@@ -250,6 +250,24 @@ end
    animation pulse_anim = pulsating_animation(color=red, period=2s)
    ```
 
+6. **Variable Duration Support:**
+   ```berry
+   # Now supported - variables in play/wait durations
+   set eye_duration = 5s
+   
+   sequence cylon_eye {
+     play red_eye for eye_duration    # ✓ Variables now work
+     wait eye_duration                # ✓ Variables work in wait too
+   }
+   
+   # Also supported - value providers for dynamic duration
+   set dynamic_time = triangle(min_value=1000, max_value=3000, period=10s)
+   
+   sequence demo {
+     play animation for dynamic_time  # ✓ Dynamic duration
+   }
+   ```
+
 6. **Parameter Constraint Violations:**
    ```berry
    # Wrong - negative period not allowed
@@ -263,6 +281,41 @@ end
    # Correct - valid parameters within constraints
    animation good_pulse = pulsating_animation(color=red, period=2s)
    animation good_comet = comet_animation(color=red, direction=1)
+   ```
+
+7. **Repeat Syntax Errors:**
+   ```berry
+   # Wrong - old colon syntax no longer supported
+   sequence bad_demo {
+     repeat 3 times:  # Error: Expected '{' after 'times'
+       play anim for 1s
+   }
+   
+   # Wrong - missing braces
+   sequence bad_demo2 {
+     repeat 3 times
+       play anim for 1s  # Error: Expected '{' after 'times'
+   }
+   
+   # Correct - use braces for repeat blocks
+   sequence good_demo {
+     repeat 3 times {
+       play anim for 1s
+     }
+   }
+   
+   # Also correct - alternative syntax
+   sequence good_demo_alt repeat 3 times {
+     play anim for 1s
+   }
+   
+   # Correct - forever syntax
+   sequence infinite_demo {
+     repeat forever {
+       play anim for 1s
+       wait 500ms
+     }
+   }
    ```
 
 ### DSL Runtime Errors
@@ -281,7 +334,28 @@ end
    run red_anim
    ```
 
-2. **Sequence Issues:**
+2. **Repeat Performance Issues:**
+   ```berry
+   # Efficient - runtime repeats don't expand at compile time
+   sequence efficient {
+     repeat 1000 times {  # No memory overhead for large counts
+       play anim for 100ms
+       wait 50ms
+     }
+   }
+   
+   # Nested repeats work efficiently
+   sequence nested {
+     repeat 100 times {
+       repeat 50 times {  # Total: 5000 iterations, but efficient
+         play quick_flash for 10ms
+       }
+       wait 100ms
+     }
+   }
+   ```
+
+3. **Sequence Issues:**
    ```berry
    # Make sure animations are defined before sequences
    color red = 0xFF0000
@@ -294,7 +368,7 @@ end
    run demo
    ```
 
-3. **Undefined References:**
+4. **Undefined References:**
    ```berry
    # Wrong - using undefined animation in sequence
    sequence bad_demo {

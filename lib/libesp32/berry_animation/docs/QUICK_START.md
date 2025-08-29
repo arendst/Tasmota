@@ -77,13 +77,30 @@ sequence rgb_show {
   wait 500ms
   play blue_pulse for 3s
   
-  repeat 2 times:
+  repeat 2 times {
     play red_pulse for 1s
     play green_pulse for 1s
     play blue_pulse for 1s
+  }
 }
 
 run rgb_show
+```
+
+**Pro Tip: Variable Durations**
+Use variables for consistent timing:
+
+```berry
+# Define timing variables
+set short_time = 1s
+set long_time = 3s
+
+sequence timed_show {
+  play red_pulse for long_time      # Use variable duration
+  wait 500ms
+  play green_pulse for short_time   # Different timing
+  play blue_pulse for long_time     # Reuse timing
+}
 ```
 
 ## Step 5: Dynamic Effects

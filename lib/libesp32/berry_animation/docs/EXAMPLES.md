@@ -96,9 +96,98 @@ sequence sunrise_show {
 run sunrise_show
 ```
 
+### 8.1. Variable Duration Sequences
+```berry
+# Define timing variables for consistent durations
+set short_duration = 2s
+set long_duration = 5s
+set fade_time = 1s
+
+animation red_anim = solid(color=red)
+animation green_anim = solid(color=green)
+animation blue_anim = solid(color=blue)
+
+sequence timed_show forever {
+  play red_anim for short_duration    # Use variable duration
+  wait fade_time                      # Variable wait time
+  play green_anim for long_duration   # Different variable duration
+  wait fade_time
+  play blue_anim for short_duration   # Reuse timing variable
+}
+run timed_show
+```
+
+## Sequence Assignments
+
+### 9. Dynamic Property Changes
+```berry
+# Create oscillators for dynamic position
+set triangle_val = triangle(min_value=0, max_value=27, duration=5s)
+set cosine_val = cosine_osc(min_value=0, max_value=27, duration=5s)
+
+# Create color cycle
+palette eye_palette = [red, yellow, green, violet]
+color eye_color = color_cycle(palette=eye_palette, cycle_period=0)
+
+# Create beacon animation
+animation red_eye = beacon_animation(
+  color=eye_color
+  pos=cosine_val
+  beacon_size=3
+  slew_size=2
+  priority=10
+)
+
+# Sequence with property assignments
+sequence cylon_eye {
+  play red_eye for 3s
+  red_eye.pos = triangle_val        # Change to triangle oscillator
+  play red_eye for 3s  
+  red_eye.pos = cosine_val          # Change back to cosine
+  eye_color.next = 1                # Advance to next color
+}
+run cylon_eye
+```
+
+### 10. Multiple Assignments in Sequence
+```berry
+set high_brightness = 255
+set low_brightness = 64
+color my_blue = 0x0000FF
+
+animation test = solid(color=red)
+test.opacity = high_brightness
+
+sequence demo {
+  play test for 1s
+  test.opacity = low_brightness     # Dim the animation
+  test.color = my_blue              # Change color to blue
+  play test for 1s
+  test.opacity = high_brightness    # Brighten again
+  play test for 1s
+}
+run demo
+```
+
+### 11. Assignments in Repeat Blocks
+```berry
+set brightness = smooth(min_value=50, max_value=255, period=2s)
+animation pulse = pulsating_animation(color=white, period=1s)
+
+sequence breathing_cycle {
+  repeat 3 times {
+    play pulse for 500ms
+    pulse.opacity = brightness      # Apply breathing effect
+    wait 200ms
+    pulse.opacity = 255             # Reset to full brightness
+  }
+}
+run breathing_cycle
+```
+
 ## User Functions in Computed Parameters
 
-### 9. Simple User Function
+### 12. Simple User Function
 ```berry
 # Simple user function in computed parameter
 animation random_base = solid(color=blue, priority=10)
@@ -106,7 +195,7 @@ random_base.opacity = rand_demo()
 run random_base
 ```
 
-### 10. User Function with Math Operations
+### 13. User Function with Math Operations
 ```berry
 # Mix user functions with mathematical functions
 animation random_bounded = solid(
@@ -117,7 +206,7 @@ animation random_bounded = solid(
 run random_bounded
 ```
 
-### 11. User Function in Arithmetic Expression
+### 14. User Function in Arithmetic Expression
 ```berry
 # Use user function in arithmetic expressions
 animation random_variation = solid(
@@ -130,9 +219,80 @@ run random_variation
 
 See `anim_examples/user_functions_demo.anim` for a complete working example.
 
+## New Repeat System Examples
+
+### 15. Runtime Repeat with Forever Loop
+```berry
+color red = 0xFF0000
+color blue = 0x0000FF
+animation red_anim = solid(color=red)
+animation blue_anim = solid(color=blue)
+
+# Traditional syntax with repeat sub-sequence
+sequence cylon_effect {
+  repeat forever {
+    play red_anim for 1s
+    play blue_anim for 1s
+  }
+}
+
+# Alternative syntax - sequence with repeat modifier
+sequence cylon_effect_alt repeat forever {
+  play red_anim for 1s
+  play blue_anim for 1s
+}
+
+run cylon_effect
+```
+
+### 16. Nested Repeats (Multiplication)
+```berry
+color green = 0x00FF00
+color yellow = 0xFFFF00
+animation green_anim = solid(color=green)
+animation yellow_anim = solid(color=yellow)
+
+# Nested repeats: 3 × 2 = 6 total iterations
+sequence nested_pattern {
+  repeat 3 times {
+    repeat 2 times {
+      play green_anim for 200ms
+      play yellow_anim for 200ms
+    }
+    wait 500ms  # Pause between outer iterations
+  }
+}
+run nested_pattern
+```
+
+### 17. Repeat with Property Assignments
+```berry
+set triangle_pos = triangle(min_value=0, max_value=29, period=3s)
+set cosine_pos = cosine_osc(min_value=0, max_value=29, period=3s)
+
+color eye_color = color_cycle(palette=[red, yellow, green, blue], cycle_period=0)
+animation moving_eye = beacon_animation(
+  color=eye_color
+  pos=triangle_pos
+  beacon_size=2
+  slew_size=1
+)
+
+sequence dynamic_cylon {
+  repeat 5 times {
+    play moving_eye for 2s
+    moving_eye.pos = cosine_pos     # Switch to cosine movement
+    play moving_eye for 2s
+    moving_eye.pos = triangle_pos   # Switch back to triangle
+    eye_color.next = 1              # Next color
+  }
+}
+run dynamic_cylon
+```
+
 ## Advanced Examples
 
-### 13. Dynamic Position
+### 18. Dynamic Position
 ```berry
 strip length 60
 
@@ -148,7 +308,7 @@ animation moving_pulse = beacon_animation(
 run moving_pulse
 ```
 
-### 14. Multi-Layer Effect
+### 19. Multi-Layer Effect
 ```berry
 # Base layer - slow breathing
 set breathing = smooth(min_value=100, max_value=255, period=4s)

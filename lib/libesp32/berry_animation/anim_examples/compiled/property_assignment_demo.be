@@ -41,25 +41,20 @@ left_pulse_.priority = 10
 center_pulse_.priority = 15  # Center has highest priority
 right_pulse_.priority = 5
 # Create a sequence that shows all three
-var demo_ = (def (engine)
-  var steps = []
-  steps.push(animation.create_play_step(animation.global('left_pulse_'), 3000))
-  steps.push(animation.create_wait_step(500))
-  steps.push(animation.create_play_step(animation.global('center_pulse_'), 3000))
-  steps.push(animation.create_wait_step(500))
-  steps.push(animation.create_play_step(animation.global('right_pulse_'), 3000))
-  steps.push(animation.create_wait_step(500))
+var demo_ = animation.SequenceManager(engine)
+  .push_play_step(left_pulse_, 3000)
+  .push_wait_step(500)
+  .push_play_step(center_pulse_, 3000)
+  .push_wait_step(500)
+  .push_play_step(right_pulse_, 3000)
+  .push_wait_step(500)
   # Play all together for final effect
-  for repeat_i : 0..3-1
-    steps.push(animation.create_play_step(animation.global('left_pulse_'), 2000))
-    steps.push(animation.create_play_step(animation.global('center_pulse_'), 2000))
-    steps.push(animation.create_play_step(animation.global('right_pulse_'), 2000))
-    steps.push(animation.create_wait_step(1000))
-  end
-  var seq_manager = animation.SequenceManager(engine)
-  seq_manager.start_sequence(steps)
-  return seq_manager
-end)(engine)
+  .push_repeat_subsequence(animation.SequenceManager(engine, -1)
+    .push_play_step(left_pulse_, 2000)
+    .push_play_step(center_pulse_, 2000)
+    .push_play_step(right_pulse_, 2000)
+    .push_wait_step(1000)
+    )
 engine.add_sequence_manager(demo_)
 engine.start()
 
@@ -100,11 +95,12 @@ sequence demo {
   wait 500ms
   
   # Play all together for final effect
-  repeat 3 times:
+  repeat forever {
     play left_pulse for 2s
     play center_pulse for 2s
     play right_pulse for 2s
     wait 1s
+  }
 }
 
 run demo

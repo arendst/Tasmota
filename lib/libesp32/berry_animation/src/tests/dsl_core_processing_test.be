@@ -200,9 +200,9 @@ def test_sequence_processing()
   var berry_code = animation_dsl.compile(basic_seq_dsl)
 
   assert(berry_code != nil, "Should compile basic sequence")
-  assert(string.find(berry_code, "var demo_ = (def (engine)") >= 0, "Should define sequence closure")
+  assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should define sequence manager")
   assert(string.find(berry_code, "red_anim") >= 0, "Should reference animation")
-  assert(string.find(berry_code, "animation.create_play_step(animation.global('red_anim_'), 2000)") >= 0, "Should create play step")
+  assert(string.find(berry_code, ".push_play_step(red_anim_, 2000)") >= 0, "Should create play step")
   assert(string.find(berry_code, "engine.add_sequence_manager(demo_)") >= 0, "Should add sequence manager")
   assert(string.find(berry_code, "engine.start()") >= 0, "Should start engine")
   
@@ -210,9 +210,10 @@ def test_sequence_processing()
   var repeat_seq_dsl = "color custom_blue = 0x0000FF\n" +
     "animation blue_anim = solid(color=custom_blue)\n" +
     "sequence test {\n" +
-    "  repeat 3 times:\n" +
+    "  repeat 3 times {\n" +
     "    play blue_anim for 1s\n" +
     "    wait 500ms\n" +
+    "  }\n" +
     "}\n" +
     "run test"
   
@@ -223,8 +224,8 @@ def test_sequence_processing()
   # print(berry_code)
   # print("==================================================")
   assert(berry_code != nil, "Should compile repeat sequence")
-  assert(string.find(berry_code, "for repeat_i : 0..3-1") >= 0, "Should generate repeat loop")
-  assert(string.find(berry_code, "animation.create_wait_step(500)") >= 0, "Should generate wait step")
+  assert(string.find(berry_code, "animation.SequenceManager(engine, 3)") >= 0, "Should generate repeat subsequence")
+  assert(string.find(berry_code, ".push_wait_step(500)") >= 0, "Should generate wait step")
   
   print("✓ Sequence processing test passed")
   return true

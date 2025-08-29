@@ -1,0 +1,27 @@
+# Swipe Rainbow
+
+set strip_len = strip_length()
+
+palette palette_olivary = [
+ red,
+ orange,
+ yellow,
+ green,
+ blue,
+ indigo,
+ violet,
+ white
+]
+
+color olivary = color_cycle(palette=palette_olivary, cycle_period=0)
+
+animation swipe_animation = solid(
+  color = olivary
+)
+
+sequence slide_colors {
+  play swipe_animation for 1s
+  olivary.next = 1
+}
+
+run slide_colors

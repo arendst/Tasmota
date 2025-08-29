@@ -19,7 +19,13 @@ class ColorCycleColorProvider : animation.color_provider
   
   # Parameter definitions
   static var PARAMS = {
-    "palette": {"default": [0xFF0000FF, 0xFF00FF00, 0xFFFF0000], "type": "instance"},  # Default RGB palette
+    "palette": {"type": "bytes", "default":
+      bytes(          # Palette bytes in AARRGGBB format
+        "FF0000FF"    # Blue
+        "FF00FF00"    # Green  
+        "FFFF0000"    # Red
+      )
+    },
     "cycle_period": {"min": 0, "default": 5000},  # 0 = manual only, >0 = auto cycle time in ms
     "next": {"default": 0}  # Write 1 to move to next color
   }
@@ -31,9 +37,44 @@ class ColorCycleColorProvider : animation.color_provider
     super(self).init(engine)  # Initialize parameter system
     
     # Initialize non-parameter instance variables
-    var default_palette = self.palette  # Get default palette
-    self.current_color = default_palette[0]  # Start with first color in palette
+    var palette_bytes = self._get_palette_bytes()
+    self.current_color = self._get_color_at_index(0)  # Start with first color in palette
     self.current_index = 0  # Start at first color
+  end
+  
+  # Get palette bytes from parameter with default fallback
+  def _get_palette_bytes()
+    var palette_bytes = self.palette
+    if palette_bytes == nil
+      # Get default from PARAMS
+      var param_def = self._get_param_def("palette")
+      if param_def != nil && param_def.contains("default")
+        palette_bytes = param_def["default"]
+      end
+    end
+    return palette_bytes
+  end
+  
+  # Get color at a specific index from bytes palette
+  # We force alpha channel to 0xFF to force opaque colors
+  def _get_color_at_index(idx)
+    var palette_bytes = self._get_palette_bytes()
+    var palette_size = size(palette_bytes) / 4  # Each color is 4 bytes (AARRGGBB)
+    
+    if palette_size == 0 || idx < 0 || idx >= palette_size
+      return 0xFFFFFFFF  # Default to white
+    end
+    
+    # Read 4 bytes in big-endian format (AARRGGBB)
+    var color = palette_bytes.get(idx * 4, -4)  # Big endian
+    color = color | 0xFF000000
+    return color
+  end
+  
+  # Get the number of colors in the palette
+  def _get_palette_size()
+    var palette_bytes = self._get_palette_bytes()
+    return size(palette_bytes) / 4  # Each color is 4 bytes
   end
   
   # Handle parameter changes
@@ -43,20 +84,24 @@ class ColorCycleColorProvider : animation.color_provider
   def on_param_changed(name, value)
     if name == "palette"
       # When palette changes, update current_color if current_index is valid
-      var palette = value
-      if size(palette) > 0
+      var palette_size = self._get_palette_size()
+      if palette_size > 0
         # Clamp current_index to valid range
-        if self.current_index >= size(palette)
+        if self.current_index >= palette_size
           self.current_index = 0
         end
-        self.current_color = palette[self.current_index]
+        self.current_color = self._get_color_at_index(self.current_index)
       end
-    elif name == "next" && value == 1
-      # Move to next color in palette
-      var palette = self.palette
-      if size(palette) > 0
-        self.current_index = (self.current_index + 1) % size(palette)
-        self.current_color = palette[self.current_index]
+    elif name == "next" && value != 0
+      # Add to color index
+      var palette_size = self._get_palette_size()
+      if palette_size > 0
+        var current_index = (self.current_index + value) % palette_size
+        if current_index < 0
+          current_index += palette_size
+        end
+        self.current_index = current_index
+        self.current_color = self._get_color_at_index(self.current_index)
       end
       # Reset the next parameter back to 0
       self.set_param("next", 0)
@@ -70,18 +115,17 @@ class ColorCycleColorProvider : animation.color_provider
   # @return int - Color in ARGB format (0xAARRGGBB)
   def produce_value(name, time_ms)
     # Get parameter values using virtual member access
-    var palette = self.palette
     var cycle_period = self.cycle_period
     
     # Get the number of colors in the palette
-    var palette_size = size(palette)
+    var palette_size = self._get_palette_size()
     if palette_size == 0
       return 0xFFFFFFFF  # Default to white if no colors
     end
     
     if palette_size == 1
       # If only one color, just return it
-      self.current_color = palette[0]
+      self.current_color = self._get_color_at_index(0)
       return self.current_color
     end
     
@@ -103,7 +147,7 @@ class ColorCycleColorProvider : animation.color_provider
     
     # Update current state and return the color
     self.current_index = color_index
-    self.current_color = palette[color_index]
+    self.current_color = self._get_color_at_index(color_index)
     
     return self.current_color
   end
@@ -115,17 +159,14 @@ class ColorCycleColorProvider : animation.color_provider
   # @param time_ms: int - Current time in milliseconds (ignored for value-based color)
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color_for_value(value, time_ms)
-    # Get parameter values using virtual member access
-    var palette = self.palette
-    
     # Get the number of colors in the palette
-    var palette_size = size(palette)
+    var palette_size = self._get_palette_size()
     if palette_size == 0
       return 0xFFFFFFFF  # Default to white if no colors
     end
     
     if palette_size == 1
-      return palette[0]  # If only one color, just return it
+      return self._get_color_at_index(0)  # If only one color, just return it
     end
     
     # Clamp value to 0-100
@@ -143,108 +184,24 @@ class ColorCycleColorProvider : animation.color_provider
       color_index = palette_size - 1
     end
     
-    return palette[color_index]
+    return self._get_color_at_index(color_index)
   end
   
 
   
-  # Add a color to the palette
-  #
-  # @param color: int - Color to add (32-bit ARGB value)
-  # @return self for method chaining
-  def add_color(color)
-    var current_palette = self.palette
-    var new_palette = current_palette.copy()
-    new_palette.push(color)
-    self.palette = new_palette
-    return self
-  end
-  
+
   # String representation of the provider
   def tostring()
     try
       var mode = self.cycle_period == 0 ? "manual" : "auto"
-      return f"ColorCycleColorProvider(palette_size={size(self.palette)}, cycle_period={self.cycle_period}, mode={mode}, current_index={self.current_index})"
+      var palette_size = self._get_palette_size()
+      return f"ColorCycleColorProvider(palette_size={palette_size}, cycle_period={self.cycle_period}, mode={mode}, current_index={self.current_index})"
     except ..
       return "ColorCycleColorProvider(uninitialized)"
     end
   end
 end
 
-# Factory function for custom palette
-#
-# @param engine: AnimationEngine - Animation engine reference
-# @param palette: list - List of colors to cycle through (32-bit ARGB values)
-# @param cycle_period: int - Time for one complete cycle in milliseconds
-# @return ColorCycleColorProvider - A new color cycle color provider instance
-def color_cycle_from_palette(engine, palette, cycle_period)
-  var provider = animation.color_cycle(engine)
-  if palette != nil
-    provider.palette = palette
-  end
-  if cycle_period != nil
-    provider.cycle_period = cycle_period
-  end
-  return provider
-end
 
-# Factory function for rainbow palette
-#
-# @param engine: AnimationEngine - Animation engine reference
-# @param num_colors: int - Number of colors in the rainbow (default: 6)
-# @param cycle_period: int - Time for one complete cycle in milliseconds
-# @return ColorCycleColorProvider - A new color cycle color provider instance
-def color_cycle_rainbow(engine, num_colors, cycle_period)
-  # Default parameters
-  if num_colors == nil || num_colors < 2
-    num_colors = 6
-  end
-  
-  # Create a rainbow palette
-  var palette = []
-  var i = 0
-  while i < num_colors
-    # Calculate hue (0 to 360 degrees)
-    var hue = tasmota.scale_uint(i, 0, num_colors, 0, 360)
-    
-    # Convert HSV to RGB (simplified conversion)
-    var r, g, b
-    var h_section = (hue / 60) % 6
-    var f = (hue / 60) - h_section
-    var v = 255  # Value (brightness)
-    var p = 0    # Saturation is 100%, so p = 0
-    var q = int(v * (1 - f))
-    var t = int(v * f)
-    
-    if h_section == 0
-      r = v; g = t; b = p
-    elif h_section == 1
-      r = q; g = v; b = p
-    elif h_section == 2
-      r = p; g = v; b = t
-    elif h_section == 3
-      r = p; g = q; b = v
-    elif h_section == 4
-      r = t; g = p; b = v
-    else
-      r = v; g = p; b = q
-    end
-    
-    # Create ARGB color (fully opaque)
-    var color = (255 << 24) | (r << 16) | (g << 8) | b
-    palette.push(color)
-    i += 1
-  end
-  
-  # Create and return a new color cycle color provider with the rainbow palette
-  var provider = animation.color_cycle(engine)
-  provider.palette = palette
-  if cycle_period != nil
-    provider.cycle_period = cycle_period
-  end
-  return provider
-end
 
-return {'color_cycle': ColorCycleColorProvider,
-        'color_cycle_from_palette': color_cycle_from_palette,
-        'color_cycle_rainbow': color_cycle_rainbow}
+return {'color_cycle': ColorCycleColorProvider}

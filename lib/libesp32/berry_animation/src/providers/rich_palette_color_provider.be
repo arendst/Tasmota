@@ -18,7 +18,7 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Parameter definitions
   static var PARAMS = {
-    "palette": {"type": "instance", "default": nil},  # Palette bytes or predefined palette constant
+    "palette": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
     "brightness": {"min": 0, "max": 255, "default": 255},
@@ -91,26 +91,18 @@ class RichPaletteColorProvider : animation.color_provider
   # Get palette bytes from parameter with default fallback
   def _get_palette_bytes()
     var palette_bytes = self.palette
-    
-    if palette_bytes == nil
-      # Default rainbow palette (reusing format from Animate_palette)
-      palette_bytes = bytes(
-        "00FF0000"    # Red (value 0)
-        "24FFA500"    # Orange (value 36)
-        "49FFFF00"    # Yellow (value 73)
-        "6E00FF00"    # Green (value 110)
-        "920000FF"    # Blue (value 146)
-        "B74B0082"    # Indigo (value 183)
-        "DBEE82EE"    # Violet (value 219)
-        "FFFF0000"    # Red (value 255)
-      )
-    end
-    
-    # Convert comptr to palette buffer if needed (from Animate_palette)
-    if type(palette_bytes) == 'ptr'   palette_bytes = self._ptr_to_palette(palette_bytes)    end
-    
-    return palette_bytes
+    return (palette_bytes != nil) ? palette_bytes : self._DEFAULT_PALETTE
   end
+  static _DEFAULT_PALETTE = bytes(
+    "00FF0000"    # Red (value 0)
+    "24FFA500"    # Orange (value 36)
+    "49FFFF00"    # Yellow (value 73)
+    "6E00FF00"    # Green (value 110)
+    "920000FF"    # Blue (value 146)
+    "B74B0082"    # Indigo (value 183)
+    "DBEE82EE"    # Violet (value 219)
+    "FFFF0000"    # Red (value 255)
+  )
   
   # Recompute palette slots and metadata
   def _recompute_palette()
@@ -134,33 +126,6 @@ class RichPaletteColorProvider : animation.color_provider
     end
     
     return self
-  end
-  
-  # Convert comptr to bytes (reused from Animate_palette.ptr_to_palette)
-  def _ptr_to_palette(p)
-    if type(p) == 'ptr'
-      var b_raw = bytes(p, 2000)      # arbitrary large size
-      var idx = 1
-      if b_raw[0] != 0
-        # palette in tick counts
-        while true
-          if b_raw[idx * 4] == 0
-            break
-          end
-          idx += 1
-        end
-      else
-        # palette is in value range from 0..255
-        while true
-          if b_raw[idx * 4] == 0xFF
-            break
-          end
-          idx += 1
-        end
-      end
-      var sz = (idx + 1) * 4
-      return bytes(p, sz)
-    end
   end
   
   # Parse the palette and create slots array (reused from Animate_palette)
@@ -212,12 +177,9 @@ class RichPaletteColorProvider : animation.color_provider
     end
     
     var palette_bytes = self._get_palette_bytes()
-    var bgrt = palette_bytes.get(idx * 4, 4)
-    var r = (bgrt >>  8) & 0xFF
-    var g = (bgrt >> 16) & 0xFF
-    var b = (bgrt >> 24) & 0xFF
-    
-    return (0xFF << 24) | (r << 16) | (g << 8) | b
+    var trgb = palette_bytes.get(idx * 4, -4)   # Big Endian
+    trgb = trgb | 0xFF000000    # set alpha channel to full opaque
+    return trgb
   end
   
   # Produce a color value for any parameter name (optimized version from Animate_palette)

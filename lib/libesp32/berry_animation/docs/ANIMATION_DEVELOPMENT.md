@@ -99,6 +99,7 @@ static var PARAMS = {
 - **`"int"`** - Integer values (default if not specified)
 - **`"string"`** - String values
 - **`"bool"`** - Boolean values (true/false)
+- **`"bytes"`** - Bytes objects (validated using isinstance())
 - **`"instance"`** - Object instances
 - **`"any"`** - Any type (no type validation)
 

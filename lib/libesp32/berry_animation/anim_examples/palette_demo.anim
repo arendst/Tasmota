@@ -32,9 +32,10 @@ sequence palette_demo {
   wait 1s
   play ocean_anim for 10s
   wait 1s
-  repeat 2 times:
+  repeat 2 times {
     play fire_anim for 3s
     play ocean_anim for 3s
+  }
 }
 
 run palette_demo

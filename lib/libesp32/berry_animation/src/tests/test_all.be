@@ -46,6 +46,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/frame_buffer_test.be",
     "lib/libesp32/berry_animation/src/tests/nillable_parameter_test.be",
     "lib/libesp32/berry_animation/src/tests/parameterized_object_test.be",  # Tests parameter management base class
+    "lib/libesp32/berry_animation/src/tests/bytes_type_test.be",  # Tests bytes type validation in parameterized objects
     "lib/libesp32/berry_animation/src/tests/animation_test.be",
     "lib/libesp32/berry_animation/src/tests/animation_engine_test.be",
     "lib/libesp32/berry_animation/src/tests/fast_loop_integration_test.be",
@@ -57,6 +58,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/pulse_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/breathe_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/color_cycle_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/color_cycle_bytes_test.be",  # Tests ColorCycleColorProvider with bytes palette
     "lib/libesp32/berry_animation/src/tests/rich_palette_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/rich_palette_animation_class_test.be",
     "lib/libesp32/berry_animation/src/tests/comet_animation_test.be",

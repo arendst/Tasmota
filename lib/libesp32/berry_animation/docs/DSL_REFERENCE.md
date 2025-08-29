@@ -220,7 +220,7 @@ color my_white = white              # Reference to predefined color
 
 # Color providers for dynamic colors
 color rainbow_cycle = color_cycle(
-  palette=[red, green, blue]
+  palette=bytes("FFFF0000" "FF00FF00" "FF0000FF")
   cycle_period=5s
 )
 color breathing_red = breathe_color(
@@ -491,7 +491,9 @@ The following user functions are available by default (see [User Functions Guide
 
 ## Sequences
 
-Sequences orchestrate multiple animations with timing control:
+Sequences orchestrate multiple animations with timing control. The DSL supports two syntaxes for sequences with repeat functionality:
+
+### Basic Sequence Syntax
 
 ```berry
 sequence demo {
@@ -499,13 +501,42 @@ sequence demo {
   wait 1s
   play blue_animation for 2s
   
-  repeat 3 times:
+  repeat 3 times {
     play flash_effect for 200ms
     wait 300ms
+  }
   
   play final_animation
 }
 ```
+
+### Repeat Sequence Syntax
+
+For sequences that are primarily repeating patterns, you can use the alternative syntax:
+
+```berry
+# Option 1: Traditional syntax with repeat sub-sequence
+sequence cylon_eye {
+  repeat forever {
+    play red_eye for 3s
+    red_eye.pos = triangle_val
+    play red_eye for 3s
+    red_eye.pos = cosine_val
+    eye_color.next = 1
+  }
+}
+
+# Option 2: Alternative syntax - sequence with repeat modifier
+sequence cylon_eye repeat forever {
+  play red_eye for 3s
+  red_eye.pos = triangle_val
+  play red_eye for 3s
+  red_eye.pos = cosine_val
+  eye_color.next = 1
+}
+```
+
+**Note**: Both syntaxes are functionally equivalent. The second syntax creates an outer sequence (runs once) containing an inner repeat sub-sequence.
 
 ### Sequence Statements
 
@@ -514,6 +545,7 @@ sequence demo {
 ```berry
 play animation_name                 # Play indefinitely
 play animation_name for 5s          # Play for specific duration
+play animation_name for duration_var # Play for variable duration
 ```
 
 #### Wait Statement
@@ -521,22 +553,119 @@ play animation_name for 5s          # Play for specific duration
 ```berry
 wait 1s                            # Wait for 1 second
 wait 500ms                         # Wait for 500 milliseconds
+wait duration_var                  # Wait for variable duration
+```
+
+#### Duration Support
+
+Both `play` and `wait` statements support flexible duration specifications:
+
+**Literal Time Values:**
+```berry
+play animation for 5s              # 5 seconds
+play animation for 2000ms          # 2000 milliseconds
+play animation for 1m              # 1 minute
+```
+
+**Variable References:**
+```berry
+set short_time = 2s
+set long_time = 10s
+
+sequence demo {
+  play animation for short_time     # Use variable duration
+  wait long_time                    # Variables work in wait too
+}
+```
+
+**Value Providers (Dynamic Duration):**
+```berry
+set dynamic_duration = triangle(min_value=1000, max_value=5000, period=10s)
+
+sequence demo {
+  play animation for dynamic_duration  # Duration changes over time
+}
+```
+
+**Examples:**
+```berry
+# Cylon eye with variable duration
+set eye_duration = 5s
+
+sequence cylon_eye forever {
+  play red_eye for eye_duration     # Use variable for consistent timing
+  red_eye.pos = triangle_val
+  play red_eye for eye_duration     # Same duration for both phases
+  red_eye.pos = cosine_val
+  eye_color.next = 1
+}
 ```
 
 #### Repeat Statement
 
-```berry
-repeat 5 times:
-  play effect for 1s
-  wait 500ms
+Repeat statements create runtime sub-sequences that execute repeatedly:
 
-# Nested repeats are supported
-repeat 3 times:
-  play intro for 2s
-  repeat 2 times:
-    play flash for 100ms
-    wait 200ms
-  play outro for 1s
+```berry
+repeat 3 times {                   # Repeat exactly 3 times
+  play animation for 1s
+  wait 500ms
+}
+
+repeat forever {                   # Repeat indefinitely until parent sequence stops
+  play animation for 1s
+  wait 500ms
+}
+```
+
+**Repeat Behavior:**
+- **Runtime Execution**: Repeats are executed at runtime, not expanded at compile time
+- **Sub-sequences**: Each repeat block creates a sub-sequence that manages its own iteration state
+- **Nested Repeats**: Supports nested repeats with multiplication (e.g., `repeat 3 times { repeat 2 times { ... } }` executes 6 times total)
+- **Forever Loops**: `repeat forever` continues until the parent sequence is stopped
+- **Efficient**: No memory overhead for large repeat counts
+
+#### Assignment Statement
+
+Property assignments can be performed within sequences to dynamically modify animation parameters during playback:
+
+```berry
+sequence demo {
+  play red_eye for 3s
+  red_eye.pos = triangle_val        # Change position to triangle oscillator
+  play red_eye for 3s
+  red_eye.pos = cosine_val          # Change position to cosine oscillator
+  eye_color.next = 1                # Advance color cycle to next color
+}
+```
+
+**Assignment Semantics:**
+- Assignments in sequences have exactly the same semantics as assignments outside sequences
+- They can assign static values, value providers, or computed expressions
+- Assignments are executed instantly when the sequence step is reached
+- The assignment is wrapped in a closure: `def (engine) <assign_code> end`
+
+**Examples:**
+```berry
+sequence dynamic_show {
+  play pulse_anim for 2s
+  pulse_anim.opacity = 128          # Set static opacity
+  play pulse_anim for 2s
+  pulse_anim.opacity = brightness   # Use value provider
+  play pulse_anim for 2s
+  pulse_anim.color = next_color     # Change color provider
+  play pulse_anim for 2s
+}
+
+# Assignments work in repeat blocks too
+sequence cylon_eye {
+  repeat 3 times {
+    play red_eye for 1s
+    red_eye.pos = triangle_val      # Change oscillator pattern
+    play red_eye for 1s
+    red_eye.pos = cosine_val        # Change back
+    eye_color.next = 1              # Advance color
+  }
+}
 ```
 
 ## Execution Statements
@@ -828,13 +957,14 @@ animation_def = "animation" identifier "=" animation_expression ;
 property_assignment = identifier "." identifier "=" expression ;
 
 (* Sequences *)
-sequence = "sequence" identifier "{" sequence_body "}" ;
+sequence = "sequence" identifier [ "repeat" ( number "times" | "forever" ) ] "{" sequence_body "}" ;
 sequence_body = { sequence_statement } ;
-sequence_statement = play_stmt | wait_stmt | repeat_stmt ;
+sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment ;
 
 play_stmt = "play" identifier [ "for" time_expression ] ;
 wait_stmt = "wait" time_expression ;
-repeat_stmt = "repeat" number "times" ":" sequence_body ;
+repeat_stmt = "repeat" ( number "times" | "forever" ) "{" sequence_body "}" ;
+sequence_assignment = identifier "." identifier "=" expression ;
 
 (* Execution *)
 execution_stmt = "run" identifier ;

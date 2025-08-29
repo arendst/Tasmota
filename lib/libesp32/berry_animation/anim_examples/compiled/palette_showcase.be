@@ -40,31 +40,26 @@ sunset_glow_.cycle_period = 6000
 sunset_glow_.transition_type = animation.SINE
 sunset_glow_.brightness = 220
 # Sequence to showcase all palettes
-var palette_showcase_ = (def (engine)
-  var steps = []
+var palette_showcase_ = animation.SequenceManager(engine)
   # Fire effect
-  steps.push(animation.create_play_step(animation.global('fire_effect_'), 8000))
-  steps.push(animation.create_wait_step(1000))
+  .push_play_step(fire_effect_, 8000)
+  .push_wait_step(1000)
   # Ocean waves
-  steps.push(animation.create_play_step(animation.global('ocean_waves_'), 8000))
-  steps.push(animation.create_wait_step(1000))
+  .push_play_step(ocean_waves_, 8000)
+  .push_wait_step(1000)
   # Aurora borealis
-  steps.push(animation.create_play_step(animation.global('aurora_lights_'), 8000))
-  steps.push(animation.create_wait_step(1000))
+  .push_play_step(aurora_lights_, 8000)
+  .push_wait_step(1000)
   # Sunset
-  steps.push(animation.create_play_step(animation.global('sunset_glow_'), 8000))
-  steps.push(animation.create_wait_step(1000))
+  .push_play_step(sunset_glow_, 8000)
+  .push_wait_step(1000)
   # Quick cycle through all
-  for repeat_i : 0..3-1
-    steps.push(animation.create_play_step(animation.global('fire_effect_'), 2000))
-    steps.push(animation.create_play_step(animation.global('ocean_waves_'), 2000))
-    steps.push(animation.create_play_step(animation.global('aurora_lights_'), 2000))
-    steps.push(animation.create_play_step(animation.global('sunset_glow_'), 2000))
-  end
-  var seq_manager = animation.SequenceManager(engine)
-  seq_manager.start_sequence(steps)
-  return seq_manager
-end)(engine)
+  .push_repeat_subsequence(animation.SequenceManager(engine, 3)
+    .push_play_step(fire_effect_, 2000)
+    .push_play_step(ocean_waves_, 2000)
+    .push_play_step(aurora_lights_, 2000)
+    .push_play_step(sunset_glow_, 2000)
+    )
 engine.add_sequence_manager(palette_showcase_)
 engine.start()
 
@@ -143,11 +138,12 @@ sequence palette_showcase {
   wait 1s
   
   # Quick cycle through all
-  repeat 3 times:
+  repeat 3 times {
     play fire_effect for 2s
     play ocean_waves for 2s
     play aurora_lights for 2s
     play sunset_glow for 2s
+  }
 }
 
 run palette_showcase

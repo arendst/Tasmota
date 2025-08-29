@@ -91,7 +91,7 @@ class Animation : animation.parameterized_object
   end
   
   # Update animation state based on current time
-  # This method should be called regularly by the animation controller
+  # This method should be called regularly by the animation engine
   #
   # @param time_ms: int - Current time in milliseconds
   # @return bool - True if animation is still running, false if completed

@@ -19,6 +19,8 @@
 #
 
 import global
+import animation
+
 # Requires to first `import animation`
 # We don't include it to not create a closure, but use the global instead
 

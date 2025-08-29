@@ -24,20 +24,15 @@ var ocean_anim_ = animation.rich_palette_animation(engine)
 ocean_anim_.palette = ocean_colors_
 ocean_anim_.cycle_period = 8000
 # Sequence to show both palettes
-var palette_demo_ = (def (engine)
-  var steps = []
-  steps.push(animation.create_play_step(animation.global('fire_anim_'), 10000))
-  steps.push(animation.create_wait_step(1000))
-  steps.push(animation.create_play_step(animation.global('ocean_anim_'), 10000))
-  steps.push(animation.create_wait_step(1000))
-  for repeat_i : 0..2-1
-    steps.push(animation.create_play_step(animation.global('fire_anim_'), 3000))
-    steps.push(animation.create_play_step(animation.global('ocean_anim_'), 3000))
-  end
-  var seq_manager = animation.SequenceManager(engine)
-  seq_manager.start_sequence(steps)
-  return seq_manager
-end)(engine)
+var palette_demo_ = animation.SequenceManager(engine)
+  .push_play_step(fire_anim_, 10000)
+  .push_wait_step(1000)
+  .push_play_step(ocean_anim_, 10000)
+  .push_wait_step(1000)
+  .push_repeat_subsequence(animation.SequenceManager(engine, 2)
+    .push_play_step(fire_anim_, 3000)
+    .push_play_step(ocean_anim_, 3000)
+    )
 engine.add_sequence_manager(palette_demo_)
 engine.start()
 
@@ -77,9 +72,10 @@ sequence palette_demo {
   wait 1s
   play ocean_anim for 10s
   wait 1s
-  repeat 2 times:
+  repeat 2 times {
     play fire_anim for 3s
     play ocean_anim for 3s
+  }
 }
 
 run palette_demo

@@ -142,16 +142,16 @@ def test_dsl_runtime()
     print("✗ Runtime state management failed")
   end
   
-  # Test 8: Controller access
+  # Test 8: engine access
   tests_total += 1
-  print("\nTest 8: Controller access")
+  print("\nTest 8: engine access")
   
-  var controller = runtime.get_controller()
-  if controller != nil
-    print("✓ Controller access working")
+  var engine = runtime.get_engine()
+  if engine != nil
+    print("✓ Engine access working")
     tests_passed += 1
   else
-    print("✗ Controller access failed")
+    print("✗ engine access failed")
   end
   
   # Final results

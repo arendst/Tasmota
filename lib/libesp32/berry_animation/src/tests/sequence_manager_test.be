@@ -5,6 +5,8 @@
 
 import string
 import animation
+import global
+import tasmota
 
 def test_sequence_manager_basic()
   print("=== SequenceManager Basic Tests ===")
@@ -18,7 +20,7 @@ def test_sequence_manager_basic()
   
   # Test initialization
   var seq_manager = animation.SequenceManager(engine)
-  assert(seq_manager.controller == engine, "Engine should be set correctly")
+  assert(seq_manager.engine == engine, "Engine should be set correctly")
   assert(seq_manager.steps != nil, "Steps list should be initialized")
   assert(seq_manager.steps.size() == 0, "Steps list should be empty initially")
   assert(seq_manager.step_index == 0, "Step index should be 0 initially")
@@ -29,11 +31,6 @@ end
 
 def test_sequence_manager_step_creation()
   print("=== SequenceManager Step Creation Tests ===")
-  
-  # Test step creation helper functions
-  assert(animation.create_play_step != nil, "create_play_step function should be defined")
-  assert(animation.create_wait_step != nil, "create_wait_step function should be defined")
-  assert(animation.create_stop_step != nil, "create_stop_step function should be defined")
   
   # Create test animation using new parameterized API
   var strip = global.Leds(30)
@@ -47,21 +44,31 @@ def test_sequence_manager_step_creation()
   test_anim.loop = true
   test_anim.name = "test"
   
-  # Test play step creation
-  var play_step = animation.create_play_step(test_anim, 5000)
+  # Test fluent interface step creation
+  var seq_manager = animation.SequenceManager(engine)
+  
+  # Test push_play_step
+  seq_manager.push_play_step(test_anim, 5000)
+  assert(seq_manager.steps.size() == 1, "Should have one step after push_play_step")
+  var play_step = seq_manager.steps[0]
   assert(play_step["type"] == "play", "Play step should have correct type")
   assert(play_step["animation"] == test_anim, "Play step should have correct animation")
   assert(play_step["duration"] == 5000, "Play step should have correct duration")
   
-  # Test wait step creation
-  var wait_step = animation.create_wait_step(2000)
+  # Test push_wait_step
+  seq_manager.push_wait_step(2000)
+  assert(seq_manager.steps.size() == 2, "Should have two steps after push_wait_step")
+  var wait_step = seq_manager.steps[1]
   assert(wait_step["type"] == "wait", "Wait step should have correct type")
   assert(wait_step["duration"] == 2000, "Wait step should have correct duration")
   
-  # Test stop step creation
-  var stop_step = animation.create_stop_step(test_anim)
-  assert(stop_step["type"] == "stop", "Stop step should have correct type")
-  assert(stop_step["animation"] == test_anim, "Stop step should have correct animation")
+  # Test push_assign_step
+  var test_closure = def (engine) test_anim.opacity = 128 end
+  seq_manager.push_assign_step(test_closure)
+  assert(seq_manager.steps.size() == 3, "Should have three steps after push_assign_step")
+  var assign_step = seq_manager.steps[2]
+  assert(assign_step["type"] == "assign", "Assign step should have correct type")
+  assert(assign_step["closure"] == test_closure, "Assign step should have correct closure")
   
   print("✓ Step creation tests passed")
 end
@@ -93,21 +100,19 @@ def test_sequence_manager_execution()
   anim2.loop = true
   anim2.name = "anim2"
   
-  # Create sequence steps
-  var steps = []
-  steps.push(animation.create_play_step(anim1, 1000))
-  steps.push(animation.create_wait_step(500))
-  steps.push(animation.create_play_step(anim2, 2000))
-  steps.push(animation.create_stop_step(anim1))
+  # Create sequence using fluent interface
+  seq_manager.push_play_step(anim1, 1000)
+              .push_wait_step(500)
+              .push_play_step(anim2, 2000)
   
   # Test sequence start
   tasmota.set_millis(10000)
   engine.start()  # Start the engine
   engine.on_tick(10000)  # Update engine time
-  seq_manager.start_sequence(steps)
+  seq_manager.start()
   
   assert(seq_manager.is_running == true, "Sequence should be running after start")
-  assert(seq_manager.steps.size() == 4, "Sequence should have 4 steps")
+  assert(seq_manager.steps.size() == 3, "Sequence should have 3 steps")
   assert(seq_manager.step_index == 0, "Should start at step 0")
   
   # Check that first animation was started
@@ -134,38 +139,37 @@ def test_sequence_manager_timing()
   test_anim.loop = true
   test_anim.name = "test"
   
-  # Create simple sequence with timed steps
-  var steps = []
-  steps.push(animation.create_play_step(test_anim, 1000))  # 1 second
-  steps.push(animation.create_wait_step(500))             # 0.5 seconds
-  
+  # Create simple sequence with timed steps using fluent interface
+  seq_manager.push_play_step(test_anim, 1000)  # 1 second
+              .push_wait_step(500)             # 0.5 seconds
+
   # Start sequence at time 20000
   tasmota.set_millis(20000)
+  engine.add_sequence_manager(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(20000)  # Update engine time
-  seq_manager.start_sequence(steps)
   
   # Update immediately - should still be on first step
-  seq_manager.update()
+  seq_manager.update(engine.time_ms)
   assert(seq_manager.step_index == 0, "Should still be on first step immediately")
   assert(seq_manager.is_running == true, "Sequence should still be running")
-  
+
   # Update after 500ms - should still be on first step
   tasmota.set_millis(20500)
   engine.on_tick(20500)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(engine.time_ms)
   assert(seq_manager.step_index == 0, "Should still be on first step after 500ms")
-  
+
   # Update after 1000ms - should advance to second step (wait)
   tasmota.set_millis(21000)
   engine.on_tick(21000)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(engine.time_ms)
   assert(seq_manager.step_index == 1, "Should advance to second step after 1000ms")
   
   # Update after additional 500ms - should complete sequence
   tasmota.set_millis(21500)
   engine.on_tick(21500)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(engine.time_ms)
   assert(seq_manager.is_running == false, "Sequence should complete after all steps")
   
   print("✓ Timing tests passed")
@@ -192,15 +196,15 @@ def test_sequence_manager_step_info()
   test_anim.duration = 0
   test_anim.loop = true
   test_anim.name = "test"
-  var steps = []
-  steps.push(animation.create_play_step(test_anim, 2000))
-  steps.push(animation.create_wait_step(1000))
+  # Create sequence using fluent interface
+  seq_manager.push_play_step(test_anim, 2000)
+              .push_wait_step(1000)
   
   # Start sequence
   tasmota.set_millis(30000)
+  engine.add_sequence_manager(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(30000)  # Update engine time
-  seq_manager.start_sequence(steps)
   
   # Get step info
   step_info = seq_manager.get_current_step_info()
@@ -230,18 +234,18 @@ def test_sequence_manager_stop()
   test_anim.duration = 0
   test_anim.loop = true
   test_anim.name = "test"
-  var steps = []
-  steps.push(animation.create_play_step(test_anim, 5000))
+  # Create sequence using fluent interface
+  seq_manager.push_play_step(test_anim, 5000)
   
   # Start sequence
   tasmota.set_millis(40000)
   engine.start()  # Start the engine
   engine.on_tick(40000)  # Update engine time
-  seq_manager.start_sequence(steps)
+  seq_manager.start()
   assert(seq_manager.is_running == true, "Sequence should be running")
   
   # Stop sequence
-  seq_manager.stop_sequence()
+  seq_manager.stop()
   assert(seq_manager.is_running == false, "Sequence should not be running after stop")
   assert(engine.size() == 0, "Engine should have no animations after stop")
   
@@ -268,22 +272,81 @@ def test_sequence_manager_is_running()
   test_anim.duration = 0
   test_anim.loop = true
   test_anim.name = "test"
-  var steps = []
-  steps.push(animation.create_play_step(test_anim, 1000))
+  # Create sequence using fluent interface
+  seq_manager.push_play_step(test_anim, 1000)
   
   tasmota.set_millis(50000)
+  engine.add_sequence_manager(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(50000)  # Update engine time
-  seq_manager.start_sequence(steps)
   assert(seq_manager.is_sequence_running() == true, "Sequence should be running after start")
   
   # Complete sequence
   tasmota.set_millis(51000)
   engine.on_tick(51000)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(engine.time_ms)
   assert(seq_manager.is_sequence_running() == false, "Sequence should not be running after completion")
   
   print("✓ Running state tests passed")
+end
+
+def test_sequence_manager_assignment_steps()
+  print("=== SequenceManager Assignment Steps Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  var seq_manager = animation.SequenceManager(engine)
+  
+  # Create test animation using new parameterized API
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
+  test_anim.opacity = 255  # Initial opacity
+  
+  # Create brightness value provider for assignment
+  var brightness_provider = animation.static_value(engine)
+  brightness_provider.value = 128
+  
+  # Create assignment closure that changes animation opacity
+  var assignment_closure = def (engine) test_anim.opacity = brightness_provider.produce_value("value", engine.time_ms) end
+  
+  # Create sequence with assignment step using fluent interface
+  seq_manager.push_play_step(test_anim, 500)           # Play for 0.5s
+              .push_assign_step(assignment_closure)    # Assign new opacity
+              .push_play_step(test_anim, 500)          # Play for another 0.5s
+  
+  # Start sequence
+  tasmota.set_millis(80000)
+  engine.add_sequence_manager(seq_manager)
+  engine.start()  # Start the engine
+  engine.on_tick(80000)  # Update engine time
+  
+  # Verify initial state
+  assert(seq_manager.is_running == true, "Sequence should be running")
+  assert(seq_manager.step_index == 0, "Should start at step 0")
+  assert(test_anim.opacity == 255, "Animation should have initial opacity")
+  
+  # Advance past assignment step (after 500ms)
+  # Assignment steps are executed atomically and advance immediately
+  tasmota.set_millis(80502)
+  engine.on_tick(80502)  # Update engine time
+  seq_manager.update(80502)
+  assert(seq_manager.step_index == 2, "Should advance past assignment step immediately")
+  assert(test_anim.opacity == 128, "Animation opacity should be changed by assignment")
+  
+  # Complete sequence (second play step should finish after 500ms more)
+  tasmota.set_millis(81002)  # 80502 + 500ms = 81002
+  engine.on_tick(81002)  # Update engine time
+  seq_manager.update(81002)
+  assert(seq_manager.is_running == false, "Sequence should complete")
+  
+  print("✓ Assignment steps tests passed")
 end
 
 def test_sequence_manager_complex_sequence()
@@ -322,61 +385,46 @@ def test_sequence_manager_complex_sequence()
   blue_anim.loop = true
   blue_anim.name = "blue"
   
-  # Create complex sequence
-  var steps = []
-  steps.push(animation.create_play_step(red_anim, 1000))    # Play red for 1s
-  steps.push(animation.create_play_step(green_anim, 800))   # Play green for 0.8s
-  steps.push(animation.create_wait_step(200))              # Wait 0.2s
-  steps.push(animation.create_play_step(blue_anim, 1500))  # Play blue for 1.5s
-  steps.push(animation.create_stop_step(red_anim))         # Stop red
-  steps.push(animation.create_stop_step(green_anim))       # Stop green
+  # Create complex sequence using fluent interface
+  seq_manager.push_play_step(red_anim, 1000)    # Play red for 1s
+              .push_play_step(green_anim, 800)   # Play green for 0.8s
+              .push_wait_step(200)              # Wait 0.2s
+              .push_play_step(blue_anim, 1500)  # Play blue for 1.5s
   
   # Start sequence
   tasmota.set_millis(60000)
+  engine.add_sequence_manager(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(60000)  # Update engine time
-  seq_manager.start_sequence(steps)
   
   # Test sequence progression step by step
   
   # After 1000ms: red completes, should advance to green (step 1)
   tasmota.set_millis(61000)
   engine.on_tick(61000)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(61000)
   assert(seq_manager.step_index == 1, "Should advance to step 1 (green) after red completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
   
   # After 1800ms: green completes, should advance to wait (step 2)
   tasmota.set_millis(61800)
   engine.on_tick(61800)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(61800)
   assert(seq_manager.step_index == 2, "Should advance to step 2 (wait) after green completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
   
   # After 2000ms: wait completes, should advance to blue (step 3)
   tasmota.set_millis(62000)
   engine.on_tick(62000)  # Update engine time
-  seq_manager.update()
+  seq_manager.update(62000)
   assert(seq_manager.step_index == 3, "Should advance to step 3 (blue) after wait completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
   
-  # After 3500ms: blue completes, should advance to stop red (step 4)
+  # After 3500ms: blue completes, sequence should complete (we removed stop steps)
   tasmota.set_millis(63500)
   engine.on_tick(63500)  # Update engine time
-  seq_manager.update()
-  assert(seq_manager.step_index == 4, "Should advance to step 4 (stop red) after blue completes")
-  assert(seq_manager.is_running == true, "Sequence should still be running")
-  
-  # Stop steps execute immediately, so another update should advance to step 5 and then complete
-  seq_manager.update()
-  
-  # The sequence should complete when step_index reaches the end
-  if seq_manager.is_running
-    # If still running, do one more update to complete
-    seq_manager.update()
-  end
-  
-  assert(seq_manager.is_running == false, "Complex sequence should complete after all stop steps")
+  seq_manager.update(63500)
+  assert(seq_manager.is_running == false, "Complex sequence should complete after blue step")
   
   print("✓ Complex sequence tests passed")
 end
@@ -401,25 +449,21 @@ def test_sequence_manager_integration()
   test_anim.duration = 0
   test_anim.loop = true
   test_anim.name = "test"
-  var steps = []
-  steps.push(animation.create_play_step(test_anim, 1000))
+  # Create sequence using fluent interface
+  seq_manager.push_play_step(test_anim, 1000)
   
   # Start sequence
   tasmota.set_millis(70000)
   engine.start()  # Start the engine
   engine.on_tick(70000)  # Update engine time
-  seq_manager.start_sequence(steps)
+  
+  # The engine should automatically start the sequence manager when engine.start() is called
+  assert(seq_manager.is_running == true, "Sequence should be running after engine start")
   
   # Test that engine's on_tick calls sequence manager update
-  # The engine has a 5ms minimum delta check, so we need to account for that
-  tasmota.set_millis(71000)
-  
-  # Start the engine to initialize last_update
-  engine.start()
-  engine.on_tick(70000)  # Initialize last_update
-  
-  # Now call on_tick after the sequence should complete
-  engine.on_tick(71000)  # This should call seq_manager.update()
+  # After 1 second, the sequence should complete
+  tasmota.set_millis(71005)  # Add 5ms buffer for engine's minimum delta check
+  engine.on_tick(71005)  # This should call seq_manager.update()
   
   # The sequence should complete after the 1-second duration
   assert(seq_manager.is_running == false, "Sequence should complete after 1 second duration")
@@ -442,6 +486,7 @@ def run_all_sequence_manager_tests()
   test_sequence_manager_step_info()
   test_sequence_manager_stop()
   test_sequence_manager_is_running()
+  test_sequence_manager_assignment_steps()
   test_sequence_manager_complex_sequence()
   test_sequence_manager_integration()
   
@@ -461,6 +506,7 @@ return {
   "test_sequence_manager_step_info": test_sequence_manager_step_info,
   "test_sequence_manager_stop": test_sequence_manager_stop,
   "test_sequence_manager_is_running": test_sequence_manager_is_running,
+  "test_sequence_manager_assignment_steps": test_sequence_manager_assignment_steps,
   "test_sequence_manager_complex_sequence": test_sequence_manager_complex_sequence,
   "test_sequence_manager_integration": test_sequence_manager_integration
 }

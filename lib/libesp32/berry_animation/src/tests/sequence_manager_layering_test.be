@@ -56,26 +56,20 @@ def test_multiple_sequence_managers()
   blue_anim.opacity = 255
   blue_anim.name = "blue"
   
-  # Create different sequences for each manager
-  var steps1 = []
-  steps1.push(animation.create_play_step(red_anim, 2000))
-  steps1.push(animation.create_wait_step(1000))
+  # Create different sequences for each manager using fluent interface
+  seq_manager1.push_play_step(red_anim, 2000)
+              .push_wait_step(1000)
   
-  var steps2 = []
-  steps2.push(animation.create_wait_step(500))
-  steps2.push(animation.create_play_step(green_anim, 1500))
+  seq_manager2.push_wait_step(500)
+              .push_play_step(green_anim, 1500)
   
-  var steps3 = []
-  steps3.push(animation.create_play_step(blue_anim, 1000))
-  steps3.push(animation.create_wait_step(2000))
+  seq_manager3.push_play_step(blue_anim, 1000)
+              .push_wait_step(2000)
   
   # Start all sequences at the same time
   tasmota.set_millis(80000)
   engine.start()  # Start the engine
   engine.on_tick(80000)  # Update engine time
-  seq_manager1.start_sequence(steps1)
-  seq_manager2.start_sequence(steps2)
-  seq_manager3.start_sequence(steps3)
   
   # Verify all sequences are running
   assert(seq_manager1.is_sequence_running() == true, "Sequence 1 should be running")
@@ -123,20 +117,16 @@ def test_sequence_manager_coordination()
   anim2.opacity = 255
   anim2.name = "anim2"
   
-  # Create sequences that will overlap
-  var steps1 = []
-  steps1.push(animation.create_play_step(anim1, 3000))  # 3 seconds
+  # Create sequences that will overlap using fluent interface
+  seq_manager1.push_play_step(anim1, 3000)  # 3 seconds
   
-  var steps2 = []
-  steps2.push(animation.create_wait_step(1000))         # Wait 1 second
-  steps2.push(animation.create_play_step(anim2, 2000)) # Then play for 2 seconds
+  seq_manager2.push_wait_step(1000)         # Wait 1 second
+              .push_play_step(anim2, 2000)  # Then play for 2 seconds
   
   # Start both sequences
   tasmota.set_millis(90000)
   engine.start()  # Start the engine
   engine.on_tick(90000)  # Update engine time
-  seq_manager1.start_sequence(steps1)
-  seq_manager2.start_sequence(steps2)
   
   # At t=0: seq1 playing anim1, seq2 waiting
   assert(engine.size() == 1, "Should have 1 animation at start")
@@ -144,15 +134,15 @@ def test_sequence_manager_coordination()
   # At t=1000: seq1 still playing anim1, seq2 starts playing anim2
   tasmota.set_millis(91000)
   engine.on_tick(91000)  # Update engine time
-  seq_manager1.update()
-  seq_manager2.update()
+  seq_manager1.update(91000)
+  seq_manager2.update(91000)
   assert(engine.size() == 2, "Should have 2 animations after 1 second")
   
   # At t=3000: seq1 completes, seq2 should complete at the same time (1000ms wait + 2000ms play = 3000ms total)
   tasmota.set_millis(93000)
   engine.on_tick(93000)  # Update engine time
-  seq_manager1.update()
-  seq_manager2.update()
+  seq_manager1.update(93000)
+  seq_manager2.update(93000)
   assert(seq_manager1.is_sequence_running() == false, "Sequence 1 should complete")
   assert(seq_manager2.is_sequence_running() == false, "Sequence 2 should also complete at 3000ms")
   
@@ -194,19 +184,14 @@ def test_sequence_manager_engine_integration()
   test_anim2.opacity = 255
   test_anim2.name = "test2"
   
-  # Create sequences
-  var steps1 = []
-  steps1.push(animation.create_play_step(test_anim1, 1000))
-  
-  var steps2 = []
-  steps2.push(animation.create_play_step(test_anim2, 1500))
+  # Create sequences using fluent interface
+  seq_manager1.push_play_step(test_anim1, 1000)
+  seq_manager2.push_play_step(test_anim2, 1500)
   
   # Start sequences
   tasmota.set_millis(100000)
   engine.start()  # Start the engine
   engine.on_tick(100000)  # Update engine time
-  seq_manager1.start_sequence(steps1)
-  seq_manager2.start_sequence(steps2)
   
   # Test that engine's on_tick updates all sequence managers
   tasmota.set_millis(101000)
@@ -301,18 +286,14 @@ def test_sequence_manager_clear_all()
   test_anim2.opacity = 255
   test_anim2.name = "test2"
   
-  var steps1 = []
-  steps1.push(animation.create_play_step(test_anim1, 5000))
-  
-  var steps2 = []
-  steps2.push(animation.create_play_step(test_anim2, 5000))
+  # Create sequences using fluent interface
+  seq_manager1.push_play_step(test_anim1, 5000)
+  seq_manager2.push_play_step(test_anim2, 5000)
   
   # Start sequences
   tasmota.set_millis(110000)
   engine.start()  # Start the engine
   engine.on_tick(110000)  # Update engine time
-  seq_manager1.start_sequence(steps1)
-  seq_manager2.start_sequence(steps2)
   
   assert(seq_manager1.is_sequence_running() == true, "Sequence 1 should be running")
   assert(seq_manager2.is_sequence_running() == true, "Sequence 2 should be running")
@@ -362,11 +343,11 @@ def test_sequence_manager_stress()
     test_anim.opacity = 255
     test_anim.name = f"anim{i}"
     
-    var steps = []
-    steps.push(animation.create_play_step(test_anim, (i + 1) * 500))  # Different durations
-    steps.push(animation.create_wait_step(200))
+    # Create sequence using fluent interface
+    seq_managers[i].push_play_step(test_anim, (i + 1) * 500)  # Different durations
+                   .push_wait_step(200)
     
-    seq_managers[i].start_sequence(steps)
+    engine.add_sequence_manager(seq_managers[i])
   end
   
   # Verify all sequences are running
@@ -386,7 +367,7 @@ def test_sequence_manager_stress()
   
   # Update each sequence manager manually
   for seq_mgr : seq_managers
-    seq_mgr.update()
+    seq_mgr.update(123000)
   end
   
   # Count running sequences

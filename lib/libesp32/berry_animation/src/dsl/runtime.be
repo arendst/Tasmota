@@ -148,7 +148,7 @@ class DSLRuntime
 
   
   # Get current engine for external access
-  def get_controller()
+  def get_engine()
     return self.engine
   end
   

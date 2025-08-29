@@ -1,8 +1,5 @@
 # Unified Animation Engine
-# Combines AnimationController, AnimationManager, and Renderer into a single efficient class
 #
-# This unified approach eliminates redundancy and provides a simpler, more efficient
-# animation system for Tasmota LED control.
 
 class AnimationEngine
   # Core properties
@@ -59,6 +56,12 @@ class AnimationEngine
       var now = tasmota.millis()
       while (i < size(self.animations))
         self.animations[i].start(now)
+        i += 1
+      end
+
+      i = 0
+      while (i < size(self.sequence_managers))
+        self.sequence_managers[i].start(now)
         i += 1
       end
       
@@ -126,7 +129,7 @@ class AnimationEngine
     self.animations = []
     var i = 0
     while i < size(self.sequence_managers)
-      self.sequence_managers[i].stop_sequence()
+      self.sequence_managers[i].stop()
       i += 1
     end
     self.sequence_managers = []
@@ -190,7 +193,7 @@ class AnimationEngine
     # Update sequence managers
     var i = 0
     while i < size(self.sequence_managers)
-      self.sequence_managers[i].update()
+      self.sequence_managers[i].update(current_time)
       i += 1
     end
     
@@ -423,11 +426,5 @@ def create_engine(strip)
   return animation.animation_engine(strip)
 end
 
-# Compatibility function for legacy examples
-def animation_controller(strip)
-  return animation.animation_engine(strip)
-end
-
 return {'animation_engine': AnimationEngine,
-        'create_engine': create_engine,
-        'animation_controller': animation_controller}
+        'create_engine': create_engine}

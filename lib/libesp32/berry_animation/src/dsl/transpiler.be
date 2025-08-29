@@ -26,6 +26,7 @@ class SimpleDSLTranspiler
   var strip_initialized # Track if strip was initialized
   var sequence_names  # Track which names are sequences
   var symbol_table    # Track created objects: name -> instance
+  var indent_level    # Track current indentation level for nested sequences
   
   # Static color mapping for named colors (helps with solidification)
   static var named_colors = {
@@ -54,6 +55,18 @@ class SimpleDSLTranspiler
     self.strip_initialized = false  # Track if strip was initialized
     self.sequence_names = {}  # Track which names are sequences
     self.symbol_table = {}  # Track created objects: name -> instance
+    self.indent_level = 0  # Track current indentation level
+  end
+  
+  # Get current indentation string
+  def get_indent()
+    # return "  " * (self.indent_level + 1)  # Base indentation is 2 spaces - string multiplication not supported
+    var indent = ""
+    var spaces_needed = (self.indent_level + 1) * 2  # Base indentation is 2 spaces
+    for i : 0..spaces_needed-1
+      indent += " "
+    end
+    return indent
   end
   
   # Main transpilation method - single pass
@@ -226,7 +239,7 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Process palette definition: palette aurora_colors = [(0, #000022), (64, #004400), ...]
+  # Process palette definition: palette aurora_colors = [(0, #000022), (64, #004400), ...] or [red, 0x008000, blue, 0x112233]
   def process_palette()
     self.next()  # skip 'palette'
     var name = self.expect_identifier()
@@ -239,9 +252,22 @@ class SimpleDSLTranspiler
     
     self.expect_assign()
     
-    # Expect array literal with tuples
+    # Expect array literal
     self.expect_left_bracket()
     var palette_entries = []
+    
+    # Detect syntax type by looking at the first entry
+    self.skip_whitespace_including_newlines()
+    
+    if self.check_right_bracket()
+      # Empty palette - not allowed
+      self.error("Empty palettes are not allowed. A palette must contain at least one color entry.")
+      self.skip_statement()
+      return
+    end
+    
+    # Check if first entry starts with '(' (tuple syntax) or not (alternative syntax)
+    var is_tuple_syntax = self.current() != nil && self.current().type == animation_dsl.Token.LEFT_PAREN
     
     while !self.at_end() && !self.check_right_bracket()
       self.skip_whitespace_including_newlines()
@@ -250,16 +276,41 @@ class SimpleDSLTranspiler
         break
       end
       
-      # Parse tuple (value, color)
-      self.expect_left_paren()
-      var value = self.expect_number()
-      self.expect_comma()
-      var color = self.process_value("color")  # Reuse existing color parsing
-      self.expect_right_paren()
-      
-      # Convert to VRGB format entry
-      var vrgb_entry = self.convert_to_vrgb(value, color)
-      palette_entries.push(f'"{vrgb_entry}"')
+      if is_tuple_syntax
+        # Parse tuple (value, color) - original syntax
+        # Check if we accidentally have alternative syntax in tuple mode
+        if self.current() != nil && self.current().type != animation_dsl.Token.LEFT_PAREN
+          self.error("Cannot mix alternative syntax [color1, color2, ...] with tuple syntax (value, color). Use only one syntax per palette.")
+          self.skip_statement()
+          return
+        end
+        
+        self.expect_left_paren()
+        var value = self.expect_number()
+        self.expect_comma()
+        var color = self.process_value("color")  # Reuse existing color parsing
+        self.expect_right_paren()
+        
+        # Convert to VRGB format entry and store as integer
+        var vrgb_entry = self.convert_to_vrgb(value, color)
+        var vrgb_int = int(f"0x{vrgb_entry}")
+        palette_entries.push(vrgb_int)
+      else
+        # Parse color only - alternative syntax
+        # Check if we accidentally have a tuple in alternative syntax mode
+        if self.current() != nil && self.current().type == animation_dsl.Token.LEFT_PAREN
+          self.error("Cannot mix tuple syntax (value, color) with alternative syntax [color1, color2, ...]. Use only one syntax per palette.")
+          self.skip_statement()
+          return
+        end
+        
+        var color = self.process_value("color")  # Reuse existing color parsing
+
+        # Convert to VRGB format entry and store as integer after setting alpha to 0xFF
+        var vrgb_entry = self.convert_to_vrgb(0xFF, color)
+        var vrgb_int = int(f"0x{vrgb_entry}")
+        palette_entries.push(vrgb_int)
+      end
       
       # Skip whitespace but preserve newlines for separator detection
       while !self.at_end()
@@ -288,13 +339,15 @@ class SimpleDSLTranspiler
     self.expect_right_bracket()
     var inline_comment = self.collect_inline_comment()
     
-    # Generate Berry bytes object
+    # Generate Berry bytes object - convert integers to hex strings for bytes() constructor
     var palette_data = ""
     for i : 0..size(palette_entries)-1
       if i > 0
         palette_data += " "
       end
-      palette_data += palette_entries[i]
+      # Convert integer back to hex string for bytes() constructor
+      var hex_str = format("%08X", palette_entries[i])
+      palette_data += f'"{hex_str}"'
     end
     
     self.add(f"var {name}_ = bytes({palette_data}){inline_comment}")
@@ -410,9 +463,13 @@ class SimpleDSLTranspiler
     var value = self.process_value("variable")
     var inline_comment = self.collect_inline_comment()
     self.add(f"var {name}_ = {value}{inline_comment}")
+    
+    # Add variable to symbol table for validation
+    # Use a string marker to indicate this is a variable (not an instance)
+    self.symbol_table[name] = "variable"
   end
   
-  # Process sequence definition: sequence demo { ... }
+  # Process sequence definition: sequence demo { ... } or sequence demo repeat N times { ... }
   def process_sequence()
     self.next()  # skip 'sequence'
     var name = self.expect_identifier()
@@ -430,26 +487,67 @@ class SimpleDSLTranspiler
     # We use a string marker since sequences don't have real instances
     self.symbol_table[name] = "sequence"
     
-    self.expect_left_brace()
+    # Check for second syntax: sequence name repeat N times { ... } or sequence name forever { ... }
+    var is_repeat_syntax = false
+    var repeat_count = "1"
     
-    # Generate anonymous closure that creates and returns sequence manager
-    self.add(f"var {name}_ = (def (engine)")
-    self.add(f"  var steps = []")
-    
-    # Process sequence body
-    while !self.at_end() && !self.check_right_brace()
-      self.process_sequence_statement()
+    var current_tok = self.current()
+    if current_tok != nil && current_tok.type == animation_dsl.Token.KEYWORD
+      if current_tok.value == "repeat"
+        is_repeat_syntax = true
+        self.next()  # skip 'repeat'
+        
+        # Parse repeat count: either number or "forever"
+        var tok_after_repeat = self.current()
+        if tok_after_repeat != nil && tok_after_repeat.type == animation_dsl.Token.KEYWORD && tok_after_repeat.value == "forever"
+          self.next()  # skip 'forever'
+          repeat_count = "-1"  # -1 means forever
+        else
+          var count = self.expect_number()
+          self.expect_keyword("times")
+          repeat_count = str(count)
+        end
+      elif current_tok.value == "forever"
+        # New syntax: sequence name forever { ... } (repeat is optional)
+        is_repeat_syntax = true
+        self.next()  # skip 'forever'
+        repeat_count = "-1"  # -1 means forever
+      end
+    elif current_tok != nil && current_tok.type == animation_dsl.Token.NUMBER
+      # New syntax: sequence name N times { ... } (repeat is optional)
+      is_repeat_syntax = true
+      var count = self.expect_number()
+      self.expect_keyword("times")
+      repeat_count = str(count)
     end
     
-    self.add(f"  var seq_manager = animation.SequenceManager(engine)")
-    self.add(f"  seq_manager.start_sequence(steps)")
-    self.add(f"  return seq_manager")
-    self.add(f"end)(engine)")
+    self.expect_left_brace()
+    
+    if is_repeat_syntax
+      # Second syntax: sequence name repeat N times { ... }
+      # Create a single SequenceManager with fluent interface
+      self.add(f"var {name}_ = animation.SequenceManager(engine, {repeat_count})")
+      
+      # Process sequence body - add steps using fluent interface
+      while !self.at_end() && !self.check_right_brace()
+        self.process_sequence_statement()
+      end
+    else
+      # First syntax: sequence demo { ... }
+      # Use fluent interface for regular sequences too (no repeat count = default)
+      self.add(f"var {name}_ = animation.SequenceManager(engine)")
+      
+      # Process sequence body - add steps using fluent interface
+      while !self.at_end() && !self.check_right_brace()
+        self.process_sequence_statement()
+      end
+    end
+    
     self.expect_right_brace()
   end
   
-  # Process statements inside sequences
-  def process_sequence_statement()
+  # Process statements inside sequences using push_step()
+  def process_sequence_statement_for_manager(manager_name)
     var tok = self.current()
     if tok == nil || tok.type == animation_dsl.Token.EOF
       return
@@ -469,109 +567,321 @@ class SimpleDSLTranspiler
     end
     
     if tok.type == animation_dsl.Token.KEYWORD && tok.value == "play"
-      self.next()  # skip 'play'
-      
-      # Check if this is a function call or an identifier
-      var anim_ref = ""
-      var current_tok = self.current()
-      if current_tok != nil && (current_tok.type == animation_dsl.Token.IDENTIFIER || current_tok.type == animation_dsl.Token.KEYWORD) &&
-         self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
-        # This is a function call - process it as a nested function call
-        anim_ref = self.process_nested_function_call()
-      else
-        # This is an identifier reference - sequences need runtime resolution
-        var anim_name = self.expect_identifier()
-        
-        # Validate that the referenced object exists
-        self._validate_object_reference(anim_name, "sequence play")
-        
-        anim_ref = f"animation.global('{anim_name}_')"
-      end
-      
-      # Handle optional 'for duration'
-      var duration = "0"
-      if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
-        self.next()  # skip 'for'
-        duration = str(self.process_time_value())
-      end
-      
-      var inline_comment = self.collect_inline_comment()
-      self.add(f"  steps.push(animation.create_play_step({anim_ref}, {duration})){inline_comment}")
+      self.process_play_statement_for_manager(manager_name)
       
     elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "wait"
-      self.next()  # skip 'wait'
-      var duration = self.process_time_value()
-      var inline_comment = self.collect_inline_comment()
-      self.add(f"  steps.push(animation.create_wait_step({duration})){inline_comment}")
+      self.process_wait_statement_for_manager(manager_name)
       
     elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "repeat"
       self.next()  # skip 'repeat'
-      var count = self.expect_number()
-      self.expect_keyword("times")
-      self.expect_colon()
       
-      self.add(f"  for repeat_i : 0..{count}-1")
-      
-      # Process repeat body
-      while !self.at_end() && !self.check_right_brace()
-        var inner_tok = self.current()
-        if inner_tok == nil || inner_tok.type == animation_dsl.Token.EOF
-          break
-        end
-        if inner_tok.type == animation_dsl.Token.COMMENT
-          self.add("    " + inner_tok.value)  # Add comment with repeat body indentation
-          self.next()
-          continue
-        end
-        if inner_tok.type == animation_dsl.Token.NEWLINE
-          self.next()
-          continue
-        end
-        if inner_tok.type == animation_dsl.Token.KEYWORD && inner_tok.value == "play"
-          self.next()  # skip 'play'
-          
-          # Check if this is a function call or an identifier
-          var anim_ref = ""
-          var current_tok = self.current()
-          if current_tok != nil && (current_tok.type == animation_dsl.Token.IDENTIFIER || current_tok.type == animation_dsl.Token.KEYWORD) &&
-             self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
-            # This is a function call - process it as a nested function call
-            anim_ref = self.process_nested_function_call()
-          else
-            # This is an identifier reference - sequences need runtime resolution
-            var anim_name = self.expect_identifier()
-            
-            # Validate that the referenced object exists
-            self._validate_object_reference(anim_name, "sequence play")
-            
-            anim_ref = f"animation.global('{anim_name}_')"
-          end
-          
-          var duration = "0"
-          if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
-            self.next()  # skip 'for'
-            duration = str(self.process_time_value())
-          end
-          
-          var inline_comment = self.collect_inline_comment()
-          self.add(f"    steps.push(animation.create_play_step({anim_ref}, {duration})){inline_comment}")
-          
-        elif inner_tok.type == animation_dsl.Token.KEYWORD && inner_tok.value == "wait"
-          self.next()  # skip 'wait'
-          var duration = self.process_time_value()
-          var inline_comment = self.collect_inline_comment()
-          self.add(f"    steps.push(animation.create_wait_step({duration})){inline_comment}")
-        else
-          break  # Exit repeat body
-        end
+      # Parse repeat count: either number or "forever"
+      var repeat_count = "1"
+      var tok_after_repeat = self.current()
+      if tok_after_repeat != nil && tok_after_repeat.type == animation_dsl.Token.KEYWORD && tok_after_repeat.value == "forever"
+        self.next()  # skip 'forever'
+        repeat_count = "-1"  # -1 means forever
+      else
+        var count = self.expect_number()
+        self.expect_keyword("times")
+        repeat_count = str(count)
       end
       
-      self.add(f"  end")
+      self.expect_left_brace()
+      
+      # Create repeat sub-sequence
+      self.add(f"  var repeat_seq = animation.SequenceManager(engine, {repeat_count})")
+      
+      # Process repeat body - add steps directly to repeat sequence
+      while !self.at_end() && !self.check_right_brace()
+        self.process_sequence_statement_for_manager("repeat_seq")
+      end
+      
+      self.expect_right_brace()
+      
+      # Add the repeat sub-sequence step to main sequence
+      self.add(f"  {manager_name}.push_repeat_subsequence(repeat_seq.steps, {repeat_count})")
+    elif tok.type == animation_dsl.Token.IDENTIFIER
+      # Check if this is a property assignment (identifier.property = value)
+      if self.peek() != nil && self.peek().type == animation_dsl.Token.DOT
+        self.process_sequence_assignment_for_manager("  ", manager_name)  # Pass indentation and manager name
+      else
+        self.skip_statement()
+      end
     else
       self.skip_statement()
     end
   end
   
+
+  
+  # Process statements inside sequences using fluent interface
+  def process_sequence_statement()
+    var tok = self.current()
+    if tok == nil || tok.type == animation_dsl.Token.EOF
+      return
+    end
+    
+    # Handle comments - preserve them in generated code with proper indentation
+    if tok.type == animation_dsl.Token.COMMENT
+      self.add(self.get_indent() + tok.value)  # Add comment with fluent indentation
+      self.next()
+      return
+    end
+    
+    # Skip whitespace (newlines)
+    if tok.type == animation_dsl.Token.NEWLINE
+      self.next()
+      return
+    end
+    
+    if tok.type == animation_dsl.Token.KEYWORD && tok.value == "play"
+      self.process_play_statement_fluent()
+      
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "wait"
+      self.process_wait_statement_fluent()
+      
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "repeat"
+      self.next()  # skip 'repeat'
+      
+      # Parse repeat count: either number or "forever"
+      var repeat_count = "1"
+      var tok_after_repeat = self.current()
+      if tok_after_repeat != nil && tok_after_repeat.type == animation_dsl.Token.KEYWORD && tok_after_repeat.value == "forever"
+        self.next()  # skip 'forever'
+        repeat_count = "-1"  # -1 means forever
+      else
+        var count = self.expect_number()
+        self.expect_keyword("times")
+        repeat_count = str(count)
+      end
+      
+      self.expect_left_brace()
+      
+      # Create a nested sub-sequence using recursive processing
+      self.add(f"{self.get_indent()}.push_repeat_subsequence(animation.SequenceManager(engine, {repeat_count})")
+      
+      # Increase indentation level for nested content
+      self.indent_level += 1
+      
+      # Process repeat body recursively - just call the same method
+      while !self.at_end() && !self.check_right_brace()
+        self.process_sequence_statement()
+      end
+      
+      self.expect_right_brace()
+      
+      # Decrease indentation level and close the sub-sequence
+      self.add(f"{self.get_indent()})")
+      self.indent_level -= 1
+      
+    elif tok.type == animation_dsl.Token.IDENTIFIER
+      # Check if this is a property assignment (identifier.property = value)
+      if self.peek() != nil && self.peek().type == animation_dsl.Token.DOT
+        self.process_sequence_assignment_fluent()
+      else
+        self.skip_statement()
+      end
+    else
+      self.skip_statement()
+    end
+  end
+  
+  # Process property assignment using fluent style
+  def process_sequence_assignment_fluent()
+    var object_name = self.expect_identifier()
+    self.expect_dot()
+    var property_name = self.expect_identifier()
+    self.expect_assign()
+    var value = self.process_value("property")
+    var inline_comment = self.collect_inline_comment()
+    
+    # Create assignment step using fluent style
+    var closure_code = f"def (engine) {object_name}_.{property_name} = {value} end"
+    self.add(f"{self.get_indent()}.push_assign_step({closure_code}){inline_comment}")
+  end
+  
+  # Process property assignment inside sequences: object.property = value (legacy)
+  def process_sequence_assignment(indent)
+    self.process_sequence_assignment_generic(indent, "steps")
+  end
+  
+  # Generic method to process sequence assignment with configurable target array
+  def process_sequence_assignment_generic(indent, target_array)
+    var object_name = self.expect_identifier()
+    
+    # Check if next token is a dot
+    if self.current() != nil && self.current().type == animation_dsl.Token.DOT
+      self.next()  # skip '.'
+      var property_name = self.expect_identifier()
+      
+      # Validate parameter if we have this object in our symbol table
+      if self.symbol_table.contains(object_name)
+        var instance = self.symbol_table[object_name]
+        
+        # Only validate parameters for actual instances, not sequence markers
+        if type(instance) != "string"
+          var class_name = classname(instance)
+          
+          # Use the existing parameter validation logic
+          self._validate_single_parameter(class_name, property_name, instance)
+        else
+          # This is a sequence marker - sequences don't have properties
+          self.error(f"Sequences like '{object_name}' do not have properties. Property assignments are only valid for animations and color providers.")
+          return
+        end
+      end
+      
+      self.expect_assign()
+      var value = self.process_value("property")
+      var inline_comment = self.collect_inline_comment()
+      
+      # Generate assignment step with closure
+      # The closure receives the engine as parameter and performs the assignment
+      import introspect
+      var object_ref = ""
+      if introspect.contains(animation, object_name)
+        # Symbol exists in animation module, use it directly
+        object_ref = f"animation.{object_name}"
+      else
+        # Symbol doesn't exist in animation module, use underscore suffix
+        object_ref = f"{object_name}_"
+      end
+      
+      # Create closure that performs the assignment
+      var closure_code = f"def (engine) {object_ref}.{property_name} = {value} end"
+      self.add(f"{indent}{target_array}.push(animation.create_assign_step({closure_code})){inline_comment}")
+    else
+      # Not a property assignment, this shouldn't happen since we checked for dot
+      self.error(f"Expected property assignment for '{object_name}' but found no dot")
+      self.skip_statement()
+    end
+  end
+  
+
+  
+  # Helper method to process play statement using fluent style
+  def process_play_statement_fluent()
+    self.next()  # skip 'play'
+    
+    # Check if this is a function call or an identifier
+    var anim_ref = ""
+    var current_tok = self.current()
+    if current_tok != nil && (current_tok.type == animation_dsl.Token.IDENTIFIER || current_tok.type == animation_dsl.Token.KEYWORD) &&
+       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+      # This is a function call - process it as a nested function call
+      anim_ref = self.process_nested_function_call()
+    else
+      # This is an identifier reference
+      var anim_name = self.expect_identifier()
+      
+      # Validate that the referenced object exists
+      self._validate_object_reference(anim_name, "sequence play")
+      
+      anim_ref = f"{anim_name}_"
+    end
+    
+    # Handle optional 'for duration'
+    var duration = "nil"
+    if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
+      self.next()  # skip 'for'
+      duration = str(self.process_time_value())
+    end
+    
+    var inline_comment = self.collect_inline_comment()
+    self.add(f"{self.get_indent()}.push_play_step({anim_ref}, {duration}){inline_comment}")
+  end
+  
+  # Helper method to process wait statement using fluent style
+  def process_wait_statement_fluent()
+    self.next()  # skip 'wait'
+    var duration = self.process_time_value()
+    var inline_comment = self.collect_inline_comment()
+    self.add(f"{self.get_indent()}.push_wait_step({duration}){inline_comment}")
+  end
+  
+  # Helper method to process play statement with configurable target array (legacy)
+  def process_play_statement(target_array)
+    self.next()  # skip 'play'
+    
+    # Check if this is a function call or an identifier
+    var anim_ref = ""
+    var current_tok = self.current()
+    if current_tok != nil && (current_tok.type == animation_dsl.Token.IDENTIFIER || current_tok.type == animation_dsl.Token.KEYWORD) &&
+       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+      # This is a function call - process it as a nested function call
+      anim_ref = self.process_nested_function_call()
+    else
+      # This is an identifier reference - sequences need runtime resolution
+      var anim_name = self.expect_identifier()
+      
+      # Validate that the referenced object exists
+      self._validate_object_reference(anim_name, "sequence play")
+      
+      anim_ref = f"animation.global('{anim_name}_')"
+    end
+    
+    # Handle optional 'for duration'
+    var duration = "0"
+    if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
+      self.next()  # skip 'for'
+      duration = str(self.process_time_value())
+    end
+    
+    var inline_comment = self.collect_inline_comment()
+    self.add(f"  {target_array}.push(animation.create_play_step({anim_ref}, {duration})){inline_comment}")
+  end
+  
+  # Helper method to process wait statement with configurable target array (legacy)
+  def process_wait_statement(target_array)
+    self.next()  # skip 'wait'
+    var duration = self.process_time_value()
+    var inline_comment = self.collect_inline_comment()
+    self.add(f"  {target_array}.push(animation.create_wait_step({duration})){inline_comment}")
+  end
+  
+  # Generic method to process sequence statements with configurable target array
+  def process_sequence_statement_generic(target_array)
+    var tok = self.current()
+    if tok == nil || tok.type == animation_dsl.Token.EOF
+      return
+    end
+    
+    # Handle comments - preserve them in generated code with proper indentation
+    if tok.type == animation_dsl.Token.COMMENT
+      self.add("  " + tok.value)  # Add comment with sequence indentation
+      self.next()
+      return
+    end
+    
+    # Skip whitespace (newlines)
+    if tok.type == animation_dsl.Token.NEWLINE
+      self.next()
+      return
+    end
+    
+    if tok.type == animation_dsl.Token.KEYWORD && tok.value == "play"
+      self.process_play_statement(target_array)
+      
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "wait"
+      self.process_wait_statement(target_array)
+      
+    elif tok.type == animation_dsl.Token.IDENTIFIER
+      # Check if this is a property assignment (identifier.property = value)
+      if self.peek() != nil && self.peek().type == animation_dsl.Token.DOT
+        self.process_sequence_assignment_generic("  ", target_array)  # Pass indentation and target array
+      else
+        self.skip_statement()
+      end
+    else
+      self.skip_statement()
+    end
+  end
+  
+
+  
+
+
   # Process run statement: run demo
   def process_run()
     self.next()  # skip 'run'
@@ -640,11 +950,6 @@ class SimpleDSLTranspiler
   
   # Process any value - unified approach
   def process_value(context)
-    return self.process_expression(context)  # This calls process_additive_expression with is_top_level=true
-  end
-  
-  # Process expressions with arithmetic operations
-  def process_expression(context)
     return self.process_additive_expression(context, true)  # true = top-level expression
   end
   
@@ -1188,6 +1493,15 @@ class SimpleDSLTranspiler
       var num = tok.value
       self.next()
       return int(real(num)) * 1000  # assume seconds
+    elif tok != nil && tok.type == animation_dsl.Token.IDENTIFIER
+      # Handle variable references for time values
+      var var_name = tok.value
+      
+      # Validate that the variable exists before processing
+      self._validate_object_reference(var_name, "duration")
+      
+      var expr = self.process_primary_expression("time", true)
+      return expr
     else
       self.error("Expected time value")
       return 1000
@@ -1776,6 +2090,15 @@ class SimpleDSLTranspiler
       self.next()
     else
       self.error("Expected ':'")
+    end
+  end
+  
+  def expect_dot()
+    var tok = self.current()
+    if tok != nil && tok.type == animation_dsl.Token.DOT
+      self.next()
+    else
+      self.error("Expected '.'")
     end
   end
   

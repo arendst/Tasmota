@@ -227,6 +227,13 @@ class ParameterizedObject
         import math
         value = int(math.round(value))
         actual_type = "int"
+      # Special case: check for bytes type using isinstance()
+      elif expected_type == "bytes"
+        if actual_type == "instance" && isinstance(value, bytes)
+          actual_type = "bytes"
+        elif actual_type != "instance" || !isinstance(value, bytes)
+          raise "value_error", f"Parameter '{name}' expects type '{expected_type}' but got '{actual_type}' (value: {value})"
+        end
       elif expected_type != actual_type
         raise "value_error", f"Parameter '{name}' expects type '{expected_type}' but got '{actual_type}' (value: {value})"
       end

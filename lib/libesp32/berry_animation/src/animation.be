@@ -73,7 +73,7 @@ register_to_animation(animation_base)
 import "core/sequence_manager" as sequence_manager
 register_to_animation(sequence_manager)
 
-# Unified animation engine - central controller for all animations
+# Unified animation engine - central engine for all animations
 # Provides priority-based layering, automatic blending, and performance optimization
 import "core/animation_engine" as animation_engine
 register_to_animation(animation_engine)

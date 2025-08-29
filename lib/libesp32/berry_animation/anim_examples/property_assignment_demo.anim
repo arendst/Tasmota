@@ -33,11 +33,12 @@ sequence demo {
   wait 500ms
   
   # Play all together for final effect
-  repeat 3 times:
+  repeat forever {
     play left_pulse for 2s
     play center_pulse for 2s
     play right_pulse for 2s
     wait 1s
+  }
 }
 
 run demo

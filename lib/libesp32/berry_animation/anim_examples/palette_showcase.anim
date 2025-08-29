@@ -71,11 +71,12 @@ sequence palette_showcase {
   wait 1s
   
   # Quick cycle through all
-  repeat 3 times:
+  repeat 3 times {
     play fire_effect for 2s
     play ocean_waves for 2s
     play aurora_lights for 2s
     play sunset_glow for 2s
+  }
 }
 
 run palette_showcase

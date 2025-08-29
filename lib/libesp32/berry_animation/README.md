@@ -77,10 +77,11 @@ sequence rgb_show {
   wait 500ms
   play blue_pulse for 3s
   
-  repeat 2 times:
+  repeat 2 times {
     play red_pulse for 1s
     play green_pulse for 1s
     play blue_pulse for 1s
+  }
 }
 
 run rgb_show

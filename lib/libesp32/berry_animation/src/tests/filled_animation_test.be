@@ -51,7 +51,7 @@ assert(pixel_color == 0xFF0000FF, f"Expected 0xFF0000FF, got {pixel_color:08X}")
 # Test 2: animation.solid with a color cycle provider
 print("Test 2: animation.solid with a color cycle provider")
 var cycle_provider = animation.color_cycle(mock_engine)
-cycle_provider.palette = [0xFF0000FF, 0xFF00FF00, 0xFFFF0000]  # RGB colors
+cycle_provider.palette = bytes("FF0000FFFF00FF00FFFF0000")  # BGR colors in AARRGGBB format
 cycle_provider.cycle_period = 1000  # 1 second cycle period
 # Note: transition_type removed - now uses "brutal" color switching
 

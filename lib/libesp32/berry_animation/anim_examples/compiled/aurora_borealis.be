@@ -22,13 +22,8 @@ aurora_base_.palette = aurora_colors_  # palette
 aurora_base_.cycle_period = 10000  # cycle period
 aurora_base_.transition_type = animation.SINE  # transition type (explicit for clarity)
 aurora_base_.brightness = 180  # brightness (dimmed for aurora effect)
-var demo_ = (def (engine)
-  var steps = []
-  steps.push(animation.create_play_step(animation.global('aurora_base_'), 0))  # infinite duration (no 'for' clause)
-  var seq_manager = animation.SequenceManager(engine)
-  seq_manager.start_sequence(steps)
-  return seq_manager
-end)(engine)
+var demo_ = animation.SequenceManager(engine)
+  .push_play_step(aurora_base_, nil)  # infinite duration (no 'for' clause)
 engine.add_sequence_manager(demo_)
 engine.start()
 
@@ -41,19 +36,19 @@ engine.start()
 
 # Define aurora color palette
 palette aurora_colors = [
-  (0, 0x000022),    # Dark night sky
-  (64, 0x004400),   # Dark green
-  (128, 0x00AA44),  # Aurora green
-  (192, 0x44AA88),  # Light green
+  (0, 0x000022)     # Dark night sky
+  (64, 0x004400)    # Dark green
+  (128, 0x00AA44)   # Aurora green
+  (192, 0x44AA88)   # Light green
   (255, 0x88FFAA)   # Bright aurora
 ]
 
 # Secondary purple palette
 palette aurora_purple = [
-  (0, 0x220022),    # Dark purple
-  (64, 0x440044),   # Medium purple
-  (128, 0x8800AA),  # Bright purple
-  (192, 0xAA44CC),  # Light purple
+  (0, 0x220022)     # Dark purple
+  (64, 0x440044)    # Medium purple
+  (128, 0x8800AA)   # Bright purple
+  (192, 0xAA44CC)   # Light purple
   (255, 0xCCAAFF)   # Pale purple
 ]
 
