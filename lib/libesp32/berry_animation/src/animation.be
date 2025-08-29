@@ -87,12 +87,12 @@ import "core/user_functions" as user_functions
 register_to_animation(user_functions)
 
 # Import and register actual user functions
-try
-  import "user_functions" as user_funcs  # This registers the actual user functions
-except .. as e, msg
-  # User functions are optional - continue without them if not available
-  print(f"Note: User functions not loaded: {msg}")
-end
+# try
+#   import "user_functions" as user_funcs  # This registers the actual user functions
+# except .. as e, msg
+#   # User functions are optional - continue without them if not available
+#   print(f"Note: User functions not loaded: {msg}")
+# end
 
 # Import value providers
 import "providers/value_provider.be" as value_provider
@@ -201,28 +201,6 @@ def animation_init_strip(*l)
 end
 animation.init_strip = animation_init_strip
 
-# Global variable resolver with error checking
-# Used by DSL-generated code to resolve variable names during execution
-# First checks animation module, then global scope for user-defined variables
-def animation_global(name, module_name)
-  import global
-  import introspect
-  import animation
-  
-  # First try to find in animation module (built-in functions/classes)
-  if (module_name != nil) && introspect.contains(animation, module_name)
-    return animation.(module_name)
-  end
-  
-  # Then try global scope (user-defined variables)
-  if global.contains(name)
-    return global.(name)
-  else
-    raise "syntax_error", f"'{name}' undeclared"
-  end
-end
-animation.global = animation_global
-
 # This function is called from C++ code to set up the Berry animation environment
 # It creates a mutable 'animation' module on top of the immutable solidified
 #
@@ -249,6 +227,9 @@ def animation_init(m)
       return module("undefined")             # Return undefined module for missing members
     end
   end
+
+  # Create an empty map for user_functions
+  animation_new._user_functions = {}
 
   return animation_new
 end

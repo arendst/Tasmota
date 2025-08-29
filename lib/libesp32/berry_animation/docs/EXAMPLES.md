@@ -361,6 +361,95 @@ animation a1 = pulsating_animation(color=c1, period=4s)
 - Keep animation periods reasonable (>500ms)
 - Limit palette sizes for memory efficiency
 
+## Template Examples
+
+Templates provide reusable, parameterized animation patterns that promote code reuse and maintainability.
+
+### 21. Simple Template
+```berry
+# Define a reusable blinking template
+template blink_effect {
+  param color type color
+  param speed
+  param intensity
+  
+  animation blink = pulsating_animation(
+    color=color
+    period=speed
+  )
+  blink.opacity = intensity
+  
+  run blink
+}
+
+# Use the template with different parameters
+blink_effect(red, 1s, 80%)
+blink_effect(blue, 500ms, 100%)
+```
+
+### 22. Multi-Animation Template
+```berry
+# Template that creates a comet chase effect
+template comet_chase {
+  param trail_color type color
+  param bg_color type color
+  param chase_speed
+  param tail_size
+  
+  # Background layer
+  animation background = solid(color=bg_color)
+  background.priority = 1
+  
+  # Comet effect layer
+  animation comet = comet_animation(
+    color=trail_color
+    tail_length=tail_size
+    speed=chase_speed
+  )
+  comet.priority = 10
+  
+  run background
+  run comet
+}
+
+# Create different comet effects
+comet_chase(white, black, 1500ms, 8)
+```
+
+### 23. Template with Dynamic Colors
+```berry
+# Template using color cycling and breathing effects
+template breathing_rainbow {
+  param cycle_time
+  param breath_time
+  param base_brightness
+  
+  # Create rainbow palette
+  palette rainbow = [
+    (0, red), (42, orange), (85, yellow)
+    (128, green), (170, blue), (213, purple), (255, red)
+  ]
+  
+  # Create cycling rainbow color
+  color rainbow_cycle = color_cycle(
+    palette=rainbow
+    cycle_period=cycle_time
+  )
+  
+  # Create breathing animation with rainbow colors
+  animation breath = pulsating_animation(
+    color=rainbow_cycle
+    period=breath_time
+  )
+  breath.opacity = base_brightness
+  
+  run breath
+}
+
+# Use the rainbow breathing template
+breathing_rainbow(5s, 2s, 200)
+```
+
 ## Next Steps
 
 - **[DSL Reference](DSL_REFERENCE.md)** - Complete language syntax

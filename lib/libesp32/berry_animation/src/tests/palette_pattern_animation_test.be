@@ -34,8 +34,8 @@ var pattern_anim = animation.palette_pattern_animation(mock_engine)
 # Create a simple mock color source that has get_color_for_value method
 class MockColorSource
   def get_color_for_value(value, time_ms)
-    # Return red for high values, blue for low values
-    return value > 50 ? 0xFF0000FF : 0x0000FFFF
+    # Return red for high values, blue for low values (expecting 0-255 range)
+    return value > 127 ? 0xFF0000FF : 0x0000FFFF
   end
 end
 var mock_color_source = MockColorSource()
@@ -47,9 +47,9 @@ pattern_anim.loop = false
 pattern_anim.opacity = 255
 pattern_anim.name = "pattern_test"
 
-# Create a simple pattern function that alternates between 0 and 100
+# Create a simple pattern function that alternates between 0 and 255
 def simple_pattern(pixel_index, time_ms, animation)
-  return pixel_index % 2 == 0 ? 100 : 0
+  return pixel_index % 2 == 0 ? 255 : 0
 end
 pattern_anim.pattern_func = simple_pattern
 
@@ -126,6 +126,17 @@ assert(result, "Render should return true")
 gradient_anim.shift_period = 1500
 assert(gradient_anim.shift_period == 1500, "Shift period should be updated to 1500")
 
+# Test new parameters
+gradient_anim.spatial_period = 5
+assert(gradient_anim.spatial_period == 5, "Spatial period should be updated to 5")
+
+gradient_anim.phase_shift = 25
+assert(gradient_anim.phase_shift == 25, "Phase shift should be updated to 25")
+
+# Test static gradient (shift_period = 0)
+gradient_anim.shift_period = 0
+assert(gradient_anim.shift_period == 0, "Shift period should be updated to 0 (static)")
+
 # Test 4: PaletteMeterAnimation
 print("Test 4: PaletteMeterAnimation")
 var meter_anim = animation.palette_meter_animation(mock_engine)
@@ -133,7 +144,7 @@ meter_anim.color_source = mock_color_source
 
 # Create a value function that returns 50% (half the strip)
 def meter_value_func(time_ms, animation)
-  return 50  # 50% of the strip
+  return 50  # 50% of the strip (this is still 0-100 for meter logic)
 end
 meter_anim.value_func = meter_value_func
 
@@ -157,7 +168,7 @@ assert(result, "Render should return true")
 
 # Test changing value function
 def new_meter_value_func(time_ms, animation)
-  return 75  # 75% of the strip
+  return 75  # 75% of the strip (this is still 0-100 for meter logic)
 end
 meter_anim.value_func = new_meter_value_func
 
@@ -229,10 +240,10 @@ end
 print("Test 7: Animation with different color mapping")
 class MockRainbowColorSource
   def get_color_for_value(value, time_ms)
-    # Simple rainbow mapping based on value
-    if value < 33
+    # Simple rainbow mapping based on value (expecting 0-255 range)
+    if value < 85
       return 0xFF0000FF  # Red
-    elif value < 66
+    elif value < 170
       return 0x00FF00FF  # Green
     else
       return 0x0000FFFF  # Blue

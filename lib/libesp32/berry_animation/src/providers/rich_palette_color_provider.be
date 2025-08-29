@@ -10,7 +10,8 @@
 #@ solidify:RichPaletteColorProvider,weak
 class RichPaletteColorProvider : animation.color_provider
   # Non-parameter instance variables only
-  var slots_arr        # Constructed array of timestamp slots
+  var slots_arr        # Constructed array of timestamp slots, based on cycle_period
+  var value_arr        # Constructed array of value slots, based on range_min/range_max
   var slots            # Number of slots in the palette
   var current_color    # Current interpolated color (calculated during update)
   var light_state      # light_state instance for proper color calculations
@@ -23,7 +24,7 @@ class RichPaletteColorProvider : animation.color_provider
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
     "brightness": {"min": 0, "max": 255, "default": 255},
     "range_min": {"default": 0},
-    "range_max": {"default": 100}
+    "range_max": {"default": 255}
   }
   
   # Initialize a new RichPaletteColorProvider
@@ -35,7 +36,6 @@ class RichPaletteColorProvider : animation.color_provider
     # Initialize non-parameter instance variables
     self.current_color = 0xFFFFFFFF
     self.cycle_start = self.engine.time_ms  # Initialize cycle start time
-    self.slots_arr = nil
     self.slots = 0
     
     # Create light_state instance for proper color calculations (reuse from Animate_palette)
@@ -48,30 +48,10 @@ class RichPaletteColorProvider : animation.color_provider
   # @param name: string - Name of the parameter that changed
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
-    if name == "palette"
-      # When palette changes, recompute slots
-      self._recompute_palette()
-    elif name == "cycle_period"
-      # When cycle_period changes, recompute the palette slots array
-      if value == nil   return   end
-      if value < 0    raise "value_error", "cycle_period must be non-negative"    end
-      
-      # Recompute palette with new cycle period (only if > 0 for time-based cycling)
-      if value > 0 && self._get_palette_bytes() != nil
-        self.slots_arr = self._parse_palette(0, value - 1)
-      end
-    elif name == "range_min" || name == "range_max"
-      # When range changes, recompute the palette slots array
-      var range_min = self.range_min
-      var range_max = self.range_max
-      
-      if (range_min != nil) && (range_max != nil)
-        if range_min >= range_max   raise "value_error", "range_min must be lower than range_max"     end
-        
-        # Recompute palette with new range
-        if self._get_palette_bytes() != nil
-          self.slots_arr = self._parse_palette(range_min, range_max)
-        end
+    if name == "range_min" || name == "range_max" || name == "cycle_period" || name == "palette"
+      if (self.slots_arr != nil) || (self.value_arr != nil)
+        # only if they were already computed
+        self._recompute_palette()
       end
     end
   end
@@ -81,10 +61,11 @@ class RichPaletteColorProvider : animation.color_provider
   # @param time_ms: int - Time in milliseconds to set as cycle start (optional, uses engine time if nil)
   # @return self for method chaining
   def start(time_ms)
-    if time_ms == nil
-      time_ms = self.engine.time_ms
+    # Compute arrays if they were not yet initialized
+    if (self.slots_arr == nil) && (self.value_arr == nil)
+      self._recompute_palette()
     end
-    self.cycle_start = time_ms
+    self.cycle_start = (time_ms != nil) ? time_ms : self.engine.time_ms
     return self
   end
   
@@ -106,18 +87,27 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Recompute palette slots and metadata
   def _recompute_palette()
+    # Compute slots_arr based on 'cycle_period'
+    var cycle_period = self.cycle_period
     var palette_bytes = self._get_palette_bytes()
     self.slots = size(palette_bytes) / 4
-    
-    # Recompute palette (from Animate_palette)
-    var cycle_period = self.cycle_period
+
+    # Recompute palette with new cycle period (only if > 0 for time-based cycling)
+    if cycle_period > 0 && palette_bytes != nil
+      self.slots_arr = self._parse_palette(0, cycle_period - 1)
+    else
+      self.slots_arr = nil
+    end
+
+    # Compute value_arr based on 'range_min' and 'range_max'
     var range_min = self.range_min
     var range_max = self.range_max
-    
-    if cycle_period != nil && cycle_period > 0
-      self.slots_arr = self._parse_palette(0, cycle_period - 1)
-    elif (range_min != nil) && (range_max != nil)
-      self.slots_arr = self._parse_palette(range_min, range_max)
+    if range_min >= range_max   raise "value_error", "range_min must be lower than range_max"     end
+    # Recompute palette with new range
+    if self._get_palette_bytes() != nil
+      self.value_arr = self._parse_palette(range_min, range_max)
+    else
+      self.value_arr = nil
     end
     
     # Set initial color
@@ -188,6 +178,9 @@ class RichPaletteColorProvider : animation.color_provider
   # @param time_ms: int - Current time in milliseconds
   # @return int - Color in ARGB format (0xAARRGGBB)
   def produce_value(name, time_ms)
+    if (self.slots_arr == nil) && (self.value_arr == nil)
+      self._recompute_palette()
+    end
     var palette_bytes = self._get_palette_bytes()
     
     if palette_bytes == nil || self.slots < 2
@@ -267,26 +260,15 @@ class RichPaletteColorProvider : animation.color_provider
     return final_color
   end
   
-  # Set the range for value mapping (reused from Animate_palette)
-  #
-  # @param min: int - Minimum value for the range
-  # @param max: int - Maximum value for the range
-  # @return self for method chaining
-  def set_range(min, max)
-    if min >= max   raise "value_error", "min must be lower than max"     end
-    self.range_min = min
-    self.range_max = max
-
-    self.slots_arr = self._parse_palette(min, max)
-    return self
-  end
-  
   # Get color for a specific value (reused from Animate_palette.set_value)
   #
   # @param value: int/float - Value to map to a color
   # @param time_ms: int - Current time in milliseconds (ignored for value-based color)
   # @return int - Color in ARGB format
   def get_color_for_value(value, time_ms)
+    if (self.slots_arr == nil) && (self.value_arr == nil)
+      self._recompute_palette()
+    end
     var palette_bytes = self._get_palette_bytes()
     
     var range_min = self.range_min
@@ -299,14 +281,14 @@ class RichPaletteColorProvider : animation.color_provider
     var slots = self.slots
     var idx = slots - 2
     while idx > 0
-      if value >= self.slots_arr[idx]    break   end
+      if value >= self.value_arr[idx]    break   end
       idx -= 1
     end
     
     var bgrt0 = palette_bytes.get(idx * 4, 4)
     var bgrt1 = palette_bytes.get((idx + 1) * 4, 4)
-    var t0 = self.slots_arr[idx]
-    var t1 = self.slots_arr[idx + 1]
+    var t0 = self.value_arr[idx]
+    var t1 = self.value_arr[idx + 1]
     
     # Use tasmota.scale_uint for efficiency (from Animate_palette)
     var r = tasmota.scale_uint(value, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)

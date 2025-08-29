@@ -125,10 +125,6 @@ print("Created static animation (cycle_period = 0)")
 var css_gradient = anim.color_provider.to_css_gradient()
 print(f"CSS gradient available: {bool(css_gradient)}")
 
-anim.color_provider.set_range(0, 255)
-var value_color = anim.color_provider.get_color_for_value(128, engine.time_ms)
-print(f"Value-based color available: {bool(value_color)}")
-
 # Validate key test results
 assert(anim != nil, "Rich palette animation should be created")
 assert(type(anim) == "instance", "Animation should be an instance")

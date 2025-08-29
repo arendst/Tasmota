@@ -55,12 +55,16 @@ The following keywords are reserved and cannot be used as identifiers:
 **Configuration Keywords:**
 - `strip` - Strip configuration (temporarily disabled, reserved keyword)
 - `set` - Variable assignment
+- `import` - Import Berry modules
 
 **Definition Keywords:**
 - `color` - Color definition
 - `palette` - Palette definition
 - `animation` - Animation definition
 - `sequence` - Sequence definition
+- `template` - Template definition
+- `param` - Template parameter declaration
+- `type` - Parameter type annotation
 
 **Control Flow Keywords:**
 - `play` - Play animation in sequence
@@ -207,6 +211,46 @@ set position_sweep = triangle(min_value=0, max_value=29, period=5s)
 set strip_len = strip_length()  # Get current strip length
 ```
 
+### Import Statements
+
+The `import` keyword imports Berry modules for use in animations:
+
+```berry
+import user_functions       # Import user-defined functions
+import my_custom_module     # Import custom animation libraries
+import math                 # Import standard Berry modules
+import string               # Import utility modules
+```
+
+**Import Behavior:**
+- Module names should be valid identifiers (no quotes needed in DSL)
+- Import statements are typically placed at the beginning of DSL files
+- Transpiles to standard Berry `import "module_name"` statements
+- Imported modules become available for the entire animation
+
+**Common Use Cases:**
+```berry
+# Import user functions for computed parameters
+import user_functions
+
+animation dynamic = solid(color=blue)
+dynamic.opacity = user.my_custom_function()
+
+# Import custom animation libraries
+import fire_effects
+
+animation campfire = fire_effects.create_fire(intensity=200)
+```
+
+**Transpilation Example:**
+```berry
+# DSL Code
+import user_functions
+
+# Transpiles to Berry Code
+import "user_functions"
+```
+
 ## Color Definitions
 
 The `color` keyword defines static colors or color providers:
@@ -335,11 +379,15 @@ pulse_red.opacity = smooth(min_value=100, max_value=255, period=2s)
 set strip_len = strip_length()
 pulse_red.position = strip_len / 2      # Center position
 pulse_red.opacity = strip_len * 4       # Scale with strip size
+
+# Animation opacity (using another animation as opacity mask)
+animation opacity_mask = pulsating_animation(period=2s)
+pulse_red.opacity = opacity_mask        # Dynamic opacity from animation
 ```
 
 **Common Properties:**
 - `priority` - Animation priority (higher numbers have precedence)
-- `opacity` - Opacity level (0-255)
+- `opacity` - Opacity level (number, value provider, or animation)
 - `position` - Position on strip
 - `speed` - Speed multiplier
 - `phase` - Phase offset
@@ -443,37 +491,37 @@ test.opacity = min(255, max(50, scale(sqrt(strip_len), 0, 16, 100, 255)))
 When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `self.` in the closure context to access the ClosureValueProvider's mathematical methods.
 
 **User Functions in Computed Parameters:**
-User-defined functions can also be used in computed parameter expressions, providing powerful custom effects:
+User-defined functions can also be used in computed parameter expressions, providing powerful custom effects. User functions must be called with the `user.` prefix:
 
 ```berry
 # Simple user function in computed parameter
 animation base = solid(color=blue)
-base.opacity = rand_demo()
+base.opacity = user.rand_demo()
 
 # User functions mixed with math operations
 animation dynamic = solid(
   color=purple
-  opacity=max(50, min(255, rand_demo() + 100))
+  opacity=max(50, min(255, user.rand_demo() + 100))
 )
 ```
 
 ### User Functions
 
-User functions are custom Berry functions that can be called from computed parameters. They provide dynamic values that change over time.
+User functions are custom Berry functions that can be called from computed parameters. They provide dynamic values that change over time. User functions must be called with the `user.` prefix.
 
 **Available User Functions:**
-- `rand_demo()` - Returns random values for demonstration purposes
+- `user.rand_demo()` - Returns random values for demonstration purposes
 
 **Usage in Computed Parameters:**
 ```berry
 # Simple user function
-animation.opacity = rand_demo()
+animation.opacity = user.rand_demo()
 
 # User function with math operations
-animation.opacity = max(100, rand_demo())
+animation.opacity = max(100, user.rand_demo())
 
 # User function in arithmetic expressions
-animation.opacity = abs(rand_demo() - 128) + 64
+animation.opacity = abs(user.rand_demo() - 128) + 64
 ```
 
 **Available User Functions:**
@@ -481,7 +529,7 @@ The following user functions are available by default (see [User Functions Guide
 
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `rand_demo()` | none | Returns a random value (0-255) for demonstration |
+| `user.rand_demo()` | none | Returns a random value (0-255) for demonstration |
 
 **User Function Behavior:**
 - User functions are automatically detected by the transpiler
@@ -667,6 +715,167 @@ sequence cylon_eye {
   }
 }
 ```
+
+## Templates
+
+Templates provide a powerful way to create reusable, parameterized animation patterns. They allow you to define animation blueprints that can be instantiated with different parameters, promoting code reuse and maintainability.
+
+### Template Definition
+
+Templates are defined using the `template` keyword followed by a parameter block and body:
+
+```berry
+template template_name {
+  param parameter1 type color
+  param parameter2
+  param parameter3 type number
+  
+  # Template body with DSL statements
+  animation my_anim = some_animation(color=parameter1, period=parameter2)
+  my_anim.opacity = parameter3
+  run my_anim
+}
+```
+
+### Template Parameters
+
+Template parameters are declared using the `param` keyword with optional type annotations:
+
+```berry
+template pulse_effect {
+  param base_color type color    # Parameter with type annotation
+  param duration                 # Parameter without type annotation
+  param brightness type number   # Another typed parameter
+  
+  # Use parameters in template body
+  animation pulse = pulsating_animation(
+    color=base_color
+    period=duration
+  )
+  pulse.opacity = brightness
+  run pulse
+}
+```
+
+**Parameter Types:**
+- `color` - Color values (hex, named colors, color providers)
+- `palette` - Palette definitions
+- `number` - Numeric values (integers, percentages, time values)
+- `animation` - Animation instances
+- Type annotations are optional but improve readability
+
+### Template Body
+
+The template body can contain any valid DSL statements:
+
+**Supported Statements:**
+- Color definitions
+- Palette definitions  
+- Animation definitions
+- Property assignments
+- Run statements
+- Variable assignments (set statements)
+
+```berry
+template rainbow_pulse {
+  param pal1 as palette
+  param pal2 as palette  
+  param duration
+  param back_color as color
+  
+  # Create dynamic color cycling
+  color cycle_color = color_cycle(
+    palette=pal1
+    cycle_period=duration
+  )
+  
+  # Create animations
+  animation pulse = pulsating_animation(
+    color=cycle_color
+    period=duration
+  )
+  
+  animation background = solid(color=back_color)
+  
+  # Set properties
+  background.priority = 1
+  pulse.priority = 10
+  
+  # Run both animations
+  run background
+  run pulse
+}
+```
+
+### Template Usage
+
+Templates are called like functions with positional arguments:
+
+```berry
+# Define the template
+template blink_red {
+  param speed
+  
+  animation blink = pulsating_animation(
+    color=red
+    period=speed
+  )
+  
+  run blink
+}
+
+# Use the template
+blink_red(1s)           # Call with 1 second period
+blink_red(500ms)        # Call with 500ms period
+```
+
+**Complex Template Usage:**
+```berry
+# Create palettes for the template
+palette fire_palette = [
+  (0, black)
+  (128, red)
+  (255, yellow)
+]
+
+palette ocean_palette = [
+  (0, navy)
+  (128, cyan)
+  (255, white)
+]
+
+# Use the complex template
+rainbow_pulse(fire_palette, ocean_palette, 3s, black)
+```
+
+### Template Behavior
+
+**Code Generation:**
+Templates generate Berry functions that are registered as user functions:
+
+```berry
+# Template definition generates:
+def pulse_effect_template(engine, base_color_, duration_, brightness_)
+  var pulse_ = animation.pulsating_animation(engine)
+  pulse_.color = base_color_
+  pulse_.period = duration_
+  pulse_.opacity = brightness_
+  engine.add_animation(pulse_)
+end
+
+animation.register_user_function('pulse_effect', pulse_effect_template)
+```
+
+**Parameter Handling:**
+- Parameters get `_` suffix in generated code to avoid naming conflicts
+- Templates receive `engine` as the first parameter automatically
+- Template calls are converted to function calls with `engine` as first argument
+
+**Execution Model:**
+- Templates don't return values - they add animations directly to the engine
+- Multiple `run` statements in templates add multiple animations
+- Templates can be called multiple times to create multiple instances
+- `engine.start()` is automatically called when templates are used at the top level
 
 ## Execution Statements
 
@@ -936,22 +1145,26 @@ good.priority = 10                  # OK: Valid parameter assignment
 
 program = { statement } ;
 
-statement = config_stmt 
+statement = import_stmt
+          | config_stmt 
           | definition 
           | property_assignment 
           | sequence 
+          | template_def
           | execution_stmt ;
 
-(* Configuration *)
+(* Import and Configuration *)
+import_stmt = "import" identifier ;
 config_stmt = variable_assignment ;
 (* strip_config = "strip" "length" number ; -- TEMPORARILY DISABLED *)
 variable_assignment = "set" identifier "=" expression ;
 
 (* Definitions *)
-definition = color_def | palette_def | animation_def ;
+definition = color_def | palette_def | animation_def | template_def ;
 color_def = "color" identifier "=" color_expression ;
 palette_def = "palette" identifier "=" palette_array ;
 animation_def = "animation" identifier "=" animation_expression ;
+template_def = "template" identifier "{" template_body "}" ;
 
 (* Property Assignments *)
 property_assignment = identifier "." identifier "=" expression ;
@@ -966,8 +1179,16 @@ wait_stmt = "wait" time_expression ;
 repeat_stmt = "repeat" ( number "times" | "forever" ) "{" sequence_body "}" ;
 sequence_assignment = identifier "." identifier "=" expression ;
 
+(* Templates *)
+template_def = "template" identifier "{" template_body "}" ;
+template_body = { template_statement } ;
+template_statement = param_decl | color_def | palette_def | animation_def | property_assignment | execution_stmt ;
+param_decl = "param" identifier [ "type" identifier ] ;
+
 (* Execution *)
-execution_stmt = "run" identifier ;
+execution_stmt = "run" identifier | template_call ;
+template_call = identifier "(" [ argument_list ] ")" ;
+argument_list = expression { "," expression } ;
 
 (* Expressions *)
 expression = logical_or_expr ;

@@ -243,7 +243,8 @@ def wave_rainbow_sine(engine)
   rainbow_provider.cycle_period = 5000
   rainbow_provider.transition_type = 1  # sine transition
   rainbow_provider.brightness = 255
-  rainbow_provider.set_range(0, 255)
+  rainbow_provider.range_min = 0
+  rainbow_provider.range_max = 255
   anim.color = rainbow_provider
   anim.wave_type = 0  # sine wave
   anim.frequency = 32

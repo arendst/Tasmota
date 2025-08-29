@@ -184,7 +184,8 @@ class FireAnimation : animation.animation
           fire_provider.cycle_period = 0  # Use value-based color mapping, not time-based
           fire_provider.transition_type = 1  # Use sine transition (smooth)
           fire_provider.brightness = 255
-          fire_provider.set_range(0, 255)
+          fire_provider.range_min = 0
+          fire_provider.range_max = 255
           resolved_color = fire_provider
         end
         

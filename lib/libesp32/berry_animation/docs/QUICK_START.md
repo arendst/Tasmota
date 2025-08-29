@@ -176,9 +176,68 @@ import animation
 var runtime = animation.load_dsl_file("my_animation.anim")
 ```
 
-## User-Defined Functions
+## Templates - Reusable Animation Patterns
 
-Create custom animation functions in Berry and use them in DSL:
+Templates let you create reusable animation patterns with parameters:
+
+```berry
+# Define a template for pulsing effects
+template pulse_effect {
+  param color type color
+  param speed
+  
+  animation pulse = pulsating_animation(
+    color=color
+    period=speed
+  )
+  
+  run pulse
+}
+
+# Use the template with different parameters
+pulse_effect(red, 2s)
+pulse_effect(blue, 1s)
+pulse_effect(0xFF69B4, 3s)  # Hot pink
+```
+
+### Multi-Animation Templates
+
+Templates can contain multiple animations and sequences:
+
+```berry
+template comet_chase {
+  param trail_color type color
+  param bg_color type color
+  param chase_speed
+  
+  # Background glow
+  animation background = solid_animation(color=bg_color)
+  
+  # Moving comet
+  animation comet = comet_animation(
+    color=trail_color
+    tail_length=6
+    speed=chase_speed
+  )
+  
+  run background
+  run comet
+}
+
+# Create different comet effects
+comet_chase(white, blue, 1500)
+comet_chase(orange, black, 2000)
+```
+
+**Template Benefits:**
+- **Reusable** - Define once, use many times
+- **Type Safe** - Optional parameter type checking
+- **Clean Syntax** - Pure DSL, no Berry code needed
+- **Automatic Registration** - Available immediately after definition
+
+## User-Defined Functions (Advanced)
+
+For complex logic, create custom functions in Berry:
 
 ```berry
 # Define custom function - engine must be first parameter

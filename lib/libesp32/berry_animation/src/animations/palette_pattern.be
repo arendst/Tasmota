@@ -8,7 +8,7 @@
 
 #@ solidify:PalettePatternAnimation,weak
 class PalettePatternAnimation : animation.animation
-  var value_buffer     # Buffer to store values for each pixel
+  var value_buffer     # Buffer to store values for each pixel (bytes object)
   
   # Static definitions of parameters with constraints
   static var PARAMS = {
@@ -25,7 +25,7 @@ class PalettePatternAnimation : animation.animation
     super(self).init(engine)
     
     # Initialize non-parameter instance variables only
-    self.value_buffer = []
+    self.value_buffer = bytes()
     
     # Initialize value buffer with default frame width
     self._initialize_value_buffer()
@@ -63,7 +63,12 @@ class PalettePatternAnimation : animation.animation
     # Calculate values for each pixel
     var i = 0
     while i < strip_length
-      self.value_buffer[i] = pattern_func(i, time_ms, self)
+      var pattern_value = pattern_func(i, time_ms, self)
+      # Pattern function should return values in 0-255 range, clamp to byte range
+      var byte_value = int(pattern_value)
+      if byte_value < 0 byte_value = 0 end
+      if byte_value > 255 byte_value = 255 end
+      self.value_buffer[i] = byte_value
       i += 1
     end
   end
@@ -103,8 +108,13 @@ class PalettePatternAnimation : animation.animation
     end
     
     # Get current parameter values (cached for performance)
-    var color_source = self.color_source
+    var color_source = self.get_param('color_source')     # use get_param to avoid resolving of color_provider
     if color_source == nil
+      return false
+    end
+    
+    # Check if color_source has the required method (more flexible than isinstance check)
+    if color_source.get_color_for_value == nil
       return false
     end
     
@@ -115,17 +125,10 @@ class PalettePatternAnimation : animation.animation
     var strip_length = self.engine.get_strip_length()
     var i = 0
     while i < strip_length && i < frame.width
-      var value = self.value_buffer[i]
-      var color
+      var byte_value = self.value_buffer[i]
       
-      # Check if color_source is a ColorProvider or an animation with get_color_for_value method
-      if color_source.get_color_for_value != nil
-        # It's a ColorProvider or compatible object
-        color = color_source.get_color_for_value(value, elapsed)
-      else
-        # Fallback to direct color access (for backward compatibility)
-        color = color_source.current_color
-      end
+      # Use the color_source to get color for the byte value (0-255)
+      var color = color_source.get_color_for_value(byte_value, elapsed)
       
       frame.set_pixel_color(i, color)
       i += 1
@@ -191,13 +194,14 @@ class PaletteWaveAnimation : PalettePatternAnimation
     # Calculate values for each pixel
     var i = 0
     while i < strip_length
-      # Calculate the wave value (0-100) using scale_uint
+      # Calculate the wave value (0-255) using scale_uint
       var pos_in_wave = (i + offset) % wave_length
       var angle = tasmota.scale_uint(pos_in_wave, 0, wave_length, 0, 32767)  # 0 to 2π in fixed-point
       var sine_value = tasmota.sine_int(angle)  # -4096 to 4096
       
-      # Map sine value from -4096..4096 to 0..100
-      self.value_buffer[i] = tasmota.scale_int(sine_value, -4096, 4096, 0, 100)
+      # Map sine value from -4096..4096 to 0..255
+      var byte_value = tasmota.scale_int(sine_value, -4096, 4096, 0, 255)
+      self.value_buffer[i] = byte_value
       i += 1
     end
   end
@@ -209,7 +213,9 @@ class PaletteGradientAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
   static var PARAMS = {
     # Gradient-specific parameters only
-    "shift_period": {"min": 1, "default": 10000}
+    "shift_period": {"min": 0, "default": 0},           # Time for one complete shift cycle in ms (0 = static)
+    "spatial_period": {"min": 0, "default": 0},         # Spatial period in pixels (0 = full strip)
+    "phase_shift": {"min": 0, "max": 100, "default": 0} # Phase shift as percentage (0-100)
   }
   
   # Initialize a new gradient pattern animation
@@ -227,6 +233,8 @@ class PaletteGradientAnimation : PalettePatternAnimation
   def _update_value_buffer(time_ms)
     # Cache parameter values for performance
     var shift_period = self.shift_period
+    var spatial_period = self.spatial_period
+    var phase_shift = self.phase_shift
     var strip_length = self.engine.get_strip_length()
     
     # Resize buffer if strip length changed
@@ -234,16 +242,28 @@ class PaletteGradientAnimation : PalettePatternAnimation
       self.value_buffer.resize(strip_length)
     end
     
-    # Calculate the shift position using scale_uint for better precision
-    var position = tasmota.scale_uint(time_ms % shift_period, 0, shift_period, 0, 1000) / 1000.0
-    var offset = int(position * strip_length)
+    # Determine effective spatial period (0 means full strip)
+    var effective_spatial_period = spatial_period > 0 ? spatial_period : strip_length
+    
+    # Calculate the temporal shift position (how much the pattern has moved over time)
+    var temporal_offset = 0
+    if shift_period > 0
+      var temporal_position = tasmota.scale_uint(time_ms % shift_period, 0, shift_period, 0, 1000) / 1000.0
+      temporal_offset = temporal_position * effective_spatial_period
+    end
+    
+    # Calculate the phase shift offset in pixels
+    var phase_offset = tasmota.scale_uint(phase_shift, 0, 100, 0, effective_spatial_period)
     
     # Calculate values for each pixel
     var i = 0
     while i < strip_length
-      # Calculate the gradient value (0-100) using scale_uint
-      var pos_in_frame = (i + offset) % strip_length
-      self.value_buffer[i] = tasmota.scale_uint(pos_in_frame, 0, strip_length - 1, 0, 100)
+      # Calculate position within the spatial period, including temporal and phase offsets
+      var spatial_pos = (i + temporal_offset + phase_offset) % effective_spatial_period
+      
+      # Map spatial position to gradient value (0-255)
+      var byte_value = tasmota.scale_uint(int(spatial_pos), 0, effective_spatial_period - 1, 0, 255)
+      self.value_buffer[i] = byte_value
       i += 1
     end
   end
@@ -293,8 +313,8 @@ class PaletteMeterAnimation : PalettePatternAnimation
     # Calculate values for each pixel
     var i = 0
     while i < strip_length
-      # Return 100 if pixel is within the meter, 0 otherwise
-      self.value_buffer[i] = i < meter_position ? 100 : 0
+      # Return 255 if pixel is within the meter, 0 otherwise
+      self.value_buffer[i] = i < meter_position ? 255 : 0
       i += 1
     end
   end

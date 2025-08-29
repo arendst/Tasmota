@@ -1,0 +1,15 @@
+# Pattern fire.anim
+
+# Define fire palette from black to yellow
+palette fire_colors = [
+  0x800000    # Dark red
+  0xFF0000    # Red
+  0xFF4500    # Orange red
+  0xFFFF00    # Yellow
+]
+
+set strip_len = strip_length()
+color fire_color = rich_palette(palette=fire_colors)
+animation fire_pattern = palette_gradient_animation(color_source=fire_color, spatial_period=strip_len/2)
+
+run fire_pattern

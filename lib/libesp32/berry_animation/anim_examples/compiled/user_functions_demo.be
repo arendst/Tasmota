@@ -8,10 +8,11 @@ import animation
 
 # User Functions Demo - Advanced Computed Parameters
 # Shows how to use user functions in computed parameters via property assignments
-# Get the current strip length for calculations
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
+import user_functions 
+# Get the current strip length for calculations
 var strip_len_ = animation.strip_length(engine)
 # Example 1: Simple user function in computed parameter
 var random_base_ = animation.solid(engine)
@@ -56,6 +57,8 @@ engine.start()
 # User Functions Demo - Advanced Computed Parameters
 # Shows how to use user functions in computed parameters via property assignments
 
+import user_functions
+
 # Get the current strip length for calculations
 set strip_len = strip_length()
 
@@ -65,7 +68,7 @@ animation random_base = solid(
   priority=10
 )
 # Use user function in property assignment
-random_base.opacity = rand_demo()
+random_base.opacity = user.rand_demo()
 
 # Example 2: User function with mathematical operations
 animation random_bounded = solid(
@@ -73,7 +76,7 @@ animation random_bounded = solid(
   priority=8
 )
 # User function with bounds using math functions
-random_bounded.opacity = max(50, min(255, rand_demo() + 100))
+random_bounded.opacity = max(50, min(255, user.rand_demo() + 100))
 
 # Example 3: User function in arithmetic expressions
 animation random_variation = solid(
@@ -81,7 +84,7 @@ animation random_variation = solid(
   priority=15
 )
 # Mix user function with arithmetic operations
-random_variation.opacity = abs(rand_demo() - 128) + 64
+random_variation.opacity = abs(user.rand_demo() - 128) + 64
 
 # Example 4: User function affecting different properties
 animation random_multi = solid(
@@ -89,7 +92,7 @@ animation random_multi = solid(
   priority=12
 )
 # Use user function for multiple properties
-random_multi.opacity = max(100, rand_demo())
+random_multi.opacity = max(100, user.rand_demo())
 
 # Example 5: Complex expression with user function
 animation random_complex = solid(
@@ -97,7 +100,7 @@ animation random_complex = solid(
   priority=20
 )
 # Complex expression with user function and math operations
-random_complex.opacity = round((rand_demo() + 128) / 2 + abs(rand_demo() - 100))
+random_complex.opacity = round((user.rand_demo() + 128) / 2 + abs(user.rand_demo() - 100))
 
 # Run all animations to demonstrate the effects
 run random_base

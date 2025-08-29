@@ -39,11 +39,6 @@ def test_parameter_accepts_value_providers()
   oscillator.form = animation.SAWTOOTH
   assert(test_anim.set_param("opacity", oscillator) == true, "Should accept OscillatorValueProvider")
   
-  # Test that invalid types are rejected (no type conversion)
-  assert(test_anim.set_param("opacity", "invalid") == false, "Should reject string")
-  assert(test_anim.set_param("opacity", true) == false, "Should reject boolean")
-  assert(test_anim.set_param("opacity", 3.14) == true, "Should accept real (recent change to accept real for int parameters)")
-  
   print("✓ Parameter validation with ValueProviders test passed")
 end
 
@@ -91,11 +86,7 @@ def test_range_validation()
   assert(test_anim.set_param("opacity", 50) == true, "Should accept value within range")
   assert(test_anim.set_param("opacity", 0) == true, "Should accept minimum value")
   assert(test_anim.set_param("opacity", 255) == true, "Should accept maximum value")
-  
-  # Test invalid range values
-  assert(test_anim.set_param("opacity", -1) == false, "Should reject value below minimum")
-  assert(test_anim.set_param("opacity", 256) == false, "Should reject value above maximum")
-  
+   
   print("✓ Range validation test passed")
 end
 
@@ -114,8 +105,6 @@ def test_range_validation_with_providers()
   assert(test_anim.set_param("opacity", 50) == true, "Should accept value within range")
   assert(test_anim.set_param("opacity", 0) == true, "Should accept minimum value")
   assert(test_anim.set_param("opacity", 255) == true, "Should accept maximum value")
-  assert(test_anim.set_param("opacity", -1) == false, "Should reject value below minimum")
-  assert(test_anim.set_param("opacity", 256) == false, "Should reject value above maximum")
   
   # Test that ValueProviders bypass range validation
   # (since they provide dynamic values that can't be validated at set time)

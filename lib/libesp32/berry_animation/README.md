@@ -63,6 +63,32 @@ animation sunset_glow = rich_palette(
 run sunset_glow
 ```
 
+### Reusable Templates
+
+Create parameterized animation patterns that can be reused with different settings:
+
+```berry
+# Define a reusable template
+template pulse_effect {
+  param color type color
+  param speed
+  param brightness
+  
+  animation pulse = pulsating_animation(
+    color=color
+    period=speed
+    opacity=brightness
+  )
+  
+  run pulse
+}
+
+# Use the template with different parameters
+pulse_effect(red, 2s, 255)     # Bright red pulse
+pulse_effect(blue, 1s, 150)    # Dimmer blue pulse
+pulse_effect(0xFF69B4, 3s, 200) # Hot pink pulse
+```
+
 ### Animation Sequences
 
 ```berry

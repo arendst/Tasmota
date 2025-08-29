@@ -11,16 +11,17 @@ class Animation : animation.parameterized_object
   # Non-parameter instance variables only
   var start_time      # Time when animation started (ms) (int)
   var current_time    # Current animation time (ms) (int)
+  var opacity_frame   # Frame buffer for opacity animation rendering
   
   # Parameter definitions
   static var PARAMS = {
-    "name": {"type": "string", "default": "animation"},  # Optional name for the animation
-    "is_running": {"type": "bool", "default": false},    # Whether the animation is active
-    "priority": {"min": 0, "default": 10},        # Rendering priority (higher = on top, 0-255)
-    "duration": {"min": 0, "default": 0},         # Animation duration in ms (0 = infinite)
-    "loop": {"type": "bool", "default": true},    # Whether to loop when duration is reached
-    "opacity": {"min": 0, "max": 255, "default": 255},  # Animation opacity/brightness (0-255)
-    "color": {"default": 0xFFFFFFFF}              # Base color in ARGB format (0xAARRGGBB)
+    "name": {"type": "string", "default": "animation"}, # Optional name for the animation
+    "is_running": {"type": "bool", "default": false},   # Whether the animation is active
+    "priority": {"min": 0, "default": 10},              # Rendering priority (higher = on top, 0-255)
+    "duration": {"min": 0, "default": 0},               # Animation duration in ms (0 = infinite)
+    "loop": {"type": "bool", "default": false},         # Whether to loop when duration is reached
+    "opacity": {"type": "any", "default": 255},         # Animation opacity (0-255 number or Animation instance)
+    "color": {"default": 0xFFFFFFFF}                    # Base color in ARGB format (0xAARRGGBB)
   }
 
   # Initialize a new animation
@@ -33,6 +34,7 @@ class Animation : animation.parameterized_object
     # Initialize non-parameter instance variables
     self.start_time = 0
     self.current_time = 0
+    self.opacity_frame = nil  # Will be created when needed
   end
   
   # Start/restart the animation (make it active and reset timing)
@@ -140,6 +142,11 @@ class Animation : animation.parameterized_object
       return false
     end
     
+    # Use engine time if not provided
+    if time_ms == nil
+      time_ms = self.engine.time_ms
+    end
+    
     # Update animation state
     self.update(time_ms)
     
@@ -147,15 +154,52 @@ class Animation : animation.parameterized_object
     var current_color = self.color
     var current_opacity = self.opacity
     
-    # Fill the entire frame with the current color
-    frame.fill_pixels(current_color)
-    
-    # Apply resolved opacity if not full
-    if current_opacity < 255
-      frame.apply_brightness(current_opacity)
+    # Fill the entire frame with the current color if not transparent
+    if (current_color != 0x00000000)
+      frame.fill_pixels(current_color)
     end
     
+    # Handle opacity - can be number, frame buffer, or animation
+    self._apply_opacity(frame, current_opacity, time_ms)
+    
     return true
+  end
+  
+  # Apply opacity to frame buffer - handles numbers and animations
+  #
+  # @param frame: FrameBuffer - The frame buffer to apply opacity to
+  # @param opacity: int|Animation - Opacity value or animation
+  # @param time_ms: int - Current time in milliseconds
+  def _apply_opacity(frame, opacity, time_ms)
+    # Check if opacity is an animation instance
+    if isinstance(opacity, animation.animation)
+      # Animation mode: render opacity animation to frame buffer and use as mask
+      var opacity_animation = opacity
+      
+      # Ensure opacity frame buffer exists and has correct size
+      if self.opacity_frame == nil || self.opacity_frame.width != frame.width
+        self.opacity_frame = animation.frame_buffer(frame.width)
+      end
+      
+      # Clear and render opacity animation to frame buffer
+      self.opacity_frame.clear()
+      
+      # Start opacity animation if not running
+      if !opacity_animation.is_running
+        opacity_animation.start(self.start_time)
+      end
+      
+      # Update and render opacity animation
+      opacity_animation.update(time_ms)
+      opacity_animation.render(self.opacity_frame, time_ms)
+      
+      # Use rendered frame buffer as opacity mask
+      frame.apply_opacity(self.opacity_frame)
+    elif type(opacity) == 'int' && opacity < 255
+      # Number mode: apply uniform opacity
+      frame.apply_opacity(opacity)
+    end
+    # If opacity is 255 (full opacity), do nothing
   end
   
   # Get a color for a specific pixel position and time

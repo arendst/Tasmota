@@ -30,12 +30,18 @@ animation.register_user_function("breathing", my_breathing)
 
 ### 3. Use It in DSL
 
-Call your function just like built-in animations:
+First, import your user functions module, then call your function with the `user.` prefix in computed parameters:
 
 ```berry
-# Use your custom function
-animation calm = breathing(blue, 4s)
-animation energetic = breathing(red, 1s)
+# Import your user functions module
+import user_functions
+
+# Use your custom function in computed parameters
+animation calm = solid(color=blue)
+calm.opacity = user.breathing_effect()
+
+animation energetic = solid(color=red) 
+energetic.opacity = user.breathing_effect()
 
 sequence demo {
   play calm for 10s
@@ -43,6 +49,91 @@ sequence demo {
 }
 
 run demo
+```
+
+## Importing User Functions
+
+### DSL Import Statement
+
+The DSL supports importing Berry modules using the `import` keyword. This is the recommended way to make user functions available in your animations:
+
+```berry
+# Import user functions at the beginning of your DSL file
+import user_functions
+
+# Now user functions are available with the user. prefix
+animation test = solid(color=blue)
+test.opacity = user.my_function()
+```
+
+### Import Behavior
+
+- **Module Loading**: `import user_functions` transpiles to Berry `import "user_functions"`
+- **Function Registration**: The imported module should register functions using `animation.register_user_function()`
+- **Availability**: Once imported, functions are available throughout the DSL file
+- **No Compile-Time Checking**: The DSL doesn't validate user function existence at compile time
+
+### Example User Functions Module
+
+Create a file called `user_functions.be`:
+
+```berry
+import animation
+
+# Define your custom functions
+def rand_demo(engine)
+  import math
+  return math.rand() % 256  # Random value 0-255
+end
+
+def breathing_effect(engine, base_value, amplitude)
+  import math
+  var time_factor = (engine.time_ms / 1000) % 4  # 4-second cycle
+  var breath = math.sin(time_factor * math.pi / 2)
+  return int(base_value + breath * amplitude)
+end
+
+# Register functions for DSL use
+animation.register_user_function("rand_demo", rand_demo)
+animation.register_user_function("breathing", breathing_effect)
+
+print("User functions loaded!")
+```
+
+### Using Imported Functions in DSL
+
+```berry
+import user_functions
+
+# Simple user function call
+animation random_test = solid(color=red)
+random_test.opacity = user.rand_demo()
+
+# User function with parameters
+animation breathing_blue = solid(color=blue)
+breathing_blue.opacity = user.breathing(128, 64)
+
+# User functions in mathematical expressions
+animation complex = solid(color=green)
+complex.opacity = max(50, min(255, user.rand_demo() + 100))
+
+run random_test
+```
+
+### Multiple Module Imports
+
+You can import multiple modules in the same DSL file:
+
+```berry
+import user_functions      # Basic user functions
+import fire_effects       # Fire animation functions
+import color_utilities    # Color manipulation functions
+
+animation base = solid(color=user.random_color())
+base.opacity = user.breathing(200, 50)
+
+animation flames = solid(color=red)
+flames.opacity = user.fire_intensity(180)
 ```
 
 ## Common Patterns
@@ -61,8 +152,11 @@ animation.register_user_function("bright", solid_bright)
 ```
 
 ```berry
-animation bright_red = bright(red, 80%)
-animation dim_blue = bright(blue, 30%)
+animation bright_red = solid(color=red)
+bright_red.opacity = user.bright(80)
+
+animation dim_blue = solid(color=blue)
+dim_blue.opacity = user.bright(30)
 ```
 
 ### Fire Effects
@@ -83,8 +177,11 @@ animation.register_user_function("fire", custom_fire)
 ```
 
 ```berry
-animation campfire = fire(200, 2s)
-animation torch = fire(255, 500ms)
+animation campfire = solid(color=red)
+campfire.opacity = user.fire(200, 2000)
+
+animation torch = solid(color=orange)
+torch.opacity = user.fire(255, 500)
 ```
 
 ### Sparkle Effects
@@ -102,8 +199,11 @@ animation.register_user_function("sparkles", sparkles)
 ```
 
 ```berry
-animation stars = sparkles(white, 12, 300ms)
-animation fairy_dust = sparkles(#FFD700, 8, 500ms)
+animation stars = solid(color=white)
+stars.opacity = user.sparkles(12, 300)
+
+animation fairy_dust = solid(color=#FFD700)
+fairy_dust.opacity = user.sparkles(8, 500)
 ```
 
 ### Position-Based Effects
@@ -122,8 +222,11 @@ animation.register_user_function("pulse_at", pulse_at)
 ```
 
 ```berry
-animation left_pulse = pulse_at(green, 5, 3, 2s)
-animation right_pulse = pulse_at(blue, 25, 3, 2s)
+animation left_pulse = solid(color=green)
+left_pulse.position = user.pulse_at(5, 3, 2000)
+
+animation right_pulse = solid(color=blue)
+right_pulse.position = user.pulse_at(25, 3, 2000)
 ```
 
 ## Advanced Examples
@@ -175,9 +278,14 @@ animation.register_user_function("alert", gentle_alert)
 ```
 
 ```berry
-animation emergency = strobe()
-animation notification = alert()
-animation custom_police = police(500ms)
+animation emergency = solid(color=red)
+emergency.opacity = user.strobe()
+
+animation notification = solid(color=yellow)
+notification.opacity = user.alert()
+
+animation custom_police = solid(color=blue)
+custom_police.opacity = user.police(500)
 ```
 
 ## Function Organization
@@ -302,7 +410,7 @@ User functions can be used in computed parameter expressions alongside mathemati
 ```berry
 # Simple user function call in property assignment
 animation base = solid(color=blue, priority=10)
-base.opacity = rand_demo()  # User function as computed parameter
+base.opacity = user.rand_demo()  # User function as computed parameter
 ```
 
 ### User Functions with Mathematical Operations
@@ -314,7 +422,7 @@ set strip_len = strip_length()
 # Mix user functions with mathematical functions
 animation dynamic_solid = solid(
   color=purple
-  opacity=max(50, min(255, rand_demo() + 100))  # Random opacity with bounds
+  opacity=max(50, min(255, user.rand_demo() + 100))  # Random opacity with bounds
   priority=15
 )
 ```
@@ -325,7 +433,7 @@ animation dynamic_solid = solid(
 # Use user function in arithmetic expressions
 animation random_effect = solid(
   color=cyan
-  opacity=abs(rand_demo() - 128) + 64  # Random variation around middle value
+  opacity=abs(user.rand_demo() - 128) + 64  # Random variation around middle value
   priority=12
 )
 ```
@@ -342,7 +450,7 @@ When you use user functions in computed parameters:
 **Generated Code Example:**
 ```berry
 # DSL code
-animation.opacity = max(100, breathing(red, 2000))
+animation.opacity = max(100, user.breathing(red, 2000))
 ```
 
 **Transpiles to:**
@@ -359,7 +467,7 @@ The following user functions are available by default:
 
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `rand_demo()` | none | Returns a random value (0-255) for demonstration |
+| `user.rand_demo()` | none | Returns a random value (0-255) for demonstration |
 
 ### Best Practices for Computed Parameters
 
@@ -378,16 +486,20 @@ import animation
 # Load your custom functions
 load("user_animations.be")
 
-# Now they're available in DSL
+# Now they're available in DSL with import
 var dsl_code = 
-  "animation my_fire = fire(200, 1500ms)\n"
-  "animation my_sparkles = sparkle(white, 8, 400ms)\n"
+  "import user_functions\n"
+  "\n"
+  "animation my_fire = solid(color=red)\n"
+  "my_fire.opacity = user.fire(200, 1500)\n"
+  "animation my_sparkles = solid(color=white)\n"
+  "my_sparkles.opacity = user.sparkle(8, 400)\n"
   "\n"
   "sequence show {\n"
   "  play my_fire for 10s\n"
   "  play my_sparkles for 5s\n"
   "}\n"
-  "\n
+  "\n"
   "run show"
 
 animation_dsl.execute(dsl_code)
@@ -398,8 +510,12 @@ animation_dsl.execute(dsl_code)
 ```berry
 # Save DSL with custom functions
 var my_show =
-  "animation campfire = fire(180, 2s)\n"
-  "animation stars = sparkle(#FFFFFF, 6, 600ms)\n"
+  "import user_functions\n"
+  "\n"
+  "animation campfire = solid(color=orange)\n"
+  "campfire.opacity = user.fire(180, 2000)\n"
+  "animation stars = solid(color=#FFFFFF)\n"
+  "stars.opacity = user.sparkle(6, 600)\n"
   "\n"
   "sequence night_scene {\n"
   "  play campfire for 30s\n"

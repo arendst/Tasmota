@@ -73,8 +73,8 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 | `is_running` | bool | false | - | Whether the animation is active |
 | `priority` | int | 10 | 0-255 | Rendering priority (higher = on top) |
 | `duration` | int | 0 | min: 0 | Animation duration in ms (0 = infinite) |
-| `loop` | bool | true | - | Whether to loop when duration is reached |
-| `opacity` | int | 255 | 0-255 | Animation opacity/brightness |
+| `loop` | bool | false | - | Whether to loop when duration is reached |
+| `opacity` | any | 255 | - | Animation opacity (number, FrameBuffer, or Animation) |
 | `color` | int | 0xFFFFFFFF | - | Base color in ARGB format |
 
 **Special Behavior**: Setting `is_running = true/false` starts/stops the animation.
@@ -1213,13 +1213,19 @@ animation zoomed_sparkles = scale_animation(
 
 ### PalettePatternAnimation
 
-Applies colors from a color provider to specific patterns. Inherits from `Animation`.
+Applies colors from a color provider to specific patterns using an efficient bytes() buffer. Inherits from `Animation`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `color_source` | instance | nil | - | Color provider for pattern mapping |
-| `pattern_func` | function | nil | - | Function that generates pattern values |
+| `pattern_func` | function | nil | - | Function that generates pattern values (0-255) for each pixel |
 | *(inherits all Animation parameters)* | | | | |
+
+**Implementation Details:**
+- Uses `bytes()` buffer for efficient storage of per-pixel values
+- Pattern function should return values in 0-255 range
+- Color source receives values in 0-255 range via `get_color_for_value(value, time_ms)`
+- Buffer automatically resizes when strip length changes
 
 **Factory**: `animation.palette_pattern_animation(engine)`
 
@@ -1233,6 +1239,11 @@ Creates sine wave patterns with palette colors. Inherits from `PalettePatternAni
 | `wave_length` | int | 10 | min: 1 | Wave length in pixels |
 | *(inherits all PalettePatternAnimation parameters)* | | | | |
 
+**Pattern Generation:**
+- Generates sine wave values in 0-255 range using `tasmota.sine_int()`
+- Wave position advances based on `wave_period` timing
+- Each pixel's value calculated as: `sine_value = tasmota.scale_int(sine_int(angle), -4096, 4096, 0, 255)`
+
 **Factory**: `animation.palette_wave_animation(engine)`
 
 ### PaletteGradientAnimation
@@ -1241,8 +1252,21 @@ Creates shifting gradient patterns with palette colors. Inherits from `PalettePa
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `shift_period` | int | 10000 | min: 1 | Gradient shift period in ms |
+| `shift_period` | int | 10000 | min: 0 | Time for one complete shift cycle in ms (0 = static gradient) |
+| `spatial_period` | int | 0 | min: 0 | Spatial period in pixels (0 = full strip length) |
+| `phase_shift` | int | 0 | 0-100 | Phase shift as percentage of spatial period |
 | *(inherits all PalettePatternAnimation parameters)* | | | | |
+
+**Pattern Generation:**
+- Generates linear gradient values in 0-255 range across the specified spatial period
+- **shift_period**: Controls temporal movement - how long it takes for the gradient to shift one full spatial period
+  - `0`: Static gradient (no movement)
+  - `> 0`: Moving gradient with specified period in milliseconds
+- **spatial_period**: Controls spatial repetition - how many pixels before the gradient pattern repeats
+  - `0`: Gradient spans the full strip length (single gradient across entire strip)
+  - `> 0`: Gradient repeats every N pixels
+- **phase_shift**: Shifts the gradient pattern spatially by a percentage of the spatial period
+- Each pixel's value calculated as: `value = tasmota.scale_uint(spatial_position, 0, spatial_period-1, 0, 255)`
 
 **Factory**: `animation.palette_gradient_animation(engine)`
 
@@ -1252,8 +1276,13 @@ Creates meter/bar patterns based on a value function. Inherits from `PalettePatt
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `value_func` | function | nil | - | Function that provides meter values |
+| `value_func` | function | nil | - | Function that provides meter values (0-100 range) |
 | *(inherits all PalettePatternAnimation parameters)* | | | | |
+
+**Pattern Generation:**
+- Value function returns percentage (0-100) representing meter level
+- Pixels within meter range get value 255, others get value 0
+- Meter position calculated as: `position = tasmota.scale_uint(value, 0, 100, 0, strip_length)`
 
 **Factory**: `animation.palette_meter_animation(engine)`
 

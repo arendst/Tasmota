@@ -1,6 +1,5 @@
 # Symbol Registry Test Suite
 # Tests for the simplified transpiler's runtime symbol resolution approach
-# The simplified transpiler uses runtime resolution with new animation.global(name, module_name) signature
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/symbol_registry_test.be

@@ -1,6 +1,6 @@
 # Test for global variable access with new transpiler symbol resolution
 # Verifies that generated code uses animation.symbol for animation module symbols
-# and symbol_ for user-defined variables (no more animation.global calls)
+# and symbol_ for user-defined variables calls)
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/global_variable_test.be
@@ -26,7 +26,7 @@ def test_global_variable_access()
   assert(string.find(berry_code, "var red_alt_ = 0xFFFF0100") >= 0, "Should define red_alt variable")
   assert(string.find(berry_code, "var solid_red_ = animation.solid(engine)") >= 0, "Should define solid_red variable with new pattern")
   
-  # Variable references should now use direct underscore notation (no animation.global)
+  # Variable references should now use direct underscore notation
   assert(string.find(berry_code, "solid_red_.color = red_alt_") >= 0, "Should use red_alt_ directly for variable reference")
   
   # Verify the generated code actually compiles by executing it
@@ -50,7 +50,7 @@ def test_undefined_variable_exception()
   
   assert(berry_code != nil, "Should compile DSL code")
   
-  # Check that undefined variables use direct underscore notation (no animation.global)
+  # Check that undefined variables use direct underscore notation
   import string
   assert(string.find(berry_code, "test_.color = undefined_var_") >= 0, "Should use undefined_var_ directly for undefined variable")
   

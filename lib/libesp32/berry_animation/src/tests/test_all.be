@@ -49,6 +49,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/bytes_type_test.be",  # Tests bytes type validation in parameterized objects
     "lib/libesp32/berry_animation/src/tests/animation_test.be",
     "lib/libesp32/berry_animation/src/tests/animation_engine_test.be",
+    "lib/libesp32/berry_animation/src/tests/animation_opacity_test.be",
     "lib/libesp32/berry_animation/src/tests/fast_loop_integration_test.be",
     "lib/libesp32/berry_animation/src/tests/solid_animation_test.be",  # Tests unified solid() function
     "lib/libesp32/berry_animation/src/tests/solid_unification_test.be",  # Tests solid unification

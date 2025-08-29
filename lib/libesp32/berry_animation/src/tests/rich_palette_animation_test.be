@@ -189,11 +189,14 @@ class RichPaletteAnimationTest
     self.assert_equal(provider.cycle_period, 1000, "Cycle period is 1000ms")
     
     # Test range setting and value-based colors
-    provider.set_range(0, 100)
+    provider.range_min = 0
+    provider.range_max = 100
     self.assert_equal(provider.range_min, 0, "Range min is 0")
     self.assert_equal(provider.range_max, 100, "Range max is 100")
     
     # Test value-based color generation
+    provider.start()
+    print(f"{provider.slots_arr=} {provider.value_arr=}")
     var color_0 = provider.get_color_for_value(0, 0)
     var color_50 = provider.get_color_for_value(50, 0)
     var color_100 = provider.get_color_for_value(100, 0)
@@ -233,7 +236,9 @@ class RichPaletteAnimationTest
     var provider = animation.rich_palette(mock_engine)
     provider.palette = palette
     provider.cycle_period = 0  # Value-based mode
-    provider.set_range(0, 255)
+    provider.range_min = 0
+    provider.range_max = 255
+    provider.start()
     
     # Check that cycle_period can be set to 0
     self.assert_equal(provider.cycle_period, 0, "Cycle period can be set to 0")
