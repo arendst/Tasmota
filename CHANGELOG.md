@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - ESP32 ROM SHA Hardware Acceleration to BearSSL (#23819)
 - Extend state JSON message with functional hostname and ipaddress which could be WiFi or Ethernet
+- Berry multiplication between string and int
 
 ### Breaking Changed
 

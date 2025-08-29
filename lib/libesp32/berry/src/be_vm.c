@@ -463,6 +463,25 @@ static void make_range(bvm *vm, bvalue lower, bvalue upper)
     vm->top -= 3;
 }
 
+static void multiply_str(bvm *vm, bvalue *a_value, bvalue *count)
+{
+    bint n = 0;
+    bstring *result;
+    bstring *str = var_tostr(a_value);
+    
+    /* Convert count to integer */
+    if (var_isint(count)) {
+        n = var_toint(count);
+    } else if (var_isbool(count)) {
+        n = var_tobool(count) ? 1 : 0;
+    } else {
+        binop_error(vm, "*", a_value, count);
+    }
+    
+    result = be_strmul(vm, str, n);
+    var_setstr(vm->top, result);
+}
+
 static void connect_str(bvm *vm, bstring *a, bvalue *b)
 {
     bstring *s;
@@ -705,6 +724,10 @@ newframe: /* a new call frame */
                 breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x * y);
 #endif // CONFIG_IDF_TARGET_ESP32
+            } else if (var_isstr(a) && (var_isint(b) || var_isbool(b))) {
+                multiply_str(vm, a, b);
+                reg = vm->reg;
+                *RA() = *vm->top; /* copy result to R(A) */
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "*", ins);
             } else {

@@ -181,6 +181,19 @@ print(i)    # Only i is accessible here
 - `/`: Division
 - `%`: Modulo (remainder)
 
+**String Multiplication**: The `*` operator supports string multiplication when the left operand is a string and the right operand is an integer or boolean:
+
+```berry
+"aze" * 3        # "azeazeaze" - repeat string 3 times
+"aze" * 0        # "" - empty string
+"aze" * true     # "aze" - string if true
+"aze" * false    # "" - empty string if false
+
+# Common use cases:
+"  " * indent    # Create indentation spaces
+f"{n} time{'s' * bool(n >= 2)}"  # Conditional pluralization
+```
+
 #### Relational Operators
 - `<`: Less than
 - `<=`: Less than or equal to

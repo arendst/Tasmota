@@ -77,6 +77,50 @@ bstring* be_strcat(bvm *vm, bstring *s1, bstring *s2)
     }
 }
 
+bstring* be_strmul(bvm *vm, bstring *s1, bint n)
+{
+    /* Handle edge cases */
+    if (n == 1) {
+        return s1;
+    }
+
+    size_t string_len = (size_t)str_len(s1);
+    if ((n <= 0) || (string_len == 0)) {
+        return be_newstrn(vm, "", 0);
+    }
+    
+    /* Check for potential overflow */
+    if (n > (bint)(vm->bytesmaxsize / string_len)) {
+        be_raise(vm, "runtime_error", "string multiplication result too large");
+    }
+    
+    size_t total_len = string_len * (size_t)n;
+    
+    /* Use the same pattern as be_strcat for short vs long strings */
+    if (total_len <= SHORT_STR_MAX_LEN) {
+        char buf[SHORT_STR_MAX_LEN + 1];
+        const char *src = str(s1);
+        char *dst = buf;
+        
+        for (bint i = 0; i < n; i++) {
+            memcpy(dst, src, string_len);
+            dst += string_len;
+        }
+        buf[total_len] = '\0';
+        return be_newstrn(vm, buf, total_len);
+    } else {
+        /* Long string */
+        bstring *result = be_newstrn(vm, NULL, total_len);
+        char *dst = (char*)str(result);
+        const char *src = str(s1);
+        
+        for (bint i = 0; i < n; i++) {
+            memcpy(dst + i * string_len, src, string_len);
+        }
+        return result;
+    }
+}
+
 int be_strcmp(bstring *s1, bstring *s2)
 {
     if (be_eqstr(s1, s2)) {
