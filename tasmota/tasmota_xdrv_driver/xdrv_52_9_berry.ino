@@ -32,7 +32,9 @@ extern "C" {
   #include "berry_matter.h"
 #endif
 #ifdef USE_WS2812
-  #include "berry_animate.h"
+  #ifdef USE_BERRY_ANIMATE
+    #include "berry_animate.h"
+  #endif // USE_BERRY_ANIMATE
   #ifdef USE_BERRY_ANIMATION
     #include "berry_animation.h"
   #endif // USE_BERRY_ANIMATION
