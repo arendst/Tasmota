@@ -38,11 +38,11 @@ red_eye_.beacon_size = 3  # small 3 pixels eye
 red_eye_.slew_size = 2  # with 2 pixel shading around
 var cylon_eye_ = animation.SequenceManager(engine, -1)
   .push_play_step(red_eye_, eye_duration_)  # use COSINE movement
-  .push_assign_step(def (engine) red_eye_.pos = triangle_val_ end)  # switch to TRIANGLE
+  .push_closure_step(def (engine) red_eye_.pos = triangle_val_ end)  # switch to TRIANGLE
   .push_play_step(red_eye_, eye_duration_)
-  .push_assign_step(def (engine) red_eye_.pos = cosine_val_ end)  # switch back to COSINE for next iteration
-  .push_assign_step(def (engine) eye_color_.next = 1 end)  # advance to next color
-engine.add_sequence_manager(cylon_eye_)
+  .push_closure_step(def (engine) red_eye_.pos = cosine_val_ end)  # switch back to COSINE for next iteration
+  .push_closure_step(def (engine) eye_color_.next = 1 end)  # advance to next color
+engine.add(cylon_eye_)
 engine.start()
 
 

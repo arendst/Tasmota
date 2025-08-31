@@ -73,6 +73,8 @@ The following keywords are reserved and cannot be used as identifiers:
 - `times` - Loop count specifier
 - `for` - Duration specifier
 - `run` - Execute animation or sequence
+- `reset` - Reset value provider or animation to initial state
+- `restart` - Restart value provider or animation from beginning
 
 **Easing Keywords:**
 - `linear` - Linear/triangle wave easing
@@ -329,10 +331,57 @@ palette timed_colors = [
 **Palette Rules:**
 - **Value-based**: Positions range from 0 to 255, represent intensity/brightness levels
 - **Tick-based**: Positions represent duration in arbitrary time units
-- Colors can be hex values or named colors
+- **Colors**: Only hex values (0xRRGGBB) or predefined color names (red, blue, green, etc.)
+- **Custom colors**: Previously defined custom colors are NOT allowed in palettes
+- **Dynamic palettes**: For palettes with custom colors, use user functions instead
 - Entries are automatically sorted by position
 - Comments are preserved
 - Automatically converted to efficient VRGB bytes format
+
+### Palette Color Restrictions
+
+Palettes have strict color validation to ensure compile-time safety:
+
+**✅ Allowed:**
+```berry
+palette valid_colors = [
+  (0, 0xFF0000)      # Hex colors
+  (128, red)         # Predefined color names
+  (255, blue)        # More predefined colors
+]
+```
+
+**❌ Not Allowed:**
+```berry
+color custom_red = 0xFF0000
+palette invalid_colors = [
+  (0, custom_red)    # ERROR: Custom colors not allowed
+  (128, my_color)    # ERROR: Undefined color
+]
+```
+
+**Alternative for Dynamic Palettes:**
+For palettes that need custom or computed colors, use user functions:
+
+```berry
+# Define a user function that creates dynamic palettes
+def create_custom_palette(engine, base_color, intensity)
+  # Create palette with custom logic
+  var palette_data = create_dynamic_palette_bytes(base_color, intensity)
+  return palette_data
+end
+
+# Register for DSL use
+animation.register_user_function("custom_palette", create_custom_palette)
+```
+
+```berry
+# Use in DSL
+animation dynamic_anim = rich_palette(
+  palette=user.custom_palette(0xFF0000, 200)
+  cycle_period=3s
+)
+```
 
 ## Animation Definitions
 
@@ -582,9 +631,15 @@ sequence cylon_eye repeat forever {
   red_eye.pos = cosine_val
   eye_color.next = 1
 }
+
+# Option 3: Parametric repeat count
+sequence rainbow_cycle repeat palette.size times {
+  play animation for 1s
+  palette.next = 1
+}
 ```
 
-**Note**: Both syntaxes are functionally equivalent. The second syntax creates an outer sequence (runs once) containing an inner repeat sub-sequence.
+**Note**: All syntaxes are functionally equivalent. The repeat count can be a literal number, variable, or dynamic expression that evaluates at runtime.
 
 ### Sequence Statements
 
@@ -663,10 +718,22 @@ repeat forever {                   # Repeat indefinitely until parent sequence s
   play animation for 1s
   wait 500ms
 }
+
+repeat col1.palette_size times {   # Parametric repeat count using property access
+  play animation for 1s
+  col1.next = 1
+}
 ```
+
+**Repeat Count Types:**
+- **Literal numbers**: `repeat 5 times` - fixed repeat count
+- **Variables**: `repeat count_var times` - using previously defined variables
+- **Property access**: `repeat color_provider.palette_size times` - dynamic values from object properties
+- **Computed expressions**: `repeat strip_length() / 2 times` - calculated repeat counts
 
 **Repeat Behavior:**
 - **Runtime Execution**: Repeats are executed at runtime, not expanded at compile time
+- **Dynamic Evaluation**: Parametric repeat counts are evaluated when the sequence starts
 - **Sub-sequences**: Each repeat block creates a sub-sequence that manages its own iteration state
 - **Nested Repeats**: Supports nested repeats with multiplication (e.g., `repeat 3 times { repeat 2 times { ... } }` executes 6 times total)
 - **Forever Loops**: `repeat forever` continues until the parent sequence is stopped
@@ -713,6 +780,42 @@ sequence cylon_eye {
     red_eye.pos = cosine_val        # Change back
     eye_color.next = 1              # Advance color
   }
+}
+```
+
+#### Reset and Restart Statements
+
+Reset and restart statements allow you to reset value providers and animations to their initial state during sequence execution:
+
+```berry
+reset value_provider_name          # Reset value provider to initial state
+restart animation_name             # Restart animation from beginning
+```
+
+**Reset Statement:**
+- Resets value providers (oscillators, color cycles, etc.) to their initial state
+- Calls the `start()` method on the value provider
+- Useful for synchronizing oscillators or restarting color cycles
+
+**Restart Statement:**
+- Restarts animations from their beginning state
+- Calls the `start()` method on the animation
+- Useful for restarting complex animations or synchronizing multiple animations
+
+**Examples:**
+```berry
+# Reset oscillators for synchronized movement
+sequence sync_demo {
+  play wave_anim for 3s
+  reset position_osc              # Reset oscillator to start position
+  play wave_anim for 3s
+}
+
+# Restart animations for clean transitions
+sequence clean_transitions {
+  play comet_anim for 5s
+  restart comet_anim              # Restart from beginning position
+  play comet_anim for 5s
 }
 ```
 
@@ -860,7 +963,7 @@ def pulse_effect_template(engine, base_color_, duration_, brightness_)
   pulse_.color = base_color_
   pulse_.period = duration_
   pulse_.opacity = brightness_
-  engine.add_animation(pulse_)
+  engine.add(pulse_)
 end
 
 animation.register_user_function('pulse_effect', pulse_effect_template)
@@ -885,6 +988,22 @@ Execute animations or sequences:
 run animation_name      # Run an animation
 run sequence_name       # Run a sequence
 ```
+
+### Debug and Logging
+
+Log debug messages during animation execution:
+
+```berry
+log("Debug message")           # Log message at level 3
+log("Animation started")       # Useful for debugging sequences
+log("Color changed to red")    # Track animation state changes
+```
+
+**Log Function Behavior:**
+- Accepts string literals only (no variables or expressions)
+- Transpiles to Berry `log(f"message", 3)` 
+- Messages are logged at level 3 for debugging purposes
+- Can be used anywhere in DSL code: standalone, in sequences, etc.
 
 ## Operators and Expressions
 
@@ -1170,14 +1289,16 @@ template_def = "template" identifier "{" template_body "}" ;
 property_assignment = identifier "." identifier "=" expression ;
 
 (* Sequences *)
-sequence = "sequence" identifier [ "repeat" ( number "times" | "forever" ) ] "{" sequence_body "}" ;
+sequence = "sequence" identifier [ "repeat" ( expression "times" | "forever" ) ] "{" sequence_body "}" ;
 sequence_body = { sequence_statement } ;
-sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment ;
+sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment | reset_stmt | restart_stmt ;
 
 play_stmt = "play" identifier [ "for" time_expression ] ;
 wait_stmt = "wait" time_expression ;
-repeat_stmt = "repeat" ( number "times" | "forever" ) "{" sequence_body "}" ;
+repeat_stmt = "repeat" ( expression "times" | "forever" ) "{" sequence_body "}" ;
 sequence_assignment = identifier "." identifier "=" expression ;
+reset_stmt = "reset" identifier ;
+restart_stmt = "restart" identifier ;
 
 (* Templates *)
 template_def = "template" identifier "{" template_body "}" ;

@@ -48,36 +48,36 @@ pulse_demo_.priority = 5
 # Sequence 1: Cylon Eye with Position Changes
 var cylon_eye_ = animation.SequenceManager(engine)
   .push_play_step(red_eye_, 3000)
-  .push_assign_step(def (engine) red_eye_.pos = triangle_val_ end)  # Change to triangle oscillator
+  .push_closure_step(def (engine) red_eye_.pos = triangle_val_ end)  # Change to triangle oscillator
   .push_play_step(red_eye_, 3000)
-  .push_assign_step(def (engine) red_eye_.pos = cosine_val_ end)  # Change back to cosine
-  .push_assign_step(def (engine) eye_color_.next = 1 end)  # Advance to next color
+  .push_closure_step(def (engine) red_eye_.pos = cosine_val_ end)  # Change back to cosine
+  .push_closure_step(def (engine) eye_color_.next = 1 end)  # Advance to next color
   .push_play_step(red_eye_, 2000)
 # Sequence 2: Brightness Control Demo
 var brightness_demo_ = animation.SequenceManager(engine)
   .push_play_step(pulse_demo_, 2000)
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_low_ end)  # Dim the animation
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_low_ end)  # Dim the animation
   .push_play_step(pulse_demo_, 2000)
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_high_ end)  # Brighten again
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_high_ end)  # Brighten again
   .push_play_step(pulse_demo_, 2000)
 # Sequence 3: Multiple Property Changes
 var multi_change_ = animation.SequenceManager(engine)
   .push_play_step(pulse_demo_, 1000)
-  .push_assign_step(def (engine) pulse_demo_.color = 0xFFFF0000 end)  # Change color
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_low_ end)  # And brightness
+  .push_closure_step(def (engine) pulse_demo_.color = 0xFFFF0000 end)  # Change color
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_low_ end)  # And brightness
   .push_play_step(pulse_demo_, 1000)
-  .push_assign_step(def (engine) pulse_demo_.color = 0xFF008000 end)  # Change color again
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_high_ end)  # Full brightness
+  .push_closure_step(def (engine) pulse_demo_.color = 0xFF008000 end)  # Change color again
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_high_ end)  # Full brightness
   .push_play_step(pulse_demo_, 1000)
-  .push_assign_step(def (engine) pulse_demo_.color = 0xFF0000FF end)  # Back to blue
+  .push_closure_step(def (engine) pulse_demo_.color = 0xFF0000FF end)  # Back to blue
 # Sequence 4: Assignments in Repeat Blocks
 var repeat_demo_ = animation.SequenceManager(engine)
   .push_repeat_subsequence(animation.SequenceManager(engine, 3)
     .push_play_step(red_eye_, 1000)
-    .push_assign_step(def (engine) red_eye_.pos = triangle_val_ end)  # Change oscillator
+    .push_closure_step(def (engine) red_eye_.pos = triangle_val_ end)  # Change oscillator
     .push_play_step(red_eye_, 1000)
-    .push_assign_step(def (engine) red_eye_.pos = cosine_val_ end)  # Change back
-    .push_assign_step(def (engine) eye_color_.next = 1 end)  # Next color
+    .push_closure_step(def (engine) red_eye_.pos = cosine_val_ end)  # Change back
+    .push_closure_step(def (engine) eye_color_.next = 1 end)  # Next color
     )
 # Main demo sequence combining all examples
 var main_demo_ = animation.SequenceManager(engine)
@@ -85,31 +85,31 @@ var main_demo_ = animation.SequenceManager(engine)
   .push_play_step(red_eye_, 1000)
   .push_wait_step(500)
   # Demonstrate position changes
-  .push_assign_step(def (engine) red_eye_.pos = triangle_val_ end)
+  .push_closure_step(def (engine) red_eye_.pos = triangle_val_ end)
   .push_play_step(red_eye_, 2000)
-  .push_assign_step(def (engine) red_eye_.pos = cosine_val_ end)
+  .push_closure_step(def (engine) red_eye_.pos = cosine_val_ end)
   .push_play_step(red_eye_, 2000)
   # Color cycling
-  .push_assign_step(def (engine) eye_color_.next = 1 end)
+  .push_closure_step(def (engine) eye_color_.next = 1 end)
   .push_play_step(red_eye_, 1000)
-  .push_assign_step(def (engine) eye_color_.next = 1 end)
+  .push_closure_step(def (engine) eye_color_.next = 1 end)
   .push_play_step(red_eye_, 1000)
   .push_wait_step(1000)
   # Brightness demo with pulse
   .push_play_step(pulse_demo_, 1000)
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_low_ end)
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_low_ end)
   .push_play_step(pulse_demo_, 1000)
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_high_ end)
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_high_ end)
   .push_play_step(pulse_demo_, 1000)
   # Multi-property changes
-  .push_assign_step(def (engine) pulse_demo_.color = 0xFFFF0000 end)
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_low_ end)
+  .push_closure_step(def (engine) pulse_demo_.color = 0xFFFF0000 end)
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_low_ end)
   .push_play_step(pulse_demo_, 1000)
-  .push_assign_step(def (engine) pulse_demo_.color = 0xFF008000 end)
-  .push_assign_step(def (engine) pulse_demo_.opacity = brightness_high_ end)
+  .push_closure_step(def (engine) pulse_demo_.color = 0xFF008000 end)
+  .push_closure_step(def (engine) pulse_demo_.opacity = brightness_high_ end)
   .push_play_step(pulse_demo_, 1000)
 # Run the main demo
-engine.add_sequence_manager(main_demo_)
+engine.add(main_demo_)
 engine.start()
 
 

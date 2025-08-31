@@ -27,7 +27,7 @@ def cylon_effect_template(engine, eye_color_, back_color_, duration_)
   eye_animation_.beacon_size = 3  # small 3 pixels eye
   eye_animation_.slew_size = 2  # with 2 pixel shading around
   eye_animation_.priority = 5
-  engine.add_animation(eye_animation_)
+  engine.add(eye_animation_)
 end
 
 animation.register_user_function('cylon_effect', cylon_effect_template)

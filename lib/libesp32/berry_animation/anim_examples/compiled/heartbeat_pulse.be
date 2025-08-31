@@ -72,11 +72,11 @@ center_pulse_.opacity = (def (engine)
   return provider
 end)(engine)  # Quick white flash
 # Start all animations
-engine.add_animation(background_)
-engine.add_animation(heart_glow_)
-engine.add_animation(heartbeat1_)
-engine.add_animation(heartbeat2_)
-engine.add_animation(center_pulse_)
+engine.add(background_)
+engine.add(heart_glow_)
+engine.add(heartbeat1_)
+engine.add(heartbeat2_)
+engine.add(center_pulse_)
 engine.start()
 
 

@@ -43,17 +43,19 @@ class AnimationEngine
   end
   
   # Start the animation engine
+  # 
+  # @return self for method chaining
   def start()
     if !self.is_running
+      var now = tasmota.millis()
       self.is_running = true
-      self.last_update = tasmota.millis() - 10
+      self.last_update = now - 10
       
       if self.fast_loop_closure == nil
         self.fast_loop_closure = / -> self.on_tick()
       end
 
       var i = 0
-      var now = tasmota.millis()
       while (i < size(self.animations))
         self.animations[i].start(now)
         i += 1
@@ -71,6 +73,8 @@ class AnimationEngine
   end
   
   # Stop the animation engine
+  # 
+  # @return self for method chaining
   def stop()
     if self.is_running
       self.is_running = false
@@ -83,25 +87,23 @@ class AnimationEngine
   end
   
   # Add an animation with automatic priority sorting
+  # 
+  # @param anim: animation - The animation instance to add (if not already listed)
+  # @return true if succesful (TODO always true)
   def add_animation(anim)
-    # Check if animation already exists
-    var i = 0
-    while i < size(self.animations)
-      if self.animations[i] == anim
-        return false
+    if (self.animations.find(anim) == nil)   # not already in list
+      # Add and sort by priority (higher priority first)
+      self.animations.push(anim)
+      self._sort_animations()
+      # If the engine is already started, auto-start the animation
+      if self.is_running
+        anim.start(self.time_ms)
       end
-      i += 1
+      self.render_needed = true
+      return true
+    else
+      return false
     end
-    
-    # Add and sort by priority (higher priority first)
-    self.animations.push(anim)
-    self._sort_animations()
-    # If the engine is already started, auto-start the animation
-    if self.is_running
-      anim.start()
-    end
-    self.render_needed = true
-    return true
   end
   
   # Remove an animation
@@ -141,6 +143,27 @@ class AnimationEngine
   def add_sequence_manager(sequence_manager)
     self.sequence_managers.push(sequence_manager)
     return self
+  end
+  
+  # Unified method to add either animations or sequence managers
+  # Detects the class type and calls the appropriate method
+  # 
+  # @param obj: Animation or SequenceManager - The object to add
+  # @return self for method chaining
+  def add(obj)
+    # Check if it's a SequenceManager
+    if isinstance(obj, animation.SequenceManager)
+      return self.add_sequence_manager(obj)
+    # Check if it's an Animation (or subclass)
+    elif isinstance(obj, animation.animation)
+      self.add_animation(obj)
+      return self
+    else
+      # Unknown type - provide helpful error message
+      import introspect
+      var class_name = introspect.name(obj)
+      raise "type_error", f"Cannot add object of type '{class_name}' to engine. Expected Animation or SequenceManager."
+    end
   end
   
   # Remove a sequence manager

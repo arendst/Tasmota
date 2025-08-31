@@ -26,7 +26,7 @@ class SequenceManager
     self.is_running = false
     
     # Repeat logic
-    self.repeat_count = repeat_count != nil ? repeat_count : 1  # Default: run once
+    self.repeat_count = repeat_count != nil ? repeat_count : 1  # Default: run once (can be function or number)
     self.current_iteration = 0
     self.is_repeat_sequence = repeat_count != nil && repeat_count != 1
   end
@@ -56,10 +56,10 @@ class SequenceManager
     return self
   end
   
-  # Add an assignment step directly
-  def push_assign_step(closure)
+  # Add a closure step directly (used for both assign and log steps)
+  def push_closure_step(closure)
     self.steps.push({
-      "type": "assign",
+      "type": "closure",
       "closure": closure
     })
     return self
@@ -150,7 +150,7 @@ class SequenceManager
         # Sub-sequence finished, advance to next step
         self.advance_to_next_step(current_time)
       end
-    elif current_step["type"] == "assign"
+    elif current_step["type"] == "closure"
       # Assign steps are handled in batches by advance_to_next_step
       # This should not happen in normal flow, but handle it just in case
       self.execute_assign_steps_batch(current_time)
@@ -192,18 +192,18 @@ class SequenceManager
       var anim = step["animation"]
       self.engine.remove_animation(anim)
       
-    elif step["type"] == "assign"
-      # Assign steps should be handled in batches by execute_assign_steps_batch
+    elif step["type"] == "closure"
+      # Closure steps should be handled in batches by execute_assign_steps_batch
       # This should not happen in normal flow, but handle it for safety
-      var assign_closure = step["closure"]
-      if assign_closure != nil
-        assign_closure(self.engine)
+      var closure_func = step["closure"]
+      if closure_func != nil
+        closure_func(self.engine)
       end
       
     elif step["type"] == "subsequence"
       # Start sub-sequence (including repeat sequences)
       var sub_seq = step["sequence_manager"]
-      sub_seq.start()
+      sub_seq.start(current_time)
     end
     
     self.step_start_time = current_time
@@ -228,16 +228,16 @@ class SequenceManager
     end
   end
   
-  # Execute all consecutive assign steps in a batch to avoid black frames
+  # Execute all consecutive closure steps in a batch to avoid black frames
   def execute_assign_steps_batch(current_time)
-    # Execute all consecutive assign steps
+    # Execute all consecutive closure steps (including both assign and log steps)
     while self.step_index < size(self.steps)
       var step = self.steps[self.step_index]
-      if step["type"] == "assign"
-        # Execute assignment closure
-        var assign_closure = step["closure"]
-        if assign_closure != nil
-          assign_closure(self.engine)
+      if step["type"] == "closure"
+        # Execute closure function
+        var closure_func = step["closure"]
+        if closure_func != nil
+          closure_func(self.engine)
         end
         self.step_index += 1
       else
@@ -257,14 +257,26 @@ class SequenceManager
   def complete_iteration(current_time)
     self.current_iteration += 1
     
+    # Resolve repeat count (may be a function)
+    var resolved_repeat_count = self.get_resolved_repeat_count()
+    
     # Check if we should continue repeating
-    if self.repeat_count == -1 || self.current_iteration < self.repeat_count
+    if resolved_repeat_count == -1 || self.current_iteration < resolved_repeat_count
       # Start next iteration
       self.step_index = 0
       self.execute_current_step(current_time)
     else
       # All iterations complete
       self.is_running = false
+    end
+  end
+  
+  # Resolve repeat count (handle both functions and numbers)
+  def get_resolved_repeat_count()
+    if type(self.repeat_count) == "function"
+      return self.repeat_count(self.engine)
+    else
+      return self.repeat_count
     end
   end
   

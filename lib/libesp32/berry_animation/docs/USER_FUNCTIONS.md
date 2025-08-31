@@ -252,6 +252,52 @@ end
 animation.register_user_function("rainbow_sparkle", rainbow_sparkle)
 ```
 
+### Dynamic Palettes
+
+Since DSL palettes only accept hex colors and predefined color names (not custom colors), use user functions for dynamic palettes with custom colors:
+
+```berry
+def create_custom_palette(engine, base_color, variation_count, intensity)
+  # Create a palette with variations of the base color
+  var palette_bytes = bytes()
+  
+  # Extract RGB components from base color
+  var r = (base_color >> 16) & 0xFF
+  var g = (base_color >> 8) & 0xFF
+  var b = base_color & 0xFF
+  
+  # Create palette entries with color variations
+  for i : 0..(variation_count-1)
+    var position = int(i * 255 / (variation_count - 1))
+    var factor = intensity * i / (variation_count - 1) / 255
+    
+    var new_r = int(r * factor)
+    var new_g = int(g * factor)
+    var new_b = int(b * factor)
+    
+    # Add VRGB entry (Value, Red, Green, Blue)
+    palette_bytes.add(position, 1)  # Position
+    palette_bytes.add(new_r, 1)     # Red
+    palette_bytes.add(new_g, 1)     # Green  
+    palette_bytes.add(new_b, 1)     # Blue
+  end
+  
+  return palette_bytes
+end
+
+animation.register_user_function("custom_palette", create_custom_palette)
+```
+
+```berry
+# Use dynamic palette in DSL
+animation gradient_effect = rich_palette(
+  palette=user.custom_palette(0xFF6B35, 5, 255)
+  cycle_period=4s
+)
+
+run gradient_effect
+```
+
 ### Preset Configurations
 
 ```berry

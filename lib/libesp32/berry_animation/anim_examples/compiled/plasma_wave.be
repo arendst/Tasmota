@@ -84,10 +84,10 @@ plasma_base_.opacity = (def (engine)
   return provider
 end)(engine)
 # Start all animations
-engine.add_animation(plasma_base_)
-engine.add_animation(plasma_wave1_)
-engine.add_animation(plasma_wave2_)
-engine.add_animation(plasma_wave3_)
+engine.add(plasma_base_)
+engine.add(plasma_wave1_)
+engine.add(plasma_wave2_)
+engine.add(plasma_wave3_)
 engine.start()
 
 

@@ -31,8 +31,8 @@ stream2_.priority = 5
 stream1_.tail_length = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) / 5 end)
 stream2_.opacity = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) * 4 end)
 # Run both animations
-engine.add_animation(stream1_)
-engine.add_animation(stream2_)
+engine.add(stream1_)
+engine.add(stream2_)
 engine.start()
 
 

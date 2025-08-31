@@ -248,6 +248,7 @@ Cycles through a palette of colors with brutal switching. Inherits from `ColorPr
 | `palette` | bytes | default palette | - | Palette bytes in AARRGGBB format |
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
 | `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwars by `n` colors |
+| `palette_size` | int | 3 | read-only | Number of colors in the palette (automatically updated when palette changes) |
 
 **Modes**: Auto-cycle (`cycle_period > 0`) or Manual-only (`cycle_period = 0`)
 

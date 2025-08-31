@@ -49,6 +49,7 @@ opacity_engine.start()
 var opacity_frame = animation.frame_buffer(10)
 base_anim.start()
 var render_result = base_anim.render(opacity_frame, opacity_engine.time_ms)
+base_anim.post_render(opacity_frame, opacity_engine.time_ms)
 
 assert_test(render_result, "Animation with numeric opacity should render successfully")
 assert_equals(base_anim.opacity, 128, "Numeric opacity should be preserved")
@@ -86,6 +87,7 @@ opacity_mask.start()
 # Test rendering with animation opacity
 var masked_frame = animation.frame_buffer(10)
 render_result = masked_anim.render(masked_frame, opacity_engine.time_ms)
+masked_anim.post_render(masked_frame, opacity_engine.time_ms)
 
 assert_test(render_result, "Animation with animation opacity should render successfully")
 assert_not_nil(masked_anim.opacity_frame, "Opacity frame buffer should be created")
@@ -122,6 +124,7 @@ var base_time = 2000
 pulsing_opacity.color = 0xFF808080  # Gray (50% opacity)
 
 render_result = rainbow_base.render(test_frame, base_time)
+rainbow_base.post_render(test_frame, base_time)
 assert_test(render_result, "Complex opacity animation should render successfully")
 
 # Test 11f: Opacity animation lifecycle management
@@ -147,6 +150,7 @@ assert_test(!auto_start_opacity.is_running, "Opacity animation should start stop
 auto_start_main.start()
 var auto_frame = animation.frame_buffer(10)
 render_result = auto_start_main.render(auto_frame, opacity_engine.time_ms)
+auto_start_main.post_render(auto_frame, opacity_engine.time_ms)
 
 # Opacity animation should now be running
 assert_test(auto_start_opacity.is_running, "Opacity animation should auto-start when main animation renders")
@@ -185,6 +189,8 @@ opacity2.start()
 
 var nested_frame = animation.frame_buffer(10)
 render_result = base_nested.render(nested_frame, opacity_engine.time_ms)
+base_nested.post_render(nested_frame, opacity_engine.time_ms)
+opacity1.post_render(nested_frame, opacity_engine.time_ms)
 
 assert_test(render_result, "Nested animation opacity should render successfully")
 assert_not_nil(base_nested.opacity_frame, "Base animation should have opacity frame buffer")
@@ -211,21 +217,25 @@ param_opacity.start()
 
 var param_frame = animation.frame_buffer(10)
 render_result = param_base.render(param_frame, opacity_engine.time_ms)
+param_base.post_render(param_frame, opacity_engine.time_ms)
 assert_test(render_result, "Animation should render before opacity parameter change")
 
 # Change opacity animation color
 param_opacity.color = 0xFFFFFFFF  # White (full opacity)
 render_result = param_base.render(param_frame, opacity_engine.time_ms + 100)
+param_base.post_render(param_frame, opacity_engine.time_ms + 100)
 assert_test(render_result, "Animation should render after opacity parameter change")
 
 # Change opacity animation to numeric value
 param_base.opacity = 64  # 25% opacity
 render_result = param_base.render(param_frame, opacity_engine.time_ms + 200)
+param_base.post_render(param_frame, opacity_engine.time_ms + 200)
 assert_test(render_result, "Animation should render after changing from animation to numeric opacity")
 
 # Change back to animation opacity
 param_base.opacity = param_opacity
 render_result = param_base.render(param_frame, opacity_engine.time_ms + 300)
+param_base.post_render(param_frame, opacity_engine.time_ms + 300)
 assert_test(render_result, "Animation should render after changing from numeric to animation opacity")
 
 # Test 11i: Opacity with full transparency and full opacity
@@ -241,11 +251,13 @@ edge_base.opacity = 0
 edge_base.start()
 var edge_frame = animation.frame_buffer(10)
 render_result = edge_base.render(edge_frame, opacity_engine.time_ms)
+edge_base.post_render(edge_frame, opacity_engine.time_ms)
 assert_test(render_result, "Animation with 0 opacity should still render")
 
 # Test full opacity (should render normally)
 edge_base.opacity = 255
 render_result = edge_base.render(edge_frame, opacity_engine.time_ms + 100)
+edge_base.post_render(edge_frame, opacity_engine.time_ms + 100)
 assert_test(render_result, "Animation with full opacity should render normally")
 
 # Test transparent animation as opacity
@@ -257,6 +269,7 @@ transparent_opacity.name = "transparent_opacity"
 edge_base.opacity = transparent_opacity
 transparent_opacity.start()
 render_result = edge_base.render(edge_frame, opacity_engine.time_ms + 200)
+edge_base.post_render(edge_frame, opacity_engine.time_ms + 200)
 assert_test(render_result, "Animation with transparent animation opacity should render")
 
 # Test 11j: Performance with animation opacity

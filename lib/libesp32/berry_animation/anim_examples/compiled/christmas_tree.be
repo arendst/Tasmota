@@ -61,11 +61,11 @@ garland_.tail_length = 6  # garland length (tail length)
 garland_.speed = 4000  # slow movement (speed)
 garland_.priority = 5
 # Start all animations
-engine.add_animation(tree_base_)
-engine.add_animation(ornaments_)
-engine.add_animation(tree_star_)
-engine.add_animation(snow_sparkles_)
-engine.add_animation(garland_)
+engine.add(tree_base_)
+engine.add(ornaments_)
+engine.add(tree_star_)
+engine.add(snow_sparkles_)
+engine.add(garland_)
 engine.start()
 
 

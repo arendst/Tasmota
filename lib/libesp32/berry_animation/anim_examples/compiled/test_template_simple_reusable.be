@@ -17,7 +17,7 @@ def pulse_effect_template(engine, base_color_, duration_, brightness_)
   pulse_.color = base_color_
   pulse_.period = duration_
   pulse_.opacity = brightness_
-  engine.add_animation(pulse_)
+  engine.add(pulse_)
 end
 
 animation.register_user_function('pulse_effect', pulse_effect_template)

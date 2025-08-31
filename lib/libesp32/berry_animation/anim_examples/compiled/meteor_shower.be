@@ -50,13 +50,13 @@ meteor_flash_.density = 1  # density (single flash)
 meteor_flash_.twinkle_speed = 100  # twinkle speed (very quick)
 meteor_flash_.priority = 25
 # Start all animations
-engine.add_animation(background_)
-engine.add_animation(stars_)
-engine.add_animation(meteor1_)
-engine.add_animation(meteor2_)
-engine.add_animation(meteor3_)
-engine.add_animation(meteor4_)
-engine.add_animation(meteor_flash_)
+engine.add(background_)
+engine.add(stars_)
+engine.add(meteor1_)
+engine.add(meteor2_)
+engine.add(meteor3_)
+engine.add(meteor4_)
+engine.add(meteor_flash_)
 engine.start()
 
 

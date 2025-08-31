@@ -60,7 +60,7 @@ var palette_showcase_ = animation.SequenceManager(engine)
     .push_play_step(aurora_lights_, 2000)
     .push_play_step(sunset_glow_, 2000)
     )
-engine.add_sequence_manager(palette_showcase_)
+engine.add(palette_showcase_)
 engine.start()
 
 

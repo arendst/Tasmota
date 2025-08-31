@@ -20,7 +20,7 @@ rainbow_cycle_.cycle_period = 5000  # cycle period
 var rainbow_animation_ = animation.solid(engine)
 rainbow_animation_.color = rainbow_cycle_
 # Start the animation
-engine.add_animation(rainbow_animation_)
+engine.add(rainbow_animation_)
 engine.start()
 
 

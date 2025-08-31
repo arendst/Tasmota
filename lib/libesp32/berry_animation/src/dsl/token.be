@@ -40,7 +40,7 @@ class Token
     # Control flow keywords
     "play", "for", "with", "repeat", "times", "forever", "if", "else", "elif",
     "choose", "random", "on", "run", "wait", "goto", "interrupt", "resume",
-    "while", "from", "to", "return",
+    "while", "from", "to", "return", "reset", "restart",
     
     # Modifier keywords (only actual DSL syntax keywords)
     "at", "ease", "sync", "every", "stagger", "across", "pixels",

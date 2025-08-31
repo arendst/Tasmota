@@ -62,12 +62,12 @@ def test_sequence_manager_step_creation()
   assert(wait_step["type"] == "wait", "Wait step should have correct type")
   assert(wait_step["duration"] == 2000, "Wait step should have correct duration")
   
-  # Test push_assign_step
+  # Test push_closure_step
   var test_closure = def (engine) test_anim.opacity = 128 end
-  seq_manager.push_assign_step(test_closure)
-  assert(seq_manager.steps.size() == 3, "Should have three steps after push_assign_step")
+  seq_manager.push_closure_step(test_closure)
+  assert(seq_manager.steps.size() == 3, "Should have three steps after push_closure_step")
   var assign_step = seq_manager.steps[2]
-  assert(assign_step["type"] == "assign", "Assign step should have correct type")
+  assert(assign_step["type"] == "closure", "Assign step should have correct type")
   assert(assign_step["closure"] == test_closure, "Assign step should have correct closure")
   
   print("✓ Step creation tests passed")
@@ -318,7 +318,7 @@ def test_sequence_manager_assignment_steps()
   
   # Create sequence with assignment step using fluent interface
   seq_manager.push_play_step(test_anim, 500)           # Play for 0.5s
-              .push_assign_step(assignment_closure)    # Assign new opacity
+              .push_closure_step(assignment_closure)    # Assign new opacity
               .push_play_step(test_anim, 500)          # Play for another 0.5s
   
   # Start sequence
@@ -475,6 +475,247 @@ def test_sequence_manager_integration()
   print("✓ Integration tests passed")
 end
 
+def test_sequence_manager_parametric_repeat_counts()
+  print("=== SequenceManager Parametric Repeat Count Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Test 1: Static repeat count (baseline)
+  var static_repeat_count = 3
+  var seq_manager1 = animation.SequenceManager(engine, static_repeat_count)
+  
+  # Test get_resolved_repeat_count with static number
+  var resolved_count = seq_manager1.get_resolved_repeat_count()
+  assert(resolved_count == 3, f"Static repeat count should resolve to 3, got {resolved_count}")
+  
+  # Test 2: Function-based repeat count (simulating col1.palette_size)
+  var palette_size_function = def (engine) return 5 end  # Simulates a palette with 5 colors
+  var seq_manager2 = animation.SequenceManager(engine, palette_size_function)
+  
+  # Test get_resolved_repeat_count with function
+  resolved_count = seq_manager2.get_resolved_repeat_count()
+  assert(resolved_count == 5, f"Function repeat count should resolve to 5, got {resolved_count}")
+  
+  # Test 3: Dynamic repeat count that changes over time
+  var dynamic_counter = 0
+  var dynamic_function = def (engine) 
+    dynamic_counter += 1
+    return dynamic_counter <= 1 ? 2 : 4  # First call returns 2, subsequent calls return 4
+  end
+  
+  var seq_manager3 = animation.SequenceManager(engine, dynamic_function)
+  var first_resolved = seq_manager3.get_resolved_repeat_count()
+  var second_resolved = seq_manager3.get_resolved_repeat_count()
+  assert(first_resolved == 2, f"First dynamic call should return 2, got {first_resolved}")
+  assert(second_resolved == 4, f"Second dynamic call should return 4, got {second_resolved}")
+  
+  print("✓ Parametric repeat count tests passed")
+end
+
+def test_sequence_manager_repeat_execution_with_functions()
+  print("=== SequenceManager Repeat Execution with Functions Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create test animation
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFF00FF00
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test_repeat"
+  
+  # Create a function that returns repeat count (simulating palette_size)
+  var repeat_count_func = def (engine) return 3 end
+  
+  # Create sequence manager with function-based repeat count
+  var seq_manager = animation.SequenceManager(engine, repeat_count_func)
+  seq_manager.push_play_step(test_anim, 50)  # Short duration for testing
+  
+  # Verify repeat count is resolved correctly
+  var resolved_count = seq_manager.get_resolved_repeat_count()
+  assert(resolved_count == 3, f"Repeat count should resolve to 3, got {resolved_count}")
+  
+  # Test that the sequence manager accepts function-based repeat counts
+  assert(type(seq_manager.repeat_count) == "function", "Repeat count should be stored as function")
+  
+  # Test that multiple calls to get_resolved_repeat_count work
+  var second_resolved = seq_manager.get_resolved_repeat_count()
+  assert(second_resolved == 3, f"Second resolution should also return 3, got {second_resolved}")
+  
+  # Test sequence execution with function-based repeat count
+  tasmota.set_millis(90000)
+  seq_manager.start(90000)
+  assert(seq_manager.is_running == true, "Sequence should start running")
+  assert(seq_manager.current_iteration == 0, "Should start at iteration 0")
+  
+  print("✓ Repeat execution with functions tests passed")
+end
+
+def test_sequence_manager_palette_size_simulation()
+  print("=== SequenceManager Palette Size Simulation Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Simulate a color cycle with palette_size property (like col1.palette_size)
+  var mock_color_cycle = {
+    "palette_size": 5,  # Use smaller palette for simpler testing
+    "current_index": 0
+  }
+  
+  # Create function that accesses palette_size (simulating col1.palette_size)
+  var palette_size_func = def (engine) return mock_color_cycle["palette_size"] end
+  
+  # Create closure that advances color cycle (simulating col1.next = 1)
+  var advance_color_func = def (engine) 
+    mock_color_cycle["current_index"] = (mock_color_cycle["current_index"] + 1) % mock_color_cycle["palette_size"]
+  end
+  
+  # Create sequence similar to demo_shutter_rainbow.anim:
+  # sequence shutter_seq repeat col1.palette_size times {
+  #   play shutter_animation for duration
+  #   col1.next = 1
+  # }
+  var seq_manager = animation.SequenceManager(engine, palette_size_func)
+  seq_manager.push_closure_step(advance_color_func)  # Just test the closure execution
+  
+  # Test that repeat count is resolved correctly
+  var resolved_count = seq_manager.get_resolved_repeat_count()
+  assert(resolved_count == 5, f"Should resolve to palette size 5, got {resolved_count}")
+  
+  # Test that the closure function works
+  var initial_index = mock_color_cycle["current_index"]
+  advance_color_func(engine)
+  assert(mock_color_cycle["current_index"] == (initial_index + 1) % 5, "Color should advance when closure is called")
+  
+  # Test that the function can be called multiple times
+  var second_resolved = seq_manager.get_resolved_repeat_count()
+  assert(second_resolved == 5, f"Second resolution should also return 5, got {second_resolved}")
+  
+  print("✓ Palette size simulation tests passed")
+end
+
+def test_sequence_manager_dynamic_repeat_changes()
+  print("=== SequenceManager Dynamic Repeat Changes Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create test animation
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFF0080FF
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "dynamic_test"
+  
+  # Create dynamic repeat count that changes based on external state
+  var external_state = {"multiplier": 2}
+  var dynamic_repeat_func = def (engine) 
+    return external_state["multiplier"] * 2  # Returns 4 initially, can change
+  end
+  
+  # Create sequence with dynamic repeat count
+  var seq_manager = animation.SequenceManager(engine, dynamic_repeat_func)
+  seq_manager.push_play_step(test_anim, 250)
+  
+  # Start sequence
+  tasmota.set_millis(120000)
+  engine.add_sequence_manager(seq_manager)
+  engine.start()
+  engine.on_tick(120000)
+  seq_manager.start(120000)
+  
+  # Test initial repeat count resolution
+  var initial_count = seq_manager.get_resolved_repeat_count()
+  assert(initial_count == 4, f"Initial repeat count should be 4, got {initial_count}")
+  
+  # Change external state mid-execution (simulating dynamic conditions)
+  external_state["multiplier"] = 3
+  
+  # Test that new calls get updated count
+  var updated_count = seq_manager.get_resolved_repeat_count()
+  assert(updated_count == 6, f"Updated repeat count should be 6, got {updated_count}")
+  
+  # Test with function that depends on engine state
+  var engine_dependent_func = def (engine) 
+    # Simulating a function that depends on strip length or other engine properties
+    return engine.strip != nil ? 3 : 1
+  end
+  
+  var seq_manager2 = animation.SequenceManager(engine, engine_dependent_func)
+  var engine_count = seq_manager2.get_resolved_repeat_count()
+  assert(engine_count == 3, f"Engine-dependent count should be 3, got {engine_count}")
+  
+  print("✓ Dynamic repeat changes tests passed")
+end
+
+def test_sequence_manager_complex_parametric_scenario()
+  print("=== SequenceManager Complex Parametric Scenario Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Simulate complex scenario with multiple parametric elements
+  # Similar to a more complex version of demo_shutter_rainbow.anim
+  
+  # Mock palette and color cycle objects
+  var rainbow_palette = {
+    "colors": [0xFFFF0000, 0xFFFF8000, 0xFFFFFF00],  # Smaller palette for testing
+    "size": 3
+  }
+  
+  var color_cycle1 = {
+    "palette": rainbow_palette,
+    "current_index": 0,
+    "palette_size": rainbow_palette["size"]
+  }
+  
+  # Functions for parametric behavior
+  var palette_size_func = def (engine) return color_cycle1["palette_size"] end
+  var advance_colors_func = def (engine)
+    color_cycle1["current_index"] = (color_cycle1["current_index"] + 1) % color_cycle1["palette_size"]
+  end
+  
+  # Create sequence with parametric repeat
+  var seq_manager = animation.SequenceManager(engine, palette_size_func)
+  seq_manager.push_closure_step(advance_colors_func)
+  
+  # Verify sequence setup
+  var resolved_count = seq_manager.get_resolved_repeat_count()
+  assert(resolved_count == 3, f"Complex sequence should repeat 3 times, got {resolved_count}")
+  
+  # Test that the functions work correctly
+  var initial_color_index = color_cycle1["current_index"]
+  
+  # Test closure execution
+  advance_colors_func(engine)
+  assert(color_cycle1["current_index"] == (initial_color_index + 1) % 3, "Color should advance")
+  
+  # Test multiple function calls
+  var second_resolved = seq_manager.get_resolved_repeat_count()
+  assert(second_resolved == 3, f"Second resolution should still return 3, got {second_resolved}")
+  
+  # Test that palette size function works with different values
+  color_cycle1["palette_size"] = 5
+  var updated_resolved = seq_manager.get_resolved_repeat_count()
+  assert(updated_resolved == 5, f"Updated resolution should return 5, got {updated_resolved}")
+  
+  print("✓ Complex parametric scenario tests passed")
+end
+
 # Run all tests
 def run_all_sequence_manager_tests()
   print("Starting SequenceManager Unit Tests...")
@@ -489,6 +730,11 @@ def run_all_sequence_manager_tests()
   test_sequence_manager_assignment_steps()
   test_sequence_manager_complex_sequence()
   test_sequence_manager_integration()
+  test_sequence_manager_parametric_repeat_counts()
+  test_sequence_manager_repeat_execution_with_functions()
+  test_sequence_manager_palette_size_simulation()
+  test_sequence_manager_dynamic_repeat_changes()
+  test_sequence_manager_complex_parametric_scenario()
   
   print("\n🎉 All SequenceManager tests passed!")
   return true
@@ -508,5 +754,10 @@ return {
   "test_sequence_manager_is_running": test_sequence_manager_is_running,
   "test_sequence_manager_assignment_steps": test_sequence_manager_assignment_steps,
   "test_sequence_manager_complex_sequence": test_sequence_manager_complex_sequence,
-  "test_sequence_manager_integration": test_sequence_manager_integration
+  "test_sequence_manager_integration": test_sequence_manager_integration,
+  "test_sequence_manager_parametric_repeat_counts": test_sequence_manager_parametric_repeat_counts,
+  "test_sequence_manager_repeat_execution_with_functions": test_sequence_manager_repeat_execution_with_functions,
+  "test_sequence_manager_palette_size_simulation": test_sequence_manager_palette_size_simulation,
+  "test_sequence_manager_dynamic_repeat_changes": test_sequence_manager_dynamic_repeat_changes,
+  "test_sequence_manager_complex_parametric_scenario": test_sequence_manager_complex_parametric_scenario
 }

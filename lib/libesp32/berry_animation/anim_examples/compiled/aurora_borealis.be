@@ -24,7 +24,7 @@ aurora_base_.transition_type = animation.SINE  # transition type (explicit for c
 aurora_base_.brightness = 180  # brightness (dimmed for aurora effect)
 var demo_ = animation.SequenceManager(engine)
   .push_play_step(aurora_base_, nil)  # infinite duration (no 'for' clause)
-engine.add_sequence_manager(demo_)
+engine.add(demo_)
 engine.start()
 
 

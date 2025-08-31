@@ -338,34 +338,6 @@ class ParameterizedObject
     return self._get_param_def(name)
   end
   
-  # Get all parameter metadata from class hierarchy
-  #
-  # @return map - Map of all parameter metadata
-  def get_params_metadata()
-    import introspect
-    var all_params = {}
-    
-    # Walk up the class hierarchy to collect all parameter definitions
-    var current_class = classof(self)
-    while current_class != nil
-      # Check if this class has PARAMS
-      if introspect.contains(current_class, "PARAMS")
-        var class_params = current_class.PARAMS
-        # Add parameters from this class (child class parameters override parent)
-        for param_name : class_params.keys()
-          if !all_params.contains(param_name)  # Don't override child class params
-            all_params[param_name] = class_params[param_name]
-          end
-        end
-      end
-      
-      # Move to parent class
-      current_class = super(current_class)
-    end
-    
-    return all_params
-  end
-  
   # Helper method to get a resolved value from either a static value or a value provider
   # This is the same as accessing obj.param_name but with explicit time
   #

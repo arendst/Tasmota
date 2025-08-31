@@ -29,7 +29,7 @@ def test_basic_transpilation()
   assert(string.find(berry_code, "var engine = animation.init_strip()") >= 0, "Should generate strip configuration")
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
   assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should generate sequence manager")
-  assert(string.find(berry_code, "engine.add_sequence_manager(demo_)") >= 0, "Should add sequence manager")
+  assert(string.find(berry_code, "engine.add(demo_)") >= 0, "Should add sequence manager")
   
   # print("Generated Berry code:")
   # print("==================================================")
@@ -185,7 +185,7 @@ def test_sequence_assignments()
   var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "Should compile sequence with assignments")
   assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should define sequence manager")
-  assert(string.find(berry_code, ".push_assign_step") >= 0, "Should generate assign step")
+  assert(string.find(berry_code, ".push_closure_step") >= 0, "Should generate closure step")
   assert(string.find(berry_code, "test_.opacity = brightness_") >= 0, "Should generate assignment")
   
   # Test multiple assignments in sequence
@@ -212,7 +212,7 @@ def test_sequence_assignments()
   var assign_count = 0
   var pos = 0
   while true
-    pos = string.find(multi_berry_code, "push_assign_step", pos)
+    pos = string.find(multi_berry_code, "push_closure_step", pos)
     if pos < 0 break end
     assign_count += 1
     pos += 1
@@ -235,9 +235,10 @@ def test_sequence_assignments()
     "run demo"
   
   var repeat_berry_code = animation_dsl.compile(repeat_assign_dsl)
+print(repeat_berry_code)
   assert(repeat_berry_code != nil, "Should compile repeat with assignments")
   assert(string.find(repeat_berry_code, "push_repeat_subsequence") >= 0, "Should generate repeat loop")
-  assert(string.find(repeat_berry_code, "push_assign_step") >= 0, "Should generate assign step in repeat")
+  assert(string.find(repeat_berry_code, "push_closure_step") >= 0, "Should generate closure step in repeat")
   
   # Test complex cylon rainbow example
   var cylon_dsl = "set strip_len = strip_length()\n" +
@@ -375,9 +376,9 @@ def test_multiple_run_statements()
   assert(start_count == 1, f"Should have exactly 1 engine.start() call, found {start_count}")
   
   # Check that all animations are added to the engine
-  assert(string.find(berry_code, "engine.add_animation(red_anim_)") >= 0, "Should add red_anim to engine")
-  assert(string.find(berry_code, "engine.add_animation(blue_anim_)") >= 0, "Should add blue_anim to engine")
-  assert(string.find(berry_code, "engine.add_animation(green_anim_)") >= 0, "Should add green_anim to engine")
+  assert(string.find(berry_code, "engine.add(red_anim_)") >= 0, "Should add red_anim to engine")
+  assert(string.find(berry_code, "engine.add(blue_anim_)") >= 0, "Should add blue_anim to engine")
+  assert(string.find(berry_code, "engine.add(green_anim_)") >= 0, "Should add green_anim to engine")
   
   # Verify the engine.start() comes after all animations are added
   var start_line_index = -1
@@ -388,7 +389,7 @@ def test_multiple_run_statements()
     if string.find(line, "engine.start()") >= 0
       start_line_index = i
     end
-    if string.find(line, "engine.add_animation") >= 0 || string.find(line, "engine.add_sequence_manager") >= 0
+    if string.find(line, "engine.add(") >= 0
       last_add_line_index = i
     end
   end
@@ -425,8 +426,8 @@ def test_multiple_run_statements()
   assert(mixed_start_count == 1, f"Mixed scenario should have exactly 1 engine.start() call, found {mixed_start_count}")
   
   # Check that both animation and sequence are handled
-  assert(string.find(mixed_berry_code, "engine.add_animation(red_anim_)") >= 0, "Should add animation to engine")
-  assert(string.find(mixed_berry_code, "engine.add_sequence_manager(blue_seq_)") >= 0, "Should add sequence to engine")
+  assert(string.find(mixed_berry_code, "engine.add(red_anim_)") >= 0, "Should add animation to engine")
+  assert(string.find(mixed_berry_code, "engine.add(blue_seq_)") >= 0, "Should add sequence to engine")
   
   print("✓ Multiple run statements test passed")
   return true
@@ -685,7 +686,7 @@ def test_complex_dsl()
     assert(string.find(berry_code, "var engine = animation.init_strip()") >= 0, "Should have default strip initialization")
     assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should have color definitions")
     assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should have sequence definition")
-    assert(string.find(berry_code, "engine.add_sequence_manager(demo_)") >= 0, "Should have execution")
+    assert(string.find(berry_code, "engine.add(demo_)") >= 0, "Should have execution")
     
     print("Generated code structure looks correct")
   else
@@ -1038,6 +1039,81 @@ def test_color_type_checking()
   return true
 end
 
+# Test invalid sequence commands
+def test_invalid_sequence_commands()
+  print("Testing invalid sequence commands...")
+  
+  # Test 1: Invalid command in sequence
+  var invalid_command_dsl = 
+    "animation test_anim = solid(color=red)\n" +
+    "sequence bad {\n" +
+    "  do_bad_things anim\n" +
+    "  play test_anim for 1s\n" +
+    "}"
+  
+  try
+    var result1 = animation_dsl.compile(invalid_command_dsl)
+    assert(false, "Should have thrown an exception for invalid command")
+  except "dsl_compilation_error"
+    # Expected - invalid command should cause compilation error
+  end
+  
+  # Test 2: Another invalid command
+  var invalid_command_dsl2 = 
+    "animation test_anim = solid(color=red)\n" +
+    "sequence bad {\n" +
+    "  play test_anim for 1s\n" +
+    "  invalid_command\n" +
+    "  wait 500ms\n" +
+    "}"
+  
+  try
+    var result2 = animation_dsl.compile(invalid_command_dsl2)
+    assert(false, "Should have thrown an exception for invalid command")
+  except "dsl_compilation_error"
+    # Expected - invalid command should cause compilation error
+  end
+  
+  # Test 3: Invalid command in repeat block
+  var invalid_repeat_dsl = 
+    "animation test_anim = solid(color=red)\n" +
+    "sequence bad {\n" +
+    "  repeat 3 times {\n" +
+    "    play test_anim for 1s\n" +
+    "    bad_command_in_repeat\n" +
+    "    wait 500ms\n" +
+    "  }\n" +
+    "}"
+  
+  try
+    var result3 = animation_dsl.compile(invalid_repeat_dsl)
+    assert(false, "Should have thrown an exception for invalid command in repeat")
+  except "dsl_compilation_error"
+    # Expected - invalid command should cause compilation error
+  end
+  
+  # Test 4: Valid sequence should still work
+  var valid_sequence_dsl = 
+    "animation test_anim = solid(color=red)\n" +
+    "sequence good {\n" +
+    "  play test_anim for 1s\n" +
+    "  wait 500ms\n" +
+    "  log(\"test message\")\n" +
+    "  test_anim.opacity = 128\n" +
+    "}"
+  
+  var result4 = animation_dsl.compile(valid_sequence_dsl)
+  assert(result4 != nil, "Should compile valid sequence successfully")
+  assert(string.find(result4, "SequenceManager") >= 0, "Should generate sequence manager")
+  assert(string.find(result4, "push_play_step") >= 0, "Should generate play step")
+  assert(string.find(result4, "push_wait_step") >= 0, "Should generate wait step")
+  assert(string.find(result4, "log(f\"test message\", 3)") >= 0, "Should generate log statement")
+  assert(string.find(result4, "push_closure_step") >= 0, "Should generate closure steps")
+  
+  print("✓ Invalid sequence commands test passed")
+  return true
+end
+
 # Run all tests
 def run_dsl_transpiler_tests()
   print("=== DSL Transpiler Test Suite ===")
@@ -1064,7 +1140,8 @@ def run_dsl_transpiler_tests()
     test_comment_preservation,
     test_easing_keywords,
     test_animation_type_checking,
-    test_color_type_checking
+    test_color_type_checking,
+    test_invalid_sequence_commands
   ]
   
   var passed = 0

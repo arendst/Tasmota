@@ -252,7 +252,7 @@ var test_ = animation.solid(engine)
 test_.color = 0xFF0000FF
 test_.opacity = animation.create_closure_value(engine, 
   def (self) return animation.get_user_function('rand_demo')(self.engine) end)
-engine.add_animation(test_)
+engine.add(test_)
 engine.start()
 ```
 
@@ -286,7 +286,7 @@ def pulse_effect(engine, color, speed)
   var pulse_ = animation.pulsating_animation(engine)
   pulse_.color = color
   pulse_.period = speed
-  engine.add_animation(pulse_)
+  engine.add(pulse_)
   engine.start_animation(pulse_)
 end
 
@@ -341,9 +341,9 @@ def comet_chase(engine, trail_color, bg_color, chase_speed)
   var comet_ = animation.comet_animation(engine)
   comet_.color = trail_color
   comet_.speed = chase_speed
-  engine.add_animation(background_)
+  engine.add(background_)
   engine.start_animation(background_)
-  engine.add_animation(comet_)
+  engine.add(comet_)
   engine.start_animation(comet_)
 end
 

@@ -67,11 +67,11 @@ distant_flash_.density = 4  # density (few flashes)
 distant_flash_.twinkle_speed = 300  # twinkle speed (medium duration)
 distant_flash_.priority = 5
 # Start all animations
-engine.add_animation(storm_bg_)
-engine.add_animation(lightning_main_)
-engine.add_animation(lightning_partial_)
-engine.add_animation(afterglow_)
-engine.add_animation(distant_flash_)
+engine.add(storm_bg_)
+engine.add(lightning_main_)
+engine.add(lightning_partial_)
+engine.add(afterglow_)
+engine.add(distant_flash_)
 engine.start()
 
 

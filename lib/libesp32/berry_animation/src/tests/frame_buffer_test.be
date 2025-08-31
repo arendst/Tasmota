@@ -173,7 +173,7 @@ fb1.fill_pixels(0xFF0000FF)  # Fill fb1 with red (fully opaque)
 fb2.fill_pixels(0x8000FF00)  # Fill fb2 with green at 50% alpha
 
 # Blend fb2 into fb1 using per-pixel alpha, but only for the first half
-fb1.blend_pixels(fb2, animation.frame_buffer.BLEND_MODE_NORMAL, 0, 4)
+fb1.blend_pixels(fb2, 0, 4)
 
 var first_half_blended = true
 var second_half_original = true

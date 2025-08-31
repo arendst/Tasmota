@@ -13,11 +13,6 @@
 # The class is optimized for performance and minimal memory usage.
 
 class FrameBuffer
-  # Blend modes
-  # Currently only normal blending is implemented, but the structure allows for adding more modes later
-  static BLEND_MODE_NORMAL = 0     # Normal alpha blending
-  # Other blend modes can be added here in the future if needed
-
   var pixels          # Pixel data (bytes object)
   var width           # Number of pixels
   
@@ -125,16 +120,11 @@ class FrameBuffer
     end
   end
   
-  # Blend two colors using their alpha channels and blend mode
+  # Blend two colors using their alpha channels
   # Returns the blended color as a 32-bit integer (ARGB format - 0xAARRGGBB)
   # color1: destination color (ARGB format - 0xAARRGGBB)
   # color2: source color (ARGB format - 0xAARRGGBB)
-  # mode: blending mode (default: BLEND_MODE_NORMAL)
-  def blend(color1, color2, mode)
-    # Default blend mode to normal if not specified
-    if mode == nil
-      mode = self.BLEND_MODE_NORMAL
-    end
+  def blend(color1, color2)
     
     # Extract components from color1 (ARGB format - 0xAARRGGBB)
     var a1 = (color1 >> 24) & 0xFF
@@ -157,7 +147,7 @@ class FrameBuffer
     # Use the source alpha directly for blending
     var effective_opacity = a2
     
-    # Normal alpha blending (currently the only supported mode)
+    # Normal alpha blending
     # Use tasmota.scale_uint for ratio conversion instead of integer arithmetic
     var r = tasmota.scale_uint(255 - effective_opacity, 0, 255, 0, r1) + tasmota.scale_uint(effective_opacity, 0, 255, 0, r2)
     var g = tasmota.scale_uint(255 - effective_opacity, 0, 255, 0, g1) + tasmota.scale_uint(effective_opacity, 0, 255, 0, g2)
@@ -218,15 +208,10 @@ class FrameBuffer
   
   # Blend this frame buffer with another frame buffer using per-pixel alpha
   # other_buffer: the other frame buffer to blend with
-  # mode: blending mode (default: BLEND_MODE_NORMAL)
   # region_start: start index for blending (default: 0)
   # region_end: end index for blending (default: width-1)
-  def blend_pixels(other_buffer, mode, region_start, region_end)
+  def blend_pixels(other_buffer, region_start, region_end)
     # Default parameters
-    
-    if mode == nil
-      mode = self.BLEND_MODE_NORMAL
-    end
     
     if region_start == nil
       region_start = 0
@@ -249,43 +234,23 @@ class FrameBuffer
       raise "index_error", "region_end out of range"
     end
     
-    # Performance optimization: batch processing for normal blend mode
-    if mode == self.BLEND_MODE_NORMAL
-      # Fast path for normal blending
-      var i = region_start
-      while i <= region_end
-        var color2 = other_buffer.get_pixel_color(i)
-        var a2 = (color2 >> 24) & 0xFF
-        
-        # Only blend if the source pixel has some alpha
-        if a2 > 0
-          if a2 == 255
-            # Fully opaque source pixel, just copy it
-            self.pixels.set(i * 4, color2, 4)
-          else
-            # Partially transparent source pixel, need to blend
-            var color1 = self.get_pixel_color(i)
-            var blended = self.blend(color1, color2, mode)
-            self.pixels.set(i * 4, blended, 4)
-          end
-        end
-        
-        i += 1
-      end
-      return
-    end
-    
-    # General case: blend each pixel using the blend function
+    # Blend each pixel using the blend function
     var i = region_start
     while i <= region_end
-      var color1 = self.get_pixel_color(i)
       var color2 = other_buffer.get_pixel_color(i)
+      var a2 = (color2 >> 24) & 0xFF
       
       # Only blend if the source pixel has some alpha
-      var a2 = (color2 >> 24) & 0xFF
       if a2 > 0
-        var blended = self.blend(color1, color2, mode)
-        self.pixels.set(i * 4, blended, 4)
+        if a2 == 255
+          # Fully opaque source pixel, just copy it
+          self.pixels.set(i * 4, color2, 4)
+        else
+          # Partially transparent source pixel, need to blend
+          var color1 = self.get_pixel_color(i)
+          var blended = self.blend(color1, color2)
+          self.pixels.set(i * 4, blended, 4)
+        end
       end
       
       i += 1
@@ -437,14 +402,9 @@ class FrameBuffer
   
   # Blend a specific region with a solid color using the color's alpha channel
   # color: the color to blend (ARGB)
-  # mode: blending mode (default: BLEND_MODE_NORMAL)
   # start_pos: start position (default: 0)
   # end_pos: end position (default: width-1)
-  def blend_color(color, mode, start_pos, end_pos)
-    
-    if mode == nil
-      mode = self.BLEND_MODE_NORMAL
-    end
+  def blend_color(color, start_pos, end_pos)
     
     if start_pos == nil
       start_pos = 0
@@ -476,7 +436,7 @@ class FrameBuffer
       
       # Only blend if the color has some alpha
       if a2 > 0
-        var blended = self.blend(color1, color, mode)
+        var blended = self.blend(color1, color)
         self.pixels.set(i * 4, blended, 4)
       end
       

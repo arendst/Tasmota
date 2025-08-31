@@ -72,12 +72,12 @@ arc_sparkles_.density = 4  # density (few arcs)
 arc_sparkles_.twinkle_speed = 100  # twinkle speed (quick arcs)
 arc_sparkles_.priority = 15
 # Start all animations
-engine.add_animation(neon_main_)
-engine.add_animation(neon_surge_)
-engine.add_animation(segment1_)
-engine.add_animation(segment2_)
-engine.add_animation(segment3_)
-engine.add_animation(arc_sparkles_)
+engine.add(neon_main_)
+engine.add(neon_surge_)
+engine.add(segment1_)
+engine.add(segment2_)
+engine.add(segment3_)
+engine.add(arc_sparkles_)
 engine.start()
 
 

@@ -57,11 +57,11 @@ code_flash_.density = 3  # density (few flashes)
 code_flash_.twinkle_speed = 150  # twinkle speed (quick flash)
 code_flash_.priority = 20
 # Start all animations
-engine.add_animation(background_)
-engine.add_animation(stream1_)
-engine.add_animation(stream2_)
-engine.add_animation(stream3_)
-engine.add_animation(code_flash_)
+engine.add(background_)
+engine.add(stream1_)
+engine.add(stream2_)
+engine.add(stream3_)
+engine.add(code_flash_)
 engine.start()
 
 

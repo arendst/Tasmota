@@ -26,8 +26,8 @@ def rainbow_pulse_template(engine, pal1_, pal2_, duration_, back_color_)
   # Set pulse priority higher
   pulse_.priority = 10
   # Run both animations
-  engine.add_animation(background_)
-  engine.add_animation(pulse_)
+  engine.add(background_)
+  engine.add(pulse_)
 end
 
 animation.register_user_function('rainbow_pulse', rainbow_pulse_template)

@@ -21,7 +21,7 @@ rainbow_cycle_.cycle_period = 3000
 # Simple sequence
 var demo_ = animation.SequenceManager(engine)
   .push_play_step(rainbow_cycle_, 15000)
-engine.add_sequence_manager(demo_)
+engine.add(demo_)
 engine.start()
 
 

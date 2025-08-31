@@ -48,9 +48,9 @@ end)(engine)
 scanner_trail_.pos = pos_test_
 scanner_trail_.opacity = 128  # Half brightness
 # Start all animations
-engine.add_animation(background_)
-engine.add_animation(scanner_trail_)
-engine.add_animation(scanner_)
+engine.add(background_)
+engine.add(scanner_trail_)
+engine.add(scanner_)
 engine.start()
 
 

@@ -57,9 +57,9 @@ white_strobe_.opacity = (def (engine)
 end)(engine)  # Quick bright flashes
 white_strobe_.priority = 20
 # Start all animations
-engine.add_animation(left_red_)
-engine.add_animation(right_blue_)
-engine.add_animation(white_strobe_)
+engine.add(left_red_)
+engine.add(right_blue_)
+engine.add(white_strobe_)
 engine.start()
 
 

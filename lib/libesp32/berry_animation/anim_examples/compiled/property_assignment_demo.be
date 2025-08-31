@@ -55,7 +55,7 @@ var demo_ = animation.SequenceManager(engine)
     .push_play_step(right_pulse_, 2000)
     .push_wait_step(1000)
     )
-engine.add_sequence_manager(demo_)
+engine.add(demo_)
 engine.start()
 
 

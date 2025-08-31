@@ -45,11 +45,11 @@ random_complex_.priority = 20
 # Complex expression with user function and math operations
 random_complex_.opacity = animation.create_closure_value(engine, def (self) return self.round((animation.get_user_function('rand_demo')(self.engine) + 128) / 2 + self.abs(animation.get_user_function('rand_demo')(self.engine) - 100)) end)
 # Run all animations to demonstrate the effects
-engine.add_animation(random_base_)
-engine.add_animation(random_bounded_)
-engine.add_animation(random_variation_)
-engine.add_animation(random_multi_)
-engine.add_animation(random_complex_)
+engine.add(random_base_)
+engine.add(random_bounded_)
+engine.add(random_variation_)
+engine.add(random_multi_)
+engine.add(random_complex_)
 engine.start()
 
 

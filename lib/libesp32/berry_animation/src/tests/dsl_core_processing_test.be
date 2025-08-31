@@ -203,7 +203,7 @@ def test_sequence_processing()
   assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should define sequence manager")
   assert(string.find(berry_code, "red_anim") >= 0, "Should reference animation")
   assert(string.find(berry_code, ".push_play_step(red_anim_, 2000)") >= 0, "Should create play step")
-  assert(string.find(berry_code, "engine.add_sequence_manager(demo_)") >= 0, "Should add sequence manager")
+  assert(string.find(berry_code, "engine.add(demo_)") >= 0, "Should add sequence manager")
   assert(string.find(berry_code, "engine.start()") >= 0, "Should start engine")
   
   # Test repeat in sequence

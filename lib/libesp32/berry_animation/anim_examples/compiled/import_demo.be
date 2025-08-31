@@ -29,7 +29,7 @@ var import_demo_ = animation.SequenceManager(engine)
   .push_play_step(breathing_blue_, 3000)
   .push_play_step(dynamic_green_, 3000)
 # Run the demo
-engine.add_sequence_manager(import_demo_)
+engine.add(import_demo_)
 engine.start()
 
 

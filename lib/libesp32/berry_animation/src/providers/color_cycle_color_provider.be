@@ -27,7 +27,8 @@ class ColorCycleColorProvider : animation.color_provider
       )
     },
     "cycle_period": {"min": 0, "default": 5000},  # 0 = manual only, >0 = auto cycle time in ms
-    "next": {"default": 0}  # Write 1 to move to next color
+    "next": {"default": 0},  # Write `<n>` to move to next <n> colors
+    "palette_size": {"type": "int", "default": 3}  # Read-only: number of colors in palette
   }
   
   # Initialize a new ColorCycleColorProvider
@@ -40,6 +41,9 @@ class ColorCycleColorProvider : animation.color_provider
     var palette_bytes = self._get_palette_bytes()
     self.current_color = self._get_color_at_index(0)  # Start with first color in palette
     self.current_index = 0  # Start at first color
+    
+    # Initialize palette_size parameter
+    self.values["palette_size"] = self._get_palette_size()
   end
   
   # Get palette bytes from parameter with default fallback
@@ -82,7 +86,11 @@ class ColorCycleColorProvider : animation.color_provider
   # @param name: string - Name of the parameter that changed
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
-    if name == "palette"
+    if name == "palette_size"
+      # palette_size is read-only - restore the actual value and raise an exception
+      self.values["palette_size"] = self._get_palette_size()
+      raise "value_error", "Parameter 'palette_size' is read-only"
+    elif name == "palette"
       # When palette changes, update current_color if current_index is valid
       var palette_size = self._get_palette_size()
       if palette_size > 0
@@ -92,6 +100,8 @@ class ColorCycleColorProvider : animation.color_provider
         end
         self.current_color = self._get_color_at_index(self.current_index)
       end
+      # Update palette_size parameter
+      self.values["palette_size"] = palette_size
     elif name == "next" && value != 0
       # Add to color index
       var palette_size = self._get_palette_size()

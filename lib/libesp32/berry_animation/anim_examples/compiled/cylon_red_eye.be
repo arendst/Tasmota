@@ -24,7 +24,7 @@ red_eye_.pos = (def (engine)
 end)(engine)
 red_eye_.beacon_size = 3  # small 3 pixels eye
 red_eye_.slew_size = 2  # with 2 pixel shading around
-engine.add_animation(red_eye_)
+engine.add(red_eye_)
 engine.start()
 
 

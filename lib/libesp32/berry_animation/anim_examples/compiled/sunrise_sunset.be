@@ -74,10 +74,10 @@ stars_.opacity = (def (engine)
   return provider
 end)(engine)  # Fade out during day
 # Start all animations
-engine.add_animation(daylight_cycle_)
-engine.add_animation(sun_position_)
-engine.add_animation(sun_glow_)
-engine.add_animation(stars_)
+engine.add(daylight_cycle_)
+engine.add(sun_position_)
+engine.add(sun_glow_)
+engine.add(stars_)
 engine.start()
 
 

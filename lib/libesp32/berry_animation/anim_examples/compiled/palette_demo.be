@@ -33,7 +33,7 @@ var palette_demo_ = animation.SequenceManager(engine)
     .push_play_step(fire_anim_, 3000)
     .push_play_step(ocean_anim_, 3000)
     )
-engine.add_sequence_manager(palette_demo_)
+engine.add(palette_demo_)
 engine.start()
 
 

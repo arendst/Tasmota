@@ -36,10 +36,10 @@ comet_sparkles_.density = 8  # density (moderate sparkles)
 comet_sparkles_.twinkle_speed = 400  # twinkle speed (quick sparkle)
 comet_sparkles_.priority = 8
 # Start all animations
-engine.add_animation(background_)
-engine.add_animation(comet_main_)
-engine.add_animation(comet_secondary_)
-engine.add_animation(comet_sparkles_)
+engine.add(background_)
+engine.add(comet_main_)
+engine.add(comet_secondary_)
+engine.add(comet_sparkles_)
 engine.start()
 
 

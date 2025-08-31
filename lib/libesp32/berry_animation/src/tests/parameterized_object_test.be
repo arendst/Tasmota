@@ -216,12 +216,6 @@ def test_parameter_metadata()
   assert(enum_meta.contains("enum"), "Should have enum constraint")
   assert(enum_meta["default"] == 1, "Should have default value")
   
-  # Test getting all metadata
-  var all_meta = obj.get_params_metadata()
-  assert(all_meta.contains("range_param"), "Should contain range_param metadata")
-  assert(all_meta.contains("enum_param"), "Should contain enum_param metadata")
-  assert(all_meta.contains("simple_param"), "Should contain simple_param metadata")
-  
   print("✓ Parameter metadata test passed")
 end
 

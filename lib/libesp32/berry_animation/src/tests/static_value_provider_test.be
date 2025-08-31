@@ -127,14 +127,8 @@ def test_parameterized_object_integration()
   assert(provider.engine == engine, "Provider should have correct engine reference")
   
   # Test parameter system methods exist
-  assert(type(provider.get_params_metadata) == "function", "Should have get_params_metadata method")
   assert(type(provider.set_param) == "function", "Should have set_param method")
   assert(type(provider.get_param) == "function", "Should have get_param method")
-  
-  # Test parameter metadata
-  var params = provider.get_params_metadata()
-  assert(params.contains("value"), "Should have 'value' parameter defined")
-  assert(params["value"]["default"] == nil, "Default value should be nil")
   
   # Test parameter setting via parameter system
   assert(provider.set_param("value", 777) == true, "Should be able to set value via parameter system")

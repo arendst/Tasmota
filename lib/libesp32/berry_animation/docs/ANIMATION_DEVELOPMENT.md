@@ -537,7 +537,7 @@ anim.color = 0xFFFF0000
 anim.pos = 5
 anim.beacon_size = 3
 
-engine.add_animation(anim)
+engine.add(anim)  # Unified method for animations and sequence managers
 engine.start()
 
 # Let it run for a few seconds

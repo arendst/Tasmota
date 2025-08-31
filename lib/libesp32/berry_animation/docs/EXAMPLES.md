@@ -89,9 +89,13 @@ animation sunrise = pulsating_animation(color=orange, period=3s)
 animation day = solid(color=yellow)
 
 sequence sunrise_show {
+  log("Starting sunrise sequence")
   play night for 3s
+  log("Night phase complete, starting sunrise")
   play sunrise for 5s
+  log("Sunrise complete, switching to day")
   play day for 3s
+  log("Sunrise sequence finished")
 }
 run sunrise_show
 ```
@@ -169,7 +173,23 @@ sequence demo {
 run demo
 ```
 
-### 11. Assignments in Repeat Blocks
+### 11. Reset and Restart in Sequences
+```berry
+# Create oscillator and animation
+set wave_osc = triangle(min_value=0, max_value=29, period=4s)
+animation wave = beacon_animation(color=blue, pos=wave_osc, beacon_size=5)
+
+sequence sync_demo {
+  play wave for 3s
+  reset wave_osc                    # Reset oscillator to start position
+  play wave for 3s                  # Wave starts from beginning again
+  restart wave                      # Restart animation from initial state
+  play wave for 3s
+}
+run sync_demo
+```
+
+### 12. Assignments in Repeat Blocks
 ```berry
 set brightness = smooth(min_value=50, max_value=255, period=2s)
 animation pulse = pulsating_animation(color=white, period=1s)
@@ -187,7 +207,7 @@ run breathing_cycle
 
 ## User Functions in Computed Parameters
 
-### 12. Simple User Function
+### 13. Simple User Function
 ```berry
 # Simple user function in computed parameter
 animation random_base = solid(color=blue, priority=10)
@@ -195,7 +215,7 @@ random_base.opacity = rand_demo()
 run random_base
 ```
 
-### 13. User Function with Math Operations
+### 14. User Function with Math Operations
 ```berry
 # Mix user functions with mathematical functions
 animation random_bounded = solid(
@@ -206,7 +226,7 @@ animation random_bounded = solid(
 run random_bounded
 ```
 
-### 14. User Function in Arithmetic Expression
+### 15. User Function in Arithmetic Expression
 ```berry
 # Use user function in arithmetic expressions
 animation random_variation = solid(
@@ -221,7 +241,7 @@ See `anim_examples/user_functions_demo.anim` for a complete working example.
 
 ## New Repeat System Examples
 
-### 15. Runtime Repeat with Forever Loop
+### 16. Runtime Repeat with Forever Loop
 ```berry
 color red = 0xFF0000
 color blue = 0x0000FF
@@ -245,7 +265,7 @@ sequence cylon_effect_alt repeat forever {
 run cylon_effect
 ```
 
-### 16. Nested Repeats (Multiplication)
+### 17. Nested Repeats (Multiplication)
 ```berry
 color green = 0x00FF00
 color yellow = 0xFFFF00
@@ -265,7 +285,7 @@ sequence nested_pattern {
 run nested_pattern
 ```
 
-### 17. Repeat with Property Assignments
+### 18. Repeat with Property Assignments
 ```berry
 set triangle_pos = triangle(min_value=0, max_value=29, period=3s)
 set cosine_pos = cosine_osc(min_value=0, max_value=29, period=3s)
@@ -292,7 +312,7 @@ run dynamic_cylon
 
 ## Advanced Examples
 
-### 18. Dynamic Position
+### 19. Dynamic Position
 ```berry
 strip length 60
 
@@ -308,7 +328,7 @@ animation moving_pulse = beacon_animation(
 run moving_pulse
 ```
 
-### 19. Multi-Layer Effect
+### 20. Multi-Layer Effect
 ```berry
 # Base layer - slow breathing
 set breathing = smooth(min_value=100, max_value=255, period=4s)

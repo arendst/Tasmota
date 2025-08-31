@@ -39,7 +39,7 @@ breathing_.opacity = (def (engine)
   return provider
 end)(engine)
 # Start the animation
-engine.add_animation(breathing_)
+engine.add(breathing_)
 engine.start()
 
 

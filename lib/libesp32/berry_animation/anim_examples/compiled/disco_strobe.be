@@ -72,10 +72,10 @@ disco_pulse_.pos = (def (engine)
   return provider
 end)(engine)  # Fast movement
 # Start all animations
-engine.add_animation(disco_base_)
-engine.add_animation(white_flash_)
-engine.add_animation(disco_sparkles_)
-engine.add_animation(disco_pulse_)
+engine.add(disco_base_)
+engine.add(white_flash_)
+engine.add(disco_sparkles_)
+engine.add(disco_pulse_)
 engine.start()
 
 

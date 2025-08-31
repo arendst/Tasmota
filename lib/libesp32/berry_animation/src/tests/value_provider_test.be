@@ -98,7 +98,6 @@ def test_parameterized_object_integration()
   assert(provider.engine == engine, "Provider should have correct engine reference")
   
   # Test parameter system methods exist
-  assert(type(provider.get_params_metadata) == "function", "Should have get_params_metadata method")
   assert(type(provider.set_param) == "function", "Should have set_param method")
   assert(type(provider.get_param) == "function", "Should have get_param method")
   

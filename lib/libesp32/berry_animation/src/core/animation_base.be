@@ -34,7 +34,6 @@ class Animation : animation.parameterized_object
     # Initialize non-parameter instance variables
     self.start_time = 0
     self.current_time = 0
-    self.opacity_frame = nil  # Will be created when needed
   end
   
   # Start/restart the animation (make it active and reset timing)
@@ -44,7 +43,7 @@ class Animation : animation.parameterized_object
   def start(start_time)
     # Set is_running directly in values map to avoid infinite loop
     self.values["is_running"] = true
-    var actual_start_time = start_time != nil ? start_time : self.engine.time_ms
+    var actual_start_time = (start_time != nil) ? start_time : self.engine.time_ms
     self.start_time = actual_start_time
     self.current_time = self.start_time
     
@@ -63,11 +62,7 @@ class Animation : animation.parameterized_object
       # Check if the parameter value is a value provider
       if animation.is_value_provider(param_value)
         # Call start method if it exists (acts as restart)
-        try
-          param_value.start(time_ms)
-        except .. as e
-          # Ignore errors if start method doesn't exist or fails
-        end
+        param_value.start(time_ms)
       end
     end
   end
@@ -85,7 +80,7 @@ class Animation : animation.parameterized_object
         self.current_time = self.start_time
         # Start/restart all value providers in parameters
         self._start_value_providers(actual_start_time)
-      elif value == false
+      # elif value == false
         # Stop the animation - just set the internal state
         # (is_running is already set to false by the parameter system)
       end
@@ -143,9 +138,7 @@ class Animation : animation.parameterized_object
     end
     
     # Use engine time if not provided
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
+    time_ms = (time_ms != nil) ? time_ms : self.engine.time_ms
     
     # Update animation state
     self.update(time_ms)
@@ -224,28 +217,6 @@ class Animation : animation.parameterized_object
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color(time_ms)
     return self.get_color_at(0, time_ms)
-  end
-  
-  # Get the normalized progress of the animation (0 to 255)
-  #
-  # @return int - Progress from 0 (start) to 255 (end)
-  def get_progress()
-    var current_duration = self.duration
-    if current_duration <= 0
-      return 0  # Infinite animations always return 0 progress
-    end
-    
-    var elapsed = self.current_time - self.start_time
-    var progress = elapsed % current_duration  # Handle looping
-    
-    # For non-looping animations, if we've reached exactly the duration,
-    # return maximum progress instead of 0 (which would be the modulo result)
-    var current_loop = self.loop
-    if !current_loop && elapsed >= current_duration
-      return 255
-    end
-    
-    return tasmota.scale_uint(progress, 0, current_duration, 0, 255)
   end
   
   # String representation of the animation

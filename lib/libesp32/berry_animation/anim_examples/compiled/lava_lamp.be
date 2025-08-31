@@ -87,11 +87,11 @@ heat_shimmer_.density = 6  # density (shimmer points)
 heat_shimmer_.twinkle_speed = 1500  # twinkle speed (slow shimmer)
 heat_shimmer_.priority = 15
 # Start all animations
-engine.add_animation(lava_base_)
-engine.add_animation(lava_blob1_)
-engine.add_animation(lava_blob2_)
-engine.add_animation(lava_blob3_)
-engine.add_animation(heat_shimmer_)
+engine.add(lava_base_)
+engine.add(lava_blob1_)
+engine.add(lava_blob2_)
+engine.add(lava_blob3_)
+engine.add(heat_shimmer_)
 engine.start()
 
 

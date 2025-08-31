@@ -40,8 +40,8 @@ fire_flicker_.density = 12  # density (number of flickers)
 fire_flicker_.twinkle_speed = 200  # twinkle speed (flicker duration)
 fire_flicker_.priority = 10
 # Start both animations
-engine.add_animation(fire_base_)
-engine.add_animation(fire_flicker_)
+engine.add(fire_base_)
+engine.add(fire_flicker_)
 engine.start()
 
 

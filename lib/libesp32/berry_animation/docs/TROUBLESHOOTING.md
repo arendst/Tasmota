@@ -645,7 +645,7 @@ animation.register_user_function("pulse_effect", create_pulse_effect)
    ```berry
    # Clear before adding new animations
    engine.clear()
-   engine.add_animation(new_animation)
+   engine.add(new_animation)
    ```
 
 2. **Limit Palette Size:**
@@ -760,7 +760,7 @@ import animation
 var engine = animation.create_engine(strip)
 var red_anim = animation.solid(engine)
 red_anim.color = 0xFFFF0000
-engine.add_animation(red_anim)
+engine.add(red_anim)
 engine.start()
 
 # If basic strip works but animation doesn't, check framework setup
@@ -830,7 +830,7 @@ var engine = animation.create_engine(strip, true)  # debug=true
 
 var anim = animation.solid(engine)
 anim.color = 0xFFFF0000
-engine.add_animation(anim)
+engine.add(anim)
 engine.start()
 ```
 
@@ -852,7 +852,7 @@ anim.color = 0xFFFF0000
 print("Animation created:", anim != nil)
 
 print("4. Adding animation...")
-engine.add_animation(anim)
+engine.add(anim)
 print("Animation count:", engine.size())
 
 print("5. Starting engine...")
