@@ -128,6 +128,7 @@ run rgb_show
 ### Advanced
 - **[User Functions](docs/USER_FUNCTIONS.md)** - Create custom animation functions
 - **[Animation Development](docs/ANIMATION_DEVELOPMENT.md)** - Create custom animations
+- **[Transpiler Architecture](docs/TRANSPILER_ARCHITECTURE.md)** - DSL transpiler internals and processing flow
 
 ## 🎯 Core Concepts
 

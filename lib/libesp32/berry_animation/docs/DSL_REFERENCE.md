@@ -2,6 +2,8 @@
 
 This document provides a comprehensive reference for the Animation DSL syntax, keywords, and grammar. It focuses purely on the language specification without implementation details.
 
+For detailed information about the DSL transpiler's internal architecture and processing flow, see [TRANSPILER_ARCHITECTURE.md](TRANSPILER_ARCHITECTURE.md).
+
 ## Language Overview
 
 The Animation DSL is a declarative language for defining LED strip animations. It uses natural, readable syntax with named parameters and supports colors, animations, sequences, and property assignments.

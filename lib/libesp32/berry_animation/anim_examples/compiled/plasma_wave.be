@@ -13,7 +13,14 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var plasma_colors_ = bytes("00FF0080" "33FF8000" "66FFFF00" "9980FF00" "CC00FF80" "FF0080FF")
+var plasma_colors_ = bytes(
+  "00FF0080"  # Magenta
+  "33FF8000"  # Orange
+  "66FFFF00"  # Yellow
+  "9980FF00"  # Yellow-green
+  "CC00FF80"  # Cyan-green
+  "FF0080FF"  # Blue
+)
 # Base plasma animation with medium speed
 var plasma_base_ = animation.rich_palette_animation(engine)
 plasma_base_.palette = plasma_colors_

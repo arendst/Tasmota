@@ -11,7 +11,12 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var fire_colors_ = bytes("FF800000" "FFFF0000" "FFFF4500" "FFFFFF00")
+var fire_colors_ = bytes(
+  "FF800000"  # Dark red
+  "FFFF0000"  # Red
+  "FFFF4500"  # Orange red
+  "FFFFFF00"  # Yellow
+)
 var strip_len_ = animation.strip_length(engine)
 var fire_color_ = animation.rich_palette(engine)
 fire_color_.palette = fire_colors_

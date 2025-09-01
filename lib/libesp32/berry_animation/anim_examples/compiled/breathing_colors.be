@@ -19,7 +19,14 @@ var breathe_blue_ = 0xFF0000FF
 var breathe_purple_ = 0xFF800080
 var breathe_orange_ = 0xFFFF8000
 # Create breathing animation that cycles through colors
-var breathe_palette_ = bytes("00FF0000" "33FF8000" "66FFFF00" "9900FF00" "CC0000FF" "FF800080")
+var breathe_palette_ = bytes(
+  "00FF0000"  # Red
+  "33FF8000"  # Orange
+  "66FFFF00"  # Yellow
+  "9900FF00"  # Green
+  "CC0000FF"  # Blue
+  "FF800080"  # Purple
+)
 # Create a rich palette color provider
 var palette_pattern_ = animation.rich_palette(engine)
 palette_pattern_.palette = breathe_palette_  # palette

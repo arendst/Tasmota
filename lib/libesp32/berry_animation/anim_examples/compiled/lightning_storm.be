@@ -13,7 +13,11 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var storm_colors_ = bytes("00000011" "80110022" "FF220033")
+var storm_colors_ = bytes(
+  "00000011"  # Very dark blue
+  "80110022"  # Dark purple
+  "FF220033"  # Slightly lighter purple
+)
 var storm_bg_ = animation.rich_palette_animation(engine)
 storm_bg_.palette = storm_colors_
 storm_bg_.cycle_period = 12000

@@ -8,12 +8,12 @@ import animation
 
 # Demo Shutter Rainbow
 #
-# Shutter from left to right iterating in all colors
+# Shutter from left to right iterating in all colors, then right to left
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-# Template function: shutter_left_right
-def shutter_left_right_template(engine, colors_, duration_)
+# Template function: shutter_bidir
+def shutter_bidir_template(engine, colors_, duration_)
   var strip_len_ = animation.strip_length(engine)
   var shutter_size_ = (def (engine)
     var provider = animation.sawtooth(engine)
@@ -29,6 +29,7 @@ def shutter_left_right_template(engine, colors_, duration_)
   col2_.palette = colors_
   col2_.cycle_period = 0
   col2_.next = 1
+  # shutter moving from left to right
   var shutter_lr_animation_ = animation.beacon_animation(engine)
   shutter_lr_animation_.color = col2_
   shutter_lr_animation_.back_color = col1_
@@ -36,6 +37,7 @@ def shutter_left_right_template(engine, colors_, duration_)
   shutter_lr_animation_.beacon_size = shutter_size_
   shutter_lr_animation_.slew_size = 0
   shutter_lr_animation_.priority = 5
+  # shutter moving from right to left
   var shutter_rl_animation_ = animation.beacon_animation(engine)
   shutter_rl_animation_.color = col1_
   shutter_rl_animation_.back_color = col2_
@@ -43,9 +45,8 @@ def shutter_left_right_template(engine, colors_, duration_)
   shutter_rl_animation_.beacon_size = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - self.resolve(shutter_size_) end)
   shutter_rl_animation_.slew_size = 0
   shutter_rl_animation_.priority = 5
-  var shutter_seq_ = animation.SequenceManager(engine)
-    #repeat col1.palette_size times {
-    .push_repeat_subsequence(animation.SequenceManager(engine, 7)
+  var shutter_seq_ = animation.SequenceManager(engine, -1)
+    .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
       .push_play_step(shutter_lr_animation_, duration_)
       .push_closure_step(def (engine) col1_.next = 1 end)
@@ -60,20 +61,27 @@ def shutter_left_right_template(engine, colors_, duration_)
   engine.add(shutter_seq_)
 end
 
-animation.register_user_function('shutter_left_right', shutter_left_right_template)
+animation.register_user_function('shutter_bidir', shutter_bidir_template)
 
-var Violet_ = 0xFF112233
-var rainbow_with_white_ = bytes("FFFF0000" "FFFFA500" "FFFFFF00" "FF008000" "FF0000FF" "FF4B0082" "FFFFFFFF")
-shutter_left_right_template(engine, rainbow_with_white_, 1500)
+var rainbow_with_white_ = bytes(
+  "FFFF0000"
+  "FFFFA500"
+  "FFFFFF00"
+  "FF008000"  # comma left on-purpose to test transpiler
+  "FF0000FF"  # need for a lighter blue
+  "FF4B0082"
+  "FFFFFFFF"
+)
+shutter_bidir_template(engine, rainbow_with_white_, 1500)
 engine.start()
 
 
 #- Original DSL source:
 # Demo Shutter Rainbow
 #
-# Shutter from left to right iterating in all colors
+# Shutter from left to right iterating in all colors, then right to left
   
-template shutter_left_right {
+template shutter_bidir {
   param colors type palette
   param duration
 
@@ -84,6 +92,7 @@ template shutter_left_right {
   color col2 = color_cycle(palette=colors, cycle_period=0)
   col2.next = 1
 
+  # shutter moving from left to right
   animation shutter_lr_animation = beacon_animation(
     color = col2
     back_color = col1
@@ -93,6 +102,7 @@ template shutter_left_right {
     priority = 5
   )
 
+  # shutter moving from right to left
   animation shutter_rl_animation = beacon_animation(
     color = col1
     back_color = col2
@@ -102,9 +112,8 @@ template shutter_left_right {
     priority = 5
   )
 
-  sequence shutter_seq {
-    #repeat col1.palette_size times {
-    repeat 7 times {
+  sequence shutter_seq repeat forever {
+    repeat col1.palette_size times {
       reset shutter_size
       play shutter_lr_animation for duration
       col1.next = 1
@@ -121,18 +130,15 @@ template shutter_left_right {
   run shutter_seq
 }
 
-color Violet = 0x112233
-
-palette rainbow_with_white = [
-  red
+palette rainbow_with_white = [ red
   orange
   yellow
-  green
-  blue
+  green,      # comma left on-purpose to test transpiler
+  blue        # need for a lighter blue
   indigo
   white
 ]
 
-shutter_left_right(rainbow_with_white, 1.5s)
+shutter_bidir(rainbow_with_white, 1.5s)
 
 -#

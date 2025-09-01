@@ -13,7 +13,13 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var lava_colors_ = bytes("00330000" "40660000" "80CC3300" "C0FF6600" "FFFFAA00")
+var lava_colors_ = bytes(
+  "00330000"  # Dark red
+  "40660000"  # Medium red
+  "80CC3300"  # Bright red
+  "C0FF6600"  # Orange
+  "FFFFAA00"  # Yellow-orange
+)
 # Base lava animation - very slow color changes
 var lava_base_ = animation.rich_palette_animation(engine)
 lava_base_.palette = lava_colors_

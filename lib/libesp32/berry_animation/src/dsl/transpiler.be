@@ -76,7 +76,7 @@ class SimpleDSLTranspiler
       
       # User functions use positional parameters with engine as first argument
       # In closure context, use self.engine to access the engine from the ClosureValueProvider
-      var args = self.process_function_arguments_for_expression()
+      var args = self.process_function_arguments(true)
       var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
       return f"animation.get_user_function('{func_name}')({full_args})"
     else
@@ -242,7 +242,7 @@ class SimpleDSLTranspiler
       # Check if this is a template call first
       if self.template_definitions.contains(func_name)
         # This is a template call - treat like user function
-        var args = self.process_function_arguments()
+        var args = self.process_function_arguments(false)
         var full_args = args != "" ? f"engine, {args}" : "engine"
         self.add(f"{func_name}_template({full_args}){inline_comment}")
       else
@@ -309,6 +309,7 @@ class SimpleDSLTranspiler
     # Expect array literal
     self.expect_left_bracket()
     var palette_entries = []
+    var palette_comments = []  # Store comments for each entry
     
     # Detect syntax type by looking at the first entry
     self.skip_whitespace_including_newlines()
@@ -366,45 +367,83 @@ class SimpleDSLTranspiler
         palette_entries.push(vrgb_int)
       end
       
-      # Skip whitespace but preserve newlines for separator detection
-      while !self.at_end()
-        var tok = self.current()
-        if tok != nil && tok.type == animation_dsl.Token.COMMENT
-          self.next()
-        else
-          break
-        end
-      end
-      
       # Check for entry separator: comma OR newline OR end of palette
+      # Also collect any comment that comes after the separator
+      var entry_comment = ""
+      
       if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
         self.next()  # skip comma
-        self.skip_whitespace_including_newlines()
+        
+        # Check for comment immediately after comma
+        if self.current() != nil && self.current().type == animation_dsl.Token.COMMENT
+          entry_comment = self.current().value
+          self.next()
+        end
+        
+        # Skip remaining whitespace/newlines
+        while !self.at_end()
+          var tok = self.current()
+          if tok != nil && tok.type == animation_dsl.Token.NEWLINE
+            self.next()
+          else
+            break
+          end
+        end
       elif self.current() != nil && self.current().type == animation_dsl.Token.NEWLINE
         # Newline acts as entry separator - skip it and continue
         self.next()  # skip newline
         self.skip_whitespace_including_newlines()
       elif !self.check_right_bracket()
-        self.error("Expected ',' or ']' in palette definition")
-        break
+        # For the last entry, check if there's a comment before the closing bracket
+        if self.current() != nil && self.current().type == animation_dsl.Token.COMMENT
+          entry_comment = self.current().value
+          self.next()
+        elif !self.check_right_bracket()
+          self.error("Expected ',' or ']' in palette definition")
+          break
+        end
       end
+      
+      palette_comments.push(entry_comment)  # Store comment (empty string if no comment)
     end
     
     self.expect_right_bracket()
     var inline_comment = self.collect_inline_comment()
     
-    # Generate Berry bytes object - convert integers to hex strings for bytes() constructor
-    var palette_data = ""
-    for i : 0..size(palette_entries)-1
-      if i > 0
-        palette_data += " "
+    # Generate Berry bytes object with comments preserved
+    # Check if we have any comments to preserve
+    var has_comments = false
+    for comment : palette_comments
+      if comment != ""
+        has_comments = true
+        break
       end
-      # Convert integer back to hex string for bytes() constructor
-      var hex_str = format("%08X", palette_entries[i])
-      palette_data += f'"{hex_str}"'
     end
     
-    self.add(f"var {name}_ = bytes({palette_data}){inline_comment}")
+    if has_comments
+      # Multi-line format with comments
+      self.add(f"var {name}_ = bytes({inline_comment}")
+      for i : 0..size(palette_entries)-1
+        var hex_str = format("%08X", palette_entries[i])
+        var comment = palette_comments[i]
+        var comment_suffix = comment != "" ? f"  {comment}" : ""
+        self.add(f"  \"{hex_str}\"{comment_suffix}")
+      end
+      self.add(")")
+    else
+      # Single-line format (original behavior when no comments)
+      var palette_data = ""
+      for i : 0..size(palette_entries)-1
+        if i > 0
+          palette_data += " "
+        end
+        # Convert integer back to hex string for bytes() constructor
+        var hex_str = format("%08X", palette_entries[i])
+        palette_data += f'"{hex_str}"'
+      end
+      
+      self.add(f"var {name}_ = bytes({palette_data}){inline_comment}")
+    end
   end
   
   # Process animation definition: animation pulse_red = pulse(color=red, period=2s)
@@ -439,7 +478,7 @@ class SimpleDSLTranspiler
       # Check if this is a template call first
       if self.template_definitions.contains(func_name)
         # This is a template call - treat like user function
-        var args = self.process_function_arguments()
+        var args = self.process_function_arguments(false)
         var full_args = args != "" ? f"engine, {args}" : "engine"
         self.add(f"{func_name}_template({full_args}){inline_comment}")
       else
@@ -849,15 +888,7 @@ class SimpleDSLTranspiler
       
       # Generate assignment step with closure
       # The closure receives the engine as parameter and performs the assignment
-      import introspect
-      var object_ref = ""
-      if introspect.contains(animation, object_name)
-        # Symbol exists in animation module, use it directly
-        object_ref = f"animation.{object_name}"
-      else
-        # Symbol doesn't exist in animation module, use underscore suffix
-        object_ref = f"{object_name}_"
-      end
+      var object_ref = self.resolve_symbol_reference(object_name)
       
       # Create closure that performs the assignment
       var closure_code = f"def (engine) {object_ref}.{property_name} = {value} end"
@@ -1030,7 +1061,7 @@ class SimpleDSLTranspiler
     if self.current() != nil && self.current().type == animation_dsl.Token.LEFT_PAREN
       # Special case for log function - allow as standalone
       if object_name == "log"
-        var args = self.process_function_arguments()
+        var args = self.process_function_arguments(false)
         var inline_comment = self.collect_inline_comment()
         # Use unified log processing
         var log_code = self.process_log_call(args, "standalone", inline_comment)
@@ -1040,7 +1071,7 @@ class SimpleDSLTranspiler
       
       # This is a standalone function call - check if it's a template
       if self.template_definitions.contains(object_name)
-        var args = self.process_function_arguments()
+        var args = self.process_function_arguments(false)
         var full_args = args != "" ? f"engine, {args}" : "engine"
         var inline_comment = self.collect_inline_comment()
         self.add(f"{object_name}_template({full_args}){inline_comment}")
@@ -1079,16 +1110,8 @@ class SimpleDSLTranspiler
       var value = self.process_value("property")
       var inline_comment = self.collect_inline_comment()
       
-      # NEW: Use symbol resolution logic for property assignments
-      import introspect
-      var object_ref = ""
-      if introspect.contains(animation, object_name)
-        # Symbol exists in animation module, use it directly
-        object_ref = f"animation.{object_name}"
-      else
-        # Symbol doesn't exist in animation module, use underscore suffix
-        object_ref = f"{object_name}_"
-      end
+      # Use consolidated symbol resolution for property assignments
+      var object_ref = self.resolve_symbol_reference(object_name)
       
       # Generate property assignment
       self.add(f"{object_ref}.{property_name} = {value}{inline_comment}")
@@ -1101,7 +1124,7 @@ class SimpleDSLTranspiler
   
   # Process any value - unified approach
   def process_value(context)
-    return self.process_additive_expression(context, true)  # true = top-level expression
+    return self.process_additive_expression(context, true, false)  # true = top-level, false = not raw mode
   end
   
   # Process palette color with strict validation
@@ -1138,20 +1161,25 @@ class SimpleDSLTranspiler
     return "0xFFFFFFFF"
   end
   
-  # Process additive expressions (+ and -)
-  def process_additive_expression(context, is_top_level)
-    var left = self.process_multiplicative_expression(context, is_top_level)
+  # Process additive expressions (+ and -) - unified method
+  def process_additive_expression(context, is_top_level, raw_mode)
+    var left = self.process_multiplicative_expression(context, is_top_level, raw_mode)
     
     while !self.at_end()
       var tok = self.current()
       if tok != nil && (tok.type == animation_dsl.Token.PLUS || tok.type == animation_dsl.Token.MINUS)
         var op = tok.value
         self.next()  # consume operator
-        var right = self.process_multiplicative_expression(context, false)  # sub-expressions are not top-level
+        var right = self.process_multiplicative_expression(context, false, raw_mode)  # sub-expressions are not top-level
         left = f"{left} {op} {right}"
       else
         break
       end
+    end
+    
+    # Skip closure wrapping in raw mode
+    if raw_mode
+      return left
     end
     
     # Only create closures at the top level, but not for anonymous functions
@@ -1174,16 +1202,16 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Process multiplicative expressions (* and /)
-  def process_multiplicative_expression(context, is_top_level)
-    var left = self.process_unary_expression(context, is_top_level)
+  # Process multiplicative expressions (* and /) - unified method
+  def process_multiplicative_expression(context, is_top_level, raw_mode)
+    var left = self.process_unary_expression(context, is_top_level, raw_mode)
     
     while !self.at_end()
       var tok = self.current()
       if tok != nil && (tok.type == animation_dsl.Token.MULTIPLY || tok.type == animation_dsl.Token.DIVIDE)
         var op = tok.value
         self.next()  # consume operator
-        var right = self.process_unary_expression(context, false)  # sub-expressions are not top-level
+        var right = self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
         left = f"{left} {op} {right}"
       else
         break
@@ -1193,8 +1221,8 @@ class SimpleDSLTranspiler
     return left
   end
   
-  # Process unary expressions (- and +)
-  def process_unary_expression(context, is_top_level)
+  # Process unary expressions (- and +) - unified method
+  def process_unary_expression(context, is_top_level, raw_mode)
     var tok = self.current()
     if tok == nil
       self.error("Expected value")
@@ -1204,21 +1232,21 @@ class SimpleDSLTranspiler
     # Handle unary minus for negative numbers
     if tok.type == animation_dsl.Token.MINUS
       self.next()  # consume the minus
-      var expr = self.process_unary_expression(context, false)  # sub-expressions are not top-level
+      var expr = self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
       return f"(-{expr})"
     end
     
     # Handle unary plus (optional)
     if tok.type == animation_dsl.Token.PLUS
       self.next()  # consume the plus
-      return self.process_unary_expression(context, false)  # sub-expressions are not top-level
+      return self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
     end
     
-    return self.process_primary_expression(context, is_top_level)
+    return self.process_primary_expression(context, is_top_level, raw_mode)
   end
   
-  # Process primary expressions (literals, identifiers, function calls, parentheses)
-  def process_primary_expression(context, is_top_level)
+  # Process primary expressions (literals, identifiers, function calls, parentheses) - unified method
+  def process_primary_expression(context, is_top_level, raw_mode)
     var tok = self.current()
     if tok == nil
       self.error("Expected value")
@@ -1228,7 +1256,7 @@ class SimpleDSLTranspiler
     # Parenthesized expression
     if tok.type == animation_dsl.Token.LEFT_PAREN
       self.next()  # consume '('
-      var expr = self.process_additive_expression(context, false)  # parenthesized expressions are not top-level
+      var expr = self.process_additive_expression(context, false, raw_mode)  # parenthesized expressions are not top-level
       self.expect_right_paren()
       return f"({expr})"
     end
@@ -1237,15 +1265,45 @@ class SimpleDSLTranspiler
     if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
        self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
       
-      # Check if this is a simple function call first
       var func_name = tok.value
-      if self._is_simple_function_call(func_name)
-        return self.process_function_call(context)
-      # Check if this is a nested function call or a variable assignment with named parameters
-      elif context == "argument" || context == "property" || context == "variable"
-        return self.process_nested_function_call()
+      
+      # In raw mode, handle function calls differently
+      if raw_mode
+        self.next()
+        
+        # Check if this is a mathematical function
+        if self.is_math_method(func_name)
+          var args = self.process_function_arguments(true)
+          return f"self.{func_name}({args})"
+        end
+        
+        # Special case for log function in expressions
+        if func_name == "log"
+          var args = self.process_function_arguments(true)
+          return self.process_log_call(args, "expression", "")
+        end
+        
+        # Check if this is a template call
+        if self.template_definitions.contains(func_name)
+          var args = self.process_function_arguments(true)
+          var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
+          return f"{func_name}_template({full_args})"
+        end
+        
+        # For other functions, this shouldn't happen in expression context
+        self.error(f"Function '{func_name}' not supported in expression context")
+        return "nil"
       else
-        return self.process_function_call(context)
+        # Regular mode - existing logic
+        # Check if this is a simple function call first
+        if self._is_simple_function_call(func_name)
+          return self.process_function_call(context)
+        # Check if this is a nested function call or a variable assignment with named parameters
+        elif context == "argument" || context == "property" || context == "variable"
+          return self.process_nested_function_call()
+        else
+          return self.process_function_call(context)
+        end
       end
     end
     
@@ -1279,8 +1337,8 @@ class SimpleDSLTranspiler
       return f'"{value}"'
     end
     
-    # Array literal
-    if tok.type == animation_dsl.Token.LEFT_BRACKET
+    # Array literal (not supported in raw mode)
+    if tok.type == animation_dsl.Token.LEFT_BRACKET && !raw_mode
       return self.process_array_literal()
     end
     
@@ -1299,8 +1357,8 @@ class SimpleDSLTranspiler
           return self._process_user_function_call(property_name)
         end
         
-        # Validate that the property exists on the referenced object
-        if self.symbol_table.contains(name)
+        # Validate that the property exists on the referenced object (skip in raw mode)
+        if !raw_mode && self.symbol_table.contains(name)
           var instance = self.symbol_table[name]
           # Only validate parameters for actual instances, not sequence markers
           if type(instance) != "string"
@@ -1313,20 +1371,11 @@ class SimpleDSLTranspiler
           end
         end
         
-        # Create a closure that resolves the object property at runtime
-        # Use symbol resolution logic for the object reference
-        import introspect
-        var object_ref = ""
-        if introspect.contains(animation, name)
-          # Symbol exists in animation module, use it directly
-          object_ref = f"animation.{name}"
-        else
-          # Symbol doesn't exist in animation module, use underscore suffix
-          object_ref = f"{name}_"
-        end
+        # Use consolidated symbol resolution for the object reference
+        var object_ref = self.resolve_symbol_reference(name)
         
-        # For repeat_count context, generate simple property access
-        if context == "repeat_count"
+        # In raw mode or repeat_count context, generate simple property access
+        if raw_mode || context == "repeat_count"
           return f"{object_ref}.{property_name}"
         else
           # Return a closure expression that will be wrapped by the caller if needed
@@ -1334,26 +1383,8 @@ class SimpleDSLTranspiler
         end
       end
       
-      # Check for palette constants
-      import string
-      if string.startswith(name, "PALETTE_")
-        return f"animation.{name}"
-      end
-      
-      # Check if it's a named color
-      if animation_dsl.is_color_name(name)
-        return self.get_named_color_value(name)
-      end
-      
-      # NEW: Check at transpile time if symbol exists in animation module
-      import introspect
-      if introspect.contains(animation, name)
-        # Symbol exists in animation module, use it directly
-        return f"animation.{name}"
-      else
-        # Symbol doesn't exist in animation module, use underscore suffix
-        return f"{name}_"
-      end
+      # Use consolidated symbol resolution
+      return self.resolve_symbol_reference(name)
     end
     
     # Boolean keywords
@@ -1677,18 +1708,18 @@ class SimpleDSLTranspiler
     # Check if this is a mathematical function - handle with positional arguments
     if self.is_math_method(func_name)
       # Mathematical functions use positional arguments, not named parameters
-      var args = self.process_function_arguments()
+      var args = self.process_function_arguments(false)
       return f"{func_name}({args})"  # Return as-is for transformation in closure
     end
     
     # Special case for log function - call global log function directly
     if func_name == "log"
-      var args = self.process_function_arguments()
+      var args = self.process_function_arguments(false)
       # Use unified log processing (return expression for use in contexts)
       return self.process_log_call(args, "expression", "")
     end
     
-    var args = self.process_function_arguments()
+    var args = self.process_function_arguments(false)
     
     # Check if it's a template call first
     if self.template_definitions.contains(func_name)
@@ -1723,7 +1754,7 @@ class SimpleDSLTranspiler
       # Validate that the variable exists before processing
       self._validate_object_reference(var_name, "duration")
       
-      var expr = self.process_primary_expression("time", true)
+      var expr = self.process_primary_expression("time", true, false)
       return expr
     else
       self.error("Expected time value")
@@ -1835,8 +1866,10 @@ class SimpleDSLTranspiler
     return false
   end
   
-  # Process function arguments (legacy - kept for compatibility)
-  def process_function_arguments()
+  # Process function arguments with unified implementation
+  # @param raw_mode: boolean - If true, returns raw expressions without closures (for expression contexts)
+  #                           If false, processes values normally with closure wrapping (for statement contexts)
+  def process_function_arguments(raw_mode)
     self.expect_left_paren()
     var args = []
     
@@ -1847,7 +1880,14 @@ class SimpleDSLTranspiler
         break
       end
       
-      var arg = self.process_value("argument")
+      var arg
+      if raw_mode
+        # For expression contexts - use raw mode to avoid closure wrapping
+        arg = self.process_additive_expression("argument", true, true)  # raw_mode = true
+      else
+        # For statement contexts - use normal processing with closure wrapping
+        arg = self.process_value("argument")
+      end
       args.push(arg)
       
       self.skip_whitespace()
@@ -1874,243 +1914,9 @@ class SimpleDSLTranspiler
     return result
   end
 
-  # Process function arguments for expressions (returns raw expressions without closures)
-  def process_function_arguments_for_expression()
-    self.expect_left_paren()
-    var args = []
-    
-    while !self.at_end() && !self.check_right_paren()
-      self.skip_whitespace()
-      
-      if self.check_right_paren()
-        break
-      end
-      
-      var arg = self.process_expression_argument()
-      args.push(arg)
-      
-      self.skip_whitespace()
-      
-      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
-        self.next()  # skip comma
-        self.skip_whitespace()
-      elif !self.check_right_paren()
-        self.error("Expected ',' or ')' in function arguments")
-        break
-      end
-    end
-    
-    self.expect_right_paren()
-    
-    # Join arguments with commas
-    var result = ""
-    for i : 0..size(args)-1
-      if i > 0
-        result += ", "
-      end
-      result += args[i]
-    end
-    return result
-  end
 
-  # Process expression argument (raw expression without closure wrapping)
-  def process_expression_argument()
-    # Just process as a raw additive expression - this handles all cases
-    return self.process_additive_expression_raw()
-  end
 
-  # Process additive expression without closure wrapping (for function arguments)
-  def process_additive_expression_raw()
-    var left = self.process_multiplicative_expression_raw()
-    
-    while !self.at_end()
-      var tok = self.current()
-      if tok != nil && (tok.type == animation_dsl.Token.PLUS || tok.type == animation_dsl.Token.MINUS)
-        var op = tok.value
-        self.next()  # consume operator
-        var right = self.process_multiplicative_expression_raw()
-        left = f"{left} {op} {right}"
-      else
-        break
-      end
-    end
-    
-    return left
-  end
 
-  # Process multiplicative expression without closure wrapping (for function arguments)
-  def process_multiplicative_expression_raw()
-    var left = self.process_unary_expression_raw()
-    
-    while !self.at_end()
-      var tok = self.current()
-      if tok != nil && (tok.type == animation_dsl.Token.MULTIPLY || tok.type == animation_dsl.Token.DIVIDE)
-        var op = tok.value
-        self.next()  # consume operator
-        var right = self.process_unary_expression_raw()
-        left = f"{left} {op} {right}"
-      else
-        break
-      end
-    end
-    
-    return left
-  end
-
-  # Process unary expression without closure wrapping (for function arguments)
-  def process_unary_expression_raw()
-    var tok = self.current()
-    if tok == nil
-      self.error("Expected value")
-      return "nil"
-    end
-    
-    # Handle unary minus for negative numbers
-    if tok.type == animation_dsl.Token.MINUS
-      self.next()  # consume the minus
-      var expr = self.process_unary_expression_raw()
-      return f"(-{expr})"
-    end
-    
-    # Handle unary plus (optional)
-    if tok.type == animation_dsl.Token.PLUS
-      self.next()  # consume the plus
-      return self.process_unary_expression_raw()
-    end
-    
-    return self.process_primary_expression_raw()
-  end
-
-  # Process primary expression without closure wrapping (for function arguments)
-  def process_primary_expression_raw()
-    var tok = self.current()
-    if tok == nil
-      self.error("Expected value")
-      return "nil"
-    end
-    
-    # Parenthesized expression
-    if tok.type == animation_dsl.Token.LEFT_PAREN
-      self.next()  # consume '('
-      var expr = self.process_additive_expression_raw()
-      self.expect_right_paren()
-      return f"({expr})"
-    end
-    
-    # Function call: identifier or easing keyword followed by '('
-    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
-       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
-      
-      var func_name = tok.value
-      self.next()
-      
-      # Check if this is a mathematical function
-      if self.is_math_method(func_name)
-        var args = self.process_function_arguments_for_expression()
-        return f"self.{func_name}({args})"
-      end
-      
-      # Special case for log function in expressions
-      if func_name == "log"
-        var args = self.process_function_arguments_for_expression()
-        # Use unified log processing
-        return self.process_log_call(args, "expression", "")
-      end
-      
-      # Check if this is a template call
-      if self.template_definitions.contains(func_name)
-        # This is a template call - treat like user function
-        var args = self.process_function_arguments_for_expression()
-        var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
-        return f"{func_name}_template({full_args})"
-      end
-      
-      # For other functions, this shouldn't happen in expression context
-      self.error(f"Function '{func_name}' not supported in expression context")
-      return "nil"
-    end
-    
-    # Color value
-    if tok.type == animation_dsl.Token.COLOR
-      self.next()
-      return self.convert_color(tok.value)
-    end
-    
-    # Time value
-    if tok.type == animation_dsl.Token.TIME
-      return str(self.process_time_value())
-    end
-    
-    # Percentage value
-    if tok.type == animation_dsl.Token.PERCENTAGE
-      return str(self.process_percentage_value())
-    end
-    
-    # Number value
-    if tok.type == animation_dsl.Token.NUMBER
-      var value = tok.value
-      self.next()
-      return value
-    end
-    
-    # String value
-    if tok.type == animation_dsl.Token.STRING
-      var value = tok.value
-      self.next()
-      return f'"{value}"'
-    end
-    
-    # Identifier - variable reference or object property reference
-    if tok.type == animation_dsl.Token.IDENTIFIER
-      var name = tok.value
-      self.next()
-      
-      # Check if this is an object property reference (identifier.property)
-      if self.current() != nil && self.current().type == animation_dsl.Token.DOT
-        self.next()  # consume '.'
-        var property_name = self.expect_identifier()
-        
-        # Special handling for user.function_name() calls
-        if name == "user"
-          return self._process_user_function_call(property_name)
-        end
-        
-        # Validate that the property exists on the referenced object
-        if self.symbol_table.contains(name)
-          var instance = self.symbol_table[name]
-          # Only validate parameters for actual instances, not sequence markers
-          if type(instance) != "string"
-            var class_name = classname(instance)
-            self._validate_single_parameter(class_name, property_name, instance)
-          else
-            # This is a sequence marker - sequences don't have properties
-            self.error(f"Sequences like '{name}' do not have properties. Property references are only valid for animations and color providers.")
-            return "nil"
-          end
-        end
-        
-        # Use symbol resolution logic for the object reference
-        import introspect
-        var object_ref = ""
-        if introspect.contains(animation, name)
-          # Symbol exists in animation module, use it directly
-          object_ref = f"animation.{name}"
-        else
-          # Symbol doesn't exist in animation module, use underscore suffix
-          object_ref = f"{name}_"
-        end
-        
-        # Return a resolve call for the object property
-        return f"self.resolve({object_ref}, '{property_name}')"
-      end
-      
-      # Regular variable reference
-      return f"self.resolve({name}_)"
-    end
-    
-    self.error(f"Unexpected token in expression: {tok.value}")
-    return "nil"
-  end
   
   # Process nested function call (generates temporary variable or raw expression)
   def process_nested_function_call()
@@ -2129,13 +1935,13 @@ class SimpleDSLTranspiler
     # Check if this is a mathematical function - handle with positional arguments
     if self.is_math_method(func_name)
       # Mathematical functions use positional arguments, not named parameters
-      var args = self.process_function_arguments_for_expression()
+      var args = self.process_function_arguments(true)
       return f"self.{func_name}({args})"  # Prefix with self. for closure context
     end
     
     # Special case for log function in nested calls
     if func_name == "log"
-      var args = self.process_function_arguments_for_expression()
+      var args = self.process_function_arguments(true)
       # Use unified log processing
       return self.process_log_call(args, "expression", "")
     end
@@ -2143,14 +1949,14 @@ class SimpleDSLTranspiler
     # Check if this is a template call
     if self.template_definitions.contains(func_name)
       # This is a template call - treat like user function
-      var args = self.process_function_arguments_for_expression()
+      var args = self.process_function_arguments(true)
       var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
       return f"{func_name}_template({full_args})"
     else
       # Check if this is a simple function call without named parameters
       if self._is_simple_function_call(func_name)
         # For simple functions like strip_length(), do direct assignment
-        var args = self.process_function_arguments()
+        var args = self.process_function_arguments(false)
         if args != ""
           return f"animation.{func_name}(engine, {args})"
         else
@@ -2173,72 +1979,7 @@ class SimpleDSLTranspiler
   
   # Process named arguments for a variable (new simpler pattern with parameter validation)
   def process_named_arguments_for_variable(var_name)
-    self.expect_left_paren()
-    
-    # Extract function name from variable name for validation
-    var func_name = ""
-    import string
-    if string.find(var_name, "temp_") == 0
-      # Extract function name from temp variable: temp_breathe_123 -> breathe
-      var parts = string.split(var_name, "_")
-      if size(parts) >= 2
-        func_name = parts[1]
-      end
-    end
-    
-    # Create animation instance once for parameter validation
-    var animation_instance = nil
-    if func_name != ""
-      animation_instance = self._create_instance_for_validation(func_name)
-    end
-    
-    while !self.at_end() && !self.check_right_paren()
-      self.skip_whitespace_including_newlines()
-      
-      if self.check_right_paren()
-        break
-      end
-      
-      # Parse named argument: param_name=value
-      var param_name = self.expect_identifier()
-      
-      # Validate parameter immediately as it's parsed
-      if animation_instance != nil && func_name != ""
-        self._validate_single_parameter(func_name, param_name, animation_instance)
-      end
-      
-      self.expect_assign()
-      var param_value = self.process_value("argument")
-      var inline_comment = self.collect_inline_comment()
-      
-      # Generate parameter assignment immediately
-      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
-      
-      # Skip whitespace but preserve newlines for separator detection
-      while !self.at_end()
-        var tok = self.current()
-        if tok != nil && tok.type == animation_dsl.Token.COMMENT
-          self.next()
-        else
-          break
-        end
-      end
-      
-      # Check for parameter separator: comma OR newline OR end of parameters
-      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
-        self.next()  # skip comma
-        self.skip_whitespace_including_newlines()
-      elif self.current() != nil && self.current().type == animation_dsl.Token.NEWLINE
-        # Newline acts as parameter separator - skip it and continue
-        self.next()  # skip newline
-        self.skip_whitespace_including_newlines()
-      elif !self.check_right_paren()
-        self.error("Expected ',' or ')' in function arguments")
-        break
-      end
-    end
-    
-    self.expect_right_paren()
+    self._process_named_arguments_unified(var_name, "", "variable")
   end
   
   def expect_assign()
@@ -2736,60 +2477,7 @@ class SimpleDSLTranspiler
   # @param var_name: string - Variable name to assign parameters to
   # @param func_name: string - Animation function name for validation
   def _process_named_arguments_for_animation(var_name, func_name)
-    # Debug: print that we're entering this method
-    # print(f"DEBUG: Entering _process_named_arguments_for_animation for {func_name}")
-    self.expect_left_paren()
-    
-    # Create animation instance once for parameter validation
-    var animation_instance = self._create_instance_for_validation(func_name)
-    
-    while !self.at_end() && !self.check_right_paren()
-      self.skip_whitespace_including_newlines()
-      
-      if self.check_right_paren()
-        break
-      end
-      
-      # Parse named argument: param_name=value
-      var param_name = self.expect_identifier()
-      
-      # Validate parameter immediately as it's parsed
-      if animation_instance != nil
-        self._validate_single_parameter(func_name, param_name, animation_instance)
-      end
-      
-      self.expect_assign()
-      var param_value = self.process_value("argument")
-      var inline_comment = self.collect_inline_comment()
-      
-      # Generate parameter assignment immediately
-      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
-      
-      # Skip whitespace but preserve newlines for separator detection
-      while !self.at_end()
-        var tok = self.current()
-        if tok != nil && tok.type == animation_dsl.Token.COMMENT
-          self.next()
-        else
-          break
-        end
-      end
-      
-      # Check for parameter separator: comma OR newline OR end of parameters
-      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
-        self.next()  # skip comma
-        self.skip_whitespace_including_newlines()
-      elif self.current() != nil && self.current().type == animation_dsl.Token.NEWLINE
-        # Newline acts as parameter separator - skip it and continue
-        self.next()  # skip newline
-        self.skip_whitespace_including_newlines()
-      elif !self.check_right_paren()
-        self.error("Expected ',' or ')' in function arguments")
-        break
-      end
-    end
-    
-    self.expect_right_paren()
+    self._process_named_arguments_unified(var_name, func_name, "animation")
   end
   
   # Create instance for parameter validation at transpile time
@@ -2839,26 +2527,8 @@ class SimpleDSLTranspiler
   # @param context: string - Context where the reference occurs (for error messages)
   def _validate_object_reference(object_name, context)
     try
-      import introspect
-      
-      # Check if object exists in symbol table (user-defined)
-      if self.symbol_table.contains(object_name)
-        return  # Object exists, validation passed
-      end
-      
-      # Check if object exists in animation module (built-in)
-      if introspect.contains(animation, object_name)
-        return  # Object exists, validation passed
-      end
-      
-      # Check if it's a sequence name
-      if self.sequence_names.contains(object_name)
-        return  # Sequence exists, validation passed
-      end
-      
-      # Object not found - report error
-      self.error(f"Undefined reference '{object_name}' in {context}. Make sure the object is defined before use.")
-      
+      # Use consolidated symbol resolution
+      self.validate_symbol_reference(object_name, context)
     except .. as e, msg
       # If validation fails for any reason, just continue
       # This ensures the transpiler is robust even if validation has issues
@@ -2926,10 +2596,56 @@ class SimpleDSLTranspiler
     return self._validate_factory_function(func_name, animation.value_provider)
   end
   
+  # Consolidated symbol resolution - returns the symbol reference string
+  def resolve_symbol_reference(name)
+    import introspect
+    
+    # Check if it's a named color
+    if animation_dsl.is_color_name(name)
+      return self.get_named_color_value(name)
+    end
+    
+    # Check symbol table, sequences, then animation module
+    if self.symbol_table.contains(name) || self.sequence_names.contains(name)
+      return f"{name}_"
+    elif introspect.contains(animation, name)
+      return f"animation.{name}"
+    else
+      return f"{name}_"  # Assume user-defined if not found
+    end
+  end
+  
+  # Check if a symbol exists (for validation)
+  def symbol_exists(name)
+    import introspect
+    
+    return (
+      animation_dsl.is_color_name(name) ||
+      self.symbol_table.contains(name) ||
+      self.sequence_names.contains(name) ||
+      introspect.contains(animation, name)
+    )
+  end
+  
+  # Validate symbol reference with error reporting
+  def validate_symbol_reference(name, context)
+    if !self.symbol_exists(name)
+      self.error(f"Undefined reference '{name}' in {context}. Make sure the object is defined before use.")
+      return false
+    end
+    return true
+  end
+
   # Validate that a referenced object is a value provider or animation
   def _validate_value_provider_reference(object_name, context)
     try
-      # Check if object exists in symbol table (user-defined)
+      # First check if symbol exists
+      if !self.symbol_exists(object_name)
+        self.error(f"Undefined reference '{object_name}' in {context} statement. Make sure the value provider or animation is defined before use.")
+        return false
+      end
+      
+      # Check if it's a user-defined object in symbol table
       if self.symbol_table.contains(object_name)
         var marker = self.symbol_table[object_name]
         
@@ -2951,9 +2667,8 @@ class SimpleDSLTranspiler
         end
       end
       
-      # Object not found in symbol table
-      self.error(f"Undefined reference '{object_name}' in {context} statement. Make sure the value provider or animation is defined before use.")
-      return false
+      # For built-in symbols or sequences, assume they're valid (can't validate at compile time)
+      return true
       
     except .. as e, msg
       # If validation fails for any reason, report error but continue
@@ -2962,12 +2677,31 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Process named arguments with parameter validation at transpile time
-  def _process_named_arguments_generic(var_name, func_name)
-    self.expect_left_paren()
+  # Core parameter processing logic that can be used by different contexts
+  # @param func_name: string - Function name for validation (can be empty for variable mode)
+  # @param validation_type: string - Type of validation: "animation", "color_provider", "value_provider", "variable", or "generic"
+  # @param assignment_callback: function - Callback to handle parameter assignments, receives (param_name, param_value, inline_comment)
+  def _process_parameters_core(func_name, validation_type, assignment_callback)
+    # Create instance once for parameter validation based on validation type
+    var instance = nil
+    var effective_func_name = func_name
     
-    # Create instance once for parameter validation
-    var instance = self._create_instance_for_validation(func_name)
+    if validation_type == "variable"
+      # Extract function name from variable name for validation
+      import string
+      if string.find(func_name, "temp_") == 0
+        # Extract function name from temp variable: temp_breathe_123 -> breathe
+        var parts = string.split(func_name, "_")
+        if size(parts) >= 2
+          effective_func_name = parts[1]
+        end
+      end
+    end
+    
+    # Create validation instance if we have a function name
+    if effective_func_name != ""
+      instance = self._create_instance_for_validation(effective_func_name)
+    end
     
     while !self.at_end() && !self.check_right_paren()
       self.skip_whitespace_including_newlines()
@@ -2980,16 +2714,16 @@ class SimpleDSLTranspiler
       var param_name = self.expect_identifier()
       
       # Validate parameter immediately as it's parsed
-      if instance != nil
-        self._validate_single_parameter(func_name, param_name, instance)
+      if instance != nil && effective_func_name != ""
+        self._validate_single_parameter(effective_func_name, param_name, instance)
       end
       
       self.expect_assign()
       var param_value = self.process_value("argument")
       var inline_comment = self.collect_inline_comment()
       
-      # Generate parameter assignment immediately
-      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
+      # Call the assignment callback to handle the parameter
+      assignment_callback(param_name, param_value, inline_comment)
       
       # Skip whitespace but preserve newlines for separator detection
       while !self.at_end()
@@ -3014,13 +2748,31 @@ class SimpleDSLTranspiler
         break
       end
     end
+  end
+  
+  # Unified parameter processing method with validation type parameter
+  # @param var_name: string - Variable name to assign parameters to
+  # @param func_name: string - Function name for validation (can be empty for variable mode)
+  # @param validation_type: string - Type of validation: "animation", "color_provider", "value_provider", "variable", or "generic"
+  def _process_named_arguments_unified(var_name, func_name, validation_type)
+    self.expect_left_paren()
     
+    # Use the core processing logic with a callback for standard assignments
+    var assignment_callback = def (param_name, param_value, inline_comment)
+      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
+    end
+    
+    self._process_parameters_core(func_name, validation_type, assignment_callback)
     self.expect_right_paren()
   end
   
-  # Process named arguments for color provider declarations with parameter validation
+  # Legacy wrapper methods for backward compatibility
+  def _process_named_arguments_generic(var_name, func_name)
+    self._process_named_arguments_unified(var_name, func_name, "generic")
+  end
+  
   def _process_named_arguments_for_color_provider(var_name, func_name)
-    self._process_named_arguments_generic(var_name, func_name)
+    self._process_named_arguments_unified(var_name, func_name, "color_provider")
   end
 
   # Check if this is a simple function call that doesn't need anonymous function treatment
@@ -3050,55 +2802,12 @@ class SimpleDSLTranspiler
     # Process named arguments and collect them
     self.expect_left_paren()
     
-    # Create animation instance once for parameter validation
-    var animation_instance = self._create_instance_for_validation(func_name)
-    
-    while !self.at_end() && !self.check_right_paren()
-      self.skip_whitespace_including_newlines()
-      
-      if self.check_right_paren()
-        break
-      end
-      
-      # Parse named argument: param_name=value
-      var param_name = self.expect_identifier()
-      
-      # Validate parameter immediately as it's parsed
-      if animation_instance != nil
-        self._validate_single_parameter(func_name, param_name, animation_instance)
-      end
-      
-      self.expect_assign()
-      var param_value = self.process_value("argument")
-      var inline_comment = self.collect_inline_comment()
-      
-      # Add parameter assignment to the anonymous function
+    # Use the core processing logic with a callback for anonymous function assignments
+    var assignment_callback = def (param_name, param_value, inline_comment)
       lines.push(f"  provider.{param_name} = {param_value}{inline_comment}")
-      
-      # Skip whitespace but preserve newlines for separator detection
-      while !self.at_end()
-        var tok = self.current()
-        if tok != nil && tok.type == animation_dsl.Token.COMMENT
-          self.next()
-        else
-          break
-        end
-      end
-      
-      # Check for parameter separator: comma OR newline OR end of parameters
-      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
-        self.next()  # skip comma
-        self.skip_whitespace_including_newlines()
-      elif self.current() != nil && self.current().type == animation_dsl.Token.NEWLINE
-        # Newline acts as parameter separator - skip it and continue
-        self.next()  # skip newline
-        self.skip_whitespace_including_newlines()
-      elif !self.check_right_paren()
-        self.error("Expected ',' or ')' in function arguments")
-        break
-      end
     end
     
+    self._process_parameters_core(func_name, "generic", assignment_callback)
     self.expect_right_paren()
     
     # Complete the anonymous function

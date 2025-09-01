@@ -75,11 +75,11 @@ class SequenceManager
   end
   
   # Start this sequence
+  # FIXED: More conservative engine clearing to avoid black frames
   def start(time_ms)
     # Stop any current sequence
     if self.is_running
       self.is_running = false
-      self.engine.clear()
       # Stop any sub-sequences
       self.stop_all_subsequences()
     end
@@ -92,7 +92,24 @@ class SequenceManager
     
     # Start executing if we have steps
     if size(self.steps) > 0
-      self.execute_current_step(time_ms)
+      # Execute all consecutive closure steps at the beginning atomically
+      while self.step_index < size(self.steps)
+        var step = self.steps[self.step_index]
+        if step["type"] == "closure"
+          var closure_func = step["closure"]
+          if closure_func != nil
+            closure_func(self.engine)
+          end
+          self.step_index += 1
+        else
+          break
+        end
+      end
+      
+      # Now execute the next non-closure step (usually play)
+      if self.step_index < size(self.steps)
+        self.execute_current_step(time_ms)
+      end
     end
     
     return self
@@ -108,15 +125,14 @@ class SequenceManager
         var current_step = self.steps[self.step_index]
         if current_step["type"] == "play"
           var anim = current_step["animation"]
-          self.engine.remove_animation(anim)
+          self.engine.remove(anim)
         elif current_step["type"] == "subsequence"
           var sub_seq = current_step["sequence_manager"]
           sub_seq.stop()
         end
       end
       
-      # Clear engine and stop all sub-sequences
-      self.engine.clear()
+      # Stop all sub-sequences (but don't clear entire engine)
       self.stop_all_subsequences()
     end
     return self
@@ -151,9 +167,9 @@ class SequenceManager
         self.advance_to_next_step(current_time)
       end
     elif current_step["type"] == "closure"
-      # Assign steps are handled in batches by advance_to_next_step
+      # Closure steps are handled in batches by advance_to_next_step
       # This should not happen in normal flow, but handle it just in case
-      self.execute_assign_steps_batch(current_time)
+      self.execute_closure_steps_batch(current_time)
     else
       # Handle regular steps with duration
       if current_step.contains("duration") && current_step["duration"] > 0
@@ -181,7 +197,7 @@ class SequenceManager
     
     if step["type"] == "play"
       var anim = step["animation"]
-      self.engine.add_animation(anim)
+      self.engine.add(anim)
       anim.start(current_time)
       
     elif step["type"] == "wait"
@@ -190,10 +206,10 @@ class SequenceManager
       
     elif step["type"] == "stop"
       var anim = step["animation"]
-      self.engine.remove_animation(anim)
+      self.engine.remove(anim)
       
     elif step["type"] == "closure"
-      # Closure steps should be handled in batches by execute_assign_steps_batch
+      # Closure steps should be handled in batches by execute_closure_steps_batch
       # This should not happen in normal flow, but handle it for safety
       var closure_func = step["closure"]
       if closure_func != nil
@@ -210,27 +226,34 @@ class SequenceManager
   end
   
   # Advance to the next step in the sequence
+  # FIXED: Atomic transition to eliminate black frames
   def advance_to_next_step(current_time)
-    # Stop current animations if step had duration
+    # Get current step info BEFORE advancing
     var current_step = self.steps[self.step_index]
+    var current_anim = nil
+    
+    # Store reference to current animation but DON'T remove it yet
     if current_step["type"] == "play" && current_step.contains("duration")
-      var anim = current_step["animation"]
-      self.engine.remove_animation(anim)
+      current_anim = current_step["animation"]
     end
     
     self.step_index += 1
     
     if self.step_index >= size(self.steps)
+      # Only remove animation when completing iteration
+      if current_anim != nil
+        self.engine.remove(current_anim)
+      end
       self.complete_iteration(current_time)
     else
-      # Execute all consecutive assign steps atomically
-      self.execute_assign_steps_batch(current_time)
+      # Execute closures and start next animation BEFORE removing current one
+      self.execute_closure_steps_batch_atomic(current_time, current_anim)
     end
   end
   
   # Execute all consecutive closure steps in a batch to avoid black frames
-  def execute_assign_steps_batch(current_time)
-    # Execute all consecutive closure steps (including both assign and log steps)
+  def execute_closure_steps_batch(current_time)
+    # Execute all consecutive closure steps
     while self.step_index < size(self.steps)
       var step = self.steps[self.step_index]
       if step["type"] == "closure"
@@ -245,7 +268,7 @@ class SequenceManager
       end
     end
     
-    # Now execute the next non-assign step
+    # Now execute the next non-closure step
     if self.step_index < size(self.steps)
       self.execute_current_step(current_time)
     else
@@ -253,7 +276,40 @@ class SequenceManager
     end
   end
   
+  # ADDED: Atomic batch execution to eliminate black frames
+  def execute_closure_steps_batch_atomic(current_time, previous_anim)
+    # Execute all consecutive closure steps
+    while self.step_index < size(self.steps)
+      var step = self.steps[self.step_index]
+      if step["type"] == "closure"
+        var closure_func = step["closure"]
+        if closure_func != nil
+          closure_func(self.engine)
+        end
+        self.step_index += 1
+      else
+        break
+      end
+    end
+    
+    # Start the next animation BEFORE removing the previous one
+    if self.step_index < size(self.steps)
+      self.execute_current_step(current_time)
+    end
+    
+    # NOW it's safe to remove the previous animation (no gap)
+    if previous_anim != nil
+      self.engine.remove(previous_anim)
+    end
+    
+    # Handle completion
+    if self.step_index >= size(self.steps)
+      self.complete_iteration(current_time)
+    end
+  end
+  
   # Complete current iteration and check if we should repeat
+  # FIXED: Ensure atomic transitions during repeat iterations
   def complete_iteration(current_time)
     self.current_iteration += 1
     
@@ -262,9 +318,27 @@ class SequenceManager
     
     # Check if we should continue repeating
     if resolved_repeat_count == -1 || self.current_iteration < resolved_repeat_count
-      # Start next iteration
+      # Start next iteration - execute all initial closures atomically
       self.step_index = 0
-      self.execute_current_step(current_time)
+      
+      # Execute all consecutive closure steps at the beginning atomically
+      while self.step_index < size(self.steps)
+        var step = self.steps[self.step_index]
+        if step["type"] == "closure"
+          var closure_func = step["closure"]
+          if closure_func != nil
+            closure_func(self.engine)
+          end
+          self.step_index += 1
+        else
+          break
+        end
+      end
+      
+      # Now execute the next non-closure step (usually play)
+      if self.step_index < size(self.steps)
+        self.execute_current_step(current_time)
+      end
     else
       # All iterations complete
       self.is_running = false

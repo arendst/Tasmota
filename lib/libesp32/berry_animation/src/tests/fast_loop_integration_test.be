@@ -78,7 +78,7 @@ def test_on_tick_performance()
   # Add a test animation
   var anim = TestAnimation(engine)
   anim.priority = 1
-  engine.add_animation(anim)
+  engine.add(anim)
   anim.start(tasmota.millis())
   
   # Start the engine
@@ -125,7 +125,7 @@ def test_animation_update_timing()
   # Add a test animation
   var anim = TestAnimation(engine)
   anim.priority = 1
-  engine.add_animation(anim)
+  engine.add(anim)
   
   # Start the animation and engine
   var start_time = 2000

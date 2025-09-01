@@ -126,7 +126,7 @@ except "value_error"
 end
 
 # Test engine integration
-engine.add_animation(blue_breathe)
+engine.add(blue_breathe)
 print("✓ Animation added to engine successfully")
 
 # Validate key test results

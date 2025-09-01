@@ -13,7 +13,12 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var neon_colors_ = bytes("00FF0080" "5500FF80" "AA8000FF" "FFFF8000")
+var neon_colors_ = bytes(
+  "00FF0080"  # Hot pink
+  "5500FF80"  # Neon green
+  "AA8000FF"  # Electric purple
+  "FFFF8000"  # Neon orange
+)
 # Main neon glow with color cycling
 var neon_main_ = animation.rich_palette_animation(engine)
 neon_main_.palette = neon_colors_

@@ -42,7 +42,7 @@ base_anim.opacity = 128       # 50% opacity
 base_anim.priority = 10
 base_anim.name = "base_red"
 
-opacity_engine.add_animation(base_anim)
+opacity_engine.add(base_anim)
 opacity_engine.start()
 
 # Create frame buffer and test rendering
@@ -77,7 +77,7 @@ assert_equals(masked_anim.opacity.name, "opacity_mask", "Opacity animation shoul
 print("\n--- Test 11c: Animation opacity rendering ---")
 
 opacity_engine.clear()
-opacity_engine.add_animation(masked_anim)
+opacity_engine.add(masked_anim)
 opacity_engine.start()
 
 # Start both animations
@@ -111,7 +111,7 @@ rainbow_base.name = "rainbow_with_pulse"
 
 # Test multiple renders with changing opacity
 opacity_engine.clear()
-opacity_engine.add_animation(rainbow_base)
+opacity_engine.add(rainbow_base)
 
 rainbow_base.start()
 pulsing_opacity.start()
@@ -181,7 +181,7 @@ base_nested.opacity = opacity1
 
 # Test rendering with nested opacity
 opacity_engine.clear()
-opacity_engine.add_animation(base_nested)
+opacity_engine.add(base_nested)
 
 base_nested.start()
 opacity1.start()
@@ -297,7 +297,7 @@ for i : 0..9
   perf_animations.push(perf_base)
   perf_opacities.push(perf_opacity)
   
-  opacity_engine.add_animation(perf_base)
+  opacity_engine.add(perf_base)
 end
 
 # Start all animations

@@ -54,9 +54,9 @@ anim3.color = 0xFF0000FF
 anim3.priority = 15
 anim3.name = "blue"
 
-assert_test(engine.add_animation(anim1), "Should add first animation")
-assert_test(engine.add_animation(anim2), "Should add second animation")
-assert_test(engine.add_animation(anim3), "Should add third animation")
+assert_test(engine.add(anim1), "Should add first animation")
+assert_test(engine.add(anim2), "Should add second animation")
+assert_test(engine.add(anim3), "Should add third animation")
 assert_equals(engine.size(), 3, "Engine should have 3 animations")
 
 # Test priority sorting (higher priority first)
@@ -66,7 +66,7 @@ assert_equals(animations[1].priority, 10, "Second animation should have medium p
 assert_equals(animations[2].priority, 5, "Third animation should have lowest priority")
 
 # Test duplicate prevention
-assert_test(!engine.add_animation(anim1), "Should not add duplicate animation")
+assert_test(!engine.add(anim1), "Should not add duplicate animation")
 assert_equals(engine.size(), 3, "Size should remain 3 after duplicate attempt")
 
 # Test animation removal
@@ -93,7 +93,7 @@ var test_anim = animation.solid(engine)
 test_anim.color = 0xFFFF0000
 test_anim.priority = 10
 test_anim.name = "test"
-engine.add_animation(test_anim)
+engine.add(test_anim)
 engine.start()
 
 var current_time = tasmota.millis()
@@ -109,7 +109,7 @@ print("\n--- Test 5: Sequence Manager Integration ---")
 var seq_manager = animation.SequenceManager(engine)
 assert_not_nil(seq_manager, "Sequence manager should be created")
 
-engine.add_sequence_manager(seq_manager)
+engine.add(seq_manager)
 assert_test(true, "Should add sequence manager without error")
 
 engine.remove_sequence_manager(seq_manager)
@@ -117,9 +117,9 @@ assert_test(true, "Should remove sequence manager without error")
 
 # Test 6: Clear Functionality
 print("\n--- Test 6: Clear Functionality ---")
-engine.add_animation(anim1)
-engine.add_animation(anim3)
-engine.add_sequence_manager(seq_manager)
+engine.add(anim1)
+engine.add(anim3)
+engine.add(seq_manager)
 
 assert_equals(engine.size(), 3, "Should have 3 animations before clear")
 engine.clear()
@@ -137,7 +137,7 @@ for i : 0..49
   anim.color = color
   anim.priority = i
   anim.name = f"perf_{i}"
-  engine.add_animation(anim)
+  engine.add(anim)
 end
 
 var add_time = tasmota.millis() - start_time
@@ -261,7 +261,7 @@ dynamic_engine.start()
 var runtime_anim = animation.solid(dynamic_engine)
 runtime_anim.color = 0xFF00FF00  # Green
 runtime_anim.priority = 10
-dynamic_engine.add_animation(runtime_anim)
+dynamic_engine.add(runtime_anim)
 
 # Simulate several ticks with stable length
 var tick_time = tasmota.millis()
@@ -303,12 +303,12 @@ dynamic_engine.clear()
 var red_anim = animation.solid(dynamic_engine)
 red_anim.color = 0xFFFF0000
 red_anim.priority = 20
-dynamic_engine.add_animation(red_anim)
+dynamic_engine.add(red_anim)
 
 var blue_anim = animation.solid(dynamic_engine)
 blue_anim.color = 0xFF0000FF
 blue_anim.priority = 10
-dynamic_engine.add_animation(blue_anim)
+dynamic_engine.add(blue_anim)
 
 assert_equals(dynamic_engine.size(), 2, "Should have 2 animations")
 

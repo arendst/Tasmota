@@ -145,7 +145,7 @@ def test_sequence_manager_timing()
 
   # Start sequence at time 20000
   tasmota.set_millis(20000)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(20000)  # Update engine time
   
@@ -202,7 +202,7 @@ def test_sequence_manager_step_info()
   
   # Start sequence
   tasmota.set_millis(30000)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(30000)  # Update engine time
   
@@ -276,7 +276,7 @@ def test_sequence_manager_is_running()
   seq_manager.push_play_step(test_anim, 1000)
   
   tasmota.set_millis(50000)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(50000)  # Update engine time
   assert(seq_manager.is_sequence_running() == true, "Sequence should be running after start")
@@ -323,7 +323,7 @@ def test_sequence_manager_assignment_steps()
   
   # Start sequence
   tasmota.set_millis(80000)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(80000)  # Update engine time
   
@@ -393,7 +393,7 @@ def test_sequence_manager_complex_sequence()
   
   # Start sequence
   tasmota.set_millis(60000)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   engine.start()  # Start the engine
   engine.on_tick(60000)  # Update engine time
   
@@ -438,7 +438,7 @@ def test_sequence_manager_integration()
   
   # Test engine integration
   var seq_manager = animation.SequenceManager(engine)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   
   # Create test sequence using new parameterized API
   var color_provider = animation.static_color(engine)
@@ -632,7 +632,7 @@ def test_sequence_manager_dynamic_repeat_changes()
   
   # Start sequence
   tasmota.set_millis(120000)
-  engine.add_sequence_manager(seq_manager)
+  engine.add(seq_manager)
   engine.start()
   engine.on_tick(120000)
   seq_manager.start(120000)

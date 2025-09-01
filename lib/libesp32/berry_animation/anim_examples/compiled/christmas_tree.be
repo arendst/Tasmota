@@ -17,7 +17,13 @@ var tree_green_ = 0xFF006600
 var tree_base_ = animation.solid(engine)
 tree_base_.color = tree_green_
 # Define ornament colors
-var ornament_colors_ = bytes("00FF0000" "40FFD700" "800000FF" "C0FFFFFF" "FFFF00FF")
+var ornament_colors_ = bytes(
+  "00FF0000"  # Red
+  "40FFD700"  # Gold
+  "800000FF"  # Blue
+  "C0FFFFFF"  # White
+  "FFFF00FF"  # Magenta
+)
 # Colorful ornaments as twinkling lights
 var ornament_pattern_ = animation.rich_palette(engine)
 ornament_pattern_.palette = ornament_colors_

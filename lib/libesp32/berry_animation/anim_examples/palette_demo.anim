@@ -4,19 +4,13 @@
 #strip length 30
 
 # Define a fire palette
-palette fire_colors = [
-  (0, 0x000000),    # Black
-  (64, 0x800000),   # Dark red
-  (128, 0xFF0000),  # Red
-  (192, 0xFF8000),  # Orange
-  (255, 0xFFFF00)   # Yellow
-]
+palette fire_colors = [ (0, 0x000000), (64, 0x800000), (128, 0xFF0000), (192, 0xFF8000), (255, 0xFFFF00) ]
 
 # Define an ocean palette
 palette ocean_colors = [
-  (0, 0x000080),    # Navy blue
+  (0, 0x000080)     # Navy blue
   (64, 0x0000FF),   # Blue
-  (128, 0x00FFFF),  # Cyan
+  (128, 0x00FFFF)   # Cyan
   (192, 0x00FF80),  # Spring green
   (255, 0x008000)   # Green
 ]
@@ -25,6 +19,8 @@ palette ocean_colors = [
 animation fire_anim = rich_palette_animation(palette=fire_colors, cycle_period=5s)
 
 animation ocean_anim = rich_palette_animation(palette=ocean_colors, cycle_period=8s)
+
+animation forest_anim = rich_palette_animation(palette=PALETTE_FOREST, cycle_period=8s)
 
 # Sequence to show both palettes
 sequence palette_demo {
@@ -35,6 +31,7 @@ sequence palette_demo {
   repeat 2 times {
     play fire_anim for 3s
     play ocean_anim for 3s
+    play forest_anim for 3s
   }
 }
 

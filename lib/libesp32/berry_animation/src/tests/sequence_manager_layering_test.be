@@ -19,9 +19,9 @@ def test_multiple_sequence_managers()
   var seq_manager3 = animation.SequenceManager(engine)
   
   # Register all sequence managers with engine
-  engine.add_sequence_manager(seq_manager1)
-  engine.add_sequence_manager(seq_manager2)
-  engine.add_sequence_manager(seq_manager3)
+  engine.add(seq_manager1)
+  engine.add(seq_manager2)
+  engine.add(seq_manager3)
   
   assert(engine.sequence_managers.size() == 3, "Engine should have 3 sequence managers")
   
@@ -93,8 +93,8 @@ def test_sequence_manager_coordination()
   var seq_manager1 = animation.SequenceManager(engine)
   var seq_manager2 = animation.SequenceManager(engine)
   
-  engine.add_sequence_manager(seq_manager1)
-  engine.add_sequence_manager(seq_manager2)
+  engine.add(seq_manager1)
+  engine.add(seq_manager2)
   
   # Create test animations using new parameterized API
   var provider1 = animation.static_color(engine)
@@ -160,8 +160,8 @@ def test_sequence_manager_engine_integration()
   var seq_manager1 = animation.SequenceManager(engine)
   var seq_manager2 = animation.SequenceManager(engine)
   
-  engine.add_sequence_manager(seq_manager1)
-  engine.add_sequence_manager(seq_manager2)
+  engine.add(seq_manager1)
+  engine.add(seq_manager2)
   
   # Create test animations using new parameterized API
   var provider1 = animation.static_color(engine)
@@ -221,9 +221,9 @@ def test_sequence_manager_removal()
   var seq_manager2 = animation.SequenceManager(engine)
   var seq_manager3 = animation.SequenceManager(engine)
   
-  engine.add_sequence_manager(seq_manager1)
-  engine.add_sequence_manager(seq_manager2)
-  engine.add_sequence_manager(seq_manager3)
+  engine.add(seq_manager1)
+  engine.add(seq_manager2)
+  engine.add(seq_manager3)
   
   assert(engine.sequence_managers.size() == 3, "Should have 3 sequence managers")
   
@@ -262,8 +262,8 @@ def test_sequence_manager_clear_all()
   var seq_manager1 = animation.SequenceManager(engine)
   var seq_manager2 = animation.SequenceManager(engine)
   
-  engine.add_sequence_manager(seq_manager1)
-  engine.add_sequence_manager(seq_manager2)
+  engine.add(seq_manager1)
+  engine.add(seq_manager2)
   
   # Create test animations and sequences using new parameterized API
   var provider1 = animation.static_color(engine)
@@ -321,7 +321,7 @@ def test_sequence_manager_stress()
   var seq_managers = []
   for i : 0..9  # 10 sequence managers
     var seq_mgr = animation.SequenceManager(engine)
-    engine.add_sequence_manager(seq_mgr)
+    engine.add(seq_mgr)
     seq_managers.push(seq_mgr)
   end
   
@@ -347,7 +347,7 @@ def test_sequence_manager_stress()
     seq_managers[i].push_play_step(test_anim, (i + 1) * 500)  # Different durations
                    .push_wait_step(200)
     
-    engine.add_sequence_manager(seq_managers[i])
+    engine.add(seq_managers[i])
   end
   
   # Verify all sequences are running

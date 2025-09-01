@@ -13,13 +13,41 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var fire_gradient_ = bytes("00000000" "20330000" "40660000" "60CC0000" "80FF3300" "A0FF6600" "C0FF9900" "E0FFCC00" "FFFFFF00")
+var fire_gradient_ = bytes(
+  "00000000"  # Black (no fire)
+  "20330000"  # Very dark red
+  "40660000"  # Dark red
+  "60CC0000"  # Red
+  "80FF3300"  # Red-orange
+  "A0FF6600"  # Orange
+  "C0FF9900"  # Light orange
+  "E0FFCC00"  # Yellow-orange
+  "FFFFFF00"  # Bright yellow
+)
 # Example 2: Ocean palette with named colors
-var ocean_depths_ = bytes("00000000" "40000080" "800000FF" "C000FFFF" "FFFFFFFF")
+var ocean_depths_ = bytes(
+  "00000000"  # Deep ocean
+  "40000080"  # Deep blue
+  "800000FF"  # Ocean blue
+  "C000FFFF"  # Shallow water
+  "FFFFFFFF"  # Foam/waves
+)
 # Example 3: Aurora palette (from the original example)
-var aurora_borealis_ = bytes("00000022" "40004400" "8000AA44" "C044AA88" "FF88FFAA")
+var aurora_borealis_ = bytes(
+  "00000022"  # Dark night sky
+  "40004400"  # Dark green
+  "8000AA44"  # Aurora green
+  "C044AA88"  # Light green
+  "FF88FFAA"  # Bright aurora
+)
 # Example 4: Sunset palette mixing hex and named colors
-var sunset_sky_ = bytes("00191970" "40800080" "80FF69B4" "C0FFA500" "FFFFFF00")
+var sunset_sky_ = bytes(
+  "00191970"  # Midnight blue
+  "40800080"  # Purple twilight
+  "80FF69B4"  # Hot pink
+  "C0FFA500"  # Sunset orange
+  "FFFFFF00"  # Sun
+)
 # Create animations using each palette
 var fire_effect_ = animation.rich_palette_animation(engine)
 fire_effect_.palette = fire_gradient_

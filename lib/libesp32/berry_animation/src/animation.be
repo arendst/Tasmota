@@ -13,7 +13,7 @@
 #   import animation
 #   var engine = animation.create_engine(strip)
 #   var pulse_anim = animation.pulse(animation.solid(0xFF0000), 2000, 50, 255)
-#   engine.add_animation(pulse_anim).start()
+#   engine.add(pulse_anim).start()
 #
 # Launch standalone with: "./berry -s -g -m lib/libesp32/berry_animation"
 

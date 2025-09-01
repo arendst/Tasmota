@@ -13,9 +13,21 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var aurora_colors_ = bytes("00000022" "40004400" "8000AA44" "C044AA88" "FF88FFAA")
+var aurora_colors_ = bytes(
+  "00000022"  # Dark night sky
+  "40004400"  # Dark green
+  "8000AA44"  # Aurora green
+  "C044AA88"  # Light green
+  "FF88FFAA"  # Bright aurora
+)
 # Secondary purple palette
-var aurora_purple_ = bytes("00220022" "40440044" "808800AA" "C0AA44CC" "FFCCAAFF")
+var aurora_purple_ = bytes(
+  "00220022"  # Dark purple
+  "40440044"  # Medium purple
+  "808800AA"  # Bright purple
+  "C0AA44CC"  # Light purple
+  "FFCCAAFF"  # Pale purple
+)
 # Base aurora animation with slow flowing colors
 var aurora_base_ = animation.rich_palette_animation(engine)
 aurora_base_.palette = aurora_colors_  # palette

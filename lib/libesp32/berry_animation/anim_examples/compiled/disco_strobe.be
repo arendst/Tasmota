@@ -13,7 +13,15 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var disco_colors_ = bytes("00FF0000" "2AFF8000" "55FFFF00" "8000FF00" "AA0000FF" "D58000FF" "FFFF00FF")
+var disco_colors_ = bytes(
+  "00FF0000"  # Red
+  "2AFF8000"  # Orange
+  "55FFFF00"  # Yellow
+  "8000FF00"  # Green
+  "AA0000FF"  # Blue
+  "D58000FF"  # Purple
+  "FFFF00FF"  # Magenta
+)
 # Fast color cycling base
 var disco_base_ = animation.rich_palette_animation(engine)
 disco_base_.palette = disco_colors_

@@ -13,7 +13,13 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var ocean_colors_ = bytes("00000080" "400040C0" "800080FF" "C040C0FF" "FF80FFFF")
+var ocean_colors_ = bytes(
+  "00000080"  # Deep blue
+  "400040C0"  # Ocean blue
+  "800080FF"  # Light blue
+  "C040C0FF"  # Cyan
+  "FF80FFFF"  # Light cyan
+)
 # Base ocean animation with slow color cycling
 var ocean_base_ = animation.rich_palette_animation(engine)
 ocean_base_.palette = ocean_colors_

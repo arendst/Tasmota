@@ -36,6 +36,10 @@ import animation_dsl  # DSL compiler and runtime (required for DSL)
 - Integrating with existing Berry code
 - Firmware size is constrained (DSL module can be excluded)
 
+## Transpiler Architecture
+
+For detailed information about the DSL transpiler's internal architecture, including the core processing flow and expression processing chain, see [TRANSPILER_ARCHITECTURE.md](TRANSPILER_ARCHITECTURE.md).
+
 ## DSL API Functions
 
 ### Core Functions
@@ -287,7 +291,7 @@ def pulse_effect(engine, color, speed)
   pulse_.color = color
   pulse_.period = speed
   engine.add(pulse_)
-  engine.start_animation(pulse_)
+  engine.start()
 end
 
 animation.register_user_function("pulse_effect", pulse_effect)
@@ -342,9 +346,8 @@ def comet_chase(engine, trail_color, bg_color, chase_speed)
   comet_.color = trail_color
   comet_.speed = chase_speed
   engine.add(background_)
-  engine.start_animation(background_)
   engine.add(comet_)
-  engine.start_animation(comet_)
+  engine.start()
 end
 
 animation.register_user_function("comet_chase", comet_chase)

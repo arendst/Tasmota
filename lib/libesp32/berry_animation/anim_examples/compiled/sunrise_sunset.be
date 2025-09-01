@@ -13,7 +13,17 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var daylight_colors_ = bytes("00000011" "20001133" "40FF4400" "60FFAA00" "80FFFF88" "A0FFAA44" "C0FF6600" "E0AA2200" "FF220011")
+var daylight_colors_ = bytes(
+  "00000011"  # Night - dark blue
+  "20001133"  # Pre-dawn
+  "40FF4400"  # Sunrise orange
+  "60FFAA00"  # Morning yellow
+  "80FFFF88"  # Midday bright
+  "A0FFAA44"  # Afternoon
+  "C0FF6600"  # Sunset orange
+  "E0AA2200"  # Dusk red
+  "FF220011"  # Night - dark red
+)
 # Main daylight cycle - very slow transition
 var daylight_cycle_ = animation.rich_palette_animation(engine)
 daylight_cycle_.palette = daylight_colors_

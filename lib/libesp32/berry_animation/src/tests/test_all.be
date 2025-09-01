@@ -90,6 +90,7 @@ def run_all_tests()
     # Sequence and timing tests
     "lib/libesp32/berry_animation/src/tests/sequence_manager_test.be",
     "lib/libesp32/berry_animation/src/tests/sequence_manager_layering_test.be",
+    "lib/libesp32/berry_animation/src/tests/black_frame_fix_test.be",
     
     # Value provider tests
     "lib/libesp32/berry_animation/src/tests/core_value_provider_test.be",

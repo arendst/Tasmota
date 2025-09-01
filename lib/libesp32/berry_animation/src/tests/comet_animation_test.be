@@ -285,7 +285,7 @@ engine_comet.tail_length = 5
 engine_comet.speed = 2560
 
 # Test adding to engine
-engine.add_animation(engine_comet)
+engine.add(engine_comet)
 assert_test(true, "Animation should be added to engine successfully")
 
 # Test strip length from engine

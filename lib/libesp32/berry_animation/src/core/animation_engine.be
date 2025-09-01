@@ -90,7 +90,7 @@ class AnimationEngine
   # 
   # @param anim: animation - The animation instance to add (if not already listed)
   # @return true if succesful (TODO always true)
-  def add_animation(anim)
+  def _add_animation(anim)
     if (self.animations.find(anim) == nil)   # not already in list
       # Add and sort by priority (higher priority first)
       self.animations.push(anim)
@@ -140,7 +140,7 @@ class AnimationEngine
   end
   
   # Add a sequence manager
-  def add_sequence_manager(sequence_manager)
+  def _add_sequence_manager(sequence_manager)
     self.sequence_managers.push(sequence_manager)
     return self
   end
@@ -153,16 +153,31 @@ class AnimationEngine
   def add(obj)
     # Check if it's a SequenceManager
     if isinstance(obj, animation.SequenceManager)
-      return self.add_sequence_manager(obj)
+      return self._add_sequence_manager(obj)
     # Check if it's an Animation (or subclass)
     elif isinstance(obj, animation.animation)
-      self.add_animation(obj)
-      return self
+      return self._add_animation(obj)
     else
       # Unknown type - provide helpful error message
       import introspect
       var class_name = introspect.name(obj)
       raise "type_error", f"Cannot add object of type '{class_name}' to engine. Expected Animation or SequenceManager."
+    end
+  end
+  
+  # Generic remove method that delegates to specific remove methods
+  # @param obj: Animation or SequenceManager - The object to remove
+  # @return self for method chaining
+  def remove(obj)
+    # Check if it's a SequenceManager
+    if isinstance(obj, animation.SequenceManager)
+      return self.remove_sequence_manager(obj)
+    # Check if it's an Animation (or subclass)
+    elif isinstance(obj, animation.animation)
+      return self.remove_animation(obj)
+    else
+      # Unknown type - provide helpful error message
+      raise "type_error", f"Cannot remove object of type '{classname(obj)}' from engine. Expected Animation or SequenceManager."
     end
   end
   
