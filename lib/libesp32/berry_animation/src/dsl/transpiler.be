@@ -1530,7 +1530,40 @@ class SimpleDSLTranspiler
     var result = expr_str
     var pos = 0
     
-    # Replace all user variables (ending with _) with resolve calls
+    # First pass: Replace value provider function calls with resolve calls
+    # Handle functions like animation.strip_length(engine) that return value providers
+    var value_provider_functions = ["strip_length"]
+    
+    for func_name : value_provider_functions
+      var pattern = f"animation.{func_name}(engine)"
+      var replacement = f"animation.resolve(animation.{func_name}(engine))"
+      
+      # Replace all occurrences of this pattern
+      pos = 0
+      while pos < size(result)
+        var found_pos = string.find(result, pattern, pos)
+        if found_pos < 0
+          break
+        end
+        
+        # Check if it's already wrapped in animation.resolve()
+        var check_start = found_pos >= 18 ? found_pos - 18 : 0
+        var prefix = result[check_start..found_pos-1]
+        if string.find(prefix, "animation.resolve(") >= 0
+          # Already wrapped, skip this occurrence
+          pos = found_pos + size(pattern)
+          continue
+        end
+        
+        # Replace the pattern
+        var before = found_pos > 0 ? result[0..found_pos-1] : ""
+        var after = found_pos + size(pattern) < size(result) ? result[found_pos + size(pattern)..] : ""
+        result = before + replacement + after
+        pos = found_pos + size(replacement)
+      end
+    end
+    
+    # Second pass: Replace all user variables (ending with _) with resolve calls
     pos = 0
     while pos < size(result)
       var underscore_pos = string.find(result, "_", pos)
