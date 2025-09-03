@@ -41,12 +41,10 @@ class CrenelPositionAnimation : animation.animation
     if !self.is_running || frame == nil
       return false
     end
-    
-    # Use engine time if not provided
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
-    
+
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
+
     var pixel_size = frame.width
     
     # Access parameters via virtual members (automatically resolves ValueProviders)

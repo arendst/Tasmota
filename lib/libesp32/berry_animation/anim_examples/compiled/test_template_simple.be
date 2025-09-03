@@ -24,7 +24,7 @@ animation.register_user_function('pulse_effect', pulse_effect_template)
 
 # Use the template - templates add animations directly to engine and run them
 pulse_effect_template(engine, 0xFFFF0000, 2000, 204)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

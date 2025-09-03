@@ -11,9 +11,12 @@
 class ParameterizedObject
   var values          # Map storing all parameter values
   var engine          # Reference to the animation engine
+  var start_time      # Time when object started (ms) (int), value is set at first call to update() or render()
   
   # Static parameter definitions - should be overridden by subclasses
-  static var PARAMS = {}
+  static var PARAMS = {
+    "is_running": {"type": "bool", "default": false}   # Whether the object is active
+  }
   
   # Initialize parameter system
   #
@@ -348,10 +351,47 @@ class ParameterizedObject
     return self._resolve_parameter_value(param_name, time_ms)
   end
   
-  # Start the object - placeholder for future implementation
+  # Helper function to make sure both self.start_time and time_ms are valid
   #
+  # If time_ms is nil, replace with time_ms from engine
+  # Then initialize the value for self.start_time if not set already
+  #
+  # @param time_ms: int or nil - Current time in milliseconds
+  # @return time_ms: int (guaranteed)
+  def _fix_time_ms(time_ms)
+    if time_ms == nil
+      time_ms = self.engine.time_ms
+    end
+    if time_ms == nil
+      raise "value_error", "engine.time_ms should not be 'nil'"
+    end
+    if self.start_time == nil
+      self.start_time = time_ms
+    end
+    return time_ms
+  end
+
+  # Start the object - base implementation
+  #
+  # `start(time_ms)` is called whenever an animation is about to be run
+  # by the animation engine directly or via a sequence manager.
+  # For value providers, start is typically not called because instances
+  # can be embedded in closures. So value providers must consider the first
+  # call to `produce_value()` as a start of their internal time reference.
+  # @param start_time: int - Optional start time in milliseconds
   # @return self for method chaining
   def start(time_ms)
+    if time_ms == nil
+      time_ms = self.engine.time_ms
+    end
+    if time_ms == nil
+      raise "value_error", "engine.time_ms should not be 'nil'"
+    end
+    if self.start_time != nil   # reset time only if it was already started
+      self.start_time = time_ms
+    end
+    # Set is_running directly in values map to avoid infinite loop
+    self.values["is_running"] = true
     return self
   end
   
@@ -361,7 +401,16 @@ class ParameterizedObject
   # @param name: string - Parameter name
   # @param value: any - New parameter value
   def on_param_changed(name, value)
-    # Default implementation does nothing
+    if name == "is_running"
+      if value == true
+        # Start the object (but avoid infinite loop by not setting is_running again)
+        # Call start method to handle start_time
+        self.start(nil)
+      elif value == false
+        # Stop the object - just set the internal state
+        # (is_running is already set to false by the parameter system)
+      end
+    end
   end
   
   # Equality operator for object identity comparison

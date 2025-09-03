@@ -87,6 +87,10 @@ class JitterAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
+    if !super(self).update(time_ms)
+      return false
+    end
+
     # Cache parameter values for performance
     var jitter_frequency = self.jitter_frequency
     var source_animation = self.source_animation
@@ -232,9 +236,12 @@ class JitterAnimation : animation.animation
   
   # Render jitter to frame buffer
   def render(frame, time_ms)
-    if frame == nil
+    if !self.is_running || frame == nil
       return false
     end
+    
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     var current_strip_length = self.engine.get_strip_length()
     var i = 0

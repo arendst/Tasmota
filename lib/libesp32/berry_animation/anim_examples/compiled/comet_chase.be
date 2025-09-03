@@ -40,7 +40,7 @@ engine.add(background_)
 engine.add(comet_main_)
 engine.add(comet_secondary_)
 engine.add(comet_sparkles_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

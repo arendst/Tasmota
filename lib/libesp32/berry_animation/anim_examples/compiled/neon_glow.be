@@ -83,7 +83,7 @@ engine.add(segment1_)
 engine.add(segment2_)
 engine.add(segment3_)
 engine.add(arc_sparkles_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

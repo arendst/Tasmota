@@ -68,7 +68,7 @@ engine.add(stream1_)
 engine.add(stream2_)
 engine.add(stream3_)
 engine.add(code_flash_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

@@ -152,6 +152,7 @@ pos_comet.speed = 2560  # 10 pixels/sec (10 * 256)
 engine.time_ms = 1000
 var start_time = engine.time_ms
 pos_comet.start(start_time)
+pos_comet.update(start_time)
 
 engine.time_ms = start_time + 1000  # 1 second later
 pos_comet.update(engine.time_ms)
@@ -199,6 +200,7 @@ wrap_comet.wrap_around = 1  # Enable wrapping
 small_engine.time_ms = 3000
 start_time = small_engine.time_ms
 wrap_comet.start(start_time)
+wrap_comet.update(start_time)
 small_engine.time_ms = start_time + 2000  # 2 seconds - should wrap multiple times
 wrap_comet.update(small_engine.time_ms)
 var strip_length_subpixels = 10 * 256
@@ -215,6 +217,7 @@ bounce_comet.wrap_around = 0  # Disable wrapping (enable bouncing)
 small_engine.time_ms = 4000
 start_time = small_engine.time_ms
 bounce_comet.start(start_time)
+bounce_comet.update(small_engine.time_ms)
 small_engine.time_ms = start_time + 200  # Should hit the end and bounce
 bounce_comet.update(small_engine.time_ms)
 # Direction should have changed due to bouncing
@@ -232,8 +235,6 @@ render_comet.speed = 256  # Slow (1 pixel/sec)
 
 small_engine.time_ms = 5000
 render_comet.start(small_engine.time_ms)
-
-# Update once to initialize position
 render_comet.update(small_engine.time_ms)
 
 # Clear frame and render
@@ -295,6 +296,7 @@ assert_equals(strip_length, 30, "Strip length should come from engine")
 # Test engine time usage
 engine.time_ms = 7000
 engine_comet.start(engine.time_ms)
+engine_comet.update(engine.time_ms)
 assert_equals(engine_comet.start_time, 7000, "Animation should use engine time for start")
 
 # Test Results

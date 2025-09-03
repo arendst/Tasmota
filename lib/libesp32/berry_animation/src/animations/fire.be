@@ -52,12 +52,6 @@ class FireAnimation : animation.animation
     end
   end
   
-  # Handle parameter changes
-  def on_param_changed(name, value)
-    # No special handling needed - parameters are accessed via virtual members
-    # The default fire palette is set up by factory methods when needed
-  end
-  
   # Simple pseudo-random number generator
   # Uses a linear congruential generator for consistent results
   def _random()
@@ -226,6 +220,9 @@ class FireAnimation : animation.animation
       return false
     end
     
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
+
     var strip_length = self.engine.get_strip_length()
     
     # Render each pixel with its current color

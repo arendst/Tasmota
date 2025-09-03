@@ -26,7 +26,7 @@ background_.priority = 20
 var eye_pos_ = (def (engine)
   var provider = animation.cosine_osc(engine)
   provider.min_value = (-1)
-  provider.max_value = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - 2 end)
+  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
   provider.duration = 6000
   return provider
 end)(engine)
@@ -39,11 +39,11 @@ eye_mask_.slew_size = 2  # with 2 pixel shading around
 eye_mask_.priority = 5
 var fire_pattern_ = animation.palette_gradient_animation(engine)
 fire_pattern_.color_source = fire_color_
-fire_pattern_.spatial_period = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) / 4 end)
+fire_pattern_.spatial_period = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 4 end)
 fire_pattern_.opacity = eye_mask_
 engine.add(background_)
 engine.add(fire_pattern_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

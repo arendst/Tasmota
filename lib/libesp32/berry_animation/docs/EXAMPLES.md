@@ -173,7 +173,7 @@ sequence demo {
 run demo
 ```
 
-### 11. Reset and Restart in Sequences
+### 11. Restart in Sequences
 ```berry
 # Create oscillator and animation
 set wave_osc = triangle(min_value=0, max_value=29, period=4s)
@@ -181,9 +181,9 @@ animation wave = beacon_animation(color=blue, pos=wave_osc, beacon_size=5)
 
 sequence sync_demo {
   play wave for 3s
-  reset wave_osc                    # Reset oscillator to start position
+  restart wave_osc                    # Restart oscillator time origin (if already started)
   play wave for 3s                  # Wave starts from beginning again
-  restart wave                      # Restart animation from initial state
+  restart wave                      # Restart animation time origin (if already started)
   play wave for 3s
 }
 run sync_demo
@@ -199,7 +199,7 @@ sequence breathing_cycle {
     play pulse for 500ms
     pulse.opacity = brightness      # Apply breathing effect
     wait 200ms
-    pulse.opacity = 255             # Reset to full brightness
+    pulse.opacity = 255             # Return to full brightness
   }
 }
 run breathing_cycle

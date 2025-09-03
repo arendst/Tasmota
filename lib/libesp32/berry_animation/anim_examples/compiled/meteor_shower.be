@@ -57,7 +57,7 @@ engine.add(meteor2_)
 engine.add(meteor3_)
 engine.add(meteor4_)
 engine.add(meteor_flash_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

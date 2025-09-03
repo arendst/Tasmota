@@ -21,14 +21,14 @@ class SimpleDSLTranspiler
   var pos             # Current token position
   var output          # Generated Berry code lines
   var errors          # Compilation errors
-  var run_statements  # Collect all run statements for single engine.start()
+  var run_statements  # Collect all run statements for single engine.run()
   var first_statement # Track if we're processing the first statement
   var strip_initialized # Track if strip was initialized
   var sequence_names  # Track which names are sequences
   var symbol_table    # Track created objects: name -> instance
   var indent_level    # Track current indentation level for nested sequences
   var template_definitions  # Track template definitions: name -> {params, body}
-  var has_template_calls    # Track if we have template calls to trigger engine.start()
+  var has_template_calls    # Track if we have template calls to trigger engine.run()
   
   # Static color mapping for named colors (helps with solidification)
   static var named_colors = {
@@ -75,9 +75,9 @@ class SimpleDSLTranspiler
       # Don't check for existence during transpilation - trust that function will be available at runtime
       
       # User functions use positional parameters with engine as first argument
-      # In closure context, use self.engine to access the engine from the ClosureValueProvider
+      # In closure context, use engine parameter directly
       var args = self.process_function_arguments(true)
-      var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
+      var full_args = args != "" ? f"engine, {args}" : "engine"
       return f"animation.get_user_function('{func_name}')({full_args})"
     else
       self.error("User functions must be called with parentheses: user.function_name()")
@@ -96,8 +96,8 @@ class SimpleDSLTranspiler
         self.process_statement()
       end
       
-      # Generate single engine.start() call after all run statements
-      self.generate_engine_start()
+      # Generate single engine.run() call after all run statements
+      self.generate_engine_run()
       
       return size(self.errors) == 0 ? self.join_output() : nil
     except .. as e, msg
@@ -784,8 +784,12 @@ class SimpleDSLTranspiler
     elif tok.type == animation_dsl.Token.IDENTIFIER && tok.value == "log"
       self.process_log_statement_fluent()
       
-    elif tok.type == animation_dsl.Token.KEYWORD && (tok.value == "reset" || tok.value == "restart")
-      self.process_reset_restart_statement_fluent()
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "restart"
+      self.process_restart_statement_fluent()
+      
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "reset"
+      self.error("'reset' command is no longer supported. Use 'restart' instead.")
+      self.skip_statement()
       
     elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "repeat"
       self.next()  # skip 'repeat'
@@ -827,12 +831,12 @@ class SimpleDSLTranspiler
         self.process_sequence_assignment_fluent()
       else
         # Unknown identifier in sequence - this is an error
-        self.error(f"Unknown command '{tok.value}' in sequence. Valid sequence commands are: play, wait, repeat, reset, restart, log, or property assignments (object.property = value)")
+        self.error(f"Unknown command '{tok.value}' in sequence. Valid sequence commands are: play, wait, repeat, restart, log, or property assignments (object.property = value)")
         self.skip_statement()
       end
     else
       # Unknown token type in sequence - this is an error
-      self.error(f"Invalid statement in sequence. Expected: play, wait, repeat, reset, restart, log, or property assignments")
+      self.error(f"Invalid statement in sequence. Expected: play, wait, repeat, restart, log, or property assignments")
       self.skip_statement()
     end
   end
@@ -981,10 +985,10 @@ class SimpleDSLTranspiler
     self.add(log_code)
   end
 
-  # Helper method to process reset/restart statement using fluent style
-  def process_reset_restart_statement_fluent()
-    var keyword = self.current().value  # "reset" or "restart"
-    self.next()  # skip 'reset' or 'restart'
+  # Helper method to process restart statement using fluent style
+  def process_restart_statement_fluent()
+    var keyword = self.current().value  # "restart"
+    self.next()  # skip 'restart'
     
     # Expect the value provider identifier
     var val_name = self.expect_identifier()
@@ -1076,7 +1080,7 @@ class SimpleDSLTranspiler
         var inline_comment = self.collect_inline_comment()
         self.add(f"{object_name}_template({full_args}){inline_comment}")
         
-        # Track that we have template calls to trigger engine.start()
+        # Track that we have template calls to trigger engine.run()
         self.has_template_calls = true
       else
         self.error(f"Standalone function calls are only supported for templates. '{object_name}' is not a template.")
@@ -1274,7 +1278,7 @@ class SimpleDSLTranspiler
         # Check if this is a mathematical function
         if self.is_math_method(func_name)
           var args = self.process_function_arguments(true)
-          return f"self.{func_name}({args})"
+          return f"animation._math.{func_name}({args})"
         end
         
         # Special case for log function in expressions
@@ -1286,7 +1290,7 @@ class SimpleDSLTranspiler
         # Check if this is a template call
         if self.template_definitions.contains(func_name)
           var args = self.process_function_arguments(true)
-          var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
+          var full_args = args != "" ? f"engine, {args}" : "engine"
           return f"{func_name}_template({full_args})"
         end
         
@@ -1379,7 +1383,7 @@ class SimpleDSLTranspiler
           return f"{object_ref}.{property_name}"
         else
           # Return a closure expression that will be wrapped by the caller if needed
-          return f"self.resolve({object_ref}, '{property_name}')"
+          return f"animation.resolve({object_ref}, '{property_name}')"
         end
       end
       
@@ -1481,7 +1485,7 @@ class SimpleDSLTranspiler
       transformed_expr = string.replace(transformed_expr, "  ", " ")
     end
     
-    var closure_code = f"def (self) return {transformed_expr} end"
+    var closure_code = f"def (engine) return {transformed_expr} end"
     
     # Return a closure value provider instance
     return f"animation.create_closure_value(engine, {closure_code})"
@@ -1506,7 +1510,7 @@ class SimpleDSLTranspiler
       right_expr = string.replace(right_expr, "  ", " ")
     end
     
-    var closure_code = f"def (self) return {left_expr} {op} {right_expr} end"
+    var closure_code = f"def (engine) return {left_expr} {op} {right_expr} end"
     
     # Return a closure value provider instance
     return f"animation.create_closure_value(engine, {closure_code})"
@@ -1526,48 +1530,7 @@ class SimpleDSLTranspiler
     var result = expr_str
     var pos = 0
     
-    # First pass: Transform mathematical function calls to self.method() calls
-    # Use a simple pattern-based approach that works with the existing logic
-    var search_pos = 0
-    while true
-      var paren_pos = string.find(result, "(", search_pos)
-      if paren_pos < 0
-        break
-      end
-      
-      # Find the function name before the parenthesis
-      var func_start = paren_pos - 1
-      while func_start >= 0 && self.is_identifier_char(result[func_start])
-        func_start -= 1
-      end
-      func_start += 1
-      
-      if func_start < paren_pos
-        var func_name = result[func_start..paren_pos-1]
-        
-        # Check if this is a mathematical method using dynamic introspection
-        if self.is_math_method(func_name)
-          # Check if it's not already prefixed with "self."
-          var prefix_start = func_start >= 5 ? func_start - 5 : 0
-          var prefix = result[prefix_start..func_start-1]
-          if string.find(prefix, "self.") < 0
-            # Replace the function call with self.method()
-            var before = func_start > 0 ? result[0..func_start-1] : ""
-            var after = result[func_start..]
-            result = before + "self." + after
-            search_pos = func_start + 5 + size(func_name)  # Skip past "self." + func_name
-          else
-            search_pos = paren_pos + 1
-          end
-        else
-          search_pos = paren_pos + 1
-        end
-      else
-        search_pos = paren_pos + 1
-      end
-    end
-    
-    # Second pass: Replace all user variables (ending with _) with resolve calls
+    # Replace all user variables (ending with _) with resolve calls
     pos = 0
     while pos < size(result)
       var underscore_pos = string.find(result, "_", pos)
@@ -1581,25 +1544,19 @@ class SimpleDSLTranspiler
         start_pos -= 1
       end
       
-      # Check if this is a user variable (not preceded by "animation." or "self." or already inside a resolve call)
+      # Check if this is a user variable (not preceded by "animation." or already inside a resolve call)
       var is_user_var = true
-      if start_pos >= 13
-        var check_start = start_pos >= 13 ? start_pos - 13 : 0
+      if start_pos >= 18
+        var check_start = start_pos >= 18 ? start_pos - 18 : 0
         var prefix = result[check_start..start_pos-1]
-        if string.find(prefix, "self.resolve(") >= 0
+        if string.find(prefix, "animation.resolve(") >= 0
           is_user_var = false
         end
       end
       if is_user_var && start_pos >= 10
         var check_start = start_pos >= 10 ? start_pos - 10 : 0
         var prefix = result[check_start..start_pos-1]
-        if string.find(prefix, "animation.") >= 0 || string.find(prefix, "self.") >= 0
-          is_user_var = false
-        end
-      elif is_user_var && start_pos >= 5
-        var check_start = start_pos >= 5 ? start_pos - 5 : 0
-        var prefix = result[check_start..start_pos-1]
-        if string.find(prefix, "self.") >= 0
+        if string.find(prefix, "animation.") >= 0
           is_user_var = false
         end
       end
@@ -1612,7 +1569,7 @@ class SimpleDSLTranspiler
         var end_pos = underscore_pos + 1
         if end_pos >= size(result) || !self.is_identifier_char(result[end_pos])
           # Replace the variable with the resolve call
-          var replacement = f"self.resolve({var_name})"
+          var replacement = f"animation.resolve({var_name})"
           var before = start_pos > 0 ? result[0..start_pos-1] : ""
           var after = end_pos < size(result) ? result[end_pos..] : ""
           result = before + replacement + after
@@ -1633,28 +1590,14 @@ class SimpleDSLTranspiler
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_'
   end
   
-  # Helper method to check if a function name is a mathematical method in ClosureValueProvider
+  # Helper method to check if a function name is a mathematical function
   def is_math_method(func_name)
-    import introspect
     try
-      # Get the ClosureValueProvider class from the animation module
-      var closure_provider_class = animation.closure_value
-      if closure_provider_class == nil
-        return false
-      end
-      
-      # Check if the method exists in the class
-      var members = introspect.members(closure_provider_class)
-      for member : members
-        if member == func_name
-          # Additional check: make sure it's actually a method (function)
-          var method = introspect.get(closure_provider_class, func_name)
-          return introspect.ismethod(method) || type(method) == 'function'
-        end
-      end
-      return false
+      import introspect
+      # Check if the function is registered in the animation._math map
+      return introspect.contains(animation._math, func_name)
     except .. as e, msg
-      # If introspection fails, return false to be safe
+      # If _math map doesn't exist or access fails, return false to be safe
       return false
     end
   end
@@ -1684,7 +1627,7 @@ class SimpleDSLTranspiler
     
     if has_underscore && !has_operators && !has_paren && !has_animation_prefix
       # This looks like a simple user variable that might be a ValueProvider
-      return f"self.resolve({operand})"
+      return f"animation.resolve({operand})"
     else
       # For other expressions (literals, animation module calls, complex expressions), use as-is
       return operand
@@ -1936,7 +1879,7 @@ class SimpleDSLTranspiler
     if self.is_math_method(func_name)
       # Mathematical functions use positional arguments, not named parameters
       var args = self.process_function_arguments(true)
-      return f"self.{func_name}({args})"  # Prefix with self. for closure context
+      return f"animation._math.{func_name}({args})"  # Math functions are under _math namespace
     end
     
     # Special case for log function in nested calls
@@ -1950,7 +1893,7 @@ class SimpleDSLTranspiler
     if self.template_definitions.contains(func_name)
       # This is a template call - treat like user function
       var args = self.process_function_arguments(true)
-      var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
+      var full_args = args != "" ? f"engine, {args}" : "engine"
       return f"{func_name}_template({full_args})"
     else
       # Check if this is a simple function call without named parameters
@@ -2324,8 +2267,8 @@ class SimpleDSLTranspiler
     return report
   end
   
-  # Generate single engine.start() call for all run statements
-  def generate_engine_start()
+  # Generate single engine.run() call for all run statements
+  def generate_engine_run()
     if size(self.run_statements) == 0 && !self.has_template_calls
       return  # No run statements or template calls, no need to start engine
     end
@@ -2340,8 +2283,8 @@ class SimpleDSLTranspiler
       self.add(f"engine.add({name}_){comment}")
     end
     
-    # Single engine.start() call
-    self.add("engine.start()")
+    # Single engine.run() call
+    self.add("engine.run()")
   end
 
   # Basic event handler processing
@@ -2654,14 +2597,14 @@ class SimpleDSLTranspiler
           return true  # Valid value provider or animation
         elif type(marker) == "string"
           # It's some other type (variable, color, sequence, etc.)
-          self.error(f"'{object_name}' in {context} statement is not a value provider or animation. Only value providers (like oscillators) and animations can be reset/restarted.")
+          self.error(f"'{object_name}' in {context} statement is not a value provider or animation. Only value providers (like oscillators) and animations can be restarted.")
           return false
         else
           # It's an actual instance - check if it's a value provider or animation
           if isinstance(marker, animation.value_provider) || isinstance(marker, animation.animation)
             return true  # Valid value provider or animation
           else
-            self.error(f"'{object_name}' in {context} statement is not a value provider or animation. Only value providers (like oscillators) and animations can be reset/restarted.")
+            self.error(f"'{object_name}' in {context} statement is not a value provider or animation. Only value providers (like oscillators) and animations can be restarted.")
             return false
           end
         end

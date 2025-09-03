@@ -44,7 +44,7 @@ var palette_demo_ = animation.SequenceManager(engine)
     .push_play_step(forest_anim_, 3000)
     )
 engine.add(palette_demo_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

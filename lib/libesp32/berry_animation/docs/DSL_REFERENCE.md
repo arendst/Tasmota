@@ -75,7 +75,6 @@ The following keywords are reserved and cannot be used as identifiers:
 - `times` - Loop count specifier
 - `for` - Duration specifier
 - `run` - Execute animation or sequence
-- `reset` - Reset value provider or animation to initial state
 - `restart` - Restart value provider or animation from beginning
 
 **Easing Keywords:**
@@ -536,10 +535,10 @@ test.opacity = min(255, max(50, scale(sqrt(strip_len), 0, 16, 100, 255)))
 - **Integer Optimization**: `sqrt()` function automatically handles integer scaling for 0-255 range values
 - **Trigonometric Range**: `sin()` and `cos()` use 0-255 input range (mapped to 0-360°) and return -255 to 255 output range
 - **Automatic Detection**: Mathematical functions are automatically detected at transpile time using dynamic introspection
-- **Closure Context**: In computed parameters, mathematical functions are called as `self.<function>()` in the generated closure context
+- **Closure Context**: In computed parameters, mathematical functions are called as `animation._math.<function>()` in the generated closure context
 
 **How It Works:**
-When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `self.` in the closure context to access the ClosureValueProvider's mathematical methods.
+When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `animation._math.` in the closure context to access the ClosureValueProvider's mathematical methods.
 
 **User Functions in Computed Parameters:**
 User-defined functions can also be used in computed parameter expressions, providing powerful custom effects. User functions must be called with the `user.` prefix:
@@ -785,31 +784,32 @@ sequence cylon_eye {
 }
 ```
 
-#### Reset and Restart Statements
+#### Restart Statements
 
-Reset and restart statements allow you to reset value providers and animations to their initial state during sequence execution:
+Restart statements allow you to restart value providers and animations from their initial state during sequence execution:
 
 ```berry
-reset value_provider_name          # Reset value provider to initial state
+restart value_provider_name        # Restart value provider from beginning
 restart animation_name             # Restart animation from beginning
 ```
 
-**Reset Statement:**
-- Resets value providers (oscillators, color cycles, etc.) to their initial state
-- Calls the `start()` method on the value provider
-- Useful for synchronizing oscillators or restarting color cycles
-
 **Restart Statement:**
+- Restarts value providers (oscillators, color cycles, etc.) from their initial state
 - Restarts animations from their beginning state
-- Calls the `start()` method on the animation
-- Useful for restarting complex animations or synchronizing multiple animations
+- Calls the `start()` method on the value provider or animation, which resets the time origin only if the object was already started previously
+- Useful for synchronizing oscillators, restarting color cycles, or restarting complex animations
+
+**Timing Behavior:**
+- The `start()` method only resets the time origin if `self.start_time` is not nil (i.e., the object was already started)
+- For fresh objects, the first call to `update()`, `render()`, or `produce_value()` initializes the time reference
+- This prevents premature time initialization and ensures proper timing behavior
 
 **Examples:**
 ```berry
-# Reset oscillators for synchronized movement
+# Restart oscillators for synchronized movement
 sequence sync_demo {
   play wave_anim for 3s
-  reset position_osc              # Reset oscillator to start position
+  restart position_osc            # Restart oscillator time origin
   play wave_anim for 3s
 }
 
@@ -980,7 +980,7 @@ animation.register_user_function('pulse_effect', pulse_effect_template)
 - Templates don't return values - they add animations directly to the engine
 - Multiple `run` statements in templates add multiple animations
 - Templates can be called multiple times to create multiple instances
-- `engine.start()` is automatically called when templates are used at the top level
+- `engine.run()` is automatically called when templates are used at the top level
 
 ## Execution Statements
 
@@ -1293,13 +1293,12 @@ property_assignment = identifier "." identifier "=" expression ;
 (* Sequences *)
 sequence = "sequence" identifier [ "repeat" ( expression "times" | "forever" ) ] "{" sequence_body "}" ;
 sequence_body = { sequence_statement } ;
-sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment | reset_stmt | restart_stmt ;
+sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment | restart_stmt ;
 
 play_stmt = "play" identifier [ "for" time_expression ] ;
 wait_stmt = "wait" time_expression ;
 repeat_stmt = "repeat" ( expression "times" | "forever" ) "{" sequence_body "}" ;
 sequence_assignment = identifier "." identifier "=" expression ;
-reset_stmt = "reset" identifier ;
 restart_stmt = "restart" identifier ;
 
 (* Templates *)

@@ -92,7 +92,9 @@ class SparkleAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    super(self).update(time_ms)
+    if !super(self).update(time_ms)
+      return false
+    end
     
     # Update at approximately 30 FPS
     var update_interval = 33  # ~30 FPS
@@ -198,6 +200,9 @@ class SparkleAnimation : animation.animation
     if !self.is_running || frame == nil
       return false
     end
+    
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     var current_strip_length = self.engine.get_strip_length()
     var i = 0

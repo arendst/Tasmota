@@ -27,7 +27,6 @@ def test_closure_value_provider()
   
   # Test 2: Set a simple closure
   var f = def(self, name, time_ms) return time_ms / 100 end
-  print(f">> {f=} {provider=}")
   provider.closure = f
   result = provider.produce_value("brightness", 1000)
   assert(result == 10, f"Expected 10, got {result}")
@@ -73,36 +72,35 @@ def test_closure_value_provider()
   static_provider.value = 100
   
   provider.closure = def(self, name, time_ms)
-    # Use self.resolve to get value from another provider
-    var base_value = self.resolve(static_provider, name, time_ms)
+    # Use animation.resolve to get value from another provider
+    var base_value = animation.resolve(static_provider, name, time_ms)
     return base_value * 2
   end
   
   result = provider.produce_value("test", 2000)
   # static_provider returns 100, then multiply by 2 = 200
   assert(result == 200, f"Expected 200, got {result}")
-  print("✓ self.resolve helper method works with value providers")
+  print("✓ animation.resolve helper method works with value providers")
   
-  # Test 6: Test self.resolve with static value and value provider
+  # Test 6: Test animation.resolve with static value and value provider
   provider.closure = def(self, name, time_ms)
-    var static_value = self.resolve(50, name, time_ms)  # Static value
-    var dynamic_value = self.resolve(static_provider, name, time_ms)  # Value provider
+    var static_value = animation.resolve(50, name, time_ms)  # Static value
+    var dynamic_value = animation.resolve(static_provider, name, time_ms)  # Value provider
     return static_value + dynamic_value
   end
   
   result = provider.produce_value("test", 1000)
   # static: 50, dynamic: 100, total: 150
   assert(result == 150, f"Expected 150, got {result}")
-  print("✓ self.resolve works with both static values and value providers")
+  print("✓ animation.resolve works with both static values and value providers")
   
   # Test 7: Test the use case from documentation - arithmetic with another provider
   var oscillator = animation.oscillator_value(engine)
   oscillator.min_value = 10
   oscillator.max_value = 20
   oscillator.duration = 1000
-  
-  provider.closure = def(self, name, time_ms)
-    var osc_value = self.resolve(oscillator, name, time_ms)
+  provider.closure = def(engine, name, time_ms)
+    var osc_value = animation.resolve(oscillator, name, time_ms)
     return osc_value + 5  # Add 5 to oscillator value
   end
   
@@ -142,9 +140,9 @@ def test_closure_value_provider()
   param3.value = 2
   
   provider.closure = def(self, name, time_ms)
-    var p1 = self.resolve(param1, name, time_ms)
-    var p2 = self.resolve(param2, name, time_ms)
-    var p3 = self.resolve(param3, name, time_ms)
+    var p1 = animation.resolve(param1, name, time_ms)
+    var p2 = animation.resolve(param2, name, time_ms)
+    var p3 = animation.resolve(param3, name, time_ms)
     
     if name == "arithmetic_complex"
       return (p1 + p2) * p3 - 5  # (10 + 3) * 2 - 5 = 26 - 5 = 21
@@ -173,9 +171,9 @@ def test_closure_value_provider()
   
   # Test 10: Time-based expressions with multiple variables
   provider.closure = def(self, name, time_ms)
-    var base_freq = self.resolve(param1, name, time_ms)  # 10
-    var amplitude = self.resolve(param2, name, time_ms)  # 3
-    var offset = self.resolve(param3, name, time_ms)     # 2
+    var base_freq = animation.resolve(param1, name, time_ms)  # 10
+    var amplitude = animation.resolve(param2, name, time_ms)  # 3
+    var offset = animation.resolve(param3, name, time_ms)     # 2
     
     if name == "sine_wave_simulation"
       # Simulate: amplitude * sin(time * base_freq / 1000) + offset
@@ -259,14 +257,15 @@ def test_closure_math_methods()
   
   # Test 1: min/max functions
   provider.closure = def(self, name, time_ms)
+    print(f">> {name=} {animation._math=}")
     if name == "min_test"
-      return self.min(5, 3, 8, 1, 9)  # Should return 1
+      return animation._math.min(5, 3, 8, 1, 9)  # Should return 1
     elif name == "max_test"
-      return self.max(5, 3, 8, 1, 9)  # Should return 9
+      return animation._math.max(5, 3, 8, 1, 9)  # Should return 9
     elif name == "min_two"
-      return self.min(10, 7)          # Should return 7
+      return animation._math.min(10, 7)          # Should return 7
     elif name == "max_two"
-      return self.max(10, 7)          # Should return 10
+      return animation._math.max(10, 7)          # Should return 10
     else
       return 0
     end
@@ -286,13 +285,13 @@ def test_closure_math_methods()
   # Test 2: abs function
   provider.closure = def(self, name, time_ms)
     if name == "abs_positive"
-      return self.abs(42)      # Should return 42
+      return animation._math.abs(42)      # Should return 42
     elif name == "abs_negative"
-      return self.abs(-17)     # Should return 17
+      return animation._math.abs(-17)     # Should return 17
     elif name == "abs_zero"
-      return self.abs(0)       # Should return 0
+      return animation._math.abs(0)       # Should return 0
     elif name == "abs_float"
-      return self.abs(-3.14)   # Should return 3.14
+      return animation._math.abs(-3.14)   # Should return 3.14
     else
       return 0
     end
@@ -312,13 +311,13 @@ def test_closure_math_methods()
   # Test 3: round function
   provider.closure = def(self, name, time_ms)
     if name == "round_up"
-      return self.round(3.7)     # Should return 4
+      return animation._math.round(3.7)     # Should return 4
     elif name == "round_down"
-      return self.round(3.2)     # Should return 3
+      return animation._math.round(3.2)     # Should return 3
     elif name == "round_half"
-      return self.round(3.5)     # Should return 4
+      return animation._math.round(3.5)     # Should return 4
     elif name == "round_negative"
-      return self.round(-2.8)    # Should return -3
+      return animation._math.round(-2.8)    # Should return -3
     else
       return 0
     end
@@ -338,13 +337,13 @@ def test_closure_math_methods()
   # Test 4: sqrt function with integer handling
   provider.closure = def(self, name, time_ms)
     if name == "sqrt_integer_255"
-      return self.sqrt(255)      # Should return 255 (full scale)
+      return animation._math.sqrt(255)      # Should return 255 (full scale)
     elif name == "sqrt_integer_64"
-      return self.sqrt(64)       # Should return ~127 (sqrt(64/255)*255)
+      return animation._math.sqrt(64)       # Should return ~127 (sqrt(64/255)*255)
     elif name == "sqrt_integer_0"
-      return self.sqrt(0)        # Should return 0
+      return animation._math.sqrt(0)        # Should return 0
     elif name == "sqrt_float"
-      return self.sqrt(16.0)     # Should return 4.0
+      return animation._math.sqrt(16.0)     # Should return 4.0
     else
       return 0
     end
@@ -364,11 +363,11 @@ def test_closure_math_methods()
   # Test 5: scale function
   provider.closure = def(self, name, time_ms)
     if name == "scale_basic"
-      return self.scale(50, 0, 100, 0, 255)    # Should return ~127
+      return animation._math.scale(50, 0, 100, 0, 255)    # Should return ~127
     elif name == "scale_reverse"
-      return self.scale(25, 0, 100, 255, 0)    # Should return ~191
+      return animation._math.scale(25, 0, 100, 255, 0)    # Should return ~191
     elif name == "scale_negative"
-      return self.scale(0, -50, 50, -100, 100) # Should return 0
+      return animation._math.scale(0, -50, 50, -100, 100) # Should return 0
     else
       return 0
     end
@@ -386,13 +385,13 @@ def test_closure_math_methods()
   # Test 6: sin function
   provider.closure = def(self, name, time_ms)
     if name == "sin_0"
-      return self.sin(0)        # sin(0°) = 0
+      return animation._math.sin(0)        # sin(0°) = 0
     elif name == "sin_64"
-      return self.sin(64)       # sin(90°) = 1 -> 255
+      return animation._math.sin(64)       # sin(90°) = 1 -> 255
     elif name == "sin_128"
-      return self.sin(128)      # sin(180°) = 0
+      return animation._math.sin(128)      # sin(180°) = 0
     elif name == "sin_192"
-      return self.sin(192)      # sin(270°) = -1 -> -255
+      return animation._math.sin(192)      # sin(270°) = -1 -> -255
     else
       return 0
     end
@@ -412,13 +411,13 @@ def test_closure_math_methods()
   # Test 7: cos function (matches oscillator COSINE behavior)
   provider.closure = def(self, name, time_ms)
     if name == "cos_0"
-      return self.cos(0)      # Oscillator cosine at 0° = minimum -> -255
+      return animation._math.cos(0)      # Oscillator cosine at 0° = minimum -> -255
     elif name == "cos_64"
-      return self.cos(64)     # Oscillator cosine at 90° = ~0
+      return animation._math.cos(64)     # Oscillator cosine at 90° = ~0
     elif name == "cos_128"
-      return self.cos(128)    # Oscillator cosine at 180° = maximum -> 255
+      return animation._math.cos(128)    # Oscillator cosine at 180° = maximum -> 255
     elif name == "cos_192"
-      return self.cos(192)    # Oscillator cosine at 270° = ~0
+      return animation._math.cos(192)    # Oscillator cosine at 270° = ~0
     else
       return 0
     end
@@ -439,9 +438,9 @@ def test_closure_math_methods()
   provider.closure = def(self, name, time_ms)
     if name == "complex_math"
       var angle = time_ms % 256  # 0-255 angle based on time
-      var sine_val = self.abs(self.sin(angle))  # Absolute sine value
-      var scaled = self.scale(sine_val, 0, 255, 50, 200)  # Scale to 50-200 range
-      return self.min(self.max(scaled, 75), 175)  # Clamp to 75-175 range
+      var sine_val = animation._math.abs(animation._math.sin(angle))  # Absolute sine value
+      var scaled = animation._math.scale(sine_val, 0, 255, 50, 200)  # Scale to 50-200 range
+      return animation._math.min(animation._math.max(scaled, 75), 175)  # Clamp to 75-175 range
     else
       return 0
     end

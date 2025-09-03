@@ -68,7 +68,7 @@ def test_multiple_sequence_managers()
   
   # Start all sequences at the same time
   tasmota.set_millis(80000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(80000)  # Update engine time
   
   # Verify all sequences are running
@@ -125,7 +125,7 @@ def test_sequence_manager_coordination()
   
   # Start both sequences
   tasmota.set_millis(90000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(90000)  # Update engine time
   
   # At t=0: seq1 playing anim1, seq2 waiting
@@ -190,7 +190,7 @@ def test_sequence_manager_engine_integration()
   
   # Start sequences
   tasmota.set_millis(100000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(100000)  # Update engine time
   
   # Test that engine's on_tick updates all sequence managers
@@ -292,7 +292,7 @@ def test_sequence_manager_clear_all()
   
   # Start sequences
   tasmota.set_millis(110000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(110000)  # Update engine time
   
   assert(seq_manager1.is_sequence_running() == true, "Sequence 1 should be running")
@@ -329,7 +329,7 @@ def test_sequence_manager_stress()
   
   # Create sequences for each manager
   tasmota.set_millis(120000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(120000)  # Update engine time
   
   for i : 0..9

@@ -76,11 +76,11 @@ assert_test(!engine.remove_animation(anim2), "Should not remove non-existent ani
 
 # Test 3: Engine Lifecycle
 print("\n--- Test 3: Engine Lifecycle ---")
-assert_test(engine.start(), "Should start engine")
+assert_test(engine.run(), "Should start engine")
 assert_equals(engine.is_active(), true, "Engine should be active after start")
 
 # Test that starting again doesn't break anything
-engine.start()
+engine.run()
 assert_equals(engine.is_active(), true, "Engine should remain active after second start")
 
 assert_test(engine.stop(), "Should stop engine")
@@ -94,7 +94,7 @@ test_anim.color = 0xFFFF0000
 test_anim.priority = 10
 test_anim.name = "test"
 engine.add(test_anim)
-engine.start()
+engine.run()
 
 var current_time = tasmota.millis()
 
@@ -255,7 +255,7 @@ assert_test(temp_reused, "Temp buffer object should be reused for efficiency")
 
 # Test 10c: Runtime detection during on_tick()
 print("\n--- Test 10c: Runtime detection during on_tick() ---")
-dynamic_engine.start()
+dynamic_engine.run()
 
 # Add a test animation
 var runtime_anim = animation.solid(dynamic_engine)

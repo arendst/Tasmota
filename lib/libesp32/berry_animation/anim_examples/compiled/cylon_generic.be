@@ -20,7 +20,7 @@ def cylon_effect_template(engine, eye_color_, back_color_, duration_)
   eye_animation_.pos = (def (engine)
     var provider = animation.cosine_osc(engine)
     provider.min_value = (-1)
-    provider.max_value = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - 2 end)
+    provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
     provider.duration = duration_
     return provider
   end)(engine)
@@ -33,7 +33,7 @@ end
 animation.register_user_function('cylon_effect', cylon_effect_template)
 
 cylon_effect_template(engine, 0xFFFF0000, 0x00000000, 3000)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

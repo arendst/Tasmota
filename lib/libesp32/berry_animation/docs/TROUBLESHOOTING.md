@@ -78,6 +78,12 @@ except .. as e, msg
 end
 ```
 
+**Timing Behavior Note:**
+The framework has updated timing behavior where:
+- The `start()` method only resets the time origin if the animation/value provider was already started previously
+- The first actual rendering tick occurs in `update()`, `render()`, or `produce_value()` methods
+- This ensures proper timing initialization and prevents premature time reference setting
+
 **Common Solutions:**
 
 1. **Missing Strip Declaration:**
@@ -761,7 +767,7 @@ var engine = animation.create_engine(strip)
 var red_anim = animation.solid(engine)
 red_anim.color = 0xFFFF0000
 engine.add(red_anim)
-engine.start()
+engine.run()
 
 # If basic strip works but animation doesn't, check framework setup
 ```
@@ -831,7 +837,7 @@ var engine = animation.create_engine(strip, true)  # debug=true
 var anim = animation.solid(engine)
 anim.color = 0xFFFF0000
 engine.add(anim)
-engine.start()
+engine.run()
 ```
 
 ### Step-by-Step Testing
@@ -856,7 +862,7 @@ engine.add(anim)
 print("Animation count:", engine.size())
 
 print("5. Starting engine...")
-engine.start()
+engine.run()
 print("Engine active:", engine.is_active())
 ```
 

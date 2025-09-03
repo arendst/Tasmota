@@ -56,7 +56,7 @@ var demo_ = animation.SequenceManager(engine)
     .push_wait_step(1000)
     )
 engine.add(demo_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

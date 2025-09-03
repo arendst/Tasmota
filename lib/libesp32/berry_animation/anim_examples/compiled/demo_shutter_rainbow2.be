@@ -44,7 +44,7 @@ var shutter_run_ = animation.SequenceManager(engine, -1)
   .push_closure_step(def (engine) col2_.next = 1 end)
   .push_closure_step(def (engine) log(f"next", 3) end)
 engine.add(shutter_run_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

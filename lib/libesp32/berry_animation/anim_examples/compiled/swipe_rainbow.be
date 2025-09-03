@@ -21,7 +21,7 @@ var slide_colors_ = animation.SequenceManager(engine)
   .push_play_step(swipe_animation_, 1000)
   .push_closure_step(def (engine) olivary_.next = 1 end)
 engine.add(slide_colors_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

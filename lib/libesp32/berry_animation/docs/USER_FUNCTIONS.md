@@ -490,7 +490,7 @@ When you use user functions in computed parameters:
 
 1. **Automatic Detection**: The transpiler automatically detects user functions in expressions
 2. **Single Closure**: The entire expression is wrapped in a single efficient closure
-3. **Engine Access**: User functions receive `self.engine` in the closure context
+3. **Engine Access**: User functions receive `engine` in the closure context
 4. **Mixed Operations**: User functions work seamlessly with mathematical functions and arithmetic
 
 **Generated Code Example:**
@@ -502,8 +502,8 @@ animation.opacity = max(100, user.breathing(red, 2000))
 **Transpiles to:**
 ```berry
 animation.opacity = animation.create_closure_value(engine, 
-  def (self, param_name, time_ms) 
-    return (self.max(100, animation.get_user_function('breathing')(self.engine, 0xFFFF0000, 2000))) 
+  def (engine, param_name, time_ms) 
+    return (animation._math.max(100, animation.get_user_function('breathing')(engine, 0xFFFF0000, 2000))) 
   end)
 ```
 

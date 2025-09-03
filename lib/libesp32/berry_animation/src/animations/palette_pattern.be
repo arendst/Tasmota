@@ -83,6 +83,9 @@ class PalettePatternAnimation : animation.animation
       return false
     end
     
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
+    
     # Calculate elapsed time since animation started
     var elapsed = time_ms - self.start_time
     
@@ -102,10 +105,8 @@ class PalettePatternAnimation : animation.animation
       return false
     end
     
-    # Use provided time or default to engine time
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     # Get current parameter values (cached for performance)
     var color_source = self.get_param('color_source')     # use get_param to avoid resolving of color_provider
@@ -139,14 +140,13 @@ class PalettePatternAnimation : animation.animation
   
   # Handle parameter changes
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     if name == "pattern_func" || name == "color_source"
       # Reinitialize value buffer when pattern or color source changes
       self._initialize_value_buffer()
     end
   end
-  
 
-  
   # String representation of the animation
   def tostring()
     var strip_length = self.engine.get_strip_length()

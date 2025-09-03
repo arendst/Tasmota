@@ -53,10 +53,10 @@ transpile()
 │       │       ├── process_play_statement_fluent()
 │       │       ├── process_wait_statement_fluent()
 │       │       ├── process_log_statement_fluent()
-│       │       ├── process_reset_restart_statement_fluent()
+│       │       ├── process_restart_statement_fluent()
 │       │       └── process_sequence_assignment_fluent()
 │       ├── process_import() (direct Berry import generation)
-│       ├── process_run() (collect for single engine.start())
+│       ├── process_run() (collect for single engine.run())
 │       └── process_property_assignment()
 └── generate_engine_start() (single call for all run statements)
 ```
@@ -141,7 +141,7 @@ process_value(context)
     │   │   └── process_primary_expression(context, is_top_level, raw_mode)
     │   │       ├── Parenthesized expression → recursive call
     │   │       ├── Function call handling:
-    │   │       │   ├── Raw mode: mathematical functions → self.method()
+    │   │       │   ├── Raw mode: mathematical functions → animation._math.method()
     │   │       │   ├── Raw mode: template calls → template_func(self.engine, ...)
     │   │       │   ├── Regular mode: process_function_call() or process_nested_function_call()
     │   │       │   └── Simple function detection → _is_simple_function_call()
@@ -199,11 +199,11 @@ is_computed_expression_string(expr_str)
 
 create_computation_closure_from_string(expr_str)
 ├── transform_expression_for_closure()
-│   ├── Sequential step 1: Transform mathematical functions → self.method()
+│   ├── Sequential step 1: Transform mathematical functions → animation._math.method()
 │   │   ├── Use dynamic introspection with is_math_method()
-│   │   ├── Check for existing "self." prefix
+│   │   ├── Check for existing "self." prefix /// TODO NOT SURE IT STILL EXISTS 
 │   │   └── Only transform if not already prefixed
-│   ├── Sequential step 2: Transform user variables → self.resolve(var_)
+│   ├── Sequential step 2: Transform user variables → animation.resolve(var_)
 │   │   ├── Find variables ending with _
 │   │   ├── Check for existing resolve() calls
 │   │   ├── Avoid double-wrapping
@@ -290,7 +290,7 @@ _validate_value_provider_reference(object_name, context)
 ├── Check if symbol exists using validate_symbol_reference()
 ├── Check symbol_table markers for type information
 ├── Validate instance types using isinstance()
-├── Ensure only value providers/animations can be reset/restarted
+├── Ensure only value providers/animations can be restarted
 └── Provide detailed error messages for invalid types
 ```
 
@@ -331,14 +331,14 @@ Dynamic expressions are wrapped in closures with **mathematical function support
 # DSL: animation.opacity = strip_length() / 2 + 50
 # Generated:
 animation.opacity = animation.create_closure_value(engine, 
-  def (self) return self.resolve(strip_length_(engine)) / 2 + 50 end)
+  def (self) return animation.resolve(strip_length_(engine)) / 2 + 50 end)
 
 # DSL: animation.opacity = max(100, min(255, user.rand_demo() + 50))
 # Generated:
 animation.opacity = animation.create_closure_value(engine,
-  def (self) return self.max(100, self.min(255, animation.get_user_function('rand_demo')(self.engine) + 50)) end)
+  def (self) return animation._math.max(100, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 50)) end)
 
-# Mathematical functions are automatically detected and prefixed with self.
+# Mathematical functions are automatically detected and prefixed with animation._math.
 # User functions are wrapped with animation.get_user_function() calls
 ```
 

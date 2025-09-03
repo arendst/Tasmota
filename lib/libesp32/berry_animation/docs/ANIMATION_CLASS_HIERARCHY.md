@@ -79,6 +79,8 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 
 **Special Behavior**: Setting `is_running = true/false` starts/stops the animation.
 
+**Timing Behavior**: The `start()` method only resets the time origin if the animation was already started previously (i.e., `self.start_time` is not nil). The first actual rendering tick occurs in `update()` or `render()` methods, which initialize `start_time` on first call.
+
 **Factory**: `animation.animation(engine)`
 
 ## Value Providers
@@ -92,6 +94,8 @@ Base interface for all value providers. Inherits from `ParameterizedObject`.
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | *(none)* | - | - | - | Base interface has no parameters |
+
+**Timing Behavior**: For value providers, `start()` is typically not called because instances can be embedded in closures. Value providers consider the first call to `produce_value()` as the start of their internal time reference. The `start()` method only resets the time origin if the provider was already started previously (i.e., `self.start_time` is not nil).
 
 **Factory**: N/A (base interface)
 
@@ -141,6 +145,8 @@ Generates oscillating values using various waveforms. Inherits from `ValueProvid
 - `8` (ELASTIC) - Spring-like overshoot and oscillation
 - `9` (BOUNCE) - Ball-like bouncing with decreasing amplitude
 
+**Timing Behavior**: The `start_time` is initialized on the first call to `produce_value()`. The `start()` method only resets the time origin if the oscillator was already started previously (i.e., `self.start_time` is not nil).
+
 **Factories**: `animation.ramp(engine)`, `animation.sawtooth(engine)`, `animation.linear(engine)`, `animation.triangle(engine)`, `animation.smooth(engine)`, `animation.sine_osc(engine)`, `animation.cosine_osc(engine)`, `animation.square(engine)`, `animation.ease_in(engine)`, `animation.ease_out(engine)`, `animation.elastic(engine)`, `animation.bounce(engine)`, `animation.oscillator_value(engine)`
 
 **See Also**: [Oscillation Patterns](OSCILLATION_PATTERNS.md) - Visual examples and usage patterns for oscillation waveforms
@@ -163,14 +169,14 @@ The ClosureValueProvider includes built-in mathematical helper methods that can 
 
 | Method | Description | Parameters | Return Type | Example |
 |--------|-------------|------------|-------------|---------|
-| `min(a, b, ...)` | Minimum of two or more values | `a, b, *args: number` | `number` | `self.min(5, 3, 8)` → `3` |
-| `max(a, b, ...)` | Maximum of two or more values | `a, b, *args: number` | `number` | `self.max(5, 3, 8)` → `8` |
-| `abs(x)` | Absolute value | `x: number` | `number` | `self.abs(-5)` → `5` |
-| `round(x)` | Round to nearest integer | `x: number` | `int` | `self.round(3.7)` → `4` |
-| `sqrt(x)` | Square root with integer handling | `x: number` | `number` | `self.sqrt(64)` → `128` (for 0-255 range) |
-| `scale(v, from_min, from_max, to_min, to_max)` | Scale value between ranges | `v, from_min, from_max, to_min, to_max: number` | `int` | `self.scale(50, 0, 100, 0, 255)` → `127` |
-| `sin(angle)` | Sine function (0-255 input range) | `angle: number` | `int` | `self.sin(64)` → `255` (90°) |
-| `cos(angle)` | Cosine function (0-255 input range) | `angle: number` | `int` | `self.cos(0)` → `-255` (matches oscillator behavior) |
+| `min(a, b, ...)` | Minimum of two or more values | `a, b, *args: number` | `number` | `animation._math.min(5, 3, 8)` → `3` |
+| `max(a, b, ...)` | Maximum of two or more values | `a, b, *args: number` | `number` | `animation._math.max(5, 3, 8)` → `8` |
+| `abs(x)` | Absolute value | `x: number` | `number` | `animation._math.abs(-5)` → `5` |
+| `round(x)` | Round to nearest integer | `x: number` | `int` | `animation._math.round(3.7)` → `4` |
+| `sqrt(x)` | Square root with integer handling | `x: number` | `number` | `animation._math.sqrt(64)` → `128` (for 0-255 range) |
+| `scale(v, from_min, from_max, to_min, to_max)` | Scale value between ranges | `v, from_min, from_max, to_min, to_max: number` | `int` | `animation._math.scale(50, 0, 100, 0, 255)` → `127` |
+| `sin(angle)` | Sine function (0-255 input range) | `angle: number` | `int` | `animation._math.sin(64)` → `255` (90°) |
+| `cos(angle)` | Cosine function (0-255 input range) | `angle: number` | `int` | `animation._math.cos(0)` → `-255` (matches oscillator behavior) |
 
 **Mathematical Method Notes:**
 

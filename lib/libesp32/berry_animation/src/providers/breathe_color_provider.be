@@ -37,6 +37,7 @@ class BreatheColorProvider : animation.oscillator_value
   
   # Handle parameter changes - no need to sync oscillator min/max since they're fixed
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     # Only handle curve_factor changes for oscillator form
     if name == "curve_factor"
       # For curve_factor = 1, use pure cosine

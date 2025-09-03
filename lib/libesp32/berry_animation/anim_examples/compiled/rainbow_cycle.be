@@ -21,7 +21,7 @@ var rainbow_animation_ = animation.solid(engine)
 rainbow_animation_.color = rainbow_cycle_
 # Start the animation
 engine.add(rainbow_animation_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

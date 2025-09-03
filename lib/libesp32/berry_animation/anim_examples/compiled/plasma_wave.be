@@ -95,7 +95,7 @@ engine.add(plasma_base_)
 engine.add(plasma_wave1_)
 engine.add(plasma_wave2_)
 engine.add(plasma_wave3_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

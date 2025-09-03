@@ -20,14 +20,14 @@ eye_color_.cycle_period = 0
 var cosine_val_ = (def (engine)
   var provider = animation.cosine_osc(engine)
   provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - 2 end)
+  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
   provider.duration = eye_duration_
   return provider
 end)(engine)
 var triangle_val_ = (def (engine)
   var provider = animation.triangle(engine)
   provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - 2 end)
+  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
   provider.duration = eye_duration_
   return provider
 end)(engine)
@@ -43,7 +43,7 @@ var cylon_eye_ = animation.SequenceManager(engine, -1)
   .push_closure_step(def (engine) red_eye_.pos = cosine_val_ end)  # switch back to COSINE for next iteration
   .push_closure_step(def (engine) eye_color_.next = 1 end)  # advance to next color
 engine.add(cylon_eye_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

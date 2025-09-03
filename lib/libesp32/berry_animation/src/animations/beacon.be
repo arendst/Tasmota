@@ -40,10 +40,8 @@ class BeaconAnimation : animation.animation
       return false
     end
     
-    # Use engine time if not provided
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     var pixel_size = frame.width
     # Use virtual parameter access - automatically resolves ValueProviders

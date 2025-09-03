@@ -57,6 +57,10 @@ end
 # Import core framework components
 # These provide the fundamental architecture for the animation system
 
+# Mathematical functions for use in closures and throughout the framework
+import "core/math_functions" as math_functions
+register_to_animation(math_functions)
+
 # Base class for parameter management - shared by Animation and ValueProvider
 import "core/parameterized_object" as parameterized_object
 register_to_animation(parameterized_object)

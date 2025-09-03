@@ -24,7 +24,6 @@ var BOUNCE = 9
 #@ solidify:OscillatorValueProvider,weak
 class OscillatorValueProvider : animation.value_provider
   # Non-parameter instance variables only
-  var origin            # origin time in ms for cycle calculation
   var value             # current calculated value
   
   # Static array for better solidification (moved from inline array)
@@ -47,19 +46,20 @@ class OscillatorValueProvider : animation.value_provider
     super(self).init(engine)  # Initialize parameter system
     
     # Initialize non-parameter instance variables
-    self.origin = 0 # Will be set when `start` is called
     self.value = 0  # Will be calculated on first produce_value call
   end
   
   # Start/restart the oscillator at a specific time
   #
-  # @param time_ms: int - Time in milliseconds to set as origin (optional, uses engine time if nil)
+  # start() is typically not called at beginning of animations for value providers.
+  # The start_time is set at the first call to produce_value().
+  # This method is mainly aimed at restarting the value provider start_time
+  # via the `restart` keyword in DSL.
+  #
+  # @param time_ms: int - Time in milliseconds to set as start_time (optional, uses engine time if nil)
   # @return self for method chaining
   def start(time_ms)
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
-    self.origin = time_ms
+    super(self).start(time_ms)
     return self
   end
 
@@ -77,12 +77,15 @@ class OscillatorValueProvider : animation.value_provider
     var phase = self.phase
     var duty_cycle = self.duty_cycle
     
+    # Ensure time_ms is valid and initialize start_time if needed
+    time_ms = self._fix_time_ms(time_ms)
+
     if duration == nil || duration <= 0
       return min_value
     end
-    
-    # Calculate elapsed time since origin
-    var past = time_ms - self.origin
+
+    # Calculate elapsed time since start_time
+    var past = time_ms - self.start_time
     if past < 0
       past = 0
     end
@@ -92,7 +95,7 @@ class OscillatorValueProvider : animation.value_provider
     # Handle cycle wrapping
     if past >= duration
       var cycles = past / duration
-      self.origin += cycles * duration
+      self.start_time += cycles * duration
       past = past % duration
     end
     

@@ -255,9 +255,9 @@ import "user_functions"
 var test_ = animation.solid(engine)
 test_.color = 0xFF0000FF
 test_.opacity = animation.create_closure_value(engine, 
-  def (self) return animation.get_user_function('rand_demo')(self.engine) end)
+  def (engine) return animation.get_user_function('rand_demo')(engine) end)
 engine.add(test_)
-engine.start()
+engine.run()
 ```
 
 ## Advanced DSL Features
@@ -291,7 +291,7 @@ def pulse_effect(engine, color, speed)
   pulse_.color = color
   pulse_.period = speed
   engine.add(pulse_)
-  engine.start()
+  engine.run()
 end
 
 animation.register_user_function("pulse_effect", pulse_effect)
@@ -347,7 +347,7 @@ def comet_chase(engine, trail_color, bg_color, chase_speed)
   comet_.speed = chase_speed
   engine.add(background_)
   engine.add(comet_)
-  engine.start()
+  engine.run()
 end
 
 animation.register_user_function("comet_chase", comet_chase)

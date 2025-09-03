@@ -136,11 +136,7 @@ class CompositeColorProvider : animation.color_provider
   
   # String representation of the provider
   def tostring()
-    try
     return f"CompositeColorProvider(providers={size(self.providers)}, blend_mode={self.blend_mode})"
-    except ..
-      return "CompositeColorProvider(uninitialized)"
-    end
   end
 end
 

@@ -86,6 +86,7 @@ class ColorCycleColorProvider : animation.color_provider
   # @param name: string - Name of the parameter that changed
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     if name == "palette_size"
       # palette_size is read-only - restore the actual value and raise an exception
       self.values["palette_size"] = self._get_palette_size()

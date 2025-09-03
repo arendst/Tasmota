@@ -16,13 +16,13 @@ import user_functions
 # Create animations that use imported user functions
 var random_red_ = animation.solid(engine)
 random_red_.color = 0xFFFF0000
-random_red_.opacity = animation.create_closure_value(engine, def (self) return animation.get_user_function('rand_demo')(self.engine) end)
+random_red_.opacity = animation.create_closure_value(engine, def (engine) return animation.get_user_function('rand_demo')(engine) end)
 var breathing_blue_ = animation.solid(engine)
 breathing_blue_.color = 0xFF0000FF
-breathing_blue_.opacity = animation.create_closure_value(engine, def (self) return self.max(50, self.min(255, animation.get_user_function('rand_demo')(self.engine) + 100)) end)
+breathing_blue_.opacity = animation.create_closure_value(engine, def (engine) return animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100)) end)
 var dynamic_green_ = animation.solid(engine)
 dynamic_green_.color = 0xFF008000
-dynamic_green_.opacity = animation.create_closure_value(engine, def (self) return self.abs(animation.get_user_function('rand_demo')(self.engine) - 128) + 64 end)
+dynamic_green_.opacity = animation.create_closure_value(engine, def (engine) return animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64 end)
 # Create a sequence that cycles through the animations
 var import_demo_ = animation.SequenceManager(engine)
   .push_play_step(random_red_, 3000)
@@ -30,7 +30,7 @@ var import_demo_ = animation.SequenceManager(engine)
   .push_play_step(dynamic_green_, 3000)
 # Run the demo
 engine.add(import_demo_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

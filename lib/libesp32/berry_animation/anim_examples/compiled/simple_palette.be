@@ -22,7 +22,7 @@ rainbow_cycle_.cycle_period = 3000
 var demo_ = animation.SequenceManager(engine)
   .push_play_step(rainbow_cycle_, 15000)
 engine.add(demo_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

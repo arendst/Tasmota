@@ -72,7 +72,7 @@ engine.add(ornaments_)
 engine.add(tree_star_)
 engine.add(snow_sparkles_)
 engine.add(garland_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:
