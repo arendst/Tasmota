@@ -89,7 +89,7 @@ var palette_showcase_ = animation.SequenceManager(engine)
     .push_play_step(sunset_glow_, 2000)
     )
 engine.add(palette_showcase_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

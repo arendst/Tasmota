@@ -48,7 +48,7 @@ fire_flicker_.priority = 10
 # Start both animations
 engine.add(fire_base_)
 engine.add(fire_flicker_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

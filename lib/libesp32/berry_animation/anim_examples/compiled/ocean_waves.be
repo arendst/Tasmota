@@ -74,7 +74,7 @@ engine.add(ocean_base_)
 engine.add(wave1_)
 engine.add(wave2_)
 engine.add(foam_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

@@ -85,6 +85,7 @@ class PlasmaAnimation : animation.animation
   
   # Handle parameter changes
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     if name == "color" && value == nil
       # Reset to default rainbow palette when color is set to nil
       var rainbow_provider = animation.rich_palette(self.engine)
@@ -189,6 +190,9 @@ class PlasmaAnimation : animation.animation
     if !self.is_running || frame == nil
       return false
     end
+    
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     var strip_length = self.engine.get_strip_length()
     var i = 0

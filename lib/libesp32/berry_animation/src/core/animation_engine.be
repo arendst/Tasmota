@@ -42,10 +42,10 @@ class AnimationEngine
     self.render_needed = false
   end
   
-  # Start the animation engine
+  # Run the animation engine
   # 
   # @return self for method chaining
-  def start()
+  def run()
     if !self.is_running
       var now = tasmota.millis()
       self.is_running = true

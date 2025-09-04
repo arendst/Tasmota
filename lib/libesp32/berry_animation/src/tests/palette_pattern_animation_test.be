@@ -57,6 +57,7 @@ assert(pattern_anim != nil, "Failed to create pattern animation")
 
 # Start the animation
 pattern_anim.start()
+pattern_anim.update()   # force first tick
 assert(pattern_anim.is_running, "Animation should be running")
 
 # Update and render
@@ -83,6 +84,7 @@ assert(wave_anim.wave_length == 5, "Wave length should be 5")
 
 # Start the animation
 wave_anim.start()
+wave_anim.update()   # force first tick
 assert(wave_anim.is_running, "Animation should be running")
 
 # Update and render
@@ -114,6 +116,7 @@ assert(gradient_anim.shift_period == 3000, "Shift period should be 3000")
 
 # Start the animation
 gradient_anim.start()
+gradient_anim.update()   # force first tick
 assert(gradient_anim.is_running, "Animation should be running")
 
 # Update and render
@@ -158,6 +161,7 @@ assert(meter_anim != nil, "Failed to create meter animation")
 
 # Start the animation
 meter_anim.start()
+meter_anim.update()   # force first tick
 assert(meter_anim.is_running, "Animation should be running")
 
 # Update and render
@@ -186,6 +190,7 @@ dynamic_anim.wave_length = 3
 
 # Start the animation
 dynamic_anim.start()
+dynamic_anim.update()   # force first tick
 assert(dynamic_anim.is_running, "Animation should be running")
 
 # Update and render with initial color source
@@ -258,6 +263,7 @@ rich_anim.shift_period = 1000
 
 # Start the animation
 rich_anim.start()
+rich_anim.update()   # force first tick
 assert(rich_anim.is_running, "Animation should be running")
 
 # Update and render
@@ -282,7 +288,9 @@ anim2.shift_period = 1500
 
 # Start both animations at the same time
 anim1.start(sync_time)
+anim1.update(sync_time)   # force first tick
 anim2.start(sync_time)
+anim2.update(sync_time)   # force first tick
 
 assert(anim1.start_time == sync_time, "Animation 1 should have correct start time")
 assert(anim2.start_time == sync_time, "Animation 2 should have correct start time")

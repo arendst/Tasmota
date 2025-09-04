@@ -43,10 +43,8 @@ class MyAnimation : animation.animation
       return false
     end
     
-    # Use engine time if not provided
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     # Use virtual parameter access - automatically resolves ValueProviders
     var param1 = self.my_param1
@@ -276,6 +274,9 @@ def render(frame, time_ms)
   if !self.is_running || frame == nil
     return false
   end
+
+  # Auto-fix time_ms and start_time
+  time_ms = self._fix_time_ms(time_ms)
   
   # Get frame dimensions
   var width = frame.width
@@ -372,7 +373,9 @@ class BeaconAnimation : animation.animation
       return false
     end
     
-    # Use engine time if not provided
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
+
     if time_ms == nil
       time_ms = self.engine.time_ms
     end
@@ -538,7 +541,7 @@ anim.pos = 5
 anim.beacon_size = 3
 
 engine.add(anim)  # Unified method for animations and sequence managers
-engine.start()
+engine.run()
 
 # Let it run for a few seconds
 tasmota.delay(3000)

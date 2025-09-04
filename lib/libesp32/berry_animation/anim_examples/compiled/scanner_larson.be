@@ -51,7 +51,7 @@ scanner_trail_.opacity = 128  # Half brightness
 engine.add(background_)
 engine.add(scanner_trail_)
 engine.add(scanner_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

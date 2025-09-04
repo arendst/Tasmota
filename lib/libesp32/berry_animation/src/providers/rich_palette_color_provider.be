@@ -15,7 +15,6 @@ class RichPaletteColorProvider : animation.color_provider
   var slots            # Number of slots in the palette
   var current_color    # Current interpolated color (calculated during update)
   var light_state      # light_state instance for proper color calculations
-  var cycle_start      # Time when the animation cycle started
   
   # Parameter definitions
   static var PARAMS = {
@@ -35,7 +34,6 @@ class RichPaletteColorProvider : animation.color_provider
     
     # Initialize non-parameter instance variables
     self.current_color = 0xFFFFFFFF
-    self.cycle_start = self.engine.time_ms  # Initialize cycle start time
     self.slots = 0
     
     # Create light_state instance for proper color calculations (reuse from Animate_palette)
@@ -48,6 +46,7 @@ class RichPaletteColorProvider : animation.color_provider
   # @param name: string - Name of the parameter that changed
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     if name == "range_min" || name == "range_max" || name == "cycle_period" || name == "palette"
       if (self.slots_arr != nil) || (self.value_arr != nil)
         # only if they were already computed
@@ -58,14 +57,14 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Start/restart the animation cycle at a specific time
   #
-  # @param time_ms: int - Time in milliseconds to set as cycle start (optional, uses engine time if nil)
+  # @param time_ms: int - Time in milliseconds to set as start_time (optional, uses engine time if nil)
   # @return self for method chaining
   def start(time_ms)
     # Compute arrays if they were not yet initialized
     if (self.slots_arr == nil) && (self.value_arr == nil)
       self._recompute_palette()
     end
-    self.cycle_start = (time_ms != nil) ? time_ms : self.engine.time_ms
+    super(self).start(time_ms)
     return self
   end
   
@@ -178,6 +177,9 @@ class RichPaletteColorProvider : animation.color_provider
   # @param time_ms: int - Current time in milliseconds
   # @return int - Color in ARGB format (0xAARRGGBB)
   def produce_value(name, time_ms)
+    # Ensure time_ms is valid and initialize start_time if needed
+    time_ms = self._fix_time_ms(time_ms)
+
     if (self.slots_arr == nil) && (self.value_arr == nil)
       self._recompute_palette()
     end
@@ -210,8 +212,8 @@ class RichPaletteColorProvider : animation.color_provider
       return final_color
     end
     
-    # Calculate position in cycle using cycle_start
-    var elapsed = time_ms - self.cycle_start
+    # Calculate position in cycle using start_time
+    var elapsed = time_ms - self.start_time
     var past = elapsed % cycle_period
     
     # Find slot (exact algorithm from Animate_palette)

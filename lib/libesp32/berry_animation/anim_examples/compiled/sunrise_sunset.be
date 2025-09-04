@@ -88,7 +88,7 @@ engine.add(daylight_cycle_)
 engine.add(sun_position_)
 engine.add(sun_glow_)
 engine.add(stars_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

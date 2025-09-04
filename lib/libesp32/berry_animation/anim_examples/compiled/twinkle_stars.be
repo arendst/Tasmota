@@ -32,7 +32,7 @@ bright_flash_.priority = 15
 engine.add(background_)
 engine.add(stars_)
 engine.add(bright_flash_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

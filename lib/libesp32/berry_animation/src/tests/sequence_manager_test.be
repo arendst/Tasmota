@@ -107,7 +107,7 @@ def test_sequence_manager_execution()
   
   # Test sequence start
   tasmota.set_millis(10000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(10000)  # Update engine time
   seq_manager.start()
   
@@ -146,7 +146,7 @@ def test_sequence_manager_timing()
   # Start sequence at time 20000
   tasmota.set_millis(20000)
   engine.add(seq_manager)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(20000)  # Update engine time
   
   # Update immediately - should still be on first step
@@ -203,7 +203,7 @@ def test_sequence_manager_step_info()
   # Start sequence
   tasmota.set_millis(30000)
   engine.add(seq_manager)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(30000)  # Update engine time
   
   # Get step info
@@ -239,7 +239,7 @@ def test_sequence_manager_stop()
   
   # Start sequence
   tasmota.set_millis(40000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(40000)  # Update engine time
   seq_manager.start()
   assert(seq_manager.is_running == true, "Sequence should be running")
@@ -277,7 +277,7 @@ def test_sequence_manager_is_running()
   
   tasmota.set_millis(50000)
   engine.add(seq_manager)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(50000)  # Update engine time
   assert(seq_manager.is_sequence_running() == true, "Sequence should be running after start")
   
@@ -324,7 +324,7 @@ def test_sequence_manager_assignment_steps()
   # Start sequence
   tasmota.set_millis(80000)
   engine.add(seq_manager)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(80000)  # Update engine time
   
   # Verify initial state
@@ -394,7 +394,7 @@ def test_sequence_manager_complex_sequence()
   # Start sequence
   tasmota.set_millis(60000)
   engine.add(seq_manager)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(60000)  # Update engine time
   
   # Test sequence progression step by step
@@ -454,10 +454,10 @@ def test_sequence_manager_integration()
   
   # Start sequence
   tasmota.set_millis(70000)
-  engine.start()  # Start the engine
+  engine.run()  # Start the engine
   engine.on_tick(70000)  # Update engine time
   
-  # The engine should automatically start the sequence manager when engine.start() is called
+  # The engine should automatically start the sequence manager when engine.run() is called
   assert(seq_manager.is_running == true, "Sequence should be running after engine start")
   
   # Test that engine's on_tick calls sequence manager update
@@ -633,7 +633,7 @@ def test_sequence_manager_dynamic_repeat_changes()
   # Start sequence
   tasmota.set_millis(120000)
   engine.add(seq_manager)
-  engine.start()
+  engine.run()
   engine.on_tick(120000)
   seq_manager.start(120000)
   

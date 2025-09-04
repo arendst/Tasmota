@@ -84,7 +84,7 @@ engine.add(disco_base_)
 engine.add(white_flash_)
 engine.add(disco_sparkles_)
 engine.add(disco_pulse_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

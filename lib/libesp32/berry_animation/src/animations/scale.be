@@ -48,12 +48,6 @@ class ScaleAnimation : animation.animation
     end
   end
   
-  # Handle parameter changes
-  def on_param_changed(name, value)
-    # No special handling needed for most parameters
-    # Buffers are managed through engine strip length changes
-  end
-  
   # Start/restart the animation
   def start(time_ms)
     # Call parent start first (handles ValueProvider propagation)
@@ -73,6 +67,10 @@ class ScaleAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
+    if !super(self).update(time_ms)
+      return false
+    end
+
     # Cache parameter values for performance
     var current_scale_speed = self.scale_speed
     var current_scale_mode = self.scale_mode
@@ -239,6 +237,9 @@ class ScaleAnimation : animation.animation
     if frame == nil
       return false
     end
+    
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     
     var current_strip_length = self.engine.get_strip_length()
     var i = 0

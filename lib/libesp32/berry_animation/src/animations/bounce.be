@@ -84,6 +84,7 @@ class BounceAnimation : animation.animation
   
   # Handle parameter changes
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     if name == "bounce_speed"
       # Update velocity if speed changed
       var pixels_per_second = tasmota.scale_uint(value, 0, 255, 0, 20)

@@ -68,7 +68,7 @@ def test_user_function_with_math()
     import string
     assert(string.find(berry_code, "animation.get_user_function('rand_demo')") >= 0, 
            "Generated code should contain user function call")
-    assert(string.find(berry_code, "self.max(") >= 0, 
+    assert(string.find(berry_code, "animation._math.max(") >= 0, 
            "Generated code should contain math function call")
     
     print("✓ User function with math test passed")
@@ -94,7 +94,7 @@ def test_user_function_in_arithmetic()
     import string
     assert(string.find(berry_code, "animation.get_user_function('rand_demo')") >= 0, 
            "Generated code should contain user function call")
-    assert(string.find(berry_code, "self.abs(") >= 0, 
+    assert(string.find(berry_code, "animation._math.abs(") >= 0, 
            "Generated code should contain abs function call")
     
     print("✓ User function in arithmetic test passed")

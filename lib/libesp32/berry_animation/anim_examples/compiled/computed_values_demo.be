@@ -16,24 +16,24 @@ var strip_len_ = animation.strip_length(engine)
 # Create animation with computed values
 var stream1_ = animation.comet_animation(engine)
 stream1_.color = 0xFFFF0000
-stream1_.tail_length = animation.create_closure_value(engine, def (self) return self.abs(self.resolve(strip_len_) / 4) end)  # computed value
+stream1_.tail_length = animation.create_closure_value(engine, def (engine) return animation._math.abs(animation.resolve(strip_len_) / 4) end)  # computed value
 stream1_.speed = 1.5
 stream1_.priority = 10
 # More complex computed values
 var base_speed_ = 2.0
 var stream2_ = animation.comet_animation(engine)
 stream2_.color = 0xFF0000FF
-stream2_.tail_length = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) / 8 + (2 * self.resolve(strip_len_)) - 10 end)  # computed with addition
-stream2_.speed = animation.create_closure_value(engine, def (self) return self.resolve(base_speed_) * 1.5 end)  # computed with multiplication
+stream2_.tail_length = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 8 + (2 * animation.resolve(strip_len_)) - 10 end)  # computed with addition
+stream2_.speed = animation.create_closure_value(engine, def (engine) return animation.resolve(base_speed_) * 1.5 end)  # computed with multiplication
 stream2_.direction = (-1)
 stream2_.priority = 5
 # Property assignment with computed values
-stream1_.tail_length = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) / 5 end)
-stream2_.opacity = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) * 4 end)
+stream1_.tail_length = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 5 end)
+stream2_.opacity = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) * 4 end)
 # Run both animations
 engine.add(stream1_)
 engine.add(stream2_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

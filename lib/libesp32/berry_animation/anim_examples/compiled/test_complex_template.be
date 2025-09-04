@@ -37,7 +37,7 @@ var fire_palette_ = bytes("00000000" "80FF0000" "FFFFFF00")
 var ocean_palette_ = bytes("00000080" "800080FF" "FF00FFFF")
 # Use the template
 rainbow_pulse_template(engine, fire_palette_, ocean_palette_, 3000, 0xFF001100)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

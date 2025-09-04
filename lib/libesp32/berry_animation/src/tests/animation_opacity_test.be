@@ -43,7 +43,7 @@ base_anim.priority = 10
 base_anim.name = "base_red"
 
 opacity_engine.add(base_anim)
-opacity_engine.start()
+opacity_engine.run()
 
 # Create frame buffer and test rendering
 var opacity_frame = animation.frame_buffer(10)
@@ -78,7 +78,7 @@ print("\n--- Test 11c: Animation opacity rendering ---")
 
 opacity_engine.clear()
 opacity_engine.add(masked_anim)
-opacity_engine.start()
+opacity_engine.run()
 
 # Start both animations
 masked_anim.start()

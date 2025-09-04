@@ -150,7 +150,7 @@ engine.add(stripe7_)
 engine.add(stripe8_)
 engine.add(stripe9_)
 engine.add(stripe10_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

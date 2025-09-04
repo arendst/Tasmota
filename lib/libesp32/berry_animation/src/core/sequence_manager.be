@@ -197,7 +197,21 @@ class SequenceManager
     
     if step["type"] == "play"
       var anim = step["animation"]
-      self.engine.add(anim)
+      # Check if animation is already in the engine (avoid duplicate adds)
+      var animations = self.engine.get_animations()
+      var already_added = false
+      for existing_anim : animations
+        if existing_anim == anim
+          already_added = true
+          break
+        end
+      end
+      
+      if !already_added
+        self.engine.add(anim)
+      end
+      
+      # Always restart the animation to ensure proper timing
       anim.start(current_time)
       
     elif step["type"] == "wait"
@@ -292,14 +306,34 @@ class SequenceManager
       end
     end
     
-    # Start the next animation BEFORE removing the previous one
+    # CRITICAL FIX: Handle the case where the next step is the SAME animation
+    # This prevents removing and re-adding the same animation, which causes black frames
+    var next_step = nil
+    var is_same_animation = false
+    
     if self.step_index < size(self.steps)
-      self.execute_current_step(current_time)
+      next_step = self.steps[self.step_index]
+      if next_step["type"] == "play" && previous_anim != nil
+        is_same_animation = (next_step["animation"] == previous_anim)
+      end
     end
     
-    # NOW it's safe to remove the previous animation (no gap)
-    if previous_anim != nil
-      self.engine.remove(previous_anim)
+    if is_same_animation
+      # Same animation continuing - don't remove/re-add, but DO restart for timing sync
+      self.step_start_time = current_time
+      # CRITICAL: Still need to restart the animation to sync with sequence timing
+      previous_anim.start(current_time)
+    else
+      # Different animation or no next animation
+      # Start the next animation BEFORE removing the previous one
+      if self.step_index < size(self.steps)
+        self.execute_current_step(current_time)
+      end
+      
+      # NOW it's safe to remove the previous animation (no gap)
+      if previous_anim != nil
+        self.engine.remove(previous_anim)
+      end
     end
     
     # Handle completion

@@ -16,14 +16,14 @@ var strip_len_ = animation.strip_length(engine)
 var triangle_val_ = (def (engine)
   var provider = animation.triangle(engine)
   provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - 2 end)
+  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
   provider.duration = 5000
   return provider
 end)(engine)
 var cosine_val_ = (def (engine)
   var provider = animation.cosine_osc(engine)
   provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (self) return self.resolve(strip_len_) - 2 end)
+  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
   provider.duration = 5000
   return provider
 end)(engine)
@@ -110,7 +110,7 @@ var main_demo_ = animation.SequenceManager(engine)
   .push_play_step(pulse_demo_, 1000)
 # Run the main demo
 engine.add(main_demo_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

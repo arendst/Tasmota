@@ -37,7 +37,7 @@ aurora_base_.brightness = 180  # brightness (dimmed for aurora effect)
 var demo_ = animation.SequenceManager(engine)
   .push_play_step(aurora_base_, nil)  # infinite duration (no 'for' clause)
 engine.add(demo_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

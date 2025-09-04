@@ -39,6 +39,7 @@ class BreatheAnimation : animation.animation
   
   # Handle parameter changes - propagate to internal breathe provider
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     # Propagate relevant parameters to the breathe provider
     if name == "base_color"
       self.breathe_provider.base_color = value

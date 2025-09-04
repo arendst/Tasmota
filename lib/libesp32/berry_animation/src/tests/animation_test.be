@@ -46,18 +46,20 @@ assert(default_anim.color == 0xFFFFFFFF, "Default color should be white")
 # Test start method
 engine.time_ms = 1000
 anim.start()
+anim.update()
 assert(anim.is_running == true, "Animation should be running after start")
 assert(anim.start_time == 1000, "Animation start time should be 1000")
-assert(anim.current_time == 1000, "Animation current time should be 1000")
 
 # Test restart functionality - start() acts as restart
+engine.time_ms = 2000
 anim.start()
 assert(anim.is_running == true, "Animation should be running after start")
+assert(anim.start_time == 2000, "Animation start time should be 2000")
 var first_start_time = anim.start_time
 
 # Start again - should restart with new time
 engine.time_ms = 3000
-anim.start()
+anim.start(engine.time_ms)
 assert(anim.is_running == true, "Animation should still be running after restart")
 assert(anim.start_time == 3000, "Animation should have new start time after restart")
 
@@ -71,6 +73,7 @@ non_loop_anim.name = "non_loop"
 non_loop_anim.color = 0xFF0000
 engine.time_ms = 2000
 non_loop_anim.start(2000)
+non_loop_anim.update(2000)
 assert(non_loop_anim.is_running == true, "Animation should be running after start")
 
 # Update within duration
@@ -78,7 +81,6 @@ engine.time_ms = 2500
 var result = non_loop_anim.update(engine.time_ms)
 assert(result == true, "Update should return true when animation is still running")
 assert(non_loop_anim.is_running == true, "Animation should still be running")
-assert(non_loop_anim.current_time == 2500, "Current time should be updated")
 
 # Update after duration
 engine.time_ms = 3100
@@ -95,7 +97,8 @@ loop_anim.opacity = 255
 loop_anim.name = "loop"
 loop_anim.color = 0xFF0000
 engine.time_ms = 4000
-loop_anim.start(4000)
+loop_anim.start(engine.time_ms)
+loop_anim.update(engine.time_ms)    # update must be explictly called to start time
 
 # Update after one loop
 engine.time_ms = 5100

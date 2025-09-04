@@ -54,11 +54,7 @@ class StaticValueProvider : animation.value_provider
   
   # String representation of the provider
   def tostring()
-    try
-      return f"StaticValueProvider(value={self.value})"
-    except ..
-      return "StaticValueProvider(value=unset)"
-    end
+    return f"StaticValueProvider(value={self.value})"
   end
 end
 

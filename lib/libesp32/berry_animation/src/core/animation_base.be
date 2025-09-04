@@ -9,14 +9,11 @@
 
 class Animation : animation.parameterized_object
   # Non-parameter instance variables only
-  var start_time      # Time when animation started (ms) (int)
-  var current_time    # Current animation time (ms) (int)
   var opacity_frame   # Frame buffer for opacity animation rendering
   
   # Parameter definitions
   static var PARAMS = {
     "name": {"type": "string", "default": "animation"}, # Optional name for the animation
-    "is_running": {"type": "bool", "default": false},   # Whether the animation is active
     "priority": {"min": 0, "default": 10},              # Rendering priority (higher = on top, 0-255)
     "duration": {"min": 0, "default": 0},               # Animation duration in ms (0 = infinite)
     "loop": {"type": "bool", "default": false},         # Whether to loop when duration is reached
@@ -31,60 +28,7 @@ class Animation : animation.parameterized_object
     # Initialize parameter system with engine
     super(self).init(engine)
     
-    # Initialize non-parameter instance variables
-    self.start_time = 0
-    self.current_time = 0
-  end
-  
-  # Start/restart the animation (make it active and reset timing)
-  # 
-  # @param start_time: int - Optional start time in milliseconds
-  # @return self for method chaining
-  def start(start_time)
-    # Set is_running directly in values map to avoid infinite loop
-    self.values["is_running"] = true
-    var actual_start_time = (start_time != nil) ? start_time : self.engine.time_ms
-    self.start_time = actual_start_time
-    self.current_time = self.start_time
-    
-    # Start/restart all value providers in parameters
-    self._start_value_providers(actual_start_time)
-    
-    return self
-  end
-  
-  # Helper method to start/restart all value providers in parameters
-  #
-  # @param time_ms: int - Time to pass to value provider start methods
-  def _start_value_providers(time_ms)
-    # Iterate through all parameter values
-    for param_value : self.values
-      # Check if the parameter value is a value provider
-      if animation.is_value_provider(param_value)
-        # Call start method if it exists (acts as restart)
-        param_value.start(time_ms)
-      end
-    end
-  end
-  
-  # Handle parameter changes - specifically for is_running to control start/stop
-  #
-  # @param name: string - Parameter name that changed
-  # @param value: any - New parameter value
-  def on_param_changed(name, value)
-    if name == "is_running"
-      if value == true
-        # Start the animation (but avoid infinite loop by not setting is_running again)
-        var actual_start_time = self.engine.time_ms
-        self.start_time = actual_start_time
-        self.current_time = self.start_time
-        # Start/restart all value providers in parameters
-        self._start_value_providers(actual_start_time)
-      # elif value == false
-        # Stop the animation - just set the internal state
-        # (is_running is already set to false by the parameter system)
-      end
-    end
+    # Initialize non-parameter instance variables (none currently)
   end
   
   # Update animation state based on current time
@@ -93,14 +37,15 @@ class Animation : animation.parameterized_object
   # @param time_ms: int - Current time in milliseconds
   # @return bool - True if animation is still running, false if completed
   def update(time_ms)
+    # auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     # Access is_running via virtual member
     var current_is_running = self.is_running
     if !current_is_running
       return false
     end
     
-    self.current_time = time_ms
-    var elapsed = self.current_time - self.start_time
+    var elapsed = time_ms - self.start_time
     
     # Access parameters via virtual members
     var current_duration = self.duration
@@ -131,17 +76,16 @@ class Animation : animation.parameterized_object
   # @param time_ms: int - Current time in milliseconds
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms)
+    # auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
     # Access is_running via virtual member
     var current_is_running = self.is_running
     if !current_is_running || frame == nil
       return false
     end
     
-    # Use engine time if not provided
-    time_ms = (time_ms != nil) ? time_ms : self.engine.time_ms
-    
     # Update animation state
-    self.update(time_ms)
+    self.update(time_ms)      # TODO IS UPDATE NOT ALREADY CALLED BY ENGINE?
     
     # Access parameters via virtual members (auto-resolves ValueProviders)
     var current_color = self.color
@@ -159,6 +103,7 @@ class Animation : animation.parameterized_object
   # @param frame: FrameBuffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   def post_render(frame, time_ms)
+    # no need to auto-fix time_ms and start_time
     # Handle opacity - can be number, frame buffer, or animation
     var current_opacity = self.opacity
     self._apply_opacity(frame, current_opacity, time_ms)

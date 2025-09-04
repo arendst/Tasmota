@@ -1,4 +1,4 @@
-# Demo Shutter Rainbow
+# Demo Shutter Rainbow Bidir
 #
 # Shutter from left to right iterating in all colors, then right to left
   
@@ -35,13 +35,13 @@ template shutter_bidir {
 
   sequence shutter_seq repeat forever {
     repeat col1.palette_size times {
-      reset shutter_size
+      restart shutter_size
       play shutter_lr_animation for duration
       col1.next = 1
       col2.next = 1
     }
     repeat col1.palette_size times {
-      reset shutter_size
+      restart shutter_size
       play shutter_rl_animation for duration
       col1.next = 1
       col2.next = 1

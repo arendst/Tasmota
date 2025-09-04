@@ -47,7 +47,7 @@ breathing_.opacity = (def (engine)
 end)(engine)
 # Start the animation
 engine.add(breathing_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

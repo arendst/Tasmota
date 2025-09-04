@@ -1,8 +1,6 @@
 # User-Defined Functions Registry for Berry Animation Framework
 # This module manages external Berry functions that can be called from DSL code
 
-#@ solidify:animation_user_functions,weak
-
 # Register a Berry function for DSL use
 def register_user_function(name, func)
   animation._user_functions[name] = func

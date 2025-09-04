@@ -77,7 +77,7 @@ engine.add(heart_glow_)
 engine.add(heartbeat1_)
 engine.add(heartbeat2_)
 engine.add(center_pulse_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

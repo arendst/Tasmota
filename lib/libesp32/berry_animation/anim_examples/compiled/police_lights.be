@@ -60,7 +60,7 @@ white_strobe_.priority = 20
 engine.add(left_red_)
 engine.add(right_blue_)
 engine.add(white_strobe_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

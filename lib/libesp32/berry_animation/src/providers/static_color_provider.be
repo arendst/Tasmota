@@ -34,11 +34,7 @@ class StaticColorProvider : animation.color_provider
   
   # String representation of the provider
   def tostring()
-    try
-      return f"StaticColorProvider(color=0x{self.color:08X})"
-    except ..
-      return "StaticColorProvider(color=unset)"
-    end
+    return f"StaticColorProvider(color=0x{self.color:08X})"
   end
 end
 

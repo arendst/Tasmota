@@ -98,7 +98,7 @@ engine.add(lava_blob1_)
 engine.add(lava_blob2_)
 engine.add(lava_blob3_)
 engine.add(heat_shimmer_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

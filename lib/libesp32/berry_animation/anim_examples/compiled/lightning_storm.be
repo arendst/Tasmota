@@ -76,7 +76,7 @@ engine.add(lightning_main_)
 engine.add(lightning_partial_)
 engine.add(afterglow_)
 engine.add(distant_flash_)
-engine.start()
+engine.run()
 
 
 #- Original DSL source:

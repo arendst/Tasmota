@@ -159,7 +159,7 @@ def test_sequences()
   assert(string.find(berry_code, "var test_seq_ = animation.SequenceManager(engine)") >= 0, "Should define sequence manager")
   assert(string.find(berry_code, ".push_play_step(") >= 0, "Should add play step")
   assert(string.find(berry_code, "3000)") >= 0, "Should reference duration")
-  assert(string.find(berry_code, "engine.start()") >= 0, "Should start engine")
+  assert(string.find(berry_code, "engine.run()") >= 0, "Should start engine")
   
   print("✓ Sequences test passed")
   return true
@@ -364,29 +364,29 @@ def test_multiple_run_statements()
   var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "Should compile multiple run statements")
   
-  # Count engine.start() calls - should be exactly 1
+  # Count engine.run() calls - should be exactly 1
   var lines = string.split(berry_code, "\n")
   var start_count = 0
   for line : lines
-    if string.find(line, "engine.start()") >= 0
+    if string.find(line, "engine.run()") >= 0
       start_count += 1
     end
   end
   
-  assert(start_count == 1, f"Should have exactly 1 engine.start() call, found {start_count}")
+  assert(start_count == 1, f"Should have exactly 1 engine.run() call, found {start_count}")
   
   # Check that all animations are added to the engine
   assert(string.find(berry_code, "engine.add(red_anim_)") >= 0, "Should add red_anim to engine")
   assert(string.find(berry_code, "engine.add(blue_anim_)") >= 0, "Should add blue_anim to engine")
   assert(string.find(berry_code, "engine.add(green_anim_)") >= 0, "Should add green_anim to engine")
   
-  # Verify the engine.start() comes after all animations are added
+  # Verify the engine.run() comes after all animations are added
   var start_line_index = -1
   var last_add_line_index = -1
   
   for i : 0..size(lines)-1
     var line = lines[i]
-    if string.find(line, "engine.start()") >= 0
+    if string.find(line, "engine.run()") >= 0
       start_line_index = i
     end
     if string.find(line, "engine.add(") >= 0
@@ -394,7 +394,7 @@ def test_multiple_run_statements()
     end
   end
   
-  assert(start_line_index > last_add_line_index, "engine.start() should come after all engine.add_* calls")
+  assert(start_line_index > last_add_line_index, "engine.run() should come after all engine.add_* calls")
   
   # Test with mixed animations and sequences
   var mixed_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
@@ -414,16 +414,16 @@ def test_multiple_run_statements()
   var mixed_berry_code = animation_dsl.compile(mixed_dsl)
   assert(mixed_berry_code != nil, "Should compile mixed run statements")
   
-  # Count engine.start() calls in mixed scenario
+  # Count engine.run() calls in mixed scenario
   var mixed_lines = string.split(mixed_berry_code, "\n")
   var mixed_start_count = 0
   for line : mixed_lines
-    if string.find(line, "engine.start()") >= 0
+    if string.find(line, "engine.run()") >= 0
       mixed_start_count += 1
     end
   end
   
-  assert(mixed_start_count == 1, f"Mixed scenario should have exactly 1 engine.start() call, found {mixed_start_count}")
+  assert(mixed_start_count == 1, f"Mixed scenario should have exactly 1 engine.run() call, found {mixed_start_count}")
   
   # Check that both animation and sequence are handled
   assert(string.find(mixed_berry_code, "engine.add(red_anim_)") >= 0, "Should add animation to engine")
@@ -481,14 +481,14 @@ def test_computed_values()
   assert(computed_code != nil, "Should compile computed values")
   
   # Check for single resolve calls (no double wrapping)
-  var expected_single_resolve = "self.abs(self.resolve(strip_len_) / 4)"
+  var expected_single_resolve = "animation._math.abs(animation.resolve(strip_len_) / 4)"
   assert(string.find(computed_code, expected_single_resolve) >= 0, "Should generate single resolve call in computed expression")
   
   # Check that there are no double resolve calls
   var double_resolve_count = 0
   var pos = 0
   while true
-    pos = string.find(computed_code, "self.resolve(self.resolve(", pos)
+    pos = string.find(computed_code, "animation.resolve(self.resolve(", pos)
     if pos < 0
       break
     end
@@ -545,13 +545,13 @@ def test_computed_values()
   assert(nested_closure_count == 0, f"Should have no nested closures, found {nested_closure_count}")
   
   # Verify specific complex expression patterns
-  var expected_complex_tail = "self.resolve(strip_len_) / 8 + (2 * self.resolve(strip_len_)) - 10"
+  var expected_complex_tail = "animation.resolve(strip_len_) / 8 + (2 * animation.resolve(strip_len_)) - 10"
   assert(string.find(complex_code, expected_complex_tail) >= 0, "Should generate correct complex tail_length expression")
   
-  var expected_complex_speed = "(self.resolve(base_value_) + self.resolve(strip_len_)) * 2.5"
+  var expected_complex_speed = "(animation.resolve(base_value_) + animation.resolve(strip_len_)) * 2.5"
   assert(string.find(complex_code, expected_complex_speed) >= 0, "Should generate correct complex speed expression")
   
-  var expected_complex_priority = "self.max(1, self.min(10, self.resolve(strip_len_) / 6))"
+  var expected_complex_priority = "animation._math.max(1, animation._math.min(10, animation.resolve(strip_len_) / 6))"
   assert(string.find(complex_code, expected_complex_priority) >= 0, "Should generate correct complex priority expression with math functions")
   
   # Test simple expressions that don't need closures
@@ -582,9 +582,9 @@ def test_computed_values()
   assert(math_code != nil, "Should compile mathematical expressions")
   
   # Check that mathematical functions are prefixed with self. in closures
-  assert(string.find(math_code, "self.max(1, self.min(") >= 0, "Should prefix math functions with self. in closures")
-  assert(string.find(math_code, "self.abs(") >= 0, "Should prefix abs function with self. in closures")
-  assert(string.find(math_code, "self.round(") >= 0, "Should prefix round function with self. in closures")
+  assert(string.find(math_code, "animation._math.max(1, animation._math.min(") >= 0, "Should prefix math functions with animation._math. in closures")
+  assert(string.find(math_code, "animation._math.abs(") >= 0, "Should prefix abs function with self. in closures")
+  assert(string.find(math_code, "animation._math.round(") >= 0, "Should prefix round function with self. in closures")
   
   print("✓ Computed values test passed")
   return true

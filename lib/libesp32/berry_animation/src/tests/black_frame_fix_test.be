@@ -54,7 +54,7 @@ def test_atomic_closure_batch_execution()
   
   # Start sequence
   tasmota.set_millis(10000)
-  engine.start()
+  engine.run()
   engine.on_tick(10000)
   seq_manager.start(10000)
   
@@ -123,7 +123,7 @@ def test_multiple_consecutive_closures()
   
   # Start sequence
   tasmota.set_millis(20000)
-  engine.start()
+  engine.run()
   engine.on_tick(20000)
   seq_manager.start(20000)
   
@@ -177,7 +177,7 @@ def test_closure_batch_at_sequence_start()
   
   # Start sequence
   tasmota.set_millis(30000)
-  engine.start()
+  engine.run()
   engine.on_tick(30000)
   seq_manager.start(30000)
   
@@ -217,7 +217,7 @@ def test_repeat_sequence_closure_batching()
   
   # Start sequence
   tasmota.set_millis(40000)
-  engine.start()
+  engine.run()
   engine.on_tick(40000)
   seq_manager.start(40000)
   
@@ -294,7 +294,7 @@ def test_black_frame_fix_integration()
   
   # Start sequence
   tasmota.set_millis(50000)
-  engine.start()
+  engine.run()
   engine.on_tick(50000)
   seq_manager.start(50000)
   

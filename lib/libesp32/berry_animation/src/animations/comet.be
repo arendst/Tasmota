@@ -36,6 +36,7 @@ class CometAnimation : animation.animation
   
   # Handle parameter changes - reset position when direction changes
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     if name == "direction"
       # Reset position when direction changes
       var strip_length = self.engine.get_strip_length()

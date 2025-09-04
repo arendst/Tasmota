@@ -20,7 +20,7 @@ class RichPaletteAnimation : animation.animation
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
     "brightness": {"min": 0, "max": 255, "default": 255},
     "range_min": {"default": 0},
-    "range_max": {"default": 100}
+    "range_max": {"default": 255}
   }
   
   # Initialize a new RichPaletteAnimation
@@ -45,6 +45,7 @@ class RichPaletteAnimation : animation.animation
   # @param name: string - Name of the parameter that changed
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     # Forward rich palette parameters to internal color provider
     if name == "palette" || name == "cycle_period" || name == "transition_type" || 
        name == "brightness" || name == "range_min" || name == "range_max"
