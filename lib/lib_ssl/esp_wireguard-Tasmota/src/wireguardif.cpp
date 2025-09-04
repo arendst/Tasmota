@@ -990,7 +990,9 @@ err_t wireguardif_init(struct netif *netif) {
 	// AddLog(LOG_LEVEL_DEBUG, "WG : looking for available network interface");
 	for (int32_t i = 0; i < sizeof(ifkeys) / sizeof(char *) && err != ESP_OK; i++) {
 		ifkey = ifkeys[i];
-		err = esp_netif_get_netif_impl_name(esp_netif_get_handle_from_ifkey(ifkey), lwip_netif_name);
+		if (esp_netif_is_netif_up(esp_netif_get_handle_from_ifkey(ifkey))) {
+			err = esp_netif_get_netif_impl_name(esp_netif_get_handle_from_ifkey(ifkey), lwip_netif_name);
+		}
 		if (err == ESP_OK) {
 			AddLog(LOG_LEVEL_DEBUG, PSTR("WG : Found available network interface: %s"), lwip_netif_name);
 		}
