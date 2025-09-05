@@ -35,6 +35,10 @@ class mqttdata_cls
     mqtt.subscribe("tele/#", /topic, idx, data, databytes -> self.handle_state_data(topic, idx, data, databytes))
   end
 
+  def stop()
+    tasmota.remove_driver(self)
+  end
+
   def handle_state_data(full_topic, idx, data, databytes)
     import json
 
