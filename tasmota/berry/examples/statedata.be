@@ -36,14 +36,15 @@ class mqttdata_cls
   end
 
   def stop()
+    mqtt.unsubscribe("tele/#")                      # Assume default Fulltopic (%prefix%/%topic%/) and Prefix3 (tele)
     tasmota.remove_driver(self)
   end
 
   def handle_state_data(full_topic, idx, data, databytes)
     import json
 
-    if string.find(full_topic, "STATE") > 0         # tele/wemos7/STATE
-      var subtopic = string.split(full_topic, "/")  # Assume default Fulltopic (%prefix%/%topic%/)
+    var subtopic = string.split(full_topic, "/")    # Assume default Fulltopic (%prefix%/%topic%/)
+    if subtopic[-1] == "STATE"                      # tele/wemos7/STATE
       var topic = subtopic[1]                       # wemos7
 
       var state = json.load(data)
