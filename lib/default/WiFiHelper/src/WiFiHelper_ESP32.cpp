@@ -95,7 +95,7 @@ void WiFiHelper::scrubDNS(void) {
     const IPAddress ip_dns = IPAddress(dns_getserver(i));
     // Step 1. save valid values from DNS
     if (!ip_addr_isany_val((const ip_addr_t &)ip_dns) &&
-        ip_dns != IPAddress(0, 0, 0, 0)) { // there seems to be a bug in lwIP, this is a workaround
+        ip_dns != IPAddress(0, 0, 0, 0)) {        // 0.0.0.0 is an invalid DNS IP
       if (ip_dns.type() == IPv4 && (has_v4 || !has_v6)) {
         ip_dns.to_ip_addr_t(&dns_save4[i]);       // dns entry is populated, save it in v4 slot
       }
