@@ -90,30 +90,36 @@ void WiFiHelper::scrubDNS(void) {
 #endif
   // AddLog(LOG_LEVEL_DEBUG, "IP>1: DNS: (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), has_v4, has_v6);
 
-#ifdef USE_IPV6
   // First pass, save values
   for (uint32_t i=0; i<2; i++) {
     const IPAddress ip_dns = IPAddress(dns_getserver(i));
     // Step 1. save valid values from DNS
-    if (!ip_addr_isany_val((const ip_addr_t &)ip_dns)) {
+    if (!ip_addr_isany_val((const ip_addr_t &)ip_dns) &&
+        ip_dns != IPAddress(0, 0, 0, 0)) { // there seems to be a bug in lwIP, this is a workaround
       if (ip_dns.type() == IPv4 && (has_v4 || !has_v6)) {
         ip_dns.to_ip_addr_t(&dns_save4[i]);       // dns entry is populated, save it in v4 slot
-      } else if (has_v6) {
+      }
+#ifdef USE_IPV6 
+      else if (has_v6) {
         ip_dns.to_ip_addr_t(&dns_save6[i]);       // dns entry is populated, save it in v6 slot
       }
+#endif // USE_IPV6
     }
   }
 
   // Step 2. scrub addresses not supported
+#ifdef USE_IPV6
   if (!has_v4 && has_v6) {            // v6 only
     dns_save4[0] = *IP4_ADDR_ANY;
     dns_save4[1] = *IP4_ADDR_ANY;
   }
+#endif
   if (!has_v6) {
     dns_save6[0] = *IP_ADDR_ANY;
     dns_save6[1] = *IP_ADDR_ANY;
   }
 
+#ifdef USE_IPV6
   // Step 3. restore saved value
   if (has_v4 && has_v6) {   // if both IPv4 and IPv6 are active, prefer IPv4 for first and IPv6 for second
     if (!ip_addr_isany_val(dns_save4[0])) {
@@ -133,8 +139,10 @@ void WiFiHelper::scrubDNS(void) {
     dns_setserver(0, &dns_save6[0]);
     dns_setserver(1, &dns_save6[1]);
   } else {                                  // no v6, we use v4 even if not connected
+#endif // USE_IPV6
     dns_setserver(0, &dns_save4[0]);
     dns_setserver(1, &dns_save4[1]);
+#ifdef USE_IPV6
   }
 #endif // USE_IPV6
   // AddLog(LOG_LEVEL_DEBUG, "IP>2: DNS: from(%s %s) to (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), IPAddress(dns_getserver(0)).toString().c_str(),  IPAddress(dns_getserver(1)).toString().c_str(), has_v4, has_v6);
@@ -143,7 +151,6 @@ void WiFiHelper::scrubDNS(void) {
   //     IPAddress(&dns_save4[0]).toString().c_str(),IPAddress(&dns_save4[1]).toString().c_str(),
   //     IPAddress(&dns_save6[0]).toString().c_str(),IPAddress(&dns_save6[1]).toString().c_str());
 }
-
 
 void WiFiHelper::hostname(const char* aHostname) {
   WiFi.setHostname(aHostname);
