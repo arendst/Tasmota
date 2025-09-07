@@ -40,6 +40,10 @@ void JPEGDEC::setFramebuffer(void *pFramebuffer)
     JPEG_setFramebuffer(&_jpeg, pFramebuffer);
 } /* setFramebuffer() */
 
+int JPEGDEC::getPixelType()
+{
+    return (int)_jpeg.ucPixelType;
+}
 void JPEGDEC::setPixelType(int iType)
 {
     if (iType >= 0 && iType < INVALID_PIXEL_TYPE)
@@ -72,7 +76,7 @@ int JPEGDEC::openRAM(uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw)
     return JPEGInit(&_jpeg);
 } /* openRAM() */
 
-int JPEGDEC::openFLASH(uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw)
+int JPEGDEC::openFLASH(const uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw)
 {
     memset(&_jpeg, 0, sizeof(JPEGIMAGE));
     _jpeg.ucMemType = JPEG_MEM_FLASH;
@@ -82,10 +86,10 @@ int JPEGDEC::openFLASH(uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDra
     _jpeg.pfnOpen = NULL;
     _jpeg.pfnClose = NULL;
     _jpeg.JPEGFile.iSize = iDataSize;
-    _jpeg.JPEGFile.pData = pData;
+    _jpeg.JPEGFile.pData = (uint8_t *)pData;
     _jpeg.iMaxMCUs = 1000; // set to an unnaturally high value to start
     return JPEGInit(&_jpeg);
-} /* openRAM() */
+} /* openFLASH() */
 
 int JPEGDEC::getOrientation()
 {
@@ -142,6 +146,25 @@ void JPEGDEC::getCropArea(int *x, int *y, int *w, int *h)
     JPEG_getCropArea(&_jpeg, x, y, w, h);
 } /* getCropArea() */
 
+int JPEGDEC::getJPEGType()
+{
+    return (_jpeg.ucMode == 0xc2) ? JPEG_MODE_PROGRESSIVE : JPEG_MODE_BASELINE;
+} /* getJPEGType() */
+
+#ifdef __LINUX__
+int JPEGDEC::open(const char *szFilename, JPEG_DRAW_CALLBACK *pfnDraw)
+{
+    memset(&_jpeg, 0, sizeof(JPEGIMAGE));
+    _jpeg.pfnRead = readFile;
+    _jpeg.pfnClose = closeFile;
+    _jpeg.pfnSeek = seekFile;
+    _jpeg.pfnDraw = pfnDraw;
+    _jpeg.iMaxMCUs = 1000;
+    _jpeg.JPEGFile.fHandle = openFile(szFilename, &_jpeg.JPEGFile.iSize);
+    if (_jpeg.JPEGFile.fHandle == NULL) return 0;
+    return JPEGInit(&_jpeg);
+} /* open() */
+#endif // __LINUX__
 //
 // File (SD/MMC) based initialization
 //

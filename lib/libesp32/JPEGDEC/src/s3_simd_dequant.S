@@ -4,7 +4,7 @@
 // Copyright (c) 2024 BitBank Software, Inc.
 // Project started Jan 21, 2024
 //
-#ifdef ARDUINO_ARCH_ESP32
+#ifdef ARDUINO_ESP32S3_DEV
 
 #include "dsps_fft2r_platform.h"
 #if (dsps_fft2r_sc16_aes3_enabled == 1)

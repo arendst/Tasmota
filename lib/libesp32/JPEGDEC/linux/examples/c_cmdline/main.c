@@ -7,9 +7,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
-#include "JPEGDEC.h"
-#include "jpeg.inl"
-#include "../test_images/tulips.h"
+#include "../../../src/JPEGDEC.h"
+#include "../../../src/jpeg.inl"
+#include "../../../test_images/tulips.h"
 
 // Human readable error messages
 const char *szErrors[] = {"Success", "Invalid parameter", "Decode error", "Unsupported feature", "Invalid file"};
@@ -169,7 +169,7 @@ int ConvertFileTest(char *argv[], int iFraction)
     }
     cx = jpg.iWidth / iFraction;
     cy = jpg.iHeight / iFraction;
-    cx = (cx + 7) & 0xfff8; // align on at least 16-byte boundary
+    //cx = (cx + 7) & 0xfff8; // align on at least 16-byte boundary
     if (ucPixelType == RGB8888) {
         iDestPitch = (cx * 4); // 32-bits per pixel
         bpp = 32;
