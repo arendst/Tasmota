@@ -138,7 +138,7 @@ class mqttdata_cls
         list_index = list_size - self.line_cnt      # Offset in list using self.line_cnt
         if list_index < 0 list_index = 0 end
       end
-      var msg = format("</table>{t}")               # Terminate two column table and open new table: <table style='width:100%'>
+      var msg = "</table><table style='width:100%;font-size:80%'>" # Terminate two column table and open new table
       while list_index < list_size
         var splits = string.split(self.list_buffer[list_index], ",")
         var topic = splits[0]                       # topic or hostname
@@ -146,8 +146,7 @@ class mqttdata_cls
         var uptime = splits[2]
         var last_seen = int(splits[3])
 
-#        msg += format("<tr style='font-size:%d%%'>", 90 - (self.line_duration * 10))
-        msg += "<tr style='font-size:80%'>"
+        msg += "<tr>"
         if ipaddress
           msg += format("<td><a target=_blank href='http://%s.'>%s</a></td><td><a target=_blank href='http://%s'>%s</a></td>",
                         topic, topic, ipaddress, ipaddress)

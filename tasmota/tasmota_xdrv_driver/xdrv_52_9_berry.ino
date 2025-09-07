@@ -734,14 +734,14 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
   "<button type='submit'>Run code (or press 'Enter' twice)</button>"
   "</form>"
 #ifdef USE_BERRY_DEBUG
-  "<p><form method='post' >"
+  "<p></p><form method='post' >"
   "<button type='submit' name='rst' class='bred' onclick=\"if(confirm('Confirm removing endpoint')){clearTimeout(lt);return true;}else{return false;}\">Restart Berry VM (for devs only)</button>"
-  "</form></p>"
+  "</form>"
 #endif // USE_BERRY_DEBUG
   ;
 
 const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
-  "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
+  "<p></p><form action='bc' method='get'><button>Berry Scripting console</button></form>";
 
 
 void HandleBerryConsoleRefresh(void)
@@ -821,7 +821,7 @@ void HandleBerryBECLoaderButton(void) {
     const BeBECCode_t &bec = BECCode[i];
     if (!(*bec.loaded)) {
       if (be_global_find(vm, be_newstr(vm, bec.id)) < 0) {    // the global name  doesn't exist
-        WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form><p></p>", bec.id, bec.display_name);
+        WSContentSend_P("<form id=but_part_mgr style='display:block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form><p></p>", bec.id, bec.display_name);
       } else {
         *bec.loaded = true;
       }

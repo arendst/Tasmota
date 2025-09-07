@@ -736,7 +736,7 @@ void CmndGvUrl(void) {
 #define WEB_HANDLE_GV "gv"
 
 const char HTTP_BTN_MENU_GV[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_GV "' method='get' target='_blank'><button>" D_GPIO_VIEWER "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_GV "' method='get' target='_blank'><button>" D_GPIO_VIEWER "</button></form>";
 
 void GVSetupAndStart(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }

@@ -41,7 +41,7 @@ const char MLX90640type[] PROGMEM = "MLX90640";
 
 #ifdef USE_WEBSERVER
 #define WEB_HANDLE_MLX90640 "mlx"
-const char HTTP_BTN_MENU_MLX90640[] PROGMEM = "<p><form action='" WEB_HANDLE_MLX90640 "' method='get'><button>MLX90640</button></form></p>";
+const char HTTP_BTN_MENU_MLX90640[] PROGMEM = "<p></p><form action='" WEB_HANDLE_MLX90640 "' method='get'><button>MLX90640</button></form>";
 #endif // USE_WEBSERVER
 
 struct {

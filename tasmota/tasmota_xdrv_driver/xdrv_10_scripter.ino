@@ -9800,7 +9800,7 @@ void Scripter_save_pvars(void) {
 #define WEB_HANDLE_SCRIPT "s10"
 
 const char HTTP_BTN_MENU_RULES[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form>";
 
 
 const char HTTP_FORM_SCRIPT[] PROGMEM =
@@ -11790,7 +11790,7 @@ uint32_t fsize;
 
 #ifdef SCRIPT_FULL_WEBPAGE
 const char HTTP_WEB_FULL_DISPLAY[] PROGMEM =
-  "<p><form action='sfd%1d' method='get'><button>%s</button></form></p>";
+  "<p></p><form action='sfd%1d' method='get'><button>%s</button></form>";
 
 const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
     "var rfsh=1;"
@@ -12018,7 +12018,7 @@ const char SCRIPT_MSG_GTABLE[] PROGMEM =
   "<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>"
   "<script type='text/javascript'>google.charts.load('current',{packages:['corechart']});</script>"
   "<style>.hRow{font-weight:bold;color:black;background-color:lightblue;}.hCol{font-weight:bold;color:black;background-color:lightblue;}.tCell{color:black}</style>"
-  "<style>#chart1{display: inline-block;margin: 0 auto;#timeline text{fill:magenta;}}</style>";
+  "<style>#chart1{display:inline-block;margin: 0 auto;#timeline text{fill:magenta;}}</style>";
 
 const char SCRIPT_MSG_TABLE[] PROGMEM =
   "<script type='text/javascript'>google.charts.load('current',{packages:['table']});</script>";

@@ -637,7 +637,7 @@ void CmndDomoticzSend(void) {
 #define WEB_HANDLE_DOMOTICZ "dm"
 
 const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>";
 
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend>"

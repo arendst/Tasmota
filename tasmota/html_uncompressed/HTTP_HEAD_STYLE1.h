@@ -1,5 +1,4 @@
 const char HTTP_HEAD_STYLE1[] PROGMEM =
-  "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "fieldset{background:var(--c_frm);}"  // COLOR_FORM, Also update HTTP_TIMER_STYLE
   "p{margin:0.5em 0;}"

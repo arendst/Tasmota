@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 - Support for ESP32-C5 (#23804)
 - Berry update of preview of animation framework (#23816)
 - ESP8266 platform update from 2025.08.00 to 2025.09.00 (#23801)
+- JPEGDEC library from v1.5.0 to v1.8.3 (#23883)
+- Web UI styles and HTML syntax (#23847)
 
 ### Fixed
 - Syslog RFC5424 compliance (#23509)
