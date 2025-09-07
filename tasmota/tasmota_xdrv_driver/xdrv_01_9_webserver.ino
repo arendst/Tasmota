@@ -222,6 +222,7 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT32.h"
   #include "./html_compressed/HTTP_HEAD_STYLE_ROOT_COLOR.h"
   #include "./html_compressed/HTTP_HEAD_STYLE1.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE2.h"
   #include "./html_compressed/HTTP_HEAD_STYLE3.h"
   #include "./html_compressed/HTTP_HEAD_STYLE_WIFI.h"
 #else
@@ -229,6 +230,7 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE_ROOT_COLOR.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE3.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE_WIFI.h"
 #endif
@@ -1016,6 +1018,7 @@ void WSContentSendStyle_P(const char* formatP, ...) {
   );
 
   WSContentSendRaw_P(HTTP_HEAD_STYLE1);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE2);
 
 #ifdef USE_WEB_STATUS_LINE_WIFI
   WSContentSendRaw_P(HTTP_HEAD_STYLE_WIFI);
