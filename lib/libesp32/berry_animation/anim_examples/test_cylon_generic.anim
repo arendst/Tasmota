@@ -1,0 +1,29 @@
+# Cylon Red Eye
+# Automatically adapts to the length of the strip
+
+template cylon_effect {
+  param eye_color type color
+  param back_color type color
+  param duration
+  
+  set aaa = abs2(45) + 2
+  set strip_len = strip_length()
+  set strip_len_div_2 = abs(strip_len / 2)
+  set strip_len2 = strip_length(is_running=0) # artifically putting an argument to cause a closure
+
+  set osc1 = sawtooth()
+  set osc2 = triangle()
+  set osc3 = scale(osc1 + osc2, 0, 200, 0, 255)
+  set osc9 = sawtooth() + triangle()    # this should fail
+
+  animation eye_animation = beacon_animation(
+    color = eye_color
+    back_color = back_color
+    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = duration)
+    beacon_size = 3       # small 3 pixels eye
+    slew_size = 2         # with 2 pixel shading around
+    priority = 5
+  )
+
+  run eye_animation
+}

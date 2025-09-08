@@ -90,6 +90,11 @@ class SequenceManager
     self.current_iteration = 0
     self.is_running = true
     
+    # Push iteration context to engine stack if this is a repeat sequence
+    if self.is_repeat_sequence
+      self.engine.push_iteration_context(self.current_iteration)
+    end
+    
     # Start executing if we have steps
     if size(self.steps) > 0
       # Execute all consecutive closure steps at the beginning atomically
@@ -119,6 +124,11 @@ class SequenceManager
   def stop()
     if self.is_running
       self.is_running = false
+      
+      # Pop iteration context from engine stack if this is a repeat sequence
+      if self.is_repeat_sequence
+        self.engine.pop_iteration_context()
+      end
       
       # Stop any currently playing animations
       if self.step_index < size(self.steps)
@@ -347,6 +357,11 @@ class SequenceManager
   def complete_iteration(current_time)
     self.current_iteration += 1
     
+    # Update iteration context in engine stack if this is a repeat sequence
+    if self.is_repeat_sequence
+      self.engine.update_current_iteration(self.current_iteration)
+    end
+    
     # Resolve repeat count (may be a function)
     var resolved_repeat_count = self.get_resolved_repeat_count()
     
@@ -376,6 +391,11 @@ class SequenceManager
     else
       # All iterations complete
       self.is_running = false
+      
+      # Pop iteration context from engine stack if this is a repeat sequence
+      if self.is_repeat_sequence
+        self.engine.pop_iteration_context()
+      end
     end
   end
   

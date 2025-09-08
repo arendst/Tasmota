@@ -33,7 +33,7 @@ def test_user_function_in_computed_parameters()
   
   var dsl_code = 
     "animation random_base = solid(color=blue, priority=10)\n"
-    "random_base.opacity = user.rand_demo()\n"
+    "random_base.opacity = rand_demo()\n"
     "run random_base"
   
   try
@@ -57,7 +57,7 @@ def test_user_function_with_math()
   
   var dsl_code = 
     "animation random_bounded = solid(color=orange, priority=8)\n"
-    "random_bounded.opacity = max(50, min(255, user.rand_demo() + 100))\n"
+    "random_bounded.opacity = max(50, min(255, rand_demo() + 100))\n"
     "run random_bounded"
   
   try
@@ -83,7 +83,7 @@ def test_user_function_in_arithmetic()
   
   var dsl_code = 
     "animation random_variation = solid(color=purple, priority=15)\n"
-    "random_variation.opacity = abs(user.rand_demo() - 128) + 64\n"
+    "random_variation.opacity = abs(rand_demo() - 128) + 64\n"
     "run random_variation"
   
   try
@@ -109,7 +109,7 @@ def test_complex_user_function_expressions()
   
   var dsl_code = 
     "animation random_complex = solid(color=white, priority=20)\n"
-    "random_complex.opacity = round((user.rand_demo() + 128) / 2 + abs(user.rand_demo() - 100))\n"
+    "random_complex.opacity = round((rand_demo() + 128) / 2 + abs(rand_demo() - 100))\n"
     "run random_complex"
   
   try
@@ -140,8 +140,8 @@ def test_generated_code_validity()
   
   var dsl_code = 
     "animation random_multi = solid(color=cyan, priority=12)\n"
-    "random_multi.opacity = user.rand_demo()\n"
-    "random_multi.duration = max(100, user.rand_demo())\n"
+    "random_multi.opacity = rand_demo()\n"
+    "random_multi.duration = max(100, rand_demo())\n"
     "run random_multi"
   
   try

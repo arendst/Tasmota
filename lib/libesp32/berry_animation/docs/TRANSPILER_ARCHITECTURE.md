@@ -56,6 +56,8 @@ transpile()
 │       │       ├── process_restart_statement_fluent()
 │       │       └── process_sequence_assignment_fluent()
 │       ├── process_import() (direct Berry import generation)
+│       ├── process_event_handler() (basic event system support)
+│       ├── process_berry_code_block() (embed arbitrary Berry code)
 │       ├── process_run() (collect for single engine.run())
 │       └── process_property_assignment()
 └── generate_engine_start() (single call for all run statements)
@@ -217,24 +219,210 @@ is_anonymous_function(expr_str)
 └── Skip closure wrapping for already-wrapped functions
 ```
 
+## Enhanced Symbol Table System
+
+The transpiler uses a sophisticated **SymbolTable** system for holistic symbol management and caching. This system provides dynamic symbol detection, type validation, and conflict prevention.
+
+### SymbolTable Architecture
+
+The symbol table consists of two main classes in `symbol_table.be`:
+
+#### SymbolEntry Class
+```
+SymbolEntry
+├── name: string           # Symbol name
+├── type: string           # Symbol type classification
+├── instance: object       # Actual instance for validation
+├── takes_args: boolean    # Whether symbol accepts arguments
+├── arg_type: string       # "positional", "named", or "none"
+└── is_builtin: boolean    # Whether this is a built-in symbol from animation module
+```
+
+**Symbol Types Supported:**
+- `"palette"` - Palette objects like `PALETTE_RAINBOW` (bytes instances)
+- `"constant"` - Integer constants like `LINEAR`, `SINE`, `COSINE`
+- `"math_function"` - Mathematical functions like `max`, `min`
+- `"user_function"` - User-defined functions registered at runtime
+- `"value_provider"` - Value provider constructors
+- `"animation"` - Animation constructors
+- `"color"` - Color definitions and providers
+- `"variable"` - User-defined variables
+- `"sequence"` - Sequence definitions
+- `"template"` - Template definitions
+
+#### SymbolTable Class
+```
+SymbolTable
+├── entries: map           # Map of name -> SymbolEntry
+├── mock_engine: MockEngine # For validation testing
+├── Dynamic Detection Methods:
+│   ├── _detect_and_cache_symbol() # On-demand symbol detection
+│   ├── contains() # Existence check with auto-detection
+│   └── get() # Retrieval with auto-detection
+├── Creation Methods:
+│   ├── create_palette()
+│   ├── create_color()
+│   ├── create_animation()
+│   ├── create_value_provider()
+│   ├── create_variable()
+│   ├── create_sequence()
+│   └── create_template()
+└── Validation Methods:
+    ├── symbol_exists()
+    ├── get_reference()
+    └── takes_args() / takes_positional_args() / takes_named_args()
+```
+
+### Dynamic Symbol Detection
+
+The SymbolTable uses **lazy detection** to identify and cache symbols as they are encountered:
+
+```
+_detect_and_cache_symbol(name)
+├── Check if already cached → return cached entry
+├── Check animation module using introspection:
+│   ├── Detect bytes() instances → create_palette()
+│   ├── Detect integer constants (type == "int") → create_constant()
+│   ├── Detect math functions in animation._math → create_math_function()
+│   ├── Detect user functions via animation.is_user_function() → create_user_function()
+│   ├── Test constructors with MockEngine:
+│   │   ├── Create instance with mock_engine
+│   │   ├── Check isinstance(instance, animation.value_provider) → create_value_provider()
+│   │   └── Check isinstance(instance, animation.animation) → create_animation()
+│   └── Cache result for future lookups
+└── Return nil if not found (handled as user-defined)
+```
+
+### Symbol Type Detection Examples
+
+**Palette Detection:**
+```berry
+# DSL: animation rainbow = rich_palette_animation(palette=PALETTE_RAINBOW)
+# Detection: PALETTE_RAINBOW exists in animation module, isinstance(obj, bytes)
+# Result: SymbolEntry("PALETTE_RAINBOW", "palette", bytes_instance, true)
+# Reference: "animation.PALETTE_RAINBOW"
+```
+
+**Constant Detection:**
+```berry
+# DSL: animation wave = wave_animation(waveform=LINEAR)
+# Detection: LINEAR exists in animation module, type(LINEAR) == "int"
+# Result: SymbolEntry("LINEAR", "constant", 1, true)
+# Reference: "animation.LINEAR"
+```
+
+**Math Function Detection:**
+```berry
+# DSL: animation.opacity = max(100, min(255, brightness))
+# Detection: max exists in animation._math, is callable
+# Result: SymbolEntry("max", "math_function", nil, true)
+# Reference: "animation.max" (transformed to "animation._math.max" in closures)
+```
+
+**Value Provider Detection:**
+```berry
+# DSL: set oscillator = triangle(min_value=0, max_value=100, period=2s)
+# Detection: triangle(mock_engine) creates instance, isinstance(instance, animation.value_provider)
+# Result: SymbolEntry("triangle", "value_provider", instance, true)
+# Reference: "animation.triangle"
+```
+
+**User Function Detection:**
+```berry
+# DSL: animation demo = rand_demo(color=red)
+# Detection: animation.is_user_function("rand_demo") returns true
+# Result: SymbolEntry("rand_demo", "user_function", nil, true)
+# Reference: "rand_demo_" (handled specially in function calls)
+```
+
+### Symbol Conflict Prevention
+
+The SymbolTable prevents symbol redefinition conflicts:
+
+```
+add(name, entry)
+├── Check for built-in symbol conflicts:
+│   ├── _detect_and_cache_symbol(name)
+│   └── Raise "symbol_redefinition_error" if types differ
+├── Check existing user-defined symbols:
+│   ├── Compare entry.type with existing.type
+│   └── Raise "symbol_redefinition_error" if types differ
+├── Allow same-type updates (reassignment)
+└── Return entry for method chaining
+```
+
+**Example Conflict Detection:**
+```berry
+# This would raise an error:
+color max = #FF0000  # Conflicts with built-in math function "max"
+
+# This would also raise an error:
+color red = #FF0000
+animation red = solid(color=blue)  # Redefining "red" as different type
+```
+
+### Integration with Transpiler
+
+The SymbolTable integrates seamlessly with the transpiler's processing flow:
+
+### Performance Optimizations
+
+**Caching Strategy:**
+- **Lazy Detection**: Symbols detected only when first encountered
+- **Instance Reuse**: MockEngine instances reused for validation
+- **Introspection Caching**: Built-in symbol detection cached permanently
+
+**Memory Efficiency:**
+- **Minimal Storage**: Only essential information stored per symbol
+- **Shared MockEngine**: Single MockEngine instance for all validation
+- **Reference Counting**: Automatic cleanup of unused entries
+
+### MockEngine Integration
+
+The SymbolTable uses a lightweight MockEngine for constructor validation:
+
+```
+MockEngine
+├── time_ms: 0             # Mock time for validation
+├── get_strip_length(): 30 # Default strip length
+└── Minimal interface for instance creation testing
+```
+
+**Usage in Detection:**
+```berry
+# Test if function creates value provider
+try
+  var instance = factory_func(self.mock_engine)
+  if isinstance(instance, animation.value_provider)
+    return SymbolEntry.create_value_provider(name, instance, animation.value_provider)
+  end
+except .. as e, msg
+  # Constructor failed - not a valid provider
+end
+```
+
 ## Validation System (Comprehensive)
 
 The transpiler includes **extensive compile-time validation** with robust error handling:
 
-### Factory Function Validation (Enhanced)
+### Factory Function Validation (Simplified using SymbolTable)
 ```
-_validate_factory_function(func_name, expected_base_class)
-├── Check if function exists in animation module using introspection
-├── Check if it's callable (function or class)
-├── Create mock instance with MockEngine for type checking
-├── Validate instance type matches expected base class
-├── Handle mathematical functions separately (skip validation)
-└── Graceful error handling with try/catch
+_validate_animation_factory_exists(func_name)
+├── Skip validation for mathematical functions
+├── Use symbol_table.get(func_name) for dynamic detection
+└── Return true if entry exists (any callable function is valid)
 
-MockEngine class provides:
-├── time_ms property for validation
-├── get_strip_length() method returning default 30
-└── Minimal interface for instance creation
+_validate_animation_factory_creates_animation(func_name)
+├── Use symbol_table.get(func_name) for dynamic detection
+└── Return true if entry.type == "animation"
+
+_validate_color_provider_factory_onsts(func_name)
+├── Use symbol_table.get(func_name) for dynamic detection
+└── Return true if entry exists (any callable function is valid)
+
+_validate_value_provider_factory_exists(func_name)
+├── Use symbol_table.get(func_name) for dynamic detection
+└── Return true if entry.type == "value_provider"
 ```
 
 ### Parameter Validation (Real-time)
@@ -246,33 +434,29 @@ _validate_single_parameter(func_name, param_name, animation_instance)
 ├── Validate immediately as parameters are parsed
 └── Graceful error handling to ensure transpiler robustness
 
-_create_instance_for_validation(func_name)
-├── Create MockEngine for validation
-├── Call factory function with mock engine
-├── Return instance for parameter validation
-└── Handle creation failures gracefully
+_create_instance_for_validation(func_name) - Simplified using SymbolTable
+├── Use symbol_table.get(func_name) for dynamic detection
+└── Return entry.instance if available, nil otherwise
 ```
 
-### Reference Validation (Consolidated)
+### Reference Validation (Simplified using SymbolTable)
 ```
-resolve_symbol_reference(name) - Unified symbol resolution
-├── Check if it's a named color → get_named_color_value()
-├── Check symbol_table for user-defined objects → name_
-├── Check sequence_names for sequences → name_
-├── Check animation module using introspection → animation.name
-└── Default to user-defined format → name_
+resolve_symbol_reference(name) - Simplified using SymbolTable
+└── Use symbol_table.get_reference(name) for all symbol resolution
 
 validate_symbol_reference(name, context) - With error reporting
-├── Use symbol_exists() to check all sources
+├── Use symbol_exists() to check symbol_table
 ├── Report detailed error with context information
 └── Return validation status
 
-symbol_exists(name) - Existence check
-├── Check animation_dsl.is_color_name(name)
-├── Check symbol_table.contains(name)
-├── Check sequence_names.contains(name)
-├── Check introspect.contains(animation, name)
-└── Return boolean result
+symbol_exists(name) - Simplified existence check
+└── Use symbol_table.symbol_exists(name) for unified checking
+
+_validate_value_provider_reference(object_name, context) - Simplified
+├── Check symbol_exists() using symbol_table
+├── Use symbol_table.get(name) for type information
+├── Check entry.type == "value_provider" || entry.type == "animation"
+└── Report detailed error messages for invalid types
 ```
 
 ### User Name Validation (Reserved Names)
@@ -309,13 +493,15 @@ pulse_.color = animation.red
 pulse_.period = 2000
 ```
 
-### Symbol Resolution (Consolidated)
-The transpiler resolves symbols at compile time using **unified resolution logic**:
-```berry
-# Built-in symbols from animation module → animation.symbol
-animation.red, animation.PALETTE_RAINBOW, animation.SINE, animation.COSINE
+**Template-Only Exception**: Files containing only template definitions skip engine initialization and `engine.run()` generation, producing pure function libraries.
 
-# User-defined symbols → symbol_
+### Symbol Resolution (Consolidated)
+The transpiler resolves symbols at compile time using **unified resolution logic** based on the `is_builtin` flag:
+```berry
+# Built-in symbols (is_builtin=true) from animation module → animation.symbol
+animation.linear, animation.PALETTE_RAINBOW, animation.SINE, animation.solid
+
+# User-defined symbols (is_builtin=false) → symbol_
 my_color_, my_animation_, my_sequence_
 
 # Named colors → direct ARGB values (resolved at compile time)
@@ -323,7 +509,7 @@ red → 0xFFFF0000, blue → 0xFF0000FF
 
 # Template calls → template_function(engine, args)
 my_template(red, 2s) → my_template_template(engine, 0xFFFF0000, 2000)
-```
+
 
 ### Closure Generation (Enhanced)
 Dynamic expressions are wrapped in closures with **mathematical function support**:
@@ -333,7 +519,7 @@ Dynamic expressions are wrapped in closures with **mathematical function support
 animation.opacity = animation.create_closure_value(engine, 
   def (self) return animation.resolve(strip_length_(engine)) / 2 + 50 end)
 
-# DSL: animation.opacity = max(100, min(255, user.rand_demo() + 50))
+# DSL: animation.opacity = max(100, min(255, rand_demo() + 50))
 # Generated:
 animation.opacity = animation.create_closure_value(engine,
   def (self) return animation._math.max(100, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 50)) end)
@@ -384,6 +570,8 @@ var demo_ = animation.SequenceManager(engine)
 ## Template System (Enhanced)
 
 Templates are transpiled into Berry functions with **comprehensive parameter handling**:
+
+**Template-Only Optimization**: Files containing only template definitions skip engine initialization and execution code generation, producing pure Berry function libraries.
 
 ```
 process_template()
@@ -445,6 +633,7 @@ The transpiler provides **comprehensive error reporting** with graceful degradat
 - **Reference validation** - Undefined object references with context information
 - **Constraint validation** - Parameter values outside valid ranges
 - **Type validation** - Incorrect parameter types with expected types
+- **Safety validation** - Dangerous patterns that could cause memory leaks or performance issues
 - **Template errors** - Template definition and call validation
 - **Reserved name conflicts** - User names conflicting with built-ins
 
@@ -509,7 +698,7 @@ get_error_report()
 
 ### User Function Integration
 - **Template registration** as user functions with automatic naming
-- **User function call detection** with user. prefix handling
+- **User function call detection** usable as normal functions with positional arguments
 - **Closure generation** for computed parameters with mathematical functions
 - **Template call resolution** in multiple contexts (animation, property, standalone)
 - **Import statement processing** for user function modules
@@ -535,9 +724,86 @@ The refactored transpiler emphasizes:
 
 1. **Simplicity** - Ultra-simplified single-pass architecture
 2. **Robustness** - Comprehensive error handling and graceful degradation
-3. **Validation** - Extensive compile-time validation with detailed error messages
-4. **Flexibility** - Support for templates, multiple syntax variants, and user functions
-5. **Performance** - Efficient processing with minimal memory overhead
-6. **Maintainability** - Clear separation of concerns and unified processing methods
+3. **Enhanced Symbol Management** - Dynamic SymbolTable system with intelligent caching and conflict detection
+4. **Validation** - Extensive compile-time validation with detailed error messages
+5. **Flexibility** - Support for templates, multiple syntax variants, and user functions
+6. **Performance** - Efficient processing with minimal memory overhead and lazy symbol detection
+7. **Maintainability** - Clear separation of concerns and unified processing methods
 
-This architecture ensures robust, efficient transpilation from DSL to executable Berry code while providing comprehensive validation, detailed error reporting, and extensive language features.
+## Recent Refactoring Improvements
+
+### Code Simplification Using SymbolTable
+
+The transpiler has been significantly refactored to leverage the `symbol_table.be` system more extensively:
+
+#### **Factory Validation Simplification**
+- **Before**: Complex validation with introspection and manual instance creation (~50 lines)
+- **After**: Simple validation using symbol_table's dynamic detection (~25 lines)
+- **Improvement**: 50% code reduction with better maintainability
+
+#### **Symbol Resolution Consolidation**
+- **Before**: Multiple separate checks for sequences, introspection, etc.
+- **After**: Unified resolution through `symbol_table.get_reference()`
+- **Improvement**: Single source of truth for all symbol resolution
+
+#### **Duplicate Code Elimination**
+- **Before**: Duplicate code patterns in `process_color()` and `process_animation()` methods
+- **After**: Consolidated into reusable `_process_simple_value_assignment()` helper
+- **Improvement**: 70% reduction in duplicate code blocks
+
+#### **Legacy Variable Removal**
+- **Before**: Separate tracking of sequences in `sequence_names` variable
+- **After**: All symbols tracked uniformly in `symbol_table`
+- **Improvement**: Eliminated redundancy and simplified state management
+
+### Major Enhancements
+
+**SymbolTable System:**
+- **Dynamic Detection**: Automatically detects and caches symbol types as encountered
+- **Conflict Prevention**: Prevents redefinition of symbols with different types
+- **Performance Optimization**: Lazy loading and efficient symbol resolution for optimal performance
+- **Type Safety**: Comprehensive type checking with MockEngine validation
+- **Modular Design**: Separated into `symbol_table.be` for reusability
+- **Constant Detection**: Added support for integer constants like `LINEAR`, `SINE`, `COSINE`
+
+**Enhanced Symbol Detection:**
+- **Palette Objects**: `PALETTE_RAINBOW` → `animation.PALETTE_RAINBOW`
+- **Integer Constants**: `LINEAR`, `SINE`, `COSINE` → `animation.LINEAR`, `animation.SINE`, `animation.COSINE`
+- **Math Functions**: `max`, `min` → `animation.max`, `animation.min` (transformed to `animation._math.*` in closures)
+- **Value Providers**: `triangle`, `smooth` → `animation.triangle`, `animation.smooth`
+- **Animation Constructors**: `solid`, `pulsating_animation` → `animation.solid`, `animation.pulsating_animation`
+- **User-defined Symbols**: `my_color`, `my_animation` → `my_color_`, `my_animation_`
+
+**Validation Improvements:**
+- **Real-time Validation**: Parameter validation as symbols are parsed
+- **Instance-based Checking**: Uses actual instances for accurate validation
+- **Graceful Error Handling**: Robust error recovery with detailed error messages
+- **Simplified Validation Methods**: Factory validation reduced from ~50 to ~25 lines using symbol_table
+- **Unified Symbol Checking**: All symbol existence checks go through symbol_table system
+- **Enhanced Type Detection**: Automatic detection of constants, palettes, functions, and constructors
+
+This architecture ensures robust, efficient transpilation from DSL to executable Berry code while providing comprehensive validation, detailed error reporting, intelligent symbol management, and extensive language features.
+
+### Symbol Reference Generation
+
+The enhanced SymbolEntry system uses the `is_builtin` flag to determine correct reference generation:
+
+```berry
+# SymbolEntry.get_reference() method
+def get_reference()
+  if self.is_builtin
+    return f"animation.{self.name}"    # Built-in symbols: animation.LINEAR
+  else
+    return f"{self.name}_"             # User-defined symbols: my_color_
+  end
+end
+```
+
+**Examples:**
+- **Built-in Constants**: `LINEAR` → `animation.LINEAR`
+- **Built-in Functions**: `triangle` → `animation.triangle`
+- **Built-in Palettes**: `PALETTE_RAINBOW` → `animation.PALETTE_RAINBOW`
+- **User-defined Colors**: `my_red` → `my_red_`
+- **User-defined Animations**: `pulse_anim` → `pulse_anim_`
+
+This ensures consistent and correct symbol resolution throughout the transpilation process.

@@ -104,7 +104,7 @@ The Animation DSL uses a declarative syntax with named parameters. All animation
 - **Named colors**: `red`, `blue`, `white`, etc.
 - **Comments**: `# This is a comment`
 - **Property assignment**: `animation.property = value`
-- **User functions**: `user.function_name()` for custom functions
+- **User functions**: `function_name()` for custom functions
 
 ### Basic Structure
 
@@ -125,7 +125,7 @@ animation comet_blue = comet_animation(color=blue, tail_length=10, speed=1500)
 
 # Property assignments with user functions
 pulse_red.priority = 10
-pulse_red.opacity = user.breathing_effect()
+pulse_red.opacity = breathing_effect()
 comet_blue.direction = -1
 
 # Execution
@@ -242,7 +242,7 @@ animation.register_user_function("rand_demo", rand_demo)
 import user_functions
 
 animation test = solid(color=blue)
-test.opacity = user.rand_demo()
+test.opacity = rand_demo()
 run test
 ```
 
@@ -260,11 +260,68 @@ engine.add(test_)
 engine.run()
 ```
 
+## Berry Code Block Transpilation
+
+The DSL supports embedding arbitrary Berry code using the `berry` keyword with triple-quoted strings. This provides an escape hatch for complex logic while maintaining the declarative nature of the DSL.
+
+### Berry Code Block Syntax
+
+```berry
+# DSL Berry Code Block
+berry """
+import math
+var custom_value = math.pi * 2
+print("Custom calculation:", custom_value)
+"""
+```
+
+### Transpilation Behavior
+
+Berry code blocks are copied verbatim to the generated Berry code with comment markers:
+
+```berry
+# DSL Code
+berry """
+var test_var = 42
+print("Hello from berry block")
+"""
+
+# Transpiles to Berry Code
+# Berry code block
+var test_var = 42
+print("Hello from berry block")
+# End berry code block
+```
+
+### Integration with DSL Objects
+
+Berry code can interact with DSL-generated objects by using the underscore suffix naming convention:
+
+```berry
+# DSL Code
+animation pulse = pulsating_animation(color=red, period=2s)
+berry """
+pulse_.opacity = 200
+pulse_.priority = 10
+"""
+
+# Transpiles to Berry Code
+var pulse_ = animation.pulsating_animation(engine)
+pulse_.color = animation.red
+pulse_.period = 2000
+# Berry code block
+pulse_.opacity = 200
+pulse_.priority = 10
+# End berry code block
+```
+
 ## Advanced DSL Features
 
 ### Templates
 
 Templates provide a DSL-native way to create reusable animation patterns with parameters. Templates are transpiled into Berry functions and automatically registered for use.
+
+**Template-Only Files**: DSL files containing only template definitions generate pure Berry function code without engine initialization or execution, creating reusable function libraries.
 
 #### Template Definition Transpilation
 
@@ -361,6 +418,7 @@ animation.register_user_function("comet_chase", comet_chase)
 - Automatically registered
 - Type annotations supported
 - Transpiled to Berry functions
+- Template-only files generate pure function libraries
 
 **User Functions** (Berry-native):
 - Defined in Berry code
@@ -375,23 +433,24 @@ Register custom Berry functions for use in DSL. User functions must take `engine
 
 ```berry
 # Define custom function in Berry - engine must be first parameter
-def custom_sparkle(engine, color, density, speed)
+def custom_twinkle(engine, color, count, period)
   var anim = animation.twinkle_animation(engine)
   anim.color = color
-  anim.density = density
-  anim.speed = speed
+  anim.count = count
+  atml:parameter>
+</invoke>
   return anim
 end
 
 # Register the function for DSL use
-animation.register_user_function("sparkle", custom_sparkle)
+animation.register_user_function("twinkle", custom_twinkle)
 ```
 
 ```berry
 # Use in DSL - engine is automatically passed as first argument
-animation gold_sparkle = sparkle(#FFD700, 8, 500ms)
-animation blue_sparkle = sparkle(blue, 12, 300ms)
-run gold_sparkle
+animation gold_twinkle = twinkle(#FFD700, 8, 500ms)
+animation blue_twinkle = twinkle(blue, 12, 300ms)
+run gold_twinkle
 ```
 
 **Important**: The DSL transpiler automatically passes `engine` as the first argument to all user functions. Your function signature must include `engine` as the first parameter, but DSL users don't need to provide it when calling the function.
@@ -433,16 +492,13 @@ DSL supports nested function calls for complex compositions:
 ```berry
 # Nested calls in animation definitions (now supported)
 animation complex = pulsating_animation(
-  source=shift_animation(
-    source=solid(color=red), 
-    offset=triangle(min=0, max=29, period=3s)
-  ), 
+  color=red,
   period=2s
 )
 
 # Nested calls in run statements
 sequence demo {
-  play pulsating_animation(source=shift_animation(source=solid(color=blue), offset=5), period=1s) for 10s
+  play pulsating_animation(color=blue, period=1s) for 10s
 }
 ```
 
@@ -521,6 +577,29 @@ sequence demo {
 # Transpiler error: "Undefined reference 'nonexistent_animation' in sequence play"
 ```
 
+**Function Call Safety Validation:**
+```berry
+# Error: Dangerous function creation in computed expression
+set strip_len3 = (strip_length() + 1) / 2
+# Transpiler error: "Function 'strip_length()' cannot be used in computed expressions. 
+#                   This creates a new instance at each evaluation. Use either:
+#                   set var_name = strip_length()  # Single function call
+#                   set computed = (existing_var + 1) / 2  # Computation with existing values"
+```
+
+**Why This Validation Exists:**
+The transpiler prevents dangerous patterns where functions that create instances are called inside computed expressions that get wrapped in closures. This would create a new instance every time the closure is evaluated, leading to:
+- Memory leaks
+- Performance degradation  
+- Inconsistent behavior due to multiple timing states
+
+**Safe Alternative:**
+```berry
+# ✅ CORRECT: Separate function call from computation
+set strip_len = strip_length()      # Single function call
+set strip_len3 = (strip_len + 1) / 2  # Computation with existing value
+```
+
 ### Error Categories
 
 - **Syntax errors**: Invalid DSL syntax (lexer/parser errors)
@@ -529,6 +608,7 @@ sequence demo {
 - **Constraint validation**: Parameter values that violate defined constraints (min/max, enums, types)
 - **Reference validation**: Using undefined colors, animations, or variables
 - **Type validation**: Incorrect parameter types or incompatible assignments
+- **Safety validation**: Dangerous patterns that could cause memory leaks or performance issues
 - **Runtime errors**: Errors during Berry code execution (rare with good validation)
 
 ## Performance Considerations

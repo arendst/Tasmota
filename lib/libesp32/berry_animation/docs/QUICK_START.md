@@ -123,11 +123,11 @@ animation comet = comet_animation(
   speed=2000
 )
 
-# Sparkle effect
-animation sparkles = sparkle_animation(
+# Twinkling effect
+animation sparkles = twinkle_animation(
   color=white
-  density=80
-  fade_speed=60
+  count=8
+  period=800ms
 )
 
 run breathing
@@ -241,22 +241,22 @@ For complex logic, create custom functions in Berry:
 
 ```berry
 # Define custom function - engine must be first parameter
-def my_sparkle(engine, color, density, speed)
+def my_twinkle(engine, color, count, period)
   var anim = animation.twinkle_animation(engine)
   anim.color = color
-  anim.density = density
-  anim.speed = speed
+  anim.count = count
+  anim.period = period
   return anim
 end
 
 # Register for DSL use
-animation.register_user_function("sparkle", my_sparkle)
+animation.register_user_function("twinkle", my_twinkle)
 ```
 
 ```berry
 # Use in DSL - engine is automatically passed
-animation gold_sparkles = sparkle(0xFFD700, 8, 500ms)
-run gold_sparkles
+animation gold_twinkles = twinkle(0xFFD700, 8, 500ms)
+run gold_twinkles
 ```
 
 **Note**: The DSL automatically passes `engine` as the first argument to user functions.

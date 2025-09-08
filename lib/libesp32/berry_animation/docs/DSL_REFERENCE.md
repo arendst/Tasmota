@@ -58,6 +58,7 @@ The following keywords are reserved and cannot be used as identifiers:
 - `strip` - Strip configuration (temporarily disabled, reserved keyword)
 - `set` - Variable assignment
 - `import` - Import Berry modules
+- `berry` - Embed arbitrary Berry code
 
 **Definition Keywords:**
 - `color` - Color definition
@@ -237,7 +238,7 @@ import string               # Import utility modules
 import user_functions
 
 animation dynamic = solid(color=blue)
-dynamic.opacity = user.my_custom_function()
+dynamic.opacity = my_custom_function()
 
 # Import custom animation libraries
 import fire_effects
@@ -252,6 +253,46 @@ import user_functions
 
 # Transpiles to Berry Code
 import "user_functions"
+```
+
+### Berry Code Blocks
+
+The `berry` keyword allows embedding arbitrary Berry code within DSL files using triple-quoted strings:
+
+```berry
+berry """
+import math
+var custom_value = math.pi * 2
+print("Custom calculation:", custom_value)
+"""
+
+berry '''
+# Alternative syntax with single quotes
+def helper_function(x)
+  return x * 1.5
+end
+'''
+```
+
+**Berry Code Block Features:**
+- Code is copied verbatim to the generated Berry code
+- Supports both `"""` and `'''` triple-quote syntax
+- Can span multiple lines and include complex Berry syntax
+- Variables and functions defined in one block are available in subsequent blocks
+- Can interact with DSL-generated objects (e.g., `animation_name_.property = value`)
+
+**Example with DSL Integration:**
+```berry
+animation pulse = pulsating_animation(color=red, period=2s)
+
+berry """
+# Modify animation using Berry code
+pulse_.opacity = 200
+pulse_.priority = 10
+print("Animation configured")
+"""
+
+run pulse
 ```
 
 ## Color Definitions
@@ -379,7 +420,7 @@ animation.register_user_function("custom_palette", create_custom_palette)
 ```berry
 # Use in DSL
 animation dynamic_anim = rich_palette(
-  palette=user.custom_palette(0xFF0000, 200)
+  palette=custom_palette(0xFF0000, 200)
   cycle_period=3s
 )
 ```
@@ -446,9 +487,14 @@ pulse_red.opacity = opacity_mask        # Dynamic opacity from animation
 
 The DSL supports computed values using arithmetic expressions with value providers and mathematical functions:
 
+### Safe Patterns
+
 ```berry
-# Get strip dimensions
+# ✅ RECOMMENDED: Single value provider assignment
 set strip_len = strip_length()
+
+# ✅ RECOMMENDED: Computation with existing values
+set strip_len2 = (strip_len + 1) / 2
 
 # Use computed values in animation parameters
 animation stream1 = comet_animation(
@@ -457,7 +503,43 @@ animation stream1 = comet_animation(
   speed=1.5
   priority=10
 )
+```
 
+### ⚠️ Dangerous Patterns (Prevented by Transpiler)
+
+The transpiler prevents dangerous patterns that would create new value provider instances at each evaluation:
+
+```berry
+# ❌ DANGEROUS: Function creation in computed expression
+# This would create a new strip_length() instance at each evaluation
+set strip_len3 = (strip_length() + 1) / 2
+
+# ❌ ERROR: Transpiler will reject this with:
+# "Function 'strip_length()' cannot be used in computed expressions.
+#  This creates a new instance at each evaluation."
+```
+
+**Why This Is Dangerous:**
+- Creates a new function instance every time the expression is evaluated
+- Causes memory leaks and performance degradation
+- Each new instance has its own timing and state, leading to inconsistent behavior
+
+**Safe Alternative:**
+```berry
+# ✅ CORRECT: Separate the value provider creation from computation
+set strip_len = strip_length()      # Single value provider
+set strip_len3 = (strip_len + 1) / 2  # Computation with existing value
+```
+
+**Functions That Are Restricted in Computed Expressions:**
+- Any function that creates instances (value providers, animations, etc.) when called
+- Examples: `strip_length()`, `triangle()`, `smooth()`, `solid()`, etc.
+
+**Note:** These functions are allowed in `set` statements as they create the instance once, but they cannot be used inside arithmetic expressions that get wrapped in closures, as this would create new instances at each evaluation.
+
+### Advanced Computed Values
+
+```berry
 # Complex expressions with multiple operations
 set base_speed = 2.0
 animation stream2 = comet_animation(
@@ -541,37 +623,37 @@ test.opacity = min(255, max(50, scale(sqrt(strip_len), 0, 16, 100, 255)))
 When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `animation._math.` in the closure context to access the ClosureValueProvider's mathematical methods.
 
 **User Functions in Computed Parameters:**
-User-defined functions can also be used in computed parameter expressions, providing powerful custom effects. User functions must be called with the `user.` prefix:
+User-defined functions can also be used in computed parameter expressions, providing powerful custom effects:
 
 ```berry
 # Simple user function in computed parameter
 animation base = solid(color=blue)
-base.opacity = user.rand_demo()
+base.opacity = rand_demo()
 
 # User functions mixed with math operations
 animation dynamic = solid(
   color=purple
-  opacity=max(50, min(255, user.rand_demo() + 100))
+  opacity=max(50, min(255, rand_demo() + 100))
 )
 ```
 
 ### User Functions
 
-User functions are custom Berry functions that can be called from computed parameters. They provide dynamic values that change over time. User functions must be called with the `user.` prefix.
+User functions are custom Berry functions that can be called from computed parameters. They provide dynamic values that change over time.
 
 **Available User Functions:**
-- `user.rand_demo()` - Returns random values for demonstration purposes
+- `rand_demo()` - Returns random values for demonstration purposes
 
 **Usage in Computed Parameters:**
 ```berry
 # Simple user function
-animation.opacity = user.rand_demo()
+animation.opacity = rand_demo()
 
 # User function with math operations
-animation.opacity = max(100, user.rand_demo())
+animation.opacity = max(100, rand_demo())
 
 # User function in arithmetic expressions
-animation.opacity = abs(user.rand_demo() - 128) + 64
+animation.opacity = abs(rand_demo() - 128) + 64
 ```
 
 **Available User Functions:**
@@ -579,7 +661,7 @@ The following user functions are available by default (see [User Functions Guide
 
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `user.rand_demo()` | none | Returns a random value (0-255) for demonstration |
+| `rand_demo()` | none | Returns a random value (0-255) for demonstration |
 
 **User Function Behavior:**
 - User functions are automatically detected by the transpiler
@@ -825,6 +907,8 @@ sequence clean_transitions {
 
 Templates provide a powerful way to create reusable, parameterized animation patterns. They allow you to define animation blueprints that can be instantiated with different parameters, promoting code reuse and maintainability.
 
+**Template-Only Files**: DSL files containing only template definitions transpile to pure Berry functions without engine initialization or execution code. This allows templates to be used as reusable function libraries.
+
 ### Template Definition
 
 Templates are defined using the `template` keyword followed by a parameter block and body:
@@ -970,6 +1054,9 @@ end
 
 animation.register_user_function('pulse_effect', pulse_effect_template)
 ```
+
+**Template-Only Transpilation:**
+Files containing only templates generate pure Berry function definitions without `var engine = animation.init_strip()` or `engine.run()` calls, making them suitable as reusable function libraries.
 
 **Parameter Handling:**
 - Parameters get `_` suffix in generated code to avoid naming conflicts
@@ -1194,13 +1281,7 @@ Animation classes create visual effects on LED strips:
 | `twinkle_animation` | Twinkling stars effect |
 | `gradient_animation` | Color gradient effects |
 | `noise_animation` | Perlin noise-based patterns |
-| `plasma_animation` | Plasma wave effects |
-| `sparkle_animation` | Sparkling/glitter effects |
 | `wave_animation` | Wave propagation effects |
-| `shift_animation` | Shifting/scrolling patterns |
-| `bounce_animation` | Bouncing ball effects |
-| `scale_animation` | Scaling/zooming effects |
-| `jitter_animation` | Random jitter/shake effects |
 | `rich_palette_animation` | Palette-based color cycling |
 | `palette_wave_animation` | Wave patterns using palettes |
 | `palette_gradient_animation` | Gradient patterns using palettes |

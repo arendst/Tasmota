@@ -1,0 +1,4 @@
+# Test simple math
+
+set x = 2s
+set y = x + 4

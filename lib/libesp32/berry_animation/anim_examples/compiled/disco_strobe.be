@@ -23,11 +23,13 @@ var disco_colors_ = bytes(
   "FFFF00FF"  # Magenta
 )
 # Fast color cycling base
-var disco_base_ = animation.rich_palette_animation(engine)
-disco_base_.palette = disco_colors_
-disco_base_.cycle_period = 1000
-disco_base_.transition_type = animation.LINEAR
-disco_base_.brightness = 255
+var disco_rich_color_ = animation.rich_palette(engine)
+disco_rich_color_.palette = disco_colors_
+disco_rich_color_.cycle_period = 1000
+disco_rich_color_.transition_type = animation.LINEAR
+disco_rich_color_.brightness = 255
+var disco_base_ = animation.solid(engine)
+disco_base_.color = disco_rich_color_
 # Add strobe effect
 disco_base_.opacity = (def (engine)
   var provider = animation.square(engine)
@@ -105,7 +107,8 @@ palette disco_colors = [
 ]
 
 # Fast color cycling base
-animation disco_base = rich_palette_animation(palette=disco_colors, cycle_period=1s, transition_type=LINEAR, brightness=255)
+color disco_rich_color = rich_palette(palette=disco_colors, cycle_period=1s, transition_type=LINEAR, brightness=255)
+animation disco_base = solid(color=disco_rich_color)
 
 # Add strobe effect
 disco_base.opacity = square(min_value=0, max_value=255, duration=100ms, duty_cycle=30)  # Fast strobe

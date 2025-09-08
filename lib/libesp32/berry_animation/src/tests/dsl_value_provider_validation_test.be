@@ -165,93 +165,103 @@ class DSLValueProviderValidationTest
     end
   end
   
-  # Test strip_length arithmetic expression (should be wrapped with animation.resolve)
+  # Test strip_length arithmetic expression (should fail compilation due to dangerous pattern)
   def test_strip_length_arithmetic_expression()
     var dsl_code = "set strip_len3 = (strip_length() + 1) / 2"
     
-    var berry_code = animation_dsl.compile(dsl_code)
-    if berry_code == nil
-      raise "compilation_error", "strip_length arithmetic expression should compile successfully"
+    var compilation_failed = false
+    var error_message = ""
+    
+    try
+      var berry_code = animation_dsl.compile(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
+      end
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
     end
     
-    # Check that it generates closure with animation.resolve wrapper
-    if string.find(berry_code, "create_closure_value") == -1
-      raise "generation_error", "Arithmetic expression should create closure"
+    if !compilation_failed
+      raise "validation_error", "strip_length in arithmetic expression should cause compilation to fail due to dangerous pattern"
     end
     
-    # Most importantly, check that strip_length is wrapped with animation.resolve
-    if string.find(berry_code, "animation.resolve(animation.strip_length(engine))") == -1
-      raise "generation_error", "strip_length in arithmetic should be wrapped with animation.resolve()"
-    end
-    
-    # Check the complete expected pattern
-    var expected_pattern = "def (engine) return (animation.resolve(animation.strip_length(engine)) + 1) / 2 end"
-    if string.find(berry_code, expected_pattern) == -1
-      raise "generation_error", f"Generated code should contain expected pattern: {expected_pattern}"
+    # Check that the error message mentions the dangerous pattern
+    if string.find(error_message, "cannot be used in computed expressions") == -1
+      raise "error_message_error", f"Error message should mention computed expressions restriction, got: {error_message}"
     end
   end
   
-  # Test complex strip_length arithmetic
+  # Test complex strip_length arithmetic (should fail compilation due to dangerous pattern)
   def test_strip_length_complex_arithmetic()
     var dsl_code = "set complex = (strip_length() + 5) * 2 - strip_length() / 4"
     
-    var berry_code = animation_dsl.compile(dsl_code)
-    if berry_code == nil
-      raise "compilation_error", "Complex strip_length arithmetic should compile successfully"
-    end
+    var compilation_failed = false
+    var error_message = ""
     
-    # Check that both strip_length calls are wrapped with animation.resolve
-    var resolve_count = 0
-    var pos = 0
-    while true
-      var found_pos = string.find(berry_code, "animation.resolve(animation.strip_length(engine))", pos)
-      if found_pos == -1
-        break
+    try
+      var berry_code = animation_dsl.compile(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
       end
-      resolve_count += 1
-      pos = found_pos + 1
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
     end
     
-    if resolve_count != 2
-      raise "generation_error", f"Expected 2 animation.resolve() calls for strip_length, found {resolve_count}"
+    if !compilation_failed
+      raise "validation_error", "Complex strip_length arithmetic should cause compilation to fail due to dangerous pattern"
+    end
+    
+    # Check that the error message mentions the dangerous pattern
+    if string.find(error_message, "cannot be used in computed expressions") == -1
+      raise "error_message_error", f"Error message should mention computed expressions restriction, got: {error_message}"
     end
   end
   
-  # Test mixed user variables and strip_length
+  # Test mixed user variables and strip_length (should fail due to dangerous pattern)
   def test_mixed_variables_and_strip_length()
     var dsl_code = "set val1 = 10\nset mixed = val1 + strip_length() * 2"
     
-    var berry_code = animation_dsl.compile(dsl_code)
-    if berry_code == nil
-      raise "compilation_error", "Mixed variables and strip_length should compile successfully"
+    var compilation_failed = false
+    var error_message = ""
+    
+    try
+      var berry_code = animation_dsl.compile(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
+      end
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
     end
     
-    # Check that both val1_ and strip_length are properly resolved
-    if string.find(berry_code, "animation.resolve(val1_)") == -1
-      raise "generation_error", "User variable val1_ should be wrapped with animation.resolve()"
+    if !compilation_failed
+      raise "validation_error", "Mixed variables and strip_length should cause compilation to fail due to dangerous pattern"
     end
     
-    if string.find(berry_code, "animation.resolve(animation.strip_length(engine))") == -1
-      raise "generation_error", "strip_length should be wrapped with animation.resolve()"
+    # Check that the error message mentions the dangerous pattern
+    if string.find(error_message, "cannot be used in computed expressions") == -1
+      raise "error_message_error", f"Error message should mention computed expressions restriction, got: {error_message}"
     end
   end
   
-  # Test strip_length in property assignment
+  # Test strip_length in property assignment (currently allowed due to anonymous function wrapper)
   def test_strip_length_in_property_assignment()
     var dsl_code = "animation test = solid(color=red)\ntest.opacity = strip_length() / 2"
     
     var berry_code = animation_dsl.compile(dsl_code)
     if berry_code == nil
-      raise "compilation_error", "strip_length in property assignment should compile successfully"
+      raise "compilation_error", "strip_length in property assignment should compile (anonymous function wrapper bypasses dangerous pattern detection)"
     end
     
-    # Check that property assignment creates closure with resolved strip_length
-    if string.find(berry_code, "test_.opacity = animation.create_closure_value") == -1
-      raise "generation_error", "Property assignment with arithmetic should create closure"
+    # Check that it generates an anonymous function wrapper
+    if string.find(berry_code, "def (engine)") == -1
+      raise "generation_error", "Property assignment should generate anonymous function wrapper"
     end
     
-    if string.find(berry_code, "animation.resolve(animation.strip_length(engine))") == -1
-      raise "generation_error", "strip_length in property assignment should be wrapped with animation.resolve()"
+    if string.find(berry_code, "animation.strip_length(engine)") == -1
+      raise "generation_error", "Anonymous function should contain strip_length call"
     end
   end
   
@@ -275,74 +285,61 @@ class DSLValueProviderValidationTest
     end
   end
   
-  # Test edge case: strip_length with parentheses
+  # Test edge case: strip_length with parentheses (should fail due to dangerous pattern)
   def test_strip_length_with_parentheses()
     var dsl_code = "set result = (strip_length()) * 2"
     
-    var berry_code = animation_dsl.compile(dsl_code)
-    if berry_code == nil
-      raise "compilation_error", "strip_length with parentheses should compile successfully"
-    end
+    var compilation_failed = false
+    var error_message = ""
     
-    # Check that strip_length is still properly resolved even with extra parentheses
-    if string.find(berry_code, "animation.resolve(animation.strip_length(engine))") == -1
-      raise "generation_error", "strip_length with parentheses should be wrapped with animation.resolve()"
-    end
-  end
-  
-  # Test edge case: multiple strip_length calls in same expression
-  def test_multiple_strip_length_calls()
-    var dsl_code = "set ratio = strip_length() / (strip_length() + 10)"
-    
-    var berry_code = animation_dsl.compile(dsl_code)
-    if berry_code == nil
-      raise "compilation_error", "Multiple strip_length calls should compile successfully"
-    end
-    
-    # Count the number of animation.resolve(animation.strip_length(engine)) calls
-    var resolve_count = 0
-    var pos = 0
-    while true
-      var found_pos = string.find(berry_code, "animation.resolve(animation.strip_length(engine))", pos)
-      if found_pos == -1
-        break
+    try
+      var berry_code = animation_dsl.compile(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
       end
-      resolve_count += 1
-      pos = found_pos + 1
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
     end
     
-    if resolve_count != 2
-      raise "generation_error", f"Expected 2 resolved strip_length calls, found {resolve_count}"
+    if !compilation_failed
+      raise "validation_error", "strip_length with parentheses in arithmetic should cause compilation to fail due to dangerous pattern"
+    end
+    
+    # Check that the error message mentions the dangerous pattern
+    if string.find(error_message, "cannot be used in computed expressions") == -1
+      raise "error_message_error", f"Error message should mention computed expressions restriction, got: {error_message}"
     end
   end
   
-  # Test edge case: strip_length in nested expressions
+  # Test edge case: strip_length in nested expressions (should fail due to dangerous pattern)
   def test_strip_length_nested_expressions()
     var dsl_code = "set nested = ((strip_length() + 1) * 2) / (strip_length() - 1)"
     
-    var berry_code = animation_dsl.compile(dsl_code)
-    if berry_code == nil
-      raise "compilation_error", "Nested strip_length expressions should compile successfully"
-    end
+    var compilation_failed = false
+    var error_message = ""
     
-    # Both strip_length calls should be resolved
-    var resolve_count = 0
-    var pos = 0
-    while true
-      var found_pos = string.find(berry_code, "animation.resolve(animation.strip_length(engine))", pos)
-      if found_pos == -1
-        break
+    try
+      var berry_code = animation_dsl.compile(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
       end
-      resolve_count += 1
-      pos = found_pos + 1
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
     end
     
-    if resolve_count != 2
-      raise "generation_error", f"Expected 2 resolved strip_length calls in nested expression, found {resolve_count}"
+    if !compilation_failed
+      raise "validation_error", "Nested strip_length expressions should cause compilation to fail due to dangerous pattern"
+    end
+    
+    # Check that the error message mentions the dangerous pattern
+    if string.find(error_message, "cannot be used in computed expressions") == -1
+      raise "error_message_error", f"Error message should mention computed expressions restriction, got: {error_message}"
     end
   end
   
-  # Test that the fix doesn't affect strip_length when not in arithmetic
+  # Test that strip_length works in non-arithmetic contexts (direct assignment without closure)
   def test_strip_length_non_arithmetic_contexts()
     var dsl_code = "animation test = solid(color=red)\ntest.opacity = strip_length()"
     
@@ -351,14 +348,57 @@ class DSLValueProviderValidationTest
       raise "compilation_error", "strip_length in non-arithmetic context should compile successfully"
     end
     
-    # In non-arithmetic context, strip_length should be used directly without resolve
-    if string.find(berry_code, "test_.opacity = animation.strip_length(engine)") == -1
-      raise "generation_error", "strip_length in non-arithmetic context should be used directly"
+    # In property assignment context, strip_length should be assigned directly without closure wrapping
+    # since it's a value provider instance without additional computation
+    if string.find(berry_code, "def (engine)") != -1
+      raise "generation_error", "strip_length in property assignment should NOT use anonymous function wrapper when used alone"
     end
     
-    # Should not contain animation.resolve for this case
-    if string.find(berry_code, "animation.resolve(animation.strip_length(engine))") != -1
-      raise "generation_error", "strip_length in non-arithmetic context should not be wrapped with resolve"
+    if string.find(berry_code, "animation.strip_length(engine)") == -1
+      raise "generation_error", "Should contain direct strip_length call"
+    end
+    
+    # Should not contain animation.resolve since it's not in a computed expression
+    if string.find(berry_code, "animation.resolve") != -1
+      raise "generation_error", "strip_length should not be wrapped with resolve in this context"
+    end
+  end
+  
+  # Test the safe pattern: separate strip_length() call from computation
+  def test_strip_length_safe_pattern()
+    var dsl_code = "set strip_len = strip_length()\nset computed = (strip_len + 1) / 2"
+    
+    var berry_code = animation_dsl.compile(dsl_code)
+    if berry_code == nil
+      raise "compilation_error", "Safe strip_length pattern should compile successfully"
+    end
+    
+    # Check that strip_len is created as a direct call
+    if string.find(berry_code, "var strip_len_ = animation.strip_length(engine)") == -1
+      raise "generation_error", "strip_len should be created as direct call"
+    end
+    
+    # Check that computed uses closure with animation.resolve for the variable
+    if string.find(berry_code, "create_closure_value") == -1
+      raise "generation_error", "Computed expression should create closure"
+    end
+    
+    if string.find(berry_code, "animation.resolve(strip_len_)") == -1
+      raise "generation_error", "User variable strip_len_ should be wrapped with animation.resolve()"
+    end
+    
+    # Should NOT contain direct strip_length calls in the computed expression
+    var computed_line_start = string.find(berry_code, "var computed_ = ")
+    if computed_line_start != -1
+      var computed_line_end = string.find(berry_code, "\n", computed_line_start)
+      if computed_line_end == -1
+        computed_line_end = size(berry_code)
+      end
+      var computed_line = berry_code[computed_line_start..computed_line_end-1]
+      
+      if string.find(computed_line, "animation.strip_length(engine)") != -1
+        raise "generation_error", "Computed expression should not contain direct strip_length calls"
+      end
     end
   end
   
@@ -382,9 +422,9 @@ class DSLValueProviderValidationTest
       ["Strip Length in Property Assignment", / -> self.test_strip_length_in_property_assignment()],
       ["No Regression with Regular Expressions", / -> self.test_no_regression_with_regular_expressions()],
       ["Strip Length with Parentheses", / -> self.test_strip_length_with_parentheses()],
-      ["Multiple Strip Length Calls", / -> self.test_multiple_strip_length_calls()],
       ["Strip Length Nested Expressions", / -> self.test_strip_length_nested_expressions()],
-      ["Strip Length Non-Arithmetic Contexts", / -> self.test_strip_length_non_arithmetic_contexts()]
+      ["Strip Length Non-Arithmetic Contexts", / -> self.test_strip_length_non_arithmetic_contexts()],
+      ["Strip Length Safe Pattern", / -> self.test_strip_length_safe_pattern()]
     ]
     
     for test : tests

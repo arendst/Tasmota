@@ -21,11 +21,13 @@ var fire_colors_ = bytes(
   "FFFFFF00"  # Yellow
 )
 # Create base fire animation with palette
-var fire_base_ = animation.rich_palette_animation(engine)
-fire_base_.palette = fire_colors_
-fire_base_.cycle_period = 3000
-fire_base_.transition_type = animation.LINEAR
-fire_base_.brightness = 255
+var fire_base_color_ = animation.rich_palette(engine)
+fire_base_color_.palette = fire_colors_
+fire_base_color_.cycle_period = 3000
+fire_base_color_.transition_type = animation.LINEAR
+fire_base_color_.brightness = 255
+var fire_base_ = animation.solid(engine)
+fire_base_.color = fire_base_color_
 # Add flickering effect with random intensity changes
 fire_base_.opacity = (def (engine)
   var provider = animation.smooth(engine)
@@ -67,7 +69,8 @@ palette fire_colors = [
 ]
 
 # Create base fire animation with palette
-animation fire_base = rich_palette_animation(palette=fire_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
+color fire_base_color = rich_palette(palette=fire_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
+animation fire_base = solid(color=fire_base_color)
 
 # Add flickering effect with random intensity changes
 fire_base.opacity = smooth(min_value=180, max_value=255, duration=800ms)

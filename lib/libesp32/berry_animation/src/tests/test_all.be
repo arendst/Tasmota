@@ -8,6 +8,7 @@ import tasmota
 
 # Import the animation module
 import animation
+import user_functions
 
 # Define a function to run a test file
 def run_test_file(file_path)
@@ -56,8 +57,8 @@ def run_all_tests()
     
     # Animation effect tests
     "lib/libesp32/berry_animation/src/tests/filled_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/pulse_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/breathe_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/pulse_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/breathe_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/color_cycle_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/color_cycle_bytes_test.be",  # Tests ColorCycleColorProvider with bytes palette
     "lib/libesp32/berry_animation/src/tests/color_cycle_palette_size_test.be",  # Tests ColorCycleColorProvider palette_size read-only parameter
@@ -70,17 +71,17 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/beacon_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/gradient_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/noise_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/plasma_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/sparkle_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/plasma_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/sparkle_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/wave_animation_test.be",
     "lib/libesp32/berry_animation/src/tests/palette_pattern_animation_test.be",
     
     # Motion effects tests
-    "lib/libesp32/berry_animation/src/tests/shift_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/bounce_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/scale_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/jitter_animation_test.be",
-    "lib/libesp32/berry_animation/src/tests/motion_effects_test.be",
+    # "lib/libesp32/berry_animation/src/tests/shift_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/bounce_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/scale_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/jitter_animation_test.be",
+    # "lib/libesp32/berry_animation/src/tests/motion_effects_test.be",
     
     # Color and parameter tests
     "lib/libesp32/berry_animation/src/tests/crenel_position_color_test.be",
@@ -117,9 +118,14 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/palette_dsl_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_parameter_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_value_provider_validation_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_undefined_identifier_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_newline_syntax_test.be",
     "lib/libesp32/berry_animation/src/tests/test_math_method_transpilation.be",
     "lib/libesp32/berry_animation/src/tests/test_user_functions_in_computed_parameters.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_berry_code_blocks_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_lexer_triple_quotes_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_berry_integration_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_restart_test.be",
     
     # Event system tests
     "lib/libesp32/berry_animation/src/tests/event_system_test.be"

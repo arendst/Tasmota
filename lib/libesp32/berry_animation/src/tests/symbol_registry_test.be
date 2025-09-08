@@ -36,13 +36,13 @@ def test_basic_symbol_registration()
   return true
 end
 
-# Test forward reference resolution
-def test_forward_reference_resolution()
-  print("Testing forward reference resolution...")
+# Test proper symbol ordering (no forward references)
+def test_proper_symbol_ordering()
+  print("Testing proper symbol ordering...")
   
-  # DSL with forward reference: animation uses color defined later
-  var dsl_source = "animation fire_pattern = solid(color=custom_red)\n" +
-    "color custom_red = 0xFF0000"
+  # DSL with proper ordering: color defined before animation uses it
+  var dsl_source = "color custom_red = 0xFF0000\n" +
+    "animation fire_pattern = solid(color=custom_red)"
   
   var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
@@ -50,20 +50,20 @@ def test_forward_reference_resolution()
   
   var berry_code = transpiler.transpile()
   
-  # Should resolve the forward reference successfully
-  assert(berry_code != nil, "Should compile with forward reference")
-  assert(!transpiler.has_errors(), "Should resolve forward reference without errors")
+  # Should compile successfully with proper ordering
+  assert(berry_code != nil, "Should compile with proper symbol ordering")
+  assert(!transpiler.has_errors(), "Should have no errors with proper ordering")
   
   # Check generated code contains both definitions (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should define custom_red color")
   assert(string.find(berry_code, "var fire_pattern_ = animation.solid(engine)") >= 0, "Should define fire animation")
   assert(string.find(berry_code, "fire_pattern_.color = custom_red_") >= 0, "Should reference custom_red")
   
-  print("✓ Forward reference resolution test passed")
+  print("✓ Proper symbol ordering test passed")
   return true
 end
 
-# Test undefined reference handling (simplified transpiler uses runtime resolution)
+# Test undefined reference handling (should fail at transpile time)
 def test_undefined_reference_handling()
   print("Testing undefined reference handling...")
   
@@ -76,22 +76,13 @@ def test_undefined_reference_handling()
   
   var berry_code = transpiler.transpile()
   
-  # New behavior: transpiler generates direct reference to undefined_color_
-  assert(berry_code != nil, "Should compile with direct reference")
-  assert(!transpiler.has_errors(), "Should have no compile-time errors")
+  # Should detect undefined reference at transpile time
+  assert(transpiler.has_errors(), "Should detect undefined reference error")
   
-  # Check that direct reference is generated (since undefined_color doesn't exist in animation module)
-  assert(string.find(berry_code, "undefined_color_") >= 0, "Should generate runtime resolution")
-  
-  # With new behavior, Berry compilation will fail due to undefined variable
-  # This is actually better than runtime errors as it catches issues earlier
-  try
-    var compiled_code = compile(berry_code)
-    assert(false, "Should fail to compile due to undefined variable")
-  except .. as e, msg
-    print(f"✓ Correctly caught undefined variable at compile time: {e}")
-    assert(string.find(str(msg), "undefined_color_") >= 0, "Error should mention undefined variable")
-  end
+  # Check that error message mentions the undefined symbol
+  var error_report = transpiler.get_error_report()
+  assert(string.find(error_report, "undefined_color") >= 0, "Error should mention undefined_color")
+  assert(string.find(error_report, "Unknown identifier") >= 0, "Should be an unknown identifier error")
   
   print("✓ Undefined reference handling test passed")
   return true
@@ -147,14 +138,14 @@ def test_definition_generation()
   return true
 end
 
-# Test complex forward references
-def test_complex_forward_references()
-  print("Testing complex forward references...")
+# Test complex symbol dependencies with proper ordering
+def test_complex_symbol_dependencies()
+  print("Testing complex symbol dependencies...")
   
-  # Complex DSL with multiple forward references
-  var dsl_source = "animation complex_anim = pulsating_animation(color=primary_color, period=3000)\n" +
+  # Complex DSL with proper symbol ordering (no forward references)
+  var dsl_source = "color primary_color = 0xFF8000\n" +
+    "animation complex_anim = pulsating_animation(color=primary_color, period=3000)\n" +
     "animation gradient_pattern = solid(color=primary_color)\n" +
-    "color primary_color = 0xFF8000\n" +
     "sequence demo {\n" +
     "  play complex_anim for 5s\n" +
     "}\n" +
@@ -166,9 +157,9 @@ def test_complex_forward_references()
   
   var berry_code = transpiler.transpile()
   
-  # Should resolve all forward references
-  assert(berry_code != nil, "Should compile complex forward references")
-  assert(!transpiler.has_errors(), "Should resolve all forward references")
+  # Should compile successfully with proper ordering
+  assert(berry_code != nil, "Should compile complex dependencies")
+  assert(!transpiler.has_errors(), "Should have no errors with proper ordering")
   
   # Check all definitions are present (with underscore suffix)
   assert(string.find(berry_code, "var primary_color_") >= 0, "Should define primary color")
@@ -176,7 +167,7 @@ def test_complex_forward_references()
   assert(string.find(berry_code, "var complex_anim_") >= 0, "Should define complex animation")
   assert(string.find(berry_code, "var demo_ = animation.SequenceManager(engine)") >= 0, "Should define sequence")
   
-  print("✓ Complex forward references test passed")
+  print("✓ Complex symbol dependencies test passed")
   return true
 end
 
@@ -186,11 +177,11 @@ def run_symbol_registry_tests()
   
   var tests = [
     test_basic_symbol_registration,
-    test_forward_reference_resolution,
+    test_proper_symbol_ordering,
     test_undefined_reference_handling,
     test_builtin_reference_handling,
     test_definition_generation,
-    test_complex_forward_references
+    test_complex_symbol_dependencies
   ]
   
   var passed = 0

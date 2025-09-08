@@ -24,12 +24,12 @@ class CrenelPositionAnimation : animation.animation
   
   # Parameter definitions with constraints
   static var PARAMS = {
-    "color": {"default": 0xFFFFFFFF},
-    "back_color": {"default": 0xFF000000},
-    "pos": {"default": 0},
-    "pulse_size": {"min": 0, "default": 1},
-    "low_size": {"min": 0, "default": 3},
-    "nb_pulse": {"default": -1}
+    # 'color' for the comet head (32-bit ARGB value), inherited from animation class
+    "back_color": {"default": 0xFF000000},      # background color, TODO change to transparent
+    "pos": {"default": 0},                      # start of the pulse (in pixel)
+    "pulse_size": {"min": 0, "default": 1},     # number of pixels of the pulse
+    "low_size": {"min": 0, "default": 3},       # number of pixel until next pos - full cycle is 2 + 3
+    "nb_pulse": {"default": -1}                 # number of pulses, or `-1` for infinite
   }
   
   # Render the crenel pattern to the provided frame buffer

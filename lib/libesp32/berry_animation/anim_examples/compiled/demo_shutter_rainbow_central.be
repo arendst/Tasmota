@@ -9,9 +9,6 @@ import animation
 # Demo Shutter Rainbow
 #
 # Shutter from center to both left and right
-# Auto-generated strip initialization (using Tasmota configuration)
-var engine = animation.init_strip()
-
 # Template function: shutter_central
 def shutter_central_template(engine, colors_, duration_)
   var strip_len_ = animation.strip_length(engine)
@@ -30,23 +27,42 @@ def shutter_central_template(engine, colors_, duration_)
   col2_.palette = colors_
   col2_.cycle_period = 0
   col2_.next = 1
-  # shutter moving from left to right
-  var shutter_central_animation_ = animation.beacon_animation(engine)
-  shutter_central_animation_.color = col2_
-  shutter_central_animation_.back_color = col1_
-  shutter_central_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len2_) - animation.resolve(shutter_size_) / 2 end)
-  shutter_central_animation_.beacon_size = shutter_size_
-  shutter_central_animation_.slew_size = 0
-  shutter_central_animation_.priority = 5
+  # shutter moving in to out
+  var shutter_inout_animation_ = animation.beacon_animation(engine)
+  shutter_inout_animation_.color = col2_
+  shutter_inout_animation_.back_color = col1_
+  shutter_inout_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len2_) - (animation.resolve(shutter_size_) + 1) / 2 end)
+  shutter_inout_animation_.beacon_size = shutter_size_
+  shutter_inout_animation_.slew_size = 0
+  shutter_inout_animation_.priority = 5
+  # shutter moving out to in
+  var shutter_outin_animation_ = animation.beacon_animation(engine)
+  shutter_outin_animation_.color = col1_
+  shutter_outin_animation_.back_color = col2_
+  shutter_outin_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len2_) - (animation.resolve(strip_len_) - animation.resolve(shutter_size_) + 1) / 2 end)
+  shutter_outin_animation_.beacon_size = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - animation.resolve(shutter_size_) end)
+  shutter_outin_animation_.slew_size = 0
+  shutter_outin_animation_.priority = 5
   var shutter_seq_ = animation.SequenceManager(engine, -1)
-    .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
-    .push_play_step(shutter_central_animation_, duration_)
-    .push_closure_step(def (engine) col1_.next = 1 end)
-    .push_closure_step(def (engine) col2_.next = 1 end)
+    .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
+      .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
+      .push_play_step(shutter_inout_animation_, duration_)
+      .push_closure_step(def (engine) col1_.next = 1 end)
+      .push_closure_step(def (engine) col2_.next = 1 end)
+      )
+    .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
+      .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
+      .push_play_step(shutter_outin_animation_, duration_)
+      .push_closure_step(def (engine) col1_.next = 1 end)
+      .push_closure_step(def (engine) col2_.next = 1 end)
+      )
   engine.add(shutter_seq_)
 end
 
 animation.register_user_function('shutter_central', shutter_central_template)
+
+# Auto-generated strip initialization (using Tasmota configuration)
+var engine = animation.init_strip()
 
 var rainbow_with_white_ = bytes(
   "FFFF0000"
@@ -78,21 +94,39 @@ template shutter_central {
     color col2 = color_cycle(palette=colors, cycle_period=0)
     col2.next = 1
   
-    # shutter moving from left to right
-    animation shutter_central_animation = beacon_animation(
+    # shutter moving in to out
+    animation shutter_inout_animation = beacon_animation(
       color = col2
       back_color = col1
-      pos = strip_len2 - shutter_size / 2
+      pos = strip_len2 - (shutter_size + 1) / 2
       beacon_size = shutter_size
       slew_size = 0
       priority = 5
     )
   
+    # shutter moving out to in
+    animation shutter_outin_animation = beacon_animation(
+      color = col1
+      back_color = col2
+      pos = strip_len2 - (strip_len - shutter_size + 1) / 2
+      beacon_size = strip_len - shutter_size
+      slew_size = 0
+      priority = 5
+    )
+
     sequence shutter_seq repeat forever {
-      restart shutter_size
-      play shutter_central_animation for duration
-      col1.next = 1
-      col2.next = 1
+      repeat col1.palette_size times {
+        restart shutter_size
+        play shutter_inout_animation for duration
+        col1.next = 1
+        col2.next = 1
+      }
+      repeat col1.palette_size times {
+        restart shutter_size
+        play shutter_outin_animation for duration
+        col1.next = 1
+        col2.next = 1
+      }
     }
     
     run shutter_seq

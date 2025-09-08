@@ -130,7 +130,8 @@ def test_dsl_event_compilation()
     "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "on button_press: solid(custom_red)\n"
-    "run solid(custom_red)"
+    "animation anim = solid(color=custom_red)"
+    "run anim"
   
   var compiled_code = animation_dsl.compile(dsl_code)
   
@@ -145,8 +146,10 @@ def test_dsl_event_with_parameters()
   var dsl_code = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_blue = 0x0000FF\n"
+    "color custom_red = 0xFF0000\n"
     "on timer(5s): solid(custom_blue)\n"
-    "run solid(custom_blue)"
+    "animation anim = solid(color=custom_red)"
+    "run anim"
   
   var compiled_code = animation_dsl.compile(dsl_code)
   

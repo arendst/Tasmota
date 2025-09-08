@@ -111,7 +111,8 @@ def test_is_math_method_function()
   # Test mathematical methods
   var math_methods = ["min", "max", "abs", "round", "sqrt", "scale", "sin", "cos"]
   for method : math_methods
-    if !transpiler.is_math_method(method)
+    var entry = transpiler.symbol_table.get(method)
+    if entry == nil || entry.type != animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
       print(f"    ❌ {method} should be detected as a math method")
       return false
     else
@@ -122,7 +123,8 @@ def test_is_math_method_function()
   # Test non-mathematical methods
   var non_math_methods = ["pulsating_animation", "solid", "color_cycle", "unknown_method"]
   for method : non_math_methods
-    if transpiler.is_math_method(method)
+    var entry = transpiler.symbol_table.get(method)
+    if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
       print(f"    ❌ {method} should NOT be detected as a math method")
       return false
     else

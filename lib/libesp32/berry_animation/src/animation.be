@@ -107,6 +107,8 @@ import "providers/oscillator_value_provider.be" as oscillator_value_provider
 register_to_animation(oscillator_value_provider)
 import "providers/strip_length_provider.be" as strip_length_provider
 register_to_animation(strip_length_provider)
+import "providers/iteration_number_provider.be" as iteration_number_provider
+register_to_animation(iteration_number_provider)
 import "providers/closure_value_provider.be" as closure_value_provider
 register_to_animation(closure_value_provider)
 
@@ -145,24 +147,26 @@ import "animations/gradient" as gradient_animation
 register_to_animation(gradient_animation)
 import "animations/noise" as noise_animation
 register_to_animation(noise_animation)
-import "animations/plasma" as plasma_animation
-register_to_animation(plasma_animation)
-import "animations/sparkle" as sparkle_animation
-register_to_animation(sparkle_animation)
+# import "animations/plasma" as plasma_animation
+# register_to_animation(plasma_animation)
+# import "animations/sparkle" as sparkle_animation
+# register_to_animation(sparkle_animation)
 import "animations/wave" as wave_animation
 register_to_animation(wave_animation)
-import "animations/shift" as shift_animation
-register_to_animation(shift_animation)
-import "animations/bounce" as bounce_animation
-register_to_animation(bounce_animation)
-import "animations/scale" as scale_animation
-register_to_animation(scale_animation)
-import "animations/jitter" as jitter_animation
-register_to_animation(jitter_animation)
+# import "animations/shift" as shift_animation
+# register_to_animation(shift_animation)
+# import "animations/bounce" as bounce_animation
+# register_to_animation(bounce_animation)
+# import "animations/scale" as scale_animation
+# register_to_animation(scale_animation)
+# import "animations/jitter" as jitter_animation
+# register_to_animation(jitter_animation)
 
 # Import palette examples
 import "animations/palettes" as palettes
 register_to_animation(palettes)
+# import "animations/all_wled_palettes" as all_wled_palettes
+# register_to_animation(all_wled_palettes)
 
 # Import specialized animation classes
 import "animations/rich_palette_animation" as rich_palette_animation

@@ -19,6 +19,9 @@ class AnimationEngine
   # Performance optimization
   var render_needed         # Whether a render pass is needed
   
+  # Sequence iteration tracking (stack-based for nested sequences)
+  var iteration_stack       # Stack of iteration numbers for nested sequences
+  
   # Initialize the animation engine for a specific LED strip
   def init(strip)
     if strip == nil
@@ -40,6 +43,9 @@ class AnimationEngine
     self.time_ms = 0
     self.fast_loop_closure = nil
     self.render_needed = false
+    
+    # Initialize iteration tracking stack
+    self.iteration_stack = []
   end
   
   # Run the animation engine
@@ -452,6 +458,46 @@ class AnimationEngine
     self.frame_buffer = nil
     self.temp_buffer = nil
     self.strip = nil
+  end
+  
+  # Sequence iteration tracking methods
+  
+  # Push a new iteration context onto the stack
+  # Called when a sequence starts repeating
+  #
+  # @param iteration_number: int - The current iteration number (0-based)
+  def push_iteration_context(iteration_number)
+    self.iteration_stack.push(iteration_number)
+  end
+  
+  # Pop the current iteration context from the stack
+  # Called when a sequence finishes repeating
+  def pop_iteration_context()
+    if size(self.iteration_stack) > 0
+      return self.iteration_stack.pop()
+    end
+    return nil
+  end
+  
+  # Update the current iteration number in the top context
+  # Called when a sequence advances to the next iteration
+  #
+  # @param iteration_number: int - The new iteration number (0-based)
+  def update_current_iteration(iteration_number)
+    if size(self.iteration_stack) > 0
+      self.iteration_stack[-1] = iteration_number
+    end
+  end
+  
+  # Get the current iteration number from the innermost sequence context
+  # Used by IterationNumberProvider to return the current iteration
+  #
+  # @return int|nil - Current iteration number (0-based) or nil if not in sequence
+  def get_current_iteration_number()
+    if size(self.iteration_stack) > 0
+      return self.iteration_stack[-1]
+    end
+    return nil
   end
   
   # String representation

@@ -366,8 +366,8 @@ def test_reserved_name_validation()
     "color red_custom = 0x800000",
     "color smooth_custom = 0x808080",
     # Easing function names are now valid as user-defined names
-    "animation smooth = solid(color=blue)",
-    "animation linear = solid(color=green)"
+    "animation smooth2 = solid(color=blue)",
+    "animation linear2 = solid(color=green)"
   ]
   
   for dsl_input : valid_name_tests

@@ -9,7 +9,8 @@ template shutter_central {
     set strip_len = strip_length()
     set strip_len2 = (strip_len + 1) / 2
     # the following is highly discouraged because it creates a new value provider at each tick
-    set strip_len3 = (strip_length() + 1) / 2
+    set strip_len3 = 1 + strip_length()
+    set strip_len4 = (strip_length() + 1) / 2
     set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
   
     color col1 = color_cycle(palette=colors, cycle_period=0)

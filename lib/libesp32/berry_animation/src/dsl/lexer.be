@@ -68,7 +68,13 @@ class DSLLexer
     elif self.is_digit(ch)
       self.scan_number()
     elif ch == '"' || ch == "'"
-      self.scan_string(ch)
+      # Check for triple quotes
+      if (ch == '"' && self.peek() == '"' && self.peek_ahead(1) == '"') ||
+         (ch == "'" && self.peek() == "'" && self.peek_ahead(1) == "'")
+        self.scan_triple_quoted_string(ch)
+      else
+        self.scan_string(ch)
+      end
     elif ch == '$'
       self.scan_variable_reference()
     else
@@ -268,6 +274,49 @@ class DSLLexer
     end
   end
   
+  # Scan triple-quoted string literal (for berry code blocks)
+  def scan_triple_quoted_string(quote_char)
+    var start_pos = self.position - 1  # Include first opening quote
+    var start_column = self.column - 1
+    var value = ""
+    
+    # Consume the two remaining opening quotes
+    self.advance()  # second quote
+    self.advance()  # third quote
+    
+    # Look for the closing triple quotes
+    while !self.at_end()
+      var ch = self.peek()
+      
+      # Check for closing triple quotes
+      if ch == quote_char && 
+         self.peek_ahead(1) == quote_char && 
+         self.peek_ahead(2) == quote_char
+        # Found closing triple quotes - consume them
+        self.advance()  # first closing quote
+        self.advance()  # second closing quote
+        self.advance()  # third closing quote
+        break
+      end
+      
+      # Regular character - add to value
+      ch = self.advance()
+      if ch == '\n'
+        self.line += 1
+        self.column = 1
+      end
+      value += ch
+    end
+    
+    # Check if we reached end without finding closing quotes
+    if self.at_end() && !(self.source[self.position-3..self.position-1] == quote_char + quote_char + quote_char)
+      self.add_error("Unterminated triple-quoted string literal")
+      self.add_token(39 #-animation_dsl.Token.ERROR-#, value, self.position - start_pos)
+    else
+      self.add_token(3 #-animation_dsl.Token.STRING-#, value, self.position - start_pos)
+    end
+  end
+  
   # Scan variable reference ($identifier)
   def scan_variable_reference()
     var start_pos = self.position - 1  # Include $
@@ -417,6 +466,14 @@ class DSLLexer
       return ""
     end
     return self.source[self.position + 1]
+  end
+  
+  # Peek ahead by n characters without advancing
+  def peek_ahead(n)
+    if self.position + n >= size(self.source)
+      return ""
+    end
+    return self.source[self.position + n]
   end
   
   # Check if current character matches expected and advance if so

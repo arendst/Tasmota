@@ -589,7 +589,8 @@ def test_alternative_syntax_integration()
     "  0xFFFF00\n" +
     "]\n" +
     "\n" +
-    "animation fire_anim = rich_palette_animation(palette=fire_colors, cycle_period=3s)\n" +
+    "color rich_palette2 = color_cycle(palette=fire_colors, cycle_period=3s)\n"
+    "animation fire_anim = solid(color=rich_palette2)\n" +
     "\n" +
     "run fire_anim\n"
   
@@ -599,7 +600,8 @@ def test_alternative_syntax_integration()
   # Verify the generated code contains the expected elements
   import string
   assert(string.find(berry_code, "var fire_colors_ = bytes(") != -1, "Should contain palette definition")
-  assert(string.find(berry_code, "rich_palette_animation(engine)") != -1, "Should contain animation creation")
+  assert(string.find(berry_code, "color_cycle(engine)") != -1, "Should contain value provider creation")
+  assert(string.find(berry_code, "solid(engine)") != -1, "Should contain animation creation")
   assert(string.find(berry_code, "fire_colors_") != -1, "Should reference the palette")
   
   print("✓ Alternative syntax integration test passed")
