@@ -9,7 +9,7 @@ class TwinkleAnimation : animation.animation
   
   # Non-parameter instance variables only
   var twinkle_states   # Array storing twinkle state for each pixel
-  var current_colors   # Array of current colors for each pixel
+  var current_colors   # bytes() buffer storing ARGB colors (4 bytes per pixel)
   var last_update      # Last update time for timing
   var random_seed      # Seed for random number generation
   
@@ -32,7 +32,7 @@ class TwinkleAnimation : animation.animation
     
     # Initialize non-parameter instance variables only
     self.twinkle_states = []
-    self.current_colors = []
+    self.current_colors = bytes()  # Use bytes() buffer for ARGB colors (4 bytes per pixel)
     self.last_update = 0
     
     # Initialize random seed using engine time
@@ -48,13 +48,16 @@ class TwinkleAnimation : animation.animation
     
     # Resize arrays
     self.twinkle_states.resize(strip_length)
-    self.current_colors.resize(strip_length)
+    
+    # Create new bytes() buffer for colors (4 bytes per pixel: ARGB)
+    self.current_colors.clear()
+    self.current_colors.resize(strip_length * 4)
     
     # Initialize all pixels to off state
     var i = 0
     while i < strip_length
       self.twinkle_states[i] = 0  # 0 = off, >0 = brightness level
-      self.current_colors[i] = 0x00000000  # Transparent (alpha = 0)
+      self.current_colors.set(i * 4, 0x00000000, -4)  # Transparent (alpha = 0)
       i += 1
     end
   end
@@ -133,14 +136,14 @@ class TwinkleAnimation : animation.animation
     var strip_length = self.engine.get_strip_length()
     
     # Ensure arrays are properly sized
-    if size(self.twinkle_states) != strip_length
+    if size(self.twinkle_states) != strip_length || self.current_colors.size() != strip_length * 4
       self._initialize_arrays()
     end
     
     # Step 1: Fade existing twinkles by reducing alpha
     var i = 0
     while i < strip_length
-      var current_color = self.current_colors[i]
+      var current_color = self.current_colors.get(i * 4, -4)
       var alpha = (current_color >> 24) & 0xFF
       
       if alpha > 0
@@ -149,12 +152,12 @@ class TwinkleAnimation : animation.animation
         if alpha <= fade_amount
           # Star has faded completely - reset to transparent
           self.twinkle_states[i] = 0
-          self.current_colors[i] = 0x00000000
+          self.current_colors.set(i * 4, 0x00000000, -4)
         else
           # Reduce alpha while keeping RGB components unchanged
           var new_alpha = alpha - fade_amount
           var rgb = current_color & 0x00FFFFFF  # Keep RGB, clear alpha
-          self.current_colors[i] = (new_alpha << 24) | rgb
+          self.current_colors.set(i * 4, (new_alpha << 24) | rgb, -4)
         end
       end
       i += 1
@@ -181,7 +184,7 @@ class TwinkleAnimation : animation.animation
           
           # Create new star with full-brightness color and variable alpha
           self.twinkle_states[j] = 1  # Mark as active (non-zero)
-          self.current_colors[j] = (star_alpha << 24) | (r << 16) | (g << 8) | b
+          self.current_colors.set(j * 4, (star_alpha << 24) | (r << 16) | (g << 8) | b, -4)
         end
       end
       j += 1
@@ -204,7 +207,7 @@ class TwinkleAnimation : animation.animation
     var strip_length = self.engine.get_strip_length()
     
     # Ensure arrays are properly sized
-    if size(self.twinkle_states) != strip_length
+    if size(self.twinkle_states) != strip_length || self.current_colors.size() != strip_length * 4
       self._initialize_arrays()
     end
     
@@ -213,7 +216,7 @@ class TwinkleAnimation : animation.animation
     var i = 0
     while i < strip_length
       if i < frame.width
-        var color = self.current_colors[i]
+        var color = self.current_colors.get(i * 4, -4)
         # Only set pixels that have some alpha (are visible)
         if (color >> 24) & 0xFF > 0
           frame.set_pixel_color(i, color)

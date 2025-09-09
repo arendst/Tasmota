@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.0.1.3]
+## [15.0.1.4]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.08.30 to 2025.09.30, Framework (Arduino Core) from v3.1.3.250808 to v3.1.4 and IDF from v5.3.3.250801 to v5.3.4.250826 (#23888)
+
+### Fixed
+
+### Removed
+
+## [15.0.1.3] 20250908
 ### Added
 - ESP32 ROM SHA Hardware Acceleration to BearSSL (#23819)
 - Extend state JSON message with functional hostname and ipaddress which could be WiFi or Ethernet

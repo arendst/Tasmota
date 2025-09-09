@@ -27,12 +27,12 @@ class Token
   
   static var statement_keywords = [
     "strip", "set", "color", "palette", "animation", 
-    "sequence", "function", "zone", "on", "run", "template", "param", "import"
+    "sequence", "function", "zone", "on", "run", "template", "param", "import", "berry"
   ]
   
   static var keywords = [
     # Configuration keywords
-    "strip", "set", "import",
+    "strip", "set", "import", "berry",
     
     # Definition keywords
     "color", "palette", "animation", "sequence", "function", "zone", "template", "param", "type",

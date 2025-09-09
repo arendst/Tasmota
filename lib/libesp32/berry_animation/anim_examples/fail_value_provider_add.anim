@@ -1,0 +1,6 @@
+#  Fail value_provider addition
+#1+1
+
+set a = linear() + triangle()
+set b = triangle()
+set c = linear() + triangle()

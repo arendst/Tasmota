@@ -25,6 +25,7 @@ import animation
 # We don't include it to not create a closure, but use the global instead
 
 # Create the DSL module and make it globally accessible
+#@ solidify:animation_dsl.SimpleDSLTranspiler.ExpressionResult,weak
 #@ solidify:animation_dsl,weak
 var animation_dsl = module("animation_dsl")
 global.animation_dsl = animation_dsl
@@ -46,8 +47,12 @@ import "dsl/lexer.be" as dsl_lexer
 register_to_dsl(dsl_lexer)
 import "dsl/transpiler.be" as dsl_transpiler
 register_to_dsl(dsl_transpiler)
+import "dsl/symbol_table.be" as dsl_symbol_table
+register_to_dsl(dsl_symbol_table)
 import "dsl/runtime.be" as dsl_runtime
 register_to_dsl(dsl_runtime)
+import "dsl/named_colors.be" as dsl_named_colors
+register_to_dsl(dsl_named_colors)
 
 # Main DSL compilation function
 # Compiles DSL source code to Berry code

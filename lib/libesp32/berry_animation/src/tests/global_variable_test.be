@@ -46,21 +46,17 @@ def test_undefined_variable_exception()
   print("Testing undefined variable exception behavior...")
   
   var dsl_code = "animation test = solid(color=undefined_var)"
-  var berry_code = animation_dsl.compile(dsl_code)
   
-  assert(berry_code != nil, "Should compile DSL code")
-  
-  # Check that undefined variables use direct underscore notation
-  import string
-  assert(string.find(berry_code, "test_.color = undefined_var_") >= 0, "Should use undefined_var_ directly for undefined variable")
-  
-  # Verify the generated code fails to compile (due to undefined variable)
-  # This is better than the old behavior - we catch undefined variables at compile time!
+  # The new transpiler behavior is to catch undefined variables at DSL compile time
+  # This is better than the old behavior - we catch errors earlier!
   try
-    var compiled_code = compile(berry_code)
-    assert(false, "Should have failed to compile due to undefined variable")
-  except .. as e, msg
-    print(f"✓ Correctly failed to compile due to undefined variable: {e}")
+    var berry_code = animation_dsl.compile(dsl_code)
+    assert(false, "Should have failed to compile DSL due to undefined variable")
+  except "dsl_compilation_error" as e, msg
+    print(f"✓ Correctly failed to compile DSL due to undefined variable: {e}")
+    # Verify the error message mentions the undefined variable
+    import string
+    assert(string.find(msg, "undefined_var") >= 0, "Error message should mention undefined_var")
   end
   
   print("✓ Undefined variable exception test passed")

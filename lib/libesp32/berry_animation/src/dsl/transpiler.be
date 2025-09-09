@@ -2,19 +2,6 @@
 # Single-pass transpiler with minimal complexity
 # Leverages Berry's runtime for symbol resolution
 
-# Mock engine class for parameter validation during transpilation
-class MockEngine
-  var time_ms
-  
-  def init()
-    self.time_ms = 0
-  end
-  
-  def get_strip_length()
-    return 30  # Default strip length for validation
-  end
-end
-
 #@ solidify:SimpleDSLTranspiler,weak
 class SimpleDSLTranspiler
   var tokens          # Token stream from lexer
@@ -22,30 +9,132 @@ class SimpleDSLTranspiler
   var output          # Generated Berry code lines
   var errors          # Compilation errors
   var run_statements  # Collect all run statements for single engine.run()
-  var first_statement # Track if we're processing the first statement
   var strip_initialized # Track if strip was initialized
-  var sequence_names  # Track which names are sequences
-  var symbol_table    # Track created objects: name -> instance
+  var symbol_table    # Enhanced symbol cache: name -> {type, instance, class_obj}
   var indent_level    # Track current indentation level for nested sequences
-  var template_definitions  # Track template definitions: name -> {params, body}
   var has_template_calls    # Track if we have template calls to trigger engine.run()
   
-  # Static color mapping for named colors (helps with solidification)
-  static var named_colors = {
-    "red": "0xFFFF0000", "green": "0xFF008000", "blue": "0xFF0000FF",
-    "white": "0xFFFFFFFF", "black": "0xFF000000", "yellow": "0xFFFFFF00",
-    "orange": "0xFFFFA500", "purple": "0xFF800080", "pink": "0xFFFFC0CB",
-    "cyan": "0xFF00FFFF", "magenta": "0xFFFF00FF", "gray": "0xFF808080",
-    "grey": "0xFF808080", "silver": "0xFFC0C0C0", "gold": "0xFFFFD700",
-    "brown": "0xFFA52A2A", "lime": "0xFF00FF00", "navy": "0xFF000080",
-    "olive": "0xFF808000", "maroon": "0xFF800000", "teal": "0xFF008080",
-    "aqua": "0xFF00FFFF", "fuchsia": "0xFFFF00FF", "indigo": "0xFF4B0082",
-    "violet": "0xFFEE82EE", "crimson": "0xFFDC143C", "coral": "0xFFFF7F50",
-    "salmon": "0xFFFA8072", "khaki": "0xFFF0E68C", "plum": "0xFFDDA0DD",
-    "orchid": "0xFFDA70D6", "turquoise": "0xFF40E0D0", "tan": "0xFFD2B48C",
-    "beige": "0xFFF5F5DC", "ivory": "0xFFFFFFF0", "snow": "0xFFFFFAFA",
-    "transparent": "0x00000000"
-  }
+  # Context constants for process_value calls
+  static var CONTEXT_VARIABLE = 1
+  static var CONTEXT_COLOR = 2
+  static var CONTEXT_ANIMATION = 3
+  static var CONTEXT_ARGUMENT = 4
+  static var CONTEXT_PROPERTY = 5
+  static var CONTEXT_REPEAT_COUNT = 6
+  static var CONTEXT_ARRAY_ELEMENT = 7
+  static var CONTEXT_TIME = 8
+  static var CONTEXT_EXPRESSION = 9
+  static var CONTEXT_GENERIC = 10
+  static var CONTEXT_COLOR_PROVIDER = 11
+  
+  # Helper class to track expression metadata for closure detection
+  #@ solidify:ExpressionResult,weak
+  static class ExpressionResult
+    var expr              # The expression string
+    var has_functions     # Boolean: true if contains function calls
+    var has_variables     # Boolean: true if contains variable references
+    var has_properties    # Boolean: true if contains property access
+    var has_computation   # Boolean: true if contains operators (computation)
+    var return_type       # String: result type matching symbol_table.be types
+    var instance_for_validation  # Instance object for validation (nil by default)
+    
+    def init(expr, has_functions, has_variables, has_properties, has_computation, return_type, instance_for_validation)
+      self.expr = (expr != nil) ? expr : ""
+      self.has_functions = bool(has_functions)
+      self.has_variables = bool(has_variables)
+      self.has_properties = bool(has_properties)
+      self.has_computation = bool(has_computation)
+      self.return_type = (return_type != nil) ? return_type : "variable"
+      self.instance_for_validation = instance_for_validation  # nil by default
+    end
+    
+    # Check if this expression needs closure wrapping
+    def needs_closure()
+      return self.has_computation && (self.has_functions || self.has_variables || self.has_properties)
+    end
+
+    # Check if this expression needs function wrapping
+    def needs_function()
+      return (self.has_functions || self.has_variables || self.has_properties)
+    end
+    
+    # String representation for debugging
+    def tostring()
+      var instance_str = (self.instance_for_validation != nil) ? f"instance={classname(self.instance_for_validation)}" : "instance=nil"
+      return f"ExpressionResult(expr='{self.expr}', funcs={self.has_functions}, vars={self.has_variables}, props={self.has_properties}, comp={self.has_computation}, type={self.return_type}, {instance_str})"
+    end
+    
+    # Static method to combine expression results
+    # Takes an expression string and 1-2 ExpressionResult parameters (checks for nil)
+    static def combine(expr_str, result1, result2)
+      var has_functions = false
+      var has_variables = false
+      var has_properties = false
+      var has_computation = true  # If we're combining, it means there's an operator
+      var return_type = "variable"  # Default to variable for composite expressions
+      
+      # Combine flags from all non-nil results
+      if result1 != nil
+        has_functions = has_functions || result1.has_functions
+        has_variables = has_variables || result1.has_variables
+        has_properties = has_properties || result1.has_properties
+        has_computation = has_computation || result1.has_computation
+      end
+      
+      if result2 != nil
+        has_functions = has_functions || result2.has_functions
+        has_variables = has_variables || result2.has_variables
+        has_properties = has_properties || result2.has_properties
+        has_computation = has_computation || result2.has_computation
+      end
+      
+      # Compute the new return type
+      # For composite expressions (combining two results), typically revert to "variable"
+      # unless both operands are the same specific type
+      if result1 != nil && result2 != nil
+        # If both operands have the same specific type, preserve it
+        if result1.return_type == result2.return_type && result1.return_type != "variable"
+          return_type = result1.return_type
+        else
+          # Different types or one is variable -> result is variable
+          return_type = "variable"
+        end
+      elif result1 != nil
+        # Only one operand (unary operation) - preserve its type unless it's composite
+        return_type = has_computation ? "variable" : result1.return_type
+      elif result2 != nil
+        # Only one operand (unary operation) - preserve its type unless it's composite
+        return_type = has_computation ? "variable" : result2.return_type
+      end
+      
+      return _class(expr_str, has_functions, has_variables, has_properties, has_computation, return_type, nil)
+    end
+    
+    # Create a simple literal result (no dynamic elements)
+    static def literal(expr, return_type, instance_for_validation)
+      return _class(expr, false, false, false, false, return_type, instance_for_validation)
+    end
+    
+    # Create a function call result (comp=true)
+    static def function_call(expr, return_type, instance_for_validation)
+      return _class(expr, true, false, false, true, return_type, instance_for_validation)
+    end
+    
+    # Create a constructor call result (comp=false)
+    static def constructor_call(expr, return_type, instance_for_validation)
+      return _class(expr, true, false, false, false, return_type, instance_for_validation)
+    end
+    
+    # Create a variable reference result
+    static def variable_ref(expr, return_type, instance_for_validation)
+      return _class(expr, false, true, false, false, return_type, instance_for_validation)
+    end
+    
+    # Create a property access result
+    static def property_access(expr, return_type, instance_for_validation)
+      return _class(expr, false, false, true, false, return_type, instance_for_validation)
+    end
+  end
   
   def init(tokens)
     self.tokens = tokens != nil ? tokens : []
@@ -53,18 +142,70 @@ class SimpleDSLTranspiler
     self.output = []
     self.errors = []
     self.run_statements = []
-    self.first_statement = true  # Track if we're processing the first statement
     self.strip_initialized = false  # Track if strip was initialized
-    self.sequence_names = {}  # Track which names are sequences
-    self.symbol_table = {}  # Track created objects: name -> instance
+    self.symbol_table = animation_dsl._symbol_table()  # Enhanced symbol cache with built-in detection
     self.indent_level = 0  # Track current indentation level
-    self.template_definitions = {}  # Track template definitions
     self.has_template_calls = false  # Track if we have template calls
+    
+    # Note: Special functions like 'log' are now auto-discovered dynamically by the symbol table
   end
   
+
+
+  # Check if a function call has parameters by looking ahead
+  def _has_function_parameters()
+    # Save current position
+    var saved_pos = self.pos
+    
+    # Expect and consume the opening parenthesis
+    if self.current() == nil || self.current().type != animation_dsl.Token.LEFT_PAREN
+      return false
+    end
+    self.next()  # consume '('
+    
+    # Skip whitespace and check if we immediately hit the closing parenthesis
+    self.skip_whitespace_including_newlines()
+    var has_params = !(self.current() != nil && self.current().type == animation_dsl.Token.RIGHT_PAREN)
+    
+    # Restore position
+    self.pos = saved_pos
+    
+    return has_params
+  end
+
   # Get current indentation string
   def get_indent()
     return "  " * (self.indent_level + 1)  # Base indentation is 2 spaces
+  end
+  
+  # Helper method to process simple value assignments with symbol table tracking
+  # Consolidates duplicate code from process_color and process_animation
+  def _process_simple_value_assignment(name, context, symbol_create_method)
+    # Check if this is a simple identifier reference before processing
+    var current_tok = self.current()
+    var is_simple_identifier = (current_tok != nil && current_tok.type == animation_dsl.Token.IDENTIFIER && 
+                                (self.peek() == nil || self.peek().type != animation_dsl.Token.LEFT_PAREN))
+    var ref_name = is_simple_identifier ? current_tok.value : nil
+    
+    # Regular value assignment
+    var value_result = self.process_value(context)
+    var inline_comment = self.collect_inline_comment()
+    self.add(f"var {name}_ = {value_result.expr}{inline_comment}")
+    
+    # If this is an identifier reference to another object in our symbol table,
+    # add this name to the symbol table as well for compile-time validation
+    if is_simple_identifier && ref_name != nil && self.symbol_table.contains(ref_name)
+      var ref_entry = self.symbol_table.get(ref_name)
+      # Only copy actual instances, not just markers
+      if ref_entry != nil && ref_entry.instance != nil
+        symbol_create_method(name, ref_entry.instance)
+      else
+        symbol_create_method(name, nil)
+      end
+    else
+      # Add simple object to symbol table with a marker
+      symbol_create_method(name, nil)
+    end
   end
   
   # Helper method to process user function calls (user.function_name())
@@ -83,6 +224,75 @@ class SimpleDSLTranspiler
       self.error("User functions must be called with parentheses: user.function_name()")
       return "nil"
     end
+  end
+  
+  # Helper method to determine the return type of a function call
+  def _determine_function_return_type(entry)
+    if entry != nil
+      if entry.type == animation_dsl._symbol_entry.TYPE_ANIMATION_CONSTRUCTOR || entry.type == animation_dsl._symbol_entry.TYPE_ANIMATION
+        return "animation"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_COLOR_CONSTRUCTOR || entry.type == animation_dsl._symbol_entry.TYPE_COLOR
+        return "color"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER_CONSTRUCTOR || entry.type == animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER
+        return "value_provider"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_PALETTE_CONSTANT || entry.type == animation_dsl._symbol_entry.TYPE_PALETTE
+        return "palette"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
+        return "variable"  # Math functions return numeric values
+      elif entry.type == animation_dsl._symbol_entry.TYPE_USER_FUNCTION || entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
+        return "variable"  # User functions and templates can return anything
+      end
+    end
+    return "variable"  # Default fallback
+  end
+  
+  # Helper method to create symbol entry based on return type string
+  def _create_symbol_by_return_type(name, return_type, instance)
+    if return_type == "animation"
+      return self.symbol_table.create_animation(name, instance)
+    elif return_type == "color"
+      return self.symbol_table.create_color(name, instance)
+    elif return_type == "value_provider"
+      return self.symbol_table.create_value_provider(name, instance)
+    elif return_type == "palette"
+      return self.symbol_table.create_palette(name, instance)
+    elif return_type == "sequence"
+      return self.symbol_table.create_sequence(name)
+    elif return_type == "template"
+      return self.symbol_table.create_template(name, nil)
+    else  # "variable" or any other type
+      return self.symbol_table.create_variable(name)
+    end
+  end
+  
+  # Helper method to determine the return type of a symbol reference
+  def _determine_symbol_return_type(symbol_name)
+    # Check if it's a named color first
+    if animation_dsl.is_color_name(symbol_name)
+      return "color"
+    end
+    
+    var entry = self.symbol_table.get(symbol_name)
+    if entry != nil
+      if entry.type == animation_dsl._symbol_entry.TYPE_ANIMATION || entry.type == animation_dsl._symbol_entry.TYPE_ANIMATION_CONSTRUCTOR
+        return "animation"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_COLOR || entry.type == animation_dsl._symbol_entry.TYPE_COLOR_CONSTRUCTOR
+        return "color"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER || entry.type == animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER_CONSTRUCTOR
+        return "value_provider"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_PALETTE || entry.type == animation_dsl._symbol_entry.TYPE_PALETTE_CONSTANT
+        return "palette"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_CONSTANT
+        return "variable"  # Constants are numeric values
+      elif entry.type == animation_dsl._symbol_entry.TYPE_VARIABLE
+        return "variable"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_SEQUENCE
+        return "sequence"
+      elif entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
+        return "template"
+      end
+    end
+    return "variable"  # Default fallback
   end
   
   # Main transpilation method - single pass
@@ -151,12 +361,6 @@ class SimpleDSLTranspiler
       return
     end
     
-    # Check if this is the first non-comment, non-whitespace statement
-    var is_first_real_statement = self.first_statement
-    if tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER
-      self.first_statement = false
-    end
-    
     # Handle keywords
     if tok.type == animation_dsl.Token.KEYWORD
       if tok.value == "strip"
@@ -164,6 +368,8 @@ class SimpleDSLTranspiler
         self.error("'strip' directive is temporarily disabled. Strip configuration is handled automatically.")
         self.skip_statement()
         return
+      elif tok.value == "template"
+        self.process_template()
       else
         # For any other statement, ensure strip is initialized
         if !self.strip_initialized
@@ -180,15 +386,16 @@ class SimpleDSLTranspiler
           self.process_set()
         elif tok.value == "sequence"
           self.process_sequence()
-        elif tok.value == "template"
-          self.process_template()
         elif tok.value == "run"
           self.process_run()
         elif tok.value == "import"
           self.process_import()
         elif tok.value == "on"
           self.process_event_handler()
+        elif tok.value == "berry"
+          self.process_berry_code_block()
         else
+          self.error(f"Unknown keyword '{tok.value}'.")
           self.skip_statement()
         end
       end
@@ -206,6 +413,7 @@ class SimpleDSLTranspiler
         self.process_property_assignment()
       end
     else
+      self.error(f"Unexpected token '{tok.value}'.")
       self.skip_statement()
     end
   end
@@ -239,12 +447,26 @@ class SimpleDSLTranspiler
         self.next()
       end
       
+      # Get symbol table entry for this function
+      var entry = self.symbol_table.get(func_name)
+      
       # Check if this is a template call first
-      if self.template_definitions.contains(func_name)
+      if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
         # This is a template call - treat like user function
         var args = self.process_function_arguments(false)
         var full_args = args != "" ? f"engine, {args}" : "engine"
-        self.add(f"{func_name}_template({full_args}){inline_comment}")
+        self.add(f"var {name}_ = {func_name}_template({full_args}){inline_comment}")
+        
+        # Register in symbol table as color instance
+        self.symbol_table.create_color(name, nil)
+      elif entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_USER_FUNCTION
+        # This is a user function call - use positional parameters with engine as first argument
+        var args = self.process_function_arguments(false)
+        var full_args = args != "" ? f"engine, {args}" : "engine"
+        self.add(f"var {name}_ = animation.get_user_function('{func_name}')({full_args}){inline_comment}")
+        
+        # Track this symbol in our symbol table as a color instance (user function result)
+        self.symbol_table.create_color(name, nil)
       else
         # Built-in functions use the new engine-first + named parameters pattern
         # Validate that the factory function exists at transpilation time
@@ -260,36 +482,15 @@ class SimpleDSLTranspiler
         # Track this symbol in our symbol table
         var instance = self._create_instance_for_validation(func_name)
         if instance != nil
-          self.symbol_table[name] = instance
+          self.symbol_table.create_color(name, instance)
         end
         
         # Process named arguments with validation
         self._process_named_arguments_for_color_provider(f"{name}_", func_name)
       end
     else
-      # Check if this is a simple identifier reference before processing
-      var current_tok = self.current()
-      var is_simple_identifier = (current_tok != nil && current_tok.type == animation_dsl.Token.IDENTIFIER && 
-                                  (self.peek() == nil || self.peek().type != animation_dsl.Token.LEFT_PAREN))
-      var ref_name = is_simple_identifier ? current_tok.value : nil
-      
-      # Regular value assignment (simple color value)
-      var value = self.process_value("color")
-      var inline_comment = self.collect_inline_comment()
-      self.add(f"var {name}_ = {value}{inline_comment}")
-      
-      # If this is an identifier reference to another color provider in our symbol table,
-      # add this name to the symbol table as well for compile-time validation
-      if is_simple_identifier && ref_name != nil && self.symbol_table.contains(ref_name)
-        var ref_instance = self.symbol_table[ref_name]
-        # Only copy instances, not sequence markers
-        if type(ref_instance) != "string"
-          self.symbol_table[name] = ref_instance
-        end
-      else
-        # Add simple color to symbol table with a marker
-        self.symbol_table[name] = "color"
-      end
+      # Use helper method to process simple value assignment
+      self._process_simple_value_assignment(name, self.CONTEXT_COLOR, / name, instance -> self.symbol_table.create_color(name, instance))
     end
   end
   
@@ -444,6 +645,9 @@ class SimpleDSLTranspiler
       
       self.add(f"var {name}_ = bytes({palette_data}){inline_comment}")
     end
+    
+    # Register palette in symbol table
+    self.symbol_table.create_palette(name, nil)
   end
   
   # Process animation definition: animation pulse_red = pulse(color=red, period=2s)
@@ -475,12 +679,26 @@ class SimpleDSLTranspiler
         self.next()
       end
       
+      # Get symbol table entry for this function
+      var entry = self.symbol_table.get(func_name)
+      
       # Check if this is a template call first
-      if self.template_definitions.contains(func_name)
+      if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
         # This is a template call - treat like user function
         var args = self.process_function_arguments(false)
         var full_args = args != "" ? f"engine, {args}" : "engine"
-        self.add(f"{func_name}_template({full_args}){inline_comment}")
+        self.add(f"var {name}_ = {func_name}_template({full_args}){inline_comment}")
+        
+        # Register in symbol table as animation instance
+        self.symbol_table.create_animation(name, nil)
+      elif entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_USER_FUNCTION
+        # This is a user function call - use positional parameters with engine as first argument
+        var args = self.process_function_arguments(false)
+        var full_args = args != "" ? f"engine, {args}" : "engine"
+        self.add(f"var {name}_ = animation.get_user_function('{func_name}')({full_args}){inline_comment}")
+        
+        # Track this symbol in our symbol table as animation instance (user function result)
+        self.symbol_table.create_animation(name, nil)
       else
         # Built-in functions use the new engine-first + named parameters pattern
         # Validate that the factory function creates an animation instance at transpile time
@@ -496,36 +714,15 @@ class SimpleDSLTranspiler
         # Track this symbol in our symbol table
         var instance = self._create_instance_for_validation(func_name)
         if instance != nil
-          self.symbol_table[name] = instance
+          self.symbol_table.create_animation(name, instance)
         end
         
         # Process named arguments with validation
         self._process_named_arguments_for_animation(f"{name}_", func_name)
       end
     else
-      # Check if this is a simple identifier reference before processing
-      var current_tok = self.current()
-      var is_simple_identifier = (current_tok != nil && current_tok.type == animation_dsl.Token.IDENTIFIER && 
-                                  (self.peek() == nil || self.peek().type != animation_dsl.Token.LEFT_PAREN))
-      var ref_name = is_simple_identifier ? current_tok.value : nil
-      
-      # Regular value assignment (identifier, color, etc.)
-      var value = self.process_value("animation")
-      var inline_comment = self.collect_inline_comment()
-      self.add(f"var {name}_ = {value}{inline_comment}")
-      
-      # If this is an identifier reference to another animation in our symbol table,
-      # add this name to the symbol table as well for compile-time validation
-      if is_simple_identifier && ref_name != nil && self.symbol_table.contains(ref_name)
-        var ref_instance = self.symbol_table[ref_name]
-        # Only copy instances, not sequence markers
-        if type(ref_instance) != "string"
-          self.symbol_table[name] = ref_instance
-        end
-      else
-        # Add simple animation to symbol table with a marker
-        self.symbol_table[name] = "animation"
-      end
+      # Use helper method to process simple value assignment
+      self._process_simple_value_assignment(name, self.CONTEXT_ANIMATION, / name, instance -> self.symbol_table.create_animation(name, instance))
     end
   end
   
@@ -555,30 +752,12 @@ class SimpleDSLTranspiler
     
     self.expect_assign()
     
-    # Check if this is a value provider function call
-    var is_value_provider = false
-    var tok = self.current()
-    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
-       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
-      
-      var func_name = tok.value
-      # Check if this is a value provider factory function
-      if self._validate_value_provider_factory_exists(func_name)
-        is_value_provider = true
-      end
-    end
-    
-    var value = self.process_value("variable")
+    var value_result = self.process_value(self.CONTEXT_VARIABLE)
     var inline_comment = self.collect_inline_comment()
-    self.add(f"var {name}_ = {value}{inline_comment}")
-    
-    # Add to symbol table with appropriate marker
-    if is_value_provider
-      self.symbol_table[name] = "value_provider"
-    else
-      # Use a string marker to indicate this is a variable (not an instance)
-      self.symbol_table[name] = "variable"
-    end
+    # Add to symbol table using appropriate method based on return type
+    var local_entry = self._create_symbol_by_return_type(name, value_result.return_type, value_result.instance_for_validation)
+    var local_ref = (local_entry != nil) ? local_entry.get_reference() : f"{name}_"
+    self.add(f"var {local_ref} = {value_result.expr}{inline_comment}")
   end
   
   # Process template definition: template name { param ... }
@@ -664,18 +843,11 @@ class SimpleDSLTranspiler
     
     self.expect_right_brace()
     
-    # Store template definition
-    self.template_definitions[name] = {
-      'params': params,
-      'param_types': param_types,
-      'body_tokens': body_tokens
-    }
-    
     # Generate Berry function for this template
     self.generate_template_function(name, params, param_types, body_tokens)
     
-    # Add template to symbol table as a special marker
-    self.symbol_table[name] = "template"
+    # Add template to symbol table with parameter types
+    self.symbol_table.create_template(name, param_types)
   end
   
   # Process sequence definition: sequence demo { ... } or sequence demo repeat N times { ... }
@@ -689,12 +861,8 @@ class SimpleDSLTranspiler
       return
     end
     
-    # Track that this name is a sequence
-    self.sequence_names[name] = true
-    
-    # Also add to symbol table with a special marker for sequences
-    # We use a string marker since sequences don't have real instances
-    self.symbol_table[name] = "sequence"
+    # Track sequence in symbol table
+    self.symbol_table.create_sequence(name)
     
     # Check for second syntax: sequence name repeat N times { ... } or sequence name forever { ... }
     var is_repeat_syntax = false
@@ -712,9 +880,9 @@ class SimpleDSLTranspiler
           self.next()  # skip 'forever'
           repeat_count = "-1"  # -1 means forever
         else
-          var count_expr = self.process_value("repeat_count")
+          var count_result = self.process_value(self.CONTEXT_REPEAT_COUNT)
           self.expect_keyword("times")
-          repeat_count = count_expr
+          repeat_count = count_result.expr
         end
       elif current_tok.value == "forever"
         # New syntax: sequence name forever { ... } (repeat is optional)
@@ -725,9 +893,9 @@ class SimpleDSLTranspiler
     elif current_tok != nil && current_tok.type == animation_dsl.Token.NUMBER
       # New syntax: sequence name N times { ... } (repeat is optional)
       is_repeat_syntax = true
-      var count_expr = self.process_value("repeat_count")
+      var count_result = self.process_value(self.CONTEXT_REPEAT_COUNT)
       self.expect_keyword("times")
-      repeat_count = count_expr
+      repeat_count = count_result.expr
     end
     
     self.expect_left_brace()
@@ -801,9 +969,9 @@ class SimpleDSLTranspiler
         self.next()  # skip 'forever'
         repeat_count = "-1"  # -1 means forever
       else
-        var count_expr = self.process_value("repeat_count")
+        var count_result = self.process_value(self.CONTEXT_REPEAT_COUNT)
         self.expect_keyword("times")
-        repeat_count = count_expr
+        repeat_count = count_result.expr
       end
       
       self.expect_left_brace()
@@ -847,11 +1015,11 @@ class SimpleDSLTranspiler
     self.expect_dot()
     var property_name = self.expect_identifier()
     self.expect_assign()
-    var value = self.process_value("property")
+    var value_result = self.process_value(self.CONTEXT_PROPERTY)
     var inline_comment = self.collect_inline_comment()
     
     # Create assignment step using fluent style
-    var closure_code = f"def (engine) {object_name}_.{property_name} = {value} end"
+    var closure_code = f"def (engine) {object_name}_.{property_name} = {value_result.expr} end"
     self.add(f"{self.get_indent()}.push_closure_step({closure_code}){inline_comment}")
   end
   
@@ -871,15 +1039,15 @@ class SimpleDSLTranspiler
       
       # Validate parameter if we have this object in our symbol table
       if self.symbol_table.contains(object_name)
-        var instance = self.symbol_table[object_name]
+        var entry = self.symbol_table.get(object_name)
         
         # Only validate parameters for actual instances, not sequence markers
-        if type(instance) != "string"
-          var class_name = classname(instance)
+        if entry != nil && entry.instance != nil
+          var class_name = classname(entry.instance)
           
           # Use the existing parameter validation logic
-          self._validate_single_parameter(class_name, property_name, instance)
-        else
+          self._validate_single_parameter(class_name, property_name, entry.instance)
+        elif entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_SEQUENCE
           # This is a sequence marker - sequences don't have properties
           self.error(f"Sequences like '{object_name}' do not have properties. Property assignments are only valid for animations and color providers.")
           return
@@ -887,15 +1055,15 @@ class SimpleDSLTranspiler
       end
       
       self.expect_assign()
-      var value = self.process_value("property")
+      var value_result = self.process_value(self.CONTEXT_PROPERTY)
       var inline_comment = self.collect_inline_comment()
       
       # Generate assignment step with closure
       # The closure receives the engine as parameter and performs the assignment
-      var object_ref = self.resolve_symbol_reference(object_name)
+      var object_ref = self.symbol_table.get_reference(object_name)
       
       # Create closure that performs the assignment
-      var closure_code = f"def (engine) {object_ref}.{property_name} = {value} end"
+      var closure_code = f"def (engine) {object_ref}.{property_name} = {value_result.expr} end"
       self.add(f"{indent}{target_array}.push(animation.create_assign_step({closure_code})){inline_comment}")
     else
       # Not a property assignment, this shouldn't happen since we checked for dot
@@ -931,7 +1099,7 @@ class SimpleDSLTranspiler
     var duration = "nil"
     if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
       self.next()  # skip 'for'
-      duration = str(self.process_time_value())
+      duration = self.process_time_value()
     end
     
     var inline_comment = self.collect_inline_comment()
@@ -953,7 +1121,7 @@ class SimpleDSLTranspiler
       # For sequence context - wrap in closure
       var closure_code = f"def (engine) log(f\"{args_str}\", 3) end"
       return f"{self.get_indent()}.push_closure_step({closure_code}){inline_comment}"
-    elif context_type == "expression"
+    elif context_type == self.CONTEXT_EXPRESSION
       # For expression context - return just the call (no inline comment)
       return f"log(f\"{args_str}\", 3)"
     else
@@ -1074,7 +1242,8 @@ class SimpleDSLTranspiler
       end
       
       # This is a standalone function call - check if it's a template
-      if self.template_definitions.contains(object_name)
+      var entry = self.symbol_table.get(object_name)
+      if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
         var args = self.process_function_arguments(false)
         var full_args = args != "" ? f"engine, {args}" : "engine"
         var inline_comment = self.collect_inline_comment()
@@ -1096,29 +1265,29 @@ class SimpleDSLTranspiler
       
       # Validate parameter if we have this object in our symbol table
       if self.symbol_table.contains(object_name)
-        var instance = self.symbol_table[object_name]
+        var entry = self.symbol_table.get(object_name)
         
         # Only validate parameters for actual instances, not sequence markers
-        if type(instance) != "string"
-          var class_name = classname(instance)
+        if entry != nil && entry.instance != nil
+          var class_name = classname(entry.instance)
           
           # Use the existing parameter validation logic
-          self._validate_single_parameter(class_name, property_name, instance)
-        else
+          self._validate_single_parameter(class_name, property_name, entry.instance)
+        elif entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_SEQUENCE
           # This is a sequence marker - sequences don't have properties
           self.error(f"Sequences like '{object_name}' do not have properties. Property assignments are only valid for animations and color providers.")
         end
       end
       
       self.expect_assign()
-      var value = self.process_value("property")
+      var value_result = self.process_value(self.CONTEXT_PROPERTY)
       var inline_comment = self.collect_inline_comment()
       
       # Use consolidated symbol resolution for property assignments
-      var object_ref = self.resolve_symbol_reference(object_name)
+      var object_ref = self.symbol_table.get_reference(object_name)
       
       # Generate property assignment
-      self.add(f"{object_ref}.{property_name} = {value}{inline_comment}")
+      self.add(f"{object_ref}.{property_name} = {value_result.expr}{inline_comment}")
     else
       # Not a property assignment, skip this statement
       self.error(f"Expected property assignment for '{object_name}' but found no dot")
@@ -1128,7 +1297,31 @@ class SimpleDSLTranspiler
   
   # Process any value - unified approach
   def process_value(context)
-    return self.process_additive_expression(context, true, false)  # true = top-level, false = not raw mode
+    var result = self.process_additive_expression(context, true, false)  # true = top-level, false = not raw mode
+    # Handle closure wrapping for top-level expressions (not in raw mode) only if there is computation needed
+    print(f"> process_value {context=} {result=}")
+    if    ((context == self.CONTEXT_VARIABLE || context == self.CONTEXT_PROPERTY) && result.needs_closure())
+       || ((context == self.CONTEXT_REPEAT_COUNT) && result.needs_function())
+      # Special handling for repeat_count context - always create simple function for property access
+      if context == self.CONTEXT_REPEAT_COUNT
+        import string
+        if string.find(result.expr, ".") >= 0
+          var closure_expr = self.create_simple_function_from_string(result.expr)
+          # Return new ExpressionResult with closure expression but preserve return type
+          return self.ExpressionResult.function_call(closure_expr)
+        else
+          # Return the original result unchanged
+          return result
+        end
+      else
+        var closure_expr = self.create_computation_closure_from_string(result.expr)
+        var entry_for_closure_value = self.symbol_table.get("closure_value")
+        return self.ExpressionResult.function_call(closure_expr, entry_for_closure_value.type, entry_for_closure_value.instance)
+      end
+    else
+      # Return the original result unchanged
+      return result
+    end
   end
   
   # Process palette color with strict validation
@@ -1167,62 +1360,40 @@ class SimpleDSLTranspiler
   
   # Process additive expressions (+ and -) - unified method
   def process_additive_expression(context, is_top_level, raw_mode)
-    var left = self.process_multiplicative_expression(context, is_top_level, raw_mode)
+    var left_result = self.process_multiplicative_expression(context, is_top_level, raw_mode)
     
     while !self.at_end()
       var tok = self.current()
       if tok != nil && (tok.type == animation_dsl.Token.PLUS || tok.type == animation_dsl.Token.MINUS)
         var op = tok.value
         self.next()  # consume operator
-        var right = self.process_multiplicative_expression(context, false, raw_mode)  # sub-expressions are not top-level
-        left = f"{left} {op} {right}"
+        var right_result = self.process_multiplicative_expression(context, false, raw_mode)  # sub-expressions are not top-level
+        left_result = self.ExpressionResult.combine(f"{left_result.expr} {op} {right_result.expr}", left_result, right_result)
       else
         break
       end
     end
     
-    # Skip closure wrapping in raw mode
-    if raw_mode
-      return left
-    end
-    
-    # Only create closures at the top level, but not for anonymous functions
-    if is_top_level && !self.is_anonymous_function(left)
-      # Special handling for repeat_count context - always create simple function for property access
-      if context == "repeat_count"
-        import string
-        if self.is_computed_expression_string(left) || string.find(left, ".") >= 0
-          return self.create_simple_function_from_string(left)
-        else
-          return left
-        end
-      elif self.is_computed_expression_string(left)
-        return self.create_computation_closure_from_string(left)
-      else
-        return left
-      end
-    else
-      return left
-    end
+    return left_result
   end
   
   # Process multiplicative expressions (* and /) - unified method
   def process_multiplicative_expression(context, is_top_level, raw_mode)
-    var left = self.process_unary_expression(context, is_top_level, raw_mode)
+    var left_result = self.process_unary_expression(context, is_top_level, raw_mode)
     
     while !self.at_end()
       var tok = self.current()
       if tok != nil && (tok.type == animation_dsl.Token.MULTIPLY || tok.type == animation_dsl.Token.DIVIDE)
         var op = tok.value
         self.next()  # consume operator
-        var right = self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
-        left = f"{left} {op} {right}"
+        var right_result = self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
+        left_result = self.ExpressionResult.combine(f"{left_result.expr} {op} {right_result.expr}", left_result, right_result)
       else
         break
       end
     end
     
-    return left
+    return left_result
   end
   
   # Process unary expressions (- and +) - unified method
@@ -1230,14 +1401,14 @@ class SimpleDSLTranspiler
     var tok = self.current()
     if tok == nil
       self.error("Expected value")
-      return "nil"
+      return self.ExpressionResult.literal("nil")
     end
     
     # Handle unary minus for negative numbers
     if tok.type == animation_dsl.Token.MINUS
       self.next()  # consume the minus
-      var expr = self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
-      return f"(-{expr})"
+      var expr_result = self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
+      return self.ExpressionResult(f"(-{expr_result.expr})", expr_result.has_functions, expr_result.has_variables, expr_result.has_properties, true)
     end
     
     # Handle unary plus (optional)
@@ -1245,7 +1416,6 @@ class SimpleDSLTranspiler
       self.next()  # consume the plus
       return self.process_unary_expression(context, false, raw_mode)  # sub-expressions are not top-level
     end
-    
     return self.process_primary_expression(context, is_top_level, raw_mode)
   end
   
@@ -1254,169 +1424,198 @@ class SimpleDSLTranspiler
     var tok = self.current()
     if tok == nil
       self.error("Expected value")
-      return "nil"
+      return self.ExpressionResult.literal("nil")
     end
     
     # Parenthesized expression
     if tok.type == animation_dsl.Token.LEFT_PAREN
       self.next()  # consume '('
-      var expr = self.process_additive_expression(context, false, raw_mode)  # parenthesized expressions are not top-level
+      var expr_result = self.process_additive_expression(context, false, raw_mode)  # parenthesized expressions are not top-level
       self.expect_right_paren()
-      return f"({expr})"
-    end
-    
-    # Function call: identifier or easing keyword followed by '('
-    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
-       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
-      
-      var func_name = tok.value
-      
-      # In raw mode, handle function calls differently
-      if raw_mode
-        self.next()
-        
-        # Check if this is a mathematical function
-        if self.is_math_method(func_name)
-          var args = self.process_function_arguments(true)
-          return f"animation._math.{func_name}({args})"
-        end
-        
-        # Special case for log function in expressions
-        if func_name == "log"
-          var args = self.process_function_arguments(true)
-          return self.process_log_call(args, "expression", "")
-        end
-        
-        # Check if this is a template call
-        if self.template_definitions.contains(func_name)
-          var args = self.process_function_arguments(true)
-          var full_args = args != "" ? f"engine, {args}" : "engine"
-          return f"{func_name}_template({full_args})"
-        end
-        
-        # For other functions, this shouldn't happen in expression context
-        self.error(f"Function '{func_name}' not supported in expression context")
-        return "nil"
-      else
-        # Regular mode - existing logic
-        # Check if this is a simple function call first
-        if self._is_simple_function_call(func_name)
-          return self.process_function_call(context)
-        # Check if this is a nested function call or a variable assignment with named parameters
-        elif context == "argument" || context == "property" || context == "variable"
-          return self.process_nested_function_call()
-        else
-          return self.process_function_call(context)
-        end
-      end
+      return self.ExpressionResult(f"({expr_result.expr})", expr_result.has_functions, expr_result.has_variables, expr_result.has_properties, true)
     end
     
     # Color value
     if tok.type == animation_dsl.Token.COLOR
       self.next()
-      return self.convert_color(tok.value)
+      return self.ExpressionResult.literal(self.convert_color(tok.value), "color")
     end
     
     # Time value
     if tok.type == animation_dsl.Token.TIME
-      return str(self.process_time_value())
+      return self.ExpressionResult.literal(self.process_time_value())
     end
     
     # Percentage value
     if tok.type == animation_dsl.Token.PERCENTAGE
-      return str(self.process_percentage_value())
+      return self.ExpressionResult.literal(str(self.process_percentage_value()))
     end
     
     # Number value
     if tok.type == animation_dsl.Token.NUMBER
       var value = tok.value
       self.next()
-      return value
-    end
-    
-    # String value
-    if tok.type == animation_dsl.Token.STRING
-      var value = tok.value
-      self.next()
-      return f'"{value}"'
-    end
-    
-    # Array literal (not supported in raw mode)
-    if tok.type == animation_dsl.Token.LEFT_BRACKET && !raw_mode
-      return self.process_array_literal()
-    end
-    
-    # Identifier - could be color, animation, variable, or object property reference
-    if tok.type == animation_dsl.Token.IDENTIFIER
-      var name = tok.value
-      self.next()
-      
-      # Check if this is an object property reference (identifier.property)
-      if self.current() != nil && self.current().type == animation_dsl.Token.DOT
-        self.next()  # consume '.'
-        var property_name = self.expect_identifier()
-        
-        # Special handling for user.function_name() calls
-        if name == "user"
-          return self._process_user_function_call(property_name)
-        end
-        
-        # Validate that the property exists on the referenced object (skip in raw mode)
-        if !raw_mode && self.symbol_table.contains(name)
-          var instance = self.symbol_table[name]
-          # Only validate parameters for actual instances, not sequence markers
-          if type(instance) != "string"
-            var class_name = classname(instance)
-            self._validate_single_parameter(class_name, property_name, instance)
-          else
-            # This is a sequence marker - sequences don't have properties
-            self.error(f"Sequences like '{name}' do not have properties. Property references are only valid for animations and color providers.")
-            return "nil"
-          end
-        end
-        
-        # Use consolidated symbol resolution for the object reference
-        var object_ref = self.resolve_symbol_reference(name)
-        
-        # In raw mode or repeat_count context, generate simple property access
-        if raw_mode || context == "repeat_count"
-          return f"{object_ref}.{property_name}"
-        else
-          # Return a closure expression that will be wrapped by the caller if needed
-          return f"animation.resolve({object_ref}, '{property_name}')"
-        end
-      end
-      
-      # Use consolidated symbol resolution
-      return self.resolve_symbol_reference(name)
+      return self.ExpressionResult.literal(value)
     end
     
     # Boolean keywords
     if tok.type == animation_dsl.Token.KEYWORD && (tok.value == "true" || tok.value == "false")
       var value = tok.value
       self.next()
-      return value
+      return self.ExpressionResult.literal(value)
     end
     
-    # Handle keywords that should be treated as identifiers (not sure this actually happens)
+    # String value
+    if tok.type == animation_dsl.Token.STRING
+      var value = tok.value
+      self.next()
+      return self.ExpressionResult.literal(f'"{value}"')
+    end
+    
+    # Array literal (not supported in raw mode)
+    if tok.type == animation_dsl.Token.LEFT_BRACKET && !raw_mode
+      var result = self.process_array_literal()
+      return self.ExpressionResult.literal(result)
+    end
+    
+    # Anthing that looks like a function call
+    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
+       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+      
+      var func_name = tok.value
+      var entry = self.symbol_table.get(func_name)
+      
+      # Check if the identifier exists
+      if entry == nil
+        self.error(f"Unknown function or identifier '{func_name}'. Make sure it's defined before use.")
+        self.skip_statement()
+        return self.ExpressionResult.literal("nil")
+      end
+      
+      # Special handling for user fonction function_name() calls (without 'user.' prefix)
+      if entry.is_user_function()
+        self.next()
+        var result = self._process_user_function_call(func_name)
+        return self.ExpressionResult.function_call(result)
+      end
+
+      # Check for dangerous function calls (constructors that create new instances)
+      # Only block them in computed expressions (when not top-level)
+      if !is_top_level && entry.is_dangerous_call()
+        self.error(f"Function '{func_name}' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:\n  set var_name = {func_name}()  # Single function call\n  set computed = (existing_var + 1) / 2  # Computation with existing values")
+        self.skip_statement()
+        return self.ExpressionResult.literal("nil")
+      end
+      
+      # In raw mode, handle function calls differently
+      if raw_mode
+        self.next()
+        
+        # Check if this is a mathematical function
+        if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
+          var args = self.process_function_arguments(true)
+          var result = self.ExpressionResult.function_call(f"{entry.get_reference()}({args})")
+        end
+        
+        # Check if this is a template call
+        if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
+          var args = self.process_function_arguments(true)
+          var full_args = args != "" ? f"engine, {args}" : "engine"
+          return self.ExpressionResult.function_call(f"{func_name}_template({full_args})")
+        end
+        
+        # For other functions, this shouldn't happen in expression context
+        self.error(f"Function '{func_name}' not supported in expression context")
+        return self.ExpressionResult.literal("nil")
+      else
+        # Regular mode - function calls are marked as having functions
+        # Check if this is a simple function call first
+        if !entry.takes_named_args()
+          var result = self.process_function_call(context)
+          var return_type = self._determine_function_return_type(entry)
+          return self.ExpressionResult.function_call(result, return_type, entry.instance)
+        # Check if this is a nested function call or a variable assignment with named parameters
+        elif context == self.CONTEXT_ARGUMENT || context == self.CONTEXT_PROPERTY || context == self.CONTEXT_VARIABLE
+          var result = self.process_nested_function_call()
+          var return_type = self._determine_function_return_type(entry)
+          return self.ExpressionResult.constructor_call(result, return_type, entry.instance)
+        else
+          var result = self.process_function_call(context)
+          var return_type = self._determine_function_return_type(entry)
+          return self.ExpressionResult.constructor_call(result, return_type, entry.instance)
+        end
+      end
+    end
+    
+    # Identifier - could be color, animation, variable, or object property reference
+    if tok.type == animation_dsl.Token.IDENTIFIER
+      var name = tok.value
+      var entry = self.symbol_table.get(name)
+
+      if entry == nil
+        self.error(f"Unknown identifier '{name}'. Make sure it's defined before use.")
+        self.skip_statement()
+        return self.ExpressionResult.literal("nil")
+      end
+      self.next()
+
+      # Check if this is an object property reference (identifier.property)
+      if self.current() != nil && self.current().type == animation_dsl.Token.DOT
+        self.next()  # consume '.'
+        var property_name = self.expect_identifier()
+        
+        # Property access - mark as having properties
+        var property_expr = f"{name}.{property_name}"
+        
+        # Validate that the property exists on the referenced object (skip in raw mode)
+        if !raw_mode && self.symbol_table.contains(name)
+          # Only validate parameters for actual instances, not sequence markers
+          if entry != nil && entry.instance != nil
+            var class_name = classname(entry.instance)
+            self._validate_single_parameter(class_name, property_name, entry.instance)
+          elif entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_SEQUENCE
+            # This is a sequence marker - sequences don't have properties
+            self.error(f"Sequences like '{name}' do not have properties. Property references are only valid for animations and color providers.")
+            return self.ExpressionResult.literal("nil")
+          end
+        end
+        
+        # Use consolidated symbol resolution for the object reference
+        var object_ref = self.symbol_table.get_reference(name)
+        
+        # In raw mode or repeat_count context, generate simple property access
+        if raw_mode || context == self.CONTEXT_REPEAT_COUNT
+          return self.ExpressionResult.property_access(f"{object_ref}.{property_name}", "variable")
+        else
+          # Return a closure expression that will be wrapped by the caller if needed
+          return self.ExpressionResult.property_access(f"animation.resolve({object_ref}, '{property_name}')", "variable")
+        end
+      end
+      
+      # Regular identifier - check if it's a variable reference
+      var ref = self.symbol_table.get_reference(name)
+      if self.symbol_table.symbol_exists(name)
+        var return_type = self._determine_symbol_return_type(name)
+        return self.ExpressionResult.variable_ref(ref, return_type)
+      else
+        self.error(f"Unknown identifier '{name}'. Make sure it's defined before use.")
+        self.skip_statement()
+        return self.ExpressionResult.literal("nil")
+      end
+    end
+    
+    # Handle keywords that should be treated as identifiers (not sure this actually happens), 'run'
     if tok.type == animation_dsl.Token.KEYWORD
       var name = tok.value
       self.next()
-      return f"animation.{name}"
+      return self.ExpressionResult.literal(f"animation.{name}")
     end
     
     self.error(f"Unexpected value: {tok.value}")
-    self.next()
-    return "nil"
+    self.skip_statement()
+    return self.ExpressionResult.literal("nil")
   end
   
-  # Check if an expression is already an anonymous function
-  def is_anonymous_function(expr_str)
-    import string
-    # Check if the expression starts with "(def " and ends with ")(engine)"
-    return string.find(expr_str, "(def ") == 0 && string.find(expr_str, ")(engine)") >= 0
-  end
-
   # Check if an expression string contains computed values that need a closure
   def is_computed_expression_string(expr_str)
     import string
@@ -1446,7 +1645,7 @@ class SimpleDSLTranspiler
         var func_name = expr_str[func_start..paren_pos-1]
         
         # Only mark as needing closure if it's NOT a simple function
-        if !self._is_simple_function_call(func_name)
+        if self._is_named_arg_constructor(func_name)
           has_function_calls = true
         end
       end
@@ -1491,31 +1690,6 @@ class SimpleDSLTranspiler
     return f"animation.create_closure_value(engine, {closure_code})"
   end
   
-  # Create a closure for computed expressions (legacy method)
-  def create_computation_closure(left, op, right)
-    import string
-    
-    # Create a closure value provider that wraps the computation
-    # This replaces the old DSL computed value wrapper approach
-    
-    # Transform operands to handle ValueProvider instances
-    var left_expr = self.transform_operand_for_closure(left)
-    var right_expr = self.transform_operand_for_closure(right)
-    
-    # Clean up spacing in the expression - remove extra spaces
-    while string.find(left_expr, "  ") >= 0
-      left_expr = string.replace(left_expr, "  ", " ")
-    end
-    while string.find(right_expr, "  ") >= 0
-      right_expr = string.replace(right_expr, "  ", " ")
-    end
-    
-    var closure_code = f"def (engine) return {left_expr} {op} {right_expr} end"
-    
-    # Return a closure value provider instance
-    return f"animation.create_closure_value(engine, {closure_code})"
-  end
-  
   # Create a simple function for repeat counts (no closure wrapper)
   def create_simple_function_from_string(expr_str)
     # For repeat counts, create a simple function that takes engine and returns the value
@@ -1526,41 +1700,35 @@ class SimpleDSLTranspiler
   # Transform a complete expression for use in a closure, handling ValueProvider instances
   def transform_expression_for_closure(expr_str)
     import string
-    
+    print(f"+++ transform_expression_for_closure '{expr_str}'")
     var result = expr_str
     var pos = 0
     
-    # First pass: Replace value provider function calls with resolve calls
-    # Handle functions like animation.strip_length(engine) that return value providers
-    var value_provider_functions = ["strip_length"]
+    # First pass: Check for and reject dangerous function calls in computed expressions
+    # This prevents dangerous patterns where functions that create new instances are called
+    # inside closures, which would create a new instance at each closure evaluation
     
-    for func_name : value_provider_functions
-      var pattern = f"animation.{func_name}(engine)"
-      var replacement = f"animation.resolve(animation.{func_name}(engine))"
-      
-      # Replace all occurrences of this pattern
-      pos = 0
-      while pos < size(result)
-        var found_pos = string.find(result, pattern, pos)
-        if found_pos < 0
-          break
-        end
-        
-        # Check if it's already wrapped in animation.resolve()
-        var check_start = found_pos >= 18 ? found_pos - 18 : 0
-        var prefix = result[check_start..found_pos-1]
-        if string.find(prefix, "animation.resolve(") >= 0
-          # Already wrapped, skip this occurrence
-          pos = found_pos + size(pattern)
-          continue
-        end
-        
-        # Replace the pattern
-        var before = found_pos > 0 ? result[0..found_pos-1] : ""
-        var after = found_pos + size(pattern) < size(result) ? result[found_pos + size(pattern)..] : ""
-        result = before + replacement + after
-        pos = found_pos + size(replacement)
+    # Look for animation.function_name(engine) patterns and check if they're dangerous
+    var search_pos = 0
+    while true
+      var anim_pos = string.find(result, "animation.", search_pos)
+      if anim_pos < 0
+        break
       end
+      
+      # Find the function name after "animation."
+      var func_start = anim_pos + 10  # length of "animation."
+      var func_end = func_start
+      while func_end < size(result) && (self.is_identifier_char(result[func_end]) || result[func_end] == '_')
+        func_end += 1
+      end
+      
+      if func_end > func_start && func_end + 8 < size(result) && result[func_end..func_end+7] == "(engine)"
+        var func_name = result[func_start..func_end-1]
+        
+      end
+      
+      search_pos = anim_pos + 1
     end
     
     # Second pass: Replace all user variables (ending with _) with resolve calls
@@ -1615,56 +1783,13 @@ class SimpleDSLTranspiler
       end
     end
     
+    print(f"=== transform_expression_for_closure '{result}'")
     return result
   end
   
   # Helper method to check if a character is part of an identifier
   def is_identifier_char(ch)
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_'
-  end
-  
-  # Helper method to check if a function name is a mathematical function
-  def is_math_method(func_name)
-    try
-      import introspect
-      # Check if the function is registered in the animation._math map
-      return introspect.contains(animation._math, func_name)
-    except .. as e, msg
-      # If _math map doesn't exist or access fails, return false to be safe
-      return false
-    end
-  end
-  
-  # Transform an operand for use in a closure, handling ValueProvider instances
-  def transform_operand_for_closure(operand)
-    import string
-    
-    # If the operand is already a closure (contains create_closure_value), extract its inner expression
-    if string.find(operand, "animation.create_closure_value") >= 0
-      # Extract the inner expression from the closure
-      var start_pos = string.find(operand, "return (") + 8
-      var end_pos = size(operand) - 5  # Remove " end)"
-      var inner_expr = operand[start_pos..end_pos]
-      # Clean up any extra spaces
-      while string.find(inner_expr, "  ") >= 0
-        inner_expr = string.replace(inner_expr, "  ", " ")
-      end
-      return inner_expr
-    end
-    
-    # Check if this is a simple user variable (identifier ending with _ and no operators/parentheses)
-    var has_underscore = string.find(operand, "_") >= 0
-    var has_operators = string.find(operand, " ") >= 0  # Simple check for operators (they have spaces)
-    var has_paren = string.find(operand, "(") >= 0
-    var has_animation_prefix = string.find(operand, "animation.") >= 0
-    
-    if has_underscore && !has_operators && !has_paren && !has_animation_prefix
-      # This looks like a simple user variable that might be a ValueProvider
-      return f"animation.resolve({operand})"
-    else
-      # For other expressions (literals, animation module calls, complex expressions), use as-is
-      return operand
-    end
   end
   
   # Process function call (legacy - for non-animation contexts)
@@ -1682,23 +1807,24 @@ class SimpleDSLTranspiler
     end
     
     # Check if this is a mathematical function - handle with positional arguments
-    if self.is_math_method(func_name)
+    var entry = self.symbol_table.get(func_name)
+    if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
       # Mathematical functions use positional arguments, not named parameters
       var args = self.process_function_arguments(false)
-      return f"{func_name}({args})"  # Return as-is for transformation in closure
+      return f"{entry.get_reference()}({args})"
     end
     
     # Special case for log function - call global log function directly
     if func_name == "log"
       var args = self.process_function_arguments(false)
       # Use unified log processing (return expression for use in contexts)
-      return self.process_log_call(args, "expression", "")
+      return self.process_log_call(args, self.CONTEXT_EXPRESSION, "")
     end
     
     var args = self.process_function_arguments(false)
     
     # Check if it's a template call first
-    if self.template_definitions.contains(func_name)
+    if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
       # This is a template call - treat like user function
       var full_args = args != "" ? f"engine, {args}" : "engine"
       return f"{func_name}_template({full_args})"
@@ -1713,16 +1839,18 @@ class SimpleDSLTranspiler
   end
   
   # Process time value - simplified
+  #
+  # @Return string
   def process_time_value()
     var tok = self.current()
     if tok != nil && tok.type == animation_dsl.Token.TIME
       var time_str = tok.value
       self.next()
-      return self.convert_time_to_ms(time_str)
+      return str(self.convert_time_to_ms(time_str))
     elif tok != nil && tok.type == animation_dsl.Token.NUMBER
       var num = tok.value
       self.next()
-      return int(real(num)) * 1000  # assume seconds
+      return str(int(real(num)) * 1000)  # assume seconds
     elif tok != nil && tok.type == animation_dsl.Token.IDENTIFIER
       # Handle variable references for time values
       var var_name = tok.value
@@ -1730,11 +1858,11 @@ class SimpleDSLTranspiler
       # Validate that the variable exists before processing
       self._validate_object_reference(var_name, "duration")
       
-      var expr = self.process_primary_expression("time", true, false)
-      return expr
+      var result = self.process_primary_expression(self.CONTEXT_TIME, true, false)
+      return result.expr
     else
       self.error("Expected time value")
-      return 1000
+      return "1000"
     end
   end
   
@@ -1859,10 +1987,12 @@ class SimpleDSLTranspiler
       var arg
       if raw_mode
         # For expression contexts - use raw mode to avoid closure wrapping
-        arg = self.process_additive_expression("argument", true, true)  # raw_mode = true
+        var arg_result = self.process_additive_expression(self.CONTEXT_ARGUMENT, true, true)  # raw_mode = true
+        arg = arg_result.expr  # Extract the expression string
       else
         # For statement contexts - use normal processing with closure wrapping
-        arg = self.process_value("argument")
+        var arg_result = self.process_value(self.CONTEXT_ARGUMENT)
+        arg = arg_result.expr
       end
       args.push(arg)
       
@@ -1889,10 +2019,6 @@ class SimpleDSLTranspiler
     end
     return result
   end
-
-
-
-
   
   # Process nested function call (generates temporary variable or raw expression)
   def process_nested_function_call()
@@ -1907,55 +2033,73 @@ class SimpleDSLTranspiler
       self.error("Expected function name")
       return "nil"
     end
+    var entry = self.symbol_table.get(func_name)
     
     # Check if this is a mathematical function - handle with positional arguments
-    if self.is_math_method(func_name)
+    if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
       # Mathematical functions use positional arguments, not named parameters
       var args = self.process_function_arguments(true)
-      return f"animation._math.{func_name}({args})"  # Math functions are under _math namespace
+      return f"{entry.get_reference()}({args})"  # Math functions are under _math namespace
     end
     
     # Special case for log function in nested calls
     if func_name == "log"
       var args = self.process_function_arguments(true)
       # Use unified log processing
-      return self.process_log_call(args, "expression", "")
+      return self.process_log_call(args, self.CONTEXT_EXPRESSION, "")
     end
     
     # Check if this is a template call
-    if self.template_definitions.contains(func_name)
+    if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_TEMPLATE
       # This is a template call - treat like user function
       var args = self.process_function_arguments(true)
       var full_args = args != "" ? f"engine, {args}" : "engine"
       return f"{func_name}_template({full_args})"
     else
-      # Check if this is a simple function call without named parameters
-      if self._is_simple_function_call(func_name)
-        # For simple functions like strip_length(), do direct assignment
-        var args = self.process_function_arguments(false)
-        if args != ""
-          return f"animation.{func_name}(engine, {args})"
-        else
-          return f"animation.{func_name}(engine)"
+      # TODO not sure we can go that far with a symbol not in animation
+      if !self._validate_animation_factory_exists(func_name)
+        self.error(f"Animation factory function '{func_name}' does not exist. Check the function name and ensure it's available in the animation module.")
+        self.skip_function_arguments()  # Skip the arguments to avoid parsing errors
+        return "nil"
+      end
+
+      self.expect_left_paren()
+
+      # lines contains the attriute assignments to put in the closure
+      var lines = []
+      
+      # Use the core processing logic with a callback for anonymous function assignments
+      var assignment_callback = def (param_name, param_value, inline_comment)
+        lines.push(f"  provider.{param_name} = {param_value}{inline_comment}")
+      end
+      
+      self._process_parameters_core(func_name, "generic", assignment_callback)
+      self.expect_right_paren()
+
+      if size(lines) > 0
+        # Join all lines into a single expression
+        var result = ""
+        for i : 0..size(lines)-1
+          if i > 0
+            result += "\n"
+          end
+          result += lines[i]
         end
+
+        return f"(def (engine)\n"
+                "  var provider = animation.{func_name}(engine)\n"
+                "{result}\n"
+                "  return provider\n"
+                "end)(engine)"
       else
-        # Built-in functions use the new engine-first + named parameters pattern
-        # Validate that the factory function exists at transpilation time
-        if !self._validate_animation_factory_exists(func_name)
-          self.error(f"Animation factory function '{func_name}' does not exist. Check the function name and ensure it's available in the animation module.")
-          self.skip_function_arguments()  # Skip the arguments to avoid parsing errors
-          return "nil"
-        end
-        
-        # Generate anonymous function that creates and configures the provider
-        return self._generate_anonymous_function_call(func_name)
+        return f"animation.{func_name}(engine)"
       end
     end
   end
   
   # Process named arguments for a variable (new simpler pattern with parameter validation)
   def process_named_arguments_for_variable(var_name)
-    self._process_named_arguments_unified(var_name, "", "variable")
+    self._process_named_arguments_unified(var_name, "", self.CONTEXT_VARIABLE)
   end
   
   def expect_assign()
@@ -2093,8 +2237,8 @@ class SimpleDSLTranspiler
     
     while !self.at_end() && !self.check_right_bracket()
       # Process array element
-      var item = self.process_value("array_element")
-      items.push(item)
+      var item_result = self.process_value(self.CONTEXT_ARRAY_ELEMENT)
+      items.push(item_result.expr)
       
       if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
         self.next()  # skip comma
@@ -2191,17 +2335,25 @@ class SimpleDSLTranspiler
   # Get the ARGB value for a named color
   # This should match the colors supported by is_color_name()
   def get_named_color_value(color_name)
-    return animation_dsl.SimpleDSLTranspiler.named_colors.find(color_name, "0xFFFFFFFF")
+    return self.symbol_table.get_reference(color_name)
   end
   
   # Validate that a user-defined name is not a predefined color or DSL keyword
   def validate_user_name(name, definition_type)
-    # Check if it's a predefined color name
-    for color : animation_dsl.Token.color_names
-      if name == color
-        self.error(f"Cannot redefine predefined color '{name}'. Use a different name like '{name}_custom' or 'my_{name}'")
-        return false
-      end
+    # Check if the name already exists in the symbol table
+    var entry = self.symbol_table.get(name)
+    if entry == nil
+      # Name is available - continue with other checks
+    elif entry.is_builtin && entry.type == animation_dsl._symbol_entry.TYPE_COLOR
+      self.error(f"Cannot redefine predefined color '{name}'. Use a different name like '{name}_custom' or 'my_{name}'")
+      return false
+    elif entry.is_builtin
+      self.error(f"Cannot redefine built-in symbol '{name}' (type: {entry.type}). Use a different name like '{name}_custom' or 'my_{name}'")
+      return false
+    else
+      # User-defined symbol already exists - this is a redefinition error
+      self.error(f"Symbol '{name}' is already defined as {entry.type}. Cannot redefine as {definition_type}.")
+      return false
     end
     
     # Check if it's a DSL statement keyword
@@ -2288,6 +2440,160 @@ class SimpleDSLTranspiler
     return size(self.errors) > 0
   end
   
+  def get_symbol_table_report()
+    import string
+    
+    var report = "## Symbol Table\n\n"
+    
+    var symbols = self.symbol_table.list_symbols()
+    if size(symbols) == 0
+      report += "No symbols defined\n\n"
+      return report
+    end
+    
+    # Helper function to calculate display width (accounting for Unicode characters)
+    def display_width(s)
+      # Common Unicode symbols and their display widths
+      var unicode_widths = {
+        "✓": 1,    # Check mark
+        "⚠️": 2,   # Warning sign (emoji) - actually displays as 2 characters wide
+        "⚠": 1     # Warning sign (text)
+      }
+      
+      var width = 0
+      var i = 0
+      while i < size(s)
+        var found_unicode = false
+        # Check for known Unicode symbols
+        for symbol : unicode_widths.keys()
+          if i + size(symbol) <= size(s) && s[i..i+size(symbol)-1] == symbol
+            width += unicode_widths[symbol]
+            i += size(symbol)
+            found_unicode = true
+            break
+          end
+        end
+        
+        if !found_unicode
+          # Regular ASCII character
+          width += 1
+          i += 1
+        end
+      end
+      
+      return width
+    end
+    
+    # Collect all symbol data first to calculate column widths
+    var symbol_data = []
+    var max_name_len = 6  # "Symbol"
+    var max_type_len = 4  # "Type"
+    var max_builtin_len = 7  # "Builtin"
+    var max_dangerous_len = 9  # "Dangerous"
+    var max_takes_args_len = 10  # "Takes Args"
+    
+    for symbol_info : symbols
+      var parts = string.split(symbol_info, ": ")
+      if size(parts) >= 2
+        var name = parts[0]
+        var typ = parts[1]
+        var entry = self.symbol_table.get(name)
+        
+        # Filter out built-in colors to reduce noise
+        if entry != nil
+          var builtin = entry.is_builtin ? "✓" : ""
+          var dangerous = entry.is_dangerous_call() ? "⚠️" : ""
+          var takes_args = entry.takes_args ? " ✓ " : ""
+          
+          # Calculate max widths using display width
+          var name_with_backticks = f"`{name}`"
+          if display_width(name_with_backticks) > max_name_len
+            max_name_len = display_width(name_with_backticks)
+          end
+          if display_width(typ) > max_type_len
+            max_type_len = display_width(typ)
+          end
+          if display_width(builtin) > max_builtin_len
+            max_builtin_len = display_width(builtin)
+          end
+          if display_width(dangerous) > max_dangerous_len
+            max_dangerous_len = display_width(dangerous)
+          end
+          if display_width(takes_args) > max_takes_args_len
+            max_takes_args_len = display_width(takes_args)
+          end
+          
+          symbol_data.push({
+            "name": name_with_backticks,
+            "typ": typ,
+            "builtin": builtin,
+            "dangerous": dangerous,
+            "takes_args": takes_args
+          })
+        end
+      end
+    end
+    
+    # Sort symbol_data by name (case-insensitive)
+    def _sort_symbol_data()
+      var n = size(symbol_data)
+      if n <= 1
+        return
+      end
+      
+      # Insertion sort for small lists
+      var i = 1
+      while i < n
+        var key = symbol_data[i]
+        var key_name = key['name']
+        var j = i
+        while j > 0 && symbol_data[j-1]['name'] > key_name
+          symbol_data[j] = symbol_data[j-1]
+          j -= 1
+        end
+        symbol_data[j] = key
+        i += 1
+      end
+    end
+    
+    _sort_symbol_data()
+    
+    # Helper function to pad strings to specific width (using display width)
+    def pad_string(s, width)
+      var padding = width - display_width(s)
+      if padding <= 0
+        return s
+      end
+      return s + (" " * padding)
+    end
+    
+    def center_string(s, width)
+      var padding = width - display_width(s)
+      if padding <= 0
+        return s
+      end
+      var left_pad = padding / 2
+      var right_pad = padding - left_pad
+      return (" " * left_pad) + s + (" " * right_pad)
+    end
+    
+    # Create properly formatted table header
+    var header = f"| {pad_string('Symbol', max_name_len)} | {pad_string('Type', max_type_len)} | {pad_string('Builtin', max_builtin_len)} | {pad_string('Dangerous', max_dangerous_len)} | {pad_string('Takes Args', max_takes_args_len)} |\n"
+    var separator = f"|{'-' * (max_name_len + 2)}|{'-' * (max_type_len + 2)}|{'-' * (max_builtin_len + 2)}|{'-' * (max_dangerous_len + 2)}|{'-' * (max_takes_args_len + 2)}|\n"
+    
+    report += header
+    report += separator
+    
+    # Add formatted rows
+    for data : symbol_data
+      var row = f"| {pad_string(data['name'], max_name_len)} | {pad_string(data['typ'], max_type_len)} | {center_string(data['builtin'], max_builtin_len)} | {center_string(data['dangerous'], max_dangerous_len)} | {center_string(data['takes_args'], max_takes_args_len)} |\n"
+      report += row
+    end
+    
+    report += "\n"
+    return report
+  end
+
   def get_error_report()
     if !self.has_errors()
       return "No compilation errors"
@@ -2353,8 +2659,8 @@ class SimpleDSLTranspiler
         end
       else
         # Assume it's an animation function call or reference
-        var action = self.process_value("animation")
-        self.add(f"  var temp_anim = {action}")
+        var action_result = self.process_value(self.CONTEXT_ANIMATION)
+        self.add(f"  var temp_anim = {action_result.expr}")
         self.add(f"  engine.add(temp_anim)")
       end
     end
@@ -2377,8 +2683,8 @@ class SimpleDSLTranspiler
         var time_ms = self.process_time_value()
         params += f"\"interval\": {time_ms}"
       else
-        var value = self.process_value("event_param")
-        params += f"\"value\": {value}"
+        var value_result = self.process_value("event_param")
+        params += f"\"value\": {value_result.expr}"
       end
     end
     
@@ -2387,6 +2693,36 @@ class SimpleDSLTranspiler
     return params
   end
   
+  # Process berry code block: berry """<berry code>""" or berry '''<berry code>'''
+  def process_berry_code_block()
+    self.next()  # skip 'berry'
+    
+    # Expect a string token containing the berry code
+    var tok = self.current()
+    if tok == nil || tok.type != animation_dsl.Token.STRING
+      self.error("Expected string literal after 'berry' keyword. Use berry \"\"\"<code>\"\"\" or berry '''<code>'''")
+      self.skip_statement()
+      return
+    end
+    
+    var berry_code = tok.value
+    self.next()  # consume string token
+    
+    var inline_comment = self.collect_inline_comment()
+    
+    # Add the berry code verbatim to the output
+    self.add(f"# Berry code block{inline_comment}")
+    
+    # Split the berry code into lines and add each line
+    import string
+    var lines = string.split(berry_code, '\n')
+    for line : lines
+      self.add(line)
+    end
+    
+    self.add("# End berry code block")
+  end
+
   # Generate default strip initialization using Tasmota configuration
   def generate_default_strip_initialization()
     if self.strip_initialized
@@ -2414,12 +2750,12 @@ class SimpleDSLTranspiler
     
     # Create a new transpiler instance for the template body
     var template_transpiler = animation_dsl.SimpleDSLTranspiler(body_tokens)
-    template_transpiler.symbol_table = {}  # Fresh symbol table for template
+    template_transpiler.symbol_table = animation_dsl._symbol_table()  # Fresh symbol table for template
     template_transpiler.strip_initialized = true  # Templates assume engine exists
     
     # Add parameters to template's symbol table
     for param : params
-      template_transpiler.symbol_table[param] = "parameter"
+      template_transpiler.symbol_table.create_variable(param)  # Parameters are treated as variables
     end
     
     # Transpile the template body
@@ -2453,25 +2789,14 @@ class SimpleDSLTranspiler
   # @param var_name: string - Variable name to assign parameters to
   # @param func_name: string - Animation function name for validation
   def _process_named_arguments_for_animation(var_name, func_name)
-    self._process_named_arguments_unified(var_name, func_name, "animation")
+    self._process_named_arguments_unified(var_name, func_name, self.CONTEXT_ANIMATION)
   end
   
-  # Create instance for parameter validation at transpile time
+  # Create instance for parameter validation at transpile time - simplified using symbol_table
   def _create_instance_for_validation(func_name)
-    try
-      var mock_engine = animation_dsl.MockEngine()
-      import introspect
-      
-      if introspect.contains(animation, func_name)
-        var factory_func = animation.(func_name)
-        if type(factory_func) == "class" || type(factory_func) == "function"
-          return factory_func(mock_engine)
-        end
-      end
-      return nil
-    except .. as e, msg
-      return nil
-    end
+    # Use symbol_table's dynamic detection to get instance
+    var entry = self.symbol_table.get(func_name)
+    return entry != nil ? entry.instance : nil
   end
   
   # Validate a single parameter immediately as it's parsed
@@ -2511,135 +2836,63 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Validate factory function at transpile time by creating instance and checking type
-  def _validate_factory_function(func_name, expected_base_class)
-    try
-      import introspect
-      
-      # Check if the animation module has the function
-      if !introspect.contains(animation, func_name)
-        return false
-      end
-      
-      var factory_func = animation.(func_name)
-      
-      # Check if it's callable (function or class)
-      var func_type = type(factory_func)
-      if func_type != "function" && func_type != "class"
-        return false
-      end
-      
-      # If no type checking needed, just return true
-      if expected_base_class == nil
-        return true
-      end
-      
-      # Create instance at transpile time to validate type
-      var mock_engine = animation_dsl.MockEngine()
-      try
-        var instance = factory_func(mock_engine)
-        return isinstance(instance, expected_base_class)
-      except .. as e, msg
-        return false
-      end
-      
-    except .. as e, msg
-      return false
-    end
-  end
-  
-  # Validate animation factory exists and creates animation.animation instance
+  # Validate animation factory exists - simplified using symbol_table
   def _validate_animation_factory_exists(func_name)
-    # Skip validation for mathematical functions - they will be handled by closure transformation
-    if self.is_math_method(func_name)
-      return true  # Skip validation for mathematical functions
-    end
-    
-    return self._validate_factory_function(func_name, nil)
+    # Use symbol table's dynamic detection - any callable function is valid
+    var entry = self.symbol_table.get(func_name)
+    return entry != nil
   end
   
   def _validate_animation_factory_creates_animation(func_name)
-    return self._validate_factory_function(func_name, animation.animation)
+    # Use symbol table's dynamic detection with type checking for animation constructors only
+    var entry = self.symbol_table.get(func_name)
+    return entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_ANIMATION_CONSTRUCTOR
   end
   
-  # Validate color provider factory exists and creates animation.color_provider instance  
+  # Validate color provider factory exists - simplified using symbol_table  
   def _validate_color_provider_factory_exists(func_name)
-    return self._validate_factory_function(func_name, animation.color_provider)
+    # Use symbol table's dynamic detection - any callable function is valid
+    var entry = self.symbol_table.get(func_name)
+    return entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_COLOR_CONSTRUCTOR
   end
   
-  # Validate value provider factory exists and creates animation.value_provider instance  
+  # Validate value provider factory exists - simplified using symbol_table  
   def _validate_value_provider_factory_exists(func_name)
-    return self._validate_factory_function(func_name, animation.value_provider)
+    # Use symbol table's dynamic detection for validation
+    var entry = self.symbol_table.get(func_name)
+    return entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER_CONSTRUCTOR
   end
   
-  # Consolidated symbol resolution - returns the symbol reference string
-  def resolve_symbol_reference(name)
-    import introspect
-    
-    # Check if it's a named color
-    if animation_dsl.is_color_name(name)
-      return self.get_named_color_value(name)
-    end
-    
-    # Check symbol table, sequences, then animation module
-    if self.symbol_table.contains(name) || self.sequence_names.contains(name)
-      return f"{name}_"
-    elif introspect.contains(animation, name)
-      return f"animation.{name}"
-    else
-      return f"{name}_"  # Assume user-defined if not found
-    end
-  end
+
   
-  # Check if a symbol exists (for validation)
-  def symbol_exists(name)
-    import introspect
-    
-    return (
-      animation_dsl.is_color_name(name) ||
-      self.symbol_table.contains(name) ||
-      self.sequence_names.contains(name) ||
-      introspect.contains(animation, name)
-    )
-  end
-  
-  # Validate symbol reference with error reporting
+  # Validate symbol reference with error reporting - simplified using symbol_table
   def validate_symbol_reference(name, context)
-    if !self.symbol_exists(name)
+    if !self.symbol_table.symbol_exists(name)
       self.error(f"Undefined reference '{name}' in {context}. Make sure the object is defined before use.")
       return false
     end
     return true
   end
 
-  # Validate that a referenced object is a value provider or animation
+  # Validate that a referenced object is a value provider or animation - simplified using symbol_table
   def _validate_value_provider_reference(object_name, context)
     try
-      # First check if symbol exists
-      if !self.symbol_exists(object_name)
+      # First check if symbol exists using symbol_table
+      if !self.symbol_table.symbol_exists(object_name)
         self.error(f"Undefined reference '{object_name}' in {context} statement. Make sure the value provider or animation is defined before use.")
         return false
       end
       
-      # Check if it's a user-defined object in symbol table
-      if self.symbol_table.contains(object_name)
-        var marker = self.symbol_table[object_name]
-        
-        # Check if it's marked as a value provider or animation
-        if type(marker) == "string" && (marker == "value_provider" || marker == "animation")
-          return true  # Valid value provider or animation
-        elif type(marker) == "string"
-          # It's some other type (variable, color, sequence, etc.)
-          self.error(f"'{object_name}' in {context} statement is not a value provider or animation. Only value providers (like oscillators) and animations can be restarted.")
-          return false
+      # Use symbol_table to get type information
+      var entry = self.symbol_table.get(object_name)
+      if entry != nil
+        # Check if it's a value provider or animation instance (not constructor)
+        if entry.type == animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER || entry.type == animation_dsl._symbol_entry.TYPE_ANIMATION
+          return true  # Valid value provider or animation instance
         else
-          # It's an actual instance - check if it's a value provider or animation
-          if isinstance(marker, animation.value_provider) || isinstance(marker, animation.animation)
-            return true  # Valid value provider or animation
-          else
-            self.error(f"'{object_name}' in {context} statement is not a value provider or animation. Only value providers (like oscillators) and animations can be restarted.")
-            return false
-          end
+          # It's some other type (variable, color, sequence, constructor, etc.)
+          self.error(f"'{object_name}' in {context} statement is not a value provider or animation instance. Only value provider instances (like oscillators) and animation instances can be restarted.")
+          return false
         end
       end
       
@@ -2662,7 +2915,7 @@ class SimpleDSLTranspiler
     var instance = nil
     var effective_func_name = func_name
     
-    if validation_type == "variable"
+    if validation_type == self.CONTEXT_VARIABLE
       # Extract function name from variable name for validation
       import string
       if string.find(func_name, "temp_") == 0
@@ -2695,11 +2948,11 @@ class SimpleDSLTranspiler
       end
       
       self.expect_assign()
-      var param_value = self.process_value("argument")
+      var param_value_result = self.process_value(self.CONTEXT_VARIABLE)
       var inline_comment = self.collect_inline_comment()
       
       # Call the assignment callback to handle the parameter
-      assignment_callback(param_name, param_value, inline_comment)
+      assignment_callback(param_name, param_value_result.expr, inline_comment)
       
       # Skip whitespace but preserve newlines for separator detection
       while !self.at_end()
@@ -2744,61 +2997,23 @@ class SimpleDSLTranspiler
   
   # Legacy wrapper methods for backward compatibility
   def _process_named_arguments_generic(var_name, func_name)
-    self._process_named_arguments_unified(var_name, func_name, "generic")
+    self._process_named_arguments_unified(var_name, func_name, self.CONTEXT_GENERIC)
   end
   
   def _process_named_arguments_for_color_provider(var_name, func_name)
-    self._process_named_arguments_unified(var_name, func_name, "color_provider")
+    self._process_named_arguments_unified(var_name, func_name, self.CONTEXT_COLOR_PROVIDER)
   end
 
-  # Check if this is a simple function call that doesn't need anonymous function treatment
-  def _is_simple_function_call(func_name)
-    # Functions that return simple values and don't use named parameters
-    # Note: log is handled by unified process_log_call method
-    var simple_functions = [
-      "strip_length",
-      "static_value"
-    ]
-    
-    for simple_func : simple_functions
-      if func_name == simple_func
-        return true
-      end
-    end
-    return false
-  end
-
-  # Generate anonymous function call that creates and configures a provider without temporary variables
-  def _generate_anonymous_function_call(func_name)
-    # Start building the anonymous function
-    var lines = []
-    lines.push("(def (engine)")
-    lines.push(f"  var provider = animation.{func_name}(engine)")
-    
-    # Process named arguments and collect them
-    self.expect_left_paren()
-    
-    # Use the core processing logic with a callback for anonymous function assignments
-    var assignment_callback = def (param_name, param_value, inline_comment)
-      lines.push(f"  provider.{param_name} = {param_value}{inline_comment}")
+  # Check if this is a function taking named arguments
+  def _is_named_arg_constructor(func_name)
+    # Check if the function exists in the symbol table
+    var entry = self.symbol_table.get(func_name)
+    if entry != nil
+      return entry.takes_named_args()
     end
     
-    self._process_parameters_core(func_name, "generic", assignment_callback)
-    self.expect_right_paren()
-    
-    # Complete the anonymous function
-    lines.push("  return provider")
-    lines.push("end)(engine)")
-    
-    # Join all lines into a single expression
-    var result = ""
-    for i : 0..size(lines)-1
-      if i > 0
-        result += "\n"
-      end
-      result += lines[i]
-    end
-    return result
+    # If not in symbol table, assume it's complex (needs named parameter handling)
+    return true
   end
 
 end
@@ -2834,5 +3049,5 @@ end
 return {
   "SimpleDSLTranspiler": SimpleDSLTranspiler,
   "compile_dsl": compile_dsl,
-  "MockEngine": MockEngine
+
 }

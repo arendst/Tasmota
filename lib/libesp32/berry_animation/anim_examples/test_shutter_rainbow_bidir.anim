@@ -35,12 +35,14 @@ template shutter_bidir {
 
   sequence shutter_seq repeat forever {
     repeat col1.palette_size times {
+      log("begin 1")
       restart shutter_size
       play shutter_lr_animation for duration
       col1.next = 1
       col2.next = 1
     }
     repeat col1.palette_size times {
+      log("begin 2")
       restart shutter_size
       play shutter_rl_animation for duration
       col1.next = 1

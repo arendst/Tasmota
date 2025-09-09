@@ -30,7 +30,7 @@ animation.register_user_function("breathing", my_breathing)
 
 ### 3. Use It in DSL
 
-First, import your user functions module, then call your function with the `user.` prefix in computed parameters:
+First, import your user functions module, then call your function directly in computed parameters:
 
 ```berry
 # Import your user functions module
@@ -38,10 +38,10 @@ import user_functions
 
 # Use your custom function in computed parameters
 animation calm = solid(color=blue)
-calm.opacity = user.breathing_effect()
+calm.opacity = breathing_effect()
 
 animation energetic = solid(color=red) 
-energetic.opacity = user.breathing_effect()
+energetic.opacity = breathing_effect()
 
 sequence demo {
   play calm for 10s
@@ -61,9 +61,9 @@ The DSL supports importing Berry modules using the `import` keyword. This is the
 # Import user functions at the beginning of your DSL file
 import user_functions
 
-# Now user functions are available with the user. prefix
+# Now user functions are available directly
 animation test = solid(color=blue)
-test.opacity = user.my_function()
+test.opacity = my_function()
 ```
 
 ### Import Behavior
@@ -107,15 +107,15 @@ import user_functions
 
 # Simple user function call
 animation random_test = solid(color=red)
-random_test.opacity = user.rand_demo()
+random_test.opacity = rand_demo()
 
 # User function with parameters
 animation breathing_blue = solid(color=blue)
-breathing_blue.opacity = user.breathing(128, 64)
+breathing_blue.opacity = breathing(128, 64)
 
 # User functions in mathematical expressions
 animation complex = solid(color=green)
-complex.opacity = max(50, min(255, user.rand_demo() + 100))
+complex.opacity = max(50, min(255, rand_demo() + 100))
 
 run random_test
 ```
@@ -129,11 +129,11 @@ import user_functions      # Basic user functions
 import fire_effects       # Fire animation functions
 import color_utilities    # Color manipulation functions
 
-animation base = solid(color=user.random_color())
-base.opacity = user.breathing(200, 50)
+animation base = solid(color=random_color())
+base.opacity = breathing(200, 50)
 
 animation flames = solid(color=red)
-flames.opacity = user.fire_intensity(180)
+flames.opacity = fire_intensity(180)
 ```
 
 ## Common Patterns
@@ -153,10 +153,10 @@ animation.register_user_function("bright", solid_bright)
 
 ```berry
 animation bright_red = solid(color=red)
-bright_red.opacity = user.bright(80)
+bright_red.opacity = bright(80)
 
 animation dim_blue = solid(color=blue)
-dim_blue.opacity = user.bright(30)
+dim_blue.opacity = bright(30)
 ```
 
 ### Fire Effects
@@ -178,32 +178,32 @@ animation.register_user_function("fire", custom_fire)
 
 ```berry
 animation campfire = solid(color=red)
-campfire.opacity = user.fire(200, 2000)
+campfire.opacity = fire(200, 2000)
 
 animation torch = solid(color=orange)
-torch.opacity = user.fire(255, 500)
+torch.opacity = fire(255, 500)
 ```
 
-### Sparkle Effects
+### Twinkling Effects
 
 ```berry
-def sparkles(engine, color, density, speed)
+def twinkles(engine, color, count, period)
   var anim = animation.twinkle_animation(engine)
   anim.color = color
-  anim.density = density
-  anim.speed = speed
+  anim.count = count
+  anim.period = period
   return anim
 end
 
-animation.register_user_function("sparkles", sparkles)
+animation.register_user_function("twinkles", twinkles)
 ```
 
 ```berry
 animation stars = solid(color=white)
-stars.opacity = user.sparkles(12, 300)
+stars.opacity = twinkles(12, 800ms)
 
 animation fairy_dust = solid(color=#FFD700)
-fairy_dust.opacity = user.sparkles(8, 500)
+fairy_dust.opacity = twinkles(8, 600ms)
 ```
 
 ### Position-Based Effects
@@ -223,10 +223,10 @@ animation.register_user_function("pulse_at", pulse_at)
 
 ```berry
 animation left_pulse = solid(color=green)
-left_pulse.position = user.pulse_at(5, 3, 2000)
+left_pulse.position = pulse_at(5, 3, 2000)
 
 animation right_pulse = solid(color=blue)
-right_pulse.position = user.pulse_at(25, 3, 2000)
+right_pulse.position = pulse_at(25, 3, 2000)
 ```
 
 ## Advanced Examples
@@ -234,7 +234,7 @@ right_pulse.position = user.pulse_at(25, 3, 2000)
 ### Multi-Layer Effects
 
 ```berry
-def rainbow_sparkle(engine, base_speed, sparkle_density)
+def rainbow_twinkle(engine, base_speed, twinkle_density)
   # Create base rainbow animation
   var rainbow_provider = animation.rich_palette(engine)
   rainbow_provider.palette = animation.PALETTE_RAINBOW
@@ -291,7 +291,7 @@ animation.register_user_function("custom_palette", create_custom_palette)
 ```berry
 # Use dynamic palette in DSL
 animation gradient_effect = rich_palette(
-  palette=user.custom_palette(0xFF6B35, 5, 255)
+  palette=custom_palette(0xFF6B35, 5, 255)
   cycle_period=4s
 )
 
@@ -325,13 +325,13 @@ animation.register_user_function("alert", gentle_alert)
 
 ```berry
 animation emergency = solid(color=red)
-emergency.opacity = user.strobe()
+emergency.opacity = strobe()
 
 animation notification = solid(color=yellow)
-notification.opacity = user.alert()
+notification.opacity = alert()
 
 animation custom_police = solid(color=blue)
-custom_police.opacity = user.police(500)
+custom_police.opacity = police(500)
 ```
 
 ## Function Organization
@@ -350,14 +350,14 @@ def fire_effect(engine, intensity, speed)
   # ... implementation  
 end
 
-def sparkle_effect(engine, color, density, speed)
+def twinkle_effect(engine, color, count, period)
   # ... implementation
 end
 
 # Register all functions
 animation.register_user_function("breathing", breathing)
 animation.register_user_function("fire", fire_effect)
-animation.register_user_function("sparkle", sparkle_effect)
+animation.register_user_function("twinkle", twinkle_effect)
 
 print("Custom animations loaded!")
 ```
@@ -456,7 +456,7 @@ User functions can be used in computed parameter expressions alongside mathemati
 ```berry
 # Simple user function call in property assignment
 animation base = solid(color=blue, priority=10)
-base.opacity = user.rand_demo()  # User function as computed parameter
+base.opacity = rand_demo()  # User function as computed parameter
 ```
 
 ### User Functions with Mathematical Operations
@@ -468,7 +468,7 @@ set strip_len = strip_length()
 # Mix user functions with mathematical functions
 animation dynamic_solid = solid(
   color=purple
-  opacity=max(50, min(255, user.rand_demo() + 100))  # Random opacity with bounds
+  opacity=max(50, min(255, rand_demo() + 100))  # Random opacity with bounds
   priority=15
 )
 ```
@@ -479,7 +479,7 @@ animation dynamic_solid = solid(
 # Use user function in arithmetic expressions
 animation random_effect = solid(
   color=cyan
-  opacity=abs(user.rand_demo() - 128) + 64  # Random variation around middle value
+  opacity=abs(rand_demo() - 128) + 64  # Random variation around middle value
   priority=12
 )
 ```
@@ -496,7 +496,7 @@ When you use user functions in computed parameters:
 **Generated Code Example:**
 ```berry
 # DSL code
-animation.opacity = max(100, user.breathing(red, 2000))
+animation.opacity = max(100, breathing(red, 2000))
 ```
 
 **Transpiles to:**
@@ -513,7 +513,7 @@ The following user functions are available by default:
 
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `user.rand_demo()` | none | Returns a random value (0-255) for demonstration |
+| `rand_demo()` | none | Returns a random value (0-255) for demonstration |
 
 ### Best Practices for Computed Parameters
 
@@ -537,13 +537,13 @@ var dsl_code =
   "import user_functions\n"
   "\n"
   "animation my_fire = solid(color=red)\n"
-  "my_fire.opacity = user.fire(200, 1500)\n"
-  "animation my_sparkles = solid(color=white)\n"
-  "my_sparkles.opacity = user.sparkle(8, 400)\n"
+  "my_fire.opacity = fire(200, 1500)\n"
+  "animation my_twinkles = solid(color=white)\n"
+  "my_twinkles.opacity = twinkle(8, 400ms)\n"
   "\n"
   "sequence show {\n"
   "  play my_fire for 10s\n"
-  "  play my_sparkles for 5s\n"
+  "  play my_twinkles for 5s\n"
   "}\n"
   "\n"
   "run show"
@@ -559,9 +559,9 @@ var my_show =
   "import user_functions\n"
   "\n"
   "animation campfire = solid(color=orange)\n"
-  "campfire.opacity = user.fire(180, 2000)\n"
+  "campfire.opacity = fire(180, 2000)\n"
   "animation stars = solid(color=#FFFFFF)\n"
-  "stars.opacity = user.sparkle(6, 600)\n"
+  "stars.opacity = twinkle(6, 600ms)\n"
   "\n"
   "sequence night_scene {\n"
   "  play campfire for 30s\n"

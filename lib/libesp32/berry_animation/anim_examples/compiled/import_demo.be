@@ -42,13 +42,13 @@ import user_functions
 
 # Create animations that use imported user functions
 animation random_red = solid(color=red)
-random_red.opacity = user.rand_demo()
+random_red.opacity = rand_demo()
 
 animation breathing_blue = solid(color=blue) 
-breathing_blue.opacity = max(50, min(255, user.rand_demo() + 100))
+breathing_blue.opacity = max(50, min(255, rand_demo() + 100))
 
 animation dynamic_green = solid(color=green)
-dynamic_green.opacity = abs(user.rand_demo() - 128) + 64
+dynamic_green.opacity = abs(rand_demo() - 128) + 64
 
 # Create a sequence that cycles through the animations
 sequence import_demo {

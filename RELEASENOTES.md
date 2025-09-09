@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.0.1.3
+## Changelog v15.0.1.4
 ### Added
 - Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name [#23394](https://github.com/arendst/Tasmota/issues/23394)
 - Command `I2sPause` [#23646](https://github.com/arendst/Tasmota/issues/23646)
@@ -139,7 +139,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP8266 platform update from 2025.05.00 to 2025.09.00 [#23864](https://github.com/arendst/Tasmota/issues/23864)
-- ESP32 Platform from 2025.05.30 to 2025.08.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.3.250808 and IDF from v5.3.3.250501 to v5.3.3.250801 [#23778](https://github.com/arendst/Tasmota/issues/23778)
+- ESP32 Platform from 2025.05.30 to 2025.09.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.4 and IDF from v5.3.3.250501 to v5.3.4.250826 [#23888](https://github.com/arendst/Tasmota/issues/23888)
 - Epdiy library from v1.0.0 to v2.0.0
 - OpenTherm library from v0.9.0 to v1.1.5 [#23704](https://github.com/arendst/Tasmota/issues/23704)
 - JPEGDEC library from v1.5.0 to v1.8.3 [#23883](https://github.com/arendst/Tasmota/issues/23883)

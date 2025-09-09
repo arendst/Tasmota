@@ -6,14 +6,14 @@
 #@ solidify:FireAnimation,weak
 class FireAnimation : animation.animation
   # Non-parameter instance variables only
-  var heat_map         # Array storing heat values for each pixel (0-255)
-  var current_colors   # Array of current colors for each pixel
+  var heat_map         # bytes() buffer storing heat values for each pixel (0-255)
+  var current_colors   # bytes() buffer storing ARGB colors (4 bytes per pixel)
   var last_update      # Last update time for flicker timing
   var random_seed      # Seed for random number generation
   
   # Parameter definitions following parameterized class specification
   static var PARAMS = {
-    "color": {"default": nil},
+    # 'color' for the comet head (32-bit ARGB value), inherited from animation class
     "intensity": {"min": 0, "max": 255, "default": 180},
     "flicker_speed": {"min": 1, "max": 20, "default": 8},
     "flicker_amount": {"min": 0, "max": 255, "default": 100},
@@ -29,8 +29,8 @@ class FireAnimation : animation.animation
     super(self).init(engine)
     
     # Initialize non-parameter instance variables only
-    self.heat_map = []
-    self.current_colors = []
+    self.heat_map = bytes()  # Use bytes() buffer for efficient 0-255 value storage
+    self.current_colors = bytes()  # Use bytes() buffer for ARGB colors (4 bytes per pixel)
     self.last_update = 0
     
     # Initialize random seed using engine time
@@ -40,14 +40,19 @@ class FireAnimation : animation.animation
   # Initialize buffers based on current strip length
   def _initialize_buffers()
     var strip_length = self.engine.get_strip_length()
-    self.heat_map.resize(strip_length)
-    self.current_colors.resize(strip_length)
     
-    # Initialize all pixels to zero heat
+    # Create new bytes() buffer for heat values (1 byte per pixel)
+    self.heat_map.clear()
+    self.heat_map.resize(strip_length)
+    
+    # Create new bytes() buffer for colors (4 bytes per pixel: ARGB)
+    self.current_colors.clear()
+    self.current_colors.resize(strip_length * 4)
+    
+    # Initialize all pixels to zero heat and black color (0xFF000000)
     var i = 0
     while i < strip_length
-      self.heat_map[i] = 0
-      self.current_colors[i] = 0xFF000000  # Black with full alpha
+      self.current_colors.set(i * 4, 0xFF000000, -4)  # Black with full alpha
       i += 1
     end
   end
@@ -77,6 +82,9 @@ class FireAnimation : animation.animation
       return false
     end
     
+    # Auto-fix time_ms and start_time
+    time_ms = self._fix_time_ms(time_ms)
+    
     # Check if it's time to update the fire simulation
     # Update frequency is based on flicker_speed (Hz)
     var flicker_speed = self.flicker_speed  # Cache parameter value
@@ -99,8 +107,8 @@ class FireAnimation : animation.animation
     var color_param = self.color
     var strip_length = self.engine.get_strip_length()
     
-    # Ensure buffers are correct size
-    if size(self.heat_map) != strip_length
+    # Ensure buffers are correct size (bytes() uses .size() method)
+    if self.heat_map.size() != strip_length || self.current_colors.size() != strip_length * 4
       self._initialize_buffers()
     end
     
@@ -122,7 +130,13 @@ class FireAnimation : animation.animation
       var k = strip_length - 1
       while k >= 2
         var heat_avg = (self.heat_map[k-1] + self.heat_map[k-2] + self.heat_map[k-2]) / 3
-        self.heat_map[k] = heat_avg
+        # Ensure the result is an integer in valid range (0-255)
+        if heat_avg < 0
+          heat_avg = 0
+        elif heat_avg > 255
+          heat_avg = 255
+        end
+        self.heat_map[k] = int(heat_avg)
         k -= 1
       end
     end
@@ -130,7 +144,11 @@ class FireAnimation : animation.animation
     # Step 3: Randomly ignite new 'sparks' of heat near the bottom
     if self._random_range(255) < sparking_rate
       var spark_pos = self._random_range(7)  # Sparks only in bottom 7 pixels
-      var spark_heat = self._random_range(95) + 160  # Heat between 160-255
+      var spark_heat = self._random_range(95) + 160  # Heat between 160-254
+      # Ensure spark heat is in valid range (should already be, but be explicit)
+      if spark_heat > 255
+        spark_heat = 255
+      end
       if spark_pos < strip_length
         self.heat_map[spark_pos] = spark_heat
       end
@@ -205,7 +223,7 @@ class FireAnimation : animation.animation
         end
       end
       
-      self.current_colors[i] = color
+      self.current_colors.set(i * 4, color, -4)
       i += 1
     end
   end
@@ -229,7 +247,7 @@ class FireAnimation : animation.animation
     var i = 0
     while i < strip_length
       if i < frame.width
-        frame.set_pixel_color(i, self.current_colors[i])
+        frame.set_pixel_color(i, self.current_colors.get(i * 4, -4))
       end
       i += 1
     end

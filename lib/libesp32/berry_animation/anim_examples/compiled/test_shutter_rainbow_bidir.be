@@ -9,9 +9,6 @@ import animation
 # Demo Shutter Rainbow Bidir
 #
 # Shutter from left to right iterating in all colors, then right to left
-# Auto-generated strip initialization (using Tasmota configuration)
-var engine = animation.init_strip()
-
 # Template function: shutter_bidir
 def shutter_bidir_template(engine, colors_, duration_)
   var strip_len_ = animation.strip_length(engine)
@@ -43,16 +40,18 @@ def shutter_bidir_template(engine, colors_, duration_)
   shutter_rl_animation_.back_color = col2_
   shutter_rl_animation_.pos = 0
   shutter_rl_animation_.beacon_size = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - animation.resolve(shutter_size_) end)
-  shutter_rl_animation_.slew_size = animation.create_closure_value(engine, def (engine) return 0 + 0 end)
+  shutter_rl_animation_.slew_size = 0 + 0
   shutter_rl_animation_.priority = 5
   var shutter_seq_ = animation.SequenceManager(engine, -1)
     .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
+      .push_closure_step(def (engine) log(f"begin 1", 3) end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
       .push_play_step(shutter_lr_animation_, duration_)
       .push_closure_step(def (engine) col1_.next = 1 end)
       .push_closure_step(def (engine) col2_.next = 1 end)
       )
     .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
+      .push_closure_step(def (engine) log(f"begin 2", 3) end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
       .push_play_step(shutter_rl_animation_, duration_)
       .push_closure_step(def (engine) col1_.next = 1 end)
@@ -62,6 +61,9 @@ def shutter_bidir_template(engine, colors_, duration_)
 end
 
 animation.register_user_function('shutter_bidir', shutter_bidir_template)
+
+# Auto-generated strip initialization (using Tasmota configuration)
+var engine = animation.init_strip()
 
 var rainbow_with_white_ = bytes(
   "FFFF0000"
@@ -114,12 +116,14 @@ template shutter_bidir {
 
   sequence shutter_seq repeat forever {
     repeat col1.palette_size times {
+      log("begin 1")
       restart shutter_size
       play shutter_lr_animation for duration
       col1.next = 1
       col2.next = 1
     }
     repeat col1.palette_size times {
+      log("begin 2")
       restart shutter_size
       play shutter_rl_animation for duration
       col1.next = 1

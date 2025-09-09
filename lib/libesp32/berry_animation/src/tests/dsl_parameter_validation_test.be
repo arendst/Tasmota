@@ -214,7 +214,7 @@ class DSLParameterValidationTest
     end
     
     # Check that the generated code contains the expected object reference
-    if string.find(berry_code, "self.resolve(red_eye_, 'pos')") == -1
+    if string.find(berry_code, "animation.resolve(red_eye_, 'pos')") == -1
       raise "generation_error", "Generated code should contain object property reference"
     end
   end
@@ -336,7 +336,7 @@ class DSLParameterValidationTest
     end
     
     # Check that the generated code contains the expected computed expression
-    if string.find(berry_code, "self.resolve(strip_len_) - self.resolve(red_eye_, 'pos')") == -1
+    if string.find(berry_code, "animation.resolve(strip_len_) - animation.resolve(red_eye_, 'pos')") == -1
       raise "generation_error", "Generated code should contain computed object property reference"
     end
   end
@@ -383,7 +383,7 @@ class DSLParameterValidationTest
       return true
     else
       print("✗ Some DSL parameter validation tests failed!")
-      return false
+      raise "test_failed"
     end
   end
 end
