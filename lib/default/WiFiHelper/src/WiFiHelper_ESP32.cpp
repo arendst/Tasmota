@@ -84,9 +84,8 @@ void WiFiHelper::scrubDNS(void) {
 
   // scan DNS entries
   bool has_v4 = WifiHasIPv4() || EthernetHasIPv4();
-  bool has_v6 = false;
 #ifdef USE_IPV6
-  has_v6 = WifiHasIPv6() || EthernetHasIPv6();
+  bool has_v6 = WifiHasIPv6() || EthernetHasIPv6();
 #endif
   // AddLog(LOG_LEVEL_DEBUG, "IP>1: DNS: (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), has_v4, has_v6);
 
@@ -98,7 +97,7 @@ void WiFiHelper::scrubDNS(void) {
       if (IP_IS_V4(ip_dns)) {
         dns_save4[i] = *ip_dns;       // dns entry is populated, save it in v4 slot
       }
-#ifdef USE_IPV6 
+#ifdef USE_IPV6
       else if (has_v6) {
         dns_save6[i] = *ip_dns;       // dns entry is populated, save it in v6 slot
       }
@@ -112,13 +111,13 @@ void WiFiHelper::scrubDNS(void) {
     dns_save4[0] = *IP4_ADDR_ANY;
     dns_save4[1] = *IP4_ADDR_ANY;
   }
-#endif
   if (!has_v6) {
+#endif // USE_IPV6
     dns_save6[0] = *IP_ADDR_ANY;
     dns_save6[1] = *IP_ADDR_ANY;
+#ifdef USE_IPV6
   }
 
-#ifdef USE_IPV6
   // Step 3. restore saved value
   if (has_v4 && has_v6) {   // if both IPv4 and IPv6 are active, prefer IPv4 for first and IPv6 for second
     if (!ip_addr_isany_val(dns_save4[0])) {
