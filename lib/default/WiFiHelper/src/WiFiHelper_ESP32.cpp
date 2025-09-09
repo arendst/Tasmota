@@ -26,8 +26,8 @@ extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
 
-#ifdef USE_IPV6
 ip_addr_t dns_save4[2] = {};      // IPv4 DNS servers
+#ifdef USE_IPV6
 ip_addr_t dns_save6[2] = {};      // IPv6 DNS servers
 #endif // USE_IPV6
 
@@ -112,10 +112,8 @@ void WiFiHelper::scrubDNS(void) {
     dns_save4[1] = *IP4_ADDR_ANY;
   }
   if (!has_v6) {
-#endif // USE_IPV6
     dns_save6[0] = *IP_ADDR_ANY;
     dns_save6[1] = *IP_ADDR_ANY;
-#ifdef USE_IPV6
   }
 
   // Step 3. restore saved value
