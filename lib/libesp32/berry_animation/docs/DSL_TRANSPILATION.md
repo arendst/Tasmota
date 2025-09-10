@@ -600,16 +600,67 @@ set strip_len = strip_length()      # Single function call
 set strip_len3 = (strip_len + 1) / 2  # Computation with existing value
 ```
 
+**Template Parameter Validation:**
+```berry
+# Error: Duplicate parameter names
+template bad_template {
+  param color type color
+  param color type number  # Error: duplicate parameter name
+}
+# Transpiler error: "Duplicate parameter name 'color' in template"
+
+# Error: Reserved keyword as parameter name
+template reserved_template {
+  param animation type color  # Error: conflicts with reserved keyword
+}
+# Transpiler error: "Parameter name 'animation' conflicts with reserved keyword"
+
+# Error: Built-in color name as parameter
+template color_template {
+  param red type number  # Error: conflicts with built-in color
+}
+# Transpiler error: "Parameter name 'red' conflicts with built-in color name"
+
+# Error: Invalid type annotation
+template type_template {
+  param value type invalid_type  # Error: invalid type
+}
+# Transpiler error: "Invalid parameter type 'invalid_type'. Valid types are: [...]"
+
+# Warning: Unused parameter (compilation succeeds)
+template unused_template {
+  param used_color type color
+  param unused_param type number  # Warning: never used
+  
+  animation test = solid(color=used_color)
+  run test
+}
+# Transpiler warning: "Template 'unused_template' parameter 'unused_param' is declared but never used"
+```
+
 ### Error Categories
 
 - **Syntax errors**: Invalid DSL syntax (lexer/parser errors)
 - **Factory validation**: Non-existent or invalid animation/color provider factories
 - **Parameter validation**: Invalid parameter names in constructors or property assignments
+- **Template validation**: Invalid template parameter names, types, or usage patterns
 - **Constraint validation**: Parameter values that violate defined constraints (min/max, enums, types)
 - **Reference validation**: Using undefined colors, animations, or variables
 - **Type validation**: Incorrect parameter types or incompatible assignments
 - **Safety validation**: Dangerous patterns that could cause memory leaks or performance issues
 - **Runtime errors**: Errors during Berry code execution (rare with good validation)
+
+### Warning Categories
+
+The DSL transpiler also generates **warnings** that don't prevent compilation but indicate potential code quality issues:
+
+- **Unused parameters**: Template parameters that are declared but never used in the template body
+- **Code quality**: Suggestions for better coding practices
+
+**Warning Behavior:**
+- Warnings are included as comments in the generated Berry code
+- Compilation succeeds even with warnings present
+- Warnings help maintain code quality without being overly restrictive
 
 ## Performance Considerations
 

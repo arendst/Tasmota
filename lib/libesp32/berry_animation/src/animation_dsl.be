@@ -102,4 +102,60 @@ def create_runtime(strip, debug_mode)
 end
 animation_dsl.create_runtime = create_runtime
 
+# Compile .anim file to .be file
+# Takes a filename with .anim suffix and compiles to same prefix with .be suffix
+#
+# @param filename: string - Path to .anim file
+# @return bool - True if compilation successful
+# @raises "io_error" - If file cannot be read or written
+# @raises "dsl_compilation_error" - If DSL compilation fails
+# @raises "invalid_filename" - If filename doesn't have .anim extension
+def compile_file(filename)
+  import string
+  
+  # Validate input filename
+  if !string.endswith(filename, ".anim")
+    raise "invalid_filename", f"Input file must have .anim extension: {filename}"
+  end
+  
+  # Generate output filename
+  var base_name = filename[0..-6]  # Remove .anim extension (5 chars + 1 for 0-based)
+  var output_filename = base_name + ".be"
+  
+  # Read DSL source
+  var f = open(filename, "r")
+  if f == nil
+    raise "io_error", f"Cannot open input file: {filename}"
+  end
+  
+  var dsl_source = f.read()
+  f.close()
+  
+  # Compile DSL to Berry code
+  var berry_code = animation_dsl.compile(dsl_source)
+  if berry_code == nil
+    raise "dsl_compilation_error", f"DSL compilation failed for: {filename}"
+  end
+  
+  # Generate header with metadata (no original source for compile_file)
+  var header = "# Generated Berry code from Animation DSL\n" +
+               f"# Source: {filename}\n" +
+               "# Generated automatically by animation_dsl.compile_file()\n" +
+               "# \n" +
+               "# Do not edit manually - changes will be overwritten\n" +
+               "\n"
+  
+  # Write complete Berry file (no footer with original source)
+  var output_f = open(output_filename, "w")
+  if output_f == nil
+    raise "io_error", f"Cannot create output file: {output_filename}"
+  end
+  
+  output_f.write(header + berry_code)
+  output_f.close()
+  
+  return true
+end
+animation_dsl.compile_file = compile_file
+
 return animation_dsl

@@ -1069,6 +1069,53 @@ Files containing only templates generate pure Berry function definitions without
 - Templates can be called multiple times to create multiple instances
 - `engine.run()` is automatically called when templates are used at the top level
 
+### Template Parameter Validation
+
+The DSL transpiler provides comprehensive validation for template parameters to ensure code quality and catch errors early:
+
+**Parameter Name Validation:**
+- **Duplicate Detection**: Prevents using the same parameter name twice
+- **Reserved Keywords**: Prevents conflicts with Berry keywords (`animation`, `color`, `def`, etc.)
+- **Built-in Colors**: Prevents conflicts with predefined color names (`red`, `blue`, etc.)
+
+```berry
+template bad_example {
+  param color type color      # ❌ Error: conflicts with built-in color
+  param animation type number # ❌ Error: conflicts with reserved keyword  
+  param my_param type color
+  param my_param type number  # ❌ Error: duplicate parameter name
+}
+```
+
+**Type Annotation Validation:**
+Valid parameter types are: `color`, `palette`, `animation`, `number`, `string`, `boolean`, `time`, `percentage`, `variable`, `value_provider`
+
+```berry
+template type_example {
+  param my_color type invalid_type  # ❌ Error: invalid type annotation
+  param valid_color type color      # ✅ Valid type annotation
+}
+```
+
+**Parameter Usage Validation:**
+The transpiler generates **warnings** (not errors) for unused parameters:
+
+```berry
+template unused_example {
+  param used_color type color
+  param unused_param type number    # ⚠️ Warning: parameter never used
+  
+  animation test = solid(color=used_color)
+  run test
+}
+```
+
+**Validation Benefits:**
+- **Early Error Detection**: Catches parameter issues at compile time
+- **Clear Error Messages**: Provides helpful suggestions for fixing issues
+- **Code Quality**: Encourages proper parameter naming and usage
+- **Warnings vs Errors**: Unused parameters generate warnings that don't prevent compilation
+
 ## Execution Statements
 
 Execute animations or sequences:

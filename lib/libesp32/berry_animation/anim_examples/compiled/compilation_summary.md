@@ -26,65 +26,6 @@ This document contains a summary of the DSL compilation process, including symbo
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF110000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='heart_bg_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='150', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 150
-  provider.duty_cycle = 20
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFCC0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='150', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 180
-  provider.duration = 150
-  provider.duty_cycle = 15
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFF660000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 30
-  provider.max_value = 100
-  provider.duration = 1000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 200
-  provider.duration = 100
-  provider.duty_cycle = 10
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
 SUCCESS
 ```
 
@@ -106,16 +47,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF000033', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='night_sky_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFAA', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='300', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -157,67 +88,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.triangle(engine)
-  provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = 5000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.cosine_osc(engine)
-  provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = 5000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='64', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='eye_palette_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='eye_color_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='cosine_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='triangle_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='cosine_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_low_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_high_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_low_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='0xFF008000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_high_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='triangle_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='cosine_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='triangle_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='cosine_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_low_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_high_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_low_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='0xFF008000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_high_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -243,29 +113,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='fire_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='fire_base_color_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='800', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 180
-  provider.max_value = 255
-  provider.duration = 800
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='fire_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='flicker_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -290,51 +137,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='(strip_len_ + 1) / 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure '(strip_len_ + 1) / 2'
-=== transform_expression_for_closure '(animation.resolve(strip_len_) + 1) / 2'
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = strip_len_
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len2_ - (shutter_size_ + 1) / 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len2_ - (shutter_size_ + 1) / 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len2_) - (animation.resolve(shutter_size_) + 1) / 2'
-> process_value context=1 result=ExpressionResult(expr='shutter_size_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len2_ - (strip_len_ - shutter_size_ + 1) / 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len2_ - (strip_len_ - shutter_size_ + 1) / 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len2_) - (animation.resolve(strip_len_) - animation.resolve(shutter_size_) + 1) / 2'
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - shutter_size_', funcs=false, vars=true, props=false, comp=true, type=value_provider, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - shutter_size_'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - animation.resolve(shutter_size_)'
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='col1_.palette_size', funcs=false, vars=false, props=true, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='col1_.palette_size', funcs=false, vars=false, props=true, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='rainbow_with_white_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -365,64 +167,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='disco_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='disco_rich_color_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 100
-  provider.duty_cycle = 30
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 50
-  provider.duty_cycle = 10
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='disco_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='sparkle_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='80', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='disco_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='800', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='pulse_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='56', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 4
-  provider.max_value = 56
-  provider.duration = 2000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
 SUCCESS
 ```
 
@@ -441,10 +185,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='x_ + 4', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'x_ + 4'
-=== transform_expression_for_closure 'animation.resolve(x_) + 4'
 SUCCESS
 ```
 
@@ -475,37 +215,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF000000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='matrix_bg_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='matrix_greens_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='stream1_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='matrix_greens_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1800', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='stream2_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='matrix_greens_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='stream3_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1800', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFF00FFAA', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='150', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -519,6 +228,7 @@ SUCCESS
 |---------------------|----------------------------|---------|-----------|------------|
 | `PALETTE_RAINBOW`   | palette_constant           |    ✓    |           |            |
 | `beacon_animation`  | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `closure_value`     | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 | `col1`              | color                      |         |           |            |
 | `col2`              | color                      |         |           |            |
 | `color_cycle`       | color_constructor          |    ✓    |    ⚠️     |     ✓      |
@@ -533,31 +243,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = strip_len_
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='animation.PALETTE_RAINBOW', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.PALETTE_RAINBOW', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='shutter_size_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -571,6 +256,7 @@ SUCCESS
 |--------------------|----------------------------|---------|-----------|------------|
 | `background`       | animation                  |         |           |            |
 | `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `closure_value`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 | `pos_test`         | value_provider             |         |           |            |
 | `scanner_bg`       | color                      |         |           |            |
 | `scanner_trail`    | animation                  |         |           |            |
@@ -581,40 +267,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF110000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='scanner_bg_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='57', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.triangle(engine)
-  provider.min_value = 2
-  provider.max_value = 57
-  provider.duration = 2000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFF660000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='57', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.triangle(engine)
-  provider.min_value = 2
-  provider.max_value = 57
-  provider.duration = 2000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='pos_test_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='128', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -633,17 +285,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='pal1_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='cycle_color_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='back_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='fire_palette_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='ocean_palette_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0xFF001100', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
 SUCCESS
 ```
 
@@ -668,32 +309,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = strip_len_
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='shutter_size_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='rainbow_with_white_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -708,6 +323,7 @@ SUCCESS
 | `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 | `candy_red`        | color                      |         |           |            |
 | `candy_white`      | color                      |         |           |            |
+| `closure_value`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 | `move_speed`       | variable                   |         |           |            |
 | `sawtooth`         | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 | `stripe10`         | animation                  |         |           |            |
@@ -724,149 +340,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_red_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_white_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='9', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_red_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_white_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='21', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_red_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='27', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_white_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='33', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_red_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='39', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_white_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='45', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_red_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='51', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='candy_white_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='57', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='63', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 3
-  provider.max_value = 63
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='9', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='69', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 9
-  provider.max_value = 69
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='75', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 15
-  provider.max_value = 75
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='21', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='81', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 21
-  provider.max_value = 81
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='27', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='87', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 27
-  provider.max_value = 87
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='33', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='93', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 33
-  provider.max_value = 93
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='39', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='99', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 39
-  provider.max_value = 99
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='45', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='105', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 45
-  provider.max_value = 105
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='51', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='111', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 51
-  provider.max_value = 111
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='57', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='117', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='move_speed_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 57
-  provider.max_value = 117
-  provider.duration = move_speed_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
 SUCCESS
 ```
 
@@ -877,9 +350,11 @@ SUCCESS
 ### Compilation Output
 
 ```
-DSL compilation failed
-Errors:
-  Line 4: Cannot redefine predefined color 'red'. Use a different name like 'red_custom' or 'my_red'
+dsl_compilation_error: Line 4: Transpilation failed: Line 4: Cannot redefine predefined color 'red'. Use a different name like 'red_custom' or 'my_red'
+stack traceback:
+	<unknown source>: in function `error`
+	<unknown source>: in function `transpile`
+	<unknown source>: in function `main`
 ```
 
 ## test_shutter_rainbow_bidir.anim
@@ -903,48 +378,6 @@ Errors:
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ + 0', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ + 0'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) + 0'
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) + 0 end)
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='shutter_size_ + 0', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'shutter_size_ + 0'
-=== transform_expression_for_closure 'animation.resolve(shutter_size_) + 0'
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - shutter_size_', funcs=false, vars=true, props=false, comp=true, type=value_provider, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - shutter_size_'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - animation.resolve(shutter_size_)'
-> process_value context=1 result=ExpressionResult(expr='0 + 0', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='col1_.palette_size', funcs=false, vars=false, props=true, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='col1_.palette_size', funcs=false, vars=false, props=true, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='rainbow_with_white_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -968,27 +401,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFF00FF00', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='red_custom_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='blue_custom_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='green_custom_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='45', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='150', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1007,27 +419,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='eye_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='back_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(-1)', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.cosine_osc(engine)
-  provider.min_value = (-1)
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0x00000000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1061,41 +452,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='eye_palette_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='eye_duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.cosine_osc(engine)
-  provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = eye_duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='eye_duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.triangle(engine)
-  provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = eye_duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='eye_color_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='cosine_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='triangle_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='cosine_val_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1120,44 +476,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = strip_len_
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='shutter_size_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - shutter_size_', funcs=false, vars=true, props=false, comp=true, type=value_provider, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - shutter_size_'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - animation.resolve(shutter_size_)'
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='col1_.palette_size', funcs=false, vars=false, props=true, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='col1_.palette_size', funcs=false, vars=false, props=true, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='rainbow_with_white_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1189,43 +507,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF006600', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='tree_green_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='ornament_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='ornament_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='800', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFF00', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='58', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 200
-  provider.max_value = 255
-  provider.duration = 2000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='400', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='ornament_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='garland_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1254,77 +535,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='plasma_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='plasma_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='wave1_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='40', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 0
-  provider.max_value = 40
-  provider.duration = 8000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='plasma_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='wave2_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='45', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='45', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 45
-  provider.max_value = 15
-  provider.duration = 10000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='plasma_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='220', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='wave3_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 20
-  provider.max_value = 50
-  provider.duration = 6000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='150', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 150
-  provider.max_value = 255
-  provider.duration = 12000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
 SUCCESS
 ```
 
@@ -1353,52 +563,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='ocean_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='ocean_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='wave1_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='48', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = 48
-  provider.duration = 5000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='ocean_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='wave2_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='52', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='52', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='7000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 52
-  provider.max_value = 8
-  provider.duration = 7000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='300', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1430,11 +594,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='palette_olivary_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='olivary_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1461,32 +620,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF000011', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='space_bg_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFAA00', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFAAAAFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1800', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFAAAA', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='14', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFCCCCCC', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='25', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1510,13 +643,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='fire_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='ocean_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.PALETTE_FOREST', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1527,21 +653,13 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.linear(engine) + nil', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation.linear(engine) + nil'
-=== transform_expression_for_closure 'animation.linear(engine) + nil'
-> process_value context=1 result=ExpressionResult(expr='animation.triangle(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='animation.linear(engine) + nil', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation.linear(engine) + nil'
-=== transform_expression_for_closure 'animation.linear(engine) + nil'
-DSL compilation failed
-Errors:
-  Line 4: Function 'triangle' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
-  set var_name = triangle()  # Single function call
+dsl_compilation_error: Line 4: Transpilation failed: Line 4: Expression 'animation.linear(engine)' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
+  set var_name = animation.linear(engine)()  # Single function call
   set computed = (existing_var + 1) / 2  # Computation with existing values
-  Line 6: Function 'triangle' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
-  set var_name = triangle()  # Single function call
-  set computed = (existing_var + 1) / 2  # Computation with existing values
+stack traceback:
+	<unknown source>: in function `error`
+	<unknown source>: in function `transpile`
+	<unknown source>: in function `main`
 ```
 
 ## fail_name_predefined.anim
@@ -1551,9 +669,11 @@ Errors:
 ### Compilation Output
 
 ```
-DSL compilation failed
-Errors:
-  Line 4: Cannot redefine built-in symbol 'abs' (type: 4). Use a different name like 'abs_custom' or 'my_abs'
+dsl_compilation_error: Line 4: Transpilation failed: Line 4: Cannot redefine built-in symbol 'abs' (type: 4). Use a different name like 'abs_custom' or 'my_abs'
+stack traceback:
+	<unknown source>: in function `error`
+	<unknown source>: in function `transpile`
+	<unknown source>: in function `main`
 ```
 
 ## test_shutter_rainbow_central.anim
@@ -1563,48 +683,13 @@ Errors:
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='(strip_len_ + 1) / 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure '(strip_len_ + 1) / 2'
-=== transform_expression_for_closure '(animation.resolve(strip_len_) + 1) / 2'
-> process_value context=1 result=ExpressionResult(expr='1 + nil', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(nil)', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.sawtooth(engine)
-  provider.min_value = 0
-  provider.max_value = strip_len_
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='colors_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col2_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='col1_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len3_ - shutter_size_ / 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len3_ - shutter_size_ / 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len3_) - animation.resolve(shutter_size_) / 2'
-> process_value context=1 result=ExpressionResult(expr='shutter_size_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='rainbow_with_white_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-DSL compilation failed
-Errors:
-  Line 38: Template 'shutter_central' body error: Line 12: Function 'strip_length' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
-  set var_name = strip_length()  # Single function call
+dsl_compilation_error: Line 38: Transpilation failed: Line 12: Template body transpilation failed: Line 12: Expression 'animation.strip_length(engine)' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
+  set var_name = animation.strip_length(engine)()  # Single function call
   set computed = (existing_var + 1) / 2  # Computation with existing values
-  Line 38: Template 'shutter_central' body error: Line 13: Function 'strip_length' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
-  set var_name = strip_length()  # Single function call
-  set computed = (existing_var + 1) / 2  # Computation with existing values
-  Line 38: Template 'shutter_central' body error: Line 13: Expected ')'
+stack traceback:
+	<unknown source>: in function `error`
+	<unknown source>: in function `transpile`
+	<unknown source>: in function `main`
 ```
 
 ## sunrise_sunset.anim
@@ -1628,72 +713,6 @@ Errors:
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='daylight_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='60000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFAA', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='55', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 5
-  provider.max_value = 55
-  provider.duration = 30000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 30000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFCC88', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='16', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='55', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 5
-  provider.max_value = 55
-  provider.duration = 30000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='150', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 0
-  provider.max_value = 150
-  provider.duration = 30000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 255
-  provider.max_value = 0
-  provider.duration = 30000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
 SUCCESS
 ```
 
@@ -1718,8 +737,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='rainbow_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1751,33 +768,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='fire_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFF000088', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(-1)', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='6000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.cosine_osc(engine)
-  provider.min_value = (-1)
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = 6000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0x00000000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='eye_pos_', funcs=false, vars=true, props=false, comp=false, type=value_provider, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='fire_color_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ / 4', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ / 4'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) / 4'
-> process_value context=1 result=ExpressionResult(expr='eye_mask_', funcs=false, vars=true, props=false, comp=false, type=animation, instance=nil)
 SUCCESS
 ```
 
@@ -1809,57 +799,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='neon_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='220', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 220
-  provider.max_value = 255
-  provider.duration = 200
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 50
-  provider.duty_cycle = 2
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='neon_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.LINEAR', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='segment_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='segment_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='24', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='segment_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='42', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFAAAAFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1882,22 +821,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.cosine_osc(engine)
-  provider.min_value = 0
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = 5000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -1926,23 +849,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation.get_user_function('rand_demo')(engine)'
-=== transform_expression_for_closure 'animation.get_user_function('rand_demo')(engine)'
-> process_value context=1 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine) + 100', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100))', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100))'
-=== transform_expression_for_closure 'animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100))'
-> process_value context=1 result=ExpressionResult(expr='0xFF008000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine) - 128', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64'
-=== transform_expression_for_closure 'animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64'
 SUCCESS
 ```
 
@@ -1974,75 +880,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='lava_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='lava_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='blob1_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='9', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='18', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='9', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='51', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 9
-  provider.max_value = 51
-  provider.duration = 20000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='lava_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='220', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='blob2_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='46', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='14', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='46', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='14', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='25000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 46
-  provider.max_value = 14
-  provider.duration = 25000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='lava_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='blob3_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='25', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='25', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='35', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='18000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 25
-  provider.max_value = 35
-  provider.duration = 18000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='lava_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='shimmer_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='1500', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -2065,55 +902,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='30', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='400', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 400
-  provider.duty_cycle = 50
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='45', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='400', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 255
-  provider.max_value = 0
-  provider.duration = 400
-  provider.duty_cycle = 50
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 100
-  provider.duty_cycle = 5
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -2148,41 +936,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation.get_user_function('rand_demo')(engine)'
-=== transform_expression_for_closure 'animation.get_user_function('rand_demo')(engine)'
-> process_value context=1 result=ExpressionResult(expr='0xFFFFA500', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='50', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine) + 100', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100))', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100))'
-=== transform_expression_for_closure 'animation._math.max(50, animation._math.min(255, animation.get_user_function('rand_demo')(engine) + 100))'
-> process_value context=1 result=ExpressionResult(expr='0xFF800080', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine) - 128', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64'
-=== transform_expression_for_closure 'animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64'
-> process_value context=1 result=ExpressionResult(expr='0xFF00FFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation._math.max(100, animation.get_user_function('rand_demo')(engine))', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.max(100, animation.get_user_function('rand_demo')(engine))'
-=== transform_expression_for_closure 'animation._math.max(100, animation.get_user_function('rand_demo')(engine))'
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='animation.get_user_function('rand_demo')(engine) - 100', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='(animation.get_user_function('rand_demo')(engine) + 128) / 2 + animation._math.abs(animation.get_user_function('rand_demo')(engine) - 100)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='animation._math.round((animation.get_user_function('rand_demo')(engine) + 128) / 2 + animation._math.abs(animation.get_user_function('rand_demo')(engine) - 100))', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.round((animation.get_user_function('rand_demo')(engine) + 128) / 2 + animation._math.abs(animation.get_user_function('rand_demo')(engine) - 100))'
-=== transform_expression_for_closure 'animation._math.round((animation.get_user_function('rand_demo')(engine) + 128) / 2 + animation._math.abs(animation.get_user_function('rand_demo')(engine) - 100))'
 SUCCESS
 ```
 
@@ -2200,12 +953,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='base_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='204', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -2227,14 +974,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ / 4', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ / 4'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) / 4'
-> process_value context=4 result=ExpressionResult(expr='strip_len_ / 4', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation._math.abs(strip_len_ / 4)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.abs(strip_len_ / 4)'
-=== transform_expression_for_closure 'animation._math.abs(animation.resolve(strip_len_) / 4)'
 SUCCESS
 ```
 
@@ -2262,59 +1001,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='storm_colors_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='80', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 255
-  provider.duration = 80
-  provider.duty_cycle = 3
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFAA', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='30', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='20', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='15', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='120', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 200
-  provider.duration = 120
-  provider.duty_cycle = 4
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFF4444FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='80', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.square(engine)
-  provider.min_value = 0
-  provider.max_value = 80
-  provider.duration = 200
-  provider.duty_cycle = 8
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=5 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFF666699', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='300', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -2325,54 +1011,11 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='nil', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=4 result=ExpressionResult(expr='strip_len_ / 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation._math.abs(strip_len_ / 2)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.abs(strip_len_ / 2)'
-=== transform_expression_for_closure 'animation._math.abs(animation.resolve(strip_len_) / 2)'
-> process_value context=1 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.strip_length(engine)
-  provider.is_running = 0
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='animation.sawtooth(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='animation.triangle(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=4 result=ExpressionResult(expr='osc1_ + osc2_', funcs=false, vars=true, props=false, comp=true, type=value_provider, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation._math.scale(osc1_ + osc2_, 0, 200, 0, 255)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.scale(osc1_ + osc2_, 0, 200, 0, 255)'
-=== transform_expression_for_closure 'animation._math.scale(animation.resolve(osc1_) + animation.resolve(osc2_), 0, 200, 0, 255)'
-> process_value context=1 result=ExpressionResult(expr='animation.sawtooth(engine) + nil', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation.sawtooth(engine) + nil'
-=== transform_expression_for_closure 'animation.sawtooth(engine) + nil'
-> process_value context=1 result=ExpressionResult(expr='eye_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='back_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(-1)', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ - 2', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ - 2'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) - 2'
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.cosine_osc(engine)
-  provider.min_value = (-1)
-  provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-  provider.duration = duration_
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
-> process_value context=1 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-DSL compilation failed
-Errors:
-  Line 29: Template 'cylon_effect' body error: Line 9: Unknown function or identifier 'abs2'. Make sure it's defined before use.
-  Line 29: Template 'cylon_effect' body error: Line 17: Function 'triangle' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
-  set var_name = triangle()  # Single function call
-  set computed = (existing_var + 1) / 2  # Computation with existing values
+dsl_compilation_error: Line 29: Transpilation failed: Line 9: Template body transpilation failed: Line 9: Unknown function or identifier 'abs2'. Make sure it's defined before use.
+stack traceback:
+	<unknown source>: in function `error`
+	<unknown source>: in function `transpile`
+	<unknown source>: in function `main`
 ```
 
 ## computed_values_demo.anim
@@ -2397,30 +1040,6 @@ Errors:
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='animation.strip_length(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=StripLengthProvider)
-> process_value context=1 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='strip_len_ / 4', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation._math.abs(strip_len_ / 4)', funcs=true, vars=false, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'animation._math.abs(strip_len_ / 4)'
-=== transform_expression_for_closure 'animation._math.abs(animation.resolve(strip_len_) / 4)'
-> process_value context=1 result=ExpressionResult(expr='1.5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2.0', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='strip_len_ / 8 + (2 * strip_len_) - 10', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ / 8 + (2 * strip_len_) - 10'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) / 8 + (2 * animation.resolve(strip_len_)) - 10'
-> process_value context=1 result=ExpressionResult(expr='base_speed_ * 1.5', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'base_speed_ * 1.5'
-=== transform_expression_for_closure 'animation.resolve(base_speed_) * 1.5'
-> process_value context=1 result=ExpressionResult(expr='(-1)', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='strip_len_ / 5', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ / 5'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) / 5'
-> process_value context=5 result=ExpressionResult(expr='strip_len_ * 4', funcs=false, vars=true, props=false, comp=true, type=variable, instance=nil)
-+++ transform_expression_for_closure 'strip_len_ * 4'
-=== transform_expression_for_closure 'animation.resolve(strip_len_) * 4'
 SUCCESS
 ```
 
@@ -2447,27 +1066,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFF00FF00', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFF0000FF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFF800080', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=2 result=ExpressionResult(expr='0xFFFF8000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='breathe_palette_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='15000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='palette_pattern_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='100', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='255', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='4000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.smooth(engine)
-  provider.min_value = 100
-  provider.max_value = 255
-  provider.duration = 4000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=value_provider, instance=OscillatorValueProvider)
 SUCCESS
 ```
 
@@ -2485,12 +1083,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='base_color_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='duration_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=5 result=ExpressionResult(expr='brightness_', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='0xFFFF0000', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=4 result=ExpressionResult(expr='204', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -2527,27 +1119,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='fire_gradient_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(def (engine)
-  var provider = animation.rich_palette(engine)
-  provider.palette = fire_gradient_
-  provider.cycle_period = 3000
-  return provider
-end)(engine)', funcs=true, vars=false, props=false, comp=false, type=color, instance=RichPaletteColorProvider)
-> process_value context=1 result=ExpressionResult(expr='ocean_depths_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='200', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='aurora_borealis_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='12000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='180', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='sunset_sky_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='6000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='animation.SINE', funcs=false, vars=true, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='220', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=6 result=ExpressionResult(expr='3', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 
@@ -2568,9 +1139,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=1 result=ExpressionResult(expr='rainbow_palette_', funcs=false, vars=true, props=false, comp=false, type=palette, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='rainbow_cycle_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
 SUCCESS
 ```
 
@@ -2594,21 +1162,6 @@ SUCCESS
 ### Compilation Output
 
 ```
-> process_value context=2 result=ExpressionResult(expr='0xFF000066', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='space_blue_', funcs=false, vars=true, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFFFFFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='10', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='2000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='7', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFFF4500', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='3000', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='(-1)', funcs=false, vars=false, props=false, comp=true, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='5', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='0xFFAAAAFF', funcs=false, vars=false, props=false, comp=false, type=color, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='400', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
-> process_value context=1 result=ExpressionResult(expr='8', funcs=false, vars=false, props=false, comp=false, type=variable, instance=nil)
 SUCCESS
 ```
 

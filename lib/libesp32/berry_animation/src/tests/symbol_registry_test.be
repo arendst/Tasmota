@@ -24,7 +24,7 @@ def test_basic_symbol_registration()
   var berry_code = transpiler.transpile()
   
   assert(berry_code != nil, "Should compile successfully")
-  assert(!transpiler.has_errors(), "Should have no errors")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check that definitions appear in generated code (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
@@ -52,7 +52,7 @@ def test_proper_symbol_ordering()
   
   # Should compile successfully with proper ordering
   assert(berry_code != nil, "Should compile with proper symbol ordering")
-  assert(!transpiler.has_errors(), "Should have no errors with proper ordering")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check generated code contains both definitions (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should define custom_red color")
@@ -74,15 +74,15 @@ def test_undefined_reference_handling()
   var tokens = lexer.tokenize()
   var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
-  var berry_code = transpiler.transpile()
-  
-  # Should detect undefined reference at transpile time
-  assert(transpiler.has_errors(), "Should detect undefined reference error")
-  
-  # Check that error message mentions the undefined symbol
-  var error_report = transpiler.get_error_report()
-  assert(string.find(error_report, "undefined_color") >= 0, "Error should mention undefined_color")
-  assert(string.find(error_report, "Unknown identifier") >= 0, "Should be an unknown identifier error")
+  # Should detect undefined reference at transpile time and raise exception
+  try
+    var berry_code = transpiler.transpile()
+    assert(false, "Should raise exception for undefined reference")
+  except "dsl_compilation_error" as e, msg
+    # Check that error message mentions the undefined symbol
+    assert(string.find(msg, "undefined_color") >= 0, "Error should mention undefined_color")
+    assert(string.find(msg, "Unknown identifier") >= 0, "Should be an unknown identifier error")
+  end
   
   print("✓ Undefined reference handling test passed")
   return true
@@ -104,7 +104,7 @@ def test_builtin_reference_handling()
   
   # Should compile successfully with built-in references
   assert(berry_code != nil, "Should compile with built-in references")
-  assert(!transpiler.has_errors(), "Should handle built-in references without errors")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check generated code
   assert(string.find(berry_code, "red_pattern_.color = 0xFFFF0000") >= 0, "Should use built-in red color")
@@ -159,7 +159,7 @@ def test_complex_symbol_dependencies()
   
   # Should compile successfully with proper ordering
   assert(berry_code != nil, "Should compile complex dependencies")
-  assert(!transpiler.has_errors(), "Should have no errors with proper ordering")
+  # No error check needed - transpiler would have raised exception if there were errors
   
   # Check all definitions are present (with underscore suffix)
   assert(string.find(berry_code, "var primary_color_") >= 0, "Should define primary color")

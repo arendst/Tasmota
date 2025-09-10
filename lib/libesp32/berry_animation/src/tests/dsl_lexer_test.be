@@ -6,6 +6,7 @@
 
 import animation
 import animation_dsl
+import string
 
 # Test basic tokenization
 def test_basic_tokenization()
@@ -43,8 +44,7 @@ def test_basic_tokenization()
   assert(found_color_keyword, "Should find 'color' keyword")
   assert(found_color_value, "Should find '0xFF0000' color value")
   
-  # Should have no errors
-  assert(!lexer.has_errors(), "Should have no lexical errors")
+  # Should have no errors (lexer would have raised exception if there were errors)
   
   print("✓ Basic tokenization test passed")
   return true
@@ -240,13 +240,17 @@ def test_string_literals()
     end
     
     assert(found_string, "Should recognize string literal: " + str_test)
-    assert(!lexer.has_errors(), "String parsing should not produce errors")
+    # No errors check needed - lexer would have raised exception if there were errors
   end
   
-  # Test unterminated string (should produce error)
-  var lexer = animation_dsl.DSLLexer('text = "unterminated string')
-  var tokens = lexer.tokenize()
-  assert(lexer.has_errors(), "Unterminated string should produce error")
+  # Test unterminated string (should raise exception)
+  try
+    var lexer = animation_dsl.DSLLexer('text = "unterminated string')
+    var tokens = lexer.tokenize()
+    assert(false, "Unterminated string should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - unterminated string should raise lexical_error
+  end
   
   print("✓ String literals test passed")
   return true
@@ -277,12 +281,16 @@ def test_variable_references()
     assert(found_var_ref, "Should recognize variable reference: " + var_test)
   end
   
-  # Test invalid variable references
+  # Test invalid variable references (should raise exceptions)
   var invalid_tests = ["$123", "$"]
   for invalid_test : invalid_tests
-    var lexer = animation_dsl.DSLLexer("value = " + invalid_test)
-    var tokens = lexer.tokenize()
-    assert(lexer.has_errors(), "Invalid variable reference should produce error: " + invalid_test)
+    try
+      var lexer = animation_dsl.DSLLexer("value = " + invalid_test)
+      var tokens = lexer.tokenize()
+      assert(false, "Invalid variable reference should raise exception: " + invalid_test)
+    except "lexical_error" as e, msg
+      # Expected - invalid variable reference should raise lexical_error
+    end
   end
   
   print("✓ Variable references test passed")
@@ -348,14 +356,13 @@ def test_complex_dsl()
     "run campfire"
   
   var lexer = animation_dsl.DSLLexer(complex_dsl)
-  var result = lexer.tokenize_with_errors()
+  var tokens = lexer.tokenize()
   
-  assert(result["success"], "Complex DSL should tokenize successfully")
-  assert(size(result["tokens"]) > 50, "Should have many tokens")
+  assert(size(tokens) > 50, "Should have many tokens")
   
   # Count token types
   var token_counts = {}
-  for token : result["tokens"]
+  for token : tokens
     var type_name = animation_dsl.Token.to_string(token.type)
     if token_counts.contains(type_name)
       token_counts[type_name] += 1
@@ -380,27 +387,36 @@ end
 def test_error_handling()
   print("Testing error handling...")
   
-  # Test invalid characters
-  var lexer1 = animation_dsl.DSLLexer("color red = @invalid")
-  var tokens1 = lexer1.tokenize()
-  assert(lexer1.has_errors(), "Invalid character should produce error")
+  # Test invalid characters (should raise exception)
+  try
+    var lexer1 = animation_dsl.DSLLexer("color red = @invalid")
+    var tokens1 = lexer1.tokenize()
+    assert(false, "Invalid character should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - invalid character should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+  end
   
-  # Test invalid hex color
-  var lexer2 = animation_dsl.DSLLexer("color red = 0xGGGGGG")
-  var tokens2 = lexer2.tokenize()
-  assert(lexer2.has_errors(), "Invalid hex color should produce error")
+  # Test invalid hex color (should raise exception)
+  try
+    var lexer2 = animation_dsl.DSLLexer("color red = 0xGGGGGG")
+    var tokens2 = lexer2.tokenize()
+    assert(false, "Invalid hex color should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - invalid hex color should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+  end
   
-  # Test unterminated string
-  var lexer3 = animation_dsl.DSLLexer('text = "unterminated')
-  var tokens3 = lexer3.tokenize()
-  assert(lexer3.has_errors(), "Unterminated string should produce error")
-  
-  # Test error reporting
-  var errors = lexer3.get_errors()
-  assert(size(errors) > 0, "Should have error details")
-  
-  var error_report = lexer3.get_error_report()
-  assert(size(error_report) > 0, "Should generate error report")
+  # Test unterminated string (should raise exception)
+  try
+    var lexer3 = animation_dsl.DSLLexer('text = "unterminated')
+    var tokens3 = lexer3.tokenize()
+    assert(false, "Unterminated string should raise exception")
+  except "lexical_error" as e, msg
+    # Expected - unterminated string should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+    assert(string.find(msg, "Unterminated") >= 0, "Error message should mention unterminated string")
+  end
   
   print("✓ Error handling test passed")
   return true

@@ -9,9 +9,6 @@ import animation
 # Demo Shutter Rainbow Bidir
 #
 # Shutter from left to right iterating in all colors, then right to left
-# Auto-generated strip initialization (using Tasmota configuration)
-var engine = animation.init_strip()
-
 # Template function: shutter_bidir
 def shutter_bidir_template(engine, colors_, duration_)
   var strip_len_ = animation.strip_length(engine)
@@ -48,13 +45,13 @@ def shutter_bidir_template(engine, colors_, duration_)
   var shutter_seq_ = animation.SequenceManager(engine, -1)
     .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
-      .push_play_step(shutter_lr_animation_, duration_)
+      .push_play_step(shutter_lr_animation_, animation.resolve(duration_))
       .push_closure_step(def (engine) col1_.next = 1 end)
       .push_closure_step(def (engine) col2_.next = 1 end)
       )
     .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
-      .push_play_step(shutter_rl_animation_, duration_)
+      .push_play_step(shutter_rl_animation_, animation.resolve(duration_))
       .push_closure_step(def (engine) col1_.next = 1 end)
       .push_closure_step(def (engine) col2_.next = 1 end)
       )
@@ -62,6 +59,9 @@ def shutter_bidir_template(engine, colors_, duration_)
 end
 
 animation.register_user_function('shutter_bidir', shutter_bidir_template)
+
+# Auto-generated strip initialization (using Tasmota configuration)
+var engine = animation.init_strip()
 
 var rainbow_with_white_ = bytes(
   "FFFF0000"

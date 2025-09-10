@@ -7,9 +7,6 @@
 import animation
 
 # Complex template test
-# Auto-generated strip initialization (using Tasmota configuration)
-var engine = animation.init_strip()
-
 # Template function: rainbow_pulse
 def rainbow_pulse_template(engine, pal1_, pal2_, duration_, back_color_)
   var cycle_color_ = animation.color_cycle(engine)
@@ -33,11 +30,17 @@ end
 animation.register_user_function('rainbow_pulse', rainbow_pulse_template)
 
 # Create palettes
+# Auto-generated strip initialization (using Tasmota configuration)
+var engine = animation.init_strip()
+
 var fire_palette_ = bytes("00000000" "80FF0000" "FFFFFF00")
 var ocean_palette_ = bytes("00000080" "800080FF" "FF00FFFF")
 # Use the template
 rainbow_pulse_template(engine, fire_palette_, ocean_palette_, 3000, 0xFF001100)
 engine.run()
+
+# Compilation warnings:
+# Line 28: Template 'rainbow_pulse' parameter 'pal2' is declared but never used in the template body.
 
 
 #- Original DSL source:

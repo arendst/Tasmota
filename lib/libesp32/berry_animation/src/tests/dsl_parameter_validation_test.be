@@ -201,7 +201,6 @@ class DSLParameterValidationTest
   # Test valid object property references - should compile successfully
   def test_valid_object_property_references()
     var dsl_code = 
-      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation red_eye = beacon_animation(color=red, pos=10)\n"
       "animation green_eye = beacon_animation(color=green, pos=red_eye.pos)\n"
       "run red_eye\n"
@@ -214,7 +213,7 @@ class DSLParameterValidationTest
     end
     
     # Check that the generated code contains the expected object reference
-    if string.find(berry_code, "animation.resolve(red_eye_, 'pos')") == -1
+    if string.find(berry_code, "red_eye_.pos") == -1
       raise "generation_error", "Generated code should contain object property reference"
     end
   end
@@ -336,7 +335,7 @@ class DSLParameterValidationTest
     end
     
     # Check that the generated code contains the expected computed expression
-    if string.find(berry_code, "animation.resolve(strip_len_) - animation.resolve(red_eye_, 'pos')") == -1
+    if string.find(berry_code, "animation.resolve(strip_len_) - red_eye_.pos") == -1
       raise "generation_error", "Generated code should contain computed object property reference"
     end
   end

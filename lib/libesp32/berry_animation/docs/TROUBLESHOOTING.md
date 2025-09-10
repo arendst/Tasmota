@@ -999,16 +999,41 @@ run red_solid
 ```berry
 # Define reusable template
 template pulse_effect {
-  param color type color
-  param speed
+  param base_color type color    # Use descriptive names
+  param speed type time          # Add type annotations for clarity
   
-  animation pulse = pulsating_animation(color=color, period=speed)
+  animation pulse = pulsating_animation(color=base_color, period=speed)
   run pulse
 }
 
 # Use template multiple times
 pulse_effect(red, 2s)
 pulse_effect(blue, 1s)
+```
+
+**Common Template Parameter Issues:**
+
+```berry
+# ❌ AVOID: Parameter name conflicts
+template bad_example {
+  param color type color      # Error: conflicts with built-in color name
+  param animation type number # Error: conflicts with reserved keyword
+}
+
+# ✅ CORRECT: Use descriptive, non-conflicting names
+template good_example {
+  param base_color type color    # Clear, non-conflicting name
+  param anim_speed type time     # Descriptive parameter name
+}
+
+# ⚠️ WARNING: Unused parameters generate warnings
+template unused_param_example {
+  param used_color type color
+  param unused_value type number  # Warning: never used in template body
+  
+  animation test = solid(color=used_color)
+  run test
+}
 ```
 
 ### Animation with Parameters

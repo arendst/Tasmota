@@ -8,10 +8,12 @@ def test_transpilation_case(dsl_code, expected_methods, test_name)
   print(f"\n  Testing: {test_name}")
   
   var lexer = animation_dsl.DSLLexer(dsl_code)
-  var tokens = lexer.tokenize()
+  var tokens
   
-  if size(lexer.errors) > 0
-    print(f"    ❌ Lexer errors: {lexer.errors}")
+  try
+    tokens = lexer.tokenize()
+  except "lexical_error" as e, msg
+    print(f"    ❌ Lexer error: {msg}")
     return false
   end
   
@@ -63,10 +65,12 @@ def test_non_math_functions(dsl_code)
   print("\n  Testing: Non-math functions should NOT be prefixed with animation._math.")
   
   var lexer = animation_dsl.DSLLexer(dsl_code)
-  var tokens = lexer.tokenize()
+  var tokens
   
-  if size(lexer.errors) > 0
-    print(f"    ❌ Lexer errors: {lexer.errors}")
+  try
+    tokens = lexer.tokenize()
+  except "lexical_error" as e, msg
+    print(f"    ❌ Lexer error: {msg}")
     return false
   end
   

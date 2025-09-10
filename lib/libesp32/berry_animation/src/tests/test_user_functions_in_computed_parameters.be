@@ -11,10 +11,12 @@ def test_transpilation_case(dsl_code, expected_user_function, test_name)
   print(f"\n  Testing: {test_name}")
   
   var lexer = animation_dsl.DSLLexer(dsl_code)
-  var tokens = lexer.tokenize()
+  var tokens
   
-  if size(lexer.errors) > 0
-    print(f"    ❌ Lexer errors: {lexer.errors}")
+  try
+    tokens = lexer.tokenize()
+  except "lexical_error" as e, msg
+    print(f"    ❌ Lexer error: {msg}")
     return false
   end
   

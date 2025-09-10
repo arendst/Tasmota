@@ -101,18 +101,16 @@ def test_unterminated_triple_quotes()
   
   var source = 'berry """\nUnterminated string'
   var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
   
-  # Should generate an error token
-  var has_error = false
-  for token : tokens
-    if token.type == animation_dsl.Token.ERROR
-      has_error = true
-      break
-    end
+  # Should raise an exception for unterminated string
+  try
+    var tokens = lexer.tokenize()
+    assert(false, "Should raise exception for unterminated triple-quoted string")
+  except "lexical_error" as e, msg
+    # Expected - unterminated string should raise lexical_error
+    assert(size(msg) > 0, "Should have error message")
+    assert(string.find(msg, "Unterminated") >= 0, "Error message should mention unterminated string")
   end
-  
-  assert(has_error, "Should generate an ERROR token for unterminated string")
   
   print("✓ Unterminated triple-quoted string test passed")
   return true
