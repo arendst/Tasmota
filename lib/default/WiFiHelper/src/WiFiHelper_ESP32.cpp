@@ -94,10 +94,12 @@ void WiFiHelper::scrubDNS(void) {
     const ip_addr_t* ip_dns = dns_getserver(i);
     // Step 1. save valid values from DNS
     if (ip_dns && !ip_addr_isany_val(*ip_dns)) {
-      if (IP_IS_V4(ip_dns)) {
-        dns_save4[i] = *ip_dns;       // dns entry is populated, save it in v4 slot
-      }
 #ifdef USE_IPV6
+      if (IP_IS_V4(ip_dns)) {
+#endif // USE_IPV6
+        dns_save4[i] = *ip_dns;       // dns entry is populated, save it in v4 slot
+#ifdef USE_IPV6
+      }
       else if (has_v6) {
         dns_save6[i] = *ip_dns;       // dns entry is populated, save it in v6 slot
       }
