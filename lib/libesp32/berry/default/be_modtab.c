@@ -83,6 +83,8 @@ be_extern_native_module(haspmota);
 #endif // USE_LVGL_HASPMOTA
 #endif // USE_LVGL
 #ifdef USE_MATTER_DEVICE
+be_extern_native_module(matter);
+#endif // USE_MATTER_DEVICE
 #ifdef USE_WS2812
 #ifdef USE_BERRY_ANIMATION
 be_extern_native_module(animation);
@@ -91,8 +93,6 @@ be_extern_native_module(animation_dsl);
 #endif // USE_BERRY_ANIMATION_DSL
 #endif // USE_BERRY_ANIMATION
 #endif // USE_WS2812
-be_extern_native_module(matter);
-#endif // USE_MATTER_DEVICE
 
 /* user-defined modules declare start */
 
