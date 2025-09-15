@@ -791,6 +791,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%UTCTIME%"), String(UtcTime()));
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
+      RulesVarReplace(commands, F("%TIMESTAMP_MS%"), GetDateAndTime(DT_LOCAL_MILLIS));
       RulesVarReplace(commands, F("%TOPIC%"), TasmotaGlobal.mqtt_topic);
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
