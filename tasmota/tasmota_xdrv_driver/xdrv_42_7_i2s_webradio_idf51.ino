@@ -43,9 +43,14 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
     wr_tasksize = 26000;
   }
 
+  size_t finalBufferSize = preallocateBufferSize;
+  if(CanUsePSRAM()){
+    size_t targetsize = (ESP_getMaxAllocPsram()/4) * 3; // use up to 3/4 of available PSRAM
+    finalBufferSize = targetsize;
+  }
   // allocate buffers if not already done
   if (audio_i2s_mp3.preallocateBuffer == NULL) {
-    audio_i2s_mp3.preallocateBuffer = special_malloc(preallocateBufferSize);
+    audio_i2s_mp3.preallocateBuffer = special_malloc(finalBufferSize);
   }
   if (audio_i2s_mp3.preallocateCodec == NULL) {
     audio_i2s_mp3.preallocateCodec = special_malloc(preallocateCodecSize);
@@ -65,6 +70,7 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
   }
 
   Audio_webradio.ifile = new AudioFileSourceICYStream();
+  Audio_webradio.ifile->SetReconnect(5, 5);
   Audio_webradio.ifile->RegisterMetadataCB(I2sMDCallback, NULL);
   Audio_webradio.ifile->RegisterStatusCB(I2SWrStatusCB, NULL);
   if(!Audio_webradio.ifile->open(url)){
@@ -73,7 +79,7 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
   AddLog(LOG_LEVEL_INFO, "I2S: did connect to %s",url);
 
   I2SAudioPower(true);
-  audio_i2s_mp3.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, audio_i2s_mp3.preallocateBuffer, preallocateBufferSize);
+  audio_i2s_mp3.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, audio_i2s_mp3.preallocateBuffer, finalBufferSize);
   if(audio_i2s_mp3.buff == nullptr){
     goto i2swr_fail;
   }
