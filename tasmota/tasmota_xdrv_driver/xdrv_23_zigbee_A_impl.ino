@@ -1917,9 +1917,9 @@ const char ZB_WEB_U[] PROGMEM =
     // Lighting
     ".bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
     // Signal Strength Indicator
-    ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
-    ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:#%06x}"
-    ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}"
+    ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
+    "i{width:3px;margin-right:1px;border-radius:3px;background-color:#%06x}"
+    ".b0{height:25%%}.b1{height:50%%}.b2{height:75%%}.b3{height:100%%}}.o30{opacity:.3}"
     "</style>"
 
     "\0"
@@ -2277,8 +2277,8 @@ void ZigbeeShow(bool json)
         EscapeHTMLString(name).c_str(), sbatt, slqi);
 
         if(device.validLqi()) {
-            for(uint32_t j = 0; j < 4; ++j) {
-              WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
+            for(uint32_t j = 0; j < 4; j++) {
+              WSContentSend_P(PSTR("<i class='b%d%s'></i>"), j, (j >= num_bars) ? PSTR(" o30") : PSTR(""));
             }
         }
         snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));

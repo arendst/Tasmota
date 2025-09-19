@@ -248,9 +248,10 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
 
 const char HTTP_HEAD_STYLE_SSI[] PROGMEM =
   // Signal Strength Indicator
-  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
-  ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
-  ".si .b0{height:25%}.si .b1{height:50%}.si .b2{height:75%}.si .b3{height:100%}.o30{opacity:.3}";
+  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
+  "i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
+  ".b0{height:25%}.b1{height:50%}.b2{height:75%}.b3{height:100%}}"
+  ".o30{opacity:.3}";
 
 // special case if MINIMAL, then we don't use compressed version
 #ifdef FIRMWARE_MINIMAL
@@ -1973,12 +1974,12 @@ bool HandleRootStatusRefresh(void) {
 #ifdef USE_WEB_STATUS_LINE_WIFI
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("<div class='wifi' title='%s: " D_RSSI " %d%%, %d dBm' style='padding:0 2px 0 2px;'><div class='arc a3 %s'></div><div class='arc a2 %s'></div><div class='arc a1 %s'></div><div class='arc a0 active'></div></div>"),
+    WSContentSend_P(PSTR("<div class='wifi' title='%s: " D_RSSI " %d dBm (%d%%)'><div class='arc a3%s'></div><div class='arc a2%s'></div><div class='arc a1%s'></div><div class='arc a0'></div></div>"),
                           SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str(),                      
-                          WifiGetRssiAsQuality(rssi), rssi,
-                          rssi >= -55 ? "active" : "",
-                          rssi >= -70 ? "active" : "",
-                          rssi >= -85 ? "active" : "");
+                          rssi, WifiGetRssiAsQuality(rssi),
+                          rssi < -55 ? " o30" : "",
+                          rssi < -70 ? " o30" : "",
+                          rssi < -85 ? " o30" : "");
   }
 #endif // USE_WEB_STATUS_LINE_WIFI
 #ifdef USE_WEB_STATUS_LINE_HEAP
@@ -2576,14 +2577,17 @@ void HandleWifiConfiguration(void) {
             }
             skipduplicated = false;
             String nextSSID = "";
+#ifdef USE_HIGHLIGHT_CONNECTED_AP
+            bool HighlightAP;
+#endif
             // Handle all APs with the same SSID
             for (uint32_t j = 0; j < n; j++) {
               if ((indices[j] < n) && ((nextSSID = WiFi.SSID(indices[j])) == ssid)) {
                 if (!skipduplicated) {
                   // Update RSSI / quality
                   rssi = WiFi.RSSI(indices[j]);
-                  uint32_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
-                  uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
+                  uint8_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
+                  uint8_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
 
                   WSContentSend_P(PSTR("<div title='%d dBm (%d%%)'>"), rssi, rssi_as_quality);
                   if (limitScannedNetworks) {
@@ -2591,18 +2595,27 @@ void HandleWifiConfiguration(void) {
                     WSContentSend_P(PSTR("<a href='#p' onclick='c(this)'>%s</a><span class='q'><div class='si'>"), HtmlEscape(ssid_copy).c_str());
                     ssid_showed++;
                     skipduplicated = true; // For the simplified page, just show 1 SSID if there are many Networks with the same
+#ifdef USE_HIGHLIGHT_CONNECTED_AP
+                    HighlightAP = ssid_copy == WiFi.SSID();
+#endif
                   } else {
                     // Print item
-                    WSContentSend_P(PSTR("%s<span class='q'>(%d) <div class='si'>"), WiFi.BSSIDstr(indices[j]).c_str(), WiFi.channel(indices[j])
-                    );
+                    WSContentSend_P(PSTR("%s<span class='q'>(%d) <div class='si'>"), WiFi.BSSIDstr(indices[j]).c_str(), WiFi.channel(indices[j]));
+#ifdef USE_HIGHLIGHT_CONNECTED_AP
+                    HighlightAP = WiFi.BSSIDstr(indices[j]) == WiFi.BSSIDstr();
+#endif
                   }
                   // Print signal strength indicator
-                  for (uint32_t k = 0; k < 4; ++k) {
-                    WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
+                  for (uint8_t k = 0; k < 4; k++) {
+#ifdef USE_HIGHLIGHT_CONNECTED_AP
+                    WSContentSend_P(PSTR("<i class='b%d%s'%s></i>"), k, (k >= num_bars) ? PSTR(" o30") : PSTR(""), HighlightAP ? PSTR(" style='background-color:var(--c_btn);'") : PSTR(""));
+#else
+                    WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (k >= num_bars) ? PSTR(" o30") : PSTR(""));
+#endif
                   }
                   WSContentSend_P(PSTR("</div></span></div>"));
                 } else {
-                  if (ssid_showed <= networksToShow ) { networksToShow++; }
+                  if (ssid_showed <= networksToShow) { networksToShow++; }
                 }
                 indices[j] = n;
               }

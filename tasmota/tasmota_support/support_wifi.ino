@@ -58,16 +58,9 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
  * - Values in between are linearly mapped (each 2.5 dBm = 5%)
  */
 int WifiGetRssiAsQuality(int rssi) {
-  int quality = 0;
-
-  if (rssi <= -100) {
-    quality = 0;
-  } else if (rssi >= -50) {
-    quality = 100;
-  } else {
-    quality = 2 * (rssi + 100);
-  }
-  return quality;
+  if (rssi <= -100) { return 0; }
+  if (rssi >= -50)  { return 100; }
+  return 2 * (rssi + 100);
 }
 
 //                                           0    1   2       3        4
