@@ -1,3 +1,60 @@
+/*
+  xdrv_55_touch.ino - Touch controllers
+
+  Copyright (C) 2025
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*******************************************************************************************\
+ * Time Proportional driver
+ *
+ * allowing to add a time proportional overlay to relays. The individual value is defining
+ * how long a relay will be on during the cycle. E.g. if the cycle length is 10 minutes and
+ * the set value is 40 the relay will on for 4 minutes and off for 6 minutes. The cycle will
+ * start again.
+ * 
+ * the driver has some configuration items that are controllable via mqtt, console and web
+ * 
+ * TimePropEnable: Enables the Timeprop overlay
+ * TimePropCycleLength: Defines how long the cycle is. will take a value between 0 and 3.
+ *    That value is multiplied by 5 minutes. If TimePropCycleLength has a value of 2 the
+ *    cycle length is 3*60seconds. The maximum cycle length is therefore 20 minutes. The
+ *    limitation of values has been done to save configuration memoty.
+ * TimePropCount: The number of relays controlled via timeprops. When set to 5, the first
+ *    five relays are timeprop controlled. Because the relay - output mapping is flexible,
+ *    the timeprop - relay mapping has been made static to save configuration memory.
+ * TimePropLoadType:
+ *    0: load distribution. timeprop is trying to distribute the start time for each timeprop
+ *                          so that flow is distributed evenly.
+ *    1: load collection.   all timeprops are opening at start of cycle. closing is defined
+ *                          by set time
+ * TimePropFallbackAfter: if after this time no new set value has been received the timeprop
+ *    will fall back to a value. In case a controlling instance is failing the local timeprop
+ *    is acting in a defined state. the value it is falling back to is defined by
+ *    TimePropFallbackValue. 4 bit are set aside for this functionality. we store from 0 to 15
+ *    and multiply that by TIMEPROP_FALLBACKTIME_MULTIPLIER with a default of 2. Using that
+ *    default allows for a fallback time from 0 to 30 hours in 2 hours increment.
+ * TimePropFallbackValue: See above. To save memory this is also a 4 bit value that is expanded
+ *    to a value from 0 to 100.
+ * 
+ * To control the individual set values:
+
+ * TimePropSet<n>: is taking a value from 0-100 which defines the time the relay is on in
+ *    relation to TimePropCycleLength.
+\*******************************************************************************************/
+
 #ifdef USE_TIMEPROP
 
 #define XDRV_48 48
