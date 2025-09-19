@@ -15,12 +15,8 @@
 #define XDRV_84               84
 
 #include "esp_hosted.h"
-#if __has_include("port/esp/freertos/include/port_esp_hosted_host_config.h")
-#include "port/esp/freertos/include/port_esp_hosted_host_config.h"
-#endif  //#include "port_esp_hosted_host_config.h"
-#include "esp_hosted_api_types.h"
-#include "esp_hosted_ota.h"
 #include "esp_hosted_transport_config.h"
+#include "port/esp/freertos/include/port_esp_hosted_host_config.h"
 
 struct Hosted_t {
   char *hosted_ota_url;                     // Hosted MCU OTA URL
