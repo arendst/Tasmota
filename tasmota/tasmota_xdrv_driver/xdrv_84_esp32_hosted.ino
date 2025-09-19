@@ -15,7 +15,11 @@
 #define XDRV_84               84
 
 #include "esp_hosted.h"
+
+extern "C" {
 #include "esp_hosted_transport_config.h"
+}
+
 #include "port/esp/freertos/include/port_esp_hosted_host_config.h"
 
 struct Hosted_t {
