@@ -888,14 +888,25 @@ int32_t script_mdns(char *name, char *mac, char *xtype) {
 
   strcpy(glob_script_mem.mdns.type, xtype);
   char shelly_mac[13];
-  strcpy(glob_script_mem.mdns.shelly_name, name);
-  if (*mac == '-') {
-    uint8_t mac[6];
-    WiFi.macAddress(mac);
-    sprintf(shelly_mac, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    strcat(glob_script_mem.mdns.shelly_name, shelly_mac);
+  if (*name == '-'){
+    strcpy(glob_script_mem.mdns.shelly_name, TasmotaGlobal.hostname);
   } else {
-    strcat(glob_script_mem.mdns.shelly_name, mac);
+    strcpy(glob_script_mem.mdns.shelly_name, name);
+    if (*mac == '-') {
+      uint8_t mac[6];
+      WiFi.macAddress(mac);
+      sprintf(shelly_mac, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+      strcat(glob_script_mem.mdns.shelly_name, shelly_mac);
+    } else {
+      strcat(glob_script_mem.mdns.shelly_name, mac);
+    }
+  }
+  
+  uint8_t emu_choice;
+  if (!strcmp(xtype, "everhome")) {
+    emu_choice = 1;
+  } else {
+    emu_choice = 0; //default = shelly  
   }
 
   if (!MDNS.begin(glob_script_mem.mdns.shelly_name)) {
@@ -905,35 +916,57 @@ int32_t script_mdns(char *name, char *mac, char *xtype) {
 #ifdef ESP32
     MDNS.addService("http", "tcp", 80);
     MDNS.addService((const char*)glob_script_mem.mdns.type, "tcp", 80);
-    mdns_txt_item_t serviceTxtData[4] = {
-      { "fw_id", glob_script_mem.mdns.shelly_fw_id },
-      { "arch", "esp8266" },
-      { "id", glob_script_mem.mdns.shelly_name },
-      { "gen", glob_script_mem.mdns.shelly_gen }
-    };
-    mdns_service_instance_name_set("_http", "_tcp", glob_script_mem.mdns.shelly_name);
-    mdns_service_txt_set("_http", "_tcp", serviceTxtData, 4);
-    mdns_service_instance_name_set("_shelly", "_tcp", glob_script_mem.mdns.shelly_name);
-    mdns_service_txt_set("_shelly", "_tcp", serviceTxtData, 4);
+
+    if (emu_choice == 1) {
+      mdns_txt_item_t serviceTxtData[2] = {
+        { "name", glob_script_mem.mdns.shelly_name },
+        { "id", glob_script_mem.mdns.shelly_name }
+      };
+      mdns_service_instance_name_set("_http", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_http", "_tcp", serviceTxtData, 2);
+      mdns_service_instance_name_set("_shelly", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_everhome", "_tcp", serviceTxtData, 2);
+    } else {
+      mdns_txt_item_t serviceTxtData[4] = {
+        { "fw_id", glob_script_mem.mdns.shelly_fw_id },
+        { "arch", "esp8266" },
+        { "id", glob_script_mem.mdns.shelly_name },
+        { "gen", glob_script_mem.mdns.shelly_gen }
+      };
+      mdns_service_instance_name_set("_http", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_http", "_tcp", serviceTxtData, 4);
+      mdns_service_instance_name_set("_shelly", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_shelly", "_tcp", serviceTxtData, 4);
+    }
 #else
     hMDNSService = MDNS.addService(0, "http", "tcp", 80);
     hMDNSService2 = MDNS.addService(0, glob_script_mem.mdns.type, "tcp", 80);
     if (hMDNSService) {
       MDNS.setServiceName(hMDNSService, glob_script_mem.mdns.shelly_name);
-      MDNS.addServiceTxt(hMDNSService, "fw_id", glob_script_mem.mdns.shelly_fw_id);
-      MDNS.addServiceTxt(hMDNSService, "arch", "esp8266");
-      MDNS.addServiceTxt(hMDNSService, "id", glob_script_mem.mdns.shelly_name);
-      MDNS.addServiceTxt(hMDNSService, "gen", glob_script_mem.mdns.shelly_gen);
+      if (emu_choice == 1) {
+        MDNS.addServiceTxt(hMDNSService, "name", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService, "id", glob_script_mem.mdns.shelly_name);
+      } else {
+        MDNS.addServiceTxt(hMDNSService, "fw_id", glob_script_mem.mdns.shelly_fw_id);
+        MDNS.addServiceTxt(hMDNSService, "arch", "esp8266");
+        MDNS.addServiceTxt(hMDNSService, "id", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService, "gen", glob_script_mem.mdns.shelly_gen);
+      }
     }
     if (hMDNSService2) {
       MDNS.setServiceName(hMDNSService2, glob_script_mem.mdns.shelly_name);
-      MDNS.addServiceTxt(hMDNSService2, "fw_id", glob_script_mem.mdns.shelly_fw_id);
-      MDNS.addServiceTxt(hMDNSService2, "arch", "esp8266");
-      MDNS.addServiceTxt(hMDNSService2, "id", glob_script_mem.mdns.shelly_name);
-      MDNS.addServiceTxt(hMDNSService2, "gen", glob_script_mem.mdns.shelly_gen);
+      if (emu_choice == 1) {
+        MDNS.addServiceTxt(hMDNSService2, "name", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService2, "id", glob_script_mem.mdns.shelly_name);
+      } else {
+        MDNS.addServiceTxt(hMDNSService2, "fw_id", glob_script_mem.mdns.shelly_fw_id);
+        MDNS.addServiceTxt(hMDNSService2, "arch", "esp8266");
+        MDNS.addServiceTxt(hMDNSService2, "id", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService2, "gen", glob_script_mem.mdns.shelly_gen);
+      }
     }
 #endif
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP "SCR: mDNS responder started: %s"),glob_script_mem.mdns.shelly_name);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP "SCR: mDNS started with service tcp and %s. Hostname: %s"), glob_script_mem.mdns.type, glob_script_mem.mdns.shelly_name);
   return 0;
 }
 #endif // USE_SCRIPT_MDNS
@@ -1241,9 +1274,11 @@ char *script;
                 if ((*lp == 'm' || *lp == 'M') && *(lp + 1) == ':') {
                     uint8_t flg = *lp;
                     lp += 2;
+                    pflg = 0;
                     if (*lp == 'p' && *(lp + 1) == ':') {
                       vtypes[vars].bits.is_permanent = 1;
                       lp += 2;
+                      pflg = 1;
                     }
                     if (flg == 'M') mfilt[numflt].numvals = 8;
                     else mfilt[numflt].numvals = 5;
@@ -9801,7 +9836,6 @@ void Scripter_save_pvars(void) {
 
 const char HTTP_BTN_MENU_RULES[] PROGMEM =
   "<p></p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form>";
-
 
 const char HTTP_FORM_SCRIPT[] PROGMEM =
     "<fieldset><legend><b>&nbsp;" D_SCRIPT "&nbsp;</b></legend>"
