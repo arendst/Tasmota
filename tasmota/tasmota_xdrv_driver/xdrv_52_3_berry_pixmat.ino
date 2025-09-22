@@ -1,3 +1,22 @@
+/*
+  xdrv_52_3_berry_pixmat.ino - Berry scripting language, native functions
+
+  Copyright (C) 2021 Christian Baars & Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifdef USE_BERRY
 #include <berry.h>
 #ifdef USE_WS2812
@@ -9,13 +28,13 @@
 #include <limits>
 
 // Forward declare native core so it can appear in signatures
-struct MatrixCore;
+struct PixmatCore;
 
 // Prototypes for helpers
-static MatrixCore* self_core(bvm* vm);
-static inline bool in_bounds(const MatrixCore* mc, int x, int y);
+static PixmatCore* self_core(bvm* vm);
+static inline bool in_bounds(const PixmatCore* mc, int x, int y);
 
-struct MatrixCore {
+struct PixmatCore {
     uint8_t* data = nullptr;
     int width = 0;
     int height = 0;
@@ -43,7 +62,7 @@ struct MatrixCore {
         return static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(bpp);
     }
 
-    inline void blit(const MatrixCore* src, int dx, int dy) {
+    inline void blit(const PixmatCore* src, int dx, int dy) {
       uint8_t pix[8]; // enough for max bpp
       for (int sy = 0; sy < src->height; ++sy) {
           int dypos = sy + dy;
@@ -59,16 +78,16 @@ struct MatrixCore {
 };
 
 /* fetch native pointer from this .p */
-static MatrixCore* self_core(bvm* vm) {
+static PixmatCore* self_core(bvm* vm) {
     be_getmember(vm, 1, ".p");
-    MatrixCore* mc = (MatrixCore*) be_tocomptr(vm, -1);
+    PixmatCore* mc = (PixmatCore*) be_tocomptr(vm, -1);
     be_pop(vm, 1);
     return mc;
 }
 
 static inline uint8_t mul8(uint8_t a, uint8_t b){ return (a * b) >> 8; }
 
-static inline bool in_bounds(const MatrixCore* mc, int x, int y) {
+static inline bool in_bounds(const PixmatCore* mc, int x, int y) {
     return (x >= 0 && x < mc->width && y >= 0 && y < mc->height);
 }
 
@@ -89,19 +108,19 @@ static inline void unpack_color(uint32_t c, int bpp, uint8_t out[8]) {
 extern "C" {
 
 // Prototypes for all Berry entry points
-int be_matrix_init(bvm* vm);
-int be_matrix_deinit(bvm* vm);
-int be_matrix_get(bvm* vm);
-int be_matrix_set(bvm* vm);
-int be_matrix_blit(bvm* vm);
-int be_matrix_scroll(bvm* vm);
-int be_matrix_clear(bvm* vm);
+int be_pixmat_init(bvm* vm);
+int be_pixmat_deinit(bvm* vm);
+int be_pixmat_get(bvm* vm);
+int be_pixmat_set(bvm* vm);
+int be_pixmat_blit(bvm* vm);
+int be_pixmat_scroll(bvm* vm);
+int be_pixmat_clear(bvm* vm);
 
-int be_matrix_init(bvm* vm) {
+int be_pixmat_init(bvm* vm) {
     int argc = be_top(vm);
-    auto* mc = new MatrixCore();
+    auto* mc = new PixmatCore();
 
-    // overload: Matrix(bitplane_bytes, bytes_per_line)
+    // overload: pixmat(bitplane_bytes, bytes_per_line)
     if (be_isbytes(vm, 2) && be_isint(vm, 3) && argc == 3) {
         size_t len = 0;
         const uint8_t* bits = (const uint8_t*)be_tobytes(vm, 2, &len);
@@ -183,7 +202,7 @@ int be_matrix_init(bvm* vm) {
     else {
         delete mc;
         be_raise(vm, "type_error",
-            "Matrix(bitlines:bytes,bytes_per_line) or Matrix(buf:bytes,w,h,bpp,[serp]) or Matrix(w,h,bpp,[serp])");
+            "pixmat(bitlines:bytes,bytes_per_line) or pixmat(buf:bytes,w,h,bpp,[serp]) or pixmat(w,h,bpp,[serp])");
     }
 
     be_pushcomptr(vm, (void*)mc);
@@ -191,7 +210,7 @@ int be_matrix_init(bvm* vm) {
     be_return_nil(vm);
 }
 
-int be_matrix_deinit(bvm* vm) {
+int be_pixmat_deinit(bvm* vm) {
     auto* mc = self_core(vm);
     if (mc) {
         if (!mc->external && mc->data) free(mc->data);
@@ -201,7 +220,7 @@ int be_matrix_deinit(bvm* vm) {
     be_return_nil(vm);
 }
 
-int be_matrix_clear(bvm* vm) {
+int be_pixmat_clear(bvm* vm) {
     auto* mc = self_core(vm);
     if (!mc) be_raise(vm, "type_error", "clear([val:int])");
     int val = (be_top(vm) >= 2) ? (be_toint(vm, 2) & 0xFF) : 0;
@@ -210,7 +229,7 @@ int be_matrix_clear(bvm* vm) {
 }
 
 /* get */
-int be_matrix_get(bvm* vm) {
+int be_pixmat_get(bvm* vm) {
     auto* mc = self_core(vm);
     if (!mc || be_top(vm) < 3) be_raise(vm, "type_error", "get(x,y)");
     int x = be_toint(vm, 2), y = be_toint(vm, 3);
@@ -223,7 +242,7 @@ int be_matrix_get(bvm* vm) {
     be_return(vm);
 }
 
-int be_matrix_set(bvm* vm) {
+int be_pixmat_set(bvm* vm) {
     auto* mc = self_core(vm);
     int argc = be_top(vm);
     if (!mc || argc < 4) {
@@ -278,12 +297,12 @@ int be_matrix_set(bvm* vm) {
     be_return_nil(vm);
 }
 
-int be_matrix_blit(bvm* vm) {
+int be_pixmat_blit(bvm* vm) {
     auto* dest = self_core(vm);
     if (!dest || be_top(vm) < 4) be_raise(vm, "type_error", "blit(src,dx,dy[,bri:int][,tint:int])");
 
     be_getmember(vm, 2, ".p");
-    MatrixCore* src = (MatrixCore*)be_tocomptr(vm, -1);
+    PixmatCore* src = (PixmatCore*)be_tocomptr(vm, -1);
     be_pop(vm, 1);
     if (!src) be_raise(vm, "type_error", "invalid src matrix");
 
@@ -333,7 +352,7 @@ int be_matrix_blit(bvm* vm) {
     be_return_nil(vm);
 }
 
-int be_matrix_scroll(bvm* vm) {
+int be_pixmat_scroll(bvm* vm) {
     auto* d = self_core(vm);
     if (!d || be_top(vm) < 2)
         be_raise(vm, "type_error", "scroll(dir[,src])");
@@ -343,18 +362,18 @@ int be_matrix_scroll(bvm* vm) {
     int h    = d->height;
     int bpp  = d->bpp;
 
-    MatrixCore* s = nullptr;
+    PixmatCore* s = nullptr;
     if (be_top(vm) >= 3 && !be_isnil(vm, 3)) {
         be_getmember(vm, 3, ".p");
-        s = (MatrixCore*)be_tocomptr(vm, -1);
+        s = (PixmatCore*)be_tocomptr(vm, -1);
         be_pop(vm, 1);
     }
 
     size_t need = (dir < 2 ? w : h) * bpp;
     uint8_t edge[256], pix[8];
 
-    auto save_row  = [&](int y, MatrixCore* m) { for (int x = 0; x < w; ++x) m->load(x, y, edge + x * bpp); };
-    auto save_col  = [&](int x, MatrixCore* m) { for (int y = 0; y < h; ++y) m->load(x, y, edge + y * bpp); };
+    auto save_row  = [&](int y, PixmatCore* m) { for (int x = 0; x < w; ++x) m->load(x, y, edge + x * bpp); };
+    auto save_col  = [&](int x, PixmatCore* m) { for (int y = 0; y < h; ++y) m->load(x, y, edge + y * bpp); };
     auto write_row = [&](int y) { for (int x = 0; x < w; ++x) d->store(x, y, edge + x * bpp); };
     auto write_col = [&](int x) { for (int y = 0; y < h; ++y) d->store(x, y, edge + y * bpp); };
 
@@ -410,18 +429,18 @@ int be_matrix_scroll(bvm* vm) {
 
 
 /*
-Matrix API (Berry)
+pixmat API (Berry)
 ==================
 
 Constructor overloads:
 -----------------------
-Matrix(bitplane_bytes:bytes, bytes_per_line:int)
+pixmat(bitplane_bytes:bytes, bytes_per_line:int)
     Create 1‑bpp mono matrix from packed bitplane data.
 
-Matrix(buf:bytes, width:int, height:int, bpp:int[, serpentine:bool])
+pixmat(buf:bytes, width:int, height:int, bpp:int[, serpentine:bool])
     Wrap an existing pixel buffer (no copy).
 
-Matrix(width:int, height:int, bpp:int[, serpentine:bool])
+pixmat(width:int, height:int, bpp:int[, serpentine:bool])
     Allocate a new zero‑filled buffer.
 
 Methods:
@@ -441,12 +460,12 @@ set(x:int, y:int, rgb:int[, bri:int])
 set(x:int, y:int, h:int, s:int, v:int[, bri:int])
     Set pixel from HSV (h=0–359°, s/v=0–255), optional brightness.
 
-blit(src:Matrix, dx:int, dy:int[, bri:int][, tint:int])
+blit(src:pixmat, dx:int, dy:int[, bri:int][, tint:int])
     Copy pixels from src into this matrix at offset.
     Optional brightness scale and RGB tint.
     Supports mono→color expansion.
 
-scroll(dir:int[, src:Matrix])
+scroll(dir:int[, src:pixmat])
     Scroll content by one pixel:
         dir=0: up
         dir=1: left
