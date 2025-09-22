@@ -1,0 +1,8 @@
+{
+  "name": "Wifi Memory Sticker",
+  "version": "0x19090100",
+  "description": "Display top left sticker with Wifi strength and memory heap",
+  "author": "Stephan Hadinger",
+  "min_tasmota": "0x0F000100",
+  "features": ""
+}

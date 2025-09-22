@@ -815,7 +815,17 @@ class leds_panel
     end
     if (port == nil)  port = self.PORT   end
     self.port = port
-    self.web = global.webserver_async(port)
+
+    # start network part
+    if tasmota.is_network_up()
+      self.init_network()
+    else
+      tasmota.when_network_up(/ -> self.init_network())
+    end
+  end
+
+  def init_network()
+    self.web = global.webserver_async(self.port)
     self.sampling_interval = self.SAMPLING
 
     self.strip = Leds()
@@ -848,7 +858,9 @@ class leds_panel
   #################################################################################
   def close()
     tasmota.remove_driver(self)
-    self.web.close()
+    if self.web
+      self.web.close()
+    end
   end
 
   def update()
@@ -966,7 +978,7 @@ class leds_panel
           '<tbody>'
             '<tr>'
               '<td>'
-                '<fieldset style="background-color:{tasmota.webcolor(1)};">'
+                '<fieldset style="background-color:var(--c_bg);">'
                   '<legend style="text-align:left;">'
                     '<label>'
                       '<input type="checkbox" id="ledchk">&nbsp;Leds mirroring&nbsp;'

@@ -7,8 +7,6 @@
 # rm Partition_Wizard.tapp; zip Partition_Wizard.tapp -j -0 Partition_Wizard/autoexec.be Partition_Wizard/partition_wizard.be
 #######################################################################
 
-var partition_wizard = module('partition_wizard')
-
 #################################################################################
 # Partition_wizard_UI
 #
@@ -22,6 +20,11 @@ class Partition_wizard_UI
   def init()
     import persist
 
+    tasmota.add_driver(self)
+    if tasmota.is_network_up()
+      self.web_add_handler()      # if init is called after the network is up, `web_add_handler` event is not fired
+    end
+
     if persist.find("factory_migrate") == true
       # remove marker to avoid bootloop if something goes wrong
       tasmota.log("UPL: Resuming after step 1", 2)
@@ -30,18 +33,25 @@ class Partition_wizard_UI
 
       # continue the migration process 5 seconds after Wifi is connected
       def continue_after_5s()
-        tasmota.remove_rule("parwiz_5s1")      # first remove rule to avoid firing it again at Wifi reconnect
-        tasmota.remove_rule("parwiz_5s2")      # first remove rule to avoid firing it again at Wifi reconnect
-        tasmota.set_timer(5000, /-> self.do_safeboot_partitioning())  # delay by 5 s
+        tasmota.set_timer(5000, /-> self.do_safeboot_partitioning(), "partition_wizard_timer")  # delay by 5 s
       end
-      tasmota.add_rule("Wifi#Connected=1", continue_after_5s, "parwiz_5s1")
-      tasmota.add_rule("Wifi#Connected==1", continue_after_5s, "parwiz_5s2")
-      
+      tasmota.when_network_up(continue_after_5s)      
     end
   end
 
+  #- ---------------------------------------------------------------------- -#
+  # unload
+  #- ---------------------------------------------------------------------- -#
+  def unload()
+    import webserver
+    webserver.remove_route("/part_wiz", webserver.HTTP_GET)
+    webserver.remove_route("/part_wiz", webserver.HTTP_POST)
+    tasmota.remove_driver(self)
+    tasmota.remove_timer("partition_wizard_timer")
+  end
+
   # ----------------------------------------------------------------------
-  # Patch partition core since we can't chang the solidified code
+  # Patch partition core since we can't change the solidified code
   # ----------------------------------------------------------------------
   def patch_partition_core(p)
     var otadata = p.otadata
@@ -881,26 +891,5 @@ class Partition_wizard_UI
     webserver.on("/part_wiz", / -> self.page_part_ctl(), webserver.HTTP_POST)
   end
 end
-partition_wizard.Partition_wizard_UI = Partition_wizard_UI
 
-
-#- create and register driver in Tasmota -#
-if tasmota
-  import partition_core
-  var partition_wizard_ui = partition_wizard.Partition_wizard_UI()
-  tasmota.add_driver(partition_wizard_ui)
-  ## can be removed if put in 'autoexec.bat'
-  partition_wizard_ui.web_add_handler()
-end
-
-return partition_wizard
-
-#- Example
-
-import partition
-
-# read
-p = partition.Partition()
-print(p)
-
--#
+return Partition_wizard_UI()

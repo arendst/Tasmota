@@ -599,8 +599,8 @@ class Tasmota
     # Ex: f_name = '/app.zip#autoexec'
 
     # if ends with ".tapp", add "#autoexec"
-    # there's a trick here, since actual prefix may be ".tapp" or "._tapp" (the later for no-autp-run)
-    if string.endswith(f_name, 'tapp')
+    # prefix may be ".tapp" or ".tapp_"
+    if string.endswith(f_name, '.tapp') || string.endswith(f_name, '.tapp_')
       f_name += "#autoexec"
     end
 
@@ -845,6 +845,95 @@ class Tasmota
     end
   end
 
+  ######################################################################
+  # add_extension
+  #
+  # Add an instance to the dispatchin of Berry events
+  #
+  # Args:
+  #    - `d`: instance (or driver)
+  #           The events will be dispatched to this instance whenever
+  #           it has a method with the same name of the instance
+  #    - `ext_path`: the path of the extension, usually a '.tapp' file
+  ######################################################################
+  def add_extension(d, ext_path)    # add ext
+    if (ext_path == nil)
+      ext_path = tasmota.wd
+    end
+
+    if (type(d) != 'instance') || (type(ext_path) != 'string')
+      raise "value_error", "instance and name required"
+    end
+    if (ext_path != nil)
+      import string
+      # initialize self._ext if it does not exist
+      if self._ext == nil
+        self._ext = sortedmap()
+      end
+      if string.endswith(ext_path, '#')
+        ext_path = ext_path[0..-2]    # remove trailing '#''
+      end
+      if self._ext.contains(ext_path)
+        log(f"BRY: Extension '{ext_path}' already registered", 3)
+      else
+        self._ext[ext_path] = d
+      end
+    end
+  end
+
+  ######################################################################
+  # read_extension_manifest
+  #
+  # Read and parse the 'manifest.json' file in the 'wd' (working dir)
+  #
+  # Args:
+  #    - `wd`: (string) working dir indicating which .tapp file to read
+  #            ex: 'Partition_Wizard.tapp#'
+  # Returns:  map of values from JSON, or `nil` if an error occured
+  #
+  # Returned map is eitner `nil` if failed or a map with guaranteed content:
+  #    - name (string)
+  #    - description (string), default ""
+  #    - version (int), default 0
+  #    - min_tasmota(int), default 0
+  #
+  ######################################################################
+  def read_extension_manifest(wd_or_instance)
+    var f
+    var wd = wd_or_instance
+    try
+      import json
+      import string
+
+      if (wd == nil)    wd = tasmota.wd   end   # if 'wd' is nil, use the current `tasmota.wd`
+
+      var delimiter = ((size(wd) > 0) && (wd[-1] != '/') && (wd[-1] != '#')) ? '#' : ''    # add '#' delimiter if filename
+      f = open(wd + delimiter + 'manifest.json')
+      var s = f.read()
+      f.close()
+      var j = json.load(s)
+      # check if valid, 'name' is mandatory
+      var name = j.find('name')
+      if name
+        # convert version numbers if present
+        j['name']         = str(j['name'])
+        j['description']  = str(j.find('description', ''))
+        j['version']      = int(j.find('version', 0))
+        j['min_tasmota']  = int(j.find('min_tasmota', 0))
+        j['autorun']      = string.endswith(wd, ".tapp")
+        return j
+      else
+        return nil
+      end
+    except .. as e, m
+      log(f"BRY: error {e} {m} when reading 'manifest.json' in '{wd}'")
+      if (f != nil)
+        f.close()
+      end
+      return nil
+    end
+  end
+
   def remove_driver(d)
     if self._drivers
       var idx = self._drivers.find(d)
@@ -852,6 +941,31 @@ class Tasmota
         self._drivers.pop(idx)
       end
     end
+    # remove ext
+    if self._ext
+      self._ext.remove_by_value(d)
+    end
+  end
+
+  def unload_extension(name_or_instance)
+    if (self._ext == nil)   return  end
+    var d = name_or_instance    # d = driver
+
+    if type(name_or_instance) == 'string'
+      d = self._ext.find(name_or_instance)
+    end
+    if type(d) == 'instance'
+      import introspect
+
+      if introspect.contains(d, "unload")
+        d.unload()
+      end
+      self.remove_driver(d)
+    end
+    # force gc of instance
+    name_or_instance = nil
+    d = nil
+    tasmota.gc()
   end
 
   # cmd high-level function
