@@ -908,6 +908,7 @@ void MqttShowState(void)
   }
   
   char *hostname = TasmotaGlobal.hostname;
+  char *devicename = SettingsText(SET_DEVICENAME);
   uint32_t ipaddress = 0;
 #if defined(ESP32) && defined(USE_ETHERNET)
   if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
@@ -929,8 +930,8 @@ void MqttShowState(void)
     }
   }
   // I only want to show one active connection for device access
-  ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
-    hostname, ipaddress);
+  ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_CMND_DEVICENAME "\":\"%s\""),
+    hostname, ipaddress, devicename);
 
   ResponseJsonEnd();
 }
