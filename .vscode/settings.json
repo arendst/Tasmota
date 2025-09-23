@@ -71,12 +71,5 @@
         "commands": "platformio-ide.rebuildProjectIndex"
       }
     ],
-    "files.associations": {
-      "array": "cpp",
-      "variant": "cpp",
-      "set": "cpp",
-      "unordered_map": "cpp",
-      "map": "cpp",
-      "unordered_set": "cpp"
-    }
+    "C_Cpp.dimInactiveRegions": false
   }
