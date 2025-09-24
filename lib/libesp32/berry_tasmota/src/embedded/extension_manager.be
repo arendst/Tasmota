@@ -179,6 +179,7 @@ class Extension_manager
   # @param tapp_fname : string - name of tapp file to install from repository
   def install_from_store(tapp_fname)
     import string
+    import path
     # sanitize
     tapp_fname = self.tapp_name(tapp_fname)
     # add '.tapp' extension if it is not present
@@ -198,8 +199,14 @@ class Extension_manager
         log(f"EXT: return_code={r}", 2)
         return
       end
-      cl.write_file(local_file)
+      var ret = cl.write_file(local_file)
       cl.close()
+      # test if file exists and tell its size
+      if path.exists(local_file)        
+        log(f"EXT: file written to '{local_file}' ret={ret}")
+      else
+        raise "file_error", f"could not download into '{local_file}' ret={ret}"
+      end
     except .. as e, m
       tasmota.log(format("CFG: exception '%s' - '%s'", e, m), 2)
       return nil
