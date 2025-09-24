@@ -174,6 +174,28 @@ class Extension_manager
   # Methods to install / upgrade / delete extensions from the store
   #####################################################################################################
   #####################################################################################################
+  # check_or_create_dir()
+  #
+  # Check that directory exists or create it
+  static def check_or_create_dir(ext_folder)
+    import path
+    if path.exists(ext_folder)
+      if path.isdir(ext_folder)
+        return      # all good, already exists
+      else
+        path.remove(ext_folder)    # it's a file, remove it
+      end
+    end
+    # `/.extensions/` does not exist
+    path.mkdir(ext_folder)
+    # final check
+    if !path.exists(ext_folder) || !path.isdir(ext_folder)
+      raise "io_error", f"cannot create folder '{ext_folder}'"
+    end
+    # all good, created successfully
+  end
+
+  #####################################################################################################
   # install_from_store(tapp_fname)
   #
   # @param tapp_fname : string - name of tapp file to install from repository
@@ -191,6 +213,9 @@ class Extension_manager
     log(f"EXT: installing from '{ext_url}'", 3)
     # load from web
     try
+      # check if directory exists
+      self.check_or_create_dir(self.EXT_FOLDER)   # raises an exception if failed
+      
       var local_file = f"{self.EXT_FOLDER}{tapp_fname}"
       var cl = webclient()
       cl.begin(ext_url)
@@ -202,13 +227,13 @@ class Extension_manager
       var ret = cl.write_file(local_file)
       cl.close()
       # test if file exists and tell its size
-      if path.exists(local_file)        
-        log(f"EXT: file written to '{local_file}' ret={ret}")
+      if ret > 0 && path.exists(local_file)        
+        log(f"EXT: successfully installed '{local_file}' {ret} bytes", 3)
       else
-        raise "file_error", f"could not download into '{local_file}' ret={ret}"
+        raise "io_error", f"could not download into '{local_file}' ret={ret}"
       end
     except .. as e, m
-      tasmota.log(format("CFG: exception '%s' - '%s'", e, m), 2)
+      tasmota.log(format("EXT: exception '%s' - '%s'", e, m), 2)
       return nil
     end
   end
