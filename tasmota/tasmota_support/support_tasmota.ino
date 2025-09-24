@@ -931,7 +931,7 @@ void MqttShowState(void)
   }
   // I only want to show one active connection for device access
   ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_CMND_DEVICENAME "\":\"%s\""),
-    hostname, ipaddress, devicename);
+    hostname, ipaddress, EscapeJSONString(devicename).c_str());
 
   ResponseJsonEnd();
 }
