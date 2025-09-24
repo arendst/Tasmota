@@ -113,8 +113,8 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
     if(_mutex) return;
     _mutex = true;
 
-    int RSSI = advertisedDevice->getRSSI();
-    uint8_t addr[6];
+    const int RSSI = advertisedDevice->getRSSI();
+    alignas(4) uint8_t addr[6];
     memcpy(addr,advertisedDevice->getAddress().getVal(),6);
     MI32_ReverseMAC(addr);
     size_t ServiceDataLength = 0;
@@ -283,46 +283,33 @@ static MI32CharacteristicCallbacks MI32ChrCallback;
 \*********************************************************************************************/
 
 /**
- * @brief Remove all colons from null terminated char array
- *
- * @param _string Typically representing a MAC-address like AA:BB:CC:DD:EE:FF
- */
-void MI32stripColon(char* _string){
-  uint32_t _length = strlen(_string);
-  uint32_t _index = 0;
-  while (_index < _length) {
-    char c = _string[_index];
-    if(c==':'){
-      memmove(_string+_index,_string+_index+1,_length-_index);
-    }
-    _index++;
-  }
-  _string[_index] = 0;
-}
-
-/**
  * @brief Convert string that represents a hexadecimal number to a byte array
+ *        Accepts formats like AABBCCDDEEFF or AA:BB:CC:DD:EE:FF, case insensitive.
+ *        Colons are ignored during parsing.
  *
- * @param _string input string in format: AABBCCDDEEFF or AA:BB:CC:DD:EE:FF, case insensitive
- * @param _mac  target byte array must match the correct size (i.e. AA:BB -> uint8_t bytes[2])
+ * @param _string     Input string (modified in-place to uppercase)
+ * @param _byteArray  Target byte array; must match correct size
  */
-
 void MI32HexStringToBytes(char* _string, uint8_t* _byteArray) {
-  MI32stripColon(_string);
-  UpperCase(_string,_string);
-  uint32_t index = 0;
-  uint32_t _end = strlen(_string);
-  memset(_byteArray,0,_end/2);
-  while (index < _end) {
-      char c = _string[index];
-      uint8_t value = 0;
-      if(c >= '0' && c <= '9')
-        value = (c - '0');
-      else if (c >= 'A' && c <= 'F')
-        value = (10 + (c - 'A'));
-      _byteArray[(index/2)] += value << (((index + 1) % 2) * 4);
-      index++;
-  }
+    UpperCase(_string, _string);
+    uint8_t *out = _byteArray;
+    bool high = true;
+    while (*_string) {
+        char c = *_string++;
+        if (c == ':') continue;  // skip delimiters
+        uint8_t value;
+        if (c >= '0' && c <= '9')
+            value = c - '0';
+        else
+            value = 10 + (c - 'A');
+        if (high) {
+            *out = value << 4;
+            high = false;
+        } else {
+            *out++ |= value;
+            high = true;
+        }
+    }
 }
 
 /**
@@ -330,12 +317,12 @@ void MI32HexStringToBytes(char* _string, uint8_t* _byteArray) {
  *
  * @param _mac a byte array of size 6 (typically representing a MAC address)
  */
-void MI32_ReverseMAC(uint8_t _mac[]){
-  uint8_t _reversedMAC[6];
-  for (uint8_t i=0; i<6; i++){
-    _reversedMAC[5-i] = _mac[i];
-  }
-  memcpy(_mac,_reversedMAC, sizeof(_reversedMAC));
+void MI32_ReverseMAC(uint8_t _mac[]) {
+    for (uint8_t i = 0; i < 3; i++) {
+        uint8_t tmp       = _mac[i];
+        _mac[i]           = _mac[5 - i];
+        _mac[5 - i]       = tmp;
+    }
 }
 
 void MI32AddKey(mi_bindKey_t keyMAC){
@@ -1177,6 +1164,7 @@ void MI32ScanTask(void *pvParameters){
 
   MI32Scan->setActiveScan(MI32.option.activeScan == 1);
   MI32Scan->setMaxResults(0);
+  MI32Scan->setDuplicateFilter(0);
   // MI32Scan->setInterval(30);
   // MI32Scan->setWindow(25);
   MI32Scan->start(0, false); // never stop scanning, will pause automatically while connecting
@@ -1194,7 +1182,7 @@ void MI32ScanTask(void *pvParameters){
     if(MI32.mode.updateScan == 1){
       MI32Scan->stop();
       MI32Scan->setActiveScan(MI32.option.activeScan == 1);
-      MI32Scan->start(0,true);
+      MI32Scan->start(0, false, true);
       MI32.mode.updateScan = 0;
       MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
     }
@@ -2070,9 +2058,7 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
 }
 
 void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){ // no MiBeacon
-  uint8_t _addr[6];
-  memcpy(_addr,addr,6);
-  uint32_t _slot = MIBLEgetSensorSlot(_addr, 0x0576, 0); // This must be hard-coded, no object-id in Cleargrass-packet, we have no packet counter too
+  uint32_t _slot = MIBLEgetSensorSlot(addr, 0x0576, 0); // This must be hard-coded, no object-id in Cleargrass-packet, we have no packet counter too
   if(_slot==0xff) return;
   // AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), MI32getDeviceName(_slot),_slot);
   MIBLEsensors[_slot].RSSI=RSSI;
@@ -2239,7 +2225,7 @@ void MI32BLELoop()
       void (*func_ptr)(int, int, int, int) = (void (*)(int, int, int, int))MI32.beConnCB;
       char _message[32];
       GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
+      AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: BryCbMsg: %s"),_message);
       func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID, MI32.conCtx->handle);
     }
     MI32.mode.triggerBerryConnCB = 0;
@@ -2264,7 +2250,7 @@ void MI32BLELoop()
         void (*func_ptr)(int, int, int, int) = (void (*)(int, int, int, int))MI32.beServerCB;
         char _message[32];
         GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
-        AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
+        AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: BryCbMsg: %s"),_message);
         func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID, MI32.conCtx->handle);
       }
     }
@@ -2431,23 +2417,18 @@ bool MI32HandleWebGUIResponse(void){
   }
   char tmp[16];
   WebGetArg(PSTR("wi"), tmp, sizeof(tmp));
-  if (strlen(tmp)) {
+  if (!tmp[0]) return false;
     WSContentBegin(200, CT_PLAIN);
-    if(MI32.widgetSlot!=0){
-      for(uint32_t i=0;i<32;i++){
-        if(bitRead(MI32.widgetSlot,i)){
-          MI32sendWidget(i);
-          bitClear(MI32.widgetSlot,i);
-          break;
-        }
-      }
+    uint32_t slot = MI32.widgetSlot;
+    if (slot) {
+      uint32_t i = __builtin_ctz(slot);        // index of first set bit
+      MI32sendWidget(i);
+      MI32.widgetSlot &= ~(1UL << i);          // clear that bit
     } else {
       MI32sendBerryWidget();
     }
     WSContentEnd();
     return true;
-  }
-  return false;
 }
 
 #ifdef USE_MI_ESP32_ENERGY
