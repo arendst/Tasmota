@@ -60,6 +60,7 @@ register_to_dsl(dsl_named_colors)
 # @param source: string - DSL source code
 # @return string - Generated Berry code
 def compile_dsl_source(source)
+  import animation_dsl
   return animation_dsl.compile_dsl(source)
 end
 animation_dsl.compile = compile_dsl_source
@@ -70,6 +71,7 @@ animation_dsl.compile = compile_dsl_source
 # @param source: string - DSL source code
 # @return any - Result of execution
 def execute(source)
+  import animation_dsl
   var berry_code = animation_dsl.compile(source)
   var compiled_fn = compile(berry_code)
   return compiled_fn()
@@ -81,6 +83,7 @@ animation_dsl.execute = execute
 # @param filename: string - Path to DSL file
 # @return any - Result of execution
 def load_file(filename)
+  import animation_dsl
   var f = open(filename, "r")
   if f == nil
     raise "io_error", f"Cannot open DSL file: {filename}"
@@ -97,6 +100,7 @@ animation_dsl.load_file = load_file
 #
 # @return DSLRuntime - New runtime instance
 def create_runtime(strip, debug_mode)
+  import animation_dsl
   var engine = animation.create_engine(strip)
   return animation_dsl.DSLRuntime(engine, debug_mode)
 end
@@ -112,6 +116,7 @@ animation_dsl.create_runtime = create_runtime
 # @raises "invalid_filename" - If filename doesn't have .anim extension
 def compile_file(filename)
   import string
+  import animation_dsl
   
   # Validate input filename
   if !string.endswith(filename, ".anim")

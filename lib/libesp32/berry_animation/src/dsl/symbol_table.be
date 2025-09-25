@@ -318,12 +318,14 @@ class SymbolTable
   var mock_engine    # MockEngine for validation
   
   def init()
+    import animation_dsl
     self.entries = {}
     self.mock_engine = animation_dsl.MockEngine()
   end
   
   # Dynamically detect and cache symbol type when first encountered
   def _detect_and_cache_symbol(name)
+    import animation_dsl
     if self.entries.contains(name)
       return self.entries[name]  # Already cached
     end
@@ -459,11 +461,12 @@ class SymbolTable
   
   # Get symbol reference for code generation (with dynamic detection)
   def get_reference(name)
+    import animation_dsl
     # Try to get from cache or detect dynamically (includes named colors)
     var entry = self.get(name)
     if entry != nil
       # For builtin color entries, return the actual color value directly
-      if entry.is_builtin && entry.type == animation_dsl._symbol_entry.TYPE_COLOR
+      if entry.is_builtin && entry.type == 11 #-animation_dsl._symbol_entry.TYPE_COLOR-#
         return animation_dsl.named_colors[name]
       end
       return entry.get_reference()
@@ -481,42 +484,49 @@ class SymbolTable
   
   # Create and register a palette instance symbol (user-defined)
   def create_palette(name, instance)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_palette_instance(name, instance, false)
     return self.add(name, entry)
   end
   
   # Create and register a color instance symbol (user-defined)
   def create_color(name, instance)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_color_instance(name, instance, false)
     return self.add(name, entry)
   end
   
   # Create and register an animation instance symbol (user-defined)
   def create_animation(name, instance)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_animation_instance(name, instance, false)
     return self.add(name, entry)
   end
   
   # Create and register a value provider instance symbol (user-defined)
   def create_value_provider(name, instance)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_value_provider_instance(name, instance, false)
     return self.add(name, entry)
   end
   
   # Create and register a variable symbol (user-defined)
   def create_variable(name)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_variable(name, false)
     return self.add(name, entry)
   end
   
   # Create and register a sequence symbol (user-defined)
   def create_sequence(name)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_sequence(name, false)
     return self.add(name, entry)
   end
   
   # Create and register a template symbol (user-defined)
   def create_template(name, param_types)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry.create_template(name, false)
     entry.set_param_types(param_types != nil ? param_types : {})
     return self.add(name, entry)
@@ -525,6 +535,7 @@ class SymbolTable
 
   # Register a user function (detected at runtime)
   def register_user_function(name)
+    import animation_dsl
     if !self.contains(name)
       var entry = animation_dsl._symbol_entry.create_user_function(name, false)
       self.add(name, entry)
@@ -533,6 +544,7 @@ class SymbolTable
   
   # Generic create function that can specify name/type/instance/builtin directly
   def create_generic(name, typ, instance, is_builtin)
+    import animation_dsl
     var entry = animation_dsl._symbol_entry(name, typ, instance, is_builtin != nil ? is_builtin : false)
     return self.add(name, entry)
   end
@@ -575,8 +587,9 @@ class SymbolTable
   
   # Helper method to get named color value (uses proper discovery)
   def _get_named_color_value(color_name)
+    import animation_dsl
     var entry = self.get(color_name)  # This will trigger _detect_and_cache_symbol if needed
-    if entry != nil && entry.is_builtin && entry.type == animation_dsl._symbol_entry.TYPE_COLOR
+    if entry != nil && entry.is_builtin && entry.type == 11 #-animation_dsl._symbol_entry.TYPE_COLOR-#
       return animation_dsl.named_colors[color_name]
     end
     return "0xFFFFFFFF"  # Default fallback

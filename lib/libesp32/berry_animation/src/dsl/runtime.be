@@ -15,6 +15,7 @@ class DSLRuntime
   
   # Load and execute DSL from string
   def load_dsl(source_code)
+    import animation_dsl
     if source_code == nil || size(source_code) == 0
       if self.debug_mode
         print("DSL: Empty source code")
@@ -90,6 +91,7 @@ class DSLRuntime
   
   # Get generated Berry code for inspection (debugging)
   def get_generated_code(source_code)
+    import animation_dsl
     if source_code == nil
       source_code = self.active_source
     end
@@ -165,6 +167,7 @@ end
 
 # Factory function for easy creation
 def create_dsl_runtime(strip, debug_mode)
+  import animation_dsl
   var engine = animation.create_engine(strip)
   return animation_dsl.DSLRuntime(engine, debug_mode)
 end

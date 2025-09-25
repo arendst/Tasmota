@@ -62,6 +62,10 @@ const char be_berry_init_code[] =
   "do import extension_manager end "
 #endif
 
+#ifdef USE_BERRY_ANIMATION
+  "import animation "
+#endif // USE_BERRY_ANIMATION
+
 #ifdef USE_LVGL
   "import lv "
   "import lv_tasmota "

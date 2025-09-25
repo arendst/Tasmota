@@ -218,6 +218,7 @@ class Token
   # @param new_type: int - New token type
   # @return Token - New token with same position but different type
   def with_type(new_type)
+    import animation_dsl
     return animation_dsl.Token(new_type, self.value, self.line, self.column, self.length)
   end
   
@@ -226,6 +227,7 @@ class Token
   # @param new_value: string - New value
   # @return Token - New token with same position but different value
   def with_value(new_value)
+    import animation_dsl
     return animation_dsl.Token(self.type, new_value, self.line, self.column, size(new_value))
   end
   
@@ -415,6 +417,7 @@ end
 # @param column: int - Column number
 # @return Token - EOF token
 def create_eof_token(line, column)
+  import animation_dsl
   return animation_dsl.Token(38 #-animation_dsl.Token.EOF-#, "", line, column, 0)
 end
 
@@ -425,6 +428,7 @@ end
 # @param column: int - Column number
 # @return Token - Error token
 def create_error_token(message, line, column)
+  import animation_dsl
   return animation_dsl.Token(39 #-animation_dsl.Token.ERROR-#, message, line, column, size(message))
 end
 
@@ -434,6 +438,7 @@ end
 # @param column: int - Column number
 # @return Token - Newline token
 def create_newline_token(line, column)
+  import animation_dsl
   return animation_dsl.Token(35 #-animation_dsl.Token.NEWLINE-#, "\n", line, column, 1)
 end
 
@@ -442,6 +447,7 @@ end
 # @param word: string - Word to check
 # @return bool - True if word is a reserved keyword
 def is_keyword(word)
+  import animation_dsl
   for keyword : animation_dsl.Token.keywords
     if word == keyword
       return true
@@ -455,6 +461,7 @@ end
 # @param word: string - Word to check
 # @return bool - True if word is a predefined color name
 def is_color_name(word)
+  import animation_dsl
   for color : animation_dsl.Token.color_names
     if word == color
       return true
