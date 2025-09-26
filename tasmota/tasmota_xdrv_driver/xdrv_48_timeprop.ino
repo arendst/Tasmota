@@ -1,5 +1,5 @@
 /*
-  xdrv_55_touch.ino - Touch controllers
+  xdrv_48_timeprop.ino - Time Proportional support for Tasmota
 
   Copyright (C) 2025
 
@@ -53,6 +53,16 @@
 
  * TimePropSet<n>: is taking a value from 0-100 which defines the time the relay is on in
  *    relation to TimePropCycleLength.
+ * 
+ * A note on set value and fallback value. Fallback timer is implemented globally and each
+ * set value received is resetting the fallback timer. if no set value is received within
+ * the fallback time, all timeprops will receive the fallback value.
+ * As soon a new set value is received the fallback timer is reset. But all other timeprop
+ * set values will stay on fallback value until they receive a new set value.
+ * It is expected that all timeprops are controlled via the same system and the fallback
+ * will only jump in if the connection between the central instance and timeprop is broken.
+ * It is considered very unlikely that we reach fallback and after that only a subset of
+ * timeprops are receiving new set values. 
 \*******************************************************************************************/
 
 #ifdef USE_TIMEPROP
@@ -419,8 +429,6 @@ void CmndTimePropFallbackValue(void)
 /*********************************************************************************************\
  * Periodic
 \*********************************************************************************************/
-// TODO wenn fallback aufgeloest wird bleiben die anderen alle auf fallback value stehen.
-// wollen wir das? aktuell fühlt sich das richtig an
 void TimepropEverySecond(void)
 {
   if (!Timeprop.enabled)
