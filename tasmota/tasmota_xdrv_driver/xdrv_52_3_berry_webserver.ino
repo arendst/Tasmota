@@ -268,11 +268,17 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `webserver.content_send_style() -> nil`
+  // Berry: `webserver.content_send_style([style : string]) -> nil`
   //
   int32_t w_webserver_content_send_style(struct bvm *vm);
   int32_t w_webserver_content_send_style(struct bvm *vm) {
-    WSContentSendStyle();
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * head_content = be_tostring(vm, 1);
+      WSContentSendStyle_P("%s", head_content);
+    } else {
+      WSContentSendStyle();
+    }
     be_return_nil(vm);
   }
 
