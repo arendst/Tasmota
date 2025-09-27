@@ -948,7 +948,7 @@ class Tasmota
   end
 
   def unload_extension(name_or_instance)
-    if (self._ext == nil)   return  end
+    if (self._ext == nil)   return false end
     var d = name_or_instance    # d = driver
 
     if type(name_or_instance) == 'string'
@@ -961,11 +961,14 @@ class Tasmota
         d.unload()
       end
       self.remove_driver(d)
+      # force gc of instance
+      name_or_instance = nil
+      d = nil
+      tasmota.gc()
+      return true
+    else
+      return false
     end
-    # force gc of instance
-    name_or_instance = nil
-    d = nil
-    tasmota.gc()
   end
 
   # cmd high-level function

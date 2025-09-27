@@ -2,7 +2,6 @@
 #
 #
 
-
 var extension_manager = module("extension_manager")
 
 #@ solidify:extension_manager
@@ -40,10 +39,10 @@ class Extension_manager
   # tapp_name(wd)
   #
   # Takes a working directory 'wd' and extract the name of the tapp file.
-  # Ex: '/.extensions/Leds_Panel.tapp#' becomes 'Leds_Panel.tapp'
+  # Ex: '/.extensions/Leds_Panel.tapp#' becomes 'Leds_Panel'
   #
   # @param wv: string - the Working Dir of the tapp file like '/.extensions/Leds_Panel.tapp#'
-  # @return string - the raw name of the tapp file, like 'Leds_Panel.tapp'
+  # @return string - the raw name of the tapp file, like 'Leds_Panel'
   #####################################################################################################
   static def tapp_name(wd)
     import string
@@ -113,6 +112,10 @@ class Extension_manager
   # Return a map of installed tap files, by tapp file name
   # tapp_name -> path {'Leds_Panel.tapp': '/.extensions/Leds_Panel.tapp'}
   #
+  # Example:
+  # > extension_manager.list_installed_ext()
+  # {'Leds_Panel': '/.extensions/Leds_Panel.tapp', 'Partition_Wizard': '/.extensions/Partition_Wizard.tapp_'}
+  #
   # @return map: tapp_namt -> full path (or wd)
   static def list_installed_ext()
     # Read extensions in file system
@@ -129,6 +132,10 @@ class Extension_manager
   # list_extensions_in_fs()
   #
   # List all extensions in file-system, whether they are running or not
+  #
+  # Example:
+  # > extension_manager.list_extensions_in_fs()
+  # {'Leds Panel': '/.extensions/Leds_Panel.tapp', 'Partition Wizard': '/.extensions/Partition_Wizard.tapp_'}
   #
   # @return sortedmap: with Name of App as key, and following map:
   #   name, description, version (int), autorun (bool)
@@ -196,18 +203,96 @@ class Extension_manager
   end
 
   #####################################################################################################
+  # run_stop_ext(tapp_fname, run_stop)
+  #
+  # @param tapp_fname : string - name of tapp file to install from repository (ex: "Leds_Panel")
+  # @param run_stop : bool - `true` to run , `false` to stop
+  # @return bool - `true` if success
+  static def run_stop_ext(tapp_fname, run_stop)
+    # sanitize
+    tapp_fname = _class.tapp_name(tapp_fname)
+
+    # get the path for actual file
+    var tapp_path = _class.list_installed_ext().find(tapp_fname)
+    if tapp_path != nil
+      if run_stop
+        return tasmota.load(tapp_path)
+      else
+        return tasmota.unload_extension(tapp_path)
+      end
+    else
+      return false
+    end
+  end
+
+  #####################################################################################################
+  # enable_disable_ext(tapp_fname, run_stop)
+  #
+  # @param tapp_fname : string - name of tapp file to enable or disable (ex: "Leds_Panel")
+  # @param enable : bool - `true` to enable , `false` to disable
+  # @return bool - `true` if success
+  static def enable_disable_ext(tapp_fname, enable)
+    import string
+    # sanitize
+    tapp_fname = _class.tapp_name(tapp_fname)
+
+    # get the path for actual file
+    var tapp_path = _class.list_installed_ext().find(tapp_fname)
+    if tapp_path != nil
+
+      var new_name
+      if   enable && string.endswith(tapp_path, ".tapp_")
+        new_name = tapp_path[0..-2]     # remove trailing '_'
+      elif !enable && string.endswith(tapp_path, ".tapp")
+        new_name = tapp_path + '_'      # add trailing '_'
+      end
+
+      if new_name
+        import path
+        var success = path.rename(tapp_path, new_name)
+        if (success)                  # update any running extension with its new name
+          if (tasmota._ext != nil) && tasmota._ext.contains(tapp_path)
+            tasmota._ext[new_name] = tasmota._ext[tapp_path]
+            tasmota._ext.remove(tapp_path)
+          end
+        end
+        return success
+      end
+    end
+    return false
+  end
+
+  #####################################################################################################
+  # delete_ext(tapp_fname)
+  #
+  # @param tapp_fname : string - name of tapp file to delete from file system (ex: "Leds_Panel")
+  # @return bool - `true` if success
+  static def delete_ext(tapp_fname)
+    # sanitize
+    tapp_fname = _class.tapp_name(tapp_fname)
+
+    # get the path for actual file
+    var tapp_path = _class.list_installed_ext().find(tapp_fname)
+    if tapp_path != nil
+      import path
+      _class.run_stop_ext(tapp_fname, false)      # stop the extension if it's running
+      var success = path.remove(tapp_path)
+      return success
+    else
+      return false
+    end
+  end
+
+  #####################################################################################################
   # install_from_store(tapp_fname)
   #
   # @param tapp_fname : string - name of tapp file to install from repository
+  # @return bool : 'true' if success
   def install_from_store(tapp_fname)
     import string
     import path
     # sanitize
-    tapp_fname = self.tapp_name(tapp_fname)
-    # add '.tapp' extension if it is not present
-    if !string.endswith(tapp_fname, ".tapp")
-      tapp_fname += '.tapp'
-    end
+    tapp_fname = self.tapp_name(tapp_fname) + ".tapp"
     # full url
     var ext_url = f"{self.EXT_REPO}{self.EXT_REPO_FOLDER}{tapp_fname}"
     log(f"EXT: installing from '{ext_url}'", 3)
@@ -222,19 +307,20 @@ class Extension_manager
       var r = cl.GET()
       if r != 200
         log(f"EXT: return_code={r}", 2)
-        return
+        return false
       end
       var ret = cl.write_file(local_file)
       cl.close()
       # test if file exists and tell its size
       if ret > 0 && path.exists(local_file)        
         log(f"EXT: successfully installed '{local_file}' {ret} bytes", 3)
+        return true
       else
         raise "io_error", f"could not download into '{local_file}' ret={ret}"
       end
     except .. as e, m
-      tasmota.log(format("EXT: exception '%s' - '%s'", e, m), 2)
-      return nil
+      log(format("EXT: exception '%s' - '%s'", e, m), 2)
+      return false
     end
   end
 
@@ -278,7 +364,6 @@ class Extension_manager
     webserver.content_send("<script>"
       "function loadext() {"
         "eb('store').disabled=true;"
-        # "eb('store').innerHTML = '[ <span style=\"color:var(--c_btnsv);\">Loading from Store...</span> ]';"
         "x=new XMLHttpRequest();"
         "x.timeout=4000;"
         "x.onreadystatechange = () => {"
@@ -286,8 +371,6 @@ class Extension_manager
             "if(x.status==200){"
               "eb('inet').style.display='none';"
               "eb('store').outerHTML=x.responseText;"
-            # "}else{"
-            #   "eb('store').innerHTML='<b>[ <span style=\"color:var(--c_btnrsthvr);\">Error loading manifest.</span> ]</b>';"
             "}"
           "}"
         "};"
@@ -327,23 +410,23 @@ class Extension_manager
       "</script>"
     )
 
-    webserver.content_send("<fieldset style='padding:0 5px;'>"
-                           "<style>"
-                           # Fix for small text - the key is width: min-content on parent */
-                           ".ext-item{width:min-content;min-width:100%;}"
-                           ".ext-item small{display:block;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;padding-right:5px;padding-top:2px;}"
-                           # Control bar styles
-                           ".ext-controls{display:flex;gap:8px;align-items:center;margin-top:4px;padding:0px}"
-                           # Small action buttons
-                           ".btn-small{padding:0 6px;line-height:1.8rem;font-size:0.9rem;min-width:auto;width:auto;flex-shrink:0;}"
-                           # form
-                           "form{padding-top:0px;padding-bottom:0px;}"
-                           # Running indicator
-                           ".running-indicator{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--c_btnsvhvr);animation:pulse 1.5s infinite;}"
-                           "@keyframes pulse{0%{opacity:1;}50%{opacity:0.5;}100%{opacity:1;}}"
+    webserver.content_send(
+                          "<fieldset style='padding:0 5px;'>"
+                          "<style>"
+                          # Fix for small text - the key is width: min-content on parent */
+                          ".ext-item{width:min-content;min-width:100%;}"
+                          ".ext-item small{display:block;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;padding-right:5px;padding-top:2px;}"
+                          # Control bar styles
+                          ".ext-controls{display:flex;gap:8px;align-items:center;margin-top:4px;padding:0px}"
+                          # Small action buttons
+                          ".btn-small{padding:0 6px;line-height:1.8rem;font-size:0.9rem;min-width:auto;width:auto;flex-shrink:0;}"
+                          # form
+                          "form{padding-top:0px;padding-bottom:0px;}"
+                          # Running indicator
+                          ".running-indicator{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--c_btnsvhvr);animation:pulse 1.5s infinite;}"
+                          "@keyframes pulse{0%{opacity:1;}50%{opacity:0.5;}100%{opacity:1;}}"
 
                            # for store
-
                           # /* Extension Store specific styles */
                           ".store-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}"
                           ".store-stats{font-size:0.9em;color:var(--c_in);}"
@@ -379,24 +462,23 @@ class Extension_manager
       while ext_nb < size(installed_ext)
         if (ext_nb > 0)       webserver.content_send("<hr style='margin:2px 0 0 0;'>")   end
         var ext_path = installed_ext.get_by_index(ext_nb)   # ex: '/.extensions/Partition_Wizard.tapp'
-        var ext_path_html = webserver.html_escape(ext_path)
+        var tapp_name = self.tapp_name(ext_path)
+        var tapp_name_html = webserver.html_escape(tapp_name)
         var details = tasmota.read_extension_manifest(ext_path)
-        # log(f"EXT: {details=}")
         var running = tasmota._ext ? tasmota._ext.contains(ext_path) : false
         var running_indicator = running ? " <span class='running-indicator' title='Running'></span>" : ""
         var autorun = details.find("autorun", false)
         var back_green = "style='background:var(--c_btnsvhvr);'"
         var dark_blue = "style='background:var(--c_btnoff);'"
         webserver.content_send("<div class='ext-item'>")
-        webserver.content_send(f"<span title='path: {ext_path_html}'><b>{webserver.html_escape(details['name'])}</b>{running_indicator}</span><br>")
+        webserver.content_send(f"<span title='path: {tapp_name_html}'><b>{webserver.html_escape(details['name'])}</b>{running_indicator}</span><br>")
         webserver.content_send(f"<small>{webserver.html_escape(details['description'])}</small>")
 
         webserver.content_send("<div class='ext-controls' style='padding-top:0px;padding-bottom:0px;'>")
         webserver.content_send("<form action='/ext' method='post' class='ext-controls'>")
-        webserver.content_send(f"<button type='submit' class='btn-small' {running ? back_green :: dark_blue} name='{running ? 's' :: 'r'}{ext_path_html}'>{running ? 'Running' :: 'Stopped'}</button>")
-        webserver.content_send(f"<button type='submit' class='btn-small' {autorun ? '' :: dark_blue} name='{autorun ? 'a' :: 'A'}{ext_path_html}'>Auto-run: {autorun ? 'ON' :: 'OFF'}</button>")
-        webserver.content_send(f"<button type='submit' class='btn-small bred' name='d{ext_path_html}' onclick='return confirm(\"Confirm deletion of {webserver.html_escape(ext_path)}\")'>Uninstall</button>")
-        # webserver.content_send(f"<button type='submit' class='btn-small' style='background-color:var(--c_btnoff);border-color:var(--c_btnrst);border-width:3px;border-style:solid;' name='d{ext_path_html}' onclick='return confirm(\"Confirm deletion of {webserver.html_escape(ext_path)}\")'>Uninstall</button>")
+        webserver.content_send(f"<button type='submit' class='btn-small' {running ? back_green :: dark_blue} name='{running ? 's' :: 'r'}{tapp_name_html}'>{running ? 'Running' :: 'Stopped'}</button>")
+        webserver.content_send(f"<button type='submit' class='btn-small' {autorun ? '' :: dark_blue} name='{autorun ? 'a' :: 'A'}{tapp_name_html}'>Auto-run: {autorun ? 'ON' :: 'OFF'}</button>")
+        webserver.content_send(f"<button type='submit' class='btn-small bred' name='d{tapp_name_html}' onclick='return confirm(\"Confirm deletion of {tapp_name_html}.tapp\")'>Uninstall</button>")
         webserver.content_send("</form></div></div>")
 
         ext_nb += 1
@@ -412,7 +494,6 @@ class Extension_manager
                            "<hr style='margin-bottom:0;'>"
                            "<span id='inet' style='font-size:small;font-weight:normal;''>&nbsp;(This feature requires an internet connection)</span>"
                            "</h3></div>")
-                          #  "<p><small>&nbsp;(This feature requires an internet connection)</small></p>")
 
     webserver.content_send("<b id='store'>[ <span style='color:var(--c_btnsv);'>Loading from Store...</span> ]</b>")
 
@@ -483,10 +564,8 @@ class Extension_manager
         installed_tapp_name = self.tapp_name(entry['file'])
         var installed_tapp_name_web = webserver.html_escape(installed_tapp_name)
         installed = installed_ext.contains(installed_tapp_name)
-        var installed_path_web
         if installed
           var installed_path = installed_ext[installed_tapp_name]
-          installed_path_web = webserver.html_escape(installed_path)
           var details = tasmota.read_extension_manifest(installed_path)
           installed_version = int(details.find('version', 0))
         end
@@ -524,14 +603,14 @@ class Extension_manager
                                       "<div style='width:30%'></div>")
         if installed
           if upgrade
-            webserver.content_send(    f"<button type='submit' class='btn-action' name='u{installed_path_web}' onclick='return confirm(\"Confirm upgrade of {installed_path_web}\")'>Upgrade</button>")
+            webserver.content_send(    f"<button type='submit' class='btn-action' name='u{installed_tapp_name_web}' onclick='return confirm(\"Confirm upgrade of {installed_tapp_name_web}\")'>Upgrade</button>")
           else
             webserver.content_send(     "<button type='submit' class='btn-action' style='visibility:hidden;'></button>")
           end
-          webserver.content_send(    f"<button type='submit' class='btn-action bred' name='d{installed_path_web}' onclick='return confirm(\"Confirm deletion of {installed_path_web}\")'>Uninstall</button>")
+          webserver.content_send(    f"<button type='submit' class='btn-action bred' name='d{installed_tapp_name_web}' onclick='return confirm(\"Confirm deletion of {installed_tapp_name_web}\")'>Uninstall</button>")
         else
-          webserver.content_send(    f"<button type='submit' class='btn-action' style='visibility:hidden;'></button>"
-                                      "<button type='submit' class='btn-action bgrn' name='i{installed_tapp_name_web}' onclick='return confirm(\"Confirm installation of {app_name_web}\")'>Install</button>")
+          webserver.content_send(    f"<button type='submit' class='btn-action' name='i{installed_tapp_name_web}' onclick='return confirm(\"Confirm installation of {app_name_web}\")'>Install</button>"
+                                      "<button type='submit' class='btn-action bgrn' name='I{installed_tapp_name_web}' onclick='return confirm(\"Confirm installation of {app_name_web}\")'>Install+Run</button>")
         end
         webserver.content_send(     "</form>" 
                                   "</div>"
@@ -565,14 +644,14 @@ class Extension_manager
       cl.begin(url)
       var r = cl.GET()
       if r != 200
-        tasmota.log(f"EXT: error fetching manifest {r}", 2)
+        log(f"EXT: error fetching manifest {r}", 2)
         raise "webclient_error", f"Error fetching manifest code={r}"
       end
       var s = cl.get_string()
       cl.close()
       return s
     except .. as e, m
-      tasmota.log(format("EXT: exception '%s' - '%s'", e, m), 2)
+      log(format("EXT: exception '%s' - '%s'", e, m), 2)
       raise e, m
     end
   end
@@ -591,73 +670,46 @@ class Extension_manager
 
     try
       # log(f">>> {webserver.arg_name(0)=} {webserver.arg(0)=} {webserver.arg_size()=}")
-      # var redirect_to_store = false     # add suffix to redirect to store
 
       var btn_name = webserver.arg_name(0)
       var action = btn_name[0]          # first character
       var action_path = btn_name[1..]   # remove first character
 
-      if (action == "r")                # button "Run"
-        if (action_path != "")
-          # log(f"EXT: run '{action_path}'")
-          tasmota.load(action_path)
-        end
-      elif (action == "s")              # button "Stop"
-        # log(f"EXT: stop '{action_path}'")
-        tasmota.unload_extension(action_path)
+      if (action == "r") || (action == "s")               # button "Run" or "Stop"
+        self.run_stop_ext(action_path, action == "r")
       elif (action == "a") || (action == "A")             # button "Autorun", "A" enable, "a" disable
-        var new_name
-        if (action == "a") && string.endswith(action_path, ".tapp")     # Autorun is enabled, disable it
-          new_name = action_path[0..-5] + "tapp_"
-        elif (action == "A") && string.endswith(action_path, ".tapp_")
-          new_name = action_path[0..-6] + "tapp"
-        end
-        if new_name
-          var success = path.rename(action_path, new_name)
-          # log(f"EXT: rename '{action_path}' to '{new_name} {success=}", 3)
-          if (success)                  # update any running extension with its new name
-            if tasmota._ext.contains(action_path)
-              tasmota._ext[new_name] = tasmota._ext[action_path]
-              tasmota._ext.remove(action_path)
-            end
-          end
-        else
-          log(f"EXT: wrong action '{btn_name}'", 3)
-        end
+        self.enable_disable_ext(action_path, action == "A")
       elif (action == 'd')              # button "Delete"
-        if (action_path != "")
-          # first stop if it was running
-          tasmota.unload_extension(action_path)
-          # then delete file
-          var success = path.remove(action_path)
-          # log(f"EXT: delete '{action_path}' {success=}", 3)
-        end
- 
+        self.delete_ext(action_path)
+      
       # Now try the store commands
       elif (action == 'u')              # Upgrade ext
-        # log(f"EXT: upgrade '{action_path}'", 3)
         # first stop the app if it's running
-        tasmota.unload_extension(action_path)
-        self.install_from_store(self.tapp_name(action_path))
-        # redirect_to_store = true
-      elif (action == 'i')              # Install ext
-        # log(f"EXT: install '{action_path}'", 3)
-        self.install_from_store(self.tapp_name(action_path))
-        # redirect_to_store = true
+        self.run_stop_ext(action_path, false)   # stop the extension
+        var success = self.install_from_store(self.tapp_name(action_path))
+      elif (action == 'i') || (action == 'I')  # Install ext ('I' for run as well)
+        var success = self.install_from_store(self.tapp_name(action_path))
+        if success
+          if (action == 'I')            # run
+            self.run_stop_ext(action_path, true)
+          else                          # disable
+            self.enable_disable_ext(action_path, false)
+          end
+        end
+      else
+        log(f"EXT: wrong action '{btn_name}'", 3)
       end
 
-      # var redirect_suffix = redirect_to_store ? "store=" : ""
-      # webserver.redirect(f"/ext?{redirect_suffix}")
       webserver.redirect(f"/ext")
     except .. as e, m
-      log(f"CFG: Exception> '{e}' - {m}", 2)
+      log(f"EXT: Exception> '{e}' - {m}", 2)
       #- display error page -#
       webserver.content_start("Parameter error")           #- title of the web page -#
       webserver.content_send_style()                  #- send standard Tasmota styles -#
 
       webserver.content_send(f"<p style='width:340px;'><b>Exception:</b><br>'{webserver.html_escape(e)}'<br>{webserver.html_escape(m)}</p>")
 
-      webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to management page -#
+      webserver.content_button(webserver.BUTTON_MANAGEMENT) #- button back to management page -#
       webserver.content_stop()                        #- end of web page -#
     end
   end
