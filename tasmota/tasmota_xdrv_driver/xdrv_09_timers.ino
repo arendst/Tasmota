@@ -805,15 +805,15 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
   "}"
   "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{border:1px solid var(--c_frm);padding:1px;width:28px;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
-  "<fieldset style='min-width:470px;text-align:center;'>"
+  "<fieldset style='white-space:nowrap;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br><label><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b></label><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
-  "' hidden><div id='bt'></div><br><br><br>"
+  "' hidden><div id='bt'></div><br>"
   "<div id='oa' name='oa'></div><br>"
   "<div>"
   "<label><input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b></label>&emsp;"
@@ -872,13 +872,20 @@ void HandleTimerConfiguration(void)
 #ifdef USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
+
+#ifdef MAX_GUI_TIMERS
+  const uint8_t TimersToShow = MAX_TIMERS < MAX_GUI_TIMERS ? MAX_TIMERS : MAX_GUI_TIMERS;
+#else // MAX_GUI_TIMERS
+  const uint8_t TimersToShow = MAX_TIMERS;
+#endif // MAX_GUI_TIMERS
+
   WSContentSend_P(HTTP_TIMER_SCRIPT3, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), TasmotaGlobal.devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT5, TimersToShow, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, (TasmotaGlobal.devices_present > 16) ? 16 : TasmotaGlobal.devices_present);  // Power field is 4-bit allowing 0 to 15 devices
-  WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
+  WSContentSendStyle_P(HTTP_TIMER_STYLE);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings->flag3.timers_enable) ? PSTR(" checked") : "");  // CMND_TIMERS
-  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+  for (uint32_t i = 0; i < TimersToShow; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings->timer[i].data);
   }
   WSContentSend_P(HTTP_FORM_TIMER2);
