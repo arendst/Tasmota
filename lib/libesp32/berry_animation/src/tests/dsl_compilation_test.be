@@ -2,7 +2,7 @@
 # Tests for DSL compilation with both successful and failing cases
 #
 # Command to run test is:
-#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x) print(x) end import animation import animation_dsl " lib/libesp32/berry_animation/src/tests/dsl_compilation_test.be
+#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x,l) tasmota.log(x,l) end import animation import animation_dsl " lib/libesp32/berry_animation/src/tests/dsl_compilation_test.be
 
 import animation
 import animation_dsl

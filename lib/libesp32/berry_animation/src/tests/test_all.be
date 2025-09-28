@@ -6,6 +6,8 @@
 import global
 import tasmota
 
+def log(x,l) tasmota.log(x,l) end
+
 # Import the animation module
 import animation
 import user_functions
