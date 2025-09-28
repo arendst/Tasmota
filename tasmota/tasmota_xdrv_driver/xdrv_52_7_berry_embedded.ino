@@ -64,6 +64,9 @@ const char be_berry_init_code[] =
 
 #ifdef USE_BERRY_ANIMATION
   "import animation "
+  #ifdef USE_BERRY_ANIMATION_DSL
+    "import animation_dsl "
+  #endif // USE_BERRY_ANIMATION_DSL
 #endif // USE_BERRY_ANIMATION
 
 #ifdef USE_LVGL

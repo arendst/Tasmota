@@ -54,6 +54,10 @@ register_to_dsl(dsl_runtime)
 import "dsl/named_colors.be" as dsl_named_colors
 register_to_dsl(dsl_named_colors)
 
+# Import Web UI components
+import "webui/animation_web_ui.be" as animation_web_ui
+register_to_dsl(animation_web_ui)
+
 # Main DSL compilation function
 # Compiles DSL source code to Berry code
 #
@@ -162,5 +166,16 @@ def compile_file(filename)
   return true
 end
 animation_dsl.compile_file = compile_file
+
+# this function is called when the module is loaded
+def animation_dsl_init(m)
+  import animation
+  # load the Web UI component
+  var animation_web_ui = m.animation_web_ui
+  animation.web_ui = animation_web_ui()     # create an instance and store in "animation.web_ui"
+
+  return m    # return the module unchanged
+end
+animation_dsl.init = animation_dsl_init
 
 return animation_dsl

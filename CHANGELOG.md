@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.0.1.4]
 ### Added
 - ESP32 Extension Manager, replacing loading of Partition Wizard (#23955)
+- Berry animation framework web ui to compile DSL
 
 ### Breaking Changed
 

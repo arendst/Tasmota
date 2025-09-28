@@ -325,13 +325,12 @@ class Extension_manager
   end
 
   #####################################################################################################
-  # Init web handlers
+  # Web handlers
   #####################################################################################################
-  # Displays a "Autoconf" button on the configuration page
+  # Displays a "Extension Manager" button on the configuration page
   def web_add_button()
     import webserver
-      webserver.content_send(
-      "<p></p><form id=but_part_mgr style='display: block;' action='ext' method='get'><button>Extension Manager</button></form><p></p>")
+    webserver.content_send("<p></p><form id=but_part_mgr style='display: block;' action='ext' method='get'><button>Extension Manager</button></form><p></p>")
   end
 
   #####################################################################################################
