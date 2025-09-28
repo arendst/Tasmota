@@ -807,7 +807,7 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
 const char HTTP_TIMER_STYLE[] PROGMEM =
   ".tl{border:1px solid var(--c_frm);padding:1px;width:28px;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
-  "<fieldset style='white-space:nowrap;text-align:center;'>"
+  "<fieldset style='text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br><label><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b></label><br><br><hr>"
@@ -836,23 +836,24 @@ const char HTTP_FORM_TIMER3[] PROGMEM =
 #endif  // USE_SUNRISE
 
 #ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_FORM_TIMER4_SIZE = 249;
+const size_t HTTP_FORM_TIMER4_SIZE = 266;    // compressed size 132 bytes
 const char HTTP_FORM_TIMER4_COMPRESSED[] PROGMEM = "\x3D\x3C\x32\xF8\xFC\x3D\x3C\xC2\x61\xD2\xF5\x19\x04\xCF\x87\xD8\xFE\x89\x42\x8F"
                              "\x33\x9C\xC8\x61\xB0\xF0\x7D\xAD\x10\xF8\x7D\x8A\xC3\xEC\xFC\x3D\x0E\xC0\x41\xC0"
-                             "\x4F\xC3\xD0\xEC\xF0\xCB\xE3\xF0\xFD\x70\xEF\x0C\x3C\x1F\x5E\x04\x18\x80\xC0\x72"
-                             "\x41\xBA\x09\xD9\x23\x1B\xE1\x87\x83\xD0\x71\xF8\x76\xCE\xC3\xAC\xF4\x3B\x07\x02"
-                             "\x16\x68\x0C\x0B\x2C\x1F\x04\xDC\xB0\xF4\x3B\x04\xD3\x33\xF0\xF4\x1D\xF3\xF0\xF4"
-                             "\x13\x4C\xD6\x88\x7C\x3E\xC4\xF1\xF6\xBA\xC6\xB3\xE1\xF6\x27\x8F\xB0\x42\xBA";
+                             "\x4F\xC3\xD0\xEC\xF0\xCB\xE3\xF1\x1E\x68\x18\x0E\x32\x37\x41\x37\x19\x3F\x4C\x6F"
+                             "\x86\x1E\x0F\x41\xC7\xE1\xDB\x3B\x0E\xB3\xD0\xEC\x1C\x7E\x1F\xAE\x1D\xE1\x87\x80"
+                             "\x60\x59\x60\xF8\x26\xE5\x87\xA1\xD8\x26\x99\x9F\x87\xA0\xEF\x9F\x87\xA0\x9A\x66"
+                             "\xB4\x43\xE1\xF6\x27\x8F\xB5\xD6\x35\x82\x0C\x60\x43\xCA\x45\x6D\x33\xAF\xC3\x2C"
+                             "\x36\x79\xF6\x0F\xFE\xC6\x1E\x0F\xB0\x42\xC6\x4D";
 #define  HTTP_FORM_TIMER4       Decompress(HTTP_FORM_TIMER4_COMPRESSED,HTTP_FORM_TIMER4_SIZE).c_str()
 #else
 const char HTTP_FORM_TIMER4[] PROGMEM =
   "<span><select style='width:60px;' id='ho'></select></span>"
-  "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
+  " " D_HOUR_MINUTE_SEPARATOR " "
   "<span><select style='width:60px;' id='mi'></select></span>"
   "&emsp;<b>+/-</b>&nbsp;"
   "<span><select style='width:60px;' id='mw'></select></span>"
   "</div><br>"
-  "<div id='ds' name='ds'></div>";
+  "<div id='ds' name='ds' style='white-space:nowrap;'></div>";
 #endif //USE_UNISHOX_COMPRESSION
 
 void HandleTimerConfiguration(void)
@@ -873,19 +874,13 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
 
-#ifdef MAX_GUI_TIMERS
-  const uint8_t TimersToShow = MAX_TIMERS < MAX_GUI_TIMERS ? MAX_TIMERS : MAX_GUI_TIMERS;
-#else // MAX_GUI_TIMERS
-  const uint8_t TimersToShow = MAX_TIMERS;
-#endif // MAX_GUI_TIMERS
-
   WSContentSend_P(HTTP_TIMER_SCRIPT3, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), TasmotaGlobal.devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT5, TimersToShow, TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, (TasmotaGlobal.devices_present > 16) ? 16 : TasmotaGlobal.devices_present);  // Power field is 4-bit allowing 0 to 15 devices
   WSContentSendStyle_P(HTTP_TIMER_STYLE);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings->flag3.timers_enable) ? PSTR(" checked") : "");  // CMND_TIMERS
-  for (uint32_t i = 0; i < TimersToShow; i++) {
+  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings->timer[i].data);
   }
   WSContentSend_P(HTTP_FORM_TIMER2);
@@ -897,11 +892,7 @@ void HandleTimerConfiguration(void)
 #else
   WSContentSend_P(HTTP_FORM_TIMER3);
 #endif  // USE_SUNRISE
-#ifdef USE_UNISHOX_COMPRESSION
-  WSContentSend_P(HTTP_FORM_TIMER4,D_HOUR_MINUTE_SEPARATOR);
-#else
   WSContentSend_P(HTTP_FORM_TIMER4);
-#endif //USE_UNISHOX_COMPRESSION
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
