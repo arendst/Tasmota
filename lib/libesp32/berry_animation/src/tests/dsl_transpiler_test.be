@@ -8,6 +8,25 @@ import animation
 import animation_dsl
 import string
 
+# Helper function to extract all tokens from a pull lexer (for testing only)
+def extract_all_tokens(lexer)
+  var tokens = []
+  lexer.reset()  # Start from beginning
+  
+  while !lexer.at_end()
+    var token = lexer.next_token()
+    
+    # EOF token removed - check for nil instead
+    if token == nil
+      break
+    end
+    
+    tokens.push(token)
+  end
+  
+  return tokens
+end
+
 # Test basic transpilation
 def test_basic_transpilation()
   print("Testing basic DSL transpilation...")
@@ -630,9 +649,8 @@ def test_forward_references()
   var compilation_failed = false
   
   try
-    var lexer = animation_dsl.DSLLexer(dsl_source)
-    var tokens = lexer.tokenize()
-    var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+    var lexer = animation_dsl.create_lexer(dsl_source)
+    var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
     berry_code = transpiler.transpile()
   except "dsl_compilation_error" as e, msg
     compilation_failed = true
@@ -700,23 +718,12 @@ def test_complex_dsl()
     print("Complex DSL compilation failed - checking for specific issues...")
     
     # Test individual components
-    var lexer = animation_dsl.DSLLexer(complex_dsl)
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer(complex_dsl)
     
-    if lexer.has_errors()
-      print("Lexical errors found:")
-      print(lexer.get_error_report())
-    else
-      print("Lexical analysis passed")
-      
-      var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
-      var result = transpiler.transpile()
-      
-      if transpiler.has_errors()
-        print("Transpilation errors found:")
-        print(transpiler.get_error_report())
-      end
-    end
+    print("Lexical analysis passed")
+    
+    var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
+    var result = transpiler.transpile()
   end
   
   print("✓ Complex DSL test completed")
@@ -731,11 +738,13 @@ def test_transpiler_components()
   print("Testing basic transpiler instantiation...")
   
   # Test token processing
-  var lexer = animation_dsl.DSLLexer("color red = 0xFF0000")
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer("color red = 0xFF0000")
+  var tokens = extract_all_tokens(lexer)
   assert(size(tokens) >= 4, "Should have multiple tokens")
   
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  # Reset lexer position before creating transpiler
+  lexer.reset()
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   assert(!transpiler.at_end(), "Should not be at end initially")
   
   print("✓ Transpiler components test passed")

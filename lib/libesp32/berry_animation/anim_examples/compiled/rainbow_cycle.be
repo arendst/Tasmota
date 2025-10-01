@@ -12,7 +12,7 @@ import animation
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var rainbow_palette_ = bytes("FFFF0000" "FFFF8000" "FFFFFF00" "FF00FF00" "FF0000FF" "FF8000FF" "FFFF00FF")  # rainbow colors 
+var rainbow_palette_ = bytes("FFFF0000" "FFFF8000" "FFFFFF00" "FF00FF00" "FF0000FF" "FF8000FF" "FFFF00FF")  # rainbow colors
 # Create smooth rainbow cycle animation
 var rainbow_cycle_ = animation.color_cycle(engine)
 rainbow_cycle_.palette = rainbow_palette_

@@ -683,7 +683,7 @@ stack traceback:
 ### Compilation Output
 
 ```
-dsl_compilation_error: Line 38: Transpilation failed: Line 12: Template body transpilation failed: Line 12: Expression 'animation.strip_length(engine)' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
+dsl_compilation_error: Line 12: Transpilation failed: Line 12: Template body transpilation failed: Line 12: Expression 'animation.strip_length(engine)' cannot be used in computed expressions. This creates a new instance at each evaluation. Use either:
   set var_name = animation.strip_length(engine)()  # Single function call
   set computed = (existing_var + 1) / 2  # Computation with existing values
 stack traceback:
@@ -1011,7 +1011,7 @@ SUCCESS
 ### Compilation Output
 
 ```
-dsl_compilation_error: Line 29: Transpilation failed: Line 9: Template body transpilation failed: Line 9: Unknown function or identifier 'abs2'. Make sure it's defined before use.
+dsl_compilation_error: Line 9: Transpilation failed: Line 9: Template body transpilation failed: Line 9: Unknown function or identifier 'abs2'. Make sure it's defined before use.
 stack traceback:
 	<unknown source>: in function `error`
 	<unknown source>: in function `transpile`

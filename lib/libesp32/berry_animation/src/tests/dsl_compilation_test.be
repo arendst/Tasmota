@@ -146,7 +146,7 @@ def test_compilation_failures()
     var berry_code = animation_dsl.compile(dangerous_dsl)
     assert(false, "Should fail with dangerous function creation")
   except "dsl_compilation_error" as e, msg
-    assert(string.find(msg, "Function 'strip_length' cannot be used in computed expressions") >= 0, 
+    assert(string.find(msg, "Expression 'animation.strip_length(engine)' cannot be used in computed expressions.") >= 0, 
            "Should report dangerous function creation error")
     print("✓ Dangerous function creation properly rejected")
   end
@@ -417,24 +417,6 @@ def test_complete_example()
   return true
 end
 
-# Test the specific failing case mentioned in the original request
-def test_specific_failing_case()
-  print("Testing specific failing case: set s2 = strip_length() + strip_length()...")
-  
-  var failing_dsl = "set s2 = strip_length() + strip_length()"
-  
-  try
-    var berry_code = animation_dsl.compile(failing_dsl)
-    assert(false, "Should fail - dangerous pattern should be rejected")
-  except "dsl_compilation_error" as e, msg
-    assert(string.find(msg, "Function 'strip_length' cannot be used in computed expressions") >= 0,
-           "Should report the specific error about function usage in computed expressions")
-    print("✓ Specific failing case properly rejected with correct error message")
-  end
-  
-  return true
-end
-
 # Run all tests
 def run_all_tests()
   print("=== DSL Compilation Test Suite ===")
@@ -443,8 +425,7 @@ def run_all_tests()
     test_successful_compilation,
     test_compilation_failures, 
     test_edge_cases,
-    test_complete_example,
-    test_specific_failing_case
+    test_complete_example
   ]
   
   var passed = 0
@@ -471,7 +452,7 @@ def run_all_tests()
     return true
   else
     print("❌ Some tests failed")
-    return false
+    raise "test_failed"
   end
 end
 

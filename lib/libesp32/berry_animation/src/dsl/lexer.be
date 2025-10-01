@@ -1,19 +1,20 @@
-# DSL Lexer (Tokenizer) for Animation DSL
-# Converts DSL source code into a stream of tokens for the single-pass transpiler
+# Pull-Mode Lexer v2 for Animation DSL
+# Combines pull-mode interface with original lexer.be implementation
+# Reuses most of the code from lexer.be while providing pull-based token access
 
 # Import token functions and Token class
 import "dsl/token.be" as token_module
 var Token = token_module["Token"]
 
-#@ solidify:DSLLexer,weak
-class DSLLexer
+#@ solidify:Lexer,weak
+class Lexer
   var source          # String - DSL source code
   var position        # Integer - current character position
   var line            # Integer - current line number (1-based)
   var column          # Integer - current column number (1-based)
-  var tokens          # List - generated tokens
+  var token_position  # Integer - current token position (for compatibility)
   
-  # Initialize lexer with source code
+  # Initialize pull lexer with source code
   #
   # @param source: string - DSL source code to tokenize
   def init(source)
@@ -21,63 +22,261 @@ class DSLLexer
     self.position = 0
     self.line = 1
     self.column = 1
-    self.tokens = []
+    self.token_position = 0
   end
   
-  # Tokenize the entire source code
+  # Pull the next token from the stream
+  # This is the main pull-mode interface - generates tokens on demand
   #
-  # @return list - Array of Token objects
-  def tokenize()
-    self.tokens = []
+  # @return Token - Next token, or nil if at end
+  def next_token()
+    # Skip whitespace and comments until we find a meaningful token or reach end
+    while !self.at_end()
+      var start_column = self.column
+      var ch = self.advance()
+      
+      if ch == ' ' || ch == '\t' || ch == '\r'
+        # Skip whitespace (but not newlines - they can be significant)
+        continue
+      elif ch == '\n'
+        var token = self.create_token(35 #-animation_dsl.Token.NEWLINE-#, "\n", 1)
+        self.line += 1
+        self.column = 1
+        self.token_position += 1
+        return token
+      elif ch == '#'
+        var token = self.scan_comment()
+        self.token_position += 1
+        return token
+      elif ch == '0' && self.peek() == 'x'
+        var token = self.scan_hex_color_0x()
+        self.token_position += 1
+        return token
+      elif self.is_alpha(ch) || ch == '_'
+        var token = self.scan_identifier_or_keyword()
+        self.token_position += 1
+        return token
+      elif self.is_digit(ch)
+        var token = self.scan_number()
+        self.token_position += 1
+        return token
+      elif ch == '"' || ch == "'"
+        # Check for triple quotes
+        if (ch == '"' && self.peek() == '"' && self.peek_char_ahead(1) == '"') ||
+           (ch == "'" && self.peek() == "'" && self.peek_char_ahead(1) == "'")
+          var token = self.scan_triple_quoted_string(ch)
+          self.token_position += 1
+          return token
+        else
+          var token = self.scan_string(ch)
+          self.token_position += 1
+          return token
+        end
+      elif ch == '$'
+        var token = self.scan_variable_reference()
+        self.token_position += 1
+        return token
+      else
+        var token = self.scan_operator_or_delimiter(ch)
+        self.token_position += 1
+        return token
+      end
+    end
+    
+    # Reached end of source
+    return nil
+  end
+  
+  # Peek at the next token without consuming it
+  # Uses position saving/restoring to implement peek
+  #
+  # @return Token - Next token, or nil if at end
+  def peek_token()
+    # Save current state
+    var saved_position = self.position
+    var saved_line = self.line
+    var saved_column = self.column
+    var saved_token_position = self.token_position
+    
+    # Get next token
+    var token = self.next_token()
+    if (token != nil)
+      # We haven't reached the end of the file    
+      # Restore state
+      self.position = saved_position
+      self.line = saved_line
+      self.column = saved_column
+      self.token_position = saved_token_position
+    end
+    
+    return token
+  end
+  
+  # Peek ahead by n tokens without consuming them
+  # Note: This is less efficient than the array-based version but maintains simplicity
+  #
+  # @param n: int - Number of tokens to look ahead (1-based)
+  # @return Token - Token at position + n, or nil if beyond end
+  def peek_ahead(n)
+    if n <= 0 return nil end
+    
+    # Save current state
+    var saved_position = self.position
+    var saved_line = self.line
+    var saved_column = self.column
+    var saved_token_position = self.token_position
+    
+    # Advance n tokens
+    var token = nil
+    for i : 1..n
+      token = self.next_token()
+      if token == nil break end
+    end
+    
+    # Restore state
+    self.position = saved_position
+    self.line = saved_line
+    self.column = saved_column
+    self.token_position = saved_token_position
+    
+    return token
+  end
+  
+  # Check if we're at the end of the source
+  #
+  # @return bool - True if no more characters available
+  def at_end()
+    return self.position >= size(self.source)
+  end
+  
+  # Reset to beginning of source
+  def reset()
     self.position = 0
     self.line = 1
     self.column = 1
-    
-    while !self.at_end()
-      self.scan_token()
-    end
-    
-    # Add EOF token
-    self.add_token(38 #-animation_dsl.Token.EOF-#, "", 0)
-    
-    return self.tokens
+    self.token_position = 0
   end
   
-  # Scan and create the next token
-  def scan_token()
-    var start_column = self.column
-    var ch = self.advance()
+  
+  # Get current position in token stream (for compatibility with array-based version)
+  #
+  # @return int - Current token position
+  def get_position()
+    return self.token_position
+  end
+  
+  # Set position in token stream (for compatibility with array-based version)
+  # Note: This is a simplified implementation that resets to beginning and advances
+  #
+  # @param pos: int - New token position
+  def set_position(pos)
+    if pos < 0 return end
     
-    if ch == ' ' || ch == '\t' || ch == '\r'
-      # Skip whitespace (but not newlines - they can be significant)
-      return
-    elif ch == '\n'
-      self.add_token(35 #-animation_dsl.Token.NEWLINE-#, "\n", 1)
-      self.line += 1
-      self.column = 1
-      return
-    elif ch == '#'
-      self.scan_comment()
-    elif ch == '0' && self.peek() == 'x'
-      self.scan_hex_color_0x()
-    elif self.is_alpha(ch) || ch == '_'
-      self.scan_identifier_or_keyword()
-    elif self.is_digit(ch)
-      self.scan_number()
-    elif ch == '"' || ch == "'"
-      # Check for triple quotes
-      if (ch == '"' && self.peek() == '"' && self.peek_ahead(1) == '"') ||
-         (ch == "'" && self.peek() == "'" && self.peek_ahead(1) == "'")
-        self.scan_triple_quoted_string(ch)
-      else
-        self.scan_string(ch)
-      end
-    elif ch == '$'
-      self.scan_variable_reference()
-    else
-      self.scan_operator_or_delimiter(ch)
+    # Save current state in case we need to restore it
+    var saved_position = self.position
+    var saved_line = self.line
+    var saved_column = self.column
+    var saved_token_position = self.token_position
+    
+    # Reset to beginning
+    self.position = 0
+    self.line = 1
+    self.column = 1
+    self.token_position = 0
+    
+    # Advance to desired token position
+    while self.token_position < pos && !self.at_end()
+      self.next_token()
+    end
+    
+    # If we didn't reach the desired position, it was invalid - restore state
+    if self.token_position != pos
+      self.position = saved_position
+      self.line = saved_line
+      self.column = saved_column
+      self.token_position = saved_token_position
     end
   end
+  
+  # Create a sub-lexer (for compatibility with array-based version)
+  # Note: This converts token positions to character positions
+  #
+  # @param start_token_pos: int - Starting token position
+  # @param end_token_pos: int - Ending token position (exclusive)
+  # @return Lexer - New pull lexer with subset of source
+  def create_sub_lexer(start_token_pos, end_token_pos)
+    import animation_dsl
+    # Check for invalid ranges
+    if start_token_pos < 0 || end_token_pos <= start_token_pos
+      # Invalid range - return empty sub-lexer
+      return animation_dsl.create_lexer("")
+    end
+    
+    # Save current state
+    var saved_position = self.position
+    var saved_line = self.line
+    var saved_column = self.column
+    var saved_token_position = self.token_position
+    
+    # Reset to beginning and find character positions for token positions
+    self.position = 0
+    self.line = 1
+    self.column = 1
+    self.token_position = 0
+    
+    var start_char_pos = 0
+    var end_char_pos = size(self.source)
+    var found_start = false
+    var found_end = false
+    
+    # Find start position
+    while self.token_position < start_token_pos && !self.at_end()
+      start_char_pos = self.position
+      self.next_token()
+    end
+    if self.token_position == start_token_pos
+      start_char_pos = self.position
+      found_start = true
+    end
+    
+    # Find end position
+    while self.token_position < end_token_pos && !self.at_end()
+      self.next_token()
+    end
+    if self.token_position == end_token_pos
+      end_char_pos = self.position
+      found_end = true
+    end
+    
+    # Restore state
+    self.position = saved_position
+    self.line = saved_line
+    self.column = saved_column
+    self.token_position = saved_token_position
+    
+    # Create sub-lexer with character range
+    if !found_start
+      return animation_dsl.create_lexer("")
+    end
+    
+    # Clamp end position
+    if end_char_pos > size(self.source) end_char_pos = size(self.source) end
+    if start_char_pos >= end_char_pos
+      return animation_dsl.create_lexer("")
+    end
+    
+    # Extract subset of source
+    var sub_source = self.source[start_char_pos..end_char_pos-1]
+    var sub_lexer = animation_dsl.create_lexer(sub_source)
+    # Ensure sub-lexer starts at position 0 (should already be 0 from init, but make sure)
+    sub_lexer.position = 0
+    sub_lexer.line = 1
+    sub_lexer.column = 1
+    sub_lexer.token_position = 0
+    return sub_lexer
+  end
+  
+  # === TOKEN SCANNING METHODS (from original lexer.be) ===
   
   # Scan comment (now unambiguous - only starts with #)
   def scan_comment()
@@ -90,7 +289,24 @@ class DSLLexer
     end
     
     var comment_text = self.source[start_pos..self.position-1]
-    self.add_token(37 #-animation_dsl.Token.COMMENT-#, comment_text, self.position - start_pos)
+    
+    # Trim trailing whitespace from comment text manually
+    # Find the last non-whitespace character in the comment content
+    var trimmed_text = comment_text
+    var end_pos = size(comment_text) - 1
+    while end_pos >= 0 && (comment_text[end_pos] == ' ' || comment_text[end_pos] == '\t' || comment_text[end_pos] == '\r')
+      end_pos -= 1
+    end
+    
+    # Extract trimmed comment text
+    if end_pos >= 0
+      trimmed_text = comment_text[0 .. end_pos]
+    else
+      trimmed_text = "#"  # Keep at least the # character for empty comments
+    end
+    
+    # Use trimmed text but keep original position tracking
+    return self.create_token(37 #-animation_dsl.Token.COMMENT-#, trimmed_text, self.position - start_pos)
   end
   
   # Scan hex color (0xRRGGBB, 0xAARRGGBB)
@@ -112,7 +328,7 @@ class DSLLexer
     
     # Validate hex color format - support 6 (RGB) or 8 (ARGB) digits
     if hex_digits == 6 || hex_digits == 8
-      self.add_token(4 #-animation_dsl.Token.COLOR-#, color_value, size(color_value))
+      return self.create_token(4 #-animation_dsl.Token.COLOR-#, color_value, size(color_value))
     else
       self.error("Invalid hex color format: " + color_value + " (expected 0xRRGGBB or 0xAARRGGBB)")
     end
@@ -141,7 +357,7 @@ class DSLLexer
       token_type = 1 #-animation_dsl.Token.IDENTIFIER-#
     end
     
-    self.add_token(token_type, text, size(text))
+    return self.create_token(token_type, text, size(text))
   end
   
   # Scan numeric literal (with optional time/percentage/multiplier suffix)
@@ -172,18 +388,18 @@ class DSLLexer
     # Check for time unit suffixes
     if self.check_time_suffix()
       var suffix = self.scan_time_suffix()
-      self.add_token(5 #-animation_dsl.Token.TIME-#, number_text + suffix, size(number_text + suffix))
+      return self.create_token(5 #-animation_dsl.Token.TIME-#, number_text + suffix, size(number_text + suffix))
     # Check for percentage suffix
     elif !self.at_end() && self.peek() == '%'
       self.advance()
-      self.add_token(6 #-animation_dsl.Token.PERCENTAGE-#, number_text + "%", size(number_text) + 1)
+      return self.create_token(6 #-animation_dsl.Token.PERCENTAGE-#, number_text + "%", size(number_text) + 1)
     # Check for multiplier suffix
     elif !self.at_end() && self.peek() == 'x'
       self.advance()
-      self.add_token(7 #-animation_dsl.Token.MULTIPLIER-#, number_text + "x", size(number_text) + 1)
+      return self.create_token(7 #-animation_dsl.Token.MULTIPLIER-#, number_text + "x", size(number_text) + 1)
     else
       # Plain number
-      self.add_token(2 #-animation_dsl.Token.NUMBER-#, number_text, size(number_text))
+      return self.create_token(2 #-animation_dsl.Token.NUMBER-#, number_text, size(number_text))
     end
   end
   
@@ -266,7 +482,7 @@ class DSLLexer
     else
       # Consume closing quote
       self.advance()
-      self.add_token(3 #-animation_dsl.Token.STRING-#, value, self.position - start_pos)
+      return self.create_token(3 #-animation_dsl.Token.STRING-#, value, self.position - start_pos)
     end
   end
   
@@ -286,8 +502,8 @@ class DSLLexer
       
       # Check for closing triple quotes
       if ch == quote_char && 
-         self.peek_ahead(1) == quote_char && 
-         self.peek_ahead(2) == quote_char
+         self.peek_char_ahead(1) == quote_char && 
+         self.peek_char_ahead(2) == quote_char
         # Found closing triple quotes - consume them
         self.advance()  # first closing quote
         self.advance()  # second closing quote
@@ -308,7 +524,7 @@ class DSLLexer
     if self.at_end() && !(self.source[self.position-3..self.position-1] == quote_char + quote_char + quote_char)
       self.error("Unterminated triple-quoted string literal")
     else
-      self.add_token(3 #-animation_dsl.Token.STRING-#, value, self.position - start_pos)
+      return self.create_token(3 #-animation_dsl.Token.STRING-#, value, self.position - start_pos)
     end
   end
   
@@ -327,7 +543,7 @@ class DSLLexer
     end
     
     var var_ref = self.source[start_pos..self.position-1]
-    self.add_token(36 #-animation_dsl.Token.VARIABLE_REF-#, var_ref, size(var_ref))
+    return self.create_token(36 #-animation_dsl.Token.VARIABLE_REF-#, var_ref, size(var_ref))
   end
   
   # Scan operator or delimiter
@@ -336,99 +552,89 @@ class DSLLexer
     
     if ch == '='
       if self.match('=')
-        self.add_token(15 #-animation_dsl.Token.EQUAL-#, "==", 2)
+        return self.create_token(15 #-animation_dsl.Token.EQUAL-#, "==", 2)
       else
-        self.add_token(8 #-animation_dsl.Token.ASSIGN-#, "=", 1)
+        return self.create_token(8 #-animation_dsl.Token.ASSIGN-#, "=", 1)
       end
     elif ch == '!'
       if self.match('=')
-        self.add_token(16 #-animation_dsl.Token.NOT_EQUAL-#, "!=", 2)
+        return self.create_token(16 #-animation_dsl.Token.NOT_EQUAL-#, "!=", 2)
       else
-        self.add_token(23 #-animation_dsl.Token.LOGICAL_NOT-#, "!", 1)
+        return self.create_token(23 #-animation_dsl.Token.LOGICAL_NOT-#, "!", 1)
       end
     elif ch == '<'
       if self.match('=')
-        self.add_token(18 #-animation_dsl.Token.LESS_EQUAL-#, "<=", 2)
+        return self.create_token(18 #-animation_dsl.Token.LESS_EQUAL-#, "<=", 2)
       elif self.match('<')
         # Left shift - not used in DSL but included for completeness
         self.error("Left shift operator '<<' not supported in DSL")
       else
-        self.add_token(17 #-animation_dsl.Token.LESS_THAN-#, "<", 1)
+        return self.create_token(17 #-animation_dsl.Token.LESS_THAN-#, "<", 1)
       end
     elif ch == '>'
       if self.match('=')
-        self.add_token(20 #-animation_dsl.Token.GREATER_EQUAL-#, ">=", 2)
+        return self.create_token(20 #-animation_dsl.Token.GREATER_EQUAL-#, ">=", 2)
       elif self.match('>')
         # Right shift - not used in DSL but included for completeness
         self.error("Right shift operator '>>' not supported in DSL")
       else
-        self.add_token(19 #-animation_dsl.Token.GREATER_THAN-#, ">", 1)
+        return self.create_token(19 #-animation_dsl.Token.GREATER_THAN-#, ">", 1)
       end
     elif ch == '&'
       if self.match('&')
-        self.add_token(21 #-animation_dsl.Token.LOGICAL_AND-#, "&&", 2)
+        return self.create_token(21 #-animation_dsl.Token.LOGICAL_AND-#, "&&", 2)
       else
         self.error("Single '&' not supported in DSL")
       end
     elif ch == '|'
       if self.match('|')
-        self.add_token(22 #-animation_dsl.Token.LOGICAL_OR-#, "||", 2)
+        return self.create_token(22 #-animation_dsl.Token.LOGICAL_OR-#, "||", 2)
       else
         self.error("Single '|' not supported in DSL")
       end
     elif ch == '-'
       if self.match('>')
-        self.add_token(34 #-animation_dsl.Token.ARROW-#, "->", 2)
+        return self.create_token(34 #-animation_dsl.Token.ARROW-#, "->", 2)
       else
-        self.add_token(10 #-animation_dsl.Token.MINUS-#, "-", 1)
+        return self.create_token(10 #-animation_dsl.Token.MINUS-#, "-", 1)
       end
     elif ch == '+'
-      self.add_token(9 #-animation_dsl.Token.PLUS-#, "+", 1)
+      return self.create_token(9 #-animation_dsl.Token.PLUS-#, "+", 1)
     elif ch == '*'
-      self.add_token(11 #-animation_dsl.Token.MULTIPLY-#, "*", 1)
+      return self.create_token(11 #-animation_dsl.Token.MULTIPLY-#, "*", 1)
     elif ch == '/'
-      self.add_token(12 #-animation_dsl.Token.DIVIDE-#, "/", 1)
+      return self.create_token(12 #-animation_dsl.Token.DIVIDE-#, "/", 1)
     elif ch == '%'
-      self.add_token(13 #-animation_dsl.Token.MODULO-#, "%", 1)
+      return self.create_token(13 #-animation_dsl.Token.MODULO-#, "%", 1)
     elif ch == '^'
-      self.add_token(14 #-animation_dsl.Token.POWER-#, "^", 1)
+      return self.create_token(14 #-animation_dsl.Token.POWER-#, "^", 1)
     elif ch == '('
-      self.add_token(24 #-animation_dsl.Token.LEFT_PAREN-#, "(", 1)
+      return self.create_token(24 #-animation_dsl.Token.LEFT_PAREN-#, "(", 1)
     elif ch == ')'
-      self.add_token(25 #-animation_dsl.Token.RIGHT_PAREN-#, ")", 1)
+      return self.create_token(25 #-animation_dsl.Token.RIGHT_PAREN-#, ")", 1)
     elif ch == '{'
-      self.add_token(26 #-animation_dsl.Token.LEFT_BRACE-#, "{", 1)
+      return self.create_token(26 #-animation_dsl.Token.LEFT_BRACE-#, "{", 1)
     elif ch == '}'
-      self.add_token(27 #-animation_dsl.Token.RIGHT_BRACE-#, "}", 1)
+      return self.create_token(27 #-animation_dsl.Token.RIGHT_BRACE-#, "}", 1)
     elif ch == '['
-      self.add_token(28 #-animation_dsl.Token.LEFT_BRACKET-#, "[", 1)
+      return self.create_token(28 #-animation_dsl.Token.LEFT_BRACKET-#, "[", 1)
     elif ch == ']'
-      self.add_token(29 #-animation_dsl.Token.RIGHT_BRACKET-#, "]", 1)
+      return self.create_token(29 #-animation_dsl.Token.RIGHT_BRACKET-#, "]", 1)
     elif ch == ','
-      self.add_token(30 #-animation_dsl.Token.COMMA-#, ",", 1)
+      return self.create_token(30 #-animation_dsl.Token.COMMA-#, ",", 1)
     elif ch == ';'
-      self.add_token(31 #-animation_dsl.Token.SEMICOLON-#, ";", 1)
+      return self.create_token(31 #-animation_dsl.Token.SEMICOLON-#, ";", 1)
     elif ch == ':'
-      self.add_token(32 #-animation_dsl.Token.COLON-#, ":", 1)
+      return self.create_token(32 #-animation_dsl.Token.COLON-#, ":", 1)
     elif ch == '.'
-      if self.match('.')
-        # Range operator (..) - treat as two dots for now
-        self.add_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
-        self.add_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
-      else
-        self.add_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
-      end
+      # For now, just handle single dots - range operators can be added later if needed
+      return self.create_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
     else
       self.error("Unexpected character: '" + ch + "'")
     end
   end
   
-  # Helper methods
-  
-  # Check if at end of source
-  def at_end()
-    return self.position >= size(self.source)
-  end
+  # === HELPER METHODS (from original lexer.be) ===
   
   # Advance position and return current character
   def advance()
@@ -450,16 +656,8 @@ class DSLLexer
     return self.source[self.position]
   end
   
-  # Peek at next character without advancing
-  def peek_next()
-    if self.position + 1 >= size(self.source)
-      return ""
-    end
-    return self.source[self.position + 1]
-  end
-  
   # Peek ahead by n characters without advancing
-  def peek_ahead(n)
+  def peek_char_ahead(n)
     if self.position + n >= size(self.source)
       return ""
     end
@@ -494,11 +692,10 @@ class DSLLexer
     return self.is_digit(ch) || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F')
   end
   
-  # Add token to tokens list
-  def add_token(token_type, value, length)
+  # Create token with proper position tracking
+  def create_token(token_type, value, length)
     import animation_dsl
-    var token = animation_dsl.Token(token_type, value, self.line, self.column - length, length)
-    self.tokens.push(token)
+    return animation_dsl.Token(token_type, value, self.line, self.column - length, length)
   end
   
   # Raise lexical error immediately
@@ -506,40 +703,8 @@ class DSLLexer
     var error_msg = "Line " + str(self.line) + ":" + str(self.column) + ": " + message
     raise "lexical_error", error_msg
   end
-  
-  # Reset lexer state for reuse
-  def reset(new_source)
-    self.source = new_source != nil ? new_source : ""
-    self.position = 0
-    self.line = 1
-    self.column = 1
-    self.tokens = []
-  end
-  
-  # Get current position info for debugging
-  def get_position_info()
-    return {
-      "position": self.position,
-      "line": self.line,
-      "column": self.column,
-      "at_end": self.at_end()
-    }
-  end
-  
-
-end
-
-# Utility function to tokenize DSL source code
-#
-# @param source: string - DSL source code
-# @return list - Array of Token objects
-def tokenize_dsl(source)
-  import animation_dsl
-  var lexer = animation_dsl.DSLLexer(source)
-  return lexer.tokenize()
 end
 
 return {
-  "DSLLexer": DSLLexer,
-  "tokenize_dsl": tokenize_dsl
+  "create_lexer": Lexer
 }

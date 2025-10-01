@@ -4,8 +4,7 @@
 
 #@ solidify:SimpleDSLTranspiler,weak
 class SimpleDSLTranspiler
-  var tokens          # Token stream from lexer
-  var pos             # Current token position
+  var pull_lexer      # Pull lexer instance
   var output          # Generated Berry code lines
   var warnings        # Compilation warnings
   var run_statements  # Collect all run statements for single engine.run()
@@ -59,29 +58,30 @@ class SimpleDSLTranspiler
     # String representation for debugging
     def tostring()
       var instance_str = (self.instance_for_validation != nil) ? f"instance={classname(self.instance_for_validation)}" : "instance=nil"
-      var type_str = self._type_to_string(self.return_type)
-      return f"ExpressionResult(expr='{self.expr}', dynamic={self.has_dynamic}, dangerous={self.has_dangerous}, comp={self.has_computation}, type={type_str}, {instance_str})"
+      # var type_str = self._type_to_string(self.return_type)
+      # return f"ExpressionResult(expr='{self.expr}', dynamic={self.has_dynamic}, dangerous={self.has_dangerous}, comp={self.has_computation}, type={type_str}, {instance_str})"
+      return f"ExpressionResult(expr='{self.expr}', dynamic={self.has_dynamic}, dangerous={self.has_dangerous}, comp={self.has_computation}, type={self.return_type}, {instance_str})"
     end
     
-    # Helper method to convert type number to string for debugging
-    def _type_to_string(type_num)
-      if type_num == 1 #-animation_dsl._symbol_entry.TYPE_PALETTE_CONSTANT-# return "palette_constant"
-      elif type_num == 2 #-animation_dsl._symbol_entry.TYPE_PALETTE-# return "palette"
-      elif type_num == 3 #-animation_dsl._symbol_entry.TYPE_CONSTANT-# return "constant"
-      elif type_num == 4 #-animation_dsl._symbol_entry.TYPE_MATH_FUNCTION-# return "math_function"
-      elif type_num == 5 #-animation_dsl._symbol_entry.TYPE_USER_FUNCTION-# return "user_function"
-      elif type_num == 6 #-animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER_CONSTRUCTOR-# return "value_provider_constructor"
-      elif type_num == 7 #-animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER-# return "value_provider"
-      elif type_num == 8 #-animation_dsl._symbol_entry.TYPE_ANIMATION_CONSTRUCTOR-# return "animation_constructor"
-      elif type_num == 9 #-animation_dsl._symbol_entry.TYPE_ANIMATION-# return "animation"
-      elif type_num == 10 #-animation_dsl._symbol_entry.TYPE_COLOR_CONSTRUCTOR-# return "color_constructor"
-      elif type_num == 11 #-animation_dsl._symbol_entry.TYPE_COLOR-# return "color"
-      elif type_num == 12 #-animation_dsl._symbol_entry.TYPE_VARIABLE-# return "variable"
-      elif type_num == 13 #-animation_dsl._symbol_entry.TYPE_SEQUENCE-# return "sequence"
-      elif type_num == 14 #-animation_dsl._symbol_entry.TYPE_TEMPLATE-# return "template"
-      else return f"unknown({type_num})"
-      end
-    end
+    # # Helper method to convert type number to string for debugging
+    # def _type_to_string(type_num)
+    #   if type_num == 1 #-animation_dsl._symbol_entry.TYPE_PALETTE_CONSTANT-# return "palette_constant"
+    #   elif type_num == 2 #-animation_dsl._symbol_entry.TYPE_PALETTE-# return "palette"
+    #   elif type_num == 3 #-animation_dsl._symbol_entry.TYPE_CONSTANT-# return "constant"
+    #   elif type_num == 4 #-animation_dsl._symbol_entry.TYPE_MATH_FUNCTION-# return "math_function"
+    #   elif type_num == 5 #-animation_dsl._symbol_entry.TYPE_USER_FUNCTION-# return "user_function"
+    #   elif type_num == 6 #-animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER_CONSTRUCTOR-# return "value_provider_constructor"
+    #   elif type_num == 7 #-animation_dsl._symbol_entry.TYPE_VALUE_PROVIDER-# return "value_provider"
+    #   elif type_num == 8 #-animation_dsl._symbol_entry.TYPE_ANIMATION_CONSTRUCTOR-# return "animation_constructor"
+    #   elif type_num == 9 #-animation_dsl._symbol_entry.TYPE_ANIMATION-# return "animation"
+    #   elif type_num == 10 #-animation_dsl._symbol_entry.TYPE_COLOR_CONSTRUCTOR-# return "color_constructor"
+    #   elif type_num == 11 #-animation_dsl._symbol_entry.TYPE_COLOR-# return "color"
+    #   elif type_num == 12 #-animation_dsl._symbol_entry.TYPE_VARIABLE-# return "variable"
+    #   elif type_num == 13 #-animation_dsl._symbol_entry.TYPE_SEQUENCE-# return "sequence"
+    #   elif type_num == 14 #-animation_dsl._symbol_entry.TYPE_TEMPLATE-# return "template"
+    #   else return f"unknown({type_num})"
+    #   end
+    # end
     
     # Static method to combine expression results
     # Takes an expression string and 1-2 ExpressionResult parameters (checks for nil)
@@ -152,10 +152,11 @@ class SimpleDSLTranspiler
     end
   end
   
-  def init(tokens)
+  def init(pull_lexer)
     import animation_dsl
-    self.tokens = tokens != nil ? tokens : []
-    self.pos = 0
+    
+    # Only support pull lexer interface now
+    self.pull_lexer = pull_lexer
     self.output = []
     self.warnings = []  # Separate array for warnings
     self.run_statements = []
@@ -367,8 +368,24 @@ class SimpleDSLTranspiler
   # Transpile template body (similar to main transpile but without imports/engine start)
   def transpile_template_body()
     try
-      # Process all statements in template body
+      # Process all statements in template body until we hit the closing brace
+      var brace_depth = 0
       while !self.at_end()
+        var tok = self.current()
+        
+        # Check for template end condition
+        if tok != nil && tok.type == 27 #-animation_dsl.Token.RIGHT_BRACE-# && brace_depth == 0
+          # This is the closing brace of the template - stop processing
+          break
+        end
+        
+        # Track brace depth for nested braces
+        if tok != nil && tok.type == 26 #-animation_dsl.Token.LEFT_BRACE-#
+          brace_depth += 1
+        elif tok != nil && tok.type == 27 #-animation_dsl.Token.RIGHT_BRACE-#
+          brace_depth -= 1
+        end
+        
         self.process_statement()
       end
       
@@ -391,7 +408,7 @@ class SimpleDSLTranspiler
   # Process statements - simplified approach
   def process_statement()
     var tok = self.current()
-    if tok == nil || tok.type == 38 #-animation_dsl.Token.EOF-#
+    if tok == nil  # EOF token removed - nil indicates end of file
       return
     end
     
@@ -890,38 +907,8 @@ class SimpleDSLTranspiler
       end
     end
     
-    # Second pass: collect body tokens (everything until closing brace)
-    var body_tokens = []
-    var brace_depth = 0
-    
-    while !self.at_end()
-      var tok = self.current()
-      
-      if tok == nil || tok.type == 38 #-animation_dsl.Token.EOF-#
-        break
-      end
-      
-      if tok.type == 26 #-animation_dsl.Token.LEFT_BRACE-#
-        brace_depth += 1
-        body_tokens.push(tok)
-      elif tok.type == 27 #-animation_dsl.Token.RIGHT_BRACE-#
-        if brace_depth == 0
-          break  # This is our closing brace
-        else
-          brace_depth -= 1
-          body_tokens.push(tok)
-        end
-      else
-        body_tokens.push(tok)
-      end
-      
-      self.next()
-    end
-    
-    self.expect_right_brace()
-    
-    # Generate Berry function for this template
-    self.generate_template_function(name, params, param_types, body_tokens)
+    # Generate Berry function for this template using direct pull-lexer approach
+    self.generate_template_function_direct(name, params, param_types)
     
     # Add template to symbol table with parameter information
     var template_info = {
@@ -1007,7 +994,7 @@ class SimpleDSLTranspiler
   # Process statements inside sequences using fluent interface
   def process_sequence_statement()
     var tok = self.current()
-    if tok == nil || tok.type == 38 #-animation_dsl.Token.EOF-#
+    if tok == nil  # EOF token removed - nil indicates end of file
       return
     end
     
@@ -1807,24 +1794,21 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Helper methods
+  # Helper methods - pull lexer only
   def current()
-    return self.pos < size(self.tokens) ? self.tokens[self.pos] : nil
+    return self.pull_lexer.peek_token()
   end
   
   def peek()
-    return (self.pos + 1 < size(self.tokens)) ? self.tokens[self.pos + 1] : nil
+    return self.pull_lexer.peek_ahead(2)  # Look ahead by 2 (next token after current)
   end
   
   def next()
-    if self.pos < size(self.tokens)
-      self.pos += 1
-    end
+    return self.pull_lexer.next_token()
   end
   
   def at_end()
-    return self.pos >= size(self.tokens) || 
-           (self.current() != nil && self.current().type == 38 #-animation_dsl.Token.EOF-#)
+    return self.pull_lexer.at_end()
   end
   
   def skip_whitespace()
@@ -2184,7 +2168,7 @@ class SimpleDSLTranspiler
     # Skip to next statement (newline or EOF)
     while !self.at_end()
       var tok = self.current()
-      if tok.type == 35 #-animation_dsl.Token.NEWLINE-# || tok.type == 38 #-animation_dsl.Token.EOF-#
+      if tok == nil || tok.type == 35 #-animation_dsl.Token.NEWLINE-#  # EOF token removed - check nil
         break
       end
       self.next()
@@ -2645,8 +2629,10 @@ class SimpleDSLTranspiler
     self.strip_initialized = true
   end
   
-  # Generate Berry function for template definition
-  def generate_template_function(name, params, param_types, body_tokens)
+
+
+  # Generate Berry function for template definition using direct pull-lexer approach
+  def generate_template_function_direct(name, params, param_types)
     import animation_dsl
     import string
     
@@ -2659,8 +2645,9 @@ class SimpleDSLTranspiler
     self.add(f"# Template function: {name}")
     self.add(f"def {name}_template({param_list})")
     
-    # Create a new transpiler instance for the template body
-    var template_transpiler = animation_dsl.SimpleDSLTranspiler(body_tokens)
+    # Create a new transpiler that shares the same pull lexer
+    # It will consume tokens from the current position until the template ends
+    var template_transpiler = animation_dsl.SimpleDSLTranspiler(self.pull_lexer)
     template_transpiler.symbol_table = animation_dsl._symbol_table()  # Fresh symbol table for template
     template_transpiler.strip_initialized = true  # Templates assume engine exists
     
@@ -2676,7 +2663,7 @@ class SimpleDSLTranspiler
       end
     end
     
-    # Transpile the template body
+    # Transpile the template body - it will consume tokens until the closing brace
     var template_body = template_transpiler.transpile_template_body()
     
     if template_body != nil
@@ -2696,6 +2683,9 @@ class SimpleDSLTranspiler
         self.error(f"Template '{name}' body error: {error}")
       end
     end
+    
+    # Expect the closing brace (template_transpiler should have left us at this position)
+    self.expect_right_brace()
     
     self.add("end")
     self.add("")
@@ -3011,16 +3001,8 @@ end
 # DSL compilation function
 def compile_dsl(source)
   import animation_dsl
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens
-  
-  try
-    tokens = lexer.tokenize()
-  except "lexical_error" as e, msg
-    raise "dsl_compilation_error", msg
-  end
-  
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   var berry_code = transpiler.transpile()
   
   return berry_code
@@ -3030,5 +3012,4 @@ end
 return {
   "SimpleDSLTranspiler": SimpleDSLTranspiler,
   "compile_dsl": compile_dsl,
-
 }

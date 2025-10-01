@@ -80,17 +80,6 @@ f.close()
 animation_dsl.load_file("my_animation.dsl")
 ```
 
-### Runtime Management
-
-#### `animation_dsl.create_runtime()`
-Creates a DSL runtime instance for advanced control.
-
-```berry
-var runtime = animation_dsl.create_runtime()
-runtime.load_dsl(dsl_source)
-runtime.execute()
-```
-
 ## DSL Language Overview
 
 The Animation DSL uses a declarative syntax with named parameters. All animations are created with an engine-first pattern and parameters are set individually for maximum flexibility.
@@ -694,17 +683,6 @@ The DSL transpiler also generates **warnings** that don't prevent compilation bu
    
    # Programmatic for performance-critical animations
    var performance_critical_anim = animation.create_optimized_animation()
-   ```
-
-3. **Minimize DSL recompilation**:
-   ```berry
-   # Good: Compile once
-   var runtime = animation_dsl.create_runtime()
-   runtime.load_dsl(source)
-   runtime.execute()
-   
-   # Avoid: Recompiling same DSL repeatedly
-   # animation_dsl.execute(same_source)  # Don't do this in loops
    ```
 
 ## Integration Examples

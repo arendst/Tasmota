@@ -108,6 +108,8 @@ def run_all_tests()
     
     # DSL tests
     "lib/libesp32/berry_animation/src/tests/dsl_lexer_test.be",
+    "lib/libesp32/berry_animation/src/tests/pull_lexer_test.be",
+    "lib/libesp32/berry_animation/src/tests/pull_lexer_transpiler_test.be",
     "lib/libesp32/berry_animation/src/tests/token_test.be",
     "lib/libesp32/berry_animation/src/tests/global_variable_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_transpiler_test.be",
@@ -115,7 +117,6 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/dsl_core_processing_test.be",
     "lib/libesp32/berry_animation/src/tests/simplified_transpiler_test.be",
     "lib/libesp32/berry_animation/src/tests/symbol_registry_test.be",
-    "lib/libesp32/berry_animation/src/tests/dsl_runtime_test.be",
     "lib/libesp32/berry_animation/src/tests/nested_function_calls_test.be",
     "lib/libesp32/berry_animation/src/tests/user_functions_test.be",
     "lib/libesp32/berry_animation/src/tests/palette_dsl_test.be",

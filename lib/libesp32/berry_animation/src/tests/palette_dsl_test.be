@@ -4,6 +4,25 @@
 import animation
 import animation_dsl
 
+# Helper function to extract all tokens from a pull lexer (for testing only)
+def extract_all_tokens(lexer)
+  var tokens = []
+  lexer.reset()  # Start from beginning
+  
+  while !lexer.at_end()
+    var token = lexer.next_token()
+    
+    # EOF token removed - check for nil instead
+    if token == nil
+      break
+    end
+    
+    tokens.push(token)
+  end
+  
+  return tokens
+end
+
 # Test basic palette definition and compilation
 def test_palette_definition()
   print("Testing palette definition...")
@@ -359,12 +378,12 @@ def test_palette_keyword_recognition()
   print("Testing palette keyword recognition...")
   
   var simple_palette_dsl = "palette test = [(0, #FF0000)]"
-  var lexer = animation_dsl.DSLLexer(simple_palette_dsl)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(simple_palette_dsl)
+  var tokens = extract_all_tokens(lexer)
   
   var found_palette_keyword = false
   for token : tokens
-    if token.type == animation_dsl.Token.KEYWORD && token.value == "palette"
+    if token.type == 0 #-animation_dsl.Token.KEYWORD-# && token.value == "palette"
       found_palette_keyword = true
       break
     end

@@ -16,9 +16,8 @@ def test_basic_symbol_registration()
     "animation solid_red = solid(color=custom_red)\n" +
     "animation red_anim = solid_red"
   
-  var lexer = animation_dsl.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   # Process the DSL
   var berry_code = transpiler.transpile()
@@ -44,9 +43,8 @@ def test_proper_symbol_ordering()
   var dsl_source = "color custom_red = 0xFF0000\n" +
     "animation fire_pattern = solid(color=custom_red)"
   
-  var lexer = animation_dsl.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
@@ -70,9 +68,8 @@ def test_undefined_reference_handling()
   # DSL with undefined reference
   var dsl_source = "animation test_pattern = solid(color=undefined_color)"
   
-  var lexer = animation_dsl.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   # Should detect undefined reference at transpile time and raise exception
   try
@@ -96,9 +93,8 @@ def test_builtin_reference_handling()
   var dsl_source = "animation red_pattern = solid(color=red)\n" +
     "animation pulse_anim = pulsating_animation(color=red, period=2000)"
   
-  var lexer = animation_dsl.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
@@ -120,9 +116,8 @@ def test_definition_generation()
   
   var dsl_source = "color custom_blue = 0x0000FF"
   
-  var lexer = animation_dsl.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
@@ -151,9 +146,8 @@ def test_complex_symbol_dependencies()
     "}\n" +
     "run demo"
   
-  var lexer = animation_dsl.DSLLexer(dsl_source)
-  var tokens = lexer.tokenize()
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_source)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   
   var berry_code = transpiler.transpile()
   
