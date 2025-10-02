@@ -302,7 +302,7 @@ class AnimationEngine
       if rendered
         anim.post_render(self.temp_buffer, time_ms)
         # Blend temp buffer into main buffer
-        self.frame_buffer.blend_pixels(self.temp_buffer)
+        self.frame_buffer.blend_pixels(self.frame_buffer.pixels, self.temp_buffer.pixels)
       end
       i += 1
     end

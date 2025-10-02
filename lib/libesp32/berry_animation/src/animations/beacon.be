@@ -53,7 +53,7 @@ class BeaconAnimation : animation.animation
     
     # Fill background if not transparent
     if back_color != 0xFF000000
-      frame.fill_pixels(back_color)
+      frame.fill_pixels(frame.pixels, back_color)
     end
     
     # Calculate beacon boundaries

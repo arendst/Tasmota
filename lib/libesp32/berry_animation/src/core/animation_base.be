@@ -92,7 +92,7 @@ class Animation : animation.parameterized_object
     
     # Fill the entire frame with the current color if not transparent
     if (current_color != 0x00000000)
-      frame.fill_pixels(current_color)
+      frame.fill_pixels(frame.pixels, current_color)
     end
     
     return true
@@ -138,10 +138,10 @@ class Animation : animation.parameterized_object
       opacity_animation.render(self.opacity_frame, time_ms)
       
       # Use rendered frame buffer as opacity mask
-      frame.apply_opacity(self.opacity_frame)
+      frame.apply_opacity(frame.pixels, self.opacity_frame.pixels)
     elif type(opacity) == 'int' && opacity < 255
       # Number mode: apply uniform opacity
-      frame.apply_opacity(opacity)
+      frame.apply_opacity(frame.pixels, opacity)
     end
     # If opacity is 255 (full opacity), do nothing
   end
