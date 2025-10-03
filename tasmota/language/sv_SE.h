@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Timerparametrar"
 #define D_TIMER_ENABLE "Aktivera timer"
 #define D_TIMER_ARM "Aktivera"
-#define D_TIMER_TIME "Tid"
+#define D_TIME "Tid"
 #define D_TIMER_DAYS "Dagar"
 #define D_TIMER_REPEAT "Repetera"
 #define D_TIMER_OUTPUT "Utgång"

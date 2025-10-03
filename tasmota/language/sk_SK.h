@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Časovač"
 #define D_TIMER_ENABLE "Povoľ časovače"
 #define D_TIMER_ARM "Aktívne"
-#define D_TIMER_TIME "Čas"
+#define D_TIME "Čas"
 #define D_TIMER_DAYS "Dni"
 #define D_TIMER_REPEAT "Opakovať"
 #define D_TIMER_OUTPUT "Výstup"

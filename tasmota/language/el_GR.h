@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Παράμετροι χρονικών"
 #define D_TIMER_ENABLE "Ενεργοποίηση χρονικών"
 #define D_TIMER_ARM "Οπλισμένο"
-#define D_TIMER_TIME "Ώρα"
+#define D_TIME "Ώρα"
 #define D_TIMER_DAYS "Μέρες"
 #define D_TIMER_REPEAT "Επανάληψη"
 #define D_TIMER_OUTPUT "Έξοδος"

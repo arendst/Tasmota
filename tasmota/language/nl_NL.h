@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Tijdschakelaar parameters"
 #define D_TIMER_ENABLE "Tijdschakelaars inschakelen"
 #define D_TIMER_ARM "Actief"
-#define D_TIMER_TIME "Tijd"
+#define D_TIME "Tijd"
 #define D_TIMER_DAYS "Dagen"
 #define D_TIMER_REPEAT "Herhaal"
 #define D_TIMER_OUTPUT "Uitgang"

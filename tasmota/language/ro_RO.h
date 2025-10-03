@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Parameteri Temporizare"
 #define D_TIMER_ENABLE "Activează Temporizare"
 #define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Timp"
+#define D_TIME "Timp"
 #define D_TIMER_DAYS "Zile"
 #define D_TIMER_REPEAT "Repetă"
 #define D_TIMER_OUTPUT "Ieșire"

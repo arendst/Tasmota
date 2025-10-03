@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Időzítő paraméterei"
 #define D_TIMER_ENABLE "Időzítők engedélyezve"
 #define D_TIMER_ARM "Be"
-#define D_TIMER_TIME "Idő"
+#define D_TIME "Idő"
 #define D_TIMER_DAYS "Napok"
 #define D_TIMER_REPEAT "Ismétlés"
 #define D_TIMER_OUTPUT "Kimenet"

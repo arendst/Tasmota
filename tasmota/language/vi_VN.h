@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Các thông số hẹn giờ"
 #define D_TIMER_ENABLE "Kích hoạt hẹn giờ"
 #define D_TIMER_ARM "Kích hoạt"
-#define D_TIMER_TIME "Thời gian"
+#define D_TIME "Thời gian"
 #define D_TIMER_DAYS "Ngày"
 #define D_TIMER_REPEAT "Lặp lại"
 #define D_TIMER_OUTPUT "Ngõ ra"

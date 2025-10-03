@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Laikmačio parametrai"
 #define D_TIMER_ENABLE "Įjungti laikmačius"
 #define D_TIMER_ARM "Įjungti"
-#define D_TIMER_TIME "Laikas"
+#define D_TIME "Laikas"
 #define D_TIMER_DAYS "Dienos"
 #define D_TIMER_REPEAT "Kartoti"
 #define D_TIMER_OUTPUT "Išvestis"

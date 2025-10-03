@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Параметри на графиците"
 #define D_TIMER_ENABLE "Използване на графици"
 #define D_TIMER_ARM "Включване"
-#define D_TIMER_TIME "Време"
+#define D_TIME "Време"
 #define D_TIMER_DAYS "Дни"
 #define D_TIMER_REPEAT "Повтаряне"
 #define D_TIMER_OUTPUT "Изход"

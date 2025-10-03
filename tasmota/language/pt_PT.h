@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Parâmetros do temporizador"
 #define D_TIMER_ENABLE "Habilitar Temporizadores"
 #define D_TIMER_ARM "Armar"
-#define D_TIMER_TIME "Tempo"
+#define D_TIME "Tempo"
 #define D_TIMER_DAYS "Dias"
 #define D_TIMER_REPEAT "Repetir"
 #define D_TIMER_OUTPUT "Saída"

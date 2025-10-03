@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "פרמטרים עבור תזמון"
 #define D_TIMER_ENABLE "אפשר תזמון"
 #define D_TIMER_ARM "טען"
-#define D_TIMER_TIME "זמן"
+#define D_TIME "זמן"
 #define D_TIMER_DAYS "ימים"
 #define D_TIMER_REPEAT "חזרות"
 #define D_TIMER_OUTPUT "פלט"

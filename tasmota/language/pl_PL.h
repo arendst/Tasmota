@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Parametry harmonogramu"
 #define D_TIMER_ENABLE "Załącz harmonogram"
 #define D_TIMER_ARM "Załącz"
-#define D_TIMER_TIME "Czas"
+#define D_TIME "Czas"
 #define D_TIMER_DAYS "Dni"
 #define D_TIMER_REPEAT "Powtarzaj"
 #define D_TIMER_OUTPUT "Wyjście"

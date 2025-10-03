@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS  "Parametri timer"
 #define D_TIMER_ENABLE      "Abilita timer"
 #define D_TIMER_ARM         "Abilita"
-#define D_TIMER_TIME        "Ora"
+#define D_TIME        "Ora"
 #define D_TIMER_DAYS        "Giorni"
 #define D_TIMER_REPEAT      "Ripeti"
 #define D_TIMER_OUTPUT      "Uscita"

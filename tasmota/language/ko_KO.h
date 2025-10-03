@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "타이머 설정"
 #define D_TIMER_ENABLE "타이머 사용"
 #define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "시간"
+#define D_TIME "시간"
 #define D_TIMER_DAYS "일"
 #define D_TIMER_REPEAT "반복"
 #define D_TIMER_OUTPUT "출력"

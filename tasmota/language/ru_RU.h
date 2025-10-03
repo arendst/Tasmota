@@ -475,7 +475,7 @@
 #define D_TIMER_PARAMETERS "Настройки таймера"
 #define D_TIMER_ENABLE "Включить таймеры"
 #define D_TIMER_ARM "Включить"
-#define D_TIMER_TIME "Время"
+#define D_TIME "Время"
 #define D_TIMER_DAYS "Дни"
 #define D_TIMER_REPEAT "Повторять"
 #define D_TIMER_OUTPUT "Выход"

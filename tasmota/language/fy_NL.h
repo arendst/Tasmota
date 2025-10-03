@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Timerskakelaar parameters"
 #define D_TIMER_ENABLE "Skeakelje timers yn"
 #define D_TIMER_ARM "Aktyf"
-#define D_TIMER_TIME "Tiid"
+#define D_TIME "Tiid"
 #define D_TIMER_DAYS "Dagen"
 #define D_TIMER_REPEAT "Werhelje"
 #define D_TIMER_OUTPUT "Útgong"

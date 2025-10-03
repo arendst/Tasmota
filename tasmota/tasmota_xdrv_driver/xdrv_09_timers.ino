@@ -803,15 +803,15 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
   "}"
   "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
-  "<fieldset style=text-align:center;'>"
+  "<fieldset style='text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br><label><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b></label><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
-  "' hidden><div id='bt'></div><br><br><br><br><br>"
+  "' hidden><div id='bt'></div><br>"
   "<div id='oa' name='oa'></div><br>"
   "<div>"
   "<label><input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b></label>&emsp;"
@@ -821,7 +821,7 @@ const char HTTP_FORM_TIMER2[] PROGMEM =
 #ifdef USE_SUNRISE
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
-  "<label><input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b></label><br>"
+  "<label><input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIME "</b></label><br>"
   "<label><input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b>%s (%s)</label><br>"
   "<label><input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b>%s (%s)</label><br>"
   "</fieldset>"
@@ -830,24 +830,24 @@ const char HTTP_FORM_TIMER3[] PROGMEM =
   "&nbsp;";
 #else
 const char HTTP_FORM_TIMER3[] PROGMEM =
-  "<b>" D_TIMER_TIME "</b>&nbsp;";
+  "<b>" D_TIME "</b>&nbsp;";
 #endif  // USE_SUNRISE
 
 #ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_FORM_TIMER4_SIZE = 249;
+const size_t HTTP_FORM_TIMER4_SIZE = 233;    // compressed size 112 bytes
 const char HTTP_FORM_TIMER4_COMPRESSED[] PROGMEM = "\x3D\x3C\x32\xF8\xFC\x3D\x3C\xC2\x61\xD2\xF5\x19\x04\xCF\x87\xD8\xFE\x89\x42\x8F"
                              "\x33\x9C\xC8\x61\xB0\xF0\x7D\xAD\x10\xF8\x7D\x8A\xC3\xEC\xFC\x3D\x0E\xC0\x41\xC0"
-                             "\x4F\xC3\xD0\xEC\xF0\xCB\xE3\xF0\xFD\x70\xEF\x0C\x3C\x1F\x5E\x04\x18\x80\xC0\x72"
-                             "\x41\xBA\x09\xD9\x23\x1B\xE1\x87\x83\xD0\x71\xF8\x76\xCE\xC3\xAC\xF4\x3B\x07\x02"
-                             "\x16\x68\x0C\x0B\x2C\x1F\x04\xDC\xB0\xF4\x3B\x04\xD3\x33\xF0\xF4\x1D\xF3\xF0\xF4"
-                             "\x13\x4C\xD6\x88\x7C\x3E\xC4\xF1\xF6\xBA\xC6\xB3\xE1\xF6\x27\x8F\xB0\x42\xBA";
+                             "\x4F\xC3\xD0\xEC\xF0\xCB\xE3\xF1\x1E\x68\x18\x0E\x32\x37\x41\x37\x19\x3F\x4C\x6F"
+                             "\x86\x1E\x0F\x41\xC7\xE1\xDB\x3B\x0E\xB3\xD0\xEC\x1C\x7E\x03\x03\xC9\xC7\xC1\x37"
+                             "\x27\x3D\x0E\xC1\x34\xCC\xFC\x3D\x07\x7C\xFC\x3D\x04\xD3\x35\xA2\x1F\x0F\xB1\x3C"
+                             "\x7D\xAE\xB1\xAC\xF8\x7D\x89\xE3\xEC\x10\xAE\x9B";
 #define  HTTP_FORM_TIMER4       Decompress(HTTP_FORM_TIMER4_COMPRESSED,HTTP_FORM_TIMER4_SIZE).c_str()
 #else
 const char HTTP_FORM_TIMER4[] PROGMEM =
   "<span><select style='width:60px;' id='ho'></select></span>"
-  "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
+  " " D_HOUR_MINUTE_SEPARATOR " "
   "<span><select style='width:60px;' id='mi'></select></span>"
-  "&emsp;<b>+/-</b>&nbsp;"
+  "&emsp;<b>+/-</b> "
   "<span><select style='width:60px;' id='mw'></select></span>"
   "</div><br>"
   "<div id='ds' name='ds'></div>";
@@ -888,11 +888,7 @@ void HandleTimerConfiguration(void)
 #else
   WSContentSend_P(HTTP_FORM_TIMER3);
 #endif  // USE_SUNRISE
-#ifdef USE_UNISHOX_COMPRESSION
-  WSContentSend_P(HTTP_FORM_TIMER4,D_HOUR_MINUTE_SEPARATOR);
-#else
   WSContentSend_P(HTTP_FORM_TIMER4);
-#endif //USE_UNISHOX_COMPRESSION
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();

@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Налаштування таймерів"
 #define D_TIMER_ENABLE "Таймери увімкнені"
 #define D_TIMER_ARM "Увімкнений"
-#define D_TIMER_TIME "Час"
+#define D_TIME "Час"
 #define D_TIMER_DAYS "Дні"
 #define D_TIMER_REPEAT "Повторення"
 #define D_TIMER_OUTPUT "Вихід"

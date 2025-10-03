@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "計時器參數"
 #define D_TIMER_ENABLE "啟用"
 #define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "時間"
+#define D_TIME "時間"
 #define D_TIMER_DAYS "日數"
 #define D_TIMER_REPEAT "重複"
 #define D_TIMER_OUTPUT "輸出"

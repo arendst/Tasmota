@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "Zamanlayıcı Parametreleri"
 #define D_TIMER_ENABLE "Zamanlayıcı Aktif"
 #define D_TIMER_ARM "Arm"
-#define D_TIMER_TIME "Zaman"
+#define D_TIME "Zaman"
 #define D_TIMER_DAYS "Gün"
 #define D_TIMER_REPEAT "Tekrar"
 #define D_TIMER_OUTPUT "Output"

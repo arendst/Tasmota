@@ -474,7 +474,7 @@
 #define D_TIMER_PARAMETERS "定时器参数"
 #define D_TIMER_ENABLE "启用定时器"
 #define D_TIMER_ARM "启用"
-#define D_TIMER_TIME "时间"
+#define D_TIME "时间"
 #define D_TIMER_DAYS "天"
 #define D_TIMER_REPEAT "重复"
 #define D_TIMER_OUTPUT "输出"
