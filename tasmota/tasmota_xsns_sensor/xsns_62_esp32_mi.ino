@@ -565,44 +565,54 @@ void MI32triggerTele(void){
 
 #ifdef USE_MI_EXT_GUI
 /**
- * @brief Saves a sensor value mapped to the graph range of 0-20 pixel, this function automatically reads the actual hour from system time
+ * @brief Saves a sensor value mapped to the graph range of 0–127.
+ *        This function automatically reads the actual hour from system time.
  *
- * @param history - pointer to uint8_t[23]
- * @param value - value as float, this
- * @param type  - internal type. for BLE: 0 - temperature, 1 - humidity, 2 - illuminance, for internal sensors: 100 - wattage
+ * @param history - pointer to uint8_t[24]
+ * @param value   - sensor value as int
+ * @param type    - internal type. for BLE: 0 - temperature, 1 - humidity,
+ *                  2 - illuminance, 3 - BLE sightings,
+ *                  for internal sensors: 100 - wattage
  */
-void MI32addHistory(uint8_t history[24], float value, const uint32_t type){
-  const uint32_t _hour = (LocalTime()%SECS_PER_DAY)/SECS_PER_HOUR;
-  // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history hour: %u"),_hour);
-  switch(type){
-    case 0:  //temperature
-      history[_hour] = ((((value + 5.0f)/4) + 1) + 0b10000000); //temp
+void MI32addHistory(uint8_t history[24], int value, const uint32_t type) {
+  const uint32_t _hour = (LocalTime() % SECS_PER_DAY) / SECS_PER_HOUR;
+  uint8_t scaled = 0;
+
+  switch (type) {
+    case 0: { // temperature, -20..60 °C
+      scaled = changeIntScale((int16_t)value, -20, 60, 1, 127);
       break;
-    case 1: //humidity
-      history[_hour] = (((value/5.0f) + 1) + 0b10000000) ; //hum
+    }
+    case 1: { // humidity, 0..100 %
+      scaled = changeIntScale((int16_t)value, 0, 100, 1, 127);
       break;
-    case 2: //light
-      if(value>100.0f) value=100.0f; //clamp it for now
-      history[_hour] = (((value/5.0f) + 1) + 0b10000000); //lux
-      // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history lux: %u in hour:%u"),history[_hour], _hour);
+    }
+    case 2: { // light, 0..1000 lux
+      scaled = changeIntScale((int16_t)value, 0, 1000, 1, 127);
       break;
-    case 3: //BLE device sighting
-      uint16_t sightings = history[_hour] & 0b01111111;
-      if(sightings<20){
-        history[_hour] = (sightings | 0b10000000) + 1;
-        // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history sighting: %u in hour:%u"),history[_hour], _hour);
+    }
+    case 3: { // BLE sightings, count up to 127
+      uint8_t sightings = history[_hour] & 0x7F;
+      if (sightings < 127) {
+        scaled = sightings + 1;
+      } else {
+        scaled = 127;
       }
       break;
+    }
 #ifdef USE_MI_ESP32_ENERGY
-    case 100: // energy
-      if(value == 0.0f) value = 1.0f;
-      const uint8_t _watt = ((MI32ln(value)*2) + 0b10000000); //watt
-      history[_hour] = _watt;
-      // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history energy: %u for value:%u"),history[_hour], value); //still playing with the mapping
+    case 100: { // energy/wattage, logarithmic mapping
+      if (value <= 0) value = 1;
+      int16_t lnval = MI32ln(value);
+      scaled = changeIntScale(lnval, 0, 64, 1, 127);
       break;
-#endif //USE_MI_ESP32_ENERGY
+    }
+#endif
   }
+  // Set MSB to mark “valid datapoint”
+  history[_hour] = (scaled & 0x7F) | 0x80;
 }
+
 
 /**
  * @brief Returns a value between 0-21 for use as a data point in the history graph of the extended web UI
@@ -611,11 +621,13 @@ void MI32addHistory(uint8_t history[24], float value, const uint32_t type){
  * @param hour  - hour of datapoint
  * @return uint8_t  - value for the y-axis, should be between 0-21
  */
-uint8_t MI32fetchHistory(uint8_t history[24], uint32_t hour){
-    if((hour>23 || bitRead(history[hour],7)) == 0) {
-      return 0; //invalidated data
-    }
-    return (history[hour]) - 0b10000000;
+uint8_t MI32fetchHistory(uint8_t history[24], uint32_t hour) {
+  if (hour > 23) return 0;
+  uint8_t v = history[hour];
+  if ((v & 0x80) == 0) {
+    return 0; // no data received
+  }
+  return v & 0x7F; // strip MSB, return 1..127
 }
 
 /**
@@ -957,10 +969,33 @@ extern "C" {
   }
 
   void MI32sendBerryWidget() {
+    static uint32_t lastMetricsTime = UINT32_MAX; //we want an overlow in the first run
     if(be_MI32Widget.size != 0) {
       WSContentSend(be_MI32Widget.data, be_MI32Widget.size);
       be_MI32Widget.data = nullptr;
       be_MI32Widget.size = 0;
+    } else {
+      uint32_t now = millis();
+      if (now - lastMetricsTime >= 10000) {
+        lastMetricsTime = now;
+        char metricsBuf[64];
+        // Fields: RSSI (dBm), Channel, PHY Mode, Free Heap (bytes), Total Heap (bytes), Heap Fragmentation (%), PSRAM Total (bytes), PSRAM Free (bytes), Uptime (sec), MI32.role, BLE Sensors Count
+        snprintf(metricsBuf, sizeof(metricsBuf),
+          "%i,%u,%u,%d,%d,%d,%d,%d,%d,%d,%d",
+          WiFi.RSSI(),
+          WiFi.channel(),
+          WiFiHelper::getPhyMode(),
+          ESP.getFreeHeap(),
+          ESP.getHeapSize(),
+          ESP_getHeapFragmentation(),
+          ESP.getPsramSize(),
+          ESP.getFreePsram(),
+          UpTime(),
+          MI32.role,
+          MIBLEsensors.size()
+        );
+        WSContentSend(metricsBuf, 64);
+      }
     }
   }
 
@@ -1821,7 +1856,7 @@ if(decryptRet!=0){
       }
       MIBLEsensors[_slot].eventType.lux  = 1;
 #ifdef USE_MI_EXT_GUI
-      MI32addHistory(MIBLEsensors[_slot].lux_history, (float)MIBLEsensors[_slot].lux, 2);
+      MI32addHistory(MIBLEsensors[_slot].lux_history, MIBLEsensors[_slot].lux, 2);
 #endif //USE_MI_EXT_GUI
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 7: U24: %u Lux"), _payload.lux & 0x00ffffff);
     break;
@@ -1879,7 +1914,7 @@ if(decryptRet!=0){
       MIBLEsensors[_slot].NMT = 0;
       MI32.mode.shallTriggerTele = 1;
 #ifdef USE_MI_EXT_GUI
-      MI32addHistory(MIBLEsensors[_slot].lux_history, (float)MIBLEsensors[_slot].lux, 2);
+      MI32addHistory(MIBLEsensors[_slot].lux_history, MIBLEsensors[_slot].lux, 2);
 #endif //USE_MI_EXT_GUI
       // AddLog(LOG_LEVEL_DEBUG,PSTR("motion: primary"),MIBLEsensors[_slot].lux );
     break;
@@ -2050,8 +2085,8 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
   MIBLEsensors[_slot].eventType.bat  = 1;
 #ifdef USE_MI_EXT_GUI
   bitSet(MI32.widgetSlot,_slot);
-  MI32addHistory(MIBLEsensors[_slot].temp_history, (float)MIBLEsensors[_slot].temp, 0);
-  MI32addHistory(MIBLEsensors[_slot].hum_history, (float)MIBLEsensors[_slot].hum, 1);
+  MI32addHistory(MIBLEsensors[_slot].temp_history, MIBLEsensors[_slot].temp, 0);
+  MI32addHistory(MIBLEsensors[_slot].hum_history, MIBLEsensors[_slot].hum, 1);
 #endif //USE_MI_EXT_GUI
   MIBLEsensors[_slot].shallSendMQTT = 1;
   if(MI32.option.directBridgeMode == 1) MI32.mode.shallTriggerTele = 1;
@@ -2074,7 +2109,7 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI
           MIBLEsensors[_slot].eventType.temp  = 1;
           DEBUG_SENSOR_LOG(PSTR("CGD1: temp updated"));
 #ifdef USE_MI_EXT_GUI
-          MI32addHistory(MIBLEsensors[_slot].temp_history, (float)MIBLEsensors[_slot].temp, 0);
+          MI32addHistory(MIBLEsensors[_slot].temp_history, MIBLEsensors[_slot].temp, 0);
 #endif //USE_MI_EXT_GUI
       }
       _tempFloat=(float)(_packet.hum)/10.0f;
@@ -2083,7 +2118,7 @@ void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI
           MIBLEsensors[_slot].eventType.hum  = 1;
           DEBUG_SENSOR_LOG(PSTR("CGD1: hum updated"));
 #ifdef USE_MI_EXT_GUI
-          MI32addHistory(MIBLEsensors[_slot].hum_history, (float)MIBLEsensors[_slot].hum, 1);
+          MI32addHistory(MIBLEsensors[_slot].hum_history, MIBLEsensors[_slot].hum, 1);
 #endif //USE_MI_EXT_GUI
       }
       DEBUG_SENSOR_LOG(PSTR("CGD1: U16:  %x Temp U16: %x Hum"), _packet.temp,  _packet.hum);
@@ -2164,7 +2199,7 @@ void MI32HandleEveryDevice(const NimBLEAdvertisedDevice* advertisedDevice, uint8
       memcpy(_sensor.payload, advertisedDevice->getPayload().data(), advertisedDevice->getPayload().size());
       _sensor.payload_len = advertisedDevice->getPayload().size();
       bitSet(MI32.widgetSlot,_slot);
-      MI32addHistory(_sensor.temp_history, 0.0f, 3); // reuse temp_history as sighting history
+      MI32addHistory(_sensor.temp_history, 0, 3); // reuse temp_history as sighting history
       _sensor.RSSI=RSSI;
       _sensor.feature.payload = 1;
       _sensor.eventType.payload = 1;
@@ -2417,57 +2452,72 @@ bool MI32HandleWebGUIResponse(void){
   }
   char tmp[16];
   WebGetArg(PSTR("wi"), tmp, sizeof(tmp));
-  if (!tmp[0]) return false;
-    WSContentBegin(200, CT_PLAIN);
-    uint32_t slot = MI32.widgetSlot;
-    if (slot) {
-      uint32_t i = __builtin_ctz(slot);        // index of first set bit
-      MI32sendWidget(i);
-      MI32.widgetSlot &= ~(1UL << i);          // clear that bit
-    } else {
-      MI32sendBerryWidget();
-    }
-    WSContentEnd();
+  if (!tmp[0]) {
+    return false;
+  }
+
+  if (atoi(tmp) == 0) {
+    MI32ServeStaticPage();
     return true;
+  }
+
+  WSContentBegin(200, CT_PLAIN);
+  uint32_t slot = MI32.widgetSlot;
+  if (slot) {
+    uint32_t i = __builtin_ctz(slot);        // index of first set bit
+    MI32sendWidget(i);
+    MI32.widgetSlot &= ~(1UL << i);          // clear that bit
+  } else {
+    MI32sendBerryWidget();
+  }
+  WSContentEnd();
+  return true;
 }
 
 #ifdef USE_MI_ESP32_ENERGY
-//https://gist.github.com/LingDong-/7e4c4cae5cbbc44400a05fba65f06f23
-// used for logarithmic mapping of 0 - 3600 watts to 0-20 pixel - TaylorLog did not work as expected
-float MI32ln(float x) {
-  unsigned int bx = * (unsigned int *) (&x);
-  unsigned int ex = bx >> 23;
-  signed int t = (signed int)ex-(signed int)127;
-  unsigned int s = (t < 0) ? (-t) : t;
-  bx = 1065353216 | (bx & 8388607);
-  x = * (float *) (&bx);
-  return -1.49278+(2.11263+(-0.729104+0.10969*x)*x)*x+0.6931471806*t;
+// ultra simple integer log2 using builtin CLZ
+int MI32ln(uint32_t x) {
+  return 31 - __builtin_clz(v);
 }
 #endif //USE_MI_ESP32_ENERGY
 
-void MI32createPolyline(char *polyline, uint8_t *history){
-  uint32_t _pos = 0;
-  uint32_t _inc = 0;
-  for (uint32_t i = 0; i<24;i++){
-    uint32_t y = 21-MI32fetchHistory(history,i);
-    if (y>20){
-      y = 150; //create a big gap in the graph to represent invalidated data
-    }
-    _inc = snprintf_P(polyline+_pos,10,PSTR("%u,%u "),i*6,y);
-    _pos+=_inc;
+void MI32createGraph(char *buffer, uint8_t *history, uint8_t r, uint8_t g, uint8_t b) {
+  constexpr size_t bufferSize = 256;  // total size of buffer
+  uint32_t pos = 0;
+  uint16_t w = 150;
+  uint16_t h = 20;
+  // Start compact DSL for a single-series histogram: "{h,width,height,(r,g,b):"
+  if (pos < bufferSize - 20) {
+    pos += snprintf_P(buffer + pos, bufferSize - pos,
+                      PSTR("{h,%u,%u,(%u,%u,%u):"),
+                      w, h, r, g, b);
   }
-      // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: polyline: %s"),polyline);
+
+  // Emit 24 history values separated by commas
+  for (uint8_t i = 0; i < 24 && pos < bufferSize - 10; i++) {
+    uint8_t value = MI32fetchHistory(history, i);
+    if (i > 0 && pos < bufferSize - 1) {
+      buffer[pos++] = ',';      // add comma
+      buffer[pos]   = '\0';
+    }
+    pos += snprintf_P(buffer + pos, bufferSize - pos,
+                      PSTR("%u"),
+                      value);
+  }
+  // Close the DSL block "}"
+  if (pos < bufferSize - 2) {
+    pos += snprintf_P(buffer + pos, bufferSize - pos,
+                      PSTR("}"));
+  }
 }
 
 #ifdef USE_MI_ESP32_ENERGY
 void MI32sendEnergyWidget(){
   if (Energy->current_available && Energy->voltage_available) {
     WSContentSend_P(HTTP_MI32_POWER_WIDGET,MIBLEsensors.size()+1, Energy->voltage,Energy->current[1]);
-    char _polyline[176];
-    MI32createPolyline(_polyline,MI32.energy_history);
-    WSContentSend_P(PSTR("<p>" D_POWERUSAGE ": %.1f " D_UNIT_WATT ""),Energy->active_power);
-    WSContentSend_P(HTTP_MI32_GRAPH,_polyline,185,124,124,_polyline,1);
-    WSContentSend_P(PSTR("</p></div>"));
+    char _graph[256];
+    MI32createGraph(_graph, MI32.energy_history, 185, 124, 124);
+    WSContentSend_P(PSTR("<p>" D_POWERUSAGE ": %.1f " D_UNIT_WATT "%s</p></div>"), Energy->active_power, _graph);
   }
 }
 #endif //USE_MI_ESP32_ENERGY
@@ -2524,18 +2574,14 @@ void MI32sendWidget(uint32_t slot){
 
   if(_sensor.feature.temp == 1 && _sensor.feature.hum == 1){
     if(!isnan(_sensor.temp)){
-      char _polyline[176];
-      MI32createPolyline(_polyline,_sensor.temp_history);
-      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %.1f °C"),_sensor.temp);
-      WSContentSend_P(HTTP_MI32_GRAPH,_polyline,185,124,124,_polyline,1);
-      WSContentSend_P(PSTR("</p>"));
+      char _graph[256];
+      MI32createGraph(_graph, _sensor.temp_history, 185, 124, 124);
+      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %.1f °C%s</p>"), _sensor.temp, _graph);
     }
     if(!isnan(_sensor.hum)){
-      char _polyline[176];
-      MI32createPolyline(_polyline,_sensor.hum_history);
-      WSContentSend_P(PSTR("<p>" D_JSON_HUMIDITY ": %.1f %%"),_sensor.hum);
-      WSContentSend_P(HTTP_MI32_GRAPH,_polyline,151,190,216,_polyline,2);
-      WSContentSend_P(PSTR("</p>"));
+      char _graph[256];
+      MI32createGraph(_graph, _sensor.hum_history, 151, 190, 216);
+      WSContentSend_P(PSTR("<p>" D_JSON_HUMIDITY ": %.1f %%%s</p>"), _sensor.hum, _graph);
     }
     if(!isnan(_sensor.temp) && !isnan(_sensor.hum)){
       WSContentSend_P(PSTR("" D_JSON_DEWPOINT ": %.1f °C"),CalcTempHumToDew(_sensor.temp,_sensor.hum));
@@ -2543,20 +2589,16 @@ void MI32sendWidget(uint32_t slot){
   }
   else if(_sensor.feature.temp == 1){
     if(!isnan(_sensor.temp)){
-      char _polyline[176];
-      MI32createPolyline(_polyline,_sensor.temp_history);
-      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %.1f °C"),_sensor.temp);
-      WSContentSend_P(HTTP_MI32_GRAPH,_polyline,185,124,124,_polyline,1);
-      WSContentSend_P(PSTR("</p>"));
+      char _graph[256];
+      MI32createGraph(_graph, _sensor.temp_history, 185, 124, 124);
+      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %.1f °C%s</p>"), _sensor.temp, _graph);
     }
   }
   if(_sensor.feature.lux == 1){
     if(_sensor.lux!=0x00ffffff){
-      char _polyline[176];
-      MI32createPolyline(_polyline,_sensor.lux_history);
-      WSContentSend_P(PSTR("<p>" D_JSON_ILLUMINANCE ": %d Lux"),_sensor.lux);
-      WSContentSend_P(HTTP_MI32_GRAPH,_polyline,242,240,176,_polyline,3);
-      WSContentSend_P(PSTR("</p>"));
+      char _graph[256];
+      MI32createGraph(_graph, _sensor.lux_history, 242, 240, 176);
+      WSContentSend_P(PSTR("<p>" D_JSON_ILLUMINANCE ": %d Lux%s</p>"), _sensor.lux, _graph);
     }
   }
   if(_sensor.feature.knob == 1){
@@ -2599,12 +2641,10 @@ void MI32sendWidget(uint32_t slot){
   if(_sensor.feature.payload == 1){
     if(_sensor.payload != nullptr){
       char _payload[128];
-      char _polyline[176];
+      char _graph[256];
       ToHex_P((const unsigned char*)_sensor.payload,_sensor.payload_len,_payload, (_sensor.payload_len * 2) + 1);
-      MI32createPolyline(_polyline,_sensor.temp_history);
-      WSContentSend_P(PSTR("<p>Payload:"));
-      WSContentSend_P(HTTP_MI32_GRAPH,_polyline,60,240,176,_polyline,4);
-      WSContentSend_P(PSTR("</p><code style='word-break: break-all;'>%s</code>"),_payload);
+      MI32createGraph(_graph, _sensor.temp_history, 60, 240, 176);
+      WSContentSend_P(PSTR("<p>Payload:%s</p><code>%s</code>"),_graph,_payload);
     }
   }
   WSContentSend_P(PSTR("<p>Timestamp: %s</p>"),GetDT(_sensor.lastTime).c_str());
@@ -2614,38 +2654,25 @@ void MI32sendWidget(uint32_t slot){
 void MI32InitGUI(void){
   MI32.widgetSlot=0;
   WSContentStart_P("m32");
-  WSContentSend_P(HTTP_MI32_SCRIPT_1);
+  WSContentSend_P(HTTP_MI32_BOOTSTRAP);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_MI32_STYLE);
-  WSContentSend_P(HTTP_MI32_STYLE_SVG,1,185,124,124,185,124,124);
-  WSContentSend_P(HTTP_MI32_STYLE_SVG,2,151,190,216,151,190,216);
-  WSContentSend_P(HTTP_MI32_STYLE_SVG,3,242,240,176,242,240,176);
-  WSContentSend_P(HTTP_MI32_STYLE_SVG,4,60,240,176,60,240,176);
-
-  char _role[16];
-  GetTextIndexed(_role, sizeof(_role), MI32.role, HTTP_MI32_PARENT_BLE_ROLE);
-  WSContentSend_P((HTTP_MI32_PARENT_START),MIBLEsensors.size(),UpTime(),ESP.getFreeHeap()/1024,_role);
-
-  uint32_t _slot;
-  for(_slot = 0;_slot<MIBLEsensors.size();_slot++){
-    MI32sendWidget(_slot);
-  }
-
-#ifdef USE_MI_ESP32_ENERGY
-  MI32sendEnergyWidget();
-#endif //USE_MI_ESP32_ENERGY
-#ifdef USE_WEBCAM
-  MI32sendCamWidget();
-#endif //USE_WEBCAM
-  WSContentSend_P(PSTR("</div>"));
+  WSContentSend_P("<div id='m'></div>");
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
+}
+
+void MI32ServeStaticPage(void) {
+  Webserver->sendHeader(F("Content-Encoding"), F("gzip"));
+  Webserver->sendHeader(F("Cache-Control"), F("no-store, no-cache, must-revalidate, max-age=0"));
+  Webserver->send_P(200, PSTR("text/html"), MI32_STATIC_PAGE, MI32_STATIC_PAGE_len);
 }
 
 void MI32HandleWebGUI(void){
   if (!HttpCheckPriviledgedAccess()) { return; }
   if (MI32HandleWebGUIResponse()) { return; }
   MI32InitGUI();
+  size_t n = MIBLEsensors.size();
+  MI32.widgetSlot = ((1u << n) - 1);
 }
 #endif //USE_MI_EXT_GUI
 
