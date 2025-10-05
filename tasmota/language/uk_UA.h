@@ -186,7 +186,7 @@
 #define D_SUNRISE "Схід сонця"
 #define D_SUNSET "Захід сонця"
 #define D_TEMPERATURE "Температура"
-#define D_TIME "Час"
+#define D_TIME_OF_DAY "Час"
 #define D_TO "до"
 #define D_TOGGLE "Перекл."
 #define D_TOPIC "Топік"

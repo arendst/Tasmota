@@ -186,7 +186,7 @@
 #define D_SUNRISE "Napkelte"
 #define D_SUNSET "Napnyugta"
 #define D_TEMPERATURE "Hőmérséklet"
-#define D_TIME "Idő"
+#define D_TIME_OF_DAY "Idő"
 #define D_TO "-nak"
 #define D_TOGGLE "Megfordítás"
 #define D_TOPIC "Topic"

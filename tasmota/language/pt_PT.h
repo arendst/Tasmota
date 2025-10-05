@@ -186,7 +186,7 @@
 #define D_SUNRISE "Nascer do Sol"
 #define D_SUNSET "Pôr do Sol"
 #define D_TEMPERATURE "Temperatura"
-#define D_TIME "Tempo"
+#define D_TIME_OF_DAY "Tempo"
 #define D_TO "para"
 #define D_TOGGLE "Pressionar"
 #define D_TOPIC "Tópico"

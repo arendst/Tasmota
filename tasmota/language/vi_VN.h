@@ -186,7 +186,7 @@
 #define D_SUNRISE "Mặt trời mọc"
 #define D_SUNSET "Mặt trời lặn"
 #define D_TEMPERATURE "Nhiệt độ"
-#define D_TIME "Thời gian"
+#define D_TIME_OF_DAY "Thời gian"
 #define D_TO "tới"
 #define D_TOGGLE "Bật Tắt"
 #define D_TOPIC "Chủ đề"

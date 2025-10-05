@@ -186,7 +186,7 @@
 #define D_SUNRISE "Sonsopkoms"
 #define D_SUNSET "Sononder"
 #define D_TEMPERATURE "Temperatuur"
-#define D_TIME "Tyd"
+#define D_TIME_OF_DAY "Tyd"
 #define D_TO "naar"
 #define D_TOGGLE "Verwissel"
 #define D_TOPIC "Onderwerp"

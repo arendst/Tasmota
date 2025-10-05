@@ -186,7 +186,7 @@
 #define D_SUNRISE "Svítání"
 #define D_SUNSET "Soumrak"
 #define D_TEMPERATURE "Teplota"
-#define D_TIME "Čas"
+#define D_TIME_OF_DAY "Čas"
 #define D_TO "do"
 #define D_TOGGLE "Přepni"
 #define D_TOPIC "Topic"

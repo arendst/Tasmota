@@ -186,7 +186,7 @@
 #define D_SUNRISE "Răsărit"
 #define D_SUNSET "Apus"
 #define D_TEMPERATURE "Temperatură"
-#define D_TIME "Timp"
+#define D_TIME_OF_DAY "Timp"
 #define D_TO "la"
 #define D_TOGGLE "Comută"
 #define D_TOPIC "Topic"

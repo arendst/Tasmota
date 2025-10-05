@@ -186,7 +186,7 @@
 #define D_SUNRISE "Gün doğumu"
 #define D_SUNSET "Gün batımı"
 #define D_TEMPERATURE "Sıcaklık"
-#define D_TIME "Zaman"
+#define D_TIME_OF_DAY "Zaman"
 #define D_TO "den"
 #define D_TOGGLE "Geçiş Tuşu"
 #define D_TOPIC "Başlık"

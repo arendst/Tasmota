@@ -186,7 +186,7 @@
 #define D_SUNRISE "Lever du jour"
 #define D_SUNSET "Tombée de la nuit"
 #define D_TEMPERATURE "Température"
-#define D_TIME "Temps"
+#define D_TIME_OF_DAY "Temps"
 #define D_TO "à"
 #define D_TOGGLE "Inverser"
 #define D_TOPIC "Topic"              // Keep MQTT keyword

@@ -186,7 +186,7 @@
 #define D_SUNRISE "일출"
 #define D_SUNSET "일몰"
 #define D_TEMPERATURE "온도"
-#define D_TIME "시간"
+#define D_TIME_OF_DAY "시간"
 #define D_TO "to"
 #define D_TOGGLE "켜기/끄기"
 #define D_TOPIC "Topic"

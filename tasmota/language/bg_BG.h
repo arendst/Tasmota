@@ -186,7 +186,7 @@
 #define D_SUNRISE "Изгрев"
 #define D_SUNSET "Залез"
 #define D_TEMPERATURE "Температура"
-#define D_TIME "Време"
+#define D_TIME_OF_DAY "Време"
 #define D_TO "към"
 #define D_TOGGLE "Превключване"
 #define D_TOPIC "Тема"

@@ -186,7 +186,7 @@
 #define D_SUNRISE "זריחה"
 #define D_SUNSET "שקיעה"
 #define D_TEMPERATURE "טמפרטורה"
-#define D_TIME "זמן"
+#define D_TIME_OF_DAY "זמן"
 #define D_TO "ל"
 #define D_TOGGLE "מתג"
 #define D_TOPIC "נושא"

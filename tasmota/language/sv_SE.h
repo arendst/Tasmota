@@ -186,7 +186,7 @@
 #define D_SUNRISE "Soluppgång"
 #define D_SUNSET "Solnedgång"
 #define D_TEMPERATURE "Temperatur"
-#define D_TIME "Tid"
+#define D_TIME_OF_DAY "Tid"
 #define D_TO "till"
 #define D_TOGGLE "Växla"
 #define D_TOPIC "Ämne"

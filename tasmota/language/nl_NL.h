@@ -186,7 +186,7 @@
 #define D_SUNRISE "Zonsopgang"
 #define D_SUNSET "Zonsondergang"
 #define D_TEMPERATURE "Temperatuur"
-#define D_TIME "Tijd"
+#define D_TIME_OF_DAY "Tijd"
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
 #define D_TOPIC "Topic"  // Onderwerp

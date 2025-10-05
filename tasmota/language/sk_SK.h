@@ -186,7 +186,7 @@
 #define D_SUNRISE "Svitanie"
 #define D_SUNSET "Súmrak"
 #define D_TEMPERATURE "Teplota"
-#define D_TIME "Čas"
+#define D_TIME_OF_DAY "Čas"
 #define D_TO "do"
 #define D_TOGGLE "Prepni"
 #define D_TOPIC "Topic"

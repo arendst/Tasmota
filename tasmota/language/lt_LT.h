@@ -186,7 +186,7 @@
 #define D_SUNRISE "Saulėtekis"
 #define D_SUNSET "Saulėlydis"
 #define D_TEMPERATURE "Temperatūra"
-#define D_TIME "Laikas"
+#define D_TIME_OF_DAY "Laikas"
 #define D_TO "į"
 #define D_TOGGLE "Perjungti"
 #define D_TOPIC "Tema"

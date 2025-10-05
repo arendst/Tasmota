@@ -186,7 +186,7 @@
 #define D_SUNRISE "日出"
 #define D_SUNSET "日落"
 #define D_TEMPERATURE "温度"
-#define D_TIME "时间"
+#define D_TIME_OF_DAY "时间"
 #define D_TO "to"
 #define D_TOGGLE "切换"
 #define D_TOPIC "主题"

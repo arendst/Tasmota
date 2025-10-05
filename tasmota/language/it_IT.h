@@ -186,7 +186,7 @@
 #define D_SUNRISE              "Alba"
 #define D_SUNSET               "Tramonto"
 #define D_TEMPERATURE          "Temperatura"
-#define D_TIME                 "Ora"
+#define D_TIME_OF_DAY                 "Ora"
 #define D_TO                   "a"
 #define D_TOGGLE               "ON/OFF"
 #define D_TOPIC                "Topic"

@@ -186,7 +186,7 @@
 #define D_SUNRISE "Albada"
 #define D_SUNSET "Posta de sol"
 #define D_TEMPERATURE "Temperatura"
-#define D_TIME "Time"
+#define D_TIME_OF_DAY "Time"
 #define D_TO "a"
 #define D_TOGGLE "Canvia"
 #define D_TOPIC "Tòpic"

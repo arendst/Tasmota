@@ -186,7 +186,7 @@
 #define D_SUNRISE "Ανατολή Ηλίου"
 #define D_SUNSET "Ηλιοβασίλεμα"
 #define D_TEMPERATURE "Θερμοκρασία"
-#define D_TIME "Ώρα"
+#define D_TIME_OF_DAY "Ώρα"
 #define D_TO "έως"
 #define D_TOGGLE "Εναλλαγή"
 #define D_TOPIC "Topic"
