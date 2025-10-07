@@ -3,6 +3,8 @@
 # This animation scales patterns up or down with configurable scaling factors,
 # interpolation methods, and center points.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:ScaleAnimation,weak
 class ScaleAnimation : animation.animation
   # Non-parameter instance variables only
@@ -12,14 +14,14 @@ class ScaleAnimation : animation.animation
   var start_time         # Animation start time
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "source_animation": {"type": "instance", "default": nil},
     "scale_factor": {"min": 1, "max": 255, "default": 128},
     "scale_speed": {"min": 0, "max": 255, "default": 0},
     "scale_mode": {"min": 0, "max": 3, "default": 0},
     "scale_center": {"min": 0, "max": 255, "default": 128},
     "interpolation": {"min": 0, "max": 1, "default": 1}
-  }
+  })
   
   # Initialize a new Scale animation
   # @param engine: AnimationEngine - Required animation engine

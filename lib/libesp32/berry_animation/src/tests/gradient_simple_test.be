@@ -5,7 +5,7 @@ print("Testing basic GradientAnimation functionality...")
 
 # Create LED strip and engine
 var strip = global.Leds(5)
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 # Test basic creation
 var gradient = animation.gradient_animation(engine)

@@ -12,7 +12,7 @@ def test_plasma_animation_basic()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test with default parameters
   var plasma_anim = animation.plasma_animation(engine)
@@ -36,7 +36,7 @@ def test_plasma_animation_custom()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test with custom parameters using virtual member assignment
   var plasma_anim = animation.plasma_animation(engine)
@@ -71,7 +71,7 @@ def test_plasma_animation_parameters()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var plasma_anim = animation.plasma_animation(engine)
   plasma_anim.name = "param_test"
@@ -102,7 +102,7 @@ def test_plasma_animation_update_render()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var plasma_anim = animation.plasma_animation(engine)
   plasma_anim.color = 0xFFFF0000
@@ -146,7 +146,7 @@ def test_plasma_constructors()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test plasma_rainbow
   var rainbow_plasma = animation.plasma_rainbow(engine)
@@ -170,7 +170,7 @@ def test_plasma_tostring()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(12)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var plasma_anim = animation.plasma_animation(engine)
   plasma_anim.freq_x = 55

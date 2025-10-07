@@ -12,7 +12,7 @@ import animation
 
 # Create animation engine for testing
 var strip = global.Leds()
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 # Test Animation class
 assert(animation.animation != nil, "Animation class should be defined")
@@ -129,10 +129,13 @@ assert(param_anim.set_param("priority", -1) == false, "Value below min should be
 assert(param_anim.get_param("unknown", "default") == "default", "Unknown parameter should return default")
 assert(param_anim.get_param("priority", 0) == 75, "Known parameter should return current value")
 
-# Test parameter metadata
-var metadata = param_anim.get_param_metadata("priority")
-assert(metadata != nil, "Metadata should exist for static parameter")
-assert(metadata["min"] == 0, "Metadata should contain correct min value")
+# Test parameter definition using _has_param and _get_param_def
+assert(param_anim._has_param("priority") == true, "Should have priority parameter")
+var param_def = param_anim._get_param_def("priority")
+assert(param_def != nil, "Parameter definition should exist for static parameter")
+# Use static methods to access encoded constraint data
+assert(param_anim.constraint_mask(param_def, "min") == 0x01, "Parameter definition should have min constraint")
+assert(param_anim.constraint_find(param_def, "min", nil) == 0, "Parameter definition should contain correct min value")
 
 # Test updating multiple static parameters
 # Test individual parameter updates using existing static parameters

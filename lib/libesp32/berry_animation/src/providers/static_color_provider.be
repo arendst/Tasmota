@@ -7,12 +7,14 @@
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:StaticColorProvider,weak
 class StaticColorProvider : animation.color_provider
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": 0xFFFFFFFF}  # Default to white
-  }
+  })
   
   # Produce the solid color for any parameter name
   #

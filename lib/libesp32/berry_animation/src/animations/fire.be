@@ -3,6 +3,8 @@
 # This animation creates a realistic fire effect with flickering flames.
 # The fire uses random intensity variations and warm colors to simulate flames.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:FireAnimation,weak
 class FireAnimation : animation.animation
   # Non-parameter instance variables only
@@ -12,14 +14,14 @@ class FireAnimation : animation.animation
   var random_seed      # Seed for random number generation
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     # 'color' for the comet head (32-bit ARGB value), inherited from animation class
     "intensity": {"min": 0, "max": 255, "default": 180},
     "flicker_speed": {"min": 1, "max": 20, "default": 8},
     "flicker_amount": {"min": 0, "max": 255, "default": 100},
     "cooling_rate": {"min": 0, "max": 255, "default": 55},
     "sparking_rate": {"min": 0, "max": 255, "default": 120}
-  }
+  })
   
   # Initialize a new Fire animation
   #

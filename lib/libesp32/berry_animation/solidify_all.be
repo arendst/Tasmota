@@ -19,7 +19,7 @@ var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,M
 for g:string2.split(globs, ",")
   global.(g) = nil
 end
-# special case to declane animation
+# special case to declare animation
 global.animation = module("animation")
 
 var prefix_dir = "src/"

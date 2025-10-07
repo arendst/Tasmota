@@ -5,7 +5,7 @@ print("Testing gradient rainbow with light_state HSV conversion...")
 
 # Create LED strip and engine
 var strip = global.Leds(10)
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 # Test rainbow gradient (nil color)
 var rainbow_gradient = animation.gradient_animation(engine)

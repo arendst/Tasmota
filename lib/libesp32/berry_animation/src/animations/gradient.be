@@ -3,6 +3,8 @@
 # This animation creates smooth color gradients that can be linear or radial,
 # with optional movement and color transitions over time.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:GradientAnimation,weak
 class GradientAnimation : animation.animation
   # Non-parameter instance variables only
@@ -10,14 +12,14 @@ class GradientAnimation : animation.animation
   var phase_offset       # Current phase offset for movement
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": nil, "nillable": true},
     "gradient_type": {"min": 0, "max": 1, "default": 0},
     "direction": {"min": 0, "max": 255, "default": 0},
     "center_pos": {"min": 0, "max": 255, "default": 128},
     "spread": {"min": 1, "max": 255, "default": 255},
     "movement_speed": {"min": 0, "max": 255, "default": 0}
-  }
+  })
   
   # Initialize a new Gradient animation
   def init(engine)

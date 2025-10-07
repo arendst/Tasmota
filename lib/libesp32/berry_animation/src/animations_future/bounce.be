@@ -3,6 +3,8 @@
 # This animation creates bouncing effects where patterns bounce back and forth
 # across the LED strip with configurable physics and damping.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:BounceAnimation,weak
 class BounceAnimation : animation.animation
   # Non-parameter instance variables only
@@ -14,13 +16,13 @@ class BounceAnimation : animation.animation
   var last_update_time   # Last update time for physics calculation
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "source_animation": {"type": "instance", "default": nil},
     "bounce_speed": {"min": 0, "max": 255, "default": 128},
     "bounce_range": {"min": 0, "max": 1000, "default": 0},
     "damping": {"min": 0, "max": 255, "default": 250},
     "gravity": {"min": 0, "max": 255, "default": 0}
-  }
+  })
   
   # Initialize a new Bounce animation
   def init(engine)

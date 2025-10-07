@@ -5,13 +5,15 @@
 
 import animation
 
+import "./core/param_encoder" as encode_constraints
+
 # Test the basic ValueProvider interface
 def test_value_provider_interface()
   print("Testing ValueProvider interface...")
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var provider = animation.value_provider(engine)
   
@@ -32,14 +34,14 @@ def test_custom_value_provider()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a simple time-based provider using new API
   class TimeBasedProvider : animation.value_provider
     # Parameter definitions
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "multiplier": {"default": 1}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -71,7 +73,7 @@ def test_is_value_provider()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var base_provider = animation.value_provider(engine)
   
@@ -89,7 +91,7 @@ def test_parameterized_object_integration()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var provider = animation.value_provider(engine)
   
@@ -113,7 +115,7 @@ def test_lifecycle_methods()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a provider that tracks start calls
   class LifecycleProvider : animation.value_provider

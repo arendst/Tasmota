@@ -6,13 +6,15 @@
 import animation
 import global
 
+import "./core/param_encoder" as encode_constraints
+
 # Test that parameters accept ValueProviders and integers only
 def test_parameter_accepts_value_providers()
   print("Testing parameter validation with ValueProviders...")
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a test animation using new constructor pattern
   var test_anim = animation.animation(engine)
@@ -48,7 +50,7 @@ def test_loop_boolean_validation()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a test animation
   var test_anim = animation.animation(engine)
@@ -77,7 +79,7 @@ def test_range_validation()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a test animation
   var test_anim = animation.animation(engine)
@@ -96,7 +98,7 @@ def test_range_validation_with_providers()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a test animation
   var test_anim = animation.animation(engine)
@@ -123,18 +125,18 @@ def test_type_validation()
   
   # Create engine for testing
   var strip = global.Leds()
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a test class with different parameter types
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "int_param": {"default": 42},                    # Default type is "int"
       "explicit_int_param": {"type": "int", "default": 10},
       "string_param": {"type": "string", "default": "hello"},
       "bool_param": {"type": "bool", "default": true},
       "instance_param": {"type": "instance", "default": nil},
       "any_param": {"type": "any", "default": nil}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)

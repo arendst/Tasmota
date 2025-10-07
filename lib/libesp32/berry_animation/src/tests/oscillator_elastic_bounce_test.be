@@ -8,7 +8,7 @@ import string
 
 # Create a real engine for testing using global.Leds()
 var strip = global.Leds(10)
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 # Test the ELASTIC waveform
 def test_elastic_waveform()

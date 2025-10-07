@@ -490,7 +490,7 @@ import animation
 def test_my_animation()
   # Create LED strip and engine for testing
   var strip = global.Leds(10)  # Use built-in LED strip for testing
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test basic construction
   var anim = animation.my_animation(engine)
@@ -532,7 +532,7 @@ Test with the animation engine:
 
 ```berry
 var strip = global.Leds(30)  # Use built-in LED strip
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 var anim = animation.my_animation(engine)
 
 # Set parameters

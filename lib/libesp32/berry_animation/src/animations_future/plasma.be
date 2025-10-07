@@ -3,6 +3,8 @@
 # This animation creates classic plasma effects using sine wave interference
 # patterns with configurable frequencies, phases, and time-based animation.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:PlasmaAnimation,weak
 class PlasmaAnimation : animation.animation
   # Non-parameter instance variables only
@@ -10,7 +12,7 @@ class PlasmaAnimation : animation.animation
   var time_phase         # Current time-based phase
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": nil},
     "freq_x": {"min": 1, "max": 255, "default": 32},
     "freq_y": {"min": 1, "max": 255, "default": 23},
@@ -18,7 +20,7 @@ class PlasmaAnimation : animation.animation
     "phase_y": {"min": 0, "max": 255, "default": 64},
     "time_speed": {"min": 0, "max": 255, "default": 50},
     "blend_mode": {"min": 0, "max": 2, "default": 0}
-  }
+  })
   
   # Initialize a new Plasma animation
   #

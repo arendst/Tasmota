@@ -15,14 +15,16 @@
 #   animation.brightness = provider
 #   
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:ClosureValueProvider,weak
 class ClosureValueProvider : animation.value_provider
   var _closure                # We keep the closure as instance variable for faster dereferencing, in addition to PARAMS
 
   # Static parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "closure": {"type": "function", "default": nil}
-  }
+  })
   
   # Method called when a parameter is changed
   # Copy "closure" parameter to _closure instance variable

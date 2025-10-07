@@ -7,15 +7,17 @@
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:CompositeColorProvider,weak
 class CompositeColorProvider : animation.color_provider
   # Non-parameter instance variables only
   var providers        # List of color providers
   
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "blend_mode": {"enum": [0, 1, 2], "default": 0}  # 0=overlay, 1=add, 2=multiply
-  }
+  })
   
   # Initialize a new CompositeColorProvider
   #

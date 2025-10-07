@@ -11,6 +11,8 @@
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:ColorCycleColorProvider,weak
 class ColorCycleColorProvider : animation.color_provider
   # Non-parameter instance variables only
@@ -18,7 +20,7 @@ class ColorCycleColorProvider : animation.color_provider
   var current_index   # Current color index for next functionality
   
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "palette": {"type": "bytes", "default":
       bytes(          # Palette bytes in AARRGGBB format
         "FF0000FF"    # Blue
@@ -29,7 +31,7 @@ class ColorCycleColorProvider : animation.color_provider
     "cycle_period": {"min": 0, "default": 5000},  # 0 = manual only, >0 = auto cycle time in ms
     "next": {"default": 0},  # Write `<n>` to move to next <n> colors
     "palette_size": {"type": "int", "default": 3}  # Read-only: number of colors in palette
-  }
+  })
   
   # Initialize a new ColorCycleColorProvider
   #
@@ -50,10 +52,10 @@ class ColorCycleColorProvider : animation.color_provider
   def _get_palette_bytes()
     var palette_bytes = self.palette
     if palette_bytes == nil
-      # Get default from PARAMS
-      var param_def = self._get_param_def("palette")
-      if param_def != nil && param_def.contains("default")
-        palette_bytes = param_def["default"]
+      # Get default from PARAMS using encoded constraints
+      var encoded_constraints = self._get_param_def("palette")
+      if encoded_constraints != nil && self.constraint_mask(encoded_constraints, "default")
+        palette_bytes = self.constraint_find(encoded_constraints, "default", nil)
       end
     end
     return palette_bytes

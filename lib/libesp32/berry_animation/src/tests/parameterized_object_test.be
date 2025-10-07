@@ -5,6 +5,8 @@
 
 import animation
 
+import "./core/param_encoder" as encode_constraints
+
 # Create a mock engine for testing
 class MockEngine
   var time_ms
@@ -24,11 +26,11 @@ def test_parameterized_object_basic()
   class TestObject : animation.parameterized_object
     # No instance variables for parameters - they're handled by the virtual system
     
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "test_value": {"min": 0, "max": 100, "default": 50},
       "test_name": {"type": "string", "default": "test"},
       "test_enum": {"enum": [1, 2, 3], "default": 1}
-    }
+    })
     
     def init(engine, value, name)
       super(self).init(engine)  # This initializes parameters with defaults
@@ -93,10 +95,10 @@ def test_parameter_hierarchy()
   
   # Create a base class with some parameters
   class BaseClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "base_param": {"type": "string", "default": "base_value"},
       "shared_param": {"type": "string", "default": "base_default"}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -105,10 +107,10 @@ def test_parameter_hierarchy()
   
   # Create a child class with additional parameters
   class ChildClass : BaseClass
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "child_param": {"min": 0, "max": 10, "default": 5},
       "shared_param": {"type": "string", "default": "child_default"}  # Override parent default
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -142,9 +144,9 @@ def test_value_provider_as_parameter()
   
   # Create a simple test class
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "dynamic_value": {"min": 0, "max": 100, "default": 50}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -191,11 +193,11 @@ def test_parameter_metadata()
   print("Testing parameter metadata...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "range_param": {"min": 0, "max": 100, "default": 50},
       "enum_param": {"enum": [1, 2, 3], "default": 1},
       "simple_param": {"type": "string", "default": "test"}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -204,17 +206,19 @@ def test_parameter_metadata()
   
   var obj = TestClass(mock_engine)
   
-  # Test getting single parameter metadata
-  var range_meta = obj.get_param_metadata("range_param")
-  assert(range_meta != nil, "Should get range parameter metadata")
-  assert(range_meta["min"] == 0, "Should have min constraint")
-  assert(range_meta["max"] == 100, "Should have max constraint")
-  assert(range_meta["default"] == 50, "Should have default value")
+  # Test getting single parameter definition
+  assert(obj._has_param("range_param") == true, "range_param should exist")
+  var range_def = obj._get_param_def("range_param")
+  assert(range_def != nil, "Should get range parameter definition")
+  assert(obj.constraint_find(range_def, "min", nil) == 0, "Should have min constraint")
+  assert(obj.constraint_find(range_def, "max", nil) == 100, "Should have max constraint")
+  assert(obj.constraint_find(range_def, "default", nil) == 50, "Should have default value")
   
-  var enum_meta = obj.get_param_metadata("enum_param")
-  assert(enum_meta != nil, "Should get enum parameter metadata")
-  assert(enum_meta.contains("enum"), "Should have enum constraint")
-  assert(enum_meta["default"] == 1, "Should have default value")
+  assert(obj._has_param("enum_param") == true, "enum_param should exist")
+  var enum_def = obj._get_param_def("enum_param")
+  assert(enum_def != nil, "Should get enum parameter definition")
+  assert(obj.constraint_mask(enum_def, "enum") == 0x10, "Should have enum constraint")
+  assert(obj.constraint_find(enum_def, "default", nil) == 1, "Should have default value")
   
   print("✓ Parameter metadata test passed")
 end
@@ -224,9 +228,9 @@ def test_virtual_member_errors()
   print("Testing virtual member error handling...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "valid_param": {"min": 0, "max": 100, "default": 50}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -275,9 +279,9 @@ def test_undefined_parameter_behavior()
   import string  # Import once at the top of the function
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "defined_param": {"min": 0, "max": 100, "default": 50}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)
@@ -354,10 +358,11 @@ def test_undefined_parameter_behavior()
   obj.defined_param = 75
   assert(obj.defined_param == 75, "Defined parameter assignment should still work")
   
-  # Test get_param_metadata for undefined parameter
-  print("  Testing metadata for undefined parameter...")
-  var undefined_meta = obj.get_param_metadata("undefined_param")
-  assert(undefined_meta == nil, "Metadata for undefined parameter should be nil")
+  # Test _has_param and _get_param_def for undefined parameter
+  print("  Testing parameter definition for undefined parameter...")
+  assert(obj._has_param("undefined_param") == false, "_has_param for undefined parameter should return false")
+  var undefined_def = obj._get_param_def("undefined_param")
+  assert(undefined_def == nil, "_get_param_def for undefined parameter should be nil")
   
   # Test get_param_value for undefined parameter
   print("  Testing get_param_value for undefined parameter...")
@@ -372,9 +377,9 @@ def test_engine_requirement()
   print("Testing engine parameter requirement...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "test_param": {"default": 42}
-    }
+    })
   end
   
   # Test that nil engine raises error
@@ -398,9 +403,9 @@ def test_equality_operator()
   print("Testing equality operator...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = {
+    static var PARAMS = encode_constraints({
       "test_param": {"default": 42}
-    }
+    })
     
     def init(engine)
       super(self).init(engine)

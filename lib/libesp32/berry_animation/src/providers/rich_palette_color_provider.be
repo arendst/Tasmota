@@ -7,6 +7,8 @@
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:RichPaletteColorProvider,weak
 class RichPaletteColorProvider : animation.color_provider
   # Non-parameter instance variables only
@@ -17,14 +19,14 @@ class RichPaletteColorProvider : animation.color_provider
   var light_state      # light_state instance for proper color calculations
   
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "palette": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
     "brightness": {"min": 0, "max": 255, "default": 255},
     "range_min": {"default": 0},
     "range_max": {"default": 255}
-  }
+  })
   
   # Initialize a new RichPaletteColorProvider
   #

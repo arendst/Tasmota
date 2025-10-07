@@ -3,6 +3,8 @@
 # This animation adds random jitter/shake effects to patterns with configurable
 # intensity, frequency, and jitter types (position, color, brightness).
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:JitterAnimation,weak
 class JitterAnimation : animation.animation
   # Non-parameter instance variables only
@@ -13,7 +15,7 @@ class JitterAnimation : animation.animation
   var current_colors     # Array of current colors for each pixel
   
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "source_animation": {"type": "instance", "default": nil},
     "jitter_intensity": {"min": 0, "max": 255, "default": 100},
     "jitter_frequency": {"min": 0, "max": 255, "default": 60},
@@ -21,7 +23,7 @@ class JitterAnimation : animation.animation
     "position_range": {"min": 0, "max": 255, "default": 50},
     "color_range": {"min": 0, "max": 255, "default": 30},
     "brightness_range": {"min": 0, "max": 255, "default": 40}
-  }
+  })
   
   # Initialize a new Jitter animation
   def init(engine)

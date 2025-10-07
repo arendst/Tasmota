@@ -3,6 +3,8 @@
 # This animation creates random sparkles that appear and fade out over time,
 # with configurable density, fade speed, and colors.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:SparkleAnimation,weak
 class SparkleAnimation : animation.animation
   # Non-parameter instance variables only
@@ -13,7 +15,7 @@ class SparkleAnimation : animation.animation
   var last_update        # Last update time for frame timing
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": 0xFFFFFFFF},
     "back_color": {"default": 0xFF000000},
     "density": {"min": 0, "max": 255, "default": 30},
@@ -21,7 +23,7 @@ class SparkleAnimation : animation.animation
     "sparkle_duration": {"min": 0, "max": 255, "default": 60},
     "min_brightness": {"min": 0, "max": 255, "default": 100},
     "max_brightness": {"min": 0, "max": 255, "default": 255}
-  }
+  })
   
   # Initialize a new Sparkle animation
   # @param engine: AnimationEngine - Required animation engine reference

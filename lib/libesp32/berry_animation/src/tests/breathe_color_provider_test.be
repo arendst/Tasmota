@@ -13,7 +13,7 @@ print("Imported animation module")
 
 # Create LED strip and animation engine following specification
 var strip = global.Leds(10)  # Use global.Leds() for testing as per specification
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 print("Created LED strip and animation engine")
 
 # Create a breathe color provider with engine-only parameter

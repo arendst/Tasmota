@@ -3,6 +3,8 @@
 # This animation creates a twinkling stars effect with random lights
 # appearing and fading at different positions with customizable density and timing.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:TwinkleAnimation,weak
 class TwinkleAnimation : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
@@ -14,14 +16,14 @@ class TwinkleAnimation : animation.animation
   var random_seed      # Seed for random number generation
   
   # Parameter definitions with constraints
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": 0xFFFFFFFF},
     "density": {"min": 0, "max": 255, "default": 128},
     "twinkle_speed": {"min": 1, "max": 5000, "default": 6},
     "fade_speed": {"min": 0, "max": 255, "default": 180},
     "min_brightness": {"min": 0, "max": 255, "default": 32},
     "max_brightness": {"min": 0, "max": 255, "default": 255}
-  }
+  })
   
   # Initialize a new Twinkle animation
   #

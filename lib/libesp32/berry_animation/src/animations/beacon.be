@@ -17,18 +17,20 @@
 # 2: `slew_size`, number of pixels to fade from back to fore color, can be `0`
 # 3: `beacon_size`, number of pixels of the beacon
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:BeaconAnimation,weak
 class BeaconAnimation : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions following the new specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": 0xFFFFFFFF},
     "back_color": {"default": 0xFF000000},
     "pos": {"default": 0},
     "beacon_size": {"min": 0, "default": 1},
     "slew_size": {"min": 0, "default": 0}
-  }
+  })
 
   # Render the beacon to the provided frame buffer
   #

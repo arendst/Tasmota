@@ -3,6 +3,8 @@
 # This animation shifts/scrolls patterns horizontally across the LED strip
 # with configurable speed, direction, and wrapping behavior.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:ShiftAnimation,weak
 class ShiftAnimation : animation.animation
   # Non-parameter instance variables only
@@ -11,12 +13,12 @@ class ShiftAnimation : animation.animation
   var current_colors     # Array of current colors for each pixel
   
   # Parameter definitions with constraints
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "source_animation": {"type": "instance", "default": nil},
     "shift_speed": {"min": 0, "max": 255, "default": 128},
     "direction": {"min": -1, "max": 1, "default": 1},
     "wrap_around": {"type": "bool", "default": true}
-  }
+  })
   
   # Initialize a new Shift animation
   def init(engine)

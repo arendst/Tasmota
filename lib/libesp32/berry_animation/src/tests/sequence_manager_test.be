@@ -34,7 +34,7 @@ def test_sequence_manager_step_creation()
   
   # Create test animation using new parameterized API
   var strip = global.Leds(30)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var color_provider = animation.static_color(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
@@ -183,10 +183,6 @@ def test_sequence_manager_step_info()
   var engine = animation.create_engine(strip)
   var seq_manager = animation.SequenceManager(engine)
   
-  # Test step info when not running
-  var step_info = seq_manager.get_current_step_info()
-  assert(step_info == nil, "Step info should be nil when not running")
-  
   # Create test sequence using new parameterized API
   var color_provider = animation.static_color(engine)
   color_provider.color = 0xFFFF0000
@@ -205,14 +201,6 @@ def test_sequence_manager_step_info()
   engine.add(seq_manager)
   engine.run()  # Start the engine
   engine.on_tick(30000)  # Update engine time
-  
-  # Get step info
-  step_info = seq_manager.get_current_step_info()
-  assert(step_info != nil, "Step info should not be nil when running")
-  assert(step_info["step_index"] == 0, "Step info should show correct step index")
-  assert(step_info["total_steps"] == 2, "Step info should show correct total steps")
-  assert(step_info["current_step"]["type"] == "play", "Step info should show correct step type")
-  assert(step_info["elapsed_ms"] >= 0, "Step info should show elapsed time")
   
   print("✓ Step info tests passed")
 end

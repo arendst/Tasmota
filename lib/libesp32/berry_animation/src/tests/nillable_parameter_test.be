@@ -1,14 +1,16 @@
 # Test for nillable parameter attribute
 import animation
 
+import "./core/param_encoder" as encode_constraints
+
 print("Testing nillable parameter attribute...")
 
 # Create a test class with nillable and non-nillable parameters
 class TestParameterizedClass : animation.parameterized_object
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "nillable_param": {"type": "int", "nillable": true},
     "non_nillable_param": {"type": "int"}  # No default, no nillable
-  }
+  })
   
   def init(engine)
     super(self).init(engine)
@@ -17,7 +19,7 @@ end
 
 # Create LED strip and engine
 var strip = global.Leds(5)
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 # Test nillable parameter
 var test_obj = TestParameterizedClass(engine)

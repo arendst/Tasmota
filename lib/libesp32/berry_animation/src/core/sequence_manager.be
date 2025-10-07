@@ -413,22 +413,22 @@ class SequenceManager
     return self.is_running
   end
   
-  # Get current step info for debugging
-  def get_current_step_info()
-    if !self.is_running || self.step_index >= size(self.steps)
-      return nil
-    end
+  # # Get current step info for debugging
+  # def get_current_step_info()
+  #   if !self.is_running || self.step_index >= size(self.steps)
+  #     return nil
+  #   end
     
-    return {
-      "step_index": self.step_index,
-      "total_steps": size(self.steps),
-      "current_step": self.steps[self.step_index],
-      "elapsed_ms": self.engine.time_ms - self.step_start_time,
-      "repeat_count": self.repeat_count,
-      "current_iteration": self.current_iteration,
-      "is_repeat_sequence": self.is_repeat_sequence
-    }
-  end
+  #   return {
+  #     "step_index": self.step_index,
+  #     "total_steps": size(self.steps),
+  #     "current_step": self.steps[self.step_index],
+  #     "elapsed_ms": self.engine.time_ms - self.step_start_time,
+  #     "repeat_count": self.repeat_count,
+  #     "current_iteration": self.current_iteration,
+  #     "is_repeat_sequence": self.is_repeat_sequence
+  #   }
+  # end
 end
 
 return {'SequenceManager': SequenceManager}

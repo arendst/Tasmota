@@ -47,6 +47,7 @@ def run_all_tests()
 
     # Core framework tests
     "lib/libesp32/berry_animation/src/tests/frame_buffer_test.be",
+    "lib/libesp32/berry_animation/src/tests/constraint_encoding_test.be",  # Tests parameter constraint encoding/decoding
     "lib/libesp32/berry_animation/src/tests/nillable_parameter_test.be",
     "lib/libesp32/berry_animation/src/tests/parameterized_object_test.be",  # Tests parameter management base class
     "lib/libesp32/berry_animation/src/tests/bytes_type_test.be",  # Tests bytes type validation in parameterized objects

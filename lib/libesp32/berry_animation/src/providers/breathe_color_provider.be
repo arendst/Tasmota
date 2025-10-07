@@ -9,16 +9,18 @@
 # - curve_factor 1: Pure cosine wave (smooth pulsing)
 # - curve_factor 2-5: Natural breathing with pauses at peaks (5 = most pronounced pauses)
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:BreatheColorProvider,weak
 class BreatheColorProvider : animation.oscillator_value
   # Additional parameter definitions for color-specific functionality
   # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "base_color": {"default": 0xFFFFFFFF},               # The base color to modulate (32-bit ARGB value)
     "min_brightness": {"min": 0, "max": 255, "default": 0},      # Minimum brightness level (0-255)
     "max_brightness": {"min": 0, "max": 255, "default": 255},    # Maximum brightness level (0-255)
     "curve_factor": {"min": 1, "max": 5, "default": 2}   # Factor to control breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses)
-  }
+  })
   
   # Initialize a new Breathe Color Provider
   # Following parameterized class specification - engine parameter only

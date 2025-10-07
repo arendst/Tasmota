@@ -7,19 +7,21 @@
 # This is the unified base class for all visual elements in the framework.
 # A Pattern is simply an Animation with infinite duration (duration = 0).
 
+import "./core/param_encoder" as encode_constraints
+
 class Animation : animation.parameterized_object
   # Non-parameter instance variables only
   var opacity_frame   # Frame buffer for opacity animation rendering
   
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "name": {"type": "string", "default": "animation"}, # Optional name for the animation
     "priority": {"min": 0, "default": 10},              # Rendering priority (higher = on top, 0-255)
     "duration": {"min": 0, "default": 0},               # Animation duration in ms (0 = infinite)
     "loop": {"type": "bool", "default": false},         # Whether to loop when duration is reached
     "opacity": {"type": "any", "default": 255},         # Animation opacity (0-255 number or Animation instance)
     "color": {"default": 0xFFFFFFFF}                    # Base color in ARGB format (0xAARRGGBB)
-  }
+  })
 
   # Initialize a new animation
   #

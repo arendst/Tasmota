@@ -4,13 +4,15 @@
 import animation
 import animation_dsl
 
+import "./core/param_encoder" as encode_constraints
+
 # Test class that uses bytes parameter
 class BytesTestClass : animation.parameterized_object
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "data": {"type": "bytes", "default": nil, "nillable": true},
     "required_data": {"type": "bytes"},
     "name": {"type": "string", "default": "test"}
-  }
+  })
   
   def init(engine)
     super(self).init(engine)
@@ -76,14 +78,16 @@ def test_bytes_type_validation()
   success = obj.set_param("data", "invalid")
   assert(success == false, "Method setting with invalid type should fail")
   
-  # Test 5: Parameter metadata
-  var metadata = obj.get_param_metadata("data")
-  assert(metadata["type"] == "bytes", "Data parameter should have bytes type")
-  assert(metadata["nillable"] == true, "Data parameter should be nillable")
+  # Test 5: Parameter definition
+  assert(obj._has_param("data") == true, "data parameter should exist")
+  var param_def = obj._get_param_def("data")
+  assert(obj.constraint_find(param_def, "type", nil) == "bytes", "Data parameter should have bytes type")
+  assert(obj.constraint_mask(param_def, "nillable") == 0x20, "Data parameter should be nillable")
   
-  var req_metadata = obj.get_param_metadata("required_data")
-  assert(req_metadata["type"] == "bytes", "Required data should have bytes type")
-  assert(req_metadata.find("nillable", false) == false, "Required data should not be nillable")
+  assert(obj._has_param("required_data") == true, "required_data parameter should exist")
+  var req_param_def = obj._get_param_def("required_data")
+  assert(obj.constraint_find(req_param_def, "type", nil) == "bytes", "Required data should have bytes type")
+  assert(obj.constraint_mask(req_param_def, "nillable") == 0x00, "Required data should not be nillable")
   
   print("✓ All bytes type validation tests passed!")
 end

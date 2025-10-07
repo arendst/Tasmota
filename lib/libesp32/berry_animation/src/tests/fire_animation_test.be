@@ -7,7 +7,7 @@ print("=== Fire Animation Test ===")
 
 # Create engine and LED strip for testing
 var strip = global.Leds(30)  # Use built-in LED strip for testing
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 # Test 1: Basic Fire Animation Creation
 print("\n1. Testing basic fire animation creation...")
@@ -148,7 +148,7 @@ print("\n10. Testing edge cases...")
 
 # Very small strip
 var tiny_strip = global.Leds(1)
-var tiny_engine = animation.animation_engine(tiny_strip)
+var tiny_engine = animation.create_engine(tiny_strip)
 var tiny_fire = animation.fire_animation(tiny_engine)
 tiny_fire.intensity = 180
 tiny_fire.priority = 1
@@ -161,7 +161,7 @@ print("Tiny fire (1 pixel) created and rendered successfully")
 
 # Zero intensity
 var dim_strip = global.Leds(10)
-var dim_engine = animation.animation_engine(dim_strip)
+var dim_engine = animation.create_engine(dim_strip)
 var dim_fire = animation.fire_animation(dim_engine)
 dim_fire.intensity = 0
 dim_fire.priority = 10

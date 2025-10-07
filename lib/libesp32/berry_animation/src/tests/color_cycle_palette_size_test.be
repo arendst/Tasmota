@@ -167,16 +167,17 @@ def test_palette_size_parameter_metadata()
   var engine = MockEngine()
   var provider = animation.color_cycle(engine)
   
-  # Test 1: Parameter should exist in metadata
-  var metadata = provider.get_param_metadata("palette_size")
-  assert(metadata != nil, "palette_size should have metadata")
+  # Test 1: Parameter should exist
+  assert(provider._has_param("palette_size") == true, "palette_size parameter should exist")
+  var param_def = provider._get_param_def("palette_size")
+  assert(param_def != nil, "palette_size should have parameter definition")
   
-  # Test 2: Check parameter definition
-  assert(metadata.contains("type"), "palette_size metadata should have type")
-  assert(metadata["type"] == "int", f"palette_size type should be 'int', got '{metadata['type']}'")
+  # Test 2: Check parameter definition using static methods
+  assert(provider.constraint_mask(param_def, "type") == 0x08, "palette_size definition should have type")
+  assert(provider.constraint_find(param_def, "type", nil) == "int", f"palette_size type should be 'int', got '{provider.constraint_find(param_def, 'type', nil)}'")
   
-  assert(metadata.contains("default"), "palette_size metadata should have default")
-  assert(metadata["default"] == 3, f"palette_size default should be 3, got {metadata['default']}")
+  assert(provider.constraint_mask(param_def, "default") == 0x04, "palette_size definition should have default")
+  assert(provider.constraint_find(param_def, "default", nil) == 3, f"palette_size default should be 3, got {provider.constraint_find(param_def, 'default', nil)}")
     
   print("✓ Parameter metadata tests passed!")
 end

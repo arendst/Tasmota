@@ -31,6 +31,7 @@ class be_class_FrameBufferNtv (scope: global, name: FrameBufferNtv, strings: wea
   apply_opacity, static_func(be_animation_ntv_apply_opacity)
   apply_brightness, static_func(be_animation_ntv_apply_brightness)
   fill_pixels, static_func(be_animation_ntv_fill_pixels)
+//   paste_pixels, func(be_leds_paste_pixels)
 }
 @const_object_info_end */
 

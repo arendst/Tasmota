@@ -7,13 +7,15 @@
 #
 # Follows the parameterized class specification with parameter forwarding pattern.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:RichPaletteAnimation,weak
 class RichPaletteAnimation : animation.animation
   # Non-parameter instance variables only
   var color_provider   # Internal RichPaletteColorProvider instance
   
   # Parameter definitions - only RichPaletteColorProvider parameters (Animation params inherited)
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     # RichPaletteColorProvider parameters (forwarded to internal provider)
     "palette": {"type": "instance", "default": nil},
     "cycle_period": {"min": 0, "default": 5000},
@@ -21,7 +23,7 @@ class RichPaletteAnimation : animation.animation
     "brightness": {"min": 0, "max": 255, "default": 255},
     "range_min": {"default": 0},
     "range_max": {"default": 255}
-  }
+  })
   
   # Initialize a new RichPaletteAnimation
   #

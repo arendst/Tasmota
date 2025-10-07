@@ -6,16 +6,18 @@
 # This version supports both RichPaletteAnimation and ColorProvider instances as color sources,
 # allowing for more flexible usage of color providers.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:PalettePatternAnimation,weak
 class PalettePatternAnimation : animation.animation
   var value_buffer     # Buffer to store values for each pixel (bytes object)
   
   # Static definitions of parameters with constraints
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     # Palette pattern-specific parameters
     "color_source": {"default": nil, "type": "instance"},
     "pattern_func": {"default": nil, "type": "function"}
-  }
+  })
   
   # Initialize a new PalettePattern animation
   #
@@ -158,11 +160,11 @@ end
 #@ solidify:PaletteWaveAnimation,weak
 class PaletteWaveAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     # Wave-specific parameters only
     "wave_period": {"min": 1, "default": 5000},
     "wave_length": {"min": 1, "default": 10}
-  }
+  })
   
   # Initialize a new wave pattern animation
   #
@@ -211,12 +213,12 @@ end
 #@ solidify:PaletteGradientAnimation,weak
 class PaletteGradientAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     # Gradient-specific parameters only
     "shift_period": {"min": 0, "default": 0},           # Time for one complete shift cycle in ms (0 = static)
     "spatial_period": {"min": 0, "default": 0},         # Spatial period in pixels (0 = full strip)
     "phase_shift": {"min": 0, "max": 100, "default": 0} # Phase shift as percentage (0-100)
-  }
+  })
   
   # Initialize a new gradient pattern animation
   #
@@ -273,10 +275,10 @@ end
 #@ solidify:PaletteMeterAnimation,weak
 class PaletteMeterAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     # Meter-specific parameters only
     "value_func": {"default": nil, "type": "function"}
-  }
+  })
   
   # Initialize a new meter pattern animation
   #

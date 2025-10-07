@@ -30,7 +30,7 @@ end
 # Test 1: Engine Creation
 print("\n--- Test 1: Engine Creation ---")
 var strip = global.Leds(20)
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 
 assert_not_nil(engine, "Engine should be created")
 assert_equals(engine.width, 20, "Engine width should match strip length")
@@ -155,7 +155,7 @@ assert_test(render_time < 200, f"10 render cycles should be fast (took {render_t
 # Test 8: Error Handling
 print("\n--- Test 8: Error Handling ---")
 try
-  var bad_engine = animation.animation_engine(nil)
+  var bad_engine = animation.create_engine(nil)
   assert_test(false, "Should throw error for nil strip")
 except "value_error"
   assert_test(true, "Should throw value_error for nil strip")
@@ -167,7 +167,7 @@ var engine2 = animation.create_engine(strip)
 assert_not_nil(engine2, "Second engine should be created")
 assert_equals(engine2.width, strip.length(), "Second engine width should match strip")
 
-var engine3 = animation.animation_engine(strip)
+var engine3 = animation.create_engine(strip)
 assert_not_nil(engine3, "Direct engine creation should work")
 assert_equals(engine3.width, strip.length(), "Direct engine width should match strip")
 
@@ -221,7 +221,7 @@ end
 
 # Create engine with dynamic strip
 var dynamic_strip = MockDynamicStrip(15)
-var dynamic_engine = animation.animation_engine(dynamic_strip)
+var dynamic_engine = animation.create_engine(dynamic_strip)
 
 # Test initial state
 assert_equals(dynamic_engine.width, 15, "Engine should start with strip length 15")

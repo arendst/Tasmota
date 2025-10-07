@@ -3,6 +3,8 @@
 # This animation creates pseudo-random noise patterns with configurable
 # scale, speed, and color mapping through palettes or single colors.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:NoiseAnimation,weak
 class NoiseAnimation : animation.animation
   # Non-parameter instance variables only
@@ -11,14 +13,14 @@ class NoiseAnimation : animation.animation
   var noise_table        # Pre-computed noise values for performance
   
   # Parameter definitions following new specification
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": nil},
     "scale": {"min": 1, "max": 255, "default": 50},
     "speed": {"min": 0, "max": 255, "default": 30},
     "octaves": {"min": 1, "max": 4, "default": 1},
     "persistence": {"min": 0, "max": 255, "default": 128},
     "seed": {"min": 0, "max": 65535, "default": 12345}
-  }
+  })
   
   # Initialize a new Noise animation
   def init(engine)

@@ -3,6 +3,8 @@
 # This animation creates various wave patterns (sine, triangle, square, sawtooth)
 # with configurable amplitude, frequency, phase, and movement speed.
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:WaveAnimation,weak
 class WaveAnimation : animation.animation
   # Non-parameter instance variables only
@@ -11,7 +13,7 @@ class WaveAnimation : animation.animation
   var wave_table         # Pre-computed wave table for performance
   
   # Parameter definitions for WaveAnimation
-  static var PARAMS = {
+  static var PARAMS = encode_constraints({
     "color": {"default": 0xFFFF0000},
     "back_color": {"default": 0xFF000000},
     "wave_type": {"min": 0, "max": 3, "default": 0},
@@ -20,7 +22,7 @@ class WaveAnimation : animation.animation
     "phase": {"min": 0, "max": 255, "default": 0},
     "wave_speed": {"min": 0, "max": 255, "default": 50},
     "center_level": {"min": 0, "max": 255, "default": 128}
-  }
+  })
   
   # Initialize a new Wave animation
   #

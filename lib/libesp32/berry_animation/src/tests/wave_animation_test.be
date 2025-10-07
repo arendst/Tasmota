@@ -12,7 +12,7 @@ def test_wave_animation_basic()
   
   # Create engine and animation
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var wave_anim = animation.wave_animation(engine)
   
   assert(wave_anim != nil, "WaveAnimation should be created")
@@ -34,7 +34,7 @@ def test_wave_animation_custom()
   
   # Create engine and animation with custom parameters
   var strip = global.Leds(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var wave_anim = animation.wave_animation(engine)
   
   # Set custom parameters using virtual member access
@@ -69,7 +69,7 @@ def test_wave_animation_parameters()
   print("Testing WaveAnimation parameter changes...")
   
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var wave_anim = animation.wave_animation(engine)
   
   # Test parameter changes using virtual member access
@@ -96,7 +96,7 @@ def test_wave_animation_update_render()
   print("Testing WaveAnimation update and render...")
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var wave_anim = animation.wave_animation(engine)
   
   # Set parameters
@@ -141,7 +141,7 @@ def test_wave_types()
   print("Testing different wave types...")
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var frame = animation.frame_buffer(10)
   
   # Test each wave type
@@ -172,7 +172,7 @@ def test_wave_constructors()
   print("Testing wave constructor functions...")
   
   var strip = global.Leds(30)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test wave_rainbow_sine
   var rainbow_wave = animation.wave_rainbow_sine(engine)
@@ -203,7 +203,7 @@ def test_wave_tostring()
   print("Testing WaveAnimation string representation...")
   
   var strip = global.Leds(12)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var wave_anim = animation.wave_animation(engine)
   
   # Set parameters

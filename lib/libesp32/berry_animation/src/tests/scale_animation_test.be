@@ -12,7 +12,7 @@ def test_scale_animation_basic()
   
   # Create LED strip and engine using global.Leds
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Create a simple source animation
   var source = animation.solid(engine)
@@ -38,7 +38,7 @@ def test_scale_animation_custom()
   
   # Create LED strip and engine
   var strip = global.Leds(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFF00FF00
@@ -67,7 +67,7 @@ def test_scale_animation_parameters()
   
   # Create LED strip and engine
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFF0000FF
@@ -104,7 +104,7 @@ def test_scale_animation_modes()
   
   # Create LED strip and engine
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFFFFFF00
@@ -155,7 +155,7 @@ def test_scale_animation_interpolation()
   
   # Create LED strip and engine
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFF808080
@@ -184,7 +184,7 @@ def test_scale_animation_sine()
   
   # Create LED strip and engine
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFF000000
@@ -217,7 +217,7 @@ def test_scale_animation_update_render()
   
   # Create LED strip and engine
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFFFF00FF
@@ -257,7 +257,7 @@ def test_scale_constructors()
   
   # Create LED strip and engine
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFF00FFFF
@@ -296,7 +296,7 @@ def test_scale_tostring()
   
   # Create LED strip and engine
   var strip = global.Leds(12)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var source = animation.solid(engine)
   source.color = 0xFF444444

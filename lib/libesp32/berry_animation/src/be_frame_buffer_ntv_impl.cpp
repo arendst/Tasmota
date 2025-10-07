@@ -603,6 +603,47 @@ extern "C" {
     
     be_return_nil(vm);
   }
+
+  // // Leds_frame.paste_pixels(neopixel:bytes(), led_buffer:bytes(), bri:int 0..100, gamma:bool)
+  // //
+  // // Copy from ARGB buffer to RGB
+  // int32_t be_leds_paste_pixels(bvm *vm);
+  // int32_t be_leds_paste_pixels(bvm *vm) {
+  //   int32_t top = be_top(vm); // Get the number of arguments
+  //   if (top >= 2 && be_isbytes(vm, 2)) {
+  //     size_t src_len = 0;
+  //     uint32_t * src_buf = (uint32_t*) be_tobytes(vm, 1, &src_len);
+  //     size_t dest_len = 0;
+  //     uint8_t * dest_buf = (uint8_t*) be_tobytes(vm, 2, &dest_len);
+
+  //     uint32_t bri255 = 255;
+  //     if (top >= 3 && be_isint(vm, 3)) {
+  //       bri255 = be_toint(vm, 3);
+  //     }
+  //     bool gamma = false;
+  //     if (top >= 4 && be_isbool(vm, 4)) {
+  //       gamma = be_tobool(vm, 4);
+  //     }
+
+  //     size_t pixels_count = src_len / 4;
+  //     if (pixels_count > dest_len / 3) { pixels_count = dest_len / 3; }
+  //     if (pixels_count > 0) {
+  //       for (size_t i = 0; i < pixels_count; i++) {
+  //         uint32_t src_argb = ApplyBriGamma(src_buf[i], bri255, gamma);
+  //         uint32_t src_r = (src_argb >> 16) & 0xFF;
+  //         uint32_t src_g = (src_argb >>  8) & 0xFF;
+  //         uint32_t src_b = (src_argb      ) & 0xFF;
+  //         dest_buf[i * 3 + 0] = src_r;
+  //         dest_buf[i * 3 + 1] = src_g;
+  //         dest_buf[i * 3 + 2] = src_b;
+  //       }
+  //     }
+  //     be_return_nil(vm);
+  //   }
+  //   be_raise(vm, "type_error", nullptr);
+  // }
+
+
 }
 
 #endif // USE_BERRY_ANIMATION

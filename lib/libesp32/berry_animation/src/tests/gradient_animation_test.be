@@ -11,7 +11,7 @@ def test_gradient_creation()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test default gradient (rainbow linear)
   var gradient = animation.gradient_animation(engine)
@@ -47,7 +47,7 @@ def test_gradient_parameters()
   print("Testing GradientAnimation parameters...")
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var gradient = animation.gradient_animation(engine)
   gradient.color = 0xFFFFFFFF
   gradient.name = "test"
@@ -80,7 +80,7 @@ def test_gradient_updates()
   print("Testing GradientAnimation updates...")
   
   var strip = global.Leds(5)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var gradient = animation.gradient_animation(engine)
   gradient.color = 0xFF00FF00
   gradient.movement_speed = 100
@@ -109,7 +109,7 @@ def test_gradient_rendering()
   print("Testing GradientAnimation rendering...")
   
   var strip = global.Leds(5)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var gradient = animation.gradient_animation(engine)
   gradient.color = 0xFFFF0000
   gradient.movement_speed = 0
@@ -141,7 +141,7 @@ def test_gradient_factory_methods()
   print("Testing GradientAnimation factory methods...")
   
   var strip = global.Leds(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test rainbow linear factory
   var rainbow_linear = animation.gradient_rainbow_linear(engine)
@@ -170,7 +170,7 @@ def test_gradient_position_calculations()
   print("Testing GradientAnimation position calculations...")
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test linear gradient with different directions
   var linear_gradient = animation.gradient_animation(engine)
@@ -212,7 +212,7 @@ def test_gradient_color_refactoring()
   print("Testing GradientAnimation color refactoring...")
   
   var strip = global.Leds(5)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test with static color
   var static_gradient = animation.gradient_animation(engine)
@@ -250,7 +250,7 @@ def test_gradient_virtual_parameters()
   print("Testing GradientAnimation virtual parameters...")
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var gradient = animation.gradient_animation(engine)
   gradient.name = "test"
   
@@ -283,7 +283,7 @@ def test_gradient_tostring()
   import string
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test with static color
   var static_gradient = animation.gradient_animation(engine)

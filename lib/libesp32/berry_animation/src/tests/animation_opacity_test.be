@@ -32,7 +32,7 @@ print("\n--- Test 11: Animation Opacity with Animation Masks ---")
 
 # Create a fresh engine for opacity tests
 var opacity_strip = global.Leds(10)
-var opacity_engine = animation.animation_engine(opacity_strip)
+var opacity_engine = animation.create_engine(opacity_strip)
 
 # Test 11a: Basic numeric opacity
 print("\n--- Test 11a: Basic numeric opacity ---")

@@ -39,7 +39,7 @@ end
 
 # Create LED strip and animation engine following specification
 var strip = global.Leds(30)  # Use global.Leds() for testing as per specification
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 print("Created LED strip and animation engine")
 
 # Test 1: Basic Construction
@@ -188,7 +188,7 @@ print("\n--- Test 6: Wrap Around vs Bounce ---")
 
 # Create smaller strip for faster testing
 var small_strip = global.Leds(10)
-var small_engine = animation.animation_engine(small_strip)
+var small_engine = animation.create_engine(small_strip)
 
 # Test wrap around
 var wrap_comet = animation.comet_animation(small_engine)
