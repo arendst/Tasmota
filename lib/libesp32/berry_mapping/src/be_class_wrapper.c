@@ -584,12 +584,14 @@ int be_call_c_func(bvm *vm, const void * func, const char * return_type, const c
   // We do some special trickery here, we need to set be_top to zero
   // but in the same time we need to keep argument '1' to set the instance
   // later. So we increment first vm->reg and we set vm->top to the same value
-  vm->reg++;
+  uint32_t reg_save = (argc > 0) ? 1 : 0;
+  vm->reg += reg_save;
   vm->top = vm->reg;
   intptr_t ret = 0;
   if (f) ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
   // now we restore vm->reg
-  vm->reg--;
+  vm->reg -= reg_save;
+  vm->top = vm->reg + reg_save;
   // berry_log_C("be_call_c_func '%s' -> '%s': (%i,%i,%i,%i,%i,%i) -> %i", return_type, arg_type, p[0], p[1], p[2], p[3], p[4], p[5], ret);
 
   if ((return_type == NULL) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
