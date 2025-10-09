@@ -523,7 +523,7 @@ void CmndBrRun(void) {
     be_pop(berry.vm, 1);
   } else {
     Response_P(PSTR("{\"" D_PRFX_BR "\":\"[%s] %s\"}"), EscapeJSONString(be_tostring(berry.vm, -2)).c_str(), EscapeJSONString(be_tostring(berry.vm, -1)).c_str());
-    be_pop(berry.vm, 2);
+    be_pop(berry.vm, 3);
   }
 
   checkBeTop();

@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry fixed 'be_top is non zero' warning when calling C mapped functions
+- Berry fixed 'be_top is non zero' when `Br` command fails
 
 ### Removed
 
