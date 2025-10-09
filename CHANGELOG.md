@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP8266 platform update from 2025.09.00 to 2025.10.00 (#23971)
 - ESP32 Platform from 2025.09.30 to 2025.10.30, Framework (Arduino Core) from v3.1.3.250808 to v3.1.4 and IDF from v5.3.3.250801 to v5.3.4.250826 (#23971)
+- Extension Manager show current version in UI
 
 ### Fixed
 - Berry fixed 'be_top is non zero' warning when calling C mapped functions (#23989)

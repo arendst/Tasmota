@@ -466,6 +466,7 @@ class Extension_manager
         var tapp_name = self.tapp_name(ext_path)
         var tapp_name_html = webserver.html_escape(tapp_name)
         var details = tasmota.read_extension_manifest(ext_path)
+        var installed_version = int(details.find('version', 0))
         var running = tasmota._ext ? tasmota._ext.contains(ext_path) : false
         var running_indicator = running ? " <span class='running-indicator' title='Running'></span>" : ""
         var autorun = details.find("autorun", false)
@@ -474,6 +475,9 @@ class Extension_manager
         webserver.content_send("<div class='ext-item'>")
         webserver.content_send(f"<span title='path: {tapp_name_html}'><b>{webserver.html_escape(details['name'])}</b>{running_indicator}</span><br>")
         webserver.content_send(f"<small>{webserver.html_escape(details['description'])}</small>")
+        if (installed_version > 0)
+          webserver.content_send(f"<small>{self.version_string(installed_version)}</small>")
+        end
 
         webserver.content_send("<div class='ext-controls' style='padding-top:0px;padding-bottom:0px;'>")
         webserver.content_send("<form action='/ext' method='post' class='ext-controls'>")
