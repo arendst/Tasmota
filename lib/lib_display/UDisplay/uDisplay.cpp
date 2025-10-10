@@ -599,11 +599,8 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           case 'B':
             lvgl_param.flushlines = next_val(&lp1);
             lvgl_param.data = next_val(&lp1);
-            // temporary fix to disable DMA due to a problem in esp-idf 5.3
 #ifdef ESP32
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 0)
-            lvgl_param.use_dma = false;
-#endif
+            lvgl_param.use_dma = false; // temporary fix to disable DMA due to a problem in esp-idf 5.3
 #endif
             break;
           case 'M':
@@ -1241,11 +1238,7 @@ Renderer *uDisplay::Init(void) {
     _panel_config->disp_gpio_num = GPIO_NUM_NC;
 
     _panel_config->flags.disp_active_low = 0;
-#if ESP_IDF_VERSION_MAJOR >= 5
     _panel_config->flags.refresh_on_demand = 0;
-#else
-    _panel_config->flags.relax_on_idle = 0;
-#endif // ESP_IDF_VERSION_MAJOR >= 5
     _panel_config->flags.fb_in_psram = 1;             // allocate frame buffer in PSRAM
 
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(_panel_config, &_panel_handle));
@@ -1255,16 +1248,9 @@ Renderer *uDisplay::Init(void) {
     uint16_t color = random(0xffff);
     ESP_ERROR_CHECK(_panel_handle->draw_bitmap(_panel_handle, 0, 0, 1, 1, &color));
 
-#if ESP_IDF_VERSION_MAJOR < 5
-    _rgb_panel = __containerof(_panel_handle, esp_rgb_panel_t, base);
-    rgb_fb = (uint16_t *)_rgb_panel->fb;
-#else
     void * buf = NULL;
     esp_lcd_rgb_panel_get_frame_buffer(_panel_handle, 1, &buf);
     rgb_fb = (uint16_t *)buf;
-#endif
-
-
 
 #endif // USE_ESP32_S3
   }
@@ -1339,10 +1325,6 @@ Renderer *uDisplay::Init(void) {
     _i80_bus = nullptr;
 
     esp_lcd_new_i80_bus(&bus_config, &_i80_bus);
-
-#if ESP_IDF_VERSION_MAJOR < 5
-    _dma_chan = _i80_bus->dma_chan;
-#endif
 
     uint32_t div_a, div_b, div_n, clkcnt;
     calcClockDiv(&div_a, &div_b, &div_n, &clkcnt, 240*1000*1000, spi_speed*1000000);

@@ -11,10 +11,8 @@
 #define USE_ESP32_S3
 #endif
 #include "driver/spi_master.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
 #include "soc/gpio_periph.h"
 #include <rom/gpio.h>
-#endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif
 
 enum {
@@ -56,9 +54,7 @@ static inline void gpio_lo(int_fast8_t pin) { if (pin >= 0) *get_gpio_lo_reg(pin
 #include "esp_lcd_panel_ops.h"
 #include <hal/dma_types.h>
 #include <rom/cache.h>
-#if ESP_IDF_VERSION_MAJOR >= 5
 #include "esp_rom_lldesc.h"
-#endif // ESP_IDF_VERSION_MAJOR >= 5
 #endif // USE_ESP32_S3
 
 #define _UDSP_I2C 1
@@ -135,57 +131,6 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define SPI_CS_HIGH if (spi_cs >= 0) GPIO_SET_SLOW(spi_cs);
 #define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR_SLOW(spi_dc);
 #define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET_SLOW(spi_dc);
-
-
-#if defined(USE_ESP32_S3) && ESP_IDF_VERSION_MAJOR < 5
-struct esp_lcd_i80_bus_t {
-    int bus_id;            // Bus ID, index from 0
-    portMUX_TYPE spinlock; // spinlock used to protect i80 bus members(hal, device_list, cur_trans)
-    lcd_hal_context_t hal; // Hal object
-    size_t bus_width;      // Number of data lines
-    intr_handle_t intr;    // LCD peripheral interrupt handle
-    void* pm_lock; // Power management lock
-    size_t num_dma_nodes;  // Number of DMA descriptors
-    uint8_t *format_buffer;  // The driver allocates an internal buffer for DMA to do data format transformer
-    size_t resolution_hz;    // LCD_CLK resolution, determined by selected clock source
-    gdma_channel_handle_t dma_chan; // DMA channel handle
-};
-
-// extract from esp-idf esp_lcd_rgb_panel.c
-struct esp_rgb_panel_t
-{
-  esp_lcd_panel_t base;                                        // Base class of generic lcd panel
-  int panel_id;                                                // LCD panel ID
-  lcd_hal_context_t hal;                                       // Hal layer object
-  size_t data_width;                                           // Number of data lines (e.g. for RGB565, the data width is 16)
-  size_t sram_trans_align;                                     // Alignment for framebuffer that allocated in SRAM
-  size_t psram_trans_align;                                    // Alignment for framebuffer that allocated in PSRAM
-  int disp_gpio_num;                                           // Display control GPIO, which is used to perform action like "disp_off"
-  intr_handle_t intr;                                          // LCD peripheral interrupt handle
-  esp_pm_lock_handle_t pm_lock;                                // Power management lock
-  size_t num_dma_nodes;                                        // Number of DMA descriptors that used to carry the frame buffer
-  uint8_t *fb;                                                 // Frame buffer
-  size_t fb_size;                                              // Size of frame buffer
-  int data_gpio_nums[SOC_LCD_RGB_DATA_WIDTH];                  // GPIOs used for data lines, we keep these GPIOs for action like "invert_color"
-  size_t resolution_hz;                                        // Peripheral clock resolution
-  esp_lcd_rgb_timing_t timings;                                // RGB timing parameters (e.g. pclk, sync pulse, porch width)
-  gdma_channel_handle_t dma_chan;                              // DMA channel handle
-#if ESP_IDF_VERSION_MAJOR < 5
-  esp_lcd_rgb_panel_frame_trans_done_cb_t on_frame_trans_done; // Callback, invoked after frame trans done
-#endif // ESP_IDF_VERSION_MAJOR < 5
-  void *user_ctx;                                              // Reserved user's data of callback functions
-  int x_gap;                                                   // Extra gap in x coordinate, it's used when calculate the flush window
-  int y_gap;                                                   // Extra gap in y coordinate, it's used when calculate the flush window
-  struct
-  {
-    unsigned int disp_en_level : 1; // The level which can turn on the screen by `disp_gpio_num`
-    unsigned int stream_mode : 1;   // If set, the LCD transfers data continuously, otherwise, it stops refreshing the LCD when transaction done
-    unsigned int fb_in_psram : 1;   // Whether the frame buffer is in PSRAM
-  } flags;
-  dma_descriptor_t dma_nodes[]; // DMA descriptor pool of size `num_dma_nodes`
-};
-#endif //USE_ESP32_S3 && ESP_IDF_VERSION_MAJOR < 5
-
 
 class uDisplay : public Renderer {
  public:
@@ -393,11 +338,6 @@ class uDisplay : public Renderer {
    uint16_t pclk_active_neg;
 
    esp_lcd_panel_handle_t _panel_handle = NULL;
-#if ESP_IDF_VERSION_MAJOR < 5
-   esp_rgb_panel_t *_rgb_panel;
-#endif //ESP_IDF_VERSION_MAJOR < 5
-   
-
 
    esp_lcd_i80_bus_handle_t _i80_bus = nullptr;
    gdma_channel_handle_t _dma_chan;
