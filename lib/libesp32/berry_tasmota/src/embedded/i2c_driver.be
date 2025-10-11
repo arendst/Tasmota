@@ -118,6 +118,13 @@ class I2C_Driver
     var buf = self.wire.read_bytes(self.addr, reg, 4)
     return (buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3]
   end
+
+  # Reads a specific bit from a register
+  # read_bit(reg:int, bit:int) -> bool
+  def read_bit(reg, bit)
+    if bit < 0 || bit > 7 return end
+    return bool(self.read8(reg) & 1 << bit)
+  end
 end
 
 #- Example
