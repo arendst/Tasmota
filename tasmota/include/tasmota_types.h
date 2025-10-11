@@ -199,7 +199,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_export_energy_today : 1;   // bit 16 (v14.3.0.7) - SetOption162 - (Energy) Do not add export energy to energy today (1)
     uint32_t gui_device_name : 1;          // bit 17 (v14.4.1.1) - SetOption163 - GUI_NOSHOW_DEVICENAME - (GUI) Disable display of GUI device name (1)
     uint32_t wizmote_enabled : 1;          // bit 18 (v14.4.1.4) - SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
-    uint32_t spare19 : 1;                  // bit 19
+    uint32_t tls_use_ecdsa : 1;            // bit 19 (v15.0.1.0) - SetOption165 - (TLS) Enable ECDSA validation in addition to RSA
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22

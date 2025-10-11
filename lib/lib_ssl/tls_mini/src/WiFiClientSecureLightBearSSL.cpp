@@ -930,8 +930,8 @@ extern "C" {
     br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
     // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
-    br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15); // TODO
-#ifndef ESP8266
+    br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+#ifdef ESP32
     br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 #endif
   }
@@ -986,6 +986,9 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
       br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
       br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
       br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
+#ifdef ESP32
+      br_x509_minimal_set_ecdsa(x509_minimal, &br_ec_all_m15, &br_ecdsa_i15_vrfy_asn1);
+#endif // ESP32
       br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
       uint32_t now = UtcTime();
       uint32_t cfg_time = CfgTime();

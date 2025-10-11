@@ -262,6 +262,7 @@ void MqttInit(void) {
     if (!Settings->flag5.tls_use_fingerprint) {
       tlsClient->setTrustAnchor(Tasmota_TA, nitems(Tasmota_TA));
     }
+    tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
 
     MqttClient.setClient(*tlsClient);
   } else {
@@ -1391,6 +1392,14 @@ void MqttReconnect(void) {
       120 : 376 : BR_ALERT_NO_APPLICATION_PROTOCOL
 */
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
+      if (tlsClient->getLastError() == 296) {
+        // in this special case of cipher mismatch, we force enable ECDSA
+        // this would be the case for newer letsencrypt certificates now defaulting
+        // to EC certificates requiring ECDSA instead of RSA
+        Settings->flag6.tls_use_ecdsa = true;
+        tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS now enabling ECDSA 'SetOption165 1'"), tlsClient->getLastError());
+      }
     }
 #endif
 /*
@@ -1408,6 +1417,18 @@ void MqttReconnect(void) {
 */
     MqttDisconnected(MqttClient.state());
   }
+#ifdef USE_MQTT_TLS
+  if (Mqtt.mqtt_tls) {
+    int32_t cipher_suite = tlsClient->getLastCipherSuite();
+    if (BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_RSA_AES_128_GCM_SHA256"));
+    } else if (BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_ECDSA_AES_128_GCM_SHA256"));
+    } else if (0 != cipher_suite) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: 0x%04X"), cipher_suite);
+    }
+  }
+#endif // USE_MQTT_TLS
 }
 
 void MqttCheck(void) {

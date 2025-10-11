@@ -173,8 +173,9 @@
 #define MQTT_INDEX_SEPARATOR   false             // [SetOption64] Enable "_" instead of "-" as sensor index separator
 #define MQTT_TUYA_RECEIVED     false             // [SetOption66] Enable TuyaMcuReceived messages over Mqtt
 #define MQTT_ONLY_JSON_OUTPUT  false             // [SetOption90] Disable non-json messages
-#define MQTT_TLS_ENABLED       false             // [SetOption103] Enable TLS mode (requires TLS version)
-#define MQTT_TLS_FINGERPRINT   false             // [SetOption132] Force TLS fingerprint validation instead of CA (requires TLS version)
+#define MQTT_TLS_ENABLED       false             // [SetOption103] Enable TLS mode
+#define MQTT_TLS_FINGERPRINT   false             // [SetOption132] Force TLS fingerprint validation instead of CA
+#define MQTT_TLS_ECDSA         false             // [SetOption165] Enable TLS ECDSA validation in addition to RSA, false by default but automatically set to 'true' in case of a cipher error '296'
 
 // -- HTTP ----------------------------------------
 #define WEB_SERVER             2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
