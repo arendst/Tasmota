@@ -1392,6 +1392,8 @@ void MqttReconnect(void) {
       120 : 376 : BR_ALERT_NO_APPLICATION_PROTOCOL
 */
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
+
+#if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
       if (tlsClient->getLastError() == 296) {
         // in this special case of cipher mismatch, we force enable ECDSA
         // this would be the case for newer letsencrypt certificates now defaulting
@@ -1400,6 +1402,7 @@ void MqttReconnect(void) {
         tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS now enabling ECDSA 'SetOption165 1'"), tlsClient->getLastError());
       }
+#endif // defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
     }
 #endif
 /*

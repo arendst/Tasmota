@@ -884,14 +884,6 @@ extern "C" {
     ctx->fingerprint_all = fingerprint_all;
   }
 
-#ifdef ESP8266
-  // We limit to a single cipher to reduce footprint
-  // we reference it, don't put in PROGMEM
-  static const uint16_t suites[] = {
-    BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-  };
-#else
-  // add more flexibility on ESP32
   static const uint16_t suites[] = {
     BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
     BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -899,7 +891,6 @@ extern "C" {
   static const uint16_t suites_RSA_ONLY[] = {
     BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
   };
-#endif
 
   // Default initializion for our SSL clients
   static void br_ssl_client_base_init(br_ssl_client_context *cc, bool _rsa_only) {
@@ -908,14 +899,14 @@ extern "C" {
     br_ssl_engine_add_flags(&cc->eng, BR_OPT_NO_RENEGOTIATION);
 
     br_ssl_engine_set_versions(&cc->eng, BR_TLS12, BR_TLS12);
-#ifdef ESP8266
-    br_ssl_engine_set_suites(&cc->eng, suites, (sizeof suites) / (sizeof suites[0]));
-#else
+#if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
     if (_rsa_only) {
       br_ssl_engine_set_suites(&cc->eng, suites_RSA_ONLY, (sizeof suites_RSA_ONLY) / (sizeof suites_RSA_ONLY[0]));
     } else {
       br_ssl_engine_set_suites(&cc->eng, suites, (sizeof suites) / (sizeof suites[0]));
     }
+#else
+    br_ssl_engine_set_suites(&cc->eng, suites_RSA_ONLY, (sizeof suites_RSA_ONLY) / (sizeof suites_RSA_ONLY[0]));
 #endif
     br_ssl_client_set_default_rsapub(cc);
     br_ssl_engine_set_default_rsavrfy(&cc->eng);
@@ -931,7 +922,7 @@ extern "C" {
 
     // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
     br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
-#ifdef ESP32
+#if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
     br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 #endif
   }
@@ -951,6 +942,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     // ============================================================
     // allocate Thunk stack, move to alternate stack and initialize
 #ifdef ESP8266
+    stack_thunk_light_set_size(_rsa_only);
     stack_thunk_light_add_ref();
 #endif // ESP8266
     LOG_HEAP_SIZE("Thunk allocated");
@@ -986,9 +978,11 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
       br_x509_minimal_init(x509_minimal, &br_sha256_vtable, _ta_P, _ta_size);
       br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
       br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
-#ifdef ESP32
-      br_x509_minimal_set_ecdsa(x509_minimal, &br_ec_all_m15, &br_ecdsa_i15_vrfy_asn1);
-#endif // ESP32
+#if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
+      if (!_rsa_only) {
+        br_x509_minimal_set_ecdsa(x509_minimal, &br_ec_all_m15, &br_ecdsa_i15_vrfy_asn1);
+      }
+#endif
       br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
       uint32_t now = UtcTime();
       uint32_t cfg_time = CfgTime();
