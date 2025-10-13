@@ -11408,7 +11408,7 @@ be_local_class(lvh_btnmatrix,
     })),
     be_str_weak(lvh_btnmatrix)
 );
-// compact class 'lvh_cpicker' ktab size: 21, total: 31 (saved 80 bytes)
+// compact class 'lvh_cpicker' ktab size: 21, total: 33 (saved 96 bytes)
 static const bvalue be_ktab_class_lvh_cpicker[21] = {
   /* K0   */  be_nested_str_weak(_CW_MODES),
   /* K1   */  be_nested_str_weak(find),
@@ -11416,21 +11416,21 @@ static const bvalue be_ktab_class_lvh_cpicker[21] = {
   /* K3   */  be_nested_str_weak(set_mode),
   /* K4   */  be_nested_str_weak(unknown_X20color_X20mode_X20_X27_X25s_X27),
   /* K5   */  be_nested_str_weak(value_error),
-  /* K6   */  be_nested_str_weak(get_rgb),
-  /* K7   */  be_nested_str_weak(_X23_X2506X),
-  /* K8   */  be_nested_str_weak(get_color_mode_fixed),
-  /* K9   */  be_nested_str_weak(get_color_mode),
-  /* K10  */  be_const_int(0),
-  /* K11  */  be_nested_str_weak(unknown),
-  /* K12  */  be_nested_str_weak(lv),
-  /* K13  */  be_nested_str_weak(colorwheel),
-  /* K14  */  be_nested_str_weak(init),
-  /* K15  */  be_nested_str_weak(set_scale_width),
-  /* K16  */  be_nested_str_weak(set_style_arc_width),
-  /* K17  */  be_nested_str_weak(parse_color),
-  /* K18  */  be_nested_str_weak(set_rgb),
-  /* K19  */  be_nested_str_weak(set_mode_fixed),
-  /* K20  */  be_nested_str_weak(get_style_arc_width),
+  /* K6   */  be_nested_str_weak(get_color_mode),
+  /* K7   */  be_const_int(0),
+  /* K8   */  be_nested_str_weak(unknown),
+  /* K9   */  be_nested_str_weak(set_mode_fixed),
+  /* K10  */  be_nested_str_weak(parse_color),
+  /* K11  */  be_nested_str_weak(set_rgb),
+  /* K12  */  be_nested_str_weak(get_rgb),
+  /* K13  */  be_nested_str_weak(_X23_X2506X),
+  /* K14  */  be_nested_str_weak(get_style_arc_width),
+  /* K15  */  be_nested_str_weak(lv),
+  /* K16  */  be_nested_str_weak(colorwheel),
+  /* K17  */  be_nested_str_weak(init),
+  /* K18  */  be_nested_str_weak(set_scale_width),
+  /* K19  */  be_nested_str_weak(set_style_arc_width),
+  /* K20  */  be_nested_str_weak(get_color_mode_fixed),
 };
 
 
@@ -11478,6 +11478,108 @@ be_local_closure(class_lvh_cpicker_set_mode,   /* name */
 
 
 /********************************************************************
+** Solidified function: get_mode
+********************************************************************/
+be_local_closure(class_lvh_cpicker_get_mode,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_cpicker,     /* shared constants */
+    be_str_weak(get_mode),
+    &be_const_str_solidified,
+    ( &(const binstruction[16]) {  /* code */
+      0x88040102,  //  0000  GETMBR	R1	R0	K2
+      0x8C040306,  //  0001  GETMET	R1	R1	K6
+      0x7C040200,  //  0002  CALL	R1	1
+      0x28080307,  //  0003  GE	R2	R1	K7
+      0x780A0008,  //  0004  JMPF	R2	#000E
+      0x6008000C,  //  0005  GETGBL	R2	G12
+      0x880C0100,  //  0006  GETMBR	R3	R0	K0
+      0x7C080200,  //  0007  CALL	R2	1
+      0x14080202,  //  0008  LT	R2	R1	R2
+      0x780A0003,  //  0009  JMPF	R2	#000E
+      0x88080100,  //  000A  GETMBR	R2	R0	K0
+      0x94080401,  //  000B  GETIDX	R2	R2	R1
+      0x80040400,  //  000C  RET	1	R2
+      0x70020000,  //  000D  JMP		#000F
+      0x80061000,  //  000E  RET	1	K8
+      0x80000000,  //  000F  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_mode_fixed
+********************************************************************/
+be_local_closure(class_lvh_cpicker_set_mode_fixed,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_cpicker,     /* shared constants */
+    be_str_weak(set_mode_fixed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x60080017,  //  0000  GETGBL	R2	G23
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C040400,  //  0003  MOVE	R1	R2
+      0x88080102,  //  0004  GETMBR	R2	R0	K2
+      0x8C080509,  //  0005  GETMET	R2	R2	K9
+      0x5C100200,  //  0006  MOVE	R4	R1
+      0x7C080400,  //  0007  CALL	R2	2
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_color
+********************************************************************/
+be_local_closure(class_lvh_cpicker_set_color,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_cpicker,     /* shared constants */
+    be_str_weak(set_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x8C08010A,  //  0000  GETMET	R2	R0	K10
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x7C080400,  //  0002  CALL	R2	2
+      0x880C0102,  //  0003  GETMBR	R3	R0	K2
+      0x8C0C070B,  //  0004  GETMET	R3	R3	K11
+      0x5C140400,  //  0005  MOVE	R5	R2
+      0x7C0C0400,  //  0006  CALL	R3	2
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: get_color
 ********************************************************************/
 be_local_closure(class_lvh_cpicker_get_color,   /* name */
@@ -11495,10 +11597,10 @@ be_local_closure(class_lvh_cpicker_get_color,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88040102,  //  0000  GETMBR	R1	R0	K2
-      0x8C040306,  //  0001  GETMET	R1	R1	K6
+      0x8C04030C,  //  0001  GETMET	R1	R1	K12
       0x7C040200,  //  0002  CALL	R1	1
       0x60080018,  //  0003  GETGBL	R2	G24
-      0x580C0007,  //  0004  LDCONST	R3	K7
+      0x580C000D,  //  0004  LDCONST	R3	K13
       0x5C100200,  //  0005  MOVE	R4	R1
       0x7C080400,  //  0006  CALL	R2	2
       0x80040400,  //  0007  RET	1	R2
@@ -11533,36 +11635,9 @@ be_local_closure(class_lvh_cpicker_get_pad_inner,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_mode_fixed
+** Solidified function: get_scale_width
 ********************************************************************/
-be_local_closure(class_lvh_cpicker_get_mode_fixed,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_cpicker,     /* shared constants */
-    be_str_weak(get_mode_fixed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x88040102,  //  0000  GETMBR	R1	R0	K2
-      0x8C040308,  //  0001  GETMET	R1	R1	K8
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_mode
-********************************************************************/
-be_local_closure(class_lvh_cpicker_get_mode,   /* name */
+be_local_closure(class_lvh_cpicker_get_scale_width,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -11573,25 +11648,14 @@ be_local_closure(class_lvh_cpicker_get_mode,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_cpicker,     /* shared constants */
-    be_str_weak(get_mode),
+    be_str_weak(get_scale_width),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
+    ( &(const binstruction[ 5]) {  /* code */
       0x88040102,  //  0000  GETMBR	R1	R0	K2
-      0x8C040309,  //  0001  GETMET	R1	R1	K9
-      0x7C040200,  //  0002  CALL	R1	1
-      0x2808030A,  //  0003  GE	R2	R1	K10
-      0x780A0008,  //  0004  JMPF	R2	#000E
-      0x6008000C,  //  0005  GETGBL	R2	G12
-      0x880C0100,  //  0006  GETMBR	R3	R0	K0
-      0x7C080200,  //  0007  CALL	R2	1
-      0x14080202,  //  0008  LT	R2	R1	R2
-      0x780A0003,  //  0009  JMPF	R2	#000E
-      0x88080100,  //  000A  GETMBR	R2	R0	K0
-      0x94080401,  //  000B  GETIDX	R2	R2	R1
-      0x80040400,  //  000C  RET	1	R2
-      0x70020000,  //  000D  JMP		#000F
-      0x80061600,  //  000E  RET	1	K11
-      0x80000000,  //  000F  RET	0
+      0x8C04030E,  //  0001  GETMET	R1	R1	K14
+      0x580C0007,  //  0002  LDCONST	R3	K7
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80040200,  //  0004  RET	1	R1
     })
   )
 );
@@ -11615,8 +11679,8 @@ be_local_closure(class_lvh_cpicker_init,   /* name */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
-      0xB81A1800,  //  0000  GETNGBL	R6	K12
-      0x8C180D0D,  //  0001  GETMET	R6	R6	K13
+      0xB81A1E00,  //  0000  GETNGBL	R6	K15
+      0x8C180D10,  //  0001  GETMET	R6	R6	K16
       0x5C200200,  //  0002  MOVE	R8	R1
       0x50240200,  //  0003  LDBOOL	R9	1	0
       0x7C180600,  //  0004  CALL	R6	3
@@ -11624,14 +11688,14 @@ be_local_closure(class_lvh_cpicker_init,   /* name */
       0x60180003,  //  0006  GETGBL	R6	G3
       0x5C1C0000,  //  0007  MOVE	R7	R0
       0x7C180200,  //  0008  CALL	R6	1
-      0x8C180D0E,  //  0009  GETMET	R6	R6	K14
+      0x8C180D11,  //  0009  GETMET	R6	R6	K17
       0x5C200200,  //  000A  MOVE	R8	R1
       0x5C240400,  //  000B  MOVE	R9	R2
       0x5C280600,  //  000C  MOVE	R10	R3
       0x5C2C0800,  //  000D  MOVE	R11	R4
       0x5C300A00,  //  000E  MOVE	R12	R5
       0x7C180C00,  //  000F  CALL	R6	6
-      0x8C18010F,  //  0010  GETMET	R6	R0	K15
+      0x8C180112,  //  0010  GETMET	R6	R0	K18
       0x54220018,  //  0011  LDINT	R8	25
       0x7C180400,  //  0012  CALL	R6	2
       0x80000000,  //  0013  RET	0
@@ -11683,11 +11747,11 @@ be_local_closure(class_lvh_cpicker_set_scale_width,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88080102,  //  0000  GETMBR	R2	R0	K2
-      0x8C080510,  //  0001  GETMET	R2	R2	K16
+      0x8C080513,  //  0001  GETMET	R2	R2	K19
       0x60100009,  //  0002  GETGBL	R4	G9
       0x5C140200,  //  0003  MOVE	R5	R1
       0x7C100200,  //  0004  CALL	R4	1
-      0x5814000A,  //  0005  LDCONST	R5	K10
+      0x58140007,  //  0005  LDCONST	R5	K7
       0x7C080600,  //  0006  CALL	R2	3
       0x80000000,  //  0007  RET	0
     })
@@ -11697,74 +11761,11 @@ be_local_closure(class_lvh_cpicker_set_scale_width,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_color
+** Solidified function: get_mode_fixed
 ********************************************************************/
-be_local_closure(class_lvh_cpicker_set_color,   /* name */
+be_local_closure(class_lvh_cpicker_get_mode_fixed,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_cpicker,     /* shared constants */
-    be_str_weak(set_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x8C080111,  //  0000  GETMET	R2	R0	K17
-      0x5C100200,  //  0001  MOVE	R4	R1
-      0x7C080400,  //  0002  CALL	R2	2
-      0x880C0102,  //  0003  GETMBR	R3	R0	K2
-      0x8C0C0712,  //  0004  GETMET	R3	R3	K18
-      0x5C140400,  //  0005  MOVE	R5	R2
-      0x7C0C0400,  //  0006  CALL	R3	2
-      0x80000000,  //  0007  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_mode_fixed
-********************************************************************/
-be_local_closure(class_lvh_cpicker_set_mode_fixed,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_cpicker,     /* shared constants */
-    be_str_weak(set_mode_fixed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x60080017,  //  0000  GETGBL	R2	G23
-      0x5C0C0200,  //  0001  MOVE	R3	R1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x5C040400,  //  0003  MOVE	R1	R2
-      0x88080102,  //  0004  GETMBR	R2	R0	K2
-      0x8C080513,  //  0005  GETMET	R2	R2	K19
-      0x5C100200,  //  0006  MOVE	R4	R1
-      0x7C080400,  //  0007  CALL	R2	2
-      0x80000000,  //  0008  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_scale_width
-********************************************************************/
-be_local_closure(class_lvh_cpicker_get_scale_width,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -11773,14 +11774,40 @@ be_local_closure(class_lvh_cpicker_get_scale_width,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_cpicker,     /* shared constants */
-    be_str_weak(get_scale_width),
+    be_str_weak(get_mode_fixed),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
+    ( &(const binstruction[ 4]) {  /* code */
       0x88040102,  //  0000  GETMBR	R1	R0	K2
       0x8C040314,  //  0001  GETMET	R1	R1	K20
-      0x580C000A,  //  0002  LDCONST	R3	K10
-      0x7C040400,  //  0003  CALL	R1	2
-      0x80040200,  //  0004  RET	1	R1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_val
+********************************************************************/
+be_local_closure(class_lvh_cpicker_get_val,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_cpicker,     /* shared constants */
+    be_str_weak(get_val),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040102,  //  0000  GETMBR	R1	R0	K2
+      0x8C04030C,  //  0001  GETMET	R1	R1	K12
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -11794,12 +11821,20 @@ extern const bclass be_class_lvh_obj;
 be_local_class(lvh_cpicker,
     0,
     &be_class_lvh_obj,
-    be_nested_map(13,
+    be_nested_map(14,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(get_scale_width, 9), be_const_closure(class_lvh_cpicker_get_scale_width_closure) },
-        { be_const_key_weak(get_color, -1), be_const_closure(class_lvh_cpicker_get_color_closure) },
+        { be_const_key_weak(get_val, 1), be_const_closure(class_lvh_cpicker_get_val_closure) },
+        { be_const_key_weak(get_mode, -1), be_const_closure(class_lvh_cpicker_get_mode_closure) },
+        { be_const_key_weak(set_mode_fixed, -1), be_const_closure(class_lvh_cpicker_set_mode_fixed_closure) },
+        { be_const_key_weak(set_color, 8), be_const_closure(class_lvh_cpicker_set_color_closure) },
+        { be_const_key_weak(set_scale_width, -1), be_const_closure(class_lvh_cpicker_set_scale_width_closure) },
+        { be_const_key_weak(get_color, 9), be_const_closure(class_lvh_cpicker_get_color_closure) },
         { be_const_key_weak(get_pad_inner, -1), be_const_closure(class_lvh_cpicker_get_pad_inner_closure) },
-        { be_const_key_weak(_CW_MODES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        { be_const_key_weak(get_scale_width, -1), be_const_closure(class_lvh_cpicker_get_scale_width_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_colorwheel) },
+        { be_const_key_weak(init, -1), be_const_closure(class_lvh_cpicker_init_closure) },
+        { be_const_key_weak(set_pad_inner, -1), be_const_closure(class_lvh_cpicker_set_pad_inner_closure) },
+        { be_const_key_weak(_CW_MODES, 4), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(3,
     ( (struct bvalue*) &(const bvalue[]) {
         be_nested_str_weak(hue),
@@ -11807,13 +11842,6 @@ be_local_class(lvh_cpicker,
         be_nested_str_weak(value),
     }))    ) } )) },
         { be_const_key_weak(get_mode_fixed, -1), be_const_closure(class_lvh_cpicker_get_mode_fixed_closure) },
-        { be_const_key_weak(get_mode, -1), be_const_closure(class_lvh_cpicker_get_mode_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(class_lvh_cpicker_init_closure) },
-        { be_const_key_weak(set_color, 8), be_const_closure(class_lvh_cpicker_set_color_closure) },
-        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_colorwheel) },
-        { be_const_key_weak(set_pad_inner, 4), be_const_closure(class_lvh_cpicker_set_pad_inner_closure) },
-        { be_const_key_weak(set_scale_width, 7), be_const_closure(class_lvh_cpicker_set_scale_width_closure) },
-        { be_const_key_weak(set_mode_fixed, -1), be_const_closure(class_lvh_cpicker_set_mode_fixed_closure) },
         { be_const_key_weak(set_mode, 0), be_const_closure(class_lvh_cpicker_set_mode_closure) },
     })),
     be_str_weak(lvh_cpicker)

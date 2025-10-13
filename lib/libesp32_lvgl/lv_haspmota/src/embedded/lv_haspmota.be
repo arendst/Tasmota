@@ -2655,6 +2655,11 @@ class lvh_cpicker : lvh_obj
   # pad_inner is ignored (for now?)
   def set_pad_inner() end
   def get_pad_inner() end
+
+  # map val to rgb which is mapped to a color instance
+  def get_val()
+    return self._lv_obj.get_rgb()
+  end
 end
 
 #################################################################################
