@@ -344,6 +344,50 @@ static int call_berry_cb(int num, int v0, int v1, int v2, int v3, int v4) {
 }
 
 /*********************************************************************************************\
+ * Free a cb by function pointer
+\*********************************************************************************************/
+static int be_cb_free_cb(bvm *vm) {
+  int32_t top = be_top(vm);
+#if BE_MAPPING_ENABLE_INPUT_VALIDATION
+  // SECURITY: Input validation
+  if (top < 1) {
+    be_raise(vm, "value_error", "gen_cb requires at least 1 argument");
+  }
+
+  if (!be_iscomptr(vm, 1)) {
+    be_raise(vm, "value_error", "arg must be a comptr");
+  }
+#endif // BE_MAPPING_ENABLE_INPUT_VALIDATION
+
+  void *cb = be_tocomptr(vm, 1);
+  
+  // Find slot number
+  int32_t slot;
+  for (slot = 0; slot < BE_MAX_CB; slot++) {
+    if (cb == (void*) berry_callback_array[slot]) {
+      break;
+    }
+  }
+  
+  if (slot >= BE_MAX_CB) {
+    be_raise(vm, "internal_error", "could not find cb");
+  }
+  
+  // Fix GC object if needed
+  bvalue *found = &be_cb_hooks[slot].f;
+  if (be_isgcobj(found)) {
+    be_gc_fix_set(vm, found->v.gc, bfalse);    // mark the function as gc so it can be freed
+  }
+  
+  // Record pointers
+  be_cb_hooks[slot].vm = NULL;
+  be_cb_hooks[slot].f.type = 0;
+  be_cb_hooks[slot].f.v.p = NULL;
+  
+  be_return_nil(vm);
+}
+
+/*********************************************************************************************\
  * `be_cb_deinit`: SECURITY PATCHED
  *  Clean any callback for this VM, they shouldn't call the registered function anymore
  *  
@@ -406,6 +450,7 @@ void be_cb_deinit(bvm *vm) {
 /* @const_object_info_begin
 module cb (scope: global) {
     gen_cb, func(be_cb_gen_cb)
+    free_cb, func(be_cb_free_cb)
     get_cb_list, func(be_cb_get_cb_list)
 
     add_handler, func(be_cb_add_handler)

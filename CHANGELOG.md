@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.1.0.1]
 ### Added
 - TLS enabled ECDSA by default for ESP8266 (#24009)
+- Berry add `cb.free_cb` for extension manager
 
 ### Breaking Changed
 
