@@ -290,7 +290,7 @@ enum NeoPoolRegister {
   // Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
   MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
-  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight function (see MBV_PAR_BACKLIGHT_*)
+  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight brightness (in %, upper part (8-bit MSB)=0-100) and function (lower part 8-bit LSB, see MBV_PAR_BACKLIGHT_*)
   MBF_PAR_UICFG_SOUND,                    // 0x0603* mask   Audible alerts (see MBMSK_PAR_SOUND_*)
   MBF_PAR_UICFG_PASSWORD,                 // 0x0604*        System password encoded in BCD
   MBF_PAR_UICFG_VISUAL_OPTIONS,           // 0x0605* mask   Stores the different display options for the user interface menus (bitmask). Some bits allow you to hide options that are normally visible (bits 0 to 3) while other bits allow you to show options that are normally hidden (bits 9 to 15)
@@ -517,7 +517,7 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_LANG_HUNGARIAN                  = 10,
   MBV_PAR_LANG_RUSSIAN                    = 11,
 
-  // MBF_PAR_UICFG_BACKLIGHT
+  // MBF_PAR_UICFG_BACKLIGHT (LSB)
   MBV_PAR_BACKLIGHT_15SEC                 = 0,      // Backlight off after 15 sec
   MBV_PAR_BACKLIGHT_30SEC                 = 1,      // Backlight off after 30 sec
   MBV_PAR_BACKLIGHT_60SEC                 = 2,      // Backlight off after 60 sec
