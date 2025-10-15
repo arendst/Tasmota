@@ -1,0 +1,671 @@
+# WLED Palettes converted to DSL format
+# Auto-generated from from_wled/src/wled_palettes.h
+# Total palettes: 59
+
+# Gradient palette "ib_jul01_gp", originally from http://seaviewsensing.com/pub/cpt-city/ing/xmas/ib_jul01.c3g
+palette PALETTE_JUL = [
+  (0, 0xE2060C)    # 0.0% rgb(226,6,12) (start)
+  (94, 0x1A604E)    # 36.9% rgb(26,96,78)
+  (132, 0x82BD5E)    # 51.8% rgb(130,189,94)
+  (255, 0xB10309)    # 100.0% rgb(177,3,9) (end)
+]
+
+# Gradient palette "es_vintage_57_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/vintage/es_vintage_57.c3g
+palette PALETTE_GRINTAGE = [
+  (0, 0x1D0803)    # 0.0% rgb(29,8,3) (start)
+  (53, 0x4C0100)    # 20.8% rgb(76,1,0)
+  (104, 0x8E601C)    # 40.8% rgb(142,96,28)
+  (153, 0xD3BF3D)    # 60.0% rgb(211,191,61)
+  (255, 0x75812A)    # 100.0% rgb(117,129,42) (end)
+]
+
+# Gradient palette "es_vintage_01_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/vintage/es_vintage_01.c3g
+palette PALETTE_VINTAGE = [
+  (0, 0x291218)    # 0.0% rgb(41,18,24) (start)
+  (51, 0x490016)    # 20.0% rgb(73,0,22)
+  (76, 0xA5AA26)    # 29.8% rgb(165,170,38)
+  (101, 0xFFBD50)    # 39.6% rgb(255,189,80)
+  (127, 0x8B3828)    # 49.8% rgb(139,56,40)
+  (153, 0x490016)    # 60.0% rgb(73,0,22)
+  (229, 0x291218)    # 89.8% rgb(41,18,24)
+  (255, 0x291218)    # 100.0% rgb(41,18,24) (end)
+]
+
+# Gradient palette "es_rivendell_15_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/rivendell/es_rivendell_15.c3g
+palette PALETTE_RIVENDELL = [
+  (0, 0x18452C)    # 0.0% rgb(24,69,44) (start)
+  (101, 0x496946)    # 39.6% rgb(73,105,70)
+  (165, 0x818C61)    # 64.7% rgb(129,140,97)
+  (242, 0xC8CCA6)    # 94.9% rgb(200,204,166)
+  (255, 0xC8CCA6)    # 100.0% rgb(200,204,166) (end)
+]
+
+# Gradient palette "rgi_15_gp", originally from http://seaviewsensing.com/pub/cpt-city/ds/rgi/rgi_15.c3g
+palette PALETTE_RED_BLUE = [
+  (0, 0x290E63)    # 0.0% rgb(41,14,99) (start)
+  (31, 0x80184A)    # 12.2% rgb(128,24,74)
+  (63, 0xE32232)    # 24.7% rgb(227,34,50)
+  (95, 0x841F4C)    # 37.3% rgb(132,31,76)
+  (127, 0x2F1D66)    # 49.8% rgb(47,29,102)
+  (159, 0x6D2F65)    # 62.4% rgb(109,47,101)
+  (191, 0xB04264)    # 74.9% rgb(176,66,100)
+  (223, 0x813968)    # 87.5% rgb(129,57,104)
+  (255, 0x54306C)    # 100.0% rgb(84,48,108) (end)
+]
+
+# Gradient palette "retro2_16_gp", originally from http://seaviewsensing.com/pub/cpt-city/ma/retro2/retro2_16.c3g
+palette PALETTE_YELLOWOUT = [
+  (0, 0xDEBF08)    # 0.0% rgb(222,191,8) (start)
+  (255, 0x753401)    # 100.0% rgb(117,52,1) (end)
+]
+
+# Gradient palette "Analogous_1_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/red/Analogous_1.c3g
+palette PALETTE_ANALOGOUS = [
+  (0, 0x2600FF)    # 0.0% rgb(38,0,255) (start)
+  (63, 0x5600FF)    # 24.7% rgb(86,0,255)
+  (127, 0x8B00FF)    # 49.8% rgb(139,0,255)
+  (191, 0xC40075)    # 74.9% rgb(196,0,117)
+  (255, 0xFF0000)    # 100.0% rgb(255,0,0) (end)
+]
+
+# Gradient palette "es_pinksplash_08_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/pink_splash/es_pinksplash_08.c3g
+palette PALETTE_SPLASH = [
+  (0, 0xBA3FFF)    # 0.0% rgb(186,63,255) (start)
+  (127, 0xE30955)    # 49.8% rgb(227,9,85)
+  (175, 0xEACDD5)    # 68.6% rgb(234,205,213)
+  (221, 0xCD26B0)    # 86.7% rgb(205,38,176)
+  (255, 0xCD26B0)    # 100.0% rgb(205,38,176) (end)
+]
+
+# Gradient palette "es_ocean_breeze_036_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/ocean_breeze/es_ocean_breeze_036.c3g
+palette PALETTE_BREEZE = [
+  (0, 0x103033)    # 0.0% rgb(16,48,51) (start)
+  (89, 0x1BA6AF)    # 34.9% rgb(27,166,175)
+  (153, 0xC5E9FF)    # 60.0% rgb(197,233,255)
+  (255, 0x009198)    # 100.0% rgb(0,145,152) (end)
+]
+
+# Gradient palette "departure_gp", originally from http://seaviewsensing.com/pub/cpt-city/mjf/departure.c3g
+palette PALETTE_DEPARTURE = [
+  (0, 0x352200)    # 0.0% rgb(53,34,0) (start)
+  (42, 0x563300)    # 16.5% rgb(86,51,0)
+  (63, 0x936C31)    # 24.7% rgb(147,108,49)
+  (84, 0xD4A66C)    # 32.9% rgb(212,166,108)
+  (106, 0xEBD4B4)    # 41.6% rgb(235,212,180)
+  (116, 0xFFFFFF)    # 45.5% rgb(255,255,255)
+  (138, 0xBFFFC1)    # 54.1% rgb(191,255,193)
+  (148, 0x54FF58)    # 58.0% rgb(84,255,88)
+  (170, 0x00FF00)    # 66.7% rgb(0,255,0)
+  (191, 0x00C000)    # 74.9% rgb(0,192,0)
+  (212, 0x008000)    # 83.1% rgb(0,128,0)
+  (255, 0x008000)    # 100.0% rgb(0,128,0) (end)
+]
+
+# Gradient palette "es_landscape_64_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/landscape/es_landscape_64.c3g
+palette PALETTE_LANDSCAPE = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (37, 0x1F5913)    # 14.5% rgb(31,89,19)
+  (76, 0x48B22B)    # 29.8% rgb(72,178,43)
+  (127, 0x96EB05)    # 49.8% rgb(150,235,5)
+  (128, 0xBAEA77)    # 50.2% rgb(186,234,119)
+  (130, 0xDEE9FC)    # 51.0% rgb(222,233,252)
+  (153, 0xC5DBE7)    # 60.0% rgb(197,219,231)
+  (204, 0x84B3FD)    # 80.0% rgb(132,179,253)
+  (255, 0x1C6BE1)    # 100.0% rgb(28,107,225) (end)
+]
+
+# Gradient palette "es_landscape_33_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/landscape/es_landscape_33.c3g
+palette PALETTE_BEACH = [
+  (0, 0x0C2D00)    # 0.0% rgb(12,45,0) (start)
+  (19, 0x655602)    # 7.5% rgb(101,86,2)
+  (38, 0xCF8004)    # 14.9% rgb(207,128,4)
+  (63, 0xF3C512)    # 24.7% rgb(243,197,18)
+  (66, 0x6DC492)    # 25.9% rgb(109,196,146)
+  (255, 0x052707)    # 100.0% rgb(5,39,7) (end)
+]
+
+# Gradient palette "rainbowsherbet_gp", originally from http://seaviewsensing.com/pub/cpt-city/ma/icecream/rainbowsherbet.c3g
+palette PALETTE_SHERBET = [
+  (0, 0xFF6629)    # 0.0% rgb(255,102,41) (start)
+  (43, 0xFF8C5A)    # 16.9% rgb(255,140,90)
+  (86, 0xFF335A)    # 33.7% rgb(255,51,90)
+  (127, 0xFF99A9)    # 49.8% rgb(255,153,169)
+  (170, 0xFFFFF9)    # 66.7% rgb(255,255,249)
+  (209, 0x71FF55)    # 82.0% rgb(113,255,85)
+  (255, 0x9DFF89)    # 100.0% rgb(157,255,137) (end)
+]
+
+# Gradient palette "gr65_hult_gp", originally from http://seaviewsensing.com/pub/cpt-city/hult/gr65_hult.c3g
+palette PALETTE_HULT = [
+  (0, 0xFBD8FC)    # 0.0% rgb(251,216,252) (start)
+  (48, 0xFFC0FF)    # 18.8% rgb(255,192,255)
+  (89, 0xEF5FF1)    # 34.9% rgb(239,95,241)
+  (160, 0x3399D9)    # 62.7% rgb(51,153,217)
+  (216, 0x18B8AE)    # 84.7% rgb(24,184,174)
+  (255, 0x18B8AE)    # 100.0% rgb(24,184,174) (end)
+]
+
+# Gradient palette "gr64_hult_gp", originally from http://seaviewsensing.com/pub/cpt-city/hult/gr64_hult.c3g
+palette PALETTE_HULT64 = [
+  (0, 0x18B8AE)    # 0.0% rgb(24,184,174) (start)
+  (66, 0x08A296)    # 25.9% rgb(8,162,150)
+  (104, 0x7C8907)    # 40.8% rgb(124,137,7)
+  (130, 0xB2BA16)    # 51.0% rgb(178,186,22)
+  (150, 0x7C8907)    # 58.8% rgb(124,137,7)
+  (201, 0x069C90)    # 78.8% rgb(6,156,144)
+  (239, 0x008075)    # 93.7% rgb(0,128,117)
+  (255, 0x008075)    # 100.0% rgb(0,128,117) (end)
+]
+
+# Gradient palette "GMT_drywet_gp", originally from http://seaviewsensing.com/pub/cpt-city/gmt/GMT_drywet.c3g
+palette PALETTE_DRYWET = [
+  (0, 0x776121)    # 0.0% rgb(119,97,33) (start)
+  (42, 0xEBC758)    # 16.5% rgb(235,199,88)
+  (84, 0xA9EE7C)    # 32.9% rgb(169,238,124)
+  (127, 0x25EEE8)    # 49.8% rgb(37,238,232)
+  (170, 0x0778EC)    # 66.7% rgb(7,120,236)
+  (212, 0x1B01AF)    # 83.1% rgb(27,1,175)
+  (255, 0x043365)    # 100.0% rgb(4,51,101) (end)
+]
+
+# Gradient palette "ib15_gp", originally from http://seaviewsensing.com/pub/cpt-city/ing/general/ib15.c3g
+palette PALETTE_REWHI = [
+  (0, 0xB1A0C7)    # 0.0% rgb(177,160,199) (start)
+  (72, 0xCD9E95)    # 28.2% rgb(205,158,149)
+  (89, 0xE99B65)    # 34.9% rgb(233,155,101)
+  (107, 0xFF5F3F)    # 42.0% rgb(255,95,63)
+  (141, 0xC0626D)    # 55.3% rgb(192,98,109)
+  (255, 0x84659F)    # 100.0% rgb(132,101,159) (end)
+]
+
+# Gradient palette "Tertiary_01_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/vermillion/Tertiary_01.c3g
+palette PALETTE_TERTIARY = [
+  (0, 0x0019FF)    # 0.0% rgb(0,25,255) (start)
+  (63, 0x268C75)    # 24.7% rgb(38,140,117)
+  (127, 0x56FF00)    # 49.8% rgb(86,255,0)
+  (191, 0xA78C13)    # 74.9% rgb(167,140,19)
+  (255, 0xFF1929)    # 100.0% rgb(255,25,41) (end)
+]
+
+# Gradient palette "lava_gp", originally from http://seaviewsensing.com/pub/cpt-city/neota/elem/lava.c3g
+palette PALETTE_FIRE = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (46, 0x4D0000)    # 18.0% rgb(77,0,0)
+  (96, 0xB10000)    # 37.6% rgb(177,0,0)
+  (108, 0xC42609)    # 42.4% rgb(196,38,9)
+  (119, 0xD74C13)    # 46.7% rgb(215,76,19)
+  (146, 0xEB731D)    # 57.3% rgb(235,115,29)
+  (174, 0xFF9929)    # 68.2% rgb(255,153,41)
+  (188, 0xFFB229)    # 73.7% rgb(255,178,41)
+  (202, 0xFFCC29)    # 79.2% rgb(255,204,41)
+  (218, 0xFFE629)    # 85.5% rgb(255,230,41)
+  (234, 0xFFFF29)    # 91.8% rgb(255,255,41)
+  (244, 0xFFFF8F)    # 95.7% rgb(255,255,143)
+  (255, 0xFFFFFF)    # 100.0% rgb(255,255,255) (end)
+]
+
+# Gradient palette "fierce-ice_gp", originally from http://seaviewsensing.com/pub/cpt-city/neota/elem/fierce-ice.c3g
+palette PALETTE_ICEFIRE = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (59, 0x003375)    # 23.1% rgb(0,51,117)
+  (119, 0x0066FF)    # 46.7% rgb(0,102,255)
+  (149, 0x2699FF)    # 58.4% rgb(38,153,255)
+  (180, 0x56CCFF)    # 70.6% rgb(86,204,255)
+  (217, 0xA7E6FF)    # 85.1% rgb(167,230,255)
+  (255, 0xFFFFFF)    # 100.0% rgb(255,255,255) (end)
+]
+
+# Gradient palette "Colorfull_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/atmospheric/Colorfull.c3g
+palette PALETTE_CYANE = [
+  (0, 0x3D9B2C)    # 0.0% rgb(61,155,44) (start)
+  (25, 0x5FAE4D)    # 9.8% rgb(95,174,77)
+  (60, 0x84C171)    # 23.5% rgb(132,193,113)
+  (93, 0x9AA67D)    # 36.5% rgb(154,166,125)
+  (106, 0xAF8A88)    # 41.6% rgb(175,138,136)
+  (109, 0xB77989)    # 42.7% rgb(183,121,137)
+  (113, 0xC2688A)    # 44.3% rgb(194,104,138)
+  (116, 0xE1B3A5)    # 45.5% rgb(225,179,165)
+  (124, 0xFFFFC0)    # 48.6% rgb(255,255,192)
+  (168, 0xA7DACB)    # 65.9% rgb(167,218,203)
+  (255, 0x54B6D7)    # 100.0% rgb(84,182,215) (end)
+]
+
+# Gradient palette "Pink_Purple_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/atmospheric/Pink_Purple.c3g
+palette PALETTE_LIGHT_PINK = [
+  (0, 0x4F206D)    # 0.0% rgb(79,32,109) (start)
+  (25, 0x5A2875)    # 9.8% rgb(90,40,117)
+  (51, 0x66307C)    # 20.0% rgb(102,48,124)
+  (76, 0x8D87B9)    # 29.8% rgb(141,135,185)
+  (102, 0xB4DEF8)    # 40.0% rgb(180,222,248)
+  (109, 0xD0ECFC)    # 42.7% rgb(208,236,252)
+  (114, 0xEDFAFF)    # 44.7% rgb(237,250,255)
+  (122, 0xCEC8EF)    # 47.8% rgb(206,200,239)
+  (149, 0xB195DE)    # 58.4% rgb(177,149,222)
+  (183, 0xBB82CB)    # 71.8% rgb(187,130,203)
+  (255, 0xC66FB8)    # 100.0% rgb(198,111,184) (end)
+]
+
+# Gradient palette "Sunset_Real_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/atmospheric/Sunset_Real.c3g
+palette PALETTE_SUNSET = [
+  (0, 0xB50000)    # 0.0% rgb(181,0,0) (start)
+  (22, 0xDA5500)    # 8.6% rgb(218,85,0)
+  (51, 0xFFAA00)    # 20.0% rgb(255,170,0)
+  (85, 0xD3554D)    # 33.3% rgb(211,85,77)
+  (135, 0xA700A9)    # 52.9% rgb(167,0,169)
+  (198, 0x4900BC)    # 77.6% rgb(73,0,188)
+  (255, 0x0000CF)    # 100.0% rgb(0,0,207) (end)
+]
+
+# Gradient palette "Sunset_Yellow_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/atmospheric/Sunset_Yellow.c3g
+palette PALETTE_PASTEL = [
+  (0, 0x3D87B8)    # 0.0% rgb(61,135,184) (start)
+  (36, 0x81BCA9)    # 14.1% rgb(129,188,169)
+  (87, 0xCBF19B)    # 34.1% rgb(203,241,155)
+  (100, 0xE4ED8D)    # 39.2% rgb(228,237,141)
+  (107, 0xFFE87F)    # 42.0% rgb(255,232,127)
+  (115, 0xFBCA82)    # 45.1% rgb(251,202,130)
+  (120, 0xF8AC85)    # 47.1% rgb(248,172,133)
+  (128, 0xFBCA82)    # 50.2% rgb(251,202,130)
+  (180, 0xFFE87F)    # 70.6% rgb(255,232,127)
+  (223, 0xFFF278)    # 87.5% rgb(255,242,120)
+  (255, 0xFFFC71)    # 100.0% rgb(255,252,113) (end)
+]
+
+# Gradient palette "Beech_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/atmospheric/Beech.c3g
+palette PALETTE_BEECH = [
+  (0, 0xFFFEEC)    # 0.0% rgb(255,254,236) (start)
+  (12, 0xFFFEEC)    # 4.7% rgb(255,254,236)
+  (22, 0xFFFEEC)    # 8.6% rgb(255,254,236)
+  (26, 0xDFE0B2)    # 10.2% rgb(223,224,178)
+  (28, 0xC0C37C)    # 11.0% rgb(192,195,124)
+  (28, 0xB0FFE7)    # 11.0% rgb(176,255,231)
+  (50, 0x7BFBEC)    # 19.6% rgb(123,251,236)
+  (71, 0x4AF6F1)    # 27.8% rgb(74,246,241)
+  (93, 0x21E1E4)    # 36.5% rgb(33,225,228)
+  (120, 0x00CCD7)    # 47.1% rgb(0,204,215)
+  (133, 0x04A8B2)    # 52.2% rgb(4,168,178)
+  (136, 0x0A848F)    # 53.3% rgb(10,132,143)
+  (136, 0x33BDD4)    # 53.3% rgb(51,189,212)
+  (208, 0x179FC9)    # 81.6% rgb(23,159,201)
+  (255, 0x0081BE)    # 100.0% rgb(0,129,190) (end)
+]
+
+# Gradient palette "Another_Sunset_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/atmospheric/Another_Sunset.c3g
+palette PALETTE_SUNSET2 = [
+  (0, 0xAF793E)    # 0.0% rgb(175,121,62) (start)
+  (29, 0x80673C)    # 11.4% rgb(128,103,60)
+  (68, 0x54543A)    # 26.7% rgb(84,84,58)
+  (68, 0xF8B837)    # 26.7% rgb(248,184,55)
+  (97, 0xEFCC5D)    # 38.0% rgb(239,204,93)
+  (124, 0xE6E185)    # 48.6% rgb(230,225,133)
+  (178, 0x667D81)    # 69.8% rgb(102,125,129)
+  (255, 0x001A7D)    # 100.0% rgb(0,26,125) (end)
+]
+
+# Gradient palette "es_autumn_19_gp", originally from http://seaviewsensing.com/pub/cpt-city/es/autumn/es_autumn_19.c3g
+palette PALETTE_AUTUMN = [
+  (0, 0x5A0E05)    # 0.0% rgb(90,14,5) (start)
+  (51, 0x8B290D)    # 20.0% rgb(139,41,13)
+  (84, 0xB44611)    # 32.9% rgb(180,70,17)
+  (104, 0xC0CA7D)    # 40.8% rgb(192,202,125)
+  (112, 0xB18903)    # 43.9% rgb(177,137,3)
+  (122, 0xBEC883)    # 47.8% rgb(190,200,131)
+  (124, 0xC0CA7C)    # 48.6% rgb(192,202,124)
+  (135, 0xB18903)    # 52.9% rgb(177,137,3)
+  (142, 0xC2CB76)    # 55.7% rgb(194,203,118)
+  (163, 0xB14411)    # 63.9% rgb(177,68,17)
+  (204, 0x80230C)    # 80.0% rgb(128,35,12)
+  (249, 0x4A0502)    # 97.6% rgb(74,5,2)
+  (255, 0x4A0502)    # 100.0% rgb(74,5,2) (end)
+]
+
+# Gradient palette "BlacK_Blue_Magenta_White_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/basic/BlacK_Blue_Magenta_White.c3g
+palette PALETTE_MAGENTA = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (42, 0x000075)    # 16.5% rgb(0,0,117)
+  (84, 0x0000FF)    # 32.9% rgb(0,0,255)
+  (127, 0x7100FF)    # 49.8% rgb(113,0,255)
+  (170, 0xFF00FF)    # 66.7% rgb(255,0,255)
+  (212, 0xFF80FF)    # 83.1% rgb(255,128,255)
+  (255, 0xFFFFFF)    # 100.0% rgb(255,255,255) (end)
+]
+
+# Gradient palette "BlacK_Magenta_Red_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/basic/BlacK_Magenta_Red.c3g
+palette PALETTE_MAGRED = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (63, 0x710075)    # 24.7% rgb(113,0,117)
+  (127, 0xFF00FF)    # 49.8% rgb(255,0,255)
+  (191, 0xFF0075)    # 74.9% rgb(255,0,117)
+  (255, 0xFF0000)    # 100.0% rgb(255,0,0) (end)
+]
+
+# Gradient palette "BlacK_Red_Magenta_Yellow_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/basic/BlacK_Red_Magenta_Yellow.c3g
+palette PALETTE_YELMAG = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (42, 0x710000)    # 16.5% rgb(113,0,0)
+  (84, 0xFF0000)    # 32.9% rgb(255,0,0)
+  (127, 0xFF0075)    # 49.8% rgb(255,0,117)
+  (170, 0xFF00FF)    # 66.7% rgb(255,0,255)
+  (212, 0xFF8075)    # 83.1% rgb(255,128,117)
+  (255, 0xFFFF00)    # 100.0% rgb(255,255,0) (end)
+]
+
+# Gradient palette "Blue_Cyan_Yellow_gp", originally from http://seaviewsensing.com/pub/cpt-city/nd/basic/Blue_Cyan_Yellow.c3g
+palette PALETTE_YELBLU = [
+  (0, 0x0000FF)    # 0.0% rgb(0,0,255) (start)
+  (63, 0x0080FF)    # 24.7% rgb(0,128,255)
+  (127, 0x00FFFF)    # 49.8% rgb(0,255,255)
+  (191, 0x71FF75)    # 74.9% rgb(113,255,117)
+  (255, 0xFFFF00)    # 100.0% rgb(255,255,0) (end)
+]
+
+# Custom palette by Aircoookie
+palette PALETTE_ORANGE_TEAL = [
+  (0, 0x00965C)    # 0.0% rgb(0,150,92) (start)
+  (55, 0x00965C)    # 21.6% rgb(0,150,92)
+  (200, 0xFF4800)    # 78.4% rgb(255,72,0)
+  (255, 0xFF4800)    # 100.0% rgb(255,72,0) (end)
+]
+
+# Custom palette by Aircoookie
+palette PALETTE_TIAMAT = [
+  (0, 0x01020E)    # 0.0% rgb(1,2,14) (start)
+  (33, 0x020523)    # 12.9% rgb(2,5,35)
+  (100, 0x0D875C)    # 39.2% rgb(13,135,92)
+  (120, 0x2BFFC1)    # 47.1% rgb(43,255,193)
+  (140, 0xF707F9)    # 54.9% rgb(247,7,249)
+  (160, 0xC111D0)    # 62.7% rgb(193,17,208)
+  (180, 0x27FF9A)    # 70.6% rgb(39,255,154)
+  (200, 0x04D5EC)    # 78.4% rgb(4,213,236)
+  (220, 0x27FC87)    # 86.3% rgb(39,252,135)
+  (240, 0xC1D5FD)    # 94.1% rgb(193,213,253)
+  (255, 0xFFF9FF)    # 100.0% rgb(255,249,255) (end)
+]
+
+# Custom palette by Aircoookie
+palette PALETTE_APRIL_NIGHT = [
+  (0, 0x01052D)    # 0.0% rgb(1,5,45) (start)
+  (10, 0x01052D)    # 3.9% rgb(1,5,45)
+  (25, 0x05A9AF)    # 9.8% rgb(5,169,175)
+  (40, 0x01052D)    # 15.7% rgb(1,5,45)
+  (61, 0x01052D)    # 23.9% rgb(1,5,45)
+  (76, 0x2DAF1F)    # 29.8% rgb(45,175,31)
+  (91, 0x01052D)    # 35.7% rgb(1,5,45)
+  (112, 0x01052D)    # 43.9% rgb(1,5,45)
+  (127, 0xF99605)    # 49.8% rgb(249,150,5)
+  (143, 0x01052D)    # 56.1% rgb(1,5,45)
+  (162, 0x01052D)    # 63.5% rgb(1,5,45)
+  (178, 0xFF5C00)    # 69.8% rgb(255,92,0)
+  (193, 0x01052D)    # 75.7% rgb(1,5,45)
+  (214, 0x01052D)    # 83.9% rgb(1,5,45)
+  (229, 0xDF2D48)    # 89.8% rgb(223,45,72)
+  (244, 0x01052D)    # 95.7% rgb(1,5,45)
+  (255, 0x01052D)    # 100.0% rgb(1,5,45) (end)
+]
+
+palette PALETTE_ORANGERY = [
+  (0, 0xFF5F17)    # 0.0% rgb(255,95,23) (start)
+  (30, 0xFF5200)    # 11.8% rgb(255,82,0)
+  (60, 0xDF0D08)    # 23.5% rgb(223,13,8)
+  (90, 0x902C02)    # 35.3% rgb(144,44,2)
+  (120, 0xFF6E11)    # 47.1% rgb(255,110,17)
+  (150, 0xFF4500)    # 58.8% rgb(255,69,0)
+  (180, 0x9E0D0B)    # 70.6% rgb(158,13,11)
+  (210, 0xF15211)    # 82.4% rgb(241,82,17)
+  (255, 0xD52504)    # 100.0% rgb(213,37,4) (end)
+]
+
+# inspired by Mark Kriegsman https://gist.github.com/kriegsman/756ea6dcae8e30845b5a
+palette PALETTE_C9 = [
+  (0, 0xB80400)    # 0.0% rgb(184,4,0) (start)
+  (60, 0xB80400)    # 23.5% rgb(184,4,0)
+  (65, 0x902C02)    # 25.5% rgb(144,44,2)
+  (125, 0x902C02)    # 49.0% rgb(144,44,2)
+  (130, 0x046002)    # 51.0% rgb(4,96,2)
+  (190, 0x046002)    # 74.5% rgb(4,96,2)
+  (195, 0x070758)    # 76.5% rgb(7,7,88)
+  (255, 0x070758)    # 100.0% rgb(7,7,88) (end)
+]
+
+palette PALETTE_SAKURA = [
+  (0, 0xC4130A)    # 0.0% rgb(196,19,10) (start)
+  (65, 0xFF452D)    # 25.5% rgb(255,69,45)
+  (130, 0xDF2D48)    # 51.0% rgb(223,45,72)
+  (195, 0xFF5267)    # 76.5% rgb(255,82,103)
+  (255, 0xDF0D11)    # 100.0% rgb(223,13,17) (end)
+]
+
+palette PALETTE_AURORA = [
+  (0, 0x01052D)    # 0.0% rgb(1,5,45) (start)
+  (64, 0x00C817)    # 25.1% rgb(0,200,23)
+  (128, 0x00FF00)    # 50.2% rgb(0,255,0)
+  (170, 0x00F32D)    # 66.7% rgb(0,243,45)
+  (200, 0x008707)    # 78.4% rgb(0,135,7)
+  (255, 0x01052D)    # 100.0% rgb(1,5,45) (end)
+]
+
+palette PALETTE_ATLANTICA = [
+  (0, 0x001C70)    # 0.0% rgb(0,28,112) (start)
+  (50, 0x2060FF)    # 19.6% rgb(32,96,255)
+  (100, 0x00F32D)    # 39.2% rgb(0,243,45)
+  (150, 0x0C5F52)    # 58.8% rgb(12,95,82)
+  (200, 0x19BE5F)    # 78.4% rgb(25,190,95)
+  (255, 0x28AA50)    # 100.0% rgb(40,170,80) (end)
+]
+
+palette PALETTE_C9_2 = [
+  (0, 0x067E02)    # 0.0% rgb(6,126,2) (start)
+  (45, 0x067E02)    # 17.6% rgb(6,126,2)
+  (46, 0x041E72)    # 18.0% rgb(4,30,114)
+  (90, 0x041E72)    # 35.3% rgb(4,30,114)
+  (91, 0xFF0500)    # 35.7% rgb(255,5,0)
+  (135, 0xFF0500)    # 52.9% rgb(255,5,0)
+  (136, 0xC43902)    # 53.3% rgb(196,57,2)
+  (180, 0xC43902)    # 70.6% rgb(196,57,2)
+  (181, 0x895502)    # 71.0% rgb(137,85,2)
+  (255, 0x895502)    # 100.0% rgb(137,85,2) (end)
+]
+
+# C9, but brighter and with a less purple blue
+palette PALETTE_C9_NEW = [
+  (0, 0xFF0500)    # 0.0% rgb(255,5,0) (start)
+  (60, 0xFF0500)    # 23.5% rgb(255,5,0)
+  (61, 0xC43902)    # 23.9% rgb(196,57,2)
+  (120, 0xC43902)    # 47.1% rgb(196,57,2)
+  (121, 0x067E02)    # 47.5% rgb(6,126,2)
+  (180, 0x067E02)    # 70.6% rgb(6,126,2)
+  (181, 0x041E72)    # 71.0% rgb(4,30,114)
+  (255, 0x041E72)    # 100.0% rgb(4,30,114) (end)
+]
+
+# Gradient palette "temperature_gp", originally from http://seaviewsensing.com/pub/cpt-city/arendal/temperature.c3g
+palette PALETTE_TEMPERATURE = [
+  (0, 0x145CAB)    # 0.0% rgb(20,92,171) (start)
+  (14, 0x0F6FBA)    # 5.5% rgb(15,111,186)
+  (28, 0x068ED3)    # 11.0% rgb(6,142,211)
+  (42, 0x02A1E3)    # 16.5% rgb(2,161,227)
+  (56, 0x10B5EF)    # 22.0% rgb(16,181,239)
+  (70, 0x26BCC9)    # 27.5% rgb(38,188,201)
+  (84, 0x56CCC8)    # 32.9% rgb(86,204,200)
+  (99, 0x8BDBB0)    # 38.8% rgb(139,219,176)
+  (113, 0xB6E57D)    # 44.3% rgb(182,229,125)
+  (127, 0xC4E63F)    # 49.8% rgb(196,230,63)
+  (141, 0xF1F016)    # 55.3% rgb(241,240,22)
+  (155, 0xFEDE1E)    # 60.8% rgb(254,222,30)
+  (170, 0xFBC704)    # 66.7% rgb(251,199,4)
+  (184, 0xF79D09)    # 72.2% rgb(247,157,9)
+  (198, 0xF3720F)    # 77.6% rgb(243,114,15)
+  (226, 0xD51E1D)    # 88.6% rgb(213,30,29)
+  (240, 0x972623)    # 94.1% rgb(151,38,35)
+  (255, 0x972623)    # 100.0% rgb(151,38,35) (end)
+]
+
+# Gradient palette "bhw1_01_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_01.c3g
+palette PALETTE_RETRO_CLOWN = [
+  (0, 0xF2A826)    # 0.0% rgb(242,168,38) (start)
+  (117, 0xE24E50)    # 45.9% rgb(226,78,80)
+  (255, 0xA136E1)    # 100.0% rgb(161,54,225) (end)
+]
+
+# Gradient palette "bhw1_04_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_04.c3g
+palette PALETTE_CANDY = [
+  (0, 0xF3F217)    # 0.0% rgb(243,242,23) (start)
+  (15, 0xF2A826)    # 5.9% rgb(242,168,38)
+  (142, 0x6F1597)    # 55.7% rgb(111,21,151)
+  (198, 0x4A1696)    # 77.6% rgb(74,22,150)
+  (255, 0x000075)    # 100.0% rgb(0,0,117) (end)
+]
+
+# Gradient palette "bhw1_05_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_05.c3g
+palette PALETTE_TOXY_REAF = [
+  (0, 0x02EF7E)    # 0.0% rgb(2,239,126) (start)
+  (255, 0x9123D9)    # 100.0% rgb(145,35,217) (end)
+]
+
+# Gradient palette "bhw1_06_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_06.c3g
+palette PALETTE_FAIRY_REAF = [
+  (0, 0xDC13BB)    # 0.0% rgb(220,19,187) (start)
+  (160, 0x0CE1DB)    # 62.7% rgb(12,225,219)
+  (219, 0xCBF2DF)    # 85.9% rgb(203,242,223)
+  (255, 0xFFFFFF)    # 100.0% rgb(255,255,255) (end)
+]
+
+# Gradient palette "bhw1_14_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_14.c3g
+palette PALETTE_SEMI_BLUE = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (12, 0x180426)    # 4.7% rgb(24,4,38)
+  (53, 0x370854)    # 20.8% rgb(55,8,84)
+  (80, 0x2B309F)    # 31.4% rgb(43,48,159)
+  (119, 0x1F59ED)    # 46.7% rgb(31,89,237)
+  (145, 0x323BA6)    # 56.9% rgb(50,59,166)
+  (186, 0x471E62)    # 72.9% rgb(71,30,98)
+  (233, 0x1F0F2D)    # 91.4% rgb(31,15,45)
+  (255, 0x000000)    # 100.0% rgb(0,0,0) (end)
+]
+
+# Gradient palette "bhw1_three_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_three.c3g
+palette PALETTE_PINK_CANDY = [
+  (0, 0xFFFFFF)    # 0.0% rgb(255,255,255) (start)
+  (45, 0x3240FF)    # 17.6% rgb(50,64,255)
+  (112, 0xF210BA)    # 43.9% rgb(242,16,186)
+  (140, 0xFFFFFF)    # 54.9% rgb(255,255,255)
+  (155, 0xF210BA)    # 60.8% rgb(242,16,186)
+  (196, 0x740DA6)    # 76.9% rgb(116,13,166)
+  (255, 0xFFFFFF)    # 100.0% rgb(255,255,255) (end)
+]
+
+# Gradient palette "bhw1_w00t_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw1/bhw1_w00t.c3g
+palette PALETTE_RED_REAF = [
+  (0, 0x244472)    # 0.0% rgb(36,68,114) (start)
+  (104, 0x95C3F8)    # 40.8% rgb(149,195,248)
+  (188, 0xFF0000)    # 73.7% rgb(255,0,0)
+  (255, 0x5E0E09)    # 100.0% rgb(94,14,9) (end)
+]
+
+# Gradient palette "bhw2_23_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw2/bhw2_23.c3g
+palette PALETTE_AQUA_FLASH = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (66, 0x82F2F5)    # 25.9% rgb(130,242,245)
+  (96, 0xFFFF35)    # 37.6% rgb(255,255,53)
+  (124, 0xFFFFFF)    # 48.6% rgb(255,255,255)
+  (153, 0xFFFF35)    # 60.0% rgb(255,255,53)
+  (188, 0x82F2F5)    # 73.7% rgb(130,242,245)
+  (255, 0x000000)    # 100.0% rgb(0,0,0) (end)
+]
+
+# Gradient palette "bhw2_xc_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw2/bhw2_xc.c3g
+palette PALETTE_YELBLU_HOT = [
+  (0, 0x2B1E39)    # 0.0% rgb(43,30,57) (start)
+  (58, 0x490077)    # 22.7% rgb(73,0,119)
+  (122, 0x57004A)    # 47.8% rgb(87,0,74)
+  (158, 0xC53916)    # 62.0% rgb(197,57,22)
+  (183, 0xDA751B)    # 71.8% rgb(218,117,27)
+  (219, 0xEFB120)    # 85.9% rgb(239,177,32)
+  (255, 0xF6F71B)    # 100.0% rgb(246,247,27) (end)
+]
+
+# Gradient palette "bhw2_45_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw2/bhw2_45.c3g
+palette PALETTE_LITE_LIGHT = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (9, 0x141516)    # 3.5% rgb(20,21,22)
+  (40, 0x2E2B31)    # 15.7% rgb(46,43,49)
+  (66, 0x2E2B31)    # 25.9% rgb(46,43,49)
+  (101, 0x3D1041)    # 39.6% rgb(61,16,65)
+  (255, 0x000000)    # 100.0% rgb(0,0,0) (end)
+]
+
+# Gradient palette "bhw2_22_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw2/bhw2_22.c3g
+palette PALETTE_RED_FLASH = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (99, 0xF20C08)    # 38.8% rgb(242,12,8)
+  (130, 0xFDE4A3)    # 51.0% rgb(253,228,163)
+  (155, 0xF20C08)    # 60.8% rgb(242,12,8)
+  (255, 0x000000)    # 100.0% rgb(0,0,0) (end)
+]
+
+# Gradient palette "bhw3_40_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw3/bhw3_40.c3g
+palette PALETTE_BLINK_RED = [
+  (0, 0x040704)    # 0.0% rgb(4,7,4) (start)
+  (43, 0x28193E)    # 16.9% rgb(40,25,62)
+  (76, 0x3D0F24)    # 29.8% rgb(61,15,36)
+  (109, 0xCF2760)    # 42.7% rgb(207,39,96)
+  (127, 0xFF9CB8)    # 49.8% rgb(255,156,184)
+  (165, 0xB949CF)    # 64.7% rgb(185,73,207)
+  (204, 0x6942F0)    # 80.0% rgb(105,66,240)
+  (255, 0x4D1D4E)    # 100.0% rgb(77,29,78) (end)
+]
+
+# Gradient palette "bhw3_52_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw3/bhw3_52.c3g
+palette PALETTE_RED_SHIFT = [
+  (0, 0x62165D)    # 0.0% rgb(98,22,93) (start)
+  (45, 0x671649)    # 17.6% rgb(103,22,73)
+  (99, 0xC02D38)    # 38.8% rgb(192,45,56)
+  (132, 0xEBBB3B)    # 51.8% rgb(235,187,59)
+  (175, 0xE4551A)    # 68.6% rgb(228,85,26)
+  (201, 0xE43830)    # 78.8% rgb(228,56,48)
+  (255, 0x020002)    # 100.0% rgb(2,0,2) (end)
+]
+
+# Gradient palette "bhw4_097_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw4/bhw4_097.c3g
+palette PALETTE_RED_TIDE = [
+  (0, 0xFB2E00)    # 0.0% rgb(251,46,0) (start)
+  (28, 0xFF8B19)    # 11.0% rgb(255,139,25)
+  (43, 0xF69E3F)    # 16.9% rgb(246,158,63)
+  (58, 0xF6D87B)    # 22.7% rgb(246,216,123)
+  (84, 0xF35E0A)    # 32.9% rgb(243,94,10)
+  (114, 0xB1410B)    # 44.7% rgb(177,65,11)
+  (140, 0xFFF173)    # 54.9% rgb(255,241,115)
+  (168, 0xB1410B)    # 65.9% rgb(177,65,11)
+  (196, 0xFAE99E)    # 76.9% rgb(250,233,158)
+  (216, 0xFF5E06)    # 84.7% rgb(255,94,6)
+  (255, 0x7E0804)    # 100.0% rgb(126,8,4) (end)
+]
+
+# Gradient palette "bhw4_017_gp", originally from http://seaviewsensing.com/pub/cpt-city/bhw/bhw4/bhw4_017.c3g
+palette PALETTE_CANDY2 = [
+  (0, 0x6D6666)    # 0.0% rgb(109,102,102) (start)
+  (25, 0x2A3147)    # 9.8% rgb(42,49,71)
+  (48, 0x796054)    # 18.8% rgb(121,96,84)
+  (73, 0xF1D61A)    # 28.6% rgb(241,214,26)
+  (89, 0xD8682C)    # 34.9% rgb(216,104,44)
+  (130, 0x2A3147)    # 51.0% rgb(42,49,71)
+  (163, 0xFFB12F)    # 63.9% rgb(255,177,47)
+  (186, 0xF1D61A)    # 72.9% rgb(241,214,26)
+  (211, 0x6D6666)    # 82.7% rgb(109,102,102)
+  (255, 0x14130D)    # 100.0% rgb(20,19,13) (end)
+]
+
+palette PALETTE_TRAFFIC_LIGHT = [
+  (0, 0x000000)    # 0.0% rgb(0,0,0) (start)
+  (85, 0x00FF00)    # 33.3% rgb(0,255,0)
+  (170, 0xFFFF00)    # 66.7% rgb(255,255,0)
+  (255, 0xFF0000)    # 100.0% rgb(255,0,0) (end)
+]
+
+palette PALETTE_AURORA_2 = [
+  (0, 0x11B10D)    # 0.0% rgb(17,177,13) (start)
+  (64, 0x79F205)    # 25.1% rgb(121,242,5)
+  (128, 0x19AD79)    # 50.2% rgb(25,173,121)
+  (192, 0xFA4D7F)    # 75.3% rgb(250,77,127)
+  (255, 0xAB65DD)    # 100.0% rgb(171,101,221) (end)
+]
