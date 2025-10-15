@@ -1035,8 +1035,12 @@ class lvgl_panel
 
   def send_iframe_code()
     import webserver
+    import string
     self.update()
-    var ip = tasmota.wifi().find('ip')
+    var ip = string.split(webserver.header('Host'), ':')[0]   # get 'Host' header and take everything before the first ':'
+    if (ip == nil || ip == '')
+      ip = tasmota.wifi().find('ip')
+    end
     if (ip == nil)
       ip = tasmota.eth().find('ip')
     end
