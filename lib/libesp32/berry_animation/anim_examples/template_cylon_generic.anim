@@ -3,18 +3,10 @@
 
 template cylon_effect {
   param eye_color type color
+  param duration type time
   param back_color type color
-  param duration
   
-  set aaa = abs2(45) + 2
   set strip_len = strip_length()
-  set strip_len_div_2 = abs(strip_len / 2)
-  set strip_len2 = strip_length(is_running=0) # artifically putting an argument to cause a closure
-
-  set osc1 = sawtooth()
-  set osc2 = triangle()
-  set osc3 = scale(osc1 + osc2, 0, 200, 0, 255)
-  set osc9 = sawtooth() + triangle()    # this should fail
 
   animation eye_animation = beacon_animation(
     color = eye_color

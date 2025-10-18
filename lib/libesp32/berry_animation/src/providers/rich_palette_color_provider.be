@@ -22,7 +22,7 @@ class RichPaletteColorProvider : animation.color_provider
   static var PARAMS = encode_constraints({
     "palette": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
-    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
+    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR},
     "brightness": {"min": 0, "max": 255, "default": 255},
     "range_min": {"default": 0},
     "range_max": {"default": 255}
@@ -173,6 +173,43 @@ class RichPaletteColorProvider : animation.color_provider
     return trgb
   end
   
+  # Interpolate a value between two points using the selected transition type
+  #
+  # @param value: int - Current value to interpolate
+  # @param from_min: int - Start of range
+  # @param from_max: int - End of range
+  # @param to_min: int - Start of output range
+  # @param to_max: int - End of output range
+  # @return int - Interpolated value
+  def _interpolate(value, from_min, from_max, to_min, to_max)
+    var transition_type = self.transition_type
+    
+    if transition_type == animation.SINE
+      # Cosine interpolation for smooth transitions
+      # Map value to 0..255 range first
+      var t = tasmota.scale_uint(value, from_min, from_max, 0, 255)
+      
+      # Map to angle range for cosine: 0 -> 16384 (180 degrees)
+      # We use cosine from 180° to 0° which gives us 0->1 smooth curve
+      var angle = tasmota.scale_uint(t, 0, 255, 16384, 0)
+      
+      # tasmota.sine_int returns -4096 to 4096 for angle 0-32767
+      # At angle 16384 (180°): sine_int returns 0 (actually cosine = -1)
+      # At angle 0 (0°): sine_int returns 0 (cosine = 1)
+      # We need to shift by 8192 to get cosine behavior
+      var cos_val = tasmota.sine_int(angle + 8192)  # -4096 to 4096
+      
+      # Map cosine from -4096..4096 to 0..255
+      var normalized = tasmota.scale_int(cos_val, -4096, 4096, 0, 255)
+      
+      # Finally map to output range
+      return tasmota.scale_int(normalized, 0, 255, to_min, to_max)
+    else
+      # Default to linear interpolation (for LINEAR mode or any unknown type)
+      return tasmota.scale_uint(value, from_min, from_max, to_min, to_max)
+    end
+  end
+  
   # Produce a color value for any parameter name (optimized version from Animate_palette)
   #
   # @param name: string - Parameter name being requested (ignored)
@@ -231,10 +268,10 @@ class RichPaletteColorProvider : animation.color_provider
     var t0 = self.slots_arr[idx]
     var t1 = self.slots_arr[idx + 1]
     
-    # Use tasmota.scale_uint for efficiency (from Animate_palette)
-    var r = tasmota.scale_uint(past, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)
-    var g = tasmota.scale_uint(past, t0, t1, (bgrt0 >> 16) & 0xFF, (bgrt1 >> 16) & 0xFF)
-    var b = tasmota.scale_uint(past, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
+    # Use interpolation based on transition_type (LINEAR or SINE)
+    var r = self._interpolate(past, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)
+    var g = self._interpolate(past, t0, t1, (bgrt0 >> 16) & 0xFF, (bgrt1 >> 16) & 0xFF)
+    var b = self._interpolate(past, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
 
     # Use light_state for proper brightness calculation (from Animate_palette)
     var light_state = self.light_state
@@ -242,7 +279,7 @@ class RichPaletteColorProvider : animation.color_provider
     var bri0 = light_state.bri
     light_state.set_rgb((bgrt1 >>  8) & 0xFF, (bgrt1 >> 16) & 0xFF, (bgrt1 >> 24) & 0xFF)
     var bri1 = light_state.bri
-    var bri2 = tasmota.scale_uint(past, t0, t1, bri0, bri1)
+    var bri2 = self._interpolate(past, t0, t1, bri0, bri1)
     light_state.set_rgb(r, g, b)
     light_state.set_bri(bri2)
 
@@ -294,10 +331,10 @@ class RichPaletteColorProvider : animation.color_provider
     var t0 = self.value_arr[idx]
     var t1 = self.value_arr[idx + 1]
     
-    # Use tasmota.scale_uint for efficiency (from Animate_palette)
-    var r = tasmota.scale_uint(value, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)
-    var g = tasmota.scale_uint(value, t0, t1, (bgrt0 >> 16) & 0xFF, (bgrt1 >> 16) & 0xFF)
-    var b = tasmota.scale_uint(value, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
+    # Use interpolation based on transition_type (LINEAR or SINE)
+    var r = self._interpolate(value, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)
+    var g = self._interpolate(value, t0, t1, (bgrt0 >> 16) & 0xFF, (bgrt1 >> 16) & 0xFF)
+    var b = self._interpolate(value, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
     
     # Apply brightness scaling (from Animate_palette)
     if brightness != 255

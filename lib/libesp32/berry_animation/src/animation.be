@@ -165,8 +165,6 @@ register_to_animation(wave_animation)
 # Import palette examples
 import "animations/palettes" as palettes
 register_to_animation(palettes)
-# import "animations/all_wled_palettes" as all_wled_palettes
-# register_to_animation(all_wled_palettes)
 
 # Import specialized animation classes
 import "animations/rich_palette_animation" as rich_palette_animation

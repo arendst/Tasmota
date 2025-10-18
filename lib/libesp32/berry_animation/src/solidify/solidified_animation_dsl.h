@@ -2237,30 +2237,197 @@ be_local_class(Token,
     be_str_weak(Token)
 );
 
-extern const bclass be_class_MockEngine;
+extern const bclass be_class_WLED_Palettes;
 
 /********************************************************************
-** Solidified function: init
+** Solidified class: WLED_Palettes
 ********************************************************************/
-be_local_closure(class_MockEngine_init,   /* name */
+be_local_class(WLED_Palettes,
+    0,
+    NULL,
+    be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(map, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(59,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(Red_X20_X26_X20Blue, 38), be_const_bytes_instance(00290E631F80184A3FE322325F841F4C7F2F1D669F6D2F65BFB04264DF813968FF54306C) },
+        { be_const_key_weak(Red_X20Tide, -1), be_const_bytes_instance(00FB2E001CFF8B192BF69E3F3AF6D87B54F35E0A72B1410B8CFFF173A8B1410BC4FAE99ED8FF5E06FF7E0804) },
+        { be_const_key_weak(C9_X202, 5), be_const_bytes_instance(00067E022D067E022E041E725A041E725BFF050087FF050088C43902B4C43902B5895502FF895502) },
+        { be_const_key_weak(Aqua_X20Flash, -1), be_const_bytes_instance(000000004282F2F560FFFF357CFFFFFF99FFFF35BC82F2F5FF000000) },
+        { be_const_key_weak(Icefire, -1), be_const_bytes_instance(000000003B003375770066FF952699FFB456CCFFD9A7E6FFFFFFFFFF) },
+        { be_const_key_weak(Hult, 15), be_const_bytes_instance(00FBD8FC30FFC0FF59EF5FF1A03399D9D818B8AEFF18B8AE) },
+        { be_const_key_weak(Yelmag, 47), be_const_bytes_instance(000000002A71000054FF00007FFF0075AAFF00FFD4FF8075FFFFFF00) },
+        { be_const_key_weak(Red_X20Flash, -1), be_const_bytes_instance(0000000063F20C0882FDE4A39BF20C08FF000000) },
+        { be_const_key_weak(Beech, -1), be_const_bytes_instance(00FFFEEC0CFFFEEC16FFFEEC1ADFE0B21CC0C37C1CB0FFE7327BFBEC474AF6F15D21E1E47800CCD78504A8B2880A848F8833BDD4D0179FC9FF0081BE) },
+        { be_const_key_weak(Landscape, -1), be_const_bytes_instance(00000000251F59134C48B22B7F96EB0580BAEA7782DEE9FC99C5DBE7CC84B3FDFF1C6BE1) },
+        { be_const_key_weak(Rewhi, -1), be_const_bytes_instance(00B1A0C748CD9E9559E99B656BFF5F3F8DC0626DFF84659F) },
+        { be_const_key_weak(C9_X20New, -1), be_const_bytes_instance(00FF05003CFF05003DC4390278C4390279067E02B4067E02B5041E72FF041E72) },
+        { be_const_key_weak(Jul, 37), be_const_bytes_instance(00E2060C5E1A604E8482BD5EFFB10309) },
+        { be_const_key_weak(Cyane, -1), be_const_bytes_instance(003D9B2C195FAE4D3C84C1715D9AA67D6AAF8A886DB7798971C2688A74E1B3A57CFFFFC0A8A7DACBFF54B6D7) },
+        { be_const_key_weak(C9, -1), be_const_bytes_instance(00B804003CB8040041902C027D902C0282046002BE046002C3070758FF070758) },
+        { be_const_key_weak(Light_X20Pink, -1), be_const_bytes_instance(004F206D195A28753366307C4C8D87B966B4DEF86DD0ECFC72EDFAFF7ACEC8EF95B195DEB7BB82CBFFC66FB8) },
+        { be_const_key_weak(Lite_X20Light, -1), be_const_bytes_instance(0000000009141516282E2B31422E2B31653D1041FF000000) },
+        { be_const_key_weak(Orange_X20_X26_X20Teal, 50), be_const_bytes_instance(0000965C3700965CC8FF4800FFFF4800) },
+        { be_const_key_weak(Sunset2, -1), be_const_bytes_instance(00AF793E1D80673C4454543A44F8B83761EFCC5D7CE6E185B2667D81FF001A7D) },
+        { be_const_key_weak(Toxy_X20Reaf, 9), be_const_bytes_instance(0002EF7EFF9123D9) },
+        { be_const_key_weak(Aurora_X202, -1), be_const_bytes_instance(0011B10D4079F2058019AD79C0FA4D7FFFAB65DD) },
+        { be_const_key_weak(Vintage, 44), be_const_bytes_instance(00291218334900164CA5AA2665FFBD507F8B382899490016E5291218FF291218) },
+        { be_const_key_weak(Fire, 3), be_const_bytes_instance(000000002E4D000060B100006CC4260977D74C1392EB731DAEFF9929BCFFB229CAFFCC29DAFFE629EAFFFF29F4FFFF8FFFFFFFFF) },
+        { be_const_key_weak(Rivendell, 29), be_const_bytes_instance(0018452C65496946A5818C61F2C8CCA6FFC8CCA6) },
+        { be_const_key_weak(Blink_X20Red, -1), be_const_bytes_instance(000407042B28193E4C3D0F246DCF27607FFF9CB8A5B949CFCC6942F0FF4D1D4E) },
+        { be_const_key_weak(Magred, -1), be_const_bytes_instance(000000003F7100757FFF00FFBFFF0075FFFF0000) },
+        { be_const_key_weak(Semi_X20Blue, -1), be_const_bytes_instance(000000000C18042635370854502B309F771F59ED91323BA6BA471E62E91F0F2DFF000000) },
+        { be_const_key_weak(Analogous, 39), be_const_bytes_instance(002600FF3F5600FF7F8B00FFBFC40075FFFF0000) },
+        { be_const_key_weak(Sakura, 20), be_const_bytes_instance(00C4130A41FF452D82DF2D48C3FF5267FFDF0D11) },
+        { be_const_key_weak(Pastel, -1), be_const_bytes_instance(003D87B82481BCA957CBF19B64E4ED8D6BFFE87F73FBCA8278F8AC8580FBCA82B4FFE87FDFFFF278FFFFFC71) },
+        { be_const_key_weak(Candy2, -1), be_const_bytes_instance(006D6666192A31473079605449F1D61A59D8682C822A3147A3FFB12FBAF1D61AD36D6666FF14130D) },
+        { be_const_key_weak(Red_X20Reaf, -1), be_const_bytes_instance(002444726895C3F8BCFF0000FF5E0E09) },
+        { be_const_key_weak(Red_X20Shift, 40), be_const_bytes_instance(0062165D2D67164963C02D3884EBBB3BAFE4551AC9E43830FF020002) },
+        { be_const_key_weak(Grintage, -1), be_const_bytes_instance(001D0803354C0100688E601C99D3BF3DFF75812A) },
+        { be_const_key_weak(Pink_X20Candy, 14), be_const_bytes_instance(00FFFFFF2D3240FF70F210BA8CFFFFFF9BF210BAC4740DA6FFFFFFFF) },
+        { be_const_key_weak(Temperature, 12), be_const_bytes_instance(00145CAB0E0F6FBA1C068ED32A02A1E33810B5EF4626BCC95456CCC8638BDBB071B6E57D7FC4E63F8DF1F0169BFEDE1EAAFBC704B8F79D09C6F3720FE2D51E1DF0972623FF972623) },
+        { be_const_key_weak(Departure, -1), be_const_bytes_instance(003522002A5633003F936C3154D4A66C6AEBD4B474FFFFFF8ABFFFC19454FF58AA00FF00BF00C000D4008000FF008000) },
+        { be_const_key_weak(Candy, -1), be_const_bytes_instance(00F3F2170FF2A8268E6F1597C64A1696FF000075) },
+        { be_const_key_weak(Retro_X20Clown, 46), be_const_bytes_instance(00F2A82675E24E50FFA136E1) },
+        { be_const_key_weak(Beach, 26), be_const_bytes_instance(000C2D001365560226CF80043FF3C512426DC492FF052707) },
+        { be_const_key_weak(Sunset, -1), be_const_bytes_instance(00B5000016DA550033FFAA0055D3554D87A700A9C64900BCFF0000CF) },
+        { be_const_key_weak(Yelblu, -1), be_const_bytes_instance(000000FF3F0080FF7F00FFFFBF71FF75FFFFFF00) },
+        { be_const_key_weak(Atlantica, -1), be_const_bytes_instance(00001C70322060FF6400F32D960C5F52C819BE5FFF28AA50) },
+        { be_const_key_weak(Sherbet, -1), be_const_bytes_instance(00FF66292BFF8C5A56FF335A7FFF99A9AAFFFFF9D171FF55FF9DFF89) },
+        { be_const_key_weak(Orangery, -1), be_const_bytes_instance(00FF5F171EFF52003CDF0D085A902C0278FF6E1196FF4500B49E0D0BD2F15211FFD52504) },
+        { be_const_key_weak(Yellowout, -1), be_const_bytes_instance(00DEBF08FF753401) },
+        { be_const_key_weak(April_X20Night, -1), be_const_bytes_instance(0001052D0A01052D1905A9AF2801052D3D01052D4C2DAF1F5B01052D7001052D7FF996058F01052DA201052DB2FF5C00C101052DD601052DE5DF2D48F401052DFF01052D) },
+        { be_const_key_weak(Aurora, -1), be_const_bytes_instance(0001052D4000C8178000FF00AA00F32DC8008707FF01052D) },
+        { be_const_key_weak(Magenta, 28), be_const_bytes_instance(000000002A000075540000FF7F7100FFAAFF00FFD4FF80FFFFFFFFFF) },
+        { be_const_key_weak(Autumn, 18), be_const_bytes_instance(005A0E05338B290D54B4461168C0CA7D70B189037ABEC8837CC0CA7C87B189038EC2CB76A3B14411CC80230CF94A0502FF4A0502) },
+        { be_const_key_weak(Drywet, -1), be_const_bytes_instance(007761212AEBC75854A9EE7C7F25EEE8AA0778ECD41B01AFFF043365) },
+        { be_const_key_weak(Hult64, -1), be_const_bytes_instance(0018B8AE4208A296687C890782B2BA16967C8907C9069C90EF008075FF008075) },
+        { be_const_key_weak(Yelblu_X20Hot, -1), be_const_bytes_instance(002B1E393A4900777A57004A9EC53916B7DA751BDBEFB120FFF6F71B) },
+        { be_const_key_weak(Traffic_X20Light, 13), be_const_bytes_instance(000000005500FF00AAFFFF00FFFF0000) },
+        { be_const_key_weak(Splash, 34), be_const_bytes_instance(00BA3FFF7FE30955AFEACDD5DDCD26B0FFCD26B0) },
+        { be_const_key_weak(Breeze, -1), be_const_bytes_instance(00103033591BA6AF99C5E9FFFF009198) },
+        { be_const_key_weak(Tertiary, -1), be_const_bytes_instance(000019FF3F268C757F56FF00BFA78C13FFFF1929) },
+        { be_const_key_weak(Tiamat, 27), be_const_bytes_instance(0001020E21020523640D875C782BFFC18CF707F9A0C111D0B427FF9AC804D5ECDC27FC87F0C1D5FDFFFFF9FF) },
+        { be_const_key_weak(Fairy_X20Reaf, 31), be_const_bytes_instance(00DC13BBA00CE1DBDBCBF2DFFFFFFFFF) },
+    }))    ) } )) },
+    })),
+    be_str_weak(WLED_Palettes)
+);
+
+/********************************************************************
+** Solidified function: compile_file
+********************************************************************/
+be_local_closure(compile_file,   /* name */
   be_nested_proto(
-    1,                          /* nstack */
+    13,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(time_ms),
-    /* K1   */  be_const_int(0),
+    ( &(const bvalue[25]) {     /* constants */
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(animation_dsl),
+    /* K2   */  be_nested_str_weak(endswith),
+    /* K3   */  be_nested_str_weak(_X2Eanim),
+    /* K4   */  be_nested_str_weak(Input_X20file_X20must_X20have_X20_X2Eanim_X20extension_X3A_X20_X25s),
+    /* K5   */  be_nested_str_weak(invalid_filename),
+    /* K6   */  be_const_int(0),
+    /* K7   */  be_nested_str_weak(_X2Ebe),
+    /* K8   */  be_nested_str_weak(r),
+    /* K9   */  be_nested_str_weak(Cannot_X20open_X20input_X20file_X3A_X20_X25s),
+    /* K10  */  be_nested_str_weak(io_error),
+    /* K11  */  be_nested_str_weak(read),
+    /* K12  */  be_nested_str_weak(close),
+    /* K13  */  be_nested_str_weak(compile),
+    /* K14  */  be_nested_str_weak(DSL_X20compilation_X20failed_X20for_X3A_X20_X25s),
+    /* K15  */  be_nested_str_weak(dsl_compilation_error),
+    /* K16  */  be_nested_str_weak(_X23_X20Generated_X20Berry_X20code_X20from_X20Animation_X20DSL_X0A),
+    /* K17  */  be_nested_str_weak(_X23_X20Source_X3A_X20_X25s_X0A),
+    /* K18  */  be_nested_str_weak(_X23_X20Generated_X20automatically_X20by_X20animation_dsl_X2Ecompile_file_X28_X29_X0A),
+    /* K19  */  be_nested_str_weak(_X23_X20_X0A),
+    /* K20  */  be_nested_str_weak(_X23_X20Do_X20not_X20edit_X20manually_X20_X2D_X20changes_X20will_X20be_X20overwritten_X0A),
+    /* K21  */  be_nested_str_weak(_X0A),
+    /* K22  */  be_nested_str_weak(w),
+    /* K23  */  be_nested_str_weak(Cannot_X20create_X20output_X20file_X3A_X20_X25s),
+    /* K24  */  be_nested_str_weak(write),
     }),
-    be_str_weak(init),
+    be_str_weak(compile_file),
     &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x90020101,  //  0000  SETMBR	R0	K0	K1
-      0x80000000,  //  0001  RET	0
+    ( &(const binstruction[71]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0xA40A0200,  //  0001  IMPORT	R2	K1
+      0x8C0C0302,  //  0002  GETMET	R3	R1	K2
+      0x5C140000,  //  0003  MOVE	R5	R0
+      0x58180003,  //  0004  LDCONST	R6	K3
+      0x7C0C0600,  //  0005  CALL	R3	3
+      0x740E0004,  //  0006  JMPT	R3	#000C
+      0x600C0018,  //  0007  GETGBL	R3	G24
+      0x58100004,  //  0008  LDCONST	R4	K4
+      0x5C140000,  //  0009  MOVE	R5	R0
+      0x7C0C0400,  //  000A  CALL	R3	2
+      0xB0060A03,  //  000B  RAISE	1	K5	R3
+      0x540DFFF9,  //  000C  LDINT	R3	-6
+      0x400E0C03,  //  000D  CONNECT	R3	K6	R3
+      0x940C0003,  //  000E  GETIDX	R3	R0	R3
+      0x00100707,  //  000F  ADD	R4	R3	K7
+      0x60140011,  //  0010  GETGBL	R5	G17
+      0x5C180000,  //  0011  MOVE	R6	R0
+      0x581C0008,  //  0012  LDCONST	R7	K8
+      0x7C140400,  //  0013  CALL	R5	2
+      0x4C180000,  //  0014  LDNIL	R6
+      0x1C180A06,  //  0015  EQ	R6	R5	R6
+      0x781A0004,  //  0016  JMPF	R6	#001C
+      0x60180018,  //  0017  GETGBL	R6	G24
+      0x581C0009,  //  0018  LDCONST	R7	K9
+      0x5C200000,  //  0019  MOVE	R8	R0
+      0x7C180400,  //  001A  CALL	R6	2
+      0xB0061406,  //  001B  RAISE	1	K10	R6
+      0x8C180B0B,  //  001C  GETMET	R6	R5	K11
+      0x7C180200,  //  001D  CALL	R6	1
+      0x8C1C0B0C,  //  001E  GETMET	R7	R5	K12
+      0x7C1C0200,  //  001F  CALL	R7	1
+      0x8C1C050D,  //  0020  GETMET	R7	R2	K13
+      0x5C240C00,  //  0021  MOVE	R9	R6
+      0x7C1C0400,  //  0022  CALL	R7	2
+      0x4C200000,  //  0023  LDNIL	R8
+      0x1C200E08,  //  0024  EQ	R8	R7	R8
+      0x78220004,  //  0025  JMPF	R8	#002B
+      0x60200018,  //  0026  GETGBL	R8	G24
+      0x5824000E,  //  0027  LDCONST	R9	K14
+      0x5C280000,  //  0028  MOVE	R10	R0
+      0x7C200400,  //  0029  CALL	R8	2
+      0xB0061E08,  //  002A  RAISE	1	K15	R8
+      0x60200018,  //  002B  GETGBL	R8	G24
+      0x58240011,  //  002C  LDCONST	R9	K17
+      0x5C280000,  //  002D  MOVE	R10	R0
+      0x7C200400,  //  002E  CALL	R8	2
+      0x00222008,  //  002F  ADD	R8	K16	R8
+      0x00201112,  //  0030  ADD	R8	R8	K18
+      0x00201113,  //  0031  ADD	R8	R8	K19
+      0x00201114,  //  0032  ADD	R8	R8	K20
+      0x00201115,  //  0033  ADD	R8	R8	K21
+      0x60240011,  //  0034  GETGBL	R9	G17
+      0x5C280800,  //  0035  MOVE	R10	R4
+      0x582C0016,  //  0036  LDCONST	R11	K22
+      0x7C240400,  //  0037  CALL	R9	2
+      0x4C280000,  //  0038  LDNIL	R10
+      0x1C28120A,  //  0039  EQ	R10	R9	R10
+      0x782A0004,  //  003A  JMPF	R10	#0040
+      0x60280018,  //  003B  GETGBL	R10	G24
+      0x582C0017,  //  003C  LDCONST	R11	K23
+      0x5C300800,  //  003D  MOVE	R12	R4
+      0x7C280400,  //  003E  CALL	R10	2
+      0xB006140A,  //  003F  RAISE	1	K10	R10
+      0x8C281318,  //  0040  GETMET	R10	R9	K24
+      0x00301007,  //  0041  ADD	R12	R8	R7
+      0x7C280400,  //  0042  CALL	R10	2
+      0x8C28130C,  //  0043  GETMET	R10	R9	K12
+      0x7C280200,  //  0044  CALL	R10	1
+      0x50280200,  //  0045  LDBOOL	R10	1	0
+      0x80041400,  //  0046  RET	1	R10
     })
   )
 );
@@ -2268,44 +2435,51 @@ be_local_closure(class_MockEngine_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_strip_length
+** Solidified function: is_keyword
 ********************************************************************/
-be_local_closure(class_MockEngine_get_strip_length,   /* name */
+be_local_closure(is_keyword,   /* name */
   be_nested_proto(
-    2,                          /* nstack */
+    5,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(get_strip_length),
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(animation_dsl),
+    /* K1   */  be_nested_str_weak(Token),
+    /* K2   */  be_nested_str_weak(keywords),
+    /* K3   */  be_nested_str_weak(stop_iteration),
+    }),
+    be_str_weak(is_keyword),
     &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x5406001D,  //  0000  LDINT	R1	30
-      0x80040200,  //  0001  RET	1	R1
+    ( &(const binstruction[19]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x60080010,  //  0001  GETGBL	R2	G16
+      0x880C0301,  //  0002  GETMBR	R3	R1	K1
+      0x880C0702,  //  0003  GETMBR	R3	R3	K2
+      0x7C080200,  //  0004  CALL	R2	1
+      0xA8020007,  //  0005  EXBLK	0	#000E
+      0x5C0C0400,  //  0006  MOVE	R3	R2
+      0x7C0C0000,  //  0007  CALL	R3	0
+      0x1C100003,  //  0008  EQ	R4	R0	R3
+      0x78120002,  //  0009  JMPF	R4	#000D
+      0x50100200,  //  000A  LDBOOL	R4	1	0
+      0xA8040001,  //  000B  EXBLK	1	1
+      0x80040800,  //  000C  RET	1	R4
+      0x7001FFF7,  //  000D  JMP		#0006
+      0x58080003,  //  000E  LDCONST	R2	K3
+      0xAC080200,  //  000F  CATCH	R2	1	0
+      0xB0080000,  //  0010  RAISE	2	R0	R0
+      0x50080000,  //  0011  LDBOOL	R2	0	0
+      0x80040400,  //  0012  RET	1	R2
     })
   )
 );
 /*******************************************************************/
 
-
-/********************************************************************
-** Solidified class: MockEngine
-********************************************************************/
-be_local_class(MockEngine,
-    1,
-    NULL,
-    be_nested_map(3,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(time_ms, 1), be_const_var(0) },
-        { be_const_key_weak(init, -1), be_const_closure(class_MockEngine_init_closure) },
-        { be_const_key_weak(get_strip_length, -1), be_const_closure(class_MockEngine_get_strip_length_closure) },
-    })),
-    be_str_weak(MockEngine)
-);
 
 /********************************************************************
 ** Solidified function: compile_dsl_source
@@ -3542,53 +3716,6 @@ be_local_class(SymbolTable,
     })),
     be_str_weak(SymbolTable)
 );
-
-/********************************************************************
-** Solidified function: is_keyword
-********************************************************************/
-be_local_closure(is_keyword,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(animation_dsl),
-    /* K1   */  be_nested_str_weak(Token),
-    /* K2   */  be_nested_str_weak(keywords),
-    /* K3   */  be_nested_str_weak(stop_iteration),
-    }),
-    be_str_weak(is_keyword),
-    &be_const_str_solidified,
-    ( &(const binstruction[19]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x60080010,  //  0001  GETGBL	R2	G16
-      0x880C0301,  //  0002  GETMBR	R3	R1	K1
-      0x880C0702,  //  0003  GETMBR	R3	R3	K2
-      0x7C080200,  //  0004  CALL	R2	1
-      0xA8020007,  //  0005  EXBLK	0	#000E
-      0x5C0C0400,  //  0006  MOVE	R3	R2
-      0x7C0C0000,  //  0007  CALL	R3	0
-      0x1C100003,  //  0008  EQ	R4	R0	R3
-      0x78120002,  //  0009  JMPF	R4	#000D
-      0x50100200,  //  000A  LDBOOL	R4	1	0
-      0xA8040001,  //  000B  EXBLK	1	1
-      0x80040800,  //  000C  RET	1	R4
-      0x7001FFF7,  //  000D  JMP		#0006
-      0x58080003,  //  000E  LDCONST	R2	K3
-      0xAC080200,  //  000F  CATCH	R2	1	0
-      0xB0080000,  //  0010  RAISE	2	R0	R0
-      0x50080000,  //  0011  LDBOOL	R2	0	0
-      0x80040400,  //  0012  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
 // compact class 'Lexer' ktab size: 109, total: 288 (saved 1432 bytes)
 static const bvalue be_ktab_class_Lexer[109] = {
   /* K0   */  be_nested_str_weak(position),
@@ -5849,125 +5976,75 @@ be_local_closure(load_file,   /* name */
 /*******************************************************************/
 
 
+extern const bclass be_class_MockEngine;
+
 /********************************************************************
-** Solidified function: compile_file
+** Solidified function: init
 ********************************************************************/
-be_local_closure(compile_file,   /* name */
+be_local_closure(class_MockEngine_init,   /* name */
   be_nested_proto(
-    13,                          /* nstack */
+    1,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[25]) {     /* constants */
-    /* K0   */  be_nested_str_weak(string),
-    /* K1   */  be_nested_str_weak(animation_dsl),
-    /* K2   */  be_nested_str_weak(endswith),
-    /* K3   */  be_nested_str_weak(_X2Eanim),
-    /* K4   */  be_nested_str_weak(Input_X20file_X20must_X20have_X20_X2Eanim_X20extension_X3A_X20_X25s),
-    /* K5   */  be_nested_str_weak(invalid_filename),
-    /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_str_weak(_X2Ebe),
-    /* K8   */  be_nested_str_weak(r),
-    /* K9   */  be_nested_str_weak(Cannot_X20open_X20input_X20file_X3A_X20_X25s),
-    /* K10  */  be_nested_str_weak(io_error),
-    /* K11  */  be_nested_str_weak(read),
-    /* K12  */  be_nested_str_weak(close),
-    /* K13  */  be_nested_str_weak(compile),
-    /* K14  */  be_nested_str_weak(DSL_X20compilation_X20failed_X20for_X3A_X20_X25s),
-    /* K15  */  be_nested_str_weak(dsl_compilation_error),
-    /* K16  */  be_nested_str_weak(_X23_X20Generated_X20Berry_X20code_X20from_X20Animation_X20DSL_X0A),
-    /* K17  */  be_nested_str_weak(_X23_X20Source_X3A_X20_X25s_X0A),
-    /* K18  */  be_nested_str_weak(_X23_X20Generated_X20automatically_X20by_X20animation_dsl_X2Ecompile_file_X28_X29_X0A),
-    /* K19  */  be_nested_str_weak(_X23_X20_X0A),
-    /* K20  */  be_nested_str_weak(_X23_X20Do_X20not_X20edit_X20manually_X20_X2D_X20changes_X20will_X20be_X20overwritten_X0A),
-    /* K21  */  be_nested_str_weak(_X0A),
-    /* K22  */  be_nested_str_weak(w),
-    /* K23  */  be_nested_str_weak(Cannot_X20create_X20output_X20file_X3A_X20_X25s),
-    /* K24  */  be_nested_str_weak(write),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(time_ms),
+    /* K1   */  be_const_int(0),
     }),
-    be_str_weak(compile_file),
+    be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[71]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0xA40A0200,  //  0001  IMPORT	R2	K1
-      0x8C0C0302,  //  0002  GETMET	R3	R1	K2
-      0x5C140000,  //  0003  MOVE	R5	R0
-      0x58180003,  //  0004  LDCONST	R6	K3
-      0x7C0C0600,  //  0005  CALL	R3	3
-      0x740E0004,  //  0006  JMPT	R3	#000C
-      0x600C0018,  //  0007  GETGBL	R3	G24
-      0x58100004,  //  0008  LDCONST	R4	K4
-      0x5C140000,  //  0009  MOVE	R5	R0
-      0x7C0C0400,  //  000A  CALL	R3	2
-      0xB0060A03,  //  000B  RAISE	1	K5	R3
-      0x540DFFF9,  //  000C  LDINT	R3	-6
-      0x400E0C03,  //  000D  CONNECT	R3	K6	R3
-      0x940C0003,  //  000E  GETIDX	R3	R0	R3
-      0x00100707,  //  000F  ADD	R4	R3	K7
-      0x60140011,  //  0010  GETGBL	R5	G17
-      0x5C180000,  //  0011  MOVE	R6	R0
-      0x581C0008,  //  0012  LDCONST	R7	K8
-      0x7C140400,  //  0013  CALL	R5	2
-      0x4C180000,  //  0014  LDNIL	R6
-      0x1C180A06,  //  0015  EQ	R6	R5	R6
-      0x781A0004,  //  0016  JMPF	R6	#001C
-      0x60180018,  //  0017  GETGBL	R6	G24
-      0x581C0009,  //  0018  LDCONST	R7	K9
-      0x5C200000,  //  0019  MOVE	R8	R0
-      0x7C180400,  //  001A  CALL	R6	2
-      0xB0061406,  //  001B  RAISE	1	K10	R6
-      0x8C180B0B,  //  001C  GETMET	R6	R5	K11
-      0x7C180200,  //  001D  CALL	R6	1
-      0x8C1C0B0C,  //  001E  GETMET	R7	R5	K12
-      0x7C1C0200,  //  001F  CALL	R7	1
-      0x8C1C050D,  //  0020  GETMET	R7	R2	K13
-      0x5C240C00,  //  0021  MOVE	R9	R6
-      0x7C1C0400,  //  0022  CALL	R7	2
-      0x4C200000,  //  0023  LDNIL	R8
-      0x1C200E08,  //  0024  EQ	R8	R7	R8
-      0x78220004,  //  0025  JMPF	R8	#002B
-      0x60200018,  //  0026  GETGBL	R8	G24
-      0x5824000E,  //  0027  LDCONST	R9	K14
-      0x5C280000,  //  0028  MOVE	R10	R0
-      0x7C200400,  //  0029  CALL	R8	2
-      0xB0061E08,  //  002A  RAISE	1	K15	R8
-      0x60200018,  //  002B  GETGBL	R8	G24
-      0x58240011,  //  002C  LDCONST	R9	K17
-      0x5C280000,  //  002D  MOVE	R10	R0
-      0x7C200400,  //  002E  CALL	R8	2
-      0x00222008,  //  002F  ADD	R8	K16	R8
-      0x00201112,  //  0030  ADD	R8	R8	K18
-      0x00201113,  //  0031  ADD	R8	R8	K19
-      0x00201114,  //  0032  ADD	R8	R8	K20
-      0x00201115,  //  0033  ADD	R8	R8	K21
-      0x60240011,  //  0034  GETGBL	R9	G17
-      0x5C280800,  //  0035  MOVE	R10	R4
-      0x582C0016,  //  0036  LDCONST	R11	K22
-      0x7C240400,  //  0037  CALL	R9	2
-      0x4C280000,  //  0038  LDNIL	R10
-      0x1C28120A,  //  0039  EQ	R10	R9	R10
-      0x782A0004,  //  003A  JMPF	R10	#0040
-      0x60280018,  //  003B  GETGBL	R10	G24
-      0x582C0017,  //  003C  LDCONST	R11	K23
-      0x5C300800,  //  003D  MOVE	R12	R4
-      0x7C280400,  //  003E  CALL	R10	2
-      0xB006140A,  //  003F  RAISE	1	K10	R10
-      0x8C281318,  //  0040  GETMET	R10	R9	K24
-      0x00301007,  //  0041  ADD	R12	R8	R7
-      0x7C280400,  //  0042  CALL	R10	2
-      0x8C28130C,  //  0043  GETMET	R10	R9	K12
-      0x7C280200,  //  0044  CALL	R10	1
-      0x50280200,  //  0045  LDBOOL	R10	1	0
-      0x80041400,  //  0046  RET	1	R10
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020101,  //  0000  SETMBR	R0	K0	K1
+      0x80000000,  //  0001  RET	0
     })
   )
 );
 /*******************************************************************/
 
+
+/********************************************************************
+** Solidified function: get_strip_length
+********************************************************************/
+be_local_closure(class_MockEngine_get_strip_length,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(get_strip_length),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x5406001D,  //  0000  LDINT	R1	30
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified class: MockEngine
+********************************************************************/
+be_local_class(MockEngine,
+    1,
+    NULL,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(time_ms, 1), be_const_var(0) },
+        { be_const_key_weak(init, -1), be_const_closure(class_MockEngine_init_closure) },
+        { be_const_key_weak(get_strip_length, -1), be_const_closure(class_MockEngine_get_strip_length_closure) },
+    })),
+    be_str_weak(MockEngine)
+);
 // ktab too big for class 'SimpleDSLTranspiler' - skipping
 
 extern const bclass be_class_SimpleDSLTranspiler;
@@ -16076,17 +16153,22 @@ be_local_class(AnimationWebUI,
 ********************************************************************/
 be_local_module(animation_dsl,
     "animation_dsl",
-    be_nested_map(17,
+    be_nested_map(18,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(animation_web_ui, -1), be_const_class(be_class_AnimationWebUI) },
-        { be_const_key_weak(MockEngine, 14), be_const_class(be_class_MockEngine) },
-        { be_const_key_weak(compile_dsl, -1), be_const_closure(compile_dsl_closure) },
-        { be_const_key_weak(is_keyword, -1), be_const_closure(is_keyword_closure) },
-        { be_const_key_weak(Token, -1), be_const_class(be_class_Token) },
         { be_const_key_weak(create_lexer, -1), be_const_class(be_class_Lexer) },
+        { be_const_key_weak(animation_web_ui, -1), be_const_class(be_class_AnimationWebUI) },
+        { be_const_key_weak(SimpleDSLTranspiler, -1), be_const_class(be_class_SimpleDSLTranspiler) },
+        { be_const_key_weak(compile_dsl, 8), be_const_closure(compile_dsl_closure) },
+        { be_const_key_weak(Token, -1), be_const_class(be_class_Token) },
+        { be_const_key_weak(VERSION, -1), be_const_int(65536) },
         { be_const_key_weak(compile, -1), be_const_closure(compile_dsl_source_closure) },
-        { be_const_key_weak(compile_file, 9), be_const_closure(compile_file_closure) },
-        { be_const_key_weak(named_colors, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(_symbol_table, 1), be_const_class(be_class_SymbolTable) },
+        { be_const_key_weak(execute, -1), be_const_closure(execute_closure) },
+        { be_const_key_weak(MockEngine, -1), be_const_class(be_class_MockEngine) },
+        { be_const_key_weak(wled_palettes, 3), be_const_class(be_class_WLED_Palettes) },
+        { be_const_key_weak(compile_file, 16), be_const_closure(compile_file_closure) },
+        { be_const_key_weak(is_color_name, -1), be_const_closure(is_color_name_closure) },
+        { be_const_key_weak(named_colors, 5), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(37,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(brown, -1), be_const_int(-5952982) },
@@ -16128,13 +16210,9 @@ be_local_module(animation_dsl,
         { be_const_key_weak(maroon, -1), be_const_int(-8388608) },
     }))    ) } )) },
         { be_const_key_weak(load_file, -1), be_const_closure(load_file_closure) },
-        { be_const_key_weak(_symbol_entry, 6), be_const_class(be_class_SymbolEntry) },
-        { be_const_key_weak(is_color_name, 7), be_const_closure(is_color_name_closure) },
-        { be_const_key_weak(execute, 0), be_const_closure(execute_closure) },
         { be_const_key_weak(init, -1), be_const_closure(animation_dsl_init_closure) },
-        { be_const_key_weak(VERSION, -1), be_const_int(65536) },
-        { be_const_key_weak(_symbol_table, 13), be_const_class(be_class_SymbolTable) },
-        { be_const_key_weak(SimpleDSLTranspiler, -1), be_const_class(be_class_SimpleDSLTranspiler) },
+        { be_const_key_weak(is_keyword, -1), be_const_closure(is_keyword_closure) },
+        { be_const_key_weak(_symbol_entry, 12), be_const_class(be_class_SymbolEntry) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(animation_dsl);

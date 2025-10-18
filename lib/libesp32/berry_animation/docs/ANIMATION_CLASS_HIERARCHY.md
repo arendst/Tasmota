@@ -281,7 +281,7 @@ Generates colors from predefined palettes with smooth transitions and profession
 |-----------|------|---------|-------------|-------------|
 | `palette` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
-| `transition_type` | int | 1 | enum: [0,1] | 0=linear, 1=sine/smooth |
+| `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
 | `brightness` | int | 255 | 0-255 | Overall brightness scaling |
 | `range_min` | int | 0 | - | Minimum value for value-based mapping |
 | `range_max` | int | 100 | - | Maximum value for value-based mapping |
@@ -300,27 +300,26 @@ Generates colors from predefined palettes with smooth transitions and profession
 #### Usage Examples
 
 ```berry
-# Rainbow palette with smooth transitions
+# Rainbow palette with smooth ease-in/ease-out transitions
 color rainbow_colors = rich_palette(
   palette=PALETTE_RAINBOW,
   cycle_period=5s,
-  transition_type=1,
+  transition_type=SINE,
   brightness=255
 )
 
-# Fire effect with linear transitions
+# Fire effect with linear (constant speed) transitions
 color fire_colors = rich_palette(
   palette=PALETTE_FIRE,
   cycle_period=3s,
-  transition_type=0,
+  transition_type=LINEAR,
   brightness=200
 )
 
-# Ocean waves with smooth, slow transitions
+# Ocean waves with default linear transitions
 color ocean_colors = rich_palette(
   palette=PALETTE_OCEAN,
   cycle_period=8s,
-  transition_type=1,
   brightness=180
 )
 ```
@@ -789,7 +788,7 @@ Creates smooth color transitions using rich palette data with direct parameter a
 |-----------|------|---------|-------------|-------------|
 | `palette` | bytes | rainbow palette | - | Palette bytes or predefined palette |
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
-| `transition_type` | int | 1 | enum: [0,1] | 0=linear, 1=sine |
+| `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
 | `brightness` | int | 255 | 0-255 | Overall brightness scaling |
 | `range_min` | int | 0 | - | Minimum value for value-based mapping |
 | `range_max` | int | 100 | - | Maximum value for value-based mapping |

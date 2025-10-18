@@ -56,6 +56,9 @@ register_to_dsl(dsl_named_colors)
 import "webui/animation_web_ui.be" as animation_web_ui
 register_to_dsl(animation_web_ui)
 
+import "dsl/all_wled_palettes" as all_wled_palettes
+register_to_dsl(all_wled_palettes)
+
 # Main DSL compilation function
 # Compiles DSL source code to Berry code
 #
