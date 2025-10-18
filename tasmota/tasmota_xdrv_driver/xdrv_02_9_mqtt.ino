@@ -29,9 +29,11 @@
 #endif
 WiFiClient EspClient;                     // Wifi Client - non-TLS
 
-#ifdef USE_MQTT_AZURE_IOT
+#if defined(USE_MQTT_AZURE_IOT) || defined(MQTT_TLS_ENABLED)
 #undef  MQTT_PORT
 #define MQTT_PORT         8883
+#endif
+#ifdef USE_MQTT_AZURE_IOT
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
   #include <ESP8266HTTPClient.h>
   // dedicated tlsHttpsClient for DPS as the 'tlsClient' above causes error '-1' in httpsClient after it is associated with PubSub.  It cost ~5K of heap
