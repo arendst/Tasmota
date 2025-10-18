@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Refactored library UDisplay (#24007)
+- LVGL library from v9.3.0 to v9.4.0
 
 ### Fixed
 - TLS fix ECDSA and add `SetOption165 1` to enable ECDSA in addition to RSA (#24000)

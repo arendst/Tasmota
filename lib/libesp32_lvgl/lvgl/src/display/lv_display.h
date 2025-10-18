@@ -60,22 +60,22 @@ typedef enum {
 } lv_display_render_mode_t;
 
 typedef enum {
-    LV_SCR_LOAD_ANIM_NONE,
-    LV_SCR_LOAD_ANIM_OVER_LEFT,
-    LV_SCR_LOAD_ANIM_OVER_RIGHT,
-    LV_SCR_LOAD_ANIM_OVER_TOP,
-    LV_SCR_LOAD_ANIM_OVER_BOTTOM,
-    LV_SCR_LOAD_ANIM_MOVE_LEFT,
-    LV_SCR_LOAD_ANIM_MOVE_RIGHT,
-    LV_SCR_LOAD_ANIM_MOVE_TOP,
-    LV_SCR_LOAD_ANIM_MOVE_BOTTOM,
-    LV_SCR_LOAD_ANIM_FADE_IN,
-    LV_SCR_LOAD_ANIM_FADE_ON = LV_SCR_LOAD_ANIM_FADE_IN, /*For backward compatibility*/
-    LV_SCR_LOAD_ANIM_FADE_OUT,
-    LV_SCR_LOAD_ANIM_OUT_LEFT,
-    LV_SCR_LOAD_ANIM_OUT_RIGHT,
-    LV_SCR_LOAD_ANIM_OUT_TOP,
-    LV_SCR_LOAD_ANIM_OUT_BOTTOM,
+    LV_SCREEN_LOAD_ANIM_NONE,
+    LV_SCREEN_LOAD_ANIM_OVER_LEFT,
+    LV_SCREEN_LOAD_ANIM_OVER_RIGHT,
+    LV_SCREEN_LOAD_ANIM_OVER_TOP,
+    LV_SCREEN_LOAD_ANIM_OVER_BOTTOM,
+    LV_SCREEN_LOAD_ANIM_MOVE_LEFT,
+    LV_SCREEN_LOAD_ANIM_MOVE_RIGHT,
+    LV_SCREEN_LOAD_ANIM_MOVE_TOP,
+    LV_SCREEN_LOAD_ANIM_MOVE_BOTTOM,
+    LV_SCREEN_LOAD_ANIM_FADE_IN,
+    LV_SCREEN_LOAD_ANIM_FADE_ON = LV_SCREEN_LOAD_ANIM_FADE_IN, /*For backward compatibility*/
+    LV_SCREEN_LOAD_ANIM_FADE_OUT,
+    LV_SCREEN_LOAD_ANIM_OUT_LEFT,
+    LV_SCREEN_LOAD_ANIM_OUT_RIGHT,
+    LV_SCREEN_LOAD_ANIM_OUT_TOP,
+    LV_SCREEN_LOAD_ANIM_OUT_BOTTOM,
 } lv_screen_load_anim_t;
 
 typedef void (*lv_display_flush_cb_t)(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map);
@@ -358,6 +358,7 @@ void lv_display_set_tile_cnt(lv_display_t * disp, uint32_t tile_cnt);
 uint32_t lv_display_get_tile_cnt(lv_display_t * disp);
 
 /**
+ * Disabling anti-aliasing is not supported since v9. This function will be removed.
  * Enable anti-aliasing for the render engine
  * @param disp      pointer to a display
  * @param en        true/false
@@ -409,6 +410,13 @@ lv_obj_t * lv_display_get_screen_active(lv_display_t * disp);
 lv_obj_t * lv_display_get_screen_prev(lv_display_t * disp);
 
 /**
+ * Return the screen that is currently being loaded by the display
+ * @param disp      pointer to a display object (NULL to use the default screen)
+ * @return          pointer to the screen being loaded or NULL if no screen is currently being loaded
+ */
+lv_obj_t * lv_display_get_screen_loading(lv_display_t * disp);
+
+/**
  * Return the top layer. The top layer is the same on all screens and it is above the normal screen layer.
  * @param disp      pointer to display which top layer should be get. (NULL to use the default screen)
  * @return          pointer to the top layer object
@@ -430,6 +438,20 @@ lv_obj_t * lv_display_get_layer_sys(lv_display_t * disp);
  */
 lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp);
 
+
+#if LV_USE_OBJ_NAME
+
+/**
+ * Get screen by its name on a display. The name should be set by
+ * `lv_obj_set_name()` or `lv_obj_set_name_static()`.
+ * @param disp          pointer to a display or NULL to use default display
+ * @param screen_name   name of the screen to get
+ * @return              pointer to the screen, or NULL if not found.
+ */
+lv_obj_t * lv_display_get_screen_by_name(const lv_display_t * disp, const char * screen_name);
+
+#endif /*LV_USE_OBJ_NAME*/
+
 /**
  * Load a screen on the default display
  * @param scr       pointer to a screen
@@ -439,7 +461,7 @@ void lv_screen_load(struct _lv_obj_t * scr);
 /**
  * Switch screen with animation
  * @param scr       pointer to the new screen to load
- * @param anim_type type of the animation from `lv_screen_load_anim_t`, e.g. `LV_SCR_LOAD_ANIM_MOVE_LEFT`
+ * @param anim_type type of the animation from `lv_screen_load_anim_t`, e.g. `LV_SCREEN_LOAD_ANIM_MOVE_LEFT`
  * @param time      time of the animation
  * @param delay     delay before the transition
  * @param auto_del  true: automatically delete the old screen

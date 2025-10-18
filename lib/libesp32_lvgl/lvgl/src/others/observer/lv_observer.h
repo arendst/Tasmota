@@ -15,7 +15,7 @@ extern "C" {
  *********************/
 
 #include "../../core/lv_obj.h"
-#if LV_USE_OBSERVER
+#if 1 // LV_USE_OBSERVER
 
 /*********************
  *      DEFINES
@@ -32,10 +32,11 @@ typedef enum {
     LV_SUBJECT_TYPE_INVALID =   0,   /**< indicates Subject not initialized yet */
     LV_SUBJECT_TYPE_NONE =      1,   /**< a null value like None or NILt */
     LV_SUBJECT_TYPE_INT =       2,   /**< an int32_t */
-    LV_SUBJECT_TYPE_POINTER =   3,   /**< a void pointer */
-    LV_SUBJECT_TYPE_COLOR   =   4,   /**< an lv_color_t */
-    LV_SUBJECT_TYPE_GROUP  =    5,   /**< an array of Subjects */
-    LV_SUBJECT_TYPE_STRING  =   6,   /**< a char pointer */
+    LV_SUBJECT_TYPE_FLOAT =     3,   /**< a float, requires `LV_USE_FLOAT 1` */
+    LV_SUBJECT_TYPE_POINTER =   4,   /**< a void pointer */
+    LV_SUBJECT_TYPE_COLOR   =   5,   /**< an lv_color_t */
+    LV_SUBJECT_TYPE_GROUP  =    6,   /**< an array of Subjects */
+    LV_SUBJECT_TYPE_STRING  =   7,   /**< a char pointer */
 } lv_subject_type_t;
 
 /**
@@ -45,6 +46,9 @@ typedef union {
     int32_t num;           /**< Integer number (opacity, enums, booleans or "normal" numbers) */
     const void * pointer;  /**< Constant pointer  (string buffer, format string, font, cone text, etc.) */
     lv_color_t color;      /**< Color */
+#if LV_USE_FLOAT
+    float float_v;         /**< Floating point value*/
+#endif
 } lv_subject_value_t;
 
 /**
@@ -54,10 +58,12 @@ typedef struct {
     lv_ll_t subs_ll;                     /**< Subscribers */
     lv_subject_value_t value;            /**< Current value */
     lv_subject_value_t prev_value;       /**< Previous value */
+    lv_subject_value_t min_value;        /**< Minimum value for min. int or float*/
+    lv_subject_value_t max_value;        /**< Maximum value for max. int or float*/
     void * user_data;                    /**< Additional parameter, can be used freely by user */
     uint32_t type                 :  4;  /**< One of the LV_SUBJECT_TYPE_... values */
     uint32_t size                 : 24;  /**< String buffer size or group length */
-    uint32_t notify_restart_query :  1;  /**< If an Observer was deleted during notifcation,
+    uint32_t notify_restart_query :  1;  /**< If an Observer was deleted during notification,
                                           * start notifying from the beginning. */
 } lv_subject_t;
 
@@ -99,6 +105,67 @@ int32_t lv_subject_get_int(lv_subject_t * subject);
  * @return          current value
  */
 int32_t lv_subject_get_previous_int(lv_subject_t * subject);
+
+
+/**
+ * Set a minimum value for an integer subject
+ * @param subject   pointer to Subject
+ * @param min_value the minimum value
+ */
+void lv_subject_set_min_value_int(lv_subject_t * subject, int32_t min_value);
+
+/**
+ * Set a maximum value for an integer subject
+ * @param subject   pointer to Subject
+ * @param max_value the maximum value
+ */
+void lv_subject_set_max_value_int(lv_subject_t * subject, int32_t max_value);
+
+#if LV_USE_FLOAT
+
+/**
+ * Initialize an float-type Subject.
+ * @param subject   pointer to Subject
+ * @param value     initial value
+ */
+void lv_subject_init_float(lv_subject_t * subject, float value);
+
+/**
+ * Set value of an float Subject and notify Observers.
+ * @param subject   pointer to Subject
+ * @param value     new value
+ */
+void lv_subject_set_float(lv_subject_t * subject, float value);
+
+/**
+ * Get current value of an float Subject.
+ * @param subject   pointer to Subject
+ * @return          current value
+ */
+float lv_subject_get_float(lv_subject_t * subject);
+
+/**
+ * Get previous value of an float Subject.
+ * @param subject   pointer to Subject
+ * @return          current value
+ */
+float lv_subject_get_previous_float(lv_subject_t * subject);
+
+/**
+ * Set a minimum value for a float subject
+ * @param subject   pointer to Subject
+ * @param min_value the minimum value
+ */
+void lv_subject_set_min_value_float(lv_subject_t * subject, float min_value);
+
+/**
+ * Set a maximum value for a float subject
+ * @param subject   pointer to Subject
+ * @param max_value the maximum value
+ */
+void lv_subject_set_max_value_float(lv_subject_t * subject, float max_value);
+
+#endif /*LV_USE_FLOAT*/
 
 /**
  * Initialize a string-type Subject.
@@ -239,7 +306,7 @@ lv_observer_t * lv_subject_add_observer(lv_subject_t * subject, lv_observer_cb_t
  * When the Widget is deleted, Observer will be unsubscribed from Subject automatically.
  * @param subject       pointer to Subject
  * @param observer_cb   notification callback
- * @param obj           pinter to Widget
+ * @param obj           pointer to Widget
  * @param user_data     optional user data
  * @return              pointer to newly-created Observer
  * @note                Do not call `lv_observer_remove()` on Observers created this way.
@@ -305,6 +372,94 @@ void * lv_observer_get_user_data(const lv_observer_t * observer);
  * @param subject       pointer to Subject
  */
 void lv_subject_notify(lv_subject_t * subject);
+
+/**
+ * Add an event handler to increment (or decrement) the value of a subject on a trigger.
+ * @param obj       pointer to a widget
+ * @param subject   pointer to a subject to change
+ * @param trigger   the trigger on which the subject should be changed
+ * @param step      value to add on trigger
+ *                  if the minimum value is reached, the maximum value will be set on rollover.
+ */
+lv_subject_increment_dsc_t * lv_obj_add_subject_increment_event(lv_obj_t * obj, lv_subject_t * subject,
+                                                                lv_event_code_t trigger, int32_t step);
+
+/**
+ * Set the minimum subject value to set by the event
+ * @param obj           pointer to the Widget to which the event is attached
+ * @param dsc           pointer to the descriptor returned by `lv_obj_add_subject_increment_event()`
+ * @param min_value     the minimum value to set
+ */
+void lv_obj_set_subject_increment_event_min_value(lv_obj_t * obj, lv_subject_increment_dsc_t * dsc, int32_t min_value);
+
+/**
+ * Set the maximum subject value to set by the event
+ * @param obj           pointer to the Widget to which the event is attached
+ * @param dsc           pointer to the descriptor returned by `lv_obj_add_subject_increment_event()`
+ * @param max_value     the maximum value to set
+ */
+void lv_obj_set_subject_increment_event_max_value(lv_obj_t * obj, lv_subject_increment_dsc_t * dsc, int32_t max_value);
+
+/**
+ * Set what to do when the min/max value is crossed.
+ * @param obj           pointer to the Widget to which the event is attached
+ * @param dsc           pointer to the descriptor returned by `lv_obj_add_subject_increment_event()`
+ * @param rollover      false: stop at the min/max value; true: jump to the other end
+ * @note                the subject also can have min/max values and always the smaller range will be considered
+ */
+void lv_obj_set_subject_increment_event_rollover(lv_obj_t * obj, lv_subject_increment_dsc_t * dsc, bool rollover);
+
+/**
+* Toggle the value of an integer subject on an event. If it was != 0 it will be 0.
+* If it was 0, it will be 1.
+* @param obj       pointer to a widget
+* @param subject   pointer to a subject to toggle
+* @param trigger   the trigger on which the subject should be changed
+*/
+void lv_obj_add_subject_toggle_event(lv_obj_t * obj, lv_subject_t * subject, lv_event_code_t trigger);
+
+/**
+ * Set the value of an integer subject.
+ * @param obj       pointer to a widget
+ * @param subject   pointer to a subject to change
+ * @param trigger   the trigger on which the subject should be changed
+ * @param value     the value to set
+ */
+void lv_obj_add_subject_set_int_event(lv_obj_t * obj, lv_subject_t * subject, lv_event_code_t trigger, int32_t value);
+
+
+#if LV_USE_FLOAT
+/**
+ * Set the value of a float subject.
+ * @param obj       pointer to a widget
+ * @param subject   pointer to a subject to change
+ * @param trigger   the trigger on which the subject should be changed
+ * @param value     the value to set
+ */
+void lv_obj_add_subject_set_float_event(lv_obj_t * obj, lv_subject_t * subject, lv_event_code_t trigger, float value);
+#endif
+
+/**
+ * Set the value of a string subject.
+ * @param obj       pointer to a widget
+ * @param subject   pointer to a subject to change
+ * @param trigger   the trigger on which the subject should be changed
+ * @param value     the value to set
+ */
+void lv_obj_add_subject_set_string_event(lv_obj_t * obj, lv_subject_t * subject, lv_event_code_t trigger,
+                                         const char * value);
+
+/**
+ * Disable a style if a subject's value is not equal to a reference value
+ * @param obj           pointer to Widget
+ * @param style         pointer to a style
+ * @param selector      pointer to a selector
+ * @param subject       pointer to Subject
+ * @param ref_value     reference value to compare Subject's value with
+ * @return              pointer to newly-created Observer
+ */
+lv_observer_t * lv_obj_bind_style(lv_obj_t * obj, const lv_style_t * style, lv_style_selector_t selector,
+                                  lv_subject_t * subject, int32_t ref_value);
 
 /**
  * Set Widget's flag(s) if an integer Subject's value is equal to a reference value, clear flag otherwise.
@@ -439,60 +594,6 @@ lv_observer_t * lv_obj_bind_state_if_le(lv_obj_t * obj, lv_subject_t * subject, 
  */
 lv_observer_t * lv_obj_bind_checked(lv_obj_t * obj, lv_subject_t * subject);
 
-#if LV_USE_LABEL
-/**
- * Bind an integer, string, or pointer Subject to a Label.
- * @param obj       pointer to Label
- * @param subject   pointer to Subject
- * @param fmt       optional printf-like format string with 1 format specifier (e.g. "%d °C")
- *                  or NULL to bind to the value directly.
- * @return          pointer to newly-created Observer
- * @note            `fmt == NULL` can be used only with string and pointer Subjects.
- * @note            If Subject is a pointer and `fmt == NULL`, pointer must point
- *                  to a `\0` terminated string.
- */
-lv_observer_t * lv_label_bind_text(lv_obj_t * obj, lv_subject_t * subject, const char * fmt);
-#endif
-
-#if LV_USE_ARC
-/**
- * Bind an integer subject to an Arc's value.
- * @param obj       pointer to Arc
- * @param subject   pointer to Subject
- * @return          pointer to newly-created Observer
- */
-lv_observer_t * lv_arc_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
-
-#if LV_USE_SLIDER
-/**
- * Bind an integer Subject to a Slider's value.
- * @param obj       pointer to Slider
- * @param subject   pointer to Subject
- * @return          pointer to newly-created Observer
- */
-lv_observer_t * lv_slider_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
-
-#if LV_USE_ROLLER
-/**
- * Bind an integer Subject to a Roller's value.
- * @param obj       pointer to Roller
- * @param subject   pointer to Subject
- * @return          pointer to newly-created Observer
- */
-lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
-
-#if LV_USE_DROPDOWN
-/**
- * Bind an integer Subject to a Dropdown's value.
- * @param obj       pointer to Dropdown
- * @param subject   pointer to Subject
- * @return          pointer to newly-created Observer
- */
-lv_observer_t * lv_dropdown_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
 
 /**********************
  *      MACROS

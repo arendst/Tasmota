@@ -7,7 +7,7 @@
  *      INCLUDES
  *********************/
 #include "lv_xml_bar_parser.h"
-#if LV_USE_XML
+#if LV_USE_XML && LV_USE_BAR
 
 #include "../../../lvgl.h"
 #include "../../../lvgl_private.h"
@@ -23,7 +23,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_bar_orientation_t orentation_text_to_enum_value(const char * txt);
+static lv_bar_orientation_t orientation_text_to_enum_value(const char * txt);
 static lv_bar_mode_t mode_text_to_enum_value(const char * txt);
 
 /**********************
@@ -56,30 +56,29 @@ void lv_xml_bar_apply(lv_xml_parser_state_t * state, const char ** attrs)
         const char * value = attrs[i + 1];
 
         if(lv_streq("value", name)) {
-            char buf[64];
-            lv_strlcpy(buf, value, sizeof(buf));
-            char * buf_p = buf;
-            int32_t v1 = lv_xml_atoi(lv_xml_split_str(&buf_p, ' '));
-            bool v2 = lv_xml_to_bool(buf_p);
-            lv_bar_set_value(item, v1, v2);
+            int32_t v = lv_xml_atoi(value);
+            const char * anim_str = lv_xml_get_value_of(attrs, "value-animated");
+            bool anim = anim_str ? lv_xml_to_bool(anim_str) : false;
+            lv_bar_set_value(item, v, anim);
         }
-        if(lv_streq("start_value", name)) {
-            char buf[64];
-            lv_strlcpy(buf, value, sizeof(buf));
-            char * buf_p = buf;
-            int32_t v1 = lv_xml_atoi(lv_xml_split_str(&buf_p, ' '));
-            bool v2 = lv_xml_to_bool(buf_p);
-            lv_bar_set_start_value(item, v1, v2);
+        else if(lv_streq("start_value", name)) {
+            int32_t v = lv_xml_atoi(value);
+            const char * anim_str = lv_xml_get_value_of(attrs, "start_value-animated");
+            bool anim = anim_str ? lv_xml_to_bool(anim_str) : false;
+            lv_bar_set_start_value(item, v, anim);
         }
-        if(lv_streq("orientation", name)) lv_bar_set_orientation(item, orentation_text_to_enum_value(value));
-        if(lv_streq("mode", name)) lv_bar_set_mode(item, mode_text_to_enum_value(value));
-        if(lv_streq("range", name)) {
-            char buf[64];
-            lv_strlcpy(buf, value, sizeof(buf));
-            char * buf_p = buf;
-            int32_t v1 = lv_xml_atoi(lv_xml_split_str(&buf_p, ' '));
-            int32_t v2 = lv_xml_atoi(buf_p);
-            lv_bar_set_range(item, v1, v2);
+        else if(lv_streq("min_value", name)) lv_bar_set_min_value(item, lv_xml_atoi(value));
+        else if(lv_streq("max_value", name)) lv_bar_set_max_value(item, lv_xml_atoi(value));
+        else if(lv_streq("orientation", name)) lv_bar_set_orientation(item, orientation_text_to_enum_value(value));
+        else if(lv_streq("mode", name)) lv_bar_set_mode(item, mode_text_to_enum_value(value));
+        else if(lv_streq("bind_value", name)) {
+            lv_subject_t * subject = lv_xml_get_subject(&state->scope, value);
+            if(subject) {
+                lv_bar_bind_value(item, subject);
+            }
+            else {
+                LV_LOG_WARN("Subject \"%s\" doesn't exist in bar bind_value", value);
+            }
         }
     }
 }
@@ -88,7 +87,7 @@ void lv_xml_bar_apply(lv_xml_parser_state_t * state, const char ** attrs)
  *   STATIC FUNCTIONS
  **********************/
 
-static lv_bar_orientation_t orentation_text_to_enum_value(const char * txt)
+static lv_bar_orientation_t orientation_text_to_enum_value(const char * txt)
 {
     if(lv_streq("auto", txt)) return LV_BAR_ORIENTATION_AUTO;
     if(lv_streq("horizontal", txt)) return LV_BAR_ORIENTATION_HORIZONTAL;

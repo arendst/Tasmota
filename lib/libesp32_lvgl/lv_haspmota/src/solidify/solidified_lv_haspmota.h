@@ -12000,7 +12000,7 @@ static const bvalue be_ktab_class_lvh_page[45] = {
   /* K39  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22in_X22_X7D_X7D),
   /* K40  */  be_nested_str_weak(screen_load),
   /* K41  */  be_nested_str_weak(show_anim),
-  /* K42  */  be_nested_str_weak(SCR_LOAD_ANIM_NONE),
+  /* K42  */  be_nested_str_weak(SCREEN_LOAD_ANIM_NONE),
   /* K43  */  be_nested_str_weak(screen_load_anim),
   /* K44  */  be_nested_str_weak(_remove_page),
 };

@@ -57,6 +57,9 @@ class LVGLPreprocessor:
             r"^lv_obj_get_property",
             r"^lv_win_",
             r"^lv_obj.*name",             # we don't enable #if LV_USE_OBJ_NAME
+            r".*_bind_.*",                # 9.4.0 remove observer methods
+            r".*_get_.*_by_name",         # 9.4.0
+            r".*_translation_",           # 9.4.0
         ]
         
         # Enum exclusion patterns
@@ -65,6 +68,7 @@ class LVGLPreprocessor:
             "LV_TASK_PRIO_", "LV_THEME_", "LV_LRU_", "LV_VECTOR_",
             "LV_KEYBOARD_MODE_TEXT_ARABIC", "LV_DRAW_TASK_TYPE_3D", 
             "LV_DRAW_TASK_TYPE_VECTOR",
+            "LV_EVENT_TRANSLATION_"
         }
 
     def comment_remover(self, text: str) -> str:

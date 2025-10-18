@@ -27,16 +27,12 @@ extern "C" {
 #include "../misc/lv_log.h"
 #include "../misc/lv_style.h"
 #include "../misc/lv_timer.h"
-#include "../osal/lv_os.h"
+#include "../osal/lv_os_private.h"
 #include "../others/sysmon/lv_sysmon.h"
 #include "../stdlib/builtin/lv_tlsf.h"
 
 #if LV_USE_FONT_COMPRESSED
 #include "../font/lv_font_fmt_txt_private.h"
-#endif
-
-#if LV_USE_OS != LV_OS_NONE && defined(__linux__)
-#include "../osal/lv_linux_private.h"
 #endif
 
 #include "../tick/lv_tick.h"
@@ -82,6 +78,14 @@ struct _lv_nuttx_ctx_t;
 #endif
 
 typedef struct _lv_global_t {
+    /**
+     * User data for the LVGL library. Move from the bottom of the struct
+     * to avoid breaking the ABI. E.g., if the user data is used by a
+     * closed-source library, this can help to avoid re-compiling the library
+     * when the lvgl-related configs are changed.
+     */
+    void * user_data;
+
     bool inited;
     bool deinit_in_progress;     /**< Can be used e.g. in the LV_EVENT_DELETE to deinit the drivers too */
 
@@ -122,6 +126,10 @@ typedef struct _lv_global_t {
                                                             * can be managed by image cache. */
 
     lv_ll_t img_decoder_ll;
+#if LV_USE_OS != LV_OS_NONE
+    lv_mutex_t img_decoder_info_lock;
+    lv_mutex_t img_decoder_open_lock;
+#endif
 
     lv_cache_t * img_cache;
     lv_cache_t * img_header_cache;
@@ -191,6 +199,10 @@ typedef struct _lv_global_t {
     lv_fs_drv_t arduino_sd_fs_drv;
 #endif
 
+#if LV_USE_FS_FROGFS
+    lv_fs_drv_t frogfs_fs_drv;
+#endif
+
 #if LV_USE_FREETYPE
     struct _lv_freetype_context_t * ft_context;
 #endif
@@ -207,8 +219,10 @@ typedef struct _lv_global_t {
     struct _lv_profiler_builtin_ctx_t * profiler_context;
 #endif
 
-#if LV_USE_FILE_EXPLORER != 0
-    lv_style_t fe_list_button_style;
+
+#if LV_USE_FILE_EXPLORER
+    lv_style_t file_explorer_quick_access_style;
+    size_t file_explorer_count;
 #endif
 
 #if LV_USE_MEM_MONITOR
@@ -228,14 +242,24 @@ typedef struct _lv_global_t {
     lv_test_state_t test_state;
 #endif
 
+#if LV_USE_TRANSLATION
+    lv_ll_t translation_packs_ll;
+    const char * translation_selected_lang;
+#endif
+
 #if LV_USE_NUTTX
     struct _lv_nuttx_ctx_t * nuttx_ctx;
 #endif
 
 #if LV_USE_OS != LV_OS_NONE
     lv_mutex_t lv_general_mutex;
+#endif
+
 #if defined(__linux__)
-    lv_proc_stat_t linux_last_proc_stat;
+    lv_linux_proc_stat_t linux_last_proc_stat;
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    uint64_t linux_last_self_proc_time_ticks;
+    lv_linux_proc_stat_t linux_last_system_total_ticks_stat;
 #endif
 #endif
 
@@ -250,7 +274,15 @@ typedef struct _lv_global_t {
     lv_evdev_discovery_t * evdev_discovery;
 #endif
 
-    void * user_data;
+#if LV_USE_XML
+    const char * xml_path_prefix;
+    uint32_t lv_event_xml_store_timeline;
+    lv_ll_t xml_loads;
+#endif
+
+#if LV_USE_DRAW_EVE
+    lv_draw_eve_unit_t * draw_eve_unit;
+#endif
 } lv_global_t;
 
 /**********************

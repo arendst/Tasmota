@@ -12,6 +12,8 @@
 #if LV_WAYLAND_WINDOW_DECORATIONS
 
 #include "lv_wayland_private.h"
+#include <errno.h>
+#include <unistd.h>
 
 /*********************
  *      DEFINES
@@ -58,9 +60,14 @@ static void color_fill_RGB565(void * pixels, lv_color_t color, uint32_t width, u
  **********************/
 
 bool lv_wayland_window_decoration_attach(struct window * window, struct graphic_object * decoration,
-                                         smm_buffer_t * decoration_buffer, struct graphic_object * parent)
+                                         void * decoration_buffer, struct graphic_object * parent)
 {
-    struct wl_buffer * wl_buf = SMM_BUFFER_PROPERTIES(decoration_buffer)->tag[TAG_LOCAL];
+#if LV_WAYLAND_USE_DMABUF
+    struct wl_buffer * wl_buf = ((struct buffer *)decoration_buffer)->buffer;
+#else
+    struct wl_buffer * wl_buf = SMM_BUFFER_PROPERTIES((smm_buffer_t *)decoration_buffer)->tag[TAG_LOCAL];
+#endif
+
 
     int pos_x, pos_y;
 
@@ -73,7 +80,6 @@ bool lv_wayland_window_decoration_attach(struct window * window, struct graphic_
             pos_x = parent->width - 1 * (BUTTON_MARGIN + BUTTON_SIZE);
             pos_y = -1 * (BUTTON_MARGIN + BUTTON_SIZE + (BORDER_SIZE / 2));
             break;
-#if LV_WAYLAND_XDG_SHELL
         case OBJECT_BUTTON_MAXIMIZE:
             pos_x = parent->width - 2 * (BUTTON_MARGIN + BUTTON_SIZE);
             pos_y = -1 * (BUTTON_MARGIN + BUTTON_SIZE + (BORDER_SIZE / 2));
@@ -82,7 +88,6 @@ bool lv_wayland_window_decoration_attach(struct window * window, struct graphic_
             pos_x = parent->width - 3 * (BUTTON_MARGIN + BUTTON_SIZE);
             pos_y = -1 * (BUTTON_MARGIN + BUTTON_SIZE + (BORDER_SIZE / 2));
             break;
-#endif
         case OBJECT_BORDER_TOP:
             pos_x = -BORDER_SIZE;
             pos_y = -(BORDER_SIZE + TITLE_BAR_HEIGHT);
@@ -165,7 +170,11 @@ void lv_wayland_window_decoration_detach_all(struct window * window)
 bool lv_wayland_window_decoration_create(struct window * window, struct graphic_object * decoration, int window_width,
                                          int window_height)
 {
+#if LV_WAYLAND_USE_DMABUF
+    struct buffer * buf;
+#else
     smm_buffer_t * buf;
+#endif
     void * buf_base;
     int x, y;
     lv_color_t * pixel;
@@ -180,7 +189,6 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
             decoration->width  = BUTTON_SIZE;
             decoration->height = BUTTON_SIZE;
             break;
-#if LV_WAYLAND_XDG_SHELL
         case OBJECT_BUTTON_MAXIMIZE:
             decoration->width  = BUTTON_SIZE;
             decoration->height = BUTTON_SIZE;
@@ -189,7 +197,6 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
             decoration->width  = BUTTON_SIZE;
             decoration->height = BUTTON_SIZE;
             break;
-#endif
         case OBJECT_BORDER_TOP:
             decoration->width  = window_width + 2 * (BORDER_SIZE);
             decoration->height = BORDER_SIZE;
@@ -210,7 +217,17 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
             LV_ASSERT_MSG(0, "Invalid object type");
             return false;
     }
-
+#if LV_WAYLAND_USE_DMABUF
+    bpp = lv_color_format_get_size(LV_COLOR_FORMAT_NATIVE);
+    buf = dmabuf_acquire_pool_buffer(window, decoration);
+    buf_base = mmap(0, (decoration->width * bpp) * decoration->height, PROT_READ | PROT_WRITE, MAP_SHARED,
+                    buf->dmabuf_fds[0], 0);
+    if(buf_base == MAP_FAILED) {
+        destroy_decorators_buf(window, decoration);
+        LV_LOG_ERROR("cannot map in allocated decoration buffer %d (%s)", errno, strerror(errno));
+        return false;
+    }
+#else
     bpp = lv_color_format_get_size(LV_COLOR_FORMAT_NATIVE);
 
     LV_LOG_TRACE("decoration window %dx%d", decoration->width, decoration->height);
@@ -230,7 +247,7 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
         smm_release(buf);
         return false;
     }
-
+#endif
     switch(decoration->type) {
         case OBJECT_TITLEBAR:
             color_fill(buf_base, lv_color_make(0x66, 0x66, 0x66), decoration->width, decoration->height);
@@ -251,7 +268,6 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
                 }
             }
             break;
-#if LV_WAYLAND_XDG_SHELL
         case OBJECT_BUTTON_MAXIMIZE:
             color_fill(buf_base, lv_color_make(0xCC, 0xCC, 0xCC), decoration->width, decoration->height);
             for(y = 0; y < decoration->height; y++) {
@@ -282,7 +298,6 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
                 }
             }
             break;
-#endif
         case OBJECT_BORDER_TOP:
         /* fallthrough */
         case OBJECT_BORDER_BOTTOM:
@@ -297,7 +312,13 @@ bool lv_wayland_window_decoration_create(struct window * window, struct graphic_
             return false;
     }
 
-    return lv_wayland_window_decoration_attach(window, decoration, buf, window->body);
+    bool ret = lv_wayland_window_decoration_attach(window, decoration, buf, window->body);
+
+#if LV_WAYLAND_USE_DMABUF
+    munmap(buf_base, (decoration->width * bpp) * decoration->height);
+#endif
+
+    return ret;
 }
 
 void lv_wayland_window_decoration_detach(struct window * window, struct graphic_object * decoration)

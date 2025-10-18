@@ -210,11 +210,6 @@ static bool _pxp_draw_img_supported(const lv_draw_image_dsc_t * draw_dsc)
 {
     const lv_image_dsc_t * img_dsc = draw_dsc->src;
 
-    bool is_tiled = draw_dsc->tile;
-    /* Tiled image (repeat image) is currently not supported. */
-    if(is_tiled)
-        return false;
-
     bool has_recolor = (draw_dsc->recolor_opa > LV_OPA_MIN);
     bool has_transform = (draw_dsc->rotation != 0 || draw_dsc->scale_x != LV_SCALE_NONE ||
                           draw_dsc->scale_y != LV_SCALE_NONE);
@@ -350,7 +345,7 @@ static int32_t _pxp_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 #else
     _pxp_execute_drawing(draw_pxp_unit);
 
-    draw_pxp_unit->task_act->state = LV_DRAW_TASK_STATE_READY;
+    draw_pxp_unit->task_act->state = LV_DRAW_TASK_STATE_FINISHED;
     draw_pxp_unit->task_act = NULL;
 
     /* The draw unit is free now. Request a new dispatching as it can get a new task. */
@@ -434,7 +429,7 @@ static void _pxp_execute_drawing(lv_draw_pxp_unit_t * u)
         lv_draw_sw_fill((lv_draw_unit_t *)u, &rect_dsc, &draw_area);
 
         lv_point_t txt_size;
-        lv_text_get_size(&txt_size, "W", LV_FONT_DEFAULT, 0, 0, 100, LV_TEXT_FLAG_NONE);
+        lv_text_get_size_attributes(&txt_size, "W", LV_FONT_DEFAULT, 0, 0, 100, LV_TEXT_FLAG_NONE);
 
         lv_area_t txt_area;
         txt_area.x1 = draw_area.x1;
@@ -482,7 +477,7 @@ static void _pxp_render_thread_cb(void * ptr)
         _pxp_execute_drawing(u);
 
         /* Signal the ready state to dispatcher. */
-        u->task_act->state = LV_DRAW_TASK_STATE_READY;
+        u->task_act->state = LV_DRAW_TASK_STATE_FINISHED;
 
         /* Cleanup. */
         u->task_act = NULL;

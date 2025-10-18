@@ -2698,7 +2698,7 @@ end
 #  Encapsulates a `lv_screen` which is `lv.obj(0)` object
 #################################################################################
 #
-# ex of transition: lv.scr_load_anim(scr, lv.SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false)
+# ex of transition: lv.scr_load_anim(scr, lv.SCREEN_LOAD_ANIM_MOVE_RIGHT, 500, 0, false)
 #@ solidify:lvh_page,weak
 class lvh_page
   var _obj_id               # (map) of `lvh_obj` objects by id numbers
@@ -2867,11 +2867,11 @@ class lvh_page
   #  show this page, with animation
   #====================================================================
   static show_anim = {
-     1: lv.SCR_LOAD_ANIM_MOVE_LEFT,
-    -1: lv.SCR_LOAD_ANIM_MOVE_RIGHT,
-    -2: lv.SCR_LOAD_ANIM_MOVE_TOP,
-     2: lv.SCR_LOAD_ANIM_MOVE_BOTTOM,
-     0: lv.SCR_LOAD_ANIM_NONE,
+     1: lv.SCREEN_LOAD_ANIM_MOVE_LEFT,
+    -1: lv.SCREEN_LOAD_ANIM_MOVE_RIGHT,
+    -2: lv.SCREEN_LOAD_ANIM_MOVE_TOP,
+     2: lv.SCREEN_LOAD_ANIM_MOVE_BOTTOM,
+     0: lv.SCREEN_LOAD_ANIM_NONE,
   }
   def show(anim, duration)
     # ignore if the page does not contain a screen, like when id==0
@@ -2901,7 +2901,7 @@ class lvh_page
     if (anim == 0)
       lv.screen_load(self._lv_scr)
     else    # animation
-      var anim_lvgl = self.show_anim.find(anim, lv.SCR_LOAD_ANIM_NONE)
+      var anim_lvgl = self.show_anim.find(anim, lv.SCREEN_LOAD_ANIM_NONE)
       # load new screen with animation, no delay, 500ms transition time, no auto-delete
       lv.screen_load_anim(self._lv_scr, anim_lvgl, duration, 0, false)
     end

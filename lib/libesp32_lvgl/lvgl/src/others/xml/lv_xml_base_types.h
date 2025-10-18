@@ -91,6 +91,20 @@ lv_text_align_t lv_xml_text_align_to_enum(const char * txt);
 lv_text_decor_t lv_xml_text_decor_to_enum(const char * txt);
 
 /**
+ * Convert a scroll snap string to enum
+ * @param txt       e.g. "start"
+ * @return          the related enum, e.g. `LV_SCROLL_SNAP_START`
+ */
+lv_scroll_snap_t lv_xml_scroll_snap_to_enum(const char * txt);
+
+/**
+ * Convert a scrollbar mode string to enum
+ * @param txt       e.g. "active"
+ * @return          the related enum, e.g. `LV_SCROLLBAR_MODE_ACTIVE`
+ */
+lv_scrollbar_mode_t lv_xml_scrollbar_mode_to_enum(const char * txt);
+
+/**
  * Convert a flex flow string to enum
  * @param txt       e.g. "row_wrap"
  * @return          the related enum, e.g. `LV_FLEX_FLOW_ROW_WRAP`
@@ -124,6 +138,51 @@ lv_layout_t lv_xml_layout_to_enum(const char * txt);
  * @return          the related enum, e.g. `LV_BLEND_MODE_ADDITIVE`
  */
 lv_blend_mode_t lv_xml_blend_mode_to_enum(const char * txt);
+
+/**
+ * Convert an event trigger string to enum
+ * @param txt       e.g. "clicked"
+ * @return          the related enum, e.g. `LV_EVENT_CLICKED`
+ */
+lv_event_code_t lv_xml_trigger_text_to_enum_value(const char * txt);
+
+/**
+ * Convert a screen animation type string to enum
+ * @param txt       e.g. "over_right"
+ * @return          the related enum, e.g. `LV_SCREEN_LOAD_ANIM_OVER_RIGHT`
+ */
+lv_screen_load_anim_t lv_xml_screen_load_anim_text_to_enum_value(const char * txt);
+
+/**
+ * Convert a style property string to enum
+ * @param txt       e.g. "bg_color"
+ * @return          the related enum, e.g. `LV_STYLE_BG_COLOR` or
+ *                  `LV_STYLE_PROP_INV` if not found.
+ */
+lv_style_prop_t lv_xml_style_prop_to_enum(const char * txt);
+
+
+/**
+ * Convert a style state to enum
+ * @param txt       e.g. "pressed"
+ * @return          the enum `LV_STATE_PRESSED`
+ */
+lv_state_t lv_xml_style_state_to_enum(const char * txt);
+
+/**
+ * Convert a style part to enum
+ * @param txt       e.g. "knob"
+ * @return          the enum `LV_PART_KNOB`
+ */
+lv_part_t lv_xml_style_part_to_enum(const char * txt);
+
+
+/**
+ * Convert ORed style parts and states to an ORed selector
+ * @param txt       e.g. "knob|pressed"
+ * @return          the enum `LV_PART_KNOB|LV_STATE_PRESSED`
+ */
+lv_style_selector_t lv_xml_style_selector_text_to_enum(const char * str);
 
 /**********************
  *      MACROS

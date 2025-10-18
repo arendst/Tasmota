@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef LV_SPANGROUP_XML_PARSER_H
-#define LV_SPANGROUP_XML_PARSER_H
+#ifndef LV_XML_SPANGROUP_PARSER_H
+#define LV_XML_SPANGROUP_PARSER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,7 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 #include "../lv_xml.h"
-#if LV_USE_XML
+#if LV_USE_XML && LV_USE_SPAN
 
 /**********************
  *      TYPEDEFS
@@ -38,4 +38,4 @@ void lv_xml_spangroup_span_apply(lv_xml_parser_state_t * state, const char ** at
 } /*extern "C"*/
 #endif
 
-#endif /*LV_SPANGROUP_XML_PARSE_H*/
+#endif /*LV_XML_SPANGROUP_PARSER_H*/

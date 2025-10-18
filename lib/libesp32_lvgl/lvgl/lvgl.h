@@ -36,7 +36,8 @@ extern "C" {
 #include "src/misc/lv_iter.h"
 #include "src/misc/lv_circle_buf.h"
 #include "src/misc/lv_tree.h"
-#include "src/misc/cache/lv_cache.h"
+
+#include "src/osal/lv_os.h"
 
 #include "src/tick/lv_tick.h"
 
@@ -53,6 +54,7 @@ extern "C" {
 
 #include "src/widgets/animimage/lv_animimage.h"
 #include "src/widgets/arc/lv_arc.h"
+#include "src/widgets/arclabel/lv_arclabel.h"
 #include "src/widgets/bar/lv_bar.h"
 #include "src/widgets/button/lv_button.h"
 #include "src/widgets/buttonmatrix/lv_buttonmatrix.h"
@@ -95,8 +97,8 @@ extern "C" {
 #include "src/others/ime/lv_ime_pinyin.h"
 #include "src/others/file_explorer/lv_file_explorer.h"
 #include "src/others/font_manager/lv_font_manager.h"
+#include "src/others/translation/lv_translation.h"
 #include "src/others/xml/lv_xml.h"
-#include "src/others/xml/lv_xml_component.h"
 #include "src/others/test/lv_test.h"
 
 #include "src/libs/barcode/lv_barcode.h"
@@ -106,7 +108,10 @@ extern "C" {
 #include "src/libs/fsdrv/lv_fsdrv.h"
 #include "src/libs/lodepng/lv_lodepng.h"
 #include "src/libs/libpng/lv_libpng.h"
+#include "src/libs/gltf/gltf_data/lv_gltf_model.h"
+#include "src/libs/gltf/gltf_view/lv_gltf.h"
 #include "src/libs/gif/lv_gif.h"
+#include "src/libs/gstreamer/lv_gstreamer.h"
 #include "src/libs/qrcode/lv_qrcode.h"
 #include "src/libs/tjpgd/lv_tjpgd.h"
 #include "src/libs/libjpeg_turbo/lv_libjpeg_turbo.h"
@@ -122,14 +127,21 @@ extern "C" {
 #include "src/draw/lv_draw_buf.h"
 #include "src/draw/lv_draw_vector.h"
 #include "src/draw/sw/lv_draw_sw_utils.h"
+#include "src/draw/eve/lv_draw_eve_target.h"
 
 #include "src/themes/lv_theme.h"
 
 #include "src/drivers/lv_drivers.h"
 
-#include "src/lv_api_map_v8.h"
-#include "src/lv_api_map_v9_0.h"
-#include "src/lv_api_map_v9_1.h"
+/* Define LV_DISABLE_API_MAPPING using a compiler option 
+ * to make sure your application is not using deprecated names */
+#ifndef LV_DISABLE_API_MAPPING
+    #include "src/lv_api_map_v8.h"
+    #include "src/lv_api_map_v9_0.h"
+    #include "src/lv_api_map_v9_1.h"
+    #include "src/lv_api_map_v9_2.h"
+    #include "src/lv_api_map_v9_3.h"
+#endif /*LV_DISABLE_API_MAPPING*/
 
 #if LV_USE_PRIVATE_API
 #include "src/lvgl_private.h"

@@ -73,13 +73,15 @@ struct _lv_draw_image_dsc_t {
      */
     lv_blend_mode_t blend_mode : 4;
 
-    /**1: perform the transformation with anti-alaising */
+    /**1: perform the transformation with anti-aliasing */
     uint16_t antialias          : 1;
 
     /**If the image is smaller than the `image_area` field of `lv_draw_image_dsc_t`
      * tile the image (repeat is both horizontally and vertically) to fill the
      * `image_area` area*/
     uint16_t tile               : 1;
+
+    const lv_image_colorkey_t * colorkey;
 
     /**Used internally to store some information about the palette or the color of A8 images*/
     lv_draw_image_sup_t * sup;

@@ -1,5 +1,5 @@
 /**
- * @file lv_nuttx_entry.h
+ * @file lv_nuttx_entry.c
  *
  */
 
@@ -19,6 +19,7 @@
 #include "lv_nuttx_image_cache.h"
 #include "../../core/lv_global.h"
 #include "lv_nuttx_profiler.h"
+#include "lv_nuttx_mouse.h"
 
 #include "../../../lvgl.h"
 
@@ -106,6 +107,14 @@ void lv_nuttx_dsc_init(lv_nuttx_dsc_t * dsc)
 #ifdef CONFIG_UINPUT_TOUCH
     dsc->utouch_path = "/dev/utouch";
 #endif
+
+#if LV_USE_NUTTX_MOUSE
+    dsc->mouse_path = "/dev/mouse0";
+#endif
+
+#if LV_USE_NUTTX_TRACE_FILE
+    dsc->trace_path = LV_NUTTX_TRACE_FILE_PATH;
+#endif
 }
 
 void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
@@ -126,6 +135,9 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
     lv_nuttx_profiler_init();
+#if LV_USE_NUTTX_TRACE_FILE
+    lv_nuttx_profiler_set_file(dsc->trace_path);
+#endif
 #endif
 
     if(result) {
@@ -164,6 +176,15 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
             lv_indev_t * indev = lv_nuttx_touchscreen_create(dsc->utouch_path);
             if(result) {
                 result->utouch_indev = indev;
+            }
+        }
+#endif
+
+#if LV_USE_NUTTX_MOUSE
+        if(dsc->mouse_path) {
+            lv_indev_t * indev = lv_nuttx_mouse_create(dsc->mouse_path);
+            if(result) {
+                result->mouse_indev = indev;
             }
         }
 #endif
@@ -240,6 +261,9 @@ void lv_nuttx_deinit(lv_nuttx_result_t * result)
         lv_nuttx_cache_deinit();
         lv_nuttx_image_cache_deinit();
 
+#if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
+        lv_nuttx_profiler_deinit();
+#endif
         lv_free(nuttx_ctx_p);
         nuttx_ctx_p = NULL;
     }

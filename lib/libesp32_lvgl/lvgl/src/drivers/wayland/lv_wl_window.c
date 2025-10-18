@@ -83,6 +83,9 @@ lv_display_t * lv_wayland_window_create(uint32_t hor_res, uint32_t ver_res, char
     int32_t window_width;
     int32_t window_height;
 
+    uint32_t width = hor_res;
+    uint32_t height = ver_res;
+
     lv_wayland_init();
 
     window_width  = hor_res;
@@ -104,7 +107,7 @@ lv_display_t * lv_wayland_window_create(uint32_t hor_res, uint32_t ver_res, char
     window->close_cb = close_cb;
 
     /* Initialize display driver */
-    window->lv_disp = lv_display_create(hor_res, ver_res);
+    window->lv_disp = lv_display_create(width, height);
     if(window->lv_disp == NULL) {
         LV_LOG_ERROR("failed to create lvgl display");
         return NULL;
@@ -122,7 +125,9 @@ lv_display_t * lv_wayland_window_create(uint32_t hor_res, uint32_t ver_res, char
     }
 #endif
 
-    lv_display_set_user_data(window->lv_disp, window);
+    lv_wayland_xdg_shell_configure_surface(window);
+
+    lv_display_set_driver_data(window->lv_disp, window);
 
     lv_display_set_render_mode(window->lv_disp, LV_WAYLAND_RENDER_MODE);
     lv_display_set_flush_wait_cb(window->lv_disp, lv_wayland_wait_flush_cb);
@@ -131,9 +136,11 @@ lv_display_t * lv_wayland_window_create(uint32_t hor_res, uint32_t ver_res, char
     lv_wayland_dmabuf_set_draw_buffers(&lv_wl_ctx.dmabuf_ctx, window->lv_disp);
     lv_display_set_flush_cb(window->lv_disp, lv_wayland_dmabuf_flush_full_mode);
 #else
-    lv_wayland_shm_set_draw_buffers(&lv_wl_ctx.shm_ctx, window->lv_disp);
+    lv_wayland_shm_set_draw_buffers(&lv_wl_ctx.shm_ctx, window->lv_disp, window);
     lv_display_set_flush_cb(window->lv_disp, lv_wayland_shm_flush_partial_mode);
 #endif
+
+    lv_display_add_event_cb(window->lv_disp, lv_wayland_event_cb, LV_EVENT_RESOLUTION_CHANGED, window);
 
     /* Register input */
     window->lv_indev_pointer = lv_wayland_pointer_create();
@@ -151,16 +158,12 @@ lv_display_t * lv_wayland_window_create(uint32_t hor_res, uint32_t ver_res, char
         LV_LOG_ERROR("failed to register pointeraxis indev");
     }
 
-#if LV_USE_GESTURE_RECOGNITION
-
     window->lv_indev_touch = lv_wayland_touch_create();
     lv_indev_set_display(window->lv_indev_touch, window->lv_disp);
 
     if(!window->lv_indev_touch) {
         LV_LOG_ERROR("failed to register touch indev");
     }
-
-#endif /* END LV_USE_GESTURE_RECOGNITION */
 
     window->lv_indev_keyboard = lv_wayland_keyboard_create();
     lv_indev_set_display(window->lv_indev_keyboard, window->lv_disp);
@@ -173,7 +176,7 @@ lv_display_t * lv_wayland_window_create(uint32_t hor_res, uint32_t ver_res, char
 
 void lv_wayland_window_close(lv_display_t * disp)
 {
-    struct window * window = lv_display_get_user_data(disp);
+    struct window * window = lv_display_get_driver_data(disp);
     if(!window || window->closed) {
         return;
     }
@@ -196,7 +199,7 @@ bool lv_wayland_window_is_open(lv_display_t * disp)
         }
     }
     else {
-        window = lv_display_get_user_data(disp);
+        window = lv_display_get_driver_data(disp);
         open   = (!window->closed);
     }
 
@@ -205,18 +208,14 @@ bool lv_wayland_window_is_open(lv_display_t * disp)
 
 void lv_wayland_window_set_maximized(lv_display_t * disp, bool maximized)
 {
-    struct window * window = lv_display_get_user_data(disp);
+    struct window * window = lv_display_get_driver_data(disp);
     lv_result_t err        = LV_RESULT_INVALID;
     if(!window || window->closed) {
         return;
     }
 
     if(window->maximized != maximized) {
-#if LV_WAYLAND_WL_SHELL
-        err = lv_wayland_wl_shell_set_maximized(window, maximized);
-#elif LV_WAYLAND_XDG_SHELL
         err = lv_wayland_xdg_shell_set_maximized(window, maximized);
-#endif
     }
 
     if(err == LV_RESULT_INVALID) {
@@ -228,9 +227,47 @@ void lv_wayland_window_set_maximized(lv_display_t * disp, bool maximized)
     window->flush_pending = true;
 }
 
+void lv_wayland_assign_physical_display(lv_display_t * disp, uint8_t display_number)
+{
+    if(!disp) {
+        LV_LOG_ERROR("Invalid display");
+        return;
+    }
+
+    struct window * window = lv_display_get_driver_data(disp);
+
+    if(!window || window->closed) {
+        LV_LOG_ERROR("Invalid window");
+        return;
+    }
+
+    if(display_number >= window->wl_ctx->wl_output_count) {
+        LV_LOG_WARN("Invalid display number '%d'. Expected '0'..'%d'", display_number, window->wl_ctx->wl_output_count - 1);
+        return;
+    }
+    window->assigned_output = lv_wl_ctx.outputs[display_number].wl_output;
+}
+
+void lv_wayland_unassign_physical_display(lv_display_t * disp)
+{
+
+    if(!disp) {
+        LV_LOG_ERROR("Invalid display");
+        return;
+    }
+
+    struct window * window = lv_display_get_user_data(disp);
+
+    if(!window || window->closed) {
+        LV_LOG_ERROR("Invalid window");
+        return;
+    }
+    window->assigned_output = NULL;
+}
+
 void lv_wayland_window_set_fullscreen(lv_display_t * disp, bool fullscreen)
 {
-    struct window * window = lv_display_get_user_data(disp);
+    struct window * window = lv_display_get_driver_data(disp);
     lv_result_t err        = LV_RESULT_INVALID;
     if(!window || window->closed) {
         return;
@@ -239,18 +276,14 @@ void lv_wayland_window_set_fullscreen(lv_display_t * disp, bool fullscreen)
     if(window->fullscreen == fullscreen) {
         return;
     }
-#if LV_WAYLAND_WL_SHELL
-    err = lv_wayland_wl_shell_set_fullscreen(window, fullscreen);
-#elif LV_WAYLAND_XDG_SHELL
-    err = lv_wayland_xdg_shell_set_fullscreen(window, fullscreen);
-#endif
+    err = lv_wayland_xdg_shell_set_fullscreen(window, fullscreen, window->assigned_output);
 
     if(err == LV_RESULT_INVALID) {
         LV_LOG_WARN("Failed to set wayland window to fullscreen");
         return;
     }
 
-    window->fullscreen    = fullscreen;
+    window->fullscreen = fullscreen;
     window->flush_pending = true;
 }
 
@@ -276,9 +309,7 @@ void lv_wayland_window_draw(struct window * window, uint32_t width, uint32_t hei
     /* First resize */
     if(lv_wayland_window_resize(window, width, height) != LV_RESULT_OK) {
         LV_LOG_ERROR("Failed to resize window");
-#if LV_WAYLAND_XDG_SHELL
         lv_wayland_xdg_shell_destroy_window_toplevel(window);
-#endif
     }
 
     lv_refr_now(window->lv_disp);
@@ -287,29 +318,32 @@ void lv_wayland_window_draw(struct window * window, uint32_t width, uint32_t hei
 lv_result_t lv_wayland_window_resize(struct window * window, int width, int height)
 {
 
-
 #if LV_WAYLAND_WINDOW_DECORATIONS
     if(!window->wl_ctx->opt_disable_decorations && !window->fullscreen) {
         width -= (2 * BORDER_SIZE);
         height -= (TITLE_BAR_HEIGHT + (2 * BORDER_SIZE));
     }
 #endif
+    if(window->lv_disp) {
+        lv_display_set_resolution(window->lv_disp, width, height);
+        window->body->input.pointer.x = LV_MIN((int32_t)window->body->input.pointer.x, (width - 1));
+        window->body->input.pointer.y = LV_MIN((int32_t)window->body->input.pointer.y, (height - 1));
+    }
 
+    /* On the first resize call, the resolution of the display is already set, so there won't be a trigger on the resolution changed event.*/
+    if(!window->is_window_configured) {
 #if LV_WAYLAND_USE_DMABUF
-    {
-        lv_result_t err = lv_wayland_dmabuf_resize_window(&window->wl_ctx->dmabuf_ctx, window);
+        lv_result_t err = lv_wayland_dmabuf_resize_window(&window->wl_ctx->dmabuf_ctx, window, width, height);
         if(err != LV_RESULT_OK) {
             return err;
         }
-    }
 #else
-    {
         lv_result_t err = lv_wayland_shm_resize_window(&window->wl_ctx->shm_ctx, window, width, height);
         if(err != LV_RESULT_OK) {
             return err;
         }
-    }
 #endif
+    }
 
 #if LV_WAYLAND_WINDOW_DECORATIONS
     if(!window->wl_ctx->opt_disable_decorations && !window->fullscreen) {
@@ -322,11 +356,6 @@ lv_result_t lv_wayland_window_resize(struct window * window, int width, int heig
     }
 #endif
 
-    if(window->lv_disp) {
-        lv_display_set_resolution(window->lv_disp, width, height);
-        window->body->input.pointer.x = LV_MIN((int32_t)window->body->input.pointer.x, (width - 1));
-        window->body->input.pointer.y = LV_MIN((int32_t)window->body->input.pointer.y, (height - 1));
-    }
     window->width  = width;
     window->height = height;
     return LV_RESULT_OK;
@@ -338,12 +367,8 @@ void lv_wayland_window_destroy(struct window * window)
         return;
     }
 
-#if LV_WAYLAND_WL_SHELL
-    lv_wayland_wl_shell_destroy_window(window);
-#elif LV_WAYLAND_XDG_SHELL
     lv_wayland_xdg_shell_destroy_window_toplevel(window);
     lv_wayland_xdg_shell_destroy_window_surface(window);
-#endif
 
 #if LV_WAYLAND_WINDOW_DECORATIONS
     for(size_t i = 0; i < NUM_DECORATIONS; i++) {
@@ -390,16 +415,9 @@ static struct window * create_window(struct lv_wayland_context * app, int width,
         goto err_free_window;
     }
 
-#if LV_WAYLAND_WL_SHELL
-    if(lv_wayland_wl_shell_create_window(app, window, title) != LV_RESULT_OK) {
-        LV_LOG_ERROR("Failed to create wl shell window");
-        goto err_destroy_surface;
-    }
-#elif LV_WAYLAND_XDG_SHELL
     if(lv_wayland_xdg_shell_create_window(app, window, title) != LV_RESULT_OK) {
         goto err_destroy_surface;
     }
-#endif
 
     return window;
 

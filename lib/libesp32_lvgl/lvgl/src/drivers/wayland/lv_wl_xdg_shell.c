@@ -9,14 +9,8 @@
 #include "lv_wayland.h"
 
 #if LV_USE_WAYLAND
-/*
- * LV_WAYLAND_XDG_SHELL is automatically defined if LV_WAYLAND_WL_SHELL is not set
- * inside lv_wayland_private.h so we need include this header file before checking
- * for LV_WAYLAND_XDG_SHELL
- */
 #include "lv_wayland_private.h"
 
-#if LV_WAYLAND_XDG_SHELL
 
 #include <linux/input-event-codes.h>
 #include "wayland_xdg_shell.h"
@@ -53,7 +47,6 @@ static const struct xdg_toplevel_listener xdg_toplevel_listener = {
 };
 
 static const struct xdg_wm_base_listener xdg_wm_base_listener = {.ping = xdg_wm_base_ping};
-static bool is_window_configured                              = false;
 
 /**********************
  *      MACROS
@@ -102,14 +95,14 @@ const struct xdg_toplevel_listener * lv_wayland_xdg_shell_get_toplevel_listener(
  *   Shell Window
  **********************/
 
-lv_result_t lv_wayland_xdg_shell_set_fullscreen(struct window * window, bool fullscreen)
+lv_result_t lv_wayland_xdg_shell_set_fullscreen(struct window * window, bool fullscreen, struct wl_output * output)
 {
 
     if(!window->xdg_toplevel) {
         return LV_RESULT_INVALID;
     }
     if(fullscreen) {
-        xdg_toplevel_set_fullscreen(window->xdg_toplevel, NULL);
+        xdg_toplevel_set_fullscreen(window->xdg_toplevel, output);
     }
     else {
         xdg_toplevel_unset_fullscreen(window->xdg_toplevel);
@@ -143,6 +136,16 @@ lv_result_t lv_wayland_xdg_shell_set_minimized(struct window * window)
     return LV_RESULT_OK;
 }
 
+#if LV_WAYLAND_USE_DMABUF
+void lv_wayland_xdg_shell_ack_configure(struct window * window, uint32_t serial)
+{
+    if(window->xdg_surface && serial > 0) {
+        xdg_surface_ack_configure(window->xdg_surface, serial);
+        LV_LOG_TRACE("XDG surface configure acknowledged (serial=%u)", serial);
+    }
+}
+#endif
+
 lv_result_t lv_wayland_xdg_shell_create_window(struct lv_wayland_context * app, struct window * window,
                                                const char * title)
 {
@@ -169,14 +172,18 @@ lv_result_t lv_wayland_xdg_shell_create_window(struct lv_wayland_context * app, 
     xdg_toplevel_set_title(window->xdg_toplevel, title);
     xdg_toplevel_set_app_id(window->xdg_toplevel, title);
 
+    return LV_RESULT_OK;
+}
+
+void lv_wayland_xdg_shell_configure_surface(struct window * window)
+{
     // XDG surfaces need to be configured before a buffer can be attached.
     // An (XDG) surface commit (without an attached buffer) triggers this
     // configure event
-    is_window_configured = false;
+    window->is_window_configured = false;
     wl_surface_commit(window->body->surface);
     wl_display_roundtrip(lv_wl_ctx.display);
-    LV_ASSERT_MSG(is_window_configured, "Failed to receive the xdg_surface configuration event");
-    return LV_RESULT_OK;
+    LV_ASSERT_MSG(window->is_window_configured, "Failed to receive the xdg_surface configuration event");
 }
 
 lv_result_t lv_wayland_xdg_shell_destroy_window_surface(struct window * window)
@@ -396,9 +403,28 @@ static void xdg_surface_handle_configure(void * data, struct xdg_surface * xdg_s
 {
     struct window * window = (struct window *)data;
 
-    xdg_surface_ack_configure(xdg_surface, serial);
+#if LV_WAYLAND_USE_DMABUF
+    LV_LOG_TRACE("XDG surface configure: serial=%u, dmabuf_resize_pending=%d",
+                 serial, window->dmabuf_resize_pending);
 
-    if(!is_window_configured) {
+    /* Store the configure serial for synchronization */
+    window->configure_serial = serial;
+    window->surface_configured = true;
+    window->configure_acknowledged = false;
+
+    /* Only acknowledge immediately if no DMABUF resize is pending */
+    if(!window->dmabuf_resize_pending) {
+        xdg_surface_ack_configure(xdg_surface, serial);
+        window->configure_acknowledged = true;
+        LV_LOG_TRACE("XDG surface configure acknowledged immediately");
+    }
+    else {
+        LV_LOG_TRACE("XDG surface configure deferred - DMABUF resize pending");
+    }
+#else
+    xdg_surface_ack_configure(xdg_surface, serial);
+#endif
+    if(!window->is_window_configured) {
         /* This branch is executed at launch */
         if(!window->resize_pending) {
             /* Use the size passed to the create_window function */
@@ -415,7 +441,7 @@ static void xdg_surface_handle_configure(void * data, struct xdg_surface * xdg_s
             window->resize_pending = false;
         }
     }
-    is_window_configured = true;
+    window->is_window_configured = true;
 }
 
 static void xdg_toplevel_handle_configure(void * data, struct xdg_toplevel * xdg_toplevel, int32_t width,
@@ -426,9 +452,9 @@ static void xdg_toplevel_handle_configure(void * data, struct xdg_toplevel * xdg
     LV_UNUSED(xdg_toplevel);
     LV_UNUSED(states);
 
-    LV_LOG_TRACE("w:%d h:%d", width, height);
+    LV_LOG_TRACE("XDG toplevel configure: w=%d h=%d (current: %dx%d)",
+                 width, height, window->width, window->height);
     LV_LOG_TRACE("current body w:%d h:%d", window->body->width, window->body->height);
-    LV_LOG_TRACE("window w:%d h:%d", window->width, window->height);
 
     if((width <= 0) || (height <= 0)) {
         LV_LOG_TRACE("will not resize to w:%d h:%d", width, height);
@@ -439,7 +465,9 @@ static void xdg_toplevel_handle_configure(void * data, struct xdg_toplevel * xdg
         window->resize_width   = width;
         window->resize_height  = height;
         window->resize_pending = true;
-        LV_LOG_TRACE("resize_pending is set, will resize to w:%d h:%d", width, height);
+#if LV_WAYLAND_USE_DMABUF
+        window->dmabuf_resize_pending = true;
+#endif
     }
     else {
         LV_LOG_TRACE("resize_pending not set w:%d h:%d", width, height);
@@ -463,5 +491,4 @@ static void xdg_wm_base_ping(void * data, struct xdg_wm_base * xdg_wm_base, uint
     return;
 }
 
-#endif /* LV_WAYLAND_XDG_SHELL */
 #endif /* LV_USE_WAYLAND */
