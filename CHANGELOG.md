@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - TLS enabled ECDSA by default for ESP8266 (#24009)
 - Berry add `cb.free_cb` for extension manager (#24014)
+- Berry `light.get()` direct access to values
 
 ### Breaking Changed
 

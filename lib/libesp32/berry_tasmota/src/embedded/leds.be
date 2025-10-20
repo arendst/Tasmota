@@ -38,7 +38,7 @@ class Leds : Leds_ntv
       # in such case, `self._p` is equal to `0`
       self.leds = self.pixel_count()
       import light
-      self.bri = light.get()['bri']
+      self.bri = light.get(0, 'bri')
     else
       # use pure Berry driver
       leds = int(leds)
