@@ -21,6 +21,24 @@ extern "C" {
 }
 
 #include "port/esp/freertos/include/port_esp_hosted_host_config.h"
+#include "HttpClientLight.h"
+
+extern "C" {
+#include "esp_hosted_ota.h"
+
+  /* Weak declarations for both old and new OTA APIs.
+     At runtime, we check which symbols are available and use accordingly. */
+#if defined(__GNUC__)
+  // Old one-shot API (deprecated but may be present in older libs)
+  esp_err_t esp_hosted_slave_ota(const char* image_url) __attribute__((weak));
+  
+  // New low-level streaming APIs (may be present in newer libs)
+  esp_err_t esp_hosted_slave_ota_begin(void) __attribute__((weak));
+  esp_err_t esp_hosted_slave_ota_write(uint8_t* ota_data, uint32_t ota_data_len) __attribute__((weak));
+  esp_err_t esp_hosted_slave_ota_end(void) __attribute__((weak));
+  esp_err_t esp_hosted_slave_ota_activate(void) __attribute__((weak));
+#endif
+}
 
 struct Hosted_t {
   char *hosted_ota_url;                     // Hosted MCU OTA URL
@@ -114,7 +132,83 @@ void HostedMCUEverySecond(void) {
     if (Hosted.hosted_ota_state_flag <= 0) {
       // Blocking
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: About to OTA update with %s"), Hosted.hosted_ota_url);
-      int ret = esp_hosted_slave_ota(Hosted.hosted_ota_url);
+      int ret = -1;
+      
+#if defined(__GNUC__)
+      // Check which API is available at runtime using weak symbols
+      if (esp_hosted_slave_ota) {
+        // Old one-shot API is available
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: Using legacy OTA API"));
+        ret = (int)esp_hosted_slave_ota(Hosted.hosted_ota_url);
+      } else if (esp_hosted_slave_ota_begin && esp_hosted_slave_ota_write && 
+                 esp_hosted_slave_ota_end && esp_hosted_slave_ota_activate) {
+        // New streaming API is available
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: Using streaming OTA API"));
+        
+        HTTPClientLight http;
+        if (!http.begin(Hosted.hosted_ota_url)) {
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: HTTP begin failed"));
+          ret = -1;
+        } else {
+          http.setTimeout(15000);
+          int httpCode = http.GET();
+          if (httpCode != 200) {
+            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: HTTP GET failed %d"), httpCode);
+            http.end();
+            ret = httpCode;
+          } else {
+            // Start OTA on coprocessor
+            esp_err_t err = esp_hosted_slave_ota_begin();
+            if (err != ESP_OK) {
+              AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: ota_begin failed %d"), err);
+              http.end();
+              ret = err;
+            } else {
+              // Stream response in blocks
+              WiFiClient& stream = http.getStream();
+              const size_t bufSize = 1024;
+              uint8_t *buf = (uint8_t*)malloc(bufSize);
+              if (!buf) {
+                http.end();
+                ret = -1;
+              } else {
+                int read = 0;
+                bool write_ok = true;
+                while ((read = stream.readBytes((char*)buf, bufSize)) > 0) {
+                  esp_err_t werr = esp_hosted_slave_ota_write(buf, (uint32_t)read);
+                  if (werr != ESP_OK) {
+                    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: ota_write failed %d"), werr);
+                    write_ok = false;
+                    ret = werr;
+                    break;
+                  }
+                }
+                free(buf);
+                http.end();
+                
+                if (write_ok) {
+                  err = esp_hosted_slave_ota_end();
+                  if (err != ESP_OK) {
+                    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: ota_end failed %d"), err);
+                    ret = err;
+                  } else {
+                    // Activate will likely reboot the slave
+                    err = esp_hosted_slave_ota_activate();
+                    ret = err;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("HST: No OTA API available"));
+        ret = -1;
+      }
+#else
+      // Fallback: try old API without weak symbol check
+      ret = (int)esp_hosted_slave_ota(Hosted.hosted_ota_url);
+#endif
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: Done with result %d"), ret);
       free(Hosted.hosted_ota_url);
       Hosted.hosted_ota_url = nullptr;
