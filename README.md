@@ -116,6 +116,9 @@ If you're looking for support on **Tasmota** there are some options available:
 * [Search in Issues](https://github.com/arendst/Tasmota/issues): You might find an answer to your question by searching current or closed issues.
 * [Software Problem Report](https://github.com/arendst/Tasmota/issues/new?template=Bug_report.md): For reporting problems of Tasmota Software.
 
+### Unofficial Community Resources
+* [Tasmota-DE](https://t.me/TasmotaDE): A German-language Telegram group related to Tasmota.
+
 ## Contribute
 
 You can contribute to Tasmota by
