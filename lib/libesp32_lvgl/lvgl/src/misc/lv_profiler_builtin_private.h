@@ -29,10 +29,10 @@ extern "C" {
 /**
  * @brief LVGL profiler built-in configuration structure
  */
-struct lv_profiler_builtin_config_t {
+struct _lv_profiler_builtin_config_t {
     size_t buf_size;                    /**< The size of the buffer used for profiling data */
     uint32_t tick_per_sec;              /**< The number of ticks per second */
-    uint32_t (*tick_get_cb)(void);      /**< Callback function to get the current tick count */
+    uint64_t (*tick_get_cb)(void);      /**< Callback function to get the current tick count */
     void (*flush_cb)(const char * buf); /**< Callback function to flush the profiling data */
     int (*tid_get_cb)(void);            /**< Callback function to get the current thread ID */
     int (*cpu_get_cb)(void);            /**< Callback function to get the current CPU */
@@ -42,6 +42,15 @@ struct lv_profiler_builtin_config_t {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
+
+#if LV_USE_PROFILER_BUILTIN_POSIX
+
+/**
+ * Initialize the built-in profiler with POSIX functions.
+ */
+void lv_profiler_builtin_posix_init(void);
+
+#endif /* LV_USE_PROFILER_BUILTIN_POSIX */
 
 /**********************
  *      MACROS

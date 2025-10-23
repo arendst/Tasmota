@@ -58,13 +58,12 @@ struct Fill::Impl
     uint32_t cnt = 0;
     FillSpread spread;
     DuplicateMethod<Fill>* dup = nullptr;
-    uint8_t id;
 
     ~Impl()
     {
         delete(dup);
-        free(colorStops);
-        free(transform);
+        lv_free(colorStops);
+        lv_free(transform);
     }
 
     void method(DuplicateMethod<Fill>* dup)
@@ -79,10 +78,12 @@ struct Fill::Impl
 
         ret->pImpl->cnt = cnt;
         ret->pImpl->spread = spread;
-        ret->pImpl->colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * cnt));
+        ret->pImpl->colorStops = static_cast<ColorStop*>(lv_malloc(sizeof(ColorStop) * cnt));
+        LV_ASSERT_MALLOC(ret->pImpl->colorStops);
         memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
         if (transform) {
-            ret->pImpl->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
+            ret->pImpl->transform = static_cast<Matrix*>(lv_malloc(sizeof(Matrix)));
+			LV_ASSERT_MALLOC(ret->pImpl->transform);
             *ret->pImpl->transform = *transform;
         }
         return ret;

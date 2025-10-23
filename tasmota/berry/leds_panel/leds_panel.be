@@ -705,8 +705,10 @@ class leds_panel
   var strip                     # strip object
   var h, w, cell_size, cell_space
 
+  static var EXT_NAME = "leds_panel"
   static var SAMPLING = 100
-  static var PORT = 8887      # default port 8886
+  static var PORT = 8886      # default port 8886
+  static var HTML_WIDTH = 290
   static var HTML_HEAD1 = 
     "<!DOCTYPE HTML><html><head>"
   static var HTML_URL_F = 
@@ -750,7 +752,6 @@ class leds_panel
     '};'
 
     'function jd() {'
-      'lh = eb("leds_hex");'
       'led_canvas = eb("canvas");'
       'led_canvas_ctx = led_canvas.getContext("2d");'
       'initEventSource();'
@@ -795,10 +796,10 @@ class leds_panel
     '<body>'
       '<style>body{margin:0px;}</style>'
   static var HTML_CONTENT =
-      '<table style="width:100%;border:0px;margin:0px;">'
+     '<table style="width:100%;border:0px;margin:0px;">'
         '<tbody>'
           '<tr><td>'
-            '<canvas id="canvas" width="330" height="10" style="display:block;margin-left:auto;margin-right:auto;"></canvas>'
+            '<canvas id="canvas" width="290" height="10" style="display:block;margin-left:auto;margin-right:auto;"></canvas>'
           '</td></tr>'
         '</tbody>'
     '</table>'
@@ -812,7 +813,7 @@ class leds_panel
       log("LED: no leds configured, can't start leds_panel", 3)
       return
     end
-    if (port == nil)  port = 8886   end
+    if (port == nil)  port = self.PORT   end
     self.port = port
     self.web = global.webserver_async(port)
     self.sampling_interval = self.SAMPLING
@@ -826,9 +827,25 @@ class leds_panel
     self.web.on("/leds_feed", self, self.send_info_feed)        # feed with leds values
     self.web.on("/leds", self, self.send_info_page)             # display leds page
 
-    tasmota.add_driver(self)
+    tasmota.add_driver(self, self.EXT_NAME)                     # also register as `leds_panel` extension
   end
 
+  #################################################################################
+  # unload
+  #
+  # Uninstall the extension and deallocate all resources
+  #################################################################################
+  def unload()
+    self.close()                                                # stop server
+    tasmota.remove_driver(self)                                 # remove driver, normally already done by tasmota.unload_ext
+    global.undef("webserver_async")                             # free `webserver_async` if it was loaded as part of this file
+  end
+
+  #################################################################################
+  # stop
+  #
+  # Stop server
+  #################################################################################
   def close()
     tasmota.remove_driver(self)
     self.web.close()
@@ -838,7 +855,7 @@ class leds_panel
     self.p_leds = self.strip.pixels_buffer(self.p_leds)   # update buffer
     self.h = tasmota.settings.light_pixels_height_1 + 1
     self.w = self.strip.pixel_count() / (tasmota.settings.light_pixels_height_1 + 1)
-    self.cell_size = tasmota.int(330 / self.w, 4, 25)
+    self.cell_size = tasmota.int(self.HTML_WIDTH / self.w, 4, 25)
     self.cell_space = (self.cell_size <= 6) ? 1 : 2
   end
 
@@ -947,14 +964,46 @@ class leds_panel
       webserver.content_send(
         f'<table style="width:100%;">'
           '<tbody>'
-            '<fieldset style="background-color:{tasmota.webcolor(1)};"><legend style="text-align:left;">&nbsp;Leds mirroring&nbsp;</legend>'
-              '<iframe src="http://{ip}:{self.port}/leds" '
-                'style="color:#eaeaea; border:0px none;height:{height}px;width:340px;margin:0px 8px 0px 8px;padding:0px 0px;">'
-              '</iframe>'
-            '</fieldset>'            
-          '</td>'
-        '</tr>'
-        '</tbody></table>'
+            '<tr>'
+              '<td>'
+                '<fieldset style="background-color:{tasmota.webcolor(1)};">'
+                  '<legend style="text-align:left;">'
+                    '<label>'
+                      '<input type="checkbox" id="ledchk">&nbsp;Leds mirroring&nbsp;'
+                    '</label>'
+                  '</legend>'
+                  '<iframe id="led_iframe" src="about:blank" hidden="true" '
+                    'style="color:#eaeaea;border:0px none;height:{height}px;width:300px;margin:0px 8px 0px 8px;padding:0px 0px;">'
+                  '</iframe>'
+                '</fieldset>'            
+              '</td>'
+            '</tr>'
+          '</tbody>'
+        '</table>'
+        '<script>'
+          'const leduri="http://{ip}:{self.port}/leds";'
+        '</script>'
+      )
+      webserver.content_send(
+        '<script>'
+        'function ledm(){'
+          'ledchk=eb("ledchk");'
+          # checkbox event
+          'ledchk.addEventListener("change",(event)=>{'
+            'const iframe=document.getElementById("led_iframe");'
+            'if(ledchk.checked){'
+              # When checked, reload the original content
+              'iframe.src=leduri;'
+              'iframe.hidden=false;'
+            '}else{'
+              # When unchecked, replace iframe with itself to unload it
+              'iframe.src="about:blank";'
+              'iframe.hidden=true;'
+            '}'
+          '});'
+        '}'
+        'wl(ledm);'
+        '</script>'
       )
     end
   end

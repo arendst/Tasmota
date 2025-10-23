@@ -1,0 +1,51 @@
+# Ocean Waves - Blue-green wave simulation
+# Flowing water colors with wave motion
+
+#strip length 60
+
+# Define ocean color palette
+palette ocean_colors = [
+  (0, 0x000080),    # Deep blue
+  (64, 0x0040C0),   # Ocean blue
+  (128, 0x0080FF),  # Light blue
+  (192, 0x40C0FF),  # Cyan
+  (255, 0x80FFFF)   # Light cyan
+]
+
+# Base ocean animation with slow color cycling
+animation ocean_base = rich_palette_animation(palette=ocean_colors, cycle_period=8s, transition_type=SINE, brightness=200)
+
+# Add wave motion with moving pulses
+color wave1_pattern = rich_palette(palette=ocean_colors, cycle_period=6s, transition_type=SINE, brightness=255)
+animation wave1 = beacon_animation(
+  color=wave1_pattern # color source
+  pos=0               # initial position
+  beacon_size=12      # wave width
+  slew_size=6         # soft edges
+)
+wave1.priority = 10
+wave1.pos = sawtooth(min_value=0, max_value=48, duration=5s)  # 60-12 = 48
+
+color wave2_pattern = rich_palette(palette=ocean_colors, cycle_period=4s, transition_type=SINE, brightness=180)
+animation wave2 = beacon_animation(
+  color=wave2_pattern # color source
+  pos=52              # initial position
+  beacon_size=8       # smaller wave
+  slew_size=4         # soft edges
+)
+wave2.priority = 8
+wave2.pos = sawtooth(min_value=52, max_value=8, duration=7s)  # Opposite direction
+
+# Add foam sparkles
+animation foam = twinkle_animation(
+  color=0xFFFFFF  # White foam
+  density=6       # density (sparkle count)
+  twinkle_speed=300ms # twinkle speed (quick sparkles)
+)
+foam.priority = 15
+
+# Start all animations
+run ocean_base
+run wave1
+run wave2
+run foam

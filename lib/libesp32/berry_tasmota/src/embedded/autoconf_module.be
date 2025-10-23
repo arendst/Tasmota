@@ -124,7 +124,7 @@ autoconf_module.init = def (m)
     # Displays a "Autoconf" button on the configuration page
     def web_add_config_button()
       import webserver
-      webserver.content_send("<p><form id=ac action='ac' style='display: block;' method='get'><button>Auto-Conf</button></form></p>")
+      webserver.content_send("<p></p><form id=ac action='ac' style='display: block;' method='get'><button>Auto-Conf</button></form>")
     end
 
 
@@ -147,17 +147,17 @@ autoconf_module.init = def (m)
 
       if cur_module
         # add button to reapply template
-        webserver.content_send("<p><form id=reapply style='display: block;' action='/ac' method='post' ")
+        webserver.content_send("<p></p><form id=reapply style='display: block;' action='/ac' method='post' ")
         webserver.content_send("onsubmit='return confirm(\"This will cause a restart.\");'>")
         webserver.content_send("<button name='reapply' class='button bgrn'>Re-apply current configuration</button>")
-        webserver.content_send("</form></p>")
+        webserver.content_send("</form>")
       end
       webserver.content_send("<p></p></fieldset><p></p>")
 
       webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
       webserver.content_send(format("<legend><b title='New autoconf'>&nbsp;Select new auto-configuration</b></legend>"))
 
-      webserver.content_send("<p><form id=zip style='display: block;' action='/ac' method='post' ")
+      webserver.content_send("<p></p><form id=zip style='display: block;' action='/ac' method='post' ")
       webserver.content_send("onsubmit='return confirm(\"This will change the current configuration and cause a restart.\");'>")
       webserver.content_send("<label>Choose a device configuration:</label><br>")
       webserver.content_send("<select name='zip'>")
@@ -172,7 +172,7 @@ autoconf_module.init = def (m)
 
       webserver.content_send("<button name='zipapply' class='button bgrn'>Apply configuration</button>")
       # webserver.content_send(format("<input name='ota' type='hidden' value='%d'>", ota_num))
-      webserver.content_send("</form></p>")
+      webserver.content_send("</form>")
 
 
       webserver.content_send("<p></p></fieldset><p></p>")

@@ -1,0 +1,32 @@
+# Cylon Rainbow
+# Alternat between COSINE and TRIANGLE then shift to next color
+
+set strip_len = strip_length()
+
+set eye_duration = 5s     # duration for a cylon eye cycle
+
+palette eye_palette = [ red, yellow, green, violet ]
+
+color eye_color = color_cycle(palette=eye_palette, cycle_period=0)
+
+set cosine_val = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = eye_duration)
+set triangle_val = triangle(min_value = 0, max_value = strip_len - 2, duration = eye_duration)
+
+animation red_eye = beacon_animation(
+  color = eye_color     # palette that will advance when we do `eye_color.next = 1`
+  pos = cosine_val      # oscillator for position
+  beacon_size = 3       # small 3 pixels eye
+  slew_size = 2         # with 2 pixel shading around
+)
+
+sequence cylon_eye forever {
+  restart cosine_val
+  play red_eye for eye_duration # use COSINE movement
+  red_eye.pos = triangle_val    # switch to TRIANGLE
+  restart triangle_val
+  play red_eye for eye_duration
+  red_eye.pos = cosine_val      # switch back to COSINE for next iteration
+  eye_color.next = 1            # advance to next color
+}
+
+run cylon_eye

@@ -1,0 +1,42 @@
+# Heartbeat Pulse - Rhythmic double pulse
+# Red pulsing like a heartbeat
+
+#strip length 60
+
+# Dark background
+color heart_bg = 0x110000
+animation background = solid(color=heart_bg)
+
+# Define heartbeat timing - double pulse animation
+# First pulse (stronger)
+animation heartbeat1 = solid(color=0xFF0000)  # Bright red
+heartbeat1.opacity = square(min_value=0, max_value=255, duration=150ms, duty_cycle=20)  # Quick strong pulse
+heartbeat1.priority = 10
+
+# Second pulse (weaker, slightly delayed)
+animation heartbeat2 = solid(color=0xCC0000)  # Slightly dimmer red
+# Delay the second pulse by adjusting the square wave phase
+heartbeat2.opacity = square(min_value=0, max_value=180, duration=150ms, duty_cycle=15)  # Weaker pulse
+heartbeat2.priority = 8
+
+# Add subtle glow effect
+animation heart_glow = solid(color=0x660000)  # Dim red glow
+heart_glow.opacity = smooth(min_value=30, max_value=100, duration=1s)  # Gentle breathing glow
+heart_glow.priority = 5
+
+# Add center pulse for emphasis
+animation center_pulse = beacon_animation(
+  color=0xFFFFFF  # White center
+  pos=30          # center of strip
+  beacon_size=4   # small center
+  slew_size=2     # soft edges
+)
+center_pulse.priority = 20
+center_pulse.opacity = square(min_value=0, max_value=200, duration=100ms, duty_cycle=10)  # Quick white flash
+
+# Start all animations
+run background
+run heart_glow
+run heartbeat1
+run heartbeat2
+run center_pulse

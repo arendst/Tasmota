@@ -120,6 +120,27 @@ typedef struct {
 } vg_color32_t;
 
 typedef struct {
+    uint8_t blue : 4;
+    uint8_t green : 4;
+    uint8_t red : 4;
+    uint8_t alpha : 4;
+} vg_color_bgra4444_t;
+
+typedef struct {
+    uint8_t blue : 2;
+    uint8_t green : 2;
+    uint8_t red : 2;
+    uint8_t alpha : 2;
+} vg_color_bgra2222_t;
+
+typedef struct {
+    uint8_t blue : 5;
+    uint8_t green : 5;
+    uint8_t red : 5;
+    uint8_t alpha : 1;
+} vg_color_bgra5551_t;
+
+typedef struct {
     vg_lite_float_t x;
     vg_lite_float_t y;
 } vg_lite_fpoint_t;
@@ -131,14 +152,20 @@ class vg_lite_ctx
     public:
         std::unique_ptr<SwCanvas> canvas;
         void * target_buffer;
+        void * tvg_target_buffer;
         vg_lite_uint32_t target_px_size;
         vg_lite_buffer_format_t target_format;
+        vg_lite_rectangle_t scissor_rect;
+        bool scissor_is_set;
 
     public:
         vg_lite_ctx()
             : target_buffer { nullptr }
+            , tvg_target_buffer { nullptr }
             , target_px_size { 0 }
             , target_format { VG_LITE_BGRA8888 }
+            , scissor_rect { 0, 0, 0, 0 }
+            , scissor_is_set { false }
             , clut_2colors { 0 }
             , clut_4colors { 0 }
             , clut_16colors { 0 }
@@ -297,8 +324,8 @@ static void get_format_bytes(vg_lite_buffer_format_t format,
                              vg_lite_uint32_t * bytes_align);
 
 static vg_lite_fpoint_t matrix_transform_point(const vg_lite_matrix_t * matrix, const vg_lite_fpoint_t * point);
-static bool vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t * matrix);
-static void vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_matrix_t * mult);
+static Result vg_lite_grad_matrix_conv(vg_lite_matrix_t * result, const vg_lite_matrix_t * grad_matrix,
+                                       const vg_lite_matrix_t * path_matrix);
 
 /**********************
  *  STATIC VARIABLES
@@ -420,6 +447,65 @@ static vg_lite_converter<vg_color32_t, uint8_t> conv_alpha4_to_bgra8888(
         dest++;
         src++;
     }
+});
+
+static vg_lite_converter<vg_color32_t, uint8_t> conv_l8_to_bgra8888(
+    [](vg_color32_t * dest, const uint8_t * src, vg_lite_uint32_t px_size, vg_lite_uint32_t /* color */)
+{
+    while(px_size--) {
+        dest->alpha = 0xFF;
+        dest->red = *src;
+        dest->green = *src;
+        dest->blue = *src;
+        dest++;
+        src++;
+    }
+});
+
+static vg_lite_converter<vg_color32_t, vg_color_bgra5551_t> conv_bgra5551_to_bgra8888(
+    [](vg_color32_t * dest, const vg_color_bgra5551_t * src, vg_lite_uint32_t px_size, vg_lite_uint32_t /* color */)
+{
+    while(px_size--) {
+        dest->red = src->red * 0xFF / 0x1F;
+        dest->green = src->green * 0xFF / 0x1F;
+        dest->blue = src->blue * 0xFF / 0x1F;
+        dest->alpha = src->alpha ? 0xFF : 0;
+        src++;
+        dest++;
+    }
+});
+
+static vg_lite_converter<vg_color32_t, vg_color_bgra4444_t> conv_bgra4444_to_bgra8888(
+    [](vg_color32_t * dest, const vg_color_bgra4444_t * src, vg_lite_uint32_t px_size, vg_lite_uint32_t /* color */)
+{
+    while(px_size--) {
+        dest->red = src->red * 0xFF / 0xF;
+        dest->green = src->green * 0xFF / 0xF;
+        dest->blue = src->blue * 0xFF / 0xF;
+        dest->alpha = src->alpha * 0xFF / 0xF;
+        src++;
+        dest++;
+    }
+});
+
+static vg_lite_converter<vg_color32_t, vg_color_bgra2222_t> conv_bgra2222_to_bgra8888(
+    [](vg_color32_t * dest, const vg_color_bgra2222_t * src, vg_lite_uint32_t px_size, vg_lite_uint32_t /* color */)
+{
+    while(px_size--) {
+        dest->red = src->red * 0xFF / 0x3;
+        dest->green = src->green * 0xFF / 0x3;
+        dest->blue = src->blue * 0xFF / 0x3;
+        dest->alpha = src->alpha * 0xFF / 0x3;
+        src++;
+        dest++;
+    }
+});
+
+/* Used to copy images with inconsistent strides but the same color format */
+static vg_lite_converter<vg_color32_t, vg_color32_t> conv_bgra8888_to_bgra8888(
+    [](vg_color32_t * dest, const vg_color32_t * src, vg_lite_uint32_t px_size, vg_lite_uint32_t /* color */)
+{
+    memcpy(dest, src, sizeof(vg_color32_t) * px_size);
 });
 
 /**********************
@@ -578,13 +664,19 @@ extern "C" {
         auto ctx = vg_lite_ctx::get_instance();
         TVG_CHECK_RETURN_VG_ERROR(canvas_set_target(ctx, target));
 
+        vg_lite_matrix_t new_matrix = *matrix;
+        if(rect->x || rect->y) {
+            /* simulate hardware device clipping behavior */
+            vg_lite_translate(-rect->x, -rect->y, &new_matrix);
+        }
+
         auto shape = Shape::gen();
         TVG_CHECK_RETURN_VG_ERROR(shape_append_rect(shape, target, rect));
-        TVG_CHECK_RETURN_VG_ERROR(shape->transform(matrix_conv(matrix)));
+        TVG_CHECK_RETURN_VG_ERROR(shape->transform(matrix_conv(&new_matrix)));
 
         auto picture = tvg::Picture::gen();
         TVG_CHECK_RETURN_VG_ERROR(picture_load(ctx, picture, source, color));
-        TVG_CHECK_RETURN_VG_ERROR(picture->transform(matrix_conv(matrix)));
+        TVG_CHECK_RETURN_VG_ERROR(picture->transform(matrix_conv(&new_matrix)));
         TVG_CHECK_RETURN_VG_ERROR(picture->blend(blend_method_conv(blend)));
         TVG_CHECK_RETURN_VG_ERROR(picture->composite(std::move(shape), CompositeMethod::ClipPath));
         TVG_CHECK_RETURN_VG_ERROR(ctx->canvas->push(std::move(picture)));
@@ -649,6 +741,61 @@ extern "C" {
         }
     }
 
+    static void picture_bgra8888_to_l8(uint8_t * dest, const vg_color32_t * src, vg_lite_uint32_t px_size)
+    {
+        while(px_size--) {
+            *dest = (src->red * 19595 + src->green * 38469 + src->blue * 7472) >> 16;
+            src++;
+            dest++;
+        }
+    }
+
+    static void picture_bgra8888_to_alpha8(uint8_t * dest, const vg_color32_t * src, vg_lite_uint32_t px_size)
+    {
+        while(px_size--) {
+            *dest = src->alpha;
+            src++;
+            dest++;
+        }
+    }
+
+    static void picture_bgra8888_to_bgra5551(vg_color_bgra5551_t * dest, const vg_color32_t * src, vg_lite_uint32_t px_size)
+    {
+        while(px_size--) {
+            dest->red = src->red * 0x1F / 0xFF;
+            dest->green = src->green * 0x1F / 0xFF;
+            dest->blue = src->blue * 0x1F / 0xFF;
+            dest->alpha = src->alpha > (0xFF / 2) ? 1 : 0;
+            src++;
+            dest++;
+        }
+    }
+
+    static void picture_bgra8888_to_bgra4444(vg_color_bgra4444_t * dest, const vg_color32_t * src, vg_lite_uint32_t px_size)
+    {
+        while(px_size--) {
+            dest->red = src->red * 0xF / 0xFF;
+            dest->green = src->green * 0xF / 0xFF;
+            dest->blue = src->blue * 0xF / 0xFF;
+            dest->alpha = src->alpha * 0xF / 0xFF;
+            src++;
+            dest++;
+        }
+    }
+
+    static void picture_bgra8888_to_bgra2222(vg_color_bgra2222_t * dest, const vg_color32_t * src, vg_lite_uint32_t px_size)
+    {
+        while(px_size--) {
+            dest->red = src->red * 0x3 / 0xFF;
+            dest->green = src->green * 0x3 / 0xFF;
+            dest->blue = src->blue * 0x3 / 0xFF;
+            dest->alpha = src->alpha * 0x3 / 0xFF;
+            src++;
+            dest++;
+        }
+    }
+
+
     vg_lite_error_t vg_lite_finish(void)
     {
         vg_lite_ctx * ctx = vg_lite_ctx::get_instance();
@@ -683,6 +830,33 @@ extern "C" {
                     (const vg_color32_t *)ctx->get_temp_target_buffer(),
                     ctx->target_px_size);
                 break;
+            case VG_LITE_L8:
+                picture_bgra8888_to_l8(
+                    (uint8_t *)ctx->target_buffer,
+                    (const vg_color32_t *)ctx->get_temp_target_buffer(),
+                    ctx->target_px_size);
+                break;
+            case VG_LITE_A8:
+                picture_bgra8888_to_alpha8(
+                    (uint8_t *)ctx->target_buffer,
+                    (const vg_color32_t *)ctx->get_temp_target_buffer(),
+                    ctx->target_px_size);
+                break;
+            case VG_LITE_BGRA5551:
+                picture_bgra8888_to_bgra5551((vg_color_bgra5551_t *)ctx->target_buffer,
+                                             (const vg_color32_t *)ctx->get_temp_target_buffer(),
+                                             ctx->target_px_size);
+                break;
+            case VG_LITE_BGRA4444:
+                picture_bgra8888_to_bgra4444((vg_color_bgra4444_t *)ctx->target_buffer,
+                                             (const vg_color32_t *)ctx->get_temp_target_buffer(),
+                                             ctx->target_px_size);
+                break;
+            case VG_LITE_BGRA2222:
+                picture_bgra8888_to_bgra2222((vg_color_bgra2222_t *)ctx->target_buffer,
+                                             (const vg_color32_t *)ctx->get_temp_target_buffer(),
+                                             ctx->target_px_size);
+                break;
             case VG_LITE_BGRA8888:
             case VG_LITE_BGRX8888:
                 /* No conversion required. */
@@ -695,6 +869,7 @@ extern "C" {
 
         /* finish convert, clean target buffer info */
         ctx->target_buffer = nullptr;
+        ctx->tvg_target_buffer = nullptr;
         ctx->target_px_size = 0;
 
         return VG_LITE_SUCCESS;
@@ -817,12 +992,12 @@ extern "C" {
             case gcFEATURE_BIT_VG_RGBA2_FORMAT:
             case gcFEATURE_BIT_VG_IM_FASTCLAER:
             case gcFEATURE_BIT_VG_GLOBAL_ALPHA:
-            case gcFEATURE_BIT_VG_COLOR_KEY:
             case gcFEATURE_BIT_VG_24BIT:
             case gcFEATURE_BIT_VG_DITHER:
             case gcFEATURE_BIT_VG_USE_DST:
             case gcFEATURE_BIT_VG_RADIAL_GRADIENT:
             case gcFEATURE_BIT_VG_IM_REPEAT_REFLECT:
+            case gcFEATURE_BIT_VG_SCISSOR:
 
 #if LV_VG_LITE_THORVG_LVGL_BLEND_SUPPORT
             case gcFEATURE_BIT_VG_LVGL_SUPPORT:
@@ -1294,10 +1469,13 @@ Empty_sequence_handler:
         TVG_CHECK_RETURN_VG_ERROR(shape->fill(fill_rule_conv(fill_rule)););
         TVG_CHECK_RETURN_VG_ERROR(shape->blend(blend_method_conv(blend)));
 
+        vg_lite_matrix_t grad_matrix;
+        TVG_CHECK_RETURN_VG_ERROR(vg_lite_grad_matrix_conv(&grad_matrix, &grad->matrix, path_matrix));
+
         auto linearGrad = LinearGradient::gen();
         TVG_CHECK_RETURN_VG_ERROR(linearGrad->linear(grad->linear_grad.X0, grad->linear_grad.Y0, grad->linear_grad.X1,
                                                      grad->linear_grad.Y1));
-        TVG_CHECK_RETURN_VG_ERROR(linearGrad->transform(matrix_conv(&grad->matrix)));
+        TVG_CHECK_RETURN_VG_ERROR(linearGrad->transform(matrix_conv(&grad_matrix)));
         TVG_CHECK_RETURN_VG_ERROR(linearGrad->spread(fill_spread_conv(grad->spread_mode)));
 
         tvg::Fill::ColorStop colorStops[VLC_MAX_COLOR_RAMP_STOPS];
@@ -1749,9 +1927,7 @@ Empty_sequence_handler:
         TVG_CHECK_RETURN_VG_ERROR(shape->blend(blend_method_conv(blend)));
 
         vg_lite_matrix_t grad_matrix;
-        vg_lite_identity(&grad_matrix);
-        vg_lite_matrix_inverse(&grad_matrix, matrix);
-        vg_lite_matrix_multiply(&grad_matrix, &grad->matrix);
+        TVG_CHECK_RETURN_VG_ERROR(vg_lite_grad_matrix_conv(&grad_matrix, &grad->matrix, matrix));
 
         vg_lite_fpoint_t p1 = {0.0f, 0.0f};
         vg_lite_fpoint_t p2 = {1.0f, 0};
@@ -1812,8 +1988,11 @@ Empty_sequence_handler:
         TVG_CHECK_RETURN_VG_ERROR(shape->fill(fill_rule_conv(fill_rule)););
         TVG_CHECK_RETURN_VG_ERROR(shape->blend(blend_method_conv(blend)));
 
+        vg_lite_matrix_t grad_matrix;
+        TVG_CHECK_RETURN_VG_ERROR(vg_lite_grad_matrix_conv(&grad_matrix, &grad->matrix, path_matrix));
+
         auto radialGrad = RadialGradient::gen();
-        TVG_CHECK_RETURN_VG_ERROR(radialGrad->transform(matrix_conv(&grad->matrix)));
+        TVG_CHECK_RETURN_VG_ERROR(radialGrad->transform(matrix_conv(&grad_matrix)));
         TVG_CHECK_RETURN_VG_ERROR(radialGrad->radial(grad->radial_grad.cx, grad->radial_grad.cy, grad->radial_grad.r));
         TVG_CHECK_RETURN_VG_ERROR(radialGrad->spread(fill_spread_conv(grad->spread_mode)));
 
@@ -1839,29 +2018,47 @@ Empty_sequence_handler:
         return VG_LITE_NOT_SUPPORT;
     }
 
-    vg_lite_error_t vg_lite_set_scissor(int32_t x, int32_t y, int32_t right, int32_t bottom)
+    vg_lite_error_t vg_lite_set_scissor(vg_lite_int32_t x, vg_lite_int32_t y, vg_lite_int32_t right, vg_lite_int32_t bottom)
     {
-        LV_UNUSED(x);
-        LV_UNUSED(y);
-        LV_UNUSED(right);
-        LV_UNUSED(bottom);
-        return VG_LITE_NOT_SUPPORT;
+        auto ctx = vg_lite_ctx::get_instance();
+        vg_lite_int32_t width = right - x;
+        vg_lite_int32_t height = bottom - y;
+
+        if(width <= 0 || height <= 0) {
+            return VG_LITE_INVALID_ARGUMENT;
+        }
+
+        if(ctx->scissor_rect.x == x && ctx->scissor_rect.y == y &&
+           ctx->scissor_rect.width == width && ctx->scissor_rect.height == height) {
+            return VG_LITE_SUCCESS;
+        }
+
+        /*Finish the previous rendering before setting the new scissor*/
+        vg_lite_error_t error;
+        VG_LITE_RETURN_ERROR(vg_lite_finish());
+
+        ctx->scissor_rect.x = x;
+        ctx->scissor_rect.y = y;
+        ctx->scissor_rect.width = width;
+        ctx->scissor_rect.height = height;
+        ctx->scissor_is_set = true;
+        return VG_LITE_SUCCESS;
     }
 
     vg_lite_error_t vg_lite_enable_scissor(void)
     {
-        return VG_LITE_NOT_SUPPORT;
+        return VG_LITE_SUCCESS;
     }
 
     vg_lite_error_t vg_lite_disable_scissor(void)
     {
-        return VG_LITE_NOT_SUPPORT;
+        return VG_LITE_SUCCESS;
     }
 
     vg_lite_error_t vg_lite_get_mem_size(vg_lite_uint32_t * size)
     {
         *size = 0;
-        return VG_LITE_NOT_SUPPORT;
+        return VG_LITE_SUCCESS;
     }
 
     vg_lite_error_t vg_lite_source_global_alpha(vg_lite_global_alpha_t alpha_mode, uint8_t alpha_value)
@@ -1960,6 +2157,13 @@ Empty_sequence_handler:
 
         return VG_LITE_NOT_SUPPORT;
     }
+
+    vg_lite_error_t vg_lite_dump_command_buffer(void)
+    {
+        LV_LOG_USER("command:");
+        LV_LOG_USER("@[commit]");
+        return VG_LITE_SUCCESS;
+    }
 } /* extern "C" */
 
 /**********************
@@ -1993,6 +2197,15 @@ static vg_lite_error_t vg_lite_error_conv(Result result)
 
 static Matrix matrix_conv(const vg_lite_matrix_t * matrix)
 {
+    static const Matrix identity = {
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    };
+    if(!matrix) {
+        return identity;
+    }
+
     return *(Matrix *)matrix;
 }
 
@@ -2095,7 +2308,7 @@ static float vlc_get_arg(const void * data, vg_lite_format_t format)
             return *((float *)data);
 
         default:
-            LV_LOG_ERROR("UNKNOW_FORMAT: %d", format);
+            LV_LOG_ERROR("UNKNOWN_FORMAT: %d", format);
             break;
     }
 
@@ -2114,7 +2327,7 @@ static uint8_t vlc_format_len(vg_lite_format_t format)
         case VG_LITE_FP32:
             return 4;
         default:
-            LV_LOG_ERROR("UNKNOW_FORMAT: %d", format);
+            LV_LOG_ERROR("UNKNOWN_FORMAT: %d", format);
             LV_ASSERT(false);
             break;
     }
@@ -2144,7 +2357,7 @@ static uint8_t vlc_op_arg_len(uint8_t vlc_op)
             VLC_OP_ARG_LEN(LCWARC, 5);
             VLC_OP_ARG_LEN(LCWARC_REL, 5);
         default:
-            LV_LOG_ERROR("UNKNOW_VLC_OP: 0x%x", vlc_op);
+            LV_LOG_ERROR("UNKNOWN_VLC_OP: 0x%x", vlc_op);
             LV_ASSERT(false);
             break;
     }
@@ -2255,17 +2468,17 @@ static Result shape_append_path(std::unique_ptr<Shape> & shape, vg_lite_path_t *
         cur += arg_len * fmt_len;
     }
 
+    TVG_CHECK_RETURN_RESULT(shape_set_stroke(shape, path));
+
     float x_min = path->bounding_box[0];
     float y_min = path->bounding_box[1];
     float x_max = path->bounding_box[2];
     float y_max = path->bounding_box[3];
 
-    if(math_equal(x_min, FLT_MIN) && math_equal(y_min, FLT_MIN)
+    if(math_equal(x_min, -FLT_MAX) && math_equal(y_min, -FLT_MAX)
        && math_equal(x_max, FLT_MAX) && math_equal(y_max, FLT_MAX)) {
         return Result::Success;
     }
-
-    TVG_CHECK_RETURN_RESULT(shape_set_stroke(shape, path));
 
     auto cilp = Shape::gen();
     TVG_CHECK_RETURN_RESULT(cilp->appendRect(x_min, y_min, x_max - x_min, y_max - y_min, 0, 0));
@@ -2293,8 +2506,6 @@ static Result shape_append_rect(std::unique_ptr<Shape> & shape, const vg_lite_bu
 
 static Result canvas_set_target(vg_lite_ctx * ctx, vg_lite_buffer_t * target)
 {
-    void * tvg_target_buffer = nullptr;
-
     /* if target_buffer needs to be changed, finish current drawing */
     if(ctx->target_buffer && ctx->target_buffer != target->memory) {
         vg_lite_finish();
@@ -2304,48 +2515,58 @@ static Result canvas_set_target(vg_lite_ctx * ctx, vg_lite_buffer_t * target)
     ctx->target_format = target->format;
     ctx->target_px_size = target->width * target->height;
 
+    void * canvas_target_buffer;
+    uint32_t stride = 0;
+
     if(TVG_IS_VG_FMT_SUPPORT(target->format)) {
         /* if target format is supported by VG, use target buffer directly */
-        tvg_target_buffer = target->memory;
+        canvas_target_buffer = target->memory;
+
+        /* support target stride */
+        LV_ASSERT(target->stride >= target->width);
+        LV_ASSERT(VG_LITE_IS_ALIGNED(target->stride, sizeof(uint32_t)));
+        stride = target->stride / sizeof(uint32_t);
     }
     else {
         /* if target format is not supported by VG, use internal buffer */
-        tvg_target_buffer = ctx->get_temp_target_buffer(target->width, target->height);
+        canvas_target_buffer = ctx->get_temp_target_buffer(target->width, target->height);
+        stride = target->width;
     }
 
-    Result res = ctx->canvas->target(
-                     (uint32_t *)tvg_target_buffer,
-                     target->width,
-                     target->width,
-                     target->height,
-                     SwCanvas::ARGB8888);
-
-    return res;
-}
-
-static vg_lite_uint32_t width_to_stride(vg_lite_uint32_t w, vg_lite_buffer_format_t color_format)
-{
-    if(vg_lite_query_feature(gcFEATURE_BIT_VG_16PIXELS_ALIGN)) {
-        w = VG_LITE_ALIGN(w, 16);
+    /* Prevent repeated target setting */
+    if(ctx->tvg_target_buffer == canvas_target_buffer) {
+        return Result::Success;
     }
 
-    vg_lite_uint32_t mul, div, align;
-    get_format_bytes(color_format, &mul, &div, &align);
-    return VG_LITE_ALIGN((w * mul / div), align);
+    ctx->tvg_target_buffer = canvas_target_buffer;
+
+    TVG_CHECK_RETURN_RESULT(ctx->canvas->target(
+                                (uint32_t *)ctx->tvg_target_buffer,
+                                stride,
+                                target->width,
+                                target->height,
+                                SwCanvas::ARGB8888));
+
+    if(ctx->scissor_is_set) {
+        TVG_CHECK_RETURN_RESULT(
+            ctx->canvas->viewport(
+                ctx->scissor_rect.x, ctx->scissor_rect.y,
+                ctx->scissor_rect.width, ctx->scissor_rect.height));
+    }
+
+    return Result::Success;
 }
 
 static bool decode_indexed_line(
     vg_lite_buffer_format_t color_format,
     const vg_lite_uint32_t * palette,
     int32_t x, int32_t y,
-    int32_t w_px, const uint8_t * in, vg_lite_uint32_t * out)
+    int32_t w_px, uint32_t stride, const uint8_t * in, vg_lite_uint32_t * out)
 {
     uint8_t px_size;
     uint16_t mask;
 
-    vg_lite_uint32_t w_byte = width_to_stride(w_px, color_format);
-
-    in += w_byte * y; /*First pixel*/
+    in += stride * y; /*First pixel*/
     out += w_px * y;
 
     int8_t shift = 0;
@@ -2395,19 +2616,22 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
                            vg_lite_color_t color)
 {
     vg_lite_uint32_t * image_buffer;
-    LV_ASSERT(VG_LITE_IS_ALIGNED(source->memory, LV_VG_LITE_THORVG_BUF_ADDR_ALIGN));
 
-#if LV_VG_LITE_THORVG_16PIXELS_ALIGN
-    LV_ASSERT(VG_LITE_IS_ALIGNED(source->width, 16));
-#endif
+    /* At least 8-byte alignment */
+    LV_ASSERT(VG_LITE_IS_ALIGNED(source->memory, 8));
 
-    if(source->format == VG_LITE_BGRA8888 && source->image_mode == VG_LITE_NORMAL_IMAGE_MODE) {
+    /**
+     * Since ThorVG's picture->load does not support stride,
+     * reconversion is required when the stride and width do not match.
+     */
+    if(source->format == VG_LITE_BGRA8888
+       && source->image_mode == VG_LITE_NORMAL_IMAGE_MODE
+       && (size_t)source->stride == (size_t)(source->width * sizeof(vg_lite_uint32_t))) {
         image_buffer = (vg_lite_uint32_t *)source->memory;
     }
     else {
         vg_lite_uint32_t width = source->width;
         vg_lite_uint32_t height = source->height;
-        vg_lite_uint32_t px_size = width * height;
         image_buffer = ctx->get_image_buffer(width, height);
 
         vg_lite_buffer_t target;
@@ -2416,7 +2640,7 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
         target.format = VG_LITE_BGRA8888;
         target.width = width;
         target.height = height;
-        target.stride = width_to_stride(width, target.format);
+        target.stride = width * sizeof(vg_lite_uint32_t);
 
         switch(source->format) {
             case VG_LITE_INDEX_1:
@@ -2425,7 +2649,7 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
             case VG_LITE_INDEX_8: {
                     const vg_lite_uint32_t * clut_colors = ctx->get_CLUT(source->format);
                     for(vg_lite_uint32_t y = 0; y < height; y++) {
-                        decode_indexed_line(source->format, clut_colors, 0, y, width, (uint8_t *)source->memory, image_buffer);
+                        decode_indexed_line(source->format, clut_colors, 0, y, width, source->stride, (uint8_t *)source->memory, image_buffer);
                     }
                 }
                 break;
@@ -2437,6 +2661,11 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
 
             case VG_LITE_A8: {
                     conv_alpha8_to_bgra8888.convert(&target, source, color);
+                }
+                break;
+
+            case VG_LITE_L8: {
+                    conv_l8_to_bgra8888.convert(&target, source);
                 }
                 break;
 
@@ -2460,6 +2689,21 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
                 }
                 break;
 
+            case VG_LITE_BGRA5551: {
+                    conv_bgra5551_to_bgra8888.convert(&target, source);
+                }
+                break;
+
+            case VG_LITE_BGRA4444: {
+                    conv_bgra4444_to_bgra8888.convert(&target, source);
+                }
+                break;
+
+            case VG_LITE_BGRA2222: {
+                    conv_bgra2222_to_bgra8888.convert(&target, source);
+                }
+                break;
+
 #if LV_VG_LITE_THORVG_YUV_SUPPORT
             case VG_LITE_NV12: {
                     libyuv::NV12ToARGB((const uint8_t *)source->memory, source->stride, (const uint8_t *)source->yuv.uv_memory,
@@ -2470,7 +2714,8 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
 #endif
 
             case VG_LITE_BGRA8888: {
-                    memcpy(image_buffer, source->memory, px_size * sizeof(vg_color32_t));
+                    /* For stride conversion */
+                    conv_bgra8888_to_bgra8888.convert(&target, source);
                 }
                 break;
 
@@ -2483,6 +2728,7 @@ static Result picture_load(vg_lite_ctx * ctx, std::unique_ptr<Picture> & picture
         /* multiply color */
         if(source->image_mode == VG_LITE_MULTIPLY_IMAGE_MODE && !VG_LITE_IS_ALPHA_FORMAT(source->format)) {
             vg_color32_t * dest = (vg_color32_t *)image_buffer;
+            vg_lite_uint32_t px_size = width * height;
             while(px_size--) {
                 dest->alpha = UDIV255(dest->alpha * A(color));
                 dest->red = UDIV255(dest->red * B(color));
@@ -2762,6 +3008,27 @@ static void vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_mat
 
     /* Copy temporary matrix into result. */
     lv_memcpy(matrix->m, &temp.m, sizeof(temp.m));
+}
+
+static Result vg_lite_grad_matrix_conv(vg_lite_matrix_t * result, const vg_lite_matrix_t * grad_matrix,
+                                       const vg_lite_matrix_t * path_matrix)
+{
+    /**
+     * Since Thorvg internally multiplies the path (shape) matrix with the gradient matrix to produce
+     * the rendering result, and VG-Lite's gradient matrix and path matrix are completely independent,
+     * requiring a previous multiplication to achieve the same rendering result,
+     * for the VG-Lite emulator, it is necessary to offset the gradient matrix to obtain the user's original gradient matrix
+     * to simulate hardware behavior:
+     * matrix_out = path_matrix * gradient_matrix
+     * =>
+     * gradient_matrix = inv(path_matrix) * matrix_out
+     */
+    if(!vg_lite_matrix_inverse(result, path_matrix)) {
+        return Result::InvalidArguments;
+    }
+
+    vg_lite_matrix_multiply(result, grad_matrix);
+    return Result::Success;
 }
 
 #endif

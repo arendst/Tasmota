@@ -3511,15 +3511,15 @@ be_local_closure(class_Matter_InvokeRequestMessage_solo_from_raw,   /* name */
       0x90020605,  //  0094  SETMBR	R0	K3	R5
       0x88140103,  //  0095  GETMBR	R5	R0	K3
       0x88080B0F,  //  0096  GETMBR	R2	R5	K15
-      0x8C180304,  //  0097  GETMET	R6	R1	K4
-      0x5C200400,  //  0098  MOVE	R8	R2
-      0x5425FFFD,  //  0099  LDINT	R9	-2
-      0x7C180600,  //  009A  CALL	R6	3
-      0x541E1817,  //  009B  LDINT	R7	6168
-      0x20180C07,  //  009C  NE	R6	R6	R7
-      0x781A0001,  //  009D  JMPF	R6	#00A0
-      0x4C180000,  //  009E  LDNIL	R6
-      0x80040C00,  //  009F  RET	1	R6
+      0x8C140304,  //  0097  GETMET	R5	R1	K4
+      0x5C1C0400,  //  0098  MOVE	R7	R2
+      0x5421FFFD,  //  0099  LDINT	R8	-2
+      0x7C140600,  //  009A  CALL	R5	3
+      0x541A1817,  //  009B  LDINT	R6	6168
+      0x20140A06,  //  009C  NE	R5	R5	R6
+      0x78160001,  //  009D  JMPF	R5	#00A0
+      0x4C140000,  //  009E  LDNIL	R5
+      0x80040A00,  //  009F  RET	1	R5
       0x00080506,  //  00A0  ADD	R2	R2	K6
       0x8C140304,  //  00A1  GETMET	R5	R1	K4
       0x5C1C0400,  //  00A2  MOVE	R7	R2

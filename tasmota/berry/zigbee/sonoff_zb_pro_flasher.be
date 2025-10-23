@@ -70,7 +70,7 @@ class sonoff_zb_pro_flasher
     except .. as e, m
       self.file_checked = false
       self.file_validated = false
-      raise e, m
+      print(f"FLH: Exception raised '{e}' - '{m}'")
     end
   end
 

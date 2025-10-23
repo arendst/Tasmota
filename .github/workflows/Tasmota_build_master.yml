@@ -7,6 +7,7 @@ on:
     paths-ignore:
     - '.github/**'        # Ignore changes towards the .github directory
     - '**.md'             # Do no build if *.md files changes
+    - 'tasmota/berry/**'  # Ignore Berry examples
 
 # Ensures that only one deploy task per branch/environment will run at a time.
 concurrency:
@@ -23,15 +24,19 @@ jobs:
         variant:
           - tasmota32-safeboot
           - tasmota32solo1-safeboot
-          - tasmota32c2-safeboot
-          - tasmota32c3-safeboot
-          - tasmota32c3ser-safeboot
           - tasmota32s2-safeboot
           - tasmota32s2cdc-safeboot
           - tasmota32s3-safeboot
           - tasmota32s3ser-safeboot
+          - tasmota32c2-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c3ser-safeboot
+          - tasmota32c5-safeboot
+          - tasmota32c5ser-safeboot
           - tasmota32c6-safeboot
           - tasmota32c6ser-safeboot
+          - tasmota32p4-safeboot
+          - tasmota32p4ser-safeboot
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,21 +44,28 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware_safeboot
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   base-images:
@@ -80,21 +92,28 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   base32-images:
@@ -115,7 +134,9 @@ jobs:
           - tasmota32-lvgl
           - tasmota32c2
           - tasmota32c3
+          - tasmota32c5
           - tasmota32c6
+          - tasmota32p4
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -127,29 +148,37 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: jason2866/download-artifact@v3.0.4
+        uses: actions/download-artifact@v4
         with:
-          name: firmware_safeboot
-          path: ./firmware
-      - name: Display downloaded files
+          pattern: tasmota32*
+          path: ./temp
+      - name: Move safeboot files
         run: |
-          ls -R ./firmware/
+          mkdir -p ./firmware/firmware
+          find ./temp -type f -exec cp -t ./firmware/firmware {} +
       - name: Add "release" to footer
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   language-images:
@@ -160,7 +189,7 @@ jobs:
     strategy:
       matrix:
         variant: [ tasmota, tasmota32 ]
-        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -168,29 +197,37 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: jason2866/download-artifact@v3.0.4
+        uses: actions/download-artifact@v4
         with:
-          name: firmware_safeboot
-          path: ./firmware
-      - name: Display downloaded files
+          pattern: tasmota32*
+          path: ./temp
+      - name: Move safeboot files
         run: |
-          ls -R ./firmware/
+          mkdir -p ./firmware/firmware
+          find ./temp -type f -exec cp -t ./firmware/firmware {} +
       - name: Add "release" to footer
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}-${{ matrix.language }}
           path: ./build_output
 
   Release:
@@ -199,28 +236,24 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v4
-    - name: Download Tasmota firmwares
-      uses: jason2866/download-artifact@v3.0.4
+    - name: Download all Tasmota artifacts
+      uses: actions/download-artifact@v4
       with:
-        name: firmware
-        path: ./mv_firmware
-    - name: Download safeboot firmwares
-      uses: jason2866/download-artifact@v3.0.4
-      with:
-        name: firmware_safeboot
-        path: ./mv_firmware
+        pattern: tasmota*
+        path: ./temp
+    - name: Move files
+      run: |
+        mkdir -p ./release
+        find ./temp -type f -exec cp -t ./release {} +
     - name: Display structure of downloaded files
-      run: ls -R ./mv_firmware/
-    - name: Zip all map.gz files in one file -> map_all.zip
-      run: 7z a -mx=9 -tzip -xr'!.*' map_all.zip mv_firmware/map
+      run: ls -R ./release/
     - name: Release
       uses: jason2866/action-gh-release@v1.2
       #if: startsWith(github.ref, 'refs/tags/')
       with:
         tag_name: ${{ github.run_number }}
         files: |
-          ./mv_firmware/firmware/*
-          map_all.zip
+          ./release/tasmota*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

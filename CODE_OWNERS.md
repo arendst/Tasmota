@@ -85,12 +85,13 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_71_magic_switch         | @barbudor
 | xdrv_72_pipsolar             | @chefpro
 | xdrv_73_lora                 | @arendst
-| xdrv_74                      |
+| xdrv_74_lorawan              | @arendst
 | xdrv_75_dali                 | @eeak, @arendst
-| xdrv_76                      |
-| xdrv_77                      |
-| xdrv_78                      |
+| xdrv_76_serial_i2c           | @s-hadinger
+| xdrv_77_wizmote              | @arendst
+| xdrv_78_telnet               | @arendst
 | xdrv_79_esp32_ble            | @staars, @btsimonh
+| xdrv_80_wireguard_client     | @s-hadinger
 | xdrv_81_esp32_webcam         | @gemu, @philrich
 | xdrv_82_esp32_ethernet       | @arendst
 | xdrv_83_esp32_watch          | @gemu
@@ -100,11 +101,13 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_88_esp32_shelly_pro     | @arendst
 | xdrv_89_                     |
 | xdrv_90_esp32_dingtian_relay | @barbudor
-| xdrv_91_                     |
+| xdrv_91_esp32_twai           | @arendst
 | xdrv_92_                     |
 | xdrv_93_                     |
 | xdrv_94_                     |
 |                              |
+| xdrv_119_i2c_ap33772s        | @arendst
+| xdrv_120_xyzmodem            | @arendst
 | xdrv_121_gpioviewer          | @arendst
 | xdrv_122_file_settings_demo  | @arendst
 | xdrv_122_file_json_settings_demo | @arendst
@@ -230,6 +233,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_113_hc8                 | Daniel Maier
 | xsns_114_amsx915             | Bastian Urschel
 | xsns_115_wooliis             | Luca Melette
+| xsns_117_c8_co2_5k           | @jeroenvermeulen
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |

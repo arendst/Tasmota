@@ -159,6 +159,18 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
+enum DisplayModes { 
+  DM_USER_CONTROL,         // 0
+  DM_TIME,
+  DM_LOCAL_SENSORS,
+  DM_TIME_LOCAL_SENSORS,
+  DM_MQTT_SENSORS,
+  DM_TIME_MQTT_SENSORS,
+  DM_MQTT_TOPIC_UPTIME,
+  DM_MQTT_HOSTNAME_IPADDRESS,
+  DM_MAX
+};
+
 const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_TYPE "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_MODE "|"
   D_CMND_DISP_INVERT "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
@@ -184,6 +196,10 @@ void (* const DisplayCommand[])(void) PROGMEM = {
 };
 
 #ifdef USE_GRAPH
+
+#ifndef NUM_GRAPHS
+#define NUM_GRAPHS      4                    // Max 16
+#endif
 
 typedef union {
   uint8_t data;
@@ -1786,6 +1802,80 @@ void DisplayAnalyzeJson(char *topic, const char *json) {
   }
 }
 
+void DisplayState(const char *topic, const char *json) {
+  // Impact DisplayCols1 and DisplayCols2:
+  // 12345678901234567890123456 = [DisplayCols1] 26   - Visible display columns
+  // leftitem         rightitem   [DisplayCols2] >= 3 - Display both left and rightaligned item, truncate rightaligned if total is too long
+  // leftitem             right   [DisplayCols2] 2    - Display both left and truncated rightaligned item
+  // leftitem                     [DisplayCols2] 1    - Display left item only
+  static uint32_t minute = 61; 
+
+  String jsonStr = json;                           // {"Time":"2025-08-24T14:34:59","Uptime":"0T00:05:10","UptimeSec":310,"Heap":49,...
+  JsonParser parser((char*)jsonStr.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return; }                           // Did JSON parsing went ok?
+
+  const char *leftitem = EmptyStr;
+  const char *rightitem = EmptyStr;
+
+  if (DM_MQTT_TOPIC_UPTIME == Settings->display_mode) {
+    leftitem = topic;
+    if (Settings->display_cols[1] > 1) {           // Need space for displaying topic and uptime
+      rightitem = root.getStr(PSTR(D_JSON_UPTIME), EmptyStr);
+      if (strlen(rightitem)) {
+        if ((2 == Settings->display_cols[1]) ||
+           ((Settings->display_cols[1] > 2) && ((strlen(leftitem) + strlen(rightitem) +1) > Settings->display_cols[0]))) {
+          char *eol = (char*)rightitem + strlen(rightitem) -3;
+          *eol = '\0';                             // Remove uptime seconds
+        }
+      }
+    }
+  }
+  else if (DM_MQTT_HOSTNAME_IPADDRESS == Settings->display_mode) {
+    leftitem = root.getStr(PSTR(D_CMND_HOSTNAME), EmptyStr);
+    if (Settings->display_cols[1] > 1) {           // Need space for displaying hostname and ipaddress
+      rightitem = root.getStr(PSTR(D_CMND_IPADDRESS), EmptyStr);
+      if (strlen(rightitem)) {
+        if ((2 == Settings->display_cols[1]) ||
+           ((Settings->display_cols[1] > 2) && ((strlen(leftitem) + strlen(rightitem) +1) > Settings->display_cols[0]))) {
+          uint32_t netmask = Settings->ipv4_address[2];  // Assume WiFi netmask = Ethernet netmask
+#if defined(ESP32) && defined(USE_ETHERNET)
+          if (0 == netmask) {                      // Assume Ethernet netmask = WiFi netmask
+            netmask = Settings->eth_ipv4_address[2];
+          }
+#endif
+          if (netmask != 0) {
+            for (uint32_t i = 0; i < 3; i++) {
+              if (netmask >= 0x000000FF) {
+                rightitem = strchr(rightitem +1, '.');  // Remove network IP address octets
+              }
+              netmask >>= 8;
+            }
+          } else {
+            rightitem = strrchr(rightitem, '.');   // last IP address octet assuming netmask 255.255.255.0
+          }
+        }
+      }
+    }
+  }
+
+  if (strlen(leftitem)) {
+    char buffer[Settings->display_cols[0] +1];     // Max sized buffer string
+    if (minute != RtcTime.minute) {
+      minute = RtcTime.minute;
+      char buffer2[Settings->display_cols[0] +1];  // Max sized buffer string
+      memset(buffer2, '-', sizeof(buffer2));       // Set to -
+      buffer2[sizeof(buffer2) -1] = '\0';
+      snprintf_P(buffer, sizeof(buffer), PSTR("- %02d" D_HOUR_MINUTE_SEPARATOR "%02d %s"), RtcTime.hour, RtcTime.minute, buffer2);
+      DisplayLogBufferAdd(buffer);
+    }
+    int spaces = Settings->display_cols[0] - strlen(leftitem) - strlen(rightitem);
+    if (spaces < 1) { spaces = 1; }
+    snprintf_P(buffer, sizeof(buffer), PSTR("%s%*s%s"), leftitem, spaces, "", rightitem);
+    DisplayLogBufferAdd(buffer);
+  }
+}
+
 void DisplayMqttSubscribe(void) {
 /* Subscribe to tele messages only
  * Supports the following FullTopic formats
@@ -1807,7 +1897,7 @@ void DisplayMqttSubscribe(void) {
   }
   strncat(ntopic, SettingsText(SET_MQTTPREFIX3), sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
   strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
-  if (Settings->display_model && (Settings->display_mode &0x04)) {
+  if (Settings->display_model && (Settings->display_mode >= DM_MQTT_SENSORS)) {
     disp_subscribed = true;
     MqttSubscribe(ntopic);
   } else {
@@ -1825,10 +1915,23 @@ bool DisplayMqttData(void) {
     snprintf_P(stopic, sizeof(stopic) , PSTR("%s/"), SettingsText(SET_MQTTPREFIX3));  // tele/
     char *tp = strstr(XdrvMailbox.topic, stopic);
     if (tp) {                                                // tele/tasmota/SENSOR
-      if (Settings->display_mode &0x04) {
-        tp = tp + strlen(stopic);                              // tasmota/SENSOR
-        char *topic = strtok(tp, "/");                         // tasmota
-        DisplayAnalyzeJson(topic, XdrvMailbox.data);
+      if (Settings->display_mode >= DM_MQTT_SENSORS) {       // 4..6
+        tp = tp + strlen(stopic);                            // tasmota/SENSOR
+        char *state = strstr_P(tp, PSTR("STATE"));
+        char *sensor = strstr_P(tp, PSTR("SENSOR"));
+        char *topic = strtok(tp, "/");                       // tasmota
+        if (topic) {
+          if ((DM_MQTT_TOPIC_UPTIME == Settings->display_mode) ||
+             (DM_MQTT_HOSTNAME_IPADDRESS == Settings->display_mode)) {
+            if (state) {
+              DisplayState(topic, XdrvMailbox.data);
+            }
+          } else {                                           // DM_MQTT_SENSORS and DM_TIME_MQTT_SENSORS
+            if (state || sensor) {
+              DisplayAnalyzeJson(topic, XdrvMailbox.data);
+            }
+          }
+        }
       }
       return true;
     }
@@ -1836,9 +1939,10 @@ bool DisplayMqttData(void) {
   return false;
 }
 
-void DisplayLocalSensor(void)
-{
-  if ((Settings->display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
+void DisplayLocalSensor(void) {
+  if (((DM_LOCAL_SENSORS == Settings->display_mode) ||
+       (DM_TIME_LOCAL_SENSORS == Settings->display_mode)) &&
+      (0 == TasmotaGlobal.tele_period)) {
     char no_topic[1] = { 0 };
 //    DisplayAnalyzeJson(TasmotaGlobal.mqtt_topic, ResponseData());  // Add local topic
     DisplayAnalyzeJson(no_topic, ResponseData());    // Discard any topic
@@ -1895,7 +1999,7 @@ void DisplayInitDriver(void) {
   disp_device = TasmotaGlobal.devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
-  Settings->display_mode = 0;
+  Settings->display_mode = DM_USER_CONTROL;
 #else
   DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
@@ -1983,19 +2087,20 @@ void CmndDisplayMode(void) {
  * 3 = Day                  Local sensors and time               Local sensors and time
  * 4 = Mqtt left and time   Mqtt (incl local) sensors            Mqtt (incl local) sensors
  * 5 = Mqtt up and time     Mqtt (incl local) sensors and time   Mqtt (incl local) sensors and time
+ * 6 = Mqtt topic           Mqtt topic                           Mqtt topic
 */
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
+  if ((XdrvMailbox.payload >= DM_USER_CONTROL) && (XdrvMailbox.payload < DM_MAX)) {
     uint32_t last_display_mode = Settings->display_mode;
     Settings->display_mode = XdrvMailbox.payload;
     if (last_display_mode != Settings->display_mode) {       // Switch to different mode
-      if ((!last_display_mode && Settings->display_mode) ||  // Switch to mode 1, 2, 3 or 4
+      if ((!last_display_mode && Settings->display_mode) ||  // Switch to mode >0
           (last_display_mode && !Settings->display_mode)) {  // Switch to mode 0
         DisplayInit(DISPLAY_INIT_MODE);
       }
-      if (1 == Settings->display_mode) {                     // Switch to mode 1
+      if (DM_TIME == Settings->display_mode) {               // Switch to mode 1
         DisplayClear();
       }
-      else if (Settings->display_mode > 1) {                 // Switch to mode 2, 3 or 4
+      else if (Settings->display_mode > DM_TIME) {           // Switch to mode 2 .. 6
         DisplayLogBufferInit();
       }
       DisplayMqttSubscribe();
@@ -2006,12 +2111,12 @@ void CmndDisplayMode(void) {
 }
 
 // Apply the current display dimmer
-void ApplyDisplayDimmer(void) {
+void ApplyDisplayDimmer(uint8_t dimmer) {
   disp_apply_display_dimmer_request = true;
   if ((disp_power < 0) || !disp_device) { return; }  // Not initialized yet
   disp_apply_display_dimmer_request = false;
 
-  uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
+  uint8_t dimmer8 = changeUIntScale(dimmer, 0, 100, 0, 255);
   uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
     ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
@@ -2035,7 +2140,7 @@ void CmndDisplayDimmer(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
     uint8_t dimmer = XdrvMailbox.payload;
     SetDisplayDimmer(dimmer);
-    ApplyDisplayDimmer();
+    ApplyDisplayDimmer(dimmer);
   }
   ResponseCmndNumber(GetDisplayDimmer());
 }
@@ -2298,7 +2403,7 @@ char ppath[16];
 #ifdef ESP32
 #ifdef JPEG_PICTS
 #include "img_converters.h"
-#include "esp_jpg_decode.h"
+#include "jpeg_decoder.h"
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 bool jpg2rgb565(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
@@ -2923,7 +3028,7 @@ bool Xdrv13(uint32_t function) {
         break;
       case FUNC_INIT:
         if (disp_apply_display_dimmer_request) {
-          ApplyDisplayDimmer();  // Allowed here.
+          ApplyDisplayDimmer(GetDisplayDimmer());  // Allowed here.
         }
         break;
       case FUNC_EVERY_50_MSECOND:

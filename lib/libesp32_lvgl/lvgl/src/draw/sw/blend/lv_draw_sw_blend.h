@@ -33,11 +33,23 @@ extern "C" {
  **********************/
 
 /**
+ * Custom draw function for SW rendering.
+ * @param t             pointer to a draw task
+ * @param dsc           pointer to an initialized blend descriptor
+ */
+typedef void (*lv_draw_sw_blend_handler_t)(lv_draw_task_t * t, const lv_draw_sw_blend_dsc_t * dsc);
+
+typedef struct {
+    lv_color_format_t dest_cf;
+    lv_draw_sw_blend_handler_t handler;
+} lv_draw_sw_custom_blend_handler_t;
+
+/**
  * Call the blend function of the `layer`.
  * @param draw_unit     pointer to a draw unit
  * @param dsc           pointer to an initialized blend descriptor
  */
-void lv_draw_sw_blend(lv_draw_unit_t * draw_unit, const lv_draw_sw_blend_dsc_t * dsc);
+void lv_draw_sw_blend(lv_draw_task_t * t, const lv_draw_sw_blend_dsc_t * dsc);
 
 /**********************
  *      MACROS

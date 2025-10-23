@@ -3,7 +3,7 @@
 // input sha256: 92e33b521e56657da8f50887c7e1431219de0a8f19048247211f3b6d4c9b68ba
 /////////////////////////////////////////////////////////////////////
 
-const size_t HTTP_SCRIPT_MODULE_TEMPLATE_SIZE = 589;
+const size_t HTTP_SCRIPT_MODULE_TEMPLATE_SIZE = 589;    // compressed size 441 bytes
 const char HTTP_SCRIPT_MODULE_TEMPLATE_COMPRESSED[] PROGMEM = "\x33\xBF\xAC\xF1\xD4\x2B\xC7\x83\x02\xF8\x3A\xDC\xE4\x1B\x3B\xBA\x75\x1A\x8E\xF1"
                              "\xED\x33\xBF\xAC\x3E\x09\x81\x8B\x1A\xFA\x8E\x81\xFD\xDD\x32\x61\x31\xAF\xA8\xEE"
                              "\x9F\x78\x32\xB7\x38\xFB\x3B\xC7\x8C\x3A\x53\x36\x51\x07\x9D\x4F\xA8\xF9\xA7\x83"

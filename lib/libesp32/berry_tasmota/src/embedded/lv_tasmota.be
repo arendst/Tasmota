@@ -25,6 +25,7 @@ def init(lv_tasmota)
 
   lv.register_button_encoder = lv_tasmota.register_button_encoder
   lv.screenshot = lv_tasmota.screenshot
+  lv.set_paint_cb = lv_tasmota.set_paint_cb
 
   # add version information
   lv.version = lv.version_major()
@@ -121,11 +122,8 @@ def splash()
   bg.set_user_data(0x53706C68)
 
   var tas_logo = lv.img(bg)
-  tas_logo.set_tasmota_logo()
-  tas_logo.set_zoom(150)
-  tas_logo.set_style_img_recolor_opa(255, 0)  # lv.PART_MAIN | lv.STATE_DEFAULT
-  tas_logo.set_style_img_recolor(white, 0)    # lv.PART_MAIN | lv.STATE_DEFAULT
-  tas_logo.align(lv.ALIGN_LEFT_MID, -12, 0)
+  tas_logo.set_tasmota_logo36()
+  tas_logo.align(lv.ALIGN_LEFT_MID, 0, 0)
 
   var tas = lv.label(bg)
   # tas.set_style_bg_opa(lv.OPA_TRANSP, lv.PART_MAIN | lv.STATE_DEFAULT)

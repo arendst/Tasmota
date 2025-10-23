@@ -16,6 +16,7 @@ extern int lv0_load_robotocondensed_latin1_font(bvm *vm);
 extern int lv0_load_font_embedded(bvm *vm);
 
 extern int lv0_screenshot(bvm *vm);
+extern int lv0_set_paint_cb(bvm *vm);
 extern int lv0_load_freetype_font(bvm *vm);
 
 #include "solidify/solidified_lv_tasmota.h"
@@ -37,6 +38,7 @@ module lv_tasmota (scope: global, strings: weak) {
     font_embedded, func(lv0_load_font_embedded)
     register_button_encoder, func(lv0_register_button_encoder)
     screenshot, func(lv0_screenshot)
+    set_paint_cb, func(lv0_set_paint_cb)
 
     load_freetype_font, func(lv0_load_freetype_font)
 }

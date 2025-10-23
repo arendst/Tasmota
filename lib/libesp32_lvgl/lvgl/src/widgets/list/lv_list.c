@@ -34,21 +34,21 @@ const lv_obj_class_t lv_list_class = {
     .base_class = &lv_obj_class,
     .width_def = (LV_DPI_DEF * 3) / 2,
     .height_def = LV_DPI_DEF * 2,
-    .name = "list",
+    .name = "lv_list",
 };
 
 const lv_obj_class_t lv_list_button_class = {
     .base_class = &lv_button_class,
     .width_def = LV_PCT(100),
     .height_def = LV_SIZE_CONTENT,
-    .name = "list-btn",
+    .name = "lv_list_button",
 };
 
 const lv_obj_class_t lv_list_text_class = {
     .base_class = &lv_label_class,
     .width_def = LV_PCT(100),
     .height_def = LV_SIZE_CONTENT,
-    .name = "list-text",
+    .name = "lv_list_text",
 };
 
 /**********************
@@ -99,7 +99,7 @@ lv_obj_t * lv_list_add_button(lv_obj_t * list, const void * icon, const char * t
     if(txt) {
         lv_obj_t * label = lv_label_create(obj);
         lv_label_set_text(label, txt);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_MODE_SCROLL_CIRCULAR);
         lv_obj_set_flex_grow(label, 1);
     }
 

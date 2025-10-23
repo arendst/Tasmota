@@ -1,0 +1,19 @@
+# Test template functionality
+
+# Define a simple template
+template pulse_effect {
+  param base_color type color
+  param duration
+  param brightness
+  
+  animation pulse = pulsating_animation(
+    color=base_color
+    period=duration
+  )
+  pulse.opacity = brightness
+  
+  run pulse
+}
+
+# Use the template - templates add animations directly to engine and run them
+pulse_effect(red, 2s, 80%)

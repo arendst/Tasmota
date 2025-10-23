@@ -9,6 +9,12 @@
 
 #include "lv_blend_helium.h"
 
+/*GCC Workaround: missing .note.GNU-stack section implies executable stack*/
+#ifdef __ELF__
+.section .note.GNU-stack,"",%progbits
+#endif /* __ELF__ */
+
+
 #if LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE && LV_USE_NATIVE_HELIUM_ASM
 
 .data
@@ -665,15 +671,15 @@ BITMASK     .req q6
 
 .macro export_set src, dst, src_bpp, dst_bpp, mode
 .ifc \src, color
-    export lv_\src\()_blend_to_\dst\()_helium, \src_bpp, \dst_bpp, 0, 0, \mode
-    export lv_\src\()_blend_to_\dst\()_with_opa_helium, \src_bpp, \dst_bpp, 0, 1, \mode
-    export lv_\src\()_blend_to_\dst\()_with_mask_helium, \src_bpp, \dst_bpp, 1, 0, \mode
-    export lv_\src\()_blend_to_\dst\()_mix_mask_opa_helium, \src_bpp, \dst_bpp, 1, 1, \mode
+    export _lv_\src\()_blend_to_\dst\()_helium, \src_bpp, \dst_bpp, 0, 0, \mode
+    export _lv_\src\()_blend_to_\dst\()_with_opa_helium, \src_bpp, \dst_bpp, 0, 1, \mode
+    export _lv_\src\()_blend_to_\dst\()_with_mask_helium, \src_bpp, \dst_bpp, 1, 0, \mode
+    export _lv_\src\()_blend_to_\dst\()_mix_mask_opa_helium, \src_bpp, \dst_bpp, 1, 1, \mode
 .else
-    export lv_\src\()_blend_\mode\()_to_\dst\()_helium, \src_bpp, \dst_bpp, 0, 0, \mode
-    export lv_\src\()_blend_\mode\()_to_\dst\()_with_opa_helium, \src_bpp, \dst_bpp, 0, 1, \mode
-    export lv_\src\()_blend_\mode\()_to_\dst\()_with_mask_helium, \src_bpp, \dst_bpp, 1, 0, \mode
-    export lv_\src\()_blend_\mode\()_to_\dst\()_mix_mask_opa_helium, \src_bpp, \dst_bpp, 1, 1, \mode
+    export _lv_\src\()_blend_\mode\()_to_\dst\()_helium, \src_bpp, \dst_bpp, 0, 0, \mode
+    export _lv_\src\()_blend_\mode\()_to_\dst\()_with_opa_helium, \src_bpp, \dst_bpp, 0, 1, \mode
+    export _lv_\src\()_blend_\mode\()_to_\dst\()_with_mask_helium, \src_bpp, \dst_bpp, 1, 0, \mode
+    export _lv_\src\()_blend_\mode\()_to_\dst\()_mix_mask_opa_helium, \src_bpp, \dst_bpp, 1, 1, \mode
 .endif
 .endm
 
@@ -699,3 +705,4 @@ export_set xrgb8888, argb8888, 31, 32, normal
 export_set argb8888, argb8888, 32, 32, normal
 
 #endif /*LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE && LV_USE_NATIVE_HELIUM_ASM*/
+

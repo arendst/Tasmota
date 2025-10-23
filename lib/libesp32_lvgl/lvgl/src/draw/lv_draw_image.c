@@ -1,5 +1,5 @@
 /**
- * @file lv_draw_img.c
+ * @file lv_draw_image.c
  *
  */
 
@@ -14,6 +14,7 @@
 #include "../misc/lv_log.h"
 #include "../misc/lv_math.h"
 #include "../core/lv_refr.h"
+#include "../core/lv_obj_private.h"
 #include "../stdlib/lv_mem.h"
 #include "../stdlib/lv_string.h"
 
@@ -29,7 +30,7 @@
  *  STATIC PROTOTYPES
  **********************/
 
-static void img_decode_and_draw(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * draw_dsc,
+static void img_decode_and_draw(lv_draw_task_t * t, const lv_draw_image_dsc_t * draw_dsc,
                                 lv_image_decoder_dsc_t * decoder_dsc, lv_area_t * relative_decoded_area,
                                 const lv_area_t * img_area, const lv_area_t * clipped_img_area,
                                 lv_draw_image_core_cb draw_core_cb);
@@ -70,24 +71,31 @@ void lv_draw_layer(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
         return;
     }
 
-    lv_draw_task_t * t = lv_draw_add_task(layer, coords);
+    LV_PROFILER_DRAW_BEGIN;
 
-    t->draw_dsc = lv_malloc(sizeof(*dsc));
-    lv_memcpy(t->draw_dsc, dsc, sizeof(*dsc));
-    t->type = LV_DRAW_TASK_TYPE_LAYER;
-    t->state = LV_DRAW_TASK_STATE_WAITING;
+    lv_draw_task_t * t = lv_draw_add_task(layer, coords, LV_DRAW_TASK_TYPE_LAYER);
+    lv_draw_image_dsc_t * new_image_dsc = t->draw_dsc;
+    lv_memcpy(new_image_dsc, dsc, sizeof(*dsc));
+    t->state = LV_DRAW_TASK_STATE_BLOCKED;
 
     lv_image_buf_get_transformed_area(&t->_real_area, lv_area_get_width(coords), lv_area_get_height(coords),
                                       dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
     lv_area_move(&t->_real_area, coords->x1, coords->y1);
 
+    /*If the image_area is not set assume that it's the same as the rendering area */
+    if(new_image_dsc->image_area.x2 == LV_COORD_MIN) {
+        new_image_dsc->image_area = *coords;
+    }
+
     lv_layer_t * layer_to_draw = (lv_layer_t *)dsc->src;
     layer_to_draw->all_tasks_added = true;
 
     lv_draw_finalize_task_creation(layer, t);
+
+    LV_PROFILER_DRAW_END;
 }
 
-void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv_area_t * coords)
+void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv_area_t * image_coords)
 {
     if(dsc->src == NULL) {
         LV_LOG_WARN("Image draw: src is NULL");
@@ -100,27 +108,83 @@ void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
         return;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
 
-    lv_draw_image_dsc_t * new_image_dsc = lv_malloc(sizeof(*dsc));
-    lv_memcpy(new_image_dsc, dsc, sizeof(*dsc));
-    lv_result_t res = lv_image_decoder_get_info(new_image_dsc->src, &new_image_dsc->header);
+    lv_draw_image_dsc_t new_image_dsc;
+    lv_memcpy(&new_image_dsc, dsc, sizeof(*dsc));
+    lv_result_t res = lv_image_decoder_get_info(new_image_dsc.src, &new_image_dsc.header);
     if(res != LV_RESULT_OK) {
         LV_LOG_WARN("Couldn't get info about the image");
-        lv_free(new_image_dsc);
+        LV_PROFILER_DRAW_END;
         return;
     }
 
-    lv_draw_task_t * t = lv_draw_add_task(layer, coords);
-    t->draw_dsc = new_image_dsc;
-    t->type = LV_DRAW_TASK_TYPE_IMAGE;
+    /*If the image_area is not set assume that it's the same as the rendering area */
+    if(new_image_dsc.image_area.x2 == LV_COORD_MIN) {
+        new_image_dsc.image_area = *image_coords;
+    }
 
-    lv_image_buf_get_transformed_area(&t->_real_area, lv_area_get_width(coords), lv_area_get_height(coords),
-                                      dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
-    lv_area_move(&t->_real_area, coords->x1, coords->y1);
+    /*Typical case, draw the image as bitmap*/
+    if(!(new_image_dsc.header.flags & LV_IMAGE_FLAGS_CUSTOM_DRAW)) {
+        lv_draw_task_t * t = lv_draw_add_task(layer, image_coords, LV_DRAW_TASK_TYPE_IMAGE);
+        lv_memcpy(t->draw_dsc, &new_image_dsc, sizeof(lv_draw_image_dsc_t));
 
-    lv_draw_finalize_task_creation(layer, t);
-    LV_PROFILER_END;
+        lv_image_buf_get_transformed_area(&t->_real_area, lv_area_get_width(image_coords), lv_area_get_height(image_coords),
+                                          dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
+        lv_area_move(&t->_real_area, image_coords->x1, image_coords->y1);
+
+        lv_draw_finalize_task_creation(layer, t);
+    }
+    /*Use a custom draw callback*/
+    else {
+
+        lv_image_decoder_dsc_t decoder_dsc;
+        res = lv_image_decoder_open(&decoder_dsc, new_image_dsc.src, NULL);
+        if(res != LV_RESULT_OK) {
+            LV_LOG_ERROR("Failed to open image");
+            LV_PROFILER_DRAW_END;
+            return;
+        }
+
+        if(decoder_dsc.decoder && decoder_dsc.decoder->custom_draw_cb) {
+            lv_area_t draw_area = layer->buf_area;
+            lv_area_t coords_area = *image_coords;
+
+            lv_area_t obj_area = dsc->base.obj->coords;
+            if(layer->parent) { /* child layer */
+                if(lv_area_intersect(&coords_area, &coords_area, &obj_area)) {
+                    int32_t xpos = image_coords->x1 - draw_area.x1;
+                    int32_t ypos = image_coords->y1 - draw_area.y1;
+
+                    lv_area_move(&coords_area, -(image_coords->x1 - xpos), -(image_coords->y1 - ypos));
+                    layer->_clip_area = coords_area;
+                    decoder_dsc.decoder->custom_draw_cb(layer, &decoder_dsc, &coords_area, &new_image_dsc, &coords_area);
+                }
+            }
+            else {
+                lv_area_t clip_area = draw_area;
+                if(lv_area_intersect(&clip_area, &clip_area, &coords_area)) {
+
+                    lv_image_buf_get_transformed_area(&coords_area, lv_area_get_width(image_coords), lv_area_get_height(image_coords),
+                                                      dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
+                    lv_area_move(&coords_area, image_coords->x1, image_coords->y1);
+
+                    lv_image_buf_get_transformed_area(&clip_area, lv_area_get_width(image_coords), lv_area_get_height(image_coords),
+                                                      dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
+                    lv_area_move(&clip_area, image_coords->x1, image_coords->y1);
+
+                    if(lv_area_intersect(&clip_area, &clip_area, &obj_area)) {
+                        decoder_dsc.decoder->custom_draw_cb(layer, &decoder_dsc, &coords_area, &new_image_dsc, &clip_area);
+                    }
+                }
+            }
+
+        }
+
+        lv_image_decoder_close(&decoder_dsc);
+    }
+
+    LV_PROFILER_DRAW_END;
 }
 
 lv_image_src_t lv_image_src_get_type(const void * src)
@@ -140,7 +204,7 @@ lv_image_src_t lv_image_src_get_type(const void * src)
     }
 }
 
-void lv_draw_image_normal_helper(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * draw_dsc,
+void lv_draw_image_normal_helper(lv_draw_task_t * t, const lv_draw_image_dsc_t * draw_dsc,
                                  const lv_area_t * coords, lv_draw_image_core_cb draw_core_cb)
 {
     if(draw_core_cb == NULL) {
@@ -164,7 +228,7 @@ void lv_draw_image_normal_helper(lv_draw_unit_t * draw_unit, const lv_draw_image
     }
 
     lv_area_t clipped_img_area;
-    if(!lv_area_intersect(&clipped_img_area, &draw_area, draw_unit->clip_area)) {
+    if(!lv_area_intersect(&clipped_img_area, &draw_area, &t->clip_area)) {
         return;
     }
 
@@ -175,12 +239,12 @@ void lv_draw_image_normal_helper(lv_draw_unit_t * draw_unit, const lv_draw_image
         return;
     }
 
-    img_decode_and_draw(draw_unit, draw_dsc, &decoder_dsc, NULL, coords, &clipped_img_area, draw_core_cb);
+    img_decode_and_draw(t, draw_dsc, &decoder_dsc, NULL, coords, &clipped_img_area, draw_core_cb);
 
     lv_image_decoder_close(&decoder_dsc);
 }
 
-void lv_draw_image_tiled_helper(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * draw_dsc,
+void lv_draw_image_tiled_helper(lv_draw_task_t * t, const lv_draw_image_dsc_t * draw_dsc,
                                 const lv_area_t * coords, lv_draw_image_core_cb draw_core_cb)
 {
     if(draw_core_cb == NULL) {
@@ -222,7 +286,7 @@ void lv_draw_image_tiled_helper(lv_draw_unit_t * draw_unit, const lv_draw_image_
 
             lv_area_t clipped_img_area;
             if(lv_area_intersect(&clipped_img_area, &tile_area, coords)) {
-                img_decode_and_draw(draw_unit, draw_dsc, &decoder_dsc, &relative_decoded_area, &tile_area, &clipped_img_area,
+                img_decode_and_draw(t, draw_dsc, &decoder_dsc, &relative_decoded_area, &tile_area, &clipped_img_area,
                                     draw_core_cb);
             }
 
@@ -270,7 +334,7 @@ void lv_image_buf_get_transformed_area(lv_area_t * res, int32_t w, int32_t h, in
  *   STATIC FUNCTIONS
  **********************/
 
-static void img_decode_and_draw(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * draw_dsc,
+static void img_decode_and_draw(lv_draw_task_t * t, const lv_draw_image_dsc_t * draw_dsc,
                                 lv_image_decoder_dsc_t * decoder_dsc, lv_area_t * relative_decoded_area,
                                 const lv_area_t * img_area, const lv_area_t * clipped_img_area,
                                 lv_draw_image_core_cb draw_core_cb)
@@ -282,7 +346,7 @@ static void img_decode_and_draw(lv_draw_unit_t * draw_unit, const lv_draw_image_
 
     /*The whole image is available, just draw it*/
     if(decoder_dsc->decoded && (relative_decoded_area == NULL || relative_decoded_area->x1 == LV_COORD_MIN)) {
-        draw_core_cb(draw_unit, draw_dsc, decoder_dsc, &sup, img_area, clipped_img_area);
+        draw_core_cb(t, draw_dsc, decoder_dsc, &sup, img_area, clipped_img_area);
     }
     /*Draw in smaller pieces*/
     else {
@@ -305,7 +369,7 @@ static void img_decode_and_draw(lv_draw_unit_t * draw_unit, const lv_draw_image_
                 /*Limit draw area to the current decoded area and draw the image*/
                 lv_area_t clipped_img_area_sub;
                 if(lv_area_intersect(&clipped_img_area_sub, clipped_img_area, &absolute_decoded_area)) {
-                    draw_core_cb(draw_unit, draw_dsc, decoder_dsc, &sup,
+                    draw_core_cb(t, draw_dsc, decoder_dsc, &sup,
                                  &absolute_decoded_area, &clipped_img_area_sub);
                 }
             }

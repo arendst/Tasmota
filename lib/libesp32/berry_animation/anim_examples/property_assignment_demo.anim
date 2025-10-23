@@ -1,0 +1,44 @@
+# Property Assignment Demo
+# Shows how to set animation properties after creation
+
+#strip length 60
+
+# Define colors
+color red_custom = 0xFF0000
+color blue_custom = 0x0000FF
+color green_custom = 0x00FF00
+
+# Create animations
+animation left_pulse = beacon_animation(color=red_custom, pos=15, beacon_size=15, slew_size=3)
+animation center_pulse = beacon_animation(color=blue_custom, pos=30, beacon_size=15, slew_size=3)
+animation right_pulse = beacon_animation(color=green_custom, pos=45, beacon_size=15, slew_size=3)
+
+# Set different opacities
+left_pulse.opacity = 255    # Full slew_size
+center_pulse.opacity = 200  # Slightly dimmed
+right_pulse.opacity = 150   # More dimmed
+
+# Set priorities (higher numbers have priority)
+left_pulse.priority = 10
+center_pulse.priority = 15   # Center has highest priority
+right_pulse.priority = 5
+
+# Create a sequence that shows all three
+sequence demo {
+  play left_pulse for 3s
+  wait 500ms
+  play center_pulse for 3s
+  wait 500ms
+  play right_pulse for 3s
+  wait 500ms
+  
+  # Play all together for final effect
+  repeat forever {
+    play left_pulse for 2s
+    play center_pulse for 2s
+    play right_pulse for 2s
+    wait 1s
+  }
+}
+
+run demo

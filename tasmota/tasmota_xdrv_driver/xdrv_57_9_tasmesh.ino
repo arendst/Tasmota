@@ -422,6 +422,7 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
 void MESHstartBroker(void) {       // Must be called after WiFi is initialized!! Rule - on system#boot do meshbroker endon
 #ifdef ESP32
   WiFi.mode(WIFI_AP_STA);
+  WiFi.AP.begin();
   AddLog(LOG_LEVEL_INFO, PSTR("MSH: Broker MAC %s"), WiFi.softAPmacAddress().c_str());
   WiFi.softAPmacAddress(MESH.broker); //set MESH.broker to the needed MAC
   uint32_t _channel = WiFi.channel();

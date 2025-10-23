@@ -94,4 +94,4 @@ Module             | LCode | Description
 06 TTGO Watch      |   x   | TTGO Watch
 07 M5Stack Core2   |   x   | M5Stack Core2
 
-Over 2500 additional devices are supported using [templates](TEMPLATES.md).
+Over 2800 additional devices are supported using [templates](TEMPLATES.md).

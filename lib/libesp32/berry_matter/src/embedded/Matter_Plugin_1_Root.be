@@ -43,15 +43,41 @@ class Matter_Plugin_Root : Matter_Plugin
     0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
     0x003F: []                        # Group Key Management Cluster 11.2 p.572
   })
+  # static var CLUSTERS_ICD = matter.consolidate_clusters(_class.CLUSTERS, {
+  #   0x0046: [0,1,2]                   # ICD Management Cluster
+  # })
   static var TYPES = { 0x0016: 1 }       # Root node
+
+  # # ICD options
+  # var icd_idle, icd_active, icd_threshold
 
   #############################################################
   # Constructor
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
+    # # check if we have ICD parameters
+    # self.icd_idle = config.find("icd_idle", nil)
+    # if (self.icd_idle != nil)
+    #   self.icd_active = config.find("icd_active", 5000)       # default 5s
+    #   self.icd_threshold = config.find("icd_threshold", 300)     # default 300ms
+    # end
+    # publish mandatory events
     self.publish_event(0x0028, 0x00, matter.EVENT_CRITICAL, matter.TLV.Matter_TLV_item().set(matter.TLV.U4, tasmota.version()))   # Event StartUp - Software Version
     self.publish_event(0x0033, 0x03, matter.EVENT_CRITICAL, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
   end
+
+  #############################################################
+  # consolidate_clusters
+  #
+  # Build a consolidated map of all the `CLUSTERS` static vars
+  # from the inheritance hierarchy
+  # def get_clusters()
+  #   if (self.icd_idle == nil)
+  #     return self.CLUSTERS
+  #   else
+  #     return self.CLUSTERS_ICD
+  #   end
+  # end
 
   #############################################################
   # read an attribute
@@ -322,6 +348,17 @@ class Matter_Plugin_Root : Matter_Plugin
         end
         return pl
       end
+
+    # ====================================================================================================
+    # elif cluster == 0x0046              # ========== ICD Management Cluster ==========
+
+    #   if   attribute == 0x0000          #  ---------- IdleModeDuration / uint32 (seconds) ----------
+    #     return tlv_solo.set_or_nil(TLV.U4, self.icd_idle)
+    #   elif attribute == 0x0001          #  ---------- ActiveModeDuration / uint32 (milliseconds) ----------
+    #     return tlv_solo.set_or_nil(TLV.U4, self.icd_active)
+    #   elif attribute == 0x0002          #  ---------- ActiveModeThreshold / uint16 (milliseconds) ----------
+    #     return tlv_solo.set_or_nil(TLV.U2, self.icd_threshold)
+    #   end
 
     end
     return super(self).read_attribute(session, ctx, tlv_solo)

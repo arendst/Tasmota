@@ -44,7 +44,7 @@ const lv_obj_class_t lv_menu_class = {
     .width_def = (LV_DPI_DEF * 3) / 2,
     .height_def = LV_DPI_DEF * 2,
     .instance_size = sizeof(lv_menu_t),
-    .name = "menu",
+    .name = "lv_menu",
 };
 const lv_obj_class_t lv_menu_page_class = {
     .constructor_cb = lv_menu_page_constructor,
@@ -53,7 +53,7 @@ const lv_obj_class_t lv_menu_page_class = {
     .width_def = LV_PCT(100),
     .height_def = LV_SIZE_CONTENT,
     .instance_size = sizeof(lv_menu_page_t),
-    .name = "menu-page",
+    .name = "lv_menu_page",
 };
 
 const lv_obj_class_t lv_menu_cont_class = {
@@ -61,7 +61,7 @@ const lv_obj_class_t lv_menu_cont_class = {
     .base_class = &lv_obj_class,
     .width_def = LV_PCT(100),
     .height_def = LV_SIZE_CONTENT,
-    .name = "menu-cont",
+    .name = "lv_menu_cont",
 };
 
 const lv_obj_class_t lv_menu_section_class = {
@@ -69,14 +69,14 @@ const lv_obj_class_t lv_menu_section_class = {
     .base_class = &lv_obj_class,
     .width_def = LV_PCT(100),
     .height_def = LV_SIZE_CONTENT,
-    .name = "menu-section",
+    .name = "lv_menu_section",
 };
 
 const lv_obj_class_t lv_menu_separator_class = {
     .base_class = &lv_obj_class,
     .width_def = LV_SIZE_CONTENT,
     .height_def = LV_SIZE_CONTENT,
-    .name = "menu-separator",
+    .name = "lv_menu_separator",
 };
 
 const lv_obj_class_t lv_menu_sidebar_cont_class = {
@@ -113,7 +113,6 @@ static void lv_menu_value_changed_event_cb(lv_event_t * e);
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
-bool lv_menu_item_back_button_is_root(lv_obj_t * menu, lv_obj_t * obj);
 void lv_menu_clear_history(lv_obj_t * obj);
 
 lv_obj_t * lv_menu_create(lv_obj_t * parent)
@@ -124,10 +123,12 @@ lv_obj_t * lv_menu_create(lv_obj_t * parent)
     return obj;
 }
 
-lv_obj_t * lv_menu_page_create(lv_obj_t * parent, char const * const title)
+lv_obj_t * lv_menu_page_create(lv_obj_t * menu, char const * const title)
 {
+    LV_ASSERT_OBJ(menu, MY_CLASS);
+
     LV_LOG_INFO("begin");
-    lv_obj_t * obj = lv_obj_class_create_obj(&lv_menu_page_class, parent);
+    lv_obj_t * obj = lv_obj_class_create_obj(&lv_menu_page_class, menu);
     lv_obj_class_init_obj(obj);
 
     lv_menu_page_t * page = (lv_menu_page_t *)obj;
@@ -141,6 +142,14 @@ lv_obj_t * lv_menu_page_create(lv_obj_t * parent, char const * const title)
 
 lv_obj_t * lv_menu_cont_create(lv_obj_t * parent)
 {
+    LV_ASSERT_NULL(parent);
+    if(!parent || (LV_USE_ASSERT_OBJ &&
+                   !(lv_obj_has_class(parent, &lv_menu_page_class)
+                     || lv_obj_has_class(parent, &lv_menu_section_class)))) {
+        LV_LOG_WARN("Invalid parent object type for menu container object");
+        return NULL;
+    }
+
     LV_LOG_INFO("begin");
     lv_obj_t * obj = lv_obj_class_create_obj(&lv_menu_cont_class, parent);
     lv_obj_class_init_obj(obj);
@@ -149,6 +158,8 @@ lv_obj_t * lv_menu_cont_create(lv_obj_t * parent)
 
 lv_obj_t * lv_menu_section_create(lv_obj_t * parent)
 {
+    LV_ASSERT_OBJ(parent, &lv_menu_page_class);
+
     LV_LOG_INFO("begin");
     lv_obj_t * obj = lv_obj_class_create_obj(&lv_menu_section_class, parent);
     lv_obj_class_init_obj(obj);
@@ -157,6 +168,8 @@ lv_obj_t * lv_menu_section_create(lv_obj_t * parent)
 
 lv_obj_t * lv_menu_separator_create(lv_obj_t * parent)
 {
+    LV_ASSERT_OBJ(parent, &lv_menu_page_class);
+
     LV_LOG_INFO("begin");
     lv_obj_t * obj = lv_obj_class_create_obj(&lv_menu_separator_class, parent);
     lv_obj_class_init_obj(obj);
@@ -389,6 +402,8 @@ void lv_menu_set_load_page_event(lv_obj_t * menu, lv_obj_t * obj, lv_obj_t * pag
 
 void lv_menu_set_page_title(lv_obj_t * page_obj, char const * const title)
 {
+    LV_ASSERT_OBJ(page_obj, &lv_menu_page_class);
+
     LV_LOG_INFO("begin");
     lv_menu_page_t * page = (lv_menu_page_t *)page_obj;
 
@@ -414,6 +429,8 @@ void lv_menu_set_page_title(lv_obj_t * page_obj, char const * const title)
 
 void lv_menu_set_page_title_static(lv_obj_t * page_obj, char const * const title)
 {
+    LV_ASSERT_OBJ(page_obj, &lv_menu_page_class);
+
     LV_LOG_INFO("begin");
     lv_menu_page_t * page = (lv_menu_page_t *)page_obj;
 

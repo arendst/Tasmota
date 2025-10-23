@@ -32,12 +32,14 @@ extern "C" {
  **********************/
 
 /** Description of a array*/
-typedef struct {
+struct _lv_array_t {
     uint8_t * data;
     uint32_t size;
     uint32_t capacity;
     uint32_t element_size;
-} lv_array_t;
+
+    bool inner_alloc; /* true: data is allocated by the array; false: data is allocated by the user */
+};
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -52,12 +54,23 @@ typedef struct {
 void lv_array_init(lv_array_t * array, uint32_t capacity, uint32_t element_size);
 
 /**
+ * Init an array from a buffer.
+ * @note The buffer must be large enough to store `capacity` elements. The array will not release the buffer and reallocate it.
+ *       The user must ensure that the buffer is valid during the lifetime of the array. And release the buffer when the array is no longer needed.
+ * @param array pointer to an `lv_array_t` variable to initialize
+ * @param buf pointer to a buffer to use as the array's data
+ * @param capacity the initial capacity of the array
+ * @param element_size the size of an element in bytes
+ */
+void lv_array_init_from_buf(lv_array_t * array, void * buf, uint32_t capacity, uint32_t element_size);
+
+/**
  * Resize the array to the given capacity.
  * @note if the new capacity is smaller than the current size, the array will be truncated.
  * @param array pointer to an `lv_array_t` variable
  * @param new_capacity the new capacity of the array
  */
-void lv_array_resize(lv_array_t * array, uint32_t new_capacity);
+bool lv_array_resize(lv_array_t * array, uint32_t new_capacity);
 
 /**
  * Deinit the array, and free the allocated memory
@@ -70,28 +83,40 @@ void lv_array_deinit(lv_array_t * array);
  * @param array pointer to an `lv_array_t` variable
  * @return the number of elements stored in the array
  */
-uint32_t lv_array_size(const lv_array_t * array);
+static inline uint32_t lv_array_size(const lv_array_t * array)
+{
+    return array->size;
+}
 
 /**
  * Return the capacity of the array, i.e. how many elements can be stored.
  * @param array pointer to an `lv_array_t` variable
  * @return the capacity of the array
  */
-uint32_t lv_array_capacity(const lv_array_t * array);
+static inline uint32_t lv_array_capacity(const lv_array_t * array)
+{
+    return array->capacity;
+}
 
 /**
  * Return if the array is empty
  * @param array pointer to an `lv_array_t` variable
  * @return true: array is empty; false: array is not empty
  */
-bool lv_array_is_empty(const lv_array_t * array);
+static inline bool lv_array_is_empty(const lv_array_t * array)
+{
+    return array->size == 0;
+}
 
 /**
  * Return if the array is full
  * @param array pointer to an `lv_array_t` variable
  * @return true: array is full; false: array is not full
  */
-bool lv_array_is_full(const lv_array_t * array);
+static inline bool lv_array_is_full(const lv_array_t * array)
+{
+    return array->size == array->capacity;
+}
 
 /**
  * Copy an array to another.
@@ -105,7 +130,10 @@ void lv_array_copy(lv_array_t * target, const lv_array_t * source);
  * Remove all elements in array.
  * @param array pointer to an `lv_array_t` variable
  */
-void lv_array_clear(lv_array_t * array);
+static inline void lv_array_clear(lv_array_t * array)
+{
+    array->size = 0;
+}
 
 /**
  * Shrink the memory capacity of array if necessary.
@@ -144,8 +172,9 @@ lv_result_t lv_array_concat(lv_array_t * array, const lv_array_t * other);
 /**
  * Push back element. Adds a new element to the end of the array.
  * If the array capacity is not enough for the new element, the array will be resized automatically.
+ * @note If the element is NULL, it will be added as an empty element.
  * @param array pointer to an `lv_array_t` variable
- * @param element pointer to the element to add
+ * @param element pointer to the element to add. NULL to push an empty element.
  * @return LV_RESULT_OK: success, otherwise: error
  */
 lv_result_t lv_array_push_back(lv_array_t * array, const void * element);
@@ -172,13 +201,19 @@ void * lv_array_at(const lv_array_t * array, uint32_t index);
  * @param array pointer to an `lv_array_t` variable
  * @return a pointer to the first element in the array
  */
-void * lv_array_front(const lv_array_t * array);
+static inline void * lv_array_front(const lv_array_t * array)
+{
+    return lv_array_at(array, 0);
+}
 
 /**
  * Returns a pointer to the last element in the array.
  * @param array pointer to an `lv_array_t` variable
  */
-void * lv_array_back(const lv_array_t * array);
+static inline void * lv_array_back(const lv_array_t * array)
+{
+    return lv_array_at(array, lv_array_size(array) - 1);
+}
 
 /**********************
  *      MACROS

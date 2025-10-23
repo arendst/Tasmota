@@ -42,7 +42,7 @@ const lv_obj_class_t lv_tabview_class = {
     .height_def = LV_PCT(100),
     .base_class = &lv_obj_class,
     .instance_size = sizeof(lv_tabview_t),
-    .name = "tabview",
+    .name = "lv_tabview",
 };
 
 typedef struct {
@@ -74,7 +74,6 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * obj, const char * name)
 
     lv_obj_t * page = lv_obj_create(cont);
     lv_obj_set_size(page, lv_pct(100), lv_pct(100));
-    uint32_t tab_idx = lv_obj_get_child_count(cont);
 
     lv_obj_t * tab_bar = lv_tabview_get_tab_bar(obj);
 
@@ -89,8 +88,10 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * obj, const char * name)
     lv_label_set_text(label, name);
     lv_obj_center(label);
 
-    if(tab_idx == 1) {
-        lv_tabview_set_active(obj, 0, LV_ANIM_OFF);
+    uint32_t tab_idx = lv_obj_get_child_count(cont) - 1;
+    lv_tabview_t * tabview = (lv_tabview_t *)obj;
+    if(tab_idx == tabview->tab_cur) {
+        lv_tabview_set_active(obj, tab_idx, LV_ANIM_OFF);
     }
 
     return page;
@@ -111,18 +112,18 @@ void lv_tabview_set_active(lv_obj_t * obj, uint32_t idx, lv_anim_enable_t anim_e
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_tabview_t * tabview = (lv_tabview_t *)obj;
 
+    tabview->tab_cur = idx;
+
     lv_obj_t * cont = lv_tabview_get_content(obj);
     lv_obj_t * tab_bar = lv_tabview_get_tab_bar(obj);
 
     uint32_t tab_cnt = lv_tabview_get_tab_count(obj);
-    if(idx >= tab_cnt) {
-        idx = tab_cnt - 1;
-    }
+    if(idx >= tab_cnt) return;
 
     /*To be sure lv_obj_get_content_width will return valid value*/
-    lv_obj_update_layout(obj);
-
     if(cont == NULL) return;
+
+    lv_obj_update_layout(obj);
 
     if((tabview->tab_pos & LV_DIR_VER) != 0) {
         int32_t gap = lv_obj_get_style_pad_column(cont, LV_PART_MAIN);
@@ -149,7 +150,6 @@ void lv_tabview_set_active(lv_obj_t * obj, uint32_t idx, lv_anim_enable_t anim_e
         button = lv_obj_get_child_by_type(tab_bar, (int32_t)i, &lv_button_class);
     }
 
-    tabview->tab_cur = idx;
 }
 
 void lv_tabview_set_tab_bar_position(lv_obj_t * obj, lv_dir_t dir)
@@ -233,7 +233,6 @@ void lv_tabview_set_tab_bar_size(lv_obj_t * obj, int32_t size)
     else {
         lv_obj_set_width(tab_bar, size);
     }
-
 }
 
 uint32_t lv_tabview_get_tab_active(lv_obj_t * obj)
@@ -241,6 +240,13 @@ uint32_t lv_tabview_get_tab_active(lv_obj_t * obj)
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_tabview_t * tabview = (lv_tabview_t *)obj;
     return tabview->tab_cur;
+}
+
+lv_obj_t * lv_tabview_get_tab_button(lv_obj_t * obj, int32_t idx)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    return lv_obj_get_child_by_type(lv_tabview_get_tab_bar(obj), idx, &lv_button_class);
 }
 
 uint32_t lv_tabview_get_tab_count(lv_obj_t * obj)
@@ -278,7 +284,8 @@ static void lv_tabview_constructor(const lv_obj_class_t * class_p, lv_obj_t * ob
     cont = lv_obj_create(obj);
     lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
 
-    lv_obj_add_event_cb(cont, cont_scroll_end_event_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(cont, cont_scroll_end_event_cb, LV_EVENT_LAYOUT_CHANGED, NULL);
+    lv_obj_add_event_cb(cont, cont_scroll_end_event_cb, LV_EVENT_SCROLL_END, NULL);
     lv_obj_set_scrollbar_mode(cont, LV_SCROLLBAR_MODE_OFF);
     lv_tabview_set_tab_bar_position(obj, LV_DIR_TOP);
 
@@ -305,8 +312,23 @@ static void button_clicked_event_cb(lv_event_t * e)
     lv_obj_t * button = lv_event_get_current_target(e);
 
     lv_obj_t * tv = lv_obj_get_parent(lv_obj_get_parent(button));
-    int32_t idx = lv_obj_get_index_by_type(button, &lv_button_class);
+
+    if(tv == NULL) return;
+
+    /* Remember currently active tab before the click */
+    uint32_t prev_idx = lv_tabview_get_tab_active(tv);
+
+    /* Index of the button that was clicked */
+    uint32_t idx = lv_obj_get_index_by_type(button, &lv_button_class);
+
+    /* Switch to the requested tab */
     lv_tabview_set_active(tv, idx, LV_ANIM_OFF);
+
+    /* If the tab really changed, notify listeners just like the
+     * swipe/scroll handler does. */
+    if(prev_idx != idx) {
+        lv_obj_send_event(tv, LV_EVENT_VALUE_CHANGED, NULL);
+    }
 }
 
 static void cont_scroll_end_event_cb(lv_event_t * e)

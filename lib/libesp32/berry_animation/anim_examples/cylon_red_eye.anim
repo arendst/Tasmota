@@ -1,0 +1,14 @@
+# Cylon Red Eye
+# Automatically adapts to the length of the strip
+
+set strip_len = strip_length()
+
+# Base aurora animation with slow flowing colors
+animation red_eye = beacon_animation(
+  color = red
+  pos = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = 5s)
+  beacon_size = 3       # small 3 pixels eye
+  slew_size = 2         # with 2 pixel shading around
+)
+
+run red_eye

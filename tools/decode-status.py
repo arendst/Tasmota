@@ -219,7 +219,8 @@ a_setoption = [[
     "(GUI) Disable display of state text (1)",
     "(Energy) Do not add export energy to energy today (1)",
     "(GUI) Disable display of GUI device name (1)",
-    "","",
+    "(WizMote) Enable WiZ Smart Remote support (1)",
+    "",
     "","","","",
     "","","","",
     "","","",""
@@ -310,8 +311,8 @@ a_features = [[
     "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
     "USE_SPI_LORA","USE_SPL06_007","USE_QMP6988","USE_WOOLIIS",
     "USE_HX711_M5SCALES","USE_RX8010","USE_PCF85063","USE_ESP32_TWAI",
-    "","","","",
-    "","","","",
+    "USE_C8_CO2_5K","USE_WIZMOTE","USE_V9240","USE_TELNET",
+    "USE_XYZMODEM","USE_WIREGUARD","USE_AP33772S","",
     "","","","",
     "","","","",
     "","","",""
@@ -342,7 +343,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v14.4.1.2 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v14.6.0.2 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

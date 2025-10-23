@@ -32,6 +32,7 @@
 #endif
 
 #if defined (ARDUINO_ARCH_ESP32) && !defined(NO_SIMD)
+#if __has_include ("dsps_fft2r_platform.h")
 #include "dsps_fft2r_platform.h"
 #if (dsps_fft2r_sc16_aes3_enabled == 1)
 #define ESP32S3_SIMD
@@ -42,6 +43,7 @@ void s3_dequant(int16_t *pMCU, int16_t *pQuant);
 }
 int16_t i16_Consts[8] = {0x80, 113, 90, 22, 46, 1,32,2048};
 #endif // S3 SIMD
+#endif // __has_include
 #endif // ESP32
 
 #if defined( __x86_64__ ) && !defined(NO_SIMD)
@@ -64,13 +66,14 @@ static void JPEGGetMoreData(JPEGIMAGE *pPage);
 static int DecodeJPEG(JPEGIMAGE *pImage);
 static int32_t readRAM(JPEGFILE *pFile, uint8_t *pBuf, int32_t iLen);
 static int32_t seekMem(JPEGFILE *pFile, int32_t iPosition);
-#if defined (__MACH__) || defined( __LINUX__ ) || defined( __MCUXPRESSO )
+#if defined (__MACH__) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined(_WIN64)
 static int32_t readFile(JPEGFILE *pFile, uint8_t *pBuf, int32_t iLen);
 static int32_t seekFile(JPEGFILE *pFile, int32_t iPosition);
 static void closeFile(void *handle);
 #endif
 static void JPEGDither(JPEGIMAGE *pJPEG, int iWidth, int iHeight);
 /* JPEG tables */
+const int iBitMasks[33] = {0,1,3,7,0xf,0x1f,0x3f,0x7f,0xff,0x1ff,0x3ff,0x7ff,0x0fff,0x1fff,0x3fff,0x7fff,0xffff,0x1ffff,0x3ffff,0x7ffff,0xfffff,0x1fffff,0x3fffff,0x7fffff,0xffffff,0x1ffffff,0x3ffffff,0x7ffffff,0xfffffff,0x1fffffff,0x3fffffff,0x7fffffff,1};
 // zigzag ordering of DCT coefficients
 static const unsigned char cZigZag[64] = {0,1,5,6,14,15,27,28,
     2,4,7,13,16,26,29,42,
@@ -550,7 +553,7 @@ static const uint16_t usRangeTableB[] = {0x0000,0x0000,0x0000,0x0000,0x0000,0x00
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-#if defined (__MACH__) || defined( __LINUX__ ) || defined( __MCUXPRESSO )
+#if defined (__MACH__) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined(_WIN64)
 //
 // API for C
 //
@@ -773,7 +776,7 @@ static int32_t seekMem(JPEGFILE *pFile, int32_t iPosition)
     return iPosition;
 } /* seekMem() */
 
-#if defined (__MACH__) || defined( __LINUX__ ) || defined( __MCUXPRESSO )
+#if defined (__MACH__) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined(_WIN64)
 
 static void closeFile(void *handle)
 {
@@ -788,6 +791,17 @@ static int32_t seekFile(JPEGFILE *pFile, int32_t iPosition)
     fseek((FILE *)pFile->fHandle, iPosition, SEEK_SET);
     return iPosition;
 } /* seekFile() */
+
+static void * openFile(const char *szFilename, int32_t *pFileSize)
+{
+FILE *f;
+    f = fopen(szFilename, "r+b");
+    if (!f) return NULL;
+    fseek(f, 0, SEEK_END);
+    *pFileSize = (int32_t)ftell(f);
+    fseek(f, 0, SEEK_SET);
+    return (void *)f;
+} /* openFile() */
 
 static int32_t readFile(JPEGFILE *pFile, uint8_t *pBuf, int32_t iLen)
 {
@@ -1171,7 +1185,7 @@ static int JPEGMakeHuffTables(JPEGIMAGE *pJPEG, int bThumbnail)
             pBits = &pHuffVals[(iTable+4) * HUFF_TABLEN];
             p = pBits;
             p += 16; // point to bit data
-            if (iTable * HUFF11SIZE >= sizeof(pJPEG->usHuffAC) / 2)
+            if (iTable * HUFF11SIZE >= (int)sizeof(pJPEG->usHuffAC) / 2)
                 return 0;
             pShort = &pJPEG->usHuffAC[iTable*HUFF11SIZE];
             pLong = &pJPEG->usHuffAC[iTable*HUFF11SIZE + 1024];
@@ -1605,6 +1619,10 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
                 (*pPage->pfnSeek)(&pPage->JPEGFile, iFilePos);
                 iBytesRead = 0; // throw away any old data
             }
+            if (iOffset > iBytesRead) { // something went wrong
+                pPage->iError = JPEG_DECODE_ERROR;
+                return 0;
+            }
             // move existing bytes down
             if (iOffset)
             {
@@ -1627,9 +1645,8 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
         }
         switch (usMarker)
         {
-            case 0xffc1:
-            case 0xffc2:
-            case 0xffc3:
+            case 0xffc1: // extended mode
+            case 0xffc3: // lossless mode
                 pPage->iError = JPEG_UNSUPPORTED_FEATURE;
                 return 0; // currently unsupported modes
                 
@@ -1649,7 +1666,7 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
                        // point to next IFD
                         IFD += (12 * iTagCount) + 2;
                         IFD = TIFFLONG(&s[IFD + iOffset + 8], bMotorola);
-                        if (IFD != 0) // Thumbnail present?
+                        if (IFD != 0 && IFD + iOffset + 8 < JPEG_FILE_BUF_SIZE) // Thumbnail present?
                         {
                             pPage->ucHasThumb = 1;
                             GetTIFFInfo(pPage, bMotorola, IFD+iOffset+8); // info for second 'page' of TIFF
@@ -1658,7 +1675,8 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
                     }
                 }
                 break;
-            case 0xffc0: // SOFx - start of frame
+            case 0xffc0: // SOFx - start of frame (baseline)
+            case 0xffc2: // (progressive)
                 pPage->ucMode = (uint8_t)usMarker;
                 pPage->ucBpp = s[iOffset+2]; // bits per sample
                 pPage->iCropX = pPage->iCropY = 0; // initialize crop rectangle to full image size
@@ -1666,9 +1684,6 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
                 pPage->iCropCX = pPage->iWidth = MOTOSHORT(&s[iOffset+5]);
                 pPage->ucNumComponents = s[iOffset+7];
                 pPage->ucBpp = pPage->ucBpp * pPage->ucNumComponents; /* Bpp = number of components * bits per sample */
-                if (pPage->ucNumComponents == 1)
-                    pPage->ucSubSample = 0; // use this to differentiate from color 1:1
-                else
                 {
                     usLen -= 8;
                     iOffset += 8;
@@ -1691,6 +1706,9 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
                         }
                         usLen -= 3;
                     }
+                }
+                if (pPage->ucNumComponents == 1) {
+                    pPage->ucSubSample = 0; // use this to differentiate from color 1:1
                 }
                 break;
             case 0xffdd: // Restart Interval
@@ -1744,11 +1762,11 @@ static int JPEGParseInfo(JPEGIMAGE *pPage, int bExtractThumb)
     } // while
     if (usMarker == 0xffda) // start of image
     {
-        if (pPage->ucBpp != 8) // need to match up table IDs
-        {
+//        if (pPage->ucBpp != 8) // need to match up table IDs
+//        {
             iOffset -= usLen;
             JPEGGetSOS(pPage, &iOffset); // get Start-Of-Scan info for decoding
-        }
+//        }
         if (!JPEGMakeHuffTables(pPage, 0)) //int bThumbnail) DEBUG
         {
             pPage->iError = JPEG_UNSUPPORTED_FEATURE;
@@ -1790,6 +1808,279 @@ static void JPEGFixQuantD(JPEGIMAGE *pJPEG)
         }
     }
 } /* JPEGFixQuantD() */
+/****************************************************************************
+ *                                                                          *
+ *  FUNCTION   : JPEGDecodeMCU_P(char *, int *, int *, int *, JPEGDATA *)   *
+ *                                                                          *
+ *  PURPOSE    : Decompress a macro block of Progressive JPEG data.         *
+ *                                                                          *
+ ****************************************************************************/
+static int JPEGDecodeMCU_P(JPEGIMAGE *pJPEG, int iMCU, int *iDCPredictor)
+{
+    int iCount;
+    int iIndex;
+    unsigned char ucHuff, *pFastDC;
+    unsigned short *pFast;
+    uint32_t usHuff; // this prevents an unnecessary & 65535 for shorts
+    signed int iPositive, iNegative, iCoeff;
+    signed short *pMCU = &pJPEG->sMCUs[iMCU & 0xffffff];
+    uint32_t ulBitOff;
+    my_ulong ulCode, ulBits, ulTemp; // local copies to allow compiler to use register vars
+    uint8_t *pBuf;
+
+    ulBitOff = pJPEG->bb.ulBitOff;
+    ulBits = pJPEG->bb.ulBits;
+    pBuf = pJPEG->bb.pBuf;
+        
+    if (ulBitOff > (REGISTER_WIDTH-17)) { // need to get more data
+        pBuf += (ulBitOff >> 3);
+        ulBitOff &= 7;
+        ulBits = MOTOLONG(pBuf);
+    }
+
+    iPositive = (1 << pJPEG->cApproxBitsLow); // positive bit position being coded
+    iNegative = ((-1) << pJPEG->cApproxBitsLow); // negative bit position being coded
+        
+    if (pJPEG->iScanStart == 0)
+    {
+        if (pJPEG->cApproxBitsHigh) // successive approximation - simply encodes the specified bit
+        {
+            ulCode = (ulBits >> (31-ulBitOff)) & 1; // just get 1 bit
+            ulBitOff += 1;
+            if (ulCode)
+            {
+                //            (*iDCPredictor) |= iPositive;  // in case the scan is run more than once
+                //            pMCU[0] = *iDCPredictor; // store in MCU[0]
+                pMCU[0] |= iPositive;
+            }
+            goto mcu_done; // that's it
+        }
+        // get the DC component
+        ulCode = (ulBits >> (REGISTER_WIDTH - 12 - ulBitOff)) & 0xfff; // get as lower 12 bits
+        if (ulCode >= 0xf80) // long code
+            ulCode = (ulCode & 0xff); // point to long table
+        else
+            ulCode >>= 6; // use first 6 bits of short code
+        pFastDC = &pJPEG->ucHuffDC[pJPEG->ucDCTable * DC_TABLE_SIZE];
+        ucHuff = pFastDC[ulCode]; // get the length+code
+        if (ucHuff == 0) // invalid code
+            return -1;
+        ulBitOff += (ucHuff >> 4); // add the Huffman length
+        ucHuff &= 0xf; // get the actual code (SSSS)
+        if (ucHuff) // if there is a change to the DC value
+        { // get the 'extra' bits
+            if (ulBitOff > (REGISTER_WIDTH - 17)) // need to get more data
+            {
+                pBuf += (ulBitOff >> 3);
+                ulBitOff &= 7;
+                ulBits = MOTOLONG(pBuf);
+            }
+            ulCode = ulBits << ulBitOff;
+            ulTemp = ~(my_ulong)(((my_long)ulCode)>>(REGISTER_WIDTH-1)); // slide sign bit across other 63/31 bits
+            ulCode >>= (REGISTER_WIDTH - ucHuff);
+            ulCode -= ulTemp>>(REGISTER_WIDTH-ucHuff);
+            ulBitOff += ucHuff; // add bit length
+            ulCode <<= pJPEG->cApproxBitsLow; // successive approximation shift value
+            (*iDCPredictor) += ulCode;
+        }
+        pMCU[0] = (short)*iDCPredictor; // store in MCU[0]
+    }
+    // Now get the other 63 AC coefficients
+    pFast = &pJPEG->usHuffAC[pJPEG->ucACTable * HUFF11SIZE];
+    if (pJPEG->iScanStart)
+        iIndex = pJPEG->iScanStart; // starting index of this scan (progressive JPEG)
+    else
+        iIndex = 1; // special case when the DC component is included
+    if (pJPEG->cApproxBitsHigh) // successive approximation - different method
+    {
+        if (1)
+//        if (*iSkip == 0) // only decode this block if not being skipped in EOB run
+        {
+            for (; iIndex <= pJPEG->iScanEnd; iIndex++)
+            {
+                if (ulBitOff > (REGISTER_WIDTH-17)) { // need to get more data
+                    pBuf += (ulBitOff >> 3);
+                    ulBitOff &= 7;
+                    ulBits = MOTOLONG(pBuf);
+                }
+                ulCode = (ulBits >> (REGISTER_WIDTH - 16 - ulBitOff)) & 0xffff; // get as lower 16 bits
+                if (ulCode >= 0xf000) // first 4 bits = 1, use long table
+                    ulCode = (ulCode & 0x1fff);
+                else
+                    ulCode >>= 4; // use lower 12 bits (short table)
+                usHuff = pFast[ulCode];
+                if (usHuff == 0) // invalid code
+                    return -1;
+                ulBitOff += (usHuff >> 8); // add length
+                usHuff &= 0xff; // get code (RRRR/SSSS)
+                iCoeff = 0;
+                if (usHuff & 0xf)
+                {
+                    if ((usHuff & 0xf) != 1)   // size of new coefficient should always be one
+                        return -1;
+                    ulCode = (ulBits >> (REGISTER_WIDTH-1-ulBitOff)) & 1; // just get 1 bit
+                    ulBitOff += 1;
+                    if (ulCode) // 1 means use positive value; 0 = use negative
+                        iCoeff = iPositive;
+                    else
+                        iCoeff = iNegative;
+                }
+                else // since SSSS = 0, must be a ZRL or EOBn code
+                {
+                    if (usHuff != 0xf0) // ZRL
+                    { // EOBn code
+                        usHuff = (usHuff >> 4); // get the number of extra bits needed to code the count
+                        ulCode = ulBits >> (REGISTER_WIDTH - usHuff - ulBitOff); // shift down by (SSSS) - extra length
+                        ulCode &= iBitMasks[usHuff];
+                        ulCode += (1 << usHuff); // plus base amount
+                        ulBitOff += usHuff; // add extra length
+                        //*iSkip = ulCode; // return this skip amount
+                        break;
+                    }
+                }
+                // Advance over already-nonzero coefficients and RRRR still-zero coefficients
+                // appending correction bits to the nonzeroes.  A correction bit is 1 if the abs
+                // value of the coefficient must be increased.
+                iCount = (usHuff >> 4); // get RRRR in lower 4 bits
+                do {
+                    if (pMCU[iIndex])
+                    {
+                        if (ulBitOff > (REGISTER_WIDTH-17)) { // need to get more data
+                            pBuf += (ulBitOff >> 3);
+                            ulBitOff &= 7;
+                            ulBits = MOTOLONG(pBuf);
+                        }
+                        ulCode = (ulBits >> (REGISTER_WIDTH-1-ulBitOff)) & 1; // just get 1 bit
+                        ulBitOff++;
+                        if (ulCode)
+                        {
+                            if ((pMCU[iIndex] & iPositive) == 0) // only combine if not already done
+                            {
+                                if (pMCU[iIndex] >= 0)
+                                    pMCU[iIndex] += (short)iPositive;
+                                else
+                                    pMCU[iIndex] += (short)iNegative;
+                            }
+                        }
+                    }
+                    else // count the zero coeffs to skip
+                    {
+                        if (--iCount < 0)
+                            break;      // done skipping zeros
+                    }
+                    iIndex++;
+                } while (iIndex <= pJPEG->iScanEnd);
+                if (iCoeff && iIndex < 0x40) // store the non-zero coefficient
+                    pMCU[iIndex] = (short) iCoeff;
+            } // for - AC coeffs
+        } // if not skipped
+        if (0)
+//        if (*iSkip) // scan any remaining coefficient positions after the end-of-band
+        {
+            for (; iIndex <= pJPEG->iScanEnd; iIndex++)
+            {
+                if (pMCU[iIndex]) // only non-zero ones need correction
+                {
+                    if (ulBitOff > 15) // need to grab more bytes to nibble on
+                    {
+                        pBuf += 2; // grab 2 more bytes since that's what we really need
+                        ulBitOff -= 16;
+                        ulBits <<= 16;
+                        ulBits |= MOTOSHORT(&pBuf[2]);
+                    }
+                    ulCode = ulBits >> (REGISTER_WIDTH - 1 - ulBitOff); // get 1 bit
+                    ulBitOff++;
+                    if (ulCode & 1)   // correction bit
+                    {
+                        if ((pMCU[iIndex] & iPositive) == 0) // only combine if not already done
+                        {
+                            if (pMCU[iIndex] >= 0)
+                                pMCU[iIndex] += (short)iPositive;
+                            else
+                                pMCU[iIndex] += (short)iNegative;
+                        }
+                    }  // if correction bit
+                }  // if coeff is non-zero
+            } // for the rest of the AC coefficients
+         //   (*iSkip)--; // count this block as completed
+        }  // if this block is being skipped
+    } // if successive approx
+    else // normal AC decoding
+    {
+       // if (*iSkip == 0) // if this block is not being skipped in a EOB run
+        {
+            while (iIndex <= pJPEG->iScanEnd)
+            {
+                if (ulBitOff > 15) // need to grab more bytes to nibble on
+                {
+                    pBuf += 2; // grab 2 more bytes since that's what we really need
+                    ulBitOff -= 16;
+                    ulBits <<= 16;
+                    ulBits |= MOTOSHORT(&pBuf[2]);
+                }
+                ulCode = (ulBits >> (REGISTER_WIDTH - 16 - ulBitOff)) & 0xffff; // get as lower 16 bits
+                if (ulCode >= 0xf000) // first 4 bits = 1, use long table
+                    ulCode = (ulCode & 0x1fff);
+                else
+                    ulCode >>= 4; // use lower 12 bits (short table)
+                usHuff = pFast[ulCode];
+                if (usHuff == 0) // invalid code
+                    return -1;
+                ulBitOff += (usHuff >> 8); // add length
+                usHuff &= 0xff; // get code (RRRR/SSSS)
+                //            if (usHuff == 0) // no more AC components
+                //               {
+                //               goto mcu_done;
+                //               }
+                if (usHuff == 0xf0) // is it ZRL?
+                {
+                    iIndex += 16; // skip 16 AC coefficients
+                }
+                else
+                {
+                    if (ulBitOff > 15)
+                    {
+                        pBuf += 2; // grab 2 more bytes since that's what we really need
+                        ulBitOff -= 16;
+                        ulBits <<= 16;
+                        ulBits |= MOTOSHORT(&pBuf[2]);
+                    }
+                    if ((usHuff & 0xf) == 0) // special case for encoding EOB (end-of-band) codes (SSSS=0)
+                    {
+                        usHuff = (usHuff >> 4); // get the number of extra bits needed to code the count
+                        ulCode = ulBits >> (REGISTER_WIDTH - usHuff - ulBitOff); // shift down by (SSSS) - extra length
+                        ulCode &= iBitMasks[usHuff];
+                        ulCode += (1 << usHuff); // plus base amount
+                        ulBitOff += usHuff; // add extra length
+                       // *iSkip = ulCode; // return this skip amount
+                        break;
+                    }
+                    else
+                    {
+                        iIndex += (usHuff >> 4); // skip amount
+                        usHuff &= 0xf; // get (SSSS) - extra length
+                        ulCode = ulBits << ulBitOff;
+                        ulCode >>= (32 - usHuff);
+                        if (!(ulCode & 0x80000000>>(REGISTER_WIDTH - 16 - -usHuff))) // test for negative
+                            ulCode -= 0xffffffff>>(REGISTER_WIDTH - 16 - -usHuff);
+                        ulBitOff += usHuff; // add (SSSS) extra length
+                        ulCode <<= pJPEG->cApproxBitsLow; // successive approximation shift value
+                        pMCU[iIndex++] = (signed short)ulCode; // store AC coefficient
+                    }
+                }
+            } // while
+        } // if this block not skipped
+    //    if (*iSkip)
+    //        (*iSkip)--; // count this block as being completed (or skipped)
+    } // end of non-successive approx code
+mcu_done:
+    pJPEG->bb.pBuf = pBuf;
+    pJPEG->iVLCOff = (int)(pBuf - pJPEG->ucFileBuf);
+    pJPEG->bb.ulBitOff = ulBitOff;
+    pJPEG->bb.ulBits = ulBits;
+    return 0;
+    
+} /* JPEGDecodeMCU_P() */
 //
 // Decode the DC and 2-63 AC coefficients of the current DCT block
 // For 1/4 and 1/8 scaled images, we don't store most of the AC values since we
@@ -1873,6 +2164,9 @@ static int JPEGDecodeMCU(JPEGIMAGE *pJPEG, int iMCU, int *iDCPredictor)
     }
     if (pJPEG->ucACTable > 1) // unsupported
         return -1;
+    if (pJPEG->iScanEnd == 0) { // first scan of progressive has only DC values
+        return 0; // we're done
+    }
     // Now get the other 63 AC coefficients
     pFast = &pJPEG->usHuffAC[pJPEG->ucACTable * HUFF11SIZE];
     if (pJPEG->b11Bit) // 11-bit "slow" tables used
@@ -1983,8 +2277,6 @@ mcu_done:
 static void JPEGIDCT(JPEGIMAGE *pJPEG, int iMCUOffset, int iQuantTable)
 {
     int iRow;
-    unsigned char ucColMask;
-    int iCol;
     signed int tmp6,tmp7,tmp10,tmp11,tmp12,tmp13;
     signed int z5,z10,z11,z12,z13;
     signed int tmp0,tmp1,tmp2,tmp3,tmp4,tmp5;
@@ -2260,7 +2552,7 @@ int16x8_t mmxZ5, mmxZ10, mmxZ11, mmxZ12, mmxZ13;
 #if !defined (HAS_SSE) && !defined(HAS_NEON)
     // do columns first
     u16MCUFlags |= 1; // column 0 must always be calculated
-    for (iCol = 0; iCol < 8 && u16MCUFlags; iCol++)
+    for (int iCol = 0; iCol < 8 && u16MCUFlags; iCol++)
     {
         if (u16MCUFlags & (1<<iCol)) // column has data in it
         {
@@ -2471,7 +2763,7 @@ int16x8_t mmxZ5, mmxZ10, mmxZ11, mmxZ12, mmxZ13;
 #ifdef HAS_NEON
         {
             int16x4_t L_in_16x4, R_in_16x4, L_out, R_out;
-            int8x8_t LR_out_8x8;
+            uint8x8_t LR_out_8x8;
             int16x8_t LR_out;
             L_in_16x4 = vdup_n_s16(tmp0); // suppresses warning of setting lane 0 of uninitialized var
             L_in_16x4 = vset_lane_s16(tmp1, L_in_16x4, 1);
@@ -2508,12 +2800,13 @@ static void JPEGPutMCU8BitGray(JPEGIMAGE *pJPEG, int x, int iPitch)
     int i, j, xcount, ycount;
     uint8_t *pDest, *pSrc = (uint8_t *)&pJPEG->sMCUs[0];
     
-    if (pJPEG->pDitherBuffer)
+    if (pJPEG->pDitherBuffer) {
         pDest = &pJPEG->pDitherBuffer[x];
-    else
-        pDest = (uint8_t *)&pJPEG->usPixels[x/2];
-    
-    if (pJPEG->ucSubSample <= 0x11) // single Y 
+    } else {
+        pDest = (uint8_t *)&pJPEG->usPixels[0];
+        pDest += x;
+    }
+    if (pJPEG->ucSubSample <= 0x11) // single Y
     {
         if (pJPEG->iOptions & JPEG_SCALE_HALF) // special handling of 1/2 size (pixel averaging)
         {
@@ -2704,40 +2997,46 @@ static void JPEGPutMCU8BitGray(JPEGIMAGE *pJPEG, int x, int iPitch)
             return;
         }
 #ifdef ALLOWS_UNALIGNED
-        for (i=0; i<8; i++)
-        {
-            *(uint32_t *)pDest = *(uint32_t *)pSrc; // Y0
-            *(uint32_t *)&pDest[4] = *(uint32_t *)&pSrc[4]; // Y0
-            *(uint32_t *)&pDest[8] = *(uint32_t *)&pSrc[128]; // Y1
-            *(uint32_t *)&pDest[12] = *(uint32_t *)&pSrc[132]; // Y1
-            *(uint32_t *)&pDest[iPitch*8] = *(uint32_t *)&pSrc[256]; // Y2
-            *(uint32_t *)&pDest[(iPitch*8)+4] = *(uint32_t *)&pSrc[260]; // Y2
-            *(uint32_t *)&pDest[(iPitch*8) + 8] = *(uint32_t *)&pSrc[384]; // Y3
-            *(uint32_t *)&pDest[(iPitch*8) + 12] = *(uint32_t *)&pSrc[388]; // Y3
-            pSrc += 8;
-            pDest += iPitch;
+        if (x + 16 <= iPitch) { // no cropping needed
+            for (i=0; i<8; i++) {
+                *(uint32_t *)pDest = *(uint32_t *)pSrc; // Y0
+                *(uint32_t *)&pDest[4] = *(uint32_t *)&pSrc[4]; // Y0
+                *(uint32_t *)&pDest[8] = *(uint32_t *)&pSrc[128]; // Y1
+                *(uint32_t *)&pDest[12] = *(uint32_t *)&pSrc[132]; // Y1
+                *(uint32_t *)&pDest[iPitch*8] = *(uint32_t *)&pSrc[256]; // Y2
+                *(uint32_t *)&pDest[(iPitch*8)+4] = *(uint32_t *)&pSrc[260]; // Y2
+                *(uint32_t *)&pDest[(iPitch*8) + 8] = *(uint32_t *)&pSrc[384]; // Y3
+                *(uint32_t *)&pDest[(iPitch*8) + 12] = *(uint32_t *)&pSrc[388]; // Y3
+                pSrc += 8;
+                pDest += iPitch;
+            }
+            return;
         }
-#else
+#endif
+        xcount = iPitch - x;
         for (i=0; i<8; i++)
         {
             for (j=0; j<8; j++)
             {
-                pDest[j] = pSrc[j]; // Y0
-                pDest[j+8] = pSrc[j+128]; // Y1
-                pDest[iPitch*8 + j] = pSrc[j+256]; // Y2
-                pDest[iPitch*8 + j + 8] = pSrc[j + 384]; // Y3
+                if (j < xcount) {
+                    pDest[j] = pSrc[j]; // Y0
+                    pDest[iPitch*8 + j] = pSrc[j+256]; // Y2
+                }
+                if (j+8 < xcount) {
+                    pDest[j+8] = pSrc[j+128]; // Y1
+                    pDest[iPitch*8 + j + 8] = pSrc[j + 384]; // Y3
+                }
             }
             pSrc += 8;
             pDest += iPitch;
         }
-#endif
     } // 0x22
 } /* JPEGMPutMCU8BitGray() */
 
 static void JPEGPutMCUGray(JPEGIMAGE *pJPEG, int x, int iPitch)
 {
     uint16_t *usDest = (uint16_t *)&pJPEG->usPixels[x];
-    int i, j, xcount, ycount;
+    int i, j, xcount, ycount, delta;
     uint8_t *pSrc = (uint8_t *)&pJPEG->sMCUs[0];
     
     if (pJPEG->iOptions & JPEG_SCALE_HALF) // special handling of 1/2 size (pixel averaging)
@@ -2769,10 +3068,17 @@ static void JPEGPutMCUGray(JPEGIMAGE *pJPEG, int x, int iPitch)
         return;
     }
     xcount = ycount = 8; // debug
-    if (pJPEG->iOptions & JPEG_SCALE_QUARTER)
+    delta = 0;
+    if (pJPEG->iOptions & JPEG_SCALE_QUARTER) {
         xcount = ycount = 2;
-    else if (pJPEG->iOptions & JPEG_SCALE_EIGHTH)
+    } else if (pJPEG->iOptions & JPEG_SCALE_EIGHTH) {
         xcount = ycount = 1;
+    } else {
+        if (x + 8 > iPitch) {
+            xcount = iPitch - x; // final block is partial width
+            delta = 8 - xcount;
+        }
+    }
     for (i=0; i<ycount; i++) // do up to 8 rows
     {
         if (pJPEG->ucPixelType == RGB565_LITTLE_ENDIAN)
@@ -2787,6 +3093,7 @@ static void JPEGPutMCUGray(JPEGIMAGE *pJPEG, int x, int iPitch)
         }
         usDest -= xcount;
         usDest += iPitch; // next line
+        pSrc += delta;
     }
 } /* JPEGPutMCUGray() */
 
@@ -2855,7 +3162,7 @@ static void JPEGPixelRGB(uint32_t *pDest, int iY, int iCb, int iCr)
     i32 = ((iCBB + iY) >> 12);
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
-    u32Pixel |= (uint32_t)i32; // blue
+    u32Pixel |= (uint32_t)(i32<<16); // blue
     i32 = ((iCBG + iCRG + iY) >> 12); // green pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
@@ -2863,7 +3170,7 @@ static void JPEGPixelRGB(uint32_t *pDest, int iY, int iCb, int iCr)
     i32 = ((iCRR + iY) >> 12); // red pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
-    u32Pixel |= (uint32_t)(i32 << 16);
+    u32Pixel |= (uint32_t)(i32);
     pDest[0] = u32Pixel;
 } /* JPEGPixelRGB() */
 
@@ -2943,7 +3250,7 @@ static void JPEGPixel2RGB(uint32_t *pDest, int32_t iY1, int32_t iY2, int32_t iCb
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
     u32Pixel1 = u32Pixel2 = 0xff000000; // Alpha = 255
-    u32Pixel1 |= (uint32_t)i32; // blue
+    u32Pixel1 |= (uint32_t)(i32<<16); // blue
     i32 = ((iCBG + iCRG + iY1) >> 12); // green pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
@@ -2951,12 +3258,12 @@ static void JPEGPixel2RGB(uint32_t *pDest, int32_t iY1, int32_t iY2, int32_t iCb
     i32 = ((iCRR + iY1) >> 12); // red pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
-    u32Pixel1 |= (uint32_t)(i32 << 16); // red
+    u32Pixel1 |= (uint32_t)i32; // red
 
     i32 = ((iCBB + iY2) >> 12); // blue pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
-    u32Pixel2 |= (uint32_t)i32;
+    u32Pixel2 |= (uint32_t)(i32<<16);
     i32 = ((iCBG + iCRG + iY2) >> 12); // green pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
@@ -2964,7 +3271,7 @@ static void JPEGPixel2RGB(uint32_t *pDest, int32_t iY1, int32_t iY2, int32_t iCb
     i32 = ((iCRR + iY2) >> 12); // red pixel
     if (i32 < 0) i32 = 0;
     else if (i32 > 255) i32 = 255;
-    u32Pixel2 |= (uint32_t)(i32 << 16);
+    u32Pixel2 |= (uint32_t)i32;
     pDest[0] = u32Pixel1;
     pDest[1] = u32Pixel2;
 } /* JPEGPixel2RGB() */
@@ -2973,7 +3280,7 @@ static void JPEGPutMCU11(JPEGIMAGE *pJPEG, int x, int iPitch)
 {
     int iCr, iCb;
     signed int Y;
-    int iCol;
+    int iCol, w, delta;
     int iRow;
     uint8_t *pY, *pCr, *pCb;
     uint16_t *pOutput = &pJPEG->usPixels[x];
@@ -3088,12 +3395,14 @@ static void JPEGPutMCU11(JPEGIMAGE *pJPEG, int x, int iPitch)
     }
 // full size
 #ifdef ESP32S3_SIMD
-    if (pJPEG->ucPixelType == RGB8888) iPitch *= 2;
-    for (iRow=0; iRow<8; iRow++) {
-        s3_ycbcr_convert_444(pY, pCb, pCr, pOutput, i16_Consts, pJPEG->ucPixelType);
-        pCb += 8; pCr += 8; pY += 8; pOutput += iPitch;
-    }
+    if (x + 8 <= iPitch && (iPitch & 15) == 0) { // only for non-clipped MCUs
+        if (pJPEG->ucPixelType == RGB8888) iPitch *= 2;
+        for (iRow=0; iRow<8; iRow++) {
+            s3_ycbcr_convert_444(pY, pCb, pCr, pOutput, i16_Consts, pJPEG->ucPixelType);
+            pCb += 8; pCr += 8; pY += 8; pOutput += iPitch;
+        }
     return;
+    }
 #endif // ESP32S3_SIMD
 
 #ifdef HAS_SSE
@@ -3206,35 +3515,44 @@ static void JPEGPutMCU11(JPEGIMAGE *pJPEG, int x, int iPitch)
      }
 #endif // HAS_SSE
 
+// C reference version
+    w = 8; delta = 0;
+    if (x + 8 > iPitch) {
+        w = iPitch - x;
+        delta = 8 - w;
+    }
     for (iRow=0; iRow<8; iRow++) // up to 8 rows to do
     {
         if (pJPEG->ucPixelType == RGB565_LITTLE_ENDIAN)
         {
-            for (iCol=0; iCol<8; iCol++) // up to 4x2 cols to do
+            for (iCol=0; iCol<w; iCol++) // up to 4x2 cols to do
             {
                 iCr = *pCr++;
                 iCb = *pCb++;
                 Y = (int)(*pY++) << 12;
                 JPEGPixelLE(pOutput+iCol, Y, iCb, iCr);
             } // for col
+            pCr += delta; pCb += delta;
         }
         else if (pJPEG->ucPixelType == RGB565_BIG_ENDIAN)
         {
-            for (iCol=0; iCol<8; iCol++) // up to 4x2 cols to do
+            for (iCol=0; iCol<w; iCol++) // up to 4x2 cols to do
             {
                 iCr = *pCr++;
                 iCb = *pCb++;
                 Y = (int)(*pY++) << 12;
                 JPEGPixelBE(pOutput+iCol, Y, iCb, iCr);
             } // for col
+            pCr += delta; pCb += delta;
         } else { // RGB888
-            for (iCol=0; iCol<8; iCol++) // up to 4x2 cols to do
+            for (iCol=0; iCol<w; iCol++) // up to 4x2 cols to do
             {
                 iCr = *pCr++;
                 iCb = *pCb++;
                 Y = (int)(*pY++) << 12;
                 JPEGPixelRGB((uint32_t *)&pOutput[iCol*2], Y, iCb, iCr);
             } // for col
+            pCr += delta; pCb += delta;
         }
         pOutput += (pJPEG->ucPixelType == RGB8888) ? iPitch*2 : iPitch;
     } // for row
@@ -3429,20 +3747,22 @@ static void JPEGPutMCU22(JPEGIMAGE *pJPEG, int x, int iPitch)
     }
 // full size
 #ifdef ESP32S3_SIMD
-    if (pJPEG->ucPixelType == RGB8888) iPitch *= 2;
-    for (iRow=0; iRow<4; iRow++) { // top L+R, 4 pairs of lines x 16 pixels
-        // each call converts 16 pixels
-        s3_ycbcr_convert_420(pY, pCb, pCr, pOutput, i16_Consts, pJPEG->ucPixelType);
-        s3_ycbcr_convert_420(pY+8, pCb, pCr, pOutput+iPitch, i16_Consts, pJPEG->ucPixelType);
-        pCb += 8; pCr += 8; pY += 16; pOutput += iPitch*2;
+    if (x + 8 <= iPitch && (iPitch & 15) == 0) { // only for non-clipped MCUs
+        if (pJPEG->ucPixelType == RGB8888) iPitch *= 2;
+        for (iRow=0; iRow<4; iRow++) { // top L+R, 4 pairs of lines x 16 pixels
+            // each call converts 16 pixels
+            s3_ycbcr_convert_420(pY, pCb, pCr, pOutput, i16_Consts, pJPEG->ucPixelType);
+            s3_ycbcr_convert_420(pY+8, pCb, pCr, pOutput+iPitch, i16_Consts, pJPEG->ucPixelType);
+            pCb += 8; pCr += 8; pY += 16; pOutput += iPitch*2;
+        }
+        pY += (256 - 64);
+        for (iRow=0; iRow<4; iRow++) { // bottom L+R
+            s3_ycbcr_convert_420(pY, pCb, pCr, pOutput, i16_Consts, pJPEG->ucPixelType);
+            s3_ycbcr_convert_420(pY+8, pCb, pCr, pOutput+iPitch, i16_Consts, pJPEG->ucPixelType);
+            pCb += 8; pCr += 8; pY += 16; pOutput += iPitch*2;
+        }
+        return;
     }
-    pY += (256 - 64);
-    for (iRow=0; iRow<4; iRow++) { // bottom L+R
-        s3_ycbcr_convert_420(pY, pCb, pCr, pOutput, i16_Consts, pJPEG->ucPixelType);
-        s3_ycbcr_convert_420(pY+8, pCb, pCr, pOutput+iPitch, i16_Consts, pJPEG->ucPixelType);
-        pCb += 8; pCr += 8; pY += 16; pOutput += iPitch*2;
-    }
-    return;
 #endif // ESP32S3_SIMD
 
 #ifdef HAS_NEON
@@ -3938,7 +4258,7 @@ static void JPEGPutMCU22(JPEGIMAGE *pJPEG, int x, int iPitch)
          mmxTemp = _mm_or_si128(mmxR, mmxG); // R+G
          mmxTemp = _mm_or_si128(mmxTemp, mmxB); // R+G+B
          // store first row of right block
-         _mm_storeu_si128((__m128i *)(pOutput+16), mmxTemp); // write 8 RGB565 pixels
+         _mm_storeu_si128((__m128i *)(pOutput+8), mmxTemp); // write 8 RGB565 pixels
          // prepare second row of right block
          mmxY = _mm_loadl_epi64((__m128i *)(pY+136)); // load 1 row of Y (right block)
          mmxTemp2 = _mm_setzero_si128(); // zero it to use to set upper bits to 0
@@ -3970,7 +4290,7 @@ static void JPEGPutMCU22(JPEGIMAGE *pJPEG, int x, int iPitch)
          mmxTemp = _mm_or_si128(mmxR, mmxG); // R+G
          mmxTemp = _mm_or_si128(mmxTemp, mmxB); // R+G+B
          // store second row of right block
-         _mm_storeu_si128((__m128i *)(pOutput+16+iPitch), mmxTemp); // write 8 RGB565 pixels
+         _mm_storeu_si128((__m128i *)(pOutput+8+iPitch), mmxTemp); // write 8 RGB565 pixels
 
          pOutput += iPitch*2;
          pCr += 8;
@@ -3987,21 +4307,21 @@ static void JPEGPutMCU22(JPEGIMAGE *pJPEG, int x, int iPitch)
     /* Convert YCC pixels into RGB pixels and store in output image */
     iYCount = 4;
     bUseOdd1 = bUseOdd2 = 1; // assume odd column can be used
-    if ((x+15) >= pJPEG->iWidth)
+    if ((x+15) >= iPitch)
     {
-        iCol = (((pJPEG->iWidth & 15)+1) >> 1);
+        iCol = (((iPitch & 15)+1) >> 1);
         if (iCol >= 4)
         {
             iXCount1 = 4;
             iXCount2 = iCol-4;
-            if (pJPEG->iWidth & 1 && (iXCount2 * 2) + 8 + (x * 16) > pJPEG->iWidth)
+            if (iPitch & 1 && (iXCount2 * 2) + 8 + (x * 16) > iPitch)
                 bUseOdd2 = 0;
         }
         else
         {
             iXCount1 = iCol;
             iXCount2 = 0;
-            if (pJPEG->iWidth & 1 && (iXCount1 * 2) + (x * 16) > pJPEG->iWidth)
+            if (iPitch & 1 && (iXCount1 * 2) + (x * 16) > iPitch)
                 bUseOdd1 = 0;
         }
     }
@@ -4627,6 +4947,8 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
     signed int iDCPred0, iDCPred1, iDCPred2;
     int i, iQuant1, iQuant2, iQuant3, iErr;
     int iSkipMask, bSkipRow;
+    int iDMASize, iDMAOffset;
+    uint16_t *pAlignedPixels = pJPEG->usPixels;
     uint8_t c;
     int iMCUCount, xoff, iPitch, bThumbnail = 0;
     int bContinue = 1; // early exit if the DRAW callback wants to stop
@@ -4636,6 +4958,9 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
     int iMaxFill = 16, iScaleShift = 0;
 
     // Requested the Exif thumbnail
+    if (pJPEG->ucMode == 0xc2) { // progressive mode - we only decode the first scan (DC values)
+        pJPEG->iOptions |= JPEG_SCALE_EIGHTH; // return 1/8 sized image
+    }
     if (pJPEG->iOptions & JPEG_EXIF_THUMBNAIL)
     {
         if (pJPEG->iThumbData == 0 || pJPEG->iThumbWidth == 0) // doesn't exist
@@ -4660,7 +4985,9 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
         iMaxFill = 1;
         bThumbnail = 1;
     }
-    
+    if (pJPEG->iOptions & JPEG_LUMA_ONLY && pJPEG->ucPixelType < EIGHT_BIT_GRAYSCALE) {
+        pJPEG->ucPixelType = EIGHT_BIT_GRAYSCALE; // switch to grayscale output
+    }
     // reorder and fix the quantization table for decoding
     JPEGFixQuantD(pJPEG);
     pJPEG->bb.ulBits = MOTOLONG(&pJPEG->ucFileBuf[0]); // preload first 4/8 bytes
@@ -4681,14 +5008,14 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
         case 0x01: // fake value to handle sRGB/CMYK
         case 0x11:
             cx = (pJPEG->iWidth + 7) >> 3;  // number of MCU blocks
-            cy = (pJPEG->iCropY + pJPEG->iCropCY) >> 3;
+            cy = (pJPEG->iCropY + pJPEG->iCropCY + 7) >> 3;
             iCr = MCU1;
             iCb = MCU2;
             mcuCX = mcuCY = 8;
             break;
         case 0x12:
             cx = (pJPEG->iWidth + 7) >> 3;  // number of MCU blocks
-            cy = (pJPEG->iCropY + pJPEG->iCropCY) >> 4;
+            cy = (pJPEG->iCropY + pJPEG->iCropCY + 15) >> 4;
             iCr = MCU2;
             iCb = MCU3;
             mcuCX = 8;
@@ -4696,7 +5023,7 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
             break;
         case 0x21:
             cx = (pJPEG->iWidth + 15) >> 4;  // number of MCU blocks
-            cy = (pJPEG->iCropY + pJPEG->iCropCY) >> 3;
+            cy = (pJPEG->iCropY + pJPEG->iCropCY + 7) >> 3;
             iCr = MCU2;
             iCb = MCU3;
             mcuCX = 16;
@@ -4704,7 +5031,7 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
             break;
         case 0x22:
             cx = (pJPEG->iWidth + 15) >> 4;  // number of MCU blocks
-            cy = (pJPEG->iCropY + pJPEG->iCropCY) >> 4;
+            cy = (pJPEG->iCropY + pJPEG->iCropCY + 15) >> 4;
             iCr = MCU4;
             iCb = MCU5;
             mcuCX = mcuCY = 16;
@@ -4733,14 +5060,25 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
     if (pJPEG->ucPixelType == RGB8888) {
         iMCUCount /= 2; // half as many will fit
     }
+    iDMASize = iDMAOffset = 0; // assume no DMA scheme
     if (pJPEG->ucPixelType == EIGHT_BIT_GRAYSCALE)
         iMCUCount *= 2; // each pixel is only 1 byte
     if (iMCUCount > cx)
         iMCUCount = cx; // don't go wider than the image
-    if (iMCUCount > pJPEG->iMaxMCUs) // did the user set an upper bound on how many pixels per JPEGDraw callback?
+    if (iMCUCount > pJPEG->iMaxMCUs) { // did the user set an upper bound on how many pixels per JPEGDraw callback?
         iMCUCount = pJPEG->iMaxMCUs;
-    if (pJPEG->ucPixelType > EIGHT_BIT_GRAYSCALE) // dithered, override the max MCU count
+    } else if (pJPEG->iOptions & JPEG_USES_DMA) { // user wants a ping-pong buffer scheme
+        iMCUCount /= 2; // divide the pixel buffer in half
+        iDMASize = MAX_BUFFERED_PIXELS / 2; // offset to the second half of the buffer
+    }
+    if (pJPEG->ucPixelType > EIGHT_BIT_GRAYSCALE) { // dithered, override the max MCU count
         iMCUCount = cx; // do the whole row
+    }
+    if (pJPEG->iCropCX != pJPEG->iWidth /*(cx * mcuCX)*/) { // crop enabled
+        if (iMCUCount * mcuCX > pJPEG->iCropCX) {
+            iMCUCount = (pJPEG->iCropCX / mcuCX); // maximum width is the crop width
+        }
+    }
     jd.iBpp = 16;
     switch (pJPEG->ucPixelType)
     {
@@ -4786,14 +5124,20 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
         }
         for (x = 0; x < cx && bContinue && iErr == 0; x++)
         {
+            pJPEG->usPixels = &pAlignedPixels[iDMAOffset]; // make sure output is correct offset for DMA   
+
             iSkipMask = 0; // assume not skipping
-            if (bSkipRow || x*mcuCX < pJPEG->iCropX || x*mcuCX >= pJPEG->iCropX+pJPEG->iCropCX) {
+            if (bSkipRow || x*mcuCX < pJPEG->iCropX || x*mcuCX > pJPEG->iCropX+pJPEG->iCropCX) {
                 iSkipMask = MCU_SKIP;
             }
             pJPEG->ucACTable = cACTable0;
             pJPEG->ucDCTable = cDCTable0;
             // do the first luminance component
-            iErr = JPEGDecodeMCU(pJPEG, iLum0 | iSkipMask, &iDCPred0);
+            if (pJPEG->ucMode == 0xc2) { // progressive
+                iErr = JPEGDecodeMCU_P(pJPEG, iLum0 | iSkipMask, &iDCPred0);
+            } else {
+                iErr = JPEGDecodeMCU(pJPEG, iLum0 | iSkipMask, &iDCPred0);
+            }
             if (pJPEG->u16MCUFlags == 0 || bThumbnail) // no AC components, save some time
             {
                 pl = (uint32_t *)&pJPEG->sMCUs[iLum0];
@@ -4810,7 +5154,11 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
             // do the second luminance component
             if (pJPEG->ucSubSample > 0x11) // subsampling
             {
-                iErr |= JPEGDecodeMCU(pJPEG, iLum1 | iSkipMask, &iDCPred0);
+                if (pJPEG->ucMode == 0xc2) { // progressive
+                    iErr |= JPEGDecodeMCU_P(pJPEG, iLum1 | iSkipMask, &iDCPred0);
+                } else {
+                    iErr |= JPEGDecodeMCU(pJPEG, iLum1 | iSkipMask, &iDCPred0);
+                }
                 if (pJPEG->u16MCUFlags == 0 || bThumbnail) // no AC components, save some time
                 {
                     c = ucRangeTable[((iDCPred0 * iQuant1) >> 5) & 0x3ff];
@@ -4826,7 +5174,11 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
                 }
                 if (pJPEG->ucSubSample == 0x22)
                 {
-                    iErr |= JPEGDecodeMCU(pJPEG, iLum2 | iSkipMask, &iDCPred0);
+                    if (pJPEG->ucMode == 0xc2) { // progressive
+                        iErr |= JPEGDecodeMCU_P(pJPEG, iLum2 | iSkipMask, &iDCPred0);
+                    } else {
+                        iErr |= JPEGDecodeMCU(pJPEG, iLum2 | iSkipMask, &iDCPred0);
+                    }
                     if (pJPEG->u16MCUFlags == 0 || bThumbnail) // no AC components, save some time
                     {
                         c = ucRangeTable[((iDCPred0 * iQuant1) >> 5) & 0x3ff];
@@ -4840,7 +5192,11 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
                     {
                         JPEGIDCT(pJPEG, iLum2, pJPEG->JPCI[0].quant_tbl_no); // first quantization table
                     }
-                    iErr |= JPEGDecodeMCU(pJPEG, iLum3 | iSkipMask, &iDCPred0);
+                    if (pJPEG->ucMode == 0xc2) { // progressive
+                        iErr |= JPEGDecodeMCU_P(pJPEG, iLum3 | iSkipMask, &iDCPred0);
+                    } else {
+                        iErr |= JPEGDecodeMCU(pJPEG, iLum3 | iSkipMask, &iDCPred0);
+                    }
                     if (pJPEG->u16MCUFlags == 0 || bThumbnail) // no AC components, save some time
                     {
                         c = ucRangeTable[((iDCPred0 * iQuant1) >> 5) & 0x3ff];
@@ -4863,10 +5219,19 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
                 pJPEG->ucDCTable = cDCTable1;
                 if (pJPEG->ucPixelType >= EIGHT_BIT_GRAYSCALE) {
                     // We're not going to use the color channels, so avoid as much work as possible
-                    iErr |= JPEGDecodeMCU(pJPEG, MCU_SKIP, &iDCPred1); // decode Cr block
-                    iErr |= JPEGDecodeMCU(pJPEG, MCU_SKIP, &iDCPred2); // decode Cb block
+                    if (pJPEG->ucMode == 0xc2) { // progressive
+                        iErr |= JPEGDecodeMCU_P(pJPEG, MCU_SKIP, &iDCPred1);
+                        iErr |= JPEGDecodeMCU_P(pJPEG, MCU_SKIP, &iDCPred2);
+                    } else {
+                        iErr |= JPEGDecodeMCU(pJPEG, MCU_SKIP, &iDCPred1); // decode Cr block
+                        iErr |= JPEGDecodeMCU(pJPEG, MCU_SKIP, &iDCPred2); // decode Cb block
+                    }
                 } else {
-                    iErr |= JPEGDecodeMCU(pJPEG, iCr | iSkipMask, &iDCPred1);
+                    if (pJPEG->ucMode == 0xc2) { // progressive
+                        iErr |= JPEGDecodeMCU_P(pJPEG, iCr | iSkipMask, &iDCPred1);
+                    } else {
+                        iErr |= JPEGDecodeMCU(pJPEG, iCr | iSkipMask, &iDCPred1);
+                    }
                     if (pJPEG->u16MCUFlags == 0 || bThumbnail) // no AC components, save some time
                     {
                         c = ucRangeTable[((iDCPred1 * iQuant2) >> 5) & 0x3ff];
@@ -4883,7 +5248,11 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
                     // second chroma
                     pJPEG->ucACTable = cACTable2;
                     pJPEG->ucDCTable = cDCTable2;
-                    iErr |= JPEGDecodeMCU(pJPEG, iCb | iSkipMask, &iDCPred2);
+                    if (pJPEG->ucMode == 0xc2) { // progressive
+                        iErr |= JPEGDecodeMCU_P(pJPEG, iCb | iSkipMask, &iDCPred2);
+                    } else {
+                        iErr |= JPEGDecodeMCU(pJPEG, iCb | iSkipMask, &iDCPred2);
+                    }
                     if (pJPEG->u16MCUFlags == 0 || bThumbnail) // no AC components, save some time
                     {
                         c = ucRangeTable[((iDCPred2 * iQuant3) >> 5) & 0x3ff];
@@ -4923,26 +5292,42 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
                 } // normal MCU drawing
                 xoff += mcuCX;
             } // if not skipped
-            if (pJPEG->pFramebuffer == NULL && (xoff == iPitch || x == cx-1) && !bSkipRow) // time to draw
+            if (pJPEG->pFramebuffer == NULL && (xoff == iPitch || x == cx-1) && !iSkipMask) // time to draw
             {
+                int iAdjust;
+                int iCurW, iCurH;
+                iAdjust = (1<<iScaleShift)-1;
+                iCurW = (pJPEG->iWidth + iAdjust) >> iScaleShift;
+                iCurH = (pJPEG->iHeight + iAdjust) >> iScaleShift;
                 jd.iWidth = jd.iWidthUsed = iPitch; // width of each LCD block group
                 jd.pUser = pJPEG->pUser;
-                if (pJPEG->ucPixelType > EIGHT_BIT_GRAYSCALE) // dither to 4/2/1 bits
+                if (pJPEG->ucPixelType > EIGHT_BIT_GRAYSCALE) { // dither to 4/2/1 bits
                     JPEGDither(pJPEG, cx * mcuCX, mcuCY);
-                if ((x+1)*mcuCX > pJPEG->iWidth) { // right edge has clipped pixels
-                   jd.iWidthUsed = iPitch - (cx*mcuCX - pJPEG->iWidth);
-                } else if (jd.x + iPitch > pJPEG->iCropCX) { // not a full width
-                    jd.iWidthUsed = pJPEG->iCropCX - jd.x;
+                }
+                if (((jd.x - pJPEG->iXOffset) + iPitch) > iCurW) { // right edge has clipped pixels
+                   jd.iWidthUsed = iCurW - (jd.x-pJPEG->iXOffset);
+                } else if (((jd.x-pJPEG->iXOffset) + iPitch) > pJPEG->iCropCX) { // not a full width
+                    jd.iWidthUsed = pJPEG->iCropCX - (jd.x-pJPEG->iXOffset);
                 }
                 jd.y = pJPEG->iYOffset + (y * mcuCY) - pJPEG->iCropY;
-                if ((jd.y - pJPEG->iYOffset + mcuCY) > (pJPEG->iHeight>>iScaleShift)) { // last row needs to be trimmed
-                   jd.iHeight = (pJPEG->iHeight>>iScaleShift) - (jd.y - pJPEG->iYOffset);
+                if ((jd.y - pJPEG->iYOffset + mcuCY) > iCurH) { // last row needs to be trimmed
+                   jd.iHeight = iCurH - (jd.y - pJPEG->iYOffset);
                 }
+                if (pJPEG->ucPixelType > EIGHT_BIT_GRAYSCALE)
+                    jd.pPixels = (uint16_t *)pJPEG->pDitherBuffer; 
+                else
+                    jd.pPixels = pJPEG->usPixels;
                 bContinue = (*pJPEG->pfnDraw)(&jd);
+                iDMAOffset ^= iDMASize; // toggle ping-pong offset
                 jd.x += iPitch;
-                if ((cx - 1 - x) < iMCUCount) // change pitch for the last set of MCUs on this row
+                if (pJPEG->iCropCX != (cx * mcuCX) && (iPitch + jd.x) > (pJPEG->iCropX + pJPEG->iCropCX)) { // image is cropped, don't go past end
+                    iPitch = pJPEG->iCropCX - (jd.x-pJPEG->iXOffset); // x=0 of output is really pJPEG->iCropx
+                } else if ((cx - 1 - x) < iMCUCount) // change pitch for the last set of MCUs on this row
                     iPitch = (cx - 1 - x) * mcuCX;
                 xoff = 0;
+                if (iPitch & (mcuCX-1)) { // we don't clip the MCU drawing, so expand it
+                    iPitch = (iPitch + (mcuCX-1)) & ~(mcuCX-1);
+                }
             }
             if (pJPEG->iResInterval)
             {

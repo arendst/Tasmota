@@ -508,7 +508,7 @@ class Partition_manager_UI
   def web_add_button()
     import webserver
     webserver.content_send(
-      "<form id=but_part_mgr style='display: block;' action='part_mgr' method='get'><button>Partition Manager</button></form><p></p>")
+      "<p></p><form id=but_part_mgr style='display: block;' action='part_mgr' method='get'><button>Partition Manager</button></form>")
   end
 
   #- ---------------------------------------------------------------------- -#
@@ -533,20 +533,20 @@ class Partition_manager_UI
     end
     if maxota != nil && maxota > 0
       if !active && used > 0
-        webserver.content_send("<p><form id=setactive style='display: block;' action='/part_mgr' method='post' ")
+        webserver.content_send("<p></p><form id=setactive style='display: block;' action='/part_mgr' method='post' ")
         webserver.content_send("onsubmit='return confirm(\"This will change the active partition and cause a restart.\");'>")
         webserver.content_send("<button name='setactive' class='button bgrn'>Switch To This Partition</button>")
         webserver.content_send(format("<input name='ota' type='hidden' value='%d'>", ota_num))
-        webserver.content_send("</form></p>")
+        webserver.content_send("</form>")
       else
         # put a fake disabled button
-        webserver.content_send("<p><form style='display: block;'>")
+        webserver.content_send("<p></p><form style='display: block;'>")
         if used >= 0
           webserver.content_send("<button name='setactive' class='button bdis' disabled title=\"No need to click, it's already the active partition\">Current Active Partition</button>")
         else
           webserver.content_send("<button name='setactive' class='button bdis' disabled>Empty Partition</button>")
         end
-        webserver.content_send("</form></p>")
+        webserver.content_send("</form>")
       end
     end
     

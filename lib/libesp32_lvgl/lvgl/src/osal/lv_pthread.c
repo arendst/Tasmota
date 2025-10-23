@@ -6,12 +6,15 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_os.h"
+#include "lv_os_private.h"
 
 #if LV_USE_OS == LV_OS_PTHREAD
 
-#include <errno.h>
 #include "../misc/lv_log.h"
+
+#ifndef __linux__
+    #include "../misc/lv_timer.h"
+#endif
 
 /*********************
  *      DEFINES
@@ -26,6 +29,7 @@
  **********************/
 static void * generic_callback(void * user_data);
 
+
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -38,9 +42,11 @@ static void * generic_callback(void * user_data);
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_result_t lv_thread_init(lv_thread_t * thread, lv_thread_prio_t prio, void (*callback)(void *), size_t stack_size,
-                           void * user_data)
+lv_result_t lv_thread_init(lv_thread_t * thread, const char * const name,
+                           lv_thread_prio_t prio, void (*callback)(void *),
+                           size_t stack_size, void * user_data)
 {
+    LV_UNUSED(name);
     LV_UNUSED(prio);
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -48,6 +54,7 @@ lv_result_t lv_thread_init(lv_thread_t * thread, lv_thread_prio_t prio, void (*c
     thread->callback = callback;
     thread->user_data = user_data;
     pthread_create(&thread->thread, &attr, generic_callback, thread);
+    pthread_attr_destroy(&attr);
     return LV_RESULT_OK;
 }
 
@@ -164,6 +171,19 @@ lv_result_t lv_thread_sync_signal_isr(lv_thread_sync_t * sync)
     return LV_RESULT_INVALID;
 }
 
+#ifndef __linux__
+uint32_t lv_os_get_idle_percent(void)
+{
+    return lv_timer_get_idle();
+}
+#endif
+
+void lv_sleep_ms(uint32_t ms)
+{
+    /* Just call standard posix sleep function */
+    usleep(ms * 1000);
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -174,5 +194,6 @@ static void * generic_callback(void * user_data)
     thread->callback(thread->user_data);
     return NULL;
 }
+
 
 #endif /*LV_USE_OS == LV_OS_PTHREAD*/

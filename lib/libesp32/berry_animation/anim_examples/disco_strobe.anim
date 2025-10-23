@@ -1,0 +1,53 @@
+# Disco Strobe - Fast colorful strobing
+# Rapid color changes with strobe effects
+
+#strip length 60
+
+# Define disco color palette
+palette disco_colors = [
+  (0, 0xFF0000),    # Red
+  (42, 0xFF8000),   # Orange
+  (85, 0xFFFF00),   # Yellow
+  (128, 0x00FF00),  # Green
+  (170, 0x0000FF),  # Blue
+  (213, 0x8000FF),  # Purple
+  (255, 0xFF00FF)   # Magenta
+]
+
+# Fast color cycling base
+color disco_rich_color = rich_palette(palette=disco_colors, cycle_period=1s, transition_type=LINEAR, brightness=255)
+animation disco_base = solid(color=disco_rich_color)
+
+# Add strobe effect
+disco_base.opacity = square(min_value=0, max_value=255, duration=100ms, duty_cycle=30)  # Fast strobe
+
+# Add white flash overlay
+animation white_flash = solid(color=0xFFFFFF)
+white_flash.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cycle=10)  # Quick white flashes
+white_flash.priority = 20
+
+# Add colored sparkles
+color sparkle_pattern = rich_palette(palette=disco_colors, cycle_period=500ms, transition_type=LINEAR, brightness=255)
+animation disco_sparkles = twinkle_animation(
+  color=sparkle_pattern # color source
+  density=12            # density (many sparkles)
+  twinkle_speed=80ms    # twinkle speed (very quick)
+)
+disco_sparkles.priority = 15
+
+# Add moving pulse for extra effect
+color pulse_pattern = rich_palette(palette=disco_colors, cycle_period=800ms, transition_type=LINEAR, brightness=255)
+animation disco_pulse = beacon_animation(
+  color=pulse_pattern # color source
+  pos=4               # initial position
+  beacon_size=8       # pulse width
+  slew_size=2         # sharp edges (slew size)
+)
+disco_pulse.priority = 10
+disco_pulse.pos = sawtooth(min_value=4, max_value=56, duration=2s)  # Fast movement
+
+# Start all animations
+run disco_base
+run white_flash
+run disco_sparkles
+run disco_pulse

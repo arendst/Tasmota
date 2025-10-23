@@ -1,0 +1,25 @@
+# Import Demo - Demonstrates DSL import functionality
+# This example shows how to import user functions and use them in animations
+
+# Import user functions module
+import user_functions
+
+# Create animations that use imported user functions
+animation random_red = solid(color=red)
+random_red.opacity = rand_demo()
+
+animation breathing_blue = solid(color=blue) 
+breathing_blue.opacity = max(50, min(255, rand_demo() + 100))
+
+animation dynamic_green = solid(color=green)
+dynamic_green.opacity = abs(rand_demo() - 128) + 64
+
+# Create a sequence that cycles through the animations
+sequence import_demo {
+  play random_red for 3s
+  play breathing_blue for 3s  
+  play dynamic_green for 3s
+}
+
+# Run the demo
+run import_demo

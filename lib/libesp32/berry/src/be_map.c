@@ -178,6 +178,9 @@ static bmapnode* insert(bvm *vm, bmap *map, bvalue *key, uint32_t hash)
 
 static bmapnode* find(bvm *vm, bmap *map, bvalue *key, uint32_t hash)
 {
+    if (map->size == 0) {   /* this situation happens only for solidified empty maps that are compacted */
+        return NULL;
+    }
     bmapnode *slot = hash2slot(map, hash);
     if (isnil(slot)) {
         return NULL;

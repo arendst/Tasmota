@@ -29,7 +29,9 @@ struct {
 void StartMdns(void) {
   if (Settings->flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
     if (!Mdns.begun) {
+#ifdef ESP8266    // the following will break Matter support, MDNS.end() does not seem necessary for ESP32, but I prefer to keep it on ESP8266 because I can't test it (#23371)
       MDNS.end(); // close existing or MDNS.begin will fail
+#endif // ESP8266
       Mdns.begun = (uint8_t)MDNS.begin(TasmotaGlobal.hostname);
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s '%s.local'"), (Mdns.begun) ? PSTR(D_INITIALIZED) : PSTR(D_FAILED), TasmotaGlobal.hostname);
     }
@@ -124,4 +126,12 @@ String NetworkUniqueId(void) {
   String unique_id = WiFiHelper::macAddress();
   unique_id.replace(":", "");  // Full 12 chars MAC address as ID
   return unique_id;
+}
+
+void AddLogServerActive(const char *server) {
+  AddLog(LOG_LEVEL_INFO, PSTR("%s server active on %s%s with IP address %s"),
+    server,
+    NetworkHostname(),
+    (Mdns.begun) ? PSTR(".local") : "",
+    IPGetListeningAddressStr().c_str());
 }

@@ -330,3 +330,54 @@ assert(bytes("02"))
 a = bytes("01020304")
 assert(a.get(1, 3) == 0x040302)
 assert(a.get(1, -3) == 0x020304)
+
+# append base64
+b = bytes("AABBCC")
+c = bytes("001122")
+assert(bytes().fromstring(bytes("001122").tob64()) == bytes('41424569'))
+assert(b.appendb64(c) == bytes("AABBCC41424569"))
+assert(b.appendb64(bytes()) == bytes("AABBCC41424569"))
+
+b = bytes("AABBCC")
+assert(bytes().fromstring(bytes("1122").tob64()) == bytes('4553493D'))
+assert(b.appendb64(c, 1) == bytes("AABBCC4553493D"))
+
+b = bytes("AABBCC")
+assert(bytes().fromstring(bytes("22").tob64()) == bytes('49673D3D'))
+assert(b.appendb64(c, 2) == bytes("AABBCC49673D3D"))
+
+b = bytes("AABBCC")
+assert(bytes().fromstring(bytes("11").tob64()) == bytes('45513D3D'))
+assert(b.appendb64(c, 1, 1) == bytes("AABBCC45513D3D"))
+
+# bytes assign 3-byte values
+b = bytes("1122")
+assert(b.add(0x334455, 3) == bytes('1122554433'))
+assert(b.add(0x334455, -3) == bytes('1122554433334455'))
+
+# new type testing in set/add methods
+b = bytes("0000000000")
+
+assert_error(def () b.set(0, 0.5, 4) end, 'type_error')
+assert_error(def () b.set(0, nil, 4) end, 'type_error')
+assert_error(def () b.set(0, 1, nil) end, 'type_error')
+assert_error(def () b.set(0, 1, 3.5) end, 'type_error')
+assert_error(def () b.set(0, 'foo', 4) end, 'type_error')
+assert_error(def () b.set(0, 4, 'foo') end, 'type_error')
+assert_error(def () b.set(0, 0.5) end, 'type_error')
+assert_error(def () b.set(0, nil) end, 'type_error')
+assert_error(def () b.set(0, 'foo') end, 'type_error')
+assert_error(def () b.set() end, 'type_error')
+
+assert_error(def () b.add(0.5, 4) end, 'type_error')
+assert_error(def () b.add(nil, 4) end, 'type_error')
+assert_error(def () b.add(5, 1.5) end, 'type_error')
+assert_error(def () b.add(5, nil) end, 'type_error')
+assert_error(def () b.add('foo', 4) end, 'type_error')
+assert_error(def () b.add(5, 'foo') end, 'type_error')
+assert_error(def () b.add() end, 'type_error')
+
+assert_error(def () b.addfloat(true) end, 'type_error')
+assert_error(def () b.addfloat(nil) end, 'type_error')
+assert_error(def () b.addfloat('foo') end, 'type_error')
+assert_error(def () b.addfloat() end, 'type_error')

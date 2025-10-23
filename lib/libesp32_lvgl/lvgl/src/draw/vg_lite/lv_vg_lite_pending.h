@@ -26,7 +26,7 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-typedef struct lv_vg_lite_pending_t lv_vg_lite_pending_t;
+typedef struct _lv_vg_lite_pending_t lv_vg_lite_pending_t;
 
 typedef void (*lv_vg_lite_pending_free_cb_t)(void * obj, void * user_data);
 
@@ -65,10 +65,16 @@ void lv_vg_lite_pending_set_free_cb(lv_vg_lite_pending_t * pending, lv_vg_lite_p
 void lv_vg_lite_pending_add(lv_vg_lite_pending_t * pending, void * obj);
 
 /**
- * Remove all objects from the pending list
+ * Remove all objects from the active pending list
  * @param pending pointer to the pending list
  */
 void lv_vg_lite_pending_remove_all(lv_vg_lite_pending_t * pending);
+
+/**
+ * Remove all old objects reference and swap new objects reference
+ * @param pending pointer to the pending list
+ */
+void lv_vg_lite_pending_swap(lv_vg_lite_pending_t * pending);
 
 /**********************
  *      MACROS

@@ -31,10 +31,14 @@ const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|HT20|HT40|HE20"; //
   #define ESP32_ARCH              "esp32c2"
 #elif CONFIG_IDF_TARGET_ESP32C3
   #define ESP32_ARCH              "esp32c3"
+#elif CONFIG_IDF_TARGET_ESP32C5
+  #define ESP32_ARCH              "esp32c5"  
 #elif CONFIG_IDF_TARGET_ESP32C6
   #define ESP32_ARCH              "esp32c6"
 #elif CONFIG_IDF_TARGET_ESP32H2
   #define ESP32_ARCH              "esp32h2"
+#elif CONFIG_IDF_TARGET_ESP32P4
+  #define ESP32_ARCH              "esp32p4"
 #else
   #define ESP32_ARCH              ""
 #endif
@@ -51,10 +55,14 @@ const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|HT20|HT40|HE20"; //
   #include "esp32c2/rom/rtc.h"
 #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
   #include "esp32c3/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C5  // ESP32-C5
+  #include "esp32c5/rom/rtc.h"
 #elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
   #include "esp32c6/rom/rtc.h"
 #elif CONFIG_IDF_TARGET_ESP32H2  // ESP32-H2
   #include "esp32h2/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32P4  // ESP32-P4
+  #include "esp32p4/rom/rtc.h"
 #else
   #error Target CONFIG_IDF_TARGET is not supported
 #endif
@@ -64,7 +72,9 @@ size_t getArduinoLoopTaskStackSize(void) {
   return SET_ESP32_STACK_SIZE;
 }
 
+#ifndef CONFIG_IDF_TARGET_ESP32P4
 #include <esp_phy_init.h>
+#endif
 
 // Handle 20k of NVM
 
@@ -139,9 +149,11 @@ void SettingsErase(uint8_t type) {
       break;
     case 1:               // Reset 3 = SDK parameter area
     case 4:               // WIFI_FORCE_RF_CAL_ERASE = SDK parameter area
+#ifdef SOC_SUPPORTS_WIFI
       r1 = esp_phy_erase_cal_data_in_nvs();
 //      r1 = NvmErase("cal_data");
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " PHY data (%d)"), r1);
+#endif //SOC_SUPPORTS_WIFI
       break;
     case 3:               // QPC Reached = QPC, Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 //      nvs_flash_erase();  // Erase RTC, PHY, sta.mac, ap.sndchan, ap.mac, Tasmota etc.
@@ -240,12 +252,18 @@ extern "C" {
 #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
   #include "esp32c3/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32C5   // ESP32-C5
+  #include "esp32c5/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32c5 is located at 0x2000
 #elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
   #include "esp32c6/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32H2   // ESP32-H2
   #include "esp32h2/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32P4   // ESP32-P4
+  #include "esp32p4/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x2000  // Esp32p4 is located at 0x2000
 #else
     #error Target CONFIG_IDF_TARGET is not supported
 #endif
@@ -585,8 +603,10 @@ extern "C" {
 // `psramFound()` can return true even if no PSRAM is actually installed
 // This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
 bool FoundPSRAM(void) {
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || DISABLE_PSRAMCHECK || CORE32SOLO1
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || DISABLE_PSRAMCHECK || CORE32SOLO1
   return psramFound();
+#elif CONFIG_IDF_TARGET_ESP32P4
+  return ESP.getPsramSize() > 0;
 #else
   return psramFound() && esp_psram_is_initialized();
 #endif
@@ -712,6 +732,7 @@ typedef enum {
     CHIP_ESP32S3 = 9, //!< ESP32-S3
     CHIP_ESP32C3 = 5, //!< ESP32-C3
     CHIP_ESP32C2 = 12, //!< ESP32-C2
+    CHIP_ESP32C5 = 23, //!< ESP32-C5
     CHIP_ESP32C6 = 13, //!< ESP32-C6
     CHIP_ESP32H2 = 16, //!< ESP32-H2
     CHIP_POSIX_LINUX = 999, //!< The code is running on POSIX/Linux simulator
@@ -874,6 +895,21 @@ typedef struct {
 #endif  // CONFIG_IDF_TARGET_ESP32C2
       return F("ESP32-C2");
     }
+    case 23: {  // ESP32-C5
+      /*
+      ESP32-C5 Series
+      - Ultra-low-power SoC with 32-bit RISC-V single-core microprocessor
+      - 2.4 and 5 GHz dual-band Wi-Fi 6 (802.11ax), Bluetooth® 5 (LE), Zigbee and Thread (802.15.4)
+      - 27 or 19 GPIOs, rich set of peripherals
+      */
+#ifdef CONFIG_IDF_TARGET_ESP32C5
+      switch (pkg_version) {
+        case 0:              return F("ESP32-C5");
+        case 1:              return F("ESP32-C5FH4");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32C5
+      return F("ESP32-C5");
+    }
     case 7:     // ESP32-C6(beta)
     case 13: {  // ESP32-C6
       /*
@@ -903,11 +939,6 @@ typedef struct {
       return F("ESP32-H2");
     }
     case 18: {  // ESP32-P4
-#ifdef CONFIG_IDF_TARGET_ESP32P4
-      switch (pkg_version) {
-        case 0:              return F("ESP32-P4");
-      }
-#endif  // CONFIG_IDF_TARGET_ESP32P4
       return F("ESP32-P4");
     }
   }

@@ -48,6 +48,7 @@ class Matter_Plugin
   # `FEATURE_MAPS` contains any non-zero value per cluster, if not present default to `0`
   static var FEATURE_MAPS = {               # feature map per cluster
     0x0031: 0x04,                           # Put Eth for now which should work for any on-network
+    # 0x0046: 0x04,                           # LITS: LongIdleTimeSupport
     0x0102: 1 + 4,                          # Lift + PA_LF
     0x0202: 2,                              # Fan: Auto
   }
@@ -77,6 +78,7 @@ class Matter_Plugin
     # 0x0040: 1,                            # Initial Release
     # 0x0041: 1,                            # Initial Release
     # 0x0042: 1,                            # Initial Release
+    # 0x0046: 3,                              # ICD v3
     # 0x005B: 1,                            # Initial Release
     # 0x005C: 1,                            # Initial Release
     0x0101: 7,                              # Added support for European door locks (unbolt feature)
@@ -283,20 +285,20 @@ matter_device.events.dump()
     return self.endpoint
   end
   def get_cluster_list_sorted()
-    return self.device.k2l(self.CLUSTERS)
+    return self.device.k2l(self.get_clusters())
   end
   def contains_cluster(cluster)
-    return self.CLUSTERS.contains(cluster)
+    return self.get_clusters().contains(cluster)
   end
   # def get_attribute_list(cluster)
   #   return self.clusters.find(cluster, [])
   # end
   # returns as a constant bytes of 16-bit ints, big endian
   def get_attribute_list_bytes(cluster)
-    return self.CLUSTERS.find(cluster, nil)
+    return self.get_clusters().find(cluster, nil)
   end
   def contains_attribute(cluster, attribute)
-    var attr_list = self.CLUSTERS.find(cluster)
+    var attr_list = self.get_clusters().find(cluster)
     # log(f"MTR: contains_attribute {cluster=} {attribute=} {attr_list=}")
     if attr_list != nil
       var idx = 0

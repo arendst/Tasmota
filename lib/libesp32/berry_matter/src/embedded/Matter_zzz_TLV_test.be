@@ -24,6 +24,12 @@ import matter
 
 def test_TLV(b, s)
   var m = matter.TLV.parse(b)
+  var s2 = m.tostring()
+  if (s2 != s) print(f"{s2=} {s=}") end
+  var b2 = m.tlv2raw()
+  if (b2 != b) print(f"{b2=} {b=}") end
+  var sz = m.encode_len()
+  if (sz != size(b)) print(f"{sz=} {size(b)=}") end
   assert(m.tostring() == s)
   assert(m.tlv2raw() == b)
   assert(m.encode_len() == size(b))

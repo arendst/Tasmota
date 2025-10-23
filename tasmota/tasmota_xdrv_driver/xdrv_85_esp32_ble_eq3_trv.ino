@@ -128,7 +128,7 @@ print("".join(pin))
 #define USE_EQ3_ESP32
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_EQ3_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 #ifdef USE_BLE_ESP32
@@ -324,7 +324,7 @@ bool EQ3Operation(const uint8_t *MAC, const uint8_t *data, int datalen, int cmdt
 #endif
   }
 
-  NimBLEAddress addr((uint8_t *)MAC);
+  NimBLEAddress addr((uint8_t *)MAC,0); //type 0 is public
   op->addr = addr;
 
   bool havechar = false;
@@ -397,7 +397,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
   ResponseClear();
 
   uint8_t addrev[7];
-  const uint8_t *native = op->addr.getNative();
+  const uint8_t *native = op->addr.getVal();
   memcpy(addrev, native, 6);
   BLE_ESP32::ReverseMAC(addrev);
 
@@ -594,7 +594,7 @@ int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
   if (op->state <= GEN_STATE_FAILED){
     uint8_t addrev[7];
-    const uint8_t *native = op->addr.getNative();
+    const uint8_t *native = op->addr.getVal();
     memcpy(addrev, native, 6);
     BLE_ESP32::ReverseMAC(addrev);
 
@@ -804,7 +804,7 @@ const char *EQ3Names[] = {
 int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   // we will try not to use this...
-  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   std::string sname = advertisedDevice->getName();
 
@@ -845,8 +845,8 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: saw device"),advertisedDevice->getAddress().toString().c_str());
 #endif
 
-  uint8_t* payload = advertisedDevice->getPayload();
-  size_t payloadlen = advertisedDevice->getPayloadLength();
+  uint8_t* payload = (uint8_t *)advertisedDevice->getPayload().data();
+  size_t payloadlen = advertisedDevice->getPayload().size();
 
   char name[20] = {0};
   char serial[20] = {0};
@@ -989,12 +989,12 @@ int EQ3SendResult(char *requested, const char *result){
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_EQ3_ALIAS[]        PROGMEM = "{s}EQ3 %d Alias{m}%s{e}";
-const char HTTP_EQ3_MAC[]          PROGMEM = "{s}EQ3 %d " D_MAC_ADDRESS "{m}%s{e}";
-const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}EQ3 %d " D_RSSI "{m}%d dBm{e}";
-const char HTTP_EQ3_TEMPERATURE[]  PROGMEM = "{s}EQ3 %d %s{m}%*_f " D_UNIT_DEGREE "%c{e}";
-const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}EQ3 %d " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
-const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}EQ3 %d " D_BATTERY "{m}%s{e}";
+const char HTTP_EQ3_TYPE[]         PROGMEM = "{s}%s " D_NEOPOOL_TYPE "{m}EQ3{e}";
+const char HTTP_EQ3_MAC[]          PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
+const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
+const char HTTP_EQ3_TEMPERATURE[]  PROGMEM = "{s}%s " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
+const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}%s " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}%s " D_BATTERY "{m}%s{e}";
 
 void EQ3Show(void)
 {
@@ -1005,15 +1005,21 @@ void EQ3Show(void)
     if (EQ3Devices[i].timeoutTime) {
       if (FirstSensorShown) WSContentSend_P(HTTP_SNS_HR_THIN);
       FirstSensorShown = true;
+      const char *label;
       const char *alias = BLE_ESP32::getAlias(EQ3Devices[i].addr);
       if (alias && *alias){
-        WSContentSend_P(HTTP_EQ3_ALIAS, i + 1, alias);
+        label = alias;
+        WSContentSend_P(HTTP_EQ3_TYPE, label);
+      } else {
+        char tlabel[8];
+        snprintf(tlabel, sizeof(tlabel), "EQ3-%d", i + 1);
+        label = tlabel;
       }
-      WSContentSend_P(HTTP_EQ3_MAC, i + 1, addrStr(EQ3Devices[i].addr));
-      WSContentSend_PD(HTTP_EQ3_RSSI, i + 1, EQ3Devices[i].RSSI);
-      WSContentSend_PD(HTTP_EQ3_TEMPERATURE, i + 1, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &EQ3Devices[i].TargetTemp, c_unit);
-      WSContentSend_P(HTTP_EQ3_DUTY_CYCLE, i + 1, EQ3Devices[i].DutyCycle);
-      WSContentSend_P(HTTP_EQ3_BATTERY, i + 1, EQ3Devices[i].Battery ? D_NEOPOOL_LOW : D_OK);
+      WSContentSend_P(HTTP_EQ3_MAC, label, addrStr(EQ3Devices[i].addr));
+      WSContentSend_PD(HTTP_EQ3_RSSI, label, EQ3Devices[i].RSSI);
+      WSContentSend_PD(HTTP_EQ3_TEMPERATURE, label, Settings->flag2.temperature_resolution, &EQ3Devices[i].TargetTemp, c_unit);
+      WSContentSend_P(HTTP_EQ3_DUTY_CYCLE, label, EQ3Devices[i].DutyCycle);
+      WSContentSend_P(HTTP_EQ3_BATTERY, label, EQ3Devices[i].Battery ? D_NEOPOOL_LOW : D_OK);
     }
   }
 }

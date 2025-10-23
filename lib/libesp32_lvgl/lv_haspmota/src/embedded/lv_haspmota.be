@@ -27,6 +27,105 @@ def list_to_bytes(l)
 end
 
 #################################################################################
+# Class Antiburn now embedded in HASPmota
+#################################################################################
+#@ solidify:Antiburn,weak
+class Antiburn
+  var antiburn            # the lv_obj object used as a plain color
+  var running
+  static colors = [
+    0x000000,
+    0xff0000,
+    0x00ff00,
+    0x0000ff,
+    0xffffff
+  ]
+  def init()
+    self.running = false
+  end
+  def start()
+    if self.running 
+      return
+    else
+      lv.start()
+
+      if self.antiburn == nil
+        var antiburn = lv.obj(lv.layer_sys())
+        antiburn.set_style_radius(0, 0)
+        antiburn.set_style_border_width(0, 0)
+        antiburn.set_style_bg_opa(255, 0)
+        antiburn.set_pos(0, 0)
+        antiburn.set_width(lv.get_hor_res())
+        antiburn.set_height(lv.get_ver_res())
+        
+        antiburn.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
+        self.antiburn = antiburn
+      end
+      self.antiburn.set_style_bg_opa(255, 0)
+      self.antiburn.add_flag(lv.OBJ_FLAG_CLICKABLE)
+      self.antiburn.move_foreground()
+
+      self.running = true
+      self.cycle(0)
+    end
+  end
+  def cycle(i)
+    if !self.running || self.antiburn == nil return nil end
+    if i < 30
+      self.antiburn.set_style_bg_color(lv.color_hex(self.colors[i % 5]), 0)
+      tasmota.set_timer(1000, /->self.cycle(i+1))
+    else
+      self.stop()
+    end
+  end
+  def stop()
+    if self.running && self.antiburn != nil
+      self.antiburn.set_style_bg_opa(0, 0)
+      self.antiburn.clear_flag(lv.OBJ_FLAG_CLICKABLE)
+      self.running = false
+      self.antiburn.del()
+      self.antiburn = nil
+    end    
+  end
+end
+
+
+#################################################################################
+# Class DimmedPanel
+#
+# The screen is dimmed so we disable any touch action except to
+# get out of dimmed mode
+#################################################################################
+#@ solidify:DimmedPanel,weak
+class DimmedPanel
+  var panel            # the lv_obj object used as a plain color
+
+  def init()
+    if self.panel == nil
+      var panel = lv.obj(lv.layer_sys())
+      panel.set_style_radius(0, 0)
+      panel.set_style_border_width(0, 0)
+      panel.set_style_bg_opa(0, 0)
+      panel.set_pos(0, 0)
+      panel.set_width(lv.get_hor_res())
+      panel.set_height(lv.get_ver_res())
+
+      panel.add_flag(lv.OBJ_FLAG_CLICKABLE)
+      panel.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
+      self.panel = panel
+    end
+    self.panel.move_foreground()
+  end
+  def stop()
+    if (self.panel != nil)
+      self.panel.del()
+      self.panel = nil
+    end    
+  end
+end
+
+
+#################################################################################
 # Pre-defined events lists
 #################################################################################
 var EVENTS_NONE = list_to_bytes([])
@@ -56,9 +155,6 @@ class lvh_root
     "page",
     "comment",
     "parentid",
-    # "auto_size",    # TODO not sure it's still needed in LVGL8
-    # attributes for page
-    "prev", "next", "back",
     "berry_run",    # run Berry code after the object is created
   ]
 
@@ -290,7 +386,7 @@ class lvh_root
     else
       self._lv_obj = obj
     end
-    self.post_init()
+    self.post_init(jline)
   end
 
   #====================================================================
@@ -599,7 +695,7 @@ class lvh_obj : lvh_root
   #====================================================================
   # post-init, to be overriden and used by certain classes
   #====================================================================
-  def post_init()
+  def post_init(jline)
     self.register_event_cb()
   end
 
@@ -660,7 +756,7 @@ class lvh_obj : lvh_root
     var code = event.get_code()     # materialize to a local variable, otherwise the value can change (and don't capture event object)
     if self.action != "" && code == lv.EVENT_CLICKED
       # if clicked and action is declared, do the page change event
-      tasmota.set_timer(0, /-> hm.do_action(self, code))
+      tasmota.defer(/-> hm.do_action(self, code))
     end
 
     var event_hasp = self._event_map.find(code)
@@ -689,10 +785,10 @@ class lvh_obj : lvh_root
 
       var tas_event = format('{"hasp":{"p%ib%i%s":{"event":"%s"%s}}}', self._page._page_id, self.id, sub_index_str, event_hasp, tas_event_more)
       # print("val=",val)
-      tasmota.set_timer(0,  def ()
-                              tasmota.publish_rule(tas_event)
-                              tasmota.log(f"HSP: publish {tas_event}", 4)
-                            end)
+      tasmota.defer(def ()
+                      tasmota.publish_rule(tas_event)
+                      tasmota.log(f"HSP: publish {tas_event}", 4)
+                    end)
     end
   end
 
@@ -1051,7 +1147,7 @@ class lvh_obj : lvh_root
         style_modifier = self.digits_to_style(suffix_digits)
       end
     end
-    # print(f">>>: getmember {k=} {style_modifier=}")
+    #print(f">>>: member {k=} {style_modifier=}")
 
     # if attribute name is in ignore list, abort
     if self._attr_ignore.find(k) != nil return end
@@ -1177,8 +1273,8 @@ class lvh_fixed : lvh_obj
   # static var _EVENTS = EVENTS_ALL
 
   # label do not need a sub-label
-  def post_init()
-    super(self).post_init()         # call super
+  def post_init(jline)
+    super(self).post_init(jline)         # call super
     var obj = self._lv_obj
     obj.set_style_pad_all(0, 0)
     obj.set_style_radius(0, 0)
@@ -1197,8 +1293,8 @@ class lvh_flex : lvh_fixed
   # static var _lv_class = lv.obj # from parent class
   static var _EVENTS = EVENTS_NONE # inhetited
   # label do not need a sub-label
-  def post_init()
-    super(self).post_init()         # call super
+  def post_init(jline)
+    super(self).post_init(jline)         # call super
     var obj = self._lv_obj
     obj.set_flex_flow(lv.FLEX_FLOW_ROW)
   end
@@ -1211,9 +1307,9 @@ end
 class lvh_label : lvh_obj
   static var _lv_class = lv.label
   # label do not need a sub-label
-  def post_init()
+  def post_init(jline)
     self._lv_label = self._lv_obj   # the label is also the object itself
-    super(self).post_init()         # call super
+    super(self).post_init(jline)         # call super
   end
 end
 
@@ -1347,6 +1443,21 @@ class lvh_msgbox : lvh_obj
     # apply some default styles
     self.text_align = 2     # can be overriden
     self.bg_opa = 255       # can be overriden
+  end
+
+  #====================================================================
+  # post_init
+  #
+  # We need to instanciate all buttons first before applying attributes
+  #====================================================================
+  def post_init(jline)
+    # need to apply options first, and remove to avoid being handled again
+    if jline.contains('options')
+      self.set_options(jline['options'])
+      jline.remove('options')
+    end
+    # rest of attributes
+    super(self).post_init(jline)
   end
 
   #====================================================================
@@ -1740,7 +1851,7 @@ class lvh_dropdown_list : lvh_obj
   static var _lv_class = nil
   # static var _EVENTS = EVENTS_NONE
 
-  def post_init()
+  def post_init(jline)
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
     # check if it is the parent is a spangroup
     if isinstance(self._parent_lvh, self._page._hm.lvh_dropdown)
@@ -1748,7 +1859,7 @@ class lvh_dropdown_list : lvh_obj
     else
       print("HSP: 'dropdown_list' should have a parent of type 'dropdown'")
     end
-    super(self).post_init()
+    super(self).post_init(jline)
   end
 end
 
@@ -1759,8 +1870,8 @@ end
 class lvh_bar : lvh_obj
   static var _lv_class = lv.bar
   
-  def post_init()
-    super(self).post_init()
+  def post_init(jline)
+    super(self).post_init(jline)
     if isinstance(self._parent_lvh, self._page._hm.lvh_scale)
       # if sub-object of scale, copy min and max
       var min = self._parent_lvh._lv_obj.get_range_min_value()
@@ -1864,7 +1975,7 @@ class lvh_scale_section : lvh_root
   var _style30                        # style for LV_PART_ITEMS
   var _min, _max
 
-  def post_init()
+  def post_init(jline)
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
     self._min = 0                     # default value by LVGL
     self._max = 0                     # default value by LVGL
@@ -1881,7 +1992,7 @@ class lvh_scale_section : lvh_root
     else
       print("HSP: 'scale_section' should have a parent of type 'scale'")
     end
-    # super(self).post_init()         # call super - not needed for lvh_root
+    # super(self).post_init(jline)         # call super - not needed for lvh_root
   end
 
   def set_min(t)
@@ -1998,14 +2109,14 @@ class lvh_scale_line : lvh_line
   var _needle_length
   # var _lv_points          # in superclass
 
-  def post_init()
+  def post_init(jline)
     # check if it is the parent is a spangroup
     if !isinstance(self._parent_lvh, self._page._hm.lvh_scale)
       print("HSP: 'scale_line' should have a parent of type 'scale'")
     end
     self._needle_length = 0
     self._lv_points = lv.point_arr([lv.point(), lv.point()])    # create an array with 2 points
-    super(self).post_init()
+    super(self).post_init(jline)
   end
 
   def set_needle_length(t)
@@ -2040,14 +2151,14 @@ end
 class lvh_spangroup : lvh_obj
   static var _lv_class = lv.spangroup
   # label do not need a sub-label
-  def post_init()
+  def post_init(jline)
     self._lv_obj.set_mode(lv.SPAN_MODE_BREAK)           # use lv.SPAN_MODE_BREAK by default
-    self._lv_obj.refr_mode()
-    super(self).post_init()         # call super -- not needed
+    self._lv_obj.refresh()
+    super(self).post_init(jline)         # call super -- not needed
   end
   # refresh mode
-  def refr_mode()
-    self._lv_obj.refr_mode()
+  def refresh()
+    self._lv_obj.refresh()
   end
 end
 
@@ -2060,17 +2171,17 @@ class lvh_span : lvh_root
   # label do not need a sub-label
   var _style                          # style object
 
-  def post_init()
+  def post_init(jline)
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
     # check if it is the parent is a spangroup
     if isinstance(self._parent_lvh, self._page._hm.lvh_spangroup)
       # print(">>> GOOD")
-      self._lv_obj = self._parent_lvh._lv_obj.new_span()
+      self._lv_obj = self._parent_lvh._lv_obj.add_span()
       self._style = self._lv_obj.get_style()
     else
       print("HSP: 'span' should have a parent of type 'spangroup'")
     end
-    # super(self).post_init()         # call super - not needed for lvh_root
+    # super(self).post_init(jline)         # call super - not needed for lvh_root
   end
 
   #====================================================================
@@ -2083,7 +2194,7 @@ class lvh_span : lvh_root
     var font = self.parse_font(t)
     if font != nil
       self._style.set_text_font(font)
-      self._parent_lvh.refr_mode()
+      self._parent_lvh.refresh()
     end
   end
   
@@ -2160,7 +2271,7 @@ class lvh_span : lvh_root
       # invoke
       try
         f(self._style, v)
-        self._parent_lvh.refr_mode()
+        self._parent_lvh.refresh()
       except .. as e, m
         raise e, m + " for " + k
       end
@@ -2182,9 +2293,9 @@ class lvh_tabview : lvh_obj
   var _tab_list                             # list of tabs
 
   # label do not need a sub-label
-  def post_init()
+  def post_init(jline)
     self._tab_list = []
-    super(self).post_init()         # call super -- not needed
+    super(self).post_init(jline)         # call super -- not needed
   end
 
   #====================================================================
@@ -2235,7 +2346,7 @@ class lvh_tabview : lvh_obj
     if (v_max == 0)
       # probably not constructed yet
       if (!stop)
-        tasmota.set_timer(0, def () self.set_val(v, true #-stop propagation-#) end)
+        tasmota.defer(def () self.set_val(v, true #-stop propagation-#) end)
       end
     else
       if (v == nil)   v = 0           end
@@ -2271,7 +2382,7 @@ class lvh_tab : lvh_obj
     #====================================================================
     # specific post-init wihtout events
     #====================================================================
-    def post_init()
+    def post_init(jline)
       self._lv_obj.set_style_radius(0, 0)       # set default radius to `0` for rectangle tabs
       # self.register_event_cb()
     end
@@ -2291,7 +2402,7 @@ class lvh_tab : lvh_obj
     super(self).init(parent, page, jline, lv_instance, parent_obj)
   end
 
-  def post_init()
+  def post_init(jline)
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
     # check if it is the parent is a spangroup
     if isinstance(self._parent_lvh, self._page._hm.lvh_tabview)
@@ -2313,7 +2424,7 @@ class lvh_tab : lvh_obj
     else
       print("HSP: 'tab' should have a parent of type 'tabview'")
     end
-    # super(self).post_init()         # call super - not needed for lvh_root
+    # super(self).post_init(jline)         # call super - not needed for lvh_root
   end
 
   #====================================================================
@@ -2360,13 +2471,16 @@ class lvh_chart : lvh_obj
   var _ser1, _ser2
   # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
   var _y_min, _y_max
+  var _y2_min, _y2_max
   # h_div/v_div contain the horizontal and vertical divisions, we need to memorize values because both are set from same API
   var _h_div, _v_div
 
-  def post_init()
+  def post_init(jline)
     # default values from LVGL are 0..100
     self._y_min = 0
     self._y_max = 100
+    self._y2_min = 0
+    self._y2_max = 100
     # default values
     #define LV_CHART_HDIV_DEF 3
     #define LV_CHART_VDIV_DEF 5
@@ -2376,7 +2490,8 @@ class lvh_chart : lvh_obj
     self._lv_obj.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
 
     self._ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
-    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
+    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_SECONDARY_Y)
+    super(self).post_init(jline)
   end
 
   def add_point(v)
@@ -2399,13 +2514,27 @@ class lvh_chart : lvh_obj
   def get_y_max()
     return self._y_max
   end
+  def get_y2_min()
+    return self._y2_min
+  end
+  def get_y2_max()
+    return self._y2_max
+  end
   def set_y_min(_y_min)
     self._y_min = _y_min
-    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
   end
   def set_y_max(_y_max)
     self._y_max = _y_max
-    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+  end
+  def set_y2_min(_y2_min)
+    self._y2_min = _y2_min
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
+  end
+  def set_y2_max(_y2_max)
+    self._y2_max = _y2_max
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
   end
 
   def set_series1_color(color)
@@ -2526,6 +2655,11 @@ class lvh_cpicker : lvh_obj
   # pad_inner is ignored (for now?)
   def set_pad_inner() end
   def get_pad_inner() end
+
+  # map val to rgb which is mapped to a color instance
+  def get_val()
+    return self._lv_obj.get_rgb()
+  end
 end
 
 #################################################################################
@@ -2537,7 +2671,19 @@ end
 #@ solidify:lvh_btn,weak
 class lvh_btn : lvh_obj         static var _lv_class = lv.button      end
 #@ solidify:lvh_checkbox,weak
-class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
+class lvh_checkbox : lvh_obj
+  static var _lv_class = lv.checkbox
+  static var _lv_part2_selector = lv.PART_INDICATOR
+  # static var _EVENTS = EVENTS_ALL
+  # map val to toggle
+  def set_val(t)
+    self._val = t
+    return self.set_toggle(t)
+  end
+  def get_val()
+    return self.get_toggle()
+  end
+end
 # class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 #@ solidify:lvh_scr,weak
@@ -2552,7 +2698,7 @@ end
 #  Encapsulates a `lv_screen` which is `lv.obj(0)` object
 #################################################################################
 #
-# ex of transition: lv.scr_load_anim(scr, lv.SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false)
+# ex of transition: lv.scr_load_anim(scr, lv.SCREEN_LOAD_ANIM_MOVE_RIGHT, 500, 0, false)
 #@ solidify:lvh_page,weak
 class lvh_page
   var _obj_id               # (map) of `lvh_obj` objects by id numbers
@@ -2589,8 +2735,6 @@ class lvh_page
       self._lv_scr = lv.layer_top() # top layer, visible over all screens
     else
       self._lv_scr = lv.obj(0)      # allocate a new screen
-      var bg_color = lv.scr_act().get_style_bg_color(0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#) # bg_color of default screen
-      self._lv_scr.set_style_bg_color(bg_color, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#) # set white background
     end
 
     # page object is also stored in the object map at id `0` as instance of `lvg_scr`
@@ -2723,11 +2867,11 @@ class lvh_page
   #  show this page, with animation
   #====================================================================
   static show_anim = {
-     1: lv.SCR_LOAD_ANIM_MOVE_LEFT,
-    -1: lv.SCR_LOAD_ANIM_MOVE_RIGHT,
-    -2: lv.SCR_LOAD_ANIM_MOVE_TOP,
-     2: lv.SCR_LOAD_ANIM_MOVE_BOTTOM,
-     0: lv.SCR_LOAD_ANIM_NONE,
+     1: lv.SCREEN_LOAD_ANIM_MOVE_LEFT,
+    -1: lv.SCREEN_LOAD_ANIM_MOVE_RIGHT,
+    -2: lv.SCREEN_LOAD_ANIM_MOVE_TOP,
+     2: lv.SCREEN_LOAD_ANIM_MOVE_BOTTOM,
+     0: lv.SCREEN_LOAD_ANIM_NONE,
   }
   def show(anim, duration)
     # ignore if the page does not contain a screen, like when id==0
@@ -2747,9 +2891,9 @@ class lvh_page
 
     # send page events
     var event_str_in = format('{"hasp":{"p%i":"out"}}', self._hm.lvh_page_cur_idx)
-    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
+    tasmota.defer(/-> tasmota.publish_rule(event_str_in))
     var event_str_out = format('{"hasp":{"p%i":"in"}}', self._page_id)
-    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_out))
+    tasmota.defer(/-> tasmota.publish_rule(event_str_out))
 
     # change current page
     self._hm.lvh_page_cur_idx = self._page_id
@@ -2757,7 +2901,7 @@ class lvh_page
     if (anim == 0)
       lv.screen_load(self._lv_scr)
     else    # animation
-      var anim_lvgl = self.show_anim.find(anim, lv.SCR_LOAD_ANIM_NONE)
+      var anim_lvgl = self.show_anim.find(anim, lv.SCREEN_LOAD_ANIM_NONE)
       # load new screen with animation, no delay, 500ms transition time, no auto-delete
       lv.screen_load_anim(self._lv_scr, anim_lvgl, duration, 0, false)
     end
@@ -2772,10 +2916,10 @@ end
 
 # main class controller, meant to be a singleton and the only externally used class
 class HASPmota
-  var dark                              # (bool) use dark theme?
+  var started                           # (bool) is HASPmota already started?
   var hres, vres                        # (int) resolution
   var scr                               # (lv_obj) default LVGL screen
-  var r16                               # (lv_font) robotocondensed fonts size 16
+  var r12, r16, r24                     # (lv_font) robotocondensed fonts size 12, 16 and 24
   # haspmota objects
   var lvh_pages                         # (list of lvg_page) list of pages
   var lvh_page_cur_idx                  # (int) current page index number
@@ -2785,6 +2929,14 @@ class HASPmota
   # specific event_cb handling for less memory usage since we are registering a lot of callbacks
   var event                             # try to keep the event object around and reuse it
   var event_cb                          # the low-level callback for the closure to be registered
+  # auto-dimming for inactivity
+  var antiburn_time                     # number of minutes to perdiodically trigger antiburn for LCD
+  var dimming_time                      # number of minutes of inactivity to trigger auto-dimming (or 0 if disabled)
+  var dimming_min                       # minimum dimming value (1..100), by default it divides dimmer value by 4
+  var dimming_duration                  # number of seconds to keep low dimming before turning screen off
+  static var DIMMING_DURATION = 30      # default dimming duration is 30 seconds
+  var dimming_state                     # the current dimming state: 100=normal 25=dimmed_low 0=off
+  var dimmed_panel                      # the object used to mask any touch event with the screen is dimmed
 
   # assign lvh_page to a static attribute
   static lvh_root = lvh_root
@@ -2827,14 +2979,25 @@ class HASPmota
   static lvh_qrcode = lvh_qrcode
   # special cases
   static lvh_chart = lvh_chart
+  # other helper classes
+  static var Antiburn = Antiburn
+  static var DimmedPanel = DimmedPanel
 
-  static def_templ_name = "pages.jsonl" # default template name
+  static var PAGES_JSONL = "pages.jsonl" # default template name
 
   def init()
     self.fix_lv_version()
     import re
-    self.re_page_target = re.compile("p\\d+")
+    self.re_page_target = re.compilebytes("p\\d+")
     # nothing to put here up to now
+    # defaulting values
+    self.antiburn_time = 0
+    self.dimming_time = 0
+    self.dimming_min = 1
+    self.dimming_duration = self.DIMMING_DURATION
+    self.dimming_state = 100      # normal brightness from Settings
+    # register as driver
+    tasmota.add_driver(self)
   end
 
   # make sure that `lv.version` returns a version number
@@ -2848,35 +3011,72 @@ class HASPmota
   #====================================================================
   # init
   #
-  # arg1: (bool) use dark theme if `true`
+  # Opt1: no arguments
+  #       load "pages.jsonl"
+  # Opt2:
+  #    arg1: (string) use it as template name
   #
-  # implicitly loads `pages.jsonl` from file-system // TODO allow to specicify file name
+  # Opt3:
+  #    arg1: (bool) set dark mode (deprecated)
+  #    arg2:  (string) use it as template name
+  #
   #====================================================================
-  def start(dark, templ_name)
+  def start(arg1, arg2)
+    if (self.started)      return    end
+
+    var templ_name
+    if type(arg1) == 'string'
+      templ_name = arg1
+    elif type(arg2) == 'string'
+      templ_name = arg2
+    else
+      templ_name = self.PAGES_JSONL       # use default PAGES.JSONL
+    end
+
     import path
-    if templ_name == nil   templ_name = self.def_templ_name end
     if !path.exists(templ_name)
       raise "io_erorr", "file '" + templ_name + "' not found"
     end
     # start lv if not already started. It does no harm to call lv.start() if LVGL was already started
     lv.start()
 
-    self.dark = bool(dark)
-
     self.hres = lv.get_hor_res()       # ex: 320
     self.vres = lv.get_ver_res()       # ex: 240
     self.scr = lv.scr_act()            # LVGL default screean object
 
     try
+      self.r12 = lv.font_embedded("robotocondensed", 12)  # TODO what if does not exist
+    except ..
+      self.r12 = lv.font_embedded("montserrat", 10)  # TODO what if does not exist
+    end
+    try
       self.r16 = lv.font_embedded("robotocondensed", 16)  # TODO what if does not exist
     except ..
       self.r16 = lv.font_embedded("montserrat", 14)  # TODO what if does not exist
     end
+    try
+      self.r24 = lv.font_embedded("robotocondensed", 24)  # TODO what if does not exist
+    except ..
+      self.r24 = lv.font_embedded("montserrat", 20)  # TODO what if does not exist
+    end
 
     # set the theme for HASPmota
-    var th2 = lv.theme_haspmota_init(0, lv.color(0xFF00FF), lv.color(0x303030), self.dark, self.r16)
+    var primary_color = self.lvh_root.parse_color(tasmota.webcolor(10 #-COL_BUTTON-#))
+    var secondary_color = self.lvh_root.parse_color(tasmota.webcolor(11 #-COL_BUTTON_HOVER-#))
+    var color_scr = self.lvh_root.parse_color(tasmota.webcolor(1 #-COL_BACKGROUND-#))
+    var color_text = self.lvh_root.parse_color(tasmota.webcolor(9 #-COL_BUTTON_TEXT-#))
+    var color_card = self.lvh_root.parse_color(tasmota.webcolor(2 #-COL_FORM-#))
+    var color_grey = self.lvh_root.parse_color(tasmota.webcolor(2 #-COL_FORM-#))
+    var color_reset = self.lvh_root.parse_color(tasmota.webcolor(12 #-COL_BUTTON_RESET-#))
+    var color_reset_hover = self.lvh_root.parse_color(tasmota.webcolor(13 #-COL_BUTTON_RESET_HOVER-#))
+    var color_save = self.lvh_root.parse_color(tasmota.webcolor(14 #-COL_BUTTON_SAVE-#))
+    var color_save_hover = self.lvh_root.parse_color(tasmota.webcolor(15 #-COL_BUTTON_SAVE_HOVER-#))
+    var colors = lv.color_arr([primary_color, secondary_color, color_scr, color_text, color_card, color_grey,
+                               color_reset, color_reset_hover, color_save, color_save_hover])
+    
+    var th2 = lv.theme_haspmota_init(0, colors,
+                                     self.r12, self.r16, self.r24)
     self.scr.get_disp().set_theme(th2)
-    self.scr.set_style_bg_color(self.dark ? lv.color(0x000000) : lv.color(0xFFFFFF),0)    # set background to white
     # apply theme to layer_top, but keep it transparent
     lv.theme_apply(lv.layer_top())
     lv.layer_top().set_style_bg_opa(0,0)
@@ -2884,6 +3084,8 @@ class HASPmota
     self.lvh_pages = {}
     # load from JSONL
     self._load(templ_name)
+    self.started = true
+    log("HSP: HASPmota initialized")
   end
 
   #################################################################################
@@ -2891,7 +3093,8 @@ class HASPmota
   #################################################################################
   static def sort(l)
     # insertion sort
-    for i:1..size(l)-1
+    var i = 0
+    while i < size(l)
       var k = l[i]
       var j = i
       while (j > 0) && (l[j-1] > k)
@@ -2899,10 +3102,86 @@ class HASPmota
         j -= 1
       end
       l[j] = k
+      i += 1
     end
     return l
   end
 
+  #################################################################################
+  # Antiburn
+  #################################################################################
+  def antiburn()
+    self.Antiburn().start()
+  end
+
+  #################################################################################
+  # auto_dimming
+  #################################################################################
+  def auto_dimming()
+    if (self.dimming_time <= 0)    return    end     # fast return if not enabled
+    var dim_event = nil
+
+    import display
+    var dimming_time_ms = self.dimming_time * 60000
+    var inactive_time_ms = lv.disp().get_inactive_time()
+
+    if (inactive_time_ms < dimming_time_ms)
+      # no dimming
+      if (self.dimmed_panel != nil)
+        self.dimmed_panel.stop()
+        self.dimmed_panel = nil
+      end
+      if (self.dimming_state < 100)
+        self.dimming_state = 100
+        display.dimmer(display.dimmer())    # restore dimmer value from settings
+        # trigger event
+        dim_event = "off"
+      end
+    elif (inactive_time_ms < dimming_time_ms + self.dimming_duration * 1000)
+      # low brightness dimming
+      if (self.dimmed_panel == nil)
+        self.dimmed_panel = self.DimmedPanel()
+      end
+      if (self.dimming_state > 25)
+        # lower dimmer
+        self.dimming_state = 25
+        var cur_dim = display.dimmer()
+        var relative_dim = (cur_dim > self.dimming_min) ? cur_dim - self.dimming_min : self.dimming_min
+        var low_dim = (relative_dim / 4) + self.dimming_min
+        display.dimmer(low_dim, true #-no settings-#)
+        # no event
+        dim_event = "short"
+      end
+    else
+      if (self.dimmed_panel == nil)
+        self.dimmed_panel = self.DimmedPanel()
+      end
+      # dimmer off
+      if (self.dimming_state > 0)
+        # needs to turn off
+        self.dimming_state = 0
+        display.dimmer(0, true #-no settings-#)
+        # trigger event
+        dim_event = "long"
+      end
+    end
+    # send event if any
+    if (dim_event != nil)
+      var tas_event = format('{"hasp":{"p0b0":{"idle":"%s"}}}', dim_event)
+      # print("val=",val)
+      tasmota.defer(def ()
+                      tasmota.publish_rule(tas_event)
+                      tasmota.log(f"HSP: publish {tas_event}", 4)
+                    end)
+    end
+  end
+
+  #################################################################################
+  # every_100ms
+  #################################################################################
+  def every_100ms()
+    self.auto_dimming()
+  end
 
   #####################################################################
   # General Setters and Getters
@@ -2934,21 +3213,21 @@ class HASPmota
     import string
     import json
 
-    var f = open(templ_name,"r")
-    var f_content =  f.read()
-    f.close()
-    
-    var jsonl = string.split(f_content, "\n")
-    f = nil   # allow deallocation
-    f_content = nil
-
+    var f = open(templ_name)
     # parse each line
-    while size(jsonl) > 0
-      var jline = json.load(jsonl[0])
+    while f.tell() < f.size()                 # while we're not at the end of the file
+      var line = f.readline()
 
+      # if size is '1', the line is considered as empty because it's a '\n' character
+      if (size(line) <= 1) || (line[0] == '#')    # skip empty lines and lines starting with '#'
+        continue
+      end
+
+      var jline = json.load(line)
       if type(jline) == 'instance'
         if tasmota.loglevel(4)
-          tasmota.log(f"HSP: parsing line '{jsonl[0]}'", 4)
+          if string.endswith(line, "\n")   line = line[0..-2]    end   # remove unwanted last '\n'
+          tasmota.log(f"HSP: parsing line '{line}'", 4)
         end
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
         # objects are created in the current page
@@ -2958,14 +3237,13 @@ class HASPmota
         self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
       else
         # check if it's invalid json
-        if size(string.tr(jsonl[0], " \t", "")) > 0
-          tasmota.log(f"HSP: invalid JSON line '{jsonl[0]}'", 2)
+        if size(string.tr(line, " \t", "")) > 0
+          tasmota.log(f"HSP: invalid JSON line '{line}'", 2)
         end
       end
       jline = nil
-      jsonl.remove(0)
     end
-    jsonl = nil     # make all of it freeable
+    f.close()
 
     # current page is always 1 when we start
     var pages_sorted = self.pages_list_sorted(nil)            # nil for full list
@@ -2986,9 +3264,10 @@ class HASPmota
     var jline = json.load(j)
 
     if type(jline) == 'instance'
+      self.lvh_page_cur_idx_parsing = self.lvh_page_cur_idx
       self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
       # objects are created in the current page
-      self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
+      self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
     else
       raise "value_error", "unable to parse JSON line"
     end
@@ -3080,6 +3359,7 @@ class HASPmota
   #  Returns: the target page object if changed, or `nil` if still on same page
   #====================================================================
   def page_show(action, anim, duration)
+    import re
     # resolve between page numbers
     # p1 is either a number or nil (stored value)
     # p2 is the default value
@@ -3115,7 +3395,7 @@ class HASPmota
       if (to_page == cur_page.id())
         to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
       end
-    elif self.re_page_target.match(action)
+    elif re.match(self.re_page_target, action)
       # action is supposed to be `p<number>` format
       to_page = to_page_resolve(int(action[1..-1]), nil #-default to nil-#, sorted_pages_list)
     end
@@ -3140,7 +3420,7 @@ class HASPmota
   def parse_page(jline)
     if jline.has("page") && type(jline["page"]) == 'int'
       var page = int(jline["page"])
-      # print(f">>> parsing page {page}")
+      # print(f">>> parsing page {page} {jline=}")
       self.lvh_page_cur_idx_parsing = page    # change current page
       if (self.lvh_page_cur_idx == nil)       # also set current page if we haven't any yet
         self.lvh_page_cur_idx = page
@@ -3151,13 +3431,27 @@ class HASPmota
         var lvh_page_class = self.lvh_page
         self.lvh_pages[page] = lvh_page_class(page, self)
       end
+    end
 
-      # check if there is "id":0
-      if jline.find("id") == 0
-        var lvh_page_cur = self.get_page_cur_parsing()
-        lvh_page_cur.prev = int(jline.find("prev", nil))
-        lvh_page_cur.next = int(jline.find("next", nil))
-        lvh_page_cur.back = int(jline.find("back", nil))
+    # check if there is "id":0
+    if jline.find("id") == 0
+      var lvh_page_cur = self.get_page_cur_parsing()
+      lvh_page_cur.prev = int(jline.find("prev", nil))
+      lvh_page_cur.next = int(jline.find("next", nil))
+      lvh_page_cur.back = int(jline.find("back", nil))
+      jline.remove("prev")
+      jline.remove("next")
+      jline.remove("back")
+      # special case if it's also "page == 0"
+      if (lvh_page_cur._page_id == 0)
+        self.dimming_time = int(jline.find("dimming_time", self.dimming_time))
+        self.dimming_min = int(jline.find("dimming_min", self.dimming_min))
+        self.dimming_duration = int(jline.find("dimming_duration", self.dimming_duration))
+        self.antiburn_time = int(jline.find("antiburn", self.dimming_time))
+        jline.remove("dimming_time")
+        jline.remove("dimming_min")
+        jline.remove("dimming_duration")
+        jline.remove("antiburn")
       end
     end
   end

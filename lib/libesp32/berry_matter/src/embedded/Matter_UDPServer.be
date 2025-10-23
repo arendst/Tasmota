@@ -186,11 +186,11 @@ class Matter_UDPServer
   # If all retries expired, remove packet and log.
   def _resend_packets()
     var idx = 0
-    while idx < size(self.packets_sent)
+    while (idx < size(self.packets_sent)) && (idx < 4)              # limit to 4 packets in output queue
       var packet = self.packets_sent[idx]
       if tasmota.time_reached(packet.next_try)
         if packet.retries <= self.RETRIES
-          log("MTR: .          Resending packet id=" + str(packet.msg_id), 4)
+          log(f"MTR: .          Resending packet id={packet.msg_id} {packet.retries=}", 3)
           self.send(packet)
           packet.next_try = tasmota.millis() + self._backoff_time(packet.retries)
           packet.retries += 1
@@ -217,8 +217,8 @@ class Matter_UDPServer
       var packet = self.packets_sent[idx]
       if packet.msg_id == id && packet.exchange_id == exch
         self.packets_sent.remove(idx)
-        if tasmota.loglevel(4)
-          log("MTR: .          Removed packet from sending list id=" + str(id), 4)
+        if tasmota.loglevel(3)
+          log("MTR: .          Removed packet from sending list id=" + str(id), 3)
         end
       else
         idx += 1

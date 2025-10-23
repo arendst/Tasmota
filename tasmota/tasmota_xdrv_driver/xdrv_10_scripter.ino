@@ -42,14 +42,12 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define XDRV_10             10
 
-
 #ifndef TS_FLOAT
 #define TS_FLOAT float
 #endif
 // float = 4, double = 8 bytes
 
-
-const uint8_t SCRIPT_VERS[2] = {5, 3};
+const uint8_t SCRIPT_VERS[2] = {5, 5};
 
 #define SCRIPT_DEBUG 0
 
@@ -78,7 +76,7 @@ const uint8_t SCRIPT_VERS[2] = {5, 3};
 #endif
 
 #ifndef SCRIPT_MAXSSIZE
-#define SCRIPT_MAXSSIZE 48
+#define SCRIPT_MAXSSIZE 255
 #endif
 
 //#define SCRIPT_MAX_SBSIZE SCRIPT_MAXSSIZE
@@ -98,6 +96,9 @@ const uint8_t SCRIPT_VERS[2] = {5, 3};
 #define MAX_SCRIPT_CMDBUFFER 4096
 
 #define SPI_FLASH_2SEC_SIZE SPI_FLASH_SEC_SIZE*2
+
+#define UNIX_TS_OFFSET 0
+//1740389573
 
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
@@ -160,6 +161,16 @@ char *Get_esc_char(char *cp, char *esc_chr);
 
 #endif // USE_UFILESYS
 
+#ifdef USE_SCRIPT_MDNS
+#ifdef ESP32
+  #include <ESPmDNS.h>
+#else
+  #include <ESP8266mDNS.h>
+  MDNSResponder::hMDNSService hMDNSService = 0; // handle of the http service in the MDNS responder
+  MDNSResponder::hMDNSService hMDNSService2 = 0; // handle of the shelly service in the MDNS responder
+#endif
+#endif
+
 #include <unishox.h>
 #define SCRIPT_COMPRESS compressor.unishox_compress
 #define SCRIPT_DECOMPRESS compressor.unishox_decompress
@@ -188,6 +199,8 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #ifdef ESP32
 #include "driver/i2s_std.h"
 #include "driver/i2s_pdm.h"
+#include "driver/rtc_io.h"
+#include "esp_sleep.h"
 #endif
 
 
@@ -248,6 +261,11 @@ char *Get_esc_char(char *cp, char *esc_chr);
 
 #endif
 
+#ifndef NO_SCRIPT_FATFS_EXT
+#undef USE_SCRIPT_FATFS_EXT
+#define USE_SCRIPT_FATFS_EXT
+#endif
+
 
 #ifdef USE_SCRIPT_TIMER
 #include <Ticker.h>
@@ -278,6 +296,14 @@ void Script_ticker4_end(void) {
 #define HARDWARE_FALLBACK          2
 #endif
 
+
+#ifdef USE_SCRIPT_GLOBVARS
+#ifndef SCRIPT_UDP_BUFFER_SIZE
+#define SCRIPT_UDP_BUFFER_SIZE 128
+#endif
+#define SCRIPT_UDP_PORT 1999
+#endif
+
 // EEPROM MACROS
 // i2c eeprom
 #define EEP_WRITE(A,B,C) eeprom_writeBytes(A, B, (uint8_t*)C);
@@ -293,9 +319,6 @@ void Script_ticker4_end(void) {
 #endif
 #endif
 
-//#if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
-//extern uint8_t sml_options;
-//#endif
 
 #if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
 
@@ -303,6 +326,7 @@ void Script_ticker4_end(void) {
 #define SPEC_SCRIPT_FLASH 0x000F2000
 
 uint32_t eeprom_block;
+
 
 // these support only one 4 k block below EEPROM (eeprom @0x402FB000) this steals 4k of application area
 uint32_t alt_eeprom_init(uint32_t size) {
@@ -351,7 +375,7 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 #include <TasmotaSerial.h>
 
-#ifdef TESLA_POWERWALL
+#if defined(ESP32) && defined(TESLA_POWERWALL)
 #include "SSLClient/ESP_SSLClient.h"
 #include "include/powerwall.h"
 #endif
@@ -367,7 +391,7 @@ extern Renderer *renderer;
 #endif
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU,OPER_SHLEQU,OPER_SHREQU,OPER_SHL,OPER_SHR};
-enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS,SCRIPT_CBSIZE};
+enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS,SCRIPT_CBSIZE,SCRIPT_UDP_PBS,SCRIPT_UDP_MOD};
 
 
 #ifdef USE_UFILESYS
@@ -482,7 +506,7 @@ typedef union {
       uint8_t nutu6 : 1;
       uint8_t nutu5 : 1;
       uint8_t nutu4 : 1;
-      uint8_t nutu3 : 1;
+      uint8_t udp_binary_payload : 1;
       uint8_t udp_connected : 1;
       uint8_t udp_used : 1;
   };
@@ -496,7 +520,7 @@ typedef union {
       uint8_t nutu6 : 1;
       uint8_t nutu5 : 1;
       uint8_t nutu4 : 1;
-      uint8_t nutu3 : 1;
+      uint8_t ignore_line : 1;
       bool fsys : 1;
       bool eeprom : 1;
   };
@@ -520,9 +544,9 @@ struct SCRIPT_SPI {
 };
 #endif
 
-
 #define NUM_RES 0xfe
 #define STR_RES 0xfd
+#define NUM_ARRAY_RES 0xfc
 #define VAR_NV 0xff
 
 #define NTYPE 0
@@ -578,6 +602,13 @@ typedef struct {
 } ScriptOneWire;
 #endif // USE_SCRIPT_ONEWIRE
 
+typedef struct {
+    char shelly_name[26];
+    char shelly_gen[2];
+    char shelly_fw_id[32];
+    char type[16];
+} SCRIPT_MDNS;
+
 #define SFS_MAX 4
 // global memory
 typedef struct {
@@ -627,8 +658,17 @@ typedef struct {
     UDP_FLAGS udp_flags;
     IPAddress last_udp_ip;
     WiFiUDP Script_PortUdp;
+    WiFiUDP *Script_PortUdp_1;
+    uint16_t udp1_port;
     IPAddress script_udp_remote_ip;
+    char *packet_buffer;
+    uint16_t pb_size = SCRIPT_UDP_BUFFER_SIZE;
 #endif // USE_SCRIPT_GLOBVARS
+
+#ifdef USE_SCRIPT_MDNS
+    SCRIPT_MDNS mdns = {"","2","20241011-114455/1.4.4-g6d2a586",""};
+#endif // USE_SCRIPT_MDNS
+
     char web_mode;
     char *glob_script = 0;
     char *fast_script = 0;
@@ -843,13 +883,101 @@ void script_sort_array(TS_FLOAT *array, uint16_t size);
 uint32_t Touch_Status(int32_t sel);
 int32_t play_wave(char *path);
 
+#ifdef USE_SCRIPT_MDNS
+int32_t script_mdns(char *name, char *mac, char *xtype) {
+
+  strcpy(glob_script_mem.mdns.type, xtype);
+  char shelly_mac[13];
+  if (*name == '-'){
+    strcpy(glob_script_mem.mdns.shelly_name, TasmotaGlobal.hostname);
+  } else {
+    strcpy(glob_script_mem.mdns.shelly_name, name);
+    if (*mac == '-') {
+      uint8_t mac[6];
+      WiFi.macAddress(mac);
+      sprintf(shelly_mac, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+      strcat(glob_script_mem.mdns.shelly_name, shelly_mac);
+    } else {
+      strcat(glob_script_mem.mdns.shelly_name, mac);
+    }
+  }
+  
+  uint8_t emu_choice;
+  if (!strcmp(xtype, "everhome")) {
+    emu_choice = 1;
+  } else {
+    emu_choice = 0; //default = shelly  
+  }
+
+  if (!MDNS.begin(glob_script_mem.mdns.shelly_name)) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP "SCR: Error setting up MDNS responder!"));
+  }
+
+#ifdef ESP32
+    MDNS.addService("http", "tcp", 80);
+    MDNS.addService((const char*)glob_script_mem.mdns.type, "tcp", 80);
+
+    if (emu_choice == 1) {
+      mdns_txt_item_t serviceTxtData[2] = {
+        { "name", glob_script_mem.mdns.shelly_name },
+        { "id", glob_script_mem.mdns.shelly_name }
+      };
+      mdns_service_instance_name_set("_http", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_http", "_tcp", serviceTxtData, 2);
+      mdns_service_instance_name_set("_shelly", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_everhome", "_tcp", serviceTxtData, 2);
+    } else {
+      mdns_txt_item_t serviceTxtData[4] = {
+        { "fw_id", glob_script_mem.mdns.shelly_fw_id },
+        { "arch", "esp8266" },
+        { "id", glob_script_mem.mdns.shelly_name },
+        { "gen", glob_script_mem.mdns.shelly_gen }
+      };
+      mdns_service_instance_name_set("_http", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_http", "_tcp", serviceTxtData, 4);
+      mdns_service_instance_name_set("_shelly", "_tcp", glob_script_mem.mdns.shelly_name);
+      mdns_service_txt_set("_shelly", "_tcp", serviceTxtData, 4);
+    }
+#else
+    hMDNSService = MDNS.addService(0, "http", "tcp", 80);
+    hMDNSService2 = MDNS.addService(0, glob_script_mem.mdns.type, "tcp", 80);
+    if (hMDNSService) {
+      MDNS.setServiceName(hMDNSService, glob_script_mem.mdns.shelly_name);
+      if (emu_choice == 1) {
+        MDNS.addServiceTxt(hMDNSService, "name", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService, "id", glob_script_mem.mdns.shelly_name);
+      } else {
+        MDNS.addServiceTxt(hMDNSService, "fw_id", glob_script_mem.mdns.shelly_fw_id);
+        MDNS.addServiceTxt(hMDNSService, "arch", "esp8266");
+        MDNS.addServiceTxt(hMDNSService, "id", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService, "gen", glob_script_mem.mdns.shelly_gen);
+      }
+    }
+    if (hMDNSService2) {
+      MDNS.setServiceName(hMDNSService2, glob_script_mem.mdns.shelly_name);
+      if (emu_choice == 1) {
+        MDNS.addServiceTxt(hMDNSService2, "name", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService2, "id", glob_script_mem.mdns.shelly_name);
+      } else {
+        MDNS.addServiceTxt(hMDNSService2, "fw_id", glob_script_mem.mdns.shelly_fw_id);
+        MDNS.addServiceTxt(hMDNSService2, "arch", "esp8266");
+        MDNS.addServiceTxt(hMDNSService2, "id", glob_script_mem.mdns.shelly_name);
+        MDNS.addServiceTxt(hMDNSService2, "gen", glob_script_mem.mdns.shelly_gen);
+      }
+    }
+#endif
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP "SCR: mDNS started with service tcp and %s. Hostname: %s"), glob_script_mem.mdns.type, glob_script_mem.mdns.shelly_name);
+  return 0;
+}
+#endif // USE_SCRIPT_MDNS
+
 
 #if defined(USE_BINPLUGINS) && !defined(USE_SML_M)
 SML_TABLE *get_sml_table(void) {
   if (Plugin_Query(53, 0, 0)) {
     return (SML_TABLE*)Plugin_Query(53, 1, 0);
-  } else {
-    return 0;
+    } else {
+      return 0;
   }
 }
 #endif
@@ -949,6 +1077,35 @@ uint32_t Script_Find_Vars(char *sp) {
   return (svars << 16) | numvars;
 }
 
+// get integer with math
+int32_t get_math_intval(char *cp) {
+  int32_t result = strtol(cp, &cp, 10);
+  while (*cp) {
+    while (*cp == ' ') cp++;
+    if (*cp == SCRIPT_EOL) { break; }
+    switch (*cp) {
+      case '+':
+        cp++;
+        result += strtol(cp, &cp, 10);
+        break;
+      case '-':
+        cp++;
+        result -= strtol(cp, &cp, 10);
+        break;
+      case '*':
+        cp++;
+        result *= strtol(cp, &cp, 10);
+        break;
+      case '/':
+        cp++;
+        result /= strtol(cp, &cp, 10);
+        break;
+    }
+  }
+  return result;
+  //return atoi(cp);
+}
+
 
 // allocates all variables and presets them
 int16_t Init_Scripter(void) {
@@ -957,6 +1114,17 @@ char *script;
     int16_t err = 0;
     script = glob_script_mem.script_ram;
     if (!*script) return -999;
+
+    glob_script_mem.max_ssize = SCRIPT_SVARSIZE;
+
+    { char *lp = script + 2;
+      SCRIPT_SKIP_SPACES
+      if (isdigit(*lp)) {
+        uint8_t ssize = atoi(lp) + 1;
+        if (ssize < 10 || ssize > SCRIPT_MAXSSIZE) ssize = SCRIPT_MAXSSIZE;
+        glob_script_mem.max_ssize = ssize;
+      }
+    }
 
     uint32_t xvars = Script_Find_Vars(script + 1);
     uint16_t maxnvars = xvars & 0xffff;
@@ -998,7 +1166,9 @@ char *script;
 
     //char strings[MAXSVARS*SCRIPT_MAXSSIZE];
     //char *strings_p = strings;
-    char *strings_op = (char*)calloc(maxsvars * SCRIPT_MAXSSIZE, 1);
+    //char *strings_op = (char*)calloc(maxsvars * SCRIPT_MAXSSIZE, 1);
+    char *strings_op = (char*)calloc(maxsvars * glob_script_mem.max_ssize, 1);
+
     char *strings_p = strings_op;
     if (!strings_op) {
       free(imemptr);
@@ -1039,10 +1209,11 @@ char *script;
     uint8_t numflt = 0;
     uint16_t count;
 
-    glob_script_mem.max_ssize = SCRIPT_SVARSIZE;
     glob_script_mem.scriptptr = 0;
 
     char init = 0;
+    uint8_t pflg = 0;
+    uint16_t pmem = 0;
     while (1) {
         // check line
         // skip leading spaces
@@ -1065,10 +1236,12 @@ char *script;
                     lp += 2;
                     if (numperm < SCRIPT_MAXPERM) {
                       vtypes[vars].bits.is_permanent = 1;
+                      pflg = 1;
                       numperm++;
                     }
                 } else {
                     vtypes[vars].bits.is_permanent = 0;
+                    pflg = 0;
                 }
                 if (*lp == 't' && *(lp + 1) == ':') {
                     lp += 2;
@@ -1101,9 +1274,11 @@ char *script;
                 if ((*lp == 'm' || *lp == 'M') && *(lp + 1) == ':') {
                     uint8_t flg = *lp;
                     lp += 2;
+                    pflg = 0;
                     if (*lp == 'p' && *(lp + 1) == ':') {
                       vtypes[vars].bits.is_permanent = 1;
                       lp += 2;
+                      pflg = 1;
                     }
                     if (flg == 'M') mfilt[numflt].numvals = 8;
                     else mfilt[numflt].numvals = 5;
@@ -1169,9 +1344,11 @@ char *script;
                         op++;
                       }
                       while (*op == ' ') op++;
+                      uint16_t flen = 1;
                       if (isdigit(*op)) {
                         // lenght define follows
-                        uint16_t flen = atoi(op);
+                        //flen = atoi(op);
+                        flen = get_math_intval(op);
                         if (flen > MAX_ARRAY_SIZE) {
                           // limit array size
                           flen = MAX_ARRAY_SIZE;
@@ -1179,10 +1356,23 @@ char *script;
                         mfilt[numflt - 1].numvals &= OR_FILT_MASK;
                         mfilt[numflt - 1].numvals |= flen & AND_FILT_MASK;
                       }
+                      if (pflg) {
+                        pmem += sizeof(TS_FLOAT) * flen;
+                        pflg = 0;
+                      }
+                    } else {
+                      if (pflg) {
+                        pmem += sizeof(TS_FLOAT);
+                        pflg = 0;
+                      }
                     }
 
                 } else {
                     // string vars
+                    if (pflg) {
+                      pmem += glob_script_mem.max_ssize;
+                      pflg = 0;
+                    }
                     op++;
                     *snp_p ++= strings_p;
                     while (*op != '\"') {
@@ -1211,13 +1401,13 @@ char *script;
             }
         } else {
             if (!strncmp(lp, ">D", 2)) {
-              lp += 2;
+              /* lp += 2;
               SCRIPT_SKIP_SPACES
               if (isdigit(*lp)) {
                 uint8_t ssize = atoi(lp) + 1;
                 if (ssize < 10 || ssize > SCRIPT_MAXSSIZE) ssize = SCRIPT_MAXSSIZE;
                 glob_script_mem.max_ssize = ssize;
-              }
+              }*/
               init = 1;
             }
         }
@@ -1231,6 +1421,10 @@ char *script;
     uint16_t fsize = 0;
     for (count = 0; count < numflt; count++) {
       fsize += sizeof(struct M_FILT) + ((mfilt[count].numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
+    }
+
+    if (pmem >= glob_script_mem.script_pram_size) {
+      return -6;
     }
 
     // now copy vars to memory
@@ -1346,7 +1540,7 @@ char *script;
 
     // variables usage info
     uint32_t tot_mem = sizeof(glob_script_mem) + glob_script_mem.script_mem_size + glob_script_mem.script_size + index;
-    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d, gmem=%d, tmem=%d "), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size, sizeof(glob_script_mem), tot_mem);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d, gmem=%d, pmem=%d, tmem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size, sizeof(glob_script_mem), pmem, tot_mem);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -1450,6 +1644,7 @@ char *script;
 }
 
 
+#ifdef USE_SCRIPT_GLOBVARS
 int32_t udp_call(char *url, uint32_t port, char *sbuf) {
   WiFiUDP udp;
   IPAddress adr;
@@ -1462,10 +1657,6 @@ int32_t udp_call(char *url, uint32_t port, char *sbuf) {
   udp.stop();
   return 0;
 }
-
-#ifdef USE_SCRIPT_GLOBVARS
-#define SCRIPT_UDP_BUFFER_SIZE 128
-#define SCRIPT_UDP_PORT 1999
 
 //#define SCRIPT_DEBUG_UDP
 
@@ -1481,6 +1672,11 @@ void Script_Stop_UDP(void) {
     glob_script_mem.Script_PortUdp.stop();
     glob_script_mem.udp_flags.udp_connected  = 0;
   }
+  if (glob_script_mem.packet_buffer) {
+    free(glob_script_mem.packet_buffer);
+    glob_script_mem.packet_buffer = 0;
+  }
+
 }
 
 void Script_Init_UDP() {
@@ -1488,7 +1684,8 @@ void Script_Init_UDP() {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
-  //if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+  glob_script_mem.packet_buffer = (char*)malloc(glob_script_mem.pb_size);
+
 #ifdef ESP8266
   if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
 #else
@@ -1508,37 +1705,51 @@ void Script_Init_UDP() {
   }
 }
 
-
-
 void Script_PollUdp(void) {
   if (TasmotaGlobal.global_state.network_down) return;
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected ) {
     uint32_t timeout = millis();
-    while (glob_script_mem.Script_PortUdp.parsePacket()) {
+    while (1) {
+      char *packet_buffer = glob_script_mem.packet_buffer;
+      uint16_t plen = glob_script_mem.Script_PortUdp.parsePacket();
+      if (!plen || plen > glob_script_mem.pb_size) {
+        if (plen > 0) {
+          glob_script_mem.Script_PortUdp.read(packet_buffer, glob_script_mem.pb_size - 1);
+          glob_script_mem.Script_PortUdp.flush();
+        }
+        break;
+      }
+
       // not more then 500 ms
       if (millis() - timeout > 500) { break;}
-      char packet_buffer[SCRIPT_UDP_BUFFER_SIZE];
-      int32_t len = glob_script_mem.Script_PortUdp.read(packet_buffer, SCRIPT_UDP_BUFFER_SIZE - 1);
+      int32_t len = glob_script_mem.Script_PortUdp.read(packet_buffer, glob_script_mem.pb_size - 1);
       packet_buffer[len] = 0;
       glob_script_mem.script_udp_remote_ip = glob_script_mem.Script_PortUdp.remoteIP();
 #ifdef SCRIPT_DEBUG_UDP
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
-      AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %_I"), packet_buffer, len, (uint32_t)glob_script_mem.script_udp_remote_ip);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: received Packet %s - %d - %_I"), packet_buffer, len, (uint32_t)glob_script_mem.script_udp_remote_ip);
 #endif
       char *lp = packet_buffer;
       if (!strncmp(lp,"=>", 2)) {
         lp += 2;
-        char *cp=strchr(lp, '=');
-        if (cp) {
-          char vnam[32];
-          for (uint32_t count = 0; count<len; count++) {
-            if (lp[count] == '=') {
-              vnam[count] = 0;
-              break;
-            }
-            vnam[count] = lp[count];
+        char *cp = lp;
+        char umode = 0;
+        while (*cp) {
+          if (*cp == '=') {
+            umode = '=';
+            break;
           }
+          if (*cp == ':') {
+            umode = ':';
+            break;
+          }
+          cp++;
+        }
+        if (umode) {
+          char vnam[32];
+          *cp = 0;
+          strcpy(vnam, lp);
+          lp = cp + 1;
           TS_FLOAT *fp;
           char *sp;
           uint32_t index;
@@ -1547,12 +1758,44 @@ void Script_PollUdp(void) {
 #ifdef SCRIPT_DEBUG_UDP
             AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: num var found - %s - %d - %d"), vnam, res, index);
 #endif
-            *fp=CharToFloat(cp + 1);
+            if (umode == '=') {
+              *fp = CharToFloat(lp);
+            } else {
+              TS_FLOAT udpf;
+              uint8_t *ucp = (uint8_t*) &udpf;
+              ucp[0] = lp[0];
+              ucp[1] = lp[1];
+              ucp[2] = lp[2];
+              ucp[3] = lp[3];
+              *fp = udpf;
+            }
           } else if (res == STR_RES) {
 #ifdef SCRIPT_DEBUG_UDP
             AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: string var found - %s - %d - %d"), vnam, res, index);
 #endif
-            strlcpy(sp, cp + 1, SCRIPT_MAX_SBSIZE);
+            strlcpy(sp, lp, SCRIPT_MAX_SBSIZE);
+          } else if (res == NUM_ARRAY_RES) {
+#ifdef SCRIPT_DEBUG_UDP
+            AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: array var found - %s - %d - %d"), vnam, res, index);
+#endif
+            uint16_t alen = lp[1] << 8 | lp[0];
+            lp += 2;
+            if (alen != index) {
+              AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: warning: array lenght mismatch"));
+              if (alen < index) {
+                index = alen;
+              }
+            }
+            for (uint16_t count = 0; count < index; count++) {
+              TS_FLOAT udpf;
+              uint8_t *ucp = (uint8_t*) &udpf;
+              ucp[0] = lp[0];
+              ucp[1] = lp[1];
+              ucp[2] = lp[2];
+              ucp[3] = lp[3];
+              lp += sizeof(TS_FLOAT);
+              fp[count] = udpf;
+            }
           } else {
             // error var not found
           }
@@ -1573,33 +1816,59 @@ void Script_PollUdp(void) {
   }
 }
 
-void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp);
+void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp, uint16_t alen);
 
-void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp) {
+void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp, uint16_t alen) {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (!glob_script_mem.udp_flags.udp_connected) return;
 
-  char sbuf[SCRIPT_MAX_SBSIZE + 4];
+  uint16_t ubsiz = SCRIPT_MAX_SBSIZE + 16;
+  if (ubsiz < 32) {
+    ubsiz = 32;
+  }
+  char sbuf[ubsiz];
+
   strcpy(sbuf, "=>");
   strcat(sbuf, vname);
-  strcat(sbuf, "=");
-  if (fp) {
-    char flstr[16];
-    dtostrfd(*fp, 8, flstr);
-    strcat(sbuf, flstr);
-#ifdef SCRIPT_DEBUG_UDP
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: num var updated - %s"), sbuf);
-#endif
+  if (glob_script_mem.udp_flags.udp_binary_payload == 0 || !fp) {
+    strcat(sbuf, "=");
+    if (fp) {
+      char flstr[16];
+      dtostrfd(*fp, 8, flstr);
+      strcat(sbuf, flstr);
+    } else {
+      strcat(sbuf, sp);
+    }
+    glob_script_mem.Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
+    //  Udp.print(String("RET UC: ") + String(recv_Packet));
+    glob_script_mem.Script_PortUdp.write((const uint8_t*)sbuf, strlen(sbuf));
+    glob_script_mem.Script_PortUdp.endPacket();
   } else {
-    strcat(sbuf, sp);
-#ifdef SCRIPT_DEBUG_UDP
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: string var updated - %s"), sbuf);
-#endif
+    // binary numeric
+    strcat(sbuf, ":");
+    glob_script_mem.Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
+    glob_script_mem.Script_PortUdp.write((const uint8_t*)sbuf, strlen(sbuf));
+    if (alen) {
+      glob_script_mem.Script_PortUdp.write((const uint8_t*)&alen, 2);
+      for (uint16_t count = 0; count < alen; count++) {
+        uint8_t *ucp = (uint8_t*)&fp[count];
+        glob_script_mem.Script_PortUdp.write((const uint8_t*)ucp, sizeof(TS_FLOAT));
+      }
+    } else {
+      uint8_t *ucp = (uint8_t*)fp;
+      glob_script_mem.Script_PortUdp.write((const uint8_t*)ucp, sizeof(TS_FLOAT));
+    }
+    glob_script_mem.Script_PortUdp.endPacket();
+
   }
-  glob_script_mem.Script_PortUdp.beginPacket(IPAddress(239, 255, 255, 250), SCRIPT_UDP_PORT);
-  //  Udp.print(String("RET UC: ") + String(recv_Packet));
-  glob_script_mem.Script_PortUdp.write((const uint8_t*)sbuf, strlen(sbuf));
-  glob_script_mem.Script_PortUdp.endPacket();
+
+#ifdef SCRIPT_DEBUG_UDP
+  if (fp) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: num var updated - %s"), sbuf);
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCR: string var updated - %s"), sbuf);
+  }
+#endif // SCRIPT_DEBUG_UDP
 }
 
 #endif //USE_SCRIPT_GLOBVARS
@@ -2576,6 +2845,30 @@ uint32_t MeasurePulseTime(int32_t in) {
 }
 #endif // USE_ANGLE_FUNC
 
+uint32_t check_varname(char *dvnam) {
+  uint16_t olen = strlen(dvnam);
+  struct T_INDEX *vtp = glob_script_mem.type;
+  for (uint32_t count = 0; count < glob_script_mem.numvars; count++) {
+    char *cp = glob_script_mem.glob_vnp + glob_script_mem.vnp_offset[count];
+    uint8_t slen = strlen(cp);
+    if (slen == olen && *cp == dvnam[0]) {
+      if (!strncmp(cp, dvnam, olen)) {
+        uint16_t index = vtp[count].index;
+        if (vtp[count].bits.is_string) {
+          return STR_RES;
+        } else {
+          if (vtp[count].bits.is_filter) {
+            return NUM_ARRAY_RES;
+          } else {
+            return NUM_RES;
+          }
+        }
+      }
+    }
+  }
+  return 0;
+}
+
 #ifdef USE_SCRIPT_GLOBVARS
 uint32_t match_vars(char *dvnam, TS_FLOAT **fp, char **sp, uint32_t *ind) {
   uint16_t olen = strlen(dvnam);
@@ -2589,8 +2882,11 @@ uint32_t match_vars(char *dvnam, TS_FLOAT **fp, char **sp, uint32_t *ind) {
         if (vtp[count].bits.global > 0) {
           if (vtp[count].bits.is_string == 0) {
             if (vtp[count].bits.is_filter) {
-              // error
-              return 0;
+              // array variable
+              uint16_t len = 0;
+              *fp = Get_MFAddr(index, &len, 0);
+              *ind = len;
+              return NUM_ARRAY_RES;
             } else {
               *fp = &glob_script_mem.fvars[index];
               *ind = count;
@@ -2733,7 +3029,7 @@ TS_FLOAT fvar;
   SCRIPT_SKIP_SPACES
   char str[SCRIPT_MAX_SBSIZE];
   str[0] = 0;
-  
+
   if (index < 1) index = 1;
   index--;
   if (gv) gv->strind = index;
@@ -3105,9 +3401,11 @@ chknext:
           if (*lp!=')') {
             lp = GetNumericArgument(lp, OPER_EQU, &pin, gv);
 #ifdef CONFIG_IDF_TARGET_ESP32S3
-            if (pin<1 || pin>20) pin = 1;
+            if (pin < 1 || pin > 20) pin = 1;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+            if (pin < 0 || pin > 5) pin = 0;
 #else
-            if (pin<32 || pin>39) pin = 32;
+            if (pin < 32 || pin > 39) pin = 32;
 #endif
           }
           lp++;
@@ -3139,9 +3437,30 @@ chknext:
           TS_FLOAT *fpd;
           lp = get_array_by_name(lp, &fpd, &alend, 0);
           SCRIPT_SKIP_SPACES
-          uint16_t alens;
+          uint16_t alens = 0;
           TS_FLOAT *fps;
           char *slp = lp;
+#if (defined(USE_SML_M) || defined(USE_BINPLUGINS)) && defined(USE_SML_SCRIPT_CMD)
+          if (!strncmp_XP(lp, XPSTR("sml"), 3)) {
+            lp += 3;
+            // source is sml array
+            SML_TABLE *smlp = get_sml_table();
+            if (smlp) {
+              alens = smlp->SML_GetVal(0);
+              if (alens < alend) {
+                alend = alens;
+              }
+              for (uint32_t cnt = 0; cnt < alend; cnt++ ) {
+                fpd[cnt] = smlp->SML_GetVal(cnt + 1);
+              }
+              fvar = alens;
+              goto nfuncexit;
+            } else {
+              fvar = -1;
+              goto nfuncexit;
+            }
+          }
+#endif
           lp = get_array_by_name(lp, &fps, &alens, 0);
           if (lp == 0 || fps == 0) {
             lp = slp;
@@ -3282,9 +3601,11 @@ chknext:
           uint8_t vtype;
           lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
-            uint16_t index = glob_script_mem.type[ind.index].index;
-            fvar = glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index];
-            glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
+            if (!glob_script_mem.FLAGS.ignore_line) {
+              uint16_t index = glob_script_mem.type[ind.index].index;
+              fvar = glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index];
+              glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
+            }
           } else {
             fvar = 0;
           }
@@ -3366,6 +3687,7 @@ chknext:
           tind->index = SCRIPT_CBSIZE;
           goto exit_settable;
         }
+
 #ifdef USE_W8960
 extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
@@ -3452,6 +3774,70 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
+#ifdef ESP32
+        if (!strncmp_XP(lp, XPSTR("ds("), 3)) {
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
+          if (fvar == -1) {
+            fvar = esp_sleep_get_wakeup_cause();
+          } else {
+            if (fvar > 0) {
+              esp_sleep_enable_timer_wakeup(fvar * 1000000);
+            }
+            SCRIPT_SKIP_SPACES
+            if (*lp != ')') {
+              lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+              if (fvar != -1) {
+                gpio_num_t gpio_num = (gpio_num_t)fvar;
+                lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+#if SOC_PM_SUPPORT_EXT1_WAKEUP
+                if (fvar == 0) {
+                  esp_sleep_enable_ext1_wakeup_io(1 << gpio_num, ESP_EXT1_WAKEUP_ANY_HIGH);
+#if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
+                  rtc_gpio_pullup_dis(gpio_num);
+                  rtc_gpio_pulldown_en(gpio_num);
+#else
+_Pragma("GCC warning \"'rtc io' not supported\"")
+#endif
+                } else {
+#if CONFIG_IDF_TARGET_ESP32
+                  esp_sleep_enable_ext1_wakeup_io(1 << gpio_num, ESP_EXT1_WAKEUP_ALL_LOW);
+#else
+                  esp_sleep_enable_ext1_wakeup_io(1 << gpio_num, ESP_EXT1_WAKEUP_ANY_LOW);
+#endif
+#if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
+                  rtc_gpio_pullup_en(gpio_num);
+                  rtc_gpio_pulldown_dis(gpio_num);
+#else
+_Pragma("GCC warning \"'rtc io' not supported\"")
+#endif
+                }
+#else
+_Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
+
+                const gpio_config_t config = {
+                  .pin_bit_mask = BIT(gpio_num),
+                  .mode = GPIO_MODE_INPUT,
+                  .pull_up_en = (gpio_pullup_t)!fvar,
+                  .pull_down_en = (gpio_pulldown_t)fvar
+
+                };
+                gpio_config(&config);
+
+                if (fvar == 0) {
+                  esp_deep_sleep_enable_gpio_wakeup(1 << gpio_num, ESP_GPIO_WAKEUP_GPIO_LOW);
+                } else {
+                  esp_deep_sleep_enable_gpio_wakeup(1 << gpio_num, ESP_GPIO_WAKEUP_GPIO_HIGH);
+                }
+
+#endif // SOC_PM_SUPPORT_EXT1_WAKEUP
+              }
+            }
+            SettingsSaveAll();
+            esp_deep_sleep_start();
+          }
+          goto nfuncexit;
+        }
+#endif // ESP32
         break;
       case 'e':
         if (!strncmp_XP(vname, XPSTR("epoch"), 5)) {
@@ -3468,6 +3854,25 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           tind->index = SCRIPT_EVENT_HANDLED;
           goto exit_settable;
         }
+#ifdef ROTARY_V1
+        if (!strncmp_XP(lp, XPSTR("encabs["), 7)) { // Absolute encoder value
+          GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
+          uint8_t index = fvar;
+          if (index < 1 || index > MAX_ROTARIES) index = 1;
+          fvar = Encoder[index - 1].abs_position[0];
+          len += 1;
+          goto exit;
+        }
+        if (!strncmp_XP(lp, XPSTR("encrel["), 7)) { // Relative encoder value (will be reset after reading)
+          GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
+          uint8_t index = fvar;
+          if (index < 1 || index > MAX_ROTARIES) index = 1;
+          fvar = Encoder[index - 1].rel_position;
+          Encoder[index - 1].rel_position = 0;
+          len += 1;
+          goto exit;
+        }
+#endif
 #ifdef USE_ENERGY_SENSOR
         if (!strncmp_XP(lp, XPSTR("enrg["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
@@ -3871,7 +4276,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         if (!strncmp_XP(lp, XPSTR("fmt("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           if (!fvar) {
-            LittleFS.format();
+            fvar = LittleFS.format();
           } else {
             //SD.format();
           }
@@ -4289,7 +4694,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                   if (delimc) {
                     char *xp = strchr(rstring, delimc);
                      if (xp) {
-                      *xp = 0;              
+                      *xp = 0;
                     }
                   }
                   free(mqd);
@@ -4316,7 +4721,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         }
 #endif //SCRIPT_GET_HTTPS_JP
 
-#ifdef TESLA_POWERWALL
+#if defined(ESP32) && defined(TESLA_POWERWALL)
         if (!strncmp_XP(lp, XPSTR("gpwl("), 5)) {
           char *path;
           //lp = GetStringArgument(lp + 5, OPER_EQU, path, 0);
@@ -4340,6 +4745,48 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
+#ifdef USE_SCRIPT_GLOBVARS
+        if (!strncmp_XP(lp, XPSTR("gvrsa("), 6)) {
+          TS_FLOAT *fpd = 0;
+          uint16_t alend;
+          uint16_t ipos;
+          lp += 6;
+          SCRIPT_SKIP_SPACES
+          char vname[32];
+          char *cp = lp;
+          char *vnp = vname;
+          while (*cp) {
+            if (*cp == ')') {
+              break;
+            }
+            *vnp++ = *cp++;
+          }
+          *vnp = 0;
+          lp = get_array_by_name(lp, &fpd, &alend, &ipos);
+          if (fpd) {
+            uint8_t sv = glob_script_mem.udp_flags.udp_binary_payload;
+            glob_script_mem.udp_flags.udp_binary_payload = 1;
+            script_udp_sendvar(vname, fpd, 0, alend);
+            glob_script_mem.udp_flags.udp_binary_payload = sv;
+            fvar = ipos;
+          } else {
+            fvar = -1;
+          }
+          goto nfuncexit;
+        }
+
+        if (!strncmp_XP(lp, XPSTR("gvrbs"), 5)) {
+          fvar = glob_script_mem.pb_size;
+          tind->index = SCRIPT_UDP_PBS;
+          goto exit_settable;
+        }
+
+        if (!strncmp_XP(lp, XPSTR("gvrm"), 4)) {
+          fvar = glob_script_mem.udp_flags.udp_binary_payload;
+          tind->index = SCRIPT_UDP_MOD;
+          goto exit_settable;
+        }
+#endif // USE_SCRIPT_GLOBVARS
         break;
       case 'h':
         if (!strncmp_XP(vname, XPSTR("hours"), 5)) {
@@ -4662,7 +5109,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           uint8_t selector = fvar;
           switch (selector) {
             case 0:
-              { 
+              {
                 // start streaming
                 char url[SCRIPT_MAX_SBSIZE];
                 lp = GetStringArgument(lp, OPER_EQU, url, 0);
@@ -4928,6 +5375,19 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           if (sp) strlcpy(sp, NetworkUniqueId().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
+
+#ifdef USE_SCRIPT_MDNS
+        if (!strncmp_XP(vname, XPSTR("mdns("), 5)) {
+          char name[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, name, 0);
+          char mac[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, mac, 0);
+          char type[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, type, 0);
+          fvar = script_mdns(name, mac, type);
+          goto nfuncexit;
+        }
+  #endif // USE_SCRIPT_MDNS
         break;
 
       case 'n':
@@ -4952,6 +5412,8 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         break;
 #endif // USE_SCRIPT_ONEWIRE
 
+int32_t I2SPlayFile(const char *path, uint32_t decoder_type);
+
       case 'p':
         if (!strncmp_XP(lp, XPSTR("pin["), 4)) {
           // raw pin level
@@ -4975,7 +5437,8 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #if !defined(ESP_IDF_VERSION) || (ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0))
           Play_mp3(path);
 #else
-          I2SPlayMp3(path);
+          //I2SPlayMp3(path);
+          I2SPlayFile(path, 1);
 #endif
           len++;
           len = 0;
@@ -5165,7 +5628,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint32_t ivar = *(uint32_t*)&fvar;
           ivar = *(uint32_t*)ivar;
-          *(uint32_t*)&fvar = ivar; 
+          *(uint32_t*)&fvar = ivar;
           goto nfuncexit;
         }
         break;
@@ -5543,7 +6006,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             if (Is_gpio_used(rxpin) || Is_gpio_used(txpin)) {
               AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
             }
- 
+
             glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, HARDWARE_FALLBACK, 0, rxbsiz);
 
             if (glob_script_mem.sp) {
@@ -5782,13 +6245,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                   mbp++;
                   crc = 0;
                 }
-                crc = MBUS_calculateCRC(mbp, mbp[2] + 3, crc);
+                uint8_t pos = 6; // mbp[2] + 3
+                crc = MBUS_calculateCRC(mbp, pos, crc);
+                //AddLog(LOG_LEVEL_INFO,PSTR("SCR: >> %04x"), crc);
                 if (opts == 1) {
-                  if ((mbp[mbp[2] + 3] != highByte(crc)) || (mbp[mbp[2] + 4] != lowByte(crc))) {
+                  if ((mbp[pos] != highByte(crc)) || (mbp[pos + 1] != lowByte(crc))) {
                     fvar = -2;
                   }
                 } else {
-                  if ((mbp[mbp[2] + 3] != lowByte(crc)) || (mbp[mbp[2] + 4] != highByte(crc))) {
+                  if ((mbp[pos] != lowByte(crc)) || (mbp[pos + 1] != highByte(crc))) {
                     fvar = -2;
                   }
                 }
@@ -5823,13 +6288,15 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             if (nvals > alend) {
               nvals = alend;
             }
-
+            TS_FLOAT code = 4;
+            if (*lp != ')') {
+              lp = GetNumericArgument(lp, OPER_EQU, &code, 0);
+            }
             uint8_t modbus_response[128];
-
             uint8_t mb_index = 0;
             modbus_response[mb_index] = addr;
             mb_index++;
-            modbus_response[mb_index] = 4;
+            modbus_response[mb_index] = code;
             mb_index++;
 
             if (mode == 0) {
@@ -6031,13 +6498,24 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len = 0;
           goto strexit;
         }
+
+
 #ifdef USE_FEXTRACT
         if (!strncmp_XP(lp, XPSTR("s2t("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
           char str[SCRIPT_MAX_SBSIZE];
-          s2tstamp(str, SCRIPT_MAX_SBSIZE, fvar, 0);
+          while (*lp == ' ') lp++;
+          if (*lp == 'i') {
+            uint32_t secs = *(uint32_t*)&fvar;
+            s2tstamp(str, SCRIPT_MAX_SBSIZE, secs, 0);
+            lp++;
+          } else {
+            uint32_t secs = (uint32_t)fvar + (uint32_t)glob_script_mem.epoch_offset;
+            s2tstamp(str, SCRIPT_MAX_SBSIZE, secs, 0);
+          }
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           len = 0;
+          lp++;
           goto strexit;
         }
 #endif // USE_FEXTRACT
@@ -6206,7 +6684,14 @@ void tmod_directModeOutput(uint32_t pin);
         if (!strncmp_XP(lp, XPSTR("tsn("), 4)) {
           char str[SCRIPT_MAX_SBSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
-          fvar = tstamp2l(str);
+          while (*lp == ' ') lp++;
+          if (*lp == 'i') {
+            lp++;
+            uint32_t result = tstamp2l(str);
+            fvar = *(float*)&result;
+          } else {
+            fvar = tstamp2l(str) - (uint32_t)glob_script_mem.epoch_offset;
+          }
           goto nfuncexit;
         }
 #endif
@@ -6231,34 +6716,115 @@ void tmod_directModeOutput(uint32_t pin);
           goto exit;
         }
         if (!strncmp_XP(lp, XPSTR("upd["), 4)) {
-          // var was updated
+          // var was updated ?
           struct T_INDEX ind;
           uint8_t vtype;
-          isvar(lp + 4, &vtype, &ind, 0, 0, gv);
+          lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
             if (!ind.bits.changed) {
               fvar = 0;
-              len++;
-              goto exit;
+              goto nfuncexit;
             } else {
-              glob_script_mem.type[ind.index].bits.changed = 0;
+              if (!glob_script_mem.FLAGS.ignore_line) {
+                glob_script_mem.type[ind.index].bits.changed = 0;
+              }
               fvar = 1;
-              len++;
-              goto exit;
+              goto nfuncexit;
             }
           }
           goto notfound;
         }
+
+#ifdef USE_SCRIPT_GLOBVARS
         if (!strncmp_XP(lp, XPSTR("udp("), 4)) {
-          char url[SCRIPT_MAX_SBSIZE];
-          lp = GetStringArgument(lp + 4, OPER_EQU, url, 0);
-          TS_FLOAT port;
-          lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
-          char payload[SCRIPT_MAX_SBSIZE];
-          lp = GetStringArgument(lp, OPER_EQU, payload, 0);
-          fvar = udp_call(url, port, payload);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          uint8_t sel = fvar;
+          if (sel == 0) {
+            // open port
+            TS_FLOAT port;
+            lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+            if (!glob_script_mem.Script_PortUdp_1) {
+              glob_script_mem.Script_PortUdp_1 = new WiFiUDP;
+            }
+            glob_script_mem.udp1_port = port;
+            fvar = glob_script_mem.Script_PortUdp_1->begin(port);
+          }
+          if (sel == 1 && glob_script_mem.Script_PortUdp_1) {
+            // rec from port
+            if (TasmotaGlobal.global_state.wifi_down) {
+              if (sp) *sp = 0;
+            } else {
+              int32_t packetSize = glob_script_mem.Script_PortUdp_1->parsePacket();
+              if (packetSize > 0) {
+                char packet[SCRIPT_MAX_SBSIZE];
+                int32_t len = glob_script_mem.Script_PortUdp_1->read(packet, SCRIPT_MAX_SBSIZE);
+                packet[len] = 0;
+                if (sp) strlcpy(sp, packet, glob_script_mem.max_ssize);
+              } else {
+                if (sp) *sp = 0;
+              }
+            }
+            lp++;
+            len = 0;
+            goto strexit;
+          }
+          if (sel == 2 && glob_script_mem.Script_PortUdp_1) {
+            // send to recive port up to 3 text buffers
+            char payload[SCRIPT_MAX_SBSIZE * 3];
+            char part1[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+            SCRIPT_SKIP_SPACES
+            strcpy(payload, part1);
+            if (*lp != ')') {
+              // get next part
+              lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+              SCRIPT_SKIP_SPACES
+              strcat(payload, part1);
+              if (*lp != ')') {
+                // get next part
+                lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+                SCRIPT_SKIP_SPACES
+                strcat(payload, part1);
+              }
+            }
+            glob_script_mem.Script_PortUdp_1->beginPacket(glob_script_mem.Script_PortUdp_1->remoteIP(), glob_script_mem.Script_PortUdp_1->remotePort());
+            glob_script_mem.Script_PortUdp_1->write((unsigned char*)payload, strlen(payload));
+            glob_script_mem.Script_PortUdp_1->endPacket();
+            glob_script_mem.Script_PortUdp_1->flush();
+          }
+          if (sel == 3 && glob_script_mem.Script_PortUdp_1) {
+            char url[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, url, 0);
+            char payload[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, payload, 0);
+            IPAddress adr;
+            adr.fromString(url);
+            glob_script_mem.Script_PortUdp_1->beginPacket(adr, glob_script_mem.udp1_port);
+            glob_script_mem.Script_PortUdp_1->write((unsigned char*)payload, strlen(payload));
+            glob_script_mem.Script_PortUdp_1->endPacket();
+          }
+          if (sel == 4) {
+            if (sp) strlcpy(sp, glob_script_mem.Script_PortUdp_1->remoteIP().toString().c_str(), glob_script_mem.max_ssize);
+            lp++;
+            len = 0;
+            goto strexit;
+          }
+          if (sel == 5) {
+            fvar = glob_script_mem.Script_PortUdp_1->remotePort();
+          }
+          if (sel == 6) {
+            // generic send to url and port
+            char url[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, url, 0);
+            TS_FLOAT port;
+            lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+            char payload[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, payload, 0);
+            fvar = udp_call(url, port, payload);
+          }
           goto nfuncexit;
         }
+#endif
         break;
 
       case 'w':
@@ -6303,7 +6869,11 @@ void tmod_directModeOutput(uint32_t pin);
             case 6:
               { TS_FLOAT fvar2;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
+#ifdef USE_WEBCAM_V2
+                fvar = 0;
+#else
                 fvar = WcSetMotionDetect(fvar2);
+#endif
               }
               break;
               /*
@@ -6441,7 +7011,7 @@ void tmod_directModeOutput(uint32_t pin);
                 for (uint16_t cnt = 0; cnt < slen; cnt++) {
                   buff[cnt] = glob_script_mem.tcp_client.read();
                 }
-                buff[slen] = 0; 
+                buff[slen] = 0;
                 if (sp) strlcpy(sp, buff, glob_script_mem.max_ssize);
             }
           }
@@ -6510,7 +7080,7 @@ void tmod_directModeOutput(uint32_t pin);
                       dlen++;
                       break;
                     case 1:
-                      { 
+                      {
                         uint16_t wval = *fpd++;
                         //glob_script_mem.tcp_client.write(wval >> 8);
                         //glob_script_mem.tcp_client.write(wval);
@@ -6572,6 +7142,46 @@ void tmod_directModeOutput(uint32_t pin);
           uint32_t lval = *(uint32_t*)&fvar;
           *(uint32_t*)ivar = lval;
           goto nfuncexit;
+        }
+
+        if (!strncmp_XP(lp, XPSTR("won("), 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          char url[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, url, 0);
+          bool glob = false;
+          if (url[strlen(url) - 1] == '*') {
+            glob = true;
+          }
+          switch ((uint8_t)fvar) {
+            case 1:
+              if (glob) {
+                Webserver->on(UriGlob(url), HTTP_GET, ScriptWebOn1);
+              } else {
+                Webserver->on(url, HTTP_GET, ScriptWebOn1);
+              }
+              break;
+            case 2:
+               if (glob) {
+                Webserver->on(UriGlob(url), HTTP_GET, ScriptWebOn2);
+              } else {
+                Webserver->on(url, HTTP_GET, ScriptWebOn2);
+              }
+              break;
+            case 3:
+                if (glob) {
+                Webserver->on(UriGlob(url), HTTP_GET, ScriptWebOn3);
+              } else {
+                Webserver->on(url, HTTP_GET, ScriptWebOn3);
+              }
+              break;
+          }           
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("warg"), 4)) {
+          if (sp) strlcpy(sp, Webserver->uri().c_str(), glob_script_mem.max_ssize);
+          lp++;
+          len = 0;
+          goto strexit;
         }
         break;
 
@@ -6835,7 +7445,7 @@ int32_t play_wave(char *path) {
           break;
     }
 
-    i2s_std_config_t std_cfg = { 
+    i2s_std_config_t std_cfg = {
         .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(8000),
         .slot_cfg = slot_cfg,
         .gpio_cfg = {
@@ -6863,10 +7473,10 @@ File wf = ufsp->open(path, FS_FILE_READ);
     return -1;
   }
 
-  int16_t buffer[512]; 
+  int16_t buffer[512];
 
   uint32_t fsize = wf.size();
- 
+
   // check for RIFF
    wf.readBytes((char*)buffer, sizeof(wav_header_t));
    wav_header_t *wh = (wav_header_t *)buffer;
@@ -7269,7 +7879,7 @@ int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
         glob_script_mem.type[ind.index].bits.changed = 1;
 #ifdef USE_SCRIPT_GLOBVARS
         if (glob_script_mem.type[ind.index].bits.global) {
-          script_udp_sendvar(vname, &res, 0);
+          script_udp_sendvar(vname, &res, 0, 0);
         }
 #endif //USE_SCRIPT_GLOBVARS
         return 0;
@@ -7342,7 +7952,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                 if (*(cp + 1) == '.' || *(cp + 1) == ',') {
                   dsep = *(cp + 1);
                   lzero = *cp & 0xf;
-                  cp+=2;
+                  cp += 2;
                 }
                 dprec = *cp & 0xf;
                 cp++;
@@ -7351,7 +7961,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                 lzero = glob_script_mem.script_lzero;
                 dsep = glob_script_mem.script_sepc;
               }
-              if (*cp=='(') {
+              if (*cp == '(') {
                 // math expression
                 cp++;
                 glob_script_mem.glob_error = 0;
@@ -7395,7 +8005,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                   count += 2;
                   while (*cp != '%') {
                     if (*cp == 0 || *cp == SCRIPT_EOL) {
-                      dstbuf[count+1] = 0;
+                      dstbuf[count + 1] = 0;
                       return;
                     }
                     cp++;
@@ -7405,15 +8015,15 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               }
             }
         } else {
-            if (*cp=='\\') {
+            if (*cp == '\\') {
               cp++;
-              if (*cp=='n') {
+              if (*cp == 'n') {
                 dstbuf[count] = '\n';
-              } else if (*cp=='r') {
+              } else if (*cp == 'r') {
                 dstbuf[count] = '\r';
-              } else if (*cp=='\\') {
+              } else if (*cp == '\\') {
                 dstbuf[count] = '\\';
-              } else if (*cp=='#') {
+              } else if (*cp == '#') {
                 dstbuf[count] = '#';
               } else {
                 dstbuf[count] = *cp;
@@ -7421,7 +8031,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
             } else {
               dstbuf[count] = *cp;
             }
-            if (*cp==0) {
+            if (*cp == 0) {
                 break;
             }
             cp++;
@@ -7807,6 +8417,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     if_state[ifstck] = 0;
     if_result[ifstck] = 0;
     if_exe[ifstck] = 1;
+    glob_script_mem.FLAGS.ignore_line = 0;
     char cmpstr[SCRIPT_MAX_SBSIZE];
     TS_FLOAT *dfvar;
 
@@ -7841,7 +8452,7 @@ startline:
         while (*lp == '\t' || *lp == ' ') {
           lp++;
         }
-        
+
         // skip comment
         if (*lp == ';') goto next_line;
         if (!*lp) break;
@@ -7866,6 +8477,8 @@ startline:
 //if (if_state[s_ifstck]==3 && if_result[s_ifstck]) goto next_line;
 //if (if_state[s_ifstck]==2 && !if_result[s_ifstck]) goto next_line;
 
+            glob_script_mem.FLAGS.ignore_line = 0;
+
             if (!strncmp(lp, "if", 2)) {
                 lp += 2;
                 if (ifstck < IF_NEST - 1) ifstck++;
@@ -7874,6 +8487,28 @@ startline:
                 if (ifstck == 1) if_exe[ifstck] = 1;
                 else if_exe[ifstck] = if_exe[ifstck - 1];
                 and_or = 0;
+                if (if_exe[ifstck - 1] == 0) {
+                  // not enabled
+#if 0
+                  glob_script_mem.FLAGS.ignore_line = 1;
+                // AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);
+#else
+                //  AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);
+                  while (*lp) {
+                    if (*lp == SCRIPT_EOL) {
+                      lp--;
+                      break;
+                    }
+                    if (*lp == '{') {
+                      // then
+                      if_state[ifstck] = 2;
+                      break;
+                    }
+                    lp++;
+                  }
+                  goto next_line;
+#endif
+                }
             } else if (!strncmp(lp, "then", 4) && if_state[ifstck] == 1) {
                 lp += 4;
                 if_state[ifstck] = 2;
@@ -7884,7 +8519,7 @@ startline:
                 if (if_exe[ifstck - 1]) if_exe[ifstck] = !if_result[ifstck];
             } else if (!strncmp(lp, "endif", 5) && if_state[ifstck] >= 2) {
                 lp += 5;
-                if (ifstck>0) {
+                if (ifstck > 0) {
                   if_state[ifstck] = 0;
                   ifstck--;
                 }
@@ -8192,6 +8827,7 @@ getnext:
               goto next_line;
             }
 #endif // USE_SCRIPT_GLOBVARS
+
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
             else if (!strncmp(lp, "ws2812(", 7)) {
@@ -8381,7 +9017,7 @@ getnext:
 
             // check for variable result
             if (if_state[ifstck] == 1) {
-              // evaluate exxpression
+              // evaluate expression
               lp = Evaluate_expression(lp, and_or, &if_result[ifstck], gv);
               SCRIPT_SKIP_SPACES
               if (*lp == '{' && if_state[ifstck] == 1) {
@@ -8541,7 +9177,7 @@ getnext:
 #ifdef USE_SCRIPT_GLOBVARS
                       if (globvindex >= 0 ) {
                         if (glob_script_mem.type[globvindex].bits.global) {
-                          script_udp_sendvar(varname, dfvar, 0);
+                          script_udp_sendvar(varname, dfvar, 0, 0);
                         }
                       }
 #endif //USE_SCRIPT_GLOBVARS
@@ -8589,6 +9225,16 @@ getnext:
                             }
                             glob_script_mem.cmdbuffer_size = *dfvar;
                             break;
+#ifdef USE_SCRIPT_GLOBVARS
+                          case SCRIPT_UDP_PBS:
+                            glob_script_mem.pb_size = *dfvar;
+                            Restart_globvars();
+                            break;
+                          case SCRIPT_UDP_MOD:
+                            glob_script_mem.udp_flags.udp_binary_payload = *dfvar;
+                            break;
+#endif
+
 #if (defined(USE_SML_M) || defined(USE_BINPLUGINS)) && defined(USE_SML_SCRIPT_CMD)
                           case SML_JSON_ENABLE:
                             //sml_options = *dfvar;
@@ -8634,7 +9280,7 @@ getnext:
 #ifdef USE_SCRIPT_GLOBVARS
                       if (globvindex >= 0) {
                         if (glob_script_mem.type[globvindex].bits.global) {
-                          script_udp_sendvar(varname, 0, str);
+                          script_udp_sendvar(varname, 0, str, 0);
                         }
                       }
 #endif //USE_SCRIPT_GLOBVARS
@@ -9112,7 +9758,6 @@ void script_sort_array(TS_FLOAT *array, uint16_t size) {
   } while (swapped);
 }
 
-
 bool Is_gpio_used(uint8_t gpiopin) {
   if (gpiopin >= 0 && (gpiopin < nitems(TasmotaGlobal.gpio_pin)) && (TasmotaGlobal.gpio_pin[gpiopin] > 0)) {
     return true;
@@ -9190,8 +9835,7 @@ void Scripter_save_pvars(void) {
 #define WEB_HANDLE_SCRIPT "s10"
 
 const char HTTP_BTN_MENU_RULES[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form></p>";
-
+  "<p></p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form>";
 
 const char HTTP_FORM_SCRIPT[] PROGMEM =
     "<fieldset><legend><b>&nbsp;" D_SCRIPT "&nbsp;</b></legend>"
@@ -10331,6 +10975,44 @@ const char kScriptCommands[] PROGMEM = D_CMND_SCRIPT "|" D_CMND_SUBSCRIBE "|" D_
 #endif
 ;
 
+void list_var(char *lp) {
+TS_FLOAT fvar;
+char str[SCRIPT_MAX_SBSIZE];
+  glob_script_mem.glob_error = 0;
+  if (check_varname(lp) == NUM_ARRAY_RES && !strchr(lp, '[')) {
+    TS_FLOAT *fpd = 0;
+    uint16_t alend;
+    char *cp = get_array_by_name(lp, &fpd, &alend, 0);
+    ResponseAppend_P(PSTR("\"%s\":["), lp);
+    for (uint16_t cnt = 0; cnt < alend; cnt++) {
+        TS_FLOAT tvar = *fpd++;
+        ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &tvar);
+        if (cnt) {
+          ResponseAppend_P(PSTR(",%s"), str);
+        } else {
+          ResponseAppend_P(PSTR("%s"), str);
+        }
+    }
+    ResponseAppend_P(PSTR("]"));
+  } else {
+    glob_script_mem.glob_error = 0;
+    glob_script_mem.var_not_found = 0;
+    GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+    if (glob_script_mem.var_not_found) {
+      ResponseAppend_P(PSTR("\"%s\":\"???\""), lp);
+    } else {
+      if (glob_script_mem.glob_error == 1) {
+        // was string, not number
+        GetStringArgument(lp, OPER_EQU, str, 0);
+        ResponseAppend_P(PSTR("\"%s\":\"%s\""), lp, str);
+      } else {
+        ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &fvar);
+        ResponseAppend_P(PSTR("\"%s\":%s"), lp, str);
+      }
+    }
+  }
+}
+
 bool ScriptCommand(void) {
   char command[CMDSZ];
   bool serviced = true;
@@ -10384,38 +11066,22 @@ bool ScriptCommand(void) {
       if ('?' == XdrvMailbox.data[0]) {
         char *lp = XdrvMailbox.data;
         lp++;
-        while (*lp==' ') lp++;
-        TS_FLOAT fvar;
-        char str[SCRIPT_MAX_SBSIZE];
-        glob_script_mem.glob_error = 0;
-        TS_FLOAT *fpd = 0;
-        uint16_t alend;
-        char *cp = get_array_by_name(lp, &fpd, &alend, 0);
-        if (fpd && cp && (!strchr(lp, '[')) ) {
-          // is array
-          Response_P(PSTR("{\"script\":{\"%s\":["), lp);
-          for (uint16_t cnt = 0; cnt < alend; cnt++) {
-            TS_FLOAT tvar = *fpd++;
-            ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &tvar);
-            if (cnt) {
-              ResponseAppend_P(PSTR(",%s"), str);
-            } else {
-              ResponseAppend_P(PSTR("%s"), str);
-            }
-          }
-          ResponseAppend_P(PSTR("]}}"));
-        } else {
-          glob_script_mem.glob_error = 0;
-          GetNumericArgument(lp, OPER_EQU, &fvar, 0);
-          if (glob_script_mem.glob_error == 1) {
-            // was string, not number
-            GetStringArgument(lp, OPER_EQU, str, 0);
-            Response_P(PSTR("{\"script\":{\"%s\":\"%s\"}}"), lp, str);
+        Response_P(PSTR("{\"script\":{"));
+        while (1) {
+          while (*lp==' ') lp++;
+          char *cp = strchr(lp, ';');
+          if (cp) {
+            *cp = 0;
+            list_var(lp);
+            ResponseAppend_P(PSTR(","));
+            lp = cp + 1;
           } else {
-            ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &fvar);
-            Response_P(PSTR("{\"script\":{\"%s\":%s}}"), lp, str);
+            list_var(lp);
+            ResponseAppend_P(PSTR("}"));
+            break;
           }
         }
+        ResponseAppend_P(PSTR("}"));
       }
       return serviced;
     }
@@ -10435,18 +11101,22 @@ bool ScriptCommand(void) {
 #endif
 #endif //SUPPORT_MQTT_EVENT
 #ifdef USE_UFILESYS
-#ifndef NO_SCRIPT_VARBSIZE  
+#ifndef NO_SCRIPT_VARBSIZE
     } else if (CMND_BSIZE  == command_code) {
       // set script buffer size
       if (XdrvMailbox.payload >= 1000) {
         *SSIZE_PSTORE = XdrvMailbox.payload;
         TasmotaGlobal.restart_flag = 2;
       }
-      Response_P(PSTR("{\"script buffer\":%d}"), *SSIZE_PSTORE);
+      uint16_t ssize = *SSIZE_PSTORE;
+      if (!ssize) {
+        ssize = UFSYS_SIZE;
+      }
+      Response_P(PSTR("{\"script buffer\":%d}"), ssize);
       serviced = true;
 #endif
 #endif
-    
+
   }
   return serviced;
 }
@@ -10706,6 +11376,23 @@ String ScriptUnsubscribe(const char * data, int data_len)
 #endif //     SUPPORT_MQTT_EVENT
 
 
+void ScriptWebOn1(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Run_Scripter1(">on1", 4, 0);
+}
+
+void ScriptWebOn2(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Run_Scripter1(">on2", 4, 0);
+}
+
+void ScriptWebOn3(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Run_Scripter1(">on3", 4, 0);
+}
+
+
+
 #if defined(ESP32) && defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
 
 #ifndef SCRIPT_DLPORT
@@ -10731,7 +11418,7 @@ void ScriptServeFile82(void) {
       if (ufsp->exists(cp)) {
 #endif
         if (glob_script_mem.download82_busy == true) {
-          AddLog(LOG_LEVEL_INFO, PSTR("UFS: 82 Download is busy"));
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "82 Download is busy"));
           return;
         }
         glob_script_mem.download82_busy = true;
@@ -10835,7 +11522,7 @@ int32_t SendFile(char *fname) {
 #ifdef ESP32
 #ifdef USE_DLTASK
   if (glob_script_mem.script_download_busy == true) {
-    AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "Download is busy"));
     return -1;
   }
   glob_script_mem.script_download_busy = true;
@@ -11137,7 +11824,7 @@ uint32_t fsize;
 
 #ifdef SCRIPT_FULL_WEBPAGE
 const char HTTP_WEB_FULL_DISPLAY[] PROGMEM =
-  "<p><form action='sfd%1d' method='get'><button>%s</button></form></p>";
+  "<p></p><form action='sfd%1d' method='get'><button>%s</button></form>";
 
 const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
     "var rfsh=1;"
@@ -11365,7 +12052,7 @@ const char SCRIPT_MSG_GTABLE[] PROGMEM =
   "<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>"
   "<script type='text/javascript'>google.charts.load('current',{packages:['corechart']});</script>"
   "<style>.hRow{font-weight:bold;color:black;background-color:lightblue;}.hCol{font-weight:bold;color:black;background-color:lightblue;}.tCell{color:black}</style>"
-  "<style>#chart1{display: inline-block;margin: 0 auto;#timeline text{fill:magenta;}}</style>";
+  "<style>#chart1{display:inline-block;margin: 0 auto;#timeline text{fill:magenta;}}</style>";
 
 const char SCRIPT_MSG_TABLE[] PROGMEM =
   "<script type='text/javascript'>google.charts.load('current',{packages:['table']});</script>";
@@ -11705,6 +12392,7 @@ int32_t web_send_file(char mc, char *fname) {
 
 char *web_send_line(char mc, char *lp1) {
 //char tmp[256];
+
 char *tmp = (char*)malloc(SCRIPT_WS_LINE_SIZE);
 if (!tmp) {
   return 0;
@@ -11745,7 +12433,7 @@ const char *gc_str;
   if ((dogui && !(glob_script_mem.specopt & WSO_FORCEGUI)) || (!dogui && (glob_script_mem.specopt & WSO_FORCEGUI))) {
   //if ( ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(glob_script_mem.specopt & WSO_FORCEMAIN)) || (glob_script_mem.specopt & WSO_FORCEGUI)) {
     // normal web section
-#ifdef SCRIPT_WEB_DEBUG    
+#ifdef SCRIPT_WEB_DEBUG
     AddLog(LOG_LEVEL_INFO, PSTR("WEB GUI section"));
 #endif
     if (*lin == '@') {
@@ -12155,7 +12843,7 @@ const char *gc_str;
     // end standard web interface
   } else {
     //  main section interface
-#ifdef SCRIPT_WEB_DEBUG    
+#ifdef SCRIPT_WEB_DEBUG
     AddLog(LOG_LEVEL_INFO, PSTR("WEB main section"));
 #endif
     if ( (*lin == mc) || (mc == 'z') || (glob_script_mem.specopt & WSO_FORCEMAIN)) {
@@ -12167,7 +12855,7 @@ const char *gc_str;
         }
       }
 exgc:
-#ifdef SCRIPT_WEB_DEBUG    
+#ifdef SCRIPT_WEB_DEBUG
       AddLog(LOG_LEVEL_INFO, PSTR("WEB GC section"));
 #endif
       char *lp;
@@ -12594,7 +13282,7 @@ exgc:
       } else {
         WSContentSend_P(PSTR("%s"), lin);
       }
-      
+
 #else
 
       if (mc != 'z') {
@@ -12607,9 +13295,9 @@ exgc:
           //  WSContentSend_P(PSTR("%s"),lin);
 #endif //USE_GOOGLE_CHARTS
     }
-    
+
   }
-  
+
   WS_LINE_RETURN
 }
 
@@ -13024,16 +13712,16 @@ int32_t http_req(char *host, char *header, char *request) {
 
 #ifdef SCRIPT_GET_HTTPS_JP
 
-#ifdef TESLA_POWERWALL
+#if defined(ESP32) && defined(TESLA_POWERWALL)
 Powerwall powerwall = Powerwall();
 
 int32_t call2pwl(const char *url) {
-  
+
   if (*url == '@') {
     powerwall.GetRequest(String(url));
     return 0;
   }
-  
+
   uint8_t debug = 0;
   if (*url == 'D') {
     url++;
@@ -13235,7 +13923,7 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       if (val & 128) {
         XsnsCall(FUNC_INIT);
       }
-#endif     
+#endif
       break;
   }
   return rval;
@@ -13682,7 +14370,6 @@ bool Xdrv10(uint32_t function) {
     //case FUNC_PRE_INIT:
     //case FUNC_INIT:
     case FUNC_SETUP_RING1:  // We need to setup SCRIPT before call to ScriptLoadSection()
-
       //bitWrite(Settings->rule_enabled, 0, 0); // >>>>>>>>>>>
 #ifndef NO_SCRIPT_STOP_ON_ERROR
       bitWrite(Settings->rule_stop, 0, 1);
@@ -13696,7 +14383,7 @@ bool Xdrv10(uint32_t function) {
       glob_script_mem.FLAGS.eeprom = false;
       glob_script_mem.script_pram = (uint8_t*)Settings->script_pram[0];
       glob_script_mem.script_pram_size = PMEM_SIZE;
-      
+
 #ifdef USE_UFILESYS
       if (ufs_type) {
 #ifndef NO_SCRIPT_VARBSIZE
@@ -13960,6 +14647,7 @@ bool Xdrv10(uint32_t function) {
 #if defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
       WebServer82Init();
 #endif // USE_SCRIPT_ALT_DOWNLOAD
+      Run_Scripter1(">ah", 3, 0);
       break;
 #endif // USE_WEBSERVER
 
@@ -14021,11 +14709,13 @@ bool Xdrv10(uint32_t function) {
 #ifdef USE_SCRIPT_ALT_DOWNLOAD
       WebServer82Loop();
 #endif
+#ifdef USE_SCRIPT_MDNS
+#ifndef ESP32
+      MDNS.update();
+#endif
+#endif
       break;
 
-    case FUNC_NETWORK_UP:
-      break;
-    
     case FUNC_ACTIVE:
       result = true;
       break;

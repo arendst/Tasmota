@@ -69,7 +69,7 @@ void _LoraWanDeriveLegacyAppSKey(uint8_t* key, uint32_t jn, uint32_t nid, uint16
 }
 
 void LoraWanDeriveLegacyAppSKey(uint32_t node, uint8_t* AppSKey) {
-  _LoraWanDeriveLegacyAppSKey(Lora->settings.end_node[node].AppKey, TAS_LORAWAN_JOINNONCE +node, TAS_LORAWAN_NETID, Lora->settings.end_node[node].DevNonce, AppSKey);
+  _LoraWanDeriveLegacyAppSKey(Lora->settings.end_node[node]->AppKey, TAS_LORAWAN_JOINNONCE +node, TAS_LORAWAN_NETID, Lora->settings.end_node[node]->DevNonce, AppSKey);
 }
 
 // DeriveLegacyNwkSKey derives the LoRaWAN 1.0 Network Session Key. AppNonce is entered as JoinNonce.
@@ -82,7 +82,7 @@ void _LoraWanDeriveLegacyNwkSKey(uint8_t* appKey, uint32_t jn, uint32_t nid, uin
 }
 
 void LoraWanDeriveLegacyNwkSKey(uint32_t node, uint8_t* NwkSKey) {
-  _LoraWanDeriveLegacyNwkSKey(Lora->settings.end_node[node].AppKey, TAS_LORAWAN_JOINNONCE +node, TAS_LORAWAN_NETID, Lora->settings.end_node[node].DevNonce, NwkSKey);
+  _LoraWanDeriveLegacyNwkSKey(Lora->settings.end_node[node]->AppKey, TAS_LORAWAN_JOINNONCE +node, TAS_LORAWAN_NETID, Lora->settings.end_node[node]->DevNonce, NwkSKey);
 }
 
 #ifdef USE_LORAWAN_TEST

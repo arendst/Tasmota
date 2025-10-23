@@ -234,7 +234,9 @@ int be_nfunc_open(bvm *vm)
         { "flush", i_flush },
         { "close", i_close },
         { "deinit", i_close },
+#if BE_USE_BYTECODE_SAVER
         { "savecode", i_savecode },
+#endif
         { NULL, NULL }
     };
     fname = argc >= 1 && be_isstring(vm, 1) ? be_tostring(vm, 1) : NULL;

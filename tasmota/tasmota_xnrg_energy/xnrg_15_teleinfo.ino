@@ -454,13 +454,13 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Contract subscribed (standard is in clear text in value)
             else if (ilabel == LABEL_NGTF)
             {
-                if (strstr(me->value, TELEINFO_STD_CONTRACT_BASE)) {
+                if (strstr_P(me->value, TELEINFO_STD_CONTRACT_BASE)) {
                     contrat = CONTRAT_BAS;
-                } else if (strstr(me->value, TELEINFO_STD_CONTRACT_HCHP)) {
+                } else if (strstr_P(me->value, TELEINFO_STD_CONTRACT_HCHP)) {
                     contrat = CONTRAT_HC;
-                } else if (strstr(me->value, TELEINFO_STD_CONTRACT_BBR)) {
+                } else if (strstr_P(me->value, TELEINFO_STD_CONTRACT_BBR)) {
                     contrat = CONTRAT_BBR;
-                } else if (strstr(me->value, TELEINFO_STD_CONTRACT_EJP)) {
+                } else if (strstr_P(me->value, TELEINFO_STD_CONTRACT_EJP)) {
                     contrat = CONTRAT_EJP;
                 }
 

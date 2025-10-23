@@ -1,0 +1,32 @@
+# Demo Shutter Rainbow
+#
+# Shutter from left to right iterating in all colors
+
+set duration = 3s
+  
+  set strip_len = strip_length()
+  set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
+
+  color col1 = color_cycle(palette=PALETTE_RAINBOW, cycle_period=0)
+  color col2 = color_cycle(palette=PALETTE_RAINBOW, cycle_period=0)
+  col2.next = 1
+
+  animation shutter_animation = beacon_animation(
+    color = col1
+    back_color = col2
+    pos = 0
+    beacon_size = shutter_size
+    slew_size = 0
+    priority = 5
+  )
+  log("foobar")
+  sequence shutter_run repeat forever {
+    log("before")
+    play shutter_animation for duration
+    log("after")
+    col1.next = 1
+    col2.next = 1
+    log("next")
+  }
+
+  run shutter_run

@@ -41,6 +41,11 @@
   "download": {
     "speed": 230400
   },
+  "espidf": {
+    "custom_sdkconfig": [
+      "CONFIG_FREERTOS_UNICORE=y" 
+    ]
+  },
   "url": "https://www.espressif.com/sites/default/files/documentation/esp32-solo-1_datasheet_en.pdf",
   "vendor": "Espressif"
 }

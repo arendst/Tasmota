@@ -13,14 +13,14 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_cache_entry.h"
-#include "lv_cache_private.h"
+
 #include "../lv_types.h"
 
-#include "lv_cache_lru_rb.h"
+#include "lv_cache_entry.h"
 
-#include "lv_image_cache.h"
-#include "lv_image_header_cache.h"
+#include "class/lv_cache_class.h"
+#include "instance/lv_cache_instance.h"
+
 /*********************
  *      DEFINES
  *********************/
@@ -214,6 +214,13 @@ void lv_cache_set_name(lv_cache_t * cache, const char * name);
  * @return              Returns the name of the cache.
  */
 const char * lv_cache_get_name(lv_cache_t * cache);
+
+/**
+ * Create an iterator for the cache object. The iterator is used to iterate over all cache entries.
+ * @param cache         The cache object pointer to create the iterator.
+ * @return              Returns a pointer to the created iterator on success, `NULL` on error.
+ */
+lv_iter_t * lv_cache_iter_create(lv_cache_t * cache);
 
 /*************************
  *    GLOBAL VARIABLES

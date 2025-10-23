@@ -1,0 +1,29 @@
+# Twinkle Stars - Random sparkling white stars
+# White sparkles on dark blue background
+
+#strip length 60
+
+# Dark blue background
+color night_sky = 0x000033
+animation background = solid(color=night_sky)
+
+# White twinkling stars
+animation stars = twinkle_animation(
+  color=0xFFFFFF  # White stars
+  density=8       # density (number of stars)
+  twinkle_speed=500ms # twinkle speed (twinkle duration)
+)
+stars.priority = 10
+
+# Add occasional bright flash
+animation bright_flash = twinkle_animation(
+  color=0xFFFFAA  # Bright yellow-white
+  density=2       # density (fewer bright flashes)
+  twinkle_speed=300ms # twinkle speed (quick flash)
+)
+bright_flash.priority = 15
+
+# Start all animations
+run background
+run stars
+run bright_flash

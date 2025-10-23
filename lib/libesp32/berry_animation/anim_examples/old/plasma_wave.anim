@@ -1,0 +1,57 @@
+# Plasma Wave - Smooth flowing plasma colors
+# Continuous color waves like plasma display
+
+#strip length 60
+
+# Define plasma color palette with smooth transitions
+palette plasma_colors = [
+  (0, 0xFF0080),    # Magenta
+  (51, 0xFF8000),   # Orange
+  (102, 0xFFFF00),  # Yellow
+  (153, 0x80FF00),  # Yellow-green
+  (204, 0x00FF80),  # Cyan-green
+  (255, 0x0080FF)   # Blue
+]
+
+# Base plasma animation with medium speed
+animation plasma_base = rich_palette_animation(palette=plasma_colors, cycle_period=6s, transition_type=SINE, brightness=200)
+
+# Add multiple wave layers for complexity
+color wave1_pattern = rich_palette(palette=plasma_colors, cycle_period=4s, transition_type=SINE, brightness=255)
+animation plasma_wave1 = beacon_animation(
+  color=wave1_pattern # color source
+  pos=0               # initial position
+  beacon_size=20      # wide wave
+  slew_size=10        # very smooth
+)
+plasma_wave1.priority = 10
+plasma_wave1.pos = smooth(min_value=0, max_value=40, duration=8s)
+
+color wave2_pattern = rich_palette(palette=plasma_colors, cycle_period=5s, transition_type=SINE, brightness=180)
+animation plasma_wave2 = beacon_animation(
+  color=wave2_pattern # color source
+  pos=45              # initial position
+  beacon_size=15      # medium wave
+  slew_size=8         # smooth
+)
+plasma_wave2.priority = 8
+plasma_wave2.pos = smooth(min_value=45, max_value=15, duration=10s)  # Opposite direction
+
+color wave3_pattern = rich_palette(palette=plasma_colors, cycle_period=3s, transition_type=SINE, brightness=220)
+animation plasma_wave3 = beacon_animation(
+  color=wave3_pattern # color source
+  pos=20              # initial position
+  beacon_size=12      # smaller wave
+  slew_size=6         # smooth
+)
+plasma_wave3.priority = 12
+plasma_wave3.pos = smooth(min_value=20, max_value=50, duration=6s)  # Different speed
+
+# Add subtle intensity variation
+plasma_base.opacity = smooth(min_value=150, max_value=255, duration=12s)
+
+# Start all animations
+run plasma_base
+run plasma_wave1
+run plasma_wave2
+run plasma_wave3

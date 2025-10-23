@@ -1,6 +1,6 @@
 {
   "name": "JPEGDEC",
-  "version": "1.2.7",
+  "version": "1.8.3",
   "description": "A fast JPEG library with a unique set of functions to make viewing image on microcontrollers easy. Includes fast downscaling options and the ability to view Exif embedded thumbnails. Supports baseline grayscale and color images with Huffman encoding.",
   "repository":
   {

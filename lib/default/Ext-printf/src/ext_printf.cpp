@@ -177,6 +177,22 @@ char * ToBinary(uint32_t value, char *str, int32_t digits) {
   return str;
 }
 
+char * U64toStr(uint64_t value, char *str) {
+  // str must be at least 24 bytes long
+  uint32_t i = 23;
+  str[--i] = 0;    // end of string
+  do {
+    uint64_t m = value;
+    value /= 10;
+    char c = m - 10 * value;
+    str[--i] = c < 10 ? c + '0' : c + 'A' - 10;
+  } while (value);
+  if (i) {
+    memmove(str, str +i, 23 -i);
+  }
+  return str;
+}
+
 char * U64toHex(uint64_t value, char *str, uint32_t zeroleads) {
   // str must be at least 17 bytes long
   str[16] = 0;    // end of string
@@ -310,6 +326,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
               }
             }
             break;
+
           case 'B':     // Pointer to SBuffer
             {
               if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
@@ -326,6 +343,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
               }
             }
             break;
+
           // '%_b' outputs a uint32_t to binary
           // '%8_b' outputs a uint8_t to binary
           case 'b':     // Binary, decimals indicates the zero prefill
@@ -416,6 +434,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
               }
             }
             break;
+
           // '%_X' outputs a 64 bits unsigned int to uppercase HEX with 16 digits
           case 'X':     // input is `uint64_t*`, printed as 16 hex digits (no prefix 0x)
             {
@@ -429,6 +448,20 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
               }
             }
             break;
+
+          // '%_U' outputs a 64 bits unsigned int to decimal
+          case 'U':     // input is `uint64_t*`, printed as decimal
+            {
+              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              else {
+                U64toStr(*(uint64_t*)cur_val, hex);
+                new_val_str = copyStr(hex);
+                if (new_val_str == nullptr) { goto free_allocs; }
+                allocs[alloc_idx++] = new_val_str;
+              }
+            }
+            break;
+
         }
         *cur_val_ptr = new_val_str;
         *fmt = 's';     // replace `%_X` with `%0s` to display a string instead

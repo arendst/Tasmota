@@ -216,6 +216,9 @@ void SenseairInit(void)
         // We have hardware serial, so claim it
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SENSEAIR "Serial UART%d"), SenseairModbus->getUart());
+#endif
       senseair_type = SENSOR_TYPE_UNKNOWN;
     }
   }

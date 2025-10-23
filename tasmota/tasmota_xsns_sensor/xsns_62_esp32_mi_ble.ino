@@ -20,11 +20,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.4"
+#define MI32_VERSION "V0.9.2.6"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.6 20250503  changed - display alias instead of type, when present
+  -------
+  0.9.2.5 20250319  changed - added support for MI LYWSD02MMC with different device ID
+  -------
   0.9.2.4 20240111  changed - Enhancement of debug log output                              
   -------
   0.9.2.3 20240101  changed - added initial support for MI LYWSD02MMC                              
@@ -78,7 +82,7 @@
 #ifdef USE_BLE_ESP32
 
 #ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 
 #ifdef USE_MI_ESP32
 
@@ -492,8 +496,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define AT_BTN         18
 #define MI_SJWS01LM    19
 #define MI_LYWSD02MMC  20
+#define MI_LYWSD02MMC2 21
 
-#define MI_MI32_TYPES  20 //count this manually
+#define MI_MI32_TYPES  21 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -515,7 +520,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x066f, // CGDK2
   0x004e, // Avago Tech Bluetooth Buttons (Company Id)
   0x0863, // SJWS01LM
-  0x2542  // LYWSD02MMC
+  0x2542, // LYWSD02MMC
+  0x16e4  // LYWSD02MMC F3_A1 hardware revision, 2.0.1_0060 firmware revision
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -538,10 +544,11 @@ const char kMI32DeviceType16[] PROGMEM ="CGDK2";
 const char kMI32DeviceType17[] PROGMEM ="ATBTN";
 const char kMI32DeviceType18[] PROGMEM = "SJWS01LM";
 const char kMI32DeviceType19[] PROGMEM = "LYWSD02MMC";
+const char kMI32DeviceType20[] PROGMEM = "LYWSD02MMC";
 const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0, kMI32DeviceType1, kMI32DeviceType2, kMI32DeviceType3,
   kMI32DeviceType4, kMI32DeviceType5, kMI32DeviceType6, kMI32DeviceType7, kMI32DeviceType8, kMI32DeviceType9,
   kMI32DeviceType10, kMI32DeviceType11, kMI32DeviceType12, kMI32DeviceType13, kMI32DeviceType14, kMI32DeviceType15,
-  kMI32DeviceType16, kMI32DeviceType17, kMI32DeviceType18, kMI32DeviceType19};
+  kMI32DeviceType16, kMI32DeviceType17, kMI32DeviceType18, kMI32DeviceType19, kMI32DeviceType20};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -670,14 +677,14 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
   }
 
   if (slot >= 0){
-    op->addr = NimBLEAddress(MIBLEsensors[slot].MAC);
+    op->addr = NimBLEAddress(MIBLEsensors[slot].MAC,0);
   } else {
     if (!addr){
       AddLog(LOG_LEVEL_ERROR, PSTR("M32: No addr"));
       BLE_ESP32::freeOperation(&op);
       return 0;
     }
-    op->addr = NimBLEAddress(addr);
+    op->addr = NimBLEAddress(addr, 0);
   }
 
   bool havechar = false;
@@ -796,6 +803,7 @@ int genericSensorReadFn(int slot, int force){
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_MHOC401:
@@ -944,6 +952,7 @@ int genericTimeWriteFn(int slot){
   int res = 0;
   switch (MIBLEsensors[slot].type){
     case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD02: {
       union {
         uint8_t buf[5];
@@ -983,7 +992,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   uint8_t addrrev[6];
   memcpy(addrrev, MIBLEsensors[slot].MAC, 6);
   //BLE_ESP32::ReverseMAC(addrrev);
-  NimBLEAddress addr(addrrev);
+  NimBLEAddress addr(addrrev, 0);
 
   bool fail = false;
   if (op->addr != addr){
@@ -1068,7 +1077,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   // we will try not to use this...
-  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   // AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
   int RSSI = pStruct->RSSI;
@@ -1097,12 +1106,12 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 
   NimBLEUUID UUIDBig = advertisedDevice->getServiceDataUUID(0);//.getNative()->u16.value;
 
-  const ble_uuid_any_t* native = UUIDBig.getNative();
-  if (native->u.type != 16){
+  const ble_uuid_t* native = UUIDBig.getBase();
+  if (native->type != 16){
     //not interested in 128 bit;
     return 0;
   }
-  uint16_t UUID = native->u16.value;
+  uint16_t UUID = *(uint16_t*)UUIDBig.getValue();
 
   if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: svc[0] UUID (%x)"), MIaddrStr(addr), UUID);
   std::string ServiceDataStr = advertisedDevice->getServiceData(0);
@@ -2129,6 +2138,21 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MIBLEsensors[_slot].shallSendMQTT = 1;
       MIBLEsensors[_slot].feature.Btn = 1;
     } break;
+    case 0x4c01:{ // 'temperature'
+      const uint32_t payload32 = uint32_t(parsed->payload.data[0]) | (uint32_t(parsed->payload.data[1]) << 8) | (uint32_t(parsed->payload.data[2]) << 16) | (uint32_t(parsed->payload.data[3]) << 24);
+      float _tempFloat;
+      memcpy(&_tempFloat, &payload32, sizeof(_tempFloat));
+      MIBLEsensors[_slot].temp = _tempFloat;
+      MIBLEsensors[_slot].feature.temp = 1;
+      MIBLEsensors[_slot].eventType.temp = 1;
+    } break;
+    case 0x4c02:{ // 'humidity'
+      const uint8_t payload8 = parsed->payload.data[0];
+      float _tempFloat = (float)payload8 / 1.0f;
+      MIBLEsensors[_slot].hum = _tempFloat;
+      MIBLEsensors[_slot].feature.hum = 1;
+      MIBLEsensors[_slot].eventType.hum = 1;
+    } break;
 
     //Weight attributes	0x101A	600	0
     //No one moves over time	0x101B	1	1
@@ -2279,7 +2303,7 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
       if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: LYWSD0x Hum updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].hum);
     }
     MIBLEsensors[_slot].eventType.tempHum  = 1;
-    if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
+    if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD02MMC2 || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
       // ok, so CR2032 is 3.0v, but drops immediately to ~2.9.
       // so we'll go with the 2.1 min, 2.95 max.
       float minVolts = 2100.0;
@@ -2687,7 +2711,7 @@ void CmndMi32Keys(void){
           return;
         }
 
-        AddLog(LOG_LEVEL_ERROR,PSTR("M32: Add key mac %s = key %s"), mac, key);
+        AddLog(LOG_LEVEL_INFO, PSTR("M32: Add key mac %s = key %s"), mac, key);
         char tmp[20];
         // convert mac back to string
         ToHex_P(addr,6,tmp,20,0);
@@ -2723,7 +2747,7 @@ void CmndMi32Keys(void){
 \*********************************************************************************************/
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 " MI32_VERSION "{m}%u%s / %u{e}";
-const char HTTP_MI32_ALIAS[] PROGMEM = "{s}%s Alias{m}%s{e}";
+const char HTTP_MI32_TYPE[] PROGMEM = "{s}%s " D_SENSOR"{m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
 const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
@@ -3523,32 +3547,36 @@ void MI32Show(bool json)
       mi_sensor_t *p;
       p = &MIBLEsensors[i];
 
+      const char *label;
       const char *typeName = kMI32DeviceType[p->type-1];
       const char *alias = BLE_ESP32::getAlias(p->MAC);
       if (alias && *alias){
-        WSContentSend_P(HTTP_MI32_ALIAS, typeName, alias);
+        label = alias;
+        WSContentSend_P(HTTP_MI32_TYPE, label, typeName);
+      } else {
+        label = typeName;
       }
       char _MAC[18];
       ToHex_P(p->MAC,6,_MAC,18);//,':');
-      WSContentSend_P(HTTP_MI32_MAC, typeName, _MAC);
-      WSContentSend_PD(HTTP_MI32_RSSI, typeName, p->RSSI);
+      WSContentSend_P(HTTP_MI32_MAC, label, _MAC);
+      WSContentSend_PD(HTTP_MI32_RSSI, label, p->RSSI);
 
       // for some reason, display flora differently
       switch(p->type){
         case MI_FLORA:{
           if (!isnan(p->temp)) {
-            WSContentSend_Temp(typeName, ConvertTempToFahrenheit(p->temp));  // convert if SO8 on
+            WSContentSend_Temp(label, ConvertTempToFahrenheit(p->temp));  // convert if SO8 on
           }
           if (p->moisture!=0xff) {
-            WSContentSend_PD(HTTP_SNS_MOISTURE, typeName, p->moisture);
+            WSContentSend_PD(HTTP_SNS_MOISTURE, label, p->moisture);
           }
           if (p->fertility!=0xffff) {
-            WSContentSend_PD(HTTP_MI32_FLORA_DATA, typeName, p->fertility);
+            WSContentSend_PD(HTTP_MI32_FLORA_DATA, label, p->fertility);
           }
         } break;
         default:{
           if (!isnan(p->hum) && !isnan(p->temp)) {
-            WSContentSend_THD(typeName, ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
+            WSContentSend_THD(label, ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
           }
         }
       }
@@ -3589,52 +3617,52 @@ void MI32Show(bool json)
       // (future work)
       if (showkey){
         BLE_ESP32::dump(_MAC, 13, p->MAC, 6);
-        WSContentSend_P(HTTP_NEEDKEY, typeName, _MAC, IPGetListeningAddressStr().c_str(), tmp);
+        WSContentSend_P(HTTP_NEEDKEY, label, _MAC, IPGetListeningAddressStr().c_str(), tmp);
       }
 
 #endif //USE_MI_DECRYPTION
 
       if (p->feature.events){
-        WSContentSend_PD(HTTP_MI32_EVENTS, typeName, p->events);
+        WSContentSend_PD(HTTP_MI32_EVENTS, label, p->events);
       }
       if (p->feature.NMT){
         // no motion time
-        if(p->NMT>0) WSContentSend_PD(HTTP_MI32_NMT, typeName, p->NMT);
+        if(p->NMT>0) WSContentSend_PD(HTTP_MI32_NMT, label, p->NMT);
       }
 
       if (p->feature.lux){
         if (p->lux!=0x00ffffff) { // this is the error code -> no valid value
-          WSContentSend_PD(HTTP_SNS_ILLUMINANCE, typeName, p->lux);
+          WSContentSend_PD(HTTP_SNS_ILLUMINANCE, label, p->lux);
         }
       }
       if (p->feature.light){
-        WSContentSend_PD(HTTP_MI32_LIGHT, typeName, p->light);
+        WSContentSend_PD(HTTP_MI32_LIGHT, label, p->light);
       }
       if (p->feature.scale){
-        WSContentSend_PD(HTTP_MISCALE_WEIGHT, typeName, Settings->flag2.weight_resolution, &p->weight, p->weight_unit);
+        WSContentSend_PD(HTTP_MISCALE_WEIGHT, label, Settings->flag2.weight_resolution, &p->weight, p->weight_unit);
         if (MI32.option.directBridgeMode) {
-          WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, typeName, p->weight_removed? PSTR("yes") : PSTR("no"));
-          WSContentSend_PD(HTTP_MISCALE_WEIGHT_STABILIZED, typeName, p->weight_stabilized ? PSTR("yes") : PSTR("no"));
+          WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, label, p->weight_removed? PSTR("yes") : PSTR("no"));
+          WSContentSend_PD(HTTP_MISCALE_WEIGHT_STABILIZED, label, p->weight_stabilized ? PSTR("yes") : PSTR("no"));
         }
         if (p->feature.impedance) {
-          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, typeName, p->impedance);
+          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, label, p->impedance);
           if (MI32.option.directBridgeMode) {
-            WSContentSend_PD(HTTP_MISCALE_IMPEDANCE_STABILIZED, typeName, p->impedance_stabilized? PSTR("yes") : PSTR("no"));
+            WSContentSend_PD(HTTP_MISCALE_IMPEDANCE_STABILIZED, label, p->impedance_stabilized? PSTR("yes") : PSTR("no"));
           }
         }
       }
       if(p->bat!=0x00){
-          WSContentSend_PD(HTTP_MI32_BATTERY, typeName, p->bat);
+          WSContentSend_PD(HTTP_MI32_BATTERY, label, p->bat);
       }
       if (p->feature.Btn){
-        WSContentSend_PD(HTTP_MI32_LASTBUTTON, typeName, p->Btn);
+        WSContentSend_PD(HTTP_MI32_LASTBUTTON, label, p->Btn);
       }
       if (p->feature.flooding)
       {
-        WSContentSend_PD(HTTP_SJWS01LM_FLOODING, typeName, p->flooding);
+        WSContentSend_PD(HTTP_SJWS01LM_FLOODING, label, p->flooding);
       }
       if (p->pairing){
-        WSContentSend_PD(HTTP_PAIRING, typeName);
+        WSContentSend_PD(HTTP_PAIRING, label);
       }
     }
     _counter++;

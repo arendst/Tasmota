@@ -1,0 +1,23 @@
+# Simple Palette Example
+# Demonstrates basic palette usage in the DSL
+
+#strip length 20
+
+# Define a simple rainbow palette
+palette rainbow = [
+  (0, red),
+  (64, orange), 
+  (128, yellow),
+  (192, green),
+  (255, blue)
+]
+
+# Create an animation using the palette
+animation rainbow_cycle = rich_palette_animation(palette=rainbow, cycle_period=3s)
+
+# Simple sequence
+sequence demo {
+  play rainbow_cycle for 15s
+}
+
+run demo

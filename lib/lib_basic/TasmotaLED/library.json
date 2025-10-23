@@ -11,6 +11,7 @@
         "url": "https://github.com/arendst/Tasmota/lib/lib_basic/TasmotaLED"
     },
     "frameworks": "arduino",
+    "libCompatMode": "strict",
     "platforms": [
       "espressif32"
     ]

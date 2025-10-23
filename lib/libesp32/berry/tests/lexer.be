@@ -84,3 +84,6 @@ var malformed_numbers = [
 for i : malformed_numbers
     test_source(i, 'malformed number')
 end
+
+#- ensure that string literal with NULL character is truncated -#
+assert(size('aa\000bb\000cc') == 2)

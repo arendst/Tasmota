@@ -82,8 +82,8 @@ BERRY_API void be_regfunc(bvm *vm, const char *name, bntvfunc f)
     bstring *s = be_newstr(vm, name);
 #if !BE_USE_PRECOMPILED_OBJECT
     int idx = be_builtin_find(vm, s);
-    be_assert(idx == -1);
-    if (idx == -1) { /* new function */
+    be_assert(idx < 0);
+    if (idx < 0) { /* new function */
         idx = be_builtin_new(vm, s);
 #else
     int idx = be_global_find(vm, s);
@@ -102,8 +102,8 @@ BERRY_API void be_regclass(bvm *vm, const char *name, const bnfuncinfo *lib)
     bstring *s = be_newstr(vm, name);
 #if !BE_USE_PRECOMPILED_OBJECT
     int idx = be_builtin_find(vm, s);
-    be_assert(idx == -1);
-    if (idx == -1) { /* new function */
+    be_assert(idx < 0);
+    if (idx < 0) { /* new function */
         idx = be_builtin_new(vm, s);
 #else
     int idx = be_global_find(vm, s);
@@ -599,7 +599,7 @@ BERRY_API bbool be_getglobal(bvm *vm, const char *name)
 {
     int idx = be_global_find(vm, be_newstr(vm, name));
     bvalue *top = be_incrtop(vm);
-    if (idx > -1) {
+    if (idx >= 0) {
         *top = *be_global_var(vm, idx);
         return btrue;
     }

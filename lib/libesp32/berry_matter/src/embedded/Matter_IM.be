@@ -239,7 +239,7 @@ class Matter_IM
   #
   # `pi` is the plugin object
   #      if `pi` is nil, just report the status for ctx.status
-  # `ctx` is the context with endpoint/cluster/attribute, `cts.status` is non-nil for direct request and contains the error message to show
+  # `ctx` is the context with endpoint/cluster/attribute, `ctx.status` is non-nil for direct request and contains the error message to show
   # `session` is the current session
   # `force_log` is false, then don't log normal values - typically used to not log wildcard requests
   #
@@ -1258,11 +1258,3 @@ class Matter_IM
 
 end
 matter.IM = Matter_IM
-
-#-
-
-# Unit tests
-
-
--#
-

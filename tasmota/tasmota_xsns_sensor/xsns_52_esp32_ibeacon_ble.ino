@@ -52,7 +52,7 @@
 
 // for testing of BLE_ESP32, we remove xsns_52_ibeacon.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
 // in the future this may be more fine-grained, e.g. to allow hm17 for this, and BLE-ESP32 for other
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 ||CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_BLE_ESP32
 
 #define XSNS_52                       52
@@ -202,7 +202,7 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   struct IBEACON ib;
   if (!iBeaconEnable) return 0;
 
-  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   char sRSSI[6];
   itoa(pStruct->RSSI,sRSSI,10);
@@ -237,9 +237,9 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
         manufacturerData[1] == 0x00)
     {
       BLEBeacon oBeacon = BLEBeacon();
-      oBeacon.setData(std::string((char *)manufacturerData, manufacturerDataLen));
+      oBeacon.setData(manufacturerData, manufacturerDataLen);
       uint8_t UUID[16];
-      memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
+      memcpy(UUID,oBeacon.getProximityUUID().getValue(),16); //TODO: check correct size
       ESP32BLE_ReverseStr(UUID,16);
 
 //      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());

@@ -1,5 +1,5 @@
 /**
- * @file lv_nuttx_entry.h
+ * @file lv_nuttx_entry.c
  *
  */
 
@@ -19,6 +19,7 @@
 #include "lv_nuttx_image_cache.h"
 #include "../../core/lv_global.h"
 #include "lv_nuttx_profiler.h"
+#include "lv_nuttx_mouse.h"
 
 #include "../../../lvgl.h"
 
@@ -66,6 +67,8 @@ static void check_stack_size(void);
 
 #if LV_ENABLE_GLOBAL_CUSTOM
 
+static int lv_nuttx_tlskey = -1;
+
 static void lv_global_free(void * data)
 {
     if(data) {
@@ -75,18 +78,17 @@ static void lv_global_free(void * data)
 
 lv_global_t * lv_global_default(void)
 {
-    static int index = -1;
     lv_global_t * data = NULL;
 
-    if(index < 0) {
-        index = task_tls_alloc(lv_global_free);
+    if(lv_nuttx_tlskey < 0) {
+        lv_nuttx_tlskey = task_tls_alloc(lv_global_free);
     }
 
-    if(index >= 0) {
-        data = (lv_global_t *)task_tls_get_value(index);
+    if(lv_nuttx_tlskey >= 0) {
+        data = (lv_global_t *)task_tls_get_value(lv_nuttx_tlskey);
         if(data == NULL) {
             data = (lv_global_t *)calloc(1, sizeof(lv_global_t));
-            task_tls_set_value(index, (uintptr_t)data);
+            task_tls_set_value(lv_nuttx_tlskey, (uintptr_t)data);
         }
     }
     return data;
@@ -105,6 +107,14 @@ void lv_nuttx_dsc_init(lv_nuttx_dsc_t * dsc)
 #ifdef CONFIG_UINPUT_TOUCH
     dsc->utouch_path = "/dev/utouch";
 #endif
+
+#if LV_USE_NUTTX_MOUSE
+    dsc->mouse_path = "/dev/mouse0";
+#endif
+
+#if LV_USE_NUTTX_TRACE_FILE
+    dsc->trace_path = LV_NUTTX_TRACE_FILE_PATH;
+#endif
 }
 
 void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
@@ -121,10 +131,13 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
 
     lv_nuttx_cache_init();
 
-    lv_nuttx_image_cache_init();
+    lv_nuttx_image_cache_init(LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP);
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
     lv_nuttx_profiler_init();
+#if LV_USE_NUTTX_TRACE_FILE
+    lv_nuttx_profiler_set_file(dsc->trace_path);
+#endif
 #endif
 
     if(result) {
@@ -166,6 +179,15 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
             }
         }
 #endif
+
+#if LV_USE_NUTTX_MOUSE
+        if(dsc->mouse_path) {
+            lv_indev_t * indev = lv_nuttx_mouse_create(dsc->mouse_path);
+            if(result) {
+                result->mouse_indev = indev;
+            }
+        }
+#endif
     }
 
 #else
@@ -185,6 +207,8 @@ void lv_nuttx_run(lv_nuttx_result_t * result)
 
         /* Minimum sleep of 1ms */
         idle = idle ? idle : 1;
+        /* Handle LV_DEF_REFR_PERIOD */
+        idle = idle != LV_NO_TIMER_READY ? idle : LV_DEF_REFR_PERIOD;
         usleep(idle * 1000);
     }
 #endif
@@ -237,6 +261,9 @@ void lv_nuttx_deinit(lv_nuttx_result_t * result)
         lv_nuttx_cache_deinit();
         lv_nuttx_image_cache_deinit();
 
+#if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
+        lv_nuttx_profiler_deinit();
+#endif
         lv_free(nuttx_ctx_p);
         nuttx_ctx_p = NULL;
     }

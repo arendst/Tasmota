@@ -29,7 +29,7 @@
 
 #ifdef _WIN32
     #include <malloc.h>
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__ZEPHYR__)
     #include <alloca.h>
 #else
     #include <stdlib.h>
@@ -301,7 +301,8 @@ bool isIgnoreUnsupportedLogElements(TVG_UNUSED const char* tagName)
 bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data)
 {
     const char *itr = buf, *itrEnd = buf + bufLength;
-    char* tmpBuf = (char*)malloc(bufLength + 1);
+    char* tmpBuf = (char*)lv_malloc(bufLength + 1);
+    LV_ASSERT_MALLOC(tmpBuf);
 
     if (!buf || !func || !tmpBuf) goto error;
 
@@ -366,11 +367,11 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
     }
 
 success:
-    free(tmpBuf);
+    lv_free(tmpBuf);
     return true;
 
 error:
-    free(tmpBuf);
+    lv_free(tmpBuf);
     return false;
 }
 
@@ -495,13 +496,13 @@ bool simpleXmlParseW3CAttribute(const char* buf, unsigned bufLength, simpleXMLAt
         key[0] = '\0';
         val[0] = '\0';
 
-        if (next == nullptr && sep != nullptr) {
+        if (sep != nullptr && next == nullptr) {
             memcpy(key, buf, sep - buf);
             key[sep - buf] = '\0';
 
             memcpy(val, sep + 1, end - sep - 1);
             val[end - sep - 1] = '\0';
-        } else if (sep < next && sep != nullptr) {
+        } else if (sep != nullptr && sep < next) {
             memcpy(key, buf, sep - buf);
             key[sep - buf] = '\0';
 
@@ -525,8 +526,9 @@ bool simpleXmlParseW3CAttribute(const char* buf, unsigned bufLength, simpleXMLAt
             }
         }
 
+        if (!next) break;
         buf = next + 1;
-    } while (next != nullptr);
+    } while (true);
 
     return true;
 }
@@ -563,7 +565,7 @@ const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char
         if (*p == '.') break;
     }
 
-    if (p == itr) *tag = strdup("all");
+    if (p == itr) *tag = lv_strdup("all");
     else *tag = strDuplicate(itr, p - itr);
 
     if (p == itrEnd) *name = nullptr;

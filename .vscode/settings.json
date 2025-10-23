@@ -71,11 +71,5 @@
         "commands": "platformio-ide.rebuildProjectIndex"
       }
     ],
-    "files.associations": {
-      "array": "cpp",
-      "string": "cpp",
-      "functional": "cpp",
-      "*.tcc": "cpp",
-      "sstream": "cpp"
-    }
+    "C_Cpp.dimInactiveRegions": false
   }

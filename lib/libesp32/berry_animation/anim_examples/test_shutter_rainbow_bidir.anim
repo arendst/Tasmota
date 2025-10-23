@@ -1,0 +1,65 @@
+# Demo Shutter Rainbow Bidir
+#
+# Shutter from left to right iterating in all colors, then right to left
+  
+template shutter_bidir {
+  param colors type palette
+  param duration
+
+  set strip_len = strip_length()
+  set shutter_size = sawtooth(min_value = 0, max_value = strip_len + 0, duration = duration)
+
+  color col1 = color_cycle(palette=colors, cycle_period=0)
+  color col2 = color_cycle(palette=colors, cycle_period=0)
+  col2.next = 1
+
+  # shutter moving from left to right
+  animation shutter_lr_animation = beacon_animation(
+    color = col2
+    back_color = col1
+    pos = 0
+    beacon_size = shutter_size + 0
+    slew_size = 0
+    priority = 5
+  )
+
+  # shutter moving from right to left
+  animation shutter_rl_animation = beacon_animation(
+    color = col1
+    back_color = col2
+    pos = 0
+    beacon_size = strip_len - shutter_size
+    slew_size = 0 + 0
+    priority = 5
+  )
+
+  sequence shutter_seq repeat forever {
+    repeat col1.palette_size times {
+      log("begin 1")
+      restart shutter_size
+      play shutter_lr_animation for duration
+      col1.next = 1
+      col2.next = 1
+    }
+    repeat col1.palette_size times {
+      log("begin 2")
+      restart shutter_size
+      play shutter_rl_animation for duration
+      col1.next = 1
+      col2.next = 1
+    }
+  }
+  
+  run shutter_seq
+}
+
+palette rainbow_with_white = [ red
+  orange
+  yellow
+  green,      # comma left on-purpose to test transpiler
+  blue        # need for a lighter blue
+  indigo
+  white
+]
+
+shutter_bidir(rainbow_with_white, 1.5s)

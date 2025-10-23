@@ -531,7 +531,7 @@ void CmndSunrise(void) {
 #define WEB_HANDLE_TIMER "tm"
 
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
 
 #ifdef USE_UNISHOX_COMPRESSION
 const size_t HTTP_TIMER_SCRIPT1_SIZE = 106;
@@ -688,51 +688,53 @@ const char HTTP_TIMER_SCRIPT3[] PROGMEM =
 
 #ifdef USE_UNISHOX_COMPRESSION
 #ifdef USE_SUNRISE
-const size_t HTTP_TIMER_SCRIPT4_SIZE = 548;
+const size_t HTTP_TIMER_SCRIPT4_SIZE = 579;
 const char HTTP_TIMER_SCRIPT4_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x59\x47\x76\x8E\xA6\x77\x8F\x69\x9D\xFD\x69\xD5\xC7\x56\x1D"
                              "\x43\x0E\xA3\x51\xD5\xE3\xC6\x98\x3B\xA1\xD1\xE8\x71\x23\xBC\x7B\x4B\xD4\x77\x4E"
                              "\xF1\xE0\xF7\x07\x47\xCA\x3C\x61\xF0\x4C\x0C\x58\xD7\xD4\x74\x1E\x74\x4C\x26\x35"
                              "\xF5\x78\x87\x19\x10\x61\x5F\xBC\x5D\x63\x59\xDD\x3E\xE8\x23\xEC\xEF\x1E\x0C\x67"
                              "\xCE\xEE\x9F\x0E\x33\xC1\x69\xE9\x87\x40\x9F\x0F\x50\xA3\xC6\x9D\xB3\xB6\x77\x8F"
                              "\x6E\x1E\xF6\x9E\xF9\xD3\xD4\x64\x13\x3A\x07\xEF\x15\x33\x65\x1F\x0F\x60\xEB\x0C"
-                             "\xD0\x7B\xF8\x2F\x84\x3C\xCF\x23\xE8\xE3\xE2\x36\x1E\x03\xC0\xB3\xE0\x85\x20\xC6"
-                             "\x75\x1D\x63\xEF\x47\x85\x51\xE7\xD9\xF1\xB6\x11\xE0\xF6\x1E\xE6\x0C\x53\x1F\x1D"
-                             "\x81\x08\x78\x3D\x87\x8F\x1F\x06\x51\xEF\x07\x47\xBE\x78\x18\x7C\x3B\xBE\x3F\x0F"
-                             "\xC3\x94\x8E\xF1\xFA\xB3\xC1\x31\xC7\x74\xFB\x1C\x7D\x9D\xB1\x87\x78\xE8\x18\xA6"
-                             "\x19\xA3\x10\xF8\x72\x1E\x08\x7A\x8E\xE9\xDE\x3C\x1A\x8F\x87\x77\xC7\xE1\xF8\x72"
-                             "\x43\xBC\x7E\x99\x1B\x08\xC1\xE3\x4C\x1D\xD3\x51\xE8\x72\x33\xBC\x7B\x48\xD4\x7C"
-                             "\x3E\xCE\x33\xEC\xED\x91\xA8\xF0\x7B\x8D\x5E\x3B\xA7\xD9\xE4\x34\x7C\xFB\x3B\xC7"
-                             "\x43\x3B\x08\x5B\x3E\x1A\x81\x1B\x85\xB3\x9E\x20\x41\xE1\x50\x10\x74\x43\xBA\x72"
-                             "\x71\xDB\x2D\x3B\xC7\x78\xFD\x1C\x87\x82\x63\x8E\xE9\xF6\x3E\x7D\x9D\xBD\x04\x5D"
-                             "\x20\x61\xE0\xF7\x69\x83\xBA\x7D\x08\x7E\x1C\x64\x08\x78\x51\xCA\xB2\x04\x1D\x34"
-                             "\xD5\xE3\xBA\x7D\x9E\x42\x1C\x84\x08\x99\xD8\xC3\xB6\x72\x10\x21\xF0\x28\x73\xC7"
-                             "\x78\xFD\x59\x02\x0D\xC1\x87\x21\xF6\x77\x8E\x85\xE6\x13\x0E\x98\x85\xBC\x23\x36"
-                             "\x1F\x06\x1E\x0F\x70\x20\xE0\x67\x26\x90\x21\xE9\xFF\x38\xCF\xB2\x04\x7D\x38\x10"
-                             "\x6D\x9C\xB8\x40\x87\x6E\xC1\x26\xD9\xEE";
+                             "\xD0\x7B\xF8\x2F\x84\x3C\xCC\xEF\xE7\x74\xEB\x3A\xC3\x3F\x75\x63\x8E\xF1\xE0\x3C"
+                             "\x0B\x3E\x08\xF3\xE8\xD9\x47\x78\xF0\x63\x3A\x8E\xB1\xF7\xA3\xC2\xA8\xF3\xEC\xF8"
+                             "\xDB\x08\xF0\x7B\x0F\x73\x05\xEC\xC0\xC7\xC6\x82\x2E\x61\x40\x83\x98\x02\x5E\x5A"
+                             "\x3B\x02\x10\xF0\x7B\x0F\x1E\x3E\x0C\xA3\xDE\x0E\x8F\x7C\xF0\x30\xF8\x77\x7C\x7E"
+                             "\x1F\x87\x29\x1D\xE3\xF5\x67\x82\x63\x8E\xE9\xF6\x38\xFB\x3B\x63\x0E\xF1\xD0\x31"
+                             "\x4C\x33\x46\x21\xF0\xE4\x3C\x10\xF5\x1D\xD3\xBC\x78\x35\x1F\x0E\xEF\x8F\xC3\xF0"
+                             "\xE4\x87\x78\xFD\x32\x36\x11\x83\xC6\x98\x3B\xA6\xA3\xD0\xE4\x67\x78\xF6\x91\xA8"
+                             "\xF8\x7D\x9C\x67\xD9\xDB\x23\x51\xE0\xF7\x1A\xBC\x77\x4F\xB3\xC8\x68\xF9\xF6\x77"
+                             "\x8E\x86\x76\x10\xB6\x7C\x35\x02\x37\x0F\x47\x3C\x40\x83\xC3\x98\x20\xE8\x87\x74"
+                             "\xE4\xE3\xB6\x5A\x77\x8E\xF1\xFA\x39\x0F\x04\xC7\x1D\xD3\xEC\x7C\xFB\x3B\x7A\x08"
+                             "\xBA\x40\xC3\xC1\xEE\xD3\x07\x74\xFA\x10\xFC\x38\xC8\x10\xF0\xA3\x95\x64\x08\x3A"
+                             "\x69\xAB\xC7\x74\xFB\x3C\x84\x39\x08\x11\x33\xB1\x87\x6C\xE4\x20\x43\xE0\x50\xE7"
+                             "\x8E\xF1\xFA\xB2\x04\x1B\x83\x0E\x43\xEC\xEF\x1D\x0B\xCC\x26\x1D\x31\x0B\x78\x46"
+                             "\x6C\x3E\x0C\x3C\x1E\xE0\x41\xC0\xCE\x4D\x20\x43\xD3\xFE\x71\x9F\x64\x08\xFA\x70"
+                             "\x20\xDB\x39\x70\x81\x0E\xDD\x82\x4D\xB3\xDC";
 #define  HTTP_TIMER_SCRIPT4       Decompress(HTTP_TIMER_SCRIPT4_COMPRESSED,HTTP_TIMER_SCRIPT4_SIZE).c_str()
 #else
-const size_t HTTP_TIMER_SCRIPT4_SIZE = 620;
+const size_t HTTP_TIMER_SCRIPT4_SIZE = 651;
 const char HTTP_TIMER_SCRIPT4_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x59\x47\x76\x8E\xA6\x77\x8F\x69\x9D\xFD\x69\xD5\xC7\x56\x1D"
                              "\x43\x0E\xA3\x51\xD5\xE3\xC6\x98\x3B\xA1\xD1\xE8\x71\x23\xBC\x7B\x4B\xD4\x77\x4E"
                              "\xF1\xE0\xF7\x07\x47\xCA\x3C\x61\xF0\x4C\x0C\x58\xD7\xD4\x74\x1E\x74\x4C\x26\x35"
                              "\xF5\x78\x87\x19\x10\x61\x5F\xBC\x5D\x63\x59\xDD\x3E\xE8\x23\xEC\xEF\x1E\x0C\x67"
                              "\xCE\xEE\x9F\x0E\x33\xC1\x69\xE9\x87\x40\x9F\x0F\x50\xA3\xC6\x9D\xB3\xB6\x77\x8F"
                              "\x6E\x1E\xF6\x9E\xF9\xD3\xD4\x64\x13\x3A\x07\xEF\x15\x33\x65\x1F\x0F\x60\xEB\x0C"
-                             "\xD0\x7B\xF8\x2F\x84\x3C\xCF\x23\xE8\xE3\xE2\x36\x1E\x03\xC0\xB3\xE0\x85\x20\xC6"
-                             "\x75\x1D\x63\xEF\x47\x85\x51\xE7\xD9\xF1\xB6\x11\xE0\xF6\x1E\xE6\x0C\x53\x1F\x1D"
-                             "\x81\x08\x78\x3D\x87\x8F\x1F\x06\x51\xEF\x07\x47\xBE\x78\x18\x7C\xF1\xFA\x38\xC8"
-                             "\xD8\x73\xC4\x46\x08\xC1\xE0\xD4\x7C\x21\xB7\x42\x8E\x86\x02\xCC\xF9\xDD\x18\x76"
-                             "\x1C\xE6\x77\x8F\x05\xA6\x0E\xE9\xA8\xF4\x39\x19\xDE\x3D\xA4\x6A\x3E\x1F\x67\x19"
-                             "\xF6\x76\xC8\xD4\x78\x3D\xC6\xAF\x1D\xD3\xEC\xF2\x15\x87\xD9\xDE\x3A\x19\xD8\x42"
-                             "\xD9\xF0\xD4\x78\x35\x1F\x06\x1F\x47\xD1\xCE\x64\x0A\x78\x40\xDD\x04\x8C\x20\xEE"
-                             "\xF8\xFC\x3F\x0E\x48\x77\x8F\xD3\x23\x61\x18\x05\x4C\x38\x7C\x11\xB0\xE0\x45\xE2"
-                             "\x8C\xE7\x88\x10\x78\x9C\x18\x7C\x3B\xBE\x3F\x0F\xC3\xBA\x72\x71\xDB\x2D\x3B\xC7"
-                             "\x78\xFD\x1C\x87\x82\x63\x8E\xE9\xF6\x3E\x7D\x9D\xBD\x3B\xC7\x40\xC5\x30\xCD\x18"
-                             "\x87\xC1\x87\x83\xDD\xA6\x0E\xE9\xF4\x21\xF8\x71\x90\x21\xE1\x47\x2A\x2B\xC8\x10"
-                             "\x74\xD3\x57\x8E\xE9\xF6\x79\x08\x72\x10\x22\x67\x63\x0E\xD9\xC8\x78\x20\x42\xBC"
-                             "\x73\xC7\x78\xFD\x59\x02\x0D\xC1\x87\x21\xF6\x77\x8E\x85\xE6\x13\x0E\x98\x85\xBC"
-                             "\x23\x36\x1F\x06\x1E\x0F\x70\x20\xE0\x67\x26\x90\x21\xE9\xFF\x38\xCF\xB2\x04\x7D"
-                             "\x38\x10\x6D\x9C\xB8\x40\x87\x6E\xC1\x26\xD9\xEE";
+                             "\xD0\x7B\xF8\x2F\x84\x3C\xCC\xEF\xE7\x74\xEB\x3A\xC3\x3F\x75\x63\x8E\xF1\xE0\x3C"
+                             "\x0B\x3E\x08\xF3\xE8\xD9\x47\x78\xF0\x63\x3A\x8E\xB1\xF7\xA3\xC2\xA8\xF3\xEC\xF8"
+                             "\xDB\x08\xF0\x7B\x0F\x73\x05\xEC\xC0\xC7\xC6\x82\x2E\x61\x40\x83\x98\x02\x5E\x5A"
+                             "\x3B\x02\x10\xF0\x7B\x0F\x1E\x3E\x0C\xA3\xDE\x0E\x8F\x7C\xF0\x30\xF9\xE3\xF4\x71"
+                             "\x91\xB0\xE7\x88\x8C\x11\x83\xC1\xA8\xF8\x43\x6E\x85\x1D\x0C\x05\x99\xF3\xBA\x30"
+                             "\xEC\x39\xCC\xEF\x1E\x0B\x4C\x1D\xD3\x51\xE8\x72\x33\xBC\x7B\x48\xD4\x7C\x3E\xCE"
+                             "\x33\xEC\xED\x91\xA8\xF0\x7B\x8D\x5E\x3B\xA7\xD9\xE4\x2B\x0F\xB3\xBC\x74\x33\xB0"
+                             "\x85\xB3\xE1\xA8\xF0\x6A\x3E\x0C\x3E\x8F\xA3\x9C\xC8\x14\xF0\x81\xBA\x09\x18\x41"
+                             "\xDD\xF1\xF8\x7E\x1C\x90\xEF\x1F\xA6\x46\xC2\x30\x0A\x98\x70\xF8\x23\x61\xC0\x8B"
+                             "\xC6\x11\xCF\x10\x20\xF1\x76\x30\xF8\x77\x7C\x7E\x1F\x87\x74\xE4\xE3\xB6\x5A\x77"
+                             "\x8E\xF1\xFA\x39\x0F\x04\xC7\x1D\xD3\xEC\x7C\xFB\x3B\x7A\x77\x8E\x81\x8A\x61\x9A"
+                             "\x31\x0F\x83\x0F\x07\xBB\x4C\x1D\xD3\xE8\x43\xF0\xE3\x20\x43\xC2\x8E\x55\x90\x20"
+                             "\xE9\xA6\xAF\x1D\xD3\xEC\xF2\x10\xE4\x20\x44\xCE\xC6\x1D\xB3\x90\xF0\x40\x85\x78"
+                             "\xE7\x8E\xF1\xFA\xB2\x04\x1B\x83\x0E\x43\xEC\xEF\x1D\x0B\xCC\x26\x1D\x31\x0B\x78"
+                             "\x46\x6C\x3E\x0C\x3C\x1E\xE0\x41\xC0\xCE\x4D\x20\x43\xD3\xFE\x71\x9F\x64\x08\xFA"
+                             "\x70\x20\xDB\x39\x70\x81\x0E\xDD\x82\x4D\xB3\xDC";
 #define  HTTP_TIMER_SCRIPT4       Decompress(HTTP_TIMER_SCRIPT4_COMPRESSED,HTTP_TIMER_SCRIPT4_SIZE).c_str()
 #endif //USE_SUNRISE
 #else
@@ -742,8 +744,8 @@ const char HTTP_TIMER_SCRIPT4[] PROGMEM =
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background:#%06x;color:#%06x;font-weight:normal;\"}"  // COLOR_TIMER_TAB_BACKGROUND, COLOR_TIMER_TAB_TEXT
-    "e.style.cssText=\"background:#%06x;color:#%06x;font-weight:bold;\";"  // COLOR_FORM, COLOR_TEXT, Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background:var(--c_tab);color:var(--c_tabtxt);font-weight:normal;\"}"
+    "e.style.cssText=\"background:var(--c_frm);color:vat(--c_txt);font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -776,7 +778,7 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
     "}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
     "if(%d>0){"                                                   // Create Output and Action drop down boxes (TasmotaGlobal.devices_present)
-      "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1'></select>\";"
+      "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:80px;' id='p1'></select>\";"
       "o=qs('#p1');ce('" D_OFF "',o);ce('" D_ON "',o);ce('" D_TOGGLE "',o);"  // Create offset direction select options
 #if defined(USE_RULES) || defined(USE_SCRIPT)
       "ce('" D_RULE "',o);"
@@ -795,25 +797,21 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
     "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs ((TasmotaGlobal.devices_present > 16) ? 16 : TasmotaGlobal.devices_present)
     "var a='" D_DAY3LIST "';"
-
-//    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
-//    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><label for='w\"+i+\"'>\"+a.substring(i*3,(i*3)+3)+\"</label> \"}"
-    "s='';for(i=0;i<7;i++){s+=\"<label><input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b></label> \"}"
-
+    "s='';for(i=0;i<7;i++){s+=\"<label><input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b></label> \";if(i==3){s+=\"<br>\"}}"
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}"
   "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{float:left;border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
-  "<fieldset style='min-width:470px;text-align:center;'>"
+  "<fieldset style='text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br><label><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b></label><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
-  "' hidden><div id='bt'></div><br><br><br>"
+  "' hidden><div id='bt'></div><br><br><br><br><br>"
   "<div id='oa' name='oa'></div><br>"
   "<div>"
   "<label><input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b></label>&emsp;"
@@ -873,10 +871,10 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, TasmotaGlobal.devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT4, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, (TasmotaGlobal.devices_present > 16) ? 16 : TasmotaGlobal.devices_present);  // Power field is 4-bit allowing 0 to 15 devices
-  WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
+  WSContentSendStyle_P(HTTP_TIMER_STYLE);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings->flag3.timers_enable) ? PSTR(" checked") : "");  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings->timer[i].data);

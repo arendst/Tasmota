@@ -35,4 +35,4 @@ class be_class_zcl_attribute_list_ntv (scope: global, name: zcl_attribute_list_n
 }
 @const_object_info_end */
 
-#endif // USE_LIGHT
+#endif // USE_ZIGBEE

@@ -1,0 +1,23 @@
+# Cylon Red Eye
+# Automatically adapts to the length of the strip
+
+template cylon_effect {
+  param eye_color type color
+  param back_color type color
+  param duration
+  
+  set strip_len = strip_length()
+
+  animation eye_animation = beacon_animation(
+    color = eye_color
+    back_color = back_color
+    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = duration)
+    beacon_size = 3       # small 3 pixels eye
+    slew_size = 2         # with 2 pixel shading around
+    priority = 5
+  )
+
+  run eye_animation
+}
+
+cylon_effect(red, transparent, 3s)

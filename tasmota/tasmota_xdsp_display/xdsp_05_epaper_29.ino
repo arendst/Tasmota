@@ -155,15 +155,10 @@ void EpdRefresh29(void)  // Every second
 
     EpdDrawStringAt(0, 0, tftdt, COLORED, 0);
 */
-    switch (Settings->display_mode) {
-      case 1:  // Text
-      case 2:  // Local
-      case 3:  // Local
-      case 4:  // Mqtt
-      case 5:  // Mqtt
-        EpdPrintLog29();
-        renderer->Updateframe();
-        break;
+
+    if (Settings->display_mode > DM_USER_CONTROL) {
+      EpdPrintLog29();
+      renderer->Updateframe();
     }
 
 //    EpdDisplayFrame();

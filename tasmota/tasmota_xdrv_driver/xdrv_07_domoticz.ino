@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_DOMOTICZ
+#ifndef USE_UFILESYS
 /*********************************************************************************************\
  * Domoticz support
  *
@@ -140,12 +141,12 @@ void MqttPublishDomoticzFanState(void) {
 }
 
 void DomoticzUpdateFanState(void) {
-  if (Domoticz) {
-    if (Domoticz->update_flag) {
-      MqttPublishDomoticzFanState();
-    }
-    Domoticz->update_flag = true;
+  if (!Domoticz) { return; }  // No MQTT enabled or unable to allocate memory
+
+  if (Domoticz->update_flag) {
+    MqttPublishDomoticzFanState();
   }
+  Domoticz->update_flag = true;
 }
 #endif  // USE_SONOFF_IFAN
 
@@ -180,12 +181,12 @@ void MqttPublishDomoticzPowerState(uint8_t device) {
 }
 
 void DomoticzUpdatePowerState(uint8_t device) {
-  if (Domoticz) {
-    if (Domoticz->update_flag) {
-      MqttPublishDomoticzPowerState(device);
-    }
-    Domoticz->update_flag = true;
+  if (!Domoticz) { return; }  // No MQTT enabled or unable to allocate memory
+
+  if (Domoticz->update_flag) {
+    MqttPublishDomoticzPowerState(device);
   }
+  Domoticz->update_flag = true;
 }
 
 /*********************************************************************************************/
@@ -400,16 +401,16 @@ void DomoticzSendSwitch(uint32_t type, uint32_t index, uint32_t state) {
   MqttPublish(domoticz_in_topic);
 }
 
-bool DomoticzSendKey(uint8_t key, uint8_t device, uint8_t state, uint8_t svalflg) {
-  bool result = false;
+bool DomoticzSendKey(uint32_t key, uint32_t device, uint32_t state, uint32_t svalflg) {
+  if (!Domoticz) { return false; }  // No MQTT enabled or unable to allocate memory
 
   if (device <= MAX_DOMOTICZ_IDX) {
     if ((Settings->domoticz_key_idx[device -1] || Settings->domoticz_switch_idx[device -1]) && (svalflg)) {
       DomoticzSendSwitch(0, (key) ? Settings->domoticz_switch_idx[device -1] : Settings->domoticz_key_idx[device -1], state);
-      result = true;
+      return true;
     }
   }
-  return result;
+  return false;
 }
 
 /*********************************************************************************************\
@@ -454,10 +455,6 @@ void DomoticzSensor(uint8_t idx, char *data) {
   }
 }
 
-uint8_t DomoticzHumidityState(float h) {
-  return (!h) ? 0 : (h < 40) ? 2 : (h > 70) ? 3 : 1;
-}
-
 void DomoticzSensor(uint8_t idx, int value) {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d"), value);
@@ -481,6 +478,10 @@ void DomoticzFloatSensor(uint8_t idx, float value) {
   char data[FLOATSZ];
   dtostrfd(value, resolution, data);
   DomoticzSensor(idx, data);
+}
+
+uint8_t DomoticzHumidityState(float h) {
+  return (!h) ? 0 : (h < 40) ? 2 : (h > 70) ? 3 : 1;
 }
 
 //void DomoticzTempHumPressureSensor(float temp, float hum, float baro = -1);
@@ -636,7 +637,7 @@ void CmndDomoticzSend(void) {
 #define WEB_HANDLE_DOMOTICZ "dm"
 
 const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>";
 
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend>"
@@ -769,4 +770,5 @@ bool Xdrv07(uint32_t function) {
   return result;
 }
 
+#endif  // No USE_UFILESYS
 #endif  // USE_DOMOTICZ

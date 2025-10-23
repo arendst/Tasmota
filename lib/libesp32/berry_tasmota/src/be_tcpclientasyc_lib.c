@@ -5,8 +5,6 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_WEBCLIENT
-
 extern int wc_tcpasync_init(bvm *vm);
 extern int wc_tcpasync_deinit(bvm *vm);
 
@@ -42,5 +40,3 @@ class be_class_tcpclientasync (scope: global, name: tcpclientasync) {
     readbytes, func(wc_tcpasync_readbytes)
 }
 @const_object_info_end */
-
-#endif // USE_WEBCLIENT

@@ -183,19 +183,17 @@
 
 #define USE_TLS
 #define USE_WEBSERVER
-#define USE_WEBCLIENT
-#define USE_WEBCLIENT_HTTPS
 
 #undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
 
-#if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
 #if CONFIG_ETH_ENABLED                               // Check for Ethernet support in Arduino libs
 //  #undef USE_MQTT_TLS
 //  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
   #define USE_SPI                                    // Make SPI Ethernet adapters useable (+124 bytes)
   #define USE_ETHERNET
 #endif  // CONFIG_ETH_ENABLED
-#endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
+#endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
 
 #endif  // FIRMWARE_SAFEBOOT
 
@@ -211,7 +209,8 @@
 #endif
 
 #define USE_WEBCAM
-#define ENABLE_RTSPSERVER
+  #define USE_WEBCAM_V2
+  #define ENABLE_RTSPSERVER
 #define USE_SPI
 #define USE_SDCARD
 
@@ -300,8 +299,6 @@
 #undef USE_DOMOTICZ
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
-
-#define USE_WEBCLIENT_HTTPS
 
 #define USE_I2S
 #define USE_SPI
@@ -507,8 +504,6 @@
 #undef USE_DOMOTICZ
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
-
-#define USE_WEBCLIENT_HTTPS
 
 #define USE_ZIGBEE
 #define USE_TCP_BRIDGE

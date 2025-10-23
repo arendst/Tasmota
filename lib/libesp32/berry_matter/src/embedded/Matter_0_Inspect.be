@@ -87,9 +87,18 @@ matter.inspect = inspect
 #
 # Build a consolidated map of all the `CLUSTERS` static vars
 # from the inheritance hierarchy
+#
+# `cl` can be a the class to get the superclass, or a `map`
 #@ solidify:matter.consolidate_clusters,weak
 def consolidate_clusters(cl, m)
-  var cl_parent = (super(cl) != nil) ? super(cl).CLUSTERS : {}
+  var cl_parent
+  if cl == nil
+    cl_parent = {}
+  elif type(cl) == 'class'
+    cl_parent = (super(cl) != nil) ? super(cl).CLUSTERS : {}
+  elif type(cl) == 'instance'
+    cl_parent = cl
+  end
   var ret = {}
   # clone cl_parent
   for k: cl_parent.keys()

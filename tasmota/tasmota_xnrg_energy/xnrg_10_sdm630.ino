@@ -322,6 +322,9 @@ void Sdm630SnsInit(void)
   uint8_t result = Sdm630Modbus->Begin(SDM630_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Serial UART%d"), Sdm630Modbus->getUart());
+#endif
     Energy->phase_count = 3;
     Energy->frequency_common = true;             // Use common frequency
   } else {

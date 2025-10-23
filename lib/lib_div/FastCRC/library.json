@@ -1,0 +1,26 @@
+{
+  "name": "FastCRC",
+  "keywords": "CRC7, CRC8, CRC16, CRC32",
+  "description": "Fast CRC routines for Arduino and PC (Teensy 3.x: CRC in hardware)",
+  "exclude": [
+    "examples",
+    "examples_PC"
+  ],  
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/FrankBoesing/FastCRC"
+  },
+  "authors":
+  [
+    {
+      "name": "Frank Bösing",
+      "email": "f.boesing@gmx.de",
+      "url": "https://github.com/FrankBoesing/FastCRC",
+      "maintainer": true
+    }
+  ],
+  "version": "1.44",
+  "frameworks": "arduino",
+  "platforms": "*"
+}

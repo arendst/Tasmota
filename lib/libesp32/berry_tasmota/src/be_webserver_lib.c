@@ -14,6 +14,7 @@
 
 extern int w_webserver_member(bvm *vm);
 extern int w_webserver_on(bvm *vm);
+extern int w_webserver_remove_route(bvm *vm);
 extern int w_webserver_state(bvm *vm);
 
 extern int w_webserver_check_privileged_access(bvm *vm);
@@ -27,6 +28,7 @@ extern int w_webserver_content_flush(bvm *vm);
 extern int w_webserver_content_stop(bvm *vm);
 extern int w_webserver_content_close(bvm *vm);
 extern int w_webserver_content_button(bvm *vm);
+extern int w_webserver_content_status_sticker(bvm *vm);
 
 extern int w_webserver_html_escape(bvm *vm);
 
@@ -41,7 +43,7 @@ extern int w_webserver_header(bvm *vm);
 // model from Arduino framework.
 // We use our own list of callbacks
 
-#define WEBSERVER_REQ_HANDLER_HOOK_MAX       16      // max number of callbacks, each callback requires a distinct address
+#define WEBSERVER_REQ_HANDLER_HOOK_MAX       32      // max number of callbacks, each callback requires a distinct address
 typedef struct be_webserver_callback_hook_t {
   bvm *vm;                // make sure we are using the same VM
   bvalue f;               // the Berry function to call
@@ -69,6 +71,22 @@ WEBSERVER_HOOK_CB(12);
 WEBSERVER_HOOK_CB(13);
 WEBSERVER_HOOK_CB(14);
 WEBSERVER_HOOK_CB(15);
+WEBSERVER_HOOK_CB(16);
+WEBSERVER_HOOK_CB(17);
+WEBSERVER_HOOK_CB(18);
+WEBSERVER_HOOK_CB(19);
+WEBSERVER_HOOK_CB(20);
+WEBSERVER_HOOK_CB(21);
+WEBSERVER_HOOK_CB(22);
+WEBSERVER_HOOK_CB(23);
+WEBSERVER_HOOK_CB(24);
+WEBSERVER_HOOK_CB(25);
+WEBSERVER_HOOK_CB(26);
+WEBSERVER_HOOK_CB(27);
+WEBSERVER_HOOK_CB(28);
+WEBSERVER_HOOK_CB(29);
+WEBSERVER_HOOK_CB(30);
+WEBSERVER_HOOK_CB(31);
 
 // array of callbacks
 static const berry_webserver_cb_t berry_callback_array[WEBSERVER_REQ_HANDLER_HOOK_MAX] = {
@@ -88,15 +106,44 @@ static const berry_webserver_cb_t berry_callback_array[WEBSERVER_REQ_HANDLER_HOO
   berry_webserver_cb_13,
   berry_webserver_cb_14,
   berry_webserver_cb_15,
+  berry_webserver_cb_16,
+  berry_webserver_cb_17,
+  berry_webserver_cb_18,
+  berry_webserver_cb_19,
+  berry_webserver_cb_20,
+  berry_webserver_cb_21,
+  berry_webserver_cb_22,
+  berry_webserver_cb_23,
+  berry_webserver_cb_24,
+  berry_webserver_cb_25,
+  berry_webserver_cb_26,
+  berry_webserver_cb_27,
+  berry_webserver_cb_28,
+  berry_webserver_cb_29,
+  berry_webserver_cb_30,
+  berry_webserver_cb_31,
 };
 
 // Return slot number
 // -1 if no more available
 berry_webserver_cb_t be_webserver_allocate_hook(bvm *vm, int32_t slot, bvalue *f) {
   if (slot < 0 || slot >= WEBSERVER_REQ_HANDLER_HOOK_MAX) return NULL;   // invalid call, avoid a crash
+  if (be_isgcobj(f)) {
+    be_gc_fix_set(vm, f->v.gc, btrue);    // mark the function as non-gc
+  }
   be_webserver_cb_hooks[slot].vm = vm;
   be_webserver_cb_hooks[slot].f = *f;
   return berry_callback_array[slot];
+}
+
+bbool be_webserver_deallocate_hook(bvm *vm, int32_t slot) {
+  if (slot < 0 || slot >= WEBSERVER_REQ_HANDLER_HOOK_MAX) return bfalse;   // invalid call, avoid a crash
+  bvalue f = be_webserver_cb_hooks[slot].f;
+  if (be_isgcobj(&f)) {
+    be_gc_fix_set(vm, f.v.gc, bfalse);    // remove the marker for non-gc
+  }
+  var_setnil(&be_webserver_cb_hooks[slot].f);
+  return btrue;
 }
 
 /*********************************************************************************************\
@@ -143,6 +190,7 @@ module webserver (scope: global) {
     member, func(w_webserver_member)
 
     on, func(w_webserver_on)
+    remove_route, func(w_webserver_remove_route)
     state, func(w_webserver_state)
 
     check_privileged_access, func(w_webserver_check_privileged_access)
@@ -156,6 +204,8 @@ module webserver (scope: global) {
     content_stop, func(w_webserver_content_stop)
     content_close, func(w_webserver_content_close)
     content_button, func(w_webserver_content_button)
+
+    content_status_sticker, func(w_webserver_content_status_sticker)
 
     html_escape, func(w_webserver_html_escape)
 

@@ -236,6 +236,9 @@ void BioPduSnsInit(void)
     {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PDU: Serial UART%d"), BioPduModbus->getUart());
+#endif
     BioPdu.phase = Energy->phase_count - 1;
   }
   else

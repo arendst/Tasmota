@@ -1,0 +1,63 @@
+# Lava Lamp - Slow flowing warm colors
+# Organic movement like a lava lamp
+
+#strip length 60
+
+# Define lava colors (warm oranges and reds)
+palette lava_colors = [
+  (0, 0x330000),    # Dark red
+  (64, 0x660000),   # Medium red
+  (128, 0xCC3300),  # Bright red
+  (192, 0xFF6600),  # Orange
+  (255, 0xFFAA00)   # Yellow-orange
+]
+
+# Base lava animation - very slow color changes
+animation lava_base = rich_palette_animation(palette=lava_colors, cycle_period=15s, transition_type=SINE, brightness=180)
+
+# Add slow-moving lava blobs
+color blob1_pattern = rich_palette(palette=lava_colors, cycle_period=12s, transition_type=SINE, brightness=255)
+animation lava_blob1 = beacon_animation(
+  color=blob1_pattern # color source
+  pos=9               # initial position
+  beacon_size=18      # large blob
+  slew_size=12        # very soft edges
+)
+lava_blob1.priority = 10
+lava_blob1.pos = smooth(min_value=9, max_value=51, duration=20s)  # Very slow movement
+
+color blob2_pattern = rich_palette(palette=lava_colors, cycle_period=10s, transition_type=SINE, brightness=220)
+animation lava_blob2 = beacon_animation(
+  color=blob2_pattern # color source
+  pos=46              # initial position
+  beacon_size=14      # medium blob
+  slew_size=10        # soft edges
+)
+lava_blob2.priority = 8
+lava_blob2.pos = smooth(min_value=46, max_value=14, duration=25s)  # Opposite direction, slower
+
+color blob3_pattern = rich_palette(palette=lava_colors, cycle_period=8s, transition_type=SINE, brightness=200)
+animation lava_blob3 = beacon_animation(
+  color=blob3_pattern # color source
+  pos=25              # initial position
+  beacon_size=10      # smaller blob
+  slew_size=8         # soft edges
+)
+lava_blob3.priority = 6
+lava_blob3.pos = smooth(min_value=25, max_value=35, duration=18s)  # Small movement range
+
+# Add subtle heat shimmer effect
+color shimmer_pattern = rich_palette(palette=lava_colors, cycle_period=6s, transition_type=SINE, brightness=255)
+animation heat_shimmer = twinkle_animation(
+  color=shimmer_pattern # color source
+  density=6             # density (shimmer points)
+  twinkle_speed=1.5s    # twinkle speed (slow shimmer)
+)
+heat_shimmer.priority = 15
+
+# Start all animations
+run lava_base
+run lava_blob1
+run lava_blob2
+run lava_blob3
+run heat_shimmer

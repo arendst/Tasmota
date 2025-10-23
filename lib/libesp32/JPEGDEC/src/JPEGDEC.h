@@ -13,7 +13,7 @@
 //
 #ifndef __JPEGDEC__
 #define __JPEGDEC__
-#if defined( __MACH__ ) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined( ESP_PLATFORM )
+#if defined( __MACH__ ) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined( ESP_PLATFORM ) || defined(_WIN64)
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -27,6 +27,12 @@
 #ifndef PROGMEM
 #define memcpy_P memcpy
 #define PROGMEM
+#endif
+#ifdef _M_X64 //MSVC
+#define __x86_64__
+#define __builtin_bswap16 _byteswap_ushort
+#define __builtin_bswap64 _byteswap_uint64
+#define __builtin_bswap32 _byteswap_ulong
 #endif
 // Cortex-M4/M7 allow unaligned access to SRAM
 #if defined(HAL_ESP32_HAL_H_) || defined(TEENSYDUINO) || defined(ARM_MATH_CM4) || defined(ARM_MATH_CM7) || defined (__x86_64__) || defined(TEENSYDUINO)
@@ -66,6 +72,7 @@
 #define JPEG_LE_PIXELS 16
 #define JPEG_EXIF_THUMBNAIL 32
 #define JPEG_LUMA_ONLY 64
+#define JPEG_USES_DMA 128
 
 #define MCU0 (DCTSIZE * 0)
 #define MCU1 (DCTSIZE * 1)
@@ -83,6 +90,13 @@ typedef int64_t my_long;
 typedef uint32_t my_ulong;
 typedef int32_t my_long;
 #endif
+
+// Supported decode modes
+enum {
+    JPEG_MODE_BASELINE = 0,
+    JPEG_MODE_PROGRESSIVE,
+    JPEG_MODE_INVALID
+};
 
 // Pixel types (defaults to little endian RGB565)
 enum {
@@ -107,7 +121,8 @@ enum {
     JPEG_INVALID_PARAMETER,
     JPEG_DECODE_ERROR,
     JPEG_UNSUPPORTED_FEATURE,
-    JPEG_INVALID_FILE
+    JPEG_INVALID_FILE,
+    JPEG_ERROR_MEMORY
 };
 
 typedef struct buffered_bits
@@ -235,8 +250,11 @@ class JPEGDEC
 {
   public:
     int openRAM(uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw);
-    int openFLASH(uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw);
+    int openFLASH(const uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw);
     int open(const char *szFilename, JPEG_OPEN_CALLBACK *pfnOpen, JPEG_CLOSE_CALLBACK *pfnClose, JPEG_READ_CALLBACK *pfnRead, JPEG_SEEK_CALLBACK *pfnSeek, JPEG_DRAW_CALLBACK *pfnDraw);
+#ifdef __LINUX__
+    int open(const char *szFilename, JPEG_DRAW_CALLBACK *pfnDraw);
+#endif
     int open(void *fHandle, int iDataSize, JPEG_CLOSE_CALLBACK *pfnClose, JPEG_READ_CALLBACK *pfnRead, JPEG_SEEK_CALLBACK *pfnSeek, JPEG_DRAW_CALLBACK *pfnDraw);
     void setFramebuffer(void *pFramebuffer);
     void setCropArea(int x, int y, int w, int h);
@@ -255,11 +273,13 @@ class JPEGDEC
     int getBpp();
     void setUserPointer(void *p);
     int getSubSample();
+    int getJPEGType();
     int hasThumb();
     int getThumbWidth();
     int getThumbHeight();
     int getLastError();
     void setPixelType(int iType); // defaults to little endian
+    int getPixelType();
     void setMaxOutputSize(int iMaxMCUs);
 
   private:

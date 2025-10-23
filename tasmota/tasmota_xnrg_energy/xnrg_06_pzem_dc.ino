@@ -43,6 +43,7 @@ struct PZEMDC_Data {
   uint8_t send_retry;
   uint8_t channel;
   uint8_t address;
+  uint8_t addr[ENERGY_MAX_PHASES];
   uint8_t range;
   uint8_t address_step;
 } *PzemDc = nullptr; // Will be dynamically allocated in PzemDcDrvInit() if GPIO in use
@@ -72,6 +73,7 @@ void PzemDcEverySecond(void)
     } else {
       Energy->data_valid[PzemDc->channel] = 0;
       if (8 == registers) {
+        PzemDc->addr[PzemDc->channel] = PZEM_DC_DEVICE_ADDRESS + PzemDc->channel;
 
         //           0     1     2     3     4     5     6     7           = ModBus register
         //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20  = Buffer index
@@ -128,6 +130,9 @@ void PzemDcSnsInit(void)
   uint8_t result = PzemDc->modbus->Begin(9600, SERIAL_8N2);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PDC: Serial UART%d"), PzemDc->modbus->getUart());
+#endif
     Energy->type_dc = true;
     Energy->phase_count = ENERGY_MAX_PHASES;  // Start off with three channels
     PzemDc->channel = 0;
@@ -178,6 +183,20 @@ bool PzemDcCommand(void)
   return serviced;
 }
 
+void PzemDcShow(bool json) {
+  float address[ENERGY_MAX_PHASES];
+  for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
+    address[i] = PzemDc->addr[i];
+  }
+  if (json) {
+    ResponseAppend_P(PSTR(",\"Address\":%s"), EnergyFmt(address, 0));
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_SNS_ADDRESS, WebEnergyFmt(address, 0));
+#endif  // USE_WEBSERVER
+  }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -190,6 +209,14 @@ bool Xnrg06(uint32_t function)
     case FUNC_ENERGY_EVERY_SECOND:
       if (TasmotaGlobal.uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
       break;
+    case FUNC_JSON_APPEND:
+      PzemDcShow(1);
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_COL_SENSOR:
+      PzemDcShow(0);
+      break;
+#endif  // USE_WEBSERVER
     case FUNC_COMMAND:
       result = PzemDcCommand();
       break;

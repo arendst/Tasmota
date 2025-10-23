@@ -319,7 +319,7 @@ int be_baselib_iterator(bvm *vm)
 static int l_call(bvm *vm)
 {
     int top = be_top(vm);
-    if (top >= 1 && be_isfunction(vm, 1)) {
+    if (top >= 1 && (be_isfunction(vm, 1) || be_isclass(vm, 1))) {
         size_t arg_count = top - 1;  /* we have at least 'top - 1' arguments */
         /* test if last argument is a list */
 
@@ -354,7 +354,7 @@ static int l_call(bvm *vm)
 
         be_return(vm);
     }
-    be_raise(vm, "value_error", "first argument must be a function");
+    be_raise(vm, "value_error", "first argument must be a function or a class");
     be_return_nil(vm);
 }
 
@@ -412,21 +412,21 @@ static int raise_compile_error(bvm *vm)
     return 0;
 }
 
-static int m_compile_str(bvm *vm)
+static int m_compile_str(bvm *vm, bbool islocal)
 {
     int len = be_strlen(vm, 1);
     const char *src = be_tostring(vm, 1);
-    int res = be_loadbuffer(vm, "string", src, len);
+    int res = be_loadbuffer_local(vm, "string", src, len, islocal);
     if (res == BE_OK) {
         be_return(vm);
     }
     return raise_compile_error(vm);
 }
 
-static int m_compile_file(bvm *vm)
+static int m_compile_file(bvm *vm, bbool islocal)
 {
     const char *fname = be_tostring(vm, 1);
-    int res = be_loadfile(vm, fname);
+    int res = be_loadfile_local(vm, fname, islocal);
     if (res == BE_OK) {
         be_return(vm);
     } else if (res == BE_IO_ERROR) {
@@ -443,14 +443,18 @@ int be_baselib_compile(bvm *vm)
     if (be_top(vm) && be_isstring(vm, 1)) {
         if (be_top(vm) >= 2 && be_isstring(vm, 2)) {
             const char *s = be_tostring(vm, 2);
+            bbool islocal = bfalse;
+            if (be_top(vm) >= 3 && be_isbool(vm, 3)) {
+                islocal = be_tobool(vm, 3);
+            }
             if (!strcmp(s, "string")) {
-                return m_compile_str(vm);
+                return m_compile_str(vm, islocal);
             }
             if (!strcmp(s, "file")) {
-                return m_compile_file(vm);
+                return m_compile_file(vm, islocal);
             }
         } else {
-            return m_compile_str(vm);
+            return m_compile_str(vm, bfalse);       /* default to global context */
         }
     }
 #endif

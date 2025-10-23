@@ -1,0 +1,62 @@
+# Meteor Shower - Multiple meteors with trails
+# Fast moving bright objects with fading trails
+
+#strip length 60
+
+# Dark space background
+color space_bg = 0x000011
+animation background = solid(color=space_bg)
+
+# Multiple meteors with different speeds and colors
+animation meteor1 = comet_animation(
+  color=0xFFFFFF  # Bright white
+  tail_length=12  # long trail
+  speed=1.5s      # fast speed
+)
+meteor1.priority = 15
+
+animation meteor2 = comet_animation(
+  color=0xFFAA00  # Orange
+  tail_length=10  # medium trail
+  speed=2s        # medium speed
+)
+meteor2.priority = 12
+
+animation meteor3 = comet_animation(
+  color=0xAAAAFF  # Blue-white
+  tail_length=8   # shorter trail
+  speed=1.8s      # fast speed
+)
+meteor3.priority = 10
+
+animation meteor4 = comet_animation(
+  color=0xFFAAAA  # Pink-white
+  tail_length=14  # long trail
+  speed=2.5s      # slower speed
+)
+meteor4.priority = 8
+
+# Add distant stars
+animation stars = twinkle_animation(
+  color=0xCCCCCC  # Dim white
+  density=12      # density (many stars)
+  twinkle_speed=2s # twinkle speed (slow twinkle)
+)
+stars.priority = 5
+
+# Add occasional bright flash (meteor explosion)
+animation meteor_flash = twinkle_animation(
+  color=0xFFFFFF  # Bright white
+  density=1       # density (single flash)
+  twinkle_speed=100ms # twinkle speed (very quick)
+)
+meteor_flash.priority = 25
+
+# Start all animations
+run background
+run stars
+run meteor1
+run meteor2
+run meteor3
+run meteor4
+run meteor_flash

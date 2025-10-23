@@ -18,6 +18,7 @@
         "+<base/ftbitmap.c>",
 
         "+<base/ftbase.c>",
+        "+<base/ftstroke.c>",
 
         "+<base/ftbbox.c>",
         "+<base/ftglyph.c>",

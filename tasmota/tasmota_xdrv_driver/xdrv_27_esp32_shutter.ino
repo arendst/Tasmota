@@ -130,7 +130,7 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_UNITTEST "|" 
 #endif  // SHUTTER_UNITTEST
   D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP "|"
-  D_CMD_SHUTTER_EXTRASTOPRELAY;
+  D_CMD_SHUTTER_EXTRASTOPRELAY "|" D_CMND_SHUTTER_SETPOSITION;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -141,7 +141,8 @@ void (* const ShutterCommand[])(void) PROGMEM = {
 #ifdef SHUTTER_UNITTEST
   &CmndShutterUnitTest,
 #endif  // SHUTTER_UNITTEST
-  &CmndShutterTiltConfig, &CmndShutterSetTilt, &CmndShutterTiltIncDec, &CmndShutterMotorStop, &CmndShutterSetup, &CmndShutterExtraStopPulseRelay
+  &CmndShutterTiltConfig, &CmndShutterSetTilt, &CmndShutterTiltIncDec, &CmndShutterMotorStop, &CmndShutterSetup, &CmndShutterExtraStopPulseRelay,
+  &CmndShutterSetPosition
   };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
@@ -571,12 +572,15 @@ void ShutterInit(void)
       ShutterGlobal.RelayShutterMask |= 3 << (ShutterSettings.shutter_startrelay[i] -1)  ;
 
       // All shutters must have same mode. Switch OR Pulse. N
-      switch (Settings->pulse_timer[i]) {
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Testing Pulsetime on %d"), ShutterSettings.shutter_startrelay[i]);
+      switch (Settings->pulse_timer[ShutterSettings.shutter_startrelay[i]]) {
         case 0:
           Shutter[i].switch_mode = SHT_SWITCH;
+          //AddLog(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d is SWITCH"), i+1);
         break;
         default:
           Shutter[i].switch_mode = SHT_PULSE;
+          //AddLog(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d is PULSE"), i+1);
         break;
       }
 
@@ -885,7 +889,7 @@ void ShutterRelayChanged(void)
 	for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
 		power_t powerstate_local = (TasmotaGlobal.power >> (ShutterSettings.shutter_startrelay[i] - 1)) & 3;
     // SRC_IGNORE added because INTERLOCK function bite causes this as last source for changing the relay.
-		//uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (ShutterSettings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != TasmotaGlobal.last_source && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
+		// uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (ShutterSettings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != TasmotaGlobal.last_source && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
     uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (ShutterSettings.shutter_startrelay[i] - 1)) & 3) && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Source %s, Powerstate %ld, RelayMask %d, ManualChange %d"),
     //  i+1, GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource), powerstate_local,ShutterGlobal.RelayCurrentMask,manual_relays_changed);
@@ -1171,6 +1175,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       || ( (-1 == direction) &&  (Shutter[i].real_position <= Shutter[i].min_realPositionChange)) )
      && abs(Shutter[i].tilt_real_pos-Shutter[i].tilt_target_pos) <=  Shutter[i].min_TiltChange) {
     ShutterGlobal.skip_relay_change = 1;
+    //AddLog(LOG_LEVEL_INFO, "SHT: Setting skip relay to 1");
   } else {
     Shutter[i].pwm_velocity = 0;
     ShutterWaitForMotorStart(i);
@@ -1378,8 +1383,7 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterWaitForMotorStart(uint8_t i)
 {
-  uint32_t end_time = Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop;
-  while (!TimeReached(end_time)) {
+  while (millis() - Shutter[i].last_stop_time < ShutterSettings.shutter_motorstop) { // statement is overflow proof
     loop();
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
@@ -2022,16 +2026,36 @@ void CmndShutterRelay(void)
   ResponseAppend_P(PSTR("}"));
 }
 
-void CmndShutterSetClose(void)
+void CmndShutterSetPosition(void)
 {
+  int16_t  index = XdrvMailbox.index - 1;
+  int16_t  new_position = (ShutterSettings.shutter_options[index] & 1) ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
-    Shutter[XdrvMailbox.index - 1].real_position            = 0;
-    Shutter[XdrvMailbox.index - 1].tilt_real_pos            = Shutter[XdrvMailbox.index - 1].tilt_config[0];
-    Shutter[XdrvMailbox.index - 1].lastdirection            = -1;
-    ShutterStartInit(XdrvMailbox.index -1, 0, 0);
-    ShutterSettings.shutter_position[XdrvMailbox.index - 1] = 0;
+    Shutter[index].real_position = ShutterPercentToRealPosition(new_position, index);
+    switch (new_position) {
+      case 0:
+        Shutter[index].tilt_real_pos = Shutter[index].tilt_config[0];
+        Shutter[index].lastdirection = -1;
+      case 100: 
+        Shutter[index].tilt_real_pos = Shutter[index].tilt_config[1];
+        Shutter[index].lastdirection = 1;
+    }
+    ShutterStartInit(index, 0, Shutter[index].real_position);
+    ShutterSettings.shutter_position[index] = new_position;
     ResponseCmndIdxChar(D_CONFIGURATION_RESET);
   }
+}
+
+void CmndShutterSetClose(void)
+{
+  XdrvMailbox.payload = 0;
+  CmndShutterSetPosition();
+}
+
+void CmndShutterSetOpen(void)
+{
+  XdrvMailbox.payload = 100;
+  CmndShutterSetPosition();
 }
 
 void CmndShutterSetHalfway(void)
@@ -2047,18 +2071,6 @@ void CmndShutterSetHalfway(void)
       ShutterInit();
     }
   ResponseCmndIdxNumber((ShutterSettings.shutter_options[XdrvMailbox.index - 1] & 1) ? 100 - ShutterSettings.shutter_set50percent[XdrvMailbox.index - 1] : ShutterSettings.shutter_set50percent[XdrvMailbox.index - 1]);
-  }
-}
-
-void CmndShutterSetOpen(void)
-{
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
-    Shutter[XdrvMailbox.index - 1].real_position = Shutter[XdrvMailbox.index - 1].open_max;
-    Shutter[XdrvMailbox.index - 1].tilt_real_pos = Shutter[XdrvMailbox.index - 1].tilt_config[1];
-    Shutter[XdrvMailbox.index - 1].lastdirection = 1;
-    ShutterStartInit(XdrvMailbox.index -1, 0, Shutter[XdrvMailbox.index - 1].open_max);
-    ShutterSettings.shutter_position[XdrvMailbox.index - 1] = 100;
-    ResponseCmndIdxChar(D_CONFIGURATION_RESET);
   }
 }
 

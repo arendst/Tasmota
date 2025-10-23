@@ -20,6 +20,7 @@ void be_globalvar_init(bvm *vm);
 void be_globalvar_deinit(bvm *vm);
 int be_global_find(bvm *vm, bstring *name);
 int be_global_new(bvm *vm, bstring *name);
+bbool be_global_undef(bvm *vm, bstring *name);
 bvalue* be_global_var(bvm *vm, int index);
 void be_global_release_space(bvm *vm);
 int be_builtin_find(bvm *vm, bstring *name);

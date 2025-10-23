@@ -1,0 +1,109 @@
+# Sequence Assignments Demo
+# Demonstrates dynamic property changes within sequences
+
+# Set up strip length and value providers
+set strip_len = strip_length()
+set triangle_val = triangle(min_value=0, max_value=strip_len - 2, duration=5s)
+set cosine_val = cosine_osc(min_value=0, max_value=strip_len - 2, duration=5s)
+set brightness_high = 255
+set brightness_low = 64
+
+# Create color palette and cycling color
+palette eye_palette = [red, yellow, green, violet]
+color eye_color = color_cycle(palette=eye_palette, cycle_period=0)
+
+# Create animations
+animation red_eye = beacon_animation(
+  color=eye_color
+  pos=cosine_val
+  beacon_size=3
+  slew_size=2
+  priority=10
+)
+
+animation pulse_demo = pulsating_animation(
+  color=blue
+  period=2s
+  priority=5
+)
+
+# Sequence 1: Cylon Eye with Position Changes
+sequence cylon_eye {
+  play red_eye for 3s
+  red_eye.pos = triangle_val        # Change to triangle oscillator
+  play red_eye for 3s  
+  red_eye.pos = cosine_val          # Change back to cosine
+  eye_color.next = 1                # Advance to next color
+  play red_eye for 2s
+}
+
+# Sequence 2: Brightness Control Demo
+sequence brightness_demo {
+  play pulse_demo for 2s
+  pulse_demo.opacity = brightness_low    # Dim the animation
+  play pulse_demo for 2s
+  pulse_demo.opacity = brightness_high   # Brighten again
+  play pulse_demo for 2s
+}
+
+# Sequence 3: Multiple Property Changes
+sequence multi_change {
+  play pulse_demo for 1s
+  pulse_demo.color = red            # Change color
+  pulse_demo.opacity = brightness_low    # And brightness
+  play pulse_demo for 1s
+  pulse_demo.color = green          # Change color again
+  pulse_demo.opacity = brightness_high   # Full brightness
+  play pulse_demo for 1s
+  pulse_demo.color = blue           # Back to blue
+}
+
+# Sequence 4: Assignments in Repeat Blocks
+sequence repeat_demo {
+  repeat 3 times {
+    play red_eye for 1s
+    red_eye.pos = triangle_val      # Change oscillator
+    play red_eye for 1s
+    red_eye.pos = cosine_val        # Change back
+    eye_color.next = 1              # Next color
+  }
+}
+
+# Main demo sequence combining all examples
+sequence main_demo {
+  # Run cylon eye demo
+  play red_eye for 1s
+  wait 500ms
+  
+  # Demonstrate position changes
+  red_eye.pos = triangle_val
+  play red_eye for 2s
+  red_eye.pos = cosine_val
+  play red_eye for 2s
+  
+  # Color cycling
+  eye_color.next = 1
+  play red_eye for 1s
+  eye_color.next = 1
+  play red_eye for 1s
+  
+  wait 1s
+  
+  # Brightness demo with pulse
+  play pulse_demo for 1s
+  pulse_demo.opacity = brightness_low
+  play pulse_demo for 1s
+  pulse_demo.opacity = brightness_high
+  play pulse_demo for 1s
+  
+  # Multi-property changes
+  pulse_demo.color = red
+  pulse_demo.opacity = brightness_low
+  play pulse_demo for 1s
+  pulse_demo.color = green
+  pulse_demo.opacity = brightness_high
+  play pulse_demo for 1s
+}
+
+# Run the main demo
+run main_demo

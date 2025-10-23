@@ -14,10 +14,13 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_HOME_ASSISTANT        | -     | - / - | -     | -     | -     | -     |
 | USE_TASMOTA_DISCOVERY     | x     | x / x | x     | x     | x     | x     |
 | USE_MQTT_TLS\*            | -     | - / x | -     | -     | -     | -     |
+| USE_MQTT_CLIENT_CERT      | -     | - / - | -     | -     | -     | -     |
 | USE_MQTT_AWS_IOT          | -     | - / - | -     | -     | -     | -     |
 | USE_4K_RSA                | -     | - / - | -     | -     | -     | -     |
 | USE_TELEGRAM              | -     | - / - | -     | -     | -     | -     |
 | USE_KNX                   | -     | - / x | x     | -     | -     | -     |
+| USE_TELNET                | -     | - / - | -     | -     | -     | -     |
+| USE_XYZMODEM              | -     | - / - | -     | -     | -     | -     |
 | USE_WEBSERVER             | x     | x / x | x     | x     | x     | x     |
 | USE_WEBSEND_RESPONSE      | -     | - / - | -     | -     | -     | -     |
 | USE_EMULATION_HUE         | x     | x / x | -     | x     | -     | -     |
@@ -33,6 +36,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_EXPRESSION            | -     | x / x | -     | -     | -     | -     |
 | SUPPORT_IF_STATEMENT      | -     | x / x | -     | -     | -     | -     |
 | USE_HOTPLUG               | -     | - / - | -     | -     | -     | -     |
+| USE_INFLUXDB              | -     | - / x | -     | -     | -     | -     |
 | USE_PROMETHEUS            | -     | - / - | -     | -     | -     | -     |
 | USE_PING                  | -     | - / - | -     | -     | -     | -     |
 | USE_HDMI_CEC              | -     | - / - | -     | -     | -     | -     |
@@ -110,6 +114,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | -USE_PCF85063             | -     | - / - | -     | -     | -     | -     |
 | -USE_PCF85363             | -     | - / - | -     | -     | -     | -     |
 | -USE_RX8010               | -     | - / - | -     | -     | -     | -     |
+| -USE_RX8030               | -     | - / - | -     | -     | -     | -     |
 | USE_SHT                   | -     | - / x | -     | x     | -     | -     |
 | USE_HTU                   | -     | - / x | -     | x     | -     | -     |
 | USE_BMP                   | -     | - / x | -     | x     | -     | -     |
@@ -228,12 +233,15 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_MIEL_HVAC             | -     | - / - | -     | -     | -     | -     |
 | USE_PROJECTOR_CTRL        | -     | - / - | -     | -     | -     | -     |
 | USE_AS608                 | -     | - / - | -     | -     | -     | -     |
+| USE_LD2402                | -     | - / - | -     | -     | -     | -     |
 | USE_LD2410                | -     | - / - | -     | -     | -     | -     |
+| USE_LD2410S               | -     | - / - | -     | -     | -     | -     |
 | USE_GM861                 | -     | - / - | -     | -     | -     | -     |
 | USE_TCP_BRIDGE            | -     | - / - | -     | -     | -     | -     | zbbridge / zbbrdgpro        |
 | USE_HC8                   | -     | - / - | -     | -     | -     | -     |
 | USE_PIPSOLAR              | -     | - / - | -     | -     | -     | -     |
 | USE_WOOLIIS               | -     | - / - | -     | -     | -     | -     |
+| USE_C8_CO2_5K             | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | USE_NRF24                 | -     | - / - | -     | -     | -     | -     |
 | USE_MIBLE                 | -     | - / - | -     | -     | -     | -     |
@@ -244,6 +252,8 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_IR_REMOTE             | -     | x / - | x     | x     | x     | x     |
 | USE_IR_RECEIVE            | -     | x / - | x     | x     | x     | x     |
 | USE_IR_REMOTE_FULL        | -     | - / - | -     | -     | x     | -     | Enable ALL protocols        |
+|                           |       |       |       |       |       |       |
+| USE_WIZMOTE               | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | USE_SR04                  | -     | - / - | -     | x     | -     | -     |
 | USE_ME007                 | -     | - / - | -     | -     | -     | -     |

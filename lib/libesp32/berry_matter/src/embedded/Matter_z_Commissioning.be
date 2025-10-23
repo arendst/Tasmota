@@ -110,18 +110,7 @@ class Matter_Commissioning
     self.commissioning_L  = L
     self.commissioning_admin_fabric = admin_fabric
 
-    if tasmota.wifi()['up'] || tasmota.eth()['up']
-      self.mdns_announce_PASE()
-    else
-      tasmota.add_rule("Wifi#Connected", def ()
-          self.mdns_announce_PASE()
-          tasmota.remove_rule("Wifi#Connected", "mdns_announce_PASE")
-        end, "mdns_announce_PASE")
-        tasmota.add_rule("Eth#Connected", def ()
-            self.mdns_announce_PASE()
-            tasmota.remove_rule("Eth#Connected", "mdns_announce_PASE")
-          end, "mdns_announce_PASE")
-    end
+    tasmota.when_network_up(def () self.mdns_announce_PASE() end)
   end
 
   #############################################################
@@ -190,7 +179,7 @@ class Matter_Commissioning
   # Deferred until next tick.
   def start_operational_discovery_deferred(fabric)
     # defer to next click
-    tasmota.set_timer(0, /-> self.start_operational_discovery(fabric))
+    tasmota.defer(/-> self.start_operational_discovery(fabric))
   end
 
   #############################################################
@@ -199,7 +188,7 @@ class Matter_Commissioning
   # Deferred until next tick.
   def start_commissioning_complete_deferred(session)
     # defer to next click
-    tasmota.set_timer(0, /-> self.start_commissioning_complete(session))
+    tasmota.defer(/-> self.start_commissioning_complete(session))
   end
 
   #############################################################
@@ -236,23 +225,16 @@ class Matter_Commissioning
   # When the announce is active, `hostname_wifi` and `hostname_eth`
   # are defined
   def start_mdns_announce_hostnames()
-    if tasmota.wifi()['up']
-      self._mdns_announce_hostname(false)
-    else
-      tasmota.add_rule("Wifi#Connected", def ()
-          self._mdns_announce_hostname(false)
-          tasmota.remove_rule("Wifi#Connected", "matter_mdns_host")
-        end, "matter_mdns_host")
-    end
+    tasmota.when_network_up(def ()
 
-    if tasmota.eth()['up']
-      self._mdns_announce_hostname(true)
-    else
-      tasmota.add_rule("Eth#Connected", def ()
-          self._mdns_announce_hostname(true)
-          tasmota.remove_rule("Eth#Connected", "matter_mdns_host")
-        end, "matter_mdns_host")
-    end
+      if tasmota.wifi('up')
+        self._mdns_announce_hostname(false)
+      end
+      if tasmota.eth('up')
+        self._mdns_announce_hostname(true)
+      end
+
+    end)
   end
 
   #############################################################

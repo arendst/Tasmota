@@ -30,6 +30,12 @@
  *   GvUrl 1                - Select default url (GV_BASE_URL)
  *   GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
  * 
+ * Note 20250503
+ * - GVRelease 1.6.3 (No code change)
+ * 
+ * Note 20250223
+ * - GVRelease 1.6.2 (No code change)
+ * 
  * Note 20250126
  * - GVRelease 1.6.1 (No code change)
  * 
@@ -86,7 +92,7 @@
 
 #define GV_KEEP_ALIVE         1000         // milliseconds - If no activity after this do a heap size event anyway
 
-const char *GVRelease = "1.6.1";
+const char *GVRelease = "1.6.3";
 
 /*********************************************************************************************/
 
@@ -340,9 +346,10 @@ void GVHandleEspInfo(void) {
   jsonResponse += "\",\"cycle_count\":" + String(ESP.getCycleCount());
   jsonResponse += ",\"mac\":\"" + ESP_getEfuseMac();
 
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   const FlashMode_t flashMode = ESP.getFlashChipMode(); // enum
   jsonResponse += "\",\"flash_mode\":" + String(flashMode);
-
+#endif // CONFIG_IDF_TARGET_ESP32P4
 #ifdef ESP8266
   jsonResponse += ",\"flash_chip_size\":" + String(ESP.getFlashChipRealSize());
 #else   // ESP32
@@ -729,7 +736,7 @@ void CmndGvUrl(void) {
 #define WEB_HANDLE_GV "gv"
 
 const char HTTP_BTN_MENU_GV[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_GV "' method='get' target='_blank'><button>" D_GPIO_VIEWER "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_GV "' method='get' target='_blank'><button>" D_GPIO_VIEWER "</button></form>";
 
 void GVSetupAndStart(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }

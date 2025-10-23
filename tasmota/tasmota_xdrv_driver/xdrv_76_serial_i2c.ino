@@ -116,8 +116,8 @@ public:
   }
 
   // unused function, but override to NOP just in case
-  void onReceive(void (*)(int)) override {};
-  void onRequest(void (*)(void)) override {};
+  void onReceive(const std::function<void(int)> &) override {};
+  void onRequest(const std::function<void()> &) override {};
 
   void beginTransmission(uint8_t address) override {
     non_stop = false;

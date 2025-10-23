@@ -15,7 +15,7 @@
 #include "../../misc/lv_math.h"
 #include "../../misc/lv_log.h"
 #include "../../misc/lv_assert.h"
-#include "../../osal/lv_os.h"
+#include "../../osal/lv_os_private.h"
 #include "../../stdlib/lv_string.h"
 
 /*********************
@@ -1093,6 +1093,7 @@ static void circ_calc_aa4(lv_draw_sw_mask_radius_circle_dsc_t * c, int32_t radiu
 
     const size_t cir_xy_size = (radius + 1) * 2 * 2 * sizeof(int32_t);
     int32_t * cir_x = lv_malloc_zeroed(cir_xy_size);
+    LV_ASSERT_MALLOC(cir_x);
     int32_t * cir_y = &cir_x[(radius + 1) * 2];
 
     uint32_t y_8th_cnt = 0;
@@ -1136,7 +1137,7 @@ static void circ_calc_aa4(lv_draw_sw_mask_radius_circle_dsc_t * c, int32_t radiu
 
             cir_x[cir_size] = x_int[0] - 1;
             cir_y[cir_size] = y_8th_cnt;
-            c->cir_opa[cir_size] = 1 * 4 + x_fract[1] + x_fract[2] + x_fract[3];;
+            c->cir_opa[cir_size] = 1 * 4 + x_fract[1] + x_fract[2] + x_fract[3];
             c->cir_opa[cir_size] *= 16;
             cir_size++;
         }
@@ -1150,7 +1151,7 @@ static void circ_calc_aa4(lv_draw_sw_mask_radius_circle_dsc_t * c, int32_t radiu
 
             cir_x[cir_size] = x_int[0] - 1;
             cir_y[cir_size] = y_8th_cnt;
-            c->cir_opa[cir_size] = 2 * 4 + x_fract[2] + x_fract[3];;
+            c->cir_opa[cir_size] = 2 * 4 + x_fract[2] + x_fract[3];
             c->cir_opa[cir_size] *= 16;
             cir_size++;
         }
@@ -1164,7 +1165,7 @@ static void circ_calc_aa4(lv_draw_sw_mask_radius_circle_dsc_t * c, int32_t radiu
 
             cir_x[cir_size] = x_int[0] - 1;
             cir_y[cir_size] = y_8th_cnt;
-            c->cir_opa[cir_size] = 3 * 4 + x_fract[3];;
+            c->cir_opa[cir_size] = 3 * 4 + x_fract[3];
             c->cir_opa[cir_size] *= 16;
             cir_size++;
         }
@@ -1208,7 +1209,7 @@ static void circ_calc_aa4(lv_draw_sw_mask_radius_circle_dsc_t * c, int32_t radiu
     while(i < cir_size) {
         c->opa_start_on_y[y] = i;
         c->x_start_on_y[y] = cir_x[i];
-        for(; cir_y[i] == y && i < (int32_t)cir_size; i++) {
+        for(; i < (int32_t)cir_size && cir_y[i] == y; i++) {
             c->x_start_on_y[y] = LV_MIN(c->x_start_on_y[y], cir_x[i]);
         }
         y++;

@@ -81,9 +81,10 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
     novasds_cmnd[17] += novasds_cmnd[i];
   }
 
-//  char hex_char[60];
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("SDS: Send %s"), ToHex_P((unsigned char*)novasds_cmnd, 19, hex_char, sizeof(hex_char), ' '));
-
+#ifdef DEBUG_TASMOTA_SENSOR
+  char hex_char[60];
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SDS: Send %s"), ToHex_P((unsigned char*)novasds_cmnd, 19, hex_char, sizeof(hex_char), ' '));
+#endif
   // send cmnd
   NovaSdsSerial->write(novasds_cmnd, sizeof(novasds_cmnd));
   NovaSdsSerial->flush();
@@ -92,6 +93,9 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   unsigned long cmndtime = millis() + NOVA_SDS_RECDATA_TIMEOUT;
   while ( (!TimeReached(cmndtime)) && ( ! NovaSdsSerial->available() ) );
   if ( ! NovaSdsSerial->available() ) {
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SDS: " D_SENSOR_DID_NOT_ACK_COMMAND));
+#endif
     // timeout
     return false;
   }
@@ -100,11 +104,17 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   // sync to 0xAA header
   while ( (!TimeReached(cmndtime)) && ( NovaSdsSerial->available() > 0) && (0xAA != (recbuf[0] = NovaSdsSerial->read())) );
   if ( 0xAA != recbuf[0] ) {
+#ifdef DEBUG_TASMOTA_SENSOR
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SDS: Header not found: 0x%02X"), recbuf[0]);
+#endif
     // no head found
     return false;
   }
 
   // read rest (9 of 10 bytes) of message
+#ifdef DEBUG_TASMOTA_SENSOR
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SDS: %d bytes available"), NovaSdsSerial->available());
+#endif
   NovaSdsSerial->readBytes(&recbuf[1], 9);
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
 

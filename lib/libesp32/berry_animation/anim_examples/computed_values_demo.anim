@@ -1,0 +1,31 @@
+# Computed Values Demo - Example from the original request
+# Shows how to use computed values from value providers
+
+# Get the current strip length
+set strip_len = strip_length()
+
+# Create animation with computed values
+animation stream1 = comet_animation(
+  color=red
+  tail_length=abs(strip_len / 4)  # computed value
+  speed=1.5
+  priority=10
+)
+
+# More complex computed values
+set base_speed = 2.0
+animation stream2 = comet_animation(
+  color=blue
+  tail_length=strip_len / 8 + (2 * strip_len) -10  # computed with addition
+  speed=base_speed * 1.5         # computed with multiplication
+  direction=-1
+  priority=5
+)
+
+# Property assignment with computed values
+stream1.tail_length = strip_len / 5
+stream2.opacity = strip_len * 4
+
+# Run both animations
+run stream1
+run stream2

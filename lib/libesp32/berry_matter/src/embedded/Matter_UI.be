@@ -79,10 +79,10 @@ class Matter_UI
   # Displays the Configure Matter button on the configuration page
   def web_add_config_button()
     import webserver
-    # webserver.content_send("<p><form id=ac action='matterc' style='display: block;' method='get'><button>Configure Matter</button></form></p>")
-    webserver.content_send("<p><form id=ac action='matterc' style='display: block;' method='get'><button>")
+    # webserver.content_send("<p></p><form id=ac action='matterc' style='display: block;' method='get'><button>Configure Matter</button></form>")
+    webserver.content_send("<p></p><form id=ac action='matterc' style='display: block;' method='get'><button>")
     webserver.content_send(matter._LOGO)
-    webserver.content_send(" Matter</button></form></p>")
+    webserver.content_send(" Matter</button></form>")
   end
 
   #- ---------------------------------------------------------------------- -#

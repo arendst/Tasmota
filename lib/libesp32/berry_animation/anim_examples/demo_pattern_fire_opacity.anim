@@ -1,0 +1,33 @@
+# Pattern fire.anim
+
+# Define fire palette from black to yellow
+palette fire_colors = [
+  0x800000    # Dark red
+  0xFF0000    # Red
+  0xFF4500    # Orange red
+  0xFFFF00    # Yellow
+]
+
+set strip_len = strip_length()
+color fire_color = rich_palette(palette=fire_colors)
+
+animation background = solid(color=0x000088, priority=20)
+run background
+
+set eye_pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 6s)
+animation eye_mask = beacon_animation(
+  color = white
+  back_color = transparent
+  pos = eye_pos
+  beacon_size = 4       # small 3 pixels eye
+  slew_size = 2         # with 2 pixel shading around
+  priority = 5
+)
+
+animation fire_pattern = palette_gradient_animation(
+  color_source = fire_color
+  spatial_period = strip_len / 4
+  opacity = eye_mask
+)
+
+run fire_pattern

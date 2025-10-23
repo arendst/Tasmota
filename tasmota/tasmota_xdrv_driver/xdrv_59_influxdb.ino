@@ -292,6 +292,9 @@ char* InfluxDbNumber(char* alternative, JsonParserToken value) {
     char* source = (char*)value.getStr();
     // Test for valid numeric data ('-.0123456789') or ON, OFF etc. as defined in kOptions
     if (source != nullptr) {
+      if (ChrCount(source, ".") > 1) {  // IPAddress like 192.168.2.123
+        return nullptr;
+      }
       char* out = source;
       // Convert special text as found in kOptions to a number
       // Like "OFF" -> 0, "ON" -> 1, "TOGGLE" -> 2

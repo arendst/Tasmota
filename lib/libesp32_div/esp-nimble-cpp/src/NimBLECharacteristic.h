@@ -1,196 +1,242 @@
 /*
- * NimBLECharacteristic.h
+ * Copyright 2020-2025 Ryan Powell <ryan@nable-embedded.io> and
+ * esp-nimble-cpp, NimBLE-Arduino contributors.
  *
- *  Created: on March 3, 2020
- *      Author H2zero
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Originally:
- * BLECharacteristic.h
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Created on: Jun 22, 2017
- *      Author: kolban
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-#ifndef MAIN_NIMBLECHARACTERISTIC_H_
-#define MAIN_NIMBLECHARACTERISTIC_H_
+#ifndef NIMBLE_CPP_CHARACTERISTIC_H_
+#define NIMBLE_CPP_CHARACTERISTIC_H_
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
-#include "host/ble_hs.h"
-#else
-#include "nimble/nimble/host/include/host/ble_hs.h"
-#endif
-
-/****  FIX COMPILATION ****/
-#undef min
-#undef max
-/**************************/
-
-typedef enum {
-    READ         =  BLE_GATT_CHR_F_READ,
-    READ_ENC     =  BLE_GATT_CHR_F_READ_ENC,
-    READ_AUTHEN  =  BLE_GATT_CHR_F_READ_AUTHEN,
-    READ_AUTHOR  =  BLE_GATT_CHR_F_READ_AUTHOR,
-    WRITE        =  BLE_GATT_CHR_F_WRITE,
-    WRITE_NR     =  BLE_GATT_CHR_F_WRITE_NO_RSP,
-    WRITE_ENC    =  BLE_GATT_CHR_F_WRITE_ENC,
-    WRITE_AUTHEN =  BLE_GATT_CHR_F_WRITE_AUTHEN,
-    WRITE_AUTHOR =  BLE_GATT_CHR_F_WRITE_AUTHOR,
-    BROADCAST    =  BLE_GATT_CHR_F_BROADCAST,
-    NOTIFY       =  BLE_GATT_CHR_F_NOTIFY,
-    INDICATE     =  BLE_GATT_CHR_F_INDICATE
-} NIMBLE_PROPERTY;
-
-#include "NimBLEService.h"
-#include "NimBLEDescriptor.h"
-#include "NimBLEAttValue.h"
-#include "NimBLEConnInfo.h"
-
-#include <string>
-#include <vector>
-
-class NimBLEService;
-class NimBLEDescriptor;
 class NimBLECharacteristicCallbacks;
+class NimBLEService;
+class NimBLECharacteristic;
+class NimBLEDescriptor;
+class NimBLE2904;
 
+# include "NimBLELocalValueAttribute.h"
+
+# include <string>
+# include <vector>
 
 /**
- * @brief The model of a %BLE Characteristic.
+ * @brief The model of a BLE Characteristic.
  *
- * A BLE Characteristic is an identified value container that manages a value. It is exposed by a BLE server and
- * can be read and written to by a %BLE client.
+ * A BLE Characteristic is an identified value container that manages a value. It is exposed by a BLE service and
+ * can be read and written to by a BLE client.
  */
-class NimBLECharacteristic {
-public:
-    NimBLECharacteristic(const char* uuid,
-                         uint16_t properties =
-                         NIMBLE_PROPERTY::READ |
-                         NIMBLE_PROPERTY::WRITE,
-                         uint16_t max_len = BLE_ATT_ATTR_MAX_LEN,
-                         NimBLEService* pService = nullptr);
-    NimBLECharacteristic(const NimBLEUUID &uuid,
-                         uint16_t properties =
-                         NIMBLE_PROPERTY::READ |
-                         NIMBLE_PROPERTY::WRITE,
-                         uint16_t max_len = BLE_ATT_ATTR_MAX_LEN,
-                         NimBLEService* pService = nullptr);
+class NimBLECharacteristic : public NimBLELocalValueAttribute {
+  public:
+    NimBLECharacteristic(const char*    uuid,
+                         uint16_t       properties = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE,
+                         uint16_t       maxLen     = BLE_ATT_ATTR_MAX_LEN,
+                         NimBLEService* pService   = nullptr);
+    NimBLECharacteristic(const NimBLEUUID& uuid,
+                         uint16_t          properties = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE,
+                         uint16_t          maxLen     = BLE_ATT_ATTR_MAX_LEN,
+                         NimBLEService*    pService   = nullptr);
 
     ~NimBLECharacteristic();
 
-    uint16_t          getHandle();
-    NimBLEUUID        getUUID();
-    std::string       toString();
-    void              indicate();
-    void              indicate(const uint8_t* value, size_t length);
-    void              indicate(const std::vector<uint8_t>& value);
-    void              notify(bool is_notification = true, uint16_t conn_handle = BLE_HCI_LE_CONN_HANDLE_MAX + 1);
-    void              notify(const uint8_t* value, size_t length, bool is_notification = true, uint16_t conn_handle = BLE_HCI_LE_CONN_HANDLE_MAX + 1);
-    void              notify(const std::vector<uint8_t>& value, bool is_notification = true, uint16_t conn_handle = BLE_HCI_LE_CONN_HANDLE_MAX + 1);
-    size_t            getSubscribedCount();
-    void              addDescriptor(NimBLEDescriptor *pDescriptor);
-    NimBLEDescriptor* getDescriptorByUUID(const char* uuid);
-    NimBLEDescriptor* getDescriptorByUUID(const NimBLEUUID &uuid);
-    NimBLEDescriptor* getDescriptorByHandle(uint16_t handle);
-    void              removeDescriptor(NimBLEDescriptor *pDescriptor, bool deleteDsc = false);
-    NimBLEService*    getService();
-    uint16_t          getProperties();
-    NimBLEAttValue    getValue(time_t *timestamp = nullptr);
-    size_t            getDataLength();
-    void              setValue(const uint8_t* data, size_t size);
-    void              setValue(const std::vector<uint8_t>& vec);
-    void              setCallbacks(NimBLECharacteristicCallbacks* pCallbacks);
+    std::string toString() const;
+    void        addDescriptor(NimBLEDescriptor* pDescriptor);
+    void        removeDescriptor(NimBLEDescriptor* pDescriptor, bool deleteDsc = false);
+    uint16_t    getProperties() const;
+    void        setCallbacks(NimBLECharacteristicCallbacks* pCallbacks);
+    bool        indicate(uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const;
+    bool        indicate(const uint8_t* value, size_t length, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const;
+    bool        notify(uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const;
+    bool        notify(const uint8_t* value, size_t length, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const;
+
     NimBLEDescriptor* createDescriptor(const char* uuid,
-                                       uint32_t properties =
-                                       NIMBLE_PROPERTY::READ |
-                                       NIMBLE_PROPERTY::WRITE,
-                                       uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);;
-    NimBLEDescriptor* createDescriptor(const NimBLEUUID &uuid,
-                                       uint32_t properties =
-                                       NIMBLE_PROPERTY::READ |
-                                       NIMBLE_PROPERTY::WRITE,
-                                       uint16_t max_len = BLE_ATT_ATTR_MAX_LEN);
+                                       uint32_t    properties = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE,
+                                       uint16_t    maxLen     = BLE_ATT_ATTR_MAX_LEN);
+    NimBLEDescriptor* createDescriptor(const NimBLEUUID& uuid,
+                                       uint32_t          properties = NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE,
+                                       uint16_t          maxLen     = BLE_ATT_ATTR_MAX_LEN);
+    NimBLE2904*       create2904();
+    NimBLEDescriptor* getDescriptorByUUID(const char* uuid) const;
+    NimBLEDescriptor* getDescriptorByUUID(const NimBLEUUID& uuid) const;
+    NimBLEDescriptor* getDescriptorByHandle(uint16_t handle) const;
+    NimBLEService*    getService() const;
 
-    NimBLECharacteristicCallbacks* getCallbacks();
-
+    NimBLECharacteristicCallbacks* getCallbacks() const;
 
     /*********************** Template Functions ************************/
 
+# if __cplusplus < 201703L
     /**
-     * @brief Template to set the characteristic value to <type\>val.
-     * @param [in] s The value to set.
+     * @brief Template to send a notification with a value from a struct or array.
+     * @param [in] v The value to send.
+     * @param [in] connHandle Optional, a connection handle to send the notification to.
+     * @details <type\> size must be evaluatable by `sizeof()`.
      */
-    template<typename T>
-    void              setValue(const T &s) { m_value.setValue<T>(s); }
-
-    /**
-     * @brief Template to convert the characteristic data to <type\>.
-     * @tparam T The type to convert the data to.
-     * @param [in] timestamp (Optional) A pointer to a time_t struct to store the time the value was read.
-     * @param [in] skipSizeCheck (Optional) If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
-     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is less than <tt>sizeof(<type\>)</tt>.
-     * @details <b>Use:</b> <tt>getValue<type>(&timestamp, skipSizeCheck);</tt>
-     */
-    template<typename T>
-    T   getValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
-        return m_value.getValue<T>(timestamp, skipSizeCheck);
+    template <typename T>
+#  ifdef _DOXYGEN_
+    bool
+#  else
+    typename std::enable_if<!std::is_pointer<T>::value && !std::is_array<T>::value && !Has_c_str_length<T>::value &&
+                                !Has_data_size<T>::value,
+                            bool>::type
+#  endif
+    notify(const T& v, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        return notify(reinterpret_cast<const uint8_t*>(&v), sizeof(T), connHandle);
     }
 
     /**
-     * @brief Template to send a notification from a class type that has a c_str() and length() method.
+     * @brief Template to send a notification with a value from a class that has a c_str() and length() method.
+     * @param [in] s The value to send.
+     * @param [in] connHandle Optional, a connection handle to send the notification to.
+     */
+    template <typename T>
+#  ifdef _DOXYGEN_
+    bool
+#  else
+    typename std::enable_if<Has_c_str_length<T>::value && !Has_data_size<T>::value, bool>::type
+#  endif
+    notify(const T& s, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        return notify(reinterpret_cast<const uint8_t*>(s.c_str()), s.length(), connHandle);
+    }
+
+    /**
+     * @brief Template to send a notification with a value from a class that has a data() and size() method.
+     * @param [in] v The value to send.
+     * @param [in] connHandle Optional, a connection handle to send the notification to.
+     */
+    template <typename T>
+#  ifdef _DOXYGEN_
+    bool
+#  else
+    typename std::enable_if<Has_data_size<T>::value, bool>::type
+#  endif
+    notify(const T& v, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        return notify(reinterpret_cast<const uint8_t*>(v.data()), v.size(), connHandle);
+    }
+
+    /**
+     * @brief Template to send an indication with a value from a struct or array.
+     * @param [in] v The value to send.
+     * @param [in] connHandle Optional, a connection handle to send the notification to.
+     * @details <type\> size must be evaluatable by `sizeof()`.
+     */
+    template <typename T>
+#  ifdef _DOXYGEN_
+    bool
+#  else
+    typename std::enable_if<!std::is_pointer<T>::value && !std::is_array<T>::value && !Has_c_str_length<T>::value &&
+                                !Has_data_size<T>::value,
+                            bool>::type
+#  endif
+    indicate(const T& v, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        return indicate(reinterpret_cast<const uint8_t*>(&v), sizeof(T), connHandle);
+    }
+
+    /**
+     * @brief Template to send a indication with a value from a class that has a c_str() and length() method.
+     * @param [in] s The value to send.
+     * @param [in] connHandle Optional, a connection handle to send the notification to.
+     */
+    template <typename T>
+#  ifdef _DOXYGEN_
+    bool
+#  else
+    typename std::enable_if<Has_c_str_length<T>::value && !Has_data_size<T>::value, bool>::type
+#  endif
+    indicate(const T& s, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        return indicate(reinterpret_cast<const uint8_t*>(s.c_str()), s.length(), connHandle);
+    }
+
+    /**
+     * @brief Template to send a indication with a value from a class that has a data() and size() method.
+     * @param [in] v The value to send.
+     * @param [in] connHandle Optional, a connection handle to send the notification to.
+     */
+    template <typename T>
+#  ifdef _DOXYGEN_
+    bool
+#  else
+    typename std::enable_if<Has_data_size<T>::value, bool>::type
+#  endif
+    indicate(const T& v, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        return indicate(reinterpret_cast<const uint8_t*>(v.data()), v.size(), connHandle);
+    }
+
+# else
+
+    /**
+     * @brief Template to send a notification for classes which may have
+     *        data()/size() or c_str()/length() methods. Falls back to sending
+     *        the data by casting the first element of the array to a uint8_t
+     *        pointer and getting the length of the array using sizeof.
      * @tparam T The a reference to a class containing the data to send.
      * @param[in] value The <type\>value to set.
-     * @param[in] is_notification if true sends a notification, false sends an indication.
-     * @details Only used if the <type\> has a `c_str()` method.
+     * @param[in] connHandle The connection handle to send the notification to.
+     * @note This function is only available if the type T is not a pointer.
      */
-    template<typename T>
-#ifdef _DOXYGEN_
-    void
-#else
-    typename std::enable_if<Has_c_str_len<T>::value, void>::type
-#endif
-    notify(const T& value, bool is_notification = true) {
-        notify((uint8_t*)value.c_str(), value.length(), is_notification);
+    template <typename T>
+    typename std::enable_if<!std::is_pointer<T>::value && !std::is_array<T>::value, bool>::type notify(
+        const T& value, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        if constexpr (Has_data_size<T>::value) {
+            return notify(reinterpret_cast<const uint8_t*>(value.data()), value.size(), connHandle);
+        } else if constexpr (Has_c_str_length<T>::value) {
+            return notify(reinterpret_cast<const uint8_t*>(value.c_str()), value.length(), connHandle);
+        } else {
+            return notify(reinterpret_cast<const uint8_t*>(&value), sizeof(value), connHandle);
+        }
     }
 
     /**
-     * @brief Template to send an indication from a class type that has a c_str() and length() method.
+     * @brief Template to send an indication for classes which may have
+     *       data()/size() or c_str()/length() methods. Falls back to sending
+     *       the data by casting the first element of the array to a uint8_t
+     *       pointer and getting the length of the array using sizeof.
      * @tparam T The a reference to a class containing the data to send.
      * @param[in] value The <type\>value to set.
-     * @details Only used if the <type\> has a `c_str()` method.
+     * @param[in] connHandle The connection handle to send the indication to.
+     * @note This function is only available if the type T is not a pointer.
      */
-    template<typename T>
-#ifdef _DOXYGEN_
-    void
-#else
-    typename std::enable_if<Has_c_str_len<T>::value, void>::type
-#endif
-    indicate(const T& value) {
-        indicate((uint8_t*)value.c_str(), value.length());
+    template <typename T>
+    typename std::enable_if<!std::is_pointer<T>::value && !std::is_array<T>::value, bool>::type indicate(
+        const T& value, uint16_t connHandle = BLE_HS_CONN_HANDLE_NONE) const {
+        if constexpr (Has_data_size<T>::value) {
+            return indicate(reinterpret_cast<const uint8_t*>(value.data()), value.size(), connHandle);
+        } else if constexpr (Has_c_str_length<T>::value) {
+            return indicate(reinterpret_cast<const uint8_t*>(value.c_str()), value.length(), connHandle);
+        } else {
+            return indicate(reinterpret_cast<const uint8_t*>(&value), sizeof(value), connHandle);
+        }
     }
+# endif
 
-private:
+  private:
+    friend class NimBLEServer;
+    friend class NimBLEService;
 
-    friend class    NimBLEServer;
-    friend class    NimBLEService;
+    void setService(NimBLEService* pService);
+    void readEvent(NimBLEConnInfo& connInfo) override;
+    void writeEvent(const uint8_t* val, uint16_t len, NimBLEConnInfo& connInfo) override;
+    bool sendValue(const uint8_t* value,
+                   size_t         length,
+                   bool           is_notification = true,
+                   uint16_t       connHandle      = BLE_HS_CONN_HANDLE_NONE) const;
 
-    void            setService(NimBLEService *pService);
-    void            setSubscribe(struct ble_gap_event *event);
-    static int      handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
-                                   struct ble_gatt_access_ctxt *ctxt, void *arg);
-
-    NimBLEUUID                     m_uuid;
-    uint16_t                       m_handle;
-    uint16_t                       m_properties;
-    NimBLECharacteristicCallbacks* m_pCallbacks;
-    NimBLEService*                 m_pService;
-    NimBLEAttValue                 m_value;
-    std::vector<NimBLEDescriptor*> m_dscVec;
-    uint8_t                        m_removed;
-
-    std::vector<std::pair<uint16_t, uint16_t>>  m_subscribedVec;
+    NimBLECharacteristicCallbacks* m_pCallbacks{nullptr};
+    NimBLEService*                 m_pService{nullptr};
+    std::vector<NimBLEDescriptor*> m_vDescriptors{};
 }; // NimBLECharacteristic
-
 
 /**
  * @brief Callbacks that can be associated with a %BLE characteristic to inform of events.
@@ -200,14 +246,13 @@ private:
  * sub-classed instance of this class and will be notified when such an event happens.
  */
 class NimBLECharacteristicCallbacks {
-public:
-    virtual      ~NimBLECharacteristicCallbacks(){}
+  public:
+    virtual ~NimBLECharacteristicCallbacks() {}
     virtual void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo);
     virtual void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo);
-    virtual void onNotify(NimBLECharacteristic* pCharacteristic);
     virtual void onStatus(NimBLECharacteristic* pCharacteristic, int code);
     virtual void onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue);
 };
 
-#endif /* CONFIG_BT_ENABLED  && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
-#endif /*MAIN_NIMBLECHARACTERISTIC_H_*/
+#endif // CONFIG_BT_ENABLED  && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // NIMBLE_CPP_CHARACTERISTIC_H_

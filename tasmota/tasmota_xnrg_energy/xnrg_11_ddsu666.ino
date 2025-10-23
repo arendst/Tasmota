@@ -66,7 +66,7 @@ void DDSU666Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Ddsu666Modbus->ReceiveCount());
 
     if (error) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DDS: Ddsu666 error %d"), error);
     } else {
       Energy->data_valid[0] = 0;
 
@@ -136,6 +136,9 @@ void Ddsu666SnsInit(void)
   uint8_t result = Ddsu666Modbus->Begin(DDSU666_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DDS: Serial UART%d"), Ddsu666Modbus->getUart());
+#endif
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

@@ -82,14 +82,16 @@ bool utouch_found = false;
 VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
-void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t gesture) {
+void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t gesture, bool force_no_convert) {
   TSGlobal.external_ts = true;
   TSGlobal.gesture = gesture;
   TSGlobal.touches = touches;
   TSGlobal.touched = (TSGlobal.touches > 0);
   TSGlobal.touch_xp = TSGlobal.raw_touch_xp = raw_x;
   TSGlobal.touch_yp = TSGlobal.raw_touch_yp = raw_y;
-  TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
+  if (!force_no_convert) {
+    TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
+  }
 }
 
 // return true if succesful, false if not configured

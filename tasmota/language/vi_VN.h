@@ -52,12 +52,14 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY "Abs Humidity"
+#define D_ADDRESS "Address"
 #define D_ADMIN "Quản trị"
 #define D_AIR_QUALITY "Chất lượng không khí"
 #define D_AP "Mạng wifi"                    // Access Point
 #define D_AS "với tên gọi"
 #define D_AT "at"
 #define D_AUTO "AUTO"
+#define D_AUTO_UPDATE "Auto Update"
 #define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -88,6 +90,7 @@
 #define D_DEBUG "Tìm lỗi"
 #define D_DEWPOINT "Điểm sương"
 #define D_DISABLED "Vô hiệu hóa"
+#define D_DISCONNECTED "Disconnected"
 #define D_DISTANCE "Khoảng cách"
 #define D_DNS_SERVER "Máy chủ DNS"
 #define D_DO "Disolved Oxygen"
@@ -370,6 +373,7 @@
 #define D_PROGRAM_VERSION "Phiên bản trương chình"
 #define D_BUILD_DATE_AND_TIME "Ngày giờ tạo"
 #define D_CORE_AND_SDK_VERSION "Phiên bản lõi SDK "
+#define D_HOSTED_MCU "Hosted MCU"
 #define D_FLASH_WRITE_COUNT "Số lần ghi Flash"
 #define D_MAC_ADDRESS "Địa chỉ MAC"
 #define D_MQTT_HOST "Máy chủ MQTT"
@@ -450,6 +454,8 @@
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
+#define D_DOMOTICZ_KEY "Key"
+#define D_DOMOTICZ_SWITCH "Switch"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
   #define D_DOMOTICZ_TEMP "Temp"
   #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
@@ -749,6 +755,13 @@
 #define D_SENSOR_SDIO_D1       "SDIO D1"
 #define D_SENSOR_SDIO_D2       "SDIO D2"
 #define D_SENSOR_SDIO_D3       "SDIO D3"
+#define D_SENSOR_HSDIO_CMD     "HSDIO CMD"
+#define D_SENSOR_HSDIO_CLK     "HSDIO CLK"
+#define D_SENSOR_HSDIO_RST     "HSDIO RST"
+#define D_SENSOR_HSDIO_D0      "HSDIO D0"
+#define D_SENSOR_HSDIO_D1      "HSDIO D1"
+#define D_SENSOR_HSDIO_D2      "HSDIO D2"
+#define D_SENSOR_HSDIO_D3      "HSDIO D3"
 #define D_SENSOR_BACKLIGHT    "Backlight"
 #define D_SENSOR_PMS5003_TX    "PMS5003 Tx"
 #define D_SENSOR_PMS5003_RX    "PMS5003 Rx"
@@ -776,6 +789,8 @@
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
 #define D_SENSOR_WE517_RX      "WE517 Rx"
+#define D_SENSOR_LD2402_TX     "LD2402 Tx"
+#define D_SENSOR_LD2402_RX     "LD2402 Rx"
 #define D_SENSOR_LD2410_TX     "LD2410 Tx"
 #define D_SENSOR_LD2410_RX     "LD2410 Rx"
 #define D_SENSOR_LD2410S_TX     "LD2410S Tx"
@@ -1021,6 +1036,8 @@
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 #define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
 #define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
+#define D_SENSOR_C8_CO2_5K_RX  "C8-CO2-5K Rx"
+#define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
 #define D_GPIO_MKSKYBLU_TX     "MkSkyBlu Tx"
 #define D_GPIO_MKSKYBLU_RX     "MkSkyBlu Rx"
 
@@ -1313,5 +1330,9 @@
 #define D_EXPORT                          "Export"
 #define D_CHARGING                        "Charging"
 #define D_CAPACITY                        "Capacity"
+
+// xnrg_25_v9240.ino
+#define D_SENSOR_V9240_TX "V9240 TX"
+#define D_SENSOR_V9240_RX "V9240 RX"
 
 #endif  // _LANGUAGE_VI_VN_H_

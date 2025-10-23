@@ -242,7 +242,11 @@ void SonoffBridgeReceived(void)
         if (Settings->flag.rf_receive_decimal) {  // SetOption28 - RF receive data format
           snprintf_P(stemp, sizeof(stemp), PSTR("%u"), received_id);
         } else {
+#ifdef FIX_JSON_HEXADECIMAL
+          snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%06X\""), received_id);
+#else
           snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
+#endif  // FIX_JSON_HEXADECIMAL
         }
         ResponseTime_P(PSTR(",\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_PREFIX_RF D_CMND_RFKEY "\":%s}}"),
           sync_time, low_time, high_time, stemp, rfkey);

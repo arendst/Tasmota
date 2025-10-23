@@ -546,6 +546,10 @@ bool SettingsConfigRestore(void) {
     valid_settings = (5 == settings_buffer[0xF36]);  // Settings->config_version ESP32C2
 #elif CONFIG_IDF_TARGET_ESP32C6
     valid_settings = (6 == settings_buffer[0xF36]);  // Settings->config_version ESP32C6
+#elif CONFIG_IDF_TARGET_ESP32P4
+    valid_settings = (7 == settings_buffer[0xF36]);  // Settings->config_version ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C5
+    valid_settings = (8 == settings_buffer[0xF36]);  // Settings->config_version ESP32C5
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version ESP32 all other
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -986,6 +990,10 @@ void SettingsDefaultSet2(void) {
   Settings->config_version = 5;  // ESP32C2
 #elif CONFIG_IDF_TARGET_ESP32C6
   Settings->config_version = 6;  // ESP32C6
+#elif CONFIG_IDF_TARGET_ESP32P4
+  Settings->config_version = 7;  // ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C5
+  Settings->config_version = 8;  // ESP32C5
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1440,6 +1448,7 @@ void SettingsDefaultSet2(void) {
 
   // Matter
   flag6.matter_enabled |= MATTER_ENABLED;
+  flag6.tls_use_ecdsa |= MQTT_TLS_ECDSA;
 
   Settings->flag = flag;
   Settings->flag2 = flag2;
@@ -1557,7 +1566,7 @@ void SettingsDelta(void) {
       SettingsUpdateText(SET_STAPWD1, temp41);
       SettingsUpdateText(SET_STAPWD2, temp42);
 
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_CLIENT_CERT)
       if (!strlen(Settings->ex_mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, temp7);
         SettingsUpdateText(SET_MQTT_USER, temp9);
@@ -1567,10 +1576,10 @@ void SettingsDelta(void) {
         SettingsUpdateText(SET_MQTT_HOST, aws_mqtt_host);
         SettingsUpdateText(SET_MQTT_USER, "");
       }
-#else  // No USE_MQTT_TLS and USE_MQTT_AWS_IOT
+#else  // No USE_MQTT_TLS and USE_MQTT_CLIENT_CERT
       SettingsUpdateText(SET_MQTT_HOST, temp7);
       SettingsUpdateText(SET_MQTT_USER, temp9);
-#endif  // USE_MQTT_TLS and USE_MQTT_AWS_IOT
+#endif  // USE_MQTT_TLS and USE_MQTT_CLIENT_CERT
       SettingsUpdateText(SET_MQTT_PWD, temp10);
       SettingsUpdateText(SET_MQTT_TOPIC, temp11);
     }
@@ -1598,6 +1607,10 @@ void SettingsDelta(void) {
       Settings->config_version = 5;  // ESP32C2
 #elif CONFIG_IDF_TARGET_ESP32C6
       Settings->config_version = 6;  // ESP32C6
+#elif CONFIG_IDF_TARGET_ESP32P4
+      Settings->config_version = 7;  // ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C5
+      Settings->config_version = 8;  // ESP32C5
 #else
       Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3

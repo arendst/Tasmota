@@ -37,3 +37,20 @@ ta.c = 30
 assert(ta.c == 30)
 assert(ta.virtual_c == 30)
 assert_attribute_error(def() ta.d = 0 end)
+
+# bug: if a function is sent to 'setmember()', the internal BE_STATIC flag is added
+# which makes the function not callable and scrambles tostring()
+class A
+  var _v
+  def init()
+    self._v = {}
+  end
+  def setmember(name, value)
+    self._v[name] = value
+  end
+end
+a = A()
+f = def(name, time_ms) return 42 end
+a.f = f
+
+assert(a._v['f']() == 42)

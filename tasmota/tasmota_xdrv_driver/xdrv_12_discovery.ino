@@ -46,7 +46,7 @@ void TasDiscoverMessage(void) {
                    "\"dn\":\"%s\","                            // Device Name
                    "\"fn\":["),                                // Friendly Names (start)
                    ip_address,
-                   SettingsText(SET_DEVICENAME));
+                   EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str());
 
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {

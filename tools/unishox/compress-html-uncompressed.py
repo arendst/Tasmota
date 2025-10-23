@@ -169,7 +169,7 @@ def compress_html(source, target, argv=None, verbose=False):
 
   lines_raw = [ "\"\\x" + "\\x".join( [ '{:02X}'.format(b) for b in chunk ] ) + "\"" for chunk in chunks ]
   line_complete = f"const char {const_name}_COMPRESSED[] PROGMEM = " + ("\n" + " "*29).join(lines_raw) + ";"
-  lines = f"\nconst size_t {const_name}_SIZE = {in_len};\n{line_complete}\n\n"
+  lines = f"\nconst size_t {const_name}_SIZE = {in_len};    // compressed size {out_len} bytes\n{line_complete}\n\n"
 
   #print('####### Final output:')
   #print(lines)

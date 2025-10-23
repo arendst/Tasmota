@@ -237,7 +237,7 @@ void be_load_maplib(bvm *vm)
         { "insert", m_insert },
         { "iter", m_iter },
         { "keys", m_keys },
-        { "tobool", m_tobool }
+        { "tobool", m_tobool },
         { NULL, NULL }
     };
     be_regclass(vm, "map", members);

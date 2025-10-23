@@ -24,6 +24,21 @@ extern "C" {
 #include "display/fb/lv_linux_fbdev.h"
 
 #include "display/tft_espi/lv_tft_espi.h"
+#include "display/lovyan_gfx/lv_lovyan_gfx.h"
+
+#include "display/lcd/lv_lcd_generic_mipi.h"
+#include "display/ili9341/lv_ili9341.h"
+#include "display/st7735/lv_st7735.h"
+#include "display/st7789/lv_st7789.h"
+#include "display/st7796/lv_st7796.h"
+#include "display/nv3007/lv_nv3007.h"
+
+#include "display/renesas_glcdc/lv_renesas_glcdc.h"
+#include "display/st_ltdc/lv_st_ltdc.h"
+#include "display/ft81x/lv_ft81x.h"
+
+#include "draw/eve/lv_draw_eve_display.h"
+#include "draw/eve/lv_draw_eve_display_defines.h"
 
 #include "nuttx/lv_nuttx_entry.h"
 #include "nuttx/lv_nuttx_fbdev.h"
@@ -37,13 +52,19 @@ extern "C" {
 #include "windows/lv_windows_input.h"
 #include "windows/lv_windows_display.h"
 
-#include "glfw/lv_glfw_window.h"
-#include "glfw/lv_opengles_texture.h"
-#include "glfw/lv_opengles_driver.h"
+#include "opengles/lv_opengles_window.h"
+#include "opengles/lv_opengles_texture.h"
+#include "opengles/lv_opengles_driver.h"
+#include "opengles/lv_opengles_glfw.h"
+#include "opengles/lv_opengles_egl.h"
 
 #include "qnx/lv_qnx.h"
 
 #include "wayland/lv_wayland.h"
+
+#include "uefi/lv_uefi_context.h"
+#include "uefi/lv_uefi_indev.h"
+#include "uefi/lv_uefi_display.h"
 
 /*********************
  *      DEFINES

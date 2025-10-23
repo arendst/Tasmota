@@ -138,31 +138,42 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc)
 {
     LV_UNUSED(decoder); /*Unused*/
+
+    LV_PROFILER_DECODER_BEGIN_TAG("lv_libpng_decoder_open");
+
     lv_draw_buf_t * decoded;
     decoded = decode_png(dsc);
 
     if(decoded == NULL) {
+        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
-        lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
+        lv_draw_buf_destroy(decoded);
+        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
     /*The adjusted draw buffer is newly allocated.*/
     if(adjusted != decoded) {
-        lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
+        lv_draw_buf_destroy(decoded);
         decoded = adjusted;
     }
 
     dsc->decoded = decoded;
 
-    if(dsc->args.no_cache) return LV_RESULT_OK;
+    if(dsc->args.no_cache) {
+        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
+        return LV_RESULT_OK;
+    }
 
     /*If the image cache is disabled, just return the decoded image*/
-    if(!lv_image_cache_is_enabled()) return LV_RESULT_OK;
+    if(!lv_image_cache_is_enabled()) {
+        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
+        return LV_RESULT_OK;
+    }
 
     /*Add the decoded image to the cache*/
     lv_image_cache_data_t search_key;
@@ -173,11 +184,13 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     lv_cache_entry_t * entry = lv_image_decoder_add_to_cache(decoder, &search_key, decoded, NULL);
 
     if(entry == NULL) {
-        lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
+        lv_draw_buf_destroy(decoded);
+        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_INVALID;
     }
     dsc->cache_entry = entry;
 
+    LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
     return LV_RESULT_OK;     /*The image is fully decoded. Return with its pointer*/
 }
 
@@ -189,7 +202,7 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
     LV_UNUSED(decoder); /*Unused*/
 
     if(dsc->args.no_cache ||
-       !lv_image_cache_is_enabled()) lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, (lv_draw_buf_t *)dsc->decoded);
+       !lv_image_cache_is_enabled()) lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
 }
 
 static uint8_t * alloc_file(const char * filename, uint32_t * size)
@@ -258,10 +271,6 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
     image.version = PNG_IMAGE_VERSION;
 
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
-        if(lv_strcmp(lv_fs_get_ext(dsc->src), "png") != 0) {              /*Check the extension*/
-            return NULL;
-        }
-
         png_data = alloc_file(dsc->src, &png_data_size);
         if(png_data == NULL) {
             LV_LOG_WARN("can't load file: %s", (const char *)dsc->src);
@@ -308,6 +317,7 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         else if(dsc->src_type == LV_IMAGE_SRC_VARIABLE)
             LV_LOG_ERROR("alloc PNG_IMAGE_SIZE(%" LV_PRIu32 ")", (uint32_t)PNG_IMAGE_SIZE(image));
 
+        png_image_free(&image);
         return NULL;
     }
 
@@ -321,7 +331,7 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         lv_free(png_data);
     if(!ret) {
         LV_LOG_ERROR("png decode failed: %s", image.message);
-        lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
+        lv_draw_buf_destroy(decoded);
         return NULL;
     }
 

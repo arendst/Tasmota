@@ -14,6 +14,8 @@
 #include "../stdlib/lv_string.h"
 #include "lv_math.h"
 #include <math.h>
+#include <float.h>
+#include "../misc/lv_log.h"
 /*********************
  *      DEFINES
  *********************/
@@ -180,19 +182,37 @@ bool lv_matrix_inverse(lv_matrix_t * matrix, const lv_matrix_t * m)
 lv_point_precise_t lv_matrix_transform_precise_point(const lv_matrix_t * matrix, const lv_point_precise_t * point)
 {
     lv_point_precise_t p;
-    p.x = (lv_value_precise_t)roundf(point->x * matrix->m[0][0] + point->y * matrix->m[0][1] + matrix->m[0][2]);
-    p.y = (lv_value_precise_t)roundf(point->x * matrix->m[1][0] + point->y * matrix->m[1][1] + matrix->m[1][2]);
+    lv_value_precise_t w = point->x * matrix->m[2][0] + point->y * matrix->m[2][1] + matrix->m[2][2];
+    if(LV_ABS(w) < FLT_EPSILON) {
+        LV_LOG_ERROR("matrix is invalid");
+        p.x = 0;
+        p.y = 0;
+    }
+    else {
+        lv_value_precise_t inv_w = 1.0f / w;
+        p.x = (lv_value_precise_t)roundf((point->x * matrix->m[0][0] + point->y * matrix->m[0][1] + matrix->m[0][2]) * inv_w);
+        p.y = (lv_value_precise_t)roundf((point->x * matrix->m[1][0] + point->y * matrix->m[1][1] + matrix->m[1][2]) * inv_w);
+    }
     return p;
 }
 
 lv_area_t lv_matrix_transform_area(const lv_matrix_t * matrix, const lv_area_t * area)
 {
+    if(lv_matrix_is_identity(matrix)) {
+        return *area;
+    }
+
+    /**
+     * Since lv_area_t will subtract 1px when calculating width and height,
+     * this will affect the matrix transformation calculation, so +1px is needed as compensation,
+     * and the compensation value is subtracted after the calculation is completed
+     */
     lv_area_t res;
     lv_point_precise_t p[4] = {
         {area->x1, area->y1},
-        {area->x1, area->y2},
-        {area->x2, area->y1},
-        {area->x2, area->y2},
+        {area->x1, area->y2 + 1},
+        {area->x2 + 1, area->y1},
+        {area->x2 + 1, area->y2 + 1},
     };
     p[0] = lv_matrix_transform_precise_point(matrix, &p[0]);
     p[1] = lv_matrix_transform_precise_point(matrix, &p[1]);
@@ -200,11 +220,16 @@ lv_area_t lv_matrix_transform_area(const lv_matrix_t * matrix, const lv_area_t *
     p[3] = lv_matrix_transform_precise_point(matrix, &p[3]);
 
     res.x1 = (int32_t)(LV_MIN4(p[0].x, p[1].x, p[2].x, p[3].x));
-    res.x2 = (int32_t)(LV_MAX4(p[0].x, p[1].x, p[2].x, p[3].x));
+    res.x2 = (int32_t)(LV_MAX4(p[0].x, p[1].x, p[2].x, p[3].x)) - 1;
     res.y1 = (int32_t)(LV_MIN4(p[0].y, p[1].y, p[2].y, p[3].y));
-    res.y2 = (int32_t)(LV_MAX4(p[0].y, p[1].y, p[2].y, p[3].y));
+    res.y2 = (int32_t)(LV_MAX4(p[0].y, p[1].y, p[2].y, p[3].y)) - 1;
 
     return res;
+}
+
+bool lv_matrix_is_identity(const lv_matrix_t * matrix)
+{
+    return (matrix->m[0][2] == 0.0f && matrix->m[1][2] == 0.0f && lv_matrix_is_identity_or_translation(matrix));
 }
 
 bool lv_matrix_is_identity_or_translation(const lv_matrix_t * matrix)

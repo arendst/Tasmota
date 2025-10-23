@@ -40,8 +40,7 @@ typedef enum {
  * @param font pointer to a font to use.
  * @return a pointer to reference this theme later
  */
-lv_theme_t * lv_theme_haspmota_init(lv_display_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font);
-
+lv_theme_t * lv_theme_haspmota_init(lv_display_t * disp, lv_color_t * colors, const lv_font_t * font_small, const lv_font_t * font_normal, const lv_font_t * font_large);
 bool lv_theme_haspmota_is_inited(void);
 
 /**********************

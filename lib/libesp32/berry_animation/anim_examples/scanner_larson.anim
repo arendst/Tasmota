@@ -1,0 +1,37 @@
+# Scanner (Larson) - Knight Rider style scanner
+# Red dot bouncing back and forth
+
+#strip length 60
+
+# Dark background
+color scanner_bg = 0x110000
+animation background = solid(color=scanner_bg)
+
+# Main scanner pulse that bounces
+animation scanner = beacon_animation(
+  color=0xFF0000  # Bright red
+  pos=2           # initial position
+  beacon_size=3   # pulse width
+  slew_size=2     # fade region
+)
+scanner.priority = 10
+
+# Bouncing position from left to right and back
+scanner.pos = triangle(min_value=2, max_value=57, duration=2s)
+
+# Add trailing glow effect
+animation scanner_trail = beacon_animation(
+  color=0x660000  # Dim red trail
+  pos=2           # initial position
+  beacon_size=6   # wider trail
+  slew_size=4     # more fade
+)
+scanner_trail.priority = 5
+set pos_test = triangle(min_value=2, max_value=57, duration=2s)
+scanner_trail.pos = pos_test
+scanner_trail.opacity = 128  # Half brightness
+
+# Start all animations
+run background
+run scanner_trail
+run scanner

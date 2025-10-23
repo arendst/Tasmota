@@ -869,14 +869,14 @@ String RuleLoadFile(const char* fname) {
 
 /*******************************************************************************************/
 
-bool RulesProcessEvent(const char *json_event)
-{
+bool RulesProcessEvent(const char *json_event) {
 #ifdef USE_BERRY
   // events are passed to Berry before Rules engine
   callBerryRule(json_event, Rules.teleperiod);
 #endif  // USE_BERRY
 
   if (Rules.busy) { return false; }
+  if (!strlen(json_event)) { return true; }
 
   Rules.busy = true;
   bool serviced = false;

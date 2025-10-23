@@ -1,0 +1,65 @@
+# Demo Shutter Rainbow
+#
+# Shutter from center to both left and right
+  
+template shutter_central {
+    param colors type palette
+    param duration
+  
+    set strip_len = strip_length()
+    set strip_len2 = (strip_len + 1) / 2
+    set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
+  
+    color col1 = color_cycle(palette=colors, cycle_period=0)
+    color col2 = color_cycle(palette=colors, cycle_period=0)
+    col2.next = 1
+  
+    # shutter moving in to out
+    animation shutter_inout_animation = beacon_animation(
+      color = col2
+      back_color = col1
+      pos = strip_len2 - (shutter_size + 1) / 2
+      beacon_size = shutter_size
+      slew_size = 0
+      priority = 5
+    )
+  
+    # shutter moving out to in
+    animation shutter_outin_animation = beacon_animation(
+      color = col1
+      back_color = col2
+      pos = strip_len2 - (strip_len - shutter_size + 1) / 2
+      beacon_size = strip_len - shutter_size
+      slew_size = 0
+      priority = 5
+    )
+
+    sequence shutter_seq repeat forever {
+      repeat col1.palette_size times {
+        restart shutter_size
+        play shutter_inout_animation for duration
+        col1.next = 1
+        col2.next = 1
+      }
+      repeat col1.palette_size times {
+        restart shutter_size
+        play shutter_outin_animation for duration
+        col1.next = 1
+        col2.next = 1
+      }
+    }
+    
+    run shutter_seq
+  }
+  
+  palette rainbow_with_white = [ red
+    orange
+    yellow
+    green,      # comma left on-purpose to test transpiler
+    blue        # need for a lighter blue
+    indigo
+    white
+  ]
+  
+  shutter_central(rainbow_with_white, 1.5s)
+  

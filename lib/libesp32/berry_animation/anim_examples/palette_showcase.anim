@@ -1,0 +1,82 @@
+# Palette Showcase - Demonstrates all palette features
+# This example shows the full range of palette capabilities
+
+#strip length 60
+
+# Example 1: Fire palette with hex colors
+palette fire_gradient = [
+  (0, 0x000000),    # Black (no fire)
+  (32, 0x330000),   # Very dark red
+  (64, 0x660000),   # Dark red
+  (96, 0xCC0000),   # Red
+  (128, 0xFF3300),  # Red-orange
+  (160, 0xFF6600),  # Orange
+  (192, 0xFF9900),  # Light orange
+  (224, 0xFFCC00),  # Yellow-orange
+  (255, 0xFFFF00)   # Bright yellow
+]
+
+# Example 2: Ocean palette with named colors
+palette ocean_depths = [
+  (0, black),      # Deep ocean
+  (64, navy),      # Deep blue
+  (128, blue),     # Ocean blue
+  (192, cyan),     # Shallow water
+  (255, white)     # Foam/waves
+]
+
+# Example 3: Aurora palette (from the original example)
+palette aurora_borealis = [
+  (0, 0x000022),    # Dark night sky
+  (64, 0x004400),   # Dark green
+  (128, 0x00AA44),  # Aurora green
+  (192, 0x44AA88),  # Light green
+  (255, 0x88FFAA)   # Bright aurora
+]
+
+# Example 4: Sunset palette mixing hex and named colors
+palette sunset_sky = [
+  (0, 0x191970),    # Midnight blue
+  (64, purple),     # Purple twilight
+  (128, 0xFF69B4),  # Hot pink
+  (192, orange),    # Sunset orange
+  (255, yellow)     # Sun
+]
+
+# Create animations using each palette
+animation fire_effect = solid(color=rich_palette(palette=fire_gradient, cycle_period=3s))
+
+animation ocean_waves = rich_palette_animation(palette=ocean_depths, cycle_period=8s, transition_type=SINE, brightness=200)
+
+animation aurora_lights = rich_palette_animation(palette=aurora_borealis, cycle_period=12s, transition_type=SINE, brightness=180)
+
+animation sunset_glow = rich_palette_animation(palette=sunset_sky, cycle_period=6s, transition_type=SINE, brightness=220)
+
+# Sequence to showcase all palettes
+sequence palette_showcase {
+  # Fire effect
+  play fire_effect for 8s
+  wait 1s
+  
+  # Ocean waves
+  play ocean_waves for 8s
+  wait 1s
+  
+  # Aurora borealis
+  play aurora_lights for 8s
+  wait 1s
+  
+  # Sunset
+  play sunset_glow for 8s
+  wait 1s
+  
+  # Quick cycle through all
+  repeat 3 times {
+    play fire_effect for 2s
+    play ocean_waves for 2s
+    play aurora_lights for 2s
+    play sunset_glow for 2s
+  }
+}
+
+run palette_showcase

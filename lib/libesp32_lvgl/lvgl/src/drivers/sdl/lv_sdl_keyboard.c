@@ -11,6 +11,7 @@
 
 #include "../../core/lv_group.h"
 #include "../../stdlib/lv_string.h"
+#include "../../misc/lv_text_private.h"
 #include "lv_sdl_private.h"
 
 /*********************
@@ -81,8 +82,14 @@ static void sdl_keyboard_read(lv_indev_t * indev, lv_indev_data_t * data)
     else if(len > 0) {
         dev->dummy_read = true;
         data->state = LV_INDEV_STATE_PRESSED;
-        data->key = dev->buf[0];
-        lv_memmove(dev->buf, dev->buf + 1, len);
+        data->key = 0;
+        /*Copy the first UTF8 character from the buffer*/
+        uint32_t utf8_len = lv_text_encoded_size(dev->buf);
+        if(utf8_len == 0) utf8_len = 1; /*Make sure that at least 1 character is read*/
+        lv_memcpy(&data->key, dev->buf, utf8_len);
+
+        /*Drop the first character*/
+        lv_memmove(dev->buf, dev->buf + utf8_len, len - utf8_len + 1);
     }
 }
 
@@ -118,7 +125,7 @@ void lv_sdl_keyboard_handler(SDL_Event * event)
     /*Find a suitable indev*/
     lv_indev_t * indev = lv_indev_get_next(NULL);
     while(indev) {
-        if(lv_indev_get_type(indev) == LV_INDEV_TYPE_KEYPAD) {
+        if(lv_indev_get_read_cb(indev) == sdl_keyboard_read) {
             /*If disp is NULL for any reason use the first indev with the correct type*/
             if(disp == NULL || lv_indev_get_display(indev) == disp) break;
         }
@@ -143,7 +150,7 @@ void lv_sdl_keyboard_handler(SDL_Event * event)
         case SDL_TEXTINPUT: {                   /*Text input*/
                 const size_t len = lv_strlen(dsc->buf) + lv_strlen(event->text.text);
                 if(len < KEYBOARD_BUFFER_SIZE - 1)
-                    strcat(dsc->buf, event->text.text);
+                    lv_strcat(dsc->buf, event->text.text);
             }
             break;
         default:

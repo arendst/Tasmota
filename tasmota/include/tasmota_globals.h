@@ -47,8 +47,11 @@ extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t
   uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 extern "C" void setTimer1Callback(uint32_t (*fn)());
 #ifdef USE_SERIAL_BRIDGE
-void SerialBridgePrintf(PGM_P formatP, ...);
+void SerialBridgeWrite(char *line, uint32_t len);
 #endif
+#ifdef USE_TELNET
+void TelnetWrite(char *line, uint32_t len);
+#endif  // USE_TELNET
 #ifdef USE_INFLUXDB
 void InfluxDbProcess(bool use_copy = false);
 #endif
@@ -145,15 +148,15 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 \*-------------------------------------------------------------------------------------------*/
 
 /*-------------------------------------------------------------------------------------------*\
- * Start ESP32-C3/C6 specific parameters - disable features not present in ESP32-C3/C6
+ * Start ESP32-C3/C5/C6 specific parameters - disable features not present in ESP32-C3/C5/C6
 \*-------------------------------------------------------------------------------------------*/
 
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6  // ESP32-C3/C6
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6   // ESP32-C3/C5/C6
 //#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // ESP32-C3/C6 does not support ethernet
+//#undef USE_ETHERNET                                // ESP32-C3/C5/C6 does not support ethernet
 //#endif
 
-#endif  // CONFIG_IDF_TARGET_ESP32C3/C6
+#endif  // CONFIG_IDF_TARGET_ESP32C3/C5/C6
 
 /*-------------------------------------------------------------------------------------------*\
  * End ESP32-C3 specific parameters

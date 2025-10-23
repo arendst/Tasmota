@@ -1,0 +1,65 @@
+# Neon Glow - Electric neon tube effect
+# Bright saturated colors with flickering
+
+#strip length 60
+
+# Define neon colors
+palette neon_colors = [
+  (0, 0xFF0080),    # Hot pink
+  (85, 0x00FF80),   # Neon green
+  (170, 0x8000FF),  # Electric purple
+  (255, 0xFF8000)   # Neon orange
+]
+
+# Main neon glow with color cycling
+animation neon_main = rich_palette_animation(palette=neon_colors, cycle_period=4s, transition_type=LINEAR, brightness=255)
+
+# Add electrical flickering
+neon_main.opacity = smooth(min_value=220, max_value=255, duration=200ms)
+
+# Add occasional electrical surge
+animation neon_surge = solid(color=0xFFFFFF)  # White surge
+neon_surge.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cycle=2)  # Quick bright surges
+neon_surge.priority = 20
+
+# Add neon tube segments with gaps
+color segment_pattern = rich_palette(palette=neon_colors, cycle_period=4s, transition_type=LINEAR, brightness=255)
+animation segment1 = beacon_animation(
+  color=segment_pattern # color source
+  pos=6                 # position
+  beacon_size=12        # segment length
+  slew_size=1           # sharp edges
+)
+segment1.priority = 10
+
+animation segment2 = beacon_animation(
+  color=segment_pattern # color source
+  pos=24                # position
+  beacon_size=12        # segment length
+  slew_size=1           # sharp edges
+)
+segment2.priority = 10
+
+animation segment3 = beacon_animation(
+  color=segment_pattern # color source
+  pos=42                # position
+  beacon_size=12        # segment length
+  slew_size=1           # sharp edges
+)
+segment3.priority = 10
+
+# Add electrical arcing between segments
+animation arc_sparkles = twinkle_animation(
+  color=0xAAAAFF  # Electric blue
+  density=4       # density (few arcs)
+  twinkle_speed=100ms # twinkle speed (quick arcs)
+)
+arc_sparkles.priority = 15
+
+# Start all animations
+run neon_main
+run neon_surge
+run segment1
+run segment2
+run segment3
+run arc_sparkles

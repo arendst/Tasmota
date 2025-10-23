@@ -186,7 +186,7 @@ float strToFloat(const char *nPtr, char **endPtr)
         auto scale = 1.0f;
 
         while (exponentPart >= 8U) {
-            scale *= 1E8f;
+            scale *= 1E8;
             exponentPart -= 8U;
         }
         while (exponentPart > 0U) {
@@ -210,26 +210,26 @@ error:
     return 0.0f;
 }
 
-
-int str2int(const char* str, size_t n)
-{
-    int ret = 0;
-    for(size_t i = 0; i < n; ++i) {
-        ret = ret * 10 + (str[i] - '0');
-    }
-    return ret;
-}
-
 char* strDuplicate(const char *str, size_t n)
 {
     auto len = strlen(str);
     if (len < n) n = len;
 
-    auto ret = (char *) malloc(n + 1);
+    auto ret = (char *) lv_malloc(n + 1);
+    LV_ASSERT_MALLOC(ret);
     if (!ret) return nullptr;
     ret[n] = '\0';
 
     return (char *) memcpy(ret, str, n);
+}
+
+char* strAppend(char* lhs, const char* rhs, size_t n)
+{
+    if (!rhs) return lhs;
+    if (!lhs) return strDuplicate(rhs, n);
+    lhs = (char*)lv_realloc(lhs, strlen(lhs) + n + 1);
+    LV_ASSERT_MALLOC(lhs);
+    return strncat(lhs, rhs, n);
 }
 
 char* strDirname(const char* path)

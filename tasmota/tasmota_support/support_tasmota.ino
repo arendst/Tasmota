@@ -389,6 +389,7 @@ void SetAllPower(uint32_t state, uint32_t source) {
     publish_power = false;
   }
   if (((state >= POWER_OFF) && (state <= POWER_TOGGLE)) || (POWER_OFF_FORCE == state))  {
+    power_t current_power = TasmotaGlobal.power;
     power_t all_on = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     switch (state) {
     case POWER_OFF:
@@ -408,6 +409,13 @@ void SetAllPower(uint32_t state, uint32_t source) {
       TasmotaGlobal.power = 0; 
       break;
     }
+#ifdef USE_SONOFF_IFAN
+    if (IsModuleIfan()) {
+      // Do not touch Fan relays
+      TasmotaGlobal.power &= 0x0001;
+      TasmotaGlobal.power |= (current_power & 0xFFFE);
+    }
+#endif  // USE_SONOFF_IFAN
     SetDevicePower(TasmotaGlobal.power, source);
   }
   if (publish_power) {
@@ -898,6 +906,15 @@ void MqttShowState(void)
     ResponseAppend_P(PSTR(","));
     MqttShowPWMState();
   }
+  
+  char *hostname = TasmotaGlobal.hostname;
+  uint32_t ipaddress = 0;
+#if defined(ESP32) && defined(USE_ETHERNET)
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+    hostname = EthernetHostname();           // Set ethernet as IP connection
+    ipaddress = (uint32_t)EthernetLocalIP();
+  }
+#endif
 
   if (!TasmotaGlobal.global_state.wifi_down) {
     int32_t rssi = WiFi.RSSI();
@@ -905,7 +922,15 @@ void MqttShowState(void)
       Settings->sta_active +1, EscapeJSONString(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(),
       WifiGetPhyMode().c_str(), WifiGetRssiAsQuality(rssi), rssi,
       WifiLinkCount(), WifiDowntime().c_str());
+
+    if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+      hostname = TasmotaGlobal.hostname;     // Overrule ethernet as primary IP connection
+      ipaddress = (uint32_t)WiFi.localIP();
+    }
   }
+  // I only want to show one active connection for device access
+  ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
+    hostname, ipaddress);
 
   ResponseJsonEnd();
 }
@@ -1111,6 +1136,7 @@ void PerformEverySecond(void)
     RtcRebootReset();
 
     Settings->last_module = Settings->module;
+
 
 #ifdef USE_DEEPSLEEP
     if (!(DeepSleepEnabled() && !Settings->flag3.bootcount_update)) {  // SetOption76  - (Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled
@@ -1774,8 +1800,11 @@ void ArduinoOtaLoop(void)
 
 /********************************************************************************************/
 
-void SerialInput(void)
-{
+void SerialInput(void) {
+#ifdef USE_XYZMODEM
+  if (XYZModemActive(TXMP_TASCONSOLE)) { return; }
+#endif  // USE_XYZMODEM
+
   static uint32_t serial_polling_window = 0;
   static bool serial_buffer_overrun = false;
 
@@ -1810,6 +1839,12 @@ void SerialInput(void)
       Serial.flush();
       return;
     }
+
+/*-------------------------------------------------------------------------------------------*/
+
+#ifdef USE_XYZMODEM
+    if (XYZModemStart(TXMP_TASCONSOLE, TasmotaGlobal.serial_in_byte)) { return; }
+#endif  // USE_XYZMODEM
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -1870,7 +1905,7 @@ void SerialInput(void)
 
     if (!Settings->flag.mqtt_serial && (TasmotaGlobal.serial_in_byte == '\n')) {   // CMND_SERIALSEND and CMND_SERIALLOG
       TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;    // Serial data completed
-      TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+      SetMinimumSeriallog();
       if (serial_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
       } else {
@@ -1923,11 +1958,19 @@ void SerialInput(void)
 String console_buffer = "";
 
 void TasConsoleInput(void) {
+#ifdef USE_XYZMODEM
+  if (XYZModemActive(TXMP_TASCONSOLE)) { return; }
+#endif  // USE_XYZMODEM
+
   static bool console_buffer_overrun = false;
 
   while (TasConsole.available()) {
     delay(0);
     char console_in_byte = TasConsole.read();
+
+#ifdef USE_XYZMODEM
+    if (XYZModemStart(TXMP_TASCONSOLE, console_in_byte)) { return; }
+#endif  // USE_XYZMODEM
 
     if (isprint(console_in_byte)) {                       // Any char between 32 and 127
       if (console_buffer.length() < INPUT_BUFFER_SIZE) {  // Add char to string if it still fits
@@ -1937,7 +1980,7 @@ void TasConsoleInput(void) {
       }
     }
     else if (console_in_byte == '\n') {
-      TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+      SetMinimumSeriallog();
       if (console_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "USB buffer overrun"));
       } else {

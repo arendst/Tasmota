@@ -25,42 +25,57 @@
 #endif
 
 
-void Stream_mp3(void) {
+void I2SMP3StreamInit(){
+  audio_i2s_mp3.encoder_type = MP3_ENCODER;
+  I2SstreamInit ();
+}
+
+void I2SOpusStreamInit(){
+  audio_i2s_mp3.encoder_type = OPUS_ENCODER;
+  I2SstreamInit ();
+}
+
+void I2SstreamInit (void) {
   if (audio_i2s_mp3.stream_active) {
-    AddLog(LOG_LEVEL_INFO, PSTR("I2S: can not handle client - other MP3 task active"));
+    AddLog(LOG_LEVEL_INFO, PSTR("I2S: can not handle client - other stream task active"));
     return;
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("I2S: Handle mp3server"));
-  audio_i2s_mp3.stream_active = 1;
-  audio_i2s_mp3.client = audio_i2s_mp3.MP3Server->client();
+  audio_i2s_mp3.stream_active = true;
+  audio_i2s_mp3.client = audio_i2s_mp3.StreamServer->client();
   AddLog(LOG_LEVEL_INFO, PSTR("I2S: Create client"));
-  // i2s_record_shine((char*)"stream.mp3");
-  I2sRecordShine((char*)"stream.mp3");
-}
 
-void I2sMp3Loop(void) {
-  if (audio_i2s_mp3.MP3Server) {
-    audio_i2s_mp3.MP3Server->handleClient();
+  audio_i2s_mp3.use_stream = true;
+  if(I2sRecord((char*)"", audio_i2s_mp3.encoder_type) != pdTRUE){
+    AddLog(LOG_LEVEL_INFO, PSTR("I2S: Stop client"));
+    audio_i2s_mp3.stream_active = false;
+    audio_i2s_mp3.client.stop();
   }
 }
 
-void I2sMp3Init(uint32_t on) {
+void I2sStreamLoop(void) {
+  if (audio_i2s_mp3.StreamServer) {
+    audio_i2s_mp3.StreamServer->handleClient();
+  }
+}
+
+void I2sServerInit(uint32_t on) {
   if (on) {
-    if (!audio_i2s_mp3.MP3Server) {
-      audio_i2s_mp3.MP3Server = new ESP8266WebServer(MP3_STREAM_PORT);
-      audio_i2s_mp3.MP3Server->on(PSTR("/stream.mp3"), Stream_mp3);
-      audio_i2s_mp3.MP3Server->on(PSTR("/stream.m3a"), Stream_mp3);
-      audio_i2s_mp3.MP3Server->begin();
-      AddLog(LOG_LEVEL_INFO, PSTR("MP3: server created on port: %d "), MP3_STREAM_PORT);
+    if (!audio_i2s_mp3.StreamServer) {
+      audio_i2s_mp3.StreamServer = new ESP8266WebServer(MP3_STREAM_PORT);
+      audio_i2s_mp3.StreamServer->on(PSTR("/stream.mp3"), I2SMP3StreamInit);
+      audio_i2s_mp3.StreamServer->on(PSTR("/stream.m3a"), I2SMP3StreamInit);
+      audio_i2s_mp3.StreamServer->on(PSTR("/stream.webm"), I2SOpusStreamInit);
+      audio_i2s_mp3.StreamServer->begin();
+      AddLog(LOG_LEVEL_INFO, PSTR("I2S: server created on port: %d "), MP3_STREAM_PORT);
     }
   } else {
-    if (audio_i2s_mp3.MP3Server) {
-      audio_i2s_mp3.MP3Server->stop();
-      delete audio_i2s_mp3.MP3Server;
-      audio_i2s_mp3.MP3Server = nullptr;
+    if (audio_i2s_mp3.StreamServer) {
+      audio_i2s_mp3.StreamServer->stop();
+      delete audio_i2s_mp3.StreamServer;
+      audio_i2s_mp3.StreamServer = nullptr;
       audio_i2s_mp3.mic_stop = 1;
-      audio_i2s_mp3.stream_active = 0;
-      AddLog(LOG_LEVEL_INFO, PSTR("MP3: server deleted"));
+      audio_i2s_mp3.stream_active = false;
+      AddLog(LOG_LEVEL_INFO, PSTR("I2S: server deleted"));
     }
   }
 }
@@ -70,7 +85,7 @@ void CmndI2SMP3Stream(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     audio_i2s_mp3.stream_enable = XdrvMailbox.payload;
   }
-  I2sMp3Init(audio_i2s_mp3.stream_enable);
+  I2sServerInit(audio_i2s_mp3.stream_enable);
   ResponseCmndNumber(audio_i2s_mp3.stream_enable);
 }
 

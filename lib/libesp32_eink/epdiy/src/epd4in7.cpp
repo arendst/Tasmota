@@ -37,7 +37,7 @@
 #include <esp_types.h>
 #include <xtensa/core-macros.h>
 #include <driver/gpio.h>
-#include "epd_driver.h"
+//#include "epd_driver.h"
 #include "epd_highlevel.h"
 
 #define WAVEFORM EPD_BUILTIN_WAVEFORM
@@ -58,8 +58,9 @@ Epd47::Epd47(int16_t dwidth, int16_t dheight) :  Renderer(dwidth, dheight) {
   disp_bpp = 4;
 }
 
-int32_t Epd47::Init(void) {
-  epd_init(EPD_LUT_1K);
+int Epd47::Init(void) {
+  epd_init(&epd_board_lilygo_t5_47, &ED047TC1, EPD_LUT_64K);
+//  epd_set_vcom(1560);
   hl = epd_hl_init(WAVEFORM);
   epd47_buffer = epd_hl_get_framebuffer(&hl);
   framebuffer = epd47_buffer;
