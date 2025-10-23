@@ -2,7 +2,7 @@
   "build": {
     "core": "esp32",
     "extra_flags": [
-      "-DARDUINO_TASMOTA -DESP32P4 -DBOARD_HAS_PSRAM"
+      "-DARDUINO_TASMOTA -DESP32P4 -DESP32_16M -DBOARD_HAS_PSRAM"
     ],
     "f_cpu": "360000000L",
     "f_flash": "80000000L",
@@ -10,7 +10,7 @@
     "flash_mode": "qio",
     "mcu": "esp32p4",
     "variant": "esp32p4",
-    "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
+    "partitions": "partitions/esp32_partition_app3904k_fs11584k.csv"
   },
   "connectivity": [
     "wifi",
@@ -25,7 +25,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif Generic ESP32-P4 >= 4M Flash, Tasmota 2880k Code/OTA, >= 320k FS",
+  "name": "Espressif Generic ESP32-P4 16M Flash, Tasmota 3904k Code/OTA, 11584k FS",
   "upload": {
     "arduino": {
       "flash_extra_images": [
@@ -35,9 +35,9 @@
         ]
       ]
     },
-    "flash_size": "4MB",
+    "flash_size": "16MB",
     "maximum_ram_size": 768000,
-    "maximum_size": 4194304,
+    "maximum_size": 16777216,
     "require_upload_port": true,
     "speed": 1500000
   },
