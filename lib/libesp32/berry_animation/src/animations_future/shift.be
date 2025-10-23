@@ -13,7 +13,7 @@ class ShiftAnimation : animation.animation
   var current_colors     # Array of current colors for each pixel
   
   # Parameter definitions with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "source_animation": {"type": "instance", "default": nil},
     "shift_speed": {"min": 0, "max": 255, "default": 128},
     "direction": {"min": -1, "max": 1, "default": 1},

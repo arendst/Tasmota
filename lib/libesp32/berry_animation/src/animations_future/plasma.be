@@ -12,7 +12,7 @@ class PlasmaAnimation : animation.animation
   var time_phase         # Current time-based phase
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": nil},
     "freq_x": {"min": 1, "max": 255, "default": 32},
     "freq_y": {"min": 1, "max": 255, "default": 23},

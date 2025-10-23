@@ -12,7 +12,7 @@ class GradientAnimation : animation.animation
   var phase_offset       # Current phase offset for movement
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": nil, "nillable": true},
     "gradient_type": {"min": 0, "max": 1, "default": 0},
     "direction": {"min": 0, "max": 255, "default": 0},

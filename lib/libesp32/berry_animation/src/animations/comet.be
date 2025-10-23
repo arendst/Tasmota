@@ -14,7 +14,7 @@ class CometAnimation : animation.animation
   var head_position    # Current position of the comet head (in 1/256th pixels for smooth movement)
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # 'color' for the comet head (32-bit ARGB value), inherited from animation class
     "tail_length": {"min": 1, "max": 50, "default": 5}, # Length of the comet tail in pixels
     "speed": {"min": 1, "max": 25600, "default": 2560}, # Movement speed in 1/256th pixels per second

@@ -72,7 +72,7 @@ sunset_glow_.cycle_period = 6000
 sunset_glow_.transition_type = animation.SINE
 sunset_glow_.brightness = 220
 # Sequence to showcase all palettes
-var palette_showcase_ = animation.SequenceManager(engine)
+var palette_showcase_ = animation.sequence_manager(engine)
   # Fire effect
   .push_play_step(fire_effect_, 8000)
   .push_wait_step(1000)
@@ -86,7 +86,7 @@ var palette_showcase_ = animation.SequenceManager(engine)
   .push_play_step(sunset_glow_, 8000)
   .push_wait_step(1000)
   # Quick cycle through all
-  .push_repeat_subsequence(animation.SequenceManager(engine, 3)
+  .push_repeat_subsequence(animation.sequence_manager(engine, 3)
     .push_play_step(fire_effect_, 2000)
     .push_play_step(ocean_waves_, 2000)
     .push_play_step(aurora_lights_, 2000)

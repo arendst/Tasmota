@@ -14,7 +14,7 @@ class FireAnimation : animation.animation
   var random_seed      # Seed for random number generation
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # 'color' for the comet head (32-bit ARGB value), inherited from animation class
     "intensity": {"min": 0, "max": 255, "default": 180},
     "flicker_speed": {"min": 1, "max": 20, "default": 8},

@@ -53,10 +53,12 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/bytes_type_test.be",  # Tests bytes type validation in parameterized objects
     "lib/libesp32/berry_animation/src/tests/animation_test.be",
     "lib/libesp32/berry_animation/src/tests/animation_engine_test.be",
+    "lib/libesp32/berry_animation/src/tests/cpu_metrics_test.be",  # Tests CPU metrics and profiling API
     "lib/libesp32/berry_animation/src/tests/animation_opacity_test.be",
     "lib/libesp32/berry_animation/src/tests/fast_loop_integration_test.be",
     "lib/libesp32/berry_animation/src/tests/solid_animation_test.be",  # Tests unified solid() function
     "lib/libesp32/berry_animation/src/tests/solid_unification_test.be",  # Tests solid unification
+    "lib/libesp32/berry_animation/src/tests/engine_proxy_test.be",  # Tests engine proxy (Playable refactoring)
     
     # Animation effect tests
     "lib/libesp32/berry_animation/src/tests/filled_animation_test.be",
@@ -124,6 +126,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/dsl_parameter_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_value_provider_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_template_validation_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_template_animation_test.be",  # Tests template animation feature
     "lib/libesp32/berry_animation/src/tests/dsl_undefined_identifier_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_newline_syntax_test.be",
     "lib/libesp32/berry_animation/src/tests/test_math_method_transpilation.be",

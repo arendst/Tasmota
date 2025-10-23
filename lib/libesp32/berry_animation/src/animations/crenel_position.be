@@ -25,7 +25,7 @@ class CrenelPositionAnimation : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # 'color' for the comet head (32-bit ARGB value), inherited from animation class
     "back_color": {"default": 0xFF000000},      # background color, TODO change to transparent
     "pos": {"default": 0},                      # start of the pulse (in pixel)

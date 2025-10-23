@@ -70,9 +70,9 @@ assert_test(!engine.add(anim1), "Should not add duplicate animation")
 assert_equals(engine.size(), 3, "Size should remain 3 after duplicate attempt")
 
 # Test animation removal
-assert_test(engine.remove_animation(anim2), "Should remove existing animation")
+assert_test(engine.remove(anim2), "Should remove existing animation")
 assert_equals(engine.size(), 2, "Size should be 2 after removal")
-assert_test(!engine.remove_animation(anim2), "Should not remove non-existent animation")
+assert_test(!engine.remove(anim2), "Should not remove non-existent animation")
 
 # Test 3: Engine Lifecycle
 print("\n--- Test 3: Engine Lifecycle ---")
@@ -106,13 +106,13 @@ assert_test(true, "Engine should process tick without error")
 
 # Test 5: Sequence Manager Integration
 print("\n--- Test 5: Sequence Manager Integration ---")
-var seq_manager = animation.SequenceManager(engine)
+var seq_manager = animation.sequence_manager(engine)
 assert_not_nil(seq_manager, "Sequence manager should be created")
 
 engine.add(seq_manager)
 assert_test(true, "Should add sequence manager without error")
 
-engine.remove_sequence_manager(seq_manager)
+engine.remove(seq_manager)
 assert_test(true, "Should remove sequence manager without error")
 
 # Test 6: Clear Functionality

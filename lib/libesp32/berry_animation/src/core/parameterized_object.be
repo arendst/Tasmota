@@ -16,9 +16,9 @@ class ParameterizedObject
   var start_time      # Time when object started (ms) (int), value is set at first call to update() or render()
   
   # Static parameter definitions - should be overridden by subclasses
-  static var PARAMS = encode_constraints(
-    {"is_running": {"type": "bool", "default": false}
-  })   # Whether the object is active
+  static var PARAMS = animation.enc_params(
+    {"is_running": {"type": "bool", "default": false}     # Whether the object is active
+  })
   
   # Initialize parameter system
   #
@@ -175,13 +175,8 @@ class ParameterizedObject
     
     var value = self.values[name]
     
-    # If it's a ValueProvider, resolve it using produce_value
-    if animation.is_value_provider(value)
-      return value.produce_value(name, time_ms)
-    else
-      # It's a static value, return as-is
-      return value
-    end
+    # Apply produce_value() if it' a ValueProvider
+    return self.resolve_value(value, name, time_ms)
   end
   
   # Validate a parameter value against its constraints
@@ -210,7 +205,7 @@ class ParameterizedObject
       
       # Check if there's a default value (nil is acceptable if there's a default)
       if self.constraint_mask(encoded_constraints, "default")
-        return value  # nil is acceptable, will use default
+        return self.constraint_find(encoded_constraints, "default")  # nil is not allowed, use default
       end
       
       # nil is not allowed for this parameter
@@ -219,6 +214,15 @@ class ParameterizedObject
     
     # Type validation - default type is "int" if not specified
     var expected_type = self.constraint_find(encoded_constraints, "type", "int")
+    
+    # Normalize type synonyms to their base types
+    # 'time', 'percentage', 'color' are synonyms for 'int'
+    # 'palette' is synonym for 'bytes'
+    if expected_type == "time" || expected_type == "percentage" || expected_type == "color"
+      expected_type = "int"
+    elif expected_type == "palette"
+      expected_type = "bytes"
+    end
     
     # Get actual type for validation
     var actual_type = type(value)
@@ -326,9 +330,20 @@ class ParameterizedObject
   # @param param_name: string - Parameter name for specific produce_value() method lookup
   # @param time_ms: int - Current time in milliseconds
   # @return any - The resolved value (static or from provider)
-  def resolve_value(value, param_name, time_ms)
+  def resolve_value(value, name, time_ms)
     if animation.is_value_provider(value)             # this also captures 'nil'
-      return value.produce_value(param_name, time_ms)
+      var ret = value.produce_value(name, time_ms)
+
+      # If result is `nil` we check if the parameter is nillable, if so use default value
+      if (ret == nil)
+        var encoded_constraints = self._get_param_def(name)
+        if !self.constraint_mask(encoded_constraints, "nillable") &&
+            self.constraint_mask(encoded_constraints, "default")
+
+          ret = self.constraint_find(encoded_constraints, "default")
+        end
+      end
+      return ret
     else
       return value
     end
@@ -416,6 +431,15 @@ class ParameterizedObject
     return introspect.toptr(self) == introspect.toptr(other)
   end
   
+  # Default method to convert instance to boolean
+  # Having an explicit method prevents from calling member()
+  # Always return 'true' to mimick default test of instance existance
+  #
+  # @return bool - always True since the instance is not 'nil'
+  def tobool()
+    return true
+  end
+
   # Inequality operator for object identity comparison
   # This prevents the member() method from being called during != comparisons
   #
@@ -495,7 +519,7 @@ class ParameterizedObject
   #
   # Encoding constraints (see param_encoder.be):
   #   import param_encoder
-  #   var encoded = param_encoder.encode_constraints({"min": 0, "max": 255, "default": 128})
+  #   var encoded = param_encoder.animation.enc_params({"min": 0, "max": 255, "default": 128})
   #
   # Checking if constraint contains a field:
   #   if ParameterizedObject.constraint_mask(encoded, "min")
@@ -538,7 +562,7 @@ class ParameterizedObject
     "function"    # 0x06
   ]
   static def constraint_mask(encoded_bytes, name)
-    if size(encoded_bytes) > 0
+    if (encoded_bytes != nil) && size(encoded_bytes) > 0
       var index_mask = _class._MASK.find(name)
       if (index_mask != nil)
         return (encoded_bytes[0] & (1 << index_mask))

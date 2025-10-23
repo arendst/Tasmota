@@ -16,7 +16,7 @@ class TwinkleAnimation : animation.animation
   var random_seed      # Seed for random number generation
   
   # Parameter definitions with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFFFFFF},
     "density": {"min": 0, "max": 255, "default": 128},
     "twinkle_speed": {"min": 1, "max": 5000, "default": 6},

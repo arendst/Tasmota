@@ -22,7 +22,7 @@ class ClosureValueProvider : animation.value_provider
   var _closure                # We keep the closure as instance variable for faster dereferencing, in addition to PARAMS
 
   # Static parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "closure": {"type": "function", "default": nil}
   })
   

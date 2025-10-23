@@ -41,7 +41,7 @@ assert(default_anim.duration == 0, "Default duration should be 0 (infinite)")
 assert(default_anim.loop == false, "Default loop should be false")
 assert(default_anim.opacity == 255, "Default opacity should be 255")
 assert(default_anim.name == "animation", "Default name should be 'animation'")
-assert(default_anim.color == 0xFFFFFFFF, "Default color should be white")
+assert(default_anim.color == 0x00000000, "Default color should be transparent")
 
 # Test start method
 engine.time_ms = 1000

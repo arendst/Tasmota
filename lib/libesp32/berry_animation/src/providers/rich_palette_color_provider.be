@@ -19,7 +19,7 @@ class RichPaletteColorProvider : animation.color_provider
   var light_state      # light_state instance for proper color calculations
   
   # Parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "palette": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR},

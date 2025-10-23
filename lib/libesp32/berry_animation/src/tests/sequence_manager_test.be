@@ -12,14 +12,14 @@ def test_sequence_manager_basic()
   print("=== SequenceManager Basic Tests ===")
   
   # Test SequenceManager class exists
-  assert(animation.SequenceManager != nil, "SequenceManager class should be defined")
+  assert(animation.sequence_manager != nil, "SequenceManager class should be defined")
   
   # Create strip and engine for testing
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
   
   # Test initialization
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   assert(seq_manager.engine == engine, "Engine should be set correctly")
   assert(seq_manager.steps != nil, "Steps list should be initialized")
   assert(seq_manager.steps.size() == 0, "Steps list should be empty initially")
@@ -45,7 +45,7 @@ def test_sequence_manager_step_creation()
   test_anim.name = "test"
   
   # Test fluent interface step creation
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Test push_play_step
   seq_manager.push_play_step(test_anim, 5000)
@@ -79,7 +79,7 @@ def test_sequence_manager_execution()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test animations using new parameterized API
   var color_provider1 = animation.static_color(engine)
@@ -127,7 +127,7 @@ def test_sequence_manager_timing()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test animation using new parameterized API
   var color_provider = animation.static_color(engine)
@@ -181,7 +181,7 @@ def test_sequence_manager_step_info()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test sequence using new parameterized API
   var color_provider = animation.static_color(engine)
@@ -211,7 +211,7 @@ def test_sequence_manager_stop()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test sequence using new parameterized API
   var color_provider = animation.static_color(engine)
@@ -246,7 +246,7 @@ def test_sequence_manager_is_running()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Test initial state
   assert(seq_manager.is_sequence_running() == false, "Sequence should not be running initially")
@@ -284,7 +284,7 @@ def test_sequence_manager_assignment_steps()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test animation using new parameterized API
   var color_provider = animation.static_color(engine)
@@ -343,7 +343,7 @@ def test_sequence_manager_complex_sequence()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create multiple test animations using new parameterized API
   var red_provider = animation.static_color(engine)
@@ -425,7 +425,7 @@ def test_sequence_manager_integration()
   var engine = animation.create_engine(strip)
   
   # Test engine integration
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   engine.add(seq_manager)
   
   # Create test sequence using new parameterized API
@@ -458,7 +458,7 @@ def test_sequence_manager_integration()
   
   # Test engine cleanup
   engine.clear()
-  assert(engine.sequence_managers.size() == 0, "Engine should clear sequence managers")
+  assert(size(engine.root_animation.sequences) == 0, "Engine should clear sequence managers")
   
   print("✓ Integration tests passed")
 end
@@ -472,7 +472,7 @@ def test_sequence_manager_parametric_repeat_counts()
   
   # Test 1: Static repeat count (baseline)
   var static_repeat_count = 3
-  var seq_manager1 = animation.SequenceManager(engine, static_repeat_count)
+  var seq_manager1 = animation.sequence_manager(engine, static_repeat_count)
   
   # Test get_resolved_repeat_count with static number
   var resolved_count = seq_manager1.get_resolved_repeat_count()
@@ -480,7 +480,7 @@ def test_sequence_manager_parametric_repeat_counts()
   
   # Test 2: Function-based repeat count (simulating col1.palette_size)
   var palette_size_function = def (engine) return 5 end  # Simulates a palette with 5 colors
-  var seq_manager2 = animation.SequenceManager(engine, palette_size_function)
+  var seq_manager2 = animation.sequence_manager(engine, palette_size_function)
   
   # Test get_resolved_repeat_count with function
   resolved_count = seq_manager2.get_resolved_repeat_count()
@@ -493,7 +493,7 @@ def test_sequence_manager_parametric_repeat_counts()
     return dynamic_counter <= 1 ? 2 : 4  # First call returns 2, subsequent calls return 4
   end
   
-  var seq_manager3 = animation.SequenceManager(engine, dynamic_function)
+  var seq_manager3 = animation.sequence_manager(engine, dynamic_function)
   var first_resolved = seq_manager3.get_resolved_repeat_count()
   var second_resolved = seq_manager3.get_resolved_repeat_count()
   assert(first_resolved == 2, f"First dynamic call should return 2, got {first_resolved}")
@@ -523,7 +523,7 @@ def test_sequence_manager_repeat_execution_with_functions()
   var repeat_count_func = def (engine) return 3 end
   
   # Create sequence manager with function-based repeat count
-  var seq_manager = animation.SequenceManager(engine, repeat_count_func)
+  var seq_manager = animation.sequence_manager(engine, repeat_count_func)
   seq_manager.push_play_step(test_anim, 50)  # Short duration for testing
   
   # Verify repeat count is resolved correctly
@@ -572,7 +572,7 @@ def test_sequence_manager_palette_size_simulation()
   #   play shutter_animation for duration
   #   col1.next = 1
   # }
-  var seq_manager = animation.SequenceManager(engine, palette_size_func)
+  var seq_manager = animation.sequence_manager(engine, palette_size_func)
   seq_manager.push_closure_step(advance_color_func)  # Just test the closure execution
   
   # Test that repeat count is resolved correctly
@@ -615,7 +615,7 @@ def test_sequence_manager_dynamic_repeat_changes()
   end
   
   # Create sequence with dynamic repeat count
-  var seq_manager = animation.SequenceManager(engine, dynamic_repeat_func)
+  var seq_manager = animation.sequence_manager(engine, dynamic_repeat_func)
   seq_manager.push_play_step(test_anim, 250)
   
   # Start sequence
@@ -642,7 +642,7 @@ def test_sequence_manager_dynamic_repeat_changes()
     return engine.strip != nil ? 3 : 1
   end
   
-  var seq_manager2 = animation.SequenceManager(engine, engine_dependent_func)
+  var seq_manager2 = animation.sequence_manager(engine, engine_dependent_func)
   var engine_count = seq_manager2.get_resolved_repeat_count()
   assert(engine_count == 3, f"Engine-dependent count should be 3, got {engine_count}")
   
@@ -678,7 +678,7 @@ def test_sequence_manager_complex_parametric_scenario()
   end
   
   # Create sequence with parametric repeat
-  var seq_manager = animation.SequenceManager(engine, palette_size_func)
+  var seq_manager = animation.sequence_manager(engine, palette_size_func)
   seq_manager.push_closure_step(advance_colors_func)
   
   # Verify sequence setup
@@ -704,6 +704,239 @@ def test_sequence_manager_complex_parametric_scenario()
   print("✓ Complex parametric scenario tests passed")
 end
 
+def test_sequence_manager_zero_iterations()
+  print("=== SequenceManager Zero Iterations Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create test animation
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
+  
+  # Track execution count
+  var execution_count = 0
+  
+  # Test 1: Static zero repeat count
+  var seq_manager = animation.sequence_manager(engine, 0)
+  seq_manager.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager.push_play_step(test_anim, 100)
+  
+  # Start the sequence
+  tasmota.set_millis(100000)
+  seq_manager.start(100000)
+  
+  # Verify that the sequence did not execute
+  assert(seq_manager.is_running == false, "Sequence with repeat_count=0 should not start")
+  assert(execution_count == 0, f"Sequence with repeat_count=0 should not execute, but executed {execution_count} time(s)")
+  
+  # Test 2: Function-based zero repeat count (simulating empty palette)
+  execution_count = 0
+  var zero_func = def (engine) return 0 end
+  var seq_manager2 = animation.sequence_manager(engine, zero_func)
+  seq_manager2.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager2.push_play_step(test_anim, 100)
+  
+  # Start the sequence
+  tasmota.set_millis(101000)
+  seq_manager2.start(101000)
+  
+  # Verify that the sequence did not execute
+  assert(seq_manager2.is_running == false, "Sequence with function returning 0 should not start")
+  assert(execution_count == 0, f"Sequence with function returning 0 should not execute, but executed {execution_count} time(s)")
+  
+  print("✓ Zero iterations tests passed")
+end
+
+def test_sequence_manager_zero_palette_size()
+  print("=== SequenceManager Zero Palette Size Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create a color cycle with empty palette (palette_size = 0)
+  var col1 = animation.color_cycle(engine)
+  col1.palette = bytes()  # Empty palette
+  col1.cycle_period = 0
+  
+  # Verify palette size is 0
+  assert(col1.palette_size == 0, f"Empty palette should have size 0, got {col1.palette_size}")
+  
+  # Track execution count
+  var execution_count = 0
+  
+  # Create sequence with repeat col1.palette_size times (should be 0)
+  var seq_manager = animation.sequence_manager(engine, def (engine) return col1.palette_size end)
+  seq_manager.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager.push_wait_step(100)
+  
+  # Start the sequence
+  tasmota.set_millis(102000)
+  seq_manager.start(102000)
+  
+  # Verify that the sequence did not execute
+  assert(seq_manager.is_running == false, "Sequence with palette_size=0 should not start")
+  assert(execution_count == 0, f"Sequence with palette_size=0 should not execute, but executed {execution_count} time(s)")
+  
+  # Test with non-empty palette for comparison
+  execution_count = 0
+  var col2 = animation.color_cycle(engine)
+  col2.palette = bytes("FFFF0000" "FF00FF00" "FF0000FF")  # 3 colors
+  col2.cycle_period = 0
+  
+  assert(col2.palette_size == 3, f"Palette with 3 colors should have size 3, got {col2.palette_size}")
+  
+  # Create sequence with repeat col2.palette_size times (should be 3)
+  var seq_manager2 = animation.sequence_manager(engine, def (engine) return col2.palette_size end)
+  seq_manager2.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager2.push_wait_step(100)
+  
+  # Start the sequence
+  tasmota.set_millis(103000)
+  seq_manager2.start(103000)
+  
+  # Verify that the sequence started
+  assert(seq_manager2.is_running == true, "Sequence with palette_size=3 should start")
+  assert(execution_count == 1, f"Sequence with palette_size=3 should execute once initially, got {execution_count}")
+  
+  # Simulate multiple updates to complete all iterations
+  var time = 103000
+  while seq_manager2.is_running && execution_count < 10  # Safety limit
+    time += 150
+    seq_manager2.update(time)
+  end
+  
+  assert(execution_count == 3, f"Sequence with palette_size=3 should execute 3 times total, got {execution_count}")
+  
+  print("✓ Zero palette size tests passed")
+end
+
+def test_sequence_manager_boolean_repeat_counts()
+  print("=== SequenceManager Boolean Repeat Count Tests ===")
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create test animation
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFF00FF00
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test_bool"
+  
+  # Test 1: repeat_count = true (should execute once, true converts to 1)
+  var execution_count = 0
+  var seq_manager1 = animation.sequence_manager(engine, true)
+  seq_manager1.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager1.push_wait_step(100)
+  
+  # Verify repeat count resolution
+  var resolved_count = seq_manager1.get_resolved_repeat_count()
+  assert(resolved_count == 1, f"Boolean true should resolve to 1, got {resolved_count}")
+  
+  # Start and run sequence
+  tasmota.set_millis(104000)
+  seq_manager1.start(104000)
+  
+  var time = 104000
+  while seq_manager1.is_running && execution_count < 10
+    time += 150
+    seq_manager1.update(time)
+  end
+  
+  assert(execution_count == 1, f"Sequence with repeat_count=true should execute once, got {execution_count}")
+  
+  # Test 2: repeat_count = false (should not execute, false converts to 0)
+  execution_count = 0
+  var seq_manager2 = animation.sequence_manager(engine, false)
+  seq_manager2.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager2.push_wait_step(100)
+  
+  # Verify repeat count resolution
+  resolved_count = seq_manager2.get_resolved_repeat_count()
+  assert(resolved_count == 0, f"Boolean false should resolve to 0, got {resolved_count}")
+  
+  # Start sequence
+  tasmota.set_millis(105000)
+  seq_manager2.start(105000)
+  
+  # Verify that the sequence did not execute
+  assert(seq_manager2.is_running == false, "Sequence with repeat_count=false should not start")
+  assert(execution_count == 0, f"Sequence with repeat_count=false should not execute, got {execution_count}")
+  
+  # Test 3: Function returning true
+  execution_count = 0
+  var bool_func_true = def (engine) return true end
+  var seq_manager3 = animation.sequence_manager(engine, bool_func_true)
+  seq_manager3.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager3.push_wait_step(100)
+  
+  # Verify repeat count resolution
+  resolved_count = seq_manager3.get_resolved_repeat_count()
+  assert(resolved_count == 1, f"Function returning true should resolve to 1, got {resolved_count}")
+  
+  # Start and run sequence
+  tasmota.set_millis(106000)
+  seq_manager3.start(106000)
+  
+  time = 106000
+  while seq_manager3.is_running && execution_count < 10
+    time += 150
+    seq_manager3.update(time)
+  end
+  
+  assert(execution_count == 1, f"Sequence with function returning true should execute once, got {execution_count}")
+  
+  # Test 4: Function returning false
+  execution_count = 0
+  var bool_func_false = def (engine) return false end
+  var seq_manager4 = animation.sequence_manager(engine, bool_func_false)
+  seq_manager4.push_closure_step(def (engine) 
+    execution_count += 1
+  end)
+  seq_manager4.push_wait_step(100)
+  
+  # Verify repeat count resolution
+  resolved_count = seq_manager4.get_resolved_repeat_count()
+  assert(resolved_count == 0, f"Function returning false should resolve to 0, got {resolved_count}")
+  
+  # Start sequence
+  tasmota.set_millis(107000)
+  seq_manager4.start(107000)
+  
+  # Verify that the sequence did not execute
+  assert(seq_manager4.is_running == false, "Sequence with function returning false should not start")
+  assert(execution_count == 0, f"Sequence with function returning false should not execute, got {execution_count}")
+  
+  print("✓ Boolean repeat count tests passed")
+end
+
 # Run all tests
 def run_all_sequence_manager_tests()
   print("Starting SequenceManager Unit Tests...")
@@ -723,6 +956,9 @@ def run_all_sequence_manager_tests()
   test_sequence_manager_palette_size_simulation()
   test_sequence_manager_dynamic_repeat_changes()
   test_sequence_manager_complex_parametric_scenario()
+  test_sequence_manager_zero_iterations()
+  test_sequence_manager_zero_palette_size()
+  test_sequence_manager_boolean_repeat_counts()
   
   print("\n🎉 All SequenceManager tests passed!")
   return true
@@ -747,5 +983,8 @@ return {
   "test_sequence_manager_repeat_execution_with_functions": test_sequence_manager_repeat_execution_with_functions,
   "test_sequence_manager_palette_size_simulation": test_sequence_manager_palette_size_simulation,
   "test_sequence_manager_dynamic_repeat_changes": test_sequence_manager_dynamic_repeat_changes,
-  "test_sequence_manager_complex_parametric_scenario": test_sequence_manager_complex_parametric_scenario
+  "test_sequence_manager_complex_parametric_scenario": test_sequence_manager_complex_parametric_scenario,
+  "test_sequence_manager_zero_iterations": test_sequence_manager_zero_iterations,
+  "test_sequence_manager_zero_palette_size": test_sequence_manager_zero_palette_size,
+  "test_sequence_manager_boolean_repeat_counts": test_sequence_manager_boolean_repeat_counts
 }

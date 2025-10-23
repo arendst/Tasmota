@@ -595,6 +595,185 @@ animation.register_user_function("pulse_effect", create_pulse_effect)
 
 ## Performance Issues
 
+### CPU Metrics and Profiling
+
+**Feature:** Built-in CPU metrics tracking to monitor animation performance
+
+The AnimationEngine automatically tracks CPU usage and provides detailed statistics every 5 seconds. This helps identify performance bottlenecks and optimize animations for ESP32 embedded systems.
+
+**Automatic Metrics:**
+
+When the engine is running, it automatically logs performance statistics:
+
+```
+AnimEngine: ticks=1000/1000 missed=0 total=0.50ms(0-2) anim=0.30ms(0-1) hw=0.20ms(0-1) cpu=10.0%
+```
+
+**Metrics Explained:**
+- **ticks**: Actual ticks executed vs expected (at 5ms intervals)
+- **missed**: Hint of missed ticks (negative means extra ticks, positive means missed)
+- **total**: Mean total tick time with (min-max) range in milliseconds
+- **anim**: Mean animation calculation time with (min-max) range - everything before hardware output
+- **hw**: Mean hardware output time with (min-max) range - just the LED strip update
+- **cpu**: Overall CPU usage percentage over the 5-second period
+
+**Custom Profiling API:**
+
+For measuring specific code sections, use the profiling API:
+
+```berry
+import animation
+
+var strip = Leds(30)
+var engine = animation.create_engine(strip)
+
+# Start measuring a code section
+engine.profile_start("my_calculation")
+
+# Your code to measure
+var result = 0
+var i = 0
+while i < 1000
+  result += i
+  i += 1
+end
+
+# End measuring
+engine.profile_end("my_calculation")
+
+# Run the engine - stats will be printed every 5 seconds
+engine.run()
+```
+
+**Profiling Output:**
+
+Custom profiling points appear in the stats output:
+
+```
+AnimEngine: ticks=1000/1000 missed=0 total=0.50ms(0-2) anim=0.30ms(0-1) hw=0.20ms(0-1) cpu=10.0%
+  Profile[my_calculation]: count=1000 mean=0.15ms min=0ms max=1ms
+  Profile[another_section]: count=500 mean=0.25ms min=0ms max=2ms
+```
+
+**Profiling Best Practices:**
+
+1. **Use Descriptive Names:**
+   ```berry
+   engine.profile_start("render_effects")
+   # ... rendering code ...
+   engine.profile_end("render_effects")
+   
+   engine.profile_start("color_calculation")
+   # ... color processing ...
+   engine.profile_end("color_calculation")
+   ```
+
+2. **Profile Critical Sections:**
+   ```berry
+   # Measure custom effect rendering
+   def my_custom_effect(frame, time_ms)
+     self.engine.profile_start("custom_effect")
+     
+     # Your effect logic
+     var i = 0
+     while i < frame.width
+       var color = calculate_color(i, time_ms)
+       frame.set_pixel_color(i, color)
+       i += 1
+     end
+     
+     self.engine.profile_end("custom_effect")
+   end
+   ```
+
+3. **Avoid Profiling in Tight Loops:**
+   ```berry
+   # ❌ BAD - profiling overhead in loop
+   var i = 0
+   while i < 1000
+     engine.profile_start("loop_iteration")
+     # ... work ...
+     engine.profile_end("loop_iteration")
+     i += 1
+   end
+   
+   # ✅ GOOD - profile entire loop
+   engine.profile_start("entire_loop")
+   var i = 0
+   while i < 1000
+     # ... work ...
+     i += 1
+   end
+   engine.profile_end("entire_loop")
+   ```
+
+4. **Multiple Profiling Points:**
+   ```berry
+   # You can have multiple active profiling points
+   engine.profile_start("section_a")
+   # ... code A ...
+   engine.profile_end("section_a")
+   
+   engine.profile_start("section_b")
+   # ... code B ...
+   engine.profile_end("section_b")
+   ```
+
+**Interpreting Performance Metrics:**
+
+1. **High Animation Time:**
+   - Too many simultaneous animations
+   - Complex value provider calculations
+   - Inefficient custom effects
+   
+   **Solution:** Simplify animations or use sequences
+
+2. **High Hardware Time:**
+   - Large LED strip (many pixels)
+   - Slow SPI/I2C communication
+   - Hardware limitations
+   
+   **Solution:** Reduce update frequency or strip length
+
+3. **Missed Ticks:**
+   - CPU overload (total time > 5ms per tick)
+   - Other Tasmota tasks interfering
+   
+   **Solution:** Optimize animations or reduce complexity
+
+4. **High CPU Percentage:**
+   - Animations consuming too much CPU
+   - May affect other Tasmota functions
+   
+   **Solution:** Increase animation periods or reduce effects
+
+**Example Performance Optimization:**
+
+```berry
+import animation
+
+var strip = Leds(60)
+var engine = animation.create_engine(strip)
+
+# Before optimization - complex animation
+var complex_anim = animation.rainbow_animation(engine)
+complex_anim.period = 100  # Very fast, high CPU
+
+engine.add(complex_anim)
+engine.run()
+
+# Check metrics after 5 seconds:
+# AnimEngine: ticks=950/1000 missed=50 total=5.2ms(4-8) cpu=104.0%
+# ^ Too slow! Missing ticks and over 100% CPU
+
+# After optimization - slower period
+complex_anim.period = 2000  # 2 seconds instead of 100ms
+
+# Check metrics after 5 seconds:
+# AnimEngine: ticks=1000/1000 missed=0 total=0.8ms(0-2) cpu=16.0%
+# ^ Much better! All ticks processed, reasonable CPU usage
+```
+
 ### Choppy Animations
 
 **Problem:** Animations appear jerky or stuttering
@@ -639,6 +818,19 @@ animation.register_user_function("pulse_effect", create_pulse_effect)
    
    animation anim2 = pulsating_animation(color=blue, period=2s)
    anim2.opacity = breathing  # Reuse same provider
+   ```
+
+4. **Monitor CPU Metrics:**
+   ```berry
+   # Check if CPU is overloaded
+   # Look for missed ticks or high CPU percentage in metrics
+   # AnimEngine: ticks=950/1000 missed=50 ... cpu=95.0%
+   # ^ This indicates performance issues
+   
+   # Use profiling to find bottlenecks
+   engine.profile_start("suspect_code")
+   # ... code that might be slow ...
+   engine.profile_end("suspect_code")
    ```
 
 ### Memory Issues

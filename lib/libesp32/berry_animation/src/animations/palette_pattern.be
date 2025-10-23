@@ -13,7 +13,7 @@ class PalettePatternAnimation : animation.animation
   var value_buffer     # Buffer to store values for each pixel (bytes object)
   
   # Static definitions of parameters with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # Palette pattern-specific parameters
     "color_source": {"default": nil, "type": "instance"},
     "pattern_func": {"default": nil, "type": "function"}
@@ -160,7 +160,7 @@ end
 #@ solidify:PaletteWaveAnimation,weak
 class PaletteWaveAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # Wave-specific parameters only
     "wave_period": {"min": 1, "default": 5000},
     "wave_length": {"min": 1, "default": 10}
@@ -213,7 +213,7 @@ end
 #@ solidify:PaletteGradientAnimation,weak
 class PaletteGradientAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # Gradient-specific parameters only
     "shift_period": {"min": 0, "default": 0},           # Time for one complete shift cycle in ms (0 = static)
     "spatial_period": {"min": 0, "default": 0},         # Spatial period in pixels (0 = full strip)
@@ -275,7 +275,7 @@ end
 #@ solidify:PaletteMeterAnimation,weak
 class PaletteMeterAnimation : PalettePatternAnimation
   # Static definitions of parameters with constraints
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # Meter-specific parameters only
     "value_func": {"default": nil, "type": "function"}
   })

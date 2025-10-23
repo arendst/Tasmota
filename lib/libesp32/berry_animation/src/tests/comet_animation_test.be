@@ -50,7 +50,7 @@ assert_not_nil(comet, "Comet animation should be created")
 assert_equals(comet.engine, engine, "Animation should have correct engine reference")
 
 # Test default values
-assert_equals(comet.color, 0xFFFFFFFF, "Default color should be white")
+assert_equals(comet.color, 0x00000000, "Default color should be transparent")
 assert_equals(comet.tail_length, 5, "Default tail length should be 5")
 assert_equals(comet.speed, 2560, "Default speed should be 2560")
 assert_equals(comet.direction, 1, "Default direction should be 1 (forward)")

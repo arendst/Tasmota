@@ -7,7 +7,7 @@ print("Testing nillable parameter attribute...")
 
 # Create a test class with nillable and non-nillable parameters
 class TestParameterizedClass : animation.parameterized_object
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "nillable_param": {"type": "int", "nillable": true},
     "non_nillable_param": {"type": "int"}  # No default, no nillable
   })

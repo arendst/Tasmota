@@ -15,7 +15,7 @@ class JitterAnimation : animation.animation
   var current_colors     # Array of current colors for each pixel
   
   # Parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "source_animation": {"type": "instance", "default": nil},
     "jitter_intensity": {"min": 0, "max": 255, "default": 100},
     "jitter_frequency": {"min": 0, "max": 255, "default": 60},

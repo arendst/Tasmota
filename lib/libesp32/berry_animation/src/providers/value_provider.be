@@ -17,7 +17,7 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:ValueProvider,weak
 class ValueProvider : animation.parameterized_object
   # Static parameter definitions - can be overridden by subclasses
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     
   })
   

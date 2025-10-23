@@ -15,7 +15,7 @@ class SparkleAnimation : animation.animation
   var last_update        # Last update time for frame timing
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFFFFFF},
     "back_color": {"default": 0xFF000000},
     "density": {"min": 0, "max": 255, "default": 30},

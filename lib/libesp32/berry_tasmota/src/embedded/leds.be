@@ -76,8 +76,16 @@ class Leds : Leds_ntv
     self.show()
   end
 
-  # set bri (0..255)
+  # set bri (0..255) or 'nil' to adjust to the default Tasmota brightness if we use the default strip
   def set_bri(bri)
+    if (bri == nil)
+      if !self._p         # if `_p` is `nil` or `<ptr: 0>` then bool() returns false
+        import light
+        bri = light.get(0, 'bri')
+      else
+        return            # not default strip, we don't adjust
+      end
+    end
     if (bri < 0)    bri = 0   end
     if (bri > 255)  bri = 255 end
     self.bri = bri
@@ -254,6 +262,9 @@ class Leds : Leds_ntv
       
       # set bri (0..255)
       def set_bri(bri)
+        if (bri == nil)
+          return
+        end
         if (bri < 0)    bri = 0   end
         if (bri > 255)  bri = 255 end
         self.bri = bri

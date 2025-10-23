@@ -16,11 +16,10 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:ColorCycleColorProvider,weak
 class ColorCycleColorProvider : animation.color_provider
   # Non-parameter instance variables only
-  var current_color   # Current interpolated color (calculated during update)
   var current_index   # Current color index for next functionality
   
   # Parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "palette": {"type": "bytes", "default":
       bytes(          # Palette bytes in AARRGGBB format
         "FF0000FF"    # Blue
@@ -40,49 +39,68 @@ class ColorCycleColorProvider : animation.color_provider
     super(self).init(engine)  # Initialize parameter system
     
     # Initialize non-parameter instance variables
-    var palette_bytes = self._get_palette_bytes()
-    self.current_color = self._get_color_at_index(0)  # Start with first color in palette
-    self.current_index = 0  # Start at first color
+    var palette_bytes = self.palette
+    self.current_index = 0      # Start at first color
     
     # Initialize palette_size parameter
     self.values["palette_size"] = self._get_palette_size()
   end
   
-  # Get palette bytes from parameter with default fallback
-  def _get_palette_bytes()
-    var palette_bytes = self.palette
-    if palette_bytes == nil
-      # Get default from PARAMS using encoded constraints
-      var encoded_constraints = self._get_param_def("palette")
-      if encoded_constraints != nil && self.constraint_mask(encoded_constraints, "default")
-        palette_bytes = self.constraint_find(encoded_constraints, "default", nil)
-      end
-    end
-    return palette_bytes
-  end
-  
   # Get color at a specific index from bytes palette
   # We force alpha channel to 0xFF to force opaque colors
   def _get_color_at_index(idx)
-    var palette_bytes = self._get_palette_bytes()
+    var palette_bytes = self.palette
     var palette_size = size(palette_bytes) / 4  # Each color is 4 bytes (AARRGGBB)
     
-    if palette_size == 0 || idx < 0 || idx >= palette_size
-      return 0xFFFFFFFF  # Default to white
+    if (palette_size == 0) || (idx >= palette_size) || (idx < 0)
+      return 0x00000000  # Default to transparent
     end
     
     # Read 4 bytes in big-endian format (AARRGGBB)
     var color = palette_bytes.get(idx * 4, -4)  # Big endian
-    color = color | 0xFF000000
+    color = color | 0xFF000000      # force full opacity
     return color
   end
   
   # Get the number of colors in the palette
   def _get_palette_size()
-    var palette_bytes = self._get_palette_bytes()
-    return size(palette_bytes) / 4  # Each color is 4 bytes
+    return size( self.palette) / 4  # Each color is 4 bytes
   end
   
+  # Virtual member access - implements the virtual "palette_size" attribute
+  #
+  # @param name: string - Parameter name being accessed
+  # @return any - Resolved parameter value (ValueProvider resolved to actual value)
+  def member(name)
+    if name == "palette_size"
+      return self._get_palette_size()
+    else
+      return super(self).member(name)
+    end
+  end
+
+  # Adjust index according to palette_size
+  #
+  # @param palette_size: int - Size of palette in colors, passed as parameter to avoid recalculating it
+  def _adjust_index()
+    var palette_size = self._get_palette_size()
+    if palette_size > 0
+      # Apply modulo palette size
+      var index =  self.current_index % palette_size
+      # It is still possible to be negative
+      if index < 0
+        index += palette_size
+      end
+      # If index changed, invalidate color
+      if self.current_index != index
+        self.current_index = index
+      end
+
+    else
+      self.current_index = 0      # default value when empty palette
+    end
+  end
+
   # Handle parameter changes
   #
   # @param name: string - Name of the parameter that changed
@@ -93,31 +111,14 @@ class ColorCycleColorProvider : animation.color_provider
       # palette_size is read-only - restore the actual value and raise an exception
       self.values["palette_size"] = self._get_palette_size()
       raise "value_error", "Parameter 'palette_size' is read-only"
-    elif name == "palette"
-      # When palette changes, update current_color if current_index is valid
-      var palette_size = self._get_palette_size()
-      if palette_size > 0
-        # Clamp current_index to valid range
-        if self.current_index >= palette_size
-          self.current_index = 0
-        end
-        self.current_color = self._get_color_at_index(self.current_index)
-      end
-      # Update palette_size parameter
-      self.values["palette_size"] = palette_size
+
     elif name == "next" && value != 0
       # Add to color index
-      var palette_size = self._get_palette_size()
-      if palette_size > 0
-        var current_index = (self.current_index + value) % palette_size
-        if current_index < 0
-          current_index += palette_size
-        end
-        self.current_index = current_index
-        self.current_color = self._get_color_at_index(self.current_index)
-      end
+      self.current_index += value
+      self._adjust_index()
+
       # Reset the next parameter back to 0
-      self.set_param("next", 0)
+      self.values["next"] = 0
     end
   end
   
@@ -132,21 +133,13 @@ class ColorCycleColorProvider : animation.color_provider
     
     # Get the number of colors in the palette
     var palette_size = self._get_palette_size()
-    if palette_size == 0
-      return 0xFFFFFFFF  # Default to white if no colors
-    end
-    
-    if palette_size == 1
-      # If only one color, just return it
-      self.current_color = self._get_color_at_index(0)
-      return self.current_color
-    end
-    
-    # Check if cycle_period is 0 (manual-only mode)
-    if cycle_period == 0
-      # Manual-only mode: colors only change when 'next' parameter is set to 1
-      # Return the current color without any time-based changes
-      return self.current_color
+
+    if (palette_size <= 1) || (cycle_period == 0)          # no cycling stop here
+      var idx = self.current_index
+      if (idx >= palette_size)    idx = palette_size - 1    end
+      if (idx < 0)                idx = 0                   end
+      self.current_index = idx
+      return self._get_color_at_index(self.current_index)
     end
     
     # Auto-cycle mode: calculate which color to show based on time (brutal switching using integer math)
@@ -160,9 +153,7 @@ class ColorCycleColorProvider : animation.color_provider
     
     # Update current state and return the color
     self.current_index = color_index
-    self.current_color = self._get_color_at_index(color_index)
-    
-    return self.current_color
+    return self._get_color_at_index(color_index)
   end
   
   # Get a color based on a value (maps value to position in cycle)
@@ -175,7 +166,7 @@ class ColorCycleColorProvider : animation.color_provider
     # Get the number of colors in the palette
     var palette_size = self._get_palette_size()
     if palette_size == 0
-      return 0xFFFFFFFF  # Default to white if no colors
+      return 0x00000000 # Default to transparent if no colors
     end
     
     if palette_size == 1

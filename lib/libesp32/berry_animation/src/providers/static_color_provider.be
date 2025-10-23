@@ -12,7 +12,7 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:StaticColorProvider,weak
 class StaticColorProvider : animation.color_provider
   # Parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFFFFFF}  # Default to white
   })
   

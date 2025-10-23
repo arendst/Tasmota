@@ -32,7 +32,7 @@ class OscillatorValueProvider : animation.value_provider
   static var form_names = ["", "SAWTOOTH", "TRIANGLE", "SQUARE", "COSINE", "SINE", "EASE_IN", "EASE_OUT", "ELASTIC", "BOUNCE"]
   
   # Parameter definitions for the oscillator
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "min_value": {"default": 0},
     "max_value": {"default": 100},
     "duration": {"min": 1, "default": 1000},

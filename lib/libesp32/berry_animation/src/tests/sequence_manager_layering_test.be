@@ -14,16 +14,16 @@ def test_multiple_sequence_managers()
   var engine = animation.create_engine(strip)
   
   # Create multiple sequence managers
-  var seq_manager1 = animation.SequenceManager(engine)
-  var seq_manager2 = animation.SequenceManager(engine)
-  var seq_manager3 = animation.SequenceManager(engine)
+  var seq_manager1 = animation.sequence_manager(engine)
+  var seq_manager2 = animation.sequence_manager(engine)
+  var seq_manager3 = animation.sequence_manager(engine)
   
   # Register all sequence managers with engine
   engine.add(seq_manager1)
   engine.add(seq_manager2)
   engine.add(seq_manager3)
   
-  assert(engine.sequence_managers.size() == 3, "Engine should have 3 sequence managers")
+  assert(size(engine.root_animation.sequences) == 3, "Engine should have 3 sequence managers")
   
   # Create test animations using new parameterized API
   var red_provider = animation.static_color(engine)
@@ -90,8 +90,8 @@ def test_sequence_manager_coordination()
   var engine = animation.create_engine(strip)
   
   # Create two sequence managers with overlapping timing
-  var seq_manager1 = animation.SequenceManager(engine)
-  var seq_manager2 = animation.SequenceManager(engine)
+  var seq_manager1 = animation.sequence_manager(engine)
+  var seq_manager2 = animation.sequence_manager(engine)
   
   engine.add(seq_manager1)
   engine.add(seq_manager2)
@@ -157,8 +157,8 @@ def test_sequence_manager_engine_integration()
   var engine = animation.create_engine(strip)
   
   # Create sequence managers
-  var seq_manager1 = animation.SequenceManager(engine)
-  var seq_manager2 = animation.SequenceManager(engine)
+  var seq_manager1 = animation.sequence_manager(engine)
+  var seq_manager2 = animation.sequence_manager(engine)
   
   engine.add(seq_manager1)
   engine.add(seq_manager2)
@@ -217,24 +217,24 @@ def test_sequence_manager_removal()
   var engine = animation.create_engine(strip)
   
   # Create sequence managers
-  var seq_manager1 = animation.SequenceManager(engine)
-  var seq_manager2 = animation.SequenceManager(engine)
-  var seq_manager3 = animation.SequenceManager(engine)
+  var seq_manager1 = animation.sequence_manager(engine)
+  var seq_manager2 = animation.sequence_manager(engine)
+  var seq_manager3 = animation.sequence_manager(engine)
   
   engine.add(seq_manager1)
   engine.add(seq_manager2)
   engine.add(seq_manager3)
   
-  assert(engine.sequence_managers.size() == 3, "Should have 3 sequence managers")
+  assert(size(engine.root_animation.sequences) == 3, "Should have 3 sequence managers")
   
   # Test removing specific sequence manager
-  engine.remove_sequence_manager(seq_manager2)
-  assert(engine.sequence_managers.size() == 2, "Should have 2 sequence managers after removal")
+  engine.remove(seq_manager2)
+  assert(size(engine.root_animation.sequences) == 2, "Should have 2 sequence managers after removal")
   
   # Verify correct managers remain
   var found_seq1 = false
   var found_seq3 = false
-  for seq_mgr : engine.sequence_managers
+  for seq_mgr : engine.root_animation.sequences
     if seq_mgr == seq_manager1
       found_seq1 = true
     elif seq_mgr == seq_manager3
@@ -245,8 +245,8 @@ def test_sequence_manager_removal()
   assert(found_seq3 == true, "Sequence manager 3 should remain")
   
   # Test removing non-existent sequence manager
-  engine.remove_sequence_manager(seq_manager2)  # Already removed
-  assert(engine.sequence_managers.size() == 2, "Size should remain 2 after removing non-existent manager")
+  engine.remove(seq_manager2)  # Already removed
+  assert(size(engine.root_animation.sequences) == 2, "Size should remain 2 after removing non-existent manager")
   
   print("✓ Sequence manager removal tests passed")
 end
@@ -259,8 +259,8 @@ def test_sequence_manager_clear_all()
   var engine = animation.create_engine(strip)
   
   # Create sequence managers with running sequences
-  var seq_manager1 = animation.SequenceManager(engine)
-  var seq_manager2 = animation.SequenceManager(engine)
+  var seq_manager1 = animation.sequence_manager(engine)
+  var seq_manager2 = animation.sequence_manager(engine)
   
   engine.add(seq_manager1)
   engine.add(seq_manager2)
@@ -304,7 +304,7 @@ def test_sequence_manager_clear_all()
   
   assert(seq_manager1.is_sequence_running() == false, "Sequence 1 should be stopped after clear")
   assert(seq_manager2.is_sequence_running() == false, "Sequence 2 should be stopped after clear")
-  assert(engine.sequence_managers.size() == 0, "Should have no sequence managers after clear")
+  assert(size(engine.root_animation.sequences) == 0, "Should have no sequence managers after clear")
   assert(engine.size() == 0, "Should have no animations after clear")
   
   print("✓ Clear all tests passed")
@@ -320,12 +320,12 @@ def test_sequence_manager_stress()
   # Create many sequence managers
   var seq_managers = []
   for i : 0..9  # 10 sequence managers
-    var seq_mgr = animation.SequenceManager(engine)
+    var seq_mgr = animation.sequence_manager(engine)
     engine.add(seq_mgr)
     seq_managers.push(seq_mgr)
   end
   
-  assert(engine.sequence_managers.size() == 10, "Should have 10 sequence managers")
+  assert(size(engine.root_animation.sequences) == 10, "Should have 10 sequence managers")
   
   # Create sequences for each manager
   tasmota.set_millis(120000)

@@ -16,7 +16,7 @@ class BreatheAnimation : animation.animation
   var breathe_provider # Internal breathe color provider
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "base_color": {"default": 0xFFFFFFFF},               # The base color to breathe (32-bit ARGB value)
     "min_brightness": {"min": 0, "max": 255, "default": 0},      # Minimum brightness level (0-255)
     "max_brightness": {"min": 0, "max": 255, "default": 255},    # Maximum brightness level (0-255)

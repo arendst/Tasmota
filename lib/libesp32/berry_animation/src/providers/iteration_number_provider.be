@@ -24,7 +24,7 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:IterationNumberProvider,weak
 class IterationNumberProvider : animation.value_provider
   # Static parameter definitions (no parameters needed)
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     
   })
   

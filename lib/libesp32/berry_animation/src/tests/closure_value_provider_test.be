@@ -14,6 +14,10 @@ def test_closure_value_provider()
     def init()
       self.time_ms = 1000
     end
+    
+    def tostring()
+      return ''
+    end
   end
   var engine = MockEngine()
   

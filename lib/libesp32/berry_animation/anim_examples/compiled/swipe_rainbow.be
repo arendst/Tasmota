@@ -17,7 +17,7 @@ olivary_.palette = palette_olivary_
 olivary_.cycle_period = 0
 var swipe_animation_ = animation.solid(engine)
 swipe_animation_.color = olivary_
-var slide_colors_ = animation.SequenceManager(engine)
+var slide_colors_ = animation.sequence_manager(engine)
   .push_play_step(swipe_animation_, 1000)
   .push_closure_step(def (engine) olivary_.next = 1 end)
 engine.add(slide_colors_)

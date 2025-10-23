@@ -39,7 +39,7 @@ def test_custom_value_provider()
   # Create a simple time-based provider using new API
   class TimeBasedProvider : animation.value_provider
     # Parameter definitions
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "multiplier": {"default": 1}
     })
     

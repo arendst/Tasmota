@@ -137,16 +137,20 @@ be_local_closure(class_Leds_segment_set_bri,   /* name */
     &be_ktab_class_Leds_segment,     /* shared constants */
     &be_const_str_set_bri,
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x14080306,  //  0000  LT	R2	R1	K6
-      0x780A0000,  //  0001  JMPF	R2	#0003
-      0x58040006,  //  0002  LDCONST	R1	K6
-      0x540A00FE,  //  0003  LDINT	R2	255
-      0x24080202,  //  0004  GT	R2	R1	R2
+    ( &(const binstruction[13]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x1C080202,  //  0001  EQ	R2	R1	R2
+      0x780A0000,  //  0002  JMPF	R2	#0004
+      0x80000400,  //  0003  RET	0
+      0x14080306,  //  0004  LT	R2	R1	K6
       0x780A0000,  //  0005  JMPF	R2	#0007
-      0x540600FE,  //  0006  LDINT	R1	255
-      0x90020801,  //  0007  SETMBR	R0	K4	R1
-      0x80000000,  //  0008  RET	0
+      0x58040006,  //  0006  LDCONST	R1	K6
+      0x540A00FE,  //  0007  LDINT	R2	255
+      0x24080202,  //  0008  GT	R2	R1	R2
+      0x780A0000,  //  0009  JMPF	R2	#000B
+      0x540600FE,  //  000A  LDINT	R1	255
+      0x90020801,  //  000B  SETMBR	R0	K4	R1
+      0x80000000,  //  000C  RET	0
     })
   )
 );
@@ -706,7 +710,7 @@ be_local_class(Leds_segment,
     })),
     (bstring*) &be_const_str_Leds_segment
 );
-// compact class 'Leds' ktab size: 38, total: 69 (saved 248 bytes)
+// compact class 'Leds' ktab size: 38, total: 72 (saved 272 bytes)
 static const bvalue be_ktab_class_Leds[38] = {
   /* K0   */  be_nested_str(call_native),
   /* K1   */  be_nested_str(pixel_size),
@@ -1287,7 +1291,7 @@ be_local_closure(class_Leds_dirty,   /* name */
 ********************************************************************/
 be_local_closure(class_Leds_set_bri,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
+    7,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -1298,16 +1302,29 @@ be_local_closure(class_Leds_set_bri,   /* name */
     &be_ktab_class_Leds,     /* shared constants */
     &be_const_str_set_bri,
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x1408030B,  //  0000  LT	R2	R1	K11
-      0x780A0000,  //  0001  JMPF	R2	#0003
-      0x5804000B,  //  0002  LDCONST	R1	K11
-      0x540A00FE,  //  0003  LDINT	R2	255
-      0x24080202,  //  0004  GT	R2	R1	R2
-      0x780A0000,  //  0005  JMPF	R2	#0007
-      0x540600FE,  //  0006  LDINT	R1	255
-      0x90021E01,  //  0007  SETMBR	R0	K15	R1
-      0x80000000,  //  0008  RET	0
+    ( &(const binstruction[22]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x1C080202,  //  0001  EQ	R2	R1	R2
+      0x780A0009,  //  0002  JMPF	R2	#000D
+      0x88080117,  //  0003  GETMBR	R2	R0	K23
+      0x740A0006,  //  0004  JMPT	R2	#000C
+      0xA40A1C00,  //  0005  IMPORT	R2	K14
+      0x8C0C0510,  //  0006  GETMET	R3	R2	K16
+      0x5814000B,  //  0007  LDCONST	R5	K11
+      0x5818000F,  //  0008  LDCONST	R6	K15
+      0x7C0C0600,  //  0009  CALL	R3	3
+      0x5C040600,  //  000A  MOVE	R1	R3
+      0x70020000,  //  000B  JMP		#000D
+      0x80000400,  //  000C  RET	0
+      0x1408030B,  //  000D  LT	R2	R1	K11
+      0x780A0000,  //  000E  JMPF	R2	#0010
+      0x5804000B,  //  000F  LDCONST	R1	K11
+      0x540A00FE,  //  0010  LDINT	R2	255
+      0x24080202,  //  0011  GT	R2	R1	R2
+      0x780A0000,  //  0012  JMPF	R2	#0014
+      0x540600FE,  //  0013  LDINT	R1	255
+      0x90021E01,  //  0014  SETMBR	R0	K15	R1
+      0x80000000,  //  0015  RET	0
     })
   )
 );

@@ -12,6 +12,7 @@ class SimpleDSLTranspiler
   var symbol_table    # Enhanced symbol cache: name -> {type, instance, class_obj}
   var indent_level    # Track current indentation level for nested sequences
   var has_template_calls    # Track if we have template calls to trigger engine.run()
+  var template_animation_params  # Set of parameter names when processing template animation body
   
   # Context constants for process_value calls
   static var CONTEXT_VARIABLE = 1
@@ -164,6 +165,7 @@ class SimpleDSLTranspiler
     self.symbol_table = animation_dsl._symbol_table()  # Enhanced symbol cache with built-in detection
     self.indent_level = 0  # Track current indentation level
     self.has_template_calls = false  # Track if we have template calls
+    self.template_animation_params = nil  # Set of parameter names when processing template animation body
     
     # Note: Special functions like 'log' are now auto-discovered dynamically by the symbol table
   end
@@ -405,6 +407,47 @@ class SimpleDSLTranspiler
     end
   end
   
+  # Transpile template animation body (for engine_proxy classes)
+  # Similar to template body but uses self.add() instead of engine.add()
+  def transpile_template_animation_body()
+    try
+      # Process all statements in template animation body until we hit the closing brace
+      var brace_depth = 0
+      while !self.at_end()
+        var tok = self.current()
+        
+        # Check for template end condition
+        if tok != nil && tok.type == 27 #-animation_dsl.Token.RIGHT_BRACE-# && brace_depth == 0
+          # This is the closing brace of the template - stop processing
+          break
+        end
+        
+        # Track brace depth for nested braces
+        if tok != nil && tok.type == 26 #-animation_dsl.Token.LEFT_BRACE-#
+          brace_depth += 1
+        elif tok != nil && tok.type == 27 #-animation_dsl.Token.RIGHT_BRACE-#
+          brace_depth -= 1
+        end
+        
+        self.process_statement()
+      end
+      
+      # For template animations, use self.add() instead of engine.add()
+      if size(self.run_statements) > 0
+        for run_stmt : self.run_statements
+          var obj_name = run_stmt["name"]
+          var comment = run_stmt["comment"]
+          # In template animations, use self.add() for engine_proxy
+          self.add(f"self.add({obj_name}_){comment}")
+        end
+      end
+      
+      return self.join_output()
+    except .. as e, msg
+      self.error(f"Template animation body transpilation failed: {msg}")
+    end
+  end
+  
   # Process statements - simplified approach
   def process_statement()
     var tok = self.current()
@@ -433,7 +476,13 @@ class SimpleDSLTranspiler
         self.skip_statement()
         return
       elif tok.value == "template"
-        self.process_template()
+        # Check if this is "template animation" or just "template"
+        var next_tok = self.peek()
+        if next_tok != nil && next_tok.type == 0 #-animation_dsl.Token.KEYWORD-# && next_tok.value == "animation"
+          self.process_template_animation()
+        else
+          self.process_template()
+        end
       else
         # For any other statement, ensure strip is initialized
         if !self.strip_initialized
@@ -787,8 +836,14 @@ class SimpleDSLTranspiler
           return
         end
         
-        # Generate the base function call immediately
-        self.add(f"var {name}_ = animation.{func_name}(engine){inline_comment}")
+        # Check if this is a template animation (user-defined, not built-in)
+        if entry.is_builtin
+          # Built-in animation constructor from animation module
+          self.add(f"var {name}_ = animation.{func_name}(engine){inline_comment}")
+        else
+          # Template animation constructor (user-defined class)
+          self.add(f"var {name}_ = {func_name}_animation(engine){inline_comment}")
+        end
         
         # Track this symbol in our symbol table
         var instance = self._create_instance_for_validation(func_name)
@@ -871,8 +926,8 @@ class SimpleDSLTranspiler
         self.next()  # skip 'param'
         var param_name = self.expect_identifier()
         
-        # Validate parameter name
-        if !self._validate_template_parameter_name(param_name, param_names_seen)
+        # Validate parameter name (not a template animation)
+        if !self._validate_template_parameter_name(param_name, param_names_seen, false)
           self.skip_statement()
           return
         end
@@ -916,6 +971,81 @@ class SimpleDSLTranspiler
       "param_types": param_types
     }
     self.symbol_table.create_template(name, template_info)
+  end
+  
+  # Process template animation definition: template animation name { param ... }
+  # Generates a class extending engine_proxy instead of a function
+  def process_template_animation()
+    self.next()  # skip 'template'
+    self.next()  # skip 'animation'
+    var name = self.expect_identifier()
+    
+    # Validate that the template animation name is not reserved
+    if !self.validate_user_name(name, "template animation")
+      self.skip_statement()
+      return
+    end
+    
+    self.expect_left_brace()
+    
+    # First pass: collect all parameters with validation
+    var params = []
+    var param_types = {}
+    var param_names_seen = {}  # Track duplicate parameter names
+    
+    while !self.at_end() && !self.check_right_brace()
+      self.skip_whitespace_including_newlines()
+      
+      if self.check_right_brace()
+        break
+      end
+      
+      var tok = self.current()
+      
+      if tok != nil && tok.type == 0 #-animation_dsl.Token.KEYWORD-# && tok.value == "param"
+        # Process parameter declaration in template animation
+        self.next()  # skip 'param'
+        var param_name = self.expect_identifier()
+        
+        # Validate parameter name (this is a template animation)
+        if !self._validate_template_parameter_name(param_name, param_names_seen, true)
+          self.skip_statement()
+          return
+        end
+        
+        # Parse parameter constraints (type, min, max, default)
+        var param_constraints = self._parse_parameter_constraints()
+        
+        # Add parameter to collections
+        params.push(param_name)
+        param_names_seen[param_name] = true
+        if param_constraints != nil && size(param_constraints) > 0
+          param_types[param_name] = param_constraints
+        end
+        
+        # Skip optional newline after parameter
+        if self.current() != nil && self.current().type == 35 #-animation_dsl.Token.NEWLINE-#
+          self.next()
+        end
+      else
+        # Found non-param statement, break to collect body
+        break
+      end
+    end
+    
+    # Generate Berry class for this template animation
+    self.generate_template_animation_class(name, params, param_types)
+    
+    # Add template animation to symbol table with parameter information
+    var template_info = {
+      "params": params,
+      "param_types": param_types
+    }
+    self.symbol_table.create_template(name, template_info)
+    
+    # Also register as an animation constructor so it can be used like: animation x = template_name(...)
+    # We create a special entry that tracks it as both a template and an animation constructor
+    self._register_template_animation_constructor(name, params, param_types)
   end
   
   # Process sequence definition: sequence demo { ... } or sequence demo repeat N times { ... }
@@ -971,7 +1101,7 @@ class SimpleDSLTranspiler
     if is_repeat_syntax
       # Second syntax: sequence name repeat N times { ... }
       # Create a single SequenceManager with fluent interface
-      self.add(f"var {name}_ = animation.SequenceManager(engine, {repeat_count})")
+      self.add(f"var {name}_ = animation.sequence_manager(engine, {repeat_count})")
       
       # Process sequence body - add steps using fluent interface
       while !self.at_end() && !self.check_right_brace()
@@ -980,7 +1110,7 @@ class SimpleDSLTranspiler
     else
       # First syntax: sequence demo { ... }
       # Use fluent interface for regular sequences too (no repeat count = default)
-      self.add(f"var {name}_ = animation.SequenceManager(engine)")
+      self.add(f"var {name}_ = animation.sequence_manager(engine)")
       
       # Process sequence body - add steps using fluent interface
       while !self.at_end() && !self.check_right_brace()
@@ -1127,7 +1257,26 @@ class SimpleDSLTranspiler
     var duration = "nil"
     if self.current() != nil && self.current().type == 0 #-animation_dsl.Token.KEYWORD-# && self.current().value == "for"
       self.next()  # skip 'for'
-      duration = self.process_time_value()
+      var tok = self.current()
+      
+      # Check if duration is a literal time value or a variable reference
+      if tok != nil && (tok.type == 5 #-animation_dsl.Token.TIME-# || tok.type == 2 #-animation_dsl.Token.NUMBER-#)
+        # Literal time value - use directly
+        duration = self.process_time_value()
+      elif tok != nil && tok.type == 1 #-animation_dsl.Token.IDENTIFIER-#
+        # Variable reference - need to wrap in closure for dynamic values
+        var duration_expr = self.process_time_value()
+        # Check if this is a template animation parameter (starts with "self.")
+        if duration_expr[0..4] == "self."
+          # Template animation parameter - wrap in closure for dynamic evaluation
+          duration = f"def (engine) return {duration_expr} end"
+        else
+          # Regular variable - use directly (static value)
+          duration = duration_expr
+        end
+      else
+        duration = self.process_time_value()
+      end
     end
     
     var inline_comment = self.collect_inline_comment()
@@ -1221,7 +1370,7 @@ class SimpleDSLTranspiler
     self.expect_left_brace()
     
     # Create a nested sub-sequence using recursive processing
-    self.add(f"{self.get_indent()}.push_repeat_subsequence(animation.SequenceManager(engine, {repeat_count})")
+    self.add(f"{self.get_indent()}.push_repeat_subsequence(animation.sequence_manager(engine, {repeat_count})")
     
     # Increase indentation level for nested content
     self.indent_level += 1
@@ -1636,6 +1785,17 @@ class SimpleDSLTranspiler
     # Identifier - could be color, animation, variable, or object property reference
     if tok.type == 1 #-animation_dsl.Token.IDENTIFIER-#
       var name = tok.value
+      
+      # Check if this is a template animation parameter FIRST - before symbol table lookup
+      # This allows template animation parameters to override any other symbol resolution
+      if self.template_animation_params != nil && self.template_animation_params.contains(name)
+        self.next()
+        # This is a parameter in a template animation - return self.param reference
+        # The wrapping in create_closure_value will be done at the assignment level, not here
+        var param_ref = f"self.{name}"
+        return self.ExpressionResult.variable_ref(param_ref, 12 #-animation_dsl._symbol_entry.TYPE_VARIABLE-#, nil)
+      end
+      
       var entry = self.symbol_table.get(name)
 
       if entry == nil
@@ -2695,6 +2855,179 @@ class SimpleDSLTranspiler
     self.add("")
   end
   
+  # Helper method to add inherited parameters from engine_proxy class hierarchy
+  # This dynamically discovers all parameters from engine_proxy and its superclasses
+  def _add_inherited_params_to_template(template_params_map)
+    import introspect
+    
+    # Create a temporary engine_proxy instance to inspect its class hierarchy
+    try
+      var temp_engine = animation.init_strip()
+      var proxy_instance = animation.engine_proxy(temp_engine)
+      
+      # Walk up the class hierarchy to collect all PARAMS
+      var current_class = classof(proxy_instance)
+      while current_class != nil
+        # Check if this class has PARAMS
+        if introspect.contains(current_class, "PARAMS")
+          var class_params = current_class.PARAMS
+          # Add all parameter names from this class
+          for param_name : class_params.keys()
+            template_params_map[param_name] = true
+          end
+        end
+        
+        # Move to parent class
+        current_class = super(current_class)
+      end
+    except .. as e, msg
+      # If we can't create the instance, fall back to a static list
+      # This should include the known parameters from engine_proxy hierarchy
+      var fallback_params = ["name", "priority", "duration", "loop", "opacity", "color", "is_running"]
+      for param : fallback_params
+        template_params_map[param] = true
+      end
+    end
+  end
+  
+  # Generate Berry class for template animation definition
+  # Creates a class extending engine_proxy with parameters as instance variables
+  def generate_template_animation_class(name, params, param_types)
+    import animation_dsl
+    import string
+    
+    # Generate class definition
+    self.add(f"# Template animation class: {name}")
+    self.add(f"class {name}_animation : animation.engine_proxy")
+    
+    # Generate PARAMS static variable with encode_constraints
+    self.add("  static var PARAMS = animation.enc_params({")
+    for i : 0..size(params)-1
+      var param = params[i]
+      var param_constraints = param_types.find(param)
+      var comma = (i < size(params) - 1) ? "," : ""
+      
+      if param_constraints != nil
+        # param_constraints is now a map with type, min, max, default
+        if type(param_constraints) == "instance" && classname(param_constraints) == "map"
+          # Build constraint map string
+          var constraint_parts = []
+          if param_constraints.contains("type")
+            constraint_parts.push(f'"type": "{param_constraints["type"]}"')
+          end
+          if param_constraints.contains("min")
+            constraint_parts.push(f'"min": {param_constraints["min"]}')
+          end
+          if param_constraints.contains("max")
+            constraint_parts.push(f'"max": {param_constraints["max"]}')
+          end
+          if param_constraints.contains("default")
+            constraint_parts.push(f'"default": {param_constraints["default"]}')
+          end
+          if param_constraints.contains("nillable")
+            constraint_parts.push(f'"nillable": {param_constraints["nillable"]}')
+          end
+          
+          var constraint_str = ""
+          for j : 0..size(constraint_parts)-1
+            constraint_str += constraint_parts[j]
+            if j < size(constraint_parts) - 1
+              constraint_str += ", "
+            end
+          end
+          
+          self.add(f'    "{param}": {{{constraint_str}}}{comma}')
+        else
+          # Old format - just a string type
+          self.add(f'    "{param}": {{"type": "{param_constraints}"}}{comma}')
+        end
+      else
+        self.add(f'    "{param}": {{}}{comma}')
+      end
+    end
+    self.add("  })")
+    self.add("")
+    
+    # Generate setup_template method (contains all template code)
+    self.add("  # Template setup method - overrides EngineProxy placeholder")
+    self.add("  def setup_template()")
+    self.add("    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')")
+    self.add("")
+    
+    # Create a new transpiler that shares the same pull lexer
+    # It will consume tokens from the current position until the template ends
+    var template_transpiler = animation_dsl.SimpleDSLTranspiler(self.pull_lexer)
+    template_transpiler.symbol_table = animation_dsl._symbol_table()  # Fresh symbol table for template
+    template_transpiler.strip_initialized = true  # Templates assume engine exists
+    template_transpiler.indent_level = 2  # Start with 2 levels of indentation (inside class and setup_template method)
+    
+    # Set template animation parameters for special handling
+    # Include both user-defined parameters AND inherited parameters from engine_proxy class hierarchy
+    template_transpiler.template_animation_params = {}
+    
+    # Add user-defined parameters
+    for param : params
+      template_transpiler.template_animation_params[param] = true
+    end
+    
+    # Add inherited parameters from engine_proxy class hierarchy dynamically
+    self._add_inherited_params_to_template(template_transpiler.template_animation_params)
+    
+    # Add parameters to template's symbol table with proper types
+    # Mark them as special "parameter" type so they get wrapped in closures
+    for param : params
+      var param_constraints = param_types.find(param)
+      if param_constraints != nil
+        # Extract type from constraints map (or use directly if it's a string)
+        var param_type = nil
+        if type(param_constraints) == "instance" && classname(param_constraints) == "map"
+          param_type = param_constraints.find("type")
+        else
+          param_type = param_constraints  # Old format - just a string
+        end
+        
+        if param_type != nil
+          # Create typed parameter based on type annotation
+          self._add_typed_parameter_to_symbol_table(template_transpiler.symbol_table, param, param_type)
+        else
+          # No type specified - default to variable
+          template_transpiler.symbol_table.create_variable(param)
+        end
+      else
+        # Default to variable type for untyped parameters
+        template_transpiler.symbol_table.create_variable(param)
+      end
+    end
+    
+    # Transpile the template body - it will consume tokens until the closing brace
+    var template_body = template_transpiler.transpile_template_animation_body()
+    
+    if template_body != nil
+      # Add the transpiled body with proper indentation (4 spaces for inside setup_template method)
+      var body_lines = string.split(template_body, "\n")
+      for line : body_lines
+        if size(line) > 0
+          self.add(f"    {line}")  # Add 4-space indentation for setup_template method body
+        end
+      end
+      
+      # Validate parameter usage in template body (post-transpilation check)
+      self._validate_template_parameter_usage(name, params, template_body)
+    else
+      # Error in template body transpilation
+      for error : template_transpiler.errors
+        self.error(f"Template animation '{name}' body error: {error}")
+      end
+    end
+    
+    # Expect the closing brace (template_transpiler should have left us at this position)
+    self.expect_right_brace()
+    
+    self.add("  end")
+    self.add("end")
+    self.add("")
+  end
+  
   # Process named arguments for animation declarations with parameter validation
   #
   # @param var_name: string - Variable name to assign parameters to
@@ -2879,7 +3212,7 @@ class SimpleDSLTranspiler
   # Template parameter validation methods
   
   # Validate template parameter name
-  def _validate_template_parameter_name(param_name, param_names_seen)
+  def _validate_template_parameter_name(param_name, param_names_seen, is_template_animation)
     import animation_dsl
     # Check for duplicate parameter names
     if param_names_seen.contains(param_name)
@@ -2907,14 +3240,28 @@ class SimpleDSLTranspiler
       return false
     end
     
+    # For template animations, check if parameter masks an existing parameter from EngineProxy or Animation
+    if is_template_animation
+      var base_class_params = [
+        "name", "is_running", "priority", "duration", "loop", "opacity", "color"
+      ]
+      
+      for base_param : base_class_params
+        if param_name == base_param
+          self.warning(f"Template animation parameter '{param_name}' masks existing parameter from EngineProxy base class. This may cause unexpected behavior. Consider using a different name like 'custom_{param_name}' or '{param_name}_value'.")
+          break
+        end
+      end
+    end
+    
     return true
   end
   
   # Validate template parameter type annotation
   def _validate_template_parameter_type(param_type)
     var valid_types = [
-      "color", "palette", "animation", "number", "string", "boolean", 
-      "time", "percentage", "variable", "value_provider"
+      "int", "bool", "string", "bytes", "function", "animation", 
+      "value_provider", "number", "color", "palette", "time", "percentage", "any"
     ]
     
     for valid_type : valid_types
@@ -2925,6 +3272,138 @@ class SimpleDSLTranspiler
     
     self.error(f"Invalid parameter type '{param_type}'. Valid types are: {valid_types}")
     return false
+  end
+  
+  # Register template animation as an animation constructor
+  # This allows it to be used like: animation x = template_name(param1=value1, ...)
+  def _register_template_animation_constructor(name, params, param_types)
+    import animation_dsl
+    
+    # Create a mock instance that has _has_param method for validation
+    var mock_instance = {
+      "_params": {},
+      "_has_param": def (param_name)
+        # Check if this parameter exists in the template's parameter list
+        for p : params
+          if p == param_name
+            return true
+          end
+        end
+        return false
+      end
+    }
+    
+    # Add all parameters to the mock instance's _params
+    for param : params
+      mock_instance["_params"][param] = true
+    end
+    
+    # Get the existing template entry and update it to be an animation constructor
+    var existing_entry = self.symbol_table.entries.find(name)
+    if existing_entry != nil
+      # Update the existing entry to be an animation constructor type
+      existing_entry.type = 8  # TYPE_ANIMATION_CONSTRUCTOR
+      existing_entry.instance = mock_instance
+      existing_entry.takes_args = true
+      existing_entry.arg_type = "named"
+    end
+  end
+  
+  # Parse parameter constraints (type, min, max, default)
+  # Returns a map with constraint keys and values, or nil if no constraints
+  def _parse_parameter_constraints()
+    var constraints = {}
+    
+    # Parse all constraint keywords until we hit a newline or end of constraints
+    while !self.at_end()
+      var tok = self.current()
+      
+      # Stop if we hit a newline or closing brace
+      if tok == nil || tok.type == 35 #-animation_dsl.Token.NEWLINE-# || tok.type == 27 #-animation_dsl.Token.RIGHT_BRACE-#
+        break
+      end
+      
+      # Check for constraint keywords (can be either KEYWORD or IDENTIFIER tokens)
+      if tok.type == 0 #-animation_dsl.Token.KEYWORD-# || tok.type == 1 #-animation_dsl.Token.IDENTIFIER-#
+        if tok.value == "type"
+          self.next()  # skip 'type'
+          var param_type = self.expect_identifier()
+          
+          # Validate type annotation
+          if !self._validate_template_parameter_type(param_type)
+            return nil
+          end
+          
+          constraints["type"] = param_type
+          
+        elif tok.value == "min"
+          self.next()  # skip 'min'
+          # Use process_value to handle all value types (numbers, time, colors, etc.)
+          var min_result = self.process_value(self.CONTEXT_GENERIC)
+          if min_result != nil && min_result.expr != nil
+            # Try to evaluate the expression to get a concrete value
+            # For simple literals, the expr will be the value itself
+            constraints["min"] = min_result.expr
+          else
+            self.error("Expected value after 'min'")
+            return nil
+          end
+          
+        elif tok.value == "max"
+          self.next()  # skip 'max'
+          # Use process_value to handle all value types (numbers, time, colors, etc.)
+          var max_result = self.process_value(self.CONTEXT_GENERIC)
+          if max_result != nil && max_result.expr != nil
+            # Try to evaluate the expression to get a concrete value
+            # For simple literals, the expr will be the value itself
+            constraints["max"] = max_result.expr
+          else
+            self.error("Expected value after 'max'")
+            return nil
+          end
+          
+        elif tok.value == "default"
+          self.next()  # skip 'default'
+          # Use process_value to handle all value types (numbers, time, colors, etc.)
+          var default_result = self.process_value(self.CONTEXT_GENERIC)
+          if default_result != nil && default_result.expr != nil
+            # Store the expression as the default value
+            constraints["default"] = default_result.expr
+          else
+            self.error("Expected value after 'default'")
+            return nil
+          end
+          
+        elif tok.value == "nillable"
+          self.next()  # skip 'nillable'
+          var nillable_tok = self.current()
+          if nillable_tok != nil && nillable_tok.type == 0 #-animation_dsl.Token.KEYWORD-#
+            if nillable_tok.value == "true"
+              self.next()
+              constraints["nillable"] = true
+            elif nillable_tok.value == "false"
+              self.next()
+              constraints["nillable"] = false
+            else
+              self.error("Expected 'true' or 'false' after 'nillable'")
+              return nil
+            end
+          else
+            self.error("Expected 'true' or 'false' after 'nillable'")
+            return nil
+          end
+          
+        else
+          # Unknown keyword - stop parsing constraints
+          break
+        end
+      else
+        # Not a keyword or identifier - stop parsing constraints
+        break
+      end
+    end
+    
+    return size(constraints) > 0 ? constraints : nil
   end
   
   # Add typed parameter to symbol table based on type annotation
@@ -2938,7 +3417,7 @@ class SimpleDSLTranspiler
     elif param_type == "value_provider"
       symbol_table.create_value_provider(param_name, nil)
     else
-      # Default to variable for number, string, boolean, time, percentage, variable
+      # Default to variable for number, string, bool, time, percentage, function
       symbol_table.create_variable(param_name)
     end
   end
@@ -2949,9 +3428,11 @@ class SimpleDSLTranspiler
     
     # Check if each parameter is actually used in the template body
     for param : params
-      var param_ref = f"{param}_"  # Parameters are referenced with underscore suffix
+      # Check for both regular template usage (param_) and template animation usage (self.param)
+      var param_ref_regular = f"{param}_"
+      var param_ref_animation = f"self.{param}"
       
-      if string.find(template_body, param_ref) == -1
+      if string.find(template_body, param_ref_regular) == -1 && string.find(template_body, param_ref_animation) == -1
         # Parameter not found in body - this is a warning, not an error
         self.warning(f"Template '{template_name}' parameter '{param}' is declared but never used in the template body.")
       end

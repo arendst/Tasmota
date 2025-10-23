@@ -206,7 +206,6 @@ def test_animation_engine_event_integration()
   
   # Test interrupt methods exist
   return introspect.contains(engine, "interrupt_current") &&
-         introspect.contains(engine, "interrupt_all") &&
          introspect.contains(engine, "resume")
 end
 

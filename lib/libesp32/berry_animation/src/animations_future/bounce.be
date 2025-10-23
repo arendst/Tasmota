@@ -16,7 +16,7 @@ class BounceAnimation : animation.animation
   var last_update_time   # Last update time for physics calculation
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "source_animation": {"type": "instance", "default": nil},
     "bounce_speed": {"min": 0, "max": 255, "default": 128},
     "bounce_range": {"min": 0, "max": 1000, "default": 0},

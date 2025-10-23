@@ -308,11 +308,74 @@ pulse_.priority = 10
 
 ### Templates
 
-Templates provide a DSL-native way to create reusable animation patterns with parameters. Templates are transpiled into Berry functions and automatically registered for use.
+The DSL supports two types of templates: regular templates (functions) and template animations (classes).
 
-**Template-Only Files**: DSL files containing only template definitions generate pure Berry function code without engine initialization or execution, creating reusable function libraries.
+#### Template Animation Transpilation
 
-#### Template Definition Transpilation
+Template animations create reusable animation classes extending `engine_proxy`:
+
+```berry
+# DSL Template Animation
+template animation shutter_effect {
+  param colors type palette nillable true
+  param duration type time min 0 max 3600 default 5 nillable false
+  
+  set strip_len = strip_length()
+  color col = color_cycle(palette=colors, cycle_period=0)
+  
+  animation shutter = beacon_animation(
+    color = col
+    beacon_size = strip_len / 2
+  )
+  
+  sequence seq repeat forever {
+    play shutter for duration
+    col.next = 1
+  }
+  
+  run seq
+}
+```
+
+**Transpiles to:**
+
+```berry
+class shutter_effect_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "colors": {"type": "palette", "nillable": true},
+    "duration": {"type": "time", "min": 0, "max": 3600, "default": 5, "nillable": false}
+  })
+  
+  def init(engine)
+    super(self).init(engine)
+    
+    var strip_len_ = animation.strip_length(engine)
+    var col_ = animation.color_cycle(engine)
+    col_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col_.cycle_period = 0
+    
+    var shutter_ = animation.beacon_animation(engine)
+    shutter_.color = col_
+    shutter_.beacon_size = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 2 end)
+    
+    var seq_ = animation.sequence_manager(engine, -1)
+      .push_play_step(shutter_, animation.resolve(self.duration))
+      .push_closure_step(def (engine) col_.next = 1 end)
+    
+    self.add(seq_)
+  end
+end
+```
+
+**Key Features:**
+- Parameters accessed as `self.<param>` and wrapped in closures
+- Constraints (min, max, default, nillable) encoded in PARAMS
+- Uses `self.add()` instead of `engine.add()`
+- Can be instantiated multiple times with different parameters
+
+#### Regular Template Transpilation
+
+Regular templates generate Berry functions:
 
 ```berry
 # DSL Template
@@ -320,11 +383,7 @@ template pulse_effect {
   param color type color
   param speed
   
-  animation pulse = pulsating_animation(
-    color=color
-    period=speed
-  )
-  
+  animation pulse = pulsating_animation(color=color, period=speed)
   run pulse
 }
 ```
@@ -332,89 +391,30 @@ template pulse_effect {
 **Transpiles to:**
 
 ```berry
-def pulse_effect(engine, color, speed)
+def pulse_effect_template(engine, color_, speed_)
   var pulse_ = animation.pulsating_animation(engine)
-  pulse_.color = color
-  pulse_.period = speed
+  pulse_.color = color_
+  pulse_.period = speed_
   engine.add(pulse_)
-  engine.run()
 end
 
-animation.register_user_function("pulse_effect", pulse_effect)
+animation.register_user_function('pulse_effect', pulse_effect_template)
 ```
 
-#### Template Transpilation Process
+#### Template vs Template Animation
 
-1. **Function Generation**: Template becomes a Berry function with `engine` as first parameter
-2. **Parameter Mapping**: Template parameters become function parameters (after `engine`)
-3. **Body Transpilation**: Template body is transpiled using standard DSL rules
-4. **Auto-Registration**: Generated function is automatically registered as a user function
-5. **Type Annotations**: Optional `type` annotations are preserved as comments for documentation
+**Template Animation** (`template animation`):
+- Generates classes extending `engine_proxy`
+- Parameters accessed as `self.<param>`
+- Supports parameter constraints (min, max, default, nillable)
+- Uses `self.add()` for composition
+- Can be instantiated multiple times
 
-#### Template Call Transpilation
-
-```berry
-# DSL Template Call
-pulse_effect(red, 2s)
-```
-
-**Transpiles to:**
-
-```berry
-pulse_effect(engine, animation.red, 2000)
-```
-
-Template calls are transpiled as regular user function calls with automatic `engine` parameter injection.
-
-#### Advanced Template Features
-
-**Multi-Animation Templates:**
-```berry
-template comet_chase {
-  param trail_color type color
-  param bg_color type color
-  param chase_speed
-  
-  animation background = solid_animation(color=bg_color)
-  animation comet = comet_animation(color=trail_color, speed=chase_speed)
-  
-  run background
-  run comet
-}
-```
-
-**Transpiles to:**
-```berry
-def comet_chase(engine, trail_color, bg_color, chase_speed)
-  var background_ = animation.solid_animation(engine)
-  background_.color = bg_color
-  var comet_ = animation.comet_animation(engine)
-  comet_.color = trail_color
-  comet_.speed = chase_speed
-  engine.add(background_)
-  engine.add(comet_)
-  engine.run()
-end
-
-animation.register_user_function("comet_chase", comet_chase)
-```
-
-#### Template vs User Function Transpilation
-
-**Templates** (DSL-native):
-- Defined within DSL files
-- Use DSL syntax in body
-- Automatically registered
-- Type annotations supported
-- Transpiled to Berry functions
-- Template-only files generate pure function libraries
-
-**User Functions** (Berry-native):
-- Defined in Berry code
-- Use Berry syntax
-- Manually registered
-- Full Berry language features
-- Called from DSL
+**Regular Template** (`template`):
+- Generates functions
+- Parameters accessed as `<param>_`
+- Uses `engine.add()` for execution
+- Called like functions
 
 ### User-Defined Functions
 

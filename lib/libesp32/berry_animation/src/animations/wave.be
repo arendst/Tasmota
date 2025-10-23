@@ -13,7 +13,7 @@ class WaveAnimation : animation.animation
   var wave_table         # Pre-computed wave table for performance
   
   # Parameter definitions for WaveAnimation
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFF0000},
     "back_color": {"default": 0xFF000000},
     "wave_type": {"min": 0, "max": 3, "default": 0},

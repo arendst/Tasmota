@@ -41,7 +41,7 @@ left_pulse_.priority = 10
 center_pulse_.priority = 15  # Center has highest priority
 right_pulse_.priority = 5
 # Create a sequence that shows all three
-var demo_ = animation.SequenceManager(engine)
+var demo_ = animation.sequence_manager(engine)
   .push_play_step(left_pulse_, 3000)
   .push_wait_step(500)
   .push_play_step(center_pulse_, 3000)
@@ -49,7 +49,7 @@ var demo_ = animation.SequenceManager(engine)
   .push_play_step(right_pulse_, 3000)
   .push_wait_step(500)
   # Play all together for final effect
-  .push_repeat_subsequence(animation.SequenceManager(engine, -1)
+  .push_repeat_subsequence(animation.sequence_manager(engine, -1)
     .push_play_step(left_pulse_, 2000)
     .push_play_step(center_pulse_, 2000)
     .push_play_step(right_pulse_, 2000)

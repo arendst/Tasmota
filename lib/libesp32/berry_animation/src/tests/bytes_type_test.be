@@ -8,7 +8,7 @@ import "./core/param_encoder" as encode_constraints
 
 # Test class that uses bytes parameter
 class BytesTestClass : animation.parameterized_object
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "data": {"type": "bytes", "default": nil, "nillable": true},
     "required_data": {"type": "bytes"},
     "name": {"type": "string", "default": "test"}
@@ -24,6 +24,10 @@ class MockEngine
   var time_ms
   def init()
     self.time_ms = 1000
+  end
+    
+  def tostring()
+    return ''
   end
 end
 

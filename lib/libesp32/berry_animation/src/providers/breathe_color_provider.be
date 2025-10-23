@@ -15,7 +15,7 @@ import "./core/param_encoder" as encode_constraints
 class BreatheColorProvider : animation.oscillator_value
   # Additional parameter definitions for color-specific functionality
   # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "base_color": {"default": 0xFFFFFFFF},               # The base color to modulate (32-bit ARGB value)
     "min_brightness": {"min": 0, "max": 255, "default": 0},      # Minimum brightness level (0-255)
     "max_brightness": {"min": 0, "max": 255, "default": 255},    # Maximum brightness level (0-255)

@@ -80,14 +80,13 @@ def test_color_cycle_bytes_format()
   # Test 7: Test manual mode
   provider.cycle_period = 0  # Manual mode
   provider.current_index = 1
-  provider.current_color = custom_color1
   
   var manual_color = provider.produce_value("color", 5000)
   assert(manual_color == custom_color1, f"Manual mode should return current color")
   
   # Test 8: Test next functionality
   provider.next = 1  # Should trigger move to next color
-  var next_color = provider.current_color
+  var next_color = provider.produce_value("color", 5000)
   assert(next_color == custom_color2, f"Next should move to third color")
   assert(provider.current_index == 2, f"Current index should be 2")
   
@@ -101,10 +100,10 @@ def test_color_cycle_bytes_format()
   
   # Test 10: Test edge cases
   var invalid_color = provider._get_color_at_index(-1)  # Invalid index
-  assert(invalid_color == 0xFFFFFFFF, f"Invalid index should return white")
+  assert(invalid_color == 0x00000000, f"Invalid index should return transparent")
   
   var out_of_bounds_color = provider._get_color_at_index(100)  # Out of bounds
-  assert(out_of_bounds_color == 0xFFFFFFFF, f"Out of bounds index should return white")
+  assert(out_of_bounds_color == 0x00000000, f"Out of bounds index should return transparent")
   
   # Test 11: Test empty palette handling
   var empty_palette = bytes()
@@ -113,7 +112,7 @@ def test_color_cycle_bytes_format()
   assert(empty_size == 0, f"Empty palette should have 0 colors")
   
   var empty_color = provider.produce_value("color", 1000)
-  assert(empty_color == 0xFFFFFFFF, f"Empty palette should return white")
+  assert(empty_color == 0x00000000, f"Empty palette should return transparent")
   
   print("✓ All ColorCycleColorProvider bytes format tests passed!")
 end
@@ -127,7 +126,7 @@ def test_bytes_parameter_validation()
   # Test 1: Valid bytes palette should be accepted
   var valid_palette = bytes("FF0000FFFF00FF00FFFF0000")
   provider.palette = valid_palette
-  assert(provider._get_palette_size() == 3, "Valid bytes palette should be accepted")
+  assert(provider.palette_size == 3, "Valid bytes palette should be accepted")
   
   # Test 2: Invalid types should be rejected
   var invalid_types = ["string", 123, 3.14, true, [], {}]
@@ -144,7 +143,7 @@ def test_bytes_parameter_validation()
   
   # Test 3: Nil should be accepted (uses default)
   provider.palette = nil
-  assert(provider._get_palette_size() == 3, "Nil should use default palette")
+  assert(provider.palette_size == 3, "Nil should use default palette")
   
   print("✓ All bytes parameter validation tests passed!")
 end

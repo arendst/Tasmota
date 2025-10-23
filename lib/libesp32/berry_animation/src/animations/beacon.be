@@ -24,7 +24,7 @@ class BeaconAnimation : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions following the new specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFFFFFF},
     "back_color": {"default": 0xFF000000},
     "pos": {"default": 0},

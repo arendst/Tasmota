@@ -15,7 +15,7 @@ class CompositeColorProvider : animation.color_provider
   var providers        # List of color providers
   
   # Parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "blend_mode": {"enum": [0, 1, 2], "default": 0}  # 0=overlay, 1=add, 2=multiply
   })
   

@@ -26,7 +26,7 @@ def test_parameterized_object_basic()
   class TestObject : animation.parameterized_object
     # No instance variables for parameters - they're handled by the virtual system
     
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "test_value": {"min": 0, "max": 100, "default": 50},
       "test_name": {"type": "string", "default": "test"},
       "test_enum": {"enum": [1, 2, 3], "default": 1}
@@ -95,7 +95,7 @@ def test_parameter_hierarchy()
   
   # Create a base class with some parameters
   class BaseClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "base_param": {"type": "string", "default": "base_value"},
       "shared_param": {"type": "string", "default": "base_default"}
     })
@@ -107,7 +107,7 @@ def test_parameter_hierarchy()
   
   # Create a child class with additional parameters
   class ChildClass : BaseClass
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "child_param": {"min": 0, "max": 10, "default": 5},
       "shared_param": {"type": "string", "default": "child_default"}  # Override parent default
     })
@@ -144,7 +144,7 @@ def test_value_provider_as_parameter()
   
   # Create a simple test class
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "dynamic_value": {"min": 0, "max": 100, "default": 50}
     })
     
@@ -164,6 +164,9 @@ def test_value_provider_as_parameter()
     end
     def produce_value(name, time_ms)
       return self.test_value
+    end
+    def tostring()
+      return ''
     end
   end
   
@@ -193,7 +196,7 @@ def test_parameter_metadata()
   print("Testing parameter metadata...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "range_param": {"min": 0, "max": 100, "default": 50},
       "enum_param": {"enum": [1, 2, 3], "default": 1},
       "simple_param": {"type": "string", "default": "test"}
@@ -228,7 +231,7 @@ def test_virtual_member_errors()
   print("Testing virtual member error handling...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "valid_param": {"min": 0, "max": 100, "default": 50}
     })
     
@@ -279,7 +282,7 @@ def test_undefined_parameter_behavior()
   import string  # Import once at the top of the function
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "defined_param": {"min": 0, "max": 100, "default": 50}
     })
     
@@ -377,7 +380,7 @@ def test_engine_requirement()
   print("Testing engine parameter requirement...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "test_param": {"default": 42}
     })
   end
@@ -403,7 +406,7 @@ def test_equality_operator()
   print("Testing equality operator...")
   
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "test_param": {"default": 42}
     })
     

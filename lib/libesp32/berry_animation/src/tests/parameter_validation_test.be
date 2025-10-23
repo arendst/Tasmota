@@ -129,7 +129,7 @@ def test_type_validation()
   
   # Create a test class with different parameter types
   class TestClass : animation.parameterized_object
-    static var PARAMS = encode_constraints({
+    static var PARAMS = animation.enc_params({
       "int_param": {"default": 42},                    # Default type is "int"
       "explicit_int_param": {"type": "int", "default": 10},
       "string_param": {"type": "string", "default": "hello"},
@@ -140,6 +140,9 @@ def test_type_validation()
     
     def init(engine)
       super(self).init(engine)
+    end
+    def tostring()
+      return ''
     end
   end
   

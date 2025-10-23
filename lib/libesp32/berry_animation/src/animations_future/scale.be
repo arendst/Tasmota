@@ -14,7 +14,7 @@ class ScaleAnimation : animation.animation
   var start_time         # Animation start time
   
   # Parameter definitions following parameterized class specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "source_animation": {"type": "instance", "default": nil},
     "scale_factor": {"min": 1, "max": 255, "default": 128},
     "scale_speed": {"min": 0, "max": 255, "default": 0},

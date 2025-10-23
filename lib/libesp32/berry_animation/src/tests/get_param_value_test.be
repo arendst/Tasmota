@@ -43,6 +43,10 @@ def test_get_param_value_with_color_provider()
       self.produce_value_called += 1
       return self.color
     end
+
+    def tostring()
+      return ''
+    end
   end
   
   var tracking_provider = TrackingColorProvider(mock_engine, 0xFF00FF00)  # Green
@@ -85,6 +89,10 @@ def test_get_param_value_with_generic_provider()
     def produce_value(name, time_ms)
       self.produce_value_called += 1
       return self.value
+    end
+    
+    def tostring()
+      return ''
     end
   end
   
@@ -135,6 +143,10 @@ def test_get_param_value_with_context_aware_provider()
       else
         return self.base_value
       end
+    end
+    
+    def tostring()
+      return ''
     end
   end
   

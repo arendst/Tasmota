@@ -61,6 +61,24 @@ SUCCESS
 SUCCESS
 ```
 
+## chap_5_21_template_shutter_bidir.anim
+
+**Status:** ✅ Success
+
+## Symbol Table
+
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `main`               | animation             |         |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `shutter_bidir`      | animation_constructor |         |           |     ✓      |
+
+### Compilation Output
+
+```
+SUCCESS
+```
+
 ## christmas_tree.anim
 
 **Status:** ✅ Success
@@ -252,15 +270,8 @@ SUCCESS
 
 | Symbol               | Type     | Builtin | Dangerous | Takes Args |
 |----------------------|----------|---------|-----------|------------|
-| `blue`               | color    |    ✓    |           |            |
-| `green`              | color    |    ✓    |           |            |
-| `indigo`             | color    |    ✓    |           |            |
-| `orange`             | color    |    ✓    |           |            |
 | `rainbow_with_white` | palette  |         |           |            |
-| `red`                | color    |    ✓    |           |            |
 | `shutter_bidir`      | template |         |           |            |
-| `white`              | color    |    ✓    |           |            |
-| `yellow`             | color    |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -1086,6 +1097,27 @@ SUCCESS
 SUCCESS
 ```
 
+## test_template_animation.anim
+
+**Status:** ✅ Success
+
+## Symbol Table
+
+| Symbol            | Type                  | Builtin | Dangerous | Takes Args |
+|-------------------|-----------------------|---------|-----------|------------|
+| `blue`            | color                 |    ✓    |           |            |
+| `green`           | color                 |    ✓    |           |            |
+| `my_shutter`      | animation             |         |           |            |
+| `rainbow_colors`  | palette               |         |           |            |
+| `red`             | color                 |    ✓    |           |            |
+| `shutter_central` | animation_constructor |         |           |     ✓      |
+
+### Compilation Output
+
+```
+SUCCESS
+```
+
 ## test_template_simple_reusable.anim
 
 **Status:** ✅ Success
@@ -1177,14 +1209,15 @@ SUCCESS
 
 ## Summary
 
-- **Total files processed:** 47
-- **Successfully compiled:** 44
+- **Total files processed:** 49
+- **Successfully compiled:** 46
 - **Failed to compile:** 3
 
 ### Successful Files
 
 - ✅ breathing_colors.anim
 - ✅ candy_cane.anim
+- ✅ chap_5_21_template_shutter_bidir.anim
 - ✅ christmas_tree.anim
 - ✅ comet_chase.anim
 - ✅ computed_values_demo.anim
@@ -1223,6 +1256,7 @@ SUCCESS
 - ✅ test_shutter_rainbow_bidir.anim
 - ✅ test_shutter_rainbow_central.anim
 - ✅ test_simple_math.anim
+- ✅ test_template_animation.anim
 - ✅ test_template_simple_reusable.anim
 - ✅ test_template_simple.anim
 - ✅ twinkle_stars.anim

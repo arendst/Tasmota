@@ -16,7 +16,7 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:StaticValueProvider,weak
 class StaticValueProvider : animation.value_provider
   # Parameter definitions
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "value": {"default": nil, "type": "any"}
   })
   

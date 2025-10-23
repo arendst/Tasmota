@@ -13,7 +13,7 @@ class NoiseAnimation : animation.animation
   var noise_table        # Pre-computed noise values for performance
   
   # Parameter definitions following new specification
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     "color": {"default": nil},
     "scale": {"min": 1, "max": 255, "default": 50},
     "speed": {"min": 0, "max": 255, "default": 30},

@@ -48,7 +48,7 @@
 # @return map - Map of parameter names to encoded bytes() objects
 #
 # Example:
-#   encode_constraints({"color": {"default": 0xFFFFFFFF}, "size": {"min": 0, "max": 255, "default": 128}})
+#   animation.enc_params({"color": {"default": 0xFFFFFFFF}, "size": {"min": 0, "max": 255, "default": 128}})
 #   => {"color": bytes("04 02 FFFFFFFF"), "size": bytes("07 00 00 FF 80")}
 def encode_constraints(params_map)
   # Nested function: Encode a single constraint map into bytes() format
@@ -281,4 +281,6 @@ end
 # Export only the encode function (decode not needed - use constraint_mask/constraint_find instead)
 # Note: constraint_mask() and constraint_find() are static methods
 # in ParameterizedObject class for accessing encoded constraints
-return encode_constraints
+return {
+  'enc_params': encode_constraints
+}

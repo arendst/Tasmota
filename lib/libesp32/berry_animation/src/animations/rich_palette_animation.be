@@ -15,7 +15,7 @@ class RichPaletteAnimation : animation.animation
   var color_provider   # Internal RichPaletteColorProvider instance
   
   # Parameter definitions - only RichPaletteColorProvider parameters (Animation params inherited)
-  static var PARAMS = encode_constraints({
+  static var PARAMS = animation.enc_params({
     # RichPaletteColorProvider parameters (forwarded to internal provider)
     "palette": {"type": "instance", "default": nil},
     "cycle_period": {"min": 0, "default": 5000},

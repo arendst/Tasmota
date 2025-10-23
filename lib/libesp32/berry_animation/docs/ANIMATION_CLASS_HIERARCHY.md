@@ -15,33 +15,35 @@ This document provides a comprehensive reference for all classes in the Berry An
 
 ```
 ParameterizedObject
-├── Animation
-│   ├── BreatheAnimation
-│   ├── CometAnimation
-│   ├── FireAnimation
-│   ├── GradientAnimation
-│   ├── NoiseAnimation
-│   ├── BeaconAnimation
-│   ├── CrenelPositionAnimation
-│   ├── RichPaletteAnimation
-│   ├── TwinkleAnimation
-│   ├── WaveAnimation
-│   ├── PalettePatternAnimation
-│   │   ├── PaletteWaveAnimation
-│   │   ├── PaletteGradientAnimation
-│   │   └── PaletteMeterAnimation
-│   └── (other animation classes)
-└── ValueProvider
-    ├── StaticValueProvider
-    ├── StripLengthProvider
-    ├── OscillatorValueProvider
-    ├── ClosureValueProvider (internal use only)
-    └── ColorProvider
-        ├── StaticColorProvider
-        ├── ColorCycleColorProvider
-        ├── RichPaletteColorProvider
-        ├── BreatheColorProvider
-        └── CompositeColorProvider
+├── Playable (base interface for animations and sequences)
+│   ├── Animation (unified base class for all visual elements)
+│   │   ├── EngineProxy (combines rendering and orchestration)
+│   │   │   └── (user-defined template animations)
+│   │   ├── SolidAnimation (solid color fill)
+│   │   ├── BeaconAnimation (pulse at specific position)
+│   │   ├── CrenelPositionAnimation (crenel/square wave pattern)
+│   │   ├── BreatheAnimation (breathing effect)
+│   │   ├── PalettePatternAnimation (base for palette-based animations)
+│   │   ├── CometAnimation (moving comet with tail)
+│   │   ├── FireAnimation (realistic fire effect)
+│   │   ├── TwinkleAnimation (twinkling stars effect)
+│   │   ├── GradientAnimation (color gradients)
+│   │   ├── NoiseAnimation (Perlin noise patterns)
+│   │   ├── WaveAnimation (wave motion effects)
+│   │   └── RichPaletteAnimation (smooth palette transitions)
+│   └── SequenceManager (orchestrates animation sequences)
+└── ValueProvider (dynamic value generation)
+    ├── StaticValueProvider (wraps static values)
+    ├── StripLengthProvider (provides LED strip length)
+    ├── IterationNumberProvider (provides sequence iteration number)
+    ├── OscillatorValueProvider (oscillating values with waveforms)
+    ├── ClosureValueProvider (computed values, internal use only)
+    └── ColorProvider (dynamic color generation)
+        ├── StaticColorProvider (solid color)
+        ├── ColorCycleColorProvider (cycles through palette)
+        ├── RichPaletteColorProvider (smooth palette transitions)
+        ├── BreatheColorProvider (breathing color effect)
+        └── CompositeColorProvider (blends multiple colors)
 ```
 
 ## Base Classes
@@ -75,6 +77,116 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 **Timing Behavior**: The `start()` method only resets the time origin if the animation was already started previously (i.e., `self.start_time` is not nil). The first actual rendering tick occurs in `update()` or `render()` methods, which initialize `start_time` on first call.
 
 **Factory**: `animation.animation(engine)`
+
+### EngineProxy
+
+A specialized animation class that combines rendering and orchestration capabilities. Extends `Animation` and can contain child animations and sequences. Inherits from `Animation`.
+
+| Parameter | Type | Default | Constraints | Description |
+|-----------|------|---------|-------------|-------------|
+| *(inherits all Animation parameters)* | | | | |
+
+**Key Features**:
+- Can render visual content like a regular animation
+- Can orchestrate sub-animations and sequences using `add()`
+- Enables complex composite effects
+- Used as base class for template animations
+
+**Child Management**:
+- `add(playable)` - Adds a child animation or sequence
+- `remove_child(playable)` - Removes a child
+- Children are automatically started/stopped with parent
+- Children are rendered in priority order (higher priority on top)
+
+**Use Cases**:
+- Composite effects combining multiple animations
+- Template animations with parameters
+- Complex patterns with timing control
+- Reusable animation components
+
+**Factory**: `animation.engine_proxy(engine)`
+
+### Template Animations
+
+Template animations are user-defined classes that extend `EngineProxy`, created using the DSL's `template animation` syntax. They provide reusable, parameterized animation patterns.
+
+**DSL Definition**:
+```berry
+template animation shutter_effect {
+  param colors type palette nillable true
+  param duration type time min 0 max 3600 default 5 nillable false
+  
+  # Animation definition with sequences, colors, etc.
+  # Parameters accessed as self.colors, self.duration
+}
+```
+
+**Generated Class Structure**:
+```berry
+class shutter_effect_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "colors": {"type": "palette", "nillable": true},
+    "duration": {"type": "time", "min": 0, "max": 3600, "default": 5, "nillable": false}
+  })
+  
+  def init(engine)
+    super(self).init(engine)
+    # Generated code with self.colors and self.duration references
+    # Uses self.add() for sub-animations and sequences
+  end
+end
+```
+
+**Parameter Constraints**:
+Template animation parameters support all standard constraints:
+- `type` - Parameter type (palette, time, int, color, etc.)
+- `min` - Minimum value (for numeric types)
+- `max` - Maximum value (for numeric types)
+- `default` - Default value
+- `nillable` - Whether parameter can be nil (true/false)
+
+**Implicit Parameters**:
+Template animations automatically inherit parameters from the `EngineProxy` class hierarchy without explicit declaration:
+- `name` (string, default: "animation") - Animation name
+- `priority` (int, default: 10) - Rendering priority
+- `duration` (int, default: 0) - Animation duration in milliseconds
+- `loop` (bool, default: false) - Whether animation loops
+- `opacity` (int, default: 255) - Animation opacity (0-255)
+- `color` (int, default: 0) - Base color value
+- `is_running` (bool, default: false) - Running state
+
+These parameters can be used directly in template animation bodies without declaration:
+```berry
+template animation fade_effect {
+  param colors type palette
+  
+  # 'duration' is implicit - no need to declare
+  set oscillator = sawtooth(min_value=0, max_value=255, duration=duration)
+  
+  color col = color_cycle(palette=colors, cycle_period=0)
+  animation test = solid(color=col)
+  test.opacity = oscillator  # 'opacity' is also implicit
+  
+  run test
+}
+```
+
+**Usage**:
+```berry
+# Create instance with parameters
+palette rainbow = [red, orange, yellow, green, blue]
+animation my_shutter = shutter_effect(colors=rainbow, duration=2s)
+run my_shutter
+```
+
+**Key Differences from Regular Animations**:
+- Defined in DSL, not Berry code
+- Parameters accessed as `self.<param>` instead of direct variables
+- Uses `self.add()` for composition
+- Can be instantiated multiple times with different parameters
+- Automatically registered as animation constructors
+
+**Factory**: User-defined (e.g., `shutter_effect(engine)`)
 
 ## Value Providers
 

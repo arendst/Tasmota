@@ -107,13 +107,13 @@ process_sequence()
 │   ├── "sequence name N times { ... }"
 │   └── "sequence name { repeat ... }"
 ├── expect_left_brace() → '{'
-├── add("var name_ = animation.SequenceManager(engine, repeat_count)")
+├── add("var name_ = animation.sequence_manager(engine, repeat_count)")
 ├── while !check_right_brace()
 │   └── process_sequence_statement() (fluent interface)
 └── expect_right_brace() → '}'
 ```
 
-#### Template Processing (New)
+#### Template Processing
 ```
 process_template()
 ├── expect_identifier() → template name
@@ -129,6 +129,55 @@ process_template()
 │   ├── Generate Berry function with engine parameter
 │   └── Register as user function
 └── Track in symbol_table as "template"
+
+process_template_animation()
+├── expect_identifier() → template animation name
+├── validate_user_name() → check against reserved names
+├── expect_left_brace() → '{'
+├── Sequential step 1: collect parameters with constraints (type, min, max, default)
+├── Sequential step 2: collect body tokens
+├── expect_right_brace() → '}'
+├── generate_template_animation_class()
+│   ├── Generate class extending engine_proxy
+│   ├── Generate PARAMS with encode_constraints
+│   ├── Create new transpiler instance for body
+│   ├── Set template_animation_params for special handling
+│   │   ├── Add user-defined parameters
+│   │   └── Add inherited parameters from engine_proxy hierarchy (dynamic discovery)
+│   ├── Transpile body with self.param references
+│   └── Use self.add() instead of engine.add()
+└── Track in symbol_table as "template"
+
+### Implicit Parameters in Template Animations
+
+Template animations automatically inherit parameters from the `engine_proxy` class hierarchy. The transpiler dynamically discovers these parameters at compile time:
+
+**Dynamic Parameter Discovery:**
+```
+_add_inherited_params_to_template(template_params_map)
+├── Create temporary engine_proxy instance
+├── Walk up class hierarchy using introspection
+├── For each class with PARAMS:
+│   └── Add all parameter names to template_params_map
+└── Fallback to static list if instance creation fails
+```
+
+**Inherited Parameters (from Animation and ParameterizedObject):**
+- `name` (string, default: "animation")
+- `priority` (int, default: 10)
+- `duration` (int, default: 0)
+- `loop` (bool, default: false)
+- `opacity` (int, default: 255)
+- `color` (int, default: 0)
+- `is_running` (bool, default: false)
+
+**Parameter Resolution Order:**
+1. Check if identifier is in `template_animation_params` (includes both user-defined and inherited)
+2. If found, resolve as `self.<param>` (template animation parameter)
+3. Otherwise, check symbol table for user-defined variables
+4. If not found, raise "Unknown identifier" error
+
+This allows template animations to use inherited parameters like `duration` and `opacity` without explicit declaration, while still maintaining type safety and validation.
 ```
 
 ## Expression Processing Chain
@@ -556,13 +605,13 @@ Sequences use fluent interface pattern for better readability:
 ```berry
 # DSL: sequence demo { play anim for 2s; wait 1s }
 # Generated:
-var demo_ = animation.SequenceManager(engine)
+var demo_ = animation.sequence_manager(engine)
   .push_play_step(anim_, 2000)
   .push_wait_step(1000)
 
 # Nested repeats use sub-sequences:
-var demo_ = animation.SequenceManager(engine)
-  .push_repeat_subsequence(animation.SequenceManager(engine, 3)
+var demo_ = animation.sequence_manager(engine)
+  .push_repeat_subsequence(animation.sequence_manager(engine, 3)
     .push_play_step(anim_, 1000)
   )
 ```
