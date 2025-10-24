@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry `cb.free_cb` for extension manager (#24014)
 - Berry `light.get()` direct access to values (#24033)
 - HostedMCU file update using command `HostedLoad <version>|<filename>`
+- Berry add `gc_heap` and `gc_time` to `tasmota.memory()`
 
 ### Breaking Changed
 

@@ -1,12 +1,12 @@
 #######################################################################
-# Wifi Memory Sticker
+# Wifi Heap Sticker
 #
 # Sticker to show realtime wifi strengh and memory (top left of main page)
 
 #################################################################################
-# Wifi_Memory_Sticker
+# Wifi_Heap_Sticker
 #################################################################################
-class Wifi_Memory_Sticker
+class Wifi_Heap_Sticker
 
   static var HTTP_HEAD_STYLE_WIFI =
     "<style>"
@@ -43,8 +43,14 @@ class Wifi_Memory_Sticker
                                     rssi >= -85 ? "active" : ""))
     end
     # display free heap
-    webserver.content_send(f"<span>&nbsp;{tasmota.memory('heap_free')}k</span>")
+    var gc_time = tasmota.memory('gc_time')
+    var gc_heap = tasmota.memory('gc_heap')
+    if (gc_time != nil) && (gc_heap != nil)
+      webserver.content_send(f"<span>&nbsp;{tasmota.memory('heap_free')}-{gc_heap}k [{gc_time}ms]</span>")
+    else
+      webserver.content_send(f"<span>&nbsp;{tasmota.memory('heap_free')}k</span>")
+    end
   end
 end
 
-return Wifi_Memory_Sticker()
+return Wifi_Heap_Sticker()
