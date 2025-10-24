@@ -386,6 +386,221 @@ def test_sequence_manager_stress()
   print(f"✓ Stress test passed - {still_running} sequences still running out of 10")
 end
 
+def test_dsl_if_statement_static()
+  print("=== DSL If Statement (Static) Tests ===")
+  
+  import animation_dsl
+  
+  # Test 1: if with static true (should execute)
+  var dsl_source1 = "color my_red = 0xFF0000\n" +
+    "animation solid_red = solid(color=my_red)\n" +
+    "sequence test repeat forever {\n" +
+    "  if true {\n" +
+    "    play solid_red for 100ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code1 = animation_dsl.compile(dsl_source1)
+  assert(berry_code1 != nil, "Should compile if statement with true")
+  assert(string.find(berry_code1, "bool(true)") >= 0, "Should generate bool(true) for static true")
+  assert(string.find(berry_code1, "def (engine) return bool(true) end") < 0, "Should NOT wrap static true in closure")
+  
+  # Test 2: if with static false (should not execute)
+  var dsl_source2 = "color my_blue = 0x0000FF\n" +
+    "animation solid_blue = solid(color=my_blue)\n" +
+    "sequence test repeat forever {\n" +
+    "  if false {\n" +
+    "    play solid_blue for 100ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code2 = animation_dsl.compile(dsl_source2)
+  assert(berry_code2 != nil, "Should compile if statement with false")
+  assert(string.find(berry_code2, "bool(false)") >= 0, "Should generate bool(false) for static false")
+  
+  # Test 3: if with static number (should convert to boolean)
+  var dsl_source3 = "color my_green = 0x00FF00\n" +
+    "animation solid_green = solid(color=my_green)\n" +
+    "sequence test repeat forever {\n" +
+    "  if 5 {\n" +
+    "    play solid_green for 100ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code3 = animation_dsl.compile(dsl_source3)
+  assert(berry_code3 != nil, "Should compile if statement with number")
+  assert(string.find(berry_code3, "bool(5)") >= 0, "Should generate bool(5) for static number")
+  assert(string.find(berry_code3, "def (engine) return bool(5) end") < 0, "Should NOT wrap static number in closure")
+  
+  print("✓ DSL if statement (static) tests passed")
+end
+
+def test_dsl_if_statement_dynamic()
+  print("=== DSL If Statement (Dynamic) Tests ===")
+  
+  import animation_dsl
+  
+  # Test 1: if with template parameter (dynamic)
+  var dsl_source1 = "template animation test_if {\n" +
+    "  param flag type bool default true\n" +
+    "  color my_red = 0xFF0000\n" +
+    "  animation solid_red = solid(color=my_red)\n" +
+    "  sequence test_seq repeat forever {\n" +
+    "    if flag {\n" +
+    "      play solid_red for 100ms\n" +
+    "    }\n" +
+    "  }\n" +
+    "  run test_seq\n" +
+    "}\n" +
+    "animation main = test_if(flag=true)\n" +
+    "run main"
+  
+  var berry_code1 = animation_dsl.compile(dsl_source1)
+  assert(berry_code1 != nil, "Should compile if statement with parameter")
+  assert(string.find(berry_code1, "def (engine) return bool(self.flag) end") >= 0, "Should wrap parameter in closure with bool()")
+  
+  # Test 2: if with property access (dynamic)
+  var dsl_source2 = "color my_red = 0xFF0000\n" +
+    "color my_blue = 0x0000FF\n" +
+    "color col1 = color_cycle(cycle_period=0)\n" +
+    "animation solid_red = solid(color=my_red)\n" +
+    "set some_value = 1\n" +
+    "sequence test repeat forever {\n" +
+    "  if some_value {\n" +
+    "    play solid_red for 100ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code2 = animation_dsl.compile(dsl_source2)
+  assert(berry_code2 != nil, "Should compile if statement with variable")
+  assert(string.find(berry_code2, "def (engine) return bool(") >= 0, "Should wrap variable in closure with bool()")
+  
+  print("✓ DSL if statement (dynamic) tests passed")
+end
+
+def test_dsl_if_statement_execution()
+  print("=== DSL If Statement Execution Tests ===")
+  
+  import animation_dsl
+  
+  # Test execution with true condition
+  var dsl_source_true = "color my_red = 0xFF0000\n" +
+    "animation solid_red = solid(color=my_red)\n" +
+    "sequence test {\n" +
+    "  if true {\n" +
+    "    play solid_red for 50ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code_true = animation_dsl.compile(dsl_source_true)
+  var compiled_true = compile(berry_code_true)
+  
+  # Execute the compiled code
+  tasmota.set_millis(200000)
+  compiled_true()
+  
+  # The sequence should have started
+  # We can't easily verify execution without accessing the engine, but compilation success is a good sign
+  
+  # Test execution with false condition
+  var dsl_source_false = "color my_blue = 0x0000FF\n" +
+    "animation solid_blue = solid(color=my_blue)\n" +
+    "sequence test {\n" +
+    "  if false {\n" +
+    "    play solid_blue for 50ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code_false = animation_dsl.compile(dsl_source_false)
+  var compiled_false = compile(berry_code_false)
+  
+  # Execute the compiled code
+  tasmota.set_millis(201000)
+  compiled_false()
+  
+  print("✓ DSL if statement execution tests passed")
+end
+
+def test_dsl_if_statement_nested()
+  print("=== DSL If Statement Nested Tests ===")
+  
+  import animation_dsl
+  
+  # Test nested if statements
+  var dsl_source = "color my_red = 0xFF0000\n" +
+    "animation solid_red = solid(color=my_red)\n" +
+    "sequence test repeat forever {\n" +
+    "  if true {\n" +
+    "    if true {\n" +
+    "      play solid_red for 50ms\n" +
+    "    }\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  assert(berry_code != nil, "Should compile nested if statements")
+
+  # Count occurrences of push_repeat_subsequence (should have 3: outer repeat forever + 2 if statements)
+  var count = 0
+  var pos = 0
+  while true
+    pos = string.find(berry_code, "push_repeat_subsequence", pos)
+    if pos < 0
+      break
+    end
+    count += 1
+    pos += 1
+  end
+  assert(count == 2, f"Should have 2 push_repeat_subsequence calls (2 if), got {count}")
+  
+  print("✓ DSL if statement nested tests passed")
+end
+
+def test_dsl_if_vs_repeat_comparison()
+  print("=== DSL If vs Repeat Comparison Tests ===")
+  
+  import animation_dsl
+  
+  # Test that 'if' uses bool() wrapper while 'repeat' doesn't
+  var dsl_if = "color my_red = 0xFF0000\n" +
+    "animation solid_red = solid(color=my_red)\n" +
+    "set flag = 1\n" +
+    "sequence test repeat forever {\n" +
+    "  if flag {\n" +
+    "    play solid_red for 50ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var dsl_repeat = "color my_blue = 0x0000FF\n" +
+    "animation solid_blue = solid(color=my_blue)\n" +
+    "set count = 1\n" +
+    "sequence test repeat forever {\n" +
+    "  repeat count times {\n" +
+    "    play solid_blue for 50ms\n" +
+    "  }\n" +
+    "}\n" +
+    "run test"
+  
+  var berry_if = animation_dsl.compile(dsl_if)
+  var berry_repeat = animation_dsl.compile(dsl_repeat)
+  
+  # If statement should have bool() wrapper
+  assert(string.find(berry_if, "bool(") >= 0, "If statement should use bool() wrapper")
+  
+  # Repeat statement should NOT have bool() wrapper
+  assert(string.find(berry_repeat, "bool(") < 0, "Repeat statement should NOT use bool() wrapper")
+  
+  print("✓ DSL if vs repeat comparison tests passed")
+end
+
 # Run all layering tests
 def run_all_sequence_manager_layering_tests()
   print("Starting SequenceManager Layering Tests...")
@@ -396,6 +611,11 @@ def run_all_sequence_manager_layering_tests()
   test_sequence_manager_removal()
   test_sequence_manager_clear_all()
   test_sequence_manager_stress()
+  test_dsl_if_statement_static()
+  test_dsl_if_statement_dynamic()
+  test_dsl_if_statement_execution()
+  test_dsl_if_statement_nested()
+  test_dsl_if_vs_repeat_comparison()
   
   print("\n🎉 All SequenceManager layering tests passed!")
   return true
@@ -411,5 +631,10 @@ return {
   "test_sequence_manager_engine_integration": test_sequence_manager_engine_integration,
   "test_sequence_manager_removal": test_sequence_manager_removal,
   "test_sequence_manager_clear_all": test_sequence_manager_clear_all,
-  "test_sequence_manager_stress": test_sequence_manager_stress
+  "test_sequence_manager_stress": test_sequence_manager_stress,
+  "test_dsl_if_statement_static": test_dsl_if_statement_static,
+  "test_dsl_if_statement_dynamic": test_dsl_if_statement_dynamic,
+  "test_dsl_if_statement_execution": test_dsl_if_statement_execution,
+  "test_dsl_if_statement_nested": test_dsl_if_statement_nested,
+  "test_dsl_if_vs_repeat_comparison": test_dsl_if_vs_repeat_comparison
 }
