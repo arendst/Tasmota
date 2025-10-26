@@ -1103,13 +1103,9 @@ void TuyaNormalPowerModePacketProcess(void)
       const uint16_t payload_len = ((uint16_t)Tuya.buffer[4] << 8) | Tuya.buffer[5];
 
       // Establish pairing mode - WIFI_RESET is assumed to be AP mode
-      uint8_t first = 0x00;                   // EZ default
-      if (is_select) {
-        if (payload_len >= 1 && Tuya.buffer[6] == 0x01) {
-          first = 0x01;                       // AP
-        }
-      } else {
-        first = 0x01;                         // RESET -> AP
+      uint8_t first = 0x01;
+      if (is_select && !(payload_len >= 1 && Tuya.buffer[6] == 0x01))
+          first = 0x00;
       }
 
       // Send ACK, then WIFI_STATE ramp up to cloud connected to re-enable MCU control
