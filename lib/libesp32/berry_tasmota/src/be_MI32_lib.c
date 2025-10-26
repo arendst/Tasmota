@@ -26,7 +26,7 @@ extern void be_MI32_set_temp(int slot, int temp_val);
 BE_FUNC_CTYPE_DECLARE(be_MI32_set_temp, "", "ii");
 
 extern bbool be_MI32_widget(const char *sbuf, void* function);
-BE_FUNC_CTYPE_DECLARE(be_MI32_widget, "b", "s[c]");
+BE_FUNC_CTYPE_DECLARE(be_MI32_widget, "b", "[sc]");
 
 #include "be_fixed_MI32.h"
 

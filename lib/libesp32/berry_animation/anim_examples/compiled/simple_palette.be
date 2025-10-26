@@ -19,7 +19,7 @@ var rainbow_cycle_ = animation.rich_palette_animation(engine)
 rainbow_cycle_.palette = rainbow_
 rainbow_cycle_.cycle_period = 3000
 # Simple sequence
-var demo_ = animation.SequenceManager(engine)
+var demo_ = animation.sequence_manager(engine)
   .push_play_step(rainbow_cycle_, 15000)
 engine.add(demo_)
 engine.run()

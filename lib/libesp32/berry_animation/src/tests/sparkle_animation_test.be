@@ -12,7 +12,7 @@ def test_sparkle_animation_basic()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test with default parameters
   var sparkle_anim = animation.sparkle_animation(engine)
@@ -35,7 +35,7 @@ def test_sparkle_animation_custom()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test with custom parameters using new parameterized pattern
   var sparkle_anim = animation.sparkle_animation(engine)
@@ -70,7 +70,7 @@ def test_sparkle_animation_parameters()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var sparkle_anim = animation.sparkle_animation(engine)
   sparkle_anim.name = "param_test"
@@ -102,7 +102,7 @@ def test_sparkle_animation_update_render()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var sparkle_anim = animation.sparkle_animation(engine)
   sparkle_anim.color = 0xFFFF0000
@@ -153,7 +153,7 @@ def test_sparkle_constructors()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(15)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test sparkle_white
   var white_sparkle = animation.sparkle_white(engine)
@@ -185,7 +185,7 @@ def test_sparkle_tostring()
   
   # Create LED strip and engine for testing
   var strip = global.Leds(12)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   var sparkle_anim = animation.sparkle_animation(engine)
   sparkle_anim.density = 75

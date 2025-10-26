@@ -705,6 +705,7 @@ class leds_panel
   var strip                     # strip object
   var h, w, cell_size, cell_space
 
+  static var EXT_NAME = "leds_panel"
   static var SAMPLING = 100
   static var PORT = 8886      # default port 8886
   static var HTML_WIDTH = 290
@@ -826,9 +827,25 @@ class leds_panel
     self.web.on("/leds_feed", self, self.send_info_feed)        # feed with leds values
     self.web.on("/leds", self, self.send_info_page)             # display leds page
 
-    tasmota.add_driver(self)
+    tasmota.add_driver(self, self.EXT_NAME)                     # also register as `leds_panel` extension
   end
 
+  #################################################################################
+  # unload
+  #
+  # Uninstall the extension and deallocate all resources
+  #################################################################################
+  def unload()
+    self.close()                                                # stop server
+    tasmota.remove_driver(self)                                 # remove driver, normally already done by tasmota.unload_ext
+    global.undef("webserver_async")                             # free `webserver_async` if it was loaded as part of this file
+  end
+
+  #################################################################################
+  # stop
+  #
+  # Stop server
+  #################################################################################
   def close()
     tasmota.remove_driver(self)
     self.web.close()

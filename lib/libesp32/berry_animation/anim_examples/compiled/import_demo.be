@@ -24,7 +24,7 @@ var dynamic_green_ = animation.solid(engine)
 dynamic_green_.color = 0xFF008000
 dynamic_green_.opacity = animation.create_closure_value(engine, def (engine) return animation._math.abs(animation.get_user_function('rand_demo')(engine) - 128) + 64 end)
 # Create a sequence that cycles through the animations
-var import_demo_ = animation.SequenceManager(engine)
+var import_demo_ = animation.sequence_manager(engine)
   .push_play_step(random_red_, 3000)
   .push_play_step(breathing_blue_, 3000)
   .push_play_step(dynamic_green_, 3000)

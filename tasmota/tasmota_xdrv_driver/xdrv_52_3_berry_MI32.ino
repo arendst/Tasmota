@@ -80,6 +80,13 @@ extern "C" {
   }
 
   bool be_MI32_widget(const char* sbuf, void* function){
+    if (!sbuf && !function){
+      if(be_MI32Widget.size == 0){
+        return true; // we can safely overwrite sbuf
+      } else {
+        return false; // sbuf is notsent yet, keep it
+      }
+    }
     if (function){
       be_MI32Widget.callback = function;
     }

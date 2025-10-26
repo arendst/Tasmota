@@ -7,7 +7,7 @@
  *      INCLUDES
  *********************/
 #include "lv_xml_table_parser.h"
-#if LV_USE_XML
+#if LV_USE_XML && LV_USE_TABLE
 
 #include "../../../lvgl.h"
 #include "../../../lvgl_private.h"
@@ -58,12 +58,6 @@ void lv_xml_table_apply(lv_xml_parser_state_t * state, const char ** attrs)
 
         if(lv_streq("column_count", name)) lv_table_set_column_count(item, lv_xml_atoi(value));
         else if(lv_streq("row_count", name)) lv_table_set_row_count(item, lv_xml_atoi(value));
-        else if(lv_streq("selected_cell", name)) {
-
-            int32_t value1 = lv_xml_atoi_split(&value, ' ');
-            int32_t value2 = lv_xml_atoi_split(&value, ' ');
-            lv_table_set_selected_cell(item, value1, value2);
-        }
     }
 }
 
@@ -72,7 +66,7 @@ void * lv_xml_table_column_create(lv_xml_parser_state_t * state, const char ** a
     LV_UNUSED(attrs);
 
     /*Nothing to create*/
-    return lv_xml_state_get_parent(state);;
+    return lv_xml_state_get_parent(state);
 }
 
 void lv_xml_table_column_apply(lv_xml_parser_state_t * state, const char ** attrs)
@@ -96,7 +90,7 @@ void * lv_xml_table_cell_create(lv_xml_parser_state_t * state, const char ** att
     LV_UNUSED(attrs);
 
     /*Nothing to create*/
-    return lv_xml_state_get_parent(state);;
+    return lv_xml_state_get_parent(state);
 }
 
 void lv_xml_table_cell_apply(lv_xml_parser_state_t * state, const char ** attrs)

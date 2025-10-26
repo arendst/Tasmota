@@ -8,9 +8,6 @@ import animation
 
 # Test template functionality
 # Define a simple template
-# Auto-generated strip initialization (using Tasmota configuration)
-var engine = animation.init_strip()
-
 # Template function: pulse_effect
 def pulse_effect_template(engine, base_color_, duration_, brightness_)
   var pulse_ = animation.pulsating_animation(engine)
@@ -23,6 +20,9 @@ end
 animation.register_user_function('pulse_effect', pulse_effect_template)
 
 # Use the template - templates add animations directly to engine and run them
+# Auto-generated strip initialization (using Tasmota configuration)
+var engine = animation.init_strip()
+
 pulse_effect_template(engine, 0xFFFF0000, 2000, 204)
 engine.run()
 

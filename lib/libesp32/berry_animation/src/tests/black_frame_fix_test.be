@@ -16,7 +16,7 @@ def test_atomic_closure_batch_execution()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create two test animations
   var red_provider = animation.static_color(engine)
@@ -86,7 +86,7 @@ def test_multiple_consecutive_closures()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test animations
   var green_provider = animation.static_color(engine)
@@ -155,7 +155,7 @@ def test_closure_batch_at_sequence_start()
   # Create strip and engine
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var seq_manager = animation.SequenceManager(engine)
+  var seq_manager = animation.sequence_manager(engine)
   
   # Create test animation
   var purple_provider = animation.static_color(engine)
@@ -211,7 +211,7 @@ def test_repeat_sequence_closure_batching()
   var iteration_closure = def (engine) iteration_count += 1 end
   
   # Create repeating sequence with closure
-  var seq_manager = animation.SequenceManager(engine, 3)  # Repeat 3 times
+  var seq_manager = animation.sequence_manager(engine, 3)  # Repeat 3 times
   seq_manager.push_closure_step(iteration_closure)
               .push_play_step(cyan_anim, 30)  # Very short for fast testing
   
@@ -286,7 +286,7 @@ def test_black_frame_fix_integration()
   #   play shutter_animation for 200ms
   #   col1.next = 1
   # }
-  var seq_manager = animation.SequenceManager(engine, 5)
+  var seq_manager = animation.sequence_manager(engine, 5)
   seq_manager.push_play_step(shutter_anim, 200)
               .push_closure_step(advance_color)
   

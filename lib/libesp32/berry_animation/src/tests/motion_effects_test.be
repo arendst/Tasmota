@@ -12,7 +12,7 @@ def test_bounce_animation_basic()
   
   # Create engine and source animation
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFFFF0000
   
@@ -37,7 +37,7 @@ def test_scale_animation_basic()
   
   # Create engine and source animation
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFF00FF00
   
@@ -62,7 +62,7 @@ def test_jitter_animation_basic()
   
   # Create engine and source animation
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFF0000FF
   
@@ -87,7 +87,7 @@ def test_motion_effects_custom()
   print("Testing motion effects with custom parameters...")
   
   var strip = global.Leds(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFFFFFF00
   
@@ -156,7 +156,7 @@ def test_motion_effects_update_render()
   print("Testing motion effects update and render...")
   
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFFFF00FF
   var frame = animation.frame_buffer(10)
@@ -223,7 +223,7 @@ def test_motion_effects_constructors()
   print("Testing motion effects constructor functions...")
   
   var strip = global.Leds(30)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFF00FFFF
   
@@ -279,7 +279,7 @@ def test_motion_effects_tostring()
   print("Testing motion effects string representations...")
   
   var strip = global.Leds(12)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var source = animation.solid(engine)
   source.color = 0xFFFFFFFF
   

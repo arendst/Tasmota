@@ -8,9 +8,6 @@ import animation
 
 # Cylon Red Eye
 # Automatically adapts to the length of the strip
-# Auto-generated strip initialization (using Tasmota configuration)
-var engine = animation.init_strip()
-
 # Template function: cylon_effect
 def cylon_effect_template(engine, eye_color_, back_color_, duration_)
   var strip_len_ = animation.strip_length(engine)
@@ -31,6 +28,9 @@ def cylon_effect_template(engine, eye_color_, back_color_, duration_)
 end
 
 animation.register_user_function('cylon_effect', cylon_effect_template)
+
+# Auto-generated strip initialization (using Tasmota configuration)
+var engine = animation.init_strip()
 
 cylon_effect_template(engine, 0xFFFF0000, 0x00000000, 3000)
 engine.run()

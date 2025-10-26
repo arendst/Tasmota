@@ -279,6 +279,7 @@ class type_mapper_class:
     "lv_anim_deleted_cb_t",
     "lv_timer_handler_resume_cb_t",
     "lv_theme_apply_cb_t",
+    "lv_screen_create_cb_t",    # new in 9.4.0
     "lv_color32_t *",
     "lv_color16_t *",
     "lv_color_filter_cb_t",
@@ -465,11 +466,16 @@ class type_mapper_class:
     "void * []": "c",         # treat as a simple pointer, decoding needs to be done at Berry level
     "constchar * *": "c",
     # new in 9.3.0
-    "lv_text_cmd_state_t *": "c",
+    # "lv_text_cmd_state_t *": "c",     # not used anymore in 9.4.0
     "lv_font_info_t *": "lv_font_info",
     "lv_switch_orientation_t": "i",
     "lv_slider_orientation_t": "i",
     "lv_draw_letter_dsc_t *": "lv_draw_letter_dsc",
+    # new in 9.4.0
+    "lv_image_colorkey_t *": "c",
+    "lv_arclabel_dir_t": "i",
+    "lv_arclabel_text_align_t": "i",
+    "lv_anim_timeline_t *": "lv_anim_timeline_dsc",
 
     # callbacks
     "lv_group_focus_cb_t": "lv_group_focus_cb",

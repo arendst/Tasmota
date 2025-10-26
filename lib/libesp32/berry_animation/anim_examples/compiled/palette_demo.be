@@ -33,12 +33,12 @@ var forest_anim_ = animation.rich_palette_animation(engine)
 forest_anim_.palette = animation.PALETTE_FOREST
 forest_anim_.cycle_period = 8000
 # Sequence to show both palettes
-var palette_demo_ = animation.SequenceManager(engine)
+var palette_demo_ = animation.sequence_manager(engine)
   .push_play_step(fire_anim_, 10000)
   .push_wait_step(1000)
   .push_play_step(ocean_anim_, 10000)
   .push_wait_step(1000)
-  .push_repeat_subsequence(animation.SequenceManager(engine, 2)
+  .push_repeat_subsequence(animation.sequence_manager(engine, 2)
     .push_play_step(fire_anim_, 3000)
     .push_play_step(ocean_anim_, 3000)
     .push_play_step(forest_anim_, 3000)

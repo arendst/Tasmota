@@ -61,6 +61,7 @@ typedef struct _lv_font_src_t {
 
 static lv_font_src_t * lv_font_manager_get_src(lv_font_manager_t * manager, const char * name);
 
+static bool lv_font_manager_check_src_resource(lv_font_manager_t * manager, const char * name);
 static bool lv_font_manager_check_resource(lv_font_manager_t * manager);
 static lv_font_rec_node_t * lv_font_manager_search_rec_node(lv_font_manager_t * manager, lv_font_t * font);
 
@@ -164,6 +165,13 @@ bool lv_font_manager_remove_src(lv_font_manager_t * manager, const char * name)
         LV_LOG_WARN("src: %s not found", name);
         return false;
     }
+
+    if(lv_font_manager_check_src_resource(manager, name)) {
+        LV_LOG_ERROR("unfreed resource for font name %s detected, remove src failed!", name);
+        return false;
+    }
+
+    lv_font_recycle_remove_fonts(manager->recycle_manager, name);
 
     lv_ll_remove(&manager->src_ll, font_src);
 
@@ -446,7 +454,7 @@ static bool lv_font_manager_check_resource(lv_font_manager_t * manager)
         }
     }
 
-    /* Check the recorded font resources created by font creater */
+    /* Check the recorded font resources created by font creator */
     lv_ll_t * refer_ll = &manager->refer_ll;
     uint32_t refer_ll_len = lv_ll_get_len(refer_ll);
     if(refer_ll_len) {
@@ -463,6 +471,30 @@ static bool lv_font_manager_check_resource(lv_font_manager_t * manager)
 
     /* Check resource leak */
     bool has_resource = (rec_ll_len || refer_ll_len);
+
+    return has_resource;
+}
+
+static bool lv_font_manager_check_src_resource(lv_font_manager_t * manager, const char * name)
+{
+    LV_ASSERT_NULL(manager);
+    LV_ASSERT_NULL(name);
+
+    bool has_resource = false;
+    lv_ll_t * refer_ll = &manager->refer_ll;
+    uint32_t refer_ll_len = lv_ll_get_len(refer_ll);
+    if(refer_ll_len) {
+        lv_font_refer_node_t * node;
+        LV_LL_READ(refer_ll, node) {
+            if(lv_strcmp(name, node->name) == 0) {
+                has_resource = true;
+                LV_LOG_WARN("font: %s(%d), ref_cnt = %d",
+                            node->ft_info.name,
+                            node->ft_info.size,
+                            node->ref_cnt);
+            }
+        }
+    }
 
     return has_resource;
 }
@@ -533,7 +565,7 @@ static lv_font_t * lv_font_manager_create_font_wrapper(lv_font_manager_t * manag
     return font;
 }
 
-static void lv_font_manager_delete_font_warpper(lv_font_manager_t * manager, lv_font_refer_node_t * refer_node)
+static void lv_font_manager_delete_font_wrapper(lv_font_manager_t * manager, lv_font_refer_node_t * refer_node)
 {
     LV_ASSERT_NULL(manager);
     LV_ASSERT_NULL(refer_node);
@@ -606,7 +638,7 @@ static bool lv_font_manager_drop_font(lv_font_manager_t * manager, const lv_font
     }
 
     /* if ref_cnt is about to be 0, free font resource */
-    lv_font_manager_delete_font_warpper(manager, refer_node);
+    lv_font_manager_delete_font_wrapper(manager, refer_node);
 
     /* free refer_node */
     lv_ll_remove(&manager->refer_ll, refer_node);

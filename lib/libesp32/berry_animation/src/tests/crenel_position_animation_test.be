@@ -28,7 +28,7 @@ def run_tests()
   
   # Create engine and strip for testing
   var strip = global.Leds(10)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   
   # Test 1: Basic construction with new parameterized pattern
   var crenel = animation.crenel_position_animation(engine)

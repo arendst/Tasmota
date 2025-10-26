@@ -4,7 +4,7 @@
 
 set -e
 
-BERRY_CMD="./berry -s -g -m lib/libesp32/berry_animation/src -e 'import tasmota def log(x) print(x) end '"
+BERRY_CMD="./berry -s -g -m lib/libesp32/berry_animation/src -e 'import tasmota def log(x,l) tasmota.log(x,l) end '"
 COMPILED_DIR="lib/libesp32/berry_animation/anim_examples/compiled"
 
 echo "Running compiled DSL examples..."

@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef LV_TABVIEW_XML_PARSER_H
-#define LV_TABVIEW_XML_PARSER_H
+#ifndef LV_XML_TABVIEW_PARSER_H
+#define LV_XML_TABVIEW_PARSER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,7 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 #include "../lv_xml.h"
-#if LV_USE_XML
+#if LV_USE_XML && LV_USE_TABVIEW
 
 /**********************
  *      TYPEDEFS
@@ -30,6 +30,8 @@ void * lv_xml_tabview_tab_bar_create(lv_xml_parser_state_t * state, const char *
 void lv_xml_tabview_tab_bar_apply(lv_xml_parser_state_t * state, const char ** attrs);
 void * lv_xml_tabview_tab_create(lv_xml_parser_state_t * state, const char ** attrs);
 void lv_xml_tabview_tab_apply(lv_xml_parser_state_t * state, const char ** attrs);
+void * lv_xml_tabview_tab_button_create(lv_xml_parser_state_t * state, const char ** attrs);
+void lv_xml_tabview_tab_button_apply(lv_xml_parser_state_t * state, const char ** attrs);
 
 /**********************
  *      MACROS
@@ -41,4 +43,4 @@ void lv_xml_tabview_tab_apply(lv_xml_parser_state_t * state, const char ** attrs
 } /*extern "C"*/
 #endif
 
-#endif /*LV_TABVIEW_XML_PARSE_H*/
+#endif /*LV_XML_TABVIEW_PARSER_H*/

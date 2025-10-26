@@ -14,7 +14,7 @@
 
 #include "../../indev/lv_indev.h"
 #include "../../misc/lv_assert.h"
-#include "../../misc/lv_text.h"
+#include "../../misc/lv_text_private.h"
 #include "../../misc/lv_text_ap.h"
 #include "../../misc/lv_math.h"
 #include "../../stdlib/lv_sprintf.h"
@@ -221,10 +221,6 @@ void lv_table_set_row_count(lv_obj_t * obj, uint32_t row_cnt)
         uint32_t new_cell_cnt = table->col_cnt * table->row_cnt;
         uint32_t i;
         for(i = new_cell_cnt; i < old_cell_cnt; i++) {
-            if(table->cell_data[i] && table->cell_data[i]->user_data) {
-                lv_free(table->cell_data[i]->user_data);
-                table->cell_data[i]->user_data = NULL;
-            }
             lv_free(table->cell_data[i]);
         }
     }
@@ -277,10 +273,6 @@ void lv_table_set_column_count(lv_obj_t * obj, uint32_t col_cnt)
         int32_t i;
         for(i = 0; i < (int32_t)old_col_cnt - (int32_t)col_cnt; i++) {
             uint32_t idx = old_col_start + min_col_cnt + i;
-            if(table->cell_data[idx] && table->cell_data[idx]->user_data) {
-                lv_free(table->cell_data[idx]->user_data);
-                table->cell_data[idx]->user_data = NULL;
-            }
             lv_free(table->cell_data[idx]);
             table->cell_data[idx] = NULL;
         }
@@ -386,10 +378,6 @@ void lv_table_set_cell_user_data(lv_obj_t * obj, uint16_t row, uint16_t col, voi
         table->cell_data[cell]->ctrl = 0;
         table->cell_data[cell]->user_data = NULL;
         table->cell_data[cell]->txt[0] = '\0';
-    }
-
-    if(table->cell_data[cell]->user_data) {
-        lv_free(table->cell_data[cell]->user_data);
     }
 
     table->cell_data[cell]->user_data = user_data;
@@ -536,10 +524,6 @@ static void lv_table_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
     uint32_t i;
     for(i = 0; i < table->col_cnt * table->row_cnt; i++) {
         if(table->cell_data[i]) {
-            if(table->cell_data[i]->user_data) {
-                lv_free(table->cell_data[i]->user_data);
-                table->cell_data[i]->user_data = NULL;
-            }
             lv_free(table->cell_data[i]);
             table->cell_data[i] = NULL;
         }
@@ -823,24 +807,28 @@ static void draw_main(lv_event_t * e)
                 const int32_t cell_right = lv_obj_get_style_pad_right(obj, LV_PART_ITEMS);
                 const int32_t cell_top = lv_obj_get_style_pad_top(obj, LV_PART_ITEMS);
                 const int32_t cell_bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_ITEMS);
-                lv_text_flag_t txt_flags = LV_TEXT_FLAG_NONE;
-                lv_area_t txt_area;
 
+                lv_text_attributes_t attributes = {0};
+                attributes.text_flags = LV_TEXT_FLAG_NONE;
+                attributes.letter_space = label_dsc_act.letter_space;
+                attributes.line_space = label_dsc_act.line_space;
+
+                lv_area_t txt_area;
                 txt_area.x1 = cell_area.x1 + cell_left;
                 txt_area.x2 = cell_area.x2 - cell_right;
                 txt_area.y1 = cell_area.y1 + cell_top;
                 txt_area.y2 = cell_area.y2 - cell_bottom;
 
+                attributes.max_width = lv_area_get_width(&txt_area);
+
                 /*Align the content to the middle if not cropped*/
                 bool crop = ctrl & LV_TABLE_CELL_CTRL_TEXT_CROP;
                 if(crop) {
-                    txt_flags = LV_TEXT_FLAG_EXPAND;
+                    attributes.text_flags = LV_TEXT_FLAG_EXPAND;
                     label_dsc_act.flag |= LV_TEXT_FLAG_EXPAND;
                 }
 
-                lv_text_get_size(&txt_size, table->cell_data[cell]->txt, label_dsc_def.font,
-                                 label_dsc_act.letter_space, label_dsc_act.line_space,
-                                 lv_area_get_width(&txt_area), txt_flags);
+                lv_text_get_size_attributes(&txt_size, table->cell_data[cell]->txt, label_dsc_def.font, &attributes);
 
                 /*Align the content to the middle if not cropped*/
                 if(!crop) {
@@ -938,6 +926,11 @@ static int32_t get_row_height(lv_obj_t * obj, uint32_t row_id, const lv_font_t *
     /* Calculate the cell_data index where to start */
     uint32_t row_start = row_id * table->col_cnt;
 
+    lv_text_attributes_t attributes = {0};
+    attributes.letter_space = letter_space;
+    attributes.line_space = line_space;
+    attributes.text_flags = LV_TEXT_FLAG_NONE;
+
     /* Traverse the cells in the row_id row */
     uint32_t cell;
     uint32_t col;
@@ -948,7 +941,7 @@ static int32_t get_row_height(lv_obj_t * obj, uint32_t row_id, const lv_font_t *
             continue;
         }
 
-        int32_t txt_w = table->col_w[col];
+        attributes.max_width = table->col_w[col];
 
         /* Traverse the current row from the first until the penultimate column.
          * Increment the text width if the cell has the LV_TABLE_CELL_CTRL_MERGE_RIGHT control,
@@ -961,7 +954,7 @@ static int32_t get_row_height(lv_obj_t * obj, uint32_t row_id, const lv_font_t *
 
             lv_table_cell_ctrl_t ctrl = (lv_table_cell_ctrl_t) next_cell_data->ctrl;
             if(ctrl & LV_TABLE_CELL_CTRL_MERGE_RIGHT) {
-                txt_w += table->col_w[col + col_merge + 1];
+                attributes.max_width += table->col_w[col + col_merge + 1];
             }
             else {
                 break;
@@ -978,10 +971,9 @@ static int32_t get_row_height(lv_obj_t * obj, uint32_t row_id, const lv_font_t *
         /*Else we have to calculate the height of the cell text*/
         else {
             lv_point_t txt_size;
-            txt_w -= cell_left + cell_right;
+            attributes.max_width -= cell_left + cell_right;
 
-            lv_text_get_size(&txt_size, table->cell_data[cell]->txt, font,
-                             letter_space, line_space, txt_w, LV_TEXT_FLAG_NONE);
+            lv_text_get_size_attributes(&txt_size, table->cell_data[cell]->txt, font, &attributes);
 
             h_max = LV_MAX(txt_size.y + cell_top + cell_bottom, h_max);
             /*Skip until one element after the last merged column*/
@@ -1034,7 +1026,7 @@ static lv_result_t get_pressed_cell(lv_obj_t * obj, uint32_t * row, uint32_t * c
     }
 
     if(row) {
-        int32_t y = p.y + lv_obj_get_scroll_y(obj);;
+        int32_t y = p.y + lv_obj_get_scroll_y(obj);
         y -= obj->coords.y1;
         y -= lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
 
@@ -1114,12 +1106,12 @@ static void get_cell_area(lv_obj_t * obj, uint32_t row, uint32_t col, lv_area_t 
     if(rtl) {
         area->x1 += lv_obj_get_scroll_x(obj);
         int32_t w = lv_obj_get_width(obj);
-        area->x2 = w - area->x1 - lv_obj_get_style_pad_right(obj, 0);
+        area->x2 = w - area->x1 - lv_obj_get_style_pad_right(obj, LV_PART_MAIN);
         area->x1 = area->x2 - (table->col_w[col] + offset);
     }
     else {
         area->x1 -= lv_obj_get_scroll_x(obj);
-        area->x1 += lv_obj_get_style_pad_left(obj, 0);
+        area->x1 += lv_obj_get_style_pad_left(obj, LV_PART_MAIN);
         area->x2 = area->x1 + (table->col_w[col] + offset) - 1;
     }
 
@@ -1129,7 +1121,7 @@ static void get_cell_area(lv_obj_t * obj, uint32_t row, uint32_t col, lv_area_t 
         area->y1 += table->row_h[r];
     }
 
-    area->y1 += lv_obj_get_style_pad_top(obj, 0);
+    area->y1 += lv_obj_get_style_pad_top(obj, LV_PART_MAIN);
     area->y1 -= lv_obj_get_scroll_y(obj);
     area->y2 = area->y1 + table->row_h[row] - 1;
 

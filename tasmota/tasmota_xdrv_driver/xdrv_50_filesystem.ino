@@ -87,6 +87,8 @@ ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
 #endif  // ESP32
 */
 
+const int UFS_FILENAME_SIZE = 50;
+
 // Global file system pointer
 FS *ufsp;
 // Flash file system pointer
@@ -94,7 +96,7 @@ FS *ffsp;
 // Local pointer for file managment
 FS *dfsp;
 
-char ufs_path[48];
+char ufs_path[UFS_FILENAME_SIZE];
 File ufs_upload_file;
 uint8_t ufs_dir;
 // 0 = None, 1 = SD, 2 = ffat, 3 = littlefs
@@ -104,7 +106,7 @@ uint8_t ffs_type;
 uint8_t sd_type;
 
 struct {
-  char run_file[48];
+  char run_file[UFS_FILENAME_SIZE];
   int run_file_pos = -1;
   bool run_file_mutex = 0;
   bool download_busy;
@@ -916,8 +918,6 @@ String UfsJsonSettingsRead(const char* key) {
  * Commands
 \*********************************************************************************************/
 
-const int UFS_FILENAME_SIZE = 48;
-
 char* UfsFilename(char* fname, char* fname_in) {
   fname_in = Trim(fname_in);  // Remove possible leading spaces
   snprintf_P(fname, UFS_FILENAME_SIZE, PSTR("%s%s"), ('/' == fname_in[0]) ? "" : "/", fname_in);
@@ -1469,7 +1469,7 @@ void UfsDirectory(void) {
 }
 
 void UfsListDir(char *path, uint8_t depth) {
-  char name[48];
+  char name[UFS_FILENAME_SIZE];
   char npath[128];
   char format[12];
   sprintf(format, PSTR("%%-%ds"), 24 - depth);
@@ -1712,7 +1712,7 @@ void download_task(void *path) {
 
 
 bool UfsUploadFileOpen(const char* upload_filename) {
-  char npath[48];
+  char npath[UFS_FILENAME_SIZE];
   snprintf_P(npath, sizeof(npath), PSTR("%s/%s"), ufs_path, upload_filename);
   dfsp->remove(npath);
   ufs_upload_file = dfsp->open(npath, UFS_FILE_WRITE);

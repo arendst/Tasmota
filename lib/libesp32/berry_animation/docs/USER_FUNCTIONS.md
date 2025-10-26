@@ -202,7 +202,7 @@ animation.register_user_function("twinkles", twinkles)
 animation stars = solid(color=white)
 stars.opacity = twinkles(12, 800ms)
 
-animation fairy_dust = solid(color=#FFD700)
+animation fairy_dust = solid(color=0xFFD700)
 fairy_dust.opacity = twinkles(8, 600ms)
 ```
 
@@ -560,7 +560,7 @@ var my_show =
   "\n"
   "animation campfire = solid(color=orange)\n"
   "campfire.opacity = fire(180, 2000)\n"
-  "animation stars = solid(color=#FFFFFF)\n"
+  "animation stars = solid(color=0xFFFFFF)\n"
   "stars.opacity = twinkle(6, 600ms)\n"
   "\n"
   "sequence night_scene {\n"

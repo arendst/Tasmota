@@ -90,6 +90,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _crons, var                         // list of active crons
     _ccmd, var                          // list of active Tasmota commands implemented in Berry
     _drivers, var                       // list of active drivers
+    _ext, var                           // list of active extensions
     _wnu, var                           // list of closures to call when network is connected
     wire1, var                          // Tasmota I2C Wire1
     wire2, var                          // Tasmota I2C Wire2
@@ -189,6 +190,9 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     run_network_up, closure(class_Tasmota_run_network_up_closure)
     add_driver, closure(class_Tasmota_add_driver_closure)
     remove_driver, closure(class_Tasmota_remove_driver_closure)
+    add_extension, closure(class_Tasmota_add_extension_closure)
+    read_extension_manifest, closure(class_Tasmota_read_extension_manifest_closure)
+    unload_extension, closure(class_Tasmota_unload_extension_closure)
     load, closure(class_Tasmota_load_closure)
     compile, closure(class_Tasmota_compile_closure)
     wire_scan, closure(class_Tasmota_wire_scan_closure)

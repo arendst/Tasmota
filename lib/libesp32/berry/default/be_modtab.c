@@ -34,6 +34,7 @@ be_extern_native_module(re);
 be_extern_native_module(mqtt);
 be_extern_native_module(persist);
 be_extern_native_module(autoconf);
+be_extern_native_module(extension_manager);
 be_extern_native_module(tapp);
 be_extern_native_module(light);
 be_extern_native_module(gpio);
@@ -153,6 +154,9 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_AUTOCONF
     &be_native_module(autoconf),
 #endif // USE_AUTOCONF
+#ifdef USE_EXTENSION_MANAGER
+    &be_native_module(extension_manager),
+#endif // USE_EXTENSION_MANAGER
     &be_native_module(tapp),
     &be_native_module(gpio),
 #ifdef USE_DISPLAY
@@ -260,6 +264,7 @@ be_extern_native_class(AXP2102);
 be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
 be_extern_native_class(Leds);
+be_extern_native_class(pixmat);
 be_extern_native_class(AudioGenerator);
 be_extern_native_class(AudioFileSource);
 be_extern_native_class(AudioOutputI2S);
@@ -336,6 +341,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
+    &be_native_class(pixmat),
 #endif // USE_WS2812
 #ifdef USE_ENERGY_SENSOR
     &be_native_class(energy_struct),

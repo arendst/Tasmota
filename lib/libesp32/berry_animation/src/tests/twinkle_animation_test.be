@@ -13,7 +13,7 @@ print("=== Comprehensive Twinkle Animation Test ===")
 # Test 1: Basic Twinkle Animation Creation
 print("\n1. Testing basic twinkle animation creation...")
 var strip = global.Leds(30)
-var engine = animation.animation_engine(strip)
+var engine = animation.create_engine(strip)
 var twinkle = animation.twinkle_animation(engine)
 twinkle.color = 0xFFFFFFFF
 twinkle.density = 128
@@ -384,7 +384,7 @@ print("\n16. Testing edge cases...")
 
 # Very small strip
 var tiny_strip = global.Leds(1)
-var tiny_engine = animation.animation_engine(tiny_strip)
+var tiny_engine = animation.create_engine(tiny_strip)
 var tiny_twinkle = animation.twinkle_classic(tiny_engine)
 tiny_twinkle.density = 200
 tiny_twinkle.start()

@@ -1,5 +1,5 @@
 # DSL Lexer Triple Quotes Test Suite
-# Tests for triple-quoted string tokenization in DSLLexer
+# Tests for triple-quoted string tokenization in create_lexer
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota" lib/libesp32/berry_animation/src/tests/dsl_lexer_triple_quotes_test.be
@@ -7,18 +7,37 @@
 import animation_dsl
 import string
 
+# Helper function to extract all tokens from a pull lexer (for testing only)
+def extract_all_tokens(lexer)
+  var tokens = []
+  lexer.reset()  # Start from beginning
+  
+  while !lexer.at_end()
+    var token = lexer.next_token()
+    
+    # EOF token removed - check for nil instead
+    if token == nil
+      break
+    end
+    
+    tokens.push(token)
+  end
+  
+  return tokens
+end
+
 # Test basic triple-quoted string tokenization with double quotes
 def test_triple_quotes_double()
   print("Testing triple-quoted string tokenization (triple quotes)...")
   
   var source = 'berry """\nHello World\n"""'
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(size(tokens) >= 3, "Should have at least 3 tokens (berry, string, EOF)")
-  assert(tokens[0].type == animation_dsl.Token.KEYWORD, "First token should be KEYWORD")
+  assert(size(tokens) >= 2, "Should have at least 2 tokens (berry, string)")
+  assert(tokens[0].type == 0 #-animation_dsl.Token.KEYWORD-#, "First token should be KEYWORD")
   assert(tokens[0].value == "berry", "First token should be 'berry'")
-  assert(tokens[1].type == animation_dsl.Token.STRING, "Second token should be STRING")
+  assert(tokens[1].type == 3 #-animation_dsl.Token.STRING-#, "Second token should be STRING")
   assert(tokens[1].value == "\nHello World\n", "String content should be preserved")
   
   print("✓ Triple-quoted string (double quotes) tokenization test passed")
@@ -30,13 +49,13 @@ def test_triple_quotes_single()
   print("Testing triple-quoted string tokenization (single quotes)...")
   
   var source = "berry '''\nHello World\n'''"
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(size(tokens) >= 3, "Should have at least 3 tokens (berry, string, EOF)")
-  assert(tokens[0].type == animation_dsl.Token.KEYWORD, "First token should be KEYWORD")
+  assert(size(tokens) >= 2, "Should have at least 2 tokens (berry, string)")
+  assert(tokens[0].type == 0 #-animation_dsl.Token.KEYWORD-#, "First token should be KEYWORD")
   assert(tokens[0].value == "berry", "First token should be 'berry'")
-  assert(tokens[1].type == animation_dsl.Token.STRING, "Second token should be STRING")
+  assert(tokens[1].type == 3 #-animation_dsl.Token.STRING-#, "Second token should be STRING")
   assert(tokens[1].value == "\nHello World\n", "String content should be preserved")
   
   print("✓ Triple-quoted string (single quotes) tokenization test passed")
@@ -48,11 +67,11 @@ def test_multiline_triple_quotes()
   print("Testing multiline triple-quoted string tokenization...")
   
   var source = 'berry """\nLine 1\nLine 2\nLine 3\n"""'
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(size(tokens) >= 3, "Should have at least 3 tokens")
-  assert(tokens[1].type == animation_dsl.Token.STRING, "Second token should be STRING")
+  assert(size(tokens) >= 2, "Should have at least 2 tokens")
+  assert(tokens[1].type == 3 #-animation_dsl.Token.STRING-#, "Second token should be STRING")
   
   var expected_content = "\nLine 1\nLine 2\nLine 3\n"
   assert(tokens[1].value == expected_content, f"String content should be '{expected_content}', got '{tokens[1].value}'")
@@ -66,11 +85,11 @@ def test_embedded_quotes()
   print("Testing triple-quoted string with embedded quotes...")
   
   var source = 'berry """\nprint("Hello")\nvar x = \'world\'\n"""'
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(size(tokens) >= 3, "Should have at least 3 tokens")
-  assert(tokens[1].type == animation_dsl.Token.STRING, "Second token should be STRING")
+  assert(size(tokens) >= 2, "Should have at least 2 tokens")
+  assert(tokens[1].type == 3 #-animation_dsl.Token.STRING-#, "Second token should be STRING")
   
   var expected_content = '\nprint("Hello")\nvar x = \'world\'\n'
   assert(tokens[1].value == expected_content, f"String content should preserve embedded quotes")
@@ -84,11 +103,11 @@ def test_empty_triple_quotes()
   print("Testing empty triple-quoted string...")
   
   var source = 'berry """"""'
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(size(tokens) >= 3, "Should have at least 3 tokens")
-  assert(tokens[1].type == animation_dsl.Token.STRING, "Second token should be STRING")
+  assert(size(tokens) >= 2, "Should have at least 2 tokens")
+  assert(tokens[1].type == 3 #-animation_dsl.Token.STRING-#, "Second token should be STRING")
   assert(tokens[1].value == "", "Empty string should have empty value")
   
   print("✓ Empty triple-quoted string test passed")
@@ -100,11 +119,11 @@ def test_unterminated_triple_quotes()
   print("Testing unterminated triple-quoted string...")
   
   var source = 'berry """\nUnterminated string'
-  var lexer = animation_dsl.DSLLexer(source)
   
-  # Should raise an exception for unterminated string
+  # Should raise an exception when trying to extract tokens (pull-mode lexer)
   try
-    var tokens = lexer.tokenize()
+    var lexer = animation_dsl.create_lexer(source)
+    var tokens = extract_all_tokens(lexer)  # This should trigger the error
     assert(false, "Should raise exception for unterminated triple-quoted string")
   except "lexical_error" as e, msg
     # Expected - unterminated string should raise lexical_error
@@ -129,11 +148,11 @@ def test_complex_content()
     'print("Result:", result)\n' +
     '"""'
   
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
-  assert(size(tokens) >= 3, "Should have at least 3 tokens")
-  assert(tokens[1].type == animation_dsl.Token.STRING, "Second token should be STRING")
+  assert(size(tokens) >= 2, "Should have at least 2 tokens")
+  assert(tokens[1].type == 3 #-animation_dsl.Token.STRING-#, "Second token should be STRING")
   
   var content = tokens[1].value
   assert(string.find(content, "import math") >= 0, "Should contain import statement")
@@ -150,13 +169,13 @@ def test_mixed_quote_types()
   print("Testing that triple quotes don't interfere with regular quotes...")
   
   var source = 'color red = 0xFF0000\nberry """\ntest\n"""\nvar x = "normal string"'
-  var lexer = animation_dsl.DSLLexer(source)
-  var tokens = lexer.tokenize()
+  var lexer = animation_dsl.create_lexer(source)
+  var tokens = extract_all_tokens(lexer)
   
   # Find the normal string token
   var normal_string_found = false
   for token : tokens
-    if token.type == animation_dsl.Token.STRING && token.value == "normal string"
+    if token.type == 3 #-animation_dsl.Token.STRING-# && token.value == "normal string"
       normal_string_found = true
       break
     end

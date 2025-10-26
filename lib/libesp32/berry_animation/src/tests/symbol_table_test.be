@@ -2,7 +2,7 @@
 # Tests for the SymbolEntry and SymbolTable classes
 #
 # Command to run test is:
-#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x) print(x) end" lib/libesp32/berry_animation/src/tests/symbol_table_test.be
+#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x,l) tasmota.log(x,l) end" lib/libesp32/berry_animation/src/tests/symbol_table_test.be
 
 import animation
 import animation_dsl

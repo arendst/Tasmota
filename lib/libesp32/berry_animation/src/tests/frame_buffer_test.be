@@ -34,7 +34,7 @@ fb.set_pixel_color(4, 0x80FF00FF)  # Set fifth pixel to purple with 50% alpha
 assert(fb.get_pixel_color(4) == 0x80FF00FF, f"Fifth pixel should be purple with 50% alpha (0x{fb.get_pixel_color(4) :08x})")
 
 # Test fill_pixels method
-fb.fill_pixels(0xFFFFFFFF)  # Fill with white
+fb.fill_pixels(fb.pixels, 0xFFFFFFFF)  # Fill with white
 
 var all_white = true
 for i: 0..9
@@ -46,7 +46,7 @@ end
 assert(all_white, "All pixels should be white")
 
 # Test fill_pixels with color components
-fb.fill_pixels(0xFF00FF00)  # Fill with green
+fb.fill_pixels(fb.pixels, 0xFF00FF00)  # Fill with green
 
 var all_green = true
 for i: 0..9
@@ -61,11 +61,11 @@ assert(all_green, "All pixels should be green")
 var fb1 = animation.frame_buffer(10)
 var fb2 = animation.frame_buffer(10)
 
-fb1.fill_pixels(0xFF0000FF)  # Fill fb1 with red (fully opaque)
-fb2.fill_pixels(0x80FF0000)  # Fill fb2 with blue at 50% alpha
+fb1.fill_pixels(fb1.pixels, 0xFF0000FF)  # Fill fb1 with red (fully opaque)
+fb2.fill_pixels(fb2.pixels, 0x80FF0000)  # Fill fb2 with blue at 50% alpha
 
 # Blend fb2 into fb1 using per-pixel alpha
-fb1.blend_pixels(fb2)
+fb1.blend_pixels(fb1.pixels, fb2.pixels)
 
 var all_blended = true
 for i: 0..9
@@ -99,8 +99,8 @@ end
 assert(all_copied, "All pixels should be copied correctly")
 
 # Test blend_color method
-fb1.fill_pixels(0xFF0000FF)  # Fill fb1 with red
-fb1.blend_color(0x8000FF00)  # Blend with green at 50% alpha
+fb1.fill_pixels(fb1.pixels, 0xFF0000FF)  # Fill fb1 with red
+fb1.blend_color(fb1.pixels, 0x8000FF00)  # Blend with green at 50% alpha
 
 var still_red = true
 for i: 0..9
@@ -116,8 +116,8 @@ print("Testing apply_brightness method...")
 
 # Test reducing brightness (0-255 range)
 var brightness_test = animation.frame_buffer(5)
-brightness_test.fill_pixels(0xFFFF0000)  # Red with full brightness (255)
-brightness_test.apply_brightness(128)  # Apply 50% brightness
+brightness_test.fill_pixels(brightness_test.pixels, 0xFFFF0000)  # Red with full brightness (255)
+brightness_test.apply_brightness(brightness_test.pixels, 128)  # Apply 50% brightness
 
 var reduced_pixel = brightness_test.get_pixel_color(0)
 var reduced_r = (reduced_pixel >> 16) & 0xFF
@@ -125,8 +125,8 @@ assert(reduced_r == 128, f"Red component should be reduced to 128, got {reduced_
 
 # Test increasing brightness (256-511 range)
 var increase_test = animation.frame_buffer(5)
-increase_test.fill_pixels(0xFF008000)  # Green with 50% brightness (128)
-increase_test.apply_brightness(384)  # Apply 1.5x brightness (384 = 256 + 128)
+increase_test.fill_pixels(increase_test.pixels, 0xFF008000)  # Green with 50% brightness (128)
+increase_test.apply_brightness(increase_test.pixels, 384)  # Apply 1.5x brightness (384 = 256 + 128)
 
 var increased_pixel = increase_test.get_pixel_color(0)
 var increased_g = (increased_pixel >> 8) & 0xFF
@@ -137,8 +137,8 @@ assert(increased_g <= 255, f"Green component should not exceed 255, got {increas
 
 # Test zero brightness (fully black)
 var black_test = animation.frame_buffer(5)
-black_test.fill_pixels(0xFFFF0000)  # Red with full brightness
-black_test.apply_brightness(0)  # Make fully black
+black_test.fill_pixels(black_test.pixels, 0xFFFF0000)  # Red with full brightness
+black_test.apply_brightness(black_test.pixels, 0)  # Make fully black
 
 var black_pixel = black_test.get_pixel_color(0)
 var black_r = (black_pixel >> 16) & 0xFF
@@ -150,8 +150,8 @@ assert(black_b == 0, f"Blue component should be 0 (black), got {black_b}")
 
 # Test maximum brightness (should cap at 255)
 var max_test = animation.frame_buffer(5)
-max_test.fill_pixels(0xFF008000)  # Green with 50% brightness
-max_test.apply_brightness(511)  # Apply maximum brightness
+max_test.fill_pixels(max_test.pixels, 0xFF008000)  # Green with 50% brightness
+max_test.apply_brightness(max_test.pixels, 511)  # Apply maximum brightness
 
 var max_pixel = max_test.get_pixel_color(0)
 var max_g = (max_pixel >> 8) & 0xFF
@@ -159,8 +159,8 @@ assert(max_g == 255, f"Green component should be capped at 255, got {max_g}")
 
 # Test that alpha channel is preserved
 var alpha_test = animation.frame_buffer(5)
-alpha_test.fill_pixels(0x80FF0000)  # Red with 50% alpha
-alpha_test.apply_brightness(128)  # Apply 50% brightness
+alpha_test.fill_pixels(alpha_test.pixels, 0x80FF0000)  # Red with 50% alpha
+alpha_test.apply_brightness(alpha_test.pixels, 128)  # Apply 50% brightness
 
 var alpha_pixel = alpha_test.get_pixel_color(0)
 var alpha_a = (alpha_pixel >> 24) & 0xFF
@@ -169,11 +169,11 @@ assert(alpha_a == 128, f"Alpha should be preserved at 128, got {alpha_a}")
 assert(alpha_r == 128, f"Red should be reduced to 128, got {alpha_r}")
 
 # Test blend_pixels with region
-fb1.fill_pixels(0xFF0000FF)  # Fill fb1 with red (fully opaque)
-fb2.fill_pixels(0x8000FF00)  # Fill fb2 with green at 50% alpha
+fb1.fill_pixels(fb1.pixels, 0xFF0000FF)  # Fill fb1 with red (fully opaque)
+fb2.fill_pixels(fb2.pixels, 0x8000FF00)  # Fill fb2 with green at 50% alpha
 
 # Blend fb2 into fb1 using per-pixel alpha, but only for the first half
-fb1.blend_pixels(fb2, 0, 4)
+fb1.blend_pixels(fb1.pixels, fb2.pixels, 0, 4)
 
 var first_half_blended = true
 var second_half_original = true
@@ -197,7 +197,7 @@ assert(second_half_original, "Second half should remain original")
 
 # Test gradient_fill method
 fb1.clear()
-fb1.gradient_fill(0xFFFF0000, 0xFF00FF00)  # Red to green gradient
+fb1.gradient_fill(fb1.pixels, 0xFFFF0000, 0xFF00FF00)  # Red to green gradient
 
 var first_pixel_color = fb1.get_pixel_color(0)
 var last_pixel_color = fb1.get_pixel_color(9)
@@ -205,31 +205,13 @@ var last_pixel_color = fb1.get_pixel_color(9)
 assert(first_pixel_color == 0xFFFF0000, f"First pixel should be red (0x{first_pixel_color :08x})")
 assert(last_pixel_color == 0xFF00FF00, f"Last pixel should be green (0x{last_pixel_color :08x})")
 
-# Test apply_mask method
-fb1.fill_pixels(0xFF0000FF)  # Fill fb1 with red
-fb2.clear()
-
-# Create a gradient mask
-for i: 0..9
-  var alpha = tasmota.scale_uint(i, 0, 9, 0, 255)
-  fb2.set_pixel_color(i, animation.frame_buffer.to_color(255, 255, 255, alpha))  # White with varying alpha
-end
-
-fb1.apply_mask(fb2)
-
-# First pixel should be fully transparent (alpha = 0)
-assert((fb1.get_pixel_color(0) >> 24) & 0xFF == 0, "First pixel should be fully transparent")
-
-# Last pixel should be fully opaque (alpha = 255)
-assert((fb1.get_pixel_color(9) >> 24) & 0xFF == 255, "Last pixel should be fully opaque")
-
 # Test apply_opacity method
 print("Testing apply_opacity method...")
 
 # Test reducing opacity (0-255 range)
 var opacity_test = animation.frame_buffer(5)
-opacity_test.fill_pixels(0xFF0000FF)  # Red with full alpha (255)
-opacity_test.apply_opacity(128)  # Apply 50% opacity
+opacity_test.fill_pixels(opacity_test.pixels, 0xFF0000FF)  # Red with full alpha (255)
+opacity_test.apply_opacity(opacity_test.pixels, 128)  # Apply 50% opacity
 
 var reduced_pixel = opacity_test.get_pixel_color(0)
 var reduced_alpha = (reduced_pixel >> 24) & 0xFF
@@ -237,8 +219,8 @@ assert(reduced_alpha == 128, f"Alpha should be reduced to 128, got {reduced_alph
 
 # Test increasing opacity (256-511 range)
 var increase_test = animation.frame_buffer(5)
-increase_test.fill_pixels(0x800000FF)  # Red with 50% alpha (128)
-increase_test.apply_opacity(384)  # Apply 1.5x opacity (384 = 256 + 128)
+increase_test.fill_pixels(increase_test.pixels, 0x800000FF)  # Red with 50% alpha (128)
+increase_test.apply_opacity(increase_test.pixels, 384)  # Apply 1.5x opacity (384 = 256 + 128)
 
 
 var increased_pixel = increase_test.get_pixel_color(0)
@@ -250,8 +232,8 @@ assert(increased_alpha <= 255, f"Alpha should not exceed 255, got {increased_alp
 
 # Test zero opacity (fully transparent)
 var transparent_test = animation.frame_buffer(5)
-transparent_test.fill_pixels(0xFF0000FF)  # Red with full alpha
-transparent_test.apply_opacity(0)  # Make fully transparent
+transparent_test.fill_pixels(transparent_test.pixels, 0xFF0000FF)  # Red with full alpha
+transparent_test.apply_opacity(transparent_test.pixels, 0)  # Make fully transparent
 
 var transparent_pixel = transparent_test.get_pixel_color(0)
 var transparent_alpha = (transparent_pixel >> 24) & 0xFF
@@ -259,8 +241,8 @@ assert(transparent_alpha == 0, f"Alpha should be 0 (transparent), got {transpare
 
 # Test maximum opacity (should cap at 255)
 var max_test = animation.frame_buffer(5)
-max_test.fill_pixels(0x800000FF)  # Red with 50% alpha
-max_test.apply_opacity(511)  # Apply maximum opacity
+max_test.fill_pixels(max_test.pixels, 0x800000FF)  # Red with 50% alpha
+max_test.apply_opacity(max_test.pixels, 511)  # Apply maximum opacity
 
 var max_pixel = max_test.get_pixel_color(0)
 var max_alpha = (max_pixel >> 24) & 0xFF

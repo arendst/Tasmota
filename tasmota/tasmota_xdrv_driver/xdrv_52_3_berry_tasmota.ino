@@ -218,6 +218,13 @@ extern "C" {
     // give info about stack size
     be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
     be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
+    // values seen at last GC
+    if (berry.last_gc_tims_ms >= 0) {
+      be_map_insert_int(vm, "gc_time", berry.last_gc_tims_ms);
+    }
+    if (berry.last_gc_heap_free >= 0) {
+      be_map_insert_int(vm, "gc_heap", berry.last_gc_heap_free / 1024);
+    }
     if (UsePSRAM()) {
       be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
       be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);

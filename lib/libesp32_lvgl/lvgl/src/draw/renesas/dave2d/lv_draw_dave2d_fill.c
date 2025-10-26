@@ -34,13 +34,6 @@ void lv_draw_dave2d_fill(lv_draw_task_t * t, const lv_draw_fill_dsc_t * dsc, con
     lv_area_move(&draw_area, x, y);
     lv_area_move(&coordinates, x, y);
 
-    //
-    // Generate render operations
-    //
-#if D2_RENDER_EACH_OPERATION
-    d2_selectrenderbuffer(u->d2_handle, u->renderbuffer);
-#endif
-
     d2_framebuffer_from_layer(u->d2_handle, t->target_layer);
 
     if(LV_GRAD_DIR_NONE != dsc->grad.dir) {
@@ -63,8 +56,6 @@ void lv_draw_dave2d_fill(lv_draw_task_t * t, const lv_draw_fill_dsc_t * dsc, con
             y2 = (float)LV_MAX(coordinates.y1, coordinates.y2);
 
             if(a1 < a2) {
-                /* TODO */
-                LV_ASSERT(0);
                 y0 = 0.0f;//silence the compiler warning
                 y3 = 0.0f;
 
@@ -81,8 +72,6 @@ void lv_draw_dave2d_fill(lv_draw_task_t * t, const lv_draw_fill_dsc_t * dsc, con
                                 (d2_point)D2_FIX4((y3_i - y0_i)));
         }
         else if(LV_GRAD_DIR_HOR == dsc->grad.dir) {
-            /* TODO */
-            LV_ASSERT(0);
 
             float x1;
             float x2;
@@ -99,8 +88,6 @@ void lv_draw_dave2d_fill(lv_draw_task_t * t, const lv_draw_fill_dsc_t * dsc, con
             x2 = (float)LV_MAX(coordinates.x1, coordinates.x2);
 
             if(a1 < a2) {
-                /* TODO */
-                LV_ASSERT(0);
                 x0 = 0.0f;//silence the compiler warning
                 x3 = 0.0f;
 
@@ -288,14 +275,6 @@ void lv_draw_dave2d_fill(lv_draw_task_t * t, const lv_draw_fill_dsc_t * dsc, con
             LV_ASSERT(D2_OK == result);
         }
     }
-
-    //
-    // Execute render operations
-    //
-#if D2_RENDER_EACH_OPERATION
-    d2_executerenderbuffer(u->d2_handle, u->renderbuffer, 0);
-    d2_flushframe(u->d2_handle);
-#endif
 
     if(LV_GRAD_DIR_NONE != dsc->grad.dir) {
         d2_setalphamode(u->d2_handle, current_alpha_mode);

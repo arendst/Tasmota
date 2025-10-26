@@ -36,13 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.8** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **v3.1.3.250504**.
+This release will be supported from ESP32/Arduino library Core version **v3.1.4**.
 
-Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.3.250504 have been removed.
-
-## Support of TLS
-
-In addition to TLS using fingerprints now also user supplied CA certs, AWS IoT and Azure IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
+Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.4 have been removed.
 
 ## Initial configuration tools
 
@@ -75,21 +71,23 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-15.0.1
+- http://ota.tasmota.com/tasmota/release-15.1.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
-### ESP32, ESP32-C2, ESP32-C3, ESP32-C6, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.3.250504**.
+### ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-P4, ESP32-S2 and ESP32-S3 based
+The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.4**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
+- **tasmota32c2.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C2 with serial and 4M+ flash.
+- **tasmota32c3.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3 with USB HWCDC and fallback to serial and 4M+ flash.
+- **tasmota32c5.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C5 with USB HWCDC and fallback to serial and 4M+ flash.
+- **tasmota32c6.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C6 with USB HWCDC and fallback to serial and 4M+ flash.
+- **tasmota32p4.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-P4 with USB HWCDC and fallback to serial and 4M+ flash.
 - **tasmota32s2.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S2 with serial and 4M+ flash.
 - **tasmota32s2cdc.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S2 with serial over embedded USB CDC only and 4M+ flash.
 - **tasmota32s3.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S3 with USB HWCDC and fallback to serial and 4M+ flash.
-- **tasmota32c2.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C2 with serial and 4M+ flash.
-- **tasmota32c3.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3 with USB HWCDC and fallback to serial and 4M+ flash.
-- **tasmota32c6.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C6 with USB HWCDC and fallback to serial and 4M+ flash.
 - **tasmota32-AD.bin** to **tasmota32-VN.bin** = The Tasmota version in different languages for 4M+ flash.
 - **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support for 4M+ flash.
 - **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support for 4M+ flash.
@@ -104,7 +102,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-15.0.1
+- https://ota.tasmota.com/tasmota32/release-15.1.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -114,57 +112,29 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.0.1.4
+## Changelog v15.1.0.1
 ### Added
-- Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name [#23394](https://github.com/arendst/Tasmota/issues/23394)
-- Command `I2sPause` [#23646](https://github.com/arendst/Tasmota/issues/23646)
-- Support for RV3028 RTC [#23672](https://github.com/arendst/Tasmota/issues/23672)
-- Support for RX8030 RTC [#23855](https://github.com/arendst/Tasmota/issues/23855)
-- Extend state JSON message with functional hostname and ipaddress which could be WiFi or Ethernet
-- Internal function 'WSContentSendRaw_P' [#23641](https://github.com/arendst/Tasmota/issues/23641)
-- Universal display driver for ZJY169S0800TG01 ST7789 280x240 [#23638](https://github.com/arendst/Tasmota/issues/23638)
-- NeoPool add Redox tank alarm [#19811](https://github.com/arendst/Tasmota/issues/19811)
-- I2S additions [#23543](https://github.com/arendst/Tasmota/issues/23543)
-- ESP32 ROM SHA Hardware Acceleration to BearSSL [#23819](https://github.com/arendst/Tasmota/issues/23819)
-- Support for ESP32-P4 [#23663](https://github.com/arendst/Tasmota/issues/23663)
-- Support for ESP32-C5 [#23804](https://github.com/arendst/Tasmota/issues/23804)
-- ESP32-P4 command `HostedOta` [#23675](https://github.com/arendst/Tasmota/issues/23675)
-- Berry f-strings now support ':' in expression [#23618](https://github.com/arendst/Tasmota/issues/23618)
-- Berry preview of animation framework [#23816](https://github.com/arendst/Tasmota/issues/23816)
-- Berry `call()` now works for classes [#23744](https://github.com/arendst/Tasmota/issues/23744)
-- Berry multiplication between string and int [#23850](https://github.com/arendst/Tasmota/issues/23850)
+- HostedMCU file update using command `HostedLoad <version>|<filename>`
+- Scripter array transfer via UFS [#24060](https://github.com/arendst/Tasmota/issues/24060)
+- TLS enabled ECDSA by default for ESP8266 [#24009](https://github.com/arendst/Tasmota/issues/24009)
+- Berry `cb.free_cb` for extension manager [#24014](https://github.com/arendst/Tasmota/issues/24014)
+- Berry `light.get()` direct access to values [#24033](https://github.com/arendst/Tasmota/issues/24033)
+- Berry `gc_heap` and `gc_time` to `tasmota.memory()` [#24054](https://github.com/arendst/Tasmota/issues/24054)
 
 ### Breaking Changed
-- Berry `animate` framework is DEPRECATED, will be replace by `animation` framework [#23854](https://github.com/arendst/Tasmota/issues/23854)
 
 ### Changed
-- ESP8266 platform update from 2025.05.00 to 2025.09.00 [#23864](https://github.com/arendst/Tasmota/issues/23864)
-- ESP32 Platform from 2025.05.30 to 2025.09.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.4 and IDF from v5.3.3.250501 to v5.3.4.250826 [#23888](https://github.com/arendst/Tasmota/issues/23888)
-- Epdiy library from v1.0.0 to v2.0.0
-- OpenTherm library from v0.9.0 to v1.1.5 [#23704](https://github.com/arendst/Tasmota/issues/23704)
-- JPEGDEC library from v1.5.0 to v1.8.3 [#23883](https://github.com/arendst/Tasmota/issues/23883)
-- Library names [#23560](https://github.com/arendst/Tasmota/issues/23560)
-- Web UI styles and HTML syntax [#23847](https://github.com/arendst/Tasmota/issues/23847)
-- CSS uses named colors variables [#23597](https://github.com/arendst/Tasmota/issues/23597)
-- VEML6070 and AHT2x device detection [#23581](https://github.com/arendst/Tasmota/issues/23581)
-- Domoticz supports persistent settings for all relays, keys and switches when filesystem `#define USE_UFILESYS` is enabled
-- ESP32 LoRaWan decoding won't duplicate non-decoded message if `SO147 0`
-- Use HAL instead of ROM for SHA HW acceleration as used by TLS [#23902](https://github.com/arendst/Tasmota/issues/23902)
-- BLE updates for esp-nimble-cpp v2.x [#23553](https://github.com/arendst/Tasmota/issues/23553)
-- Berry raise webserver hooks from 16 to 32 [#23748](https://github.com/arendst/Tasmota/issues/23748)
+- LVGL library from v9.3.0 to v9.4.0 [#24028](https://github.com/arendst/Tasmota/issues/24028)
+- GPIOViewer from v1.6.3 to v1.7.0
+- Refactored library UDisplay [#24007](https://github.com/arendst/Tasmota/issues/24007)
+- Increased filesystem file name size from 48 to 50 characters
 
 ### Fixed
-- Syslog RFC5424 compliance [#23509](https://github.com/arendst/Tasmota/issues/23509)
-- Unable to use default serial GPIOs by TasmotaSerial regression from v14.5.0 with IDF 5.3.2.250120 [#23775](https://github.com/arendst/Tasmota/issues/23775)
-- AHT30 sensor start with null values after deep sleep [#23624](https://github.com/arendst/Tasmota/issues/23624)
-- NeoPool reset to default settings [#23734](https://github.com/arendst/Tasmota/issues/23734)
-- Berry vulnerability in JSON parsing for unicode [#23603](https://github.com/arendst/Tasmota/issues/23603)
-- Berry security issues in `int64` and improve documentation [#23605](https://github.com/arendst/Tasmota/issues/23605)
-- Berry security issues in `berry_mapping` and improve documentation [#23606](https://github.com/arendst/Tasmota/issues/23606)
-- Berry Hue regression from #23429 [#23623](https://github.com/arendst/Tasmota/issues/23623)
-- Berry calling `setmember` with a function [#23825](https://github.com/arendst/Tasmota/issues/23825)
-- LVGL restore `lv_chart.set_range` removed in LVGL 9.3.0 in favor of `lv_chart.set_axis_range` [#23567](https://github.com/arendst/Tasmota/issues/23567)
+- InfluxDb receives IPAddress as a value regression from v15.0.1.3 [#24031](https://github.com/arendst/Tasmota/issues/24031)
+- Scripter UDP and switch case [#24060](https://github.com/arendst/Tasmota/issues/24060)
+- TLS fix ECDSA and add `SetOption165 1` to enable ECDSA in addition to RSA [#24000](https://github.com/arendst/Tasmota/issues/24000)
+- Extension Manager exception when `OtaUrl` is not defined or invalid
+- Extension Manager Light Theme support and Extensions input field control
+- HASPmota exception in `cpicker` (colorwheel) [#24010](https://github.com/arendst/Tasmota/issues/24010)
 
 ### Removed
-- `user-scalable=no` from HTTP HEADER [#23798](https://github.com/arendst/Tasmota/issues/23798)
-

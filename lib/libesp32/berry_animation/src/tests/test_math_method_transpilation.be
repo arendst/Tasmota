@@ -7,24 +7,12 @@ import string
 def test_transpilation_case(dsl_code, expected_methods, test_name)
   print(f"\n  Testing: {test_name}")
   
-  var lexer = animation_dsl.DSLLexer(dsl_code)
-  var tokens
-  
-  try
-    tokens = lexer.tokenize()
-  except "lexical_error" as e, msg
-    print(f"    ❌ Lexer error: {msg}")
-    return false
-  end
-  
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_code)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   var generated_code = transpiler.transpile()
   
   if generated_code == nil
     print("    ❌ Transpilation failed:")
-    for error : transpiler.errors
-      print(f"      {error}")
-    end
     return false
   end
   
@@ -64,24 +52,12 @@ end
 def test_non_math_functions(dsl_code)
   print("\n  Testing: Non-math functions should NOT be prefixed with animation._math.")
   
-  var lexer = animation_dsl.DSLLexer(dsl_code)
-  var tokens
-  
-  try
-    tokens = lexer.tokenize()
-  except "lexical_error" as e, msg
-    print(f"    ❌ Lexer error: {msg}")
-    return false
-  end
-  
-  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
+  var lexer = animation_dsl.create_lexer(dsl_code)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
   var generated_code = transpiler.transpile()
   
   if generated_code == nil
     print("    ❌ Transpilation failed:")
-    for error : transpiler.errors
-      print(f"      {error}")
-    end
     return false
   end
   
@@ -110,7 +86,8 @@ end
 def test_is_math_method_function()
   print("\nTesting is_math_method() function directly...")
   
-  var transpiler = animation_dsl.SimpleDSLTranspiler([])
+  var dummy_lexer = animation_dsl.create_lexer("")
+  var transpiler = animation_dsl.SimpleDSLTranspiler(dummy_lexer)
   
   # Test mathematical methods
   var math_methods = ["min", "max", "abs", "round", "sqrt", "scale", "sin", "cos"]

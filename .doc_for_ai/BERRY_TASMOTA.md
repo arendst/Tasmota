@@ -248,16 +248,28 @@ gpio.counter_set(counter, value) # Set counter value
 ### I²C Communication
 
 ```berry
-# Use wire1 or wire2 for I²C buses
-wire1.scan()                    # Scan for devices
-wire1.detect(addr)              # Check if device present
-wire1.read(addr, reg, size)     # Read from device
-wire1.write(addr, reg, val, size) # Write to device
-wire1.read_bytes(addr, reg, size)  # Read as bytes
-wire1.write_bytes(addr, reg, bytes) # Write bytes
+# Wire objects: wire1, wire2 for I²C buses
+wire1.bus -> int                    # Bus number (read-only)
+wire1.enabled() -> bool             # Check if bus initialized
+wire1.scan() -> list(int)           # Scan for device addresses (decimal)
+wire1.detect(addr:int) -> bool      # Check if device present
 
-# Find device on any bus
-wire = tasmota.wire_scan(addr, i2c_index)
+# High-level I/O
+wire1.read(addr:int, reg:int, size:int) -> int|nil        # Read 1-4 bytes
+wire1.write(addr:int, reg:int, val:int, size:int) -> bool # Write 1-4 bytes
+wire1.read_bytes(addr:int, reg:int, size:int) -> bytes    # Read byte sequence
+wire1.write_bytes(addr:int, reg:int, val:bytes) -> nil    # Write byte sequence
+
+# Low-level control
+wire1._begin_transmission(addr:int) -> nil
+wire1._end_transmission([stop:bool]) -> nil
+wire1._request_from(addr:int, size:int, [stop:bool]) -> nil
+wire1._available() -> bool
+wire1._read() -> int                # Read single byte
+wire1._write(val:int|string) -> nil # Write single byte or string
+
+# Device discovery
+wire = tasmota.wire_scan(addr:int, i2c_index:int) -> wire_instance|nil
 ```
 
 ### MQTT Integration
@@ -266,15 +278,15 @@ wire = tasmota.wire_scan(addr, i2c_index)
 import mqtt
 
 # MQTT operations
-mqtt.publish(topic, payload, retain)
-mqtt.subscribe(topic, function)  # Subscribe with callback
-mqtt.unsubscribe(topic)
-mqtt.connected()                 # Check connection status
+mqtt.publish(topic:string, payload:string|bytes, [retain:bool, start:int, len:int]) -> nil
+mqtt.subscribe(topic:string, [function:closure]) -> nil  # Pattern matching, add wildcards manually
+mqtt.unsubscribe(topic:string) -> nil
+mqtt.connected() -> bool
 
-# Callback function signature
+# Callback function signature (topic, idx, payload_s, payload_b) -> bool
 def mqtt_callback(topic, idx, payload_s, payload_b)
-  # topic: full topic, payload_s: string, payload_b: bytes
-  return true  # Return true if handled
+  # topic: full topic, idx: unused, payload_s: string, payload_b: bytes
+  return true  # Return true if handled (prevents Tasmota command)
 end
 ```
 
@@ -370,17 +382,39 @@ ser.close()                     # Close port
 ```berry
 import crypto
 
-# AES encryption
-aes = crypto.AES_GCM(key_32_bytes, iv_12_bytes)
-encrypted = aes.encrypt(plaintext)
-tag = aes.tag()
+# AES Encryption Classes
+crypto.AES_CTR(key:bytes(32)).encrypt(data:bytes, iv:bytes(12), cc:int) -> bytes
+crypto.AES_CTR(key:bytes(32)).decrypt(data:bytes, iv:bytes(12), cc:int) -> bytes
+
+crypto.AES_GCM(key:bytes(32), iv:bytes(12)).encrypt(data:bytes) -> bytes
+crypto.AES_GCM(key:bytes(32), iv:bytes(12)).decrypt(data:bytes) -> bytes
+crypto.AES_GCM(key:bytes(32), iv:bytes(12)).tag() -> bytes(16)
+
+crypto.AES_CCM(key:bytes(16|32), iv:bytes(7..13), aad:bytes, data_len:int, tag_len:int)
+crypto.AES_CCM.encrypt1/decrypt1(...) -> bool  # Single-call variants
+
+crypto.AES_CBC.encrypt1(key:bytes(16), iv:bytes(16), data:bytes) -> bool
+crypto.AES_CBC.decrypt1(key:bytes(16), iv:bytes(16), data:bytes) -> bool
+
+# Elliptic Curve (requires defines)
+crypto.EC_C25519().public_key(priv:bytes(32)) -> bytes(32)
+crypto.EC_C25519().shared_key(our_priv:bytes(32), their_pub:bytes(32)) -> bytes(32)
+
+crypto.EC_P256().public_key(priv:bytes(32)) -> bytes(65)
+crypto.EC_P256().shared_key(our_priv:bytes(32), their_pub:bytes(65)) -> bytes(32)
+crypto.EC_P256().mod/neg/mul/muladd(...) -> bytes  # Math operations
+
+# Key Derivation
+crypto.HKDF_SHA256().derive(ikm:bytes, salt:bytes, info:bytes, out_len:int) -> bytes
+crypto.PBKDF2_HMAC_SHA256().derive(pwd:bytes, salt:bytes, iter:int, out_len:int) -> bytes
 
 # Hashing
-crypto.SHA256().update(data).finish()  # SHA256 hash
-crypto.MD5().update(data).finish()     # MD5 hash
+crypto.SHA256().update(data:bytes).out() -> bytes(32)
+crypto.MD5().update(data:bytes).finish() -> bytes(16)
+crypto.HMAC_SHA256(key:bytes).update(data:bytes).out() -> bytes(32)
 
-# HMAC
-crypto.HMAC_SHA256(key).update(data).finish()
+# RSA (requires define)
+crypto.RSA.rs256(private_key_der:bytes, payload:bytes) -> bytes  # JWT signing
 ```
 
 ### File System Operations
@@ -388,11 +422,16 @@ crypto.HMAC_SHA256(key).update(data).finish()
 ```berry
 import path
 
-path.exists("filename")         # Check file exists
-path.listdir("/")              # List directory
-path.remove("filename")        # Delete file
-path.mkdir("dirname")          # Create directory
-path.last_modified("file")     # File timestamp
+# File/directory operations (SD card: /sd/ subdirectory)
+path.exists(file:string) -> bool        # Check file exists
+path.isdir(name:string) -> bool         # Check if directory
+path.listdir(dir:string) -> list        # List directory contents
+path.mkdir(dir:string) -> bool          # Create directory
+path.rmdir(dir:string) -> bool          # Remove empty directory
+path.remove(file:string) -> bool        # Delete file
+path.rename(old:string, new:string) -> bool  # Rename file/folder
+path.last_modified(file:string) -> int  # File timestamp (nil if not exists)
+path.format(true) -> bool               # Format LittleFS (erases all!)
 ```
 
 ### Regular Expressions

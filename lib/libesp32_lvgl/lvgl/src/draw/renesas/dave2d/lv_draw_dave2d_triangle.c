@@ -31,10 +31,6 @@ void lv_draw_dave2d_triangle(lv_draw_task_t * t, const lv_draw_triangle_dsc_t * 
 
     lv_area_move(&clipped_area, x, y);
 
-#if D2_RENDER_EACH_OPERATION
-    d2_selectrenderbuffer(u->d2_handle, u->renderbuffer);
-#endif
-
     lv_point_precise_t p[3];
     p[0] = dsc->p[0];
     p[1] = dsc->p[1];
@@ -112,8 +108,6 @@ void lv_draw_dave2d_triangle(lv_draw_task_t * t, const lv_draw_triangle_dsc_t * 
             y2 = LV_MAX3(p[0].y, p[1].y, p[2].y);
 
             if(a1 < a2) {
-                /* TODO */
-                LV_ASSERT(0);
                 y0 = 0.0f;//silence the compiler warning
                 y3 = 0.0f;
 
@@ -128,10 +122,7 @@ void lv_draw_dave2d_triangle(lv_draw_task_t * t, const lv_draw_triangle_dsc_t * 
 
             d2_setalphagradient(u->d2_handle, 0, D2_FIX4(0),  D2_FIX4(y0_i), D2_FIX4(0), D2_FIX4((y3_i - y0_i)));
         }
-        else if(LV_GRAD_DIR_HOR == dsc->grad.dir) {
-            /* TODO */
-            LV_ASSERT(0);
-        }
+
 
         d2_setcolor(u->d2_handle, 0, lv_draw_dave2d_lv_colour_to_d2_colour(dsc->grad.stops[0].color));
         d2_setalphamode(u->d2_handle, d2_am_gradient1);
@@ -156,14 +147,6 @@ void lv_draw_dave2d_triangle(lv_draw_task_t * t, const lv_draw_triangle_dsc_t * 
                  (d2_point)      D2_FIX4(p[2].x),
                  (d2_point)      D2_FIX4(p[2].y),
                  flags);
-
-    //
-    // Execute render operations
-    //
-#if D2_RENDER_EACH_OPERATION
-    d2_executerenderbuffer(u->d2_handle, u->renderbuffer, 0);
-    d2_flushframe(u->d2_handle);
-#endif
 
     d2_setalphamode(u->d2_handle, current_alpha_mode);
 

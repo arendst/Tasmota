@@ -18,19 +18,21 @@
 # 3: `low_size`, number of pixel until next pos - full cycle is 2 + 3
 # 4: `nb_pulse`, number of pulses, or `-1` for infinite
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:CrenelPositionAnimation,weak
 class CrenelPositionAnimation : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions with constraints
-  static var PARAMS = {
+  static var PARAMS = animation.enc_params({
     # 'color' for the comet head (32-bit ARGB value), inherited from animation class
     "back_color": {"default": 0xFF000000},      # background color, TODO change to transparent
     "pos": {"default": 0},                      # start of the pulse (in pixel)
     "pulse_size": {"min": 0, "default": 1},     # number of pixels of the pulse
     "low_size": {"min": 0, "default": 3},       # number of pixel until next pos - full cycle is 2 + 3
     "nb_pulse": {"default": -1}                 # number of pulses, or `-1` for infinite
-  }
+  })
   
   # Render the crenel pattern to the provided frame buffer
   #
@@ -59,7 +61,7 @@ class CrenelPositionAnimation : animation.animation
     
     # Fill background if not transparent
     if back_color != 0xFF000000
-      frame.fill_pixels(back_color)
+      frame.fill_pixels(frame.pixels, back_color)
     end
     
     # Ensure we have a meaningful period

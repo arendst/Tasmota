@@ -1,0 +1,4 @@
+# Plain background
+
+animation back = solid(color=red)
+run back

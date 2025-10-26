@@ -34,7 +34,7 @@ def shutter_lr_template(engine, colors_, duration_)
   shutter_lr_animation_.beacon_size = shutter_size_
   shutter_lr_animation_.slew_size = 0
   shutter_lr_animation_.priority = 5
-  var shutter_seq_ = animation.SequenceManager(engine, -1)
+  var shutter_seq_ = animation.sequence_manager(engine, -1)
     .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
     .push_play_step(shutter_lr_animation_, animation.resolve(duration_))
     .push_closure_step(def (engine) col1_.next = 1 end)

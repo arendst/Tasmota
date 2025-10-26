@@ -41,6 +41,8 @@
     static void perf_update_timer_cb(lv_timer_t * t);
     static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
     static void perf_monitor_disp_event_cb(lv_event_t * e);
+    static void perf_dump_info(lv_display_t * disp);
+    static void perf_control(lv_display_t * disp, bool start);
 #endif
 
 #if LV_USE_MEM_MONITOR
@@ -135,6 +137,26 @@ void lv_sysmon_hide_performance(lv_display_t * disp)
     }
 
     lv_obj_add_flag(disp->perf_label, LV_OBJ_FLAG_HIDDEN);
+}
+
+void lv_sysmon_performance_dump(lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) {
+        LV_LOG_WARN("There is no default display");
+        return;
+    }
+    perf_dump_info(disp);
+}
+
+void lv_sysmon_performance_resume(lv_display_t * disp)
+{
+    perf_control(disp, true);
+}
+
+void lv_sysmon_performance_pause(lv_display_t * disp)
+{
+    perf_control(disp, false);
 }
 
 #endif
@@ -233,10 +255,8 @@ static void perf_monitor_disp_event_cb(lv_event_t * e)
     }
 }
 
-static void perf_update_timer_cb(lv_timer_t * t)
+static void perf_dump_info(lv_display_t * disp)
 {
-    lv_display_t * disp = lv_timer_get_user_data(t);
-
     uint32_t LV_SYSMON_GET_IDLE(void);
 
     lv_sysmon_perf_info_t * info = &disp->perf_sysmon_info;
@@ -246,11 +266,15 @@ static void perf_update_timer_cb(lv_timer_t * t)
     lv_timer_t * disp_refr_timer = lv_display_get_refr_timer(NULL);
     uint32_t disp_refr_period = disp_refr_timer ? disp_refr_timer->period : LV_DEF_REFR_PERIOD;
 
-    info->calculated.fps = info->measured.refr_interval_sum ? (1000 * info->measured.refr_cnt / time_since_last_report) : 0;
+    info->calculated.fps = time_since_last_report ? (1000 * info->measured.refr_cnt / time_since_last_report) : 0;
     info->calculated.fps = LV_MIN(info->calculated.fps,
                                   1000 / disp_refr_period);   /*Limit due to possible off-by-one error*/
 
     info->calculated.cpu = 100 - LV_SYSMON_GET_IDLE();
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    uint32_t LV_SYSMON_GET_PROC_IDLE(void);
+    info->calculated.cpu_proc = 100 - LV_SYSMON_GET_PROC_IDLE();
+#endif /*LV_SYSMON_PROC_IDLE_AVAILABLE*/
     info->calculated.refr_avg_time = info->measured.refr_cnt ? (info->measured.refr_elaps_sum / info->measured.refr_cnt) :
                                      0;
 
@@ -273,10 +297,20 @@ static void perf_update_timer_cb(lv_timer_t * t)
     lv_memzero(info, sizeof(lv_sysmon_perf_info_t));
     info->measured.refr_start = prev_info.measured.refr_start;
     info->calculated.cpu_avg_total = prev_info.calculated.cpu_avg_total;
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    info->calculated.cpu_proc = prev_info.calculated.cpu_proc;
+#endif  /*LV_SYSMON_PROC_IDLE_AVAILABLE*/
     info->calculated.fps_avg_total = prev_info.calculated.fps_avg_total;
     info->calculated.run_cnt = prev_info.calculated.run_cnt;
 
     info->measured.last_report_timestamp = lv_tick_get();
+}
+
+static void perf_update_timer_cb(lv_timer_t * t)
+{
+    lv_display_t * disp = lv_timer_get_user_data(t);
+
+    perf_dump_info(disp);
 }
 
 static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
@@ -285,6 +319,15 @@ static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
 
 #if LV_USE_PERF_MONITOR_LOG_MODE
     LV_UNUSED(observer);
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    LV_LOG("sysmon: "
+           "%" LV_PRIu32 " FPS (refr_cnt: %" LV_PRIu32 " | redraw_cnt: %" LV_PRIu32"), "
+           "refr %" LV_PRIu32 "ms (render %" LV_PRIu32 "ms | flush %" LV_PRIu32 "ms), "
+           "CPU (total %" LV_PRIu32 "%% proc %" LV_PRIu32 "%%)\n",
+           perf->calculated.fps, perf->measured.refr_cnt, perf->measured.render_cnt,
+           perf->calculated.refr_avg_time, perf->calculated.render_avg_time, perf->calculated.flush_avg_time,
+           perf->calculated.cpu, perf->calculated.cpu_proc);
+#else
     LV_LOG("sysmon: "
            "%" LV_PRIu32 " FPS (refr_cnt: %" LV_PRIu32 " | redraw_cnt: %" LV_PRIu32"), "
            "refr %" LV_PRIu32 "ms (render %" LV_PRIu32 "ms | flush %" LV_PRIu32 "ms), "
@@ -292,8 +335,19 @@ static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
            perf->calculated.fps, perf->measured.refr_cnt, perf->measured.render_cnt,
            perf->calculated.refr_avg_time, perf->calculated.render_avg_time, perf->calculated.flush_avg_time,
            perf->calculated.cpu);
+#endif
 #else
     lv_obj_t * label = lv_observer_get_target(observer);
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    lv_label_set_text_fmt(
+        label,
+        "%" LV_PRIu32" FPS | CPU (%" LV_PRIu32 "%% | %" LV_PRIu32 "%%)\n"
+        "%" LV_PRIu32" ms (%" LV_PRIu32" | %" LV_PRIu32")",
+        perf->calculated.fps, perf->calculated.cpu, perf->calculated.cpu_proc,
+        perf->calculated.render_avg_time + perf->calculated.flush_avg_time,
+        perf->calculated.render_avg_time, perf->calculated.flush_avg_time
+    );
+#else
     lv_label_set_text_fmt(
         label,
         "%" LV_PRIu32" FPS, %" LV_PRIu32 "%% CPU\n"
@@ -302,7 +356,26 @@ static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
         perf->calculated.render_avg_time + perf->calculated.flush_avg_time,
         perf->calculated.render_avg_time, perf->calculated.flush_avg_time
     );
+#endif /*LV_SYSMON_PROC_IDLE_AVAILABLE*/
 #endif /*LV_USE_PERF_MONITOR_LOG_MODE*/
+}
+
+static void perf_control(lv_display_t * disp, bool start)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) {
+        LV_LOG_WARN("There is no default display");
+        return;
+    }
+
+    if(disp->perf_sysmon_backend.timer == NULL) return;
+
+    if(start) {
+        lv_timer_resume(disp->perf_sysmon_backend.timer);
+    }
+    else {
+        lv_timer_pause(disp->perf_sysmon_backend.timer);
+    }
 }
 
 #endif
@@ -321,7 +394,7 @@ static void mem_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
     lv_obj_t * label = lv_observer_get_target(observer);
     const lv_mem_monitor_t * mon = lv_subject_get_pointer(subject);
 
-    size_t used_size = mon->total_size - mon->free_size;;
+    size_t used_size = mon->total_size - mon->free_size;
     size_t used_kb = used_size / 1024;
     size_t used_kb_tenth = (used_size - (used_kb * 1024)) / 102;
     size_t max_used_kb = mon->max_used / 1024;

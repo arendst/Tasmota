@@ -91,6 +91,8 @@ class BerrySupport {
 public:
   bvm *vm = nullptr;                    // berry vm
   int32_t timeout = 0;                  // Berry heartbeat timeout, preventing code to run for too long. `0` means not enabled
+  int32_t last_gc_tims_ms = -1;         // Record the time taken by the last garbage collection in milliseconds, -1 means not yet collected
+  int32_t last_gc_heap_free = -1;       // Record the free heap size after the last garbage collection, -1 means not yet collected
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
   bool web_add_handler_done = false;    // did we already sent `web_add_handler` event
 #ifdef USE_BERRY_LEDS_PANEL

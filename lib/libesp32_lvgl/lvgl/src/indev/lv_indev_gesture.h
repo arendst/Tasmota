@@ -84,6 +84,11 @@ struct lv_indev_gesture_recognizer {
  * GLOBAL PROTOTYPES
  **********************/
 
+/**
+ * Initialize this indev's recognizers. It specifies their recognizer functions
+ * @param indev             pointer to the indev containing the recognizers to initialize
+ */
+void lv_indev_gesture_init(lv_indev_t * indev);
 
 /* PINCH Gesture */
 
@@ -241,4 +246,4 @@ void lv_indev_gesture_recognizers_set_data(lv_indev_t * indev, lv_indev_data_t *
 } /*extern "C"*/
 #endif
 
-#endif /* END LV_INDEV_GESTURE_H */
+#endif /* LV_INDEV_GESTURE_H */

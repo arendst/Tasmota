@@ -29,6 +29,11 @@
  *   GvUrl                  - Show current url
  *   GvUrl 1                - Select default url (GV_BASE_URL)
  *   GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
+ *
+ * Note 20251025
+ * - GVRelease 1.7.0
+ * - Add APP partition info
+ * - Add more Information
  * 
  * Note 20250503
  * - GVRelease 1.6.3 (No code change)
@@ -92,7 +97,7 @@
 
 #define GV_KEEP_ALIVE         1000         // milliseconds - If no activity after this do a heap size event anyway
 
-const char *GVRelease = "1.6.3";
+const char *GVRelease = "1.7.0";
 
 /*********************************************************************************************/
 
@@ -339,43 +344,90 @@ void GVHandleSampling(void) {
 
 void GVHandleEspInfo(void) {
 #ifdef GV_USE_ESPINFO
-  String jsonResponse = "{\"chip_model\":\"" + GetDeviceHardware();
-  jsonResponse += "\",\"cores_count\":\"" + String(ESP_getChipCores());
-  jsonResponse += "\",\"chip_revision\":\"" + String(ESP_getChipRevision());
-  jsonResponse += "\",\"cpu_frequency\":\"" + String(ESP.getCpuFreqMHz());
-  jsonResponse += "\",\"cycle_count\":" + String(ESP.getCycleCount());
-  jsonResponse += ",\"mac\":\"" + ESP_getEfuseMac();
+  String jsonResponse = "{";
+  auto appendField = [&](const char *key, const String &value, bool quoted) {
+    if (jsonResponse.length() > 1) {
+      jsonResponse += ",";
+    }
+    jsonResponse += "\"";
+    jsonResponse += key;
+    jsonResponse += "\":";
+    if (quoted) {
+      jsonResponse += "\"";
+    }
+    jsonResponse += value;
+    if (quoted) {
+      jsonResponse += "\"";
+    }
+  };
+  appendField("chip_model", GetDeviceHardware(), true);
+  appendField("cores_count", String(ESP_getChipCores()), true);
+  appendField("chip_revision", String(ESP_getChipRevision()), true);
+  appendField("cpu_frequency", String(ESP.getCpuFreqMHz()), true);
+  appendField("cycle_count", String(ESP.getCycleCount()), false);
+  appendField("mac", ESP_getEfuseMac(), true);
+  appendField("flash_mode", D_TASMOTA_FLASHMODE, true);
 
-#ifndef CONFIG_IDF_TARGET_ESP32P4
-  const FlashMode_t flashMode = ESP.getFlashChipMode(); // enum
-  jsonResponse += "\",\"flash_mode\":" + String(flashMode);
-#endif // CONFIG_IDF_TARGET_ESP32P4
-#ifdef ESP8266
-  jsonResponse += ",\"flash_chip_size\":" + String(ESP.getFlashChipRealSize());
-#else   // ESP32
-  jsonResponse += ",\"flash_chip_size\":" + String(ESP.getFlashChipSize());
+#ifdef ESP32
+  appendField("flash_chip_size", String(ESP.getFlashChipSize()), false);
+#else  // ESP8266
+  appendField("flash_chip_size", String(ESP.getFlashChipRealSize()), false);
+#endif
+
+  appendField("flash_chip_speed", String(ESP_getFlashChipSpeed()), false);
+  appendField("heap_size", String(ESP_getHeapSize()), false);
+  appendField("heap_max_alloc", String(ESP_getMaxAllocHeap()), false);
+  appendField("psram_size", String(ESP_getPsramSize()), false);
+  appendField("free_psram", String(ESP_getFreePsram()), false);
+  appendField("psram_max_alloc", String(ESP_getMaxAllocPsram()), false);
+  appendField("free_heap", String(ESP_getFreeHeap()), false);
+
+#ifdef ESP32
+  size_t heapFree8bit = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  appendField("heap_free_8bit", String(heapFree8bit), false);
+  size_t heapFree32bit = heap_caps_get_free_size(MALLOC_CAP_32BIT);
+  appendField("heap_free_32bit", String(heapFree32bit), false);
+  size_t heapLargestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  appendField("heap_largest_free_block", String(heapLargestBlock), false);
 #endif  // ESP32
-  jsonResponse += ",\"flash_chip_speed\":" + String(ESP.getFlashChipSpeed());
-  jsonResponse += ",\"heap_size\":" + String(ESP_getHeapSize());
-  jsonResponse += ",\"heap_max_alloc\":" + String(ESP_getMaxAllocHeap());
-  jsonResponse += ",\"psram_size\":" + String(ESP_getPsramSize());
-  jsonResponse += ",\"free_psram\":" + String(ESP_getFreePsram());
-  jsonResponse += ",\"psram_max_alloc\":" + String(ESP_getMaxAllocPsram());
-  jsonResponse += ",\"free_heap\":" + String(ESP_getFreeHeap());
-  jsonResponse += ",\"up_time\":\"" + String(millis());
-  jsonResponse += "\",\"sketch_size\":" + String(ESP_getSketchSize());
 
-#ifdef ESP8266
-  String arduinoCoreVersion = "2.7.7";
-#else   // ESP32
-  String arduinoCoreVersion = "3.0.4";
+  appendField("up_time", String(UpTime() * 1000), true);
+
+#ifdef ESP32
+  uint64_t uptimeUs = static_cast<uint64_t>(esp_timer_get_time());
+  appendField("uptime_us", String(static_cast<unsigned long long>(uptimeUs)), false);
 #endif  // ESP32
-#if defined(ESP_ARDUINO_VERSION_MAJOR) && defined(ESP_ARDUINO_VERSION_MINOR) && defined(ESP_ARDUINO_VERSION_PATCH)
-  arduinoCoreVersion = String(ESP_ARDUINO_VERSION_MAJOR) + "." + String(ESP_ARDUINO_VERSION_MINOR) + "." + String(ESP_ARDUINO_VERSION_PATCH);
-#endif  // ESP_ARDUINO_VERSION_
-  jsonResponse += ",\"arduino_core_version\":\"" + arduinoCoreVersion;
 
-  jsonResponse += "\",\"free_sketch\":" + String(ESP_getFreeSketchSpace());
+  appendField("sketch_size", String(ESP_getSketchSize()), false);
+  appendField("free_sketch", String(ESP_getFreeSketchSpace()), false);
+  String arduinoCoreVersion = ARDUINO_CORE_RELEASE;
+  arduinoCoreVersion.replace("_", ".");
+  appendField("arduino_core_version", arduinoCoreVersion, true);
+
+#ifdef ESP32
+  appendField("sdk_version", String(ESP.getSdkVersion()), true);
+  appendField("idf_version", String(esp_get_idf_version()), true);
+#endif  // ESP32
+
+  String sketchMD5 = ESP.getSketchMD5();   // This takes some time
+  if (sketchMD5.length() > 0) {
+    appendField("sketch_md5", sketchMD5, true);
+  }
+
+#ifdef ESP32
+  appendField("chip_features", GetDeviceFeatures(), false);
+#endif  // ESP32
+
+  appendField("reset_reason_code", String(ResetReason()), false);
+  appendField("reset_reason", String(GetResetReason()), true);
+
+#if defined(CONFIG_IDF_TARGET_ESP32) || (defined(SOC_TEMP_SENSOR_SUPPORTED) && SOC_TEMP_SENSOR_SUPPORTED)
+  float temperatureC = temperatureRead();
+  if (!isnan(temperatureC)) {
+    appendField("temperature_c", String(temperatureC, 2), false);
+  }
+#endif
+
   jsonResponse += "}";
 #else   // No GV_USE_ESPINFO
   String jsonResponse = "{\"chip_model\":\"" + GetDeviceHardware() + "\"}";
@@ -389,36 +441,49 @@ void GVHandlePartition(void) {
   String jsonResponse = "["; // Start of JSON array
 #ifdef ESP32
   bool firstEntry = true;    // Used to format the JSON array correctly
+  const esp_partition_t *cur_part = esp_ota_get_running_partition();
 
-  esp_partition_iterator_t iter = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, NULL);
-//  esp_partition_iterator_t iter = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+  auto appendPartitions = [&](esp_partition_type_t type) {
+    esp_partition_iterator_t iter = esp_partition_find(type, ESP_PARTITION_SUBTYPE_ANY, NULL);
 
-  // Loop through partitions
-  while (iter != NULL) {
-    const esp_partition_t *partition = esp_partition_get(iter);
+    while (iter != NULL) {
+      const esp_partition_t *partition = esp_partition_get(iter);
 
-    // Add comma before the next entry if it's not the first
-    if (!firstEntry)
-    {
-      jsonResponse += ",";
+      if (!firstEntry) {
+        jsonResponse += ",";
+      }
+      firstEntry = false;
+
+      // Append partition information in JSON format
+      jsonResponse += "{";
+
+//      jsonResponse += "\"label\":\"" + String(partition->label) + "\",";
+      String label = partition->label;
+      if (label == "spiffs") {
+        label = "littlefs";
+      }
+      else if ((label == "app0") || (label == "app1")) {
+        if (label = String(cur_part->label)) {
+          label = "tasmota-" + String(CODE_IMAGE_STR);
+          label.toLowerCase();
+        }
+      }
+      jsonResponse += "\"label\":\"" + label + "\",";
+
+      jsonResponse += "\"type\":" + String(partition->type) + ",";
+      jsonResponse += "\"subtype\":" + String(partition->subtype) + ",";
+      jsonResponse += "\"address\":\"0x" + String(partition->address, HEX) + "\",";
+      jsonResponse += "\"size\":" + String(partition->size);
+      jsonResponse += "}";
+
+      iter = esp_partition_next(iter); // Move to next partition
     }
-    firstEntry = false;
 
-    // Append partition information in JSON format
-    jsonResponse += "{";
-    jsonResponse += "\"label\":\"" + String(partition->label) + "\",";
-    jsonResponse += "\"type\":" + String(partition->type) + ",";
-    jsonResponse += "\"subtype\":" + String(partition->subtype) + ",";
-    jsonResponse += "\"address\":\"0x" + String(partition->address, HEX) + "\",";
-    jsonResponse += "\"size\":" + String(partition->size);
-    jsonResponse += "}";
+    esp_partition_iterator_release(iter); // Clean up iterator
+  };
 
-    // Move to next partition
-    iter = esp_partition_next(iter);
-  }
-
-  // Clean up the iterator
-  esp_partition_iterator_release(iter);
+  appendPartitions(ESP_PARTITION_TYPE_DATA);
+  appendPartitions(ESP_PARTITION_TYPE_APP);
 #endif  // ESP32
 
   jsonResponse += "]"; // End of JSON array

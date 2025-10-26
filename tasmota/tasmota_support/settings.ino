@@ -1448,6 +1448,7 @@ void SettingsDefaultSet2(void) {
 
   // Matter
   flag6.matter_enabled |= MATTER_ENABLED;
+  flag6.tls_use_ecdsa |= MQTT_TLS_ECDSA;
 
   Settings->flag = flag;
   Settings->flag2 = flag2;

@@ -42,14 +42,14 @@ def shutter_bidir_template(engine, colors_, duration_)
   shutter_rl_animation_.beacon_size = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - animation.resolve(shutter_size_) end)
   shutter_rl_animation_.slew_size = 0
   shutter_rl_animation_.priority = 5
-  var shutter_seq_ = animation.SequenceManager(engine, -1)
-    .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
+  var shutter_seq_ = animation.sequence_manager(engine, -1)
+    .push_repeat_subsequence(animation.sequence_manager(engine, def (engine) return col1_.palette_size end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
       .push_play_step(shutter_lr_animation_, animation.resolve(duration_))
       .push_closure_step(def (engine) col1_.next = 1 end)
       .push_closure_step(def (engine) col2_.next = 1 end)
       )
-    .push_repeat_subsequence(animation.SequenceManager(engine, def (engine) return col1_.palette_size end)
+    .push_repeat_subsequence(animation.sequence_manager(engine, def (engine) return col1_.palette_size end)
       .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
       .push_play_step(shutter_rl_animation_, animation.resolve(duration_))
       .push_closure_step(def (engine) col1_.next = 1 end)
@@ -64,13 +64,14 @@ animation.register_user_function('shutter_bidir', shutter_bidir_template)
 var engine = animation.init_strip()
 
 var rainbow_with_white_ = bytes(
-  "FFFF0000"
-  "FFFFA500"
-  "FFFFFF00"
-  "FF008000"  # comma left on-purpose to test transpiler
-  "FF0000FF"  # need for a lighter blue
-  "FF4B0082"
-  "FFFFFFFF"
+  "FFFC0000"  # Red
+  "FFFF8000"  # Orange
+  "FFFFFF00"  # Yellow
+  "FF00FF00"  # Green
+  "FF00FFFF"  # Cyan
+  "FF0080FF"  # Blue
+  "FF8000FF"  # Violet
+  "FFCCCCCC"  # White
 )
 shutter_bidir_template(engine, rainbow_with_white_, 1500)
 engine.run()
@@ -130,13 +131,15 @@ template shutter_bidir {
   run shutter_seq
 }
 
-palette rainbow_with_white = [ red
-  orange
-  yellow
-  green,      # comma left on-purpose to test transpiler
-  blue        # need for a lighter blue
-  indigo
-  white
+palette rainbow_with_white = [
+  0xFC0000        # Red
+  0xFF8000        # Orange
+  0xFFFF00        # Yellow
+  0x00FF00        # Green
+  0x00FFFF        # Cyan
+  0x0080FF        # Blue
+  0x8000FF        # Violet
+  0xCCCCCC        # White
 ]
 
 shutter_bidir(rainbow_with_white, 1.5s)

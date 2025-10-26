@@ -36,7 +36,7 @@ extern "C" {
 typedef enum {
     LV_FONT_GLYPH_FORMAT_NONE   = 0, /**< Maybe not visible*/
 
-    /**< Legacy simple formats with no byte padding at end of the lines*/
+    /**< Legacy simple formats*/
     LV_FONT_GLYPH_FORMAT_A1     = 0x01, /**< 1 bit per pixel*/
     LV_FONT_GLYPH_FORMAT_A2     = 0x02, /**< 2 bit per pixel*/
     LV_FONT_GLYPH_FORMAT_A3     = 0x03, /**< 3 bit per pixel*/
@@ -68,10 +68,10 @@ typedef struct {
       * 1: return the bitmap as it is (Maybe A1/2/4 or any proprietary formats). */
     uint8_t req_raw_bitmap: 1;
 
-    int32_t outline_stroke_width;   /**< used with freetype vector fonts - width of the letter outline */
+    int32_t outline_stroke_width;   /**< used with freetype vector fonts - width of the letter border */
 
     union {
-        uint32_t index;       /**< Unicode code point*/
+        uint32_t index;       /**< Glyph descriptor index*/
         const void * src;     /**< Pointer to the source data used by image fonts*/
     } gid;                    /**< The index of the glyph in the font file. Used by the font cache*/
     lv_cache_entry_t * entry; /**< The cache entry of the glyph draw data. Used by the font cache*/
@@ -113,7 +113,7 @@ struct _lv_font_t {
     int8_t underline_thickness;     /**< Thickness of the underline*/
 
     const void * dsc;               /**< Store implementation specific or run_time data or caching here*/
-    const lv_font_t * fallback;   /**< Fallback font for missing glyph. Resolved recursively */
+    const lv_font_t * fallback;     /**< Fallback font for missing glyph. Resolved recursively */
     void * user_data;               /**< Custom user data for font.*/
 };
 
@@ -172,7 +172,6 @@ const void * lv_font_get_glyph_static_bitmap(lv_font_glyph_dsc_t * g_dsc);
  */
 bool lv_font_get_glyph_dsc(const lv_font_t * font, lv_font_glyph_dsc_t * dsc_out, uint32_t letter,
                            uint32_t letter_next);
-
 /**
  * Release the bitmap of a font.
  * @note You must call lv_font_get_glyph_dsc() to get `g_dsc` (lv_font_glyph_dsc_t) before you can call this function.
@@ -322,14 +321,6 @@ LV_FONT_DECLARE(lv_font_montserrat_28_compressed)
 LV_FONT_DECLARE(lv_font_dejavu_16_persian_hebrew)
 #endif
 
-#if LV_FONT_SIMSUN_14_CJK
-LV_FONT_DECLARE(lv_font_simsun_14_cjk)
-#endif
-
-#if LV_FONT_SIMSUN_16_CJK
-LV_FONT_DECLARE(lv_font_simsun_16_cjk)
-#endif
-
 #if LV_FONT_SOURCE_HAN_SANS_SC_14_CJK
 LV_FONT_DECLARE(lv_font_source_han_sans_sc_14_cjk)
 #endif
@@ -355,4 +346,4 @@ LV_FONT_CUSTOM_DECLARE
 } /*extern "C"*/
 #endif
 
-#endif /*USE_FONT*/
+#endif /*LV_FONT_H*/

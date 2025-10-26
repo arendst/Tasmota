@@ -121,7 +121,7 @@ void MPU_6050Detect(void)
   for (uint32_t i = 0; i < sizeof(MPU_6050_addresses); i++)
   {
     MPU_6050_address = MPU_6050_addresses[i];
-    if (!I2cSetDevice(MPU_6050_address)) { break; }
+    if (!I2cSetDevice(MPU_6050_address)) { continue; }
     mpu6050.setAddr(MPU_6050_addresses[i]);
 
 #ifdef USE_MPU6050_DMP

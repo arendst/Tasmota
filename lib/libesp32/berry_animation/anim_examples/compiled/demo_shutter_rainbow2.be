@@ -36,7 +36,7 @@ shutter_animation_.beacon_size = shutter_size_
 shutter_animation_.slew_size = 0
 shutter_animation_.priority = 5
 log(f"foobar", 3)
-var shutter_run_ = animation.SequenceManager(engine, -1)
+var shutter_run_ = animation.sequence_manager(engine, -1)
   .push_closure_step(def (engine) log(f"before", 3) end)
   .push_play_step(shutter_animation_, animation.resolve(duration_))
   .push_closure_step(def (engine) log(f"after", 3) end)

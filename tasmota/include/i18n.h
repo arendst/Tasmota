@@ -334,6 +334,7 @@
   #define D_JSON_ONE_OR_GT "1 or >%s to upgrade"
 #define D_CMND_OTAURL "OtaUrl"
 #define D_CMND_HOSTEDOTA "HostedOta"
+#define D_CMND_HOSTEDLOAD "HostedLoad"
 #define D_CMND_SERIALLOG "SerialLog"
 #define D_CMND_SYSLOG "SysLog"
 #define D_CMND_FILELOG "FileLog"

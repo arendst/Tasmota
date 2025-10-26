@@ -806,7 +806,10 @@ static int m_asstring(bvm *vm)
 {
     buf_impl attr = bytes_check_data(vm, 0);
     check_ptr(vm, &attr);
-    size_t safe_len = strnlen((const char*) attr.bufptr, attr.len);
+    /* equivalent to strnlen() */
+    const char* str = (const char*) attr.bufptr;
+    const char* found = memchr(str, '\0', attr.len);
+    size_t safe_len = found ? (size_t)(found - str) : (size_t)attr.len;
     be_pushnstring(vm, (const char*) attr.bufptr, safe_len);
     be_return(vm);
 }
@@ -851,8 +854,12 @@ static int m_add(bvm *vm)
     if (argc >= 2 && be_isint(vm, 2)) {
         int32_t v = be_toint(vm, 2);
         int vsize = 1;
-        if (argc >= 3 && be_isint(vm, 3)) {
-            vsize = be_toint(vm, 3);
+        if (argc >= 3) {
+            if (be_isint(vm, 3)) {
+                vsize = be_toint(vm, 3);
+            } else {
+                goto type_error;
+            }
         }
         switch (vsize) {
             case 0:                               break;
@@ -870,6 +877,8 @@ static int m_add(bvm *vm)
         m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return(vm);
     }
+type_error:
+    be_raise(vm, "type_error", "operands must be int");
     be_return_nil(vm);
 }
 
@@ -925,6 +934,7 @@ static int m_get(bvm *vm, bbool sign)
         be_pushint(vm, ret);
         be_return(vm);
     }
+    be_raise(vm, "type_error", "operands must be int");
     be_return_nil(vm);
 }
 
@@ -955,6 +965,7 @@ static int m_getfloat(bvm *vm)
         be_pushreal(vm, ret_f);
         be_return(vm);
     }
+    be_raise(vm, "type_error", "operands must be int");
     be_return_nil(vm);
 }
 
@@ -987,8 +998,12 @@ static int m_set(bvm *vm)
         int32_t idx = be_toint(vm, 2);
         int32_t value = be_toint(vm, 3);
         int vsize = 1;
-        if (argc >= 4 && be_isint(vm, 4)) {
-            vsize = be_toint(vm, 4);
+        if (argc >= 4) {
+            if (be_isint(vm, 4)) {
+                vsize = be_toint(vm, 4);
+            } else {
+                goto type_error;
+            }
         }
         if (idx < 0) {
             idx = attr.len + idx;       /* if index is negative, count from end */
@@ -1012,6 +1027,8 @@ static int m_set(bvm *vm)
         // m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return_nil(vm);
     }
+type_error:
+    be_raise(vm, "type_error", "operands must be int");
     be_return_nil(vm);
 }
 
@@ -1043,6 +1060,7 @@ static int m_setfloat(bvm *vm)
         }
         be_return_nil(vm);
     }
+    be_raise(vm, "type_error", "operands must be int or float");
     be_return_nil(vm);
 }
 
@@ -1069,6 +1087,7 @@ static int m_addfloat(bvm *vm)
         m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return(vm);
     }
+    be_raise(vm, "type_error", "operands must be int or float");
     be_return_nil(vm);
 }
 
@@ -1114,6 +1133,8 @@ static int m_setbytes(bvm *vm)
         if (from_len > 0) {
             memmove(attr.bufptr + idx, buf_ptr + from_byte, from_len);
         }
+    } else {
+        be_raise(vm, "type_error", "operands must be int and bytes");
     }
     be_return_nil(vm);
 }

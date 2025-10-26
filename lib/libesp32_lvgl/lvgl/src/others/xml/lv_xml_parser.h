@@ -38,15 +38,20 @@ typedef enum {
     LV_XML_PARSER_SECTION_FONTS,
     LV_XML_PARSER_SECTION_IMAGES,
     LV_XML_PARSER_SECTION_SUBJECTS,
+    LV_XML_PARSER_SECTION_ANIMATION,
+    LV_XML_PARSER_SECTION_INCLUDE_TIMELINE,
+    LV_XML_PARSER_SECTION_TIMELINE,
     LV_XML_PARSER_SECTION_VIEW
 } lv_xml_parser_section_t;
 
 struct _lv_xml_parser_state_t {
+    const char * tag_name;
     lv_xml_component_scope_t scope;
     lv_ll_t parent_ll;
     lv_obj_t * parent;
     lv_obj_t * item;
     lv_obj_t * view;    /*Pointer to the created view during component creation*/
+    void * context;     /*Custom data that can be stored during parsing*/
     const char ** parent_attrs;
     lv_xml_component_scope_t * parent_scope;
     lv_xml_parser_section_t section;

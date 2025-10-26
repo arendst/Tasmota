@@ -104,8 +104,7 @@ typedef unsigned int lv_3dtexture_id_t;
 
 typedef struct _lv_obj_t lv_obj_t;
 
-typedef uint16_t lv_state_t;
-typedef uint32_t lv_part_t;
+typedef lv_obj_t * (*lv_screen_create_cb_t)(void);
 
 typedef uint8_t lv_opa_t;
 
@@ -130,6 +129,8 @@ typedef struct _lv_timer_t lv_timer_t;
 typedef struct _lv_theme_t lv_theme_t;
 
 typedef struct _lv_anim_t lv_anim_t;
+
+typedef struct _lv_anim_timeline_t lv_anim_timeline_t;
 
 typedef struct _lv_font_t lv_font_t;
 typedef struct _lv_font_class_t lv_font_class_t;
@@ -163,8 +164,6 @@ typedef struct _lv_cache_entry_t lv_cache_entry_t;
 
 typedef struct _lv_fs_file_cache_t lv_fs_file_cache_t;
 
-typedef struct _lv_fs_path_ex_t lv_fs_path_ex_t;
-
 typedef struct _lv_image_decoder_args_t lv_image_decoder_args_t;
 
 typedef struct _lv_image_cache_data_t lv_image_cache_data_t;
@@ -196,6 +195,8 @@ typedef struct _lv_image_t lv_image_t;
 typedef struct _lv_animimg_t lv_animimg_t;
 
 typedef struct _lv_arc_t lv_arc_t;
+
+typedef struct _lv_arclabel_t lv_arclabel_t;
 
 typedef struct _lv_label_t lv_label_t;
 
@@ -275,7 +276,13 @@ typedef struct _lv_win_t lv_win_t;
 
 typedef struct _lv_3dtexture_t lv_3dtexture_t;
 
+typedef struct _lv_gltf_t lv_gltf_t;
+
+typedef struct _lv_gltf_model_t lv_gltf_model_t;
+
 typedef struct _lv_observer_t lv_observer_t;
+
+typedef struct _lv_subject_increment_dsc_t lv_subject_increment_dsc_t;
 
 typedef struct _lv_monkey_config_t lv_monkey_config_t;
 
@@ -284,8 +291,6 @@ typedef struct _lv_ime_pinyin_t lv_ime_pinyin_t;
 typedef struct _lv_file_explorer_t lv_file_explorer_t;
 
 typedef struct _lv_barcode_t lv_barcode_t;
-
-typedef struct _lv_gif_t lv_gif_t;
 
 typedef struct _lv_qrcode_t lv_qrcode_t;
 
@@ -305,11 +310,9 @@ typedef struct _lv_vector_fill_dsc_t lv_vector_fill_dsc_t;
 
 typedef struct _lv_vector_stroke_dsc_t lv_vector_stroke_dsc_t;
 
-typedef struct _lv_vector_draw_dsc_t lv_vector_draw_dsc_t;
+typedef struct _lv_vector_path_ctx_t lv_vector_path_ctx_t;
 
-typedef struct _lv_draw_vector_task_dsc_t lv_draw_vector_task_dsc_t;
-
-typedef struct _lv_vector_dsc_t lv_vector_dsc_t;
+typedef struct _lv_draw_vector_dsc_t lv_draw_vector_dsc_t;
 
 typedef struct _lv_xkb_t lv_xkb_t;
 
@@ -343,8 +346,8 @@ typedef struct _lv_rlottie_t lv_rlottie_t;
 
 typedef struct _lv_ffmpeg_player_t lv_ffmpeg_player_t;
 
-typedef struct _lv_glfw_window_t lv_glfw_window_t;
-typedef struct _lv_glfw_texture_t lv_glfw_texture_t;
+typedef struct _lv_opengles_window_t lv_opengles_window_t;
+typedef struct _lv_opengles_window_texture_t lv_opengles_window_texture_t;
 
 typedef uint32_t lv_prop_id_t;
 
@@ -375,8 +378,20 @@ typedef struct _lv_xml_component_scope_t lv_xml_component_scope_t;
 
 typedef struct _lv_xml_parser_state_t lv_xml_parser_state_t;
 
+typedef struct _lv_xml_load_t lv_xml_load_t;
+
 #if LV_USE_EVDEV
 typedef struct _lv_evdev_discovery_t lv_evdev_discovery_t;
+#endif
+
+#if LV_USE_TRANSLATION
+typedef struct _lv_translation_tag_dsc_t lv_translation_tag_dsc_t;
+
+typedef struct _lv_translation_pack_t lv_translation_pack_t;
+#endif
+
+#if LV_USE_DRAW_EVE
+typedef struct _lv_draw_eve_unit_t lv_draw_eve_unit_t;
 #endif
 
 #endif /*__ASSEMBLY__*/
@@ -408,6 +423,28 @@ typedef struct _lv_evdev_discovery_t lv_evdev_discovery_t;
 #else
 #define LV_FORMAT_ATTRIBUTE(fmtstr, vararg)
 #endif
+
+#ifndef LV_NORETURN
+#if defined(PYCPARSER)
+#define LV_NORETURN
+#elif defined(__GNUC__)
+#define LV_NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define LV_NORETURN __declspec(noreturn)
+#else
+#define LV_NORETURN
+#endif
+#endif /* LV_NORETURN not defined */
+
+#ifndef LV_UNREACHABLE
+#if defined(__GNUC__)
+#define LV_UNREACHABLE() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#define LV_UNREACHABLE() __assume(0)
+#else
+#define LV_UNREACHABLE() while(1)
+#endif
+#endif /* LV_UNREACHABLE not defined */
 
 #ifdef __cplusplus
 } /*extern "C"*/

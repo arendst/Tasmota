@@ -1,5 +1,5 @@
 /**
- * @file lv_sdl_window.h
+ * @file lv_sdl_window.c
  *
  */
 
@@ -158,6 +158,12 @@ void lv_sdl_window_set_resizeable(lv_display_t * disp, bool value)
     SDL_SetWindowResizable(dsc->window, value);
 }
 
+void lv_sdl_window_set_size(lv_display_t * disp, int32_t hor_res, int32_t ver_res)
+{
+    lv_sdl_window_t * dsc = lv_display_get_driver_data(disp);
+    SDL_SetWindowSize(dsc->window, hor_res, ver_res);
+}
+
 void lv_sdl_window_set_zoom(lv_display_t * disp, float zoom)
 {
     lv_sdl_window_t * dsc = lv_display_get_driver_data(disp);
@@ -206,6 +212,20 @@ void * lv_sdl_window_get_renderer(lv_display_t * disp)
 {
     lv_sdl_window_t * dsc = lv_display_get_driver_data(disp);
     return dsc->renderer;
+}
+
+struct SDL_Window * lv_sdl_window_get_window(lv_display_t * disp)
+{
+    if(!disp) {
+        LV_LOG_ERROR("invalid display pointer");
+        return NULL;
+    }
+    lv_sdl_window_t * dsc = lv_display_get_driver_data(disp);
+    if(!dsc) {
+        LV_LOG_ERROR("invalid driver data");
+        return NULL;
+    }
+    return dsc->window;
 }
 
 void lv_sdl_quit(void)
@@ -368,7 +388,7 @@ static void window_create(lv_display_t * disp)
     lv_sdl_window_t * dsc = lv_display_get_driver_data(disp);
     dsc->zoom = 1.0;
 
-    int flag = SDL_WINDOW_RESIZABLE;
+    int flag = 0;
 #if LV_SDL_FULLSCREEN
     flag |= SDL_WINDOW_FULLSCREEN;
 #endif
@@ -430,6 +450,7 @@ static void texture_resize(lv_display_t * disp)
     lv_sdl_window_t * dsc = lv_display_get_driver_data(disp);
 
     dsc->fb1 = sdl_draw_buf_realloc_aligned(dsc->fb1, stride * disp->ver_res);
+    LV_ASSERT_MALLOC(dsc->fb1);
     lv_memzero(dsc->fb1, stride * disp->ver_res);
 
     if(sdl_render_mode() == LV_DISPLAY_RENDER_MODE_PARTIAL) {

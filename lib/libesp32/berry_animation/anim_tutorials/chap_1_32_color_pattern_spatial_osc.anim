@@ -1,0 +1,28 @@
+# Pattern of colors in the background based on palette, spatial period oscillating
+
+# define a palette of rainbow colors including white with constant brightness
+palette rainbow_with_white = [
+  0xFC0000        # Red
+  0xFF8000        # Orange
+  0xFFFF00        # Yellow
+  0x00FF00        # Green
+  0x00FFFF        # Cyan
+  0x0080FF        # Blue
+  0x8000FF        # Violet
+  0xCCCCCC        # White
+  0xFC0000        # Red - need to add the first color at last position to ensure roll-over
+]
+
+# define a color attribute that cycles over time, cycle is 10 seconds
+color rainbow_rich_color = rich_palette(palette=rainbow_with_white, cycle_period=10s, transition_type=SINE)
+
+# since strip_length is dynamic, we need to map it to a variable
+set strip_len = strip_length()
+
+# define the oscillator for spatial period between 1/2 strip_len and 3/2
+set period = sine_osc(min_value = strip_len / 2, max_value = (3 * strip_len) / 2, duration = 5s)
+
+# define a gradient across the whole strip
+animation back_pattern = palette_gradient_animation(color_source = rainbow_rich_color, spatial_period = period)
+
+run back_pattern

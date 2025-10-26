@@ -11,12 +11,14 @@
 # - Constructor takes only 'engine' parameter
 # - Value is set via virtual member assignment after creation
 
+import "./core/param_encoder" as encode_constraints
+
 #@ solidify:StaticValueProvider,weak
 class StaticValueProvider : animation.value_provider
   # Parameter definitions
-  static var PARAMS = {
+  static var PARAMS = animation.enc_params({
     "value": {"default": nil, "type": "any"}
-  }
+  })
   
   # Comparison operators to make StaticValueProvider work with validation code
   def <(other)

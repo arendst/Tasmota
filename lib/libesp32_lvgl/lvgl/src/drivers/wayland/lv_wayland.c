@@ -10,20 +10,34 @@
 
 #if LV_USE_WAYLAND
 
-#if LV_WAYLAND_BUF_COUNT < 1 || LV_WAYLAND_BUF_COUNT > 2
-    #error "Invalid LV_WAYLAND_BUF_COUNT. Expected either 1 or 2"
+#if LV_USE_G2D
+    #if LV_USE_ROTATE_G2D
+        #if !LV_WAYLAND_USE_DMABUF
+            #error "LV_USE_ROTATE_G2D is supported only with DMABUF"
+        #endif
+        #if LV_WAYLAND_BUF_COUNT != 3
+            #error "LV_WAYLAND_BUF_COUNT must be 3 when LV_USE_ROTATE_G2D is enabled"
+        #endif
+        #define LV_WAYLAND_CHECK_BUF_COUNT 0
+    #endif
 #endif
 
-#if !LV_WAYLAND_USE_DMABUF && LV_WAYLAND_BUF_COUNT != 1
-    #error "Wayland doesn't support more than 1 LV_WAYLAND_BUF_COUNT without DMABUF"
+#ifndef LV_WAYLAND_CHECK_BUF_COUNT
+    #if LV_WAYLAND_BUF_COUNT < 1 || LV_WAYLAND_BUF_COUNT > 2
+        #error "Invalid LV_WAYLAND_BUF_COUNT. Expected either 1 or 2"
+    #endif
+
+    #if !LV_WAYLAND_USE_DMABUF && LV_WAYLAND_BUF_COUNT != 1
+        #error "Wayland doesn't support more than 1 LV_WAYLAND_BUF_COUNT without DMABUF"
+    #endif
+
+    #if LV_WAYLAND_USE_DMABUF && LV_WAYLAND_BUF_COUNT != 2
+        #error "Wayland with DMABUF only supports 2 LV_WAYLAND_BUF_COUNT"
+    #endif
 #endif
 
-#if LV_WAYLAND_USE_DMABUF && !LV_USE_DRAW_G2D
-    #error "LV_WAYLAND_USE_DMABUF requires LV_USE_DRAW_G2D"
-#endif
-
-#if LV_WAYLAND_USE_DMABUF && LV_WAYLAND_WINDOW_DECORATIONS
-    #error "LV_WAYLAND_USE_DMABUF doesn't support LV_WAYLAND_WINDOW_DECORATIONS"
+#if LV_WAYLAND_USE_DMABUF && !LV_USE_G2D
+    #error "LV_WAYLAND_USE_DMABUF requires LV_USE_G2D"
 #endif
 
 #ifndef LV_DISPLAY_RENDER_MODE_PARTIAL
@@ -92,13 +106,29 @@ static void handle_output(void);
 
 static uint32_t tick_get_cb(void);
 
+static void output_scale(void * data, struct wl_output * output, int32_t factor);
+static void output_mode(void * data, struct wl_output * output, uint32_t flags, int32_t width, int32_t height,
+                        int32_t refresh);
+static void output_done(void * data, struct wl_output * output);
+static void output_geometry(void * data, struct wl_output * output, int32_t x, int32_t y, int32_t physical_width,
+                            int32_t physical_height, int32_t subpixel, const char * make, const char * model, int32_t transform);
+
 /**********************
  *  STATIC VARIABLES
  **********************/
 
 static bool is_wayland_initialized                         = false;
-static const struct wl_registry_listener registry_listener = {.global        = handle_global,
-           .global_remove = handle_global_remove
+
+static const struct wl_registry_listener registry_listener = {
+    .global = handle_global,
+    .global_remove = handle_global_remove
+};
+
+static const struct wl_output_listener output_listener = {
+    .geometry = output_geometry,
+    .mode = output_mode,
+    .done = output_done,
+    .scale = output_scale
 };
 
 /**********************
@@ -126,15 +156,31 @@ uint32_t lv_wayland_timer_handler(void)
         LV_LOG_TRACE("handle timer frame: %d", window->frame_counter);
 
         if(window != NULL && window->resize_pending) {
+#if LV_WAYLAND_USE_DMABUF
+            /* Check surface configuration state before resizing */
+            if(!window->surface_configured) {
+                LV_LOG_TRACE("Deferring resize - surface not configured yet");
+                continue;
+            }
+#endif
+            LV_LOG_TRACE("Processing resize: %dx%d -> %dx%d",
+                         window->width, window->height,
+                         window->resize_width, window->resize_height);
+
             if(lv_wayland_window_resize(window, window->resize_width, window->resize_height) == LV_RESULT_OK) {
                 window->resize_width   = window->width;
                 window->resize_height  = window->height;
                 window->resize_pending = false;
-
+#if LV_WAYLAND_USE_DMABUF
+                /* Reset synchronization flags after successful resize */
+                window->surface_configured = false;
+                window->dmabuf_resize_pending = false;
+#endif
+                LV_LOG_TRACE("Window resize completed successfully: %dx%d",
+                             window->width, window->height);
             }
             else {
-
-                LV_LOG_TRACE("Failed to resize window frame: %d", window->frame_counter);
+                LV_LOG_ERROR("Failed to resize window frame: %d", window->frame_counter);
             }
         }
         else if(window->shall_close == true) {
@@ -266,11 +312,7 @@ void lv_wayland_deinit(void)
     lv_wayland_dmabuf_deinit(&lv_wl_ctx.dmabuf_ctx);
 #endif
 
-#if LV_WAYLAND_WL_SHELL
-    lv_wayland_wl_shell_deinit();
-#elif LV_WAYLAND_XDG_SHELL
     lv_wayland_xdg_shell_deinit();
-#endif
 
     if(lv_wl_ctx.wl_seat) {
         wl_seat_destroy(lv_wl_ctx.wl_seat);
@@ -293,7 +335,7 @@ void lv_wayland_deinit(void)
 
 void lv_wayland_wait_flush_cb(lv_display_t * disp)
 {
-    struct window * window = lv_display_get_user_data(disp);
+    struct window * window = lv_display_get_driver_data(disp);
     /* TODO: Figure out why we need this */
     if(window->frame_counter == 0) {
         return;
@@ -305,9 +347,86 @@ void lv_wayland_wait_flush_cb(lv_display_t * disp)
     }
 }
 
+void lv_wayland_event_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    struct window * window = lv_event_get_user_data(e);
+    lv_display_t * display = (lv_display_t *) lv_event_get_target(e);
+
+    switch(code) {
+        case LV_EVENT_RESOLUTION_CHANGED: {
+                uint32_t rotation = lv_display_get_rotation(window->lv_disp);
+                int width, height;
+                if(rotation == LV_DISPLAY_ROTATION_90 || rotation == LV_DISPLAY_ROTATION_270) {
+                    width = lv_display_get_vertical_resolution(display);
+                    height = lv_display_get_horizontal_resolution(display);
+                }
+                else {
+                    width = lv_display_get_horizontal_resolution(display);
+                    height = lv_display_get_vertical_resolution(display);
+                }
+#if LV_WAYLAND_USE_DMABUF
+                dmabuf_ctx_t * context = &window->wl_ctx->dmabuf_ctx;
+                lv_wayland_dmabuf_resize_window(context, window, width, height);
+#else
+                lv_wayland_shm_resize_window(&window->wl_ctx->shm_ctx, window, width, height);
+#endif
+                break;
+            }
+        default:
+            return;
+    }
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+// --- wl_output listener callbacks ---
+static void output_geometry(void * data, struct wl_output * output, int32_t x, int32_t y, int32_t physical_width,
+                            int32_t physical_height,
+                            int32_t subpixel, const char * make, const char * model, int32_t transform)
+{
+    LV_UNUSED(output);
+    LV_UNUSED(x);
+    LV_UNUSED(y);
+    LV_UNUSED(physical_width);
+    LV_UNUSED(physical_height);
+    LV_UNUSED(subpixel);
+    LV_UNUSED(make);
+    LV_UNUSED(transform);
+
+    struct output_info * info = data;
+    snprintf(info->name, sizeof(info->name), "%s", model);
+}
+
+static void output_mode(void * data, struct wl_output * wl_output, uint32_t flags, int32_t width, int32_t height,
+                        int32_t refresh)
+{
+    LV_UNUSED(wl_output);
+
+    struct output_info * info = data;
+
+    if(flags & WL_OUTPUT_MODE_CURRENT) {
+        info->height = height;
+        info->width = width;
+        info->refresh = refresh;
+        info->flags = flags;
+    }
+}
+
+static void output_done(void * data, struct wl_output * output)
+{
+    /* Called when all geometry/mode info for this output has been sent */
+    LV_UNUSED(data);
+    LV_UNUSED(output);
+}
+
+static void output_scale(void * data, struct wl_output * output, int32_t factor)
+{
+    LV_UNUSED(output);
+    struct output_info * info = data;
+    info->scale = factor;
+}
 
 static uint32_t tick_get_cb(void)
 {
@@ -339,18 +458,20 @@ static void handle_global(void * data, struct wl_registry * registry, uint32_t n
         app->wl_seat = wl_registry_bind(app->registry, name, &wl_seat_interface, 1);
         wl_seat_add_listener(app->wl_seat, lv_wayland_seat_get_listener(), app);
     }
-#if LV_WAYLAND_WL_SHELL
-    else if(strcmp(interface, wl_shell_interface.name) == 0) {
-        app->wl_shell = wl_registry_bind(registry, name, &wl_shell_interface, 1);
-    }
-#endif
-#if LV_WAYLAND_XDG_SHELL
     else if(strcmp(interface, xdg_wm_base_interface.name) == 0) {
         /* supporting version 2 of the XDG protocol - ensures greater compatibility */
         app->xdg_wm = wl_registry_bind(app->registry, name, &xdg_wm_base_interface, 2);
         xdg_wm_base_add_listener(app->xdg_wm, lv_wayland_xdg_shell_get_wm_base_listener(), app);
     }
-#endif
+    else if(strcmp(interface, wl_output_interface.name) == 0) {
+        if(app->wl_output_count < LV_WAYLAND_MAX_OUTPUTS) {
+            memset(&app->outputs[app->wl_output_count], 0, sizeof(struct output_info));
+            struct wl_output * out = wl_registry_bind(registry, name, &wl_output_interface, 1);
+            app->outputs[app->wl_output_count].wl_output = out;
+            wl_output_add_listener(out, &output_listener, &app->outputs[app->wl_output_count].wl_output);
+            app->wl_output_count++;
+        }
+    }
 #if LV_WAYLAND_USE_DMABUF
     else if(strcmp(interface, zwp_linux_dmabuf_v1_interface.name) == 0) {
         lv_wayland_dmabuf_set_interface(&app->dmabuf_ctx, app->registry, name, interface, version);

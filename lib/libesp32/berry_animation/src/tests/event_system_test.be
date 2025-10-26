@@ -206,25 +206,7 @@ def test_animation_engine_event_integration()
   
   # Test interrupt methods exist
   return introspect.contains(engine, "interrupt_current") &&
-         introspect.contains(engine, "interrupt_all") &&
          introspect.contains(engine, "resume")
-end
-
-# Test 12: Event Metadata Handling
-def test_event_metadata_handling()
-  var manager = animation.event_manager
-  var received_metadata = nil
-  
-  var metadata = {"interval": 1000, "repeat": true}
-  var handler = manager.register_handler("metadata_test", def(data) 
-    received_metadata = data
-  end, 0, nil, metadata)
-  
-  # Check handler info includes metadata
-  var handler_info = handler.get_info()
-  
-  return handler_info["metadata"]["interval"] == 1000 &&
-         handler_info["metadata"]["repeat"] == true
 end
 
 # Run all tests
@@ -243,7 +225,6 @@ def run_all_tests()
   run_test("Event Handler Deactivation", test_event_handler_deactivation)
   run_test("Event Queue Processing", test_event_queue_processing)
   run_test("Animation Engine Event Integration", test_animation_engine_event_integration)
-  run_test("Event Metadata Handling", test_event_metadata_handling)
   
   print("=== Test Results ===")
   print(f"Total tests: {test_count}")

@@ -2,7 +2,7 @@
 # Tests for DSL compilation with both successful and failing cases
 #
 # Command to run test is:
-#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x) print(x) end import animation import animation_dsl " lib/libesp32/berry_animation/src/tests/dsl_compilation_test.be
+#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x,l) tasmota.log(x,l) end import animation import animation_dsl " lib/libesp32/berry_animation/src/tests/dsl_compilation_test.be
 
 import animation
 import animation_dsl
@@ -97,7 +97,7 @@ def test_successful_compilation()
   
   berry_code = animation_dsl.compile(sequence_dsl)
   assert(berry_code != nil, "Should compile sequences with repeat")
-  assert(string.find(berry_code, "animation.SequenceManager(engine, -1)") >= 0, "Should create sequence with forever repeat")
+  assert(string.find(berry_code, "animation.sequence_manager(engine, -1)") >= 0, "Should create sequence with forever repeat")
   assert(string.find(berry_code, "push_repeat_subsequence") >= 0, "Should create repeat subsequence")
   assert(string.find(berry_code, "col1_.palette_size") >= 0, "Should reference palette size")
   assert(string.find(berry_code, "7 + 2") >= 0, "Should preserve arithmetic in repeat count")
@@ -146,7 +146,7 @@ def test_compilation_failures()
     var berry_code = animation_dsl.compile(dangerous_dsl)
     assert(false, "Should fail with dangerous function creation")
   except "dsl_compilation_error" as e, msg
-    assert(string.find(msg, "Function 'strip_length' cannot be used in computed expressions") >= 0, 
+    assert(string.find(msg, "Expression 'animation.strip_length(engine)' cannot be used in computed expressions.") >= 0, 
            "Should report dangerous function creation error")
     print("✓ Dangerous function creation properly rejected")
   end
@@ -409,28 +409,10 @@ def test_complete_example()
   assert(string.find(berry_code, "animation.sawtooth(engine)") >= 0, "Should create sawtooth providers")
   assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should create animations")
   assert(string.find(berry_code, 'bytes("FFFF0000"') >= 0, "Should create palette bytes")
-  assert(string.find(berry_code, "animation.SequenceManager(engine") >= 0, "Should create sequences")
+  assert(string.find(berry_code, "animation.sequence_manager(engine") >= 0, "Should create sequences")
   assert(string.find(berry_code, "push_repeat_subsequence") >= 0, "Should create repeat loops")
   
   print("✓ Complete example compilation test passed")
-  
-  return true
-end
-
-# Test the specific failing case mentioned in the original request
-def test_specific_failing_case()
-  print("Testing specific failing case: set s2 = strip_length() + strip_length()...")
-  
-  var failing_dsl = "set s2 = strip_length() + strip_length()"
-  
-  try
-    var berry_code = animation_dsl.compile(failing_dsl)
-    assert(false, "Should fail - dangerous pattern should be rejected")
-  except "dsl_compilation_error" as e, msg
-    assert(string.find(msg, "Function 'strip_length' cannot be used in computed expressions") >= 0,
-           "Should report the specific error about function usage in computed expressions")
-    print("✓ Specific failing case properly rejected with correct error message")
-  end
   
   return true
 end
@@ -443,8 +425,7 @@ def run_all_tests()
     test_successful_compilation,
     test_compilation_failures, 
     test_edge_cases,
-    test_complete_example,
-    test_specific_failing_case
+    test_complete_example
   ]
   
   var passed = 0
@@ -471,7 +452,7 @@ def run_all_tests()
     return true
   else
     print("❌ Some tests failed")
-    return false
+    raise "test_failed"
   end
 end
 

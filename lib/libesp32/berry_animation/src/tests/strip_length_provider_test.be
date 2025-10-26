@@ -49,7 +49,7 @@ def test_basic_functionality()
   for length : test_lengths
     # Create mock strip and engine
     var strip = MockStrip(length)
-    var engine = animation.animation_engine(strip)
+    var engine = animation.create_engine(strip)
     
     # Create StripLengthProvider
     var provider = animation.strip_length(engine)
@@ -75,7 +75,7 @@ def test_string_representation()
   print("  Testing string representation...")
   
   var strip = MockStrip(42)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var provider = animation.strip_length(engine)
   
   var str_repr = str(provider)
@@ -106,7 +106,7 @@ def test_integration()
   print("  Testing integration with animation system...")
   
   var strip = MockStrip(20)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var provider = animation.strip_length(engine)
   
   # Test that it's recognized as a value provider
@@ -128,7 +128,7 @@ def test_engine_consistency()
   print("  Testing consistency with engine properties...")
   
   var strip = MockStrip(100)
-  var engine = animation.animation_engine(strip)
+  var engine = animation.create_engine(strip)
   var provider = animation.strip_length(engine)
   
   # Test that provider returns same value as engine properties

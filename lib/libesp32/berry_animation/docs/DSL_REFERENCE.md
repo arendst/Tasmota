@@ -866,6 +866,84 @@ sequence cylon_eye {
 }
 ```
 
+#### If Statement
+
+Conditional execution statements that run their body 0 or 1 times based on a boolean condition:
+
+```berry
+if condition {                     # Execute if condition is true (non-zero)
+  play animation for 1s
+  wait 500ms
+}
+```
+
+**Condition Types:**
+- **Static values**: `if true { ... }`, `if false { ... }`, `if 5 { ... }`
+- **Variables**: `if flag { ... }` - using previously defined variables
+- **Template parameters**: `if self.enabled { ... }` - dynamic values from template parameters
+- **Computed expressions**: `if strip_length() > 30 { ... }` - calculated conditions
+
+**If Behavior:**
+- **Boolean Coercion**: All conditions are wrapped with `bool()` to ensure 0 or 1 iterations
+- **Static Optimization**: Static conditions (literals) are evaluated at compile time without closures
+- **Dynamic Evaluation**: Dynamic conditions (variables, parameters) are wrapped in closures
+- **Conditional Gate**: Useful for enabling/disabling parts of sequences based on flags
+
+**Examples:**
+```berry
+# Static condition
+sequence demo {
+  if true {
+    play animation for 1s
+  }
+}
+
+# Template parameter condition
+template animation configurable {
+  param enable_effect type bool default true
+  
+  color my_red = 0xFF0000
+  animation solid_red = solid(color=my_red)
+  
+  sequence main repeat forever {
+    if enable_effect {
+      play solid_red for 1s
+    }
+  }
+  
+  run main
+}
+
+# Variable condition
+set flag = true
+sequence conditional {
+  if flag {
+    play animation for 2s
+  }
+}
+
+# Bidirectional animation with flags
+template animation shutter_bidir {
+  param ascending type bool default true
+  param descending type bool default true
+  
+  sequence shutter_seq repeat forever {
+    if ascending {
+      play shutter_lr for 2s
+    }
+    if descending {
+      play shutter_rl for 2s
+    }
+  }
+  
+  run shutter_seq
+}
+```
+
+**Comparison with Repeat:**
+- `if condition { ... }` - Runs 0 or 1 times (boolean gate)
+- `repeat count times { ... }` - Runs exactly `count` times (iteration)
+
 #### Restart Statements
 
 Restart statements allow you to restart value providers and animations from their initial state during sequence execution:
@@ -1037,10 +1115,121 @@ palette ocean_palette = [
 rainbow_pulse(fire_palette, ocean_palette, 3s, black)
 ```
 
-### Template Behavior
+### Template Animation
+
+Template animations create reusable animation classes that extend `engine_proxy`, allowing complex animations with parameters to be instantiated multiple times:
+
+```berry
+template animation shutter_effect {
+  param colors type palette nillable true
+  param duration type time min 0 max 3600 default 5 nillable false
+  
+  set strip_len = strip_length()
+  set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
+  
+  color col = color_cycle(palette=colors, cycle_period=0)
+  
+  animation shutter = beacon_animation(
+    color = col
+    pos = strip_len / 2
+    beacon_size = shutter_size
+    priority = 5
+  )
+  
+  sequence seq repeat forever {
+    restart shutter_size
+    play shutter for duration
+    col.next = 1
+  }
+  
+  run seq
+}
+
+# Use the template animation
+palette rainbow = [red, orange, yellow, green, blue, indigo, white]
+animation my_shutter = shutter_effect(colors=rainbow, duration=2s)
+run my_shutter
+```
 
 **Code Generation:**
-Templates generate Berry functions that are registered as user functions:
+Template animations generate Berry classes extending `engine_proxy`:
+
+```berry
+class shutter_effect_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "colors": {"type": "palette"},
+    "duration": {"type": "time", "min": 0, "max": 3600, "default": 5}
+  })
+  
+  def init(engine)
+    super(self).init(engine)
+    # Generated code with self.colors and self.duration references
+    self.add(seq_)
+  end
+end
+```
+
+**Parameter Constraints:**
+Template animation parameters support constraints:
+- `type` - Parameter type (palette, time, int, color, etc.)
+- `min` - Minimum value (for numeric types)
+- `max` - Maximum value (for numeric types)
+- `default` - Default value
+- `nillable` - Whether parameter can be nil (true/false)
+
+**Implicit Parameters:**
+Template animations automatically inherit parameters from the `engine_proxy` class hierarchy. These parameters are available without explicit declaration and can be used directly in your template animation body:
+
+```berry
+# These parameters are implicitly available in all template animations:
+param name type string default "animation"
+param priority type int default 10
+param duration type int default 0
+param loop type bool default false
+param opacity type int default 255
+param color type int default 0
+param is_running type bool default false
+```
+
+**Example using implicit parameters:**
+```berry
+template animation fade_effect {
+  param colors type palette
+  
+  # 'duration' is an implicit parameter - no need to declare it
+  set oscillator = sawtooth(min_value=0, max_value=255, duration=duration)
+  
+  color col = color_cycle(palette=colors, cycle_period=0)
+  animation test = solid(color=col)
+  
+  # 'opacity' is also implicit
+  test.opacity = oscillator
+  
+  run test
+}
+
+# When instantiating, you can set implicit parameters
+animation my_fade = fade_effect(colors=rainbow)
+my_fade.duration = 5000  # Set the implicit duration parameter
+my_fade.opacity = 200    # Set the implicit opacity parameter
+```
+
+**Notes on Implicit Parameters:**
+- Implicit parameters can be overridden by explicit declarations if needed
+- They follow the same constraint rules as explicit parameters
+- They are accessed as `self.<param>` within the template body
+- All implicit parameters come from the `Animation` and `ParameterizedObject` base classes
+
+**Key Differences from Regular Templates:**
+- Generates classes instead of functions
+- Parameters accessed as `self.<param>` instead of `<param>_`
+- Uses `self.add()` instead of `engine.add()`
+- Can be instantiated multiple times with different parameters
+
+### Regular Template Behavior
+
+**Code Generation:**
+Regular templates generate Berry functions that are registered as user functions:
 
 ```berry
 # Template definition generates:
@@ -1055,9 +1244,6 @@ end
 animation.register_user_function('pulse_effect', pulse_effect_template)
 ```
 
-**Template-Only Transpilation:**
-Files containing only templates generate pure Berry function definitions without `var engine = animation.init_strip()` or `engine.run()` calls, making them suitable as reusable function libraries.
-
 **Parameter Handling:**
 - Parameters get `_` suffix in generated code to avoid naming conflicts
 - Templates receive `engine` as the first parameter automatically
@@ -1067,7 +1253,6 @@ Files containing only templates generate pure Berry function definitions without
 - Templates don't return values - they add animations directly to the engine
 - Multiple `run` statements in templates add multiple animations
 - Templates can be called multiple times to create multiple instances
-- `engine.run()` is automatically called when templates are used at the top level
 
 ### Template Parameter Validation
 
@@ -1088,7 +1273,26 @@ template bad_example {
 ```
 
 **Type Annotation Validation:**
-Valid parameter types are: `color`, `palette`, `animation`, `number`, `string`, `boolean`, `time`, `percentage`, `variable`, `value_provider`
+
+Valid parameter types for `static var PARAMS` and template parameters:
+
+| Type | Description | Synonym For | Example |
+|------|-------------|-------------|---------|
+| `int` | Integer values | - | `{"type": "int", "default": 100}` |
+| `bool` | Boolean values | - | `{"type": "bool", "default": false}` |
+| `string` | String values | - | `{"type": "string", "default": "name"}` |
+| `bytes` | Byte buffers (palettes) | - | `{"type": "bytes", "default": bytes("FF0000")}` |
+| `function` | Functions/closures | - | `{"type": "function", "default": nil}` |
+| `animation` | Animation instances | - | Symbol table tracking |
+| `value_provider` | Value provider instances | - | Symbol table tracking |
+| `number` | Generic numeric type | - | Numeric constraints only |
+| `any` | Any type (no validation) | - | `{"type": "any", "default": nil}` |
+| `color` | Color values | `int` | `{"type": "color", "default": 0xFFFF0000}` |
+| `palette` | Palette definitions | `bytes` | `{"type": "palette", "default": bytes(...)}` |
+| `time` | Time values (ms) | `int` | `{"type": "time", "default": 5000}` |
+| `percentage` | Percentage (0-255) | `int` | `{"type": "percentage", "default": 128}` |
+
+**Note:** Types `color`, `palette`, `time`, and `percentage` are user-friendly synonyms that map to their base types during validation.
 
 ```berry
 template type_example {
@@ -1421,11 +1625,12 @@ property_assignment = identifier "." identifier "=" expression ;
 (* Sequences *)
 sequence = "sequence" identifier [ "repeat" ( expression "times" | "forever" ) ] "{" sequence_body "}" ;
 sequence_body = { sequence_statement } ;
-sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment | restart_stmt ;
+sequence_statement = play_stmt | wait_stmt | repeat_stmt | if_stmt | sequence_assignment | restart_stmt ;
 
 play_stmt = "play" identifier [ "for" time_expression ] ;
 wait_stmt = "wait" time_expression ;
 repeat_stmt = "repeat" ( expression "times" | "forever" ) "{" sequence_body "}" ;
+if_stmt = "if" expression "{" sequence_body "}" ;
 sequence_assignment = identifier "." identifier "=" expression ;
 restart_stmt = "restart" identifier ;
 
@@ -1550,7 +1755,8 @@ This applies to:
 - Palette definitions with VRGB conversion
 - Animation definitions with named parameters
 - Property assignments
-- Basic sequences (play, wait, repeat)
+- Basic sequences (play, wait, repeat, if)
+- **Conditional execution**: `if` statement for boolean-based conditional execution
 - Variable assignments with type conversion
 - Reserved name validation
 - Parameter validation at compile time
@@ -1567,7 +1773,7 @@ This applies to:
 - Error recovery (basic error reporting)
 
 ### ❌ Planned Features
-- Advanced control flow (if/else, choose random)
+- Advanced control flow (else, elif, choose random)
 - Event system and handlers
 - Variable references with $ syntax
 - Spatial operations and zones

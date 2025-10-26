@@ -36,7 +36,7 @@ red_eye_.color = eye_color_  # palette that will advance when we do `eye_color.n
 red_eye_.pos = cosine_val_  # oscillator for position
 red_eye_.beacon_size = 3  # small 3 pixels eye
 red_eye_.slew_size = 2  # with 2 pixel shading around
-var cylon_eye_ = animation.SequenceManager(engine, -1)
+var cylon_eye_ = animation.sequence_manager(engine, -1)
   .push_closure_step(def (engine) cosine_val_.start(engine.time_ms) end)
   .push_play_step(red_eye_, animation.resolve(eye_duration_))  # use COSINE movement
   .push_closure_step(def (engine) red_eye_.pos = triangle_val_ end)  # switch to TRIANGLE

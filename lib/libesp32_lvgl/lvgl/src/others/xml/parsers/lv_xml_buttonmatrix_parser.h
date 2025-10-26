@@ -14,7 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 #include "../lv_xml.h"
-#if LV_USE_XML
+#if LV_USE_XML && LV_USE_BUTTONMATRIX
 
 /**********************
  *      TYPEDEFS
@@ -38,4 +38,4 @@ void lv_xml_buttonmatrix_apply(lv_xml_parser_state_t * state, const char ** attr
 } /*extern "C"*/
 #endif
 
-#endif /*LV_XML_BUTTONMATRIX_PARSE_H*/
+#endif /*LV_XML_BUTTONMATRIX_PARSER_H*/

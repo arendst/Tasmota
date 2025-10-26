@@ -29,7 +29,7 @@ class TestAnimation : animation.animation
     self.render_called = true
     # Fill frame with red for testing
     if frame != nil
-      frame.fill_pixels(0xFF0000FF)
+      frame.fill_pixels(frame.pixels, 0xFF0000FF)
     end
     return true
   end

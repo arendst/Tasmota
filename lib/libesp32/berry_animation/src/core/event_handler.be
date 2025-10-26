@@ -46,15 +46,15 @@ class EventHandler
   end
   
   # Get handler info for debugging
-  def get_info()
-    return {
-      "event_name": self.event_name,
-      "priority": self.priority,
-      "is_active": self.is_active,
-      "has_condition": self.condition != nil,
-      "metadata": self.metadata
-    }
-  end
+  # def get_info()
+  #   return {
+  #     "event_name": self.event_name,
+  #     "priority": self.priority,
+  #     "is_active": self.is_active,
+  #     "has_condition": self.condition != nil,
+  #     "metadata": self.metadata
+  #   }
+  # end
 end
 
 #@ solidify:EventManager,weak

@@ -6,20 +6,25 @@
 # 
 # This is the unified base class for all visual elements in the framework.
 # A Pattern is simply an Animation with infinite duration (duration = 0).
+#
+# Extends Playable to provide the common interface for lifecycle management.
 
-class Animation : animation.parameterized_object
+import "./core/param_encoder" as encode_constraints
+
+class Animation : animation.playable
   # Non-parameter instance variables only
   var opacity_frame   # Frame buffer for opacity animation rendering
   
-  # Parameter definitions
-  static var PARAMS = {
+  # Parameter definitions (extends Playable's PARAMS)
+  static var PARAMS = animation.enc_params({
+    # Inherited from Playable: is_running
     "name": {"type": "string", "default": "animation"}, # Optional name for the animation
     "priority": {"min": 0, "default": 10},              # Rendering priority (higher = on top, 0-255)
     "duration": {"min": 0, "default": 0},               # Animation duration in ms (0 = infinite)
     "loop": {"type": "bool", "default": false},         # Whether to loop when duration is reached
     "opacity": {"type": "any", "default": 255},         # Animation opacity (0-255 number or Animation instance)
-    "color": {"default": 0xFFFFFFFF}                    # Base color in ARGB format (0xAARRGGBB)
-  }
+    "color": {"default": 0x00000000}                    # Base color in ARGB format (0xAARRGGBB) - default to transparent
+  })
 
   # Initialize a new animation
   #
@@ -92,7 +97,7 @@ class Animation : animation.parameterized_object
     
     # Fill the entire frame with the current color if not transparent
     if (current_color != 0x00000000)
-      frame.fill_pixels(current_color)
+      frame.fill_pixels(frame.pixels, current_color)
     end
     
     return true
@@ -138,10 +143,10 @@ class Animation : animation.parameterized_object
       opacity_animation.render(self.opacity_frame, time_ms)
       
       # Use rendered frame buffer as opacity mask
-      frame.apply_opacity(self.opacity_frame)
+      frame.apply_opacity(frame.pixels, self.opacity_frame.pixels)
     elif type(opacity) == 'int' && opacity < 255
       # Number mode: apply uniform opacity
-      frame.apply_opacity(opacity)
+      frame.apply_opacity(frame.pixels, opacity)
     end
     # If opacity is 255 (full opacity), do nothing
   end

@@ -51,13 +51,15 @@ template shutter_bidir {
   run shutter_seq
 }
 
-palette rainbow_with_white = [ red
-  orange
-  yellow
-  green,      # comma left on-purpose to test transpiler
-  blue        # need for a lighter blue
-  indigo
-  white
+palette rainbow_with_white = [
+  0xFC0000        # Red
+  0xFF8000        # Orange
+  0xFFFF00        # Yellow
+  0x00FF00        # Green
+  0x00FFFF        # Cyan
+  0x0080FF        # Blue
+  0x8000FF        # Violet
+  0xCCCCCC        # White
 ]
 
 shutter_bidir(rainbow_with_white, 1.5s)

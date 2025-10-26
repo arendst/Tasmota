@@ -1,5 +1,5 @@
 /**
- * @file lv_xml.c
+ * @file lv_xml_parser.c
  *
  */
 
@@ -79,6 +79,18 @@ void lv_xml_parser_start_section(lv_xml_parser_state_t * state, const char * nam
     }
     else if(lv_streq(name, "subjects")) {
         state->section = LV_XML_PARSER_SECTION_SUBJECTS;
+        return;
+    }
+    else if(lv_streq(name, "animation")) {
+        state->section = LV_XML_PARSER_SECTION_ANIMATION;
+        return;
+    }
+    else if(lv_streq(name, "include_timeline")) {
+        state->section = LV_XML_PARSER_SECTION_INCLUDE_TIMELINE;
+        return;
+    }
+    else if(lv_streq(name, "timeline")) {
+        state->section = LV_XML_PARSER_SECTION_TIMELINE;
         return;
     }
     else if(lv_streq(name, "view")) {

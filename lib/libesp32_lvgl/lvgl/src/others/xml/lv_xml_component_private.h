@@ -34,12 +34,14 @@ struct _lv_xml_component_scope_t {
     lv_ll_t param_ll;
     lv_ll_t gradient_ll;
     lv_ll_t subjects_ll;
+    lv_ll_t timeline_ll;
     lv_ll_t font_ll;
     lv_ll_t image_ll;
     lv_ll_t event_ll;
     const char * view_def;
     const char * extends;
-    uint32_t is_widget : 1;                         /*1: not component but widget registered as a component for preview*/
+    uint32_t is_widget : 1;
+    uint32_t is_screen : 1;
     struct _lv_xml_component_scope_t * next;
 };
 
@@ -52,6 +54,11 @@ typedef struct {
     const char * name;
     lv_subject_t * subject;
 } lv_xml_subject_t;
+
+typedef struct {
+    const char * name;
+    lv_ll_t anims_ll;
+} lv_xml_timeline_t;
 
 typedef struct {
     const char * name;

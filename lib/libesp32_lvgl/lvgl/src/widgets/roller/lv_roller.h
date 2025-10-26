@@ -39,7 +39,7 @@ typedef enum {
 } lv_roller_mode_t;
 
 #if LV_USE_OBJ_PROPERTY
-enum {
+enum _lv_property_roller_id_t {
     LV_PROPERTY_ID2(ROLLER, OPTIONS,            LV_PROPERTY_TYPE_TEXT,  LV_PROPERTY_TYPE_INT,   0),
     LV_PROPERTY_ID2(ROLLER, SELECTED,           LV_PROPERTY_TYPE_INT,   LV_PROPERTY_TYPE_INT, 1),
     LV_PROPERTY_ID(ROLLER, VISIBLE_ROW_COUNT,   LV_PROPERTY_TYPE_INT,   2),
@@ -128,6 +128,26 @@ const char * lv_roller_get_options(const lv_obj_t * obj);
  * @return      the total number of options
  */
 uint32_t lv_roller_get_option_count(const lv_obj_t * obj);
+
+/**
+ * Get an option as a string.
+ * @param obj       pointer to roller object
+ * @param option    index of chosen option
+ * @param buf       pointer to an array to store the string
+ * @param buf_size  size of `buf` in bytes. 0: to ignore it.
+ * @return          LV_RESULT_OK if option found
+ */
+lv_result_t lv_roller_get_option_str(const lv_obj_t * obj, uint32_t option, char * buf, uint32_t buf_size);
+
+#if LV_USE_OBSERVER
+/**
+ * Bind an integer Subject to a Roller's value.
+ * @param obj       pointer to Roller
+ * @param subject   pointer to Subject
+ * @return          pointer to newly-created Observer
+ */
+lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject);
+#endif
 
 /**********************
  *      MACROS

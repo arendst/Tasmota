@@ -68,7 +68,7 @@ void checkBeTop(void) {
   int32_t top = be_top(berry.vm);
   if (top != 0) {
     be_pop(berry.vm, top);   // TODO should not be there
-    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Error be_top is non zero=%d", top);
+    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Warning be_top is non zero=%d", top);
   }
 }
 
@@ -286,10 +286,15 @@ void BerryObservability(bvm *vm, int event...) {
         size_t slots_allocated_before_gc = va_arg(param, size_t);
         size_t slots_used_after_gc = va_arg(param, size_t);
         size_t slots_allocated_after_gc = va_arg(param, size_t);
-        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms) - slots from %i/%i to %i/%i",
-                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
-                                slots_used_before_gc, slots_allocated_before_gc,
-                                slots_used_after_gc, slots_allocated_after_gc);
+        if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
+          AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms) - slots from %i/%i to %i/%i",
+                                  vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
+                                  slots_used_before_gc, slots_allocated_before_gc,
+                                  slots_used_after_gc, slots_allocated_after_gc);
+        }
+        // record last seen values
+        berry.last_gc_tims_ms = gc_elapsed;
+        berry.last_gc_heap_free = ESP_getFreeHeap();
 
 #ifdef UBE_BERRY_DEBUG_GC
         // Add more in-deptch metrics
@@ -523,7 +528,7 @@ void CmndBrRun(void) {
     be_pop(berry.vm, 1);
   } else {
     Response_P(PSTR("{\"" D_PRFX_BR "\":\"[%s] %s\"}"), EscapeJSONString(be_tostring(berry.vm, -2)).c_str(), EscapeJSONString(be_tostring(berry.vm, -1)).c_str());
-    be_pop(berry.vm, 2);
+    be_pop(berry.vm, 3);
   }
 
   checkBeTop();
