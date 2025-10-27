@@ -534,7 +534,13 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Invalid JSON for topic '%s', not sending to Azure IoT Hub"), topic);
     return true;
   }
-  topic = topicString.c_str();
+
+  // Handle special case for updating Azure Device Twin reported properties
+  if (topic && topic[0] == '$' && (strncmp(topic, "$iothub", 7) == 0)) {
+    topic = topic;
+  } else {
+    topic = topicString.c_str();
+  }
 #endif  // USE_MQTT_AZURE_IOT
 
   if (!MqttClient.beginPublish(topic, plength, retained)) {
