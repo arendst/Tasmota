@@ -524,9 +524,19 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 #endif  // USE_TASMESH
 
 #ifdef USE_MQTT_AZURE_IOT
-  String sourceTopicString = urlEncodeBase64(String(topic));
-  String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
-  topicString += "/messages/events/topic=" + sourceTopicString;
+  
+  // Set the topic
+  // Handle special case for updating Azure Device Twin reported properties
+  if (topic && topic[0] == '$' && (strncmp(topic, "$iothub", 7) == 0)) {
+    //Keep the original topic
+    //topic = topic; No-Op - Keep the original pointer
+  } else {
+    String sourceTopicString = urlEncodeBase64(String(topic));
+    String topicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
+    topicString += "/messages/events/topic=" + sourceTopicString;
+    //Use the telemetry formatted topic
+    topic = topicString.c_str();
+  }
 
   JsonParser mqtt_message((char*) String((const char*)payload).c_str());
   JsonParserObject message_object = mqtt_message.getRootObject();
@@ -535,12 +545,6 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
     return true;
   }
 
-  // Handle special case for updating Azure Device Twin reported properties
-  if (topic && topic[0] == '$' && (strncmp(topic, "$iothub", 7) == 0)) {
-    topic = topic;
-  } else {
-    topic = topicString.c_str();
-  }
 #endif  // USE_MQTT_AZURE_IOT
 
   if (!MqttClient.beginPublish(topic, plength, retained)) {
