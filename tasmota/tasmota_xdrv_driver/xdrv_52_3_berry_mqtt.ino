@@ -38,7 +38,7 @@ extern "C" {
       if (top >= 5) {
         if (!is_binary) { be_raise(vm, "argument_error", "start and len are not allowed with string payloads"); }
         payload_start = be_toint(vm, 5);
-        if (payload_start < 0) payload_start = 0;
+        if (payload_start < 0) { payload_start = 0; }
       }
       if (top >= 6) { len = be_toint(vm, 6); }
       const char * topic = be_tostring(vm, 2);

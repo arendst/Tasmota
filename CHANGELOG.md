@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry `gc_heap` and `gc_time` to `tasmota.memory()` (#24054)
 - Scripter array transfer via UFS (#24060)
 - ESP8266 GPIOViewer memory map if enabled with `#define GV_USE_ESPINFO`
+- Berry `tcp.write()` add `offset` and `len`
 
 ### Breaking Changed
 
