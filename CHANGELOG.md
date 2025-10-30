@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Scripter array transfer via UFS (#24060)
 - ESP8266 GPIOViewer memory map if enabled with `#define GV_USE_ESPINFO`
 - Berry `tcp.write()` add `offset` and `len` (#24076)
+- NeoPool command `NPReadLSB`, `NPReadMSB`, `NPWriteLSB`, `NWriteMSB` for directly read/write LSB/MSB of 16-bit register
 
 ### Breaking Changed
 
