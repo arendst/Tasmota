@@ -8,7 +8,7 @@
 
 #ifdef ESP32
 /*********************************************************************************************\
- * ESP32, ESP32-S2, ESP32-S3, ESP32-C2, ESP32-C3, ESP32-C6 and ESP32-H2 Support
+ * ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-H2, ESP32-P4, ESP32-S2 and ESP32-S3 Support
 \*********************************************************************************************/
 
 //                                                   11b 11g 11n  11n  11ax
@@ -16,55 +16,84 @@ const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|HT20|HT40|HE20"; //
 
 #include "soc/soc.h"
 #include "soc/spi_reg.h"
+// See libraries\ESP32\examples\ResetReason.ino
+#include "esp_chip_info.h"
+#include <nvs.h>
+
+#include "Esp.h"
+#include "spi_flash_mmap.h"
+#include <memory>
+#include <soc/soc.h>
+#include <soc/efuse_reg.h>
+#include <esp_partition.h>
+extern "C" {
+#include "esp_ota_ops.h"
+#include "esp_image_format.h"
+}
+#include "esp_system.h"
+#include "esp_flash.h"
+
+#include "bootloader_common.h"
+
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
-#if CONFIG_IDF_TARGET_ESP32
+// Flash memory mapping - See Esp.cpp
+
+#if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
   #ifdef CORE32SOLO1
     #define ESP32_ARCH            "esp32solo1"
   #else
     #define ESP32_ARCH            "esp32"
   #endif
+  #include "esp32/rom/rtc.h"
+  #include "esp32/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
 #elif CONFIG_IDF_TARGET_ESP32S2
   #define ESP32_ARCH              "esp32s2"
+  #include "esp32s2/rom/rtc.h"
+  #include "esp32s2/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
 #elif CONFIG_IDF_TARGET_ESP32S3
   #define ESP32_ARCH              "esp32s3"
+  #include "esp32s3/rom/rtc.h"
+  #include "esp32s3/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32C2
   #define ESP32_ARCH              "esp32c2"
+  #include "esp32c2/rom/rtc.h"
+  #include "esp32c2/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c2 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32C3
   #define ESP32_ARCH              "esp32c3"
+  #include "esp32c3/rom/rtc.h"
+  #include "esp32c3/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32C5
   #define ESP32_ARCH              "esp32c5"  
+  #include "esp32c5/rom/rtc.h"
+  #include "esp32c5/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32c5 is located at 0x2000
 #elif CONFIG_IDF_TARGET_ESP32C6
   #define ESP32_ARCH              "esp32c6"
+  #include "esp32c6/rom/rtc.h"
+  #include "esp32c6/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32H2
   #define ESP32_ARCH              "esp32h2"
+  #include "esp32h2/rom/rtc.h"
+  #include "esp32h2/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32P4
   #define ESP32_ARCH              "esp32p4"
+  #include "esp32p4/rom/rtc.h"
+  #include "esp32p4/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32p4 is located at 0x2000
 #else
   #define ESP32_ARCH              ""
+  #error Target CONFIG_IDF_TARGET is not supported
 #endif
 
-// See libraries\ESP32\examples\ResetReason.ino
-#include "esp_chip_info.h"
-#if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
-  #include "esp32/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
-  #include "esp32s2/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32S3  // ESP32-S3
-  #include "esp32s3/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32C2  // ESP32-C2
-  #include "esp32c2/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
-  #include "esp32c3/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32C5  // ESP32-C5
-  #include "esp32c5/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
-  #include "esp32c6/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32H2  // ESP32-H2
-  #include "esp32h2/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32P4  // ESP32-P4
-  #include "esp32p4/rom/rtc.h"
-#else
-  #error Target CONFIG_IDF_TARGET is not supported
+#ifndef CONFIG_IDF_TARGET_ESP32P4
+#include <esp_phy_init.h>
 #endif
 
 // Set the Stacksize for Arduino core. Default is 8192, some builds may need a bigger one
@@ -72,13 +101,7 @@ size_t getArduinoLoopTaskStackSize(void) {
   return SET_ESP32_STACK_SIZE;
 }
 
-#ifndef CONFIG_IDF_TARGET_ESP32P4
-#include <esp_phy_init.h>
-#endif
-
 // Handle 20k of NVM
-
-#include <nvs.h>
 
 bool NvmExists(const char *sNvsName) {
   nvs_handle_t handle;
@@ -218,57 +241,6 @@ void NvsInfo(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("NVS: Used %d/%d entries, NameSpaces %d"),
     nvs_stats.used_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
 }
-
-//
-// Flash memory mapping
-//
-
-// See Esp.cpp
-#include "Esp.h"
-#include "spi_flash_mmap.h"
-#include <memory>
-#include <soc/soc.h>
-#include <soc/efuse_reg.h>
-#include <esp_partition.h>
-extern "C" {
-#include "esp_ota_ops.h"
-#include "esp_image_format.h"
-}
-#include "esp_system.h"
-#include "esp_flash.h"
-
-#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
-  #include "esp32/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
-#elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
-  #include "esp32s2/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
-#elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
-  #include "esp32s3/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
-#elif CONFIG_IDF_TARGET_ESP32C2   // ESP32-C2
-  #include "esp32c2/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c2 is located at 0x0000
-#elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
-  #include "esp32c3/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
-#elif CONFIG_IDF_TARGET_ESP32C5   // ESP32-C5
-  #include "esp32c5/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32c5 is located at 0x2000
-#elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
-  #include "esp32c6/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
-#elif CONFIG_IDF_TARGET_ESP32H2   // ESP32-H2
-  #include "esp32h2/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
-#elif CONFIG_IDF_TARGET_ESP32P4   // ESP32-P4
-  #include "esp32p4/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x2000  // Esp32p4 is located at 0x2000
-#else
-    #error Target CONFIG_IDF_TARGET is not supported
-#endif
-
-#include "bootloader_common.h"
 
 uint32_t EspProgramSize(const char *label) {
   const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_ANY, label);
@@ -582,6 +554,14 @@ uint8_t* FlashDirectAccess(void) {
   return data;
 }
 
+uint32_t ESP_getFlashChipSpeed(void) {
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 3, 2)
+  return ESP.getFlashFrequencyMHz() * 1000000;
+#else
+  return ESP.getFlashChipSpeed();  // In Hz
+#endif
+}
+
 uint32_t ESP_getPsramSize(void) {
   return ESP.getPsramSize();
 }
@@ -719,6 +699,44 @@ float CpuTemperature(void) {
 */
 
 // #include "esp_chip_info.h"
+
+String GetDeviceFeatures(void) {
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+
+  String chip_features = "[";
+  bool first_feature = true;
+  auto appendFeature = [&](const char *name) {
+    if (!first_feature) {
+      chip_features += ",";
+    }
+    first_feature = false;
+    chip_features += "\"";
+    chip_features += name;
+    chip_features += "\"";
+  };
+
+  if (chip_info.features & CHIP_FEATURE_WIFI_BGN) {
+    appendFeature("WIFI_BGN");
+  }
+  if (chip_info.features & CHIP_FEATURE_BLE) {
+    appendFeature("BLE");
+  }
+  if (chip_info.features & CHIP_FEATURE_BT) {
+    appendFeature("BT");
+  }
+  if (chip_info.features & CHIP_FEATURE_EMB_FLASH) {
+    appendFeature("EMB_FLASH");
+  }
+  if (chip_info.features & CHIP_FEATURE_IEEE802154) {
+    appendFeature("IEEE802154");
+  }
+  if (chip_info.features & CHIP_FEATURE_EMB_PSRAM) {
+    appendFeature("EMB_PSRAM");
+  }
+  chip_features += "]";
+  return chip_features;
+}
 
 String GetDeviceHardware(void) {
   // https://www.espressif.com/en/products/socs

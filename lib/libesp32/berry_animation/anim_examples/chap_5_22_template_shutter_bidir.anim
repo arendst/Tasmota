@@ -40,7 +40,7 @@ template animation shutter_bidir {
   # this is the overall sequence composed of two sub-sequences
   # the first in ascending mode, the second in descending
   sequence shutter_seq repeat forever {
-    if ascending {                              # un only if 'ascending' is true
+    if ascending {                              # conditional execution: run only if 'ascending' is true
       repeat col1.palette_size times {          # run the shutter animation
         restart shutter_size                    # resync all times for this animation, to avoid temporal drift
         play shutter_lr_animation for period    # run the animation
@@ -48,7 +48,7 @@ template animation shutter_bidir {
         col2.next = 1
       }
     }
-    if descending {                             # run only if 'descending' is true
+    if descending {                             # conditional execution: run only if 'descending' is true
       repeat col1.palette_size times {
         restart shutter_size
         play shutter_rl_animation for period

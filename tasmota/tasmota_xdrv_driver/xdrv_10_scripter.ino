@@ -47,7 +47,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #endif
 // float = 4, double = 8 bytes
 
-const uint8_t SCRIPT_VERS[2] = {5, 5};
+const uint8_t SCRIPT_VERS[2] = {5, 6};
 
 #define SCRIPT_DEBUG 0
 
@@ -445,6 +445,7 @@ typedef union {
     uint8_t global : 1;
     uint8_t hchanged : 1;
     uint8_t integer : 1;
+    uint8_t shadow : 1;
   };
 } SCRIPT_TYPE;
 
@@ -519,7 +520,7 @@ typedef union {
       uint8_t nutu7 : 1;
       uint8_t nutu6 : 1;
       uint8_t nutu5 : 1;
-      uint8_t nutu4 : 1;
+      uint8_t x_used : 1;
       uint8_t ignore_line : 1;
       bool fsys : 1;
       bool eeprom : 1;
@@ -1214,6 +1215,7 @@ char *script;
     char init = 0;
     uint8_t pflg = 0;
     uint16_t pmem = 0;
+    uint16_t numshadow = 0;
     while (1) {
         // check line
         // skip leading spaces
@@ -1232,6 +1234,13 @@ char *script;
             if (op) {
                 vtypes[vars].bits.data = 0;
                 // found variable definition
+#ifdef USE_SHADOW_X
+                if (*lp == 'x' && *(lp + 1) == ':') {
+                    vtypes[vars].bits.shadow = 1;
+                    lp += 2;
+                    numshadow += 1;
+                }
+#endif
                 if (*lp == 'p' && *(lp + 1) == ':') {
                     lp += 2;
                     if (numperm < SCRIPT_MAXPERM) {
@@ -1418,6 +1427,18 @@ char *script;
         lp++;
     }
 
+#ifdef USE_SHADOW_X
+    if (!numshadow) {
+      numshadow = nvars;
+      glob_script_mem.FLAGS.x_used = 0;
+    } else {
+      glob_script_mem.FLAGS.x_used = 1;
+    }
+#else
+    numshadow = nvars;
+    glob_script_mem.FLAGS.x_used = 0;
+#endif
+
     uint16_t fsize = 0;
     for (count = 0; count < numflt; count++) {
       fsize += sizeof(struct M_FILT) + ((mfilt[count].numvals & AND_FILT_MASK) - 1) * sizeof(TS_FLOAT);
@@ -1431,7 +1452,7 @@ char *script;
     uint32_t script_mem_size =
     // number and number shadow vars
     (sizeof(TS_FLOAT)*nvars) +
-    (sizeof(TS_FLOAT)*nvars) +
+    (sizeof(TS_FLOAT)*numshadow) +
     // var names
     (vnames_p-vnames) +
     // vars offsets
@@ -1467,7 +1488,7 @@ char *script;
     memcpy(script_mem, fvalues, size);
     script_mem += size;
     glob_script_mem.s_fvars = (TS_FLOAT*)script_mem;
-    size = sizeof(TS_FLOAT) * nvars;
+    size = sizeof(TS_FLOAT) * numshadow;
     memcpy(script_mem, fvalues, size);
     script_mem += size;
 
@@ -1540,7 +1561,7 @@ char *script;
 
     // variables usage info
     uint32_t tot_mem = sizeof(glob_script_mem) + glob_script_mem.script_mem_size + glob_script_mem.script_size + index;
-    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d, gmem=%d, pmem=%d, tmem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size, sizeof(glob_script_mem), pmem, tot_mem);
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d, gmem=%d, pmem=%d, tmem=%d, xvars=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size, sizeof(glob_script_mem), pmem, tot_mem, numshadow);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -3100,7 +3121,6 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, TS_FLOAT *fp, char *
       // isnumber
         if (fp) {
           if (*lp == '0' && *(lp + 1) == 'x') {
-
             lp += 2;
             *fp = strtoll(lp, &lp, 16);
           } else {
@@ -3601,10 +3621,18 @@ chknext:
           uint8_t vtype;
           lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
-            if (!glob_script_mem.FLAGS.ignore_line) {
-              uint16_t index = glob_script_mem.type[ind.index].index;
-              fvar = glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index];
-              glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
+#ifdef USE_SHADOW_X
+            if (!glob_script_mem.FLAGS.x_used || ind.bits.shadow) {
+#else
+            if (1) {
+#endif
+              if (!glob_script_mem.FLAGS.ignore_line) {
+                uint16_t index = glob_script_mem.type[ind.index].index;
+                fvar = glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index];
+                glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
+              }
+            } else {
+              fvar = 0;
             }
           } else {
             fvar = 0;
@@ -3766,9 +3794,17 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           uint8_t vtype;
           lp = isvar(lp + 5, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
-            uint16_t index = glob_script_mem.type[ind.index].index;
-            fvar = glob_script_mem.fvars[index] - glob_script_mem.s_fvars[index];
-            glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
+#ifdef USE_SHADOW_X
+            if (!glob_script_mem.FLAGS.x_used || ind.bits.shadow) {
+#else
+            if (1) {
+#endif
+              uint16_t index = glob_script_mem.type[ind.index].index;
+              fvar = glob_script_mem.fvars[index] - glob_script_mem.s_fvars[index];
+              glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
+            } else {
+              fvar = 0;
+            }
           } else {
             fvar = 0;
           }
@@ -6751,7 +6787,7 @@ void tmod_directModeOutput(uint32_t pin);
           }
           if (sel == 1 && glob_script_mem.Script_PortUdp_1) {
             // rec from port
-            if (TasmotaGlobal.global_state.wifi_down) {
+            if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) {
               if (sp) *sp = 0;
             } else {
               int32_t packetSize = glob_script_mem.Script_PortUdp_1->parsePacket();
@@ -8479,6 +8515,8 @@ startline:
 
             glob_script_mem.FLAGS.ignore_line = 0;
 
+            if ((swflg & 3) == 2) goto chk_switch;
+
             if (!strncmp(lp, "if", 2)) {
                 lp += 2;
                 if (ifstck < IF_NEST - 1) ifstck++;
@@ -8644,7 +8682,7 @@ getnext:
                 }
               }
             }
-
+chk_switch:
             if (!strncmp(lp, "switch", 6)) {
               lp += 6;
               SCRIPT_SKIP_SPACES
@@ -10975,39 +11013,66 @@ const char kScriptCommands[] PROGMEM = D_CMND_SCRIPT "|" D_CMND_SUBSCRIBE "|" D_
 #endif
 ;
 
-void list_var(char *lp) {
+void list_var(char *lp, WiFiClient *client) {
 TS_FLOAT fvar;
 char str[SCRIPT_MAX_SBSIZE];
+String wbuffer = "";
+
   glob_script_mem.glob_error = 0;
   if (check_varname(lp) == NUM_ARRAY_RES && !strchr(lp, '[')) {
     TS_FLOAT *fpd = 0;
     uint16_t alend;
     char *cp = get_array_by_name(lp, &fpd, &alend, 0);
-    ResponseAppend_P(PSTR("\"%s\":["), lp);
+    if (!client) ResponseAppend_P(PSTR("\"%s\":["), lp);
+    else {
+      ext_snprintf_P(str, sizeof(str), PSTR("\"%s\":["), lp);
+      wbuffer += str;
+    }
+
     for (uint16_t cnt = 0; cnt < alend; cnt++) {
         TS_FLOAT tvar = *fpd++;
         ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &tvar);
         if (cnt) {
-          ResponseAppend_P(PSTR(",%s"), str);
+          if (!client) ResponseAppend_P(PSTR(",%s"), str);
+          else  {
+            wbuffer += ',';
+            wbuffer += str;
+          }
         } else {
-          ResponseAppend_P(PSTR("%s"), str);
+          if (!client) ResponseAppend_P(PSTR("%s"), str);
+          else {
+            wbuffer += str;
+          }
+        }
+        if (client) {
+          if (wbuffer.length() >= 1024) {
+            client->print(wbuffer);
+            wbuffer = "";
+          } 
         }
     }
-    ResponseAppend_P(PSTR("]"));
+    if (!client) ResponseAppend_P(PSTR("]"));
+    else {
+      wbuffer += ']';
+      client->print(wbuffer);
+    }
   } else {
     glob_script_mem.glob_error = 0;
     glob_script_mem.var_not_found = 0;
     GetNumericArgument(lp, OPER_EQU, &fvar, 0);
     if (glob_script_mem.var_not_found) {
-      ResponseAppend_P(PSTR("\"%s\":\"???\""), lp);
+     if (!client) ResponseAppend_P(PSTR("\"%s\":\"???\""), lp);
+     else client->printf_P(PSTR("\"%s\":\"???\""), lp);
     } else {
       if (glob_script_mem.glob_error == 1) {
         // was string, not number
         GetStringArgument(lp, OPER_EQU, str, 0);
-        ResponseAppend_P(PSTR("\"%s\":\"%s\""), lp, str);
+        if (!client) ResponseAppend_P(PSTR("\"%s\":\"%s\""), lp, str);
+        else client->printf_P(PSTR("\"%s\":\"%s\""), lp, str);
       } else {
         ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &fvar);
-        ResponseAppend_P(PSTR("\"%s\":%s"), lp, str);
+        if (!client) ResponseAppend_P(PSTR("\"%s\":%s"), lp, str);
+        else client->printf_P(PSTR("\"%s\":%s"), lp, str);
       }
     }
   }
@@ -11072,16 +11137,17 @@ bool ScriptCommand(void) {
           char *cp = strchr(lp, ';');
           if (cp) {
             *cp = 0;
-            list_var(lp);
+            list_var(lp, 0);
             ResponseAppend_P(PSTR(","));
             lp = cp + 1;
           } else {
-            list_var(lp);
+            list_var(lp, 0);
             ResponseAppend_P(PSTR("}"));
             break;
           }
         }
         ResponseAppend_P(PSTR("}"));
+        return serviced;
       }
       return serviced;
     }
@@ -11495,6 +11561,33 @@ void ScriptServeFile(void) {
 
   if (cp) {
     cp += 4;
+    char *lp = cp + 1;
+    if (*lp == '$') {
+        lp++;
+        WiFiClient wclient;
+        wclient = Webserver->client();
+        WiFiClient *client = &wclient;
+        client->printf_P(PSTR("HTTP/1.1 200 OK\r\n"));
+        client->printf_P(PSTR("Content-type:text/html\r\n\r\n"));
+        client->printf_P(PSTR("{\"script\":{"));
+        while (1) {
+          while (*lp==' ') lp++;
+          char *cp = strchr(lp, ';');
+          if (cp) {
+            *cp = 0;
+            list_var(lp, client);
+            client->printf_P(PSTR(","));
+            lp = cp + 1;
+          } else {
+            list_var(lp, client);
+            client->printf_P(PSTR("}"));
+            break;
+          }
+        }
+        client->printf_P(PSTR("}"));
+        client->flush();
+        return;
+    }
     if (ufsp) {
       if (strstr_P(cp, PSTR("scrdmp.bmp"))) {
         SendFile(cp);

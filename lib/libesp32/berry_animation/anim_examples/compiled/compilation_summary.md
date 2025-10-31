@@ -79,6 +79,24 @@ SUCCESS
 SUCCESS
 ```
 
+## chap_5_22_template_shutter_bidir.anim
+
+**Status:** ✅ Success
+
+## Symbol Table
+
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `main`               | animation             |         |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `shutter_bidir`      | animation_constructor |         |           |     ✓      |
+
+### Compilation Output
+
+```
+SUCCESS
+```
+
 ## christmas_tree.anim
 
 **Status:** ✅ Success
@@ -1209,8 +1227,8 @@ SUCCESS
 
 ## Summary
 
-- **Total files processed:** 49
-- **Successfully compiled:** 46
+- **Total files processed:** 50
+- **Successfully compiled:** 47
 - **Failed to compile:** 3
 
 ### Successful Files
@@ -1218,6 +1236,7 @@ SUCCESS
 - ✅ breathing_colors.anim
 - ✅ candy_cane.anim
 - ✅ chap_5_21_template_shutter_bidir.anim
+- ✅ chap_5_22_template_shutter_bidir.anim
 - ✅ christmas_tree.anim
 - ✅ comet_chase.anim
 - ✅ computed_values_demo.anim

@@ -242,8 +242,10 @@ void HostedMCUEverySecond(void) {
                 if ((ret = esp_hosted_slave_ota_end()) != ESP_OK) {
                   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: ota_end failed %d"), ret);
                 } else {
-                  // Activate will likely reboot the slave
-                  ret = esp_hosted_slave_ota_activate();
+                  if (GetHostedMCUFwVersion() >= 0x00020600) { 
+                    // Activate will likely reboot the slave
+                    ret = esp_hosted_slave_ota_activate();
+                  }
                 }
               }
             }
@@ -305,7 +307,7 @@ void CmndHostedLoad(void) {
   Or allow user to enter required version like:
    HostedLoad v2.0.17
   */
-  if (GetHostedMCUFwVersion() < 0x00020600) { return; }
+//  if (GetHostedMCUFwVersion() < 0x00020600) { return; }
 
   Hosted.ota_url = (char*)calloc(200, sizeof(char));
   if (!Hosted.ota_url) { return; }                 // Unable to allocate memory
