@@ -116,8 +116,6 @@ fire_palette.palette = animation.PALETTE_FIRE
 fire_palette.cycle_period = 5000
 fire_palette.transition_type = 1  # Use sine transition (smooth)
 fire_palette.brightness = 255
-fire_palette.range_min = 0
-fire_palette.range_max = 255
 fire.color = fire_palette
 print("Set back to fire palette")
 

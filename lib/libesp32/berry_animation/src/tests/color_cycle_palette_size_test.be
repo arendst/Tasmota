@@ -9,6 +9,11 @@ class MockEngine
   def init()
     self.time_ms = 1000
   end
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    return true
+  end
 end
 
 def test_palette_size_parameter_access()
@@ -168,7 +173,7 @@ def test_palette_size_parameter_metadata()
   var provider = animation.color_cycle(engine)
   
   # Test 1: Parameter should exist
-  assert(provider._has_param("palette_size") == true, "palette_size parameter should exist")
+  assert(provider.has_param("palette_size") == true, "palette_size parameter should exist")
   var param_def = provider._get_param_def("palette_size")
   assert(param_def != nil, "palette_size should have parameter definition")
   

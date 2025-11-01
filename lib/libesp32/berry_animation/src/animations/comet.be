@@ -41,7 +41,7 @@ class CometAnimation : animation.animation
     super(self).on_param_changed(name, value)
     if name == "direction"
       # Reset position when direction changes
-      var strip_length = self.engine.get_strip_length()
+      var strip_length = self.engine.strip_length
       if value > 0
         self.head_position = 0  # Start at beginning for forward movement
       else
@@ -67,7 +67,7 @@ class CometAnimation : animation.animation
     var current_speed = self.speed
     var current_direction = self.direction
     var current_wrap_around = self.wrap_around
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     
     # Calculate elapsed time since animation started
     var elapsed = time_ms - self.start_time
@@ -129,7 +129,7 @@ class CometAnimation : animation.animation
     var direction = self.direction
     var wrap_around = self.wrap_around
     var fade_factor = self.fade_factor
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     
     # Extract color components from current color (ARGB format)
     var head_a = (current_color >> 24) & 0xFF

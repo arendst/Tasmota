@@ -23,6 +23,11 @@ class MockEngine
   def set_time(time)
     self.time_ms = time
   end
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    return true
+  end
 end
 
 var mock_engine = MockEngine()
@@ -192,26 +197,23 @@ class RichPaletteAnimationTest
     # Check basic properties
     self.assert_equal(provider.cycle_period, 1000, "Cycle period is 1000ms")
     
-    # Test range setting and value-based colors
-    provider.range_min = 0
-    provider.range_max = 100
-    self.assert_equal(provider.range_min, 0, "Range min is 0")
-    self.assert_equal(provider.range_max, 100, "Range max is 100")
+    # Value-based colors now always use 0-255 range
     
-    # Test value-based color generation
+    # Test value-based color generation (now always 0-255 range)
     provider.start()
+    provider.update()
     print(f"{provider.slots_arr=} {provider.value_arr=}")
     var color_0 = provider.get_color_for_value(0, 0)
-    var color_50 = provider.get_color_for_value(50, 0)
-    var color_100 = provider.get_color_for_value(100, 0)
+    var color_128 = provider.get_color_for_value(128, 0)
+    var color_255 = provider.get_color_for_value(255, 0)
     
     self.assert_equal(color_0 != nil, true, "Color at value 0 is not nil")
-    self.assert_equal(color_50 != nil, true, "Color at value 50 is not nil")
-    self.assert_equal(color_100 != nil, true, "Color at value 100 is not nil")
+    self.assert_equal(color_128 != nil, true, "Color at value 128 is not nil")
+    self.assert_equal(color_255 != nil, true, "Color at value 255 is not nil")
     
     # Colors should be different
-    self.assert_equal(color_0 != color_50, true, "Color at 0 differs from color at 50")
-    self.assert_equal(color_50 != color_100, true, "Color at 50 differs from color at 100")
+    self.assert_equal(color_0 != color_128, true, "Color at 0 differs from color at 128")
+    self.assert_equal(color_128 != color_255, true, "Color at 128 differs from color at 255")
   end
   
   def test_css_gradient()
@@ -240,9 +242,8 @@ class RichPaletteAnimationTest
     var provider = animation.rich_palette(mock_engine)
     provider.palette = palette
     provider.cycle_period = 0  # Value-based mode
-    provider.range_min = 0
-    provider.range_max = 255
     provider.start()
+    provider.update()
     
     # Check that cycle_period can be set to 0
     self.assert_equal(provider.cycle_period, 0, "Cycle period can be set to 0")
@@ -275,6 +276,7 @@ class RichPaletteAnimationTest
     
     # Start the provider for time-based mode
     provider.start(0)
+    provider.update(0)
     
     # Now colors should change over time again
     var time_color_0 = provider.produce_value("color", 0)
@@ -351,37 +353,36 @@ class RichPaletteAnimationTest
     provider.palette = palette
     provider.cycle_period = 0  # Value-based mode
     provider.transition_type = animation.SINE
-    provider.range_min = 0
-    provider.range_max = 100
     provider.start()
+    provider.update()
     
-    # Get colors at different values
+    # Get colors at different values (now using 0-255 range)
     var color_0 = provider.get_color_for_value(0, 0)
-    var color_25 = provider.get_color_for_value(25, 0)
-    var color_50 = provider.get_color_for_value(50, 0)
-    var color_75 = provider.get_color_for_value(75, 0)
-    var color_100 = provider.get_color_for_value(100, 0)
+    var color_64 = provider.get_color_for_value(64, 0)
+    var color_128 = provider.get_color_for_value(128, 0)
+    var color_192 = provider.get_color_for_value(192, 0)
+    var color_255 = provider.get_color_for_value(255, 0)
     
     # Extract blue channel
     var blue_0 = color_0 & 0xFF
-    var blue_25 = color_25 & 0xFF
-    var blue_50 = color_50 & 0xFF
-    var blue_75 = color_75 & 0xFF
-    var blue_100 = color_100 & 0xFF
+    var blue_64 = color_64 & 0xFF
+    var blue_128 = color_128 & 0xFF
+    var blue_192 = color_192 & 0xFF
+    var blue_255 = color_255 & 0xFF
     
     # Test that we have a smooth S-curve
-    # Change from 0-25 should be smaller than 25-50 (ease-in)
-    var change_0_25 = blue_25 - blue_0
-    var change_25_50 = blue_50 - blue_25
-    self.assert_equal(change_0_25 < change_25_50, true, "Value-based SINE has ease-in")
+    # Change from 0-64 should be smaller than 64-128 (ease-in)
+    var change_0_64 = blue_64 - blue_0
+    var change_64_128 = blue_128 - blue_64
+    self.assert_equal(change_0_64 < change_64_128, true, "Value-based SINE has ease-in")
     
-    # Change from 50-75 should be larger than 75-100 (ease-out)
-    var change_50_75 = blue_75 - blue_50
-    var change_75_100 = blue_100 - blue_75
-    self.assert_equal(change_50_75 > change_75_100, true, "Value-based SINE has ease-out")
+    # Change from 128-192 should be larger than 192-255 (ease-out)
+    var change_128_192 = blue_192 - blue_128
+    var change_192_255 = blue_255 - blue_192
+    self.assert_equal(change_128_192 > change_192_255, true, "Value-based SINE has ease-out")
     
     # Midpoint should be approximately 128
-    self.assert_approx_equal(blue_50, 128, "Value-based SINE midpoint is ~128")
+    self.assert_approx_equal(blue_128, 128, "Value-based SINE midpoint is ~128")
   end
 end
 

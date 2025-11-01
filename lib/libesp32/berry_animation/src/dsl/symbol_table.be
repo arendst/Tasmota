@@ -301,13 +301,19 @@ end
 # Mock engine class for parameter validation during transpilation
 class MockEngine
   var time_ms
+  var strip_length
   
   def init()
     self.time_ms = 0
+    self.strip_length = 30    # Default strip length for validation
   end
   
   def get_strip_length()
-    return 30  # Default strip length for validation
+    return self.strip_length
+  end
+
+  def add(obj)
+    return true
   end
 end
 

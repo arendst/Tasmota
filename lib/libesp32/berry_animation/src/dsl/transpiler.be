@@ -476,12 +476,13 @@ class SimpleDSLTranspiler
         self.skip_statement()
         return
       elif tok.value == "template"
-        # Check if this is "template animation" or just "template"
+        # Only "template animation" is supported
         var next_tok = self.peek()
         if next_tok != nil && next_tok.type == 0 #-animation_dsl.Token.KEYWORD-# && next_tok.value == "animation"
           self.process_template_animation()
         else
-          self.process_template()
+          self.error("Simple 'template' is not supported. Use 'template animation' instead to create reusable animation classes.")
+          self.skip_statement()
         end
       else
         # For any other statement, ensure strip is initialized
@@ -894,85 +895,6 @@ class SimpleDSLTranspiler
     self.add(f"var {local_ref} = {value_result.expr}{inline_comment}")
   end
   
-  # Process template definition: template name { param ... }
-  def process_template()
-    self.next()  # skip 'template'
-    var name = self.expect_identifier()
-    
-    # Validate that the template name is not reserved
-    if !self.validate_user_name(name, "template")
-      self.skip_statement()
-      return
-    end
-    
-    self.expect_left_brace()
-    
-    # First pass: collect all parameters with validation
-    var params = []
-    var param_types = {}
-    var param_names_seen = {}  # Track duplicate parameter names
-    
-    while !self.at_end() && !self.check_right_brace()
-      self.skip_whitespace_including_newlines()
-      
-      if self.check_right_brace()
-        break
-      end
-      
-      var tok = self.current()
-      
-      if tok != nil && tok.type == 0 #-animation_dsl.Token.KEYWORD-# && tok.value == "param"
-        # Process parameter declaration
-        self.next()  # skip 'param'
-        var param_name = self.expect_identifier()
-        
-        # Validate parameter name (not a template animation)
-        if !self._validate_template_parameter_name(param_name, param_names_seen, false)
-          self.skip_statement()
-          return
-        end
-        
-        # Check for optional type annotation
-        var param_type = nil
-        if self.current() != nil && self.current().type == 0 #-animation_dsl.Token.KEYWORD-# && self.current().value == "type"
-          self.next()  # skip 'type'
-          param_type = self.expect_identifier()
-          
-          # Validate type annotation
-          if !self._validate_template_parameter_type(param_type)
-            self.skip_statement()
-            return
-          end
-        end
-        
-        # Add parameter to collections
-        params.push(param_name)
-        param_names_seen[param_name] = true
-        if param_type != nil
-          param_types[param_name] = param_type
-        end
-        
-        # Skip optional newline after parameter
-        if self.current() != nil && self.current().type == 35 #-animation_dsl.Token.NEWLINE-#
-          self.next()
-        end
-      else
-        # Found non-param statement, break to collect body
-        break
-      end
-    end
-    
-    # Generate Berry function for this template using direct pull-lexer approach
-    self.generate_template_function_direct(name, params, param_types)
-    
-    # Add template to symbol table with parameter information
-    var template_info = {
-      "params": params,
-      "param_types": param_types
-    }
-    self.symbol_table.create_template(name, template_info)
-  end
-  
   # Process template animation definition: template animation name { param ... }
   # Generates a class extending engine_proxy instead of a function
   def process_template_animation()
@@ -1188,52 +1110,6 @@ class SimpleDSLTranspiler
     var closure_code = f"def (engine) {object_name}_.{property_name} = {value_result.expr} end"
     self.add(f"{self.get_indent()}.push_closure_step({closure_code}){inline_comment}")
   end
-  
-  # Generic method to process sequence assignment with configurable target array
-  def process_sequence_assignment_generic(indent, target_array)
-    var object_name = self.expect_identifier()
-    
-    # Check if next token is a dot
-    if self.current() != nil && self.current().type == 33 #-animation_dsl.Token.DOT-#
-      self.next()  # skip '.'
-      var property_name = self.expect_identifier()
-      
-      # Validate parameter if we have this object in our symbol table
-      if self.symbol_table.contains(object_name)
-        var entry = self.symbol_table.get(object_name)
-        
-        # Only validate parameters for actual instances, not sequence markers
-        if entry != nil && entry.instance != nil
-          var class_name = classname(entry.instance)
-          
-          # Use the existing parameter validation logic
-          self._validate_single_parameter(class_name, property_name, entry.instance)
-        elif entry != nil && entry.type == 13 #-animation_dsl._symbol_entry.TYPE_SEQUENCE-#
-          # This is a sequence marker - sequences don't have properties
-          self.error(f"Sequences like '{object_name}' do not have properties. Property assignments are only valid for animations and color providers.")
-          return
-        end
-      end
-      
-      self.expect_assign()
-      var value_result = self.process_value(self.CONTEXT_PROPERTY)
-      var inline_comment = self.collect_inline_comment()
-      
-      # Generate assignment step with closure
-      # The closure receives the engine as parameter and performs the assignment
-      var object_ref = self.symbol_table.get_reference(object_name)
-      
-      # Create closure that performs the assignment
-      var closure_code = f"def (engine) {object_ref}.{property_name} = {value_result.expr} end"
-      self.add(f"{indent}{target_array}.push(animation.create_assign_step({closure_code})){inline_comment}")
-    else
-      # Not a property assignment, this shouldn't happen since we checked for dot
-      self.error(f"Expected property assignment for '{object_name}' but found no dot")
-      self.skip_statement()
-    end
-  end
-  
-
   
   # Helper method to process play statement using fluent style
   def process_play_statement_fluent()
@@ -2828,73 +2704,7 @@ class SimpleDSLTranspiler
     self.add("")
     self.strip_initialized = true
   end
-  
 
-
-  # Generate Berry function for template definition using direct pull-lexer approach
-  def generate_template_function_direct(name, params, param_types)
-    import animation_dsl
-    import string
-    
-    # Generate function signature with engine as first parameter
-    var param_list = "engine"
-    for param : params
-      param_list += f", {param}_"
-    end
-    
-    self.add(f"# Template function: {name}")
-    self.add(f"def {name}_template({param_list})")
-    
-    # Create a new transpiler that shares the same pull lexer
-    # It will consume tokens from the current position until the template ends
-    var template_transpiler = animation_dsl.SimpleDSLTranspiler(self.pull_lexer)
-    template_transpiler.symbol_table = animation_dsl._symbol_table()  # Fresh symbol table for template
-    template_transpiler.strip_initialized = true  # Templates assume engine exists
-    
-    # Add parameters to template's symbol table with proper types
-    for param : params
-      var param_type = param_types.find(param)
-      if param_type != nil
-        # Create typed parameter based on type annotation
-        self._add_typed_parameter_to_symbol_table(template_transpiler.symbol_table, param, param_type)
-      else
-        # Default to variable type for untyped parameters
-        template_transpiler.symbol_table.create_variable(param)
-      end
-    end
-    
-    # Transpile the template body - it will consume tokens until the closing brace
-    var template_body = template_transpiler.transpile_template_body()
-    
-    if template_body != nil
-      # Add the transpiled body with proper indentation
-      var body_lines = string.split(template_body, "\n")
-      for line : body_lines
-        if size(line) > 0
-          self.add(f"  {line}")  # Add 2-space indentation
-        end
-      end
-      
-      # Validate parameter usage in template body (post-transpilation check)
-      self._validate_template_parameter_usage(name, params, template_body)
-    else
-      # Error in template body transpilation
-      for error : template_transpiler.errors
-        self.error(f"Template '{name}' body error: {error}")
-      end
-    end
-    
-    # Expect the closing brace (template_transpiler should have left us at this position)
-    self.expect_right_brace()
-    
-    self.add("end")
-    self.add("")
-    
-    # Register the template as a user function
-    self.add(f"animation.register_user_function('{name}', {name}_template)")
-    self.add("")
-  end
-  
   # Helper method to add inherited parameters from engine_proxy class hierarchy
   # This dynamically discovers all parameters from engine_proxy and its superclasses
   def _add_inherited_params_to_template(template_params_map)
@@ -3092,9 +2902,9 @@ class SimpleDSLTranspiler
     try
       import introspect
       
-      # Validate parameter using the _has_param method
-      if animation_instance != nil && introspect.contains(animation_instance, "_has_param")
-        if !animation_instance._has_param(param_name)
+      # Validate parameter using the has_param method
+      if animation_instance != nil && introspect.contains(animation_instance, "has_param")
+        if !animation_instance.has_param(param_name)
           var line = self.current() != nil ? self.current().line : 0
           self.error(f"Animation '{func_name}' does not have parameter '{param_name}'. Check the animation documentation for valid parameters.")
         end
@@ -3319,10 +3129,10 @@ class SimpleDSLTranspiler
   def _register_template_animation_constructor(name, params, param_types)
     import animation_dsl
     
-    # Create a mock instance that has _has_param method for validation
+    # Create a mock instance that has has_param method for validation
     var mock_instance = {
       "_params": {},
-      "_has_param": def (param_name)
+      "has_param": def (param_name)
         # Check if this parameter exists in the template's parameter list
         for p : params
           if p == param_name

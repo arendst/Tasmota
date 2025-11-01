@@ -18,6 +18,10 @@ def test_closure_value_provider()
     def tostring()
       return ''
     end
+
+    def add(obj)
+      return true
+    end
   end
   var engine = MockEngine()
   
@@ -241,6 +245,11 @@ def test_closure_value_provider()
   print("✓ Edge cases with zero, negative, and boundary values work")
   
   print("All ClosureValueProvider tests passed!")
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    return true
+  end
 end
 
 # Test mathematical helper methods
@@ -252,6 +261,10 @@ def test_closure_math_methods()
     var time_ms
     def init()
       self.time_ms = 1000
+    end
+
+    def add(obj)
+      return true
     end
   end
   var engine = MockEngine()

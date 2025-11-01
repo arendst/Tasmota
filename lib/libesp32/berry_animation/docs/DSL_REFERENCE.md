@@ -981,143 +981,15 @@ sequence clean_transitions {
 }
 ```
 
-## Templates
+## Template Animations
 
-Templates provide a powerful way to create reusable, parameterized animation patterns. They allow you to define animation blueprints that can be instantiated with different parameters, promoting code reuse and maintainability.
+Template animations provide a powerful way to create reusable, parameterized animation classes. They allow you to define animation blueprints that can be instantiated multiple times with different parameters, promoting code reuse and maintainability.
 
-**Template-Only Files**: DSL files containing only template definitions transpile to pure Berry functions without engine initialization or execution code. This allows templates to be used as reusable function libraries.
+**Template-Only Files**: DSL files containing only template animation definitions transpile to pure Berry classes without engine initialization or execution code. This allows template animations to be used as reusable animation libraries.
 
-### Template Definition
+### Template Animation Definition
 
-Templates are defined using the `template` keyword followed by a parameter block and body:
-
-```berry
-template template_name {
-  param parameter1 type color
-  param parameter2
-  param parameter3 type number
-  
-  # Template body with DSL statements
-  animation my_anim = some_animation(color=parameter1, period=parameter2)
-  my_anim.opacity = parameter3
-  run my_anim
-}
-```
-
-### Template Parameters
-
-Template parameters are declared using the `param` keyword with optional type annotations:
-
-```berry
-template pulse_effect {
-  param base_color type color    # Parameter with type annotation
-  param duration                 # Parameter without type annotation
-  param brightness type number   # Another typed parameter
-  
-  # Use parameters in template body
-  animation pulse = pulsating_animation(
-    color=base_color
-    period=duration
-  )
-  pulse.opacity = brightness
-  run pulse
-}
-```
-
-**Parameter Types:**
-- `color` - Color values (hex, named colors, color providers)
-- `palette` - Palette definitions
-- `number` - Numeric values (integers, percentages, time values)
-- `animation` - Animation instances
-- Type annotations are optional but improve readability
-
-### Template Body
-
-The template body can contain any valid DSL statements:
-
-**Supported Statements:**
-- Color definitions
-- Palette definitions  
-- Animation definitions
-- Property assignments
-- Run statements
-- Variable assignments (set statements)
-
-```berry
-template rainbow_pulse {
-  param pal1 as palette
-  param pal2 as palette  
-  param duration
-  param back_color as color
-  
-  # Create dynamic color cycling
-  color cycle_color = color_cycle(
-    palette=pal1
-    cycle_period=duration
-  )
-  
-  # Create animations
-  animation pulse = pulsating_animation(
-    color=cycle_color
-    period=duration
-  )
-  
-  animation background = solid(color=back_color)
-  
-  # Set properties
-  background.priority = 1
-  pulse.priority = 10
-  
-  # Run both animations
-  run background
-  run pulse
-}
-```
-
-### Template Usage
-
-Templates are called like functions with positional arguments:
-
-```berry
-# Define the template
-template blink_red {
-  param speed
-  
-  animation blink = pulsating_animation(
-    color=red
-    period=speed
-  )
-  
-  run blink
-}
-
-# Use the template
-blink_red(1s)           # Call with 1 second period
-blink_red(500ms)        # Call with 500ms period
-```
-
-**Complex Template Usage:**
-```berry
-# Create palettes for the template
-palette fire_palette = [
-  (0, black)
-  (128, red)
-  (255, yellow)
-]
-
-palette ocean_palette = [
-  (0, navy)
-  (128, cyan)
-  (255, white)
-]
-
-# Use the complex template
-rainbow_pulse(fire_palette, ocean_palette, 3s, black)
-```
-
-### Template Animation
-
-Template animations create reusable animation classes that extend `engine_proxy`, allowing complex animations with parameters to be instantiated multiple times:
+Template animations are defined using the `template animation` keywords followed by a parameter block and body:
 
 ```berry
 template animation shutter_effect {
@@ -1220,39 +1092,12 @@ my_fade.opacity = 200    # Set the implicit opacity parameter
 - They are accessed as `self.<param>` within the template body
 - All implicit parameters come from the `Animation` and `ParameterizedObject` base classes
 
-**Key Differences from Regular Templates:**
-- Generates classes instead of functions
-- Parameters accessed as `self.<param>` instead of `<param>_`
-- Uses `self.add()` instead of `engine.add()`
+**Key Features:**
+- Generates reusable animation classes extending `engine_proxy`
+- Parameters accessed as `self.<param>` within the template body
+- Uses `self.add()` to add child animations
 - Can be instantiated multiple times with different parameters
-
-### Regular Template Behavior
-
-**Code Generation:**
-Regular templates generate Berry functions that are registered as user functions:
-
-```berry
-# Template definition generates:
-def pulse_effect_template(engine, base_color_, duration_, brightness_)
-  var pulse_ = animation.pulsating_animation(engine)
-  pulse_.color = base_color_
-  pulse_.period = duration_
-  pulse_.opacity = brightness_
-  engine.add(pulse_)
-end
-
-animation.register_user_function('pulse_effect', pulse_effect_template)
-```
-
-**Parameter Handling:**
-- Parameters get `_` suffix in generated code to avoid naming conflicts
-- Templates receive `engine` as the first parameter automatically
-- Template calls are converted to function calls with `engine` as first argument
-
-**Execution Model:**
-- Templates don't return values - they add animations directly to the engine
-- Multiple `run` statements in templates add multiple animations
-- Templates can be called multiple times to create multiple instances
+- Supports parameter constraints (type, min, max, default, nillable)
 
 ### Template Parameter Validation
 
@@ -1613,11 +1458,11 @@ config_stmt = variable_assignment ;
 variable_assignment = "set" identifier "=" expression ;
 
 (* Definitions *)
-definition = color_def | palette_def | animation_def | template_def ;
+definition = color_def | palette_def | animation_def | template_animation_def ;
 color_def = "color" identifier "=" color_expression ;
 palette_def = "palette" identifier "=" palette_array ;
 animation_def = "animation" identifier "=" animation_expression ;
-template_def = "template" identifier "{" template_body "}" ;
+template_animation_def = "template" "animation" identifier "{" template_body "}" ;
 
 (* Property Assignments *)
 property_assignment = identifier "." identifier "=" expression ;
@@ -1634,16 +1479,15 @@ if_stmt = "if" expression "{" sequence_body "}" ;
 sequence_assignment = identifier "." identifier "=" expression ;
 restart_stmt = "restart" identifier ;
 
-(* Templates *)
-template_def = "template" identifier "{" template_body "}" ;
+(* Template Animations *)
+template_animation_def = "template" "animation" identifier "{" template_body "}" ;
 template_body = { template_statement } ;
-template_statement = param_decl | color_def | palette_def | animation_def | property_assignment | execution_stmt ;
-param_decl = "param" identifier [ "type" identifier ] ;
+template_statement = param_decl | color_def | palette_def | animation_def | property_assignment | sequence_def | execution_stmt ;
+param_decl = "param" identifier [ "type" identifier ] [ constraint_list ] ;
+constraint_list = ( "min" number | "max" number | "default" expression | "nillable" boolean ) { constraint_list } ;
 
 (* Execution *)
-execution_stmt = "run" identifier | template_call ;
-template_call = identifier "(" [ argument_list ] ")" ;
-argument_list = expression { "," expression } ;
+execution_stmt = "run" identifier ;
 
 (* Expressions *)
 expression = logical_or_expr ;
@@ -1761,6 +1605,7 @@ This applies to:
 - Reserved name validation
 - Parameter validation at compile time
 - Execution statements
+- **Template animations**: Reusable animation classes with parameters extending `engine_proxy`
 - User-defined functions (with engine-first parameter pattern) - see **[User Functions Guide](USER_FUNCTIONS.md)**
 - **User functions in computed parameters**: User functions can be used in arithmetic expressions alongside mathematical functions
 - **Flexible parameter syntax**: Commas optional when parameters are on separate lines

@@ -33,7 +33,7 @@ var strip = global.Leds(20)
 var engine = animation.create_engine(strip)
 
 assert_not_nil(engine, "Engine should be created")
-assert_equals(engine.width, 20, "Engine width should match strip length")
+assert_equals(engine.strip_length, 20, "Engine strip_length should match strip length")
 assert_equals(engine.is_active(), false, "Engine should start inactive")
 assert_equals(engine.size(), 0, "Engine should start with no animations")
 
@@ -165,11 +165,11 @@ end
 print("\n--- Test 9: Engine API Consistency ---")
 var engine2 = animation.create_engine(strip)
 assert_not_nil(engine2, "Second engine should be created")
-assert_equals(engine2.width, strip.length(), "Second engine width should match strip")
+assert_equals(engine2.strip_length, strip.length(), "Second engine strip_length should match strip")
 
 var engine3 = animation.create_engine(strip)
 assert_not_nil(engine3, "Direct engine creation should work")
-assert_equals(engine3.width, strip.length(), "Direct engine width should match strip")
+assert_equals(engine3.strip_length, strip.length(), "Direct engine strip_length should match strip")
 
 # Test 10: Dynamic Strip Length Detection
 print("\n--- Test 10: Dynamic Strip Length Detection ---")
@@ -224,7 +224,7 @@ var dynamic_strip = MockDynamicStrip(15)
 var dynamic_engine = animation.create_engine(dynamic_strip)
 
 # Test initial state
-assert_equals(dynamic_engine.width, 15, "Engine should start with strip length 15")
+assert_equals(dynamic_engine.strip_length, 15, "Engine should start with strip length 15")
 assert_equals(dynamic_engine.frame_buffer.width, 15, "Frame buffer should match initial length")
 assert_equals(dynamic_engine.temp_buffer.width, 15, "Temp buffer should match initial length")
 
@@ -236,14 +236,14 @@ var original_temp_buffer = dynamic_engine.temp_buffer
 print("\n--- Test 10a: No change detection ---")
 var length_changed = dynamic_engine.check_strip_length()
 assert_test(!length_changed, "Should detect no change when length is same")
-assert_equals(dynamic_engine.width, 15, "Engine width should remain 15")
+assert_equals(dynamic_engine.strip_length, 15, "Engine strip_length should remain 15")
 
 # Test 10b: Manual length change detection
 print("\n--- Test 10b: Manual length change detection ---")
 dynamic_strip.set_length(25)
 length_changed = dynamic_engine.check_strip_length()
 assert_test(length_changed, "Should detect length change from 15 to 25")
-assert_equals(dynamic_engine.width, 25, "Engine width should update to 25")
+assert_equals(dynamic_engine.strip_length, 25, "Engine strip_length should update to 25")
 assert_equals(dynamic_engine.frame_buffer.width, 25, "Frame buffer should resize to 25")
 assert_equals(dynamic_engine.temp_buffer.width, 25, "Temp buffer should resize to 25")
 
@@ -268,7 +268,7 @@ var tick_time = tasmota.millis()
 for i : 0..2
   dynamic_engine.on_tick(tick_time + i * 10)
 end
-assert_equals(dynamic_engine.width, 25, "Width should remain stable during normal ticks")
+assert_equals(dynamic_engine.strip_length, 25, "Width should remain stable during normal ticks")
 
 # Change strip length during runtime
 dynamic_strip.set_length(35)
@@ -276,7 +276,7 @@ var old_show_calls = dynamic_strip.show_calls
 
 # Next tick should detect the change automatically
 dynamic_engine.on_tick(tick_time + 50)
-assert_equals(dynamic_engine.width, 35, "Engine should detect length change during on_tick()")
+assert_equals(dynamic_engine.strip_length, 35, "Engine should detect length change during on_tick()")
 assert_equals(dynamic_engine.frame_buffer.width, 35, "Frame buffer should resize during on_tick()")
 assert_equals(dynamic_engine.temp_buffer.width, 35, "Temp buffer should resize during on_tick()")
 
@@ -290,7 +290,7 @@ var lengths_to_test = [10, 50, 5, 30]
 for new_length : lengths_to_test
   dynamic_strip.set_length(new_length)
   dynamic_engine.on_tick(tasmota.millis())
-  assert_equals(dynamic_engine.width, new_length, f"Engine should adapt to length {new_length}")
+  assert_equals(dynamic_engine.strip_length, new_length, f"Engine should adapt to length {new_length}")
   assert_equals(dynamic_engine.frame_buffer.width, new_length, f"Frame buffer should adapt to length {new_length}")
   assert_equals(dynamic_engine.temp_buffer.width, new_length, f"Temp buffer should adapt to length {new_length}")
 end
@@ -317,29 +317,29 @@ dynamic_strip.set_length(40)
 old_show_calls = dynamic_strip.show_calls
 dynamic_engine.on_tick(tasmota.millis())
 
-assert_equals(dynamic_engine.width, 40, "Engine should handle length change with multiple animations")
+assert_equals(dynamic_engine.strip_length, 40, "Engine should handle length change with multiple animations")
 new_show_calls = dynamic_strip.show_calls
 assert_test(new_show_calls >= old_show_calls, "Rendering should continue with multiple animations (or at least not decrease)")
 assert_equals(dynamic_engine.size(), 2, "Should still have 2 animations after length change")
 
 # Test 10f: Invalid length handling
 print("\n--- Test 10f: Invalid length handling ---")
-var current_width = dynamic_engine.width
+var current_width = dynamic_engine.strip_length
 
 # Test zero length (should be ignored)
 dynamic_strip.set_length(0)
 dynamic_engine.on_tick(tasmota.millis())
-assert_equals(dynamic_engine.width, current_width, "Should ignore zero length")
+assert_equals(dynamic_engine.strip_length, current_width, "Should ignore zero length")
 
 # Test negative length (should be ignored)
 dynamic_strip.set_length(-5)
 dynamic_engine.on_tick(tasmota.millis())
-assert_equals(dynamic_engine.width, current_width, "Should ignore negative length")
+assert_equals(dynamic_engine.strip_length, current_width, "Should ignore negative length")
 
 # Restore valid length
 dynamic_strip.set_length(20)
 dynamic_engine.on_tick(tasmota.millis())
-assert_equals(dynamic_engine.width, 20, "Should accept valid length after invalid ones")
+assert_equals(dynamic_engine.strip_length, 20, "Should accept valid length after invalid ones")
 
 # Test 10g: Performance impact of length checking
 print("\n--- Test 10g: Performance impact of length checking ---")

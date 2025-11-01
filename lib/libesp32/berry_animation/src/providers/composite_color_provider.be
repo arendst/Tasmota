@@ -66,7 +66,7 @@ class CompositeColorProvider : animation.color_provider
   
   # Get a composite color based on a value
   #
-  # @param value: int/float - Value to map to a color (0-100)
+  # @param value: int/float - Value to map to a color (0-255 range)
   # @param time_ms: int - Current time in milliseconds
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color_for_value(value, time_ms)

@@ -182,11 +182,12 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol         | Type     | Builtin | Dangerous | Takes Args |
-|----------------|----------|---------|-----------|------------|
-| `cylon_effect` | template |         |           |            |
-| `red`          | color    |    ✓    |           |            |
-| `transparent`  | color    |    ✓    |           |            |
+| Symbol        | Type                  | Builtin | Dangerous | Takes Args |
+|---------------|-----------------------|---------|-----------|------------|
+| `cylon_red`   | animation             |         |           |            |
+| `cylon`       | animation_constructor |         |           |     ✓      |
+| `red`         | color                 |    ✓    |           |            |
+| `transparent` | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -286,10 +287,11 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol               | Type     | Builtin | Dangerous | Takes Args |
-|----------------------|----------|---------|-----------|------------|
-| `rainbow_with_white` | palette  |         |           |            |
-| `shutter_bidir`      | template |         |           |            |
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `main`               | animation             |         |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `shutter_bidir`      | animation_constructor |         |           |     ✓      |
 
 ### Compilation Output
 
@@ -303,17 +305,18 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol               | Type     | Builtin | Dangerous | Takes Args |
-|----------------------|----------|---------|-----------|------------|
-| `blue`               | color    |    ✓    |           |            |
-| `green`              | color    |    ✓    |           |            |
-| `indigo`             | color    |    ✓    |           |            |
-| `orange`             | color    |    ✓    |           |            |
-| `rainbow_with_white` | palette  |         |           |            |
-| `red`                | color    |    ✓    |           |            |
-| `shutter_central`    | template |         |           |            |
-| `white`              | color    |    ✓    |           |            |
-| `yellow`             | color    |    ✓    |           |            |
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `blue`               | color                 |    ✓    |           |            |
+| `green`              | color                 |    ✓    |           |            |
+| `indigo`             | color                 |    ✓    |           |            |
+| `main`               | animation             |         |           |            |
+| `orange`             | color                 |    ✓    |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `red`                | color                 |    ✓    |           |            |
+| `shutter_central`    | animation_constructor |         |           |     ✓      |
+| `white`              | color                 |    ✓    |           |            |
+| `yellow`             | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -327,17 +330,18 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol               | Type     | Builtin | Dangerous | Takes Args |
-|----------------------|----------|---------|-----------|------------|
-| `blue`               | color    |    ✓    |           |            |
-| `green`              | color    |    ✓    |           |            |
-| `indigo`             | color    |    ✓    |           |            |
-| `orange`             | color    |    ✓    |           |            |
-| `rainbow_with_white` | palette  |         |           |            |
-| `red`                | color    |    ✓    |           |            |
-| `shutter_lr`         | template |         |           |            |
-| `white`              | color    |    ✓    |           |            |
-| `yellow`             | color    |    ✓    |           |            |
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `blue`               | color                 |    ✓    |           |            |
+| `green`              | color                 |    ✓    |           |            |
+| `indigo`             | color                 |    ✓    |           |            |
+| `main`               | animation             |         |           |            |
+| `orange`             | color                 |    ✓    |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `red`                | color                 |    ✓    |           |            |
+| `shutter_lr`         | animation_constructor |         |           |     ✓      |
+| `white`              | color                 |    ✓    |           |            |
+| `yellow`             | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -1000,9 +1004,9 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol         | Type     | Builtin | Dangerous | Takes Args |
-|----------------|----------|---------|-----------|------------|
-| `cylon_effect` | template |         |           |            |
+| Symbol         | Type                  | Builtin | Dangerous | Takes Args |
+|----------------|-----------------------|---------|-----------|------------|
+| `cylon_effect` | animation_constructor |         |           |     ✓      |
 
 ### Compilation Output
 
@@ -1016,11 +1020,12 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol          | Type     | Builtin | Dangerous | Takes Args |
-|-----------------|----------|---------|-----------|------------|
-| `fire_palette`  | palette  |         |           |            |
-| `ocean_palette` | palette  |         |           |            |
-| `rainbow_pulse` | template |         |           |            |
+| Symbol          | Type                  | Builtin | Dangerous | Takes Args |
+|-----------------|-----------------------|---------|-----------|------------|
+| `fire_palette`  | palette               |         |           |            |
+| `main`          | animation             |         |           |            |
+| `ocean_palette` | palette               |         |           |            |
+| `rainbow_pulse` | animation_constructor |         |           |     ✓      |
 
 ### Compilation Output
 
@@ -1055,17 +1060,18 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol               | Type     | Builtin | Dangerous | Takes Args |
-|----------------------|----------|---------|-----------|------------|
-| `blue`               | color    |    ✓    |           |            |
-| `green`              | color    |    ✓    |           |            |
-| `indigo`             | color    |    ✓    |           |            |
-| `orange`             | color    |    ✓    |           |            |
-| `rainbow_with_white` | palette  |         |           |            |
-| `red`                | color    |    ✓    |           |            |
-| `shutter_bidir`      | template |         |           |            |
-| `white`              | color    |    ✓    |           |            |
-| `yellow`             | color    |    ✓    |           |            |
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `blue`               | color                 |    ✓    |           |            |
+| `green`              | color                 |    ✓    |           |            |
+| `indigo`             | color                 |    ✓    |           |            |
+| `main`               | animation             |         |           |            |
+| `orange`             | color                 |    ✓    |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `red`                | color                 |    ✓    |           |            |
+| `shutter_bidir`      | animation_constructor |         |           |     ✓      |
+| `white`              | color                 |    ✓    |           |            |
+| `yellow`             | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -1079,17 +1085,18 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol               | Type     | Builtin | Dangerous | Takes Args |
-|----------------------|----------|---------|-----------|------------|
-| `blue`               | color    |    ✓    |           |            |
-| `green`              | color    |    ✓    |           |            |
-| `indigo`             | color    |    ✓    |           |            |
-| `orange`             | color    |    ✓    |           |            |
-| `rainbow_with_white` | palette  |         |           |            |
-| `red`                | color    |    ✓    |           |            |
-| `shutter_central`    | template |         |           |            |
-| `white`              | color    |    ✓    |           |            |
-| `yellow`             | color    |    ✓    |           |            |
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `blue`               | color                 |    ✓    |           |            |
+| `green`              | color                 |    ✓    |           |            |
+| `indigo`             | color                 |    ✓    |           |            |
+| `main`               | animation             |         |           |            |
+| `orange`             | color                 |    ✓    |           |            |
+| `rainbow_with_white` | palette               |         |           |            |
+| `red`                | color                 |    ✓    |           |            |
+| `shutter_central`    | animation_constructor |         |           |     ✓      |
+| `white`              | color                 |    ✓    |           |            |
+| `yellow`             | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -1142,10 +1149,11 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol         | Type     | Builtin | Dangerous | Takes Args |
-|----------------|----------|---------|-----------|------------|
-| `pulse_effect` | template |         |           |            |
-| `red`          | color    |    ✓    |           |            |
+| Symbol         | Type                  | Builtin | Dangerous | Takes Args |
+|----------------|-----------------------|---------|-----------|------------|
+| `main`         | animation             |         |           |            |
+| `pulse_effect` | animation_constructor |         |           |     ✓      |
+| `red`          | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -1159,10 +1167,11 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol         | Type     | Builtin | Dangerous | Takes Args |
-|----------------|----------|---------|-----------|------------|
-| `pulse_effect` | template |         |           |            |
-| `red`          | color    |    ✓    |           |            |
+| Symbol         | Type                  | Builtin | Dangerous | Takes Args |
+|----------------|-----------------------|---------|-----------|------------|
+| `main`         | animation             |         |           |            |
+| `pulse_effect` | animation_constructor |         |           |     ✓      |
+| `red`          | color                 |    ✓    |           |            |
 
 ### Compilation Output
 

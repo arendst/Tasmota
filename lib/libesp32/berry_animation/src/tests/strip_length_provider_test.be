@@ -12,14 +12,14 @@ print("Testing StripLengthProvider...")
 
 # Create a mock LED strip for testing
 class MockStrip
-  var _length
+  var strip_length
   
   def init(length)
-    self._length = length
+    self.strip_length = length
   end
   
   def length()
-    return self._length
+    return self.strip_length
   end
   
   def set_pixel_color(index, color)
@@ -59,7 +59,7 @@ def test_basic_functionality()
     assert(result == length, f"Expected {length}, got {result}")
     
     # Test that parameter name doesn't matter
-    var result2 = provider.produce_value("width", 2000)
+    var result2 = provider.produce_value("strip_length", 2000)
     assert(result2 == length, f"Expected {length}, got {result2}")
     
     # Test that time doesn't matter
@@ -133,7 +133,7 @@ def test_engine_consistency()
   
   # Test that provider returns same value as engine properties
   var provider_length = provider.produce_value("length", 0)
-  var engine_width = engine.width
+  var engine_width = engine.strip_length
   var engine_strip_length = engine.get_strip_length()
   
   assert(provider_length == engine_width, f"Provider length {provider_length} != engine width {engine_width}")

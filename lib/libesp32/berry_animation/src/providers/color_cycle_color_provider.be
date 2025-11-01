@@ -159,7 +159,7 @@ class ColorCycleColorProvider : animation.color_provider
   # Get a color based on a value (maps value to position in cycle)
   # This method is kept for backward compatibility - brutal switching based on value
   #
-  # @param value: int/float - Value to map to a color (0-100)
+  # @param value: int/float - Value to map to a color (0-255 range)
   # @param time_ms: int - Current time in milliseconds (ignored for value-based color)
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color_for_value(value, time_ms)
@@ -173,15 +173,15 @@ class ColorCycleColorProvider : animation.color_provider
       return self._get_color_at_index(0)  # If only one color, just return it
     end
     
-    # Clamp value to 0-100
+    # Clamp value to 0-255
     if value < 0
       value = 0
-    elif value > 100
-      value = 100
+    elif value > 255
+      value = 255
     end
     
     # Map value directly to color index (brutal switching using integer math)
-    var color_index = tasmota.scale_uint(value, 0, 100, 0, palette_size - 1)
+    var color_index = tasmota.scale_uint(value, 0, 255, 0, palette_size - 1)
     
     # Clamp to valid range
     if color_index >= palette_size

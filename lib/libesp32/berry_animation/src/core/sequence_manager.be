@@ -2,12 +2,12 @@
 # Handles async execution of animation sequences without blocking delays
 # Supports sub-sequences and repeat logic through recursive composition
 #
-# Extends Playable to provide the common interface for lifecycle management,
+# Extends ParameterizedObject to provide parameter management and playable interface,
 # allowing sequences to be treated uniformly with animations by the engine.
 
 import "./core/param_encoder" as encode_constraints
 
-class SequenceManager : animation.playable
+class SequenceManager : animation.parameterized_object
   # Non-parameter instance variables
   var active_sequence # Currently running sequence
   var sequence_state  # Current sequence execution state
@@ -19,12 +19,6 @@ class SequenceManager : animation.playable
   var repeat_count    # Number of times to repeat this sequence (-1 for forever, 0 for no repeat)
   var current_iteration # Current iteration (0-based)
   var is_repeat_sequence # Whether this is a repeat sub-sequence
-  
-  # Parameter definitions (extends Playable's PARAMS)
-  static var PARAMS = animation.enc_params({
-    # Inherited from Playable: is_running
-    # SequenceManager has no additional parameters beyond Playable
-  })
   
   def init(engine, repeat_count)
     # Initialize parameter system with engine
@@ -91,7 +85,7 @@ class SequenceManager : animation.playable
   def start(time_ms)
     # Stop any current sequence
     if self.is_running
-      self.values["is_running"] = false
+      self.is_running = false
       # Stop any sub-sequences
       self.stop_all_subsequences()
     end
@@ -100,18 +94,16 @@ class SequenceManager : animation.playable
     self.step_index = 0
     self.step_start_time = time_ms
     self.current_iteration = 0
-    self.values["is_running"] = true
+    self.is_running = true
     
-    # Initialize start_time if not already set
-    if self.start_time == nil
-      self.start_time = time_ms
-    end
+    # Always set start_time for restart behavior
+    self.start_time = time_ms
     
     # FIXED: Check repeat count BEFORE starting execution
     # If repeat_count is 0, don't execute at all
     var resolved_repeat_count = self.get_resolved_repeat_count()
     if resolved_repeat_count == 0
-      self.values["is_running"] = false
+      self.is_running = false
       return self
     end
     
@@ -148,7 +140,7 @@ class SequenceManager : animation.playable
   # Stop this sequence manager
   def stop()
     if self.is_running
-      self.values["is_running"] = false
+      self.is_running = false
       
       # Pop iteration context from engine stack if this is a repeat sequence
       if self.is_repeat_sequence
@@ -433,7 +425,7 @@ class SequenceManager : animation.playable
       end
     else
       # All iterations complete
-      self.values["is_running"] = false
+      self.is_running = false
       
       # Pop iteration context from engine stack if this is a repeat sequence
       if self.is_repeat_sequence

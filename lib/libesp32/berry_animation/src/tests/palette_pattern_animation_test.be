@@ -9,13 +9,15 @@ import animation
 # Create a mock engine for testing
 class MockEngine
   var time_ms
+  var strip_length
   
   def init()
     self.time_ms = 1000  # Fixed time for testing
+    self.strip_length = 10
   end
   
   def get_strip_length()
-    return 10  # Mock strip length
+    return self.strip_length  # Mock strip length
   end
 end
 

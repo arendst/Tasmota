@@ -478,7 +478,7 @@ _validate_value_provider_factory_exists(func_name)
 ```
 _validate_single_parameter(func_name, param_name, animation_instance)
 ├── Use introspection to check if parameter exists
-├── Call instance._has_param(param_name) for validation
+├── Call instance.has_param(param_name) for validation
 ├── Report detailed error messages with line numbers
 ├── Validate immediately as parameters are parsed
 └── Graceful error handling to ensure transpiler robustness
@@ -740,7 +740,7 @@ get_error_report()
 
 ### Animation Module Integration
 - **Factory function discovery** via introspection with existence checking
-- **Parameter validation** using instance methods and _has_param()
+- **Parameter validation** using instance methods and has_param()
 - **Symbol resolution** using module contents with fallback handling
 - **Mathematical function detection** using dynamic introspection of ClosureValueProvider
 - **Automatic strip initialization** when no explicit strip configuration

@@ -100,6 +100,7 @@ def run_all_tests()
     
     # Value provider tests
     "lib/libesp32/berry_animation/src/tests/core_value_provider_test.be",
+    "lib/libesp32/berry_animation/src/tests/value_provider_integration_test.be",
     "lib/libesp32/berry_animation/src/tests/test_time_ms_requirement.be",
     "lib/libesp32/berry_animation/src/tests/value_provider_test.be",
     "lib/libesp32/berry_animation/src/tests/oscillator_value_provider_test.be",
@@ -125,7 +126,6 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/palette_dsl_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_parameter_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_value_provider_validation_test.be",
-    "lib/libesp32/berry_animation/src/tests/dsl_template_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_template_animation_test.be",  # Tests template animation feature
     "lib/libesp32/berry_animation/src/tests/dsl_undefined_identifier_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_newline_syntax_test.be",

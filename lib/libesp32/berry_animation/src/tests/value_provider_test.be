@@ -159,6 +159,130 @@ def test_lifecycle_methods()
   print("✓ Lifecycle methods test passed")
 end
 
+# Test value provider registration in EngineProxy
+def test_value_provider_registration()
+  print("Testing ValueProvider registration in EngineProxy...")
+  
+  # Create a mock LED strip
+  var strip = Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Get the root proxy (engine delegates to this)
+  var proxy = engine.root_animation
+  
+  # Create a simple value provider (oscillator)
+  # It should auto-register with the engine (which delegates to root_animation)
+  var oscillator = animation.triangle(engine)
+  oscillator.min_value = 0
+  oscillator.max_value = 255
+  oscillator.duration = 2000
+  
+  # Test: Start proxy (should NOT auto-start value provider)
+  var start_time = 1000
+  proxy.start(start_time)
+  assert(proxy.is_running == true, "Proxy should be running")
+  assert(oscillator.is_running == false, "Value provider should NOT be auto-started by proxy")
+  
+  # Test: Manually start value provider and update proxy
+  oscillator.start(start_time)
+  assert(oscillator.is_running == true, "Value provider should be running after manual start")
+  
+  var update_time = 2000
+  proxy.update(update_time)
+  
+  # Value provider should have been updated
+  var value = oscillator.produce_value("test", update_time)
+  assert(value != nil, "Value provider should produce a value")
+  
+  # Test: Stop proxy (should NOT auto-stop value provider)
+  proxy.stop()
+  assert(proxy.is_running == false, "Proxy should be stopped")
+  assert(oscillator.is_running == true, "Value provider should still be running after proxy stop")
+  
+  # Manually stop the value provider
+  oscillator.stop()
+  assert(oscillator.is_running == false, "Value provider should be stopped after manual stop")
+  
+  # Test: Clear proxy (should clear value providers)
+  proxy.clear()
+  assert(size(proxy.value_providers) == 0, "Proxy should have no value providers after clear")
+  
+  # Test: Remove value provider
+  var oscillator2 = animation.triangle(engine)
+  proxy.add(oscillator2)
+  assert(size(proxy.value_providers) == 1, "Should have 1 provider after add")
+  
+  var removed = proxy.remove(oscillator2)
+  assert(removed == true, "Value provider should be removed successfully")
+  assert(size(proxy.value_providers) == 0, "Proxy should have no value providers after remove")
+  
+  print("✓ ValueProvider registration test passed")
+end
+
+# Test multiple value providers
+def test_multiple_value_providers()
+  print("Testing multiple ValueProviders in EngineProxy...")
+  
+  var strip = Leds(30)
+  var engine = animation.create_engine(strip)
+  var proxy = animation.engine_proxy(engine)
+  
+  var osc1 = animation.triangle(engine)
+  var osc2 = animation.smooth(engine)
+  var osc3 = animation.sine_osc(engine)
+  
+  proxy.add(osc1)
+  proxy.add(osc2)
+  proxy.add(osc3)
+  
+  assert(size(proxy.value_providers) == 3, "Should have 3 value providers")
+  
+  # Manually start all value providers (simulating what animations would do)
+  osc1.start(3000)
+  osc2.start(3000)
+  osc3.start(3000)
+  
+  proxy.start(3000)
+  assert(osc1.is_running == true, "Oscillator 1 should be running")
+  assert(osc2.is_running == true, "Oscillator 2 should be running")
+  assert(osc3.is_running == true, "Oscillator 3 should be running")
+  
+  proxy.update(4000)
+  # All should be updated (we can't directly verify, but no errors means success)
+  
+  proxy.stop()
+  # Value providers should still be running (not auto-stopped by proxy)
+  assert(osc1.is_running == true, "Oscillator 1 should still be running")
+  assert(osc2.is_running == true, "Oscillator 2 should still be running")
+  assert(osc3.is_running == true, "Oscillator 3 should still be running")
+  
+  # Manually stop them
+  osc1.stop()
+  osc2.stop()
+  osc3.stop()
+  
+  print("✓ Multiple ValueProviders test passed")
+end
+
+# Test is_empty() includes value_providers
+def test_is_empty_with_value_providers()
+  print("Testing is_empty() with ValueProviders...")
+  
+  var strip = Leds(30)
+  var engine = animation.create_engine(strip)
+  var proxy = animation.engine_proxy(engine)
+  
+  assert(proxy.is_empty() == true, "Proxy should be empty initially")
+  
+  proxy.add(animation.triangle(engine))
+  assert(proxy.is_empty() == false, "Proxy should not be empty with value provider")
+  
+  proxy.clear()
+  assert(proxy.is_empty() == true, "Proxy should be empty after clear")
+  
+  print("✓ is_empty() with ValueProviders test passed")
+end
+
 # Run all tests
 def run_value_provider_tests()
   print("=== ValueProvider Base Class Tests ===")
@@ -170,7 +294,12 @@ def run_value_provider_tests()
     test_parameterized_object_integration()
     test_lifecycle_methods()
     
-    print("=== All ValueProvider base class tests passed! ===")
+    print("\n=== ValueProvider Registration Tests ===")
+    test_value_provider_registration()
+    test_multiple_value_providers()
+    test_is_empty_with_value_providers()
+    
+    print("\n=== All ValueProvider tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

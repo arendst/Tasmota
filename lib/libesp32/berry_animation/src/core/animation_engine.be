@@ -7,7 +7,7 @@
 class AnimationEngine
   # Core properties
   var strip                 # LED strip object
-  var width                 # Strip width (cached for performance)
+  var strip_length          # Strip length (cached for performance)
   var root_animation        # Root EngineProxy that holds all children
   var frame_buffer          # Main frame buffer
   var temp_buffer           # Temporary buffer for blending
@@ -32,12 +32,28 @@ class AnimationEngine
   var hw_time_sum           # Sum of hardware output times
   var hw_time_min           # Minimum hardware output time
   var hw_time_max           # Maximum hardware output time
+  
+  # Intermediate measurement point metrics
+  var phase1_time_sum       # Sum of phase 1 times (ts_start to ts_1)
+  var phase1_time_min       # Minimum phase 1 time
+  var phase1_time_max       # Maximum phase 1 time
+  var phase2_time_sum       # Sum of phase 2 times (ts_1 to ts_2)
+  var phase2_time_min       # Minimum phase 2 time
+  var phase2_time_max       # Maximum phase 2 time
+  var phase3_time_sum       # Sum of phase 3 times (ts_2 to ts_3)
+  var phase3_time_min       # Minimum phase 3 time
+  var phase3_time_max       # Maximum phase 3 time
+  
   var last_stats_time       # Last time stats were printed
   var stats_period          # Stats reporting period (5000ms)
   
-  # Custom profiling points
-  var profile_points        # Map of profile point name -> {count, sum, min, max}
-  var profile_start_times   # Map of profile point name -> start time
+  # Profiling timestamps (only store timestamps, compute durations in _record_tick_metrics)
+  var ts_start              # Timestamp: tick start
+  var ts_1                  # Timestamp: intermediate measure point 1 (optional)
+  var ts_2                  # Timestamp: intermediate measure point 2 (optional)
+  var ts_3                  # Timestamp: intermediate measure point 3 (optional)
+  var ts_hw                 # Timestamp: hardware output complete
+  var ts_end                # Timestamp: tick end
   
   # Initialize the animation engine for a specific LED strip
   def init(strip)
@@ -46,15 +62,15 @@ class AnimationEngine
     end
     
     self.strip = strip
-    self.width = strip.length()
+    self.strip_length = strip.length()
+    
+    # Create frame buffers
+    self.frame_buffer = animation.frame_buffer(self.strip_length)
+    self.temp_buffer = animation.frame_buffer(self.strip_length)
     
     # Create root EngineProxy to manage all children
     self.root_animation = animation.engine_proxy(self)
     self.root_animation.name = "root"
-    
-    # Create frame buffers
-    self.frame_buffer = animation.frame_buffer(self.width)
-    self.temp_buffer = animation.frame_buffer(self.width)
     
     # Initialize state
     self.is_running = false
@@ -74,12 +90,28 @@ class AnimationEngine
     self.hw_time_sum = 0
     self.hw_time_min = 999999
     self.hw_time_max = 0
+    
+    # Initialize intermediate phase metrics
+    self.phase1_time_sum = 0
+    self.phase1_time_min = 999999
+    self.phase1_time_max = 0
+    self.phase2_time_sum = 0
+    self.phase2_time_min = 999999
+    self.phase2_time_max = 0
+    self.phase3_time_sum = 0
+    self.phase3_time_min = 999999
+    self.phase3_time_max = 0
+    
     self.last_stats_time = 0
     self.stats_period = 5000
     
-    # Initialize custom profiling
-    self.profile_points = {}
-    self.profile_start_times = {}
+    # Initialize profiling timestamps
+    self.ts_start = nil
+    self.ts_1 = nil
+    self.ts_2 = nil
+    self.ts_3 = nil
+    self.ts_hw = nil
+    self.ts_end = nil
   end
   
   # Run the animation engine
@@ -117,9 +149,9 @@ class AnimationEngine
     return self
   end
   
-  # Add a playable object (animation or sequence) to the root animation
+  # Add an animation or sequence to the root animation
   # 
-  # @param obj: Playable - The playable object to add
+  # @param obj: Animation|SequenceManager - The object to add
   # @return bool - True if added, false if already exists
   def add(obj)
     var ret = self.root_animation.add(obj)
@@ -129,9 +161,9 @@ class AnimationEngine
     return ret
   end
   
-  # Remove a playable object from the root animation
+  # Remove an animation or sequence from the root animation
   # 
-  # @param obj: Playable - The playable object to remove
+  # @param obj: Animation|SequenceManager - The object to remove
   # @return bool - True if removed, false if not found
   def remove(obj)
     var ret = self.root_animation.remove(obj)
@@ -156,10 +188,10 @@ class AnimationEngine
     end
     
     # Start timing this tick
-    var tick_start = tasmota.millis()
+    self.ts_start = tasmota.millis()
     
     if current_time == nil
-      current_time = tick_start
+      current_time = self.ts_start
     end
     
     # Check if strip length changed since last time
@@ -185,16 +217,11 @@ class AnimationEngine
     self._process_events(current_time)
     
     # Update and render root animation (which updates all children)
-    # Measure animation calculation time separately
-    var anim_start = tasmota.millis()
     self._update_and_render(current_time)
-    var anim_end = tasmota.millis()
-    var anim_duration = anim_end - anim_start
     
     # End timing and record metrics
-    var tick_end = tasmota.millis()
-    var tick_duration = tick_end - tick_start
-    self._record_tick_metrics(tick_duration, anim_duration, current_time)
+    self.ts_end = tasmota.millis()
+    self._record_tick_metrics(current_time)
     
     return true
   end
@@ -204,41 +231,39 @@ class AnimationEngine
     # Update root animation (which updates all children)
     self.root_animation.update(time_ms)
     
+    self.ts_1 = tasmota.millis()
     # Skip rendering if no children
     if self.root_animation.is_empty()
       if self.render_needed
         self._clear_strip()
         self.render_needed = false
       end
-      return 0  # Return 0 for hardware time when no rendering
+      return
     end
     
     # Clear main buffer
     self.frame_buffer.clear()
     
+    self.ts_2 = tasmota.millis()
     # Render root animation (which renders all children with blending)
     var rendered = self.root_animation.render(self.frame_buffer, time_ms)
     
-    if rendered
-      # Apply root animation's post-processing (opacity, etc.)
-      self.root_animation.post_render(self.frame_buffer, time_ms)
-    end
-    
-    # Measure hardware output time separately
-    var hw_start = tasmota.millis()
+    self.ts_3 = tasmota.millis()
+    # Output to hardware and measure time
     self._output_to_strip()
-    var hw_end = tasmota.millis()
-    var hw_duration = hw_end - hw_start
+    self.ts_hw = tasmota.millis()
     
     self.render_needed = false
-    return hw_duration
   end
   
   # Output frame buffer to LED strip
   def _output_to_strip()
     var i = 0
-    while i < self.width
-      self.strip.set_pixel_color(i, self.frame_buffer.get_pixel_color(i))
+    var strip_length = self.strip_length
+    var strip = self.strip
+    var pixels = self.frame_buffer.pixels
+    while i < strip_length
+      strip.set_pixel_color(i, pixels.get(i * 4, 4))
       i += 1
     end
     self.strip.show()
@@ -260,41 +285,112 @@ class AnimationEngine
   end
   
   # Record tick metrics and print stats periodically
-  def _record_tick_metrics(tick_duration, anim_duration, current_time)
+  def _record_tick_metrics(current_time)
+    # Compute durations from timestamps (only if timestamps are not nil)
+    var tick_duration = nil
+    var anim_duration = nil
+    var hw_duration = nil
+    var phase1_duration = nil
+    var phase2_duration = nil
+    var phase3_duration = nil
+    
+    # Total tick duration: from start to end
+    if self.ts_start != nil && self.ts_end != nil
+      tick_duration = self.ts_end - self.ts_start
+    end
+    
+    # Animation duration: from ts_2 (after event processing) to ts_3 (before hardware)
+    if self.ts_2 != nil && self.ts_3 != nil
+      anim_duration = self.ts_3 - self.ts_2
+    end
+    
+    # Hardware duration: from ts_3 (before hardware) to ts_hw (after hardware)
+    if self.ts_3 != nil && self.ts_hw != nil
+      hw_duration = self.ts_hw - self.ts_3
+    end
+    
+    # Phase 1: from ts_start to ts_1 (initial checks)
+    if self.ts_start != nil && self.ts_1 != nil
+      phase1_duration = self.ts_1 - self.ts_start
+    end
+    
+    # Phase 2: from ts_1 to ts_2 (event processing)
+    if self.ts_1 != nil && self.ts_2 != nil
+      phase2_duration = self.ts_2 - self.ts_1
+    end
+    
+    # Phase 3: from ts_2 to ts_3 (animation update/render)
+    if self.ts_2 != nil && self.ts_3 != nil
+      phase3_duration = self.ts_3 - self.ts_2
+    end
+    
     # Initialize stats time on first tick
     if self.last_stats_time == 0
       self.last_stats_time = current_time
     end
     
-    # Update streaming statistics (no array storage)
+    # Update streaming statistics (only if durations are valid)
     self.tick_count += 1
-    self.tick_time_sum += tick_duration
     
-    # Update tick min/max
-    if tick_duration < self.tick_time_min
-      self.tick_time_min = tick_duration
-    end
-    if tick_duration > self.tick_time_max
-      self.tick_time_max = tick_duration
-    end
-    
-    # Update animation calculation stats
-    self.anim_time_sum += anim_duration
-    if anim_duration < self.anim_time_min
-      self.anim_time_min = anim_duration
-    end
-    if anim_duration > self.anim_time_max
-      self.anim_time_max = anim_duration
+    if tick_duration != nil
+      self.tick_time_sum += tick_duration
+      if tick_duration < self.tick_time_min
+        self.tick_time_min = tick_duration
+      end
+      if tick_duration > self.tick_time_max
+        self.tick_time_max = tick_duration
+      end
     end
     
-    # Hardware time is the difference between total and animation time
-    var hw_duration = tick_duration - anim_duration
-    self.hw_time_sum += hw_duration
-    if hw_duration < self.hw_time_min
-      self.hw_time_min = hw_duration
+    if anim_duration != nil
+      self.anim_time_sum += anim_duration
+      if anim_duration < self.anim_time_min
+        self.anim_time_min = anim_duration
+      end
+      if anim_duration > self.anim_time_max
+        self.anim_time_max = anim_duration
+      end
     end
-    if hw_duration > self.hw_time_max
-      self.hw_time_max = hw_duration
+    
+    if hw_duration != nil
+      self.hw_time_sum += hw_duration
+      if hw_duration < self.hw_time_min
+        self.hw_time_min = hw_duration
+      end
+      if hw_duration > self.hw_time_max
+        self.hw_time_max = hw_duration
+      end
+    end
+    
+    # Update phase metrics
+    if phase1_duration != nil
+      self.phase1_time_sum += phase1_duration
+      if phase1_duration < self.phase1_time_min
+        self.phase1_time_min = phase1_duration
+      end
+      if phase1_duration > self.phase1_time_max
+        self.phase1_time_max = phase1_duration
+      end
+    end
+    
+    if phase2_duration != nil
+      self.phase2_time_sum += phase2_duration
+      if phase2_duration < self.phase2_time_min
+        self.phase2_time_min = phase2_duration
+      end
+      if phase2_duration > self.phase2_time_max
+        self.phase2_time_max = phase2_duration
+      end
+    end
+    
+    if phase3_duration != nil
+      self.phase3_time_sum += phase3_duration
+      if phase3_duration < self.phase3_time_min
+        self.phase3_time_min = phase3_duration
+      end
+      if phase3_duration > self.phase3_time_max
+        self.phase3_time_max = phase3_duration
+      end
     end
     
     # Check if it's time to print stats (every 5 seconds)
@@ -313,6 +409,15 @@ class AnimationEngine
       self.hw_time_sum = 0
       self.hw_time_min = 999999
       self.hw_time_max = 0
+      self.phase1_time_sum = 0
+      self.phase1_time_min = 999999
+      self.phase1_time_max = 0
+      self.phase2_time_sum = 0
+      self.phase2_time_min = 999999
+      self.phase2_time_max = 0
+      self.phase3_time_sum = 0
+      self.phase3_time_min = 999999
+      self.phase3_time_max = 0
       self.last_stats_time = current_time
     end
   end
@@ -339,77 +444,24 @@ class AnimationEngine
     var stats_msg = f"AnimEngine: ticks={self.tick_count}/{int(expected_ticks)} missed={int(missed_ticks)} total={mean_time:.2f}ms({self.tick_time_min}-{self.tick_time_max}) anim={mean_anim:.2f}ms({self.anim_time_min}-{self.anim_time_max}) hw={mean_hw:.2f}ms({self.hw_time_min}-{self.hw_time_max}) cpu={cpu_percent:.1f}%"
     tasmota.log(stats_msg, 3)  # Log level 3 (DEBUG)
     
-    # Print custom profiling points if any
-    self._print_profile_points()
-  end
-  
-  # Custom profiling API - start measuring a code section
-  # 
-  # @param name: string - Name of the profiling point
-  # 
-  # Usage:
-  #   engine.profile_start("my_section")
-  #   # ... code to measure ...
-  #   engine.profile_end("my_section")
-  def profile_start(name)
-    self.profile_start_times[name] = tasmota.millis()
-  end
-  
-  # Custom profiling API - end measuring a code section
-  # 
-  # @param name: string - Name of the profiling point (must match profile_start)
-  def profile_end(name)
-    var start_time = self.profile_start_times.find(name)
-    if start_time == nil
-      return  # No matching start
+    # Print intermediate phase metrics if available
+    if self.phase1_time_sum > 0
+      var mean_phase1 = self.phase1_time_sum / self.tick_count
+      var phase1_msg = f"  Phase1(checks): mean={mean_phase1:.2f}ms({self.phase1_time_min}-{self.phase1_time_max})"
+      tasmota.log(phase1_msg, 3)
     end
     
-    var end_time = tasmota.millis()
-    var duration = end_time - start_time
-    
-    # Get or create stats for this profile point
-    var stats = self.profile_points.find(name)
-    if stats == nil
-      stats = {
-        'count': 0,
-        'sum': 0,
-        'min': 999999,
-        'max': 0
-      }
-      self.profile_points[name] = stats
+    if self.phase2_time_sum > 0
+      var mean_phase2 = self.phase2_time_sum / self.tick_count
+      var phase2_msg = f"  Phase2(events): mean={mean_phase2:.2f}ms({self.phase2_time_min}-{self.phase2_time_max})"
+      tasmota.log(phase2_msg, 3)
     end
     
-    # Update streaming statistics
-    stats['count'] += 1
-    stats['sum'] += duration
-    if duration < stats['min']
-      stats['min'] = duration
+    if self.phase3_time_sum > 0
+      var mean_phase3 = self.phase3_time_sum / self.tick_count
+      var phase3_msg = f"  Phase3(anim): mean={mean_phase3:.2f}ms({self.phase3_time_min}-{self.phase3_time_max})"
+      tasmota.log(phase3_msg, 3)
     end
-    if duration > stats['max']
-      stats['max'] = duration
-    end
-    
-    # Clear start time
-    self.profile_start_times.remove(name)
-  end
-  
-  # Print custom profiling points statistics
-  def _print_profile_points()
-    if size(self.profile_points) == 0
-      return
-    end
-    
-    for name: self.profile_points.keys()
-      var stats = self.profile_points[name]
-      if stats['count'] > 0
-        var mean = stats['sum'] / stats['count']
-        var msg = f"  Profile[{name}]: count={stats['count']} mean={mean:.2f}ms min={stats['min']}ms max={stats['max']}ms"
-        tasmota.log(msg, 3)
-      end
-    end
-    
-    # Reset profile points for next period
-    self.profile_points = {}
   end
   
   # Interrupt current animations
@@ -450,7 +502,7 @@ class AnimationEngine
   end
   
   def get_strip_length()
-    return self.width
+    return self.strip_length
   end
   
   def is_active()
@@ -481,7 +533,7 @@ class AnimationEngine
   # @return bool - True if strip lengtj was changed, false otherwise
   def check_strip_length()
     var current_length = self.strip.length()
-    if current_length != self.width
+    if current_length != self.strip_length
       self._handle_strip_length_change(current_length)
       return true  # Length changed
     end
@@ -494,7 +546,7 @@ class AnimationEngine
       return  # Invalid length, ignore
     end
     
-    self.width = new_length
+    self.strip_length = new_length
     
     # Resize existing frame buffers instead of creating new ones
     self.frame_buffer.resize(new_length)

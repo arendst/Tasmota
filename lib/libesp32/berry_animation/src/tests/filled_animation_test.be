@@ -16,6 +16,11 @@ class MockEngine
   def get_strip_length()
     return 10  # Mock strip length
   end
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    return true
+  end
 end
 
 var mock_engine = MockEngine()

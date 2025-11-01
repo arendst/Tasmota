@@ -24,10 +24,10 @@ class ColorProvider : animation.value_provider
     return 0xFFFFFFFF  # Default white
   end
   
-  # Get a color based on a value (0-100 by default)
+  # Get a color based on a value (0-255 range)
   # This method is useful for mapping values to colors in different contexts
   #
-  # @param value: int/float - Value to map to a color (typically 0-100)
+  # @param value: int/float - Value to map to a color (0-255 range)
   # @param time_ms: int - Optional current time for time-based effects
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color_for_value(value, time_ms)
