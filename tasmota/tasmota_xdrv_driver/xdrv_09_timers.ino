@@ -803,15 +803,15 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
   "}"
   "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{float:left;border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
-  "<fieldset style='text-align:center;'>"
+  "<fieldset style=text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br><label><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b></label><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
-  "' hidden><div id='bt'></div><br>"
+  "' hidden><div id='bt'></div><br><br><br><br><br>"
   "<div id='oa' name='oa'></div><br>"
   "<div>"
   "<label><input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b></label>&emsp;"
