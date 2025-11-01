@@ -543,6 +543,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_CSE7761              2  // Model 1/2 (DUALR3), 2/2 (POWCT)
 #define MAX_TWAI                 SOC_TWAI_CONTROLLER_NUM
 #define MAX_GPS_RX               3  // Baudrates 1 (9600), 2 (19200), 3 (38400)
+#define MAX_MKSKYBLU_IF          8  // maximum number of MakeSkyBlue solar charger
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                                     // Not used
@@ -1019,8 +1020,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_V9240_RX),                          //  Serial V9240 interface
 #endif
 #ifdef USE_MAKE_SKY_BLUE
-  AGPIO(GPIO_MKSKYBLU_TX),
-  AGPIO(GPIO_MKSKYBLU_RX),
+  AGPIO(GPIO_MKSKYBLU_TX) + AGMAX(MAX_MKSKYBLU_IF),
+  AGPIO(GPIO_MKSKYBLU_RX) + AGMAX(MAX_MKSKYBLU_IF),
 #endif
 #endif  // USE_ENERGY_SENSOR
 
