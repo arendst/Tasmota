@@ -1156,18 +1156,21 @@ class SimpleDSLTranspiler
     elif tok.type == 0 #-animation_dsl.Token.KEYWORD-# && tok.value == "repeat"
       self.process_repeat_statement_fluent()
       
+    elif tok.type == 0 #-animation_dsl.Token.KEYWORD-# && tok.value == "if"
+      self.process_if_statement_fluent()
+      
     elif tok.type == 1 #-animation_dsl.Token.IDENTIFIER-#
       # Check if this is a property assignment (identifier.property = value)
       if self.peek() != nil && self.peek().type == 33 #-animation_dsl.Token.DOT-#
         self.process_sequence_assignment_fluent()
       else
         # Unknown identifier in sequence - this is an error
-        self.error(f"Unknown command '{tok.value}' in sequence. Valid sequence commands are: play, wait, repeat, restart, log, or property assignments (object.property = value)")
+        self.error(f"Unknown command '{tok.value}' in sequence. Valid sequence commands are: play, wait, repeat, if, restart, log, or property assignments (object.property = value)")
         self.skip_statement()
       end
     else
       # Unknown token type in sequence - this is an error
-      self.error(f"Invalid statement in sequence. Expected: play, wait, repeat, restart, log, or property assignments")
+      self.error(f"Invalid statement in sequence. Expected: play, wait, repeat, if, restart, log, or property assignments")
       self.skip_statement()
     end
   end
@@ -1376,6 +1379,43 @@ class SimpleDSLTranspiler
     self.indent_level += 1
     
     # Process repeat body recursively - just call the same method
+    while !self.at_end() && !self.check_right_brace()
+      self.process_sequence_statement()
+    end
+    
+    self.expect_right_brace()
+    
+    # Decrease indentation level and close the sub-sequence
+    self.add(f"{self.get_indent()})")
+    self.indent_level -= 1
+  end
+
+  # Process if statement (conditional execution - runs 0 or 1 times based on boolean)
+  def process_if_statement_fluent()
+    self.next()  # skip 'if'
+    
+    # Parse condition expression - use CONTEXT_EXPRESSION to avoid automatic function wrapping
+    var condition_result = self.process_additive_expression(self.CONTEXT_EXPRESSION, true, false)
+    
+    self.expect_left_brace()
+    
+    # Create a nested sub-sequence with bool() wrapper to ensure 0 or 1 iterations
+    # Check if expression is dynamic (needs closure) or static (can be evaluated directly)
+    var repeat_count_expr
+    if condition_result.has_dynamic
+      # Dynamic expression - wrap in closure
+      repeat_count_expr = f"def (engine) return bool({condition_result.expr}) end"
+    else
+      # Static expression - evaluate directly
+      repeat_count_expr = f"bool({condition_result.expr})"
+    end
+    
+    self.add(f"{self.get_indent()}.push_repeat_subsequence(animation.sequence_manager(engine, {repeat_count_expr})")
+    
+    # Increase indentation level for nested content
+    self.indent_level += 1
+    
+    # Process if body recursively
     while !self.at_end() && !self.check_right_brace()
       self.process_sequence_statement()
     end

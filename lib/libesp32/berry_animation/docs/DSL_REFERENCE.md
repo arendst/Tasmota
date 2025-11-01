@@ -866,6 +866,84 @@ sequence cylon_eye {
 }
 ```
 
+#### If Statement
+
+Conditional execution statements that run their body 0 or 1 times based on a boolean condition:
+
+```berry
+if condition {                     # Execute if condition is true (non-zero)
+  play animation for 1s
+  wait 500ms
+}
+```
+
+**Condition Types:**
+- **Static values**: `if true { ... }`, `if false { ... }`, `if 5 { ... }`
+- **Variables**: `if flag { ... }` - using previously defined variables
+- **Template parameters**: `if self.enabled { ... }` - dynamic values from template parameters
+- **Computed expressions**: `if strip_length() > 30 { ... }` - calculated conditions
+
+**If Behavior:**
+- **Boolean Coercion**: All conditions are wrapped with `bool()` to ensure 0 or 1 iterations
+- **Static Optimization**: Static conditions (literals) are evaluated at compile time without closures
+- **Dynamic Evaluation**: Dynamic conditions (variables, parameters) are wrapped in closures
+- **Conditional Gate**: Useful for enabling/disabling parts of sequences based on flags
+
+**Examples:**
+```berry
+# Static condition
+sequence demo {
+  if true {
+    play animation for 1s
+  }
+}
+
+# Template parameter condition
+template animation configurable {
+  param enable_effect type bool default true
+  
+  color my_red = 0xFF0000
+  animation solid_red = solid(color=my_red)
+  
+  sequence main repeat forever {
+    if enable_effect {
+      play solid_red for 1s
+    }
+  }
+  
+  run main
+}
+
+# Variable condition
+set flag = true
+sequence conditional {
+  if flag {
+    play animation for 2s
+  }
+}
+
+# Bidirectional animation with flags
+template animation shutter_bidir {
+  param ascending type bool default true
+  param descending type bool default true
+  
+  sequence shutter_seq repeat forever {
+    if ascending {
+      play shutter_lr for 2s
+    }
+    if descending {
+      play shutter_rl for 2s
+    }
+  }
+  
+  run shutter_seq
+}
+```
+
+**Comparison with Repeat:**
+- `if condition { ... }` - Runs 0 or 1 times (boolean gate)
+- `repeat count times { ... }` - Runs exactly `count` times (iteration)
+
 #### Restart Statements
 
 Restart statements allow you to restart value providers and animations from their initial state during sequence execution:
@@ -1547,11 +1625,12 @@ property_assignment = identifier "." identifier "=" expression ;
 (* Sequences *)
 sequence = "sequence" identifier [ "repeat" ( expression "times" | "forever" ) ] "{" sequence_body "}" ;
 sequence_body = { sequence_statement } ;
-sequence_statement = play_stmt | wait_stmt | repeat_stmt | sequence_assignment | restart_stmt ;
+sequence_statement = play_stmt | wait_stmt | repeat_stmt | if_stmt | sequence_assignment | restart_stmt ;
 
 play_stmt = "play" identifier [ "for" time_expression ] ;
 wait_stmt = "wait" time_expression ;
 repeat_stmt = "repeat" ( expression "times" | "forever" ) "{" sequence_body "}" ;
+if_stmt = "if" expression "{" sequence_body "}" ;
 sequence_assignment = identifier "." identifier "=" expression ;
 restart_stmt = "restart" identifier ;
 
@@ -1676,7 +1755,8 @@ This applies to:
 - Palette definitions with VRGB conversion
 - Animation definitions with named parameters
 - Property assignments
-- Basic sequences (play, wait, repeat)
+- Basic sequences (play, wait, repeat, if)
+- **Conditional execution**: `if` statement for boolean-based conditional execution
 - Variable assignments with type conversion
 - Reserved name validation
 - Parameter validation at compile time
@@ -1693,7 +1773,7 @@ This applies to:
 - Error recovery (basic error reporting)
 
 ### ❌ Planned Features
-- Advanced control flow (if/else, choose random)
+- Advanced control flow (else, elif, choose random)
 - Event system and handlers
 - Variable references with $ syntax
 - Spatial operations and zones

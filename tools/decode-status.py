@@ -220,7 +220,7 @@ a_setoption = [[
     "(Energy) Do not add export energy to energy today (1)",
     "(GUI) Disable display of GUI device name (1)",
     "(WizMote) Enable WiZ Smart Remote support (1)",
-    "",
+    "(TLS) Enable ECDSA validation in addition to RSA",
     "","","","",
     "","","","",
     "","","",""

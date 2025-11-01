@@ -113,7 +113,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
+//#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE  // 2_7_8
+#define ARDUINO_CORE_RELEASE        "2.7.8"
 #endif  // ARDUINO_ESP8266_RELEASE
 
 #ifndef USE_ADC_VCC
@@ -194,7 +195,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #ifndef ARDUINO_ESP32_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
+//#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE  // 3_3_0
+#define ARDUINO_CORE_RELEASE        ESP_ARDUINO_VERSION_STR  // 3.3.0
 #endif  // ARDUINO_ESP32_RELEASE
 
 #ifdef USE_I2C_BUS2                                // If defined for ESP8266 undefine first

@@ -120,6 +120,10 @@ uint32_t ESP_getFlashChipSize(void) {
   return ESP.getFlashChipSize();
 }
 
+uint32_t ESP_getFlashChipSpeed(void) {
+  return ESP.getFlashChipSpeed();
+}
+
 uint32_t ESP_getPsramSize(void) {
   return 0;
 }

@@ -511,10 +511,12 @@ extern "C" {
     be_return(vm);
   }
 
-  // tcp.write(bytes | string) -> int
+  // tcp.write(bytes | string[, offset:int, len:int]) -> int
   int32_t wc_tcpasync_write(struct bvm *vm);
   int32_t wc_tcpasync_write(struct bvm *vm) {
     int32_t argc = be_top(vm);
+    int32_t offset = 0;
+    int32_t len = -1;   // send all of it
     if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
       AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
       const char * buf = nullptr;
@@ -525,8 +527,22 @@ extern "C" {
       } else { // bytes
         buf = (const char*) be_tobytes(vm, 2, &buf_len);
       }
-      size_t bw = tcp->write(buf, buf_len);
-      be_pushint(vm, bw);
+      if (argc >= 3 && be_isint(vm, 3)) { offset = be_toint(vm, 3); }
+      if (argc >= 4 && be_isint(vm, 4)) { len = be_toint(vm, 4); }
+
+      if (offset < 0) { offset = 0; }  // default to the beginning of the buffer
+      if (offset >= buf_len) { len = 0; offset = 0; }  // default to the end of the buffer (nothing to write)
+      else if (len < 0) { len = buf_len - offset; }  // default to the end of the buffer
+      else if (offset + len > buf_len) { len = buf_len - offset; }    // len is too long, adjust
+
+      if (len > 0) {
+        // now adjust the buffer with offset
+        buf_len += offset;
+        size_t bw = tcp->write(buf, buf_len);
+        be_pushint(vm, bw);
+      } else {
+        be_pushint(vm, 0);    // nothing to send
+      }
       be_return(vm);  /* return code */
     }
     be_raise(vm, kTypeError, nullptr);
