@@ -834,19 +834,18 @@ const char HTTP_FORM_TIMER3[] PROGMEM =
 #endif  // USE_SUNRISE
 
 #ifdef USE_UNISHOX_COMPRESSION
-const size_t HTTP_FORM_TIMER4_SIZE = 249;    // compressed size 119 bytes
-const char HTTP_FORM_TIMER4_COMPRESSED[] PROGMEM =
-        "\x3D\x3C\x32\xF8\xFC\x3D\x3C\xC2\x61\xD2\xF5\x19\x04\xCF\x87\xD8\xFE\x89\x42\x8F"
-        "\x33\x9C\xC8\x61\xB0\xF0\x7D\xAD\x10\xF8\x7D\x8A\xC3\xEC\xFC\x3D\x0E\xC0\x41\xC0"
-        "\x4F\xC3\xD0\xEC\xF0\xCB\xE3\xF0\xFD\x70\xEF\x0C\x3C\x1F\x5E\x04\x18\x80\xC0\x72"
-        "\x41\xBA\x09\xD9\x23\x1B\xE1\x87\x83\xD0\x71\xF8\x76\xCE\xC3\xAC\xF4\x3B\x07\x02"
-        "\x16\x68\x0C\x0B\x2C\x1F\x04\xDC\xB0\xF4\x3B\x04\xD3\x33\xF0\xF4\x1D\xF3\xF0\xF4"
-        "\x13\x4C\xD6\x88\x7C\x3E\xC4\xF1\xF6\xBA\xC6\xB3\xE1\xF6\x27\x8F\xB0\x42\xBA";
-#define HTTP_FORM_TIMER4 Decompress(HTTP_FORM_TIMER4_COMPRESSED, HTTP_FORM_TIMER4_SIZE).c_str()
+const size_t HTTP_FORM_TIMER4_SIZE = 249;
+const char HTTP_FORM_TIMER4_COMPRESSED[] PROGMEM = "\x3D\x3C\x32\xF8\xFC\x3D\x3C\xC2\x61\xD2\xF5\x19\x04\xCF\x87\xD8\xFE\x89\x42\x8F"
+                             "\x33\x9C\xC8\x61\xB0\xF0\x7D\xAD\x10\xF8\x7D\x8A\xC3\xEC\xFC\x3D\x0E\xC0\x41\xC0"
+                             "\x4F\xC3\xD0\xEC\xF0\xCB\xE3\xF0\xFD\x70\xEF\x0C\x3C\x1F\x5E\x04\x18\x80\xC0\x72"
+                             "\x41\xBA\x09\xD9\x23\x1B\xE1\x87\x83\xD0\x71\xF8\x76\xCE\xC3\xAC\xF4\x3B\x07\x02"
+                             "\x16\x68\x0C\x0B\x2C\x1F\x04\xDC\xB0\xF4\x3B\x04\xD3\x33\xF0\xF4\x1D\xF3\xF0\xF4"
+                             "\x13\x4C\xD6\x88\x7C\x3E\xC4\xF1\xF6\xBA\xC6\xB3\xE1\xF6\x27\x8F\xB0\x42\xBA";
+#define  HTTP_FORM_TIMER4       Decompress(HTTP_FORM_TIMER4_COMPRESSED,HTTP_FORM_TIMER4_SIZE).c_str()
 #else
 const char HTTP_FORM_TIMER4[] PROGMEM =
   "<span><select style='width:60px;' id='ho'></select></span>"
-  "&nbsp;%s&nbsp;"
+  "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
   "<span><select style='width:60px;' id='mi'></select></span>"
   "&emsp;<b>+/-</b>&nbsp;"
   "<span><select style='width:60px;' id='mw'></select></span>"
@@ -889,7 +888,11 @@ void HandleTimerConfiguration(void)
 #else
   WSContentSend_P(HTTP_FORM_TIMER3);
 #endif  // USE_SUNRISE
-  WSContentSend_P(HTTP_FORM_TIMER4, D_HOUR_MINUTE_SEPARATOR);
+#ifdef USE_UNISHOX_COMPRESSION
+  WSContentSend_P(HTTP_FORM_TIMER4,D_HOUR_MINUTE_SEPARATOR);
+#else
+  WSContentSend_P(HTTP_FORM_TIMER4);
+#endif //USE_UNISHOX_COMPRESSION
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
