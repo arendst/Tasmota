@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - InfluxDb receives IPAddress as a value regression from v15.0.1.3 (#24031)
 - Scripter UDP and switch case (#24060)
 - TuyaMCU v1 soft lock when WIFI_SELECT / WIFI_RESET is initiated (#24063)
+- HASPmota `scale` and `angle` for images
 
 ### Removed
 
