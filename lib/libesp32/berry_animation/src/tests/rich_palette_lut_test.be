@@ -51,11 +51,11 @@ provider.produce_value("color", 0)
 
 # Debug: Check palette
 log(f"Palette size: {size(provider.palette)} bytes")
-log(f"Slots: {provider.slots}")
+log(f"Slots: {provider._slots}")
 log("Range: 0 to 255 (fixed)")
 
 # Force LUT rebuild
-provider.lut_dirty = true
+provider._lut_dirty = true
 
 # Test key values
 var test_values = [0, 2, 4, 50, 100, 150, 200, 254, 255]
@@ -75,19 +75,19 @@ log("")
 log("Test 2: LUT invalidation on parameter changes")
 log("----------------------------------------------")
 
-provider.lut_dirty = false
-log(f"Initial lut_dirty: {provider.lut_dirty}")
+provider._lut_dirty = false
+log(f"Initial _lut_dirty: {provider._lut_dirty}")
 
 provider.brightness = 200
-log(f"After brightness change: lut_dirty = {provider.lut_dirty}")
+log(f"After brightness change: _lut_dirty = {provider._lut_dirty}")
 
-provider.lut_dirty = false
+provider._lut_dirty = false
 provider.transition_type = animation.SINE
-log(f"After transition_type change: lut_dirty = {provider.lut_dirty}")
+log(f"After transition_type change: _lut_dirty = {provider._lut_dirty}")
 
-provider.lut_dirty = false
+provider._lut_dirty = false
 provider.palette = bytes("00FF0000" "FFFFFF00" "FF00FF00")
-log(f"After palette change: lut_dirty = {provider.lut_dirty}")
+log(f"After palette change: _lut_dirty = {provider._lut_dirty}")
 
 log("")
 

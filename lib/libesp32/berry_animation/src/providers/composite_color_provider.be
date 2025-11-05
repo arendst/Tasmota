@@ -49,7 +49,12 @@ class CompositeColorProvider : animation.color_provider
     end
     
     if size(self.providers) == 1
-      return self.providers[0].produce_value(name, time_ms)
+      var color = self.providers[0].produce_value(name, time_ms)
+      var brightness = self.brightness
+      if brightness != 255
+        return self.apply_brightness(color, brightness)
+      end
+      return color
     end
     
     var result_color = self.providers[0].produce_value(name, time_ms)
@@ -61,6 +66,11 @@ class CompositeColorProvider : animation.color_provider
       i += 1
     end
     
+    # Apply brightness scaling to final composite color
+    var brightness = self.brightness
+    if brightness != 255
+      return self.apply_brightness(result_color, brightness)
+    end
     return result_color
   end
   
@@ -75,7 +85,12 @@ class CompositeColorProvider : animation.color_provider
     end
     
     if size(self.providers) == 1
-      return self.providers[0].get_color_for_value(value, time_ms)
+      var color = self.providers[0].get_color_for_value(value, time_ms)
+      var brightness = self.brightness
+      if brightness != 255
+        return self.apply_brightness(color, brightness)
+      end
+      return color
     end
     
     var result_color = self.providers[0].get_color_for_value(value, time_ms)
@@ -87,6 +102,11 @@ class CompositeColorProvider : animation.color_provider
       i += 1
     end
     
+    # Apply brightness scaling to final composite color
+    var brightness = self.brightness
+    if brightness != 255
+      return self.apply_brightness(result_color, brightness)
+    end
     return result_color
   end
   

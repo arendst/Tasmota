@@ -258,14 +258,7 @@ class AnimationEngine
   
   # Output frame buffer to LED strip
   def _output_to_strip()
-    var i = 0
-    var strip_length = self.strip_length
-    var strip = self.strip
-    var pixels = self.frame_buffer.pixels
-    while i < strip_length
-      strip.set_pixel_color(i, pixels.get(i * 4, 4))
-      i += 1
-    end
+    self.strip.push_pixels_buffer_argb(self.frame_buffer.pixels)
     self.strip.show()
   end
   

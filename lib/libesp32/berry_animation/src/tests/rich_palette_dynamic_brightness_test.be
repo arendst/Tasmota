@@ -42,7 +42,7 @@ var b = color_at_255 & 0xFF
 log(f"  RGB({r:3d}, {g:3d}, {b:3d}) = 0x{color_at_255:08X}")
 
 # Verify LUT is not dirty
-log(f"LUT dirty after initial build: {provider.lut_dirty}")
+log(f"LUT dirty after initial build: {provider._lut_dirty}")
 log("")
 
 # Change brightness multiple times and verify LUT stays valid
@@ -50,7 +50,7 @@ var brightness_values = [200, 150, 100, 50, 255]
 for brightness : brightness_values
   provider.brightness = brightness
   log(f"Changed brightness to {brightness}")
-  log(f"  LUT dirty: {provider.lut_dirty}")
+  log(f"  LUT dirty: {provider._lut_dirty}")
   
   var color = provider.get_color_for_value(128, 0)
   r = (color >> 16) & 0xFF
@@ -148,25 +148,25 @@ rebuild_provider.cycle_period = 0
 
 # Force initial build
 rebuild_provider.get_color_for_value(128, 0)
-log(f"After initial build: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After initial build: lut_dirty = {rebuild_provider._lut_dirty}")
 
 # Change brightness - should NOT trigger rebuild
 rebuild_provider.brightness = 100
-log(f"After brightness change: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After brightness change: lut_dirty = {rebuild_provider._lut_dirty}")
 rebuild_provider.get_color_for_value(128, 0)
-log(f"After lookup with new brightness: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After lookup with new brightness: lut_dirty = {rebuild_provider._lut_dirty}")
 
 # Change palette - SHOULD trigger rebuild
 rebuild_provider.palette = bytes("00FF0000" "FFFFFF00")
-log(f"After palette change: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After palette change: lut_dirty = {rebuild_provider._lut_dirty}")
 rebuild_provider.get_color_for_value(128, 0)
-log(f"After lookup with new palette: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After lookup with new palette: lut_dirty = {rebuild_provider._lut_dirty}")
 
 # Change transition_type - SHOULD trigger rebuild
 rebuild_provider.transition_type = animation.SINE
-log(f"After transition_type change: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After transition_type change: lut_dirty = {rebuild_provider._lut_dirty}")
 rebuild_provider.get_color_for_value(128, 0)
-log(f"After lookup with new transition: lut_dirty = {rebuild_provider.lut_dirty}")
+log(f"After lookup with new transition: lut_dirty = {rebuild_provider._lut_dirty}")
 
 log("")
 log("=== All tests completed successfully ===")

@@ -139,7 +139,14 @@ class ColorCycleColorProvider : animation.color_provider
       if (idx >= palette_size)    idx = palette_size - 1    end
       if (idx < 0)                idx = 0                   end
       self.current_index = idx
-      return self._get_color_at_index(self.current_index)
+      var color = self._get_color_at_index(self.current_index)
+      
+      # Apply brightness scaling
+      var brightness = self.brightness
+      if brightness != 255
+        return self.apply_brightness(color, brightness)
+      end
+      return color
     end
     
     # Auto-cycle mode: calculate which color to show based on time (brutal switching using integer math)
@@ -151,9 +158,16 @@ class ColorCycleColorProvider : animation.color_provider
       color_index = palette_size - 1
     end
     
-    # Update current state and return the color
+    # Update current state and get the color
     self.current_index = color_index
-    return self._get_color_at_index(color_index)
+    var color = self._get_color_at_index(color_index)
+    
+    # Apply brightness scaling
+    var brightness = self.brightness
+    if brightness != 255
+      return self.apply_brightness(color, brightness)
+    end
+    return color
   end
   
   # Get a color based on a value (maps value to position in cycle)
@@ -170,7 +184,12 @@ class ColorCycleColorProvider : animation.color_provider
     end
     
     if palette_size == 1
-      return self._get_color_at_index(0)  # If only one color, just return it
+      var color = self._get_color_at_index(0)  # If only one color, just return it
+      var brightness = self.brightness
+      if brightness != 255
+        return self.apply_brightness(color, brightness)
+      end
+      return color
     end
     
     # Clamp value to 0-255
@@ -188,7 +207,14 @@ class ColorCycleColorProvider : animation.color_provider
       color_index = palette_size - 1
     end
     
-    return self._get_color_at_index(color_index)
+    var color = self._get_color_at_index(color_index)
+    
+    # Apply brightness scaling
+    var brightness = self.brightness
+    if brightness != 255
+      return self.apply_brightness(color, brightness)
+    end
+    return color
   end
   
   # String representation of the provider

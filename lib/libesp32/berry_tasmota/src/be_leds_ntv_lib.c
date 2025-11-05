@@ -12,6 +12,7 @@
 extern int be_tasmotaled_call_native(bvm *vm);
 extern int be_leds_blend_color(bvm *vm);
 extern int be_leds_apply_bri_gamma(bvm *vm);
+extern int be_leds_set_pixels(bvm *vm);
 
 /* @const_object_info_begin
 class be_class_Leds_ntv (scope: global, name: Leds_ntv, strings: weak) {
@@ -29,6 +30,8 @@ class be_class_Leds_ntv (scope: global, name: Leds_ntv, strings: weak) {
 
   blend_color, static_func(be_leds_blend_color)
   apply_bri_gamma, static_func(be_leds_apply_bri_gamma)
+
+  set_pixels, static_func(be_leds_set_pixels)
 }
 @const_object_info_end */
 

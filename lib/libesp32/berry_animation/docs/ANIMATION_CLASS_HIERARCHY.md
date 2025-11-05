@@ -331,7 +331,10 @@ Base interface for all color providers. Inherits from `ValueProvider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| *(none)* | - | - | - | Base interface has no parameters |
+| `brightness` | int | 255 | 0-255 | Overall brightness scaling for all colors |
+
+**Static Methods**:
+- `apply_brightness(color, brightness)` - Applies brightness scaling to a color (ARGB format). Only performs scaling if brightness is not 255 (full brightness). This is a static utility method that can be called without an instance.
 
 **Factory**: N/A (base interface)
 
@@ -342,6 +345,7 @@ Returns a single, static color. Inherits from `ColorProvider`.
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `color` | int | 0xFFFFFFFF | - | The solid color to return |
+| *(inherits brightness from ColorProvider)* | | | | |
 
 #### Usage Examples
 
@@ -370,6 +374,7 @@ Cycles through a palette of colors with brutal switching. Inherits from `ColorPr
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
 | `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwards by `n` colors |
 | `palette_size` | int | 3 | read-only | Number of colors in the palette (automatically updated when palette changes) |
+| *(inherits brightness from ColorProvider)* | | | | |
 
 **Note**: The `get_color_for_value()` method accepts values in the 0-255 range for value-based color mapping.
 
@@ -406,7 +411,7 @@ Generates colors from predefined palettes with smooth transitions and profession
 | `palette` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
-| `brightness` | int | 255 | 0-255 | Overall brightness scaling |
+| *(inherits brightness from ColorProvider)* | | | | |
 
 #### Available Predefined Palettes
 
@@ -453,10 +458,11 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `base_color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
-| `min_brightness` | int | 0 | 0-255 | Minimum brightness level |
-| `max_brightness` | int | 255 | 0-255 | Maximum brightness level |
+| `min_brightness` | int | 0 | 0-255 | Minimum brightness level (breathing effect) |
+| `max_brightness` | int | 255 | 0-255 | Maximum brightness level (breathing effect) |
 | `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
+| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied after breathing effect |
 | *(inherits all OscillatorValueProvider parameters)* | | | | |
 
 **Curve Factor Effects:**
@@ -518,6 +524,7 @@ Combines multiple color providers with blending. Inherits from `ColorProvider`.
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `blend_mode` | int | 0 | enum: [0,1,2] | 0=overlay, 1=add, 2=multiply |
+| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied to final composite color |
 
 **Factory**: `animation.composite_color(engine)`
 

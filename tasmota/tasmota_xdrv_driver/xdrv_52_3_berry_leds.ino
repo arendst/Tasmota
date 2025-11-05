@@ -325,6 +325,77 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
+
+  // Leds.set_pixels(buffer:bytes, pixels_buffer:comptr, pixels_count:int, [pixel_size:int = 3, bri:int (0..255) = 255, gamma:bool = true]) -> void
+  //
+  // Copies the pixels from the buffer to the driver, from 0xAARRGGBB buffer
+  // to either 0xRRGGBB or 0xWWRRGGBB, applying brightness (0..255) and
+  // optional gamma correction
+  int32_t be_leds_set_pixels(bvm *vm);
+  int32_t be_leds_set_pixels(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top >= 3 && be_isbytes(vm, 1) && be_iscomptr(vm, 2) && be_isint(vm, 3)) {
+      // Get parameters
+      // arg1: buffer:bytes
+      size_t buffer_length;
+      uint32_t * buffer = (uint32_t*) be_tobytes(vm, 1, &buffer_length);
+      // arg2: pixels:comptr
+      uint8_t * pixels = (uint8_t*) be_tocomptr(vm, 2);
+      // arg3: pixels_count:int
+      int32_t pixels_count = be_toint(vm, 3);
+      // arg4: pixel_size:int
+      size_t pixel_size = 3;    // 0xRRGGBB
+      if (top >= 4 && be_isint(vm, 4)) {
+        pixel_size = be_toint(vm, 4);
+      }
+      if (pixel_size < 3) { pixel_size = 3; }
+      if (pixel_size > 4) { pixel_size = 4; }
+      // arg5: bri:int (0..255)
+      int32_t bri255 = 255;
+      if (top >= 3 && be_isint(vm, 5)) {
+        bri255 = be_toint(vm, 5);
+      }
+      if (bri255 < 0)  { bri255 = 0; }
+      if (bri255 > 255) { bri255 = 255; }
+      // arg6: gamma:bool
+      bool gamma = true;
+      if (top >= 6 && be_isbool(vm, 6)) {
+        gamma = be_tobool(vm, 6);
+      }
+
+      // now do the stuff
+      uint8_t * p = pixels;
+      for (uint32_t i = 0; i < pixels_count; i++) {
+        uint32_t argb = buffer[i];                        // get 0xAARRGGBB, we drop the AA alpha channel
+        uint8_t r = (argb >> 16) & 0xFF;
+        uint8_t g = (argb >>  8) & 0xFF;
+        uint8_t b = (argb      ) & 0xFF;
+        uint8_t w = 0;                                    // for now we set white channel to zero
+
+        // apply brigthness
+        if (bri255 < 255) {
+          r = changeUIntScale(bri255, 0, 255, 0, r);
+          g = changeUIntScale(bri255, 0, 255, 0, g);
+          b = changeUIntScale(bri255, 0, 255, 0, b);
+        }
+        // apply gamma
+        if (gamma) {
+          r = ledGamma(r);
+          g = ledGamma(g);
+          b = ledGamma(b);
+        }
+        // set pixel in strip
+        if (pixel_size == 4) { *p++ = 0;}
+        *p++ = r;
+        *p++ = g;
+        *p++ = b;
+      }
+      
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+  
 }
 
 #endif // USE_WS2812

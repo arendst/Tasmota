@@ -202,7 +202,7 @@ class RichPaletteAnimationTest
     # Test value-based color generation (now always 0-255 range)
     provider.start()
     provider.update()
-    print(f"{provider.slots_arr=} {provider.value_arr=}")
+    print(f"{provider._slots_arr=} {provider._value_arr=}")
     var color_0 = provider.get_color_for_value(0, 0)
     var color_128 = provider.get_color_for_value(128, 0)
     var color_255 = provider.get_color_for_value(255, 0)

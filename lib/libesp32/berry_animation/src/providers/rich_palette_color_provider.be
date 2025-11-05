@@ -33,38 +33,34 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:RichPaletteColorProvider,weak
 class RichPaletteColorProvider : animation.color_provider
   # Non-parameter instance variables only
-  var slots_arr        # Constructed array of timestamp slots, based on cycle_period
-  var value_arr        # Constructed array of value slots (always 0-255 range)
-  var slots            # Number of slots in the palette
-  var current_color    # Current interpolated color (calculated during update)
-  var light_state      # light_state instance for proper color calculations
-  var color_lut        # Color lookup table cache (129 entries: 0, 2, 4, ..., 254, 255)
-  var lut_dirty        # Flag indicating LUT needs rebuilding
-  var _brightness      # Cached value for `self.brightness` used during render()
+  var _slots_arr        # Constructed array of timestamp slots, based on cycle_period
+  var _value_arr        # Constructed array of value slots (always 0-255 range)
+  var _slots            # Number of slots in the palette
+  var _current_color    # Current interpolated color (calculated during update)
+  var _light_state      # light_state instance for proper color calculations
+  var _brightness       # Cached value for `self.brightness` used during render()
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
     "palette": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
-    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR},
-    "brightness": {"min": 0, "max": 255, "default": 255}
+    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR}
+    # brightness parameter inherited from ColorProvider base class
   })
   
   # Initialize a new RichPaletteColorProvider
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
-    super(self).init(engine)  # Initialize parameter system
+    super(self).init(engine)  # Initialize parameter system (also initializes LUT variables)
     
     # Initialize non-parameter instance variables
-    self.current_color = 0xFFFFFFFF
-    self.slots = 0
-    self.color_lut = nil
-    self.lut_dirty = true
+    self._current_color = 0xFFFFFFFF
+    self._slots = 0
     
     # Create light_state instance for proper color calculations (reuse from Animate_palette)
     import global
-    self.light_state = global.light_state(global.light_state.RGB)
+    self._light_state = global.light_state(global.light_state.RGB)
 
     # We need to register this value provider to receive 'update()'
     engine.add(self)
@@ -77,7 +73,7 @@ class RichPaletteColorProvider : animation.color_provider
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
     if name == "cycle_period" || name == "palette"
-      if (self.slots_arr != nil) || (self.value_arr != nil)
+      if (self._slots_arr != nil) || (self._value_arr != nil)
         # only if they were already computed
         self._recompute_palette()
       end
@@ -85,8 +81,9 @@ class RichPaletteColorProvider : animation.color_provider
     # Mark LUT as dirty when palette or transition_type changes
     # Note: brightness changes do NOT invalidate LUT since brightness is applied after lookup
     if name == "palette" || name == "transition_type"
-      self.lut_dirty = true
+      self._lut_dirty = true
     end
+    # Brightness changes do NOT invalidate LUT - brightness is applied after lookup
   end
   
   # Start/restart the animation cycle at a specific time
@@ -95,7 +92,7 @@ class RichPaletteColorProvider : animation.color_provider
   # @return self for method chaining
   def start(time_ms)
     # Compute arrays if they were not yet initialized
-    if (self.slots_arr == nil) && (self.value_arr == nil)
+    if (self._slots_arr == nil) && (self._value_arr == nil)
       self._recompute_palette()
     end
     super(self).start(time_ms)
@@ -123,25 +120,25 @@ class RichPaletteColorProvider : animation.color_provider
     # Compute slots_arr based on 'cycle_period'
     var cycle_period = self.cycle_period
     var palette_bytes = self._get_palette_bytes()
-    self.slots = size(palette_bytes) / 4
+    self._slots = size(palette_bytes) / 4
 
     # Recompute palette with new cycle period (only if > 0 for time-based cycling)
     if cycle_period > 0 && palette_bytes != nil
-      self.slots_arr = self._parse_palette(0, cycle_period - 1)
+      self._slots_arr = self._parse_palette(0, cycle_period - 1)
     else
-      self.slots_arr = nil
+      self._slots_arr = nil
     end
 
     # Compute value_arr for value-based mode (always 0-255 range)
     if self._get_palette_bytes() != nil
-      self.value_arr = self._parse_palette(0, 255)
+      self._value_arr = self._parse_palette(0, 255)
     else
-      self.value_arr = nil
+      self._value_arr = nil
     end
     
     # Set initial color
-    if self.slots > 0
-      self.current_color = self._get_color_at_index(0)
+    if self._slots > 0
+      self._current_color = self._get_color_at_index(0)
     end
     
     return self
@@ -155,7 +152,7 @@ class RichPaletteColorProvider : animation.color_provider
   def _parse_palette(min, max)
     var palette_bytes = self._get_palette_bytes()
     var arr = []
-    var slots = self.slots
+    var slots = self._slots
     arr.resize(slots)
 
     # Check if we have slots or values (exact logic from Animate_palette)
@@ -191,7 +188,7 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Get color at a specific index (simplified)
   def _get_color_at_index(idx)
-    if idx < 0 || idx >= self.slots
+    if idx < 0 || idx >= self._slots
       return 0xFFFFFFFF
     end
     
@@ -245,7 +242,7 @@ class RichPaletteColorProvider : animation.color_provider
   # @return bool - True if object is still running, false if completed
   def update(time_ms)
     # Rebuild LUT if dirty
-    if self.lut_dirty || self.color_lut == nil
+    if self._lut_dirty || self._color_lut == nil
       self._rebuild_color_lut()
     end
 
@@ -264,12 +261,12 @@ class RichPaletteColorProvider : animation.color_provider
     # Ensure time_ms is valid and initialize start_time if needed
     time_ms = self._fix_time_ms(time_ms)
 
-    if (self.slots_arr == nil) && (self.value_arr == nil)
+    if (self._slots_arr == nil) && (self._value_arr == nil)
       self._recompute_palette()
     end
     var palette_bytes = self._get_palette_bytes()
     
-    if palette_bytes == nil || self.slots < 2
+    if palette_bytes == nil || self._slots < 2
       return 0xFFFFFFFF
     end
     
@@ -284,7 +281,7 @@ class RichPaletteColorProvider : animation.color_provider
       var g = (bgrt0 >> 16) & 0xFF
       var b = (bgrt0 >> 24) & 0xFF
       
-      # Apply brightness scaling
+      # Apply brightness scaling (inline for speed)
       if brightness != 255
         r = tasmota.scale_uint(r, 0, 255, 0, brightness)
         g = tasmota.scale_uint(g, 0, 255, 0, brightness)
@@ -292,7 +289,7 @@ class RichPaletteColorProvider : animation.color_provider
       end
       
       var final_color = (0xFF << 24) | (r << 16) | (g << 8) | b
-      self.current_color = final_color
+      self._current_color = final_color
       return final_color
     end
     
@@ -301,17 +298,17 @@ class RichPaletteColorProvider : animation.color_provider
     var past = elapsed % cycle_period
     
     # Find slot (exact algorithm from Animate_palette)
-    var slots = self.slots
+    var slots = self._slots
     var idx = slots - 2
     while idx > 0
-      if past >= self.slots_arr[idx]    break   end
+      if past >= self._slots_arr[idx]    break   end
       idx -= 1
     end
     
     var bgrt0 = palette_bytes.get(idx * 4, 4)
     var bgrt1 = palette_bytes.get((idx + 1) * 4, 4)
-    var t0 = self.slots_arr[idx]
-    var t1 = self.slots_arr[idx + 1]
+    var t0 = self._slots_arr[idx]
+    var t1 = self._slots_arr[idx + 1]
     
     # Use interpolation based on transition_type (LINEAR or SINE)
     var r = self._interpolate(past, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)
@@ -319,7 +316,7 @@ class RichPaletteColorProvider : animation.color_provider
     var b = self._interpolate(past, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
 
     # Use light_state for proper brightness calculation (from Animate_palette)
-    var light_state = self.light_state
+    var light_state = self._light_state
     light_state.set_rgb((bgrt0 >>  8) & 0xFF, (bgrt0 >> 16) & 0xFF, (bgrt0 >> 24) & 0xFF)
     var bri0 = light_state.bri
     light_state.set_rgb((bgrt1 >>  8) & 0xFF, (bgrt1 >> 16) & 0xFF, (bgrt1 >> 24) & 0xFF)
@@ -332,7 +329,7 @@ class RichPaletteColorProvider : animation.color_provider
     g = light_state.g
     b = light_state.b
 
-    # Apply brightness scaling (from Animate_palette)
+    # Apply brightness scaling (inline for speed)
     if brightness != 255
       r = tasmota.scale_uint(r, 0, 255, 0, brightness)
       g = tasmota.scale_uint(g, 0, 255, 0, brightness)
@@ -341,7 +338,7 @@ class RichPaletteColorProvider : animation.color_provider
 
     # Create final color in ARGB format
     var final_color = (0xFF << 24) | (r << 16) | (g << 8) | b
-    self.current_color = final_color
+    self._current_color = final_color
     
     return final_color
   end
@@ -369,14 +366,14 @@ class RichPaletteColorProvider : animation.color_provider
   # - Little-endian format (native Berry integer representation)
   def _rebuild_color_lut()
     # Ensure palette arrays are initialized
-    if self.value_arr == nil
+    if self._value_arr == nil
       self._recompute_palette()
     end
     
     # Allocate LUT if needed (129 entries * 4 bytes = 516 bytes)
-    if self.color_lut == nil
-      self.color_lut = bytes()
-      self.color_lut.resize(129 * 4)
+    if self._color_lut == nil
+      self._color_lut = bytes()
+      self._color_lut.resize(129 * 4)
     end
     
     # Pre-compute colors for values 0, 2, 4, ..., 254 at max brightness
@@ -386,49 +383,49 @@ class RichPaletteColorProvider : animation.color_provider
       var color = self._get_color_for_value_uncached(value, 0)
       
       # Store color using efficient bytes.set()
-      self.color_lut.set(i * 4, color, 4)
+      self._color_lut.set(i * 4, color, 4)
       i += 1
     end
     
     # Add final entry for value 255 at max brightness
     var color_255 = self._get_color_for_value_uncached(255, 0)
-    self.color_lut.set(128 * 4, color_255, 4)
+    self._color_lut.set(128 * 4, color_255, 4)
     
-    self.lut_dirty = false
+    self._lut_dirty = false
   end
   
   # Get color for a specific value WITHOUT using cache (internal method)
   # This is the original implementation moved to a separate method
+  # Colors are returned at MAXIMUM brightness (255) - brightness scaling applied separately
   #
   # @param value: int/float - Value to map to a color (0-255 range)
   # @param time_ms: int - Current time in milliseconds (ignored for value-based color)
-  # @return int - Color in ARGB format
+  # @return int - Color in ARGB format at maximum brightness
   def _get_color_for_value_uncached(value, time_ms)
-    if (self.slots_arr == nil) && (self.value_arr == nil)
+    if (self._slots_arr == nil) && (self._value_arr == nil)
       self._recompute_palette()
     end
     var palette_bytes = self._get_palette_bytes()
-    var brightness = self.brightness
     
     # Find slot (exact algorithm from Animate_palette.set_value)
-    var slots = self.slots
+    var slots = self._slots
     var idx = slots - 2
     while idx > 0
-      if value >= self.value_arr[idx]    break   end
+      if value >= self._value_arr[idx]    break   end
       idx -= 1
     end
     
     var bgrt0 = palette_bytes.get(idx * 4, 4)
     var bgrt1 = palette_bytes.get((idx + 1) * 4, 4)
-    var t0 = self.value_arr[idx]
-    var t1 = self.value_arr[idx + 1]
+    var t0 = self._value_arr[idx]
+    var t1 = self._value_arr[idx + 1]
     
     # Use interpolation based on transition_type (LINEAR or SINE)
     var r = self._interpolate(value, t0, t1, (bgrt0 >>  8) & 0xFF, (bgrt1 >>  8) & 0xFF)
     var g = self._interpolate(value, t0, t1, (bgrt0 >> 16) & 0xFF, (bgrt1 >> 16) & 0xFF)
     var b = self._interpolate(value, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
     
-    # Create final color in ARGB format
+    # Create final color in ARGB format at maximum brightness
     return (0xFF << 24) | (r << 16) | (g << 8) | b
   end
   
@@ -448,7 +445,7 @@ class RichPaletteColorProvider : animation.color_provider
   #
   # Brightness handling:
   # - LUT stores colors at maximum brightness (255)
-  # - Actual brightness scaling applied here after lookup
+  # - Actual brightness scaling applied here after lookup using static method
   # - This allows brightness to change dynamically without invalidating LUT
   #
   # @param value: int/float - Value to map to a color (0-255 range)
@@ -469,7 +466,7 @@ class RichPaletteColorProvider : animation.color_provider
     
     # Retrieve color from LUT using efficient bytes.get()
     # This color is at maximum brightness (255)
-    var color = self.color_lut.get(lut_index * 4, 4)
+    var color = self._color_lut.get(lut_index * 4, 4)
     
     # Apply brightness scaling if not at maximum
     var brightness = self._brightness
@@ -521,7 +518,7 @@ class RichPaletteColorProvider : animation.color_provider
   # String representation
   def tostring()
     try
-      return f"RichPaletteColorProvider(slots={self.slots}, cycle_period={self.cycle_period})"
+      return f"RichPaletteColorProvider(slots={self._slots}, cycle_period={self.cycle_period})"
     except ..
       return "RichPaletteColorProvider(uninitialized)"
     end

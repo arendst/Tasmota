@@ -14,7 +14,7 @@ palette rainbow_with_white = [
 ]
 
 # define a color attribute that cycles over time, cycle is 10 seconds
-color rainbow_rich_color = rich_palette(palette=rainbow_with_white, cycle_period=10s, transition_type=SINE)
+color rainbow_rich_color = rich_palette(palette=rainbow_with_white, cycle_period=0, transition_type=SINE)
 
 # since strip_length is dynamic, we need to map it to a variable
 set strip_len = strip_length()
