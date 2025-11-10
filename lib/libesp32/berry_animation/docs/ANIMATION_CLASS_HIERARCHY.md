@@ -14,24 +14,23 @@ This document provides a comprehensive reference for all classes in the Berry An
 ## Class Hierarchy
 
 ```
-ParameterizedObject
-├── Playable (base interface for animations and sequences)
-│   ├── Animation (unified base class for all visual elements)
-│   │   ├── EngineProxy (combines rendering and orchestration)
-│   │   │   └── (user-defined template animations)
-│   │   ├── SolidAnimation (solid color fill)
-│   │   ├── BeaconAnimation (pulse at specific position)
-│   │   ├── CrenelPositionAnimation (crenel/square wave pattern)
-│   │   ├── BreatheAnimation (breathing effect)
-│   │   ├── PalettePatternAnimation (base for palette-based animations)
-│   │   ├── CometAnimation (moving comet with tail)
-│   │   ├── FireAnimation (realistic fire effect)
-│   │   ├── TwinkleAnimation (twinkling stars effect)
-│   │   ├── GradientAnimation (color gradients)
-│   │   ├── NoiseAnimation (Perlin noise patterns)
-│   │   ├── WaveAnimation (wave motion effects)
-│   │   └── RichPaletteAnimation (smooth palette transitions)
-│   └── SequenceManager (orchestrates animation sequences)
+ParameterizedObject (base class with parameter management and playable interface)
+├── Animation (unified base class for all visual elements)
+│   ├── EngineProxy (combines rendering and orchestration)
+│   │   └── (user-defined template animations)
+│   ├── SolidAnimation (solid color fill)
+│   ├── BeaconAnimation (pulse at specific position)
+│   ├── CrenelPositionAnimation (crenel/square wave pattern)
+│   ├── BreatheAnimation (breathing effect)
+│   ├── PalettePatternAnimation (base for palette-based animations)
+│   ├── CometAnimation (moving comet with tail)
+│   ├── FireAnimation (realistic fire effect)
+│   ├── TwinkleAnimation (twinkling stars effect)
+│   ├── GradientAnimation (color gradients)
+│   ├── NoiseAnimation (Perlin noise patterns)
+│   ├── WaveAnimation (wave motion effects)
+│   └── RichPaletteAnimation (smooth palette transitions)
+├── SequenceManager (orchestrates animation sequences)
 └── ValueProvider (dynamic value generation)
     ├── StaticValueProvider (wraps static values)
     ├── StripLengthProvider (provides LED strip length)
@@ -50,11 +49,22 @@ ParameterizedObject
 
 ### ParameterizedObject
 
-Base class for all parameterized objects in the framework.
+Base class for all parameterized objects in the framework. Provides parameter management with validation, storage, and retrieval, as well as the playable interface for lifecycle management (start/stop/update).
+
+This unified base class enables:
+- Consistent parameter handling across all framework objects
+- Unified engine management (animations and sequences treated uniformly)
+- Hybrid objects that combine rendering and orchestration
+- Consistent lifecycle management (start/stop/update)
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| *(none)* | - | - | - | Base class has no parameters |
+| `is_running` | bool | false | - | Whether the object is active |
+
+**Key Methods**:
+- `start(time_ms)` - Start the object at a specific time
+- `stop()` - Stop the object
+- `update(time_ms)` - Update object state based on current time
 
 **Factory**: N/A (base class)
 
@@ -93,8 +103,8 @@ A specialized animation class that combines rendering and orchestration capabili
 - Used as base class for template animations
 
 **Child Management**:
-- `add(playable)` - Adds a child animation or sequence
-- `remove_child(playable)` - Removes a child
+- `add(obj)` - Adds a child animation or sequence
+- `remove(obj)` - Removes a child
 - Children are automatically started/stopped with parent
 - Children are rendered in priority order (higher priority on top)
 
@@ -321,7 +331,10 @@ Base interface for all color providers. Inherits from `ValueProvider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| *(none)* | - | - | - | Base interface has no parameters |
+| `brightness` | int | 255 | 0-255 | Overall brightness scaling for all colors |
+
+**Static Methods**:
+- `apply_brightness(color, brightness)` - Applies brightness scaling to a color (ARGB format). Only performs scaling if brightness is not 255 (full brightness). This is a static utility method that can be called without an instance.
 
 **Factory**: N/A (base interface)
 
@@ -332,6 +345,7 @@ Returns a single, static color. Inherits from `ColorProvider`.
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `color` | int | 0xFFFFFFFF | - | The solid color to return |
+| *(inherits brightness from ColorProvider)* | | | | |
 
 #### Usage Examples
 
@@ -358,8 +372,11 @@ Cycles through a palette of colors with brutal switching. Inherits from `ColorPr
 |-----------|------|---------|-------------|-------------|
 | `palette` | bytes | default palette | - | Palette bytes in AARRGGBB format |
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
-| `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwars by `n` colors |
+| `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwards by `n` colors |
 | `palette_size` | int | 3 | read-only | Number of colors in the palette (automatically updated when palette changes) |
+| *(inherits brightness from ColorProvider)* | | | | |
+
+**Note**: The `get_color_for_value()` method accepts values in the 0-255 range for value-based color mapping.
 
 **Modes**: Auto-cycle (`cycle_period > 0`) or Manual-only (`cycle_period = 0`)
 
@@ -394,9 +411,7 @@ Generates colors from predefined palettes with smooth transitions and profession
 | `palette` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
-| `brightness` | int | 255 | 0-255 | Overall brightness scaling |
-| `range_min` | int | 0 | - | Minimum value for value-based mapping |
-| `range_max` | int | 100 | - | Maximum value for value-based mapping |
+| *(inherits brightness from ColorProvider)* | | | | |
 
 #### Available Predefined Palettes
 
@@ -443,10 +458,11 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `base_color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
-| `min_brightness` | int | 0 | 0-255 | Minimum brightness level |
-| `max_brightness` | int | 255 | 0-255 | Maximum brightness level |
+| `min_brightness` | int | 0 | 0-255 | Minimum brightness level (breathing effect) |
+| `max_brightness` | int | 255 | 0-255 | Maximum brightness level (breathing effect) |
 | `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
+| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied after breathing effect |
 | *(inherits all OscillatorValueProvider parameters)* | | | | |
 
 **Curve Factor Effects:**
@@ -508,6 +524,7 @@ Combines multiple color providers with blending. Inherits from `ColorProvider`.
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `blend_mode` | int | 0 | enum: [0,1,2] | 0=overlay, 1=add, 2=multiply |
+| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied to final composite color |
 
 **Factory**: `animation.composite_color(engine)`
 
@@ -902,8 +919,6 @@ Creates smooth color transitions using rich palette data with direct parameter a
 | `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
 | `brightness` | int | 255 | 0-255 | Overall brightness scaling |
-| `range_min` | int | 0 | - | Minimum value for value-based mapping |
-| `range_max` | int | 100 | - | Maximum value for value-based mapping |
 | *(inherits all Animation parameters)* | | | | |
 
 **Special Features**: 

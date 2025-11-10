@@ -16,17 +16,6 @@ import "./core/param_encoder" as encode_constraints
 
 #@ solidify:ValueProvider,weak
 class ValueProvider : animation.parameterized_object
-  # Static parameter definitions - can be overridden by subclasses
-  static var PARAMS = animation.enc_params({
-    
-  })
-  
-  # Initialize the value provider
-  #
-  # @param engine: AnimationEngine - Reference to the animation engine (required)
-  def init(engine)
-    super(self).init(engine)  # Initialize parameter system
-  end
   
   # Produce a value for a specific parameter name and time
   # This is the main method that subclasses should override
@@ -45,6 +34,16 @@ class ValueProvider : animation.parameterized_object
   # @return any - Value appropriate for the parameter type
   def produce_value(name, time_ms)
     return module("undefined")  # Default behavior - return undefined
+  end
+
+  # Update object state based on current time
+  # Subclasses must override this to implement their update logic
+  #
+  # @param time_ms: int - Current time in milliseconds
+  # @return bool - True if object is still running, false if completed
+  def update(time_ms)
+    # Default implementation just returns running state
+    return self.is_running
   end
 end
 

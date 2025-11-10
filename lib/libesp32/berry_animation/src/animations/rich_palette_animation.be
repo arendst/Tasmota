@@ -20,11 +20,9 @@ class RichPaletteAnimation : animation.animation
     "palette": {"type": "instance", "default": nil},
     "cycle_period": {"min": 0, "default": 5000},
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
-    "brightness": {"min": 0, "max": 255, "default": 255},
-    "range_min": {"default": 0},
-    "range_max": {"default": 255}
+    "brightness": {"min": 0, "max": 255, "default": 255}
   })
-  
+    
   # Initialize a new RichPaletteAnimation
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
@@ -50,7 +48,7 @@ class RichPaletteAnimation : animation.animation
     super(self).on_param_changed(name, value)
     # Forward rich palette parameters to internal color provider
     if name == "palette" || name == "cycle_period" || name == "transition_type" || 
-       name == "brightness" || name == "range_min" || name == "range_max"
+       name == "brightness"
       # Set parameter on internal color provider
       self.color_provider.set_param(name, value)
     else

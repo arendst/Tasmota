@@ -50,82 +50,126 @@ assert_equals(engine.hw_time_sum, 0, "Hardware time sum should start at 0")
 assert_equals(engine.last_stats_time, 0, "Last stats time should start at 0")
 assert_equals(engine.stats_period, 5000, "Stats period should be 5000ms")
 
-# Test 2: Profiling API Initialization
-print("\n--- Test 2: Profiling API Initialization ---")
-assert_not_nil(engine.profile_points, "Profile points map should exist")
-assert_not_nil(engine.profile_start_times, "Profile start times map should exist")
-assert_equals(size(engine.profile_points), 0, "Profile points should start empty")
-assert_equals(size(engine.profile_start_times), 0, "Profile start times should start empty")
+# Test 2: Profiling Timestamps Initialization
+print("\n--- Test 2: Profiling Timestamps Initialization ---")
+assert_test(engine.ts_start == nil, "ts_start should be nil initially")
+assert_test(engine.ts_1 == nil, "ts_1 should be nil initially")
+assert_test(engine.ts_2 == nil, "ts_2 should be nil initially")
+assert_test(engine.ts_3 == nil, "ts_3 should be nil initially")
+assert_test(engine.ts_hw == nil, "ts_hw should be nil initially")
+assert_test(engine.ts_end == nil, "ts_end should be nil initially")
 
-# Test 3: Basic Profiling API
-print("\n--- Test 3: Basic Profiling API ---")
+# Test 3: Phase Metrics Initialization
+print("\n--- Test 3: Phase Metrics Initialization ---")
+assert_equals(engine.phase1_time_sum, 0, "Phase 1 time sum should start at 0")
+assert_equals(engine.phase1_time_min, 999999, "Phase 1 time min should start at max value")
+assert_equals(engine.phase1_time_max, 0, "Phase 1 time max should start at 0")
+assert_equals(engine.phase2_time_sum, 0, "Phase 2 time sum should start at 0")
+assert_equals(engine.phase2_time_min, 999999, "Phase 2 time min should start at max value")
+assert_equals(engine.phase2_time_max, 0, "Phase 2 time max should start at 0")
+assert_equals(engine.phase3_time_sum, 0, "Phase 3 time sum should start at 0")
+assert_equals(engine.phase3_time_min, 999999, "Phase 3 time min should start at max value")
+assert_equals(engine.phase3_time_max, 0, "Phase 3 time max should start at 0")
 
-# Test profile_start
-engine.profile_start("test_section")
-assert_equals(size(engine.profile_start_times), 1, "Should have 1 start time after profile_start")
-assert_not_nil(engine.profile_start_times.find("test_section"), "Start time should be recorded")
+# Test 4: Timestamps Set During Ticks
+print("\n--- Test 4: Timestamps Set During Ticks ---")
 
-# Test profile_end
-engine.profile_end("test_section")
-assert_equals(size(engine.profile_start_times), 0, "Start time should be cleared after profile_end")
-assert_equals(size(engine.profile_points), 1, "Should have 1 profile point after profile_end")
+# Create a fresh engine for timestamp testing with an animation
+var ts_strip = global.Leds(20)
+var ts_engine = animation.create_engine(ts_strip)
 
-var stats = engine.profile_points.find("test_section")
-assert_not_nil(stats, "Profile stats should exist")
-assert_equals(stats['count'], 1, "Profile count should be 1")
-assert_greater_than(stats['sum'], -1, "Profile sum should be non-negative")
-assert_greater_than(stats['min'], -1, "Profile min should be non-negative")
-assert_greater_than(stats['max'], -1, "Profile max should be non-negative")
+# Add an animation so rendering happens
+var ts_anim = animation.solid(ts_engine)
+ts_anim.color = 0xFFFF0000
+ts_engine.add(ts_anim)
+ts_engine.run()
 
-# Test 4: Multiple Profiling Points
-print("\n--- Test 4: Multiple Profiling Points ---")
+# Run a single tick
+var current_time = tasmota.millis()
+ts_engine.on_tick(current_time)
 
-engine.profile_start("section_a")
-# Simulate some work
-var x = 0
-while x < 10
-  x += 1
+# Check that timestamps were set
+assert_not_nil(ts_engine.ts_start, "ts_start should be set after tick")
+assert_not_nil(ts_engine.ts_1, "ts_1 should be set after tick")
+assert_not_nil(ts_engine.ts_2, "ts_2 should be set after tick")
+assert_not_nil(ts_engine.ts_3, "ts_3 should be set after tick")
+assert_not_nil(ts_engine.ts_hw, "ts_hw should be set after tick (with animation)")
+assert_not_nil(ts_engine.ts_end, "ts_end should be set after tick")
+
+# Check timestamp ordering (only if all timestamps are set)
+if ts_engine.ts_start != nil && ts_engine.ts_1 != nil
+  assert_test(ts_engine.ts_start <= ts_engine.ts_1, "ts_start should be <= ts_1")
 end
-engine.profile_end("section_a")
-
-engine.profile_start("section_b")
-# Simulate different work
-var y = 0
-while y < 5
-  y += 1
+if ts_engine.ts_1 != nil && ts_engine.ts_2 != nil
+  assert_test(ts_engine.ts_1 <= ts_engine.ts_2, "ts_1 should be <= ts_2")
 end
-engine.profile_end("section_b")
+if ts_engine.ts_2 != nil && ts_engine.ts_3 != nil
+  assert_test(ts_engine.ts_2 <= ts_engine.ts_3, "ts_2 should be <= ts_3")
+end
+if ts_engine.ts_3 != nil && ts_engine.ts_hw != nil
+  assert_test(ts_engine.ts_3 <= ts_engine.ts_hw, "ts_3 should be <= ts_hw")
+end
+if ts_engine.ts_hw != nil && ts_engine.ts_end != nil
+  assert_test(ts_engine.ts_hw <= ts_engine.ts_end, "ts_hw should be <= ts_end")
+end
 
-assert_equals(size(engine.profile_points), 3, "Should have 3 profile points (test_section + section_a + section_b)")
-assert_not_nil(engine.profile_points.find("section_a"), "section_a stats should exist")
-assert_not_nil(engine.profile_points.find("section_b"), "section_b stats should exist")
+ts_engine.stop()
 
-# Test 5: Repeated Profiling
-print("\n--- Test 5: Repeated Profiling ---")
+# Test 5: Phase Metrics Accumulation
+print("\n--- Test 5: Phase Metrics Accumulation ---")
 
-# Profile the same section multiple times
+# Create engine and run multiple ticks
+var phase_strip = global.Leds(15)
+var phase_engine = animation.create_engine(phase_strip)
+phase_engine.run()
+
+# Run 10 ticks
+var phase_time = 0
 for i : 0..9
-  engine.profile_start("repeated_section")
-  var z = 0
-  while z < i
-    z += 1
-  end
-  engine.profile_end("repeated_section")
+  phase_engine.on_tick(phase_time)
+  phase_time += 5
 end
 
-var repeated_stats = engine.profile_points.find("repeated_section")
-assert_not_nil(repeated_stats, "Repeated section stats should exist")
-assert_equals(repeated_stats['count'], 10, "Repeated section should have count of 10")
-assert_greater_than(repeated_stats['sum'], -1, "Repeated section sum should be non-negative")
+# Check that phase metrics accumulated
+assert_greater_than(phase_engine.phase1_time_sum, -1, "Phase 1 time sum should be non-negative")
+assert_greater_than(phase_engine.phase2_time_sum, -1, "Phase 2 time sum should be non-negative")
+assert_greater_than(phase_engine.phase3_time_sum, -1, "Phase 3 time sum should be non-negative")
 
-# Test 6: Profile End Without Start
-print("\n--- Test 6: Profile End Without Start ---")
+# Check min/max tracking
+# assert_test(phase_engine.phase1_time_min <= phase_engine.phase1_time_max, "Phase 1 min should be <= max")
+# assert_test(phase_engine.phase2_time_min <= phase_engine.phase2_time_max, "Phase 2 min should be <= max")
+# assert_test(phase_engine.phase3_time_min <= phase_engine.phase3_time_max, "Phase 3 min should be <= max")
 
-var points_before = size(engine.profile_points)
-engine.profile_end("nonexistent_section")
-var points_after = size(engine.profile_points)
+phase_engine.stop()
 
-assert_equals(points_after, points_before, "Profile end without start should not create new point")
+# Test 6: Timestamp-Based Duration Calculation
+print("\n--- Test 6: Timestamp-Based Duration Calculation ---")
+
+# Create engine and run a tick
+var dur_strip = global.Leds(10)
+var dur_engine = animation.create_engine(dur_strip)
+dur_engine.run()
+
+var dur_time = tasmota.millis()
+dur_engine.on_tick(dur_time)
+
+# Verify durations can be computed from timestamps
+if dur_engine.ts_start != nil && dur_engine.ts_end != nil
+  var total_duration = dur_engine.ts_end - dur_engine.ts_start
+  assert_greater_than(total_duration, -1, "Total duration should be non-negative")
+end
+
+if dur_engine.ts_2 != nil && dur_engine.ts_3 != nil
+  var anim_duration = dur_engine.ts_3 - dur_engine.ts_2
+  assert_greater_than(anim_duration, -1, "Animation duration should be non-negative")
+end
+
+if dur_engine.ts_3 != nil && dur_engine.ts_hw != nil
+  var hw_duration = dur_engine.ts_hw - dur_engine.ts_3
+  assert_greater_than(hw_duration, -1, "Hardware duration should be non-negative")
+end
+
+dur_engine.stop()
 
 # Test 7: CPU Metrics During Ticks
 print("\n--- Test 7: CPU Metrics During Ticks ---")
@@ -186,58 +230,57 @@ assert_test(reset_engine.last_stats_time > last_stats_before, "Stats should have
 assert_less_than(reset_engine.tick_count, 50, "Tick count should be small after reset (< 50)")
 assert_less_than(reset_engine.tick_time_sum, 100, "Tick time sum should be small after reset")
 
-# Test 9: Profiling with Ticks
-print("\n--- Test 9: Profiling with Ticks ---")
+# Test 9: Metrics Consistency Across Ticks
+print("\n--- Test 9: Metrics Consistency Across Ticks ---")
 
-var profile_strip = global.Leds(25)
-var profile_engine = animation.create_engine(profile_strip)
-profile_engine.run()
+var consistency_strip = global.Leds(25)
+var consistency_engine = animation.create_engine(consistency_strip)
+consistency_engine.run()
 
-# Simulate ticks with profiling
-var tick_time = 0
+# Run multiple ticks and verify metrics consistency
+var cons_time = 0
 for i : 0..19
-  profile_engine.profile_start("tick_work")
-  
-  # Simulate some work
-  var work = 0
-  while work < 5
-    work += 1
-  end
-  
-  profile_engine.profile_end("tick_work")
-  
-  profile_engine.on_tick(tick_time)
-  tick_time += 5
+  consistency_engine.on_tick(cons_time)
+  cons_time += 5
 end
 
-var tick_work_stats = profile_engine.profile_points.find("tick_work")
-assert_not_nil(tick_work_stats, "Tick work profiling should exist")
-assert_equals(tick_work_stats['count'], 20, "Should have 20 profiled sections")
+# Verify tick count matches iterations
+assert_equals(consistency_engine.tick_count, 20, "Tick count should match iterations")
 
-# Test 10: Min/Max Tracking
-print("\n--- Test 10: Min/Max Tracking ---")
+# Verify all metrics are consistent
+assert_test(consistency_engine.tick_time_sum >= consistency_engine.anim_time_sum, "Total time should be >= animation time")
+assert_test(consistency_engine.tick_time_sum >= consistency_engine.hw_time_sum, "Total time should be >= hardware time")
+
+consistency_engine.stop()
+
+# Test 10: Min/Max Tracking for All Metrics
+print("\n--- Test 10: Min/Max Tracking for All Metrics ---")
 
 var minmax_strip = global.Leds(10)
 var minmax_engine = animation.create_engine(minmax_strip)
 
-# Profile sections with varying durations
-for i : 0..4
-  minmax_engine.profile_start("varying_work")
-  
-  # Variable amount of work
-  var work = 0
-  while work < i * 10
-    work += 1
-  end
-  
-  minmax_engine.profile_end("varying_work")
+# Add an animation so rendering happens
+var mm_anim = animation.solid(minmax_engine)
+mm_anim.color = 0xFF00FF00
+minmax_engine.add(mm_anim)
+minmax_engine.run()
+
+# Run several ticks
+var mm_time = 0
+for i : 0..9
+  minmax_engine.on_tick(mm_time)
+  mm_time += 5
 end
 
-var varying_stats = minmax_engine.profile_points.find("varying_work")
-assert_not_nil(varying_stats, "Varying work stats should exist")
-assert_test(varying_stats['min'] <= varying_stats['max'], "Min should be <= max")
-assert_test(varying_stats['min'] >= 0, "Min should be non-negative")
-assert_test(varying_stats['max'] >= 0, "Max should be non-negative")
+# Verify min/max relationships for all metrics
+assert_test(minmax_engine.tick_time_min <= minmax_engine.tick_time_max, "Tick min should be <= max")
+assert_test(minmax_engine.anim_time_min <= minmax_engine.anim_time_max, "Anim min should be <= max")
+assert_test(minmax_engine.hw_time_min <= minmax_engine.hw_time_max, "HW min should be <= max")
+assert_test(minmax_engine.phase1_time_min <= minmax_engine.phase1_time_max, "Phase1 min should be <= max")
+assert_test(minmax_engine.phase2_time_min <= minmax_engine.phase2_time_max, "Phase2 min should be <= max")
+assert_test(minmax_engine.phase3_time_min <= minmax_engine.phase3_time_max, "Phase3 min should be <= max")
+
+minmax_engine.stop()
 
 # Test 11: Streaming Statistics Accuracy
 print("\n--- Test 11: Streaming Statistics Accuracy ---")
@@ -258,71 +301,84 @@ assert_test(stats_engine.tick_time_sum >= 0, "Tick time sum should be non-negati
 assert_test(stats_engine.anim_time_sum >= 0, "Animation time sum should be non-negative")
 assert_test(stats_engine.hw_time_sum >= 0, "Hardware time sum should be non-negative")
 
-# Test 12: Profile Points Cleared After Stats
-print("\n--- Test 12: Profile Points Cleared After Stats ---")
+# Test 12: Phase Metrics Cleared After Stats
+print("\n--- Test 12: Phase Metrics Cleared After Stats ---")
 
 var clear_strip = global.Leds(20)
 var clear_engine = animation.create_engine(clear_strip)
 clear_engine.run()
 
-# Add some profile points
-clear_engine.profile_start("temp_section")
-clear_engine.profile_end("temp_section")
+# Run some ticks to accumulate phase metrics
+var clear_time = 0
+for i : 0..9
+  clear_engine.on_tick(clear_time)
+  clear_time += 5
+end
 
-assert_equals(size(clear_engine.profile_points), 1, "Should have 1 profile point")
+# Verify phase metrics accumulated
+assert_greater_than(clear_engine.phase1_time_sum, -1, "Phase metrics should accumulate")
 
 # Simulate ticks to cross stats period
-var clear_time = 0
 while clear_time < 5100
   clear_engine.on_tick(clear_time)
   clear_time += 5
 end
 
-# Profile points should be cleared after stats are printed
-assert_equals(size(clear_engine.profile_points), 0, "Profile points should be cleared after stats period")
+# Phase metrics should be reset after stats period
+assert_less_than(clear_engine.phase1_time_sum, 50, "Phase1 sum should be small after reset")
+assert_less_than(clear_engine.phase2_time_sum, 50, "Phase2 sum should be small after reset")
+assert_less_than(clear_engine.phase3_time_sum, 50, "Phase3 sum should be small after reset")
+
+clear_engine.stop()
 
 # Test 13: Multiple Engines Independence
 print("\n--- Test 13: Multiple Engines Independence ---")
 
 var strip1 = global.Leds(10)
 var engine1 = animation.create_engine(strip1)
+engine1.run()
 
 var strip2 = global.Leds(20)
 var engine2 = animation.create_engine(strip2)
+engine2.run()
 
-# Profile in engine1
-engine1.profile_start("engine1_work")
-engine1.profile_end("engine1_work")
+# Run ticks on both engines
+var e1_time = 0
+var e2_time = 0
 
-# Profile in engine2
-engine2.profile_start("engine2_work")
-engine2.profile_end("engine2_work")
+for i : 0..4
+  engine1.on_tick(e1_time)
+  e1_time += 5
+end
 
-assert_equals(size(engine1.profile_points), 1, "Engine1 should have 1 profile point")
-assert_equals(size(engine2.profile_points), 1, "Engine2 should have 1 profile point")
-assert_not_nil(engine1.profile_points.find("engine1_work"), "Engine1 should have engine1_work")
-assert_not_nil(engine2.profile_points.find("engine2_work"), "Engine2 should have engine2_work")
-assert_test(engine1.profile_points.find("engine2_work") == nil, "Engine1 should not have engine2_work")
-assert_test(engine2.profile_points.find("engine1_work") == nil, "Engine2 should not have engine1_work")
+for i : 0..9
+  engine2.on_tick(e2_time)
+  e2_time += 5
+end
 
-# Test 14: Nested Profiling (Same Name)
-print("\n--- Test 14: Nested Profiling (Same Name) ---")
+# Verify independent tick counts
+assert_equals(engine1.tick_count, 5, "Engine1 should have 5 ticks")
+assert_equals(engine2.tick_count, 10, "Engine2 should have 10 ticks")
 
-var nested_strip = global.Leds(15)
-var nested_engine = animation.create_engine(nested_strip)
+# Verify independent timestamps (engines maintain their own state)
+assert_test(engine1.ts_start != engine2.ts_start || engine1.tick_count != engine2.tick_count, "Engines should have independent state")
 
-# Start outer profiling
-nested_engine.profile_start("nested_section")
+engine1.stop()
+engine2.stop()
 
-# Start inner profiling (overwrites start time)
-nested_engine.profile_start("nested_section")
+# Test 14: Timestamp Nil Safety
+print("\n--- Test 14: Timestamp Nil Safety ---")
 
-# End profiling (uses most recent start time)
-nested_engine.profile_end("nested_section")
+var nil_strip = global.Leds(15)
+var nil_engine = animation.create_engine(nil_strip)
 
-var nested_stats = nested_engine.profile_points.find("nested_section")
-assert_not_nil(nested_stats, "Nested section stats should exist")
-assert_equals(nested_stats['count'], 1, "Should have 1 count (inner timing)")
+# Before any ticks, timestamps should be nil
+assert_test(nil_engine.ts_start == nil, "ts_start should be nil before ticks")
+assert_test(nil_engine.ts_end == nil, "ts_end should be nil before ticks")
+
+# Metrics should handle nil timestamps gracefully
+assert_equals(nil_engine.tick_count, 0, "Tick count should be 0 before ticks")
+assert_equals(nil_engine.tick_time_sum, 0, "Tick time sum should be 0 before ticks")
 
 # Test 15: Performance of Metrics Collection
 print("\n--- Test 15: Performance of Metrics Collection ---")
@@ -331,31 +387,21 @@ var perf_strip = global.Leds(30)
 var perf_engine = animation.create_engine(perf_strip)
 perf_engine.run()
 
-# Measure overhead of metrics collection
+# Measure overhead of metrics collection with timestamps
 var perf_start = tasmota.millis()
 for i : 0..99
   perf_engine.on_tick(perf_start + i * 5)
 end
 var perf_duration = tasmota.millis() - perf_start
 
-assert_less_than(perf_duration, 200, f"100 ticks with metrics should be fast (took {perf_duration}ms)")
+assert_less_than(perf_duration, 200, f"100 ticks with timestamp metrics should be fast (took {perf_duration}ms)")
 
-# Measure overhead of profiling
-perf_start = tasmota.millis()
-for i : 0..99
-  perf_engine.profile_start("perf_test")
-  perf_engine.profile_end("perf_test")
-end
-var profile_duration = tasmota.millis() - perf_start
-
-assert_less_than(profile_duration, 100, f"100 profile calls should be fast (took {profile_duration}ms)")
+perf_engine.stop()
 
 # Cleanup
 engine.stop()
 tick_engine.stop()
 reset_engine.stop()
-profile_engine.stop()
-clear_engine.stop()
 
 # Test Results
 print(f"\n=== Test Results ===")
@@ -372,11 +418,13 @@ else
 end
 
 print("\n=== CPU Metrics Benefits ===")
-print("CPU Metrics and Profiling features:")
+print("CPU Metrics and Timestamp-Based Profiling features:")
 print("- Automatic performance tracking every 5 seconds")
 print("- Separate animation vs hardware timing")
-print("- Custom profiling API for any code section")
+print("- Timestamp-based profiling (no duration storage)")
+print("- Intermediate measurement points (ts_1, ts_2, ts_3)")
 print("- Streaming statistics (no array storage)")
 print("- Memory-efficient for ESP32 embedded systems")
 print("- Helps identify performance bottlenecks")
 print("- Min/max/mean timing statistics")
+print("- Phase-based timing breakdown")

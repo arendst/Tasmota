@@ -8,26 +8,35 @@ import animation
 
 # Cylon Red Eye
 # Automatically adapts to the length of the strip
-# Template function: cylon_effect
-def cylon_effect_template(engine, eye_color_, duration_, back_color_)
-  var strip_len_ = animation.strip_length(engine)
-  var eye_animation_ = animation.beacon_animation(engine)
-  eye_animation_.color = eye_color_
-  eye_animation_.back_color = back_color_
-  eye_animation_.pos = (def (engine)
-    var provider = animation.cosine_osc(engine)
-    provider.min_value = (-1)
-    provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
-    provider.duration = duration_
-    return provider
-  end)(engine)
-  eye_animation_.beacon_size = 3  # small 3 pixels eye
-  eye_animation_.slew_size = 2  # with 2 pixel shading around
-  eye_animation_.priority = 5
-  engine.add(eye_animation_)
-end
+# Template animation class: cylon_effect
+class cylon_effect_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "eye_color": {"type": "color"},
+    "period": {"type": "time"},
+    "back_color": {"type": "color"}
+  })
 
-animation.register_user_function('cylon_effect', cylon_effect_template)
+  # Template setup method - overrides EngineProxy placeholder
+  def setup_template()
+    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
+
+    var strip_len_ = animation.strip_length(engine)
+    var eye_animation_ = animation.beacon_animation(engine)
+    eye_animation_.color = animation.create_closure_value(engine, def (engine) return self.eye_color end)
+    eye_animation_.back_color = animation.create_closure_value(engine, def (engine) return self.back_color end)
+    eye_animation_.pos = (def (engine)
+      var provider = animation.cosine_osc(engine)
+      provider.min_value = (-1)
+      provider.max_value = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - 2 end)
+      provider.duration = animation.create_closure_value(engine, def (engine) return self.period end)
+      return provider
+    end)(engine)
+    eye_animation_.beacon_size = 3  # small 3 pixels eye
+    eye_animation_.slew_size = 2  # with 2 pixel shading around
+    eye_animation_.priority = 5
+    self.add(eye_animation_)
+  end
+end
 
 
 
@@ -35,9 +44,9 @@ animation.register_user_function('cylon_effect', cylon_effect_template)
 # Cylon Red Eye
 # Automatically adapts to the length of the strip
 
-template cylon_effect {
+template animation cylon_effect {
   param eye_color type color
-  param duration type time
+  param period type time
   param back_color type color
   
   set strip_len = strip_length()
@@ -45,7 +54,7 @@ template cylon_effect {
   animation eye_animation = beacon_animation(
     color = eye_color
     back_color = back_color
-    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = duration)
+    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = period)
     beacon_size = 3       # small 3 pixels eye
     slew_size = 2         # with 2 pixel shading around
     priority = 5

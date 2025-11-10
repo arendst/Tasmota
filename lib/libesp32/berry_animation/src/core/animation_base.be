@@ -7,11 +7,11 @@
 # This is the unified base class for all visual elements in the framework.
 # A Pattern is simply an Animation with infinite duration (duration = 0).
 #
-# Extends Playable to provide the common interface for lifecycle management.
+# Extends ParameterizedObject to provide parameter management and playable interface.
 
 import "./core/param_encoder" as encode_constraints
 
-class Animation : animation.playable
+class Animation : animation.parameterized_object
   # Non-parameter instance variables only
   var opacity_frame   # Frame buffer for opacity animation rendering
   
@@ -42,32 +42,32 @@ class Animation : animation.playable
   # @param time_ms: int - Current time in milliseconds
   # @return bool - True if animation is still running, false if completed
   def update(time_ms)
+    # do nothing if not running
+    if (!self.is_running)   return false  end
+
     # auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
-    # Access is_running via virtual member
-    var current_is_running = self.is_running
-    if !current_is_running
-      return false
-    end
     
-    var elapsed = time_ms - self.start_time
     
     # Access parameters via virtual members
     var current_duration = self.duration
-    var current_loop = self.loop
     
     # Check if animation has completed its duration
-    if current_duration > 0 && elapsed >= current_duration
-      if current_loop
-        # Reset start time to create a looping effect
-        # We calculate the precise new start time to avoid drift
-        var loops_completed = elapsed / current_duration
-        self.start_time = self.start_time + (loops_completed * current_duration)
-      else
-        # Animation completed, make it inactive
-        # Set directly in values map to avoid triggering on_param_changed
-        self.values["is_running"] = false
-        return false
+    if current_duration > 0
+      var elapsed = time_ms - self.start_time
+      if elapsed >= current_duration
+        var current_loop = self.loop
+        if current_loop
+          # Reset start time to create a looping effect
+          # We calculate the precise new start time to avoid drift
+          var loops_completed = elapsed / current_duration
+          self.start_time = self.start_time + (loops_completed * current_duration)
+        else
+          # Animation completed, make it inactive
+          # Set directly in values map to avoid triggering on_param_changed
+          self.is_running = false
+          return false
+        end
       end
     end
     
@@ -81,16 +81,7 @@ class Animation : animation.playable
   # @param time_ms: int - Current time in milliseconds
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms)
-    # auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    # Access is_running via virtual member
-    var current_is_running = self.is_running
-    if !current_is_running || frame == nil
-      return false
-    end
-    
-    # Update animation state
-    self.update(time_ms)      # TODO IS UPDATE NOT ALREADY CALLED BY ENGINE?
+    if (!self.is_running)   return false  end
     
     # Access parameters via virtual members (auto-resolves ValueProviders)
     var current_color = self.color
@@ -111,7 +102,15 @@ class Animation : animation.playable
     # no need to auto-fix time_ms and start_time
     # Handle opacity - can be number, frame buffer, or animation
     var current_opacity = self.opacity
-    self._apply_opacity(frame, current_opacity, time_ms)
+    if (current_opacity == 255)
+      return        # nothing to do
+    elif type(current_opacity) == 'int'
+      # Number mode: apply uniform opacity
+      frame.apply_opacity(frame.pixels, current_opacity)
+    else
+      # Opacity is a frame buffer
+      self._apply_opacity(frame, current_opacity, time_ms)
+    end
   end
 
   # Apply opacity to frame buffer - handles numbers and animations
@@ -144,11 +143,7 @@ class Animation : animation.playable
       
       # Use rendered frame buffer as opacity mask
       frame.apply_opacity(frame.pixels, self.opacity_frame.pixels)
-    elif type(opacity) == 'int' && opacity < 255
-      # Number mode: apply uniform opacity
-      frame.apply_opacity(frame.pixels, opacity)
     end
-    # If opacity is 255 (full opacity), do nothing
   end
   
   # Get a color for a specific pixel position and time

@@ -53,7 +53,7 @@ class PlasmaAnimation : animation.animation
   
   # Initialize colors array based on current strip length
   def _initialize_colors()
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     self.current_colors.resize(strip_length)
     var i = 0
     while i < strip_length
@@ -74,8 +74,6 @@ class PlasmaAnimation : animation.animation
       rainbow_provider.cycle_period = 5000
       rainbow_provider.transition_type = 1
       rainbow_provider.brightness = 255
-      rainbow_provider.range_min = 0
-      rainbow_provider.range_max = 255
       self.color = rainbow_provider
     end
     
@@ -95,8 +93,6 @@ class PlasmaAnimation : animation.animation
       rainbow_provider.cycle_period = 5000
       rainbow_provider.transition_type = 1
       rainbow_provider.brightness = 255
-      rainbow_provider.range_min = 0
-      rainbow_provider.range_max = 255
       # Set the parameter directly to avoid recursion
       self.set_param("color", rainbow_provider)
     end
@@ -127,7 +123,7 @@ class PlasmaAnimation : animation.animation
   
   # Calculate plasma colors for all pixels
   def _calculate_plasma(time_ms)
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     
     # Ensure colors array is properly sized
     if size(self.current_colors) != strip_length
@@ -196,7 +192,7 @@ class PlasmaAnimation : animation.animation
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
     
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     var i = 0
     while i < strip_length
       if i < frame.width

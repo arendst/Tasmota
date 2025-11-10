@@ -607,6 +607,9 @@ When the engine is running, it automatically logs performance statistics:
 
 ```
 AnimEngine: ticks=1000/1000 missed=0 total=0.50ms(0-2) anim=0.30ms(0-1) hw=0.20ms(0-1) cpu=10.0%
+  Phase1(checks): mean=0.05ms(0-0)
+  Phase2(events): mean=0.05ms(0-0)
+  Phase3(anim): mean=0.20ms(0-1)
 ```
 
 **Metrics Explained:**
@@ -617,9 +620,26 @@ AnimEngine: ticks=1000/1000 missed=0 total=0.50ms(0-2) anim=0.30ms(0-1) hw=0.20m
 - **hw**: Mean hardware output time with (min-max) range - just the LED strip update
 - **cpu**: Overall CPU usage percentage over the 5-second period
 
-**Custom Profiling API:**
+**Phase Metrics (Optional):**
+When intermediate measurement points are available, the engine also reports phase-based timing:
+- **Phase1(checks)**: Initial checks (strip length, throttling, can_show)
+- **Phase2(events)**: Event processing time
+- **Phase3(anim)**: Animation update and render time (before hardware output)
 
-For measuring specific code sections, use the profiling API:
+**Timestamp-Based Profiling:**
+
+The engine uses a timestamp-based profiling system that stores only timestamps (not durations) in instance variables:
+
+- `ts_start` - Tick start timestamp
+- `ts_1` - After initial checks (optional)
+- `ts_2` - After event processing (optional)
+- `ts_3` - After animation update/render (optional)
+- `ts_hw` - After hardware output
+- `ts_end` - Tick end timestamp
+
+Durations are computed from these timestamps in `_record_tick_metrics()` with nil checks to ensure values are valid.
+
+**Accessing Profiling Data:**
 
 ```berry
 import animation
@@ -627,97 +647,43 @@ import animation
 var strip = Leds(30)
 var engine = animation.create_engine(strip)
 
-# Start measuring a code section
-engine.profile_start("my_calculation")
-
-# Your code to measure
-var result = 0
-var i = 0
-while i < 1000
-  result += i
-  i += 1
-end
-
-# End measuring
-engine.profile_end("my_calculation")
-
-# Run the engine - stats will be printed every 5 seconds
+# Add an animation
+var anim = animation.solid(engine)
+anim.color = 0xFFFF0000
+engine.add(anim)
 engine.run()
+
+# Run for a while to collect metrics
+# After 5 seconds, metrics are automatically logged
+
+# Access current metrics programmatically
+print("Tick count:", engine.tick_count)
+print("Total time sum:", engine.tick_time_sum)
+print("Animation time sum:", engine.anim_time_sum)
+print("Hardware time sum:", engine.hw_time_sum)
+
+# Access phase metrics if available
+if engine.phase1_time_sum > 0
+  print("Phase 1 time sum:", engine.phase1_time_sum)
+end
 ```
 
-**Profiling Output:**
+**Profiling Benefits:**
 
-Custom profiling points appear in the stats output:
+1. **Memory Efficient:**
+   - Only stores timestamps (6 instance variables)
+   - No duration storage or arrays
+   - Streaming statistics with no memory overhead
 
-```
-AnimEngine: ticks=1000/1000 missed=0 total=0.50ms(0-2) anim=0.30ms(0-1) hw=0.20ms(0-1) cpu=10.0%
-  Profile[my_calculation]: count=1000 mean=0.15ms min=0ms max=1ms
-  Profile[another_section]: count=500 mean=0.25ms min=0ms max=2ms
-```
+2. **Automatic Tracking:**
+   - No manual instrumentation needed
+   - Runs continuously in background
+   - Reports every 5 seconds
 
-**Profiling Best Practices:**
-
-1. **Use Descriptive Names:**
-   ```berry
-   engine.profile_start("render_effects")
-   # ... rendering code ...
-   engine.profile_end("render_effects")
-   
-   engine.profile_start("color_calculation")
-   # ... color processing ...
-   engine.profile_end("color_calculation")
-   ```
-
-2. **Profile Critical Sections:**
-   ```berry
-   # Measure custom effect rendering
-   def my_custom_effect(frame, time_ms)
-     self.engine.profile_start("custom_effect")
-     
-     # Your effect logic
-     var i = 0
-     while i < frame.width
-       var color = calculate_color(i, time_ms)
-       frame.set_pixel_color(i, color)
-       i += 1
-     end
-     
-     self.engine.profile_end("custom_effect")
-   end
-   ```
-
-3. **Avoid Profiling in Tight Loops:**
-   ```berry
-   # ❌ BAD - profiling overhead in loop
-   var i = 0
-   while i < 1000
-     engine.profile_start("loop_iteration")
-     # ... work ...
-     engine.profile_end("loop_iteration")
-     i += 1
-   end
-   
-   # ✅ GOOD - profile entire loop
-   engine.profile_start("entire_loop")
-   var i = 0
-   while i < 1000
-     # ... work ...
-     i += 1
-   end
-   engine.profile_end("entire_loop")
-   ```
-
-4. **Multiple Profiling Points:**
-   ```berry
-   # You can have multiple active profiling points
-   engine.profile_start("section_a")
-   # ... code A ...
-   engine.profile_end("section_a")
-   
-   engine.profile_start("section_b")
-   # ... code B ...
-   engine.profile_end("section_b")
-   ```
+3. **Detailed Breakdown:**
+   - Separates animation calculation from hardware output
+   - Optional phase-based timing for deeper analysis
+   - Min/max/mean statistics for all metrics
 
 **Interpreting Performance Metrics:**
 

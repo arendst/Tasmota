@@ -28,7 +28,7 @@ class NoiseAnimation : animation.animation
     super(self).init(engine)
     
     # Initialize non-parameter instance variables only
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     self.current_colors = []
     self.current_colors.resize(strip_length)
     self.time_offset = 0
@@ -50,8 +50,6 @@ class NoiseAnimation : animation.animation
       rainbow_provider.cycle_period = 5000
       rainbow_provider.transition_type = 1
       rainbow_provider.brightness = 255
-      rainbow_provider.range_min = 0
-      rainbow_provider.range_max = 255
       self.color = rainbow_provider
     end
   end
@@ -105,8 +103,6 @@ class NoiseAnimation : animation.animation
       gradient_provider.cycle_period = 5000
       gradient_provider.transition_type = 1
       gradient_provider.brightness = 255
-      gradient_provider.range_min = 0
-      gradient_provider.range_max = 255
       
       # Set the gradient provider instead of the integer
       super(self).setmember(name, gradient_provider)
@@ -124,7 +120,7 @@ class NoiseAnimation : animation.animation
     end
     
     # Update current_colors array size when strip length changes via engine
-    var new_strip_length = self.engine.get_strip_length()
+    var new_strip_length = self.engine.strip_length
     if size(self.current_colors) != new_strip_length
       self.current_colors.resize(new_strip_length)
       var i = size(self.current_colors)
@@ -209,7 +205,7 @@ class NoiseAnimation : animation.animation
   
   # Calculate noise colors for all pixels
   def _calculate_noise(time_ms)
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     var current_color = self.color
     
     var i = 0
@@ -242,7 +238,7 @@ class NoiseAnimation : animation.animation
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
     
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     var i = 0
     while i < strip_length
       if i < frame.width
@@ -280,8 +276,6 @@ def noise_rainbow(engine)
   rainbow_provider.cycle_period = 5000
   rainbow_provider.transition_type = 1
   rainbow_provider.brightness = 255
-  rainbow_provider.range_min = 0
-  rainbow_provider.range_max = 255
   anim.color = rainbow_provider
   anim.scale = 50
   anim.speed = 30
@@ -309,8 +303,6 @@ def noise_fractal(engine)
   rainbow_provider.cycle_period = 5000
   rainbow_provider.transition_type = 1
   rainbow_provider.brightness = 255
-  rainbow_provider.range_min = 0
-  rainbow_provider.range_max = 255
   anim.color = rainbow_provider
   anim.scale = 30
   anim.speed = 20

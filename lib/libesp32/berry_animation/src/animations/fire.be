@@ -41,7 +41,7 @@ class FireAnimation : animation.animation
   
   # Initialize buffers based on current strip length
   def _initialize_buffers()
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     
     # Create new bytes() buffer for heat values (1 byte per pixel)
     self.heat_map.clear()
@@ -107,7 +107,7 @@ class FireAnimation : animation.animation
     var intensity = self.intensity
     var flicker_amount = self.flicker_amount
     var color_param = self.color
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     
     # Ensure buffers are correct size (bytes() uses .size() method)
     if self.heat_map.size() != strip_length || self.current_colors.size() != strip_length * 4
@@ -198,8 +198,6 @@ class FireAnimation : animation.animation
           fire_provider.cycle_period = 0  # Use value-based color mapping, not time-based
           fire_provider.transition_type = 1  # Use sine transition (smooth)
           fire_provider.brightness = 255
-          fire_provider.range_min = 0
-          fire_provider.range_max = 255
           resolved_color = fire_provider
         end
         
@@ -243,7 +241,7 @@ class FireAnimation : animation.animation
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
 
-    var strip_length = self.engine.get_strip_length()
+    var strip_length = self.engine.strip_length
     
     # Render each pixel with its current color
     var i = 0

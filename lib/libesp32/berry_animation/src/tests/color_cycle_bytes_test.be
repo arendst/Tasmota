@@ -10,6 +10,11 @@ class MockEngine
   def init()
     self.time_ms = 1000
   end
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    return true
+  end
 end
 
 def test_color_cycle_bytes_format()
@@ -90,13 +95,13 @@ def test_color_cycle_bytes_format()
   assert(next_color == custom_color2, f"Next should move to third color")
   assert(provider.current_index == 2, f"Current index should be 2")
   
-  # Test 9: Test value-based color selection
+  # Test 9: Test value-based color selection (0-255 range)
   var value_color_0 = provider.get_color_for_value(0, 0)    # Should be first color
-  var value_color_50 = provider.get_color_for_value(50, 0)  # Should be middle color
-  var value_color_100 = provider.get_color_for_value(100, 0) # Should be last color
+  var value_color_128 = provider.get_color_for_value(128, 0)  # Should be middle color
+  var value_color_255 = provider.get_color_for_value(255, 0) # Should be last color
   
   assert(value_color_0 == custom_color0, f"Value 0 should return first color")
-  assert(value_color_100 == custom_color3, f"Value 100 should return last color")
+  assert(value_color_255 == custom_color3, f"Value 255 should return last color")
   
   # Test 10: Test edge cases
   var invalid_color = provider._get_color_at_index(-1)  # Invalid index

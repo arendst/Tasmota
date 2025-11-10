@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 GPIOViewer memory map if enabled with `#define GV_USE_ESPINFO`
 - Berry `tcp.write()` add `offset` and `len` (#24076)
 - NeoPool command `NPReadLSB`, `NPReadMSB`, `NPWriteLSB`, `NWriteMSB` for directly read/write LSB/MSB of 16-bit register (#24083)
+- Commands `DaliSend` and `DaliQuery` allow extended commands with prefix for DeviceType defaulting to DT6
 
 ### Breaking Changed
 
@@ -31,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - InfluxDb receives IPAddress as a value regression from v15.0.1.3 (#24031)
 - Scripter UDP and switch case (#24060)
 - TuyaMCU v1 soft lock when WIFI_SELECT / WIFI_RESET is initiated (#24063)
+- HASPmota `scale` and `angle` for images (#24089)
 
 ### Removed
 

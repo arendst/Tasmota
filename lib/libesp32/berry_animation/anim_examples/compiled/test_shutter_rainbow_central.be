@@ -9,40 +9,48 @@ import animation
 # Demo Shutter Rainbow
 #
 # Shutter from center to both left and right
-# Template function: shutter_central
-def shutter_central_template(engine, colors_, duration_)
-  var strip_len_ = animation.strip_length(engine)
-  var shutter_size_ = (def (engine)
-    var provider = animation.sawtooth(engine)
-    provider.min_value = 0
-    provider.max_value = strip_len_
-    provider.duration = duration_
-    return provider
-  end)(engine)
-  var col1_ = animation.color_cycle(engine)
-  col1_.palette = colors_
-  col1_.cycle_period = 0
-  var col2_ = animation.color_cycle(engine)
-  col2_.palette = colors_
-  col2_.cycle_period = 0
-  col2_.next = 1
-  # shutter moving from left to right
-  var shutter_central_animation_ = animation.beacon_animation(engine)
-  shutter_central_animation_.color = col2_
-  shutter_central_animation_.back_color = col1_
-  shutter_central_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - animation.resolve(shutter_size_) / 2 end)
-  shutter_central_animation_.beacon_size = shutter_size_
-  shutter_central_animation_.slew_size = 0
-  shutter_central_animation_.priority = 5
-  var shutter_seq_ = animation.sequence_manager(engine, -1)
-    .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
-    .push_play_step(shutter_central_animation_, animation.resolve(duration_))
-    .push_closure_step(def (engine) col1_.next = 1 end)
-    .push_closure_step(def (engine) col2_.next = 1 end)
-  engine.add(shutter_seq_)
-end
+# Template animation class: shutter_central
+class shutter_central_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "colors": {"type": "palette"},
+    "period": {"type": "time"}
+  })
 
-animation.register_user_function('shutter_central', shutter_central_template)
+  # Template setup method - overrides EngineProxy placeholder
+  def setup_template()
+    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
+
+    var strip_len_ = animation.strip_length(engine)
+    var shutter_size_ = (def (engine)
+      var provider = animation.sawtooth(engine)
+      provider.min_value = 0
+      provider.max_value = strip_len_
+      provider.duration = animation.create_closure_value(engine, def (engine) return self.period end)
+      return provider
+    end)(engine)
+    var col1_ = animation.color_cycle(engine)
+    col1_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col1_.cycle_period = 0
+    var col2_ = animation.color_cycle(engine)
+    col2_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col2_.cycle_period = 0
+    col2_.next = 1
+    # shutter moving from left to right
+    var shutter_central_animation_ = animation.beacon_animation(engine)
+    shutter_central_animation_.color = col2_
+    shutter_central_animation_.back_color = col1_
+    shutter_central_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - animation.resolve(shutter_size_) / 2 end)
+    shutter_central_animation_.beacon_size = shutter_size_
+    shutter_central_animation_.slew_size = 0
+    shutter_central_animation_.priority = 5
+    var shutter_seq_ = animation.sequence_manager(engine, -1)
+          .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
+          .push_play_step(shutter_central_animation_, def (engine) return self.period end)
+          .push_closure_step(def (engine) col1_.next = 1 end)
+          .push_closure_step(def (engine) col2_.next = 1 end)
+    self.add(shutter_seq_)
+  end
+end
 
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
@@ -56,7 +64,10 @@ var rainbow_with_white_ = bytes(
   "FF4B0082"
   "FFFFFFFF"
 )
-shutter_central_template(engine, rainbow_with_white_, 1500)
+var main_ = shutter_central_animation(engine)
+main_.colors = rainbow_with_white_
+main_.period = 1500
+engine.add(main_)
 engine.run()
 
 
@@ -65,12 +76,12 @@ engine.run()
 #
 # Shutter from center to both left and right
   
-template shutter_central {
+template animation shutter_central {
   param colors type palette
-  param duration
+  param period type time
 
   set strip_len = strip_length()
-  set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
+  set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
 
   color col1 = color_cycle(palette=colors, cycle_period=0)
   color col2 = color_cycle(palette=colors, cycle_period=0)
@@ -88,7 +99,7 @@ template shutter_central {
 
   sequence shutter_seq repeat forever {
     restart shutter_size
-    play shutter_central_animation for duration
+    play shutter_central_animation for period
     col1.next = 1
     col2.next = 1
   }
@@ -105,6 +116,6 @@ palette rainbow_with_white = [ red
   white
 ]
 
-shutter_central(rainbow_with_white, 1.5s)
-
+animation main = shutter_central(colors = rainbow_with_white, period = 1.5s)
+run main
 -#

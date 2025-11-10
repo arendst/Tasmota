@@ -8,22 +8,35 @@ import animation
 
 # Test template functionality
 # Define a simple template
-# Template function: pulse_effect
-def pulse_effect_template(engine, base_color_, duration_, brightness_)
-  var pulse_ = animation.pulsating_animation(engine)
-  pulse_.color = base_color_
-  pulse_.period = duration_
-  pulse_.opacity = brightness_
-  engine.add(pulse_)
-end
+# Template animation class: pulse_effect
+class pulse_effect_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "base_color": {"type": "color"},
+    "period": {"type": "time"},
+    "brightness": {"type": "percentage"}
+  })
 
-animation.register_user_function('pulse_effect', pulse_effect_template)
+  # Template setup method - overrides EngineProxy placeholder
+  def setup_template()
+    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
+
+    var pulse_ = animation.pulsating_animation(engine)
+    pulse_.color = animation.create_closure_value(engine, def (engine) return self.base_color end)
+    pulse_.period = animation.create_closure_value(engine, def (engine) return self.period end)
+    pulse_.opacity = animation.create_closure_value(engine, def (engine) return self.brightness end)
+    self.add(pulse_)
+  end
+end
 
 # Use the template - templates add animations directly to engine and run them
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-pulse_effect_template(engine, 0xFFFF0000, 2000, 204)
+var main_ = pulse_effect_animation(engine)
+main_.base_color = 0xFFFF0000
+main_.period = 2000
+main_.brightness = 204
+engine.add(main_)
 engine.run()
 
 
@@ -31,14 +44,14 @@ engine.run()
 # Test template functionality
 
 # Define a simple template
-template pulse_effect {
+template animation pulse_effect {
   param base_color type color
-  param duration
-  param brightness
+  param period type time
+  param brightness type percentage
   
   animation pulse = pulsating_animation(
     color=base_color
-    period=duration
+    period=period
   )
   pulse.opacity = brightness
   
@@ -46,5 +59,6 @@ template pulse_effect {
 }
 
 # Use the template - templates add animations directly to engine and run them
-pulse_effect(red, 2s, 80%)
+animation main = pulse_effect(base_color = red, period = 2s, brightness = 80%)
+run main
 -#

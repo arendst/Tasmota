@@ -821,7 +821,7 @@ const char HTTP_FORM_TIMER2[] PROGMEM =
 #ifdef USE_SUNRISE
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
-  "<label><input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b></label><br>"
+  "<label><input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIME_OF_DAY "</b></label><br>"
   "<label><input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b>%s (%s)</label><br>"
   "<label><input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b>%s (%s)</label><br>"
   "</fieldset>"
@@ -830,7 +830,7 @@ const char HTTP_FORM_TIMER3[] PROGMEM =
   "&nbsp;";
 #else
 const char HTTP_FORM_TIMER3[] PROGMEM =
-  "<b>" D_TIMER_TIME "</b>&nbsp;";
+  "<b>" D_TIME_OF_DAY "</b>&nbsp;";
 #endif  // USE_SUNRISE
 
 #ifdef USE_UNISHOX_COMPRESSION

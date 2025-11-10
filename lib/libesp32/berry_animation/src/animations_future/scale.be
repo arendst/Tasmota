@@ -37,7 +37,7 @@ class ScaleAnimation : animation.animation
   
   # Initialize frame buffers based on current strip length
   def _initialize_buffers()
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     self.source_frame = animation.frame_buffer(current_strip_length)
     self.current_colors = []
     self.current_colors.resize(current_strip_length)
@@ -141,7 +141,7 @@ class ScaleAnimation : animation.animation
   # Calculate scaled colors for all pixels
   def _calculate_scale()
     # Get current strip length from engine
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     
     # Ensure buffers are properly sized
     if size(self.current_colors) != current_strip_length
@@ -243,7 +243,7 @@ class ScaleAnimation : animation.animation
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
     
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     var i = 0
     while i < current_strip_length
       if i < frame.width

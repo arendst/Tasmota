@@ -13,8 +13,11 @@ import "./core/param_encoder" as encode_constraints
 
 class EngineProxy : animation.animation
   # Non-parameter instance variables
-  var animations          # List of child playables (animations and sequences)
-  var sequences          # List of child sequence managers
+  var animations          # List of child animations
+  var sequences           # List of child sequence managers
+  var value_providers     # List of value providers that need update() calls
+  var strip_length        # Proxy for strip_length from engine
+  var temp_buffer         # proxy for the global 'engine.temp_buffer' used as a scratchad buffer during rendering, this object is maintained over time to avoid new objects creation
   
   # Sequence iteration tracking (stack-based for nested sequences)
   var iteration_stack    # Stack of iteration numbers for nested sequences
@@ -22,19 +25,17 @@ class EngineProxy : animation.animation
   # Cached time for child access (updated during update())
   var time_ms            # Current time in milliseconds (cached from engine)
   
-  # Parameter definitions (extends Animation's PARAMS)
-  static var PARAMS = animation.enc_params({
-    # Inherited from Animation: name, is_running, priority, duration, loop, opacity, color
-    # EngineProxy has no additional parameters beyond Animation
-  })
-  
   def init(engine)
     # Initialize parameter system with engine
     super(self).init(engine)
     
+    # Keep a reference of 'engine.temp_buffer'
+    self.temp_buffer = self.engine.temp_buffer
+
     # Initialize non-parameter instance variables
     self.animations = []
     self.sequences = []
+    self.value_providers = []
     
     # Initialize iteration tracking stack
     self.iteration_stack = []
@@ -54,9 +55,9 @@ class EngineProxy : animation.animation
   
   # Is empty
   #
-  # @return true both animations and sequences are empty
+  # @return true if animations, sequences, and value_providers are all empty
   def is_empty()
-    return (size(self.animations) == 0) && (size(self.sequences) == 0)
+    return (size(self.animations) == 0) && (size(self.sequences) == 0) && (size(self.value_providers) == 0)
   end
 
   # Number of animations
@@ -77,19 +78,22 @@ class EngineProxy : animation.animation
     return anims
   end
   
-  # Add a child playable (animation or sequence)
+  # Add a child animation, sequence, or value provider
   #
-  # @param child: Playable - The child to add
+  # @param obj: Animation|SequenceManager|ValueProvider - The child to add
   # @return self for method chaining
   def add(obj)
     if isinstance(obj, animation.sequence_manager)
       return self._add_sequence_manager(obj)
+    # Check if it's a ValueProvider (before Animation check, as some animations might also be providers)
+    elif isinstance(obj, animation.value_provider)
+      return self._add_value_provider(obj)
     # Check if it's an Animation (or subclass)
     elif isinstance(obj, animation.animation)
       return self._add_animation(obj)
     else
       # Unknown type - provide helpful error message
-      raise "type_error", "only Animation or SequenceManager"
+      raise "type_error", "only Animation, SequenceManager, or ValueProvider"
     end
   end
 
@@ -97,6 +101,21 @@ class EngineProxy : animation.animation
   def _add_sequence_manager(sequence_manager)
     if (self.sequences.find(sequence_manager) == nil)
       self.sequences.push(sequence_manager)
+      return true
+    else
+      return false
+    end
+  end
+
+  # Add a value provider
+  #
+  # @param provider: ValueProvider - The value provider instance to add
+  # @return true if successful, false if already in list
+  def _add_value_provider(provider)
+    if (self.value_providers.find(provider) == nil)
+      self.value_providers.push(provider)
+      # Note: We don't start the provider here - it's started by the animation that uses it
+      # We only register it so its update() method gets called in the update loop
       return true
     else
       return false
@@ -157,9 +176,9 @@ class EngineProxy : animation.animation
     end
   end
   
-  # Remove a child playable
+  # Remove a child animation
   #
-  # @param child: Playable - The child to remove
+  # @param obj: Animation - The animation to remove
   # @return true if actually removed
   def _remove_animation(obj)
     var idx = self.animations.find(obj)
@@ -185,13 +204,30 @@ class EngineProxy : animation.animation
     end
   end
 
+  # Remove a value provider
+  #
+  # @param obj: ValueProvider instance
+  # @return true if actually removed
+  def _remove_value_provider(obj)
+    var idx = self.value_providers.find(obj)
+    if idx != nil
+      self.value_providers.remove(idx)
+      return true
+    else
+      return false
+    end
+  end
+
   # Generic remove method that delegates to specific remove methods
-  # @param obj: Animation or SequenceManager - The object to remove
+  # @param obj: Animation, SequenceManager, or ValueProvider - The object to remove
   # @return self for method chaining
   def remove(obj)
     # Check if it's a SequenceManager
     if isinstance(obj, animation.sequence_manager)
       return self._remove_sequence_manager(obj)
+    # Check if it's a ValueProvider (before Animation check)
+    elif isinstance(obj, animation.value_provider)
+      return self._remove_value_provider(obj)
     # Check if it's an Animation (or subclass)
     elif isinstance(obj, animation.animation)
       return self._remove_animation(obj)
@@ -200,7 +236,7 @@ class EngineProxy : animation.animation
     end
   end
 
-  # Start the hybrid animation and all its animations
+  # Start the hybrid animation and all its children
   #
   # @param time_ms: int - Start time in milliseconds
   # @return self for method chaining
@@ -208,14 +244,17 @@ class EngineProxy : animation.animation
     # Call parent start
     super(self).start(time_ms)
     
-    # Start all sequences
+    # Note: We don't start value_providers here - they are started by the animations that use them
+    # Value providers are only registered here so their update() method gets called
+    
+    # Start all sequences FIRST (they may control animations)
     var idx = 0
     while idx < size(self.sequences)
       self.sequences[idx].start(time_ms)
       idx += 1
     end
 
-    # Start all animations
+    # Start all animations SECOND (they use values from providers and sequences)
     idx = 0
     while idx < size(self.animations)
       self.animations[idx].start(time_ms)
@@ -225,23 +264,26 @@ class EngineProxy : animation.animation
     return self
   end
   
-  # Stop the hybrid animation and all its animations
+  # Stop the hybrid animation and all its children
   #
   # @return self for method chaining
   def stop()
-    # Stop all sequences
+    # Stop all animations FIRST (they depend on sequences and value providers)
     var idx = 0
+    while idx < size(self.animations)
+      self.animations[idx].stop()
+      idx += 1
+    end
+
+    # Stop all sequences SECOND (they may control animations)
+    idx = 0
     while idx < size(self.sequences)
       self.sequences[idx].stop()
       idx += 1
     end
 
-    # Stop all animations
-    idx = 0
-    while idx < size(self.animations)
-      self.animations[idx].stop()
-      idx += 1
-    end
+    # Note: We don't stop value_providers here - they are stopped by the animations that use them
+    # Value providers are only registered here so their update() method gets called
     
     # Call parent stop
     super(self).stop()
@@ -249,24 +291,26 @@ class EngineProxy : animation.animation
     return self
   end
   
-  # Stop and clear the hybrid animation and all its animations
+  # Stop and clear the hybrid animation and all its children
   #
   # @return self for method chaining
   def clear()
     self.stop()
     self.animations = []
     self.sequences = []
+    self.value_providers = []
 
     return self
   end
 
-  # Update the hybrid animation and all its animations
+  # Update the hybrid animation and all its children
   #
   # @param time_ms: int - Current time in milliseconds
   # @return bool - True if still running, false if completed
   def update(time_ms)
     # Cache time for child access
     self.time_ms = time_ms
+    self.strip_length = self.engine.strip_length
     
     # Update parent animation state
     var still_running = super(self).update(time_ms)
@@ -275,16 +319,28 @@ class EngineProxy : animation.animation
       return false
     end
     
-    # Update all child sequences
-    for seq : self.sequences
-      seq.update(time_ms)
+    # Update all value providers FIRST (they may produce values used by sequences and animations)
+    var idx = 0
+    var sz = size(self.value_providers)
+    while idx < sz
+      self.value_providers[idx].update(time_ms)
+      idx += 1
     end
     
-    # Update all child animations (sequences are also in animations list)
-    for child : self.animations
-      if isinstance(child, animation.animation)
-        child.update(time_ms)
-      end
+    # Update all child sequences SECOND (they may control animations)
+    idx = 0
+    sz = size(self.sequences)
+    while idx < sz
+      self.sequences[idx].update(time_ms)
+      idx += 1
+    end
+    
+    # Update all child animations LAST (they use values from providers and sequences)
+    idx = 0
+    sz = size(self.animations)
+    while idx < sz
+      var child = self.animations[idx].update(time_ms)
+      idx += 1
     end
     
     return true
@@ -310,25 +366,32 @@ class EngineProxy : animation.animation
     
     var modified = false
     
-    # Render own content (base Animation implementation)
-    modified = super(self).render(frame, time_ms)
+    # We don't call super method for optimization, skipping color computation
+    # modified = super(self).render(frame, time_ms)
     
     # Render all child animations (but not sequences - they don't render)
-    for child : self.animations
-      if isinstance(child, animation.animation) && child.is_running
-        # Create temp buffer for child
-        var temp_frame = animation.frame_buffer(frame.width)
-        var child_rendered = child.render(temp_frame, time_ms)
+    var idx = 0
+    var sz = size(self.animations)
+    while idx < sz
+      var child = self.animations[idx]
+
+      if child.is_running
+        # Clear temporary buffer with transparent
+        self.temp_buffer.clear()
+
+        # Render child
+        var child_rendered = child.render(self.temp_buffer, time_ms)
         
         if child_rendered
           # Apply child's post-processing
-          child.post_render(temp_frame, time_ms)
+          child.post_render(self.temp_buffer, time_ms)
           
           # Blend child into main frame
-          frame.blend_pixels(frame.pixels, temp_frame.pixels)
+          frame.blend_pixels(frame.pixels, self.temp_buffer.pixels)
           modified = true
         end
       end
+      idx += 1
     end
     
     return modified
@@ -338,7 +401,7 @@ class EngineProxy : animation.animation
   
   # Get strip length from engine
   def get_strip_length()
-    return (self.engine != nil) ? self.engine.get_strip_length() : 0
+    return self.engine.strip_length
   end
   
   # Sequence iteration tracking methods
@@ -383,7 +446,7 @@ class EngineProxy : animation.animation
   
   # String representation
   def tostring()
-    return f"{classname(self)}({self.name}, animations={size(self.animations)}, sequences={size(self.sequences)}, running={self.is_running})"
+    return f"{classname(self)}({self.name}, animations={size(self.animations)}, sequences={size(self.sequences)}, value_providers={size(self.value_providers)}, running={self.is_running})"
   end
 end
 

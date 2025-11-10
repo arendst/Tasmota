@@ -7,27 +7,37 @@
 import animation
 
 # Complex template test
-# Template function: rainbow_pulse
-def rainbow_pulse_template(engine, pal1_, pal2_, duration_, back_color_)
-  var cycle_color_ = animation.color_cycle(engine)
-  cycle_color_.palette = pal1_
-  cycle_color_.cycle_period = duration_
-  # Create pulsing animation
-  var pulse_ = animation.pulsating_animation(engine)
-  pulse_.color = cycle_color_
-  pulse_.period = duration_
-  # Create background
-  var background_ = animation.solid(engine)
-  background_.color = back_color_
-  background_.priority = 1
-  # Set pulse priority higher
-  pulse_.priority = 10
-  # Run both animations
-  engine.add(background_)
-  engine.add(pulse_)
-end
+# Template animation class: rainbow_pulse
+class rainbow_pulse_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "pal1": {"type": "palette"},
+    "pal2": {"type": "palette"},
+    "period": {"type": "time"},
+    "back_color": {"type": "color"}
+  })
 
-animation.register_user_function('rainbow_pulse', rainbow_pulse_template)
+  # Template setup method - overrides EngineProxy placeholder
+  def setup_template()
+    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
+
+    var cycle_color_ = animation.color_cycle(engine)
+    cycle_color_.palette = animation.create_closure_value(engine, def (engine) return self.pal1 end)
+    cycle_color_.cycle_period = animation.create_closure_value(engine, def (engine) return self.period end)
+    # Create pulsing animation
+    var pulse_ = animation.pulsating_animation(engine)
+    pulse_.color = cycle_color_
+    pulse_.period = animation.create_closure_value(engine, def (engine) return self.period end)
+    # Create background
+    var background_ = animation.solid(engine)
+    background_.color = animation.create_closure_value(engine, def (engine) return self.back_color end)
+    background_.priority = 1
+    # Set pulse priority higher
+    pulse_.priority = 10
+    # Run both animations
+    self.add(background_)
+    self.add(pulse_)
+  end
+end
 
 # Create palettes
 # Auto-generated strip initialization (using Tasmota configuration)
@@ -36,7 +46,12 @@ var engine = animation.init_strip()
 var fire_palette_ = bytes("00000000" "80FF0000" "FFFFFF00")
 var ocean_palette_ = bytes("00000080" "800080FF" "FF00FFFF")
 # Use the template
-rainbow_pulse_template(engine, fire_palette_, ocean_palette_, 3000, 0xFF001100)
+var main_ = rainbow_pulse_animation(engine)
+main_.pal1 = fire_palette_
+main_.pal2 = ocean_palette_
+main_.perriod = 3000
+main_.back_color = 0xFF001100
+engine.add(main_)
 engine.run()
 
 # Compilation warnings:
@@ -46,19 +61,19 @@ engine.run()
 #- Original DSL source:
 # Complex template test
 
-template rainbow_pulse {
+template animation rainbow_pulse {
   param pal1 type palette
   param pal2 type palette
-  param duration
+  param period type time
   param back_color type color
   
   # Create color cycle using first palette
-  color cycle_color = color_cycle(palette=pal1, cycle_period=duration)
+  color cycle_color = color_cycle(palette=pal1, cycle_period=period)
   
   # Create pulsing animation
   animation pulse = pulsating_animation(
     color=cycle_color
-    period=duration
+    period=period
   )
   
   # Create background
@@ -87,5 +102,7 @@ palette ocean_palette = [
 ]
 
 # Use the template
-rainbow_pulse(fire_palette, ocean_palette, 3s, 0x001100)
+animation main = rainbow_pulse(pal1 = fire_palette, pal2 = ocean_palette, perriod = 3s, back_color = 0x001100)
+run main
+
 -#
