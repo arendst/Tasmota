@@ -1,18 +1,18 @@
 # Complex template test
 
-template rainbow_pulse {
+template animation rainbow_pulse {
   param pal1 type palette
   param pal2 type palette
-  param duration
+  param period type time
   param back_color type color
   
   # Create color cycle using first palette
-  color cycle_color = color_cycle(palette=pal1, cycle_period=duration)
+  color cycle_color = color_cycle(palette=pal1, cycle_period=period)
   
   # Create pulsing animation
   animation pulse = pulsating_animation(
     color=cycle_color
-    period=duration
+    period=period
   )
   
   # Create background
@@ -41,4 +41,5 @@ palette ocean_palette = [
 ]
 
 # Use the template
-rainbow_pulse(fire_palette, ocean_palette, 3s, 0x001100)
+animation main = rainbow_pulse(pal1 = fire_palette, pal2 = ocean_palette, perriod = 3s, back_color = 0x001100)
+run main

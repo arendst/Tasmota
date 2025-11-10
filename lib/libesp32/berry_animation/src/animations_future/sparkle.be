@@ -61,7 +61,7 @@ class SparkleAnimation : animation.animation
   
   # Initialize buffers based on current strip length
   def _initialize_buffers()
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     
     self.current_colors.resize(current_strip_length)
     self.sparkle_states.resize(current_strip_length)
@@ -113,7 +113,7 @@ class SparkleAnimation : animation.animation
   
   # Update sparkle states and create new sparkles
   def _update_sparkles(time_ms)
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     
     # Cache parameter values for performance
     var sparkle_duration = self.sparkle_duration
@@ -206,7 +206,7 @@ class SparkleAnimation : animation.animation
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
     
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     var i = 0
     while i < current_strip_length
       if i < frame.width

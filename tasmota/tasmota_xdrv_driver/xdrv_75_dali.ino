@@ -19,6 +19,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.1.0.2 20251109  update    - Add optional extended commands prefix for commands `DaliSend` and `DaliQuery`
   1.1.0.1 20241101  update    - Enable DALI if another light is already claimed
   1.1.0.0 20241031  update    - Add GUI sliders with feedback when `DaliLight 0`
                               - Add command `DaliGroupSliders 0..16` to show GUI sliders
@@ -50,11 +51,11 @@
   0.1.0.1 20241007  update    - To stablizie communication send DALI datagram twice like Busch-Jaeger does 
                               - Change DaliPower 0..2 to act like Tasmota Power (Off, On, Toggle)
                               - Keep last Dimmer value as default power on
-  0.1.0.0 20241006  rewrite   - Add support for ESP8266
+  0.1.0.0 20241006  rewrite   - Add support for ESP8266 by Theo Arends
                               - Fix decoding of received DALI data
                               - Refactor command `DaliPower 0..254` controlling Broadcast devices
                               - Add command `DaliDimmer 0..254` controlling Broadcast devices
-  0.0.0.1 20221027  publish   - Initial version
+  0.0.0.1 20221027  publish   - Initial version by Andrei Kazmirtsuk aka eeak
 */
 
 #ifdef USE_DALI
@@ -111,6 +112,52 @@
 #ifndef DALI_DEBUG_PIN
 #define DALI_DEBUG_PIN             4       // Debug GPIO
 #endif
+
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Commands - Send as first byte
+\*-------------------------------------------------------------------------------------------*/
+
+// Address types - Send as first byte
+#define DALI_SHORT_ADDRESS0                    0x0000  // 0b00000000   0 - First short address
+#define DALI_SHORT_ADDRESS1                    0x0002  // 0b00000010   1 - Next short address
+#define DALI_SHORT_ADDRESS63                   0x007E  // 0b01111110  63 - Last short address
+#define DALI_GROUP_ADDRESS0                    0x0080  // 0b10000000   0 - First group address
+#define DALI_GROUP_ADDRESS1                    0x0082  // 0b10000010   1 - Next group address
+#define DALI_GROUP_ADDRESS15                   0x009E  // 0b10011110  15 - Last group address
+
+// Special commands - Send as first byte
+#define DALI_TERMINATE                         0x00A1  // 256 - Releases the INITIALISE state.
+#define DALI_DATA_TRANSFER_REGISTER0           0x00A3  // 257 - Stores the data XXXX XXXX to the DTR(DTR0).
+#define DALI_INITIALISE                        0x01A5  // 258 REPEAT - Sets the slave to the INITIALISE status for15 minutes. Commands 259 to 270 are enabled only for a slave in this status.
+#define DALI_RANDOMISE                         0x01A7  // 259 REPEAT - Generates a random address.
+#define DALI_COMPARE                           0x00A9  // 260 - Is the random address smaller or equal to the search address?
+#define DALI_WITHDRAW                          0x00AB  // 261 - Excludes slaves for which the random address and search address match from the Compare process.
+#define DALI_RESERVED262                       0x00AD  // 262 - [Reserved]
+#define DALI_PING                              0x00AF  // 263 - DALI-2 Ignores in the slave.
+#define DALI_SEARCHADDRH                       0x00B1  // 264 - Specifies the higher 8 bits of the search address.
+#define DALI_SEARCHADDRM                       0x00B3  // 265 - Specifies the middle 8 bits of the search address.
+#define DALI_SEARCHADDRL                       0x00B5  // 266 - Specifies the lower 8 bits of the search address.
+#define DALI_PROGRAM_SHORT_ADDRESS             0x00B7  // 267 - The slave shall store the received 6-bit address (AAA AAA) as a short address if it is selected.
+#define DALI_VERIFY_SHORT_ADDRESS              0x00B9  // 268 - Is the short address AAA AAA?
+#define DALI_QUERY_SHORT_ADDRESS               0x00BB  // 269 - What is the short address of the slaveNote 2being selected?
+#define DALI_PHYSICAL_SELECTION                0x00BD  // 270 - not DALI-2 Sets the slave to Physical Selection Mode and excludes the slave from the Compare process. (Excluding IEC62386-102ed2.0)
+#define DALI_RESERVED271                       0x00BF  // 271 - [Reserved]
+
+// Extending special commands - Send as first byte
+#define DALI_ENABLE_DEVICE_TYPE_X              0x00C1  // 272 - Adds the device XXXX (a special device).
+#define DALI_DATA_TRANSFER_REGISTER1           0x00C3  // 273 - Stores data XXXX into DTR1.
+#define DALI_DATA_TRANSFER_REGISTER2           0x00C5  // 274 - Stores data XXXX into DTR2.
+#define DALI_WRITE_MEMORY_LOCATION             0x00C7  // 275 - Write data into the specified address of the specified memory bank. (There is BW) (DTR(DTR0)：address, DTR1：memory bank number)
+#define DALI_WRITE_MEMORY_LOCATION_NO_REPLY    0x00C9  // 276 - DALI-2 Write data into the specified address of the specified memory bank. (There is no BW) (DTR(DTR0)：address, TR1：memory bank number)
+#define DALI_RESERVED277                       0x00CB  // 277 - [Reserved]
+#define DALI_RESERVED349                       0x00FD  // 349 - [Reserved]
+
+// Address type - Send as first byte
+#define DALI_BROADCAST_DP                      0x00FE  // 0b11111110 254 - Broadcast address
+
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Commands - Send as second byte
+\*-------------------------------------------------------------------------------------------*/
 
 // Control commands - Send as second byte without repeat
 #define DALI_OFF                               0x0000  //   0 - Turns off lighting.
@@ -199,6 +246,35 @@
 #define DALI_RESERVED198                       0x00C6  // 198 - [Reserved]
 #define DALI_RESERVED223                       0x00DF  // 223 - [Reserved]
 
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 201 = DT0 - Send as second byte
+ * Standard device like fluorescent lamps
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 202 = DT1 - Send as second byte
+ * Device for emergency lighting
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 203 = DT2 - Send as second byte
+ * Device for discharge lamps excluding fluorescent lamps
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 204 = DT3 - Send as second byte
+ * Device for low-voltage halogen lamps
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 205 = DT4 - Send as second byte
+ * Device for dimming incandescent lamps
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 206 = DT5 - Send as second byte
+ * Device for converting digital signales into DC signals
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 207 = DT6 - Send as second byte
+ * Device for Light Emitting Diodes (LEDs)
+\*-------------------------------------------------------------------------------------------*/
+
 // Application extended configuration commands - Send as second byte
 #define DALI_REFERENCE_SYSTEM_POWER            0x00E0  // 224 - IEC62386-207 Starts power measurement.
 #define DALI_ENABLE_CURRENT_PROTECTOR          0x00E1  // 225 - IEC62386-207 Enables the current protection.
@@ -229,43 +305,20 @@
 #define DALI_QUERY_MIN_FAST_FADE_TIME          0x00FE  // 254 - IEC62386-207 Returns set Minimum fast fade time
 #define DALI_QUERY_EXTENDED_VERSION_NUMBER     0x00FF  // 255 - IEC62386-207 The version number of the extended support? IEC62386-207: 1, Other: NO(no response)
 
-// Address types - Send as first byte
-#define DALI_SHORT_ADDRESS0                    0x0000  // 0b00000000   0 - First short address
-#define DALI_SHORT_ADDRESS1                    0x0002  // 0b00000010   1 - Next short address
-#define DALI_SHORT_ADDRESS63                   0x007E  // 0b01111110  63 - Last short address
-#define DALI_GROUP_ADDRESS0                    0x0080  // 0b10000000   0 - First group address
-#define DALI_GROUP_ADDRESS1                    0x0082  // 0b10000010   1 - Next group address
-#define DALI_GROUP_ADDRESS15                   0x009E  // 0b10011110  15 - Last group address
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 208 = DT7 - Send as second byte
+ * Device for switching functions
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 209 = DT8 - Send as second byte
+ * Device for controlling color and color temperature
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * DALI Application extended commands for IEC62386 part 210 = DT9 - Send as second byte
+ * Sequencer
+\*-------------------------------------------------------------------------------------------*/
 
-// Special commands - Send as first byte
-#define DALI_TERMINATE                         0x00A1  // 256 - Releases the INITIALISE state.
-#define DALI_DATA_TRANSFER_REGISTER0           0x00A3  // 257 - Stores the data XXXX XXXX to the DTR(DTR0).
-#define DALI_INITIALISE                        0x01A5  // 258 REPEAT - Sets the slave to the INITIALISE status for15 minutes. Commands 259 to 270 are enabled only for a slave in this status.
-#define DALI_RANDOMISE                         0x01A7  // 259 REPEAT - Generates a random address.
-#define DALI_COMPARE                           0x00A9  // 260 - Is the random address smaller or equal to the search address?
-#define DALI_WITHDRAW                          0x00AB  // 261 - Excludes slaves for which the random address and search address match from the Compare process.
-#define DALI_RESERVED262                       0x00AD  // 262 - [Reserved]
-#define DALI_PING                              0x00AF  // 263 - DALI-2 Ignores in the slave.
-#define DALI_SEARCHADDRH                       0x00B1  // 264 - Specifies the higher 8 bits of the search address.
-#define DALI_SEARCHADDRM                       0x00B3  // 265 - Specifies the middle 8 bits of the search address.
-#define DALI_SEARCHADDRL                       0x00B5  // 266 - Specifies the lower 8 bits of the search address.
-#define DALI_PROGRAM_SHORT_ADDRESS             0x00B7  // 267 - The slave shall store the received 6-bit address (AAA AAA) as a short address if it is selected.
-#define DALI_VERIFY_SHORT_ADDRESS              0x00B9  // 268 - Is the short address AAA AAA?
-#define DALI_QUERY_SHORT_ADDRESS               0x00BB  // 269 - What is the short address of the slaveNote 2being selected?
-#define DALI_PHYSICAL_SELECTION                0x00BD  // 270 - not DALI-2 Sets the slave to Physical Selection Mode and excludes the slave from the Compare process. (Excluding IEC62386-102ed2.0)
-#define DALI_RESERVED271                       0x00BF  // 271 - [Reserved]
-
-// Extending special commands - Send as first byte
-#define DALI_ENABLE_DEVICE_TYPE_X              0x00C1  // 272 - Adds the device XXXX (a special device).
-#define DALI_DATA_TRANSFER_REGISTER1           0x00C3  // 273 - Stores data XXXX into DTR1.
-#define DALI_DATA_TRANSFER_REGISTER2           0x00C5  // 274 - Stores data XXXX into DTR2.
-#define DALI_WRITE_MEMORY_LOCATION             0x00C7  // 275 - Write data into the specified address of the specified memory bank. (There is BW) (DTR(DTR0)：address, DTR1：memory bank number)
-#define DALI_WRITE_MEMORY_LOCATION_NO_REPLY    0x00C9  // 276 - DALI-2 Write data into the specified address of the specified memory bank. (There is no BW) (DTR(DTR0)：address, TR1：memory bank number)
-#define DALI_RESERVED277                       0x00CB  // 277 - [Reserved]
-#define DALI_RESERVED349                       0x00FD  // 349 - [Reserved]
-
-// Address type - Send as first byte
-#define DALI_BROADCAST_DP                      0x00FE  // 0b11111110 254 - Broadcast address
+/*-------------------------------------------------------------------------------------------*/
 
 #define DALI_MAX_STORED                        17      // Store broadcast and group states
 
@@ -1185,9 +1238,24 @@ void CmndDaliSend(void) {
   // Send command
   // Setting bit 8 will repeat command once
   // DaliSend 0x1a5,255  - DALI Initialise (send twice)
+  // DaliSend 6,3,0xe2   - DALI DT6 (6) for address 1 (3) extended command disable current protector (0xE2 = 226) 
   // DaliSend 0x01,0xa3,0x2d,254 - Set Power On level
   uint32_t values[4] = { 0 };
   uint32_t params = ParseParameters(4, values);
+  if (2 == params) {                                 // Prepare for Extended command
+    if ((values[1] >= 224) && (values[1] <= 255)) {  // Extended command
+      values[2] = values[1];
+      values[1] = values[0];
+      values[0] = 6;                                 // Default to DT6 - LEDs
+      params = 3;
+    }
+  }
+  if (3 == params) {                                 // Set extended command mode
+    DaliSendWaitResponse(DALI_ENABLE_DEVICE_TYPE_X, values[0] &0xFF);  // Enable Extended command
+    values[0] = values[1];
+    values[1] = values[2];
+    params = 2;
+  }
   if (2 == params) {
     DaliSendData(values[0] &0x1FF, values[1] &0xFF);
     ResponseCmndDone();
@@ -1206,10 +1274,25 @@ void CmndDaliSend(void) {
 void CmndDaliQuery(void) {
   // Send command and return response or -1 (no response within DALI_TIMEOUT)
   // Setting bit 8 will repeat command once
-  // DaliQuery 0xff,0x90  - DALI Query status
-  // DaliQuery 0xff,144   - DALI Query status
-  uint32_t values[2] = { 0 };
-  uint32_t params = ParseParameters(2, values);
+  // DaliQuery 0xff,0x90 - DALI Query status
+  // DaliQuery 0xff,144  - DALI Query status
+  // DaliQuery 6,7,237   - DALI Query status using extended command from DT6
+  uint32_t values[3] = { 0 };
+  uint32_t params = ParseParameters(3, values);
+  if (2 == params) {
+    if ((values[1] >= 224) && (values[1] <= 255)) {  // Extended command
+      values[2] = values[1];
+      values[1] = values[0];
+      values[0] = 6;                                 // Default to DT6 - LEDs
+      params = 3;
+    }
+  }
+  if (3 == params) {
+    DaliSendWaitResponse(DALI_ENABLE_DEVICE_TYPE_X, values[0] &0xFF);  // Enable Extended command
+    values[0] = values[1];
+    values[1] = values[2];
+    params = 2;
+  }
   if (2 == params) {
     int result = DaliSendWaitResponse(values[0] &0x1FF, values[1] &0xFF);
     ResponseCmndNumber(result);

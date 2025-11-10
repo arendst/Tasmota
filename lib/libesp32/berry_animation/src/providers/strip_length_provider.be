@@ -19,12 +19,12 @@ class StripLengthProvider : animation.value_provider
   # @param time_ms: int - Current time in milliseconds (ignored)
   # @return int - The strip length in pixels
   def produce_value(name, time_ms)
-    return (self.engine != nil) ? self.engine.get_strip_length() : 0
+    return self.engine.strip_length
   end
   
   # String representation of the provider
   def tostring()
-    var strip_width = (self.engine != nil) ? self.engine.get_strip_length() : 'unknown'
+    var strip_width = (self.engine != nil) ? self.engine.strip_length : 'unknown'
     return f"StripLengthProvider(length={strip_width})"
   end
 end

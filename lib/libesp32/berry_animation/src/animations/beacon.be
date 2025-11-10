@@ -25,7 +25,6 @@ class BeaconAnimation : animation.animation
   
   # Parameter definitions following the new specification
   static var PARAMS = animation.enc_params({
-    "color": {"default": 0xFFFFFFFF},
     "back_color": {"default": 0xFF000000},
     "pos": {"default": 0},
     "beacon_size": {"min": 0, "default": 1},
@@ -38,10 +37,6 @@ class BeaconAnimation : animation.animation
   # @param time_ms: int - Optional current time in milliseconds (defaults to engine time)
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms)
-    if frame == nil
-      return false
-    end
-    
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
     
@@ -54,7 +49,7 @@ class BeaconAnimation : animation.animation
     var color = self.color
     
     # Fill background if not transparent
-    if back_color != 0xFF000000
+    if (back_color != 0xFF000000) && ((back_color & 0xFF000000) != 0x00)
       frame.fill_pixels(frame.pixels, back_color)
     end
     
@@ -71,11 +66,13 @@ class BeaconAnimation : animation.animation
     end
     
     # Draw the main beacon
-    var i = beacon_min
-    while i < beacon_max
-      frame.set_pixel_color(i, color)
-      i += 1
-    end
+    frame.fill_pixels(frame.pixels, color, beacon_min, beacon_max)
+    var i
+    # var i = beacon_min
+    # while i < beacon_max
+    #   frame.set_pixel_color(i, color)
+    #   i += 1
+    # end
     
     # Draw slew regions if slew_size > 0
     if slew_size > 0

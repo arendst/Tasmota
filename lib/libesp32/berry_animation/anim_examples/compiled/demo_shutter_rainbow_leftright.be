@@ -9,40 +9,48 @@ import animation
 # Demo Shutter Rainbow
 #
 # Shutter from left to right iterating in all colors, then right to left
-# Template function: shutter_lr
-def shutter_lr_template(engine, colors_, duration_)
-  var strip_len_ = animation.strip_length(engine)
-  var shutter_size_ = (def (engine)
-    var provider = animation.sawtooth(engine)
-    provider.min_value = 0
-    provider.max_value = strip_len_
-    provider.duration = duration_
-    return provider
-  end)(engine)
-  var col1_ = animation.color_cycle(engine)
-  col1_.palette = colors_
-  col1_.cycle_period = 0
-  var col2_ = animation.color_cycle(engine)
-  col2_.palette = colors_
-  col2_.cycle_period = 0
-  col2_.next = 1
-  # shutter moving from left to right
-  var shutter_lr_animation_ = animation.beacon_animation(engine)
-  shutter_lr_animation_.color = col2_
-  shutter_lr_animation_.back_color = col1_
-  shutter_lr_animation_.pos = 0
-  shutter_lr_animation_.beacon_size = shutter_size_
-  shutter_lr_animation_.slew_size = 0
-  shutter_lr_animation_.priority = 5
-  var shutter_seq_ = animation.sequence_manager(engine, -1)
-    .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
-    .push_play_step(shutter_lr_animation_, animation.resolve(duration_))
-    .push_closure_step(def (engine) col1_.next = 1 end)
-    .push_closure_step(def (engine) col2_.next = 1 end)
-  engine.add(shutter_seq_)
-end
+# Template animation class: shutter_lr
+class shutter_lr_animation : animation.engine_proxy
+  static var PARAMS = animation.enc_params({
+    "colors": {"type": "palette"},
+    "period": {}
+  })
 
-animation.register_user_function('shutter_lr', shutter_lr_template)
+  # Template setup method - overrides EngineProxy placeholder
+  def setup_template()
+    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
+
+    var strip_len_ = animation.strip_length(engine)
+    var shutter_size_ = (def (engine)
+      var provider = animation.sawtooth(engine)
+      provider.min_value = 0
+      provider.max_value = strip_len_
+      provider.duration = animation.create_closure_value(engine, def (engine) return self.period end)
+      return provider
+    end)(engine)
+    var col1_ = animation.color_cycle(engine)
+    col1_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col1_.cycle_period = 0
+    var col2_ = animation.color_cycle(engine)
+    col2_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col2_.cycle_period = 0
+    col2_.next = 1
+    # shutter moving from left to right
+    var shutter_lr_animation_ = animation.beacon_animation(engine)
+    shutter_lr_animation_.color = col2_
+    shutter_lr_animation_.back_color = col1_
+    shutter_lr_animation_.pos = 0
+    shutter_lr_animation_.beacon_size = shutter_size_
+    shutter_lr_animation_.slew_size = 0
+    shutter_lr_animation_.priority = 5
+    var shutter_seq_ = animation.sequence_manager(engine, -1)
+          .push_closure_step(def (engine) shutter_size_.start(engine.time_ms) end)
+          .push_play_step(shutter_lr_animation_, def (engine) return self.period end)
+          .push_closure_step(def (engine) col1_.next = 1 end)
+          .push_closure_step(def (engine) col2_.next = 1 end)
+    self.add(shutter_seq_)
+  end
+end
 
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
@@ -56,7 +64,10 @@ var rainbow_with_white_ = bytes(
   "FF4B0082"
   "FFFFFFFF"
 )
-shutter_lr_template(engine, rainbow_with_white_, 1500)
+var main_ = shutter_lr_animation(engine)
+main_.colors = rainbow_with_white_
+main_.period = 1500
+engine.add(main_)
 engine.run()
 
 
@@ -65,46 +76,46 @@ engine.run()
 #
 # Shutter from left to right iterating in all colors, then right to left
   
-template shutter_lr {
-    param colors type palette
-    param duration
-  
-    set strip_len = strip_length()
-    set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
-  
-    color col1 = color_cycle(palette=colors, cycle_period=0)
-    color col2 = color_cycle(palette=colors, cycle_period=0)
+template animation shutter_lr {
+  param colors type palette
+  param period
+
+  set strip_len = strip_length()
+  set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
+
+  color col1 = color_cycle(palette=colors, cycle_period=0)
+  color col2 = color_cycle(palette=colors, cycle_period=0)
+  col2.next = 1
+
+  # shutter moving from left to right
+  animation shutter_lr_animation = beacon_animation(
+    color = col2
+    back_color = col1
+    pos = 0
+    beacon_size = shutter_size
+    slew_size = 0
+    priority = 5
+  )
+
+  sequence shutter_seq repeat forever {
+    restart shutter_size
+    play shutter_lr_animation for period
+    col1.next = 1
     col2.next = 1
-  
-    # shutter moving from left to right
-    animation shutter_lr_animation = beacon_animation(
-      color = col2
-      back_color = col1
-      pos = 0
-      beacon_size = shutter_size
-      slew_size = 0
-      priority = 5
-    )
-  
-    sequence shutter_seq repeat forever {
-      restart shutter_size
-      play shutter_lr_animation for duration
-      col1.next = 1
-      col2.next = 1
-    }
-    
-    run shutter_seq
   }
   
-  palette rainbow_with_white = [ red
-    orange
-    yellow
-    green,      # comma left on-purpose to test transpiler
-    blue        # need for a lighter blue
-    indigo
-    white
-  ]
-  
-  shutter_lr(rainbow_with_white, 1.5s)
-  
+  run shutter_seq
+}
+
+palette rainbow_with_white = [ red
+  orange
+  yellow
+  green,      # comma left on-purpose to test transpiler
+  blue        # need for a lighter blue
+  indigo
+  white
+]
+
+animation main = shutter_lr(colors = rainbow_with_white, period = 1.5s)
+run main
 -#

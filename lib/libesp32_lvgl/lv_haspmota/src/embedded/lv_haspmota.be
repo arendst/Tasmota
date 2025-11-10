@@ -1614,11 +1614,31 @@ class lvh_img : lvh_obj
   end
   def get_auto_size() end
   def set_angle(v)
-    v = int(v)
-    self._lv_obj.set_angle(v)
+    # set center
+    self._lv_obj.set_style_transform_pivot_x(self._lv_obj.get_width() / 2, 0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
+    self._lv_obj.set_style_transform_pivot_y(self._lv_obj.get_height() / 2, 0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
+    # set angle via rotation
+    self._lv_obj.set_style_transform_rotation(int(v), 0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
   end
   def get_angle()
-    return self._lv_obj.get_angle()
+    return self._lv_obj.get_style_transform_rotation(0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
+  end
+  def set_scale(v)
+    # set center
+    self._lv_obj.set_style_transform_pivot_x(self._lv_obj.get_width() / 2, 0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
+    self._lv_obj.set_style_transform_pivot_y(self._lv_obj.get_height() / 2, 0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
+    # set angle via rotation
+    self._lv_obj.set_style_transform_scale(int(v), 0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)
+  end
+  def get_scale()
+    return (self._lv_obj.get_style_transform_scale_x(0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#) +
+            self._lv_obj.get_style_transform_scale_y(0 #-lv.PART_MAIN | lv.STATE_DEFAULT-#)) / 2
+  end
+  def set_zoom(v)
+    self.set_scale(v)
+  end
+  def get_zoom()
+    return self.get_scale()
   end
   #- ------------------------------------------------------------#
   # `src` virtual setter

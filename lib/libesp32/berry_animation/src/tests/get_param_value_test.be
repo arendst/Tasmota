@@ -12,6 +12,11 @@ class MockEngine
   def init()
     self.time_ms = 1000  # Fixed time for testing
   end
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    return true
+  end
 end
 
 var mock_engine = MockEngine()

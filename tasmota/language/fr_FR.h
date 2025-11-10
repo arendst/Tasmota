@@ -60,8 +60,8 @@
 #define D_AT "at"
 #define D_AUTO "AUTO"
 #define D_AUTO_UPDATE "Auto Update"
-#define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
+#define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"    // Battery charge in %
 #define D_BLINK "Blink"              // Not better in french
 #define D_BLINKOFF "BlinkOff"
@@ -76,17 +76,17 @@
 #define D_CO2 "Dioxyde de carbone"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Froid"
+#define D_COLOR "Color"
 #define D_COMMAND "Commande"
 #define D_CONNECTED "Connecté"
 #define D_CORS_DOMAIN "Domaine CORS"
-#define D_COLOR "Color"
 #define D_COUNT "Compte"
 #define D_COUNTER "Compteur"
 #define D_CT_POWER "Puissance CT"
 #define D_CURRENT "Courant"          // As in Voltage and Current
 #define D_CURRENT_NEUTRAL "Courant neutre"
-#define D_DATA "Donnée"
 #define D_DARKLIGHT "Sombre"
+#define D_DATA "Donnée"
 #define D_DEBUG "Debug"
 #define D_DEWPOINT "Point de rosée"
 #define D_DISABLED "Désactivé"
@@ -113,15 +113,13 @@
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Fréq. image"
 #define D_FREE_MEMORY "Mémoire libre"
-#define D_PSR_MAX_MEMORY "Mémoire PS-RAM"
-#define D_PSR_FREE_MEMORY "Mémoire PS-RAM libre"
 #define D_FREQUENCY "Fréquence"
 #define D_GAS "Gaz"
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
-#define D_HOST "Hôte"
 #define D_HALL_EFFECT "Effet Hall"
 #define D_HEATINDEX "Heat index"
+#define D_HOST "Hôte"
 #define D_HOSTNAME "Nom d'Hôte"
 #define D_HUMIDITY "Humidité"
 #define D_ILLUMINANCE "Éclairement"
@@ -132,10 +130,11 @@
 #define D_INITIALIZED "Initialisé"
 #define D_IP_ADDRESS "Adresse IP"
 #define D_LIGHT "Lumière"
-#define D_LWT "LWT"					         // MQTT Last Will and Testament
 #define D_LQI "LQI"                  // ZigBee Link Quality Index
+#define D_LWT "LWT"					         // MQTT Last Will and Testament
 #define D_MODULE "Module"
 #define D_MOISTURE "Humidité"
+#define D_MQ "MQ"                    // MQ series Gas sensor
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-pression"
 #define D_NOISE "Bruit"
@@ -148,10 +147,9 @@
 #define D_ON "Marche"
 #define D_ONLINE "Connecté"
 #define D_ORP "Redox"                // Oxidation Reduction Potential
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PASSWORD "Mot de passe"
 #define D_PH "pH"
-#define D_MQ "MQ"                    // MQ series Gas sensor
-#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
@@ -164,27 +162,31 @@
 #define D_PROGRAM_FLASH_SIZE "Taille Flash Programme"
 #define D_PROGRAM_SIZE "Taille programme"
 #define D_PROJECT "Projet"
+#define D_PSR_FREE_MEMORY "Mémoire PS-RAM libre"
+#define D_PSR_MAX_MEMORY "Mémoire PS-RAM"
 #define D_RAIN "Pluie"
 #define D_RANGE "Intervalle"
 #define D_RECEIVED "Reçu"
 #define D_RESTART "Redémarrage"
-#define D_RESTARTING "Redémarre"
 #define D_RESTART_REASON "Raison du redémarrage"
+#define D_RESTARTING "Redémarre"
 #define D_RETAINED "persistant"		   // MQTT
 #define D_RULE "Règle"
 #define D_SAVE "Enregistrer"
 #define D_SENSOR "Capteur"
+#define D_SOC "État de la Charge"
+#define D_SOH "État de Santé"
 #define D_SSID "SSID"
 #define D_START "Lancer"	         // "Lancer la mise à jour"
 #define D_STD_TIME "STD"
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Masque sous-réseau"
 #define D_SUBSCRIBE_TO "S'abonner à"
-#define D_UNSUBSCRIBE_FROM "Se désabonner de"
 #define D_SUCCESSFUL "Réussi"
 #define D_SUNRISE "Lever du jour"
 #define D_SUNSET "Tombée de la nuit"
 #define D_TEMPERATURE "Température"
+#define D_TIME_OF_DAY "Temps"
 #define D_TO "à"
 #define D_TOGGLE "Inverser"
 #define D_TOPIC "Topic"              // Keep MQTT keyword
@@ -195,6 +197,7 @@
 #define D_TWILIGHT_ASTRONOMICAL "Astronomical"
 #define D_TWILIGHT_CIVIL "Civil"
 #define D_TWILIGHT_NAUTICAL "Nautical"
+#define D_UNSUBSCRIBE_FROM "Se désabonner de"
 #define D_UPLOAD "Upload"            // Not better in french
 #define D_UPTIME "Durée d'activité"
 #define D_USED "utilisé"
@@ -214,12 +217,10 @@
 #define D_VOC "VOC"
 #define D_VOLTAGE "Tension"
 #define D_VOLUME "Volume"
-#define D_WEIGHT "Poids"
 #define D_WARMLIGHT "Chaud"
-#define D_WEB_SERVER "Serveur web"
-#define D_SOC "État de la Charge"
-#define D_SOH "État de Santé"
 #define D_WATER_DEPTH "Profondeur de l’eau"
+#define D_WEB_SERVER "Serveur web"
+#define D_WEIGHT "Poids"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ATTENTION Cette version ne gère pas les réglages persistants"
@@ -474,7 +475,6 @@
 #define D_TIMER_PARAMETERS "Paramètres Timer"
 #define D_TIMER_ENABLE "Activer les Timers"
 #define D_TIMER_ARM "Armer"
-#define D_TIMER_TIME "Temps"
 #define D_TIMER_DAYS "Jours"
 #define D_TIMER_REPEAT "Répéter"
 #define D_TIMER_OUTPUT "Sortie"

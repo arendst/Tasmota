@@ -215,6 +215,125 @@ def render(frame, time_ms)
 end
 ```
 
+### Color Provider LUT Optimization
+
+For color providers that perform expensive color calculations (like palette interpolation), the base `ColorProvider` class provides a Lookup Table (LUT) mechanism for caching pre-computed colors:
+
+```berry
+#@ solidify:MyColorProvider,weak
+class MyColorProvider : animation.color_provider
+  # Instance variables (all should start with underscore)
+  var _cached_data    # Your custom cached data
+  
+  def init(engine)
+    super(self).init(engine)  # Initializes _color_lut and _lut_dirty
+    self._cached_data = nil
+  end
+  
+  # Mark LUT as dirty when parameters change
+  def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
+    if name == "palette" || name == "transition_type"
+      self._lut_dirty = true  # Inherited from ColorProvider
+    end
+  end
+  
+  # Rebuild LUT when needed
+  def _rebuild_color_lut()
+    # Allocate LUT (e.g., 129 entries * 4 bytes = 516 bytes)
+    if self._color_lut == nil
+      self._color_lut = bytes()
+      self._color_lut.resize(129 * 4)
+    end
+    
+    # Pre-compute colors for values 0, 2, 4, ..., 254, 255
+    var i = 0
+    while i < 128
+      var value = i * 2
+      var color = self._compute_color_expensive(value)
+      self._color_lut.set(i * 4, color, 4)
+      i += 1
+    end
+    
+    # Add final entry for value 255
+    var color_255 = self._compute_color_expensive(255)
+    self._color_lut.set(128 * 4, color_255, 4)
+    
+    self._lut_dirty = false
+  end
+  
+  # Update method checks if LUT needs rebuilding
+  def update(time_ms)
+    if self._lut_dirty || self._color_lut == nil
+      self._rebuild_color_lut()
+    end
+    return self.is_running
+  end
+  
+  # Fast color lookup using LUT
+  def get_color_for_value(value, time_ms)
+    # Build LUT if needed (lazy initialization)
+    if self._lut_dirty || self._color_lut == nil
+      self._rebuild_color_lut()
+    end
+    
+    # Map value to LUT index (divide by 2, special case for 255)
+    var lut_index = value >> 1
+    if value >= 255
+      lut_index = 128
+    end
+    
+    # Retrieve pre-computed color from LUT
+    var color = self._color_lut.get(lut_index * 4, 4)
+    
+    # Apply brightness scaling using static method (only if not 255)
+    var brightness = self.brightness
+    if brightness != 255
+      return animation.color_provider.apply_brightness(color, brightness)
+    end
+    
+    return color
+  end
+  
+  # Access LUT from outside (returns bytes() or nil)
+  # Inherited from ColorProvider: get_lut()
+end
+```
+
+**LUT Benefits:**
+- **5-10x speedup** for expensive color calculations
+- **Reduced CPU usage** during rendering
+- **Smooth animations** even with complex color logic
+- **Memory efficient** (typically 516 bytes for 129 entries)
+
+**When to use LUT:**
+- Palette interpolation with binary search
+- Complex color transformations
+- Brightness calculations
+- Any expensive per-pixel color computation
+
+**LUT Guidelines:**
+- Store colors at maximum brightness, apply scaling after lookup
+- Use 2-step resolution (0, 2, 4, ..., 254, 255) to save memory
+- Invalidate LUT when parameters affecting color calculation change
+- Don't invalidate for brightness changes if brightness is applied post-lookup
+
+**Brightness Handling:**
+
+The `ColorProvider` base class includes a `brightness` parameter (0-255, default 255) and a static method for applying brightness scaling:
+
+```berry
+# Static method for brightness scaling (only scales if brightness != 255)
+animation.color_provider.apply_brightness(color, brightness)
+```
+
+**Best Practices:**
+- Store LUT colors at maximum brightness (255)
+- Apply brightness scaling after LUT lookup using the static method
+- Only call the static method if `brightness != 255` to avoid unnecessary overhead
+- For inline performance-critical code, you can inline the brightness calculation instead of calling the static method
+- Brightness changes do NOT invalidate the LUT since brightness is applied after lookup
+
 ## Parameter Access
 
 ### Direct Virtual Member Assignment

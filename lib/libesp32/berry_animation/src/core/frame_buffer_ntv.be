@@ -93,7 +93,7 @@ class FrameBufferNtv
   # pixels: destination bytes buffer
   # color: the color to fill (ARGB format - 0xAARRGGBB)
   # start_pos: start position (default: 0)
-  # end_pos: end position (default: -1 = last pixel)
+  # end_pos: end position excluded (default: -1 = last pixel)
   static def fill_pixels(pixels, color, start_pos, end_pos)
     # Default parameters
     if (start_pos == nil) start_pos = 0 end
@@ -104,18 +104,18 @@ class FrameBufferNtv
     
     # Handle negative indices (Python-style)
     if (start_pos < 0) start_pos += width end
-    if (end_pos < 0) end_pos += width end
+    if (end_pos < 0) end_pos += width + 1 end
     
     # Clamp to valid range
     if (start_pos < 0) start_pos = 0 end
     if (end_pos < 0) end_pos = 0 end
     if (start_pos >= width) return end
-    if (end_pos >= width) end_pos = width - 1 end
+    if (end_pos > width) end_pos = width end
     if (end_pos < start_pos) return end
     
     # Fill the region with the color
     var i = start_pos
-    while i <= end_pos
+    while i < end_pos
       pixels.set(i * 4, color, 4)
       i += 1
     end

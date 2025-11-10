@@ -65,17 +65,13 @@ register_to_animation(param_encoder)
 import "core/math_functions" as math_functions
 register_to_animation(math_functions)
 
-# Base class for parameter management - shared by Animation and ValueProvider
+# Base class for parameter management and playable behavior - shared by Animation and ValueProvider
 import "core/parameterized_object" as parameterized_object
 register_to_animation(parameterized_object)
 
 # Frame buffer management for LED strip pixel data
 import "core/frame_buffer" as frame_buffer
 register_to_animation(frame_buffer)
-
-# Playable base class - common interface for animations and sequences
-import "core/playable_base" as playable_base
-register_to_animation(playable_base)
 
 # Base Animation class - unified foundation for all visual elements
 import "core/animation_base" as animation_base

@@ -131,6 +131,21 @@ class Leds : Leds_ntv
   def dirty()                   ## DEPRECATED
     self.call_native(5)
   end
+
+  # push_pixels
+  #
+  # Pushes a bytes() buffer of 0xAARRGGBB colors, without bri nor gamma correction
+  # 
+  def push_pixels_buffer_argb(pixels)
+    # Leds.set_pixels(buffer:bytes, pixels_buffer:comptr, pixels_count:int, [pixel_size:int = 3, bri:int (0..255) = 255, gamma:bool = true]) -> void
+    self.set_pixels(pixels,
+                    self.call_native(6),  # address of buffer in memory
+                    self.pixel_count(),
+                    self.pixel_size(),
+                    self.get_bri(),
+                    self.get_gamma())
+  end
+
   def pixels_buffer(old_buf)
     var buf = self.call_native(6)   # address of buffer in memory
     var sz = self.pixel_size() * self.pixel_count()

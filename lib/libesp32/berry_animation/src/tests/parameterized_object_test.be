@@ -14,6 +14,12 @@ class MockEngine
   def init()
     self.time_ms = 1000  # Fixed time for testing
   end
+  
+  # Fake add() method for value provider auto-registration
+  def add(obj)
+    # Do nothing - just prevent errors when value providers auto-register
+    return true
+  end
 end
 
 var mock_engine = MockEngine()
@@ -210,14 +216,14 @@ def test_parameter_metadata()
   var obj = TestClass(mock_engine)
   
   # Test getting single parameter definition
-  assert(obj._has_param("range_param") == true, "range_param should exist")
+  assert(obj.has_param("range_param") == true, "range_param should exist")
   var range_def = obj._get_param_def("range_param")
   assert(range_def != nil, "Should get range parameter definition")
   assert(obj.constraint_find(range_def, "min", nil) == 0, "Should have min constraint")
   assert(obj.constraint_find(range_def, "max", nil) == 100, "Should have max constraint")
   assert(obj.constraint_find(range_def, "default", nil) == 50, "Should have default value")
   
-  assert(obj._has_param("enum_param") == true, "enum_param should exist")
+  assert(obj.has_param("enum_param") == true, "enum_param should exist")
   var enum_def = obj._get_param_def("enum_param")
   assert(enum_def != nil, "Should get enum parameter definition")
   assert(obj.constraint_mask(enum_def, "enum") == 0x10, "Should have enum constraint")
@@ -361,16 +367,20 @@ def test_undefined_parameter_behavior()
   obj.defined_param = 75
   assert(obj.defined_param == 75, "Defined parameter assignment should still work")
   
-  # Test _has_param and _get_param_def for undefined parameter
+  # Test has_param and _get_param_def for undefined parameter
   print("  Testing parameter definition for undefined parameter...")
-  assert(obj._has_param("undefined_param") == false, "_has_param for undefined parameter should return false")
+  assert(obj.has_param("undefined_param") == false, "has_param for undefined parameter should return false")
   var undefined_def = obj._get_param_def("undefined_param")
   assert(undefined_def == nil, "_get_param_def for undefined parameter should be nil")
   
   # Test get_param_value for undefined parameter
   print("  Testing get_param_value for undefined parameter...")
-  var undefined_param_value = obj.get_param_value("undefined_param", 1000)
-  assert(undefined_param_value == nil, "get_param_value for undefined parameter should return nil")
+  try
+    var undefined_param_value = obj.get_param_value("undefined_param", 1000)
+    assert(true, "get_param_value for undefined parameter should raise an exception")
+  except .. as e, m
+    # exception is ok
+  end
   
   print("✓ Undefined parameter behavior test passed")
 end

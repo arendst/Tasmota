@@ -32,7 +32,7 @@ class ShiftAnimation : animation.animation
   
   # Initialize buffers based on current strip length
   def _initialize_buffers()
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     self.source_frame = animation.frame_buffer(current_strip_length)
     self.current_colors = []
     self.current_colors.resize(current_strip_length)
@@ -65,7 +65,7 @@ class ShiftAnimation : animation.animation
     var current_direction = self.direction
     var current_wrap_around = self.wrap_around
     var current_source_animation = self.source_animation
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     
     # Update shift offset based on speed
     if current_shift_speed > 0
@@ -102,7 +102,7 @@ class ShiftAnimation : animation.animation
   # Calculate shifted colors for all pixels
   def _calculate_shift()
     # Get current strip length and ensure buffers are correct size
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     if size(self.current_colors) != current_strip_length
       self._initialize_buffers()
     end
@@ -160,7 +160,7 @@ class ShiftAnimation : animation.animation
     # Auto-fix time_ms and start_time
     time_ms = self._fix_time_ms(time_ms)
     
-    var current_strip_length = self.engine.get_strip_length()
+    var current_strip_length = self.engine.strip_length
     var i = 0
     while i < current_strip_length
       if i < frame.width
