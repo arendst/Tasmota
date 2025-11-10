@@ -412,15 +412,7 @@ void I80Panel::setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
     
     uint16_t x2 = x + w - 1;
     uint16_t y2 = y + h - 1;
-    
-#ifdef UDSP_DEBUG
-    static uint8_t log_count2 = 0;
-    if (log_count2++ < 3) {
-        AddLog(LOG_LEVEL_DEBUG, "I80: setAddrWindow_int x=%d y=%d w=%d h=%d -> x=%d-%d y=%d-%d", 
-               x-cfg.x_addr_offset[_rotation], y-cfg.y_addr_offset[_rotation], w, h, x, x2, y, y2);
-    }
-#endif
-    
+       
     if (cfg.sa_mode != 8) {
         // Normal mode: send 32-bit packed coordinates
         uint32_t xa = ((uint32_t)x << 16) | x2;
