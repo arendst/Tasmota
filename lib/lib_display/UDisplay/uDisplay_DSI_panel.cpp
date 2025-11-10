@@ -273,7 +273,7 @@ bool DSIPanel::setRotation(uint8_t rot) {
     
     // Send MADCTL command (0x36) with rotation value
     esp_err_t ret = esp_lcd_panel_io_tx_param(io_handle, 0x36, &madctl_val, 1);
-    return (ret == ESP_OK);
+    return false; // pass job to Renderer
 }
 
 bool DSIPanel::updateFrame() {

@@ -133,5 +133,5 @@ void uDisplay::setRotation(uint8_t rotation) {
 }
 
 void uDisplay::Updateframe(void) {
-    universal_panel && universal_panel->updateFrame();
+    universal_panel->updateFrame();
 }
