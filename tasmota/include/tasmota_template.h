@@ -510,7 +510,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_C8_CO2_5K_TX "|" D_SENSOR_C8_CO2_5K_RX "|"
   D_SENSOR_V9240_TX "|" D_SENSOR_V9240_RX "|"
   D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX "|"
-  D_GPIO_MKSKYBLU_TX "|" D_GPIO_MKSKYBLU_RX "|"
+  D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
   #ifdef ESP32
   D_SENSOR_HSDIO_CMD "|" D_SENSOR_HSDIO_CLK "|" D_SENSOR_HSDIO_RST "|" D_SENSOR_HSDIO_D0 "|" D_SENSOR_HSDIO_D1 "|" D_SENSOR_HSDIO_D2 "|" D_SENSOR_HSDIO_D3 "|"
 #endif
@@ -543,7 +543,11 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_CSE7761              2  // Model 1/2 (DUALR3), 2/2 (POWCT)
 #define MAX_TWAI                 SOC_TWAI_CONTROLLER_NUM
 #define MAX_GPS_RX               3  // Baudrates 1 (9600), 2 (19200), 3 (38400)
-#define MAX_MKSKYBLU_IF          8  // maximum number of MakeSkyBlue solar charger
+#ifdef ESP32
+#define MAX_MKSKYBLU_IF          8  // MakeSkyBlue solar charger: ESP32-NRG supports up to 8 phases
+#else
+#define MAX_MKSKYBLU_IF          3  // MakeSkyBlue solar charger: ESP82xx-NRG supports up to 3 phases
+#endif
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                                     // Not used
