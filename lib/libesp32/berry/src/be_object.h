@@ -249,6 +249,7 @@ typedef const char* (*breader)(struct blexer*, void*, size_t*);
 #define var_setmodule(_v, _o)   var_setobj(_v, BE_MODULE, _o)
 #define var_setindex(_v, _i)    { var_settype(_v, BE_INDEX); (_v)->v.i = (_i); }
 #define var_setproto(_v, _o)    var_setobj(_v, BE_PROTO, _o)
+#define var_setcomptr(_v, _o)   var_setobj(_v, BE_COMPTR, _o)
 
 #define var_tobool(_v)          ((_v)->v.b)
 #define var_toint(_v)           ((_v)->v.i)
