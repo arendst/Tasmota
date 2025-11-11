@@ -17,8 +17,9 @@ class ColorProvider : animation.value_provider
   # LUT (Lookup Table) management for color providers
   # Subclasses can use this to cache pre-computed colors for performance
   # If a subclass doesn't use a LUT, this remains nil
-  var _color_lut       # Color lookup table cache (bytes() object or nil)
-  var _lut_dirty       # Flag indicating LUT needs rebuilding
+  var _color_lut            # Color lookup table cache (bytes() object or nil)
+  var _lut_dirty            # Flag indicating LUT needs rebuilding
+  static var LUT_FACTOR = 1 # Reduction factor for LUT compression
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
