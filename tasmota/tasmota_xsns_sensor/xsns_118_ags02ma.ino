@@ -43,7 +43,7 @@ enum AGS02MA_State {
   STATE_AGS02MA_FAIL,
 };
 
-AGS02MA ags02ma(AGS02MA_ADDRESS);
+AGS02MA *ags02ma = nullptr;
 AGS02MA_State ags02ma_state = STATE_AGS02MA_START;
 
 bool ags02ma_init = false;
@@ -58,27 +58,27 @@ void Ags02maInit(void)
 {
   if (!I2cSetDevice(AGS02MA_ADDRESS)) { return; }
 
-  ags02ma.begin(I2cGetWire());
+  ags02ma = new AGS02MA(AGS02MA_ADDRESS, &I2cGetWire());
 
-  bool b = ags02ma.begin();
+  bool b = ags02ma->begin();
   if (!b) {
     AddLog(LOG_LEVEL_INFO, PSTR("AGS02MA: Sensor not found or initialization failed"));
     ags02ma_state = STATE_AGS02MA_FAIL;
     return;
   }
 
-  uint8_t version = ags02ma.getSensorVersion();
+  uint8_t version = ags02ma->getSensorVersion();
   AddLog(LOG_LEVEL_INFO, PSTR("AGS02MA: Sensor version 0x%02X"), version);
 
   // Set PPB mode
-  b = ags02ma.setPPBMode();
+  b = ags02ma->setPPBMode();
   if (!b) {
     AddLog(LOG_LEVEL_INFO, PSTR("AGS02MA: Failed to set PPB mode"));
     ags02ma_state = STATE_AGS02MA_FAIL;
     return;
   }
 
-  uint8_t mode = ags02ma.getMode();
+  uint8_t mode = ags02ma->getMode();
   AddLog(LOG_LEVEL_INFO, PSTR("AGS02MA: Mode set to %d"), mode);
 
   I2cSetActiveFound(AGS02MA_ADDRESS, "AGS02MA", XI2C_95);
@@ -101,7 +101,7 @@ void Ags02maUpdate(void)
   if (ags02ma_state == STATE_AGS02MA_HEATING) {
     // Check every 5 seconds (called from FUNC_EVERY_SECOND, so count to 5)
     if (heating_counter % 5 == 0) {
-      if (ags02ma.isHeated()) {
+      if (ags02ma->isHeated()) {
         AddLog(LOG_LEVEL_INFO, PSTR("AGS02MA: Warm-up complete, sensor ready"));
         ags02ma_state = STATE_AGS02MA_NORMAL;
         heating_counter = 0;
@@ -119,10 +119,10 @@ void Ags02maUpdate(void)
 
   // Normal operation - read sensor value
   if (ags02ma_state == STATE_AGS02MA_NORMAL) {
-    ags02ma_ppb_value = ags02ma.readPPB();
+    ags02ma_ppb_value = ags02ma->readPPB();
     
-    uint8_t status = ags02ma.lastStatus();
-    uint8_t error = ags02ma.lastError();
+    uint8_t status = ags02ma->lastStatus();
+    uint8_t error = ags02ma->lastError();
     
     if (error != 0) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("AGS02MA: Read error - Status: 0x%02X, Error: 0x%02X"), status, error);
