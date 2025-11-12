@@ -141,8 +141,8 @@ void Ags02maShow(bool json)
 {
   if (ags02ma_state == STATE_AGS02MA_NORMAL) {
     if (json) {
-      ResponseAppend_P(PSTR(",\"AGS02MA\":{\"" D_JSON_TVOC "\":%d,\"" D_JSON_TVOC_PPB "\":%d}"), 
-                       ags02ma_ppb_value, ags02ma_ppb_value);
+      ResponseAppend_P(PSTR(",\"AGS02MA\":{\"" D_JSON_TVOC "\":%d}"), 
+                       ags02ma_ppb_value);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_AIRQUALITY, ags02ma_ppb_value);
