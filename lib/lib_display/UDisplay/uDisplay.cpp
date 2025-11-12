@@ -24,7 +24,7 @@
 #include "tasmota_options.h"
 
 
-#define UDSP_DEBUG
+// #define UDSP_DEBUG
 
 #ifndef UDSP_LBSIZE
 #define UDSP_LBSIZE 256
