@@ -43,7 +43,7 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
     esp_lcd_dsi_bus_config_t bus_config = {
         .bus_id = 0,
         .num_data_lanes = cfg.dsi_lanes,
-        .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT,
+        .phy_clk_src = (mipi_dsi_phy_pllref_clock_source_t)MIPI_DSI_PHY_CLK_SRC_PLL_F20M,
         .lane_bit_rate_mbps = cfg.lane_speed_mbps
     };
     ret = esp_lcd_new_dsi_bus(&bus_config, &dsi_bus);

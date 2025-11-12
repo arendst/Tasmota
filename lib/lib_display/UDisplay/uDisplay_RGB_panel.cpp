@@ -9,8 +9,6 @@
 #include <algorithm>
 #include <rom/cache.h>
 
-extern int CACHE_WRITEBACK_ADDR(uint32_t addr, uint32_t size);
-
 RGBPanel::RGBPanel(const esp_lcd_rgb_panel_config_t *config) {
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(config, &panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
