@@ -380,7 +380,7 @@
 //#define MY_LANGUAGE            bg_BG           // Bulgarian in Bulgaria
 //#define MY_LANGUAGE            ca_AD           // Catalan in All catalan speaking countries ( Andorra )
 //#define MY_LANGUAGE            cs_CZ           // Czech in Czech
-//#define MY_LANGUAGE            de_DE           // German in Germany
+#define MY_LANGUAGE            de_DE           // German in Germany
 //#define MY_LANGUAGE            el_GR           // Greek in Greece
 //#define MY_LANGUAGE            en_GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es_ES           // Spanish in Spain
