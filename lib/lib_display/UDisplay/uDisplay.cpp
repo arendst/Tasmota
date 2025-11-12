@@ -20,7 +20,6 @@
 #include <Arduino.h>
 #include "uDisplay.h"
 #include "uDisplay_config.h"
-#include "uDisplay_epd_panel.h"
 
 #include "tasmota_options.h"
 
