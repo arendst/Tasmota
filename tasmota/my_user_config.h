@@ -836,7 +836,7 @@
 //    #define MAX_DT_VARS     16                   // Defaults to 7
 //    #define USE_GRAPH                            // Enable line charts with displays
 //    #define NUM_GRAPHS     4                     // Max 16
-    #define USE_AGS02MA                        // [I2cDriver 93] Enable AGS02MA Air Quality Sensor (I2C address 0x1A)
+//    #define USE_AGS02MA                          // [I2cDriver 95] Enable AGS02MA Air Quality Sensor (I2C address 0x1A)
 
 #endif  // USE_I2C
 
