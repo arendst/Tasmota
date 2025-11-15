@@ -5,6 +5,7 @@
 #include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
+#include "uDisplay_config.h"
 
 #ifdef ESP32
 #if __has_include("soc/soc_caps.h")

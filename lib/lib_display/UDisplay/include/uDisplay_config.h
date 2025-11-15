@@ -1,21 +1,18 @@
 #ifndef UDISPLAY_CONFIG_H
 #define UDISPLAY_CONFIG_H
 
-// Logging system interface
-enum LoggingLevels {
-    LOG_LEVEL_NONE, 
-    LOG_LEVEL_ERROR, 
-    LOG_LEVEL_INFO, 
-    LOG_LEVEL_DEBUG, 
-    LOG_LEVEL_DEBUG_MORE
-};
-
+// Include Tasmota headers - path configured in library.json
+#include "tasmota.h"
+  
+// Declare Tasmota functions that are not in headers
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
-extern int32_t ESP_ResetInfoReason();
-extern float CharToFloat(const char *str);
-extern SPIClass *SpiBegin(uint32 bus);
-// extern int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
+extern uint32_t ESP_ResetInfoReason(void);
 extern bool UsePSRAM(void);
+extern float CharToFloat(const char *str);
+extern SPIClass *SpiBegin(uint32_t bus);
+
+// Enable universal touch support
+#define USE_UNIVERSAL_TOUCH
 
 enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 
