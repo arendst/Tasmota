@@ -1,16 +1,23 @@
 #ifndef UDISPLAY_CONFIG_H
 #define UDISPLAY_CONFIG_H
 
-// Include Tasmota headers - path configured in library.json
-#include "tasmota_compat.h"
-#include "tasmota.h"
-  
-// Declare Tasmota functions that are not in headers
+// Logging system interface - only declare if not building within Tasmota
+#ifndef _TASMOTA_H_
+enum LoggingLevels {
+    LOG_LEVEL_NONE, 
+    LOG_LEVEL_ERROR, 
+    LOG_LEVEL_INFO, 
+    LOG_LEVEL_DEBUG, 
+    LOG_LEVEL_DEBUG_MORE
+};
+
+// Function declarations - only if not building within Tasmota
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
 extern uint32_t ESP_ResetInfoReason(void);
 extern bool UsePSRAM(void);
 extern float CharToFloat(const char *str);
 extern SPIClass *SpiBegin(uint32_t bus);
+#endif  // _TASMOTA_H_
 
 // Enable universal touch support
 #define USE_UNIVERSAL_TOUCH
