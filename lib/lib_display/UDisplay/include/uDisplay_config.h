@@ -2,6 +2,7 @@
 #define UDISPLAY_CONFIG_H
 
 // Include Tasmota headers - path configured in library.json
+#include "tasmota_compat.h"
 #include "tasmota.h"
   
 // Declare Tasmota functions that are not in headers
