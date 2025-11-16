@@ -36,6 +36,7 @@ typedef struct {
     size_t len = 0;
     uint16_t width = 0;
     uint16_t height = 0;
+    uint8_t bpp = 0;
     pixformat_t format = PIXFORMAT_JPEG;
     JPEGDEC * jpeg = nullptr;
 } image_t;
@@ -59,22 +60,41 @@ typedef struct {
         size_t output_len;
 } be_jpg_encoder_t;
 
+typedef struct { 
+    image_t *img; 
+    int stride;
+    size_t buf_size;
+    bool crop_enabled;
+    uint16_t target_width;
+    uint16_t target_height;
+} be_jpg_decode_ctx_t;
+
 /*********************************************************************************************\
  * helper functions
 \*********************************************************************************************/
 
 struct be_img_util {
+  /**
+   * @brief Clears all image data and resets structure to defaults
+   * @param img Pointer to image structure
+   */
   static void clear(image_t *img){
     if(img->buf){
       free(img->buf);
       img->buf = nullptr;
     }
     img->len = 0;
+    img->bpp = 0;
     img->format = PIXFORMAT_JPEG;
     img->width = 0;
     img->height = 0;
   }
 
+  /**
+   * @brief Returns bytes per pixel for a given pixel format
+   * @param f Pixel format (note: value 1 is treated as RGB565LE, not YUV422)
+   * @return Number of bytes per pixel (1, 2, or 3)
+   */
   static int getBytesPerPixel(pixformat_t f){
     int bpp;
     switch(f) {
@@ -84,12 +104,32 @@ struct be_img_util {
       case PIXFORMAT_RGB565:
         bpp = 2;
         break;
+      case PIXFORMAT_YUV422: // Special case: we use value 1 for RGB565LE
+        bpp = 2;
+        break;
       default:
         bpp = 3;
     }
     return bpp;
   }
 
+  /**
+   * @brief Sets image format and updates bpp accordingly
+   * @param img Pointer to image structure
+   * @param format Pixel format to set
+   */
+  static void setFormat(image_t *img, pixformat_t format) {
+    img->format = format;
+    img->bpp = getBytesPerPixel(format);
+  }
+
+  /**
+   * @brief Creates image from JPEG buffer without decoding
+   * @param img Pointer to image structure
+   * @param buffer JPEG data buffer
+   * @param len Buffer length
+   * @return true on success, false on failure
+   */
   static bool from_jpg(image_t *img, uint8_t* buffer, size_t len) {
     uint16_t width, height;
     if(jpeg_size(buffer, len, &width, &height) != true){
@@ -99,6 +139,16 @@ struct be_img_util {
     return from_buffer(img, buffer, len, width, height, format);
   }
 
+  /**
+   * @brief Creates image from raw buffer
+   * @param img Pointer to image structure
+   * @param buffer Source buffer
+   * @param len Buffer length
+   * @param w Image width
+   * @param h Image height
+   * @param f Pixel format
+   * @return true on success, false on failure
+   */
   static bool from_buffer(image_t *img, uint8_t* buffer, size_t len, uint16_t w, uint16_t h, pixformat_t f) {
     if(img->buf != nullptr) {
       free(img->buf);
@@ -107,7 +157,7 @@ struct be_img_util {
     if(img->buf) {
       memcpy(img->buf,buffer,len);
       img->len = len;
-      img->format = f;
+      setFormat(img, f);
       img->width = w;
       img->height = h;
       return true;
@@ -115,6 +165,11 @@ struct be_img_util {
     return false;
   }
 
+  /**
+   * @brief Converts RGB888 to grayscale in-place
+   * @param buffer RGB888 buffer
+   * @param buffer_len Buffer length in bytes
+   */
   static void rgb888_to_grayscale_inplace(uint8_t * buffer, size_t buffer_len){
     uint8_t r, g, b;
     for (uint32_t cnt=0; cnt<buffer_len; cnt+=3) {
@@ -125,6 +180,11 @@ struct be_img_util {
     }
   }
 
+  /**
+   * @brief Converts RGB888 to RGB565 in-place (produces little endian)
+   * @param buffer RGB888 buffer
+   * @param buffer_len Buffer length in bytes
+   */
   static void rgb888_to_565_inplace(uint8_t * buffer, size_t buffer_len){
     union{
       uint8_t* temp_buf ;
@@ -145,33 +205,155 @@ struct be_img_util {
     }
   }
 
+  /**
+   * @brief Swaps byte order of RGB565 buffer (LE <-> BE)
+   * @param buffer RGB565 buffer
+   * @param buffer_len Buffer length in bytes
+   */
+  static void rgb565_swap_bytes(uint8_t * buffer, size_t buffer_len){
+    uint16_t* buf16 = (uint16_t*)buffer;
+    size_t count = buffer_len / 2;
+    for (size_t i = 0; i < count; i++) {
+      buf16[i] = (buf16[i] >> 8) | (buf16[i] << 8);
+    }
+  }
+
+  /**
+   * @brief Callback for JPEG encoding output
+   * @param arg Pointer to be_jpg_encoder_t structure
+   * @param index Current write position
+   * @param data Data to write
+   * @param len Data length
+   * @return Number of bytes written
+   */
   static size_t _jpg_out_cb(void * arg, size_t index, const void* data, size_t len){
     be_jpg_encoder_t *jpeg = (be_jpg_encoder_t *)arg; 
-
     memcpy(jpeg->output + index, data, len);
     jpeg->output_len = index+len;
     return len;
   }
 
-  static int _rgb_write_dummy(JPEGDRAW* d)
-  {
-      // not used for now
+  /**
+   * @brief Callback for JPEG decoder to draw MCU blocks
+   * @param pDraw Pointer to JPEGDRAW structure
+   * @return 1 on success, 0 on failure
+   */
+  static int jpeg_draw_mcu(JPEGDRAW *pDraw) {
+      be_jpg_decode_ctx_t *ctx = (be_jpg_decode_ctx_t*)pDraw->pUser;
+      if (!ctx || !ctx->img || !ctx->img->buf) return 0;
+      image_t *img = ctx->img;
+      
+      // Crop check - skip MCUs outside target area (top-left crop)
+      if (ctx->crop_enabled) {
+          if (pDraw->x >= ctx->target_width || pDraw->y >= ctx->target_height) {
+              return 1;  // Skip this MCU entirely
+          }
+      }
+      
+      // Calculate actual copy dimensions (handle partial MCUs at edges)
+      int copy_width = pDraw->iWidth;
+      int copy_height = pDraw->iHeight;
+      if (ctx->crop_enabled) {
+          if (pDraw->x + copy_width > ctx->target_width) {
+              copy_width = ctx->target_width - pDraw->x;
+          }
+          if (pDraw->y + copy_height > ctx->target_height) {
+              copy_height = ctx->target_height - pDraw->y;
+          }
+      }
+      
+      // Check if we're converting RGB8888 -> RGB888
+      if (img->bpp == 3 && pDraw->iBpp == 32) {  // 32 bits = 4 bytes
+          // Convert 4-byte pixels to 3-byte pixels on the fly
+          size_t dst_offset = (pDraw->y * ctx->stride) + (pDraw->x * img->bpp);
+          uint8_t *dst = img->buf + dst_offset;
+          const uint8_t *src = (const uint8_t*)pDraw->pPixels;
+          
+          for (int y = 0; y < copy_height; ++y) {
+              for (int x = 0; x < copy_width; ++x) {
+                  dst[(y * ctx->stride) + (x * 3) + 0] = src[(y * pDraw->iWidth * 4) + (x * 4) + 0];
+                  dst[(y * ctx->stride) + (x * 3) + 1] = src[(y * pDraw->iWidth * 4) + (x * 4) + 1];
+                  dst[(y * ctx->stride) + (x * 3) + 2] = src[(y * pDraw->iWidth * 4) + (x * 4) + 2];
+                  // Skip 4th byte
+              }
+          }
+      } else {
+          // Normal case - direct copy
+          size_t dst_offset = (pDraw->y * ctx->stride) + (pDraw->x * img->bpp);
+          // Check bounds for actual copy area, not full stride
+          size_t last_row_offset = ((pDraw->y + copy_height - 1) * ctx->stride) + (pDraw->x * img->bpp) + (copy_width * img->bpp);
+          if (last_row_offset > ctx->buf_size) {
+              return 0;
+          }
+          
+          uint8_t *dst = img->buf + dst_offset;
+          const uint8_t *src = (const uint8_t*)pDraw->pPixels;
+          
+          for (int y = 0; y < copy_height; ++y) {
+              memcpy(dst + y * ctx->stride, 
+                    src + y * pDraw->iWidth * img->bpp,
+                    copy_width * img->bpp);
+          }
+      }
       return 1;
   }
 
-  static bool jpeg_decode_one_image(uint8_t *input_buf, int len, uint8_t *output_buf, int type, image_t * img) {
-    img->jpeg = new JPEGDEC;
-    img->jpeg->openRAM(input_buf, len, _rgb_write_dummy);
-    img->jpeg->setPixelType(type);
-    img->jpeg->setFramebuffer(output_buf);
-    bool success = img->jpeg->decode(0,0,0);
-    img->jpeg->close();
-    delete img->jpeg;
-    return success;
+  /**
+   * @brief Decodes JPEG image to specified format
+   * @param input_buf JPEG input buffer
+   * @param len Input buffer length
+   * @param output_buf Output buffer for decoded pixels
+   * @param type Pixel type (EIGHT_BIT_GRAYSCALE, RGB565_LITTLE_ENDIAN, RGB8888)
+   * @param img Image structure (must have width, height, bpp pre-set)
+   * @return true on success, false on failure
+   */
+  static bool jpeg_decode_one_image(uint8_t *input_buf, int len, uint8_t *output_buf, 
+                                      int type, image_t *img) {
+      if (!input_buf || len <= 0 || !output_buf || !img) return false;
+      if (img->bpp == 0) return false;
+      
+      // Parse JPEG dimensions to check for mismatch
+      uint16_t jpeg_width, jpeg_height;
+      bool crop_enabled = false;
+      if (jpeg_size(input_buf, len, &jpeg_width, &jpeg_height)) {
+          if (jpeg_width != img->width || jpeg_height != img->height) {
+              // Dimension mismatch - enable cropping
+              crop_enabled = true;
+              AddLog(LOG_LEVEL_DEBUG, PSTR("IMG: JPEG crop %dx%d -> %dx%d"), 
+                     jpeg_width, jpeg_height, img->width, img->height);
+          }
+      }
+      
+      img->buf = output_buf;
+      int stride = img->width * img->bpp;
+      size_t buf_size = img->width * img->height * img->bpp;
+      be_jpg_decode_ctx_t ctx = {img, stride, buf_size, crop_enabled, img->width, img->height};
+
+      JPEGDEC *jpeg = new JPEGDEC();
+      if (!jpeg) return false;
+      
+      int result = jpeg->openRAM(input_buf, len, jpeg_draw_mcu);
+      if (result <= 0) {
+          delete jpeg;
+          return false;
+      }
+      jpeg->setUserPointer(&ctx);
+      jpeg->setPixelType(type);
+      bool ok = jpeg->decode(0, 0, 0);
+      
+      jpeg->close();
+      delete jpeg;
+      return ok;
   }
 
-
-  // https://web.archive.org/web/20131016210645/http://www.64lines.com/jpeg-width-height , but shorter now by 48 bytes flash
+  /**
+   * @brief Extracts width and height from JPEG buffer
+   * @param buffer JPEG data buffer
+   * @param data_size Buffer size
+   * @param width Output: image width
+   * @param height Output: image height
+   * @return true if valid JPEG and dimensions extracted, false otherwise
+   */
   static bool jpeg_size(uint8_t* buffer, size_t data_size, uint16_t *width, uint16_t *height) {
     union{
       uint8_t * data;
@@ -219,6 +401,11 @@ struct be_img_util {
 
 extern "C" {
 
+  /**
+   * @brief Gets image instance from Berry VM
+   * @param vm Berry VM pointer
+   * @return Pointer to image_t structure
+   */
   image_t* be_get_image_instance(struct bvm *vm);
   image_t* be_get_image_instance(struct bvm *vm) {
     be_getmember(vm, 1, ".p");
@@ -230,6 +417,11 @@ extern "C" {
     return img;
   }
 
+  /**
+   * @brief Initializes a new image instance
+   * @param vm Berry VM pointer
+   * @return Berry nil
+   */
   int be_img_init(struct bvm *vm);
   int be_img_init(struct bvm *vm) {
     image_t *img = new image_t;
@@ -238,6 +430,11 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  /**
+   * @brief Deinitializes and frees image instance
+   * @param vm Berry VM pointer
+   * @return Berry nil
+   */
   int be_img_deinit(struct bvm *vm);
   int be_img_deinit(struct bvm *vm) {
     be_getmember(vm, 1, ".p");
@@ -253,6 +450,12 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  /**
+   * @brief Loads image from JPEG buffer, optionally decoding to specified format
+   * @param vm Berry VM pointer
+   * @return Berry nil
+   * Berry arguments: (bytes_buffer, [format])
+   */
   int be_img_from_jpg(struct bvm *vm);
   int be_img_from_jpg(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
@@ -271,14 +474,17 @@ extern "C" {
           be_return_nil(vm); // done
         }
       }
+      
       bool success = false;
-      const int bpp = be_img_util::getBytesPerPixel(pixformat_t(format));
       uint16_t w,h;
       if (be_img_util::jpeg_size(src_buf, src_buf_len, &w, &h) == false){
         be_raise(vm, "img_error", "no compatible jpg buffer");
         be_return_nil(vm); //do not destroy the old image
       }
-      const size_t newSize = w * h * bpp;
+      
+      be_img_util::setFormat(img, pixformat_t(format));
+      const size_t newSize = w * h * img->bpp;
+      
       if(newSize != img->len){
         img->buf = (uint8_t*)heap_caps_realloc((void*)img->buf, newSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         if(!img->buf){
@@ -287,24 +493,30 @@ extern "C" {
           be_return_nil(vm);
         }
       }
-      switch(pixformat_t(format)) {
-        case PIXFORMAT_GRAYSCALE:
-          success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, EIGHT_BIT_GRAYSCALE, img);
-          break;
-        case PIXFORMAT_RGB565:
-          success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, RGB565_LITTLE_ENDIAN, img);
-          success = true;
-          break;
-        case PIXFORMAT_RGB888:
-          success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, RGB8888, img);
-          success = true;
-          break;
+      
+      img->width = w;
+      img->height = h;
+      
+      if(format == PIXFORMAT_GRAYSCALE) {
+        success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, EIGHT_BIT_GRAYSCALE, img);
       }
+      else if(format == PIXFORMAT_RGB565) { // Format 0: RGB565 big endian
+        success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, RGB565_BIG_ENDIAN, img);
+      }
+      else if(format == 1) { // Format 1: RGB565 little endian (RGB565LE)
+        success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, RGB565_LITTLE_ENDIAN, img);
+      }
+      else if(format == PIXFORMAT_RGB888) {
+        success = be_img_util::jpeg_decode_one_image(src_buf, src_buf_len, img->buf, RGB8888, img);
+      }
+      else {
+        be_img_util::clear(img);
+        be_raise(vm, "img_error", "unsupported format");
+        be_return_nil(vm);
+      }
+      
       if(success){
         img->len = newSize;
-        img->format = pixformat_t(format);
-        img->width = w;
-        img->height = h;
       } else {
         be_img_util::clear(img);
         be_raise(vm, "img_error", "jpg decoding failed");
@@ -316,7 +528,13 @@ extern "C" {
     be_return(vm);
   }
 
-  int be_img_from_buffer(struct bvm *vm); // (bytes(),width,height,format)
+  /**
+   * @brief Loads image from raw buffer
+   * @param vm Berry VM pointer
+   * @return Berry nil
+   * Berry arguments: (bytes_buffer, width, height, format)
+   */
+  int be_img_from_buffer(struct bvm *vm);
   int be_img_from_buffer(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 5 && be_isbytes(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5)){
@@ -339,7 +557,13 @@ extern "C" {
     be_return(vm);
   }
 
-  int be_img_get_buffer(struct bvm *vm); //(roi)
+  /**
+   * @brief Gets image buffer or ROI (region of interest) buffer
+   * @param vm Berry VM pointer
+   * @return Berry bytes buffer
+   * Berry arguments: ([roi_descriptor])
+   */
+  int be_img_get_buffer(struct bvm *vm);
   int be_img_get_buffer(struct bvm *vm) {
     image_t * img = be_get_image_instance(vm);
     be_img_roi_descriptor_t * dsc;
@@ -360,8 +584,7 @@ extern "C" {
       be_return(vm);
     }
 
-    const int bpp = be_img_util::getBytesPerPixel(img->format);
-    const size_t roi_size = dsc->width * dsc->height * bpp;
+    const size_t roi_size = dsc->width * dsc->height * img->bpp;
     uint8_t* roi_buf = (uint8_t*)malloc(roi_size);
     if(roi_buf == nullptr) {
       be_raise(vm, "img_error", "ROI buffer allocation failed");
@@ -378,8 +601,8 @@ extern "C" {
       for(uint16_t x = 0; x < dsc->width; x += 1) {
         int transformed_X = (x * dsc->scale_X) + (y * dsc->shear_Y) + dsc->translation_X;
         int transformed_Y = (x * dsc->shear_X) + (y * dsc->scale_Y) + dsc->translation_Y;
-        for(int byte_comp = 0; byte_comp < bpp; byte_comp += 1){
-          roi_buf[in_idx++] = img->buf[(transformed_X * bpp) + ((transformed_Y * bpp) * img->width) + byte_comp];
+        for(int byte_comp = 0; byte_comp < img->bpp; byte_comp += 1){
+          roi_buf[in_idx++] = img->buf[(transformed_X * img->bpp) + ((transformed_Y * img->bpp) * img->width) + byte_comp];
         }
       }
     }
@@ -389,7 +612,13 @@ extern "C" {
     be_return(vm);
   }
 
-  int be_img_convert_to(struct bvm *vm); // (pixformat)
+  /**
+   * @brief Converts image to different pixel format
+   * @param vm Berry VM pointer
+   * @return Berry nil
+   * Berry arguments: (format, [quality_for_jpeg])
+   */
+  int be_img_convert_to(struct bvm *vm);
   int be_img_convert_to(struct bvm *vm) {
     image_t * img = be_get_image_instance(vm);
     if(img->len == 0) {
@@ -414,7 +643,7 @@ extern "C" {
       const size_t pixel_count = img->width * img->height ;
       size_t  temp_buf_len = pixel_count * bpp;
       if(format == PIXFORMAT_JPEG) {
-        temp_buf_len /= 4; // a very rough guess
+        temp_buf_len /= 8; // a very rough guess
       }
       temp_buf = (uint8_t *)heap_caps_malloc((temp_buf_len)+4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
       if(temp_buf == nullptr) {
@@ -422,7 +651,18 @@ extern "C" {
         be_return_nil(vm);
       }
       if(format != PIXFORMAT_JPEG) {
-        if(!fmt2rgb888((const uint8_t *)img->buf, img->len, img->format, temp_buf)) {
+        // Handle RGB565LE (format 1) - need to swap to BE before conversion
+        bool swapped = false;
+        if(img->format == PIXFORMAT_YUV422) { // Format 1 is RGB565LE in our implementation
+          be_img_util::rgb565_swap_bytes(img->buf, img->len);
+          swapped = true;
+        }
+        
+        pixformat_t src_format = (img->format == PIXFORMAT_YUV422) ? PIXFORMAT_RGB565 : img->format;
+        if(!fmt2rgb888((const uint8_t *)img->buf, img->len, src_format, temp_buf)) {
+          if(swapped) {
+            be_img_util::rgb565_swap_bytes(img->buf, img->len); // Swap back on failure
+          }
           free(temp_buf);
           be_raise(vm, "img_error", "not enough heap");
           be_return_nil(vm);
@@ -435,11 +675,16 @@ extern "C" {
       jpeg.output = temp_buf;
       jpeg.output_len = 0;
       switch(format){
-        case PIXFORMAT_GRAYSCALE: // always from temporary RGB88
+        case PIXFORMAT_GRAYSCALE: // always from temporary RGB888
           be_img_util::rgb888_to_grayscale_inplace(temp_buf,temp_buf_len);
           temp_buf_len = pixel_count;
           break;
-        case PIXFORMAT_RGB565: // always from temporary RGB88
+        case PIXFORMAT_RGB565: // Format 0: RGB565 big endian - from temporary RGB888
+          be_img_util::rgb888_to_565_inplace(temp_buf,temp_buf_len);
+          be_img_util::rgb565_swap_bytes(temp_buf, pixel_count * 2); // Convert LE to BE
+          temp_buf_len = pixel_count * 2;
+          break;
+        case PIXFORMAT_YUV422: // Format 1: RGB565LE - from temporary RGB888
           be_img_util::rgb888_to_565_inplace(temp_buf,temp_buf_len);
           temp_buf_len = pixel_count * 2;
           break;
@@ -452,7 +697,13 @@ extern "C" {
             if(option != -1){
               quality = option;
             }
-            fmt2jpg_cb(img->buf, img->len, img->width, img->height, img->format, quality, be_img_util::_jpg_out_cb, (void *)&jpeg);
+            // Handle RGB565LE (format 1) - need to swap to BE before JPEG encoding
+            pixformat_t encode_format = img->format;
+            if(img->format == PIXFORMAT_YUV422) { // Format 1 is RGB565LE
+              be_img_util::rgb565_swap_bytes(temp_buf, img->len); // Swap LE to BE in temp buffer
+              encode_format = PIXFORMAT_RGB565;
+            }
+            fmt2jpg_cb(img->buf, img->len, img->width, img->height, encode_format, quality, be_img_util::_jpg_out_cb, (void *)&jpeg);
             temp_buf_len = jpeg.output_len;
           }
           break;
@@ -463,7 +714,7 @@ extern "C" {
          break;
       }
       free(img->buf);
-      img->format = pixformat_t(format);
+      be_img_util::setFormat(img, pixformat_t(format));
       img->len = temp_buf_len;
       img->buf = (uint8_t*)heap_caps_realloc((void*)temp_buf, img->len, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT); // shrinking should never fail ...
       if(img->buf == nullptr) {
@@ -475,6 +726,11 @@ extern "C" {
     be_return(vm);
   }
 
+  /**
+   * @brief Returns image information as Berry map
+   * @param vm Berry VM pointer
+   * @return Berry map with buf_addr, size, width, height, bpp, format
+   */
   int be_img_info(struct bvm *vm);
   int be_img_info(struct bvm *vm) {
     image_t * img = be_get_image_instance(vm);
@@ -487,6 +743,7 @@ extern "C" {
     be_map_insert_int(vm, "size", img->len);
     be_map_insert_int(vm, "width", img->width);
     be_map_insert_int(vm, "height", img->height);
+    be_map_insert_int(vm, "bpp", img->bpp);
     be_map_insert_int(vm, "format", img->format);
     be_pop(vm, 1);
     be_return(vm);
