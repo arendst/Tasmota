@@ -150,7 +150,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
         return tlv_solo.set_or_nil(TLV.U1, self.shadow_sat)
       elif attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        return tlv_solo.set(TLV.U1, 0)
+        return tlv_solo.set(TLV.U2, 0)
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
         return tlv_solo.set(TLV.U1, 0)# 0 = CurrentHue and CurrentSaturation
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
@@ -158,7 +158,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
         return tlv_solo.set(TLV.U1, 0)
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return tlv_solo.set(TLV.U1, 0x01)    # HS
+        return tlv_solo.set(TLV.U2, 0x01)    # HS
       
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
