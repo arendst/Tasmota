@@ -285,7 +285,11 @@ static void tr_string(blexer *lexer)
         }
     }
     size_t len = dst - lexbuf(lexer);
-    lexer->buf.len = strnlen(lexbuf(lexer), len);
+    /* equivalent to strnlen() */
+    /* lexer->buf.len = strnlen(lexbuf(lexer), len); */
+    const char* str = (const char*) lexbuf(lexer);
+    const char* found = memchr(str, '\0', len);
+    lexer->buf.len = found ? (size_t)(found - str) : len;
 }
 
 static int skip_newline(blexer *lexer)
