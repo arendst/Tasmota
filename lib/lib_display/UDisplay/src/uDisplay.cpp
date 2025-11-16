@@ -738,16 +738,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'T':
             // Parse timing directly into EPD config
-            if (panel_config) {
-              panel_config->epd.lut_full_time = next_val(&lp1);
-              panel_config->epd.lut_partial_time = next_val(&lp1);
-              panel_config->epd.update_time = next_val(&lp1);
-            } else {
-              // Skip values if panel_config not allocated yet
-              next_val(&lp1);
-              next_val(&lp1);
-              next_val(&lp1);
-            }
+            panel_config->epd.lut_full_time = next_val(&lp1);
+            panel_config->epd.lut_partial_time = next_val(&lp1);
+            panel_config->epd.update_time = next_val(&lp1);
             break;
           case 'B':
             lvgl_param.flushlines = next_val(&lp1);
@@ -1254,8 +1247,6 @@ if (interface == _UDSP_SPI) {
 #ifdef ESP32
         spiController->initDMA(panel_config->spi.width, lvgl_param.flushlines, lvgl_param.data);
 #endif
-        universal_panel->fillRect(0, 0, 100, 100, 0xFF00);  // Yellow
-        delay(2000);  // Hold for 2 seconds before anything else runs
     }
 
     // spiController->endTransaction();
