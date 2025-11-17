@@ -9,6 +9,7 @@
     "f_psram": "200000000L",
     "flash_mode": "qio",
     "mcu": "esp32p4",
+    "chip_variant": "esp32p4_es",
     "variant": "esp32p4",
     "partitions": "partitions/esp32_partition_app3904k_fs11584k.csv"
   },
