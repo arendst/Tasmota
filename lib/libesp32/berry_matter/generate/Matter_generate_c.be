@@ -91,6 +91,7 @@ for cl:cl_ids
   var attr_ids_local = k2l(attr_id_name)
 
   for attr_id:attr_ids_local
+    if attr_id >= 0xFFF0 continue end
     var reportable = attributes[attr_id].find('reportable', false)
     var writable = attributes[attr_id].find('writable', false)
     var flags = (writable ? 0x01 : 0x00) | (reportable ? 0x02 : 0x00)
