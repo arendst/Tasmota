@@ -82,7 +82,7 @@ fprint("  const matter_command_t* commands;")
 fprint("} matter_cluster_t;")
 fprint()
 for cl:cl_ids
-  fprint(f"const matter_attribute_t matter_Attributes_{cl:04X}[] = {")
+  fprint(f"const matter_attribute_t matter_Attributes_{cl:04X}[] = {{")
   var attributes = c[cl_id_name[cl]]['attributes']
   var attr_id_name = {}
   for attr:attributes
@@ -100,7 +100,7 @@ for cl:cl_ids
   fprint("};")
   fprint()
   # commands
-  fprint(f"const matter_command_t matter_Commands_{cl:04X}[] = {")
+  fprint(f"const matter_command_t matter_Commands_{cl:04X}[] = {{")
   var commands = c[cl_id_name[cl]]['commands']
   var cmd_id_name = {}
   for cmd:commands
