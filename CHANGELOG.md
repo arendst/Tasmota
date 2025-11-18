@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.1.0.2]
 ### Added
+- WS2812 and Berry animation support for reverse-order LED strip
 
 ### Breaking Changed
 

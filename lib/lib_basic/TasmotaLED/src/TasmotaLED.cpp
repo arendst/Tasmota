@@ -63,6 +63,7 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 
 TasmotaLED::TasmotaLED(uint16_t type, uint16_t num_leds) :
   _type(type),
+  _pixel_reverse(false),
   _timing((type >> 8) & 0xFF),
   _started(false),
   _dirty(true),
@@ -175,6 +176,11 @@ void TasmotaLED::Show(void) {
     } else {
       uint8_t *buf_from = _buf_work;
       uint8_t *buf_to = _buf_show;
+      int32_t pixel_incr = _pixel_size;         // will be set to negative if reverse
+      if (_pixel_reverse) {
+        buf_from += (_pixel_count - 1) * _pixel_size;
+        pixel_incr = -pixel_incr;
+      }
       if (_pixel_size == 3) {
         // copying with swapping 512 pixels (1536 bytes) takes 124 microseconds to copy, so it's negligeable
         for (uint32_t i = 0; i < _pixel_count; i++) {
@@ -182,7 +188,7 @@ void TasmotaLED::Show(void) {
           buf_to[(*_pixel_matrix)[1]] = buf_from[1];   // G
           buf_to[(*_pixel_matrix)[2]] = buf_from[2];   // B
           buf_to += 3;
-          buf_from += 3;
+          buf_from += pixel_incr;
         }
       } else if (_pixel_size == 4) {
         for (uint32_t i = 0; i < _pixel_count; i++) {
@@ -191,8 +197,8 @@ void TasmotaLED::Show(void) {
           buf_to[(*_pixel_matrix)[1]] = buf_from[1];   // G
           buf_to[(*_pixel_matrix)[2]] = buf_from[2];   // B
           if (!_w_before) { *buf_to++ = buf_from[3]; }
-          buf_to += 3;    // one increment already happened
-          buf_from += 4;
+          buf_to += 4;    // one increment already happened
+          buf_from += pixel_incr;
         }
       }
     }

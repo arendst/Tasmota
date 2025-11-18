@@ -636,6 +636,7 @@ bool Ws2812InitStrip(void)
     }
     uint16_t led_type = Ws2812SettingsToLedType();
     strip = new TasmotaLED(led_type, Settings->light_pixels);
+    strip->SetPixelReverse(Settings->light_pixels_reverse);
     strip->SetPusher(pusher);
     strip->Begin();
 
@@ -651,6 +652,7 @@ bool Ws2812ChangePixelCount(void)
     return true;
   }
   strip->SetPixelCount(Settings->light_pixels);
+  strip->SetPixelReverse(Settings->light_pixels_reverse);
   Ws2812Clear();
   return true;
 }
@@ -662,6 +664,7 @@ bool Ws2812ChangePixelType(bool clear)
   }
   uint16_t led_type = Ws2812SettingsToLedType();
   strip->SetPixelSubType(led_type & 0xFF);    // just submit the lower part
+  strip->SetPixelReverse(Settings->light_pixels_reverse);
   if (clear) {
     Ws2812Clear();
   } else {

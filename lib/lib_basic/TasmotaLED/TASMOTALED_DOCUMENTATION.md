@@ -57,10 +57,10 @@ TasmotaLED is designed with the following principles:
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   TasmotaLED Class                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  _buf_work   │  │  _buf_show   │  │ Pixel Format │     │
-│  │  (editable)  │─▶│  (internal)  │  │  Conversion  │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │  _buf_work   │  │  _buf_show   │  │ Pixel Format │       │
+│  │  (editable)  │─▶│  (internal)  │  │  Conversion  │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
 └────────────────────┬────────────────────────────────────────┘
                      │
                      ▼
@@ -116,6 +116,7 @@ TasmotaLED uses a dual-buffer system:
 │ - _type: uint16_t                                           │
 │ - _pixel_order: uint8_t                                     │
 │ - _w_before: bool                                           │
+│ - _pixel_reverse: bool                                      │
 │ - _timing: uint8_t                                          │
 │ - _started: bool                                            │
 │ - _dirty: bool                                              │
@@ -144,6 +145,7 @@ TasmotaLED uses a dual-buffer system:
 │ + GetType(): uint8_t                                        │
 │ + IsDirty(): bool                                           │
 │ + Dirty(): void                                             │
+│ + SetPixelReverse(bool): void                               │
 │ + SetRawFormat(raw): void                                   │
 └─────────────────────────────────────────────────────────────┘
                             │
@@ -171,18 +173,18 @@ TasmotaLED uses a dual-buffer system:
                             │
           ┌─────────────────┼─────────────────┐
           │                 │                 │
-┌─────────┴──────────┐ ┌────┴────────┐ ┌─────┴──────────┐
-│ TasmotaLEDPusherRMT│ │TasmotaLED   │ │ TasmotaLED     │
-│                    │ │PusherSPI    │ │PusherI2S       │
-├────────────────────┤ ├─────────────┤ ├────────────────┤
+┌─────────┴──────────┐ ┌────┴─────────┐ ┌─────┴──────────┐
+│ TasmotaLEDPusherRMT│ │TasmotaLED    │ │ TasmotaLED     │
+│                    │ │PusherSPI     │ │PusherI2S       │
+├────────────────────┤ ├──────────────┤ ├────────────────┤
 │ - _pin: int8_t     │ │- _pin: int8_t│ │(Future)        │
-│ - _channel: handle │ │- _spi_strip │ │                │
-│ - _led_encoder     │ │- _with_dma  │ │                │
-│ - _tx_config       │ │             │ │                │
-├────────────────────┤ ├─────────────┤ ├────────────────┤
+│ - _channel: handle │ │- _spi_strip  │ │                │
+│ - _led_encoder     │ │- _with_dma   │ │                │
+│ - _tx_config       │ │              │ │                │
+├────────────────────┤ ├──────────────┤ ├────────────────┤
 │ + Push(): bool     │ │+ Push(): bool│ │                │
-│ + CanShow(): bool  │ │+ CanShow()  │ │                │
-└────────────────────┘ └─────────────┘ └────────────────┘
+│ + CanShow(): bool  │ │+ CanShow()   │ │                │
+└────────────────────┘ └──────────────┘ └────────────────┘
 ```
 
 

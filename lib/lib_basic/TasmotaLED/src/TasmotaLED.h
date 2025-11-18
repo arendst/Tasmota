@@ -96,6 +96,8 @@ public:
   void SetPixelSubType(uint8_t type);         // change only Pixel order and pixel size
   void _adjustSubType(void);
 
+  inline void SetPixelReverse(bool reverse) { _pixel_reverse = reverse; }
+
   bool Begin(void);
   void SetPusher(TasmotaLEDPusher *pusher);   // needs to be called before `Begin()`, sets the hardware implementation
   void Show(void);                            // pushes the pixels to the LED strip
@@ -118,6 +120,7 @@ protected:
   uint16_t _type;                     // the composite type
   uint8_t _pixel_order;               // permutation between RGB and position of W
   bool _w_before;                     // true if W channel comes first (4 channels only)
+  bool _pixel_reverse;                // display LED strip in reverse order
   uint8_t _timing;                    // timing code for strip, 0=WS2812, 1=SK6812...
   bool _started;                      // true if the hardware implementation is configured
   bool _dirty;                        // for NeoPixelBus compatibility, but ignored by `Push()`
