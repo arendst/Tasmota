@@ -23,3 +23,6 @@ def parse_022025()
     end
 end
 assert(parse_022025() == 0)
+
+# bug #371 - fix an infinite loop
+def f() 1 || print(2) end

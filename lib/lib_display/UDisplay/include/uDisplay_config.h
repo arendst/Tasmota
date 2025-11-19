@@ -1,7 +1,8 @@
 #ifndef UDISPLAY_CONFIG_H
 #define UDISPLAY_CONFIG_H
 
-// Logging system interface
+// Logging system interface - only declare if not building within Tasmota
+#ifndef _TASMOTA_H_
 enum LoggingLevels {
     LOG_LEVEL_NONE, 
     LOG_LEVEL_ERROR, 
@@ -10,12 +11,16 @@ enum LoggingLevels {
     LOG_LEVEL_DEBUG_MORE
 };
 
+// Function declarations - only if not building within Tasmota
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
-extern int32_t ESP_ResetInfoReason();
-extern float CharToFloat(const char *str);
-extern SPIClass *SpiBegin(uint32 bus);
-extern int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
+extern uint32_t ESP_ResetInfoReason(void);
 extern bool UsePSRAM(void);
+extern float CharToFloat(const char *str);
+extern SPIClass *SpiBegin(uint32_t bus);
+#endif  // _TASMOTA_H_
+
+// Enable universal touch support
+#define USE_UNIVERSAL_TOUCH
 
 enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 

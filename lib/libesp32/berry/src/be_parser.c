@@ -502,7 +502,7 @@ static void new_var(bparser *parser, bstring *name, bexpdesc *var)
             init_exp(&key, ETSTRING, 0);
             key.v.s = name;
             init_exp(var, ETNGLOBAL, 0);
-            var->v.idx = be_code_nglobal(parser->finfo, &key);
+            var->v.idx = be_code_resolve(parser->finfo, &key);
         }
     }
 }
@@ -564,7 +564,7 @@ static void singlevar(bparser *parser, bexpdesc *var)
         init_exp(&key, ETSTRING, 0);
         key.v.s = varname;
         init_exp(var, ETNGLOBAL, 0);
-        var->v.idx = be_code_nglobal(parser->finfo, &key);
+        var->v.idx = be_code_resolve(parser->finfo, &key);
         break;
     default:
         break;
@@ -1026,15 +1026,18 @@ static void assign_expr(bparser *parser)
             parser_error(parser,
                 "try to assign constant expressions.");
         }
-    } else if (e.type >= ETMEMBER) {
-        bfuncinfo *finfo = parser->finfo;
-        /* these expressions occupy a register and need to be freed */
-        finfo->freereg = (bbyte)be_list_count(finfo->local);
-    } else if (e.type == ETVOID) { /* not assign expression */
-        /* undeclared symbol */
-        parser->lexer.linenumber = line;
-        check_var(parser, &e);
-    } 
+    } else {
+        be_code_resolve(parser->finfo, &e);
+        if (e.type >= ETMEMBER) {
+            bfuncinfo *finfo = parser->finfo;
+            /* these expressions occupy a register and need to be freed */
+            finfo->freereg = (bbyte)be_list_count(finfo->local);
+        } else if (e.type == ETVOID) { /* not assign expression */
+            /* undeclared symbol */
+            parser->lexer.linenumber = line;
+            check_var(parser, &e);
+        }
+    }
 }
 
 /* conditional expression */

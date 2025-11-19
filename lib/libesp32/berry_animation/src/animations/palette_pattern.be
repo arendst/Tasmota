@@ -117,15 +117,44 @@ class PalettePatternAnimation : animation.animation
     
     # Apply colors from the color source to each pixel based on its value
     var strip_length = self.engine.strip_length
-    var i = 0
-    while (i < strip_length)
-      var byte_value = self.value_buffer[i]
-      
-      # Use the color_source to get color for the byte value (0-255)
-      var color = color_source.get_color_for_value(byte_value, elapsed)
-      
-      frame.set_pixel_color(i, color)
-      i += 1
+
+    # Optimization for LUT patterns
+    var lut
+    if isinstance(color_source, animation.color_provider) && (lut := color_source.get_lut()) != nil
+      var lut_factor = color_source.LUT_FACTOR    # default = 1, we have only 128 cached values
+      var lut_max = 256 >> lut_factor
+      var i = 0
+      var frame_ptr = frame.pixels._buffer()
+      var lut_ptr = lut._buffer()
+      var buffer = self.value_buffer._buffer()
+      while (i < strip_length)
+        var byte_value = buffer[i]
+        var lut_index = byte_value >> lut_factor  # Divide by 2 using bit shift
+        if byte_value == 255
+          lut_index = lut_max
+        end
+
+        var lut_color_ptr = lut_ptr + (lut_index << 2)  # calculate the pointer for LUT color
+        frame_ptr[0] = lut_color_ptr[0]
+        frame_ptr[1] = lut_color_ptr[1]
+        frame_ptr[2] = lut_color_ptr[2]
+        frame_ptr[3] = lut_color_ptr[3]
+
+        # advance to next
+        i += 1
+        frame_ptr += 4
+      end
+    else    # no LUT, do one color at a time
+      var i = 0
+      while (i < strip_length)
+        var byte_value = self.value_buffer[i]
+        
+        # Use the color_source to get color for the byte value (0-255)
+        var color = color_source.get_color_for_value(byte_value, elapsed)
+        
+        frame.set_pixel_color(i, color)
+        i += 1
+      end
     end
     
     return true
@@ -238,13 +267,26 @@ class PaletteGradientAnimation : PalettePatternAnimation
     
     # Calculate values for each pixel
     var i = 0
+    # Calculate position within the spatial period, including temporal and phase offsets
+    var spatial_pos = (temporal_offset + phase_offset) % effective_spatial_period
+
+    # Calculate the increment per pixel, in 1/1024 of pixels
+    # We calculate 1024*255/effective_spatial_period
+    # But for rounding we actually calculate
+    # ((1024 * 255 * 2) + 1) / (2 * effective_spatial_period)
+    # Note: (1024 * 255 * 2) + 1 = 522241
+    var incr_1024 = (522241 / effective_spatial_period) >> 1
+
+    # 'spatial_1024' is our accumulator in 1/1024th of pixels, 2^10
+    var spatial_1024 = spatial_pos * incr_1024
+    var buffer = self.value_buffer._buffer()    # 'buffer' is of type 'comptr'
+
+    # var effective_spatial_period_1 = effective_spatial_period - 1
+    # # Calculate the increment in 1/256 of values
+    # var increment = tasmota.scale_uint(effective_spatial_period)
     while i < strip_length
-      # Calculate position within the spatial period, including temporal and phase offsets
-      var spatial_pos = (i + temporal_offset + phase_offset) % effective_spatial_period
-      
-      # Map spatial position to gradient value (0-255)
-      var byte_value = tasmota.scale_uint(int(spatial_pos), 0, effective_spatial_period - 1, 0, 255)
-      self.value_buffer[i] = byte_value
+      buffer[i] = spatial_1024 >> 10
+      spatial_1024 += incr_1024     # we don't really care about overflow since we clamp modula 255 anyways
       i += 1
     end
   end

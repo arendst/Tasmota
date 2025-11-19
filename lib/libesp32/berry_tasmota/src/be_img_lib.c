@@ -21,6 +21,7 @@ class be_class_img (scope: global, name: img, strings: weak) {
 
   GRAYSCALE, int(3)
   RGB565, int(0)
+  RGB565LE, int(1)
   RGB888, int(5)
   JPEG, int(4)
 

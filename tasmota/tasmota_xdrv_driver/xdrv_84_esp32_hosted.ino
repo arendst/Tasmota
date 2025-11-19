@@ -8,6 +8,7 @@
 
 #ifdef ESP32
 #ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#ifndef FIRMWARE_SAFEBOOT
 /*********************************************************************************************\
  * Support for Hosted MCU to be used on ESP32-H2 and ESP32-P4
 \*********************************************************************************************/
@@ -378,5 +379,6 @@ bool Xdrv84(uint32_t function) {
   return result;
 }
 
+#endif  // FIRMWARE_SAFEBOOT
 #endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
 #endif  // ESP32

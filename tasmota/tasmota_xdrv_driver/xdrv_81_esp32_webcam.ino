@@ -467,8 +467,13 @@ uint32_t WcSetup(int32_t fsiz) {
   bool psram = UsePSRAM();
   if (psram) {
     config.frame_size = FRAMESIZE_UXGA;
+#ifndef USE_WEBCAM_SETUP_ONLY
     config.jpeg_quality = 10;
     config.fb_count = 2;
+#else
+    config.jpeg_quality = 4; // start on the quality side for post processing
+    config.fb_count = 1; // we do not really want to stream in pure Berry
+#endif
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM found"));
   } else {
     config.frame_size = FRAMESIZE_VGA;

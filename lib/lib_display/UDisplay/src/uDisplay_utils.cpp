@@ -106,6 +106,6 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
 
 // ===== Color Conversion Helper =====
 
-static inline void lvgl_color_swap(uint16_t *data, uint16_t len) { 
-  for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8); 
-}
+// static inline void lvgl_color_swap(uint16_t *data, uint16_t len) { 
+//   for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8); 
+// }

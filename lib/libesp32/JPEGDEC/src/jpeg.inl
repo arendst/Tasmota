@@ -3766,6 +3766,7 @@ static void JPEGPutMCU22(JPEGIMAGE *pJPEG, int x, int iPitch)
 #endif // ESP32S3_SIMD
 
 #ifdef HAS_NEON
+    if (x+8 <= iPitch && (iPitch & 15) == 0) { // only for non-clipped MCUs
     if (pJPEG->ucPixelType == RGB8888) {
        int8x8_t i88Cr, i88Cb;
        uint8x16_t u816YL, u816YR;
@@ -3998,6 +3999,7 @@ static void JPEGPutMCU22(JPEGIMAGE *pJPEG, int x, int iPitch)
           } // for each row
       return;
       } // 16bpp
+      } // not clipped
 #endif // HAS_NEON
 
 #ifdef HAS_SSE
@@ -5124,7 +5126,9 @@ static int DecodeJPEG(JPEGIMAGE *pJPEG)
         }
         for (x = 0; x < cx && bContinue && iErr == 0; x++)
         {
-            pJPEG->usPixels = &pAlignedPixels[iDMAOffset]; // make sure output is correct offset for DMA   
+            if (pJPEG->pFramebuffer == NULL) {
+                pJPEG->usPixels = &pAlignedPixels[iDMAOffset]; // make sure output is correct offset for DMA   
+            }
 
             iSkipMask = 0; // assume not skipping
             if (bSkipRow || x*mcuCX < pJPEG->iCropX || x*mcuCX > pJPEG->iCropX+pJPEG->iCropCX) {

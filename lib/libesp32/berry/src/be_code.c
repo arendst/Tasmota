@@ -867,7 +867,7 @@ static void package_suffix(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
     c->v.ss.idx = key;
 }
 
-int be_code_nglobal(bfuncinfo *finfo, bexpdesc *k)
+int be_code_resolve(bfuncinfo *finfo, bexpdesc *k)
 {
     return exp2anyreg(finfo, k);
 }

@@ -32,10 +32,14 @@ bool uDisplay::utouch_Init(char **name) {
       attachInterrupt(ut_irq, ut_touch_irq, FALLING);
     }
 
-    if (ut_spi_nr == spi_nr) {
-      // same as display
-      ut_spi = uspi;
+    if (ut_wire) {
+      // I2C touch - no SPI needed
+      ut_spi = nullptr;
+    } else if (spiController && ut_spi_nr == spiController->spi_config.bus_nr) {
+      // SPI touch using same bus as display
+      ut_spi = spiController->getSPI();
     } else {
+      // SPI touch using different bus or display doesn't use SPI
 #ifdef ESP32
       ut_spi = SpiBegin(ut_spi_nr);
 #endif
@@ -406,9 +410,13 @@ int16_t uDisplay::ut_execute(uint8_t *ut_code) {
         break;
 
       case UT_GSRT:
-#ifdef USE_ESP32_S3      
+#ifdef UDISPLAY_I80      
         { 
-          uint32_t val = get_sr_touch(SIMPLERS_XP, SIMPLERS_XM, SIMPLERS_YP, SIMPLERS_YM);
+          // Simple resistive touch using I80 data pins
+          uint32_t val = get_sr_touch(panel_config->i80.data_pins_low[1], // XP
+                                       panel_config->i80.cs_pin,            // XM
+                                       panel_config->i80.dc_pin,            // YP
+                                       panel_config->i80.data_pins_low[0]); // YM
           if (val == 0) {
             return false;
           }
@@ -426,7 +434,7 @@ int16_t uDisplay::ut_execute(uint8_t *ut_code) {
           }
           return false;
         }
-#endif // USE_ESP32_S3
+#endif // UDISPLAY_I80
         break;
 
       case UT_XPT:

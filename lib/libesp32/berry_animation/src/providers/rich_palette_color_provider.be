@@ -377,19 +377,21 @@ class RichPaletteColorProvider : animation.color_provider
     end
     
     # Pre-compute colors for values 0, 2, 4, ..., 254 at max brightness
+    var lut_factor = self.LUT_FACTOR    # multiplier
     var i = 0
-    while i < 128
-      var value = i * 2
+    var i_max = (256 >> lut_factor)
+    while i < i_max
+      var value = i << lut_factor
       var color = self._get_color_for_value_uncached(value, 0)
       
       # Store color using efficient bytes.set()
-      self._color_lut.set(i * 4, color, 4)
+      self._color_lut.set(i << 2, color, 4)
       i += 1
     end
     
     # Add final entry for value 255 at max brightness
     var color_255 = self._get_color_for_value_uncached(255, 0)
-    self._color_lut.set(128 * 4, color_255, 4)
+    self._color_lut.set(i_max << 2, color_255, 4)
     
     self._lut_dirty = false
   end
@@ -459,7 +461,7 @@ class RichPaletteColorProvider : animation.color_provider
     # Map value to LUT index
     # For values 0-254: index = value / 2 (integer division)
     # For value 255: index = 128
-    var lut_index = value >> 1  # Divide by 2 using bit shift
+    var lut_index = value >> self.LUT_FACTOR  # Divide by 2 using bit shift
     if value >= 255
       lut_index = 128
     end

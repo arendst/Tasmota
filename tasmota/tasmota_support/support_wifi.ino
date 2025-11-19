@@ -371,9 +371,11 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
     WiFi.waitForConnectResult(1000);  // https://github.com/arendst/Tasmota/issues/14985
   }
 
+#ifndef FIRMWARE_SAFEBOOT
 #ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
   HostedMCUStatus();
 #endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // FIRMWARE_SAFEBOOT
 }
 
 /**

@@ -147,7 +147,6 @@ const matter_attribute_t matter_Attributes_001D[] = {
   { 0x0001, 0, 0x02, "ServerList" },
   { 0x0002, 0, 0x02, "ClientList" },
   { 0x0003, 0, 0x02, "PartsList" },
-  { 0x0004, 0, 0x02, "TagList" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -229,9 +228,6 @@ const matter_command_t matter_Commands_0028[] = {
 };
 
 const matter_attribute_t matter_Attributes_0029[] = {
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -247,9 +243,6 @@ const matter_attribute_t matter_Attributes_002A[] = {
   { 0x0001, 0, 0x02, "UpdatePossible" },
   { 0x0002, 0, 0x02, "UpdateState" },
   { 0x0003, 0, 0x02, "UpdateStateProgress" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -281,9 +274,6 @@ const matter_command_t matter_Commands_002C[] = {
 
 const matter_attribute_t matter_Attributes_002D[] = {
   { 0x0000, 0, 0x03, "TemperatureUnit" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -842,9 +832,6 @@ const matter_attribute_t matter_Attributes_0201[] = {
   { 0x0020, 0, 0x02, "StartOfWeek" },
   { 0x0021, 0, 0x02, "NumberOfWeeklyTransitions" },
   { 0x0022, 0, 0x02, "NumberOfDailyTransitions" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1005,9 +992,6 @@ const matter_attribute_t matter_Attributes_0402[] = {
   { 0x0001, 0, 0x02, "MinMeasuredValue" },
   { 0x0002, 0, 0x02, "MaxMeasuredValue" },
   { 0x0003, 0, 0x02, "Tolerance" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 
@@ -1025,9 +1009,6 @@ const matter_attribute_t matter_Attributes_0403[] = {
   { 0x0012, 0, 0x02, "MaxScaledValue" },
   { 0x0013, 0, 0x02, "ScaledTolerance" },
   { 0x0014, 0, 0x02, "Scale" },
-  { 0xFFFB, 0, 0x02, "AttributeList" },
-  { 0xFFFC, 0, 0x02, "FeatureMap" },
-  { 0xFFFD, 0, 0x02, "ClusterRevision" },
   { 0xFFFF, 0, 0x00, NULL },
 };
 

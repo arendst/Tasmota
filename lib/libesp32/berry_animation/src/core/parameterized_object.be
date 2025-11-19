@@ -103,6 +103,9 @@ class ParameterizedObject
   # @param name: string - Parameter name being accessed
   # @return any - Resolved parameter value (ValueProvider resolved to actual value)
   def member(name)
+    # if global.debug_animation
+    #   log(f">>> member {name=}", 3)
+    # end
     # Check if it's a parameter (either set in values or defined in PARAMS)
     # Implement a fast-track if the value exists
     if self.values.contains(name)
