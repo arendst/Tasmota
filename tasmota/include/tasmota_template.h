@@ -235,6 +235,7 @@ enum UserSelectablePins {
 #ifdef ESP32
   GPIO_HSDIO_CMD, GPIO_HSDIO_CLK, GPIO_HSDIO_RST, GPIO_HSDIO_D0, GPIO_HSDIO_D1, GPIO_HSDIO_D2, GPIO_HSDIO_D3, // Hosted MCU SDIO interface, including 1-bit and 4-bit modes
 #endif
+  GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -512,6 +513,7 @@ const char kSensorNames[] PROGMEM =
 #ifdef ESP32
   D_SENSOR_HSDIO_CMD "|" D_SENSOR_HSDIO_CLK "|" D_SENSOR_HSDIO_RST "|" D_SENSOR_HSDIO_D0 "|" D_SENSOR_HSDIO_D1 "|" D_SENSOR_HSDIO_D2 "|" D_SENSOR_HSDIO_D3 "|"
 #endif
+  D_VID6608_F "|" D_VID6608_CW "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -774,6 +776,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #ifdef USE_HDMI_CEC
   AGPIO(GPIO_HDMI_CEC),                          // HDMI CEC bus
+#endif
+
+#ifdef USE_VID6608
+  AGPIO(GPIO_VID6608_F) + AGMAX(4),              // VID6608 step interface (max 4 motors)
+  AGPIO(GPIO_VID6608_CW) + AGMAX(4),             // VID6608 direction interface (max 4 motors)
 #endif
 
   AGPIO(GPIO_TXD),                               // Serial interface
@@ -1160,7 +1167,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_C8_CO2_5K_TX),                      // SC8-CO2-5K Serial interface
   AGPIO(GPIO_C8_CO2_5K_RX),                      // SC8-CO2-5K Serial interface
 #endif
-
 
 #ifdef ESP32
 #ifdef USE_ESP32_TWAI
