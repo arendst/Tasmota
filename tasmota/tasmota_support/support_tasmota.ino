@@ -2017,7 +2017,7 @@ void GpioInit(void)
   }
   SetModuleType();
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
+AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
 #ifdef ESP8266
   ConvertGpios();
@@ -2148,7 +2148,7 @@ void GpioInit(void)
     if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TasmotaGlobal.gpio_pin %*_V"), nitems(TasmotaGlobal.gpio_pin), (uint8_t*)TasmotaGlobal.gpio_pin);
+AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TasmotaGlobal.gpio_pin %*_V"), nitems(TasmotaGlobal.gpio_pin), (uint8_t*)TasmotaGlobal.gpio_pin);
 
   if (ResetReasonPowerOn()) {
     TasmotaGlobal.power_on_delay = Settings->param[P_POWER_ON_DELAY2];  // SetOption47 - Delay switching relays to reduce power surge at power on

@@ -778,11 +778,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HDMI_CEC),                          // HDMI CEC bus
 #endif
 
-#ifdef USE_VID6608
-  AGPIO(GPIO_VID6608_F) + AGMAX(4),              // VID6608 step interface (max 4 motors)
-  AGPIO(GPIO_VID6608_CW) + AGMAX(4),             // VID6608 direction interface (max 4 motors)
-#endif
-
   AGPIO(GPIO_TXD),                               // Serial interface
   AGPIO(GPIO_RXD),                               // Serial interface
 
@@ -1334,6 +1329,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_VOLTAGE) + AGMAX(MAX_ADCS),     // Voltage
   AGPIO(GPIO_ADC_CURRENT) + AGMAX(MAX_ADCS),     // Current
 #endif  // ESP32
+
+
+#ifdef USE_VID6608
+  AGPIO(GPIO_VID6608_F) + AGMAX(4),              // VID6608 step interface (max 4 motors)
+  AGPIO(GPIO_VID6608_CW) + AGMAX(4),             // VID6608 direction interface (max 4 motors)
+#endif
+
 };
 
 /*-------------------------------------------------------------------------------------------*\
