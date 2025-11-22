@@ -2,7 +2,7 @@
   "build": {
     "core": "esp32",
     "extra_flags": [
-      "-DARDUINO_TASMOTA -DESP32P4 -DESP32_16M -DBOARD_HAS_PSRAM"
+      "-DARDUINO_TASMOTA -DESP32P4ES -DESP32_16M -DBOARD_HAS_PSRAM"
     ],
     "f_cpu": "360000000L",
     "f_flash": "80000000L",
@@ -26,7 +26,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif Generic ESP32-P4 16M Flash, Tasmota 3904k Code/OTA, 11584k FS",
+  "name": "Espressif Generic ESP32-P4 ES 16M Flash, Tasmota 3904k Code/OTA, 11584k FS",
   "upload": {
     "arduino": {
       "flash_extra_images": [
