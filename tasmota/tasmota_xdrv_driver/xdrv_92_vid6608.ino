@@ -26,18 +26,18 @@
 
 const char kGaugeCommands[] PROGMEM = D_PRFX_GAUGE "|"  // Prefix
 //const char kGaugeCommands[] PROGMEM = "|"  // No Prefix
-  "|" D_CMND_GAUGE_SET "|" D_CMND_GAUGE_PERCENT "|" 
+  "|" D_CMND_GAUGE_SET "|" D_CMND_GAUGE_PERCENT "|"
   D_CMND_GAUGE_ZERO
   ;
 
 void (* const GaugeCommand[])(void) PROGMEM = {
-  &CmndGauge, &CmndGaugeSet, &CmndGaugePercent, 
+  &CmndGauge, &CmndGaugeSet, &CmndGaugePercent,
   &CmndGaugeZero,
 };
 
 enum GaugeInternalCommand {
-  GAUGE_ZERO, 
-  GAUGE_SET, 
+  GAUGE_ZERO,
+  GAUGE_SET,
   GAUGE_SET_PERCENT
 };
 
@@ -49,7 +49,7 @@ void CmndGauge(void) {
   Response_P(PSTR("{\"" D_PRFX_GAUGE "\", \"Payload\": %d}"), XdrvMailbox.payload);
 }
 
-void CmndGaugeSet(void) {  
+void CmndGaugeSet(void) {
   CmndGaugeCommand(GAUGE_SET, XdrvMailbox.index, XdrvMailbox.payload);
 }
 
@@ -57,7 +57,7 @@ void CmndGaugePercent(void) {
   CmndGaugeCommand(GAUGE_SET_PERCENT, XdrvMailbox.index, XdrvMailbox.payload);
 }
 
-void CmndGaugeZero(void) {  
+void CmndGaugeZero(void) {
   CmndGaugeCommand(GAUGE_ZERO, XdrvMailbox.index, XdrvMailbox.payload);
 }
 
@@ -137,7 +137,7 @@ void VID6608Init() {
     NULL,                         /* Task input parameter */
     0,                            /* Priority of the task, lowest */
     NULL                          /* Task handle. */
-  );                           
+  );
 #endif
 }
 
@@ -170,20 +170,20 @@ bool Xdrv92(uint32_t function) {
   if (FUNC_INIT == function) {
     VID6608Init();
     return false;
-  }  
+  }
   // We are not initilized?
   if (!vid6608Present) {
     return false;
   }
-  // Normal callbacks  
+  // Normal callbacks
   bool result = false;
-  
-  switch (function) {  
+
+  switch (function) {
     case FUNC_LOOP:
 #ifndef VID6608_RTOS
   // ESP uses FreeRTOS to manage moving tasks, as it requires precision timings
-  // Others should use regular loop -> slower, but still works  
-      result = VID6608Loop();  
+  // Others should use regular loop -> slower, but still works
+      result = VID6608Loop();
 #else
       result = true;
 #endif
