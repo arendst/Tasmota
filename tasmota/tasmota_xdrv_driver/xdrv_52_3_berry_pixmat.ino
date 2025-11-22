@@ -101,6 +101,7 @@ static inline void apply_brightness(uint8_t *px, int bpp, uint8_t bri) {
 
 static inline void unpack_color(uint32_t c, int bpp, uint8_t out[8]) {
     if (bpp == 1) { out[0] = c & 0xFF; return; }
+    if (bpp == 2) { out[0] = (c>>8)&0xFF; out[1] = c&0xFF; return; }
     if (bpp == 3) { out[0] = (c>>16)&0xFF; out[1] = (c>>8)&0xFF; out[2] = c&0xFF; return; }
     if (bpp == 4) { out[0] = (c>>24)&0xFF; out[1] = (c>>16)&0xFF; out[2] = (c>>8)&0xFF; out[3] = c&0xFF; }
 }
@@ -238,6 +239,10 @@ int be_pixmat_get(bvm* vm) {
     if (mc->bpp == 3) { unsigned int c = (v[0] << 16) | (v[1] << 8) | v[2]; be_pushint(vm, (bint)c); }
     else if (mc->bpp == 4) { unsigned int c = (v[0] << 24) | (v[1] << 16) | (v[2] << 8) | v[3]; be_pushint(vm, (bint)c); }
     else if (mc->bpp == 1) { be_pushint(vm, v[0]); }
+    else if (mc->bpp == 2) { 
+        unsigned int c = (v[0] << 8) | v[1]; 
+        be_pushint(vm, (bint)c); 
+    }
     else { be_newlist(vm); for (int i=0;i<mc->bpp;++i){ be_pushint(vm, v[i]); be_data_push(vm, -2);} }
     be_return(vm);
 }
@@ -285,8 +290,9 @@ int be_pixmat_set(bvm* vm) {
                 case 4: vals[0] = t;   vals[1] = p;   vals[2] = val; break;
                 default:vals[0] = val; vals[1] = p;   vals[2] = q;   break;
             }
-        } else if (mc->bpp == 1) {
+        } else if (mc->bpp == 1 || mc->bpp == 2) {
             vals[0] = val;
+            if (mc->bpp == 2) vals[1] = val;
         }
     }
     else {
@@ -310,7 +316,7 @@ int be_pixmat_blit(bvm* vm) {
     const int dy = be_toint(vm, 4);
 
     const bool same_bpp = (src->bpp == dest->bpp);
-    const bool mono_to_color = (src->bpp == 1 && (dest->bpp == 1 || dest->bpp >= 3));
+    const bool mono_to_color = (src->bpp == 1);
     if (!same_bpp && !mono_to_color) be_raise(vm, "value_error", "unsupported bpp conversion");
 
     int bri = 255;

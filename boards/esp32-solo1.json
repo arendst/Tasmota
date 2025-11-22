@@ -6,6 +6,7 @@
     "f_flash": "40000000L",
     "flash_mode": "dio",
     "mcu": "esp32",
+    "chip_variant": "esp32u",
     "variant": "esp32",
     "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
   },
@@ -40,13 +41,6 @@
   },
   "download": {
     "speed": 230400
-  },
-  "espidf": {
-    "custom_sdkconfig": [
-      "CONFIG_FREERTOS_UNICORE=y",
-      "# CONFIG_BOOTLOADER_SPI_CUSTOM_WP_PIN is not set",
-      "CONFIG_BOOTLOADER_SPI_WP_PIN=7"
-    ]
   },
   "url": "https://www.espressif.com/sites/default/files/documentation/esp32-solo-1_datasheet_en.pdf",
   "vendor": "Espressif"

@@ -3,13 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.1.0.2]
+## [15.1.0.3]
+### Added
+- Support for ESP32-P4 rev.3 (#24146)
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.11.30 to 2025.11.31, Framework (Arduino Core) from v3.1.5 to v3.1.6 and IDF from v5.3.4.251110 to v5.3.4.251110 (#24146)
+
+### Fixed
+- ESP32-P4 Hosted MCU updated to v2.6.6 solving WiFi boot issues (#24146)
+- ESP32-Solo1 using pre-compiled Arduino libraries (#24146)
+
+### Removed
+
+## [15.1.0.2] 20251122
 ### Added
 - WS2812 and Berry animation support for reverse-order LED strip (#24138)
 - DALI persistence for `DaliTarget` and `DaliChannels` if filesystem is present
 - DALI DT8 RGBWAF color support using Tasmota light control
-
-### Breaking Changed
 
 ### Changed
 - ESP32 Platform from 2025.10.30 to 2025.11.30, Framework (Arduino Core) from v3.1.4 to v3.1.5 and IDF from v5.3.4.250826 to v5.3.4.251110 (#24118)
@@ -17,9 +30,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - DALI protocol errors
-
-### Removed
-
 
 ## [15.1.0.1] 20251115
 ### Added

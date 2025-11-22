@@ -236,11 +236,12 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
           BLERingBufferItem_t header;
           uint8_t buffer[4];
         } item;
-        item.header.length = 4;
+        item.header.length = sizeof(item.buffer);
         item.header.type = BLE_OP_ON_STATUS;
         item.header.returnCharUUID = *(uint16_t*)pCharacteristic->getUUID().getValue();
         item.header.handle = pCharacteristic->getHandle();
-        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + 4, pdMS_TO_TICKS(1));
+        memcpy(item.buffer,&code,item.header.length);
+        xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + item.header.length, pdMS_TO_TICKS(1));
     };
 
     void onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) {
@@ -1539,7 +1540,7 @@ void MI32ConnectionTask(void *pvParameters){
 bool MI32StartServerTask(){
   AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Server task ... start"));
   if (BLERingBufferQueue == nullptr){
-    BLERingBufferQueue = xRingbufferCreate(2048, RINGBUF_TYPE_NOSPLIT);
+    BLERingBufferQueue = xRingbufferCreate(4096, RINGBUF_TYPE_NOSPLIT);
     if(!BLERingBufferQueue) {
       AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to create ringbuffer queue"));
       return false;
