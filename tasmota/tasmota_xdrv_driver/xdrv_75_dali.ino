@@ -65,16 +65,19 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.3.0.3 20251122  update    - Remove sleep dependency from frame handling
+                              - Change receive timeout from 50 ms to 20 ms (DALI protocol is 9.2 ms)
+                              - Add DALI DT8 RGBWAF Control Gear (receive) for Tasmota color light control
   1.3.0.2 20251121  update    - Revert timing from 10 to 14ms as changed due to bad dali PS (underrated Shelly DALI Dimmer Gen3)
                               - Add optional power off without fading (reduces DT8 dali commands)
                               - Remove not performing logging from interrupt routine
   1.3.0.1 20251120  update    - Reduce send-twice timing from 14 to 10ms fixing MiBoxer DT8
-  1.3.0.0 20251119  update    - Add DALI DT8 RGBWAF color support using Tasmota light control
-                              - Add command `DaliChannels` to select Tasmota color type
+  1.3.0.0 20251119  update    - Add DALI DT8 RGBWAF Control Device (send) using Tasmota color light control
+                              - Add persistent command `DaliChannels` to select Tasmota color type
   1.2.0.0 20251116  update    - Add persistence for `DaliTarget` if filesystem is present
   1.1.0.4 20251115  fix       - Tasmota light control using non-broadcast address
   1.1.0.3 20251112  remove    - Remove optional repeat for commands `DaliSend` and `DaliQuery`
-                                Send twice is now based on DALI defined commands type
+                                Send twice is now based on DALI defined command type
   1.1.0.2 20251109  update    - Add optional extended commands prefix for commands `DaliSend` and `DaliQuery`
   1.1.0.1 20241101  update    - Enable DALI if another light is already claimed
   1.1.0.0 20241031  update    - Add GUI sliders with feedback when `DaliLight 0`
@@ -123,7 +126,7 @@
 #define DALI_INIT_FADE             1           // Fade between light states in number of seconds
 #endif
 #ifndef DALI_TIMEOUT
-#define DALI_TIMEOUT               50          // DALI backward frame receive timeout (ms)
+#define DALI_TIMEOUT               20          // DALI backward frame receive timeout (ms) - Protocol = >7Te and <22Te (22 * 417us)
 #endif
 
 //#define DALI_LIGHT_COLOR_SUPPORT               // Support DALI DT8 RGBWAF
@@ -156,6 +159,7 @@ struct DALI {
   uint32_t bit_cycles;
   uint32_t last_activity;
   uint32_t received_dali_data;                 // Data received from DALI bus
+  uint32_t color_sequence;
   uint8_t pin_rx;
   uint8_t pin_tx;
   uint8_t max_short_address;
@@ -164,8 +168,10 @@ struct DALI {
   uint8_t last_dimmer;
   uint8_t dimmer[DALI_MAX_STORED];
   uint8_t web_dimmer[DALI_MAX_STORED];
+  uint8_t color[5];
   uint8_t target_rgbwaf;
   uint8_t device_type;
+  uint8_t dtr[3];
   uint8_t probe;
 #ifdef DALI_DEBUG
   uint8_t log_level;
@@ -378,11 +384,12 @@ void DaliReceiveData(void) {
   uint32_t wait = ESP.getCycleCount() + (Dali->bit_cycles / 2);
   int bit_state = 0; 
   bool dali_read;
+  bool forward_frame = true;
   uint32_t received_dali_data = 0;
   uint32_t bit_number = 0;
   while (bit_number < 38) {
     while (ESP.getCycleCount() < wait);
-    wait += Dali->bit_cycles;                  // Auto roll-over
+    wait += Dali->bit_cycles;                  // Auto roll-over +1Te
     dali_read = (digitalRead(Dali->pin_rx) != Dali->invert_rx);
 #ifdef DALI_DEBUG
     digitalWrite(DALI_DEBUG_PIN, bit_number&1);  // Add LogicAnalyzer poll indication
@@ -399,6 +406,7 @@ void DaliReceiveData(void) {
                (bit_number == 19)) {           // Possible backward frame detected - Chk stop bits
         bit_state = 0;
         bit_number = 35;
+        forward_frame = false;
       }
       else if (abs(bit_state) > 1) {           // Invalid manchester data (too many 0 or 1)
         break;
@@ -414,8 +422,11 @@ void DaliReceiveData(void) {
     }
     bit_number++;
   }
-  Dali->last_activity = millis();
+  Dali->last_activity = millis();              // Start Forward Frame delay time (>22Te)
 
+  if (forward_frame) {                         // Forward frame received
+    received_dali_data |= 0x00020000;          // Forward frame received
+  }
   if (bit_state != 0) {                        // Invalid Manchester encoding including start and stop bits               
     received_dali_data |= 0x00010000;          // Possible collision or invalid reply of repeated frame due to handling of first frame
   }
@@ -441,7 +452,7 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
   Bit number          01234567890123456789012345678901234567
                                 1         2         3
   */
-  Dali->last_activity += 14;                   // As suggested by DALI protocol (> 9.17 ms)
+  Dali->last_activity += 14;                   // As suggested by DALI protocol (>22Te = 9.17 ms) - We need to add 1.1 ms due to not waiting for stop bits
   while (!TimeReached(Dali->last_activity)) {
     delay(1);                                  // Wait for bus to be free if needed
   }
@@ -458,7 +469,7 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
 #endif
 
   uint32_t wait = ESP.getCycleCount();
-  while (bit_number < 35) {                    // 417 * 35 = 14.7 ms
+  while (bit_number < 35) {                    // 417 * 35 = 35Te = 14.7 ms
     if (!collision) {
       if (0 == (bit_number &1)) {              // Even bit
         //          Start bit,              Stop bit,                Data bits
@@ -494,8 +505,9 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
   portEXIT_CRITICAL(&mux);}
 #endif
 
-//  delayMicroseconds(1100);                     // Adds to total 15.8 ms
-  Dali->last_activity = millis();
+//  delayMicroseconds(1100);                     // Wait 3Te as sending stop bits - adds to total 15.8 ms
+  Dali->last_activity = millis();              // Start Forward Frame delay time (>22Te)
+
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -560,13 +572,17 @@ int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout = DALI_TIM
 int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
   Dali->response = true;
   DaliSendData(adr, cmd);
-  while (!Dali->available && timeout--) {      // Expect backward frame within DALI_TIMEOUT ms
+  while (!Dali->available && timeout--) {      // Expect backward frame within DALI_TIMEOUT ms (>7Te and <22Te)
     delay(1);
   };
   int result = -1;                             // DALI NO or no response
   if (Dali->available) {
     Dali->available = false;                   // DALI collision (-2) or valid data (>=0)
-    result = (Dali->received_dali_data &0x00010000) ? -2 : Dali->received_dali_data;
+    bool collision = (Dali->received_dali_data &0x00010000);
+    bool forward_frame = (Dali->received_dali_data &0x00020000);
+    if (!forward_frame) {
+      result = (collision) ? -2 : (Dali->received_dali_data &0xFF);
+    }
   }
   Dali->response = false;
 
@@ -661,7 +677,7 @@ uint32_t DaliQueryRGBWAF(uint32_t adr) {
   }
   if (dt < 0) {                                // DALI version-1
     delay(DALI_TIMEOUT);
-    if (DaliQueryExtendedVersionNumber(adr, DALI_209_DEVICE_TYPE) >= 0) {  // Colour device
+    if (DaliQueryExtendedVersionNumber(adr, DALI_209_DEVICE_TYPE) >= 0) {  // Color device
       dt = DALI_209_DEVICE_TYPE;
     }
   }
@@ -841,7 +857,11 @@ uint32_t DaliCommission(uint32_t init_arg, uint32_t max_count) {
   return cnt;
 }
 
-/*********************************************************************************************/
+/*********************************************************************************************\
+ * DALI Control Gear - Ballast or Sensor / Receiver
+ *
+ * Implemented servicing of POWER, DIMMER and Color Control as send by Tasmota
+\*********************************************************************************************/
 
 void ResponseAppendDali(uint32_t index) {
   char number[12];
@@ -858,23 +878,72 @@ void ResponseDali(uint32_t index) {
   ResponseJsonEnd();
 }
 
-/*-------------------------------------------------------------------------------------------*/
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
 void DaliLoop(void) {
   if (!Dali->available || Dali->response) { return; }
 
-  AddLog((1 == Dali->probe) ? LOG_LEVEL_DEBUG : LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%05X"), Dali->received_dali_data);
+  bool collision = (Dali->received_dali_data &0x00010000);
+  bool forward_frame = (Dali->received_dali_data &0x00020000);
 
-  if ((Dali->received_dali_data &0x00010000) ||  // Rx collision
+  AddLog((1 == Dali->probe) ? LOG_LEVEL_DEBUG : LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%05X%s"), Dali->received_dali_data, (!forward_frame)?" backward":"");
+
+  if (collision ||                             // Rx collision
+      !forward_frame ||                        // We do not serve backward frames
       (1 == Dali->probe)) {                    // Probe only
     Dali->available = false;
     return;
   }
 
-  Dali->address = Dali->received_dali_data >> 8;
-  Dali->command = Dali->received_dali_data;
+  Dali->address = (Dali->received_dali_data >> 8) &0xFF;
+  Dali->command = Dali->received_dali_data &0xFF;
 
-  if (!(Dali->address & DALI_SELECTOR_BIT)) {  // Address
+#ifdef USE_LIGHT
+#ifdef DALI_LIGHT_COLOR_SUPPORT
+  if (DALI_209_SET_TEMPORARY_RGBWAF_CONTROL == Dali->command) { 
+    Dali->color_sequence = millis();           // Indicate start of color sequence - See DaliSetChannels()
+  }
+  else if (DALI_102_SET_DTR0 == Dali->address) { Dali->dtr[0] = Dali->command; }  // Might be Red / White
+  else if (DALI_102_SET_DTR1 == Dali->address) { Dali->dtr[1] = Dali->command; }  // Might be Green / Amber
+  else if (DALI_102_SET_DTR2 == Dali->address) { Dali->dtr[2] = Dali->command; }  // Might be Blue
+  else if (DALI_209_SET_TEMPORARY_RGB_DIMLEVEL == Dali->command) { 
+    Dali->color[0] = Dali->dtr[0];             // Red
+    Dali->color[1] = Dali->dtr[1];             // Green
+    Dali->color[2] = Dali->dtr[2];             // Blue
+  }
+  else if (DALI_209_SET_TEMPORARY_RGB_DIMLEVEL == Dali->command) { 
+    Dali->color[3] = Dali->dtr[1];             // Warm White (Amber)
+    Dali->color[4] = Dali->dtr[0];             // Cold White
+  }
+  else if (DALI_209_ACTIVATE == Dali->command) {
+    Dali->color_sequence = 0;
+    uint32_t channels = Dali->Settings.light_type -8;
+    if ((Dali->target_rgbwaf > 0) && (channels > 0)) {  // Color control
+      Dali->address &= 0xFE;                   // Reset DALI_SELECTOR_BIT set
+      if (Dali->allow_light && (DaliTarget2Address(Dali->Settings.target) == Dali->address)) {
+        if (Settings->sbflag1.dali_light) {    // DaliLight 1
+          uint32_t any_color = 0;
+          char scolors[20];
+          scolors[0] = 0;
+          for (uint32_t i = 0; i < channels; i++) {
+            any_color += Dali->color[i];
+            snprintf_P(scolors, sizeof(scolors), PSTR("%s%02X"), scolors, Dali->color[i]);
+          }
+          Dali->light_sync = true;             // Block local loop
+          if (any_color) {
+            char scmnd[20];
+            snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR " %s"), scolors);
+            ExecuteCommand(scmnd, SRC_SWITCH);
+          } else {
+            ExecuteCommandPower(LightDevice(), 0, SRC_SWITCH);
+          }
+        }
+      }
+    }
+  } else
+#endif  // DALI_LIGHT_COLOR_SUPPORT
+#endif  // USE_LIGHT
+  if ((!(Dali->address & DALI_SELECTOR_BIT)) && !Dali->color_sequence) {  // Address
     uint32_t index = DaliSaveState(Dali->address, Dali->command);  // Update dimmer and power
     bool show_response = true;
 #ifdef USE_LIGHT
@@ -912,9 +981,16 @@ void DaliEverySecond(void) {
   if (5 == TasmotaGlobal.uptime) {
     DaliInitLight();
   }
+  if (Dali->color_sequence && TimeReached(Dali->color_sequence + 1000)) {
+    Dali->color_sequence = 0;                  // Reset color sequence in case of incomplete DALI sequence
+  }
 }
 
-/*-------------------------------------------------------------------------------------------*/
+/*********************************************************************************************\
+ * DALI Control Device - Controller  / Transmitter
+ *
+ * Implements Tasmota light POWER, DIMMER and Color Control if `DaliLight 1`
+\*********************************************************************************************/
 
 #ifdef USE_LIGHT
 bool DaliSetChannels(void) {
@@ -932,7 +1008,7 @@ bool DaliSetChannels(void) {
       uint32_t adr = DaliTarget2Address(Dali->Settings.target);
 #ifdef DALI_LIGHT_COLOR_SUPPORT
       uint32_t channels = Dali->Settings.light_type -8;
-      if ((Dali->target_rgbwaf > 0) && (channels > 0)) {  // Colour control
+      if ((Dali->target_rgbwaf > 0) && (channels > 0)) {  // Color control
         adr |= DALI_SELECTOR_BIT;              // Enable Selector bit
 
 #ifdef DALI_POWER_OFF_NO_FADE
@@ -1005,7 +1081,9 @@ bool DaliSetChannels(void) {
 }
 #endif  // USE_LIGHT
 
-/*-------------------------------------------------------------------------------------------*/
+/*********************************************************************************************\
+ * DALI Tasmota init
+\*********************************************************************************************/
 
 bool DaliInit(uint32_t function) {
   int pin_tx = -1;
@@ -1056,7 +1134,7 @@ bool DaliInit(uint32_t function) {
     Dali->dimmer[i] = DALI_INIT_STATE;
   }
 
-  // Manchester twice 1200 bps = 2400 bps = 417 (protocol 416.76 +/- 10%) us
+  // Manchester twice 1200 bps = 2400 bps = 417 (protocol 416.76 +/- 10%) us = 1Te
   Dali->bit_cycles = ESP.getCpuFreqMHz() * 1000000 / 2400;
 
   DaliEnableRxInterrupt();
@@ -1670,6 +1748,7 @@ bool Xdrv75(uint32_t function) {
   else if (Dali) {
     switch (function) {
       case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         DaliLoop();
         break;
       case FUNC_EVERY_SECOND:
