@@ -483,6 +483,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     if (!Script_SubCmd()) {              // Allow override tasmota cmds
 #endif  // USE_SCRIPT_SUB_COMMAND
       if (!DecodeCommand(kTasmotaCommands, TasmotaCommand, kTasmotaSynonyms)) {
+        AddLog(LOG_LEVEL_DEBUG, "XdrvCall(FUNC_COMMAND)");
         if (!XdrvCall(FUNC_COMMAND)) {
           if (!XsnsCall(FUNC_COMMAND)) {
             type = (char*)EmptyStr;      // Unknown command
