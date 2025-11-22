@@ -102,7 +102,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_89_                     |
 | xdrv_90_esp32_dingtian_relay | @barbudor
 | xdrv_91_esp32_twai           | @arendst
-| xdrv_92_                     |
+| xdrv_92_vid6608              | @petrows
 | xdrv_93_                     |
 | xdrv_94_                     |
 |                              |

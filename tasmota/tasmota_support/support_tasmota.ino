@@ -2017,7 +2017,7 @@ void GpioInit(void)
   }
   SetModuleType();
 
-AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
 #ifdef ESP8266
   ConvertGpios();
@@ -2033,12 +2033,10 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
   TemplateGpios(&template_gp);
   for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
     if ((Settings->my_gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings->my_gp.io[i] < AGPIO(GPIO_USER))) {
-      DEBUG_CORE_LOG(PSTR("INI: gpio %d pin %d reset to zero"), i, Settings->my_gp.io[i]);
-      Settings->my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module      
+      Settings->my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
     }
     else if (Settings->my_gp.io[i] > GPIO_NONE) {
       TasmotaGlobal.my_module.io[i] = Settings->my_gp.io[i];       // Set User selected Module sensors
-      DEBUG_CORE_LOG(PSTR("INI: gpio %d pin set to user selected %d"), i, Settings->my_gp.io[i]);
     }
     if ((template_gp.io[i] > GPIO_NONE) && (template_gp.io[i] < AGPIO(GPIO_USER))) {
       TasmotaGlobal.my_module.io[i] = template_gp.io[i];               // Force Template override
@@ -2150,10 +2148,7 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
     if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
 
-  // AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TasmotaGlobal.gpio_pin %*_V"), nitems(TasmotaGlobal.gpio_pin), (uint8_t*)TasmotaGlobal.gpio_pin);
-  for (uint32_t i = 0; i < nitems(TasmotaGlobal.gpio_pin); i++) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TasmotaGlobal.gpio_pin %d = %d"), i, TasmotaGlobal.gpio_pin[i]);
-  }
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: TasmotaGlobal.gpio_pin %*_V"), nitems(TasmotaGlobal.gpio_pin), (uint8_t*)TasmotaGlobal.gpio_pin);
 
   if (ResetReasonPowerOn()) {
     TasmotaGlobal.power_on_delay = Settings->param[P_POWER_ON_DELAY2];  // SetOption47 - Delay switching relays to reduce power surge at power on
