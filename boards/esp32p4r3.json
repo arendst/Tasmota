@@ -2,14 +2,14 @@
   "build": {
     "core": "esp32",
     "extra_flags": [
-      "-DARDUINO_TASMOTA -DESP32P4ES -DESP32_16M -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE"
+      "-DARDUINO_TASMOTA -DESP32P4R3 -DESP32_16M -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE"
     ],
-    "f_cpu": "360000000L",
+    "f_cpu": "400000000L",
     "f_flash": "80000000L",
     "f_psram": "200000000L",
     "flash_mode": "qio",
     "mcu": "esp32p4",
-    "chip_variant": "esp32p4_es",
+    "chip_variant": "esp32p4",
     "variant": "esp32p4",
     "partitions": "partitions/esp32_partition_app3904k_fs11584k.csv"
   },
@@ -26,13 +26,13 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif Generic ESP32-P4 ES 16M Flash, Tasmota 3904k Code/OTA, 11584k FS",
+  "name": "Espressif Generic ESP32-P4 rev.3 16M Flash, Tasmota 3904k Code/OTA, 11584k FS",
   "upload": {
     "arduino": {
       "flash_extra_images": [
         [
           "0x10000",
-          "tasmota32p4-safeboot.bin"
+          "tasmota32p4r3-safeboot.bin"
         ]
       ]
     },
@@ -42,6 +42,6 @@
     "require_upload_port": true,
     "speed": 1500000
   },
-  "url": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/index.html",
+  "url": "https://documentation.espressif.com/esp32-p4_datasheet_en.html",
   "vendor": "Espressif"
 }
