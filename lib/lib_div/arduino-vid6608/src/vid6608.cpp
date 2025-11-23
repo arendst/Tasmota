@@ -141,19 +141,21 @@ void vid6608::loop() {
   }
 }
 
-void vid6608::step(vid6608::MoveDirection direction, uint16_t delay) {
+void vid6608::step(vid6608::MoveDirection direction, uint16_t delayUs) {
   if (direction != this->dirPinState) {
     this->dirPinState = direction;
     digitalWrite(this->dirPin, direction == MOVE_FORWARD ? LOW : HIGH);
     // Setup time must be > 100ns, we 1us to be safe
-    delayMicroseconds(1);
+    delay(1);
   }
   digitalWrite(this->stepPin, HIGH);
-  delayMicroseconds(delay);
+  delayMicroseconds(delayUs);
   // VID6608 reacts on raising front, so we can lower the pin immediately with lower delay
   // to improve max speed. Lower time must be > 100ns, we set 1us to be safe.
   digitalWrite(this->stepPin, LOW);
   delayMicroseconds(1);
+  // We should keep resources reserved by others
+  yield();
 }
 
 uint16_t vid6608::getDelay(uint16_t distance) {

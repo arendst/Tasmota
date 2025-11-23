@@ -59,10 +59,12 @@
   
     Driver uses background FreeRTOS task for impulse generation, as it requires microsecond precision for
     inpulses. For ESP8266 driver also works, but movement is much slower (but it is still okay for slow
-    changing values, i.e. temperature).
+    changing values, i.e. temperature). On ESP8266 speed is ~2 sec per degree. ESP32 uses FreeRTOS API
+    and movement is fast and smooth (very similar to real car gauges).
     
   Version history:
-  
+    
+    * 2025-11-23 - fixes related with ESP8266 performance
     * 2025-11-22 - initial release
 */
 
@@ -256,11 +258,13 @@ void VID6608Init() {
       // We have motor defined at number x
       uint32_t pinStep = Pin(GPIO_VID6608_F, x);
       uint32_t pinDir = Pin(GPIO_VID6608_CW, x);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: detected drive at pin %d, %d"), pinStep, pinDir);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: detected drive %d at pin %d, %d"), x, pinStep, pinDir);
       vid6608Drives[x] = new vid6608(pinStep, pinDir);
-      vid6608Present = true;
+      
       // Perform homing operation
       vid6608Drives[x]->zero();
+      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d done"), x);
+      vid6608Present = true;
     } else {
       vid6608Drives[x] = nullptr;
     }

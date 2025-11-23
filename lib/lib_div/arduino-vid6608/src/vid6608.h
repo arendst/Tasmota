@@ -146,7 +146,7 @@ class vid6608 {
     uint16_t accelMaxDistance;      // Max distance from the acceleration table
     uint16_t accelMaxDelay;         // Max delay from the acceleration table
     // Actual move
-    void step(MoveDirection direction, uint16_t delay);
+    void step(MoveDirection direction, uint16_t delayUs);
     // Get current acceleration speed (delay)
     uint16_t getDelay(uint16_t distance);
 };
