@@ -595,7 +595,12 @@ static void func_varlist(bparser *parser)
     /* '(' [ ID {',' ID}] ')' or */
     /* '(' '*' ID ')' or */
     /* '(' [ ID {',' ID}] ',' '*' ID ')' */
-    match_token(parser, OptLBK); /* skip '(' */
+    btokentype type_lbk = next_type(parser);
+    if ((type_lbk == OptSpaceLBK) || (type_lbk == OptCallLBK)) {
+        match_token(parser, type_lbk); /* skip '(' */
+    } else {
+        match_token(parser, OptCallLBK); /* raise error */
+    }
     if (next_type(parser) == OptMul) {
         func_vararg(parser);
     } else if (match_id(parser, str) != NULL) {
@@ -837,8 +842,8 @@ static void member_expr(bparser *parser, bexpdesc *e)
         init_exp(&key, ETSTRING, 0);
         key.v.s = str;
         be_code_member(parser->finfo, e, &key);
-    } else if (next_type(parser) == OptLBK) {
-        scan_next_token(parser); /* skip '(' */
+    } else if (next_type(parser) == OptCallLBK) {
+        scan_next_token(parser); /* skip '(' - must be no space before */
         bexpdesc key;
         expr(parser, &key);
         check_var(parser, &key);
@@ -897,7 +902,8 @@ static void simple_expr(bparser *parser, bexpdesc *e)
 static void primary_expr(bparser *parser, bexpdesc *e)
 {
     switch (next_type(parser)) {
-    case OptLBK: /* '(' expr ')' */
+    case OptSpaceLBK: /* '(' expr ')' - grouping parentheses only */
+    case OptCallLBK:  /* '(' expr ')' - following a symbol */
         scan_next_token(parser); /* skip '(' */
         expr(parser, e);
         check_var(parser, e);
@@ -926,7 +932,7 @@ static void suffix_expr(bparser *parser, bexpdesc *e)
     primary_expr(parser, e);
     for (;;) {
         switch (next_type(parser)) {
-        case OptLBK: /* '(' function call */
+        case OptCallLBK: /* '(' function call - no space before */
             call_expr(parser, e);
             break;
         case OptDot: /* '.' member */
@@ -1355,7 +1361,7 @@ static void continue_stmt(bparser *parser)
 static bbool isoverloadable(btokentype type)
 {
     return (type >= OptAdd && type <= OptConnect) /* overloaded binary operator */
-        || type == OptFlip || type == OptLBK;     /* '~' and '()' operator */
+        || type == OptFlip || type == OptSpaceLBK;     /* '~' and '()' operator */
 }
 
 static bstring* func_name(bparser* parser, bexpdesc* e, int ismethod)
@@ -1376,7 +1382,7 @@ static bstring* func_name(bparser* parser, bexpdesc* e, int ismethod)
             return parser_newstr(parser, "-*");
         }
         /* '()' call operator */
-        if (type == OptLBK && next_type(parser) == OptRBK) {
+        if ((type == OptSpaceLBK) && next_type(parser) == OptRBK) {
             scan_next_token(parser); /* skip ')' */
             return parser_newstr(parser, "()");
         }

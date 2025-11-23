@@ -36,7 +36,7 @@ static const char* const kwords_tab[] = {
     "^=", "<<=", ">>=", "+", "-", "*", "/", "%",
     "<", "<=", "==", "!=", ">", ">=", "&", "|",
     "^", "<<", ">>", "..", "&&", "||", "!", "~",
-    "(", ")", "[", "]", "{", "}", ".", ",", ";",
+    "(", "(", ")", "[", "]", "{", "}", ".", ",", ";",
     ":", "?", "->", "if", "elif", "else", "while",
     "for", "def", "end", "class", "break", "continue",
     "return", "true", "false", "nil", "var", "do",
@@ -686,6 +686,7 @@ static int skip_delimiter(blexer *lexer) {
         c = lgetc(lexer);
         delimeter_present = 1;
     }
+    lexer->had_whitespace = delimeter_present;
     return delimeter_present;
 }
 
@@ -791,12 +792,15 @@ static btokentype lexer_next(blexer *lexer)
         switch (lgetc(lexer)) {
         case '\r': case '\n': /* newline */
             skip_newline(lexer);
+            lexer->had_whitespace = 1;
             break;
         case ' ': case '\t': case '\f': case '\v': /* spaces */
             next(lexer);
+            lexer->had_whitespace = 1;
             break;
         case '#': /* comment */
             skip_comment(lexer);
+            lexer->had_whitespace = 1;
             break;
         case EOS: return TokenEOS; /* end of source stream */
         /* operator */
@@ -805,7 +809,7 @@ static btokentype lexer_next(blexer *lexer)
         case '*': return scan_assign(lexer, OptMulAssign, OptMul);
         case '/': return scan_assign(lexer, OptDivAssign, OptDiv);
         case '%': return scan_assign(lexer, OptModAssign, OptMod);
-        case '(': next(lexer); return OptLBK;
+        case '(': next(lexer); return lexer->had_whitespace ? OptSpaceLBK : OptCallLBK;
         case ')': next(lexer); return OptRBK;
         case '[': next(lexer); return OptLSB;
         case ']': next(lexer); return OptRSB;
@@ -865,6 +869,7 @@ void be_lexer_init(blexer *lexer, bvm *vm,
     lexer->reader.readf = reader;
     lexer->reader.data = data;
     lexer->reader.len = 0;
+    lexer->had_whitespace = 1; /* start with whitespace state */
     lexerbuf_init(lexer);
     keyword_registe(vm);
     lexer->strtab = be_map_new(vm);
@@ -892,6 +897,7 @@ int be_lexer_scan_next(blexer *lexer)
         return 0;
     }
     lexer->lastline = lexer->linenumber;
+    lexer->had_whitespace = 0; /* reset whitespace flag before scanning */
     type = lexer_next(lexer);
     clear_buf(lexer);
     if (type != TokenNone) {
