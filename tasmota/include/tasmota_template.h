@@ -232,10 +232,10 @@ enum UserSelectablePins {
   GPIO_C8_CO2_5K_TX, GPIO_C8_CO2_5K_RX, // C8-CO2-5K CO2 Sensor
   GPIO_V9240_TX, GPIO_V9240_RX,         //  V9240 serial interface
   GPIO_LD2402_TX, GPIO_LD2402_RX,       // HLK-LD2402
-  GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
-  #ifdef ESP32
+#ifdef ESP32
   GPIO_HSDIO_CMD, GPIO_HSDIO_CLK, GPIO_HSDIO_RST, GPIO_HSDIO_D0, GPIO_HSDIO_D1, GPIO_HSDIO_D2, GPIO_HSDIO_D3, // Hosted MCU SDIO interface, including 1-bit and 4-bit modes
 #endif
+  GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -510,11 +510,11 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_C8_CO2_5K_TX "|" D_SENSOR_C8_CO2_5K_RX "|"
   D_SENSOR_V9240_TX "|" D_SENSOR_V9240_RX "|"
   D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX "|"
-  D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
-  #ifdef ESP32
+#ifdef ESP32
   D_SENSOR_HSDIO_CMD "|" D_SENSOR_HSDIO_CLK "|" D_SENSOR_HSDIO_RST "|" D_SENSOR_HSDIO_D0 "|" D_SENSOR_HSDIO_D1 "|" D_SENSOR_HSDIO_D2 "|" D_SENSOR_HSDIO_D3 "|"
 #endif
-  ;
+  D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
+;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
