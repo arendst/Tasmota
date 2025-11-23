@@ -23,7 +23,7 @@
 
 /*
   VID6608 automotive gauge stepper motor driver
-  
+
   This driver implements support for following driver chips for analog automotive gauges (Switec X25.168, X27.168 and clones) with microstepping support:
 
     * VID6606 (2 motors)
@@ -36,18 +36,18 @@
   Driver chips with microstepping is the recommended way to drive such motors,
   they provide much more relailabe and smooth movement with reduced noise and
   to avoid skipping steps.
-  
+
   Driver is configured to perform 320° rotation angle with 12 steps per degree.
   Total capacity is 3840 steps for whole scale.
-  
+
   Library homepage: https://github.com/petrows/arduino-vid6608
-  
-  Connection: 
-  
+
+  Connection:
+
     * Connect IC VID6608 inputs F(scx) and CW/CCW to GPIO pins
     * Connect RESET pin of VID6608 to VCC
     * Define "VID6608 F" and "VID6608 CW" pins in Configuration / Module page
-  
+
   Driver adds following commands:
 
     * Gauge         : returns current gauges state
@@ -56,14 +56,14 @@
     * GaugeZeroX    : triggers gauge calibration and homing, where X - motor index from 1 to 4, 0 for all
 
   Performance notes:
-  
-    Driver uses background FreeRTOS task for impulse generation, as it requires microsecond precision for
-    inpulses. For ESP8266 driver also works, but movement is much slower (but it is still okay for slow
-    changing values, i.e. temperature). On ESP8266 speed is ~2 sec per degree. ESP32 uses FreeRTOS API
-    and movement is fast and smooth (very similar to real car gauges).
-    
+
+    * ESP32: Driver uses background FreeRTOS task for impulse generation, as it requires microsecond precision
+      for inpulses. ESP32 uses FreeRTOS API and movement is fast and smooth (very similar to real car gauges).
+    * ESP8266: For ESP8266 driver also works, but movement is much slower (but it is still okay for slow
+      changing values, i.e. temperature). On ESP8266 speed is ~2 sec per degree.
+
   Version history:
-    
+
     * 2025-11-23 - fixes related with ESP8266 performance
     * 2025-11-22 - initial release
 */
@@ -142,7 +142,7 @@ void CmndGaugeZero(void) {
 
 /**
  * @brief Driver common command function
- * 
+ *
  * @param command what to issue
  * @param index drive number (0 - all, 1..4 - by number)
  * @param payload command argument
@@ -188,7 +188,7 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
 void VID6608StatusJson() {
   ResponseAppend_P(PSTR("\"" D_PRFX_GAUGE "\":{"));
   bool isFirstItem = true;
-  for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {    
+  for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
     vid6608 *driver = vid6608Drives[x];
     if (driver) {
       if (!isFirstItem) {
@@ -196,9 +196,9 @@ void VID6608StatusJson() {
       }
       ResponseAppend_P(PSTR("\"%d\":{\"pos\":%d}"), (int32_t)(x+1), (int32_t)driver->getPosition());
       isFirstItem = false;
-    }    
+    }
   }
-  ResponseJsonEnd(); 
+  ResponseJsonEnd();
 }
 
 #ifdef USE_WEBSERVER
@@ -208,11 +208,11 @@ void VID6608StatusJson() {
  */
 void VID6608StatusWeb() {
   WSContentSend_PD(HTTP_TABLE100);
-  for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {    
+  for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
     vid6608 *driver = vid6608Drives[x];
     if (driver) {
       WSContentSend_PD(PSTR("<tr><th>Gauge %d</th><td>%d</td></tr>"), (int32_t)(x+1), (int32_t)driver->getPosition());
-    }    
+    }
   }
   WSContentSend_PD(PSTR("</table>"));
 }
@@ -260,7 +260,7 @@ void VID6608Init() {
       uint32_t pinDir = Pin(GPIO_VID6608_CW, x);
       AddLog(LOG_LEVEL_DEBUG, PSTR("VID: detected drive %d at pin %d, %d"), x, pinStep, pinDir);
       vid6608Drives[x] = new vid6608(pinStep, pinDir);
-      
+
       // Perform homing operation
       vid6608Drives[x]->zero();
       AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d done"), x);
