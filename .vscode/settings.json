@@ -71,9 +71,5 @@
         "commands": "platformio-ide.rebuildProjectIndex"
       }
     ],
-    "C_Cpp.dimInactiveRegions": false,
-    "editor.trimWhitespaceOnDelete": false,
-    "editor.trimAutoWhitespace": false,
-    "files.trimTrailingWhitespace": false,
-    "files.trimFinalNewlines": false
+    "C_Cpp.dimInactiveRegions": false
   }
