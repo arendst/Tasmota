@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef ESP32P4
+#ifdef ESP32
 #ifdef USE_CSI_WEBCAM
 
 /*********************************************************************************************\
@@ -44,7 +44,10 @@
 #include "esp_cam_ctlr_csi.h"
 #include "esp_cam_ctlr.h"
 #include "driver/isp.h"
+#include "driver/isp_bf.h"
 #include "esp_cache.h"
+#include "driver/jpeg_encode.h"
+#include "esp_ldo_regulator.h"
 
 /*********************************************************************************************/
 
@@ -62,8 +65,12 @@ struct CSI_Config {
 struct {
   esp_cam_ctlr_handle_t cam_handle;
   isp_proc_handle_t isp_handle;
+  jpeg_encoder_handle_t jpeg_handle;
+  esp_ldo_channel_handle_t ldo_mipi_phy;
   void *frame_buffer;
   size_t frame_buffer_size;
+  void *jpeg_buffer;
+  size_t jpeg_buffer_size;
   
   CSI_Config config;        // Sensor configuration
   
@@ -100,12 +107,25 @@ uint32_t WcSetup() {
     return Wc.up;
   }
 
+  // Initialize MIPI PHY LDO (required for CSI to work)
+  esp_ldo_channel_config_t ldo_mipi_phy_config = {
+    .chan_id = 3,        // LDO_VO3 for MIPI PHY
+    .voltage_mv = 2500,  // 2.5V for MIPI PHY
+  };
+  
+  esp_err_t ret = esp_ldo_acquire_channel(&ldo_mipi_phy_config, &Wc.ldo_mipi_phy);
+  if (ret != ESP_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to acquire MIPI LDO (0x%x)"), ret);
+    return 0;
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI PHY LDO enabled"));
+
   // Fill config with defaults for OV5647
   Wc.config.width = 800;
   Wc.config.height = 640;
   Wc.config.format = 0;        // RAW8
   Wc.config.has_isp = 0;       // No onboard ISP
-  Wc.config.lane_bitrate = 400;
+  Wc.config.lane_bitrate = 200;
   Wc.config.lane_num = 2;
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI init %dx%d @ %d Mbps"), Wc.config.width, Wc.config.height, Wc.config.lane_bitrate);
@@ -182,7 +202,7 @@ uint32_t WcSetup() {
     .byte_swap_en = false,
   };
 
-  esp_err_t ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.cam_handle);
+  ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI controller init failed (0x%x)"), ret);
     free(Wc.frame_buffer);
@@ -231,6 +251,7 @@ uint32_t WcSetup() {
     }
     
     esp_isp_processor_cfg_t isp_config = {
+      .clk_src = ISP_CLK_SRC_DEFAULT,
       .clk_hz = 80 * 1000 * 1000,
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
       .input_data_color_type = isp_input_color,
@@ -251,6 +272,43 @@ uint32_t WcSetup() {
       return 0;
     }
 
+    // Configure Bayer Filter (BF) for OV5647 with denoising
+    esp_isp_bf_config_t bf_config = {
+      .padding_mode = ISP_BF_EDGE_PADDING_MODE_SRND_DATA,
+      .padding_data = 0,
+      .bf_template = {
+        {1, 2, 1},
+        {2, 4, 2},
+        {1, 2, 1}
+      },
+      .denoising_level = 5,
+      .padding_line_tail_valid_start_pixel = 0,
+      .padding_line_tail_valid_end_pixel = 0,
+    };
+    
+    ret = esp_isp_bf_configure(Wc.isp_handle, &bf_config);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP BF config failed (0x%x)"), ret);
+      esp_isp_del_processor(Wc.isp_handle);
+      esp_cam_ctlr_disable(Wc.cam_handle);
+      esp_cam_ctlr_del(Wc.cam_handle);
+      free(Wc.frame_buffer);
+      Wc.frame_buffer = NULL;
+      return 0;
+    }
+    
+    // Enable Bayer Filter
+    ret = esp_isp_bf_enable(Wc.isp_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP BF enable failed (0x%x)"), ret);
+      esp_isp_del_processor(Wc.isp_handle);
+      esp_cam_ctlr_disable(Wc.cam_handle);
+      esp_cam_ctlr_del(Wc.cam_handle);
+      free(Wc.frame_buffer);
+      Wc.frame_buffer = NULL;
+      return 0;
+    }
+    
     ret = esp_isp_enable(Wc.isp_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable ISP (0x%x)"), ret);
@@ -262,11 +320,57 @@ uint32_t WcSetup() {
       return 0;
     }
     
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ESP32 ISP enabled"));
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ESP32 ISP enabled with GBRG Bayer"));
   } else {
     Wc.isp_handle = NULL;
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: ESP32 ISP not needed"));
   }
+
+  // Initialize JPEG encoder engine
+  jpeg_encode_engine_cfg_t jpeg_eng_cfg = {
+    .intr_priority = 0,
+    .timeout_ms = 40,  // 40ms timeout for encoding
+  };
+  
+  ret = jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+  if (ret != ESP_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: JPEG encoder init failed (0x%x)"), ret);
+    if (Wc.isp_handle) {
+      esp_isp_disable(Wc.isp_handle);
+      esp_isp_del_processor(Wc.isp_handle);
+    }
+    esp_cam_ctlr_disable(Wc.cam_handle);
+    esp_cam_ctlr_del(Wc.cam_handle);
+    free(Wc.frame_buffer);
+    Wc.frame_buffer = NULL;
+    return 0;
+  }
+  
+  // Allocate JPEG output buffer using JPEG encoder's allocator
+  // This ensures proper memory alignment and DMA compatibility
+  jpeg_encode_memory_alloc_cfg_t jpeg_mem_cfg = {
+    .buffer_direction = JPEG_ENC_ALLOC_OUTPUT_BUFFER,
+  };
+  
+  size_t jpeg_alloc_size = Wc.config.width * Wc.config.height / 2; // Estimate 50% compression
+  size_t actual_size = 0;
+  Wc.jpeg_buffer = jpeg_alloc_encoder_mem(jpeg_alloc_size, &jpeg_mem_cfg, &actual_size);
+  if (!Wc.jpeg_buffer) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate JPEG buffer"));
+    jpeg_del_encoder_engine(Wc.jpeg_handle);
+    if (Wc.isp_handle) {
+      esp_isp_disable(Wc.isp_handle);
+      esp_isp_del_processor(Wc.isp_handle);
+    }
+    esp_cam_ctlr_disable(Wc.cam_handle);
+    esp_cam_ctlr_del(Wc.cam_handle);
+    free(Wc.frame_buffer);
+    Wc.frame_buffer = NULL;
+    return 0;
+  }
+  Wc.jpeg_buffer_size = actual_size;
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
 
   Wc.up = 1;
   Wc.streaming = false;
@@ -288,9 +392,11 @@ uint32_t WcStart(void) {
 
   // Call Berry to start sensor streaming (register 0x0100)
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream_on"));
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream_on"), 0, nullptr, 0);
+  int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream_on"), 0, nullptr, 0);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Berry stream_on result: %d"), berry_result);
   
-  delay(10);
+  // Give sensor time to start streaming
+  delay(100);
 
   esp_err_t ret = esp_cam_ctlr_start(Wc.cam_handle);
   if (ret != ESP_OK) {
@@ -299,9 +405,6 @@ uint32_t WcStart(void) {
   }
 
   Wc.streaming = true;
-  
-  // Start the stream server
-  WcSetStreamserver(1);
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming started"));
   return 1;
@@ -393,6 +496,13 @@ void HandleWebcamMjpeg(void) {
 }
 
 void HandleWebcamMjpegTask(void) {
+  // Safety check - ensure everything is initialized
+  if (!Wc.up || !Wc.streaming) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Not ready for streaming"));
+    Wc.stream_active = 0;
+    return;
+  }
+  
   if (!Wc.client.connected()) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client fail"));
     Wc.stream_active = 0;
@@ -410,6 +520,13 @@ void HandleWebcamMjpegTask(void) {
   }
 
   if (2 == Wc.stream_active) {
+    // Safety check
+    if (!Wc.jpeg_handle || !Wc.jpeg_buffer) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: JPEG encoder not ready"));
+      Wc.stream_active = 0;
+      return;
+    }
+    
     // Get frame from CSI camera
     uint8_t *frame = WcGetFrameCSI(1000);
     if (!frame) {
@@ -418,15 +535,35 @@ void HandleWebcamMjpegTask(void) {
       return;
     }
 
-    // For now, send RGB565 data directly
-    // TODO: Convert to JPEG for better streaming
-    size_t frame_len = Wc.frame_buffer_size;
+    // Encode RGB565 frame to JPEG
+    jpeg_encode_cfg_t jpeg_cfg = {
+      .height = Wc.config.height,
+      .width = Wc.config.width,
+      .src_type = JPEG_ENCODE_IN_FORMAT_RGB565,
+      .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
+      .image_quality = 75
+    };
+    
+    uint32_t jpeg_size = 0;
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
+                                          &jpeg_cfg,
+                                          frame, 
+                                          Wc.frame_buffer_size,
+                                          (uint8_t*)Wc.jpeg_buffer, 
+                                          Wc.jpeg_buffer_size,
+                                          &jpeg_size);
+    
+    if (ret != ESP_OK || jpeg_size == 0) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: JPEG encode fail (0x%x)"), ret);
+      Wc.stream_active = 0;
+      return;
+    }
 
     Wc.client.print("--" BOUNDARY "\r\n");
-    Wc.client.printf("Content-Type: image/rgb565\r\n"
+    Wc.client.printf("Content-Type: image/jpeg\r\n"
       "Content-Length: %d\r\n"
-      "\r\n", static_cast<int>(frame_len));
-    Wc.client.write((char *)frame, frame_len);
+      "\r\n", static_cast<int>(jpeg_size));
+    Wc.client.write((char *)Wc.jpeg_buffer, jpeg_size);
     Wc.client.print("\r\n");
   }
   
@@ -443,13 +580,39 @@ void HandleImage(void) {
   WiFiClient client = Webserver->client();
   String response = "HTTP/1.1 200 OK\r\n";
   response += "Content-disposition: inline; filename=cap.jpg\r\n";
-  response += "Content-type: image/rgb565\r\n\r\n";
+  response += "Content-type: image/jpeg\r\n\r\n";
   Webserver->sendContent(response);
+
+  // Safety check
+  if (!Wc.jpeg_handle || !Wc.jpeg_buffer) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: JPEG encoder not ready"));
+    client.stop();
+    return;
+  }
 
   // Get a single frame
   uint8_t *frame = WcGetFrameCSI(1000);
   if (frame) {
-    client.write((char *)frame, Wc.frame_buffer_size);
+    // Encode to JPEG
+    jpeg_encode_cfg_t jpeg_cfg = {
+      .height = Wc.config.height,
+      .width = Wc.config.width,
+      .src_type = JPEG_ENCODE_IN_FORMAT_RGB565,
+      .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
+      .image_quality = 75,
+    };
+    
+    uint32_t jpeg_size = 0;
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
+                                          &jpeg_cfg,
+                                          frame, 
+                                          Wc.frame_buffer_size,
+                                          (uint8_t*)Wc.jpeg_buffer, 
+                                          Wc.jpeg_buffer_size,
+                                          &jpeg_size);
+    if (ret == ESP_OK && jpeg_size > 0) {
+      client.write((char *)Wc.jpeg_buffer, jpeg_size);
+    }
   }
   client.stop();
 
@@ -498,6 +661,11 @@ void WcShowStream(void) {
 }
 
 void WcLoop(void) {
+  // Start stream server once WiFi is available and streaming is active
+  if (Wc.streaming && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
+    WcSetStreamserver(1);
+  }
+  
   if (Wc.CamServer) {
     Wc.CamServer->handleClient();
     if (Wc.stream_active) { 
@@ -526,7 +694,15 @@ bool Xdrv81(uint32_t function) {
       WcInit();
       break;
     case FUNC_INIT:
-      if(Wc.up == 0) WcSetup();
+      if(Wc.up == 0) {
+        WcSetup();
+      }
+      break;
+    case FUNC_EVERY_SECOND:
+      // Auto-start streaming once WiFi is available
+      if (Wc.up && !Wc.streaming && !TasmotaGlobal.global_state.network_down) {
+        WcStart();
+      }
       break;
     case FUNC_ACTIVE:
       result = true;
