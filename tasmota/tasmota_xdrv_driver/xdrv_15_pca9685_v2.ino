@@ -285,18 +285,33 @@ void PCA9685_RunMotor()
 
       if (m->step == 0 || (m->step % m->every == 0))
       {
-        // AddLog(LOG_LEVEL_DEBUG, "PCA9685: MOTOR dev=%u pin=%u s=%u e=%u pwm=%lu target=%lu dir=%d",
-        //        dev,
-        //        pin,
-        //        m->step,
-        //        m->every,
-        //        m->pwm,
-        //        m->target,
-        //        m->direction);
+        // --- SECURITY-FIX START ---
+        
+        // We temporarily use "int32_t" (signed and large enough)
+        // so that we don't run into overflows.
+        int32_t next_val = (int32_t)m->pwm + (int32_t)m->direction;
 
-        PCA9685_SetPWM(dev, pin, m->pwm + m->direction, pca9685.inverted[dev]);
+        // we dim UP (direction > 0)
+        if (m->direction > 0) {
+            // // If we overshoot the target -> clamp to the target
+            if (next_val > m->target) next_val = m->target;
+            // Absolute hardware upper limit (4096 is the “fully on” bit)
+            if (next_val > 4096) next_val = 4096; 
+        }
+
+        // we dim DOWN (direction < 0)
+        if (m->direction < 0) {
+            // If we were to fall below the target -> clamp to the target
+            if (next_val < m->target) next_val = m->target;
+            // Absolute lower limit
+            if (next_val < 0) next_val = 0;
+        }
+
+        // Now write the safe, verified value
+        PCA9685_SetPWM(dev, pin, (uint16_t)next_val, pca9685.inverted[dev]);
+        
+        // --- SECURITY-FIX END ---
       }
-
       m->step++;
     }
   }
@@ -441,24 +456,28 @@ bool PCA9685_Command(void)
             //        m->target,
             //        m->direction);
 
-            m->every = 0;
-            while (m->every < 1)
-            {
-              uint16_t stepValue = abs((int16_t)m->pwm - (int16_t)m->target) / abs(m->direction);
-              if (stepValue < 1)
-              {
-                m->direction += m->target < m->pwm ? -1 : 1;
-                continue;
-              }
+            // calculate total difference (e.g. 4095 steps)
+            uint16_t totalSteps = abs((int16_t)m->pwm - (int16_t)m->target);
+            
+            // calculate how many 50ms-ticks we have at all
+            // tids is in 0.1s. so tids * 2 is the amount of 50ms ticks.
+            uint16_t totalTicks = tids * 2; 
 
-              m->every = round((tids * 200) / stepValue);
-              if (m->every < 1)
-              {
-                m->direction += m->target < m->pwm ? -1 : 1;
-                continue;
-              }
+            if (totalTicks < 1) totalTicks = 1; // lowest possible
+
+            // calculate steps per tick
+            uint16_t stepsPerTick = totalSteps / totalTicks;
+
+            if (stepsPerTick < 1) {
+                // Slow fade (we have morew time than steps)
+                m->direction = m->target < m->pwm ? -1 : 1;
+                m->every = totalTicks / totalSteps;
+            } else {
+                // Fast Fade (LED Mode: We need to make big steps)
+                m->direction = (m->target < m->pwm ? -1 : 1) * stepsPerTick;
+                m->every = 1; // Fire every tick!
             }
-
+            
             m->running = true;
           }
         }

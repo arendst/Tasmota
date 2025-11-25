@@ -542,6 +542,10 @@
 #define D_ENERGY_YESTERDAY "Consumo energético de ontem"
 #define D_ENERGY_TOTAL "Consumo energético total"
 
+// xdrv_92_vid6608.ino
+#define D_VID6608_F "VID6608 F"
+#define D_VID6608_CW "VID6608 CW"
+
 // xsns_100_ina3221.ino
 #define  D_UNIT_CHARGE                    "Ah"
 #define  D_CHARGE                         "Charge"    

@@ -2,7 +2,8 @@
     "name": "berry",
     "displayName": "Berry Script Language",
     "description": "A small embedded script language.",
-    "version": "1.1.0",
+    "version": "1.2.0",
+	"icon": "berry-icon.png",
     "publisher": "skiars",
     "engines": {
         "vscode": "^1.15.1"
@@ -22,16 +23,6 @@
                     ".be"
                 ],
                 "configuration": "./berry-configuration.json"
-            },
-            {
-                "id": "berry-bytecode",
-                "aliases": [
-                    "Berry Bytecode",
-                    "berry bytecode"
-                ],
-                "extensions": [
-                    "berry.bytecode"
-                ]
             }
         ],
         "grammars": [
@@ -39,11 +30,6 @@
                 "language": "berry",
                 "scopeName": "source.berry",
                 "path": "./syntaxes/berry.json"
-            },
-            {
-                "language": "berry-bytecode",
-                "scopeName": "source.berry.bytecode",
-                "path": "./syntaxes/bytecode.json"
             }
         ]
     },

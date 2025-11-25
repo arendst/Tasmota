@@ -6,3 +6,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [Unreleased]
 - Initial release
 - add support for f-strings, `_class` and indent on `do`
+- add support for multiline f-strings
+- remove bytecode

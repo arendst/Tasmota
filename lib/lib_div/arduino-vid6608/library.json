@@ -1,0 +1,19 @@
+{
+    "name": "vid6608",
+    "keywords": "driver, motor, control",
+    "description": "Arduino library for driving IC VID6608 and clones for Switec X25.168 / X27.168 miniature stepper motors",
+    "homepage": "https://github.com/petrows/arduino-vid6608",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/petrows/arduino-vid6608.git"
+    },
+    "authors": {
+      "name": "Petr Golovachev",
+      "email": "petro@petro.ws",
+      "url": "https://petro.ws/"
+    },
+    "version": "1.0.2",
+    "frameworks": "arduino",
+    "platforms": "*"
+}
