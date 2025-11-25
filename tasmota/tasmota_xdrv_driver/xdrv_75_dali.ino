@@ -65,6 +65,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.3.0.4 20251123  update    - Add send retry on collision detection
+                              - Prep DALI-2 24-bit transceive
   1.3.0.3 20251122  update    - Remove sleep dependency from frame handling
                               - Change receive timeout from 50 ms to 20 ms (DALI protocol is 9.2 ms)
                               - Add DALI DT8 RGBWAF Control Gear (receive) for Tasmota color light control
@@ -139,6 +141,14 @@
 #define DALI_DEBUG_PIN             4           // Debug GPIO
 #endif
 
+/*********************************************************************************************/
+
+#define DALI_COLLISION             0x10000000  // Collision data mask
+#define DALI_BACKWARD_FRAME        0x00000000  // Backward frame mask
+#define DALI_FORWARD_16BIT_FRAME   0x01000000  // DALI 16-bit forward frame mask
+#define DALI_FORWARD_24BIT_FRAME   0x02000000  // DALI-2 24-bit forward frame mask
+#define DALI_FORWARD_FRAME         0x03000000  // = DALI_FORWARD_16BIT_FRAME | DALI_FORWARD_24BIT_FRAME
+
 #include "include/xdrv_75_dali.h"
 
 #define DALI_MAX_STORED            17          // Store broadcast and group states
@@ -159,7 +169,6 @@ struct DALI {
   uint32_t bit_cycles;
   uint32_t last_activity;
   uint32_t received_dali_data;                 // Data received from DALI bus
-  uint32_t color_sequence;
   uint8_t pin_rx;
   uint8_t pin_tx;
   uint8_t max_short_address;
@@ -364,37 +373,43 @@ void DaliDisableRxInterrupt(void) {
 void IRAM_ATTR DaliReceiveData(void);          // Fix ESP8266 ISR not in IRAM! exception
 void DaliReceiveData(void) {
   /*
+  DALI-2 Forward frame (1 Start bit + 24 data bits) * 2 bits/bit (manchester encoding) + 2 * 2 Stop bits = 54 bits
+  DALI data 0xFE6432     1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0 0 0 1 1 0 0 1 0      Forward frame - 23.2 ms
+  Start and Stop bits  1                                                 1 1
+  Manchester data     01010101010101011010010110100110101010010110100110
+  Stop bits                                                             1111
+
   Forward frame (1 Start bit + 16 data bits) * 2 bits/bit (manchester encoding) + 2 * 2 Stop bits = 38 bits
-  DALI data 0xFE64       1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0       Forward frame
+  DALI data 0xFE64       1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0                      Forward frame - 16.2 ms
   Start and Stop bits  1                                 1 1
   Manchester data     0101010101010101101001011010011010
   Stop bits                                             1111                  
 
   Backward frame (1 Start bit + 8 data bits) * 2 bits/bit (manchester encoding) + 2 * 2 Stop bits = 22 bits
-  DALI data 0x64         0 1 1 0 0 1 0 0                       Backward frame
+  DALI data 0x64         0 1 1 0 0 1 0 0                                      Backward frame - 10 ms
   Start and Stop bits  1                 1 1
   Manchester data     011001011010011010
   Stop bits                             1111                  
 
-  Bit number          01234567890123456789012345678901234567
-                                1         2         3
+  Bit number          0123456789012345678901234567890123456789012345678901234
+                                1         2         3         4         5
   */
   if (Dali->available) { return; }             // Skip if last input is not yet handled
   uint32_t gap_time = millis() - Dali->last_activity;
   uint32_t wait = ESP.getCycleCount() + (Dali->bit_cycles / 2);
   int bit_state = 0; 
   bool dali_read;
-  bool forward_frame = true;
+  uint32_t frame_type = 2;                     // 0 = 8-bit backward, 1 = 16-bit forward, 2 = 24-bit forward
   uint32_t received_dali_data = 0;
   uint32_t bit_number = 0;
-  while (bit_number < 38) {
+  while (bit_number < 54) {
     while (ESP.getCycleCount() < wait);
     wait += Dali->bit_cycles;                  // Auto roll-over +1Te
     dali_read = (digitalRead(Dali->pin_rx) != Dali->invert_rx);
 #ifdef DALI_DEBUG
     digitalWrite(DALI_DEBUG_PIN, bit_number&1);  // Add LogicAnalyzer poll indication
 #endif  // DALI_DEBUG
-    if (bit_number < 34) {                     // 34 manchester encoded bits
+    if (bit_number < 50) {                     // 50 manchester encoded bits
       bit_state += (dali_read) ? 1 : -1;
       if (0 == bit_state) {                    // Manchester encoding total 2 bits is always 0
         if (bit_number > 2) {                  // Skip start bit
@@ -402,11 +417,17 @@ void DaliReceiveData(void) {
           received_dali_data |= dali_read;
         }
       }
-      else if ((2 == bit_state) &&
+      else if ((2 == bit_state) &&             // Invalid manchester data (might be stop bit)
                (bit_number == 19)) {           // Possible backward frame detected - Chk stop bits
         bit_state = 0;
-        bit_number = 35;
-        forward_frame = false;
+        bit_number = 51;                       // Continue receiving stop bits
+        frame_type = 0;                        // 0 = 8-bit backward, 1 = 16-bit forward, 2 = 24-bit forward
+      }
+      else if ((2 == bit_state) &&             // Invalid manchester data (might be stop bit)
+               (bit_number == 35)) {           // Possible 16-bit forward frame detected - Chk stop bits
+        bit_state = 0;
+        bit_number = 51;                       // Continue receiving stop bits
+        frame_type = 1;                        // 0 = 8-bit backward, 1 = 16-bit forward, 2 = 24-bit forward
       }
       else if (abs(bit_state) > 1) {           // Invalid manchester data (too many 0 or 1)
         break;
@@ -424,11 +445,9 @@ void DaliReceiveData(void) {
   }
   Dali->last_activity = millis();              // Start Forward Frame delay time (>22Te)
 
-  if (forward_frame) {                         // Forward frame received
-    received_dali_data |= 0x00020000;          // Forward frame received
-  }
+  received_dali_data |= (frame_type << 24);    // 0 = 8-bit backward, 1 = 16-bit forward, 2 = 24-bit forward
   if (bit_state != 0) {                        // Invalid Manchester encoding including start and stop bits               
-    received_dali_data |= 0x00010000;          // Possible collision or invalid reply of repeated frame due to handling of first frame
+    received_dali_data |= DALI_COLLISION;      // Possible collision or invalid reply of repeated frame due to handling of first frame
   }
   if (Dali->response ||                        // Response from last message send
       (Dali->received_dali_data != received_dali_data)) {  // Skip duplicates
@@ -441,84 +460,103 @@ void DaliReceiveData(void) {
  * DALI send
 \*-------------------------------------------------------------------------------------------*/
 
-void DaliSendDataOnce(uint16_t send_dali_data) {
+void DaliSendDataOnce(uint32_t send_dali_data) {
   /*
+  DALI-2 protocol forward frame
+  DALI data 0xFE6432     1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0 0 0 1 1 0 0 1 0
+  Start and Stop bits  1                                                 1 1
+  Manchester data     01010101010101011010010110100110101010010110100110
+  Stop bits                                                             1111                  
+
   DALI protocol forward frame
   DALI data 0xFE64       1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0
   Start and Stop bits  1                                 1 1
   Manchester data     0101010101010101101001011010011010
   Stop bits                                             1111                  
 
-  Bit number          01234567890123456789012345678901234567
-                                1         2         3
+  Bit number          012345678901234567890123456789012345678901234567890123
+                                1         2         3         4         5
   */
-  Dali->last_activity += 14;                   // As suggested by DALI protocol (>22Te = 9.17 ms) - We need to add 1.1 ms due to not waiting for stop bits
-  while (!TimeReached(Dali->last_activity)) {
-    delay(1);                                  // Wait for bus to be free if needed
-  }
   bool bit_value;
   bool pin_value;
   bool dali_read;
-  bool collision = false;
-  uint32_t bit_pos = 15;
-  uint32_t bit_number = 0;
+  uint32_t retry = 2;
+  bool collision;
+  do {
+    collision = false;
+    uint32_t send_data = send_dali_data;
+    uint32_t bit_pos = 15;                     // 16-bit forward frame
+    uint32_t max_bit_number = 34;
+    if (send_data & DALI_FORWARD_24BIT_FRAME) {
+      bit_pos = 23;                            // 24-bit forward frame
+      max_bit_number = 50;
+    }
+    uint32_t bit_number = 0;
 
-#ifdef ESP32
-  {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-  portENTER_CRITICAL(&mux);
-#endif
-
-  uint32_t wait = ESP.getCycleCount();
-  while (bit_number < 35) {                    // 417 * 35 = 35Te = 14.7 ms
-    if (!collision) {
-      if (0 == (bit_number &1)) {              // Even bit
-        //          Start bit,              Stop bit,                Data bits
-        bit_value = (0 == bit_number) ? 1 : (34 == bit_number) ? 0 : (bool)((send_dali_data >> bit_pos--) &1);  // MSB first
-      } else {                                 // Odd bit
-        bit_value = !bit_value;                // Complement bit
-      }
-      pin_value = bit_value ? LOW : HIGH;      // Invert bit
-    } else {
-      if (34 == bit_number) {
-        pin_value = HIGH;                      // Set to idle
-      }
+    Dali->last_activity += 14;                 // As suggested by DALI protocol (>22Te = 9.17 ms) - We need to add 1.1 ms due to not waiting for stop bits
+    while (!TimeReached(Dali->last_activity)) {
+      delay(1);                                // Wait for bus to be free if needed
     }
 
-    digitalWrite(Dali->pin_tx, (Dali->invert_tx) ? !pin_value : pin_value);
-    wait += Dali->bit_cycles;                  // Auto roll-over
-    while (ESP.getCycleCount() < wait);
-
-    if (!collision) {
-      dali_read = (digitalRead(Dali->pin_rx) != Dali->invert_rx);
-      if ((HIGH == pin_value) && (LOW == dali_read)) {  // Collision if write is 1 and bus is 0
-        collision = true;
-        pin_value = LOW;
-        bit_number = 29;                       // Keep bus low for 4 bits
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Tx collision"));
-      }
-    }
-
-    bit_number++;
-  }
-
 #ifdef ESP32
-  portEXIT_CRITICAL(&mux);}
+    {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+    portENTER_CRITICAL(&mux);
 #endif
 
-//  delayMicroseconds(1100);                     // Wait 3Te as sending stop bits - adds to total 15.8 ms
-  Dali->last_activity = millis();              // Start Forward Frame delay time (>22Te)
+    uint32_t wait = ESP.getCycleCount();
+    while (bit_number <= max_bit_number) {     // 417 * 35 = 35Te = 14.7 ms
+      if (!collision) {
+        if (0 == (bit_number &1)) {            // Even bit
+          //          Start bit,              Stop bit,                            Data bits
+          bit_value = (0 == bit_number) ? 1 : (max_bit_number == bit_number) ? 0 : (bool)((send_data >> bit_pos--) &1);  // MSB first
+        } else {                               // Odd bit
+          bit_value = !bit_value;              // Complement bit
+        }
+        pin_value = bit_value ? LOW : HIGH;    // Invert bit
+      } else {
+        if (max_bit_number == bit_number) {
+          pin_value = HIGH;                    // Set to idle
+        }
+      }
 
+      digitalWrite(Dali->pin_tx, (Dali->invert_tx) ? !pin_value : pin_value);
+      wait += Dali->bit_cycles;                // Auto roll-over
+      while (ESP.getCycleCount() < wait);
+
+      if (!collision) {
+        dali_read = (digitalRead(Dali->pin_rx) != Dali->invert_rx);
+        if ((HIGH == pin_value) && (LOW == dali_read)) {  // Collision if write is 1 and bus is 0
+          collision = true;
+          pin_value = LOW;
+          bit_number = max_bit_number -5;      // Keep bus low for 4 bits - break sequence
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Tx collision"));
+        }
+      }
+
+      bit_number++;
+    }
+
+#ifdef ESP32
+    portEXIT_CRITICAL(&mux);}
+#endif
+
+//    delayMicroseconds(1100);                   // Wait 3Te as sending stop bits - adds to total 15.8 ms
+    Dali->last_activity = millis();            // Start Forward Frame delay time (>22Te)
+  } while (retry-- && collision);
 }
 
 /*-------------------------------------------------------------------------------------------*/
 
-void DaliSendData(uint32_t adr, uint32_t cmd) {
+void DaliSendData(uint32_t adr, uint32_t cmd, uint32_t opt = 0);
+void DaliSendData(uint32_t adr, uint32_t cmd, uint32_t opt) {
   adr &= 0xFF;
   cmd &= 0xFF;
 
-  Dali->address = adr;
-  Dali->command = cmd;
-  DaliSaveState(adr, cmd);
+  if (!opt) {                                  // No DALI-2 24-bit command
+    Dali->address = adr;
+    Dali->command = cmd;
+    DaliSaveState(adr, cmd);
+  }
 
   bool send_twice = false;
   if (adr & DALI_SELECTOR_BIT) {               // Selector bit (command) or special command
@@ -547,11 +585,14 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
     }
   }
 
-#ifdef DALI_DEBUG
-  AddLog(Dali->log_level, PSTR("DLI: Tx DT%d, Twice %d, Adr 0x%02X, Cmd 0x%02X"), Dali->device_type, send_twice, adr, cmd);
-#endif  // DALI_DEBUG
+  uint32_t send_dali_data = adr << 8 | cmd;
+  if (opt & DALI_FORWARD_24BIT_FRAME) {
+    send_dali_data = (send_dali_data << 8) | (opt & (DALI_FORWARD_24BIT_FRAME | 0xFF));
+  }
 
-  uint16_t send_dali_data = adr << 8 | cmd;
+#ifdef DALI_DEBUG
+  AddLog(Dali->log_level, PSTR("DLI: Tx 0x%08X, Twice %d, DT%d"), send_dali_data, send_twice, Dali->device_type);
+#endif  // DALI_DEBUG
 
   DaliDisableRxInterrupt();
   DaliSendDataOnce(send_dali_data);            // Takes 14.7 ms
@@ -578,8 +619,8 @@ int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
   int result = -1;                             // DALI NO or no response
   if (Dali->available) {
     Dali->available = false;                   // DALI collision (-2) or valid data (>=0)
-    bool collision = (Dali->received_dali_data &0x00010000);
-    bool forward_frame = (Dali->received_dali_data &0x00020000);
+    bool collision = (Dali->received_dali_data & DALI_COLLISION);
+    bool forward_frame = (Dali->received_dali_data & DALI_FORWARD_FRAME);
     if (!forward_frame) {
       result = (collision) ? -2 : (Dali->received_dali_data &0xFF);
     }
@@ -587,7 +628,7 @@ int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
   Dali->response = false;
 
 #ifdef DALI_DEBUG
-  AddLog(Dali->log_level, PSTR("DLI: Rx 0x%05X Response"), result);
+  AddLog(Dali->log_level, PSTR("DLI: Rx 0x%08X Response"), result);
 #endif  // DALI_DEBUG
 
   return result;
@@ -883,13 +924,16 @@ void ResponseDali(uint32_t index) {
 void DaliLoop(void) {
   if (!Dali->available || Dali->response) { return; }
 
-  bool collision = (Dali->received_dali_data &0x00010000);
-  bool forward_frame = (Dali->received_dali_data &0x00020000);
+  bool collision = (Dali->received_dali_data & DALI_COLLISION);
+  bool forward_frame = (Dali->received_dali_data & DALI_FORWARD_FRAME);
+  bool forward_24bit_frame = (Dali->received_dali_data & DALI_FORWARD_24BIT_FRAME);
 
-  AddLog((1 == Dali->probe) ? LOG_LEVEL_DEBUG : LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%05X%s"), Dali->received_dali_data, (!forward_frame)?" backward":"");
+  AddLog((1 == Dali->probe) ? LOG_LEVEL_DEBUG : LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%08X %s"),
+    Dali->received_dali_data, (collision)?"collision":(forward_frame)?"":"backward");
 
   if (collision ||                             // Rx collision
-      !forward_frame ||                        // We do not serve backward frames
+      !forward_frame ||                        // Skip backward frames
+      forward_24bit_frame ||                   // Currently no support for DALI-2 24-bit frame
       (1 == Dali->probe)) {                    // Probe only
     Dali->available = false;
     return;
@@ -900,10 +944,7 @@ void DaliLoop(void) {
 
 #ifdef USE_LIGHT
 #ifdef DALI_LIGHT_COLOR_SUPPORT
-  if (DALI_209_SET_TEMPORARY_RGBWAF_CONTROL == Dali->command) { 
-    Dali->color_sequence = millis();           // Indicate start of color sequence - See DaliSetChannels()
-  }
-  else if (DALI_102_SET_DTR0 == Dali->address) { Dali->dtr[0] = Dali->command; }  // Might be Red / White
+  if (DALI_102_SET_DTR0 == Dali->address) { Dali->dtr[0] = Dali->command; }  // Might be Red / White
   else if (DALI_102_SET_DTR1 == Dali->address) { Dali->dtr[1] = Dali->command; }  // Might be Green / Amber
   else if (DALI_102_SET_DTR2 == Dali->address) { Dali->dtr[2] = Dali->command; }  // Might be Blue
   else if (DALI_209_SET_TEMPORARY_RGB_DIMLEVEL == Dali->command) { 
@@ -916,7 +957,6 @@ void DaliLoop(void) {
     Dali->color[4] = Dali->dtr[0];             // Cold White
   }
   else if (DALI_209_ACTIVATE == Dali->command) {
-    Dali->color_sequence = 0;
     uint32_t channels = Dali->Settings.light_type -8;
     if ((Dali->target_rgbwaf > 0) && (channels > 0)) {  // Color control
       Dali->address &= 0xFE;                   // Reset DALI_SELECTOR_BIT set
@@ -943,7 +983,7 @@ void DaliLoop(void) {
   } else
 #endif  // DALI_LIGHT_COLOR_SUPPORT
 #endif  // USE_LIGHT
-  if ((!(Dali->address & DALI_SELECTOR_BIT)) && !Dali->color_sequence) {  // Address
+  if (!(Dali->address & DALI_SELECTOR_BIT)) {  // Address
     uint32_t index = DaliSaveState(Dali->address, Dali->command);  // Update dimmer and power
     bool show_response = true;
 #ifdef USE_LIGHT
@@ -980,9 +1020,6 @@ void DaliLoop(void) {
 void DaliEverySecond(void) {
   if (5 == TasmotaGlobal.uptime) {
     DaliInitLight();
-  }
-  if (Dali->color_sequence && TimeReached(Dali->color_sequence + 1000)) {
-    Dali->color_sequence = 0;                  // Reset color sequence in case of incomplete DALI sequence
   }
 }
 
@@ -1423,6 +1460,13 @@ void CmndDaliSend(void) {
   AddLog(Dali->log_level, PSTR("DLI: index %d, params %d, values %d,%d,%d,%d,%d"), XdrvMailbox.index, params, values[0], values[1], values[2], values[3], values[4]);
 #endif  // DALI_DEBUG
 
+  if (255 == XdrvMailbox.index) {                   // DaliSend255 - Dali-2 24-bit frame
+    if (params >= 3) {
+      DaliSendData(values[0], values[1], values[2] | DALI_FORWARD_24BIT_FRAME);
+      ResponseCmndDone();
+      return;
+    }
+  }
   if (DALI_207_DEVICE_TYPE == XdrvMailbox.index) {  // DaliSend6 - DT6 = 207 = Extended LED commands 224...236
     /*
     params    0                                               1                                2
