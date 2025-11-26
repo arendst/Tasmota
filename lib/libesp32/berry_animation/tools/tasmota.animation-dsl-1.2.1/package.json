@@ -1,0 +1,49 @@
+{
+  "name": "animation-dsl",
+  "displayName": "Animation DSL",
+  "description": "Syntax highlighting for Berry Animation Framework DSL (.anim files)",
+  "version": "1.2.1",
+  "publisher": "tasmota",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "animation",
+    "led",
+    "tasmota",
+    "berry"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arendst/Tasmota"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "animation-dsl",
+        "aliases": [
+          "Animation DSL",
+          "animation-dsl",
+          "anim"
+        ],
+        "extensions": [
+          ".anim"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "animation-dsl",
+        "scopeName": "source.animation-dsl",
+        "path": "./syntaxes/animation-dsl.tmLanguage.json"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.15.0"
+  }
+}

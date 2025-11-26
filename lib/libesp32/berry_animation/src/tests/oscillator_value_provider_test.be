@@ -40,16 +40,16 @@ def test_oscillator_basic()
   assert(osc.duration == 1000, "Duration should be 1000ms")
   assert(osc.form == animation.SAWTOOTH, "Form should be SAWTOOTH")
   assert(osc.phase == 0, "Phase should default to 0")
-  assert(osc.duty_cycle == 50, "Duty cycle should default to 50")
+  assert(osc.duty_cycle == 127, "Duty cycle should default to 127")
   
   # Test parameter modification
-  osc.phase = 25
-  osc.duty_cycle = 75
+  osc.phase = 64
+  osc.duty_cycle = 191
   osc.min_value = 10
   osc.max_value = 90
   
-  assert(osc.phase == 25, "Phase should be set to 25")
-  assert(osc.duty_cycle == 75, "Duty cycle should be set to 75")
+  assert(osc.phase == 64, "Phase should be set to 64")
+  assert(osc.duty_cycle == 191, "Duty cycle should be set to 191")
   assert(osc.min_value == 10, "Starting value should be set to 10")
   assert(osc.max_value == 90, "End value should be set to 90")
   
@@ -147,8 +147,8 @@ def test_square_waveform()
   assert(value_51 == 100, f"Value at 51% should be 100, got {value_51}")
   assert(value_75 == 100, f"Value at 75% should be 100, got {value_75}")
   
-  # Test custom duty cycle (25%)
-  osc.duty_cycle = 25
+  # Test custom duty cycle (25% = 64 out of 255)
+  osc.duty_cycle = 64
   var value_20 = osc.produce_value("test", start_time + 200) # t=200ms (20% - first quarter)
   var value_30 = osc.produce_value("test", start_time + 300) # t=300ms (30% - second quarter)
   
@@ -258,8 +258,8 @@ def test_phase_shift()
   osc.phase = 0
   var value_no_phase = osc.produce_value("test", start_time)
   
-  # Test with 25% phase shift (should be like starting at 25% of cycle)
-  osc.phase = 25
+  # Test with 25% phase shift (64 out of 255 is ~25%)
+  osc.phase = 64
   var value_with_phase = osc.produce_value("test", start_time)
   
   # Values should be different due to phase shift
@@ -330,16 +330,16 @@ def test_static_constructors()
   square1.min_value = 0
   square1.max_value = 1
   square1.duration = 500
-  square1.duty_cycle = 30
+  square1.duty_cycle = 76
   assert(square1.form == animation.SQUARE, "square() should use SQUARE")
-  assert(square1.duty_cycle == 30, "square() should set duty cycle to 30")
+  assert(square1.duty_cycle == 76, "square() should set duty cycle to 76")
   
   # Test square() with default duty cycle
   var square2 = animation.square(mock_engine)
   square2.min_value = 0
   square2.max_value = 1
   square2.duration = 500
-  assert(square2.duty_cycle == 50, "square() should default duty cycle to 50")
+  assert(square2.duty_cycle == 127, "square() should default duty cycle to 127")
   
   print("✓ Static constructor functions test passed")
 end
@@ -400,7 +400,7 @@ def test_edge_cases()
   # Test with default parameters
   var osc1 = animation.oscillator_value(mock_engine)
   assert(osc1.min_value == 0, "Default min_value should be 0")
-  assert(osc1.max_value == 100, "Default max_value should be 100")
+  assert(osc1.max_value == 255, "Default max_value should be 255")
   assert(osc1.duration == 1000, "Default duration should be 1000")
   assert(osc1.form == animation.SAWTOOTH, "Default form should be SAWTOOTH")
   
@@ -420,14 +420,14 @@ def test_edge_cases()
   
   # Test valid bounds
   osc3.phase = 0
-  osc3.duty_cycle = 50
+  osc3.duty_cycle = 127
   assert(osc3.phase == 0, "Phase 0 should be valid")
-  assert(osc3.duty_cycle == 50, "Duty cycle 50 should be valid")
+  assert(osc3.duty_cycle == 127, "Duty cycle 127 should be valid")
   
-  osc3.phase = 100
-  osc3.duty_cycle = 100
-  assert(osc3.phase == 100, "Phase 100 should be valid")
-  assert(osc3.duty_cycle == 100, "Duty cycle 100 should be valid")
+  osc3.phase = 255
+  osc3.duty_cycle = 255
+  assert(osc3.phase == 255, "Phase 255 should be valid")
+  assert(osc3.duty_cycle == 255, "Duty cycle 255 should be valid")
   
   print("✓ Edge cases test passed")
 end

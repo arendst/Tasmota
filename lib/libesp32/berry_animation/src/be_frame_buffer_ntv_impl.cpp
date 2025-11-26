@@ -587,17 +587,17 @@ extern "C" {
     
     // Handle negative indices (Python-style)
     if (start_pos < 0) { start_pos += width; }
-    if (end_pos < 0) { end_pos += width; }
+    if (end_pos < 0) { end_pos += width + 1; }
     
     // Clamp to valid range
     if (start_pos < 0) { start_pos = 0; }
     if (end_pos < 0) { end_pos = 0; }
     if (start_pos >= width) { be_return_nil(vm); }
-    if (end_pos >= width) { end_pos = width - 1; }
-    if (end_pos < start_pos) { be_return_nil(vm); }
+    if (end_pos >= width) { end_pos = width; }
+    if (end_pos <= start_pos) { be_return_nil(vm); }
     
     // Fill the region with the color
-    for (int32_t i = start_pos; i <= end_pos; i++) {
+    for (int32_t i = start_pos; i < end_pos; i++) {
       pixels_buf[i] = color;
     }
     

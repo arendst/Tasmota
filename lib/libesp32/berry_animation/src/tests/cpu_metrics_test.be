@@ -77,6 +77,7 @@ print("\n--- Test 4: Timestamps Set During Ticks ---")
 # Create a fresh engine for timestamp testing with an animation
 var ts_strip = global.Leds(20)
 var ts_engine = animation.create_engine(ts_strip)
+ts_engine.tick_ms = 5  # Set low tick interval for testing
 
 # Add an animation so rendering happens
 var ts_anim = animation.solid(ts_engine)
@@ -85,7 +86,7 @@ ts_engine.add(ts_anim)
 ts_engine.run()
 
 # Run a single tick
-var current_time = tasmota.millis()
+var current_time = int(tasmota.millis())
 ts_engine.on_tick(current_time)
 
 # Check that timestamps were set
@@ -121,10 +122,11 @@ print("\n--- Test 5: Phase Metrics Accumulation ---")
 # Create engine and run multiple ticks
 var phase_strip = global.Leds(15)
 var phase_engine = animation.create_engine(phase_strip)
+phase_engine.tick_ms = 5  # Set low tick interval for testing
 phase_engine.run()
 
 # Run 10 ticks
-var phase_time = 0
+var phase_time = int(tasmota.millis())
 for i : 0..9
   phase_engine.on_tick(phase_time)
   phase_time += 5
@@ -148,9 +150,10 @@ print("\n--- Test 6: Timestamp-Based Duration Calculation ---")
 # Create engine and run a tick
 var dur_strip = global.Leds(10)
 var dur_engine = animation.create_engine(dur_strip)
+dur_engine.tick_ms = 5  # Set low tick interval for testing
 dur_engine.run()
 
-var dur_time = tasmota.millis()
+var dur_time = int(tasmota.millis())
 dur_engine.on_tick(dur_time)
 
 # Verify durations can be computed from timestamps
@@ -177,6 +180,7 @@ print("\n--- Test 7: CPU Metrics During Ticks ---")
 # Create a fresh engine for tick testing
 var tick_strip = global.Leds(20)
 var tick_engine = animation.create_engine(tick_strip)
+tick_engine.tick_ms = 5  # Set low tick interval for testing
 
 # Add a simple animation
 var test_anim = animation.solid(tick_engine)
@@ -185,7 +189,7 @@ tick_engine.add(test_anim)
 tick_engine.run()
 
 # Simulate several ticks
-var current_time = tasmota.millis()
+var current_time = int(tasmota.millis())
 for i : 0..9
   tick_engine.on_tick(current_time + i * 10)
 end
@@ -200,12 +204,13 @@ print("\n--- Test 8: Metrics Reset After Stats Period ---")
 # Create engine and simulate ticks over stats period
 var reset_strip = global.Leds(15)
 var reset_engine = animation.create_engine(reset_strip)
+reset_engine.tick_ms = 5  # Set low tick interval for testing
 reset_engine.run()
 
 # Simulate ticks for just under 5 seconds
-var start_time = 0
+var start_time = int(tasmota.millis())
 var current_time = start_time
-while current_time < 4900
+while current_time < start_time + 4900
   reset_engine.on_tick(current_time)
   current_time += 5
 end
@@ -217,7 +222,7 @@ assert_greater_than(tick_count_before, 0, "Should have ticks before stats period
 var last_stats_before = reset_engine.last_stats_time
 
 # Simulate more ticks to cross the 5 second threshold
-while current_time < 5100
+while current_time < start_time + 5100
   reset_engine.on_tick(current_time)
   current_time += 5
 end
@@ -235,10 +240,11 @@ print("\n--- Test 9: Metrics Consistency Across Ticks ---")
 
 var consistency_strip = global.Leds(25)
 var consistency_engine = animation.create_engine(consistency_strip)
+consistency_engine.tick_ms = 5  # Set low tick interval for testing
 consistency_engine.run()
 
 # Run multiple ticks and verify metrics consistency
-var cons_time = 0
+var cons_time = int(tasmota.millis())
 for i : 0..19
   consistency_engine.on_tick(cons_time)
   cons_time += 5
@@ -258,6 +264,7 @@ print("\n--- Test 10: Min/Max Tracking for All Metrics ---")
 
 var minmax_strip = global.Leds(10)
 var minmax_engine = animation.create_engine(minmax_strip)
+minmax_engine.tick_ms = 5  # Set low tick interval for testing
 
 # Add an animation so rendering happens
 var mm_anim = animation.solid(minmax_engine)
@@ -266,7 +273,7 @@ minmax_engine.add(mm_anim)
 minmax_engine.run()
 
 # Run several ticks
-var mm_time = 0
+var mm_time = int(tasmota.millis())
 for i : 0..9
   minmax_engine.on_tick(mm_time)
   mm_time += 5
@@ -287,10 +294,11 @@ print("\n--- Test 11: Streaming Statistics Accuracy ---")
 
 var stats_strip = global.Leds(15)
 var stats_engine = animation.create_engine(stats_strip)
+stats_engine.tick_ms = 5  # Set low tick interval for testing
 stats_engine.run()
 
 # Run exactly 10 ticks
-var stats_time = 0
+var stats_time = int(tasmota.millis())
 for i : 0..9
   stats_engine.on_tick(stats_time)
   stats_time += 5
@@ -306,10 +314,11 @@ print("\n--- Test 12: Phase Metrics Cleared After Stats ---")
 
 var clear_strip = global.Leds(20)
 var clear_engine = animation.create_engine(clear_strip)
+clear_engine.tick_ms = 5  # Set low tick interval for testing
 clear_engine.run()
 
 # Run some ticks to accumulate phase metrics
-var clear_time = 0
+var clear_time = int(tasmota.millis())
 for i : 0..9
   clear_engine.on_tick(clear_time)
   clear_time += 5
@@ -319,7 +328,8 @@ end
 assert_greater_than(clear_engine.phase1_time_sum, -1, "Phase metrics should accumulate")
 
 # Simulate ticks to cross stats period
-while clear_time < 5100
+var clear_start = clear_time
+while clear_time < clear_start + 5100
   clear_engine.on_tick(clear_time)
   clear_time += 5
 end
@@ -336,15 +346,17 @@ print("\n--- Test 13: Multiple Engines Independence ---")
 
 var strip1 = global.Leds(10)
 var engine1 = animation.create_engine(strip1)
+engine1.tick_ms = 5  # Set low tick interval for testing
 engine1.run()
 
 var strip2 = global.Leds(20)
 var engine2 = animation.create_engine(strip2)
+engine2.tick_ms = 5  # Set low tick interval for testing
 engine2.run()
 
 # Run ticks on both engines
-var e1_time = 0
-var e2_time = 0
+var e1_time = int(tasmota.millis())
+var e2_time = int(tasmota.millis())
 
 for i : 0..4
   engine1.on_tick(e1_time)
@@ -385,10 +397,12 @@ print("\n--- Test 15: Performance of Metrics Collection ---")
 
 var perf_strip = global.Leds(30)
 var perf_engine = animation.create_engine(perf_strip)
+perf_engine.tick_ms = 5  # Set low tick interval for testing
 perf_engine.run()
 
 # Measure overhead of metrics collection with timestamps
-var perf_start = tasmota.millis()
+var perf_start = int(tasmota.millis())
+var perf_time = perf_start
 for i : 0..99
   perf_engine.on_tick(perf_start + i * 5)
 end
