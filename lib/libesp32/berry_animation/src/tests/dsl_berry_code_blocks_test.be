@@ -1,5 +1,5 @@
-# DSL Berry Code Blocks Test Suite
-# Tests for berry code block functionality in SimpleDSLTranspiler
+# DSL Berry Code Blocks and External Functions Test Suite
+# Tests for berry code block functionality and external function declarations in SimpleDSLTranspiler
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota" lib/libesp32/berry_animation/src/tests/dsl_berry_code_blocks_test.be
@@ -275,9 +275,284 @@ def test_multiline_complex_syntax()
   return true
 end
 
+# Test external function declaration - basic syntax
+def test_external_function_basic()
+  print("Testing basic external function declaration...")
+  
+  var dsl_source = 'berry """\n' +
+    'def test_func()\n' +
+    '  return 100\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function test_func\n' +
+    'animation test = solid(color=red)\n' +
+    'test.opacity = test_func\n' +
+    'run test'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code")
+  assert(string.find(berry_code, "def test_func()") >= 0, "Should include function definition")
+  assert(string.find(berry_code, "# External function declaration: test_func") >= 0, "Should have external declaration comment")
+  assert(string.find(berry_code, "animation.get_user_function('test_func')(engine)") >= 0, "Should generate correct function call")
+  
+  print("✓ Basic external function declaration test passed")
+  return true
+end
+
+# Test external function with parentheses
+def test_external_function_with_parentheses()
+  print("Testing external function with parentheses...")
+  
+  var dsl_source = 'berry """\n' +
+    'def paren_func()\n' +
+    '  return 150\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function paren_func\n' +
+    'animation test = solid(color=blue)\n' +
+    'test.opacity = paren_func()\n' +
+    'run test'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code")
+  assert(string.find(berry_code, "animation.get_user_function('paren_func')(engine)") >= 0, "Should generate correct function call with parentheses")
+  
+  print("✓ External function with parentheses test passed")
+  return true
+end
+
+# Test multiple external functions
+def test_multiple_external_functions()
+  print("Testing multiple external functions...")
+  
+  var dsl_source = 'berry """\n' +
+    'def func1()\n' +
+    '  return 100\n' +
+    'end\n' +
+    'def func2()\n' +
+    '  return 200\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function func1\n' +
+    'extern function func2\n' +
+    'animation a1 = solid(color=red)\n' +
+    'a1.opacity = func1\n' +
+    'animation a2 = solid(color=blue)\n' +
+    'a2.opacity = func2\n' +
+    'run a1'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code")
+  assert(string.find(berry_code, "animation.get_user_function('func1')(engine)") >= 0, "Should generate call for func1")
+  assert(string.find(berry_code, "animation.get_user_function('func2')(engine)") >= 0, "Should generate call for func2")
+  
+  print("✓ Multiple external functions test passed")
+  return true
+end
+
+# Test external function in arithmetic expressions
+def test_external_function_in_arithmetic()
+  print("Testing external function in arithmetic expressions...")
+  
+  var dsl_source = 'berry """\n' +
+    'def math_func()\n' +
+    '  return 50\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function math_func\n' +
+    'animation test = solid(color=green)\n' +
+    'test.opacity = max(100, math_func + 50)\n' +
+    'run test'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code")
+  assert(string.find(berry_code, "animation.get_user_function('math_func')(engine)") >= 0, "Should generate function call in arithmetic")
+  assert(string.find(berry_code, "animation._math.max(") >= 0, "Should include math function")
+  
+  print("✓ External function in arithmetic expressions test passed")
+  return true
+end
+
+# Test external function with complex berry code
+def test_external_function_complex()
+  print("Testing external function with complex berry code...")
+  
+  var dsl_source = 'berry """\n' +
+    'import math\n' +
+    'def rand_meter(time_ms, self)\n' +
+    '  var r = math.rand() % 101\n' +
+    '  return r\n' +
+    'end\n' +
+    'def breathing_effect(base_value, amplitude)\n' +
+    '  var time_factor = (tasmota.millis() / 1000) % 4\n' +
+    '  var breath = math.sin(time_factor * math.pi / 2)\n' +
+    '  return int(base_value + breath * amplitude)\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function rand_meter\n' +
+    'extern function breathing_effect\n' +
+    'palette rainbow = [0xFF0000, 0x00FF00, 0x0000FF]\n' +
+    'animation meter = palette_meter_animation(value_func = rand_meter)\n' +
+    'animation breath = solid(color=blue)\n' +
+    'breath.opacity = breathing_effect\n' +
+    'run meter'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code")
+  assert(string.find(berry_code, "def rand_meter(time_ms, self)") >= 0, "Should include complex function definition")
+  assert(string.find(berry_code, "def breathing_effect(base_value, amplitude)") >= 0, "Should include second function")
+  assert(string.find(berry_code, "animation.get_user_function('rand_meter')(engine)") >= 0, "Should call rand_meter")
+  assert(string.find(berry_code, "animation.get_user_function('breathing_effect')(engine)") >= 0, "Should call breathing_effect")
+  
+  print("✓ External function with complex berry code test passed")
+  return true
+end
+
+# Test error handling - missing 'function' keyword
+def test_external_error_missing_function_keyword()
+  print("Testing error handling for missing 'function' keyword...")
+  
+  var dsl_source = 'berry """\n' +
+    'def test_func()\n' +
+    '  return 100\n' +
+    'end\n' +
+    '"""\n' +
+    'extern test_func\n' +
+    'animation test = solid(color=red)\n' +
+    'run test'
+  
+  try
+    var berry_code = animation_dsl.compile(dsl_source)
+    assert(false, "Should raise compilation error for missing 'function' keyword")
+  except "dsl_compilation_error" as e, msg
+    assert(string.find(msg, "Expected 'function' keyword after 'extern'") >= 0, "Should have helpful error message")
+  end
+  
+  print("✓ Error handling (missing 'function' keyword) test passed")
+  return true
+end
+
+# Test error handling - missing function name
+def test_external_error_missing_function_name()
+  print("Testing error handling for missing function name...")
+  
+  var dsl_source = 'berry """\n' +
+    'def test_func()\n' +
+    '  return 100\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function\n' +
+    'animation test = solid(color=red)\n' +
+    'run test'
+  
+  try
+    var berry_code = animation_dsl.compile(dsl_source)
+    assert(false, "Should raise compilation error for missing function name")
+  except "dsl_compilation_error" as e, msg
+    assert(string.find(msg, "Expected function name after 'extern function'") >= 0, "Should have helpful error message")
+  end
+  
+  print("✓ Error handling (missing function name) test passed")
+  return true
+end
+
+# Test external function with reserved name validation
+def test_external_function_reserved_name_validation()
+  print("Testing external function with reserved name validation...")
+  
+  # Test with a name that conflicts with an existing definition
+  var dsl_source = 'color my_color = 0xFF0000\n' +
+    'berry """\n' +
+    'def my_color()\n' +
+    '  return 100\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function my_color\n' +
+    'animation test = solid(color=blue)\n' +
+    'run test'
+  
+  try
+    var berry_code = animation_dsl.compile(dsl_source)
+    assert(false, "Should raise compilation error for already defined name")
+  except "dsl_compilation_error" as e, msg
+    # Check for redefinition error
+    var has_error = string.find(msg, "already defined") >= 0 || 
+                   string.find(msg, "redefine") >= 0 ||
+                   string.find(msg, "my_color") >= 0
+    if !has_error
+      print(f"Unexpected error message: {msg}")
+      assert(false, f"Should reject already defined names, got: {msg}")
+    end
+  end
+  
+  print("✓ External function reserved name validation test passed")
+  return true
+end
+
+# Test external function in sequences
+def test_external_function_in_sequences()
+  print("Testing external function in sequences...")
+  
+  var dsl_source = 'berry """\n' +
+    'def seq_func()\n' +
+    '  return 180\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function seq_func\n' +
+    'animation test = solid(color=purple)\n' +
+    'sequence demo {\n' +
+    '  test.opacity = seq_func\n' +
+    '  play test for 2s\n' +
+    '}\n' +
+    'run demo'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code")
+  assert(string.find(berry_code, "animation.get_user_function('seq_func')(engine)") >= 0, "Should call external function in sequence")
+  
+  print("✓ External function in sequences test passed")
+  return true
+end
+
+# Test external function compilation and execution
+def test_external_function_execution()
+  print("Testing external function compilation and execution...")
+  
+  var dsl_source = 'berry """\n' +
+    'def exec_test_func()\n' +
+    '  print("External function executed successfully")\n' +
+    '  return 128\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function exec_test_func\n' +
+    'animation test = solid(color=cyan)\n' +
+    'test.opacity = exec_test_func\n' +
+    'run test'
+  
+  # Test compilation
+  var berry_code = animation_dsl.compile(dsl_source)
+  assert(berry_code != nil, "Should compile successfully")
+  
+  # Test that generated code compiles
+  try
+    compile(berry_code)
+    print("✓ External function execution test passed")
+    return true
+  except .. as e, m
+    print("✗ Generated code compilation failed:", e, m)
+    return false
+  end
+end
+
 # Run all tests
 def run_all_berry_block_tests()
-  print("=== DSL Berry Code Blocks Test Suite ===")
+  print("=== DSL Berry Code Blocks and External Functions Test Suite ===")
   print("")
   
   var tests = [
@@ -290,7 +565,17 @@ def run_all_berry_block_tests()
     test_error_missing_string,
     test_error_invalid_token,
     test_berry_block_execution,
-    test_multiline_complex_syntax
+    test_multiline_complex_syntax,
+    test_external_function_basic,
+    test_external_function_with_parentheses,
+    test_multiple_external_functions,
+    test_external_function_in_arithmetic,
+    test_external_function_complex,
+    test_external_error_missing_function_keyword,
+    test_external_error_missing_function_name,
+    test_external_function_reserved_name_validation,
+    test_external_function_in_sequences,
+    test_external_function_execution
   ]
   
   var passed = 0
@@ -307,14 +592,14 @@ def run_all_berry_block_tests()
     print("")
   end
   
-  print("=== Berry Code Blocks Test Results ===")
+  print("=== Berry Code Blocks and External Functions Test Results ===")
   print(f"Passed: {passed}/{total}")
   
   if passed == total
-    print("All berry code block tests passed! ✓")
+    print("All berry code block and external function tests passed! ✓")
     return true
   else
-    print("Some berry code block tests failed! ✗")
+    print("Some berry code block or external function tests failed! ✗")
     raise "test_failed"
   end
 end

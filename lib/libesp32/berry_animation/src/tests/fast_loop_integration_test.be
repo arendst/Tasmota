@@ -75,6 +75,9 @@ def test_on_tick_performance()
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
   
+  # Set tick_ms to 5 for testing (default is 50ms)
+  engine.tick_ms = 5
+  
   # Add a test animation
   var anim = TestAnimation(engine)
   anim.priority = 1
@@ -89,7 +92,7 @@ def test_on_tick_performance()
   tasmota.set_millis(initial_time)
   engine.last_update = initial_time
   
-  # Call on_tick with less than 5ms elapsed
+  # Call on_tick with less than 5ms elapsed (should be throttled)
   tasmota.set_millis(initial_time + 3)
   var result = engine.on_tick()
   
@@ -97,7 +100,7 @@ def test_on_tick_performance()
   assert(result == true)
   assert(anim.render_called == false)
   
-  # Call on_tick with more than 5ms elapsed
+  # Call on_tick with more than 5ms elapsed (should render)
   tasmota.set_millis(initial_time + 10)
   result = engine.on_tick()
   

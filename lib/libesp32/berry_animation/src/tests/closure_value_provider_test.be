@@ -274,7 +274,6 @@ def test_closure_math_methods()
   
   # Test 1: min/max functions
   provider.closure = def(self, name, time_ms)
-    print(f">> {name=} {animation._math=}")
     if name == "min_test"
       return animation._math.min(5, 3, 8, 1, 9)  # Should return 1
     elif name == "max_test"

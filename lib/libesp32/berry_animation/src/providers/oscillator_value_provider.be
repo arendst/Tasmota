@@ -34,11 +34,11 @@ class OscillatorValueProvider : animation.value_provider
   # Parameter definitions for the oscillator
   static var PARAMS = animation.enc_params({
     "min_value": {"default": 0},
-    "max_value": {"default": 100},
+    "max_value": {"default": 255},
     "duration": {"min": 1, "default": 1000},
     "form": {"enum": [1, 2, 3, 4, 5, 6, 7, 8, 9], "default": 1},
-    "phase": {"min": 0, "max": 100, "default": 0},
-    "duty_cycle": {"min": 0, "max": 100, "default": 50}
+    "phase": {"min": 0, "max": 255, "default": 0},
+    "duty_cycle": {"min": 0, "max": 255, "default": 127}
   })
   
   # Initialize a new OscillatorValueProvider
@@ -92,7 +92,7 @@ class OscillatorValueProvider : animation.value_provider
       past = 0
     end
     
-    var duration_ms_mid = tasmota.scale_uint(duty_cycle, 0, 100, 0, duration)
+    var duration_ms_mid = tasmota.scale_uint(duty_cycle, 0, 255, 0, duration)
     
     # Handle cycle wrapping
     if past >= duration
@@ -105,7 +105,7 @@ class OscillatorValueProvider : animation.value_provider
     
     # Apply phase shift
     if phase > 0
-      past_with_phase += tasmota.scale_uint(phase, 0, 100, 0, duration)
+      past_with_phase += tasmota.scale_uint(phase, 0, 255, 0, duration)
       if past_with_phase >= duration
         past_with_phase -= duration
       end

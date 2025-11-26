@@ -1,0 +1,297 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Animation DSL",
+  "scopeName": "source.animation-dsl",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#colors"
+    },
+    {
+      "include": "#time-literals"
+    },
+    {
+      "include": "#percentages"
+    },
+    {
+      "include": "#animation-functions"
+    },
+    {
+      "include": "#oscillator-functions"
+    },
+    {
+      "include": "#named-colors"
+    },
+    {
+      "include": "#easing-types"
+    },
+    {
+      "include": "#mathematical-functions"
+    },
+    {
+      "include": "#user-functions"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#identifiers"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.animation-dsl",
+          "begin": "#",
+          "end": "$",
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.animation-dsl"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.animation-dsl",
+          "match": "\\b(strip|set|import|berry|extern|color|palette|animation|sequence|function|template|param|type|play|for|with|repeat|times|forever|if|else|elif|choose|random|on|run|wait|goto|interrupt|resume|while|from|to|return|reset|restart|every)\\b"
+        },
+        {
+          "name": "keyword.other.animation-dsl",
+          "match": "\\b(opacity|priority|pos|beacon_size|slew_size|direction|tail_length|speed|period|cycle_period|min_value|max_value|duration|next)\\b"
+        },
+        {
+          "name": "constant.language.boolean.animation-dsl",
+          "match": "\\b(true|false|nil|transparent)\\b"
+        },
+        {
+          "name": "keyword.other.event.animation-dsl",
+          "match": "\\b(startup|shutdown|button_press|button_hold|motion_detected|brightness_change|timer|time|sound_peak|network_message)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.animation-dsl",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.animation-dsl",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.animation-dsl",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.animation-dsl",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.animation-dsl",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.animation-dsl",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "colors": {
+      "patterns": [
+        {
+          "name": "constant.other.color.hex.animation-dsl",
+          "match": "0x[0-9A-Fa-f]{6}\\b",
+          "captures": {
+            "0": {
+              "name": "constant.other.color.hex.rgb.animation-dsl"
+            }
+          }
+        },
+        {
+          "name": "constant.other.color.hex.animation-dsl",
+          "match": "0x[0-9A-Fa-f]{8}\\b",
+          "captures": {
+            "0": {
+              "name": "constant.other.color.hex.argb.animation-dsl"
+            }
+          }
+        },
+        {
+          "name": "constant.other.color.hex.animation-dsl",
+          "match": "#[0-9A-Fa-f]{6}\\b",
+          "captures": {
+            "0": {
+              "name": "constant.other.color.hex.rgb.animation-dsl"
+            }
+          }
+        },
+        {
+          "name": "constant.other.color.hex.animation-dsl",
+          "match": "#[0-9A-Fa-f]{8}\\b",
+          "captures": {
+            "0": {
+              "name": "constant.other.color.hex.argb.animation-dsl"
+            }
+          }
+        }
+      ]
+    },
+    "time-literals": {
+      "patterns": [
+        {
+          "name": "constant.numeric.time.animation-dsl",
+          "match": "\\b\\d+(?:\\.\\d+)?\\s*(ms|s|m|h)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.other.unit.time.animation-dsl"
+            }
+          }
+        }
+      ]
+    },
+    "percentages": {
+      "patterns": [
+        {
+          "name": "constant.numeric.percentage.animation-dsl",
+          "match": "\\b\\d+(?:\\.\\d+)?%\\b",
+          "captures": {
+            "0": {
+              "name": "constant.numeric.percentage.animation-dsl"
+            }
+          }
+        }
+      ]
+    },
+    "animation-functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.animation.animation-dsl",
+          "match": "\\b(solid|pulsating_animation|beacon_animation|comet_animation|rich_palette_animation|twinkle_animation|breathe_animation|fire_animation|crenel_position_animation)\\b"
+        }
+      ]
+    },
+    "oscillator-functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.oscillator.animation-dsl",
+          "match": "\\b(triangle|cosine_osc|sawtooth|ramp|linear|smooth|square|sine|color_cycle|strip_length)\\b"
+        }
+      ]
+    },
+    "named-colors": {
+      "patterns": [
+        {
+          "name": "constant.other.color.named.primary.animation-dsl",
+          "match": "\\b(red|green|blue|white|black|yellow|orange|purple|pink|cyan|magenta)\\b"
+        },
+        {
+          "name": "constant.other.color.named.extended.animation-dsl",
+          "match": "\\b(gray|grey|silver|gold|brown|lime|navy|olive|maroon|teal|aqua|fuchsia|indigo|violet|crimson|coral|salmon|khaki|plum|orchid|turquoise|tan|beige|ivory|snow|transparent)\\b"
+        }
+      ]
+    },
+    "easing-types": {
+      "patterns": [
+        {
+          "name": "constant.other.easing.animation-dsl",
+          "match": "\\b(linear|triangle|smooth|sine|ease_in|ease_out|ramp|sawtooth|square|elastic|bounce)\\b"
+        }
+      ]
+    },
+    "mathematical-functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.math.animation-dsl",
+          "match": "\\b(abs|max|min|round|sqrt|scale|sin|cos)\\b"
+        }
+      ]
+    },
+    "user-functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.user.animation-dsl",
+          "match": "\\buser\\.[a-zA-Z_][a-zA-Z0-9_]*\\b",
+          "captures": {
+            "0": {
+              "name": "entity.name.function.user.animation-dsl"
+            }
+          }
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.animation-dsl",
+          "match": "="
+        },
+        {
+          "name": "keyword.operator.arithmetic.animation-dsl",
+          "match": "[+\\-*/%^]"
+        },
+        {
+          "name": "keyword.operator.comparison.animation-dsl",
+          "match": "(==|!=|<=|>=|<|>)"
+        },
+        {
+          "name": "keyword.operator.logical.animation-dsl",
+          "match": "(&&|\\|\\||!)"
+        },
+        {
+          "name": "punctuation.separator.comma.animation-dsl",
+          "match": ","
+        },
+        {
+          "name": "punctuation.separator.colon.animation-dsl",
+          "match": ":"
+        },
+        {
+          "name": "punctuation.separator.dot.animation-dsl",
+          "match": "\\."
+        },
+        {
+          "name": "punctuation.section.brackets.begin.animation-dsl",
+          "match": "[\\[\\(\\{]"
+        },
+        {
+          "name": "punctuation.section.brackets.end.animation-dsl",
+          "match": "[\\]\\)\\}]"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "variable.other.animation-dsl",
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}

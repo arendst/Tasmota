@@ -23,10 +23,7 @@ palette rainbow_with_white = [
   0xFC0000        # Red - need to add the first color at last position to ensure roll-over
 ]
 
-# define a color attribute cycles color in space
-color rainbow_rich_color = rich_palette(palette=rainbow_with_white, cycle_period=0, transition_type=SINE)
-
 # define a gradient across the whole strip
-animation back_pattern = palette_meter_animation(color_source = rainbow_rich_color, value_func = rand_meter)
+animation back_pattern = palette_meter_animation(value_func = rand_meter)
 
 run back_pattern

@@ -508,6 +508,8 @@ class SimpleDSLTranspiler
           self.process_event_handler()
         elif tok.value == "berry"
           self.process_berry_code_block()
+        elif tok.value == "extern"
+          self.process_external_function()
         else
           self.error(f"Unknown keyword '{tok.value}'.")
           self.skip_statement()
@@ -1755,6 +1757,13 @@ class SimpleDSLTranspiler
         return self.ExpressionResult.literal(entry.get_reference(), 11 #-animation_dsl._symbol_entry.TYPE_COLOR-#)
       end
 
+      # Special handling for user functions used without parentheses
+      if entry.is_user_function()
+        # User function used without parentheses - call it with engine parameter
+        var result = f"animation.get_user_function('{name}')(engine)"
+        return self.ExpressionResult.function_call(result)
+      end
+
       # Regular identifier - check if it's a variable reference
       var ref = self.symbol_table.get_reference(name)
       var return_type = self._determine_symbol_return_type(entry)    # compute the return type based on entry
@@ -2691,6 +2700,45 @@ class SimpleDSLTranspiler
     end
     
     self.add("# End berry code block")
+  end
+
+  # Process external function declaration: extern function function_name
+  def process_external_function()
+    self.next()  # skip 'extern'
+    
+    # Expect 'function' keyword
+    var tok = self.current()
+    if tok == nil || tok.type != 0 #-animation_dsl.Token.KEYWORD-# || tok.value != "function"
+      self.error("Expected 'function' keyword after 'extern'. Use: extern function function_name")
+      self.skip_statement()
+      return
+    end
+    
+    self.next()  # skip 'function'
+    
+    # Expect an identifier for the function name
+    tok = self.current()
+    if tok == nil || tok.type != 1 #-animation_dsl.Token.IDENTIFIER-#
+      self.error("Expected function name after 'extern function'. Use: extern function function_name")
+      self.skip_statement()
+      return
+    end
+    
+    var func_name = tok.value
+    self.next()  # consume identifier token
+    
+    var inline_comment = self.collect_inline_comment()
+    
+    # Validate function name
+    self.validate_user_name(func_name, "extern function")
+    
+    # Register the function as a user function in the symbol table
+    # This allows it to be used in computed parameters and function calls
+    self.symbol_table.register_user_function(func_name)
+    
+    # Generate runtime registration call so the function is available at execution time
+    self.add(f"# External function declaration: {func_name}{inline_comment}")
+    self.add(f"animation.register_user_function(\"{func_name}\", {func_name})")
   end
 
   # Generate default strip initialization using Tasmota configuration
