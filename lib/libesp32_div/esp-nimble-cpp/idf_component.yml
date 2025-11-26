@@ -1,5 +1,5 @@
 ## IDF Component Manager Manifest File
-version: "2.3.0"
+version: "2.3.3"
 license: "Apache-2.0"
 description: "C++ wrapper for the NimBLE BLE stack"
 url: "https://github.com/h2zero/esp-nimble-cpp"

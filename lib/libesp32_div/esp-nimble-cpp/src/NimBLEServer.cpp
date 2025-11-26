@@ -16,12 +16,12 @@
  */
 
 #include "NimBLEServer.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # include "NimBLEDevice.h"
 # include "NimBLELog.h"
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 #  include "NimBLEClient.h"
 # endif
 
@@ -49,7 +49,7 @@ NimBLEServer::NimBLEServer()
     : m_gattsStarted{false},
       m_svcChanged{false},
       m_deleteCallbacks{false},
-# if !CONFIG_BT_NIMBLE_EXT_ADV
+# if !MYNEWT_VAL(BLE_EXT_ADV)
       m_advertiseOnDisconnect{false},
 # endif
       m_pServerCallbacks{&defaultCallbacks},
@@ -69,7 +69,7 @@ NimBLEServer::~NimBLEServer() {
         delete m_pServerCallbacks;
     }
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
     if (m_pClient != nullptr) {
         delete m_pClient;
     }
@@ -143,17 +143,32 @@ NimBLEService* NimBLEServer::getServiceByHandle(uint16_t handle) const {
     return nullptr;
 }
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+/**
+ * @brief Get a BLE Characteristic by its handle
+ * @param handle The handle of the characteristic.
+ * @return A pointer to the characteristic object or nullptr if not found.
+ */
+NimBLECharacteristic* NimBLEServer::getCharacteristicByHandle(uint16_t handle) const {
+    for (const auto& svc : m_svcVec) {
+        NimBLECharacteristic* pChr = svc->getCharacteristicByHandle(handle);
+        if (pChr != nullptr) {
+            return pChr;
+        }
+    }
+    return nullptr;
+} // getCharacteristicByHandle
+
+# if MYNEWT_VAL(BLE_EXT_ADV)
 /**
  * @brief Retrieve the advertising object that can be used to advertise the existence of the server.
- * @return A pinter to an advertising object.
+ * @return A pointer to an advertising object.
  */
 NimBLEExtAdvertising* NimBLEServer::getAdvertising() const {
     return NimBLEDevice::getAdvertising();
 } // getAdvertising
 # endif
 
-# if (!CONFIG_BT_NIMBLE_EXT_ADV && CONFIG_BT_NIMBLE_ROLE_BROADCASTER) || defined(_DOXYGEN_)
+# if (!MYNEWT_VAL(BLE_EXT_ADV) && MYNEWT_VAL(BLE_ROLE_BROADCASTER)) || defined(_DOXYGEN_)
 /**
  * @brief Retrieve the advertising object that can be used to advertise the existence of the server.
  * @return A pointer to an advertising object.
@@ -189,7 +204,7 @@ void NimBLEServer::start() {
         return;
     }
 
-# if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 4
+# if MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= 4
     ble_gatts_show_local();
 # endif
 
@@ -250,7 +265,7 @@ bool NimBLEServer::disconnect(const NimBLEConnInfo& connInfo, uint8_t reason) co
     return disconnect(connInfo.getConnHandle(), reason);
 } // disconnect
 
-# if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
+# if !MYNEWT_VAL(BLE_EXT_ADV) || defined(_DOXYGEN_)
 /**
  * @brief Set the server to automatically start advertising when a client disconnects.
  * @param [in] enable true == advertise, false == don't advertise.
@@ -305,7 +320,7 @@ NimBLEConnInfo NimBLEServer::getPeerInfo(uint8_t index) const {
     for (const auto& peer : m_connectedPeers) {
         if (peer != BLE_HS_CONN_HANDLE_NONE) {
             if (count == index) {
-                return getPeerInfoByHandle(m_connectedPeers[count]);
+                return getPeerInfoByHandle(peer);
             }
             count++;
         }
@@ -354,9 +369,14 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
 
     switch (event->type) {
         case BLE_GAP_EVENT_CONNECT: {
-            if (event->connect.status != 0) {
-                NIMBLE_LOGE(LOG_TAG, "Connection failed");
-# if !CONFIG_BT_NIMBLE_EXT_ADV && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+            rc = event->connect.status;
+            if (rc == BLE_ERR_UNSUPP_REM_FEATURE) {
+                rc = 0; // Workaround: Ignore unsupported remote feature error as it is not a real error.
+            }
+
+            if (rc != 0) {
+                NIMBLE_LOGE(LOG_TAG, "Connection failed rc = %d %s", rc, NimBLEUtils::returnCodeToString(rc));
+# if !MYNEWT_VAL(BLE_EXT_ADV) && MYNEWT_VAL(BLE_ROLE_BROADCASTER)
                 NimBLEDevice::startAdvertising();
 # endif
             } else {
@@ -400,7 +420,7 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
                 }
             }
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
             if (pServer->m_pClient && pServer->m_pClient->m_connHandle == event->disconnect.conn.conn_handle) {
                 // If this was also the client make sure it's flagged as disconnected.
                 pServer->m_pClient->m_connHandle = BLE_HS_CONN_HANDLE_NONE;
@@ -413,7 +433,7 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
 
             peerInfo.m_desc = event->disconnect.conn;
             pServer->m_pServerCallbacks->onDisconnect(pServer, peerInfo, event->disconnect.reason);
-# if !CONFIG_BT_NIMBLE_EXT_ADV
+# if !MYNEWT_VAL(BLE_EXT_ADV)
             if (pServer->m_advertiseOnDisconnect) {
                 pServer->startAdvertising();
             }
@@ -422,33 +442,21 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
         } // BLE_GAP_EVENT_DISCONNECT
 
         case BLE_GAP_EVENT_SUBSCRIBE: {
-            NIMBLE_LOGI(LOG_TAG,
-                        "subscribe event; attr_handle=%d, subscribed: %s",
-                        event->subscribe.attr_handle,
-                        ((event->subscribe.cur_notify || event->subscribe.cur_indicate) ? "true" : "false"));
-
-            for (const auto& svc : pServer->m_svcVec) {
-                for (const auto& chr : svc->m_vChars) {
-                    if (chr->getHandle() == event->subscribe.attr_handle) {
-                        rc = ble_gap_conn_find(event->subscribe.conn_handle, &peerInfo.m_desc);
-                        if (rc != 0) {
-                            break;
-                        }
-
-                        auto chrProps = chr->getProperties();
-                        if (!peerInfo.isEncrypted() &&
-                            (chrProps & BLE_GATT_CHR_F_READ_AUTHEN || chrProps & BLE_GATT_CHR_F_READ_AUTHOR ||
-                             chrProps & BLE_GATT_CHR_F_READ_ENC)) {
-                            NimBLEDevice::startSecurity(event->subscribe.conn_handle);
-                        }
-
-                        chr->m_pCallbacks->onSubscribe(chr,
-                                                       peerInfo,
-                                                       event->subscribe.cur_notify + (event->subscribe.cur_indicate << 1));
-                    }
-                }
+            rc = ble_gap_conn_find(event->subscribe.conn_handle, &peerInfo.m_desc);
+            if (rc != 0) {
+                break;
             }
 
+            uint8_t subVal = event->subscribe.cur_notify + (event->subscribe.cur_indicate << 1);
+            NIMBLE_LOGI(LOG_TAG, "subscribe event; attr_handle=%d, subscribed: %d", event->subscribe.attr_handle, subVal);
+
+            auto pChar = pServer->getCharacteristicByHandle(event->subscribe.attr_handle);
+            if (!pChar) {
+                NIMBLE_LOGE(LOG_TAG, "subscribe event; attr_handle=%d, not found", event->subscribe.attr_handle);
+                break;
+            }
+
+            pChar->processSubRequest(peerInfo, subVal);
             break;
         } // BLE_GAP_EVENT_SUBSCRIBE
 
@@ -462,18 +470,14 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
         } // BLE_GAP_EVENT_MTU
 
         case BLE_GAP_EVENT_NOTIFY_TX: {
-            NimBLECharacteristic* pChar = nullptr;
-
-            for (const auto& svc : pServer->m_svcVec) {
-                for (auto& chr : svc->m_vChars) {
-                    if (chr->getHandle() == event->notify_tx.attr_handle) {
-                        pChar = chr;
-                    }
-                }
+            rc = ble_gap_conn_find(event->notify_tx.conn_handle, &peerInfo.m_desc);
+            if (rc != 0) {
+                break;
             }
 
+            auto pChar = pServer->getCharacteristicByHandle(event->notify_tx.attr_handle);
             if (pChar == nullptr) {
-                return 0;
+                break;
             }
 
             if (event->notify_tx.indication) {
@@ -483,14 +487,24 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
             }
 
             pChar->m_pCallbacks->onStatus(pChar, event->notify_tx.status);
+            pChar->m_pCallbacks->onStatus(pChar, peerInfo, event->notify_tx.status);
             break;
         } // BLE_GAP_EVENT_NOTIFY_TX
 
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
+        case BLE_GAP_EVENT_NOTIFY_RX: {
+            if (pServer->m_pClient && pServer->m_pClient->m_connHandle == event->notify_rx.conn_handle) {
+                NimBLEClient::handleGapEvent(event, pServer->m_pClient);
+            }
+            break;
+        } // BLE_GAP_EVENT_NOTIFY_RX
+# endif
+
         case BLE_GAP_EVENT_ADV_COMPLETE: {
-# if CONFIG_BT_NIMBLE_EXT_ADV && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+# if MYNEWT_VAL(BLE_EXT_ADV) && MYNEWT_VAL(BLE_ROLE_BROADCASTER)
             case BLE_GAP_EVENT_SCAN_REQ_RCVD:
                 return NimBLEExtAdvertising::handleGapEvent(event, arg);
-# elif CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+# elif MYNEWT_VAL(BLE_ROLE_BROADCASTER)
             return NimBLEAdvertising::handleGapEvent(event, arg);
 # endif
         } // BLE_GAP_EVENT_ADV_COMPLETE | BLE_GAP_EVENT_SCAN_REQ_RCVD
@@ -530,11 +544,18 @@ int NimBLEServer::handleGapEvent(ble_gap_event* event, void* arg) {
             }
 
             pServer->m_pServerCallbacks->onAuthenticationComplete(peerInfo);
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
             if (pServer->m_pClient && pServer->m_pClient->m_connHandle == event->enc_change.conn_handle) {
                 NimBLEClient::handleGapEvent(event, pServer->m_pClient);
             }
 # endif
+            // update the secured status of the peer in each characteristic's subscribed peers list
+            for (const auto& svc : pServer->m_svcVec) {
+                for (const auto& chr : svc->m_vChars) {
+                    chr->updatePeerStatus(peerInfo);
+                }
+            }
+
             break;
         } // BLE_GAP_EVENT_ENC_CHANGE
 
@@ -730,7 +751,7 @@ void NimBLEServer::removeService(NimBLEService* service, bool deleteSvc) {
 
     service->setRemoved(deleteSvc ? NIMBLE_ATT_REMOVE_DELETE : NIMBLE_ATT_REMOVE_HIDE);
     serviceChanged();
-# if !CONFIG_BT_NIMBLE_EXT_ADV && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+# if !MYNEWT_VAL(BLE_EXT_ADV) && MYNEWT_VAL(BLE_ROLE_BROADCASTER)
     NimBLEDevice::getAdvertising()->removeServiceUUID(service->getUUID());
 # endif
 } // removeService
@@ -767,7 +788,7 @@ void NimBLEServer::resetGATT() {
         return;
     }
 
-# if CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+# if MYNEWT_VAL(BLE_ROLE_BROADCASTER)
     NimBLEDevice::stopAdvertising();
 # endif
     ble_gatts_reset();
@@ -836,7 +857,7 @@ bool NimBLEServer::getPhy(uint16_t connHandle, uint8_t* txPhy, uint8_t* rxPhy) {
     return rc == 0;
 } // getPhy
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
 /**
  * @brief Start advertising.
  * @param [in] instId The extended advertisement instance ID to start.
@@ -861,7 +882,7 @@ bool NimBLEServer::stopAdvertising(uint8_t instId) const {
 
 # endif
 
-# if (!CONFIG_BT_NIMBLE_EXT_ADV && CONFIG_BT_NIMBLE_ROLE_BROADCASTER) || defined(_DOXYGEN_)
+# if (!MYNEWT_VAL(BLE_EXT_ADV) && MYNEWT_VAL(BLE_ROLE_BROADCASTER)) || defined(_DOXYGEN_)
 /**
  * @brief Start advertising.
  * @param [in] duration The duration in milliseconds to advertise for, default = forever.
@@ -938,7 +959,7 @@ void NimBLEServer::setDataLen(uint16_t connHandle, uint16_t octets) const {
 # endif
 } // setDataLen
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 /**
  * @brief Create a client instance from the connection handle.
  * @param [in] connHandle The connection handle to create a client instance from.
@@ -1025,4 +1046,4 @@ void NimBLEServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy,
     NIMBLE_LOGD("NimBLEServerCallbacks", "onPhyUpdate: default, txPhy: %d, rxPhy: %d", txPhy, rxPhy);
 } // onPhyUpdate
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)

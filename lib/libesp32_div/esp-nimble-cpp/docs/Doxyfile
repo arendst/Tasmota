@@ -48,8 +48,7 @@ PROJECT_NAME           = esp-nimble-cpp
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = 2.3.0
-
+PROJECT_NUMBER         = 2.3.3
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
@@ -2417,12 +2416,12 @@ INCLUDE_FILE_PATTERNS  =
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 PREDEFINED             = _DOXYGEN_ \
-                         CONFIG_BT_ENABLED \
-                         CONFIG_BT_NIMBLE_ROLE_CENTRAL \
-                         CONFIG_BT_NIMBLE_ROLE_OBSERVER \
-                         CONFIG_BT_NIMBLE_ROLE_PERIPHERAL \
-                         CONFIG_BT_NIMBLE_ROLE_BROADCASTER \
-                         CONFIG_BT_NIMBLE_EXT_ADV
+                         CONFIG_BT_NIMBLE_ENABLED=1 \
+                         MYNEWT_VAL_BLE_ROLE_CENTRAL=1 \
+                         MYNEWT_VAL_BLE_ROLE_OBSERVER=1 \
+                         MYNEWT_VAL_BLE_ROLE_PERIPHERAL=1 \
+                         MYNEWT_VAL_BLE_ROLE_BROADCASTER=1 \
+                         MYNEWT_VAL_BLE_EXT_ADV=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

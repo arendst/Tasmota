@@ -18,12 +18,13 @@
 #ifndef NIMBLE_CPP_BEACON_H_
 #define NIMBLE_CPP_BEACON_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER)
 
 class NimBLEUUID;
 
 # include <cstdint>
+# include <vector>
 
 /**
  * @brief Representation of a beacon.
@@ -40,6 +41,10 @@ class NimBLEBeacon {
         uint16_t major{};
         uint16_t minor{};
         int8_t   signalPower{};
+        operator std::vector<uint8_t> () const {
+            return std::vector<uint8_t>(reinterpret_cast<const uint8_t*>(this),
+                                        reinterpret_cast<const uint8_t*>(this) + sizeof(BeaconData));
+        }
     } __attribute__((packed));
 
     const BeaconData& getData();
@@ -60,5 +65,5 @@ class NimBLEBeacon {
     BeaconData m_beaconData;
 }; // NimBLEBeacon
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 #endif // NIMBLE_CPP_BEACON_H_

@@ -5,8 +5,8 @@
 #ifndef NIMBLE_CPP_L2CAPCHANNEL_H_
 #define NIMBLE_CPP_L2CAPCHANNEL_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 
 # include "inttypes.h"
 # if defined(CONFIG_NIMBLE_CPP_IDF)
@@ -122,5 +122,5 @@ class NimBLEL2CAPChannelCallbacks {
     virtual void onDisconnect(NimBLEL2CAPChannel* channel) {};
 };
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 #endif // NIMBLE_CPP_L2CAPCHANNEL_H_

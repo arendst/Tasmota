@@ -15,8 +15,15 @@
  * limitations under the License.
  */
 
-# include "NimBLECharacteristic.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#include "NimBLECharacteristic.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
+
+# if defined(CONFIG_NIMBLE_CPP_IDF)
+#  if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
+#   define ble_gatts_notify_custom   ble_gattc_notify_custom
+#   define ble_gatts_indicate_custom ble_gattc_indicate_custom
+#  endif
+# endif
 
 # include "NimBLE2904.h"
 # include "NimBLEDevice.h"
@@ -218,7 +225,8 @@ void NimBLECharacteristic::setService(NimBLEService* pService) {
  * @return True if the indication was sent successfully, false otherwise.
  */
 bool NimBLECharacteristic::indicate(uint16_t connHandle) const {
-    return sendValue(nullptr, 0, false, connHandle);
+    auto value{m_value}; // make a copy to avoid issues if the value is changed while indicating
+    return sendValue(value.data(), value.size(), false, connHandle);
 } // indicate
 
 /**
@@ -240,7 +248,8 @@ bool NimBLECharacteristic::indicate(const uint8_t* value, size_t length, uint16_
  * @return True if the notification was sent successfully, false otherwise.
  */
 bool NimBLECharacteristic::notify(uint16_t connHandle) const {
-    return sendValue(nullptr, 0, true, connHandle);
+    auto value{m_value}; // make a copy to avoid issues if the value is changed while notifying
+    return sendValue(value.data(), value.size(), true, connHandle);
 } // notify
 
 /**
@@ -264,55 +273,50 @@ bool NimBLECharacteristic::notify(const uint8_t* value, size_t length, uint16_t 
  * @return True if the value was sent successfully, false otherwise.
  */
 bool NimBLECharacteristic::sendValue(const uint8_t* value, size_t length, bool isNotification, uint16_t connHandle) const {
-    int rc = 0;
+    ble_npl_hw_enter_critical();
+    const auto subs = getSubscribers(); // make a copy to avoid issues if subscribers change while sending
+    ble_npl_hw_exit_critical(0);
 
-    if (value != nullptr && length > 0) { // custom notification value
-        os_mbuf* om = nullptr;
+    bool chSpecified = connHandle != BLE_HS_CONN_HANDLE_NONE;
+    bool requireSecure = m_properties & (BLE_GATT_CHR_F_READ_ENC | BLE_GATT_CHR_F_READ_AUTHEN | BLE_GATT_CHR_F_READ_AUTHOR);
+    int rc = chSpecified ? BLE_HS_ENOENT : 0; // if handle specified, assume not found until sent
 
-        if (connHandle != BLE_HS_CONN_HANDLE_NONE) { // only sending to specific peer
-            om = ble_hs_mbuf_from_flat(value, length);
-            if (!om) {
-                rc = BLE_HS_ENOMEM;
-                goto done;
-            }
-
-            // Null buffer will read the value from the characteristic
-            if (isNotification) {
-                rc = ble_gattc_notify_custom(connHandle, m_handle, om);
-            } else {
-                rc = ble_gattc_indicate_custom(connHandle, m_handle, om);
-            }
-
-            goto done;
+    // Notify all connected peers unless a specific handle is provided
+    for (const auto& entry : subs) {
+        uint16_t ch = entry.getConnHandle();
+        if (ch == BLE_HS_CONN_HANDLE_NONE || (chSpecified && ch != connHandle)) {
+            continue;
         }
 
-        // Notify all connected peers unless a specific handle is provided
-        for (const auto& ch : NimBLEDevice::getServer()->getPeerDevices()) {
-            // Must re-create the data buffer on each iteration because it is freed by the calls bellow.
-            om = ble_hs_mbuf_from_flat(value, length);
-            if (!om) {
-                rc = BLE_HS_ENOMEM;
-                goto done;
-            }
-
-            if (isNotification) {
-                rc = ble_gattc_notify_custom(ch, m_handle, om);
-            } else {
-                rc = ble_gattc_indicate_custom(ch, m_handle, om);
-            }
+        if (requireSecure && !entry.isSecured()) {
+            NIMBLE_LOGW(LOG_TAG, "skipping notify/indicate to connHandle=%d, link not secured", entry.getConnHandle());
+            continue;
         }
-    } else if (connHandle != BLE_HS_CONN_HANDLE_NONE) {
-        // Null buffer will read the value from the characteristic
+
+        // Must re-create the data buffer on each iteration because it is freed by the calls below.
+        uint8_t  retries = 10; // wait up to 10ms for a free buffer
+        os_mbuf* om      = ble_hs_mbuf_from_flat(value, length);
+        while (!om && --retries) {
+            ble_npl_time_delay(ble_npl_time_ms_to_ticks32(1));
+            om = ble_hs_mbuf_from_flat(value, length);
+        }
+
+        if (!om) {
+            rc = BLE_HS_ENOMEM;
+            break;
+        }
+
         if (isNotification) {
-            rc = ble_gattc_notify_custom(connHandle, m_handle, nullptr);
+            rc = ble_gatts_notify_custom(ch, m_handle, om);
         } else {
-            rc = ble_gattc_indicate_custom(connHandle, m_handle, nullptr);
+            rc = ble_gatts_indicate_custom(ch, m_handle, om);
         }
-    } else { // Notify or indicate to all connected peers the characteristic value
-        ble_gatts_chr_updated(m_handle);
+
+        if (rc != 0 || chSpecified) {
+            break;
+        }
     }
 
-done:
     if (rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "failed to send value, rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
         return false;
@@ -321,10 +325,107 @@ done:
     return true;
 } // sendValue
 
+/**
+ * @brief Process a subscription or unsubscription request from a peer.
+ * @param[in] connInfo A reference to the connection info of the peer.
+ * @param[in] subVal The subscription value (bitmask).
+ */
+void NimBLECharacteristic::processSubRequest(NimBLEConnInfo& connInfo, uint8_t subVal) const {
+    // Only allocate subscribers for characteristics that support notify or indicate.
+    const uint16_t props = getProperties();
+    if (!(props & (BLE_GATT_CHR_F_NOTIFY | BLE_GATT_CHR_F_INDICATE))) {
+        return;
+    }
+
+    auto found     = false;
+    auto firstFree = -1;
+    for (auto& entry : m_subPeers) {
+        if (entry.getConnHandle() == connInfo.getConnHandle()) {
+            found = true;
+            if (!subVal) {
+                ble_npl_hw_enter_critical();
+                entry = SubPeerEntry{}; // unsubscribed, reset entry
+                ble_npl_hw_exit_critical(0);
+            }
+            break;
+        }
+
+        if (firstFree == -1 && entry.getConnHandle() == BLE_HS_CONN_HANDLE_NONE) {
+            firstFree = &entry - &m_subPeers[0];
+        }
+    }
+
+    if (!found && subVal) {
+        if (firstFree >= 0) {
+            ble_npl_hw_enter_critical();
+            m_subPeers[firstFree].setConnHandle(connInfo.getConnHandle());
+            m_subPeers[firstFree].setSubNotify(subVal & 0x1);
+            m_subPeers[firstFree].setSubIndicate(subVal & 0x2);
+            m_subPeers[firstFree].setSecured(connInfo.isEncrypted() || connInfo.isAuthenticated() || connInfo.isBonded());
+            if (m_properties & (BLE_GATT_CHR_F_READ_AUTHEN | BLE_GATT_CHR_F_READ_AUTHOR | BLE_GATT_CHR_F_READ_ENC)) {
+                // characteristic requires security/authorization
+                if (!m_subPeers[firstFree].isSecured()) {
+                    m_subPeers[firstFree].setAwaitingSecure(true);
+                    ble_npl_hw_exit_critical(0);
+                    NimBLEDevice::startSecurity(connInfo.getConnHandle());
+                    NIMBLE_LOGD(LOG_TAG,
+                                "Subscription deferred until link is secured for connHandle=%d",
+                                connInfo.getConnHandle());
+                    return;
+                }
+            }
+            ble_npl_hw_exit_critical(0);
+        } else {
+            // should never happen, but log just in case
+            NIMBLE_LOGE(LOG_TAG, "No free subscription slots");
+            return;
+        }
+    }
+
+    m_pCallbacks->onSubscribe(const_cast<NimBLECharacteristic*>(this), const_cast<NimBLEConnInfo&>(connInfo), subVal);
+}
+
+/**
+ * @brief Update the security status of a subscribed peer.
+ * @param[in] peerInfo A reference to the connection info of the peer.
+ */
+void NimBLECharacteristic::updatePeerStatus(const NimBLEConnInfo& peerInfo) const {
+    if (!(getProperties() & (NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE))) {
+        return;
+    }
+
+    ble_npl_hw_enter_critical();
+    for (auto& entry : m_subPeers) {
+        if (entry.getConnHandle() == peerInfo.getConnHandle()) {
+            entry.setSecured(peerInfo.isEncrypted() || peerInfo.isAuthenticated() || peerInfo.isBonded());
+            if (entry.isAwaitingSecure()) {
+                entry.setAwaitingSecure(false);
+                ble_npl_hw_exit_critical(0);
+                m_pCallbacks->onSubscribe(const_cast<NimBLECharacteristic*>(this),
+                                          const_cast<NimBLEConnInfo&>(peerInfo),
+                                          entry.isSubNotify() | (entry.isSubIndicate() << 1));
+                return;
+            }
+            break;
+        }
+    }
+    ble_npl_hw_exit_critical(0);
+}
+
+/**
+ * @brief Handle a read event from a client.
+ * @param [in] connInfo A reference to a NimBLEConnInfo instance containing the peer info.
+ */
 void NimBLECharacteristic::readEvent(NimBLEConnInfo& connInfo) {
     m_pCallbacks->onRead(this, connInfo);
 } // readEvent
 
+/**
+ * @brief Handle a write event from a client.
+ * @param [in] val A pointer to the data written by the client.
+ * @param [in] len The length of the data written by the client.
+ * @param [in] connInfo A reference to a NimBLEConnInfo instance containing the peer info.
+ */
 void NimBLECharacteristic::writeEvent(const uint8_t* val, uint16_t len, NimBLEConnInfo& connInfo) {
     setValue(val, len);
     m_pCallbacks->onWrite(this, connInfo);
@@ -399,6 +500,18 @@ void NimBLECharacteristicCallbacks::onStatus(NimBLECharacteristic* pCharacterist
 } // onStatus
 
 /**
+ * @brief Callback function to support a Notify/Indicate Status report.
+ * @param [in] pCharacteristic The characteristic that is the source of the event.
+ * @param [in] connInfo A reference to a NimBLEConnInfo instance containing the peer info.
+ * @param [in] code Status return code from the NimBLE stack.
+ * @details The status code for success is 0 for notifications and BLE_HS_EDONE for indications,
+ * any other value is an error.
+ */
+void NimBLECharacteristicCallbacks::onStatus(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, int code) {
+    NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onStatus: default");
+} // onStatus
+
+/**
  * @brief Callback function called when a client changes subscription status.
  * @param [in] pCharacteristic The characteristic that is the source of the event.
  * @param [in] connInfo A reference to a NimBLEConnInfo instance containing the peer info.
@@ -414,4 +527,4 @@ void NimBLECharacteristicCallbacks::onSubscribe(NimBLECharacteristic* pCharacter
     NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onSubscribe: default");
 }
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)

@@ -1367,7 +1367,7 @@ static BLESensorCallback clientCB;
 
 
 class BLEAdvCallbacks: public NimBLEScanCallbacks {
-  void onScanEnd(const NimBLEScanResults results) {
+  void onScanEnd(const NimBLEScanResults& results, int reason) {
     BLEscanEndedCB(results);
   }
 

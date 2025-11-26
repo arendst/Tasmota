@@ -254,6 +254,8 @@
   #define CODE_IMAGE_STR "bluetooth"
 #endif
 
+#define CONFIG_NIMBLE_CPP_IDF 1
+
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
 #undef FALLBACK_MODULE

@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_HIDDEVICE_H_
 #define NIMBLE_CPP_HIDDEVICE_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # include <stdint.h>
 # include <string>
@@ -85,5 +85,5 @@ class NimBLEHIDDevice {
     NimBLECharacteristic* locateReportCharacteristicByIdAndType(uint8_t reportId, uint8_t reportType);
 };
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 #endif // NIMBLE_CPP_HIDDEVICE_H_

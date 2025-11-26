@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEAdvertisedDevice.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_OBSERVER)
 
 # include "NimBLEDevice.h"
 # include "NimBLEUtils.h"
@@ -31,13 +31,14 @@ static const char* LOG_TAG = "NimBLEAdvertisedDevice";
  * @param [in] event The advertisement event data.
  */
 NimBLEAdvertisedDevice::NimBLEAdvertisedDevice(const ble_gap_event* event, uint8_t eventType)
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     : m_address{event->ext_disc.addr},
       m_advType{eventType},
       m_rssi{event->ext_disc.rssi},
       m_callbackSent{0},
       m_advLength{event->ext_disc.length_data},
       m_isLegacyAdv{!!(event->ext_disc.props & BLE_HCI_ADV_LEGACY_MASK)},
+      m_dataStatus{event->ext_disc.data_status},
       m_sid{event->ext_disc.sid},
       m_primPhy{event->ext_disc.prim_phy},
       m_secPhy{event->ext_disc.sec_phy},
@@ -58,9 +59,18 @@ NimBLEAdvertisedDevice::NimBLEAdvertisedDevice(const ble_gap_event* event, uint8
  * @param [in] event The advertisement event data.
  */
 void NimBLEAdvertisedDevice::update(const ble_gap_event* event, uint8_t eventType) {
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     const auto& disc = event->ext_disc;
-    m_isLegacyAdv    = disc.props & BLE_HCI_ADV_LEGACY_MASK;
+    if (m_dataStatus == BLE_GAP_EXT_ADV_DATA_STATUS_INCOMPLETE) {
+        m_payload.reserve(m_advLength + disc.length_data);
+        m_payload.insert(m_payload.end(), disc.data, disc.data + disc.length_data);
+        m_dataStatus = disc.data_status;
+        m_advLength  = m_payload.size();
+        return;
+    }
+
+    m_dataStatus  = disc.data_status;
+    m_isLegacyAdv = disc.props & BLE_HCI_ADV_LEGACY_MASK;
 # else
     const auto& disc = event->disc;
 # endif
@@ -86,11 +96,11 @@ const NimBLEAddress& NimBLEAdvertisedDevice::getAddress() const {
 /**
  * @brief Get the advertisement type.
  * @return The advertising type the device is reporting:
- * * BLE_HCI_ADV_TYPE_ADV_IND            (0) - indirect advertising
- * * BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD  (1) - direct advertising - high duty cycle
- * * BLE_HCI_ADV_TYPE_ADV_SCAN_IND       (2) - indirect scan response
- * * BLE_HCI_ADV_TYPE_ADV_NONCONN_IND    (3) - indirect advertising - not connectable
- * * BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD  (4) - direct advertising - low duty cycle
+ * * BLE_HCI_ADV_RPT_EVTYPE_ADV_IND      (0) - indirect advertising - connectable and scannable
+ * * BLE_HCI_ADV_RPT_EVTYPE_DIR_IND      (1) - direct advertising - connectable
+ * * BLE_HCI_ADV_RPT_EVTYPE_SCAN_IND     (2) - indirect scan response - not connectable - scannable
+ * * BLE_HCI_ADV_RPT_EVTYPE_NONCONN_IND  (3) - beacon only - not connectable - not scannable
+ * * BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP     (4) - scan response
  */
 uint8_t NimBLEAdvertisedDevice::getAdvType() const {
     return m_advType;
@@ -233,6 +243,38 @@ std::string NimBLEAdvertisedDevice::getPayloadByType(uint16_t type, uint8_t inde
 std::string NimBLEAdvertisedDevice::getName() const {
     return getPayloadByType(BLE_HS_ADV_TYPE_COMP_NAME);
 } // getName
+
+
+/*
+ * Tasmota addition
+ * @brief Get the payload by reference.
+ * @return The name of the advertised device.
+*/
+#include <string_view>
+
+std::string_view NimBLEAdvertisedDevice::getPayloadViewByType(uint16_t type, uint8_t index) const {
+    size_t data_loc;
+    if (findAdvField(type, index, &data_loc) > 0) {
+        const ble_hs_adv_field* field =
+            reinterpret_cast<const ble_hs_adv_field*>(&m_payload[data_loc]);
+        if (field->length > 1) {
+            return std::string_view(
+                reinterpret_cast<const char*>(field->value),
+                field->length - 1
+            );
+        }
+    }
+    return {}; // empty view
+}
+
+/*
+ * Tasmota addition
+ * @brief Get the advertised name by reference.
+ * @return The name of the advertised device.
+*/
+std::string_view NimBLEAdvertisedDevice::getNameView() const {
+    return getPayloadViewByType(BLE_HS_ADV_TYPE_COMP_NAME, 0);
+}
 
 /**
  * @brief Get the RSSI.
@@ -580,7 +622,7 @@ bool NimBLEAdvertisedDevice::haveTXPower() const {
     return findAdvField(BLE_HS_ADV_TYPE_TX_PWR_LVL) > 0;
 } // haveTXPower
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
 /**
  * @brief Get the set ID of the extended advertisement.
  * @return The set ID.
@@ -617,6 +659,18 @@ uint8_t NimBLEAdvertisedDevice::getSecondaryPhy() const {
 uint16_t NimBLEAdvertisedDevice::getPeriodicInterval() const {
     return m_periodicItvl;
 } // getPeriodicInterval
+
+/**
+ * @brief Get the advertisement data status.
+ * @return The advertisement data status.
+ * One of:
+ * * BLE_GAP_EXT_ADV_DATA_STATUS_COMPLETE (0) - Complete extended advertising data
+ * * BLE_GAP_EXT_ADV_DATA_STATUS_INCOMPLETE (1) - Incomplete extended advertising data, more to come
+ * * BLE_GAP_EXT_ADV_DATA_STATUS_TRUNCATED (2) - Incomplete extended advertising data, no more to come
+ */
+uint8_t NimBLEAdvertisedDevice::getDataStatus() const {
+    return m_dataStatus;
+} // getDataStatus
 # endif
 
 uint8_t NimBLEAdvertisedDevice::findAdvField(uint8_t type, uint8_t index, size_t* data_loc) const {
@@ -730,7 +784,7 @@ std::string NimBLEAdvertisedDevice::toString() const {
  * @brief Get the length of the advertisement data in the payload.
  * @return The number of bytes in the payload that is from the advertisement.
  */
-uint8_t NimBLEAdvertisedDevice::getAdvLength() const {
+uint16_t NimBLEAdvertisedDevice::getAdvLength() const {
     return m_advLength;
 }
 
@@ -751,12 +805,13 @@ uint8_t NimBLEAdvertisedDevice::getAddressType() const {
  * @return True if the device is connectable.
  */
 bool NimBLEAdvertisedDevice::isConnectable() const {
-# if CONFIG_BT_NIMBLE_EXT_ADV
-    if (m_isLegacyAdv) {
-        return m_advType == BLE_HCI_ADV_RPT_EVTYPE_ADV_IND || m_advType == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND;
+# if MYNEWT_VAL(BLE_EXT_ADV)
+    if (!m_isLegacyAdv) {
+        return (m_advType & BLE_HCI_ADV_CONN_MASK) || (m_advType & BLE_HCI_ADV_DIRECT_MASK);
     }
 # endif
-    return (m_advType & BLE_HCI_ADV_CONN_MASK) || (m_advType & BLE_HCI_ADV_DIRECT_MASK);
+
+    return m_advType == BLE_HCI_ADV_RPT_EVTYPE_ADV_IND || m_advType == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND;
 } // isConnectable
 
 /**
@@ -772,7 +827,7 @@ bool NimBLEAdvertisedDevice::isScannable() const {
  * @return True if legacy (Bluetooth 4.x), false if extended (bluetooth 5.x).
  */
 bool NimBLEAdvertisedDevice::isLegacyAdvertisement() const {
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     return m_isLegacyAdv;
 # else
     return true;
@@ -813,4 +868,4 @@ const std::vector<uint8_t>::const_iterator NimBLEAdvertisedDevice::end() const {
     return m_payload.cend();
 }
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_OBSERVER)

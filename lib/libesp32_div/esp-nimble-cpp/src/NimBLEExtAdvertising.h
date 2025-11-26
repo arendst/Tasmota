@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_EXTADVERTISING_H_
 #define NIMBLE_CPP_EXTADVERTISING_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && CONFIG_BT_NIMBLE_EXT_ADV
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && MYNEWT_VAL(BLE_EXT_ADV)
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "host/ble_gap.h"
@@ -159,5 +159,5 @@ class NimBLEExtAdvertisingCallbacks {
     virtual void onScanRequest(NimBLEExtAdvertising* pAdv, uint8_t instId, NimBLEAddress addr);
 }; // NimBLEExtAdvertisingCallbacks
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && CONFIG_BT_NIMBLE_EXT_ADV
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && MYNEWT_VAL(BLE_EXT_ADV)
 #endif // NIMBLE_CPP_EXTADVERTISING_H_

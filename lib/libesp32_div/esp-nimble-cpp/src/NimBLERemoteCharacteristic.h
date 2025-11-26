@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_REMOTE_CHARACTERISTIC_H_
 #define NIMBLE_CPP_REMOTE_CHARACTERISTIC_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 # include "NimBLERemoteValueAttribute.h"
 # include <vector>
@@ -80,5 +80,5 @@ class NimBLERemoteCharacteristic : public NimBLERemoteValueAttribute {
 
 }; // NimBLERemoteCharacteristic
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
+#endif /* CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL) */
 #endif /* NIMBLE_CPP_REMOTE_CHARACTERISTIC_H_ */

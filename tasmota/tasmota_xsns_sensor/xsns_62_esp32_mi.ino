@@ -71,6 +71,7 @@
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 void MI32AddKey(mi_bindKey_t keyMAC);
 void MI32HandleEveryDevice(const NimBLEAdvertisedDevice* advertisedDevice, uint8_t addr[6], int RSSI);
+void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI, std::string_view optionalName);
 
 std::vector<mi_sensor_t> MIBLEsensors;
 RingbufHandle_t BLERingBufferQueue = nullptr;
@@ -145,8 +146,7 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
       MI32ParseResponse((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
     else if(UUID==0xfcd2) {
-      std::string optionalName = advertisedDevice->getName();
-      MI32parseBTHomePacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI, optionalName.c_str());
+      MI32parseBTHomePacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI, advertisedDevice->getNameView());
     }
     else if(UUID==0xfdcd) { // deprecated
       MI32parseCGD1Packet((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
@@ -1216,9 +1216,8 @@ void MI32ScanTask(void *pvParameters){
       break;
     }
     if(MI32.mode.updateScan == 1){
-      MI32Scan->stop();
       MI32Scan->setActiveScan(MI32.option.activeScan == 1);
-      MI32Scan->start(0, false, true);
+      MI32Scan->start(0, true);
       MI32.mode.updateScan = 0;
       MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
     }
@@ -1980,15 +1979,15 @@ if(decryptRet!=0){
   if(MI32.option.directBridgeMode == 1) MI32.mode.shallTriggerTele = 1;
 }
 
-void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI, const char* optionalName){
+void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI, std::string_view optionalName){
   const uint32_t _slot = MIBLEgetSensorSlot(addr, 0xb770, 0); // fake ID, constant fake counter
   if(_slot==0xff) return;
 
   auto &_sensor =  MIBLEsensors[_slot];
-  if (optionalName[0] != '\0'){
+  if (!optionalName.empty()){
     if(_sensor.name == nullptr){
-      _sensor.name = new char[strlen(optionalName) + 1];
-      strcpy(_sensor.name, optionalName);
+      _sensor.name = (char*)calloc(optionalName.length() + 1, 1);
+      memcpy(_sensor.name, optionalName.data(), optionalName.length());
     }
   }
   _sensor.RSSI = RSSI;
@@ -2188,9 +2187,9 @@ void MI32HandleEveryDevice(const NimBLEAdvertisedDevice* advertisedDevice, uint8
     auto &_sensor = MIBLEsensors[_slot];
     if (advertisedDevice->haveName()){
       if(_sensor.name == nullptr){
-        std::string name = advertisedDevice->getName();
-        _sensor.name = new char[name.length() + 1];
-        strcpy(_sensor.name, name.c_str());
+        const std::string_view nameView = advertisedDevice->getNameView();
+        _sensor.name = (char*)calloc(nameView.length() + 1, 1);
+        memcpy(_sensor.name, nameView.data(), nameView.length());
       }
     }
     if(_sensor.payload == nullptr) {

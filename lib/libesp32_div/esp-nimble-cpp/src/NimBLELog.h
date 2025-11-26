@@ -18,15 +18,24 @@
 #ifndef NIMBLE_CPP_LOG_H_
 #define NIMBLE_CPP_LOG_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED
+
+# ifndef MYNEWT_VAL_NIMBLE_CPP_LOG_LEVEL
+#  ifndef CONFIG_NIMBLE_CPP_LOG_LEVEL
+#   if defined(ARDUINO_ARCH_ESP32) && defined(CORE_DEBUG_LEVEL)
+#    define MYNEWT_VAL_NIMBLE_CPP_LOG_LEVEL CORE_DEBUG_LEVEL
+#   else
+#    define MYNEWT_VAL_NIMBLE_CPP_LOG_LEVEL 0
+#   endif
+#  else
+#   define MYNEWT_VAL_NIMBLE_CPP_LOG_LEVEL CONFIG_NIMBLE_CPP_LOG_LEVEL
+#  endif
+# endif
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "esp_log.h"
 #  include "console/console.h"
-#  ifndef CONFIG_NIMBLE_CPP_LOG_LEVEL
-#   define CONFIG_NIMBLE_CPP_LOG_LEVEL 0
-#  endif
 
 #  if defined(CONFIG_NIMBLE_CPP_LOG_OVERRIDE_COLOR)
 #   if CONFIG_LOG_COLORS
@@ -120,13 +129,13 @@
 
 #   define NIMBLE_CPP_LOG_PRINT(level, tag, format, ...)                                                            \
       do {                                                                                                          \
-        if (CONFIG_NIMBLE_CPP_LOG_LEVEL >= level) NIMBLE_CPP_LOG_LEVEL_LOCAL(level, tag, format, ##__VA_ARGS__);    \
+        if (MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= level) NIMBLE_CPP_LOG_LEVEL_LOCAL(level, tag, format, ##__VA_ARGS__);    \
       } while (0)
 
 #  else
 #   define NIMBLE_CPP_LOG_PRINT(level, tag, format, ...)                                                    \
       do {                                                                                                  \
-        if (CONFIG_NIMBLE_CPP_LOG_LEVEL >= level) ESP_LOG_LEVEL_LOCAL(level, tag, format, ##__VA_ARGS__);   \
+        if (MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= level) ESP_LOG_LEVEL_LOCAL(level, tag, format, ##__VA_ARGS__);   \
       } while (0)
 
 #  endif /* CONFIG_NIMBLE_CPP_LOG_OVERRIDE_COLOR */
@@ -137,35 +146,27 @@
 #  define NIMBLE_LOGE(tag, format, ...) NIMBLE_CPP_LOG_PRINT(ESP_LOG_ERROR, tag, format, ##__VA_ARGS__)
 
 # else
-#  include "nimble/porting/nimble/include/syscfg/syscfg.h"
 #  include "nimble/console/console.h"
-#  ifndef CONFIG_NIMBLE_CPP_LOG_LEVEL
-#   if defined(ARDUINO_ARCH_ESP32) && defined(CORE_DEBUG_LEVEL)
-#    define CONFIG_NIMBLE_CPP_LOG_LEVEL CORE_DEBUG_LEVEL
-#   else
-#    define CONFIG_NIMBLE_CPP_LOG_LEVEL 0
-#   endif
-#  endif
 
-#  if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 4
+#  if MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= 4
 #   define NIMBLE_LOGD(tag, format, ...) console_printf("D %s: " format "\n", tag, ##__VA_ARGS__)
 #  else
 #   define NIMBLE_LOGD(tag, format, ...) (void)tag
 #  endif
 
-#  if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 3
+#  if MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= 3
 #   define NIMBLE_LOGI(tag, format, ...) console_printf("I %s: " format "\n", tag, ##__VA_ARGS__)
 #  else
 #   define NIMBLE_LOGI(tag, format, ...) (void)tag
 #  endif
 
-#  if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 2
+#  if MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= 2
 #   define NIMBLE_LOGW(tag, format, ...) console_printf("W %s: " format "\n", tag, ##__VA_ARGS__)
 #  else
 #   define NIMBLE_LOGW(tag, format, ...) (void)tag
 #  endif
 
-#  if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 1
+#  if MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= 1
 #   define NIMBLE_LOGE(tag, format, ...) console_printf("E %s: " format "\n", tag, ##__VA_ARGS__)
 #  else
 #   define NIMBLE_LOGE(tag, format, ...) (void)tag
@@ -179,28 +180,5 @@
 #  define NIMBLE_LOGE_IF(cond, tag, format, ...) { if (cond) { NIMBLE_LOGE(tag, format, ##__VA_ARGS__); }}
 #  define NIMBLE_LOGE_RC(rc, tag, format, ...) { if (rc) { NIMBLE_LOGE(tag, format "; rc=%d %s", ##__VA_ARGS__, rc, NimBLEUtils::returnCodeToString(rc)); }}
 
-// The LOG_LEVEL macros are used to set the log level for the NimBLE stack, but they pollute the global namespace and would override the loglevel enum of Tasmota.
-// So we undefine them here to avoid conflicts.
-
-#ifdef LOG_LEVEL_DEBUG
-#undef LOG_LEVEL_DEBUG
-#endif
-
-#ifdef LOG_LEVEL_DEBUG_MORE
-#undef LOG_LEVEL_DEBUG_MORE
-#endif
-
-#ifdef LOG_LEVEL_INFO
-#undef LOG_LEVEL_INFO
-#endif
-
-#ifdef LOG_LEVEL_NONE
-#undef LOG_LEVEL_NONE
-#endif
-
-#ifdef LOG_LEVEL_ERROR
-#undef LOG_LEVEL_ERROR
-#endif
-
-#endif   /* CONFIG_BT_ENABLED */
+#endif   /* CONFIG_BT_NIMBLE_ENABLED */
 #endif   /* NIMBLE_CPP_LOG_H_ */

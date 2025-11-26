@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_2904_H_
 #define NIMBLE_CPP_2904_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # include "NimBLEDescriptor.h"
 
@@ -79,5 +79,5 @@ class NimBLE2904 : public NimBLEDescriptor {
     NimBLE2904Data m_data{};
 }; // NimBLE2904
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 #endif // NIMBLE_CPP_2904_H_

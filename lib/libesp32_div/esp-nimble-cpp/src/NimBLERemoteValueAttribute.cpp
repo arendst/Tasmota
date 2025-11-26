@@ -16,7 +16,7 @@
  */
 
 #include "NimBLERemoteValueAttribute.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 # include "NimBLEClient.h"
 # include "NimBLEUtils.h"
@@ -217,4 +217,4 @@ int NimBLERemoteValueAttribute::onReadCB(uint16_t conn_handle, const ble_gatt_er
     return rc;
 } // onReadCB
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)

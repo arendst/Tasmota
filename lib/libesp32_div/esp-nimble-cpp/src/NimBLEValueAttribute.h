@@ -18,15 +18,15 @@
 #ifndef NIMBLE_CPP_VALUE_ATTRIBUTE_H_
 #define NIMBLE_CPP_VALUE_ATTRIBUTE_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && (CONFIG_BT_NIMBLE_ROLE_PERIPHERAL || CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && (MYNEWT_VAL(BLE_ROLE_PERIPHERAL) || MYNEWT_VAL(BLE_ROLE_CENTRAL))
 
 # include "NimBLEAttribute.h"
 # include "NimBLEAttValue.h"
 
 class NimBLEValueAttribute {
   public:
-    NimBLEValueAttribute(uint16_t maxLen = BLE_ATT_ATTR_MAX_LEN, uint16_t initLen = CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH)
+    NimBLEValueAttribute(uint16_t maxLen = BLE_ATT_ATTR_MAX_LEN, uint16_t initLen = MYNEWT_VAL(NIMBLE_CPP_ATT_VALUE_INIT_LENGTH))
         : m_value(initLen, maxLen) {}
 
     /**
@@ -82,5 +82,5 @@ class NimBLEValueAttribute {
     NimBLEAttValue m_value{};
 };
 
-#endif // CONFIG_BT_ENABLED && (CONFIG_BT_NIMBLE_ROLE_PERIPHERAL || CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#endif // CONFIG_BT_NIMBLE_ENABLED && (MYNEWT_VAL(BLE_ROLE_PERIPHERAL) || MYNEWT_VAL(BLE_ROLE_CENTRAL))
 #endif // NIMBLE_CPP_ATTRIBUTE_H_

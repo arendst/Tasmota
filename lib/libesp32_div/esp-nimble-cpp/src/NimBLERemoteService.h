@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_REMOTE_SERVICE_H_
 #define NIMBLE_CPP_REMOTE_SERVICE_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 # include "NimBLEAttribute.h"
 # include <vector>
@@ -64,5 +64,5 @@ class NimBLERemoteService : public NimBLEAttribute {
     uint16_t                                         m_endHandle{0};
 }; // NimBLERemoteService
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 #endif // NIMBLE_CPP_REMOTE_SERVICE_H_
