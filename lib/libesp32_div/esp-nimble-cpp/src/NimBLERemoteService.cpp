@@ -16,7 +16,7 @@
  */
 
 #include "NimBLERemoteService.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 # include "NimBLERemoteCharacteristic.h"
 # include "NimBLEClient.h"
@@ -302,4 +302,4 @@ std::string NimBLERemoteService::toString() const {
     return res;
 } // toString
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)

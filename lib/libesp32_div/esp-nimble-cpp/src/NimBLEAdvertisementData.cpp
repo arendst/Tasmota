@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEAdvertisementData.h"
-#if (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#if (CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && !MYNEWT_VAL(BLE_EXT_ADV)) || defined(_DOXYGEN_)
 
 # include "NimBLEDevice.h"
 # include "NimBLEUtils.h"
@@ -583,4 +583,4 @@ std::string NimBLEAdvertisementData::toString() const {
     return str;
 } // toString
 
-#endif // (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#endif // (CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && !MYNEWT_VAL(BLE_EXT_ADV)) || defined(_DOXYGEN_)

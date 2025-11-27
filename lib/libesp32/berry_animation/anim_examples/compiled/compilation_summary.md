@@ -377,6 +377,26 @@ SUCCESS
 SUCCESS
 ```
 
+## demo_value_meter.anim
+
+**Status:** ✅ Success
+
+## Symbol Table
+
+| Symbol                    | Type                       | Builtin | Dangerous | Takes Args |
+|---------------------------|----------------------------|---------|-----------|------------|
+| `back_pattern`            | animation                  |         |           |            |
+| `closure_value`           | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `palette_meter_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `rainbow_with_white`      | palette                    |         |           |            |
+| `rand_meter`              | user_function              |         |           |     ✓      |
+
+### Compilation Output
+
+```
+SUCCESS
+```
+
 ## disco_strobe.anim
 
 **Status:** ✅ Success
@@ -702,34 +722,6 @@ SUCCESS
 SUCCESS
 ```
 
-## plasma_wave.anim
-
-**Status:** ✅ Success
-
-## Symbol Table
-
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `SINE`                   | constant                   |    ✓    |           |            |
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `plasma_base`            | animation                  |         |           |            |
-| `plasma_colors`          | palette                    |         |           |            |
-| `plasma_wave1`           | animation                  |         |           |            |
-| `plasma_wave2`           | animation                  |         |           |            |
-| `plasma_wave3`           | animation                  |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette`           | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `smooth`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `wave1_pattern`          | color                      |         |           |            |
-| `wave2_pattern`          | color                      |         |           |            |
-| `wave3_pattern`          | color                      |         |           |            |
-
-### Compilation Output
-
-```
-SUCCESS
-```
-
 ## palette_demo.anim
 
 **Status:** ✅ Success
@@ -782,6 +774,34 @@ SUCCESS
 | `sunset_sky`             | palette               |         |           |            |
 | `white`                  | color                 |    ✓    |           |            |
 | `yellow`                 | color                 |    ✓    |           |            |
+
+### Compilation Output
+
+```
+SUCCESS
+```
+
+## plasma_wave.anim
+
+**Status:** ✅ Success
+
+## Symbol Table
+
+| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
+|--------------------------|----------------------------|---------|-----------|------------|
+| `SINE`                   | constant                   |    ✓    |           |            |
+| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `plasma_base`            | animation                  |         |           |            |
+| `plasma_colors`          | palette                    |         |           |            |
+| `plasma_wave1`           | animation                  |         |           |            |
+| `plasma_wave2`           | animation                  |         |           |            |
+| `plasma_wave3`           | animation                  |         |           |            |
+| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette`           | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `smooth`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `wave1_pattern`          | color                      |         |           |            |
+| `wave2_pattern`          | color                      |         |           |            |
+| `wave3_pattern`          | color                      |         |           |            |
 
 ### Compilation Output
 
@@ -1236,8 +1256,8 @@ SUCCESS
 
 ## Summary
 
-- **Total files processed:** 50
-- **Successfully compiled:** 47
+- **Total files processed:** 51
+- **Successfully compiled:** 48
 - **Failed to compile:** 3
 
 ### Successful Files
@@ -1257,6 +1277,7 @@ SUCCESS
 - ✅ demo_shutter_rainbow_central.anim
 - ✅ demo_shutter_rainbow_leftright.anim
 - ✅ demo_shutter_rainbow2.anim
+- ✅ demo_value_meter.anim
 - ✅ disco_strobe.anim
 - ✅ fire_flicker.anim
 - ✅ heartbeat_pulse.anim
@@ -1267,9 +1288,9 @@ SUCCESS
 - ✅ meteor_shower.anim
 - ✅ neon_glow.anim
 - ✅ ocean_waves.anim
-- ✅ plasma_wave.anim
 - ✅ palette_demo.anim
 - ✅ palette_showcase.anim
+- ✅ plasma_wave.anim
 - ✅ police_lights.anim
 - ✅ property_assignment_demo.anim
 - ✅ rainbow_cycle.anim

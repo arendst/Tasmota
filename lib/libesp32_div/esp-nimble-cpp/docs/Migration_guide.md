@@ -234,7 +234,7 @@ This can be changed to use passkey authentication or numeric comparison. See [Se
 Advertising works the same as the original API except:
 
 Calling `NimBLEAdvertising::setAdvertisementData` will entirely replace any data set with `NimBLEAdvertising::addServiceUUID`, or
-`NimBLEAdvertising::setAppearance` or similar methods. You should set all the data you wish to advertise within the `NimBLEAdvertisementData` instead.  
+`NimBLEAdvertising::setAppearance` or similar methods. You should set all the data you wish to advertise within the `NimBLEAdvertisementData` instead if calling `NimBLEAdvertising::setAdvertisementData`.  
 <br/>
 
 > BLEAdvertising::start (NimBLEAdvertising::start)

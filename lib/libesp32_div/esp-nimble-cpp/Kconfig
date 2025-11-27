@@ -204,6 +204,10 @@ config NIMBLE_CPP_FREERTOS_TASK_BLOCK_BIT
         Configure the bit to set in the task notification value when a task is blocked waiting for an event.
         This should be set to a bit that is not used by other notifications in the system.
 
+config NIMBLE_CPP_IDF
+    bool
+    default BT_NIMBLE_ENABLED
+
 #
 # BT config
 #

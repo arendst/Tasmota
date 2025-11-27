@@ -1,0 +1,26 @@
+#######################################
+# Syntax Coloring Map for TasmotaDali
+# (esp8266 and esp32)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TasmotaDali	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+end	 KEYWORD2
+write	KEYWORD2
+read	KEYWORD2
+available	KEYWORD2
+flush	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

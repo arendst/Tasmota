@@ -59,6 +59,7 @@ The following keywords are reserved and cannot be used as identifiers:
 - `set` - Variable assignment
 - `import` - Import Berry modules
 - `berry` - Embed arbitrary Berry code
+- `extern` - Declare external Berry functions for DSL use
 
 **Definition Keywords:**
 - `color` - Color definition
@@ -294,6 +295,70 @@ print("Animation configured")
 
 run pulse
 ```
+
+### External Function Declarations
+
+The `extern` keyword declares Berry functions defined in `berry` code blocks so they can be used in DSL expressions and computed parameters:
+
+```berry
+# Define the function in a berry block
+berry """
+def rand_meter(time_ms, self)
+  import math
+  var r = math.rand() % 101
+  return r
+end
+
+def breathing_effect(base_value, amplitude)
+  import math
+  var time_factor = (tasmota.millis() / 1000) % 4  # 4-second cycle
+  var breath = math.sin(time_factor * math.pi / 2)
+  return int(base_value + breath * amplitude)
+end
+"""
+
+# Declare functions as external so DSL knows about them
+extern function rand_meter
+extern function breathing_effect
+
+# Now they can be used in DSL expressions
+animation back_pattern = palette_meter_animation(value_func = rand_meter)
+animation breathing_light = solid(color=blue)
+breathing_light.opacity = breathing_effect
+
+run back_pattern
+```
+
+**External Function Features:**
+- Functions must be declared with `extern function function_name` after being defined in `berry` blocks
+- Can be used with or without parentheses: `rand_meter` or `rand_meter()`
+- Automatically receive `engine` as the first parameter when called from DSL
+- Can be used in computed parameters and property assignments
+- Support the same signature pattern as registered user functions
+
+**Function Signature Requirements:**
+External functions should follow the user function pattern where the first parameter is the engine:
+
+```berry
+berry """
+def my_external_func(engine, param1, param2)
+  # engine is automatically provided by DSL
+  # param1, param2 are user-provided parameters
+  return computed_value
+end
+"""
+
+extern function my_external_func
+
+# Usage in DSL (engine parameter is automatic)
+animation test = solid(color=red)
+test.opacity = my_external_func  # Called as my_external_func(engine)
+```
+
+**Comparison with User Functions:**
+- **External functions**: Defined in `berry` blocks within the same DSL file, declared with `extern function`
+- **User functions**: Defined in separate Berry modules, imported with `import`, registered with `animation.register_user_function()`
+- Both use the same calling convention and can be used interchangeably in DSL expressions
 
 ## Color Definitions
 
@@ -1449,11 +1514,13 @@ statement = import_stmt
           | property_assignment 
           | sequence 
           | template_def
+          | external_stmt
           | execution_stmt ;
 
 (* Import and Configuration *)
 import_stmt = "import" identifier ;
 config_stmt = variable_assignment ;
+external_stmt = "extern" "function" identifier ;
 (* strip_config = "strip" "length" number ; -- TEMPORARILY DISABLED *)
 variable_assignment = "set" identifier "=" expression ;
 
@@ -1607,6 +1674,7 @@ This applies to:
 - Execution statements
 - **Template animations**: Reusable animation classes with parameters extending `engine_proxy`
 - User-defined functions (with engine-first parameter pattern) - see **[User Functions Guide](USER_FUNCTIONS.md)**
+- **External function declarations**: `extern` keyword to declare Berry functions defined in `berry` blocks for DSL use
 - **User functions in computed parameters**: User functions can be used in arithmetic expressions alongside mathematical functions
 - **Flexible parameter syntax**: Commas optional when parameters are on separate lines
 - **Computed values**: Arithmetic expressions with value providers automatically create closures

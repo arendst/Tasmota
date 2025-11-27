@@ -3,7 +3,7 @@
 //
 
 #include "NimBLEL2CAPServer.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 
 # include "NimBLEL2CAPChannel.h"
 # include "NimBLEDevice.h"
@@ -37,4 +37,4 @@ NimBLEL2CAPChannel* NimBLEL2CAPServer::createService(const uint16_t             
     return service;
 }
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)

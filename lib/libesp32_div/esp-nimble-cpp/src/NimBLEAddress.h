@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_ADDRESS_H_
 #define NIMBLE_CPP_ADDRESS_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "nimble/ble.h"
@@ -67,5 +67,5 @@ class NimBLEAddress : private ble_addr_t {
     operator uint64_t() const;
 };
 
-#endif // CONFIG_BT_ENABLED
+#endif // CONFIG_BT_NIMBLE_ENABLED
 #endif // NIMBLE_CPP_ADDRESS_H_

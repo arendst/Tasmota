@@ -5,6 +5,9 @@
 # child management and rendering to the root animation.
 
 class AnimationEngine
+  # Minimum milliseconds between ticks
+  static var TICK_MS = 50
+  
   # Core properties
   var strip                 # LED strip object
   var strip_length          # Strip length (cached for performance)
@@ -17,6 +20,7 @@ class AnimationEngine
   var last_update           # Last update time in milliseconds
   var time_ms               # Current time in milliseconds (updated each frame)
   var fast_loop_closure     # Stored closure for fast_loop registration
+  var tick_ms               # Minimum milliseconds between ticks (runtime configurable)
   
   # Performance optimization
   var render_needed         # Whether a render pass is needed
@@ -77,6 +81,7 @@ class AnimationEngine
     self.last_update = 0
     self.time_ms = 0
     self.fast_loop_closure = nil
+    self.tick_ms = self.TICK_MS  # Initialize from static default
     self.render_needed = false
     
     # Initialize CPU metrics
@@ -187,24 +192,24 @@ class AnimationEngine
       return false
     end
     
-    # Start timing this tick
-    self.ts_start = tasmota.millis()
-    
     if current_time == nil
-      current_time = self.ts_start
+      current_time = tasmota.millis()
     end
+    
+    # Throttle updates based on tick_ms setting
+    var delta_time = current_time - self.last_update
+    if delta_time < self.tick_ms
+      return true
+    end
+    
+    # Start timing this tick (use tasmota.millis() for consistent profiling)
+    self.ts_start = tasmota.millis()
     
     # Check if strip length changed since last time
     self.check_strip_length()
     
     # Update engine time
     self.time_ms = current_time
-    
-    # Throttle updates to ~5ms intervals
-    var delta_time = current_time - self.last_update
-    if delta_time < 5
-      return true
-    end
     
     self.last_update = current_time
     

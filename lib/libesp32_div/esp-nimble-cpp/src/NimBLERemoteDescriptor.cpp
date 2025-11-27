@@ -16,7 +16,7 @@
  */
 
 #include "NimBLERemoteDescriptor.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 # include "NimBLERemoteCharacteristic.h"
 
@@ -56,4 +56,4 @@ NimBLEClient* NimBLERemoteDescriptor::getClient() const {
     return m_pRemoteCharacteristic->getClient();
 }
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)

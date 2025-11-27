@@ -4,8 +4,8 @@
 
 #ifndef NIMBLE_CPP_L2CAPSERVER_H_
 #define NIMBLE_CPP_L2CAPSERVER_H_
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 
 # include "inttypes.h"
 # include <vector>
@@ -37,5 +37,5 @@ class NimBLEL2CAPServer {
     friend class NimBLEDevice;
 };
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 #endif // NIMBLE_CPP_L2CAPSERVER_H_

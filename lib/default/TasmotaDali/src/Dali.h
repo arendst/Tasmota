@@ -1,15 +1,13 @@
 /*
-  xdrv_75_dali.h - DALI support for Tasmota
+  Dali.h - DALI support for Tasmota
 
   SPDX-FileCopyrightText: 2025 Theo Arends
 
   SPDX-License-Identifier: GPL-3.0-only
 */
 
-#ifdef USE_DALI
-
-#ifndef _XDRV75_DALI_H_
-#define _XDRV75_DALI_H_
+#ifndef _DALI_H_
+#define _DALI_H_
 
 /*-------------------------------------------------------------------------------------------*\
  * DALI Address types - Send as first byte
@@ -973,5 +971,4 @@
                                                          //       Returns the version number of Part 2xx of IEC 62386 for the corresponding device type as an 8-bit number.
                                                          //       Device type implementations must provide their own implementation of QueryExtendedVersionNumber using this mixin.
 
-#endif  // _XDRV75_DALI_H_
-#endif  // USE_DALI
+#endif  // _DALI_H_

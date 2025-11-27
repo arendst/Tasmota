@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEScan.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_OBSERVER)
 
 # include "NimBLEDevice.h"
 # include "NimBLELog.h"
@@ -32,8 +32,8 @@ static NimBLEScanCallbacks defaultScanCallbacks;
  */
 NimBLEScan::NimBLEScan()
     : m_pScanCallbacks{&defaultScanCallbacks},
-      // default interval + window, no whitelist scan filter,not limited scan, no scan response, filter_duplicates
-      m_scanParams{0, 0, BLE_HCI_SCAN_FILT_NO_WL, 0, 1, 1},
+      // default interval + window, no whitelist scan filter,not limited scan, no scan response, filter_duplicates, disable_observer_mode
+      m_scanParams{0, 0, BLE_HCI_SCAN_FILT_NO_WL, 0, 1, 1, 0},
       m_pTaskData{nullptr},
       m_maxResults{0xFF} {}
 
@@ -63,7 +63,7 @@ int NimBLEScan::handleGapEvent(ble_gap_event* event, void* arg) {
                 return 0;
             }
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
             const auto& disc        = event->ext_disc;
             const bool  isLegacyAdv = disc.props & BLE_HCI_ADV_LEGACY_MASK;
             const auto  event_type  = isLegacyAdv ? disc.legacy_event_type : disc.props;
@@ -74,7 +74,7 @@ int NimBLEScan::handleGapEvent(ble_gap_event* event, void* arg) {
 # endif
             NimBLEAddress advertisedAddress(disc.addr);
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
             // stop processing if already connected
             NimBLEClient* pClient = NimBLEDevice::getClientByPeerAddress(advertisedAddress);
             if (pClient != nullptr && pClient->isConnected()) {
@@ -86,7 +86,7 @@ int NimBLEScan::handleGapEvent(ble_gap_event* event, void* arg) {
 
             // If we've seen this device before get a pointer to it from the vector
             for (const auto& dev : pScan->m_scanResults.m_deviceVec) {
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
                 // Same address but different set ID should create a new advertised device.
                 if (dev->getAddress() == advertisedAddress && dev->getSetId() == disc.sid)
 # else
@@ -117,12 +117,21 @@ int NimBLEScan::handleGapEvent(ble_gap_event* event, void* arg) {
                 NIMBLE_LOGI(LOG_TAG, "New advertiser: %s", advertisedAddress.toString().c_str());
             } else {
                 advertisedDevice->update(event, event_type);
-                if (isLegacyAdv && event_type == BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP) {
-                    NIMBLE_LOGI(LOG_TAG, "Scan response from: %s", advertisedAddress.toString().c_str());
-                } else {
-                    NIMBLE_LOGI(LOG_TAG, "Duplicate; updated: %s", advertisedAddress.toString().c_str());
+                if (isLegacyAdv) {
+                    if (event_type == BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP) {
+                        NIMBLE_LOGI(LOG_TAG, "Scan response from: %s", advertisedAddress.toString().c_str());
+                    } else {
+                        NIMBLE_LOGI(LOG_TAG, "Duplicate; updated: %s", advertisedAddress.toString().c_str());
+                    }
                 }
             }
+
+# if MYNEWT_VAL(BLE_EXT_ADV)
+            if (advertisedDevice->getDataStatus() == BLE_GAP_EXT_ADV_DATA_STATUS_INCOMPLETE) {
+                NIMBLE_LOGD(LOG_TAG, "EXT ADV data incomplete, waiting for more");
+                return 0;
+            }
+# endif
 
             if (!advertisedDevice->m_callbackSent) {
                 advertisedDevice->m_callbackSent++;
@@ -272,7 +281,7 @@ bool NimBLEScan::isScanning() {
     return ble_gap_disc_active();
 }
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
 /**
  * @brief Set the PHYs to scan.
  * @param [in] phyMask The PHYs to scan, a bit mask of:
@@ -324,7 +333,7 @@ bool NimBLEScan::start(uint32_t duration, bool isContinue, bool restart) {
 
     // If scanning is already active, call the functions anyway as the parameters can be changed.
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     ble_gap_ext_disc_params scan_params;
     scan_params.passive = m_scanParams.passive;
     scan_params.itvl    = m_scanParams.itvl;
@@ -489,7 +498,7 @@ void NimBLEScan::clearResults() {
  * @brief Dump the scan results to the log.
  */
 void NimBLEScanResults::dump() const {
-# if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 3
+# if MYNEWT_VAL(NIMBLE_CPP_LOG_LEVEL) >= 3
     for (const auto& dev : m_deviceVec) {
         NIMBLE_LOGI(LOG_TAG, "- %s", dev->toString().c_str());
     }
@@ -560,4 +569,4 @@ void NimBLEScanCallbacks::onScanEnd(const NimBLEScanResults& results, int reason
     NIMBLE_LOGD(CB_TAG, "Scan ended; reason %d, num results: %d", reason, results.getCount());
 }
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_OBSERVER)

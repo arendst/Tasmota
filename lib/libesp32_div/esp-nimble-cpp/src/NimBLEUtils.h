@@ -18,8 +18,28 @@
 #ifndef NIMBLE_CPP_UTILS_H_
 #define NIMBLE_CPP_UTILS_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED
+
+# ifndef MYNEWT_VAL_NIMBLE_CPP_DEBUG_ASSERT_ENABLED
+#  if defined(CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED)
+#   define MYNEWT_VAL_NIMBLE_CPP_DEBUG_ASSERT_ENABLED CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED
+#  else
+#   define MYNEWT_VAL_NIMBLE_CPP_DEBUG_ASSERT_ENABLED (0)
+#  endif
+# endif
+
+#if MYNEWT_VAL(NIMBLE_CPP_DEBUG_ASSERT_ENABLED) && !defined NDEBUG
+void nimble_cpp_assert(const char *file, unsigned line) __attribute((weak, noreturn));
+# define NIMBLE_ATT_VAL_FILE  (__builtin_strrchr(__FILE__, '/') ? \
+                            __builtin_strrchr (__FILE__, '/') + 1 : __FILE__)
+# define NIMBLE_CPP_DEBUG_ASSERT(cond) \
+    if (!(cond)) { \
+        nimble_cpp_assert(NIMBLE_ATT_VAL_FILE, __LINE__); \
+    }
+#else
+# define NIMBLE_CPP_DEBUG_ASSERT(cond) (void(0))
+#endif
 
 # include <string>
 
@@ -56,5 +76,5 @@ class NimBLEUtils {
     static void          taskRelease(const NimBLETaskData& taskData, int rc = 0);
 };
 
-#endif // CONFIG_BT_ENABLED
+#endif // CONFIG_BT_NIMBLE_ENABLED
 #endif // NIMBLE_CPP_UTILS_H_

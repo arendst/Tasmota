@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEBeacon.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER)
 
 # include "NimBLEUUID.h"
 # include "NimBLELog.h"
@@ -137,4 +137,4 @@ void NimBLEBeacon::setSignalPower(int8_t signalPower) {
     m_beaconData.signalPower = signalPower;
 } // setSignalPower
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER)

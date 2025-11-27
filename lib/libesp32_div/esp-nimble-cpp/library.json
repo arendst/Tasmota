@@ -1,6 +1,6 @@
 {
   "name": "esp-nimble-cpp",
-  "version": "2.2.1",
+  "version": "2.3.3",
   "description": "C++ wrapper for the NimBLE BLE stack",
   "keywords": [
     "BLE",
@@ -19,5 +19,11 @@
     "email": "ryan@nable-embedded.io",
     "url": "https://github.com/h2zero/esp-nimble-cpp",
     "maintainer": true
+  },
+  "build": {
+    "flags": [
+      "-DCONFIG_NIMBLE_CPP_IDF"
+    ],
+    "libArchive": false
   }
 }

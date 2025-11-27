@@ -1,6 +1,36 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.3.3] 2025-09-05
+
+## Fixed
+- NimBLEAdvertisedDevice::isConnectable returning incorrect result.
+- Extended advertisements not reporting full data.
+
+## Added
+- Support up to 1650 bytes of advertisement with extended advertising
+
+## [2.3.2] 2025-09-02
+
+## Fixed
+- Build failures with esp-idf versions 4.x.
+- Workaround for upstream issue causing onConnectFail to not be called.
+- Build failures with idf v5.5+ and specific roles are not enabled.
+
+## Changed
+- Allow peripheral and central roles to be used without broadcaster/observer roles.
+- Where applicable, `MYNEWT_VAL_` macros are used to control feature availability instead of `CONFIG_`
+
+## [2.3.1] 2025-06-11
+
+## Fixed
+- Build errors when disabling BLE roles.
+- `NimBLEClient::readValue` call not returning when the instance was created with a`NimBLEServer` and reading a secured characteristic.
+- `NimBLEScan` destructor potentially causing a crash.
+
+## Added
+- `NimBLEBeacon::BeaconData` `std::vector<uint8_t>` operator to allow it to be used as a parameter to `NimBLEAdvertisementData::setManufacturerData`.
+
 ## [2.3.0] 2025-05-19
 
 ## Fixed

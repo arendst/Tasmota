@@ -1,0 +1,17 @@
+{
+    "name": "TasmotaDali",
+    "version": "1.0.0",
+    "keywords": [
+      "serial", "io", "TasmotaDali"
+    ],
+    "description": "Implementation of DALI bitbang for ESP8266 and ESP32.",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/arendst/Tasmota/lib/TasmotaDali"
+    },
+    "frameworks": "arduino",
+    "platforms": [
+      "espressif8266", "espressif32"
+    ]
+}

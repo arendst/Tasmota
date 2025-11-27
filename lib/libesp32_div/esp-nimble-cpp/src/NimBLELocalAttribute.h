@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_LOCAL_ATTRIBUTE_H_
 #define NIMBLE_CPP_LOCAL_ATTRIBUTE_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # include "NimBLEAttribute.h"
 
@@ -54,5 +54,5 @@ class NimBLELocalAttribute : public NimBLEAttribute {
     uint8_t m_removed{0};
 };
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 #endif // NIMBLE_CPP_LOCAL_ATTRIBUTE_H_
