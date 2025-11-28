@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 28.07.2025
+ * Updated until v9.4.0.1 - Last update 28.11.2025
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1042,8 +1042,8 @@
 #define D_SENSOR_WOOLIIS_RX             "Wooliis - RX"
 #define D_SENSOR_C8_CO2_5K_RX           "C8-CO2-5K - RX"
 #define D_SENSOR_C8_CO2_5K_TX           "C8-CO2-5K - TX"
-#define D_SENSOR_MKSKYBLU_TX            "MkSkyBlu Tx"
-#define D_SENSOR_MKSKYBLU_RX            "MkSkyBlu Rx"
+#define D_SENSOR_MKSKYBLU_TX            "MkSkyBlu - TX"
+#define D_SENSOR_MKSKYBLU_RX            "MkSkyBlu - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
