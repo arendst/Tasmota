@@ -112,7 +112,7 @@ TasmotaLED::~TasmotaLED() {
 void TasmotaLED::_adjustSubType(void) {
   _pixel_order = (_type >> 4) & 0x07;
   _pixel_matrix = &TASMOTALED_CHANNEL_ORDERS[_pixel_order];
-  _w_before = _type & 0x08;
+  _w_before = _type & 0x80;   // bit 7 sets the position for W channel
 }
 
 void TasmotaLED::SetPixelCount(uint16_t num_leds) {
@@ -192,12 +192,18 @@ void TasmotaLED::Show(void) {
         }
       } else if (_pixel_size == 4) {
         for (uint32_t i = 0; i < _pixel_count; i++) {
-          if (_w_before) { *buf_to++ = buf_from[3]; }
-          buf_to[(*_pixel_matrix)[0]] = buf_from[0];   // R
-          buf_to[(*_pixel_matrix)[1]] = buf_from[1];   // G
-          buf_to[(*_pixel_matrix)[2]] = buf_from[2];   // B
-          if (!_w_before) { *buf_to++ = buf_from[3]; }
-          buf_to += 4;    // one increment already happened
+          if (_w_before) {
+            buf_to[0] = buf_from[0];                       // W
+            buf_to[1 + (*_pixel_matrix)[0]] = buf_from[1]; // R
+            buf_to[1 + (*_pixel_matrix)[1]] = buf_from[2]; // G
+            buf_to[1 + (*_pixel_matrix)[2]] = buf_from[3]; // B
+          } else {
+            buf_to[(*_pixel_matrix)[0]] = buf_from[1];     // R 
+            buf_to[(*_pixel_matrix)[1]] = buf_from[2];     // G 
+            buf_to[(*_pixel_matrix)[2]] = buf_from[3];     // B
+            buf_to[3] = buf_from[0];                       // W
+          }
+          buf_to += 4;
           buf_from += pixel_incr;
         }
       }
