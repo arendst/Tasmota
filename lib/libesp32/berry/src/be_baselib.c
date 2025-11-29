@@ -201,7 +201,15 @@ int be_baselib_super(bvm *vm)
 int be_baselib_type(bvm *vm)
 {
     if (be_top(vm)) {
+#if BE_USE_PRECOMPILED_OBJECT
+        bvalue *v = be_indexof(vm, 1);
+        bstring *s = be_vtype2bstring(v);
+        bvalue *reg = be_incrtop(vm);
+        be_assert(reg < vm->stacktop);
+        var_setstr(reg, s);
+#else
         be_pushstring(vm, be_typename(vm, 1));
+#endif
         be_return(vm);
     }
     be_return_nil(vm);
