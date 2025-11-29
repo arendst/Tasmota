@@ -384,11 +384,9 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
     }
   }
 
-#ifdef DALI_DEBUG
-  AddLog(Dali->log_level, PSTR("DLI: Tx 0x%08X %2d DT%d%s"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Tx 0x%08X %2d DT%d%s"),
     frame.data, frame.meta & TM_DALI_BIT_COUNT_MASK, 
     Dali->device_type, (frame.meta & TM_DALI_SEND_TWICE)?" twice":"");
-#endif  // DALI_DEBUG
 
   Dali->dali->write(frame);                    // Takes 14.7 ms
 
@@ -412,17 +410,16 @@ int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
   frame.meta = 0;
   if (Dali->dali->available()) {
     frame = Dali->dali->read();
-    if (frame.meta > 127) {
+    if ((frame.meta & TM_DALI_COLLISION) ||
+        (frame.meta != 8)) {
       result = -2;                             // Collision
     }
-    else if (8 == frame.meta) {                // Backward frame
-      result = (frame.data &0xFF);
+    else {                         
+      result = (frame.data &0xFF);             // Backward frame
     }
   }
 
-#ifdef DALI_DEBUG
-  AddLog(Dali->log_level, PSTR("DLI: Rx 0x%08X %2d response"), result, frame.meta);
-#endif  // DALI_DEBUG
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%08X %2d response"), result, frame.meta);
 
   return result;
 }
@@ -718,8 +715,10 @@ void DaliLoop(void) {
 
     DaliFrame frame = Dali->dali->read();
 
-    AddLog((1 == Dali->probe) ? LOG_LEVEL_DEBUG : LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%08X %2d queue %d%s"),
-      frame.data, frame.meta, queue, (8 == frame.meta)?" backward":"");
+    uint32_t bit_count = frame.meta & TM_DALI_BIT_COUNT_MASK;
+    bool collision = frame.meta & TM_DALI_COLLISION;
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%08X %2d queue %d%s%s"),
+      frame.data, bit_count, queue, (8 == bit_count)?" backward":"", (collision)?" collision":"");
 
     if ((frame.meta != 16) ||                    // Skip backward frames
         (1 == Dali->probe)) {                    // Probe only

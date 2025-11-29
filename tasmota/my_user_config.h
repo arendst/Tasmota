@@ -986,6 +986,8 @@
 //#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
 //#define USE_MODBUS_ENERGY                        // Add support for generic modbus energy monitor using a user file in rule space (+5k)
 //#define USE_V9240                              // Add support for Vango Technologies V924x ultralow power, single-phase, power measurement (+12k)
+//#define USE_MAKE_SKY_BLUE                        // Add support for MakeSkyBlue - Solar Charge Controller interface
+  #define MAKE_SKY_BLUE_OPTION 0x7                 // MakeSkyBlue option: 0=minimal, 0x1=with serial debug, 0x2=with EnergyConfig On/Off, 0x4=with EnergyConfig register R/W
 
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)

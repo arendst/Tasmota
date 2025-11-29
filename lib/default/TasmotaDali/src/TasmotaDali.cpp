@@ -226,10 +226,11 @@ void TasmotaDali::ReceiveData(void) {
                                 1         2         3         4         5         6         7
   */
   uint32_t wait = ESP.getCycleCount() + (m_bit_time / 2);
+  DaliFrame frame;
+  frame.data = 0;                              // Received dali data
+  frame.meta = 0;                              // Bit count 0..32 bit
   int bit_state = 0; 
   bool dali_read;
-  uint32_t bit_count = 0;
-  uint32_t received_dali_data = 0;
   uint32_t bit_number = 0;
   while (bit_number < 72) {
     while (ESP.getCycleCount() < wait);
@@ -239,15 +240,17 @@ void TasmotaDali::ReceiveData(void) {
       bit_state += (dali_read) ? 1 : -1;
       if (0 == bit_state) {                    // Manchester encoding total 2 bits is always 0
         if (bit_number > 2) {                  // Skip start bit
-          received_dali_data <<= 1;
-          received_dali_data |= dali_read;
+          frame.data <<= 1;
+          frame.data |= dali_read;
         }
       }
       else if (2 == bit_state) {               // Invalid manchester data (might be stop bit)
-          // bn 19 -> 8, 35 -> 16, 51 -> 24, 67 -> 32
-          bit_count = (bit_number - 3) / 2;    // 0..32 bit
-          bit_state = 0;
-          bit_number = 69;                     // Continue receiving stop bits
+        // bn 19 -> 8, 35 -> 16, 51 -> 24, 67 -> 32
+        if (bit_number > 4) {
+          frame.meta = (bit_number - 3) / 2;   // 1..32 bit
+        }
+        bit_state = 0;
+        bit_number = 69;                       // Continue receiving stop bits
       }
       else if (abs(bit_state) > 1) {           // Invalid manchester data (too many 0 or 1)
         break;
@@ -257,7 +260,7 @@ void TasmotaDali::ReceiveData(void) {
         break;
       }
       else if (dali_read != 1) {               // Invalid level of stop bit
-        bit_state = 1;
+        bit_state = 1;                         // Could be collision
         break;
       }
     }
@@ -265,12 +268,10 @@ void TasmotaDali::ReceiveData(void) {
   }
   m_last_activity = millis();                  // Start Forward Frame delay time (>22Te)
 
-  if ((0 == bit_state) &&                      // Valid Manchester encoding including start and stop bits               
-      (bit_count >= 8) &&                      // Minimum 8-bits (backward frame)
-      (bit_count <= 32)) {                     // Maximum 32-bits (forward and event frame)
-    DaliFrame frame;
-    frame.meta = bit_count;                    // 8..32 bit
-    frame.data = received_dali_data;
+  if (frame.meta > 0) {                        // Any valid bit received
+    if (bit_state != 0) {                      // Invalid Manchester encoding including start and stop bits               
+      frame.meta | TM_DALI_COLLISION;          // Possible collision or invalid reply of repeated frame
+    }
     uint32_t prev = (0 == m_in_pos) ? m_buffer_size -1 : m_in_pos -1;
     if ((m_buffer[prev].data != frame.data) ||
         (m_buffer[prev].meta != frame.meta)) { // Skip duplicates
