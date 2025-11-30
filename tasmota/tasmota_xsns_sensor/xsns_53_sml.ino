@@ -3274,12 +3274,41 @@ void SML_Init(void) {
 	sml_globs.mp = meter_desc;
 
   uint8_t meter_script = Run_Scripter(">M", -2, 0);
+  char *lp;
+#ifdef USE_UFILESYS
+  char *file_md = 0;
+#define SML_METER_FILE "/sml_meter.def"
+  if (meter_script != 99) {
+    // try to load meter descriptor from filesystem
+    char fname[16]; 
+    strcpy_P(fname, PSTR("/sml_meter.def"));
+    FS *cfp = script_file_path(fname);
+    File ef = cfp->open(fname, FS_FILE_READ);
+    if (ef) {
+      uint16_t fsiz = ef.size();
+      file_md = (char*)special_malloc(fsiz + 16);
+      ef.read((uint8_t*)file_md, fsiz);
+      ef.close();
+      lp = strstr_P(file_md, PSTR(">M"));
+      if (!lp) {
+        goto nfd;
+      }
+    } else {
+      nfd:
+      AddLog(LOG_LEVEL_INFO, PSTR("no meter section found!"));
+      return;
+    }
+  } else {
+     lp = glob_script_mem.section_ptr;
+  }
+#else
   if (meter_script != 99) {
     AddLog(LOG_LEVEL_INFO, PSTR("no meter section found!"));
     return;
   }
+  lp = glob_script_mem.section_ptr;
+#endif
 
-  char *lp = glob_script_mem.section_ptr;
   uint8_t new_meters_used;
 
   // use script definition
@@ -3340,7 +3369,17 @@ void SML_Init(void) {
 #endif
 
   sml_globs.sml_send_blocks = 0;
+
+#ifdef USE_UFILESYS
+  if (file_md) {
+    lp = strstr_P(file_md, PSTR(">M"));
+  } else {
+    lp = glob_script_mem.section_ptr;
+  }
+#else
   lp = glob_script_mem.section_ptr;
+#endif
+
   struct METER_DESC *mmp;
   while (lp) {
       if (!section) {
@@ -3907,13 +3946,15 @@ next_line:
 #endif
   ) {
     AddLog(LOG_LEVEL_INFO, PSTR("sml memory error!"));
+#ifdef USE_UFILESYS
+    if (file_md) free(file_md);
+#endif
     return;
   }
 
   memory += sizeof(sml_globs) + sizeof(meter_desc) + sml_globs.maxvars * (sizeof(double) +  sizeof(uint8_t) + sizeof(struct SML_MEDIAN_FILTER));
 
   AddLog(LOG_LEVEL_INFO, PSTR("meters: %d , decode lines: %d, memory used: %d bytes"), sml_globs.meters_used, sml_globs.maxvars, memory);
-
 
 // speed optimize shift flag
   for (uint32_t meters = 0; meters < sml_globs.meters_used; meters++ ) {
@@ -3937,6 +3978,10 @@ next_line:
 		}
 #endif
   }
+
+#ifdef USE_UFILESYS
+  if (file_md) free(file_md);
+#endif
 
   sml_globs.ready = true;
 }
