@@ -761,6 +761,10 @@ void DaliLoop(void) {
             }
             Dali->light_sync = true;             // Block local loop
             if (any_color) {
+              if (Settings->save_data) {
+                // Postpone save_data during fast color changes which results in exception 0 on ESP8266
+                TasmotaGlobal.save_data_counter = 4;
+              }
               char scmnd[20];
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR " %s"), scolors);
               ExecuteCommand(scmnd, SRC_SWITCH);

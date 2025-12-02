@@ -92,7 +92,7 @@ void TasmotaDali::write(DaliFrame frame) {
   if (frame.meta & TM_DALI_SEND_TWICE) {
     SendData(frame);                           // Takes 14.7 ms
   }
-  delay(2);                                    // Block response
+  delay(1);                                    // Block response
   EnableRxInterrupt();
 }
 
