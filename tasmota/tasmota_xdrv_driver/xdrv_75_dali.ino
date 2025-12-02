@@ -65,6 +65,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.4.1.0 20251130  update    - Add options to `DaliGear` and DaliGroup` to toggle specific outputs
+                              - Make max number of devices persistent to speed up scan response
   1.4.0.0 20251126  update    - Change to TasmotaDali library
   1.3.0.4 20251123  update    - Add send retry on collision detection
                               - Prep DALI-2 24-bit transceive
@@ -154,12 +156,12 @@ typedef struct DliSettings_t {
   uint32_t crc32;                              // To detect file changes
   uint8_t target;
   uint8_t light_type;
+  uint8_t max_gear;
 } DliSettings_t;
 
 struct DALI {
   DliSettings_t Settings;                      // Persistent settings
   TasmotaDali *dali;
-  uint8_t max_short_address;
   uint8_t address;
   uint8_t command;
   uint8_t last_dimmer;
@@ -199,15 +201,17 @@ bool DaliLoadData(void) {
   Dali->Settings.crc32 = root.getUInt(PSTR("Crc"), Dali->Settings.crc32);
   Dali->Settings.target = root.getUInt(PSTR("Target"), Dali->Settings.target);
   Dali->Settings.light_type = root.getUInt(PSTR("LightType"), Dali->Settings.light_type);
+  Dali->Settings.max_gear = root.getUInt(PSTR("MaxGear"), Dali->Settings.max_gear);
 
   return true;
 }
 
 bool DaliSaveData(void) {
-  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u}}"),
+  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u,\"MaxGear\":%u}}"),
                    Dali->Settings.crc32,
                    Dali->Settings.target,
-                   Dali->Settings.light_type);
+                   Dali->Settings.light_type,
+                   Dali->Settings.max_gear);
 
   return UfsJsonSettingsWrite(ResponseData());
 }
@@ -227,6 +231,7 @@ void DaliSettingsLoad(bool erase) {
   // *** Start init default values in case key is not found ***
   memset(&Dali->Settings, 0x00, sizeof(DliSettings_t));
   Dali->Settings.light_type = LT_RGB;          // Default RGB channel
+  Dali->Settings.max_gear = 64;                // Default max supported short address
   // *** End Init default values ***
 
 #ifndef USE_UFILESYS
@@ -527,20 +532,6 @@ uint32_t DaliQueryRGBWAF(uint32_t adr) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-uint32_t DaliGearPresent(void) {
-  uint32_t count = 0;
-  for (uint32_t address = 0; address < Dali->max_short_address; address++) {  // Scanning 64 addresses takes about 2500 ms
-    uint32_t short_address = address << 1;
-    if (DaliSendWaitResponse(short_address | DALI_SELECTOR_BIT, DALI_102_QUERY_CONTROL_GEAR_PRESENT, 20) >= 0) {
-      count++;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Device %d at %d, short address %d"), count, address, short_address);
-    }
-  }
-  return count;
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
 void DaliInitLight(void) {
   // Taken from Shelly Dali Dimmer ;-)
   uint32_t adr = DALI_BROADCAST_DP | DALI_SELECTOR_BIT;
@@ -684,6 +675,19 @@ uint32_t DaliCommission(uint32_t init_arg, uint32_t max_count) {
 #endif  // USE_LIGHT
   DaliSendData(address, Dali->power[0]);       // Restore lights
   return cnt;
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void DaliToggle(uint32_t adr, uint32_t *count) {
+  static uint32_t interval = 0;
+
+  if (*count && TimeReached(interval)) {
+    SetNextTimeInterval(interval, 600);
+    (*count)--;
+    DaliSendData(adr, (*count &1) ? 128 : 0);  // Power toggle
+  }
+  delay(1);
 }
 
 /*********************************************************************************************\
@@ -933,7 +937,6 @@ bool DaliInit(uint32_t function) {
   if (!Dali) { return false; }
   DaliSettingsLoad(0);
 
-  Dali->max_short_address = 64;
   for (uint32_t i = 0; i < DALI_MAX_STORED; i++) {
     Dali->dimmer[i] = DALI_INIT_STATE;
   }
@@ -962,7 +965,7 @@ bool DaliInit(uint32_t function) {
   Settings->light_correction = 0;              // Use Dali light correction
   UpdateDevicesPresent(1);
 
-  TasmotaGlobal.light_type = LT_SERIAL1;       // Single channel
+  TasmotaGlobal.light_type = LT_W;             // Single channel
 #ifdef DALI_LIGHT_COLOR_SUPPORT
   Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
   if (Dali->target_rgbwaf > 1) {
@@ -1154,10 +1157,20 @@ void CmndDaliDimmer(void) {
 void CmndDaliGroup(void) {
   // DaliGroup1 1,2   - Add device 1 and 2 to group 1
   // DaliGroup1 -1,2  - Remove device 1 and 2 to group 1
+  // DaliGroup1 b     - Blink group devices twice
   if ((XdrvMailbox.index >= 1) && (XdrvMailbox.index <= 16)) {
     uint32_t group = XdrvMailbox.index -1;
     bool more = false;
     char temp[200] = { 0 };
+    uint32_t tcount = 0;
+    uint32_t adr = DaliTarget2Address(group + 101);
+    if (XdrvMailbox.data_len) {
+      if ('b' == XdrvMailbox.data[0]) {        // Blink devices
+        tcount = 4;
+        XdrvMailbox.data++;
+        XdrvMailbox.data_len--;
+      }
+    }
     if (XdrvMailbox.data_len) {
       uint32_t command = DALI_102_ADD_TO_GROUP0;
       temp[0] = '+';
@@ -1184,6 +1197,7 @@ void CmndDaliGroup(void) {
             DaliSendData((sa << 1) | DALI_SELECTOR_BIT, command);
           }
         }
+        while (tcount) { DaliToggle(adr, &tcount); }
         ResponseCmndIdxChar(temp);
       }
     } else {
@@ -1193,7 +1207,8 @@ void CmndDaliGroup(void) {
         command = DALI_102_QUERY_GROUPS_8_15;
         bitmask = 1 << group - 8;
       }
-      for (uint32_t sa = 0; sa < Dali->max_short_address; sa++) {   // Scanning 64 addresses takes about 2500 ms
+      for (uint32_t sa = 0; sa < Dali->Settings.max_gear; sa++) {   // Scanning 64 addresses takes about 2500 ms
+        if (tcount) { DaliToggle(adr, &tcount); }
         int result = DaliSendWaitResponse((sa << 1) | DALI_SELECTOR_BIT, command, 20);
         if ((result >= 0) && (result & bitmask)) {
           snprintf_P(temp, sizeof(temp), PSTR("%s%s%d"), temp, (more)?",":"", sa +1);
@@ -1202,6 +1217,8 @@ void CmndDaliGroup(void) {
       }
       if (!strlen(temp)) {
         snprintf_P(temp, sizeof(temp), PSTR("None"));
+      } else {
+        while (tcount) { DaliToggle(adr, &tcount); }
       }
       ResponseCmndIdxChar(temp);
     }
@@ -1211,12 +1228,42 @@ void CmndDaliGroup(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliGear(void) {
-  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 64)) {
-    Dali->max_short_address = XdrvMailbox.payload;
+  // DaliGear[2] [<max_address>|<address>] - Scan bus for up to <max_address> devices and toggle output twice
+  // DaliGear                              - Scan bus for 64 devices taking around 2.5 sec
+  // DaliGear 15                           - Scan bus for up to 15 devices
+  // DaliGear2                             - Scan bus and toggle output twice
+  // DaliGear2 4                           - Toggle output twice for device 4 only
+  uint32_t toggle_count = 0;
+  uint32_t start = 0;
+  uint32_t end = Dali->Settings.max_gear;
+  uint32_t payload = ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 64)) ? XdrvMailbox.payload : 0;
+  if (1 == XdrvMailbox.index) {
+    if (payload) {
+      end = payload;
+      Dali->Settings.max_gear = end;
+    }
   }
-  uint32_t count = DaliGearPresent();
+  else if (2 == XdrvMailbox.index) {
+    toggle_count = 4;
+    if (payload) {
+      start = payload -1;
+      end = payload;
+    }
+  }
+  char temp[200] = { 0 };
+  uint32_t count = 0;
+  for (uint32_t address = start; address < end; address++) {  // Scanning 64 addresses takes about 2500 ms
+    uint32_t adr = address << 1;
+    uint32_t tcount = toggle_count;
+    if (DaliSendWaitResponse(adr | DALI_SELECTOR_BIT, DALI_102_QUERY_CONTROL_GEAR_PRESENT, 20) >= 0) {
+      snprintf_P(temp, sizeof(temp), PSTR("%s%s%d"), temp, (count)?",":"", address +1);
+      count++;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Device %d at %d, short address %d"), count, address, adr);
+      while (tcount) { DaliToggle(adr, &tcount); }
+    }
+  }
   ResponseCmnd();
-  ResponseAppend_P(PSTR("%d,\"Present\":%d}"), Dali->max_short_address, count);
+  ResponseAppend_P(PSTR("%d,\"Present\":%d,\"Address\":[%s]}"), Dali->Settings.max_gear, count, temp);
 }
 
 /*-------------------------------------------------------------------------------------------*/
