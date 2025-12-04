@@ -634,6 +634,7 @@ void setup(void) {
         Settings->rule_enabled = 0;                  // Disable all rules
         Settings->flag3.shutter_mode = 0;            // disable shutter support
         TasmotaGlobal.no_autoexec = true;
+        Settings->flag5.mi32_enable = false;         // disable BLE
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +3) {  // Restarted 5 times
         for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) {
