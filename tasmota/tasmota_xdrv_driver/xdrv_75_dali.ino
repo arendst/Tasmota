@@ -743,8 +743,8 @@ void DaliLoop(void) {
       Dali->color[2] = Dali->dtr[2];             // Blue
     }
     else if (DALI_209_SET_TEMPORARY_RGB_DIMLEVEL == Dali->command) { 
-      Dali->color[3] = Dali->dtr[1];             // Warm White (Amber)
-      Dali->color[4] = Dali->dtr[0];             // Cold White
+      Dali->color[3] = Dali->dtr[0];             // Cold White
+      Dali->color[4] = Dali->dtr[1];             // Warm White (Amber)
     }
     else if (DALI_209_ACTIVATE == Dali->command) {
       uint32_t channels = Dali->Settings.light_type -8;
@@ -832,7 +832,7 @@ bool DaliSetChannels(void) {
       Dali->light_sync = false;
     } else {
       uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
-      // cur_col[0] = Red, cur_col[1] = Green, cur_col[2] = Blue, cur_col[3] = Warm = Amber, cur_col[4] = Cold = White
+      // cur_col[0] = Red, cur_col[1] = Green, cur_col[2] = Blue, cur_col[3] = Cold = White, cur_col[4] = Warm = Amber
       for (uint32_t i = 0; i < 5; i++) {
         if (255 == cur_col[i]) { cur_col[i] = 254; }  // Max Dali value
       }
@@ -866,8 +866,8 @@ bool DaliSetChannels(void) {
         DaliSendData(adr, DALI_209_SET_TEMPORARY_RGB_DIMLEVEL);
 
         if (channels > 3) {
-          DaliSendData(DALI_102_SET_DTR0, cur_col[4]);   // DALI White
-          DaliSendData(DALI_102_SET_DTR1, (channels > 4) ?  cur_col[3] : 255); // DALI Amber
+          DaliSendData(DALI_102_SET_DTR0, cur_col[3]);   // DALI White
+          DaliSendData(DALI_102_SET_DTR1, (channels > 4) ?  cur_col[4] : 255); // DALI Amber
           DaliSendData(DALI_102_SET_DTR2, 255);          // DALI Freecolour - no change
           DaliSendData(DALI_102_ENABLE_DEVICE_TYPE_X, DALI_209_DEVICE_TYPE);  // Enable Extended command
           DaliSendData(adr, DALI_209_SET_TEMPORARY_WAF_DIMLEVEL);
@@ -885,8 +885,8 @@ bool DaliSetChannels(void) {
         DaliSendData(adr, DALI_209_SET_TEMPORARY_RGB_DIMLEVEL);
 
         if (channels > 3) {
-          if (!DaliSetDTR(0, adr, cur_col[4])) { return true; }  // DALI While
-          if (!DaliSetDTR(1, adr, (channels > 4) ? cur_col[3] : 255)) { return true; }  // DALI Amber
+          if (!DaliSetDTR(0, adr, cur_col[3])) { return true; }  // DALI While
+          if (!DaliSetDTR(1, adr, (channels > 4) ? cur_col[4] : 255)) { return true; }  // DALI Amber
           if (!DaliSetDTR(2, adr, 255)) { return true; }         // DALI Freecolour - no change
           DaliSendData(DALI_102_ENABLE_DEVICE_TYPE_X, DALI_209_DEVICE_TYPE);  // Enable Extended command
           DaliSendData(adr, DALI_209_SET_TEMPORARY_WAF_DIMLEVEL);
@@ -974,6 +974,11 @@ bool DaliInit(uint32_t function) {
   Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
   if (Dali->target_rgbwaf > 1) {
     TasmotaGlobal.light_type = Dali->Settings.light_type;
+    if (!Settings->flag3.pwm_multi_channels &&   // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
+       (TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
+       (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
+      UpdateDevicesPresent(1);                   // We manage RGB and W separately, hence adding a device
+    }
   }
 #endif  // DALI_LIGHT_COLOR_SUPPORT
 

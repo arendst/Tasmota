@@ -50,6 +50,7 @@ class TasmotaDali {
 
     // Member variables
     DaliFrame *m_buffer = nullptr;
+    DaliFrame m_last_frame;
     uint32_t m_buffer_size = TM_DALI_BUFFER_SIZE;
     uint32_t m_last_activity;
     uint32_t m_bit_time;

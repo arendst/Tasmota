@@ -44,6 +44,8 @@ TasmotaDali::TasmotaDali(int receive_pin, int transmit_pin, bool receive_invert,
   // Manchester twice 1200 bps = 2400 bps = 417 (protocol 416.76 +/- 10%) us = 1Te
   m_bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;
   m_last_activity = 0;
+  m_last_frame.data = 0;
+  m_last_frame.meta = 0;
 
   pinMode(m_tx_pin, OUTPUT);
   digitalWrite(m_tx_pin, (m_tx_invert) ? LOW : HIGH);  // Idle
@@ -92,18 +94,32 @@ void TasmotaDali::write(DaliFrame frame) {
   if (frame.meta & TM_DALI_SEND_TWICE) {
     SendData(frame);                           // Takes 14.7 ms
   }
-  delay(1);                                    // Block response
+  delay(2);                                    // Block response
   EnableRxInterrupt();
 }
 
 DaliFrame TasmotaDali::read(void) {
   DaliFrame frame;
+  frame.data = 0;
   frame.meta = 0;
-  if (m_in_pos == m_out_pos) {
-    return frame;
+  if (m_in_pos != m_out_pos) {
+/*
+    uint32_t in_pos = m_in_pos;
+    uint32_t out_pos = m_out_pos;
+    while (in_pos != out_pos) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TEO: in %d/%d 0x%08X-0x%08X"), out_pos, in_pos, m_buffer[out_pos].data, m_buffer[out_pos].meta);
+      out_pos = (out_pos +1) % m_buffer_size;
+    }
+*/
+    frame = m_buffer[m_out_pos];
+    m_out_pos = (m_out_pos +1) % m_buffer_size;
+
+    uint32_t bit_state = frame.meta >> 16;
+    frame.meta &= 0x000000FF;
+    if (bit_state != 0) {                      // Invalid Manchester encoding including start and stop bits               
+      frame.meta | TM_DALI_COLLISION;          // Possible collision or invalid reply of repeated frame
+    }
   }
-  frame = m_buffer[m_out_pos];
-  m_out_pos = (m_out_pos +1) % m_buffer_size;
   return frame;
 }
 
@@ -245,8 +261,7 @@ void TasmotaDali::ReceiveData(void) {
         }
       }
       else if (2 == bit_state) {               // Invalid manchester data (might be stop bit)
-        // bn 19 -> 8, 35 -> 16, 51 -> 24, 67 -> 32
-        if (bit_number > 4) {
+        if (bit_number > 4) {                  // bn 19 -> 8, 35 -> 16, 51 -> 24, 67 -> 32
           frame.meta = (bit_number - 3) / 2;   // 1..32 bit
         }
         bit_state = 0;
@@ -268,16 +283,15 @@ void TasmotaDali::ReceiveData(void) {
   }
   m_last_activity = millis();                  // Start Forward Frame delay time (>22Te)
 
-  if (frame.meta > 0) {                        // Any valid bit received
-    if (bit_state != 0) {                      // Invalid Manchester encoding including start and stop bits               
-      frame.meta | TM_DALI_COLLISION;          // Possible collision or invalid reply of repeated frame
-    }
-    uint32_t prev = (0 == m_in_pos) ? m_buffer_size -1 : m_in_pos -1;
-    if ((m_buffer[prev].data != frame.data) ||
-        (m_buffer[prev].meta != frame.meta)) { // Skip duplicates
-      uint32_t next = (m_in_pos + 1) % m_buffer_size;
+  if (frame.meta > 0) {                        // Any valid bit received - fix spike interrupts
+    uint32_t data_size = frame.meta;
+    frame.meta |= ((bit_state << 16) | (bit_number << 8)); // Possible collision or invalid reply of repeated frame if bit_state > 0
+    if ((8 == data_size) ||                    // Always allow backward frame
+        (m_last_frame.data != frame.data) ||
+        (m_last_frame.meta != frame.meta)) {   // Skip duplicate forward frames
+      m_last_frame = frame;
       m_buffer[m_in_pos] = frame;
-      m_in_pos = next;
+      m_in_pos = (m_in_pos + 1) % m_buffer_size;
     }
   }
 }
