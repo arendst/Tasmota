@@ -117,7 +117,7 @@ vid6608 *vid6608Drives[VID6608_MAX_DRIVES];
    * threads simultaniously. Else it will lead to stepper motor glitches and random move.
    *
    */
-  SemaphoreHandle_t vid6608Mutex = xSemaphoreCreateMutex();
+  SemaphoreHandle_t vid6608Mutex;
   // Macro for mutexs take/give
   #define VID6608_MUTEX_TAKE   xSemaphoreTake(vid6608Mutex, portMAX_DELAY);
   #define VID6608_MUTEX_GIVE   xSemaphoreGive(vid6608Mutex);
@@ -299,6 +299,8 @@ void VID6608Init() {
     return;
   }
 #ifdef VID6608_RTOS
+  // Create mutex for RTOS thread safety
+  vid6608Mutex = xSemaphoreCreateMutex();
   // Start background RTOS thread -> required for precision timing
   xTaskCreate(
     VID6608XvTask,                /* Function to implement the task */
