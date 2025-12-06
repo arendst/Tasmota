@@ -64,9 +64,7 @@ class GradientAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
     
     # Cache parameter values for performance
     var movement_speed = self.movement_speed
@@ -83,8 +81,6 @@ class GradientAnimation : animation.animation
     
     # Calculate gradient colors
     self._calculate_gradient(time_ms)
-    
-    return true
   end
   
   # Calculate gradient colors for all pixels
@@ -197,15 +193,7 @@ class GradientAnimation : animation.animation
   end
   
   # Render gradient to frame buffer
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-
-    var strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
     while i < strip_length && i < frame.width
       if i < size(self.current_colors)

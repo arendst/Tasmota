@@ -24,6 +24,6 @@ palette rainbow_with_white = [
 ]
 
 # define a gradient across the whole strip
-animation back_pattern = palette_meter_animation(value_func = rand_meter)
+animation back_pattern = palette_meter_animation(level = rand_meter())
 
 run back_pattern

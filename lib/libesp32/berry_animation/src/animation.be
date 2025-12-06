@@ -153,6 +153,8 @@ import "animations/twinkle" as twinkle_animation
 register_to_animation(twinkle_animation)
 import "animations/gradient" as gradient_animation
 register_to_animation(gradient_animation)
+import "animations/palette_meter" as palette_meter_animation
+register_to_animation(palette_meter_animation)
 import "animations/noise" as noise_animation
 register_to_animation(noise_animation)
 # import "animations/plasma" as plasma_animation

@@ -40,25 +40,6 @@ def test_pull_lexer_basic()
   return berry_code == direct_berry_code
 end
 
-def test_pull_lexer_template_mode()
-  print("=== Testing Pull Lexer Template Mode ===")
-  
-  var template_source = "animation test = solid(color=red)\n" +
-                        "test.opacity = 200\n" +
-                        "run test"
-  
-  # Test with template mode enabled
-  var pull_lexer = animation_dsl.create_lexer(template_source)
-  var transpiler = animation_dsl.SimpleDSLTranspiler(pull_lexer)
-  
-  var berry_code = transpiler.transpile_template_body()
-  
-  print("Template Body Result:")
-  print(berry_code)
-  
-  return true
-end
-
 def test_pull_lexer_token_access()
   print("=== Testing Pull Lexer Token Access Methods ===")
   
@@ -112,7 +93,6 @@ def run_all_tests()
   
   var tests = [
     test_pull_lexer_basic,
-    test_pull_lexer_template_mode,
     test_pull_lexer_token_access,
     test_pull_lexer_position_info
   ]
@@ -151,7 +131,6 @@ run_all_tests()
 
 return {
   "test_pull_lexer_basic": test_pull_lexer_basic,
-  "test_pull_lexer_template_mode": test_pull_lexer_template_mode,
   "test_pull_lexer_token_access": test_pull_lexer_token_access,
   "test_pull_lexer_position_info": test_pull_lexer_position_info,
   "run_all_tests": run_all_tests

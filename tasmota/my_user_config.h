@@ -941,8 +941,7 @@
 //#define USE_WOOLIIS                              // Add support for Wooliis Hall Effect Coulometer or Battery capacity monitor (+1k6 code)
 //#define USE_DALI                                 // Add support for DALI gateway (+7k6 code)
 //  #define DALI_POWER_OFF_NO_FADE                 // Power off immediatly without fading (+0k1 code)
-//  #define DALI_LIGHT_COLOR_SUPPORT               // Add support for DALI DT8 RGBWAF color control (+0k7 code)
-//    #define DALI_LIGHT_NO_READ_AFTER_WRITE       // Use no DTR read-after-write for smooth color transitions saving 55ms / channel (-0k1 code)
+//  #define DALI_LIGHT_NO_READ_AFTER_WRITE         // Use no DTR read-after-write for smooth color transitions saving 55ms / channel (-0k1 code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)

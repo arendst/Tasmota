@@ -1,5 +1,14 @@
 # Vue-meter based on random data
 
+berry """
+# define a pseudo-random generator, returns value in range 0..255
+def rand_meter(engine)
+  return (engine.time_ms * 2654435761) & 0xFF
+end
+"""
+
+extern function rand_meter      # declare the external function
+
 # define a palette of rainbow colors including white with constant brightness
 palette vue_meter_palette = [
   (  0, 0x00FF00)     # Green
@@ -16,6 +25,6 @@ palette vue_meter_palette = [
 color rainbow_rich_color = rich_palette(palette=vue_meter_palette, cycle_period=0, transition_type=LINEAR)
 
 # define a vue-meter based on all elements above
-animation back_pattern = palette_meter_animation(color_source = rainbow_rich_color, level = 85%)
+animation back_pattern = palette_meter_animation(color_source = rainbow_rich_color, level = rand_meter())
 
 run back_pattern

@@ -22,9 +22,7 @@ def test_gradient_creation()
   # Test single color gradient
   var red_gradient = animation.gradient_animation(engine)
   red_gradient.color = 0xFFFF0000
-  red_gradient.name = "red_gradient"
   assert(red_gradient != nil, "Should create red gradient")
-  assert(red_gradient.name == "red_gradient", "Should set name")
   
   # Test radial gradient
   var radial_gradient = animation.gradient_animation(engine)
@@ -35,7 +33,6 @@ def test_gradient_creation()
   radial_gradient.priority = 10
   radial_gradient.duration = 5000
   radial_gradient.loop = false
-  radial_gradient.name = "radial_gradient"
   assert(radial_gradient != nil, "Should create radial gradient")
   assert(radial_gradient.gradient_type == 1, "Should be radial gradient")
   
@@ -50,7 +47,6 @@ def test_gradient_parameters()
   var engine = animation.create_engine(strip)
   var gradient = animation.gradient_animation(engine)
   gradient.color = 0xFFFFFFFF
-  gradient.name = "test"
   
   # Test parameter setting via virtual members
   gradient.gradient_type = 1
@@ -84,16 +80,20 @@ def test_gradient_updates()
   var gradient = animation.gradient_animation(engine)
   gradient.color = 0xFF00FF00
   gradient.movement_speed = 100
-  gradient.name = "test"
   
   # Start the animation
+  # Note: When testing animations directly (not through engine_proxy), we must set start_time manually
+  gradient.start_time = 1000  # Set start_time manually for direct testing
   gradient.start(1000)
   assert(gradient.is_running == true, "Should be running after start")
   
   # Test update at different times
-  assert(gradient.update(1000) == true, "Should update successfully at start time")
-  assert(gradient.update(1500) == true, "Should update successfully after 500ms")
-  assert(gradient.update(2000) == true, "Should update successfully after 1000ms")
+  gradient.update(1000)
+  assert(gradient.is_running == true, "Should be running after update at start time")
+  gradient.update(1500)
+  assert(gradient.is_running == true, "Should be running after update at 500ms")
+  gradient.update(2000)
+  assert(gradient.is_running == true, "Should be running after update at 1000ms")
   
   # Test that movement_speed affects phase_offset
   var initial_offset = gradient.phase_offset
@@ -113,17 +113,17 @@ def test_gradient_rendering()
   var gradient = animation.gradient_animation(engine)
   gradient.color = 0xFFFF0000
   gradient.movement_speed = 0
-  gradient.name = "test"
   
   # Create a frame buffer
   var frame = animation.frame_buffer(5, 1)
   
   # Start and update the animation
+  gradient.start_time = 1000  # Set start_time manually for direct testing
   gradient.start(1000)
   gradient.update(1000)
   
   # Test rendering
-  var result = gradient.render(frame, 1000)
+  var result = gradient.render(frame, 1000, engine.strip_length)
   assert(result == true, "Should render successfully")
   
   # Test that colors were set (basic check)
@@ -176,14 +176,14 @@ def test_gradient_position_calculations()
   var linear_gradient = animation.gradient_animation(engine)
   linear_gradient.color = 0xFFFFFFFF
   linear_gradient.movement_speed = 0
-  linear_gradient.name = "test"
+  linear_gradient.start_time = 1000  # Set start_time manually for direct testing
   linear_gradient.start(1000)
   linear_gradient.update(1000)
   
   # The _calculate_linear_position method is private, but we can test the overall effect
   # by checking that different pixels get different colors in a linear gradient
   var frame = animation.frame_buffer(10, 1)
-  linear_gradient.render(frame, 1000)
+  linear_gradient.render(frame, 1000, engine.strip_length)
   
   var first_color = frame.get_pixel_color(0)
   var last_color = frame.get_pixel_color(9)
@@ -195,10 +195,10 @@ def test_gradient_position_calculations()
   radial_gradient.color = 0xFFFFFFFF
   radial_gradient.gradient_type = 1
   radial_gradient.movement_speed = 0
-  radial_gradient.name = "test"
+  radial_gradient.start_time = 1000  # Set start_time manually for direct testing
   radial_gradient.start(1000)
   radial_gradient.update(1000)
-  radial_gradient.render(frame, 1000)
+  radial_gradient.render(frame, 1000, engine.strip_length)
   
   # In a radial gradient, center pixel should be different from edge pixels
   var center_color = frame.get_pixel_color(5)  # Middle pixel
@@ -217,13 +217,11 @@ def test_gradient_color_refactoring()
   # Test with static color
   var static_gradient = animation.gradient_animation(engine)
   static_gradient.color = 0xFFFF0000
-  static_gradient.name = "static_test"
   assert(static_gradient.color == 0xFFFF0000, "Should have color set")
   
   # Test with nil color (default rainbow)
   var rainbow_gradient = animation.gradient_animation(engine)
   rainbow_gradient.color = nil
-  rainbow_gradient.name = "rainbow_test"
   assert(rainbow_gradient.color == nil, "Should accept nil color for rainbow")
   
   # Test color resolution
@@ -232,14 +230,16 @@ def test_gradient_color_refactoring()
   
   # Test basic rendering with different color types
   var frame = animation.frame_buffer(5, 1)
+  static_gradient.start_time = 1000  # Set start_time manually for direct testing
   static_gradient.start(1000)
   static_gradient.update(1000)
-  var result = static_gradient.render(frame, 1000)
+  var result = static_gradient.render(frame, 1000, engine.strip_length)
   assert(result == true, "Should render with static color")
   
+  rainbow_gradient.start_time = 1000  # Set start_time manually for direct testing
   rainbow_gradient.start(1000)
   rainbow_gradient.update(1000)
-  result = rainbow_gradient.render(frame, 1000)
+  result = rainbow_gradient.render(frame, 1000, engine.strip_length)
   assert(result == true, "Should render with rainbow color")
   
   print("✓ GradientAnimation color refactoring test passed")
@@ -252,7 +252,6 @@ def test_gradient_virtual_parameters()
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
   var gradient = animation.gradient_animation(engine)
-  gradient.name = "test"
   
   # Test virtual parameter assignment and access
   gradient.color = 0xFFFF00FF
@@ -289,7 +288,6 @@ def test_gradient_tostring()
   var static_gradient = animation.gradient_animation(engine)
   static_gradient.color = 0xFFFF0000
   static_gradient.movement_speed = 50
-  static_gradient.name = "static_test"
   var str_static = str(static_gradient)
   assert(str_static != nil, "Should have string representation")
   assert(string.find(str_static, "linear") != -1, "Should mention gradient type")
@@ -302,7 +300,6 @@ def test_gradient_tostring()
   provider_gradient.color = color_provider
   provider_gradient.gradient_type = 1
   provider_gradient.movement_speed = 25
-  provider_gradient.name = "provider_test"
   var str_provider = str(provider_gradient)
   assert(str_provider != nil, "Should have string representation")
   assert(string.find(str_provider, "radial") != -1, "Should mention radial type")

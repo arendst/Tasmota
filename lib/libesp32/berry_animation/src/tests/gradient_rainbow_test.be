@@ -18,7 +18,7 @@ rainbow_gradient.update(1000)
 
 # Create frame and render
 var frame = animation.frame_buffer(10, 1)
-var result = rainbow_gradient.render(frame, 1000)
+var result = rainbow_gradient.render(frame, 1000, engine.strip_length)
 assert(result == true, "Should render rainbow gradient successfully")
 
 # Check that different pixels have different colors (rainbow effect)

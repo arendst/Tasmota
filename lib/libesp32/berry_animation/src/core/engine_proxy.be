@@ -254,7 +254,14 @@ class EngineProxy : animation.animation
       idx += 1
     end
 
-    # Start all animations SECOND (they use values from providers and sequences)
+    # Start all value providers SECOND (they provide dynamic values)
+    idx = 0
+    while idx < size(self.value_providers)
+      self.value_providers[idx].start(time_ms)
+      idx += 1
+    end
+
+    # Start all animations THIRD (they use values from providers and sequences)
     idx = 0
     while idx < size(self.animations)
       self.animations[idx].start(time_ms)
@@ -306,24 +313,27 @@ class EngineProxy : animation.animation
   # Update the hybrid animation and all its children
   #
   # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if still running, false if completed
   def update(time_ms)
     # Cache time for child access
-    self.time_ms = time_ms
-    self.strip_length = self.engine.strip_length
+    self.time_ms = time_ms                        # We have 'self.time' attribute to mimick 'engine' behavior
+    self.strip_length = self.engine.strip_length  # We have 'self.strip_length' attribute to mimick 'engine' behavior
     
     # Update parent animation state
-    var still_running = super(self).update(time_ms)
-    
-    if !still_running
-      return false
-    end
+    super(self).update(time_ms)
     
     # Update all value providers FIRST (they may produce values used by sequences and animations)
     var idx = 0
     var sz = size(self.value_providers)
     while idx < sz
-      self.value_providers[idx].update(time_ms)
+      var vp = self.value_providers[idx]
+      if vp.is_running
+        # Set start time if needed
+        if vp.start_time == nil
+          vp.start_time = time_ms
+        end
+        # Call actual update
+        vp.update(time_ms)
+      end
       idx += 1
     end
     
@@ -331,7 +341,15 @@ class EngineProxy : animation.animation
     idx = 0
     sz = size(self.sequences)
     while idx < sz
-      self.sequences[idx].update(time_ms)
+      var sq = self.sequences[idx]
+      if sq.is_running
+        # Set start time if needed
+        if sq.start_time == nil
+          sq.start_time = time_ms
+        end
+        # Call actual update
+        sq.update(time_ms)
+      end
       idx += 1
     end
     
@@ -339,11 +357,17 @@ class EngineProxy : animation.animation
     idx = 0
     sz = size(self.animations)
     while idx < sz
-      var child = self.animations[idx].update(time_ms)
+      var an = self.animations[idx]
+      if an.is_running
+        # Set start time if needed
+        if an.start_time == nil
+          an.start_time = time_ms
+        end
+        # Call actual update
+        an.update(time_ms)
+      end
       idx += 1
     end
-    
-    return true
   end
   
   # Render the hybrid animation
@@ -351,10 +375,16 @@ class EngineProxy : animation.animation
   #
   # @param frame: FrameBuffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
+  # @param strip_length: int - Length of the LED strip in pixels (optional, defaults to self.strip_length)
   # @return bool - True if frame was modified, false otherwise
-  def render(frame, time_ms)
+  def render(frame, time_ms, strip_length)
     if !self.is_running || frame == nil
       return false
+    end
+
+    # Use cached strip_length if not provided
+    if strip_length == nil
+      strip_length = self.strip_length
     end
 
     # # update sequences first
@@ -367,7 +397,7 @@ class EngineProxy : animation.animation
     var modified = false
     
     # We don't call super method for optimization, skipping color computation
-    # modified = super(self).render(frame, time_ms)
+    # modified = super(self).render(frame, time_ms, strip_length)
     
     # Render all child animations (but not sequences - they don't render)
     var idx = 0
@@ -380,11 +410,11 @@ class EngineProxy : animation.animation
         self.temp_buffer.clear()
 
         # Render child
-        var child_rendered = child.render(self.temp_buffer, time_ms)
+        var child_rendered = child.render(self.temp_buffer, time_ms, strip_length)
         
         if child_rendered
           # Apply child's post-processing
-          child.post_render(self.temp_buffer, time_ms)
+          child.post_render(self.temp_buffer, time_ms, strip_length)
           
           # Blend child into main frame
           frame.blend_pixels(frame.pixels, self.temp_buffer.pixels)
@@ -446,7 +476,7 @@ class EngineProxy : animation.animation
   
   # String representation
   def tostring()
-    return f"{classname(self)}({self.name}, animations={size(self.animations)}, sequences={size(self.sequences)}, value_providers={size(self.value_providers)}, running={self.is_running})"
+    return f"{classname(self)}(animations={size(self.animations)}, sequences={size(self.sequences)}, value_providers={size(self.value_providers)}, running={self.is_running})"
   end
 end
 

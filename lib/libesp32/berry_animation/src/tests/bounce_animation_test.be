@@ -19,12 +19,10 @@ def test_bounce_animation_basic()
   # Create a simple source animation
   var source = animation.solid(engine)
   source.color = 0xFFFF0000
-  source.name = "test_source"
   
   # Test with default parameters using new parameterized pattern
   var bounce_anim = animation.bounce_animation(engine)
   bounce_anim.source_animation = source
-  bounce_anim.name = "test_bounce"
   
   assert(bounce_anim != nil, "BounceAnimation should be created")
   assert(bounce_anim.bounce_speed == 128, "Default bounce_speed should be 128")
@@ -46,7 +44,6 @@ def test_bounce_animation_custom()
   
   var source = animation.solid(engine)
   source.color = 0xFF00FF00
-  source.name = "test_source"
   
   # Test with custom parameters using new parameterized pattern
   var bounce_anim = animation.bounce_animation(engine)
@@ -59,7 +56,6 @@ def test_bounce_animation_custom()
   bounce_anim.duration = 5000
   bounce_anim.loop = false
   bounce_anim.opacity = 200
-  bounce_anim.name = "custom_bounce"
   
   assert(bounce_anim.bounce_speed == 200, "Custom bounce_speed should be 200")
   assert(bounce_anim.bounce_range == 15, "Custom bounce_range should be 15")
@@ -83,11 +79,9 @@ def test_bounce_animation_parameters()
   
   var source = animation.solid(engine)
   source.color = 0xFF0000FF
-  source.name = "test_source"
   
   var bounce_anim = animation.bounce_animation(engine)
   bounce_anim.source_animation = source
-  bounce_anim.name = "param_test"
   
   # Test parameter changes using virtual member assignment
   bounce_anim.bounce_speed = 180
@@ -118,7 +112,6 @@ def test_bounce_animation_physics()
   
   var source = animation.solid(engine)
   source.color = 0xFFFFFF00
-  source.name = "test_source"
   
   var bounce_anim = animation.bounce_animation(engine)
   bounce_anim.source_animation = source
@@ -126,7 +119,6 @@ def test_bounce_animation_physics()
   bounce_anim.bounce_range = 0
   bounce_anim.damping = 250
   bounce_anim.gravity = 0
-  bounce_anim.name = "physics_test"
   
   # Start animation
   bounce_anim.start(1000)
@@ -158,7 +150,6 @@ def test_bounce_animation_update_render()
   
   var source = animation.solid(engine)
   source.color = 0xFFFF00FF
-  source.name = "test_source"
   
   var bounce_anim = animation.bounce_animation(engine)
   bounce_anim.source_animation = source
@@ -166,7 +157,6 @@ def test_bounce_animation_update_render()
   bounce_anim.bounce_range = 0
   bounce_anim.damping = 250
   bounce_anim.gravity = 0
-  bounce_anim.name = "update_test"
   
   var frame = animation.frame_buffer(10)
   
@@ -175,11 +165,11 @@ def test_bounce_animation_update_render()
   assert(bounce_anim.is_running == true, "Animation should be running after start")
   
   # Test update
-  var result = bounce_anim.update(1500)
-  assert(result == true, "Update should return true for running animation")
+  bounce_anim.update(1500)
+  assert(bounce_anim.is_running == true, "Animation should still be running after update")
   
   # Test render
-  result = bounce_anim.render(frame, 1500)
+  var result = bounce_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # Check that frame was modified (colors should be set)
@@ -207,7 +197,6 @@ def test_bounce_constructors()
   
   var source = animation.solid(engine)
   source.color = 0xFF00FFFF
-  source.name = "test_source"
   
   # Test bounce_basic
   var basic_bounce = animation.bounce_basic(engine)
@@ -247,7 +236,6 @@ def test_bounce_animation_gravity()
   
   var source = animation.solid(engine)
   source.color = 0xFFFFFFFF
-  source.name = "test_source"
   
   var gravity_bounce = animation.bounce_animation(engine)
   gravity_bounce.source_animation = source
@@ -255,7 +243,6 @@ def test_bounce_animation_gravity()
   gravity_bounce.bounce_range = 0
   gravity_bounce.damping = 240
   gravity_bounce.gravity = 100
-  gravity_bounce.name = "gravity_test"
   
   gravity_bounce.start(1000)
   
@@ -282,7 +269,6 @@ def test_bounce_tostring()
   
   var source = animation.solid(engine)
   source.color = 0xFF888888
-  source.name = "test_source"
   
   var bounce_anim = animation.bounce_animation(engine)
   bounce_anim.source_animation = source
@@ -290,7 +276,6 @@ def test_bounce_tostring()
   bounce_anim.bounce_range = 10
   bounce_anim.damping = 240
   bounce_anim.gravity = 30
-  bounce_anim.name = "string_test"
   
   var str_repr = str(bounce_anim)
   

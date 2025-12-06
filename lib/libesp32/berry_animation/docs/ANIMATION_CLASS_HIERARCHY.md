@@ -23,7 +23,8 @@ ParameterizedObject (base class with parameter management and playable interface
 │   ├── CrenelPositionAnimation (crenel/square wave pattern)
 │   ├── BreatheAnimation (breathing effect)
 │   ├── PaletteGradientAnimation (gradient patterns with palette colors)
-│   │   └── PaletteMeterAnimation (meter/bar patterns)
+│   │   ├── PaletteMeterAnimation (meter/bar patterns)
+│   │   └── GradientMeterAnimation (VU meter with gradient colors and peak hold)
 │   ├── CometAnimation (moving comet with tail)
 │   ├── FireAnimation (realistic fire effect)
 │   ├── TwinkleAnimation (twinkling stars effect)
@@ -65,7 +66,7 @@ This unified base class enables:
 **Key Methods**:
 - `start(time_ms)` - Start the object at a specific time
 - `stop()` - Stop the object
-- `update(time_ms)` - Update object state based on current time
+- `update(time_ms)` - Update object state based on current time (no return value)
 
 **Factory**: N/A (base class)
 
@@ -75,7 +76,7 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `name` | string | "animation" | - | Optional name for the animation |
+| `id` | string | "animation" | - | Optional name for the animation |
 | `is_running` | bool | false | - | Whether the animation is active |
 | `priority` | int | 10 | 0-255 | Rendering priority (higher = on top) |
 | `duration` | int | 0 | min: 0 | Animation duration in ms (0 = infinite) |
@@ -158,7 +159,7 @@ Template animation parameters support all standard constraints:
 
 **Implicit Parameters**:
 Template animations automatically inherit parameters from the `EngineProxy` class hierarchy without explicit declaration:
-- `name` (string, default: "animation") - Animation name
+- `id` (string, default: "animation") - Animation name
 - `priority` (int, default: 10) - Rendering priority
 - `duration` (int, default: 0) - Animation duration in milliseconds
 - `loop` (bool, default: false) - Whether animation loops
@@ -212,6 +213,8 @@ Base interface for all value providers. Inherits from `ParameterizedObject`.
 | *(none)* | - | - | - | Base interface has no parameters |
 
 **Timing Behavior**: For value providers, `start()` is typically not called because instances can be embedded in closures. Value providers consider the first call to `produce_value()` as the start of their internal time reference. The `start()` method only resets the time origin if the provider was already started previously (i.e., `self.start_time` is not nil).
+
+**Update Method**: The `update(time_ms)` method does not return any value. Subclasses should check `self.is_running` to determine if the object is still active.
 
 **Factory**: N/A (base interface)
 
@@ -611,7 +614,48 @@ Creates smooth color gradients that can be linear or radial. Inherits from `Anim
 
 **Factories**: `animation.gradient_animation(engine)`, `animation.gradient_rainbow_linear(engine)`, `animation.gradient_rainbow_radial(engine)`, `animation.gradient_two_color_linear(engine)`
 
+### GradientMeterAnimation
 
+VU meter style animation that displays a gradient-colored bar from the start of the strip up to a configurable level. Includes optional peak hold indicator. Inherits from `PaletteGradientAnimation`.
+
+| Parameter | Type | Default | Constraints | Description |
+|-----------|------|---------|-------------|-------------|
+| `level` | int | 255 | 0-255 | Current meter level (0=empty, 255=full) |
+| `peak_hold` | int | 1000 | min: 0 | Peak hold time in ms (0=disabled) |
+| *(inherits all PaletteGradientAnimation parameters)* | | | | |
+
+#### Visual Representation
+
+```
+level=128 (50%), peak at 200
+[████████████████--------•-------]
+^                        ^
+|                        peak indicator (single pixel)
+filled gradient area
+```
+
+#### Usage Examples
+
+```berry
+# Simple meter with rainbow gradient
+color rainbow = rich_palette()
+animation meter = gradient_meter_animation()
+meter.color_source = rainbow
+meter.level = 128
+
+# Meter with peak hold (1 second)
+color fire_colors = rich_palette(palette=PALETTE_FIRE)
+animation vu_meter = gradient_meter_animation(peak_hold=1000)
+vu_meter.color_source = fire_colors
+
+# Dynamic level from value provider
+set audio_level = triangle(min_value=0, max_value=255, period=2s)
+animation audio_meter = gradient_meter_animation(peak_hold=500)
+audio_meter.color_source = rainbow
+audio_meter.level = audio_level
+```
+
+**Factory**: `animation.gradient_meter_animation(engine)`
 
 ### NoiseAnimation
 

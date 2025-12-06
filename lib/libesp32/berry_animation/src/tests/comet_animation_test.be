@@ -65,7 +65,6 @@ comet.direction = -1
 comet.wrap_around = 0
 comet.fade_factor = 150
 comet.priority = 15
-comet.name = "test_comet"
 
 assert_equals(comet.color, 0xFFFF0000, "Color should be set correctly")
 assert_equals(comet.tail_length, 8, "Tail length should be set correctly")
@@ -74,7 +73,6 @@ assert_equals(comet.direction, -1, "Direction should be set correctly")
 assert_equals(comet.wrap_around, 0, "Wrap around should be disabled")
 assert_equals(comet.fade_factor, 150, "Fade factor should be set correctly")
 assert_equals(comet.priority, 15, "Priority should be set correctly")
-assert_equals(comet.name, "test_comet", "Name should be set correctly")
 
 # Test 2: Multiple Comet Animations
 print("\n--- Test 2: Multiple Comet Animations ---")
@@ -149,8 +147,10 @@ pos_comet.tail_length = 3
 pos_comet.speed = 2560  # 10 pixels/sec (10 * 256)
 
 # Use engine time for testing
+# Note: When testing animations directly (not through engine_proxy), we must set start_time manually
 engine.time_ms = 1000
 var start_time = engine.time_ms
+pos_comet.start_time = start_time  # Set start_time manually for direct testing
 pos_comet.start(start_time)
 pos_comet.update(start_time)
 
@@ -173,6 +173,7 @@ dir_comet.direction = -1  # Backward
 
 engine.time_ms = 2000
 start_time = engine.time_ms
+dir_comet.start_time = start_time  # Set start_time manually for direct testing
 dir_comet.start(start_time)
 dir_comet.update(start_time)
 var initial_pos = dir_comet.head_position
@@ -199,6 +200,7 @@ wrap_comet.wrap_around = 1  # Enable wrapping
 
 small_engine.time_ms = 3000
 start_time = small_engine.time_ms
+wrap_comet.start_time = start_time  # Set start_time manually for direct testing
 wrap_comet.start(start_time)
 wrap_comet.update(start_time)
 small_engine.time_ms = start_time + 2000  # 2 seconds - should wrap multiple times
@@ -216,6 +218,7 @@ bounce_comet.wrap_around = 0  # Disable wrapping (enable bouncing)
 
 small_engine.time_ms = 4000
 start_time = small_engine.time_ms
+bounce_comet.start_time = start_time  # Set start_time manually for direct testing
 bounce_comet.start(start_time)
 bounce_comet.update(small_engine.time_ms)
 small_engine.time_ms = start_time + 200  # Should hit the end and bounce
@@ -234,12 +237,13 @@ render_comet.tail_length = 3
 render_comet.speed = 256  # Slow (1 pixel/sec)
 
 small_engine.time_ms = 5000
+render_comet.start_time = small_engine.time_ms  # Set start_time manually for direct testing
 render_comet.start(small_engine.time_ms)
 render_comet.update(small_engine.time_ms)
 
 # Clear frame and render
 frame.clear()
-var rendered = render_comet.render(frame, small_engine.time_ms)
+var rendered = render_comet.render(frame, small_engine.time_ms, small_engine.strip_length)
 assert_true(rendered, "Render should return true when successful")
 
 # Check that pixels were set (comet should be at position 0 with tail)
@@ -269,6 +273,7 @@ provider_comet.speed = 1280
 assert_not_nil(provider_comet, "Comet with color provider should be created")
 
 engine.time_ms = 6000
+provider_comet.start_time = engine.time_ms  # Set start_time manually for direct testing
 provider_comet.start(engine.time_ms)
 provider_comet.update(engine.time_ms)
 
@@ -295,6 +300,7 @@ assert_equals(strip_length, 30, "Strip length should come from engine")
 
 # Test engine time usage
 engine.time_ms = 7000
+engine_comet.start_time = engine.time_ms  # Set start_time manually for direct testing
 engine_comet.start(engine.time_ms)
 engine_comet.update(engine.time_ms)
 assert_equals(engine_comet.start_time, 7000, "Animation should use engine time for start")

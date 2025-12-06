@@ -1119,7 +1119,7 @@ Template animations automatically inherit parameters from the `engine_proxy` cla
 
 ```berry
 # These parameters are implicitly available in all template animations:
-param name type string default "animation"
+param id type string default "animation"
 param priority type int default 10
 param duration type int default 0
 param loop type bool default false

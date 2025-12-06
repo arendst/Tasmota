@@ -74,7 +74,6 @@ class AnimationEngine
     
     # Create root EngineProxy to manage all children
     self.root_animation = animation.engine_proxy(self)
-    self.root_animation.name = "root"
     
     # Initialize state
     self.is_running = false
@@ -455,11 +454,11 @@ class AnimationEngine
   end
   
   # Interrupt specific animation by name
-  def interrupt_animation(name)
+  def interrupt_animation(id)
     var i = 0
     while i < size(self.root_animation.children)
       var child = self.root_animation.children[i]
-      if isinstance(child, animation.animation) && child.name != nil && child.name == name
+      if isinstance(child, animation.animation) && child.id == id
         child.stop()
         self.root_animation.children.remove(i)
         return

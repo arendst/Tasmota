@@ -396,7 +396,7 @@ def test_external_function_complex()
     'extern function rand_meter\n' +
     'extern function breathing_effect\n' +
     'palette rainbow = [0xFF0000, 0x00FF00, 0x0000FF]\n' +
-    'animation meter = palette_meter_animation(value_func = rand_meter)\n' +
+    'animation meter = palette_meter_animation(level = rand_meter())\n' +
     'animation breath = solid(color=blue)\n' +
     'breath.opacity = breathing_effect\n' +
     'run meter'
@@ -550,6 +550,46 @@ def test_external_function_execution()
   end
 end
 
+# Test duplicate extern function declarations are allowed
+def test_duplicate_extern_function()
+  print("Testing duplicate extern function declarations...")
+  
+  var dsl_source = 'berry """\n' +
+    'def dup_func()\n' +
+    '  return 50\n' +
+    'end\n' +
+    '"""\n' +
+    'extern function dup_func\n' +
+    'extern function dup_func\n' +
+    'extern function dup_func\n' +
+    'animation test = solid(color=red)\n' +
+    'test.opacity = dup_func\n' +
+    'run test'
+  
+  var berry_code = animation_dsl.compile(dsl_source)
+  
+  assert(berry_code != nil, "Should generate Berry code for duplicate extern declarations")
+  
+  # Verify only one registration is generated (not duplicated)
+  import string
+  var count = 0
+  var idx = 0
+  while true
+    idx = string.find(berry_code, 'animation.register_user_function("dup_func"', idx)
+    if idx < 0 break end
+    count += 1
+    idx += 1
+  end
+  
+  assert(count == 1, f"Should generate exactly one registration, got {count}")
+  
+  # Verify the function call is still generated correctly
+  assert(string.find(berry_code, "animation.get_user_function('dup_func')(engine)") >= 0, "Should call external function")
+  
+  print("✓ Duplicate extern function declarations test passed")
+  return true
+end
+
 # Run all tests
 def run_all_berry_block_tests()
   print("=== DSL Berry Code Blocks and External Functions Test Suite ===")
@@ -575,7 +615,8 @@ def run_all_berry_block_tests()
     test_external_error_missing_function_name,
     test_external_function_reserved_name_validation,
     test_external_function_in_sequences,
-    test_external_function_execution
+    test_external_function_execution,
+    test_duplicate_extern_function
   ]
   
   var passed = 0

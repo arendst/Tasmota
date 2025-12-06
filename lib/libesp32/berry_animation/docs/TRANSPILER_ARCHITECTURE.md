@@ -163,7 +163,7 @@ _add_inherited_params_to_template(template_params_map)
 ```
 
 **Inherited Parameters (from Animation and ParameterizedObject):**
-- `name` (string, default: "animation")
+- `id` (string, default: "animation")
 - `priority` (int, default: 10)
 - `duration` (int, default: 0)
 - `loop` (bool, default: false)

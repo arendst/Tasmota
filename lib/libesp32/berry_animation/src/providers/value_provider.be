@@ -35,16 +35,6 @@ class ValueProvider : animation.parameterized_object
   def produce_value(name, time_ms)
     return module("undefined")  # Default behavior - return undefined
   end
-
-  # Update object state based on current time
-  # Subclasses must override this to implement their update logic
-  #
-  # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if object is still running, false if completed
-  def update(time_ms)
-    # Default implementation just returns running state
-    return self.is_running
-  end
 end
 
 # Add a method to check if an object is a value provider

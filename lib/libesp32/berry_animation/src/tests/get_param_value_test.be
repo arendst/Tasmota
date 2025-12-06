@@ -31,7 +31,6 @@ def test_get_param_value_with_color_provider()
   test_anim.duration = 0
   test_anim.loop = false
   test_anim.opacity = 255
-  test_anim.name = "test"
   
   # Create a ColorProvider that we can track calls on
   class TrackingColorProvider : animation.color_provider
@@ -78,7 +77,6 @@ def test_get_param_value_with_generic_provider()
   test_anim.duration = 0
   test_anim.loop = false
   test_anim.opacity = 255
-  test_anim.name = "test"
   
   # Create a generic ValueProvider that we can track calls on
   class TrackingValueProvider : animation.value_provider
@@ -125,7 +123,6 @@ def test_get_param_value_with_context_aware_provider()
   test_anim.duration = 0
   test_anim.loop = false
   test_anim.opacity = 255
-  test_anim.name = "test"
   
   # Create a ValueProvider that returns different values based on parameter name
   class ContextAwareProvider : animation.value_provider
@@ -180,7 +177,6 @@ def test_get_param_value_with_static_value()
   test_anim.duration = 0
   test_anim.loop = false
   test_anim.opacity = 255
-  test_anim.name = "test"
   
   # Set a static value (using the 'opacity' parameter that exists in base Animation)
   test_anim.opacity = 123

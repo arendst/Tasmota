@@ -61,42 +61,6 @@ SUCCESS
 SUCCESS
 ```
 
-## chap_5_21_template_shutter_bidir.anim
-
-**Status:** ✅ Success
-
-## Symbol Table
-
-| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
-|----------------------|-----------------------|---------|-----------|------------|
-| `main`               | animation             |         |           |            |
-| `rainbow_with_white` | palette               |         |           |            |
-| `shutter_bidir`      | animation_constructor |         |           |     ✓      |
-
-### Compilation Output
-
-```
-SUCCESS
-```
-
-## chap_5_22_template_shutter_bidir.anim
-
-**Status:** ✅ Success
-
-## Symbol Table
-
-| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
-|----------------------|-----------------------|---------|-----------|------------|
-| `main`               | animation             |         |           |            |
-| `rainbow_with_white` | palette               |         |           |            |
-| `shutter_bidir`      | animation_constructor |         |           |     ✓      |
-
-### Compilation Output
-
-```
-SUCCESS
-```
-
 ## christmas_tree.anim
 
 **Status:** ✅ Success
@@ -448,7 +412,7 @@ stack traceback:
 ### Compilation Output
 
 ```
-dsl_compilation_error: Line 4: Transpilation failed: Line 4: Cannot redefine built-in symbol 'abs' (type: 4). Use a different name like 'abs_custom' or 'my_abs'
+dsl_compilation_error: Line 4: Transpilation failed: Line 4: Cannot redefine built-in symbol 'abs'. Use a different name like 'abs_custom' or 'my_abs'
 stack traceback:
 	<unknown source>: in function `error`
 	<unknown source>: in function `transpile`
@@ -1256,16 +1220,14 @@ SUCCESS
 
 ## Summary
 
-- **Total files processed:** 51
-- **Successfully compiled:** 48
+- **Total files processed:** 49
+- **Successfully compiled:** 46
 - **Failed to compile:** 3
 
 ### Successful Files
 
 - ✅ breathing_colors.anim
 - ✅ candy_cane.anim
-- ✅ chap_5_21_template_shutter_bidir.anim
-- ✅ chap_5_22_template_shutter_bidir.anim
 - ✅ christmas_tree.anim
 - ✅ comet_chase.anim
 - ✅ computed_values_demo.anim

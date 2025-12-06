@@ -107,7 +107,7 @@ print(f"Color at full cycle: 0x{color_full :08x}")
 
 # Test rendering
 var frame = animation.frame_buffer(5)
-blue_breathe.render(frame, engine.time_ms)
+blue_breathe.render(frame, engine.time_ms, engine.strip_length)
 print(f"First pixel after rendering: 0x{frame.get_pixel_color(0) :08x}")
 
 # Test parameter validation

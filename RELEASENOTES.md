@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `light.get()` direct access to values [#24033](https://github.com/arendst/Tasmota/issues/24033)
 - Berry `gc_heap` and `gc_time` to `tasmota.memory()` [#24054](https://github.com/arendst/Tasmota/issues/24054)
 - Berry `tcp.write()` add `offset` and `len` [#24076](https://github.com/arendst/Tasmota/issues/24076)
+- Berry `tasmota.micros()` to get time in microseconds [#24192](https://github.com/arendst/Tasmota/issues/24192)
 
 ### Breaking Changed
 

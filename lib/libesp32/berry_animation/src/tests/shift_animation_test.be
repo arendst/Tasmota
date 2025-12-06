@@ -116,11 +116,11 @@ def test_shift_animation_update_render()
   assert(shift_anim.is_running == true, "Animation should be running after start")
   
   # Test update
-  var result = shift_anim.update(1500)
-  assert(result == true, "Update should return true for running animation")
+  shift_anim.update(1500)
+  assert(shift_anim.is_running == true, "Animation should still be running after update")
   
   # Test render
-  result = shift_anim.render(frame, 1500)
+  var result = shift_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # Check that colors were set

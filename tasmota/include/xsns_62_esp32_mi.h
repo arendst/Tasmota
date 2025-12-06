@@ -178,6 +178,7 @@ struct MI32connectionContextBerry_t{
   uint8_t addrType;
   int error;
   int32_t arg1;
+  uint32_t pin;
   bool hasArg1;
   bool oneOp;
   bool response;

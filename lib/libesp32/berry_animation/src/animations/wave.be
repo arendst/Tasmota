@@ -97,9 +97,7 @@ class WaveAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
     
     # Update time offset based on wave speed
     var current_wave_speed = self.wave_speed
@@ -114,8 +112,6 @@ class WaveAnimation : animation.animation
     
     # Calculate wave colors
     self._calculate_wave(time_ms)
-    
-    return true
   end
   
   # Calculate wave colors for all pixels
@@ -197,15 +193,7 @@ class WaveAnimation : animation.animation
   end
   
   # Render wave to frame buffer
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
     while i < strip_length
       if i < frame.width && i < self.current_colors.size()

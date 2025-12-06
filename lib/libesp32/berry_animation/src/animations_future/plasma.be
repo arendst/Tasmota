@@ -100,9 +100,7 @@ class PlasmaAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
     
     # Update time phase based on speed
     var current_time_speed = self.time_speed
@@ -117,8 +115,6 @@ class PlasmaAnimation : animation.animation
     
     # Calculate plasma colors
     self._calculate_plasma(time_ms)
-    
-    return true
   end
   
   # Calculate plasma colors for all pixels
@@ -184,15 +180,7 @@ class PlasmaAnimation : animation.animation
   end
   
   # Render plasma to frame buffer
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
     while i < strip_length
       if i < frame.width
@@ -230,7 +218,6 @@ def plasma_rainbow(engine)
   # Use default rainbow color (nil triggers rainbow in on_param_changed)
   anim.color = nil
   anim.time_speed = 50
-  anim.name = "plasma_rainbow"
   return anim
 end
 
@@ -244,7 +231,6 @@ def plasma_fast(engine)
   anim.time_speed = 150
   anim.freq_x = 48
   anim.freq_y = 35
-  anim.name = "plasma_fast"
   return anim
 end
 

@@ -37,7 +37,7 @@ class TestAnimation : animation.animation
   def update(time_ms)
     self.update_called = true
     self.update_time = time_ms
-    return super(self).update(time_ms)
+    super(self).update(time_ms)
   end
   
   def reset_test_state()

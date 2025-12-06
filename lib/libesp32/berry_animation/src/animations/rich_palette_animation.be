@@ -29,9 +29,6 @@ class RichPaletteAnimation : animation.animation
   def init(engine)
     super(self).init(engine)  # Initialize Animation base class
     
-    # Set default name (override inherited default)
-    self.name = "rich_palette"
-    
     # Create internal RichPaletteColorProvider instance
     self.color_provider = animation.rich_palette(engine)
     
@@ -71,7 +68,7 @@ class RichPaletteAnimation : animation.animation
   # String representation
   def tostring()
     try
-      return f"RichPaletteAnimation({self.name}, cycle_period={self.cycle_period}, brightness={self.brightness})"
+      return f"RichPaletteAnimation(cycle_period={self.cycle_period}, brightness={self.brightness})"
     except ..
       return "RichPaletteAnimation(uninitialized)"
     end
