@@ -22,7 +22,6 @@ def test_parameter_accepts_value_providers()
   test_anim.duration = 0
   test_anim.loop = false
   test_anim.opacity = 255
-  test_anim.name = "test"
   
   # Test with static integer value (using existing 'opacity' parameter with range 0-255)
   assert(test_anim.set_param("opacity", 42) == true, "Should accept static integer")

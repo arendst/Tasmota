@@ -31,13 +31,12 @@ def test_crenel_with_integer_color()
   crenel.duration = 0  # infinite
   crenel.loop = true
   crenel.opacity = 255
-  crenel.name = "test_crenel_int"
   
   # Start and render
   crenel.start()
   crenel.update(1000)
   frame.clear()
-  var result = crenel.render(frame, engine.time_ms)
+  var result = crenel.render(frame, engine.time_ms, engine.strip_length)
   
   assert(result == true, "Render should succeed with integer color")
   assert(crenel.is_running == true, "Animation should be running")
@@ -74,13 +73,12 @@ def test_crenel_with_color_provider()
   crenel.duration = 0  # infinite
   crenel.loop = true
   crenel.opacity = 255
-  crenel.name = "test_crenel_provider"
   
   # Start and render
   crenel.start()
   crenel.update(1000)
   frame.clear()
-  var result = crenel.render(frame, engine.time_ms)
+  var result = crenel.render(frame, engine.time_ms, engine.strip_length)
   
   assert(result == true, "Render should succeed with ColorProvider")
   assert(crenel.is_running == true, "Animation should be running")
@@ -117,7 +115,6 @@ def test_crenel_with_dynamic_color_provider()
   crenel.duration = 0  # infinite
   crenel.loop = true
   crenel.opacity = 255
-  crenel.name = "test_crenel_dynamic"
   
   # Start and render at different times to verify color changes
   crenel.start()
@@ -125,14 +122,14 @@ def test_crenel_with_dynamic_color_provider()
   # Render at time 0
   crenel.update(0)
   frame.clear()
-  var result1 = crenel.render(frame, engine.time_ms)
+  var result1 = crenel.render(frame, engine.time_ms, engine.strip_length)
   assert(result1 == true, "First render should succeed")
   
   # Render at time 1000 (different color expected)
   engine.time_ms = 1000  # Simulate time passage
   crenel.update(1000)
   frame.clear()
-  var result2 = crenel.render(frame, engine.time_ms)
+  var result2 = crenel.render(frame, engine.time_ms, engine.strip_length)
   assert(result2 == true, "Second render should succeed")
   
   print("✓ CrenelPositionAnimation with dynamic ColorProvider test passed")
@@ -166,13 +163,12 @@ def test_crenel_with_generic_value_provider()
   crenel.duration = 0  # infinite
   crenel.loop = true
   crenel.opacity = 255
-  crenel.name = "test_crenel_generic"
   
   # Start and render
   crenel.start()
   crenel.update(1000)
   frame.clear()
-  var result = crenel.render(frame, engine.time_ms)
+  var result = crenel.render(frame, engine.time_ms, engine.strip_length)
   
   assert(result == true, "Render should succeed with generic ValueProvider")
   assert(crenel.is_running == true, "Animation should be running")
@@ -204,7 +200,6 @@ def test_crenel_set_color_methods()
   crenel.duration = 0  # infinite
   crenel.loop = true
   crenel.opacity = 255
-  crenel.name = "test_set_color"
   
   crenel.start()
   
@@ -212,7 +207,7 @@ def test_crenel_set_color_methods()
   crenel.color = 0xFF00FF00  # Green
   crenel.update(1000)
   frame.clear()
-  var result1 = crenel.render(frame, engine.time_ms)
+  var result1 = crenel.render(frame, engine.time_ms, engine.strip_length)
   assert(result1 == true, "Render with new integer color should succeed")
   
   # Test setting color provider via direct assignment
@@ -221,7 +216,7 @@ def test_crenel_set_color_methods()
   crenel.color = yellow_provider
   crenel.update(1000)
   frame.clear()
-  var result2 = crenel.render(frame, engine.time_ms)
+  var result2 = crenel.render(frame, engine.time_ms, engine.strip_length)
   assert(result2 == true, "Render with ColorProvider should succeed")
   
   print("✓ CrenelPositionAnimation direct color assignment test passed")
@@ -247,7 +242,6 @@ def test_crenel_tostring()
   crenel_int.duration = 0
   crenel_int.loop = true
   crenel_int.opacity = 255
-  crenel_int.name = "test_tostring_int"
   
   var str_int = str(crenel_int)
   # Just verify the string is not empty and contains expected parts
@@ -269,7 +263,6 @@ def test_crenel_tostring()
   crenel_provider.duration = 0
   crenel_provider.loop = true
   crenel_provider.opacity = 255
-  crenel_provider.name = "test_tostring_provider"
   
   var str_provider = str(crenel_provider)
   # Just verify the string is not empty

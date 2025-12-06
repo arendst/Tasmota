@@ -94,21 +94,17 @@ class SparkleAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
     
     # Update at approximately 30 FPS
     var update_interval = 33  # ~30 FPS
     if time_ms - self.last_update < update_interval
-      return true
+      return
     end
     self.last_update = time_ms
     
     # Update sparkle simulation
     self._update_sparkles(time_ms)
-    
-    return true
   end
   
   # Update sparkle states and create new sparkles
@@ -198,17 +194,9 @@ class SparkleAnimation : animation.animation
   end
   
   # Render sparkles to frame buffer
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var current_strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
-    while i < current_strip_length
+    while i < strip_length
       if i < frame.width
         frame.set_pixel_color(i, self.current_colors[i])
       end
@@ -241,7 +229,6 @@ end
 def sparkle_white(engine)
   var anim = animation.sparkle_animation(engine)
   anim.color = 0xFFFFFFFF  # white sparkles
-  anim.name = "sparkle_white"
   return anim
 end
 
@@ -256,7 +243,6 @@ def sparkle_rainbow(engine)
   
   var anim = animation.sparkle_animation(engine)
   anim.color = rainbow_provider
-  anim.name = "sparkle_rainbow"
   return anim
 end
 

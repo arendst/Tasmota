@@ -69,9 +69,7 @@ class ScaleAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
 
     # Cache parameter values for performance
     var current_scale_speed = self.scale_speed
@@ -98,8 +96,6 @@ class ScaleAnimation : animation.animation
     
     # Calculate scaled colors
     self._calculate_scale()
-    
-    return true
   end
   
   # Calculate current scale factor based on mode
@@ -235,17 +231,9 @@ class ScaleAnimation : animation.animation
   end
   
   # Render scale to frame buffer
-  def render(frame, time_ms)
-    if frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var current_strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
-    while i < current_strip_length
+    while i < strip_length
       if i < frame.width
         frame.set_pixel_color(i, self.current_colors[i])
       end

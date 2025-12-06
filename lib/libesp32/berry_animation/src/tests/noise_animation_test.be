@@ -101,15 +101,17 @@ def test_noise_animation_update_render()
   var frame = animation.frame_buffer(10)
   
   # Start animation
+  # Note: When testing animations directly (not through engine_proxy), we must set start_time manually
+  noise_anim.start_time = 1000  # Set start_time manually for direct testing
   noise_anim.start(1000)
   assert(noise_anim.is_running == true, "Animation should be running after start")
   
   # Test update
-  var result = noise_anim.update(1500)
-  assert(result == true, "Update should return true for running animation")
+  noise_anim.update(1500)
+  assert(noise_anim.is_running == true, "Animation should still be running after update")
   
   # Test render
-  result = noise_anim.render(frame, 1500)
+  var result = noise_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # Check that colors were set (should not all be black)

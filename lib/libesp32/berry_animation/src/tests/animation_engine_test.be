@@ -42,17 +42,14 @@ print("\n--- Test 2: Animation Management ---")
 var anim1 = animation.solid(engine)    # Red, priority 10
 anim1.color = 0xFFFF0000
 anim1.priority = 10
-anim1.name = "red"
 
 var anim2 = animation.solid(engine)     # Green, priority 5
 anim2.color = 0xFF00FF00
 anim2.priority = 5
-anim2.name = "green"
 
 var anim3 = animation.solid(engine)     # Blue, priority 15
 anim3.color = 0xFF0000FF
 anim3.priority = 15
-anim3.name = "blue"
 
 assert_test(engine.add(anim1), "Should add first animation")
 assert_test(engine.add(anim2), "Should add second animation")
@@ -92,7 +89,6 @@ engine.clear()
 var test_anim = animation.solid(engine)
 test_anim.color = 0xFFFF0000
 test_anim.priority = 10
-test_anim.name = "test"
 engine.add(test_anim)
 engine.run()
 
@@ -136,7 +132,6 @@ for i : 0..49
   var anim = animation.solid(engine)
   anim.color = color
   anim.priority = i
-  anim.name = f"perf_{i}"
   engine.add(anim)
 end
 

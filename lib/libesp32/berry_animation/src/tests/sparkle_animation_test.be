@@ -49,7 +49,6 @@ def test_sparkle_animation_custom()
   sparkle_anim.priority = 15
   sparkle_anim.duration = 5000
   sparkle_anim.loop = false
-  sparkle_anim.name = "custom_sparkle"
   
   assert(sparkle_anim.back_color == 0xFF111111, "Custom background should be set")
   assert(sparkle_anim.density == 80, "Custom density should be 80")
@@ -73,7 +72,6 @@ def test_sparkle_animation_parameters()
   var engine = animation.create_engine(strip)
   
   var sparkle_anim = animation.sparkle_animation(engine)
-  sparkle_anim.name = "param_test"
   
   # Test parameter changes using virtual member assignment
   sparkle_anim.density = 100
@@ -112,7 +110,6 @@ def test_sparkle_animation_update_render()
   sparkle_anim.sparkle_duration = 30
   sparkle_anim.min_brightness = 100
   sparkle_anim.max_brightness = 255
-  sparkle_anim.name = "update_test"
   
   var frame = animation.frame_buffer(10)
   
@@ -128,7 +125,7 @@ def test_sparkle_animation_update_render()
   end
   
   # Test render
-  var result = sparkle_anim.render(frame, 1500)
+  var result = sparkle_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # With high density (255), we should have some sparkles
@@ -159,12 +156,10 @@ def test_sparkle_constructors()
   var white_sparkle = animation.sparkle_white(engine)
   assert(white_sparkle != nil, "sparkle_white should create animation")
   assert(white_sparkle.color == 0xFFFFFFFF, "White sparkle should have white color")
-  assert(white_sparkle.name == "sparkle_white", "White sparkle should have correct name")
   
   # Test sparkle_rainbow
   var rainbow_sparkle = animation.sparkle_rainbow(engine)
   assert(rainbow_sparkle != nil, "sparkle_rainbow should create animation")
-  assert(rainbow_sparkle.name == "sparkle_rainbow", "Rainbow sparkle should have correct name")
   # Check that color is set to a provider (not the default white color)
   var color_param = rainbow_sparkle.get_param("color")
   assert(color_param != nil, "Rainbow sparkle should have color parameter set")
@@ -190,7 +185,6 @@ def test_sparkle_tostring()
   var sparkle_anim = animation.sparkle_animation(engine)
   sparkle_anim.density = 75
   sparkle_anim.fade_speed = 45
-  sparkle_anim.name = "string_test"
   
   var str_repr = str(sparkle_anim)
   

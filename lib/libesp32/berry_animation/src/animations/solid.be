@@ -10,8 +10,6 @@
 def solid(engine)
   # Create animation with engine-only constructor
   var anim = animation.animation(engine)
-  anim.name = "solid"
-  
   return anim
 end
 

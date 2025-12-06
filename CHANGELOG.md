@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for ESP32-P4 rev.3 (#24146)
 - Support for Analog Gauges (#24153)
 - Support for MakeSkyBlue Solar Charger Energy Monitor (#24151)
+- Berry `tasmota.micros()` to get time in microseconds
 
 ### Breaking Changed
 

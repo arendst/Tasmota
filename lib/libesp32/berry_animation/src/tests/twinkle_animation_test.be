@@ -22,7 +22,6 @@ twinkle.fade_speed = 180
 twinkle.min_brightness = 32
 twinkle.max_brightness = 255
 twinkle.priority = 10
-twinkle.name = "test_twinkle"
 print(f"Created twinkle animation: {twinkle}")
 print(f"Initial state - running: {twinkle.is_running}, priority: {twinkle.priority}")
 
@@ -62,7 +61,7 @@ while dsl_cycle < 10
   
   dsl_twinkle.update(dsl_test_time)
   dsl_frame.clear()
-  dsl_twinkle.render(dsl_frame, dsl_test_time)
+  dsl_twinkle.render(dsl_frame, dsl_test_time, engine.strip_length)
   
   var dsl_pixels_lit = 0
   var i = 0
@@ -200,7 +199,7 @@ while cycle < 10
   
   # Clear and render
   render_frame.clear()
-  var rendered = twinkle.render(render_frame, test_time)
+  var rendered = twinkle.render(render_frame, test_time, engine.strip_length)
   
   # Count non-black pixels
   var non_black_pixels = 0
@@ -245,7 +244,6 @@ deterministic_twinkle.fade_speed = 100
 deterministic_twinkle.min_brightness = 128
 deterministic_twinkle.max_brightness = 255
 deterministic_twinkle.priority = 10
-deterministic_twinkle.name = "deterministic"
 deterministic_twinkle.start()
 
 # Force a specific random seed for reproducible results
@@ -262,7 +260,7 @@ while det_cycle < 5
   deterministic_twinkle.update(det_time)
   
   det_frame.clear()
-  deterministic_twinkle.render(det_frame, det_time)
+  deterministic_twinkle.render(det_frame, det_time, engine.strip_length)
   
   var det_non_black = 0
   i = 0
@@ -351,7 +349,6 @@ high_density_twinkle.fade_speed = 50
 high_density_twinkle.min_brightness = 200
 high_density_twinkle.max_brightness = 255
 high_density_twinkle.priority = 10
-high_density_twinkle.name = "high_density"
 high_density_twinkle.start()
 
 var hd_frame = animation.frame_buffer(10)
@@ -364,7 +361,7 @@ while hd_cycle < 3
   high_density_twinkle.update(hd_time)
   
   hd_frame.clear()
-  high_density_twinkle.render(hd_frame, hd_time)
+  high_density_twinkle.render(hd_frame, hd_time, engine.strip_length)
   
   var hd_non_black = 0
   i = 0
@@ -390,7 +387,7 @@ tiny_twinkle.density = 200
 tiny_twinkle.start()
 tiny_twinkle.update(current_time + 167)
 var tiny_frame = animation.frame_buffer(1)
-tiny_twinkle.render(tiny_frame)
+tiny_twinkle.render(tiny_frame, current_time, tiny_engine.strip_length)
 print("Tiny twinkle (1 pixel) created and rendered successfully")
 
 # Zero density
@@ -399,7 +396,7 @@ no_twinkle.density = 0
 no_twinkle.start()
 no_twinkle.update(current_time + 334)
 var no_frame = animation.frame_buffer(10)
-no_twinkle.render(no_frame)
+no_twinkle.render(no_frame, current_time, engine.strip_length)
 print("No twinkle (0 density) created and rendered successfully")
 
 # Maximum density
@@ -408,7 +405,7 @@ max_twinkle.density = 255
 max_twinkle.start()
 max_twinkle.update(current_time + 501)
 var max_frame = animation.frame_buffer(10)
-max_twinkle.render(max_frame)
+max_twinkle.render(max_frame, current_time, engine.strip_length)
 print("Max twinkle (255 density) created and rendered successfully")
 
 # Test 17: Alpha-Based Fading Verification

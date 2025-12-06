@@ -11,13 +11,15 @@ import animation
 # Create a mock engine for testing
 class MockEngine
   var time_ms
+  var strip_length
   
   def init()
     self.time_ms = 0  # Start at time 0
+    self.strip_length = 10  # Mock strip length
   end
   
   def get_strip_length()
-    return 10  # Mock strip length
+    return self.strip_length
   end
   
   def set_time(time)
@@ -132,28 +134,28 @@ class RichPaletteAnimationTest
     # Test at start - update engine time and get color
     mock_engine.set_time(0)
     anim.update(0)
-    anim.render(frame, 0)
+    anim.render(frame, 0, mock_engine.strip_length)
     var pixel_color = frame.get_pixel_color(0)
     self.assert_equal(pixel_color != 0, true, "Start color is not zero")
     
     # Test at middle - update engine time and get color
     mock_engine.set_time(500)
     anim.update(500)  # 50% through cycle
-    anim.render(frame, 500)
+    anim.render(frame, 500, mock_engine.strip_length)
     var middle_color = frame.get_pixel_color(0)
     self.assert_equal(middle_color != 0, true, "Middle color is not zero")
     
     # Test at end - update engine time and get color
     mock_engine.set_time(1000)
     anim.update(1000)  # 100% through cycle
-    anim.render(frame, 1000)
+    anim.render(frame, 1000, mock_engine.strip_length)
     var end_color = frame.get_pixel_color(0)
     self.assert_equal(end_color != 0, true, "End color is not zero")
     
     # Test looping - should be back to start color
     mock_engine.set_time(2000)
     anim.update(2000)  # After another full cycle
-    anim.render(frame, 2000)
+    anim.render(frame, 2000, mock_engine.strip_length)
     var loop_color = frame.get_pixel_color(0)
     self.assert_equal(loop_color, pixel_color, "Loop color matches start color")
     

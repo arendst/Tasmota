@@ -8,13 +8,15 @@ import animation
 # Create a mock engine for testing
 class MockEngine
   var time_ms
+  var strip_length
   
   def init()
     self.time_ms = 1000  # Fixed time for testing
+    self.strip_length = 10  # Mock strip length
   end
   
   def get_strip_length()
-    return 10  # Mock strip length
+    return self.strip_length
   end
   
   # Fake add() method for value provider auto-registration
@@ -36,7 +38,6 @@ solid_anim.priority = 10
 solid_anim.duration = 0
 solid_anim.loop = false  # Use boolean instead of integer
 solid_anim.opacity = 255
-solid_anim.name = "solid_test"
 assert(solid_anim != nil, "Failed to create solid animation")
 
 # Start the animation
@@ -46,7 +47,7 @@ assert(solid_anim.is_running, "Animation should be running")
 # Update and render
 solid_anim.update(mock_engine.time_ms)
 frame.clear()
-var result = solid_anim.render(frame, mock_engine.time_ms)
+var result = solid_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 # Check the color of the first pixel
@@ -66,7 +67,6 @@ cycle_anim.priority = 10
 cycle_anim.duration = 0
 cycle_anim.loop = false  # Use boolean instead of integer
 cycle_anim.opacity = 255
-cycle_anim.name = "cycle_test"
 assert(cycle_anim != nil, "Failed to create cycle animation")
 
 # Start the animation
@@ -76,7 +76,7 @@ assert(cycle_anim.is_running, "Animation should be running")
 # Update and render
 cycle_anim.update(mock_engine.time_ms)
 frame.clear()
-result = cycle_anim.render(frame, mock_engine.time_ms)
+result = cycle_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 # Test 3: animation.solid with a rich palette provider
@@ -93,7 +93,6 @@ palette_anim.priority = 10
 palette_anim.duration = 0
 palette_anim.loop = false  # Use boolean instead of integer
 palette_anim.opacity = 255
-palette_anim.name = "palette_test"
 assert(palette_anim != nil, "Failed to create palette animation")
 
 # Start the animation
@@ -103,7 +102,7 @@ assert(palette_anim.is_running, "Animation should be running")
 # Update and render
 palette_anim.update(mock_engine.time_ms)
 frame.clear()
-result = palette_anim.render(frame, mock_engine.time_ms)
+result = palette_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 # Test 4: animation.solid with a composite provider
@@ -124,7 +123,6 @@ composite_anim.priority = 10
 composite_anim.duration = 0
 composite_anim.loop = false  # Use boolean instead of integer
 composite_anim.opacity = 255
-composite_anim.name = "composite_test"
 assert(composite_anim != nil, "Failed to create composite animation")
 
 # Start the animation
@@ -134,7 +132,7 @@ assert(composite_anim.is_running, "Animation should be running")
 # Update and render
 composite_anim.update(mock_engine.time_ms)
 frame.clear()
-result = composite_anim.render(frame, mock_engine.time_ms)
+result = composite_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 # Test 5: Changing color provider dynamically
@@ -145,7 +143,6 @@ dynamic_anim.priority = 10
 dynamic_anim.duration = 0
 dynamic_anim.loop = false  # Use boolean instead of integer
 dynamic_anim.opacity = 255
-dynamic_anim.name = "dynamic_test"
 assert(dynamic_anim != nil, "Failed to create dynamic animation")
 
 # Start the animation
@@ -155,7 +152,7 @@ assert(dynamic_anim.is_running, "Animation should be running")
 # Update and render with initial color
 dynamic_anim.update(mock_engine.time_ms)
 frame.clear()
-result = dynamic_anim.render(frame, mock_engine.time_ms)
+result = dynamic_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 # Check the color of the first pixel
@@ -166,7 +163,7 @@ assert(pixel_color == 0xFF0000FF, f"Expected 0xFF0000FF, got {pixel_color:08X}")
 dynamic_anim.color = 0x00FF00FF  # Green
 dynamic_anim.update(mock_engine.time_ms)
 frame.clear()
-result = dynamic_anim.render(frame, mock_engine.time_ms)
+result = dynamic_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 # Check the color of the first pixel
@@ -177,7 +174,7 @@ assert(pixel_color == 0x00FF00FF, f"Expected 0x00FF00FF, got {pixel_color:08X}")
 dynamic_anim.color = cycle_provider
 dynamic_anim.update(mock_engine.time_ms)
 frame.clear()
-result = dynamic_anim.render(frame, mock_engine.time_ms)
+result = dynamic_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(result, "Render should return true")
 
 print("All tests passed!")

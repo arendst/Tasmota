@@ -1,0 +1,17 @@
+# Sky
+
+# Dark blue background
+color space_blue = 0x000066    # Note: opaque 0xFF alpha channel is implicitly added
+animation background = solid(color=space_blue)
+
+# Add sparkle trail behind comets but on top of blue background
+animation stars = twinkle_animation(
+  color=0xFFFFAA  # Light blue sparkles
+  density=8       # density (moderate sparkles)
+  twinkle_speed=400ms # twinkle speed (quick sparkle)
+  priority = 8
+)
+
+# Start all animations
+run background
+run stars

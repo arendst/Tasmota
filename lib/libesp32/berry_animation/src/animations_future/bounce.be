@@ -102,9 +102,7 @@ class BounceAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
     
     # Initialize last_update_time on first update
     if self.last_update_time == 0
@@ -114,7 +112,7 @@ class BounceAnimation : animation.animation
     # Calculate time delta
     var dt = time_ms - self.last_update_time
     if dt <= 0
-      return true
+      return
     end
     self.last_update_time = time_ms
     
@@ -132,8 +130,6 @@ class BounceAnimation : animation.animation
     
     # Calculate bounced colors
     self._calculate_bounce()
-    
-    return true
   end
   
   # Update bounce physics
@@ -220,14 +216,9 @@ class BounceAnimation : animation.animation
   end
   
   # Render bounce to frame buffer
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    var current_strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
-    while i < current_strip_length
+    while i < strip_length
       if i < frame.width
         frame.set_pixel_color(i, self.current_colors[i])
       end
@@ -255,7 +246,6 @@ def bounce_basic(engine)
   bounce.bounce_range = 0  # full strip range
   bounce.damping = 250
   bounce.gravity = 0
-  bounce.name = "bounce_basic"
   return bounce
 end
 
@@ -269,7 +259,6 @@ def bounce_gravity(engine)
   bounce.bounce_range = 0  # full strip range
   bounce.damping = 240
   bounce.gravity = 128
-  bounce.name = "bounce_gravity"
   return bounce
 end
 
@@ -283,7 +272,6 @@ def bounce_constrained(engine)
   bounce.bounce_range = 15  # constrained range
   bounce.damping = 250
   bounce.gravity = 0
-  bounce.name = "bounce_constrained"
   return bounce
 end
 

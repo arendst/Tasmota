@@ -110,15 +110,17 @@ def test_wave_animation_update_render()
   var frame = animation.frame_buffer(10)
   
   # Start animation
+  # Note: When testing animations directly (not through engine_proxy), we must set start_time manually
+  wave_anim.start_time = 1000  # Set start_time manually for direct testing
   wave_anim.start(1000)
   assert(wave_anim.is_running == true, "Animation should be running after start")
   
   # Test update
-  var result = wave_anim.update(1500)
-  assert(result == true, "Update should return true for running animation")
+  wave_anim.update(1500)
+  assert(wave_anim.is_running == true, "Animation should still be running after update")
   
   # Test render
-  result = wave_anim.render(frame, 1500)
+  var result = wave_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # Check that colors were set (should not all be black with high amplitude)
@@ -156,9 +158,10 @@ def test_wave_types()
     wave_anim.frequency = 50
     wave_anim.wave_speed = 0  # No movement for testing
     
+    wave_anim.start_time = 1000  # Set start_time manually for direct testing
     wave_anim.start(1000)
     wave_anim.update(1000)
-    var result = wave_anim.render(frame, 1000)
+    var result = wave_anim.render(frame, 1000, engine.strip_length)
     assert(result == true, f"Wave type {wave_types[i]} should render successfully")
     
     i += 1

@@ -17,13 +17,13 @@ def test_static_value_provider_interface()
   var provider = animation.static_value(engine)
   
   # Test default methods
-  assert(provider.get_value(1000) == nil, "Default get_value should return nil (no value set)")
-  assert(provider.update(1000) == false, "Update should return false")
+  assert(provider.produce_value("test", 1000) == nil, "Default produce_value should return nil (no value set)")
+  provider.update(1000)  # update() does not return a value
   
   # Test setting a value
   provider.value = 42
-  assert(provider.get_value(1000) == 42, "Should return set value")
-  assert(provider.get_value(2000) == 42, "Should return same value regardless of time")
+  assert(provider.produce_value("test", 1000) == 42, "Should return set value")
+  assert(provider.produce_value("test", 2000) == 42, "Should return same value regardless of time")
   
   print("✓ StaticValueProvider interface test passed")
 end
@@ -39,24 +39,24 @@ def test_static_value_provider_types()
   # Test with integer
   var int_provider = animation.static_value(engine)
   int_provider.value = 123
-  assert(int_provider.get_value(1000) == 123, "Should handle integer values")
+  assert(int_provider.produce_value("test", 1000) == 123, "Should handle integer values")
   
   # Test with string
   var str_provider = animation.static_value(engine)
   str_provider.value = "hello"
-  assert(str_provider.get_value(1000) == "hello", "Should handle string values")
+  assert(str_provider.produce_value("test", 1000) == "hello", "Should handle string values")
   
   # Test with color (hex value)
   var color_provider = animation.static_value(engine)
   color_provider.value = 0xFF00FF00
-  assert(color_provider.get_value(1000) == 0xFF00FF00, "Should handle color values")
+  assert(color_provider.produce_value("test", 1000) == 0xFF00FF00, "Should handle color values")
   
   print("✓ StaticValueProvider types test passed")
 end
 
-# Test universal get_XXX methods via member() construct
-def test_universal_get_methods()
-  print("Testing universal get_XXX methods...")
+# Test produce_value method with different parameter names
+def test_produce_value_method()
+  print("Testing produce_value method...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -65,29 +65,13 @@ def test_universal_get_methods()
   var provider = animation.static_value(engine)
   provider.value = 99
   
-  # Test various get_XXX methods
-  var get_pulse_size = provider.("get_pulse_size")
-  assert(type(get_pulse_size) == "function", "Should return function for get_pulse_size")
-  assert(get_pulse_size(1000) == 99, "get_pulse_size should return static value")
+  # Test produce_value with various parameter names - should return same value
+  assert(provider.produce_value("pulse_size", 1000) == 99, "produce_value should return static value for pulse_size")
+  assert(provider.produce_value("pos", 1000) == 99, "produce_value should return static value for pos")
+  assert(provider.produce_value("color", 1000) == 99, "produce_value should return static value for color")
+  assert(provider.produce_value("any_param", 2000) == 99, "produce_value should return static value for any param name")
   
-  var get_pos = provider.("get_pos")
-  assert(type(get_pos) == "function", "Should return function for get_pos")
-  assert(get_pos(1000) == 99, "get_pos should return static value")
-  
-  var get_color = provider.("get_color")
-  assert(type(get_color) == "function", "Should return function for get_color")
-  assert(get_color(1000) == 99, "get_color should return static value")
-  
-  # Test that non-get methods return undefined
-  try
-    var other_method = provider.("some_other_method")
-    # Should return undefined module, not a function
-    assert(type(other_method) != "function", "Non-get methods should not return functions")
-  except .. as e
-    # Exception is also acceptable
-  end
-  
-  print("✓ Universal get_XXX methods test passed")
+  print("✓ produce_value method test passed")
 end
 
 # Test comparison operators
@@ -149,17 +133,17 @@ def test_value_changes()
   var provider = animation.static_value(engine)
   
   # Test initial state
-  assert(provider.get_value(1000) == nil, "Initial value should be nil")
+  assert(provider.produce_value("test", 1000) == nil, "Initial value should be nil")
   
   # Test setting and changing values
   provider.value = 10
-  assert(provider.get_value(1000) == 10, "Should return first set value")
+  assert(provider.produce_value("test", 1000) == 10, "Should return first set value")
   
   provider.value = 20
-  assert(provider.get_value(1000) == 20, "Should return updated value")
+  assert(provider.produce_value("test", 1000) == 20, "Should return updated value")
   
   provider.value = "changed"
-  assert(provider.get_value(1000) == "changed", "Should handle type changes")
+  assert(provider.produce_value("test", 1000) == "changed", "Should handle type changes")
   
   print("✓ Value changes test passed")
 end
@@ -189,7 +173,7 @@ def run_static_value_provider_tests()
   try
     test_static_value_provider_interface()
     test_static_value_provider_types()
-    test_universal_get_methods()
+    test_produce_value_method()
     test_comparison_operators()
     test_parameterized_object_integration()
     test_value_changes()

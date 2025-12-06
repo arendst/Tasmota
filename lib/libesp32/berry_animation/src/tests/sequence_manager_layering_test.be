@@ -34,7 +34,6 @@ def test_multiple_sequence_managers()
   red_anim.duration = 0
   red_anim.loop = false
   red_anim.opacity = 255
-  red_anim.name = "red"
   
   var green_provider = animation.static_color(engine)
   green_provider.color = 0xFF00FF00
@@ -44,7 +43,6 @@ def test_multiple_sequence_managers()
   green_anim.duration = 0
   green_anim.loop = false
   green_anim.opacity = 255
-  green_anim.name = "green"
   
   var blue_provider = animation.static_color(engine)
   blue_provider.color = 0xFF0000FF
@@ -54,7 +52,6 @@ def test_multiple_sequence_managers()
   blue_anim.duration = 0
   blue_anim.loop = false
   blue_anim.opacity = 255
-  blue_anim.name = "blue"
   
   # Create different sequences for each manager using fluent interface
   seq_manager1.push_play_step(red_anim, 2000)
@@ -105,7 +102,6 @@ def test_sequence_manager_coordination()
   anim1.duration = 0
   anim1.loop = false
   anim1.opacity = 255
-  anim1.name = "anim1"
   
   var provider2 = animation.static_color(engine)
   provider2.color = 0xFF00FF00
@@ -115,7 +111,6 @@ def test_sequence_manager_coordination()
   anim2.duration = 0
   anim2.loop = false
   anim2.opacity = 255
-  anim2.name = "anim2"
   
   # Create sequences that will overlap using fluent interface
   seq_manager1.push_play_step(anim1, 3000)  # 3 seconds
@@ -172,7 +167,6 @@ def test_sequence_manager_engine_integration()
   test_anim1.duration = 0
   test_anim1.loop = false
   test_anim1.opacity = 255
-  test_anim1.name = "test1"
   
   var provider2 = animation.static_color(engine)
   provider2.color = 0xFF00FF00
@@ -182,7 +176,6 @@ def test_sequence_manager_engine_integration()
   test_anim2.duration = 0
   test_anim2.loop = false
   test_anim2.opacity = 255
-  test_anim2.name = "test2"
   
   # Create sequences using fluent interface
   seq_manager1.push_play_step(test_anim1, 1000)
@@ -274,7 +267,6 @@ def test_sequence_manager_clear_all()
   test_anim1.duration = 0
   test_anim1.loop = false
   test_anim1.opacity = 255
-  test_anim1.name = "test1"
   
   var provider2 = animation.static_color(engine)
   provider2.color = 0xFF00FF00
@@ -284,7 +276,6 @@ def test_sequence_manager_clear_all()
   test_anim2.duration = 0
   test_anim2.loop = false
   test_anim2.opacity = 255
-  test_anim2.name = "test2"
   
   # Create sequences using fluent interface
   seq_manager1.push_play_step(test_anim1, 5000)
@@ -341,7 +332,6 @@ def test_sequence_manager_stress()
     test_anim.duration = 0
     test_anim.loop = false
     test_anim.opacity = 255
-    test_anim.name = f"anim{i}"
     
     # Create sequence using fluent interface
     seq_managers[i].push_play_step(test_anim, (i + 1) * 500)  # Different durations

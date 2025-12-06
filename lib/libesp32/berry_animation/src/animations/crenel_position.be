@@ -37,18 +37,10 @@ class CrenelPositionAnimation : animation.animation
   # Render the crenel pattern to the provided frame buffer
   #
   # @param frame: FrameBuffer - The frame buffer to render to
-  # @param time_ms: int - Optional current time in milliseconds (defaults to self.engine.time_ms)
+  # @param time_ms: int - Current time in milliseconds
+  # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-
-    var pixel_size = frame.width
-    
+  def render(frame, time_ms, strip_length)
     # Access parameters via virtual members (automatically resolves ValueProviders)
     var back_color = self.back_color
     var pos = self.pos
@@ -87,7 +79,7 @@ class CrenelPositionAnimation : animation.animation
     end
     
     # Render pulses
-    while (pos < pixel_size) && (nb_pulse != 0)
+    while (pos < strip_length) && (nb_pulse != 0)
       var i = 0
       if pos < 0
         i = -pos
@@ -95,7 +87,7 @@ class CrenelPositionAnimation : animation.animation
       # Invariant: pos + i >= 0
       
       # Draw the pulse pixels
-      while (i < pulse_size) && (pos + i < pixel_size)
+      while (i < pulse_size) && (pos + i < strip_length)
         frame.set_pixel_color(pos + i, color)
         i += 1
       end

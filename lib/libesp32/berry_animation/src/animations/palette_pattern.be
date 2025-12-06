@@ -9,6 +9,8 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:PaletteGradientAnimation,weak
 class PaletteGradientAnimation : animation.animation
   var value_buffer     # Buffer to store values for each pixel (bytes object)
+  var _spatial_period  # Cached spatial_period for static pattern optimization
+  var _phase_shift     # Cached phase_shift for static pattern optimization
   
   # Static definitions of parameters with constraints
   static var PARAMS = animation.enc_params({
@@ -28,9 +30,6 @@ class PaletteGradientAnimation : animation.animation
     
     # Initialize non-parameter instance variables only
     self.value_buffer = bytes()
-    
-    # Set default name
-    self.name = "palette_gradient"
     
     # Initialize value buffer with default frame width
     self._initialize_value_buffer()
@@ -52,9 +51,23 @@ class PaletteGradientAnimation : animation.animation
   # Update the value buffer to generate gradient pattern
   def _update_value_buffer(time_ms, strip_length)
     # Cache parameter values for performance
-    var shift_period = self.shift_period
-    var spatial_period = self.spatial_period
-    var phase_shift = self.phase_shift
+    var shift_period = self.member("shift_period")
+    var spatial_period = self.member("spatial_period")
+    var phase_shift = self.member("phase_shift")
+    
+    # Optimization: for static patterns (shift_period == 0), skip recomputation
+    # if spatial_period, phase_shift, and strip_length haven't changed
+    if shift_period == 0
+      if self._spatial_period != nil &&
+         self._spatial_period == spatial_period &&
+         self._phase_shift == phase_shift &&
+         size(self.value_buffer) == strip_length
+        return  # No changes, skip recomputation
+      end
+      # Update cached values
+      self._spatial_period = spatial_period
+      self._phase_shift = phase_shift
+    end
     
     # Determine effective spatial period (0 means full strip)
     var effective_spatial_period = spatial_period > 0 ? spatial_period : strip_length
@@ -97,16 +110,7 @@ class PaletteGradientAnimation : animation.animation
   # Update animation state based on current time
   #
   # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if animation is still running, false if completed
   def update(time_ms)
-    # Call parent update method first
-    if !super(self).update(time_ms)
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
     # Calculate elapsed time since animation started
     var elapsed = time_ms - self.start_time
     
@@ -119,31 +123,21 @@ class PaletteGradientAnimation : animation.animation
     
     # Update the value buffer
     self._update_value_buffer(elapsed, strip_length)
-    
-    return true
   end
   
   # Render the pattern to the provided frame buffer
   #
   # @param frame: FrameBuffer - The frame buffer to render to
-  # @param time_ms: int - Optional current time in milliseconds (defaults to engine time)
+  # @param time_ms: int - Current time in milliseconds
+  # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
-  def render(frame, time_ms)
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
+  def render(frame, time_ms, strip_length)
     # Get current parameter values (cached for performance)
     var color_source = self.get_param('color_source')     # use get_param to avoid resolving of color_provider
     if color_source == nil
       return false
     end
     
-    # Calculate elapsed time since animation started
-    var elapsed = time_ms - self.start_time
-    
-    # Apply colors from the color source to each pixel based on its value
-    var strip_length = self.engine.strip_length
-
     # Optimization for LUT patterns
     var lut
     if isinstance(color_source, animation.color_provider) && (lut := color_source.get_lut()) != nil
@@ -171,6 +165,8 @@ class PaletteGradientAnimation : animation.animation
         frame_ptr += 4
       end
     else    # no LUT, do one color at a time
+      # Calculate elapsed time since animation started
+      var elapsed = time_ms - self.start_time
       var i = 0
       while (i < strip_length)
         var byte_value = self.value_buffer[i]
@@ -202,54 +198,6 @@ class PaletteGradientAnimation : animation.animation
   end
 end
 
-# Value meter pattern animation - creates meter/bar patterns based on a value function
-#@ solidify:PaletteMeterAnimation,weak
-class PaletteMeterAnimation : PaletteGradientAnimation
-  # Static definitions of parameters with constraints
-  static var PARAMS = animation.enc_params({
-    # Meter-specific parameters only
-    "value_func": {"default": nil, "type": "function"}
-  })
-  
-  # Initialize a new meter pattern animation
-  #
-  # @param engine: AnimationEngine - Required animation engine reference
-  def init(engine)
-    # Call parent constructor
-    super(self).init(engine)
-    
-    # Set default name
-    self.name = "palette_meter"
-  end
-  
-  # Override _update_value_buffer to generate meter pattern directly
-  def _update_value_buffer(time_ms, strip_length)
-    # Cache parameter values for performance
-    var value_func = self.value_func
-    if value_func == nil
-      return
-    end
-    
-    # Cache engine reference to avoid dereferencing
-    var engine = self.engine
-    
-    # Get the current value
-    var current_value = value_func(engine, time_ms, self)
-    
-    # Calculate the meter position using scale_uint for better precision
-    var meter_position = tasmota.scale_uint(current_value, 0, 255, 0, strip_length)
-    
-    # Calculate values for each pixel
-    var i = 0
-    while i < strip_length
-      # Return 255 if pixel is within the meter, 0 otherwise
-      self.value_buffer[i] = i < meter_position ? 255 : 0
-      i += 1
-    end
-  end
-end
-
 return {
-  'palette_gradient_animation': PaletteGradientAnimation,
-  'palette_meter_animation': PaletteMeterAnimation
+  'palette_gradient_animation': PaletteGradientAnimation
 }

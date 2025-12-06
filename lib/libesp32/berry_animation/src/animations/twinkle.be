@@ -10,7 +10,6 @@ class TwinkleAnimation : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Non-parameter instance variables only
-  var twinkle_states   # Array storing twinkle state for each pixel
   var current_colors   # bytes() buffer storing ARGB colors (4 bytes per pixel)
   var last_update      # Last update time for timing
   var random_seed      # Seed for random number generation
@@ -33,32 +32,28 @@ class TwinkleAnimation : animation.animation
     super(self).init(engine)
     
     # Initialize non-parameter instance variables only
-    self.twinkle_states = []
     self.current_colors = bytes()  # Use bytes() buffer for ARGB colors (4 bytes per pixel)
     self.last_update = 0
     
     # Initialize random seed using engine time
     self.random_seed = self.engine.time_ms % 65536
     
-    # Initialize arrays based on strip length from engine
+    # Initialize buffer based on strip length from engine
     self._initialize_arrays()
   end
   
-  # Initialize arrays based on current strip length
+  # Initialize buffer based on current strip length
   def _initialize_arrays()
     var strip_length = self.engine.strip_length
     
-    # Resize arrays
-    self.twinkle_states.resize(strip_length)
-    
     # Create new bytes() buffer for colors (4 bytes per pixel: ARGB)
+    # Alpha channel serves as the active state: alpha=0 means off, alpha>0 means active
     self.current_colors.clear()
     self.current_colors.resize(strip_length * 4)
     
-    # Initialize all pixels to off state
+    # Initialize all pixels to off state (transparent = alpha 0)
     var i = 0
     while i < strip_length
-      self.twinkle_states[i] = 0  # 0 = off, >0 = brightness level
       self.current_colors.set(i * 4, 0x00000000, -4)  # Transparent (alpha = 0)
       i += 1
     end
@@ -102,16 +97,7 @@ class TwinkleAnimation : animation.animation
   # Update animation state based on current time
   #
   # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if animation is still running, false if completed
   def update(time_ms)
-    # Call parent update method first
-    if !super(self).update(time_ms)
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
     # Access parameters via virtual members
     var twinkle_speed = self.twinkle_speed
     
@@ -122,8 +108,6 @@ class TwinkleAnimation : animation.animation
       self.last_update = time_ms
       self._update_twinkle_simulation(time_ms)
     end
-    
-    return true
   end
   
   # Update the twinkle simulation with alpha-based fading
@@ -137,8 +121,8 @@ class TwinkleAnimation : animation.animation
     
     var strip_length = self.engine.strip_length
     
-    # Ensure arrays are properly sized
-    if size(self.twinkle_states) != strip_length || self.current_colors.size() != strip_length * 4
+    # Ensure buffer is properly sized
+    if self.current_colors.size() != strip_length * 4
       self._initialize_arrays()
     end
     
@@ -153,7 +137,6 @@ class TwinkleAnimation : animation.animation
         var fade_amount = tasmota.scale_uint(fade_speed, 0, 255, 1, 20)
         if alpha <= fade_amount
           # Star has faded completely - reset to transparent
-          self.twinkle_states[i] = 0
           self.current_colors.set(i * 4, 0x00000000, -4)
         else
           # Reduce alpha while keeping RGB components unchanged
@@ -169,8 +152,11 @@ class TwinkleAnimation : animation.animation
     # For each pixel, check if it should twinkle based on density probability
     var j = 0
     while j < strip_length
-      # Only consider pixels that are currently off (transparent)
-      if self.twinkle_states[j] == 0
+      # Only consider pixels that are currently off (alpha = 0)
+      var current_color = self.current_colors.get(j * 4, -4)
+      var alpha = (current_color >> 24) & 0xFF
+      
+      if alpha == 0
         # Use density as probability out of 255
         if self._random_range(255) < density
           # Create new star at full brightness with random intensity alpha
@@ -185,7 +171,6 @@ class TwinkleAnimation : animation.animation
           var b = base_color & 0xFF
           
           # Create new star with full-brightness color and variable alpha
-          self.twinkle_states[j] = 1  # Mark as active (non-zero)
           self.current_colors.set(j * 4, (star_alpha << 24) | (r << 16) | (g << 8) | b, -4)
         end
       end
@@ -196,20 +181,12 @@ class TwinkleAnimation : animation.animation
   # Render the twinkle to the provided frame buffer
   #
   # @param frame: FrameBuffer - The frame buffer to render to
-  # @param time_ms: int - Optional current time in milliseconds (defaults to self.engine.time_ms)
+  # @param time_ms: int - Current time in milliseconds
+  # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var strip_length = self.engine.strip_length
-    
-    # Ensure arrays are properly sized
-    if size(self.twinkle_states) != strip_length || self.current_colors.size() != strip_length * 4
+  def render(frame, time_ms, strip_length)
+    # Ensure buffer is properly sized
+    if self.current_colors.size() != strip_length * 4
       self._initialize_arrays()
     end
     

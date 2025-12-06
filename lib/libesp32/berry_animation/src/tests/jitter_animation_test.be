@@ -158,11 +158,11 @@ def test_jitter_animation_update_render()
   jitter_anim.start(1000)
   
   # Test update
-  var result = jitter_anim.update(1500)
-  assert(result == true, "Update should return true for running animation")
+  jitter_anim.update(1500)
+  assert(jitter_anim.is_running == true, "Animation should still be running after update")
   
   # Test render
-  result = jitter_anim.render(frame, 1500)
+  var result = jitter_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # Check that jitter offsets were initialized

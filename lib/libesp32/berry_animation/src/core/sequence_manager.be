@@ -177,10 +177,14 @@ class SequenceManager : animation.parameterized_object
   end
   
   # Update sequence state - called from fast_loop
-  # Returns true if still running, false if completed
   def update(current_time)
     if !self.is_running || size(self.steps) == 0
-      return false
+      return
+    end
+    
+    # Safety check: ensure step_index is valid
+    if self.step_index >= size(self.steps)
+      return
     end
     
     var current_step = self.steps[self.step_index]
@@ -189,7 +193,8 @@ class SequenceManager : animation.parameterized_object
     if current_step["type"] == "subsequence"
       # Handle sub-sequence (including repeat sequences)
       var sub_seq = current_step["sequence_manager"]
-      if !sub_seq.update(current_time)
+      sub_seq.update(current_time)
+      if !sub_seq.is_running
         # Sub-sequence finished, advance to next step
         self.advance_to_next_step(current_time)
       end
@@ -221,8 +226,6 @@ class SequenceManager : animation.parameterized_object
         self.advance_to_next_step(current_time)
       end
     end
-    
-    return self.is_running
   end
   
   # Execute the current step

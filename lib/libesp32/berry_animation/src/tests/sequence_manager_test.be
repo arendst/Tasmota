@@ -42,7 +42,6 @@ def test_sequence_manager_step_creation()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   
   # Test fluent interface step creation
   var seq_manager = animation.sequence_manager(engine)
@@ -89,7 +88,6 @@ def test_sequence_manager_execution()
   anim1.priority = 0
   anim1.duration = 0
   anim1.loop = true
-  anim1.name = "anim1"
   
   var color_provider2 = animation.static_color(engine)
   color_provider2.color = 0xFF00FF00
@@ -98,7 +96,6 @@ def test_sequence_manager_execution()
   anim2.priority = 0
   anim2.duration = 0
   anim2.loop = true
-  anim2.name = "anim2"
   
   # Create sequence using fluent interface
   seq_manager.push_play_step(anim1, 1000)
@@ -137,7 +134,6 @@ def test_sequence_manager_timing()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   
   # Create simple sequence with timed steps using fluent interface
   seq_manager.push_play_step(test_anim, 1000)  # 1 second
@@ -191,7 +187,6 @@ def test_sequence_manager_step_info()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   # Create sequence using fluent interface
   seq_manager.push_play_step(test_anim, 2000)
               .push_wait_step(1000)
@@ -221,7 +216,6 @@ def test_sequence_manager_stop()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   # Create sequence using fluent interface
   seq_manager.push_play_step(test_anim, 5000)
   
@@ -259,7 +253,6 @@ def test_sequence_manager_is_running()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   # Create sequence using fluent interface
   seq_manager.push_play_step(test_anim, 1000)
   
@@ -294,7 +287,6 @@ def test_sequence_manager_assignment_steps()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   test_anim.opacity = 255  # Initial opacity
   
   # Create brightness value provider for assignment
@@ -353,7 +345,6 @@ def test_sequence_manager_complex_sequence()
   red_anim.priority = 0
   red_anim.duration = 0
   red_anim.loop = true
-  red_anim.name = "red"
   
   var green_provider = animation.static_color(engine)
   green_provider.color = 0xFF00FF00
@@ -362,7 +353,6 @@ def test_sequence_manager_complex_sequence()
   green_anim.priority = 0
   green_anim.duration = 0
   green_anim.loop = true
-  green_anim.name = "green"
   
   var blue_provider = animation.static_color(engine)
   blue_provider.color = 0xFF0000FF
@@ -371,7 +361,6 @@ def test_sequence_manager_complex_sequence()
   blue_anim.priority = 0
   blue_anim.duration = 0
   blue_anim.loop = true
-  blue_anim.name = "blue"
   
   # Create complex sequence using fluent interface
   seq_manager.push_play_step(red_anim, 1000)    # Play red for 1s
@@ -436,7 +425,6 @@ def test_sequence_manager_integration()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   # Create sequence using fluent interface
   seq_manager.push_play_step(test_anim, 1000)
   
@@ -517,7 +505,6 @@ def test_sequence_manager_repeat_execution_with_functions()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test_repeat"
   
   # Create a function that returns repeat count (simulating palette_size)
   var repeat_count_func = def (engine) return 3 end
@@ -606,7 +593,6 @@ def test_sequence_manager_dynamic_repeat_changes()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "dynamic_test"
   
   # Create dynamic repeat count that changes based on external state
   var external_state = {"multiplier": 2}
@@ -719,7 +705,6 @@ def test_sequence_manager_zero_iterations()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test"
   
   # Track execution count
   var execution_count = 0
@@ -842,7 +827,6 @@ def test_sequence_manager_boolean_repeat_counts()
   test_anim.priority = 0
   test_anim.duration = 0
   test_anim.loop = true
-  test_anim.name = "test_bool"
   
   # Test 1: repeat_count = true (should execute once, true converts to 1)
   var execution_count = 0

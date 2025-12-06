@@ -45,7 +45,6 @@ def run_tests()
   crenel.duration = 0
   crenel.loop = true
   crenel.opacity = 255
-  crenel.name = "test_crenel"
   
   test_assert(crenel.color == 0xFFFF0000, "Initial color setting")
   test_assert(crenel.pos == 4, "Initial position setting")
@@ -99,7 +98,7 @@ def run_tests()
   crenel.back_color = 0xFF000000  # Transparent
   crenel.start()
   
-  var rendered = crenel.render(frame, engine.time_ms)
+  var rendered = crenel.render(frame, engine.time_ms, engine.strip_length)
   test_assert(rendered, "Render returns true when running")
   
   # Check pattern: 2 on, 3 off, 2 on, 3 off...
@@ -118,7 +117,7 @@ def run_tests()
   # Test 6: Frame rendering with background
   frame.clear()
   crenel.back_color = 0xFF000080  # Dark blue background
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   test_assert(frame.get_pixel_color(2) == 0xFF000080, "Gap pixel has background color")
   test_assert(frame.get_pixel_color(0) == 0xFFFF0000, "Pulse pixel overrides background")
@@ -127,7 +126,7 @@ def run_tests()
   frame.clear()
   crenel.back_color = 0xFF000000  # Transparent background
   crenel.nb_pulse = 2  # Only 2 pulses
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   # Should have 2 pulses: positions 0,1 and 5,6
   test_assert(frame.get_pixel_color(0) == 0xFFFF0000, "Limited pulse 1 pixel 1 is red")
@@ -143,7 +142,7 @@ def run_tests()
   frame.clear()
   crenel.pos = 2  # Start at position 2
   crenel.nb_pulse = -1  # Back to infinite
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   # Pattern should start at position 2: positions 2,3 and 7,8
   test_assert(frame.get_pixel_color(0) == 0x00000000, "Offset pattern - position 0 is transparent")
@@ -158,7 +157,7 @@ def run_tests()
   frame.clear()
   crenel.pos = 0
   crenel.pulse_size = 0
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   # All pixels should remain transparent
   for i:0..9
@@ -169,7 +168,7 @@ def run_tests()
   frame.clear()
   crenel.pulse_size = 1
   crenel.low_size = 2
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   # Pattern: 1 on, 2 off, 1 on, 2 off...
   # Positions: 0 = red, 1,2 = transparent, 3 = red, 4,5 = transparent, 6 = red, 7,8 = transparent, 9 = red
@@ -185,7 +184,7 @@ def run_tests()
   crenel.pulse_size = 2
   crenel.low_size = 3
   crenel.pos = -1
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   # With period = 5 and pos = -1, the pattern should be shifted
   # The algorithm should handle negative positions correctly
@@ -202,7 +201,7 @@ def run_tests()
   frame.clear()
   crenel.pos = 0
   crenel.nb_pulse = 0
-  crenel.render(frame, engine.time_ms)
+  crenel.render(frame, engine.time_ms, engine.strip_length)
   
   # All pixels should remain transparent
   for i:0..9
@@ -235,7 +234,7 @@ def run_tests()
   crenel.pulse_size = 10
   crenel.low_size = 5
   crenel.nb_pulse = 3  # 3 pulses
-  crenel.render(large_frame)
+  crenel.render(large_frame, engine.time_ms, 100)  # Use frame size as strip_length for this test
   
   # Should have 3 pulses of 10 pixels each, separated by 5 pixels
   # Pulse 1: 0-9, Gap: 10-14, Pulse 2: 15-24, Gap: 25-29, Pulse 3: 30-39

@@ -24,11 +24,9 @@ print("✓ Basic creation test passed")
 print("\n=== Test 2: Add Child Animations ===")
 var child1 = animation.solid(engine)
 child1.color = 0xFFFF0000  # Red
-child1.name = "red_child"
 
 var child2 = animation.solid(engine)
 child2.color = 0xFF00FF00  # Green
-child2.name = "green_child"
 
 proxy.add(child1)
 proxy.add(child2)
@@ -60,15 +58,15 @@ print("✓ Start engine proxy test passed")
 # Test 5: Update engine proxy (should update all animations)
 print("\n=== Test 5: Update Engine Proxy ===")
 engine.time_ms = 1500
-var result = proxy.update(engine.time_ms)
-assert(result == true, "Engine proxy should still be running")
+proxy.update(engine.time_ms)
+assert(proxy.is_running == true, "Engine proxy should still be running")
 print("✓ Update engine proxy test passed")
 
 # Test 6: Render engine proxy
 print("\n=== Test 6: Render Engine Proxy ===")
 var frame = animation.frame_buffer(30)
 engine.time_ms = 2000
-result = proxy.render(frame, engine.time_ms)
+result = proxy.render(frame, engine.time_ms, engine.strip_length)
 # Rendering should work (may or may not modify frame depending on animations)
 print("✓ Render engine proxy test passed")
 
@@ -94,12 +92,10 @@ print("✓ Remove child test passed")
 print("\n=== Test 9: Engine Proxy with Own Rendering ===")
 var proxy2 = animation.engine_proxy(engine)
 proxy2.color = 0xFF0000FF  # Blue background
-proxy2.name = "blue_proxy"
 
 var pulse = animation.breathe_animation(engine)
 pulse.color = 0xFFFFFF00  # Yellow
 pulse.period = 2000
-pulse.name = "yellow_pulse"
 
 proxy2.add(pulse)
 engine.time_ms = 3000
@@ -115,7 +111,6 @@ print("\n=== Test 10: Engine Integration ===")
 var proxy3 = animation.engine_proxy(engine)
 proxy3.color = 0xFFFF00FF  # Magenta
 proxy3.priority = 15
-proxy3.name = "engine_proxy"
 
 # Add to engine (should work since EngineProxy is a Playable)
 engine.add(proxy3)
