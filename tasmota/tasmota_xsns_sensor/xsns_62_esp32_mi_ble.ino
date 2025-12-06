@@ -3530,15 +3530,13 @@ void MI32Show(bool json)
 
 #ifdef USE_WEBSERVER
   } else {
+    if (!Settings->flag5.mi32_enable) return;
+
     static  uint16_t _page = 0;
     static  uint16_t _counter = 0;
     int32_t i = _page * MI32.perPage;
     uint32_t j = i + MI32.perPage;
 
-    if (!Settings->flag5.mi32_enable) {
-      return;
-    }
-    
     if (j+1 > numsensors){
       j = numsensors;
     }

@@ -1000,12 +1000,10 @@ const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}%s " D_BATTERY "{m}%s{e}";
 
 void EQ3Show(void)
 {
+  if (!Settings->flag5.mi32_enable) return;
+
   char c_unit = D_UNIT_CELSIUS[0]; // ToDo: Check if fahrenheit is possible -> temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
   bool FirstSensorShown = false;
-
-  if (!Settings->flag5.mi32_enable) {
-    return;
-  }
 
   for (int i = 0; i < EQ3_NUM_DEVICESLOTS; i++) {
     if (EQ3Devices[i].timeoutTime) {
