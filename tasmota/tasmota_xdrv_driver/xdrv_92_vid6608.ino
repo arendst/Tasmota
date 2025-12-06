@@ -108,6 +108,23 @@ enum GaugeInternalCommand {
 bool vid6608Present = false;
 float vid6608StepsFloat = VID6608_DEFAULT_MAX_STEPS;
 vid6608 *vid6608Drives[VID6608_MAX_DRIVES];
+#ifdef VID6608_RTOS
+  /**
+   * @brief Mutex for RTOS precision timing
+   *
+   * We have to use "real" trheads under FreeRTOS, as precision timing is required
+   * for stepper motor driving. This mutex protects data access from multiple
+   * threads simultaniously. Else it will lead to stepper motor glitches and random move.
+   *
+   */
+  SemaphoreHandle_t vid6608Mutex;
+  // Macro for mutexs take/give
+  #define VID6608_MUTEX_TAKE   xSemaphoreTake(vid6608Mutex, portMAX_DELAY);
+  #define VID6608_MUTEX_GIVE   xSemaphoreGive(vid6608Mutex);
+#else
+  #define VID6608_MUTEX_TAKE
+  #define VID6608_MUTEX_GIVE
+#endif
 
 /**
  * @brief Command Gauge
@@ -148,6 +165,7 @@ void CmndGaugeZero(void) {
  * @param payload command argument
  */
 void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
+  VID6608_MUTEX_TAKE
   Response_P(PSTR("{\"" D_PRFX_GAUGE "\":{"));
   bool isFirstItem = true;
   for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
@@ -179,6 +197,7 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
     }
   }
   ResponseAppend_P(PSTR("}}"));
+  VID6608_MUTEX_GIVE
 }
 
 /**
@@ -188,6 +207,7 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
 void VID6608StatusJson() {
   ResponseAppend_P(PSTR("\"" D_PRFX_GAUGE "\":{"));
   bool isFirstItem = true;
+  VID6608_MUTEX_TAKE
   for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
     vid6608 *driver = vid6608Drives[x];
     if (driver) {
@@ -198,6 +218,7 @@ void VID6608StatusJson() {
       isFirstItem = false;
     }
   }
+  VID6608_MUTEX_GIVE
   ResponseJsonEnd();
 }
 
@@ -208,12 +229,14 @@ void VID6608StatusJson() {
  */
 void VID6608StatusWeb() {
   WSContentSend_PD(HTTP_TABLE100);
+  VID6608_MUTEX_TAKE
   for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
     vid6608 *driver = vid6608Drives[x];
     if (driver) {
       WSContentSend_PD(PSTR("<tr><th>Gauge %d</th><td>%d</td></tr>"), (int32_t)(x+1), (int32_t)driver->getPosition());
     }
   }
+  VID6608_MUTEX_GIVE
   WSContentSend_PD(PSTR("</table>"));
 }
 #endif
@@ -227,6 +250,7 @@ void VID6608StatusWeb() {
 void VID6608XvTask(void *) {
   while(true) {
     bool needToMove = false;
+    VID6608_MUTEX_TAKE
     for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
       vid6608 *driver = vid6608Drives[x];
       if (driver) {
@@ -236,6 +260,7 @@ void VID6608XvTask(void *) {
         }
       }
     }
+    VID6608_MUTEX_GIVE
     /*
       If we dont need to move any -> go sleep.
       This will delay next move begin up to 500ms, but freeds up CPU a lot.
@@ -274,6 +299,8 @@ void VID6608Init() {
     return;
   }
 #ifdef VID6608_RTOS
+  // Create mutex for RTOS thread safety
+  vid6608Mutex = xSemaphoreCreateMutex();
   // Start background RTOS thread -> required for precision timing
   xTaskCreate(
     VID6608XvTask,                /* Function to implement the task */

@@ -20,11 +20,14 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.6"
+#define MI32_VERSION "V0.9.2.7"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.7 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
+                              view on UI only when BLE enabled
+  -------
   0.9.2.6 20250503  changed - display alias instead of type, when present
   -------
   0.9.2.5 20250319  changed - added support for MI LYWSD02MMC with different device ID
@@ -2749,7 +2752,7 @@ void CmndMi32Keys(void){
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 " MI32_VERSION "{m}%u%s / %u{e}";
 const char HTTP_MI32_TYPE[] PROGMEM = "{s}%s " D_SENSOR"{m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
-const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
+const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
 const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u{e}";
 const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
@@ -3527,6 +3530,8 @@ void MI32Show(bool json)
 
 #ifdef USE_WEBSERVER
   } else {
+    if (!Settings->flag5.mi32_enable) return;
+
     static  uint16_t _page = 0;
     static  uint16_t _counter = 0;
     int32_t i = _page * MI32.perPage;
@@ -3559,7 +3564,7 @@ void MI32Show(bool json)
       char _MAC[18];
       ToHex_P(p->MAC,6,_MAC,18);//,':');
       WSContentSend_P(HTTP_MI32_MAC, label, _MAC);
-      WSContentSend_PD(HTTP_MI32_RSSI, label, p->RSSI);
+      WSContentSend_PD(HTTP_MI32_RSSI, label, WifiGetRssiAsQuality(p->RSSI), p->RSSI);
 
       // for some reason, display flora differently
       switch(p->type){
