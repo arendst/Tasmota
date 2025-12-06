@@ -119,16 +119,24 @@ extern "C" {
   int32_t l_millis(struct bvm *vm);
   int32_t l_millis(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1 || (top == 2 && be_isint(vm, 2))) {  // only 1 argument of type string accepted
+    if (top == 0 || (top == 1 && be_isint(vm, 1))) {  // only 1 argument of type string accepted
       uint32_t delay = 0;
       if (top == 2) {
-        delay = be_toint(vm, 2);
+        delay = be_toint(vm, 1);
       }
       uint32_t ret_millis = millis() + delay;
       be_pushint(vm, ret_millis);
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.micros() -> int
+  //
+  int32_t l_micros(struct bvm *vm);
+  int32_t l_micros(struct bvm *vm) {
+    be_pushint(vm, micros());
+    be_return(vm); // Return
   }
 
   // Berry: tasmota.get_option(index:int) -> int
