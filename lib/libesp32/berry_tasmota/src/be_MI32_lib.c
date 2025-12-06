@@ -64,8 +64,8 @@ BE_FUNC_CTYPE_DECLARE(be_BLE_reg_adv_cb, "", "c[c]");
 extern void be_BLE_reg_server_cb(void* function, uint8_t *buffer);
 BE_FUNC_CTYPE_DECLARE(be_BLE_reg_server_cb, "", "c[c]");
 
-extern void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-BE_FUNC_CTYPE_DECLARE(be_BLE_set_MAC, "", "@(bytes)~[i]");
+extern void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type, uint32_t pin);
+BE_FUNC_CTYPE_DECLARE(be_BLE_set_MAC, "", "@(bytes)~[ii]");
 
 extern void be_BLE_set_characteristic(struct bvm *vm, const char *Chr);
 BE_FUNC_CTYPE_DECLARE(be_BLE_set_characteristic, "", "@s");

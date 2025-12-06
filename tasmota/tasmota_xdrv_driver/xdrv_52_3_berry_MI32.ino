@@ -110,7 +110,7 @@ extern "C" {
   extern bool MI32runBerryConnection(uint8_t operation, bbool response, int32_t *arg1);
   extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
-  extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
+  extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type, uint32_t pin);
   extern bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type);
   extern void MI32setBerryStoreRec(uint8_t *buffer, size_t size);
 
@@ -159,8 +159,8 @@ extern "C" {
     return true;
   }
 
-  void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-  void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
+  void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type, uint32_t pin);
+  void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type, uint32_t pin){
     if(!be_BLE_MAC_size(vm, size)){
       return;
     }
@@ -168,7 +168,11 @@ extern "C" {
     if(type){
       _type = type;
     }
-    if (MI32setBerryCtxMAC(buf,_type)) return;
+    uint32_t _pin = 0;
+    if (pin){
+      _pin = pin;
+    }
+    if (MI32setBerryCtxMAC(buf,_type, _pin)) return;
 
     be_raisef(vm, "ble_error", "BLE: could not set MAC");
   }
