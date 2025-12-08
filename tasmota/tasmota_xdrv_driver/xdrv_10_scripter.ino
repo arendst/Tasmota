@@ -47,7 +47,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #endif
 // float = 4, double = 8 bytes
 
-const uint8_t SCRIPT_VERS[2] = {5, 6};
+const uint8_t SCRIPT_VERS[2] = {6, 0};
 
 #define SCRIPT_DEBUG 0
 
@@ -203,6 +203,7 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #include "esp_sleep.h"
 #endif
 
+#include "WiFiClientSecureLightBearSSL.h"
 
 #ifdef SCRIPT_FULL_OPTIONS
 
@@ -266,6 +267,10 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #define USE_SCRIPT_FATFS_EXT
 #endif
 
+#ifndef NO_USE_HTML_CALLBACK
+#undef USE_HTML_CALLBACK
+#define USE_HTML_CALLBACK
+#endif
 
 #ifdef USE_SCRIPT_TIMER
 #include <Ticker.h>
@@ -303,6 +308,12 @@ void Script_ticker4_end(void) {
 #endif
 #define SCRIPT_UDP_PORT 1999
 #endif
+
+
+#ifndef SCRIPT_LOCAL_NVARS
+#define SCRIPT_LOCAL_NVARS 4
+#endif
+
 
 // EEPROM MACROS
 // i2c eeprom
@@ -391,7 +402,7 @@ extern Renderer *renderer;
 #endif
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU,OPER_SHLEQU,OPER_SHREQU,OPER_SHL,OPER_SHR};
-enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS,SCRIPT_CBSIZE,SCRIPT_UDP_PBS,SCRIPT_UDP_MOD};
+enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS,SCRIPT_CBSIZE,SCRIPT_UDP_PBS,SCRIPT_UDP_MOD,SCRIPT_LOCVARS,SCRIPT_LOCSVARS};
 
 
 #ifdef USE_UFILESYS
@@ -405,7 +416,7 @@ extern FS *ffsp;
 
 #define SSIZE_PSTORE (uint16_t *) (glob_script_mem.script_pram + glob_script_mem.script_pram_size - 2)
 
-#define FAT_SCRIPT_NAME "/script.txt"
+#define FAT_SCRIPT_NAME F("/script.txt")
 
 #endif // USE_UFILESYS
 
@@ -446,6 +457,7 @@ typedef union {
     uint8_t hchanged : 1;
     uint8_t integer : 1;
     uint8_t shadow : 1;
+    uint8_t locvar : 1;
   };
 } SCRIPT_TYPE;
 
@@ -473,8 +485,10 @@ struct M_FILT {
 #undef OR_FILT_MASK
 #define AND_FILT_MASK 0x7fff
 #define OR_FILT_MASK 0x8000
+#ifndef MAX_ARRAY_SIZE
 #undef MAX_ARRAY_SIZE
 #define MAX_ARRAY_SIZE 1000
+#endif
 #else
 #undef AND_FILT_MASK
 #undef OR_FILT_MASK
@@ -810,6 +824,12 @@ typedef struct {
   SML_TABLE *smlptr;
 #endif
 
+#ifdef SCRIPT_LOCAL_NVARS
+  TS_FLOAT locvars[SCRIPT_LOCAL_NVARS];
+  char *locsvars[SCRIPT_LOCAL_NVARS];
+  uint8_t lvindex;
+#endif
+
 } SCRIPT_MEM;
 
 
@@ -883,6 +903,7 @@ int32_t script_logfile_write(char *path, char *payload, uint32_t size);
 void script_sort_array(TS_FLOAT *array, uint16_t size);
 uint32_t Touch_Status(int32_t sel);
 int32_t play_wave(char *path);
+char *exfile(char *lp, TS_FLOAT *error);
 
 #ifdef USE_SCRIPT_MDNS
 int32_t script_mdns(char *name, char *mac, char *xtype) {
@@ -1240,6 +1261,8 @@ char *script;
                     lp += 2;
                     numshadow += 1;
                 }
+#else
+                vtypes[vars].bits.shadow = 1;
 #endif
                 if (*lp == 'p' && *(lp + 1) == ':') {
                     lp += 2;
@@ -1409,7 +1432,7 @@ char *script;
                 }
             }
         } else {
-            if (!strncmp(lp, ">D", 2)) {
+            if (!strncmp_P(lp, PSTR(">D"), 2)) {
               /* lp += 2;
               SCRIPT_SKIP_SPACES
               if (isdigit(*lp)) {
@@ -1666,13 +1689,13 @@ char *script;
 
 
 #ifdef USE_SCRIPT_GLOBVARS
-int32_t udp_call(char *url, uint32_t port, char *sbuf) {
+int32_t udp_call(char *url, uint32_t port, uint8_t *sbuf, uint16_t len) {
   WiFiUDP udp;
   IPAddress adr;
   adr.fromString(url);
   udp.begin(port);
   udp.beginPacket(adr, port);
-  udp.write((const uint8_t*)sbuf, strlen(sbuf));
+  udp.write((const uint8_t*)sbuf, len);
   udp.endPacket();
   udp.flush();
   udp.stop();
@@ -3624,7 +3647,7 @@ chknext:
 #ifdef USE_SHADOW_X
             if (!glob_script_mem.FLAGS.x_used || ind.bits.shadow) {
 #else
-            if (1) {
+            if (ind.bits.shadow ) {
 #endif
               if (!glob_script_mem.FLAGS.ignore_line) {
                 uint16_t index = glob_script_mem.type[ind.index].index;
@@ -3797,7 +3820,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #ifdef USE_SHADOW_X
             if (!glob_script_mem.FLAGS.x_used || ind.bits.shadow) {
 #else
-            if (1) {
+            if (ind.bits.shadow) {
 #endif
               uint16_t index = glob_script_mem.type[ind.index].index;
               fvar = glob_script_mem.fvars[index] - glob_script_mem.s_fvars[index];
@@ -4247,10 +4270,16 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
           SCRIPT_SKIP_SPACES
           char *url;
           lp = GetLongIString(lp, &url);
+          char *path = 0;
+          SCRIPT_SKIP_SPACES
+          if (*lp != ')') {
+            lp = GetLongIString(lp, &path);
+          }
           if (url) {
-            fvar = url2file(fvar, url);
+            fvar = url2file(fvar, url, path );
           }
           if (url) free(url);
+          if (path) free(path);
           goto nfuncexit;
         }
 #endif
@@ -4282,24 +4311,7 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
 #endif //ESP32 && USE_WEBCAM
 #ifdef USE_SCRIPT_FATFS_EXT
         if (!strncmp_XP(lp, XPSTR("fe("), 3)) {
-          char str[SCRIPT_MAX_SBSIZE];
-          lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          // execute script
-          File ef = ufsp->open(str, FS_FILE_READ);
-          if (ef) {
-            uint16_t fsiz = ef.size();
-            if (fsiz < 2048) {
-              char *script = (char*)special_malloc(fsiz + 16);
-              if (script) {
-                memset(script, 0, fsiz + 16);
-                ef.read((uint8_t*)script, fsiz);
-                execute_script(script);
-                free(script);
-                fvar = 1;
-              }
-            }
-            ef.close();
-          }
+          lp = exfile(lp + 3, &fvar);
           goto nfuncexit;
         }
         if (!strncmp_XP(lp, XPSTR("fmd("), 4)) {
@@ -5206,6 +5218,38 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
 #endif
 
       case 'l':
+#ifdef SCRIPT_LOCAL_NVARS
+        if (!strncmp_XP(vname, XPSTR("lnv"), 3)) {
+          glob_script_mem.lvindex = vname[3] & 0xf;
+          len = 4;
+          if (glob_script_mem.lvindex >= SCRIPT_LOCAL_NVARS) {
+            glob_script_mem.lvindex = SCRIPT_LOCAL_NVARS - 1;
+          }
+          fvar = glob_script_mem.locvars[glob_script_mem.lvindex];
+          tind->index = SCRIPT_LOCVARS;
+          tind->bits.locvar = 1;
+          goto exit_settable;
+        }
+        if (!strncmp_XP(vname, XPSTR("lsv"), 3)) {
+          glob_script_mem.lvindex = vname[3] & 0xf;
+          len = 4;
+          if (glob_script_mem.lvindex >= SCRIPT_LOCAL_NVARS) {
+            glob_script_mem.lvindex = SCRIPT_LOCAL_NVARS - 1;
+          }
+          tind->index = SCRIPT_LOCSVARS;
+          if (!glob_script_mem.locsvars[glob_script_mem.lvindex]) {
+            glob_script_mem.locsvars[glob_script_mem.lvindex] = (char*)calloc(glob_script_mem.max_ssize + 2, 1);
+          }
+          if (sp) {
+            strlcpy(sp, glob_script_mem.locsvars[glob_script_mem.lvindex], glob_script_mem.max_ssize);
+          }
+          *vtype = STYPE;
+          tind->bits.settable = 1;
+          tind->bits.shadow = 0;
+          tind->bits.is_string = 1;
+          return lp + len;
+        }   
+#endif // SCRIPT_LOCAL_NVARS
         if (!strncmp_XP(lp, XPSTR("lip"), 3)) {
           if (sp) strlcpy(sp, (const char*)WiFi.localIP().toString().c_str(), glob_script_mem.max_ssize);
           goto strexit;
@@ -5223,6 +5267,7 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
           if (fp) *fp = fvar;
           *vtype = NTYPE;
           tind->bits.settable = 1;
+          tind->bits.shadow = 0;
           tind->bits.is_string = 0;
           return lp + len;
         }
@@ -6006,6 +6051,13 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type);
             fvar = smlp->sml_getv(fvar);
           }
           goto nfuncexit;
+        }
+        
+        if (!strncmp_XP(lp, XPSTR("ssav"), 4)) {
+          // save and restart
+          SaveScript();
+          //SaveScriptEnd();
+          goto exit;
         }
 #endif //USE_SML_M
 
@@ -6856,11 +6908,37 @@ void tmod_directModeOutput(uint32_t pin);
             lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
             char payload[SCRIPT_MAX_SBSIZE];
             lp = GetStringArgument(lp, OPER_EQU, payload, 0);
-            fvar = udp_call(url, port, payload);
+            fvar = udp_call(url, port, (uint8_t*)payload, strlen(payload));
+          }
+          if (sel == 7) {
+            // generic send array to url and port
+            char url[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, url, 0);
+            TS_FLOAT port;
+            lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+            TS_FLOAT *fpd = 0;
+            uint16_t alend;
+            uint16_t ipos;
+            lp = get_array_by_name(lp, &fpd, &alend, &ipos);
+            uint8_t *payload = (uint8_t*)malloc(alend + 2);
+            if (payload) {
+              for (uint32_t cnt = 0; cnt < alend; cnt++) {
+                payload[cnt] = fpd[cnt];
+              }
+              fvar = udp_call(url, port, payload, alend);
+              free(payload);
+            }
           }
           goto nfuncexit;
         }
 #endif
+        break;
+
+      case 'v':
+        if (!strncmp_XP(vname, XPSTR("vers"), 4)) {
+          fvar = (TS_FLOAT)SCRIPT_VERS[0] + ((TS_FLOAT)SCRIPT_VERS[1] / 10.0);
+          goto exit;
+        }
         break;
 
       case 'w':
@@ -7504,7 +7582,8 @@ int32_t play_wave(char *path) {
   }
 #endif
 
-File wf = ufsp->open(path, FS_FILE_READ);
+  FS *cfp = script_file_path(path);
+  File wf = cfp->open(path, FS_FILE_READ);
   if (!wf) {
     return -1;
   }
@@ -7564,9 +7643,39 @@ File wf = ufsp->open(path, FS_FILE_READ);
 
 #ifdef USE_SCRIPT_FATFS_EXT
 #ifdef USE_UFILESYS
+#ifndef EXFMAXSIZE
+#define EXFMAXSIZE 4096
+#endif
+char *exfile(char *lp, TS_FLOAT *error) {
+  *error = -1;
+  char str[SCRIPT_MAX_SBSIZE];
+  lp = GetStringArgument(lp, OPER_EQU, str, 0);
+  // execute script
+  FS *cfp = script_file_path(str);
+  File ef = cfp->open(str, FS_FILE_READ);
+  if (ef) {
+    uint16_t fsiz = ef.size();
+    if (fsiz < EXFMAXSIZE) {
+      char *script = (char*)special_malloc(fsiz + 16);
+      if (script) {
+        memset(script, 0, fsiz + 16);
+        ef.read((uint8_t*)script, fsiz);
+        glob_script_mem.scriptptr_bu = script;
+        execute_script(script);
+        free(script);
+      }
+    }
+    ef.close();
+    *error = 0;
+
+  }
+  return lp;
+}
+
 int32_t script_logfile_write(char *path, char *payload, uint32_t size) {
 
-      File rfd = ufsp->open(path, FS_FILE_APPEND);
+      FS *cfp = script_file_path(path);
+      File rfd = cfp->open(path, FS_FILE_APPEND);
       if (rfd == 0) {
         return -1;
       }
@@ -7592,7 +7701,7 @@ int32_t script_logfile_write(char *path, char *payload, uint32_t size) {
       }
       rfd.close();
       wfd.close();
-      ufsp->remove(path);
+      cfp->remove(path);
       ufsp->rename("/ltmp", path);
 
   return fsize;
@@ -8622,8 +8731,13 @@ startline:
               lp = isvar(lp, &vtype, &ind, 0, 0, gv);
               if ((vtype != VAR_NV) && (vtype & STYPE) == 0) {
                   // numeric var
-                  uint8_t index = glob_script_mem.type[ind.index].index;
-                  cv_count[loopdepth] = &glob_script_mem.fvars[index];
+                  if (ind.bits.locvar) {
+                    cv_count[loopdepth] = &glob_script_mem.locvars[glob_script_mem.lvindex];
+                  } else {
+                    uint8_t index = glob_script_mem.type[ind.index].index;
+                    cv_count[loopdepth] = &glob_script_mem.fvars[index];
+                  }
+
                   lp = GetNumericArgument(lp, OPER_EQU, cv_count[loopdepth], 0);
                   lp = GetNumericArgument(lp, OPER_EQU, &cv_max[loopdepth], 0);
                   lp = GetNumericArgument(lp, OPER_EQU, &cv_inc[loopdepth], 0);
@@ -8640,8 +8754,8 @@ startline:
                     }
                   }
               } else {
-                      // error
-                  toLogEOL("for error", lp);
+                // error
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: for error: %s"), lp);
               }
             } else if (!strncmp(lp, "next", 4)) {
 getnext:
@@ -8815,7 +8929,7 @@ chk_switch:
               lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, 0);
               int8_t pinnr = fvar;
               if (Is_gpio_used(pinnr)) {
-                AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
+                AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pin %d already used"), pinnr);
               }
               SCRIPT_SKIP_SPACES
               uint8_t mode = 0;
@@ -9126,7 +9240,9 @@ chk_switch:
                         switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
-                                if (!gv || !gv->jo) toLogEOL("var not found: ",lp);
+                                if (!gv || !gv->jo) {
+                                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: var not found: %s"), lp);
+                                }
                                 goto next_line;
                               }
                               *dfvar = fvar;
@@ -9169,7 +9285,9 @@ chk_switch:
                         switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
-                                if (!gv || !gv->jo) toLogEOL("var not found: ",lp);
+                                if (!gv || !gv->jo) {
+                                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: var not found: %s"), lp);
+                                }
                                 goto next_line;
                               }
                               *dfvar = fvar;
@@ -9273,6 +9391,12 @@ chk_switch:
                             break;
 #endif
 
+#ifdef SCRIPT_LOCAL_NVARS
+                          case SCRIPT_LOCVARS:
+                            glob_script_mem.locvars[glob_script_mem.lvindex] = *dfvar;
+                            break;
+#endif
+
 #if (defined(USE_SML_M) || defined(USE_BINPLUGINS)) && defined(USE_SML_SCRIPT_CMD)
                           case SML_JSON_ENABLE:
                             //sml_options = *dfvar;
@@ -9282,11 +9406,16 @@ chk_switch:
                             }
                             break;
 #endif
+
                         }
                         sysv_type = 0;
                       }
                   } else {
                     // string result
+                    if (ind.bits.settable) {
+                      sysv_type = ind.index;
+                      globvindex = -1;
+                    }
                     numeric = 0;
                     sindex = index;
                     saindex = gv->strind;
@@ -9322,6 +9451,7 @@ chk_switch:
                         }
                       }
 #endif //USE_SCRIPT_GLOBVARS
+
                       if (saindex >= 0) {
                         if (lastop == OPER_EQU) {
                           strlcpy(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
@@ -9330,10 +9460,17 @@ chk_switch:
                         }
                         gv->strind = -1;
                       } else {
+                        char *cp = glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize);
+#ifdef SCRIPT_LOCAL_NVARS
+                        if ((sysv_type == SCRIPT_LOCSVARS) && glob_script_mem.locsvars[glob_script_mem.lvindex]) {
+                          cp = glob_script_mem.locsvars[glob_script_mem.lvindex];
+                          sysv_type = 0;
+                        }
+#endif
                         if (lastop == OPER_EQU) {
-                          strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+                          strlcpy(cp, str, glob_script_mem.max_ssize);
                         } else if (lastop == OPER_PLSEQU) {
-                          strncat(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+                          strncat(cp, str, glob_script_mem.max_ssize);
                         }
                       }
                     }
@@ -9868,7 +10005,42 @@ void Scripter_save_pvars(void) {
 }
 
 // works only with webserver
+// scriptlist at page "edit script"
+// requires following defines (user_config_override.h) and external files, e.g.:
+// #define SCRIPT_LIST_DOWNLOAD_URL "https://raw.githubusercontent.com/ottelo9/tasmota-sml-script/main/smartmeter_test/scripts/"
+// #define SCRIPT_LIST "scripts.json"
+// scripts.json example:
+//{
+//	"script": [
+//		{ "label": "script 1", "filename": "script_1.tas" },
+//		{ "label": "script 2", "filename": "script_2.tas" }
+//	]
+//}
+
 #ifdef USE_WEBSERVER
+#if defined(USE_SML_SCRIPT_CMD) && defined(SCRIPT_LIST_DOWNLOAD_URL) && defined(SCRIPT_LIST)
+#define SCRIPT_LIST_SELECT_OPTIONS "" \
+    "<option value='sm_0'>--- Select Script ---</option>"
+#define SCRIPT_LIST_SELECT_FUNCTION "" \
+    "if(selScript.value=='sm_0'){ta.innerHTML=''}" \
+    "else{ta.innerHTML='';fetch('" SCRIPT_LIST_DOWNLOAD_URL "'+selScript.value,{cache:'no-store'}).then(response=>response.text()).then(content=>{ta.innerHTML=content;});}"
+#define SCRIPT_LIST_SELECT "" \
+    "<p><select id='idselScript'>" SCRIPT_LIST_SELECT_OPTIONS "</select></p>"
+#define SCRIPT_LIST_SELECT_HANDLER "" \
+    "var selScript=eb('idselScript');" \
+    "selScript.onchange=function(){" SCRIPT_LIST_SELECT_FUNCTION "};" \
+    "fetch('" SCRIPT_LIST_DOWNLOAD_URL SCRIPT_LIST "',{cache:'no-store'}).then(response=>response.json()).then(data=>{" \
+    "if(data && data.script && data.script.length){" \
+    "while(selScript.options.length>1){selScript.options.remove(1);}" \
+    "for(let n=0;n<data.script.length;n++){" \
+    "let o=document.createElement('option');o.value=data.script[n].filename;o.text=data.script[n].label;selScript.options.add(o);" \
+    "}}});"
+#else
+  #define SCRIPT_LIST_SELECT
+  #define SCRIPT_LIST_SELECT_HANDLER
+#endif
+
+
 
 #define WEB_HANDLE_SCRIPT "s10"
 
@@ -9882,11 +10054,13 @@ const char HTTP_FORM_SCRIPT[] PROGMEM =
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<div style='text-align:right' id='charNum'> </div>"
     "<label><input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>" D_SCRIPT_ENABLE "</b></label><br/>"
+    SCRIPT_LIST_SELECT
     "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "</textarea>"
     "<script type='text/javascript'>"
+    SCRIPT_LIST_SELECT_HANDLER
     "eb('charNum').innerHTML='-';"
     "var ta=eb('t1');"
     "ta.addEventListener('keydown',function(e){"
@@ -10050,12 +10224,14 @@ uint8_t DownloadFile(char *file) {
   File download_file;
   WiFiClient download_Client;
 
-    if (!ufsp->exists(file)) {
+  FS *cfp = script_file_path(file);
+
+    if (!cfp->exists(file)) {
       AddLog(LOG_LEVEL_INFO,PSTR("SCR: file not found"));
       return 0;
     }
 
-    download_file = ufsp->open(file, FS_FILE_READ);
+    download_file = cfp->open(file, FS_FILE_READ);
     if (!download_file) {
       AddLog(LOG_LEVEL_INFO,PSTR("SCR: could not open file"));
       return 0;
@@ -10108,9 +10284,153 @@ uint8_t DownloadFile(char *file) {
 
 #endif // USE_SCRIPT_FATFS
 
+uint16_t section_seek_end(char *lp) {
+  char *op = lp;
+  char *cp = lp;
+  while (1) {
+    if ((*lp == '>') || ((*lp == '#') && (*(lp + 1) == SCRIPT_EOL))){
+      break;
+    }
+    cp = strchr(lp, SCRIPT_EOL);
+    if (!cp) {
+      // end of script
+      break;
+    }
+    lp = cp + 1;
+  }
+  return ((uint32_t)lp - (uint32_t)op) + 2;
+}
 
 void HandleScriptTextareaConfiguration(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
+
+#if 0
+  String message = "Number of args received:";
+  message += Webserver->args();
+  message += "\n";
+  for (int i = 0; i < Webserver->args(); i++) {
+    message += "Arg n" + (String)i + " –> ";
+    message += Webserver->argName(i) + ": ";
+    message += Webserver->arg(i) + "\n";
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR(">>>> %s"), message.c_str());
+#endif
+
+#ifdef USE_SML_SCRIPT_CMD
+  if (Webserver->hasArg("plain")) {
+    String str = Webserver->arg("plain");
+    if (*str.c_str()) {
+      str.replace("\r\n", "\n");
+      str.replace("\r", "\n");
+      // special script copy
+      char *smlp = (char*)str.c_str();
+      char *cp = strstr_P(smlp, PSTR(">M"));
+      if (cp) {
+        // replace >M section
+        // find >M in script
+#ifndef USE_SCRIPT_FATFS
+        char *lp = strstr_P(glob_script_mem.script_ram, PSTR(">M"));
+        uint16_t doffset;
+        char *xp;
+        if (lp) {
+          // contains >M section
+          doffset = (uint32_t)lp - (uint32_t)glob_script_mem.script_ram;
+          xp = strstr_P(lp, PSTR("\n#"));
+          xp += 2;
+        } else {
+          // no >M section, append to end
+          doffset = strlen(glob_script_mem.script_ram);
+          lp = glob_script_mem.script_ram + doffset;
+          xp = glob_script_mem.script_ram + doffset;
+        }
+        char *ep = strstr_P(cp, PSTR("\n#"));
+        if (!ep) {
+          ep = cp + strlen(cp);
+        } else {
+          ep += 2;
+        }
+        if (xp && ep) {
+          uint16_t scriptsize = glob_script_mem.script_size;
+          uint16_t dlen = (uint32_t)xp - (uint32_t)lp;
+          uint16_t slen = (uint32_t)ep - (uint32_t)cp;
+          memcpy(lp, lp + dlen, scriptsize - doffset - dlen);
+          // now find source len
+          memmove(lp + slen, lp, scriptsize - doffset - slen);
+          memcpy(lp, cp, slen);
+          glob_script_mem.event_handeled = 1;
+#ifdef USE_HTML_CALLBACK
+          if (glob_script_mem.html_script) Run_Scripter1(glob_script_mem.html_script, 0, 0);
+#else
+          if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
+#endif
+        }
+      }
+#else
+        // copy to file
+        char fname[24];
+        strcpy_P(fname, PSTR("/sml_meter.def"));
+        char warg[10];
+        strcpy_P(warg, PSTR("smlsav"));
+        if (Webserver->hasArg(warg)) {
+          String path = Webserver->arg(warg);
+          if (path.length() > 0) {
+            strcat(&fname[1], path.c_str());
+          }
+        }
+        char *ep = strstr_P(cp, PSTR("\n#"));
+        if (ep) {
+          ep += 2;
+          uint16_t slen = (uint32_t)ep - (uint32_t)cp;
+          File file = ufsp->open(fname, FS_FILE_WRITE);
+          file.write((const uint8_t*)cp, slen);
+          file.close();
+          
+          // extract >S and >F section
+          strcpy_P(fname, PSTR("/sml_stask.tas"));
+          ep = strstr_P(smlp, PSTR(">S"));
+          if (ep) {
+            // has >S section
+            slen = section_seek_end(ep + 2);
+            file = ufsp->open(fname, FS_FILE_WRITE);
+            ep++;
+            ep[0] = '>';
+            ep[slen - 1] = '#';
+            file.write((const uint8_t*)ep, slen);
+            // restore to enable >F find
+            ep[slen - 1] = '>';
+            file.close();
+          } else {
+            ufsp->remove(fname);
+          }
+          strcpy_P(fname, PSTR("/sml_ftask.tas"));
+          ep = strstr_P(smlp, PSTR(">F"));
+          if (ep) {
+            // has >F section
+            slen = section_seek_end(ep + 2);
+            strcpy_P(fname, PSTR("/sml_stask.tas"));
+            file = ufsp->open(fname, FS_FILE_WRITE);
+            ep++;
+            ep[0] = '>';
+            ep[slen - 1] = '#';
+            file.write((const uint8_t*)ep, slen);
+            file.close();
+          } else {
+            ufsp->remove(fname);
+          }
+          glob_script_mem.event_handeled = 1;
+#ifdef USE_HTML_CALLBACK
+          if (glob_script_mem.html_script) Run_Scripter1(glob_script_mem.html_script, 0, 0);
+#else
+          if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
+#endif
+        }
+      }
+#endif
+    }
+    HandleManagement();
+    return;
+  }
+#endif // USE_SML_SCRIPT_CMD
 
   if (Webserver->hasArg("save")) {
     ScriptSaveSettings();
@@ -10118,7 +10438,6 @@ void HandleScriptTextareaConfiguration(void) {
     return;
   }
 }
-
 
 void HandleScriptConfiguration(void) {
 
@@ -10139,7 +10458,6 @@ void HandleScriptConfiguration(void) {
     WSContentSendStyle();
     WSContentSend_P(HTTP_FORM_SCRIPT);
 
-
 #ifdef xSCRIPT_STRIP_COMMENTS
     uint16_t ssize = glob_script_mem.script_size;
     if (bitRead(Settings->rule_enabled, 1)) ssize *= 2;
@@ -10148,7 +10466,7 @@ void HandleScriptConfiguration(void) {
     WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings->rule_enabled,0) ? PSTR(" checked") : "",glob_script_mem.script_size);
 #endif // xSCRIPT_STRIP_COMMENTS
 
-    // script is to large for WSContentSend_P
+    // script is too large for WSContentSend_P
     if (glob_script_mem.script_ram[0]) {
       WSContentFlush();
       _WSContentSend(glob_script_mem.script_ram);
@@ -10272,6 +10590,14 @@ void SaveScriptEnd(void) {
     free(glob_script_mem.script_mem);
     glob_script_mem.script_mem = 0;
     glob_script_mem.script_mem_size = 0;
+#ifdef SCRIPT_LOCAL_NVARS
+    for (uint32_t cnt = 0; cnt < SCRIPT_LOCAL_NVARS; cnt++) {
+      if (glob_script_mem.locsvars[cnt]) {
+        free(glob_script_mem.locsvars[cnt]);
+        glob_script_mem.locsvars[cnt] = 0;
+      }
+    }
+#endif
  #ifdef USE_SCRIPT_SERIAL
     Script_Close_Serial();
 #endif
@@ -10985,11 +11311,19 @@ uint32_t options = 0;
 #ifdef TESLA_POWERWALL
   options |= 0x10000000;
 #endif
+#ifdef SCRIPT_LOCAL_NVARS
+  options |= 0x20000000;
+#endif
+#ifdef USE_SHADOW_X
+  options |= 0x40000000;
+#endif
+#ifdef USE_BINPLUGINS
+  options |= 0x80000000;
+#endif
 
 
   Response_P(PSTR("{\"script\":{\"vers\":%d.%d,\"opts\":%08x}}"), SCRIPT_VERS[0], SCRIPT_VERS[1], options);
 }
-
 
 void execute_script(char *script) {
   char *svd_sp = glob_script_mem.scriptptr;
@@ -12052,14 +12386,28 @@ void Script_Check_HTML_Setvars(void) {
     char *cp = cmdbuf;
     *cp++ = '>';
     strncpy(cp, stmp.c_str(), sizeof(cmdbuf) - 1);
+    
+    if (*cp == '_')  {
+      // execute subroutine
+      *cp++ = '=';
+      *cp++ = '#'; 
+      strncpy(cp, stmp.c_str() + 1, sizeof(cmdbuf) - 3);
+      char *cp1 = strchr(cp, '_');
+      if (!cp1) return;
+      *cp1 = 0;
+      goto excmdb;
+    }
+
+    {
     char *cp1 = strchr(cp, '_');
     if (!cp1) return;
     *cp1 = 0;
+ 
     char vname[32];
     strncpy(vname, cp, sizeof(vname));
     *cp1 = '=';
     cp1++;
-
+    
     if (is_int_var(vname)) {
       memmove(cp1 + 1, cp1, strlen(cp1));
       *cp1++ = '#';
@@ -12073,9 +12421,11 @@ void Script_Check_HTML_Setvars(void) {
       uint8_t tlen = strlen(cp1);
       memmove(cp1 + 1, cp1, tlen);
       *cp1 = '\"';
-      *(cp1 + tlen +1 ) = '\"';
+      *(cp1 + tlen + 1 ) = '\"';
     }
-    //toLog(cmdbuf);
+    }
+
+excmdb:
     execute_script(cmdbuf);
 
 #ifdef USE_HTML_CALLBACK
@@ -12139,6 +12489,38 @@ const char SCRIPT_MSG_TEXTINP_U[] PROGMEM =
 const char SCRIPT_MSG_NUMINP[] PROGMEM =
   "%s<label><b>%s</b><input  min='%s' max='%s' step='%s' value='%s' type='number' style='width:%dpx' onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label>";
 
+
+#ifdef USE_SML_SCRIPT_CMD
+const char SML_PD[] PROGMEM =
+  "</p><label for='idSelSM'>%s</label><select id='idSelSM'></select></p>";
+
+const char SML_SCRIPT_TEXT[] PROGMEM =
+  "<script>"
+  "var selSM=eb('idSelSM');"
+  "var text;"
+  "selSM.onchange=function(){"
+  "var index=selSM.selectedIndex;"
+  "pr(1);"
+  "var path='%s/'+selSM.value;"
+  "text=fetch(path,{cache:'no-store'}).then(response=>response.text()).then(content=>{text=content;smlp(text,index)});"
+  "};"
+  "fetch('%s'+'/smartmeter.json',{cache:'no-store'}).then(response=>response.json()).then(data=>{"
+  "if(data && data.smartmeter && data.smartmeter.length){"
+  "while(selSM.options.length>1){selSM.options.remove(1);}"
+  "for(let n=0;n<data.smartmeter.length;n++){"
+  "let o=document.createElement('option');o.value=data.smartmeter[n].filename;o.text=data.smartmeter[n].label;selSM.options.add(o);"
+  "if (n==%d) {o.setAttribute('selected', true);}"
+  "}}});"
+  "function smlp(txt,index){"
+  "x=new XMLHttpRequest();"
+  "x.open('POST', '/ta?smlsav=%s');"
+  "x.setRequestHeader('Accept','application/text');"
+  "x.setRequestHeader('Content-Type','application/text');"
+  "x.send(txt);"
+  "setTimeout(seva, 500, index, '%s');"
+  "}"
+  "</script>";
+#endif // USE_SML_SCRIPT_CMD
 
 #ifdef USE_GOOGLE_CHARTS
 const char SCRIPT_MSG_GTABLE[] PROGMEM =
@@ -12415,9 +12797,22 @@ void ScriptWebShow(char mc, uint8_t page) {
           // subroutine
           uint8_t sflg = glob_script_mem.specopt;
           glob_script_mem.specopt = WSO_FORCEPLAIN;
-          lp = scripter_sub(lp + 1, 0);
+          if (*(lp + 3) == '(') {
+            // execute file
+            // %=#("/subfile.tas")
+            char cmdbuff[32];
+            strcpy_P(cmdbuff, PSTR(">fe"));
+            strncat(cmdbuff, lp + 3, sizeof(cmdbuff) - 5);
+            char *cp = strchr(cmdbuff, SCRIPT_EOL);
+            if (cp) {
+              *cp = 0;
+            }
+            execute_script(cmdbuff);
+            lp = strchr(lp, SCRIPT_EOL);
+          } else {
+            lp = scripter_sub(lp + 1, 0);
+          }
           glob_script_mem.specopt = sflg;
-          //goto nextwebline;
         } else if (!strncmp(lp, "%/", 2)) {
           // send file
           if (mc || (glob_script_mem.specopt & WSO_FORCESUBFILE)) {
@@ -12498,7 +12893,7 @@ const char *gc_str;
   Replace_Cmd_Vars(lp1, 1, tmp, SCRIPT_WS_LINE_SIZE);
   char *lin = tmp;
 
-  if (!strncmp(lin, "so(", 3)) {
+  if (!strncmp_P(lin, PSTR("so("), 3)) {
     // set options
     TS_FLOAT var;
     lin = GetNumericArgument(lin + 3, OPER_EQU, &var, 0);
@@ -12514,7 +12909,7 @@ const char *gc_str;
 
   bool dogui = ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(glob_script_mem.specopt & WSO_FORCEMAIN));
 
-  if (!strncmp(lin, "%=#", 3)) {
+  if (!strncmp_P(lin, PSTR("%=#"), 3)) {
     // subroutine
     uint8_t sflg = glob_script_mem.specopt;
     glob_script_mem.specopt = WSO_FORCEPLAIN;
@@ -12542,7 +12937,7 @@ const char *gc_str;
       strcpy_P(center, PSTR("<center>"));
     }
 
-    if (!strncmp(lin, "sl(", 3)) {
+    if (!strncmp_P(lin, PSTR("sl("), 3)) {
       // insert slider sl(min max var left mid right)
       char *lp = lin;
       TS_FLOAT min;
@@ -12573,7 +12968,7 @@ const char *gc_str;
       WSContentSend_P(SCRIPT_MSG_SLIDER, left, mid, right, (uint32_t)min, (uint32_t)max, (uint32_t)val, vname);
       lp++;
 
-    } else if (!strncmp(lin, "ck(", 3)) {
+    } else if (!strncmp_P(lin, PSTR("ck("), 3)) {
       char *lp = lin + 3;
       char *slp = lp;
       TS_FLOAT val;
@@ -12586,19 +12981,20 @@ const char *gc_str;
       char label[SCRIPT_MAX_SBSIZE];
       lp = GetStringArgument(lp, OPER_EQU, label, 0);
       const char *cp;
+      char option[20];
       uint8_t uval;
       if (val>0) {
-        cp = "checked='checked'";
+        strcpy_P(option, PSTR("checked='checked'"));
         uval = 0;
       } else {
-        cp = "";
+        option[0] = 0;
         uval = 1;
       }
       WCS_DIV(glob_script_mem.specopt);
-      WSContentSend_P(SCRIPT_MSG_CHKBOX, center, label, (char*)cp, uval, vname);
+      WSContentSend_P(SCRIPT_MSG_CHKBOX, center, label, (char*)option, uval, vname);
       WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       lp++;
-    } else if (!strncmp(lin, "pd(", 3)) {
+    } else if (!strncmp_P(lin, PSTR("pd("), 3)) {
       // pull down
       char *lp = lin + 3;
       char *slp = lp;
@@ -12632,35 +13028,48 @@ const char *gc_str;
       while (*lp) {
         SCRIPT_SKIP_SPACES
         lp = GetStringArgument(lp, OPER_EQU, pulabel, 0);
+        char option[10];
         if (index == 1 && pulabel[0] == '#') {
-          // number range
           char *cp = &pulabel[1];
-          uint8_t from = strtol(cp, &cp, 10);
-          uint8_t to = from;
-          if (*cp == '-') {
+          uint8_t flg = 0;
+          uint8_t from;
+          uint8_t to;
+          if (pulabel[1] == 'g') {
             cp++;
-            to = strtol(cp, &cp, 10);
+            flg = 1;
+            from = 0;
+            to = MAX_USER_PINS + MIN_FLASH_PINS - 1;
+          } else {
+            // number range
+            from = strtol(cp, &cp, 10);
+            to = from;
+            if (*cp == '-') {
+              cp++;
+              to = strtol(cp, &cp, 10);
+            }
           }
           for (uint32_t cnt = from; cnt <= to; cnt++) {
             sprintf(pulabel, "%d", cnt);
+            option[0] = 0;
             if (val == index) {
-              cp = (char*)"selected";
-            } else {
-              cp = (char*)"";
+              strcpy_P(option, PSTR("selected"));
             }
-            WSContentSend_P(SCRIPT_MSG_PULLDOWNb, cp, index, pulabel);
+
+            uint8_t disabled = FlashPin(cnt) || RedPin(cnt) || TasmotaGlobal.gpio_pin[cnt];
+            if (flg && disabled) {
+              strcpy_P(option, PSTR("disabled"));
+            }
+            WSContentSend_P(SCRIPT_MSG_PULLDOWNb, option, index, pulabel);
             index++;
           }
           break;
         }
-
-        char *cp;
         if (val == index) {
-          cp = (char*)"selected";
+          strcpy_P(option, PSTR("selected"));
         } else {
-          cp = (char*)"";
+          option[0] = 0;
         }
-        WSContentSend_P(SCRIPT_MSG_PULLDOWNb, cp, index, pulabel);
+        WSContentSend_P(SCRIPT_MSG_PULLDOWNb, option, index, pulabel);
         SCRIPT_SKIP_SPACES
         if (*lp == ')') {
           lp++;
@@ -12670,7 +13079,7 @@ const char *gc_str;
       }
       WSContentSend_P(SCRIPT_MSG_PULLDOWNc);
       WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
-    } else if (!strncmp(lin, "rb(", 3)) {
+    } else if (!strncmp_P(lin, PSTR("rb("), 3)) {
       // radio buttons
       char *lp = lin + 3;
       char *slp = lp;
@@ -12704,6 +13113,7 @@ const char *gc_str;
         WSContentSend_P(SCRIPT_MSG_RADIOa, center, tsiz, pulabel);
       }
 
+      char option[10];
       // get pu labels
       uint8_t index = 1;
       while (*lp) {
@@ -12711,11 +13121,11 @@ const char *gc_str;
         lp = GetStringArgument(lp, OPER_EQU, pulabel, 0);
         char *cp;
         if (val == index) {
-          cp = (char*)"checked";
+          strcpy_P(option, PSTR("checked"));
         } else {
-          cp = (char*)"";
+          option[0] = 0;
         }
-        WSContentSend_P(SCRIPT_MSG_RADIOb, vname, index, vname, cp, pulabel);
+        WSContentSend_P(SCRIPT_MSG_RADIOb, vname, index, vname, option, pulabel);
         SCRIPT_SKIP_SPACES
         if (*lp == ')') {
           lp++;
@@ -12726,12 +13136,12 @@ const char *gc_str;
       WSContentSend_P(SCRIPT_MSG_RADIOc);
       WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       WSContentFlush();
-    } else if (!strncmp(lin, "bu(", 3)) {
+    } else if (!strncmp_P(lin, PSTR("bu("), 3)) {
       char *lp = lin + 3;
       uint8_t bcnt = 0;
       char *found = lin;
       while (bcnt < 4) {
-        found = strstr(found, "bu(");
+        found = strstr_P(found, PSTR("bu("));
         if (!found) break;
         found += 3;
         bcnt++;
@@ -12743,7 +13153,18 @@ const char *gc_str;
       for (uint32_t cnt = 0; cnt < bcnt; cnt++) {
         TS_FLOAT val;
         char *slp = lp;
-        lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+
+        if (*lp =='_') {
+          val = 0;
+          while (*lp) {
+            if (*lp == ' ') {
+              break;
+            }
+            lp++;
+          }
+        } else {
+          lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+        }
         SCRIPT_SKIP_SPACES
 
         char vname[16];
@@ -12781,7 +13202,7 @@ const char *gc_str;
       if (optflg) WSContentSend_P(SCRIPT_MSG_BUT_STOP_TBL);
       else WSContentSend_P(SCRIPT_MSG_BUT_STOP);
 
-    }  else if (!strncmp(lin, "tm(", 3)) {
+    }  else if (!strncmp_P(lin, PSTR("tm("), 3)) {
       // time only HH:MM
       TS_FLOAT val;
       char *lp = lin + 3;
@@ -12811,7 +13232,7 @@ const char *gc_str;
       WCS_DIV(glob_script_mem.specopt);
       WSContentSend_P(SCRIPT_MSG_TEXTINP_U, center, label, type, vstr, min, max, tsiz, styp, vname);
       WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
-    }  else if (!strncmp(lin, "tx(", 3)) {
+    }  else if (!strncmp_P(lin, PSTR("tx("), 3)) {
       // text
       char *lp = lin + 3;
       char *slp = lp;
@@ -12865,7 +13286,7 @@ const char *gc_str;
       lp++;
       //goto restart;
 
-    } else if (!strncmp(lin, "nm(", 3)) {
+    } else if (!strncmp_P(lin, PSTR("nm("), 3)) {
       char *lp = lin;
       TS_FLOAT min;
       lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
@@ -12918,6 +13339,32 @@ const char *gc_str;
       WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       lp++;
 
+#ifdef USE_SML_SCRIPT_CMD
+    } else if (!strncmp_P(lin, PSTR("smlpd("), 6)) {
+      // sml pulldown
+      char *lp = lin;
+      char *url;
+      lp = GetLongIString(lp + 6, &url);
+      char label[SCRIPT_MAX_SBSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, label, 0);
+      SCRIPT_SKIP_SPACES
+      char *slp = lp;
+      TS_FLOAT sel;
+      lp = GetNumericArgument(lp, OPER_EQU, &sel, 0);
+      SCRIPT_SKIP_SPACES
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+      char path[SCRIPT_MAX_SBSIZE];
+      path[0] = 0;
+      if (*lp !=')') {
+        lp = GetStringArgument(lp, OPER_EQU, path, 0);
+      }
+      WCS_DIV(glob_script_mem.specopt);
+      WSContentSend_P(SML_PD, label);
+      WSContentSend_P(SML_SCRIPT_TEXT, url, url, (uint32_t)sel, path, vname);
+      WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
+      if (url) free(url);
+#endif
     } else {
       if (glob_script_mem.specopt & WSO_FORCETAB) {
         WSContentSend_P(PSTR("{s}%s{e}"), lin);
@@ -13011,7 +13458,7 @@ exgc:
         WS_LINE_RETURN
       }
 
-      if (!strncmp(lin, "gc(", 3)) {
+      if (!strncmp_P(lin, PSTR("gc("), 3)) {
         // get google table
         lp = lin + 3;
         SCRIPT_SKIP_SPACES
@@ -13065,7 +13512,7 @@ exgc:
         }
 
         char stacked[6];
-        strcpy_P(stacked,"false");
+        strcpy_P(stacked,PSTR("false"));
         if (glob_script_mem.gs_ctype == 'l' && *lp == 'f') {
           lp++;
           func = PSTR(",curveType:'function'");
@@ -13074,7 +13521,7 @@ exgc:
         }
         if (glob_script_mem.gs_ctype == 'c' && *lp == 's') {
           lp++;
-          strcpy_P(stacked,"true");
+          strcpy_P(stacked,PSTR("true"));
         }
         if (*lp == '2') {
           lp++;
@@ -13183,7 +13630,7 @@ exgc:
           snprintf_P(options, SCRIPT_GC_OPTIONS_SIZE, SCRIPT_MSG_GOPT4);
         }
         if (tonly) {
-          WSContentSend_P("]);");
+          WSContentSend_P(PSTR("]);"));
           if (options) free(options);
           WS_LINE_RETURN
           //goto nextwebline;
@@ -13209,7 +13656,7 @@ exgc:
         int16_t divflg = 1;
         int16_t todflg = -1;
         uint8_t hmflg = 0;
-        if (!strncmp(label, "cnt", 3)) {
+        if (!strncmp_P(label, PSTR("cnt"), 3)) {
           char *cp = &label[3];
           if (*cp == 'h') {
             hmflg = 1;
@@ -13229,7 +13676,7 @@ exgc:
           }
         } else {
           char *lp = label;
-          if (!strncmp(label, "wdh:", 4)) {
+          if (!strncmp_P(label, PSTR("wdh:"), 4)) {
             // one week hours
             todflg = -2;
             lp += 4;
@@ -13456,7 +13903,7 @@ void ScriptJsonAppend(void) {
       }
       if (*lp!=';') {
         // send this line to mqtt
-        if (!strncmp(lp, "%=#", 3)) {
+        if (!strncmp_P(lp, PSTR("%=#"), 3)) {
           // subroutine
           lp = scripter_sub(lp + 1, 0);
         } else {
@@ -13679,45 +14126,102 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_
 
 
 #ifdef USE_UFILESYS
-// read http content to file
-int32_t url2file(uint8_t fref, char *url) {
-  WiFiClient http_client;
-  HTTPClient http;
+// read http(s) content to file
+int32_t url2file(uint8_t fref, char *url, char *path) {
   int32_t httpCode = 0;
-  String weburl = "http://"+UrlEncode(url);
+  if (strstr_P(url, PSTR("https://"))) {
+    String xurl = url;
+    if (path) {
+      xurl += String("/") + path;
+    }
 
-  for (uint32_t retry = 0; retry < 3; retry++) {
-    http.begin(http_client, weburl);
-    delay(100);
-    httpCode = http.GET();
-    if (httpCode >= 0) {
-      break;
-    }
-  }
-  if (httpCode < 0) {
-    AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, http.errorToString(httpCode).c_str());
-  }
-  if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-    WiFiClient *stream = http.getStreamPtr();
-    int32_t len = http.getSize();
-    if (len < 0) len = 99999999;
-    uint8_t buff[512];
-    while (http.connected() && (len > 0)) {
-      size_t size = stream->available();
-      if (size) {
-        if (size > sizeof(buff)) {
-          size = sizeof(buff);
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+    HTTPClientLight http;
+    if (http.begin(UrlEncode(xurl))) {
+#else // HTTP only
+#if 1
+    WiFiClient http_client;
+#else
+    WiFiClientSecure http_client;
+    http_client.setInsecure();
+#endif
+    HTTPClient http;
+    if (http.begin(http_client, UrlEncode(xurl))) {
+#endif
+      httpCode = http.GET();
+      if (httpCode > 0) {
+        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+          WiFiClient *stream = http.getStreamPtr();
+          int32_t len = http.getSize();
+          if (len < 0) len = 99999999;
+          uint8_t buff[512];
+          if (buff) {
+            while (http.connected() && (len > 0)) {
+              size_t size = stream->available();
+              if (size) {
+                if (size > sizeof(buff)) {
+                  size = sizeof(buff);
+                }
+                int read = stream->readBytes(buff, size);
+                glob_script_mem.files[fref].write(buff, read);
+                len -= read;
+              }
+              delayMicroseconds(1);
+            }
+          }
         }
-        uint32_t read = stream->readBytes(buff, size);
-        glob_script_mem.files[fref].write(buff, read);
-        len -= read;
-        AddLog(LOG_LEVEL_DEBUG,PSTR("SCR: HTTP read %d"), len);
+      } else {
+        AddLog(LOG_LEVEL_INFO,PSTR("SCR: https error: %s"), http.errorToString(httpCode).c_str());
       }
-      delayMicroseconds(1);
+      http.end();                             // Clean up connection data
+    } else {
+      AddLog(LOG_LEVEL_INFO,PSTR("SCR: https begin failed"));
     }
+  } else {
+    // HTTP
+    WiFiClient http_client;
+    HTTPClient http;
+    
+    String weburl = "";
+    if (!strstr_P(url, PSTR("http"))) {
+      weburl += "http://"+UrlEncode(url);
+    } else {
+      weburl = UrlEncode(url);
+    }
+
+    for (uint32_t retry = 0; retry < 3; retry++) {
+      http.begin(http_client, weburl);
+      delay(100);
+      httpCode = http.GET();
+      if (httpCode >= 0) {
+        break;
+      }
+    }
+    if (httpCode < 0) {
+      AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, http.errorToString(httpCode).c_str());
+    }
+    if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+      WiFiClient *stream = http.getStreamPtr();
+      int32_t len = http.getSize();
+      if (len < 0) len = 99999999;
+      uint8_t buff[512];
+      while (http.connected() && (len > 0)) {
+        size_t size = stream->available();
+        if (size) {
+          if (size > sizeof(buff)) {
+            size = sizeof(buff);
+          }
+          uint32_t read = stream->readBytes(buff, size);
+          glob_script_mem.files[fref].write(buff, read);
+          len -= read;
+          AddLog(LOG_LEVEL_DEBUG,PSTR("SCR: HTTP read %d"), len);
+        }
+        delayMicroseconds(1);
+      }
+    }
+    http.end();
+    http_client.stop();
   }
-  http.end();
-  http_client.stop();
   return httpCode;
 }
 #endif
@@ -13733,7 +14237,7 @@ int32_t http_req(char *host, char *header, char *request) {
   if (!hbuff) {
     return -1;
   }
-  strcpy(hbuff, "http://");
+  strcpy_P(hbuff, PSTR("http://"));
   bool debug = false;
   if (*host == '@') {
     host++;
@@ -13759,7 +14263,7 @@ int32_t http_req(char *host, char *header, char *request) {
     //AddLog(LOG_LEVEL_INFO, PSTR("HTTP GET %s"),hbuff);
     http.begin(http_client, hbuff);
     if (*header) {
-      http.addHeader("Authorization", header);
+      http.addHeader(F("Authorization"), header);
     }
     httpCode = http.GET();
   } else {
@@ -13767,8 +14271,8 @@ int32_t http_req(char *host, char *header, char *request) {
     //AddLog(LOG_LEVEL_INFO, PSTR("HTTP POST %s - %s"),hbuff, request);
     http.begin(http_client, hbuff);
     if (*header) {
-      http.addHeader("Authorization", header);
-      http.addHeader("Content-Type", "text/plain");
+      http.addHeader(F("Authorization"), header);
+      http.addHeader(F("Content-Type"), F("text/plain"));
     }
     httpCode = http.POST(request);
   }
@@ -13866,7 +14370,7 @@ int32_t call2pwl(const char *url) {
 
 
 //#ifdef ESP8266
-#include "WiFiClientSecureLightBearSSL.h"
+
 //#else
 //#include <WiFiClientSecure.h>
 //#endif //ESP8266
@@ -13901,12 +14405,17 @@ uint32_t call2https(const char *host, const char *path) {
 
   String request;
 
+  // remove https:// from host
+  if (strstr(host, "https://")) {
+    host += 8;
+  }
+
   request = String("GET ") + path +
                     " HTTP/1.1\r\n" +
                     "Host: " + host +
                     "\r\n" + "Connection: close\r\n\r\n";
   httpsClient->print(request);
-//  AddLog(LOG_LEVEL_INFO,PSTR(">>> get request %s"),(char*)request.c_str());
+  //AddLog(LOG_LEVEL_INFO,PSTR(">>> get request %s"),(char*)request.c_str());
 
   while (httpsClient->connected()) {
     String line = httpsClient->readStringUntil('\n');
@@ -13917,13 +14426,13 @@ uint32_t call2https(const char *host, const char *path) {
   String result;
   while (httpsClient->available()) {
     String line = httpsClient->readStringUntil('\n');
-    if (line!="") {
+    if (line != "") {
       result += line;
     }
   }
   httpsClient->stop();
   delete httpsClient;
-//  AddLog(LOG_LEVEL_INFO,PSTR(">>> response 2 %s"),(char*)result.c_str());
+  //AddLog(LOG_LEVEL_INFO,PSTR(">>> response %s"),(char*)result.c_str());
   Run_Scripter(">jp", 3, (char*)result.c_str());
   return 0;
 }
@@ -14022,348 +14531,6 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
   return rval;
 }
 #endif // USE_SCRIPT_I2C
-
-
-#ifdef xUSE_LVGL
-#include <renderer.h>
-#include "lvgl.h"
-
-#define MAX_LVGL_OBJS 8
-uint8_t lvgl_numobjs;
-lv_obj_t *lvgl_buttons[MAX_LVGL_OBJS];
-
-void start_lvgl(const char * uconfig);
-lv_event_code_t lvgl_last_event;
-uint8_t lvgl_last_object;
-uint8_t lvgl_last_slider;
-static lv_obj_t * kb;
-static lv_obj_t * ta;
-
-void lvgl_set_last(lv_obj_t * obj, lv_event_code_t event);
-void lvgl_set_last(lv_obj_t * obj, lv_event_code_t event) {
-  lvgl_last_event = event;
-  lvgl_last_object = 0;
-  for (uint8_t cnt = 0; cnt < MAX_LVGL_OBJS; cnt++) {
-    if (lvgl_buttons[cnt] == obj) {
-      lvgl_last_object = cnt + 1;
-      return;
-    }
-  }
-}
-
-
-void btn_event_cb(lv_event_t * e);
-void btn_event_cb(lv_event_t * e) {
-  lvgl_set_last(e->target, e->code);
-  if (e->code == LV_EVENT_CLICKED) {
-    Run_Scripter1(">lvb", 4, 0);
-  }
-}
-
-void slider_event_cb(lv_event_t * e);
-void slider_event_cb(lv_event_t * e) {
-  lvgl_set_last(e->target, e->code);
-  lvgl_last_slider = lv_slider_get_value(e->target);
-  if (e->code == LV_EVENT_VALUE_CHANGED) {
-    Run_Scripter1(">lvs", 4, 0);
-  }
-}
-
-static void kb_create(void);
-static void ta_event_cb(lv_event_t * e);
-static void kb_event_cb(lv_event_t * e);
-
-static void kb_event_cb(lv_event_t * e) {
-    lv_keyboard_def_event_cb(e);
-    if(e->code == LV_EVENT_CANCEL) {
-        lv_keyboard_set_textarea(kb, NULL);
-        lv_obj_del(kb);
-        kb = NULL;
-    }
-}
-
-static void kb_create(void) {
-    kb = lv_keyboard_create(lv_scr_act());
-    lv_obj_add_event_cb(kb, kb_event_cb, LV_EVENT_ALL, nullptr);
-    lv_keyboard_set_textarea(kb, ta);
-}
-
-static void ta_event_cb(lv_event_t * e) {
-    if(e->code == LV_EVENT_CLICKED && kb == NULL) {
-      kb_create();
-    }
-}
-
-
-void lvgl_StoreObj(lv_obj_t *obj);
-void lvgl_StoreObj(lv_obj_t *obj) {
-  if (lvgl_numobjs < MAX_LVGL_OBJS) {
-    lvgl_buttons[lvgl_numobjs] = obj;
-    lvgl_numobjs++;
-  }
-}
-
-int32_t lvgl_test(char **lpp, int32_t p) {
-  char *lp = *lpp;
-  lv_obj_t *obj;
-  lv_obj_t *label;
-  TS_FLOAT xp, yp, xs, ys, min, max;
-  lv_meter_scale_t * scale;
-  lv_meter_indicator_t * indic;
-  char str[SCRIPT_MAX_SBSIZE];
-  int32_t res = 0;
-
-  switch (p) {
-    case 0:
-      start_lvgl(0);
-      lvgl_numobjs = 0;
-      for (uint8_t cnt = 0; cnt < MAX_LVGL_OBJS; cnt++) {
-        lvgl_buttons[cnt] = 0;
-      }
-      break;
-
-    case 1:
-      lv_obj_clean(lv_scr_act());
-      break;
-
-    case 2:
-      // create button;
-      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetStringArgument(lp, OPER_EQU, str, 0);
-      SCRIPT_SKIP_SPACES
-
-      obj = lv_btn_create(lv_scr_act());
-      lv_obj_set_pos(obj, xp, yp);
-      lv_obj_set_size(obj, xs, ys);
-      lv_obj_add_event_cb(obj, btn_event_cb, LV_EVENT_ALL, nullptr);
-      label = lv_label_create(obj);
-      lv_label_set_text(label, str);
-      lvgl_StoreObj(obj);
-      break;
-
-    case 3:
-      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
-      SCRIPT_SKIP_SPACES
-
-      obj = lv_slider_create(lv_scr_act());
-      lv_obj_set_pos(obj, xp, yp);
-      lv_obj_set_size(obj, xs, ys);
-      lv_obj_add_event_cb(obj, slider_event_cb, LV_EVENT_ALL, nullptr);
-      lvgl_StoreObj(obj);
-      break;
-
-    case 4:
-      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &min, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
-      SCRIPT_SKIP_SPACES
-
-      obj = lv_meter_create(lv_scr_act());
-      lv_obj_set_pos(obj, xp, yp);
-      lv_obj_set_size(obj, xs, ys);
-      scale = lv_meter_add_scale(obj);
-      /*Add a needle line indicator*/
-      indic = lv_meter_add_needle_line(obj, scale, 4, lv_palette_main(LV_PALETTE_GREY), -10);
-
-      // lv_gauge_set_range(obj, min, max);   // TODO LVGL8
-      lvgl_StoreObj(obj);
-      break;
-
-    case 5:
-      lp = GetNumericArgument(lp, OPER_EQU, &min, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
-      SCRIPT_SKIP_SPACES
-      if (lvgl_buttons[(uint8_t)min - 1]) {
-        // lv_gauge_set_value(lvgl_buttons[(uint8_t)min - 1], 0, max);   // TODO LVGL8
-      }
-      break;
-
-    case 6:
-      // create label;
-      lp = GetNumericArgument(lp, OPER_EQU, &xp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &yp, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &xs, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetNumericArgument(lp, OPER_EQU, &ys, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetStringArgument(lp, OPER_EQU, str, 0);
-      SCRIPT_SKIP_SPACES
-
-      obj = lv_label_create(lv_scr_act());
-      lv_obj_set_pos(obj, xp, yp);
-      lv_obj_set_size(obj, xs, ys);
-      lv_label_set_text(obj, str);
-      lvgl_StoreObj(obj);
-      break;
-
-    case 7:
-      lp = GetNumericArgument(lp, OPER_EQU, &min, 0);
-      SCRIPT_SKIP_SPACES
-      lp = GetStringArgument(lp, OPER_EQU, str, 0);
-      SCRIPT_SKIP_SPACES
-      if (lvgl_buttons[(uint8_t)min - 1]) {
-        lv_label_set_text(lvgl_buttons[(uint8_t)min - 1], str);
-      }
-      break;
-
-    case 8:
-      {
-      ta  = lv_textarea_create(lv_scr_act());
-      lv_obj_align(ta, LV_ALIGN_TOP_MID, 0, LV_DPI_DEF / 16);
-      lv_obj_add_event_cb(ta, ta_event_cb, LV_EVENT_ALL, nullptr);
-      lv_textarea_set_text(ta, "");
-      lv_coord_t max_h = LV_VER_RES / 2 - LV_DPI_DEF / 8;
-      if (lv_obj_get_height(ta) > max_h) lv_obj_set_height(ta, max_h);
-      kb_create();
-      }
-      break;
-
-    case 50:
-      res = lvgl_last_object;
-      break;
-    case 51:
-      res = lvgl_last_event;
-      break;
-    case 52:
-      res = lvgl_last_slider;
-      break;
-
-
-    default:
-      start_lvgl(0);
-      lvgl_setup();
-      break;
-  }
-
-  *lpp = lp;
-  return res;
-}
-
-
-lv_obj_t          *tabview,        // LittlevGL tabview object
-                  *gauge,          // Gauge object (on first of three tabs)
-                  *chart,          // Chart object (second tab)
-                  *canvas;         // Canvas object (third tab)
-uint8_t            active_tab = 0, // Index of currently-active tab (0-2)
-                   prev_tab   = 0; // Index of previously-active tab
-lv_chart_series_t *series;         // 'Series' data for the bar chart
-lv_draw_line_dsc_t draw_dsc; // Drawing style (for canvas) is similarly global
-
-#define CANVAS_WIDTH  200 // Dimensions in pixels
-#define CANVAS_HEIGHT 150
-
-void lvgl_setup(void) {
-  // Create a tabview object, by default this covers the full display.
-  tabview = lv_tabview_create(lv_disp_get_scr_act(NULL), LV_DIR_TOP, 50);
-  // The CLUE display has a lot of pixels and can't refresh very fast.
-  // To show off the tabview animation, let's slow it down to 1 second.
-  // lv_tabview_set_anim_time(tabview, 1000);  // LVGL8 TODO
-
-  // Because they're referenced any time an object is drawn, styles need
-  // to be permanent in scope; either declared globally (outside all
-  // functions), or static. The styles used on tabs are never modified after
-  // they're used here, so let's use static on those...
-  static lv_style_t tab_style, tab_background_style, indicator_style;
-
-  // This is the background style "behind" the tabs. This is what shows
-  // through for "off" (inactive) tabs -- a vertical green gradient,
-  // minimal padding around edges (zero at bottom).
-  lv_style_init(&tab_background_style);
-  lv_style_set_bg_color(&tab_background_style, lv_color_hex(0x408040));
-  lv_style_set_bg_grad_color(&tab_background_style, lv_color_hex(0x304030));
-  lv_style_set_bg_grad_dir(&tab_background_style, LV_GRAD_DIR_VER);
-  lv_style_set_pad_top(&tab_background_style, 2);
-  lv_style_set_pad_left(&tab_background_style, 2);
-  lv_style_set_pad_right(&tab_background_style, 2);
-  lv_style_set_pad_bottom(&tab_background_style, 0);
-  // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style); // LVGL8 TODO
-  //lv_tabview_add_tab(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style); // LVGL8 TODO
-
-  // Style for tabs. Active tab is white with opaque background, inactive
-  // tabs are transparent so the background shows through (only the white
-  // text is seen). A little top & bottom padding reduces scrunchyness.
-  lv_style_init(&tab_style);
-  lv_style_set_pad_top(&tab_style, 3);
-  lv_style_set_pad_bottom(&tab_style, 10);
-  lv_style_set_bg_color(&tab_style, lv_color_white());
-  lv_style_set_bg_opa(&tab_style, LV_OPA_100);
-  lv_style_set_text_color(&tab_style, lv_color_make(0xff, 0xff, 0xff));
-  lv_style_set_bg_opa(&tab_style, LV_OPA_TRANSP);
-  lv_style_set_text_color(&tab_style, lv_color_white());
-  // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BTN, &tab_style);  // LVGL8 TODO
-
-  // Style for the small indicator bar that appears below the active tab.
-  lv_style_init(&indicator_style);
-  lv_style_set_bg_color(&indicator_style, lv_color_make(0xff, 0x00, 0x00));
-  lv_style_set_size(&indicator_style, 5);
-  // lv_obj_add_style(tabview, LV_TABVIEW_PART_INDIC, &indicator_style);  // LVGL8 TODO
-
-  // Back to creating widgets...
-
-  // Add three tabs to the tabview
-  lv_obj_t *tab1 = lv_tabview_add_tab(tabview, "Gauge");
-  lv_obj_t *tab2 = lv_tabview_add_tab(tabview, "Chart");
-  lv_obj_t *tab3 = lv_tabview_add_tab(tabview, "Canvas");
-
-  // And then add stuff in each tab...
-
-  // The first tab holds a gauge. To keep the demo simple, let's just use
-  // the default style and range (0-100). See LittlevGL docs for options.
-  gauge = lv_meter_create(tab1);
-  lv_obj_set_size(gauge, 186, 186);
-  lv_obj_align(gauge,LV_ALIGN_CENTER, 0, 0);
-
-  // Second tab, make a chart...
-  chart = lv_chart_create(tab2);
-  lv_obj_set_size(chart, 200, 180);
-  lv_obj_align(chart, LV_ALIGN_CENTER, 0, 0);
-  lv_chart_set_type(chart, LV_CHART_TYPE_BAR);
-  // For simplicity, we'll stick with the chart's default 10 data points:
-  // series = lv_chart_add_series(chart, lv_color_make(0xff, 0x00, 0x00));  // LVGL8 TODO
-  // lv_chart_init_points(chart, series, 0);  // LVGL8 TODO
-  // Make each column shift left as new values enter on right:
-  lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
-
-  // Third tab is a canvas, which we'll fill with random colored lines.
-  // LittlevGL draw functions only work on TRUE_COLOR canvas.
-/*  canvas = lv_canvas_create(tab3);
-  lv_canvas_set_buffer(canvas, canvas_buffer,
-    CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR);
-  lv_obj_align(canvas, LV_ALIGN_CENTER, 0, 0);
-  lv_canvas_fill_bg(canvas, lv_color_white(), LV_OPA_100);
-
-  // Set up canvas line-drawing style based on defaults.
-  // Later we'll change color settings when drawing each line.
-  lv_draw_line_dsc_init(&draw_dsc);
-  */
-}
-
-
-#endif // USE_LVGL
 
 
 #ifdef USE_TIMERS

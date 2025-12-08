@@ -158,6 +158,15 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
 
+// The LOG_LEVEL macros are used to set the log level for the NimBLE stack, but they pollute the global namespace and would override the loglevel enum of Tasmota.
+// So we undefine them here to avoid conflicts.
+#undef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_INFO
+#undef LOG_LEVEL_WARN
+#undef LOG_LEVEL_ERROR
+#undef LOG_LEVEL_CRITICAL
+#undef LOG_LEVEL_NONE
+
 // assume this hack is still valid.
 #define DEPENDSONNIMBLEARDUINO 1
 #ifdef DEPENDSONNIMBLEARDUINO        
@@ -1367,7 +1376,7 @@ static BLESensorCallback clientCB;
 
 
 class BLEAdvCallbacks: public NimBLEScanCallbacks {
-  void onScanEnd(const NimBLEScanResults results) {
+  void onScanEnd(const NimBLEScanResults& results, int reason) {
     BLEscanEndedCB(results);
   }
 

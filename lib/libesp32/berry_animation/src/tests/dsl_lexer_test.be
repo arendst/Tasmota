@@ -337,7 +337,6 @@ def test_complex_dsl()
     "# Color Definitions\n" +
     "color red = 0xFF0000\n" +
     "color orange = rgb(255, 128, 0)\n" +
-    "color yellow = hsv(60, 100, 100)\n" +
     "\n" +
     "# Animation Definitions\n" +
     "animation fire_gradient = gradient(color=red)\n" +

@@ -261,6 +261,7 @@ typedef const char* (*breader)(struct blexer*, void*, size_t*);
 #define var_toidx(_v)           cast_int(var_toint(_v))
 
 const char* be_vtype2str(bvalue *v);
+bstring* be_vtype2bstring(bvalue *v);
 bvalue* be_indexof(bvm *vm, int idx);
 void be_commonobj_delete(bvm *vm, bgcobject *obj);
 int be_commonobj_destroy_generic(bvm* vm);

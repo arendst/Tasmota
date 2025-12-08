@@ -182,9 +182,7 @@ class NoiseAnimation : animation.animation
   
   # Update animation state
   def update(time_ms)
-    if !super(self).update(time_ms)
-      return false
-    end
+    super(self).update(time_ms)
     
     # Update time offset based on speed
     var current_speed = self.speed
@@ -199,8 +197,6 @@ class NoiseAnimation : animation.animation
     
     # Calculate noise colors
     self._calculate_noise(time_ms)
-    
-    return true
   end
   
   # Calculate noise colors for all pixels
@@ -230,15 +226,7 @@ class NoiseAnimation : animation.animation
   end
   
   # Render noise to frame buffer
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var strip_length = self.engine.strip_length
+  def render(frame, time_ms, strip_length)
     var i = 0
     while i < strip_length
       if i < frame.width

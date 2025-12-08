@@ -32,8 +32,8 @@
  *  6          PWM6
  *  7          PWM7
  *  8          reserved
- *  9          SERIAL1           no
- * 10          SERIAL2           yes
+ *  9          Serial1    W      no
+ * 10          Serial2    CW     yes
  * 11          +WS2812    RGB    no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
  * 13          Sonoff B1  RGBCW  yes

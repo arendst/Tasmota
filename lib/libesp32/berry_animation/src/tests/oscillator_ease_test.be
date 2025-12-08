@@ -156,7 +156,7 @@ def test_ease_with_phase()
   provider.min_value = 0
   provider.max_value = 100
   provider.duration = 1000
-  provider.phase = 25  # 25% phase shift
+  provider.phase = 64  # 25% phase shift (64 out of 255 is ~25%)
   provider.start(0)  # Start at time 0
   
   # With 25% phase shift, the curve should be shifted forward

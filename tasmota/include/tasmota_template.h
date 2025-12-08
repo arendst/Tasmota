@@ -235,6 +235,8 @@ enum UserSelectablePins {
 #ifdef ESP32
   GPIO_HSDIO_CMD, GPIO_HSDIO_CLK, GPIO_HSDIO_RST, GPIO_HSDIO_D0, GPIO_HSDIO_D1, GPIO_HSDIO_D2, GPIO_HSDIO_D3, // Hosted MCU SDIO interface, including 1-bit and 4-bit modes
 #endif
+  GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
+  GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -512,7 +514,9 @@ const char kSensorNames[] PROGMEM =
 #ifdef ESP32
   D_SENSOR_HSDIO_CMD "|" D_SENSOR_HSDIO_CLK "|" D_SENSOR_HSDIO_RST "|" D_SENSOR_HSDIO_D0 "|" D_SENSOR_HSDIO_D1 "|" D_SENSOR_HSDIO_D2 "|" D_SENSOR_HSDIO_D3 "|"
 #endif
-  ;
+  D_VID6608_F "|" D_VID6608_CW "|"
+  D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
+;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
@@ -541,6 +545,11 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_CSE7761              2  // Model 1/2 (DUALR3), 2/2 (POWCT)
 #define MAX_TWAI                 SOC_TWAI_CONTROLLER_NUM
 #define MAX_GPS_RX               3  // Baudrates 1 (9600), 2 (19200), 3 (38400)
+#ifdef ESP32
+#define MAX_MKSKYBLU_IF          8  // MakeSkyBlue solar charger: ESP32-NRG supports up to 8 phases
+#else
+#define MAX_MKSKYBLU_IF          3  // MakeSkyBlue solar charger: ESP82xx-NRG supports up to 3 phases
+#endif
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                                     // Not used
@@ -1016,6 +1025,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_V9240_TX),                          //  Serial V9240 interface
   AGPIO(GPIO_V9240_RX),                          //  Serial V9240 interface
 #endif
+#ifdef USE_MAKE_SKY_BLUE
+  AGPIO(GPIO_MKSKYBLU_TX) + AGMAX(MAX_MKSKYBLU_IF),
+  AGPIO(GPIO_MKSKYBLU_RX) + AGMAX(MAX_MKSKYBLU_IF),
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1160,7 +1173,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_C8_CO2_5K_TX),                      // SC8-CO2-5K Serial interface
   AGPIO(GPIO_C8_CO2_5K_RX),                      // SC8-CO2-5K Serial interface
 #endif
-
 
 #ifdef ESP32
 #ifdef USE_ESP32_TWAI
@@ -1328,6 +1340,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_VOLTAGE) + AGMAX(MAX_ADCS),     // Voltage
   AGPIO(GPIO_ADC_CURRENT) + AGMAX(MAX_ADCS),     // Current
 #endif  // ESP32
+
+
+#ifdef USE_VID6608
+  AGPIO(GPIO_VID6608_F) + AGMAX(4),              // VID6608 step interface (max 4 motors)
+  AGPIO(GPIO_VID6608_CW) + AGMAX(4),             // VID6608 direction interface (max 4 motors)
+#endif
+
 };
 
 /*-------------------------------------------------------------------------------------------*\

@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEAttValue.h"
-#if CONFIG_BT_ENABLED
+#if CONFIG_BT_NIMBLE_ENABLED
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "nimble/nimble_npl.h"
@@ -24,6 +24,7 @@
 #  include "nimble/nimble/include/nimble/nimble_npl.h"
 # endif
 
+# include "NimBLEUtils.h"
 # include "NimBLELog.h"
 
 static const char* LOG_TAG = "NimBLEAttValue";
@@ -34,7 +35,7 @@ NimBLEAttValue::NimBLEAttValue(uint16_t init_len, uint16_t max_len)
       m_attr_max_len{std::min<uint16_t>(BLE_ATT_ATTR_MAX_LEN, max_len)},
       m_attr_len{},
       m_capacity{init_len}
-# if CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
+# if MYNEWT_VAL(NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED)
       ,
       m_timestamp{}
 # endif
@@ -133,7 +134,7 @@ NimBLEAttValue& NimBLEAttValue::append(const uint8_t* value, uint16_t len) {
         return *this;
     }
 
-# if CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
+# if MYNEWT_VAL(NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED)
     time_t t = time(nullptr);
 # else
     time_t t = 0;
@@ -159,4 +160,4 @@ uint8_t NimBLEAttValue::operator[](int pos) const {
     return m_attr_value[pos];
 }
 
-#endif // CONFIG_BT_ENABLED
+#endif // CONFIG_BT_NIMBLE_ENABLED

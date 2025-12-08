@@ -53,16 +53,7 @@ class CometAnimation : animation.animation
   # Update animation state based on current time
   #
   # @param time_ms: int - current time in milliseconds
-  # @return bool - True if animation is still running, false if completed
   def update(time_ms)
-    # Call parent update method first
-    if !super(self).update(time_ms)
-      return false
-    end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-
     # Cache parameter values for performance (read once, use multiple times)
     var current_speed = self.speed
     var current_direction = self.direction
@@ -106,20 +97,15 @@ class CometAnimation : animation.animation
         self.direction = -current_direction
       end
     end
-    
-    return true
   end
   
   # Render the comet to the provided frame buffer
   #
   # @param frame: FrameBuffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
+  # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
-  def render(frame, time_ms)
-    if !self.is_running || frame == nil
-      return false
-    end
-    
+  def render(frame, time_ms, strip_length)
     # Get the integer position of the head (convert from 1/256th pixels to pixels)
     var head_pixel = self.head_position / 256
     
@@ -129,7 +115,6 @@ class CometAnimation : animation.animation
     var direction = self.direction
     var wrap_around = self.wrap_around
     var fade_factor = self.fade_factor
-    var strip_length = self.engine.strip_length
     
     # Extract color components from current color (ARGB format)
     var head_a = (current_color >> 24) & 0xFF

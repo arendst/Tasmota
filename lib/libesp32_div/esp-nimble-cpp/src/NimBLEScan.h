@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_SCAN_H_
 #define NIMBLE_CPP_SCAN_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_OBSERVER)
 
 # include "NimBLEAdvertisedDevice.h"
 # include "NimBLEUtils.h"
@@ -83,7 +83,7 @@ class NimBLEScan {
     void              erase(const NimBLEAddress& address);
     void              erase(const NimBLEAdvertisedDevice* device);
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     enum Phy { SCAN_1M = 0x01, SCAN_CODED = 0x02, SCAN_ALL = 0x03 };
     void setPhy(Phy phyMask);
     void setPeriod(uint32_t periodMs);
@@ -103,7 +103,7 @@ class NimBLEScan {
     NimBLETaskData*      m_pTaskData;
     uint8_t              m_maxResults;
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     uint8_t  m_phy{SCAN_ALL};
     uint16_t m_period{0};
 # endif
@@ -136,5 +136,5 @@ class NimBLEScanCallbacks {
     virtual void onScanEnd(const NimBLEScanResults& scanResults, int reason);
 };
 
-#endif // CONFIG_BT_ENABLED CONFIG_BT_NIMBLE_ROLE_OBSERVER
+#endif // CONFIG_BT_NIMBLE_ENABLED MYNEWT_VAL(BLE_ROLE_OBSERVER)
 #endif // NIMBLE_CPP_SCAN_H_

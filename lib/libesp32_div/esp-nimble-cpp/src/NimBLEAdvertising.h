@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_ADVERTISING_H_
 #define NIMBLE_CPP_ADVERTISING_H_
 
-#include "nimconfig.h"
-#if (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#include "syscfg/syscfg.h"
+#if (CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && !MYNEWT_VAL(BLE_EXT_ADV)) || defined(_DOXYGEN_)
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "host/ble_gap.h"
@@ -105,5 +105,5 @@ class NimBLEAdvertising {
     bool                    m_advDataSet : 1;
 };
 
-#endif // (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#endif // (CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && !MYNEWT_VAL(BLE_EXT_ADV)) || defined(_DOXYGEN_)
 #endif // NIMBLE_CPP_ADVERTISING_H_

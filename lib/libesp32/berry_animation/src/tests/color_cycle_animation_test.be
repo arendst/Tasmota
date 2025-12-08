@@ -61,7 +61,6 @@ class ColorCycleAnimationTest
     anim.duration = 0
     anim.loop = false
     anim.opacity = 255
-    anim.name = "test_default"
     
     # Check that the color was set correctly
     self.assert_equal(anim.color != nil, true, "Color is set")
@@ -80,7 +79,6 @@ class ColorCycleAnimationTest
     anim2.duration = 0
     anim2.loop = false
     anim2.opacity = 255
-    anim2.name = "test_custom"
     
     # Check that the color was set correctly
     self.assert_equal(anim2.color != nil, true, "Custom color is set")
@@ -105,7 +103,6 @@ class ColorCycleAnimationTest
     anim.duration = 0
     anim.loop = false
     anim.opacity = 255
-    anim.name = "test_render"
     
     # Create a frame buffer
     var frame = animation.frame_buffer(10)  # 10 pixels
@@ -115,26 +112,26 @@ class ColorCycleAnimationTest
     
     # Test brutal color switching - colors should change abruptly, not smoothly
     anim.update(0)
-    anim.render(frame, engine.time_ms)
+    anim.render(frame, engine.time_ms, engine.strip_length)
     var pixel_color = frame.get_pixel_color(0)
     self.assert_equal(pixel_color != 0, true, "Start color is not zero")
     
     # Test at middle of cycle - should still be a solid color (brutal switching)
     anim.update(500)  # 50% through cycle
-    anim.render(frame, engine.time_ms)
+    anim.render(frame, engine.time_ms, engine.strip_length)
     pixel_color = frame.get_pixel_color(0)
     self.assert_equal(pixel_color != 0, true, "Middle color is not zero")
     
     # Test at end of cycle - should be a different solid color
     anim.update(1000)  # 100% through cycle
-    anim.render(frame, engine.time_ms)
+    anim.render(frame, engine.time_ms, engine.strip_length)
     pixel_color = frame.get_pixel_color(0)
     self.assert_equal(pixel_color != 0, true, "End color is not zero")
     
     # Test manual next color trigger
     var initial_color = pixel_color
     provider.next = 1  # Trigger move to next color
-    anim.render(frame, engine.time_ms)
+    anim.render(frame, engine.time_ms, engine.strip_length)
     var next_color = frame.get_pixel_color(0)
     # Color should change when next is triggered (though it might be the same if cycling back)
     self.assert_equal(next_color != 0, true, "Next color is not zero")
@@ -154,7 +151,6 @@ class ColorCycleAnimationTest
     manual_anim.duration = 0
     manual_anim.loop = false
     manual_anim.opacity = 255
-    manual_anim.name = "manual_test"
     
     # Create a frame buffer
     var frame = animation.frame_buffer(10)  # 10 pixels
@@ -164,20 +160,20 @@ class ColorCycleAnimationTest
     
     # Test that color doesn't change with time in manual mode
     manual_anim.update(0)
-    manual_anim.render(frame, engine.time_ms)
+    manual_anim.render(frame, engine.time_ms, engine.strip_length)
     var initial_color = frame.get_pixel_color(0)
     self.assert_equal(initial_color != 0, true, "Initial color should not be zero")
     
     # Advance time significantly - color should NOT change in manual mode
     engine.time_ms = 10000  # 10 seconds later
     manual_anim.update(engine.time_ms)
-    manual_anim.render(frame, engine.time_ms)
+    manual_anim.render(frame, engine.time_ms, engine.strip_length)
     var same_color = frame.get_pixel_color(0)
     self.assert_equal(same_color, initial_color, "Color should not change with time in manual mode")
     
     # Manually trigger next color
     manual_provider.next = 1
-    manual_anim.render(frame, engine.time_ms)
+    manual_anim.render(frame, engine.time_ms, engine.strip_length)
     var next_color = frame.get_pixel_color(0)
     # Color might be the same if we cycled back to the same color, but the trigger should work
     self.assert_equal(next_color != 0, true, "Next color should not be zero")
@@ -185,7 +181,7 @@ class ColorCycleAnimationTest
     # Trigger next again to ensure it works multiple times
     var previous_color = next_color
     manual_provider.next = 1
-    manual_anim.render(frame, engine.time_ms)
+    manual_anim.render(frame, engine.time_ms, engine.strip_length)
     var third_color = frame.get_pixel_color(0)
     self.assert_equal(third_color != 0, true, "Third color should not be zero")
     
@@ -204,7 +200,6 @@ class ColorCycleAnimationTest
     anim.duration = 0
     anim.loop = false
     anim.opacity = 255
-    anim.name = "test_direct"
     
     # Check that the animation was created correctly
     self.assert_equal(anim != nil, true, "Animation was created")

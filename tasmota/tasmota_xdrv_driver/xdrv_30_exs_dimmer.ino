@@ -355,7 +355,7 @@ bool ExsModuleSelected(void)
   SetSeriallog(LOG_LEVEL_NONE);
 
   UpdateDevicesPresent(2);
-  TasmotaGlobal.light_type = LT_SERIAL2;
+  TasmotaGlobal.light_type = LT_CW;
   return true;
 }
 

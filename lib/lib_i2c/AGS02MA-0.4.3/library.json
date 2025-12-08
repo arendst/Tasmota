@@ -1,0 +1,29 @@
+{
+  "name": "AGS02MA",
+  "keywords": "I2C, AGS02MA, tvoc",
+  "description": "Arduino library for AGS02MA - TVOC sensor.",
+  "authors":
+  [
+    {
+      "name": "Viktor Balint"
+    },
+    {
+      "name": "Rob Tillaart",
+      "email": "Rob.Tillaart@gmail.com",
+      "maintainer": true
+    },
+    {
+      "name": "Beanow"
+    }
+  ],
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/RobTillaart/AGS02MA.git"
+  },
+  "version": "0.4.3",
+  "license": "MIT",
+  "frameworks": "*",
+  "platforms": "*",
+  "headers": "AGS02MA.h"
+}

@@ -16,9 +16,9 @@
  */
 
 #include "NimBLEService.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
 #  include "NimBLEExtAdvertising.h"
 # else
 #  include "NimBLEAdvertising.h"
@@ -375,4 +375,4 @@ bool NimBLEService::isStarted() const {
     return m_pSvcDef->type > 0;
 } // isStarted
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)

@@ -25,7 +25,6 @@ anim.priority = 10
 anim.duration = 0        # Infinite
 anim.loop = false
 anim.opacity = 255
-anim.name = "test_solid"
 
 print("Set parameters using virtual member assignment")
 
@@ -42,7 +41,6 @@ print(f"Priority: {anim.priority}")
 print(f"Opacity: {anim.opacity}")
 print(f"Duration: {anim.duration}")
 print(f"Loop: {anim.loop}")
-print(f"Name: {anim.name}")
 
 # Test 2: Create animation with red color
 var red_anim = animation.solid(engine)
@@ -56,7 +54,6 @@ blue_anim.priority = 20
 blue_anim.duration = 5000
 blue_anim.loop = true
 blue_anim.opacity = 200
-blue_anim.name = "test_blue"
 print(f"Blue animation - priority: {blue_anim.priority}, duration: {blue_anim.duration}, loop: {blue_anim.loop}")
 
 # Test 4: Create animation with ValueProvider
@@ -69,7 +66,7 @@ print("Green animation with color provider created")
 # Test 5: Test rendering
 var frame = animation.frame_buffer(5)
 red_anim.start()  # Uses engine time automatically
-red_anim.render(frame, engine.time_ms)
+red_anim.render(frame, engine.time_ms, engine.strip_length)
 print("Rendering test completed")
 
 # Test 6: Test engine time usage

@@ -38,18 +38,22 @@ class MyAnimation : animation.animation
     # Parameter validation is handled automatically by the framework
   end
   
-  def render(frame, time_ms)
+  # Update animation state (no return value needed)
+  def update(time_ms)
+    super(self).update(time_ms)
+    # Your update logic here
+  end
+  
+  def render(frame, time_ms, strip_length)
     if !self.is_running || frame == nil
       return false
     end
-    
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
     
     # Use virtual parameter access - automatically resolves ValueProviders
     var param1 = self.my_param1
     var param2 = self.my_param2
     
+    # Use strip_length parameter instead of self.engine.strip_length for performance
     # Your rendering logic here
     # ...
     
@@ -153,20 +157,16 @@ end
 The virtual parameter system automatically resolves ValueProviders when you access parameters:
 
 ```berry
-def render(frame, time_ms)
-  # Use engine time if not provided
-  if time_ms == nil
-    time_ms = self.engine.time_ms
-  end
-  
+def render(frame, time_ms, strip_length)
   # Virtual parameter access automatically resolves ValueProviders
   var color = self.color      # Returns current color value, not the provider
   var position = self.pos     # Returns current position value
   var size = self.size        # Returns current size value
   
+  # Use strip_length parameter (computed once by engine_proxy) instead of self.engine.strip_length
   # Use resolved values in rendering logic
   for i: position..(position + size - 1)
-    if i >= 0 && i < frame.width
+    if i >= 0 && i < strip_length
       frame.set_pixel_color(i, color)
     end
   end
@@ -198,7 +198,7 @@ anim.pos = animation.triangle(0, 29, 3000)
 For performance-critical code, cache parameter values:
 
 ```berry
-def render(frame, time_ms)
+def render(frame, time_ms, strip_length)
   # Cache parameter values to avoid multiple virtual member access
   var current_color = self.color
   var current_pos = self.pos
@@ -206,7 +206,7 @@ def render(frame, time_ms)
   
   # Use cached values in loops
   for i: current_pos..(current_pos + current_size - 1)
-    if i >= 0 && i < frame.width
+    if i >= 0 && i < strip_length
       frame.set_pixel_color(i, current_color)
     end
   end
@@ -389,24 +389,17 @@ end
 ### Frame Buffer Operations
 
 ```berry
-def render(frame, time_ms)
+def render(frame, time_ms, strip_length)
   if !self.is_running || frame == nil
     return false
   end
-
-  # Auto-fix time_ms and start_time
-  time_ms = self._fix_time_ms(time_ms)
-  
-  # Get frame dimensions
-  var width = frame.width
-  var height = frame.height  # Usually 1 for LED strips
   
   # Resolve dynamic parameters
   var color = self.resolve_value(self.color, "color", time_ms)
   var opacity = self.resolve_value(self.opacity, "opacity", time_ms)
   
-  # Render your effect
-  for i: 0..(width-1)
+  # Render your effect using strip_length parameter
+  for i: 0..(strip_length-1)
     var pixel_color = calculate_pixel_color(i, time_ms)
     frame.set_pixel_color(i, pixel_color)
   end
@@ -487,19 +480,12 @@ class BeaconAnimation : animation.animation
   end
   
   # Render the pulse to the provided frame buffer
-  def render(frame, time_ms)
+  def render(frame, time_ms, strip_length)
     if frame == nil
       return false
     end
     
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-
-    if time_ms == nil
-      time_ms = self.engine.time_ms
-    end
-    
-    var pixel_size = frame.width
+    var pixel_size = strip_length
     # Use virtual parameter access - automatically resolves ValueProviders
     var back_color = self.back_color
     var pos = self.pos
@@ -636,7 +622,7 @@ def test_my_animation()
   # Test rendering
   var frame = animation.frame_buffer(10)
   anim.start()
-  var result = anim.render(frame, 1000)
+  var result = anim.render(frame, 1000, engine.strip_length)
   assert(result == true, "Should render successfully")
   
   print("✓ All tests passed")

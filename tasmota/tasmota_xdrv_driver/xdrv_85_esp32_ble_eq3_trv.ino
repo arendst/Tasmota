@@ -19,6 +19,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.0.1.1 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
+                              view on UI only when BLE enabled
   1.0.1.0 20240113  publish - Add some values to WebUI; code cleanup
   1.0.0.0 20210910  publish - renamed to xdrv_85, and checked with TAS latest dev branch
   0.0.0.0 20201213  created - initial version
@@ -991,13 +993,15 @@ int EQ3SendResult(char *requested, const char *result){
 #ifdef USE_WEBSERVER
 const char HTTP_EQ3_TYPE[]         PROGMEM = "{s}%s " D_NEOPOOL_TYPE "{m}EQ3{e}";
 const char HTTP_EQ3_MAC[]          PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
-const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
+const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 const char HTTP_EQ3_TEMPERATURE[]  PROGMEM = "{s}%s " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
 const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}%s " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
 const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}%s " D_BATTERY "{m}%s{e}";
 
 void EQ3Show(void)
 {
+  if (!Settings->flag5.mi32_enable) return;
+
   char c_unit = D_UNIT_CELSIUS[0]; // ToDo: Check if fahrenheit is possible -> temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
   bool FirstSensorShown = false;
 
@@ -1016,7 +1020,7 @@ void EQ3Show(void)
         label = tlabel;
       }
       WSContentSend_P(HTTP_EQ3_MAC, label, addrStr(EQ3Devices[i].addr));
-      WSContentSend_PD(HTTP_EQ3_RSSI, label, EQ3Devices[i].RSSI);
+      WSContentSend_PD(HTTP_EQ3_RSSI, label, WifiGetRssiAsQuality(EQ3Devices[i].RSSI), EQ3Devices[i].RSSI);
       WSContentSend_PD(HTTP_EQ3_TEMPERATURE, label, Settings->flag2.temperature_resolution, &EQ3Devices[i].TargetTemp, c_unit);
       WSContentSend_P(HTTP_EQ3_DUTY_CYCLE, label, EQ3Devices[i].DutyCycle);
       WSContentSend_P(HTTP_EQ3_BATTERY, label, EQ3Devices[i].Battery ? D_NEOPOOL_LOW : D_OK);

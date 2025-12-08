@@ -239,7 +239,6 @@ class RichPaletteColorProvider : animation.color_provider
   # Subclasses must override this to implement their update logic
   #
   # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if object is still running, false if completed
   def update(time_ms)
     # Rebuild LUT if dirty
     if self._lut_dirty || self._color_lut == nil
@@ -247,9 +246,7 @@ class RichPaletteColorProvider : animation.color_provider
     end
 
     # Cache the brightness to an instance variable for this tick
-    self._brightness = self.brightness
-    
-    return self.is_running
+    self._brightness = self.member("brightness")
   end
 
   # Produce a color value for any parameter name (optimized version from Animate_palette)

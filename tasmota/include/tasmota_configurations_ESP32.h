@@ -254,6 +254,8 @@
   #define CODE_IMAGE_STR "bluetooth"
 #endif
 
+#define CONFIG_NIMBLE_CPP_IDF 1
+
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
 #undef FALLBACK_MODULE
@@ -797,7 +799,6 @@
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
 #define USE_DALI                                 // Add support for DALI gateway (+5k code)
-  #define DALI_LIGHT_COLOR_SUPPORT               // Add support for DALI DT8 RGBWAF color control (+0k7 code)
 #define USE_ESP32_TWAI                           // Add support for TWAI/CAN interface (+7k code)
 
 #endif // FIRMWARE_TASMOTA32

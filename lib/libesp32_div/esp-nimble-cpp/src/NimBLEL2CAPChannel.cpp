@@ -3,7 +3,7 @@
 //
 
 #include "NimBLEL2CAPChannel.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 
 # include "NimBLEClient.h"
 # include "NimBLELog.h"
@@ -149,7 +149,7 @@ int NimBLEL2CAPChannel::writeFragment(std::vector<uint8_t>::const_iterator begin
     return -BLE_HS_EREJECT;
 }
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 NimBLEL2CAPChannel* NimBLEL2CAPChannel::connect(NimBLEClient*                client,
                                                 uint16_t                     psm,
                                                 uint16_t                     mtu,
@@ -174,7 +174,7 @@ NimBLEL2CAPChannel* NimBLEL2CAPChannel::connect(NimBLEClient*                cli
     }
     return channel;
 }
-# endif // CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# endif // MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 bool NimBLEL2CAPChannel::write(const std::vector<uint8_t>& bytes) {
     if (!this->channel) {
@@ -311,4 +311,4 @@ int NimBLEL2CAPChannel::handleL2capEvent(struct ble_l2cap_event* event, void* ar
     return returnValue;
 }
 
-#endif // #if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM
+#endif // #if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)

@@ -108,14 +108,16 @@ class ParameterizedObject
     # end
     # Check if it's a parameter (either set in values or defined in PARAMS)
     # Implement a fast-track if the value exists
-    if self.values.contains(name)
-      var value = self.values[name]
+
+    # main case, the value is numerical and present, so `find()` will get it in one search
+    var value = self.values.find(name)
+    if (value != nil)                 # in not nil, there is a value
       if type(value) != "instance"
         return value
       end
-      
-      # Apply produce_value() if it' a ValueProvider
       return self.resolve_value(value, name, self.engine.time_ms)
+    elif self.values.contains(name)   # second case, nil is the actual value (and not returned because not found)
+      return nil
     else
       # Return default if available from class hierarchy
       var encoded_constraints = self._get_param_def(name)
@@ -375,9 +377,6 @@ class ParameterizedObject
     if time_ms == nil
       time_ms = self.engine.time_ms
     end
-    # if time_ms == nil
-    #   raise "value_error", "engine.time_ms should not be 'nil'"
-    # end
     if self.start_time == nil
       self.start_time = time_ms
     end
@@ -428,10 +427,8 @@ class ParameterizedObject
   # Subclasses must override this to implement their update logic
   #
   # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if object is still running, false if completed
   def update(time_ms)
-    # Default implementation just returns running state
-    return self.is_running
+    # Default implementation does nothing - subclasses override as needed
   end
   
   # Method called when a parameter is changed

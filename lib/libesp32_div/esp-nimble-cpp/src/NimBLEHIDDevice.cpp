@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEHIDDevice.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_BROADCASTER) && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # include "NimBLEServer.h"
 # include "NimBLEService.h"
@@ -340,4 +340,4 @@ NimBLEService* NimBLEHIDDevice::getBatteryService() {
     return m_batterySvc;
 } // getBatteryService
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)

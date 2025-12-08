@@ -40,7 +40,6 @@ var base_anim = animation.solid(opacity_engine)
 base_anim.color = 0xFFFF0000  # Red
 base_anim.opacity = 128       # 50% opacity
 base_anim.priority = 10
-base_anim.name = "base_red"
 
 opacity_engine.add(base_anim)
 opacity_engine.run()
@@ -61,17 +60,17 @@ print("\n--- Test 11b: Animation as opacity mask - basic setup ---")
 var opacity_mask = animation.solid(opacity_engine)
 opacity_mask.color = 0xFF808080  # Gray (128 brightness)
 opacity_mask.priority = 5
-opacity_mask.name = "opacity_mask"
+opacity_mask.id = "opacity_mask"
 
 # Create main animation with animation opacity
 var masked_anim = animation.solid(opacity_engine)
 masked_anim.color = 0xFF00FF00  # Green
 masked_anim.opacity = opacity_mask  # Use animation as opacity
 masked_anim.priority = 15
-masked_anim.name = "masked_green"
+masked_anim.id = "masked_green"
 
 assert_test(isinstance(masked_anim.opacity, animation.animation), "Opacity should be an animation instance")
-assert_equals(masked_anim.opacity.name, "opacity_mask", "Opacity animation should be correctly assigned")
+assert_equals(masked_anim.opacity.id, "opacity_mask", "Opacity animation should be correctly assigned")
 
 # Test 11c: Animation opacity rendering
 print("\n--- Test 11c: Animation opacity rendering ---")
@@ -100,14 +99,12 @@ print("\n--- Test 11e: Complex opacity animation scenarios ---")
 var pulsing_opacity = animation.solid(opacity_engine)
 pulsing_opacity.color = 0xFF000000  # Start with black (0 opacity)
 pulsing_opacity.priority = 1
-pulsing_opacity.name = "pulsing_opacity"
 
 # Create animated color base
 var rainbow_base = animation.solid(opacity_engine)
 rainbow_base.color = 0xFFFF0000  # Red base
 rainbow_base.opacity = pulsing_opacity  # Pulsing opacity
 rainbow_base.priority = 20
-rainbow_base.name = "rainbow_with_pulse"
 
 # Test multiple renders with changing opacity
 opacity_engine.clear()
@@ -134,14 +131,12 @@ print("\n--- Test 11f: Opacity animation lifecycle management ---")
 var auto_start_opacity = animation.solid(opacity_engine)
 auto_start_opacity.color = 0xFF808080  # Gray
 auto_start_opacity.priority = 1
-auto_start_opacity.name = "auto_start_opacity"
 auto_start_opacity.is_running = false  # Start stopped
 
 var auto_start_main = animation.solid(opacity_engine)
 auto_start_main.color = 0xFFFFFF00  # Yellow
 auto_start_main.opacity = auto_start_opacity
 auto_start_main.priority = 10
-auto_start_main.name = "auto_start_main"
 
 # Opacity animation should not be running initially
 assert_test(!auto_start_opacity.is_running, "Opacity animation should start stopped")
@@ -163,17 +158,14 @@ print("\n--- Test 11g: Nested animation opacity ---")
 var base_nested = animation.solid(opacity_engine)
 base_nested.color = 0xFF00FFFF  # Cyan
 base_nested.priority = 30
-base_nested.name = "base_nested"
 
 var opacity1 = animation.solid(opacity_engine)
 opacity1.color = 0xFF808080  # 50% gray
 opacity1.priority = 25
-opacity1.name = "opacity1"
 
 var opacity2 = animation.solid(opacity_engine)
 opacity2.color = 0xFFC0C0C0  # 75% gray
 opacity2.priority = 20
-opacity2.name = "opacity2"
 
 # Chain the opacities: base uses opacity1, opacity1 uses opacity2
 opacity1.opacity = opacity2
@@ -202,12 +194,10 @@ print("\n--- Test 11h: Opacity animation parameter changes ---")
 var param_base = animation.solid(opacity_engine)
 param_base.color = 0xFFFF00FF  # Magenta
 param_base.priority = 10
-param_base.name = "param_base"
 
 var param_opacity = animation.solid(opacity_engine)
 param_opacity.color = 0xFF404040  # Dark gray
 param_opacity.priority = 5
-param_opacity.name = "param_opacity"
 
 param_base.opacity = param_opacity
 
@@ -244,7 +234,6 @@ print("\n--- Test 11i: Opacity edge cases ---")
 var edge_base = animation.solid(opacity_engine)
 edge_base.color = 0xFF0080FF  # Blue
 edge_base.priority = 10
-edge_base.name = "edge_base"
 
 # Test full transparency (should still render but with no visible effect)
 edge_base.opacity = 0
@@ -264,7 +253,6 @@ assert_test(render_result, "Animation with full opacity should render normally")
 var transparent_opacity = animation.solid(opacity_engine)
 transparent_opacity.color = 0x00000000  # Fully transparent
 transparent_opacity.priority = 5
-transparent_opacity.name = "transparent_opacity"
 
 edge_base.opacity = transparent_opacity
 transparent_opacity.start()
@@ -285,12 +273,10 @@ for i : 0..9
   var perf_base = animation.solid(opacity_engine)
   perf_base.color = 0xFF000000 | ((i * 25) << 16) | ((i * 15) << 8) | (i * 10)
   perf_base.priority = 50 + i
-  perf_base.name = f"perf_base_{i}"
-  
+
   var perf_opacity = animation.solid(opacity_engine)
   perf_opacity.color = 0xFF808080  # 50% gray
   perf_opacity.priority = 40 + i
-  perf_opacity.name = f"perf_opacity_{i}"
   
   perf_base.opacity = perf_opacity
   

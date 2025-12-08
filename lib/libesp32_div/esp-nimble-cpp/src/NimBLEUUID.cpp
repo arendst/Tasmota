@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEUUID.h"
-#if CONFIG_BT_ENABLED
+#if CONFIG_BT_NIMBLE_ENABLED
 
 # include "NimBLEUtils.h"
 # include "NimBLELog.h"
@@ -336,4 +336,4 @@ NimBLEUUID::operator std::string() const {
     return ble_uuid_to_str(&m_uuid.u, buf);
 } // operator std::string
 
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_NIMBLE_ENABLED */

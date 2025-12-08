@@ -62,7 +62,7 @@ class str_build:
         return size
     
     def keywords(self):
-        opif = 50
+        opif = 52
         tab = {
             "if": opif,             "elif": opif + 1 ,
             "else": opif + 2 ,      "while": opif + 3 ,

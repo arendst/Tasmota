@@ -112,7 +112,7 @@ bool connectToServer() {
 
     /** No client to reuse? Create a new one. */
     if (!pClient) {
-        if (NimBLEDevice::getCreatedClientCount() >= NIMBLE_MAX_CONNECTIONS) {
+        if (NimBLEDevice::getCreatedClientCount() >= MYNEWT_VAL(BLE_MAX_CONNECTIONS)) {
             printf("Max clients reached - no more connections available\n");
             return false;
         }
@@ -261,8 +261,7 @@ extern "C" void app_main(void) {
      *  These are the default values, only shown here for demonstration.
      */
     // NimBLEDevice::setSecurityAuth(false, false, true);
-
-    NimBLEDevice::setSecurityAuth(/*BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM |*/ BLE_SM_PAIR_AUTHREQ_SC);
+    // NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM | BLE_SM_PAIR_AUTHREQ_SC);
 
     /** Optional: set the transmit power */
     NimBLEDevice::setPower(3); /** 3dbm */

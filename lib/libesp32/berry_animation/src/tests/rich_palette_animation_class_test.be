@@ -22,7 +22,6 @@ print("Created rich palette animation with engine-only constructor")
 # Test that it's created successfully
 print(f"Animation created: {anim}")
 print(f"Animation type: {type(anim)}")
-print(f"Animation name: {anim.name}")
 
 # Test 2: Set parameters using virtual member assignment (parameter forwarding)
 anim.palette = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
@@ -61,22 +60,22 @@ print(f"Animation running: {anim.is_running}")
 
 # Test 5: Test rendering
 var frame = animation.frame_buffer(5)
-anim.render(frame, engine.time_ms)
+anim.render(frame, engine.time_ms, engine.strip_length)
 var pixel_color = frame.get_pixel_color(0)
 print(f"Rendered pixel color: {pixel_color}")
 
 # Test 6: Test color changes over time
 engine.time_ms = 0
 anim.start(0)
-anim.render(frame, 0)
+anim.render(frame, 0, engine.strip_length)
 var color_t0 = frame.get_pixel_color(0)
 
 engine.time_ms = 1500  # Half cycle
-anim.render(frame, 1500)
+anim.render(frame, 1500, engine.strip_length)
 var color_t1500 = frame.get_pixel_color(0)
 
 engine.time_ms = 3000  # Full cycle
-anim.render(frame, 3000)
+anim.render(frame, 3000, engine.strip_length)
 var color_t3000 = frame.get_pixel_color(0)
 
 print(f"Color at t=0: {color_t0}")
@@ -124,7 +123,6 @@ print(f"CSS gradient available: {bool(css_gradient)}")
 # Validate key test results
 assert(anim != nil, "Rich palette animation should be created")
 assert(type(anim) == "instance", "Animation should be an instance")
-assert(anim.name == "rich_palette", "Animation should have correct default name")
 
 # Test parameter forwarding
 assert(anim.cycle_period == 2000, "Cycle period should be forwarded")

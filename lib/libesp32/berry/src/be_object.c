@@ -10,6 +10,8 @@
 #include "be_mem.h"
 #include "be_gc.h"
 #include "be_vm.h"
+#include "be_string.h"
+#include "be_const_strtab.h"
 
 #define cast_comobj(o)      gc_cast(o, BE_COMOBJ, bcommomobj)
 
@@ -33,6 +35,33 @@ const char* be_vtype2str(bvalue *v)
     case BE_COMPTR: return "ptr";
     default: return "invalid type";
     }
+}
+
+
+bstring* be_vtype2bstring(bvalue *v)
+{
+#if BE_USE_PRECOMPILED_OBJECT
+    switch(var_primetype(v)) {
+    case BE_NIL: return (bstring*) &be_const_str_nil;
+    case BE_INT: return (bstring*) &be_const_str_int;
+    case BE_REAL: return (bstring*) &be_const_str_real;
+    case BE_BOOL: return (bstring*) &be_const_str_bool;
+    case BE_CLOSURE: case BE_NTVCLOS: case BE_CTYPE_FUNC:
+    case BE_NTVFUNC: return (bstring*) &be_const_str_function;
+    case BE_PROTO: return (bstring*) &be_const_str_proto;
+    case BE_CLASS: return (bstring*) &be_const_str_class;
+    case BE_STRING: return (bstring*) &be_const_str_string;
+    case BE_LIST: return (bstring*) &be_const_str_list;
+    case BE_MAP: return (bstring*) &be_const_str_map;
+    case BE_INSTANCE: return (bstring*) &be_const_str_instance;
+    case BE_MODULE: return (bstring*) &be_const_str_module;
+    case BE_INDEX: return (bstring*) &be_const_str_var;
+    case BE_COMPTR: return (bstring*) &be_const_str_ptr;
+    default: return (bstring*) &be_const_str_invalid_type;
+    }
+#else
+    return be_newstr(vm, be_vtype2str(v));
+#endif
 }
 
 bvalue* be_indexof(bvm *vm, int idx)

@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_SERVER_H_
 #define NIMBLE_CPP_SERVER_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "host/ble_gap.h"
@@ -45,14 +45,14 @@ class NimBLEConnInfo;
 class NimBLEAddress;
 class NimBLEService;
 class NimBLECharacteristic;
-# if CONFIG_BT_NIMBLE_ROLE_BROADCASTER
-#  if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_ROLE_BROADCASTER)
+#  if MYNEWT_VAL(BLE_EXT_ADV)
 class NimBLEExtAdvertising;
 #  else
 class NimBLEAdvertising;
 #  endif
 # endif
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 class NimBLEClient;
 # endif
 
@@ -72,6 +72,7 @@ class NimBLEServer {
     NimBLEService*        getServiceByUUID(const char* uuid, uint16_t instanceId = 0) const;
     NimBLEService*        getServiceByUUID(const NimBLEUUID& uuid, uint16_t instanceId = 0) const;
     NimBLEService*        getServiceByHandle(uint16_t handle) const;
+    NimBLECharacteristic* getCharacteristicByHandle(uint16_t handle) const;
     void                  removeService(NimBLEService* service, bool deleteSvc = false);
     void                  addService(NimBLEService* service);
     uint16_t              getPeerMTU(uint16_t connHandle) const;
@@ -84,20 +85,20 @@ class NimBLEServer {
     bool                  updatePhy(uint16_t connHandle, uint8_t txPhysMask, uint8_t rxPhysMask, uint16_t phyOptions);
     bool                  getPhy(uint16_t connHandle, uint8_t* txPhy, uint8_t* rxPhy);
 
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
     NimBLEClient* getClient(uint16_t connHandle);
     NimBLEClient* getClient(const NimBLEConnInfo& connInfo);
     void          deleteClient();
 # endif
 
-# if CONFIG_BT_NIMBLE_ROLE_BROADCASTER
-#  if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_ROLE_BROADCASTER)
+#  if MYNEWT_VAL(BLE_EXT_ADV)
     NimBLEExtAdvertising* getAdvertising() const;
     bool                  startAdvertising(uint8_t instanceId, int duration = 0, int maxEvents = 0) const;
     bool                  stopAdvertising(uint8_t instanceId) const;
 #  endif
 
-#  if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
+#  if !MYNEWT_VAL(BLE_EXT_ADV) || defined(_DOXYGEN_)
     NimBLEAdvertising* getAdvertising() const;
     bool               startAdvertising(uint32_t duration = 0) const;
     bool               stopAdvertising() const;
@@ -108,8 +109,8 @@ class NimBLEServer {
     friend class NimBLEDevice;
     friend class NimBLEService;
     friend class NimBLECharacteristic;
-# if CONFIG_BT_NIMBLE_ROLE_BROADCASTER
-#  if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_ROLE_BROADCASTER)
+#  if MYNEWT_VAL(BLE_EXT_ADV)
     friend class NimBLEExtAdvertising;
 #  else
     friend class NimBLEAdvertising;
@@ -118,26 +119,24 @@ class NimBLEServer {
 
     NimBLEServer();
     ~NimBLEServer();
-
-    bool m_gattsStarted : 1;
-    bool m_svcChanged : 1;
-    bool m_deleteCallbacks : 1;
-# if !CONFIG_BT_NIMBLE_EXT_ADV
-    bool m_advertiseOnDisconnect : 1;
-# endif
-    NimBLEServerCallbacks*                                 m_pServerCallbacks;
-    std::vector<NimBLEService*>                            m_svcVec;
-    std::array<uint16_t, CONFIG_BT_NIMBLE_MAX_CONNECTIONS> m_connectedPeers;
-
-# if CONFIG_BT_NIMBLE_ROLE_CENTRAL
-    NimBLEClient* m_pClient{nullptr};
-# endif
-
     static int handleGapEvent(struct ble_gap_event* event, void* arg);
     static int handleGattEvent(uint16_t connHandle, uint16_t attrHandle, ble_gatt_access_ctxt* ctxt, void* arg);
     void       serviceChanged();
     void       resetGATT();
 
+    bool m_gattsStarted : 1;
+    bool m_svcChanged : 1;
+    bool m_deleteCallbacks : 1;
+# if !MYNEWT_VAL(BLE_EXT_ADV)
+    bool m_advertiseOnDisconnect : 1;
+# endif
+    NimBLEServerCallbacks*                                m_pServerCallbacks;
+    std::vector<NimBLEService*>                           m_svcVec;
+    std::array<uint16_t, MYNEWT_VAL(BLE_MAX_CONNECTIONS)> m_connectedPeers;
+
+# if MYNEWT_VAL(BLE_ROLE_CENTRAL)
+    NimBLEClient* m_pClient{nullptr};
+# endif
 }; // NimBLEServer
 
 /**
@@ -223,5 +222,5 @@ class NimBLEServerCallbacks {
     virtual void onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy);
 }; // NimBLEServerCallbacks
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 #endif // NIMBLE_CPP_SERVER_H_

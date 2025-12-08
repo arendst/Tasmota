@@ -212,8 +212,13 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
     color[2] = changeUIntScale(b8, 0, 255, 0, b_dimmer);
     color[3] = changeUIntScale(w8, 0, 255, 0, w_dimmer);
     color[4] = changeUIntScale(ww8, 0, 255, 0, ww_dimmer);
+
     // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: %02X-%02X-%02X univ=%i rows=%i max_univ=%i"), buf[idx+1], buf[idx], buf[idx+2], universe, row, artnet_conf.univ + artnet_conf.rows);
-    LightSetOutputs(color);
+    uint16_t mapped_color[LST_MAX] = {0};
+    for (uint32_t i = 0; i < LST_MAX; i++) {
+      mapped_color[i] = color[Light.color_remap[i]];
+    }
+    LightSetOutputs(mapped_color);
   }
   // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: ok universe=%i datalen=%i"), universe, datalen);
   artnet_conf.packet_accepted++;

@@ -16,7 +16,7 @@
  */
 
 #include "NimBLEDescriptor.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)
 
 # include "NimBLEService.h"
 # include "NimBLELog.h"
@@ -147,4 +147,4 @@ void NimBLEDescriptorCallbacks::onWrite(NimBLEDescriptor* pDescriptor, NimBLECon
     NIMBLE_LOGD("NimBLEDescriptorCallbacks", "onWrite: default");
 } // onWrite
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_PERIPHERAL)

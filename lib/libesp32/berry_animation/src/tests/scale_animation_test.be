@@ -232,11 +232,11 @@ def test_scale_animation_update_render()
   scale_anim.start(1000)
   
   # Test update
-  var result = scale_anim.update(1500)
-  assert(result == true, "Update should return true for running animation")
+  scale_anim.update(1500)
+  assert(scale_anim.is_running == true, "Animation should still be running after update")
   
   # Test render
-  result = scale_anim.render(frame, 1500)
+  var result = scale_anim.render(frame, 1500, engine.strip_length)
   assert(result == true, "Render should return true for running animation")
   
   # Check that colors were calculated

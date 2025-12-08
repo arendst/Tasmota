@@ -504,6 +504,7 @@ void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   lcolor.R = red;
   lcolor.G = green;
   lcolor.B = blue;
+  lcolor.W = white;
   if (led) {
     strip->SetPixelColor(led -1, lcolor.C);  // Led 1 is strip Led 0 -> substract offset 1
   } else {
@@ -615,8 +616,8 @@ uint16_t Ws2812SettingsToLedType(void) {
   uint16_t led_type = kTasLed_Type;         // default value from compile options
   if (Settings->mbflag2.light_pixels_order != 0) {
     led_type = (led_type & 0xFF00) | (Settings->mbflag2.light_pixels_order << 4)
-                                    | (Settings->mbflag2.light_pixels_w_first ? TasmotaLed_Wxxx : 0)
-                                    | (Settings->mbflag2.light_pixels_rgbw ? TasmotaLed_4_WRGB : TasmotaLed_3_RGB);
+                                    | (Settings->mbflag2.light_pixels_rgbw ? TasmotaLed_4_WRGB : TasmotaLed_3_RGB)
+                                    | (Settings->mbflag2.light_pixels_w_first ? TasmotaLed_Wxxx : 0);
   }
   return led_type;
 }
@@ -683,11 +684,16 @@ void Ws2812ModuleSelected(void)
     Light.max_scheme++;
 #endif
 
+    // If PixelType setting set, use it to determine RGBW. Otherwise use compile-time default.
+    if (Settings->mbflag2.light_pixels_order != 0) {
+      TasmotaGlobal.light_type = Settings->mbflag2.light_pixels_rgbw ? LT_RGBW : LT_RGB;
+    } else {
 #if (USE_WS2812_CTYPE > NEO_3LED)
     TasmotaGlobal.light_type = LT_RGBW;
 #else
     TasmotaGlobal.light_type = LT_RGB;
 #endif
+    }
     TasmotaGlobal.light_driver = XLGT_01;
   }
 }
@@ -849,8 +855,8 @@ void CmndPixelType(void)
     // +8 = 4 channels RGBW strip - default is 3 channels RGB
     // +16 = W channel is sent first - default W channel is sent last
     uint32_t pixels_order = XdrvMailbox.payload & 0x07;
-    uint32_t pixels_w_first = (XdrvMailbox.payload & 0x08) ? 1 : 0;
-    uint32_t pixels_rgbw = (XdrvMailbox.payload & 0x10) ? 1 : 0;
+    uint32_t pixels_rgbw = (XdrvMailbox.payload & 0x08) ? 1 : 0;
+    uint32_t pixels_w_first = (XdrvMailbox.payload & 0x10) ? 1 : 0;
     // changing number of channels requires a reboot
     bool reboot = pixels_rgbw != Settings->mbflag2.light_pixels_rgbw;
     if (reboot) {
@@ -858,14 +864,14 @@ void CmndPixelType(void)
     }
 
     Settings->mbflag2.light_pixels_order = pixels_order;
+    Settings->mbflag2.light_pixels_rgbw = pixels_rgbw;
     Settings->mbflag2.light_pixels_w_first = pixels_w_first;
-    Settings->mbflag2.light_pixels_rgbw = (XdrvMailbox.payload & 0x10) ? 1 : 0;
     Ws2812ChangePixelType(reboot);
   }
   uint32_t pixel_type = 0;
   if (Settings->mbflag2.light_pixels_order != 0) {
-    pixel_type = Settings->mbflag2.light_pixels_order | (Settings->mbflag2.light_pixels_w_first ? 0x08 : 0)
-                                                      | (Settings->mbflag2.light_pixels_rgbw ? 0x10 : 0);
+    pixel_type = Settings->mbflag2.light_pixels_order | (Settings->mbflag2.light_pixels_rgbw ? 0x08 : 0)
+                                                      | (Settings->mbflag2.light_pixels_w_first ? 0x10 : 0);
   }
   ResponseCmndNumber(pixel_type);
 }

@@ -25,12 +25,12 @@ assert(gradient.movement_speed == 50, "Should set movement speed")
 gradient.start(1000)
 assert(gradient.is_running == true, "Should be running")
 
-var result = gradient.update(1000)
-assert(result == true, "Should update successfully")
+gradient.update(1000)
+assert(gradient.is_running == true, "Should still be running after update")
 
 # Test rendering
 var frame = animation.frame_buffer(5, 1)
-result = gradient.render(frame, 1000)
+result = gradient.render(frame, 1000, engine.strip_length)
 assert(result == true, "Should render successfully")
 
 print("✓ Basic GradientAnimation test passed!")

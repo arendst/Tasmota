@@ -34,13 +34,10 @@ class BeaconAnimation : animation.animation
   # Render the beacon to the provided frame buffer
   #
   # @param frame: FrameBuffer - The frame buffer to render to
-  # @param time_ms: int - Optional current time in milliseconds (defaults to engine time)
+  # @param time_ms: int - Current time in milliseconds
+  # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
-  def render(frame, time_ms)
-    # Auto-fix time_ms and start_time
-    time_ms = self._fix_time_ms(time_ms)
-    
-    var pixel_size = frame.width
+  def render(frame, time_ms, strip_length)
     # Use virtual parameter access - automatically resolves ValueProviders
     var back_color = self.back_color
     var pos = self.pos
@@ -61,8 +58,8 @@ class BeaconAnimation : animation.animation
     if beacon_min < 0
       beacon_min = 0
     end
-    if beacon_max >= pixel_size
-      beacon_max = pixel_size
+    if beacon_max >= strip_length
+      beacon_max = strip_length
     end
     
     # Draw the main beacon
@@ -83,8 +80,8 @@ class BeaconAnimation : animation.animation
       if left_slew_min < 0
         left_slew_min = 0
       end
-      if left_slew_max >= pixel_size
-        left_slew_max = pixel_size
+      if left_slew_max >= strip_length
+        left_slew_max = strip_length
       end
       
       i = left_slew_min
@@ -103,8 +100,8 @@ class BeaconAnimation : animation.animation
       if right_slew_min < 0
         right_slew_min = 0
       end
-      if right_slew_max >= pixel_size
-        right_slew_max = pixel_size
+      if right_slew_max >= strip_length
+        right_slew_max = strip_length
       end
       
       i = right_slew_min

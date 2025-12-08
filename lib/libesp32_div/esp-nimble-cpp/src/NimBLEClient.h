@@ -18,8 +18,8 @@
 #ifndef NIMBLE_CPP_CLIENT_H_
 #define NIMBLE_CPP_CLIENT_H_
 
-#include "nimconfig.h"
-#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#include "syscfg/syscfg.h"
+#if CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 
 # if defined(CONFIG_NIMBLE_CPP_IDF)
 #  include "host/ble_gap.h"
@@ -48,7 +48,7 @@ struct NimBLETaskData;
  */
 class NimBLEClient {
   public:
-# if CONFIG_BT_NIMBLE_ROLE_OBSERVER
+# if MYNEWT_VAL(BLE_ROLE_OBSERVER)
     bool connect(const NimBLEAdvertisedDevice* device,
                  bool                          deleteAttributes = true,
                  bool                          asyncConnect     = false,
@@ -95,7 +95,7 @@ class NimBLEClient {
                             const NimBLEAttValue& value,
                             bool                  response = false);
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     void setConnectPhy(uint8_t phyMask);
 # endif
     bool updatePhy(uint8_t txPhysMask, uint8_t rxPhysMask, uint16_t phyOptions = 0);
@@ -137,7 +137,7 @@ class NimBLEClient {
     mutable uint8_t                   m_asyncSecureAttempt;
     Config                            m_config;
 
-# if CONFIG_BT_NIMBLE_EXT_ADV
+# if MYNEWT_VAL(BLE_EXT_ADV)
     uint8_t m_phyMask;
 # endif
     ble_gap_conn_params m_connParams;
@@ -229,5 +229,5 @@ class NimBLEClientCallbacks {
     virtual void onPhyUpdate(NimBLEClient* pClient, uint8_t txPhy, uint8_t rxPhy);
 };
 
-#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL
+#endif // CONFIG_BT_NIMBLE_ENABLED && MYNEWT_VAL(BLE_ROLE_CENTRAL)
 #endif // NIMBLE_CPP_CLIENT_H_
