@@ -21,7 +21,6 @@ extern int l_publish_rule(bvm *vm);
 extern int l_cmd(bvm *vm);
 extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
-extern int l_micros(bvm *vm);
 extern int l_timereached(bvm *vm);
 extern int l_rtc(bvm *vm);
 extern int l_rtc_utc(bvm *vm);
@@ -115,8 +114,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     publish_rule, func(l_publish_rule)
     _cmd, func(l_cmd)
     get_option, func(l_getoption)
-    millis, static_func(l_millis)
-    micros, static_func(l_micros)
+    millis, func(l_millis)
     time_reached, func(l_timereached)
     rtc, static_func(l_rtc)
     rtc_utc, func(l_rtc_utc)
