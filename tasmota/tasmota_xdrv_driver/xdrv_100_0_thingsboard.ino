@@ -1,10 +1,4 @@
-#ifdef USE_THINGSBOARD_HTTP_LIGHTBULB
-
-#define XDRV_100 100
-
-/*const char HTTP_BTN_MENU_TB[] PROGMEM =
-    "<p><form action='tb' method='get'><button>" D_CONFIGURE_MQTT "</button></form></p>";
-*/
+#ifdef USE_THINGSBOARD
 
 struct Telementary_data
 {
@@ -13,65 +7,7 @@ struct Telementary_data
     bool change;
 };
 
-struct Telementary_data Tele[] = {
-    {"POWER", "", false},
-    {"Color", "", false},
-    {"CT", "", false}};
-
-bool Xdrv100(uint32_t function)
-{
-    switch (function)
-    {
-    case FUNC_INIT:
-        AddLog(LOG_LEVEL_INFO, PSTR("TB : ThingsBoard HTTP Initialized"));
-        // SettingsUpdateText(SET_TB_HOST, PSTR(THINGSBOARD_HOST));
-        // SettingsUpdateText(SET_TB_TOKEN, PSTR(THINGSBOARD_TOKEN));
-        break;
-
-    case FUNC_SET_POWER:
-    {
-        snprintf_P(Tele[0].value, sizeof(Tele[0].value), PSTR("%s"), (XdrvMailbox.index == 1) ? "ON" : "OFF");
-        Tele[0].change = true;
-        break;
-    }
-    case FUNC_EVERY_SECOND:
-    {
-        char color_str[20];
-
-        FetchThingsBoardRPC();
-
-        LightGetColor(color_str, sizeof(color_str));
-
-        if (strcmp(Tele[1].value, color_str) != 0)
-        {
-            snprintf_P(Tele[1].value, sizeof(Tele[1].value), PSTR("%s"), color_str);
-            Tele[1].change = true;
-            if (LightGetColorTemp() != 0)
-            {
-                snprintf_P(Tele[2].value, sizeof(Tele[2].value), PSTR("%d"), LightGetColorTemp());
-                Tele[2].change = true;
-            }
-        }
-
-        SendThingsBoardTelemetry();
-
-        break;
-    }
-        // #ifdef USE_WEBSERVER
-        //     // case FUNC_WEB_ADD_BUTTON:
-        //     // {
-        //     //     WSContentSend_P()
-        //     //     break;
-        //     // }
-        //     // case FUNC_WEB_ADD_HANDLER:
-        //     // {
-        //     //     WebServer.on("/thingsboard", HandleTB);
-        //     //     break;
-        //     // }
-        // #endif // USE_WEBSERVER
-    }
-    return false;
-}
+Telementary_data *Tele = nullptr;
 
 void SendThingsBoardTelemetry()
 {
@@ -136,7 +72,7 @@ void FetchThingsBoardRPC()
     url += THINGSBOARD_HOST;
     url += "/api/v1/";
     url += THINGSBOARD_TOKEN;
-    url += "/rpc?timeout=500";
+    url += "/rpc?timeout=5000&limit=5";
 
     http.begin(client, url);
 
@@ -145,12 +81,13 @@ void FetchThingsBoardRPC()
     if (httpCode == HTTP_CODE_OK)
     {
         String payload = http.getString();
+        http.end();
 
         JsonParser parser((char *)payload.c_str());
         JsonParserObject root = parser.getRootObject();
         String method = root[PSTR("method")].getStr();
 
-        AddLog(LOG_LEVEL_INFO, PSTR("TB: received RPC %s"), method.c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("TB : RPC %s"), method.c_str());
 
         if (method == "setCT")
         { // params: 153-500
@@ -185,20 +122,7 @@ void FetchThingsBoardRPC()
             ExecuteCommand(cmd, SRC_WEBGUI);
         }
     }
-    // else if (httpCode != HTTP_CODE_NO_CONTENT)
-    // {
-    //     AddLog(LOG_LEVEL_ERROR, PSTR("TB : RPC HTTP %d"), httpCode);
-    // }
     http.end();
 }
 
-/*void HandleTB(void)
-{
-    if (!HttpCheckPriviledgedAccess())
-    {
-        return;
-    }
-}
-*/
-
-#endif
+#endif // USE_THINGSBOARD

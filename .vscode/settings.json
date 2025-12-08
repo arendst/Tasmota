@@ -70,5 +70,14 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
-    ]
+    ],
+    "files.associations": {
+      "functional": "cpp",
+      "array": "cpp",
+      "tuple": "cpp",
+      "type_traits": "cpp",
+      "utility": "cpp",
+      "string": "cpp",
+      "istream": "cpp"
+    }
   }
