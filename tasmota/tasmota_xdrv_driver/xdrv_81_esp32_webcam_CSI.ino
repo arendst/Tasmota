@@ -74,7 +74,7 @@ struct {
   
   void *jpeg_buffer;
   size_t jpeg_buffer_size;
-  // NOTE: backup_buffer removed, replaced by ping-pong logic
+  jpeg_encode_cfg_t jpeg_cfg;
   
   CSI_Config config;        // Sensor configuration
   esp_cam_ctlr_trans_t cam_trans;  // Transaction struct
@@ -194,8 +194,8 @@ uint32_t WcSetup() {
     .data_lane_num = Wc.config.lane_num,
     .lane_bit_rate_mbps = (int)Wc.config.lane_bitrate,
     .input_data_color_type = CAM_CTLR_COLOR_RAW8,
-    .output_data_color_type = CAM_CTLR_COLOR_RGB565,
-    .queue_items = 1, 
+    .output_data_color_type = CAM_CTLR_COLOR_YUV422,
+    .queue_items = 1,
     .byte_swap_en = false,
   };
 
@@ -242,7 +242,7 @@ uint32_t WcSetup() {
     .clk_hz = 80 * 1000 * 1000,
     .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
     .input_data_color_type = ISP_COLOR_RAW8,
-    .output_data_color_type = ISP_COLOR_RGB565,
+    .output_data_color_type = ISP_COLOR_YUV422,
     .h_res = Wc.config.width,
     .v_res = Wc.config.height,
   };
@@ -254,6 +254,12 @@ uint32_t WcSetup() {
     esp_cam_ctlr_disable(Wc.cam_handle);
     return 0;
   }
+
+  // esp_isp_bf_config_t bf_config = {
+  //   .input_data_color_type = ISP_COLOR_RAW8,
+  //   .pattern = ISP_BAYER_PATTERN_BGGR, 
+  // };
+  // esp_isp_bf_configure(Wc.isp_handle, &bf_config);
   
   ret = esp_isp_enable(Wc.isp_handle);
   if (ret != ESP_OK) {
@@ -289,6 +295,14 @@ uint32_t WcSetup() {
     return 0;
   }
   Wc.jpeg_buffer_size = actual_size;
+
+  Wc.jpeg_cfg = {
+    .height = Wc.config.height,
+    .width = Wc.config.width,
+    .src_type = JPEG_ENCODE_IN_FORMAT_YUV422, // from ISP
+    .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
+    .image_quality = 70,
+  };
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
 
@@ -361,8 +375,6 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
 }
 
 
-
-
 /*********************************************************************************************/
 
 void WcInit(void) {
@@ -378,7 +390,6 @@ void WcInit(void) {
 // - Stream server runs on port 81
 // - Supports MJPEG streaming via /cam.mjpeg, /stream
 // - Supports single frame capture via /wc.jpg, /snapshot.jpg
-// - Currently streams RGB565 raw data (TODO: add JPEG conversion)
 //
 // Endpoints:
 // - http://IP:81/           -> redirects to /cam.mjpeg
@@ -455,19 +466,10 @@ void HandleWebcamMjpegTask(void) {
 
     // 2. Sync Cache (M2C) - No memcpy needed!
     esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-
-    // 3. Encode directly from buffer
-    jpeg_encode_cfg_t jpeg_cfg = {
-      .height = Wc.config.height,
-      .width = Wc.config.width,
-      .src_type = JPEG_ENCODE_IN_FORMAT_RGB565,
-      .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
-      .image_quality = 70,
-    };
     
     uint32_t jpeg_size = 0;
     esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
-                                          &jpeg_cfg,
+                                          &Wc.jpeg_cfg,
                                           source_buf, 
                                           Wc.frame_buffer_size,
                                           (uint8_t*)Wc.jpeg_buffer, 
@@ -513,16 +515,9 @@ void HandleImage(void) {
   if (Wc.frame_ready) {
     uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
     esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-    
-    jpeg_encode_cfg_t jpeg_cfg = {
-      .height = Wc.config.height,
-      .width = Wc.config.width,
-      .src_type = JPEG_ENCODE_IN_FORMAT_RGB565,
-      .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
-      .image_quality = 75,
-    };
+
     uint32_t jpeg_size = 0;
-    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &Wc.jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
     if (ret == ESP_OK && jpeg_size > 0) {
       client.write((char *)Wc.jpeg_buffer, jpeg_size);
     }

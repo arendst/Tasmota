@@ -287,7 +287,7 @@ class OV5647 : CSI_Sensor
       
       # Timing offset
       [0x3810, 0x00],
-      [0x3811, 0x08],           # X offset = 8
+      [0x3811, 0x09],           # X offset = 8 + 1 try to fix BAYER alignment issue
       [0x3812, 0x00],
       [0x3813, 0x00],           # Y offset = 0
       
