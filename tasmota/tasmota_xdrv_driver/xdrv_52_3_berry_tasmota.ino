@@ -119,7 +119,7 @@ extern "C" {
   int32_t l_millis(struct bvm *vm);
   int32_t l_millis(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 0 || (top == 1 && be_isint(vm, 1))) {  // only 1 argument of type string accepted
+    if (top == 1 || (top == 2 && be_isint(vm, 2))) { // only 1 argument of type int accepted
       uint32_t delay = 0;
       if (top == 2) {
         delay = be_toint(vm, 1);

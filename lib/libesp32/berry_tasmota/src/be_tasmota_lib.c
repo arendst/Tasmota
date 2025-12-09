@@ -115,7 +115,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     publish_rule, func(l_publish_rule)
     _cmd, func(l_cmd)
     get_option, func(l_getoption)
-    millis, static_func(l_millis)
+    millis, func(l_millis)
     micros, static_func(l_micros)
     time_reached, func(l_timereached)
     rtc, static_func(l_rtc)
