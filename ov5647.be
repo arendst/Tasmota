@@ -475,16 +475,12 @@ class OV5647 : CSI_Sensor
       print("OV5647: 800x640 RAW8, GBRG Bayer, 2-lane MIPI @ 400 Mbps")
       return 1
       
-    elif cmd == "stream_on"
-      print("OV5647: Stream ON command")
-      var result = self.stream_on(true) ? 1 : 0
-      tasmota.delay(10)
-      self.check_status()
+    elif cmd == "stream"
+      print("OV5647: Stream command:", idx)
+      var result = self.stream_on(idx == 1) ? 1 : 0
+      # tasmota.delay(10)
+      # self.check_status()
       return result
-      
-    elif cmd == "stream_off"
-      print("OV5647: Stream OFF command")
-      return self.stream_on(false) ? 1 : 0
     
     elif cmd == "status"
       return self.check_status() ? 1 : 0

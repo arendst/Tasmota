@@ -328,8 +328,8 @@ uint32_t WcStart(void) {
 
   // CSI controller is already started during setup
   // Just need to start sensor streaming via Berry
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream_on"));
-  int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream_on"), 0, nullptr, 0);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream"));
+  int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0); // idx=1 (start)
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Berry stream_on result: %d"), berry_result);
   
   if (berry_result == 0) {
@@ -359,8 +359,8 @@ uint32_t WcStop(void) {
   }
 
   // Call Berry to stop sensor streaming
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream_off"));
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream_off"), 0, nullptr, 0);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream"));
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0); // idx=0 (stop)
 
   Wc.streaming = false;
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming stopped"));
