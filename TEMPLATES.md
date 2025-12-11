@@ -5,11 +5,7 @@
 
 # Templates
 
-Find below the available templates as of October 2025. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
-
-## 
-```
-```
+Find below the available templates as of December 2025. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -2287,8 +2283,8 @@ Devantech 8x16A              {"NAME":"ESP32LR88","GPIO":[0,0,231,0,32,35,0,0,229
 Dingtian 16 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9729,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 Dingtian 2 Channel           {"NAME":"Dingtian DT-R002","GPIO":[5536,9408,225,9440,0,0,0,0,0,9952,0,0,224,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,576,0,0,0,160,0,0,161],"FLAG":0,"BASE":1}
 Dingtian 32 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9731,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
-Dingtian 4 Channel           {"NAME":"Dingtian DT-R004","GPIO":[0,9408,225,9440,0,0,0,0,227,9952,0,0,224,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,226,162,0,163,160,0,0,161],"FLAG":0,"BASE":1}
-Dingtian 8 Channel           {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9728,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+Dingtian 4 Channel           {"NAME":"Dingtian DT-R004","GPIO":[0,9408,225,9440,0,0,0,0,227,9952,0,0,224,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,226,162,0,163,160,0,0,161],"FLAG":0,"BASE":1}
+Dingtian 8 Channel           {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,5536,9760,9728,9856,9792,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 DoHome HomeKit DIY Switch    {"NAME":"DoHome DIY","GPIO":[1,1,0,1,96,544,0,0,224,0,0,0,0,0],"FLAG":0,"BASE":1}
 Eachen ST-DC2                {"NAME":"Garage Control","GPIO":[162,0,0,0,226,225,33,0,224,288,163,227,0,4704],"FLAG":0,"BASE":18}
 Eachen ST-DC4                {"NAME":"Eachen_ST-DC4","GPIO":[160,1,1,1,226,225,1,1,224,544,1,227,1,0],"FLAG":0,"BASE":54}

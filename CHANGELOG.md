@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 Platform from 2025.11.30 to 2025.11.31, Framework (Arduino Core) from v3.1.5 to v3.1.6 and IDF from v5.3.4.251110 to v5.3.4.251110 (#24146)
 - Refactored DALI using TasmotaDali library v1.0.0 adding frame receive buffer
+- ESP32 Platform from 2025.11.31 to 2025.12.30, Framework (Arduino Core) from v3.1.6 to v3.1.7 and IDF from v5.3.4.251110 to v5.3.4.20251205 (#24212)
 
 ### Fixed
 - ESP32-P4 Hosted MCU updated to v2.6.6 solving WiFi boot issues (#24146)
@@ -23,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - PCA9685 V2 driver PWMTO fading logic and overflow (#24159)
 - RGBW handling in TasmotaLED and xlgt_01_ws2812_esp32 (#24172)
 - ArtNet single light color mapping using `ChannelRemap` (#24058)
+- Thermostat temperature unit (#24213)
 
 ### Removed
 

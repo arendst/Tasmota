@@ -2541,7 +2541,7 @@ void SyslogAsync(bool refresh) {
       subStr(timestamp, line, " ", 1);                        // 00:00:02.096-026
       subStr(timestamp, timestamp, "-", 1);                   // 00:00:02.096
 
-      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - -"),
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - - "),
         128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
         GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
         NetworkHostname());

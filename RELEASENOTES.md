@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.8** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **v3.1.6**.
+This release will be supported from ESP32/Arduino library Core version **v3.1.7**.
 
-Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.6 have been removed.
+Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.7 have been removed.
 
 ## Initial configuration tools
 
@@ -76,7 +76,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-P4, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.6**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.7**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
@@ -135,7 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
-- ESP32 Platform from 2025.11.30 to 2025.11.31, Framework (Arduino Core) from v3.1.5 to v3.1.6 and IDF from v5.3.4.250826 to v5.3.4.251110 [#24146](https://github.com/arendst/Tasmota/issues/24118)
+- ESP32 Platform from 2025.11.30 to 2025.12.30, Framework (Arduino Core) from v3.1.5 to v3.1.7 and IDF from v5.3.4.250826 to v5.3.4.20251205 [#24212](https://github.com/arendst/Tasmota/issues/24212)
 - LVGL library from v9.3.0 to v9.4.0 [#24028](https://github.com/arendst/Tasmota/issues/24028)
 - JPEGDEC library from v1.8.3 to v1.8.4 [#24120](https://github.com/arendst/Tasmota/issues/24120)
 - GPIOViewer from v1.6.3 to v1.7.0
@@ -151,6 +151,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI protocol errors
 - RGBW handling in TasmotaLED and xlgt_01_ws2812_esp32 [#24172](https://github.com/arendst/Tasmota/issues/24172)
 - ArtNet single light color mapping using `ChannelRemap` [#24058](https://github.com/arendst/Tasmota/issues/24058)
+- Thermostat temperature unit [#24213](https://github.com/arendst/Tasmota/issues/24213)
 - TLS fix ECDSA and add `SetOption165 1` to enable ECDSA in addition to RSA [#24000](https://github.com/arendst/Tasmota/issues/24000)
 - ESP32-P4 Hosted MCU updated to v2.6.6 solving WiFi boot issues [#24146](https://github.com/arendst/Tasmota/issues/24118)
 - ESP32-Solo1 using pre-compiled Arduino libraries [#24146](https://github.com/arendst/Tasmota/issues/24118)
