@@ -807,6 +807,8 @@
 //    #define USE_RX8030                           // [I2cDriver90] Enable RX8030 RTC - used by #23855 - support both I2C buses on ESP32 (I2C address 0x32) (+0k7 code)
 //    #define USE_PCF85063                         // [I2cDriver92] Enable PCF85063 RTC support (I2C address 0x51)
 
+//  #define USE_AGS02MA                            // [I2cDriver95] Enable AGS02MA Air Quality Sensor (I2C address 0x1A)
+
 //  #define USE_DISPLAY                            // Add I2C/TM1637/MAX7219 Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
     #define USE_DISPLAY_LCD                      // [DisplayModel 1] [I2cDriver3] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)

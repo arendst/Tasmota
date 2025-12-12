@@ -168,6 +168,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_GDK101                | -     | - / - | -     | -     | -     | -     |
 | USE_TC74                  | -     | - / - | -     | -     | -     | -     |
 | USE_PCA9557               | -     | - / - | -     | -     | -     | -     |
+| USE_AGS02MA               | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | **Feature or Sensor**     | **l** | **t** | **k** | **s** | **i** | **d** | **Remarks**                 |
 | USE_HIH6                  | -     | - / x | -     | x     | -     | -     |

@@ -885,7 +885,7 @@ extern "C" {
 
   bool MI32setBerryCtxChr(const char *Chr){
     if(MI32.conCtx != nullptr){
-      MI32.conCtx->charUUID = NimBLEUUID(Chr);
+      MI32.conCtx->charUUID = NimBLEUUID(Chr).to128();
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: CHR: %s"),MI32.conCtx->charUUID.toString().c_str());
       uint16_t _uuid = *reinterpret_cast<const uint16_t*>(MI32.conCtx->charUUID.getValue() + 12); //if not "notify op" -> present requested characteristic as return UUID
       MI32.conCtx->returnCharUUID = _uuid;

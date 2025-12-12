@@ -961,7 +961,9 @@ constexpr uint32_t feature[] = {
 #ifdef USE_VID6608
   0x00080000 |  // xdrv_92_vid6608.ino
 #endif
-//  0x00100000 |  // 
+#ifdef USE_AGS02MA
+  0x00100000 |  // xsns_118_ags02ma.ino
+#endif
 //  0x00200000 |  // 
 //  0x00400000 |  // 
 //  0x00800000 |  // 

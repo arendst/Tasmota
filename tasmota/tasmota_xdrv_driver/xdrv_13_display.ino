@@ -2432,13 +2432,15 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     estr[cnt] = tolower(ending[cnt]);
   }
 
+  uint16_t xsize;
+  uint16_t ysize;
+
   if (!strcmp(estr,"rgb")) {
     // special rgb format
     fp = ufsp->open(file, FS_FILE_READ);
     if (!fp) return;
-    uint16_t xsize;
+    
     fp.read((uint8_t*)&xsize, 2);
-    uint16_t ysize;
     fp.read((uint8_t*)&ysize, 2);
     uint16_t xoffs;
     uint16_t yoffs;
@@ -2451,12 +2453,13 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     }
 
 #ifndef SLOW_RGB16
-    renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+    //renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
     uint16_t *rgb = (uint16_t *)special_malloc(xsize * 2);
     if (rgb) {
       //uint16_t rgb[xsize];
       for (int16_t j = 0; j < ysize; j++) {
         fp.read((uint8_t*)rgb, xsize * 2);
+        renderer->setAddrWindow(xp, yp + j, xp + xsize, yp + j + 1);
         renderer->pushColors(rgb, xsize, true);
         OsWatchLoop();
       }
@@ -2476,6 +2479,9 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
       yp++;
     }
 #endif
+    if (scale) {
+      if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
+    }
     fp.close();
   } else if (!strcmp(estr,"jpg") || !strcmp(estr,"jpeg")) {
     // jpeg files on ESP32 with more memory
@@ -2492,8 +2498,6 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     if (mem) {
       uint8_t res = fp.read(mem, size);
       if (res) {
-        uint16_t xsize;
-        uint16_t ysize;
         uint16_t xoffs;
         uint16_t yoffs;
         if (mem[0] == 0xff && mem[1] == 0xd8) {
@@ -2513,7 +2517,7 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
               if (pixb) {
                 uint8_t *ob = out_buf;
                 if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {
-                  renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+                  //renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
                   for (int32_t j = 0; j < ysize; j++) {
                     if (inverted == false) {
                       rgb888_to_565(ob, pixb, xsize);
@@ -2521,6 +2525,7 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
                       rgb888_to_565i(ob, pixb, xsize);
                     }
                     ob += xsize * 3;
+                    renderer->setAddrWindow(xp, yp + j, xp + xsize, yp + j + 1);
                     renderer->pushColors(pixb, xsize, true);
                     OsWatchLoop();
                   }
@@ -2533,11 +2538,11 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
               }
             }
           }
-          if (scale) {
-            if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
-          }
         }
         free(mem);
+      }
+      if (scale) {
+        if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
       }
       fp.close();
     }

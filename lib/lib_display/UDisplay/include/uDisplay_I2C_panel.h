@@ -51,7 +51,7 @@ public:
     bool updateFrame() override;
     bool displayOnff(int8_t on) override;
     bool invertDisplay(bool invert) override;
-    bool setRotation(uint8_t rotation) override { return true; }
+    bool setRotation(uint8_t rotation) override { return false; }
     
     bool drawPixel(int16_t x, int16_t y, uint16_t color) override { return false; }
     bool fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override { return false; }

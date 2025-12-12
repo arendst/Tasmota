@@ -22,9 +22,9 @@ bool uDisplay::utouch_Init(char **name) {
       digitalWrite(ut_reset, HIGH);
       delay(10);
       digitalWrite(ut_reset, LOW);
-      delay(5);
-      digitalWrite(ut_reset, HIGH);
       delay(10);
+      digitalWrite(ut_reset, HIGH);
+      delay(50);
     }
     
     if (ut_irq >= 0) {

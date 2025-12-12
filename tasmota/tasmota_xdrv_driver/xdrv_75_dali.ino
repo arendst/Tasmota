@@ -37,6 +37,8 @@
  * DaliGroup<1..16> [+]|-<device>,<device>...    - Add(+) or Remove(-) devices to/from group
  * DaliPower<broadcast>|<device>|<group> 0..254  - Control power (0 = Off, 1 = Last dimmer, 2 = Toggle, 3..254 = absolute light brightness)
  * DaliDimmer<broadcast>|<device>|<group> 0..100 - Control dimmer (0 = Off, 1..100 = precentage of brightness)
+ * DaliBS 0|1                                    - Set display of GUI broadcast slider - default 1 (ON)
+ * DaliGroupSliders 0..16                        - Set display number of GUI group sliders - default 2
  * DaliLight 0|1                                 - Enable Tasmota light control for DaliTarget device - default 1
  * DaliTarget <broadcast>|<device>|<group>       - Set Tasmota light control device (0, 1..64, 101..116) - default 0
  * DaliChannels 1..5                             - Set Tasmota light type (1 = R/C = DT6, 2 = RG/CW, 3 = RGB, 4 = RGBW, 5 = RGBWC) for DaliTarget
@@ -65,6 +67,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.5.1.0 20251207  update    - Display GUI broadcast slider even if Tasmota Light Control is active
+                              - Add command `DaliNoBS 0|1` to disable display of GUI broadcast slider
   1.5.0.0 20251206  update    - Fix WAF GUI sync
                               - Refactor GUI sync
   1.4.1.0 20251130  update    - Add options to `DaliGear` and DaliGroup` to toggle specific outputs
@@ -486,6 +490,7 @@ int DaliQueryExtendedVersionNumber(uint32_t adr, uint32_t device_type) {
   return DaliSendWaitResponse(adr | DALI_SELECTOR_BIT, 255); // DALI_xxx_QUERY_EXTENDED_VERSION_NUMBER
 }
 
+#ifdef USE_LIGHT
 uint32_t DaliQueryRGBWAF(uint32_t adr) {
   // https://www.dali-alliance.org/tech-notes/device-type-discovery.html
   uint32_t rgbwaf_channels = 0;
@@ -527,6 +532,7 @@ uint32_t DaliQueryRGBWAF(uint32_t adr) {
   }
   return rgbwaf_channels;
 }
+#endif  // USE_LIGHT
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -746,11 +752,12 @@ bool DaliLoopSync(uint32_t channels) {
       }
     }
     Dali->light_sync = millis();               // Block local loop
-    light_controller.changeChannels(color);
+    light_controller.changeChannels(color, 1);
+    LightSetScheme(LS_POWER);
   }
   Dali->light_sync = millis();                 // Block local loop
   ExecuteCommandPower(LightDevice(), (2 == rgb) ? 9 : 8, SRC_SWITCH);
-  if (waf) {
+  if (waf && (Settings->param[P_RGB_REMAP] & 128)) {  // SetOption37 128)
     Dali->light_sync = millis();               // Block local loop
     ExecuteCommandPower(LightDevice() +1, (2 == waf) ? 9 : 8, SRC_SWITCH);
   }
@@ -837,10 +844,6 @@ bool DaliSetChannels(void) {
   if (Settings->sbflag1.dali_light) {          // DaliLight 1
     Settings->light_fade = 0;                  // Use Dali fading
     Settings->light_correction = 0;            // Use Dali light correction
-
-    uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: SetChannels Sync %d cur_col %02X %02X %02X %02X %02X"), Dali->light_sync, cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
-
     if (Dali->light_sync) {                    // Block local loop
       uint32_t light_sync = Dali->light_sync;
       Dali->light_sync = 0;
@@ -848,6 +851,7 @@ bool DaliSetChannels(void) {
         return true;
       }
     }
+    uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
     // cur_col[0] = Red, cur_col[1] = Green, cur_col[2] = Blue, cur_col[3] = Cold = White, cur_col[4] = Warm = Amber
     for (uint32_t i = 0; i < 5; i++) {
       if (255 == cur_col[i]) { cur_col[i] = 254; }  // Max Dali value
@@ -979,15 +983,15 @@ bool DaliInit(uint32_t function) {
 
   Settings->light_fade = 0;                    // Use Dali fading instead
   Settings->light_correction = 0;              // Use Dali light correction
+  Settings->flag3.pwm_multi_channels = 0;      // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
   UpdateDevicesPresent(1);
 
   TasmotaGlobal.light_type = LT_W;             // Single channel
   Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
   if (Dali->target_rgbwaf > 1) {
     TasmotaGlobal.light_type = Dali->Settings.light_type;
-    if (!Settings->flag3.pwm_multi_channels &&   // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-       (TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
-       (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
+    if ((TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
+        (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
       UpdateDevicesPresent(1);                   // We manage RGB and W separately, hence adding a device
     }
   }
@@ -1003,18 +1007,18 @@ bool DaliInit(uint32_t function) {
 \*********************************************************************************************/
 
 const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
-  "|" D_CMND_POWER "|" D_CMND_DIMMER "|Target"
+  "|" D_CMND_POWER "|" D_CMND_DIMMER
 #ifdef USE_LIGHT
-  "|Light|Channels"
+  "|Light|Target|Channels"
 #endif  // USE_LIGHT
-  "|Send|Query|Scan|Group|GroupSliders|Gear";
+  "|Send|Query|Scan|Group|GroupSliders|BS|Gear";
 
 void (* const DALICommand[])(void) PROGMEM = {
-  &CmndDali, &CmndDaliPower, &CmndDaliDimmer, &CmndDaliTarget,
+  &CmndDali, &CmndDaliPower, &CmndDaliDimmer,
 #ifdef USE_LIGHT
-  &CmndDaliLight, &CmndDaliChannels,
+  &CmndDaliLight, &CmndDaliTarget, &CmndDaliChannels,
 #endif  // USE_LIGHT
-  &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGroupSliders, &CmndDaliGear };
+  &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGroupSliders, &CmndDaliBroadcastSlider, &CmndDaliGear };
 
 bool DaliJsonParse(void) {
   // {"addr":254,"cmd":100}
@@ -1086,22 +1090,6 @@ void CmndDali(void) {
     DaliJsonParse();
   }
   ResponseDali(0);
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
-void CmndDaliTarget(void) {
-  // DaliTarget          - Set transmit target
-  // DaliTarget 0        - Set target to broadcast address
-  // DaliTarget 1..64    - Set target to short address
-  // DaliTarget 101..116 - Set target to group address
-  if (((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 64)) ||
-      ((XdrvMailbox.payload >= 101) && (XdrvMailbox.payload <= 116)) ||
-      (XdrvMailbox.payload == 0)) {
-    Dali->Settings.target = XdrvMailbox.payload;
-  }
-  Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
-  ResponseCmndNumber(Dali->Settings.target);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1495,6 +1483,18 @@ void CmndDaliScan(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+void CmndDaliBroadcastSlider(void) {
+  // DaliBS 1       - Show broadcast slider
+  // DaliBS 0       - Hide broadcast slider
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings->sbflag1.dali_no_broadcast_slider = !XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 2;            // Restart to update GUI
+  }
+  ResponseCmndStateText(!Settings->sbflag1.dali_no_broadcast_slider);  // DaliNoBS 0/1
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliGroupSliders(void) {
   // DaliGroupSliders 0..16  - Add group sliders
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 16)) {
@@ -1515,6 +1515,25 @@ void CmndDaliLight(void) {
     TasmotaGlobal.restart_flag = 2;            // Restart to update GUI
   }
   ResponseCmndStateText(Settings->sbflag1.dali_light);  // DaliLight 0/1
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void CmndDaliTarget(void) {
+  // DaliTarget          - Set transmit target
+  // DaliTarget 0        - Set target to broadcast address
+  // DaliTarget 1..64    - Set target to short address
+  // DaliTarget 101..116 - Set target to group address
+  if (Dali->allow_light) {
+    if (((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 64)) ||
+        ((XdrvMailbox.payload >= 101) && (XdrvMailbox.payload <= 116)) ||
+        (XdrvMailbox.payload == 0)) {
+      Dali->Settings.target = XdrvMailbox.payload;
+      TasmotaGlobal.restart_flag = 2;            // Restart to update GUI
+    }
+    Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
+  }
+  ResponseCmndNumber(Dali->Settings.target);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1549,7 +1568,8 @@ const char HTTP_MSG_SLIDER_DALI[] PROGMEM =
 void DaliWebAddMainSlider(void) {
   WSContentSend_P(HTTP_TABLE100);
   char number[12];
-  for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
+  for (uint32_t i = Settings->sbflag1.dali_no_broadcast_slider;    // DaliBS 0/1
+                i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliGroupSliders
     Dali->web_dimmer[i] = Dali->dimmer[i];
     WSContentSend_P(HTTP_MSG_SLIDER_DALI,      // Brightness - Black to White
       i,                                       // k75<i>
@@ -1573,7 +1593,8 @@ void DaliWebGetArg(void) {
   char webindex[8];                            // WebGetArg name
 
   uint32_t index;
-  for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
+  for (uint32_t i = Settings->sbflag1.dali_no_broadcast_slider;    // DaliBS 0/1
+                i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliGroupSliders
     snprintf_P(webindex, sizeof(webindex), PSTR("i75%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));     // 0 - 100 percent
     if (strlen(tmp)) {
@@ -1597,7 +1618,8 @@ void DaliWebGetArg(void) {
 void DaliWebShow(void) {
   WSContentSend_P(PSTR("</table>"));         // Terminate current {t}
   WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
-  for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
+  for (uint32_t i = Settings->sbflag1.dali_no_broadcast_slider;    // DaliBS 0/1
+                i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliGroupSliders
     WSContentSend_P(PSTR("eb('k75%d').style='background:#%06x';"),
       i, WebColor((Dali->power[i]) ? COL_BUTTON : COL_BUTTON_OFF));
     if (Dali->dimmer[i] != Dali->web_dimmer[i]) {
@@ -1630,6 +1652,7 @@ bool Xdrv75(uint32_t function) {
   else if (Dali) {
     switch (function) {
       case FUNC_LOOP:
+      case FUNC_SLEEP_LOOP:
         DaliLoop();
         break;
       case FUNC_EVERY_SECOND:
