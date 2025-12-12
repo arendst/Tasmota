@@ -48,6 +48,7 @@ vid6608::vid6608(int stepPin, int dirPin, uint16_t maxSteps /*= VID6608_MAX_STEP
   this->dirPinState = MOVE_NONE; // invalid state to force update on first step
   this->currentPosition = 0;
   this->targetPosition = 0;
+  this->targetPositionNext = 0;
   this->setAccelTable(defaultAccelTable);
   // Setup pins
   pinMode(this->stepPin, OUTPUT);
@@ -56,16 +57,19 @@ vid6608::vid6608(int stepPin, int dirPin, uint16_t maxSteps /*= VID6608_MAX_STEP
   digitalWrite(this->dirPin, LOW);
 }
 
-void vid6608::zero(uint16_t delay /*= VID6608_DEFAULT_ZERO_SPEED*/) {
+void vid6608::zero(uint16_t initialPos /*= VID6608_DEFAULT_MAX_STEPS/2*/, uint16_t delay /*= VID6608_DEFAULT_ZERO_SPEED*/) {
   // We have to optimize the zeroing process to avoid bouncing on end-stops
   // Drive makes 1/2 move forward and 1/2 backward to reduce bouncing
   // This will reduce bouncing, if the last position was not a zero position
-  uint16_t halfSteps = this->maxSteps / 2;
-  // Move to halfSteps forward
-  for (uint16_t x = 0; x < halfSteps; x++) {
+  if (initialPos >= this->maxSteps) {
+    initialPos = this->maxSteps - 1;
+  }
+  uint16_t stepsForward = this->maxSteps - initialPos;
+  // Move forward to defined steps count
+  for (uint16_t x = 0; x < stepsForward; x++) {
     step(MOVE_FORWARD, delay);
   }
-  // Move to halfSteps back
+  // Move full round back to 0
   for (uint16_t x = 0; x < this->maxSteps; x++) {
     step(MOVE_BACKWARD, delay);
   }

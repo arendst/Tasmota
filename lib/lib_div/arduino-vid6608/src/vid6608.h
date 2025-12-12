@@ -47,9 +47,10 @@ class vid6608 {
      * Uses optimized method to reduce bouncing end-stops
      * @warning this function is blocking, execution is delayed upon done
      *
+     * @param initialPos initial position to assume zeroing, default is half of maxSteps. If you know the "old" gauge potision, you can provide it here to avoid end-stop bounce
      * @param delay single step delay, controls sthe speed of motor, default is deined in VID6608_DEFAULT_ZERO_SPEED
      */
-    void zero(uint16_t delay = VID6608_DEFAULT_ZERO_SPEED);
+    void zero(uint16_t initialPos = VID6608_DEFAULT_MAX_STEPS/2, uint16_t delay = VID6608_DEFAULT_ZERO_SPEED);
 
     /**
      * @brief Shedules movement to defined absolute position
