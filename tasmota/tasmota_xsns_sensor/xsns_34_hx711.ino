@@ -618,18 +618,13 @@ void HxShow(bool json) {
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
   "<p></p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form>";
 
-const char HTTP_BTN_MENU_HX711[] PROGMEM =
-  "<p></p><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form>";
-
-const char HTTP_FORM_HX711[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_CALIBRATION "&nbsp;</b></legend>"
+const char HTTP_FORM_HX711a[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
   "<p><b>" D_REFERENCE_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br><input type='number' step='0.001' id='p1' placeholder='0' value='%s'></p>"
   "<br><button name='calibrate' type='submit'>" D_CALIBRATE "</button>"
   "</form>"
-  "</fieldset><br><br>"
-
-  "<fieldset><legend><b>&nbsp;" D_HX711_PARAMETERS "&nbsp;</b></legend>"
+  "</fieldset><br><br>";
+const char HTTP_FORM_HX711b[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
   "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br><input type='number' max='6.5535' step='0.0001' id='p2' placeholder='0.0' value='%s'></p>";
 
@@ -670,10 +665,12 @@ void HandleHxAction(void) {
 
   WSContentStart_P(PSTR(D_CONFIGURE_HX711));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_CALIBRATION));
   dtostrfd((float)Settings->weight_reference / 1000, 3, stemp1);
-  char stemp2[20];
-  dtostrfd((float)Settings->weight_item / 10000, 4, stemp2);
-  WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
+  WSContentSend_P(HTTP_FORM_HX711a, stemp1);
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_HX711_PARAMETERS));
+  dtostrfd((float)Settings->weight_item / 10000, 4, stemp1);
+  WSContentSend_P(HTTP_FORM_HX711b, stemp1);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
@@ -720,7 +717,7 @@ bool Xsns34(uint32_t function) {
         }
         break;
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_HX711);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_HX711), PSTR(D_CONFIGURE_HX711));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_HX711), HandleHxAction);

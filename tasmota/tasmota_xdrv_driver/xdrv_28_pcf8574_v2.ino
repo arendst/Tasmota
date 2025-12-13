@@ -515,12 +515,7 @@ void Pcf8574ModuleInitMode1(void) {
 #ifdef USE_WEBSERVER
 #define WEB_HANDLE_PCF8574 "pcf"
 
-const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
-  "<p></p><form action='" WEB_HANDLE_PCF8574 "' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form>";
-
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_PCF8574_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='" WEB_HANDLE_PCF8574 "'>"
   "<p><label><input id='b1' name='b1' type='checkbox'%s><b>" D_INVERT_PORTS "</b></label></p><hr/>";
 
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
@@ -544,6 +539,8 @@ void HandlePcf8574(void) {
 
   WSContentStart_P(D_CONFIGURE_PCF8574);
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_PCF8574_PARAMETERS));
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR(WEB_HANDLE_PCF8574));
   WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings->flag3.pcf8574_ports_inverted) ? PSTR(" checked") : "");  // SetOption81 - Invert all ports on PCF8574 devices
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
@@ -710,7 +707,7 @@ bool Xdrv28(uint32_t function) {
 #endif  // USE_PCF8574_SENSOR
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_PCF8574);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_PCF8574), PSTR(D_CONFIGURE_PCF8574));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_PCF8574), HandlePcf8574);

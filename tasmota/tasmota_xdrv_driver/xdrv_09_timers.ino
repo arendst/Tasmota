@@ -530,9 +530,6 @@ void CmndSunrise(void) {
 
 #define WEB_HANDLE_TIMER "tm"
 
-const char HTTP_BTN_MENU_TIMER[] PROGMEM =
-  "<p></p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
-
 #ifdef USE_UNISHOX_COMPRESSION
 const size_t HTTP_TIMER_SCRIPT1_SIZE = 106;
 const char HTTP_TIMER_SCRIPT1_COMPRESSED[] PROGMEM = "\x33\xBF\xA1\x94\x7C\x3D\xE3\xDF\x3A\x83\xA3\xE1\xC4\x8F\x04\x60\x5F\x07\x5B\x9C"
@@ -938,9 +935,11 @@ bool Xdrv09(uint32_t function)
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
 #if defined(USE_RULES) || defined(USE_SCRIPT)
-      WSContentSend_P(HTTP_BTN_MENU_TIMER);
+      WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_TIMER), PSTR(D_CONFIGURE_TIMER));
 #else
-      if (TasmotaGlobal.devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }
+      if (TasmotaGlobal.devices_present) { 
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_TIMER), PSTR(D_CONFIGURE_TIMER));
+      }
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:

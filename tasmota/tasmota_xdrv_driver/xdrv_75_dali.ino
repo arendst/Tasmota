@@ -821,7 +821,8 @@ void DaliLoop(void) {
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
       }
     }
-    yield();
+//    yield();
+    delay(0);                                  // Prevent watchdog crashes
   }
 }
 
