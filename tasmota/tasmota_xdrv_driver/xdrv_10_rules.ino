@@ -1135,6 +1135,24 @@ void RulesSaveBeforeRestart(void)
   }
 }
 
+#ifdef USE_WEBSERVER
+#ifdef USE_VIEW_RULE_MEMS_AND_VARS
+void RulesShow() {
+  // Display Rule Mems and Vars on WebUI
+  for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+    if (SettingsText(SET_MEM1 + i)[0]) {
+      WSContentSend_P(PSTR("{s}Mem%d{m}%s{e}"), i + 1, SettingsText(SET_MEM1 + i));
+    }
+  }
+  for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+    if (rules_vars[i][0]) {
+      WSContentSend_P(PSTR("{s}Var%d{m}%s{e}"), i + 1, rules_vars[i]);
+    }
+  }
+}
+#endif  // USE_VIEW_RULE_MEMS_AND_VARS
+#endif  // USE_WEBSERVER
+
 void RulesSetPower(void)
 {
   Rules.new_power = XdrvMailbox.index;
@@ -2523,6 +2541,13 @@ bool Xdrv10(uint32_t function)
     case FUNC_PRE_INIT:
       RulesInit();
       break;
+#ifdef USE_WEBSERVER
+#ifdef USE_VIEW_RULE_MEMS_AND_VARS
+    case FUNC_WEB_SENSOR:
+      RulesShow();
+      break;
+#endif  // USE_VIEW_RULE_MEMS_AND_VARS
+#endif  // USE_WEBSERVER
     case FUNC_ACTIVE:
       result = true;
       break;
