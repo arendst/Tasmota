@@ -2262,12 +2262,12 @@ void ZigbeeShow(bool json)
         }
         uint32_t num_bars = 0;
 
-        char slqi[4];
+        char slqi[16];
         slqi[0] = '-';
         slqi[1] = '\0';
         if (device.validLqi()){
           num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
-          snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
+          snprintf_P(slqi, sizeof(slqi), PSTR("%d (%d%%)"), device.lqi, changeUIntScale(device.lqi, 0, 254, 0, 100));
         }
 
         WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
