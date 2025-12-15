@@ -407,10 +407,8 @@ void IRac::airton(IRAirtonAc *ac,
                   const int16_t sleep) {
   ac->begin();
   ac->setPower(on);
-  ac->setTemp(degrees);
-  // Mode needs to be set after temp as Fan-only uses a special temp.
   ac->setMode(ac->convertMode(mode));
-  // Fan needs to be set after mode, as setMode can change the fan speed.
+  ac->setTemp(degrees);
   ac->setFan(ac->convertFan(fan));
   ac->setSwingV(swingv != stdAc::swingv_t::kOff);
   // No Quiet setting available.
