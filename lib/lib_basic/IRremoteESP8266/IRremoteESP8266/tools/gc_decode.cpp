@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <cstdio>
+#include <iostream>
 #include <string>
 #include "IRac.h"
 #include "IRsend.h"
@@ -21,7 +23,7 @@ void str_to_uint16(char *str, uint16_t *res, uint8_t base) {
   if (errno == ERANGE || val < 0 || val > UINT16_MAX || end == str ||
       *end != '\0')
     return;
-  *res = (uint16_t)val;
+  *res = static_cast<uint16_t>(val);
 }
 
 void usage_error(char *name) {

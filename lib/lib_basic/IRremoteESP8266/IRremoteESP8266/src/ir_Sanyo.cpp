@@ -892,7 +892,8 @@ uint16_t IRSanyoAc88::getClock(void) const {
 /// Set the current clock time.
 /// @param[in] mins_since_midnight The time as nr. of minutes past midnight.
 void IRSanyoAc88::setClock(const uint16_t mins_since_midnight) {
-  uint16_t mins = std::min(mins_since_midnight, (uint16_t)(23 * 60 + 59));
+  uint16_t mins = std::min(mins_since_midnight,
+                           static_cast<uint16_t>(23 * 60 + 59));
   _.ClockMins = mins % 60;
   _.ClockHrs = mins / 60;
   _.ClockSecs = 0;

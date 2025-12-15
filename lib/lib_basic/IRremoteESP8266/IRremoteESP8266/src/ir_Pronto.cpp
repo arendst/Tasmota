@@ -62,7 +62,8 @@ void IRsend::sendPronto(uint16_t data[], uint16_t len, uint16_t repeat) {
 
   // Pronto frequency is in Hz.
   uint16_t hz =
-      (uint16_t)(1000000U / (data[kProntoFreqOffset] * kProntoFreqFactor));
+      static_cast<uint16_t>(1000000U / (data[kProntoFreqOffset] *
+                            kProntoFreqFactor));
   enableIROut(hz);
 
   // Grab the length of the two sequences.

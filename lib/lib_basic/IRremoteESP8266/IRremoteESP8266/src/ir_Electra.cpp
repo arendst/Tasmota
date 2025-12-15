@@ -310,6 +310,18 @@ bool IRElectraAc::getTurbo(void) const {
   return _.Turbo;
 }
 
+/// Set the Quiet/Silent'mode of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRElectraAc::setQuiet(const bool on) {
+  _.Quiet = on;
+}
+
+/// Get the Quiet/Silent mode of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRElectraAc::getQuiet(void) const {
+  return _.Quiet;
+}
+
 /// Get the IFeel mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
 bool IRElectraAc::getIFeel(void) const { return _.IFeel; }
@@ -373,11 +385,11 @@ stdAc::state_t IRElectraAc::toCommon(void) const {
                                     : stdAc::swingh_t::kOff;
   result.light = getLightToggle();
   result.turbo = _.Turbo;
+  result.quiet = _.Quiet;
   result.clean = _.Clean;
   result.iFeel = getIFeel();
   // Not supported.
   result.model = -1;  // No models used.
-  result.quiet = false;
   result.econo = false;
   result.filter = false;
   result.beep = false;
@@ -404,6 +416,7 @@ String IRElectraAc::toString(void) const {
     result += addToggleToString(getLightToggle(), kLightStr);
     result += addBoolToString(_.Clean, kCleanStr);
     result += addBoolToString(_.Turbo, kTurboStr);
+    result += addBoolToString(_.Quiet, kQuietStr);
     result += addBoolToString(_.IFeel, kIFeelStr);
   }
   if (_.IFeel || _.SensorUpdate) {

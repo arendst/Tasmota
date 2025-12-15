@@ -311,22 +311,25 @@ TEST(TestToshibaACClass, HumanReadableOutput) {
                                                    0x00, 0xC1, 0x00, 0xC0};
 
   ac.setRaw(initial_state);
-  EXPECT_EQ("Temp: 17C, Power: On, Mode: 0 (Auto), Fan: 0 (Auto), "
-            "Turbo: Off, Econo: Off, Filter: Off",
+  EXPECT_EQ("Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Power: On, "
+            "Mode: 0 (Auto), Fan: 0 (Auto), Turbo: Off, Econo: Off, "
+            "Filter: Off",
             ac.toString());
   ac.setRaw(modified_state);
-  EXPECT_EQ("Temp: 17C, Power: On, Mode: 1 (Cool), Fan: 5 (High), "
-            "Turbo: Off, Econo: Off, Filter: Off",
+  EXPECT_EQ("Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Power: On, "
+            "Mode: 1 (Cool), Fan: 5 (High), Turbo: Off, Econo: Off, "
+            "Filter: Off",
             ac.toString());
   ac.setTemp(25);
   ac.setFan(3);
   ac.setMode(kToshibaAcDry);
-  EXPECT_EQ("Temp: 25C, Power: On, Mode: 2 (Dry), Fan: 3 (Medium), "
-            "Turbo: Off, Econo: Off, Filter: Off",
+  EXPECT_EQ("Model: 0 (TOSHIBA REMOTE A), Temp: 25C, Power: On, "
+            "Mode: 2 (Dry), Fan: 3 (Medium), Turbo: Off, Econo: Off, "
+            "Filter: Off",
             ac.toString());
   ac.off();
-  EXPECT_EQ("Temp: 25C, Power: Off, Fan: 3 (Medium), Turbo: Off, Econo: Off, "
-            "Filter: Off",
+  EXPECT_EQ("Model: 0 (TOSHIBA REMOTE A), Temp: 25C, Power: Off, "
+            "Fan: 3 (Medium), Turbo: Off, Econo: Off, Filter: Off",
             ac.toString());
 }
 
@@ -379,8 +382,8 @@ TEST(TestDecodeToshibaAC, SyntheticExample) {
   ASSERT_EQ(kToshibaACBits, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
-      "Temp: 17C, Power: On, Mode: 0 (Auto), Fan: 0 (Auto), Turbo: Off, "
-      "Econo: Off, Filter: Off",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Power: On, Mode: 0 (Auto), "
+      "Fan: 0 (Auto), Turbo: Off, Econo: Off, Filter: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
   stdAc::state_t r, p;
   ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &r, &p));
@@ -627,8 +630,8 @@ TEST(TestDecodeToshibaAC, RealLongExample) {
   EXPECT_EQ(kToshibaACBitsLong, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
-      "Temp: 22C, Power: On, Mode: 0 (Auto), Fan: 0 (Auto), Turbo: On, "
-      "Econo: Off, Filter: Off",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 22C, Power: On, Mode: 0 (Auto), "
+      "Fan: 0 (Auto), Turbo: On, Econo: Off, Filter: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
 }
 
@@ -718,7 +721,7 @@ TEST(TestDecodeToshibaAC, RealShortExample) {
   EXPECT_EQ(kToshibaACBitsShort, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
-      "Temp: 17C, Swing(V): 0 (Step)",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Swing(V): 0 (Step)",
       IRAcUtils::resultAcToString(&irsend.capture));
 }
 
@@ -732,8 +735,8 @@ TEST(TestToshibaACClass, ConstructLongState) {
   ac.setTurbo(false);
   ac.setEcono(true);
   EXPECT_EQ(
-      "Temp: 29C, Power: On, Mode: 2 (Dry), Fan: 2 (UNKNOWN), "
-      "Turbo: Off, Econo: On, Filter: Off",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 29C, Power: On, Mode: 2 (Dry), "
+      "Fan: 2 (UNKNOWN), Turbo: Off, Econo: On, Filter: Off",
       ac.toString());
   EXPECT_EQ(kToshibaACStateLengthLong, ac.getStateLength());
   const uint8_t expectedState[kToshibaACStateLengthLong] = {
@@ -783,8 +786,8 @@ TEST(TestDecodeToshibaAC, RealExample_WHUB03NJ) {
   EXPECT_EQ(kToshibaACBits, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
-      "Temp: 20C, Power: Off, Fan: 0 (Auto), Turbo: Off, Econo: Off, "
-      "Filter: Off",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 20C, Power: Off, Fan: 0 (Auto), "
+      "Turbo: Off, Econo: Off, Filter: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
 }
 
@@ -805,7 +808,7 @@ TEST(TestToshibaACClass, SwingCodes) {
   ac.setSwing(kToshibaAcSwingOn);
 
   EXPECT_EQ(
-      "Temp: 17C, Swing(V): 1 (On)",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Swing(V): 1 (On)",
       ac.toString());
   EXPECT_EQ(kToshibaACStateLengthShort, ac.getStateLength());
   const uint8_t swingOnState[kToshibaACStateLengthShort] = {
@@ -815,7 +818,7 @@ TEST(TestToshibaACClass, SwingCodes) {
 
   ac.setSwing(kToshibaAcSwingOff);
   EXPECT_EQ(
-      "Temp: 17C, Swing(V): 2 (Off)",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Swing(V): 2 (Off)",
       ac.toString());
   EXPECT_EQ(kToshibaACStateLengthShort, ac.getStateLength());
   const uint8_t swingOffState[kToshibaACStateLengthShort] = {
@@ -828,7 +831,7 @@ TEST(TestToshibaACClass, SwingCodes) {
   ac.setRaw(swingToggleState, kToshibaACStateLengthShort);
   EXPECT_EQ(kToshibaAcSwingToggle, ac.getSwing());
   EXPECT_EQ(
-      "Temp: 17C, Swing(V): 4 (Toggle)",
+      "Model: 0 (TOSHIBA REMOTE A), Temp: 17C, Swing(V): 4 (Toggle)",
       ac.toString());
 }
 

@@ -5,6 +5,7 @@
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1787
 
 #include "ir_Bosch.h"
+#include <algorithm>
 
 #if SEND_BOSCH144
 /// Send a Bosch 144-bit / 18-byte message (96-bit message are also possible)

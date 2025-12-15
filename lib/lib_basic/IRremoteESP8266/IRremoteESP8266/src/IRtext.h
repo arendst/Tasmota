@@ -229,6 +229,8 @@ extern IRTEXT_CONST_PTR(kSetTimerCommandStr);
 extern IRTEXT_CONST_PTR(kTimerStr);
 extern IRTEXT_CONST_PTR(kToggleStr);
 extern IRTEXT_CONST_PTR(kTopStr);
+extern IRTEXT_CONST_PTR(kToshibaGenericRemoteAStr);
+extern IRTEXT_CONST_PTR(kToshibaGenericRemoteBStr);
 extern IRTEXT_CONST_PTR(kTrueStr);
 extern IRTEXT_CONST_PTR(kTurboStr);
 extern IRTEXT_CONST_PTR(kTurboToggleStr);

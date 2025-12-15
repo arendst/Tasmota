@@ -68,7 +68,7 @@ const uint8_t kAirtonFanHigh = 0b100;  // 4
 const uint8_t kAirtonFanMax =  0b101;  // 5
 
 const uint8_t kAirtonMinTemp = 16;  // 16C
-const uint8_t kAirtonMaxTemp = 25;  // 25C
+const uint8_t kAirtonMaxTemp = 31;  // 31C
 
 
 /// Class for handling detailed Airton 56-bit A/C messages.

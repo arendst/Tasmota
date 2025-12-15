@@ -77,6 +77,8 @@ If you want to [contribute](.github/CONTRIBUTING.md#how-can-i-contribute) to thi
 - Improve our documentation
 - [Creating issues](.github/CONTRIBUTING.md#reporting-bugs) and [pull requests](.github/CONTRIBUTING.md#pull-requests)
 - Tell other people about this library
+- Updated documentation formatting and clarified installation steps (Hacktoberfest contribution by Prerna Utage)
+
 
 ## Contributors
 Available [here](.github/Contributors.md)
@@ -87,3 +89,6 @@ This library was originally based on Ken Shirriff's work (https://github.com/shi
 [Mark Szabo](https://github.com/crankyoldgit/IRremoteESP8266) has updated the IRsend class to work on ESP8266 and [Sebastien Warin](https://github.com/sebastienwarin/IRremoteESP8266) the receiving & decoding part (IRrecv class).
 
 As of v2.0, the library was almost entirely re-written with the ESP8266's resources in mind.
+
+## About This Project
+This project allows decoding and encoding of IR signals for controlling Air Conditioners and other devices using ESP8266 or ESP32 boards.
