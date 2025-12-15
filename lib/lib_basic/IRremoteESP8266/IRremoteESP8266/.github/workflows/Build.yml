@@ -25,7 +25,7 @@ jobs:
         JSONI=${JSONI//$'\n'}
         echo $JSONI
         # Set output
-        echo "::set-output name=matrix::[${JSONI}]"
+        echo "matrix=[${JSONI}]" >> $GITHUB_OUTPUT
   Build_Example:
     needs: Gen_Matrix
     runs-on: ubuntu-latest
@@ -36,19 +36,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Cache PlatformIO
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.platformio
         key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}
     - name: Cache PlatformIO build
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: .pio
         key: pio-${{ runner.os }}-${{ matrix.project }}
@@ -56,10 +56,13 @@ jobs:
           pio-${{ runner.os }}-
           pio-
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
+        pip install --upgrade intelhex
         pip install --upgrade platformio
     - name: Build example
       env:
