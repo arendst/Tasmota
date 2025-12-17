@@ -99,6 +99,8 @@ void IRCoolixAC::stateReset(void) {
   cleanFlag = false;
   sleepFlag = false;
   swingFlag = false;
+  tempLowF = false;
+  tempHighF = false;
 }
 
 /// Set up hardware to be able to send a message.
@@ -112,8 +114,34 @@ void IRCoolixAC::send(const uint16_t repeat) {
   // Typically repeat is `kCoolixDefaultRepeat` which is `1`, so this allows
   // it to be 0 normally for this command, and allows additional repeats if
   // requested rather always 0 for that command.
-  _irsend.sendCOOLIX(getRaw(), kCoolixBits, repeat - (getSwingVStep() &&
-                                                          repeat > 0) ? 1 : 0);
+  const uint16_t repeat_override =
+    repeat - (getSwingVStep() && repeat > 0) ? 1 : 0;
+
+  if (tempHighF || tempLowF) {
+    uint64_t coolix24_raw = getRaw();
+    // We need to sneak our temperature range into a parity bit.
+    uint64_t coolix48_raw = 0;
+
+    // First create our parity.
+    uint64_t parity = getRaw() ^ UINT32_MAX;
+
+    // Interleave raw data and parity into output, in order.
+    coolix48_raw |= ((coolix24_raw >> 16) & 0xFF) << 40;
+    coolix48_raw |= ((parity >> 16) & 0xFF) << 32;
+    coolix48_raw |= ((coolix24_raw >> 8) & 0xFF) << 24;
+    coolix48_raw |= ((parity >> 8) & 0xFF) << 16;
+    coolix48_raw |= (coolix24_raw & 0xFF) << 8;
+    coolix48_raw |= parity & 0xFF;
+
+    // Mangle parity as necessary to represent Fahrenheit range.
+    coolix48_raw |= static_cast<uint64_t>(tempLowF ? 1 : 3) << (36);
+
+    // Send as Coolix48.
+    _irsend.sendCoolix48(coolix48_raw, kCoolix48Bits, repeat_override);
+  } else {
+    _irsend.sendCOOLIX(getRaw(), kCoolixBits, repeat_override);
+  }
+
   // make sure to remove special state from the internal state
   // after command has being transmitted.
   recoverSavedState();
@@ -138,6 +166,27 @@ void IRCoolixAC::setRaw(const uint32_t new_code) {
   // must be a command changing Temp|Mode|Fan
   // it is safe to just copy to remote var
   _.raw = new_code;
+}
+
+// Set internal state from a COOLIX48 read, handling F data hidden in parity.
+void IRCoolixAC::setRawFromCoolix48(const uint64_t data) {
+  // Assume parity bits as in coolix24, let's strip them.
+  CoolixProtocol coolix24;
+  coolix24.raw = 0;
+  coolix24.raw |= ((data >> 8) & 0xff);
+  coolix24.raw |= ((data >> 24) & 0xff) << 8;
+  coolix24.raw |= ((data >> 40) & 0xff) << 16;
+
+  // Delegate to coolix24 code.
+  setRaw(coolix24.raw);
+
+  // Handle Fahrenheit range.
+  uint8_t fRange = (data >> 36) & 3;
+  if (fRange == 1) {
+    setTempFRange(false);
+  } else if (fRange == 3) {
+    setTempFRange(true);
+  }
 }
 
 /// Is the current state is a special state?
@@ -217,19 +266,53 @@ void IRCoolixAC::setTempRaw(const uint8_t code) { _.Temp = code; }
 /// @return The native temperature value.
 uint8_t IRCoolixAC::getTempRaw(void) const { return _.Temp; }
 
+/// Set the fahrenheit temperature range.
+/// @param[in] high True if setting high F range, false if low F range.
+void IRCoolixAC::setTempFRange(const bool high) {
+  tempLowF = !high;
+  tempHighF = high;
+}
+
+// Clear the fahrenheit temperature range bits.
+void IRCoolixAC::clearTempFRange() {
+  tempLowF = false;
+  tempHighF = false;
+}
+
 /// Set the temperature.
 /// @param[in] desired The temperature in degrees celsius.
 void IRCoolixAC::setTemp(const uint8_t desired) {
   // Range check.
+  if (desired >= kCoolixTempLowFMin &&
+      desired <= kCoolixTempLowFMax) {
+    setTempRaw(kCoolixTempMapLowF[desired - kCoolixTempLowFMin]);
+    setTempFRange(false);
+    return;
+  }
+  if (desired >= kCoolixTempHighFMin &&
+      desired <= kCoolixTempHighFMax) {
+    setTempRaw(kCoolixTempMapHighF[desired - kCoolixTempHighFMin]);
+    setTempFRange(true);
+    return;
+  }
   uint8_t temp = std::min(desired, kCoolixTempMax);
   temp = std::max(temp, kCoolixTempMin);
   setTempRaw(kCoolixTempMap[temp - kCoolixTempMin]);
+  clearTempFRange();
 }
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
 uint8_t IRCoolixAC::getTemp(void) const {
   const uint8_t code = getTempRaw();
+  if (tempLowF) {
+    for (uint8_t i = 0; i < kCoolixTempLowFRange; i++)
+      if (kCoolixTempMapLowF[i] == code) return kCoolixTempLowFMin + i;
+  }
+  if (tempHighF) {
+    for (uint8_t i = 0; i < kCoolixTempHighFRange; i++)
+      if (kCoolixTempMapHighF[i] == code) return kCoolixTempHighFMin + i;
+  }
   for (uint8_t i = 0; i < kCoolixTempRange; i++)
     if (kCoolixTempMap[i] == code) return kCoolixTempMin + i;
   return kCoolixTempMax;  // Not a temp we expected.
@@ -613,7 +696,9 @@ String IRCoolixAC::toString(void) const {
   }
   result += ')';
   // Fan mode doesn't have a temperature.
-  if (getMode() != kCoolixFan) result += addTempToString(getTemp());
+  bool celcius = true;
+  if (tempHighF || tempLowF) celcius = false;
+  if (getMode() != kCoolixFan) result += addTempToString(getTemp(), celcius);
   result += addBoolToString(getZoneFollow(), kZoneFollowStr);
   result += addLabeledString(
       (getSensorTemp() == kCoolixSensorTempIgnoreCode)

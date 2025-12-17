@@ -72,7 +72,7 @@ class IRsendTest : public IRsend {
     capture.decode_type = UNKNOWN;
     capture.bits = 0;
     capture.rawlen = last + 2 - offset;
-    capture.overflow = (last - offset >= (int16_t)RAW_BUF);
+    capture.overflow = (last - offset >= static_cast<uint16_t>(RAW_BUF));
     capture.repeat = false;
     capture.address = 0;
     capture.command = 0;

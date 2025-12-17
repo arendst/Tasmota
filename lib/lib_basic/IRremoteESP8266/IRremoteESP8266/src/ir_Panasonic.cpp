@@ -88,7 +88,8 @@ void IRsend::sendPanasonic64(const uint64_t data, const uint16_t nbits,
 /// @note This protocol is a modified version of Kaseikyo.
 void IRsend::sendPanasonic(const uint16_t address, const uint32_t data,
                            const uint16_t nbits, const uint16_t repeat) {
-  sendPanasonic64(((uint64_t)address << 32) | (uint64_t)data, nbits, repeat);
+  sendPanasonic64(static_cast<uint64_t>(address) << 32 |
+                  static_cast<uint64_t>(data), nbits, repeat);
 }
 
 /// Calculate the raw Panasonic data based on device, subdevice, & function.
@@ -105,8 +106,10 @@ uint64_t IRsend::encodePanasonic(const uint16_t manufacturer,
                                  const uint8_t subdevice,
                                  const uint8_t function) {
   uint8_t checksum = device ^ subdevice ^ function;
-  return (((uint64_t)manufacturer << 32) | ((uint64_t)device << 24) |
-          ((uint64_t)subdevice << 16) | ((uint64_t)function << 8) | checksum);
+  return ((static_cast<uint64_t>(manufacturer) << 32) |
+          (static_cast<uint64_t>(device) << 24) |
+          (static_cast<uint64_t>(subdevice) << 16) |
+          (static_cast<uint64_t>(function) << 8) | checksum);
 }
 #endif  // (SEND_PANASONIC || SEND_DENON)
 

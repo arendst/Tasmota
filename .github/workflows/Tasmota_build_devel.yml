@@ -1,4 +1,3 @@
-
 name: Build_development
 
 on:
@@ -129,10 +128,7 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
           PYTHONUTF8: '1'
-        run: platformio run -e ${{ matrix.variant }}
-      #- name: Use esp32-solo1 safeboot for esp32 too
-        #run: |
-          #cp ./build_output/firmware/tasmota32solo1-safeboot.bin ./build_output/firmware/tasmota32-safeboot.bin 
+        run: platformio run -e ${{ matrix.variant }} 
       - name: Upload safeboot firmware artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -310,10 +306,11 @@ jobs:
   Start_final_copy:
     needs: [base-images, base32-images, language-images]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
     steps:
     - name: Dispatch workflow in arendst/Tasmota-firmware
       run: |
-         curl -X POST https://api.github.com/repos/arendst/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
-         -H 'Accept: application/vnd.github.everest-preview+json' \
-         -u ${{ secrets.API_TOKEN_GITHUB }} \
-         --data '{"ref": "gh_actions"}'
+        gh api repos/arendst/Tasmota-firmware/actions/workflows/fetch_deploy.yml/dispatches \
+          --method POST \
+          -f ref='gh_actions'

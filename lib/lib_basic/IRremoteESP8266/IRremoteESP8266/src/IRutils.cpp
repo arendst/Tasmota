@@ -46,7 +46,7 @@
 uint64_t reverseBits(uint64_t input, uint16_t nbits) {
   if (nbits <= 1) return input;  // Reversing <= 1 bits makes no change at all.
   // Cap the nr. of bits to rotate to the max nr. of bits in the input.
-  nbits = std::min(nbits, (uint16_t)(sizeof(input) * 8));
+  nbits = std::min(nbits, static_cast<uint16_t>((sizeof(input) * 8)));
   uint64_t output = 0;
   for (uint16_t i = 0; i < nbits; i++) {
     output <<= 1;
@@ -169,6 +169,7 @@ bool hasACState(const decode_type_t protocol) {
     // This is kept sorted by name
     case AMCOR:
     case ARGO:
+    case BLUESTARHEAVY:
     case BOSCH144:
     case CARRIER_AC84:
     case CARRIER_AC128:
@@ -183,6 +184,7 @@ bool hasACState(const decode_type_t protocol) {
     case DAIKIN216:
     case DAIKIN312:
     case ELECTRA_AC:
+    case EUROM:
     case FUJITSU_AC:
     case GREE:
     case HAIER_AC:
@@ -527,912 +529,922 @@ float celsiusToFahrenheit(const float deg) { return (deg * 9.0) / 5.0 + 32.0; }
 float fahrenheitToCelsius(const float deg) { return (deg - 32.0) * 5.0 / 9.0; }
 
 namespace irutils {
-  /// Create a String with a colon separated "label: value" pair suitable for
-  /// Humans.
-  /// @param[in] value The value to come after the label.
-  /// @param[in] label The label to precede the value.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addLabeledString(const String value, const String label,
-                          const bool precomma) {
-    String result = "";
-    // ", " + ": " = 4 chars
-    result.reserve(4 + value.length() + label.length());
-    if (precomma) result += kCommaSpaceStr;
-    result += label;
-    result += kColonSpaceStr;
-    return result + value;
-  }
+/// Create a String with a colon separated "label: value" pair suitable for
+/// Humans.
+/// @param[in] value The value to come after the label.
+/// @param[in] label The label to precede the value.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addLabeledString(const String value, const String label,
+                        const bool precomma) {
+  String result = "";
+  // ", " + ": " = 4 chars
+  result.reserve(4 + value.length() + label.length());
+  if (precomma) result += kCommaSpaceStr;
+  result += label;
+  result += kColonSpaceStr;
+  return result + value;
+}
 
-  /// Create a String with a colon separated flag suitable for Humans.
-  /// e.g. "Power: On"
-  /// @param[in] value The value to come after the label.
-  /// @param[in] label The label to precede the value.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addBoolToString(const bool value, const String label,
+/// Create a String with a colon separated flag suitable for Humans.
+/// e.g. "Power: On"
+/// @param[in] value The value to come after the label.
+/// @param[in] label The label to precede the value.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addBoolToString(const bool value, const String label,
+                       const bool precomma) {
+  return addLabeledString(value ? kOnStr : kOffStr, label, precomma);
+}
+
+/// Create a String with a colon separated toggle flag suitable for Humans.
+/// e.g. "Light: Toggle", "Light: -"
+/// @param[in] toggle The value of the toggle to come after the label.
+/// @param[in] label The label to precede the value.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addToggleToString(const bool toggle, const String label,
                          const bool precomma) {
-    return addLabeledString(value ? kOnStr : kOffStr, label, precomma);
-  }
+  return addLabeledString(toggle ? kToggleStr : kDashStr, label, precomma);
+}
 
-  /// Create a String with a colon separated toggle flag suitable for Humans.
-  /// e.g. "Light: Toggle", "Light: -"
-  /// @param[in] toggle The value of the toggle to come after the label.
-  /// @param[in] label The label to precede the value.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addToggleToString(const bool toggle, const String label,
-                           const bool precomma) {
-    return addLabeledString(toggle ? kToggleStr : kDashStr, label, precomma);
-  }
+/// Create a String with a colon separated labeled Integer suitable for
+/// Humans.
+/// e.g. "Foo: 23"
+/// @param[in] value The value to come after the label.
+/// @param[in] label The label to precede the value.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addIntToString(const uint16_t value, const String label,
+                      const bool precomma) {
+  return addLabeledString(uint64ToString(value), label, precomma);
+}
 
-  /// Create a String with a colon separated labeled Integer suitable for
-  /// Humans.
-  /// e.g. "Foo: 23"
-  /// @param[in] value The value to come after the label.
-  /// @param[in] label The label to precede the value.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addIntToString(const uint16_t value, const String label,
+/// Create a String with a colon separated labeled Integer suitable for
+/// Humans.
+/// e.g. "Foo: 23"
+/// @param[in] value The value to come after the label.
+/// @param[in] label The label to precede the value.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addSignedIntToString(const int16_t value, const String label,
+                            const bool precomma) {
+  return addLabeledString(int64ToString(value), label, precomma);
+}
+
+
+/// Generate the model string for a given Protocol/Model pair.
+/// @param[in] protocol The IR protocol.
+/// @param[in] model The model number for that protocol.
+/// @return The resulting String.
+/// @note After adding a new model you should update IRac::strToModel() too.
+String modelToStr(const decode_type_t protocol, const int16_t model) {
+  switch (protocol) {
+    case decode_type_t::FUJITSU_AC:
+      switch (model) {
+        case fujitsu_ac_remote_model_t::ARRAH2E: return kArrah2eStr;
+        case fujitsu_ac_remote_model_t::ARDB1:   return kArdb1Str;
+        case fujitsu_ac_remote_model_t::ARREB1E: return kArreb1eStr;
+        case fujitsu_ac_remote_model_t::ARJW2:   return kArjw2Str;
+        case fujitsu_ac_remote_model_t::ARRY4:   return kArry4Str;
+        case fujitsu_ac_remote_model_t::ARREW4E: return kArrew4eStr;
+        default:                                 return kUnknownStr;
+      }
+      break;
+    case decode_type_t::GREE:
+      switch (model) {
+        case gree_ac_remote_model_t::YAW1F:  return kYaw1fStr;
+        case gree_ac_remote_model_t::YBOFB:  return kYbofbStr;
+        case gree_ac_remote_model_t::YX1FSF: return kYx1fsfStr;
+        default:                             return kUnknownStr;
+      }
+      break;
+    case decode_type_t::HAIER_AC176:
+      switch (model) {
+        case haier_ac176_remote_model_t::V9014557_A:
+          return kV9014557AStr;
+        case haier_ac176_remote_model_t::V9014557_B:
+          return kV9014557BStr;
+        default:
+          return kUnknownStr;
+      }
+      break;
+    case decode_type_t::HITACHI_AC1:
+      switch (model) {
+        case hitachi_ac1_remote_model_t::R_LT0541_HTA_A:
+          return kRlt0541htaaStr;
+        case hitachi_ac1_remote_model_t::R_LT0541_HTA_B:
+          return kRlt0541htabStr;
+        default:
+          return kUnknownStr;
+      }
+      break;
+    case decode_type_t::LG:
+    case decode_type_t::LG2:
+      switch (model) {
+        case lg_ac_remote_model_t::GE6711AR2853M: return kGe6711ar2853mStr;
+        case lg_ac_remote_model_t::AKB75215403:   return kAkb75215403Str;
+        case lg_ac_remote_model_t::AKB74955603:   return kAkb74955603Str;
+        case lg_ac_remote_model_t::AKB73757604:   return kAkb73757604Str;
+        case lg_ac_remote_model_t::LG6711A20083V: return kLg6711a20083vStr;
+        default:                                  return kUnknownStr;
+      }
+      break;
+    case decode_type_t::MIRAGE:
+      switch (model) {
+        case mirage_ac_remote_model_t::KKG9AC1:  return kKkg9ac1Str;
+        case mirage_ac_remote_model_t::KKG29AC1: return kKkg29ac1Str;
+        default:                                 return kUnknownStr;
+      }
+      break;
+    case decode_type_t::PANASONIC_AC:
+      switch (model) {
+        case panasonic_ac_remote_model_t::kPanasonicLke: return kLkeStr;
+        case panasonic_ac_remote_model_t::kPanasonicNke: return kNkeStr;
+        case panasonic_ac_remote_model_t::kPanasonicDke: return kDkeStr;
+        case panasonic_ac_remote_model_t::kPanasonicJke: return kJkeStr;
+        case panasonic_ac_remote_model_t::kPanasonicCkp: return kCkpStr;
+        case panasonic_ac_remote_model_t::kPanasonicRkr: return kRkrStr;
+        default:                                         return kUnknownStr;
+      }
+      break;
+    case decode_type_t::SHARP_AC:
+      switch (model) {
+        case sharp_ac_remote_model_t::A907: return kA907Str;
+        case sharp_ac_remote_model_t::A705: return kA705Str;
+        case sharp_ac_remote_model_t::A903: return kA903Str;
+        default:                            return kUnknownStr;
+      }
+      break;
+    case decode_type_t::TCL112AC:
+      switch (model) {
+        case tcl_ac_remote_model_t::TAC09CHSD: return kTac09chsdStr;
+        case tcl_ac_remote_model_t::GZ055BE1:  return kGz055be1Str;
+        default:                               return kUnknownStr;
+      }
+      break;
+    case decode_type_t::VOLTAS:
+      switch (model) {
+        case voltas_ac_remote_model_t::kVoltas122LZF: return k122lzfStr;
+        default:                                      return kUnknownStr;
+      }
+      break;
+    case decode_type_t::WHIRLPOOL_AC:
+      switch (model) {
+        case whirlpool_ac_remote_model_t::DG11J13A: return kDg11j13aStr;
+        case whirlpool_ac_remote_model_t::DG11J191: return kDg11j191Str;
+        default:                                    return kUnknownStr;
+      }
+      break;
+    case decode_type_t::ARGO:
+      switch (model) {
+        case argo_ac_remote_model_t::SAC_WREM2: return kArgoWrem2Str;
+        case argo_ac_remote_model_t::SAC_WREM3: return kArgoWrem3Str;
+        default:                                return kUnknownStr;
+      }
+      break;
+    case decode_type_t::TOSHIBA_AC:
+      switch (model) {
+        case toshiba_ac_remote_model_t::kToshibaGenericRemote_A:
+          return kToshibaGenericRemoteAStr;
+        case toshiba_ac_remote_model_t::kToshibaGenericRemote_B:
+          return kToshibaGenericRemoteBStr;
+        default:
+          return kUnknownStr;
+      }
+    default: return kUnknownStr;
+  }
+}
+
+/// Create a String of human output for a given protocol model number.
+/// e.g. "Model: JKE"
+/// @param[in] protocol The IR protocol.
+/// @param[in] model The model number for that protocol.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addModelToString(const decode_type_t protocol, const int16_t model,
                         const bool precomma) {
-    return addLabeledString(uint64ToString(value), label, precomma);
-  }
+  String result = "";
+  // ", Model: NNN (BlahBlahEtc)" = ~40 chars for longest model name.
+  result.reserve(40);
+  result += addIntToString(model, kModelStr, precomma);
+  result += kSpaceLBraceStr;
+  result += modelToStr(protocol, model);
+  return result + ')';
+}
 
-  /// Create a String with a colon separated labeled Integer suitable for
-  /// Humans.
-  /// e.g. "Foo: 23"
-  /// @param[in] value The value to come after the label.
-  /// @param[in] label The label to precede the value.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addSignedIntToString(const int16_t value, const String label,
-                              const bool precomma) {
-    return addLabeledString(int64ToString(value), label, precomma);
-  }
+/// Create a String of human output for a given temperature.
+/// e.g. "Temp: 25C"
+/// @param[in] degrees The temperature in degrees.
+/// @param[in] celsius Is the temp Celsius or Fahrenheit.
+///  true is C, false is F
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @param[in] isSensorTemp Is the value a room (ambient) temp. or target?
+/// @return The resulting String.
+String addTempToString(const uint16_t degrees, const bool celsius,
+                       const bool precomma, const bool isSensorTemp) {
+  String result = addIntToString(degrees, (isSensorTemp)?
+                                 kSensorTempStr : kTempStr, precomma);
+  result += celsius ? 'C' : 'F';
+  return result;
+}
 
+/// Create a String of human output for a given temperature.
+/// e.g. "Temp: 25.5C"
+/// @param[in] degrees The temperature in degrees.
+/// @param[in] celsius Is the temp Celsius or Fahrenheit.
+///  true is C, false is F
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @param[in] isSensorTemp Is the value a room (ambient) temp. or target?
+/// @return The resulting String.
+String addTempFloatToString(const float degrees, const bool celsius,
+                            const bool precomma, const bool isSensorTemp) {
+  String result = "";
+  result.reserve(21);  // Assuming ", Sensor Temp: XXX.5F" is the largest.
+  result += addIntToString(degrees, (isSensorTemp)?
+                           kSensorTempStr : kTempStr, precomma);
+  // Is it a half degree?
+  if (static_cast<uint16_t>(2 * degrees) & 1)
+    result += F(".5");
+  result += celsius ? 'C' : 'F';
+  return result;
+}
 
-  /// Generate the model string for a given Protocol/Model pair.
-  /// @param[in] protocol The IR protocol.
-  /// @param[in] model The model number for that protocol.
-  /// @return The resulting String.
-  /// @note After adding a new model you should update IRac::strToModel() too.
-  String modelToStr(const decode_type_t protocol, const int16_t model) {
-    switch (protocol) {
-      case decode_type_t::FUJITSU_AC:
-        switch (model) {
-          case fujitsu_ac_remote_model_t::ARRAH2E: return kArrah2eStr;
-          case fujitsu_ac_remote_model_t::ARDB1:   return kArdb1Str;
-          case fujitsu_ac_remote_model_t::ARREB1E: return kArreb1eStr;
-          case fujitsu_ac_remote_model_t::ARJW2:   return kArjw2Str;
-          case fujitsu_ac_remote_model_t::ARRY4:   return kArry4Str;
-          case fujitsu_ac_remote_model_t::ARREW4E: return kArrew4eStr;
-          default:                                 return kUnknownStr;
-        }
-        break;
-      case decode_type_t::GREE:
-        switch (model) {
-          case gree_ac_remote_model_t::YAW1F:  return kYaw1fStr;
-          case gree_ac_remote_model_t::YBOFB:  return kYbofbStr;
-          case gree_ac_remote_model_t::YX1FSF: return kYx1fsfStr;
-          default:                             return kUnknownStr;
-        }
-        break;
-      case decode_type_t::HAIER_AC176:
-        switch (model) {
-          case haier_ac176_remote_model_t::V9014557_A:
-            return kV9014557AStr;
-          case haier_ac176_remote_model_t::V9014557_B:
-            return kV9014557BStr;
-          default:
-            return kUnknownStr;
-        }
-        break;
-      case decode_type_t::HITACHI_AC1:
-        switch (model) {
-          case hitachi_ac1_remote_model_t::R_LT0541_HTA_A:
-            return kRlt0541htaaStr;
-          case hitachi_ac1_remote_model_t::R_LT0541_HTA_B:
-            return kRlt0541htabStr;
-          default:
-            return kUnknownStr;
-        }
-        break;
-      case decode_type_t::LG:
-      case decode_type_t::LG2:
-        switch (model) {
-          case lg_ac_remote_model_t::GE6711AR2853M: return kGe6711ar2853mStr;
-          case lg_ac_remote_model_t::AKB75215403:   return kAkb75215403Str;
-          case lg_ac_remote_model_t::AKB74955603:   return kAkb74955603Str;
-          case lg_ac_remote_model_t::AKB73757604:   return kAkb73757604Str;
-          case lg_ac_remote_model_t::LG6711A20083V: return kLg6711a20083vStr;
-          default:                                  return kUnknownStr;
-        }
-        break;
-      case decode_type_t::MIRAGE:
-        switch (model) {
-          case mirage_ac_remote_model_t::KKG9AC1:  return kKkg9ac1Str;
-          case mirage_ac_remote_model_t::KKG29AC1: return kKkg29ac1Str;
-          default:                                 return kUnknownStr;
-        }
-        break;
-      case decode_type_t::PANASONIC_AC:
-        switch (model) {
-          case panasonic_ac_remote_model_t::kPanasonicLke: return kLkeStr;
-          case panasonic_ac_remote_model_t::kPanasonicNke: return kNkeStr;
-          case panasonic_ac_remote_model_t::kPanasonicDke: return kDkeStr;
-          case panasonic_ac_remote_model_t::kPanasonicJke: return kJkeStr;
-          case panasonic_ac_remote_model_t::kPanasonicCkp: return kCkpStr;
-          case panasonic_ac_remote_model_t::kPanasonicRkr: return kRkrStr;
-          default:                                         return kUnknownStr;
-        }
-        break;
-      case decode_type_t::SHARP_AC:
-        switch (model) {
-          case sharp_ac_remote_model_t::A907: return kA907Str;
-          case sharp_ac_remote_model_t::A705: return kA705Str;
-          case sharp_ac_remote_model_t::A903: return kA903Str;
-          default:                            return kUnknownStr;
-        }
-        break;
-      case decode_type_t::TCL112AC:
-        switch (model) {
-          case tcl_ac_remote_model_t::TAC09CHSD: return kTac09chsdStr;
-          case tcl_ac_remote_model_t::GZ055BE1:  return kGz055be1Str;
-          default:                               return kUnknownStr;
-        }
-        break;
-      case decode_type_t::VOLTAS:
-        switch (model) {
-          case voltas_ac_remote_model_t::kVoltas122LZF: return k122lzfStr;
-          default:                                      return kUnknownStr;
-        }
-        break;
-      case decode_type_t::WHIRLPOOL_AC:
-        switch (model) {
-          case whirlpool_ac_remote_model_t::DG11J13A: return kDg11j13aStr;
-          case whirlpool_ac_remote_model_t::DG11J191: return kDg11j191Str;
-          default:                                    return kUnknownStr;
-        }
-        break;
-      case decode_type_t::ARGO:
-        switch (model) {
-          case argo_ac_remote_model_t::SAC_WREM2: return kArgoWrem2Str;
-          case argo_ac_remote_model_t::SAC_WREM3: return kArgoWrem3Str;
-          default:                                return kUnknownStr;
-        }
-        break;
-      default: return kUnknownStr;
-    }
-  }
+/// Create a String of human output for the given operating mode.
+/// e.g. "Mode: 1 (Cool)"
+/// @param[in] mode The operating mode to display.
+/// @param[in] automatic The numeric value for Auto mode.
+/// @param[in] cool The numeric value for Cool mode.
+/// @param[in] heat The numeric value for Heat mode.
+/// @param[in] dry The numeric value for Dry mode.
+/// @param[in] fan The numeric value for Fan mode.
+/// @return The resulting String.
+String addModeToString(const uint8_t mode, const uint8_t automatic,
+                       const uint8_t cool, const uint8_t heat,
+                       const uint8_t dry, const uint8_t fan) {
+  String result = "";
+  result.reserve(22);  // ", Mode: NNN (UNKNOWN)"
+  result += addIntToString(mode, kModeStr);
+  result += kSpaceLBraceStr;
+  if (mode == automatic) result += kAutoStr;
+  else if (mode == cool) result += kCoolStr;
+  else if (mode == heat) result += kHeatStr;
+  else if (mode == dry)  result += kDryStr;
+  else if (mode == fan)  result += kFanStr;
+  else
+    result += kUnknownStr;
+  return result + ')';
+}
 
-  /// Create a String of human output for a given protocol model number.
-  /// e.g. "Model: JKE"
-  /// @param[in] protocol The IR protocol.
-  /// @param[in] model The model number for that protocol.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addModelToString(const decode_type_t protocol, const int16_t model,
-                          const bool precomma) {
-    String result = "";
-    // ", Model: NNN (BlahBlahEtc)" = ~40 chars for longest model name.
-    result.reserve(40);
-    result += addIntToString(model, kModelStr, precomma);
-    result += kSpaceLBraceStr;
-    result += modelToStr(protocol, model);
-    return result + ')';
-  }
+/// Create a String of the 3-letter day of the week from a numerical day of
+/// the week. e.g. "Day: 1 (Mon)"
+/// @param[in] day_of_week A numerical version of the sequential day of the
+///  week. e.g. Saturday = 7 etc.
+/// @param[in] offset Days to offset by.
+///  e.g. For different day starting the week.
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return The resulting String.
+String addDayToString(const uint8_t day_of_week, const int8_t offset,
+                      const bool precomma) {
+  String result = "";
+  result.reserve(19);  // ", Day: N (UNKNOWN)"
+  result += addIntToString(day_of_week, kDayStr, precomma);
+  result += kSpaceLBraceStr;
+  result += dayToString(day_of_week, offset);
+  return result + ')';
+}
 
-  /// Create a String of human output for a given temperature.
-  /// e.g. "Temp: 25C"
-  /// @param[in] degrees The temperature in degrees.
-  /// @param[in] celsius Is the temp Celsius or Fahrenheit.
-  ///  true is C, false is F
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @param[in] isSensorTemp Is the value a room (ambient) temp. or target?
-  /// @return The resulting String.
-  String addTempToString(const uint16_t degrees, const bool celsius,
-                         const bool precomma, const bool isSensorTemp) {
-    String result = addIntToString(degrees, (isSensorTemp)?
-                                   kSensorTempStr : kTempStr, precomma);
-    result += celsius ? 'C' : 'F';
-    return result;
-  }
-
-  /// Create a String of human output for a given temperature.
-  /// e.g. "Temp: 25.5C"
-  /// @param[in] degrees The temperature in degrees.
-  /// @param[in] celsius Is the temp Celsius or Fahrenheit.
-  ///  true is C, false is F
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @param[in] isSensorTemp Is the value a room (ambient) temp. or target?
-  /// @return The resulting String.
-  String addTempFloatToString(const float degrees, const bool celsius,
-                              const bool precomma, const bool isSensorTemp) {
-    String result = "";
-    result.reserve(21);  // Assuming ", Sensor Temp: XXX.5F" is the largest.
-    result += addIntToString(degrees, (isSensorTemp)?
-                             kSensorTempStr : kTempStr, precomma);
-    // Is it a half degree?
-    if (((uint16_t)(2 * degrees)) & 1) result += F(".5");
-    result += celsius ? 'C' : 'F';
-    return result;
-  }
-
-  /// Create a String of human output for the given operating mode.
-  /// e.g. "Mode: 1 (Cool)"
-  /// @param[in] mode The operating mode to display.
-  /// @param[in] automatic The numeric value for Auto mode.
-  /// @param[in] cool The numeric value for Cool mode.
-  /// @param[in] heat The numeric value for Heat mode.
-  /// @param[in] dry The numeric value for Dry mode.
-  /// @param[in] fan The numeric value for Fan mode.
-  /// @return The resulting String.
-  String addModeToString(const uint8_t mode, const uint8_t automatic,
-                         const uint8_t cool, const uint8_t heat,
-                         const uint8_t dry, const uint8_t fan) {
-    String result = "";
-    result.reserve(22);  // ", Mode: NNN (UNKNOWN)"
-    result += addIntToString(mode, kModeStr);
-    result += kSpaceLBraceStr;
-    if (mode == automatic) result += kAutoStr;
-    else if (mode == cool) result += kCoolStr;
-    else if (mode == heat) result += kHeatStr;
-    else if (mode == dry)  result += kDryStr;
-    else if (mode == fan)  result += kFanStr;
-    else
-      result += kUnknownStr;
-    return result + ')';
-  }
-
-  /// Create a String of the 3-letter day of the week from a numerical day of
-  /// the week. e.g. "Day: 1 (Mon)"
-  /// @param[in] day_of_week A numerical version of the sequential day of the
-  ///  week. e.g. Saturday = 7 etc.
-  /// @param[in] offset Days to offset by.
-  ///  e.g. For different day starting the week.
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return The resulting String.
-  String addDayToString(const uint8_t day_of_week, const int8_t offset,
-                        const bool precomma) {
-    String result = "";
-    result.reserve(19);  // ", Day: N (UNKNOWN)"
-    result += addIntToString(day_of_week, kDayStr, precomma);
-    result += kSpaceLBraceStr;
-    result += dayToString(day_of_week, offset);
-    return result + ')';
-  }
-
-  /// Create a String of the 3-letter day of the week from a numerical day of
-  /// the week. e.g. "Mon"
-  /// @param[in] day_of_week A numerical version of the sequential day of the
-  ///  week. e.g. Sunday = 1, Monday = 2, ..., Saturday = 7
-  /// @param[in] offset Days to offset by.
-  ///  e.g. For different day starting the week.
-  /// @return The resulting String.
-  String dayToString(const uint8_t day_of_week, const int8_t offset) {
-    if ((uint8_t)(day_of_week + offset) < 7)
+/// Create a String of the 3-letter day of the week from a numerical day of
+/// the week. e.g. "Mon"
+/// @param[in] day_of_week A numerical version of the sequential day of the
+///  week. e.g. Sunday = 1, Monday = 2, ..., Saturday = 7
+/// @param[in] offset Days to offset by.
+///  e.g. For different day starting the week.
+/// @return The resulting String.
+String dayToString(const uint8_t day_of_week, const int8_t offset) {
+  if ((uint8_t)(day_of_week + offset) < 7)
 #if UNIT_TEST
-      return String(kThreeLetterDayOfWeekStr).substr(
-        (day_of_week + offset) * 3, 3);
+    return String(kThreeLetterDayOfWeekStr).substr(
+      (day_of_week + offset) * 3, 3);
 #else  // UNIT_TEST
-      return String(kThreeLetterDayOfWeekStr).substring(
-        (day_of_week + offset) * 3, (day_of_week + offset) * 3 + 3);
+    return String(kThreeLetterDayOfWeekStr).substring(
+      (day_of_week + offset) * 3, (day_of_week + offset) * 3 + 3);
 #endif  // UNIT_TEST
-    else
-      return kUnknownStr;
+  else
+    return kUnknownStr;
+}
+
+/// Create a String of human output for the given fan speed.
+/// e.g. "Fan: 0 (Auto)"
+/// @param[in] speed The numeric speed of the fan to display.
+/// @param[in] high The numeric value for High speed. (second highest)
+/// @param[in] low The numeric value for Low speed.
+/// @param[in] automatic The numeric value for Auto speed.
+/// @param[in] quiet The numeric value for Quiet speed.
+/// @param[in] medium The numeric value for Medium speed.
+/// @param[in] maximum The numeric value for Highest speed. (if > high)
+/// @param[in] medium_high The numeric value for third-highest speed.
+///                        (if > medium)
+/// @return The resulting String.
+String addFanToString(const uint8_t speed, const uint8_t high,
+                      const uint8_t low, const uint8_t automatic,
+                      const uint8_t quiet, const uint8_t medium,
+                      const uint8_t maximum, const uint8_t medium_high) {
+  String result = "";
+  result.reserve(21);  // ", Fan: NNN (UNKNOWN)"
+  result += addIntToString(speed, kFanStr);
+  result += kSpaceLBraceStr;
+  if (speed == high)              result += kHighStr;
+  else if (speed == low)          result += kLowStr;
+  else if (speed == automatic)    result += kAutoStr;
+  else if (speed == quiet)        result += kQuietStr;
+  else if (speed == medium)       result += kMediumStr;
+  else if (speed == maximum)      result += kMaximumStr;
+  else if (speed == medium_high)  result += kMedHighStr;
+  else
+    result += kUnknownStr;
+  return result + ')';
+}
+
+/// Create a String of human output for the given horizontal swing setting.
+/// e.g. "Swing(H): 0 (Auto)"
+/// @param[in] position The numeric position of the swing to display.
+/// @param[in] automatic The numeric value for Auto position.
+/// @param[in] maxleft The numeric value for most left position.
+/// @param[in] left The numeric value for Left position.
+/// @param[in] middle The numeric value for Middle position.
+/// @param[in] right The numeric value for Right position.
+/// @param[in] maxright The numeric value for most right position.
+/// @param[in] off The numeric value for Off position.
+/// @param[in] leftright The numeric value for "left right" position.
+/// @param[in] rightleft The numeric value for "right left" position.
+/// @param[in] threed The numeric value for 3D setting.
+/// @param[in] wide The numeric value for Wide position.
+/// @return The resulting String.
+String addSwingHToString(const uint8_t position, const uint8_t automatic,
+                         const uint8_t maxleft, const uint8_t left,
+                         const uint8_t middle,
+                         const uint8_t right, const uint8_t maxright,
+                         const uint8_t off,
+                         const uint8_t leftright, const uint8_t rightleft,
+                         const uint8_t threed, const uint8_t wide) {
+  String result = "";
+  result.reserve(30);  // ", Swing(H): NNN (Left Right)"
+  result += addIntToString(position, kSwingHStr);
+  result += kSpaceLBraceStr;
+  if (position == automatic) {
+    result += kAutoStr;
+  } else if (position == left) {
+    result += kLeftStr;
+  } else if (position == middle) {
+    result += kMiddleStr;
+  } else if (position == right) {
+    result += kRightStr;
+  } else if (position == maxleft) {
+    result += kMaxLeftStr;
+  } else if (position == maxright) {
+    result += kMaxRightStr;
+  } else if (position == off) {
+    result += kOffStr;
+  } else if (position == leftright) {
+    result += kLeftStr;
+    result += ' ';
+    result += kRightStr;
+  } else if (position == rightleft) {
+    result += kRightStr;
+    result += ' ';
+    result += kLeftStr;
+  } else if (position == threed) {
+    result += k3DStr;
+  } else if (position == wide) {
+    result += kWideStr;
+  } else {
+    result += kUnknownStr;
   }
+  return result + ')';
+}
 
-  /// Create a String of human output for the given fan speed.
-  /// e.g. "Fan: 0 (Auto)"
-  /// @param[in] speed The numeric speed of the fan to display.
-  /// @param[in] high The numeric value for High speed. (second highest)
-  /// @param[in] low The numeric value for Low speed.
-  /// @param[in] automatic The numeric value for Auto speed.
-  /// @param[in] quiet The numeric value for Quiet speed.
-  /// @param[in] medium The numeric value for Medium speed.
-  /// @param[in] maximum The numeric value for Highest speed. (if > high)
-  /// @param[in] medium_high The numeric value for third-highest speed.
-  ///                        (if > medium)
-  /// @return The resulting String.
-  String addFanToString(const uint8_t speed, const uint8_t high,
-                        const uint8_t low, const uint8_t automatic,
-                        const uint8_t quiet, const uint8_t medium,
-                        const uint8_t maximum, const uint8_t medium_high) {
-    String result = "";
-    result.reserve(21);  // ", Fan: NNN (UNKNOWN)"
-    result += addIntToString(speed, kFanStr);
-    result += kSpaceLBraceStr;
-    if (speed == high)              result += kHighStr;
-    else if (speed == low)          result += kLowStr;
-    else if (speed == automatic)    result += kAutoStr;
-    else if (speed == quiet)        result += kQuietStr;
-    else if (speed == medium)       result += kMediumStr;
-    else if (speed == maximum)      result += kMaximumStr;
-    else if (speed == medium_high)  result += kMedHighStr;
-    else
-      result += kUnknownStr;
-    return result + ')';
+/// Create a String of human output for the given vertical swing setting.
+/// e.g. "Swing(V): 0 (Auto)"
+/// @param[in] position The numeric position of the swing to display.
+/// @param[in] automatic The numeric value for Auto position.
+/// @param[in] highest The numeric value for Highest position.
+/// @param[in] high The numeric value for High position.
+/// @param[in] uppermiddle The numeric value for Upper Middle position.
+/// @param[in] middle The numeric value for Middle position.
+/// @param[in] lowermiddle The numeric value for Lower Middle position.
+/// @param[in] low The numeric value for Low position.
+/// @param[in] lowest The numeric value for Low position.
+/// @param[in] off The numeric value for Off position.
+/// @param[in] swing The numeric value for Swing setting.
+/// @param[in] breeze The numeric value for Breeze setting.
+/// @param[in] circulate The numeric value for Circulate setting.
+/// @return The resulting String.
+String addSwingVToString(const uint8_t position, const uint8_t automatic,
+                         const uint8_t highest, const uint8_t high,
+                         const uint8_t uppermiddle,
+                         const uint8_t middle,
+                         const uint8_t lowermiddle,
+                         const uint8_t low, const uint8_t lowest,
+                         const uint8_t off, const uint8_t swing,
+                         const uint8_t breeze, const uint8_t circulate) {
+  String result = "";
+  result.reserve(31);  // ", Swing(V): NNN (Upper Middle)"
+  result += addIntToString(position, kSwingVStr);
+  result += kSpaceLBraceStr;
+  if (position == automatic) {
+    result += kAutoStr;
+  } else if (position == highest) {
+    result += kHighestStr;
+  } else if (position == high) {
+    result += kHighStr;
+  } else if (position == middle) {
+    result += kMiddleStr;
+  } else if (position == low) {
+    result += kLowStr;
+  } else if (position == lowest) {
+    result += kLowestStr;
+  } else if (position == off) {
+    result += kOffStr;
+  } else if (position == uppermiddle) {
+    result += kUpperStr;
+    result += ' ';
+    result += kMiddleStr;
+  } else if (position == lowermiddle) {
+    result += kLowerStr;
+    result += ' ';
+    result += kMiddleStr;
+  } else if (position == swing) {
+    result += kSwingStr;
+  } else if (position == breeze) {
+    result += kBreezeStr;
+  } else if (position == circulate) {
+    result += kCirculateStr;
+  } else {
+    result += kUnknownStr;
   }
+  return result + ')';
+}
 
-  /// Create a String of human output for the given horizontal swing setting.
-  /// e.g. "Swing(H): 0 (Auto)"
-  /// @param[in] position The numeric position of the swing to display.
-  /// @param[in] automatic The numeric value for Auto position.
-  /// @param[in] maxleft The numeric value for most left position.
-  /// @param[in] left The numeric value for Left position.
-  /// @param[in] middle The numeric value for Middle position.
-  /// @param[in] right The numeric value for Right position.
-  /// @param[in] maxright The numeric value for most right position.
-  /// @param[in] off The numeric value for Off position.
-  /// @param[in] leftright The numeric value for "left right" position.
-  /// @param[in] rightleft The numeric value for "right left" position.
-  /// @param[in] threed The numeric value for 3D setting.
-  /// @param[in] wide The numeric value for Wide position.
-  /// @return The resulting String.
-  String addSwingHToString(const uint8_t position, const uint8_t automatic,
-                           const uint8_t maxleft, const uint8_t left,
-                           const uint8_t middle,
-                           const uint8_t right, const uint8_t maxright,
-                           const uint8_t off,
-                           const uint8_t leftright, const uint8_t rightleft,
-                           const uint8_t threed, const uint8_t wide) {
-    String result = "";
-    result.reserve(30);  // ", Swing(H): NNN (Left Right)"
-    result += addIntToString(position, kSwingHStr);
-    result += kSpaceLBraceStr;
-    if (position == automatic) {
-      result += kAutoStr;
-    } else if (position == left) {
-      result += kLeftStr;
-    } else if (position == middle) {
-      result += kMiddleStr;
-    } else if (position == right) {
-      result += kRightStr;
-    } else if (position == maxleft) {
-      result += kMaxLeftStr;
-    } else if (position == maxright) {
-      result += kMaxRightStr;
-    } else if (position == off) {
-      result += kOffStr;
-    } else if (position == leftright) {
-      result += kLeftStr;
-      result += ' ';
-      result += kRightStr;
-    } else if (position == rightleft) {
-      result += kRightStr;
-      result += ' ';
-      result += kLeftStr;
-    } else if (position == threed) {
-      result += k3DStr;
-    } else if (position == wide) {
-      result += kWideStr;
-    } else {
-      result += kUnknownStr;
-    }
-    return result + ')';
+/// @brief Create a String of human output for the given timer setting.
+///        e.g. "Timer Mode: 2 (Schedule 1)"
+/// @param[in] timerMode The numeric value of the timer mode to display.
+/// @param[in] noTimer The numeric value for no timer (off)
+/// @param[in] delayTimer The numeric value for delay (sleep) timer
+/// @param[in] schedule1 The numeric value for schedule timer #1
+/// @param[in] schedule2 The numeric value for schedule timer #2
+/// @param[in] schedule3 The numeric value for schedule timer #3
+/// @param[in] precomma Should the output string start with ", " or not?
+/// @return String representation
+String addTimerModeToString(const uint8_t timerMode, const uint8_t noTimer,
+                            const uint8_t delayTimer, const uint8_t schedule1,
+                            const uint8_t schedule2, const uint8_t schedule3,
+                            const bool precomma) {
+  String result = "";
+  result.reserve(28);  // ", Timer Mode: 2 (Schedule 1)"
+  result += addIntToString(timerMode, kTimerModeStr, precomma);
+  result += kSpaceLBraceStr;
+  if (timerMode == noTimer) {
+    result += kOffStr;
+  } else if (timerMode == delayTimer) {
+    result += kSleepTimerStr;
+  } else if (timerMode == schedule1) {
+    result += kScheduleStr;
+    result += '1';
+  } else if (timerMode == schedule2) {
+    result += kScheduleStr;
+    result += '2';
+  } else if (timerMode == schedule3) {
+    result += kScheduleStr;
+    result += '3';
+  } else {
+    result += kUnknownStr;
   }
+  return result + ')';
+}
 
-  /// Create a String of human output for the given vertical swing setting.
-  /// e.g. "Swing(V): 0 (Auto)"
-  /// @param[in] position The numeric position of the swing to display.
-  /// @param[in] automatic The numeric value for Auto position.
-  /// @param[in] highest The numeric value for Highest position.
-  /// @param[in] high The numeric value for High position.
-  /// @param[in] uppermiddle The numeric value for Upper Middle position.
-  /// @param[in] middle The numeric value for Middle position.
-  /// @param[in] lowermiddle The numeric value for Lower Middle position.
-  /// @param[in] low The numeric value for Low position.
-  /// @param[in] lowest The numeric value for Low position.
-  /// @param[in] off The numeric value for Off position.
-  /// @param[in] swing The numeric value for Swing setting.
-  /// @param[in] breeze The numeric value for Breeze setting.
-  /// @param[in] circulate The numeric value for Circulate setting.
-  /// @return The resulting String.
-  String addSwingVToString(const uint8_t position, const uint8_t automatic,
-                           const uint8_t highest, const uint8_t high,
-                           const uint8_t uppermiddle,
-                           const uint8_t middle,
-                           const uint8_t lowermiddle,
-                           const uint8_t low, const uint8_t lowest,
-                           const uint8_t off, const uint8_t swing,
-                           const uint8_t breeze, const uint8_t circulate) {
-    String result = "";
-    result.reserve(31);  // ", Swing(V): NNN (Upper Middle)"
-    result += addIntToString(position, kSwingVStr);
-    result += kSpaceLBraceStr;
-    if (position == automatic) {
-      result += kAutoStr;
-    } else if (position == highest) {
-      result += kHighestStr;
-    } else if (position == high) {
-      result += kHighStr;
-    } else if (position == middle) {
-      result += kMiddleStr;
-    } else if (position == low) {
-      result += kLowStr;
-    } else if (position == lowest) {
-      result += kLowestStr;
-    } else if (position == off) {
-      result += kOffStr;
-    } else if (position == uppermiddle) {
-      result += kUpperStr;
-      result += ' ';
-      result += kMiddleStr;
-    } else if (position == lowermiddle) {
-      result += kLowerStr;
-      result += ' ';
-      result += kMiddleStr;
-    } else if (position == swing) {
-      result += kSwingStr;
-    } else if (position == breeze) {
-      result += kBreezeStr;
-    } else if (position == circulate) {
-      result += kCirculateStr;
-    } else {
-      result += kUnknownStr;
-    }
-    return result + ')';
+/// @brief Create a String of human output for the given channel
+///        e.g. "[CH#0]"
+/// @param channel The numeric value of the channel to display.
+/// @return String representation
+String channelToString(const uint8_t channel) {
+  String result = "";
+  result.reserve(6);  // "[CH#4]"
+  result += "[";
+  result += kChStr;
+  result += uint64ToString(channel);
+  result += "]";
+  return result;
+}
+
+/// @brief Create a String of human output for the given command type
+///        e.g. "IFeel Report"
+/// @param irCommandType  The numeric value of the command type to display.
+/// @param acControlCmd The numeric value of the "control" (default) command
+/// @param iFeelReportCmd The numeric value of the sensor temperature command
+/// @param timerCmd The numeric value of the timer config IR command
+/// @param configCmd The numeric value of the config param set IR command
+/// @return String representation
+String irCommandTypeToString(uint8_t irCommandType, uint8_t acControlCmd,
+                             uint8_t iFeelReportCmd, uint8_t timerCmd,
+                             uint8_t configCmd) {
+  String result = "";
+  result.reserve(12);  // "IFeel Report"
+  if (irCommandType == acControlCmd) {
+    result += kCommandStr;
+  } else if (irCommandType == iFeelReportCmd) {
+    result += kIFeelReportStr;
+  } else if (irCommandType == timerCmd) {
+    result += kTimerStr;
+  } else if (irCommandType == configCmd) {
+    result += kConfigCommandStr;
+  } else {
+    result += kUnknownStr;
   }
+  return result;
+}
 
-  /// @brief Create a String of human output for the given timer setting.
-  ///        e.g. "Timer Mode: 2 (Schedule 1)"
-  /// @param[in] timerMode The numeric value of the timer mode to display.
-  /// @param[in] noTimer The numeric value for no timer (off)
-  /// @param[in] delayTimer The numeric value for delay (sleep) timer
-  /// @param[in] schedule1 The numeric value for schedule timer #1
-  /// @param[in] schedule2 The numeric value for schedule timer #2
-  /// @param[in] schedule3 The numeric value for schedule timer #3
-  /// @param[in] precomma Should the output string start with ", " or not?
-  /// @return String representation
-  String addTimerModeToString(const uint8_t timerMode, const uint8_t noTimer,
-                              const uint8_t delayTimer, const uint8_t schedule1,
-                              const uint8_t schedule2, const uint8_t schedule3,
-                              const bool precomma) {
-    String result = "";
-    result.reserve(28);  // ", Timer Mode: 2 (Schedule 1)"
-    result += addIntToString(timerMode, kTimerModeStr, precomma);
-    result += kSpaceLBraceStr;
-    if (timerMode == noTimer) {
-      result += kOffStr;
-    } else if (timerMode == delayTimer) {
-      result += kSleepTimerStr;
-    } else if (timerMode == schedule1) {
-      result += kScheduleStr;
-      result += '1';
-    } else if (timerMode == schedule2) {
-      result += kScheduleStr;
-      result += '2';
-    } else if (timerMode == schedule3) {
-      result += kScheduleStr;
-      result += '3';
-    } else {
-      result += kUnknownStr;
-    }
-    return result + ')';
-  }
+/// @brief Create a String of the 3-letter day of the week bitmap
+//         e.g. 0b0000101 is "Sun | Tue"
+/// @param[in] daysBitmap The bitmap representing days of week to represent
+///   e.g bit[0]=Sunday, bit[1]=Monday, ...
+/// @param[in] offset Days to offset by.
+///  e.g. For different day starting the week.
+/// @return String representation.
+String daysBitmaskToString(uint8_t daysBitmap, uint8_t offset) {
+  String result = "";
+  result.reserve(27);  // Sun|Mon|Tue|Wed|Thu|Fri|Sat
 
-  /// @brief Create a String of human output for the given channel
-  ///        e.g. "[CH#0]"
-  /// @param channel The numeric value of the channel to display.
-  /// @return String representation
-  String channelToString(const uint8_t channel) {
-    String result = "";
-    result.reserve(6);  // "[CH#4]"
-    result += "[";
-    result += kChStr;
-    result += uint64ToString(channel);
-    result += "]";
-    return result;
-  }
-
-  /// @brief Create a String of human output for the given command type
-  ///        e.g. "IFeel Report"
-  /// @param irCommandType  The numeric value of the command type to display.
-  /// @param acControlCmd The numeric value of the "control" (default) command
-  /// @param iFeelReportCmd The numeric value of the sensor temperature command
-  /// @param timerCmd The numeric value of the timer config IR command
-  /// @param configCmd The numeric value of the config param set IR command
-  /// @return String representation
-  String irCommandTypeToString(uint8_t irCommandType, uint8_t acControlCmd,
-                               uint8_t iFeelReportCmd, uint8_t timerCmd,
-                               uint8_t configCmd) {
-    String result = "";
-    result.reserve(12);  // "IFeel Report"
-    if (irCommandType == acControlCmd) {
-      result += kCommandStr;
-    } else if (irCommandType == iFeelReportCmd) {
-      result += kIFeelReportStr;
-    } else if (irCommandType == timerCmd) {
-      result += kTimerStr;
-    } else if (irCommandType == configCmd) {
-      result += kConfigCommandStr;
-    } else {
-      result += kUnknownStr;
-    }
-    return result;
-  }
-
-  /// @brief Create a String of the 3-letter day of the week bitmap
-  //         e.g. 0b0000101 is "Sun | Tue"
-  /// @param[in] daysBitmap The bitmap representing days of week to represent
-  ///   e.g bit[0]=Sunday, bit[1]=Monday, ...
-  /// @param[in] offset Days to offset by.
-  ///  e.g. For different day starting the week.
-  /// @return String representation.
-  String daysBitmaskToString(uint8_t daysBitmap, uint8_t offset) {
-    String result = "";
-    result.reserve(27);  // Sun|Mon|Tue|Wed|Thu|Fri|Sat
-
-    for (uint8_t i = 0; i < 7; ++i) {
-      if (((daysBitmap >> i) & 0b1) == 0b1) {
-        if (result.length() > 0) {
-          result += "|";
-        }
-        result += irutils::dayToString(i, offset);
+  for (uint8_t i = 0; i < 7; ++i) {
+    if (((daysBitmap >> i) & 0b1) == 0b1) {
+      if (result.length() > 0) {
+        result += "|";
       }
+      result += irutils::dayToString(i, offset);
     }
-    return result;
   }
+  return result;
+}
 
-  /// Escape any special HTML (unsafe) characters in a string. e.g. anti-XSS.
-  /// @param[in] unescaped A String containing text to make HTML safe.
-  /// @return A string that is HTML safe.
-  String htmlEscape(const String unescaped) {
-    String result = "";
-    uint16_t ulen = unescaped.length();
-    result.reserve(ulen);  // The result will be at least the size of input.
-    for (size_t i = 0; i < ulen; i++) {
-      char c = unescaped[i];
-      switch (c) {
-        // ';!-"<>=&#{}() are all unsafe.
-        case '\'': result += F("&apos;"); break;
-        case ';':  result += F("&semi;"); break;
-        case '!':  result += F("&excl;"); break;
-        case '-':  result += F("&dash;"); break;
-        case '\"': result += F("&quot;"); break;
-        case '<':  result += F("&lt;"); break;
-        case '>':  result += F("&gt;"); break;
-        case '=':  result += F("&#equals;"); break;
-        case '&':  result += F("&amp;"); break;
-        case '#':  result += F("&num;"); break;
-        case '{':  result += F("&lcub;"); break;
-        case '}':  result += F("&rcub;"); break;
-        case '(':  result += F("&lpar;"); break;
-        case ')':  result += F("&rpar;"); break;
-        default:   result += c;
-      }
+/// Escape any special HTML (unsafe) characters in a string. e.g. anti-XSS.
+/// @param[in] unescaped A String containing text to make HTML safe.
+/// @return A string that is HTML safe.
+String htmlEscape(const String unescaped) {
+  String result = "";
+  uint16_t ulen = unescaped.length();
+  result.reserve(ulen);  // The result will be at least the size of input.
+  for (size_t i = 0; i < ulen; i++) {
+    char c = unescaped[i];
+    switch (c) {
+      // ';!-"<>=&#{}() are all unsafe.
+      case '\'': result += F("&apos;"); break;
+      case ';':  result += F("&semi;"); break;
+      case '!':  result += F("&excl;"); break;
+      case '-':  result += F("&dash;"); break;
+      case '\"': result += F("&quot;"); break;
+      case '<':  result += F("&lt;"); break;
+      case '>':  result += F("&gt;"); break;
+      case '=':  result += F("&#equals;"); break;
+      case '&':  result += F("&amp;"); break;
+      case '#':  result += F("&num;"); break;
+      case '{':  result += F("&lcub;"); break;
+      case '}':  result += F("&rcub;"); break;
+      case '(':  result += F("&lpar;"); break;
+      case ')':  result += F("&rpar;"); break;
+      default:   result += c;
     }
-    return result;
   }
+  return result;
+}
 
-  /// Convert a nr. of milliSeconds into a Human-readable string.
-  /// e.g. "1 Day 6 Hours 34 Minutes 17 Seconds"
-  /// @param[in] msecs Nr. of milliSeconds (ms).
-  /// @return A human readable string.
-  String msToString(uint32_t const msecs) {
-    uint32_t totalseconds = msecs / 1000;
-    if (totalseconds == 0) return kNowStr;
+/// Convert a nr. of milliSeconds into a Human-readable string.
+/// e.g. "1 Day 6 Hours 34 Minutes 17 Seconds"
+/// @param[in] msecs Nr. of milliSeconds (ms).
+/// @return A human readable string.
+String msToString(uint32_t const msecs) {
+  uint32_t totalseconds = msecs / 1000;
+  if (totalseconds == 0) return kNowStr;
 
-    // Note: uint32_t can only hold up to 45 days, so uint8_t is safe.
-    uint8_t days = totalseconds / (60 * 60 * 24);
-    uint8_t hours = (totalseconds / (60 * 60)) % 24;
-    uint8_t minutes = (totalseconds / 60) % 60;
-    uint8_t seconds = totalseconds % 60;
+  // Note: uint32_t can only hold up to 45 days, so uint8_t is safe.
+  uint8_t days = totalseconds / (60 * 60 * 24);
+  uint8_t hours = (totalseconds / (60 * 60)) % 24;
+  uint8_t minutes = (totalseconds / 60) % 60;
+  uint8_t seconds = totalseconds % 60;
 
-    String result = "";
-    result.reserve(42);  // "99 Days, 23 Hours, 59 Minutes, 59 Seconds"
-    if (days)
-      result += uint64ToString(days) + ' ' + String((days > 1) ? kDaysStr
-                                                               : kDayStr);
-    if (hours) {
-      if (result.length()) result += ' ';
-      result += uint64ToString(hours) + ' ' + String((hours > 1) ? kHoursStr
-                                                                 : kHourStr);
-    }
-    if (minutes) {
-      if (result.length()) result += ' ';
-      result += uint64ToString(minutes) + ' ' + String(
-          (minutes > 1) ? kMinutesStr : kMinuteStr);
-    }
-    if (seconds) {
-      if (result.length()) result += ' ';
-      result += uint64ToString(seconds) + ' ' + String(
-          (seconds > 1) ? kSecondsStr : kSecondStr);
-    }
-    return result;
+  String result = "";
+  result.reserve(42);  // "99 Days, 23 Hours, 59 Minutes, 59 Seconds"
+  if (days)
+    result += uint64ToString(days) + ' ' + String((days > 1) ? kDaysStr
+                                                             : kDayStr);
+  if (hours) {
+    if (result.length()) result += ' ';
+    result += uint64ToString(hours) + ' ' + String((hours > 1) ? kHoursStr
+                                                               : kHourStr);
   }
-
-  /// Convert a nr. of minutes into a 24h clock format Human-readable string.
-  /// e.g. "23:59"
-  /// @param[in] mins Nr. of Minutes.
-  /// @return A human readable string.
-  String minsToString(const uint16_t mins) {
-    String result = "";
-    result.reserve(5);  // 23:59 is the typical worst case.
-    if (mins / 60 < 10) result += '0';  // Zero pad the hours
-    result += uint64ToString(mins / 60) + kTimeSep;
-    if (mins % 60 < 10) result += '0';  // Zero pad the minutes.
-    result += uint64ToString(mins % 60);
-    return result;
+  if (minutes) {
+    if (result.length()) result += ' ';
+    result += uint64ToString(minutes) + ' ' + String(
+        (minutes > 1) ? kMinutesStr : kMinuteStr);
   }
-
-  /// Sum all the nibbles together in a series of bytes.
-  /// @param[in] start A ptr to the start of the byte array to calculate over.
-  /// @param[in] length How many bytes to use in the calculation.
-  /// @param[in] init Starting value of the calculation to use. (Default is 0)
-  /// @return The 8-bit calculated result of all the bytes and init value.
-  uint8_t sumNibbles(const uint8_t * const start, const uint16_t length,
-                     const uint8_t init) {
-    uint8_t sum = init;
-    const uint8_t *ptr;
-    for (ptr = start; ptr - start < length; ptr++)
-      sum += (*ptr >> 4) + (*ptr & 0xF);
-    return sum;
+  if (seconds) {
+    if (result.length()) result += ' ';
+    result += uint64ToString(seconds) + ' ' + String(
+        (seconds > 1) ? kSecondsStr : kSecondStr);
   }
+  return result;
+}
 
-  /// Sum all the nibbles together in an integer.
-  /// @param[in] data The integer to be summed.
-  /// @param[in] count The number of nibbles to sum. Starts from LSB. Max of 16.
-  /// @param[in] init Starting value of the calculation to use. (Default is 0)
-  /// @param[in] nibbleonly true, the result is 4 bits. false, it's 8 bits.
-  /// @return The 4/8-bit calculated result of all the nibbles and init value.
-  uint8_t sumNibbles(const uint64_t data, const uint8_t count,
-                     const uint8_t init, const bool nibbleonly) {
-    uint8_t sum = init;
-    uint64_t copy = data;
-    const uint8_t nrofnibbles = (count < 16) ? count : (64 / 4);
-    for (uint8_t i = 0; i < nrofnibbles; i++, copy >>= 4) sum += copy & 0xF;
-    return nibbleonly ? sum & 0xF : sum;
+/// Convert a nr. of minutes into a 24h clock format Human-readable string.
+/// e.g. "23:59"
+/// @param[in] mins Nr. of Minutes.
+/// @return A human readable string.
+String minsToString(const uint16_t mins) {
+  String result = "";
+  result.reserve(5);  // 23:59 is the typical worst case.
+  if (mins / 60 < 10) result += '0';  // Zero pad the hours
+  result += uint64ToString(mins / 60) + kTimeSep;
+  if (mins % 60 < 10) result += '0';  // Zero pad the minutes.
+  result += uint64ToString(mins % 60);
+  return result;
+}
+
+/// Sum all the nibbles together in a series of bytes.
+/// @param[in] start A ptr to the start of the byte array to calculate over.
+/// @param[in] length How many bytes to use in the calculation.
+/// @param[in] init Starting value of the calculation to use. (Default is 0)
+/// @return The 8-bit calculated result of all the bytes and init value.
+uint8_t sumNibbles(const uint8_t * const start, const uint16_t length,
+                   const uint8_t init) {
+  uint8_t sum = init;
+  const uint8_t *ptr;
+  for (ptr = start; ptr - start < length; ptr++)
+    sum += (*ptr >> 4) + (*ptr & 0xF);
+  return sum;
+}
+
+/// Sum all the nibbles together in an integer.
+/// @param[in] data The integer to be summed.
+/// @param[in] count The number of nibbles to sum. Starts from LSB. Max of 16.
+/// @param[in] init Starting value of the calculation to use. (Default is 0)
+/// @param[in] nibbleonly true, the result is 4 bits. false, it's 8 bits.
+/// @return The 4/8-bit calculated result of all the nibbles and init value.
+uint8_t sumNibbles(const uint64_t data, const uint8_t count,
+                   const uint8_t init, const bool nibbleonly) {
+  uint8_t sum = init;
+  uint64_t copy = data;
+  const uint8_t nrofnibbles = (count < 16) ? count : (64 / 4);
+  for (uint8_t i = 0; i < nrofnibbles; i++, copy >>= 4) sum += copy & 0xF;
+  return nibbleonly ? sum & 0xF : sum;
+}
+
+/// Sum all the bytes together in an integer.
+/// @param[in] data The integer to be summed.
+/// @param[in] count The number of bytes to sum. Starts from LSB. Max of 8.
+/// @param[in] init Starting value of the calculation to use. (Default is 0)
+/// @param[in] byteonly true, the result is 8 bits. false, it's 16 bits.
+/// @return The 8/16-bit calculated result of all the bytes and init value.
+uint16_t sumBytes(const uint64_t data, const uint8_t count,
+                  const uint8_t init, const bool byteonly) {
+  uint16_t sum = init;
+  uint64_t copy = data;
+  const uint8_t nrofbytes = (count < 8) ? count : (64 / 8);
+  for (uint8_t i = 0; i < nrofbytes; i++, copy >>= 8) sum += (copy & 0xFF);
+  return byteonly ? sum & 0xFF : sum;
+}
+
+/// Convert a byte of Binary Coded Decimal(BCD) into an Integer.
+/// @param[in] bcd The BCD value.
+/// @return A normal Integer value.
+uint8_t bcdToUint8(const uint8_t bcd) {
+  if (bcd > 0x99) return 255;  // Too big.
+  return (bcd >> 4) * 10 + (bcd & 0xF);
+}
+
+/// Convert an Integer into a byte of Binary Coded Decimal(BCD).
+/// @param[in] integer The number to convert.
+/// @return An 8-bit BCD value.
+uint8_t uint8ToBcd(const uint8_t integer) {
+  if (integer > 99) return 255;  // Too big.
+  return ((integer / 10) << 4) + (integer % 10);
+}
+
+/// Return the value of `position`th bit of an Integer.
+/// @param[in] data Value to be examined.
+/// @param[in] position Nr. of the Nth bit to be examined. `0` is the LSB.
+/// @param[in] size Nr. of bits in data.
+/// @return The bit's value.
+bool getBit(const uint64_t data, const uint8_t position, const uint8_t size) {
+  if (position >= size) return false;  // Outside of range.
+  return data & (1ULL << position);
+}
+
+/// Return the value of `position`th bit of an Integer.
+/// @param[in] data Value to be examined.
+/// @param[in] position Nr. of the Nth bit to be examined. `0` is the LSB.
+/// @return The bit's value.
+bool getBit(const uint8_t data, const uint8_t position) {
+  if (position >= 8) return false;  // Outside of range.
+  return data & (1 << position);
+}
+
+/// Return the value of an Integer with the `position`th bit changed.
+/// @param[in] data Value to be changed.
+/// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
+/// @param[in] on Value to set the position'th bit to.
+/// @param[in] size Nr. of bits in data.
+/// @return A suitably modified integer.
+uint64_t setBit(const uint64_t data, const uint8_t position, const bool on,
+                const uint8_t size) {
+  if (position >= size) return data;  // Outside of range.
+  uint64_t mask = 1ULL << position;
+  if (on)
+    return data | mask;
+  else
+    return data & ~mask;
+}
+
+/// Return the value of an Integer with the `position`th bit changed.
+/// @param[in] data Value to be changed.
+/// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
+/// @param[in] on Value to set the position'th bit to.
+/// @return A suitably modified integer.
+uint8_t setBit(const uint8_t data, const uint8_t position, const bool on) {
+  if (position >= 8) return data;  // Outside of range.
+  uint8_t mask = 1 << position;
+  if (on)
+    return data | mask;
+  else
+    return data & ~mask;
+}
+
+/// Alter the value of an Integer with the `position`th bit changed.
+/// @param[in,out] data A pointer to the 8-bit integer to be changed.
+/// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
+/// @param[in] on Value to set the position'th bit to.
+void setBit(uint8_t * const data, const uint8_t position, const bool on) {
+  uint8_t mask = 1 << position;
+  if (on)
+    *data |= mask;
+  else
+    *data &= ~mask;
+}
+
+/// Alter the value of an Integer with the `position`th bit changed.
+/// @param[in,out] data A pointer to the 32-bit integer to be changed.
+/// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
+/// @param[in] on Value to set the position'th bit to.
+void setBit(uint32_t * const data, const uint8_t position, const bool on) {
+  uint32_t mask = static_cast<uint32_t>(1) << position;
+  if (on)
+    *data |= mask;
+  else
+    *data &= ~mask;
+}
+
+/// Alter the value of an Integer with the `position`th bit changed.
+/// @param[in,out] data A pointer to the 64-bit integer to be changed.
+/// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
+/// @param[in] on Value to set the position'th bit to.
+void setBit(uint64_t * const data, const uint8_t position, const bool on) {
+  uint64_t mask = static_cast<uint64_t>(1) << position;
+  if (on)
+    *data |= mask;
+  else
+    *data &= ~mask;
+}
+
+/// Alter an uint8_t value by overwriting an arbitrary given number of bits.
+/// @param[in,out] dst A pointer to the value to be changed.
+/// @param[in] offset Nr. of bits from the Least Significant Bit to be ignored
+/// @param[in] nbits Nr of bits of data to be placed into the destination.
+/// @param[in] data The value to be placed.
+void setBits(uint8_t * const dst, const uint8_t offset, const uint8_t nbits,
+             const uint8_t data) {
+  if (offset >= 8 || !nbits) return;  // Short circuit as it won't change.
+  // Calculate the mask for the supplied value.
+  uint8_t mask = UINT8_MAX >> (8 - ((nbits > 8) ? 8 : nbits));
+  // Calculate the mask & clear the space for the data.
+  // Clear the destination bits.
+  *dst &= ~(uint8_t)(mask << offset);
+  // Merge in the data.
+  *dst |= ((data & mask) << offset);
+}
+
+/// Alter an uint32_t value by overwriting an arbitrary given number of bits.
+/// @param[in,out] dst A pointer to the value to be changed.
+/// @param[in] offset Nr. of bits from the Least Significant Bit to be ignored
+/// @param[in] nbits Nr of bits of data to be placed into the destination.
+/// @param[in] data The value to be placed.
+void setBits(uint32_t * const dst, const uint8_t offset, const uint8_t nbits,
+             const uint32_t data) {
+  if (offset >= 32 || !nbits) return;  // Short circuit as it won't change.
+  // Calculate the mask for the supplied value.
+  uint32_t mask = UINT32_MAX >> (32 - ((nbits > 32) ? 32 : nbits));
+  // Calculate the mask & clear the space for the data.
+  // Clear the destination bits.
+  *dst &= ~(mask << offset);
+  // Merge in the data.
+  *dst |= ((data & mask) << offset);
+}
+
+/// Alter an uint64_t value by overwriting an arbitrary given number of bits.
+/// @param[in,out] dst A pointer to the value to be changed.
+/// @param[in] offset Nr. of bits from the Least Significant Bit to be ignored
+/// @param[in] nbits Nr of bits of data to be placed into the destination.
+/// @param[in] data The value to be placed.
+void setBits(uint64_t * const dst, const uint8_t offset, const uint8_t nbits,
+             const uint64_t data) {
+  if (offset >= 64 || !nbits) return;  // Short circuit as it won't change.
+  // Calculate the mask for the supplied value.
+  uint64_t mask = UINT64_MAX >> (64 - ((nbits > 64) ? 64 : nbits));
+  // Calculate the mask & clear the space for the data.
+  // Clear the destination bits.
+  *dst &= ~(mask << offset);
+  // Merge in the data.
+  *dst |= ((data & mask) << offset);
+}
+
+/// Create byte pairs where the second byte of the pair is a bit
+/// inverted/flipped copy of the first/previous byte of the pair.
+/// @param[in,out] ptr A pointer to the start of array to modify.
+/// @param[in] length The byte size of the array.
+/// @note A length of `<= 1` will do nothing.
+/// @return A ptr to the modified array.
+uint8_t * invertBytePairs(uint8_t *ptr, const uint16_t length) {
+  for (uint16_t i = 1; i < length; i += 2) {
+    // Code done this way to avoid a compiler warning bug.
+    uint8_t inv = ~*(ptr + i - 1);
+    *(ptr + i) = inv;
   }
+  return ptr;
+}
 
-  /// Sum all the bytes together in an integer.
-  /// @param[in] data The integer to be summed.
-  /// @param[in] count The number of bytes to sum. Starts from LSB. Max of 8.
-  /// @param[in] init Starting value of the calculation to use. (Default is 0)
-  /// @param[in] byteonly true, the result is 8 bits. false, it's 16 bits.
-  /// @return The 8/16-bit calculated result of all the bytes and init value.
-  uint16_t sumBytes(const uint64_t data, const uint8_t count,
-                    const uint8_t init, const bool byteonly) {
-    uint16_t sum = init;
-    uint64_t copy = data;
-    const uint8_t nrofbytes = (count < 8) ? count : (64 / 8);
-    for (uint8_t i = 0; i < nrofbytes; i++, copy >>= 8) sum += (copy & 0xFF);
-    return byteonly ? sum & 0xFF : sum;
+/// Check an array to see if every second byte of a pair is a bit
+/// inverted/flipped copy of the first/previous byte of the pair.
+/// @param[in] ptr A pointer to the start of array to check.
+/// @param[in] length The byte size of the array.
+/// @note A length of `<= 1` will always return true.
+/// @return true, if every second byte is inverted. Otherwise false.
+bool checkInvertedBytePairs(const uint8_t * const ptr,
+                            const uint16_t length) {
+  for (uint16_t i = 1; i < length; i += 2) {
+    // Code done this way to avoid a compiler warning bug.
+    uint8_t inv = ~*(ptr + i - 1);
+    if (*(ptr + i) != inv) return false;
   }
+  return true;
+}
 
-  /// Convert a byte of Binary Coded Decimal(BCD) into an Integer.
-  /// @param[in] bcd The BCD value.
-  /// @return A normal Integer value.
-  uint8_t bcdToUint8(const uint8_t bcd) {
-    if (bcd > 0x99) return 255;  // Too big.
-    return (bcd >> 4) * 10 + (bcd & 0xF);
-  }
-
-  /// Convert an Integer into a byte of Binary Coded Decimal(BCD).
-  /// @param[in] integer The number to convert.
-  /// @return An 8-bit BCD value.
-  uint8_t uint8ToBcd(const uint8_t integer) {
-    if (integer > 99) return 255;  // Too big.
-    return ((integer / 10) << 4) + (integer % 10);
-  }
-
-  /// Return the value of `position`th bit of an Integer.
-  /// @param[in] data Value to be examined.
-  /// @param[in] position Nr. of the Nth bit to be examined. `0` is the LSB.
-  /// @param[in] size Nr. of bits in data.
-  /// @return The bit's value.
-  bool getBit(const uint64_t data, const uint8_t position, const uint8_t size) {
-    if (position >= size) return false;  // Outside of range.
-    return data & (1ULL << position);
-  }
-
-  /// Return the value of `position`th bit of an Integer.
-  /// @param[in] data Value to be examined.
-  /// @param[in] position Nr. of the Nth bit to be examined. `0` is the LSB.
-  /// @return The bit's value.
-  bool getBit(const uint8_t data, const uint8_t position) {
-    if (position >= 8) return false;  // Outside of range.
-    return data & (1 << position);
-  }
-
-  /// Return the value of an Integer with the `position`th bit changed.
-  /// @param[in] data Value to be changed.
-  /// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
-  /// @param[in] on Value to set the position'th bit to.
-  /// @param[in] size Nr. of bits in data.
-  /// @return A suitably modified integer.
-  uint64_t setBit(const uint64_t data, const uint8_t position, const bool on,
-                  const uint8_t size) {
-    if (position >= size) return data;  // Outside of range.
-    uint64_t mask = 1ULL << position;
-    if (on)
-      return data | mask;
-    else
-      return data & ~mask;
-  }
-
-  /// Return the value of an Integer with the `position`th bit changed.
-  /// @param[in] data Value to be changed.
-  /// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
-  /// @param[in] on Value to set the position'th bit to.
-  /// @return A suitably modified integer.
-  uint8_t setBit(const uint8_t data, const uint8_t position, const bool on) {
-    if (position >= 8) return data;  // Outside of range.
-    uint8_t mask = 1 << position;
-    if (on)
-      return data | mask;
-    else
-      return data & ~mask;
-  }
-
-  /// Alter the value of an Integer with the `position`th bit changed.
-  /// @param[in,out] data A pointer to the 8-bit integer to be changed.
-  /// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
-  /// @param[in] on Value to set the position'th bit to.
-  void setBit(uint8_t * const data, const uint8_t position, const bool on) {
-    uint8_t mask = 1 << position;
-    if (on)
-      *data |= mask;
-    else
-      *data &= ~mask;
-  }
-
-  /// Alter the value of an Integer with the `position`th bit changed.
-  /// @param[in,out] data A pointer to the 32-bit integer to be changed.
-  /// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
-  /// @param[in] on Value to set the position'th bit to.
-  void setBit(uint32_t * const data, const uint8_t position, const bool on) {
-    uint32_t mask = (uint32_t)1 << position;
-    if (on)
-      *data |= mask;
-    else
-      *data &= ~mask;
-  }
-
-  /// Alter the value of an Integer with the `position`th bit changed.
-  /// @param[in,out] data A pointer to the 64-bit integer to be changed.
-  /// @param[in] position Nr. of the bit to be changed. `0` is the LSB.
-  /// @param[in] on Value to set the position'th bit to.
-  void setBit(uint64_t * const data, const uint8_t position, const bool on) {
-    uint64_t mask = (uint64_t)1 << position;
-    if (on)
-      *data |= mask;
-    else
-      *data &= ~mask;
-  }
-
-  /// Alter an uint8_t value by overwriting an arbitrary given number of bits.
-  /// @param[in,out] dst A pointer to the value to be changed.
-  /// @param[in] offset Nr. of bits from the Least Significant Bit to be ignored
-  /// @param[in] nbits Nr of bits of data to be placed into the destination.
-  /// @param[in] data The value to be placed.
-  void setBits(uint8_t * const dst, const uint8_t offset, const uint8_t nbits,
-               const uint8_t data) {
-    if (offset >= 8 || !nbits) return;  // Short circuit as it won't change.
-    // Calculate the mask for the supplied value.
-    uint8_t mask = UINT8_MAX >> (8 - ((nbits > 8) ? 8 : nbits));
-    // Calculate the mask & clear the space for the data.
-    // Clear the destination bits.
-    *dst &= ~(uint8_t)(mask << offset);
-    // Merge in the data.
-    *dst |= ((data & mask) << offset);
-  }
-
-  /// Alter an uint32_t value by overwriting an arbitrary given number of bits.
-  /// @param[in,out] dst A pointer to the value to be changed.
-  /// @param[in] offset Nr. of bits from the Least Significant Bit to be ignored
-  /// @param[in] nbits Nr of bits of data to be placed into the destination.
-  /// @param[in] data The value to be placed.
-  void setBits(uint32_t * const dst, const uint8_t offset, const uint8_t nbits,
-               const uint32_t data) {
-    if (offset >= 32 || !nbits) return;  // Short circuit as it won't change.
-    // Calculate the mask for the supplied value.
-    uint32_t mask = UINT32_MAX >> (32 - ((nbits > 32) ? 32 : nbits));
-    // Calculate the mask & clear the space for the data.
-    // Clear the destination bits.
-    *dst &= ~(mask << offset);
-    // Merge in the data.
-    *dst |= ((data & mask) << offset);
-  }
-
-  /// Alter an uint64_t value by overwriting an arbitrary given number of bits.
-  /// @param[in,out] dst A pointer to the value to be changed.
-  /// @param[in] offset Nr. of bits from the Least Significant Bit to be ignored
-  /// @param[in] nbits Nr of bits of data to be placed into the destination.
-  /// @param[in] data The value to be placed.
-  void setBits(uint64_t * const dst, const uint8_t offset, const uint8_t nbits,
-               const uint64_t data) {
-    if (offset >= 64 || !nbits) return;  // Short circuit as it won't change.
-    // Calculate the mask for the supplied value.
-    uint64_t mask = UINT64_MAX >> (64 - ((nbits > 64) ? 64 : nbits));
-    // Calculate the mask & clear the space for the data.
-    // Clear the destination bits.
-    *dst &= ~(mask << offset);
-    // Merge in the data.
-    *dst |= ((data & mask) << offset);
-  }
-
-  /// Create byte pairs where the second byte of the pair is a bit
-  /// inverted/flipped copy of the first/previous byte of the pair.
-  /// @param[in,out] ptr A pointer to the start of array to modify.
-  /// @param[in] length The byte size of the array.
-  /// @note A length of `<= 1` will do nothing.
-  /// @return A ptr to the modified array.
-  uint8_t * invertBytePairs(uint8_t *ptr, const uint16_t length) {
-    for (uint16_t i = 1; i < length; i += 2) {
-      // Code done this way to avoid a compiler warning bug.
-      uint8_t inv = ~*(ptr + i - 1);
-      *(ptr + i) = inv;
-    }
-    return ptr;
-  }
-
-  /// Check an array to see if every second byte of a pair is a bit
-  /// inverted/flipped copy of the first/previous byte of the pair.
-  /// @param[in] ptr A pointer to the start of array to check.
-  /// @param[in] length The byte size of the array.
-  /// @note A length of `<= 1` will always return true.
-  /// @return true, if every second byte is inverted. Otherwise false.
-  bool checkInvertedBytePairs(const uint8_t * const ptr,
-                              const uint16_t length) {
-    for (uint16_t i = 1; i < length; i += 2) {
-      // Code done this way to avoid a compiler warning bug.
-      uint8_t inv = ~*(ptr + i - 1);
-      if (*(ptr + i) != inv) return false;
-    }
-    return true;
-  }
-
-  /// Perform a low level bit manipulation sanity check for the given cpu
-  /// architecture and the compiler operation. Calls to this should return
-  /// 0 if everything is as expected, anything else means the library won't work
-  /// as expected.
-  /// @return A bit mask value of potential issues.
-  ///   0: (e.g. 0b00000000) Everything appears okay.
-  ///   0th bit set: (0b1) Unexpected bit field/packing encountered.
-  ///                Try a different compiler.
-  ///   1st bit set: (0b10) Unexpected Endianness. Try a different compiler flag
-  ///                or use a CPU different architecture.
-  ///  e.g. A result of 3 (0b11) would mean both a bit field and an Endianness
-  ///       issue has been found.
-  uint8_t lowLevelSanityCheck(void) {
-    const uint64_t kExpectedBitFieldResult = 0x8000012340000039ULL;
-    volatile uint32_t EndianTest = 0x12345678;
-    const uint8_t kBitFieldError =   0b01;
-    const uint8_t kEndiannessError = 0b10;
-    uint8_t result = 0;
-    union bitpackdata {
-      struct {
-        uint64_t lowestbit:1;     // 0th bit
-        uint64_t next7bits:7;     // 1-7th bits
-        uint64_t _unused_1:20;    // 8-27th bits
-        // Cross the 32 bit boundary.
-        uint64_t crossbits:16;    // 28-43rd bits
-        uint64_t _usused_2:18;    // 44-61st bits
-        uint64_t highest2bits:2;  // 62-63rd bits
-      };
-     uint64_t all;
+/// Perform a low level bit manipulation sanity check for the given cpu
+/// architecture and the compiler operation. Calls to this should return
+/// 0 if everything is as expected, anything else means the library won't work
+/// as expected.
+/// @return A bit mask value of potential issues.
+///   0: (e.g. 0b00000000) Everything appears okay.
+///   0th bit set: (0b1) Unexpected bit field/packing encountered.
+///                Try a different compiler.
+///   1st bit set: (0b10) Unexpected Endianness. Try a different compiler flag
+///                or use a CPU different architecture.
+///  e.g. A result of 3 (0b11) would mean both a bit field and an Endianness
+///       issue has been found.
+uint8_t lowLevelSanityCheck(void) {
+  const uint64_t kExpectedBitFieldResult = 0x8000012340000039ULL;
+  volatile uint32_t EndianTest = 0x12345678;
+  const uint8_t kBitFieldError =   0b01;
+  const uint8_t kEndiannessError = 0b10;
+  uint8_t result = 0;
+  union bitpackdata {
+    struct {
+      uint64_t lowestbit:1;     // 0th bit
+      uint64_t next7bits:7;     // 1-7th bits
+      uint64_t _unused_1:20;    // 8-27th bits
+      // Cross the 32 bit boundary.
+      uint64_t crossbits:16;    // 28-43rd bits
+      uint64_t _usused_2:18;    // 44-61st bits
+      uint64_t highest2bits:2;  // 62-63rd bits
     };
+    uint64_t all;
+  };
 
-    bitpackdata data;
-    data.lowestbit = true;
-    data.next7bits = 0b0011100;  // 0x1C
-    data._unused_1 = 0;
-    data.crossbits = 0x1234;
-    data._usused_2 = 0;
-    data.highest2bits = 0b10;  // 2
+  bitpackdata data;
+  data.lowestbit = true;
+  data.next7bits = 0b0011100;  // 0x1C
+  data._unused_1 = 0;
+  data.crossbits = 0x1234;
+  data._usused_2 = 0;
+  data.highest2bits = 0b10;  // 2
 
-    if (data.all != kExpectedBitFieldResult) result |= kBitFieldError;
-    // Check that we are using Little Endian for integers
+  if (data.all != kExpectedBitFieldResult) result |= kBitFieldError;
+  // Check that we are using Little Endian for integers
 #if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN)
-    if (BYTE_ORDER != LITTLE_ENDIAN) result |= kEndiannessError;
+  if (BYTE_ORDER != LITTLE_ENDIAN) result |= kEndiannessError;
 #endif
 #if defined(__IEEE_BIG_ENDIAN) || defined(__IEEE_BYTES_BIG_ENDIAN)
-    result |= kEndiannessError;
+  result |= kEndiannessError;
 #endif
-    // Brute force check for little endian.
-    if (*((uint8_t*)(&EndianTest)) != 0x78)  // NOLINT(readability/casting)
-      result |= kEndiannessError;
-    return result;
-  }
+  // Brute force check for little endian.
+  if (*((uint8_t*)(&EndianTest)) != 0x78)  // NOLINT(readability/casting)
+    result |= kEndiannessError;
+  return result;
+}
 }  // namespace irutils

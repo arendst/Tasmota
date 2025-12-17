@@ -952,6 +952,20 @@
 #define SEND_YORK           _IR_ENABLE_DEFAULT_
 #endif  // SEND_YORK
 
+#ifndef DECODE_BLUESTARHEAVY
+#define DECODE_BLUESTARHEAVY         _IR_ENABLE_DEFAULT_
+#endif  // DECODE_BLUESTARHEAVY
+#ifndef SEND_BLUESTARHEAVY
+#define SEND_BLUESTARHEAVY           _IR_ENABLE_DEFAULT_
+#endif  // SEND_BLUESTARHEAVY
+
+#ifndef DECODE_EUROM
+#define DECODE_EUROM         _IR_ENABLE_DEFAULT_
+#endif  // DECODE_EUROM
+#ifndef SEND_EUROM
+#define SEND_EUROM           _IR_ENABLE_DEFAULT_
+#endif  // SEND_EUROM
+
 #if (DECODE_ARGO || DECODE_DAIKIN || DECODE_FUJITSU_AC || DECODE_GREE || \
      DECODE_KELVINATOR || DECODE_MITSUBISHI_AC || DECODE_TOSHIBA_AC || \
      DECODE_TROTEC || DECODE_HAIER_AC || DECODE_HITACHI_AC || \
@@ -970,7 +984,8 @@
      DECODE_KELON168 || DECODE_HITACHI_AC296 || DECODE_CARRIER_AC128 || \
      DECODE_DAIKIN200 || DECODE_HAIER_AC160 || DECODE_TCL96AC || \
      DECODE_BOSCH144 || DECODE_SANYO_AC152 || DECODE_DAIKIN312 || \
-     DECODE_CARRIER_AC84 || DECODE_YORK || \
+     DECODE_CARRIER_AC84 || DECODE_YORK || DECODE_BLUESTARHEAVY || \
+     DECODE_EUROM || \
      false)
   // Add any DECODE to the above if it uses result->state (see kStateSizeMax)
   // you might also want to add the protocol to hasACState function
@@ -1137,8 +1152,10 @@ enum decode_type_t {
   WOWWEE,
   CARRIER_AC84,  // 125
   YORK,
+  BLUESTARHEAVY,
+  EUROM,
   // Add new entries before this one, and update it to point to the last entry.
-  kLastDecodeType = YORK,
+  kLastDecodeType = EUROM,
 };
 
 // Message lengths & required repeat values
@@ -1165,6 +1182,8 @@ const uint16_t kArgo3TimerStateLength = 9;  // Bytes
 const uint16_t kArgo3ConfigStateLength = 4;  // Bytes
 const uint16_t kArgoDefaultRepeat = kNoRepeat;
 const uint16_t kArrisBits = 32;
+const uint16_t kBluestarHeavyStateLength = 13;
+const uint16_t kBluestarHeavyBits = kBluestarHeavyStateLength * 8;
 const uint16_t kBosch144StateLength = 18;
 const uint16_t kBosch144Bits = kBosch144StateLength * 8;
 const uint16_t kCoolixBits = 24;
@@ -1435,7 +1454,8 @@ const uint16_t kRhossDefaultRepeat = 0;
 const uint16_t kClimaButlerBits = 52;
 const uint16_t kYorkBits = 136;
 const uint16_t kYorkStateLength = 17;
-
+const uint16_t kEuromStateLength = 12;
+const uint16_t kEuromBits = kEuromStateLength * 8;
 
 // Legacy defines. (Deprecated)
 #define AIWA_RC_T501_BITS             kAiwaRcT501Bits
@@ -1498,12 +1518,24 @@ const uint16_t kYorkStateLength = 17;
 
 #ifdef DEBUG
 #ifdef UNIT_TEST
-#define DPRINT(x) do { std::cout << x; } while (0)
-#define DPRINTLN(x) do { std::cout << x << std::endl; } while (0)
+#define DPRINT(x) do { \
+    std::cout << x; \
+  } \
+  while (0)
+#define DPRINTLN(x) do { \
+    std::cout << x << std::endl; \
+  } \
+  while (0)
 #endif  // UNIT_TEST
 #ifdef ARDUINO
-#define DPRINT(x) do { Serial.print(x); } while (0)
-#define DPRINTLN(x) do { Serial.println(x); } while (0)
+#define DPRINT(x) do { \
+    Serial.print(x); \
+  } \
+  while (0)
+#define DPRINTLN(x) do { \
+  Serial.println(x); \
+  } \
+  while (0)
 #endif  // ARDUINO
 #else  // DEBUG
 #define DPRINT(x)

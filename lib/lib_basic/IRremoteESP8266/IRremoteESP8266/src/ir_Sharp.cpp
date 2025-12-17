@@ -35,9 +35,11 @@ const uint16_t kSharpGapTicks = 1677;
 const uint16_t kSharpGap = kSharpGapTicks * kSharpTick;
 // Address(5) + Command(8) + Expansion(1) + Check(1)
 const uint64_t kSharpToggleMask =
-    ((uint64_t)1 << (kSharpBits - kSharpAddressBits)) - 1;
-const uint64_t kSharpAddressMask = ((uint64_t)1 << kSharpAddressBits) - 1;
-const uint64_t kSharpCommandMask = ((uint64_t)1 << kSharpCommandBits) - 1;
+    (static_cast<uint64_t>(1) << (kSharpBits - kSharpAddressBits)) - 1;
+const uint64_t kSharpAddressMask = (static_cast<uint64_t>(1) <<
+    kSharpAddressBits) - 1;
+const uint64_t kSharpCommandMask = (static_cast<uint64_t>(1) <<
+    kSharpCommandBits) - 1;
 
 using irutils::addBoolToString;
 using irutils::addFanToString;

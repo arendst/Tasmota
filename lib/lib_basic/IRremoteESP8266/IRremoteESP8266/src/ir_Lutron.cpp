@@ -96,7 +96,7 @@ bool IRrecv::decodeLutron(decode_results *results, uint16_t offset,
           break;  // We've likely reached the end of a message.
       }
       // Remove a bit length from the current entry.
-      entry = std::max(entry, (uint16_t)(kLutronTick / kRawTick)) -
+      entry = std::max(entry, static_cast<uint16_t>(kLutronTick / kRawTick)) -
               kLutronTick / kRawTick;
     }
     if (offset % 2 && !match(entry, kLutronDelta, 0, kLutronDelta)) {

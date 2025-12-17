@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v15.0.1.4 - Last update 02.10.2025
+ * Updated until v15.2.0.1 - Last update 14.12.2025
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -505,14 +505,14 @@
 #define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_23_zigbee
-#define D_ZIGBEE_PERMITJOIN_ACTIVE "Kopplung erlaubt"
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Zigbee Kopplung aktiv"
 #define D_ZIGBEE_MAPPING_TITLE "Zigbee Karte"
 #define D_ZIGBEE_NOT_STARTED "Zigbee nicht gestartet"
-#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte in Erstellung (%d s․ verbleibend)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "Keine Karte"
-#define D_ZIGBEE_MAP_REFRESH "Karte erneuern"
-#define D_ZIGBEE_MAP "Karte"
-#define D_ZIGBEE_PERMITJOIN "Kopplung ein"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte wird erstellt (%d s)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "Keine Karte verfügbar"
+#define D_ZIGBEE_MAP_REFRESH "Karte aktualisieren"
+#define D_ZIGBEE_MAP "Zigbee Karte"
+#define D_ZIGBEE_PERMITJOIN "Zigbee Kopplung aktivieren"
 #define D_ZIGBEE_GENERATE_KEY "Erzeuge zufälligen Netzwerkschlüssel"
 #define D_ZIGBEE_UNKNOWN_DEVICE "Unbekanntes Gerät"
 #define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unbekanntes Attribut"

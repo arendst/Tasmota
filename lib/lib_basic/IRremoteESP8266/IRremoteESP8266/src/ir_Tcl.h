@@ -11,6 +11,7 @@
 //   Brand: Daewoo,  Model: DSB-F0934ELH-V A/C
 //   Brand: Daewoo,  Model: GYKQ-52E remote
 //   Brand: TCL,  Model: GYKQ-58(XM) remote (TCL96AC)
+//   Brand: Electrolux,  Model: EACM CL/N3 series remote
 
 #ifndef IR_TCL_H_
 #define IR_TCL_H_

@@ -8,7 +8,7 @@ from auto_analyse_raw_data import convert_rawdata, add_rawdata_args, get_rawdata
 
 
 # pylint: disable=too-many-arguments
-def parse_and_report(rawdata_str, hertz=38000, end_usecs=100000,
+def parse_and_report(rawdata_str, hertz=38000, *, end_usecs=100000,
                      use_initial=False, generate_code=False, verbose=False,
                      output=sys.stdout):
   """Analyse the rawdata c++ definition of a IR message."""
@@ -94,9 +94,11 @@ def main():
       default=False)
   add_rawdata_args(arg_parser)
   arg_options = arg_parser.parse_args()
-  parse_and_report(get_rawdata(arg_options), arg_options.hertz,
-                   arg_options.usecs, arg_options.use_initial,
-                   arg_options.generate_code, arg_options.verbose)
+  parse_and_report(get_rawdata(arg_options), hertz=arg_options.hertz,
+                   end_usecs=arg_options.usecs,
+                   use_initial=arg_options.use_initial,
+                   generate_code=arg_options.generate_code,
+                   verbose=arg_options.verbose)
 
 
 if __name__ == '__main__':

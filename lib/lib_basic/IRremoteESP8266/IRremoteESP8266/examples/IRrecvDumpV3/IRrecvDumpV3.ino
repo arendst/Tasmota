@@ -138,6 +138,8 @@ void setup() {
   OTAwifi();  // start default wifi (previously saved on the ESP) for OTA
 #if defined(ESP8266)
   Serial.begin(kBaudRate, SERIAL_8N1, SERIAL_TX_ONLY);
+#elif ARDUINO_USB_CDC_ON_BOOT
+  Serial.begin(kBaudRate);
 #else  // ESP8266
   Serial.begin(kBaudRate, SERIAL_8N1);
 #endif  // ESP8266

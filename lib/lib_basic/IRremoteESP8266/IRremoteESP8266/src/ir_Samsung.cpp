@@ -775,7 +775,7 @@ uint16_t IRSamsungAc::getSleepTimer(void) const {
 }
 
 #define TIMER_RESOLUTION(mins) \
-    (((std::min((mins), (uint16_t)(24 * 60))) / 10) * 10)
+    (((std::min((mins), static_cast<uint16_t>(24 * 60))) / 10) * 10)
 
 /// Set the On Timer value of the A/C.
 /// @param[in] nr_of_mins The number of minutes the timer should be.

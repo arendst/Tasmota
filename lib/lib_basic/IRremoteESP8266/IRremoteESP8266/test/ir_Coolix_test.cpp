@@ -393,6 +393,7 @@ TEST(TestCoolixACClass, SetAndGetRaw) {
 TEST(TestCoolixACClass, SetAndGetTemp) {
   IRCoolixAC ac(kGpioUnused);
 
+  // Celcius
   ac.setTemp(25);
   EXPECT_EQ(25, ac.getTemp());
   ac.setTemp(kCoolixTempMin);
@@ -402,6 +403,26 @@ TEST(TestCoolixACClass, SetAndGetTemp) {
   ac.setTemp(kCoolixTempMin - 1);
   EXPECT_EQ(kCoolixTempMin, ac.getTemp());
   ac.setTemp(kCoolixTempMax + 1);
+  EXPECT_EQ(kCoolixTempMax, ac.getTemp());
+
+  // Fahrenheit low
+  ac.setTemp(70);
+  EXPECT_EQ(70, ac.getTemp());
+  ac.setTemp(kCoolixTempLowFMin);
+  EXPECT_EQ(kCoolixTempLowFMin, ac.getTemp());
+  ac.setTemp(kCoolixTempLowFMax);
+  EXPECT_EQ(kCoolixTempLowFMax, ac.getTemp());
+  ac.setTemp(kCoolixTempLowFMin - 1);
+  EXPECT_EQ(kCoolixTempMax, ac.getTemp());
+
+  // Fahrenheit high
+  ac.setTemp(80);
+  EXPECT_EQ(80, ac.getTemp());
+  ac.setTemp(kCoolixTempHighFMin);
+  EXPECT_EQ(kCoolixTempHighFMin, ac.getTemp());
+  ac.setTemp(kCoolixTempHighFMax);
+  EXPECT_EQ(kCoolixTempHighFMax, ac.getTemp());
+  ac.setTemp(kCoolixTempHighFMax + 1);
   EXPECT_EQ(kCoolixTempMax, ac.getTemp());
 }
 
@@ -1103,4 +1124,56 @@ TEST(TestCoolixACClass, Issue2012) {
       "Power: Off",
       ac.toString());
   EXPECT_EQ(kNoTempValue, ac.toCommon().sensorTemperature);
+}
+
+// Test decoding Fahrenheit from Coolix48.
+TEST(TestCoolixACClass, SetRawFahrenheit) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  IRCoolixAC ac(kGpioUnused);
+
+  ac.stateReset();
+  ac.setRawFromCoolix48(0xB25DFF00C03F);
+  EXPECT_EQ(
+    "Power: On, Mode: 0 (Cool), Fan: 7 (Fixed), Temp: 63F, "
+    "Zone Follow: Off, Sensor Temp: Off",
+    ac.toString());
+}
+
+// Test sending and decoding of Fahrenheit values.
+TEST(TestCoolixACClass, SendFahrenheit) {
+  IRrecv irrecv(kGpioUnused);
+  IRCoolixAC ac(kGpioUnused);
+
+  const uint32_t on_cool_63f_fan_fixed_noparity = 0xB2FFC0;
+  ac.begin();
+  ac.on();
+  ac.setPower(true);
+  ac.setMode(kCoolixCool);
+  ac.setFan(kCoolixFanFixed);
+  ac.setTemp(63);
+  EXPECT_EQ(on_cool_63f_fan_fixed_noparity, ac.getRaw());
+
+  ac.send();
+  ac._irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&ac._irsend.capture));
+  EXPECT_EQ(COOLIX48, ac._irsend.capture.decode_type);
+  EXPECT_EQ(kCoolix48Bits, ac._irsend.capture.bits);
+  EXPECT_EQ(0xB25DFF00C03F, ac._irsend.capture.value);
+  EXPECT_EQ(0x0, ac._irsend.capture.address);
+  EXPECT_EQ(0x0, ac._irsend.capture.command);
+
+  const uint32_t on_cool_80f_fan_fixed_noparity = 0xB2FF20;
+  ac.setTemp(80);
+  EXPECT_EQ(on_cool_80f_fan_fixed_noparity, ac.getRaw());
+
+  ac._irsend.reset();
+  ac.send();
+  ac._irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&ac._irsend.capture));
+  EXPECT_EQ(COOLIX48, ac._irsend.capture.decode_type);
+  EXPECT_EQ(kCoolix48Bits, ac._irsend.capture.bits);
+  EXPECT_EQ(0xB27DFF0020DF, ac._irsend.capture.value);
+  EXPECT_EQ(0x0, ac._irsend.capture.address);
+  EXPECT_EQ(0x0, ac._irsend.capture.command);
 }

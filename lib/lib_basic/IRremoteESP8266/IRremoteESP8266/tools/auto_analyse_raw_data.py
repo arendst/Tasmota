@@ -105,7 +105,7 @@ class RawIRMessage():
     code.append(f"    // Data Section #{self.section_count}")
     code.append(f"    // e.g. data = 0x{int(bin_str, 2):X}, nbits = {nbits}")
     code.append(f"    sendData(k{name}BitMark, k{name}OneSpace, k{name}BitMark,"
-                f" k{name}ZeroSpace, send_data, {nbits}, true);")
+                f" k{name}ZeroSpace, send_data, {nbits}, k{name}MsbFirst);")
     code.append(f"    send_data >>= {nbits};")
     if footer:
       code.append("    // Footer")
@@ -122,7 +122,8 @@ class RawIRMessage():
         f"  // e.g. data_result.data = 0x{int(bin_str, 2):X}, nbits = {nbits}",
         f"  data_result = matchData(&(results->rawbuf[offset]), {nbits},",
         f"                          k{name}BitMark, k{name}OneSpace,",
-        f"                          k{name}BitMark, k{name}ZeroSpace);",
+        f"                          k{name}BitMark, k{name}ZeroSpace,",
+        f"                          kUseDefTol, kMarkExcess, k{name}MsbFirst);",
         "  offset += data_result.used;",
         "  if (data_result.success == false) return false;  // Fail",
         f"  data <<= {nbits};  // Make room for the new bits of data.",
@@ -163,7 +164,8 @@ class RawIRMessage():
         f"                k{name}BitMark, k{name}ZeroSpace,",
         f"                {lastmark}, {lastspace},",
         f"                data + pos, {int(nbytes)},  // Bytes",
-        f"                k{name}Freq, true, kNoRepeat, kDutyDefault);",
+        f"                k{name}Freq, k{name}MsbFirst, kNoRepeat,"
+        " kDutyDefault);",
         f"    pos += {int(nbytes)};"
         f"  // Adjust by how many bytes of data we sent"])
     return code
@@ -198,7 +200,7 @@ class RawIRMessage():
         f"                      {firstmark}, {firstspace},",
         f"                      k{name}BitMark, k{name}OneSpace,",
         f"                      k{name}BitMark, k{name}ZeroSpace,",
-        f"                      {lastmark}, {lastspace}, true);",
+        f"                      {lastmark}, {lastspace}, k{name}MsbFirst);",
         "  if (used == 0) return false;  // We failed to find any data.",
         "  offset += used;  // Adjust for how much of the message we read.",
         f"  pos += {int(nbytes)};"
@@ -351,6 +353,7 @@ def dump_constants(message, defines, name="", output=sys.stdout):
       defines.append(f"const uint16_t k{name}SpaceGap{count} = {gap};")
   defines.append(f"const uint16_t k{name}Freq = 38000;  "
                  "// Hz. (Guessing the most common frequency.)")
+  defines.append(f"const bool k{name}MsbFirst = true; // default assumption")
 
 
 def parse_and_report(rawdata_str, margin, gen_code=False, name="",

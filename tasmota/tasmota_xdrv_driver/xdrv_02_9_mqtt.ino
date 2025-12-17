@@ -1112,6 +1112,9 @@ void MqttConnected(void) {
 }
 
 void MqttReconnect(void) {
+  if (!strlen(TasmotaGlobal.mqtt_client)) {  // Do it here as it needs the MAC address from a possible hosted MCU available after WiFi connection
+    Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
+  }
   Mqtt.allowed = Settings->flag.mqtt_enabled && (TasmotaGlobal.restart_flag == 0);  // SetOption3 - Enable MQTT, and don't connect if restart in process
   if (Mqtt.allowed) {
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
