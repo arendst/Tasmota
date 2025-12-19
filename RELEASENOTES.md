@@ -114,9 +114,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.2.0.1
 ### Added
+- Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
 
 ### Changed
 - Vid6608 library from v1.0.2 to v1.0.3 [#24218](https://github.com/arendst/Tasmota/issues/24218)
+- IRremoteESP8266 library from v2.8.6 to v2.8.6-ca474a6 [#24226](https://github.com/arendst/Tasmota/issues/24226)
+- Update Zigbee WebUI [#24224](https://github.com/arendst/Tasmota/issues/24224)
 
 ### Fixed
 - ESP8266 TasmotaSerial flush receive buffer on executing `TasmotaSerial.flush();`

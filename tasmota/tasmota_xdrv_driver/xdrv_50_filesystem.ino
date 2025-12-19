@@ -194,14 +194,26 @@ char *fileOnly(char *fname){
 void UfsCheckSDCardInit(void) {
   // Try SPI mode first
   // SPI mode requires SDCARD_CS to be configured
+/*
   if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
     int8_t cs = Pin(GPIO_SDCARD_CS);
+*/
+  uint32_t spi_bus = 0;
+  int8_t cs = -1;
+  if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
+    cs = Pin(GPIO_SDCARD_CS);
+  }
+  if (TasmotaGlobal.spi_enabled2 && PinUsed(GPIO_SDCARD_CS, 1)) {
+    spi_bus = 1;
+    cs = Pin(GPIO_SDCARD_CS, 1);
+  }
+  if (cs > -1) {
 
 #ifdef ESP8266
     SPI.begin();
 #endif // ESP8266
 #ifdef ESP32
-    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    SPI.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
 #endif // ESP32
 
     if (SD.begin(cs)) {
