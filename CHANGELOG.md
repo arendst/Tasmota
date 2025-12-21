@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-P4 unique MQTT Client based on hosted MCU MAC address
 
 ### Removed
+- Berry `animate` to be replaced with `animation` framework
 
 ## [Released]
 

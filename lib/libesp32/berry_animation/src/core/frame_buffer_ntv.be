@@ -57,9 +57,6 @@ class FrameBufferNtv
   # Linear interpolation between two colors using explicit blend factor
   # Returns the blended color as a 32-bit integer (ARGB format - 0xAARRGGBB)
   # 
-  # This function matches the original berry_animate frame.blend(color1, color2, blend_factor) behavior
-  # Used for creating smooth gradients like beacon slew regions
-  #
   # color1: destination/background color (ARGB format - 0xAARRGGBB)
   # color2: source/foreground color (ARGB format - 0xAARRGGBB)
   # blend_factor: blend factor (0-255 integer)
