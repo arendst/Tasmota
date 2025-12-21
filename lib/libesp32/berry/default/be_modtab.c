@@ -175,12 +175,6 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
 
-#if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
-  #ifdef USE_BERRY_ANIMATE
-    &be_native_module(animate),
-  #endif // USE_BERRY_ANIMATE
-#endif // USE_WS2812
-
 #ifdef USE_LVGL
     &be_native_module(lv),
     &be_native_module(lv_extra),
