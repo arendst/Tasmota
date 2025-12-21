@@ -34,7 +34,7 @@ jobs:
           ../berry/berry -s -g solidify_all.be
           cd ../berry_matter
           ../berry/berry -s -g solidify_all.be
-          cd ../berry_animate
+          cd ../berry_animation
           ../berry/berry -s -g solidify_all.be
           cd ../../libesp32_lvgl/lv_binding_berry
           ../../libesp32/berry/berry -s -g solidify_all.be
@@ -46,7 +46,7 @@ jobs:
           path: |
             ./lib/libesp32/berry_tasmota/src/solidify
             ./lib/libesp32/berry_matter/src/solidify
-            ./lib/libesp32/berry_animate/src/solidify
+            ./lib/libesp32/berry_animation/src/solidify
             ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
             ./lib/libesp32_lvgl/lv_haspmota/src/solidify
             ./lib/libesp32/berry/generate
@@ -71,7 +71,7 @@ jobs:
           ls -R ./berry
           mv berry/berry/libesp32/berry_tasmota/src/solidify/* ./lib/libesp32/berry_tasmota/src/solidify
           mv berry/berry/libesp32/berry_matter/src/solidify/* ./lib/libesp32/berry_matter/src/solidify
-          mv berry/berry/libesp32/berry_animate/src/solidify/* ./lib/libesp32/berry_animate/src/solidify
+          mv berry/berry/libesp32/berry_animation/src/solidify/* ./lib/libesp32/berry_animation/src/solidify
           mv berry/berry/libesp32_lvgl/lv_binding_berry/src/solidify/* ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
           mv berry/berry/libesp32_lvgl/lv_haspmota/src/solidify/* ./lib/libesp32_lvgl/lv_haspmota/src/solidify
           mv berry/berry/libesp32/berry/generate/* ./lib/libesp32/berry/generate

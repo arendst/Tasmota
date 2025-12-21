@@ -126,3 +126,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32-P4 unique MQTT Client based on hosted MCU MAC address
 - DALI watchdog exception
 - TuyaMCU v1 exception 28 regression from v15.1.0.1 reverted PR24063 [#24220](https://github.com/arendst/Tasmota/issues/24220)
+
+### Removed
+- Berry `animate` to be replaced with `animation` framework [#24241](https://github.com/arendst/Tasmota/issues/24241)
