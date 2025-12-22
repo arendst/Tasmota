@@ -1,4 +1,4 @@
-# Plain background
+# @desc Solid red background - the simplest animation
 
 animation back = solid(color=red)
 run back

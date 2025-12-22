@@ -1,4 +1,4 @@
-# Vue-meter based on random data
+# @desc VU-meter with random level using custom Berry function
 
 berry """
 # define a pseudo-random generator, returns value in range 0..255

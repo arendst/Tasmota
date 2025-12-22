@@ -1,4 +1,4 @@
-# Pattern of colors in the background based on palette
+# @desc Rainbow gradient pattern across the LED strip
 
 # define a palette of rainbow colors including white with constant brightness
 palette rainbow_with_white = [

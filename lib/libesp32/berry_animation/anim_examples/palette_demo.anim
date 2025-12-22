@@ -20,8 +20,6 @@ animation fire_anim = rich_palette_animation(palette=fire_colors, cycle_period=5
 
 animation ocean_anim = rich_palette_animation(palette=ocean_colors, cycle_period=8s)
 
-animation forest_anim = rich_palette_animation(palette=PALETTE_FOREST, cycle_period=8s)
-
 # Sequence to show both palettes
 sequence palette_demo {
   play fire_anim for 10s
@@ -31,7 +29,6 @@ sequence palette_demo {
   repeat 2 times {
     play fire_anim for 3s
     play ocean_anim for 3s
-    play forest_anim for 3s
   }
 }
 

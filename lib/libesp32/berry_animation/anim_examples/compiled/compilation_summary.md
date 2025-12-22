@@ -694,10 +694,8 @@ SUCCESS
 
 | Symbol                   | Type                  | Builtin | Dangerous | Takes Args |
 |--------------------------|-----------------------|---------|-----------|------------|
-| `PALETTE_FOREST`         | palette_constant      |    ✓    |           |            |
 | `fire_anim`              | animation             |         |           |            |
 | `fire_colors`            | palette               |         |           |            |
-| `forest_anim`            | animation             |         |           |            |
 | `ocean_anim`             | animation             |         |           |            |
 | `ocean_colors`           | palette               |         |           |            |
 | `palette_demo`           | sequence              |         |           |            |
