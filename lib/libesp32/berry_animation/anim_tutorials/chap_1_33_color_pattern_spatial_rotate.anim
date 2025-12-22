@@ -1,4 +1,4 @@
-# Pattern of colors in the background based on palette, rotating over 5 s
+# @desc Rainbow gradient rotating along the strip over 5 seconds
 
 # define a palette of rainbow colors including white with constant brightness
 palette rainbow_with_white = [

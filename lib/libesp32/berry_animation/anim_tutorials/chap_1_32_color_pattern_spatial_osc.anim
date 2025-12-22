@@ -1,4 +1,4 @@
-# Pattern of colors in the background based on palette, spatial period oscillating
+# @desc Rainbow gradient with oscillating spatial period (breathing effect)
 
 # define a palette of rainbow colors including white with constant brightness
 palette rainbow_with_white = [

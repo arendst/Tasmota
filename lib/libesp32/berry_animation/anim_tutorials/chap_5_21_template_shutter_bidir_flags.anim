@@ -1,4 +1,4 @@
-# Template animation for Cylon like eye
+# @desc Bidirectional shutter effect with rainbow colors
 
 template animation shutter_bidir {
   param colors type palette

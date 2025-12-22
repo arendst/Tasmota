@@ -1,4 +1,4 @@
-# Vue-meter based on random data
+# @desc VU-meter style animation with green-yellow-red gradient at 85%
 
 # define a palette of rainbow colors including white with constant brightness
 palette vue_meter_palette = [

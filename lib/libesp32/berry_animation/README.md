@@ -1,226 +1,179 @@
 # Berry Animation Framework
 
-A powerful, lightweight animation framework for controlling addressable LED strips in Tasmota using a simple Domain-Specific Language (DSL).
+!!! note "Requires `#define USE_BERRY_ANIMATION`, included in Tasmota32"
 
-## ✨ Features
+A lightweight animation framework for controlling addressable LED strips (WS2812, SK6812, etc.) on Tasmota-based ESP32 devices.
 
-- **🎨 Rich Animation Effects** - Pulse, breathe, fire, comet, sparkle, wave, and more
-- **🌈 Advanced Color System** - Predefined palettes, custom gradients, smooth color cycling
-- **📝 Simple DSL Syntax** - Write animations in intuitive, declarative language
-- **⚡ High Performance** - Optimized for embedded systems with minimal memory usage
-- **🔧 Extensible** - Create custom animations and effects
-- **🎯 Position-Based Effects** - Precise control over individual LED positions
-- **📊 Dynamic Parameters** - Animate colors, positions, sizes with oscillating values
-- **🎭 Sequences** - Create complex shows with timing and loops
+## Why a DSL?
 
-## 🚀 Quick Start
+Writing LED animations in pure Berry code requires understanding the animation engine internals, managing timing loops, and handling frame buffers manually. Animations are inherently asynchronous - they run over time while other code executes - making them difficult to manage with traditional state machines. The Animation DSL (Domain-Specific Language) simplifies this dramatically:
 
-### Simple Pulsing Animation
+- **Declarative, not imperative** - Just specify *what* you want and *how long* it should take; the framework handles all intermediate states and timing
+- **No state machines** - Forget about tracking animation phases, transitions, and timing manually
+- **Readable syntax** - Write `animation pulse = pulsating_animation(color=red, period=2s)` instead of dozens of lines of Berry code
+- **Automatic engine management** - No need to create engines, manage frame buffers, or handle timing
+- **Built-in effects** - Access to pulse, breathe, fire, comet, sparkle, wave, and many more effects
+- **Dynamic parameters** - Oscillating values (sine, triangle, smooth) without manual math
+- **Sequences and templates** - Orchestrate complex shows with simple syntax
+
+The DSL **transpiles to standard Berry code**, so you get the best of both worlds: easy authoring and full Berry compatibility. You can inspect the generated code, learn from it, or use it directly on devices without DSL support.
+
+## Online Emulator
+
+Test and create animations without a Tasmota device using the online emulator:
+
+**[https://tasmota.github.io/docs/Tasmota-Berry-emulator/](https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html)**
+
+The emulator runs **entirely in your browser** with no server required. It includes:
+
+- A complete Berry interpreter compiled to WebAssembly
+- Minimal Tasmota device emulation (LED strips, GPIO, timing)
+- Real-time LED strip visualization
+- DSL editor with syntax highlighting
+
+Once your animation works in the emulator, copy the transpiled Berry code to your Tasmota device - it runs identically.
+
+## Firmware Options
+
+Option|Description
+:---|:---
+`#define USE_BERRY_ANIMATION`|Core animation framework (required)
+`#define USE_BERRY_ANIMATION_DSL`|Optional: DSL compiler with simplified Web UI for on-device animation editing
+
+Without `USE_BERRY_ANIMATION_DSL`, use the online emulator to create animations and deploy the compiled Berry code.
+
+## Quick Start
+
+### Simple Breathing Animation
 
 ```berry
-# Define colors
-color bordeaux = 0x6F2C4F
-
-# Create pulsing animation
-animation pulse_bordeaux = pulsating_animation(color=bordeaux, period=3s)
-
-# Run it
-run pulse_bordeaux
+animation pulse = breathe_animation(color=red, period=2s)
+run pulse
 ```
 
-### Rainbow Color Cycling
+### Rainbow Smooth Color Cycling
 
 ```berry
-# Use predefined rainbow palette
-animation rainbow_cycle = rich_palette(
-  palette=PALETTE_RAINBOW
-  cycle_period=5s
-  transition_type=1
-)
-
-run rainbow_cycle
+animation rainbow = rich_palette_animation(palette=PALETTE_RAINBOW)
+run rainbow
 ```
 
-### Custom Color Palette
+### Animation Sequence
 
 ```berry
-# Define a sunset palette
+animation red_pulse = breathe_animation(color=red, period=2s)
+animation blue_pulse = breathe_animation(color=blue, period=1.5s)
+
+sequence show repeat forever {
+  play red_pulse for 4s
+  wait 200ms
+  play blue_pulse for 3s
+  wait 300ms
+}
+run show
+```
+
+## DSL Syntax Overview
+
+### Numbers
+
+#### Time Values
+
+Time values require a unit suffix and are converted to milliseconds:
+
+```berry
+500ms       # Milliseconds (stays 500)
+2s          # Seconds (converted to 2000ms)
+1m          # Minutes (converted to 60000ms)
+```
+
+#### Percentages
+
+Percentages are converted to 0-255 range:
+
+```berry
+0%          # Converted to 0
+50%         # Converted to 128
+100%        # Converted to 255
+```
+
+### Colors and Palettes
+
+```berry
+# Hex colors
+color my_red = 0xFF0000
+
+# Predefined: red, green, blue, white, yellow, orange, purple, cyan...
+
+# Palettes for gradients
 palette sunset = [
-  (0, 0x191970)    # Midnight blue
-  (64, purple)     # Purple
-  (128, 0xFF69B4)  # Hot pink
-  (192, orange)    # Orange
-  (255, yellow)    # Yellow
+  (0, navy), (128, purple), (255, orange)
 ]
 
-# Create palette animation
-animation sunset_glow = rich_palette(
-  palette=sunset
-  cycle_period=8s
-  transition_type=1
-)
-
-run sunset_glow
+# Built-in palettes: PALETTE_RAINBOW, PALETTE_FIRE...
 ```
 
-### Reusable Templates
+### Value Providers (Oscillators)
 
-Create parameterized animation patterns that can be reused with different settings:
+Create dynamic values that change over time:
 
 ```berry
-# Define a reusable template
-template pulse_effect {
-  param color type color
+set breathing = smooth(min_value=50, max_value=255, duration=3s)
+animation pulse = solid(color=red)
+pulse.opacity = breathing
+```
+
+Available: `smooth`, `triangle`, `sine_osc`, `linear`, `square`, `ease_in`, `ease_out`, `elastic`, `bounce`
+
+### Template Animations
+
+Create reusable, parameterized animation patterns:
+
+```berry
+template animation pulse_effect {
+  param pulse_color type color
   param speed
-  param brightness
   
-  animation pulse = pulsating_animation(
-    color=color
-    period=speed
-    opacity=brightness
-  )
-  
+  animation pulse = pulsating_animation(color=pulse_color, period=speed)
   run pulse
 }
 
-# Use the template with different parameters
-pulse_effect(red, 2s, 255)     # Bright red pulse
-pulse_effect(blue, 1s, 150)    # Dimmer blue pulse
-pulse_effect(0xFF69B4, 3s, 200) # Hot pink pulse
-```
+animation red_pulse = pulse_effect(color=red, speed=2s)
+animation blue_pulse = pulse_effect(color=blue, speed=1s)
 
-### Animation Sequences
-
-```berry
-animation red_pulse = pulsating_animation(color=red, period=2s)
-animation green_pulse = pulsating_animation(color=green, period=2s)
-animation blue_pulse = pulsating_animation(color=blue, period=2s)
-
-sequence rgb_show {
-  play red_pulse for 3s
-  wait 500ms
-  play green_pulse for 3s
-  wait 500ms
-  play blue_pulse for 3s
-  
-  repeat 2 times {
-    play red_pulse for 1s
-    play green_pulse for 1s
-    play blue_pulse for 1s
-  }
+sequence show repeat forever {
+  play red_pulse for 5s
+  play blue_pulse for 5s
 }
-
-run rgb_show
+run show
 ```
 
-## 📚 Documentation
+## Animation Reference
 
-### Getting Started
-- **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running in 5 minutes
-- **[DSL Reference](docs/DSL_REFERENCE.md)** - Complete DSL syntax and features
-- **[Examples](docs/EXAMPLES.md)** - Comprehensive examples and tutorials
+Animation|Description
+:---|:---
+`solid`|Solid color fill
+`pulsating_animation`|Breathing/pulsing effect with smooth transitions
+`breathe_animation`|Natural breathing effect with customizable curve
+`beacon_animation`|Pulse/highlight at specific position with optional slew
+`crenel_position_animation`|Crenel/square wave pattern
+`comet_animation`|Moving comet with fading tail
+`twinkle_animation`|Twinkling stars effect
+`fire_animation`|Realistic fire simulation
+`rich_palette`|Smooth palette color transitions
+`gradient_animation`|Linear or radial color gradients
+`palette_gradient_animation`|Gradient patterns with palette colors
+`palette_meter_animation`|Meter/bar patterns
+`gradient_meter_animation`|VU meter with gradient and peak hold
+`noise_animation`|Perlin noise patterns
+`wave_animation`|Wave motion effects
 
-### Reference
-- **[Animation Class Hierarchy](docs/ANIMATION_CLASS_HIERARCHY.md)** - All available animations and parameters
-- **[Oscillation Patterns](docs/OSCILLATION_PATTERNS.md)** - Dynamic value patterns and waveforms
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+## Documentation
 
-### Advanced
-- **[User Functions](docs/USER_FUNCTIONS.md)** - Create custom animation functions
-- **[Animation Development](docs/ANIMATION_DEVELOPMENT.md)** - Create custom animations
-- **[Transpiler Architecture](docs/TRANSPILER_ARCHITECTURE.md)** - DSL transpiler internals and processing flow
-
-## 🎯 Core Concepts
-
-### DSL-First Design
-Write animations using simple, declarative syntax:
-```berry
-animation fire_effect = fire_animation(intensity=200, cooling_rate=55, sparking_rate=120)
-run fire_effect
-```
-
-### Dynamic Parameters
-Use oscillating values to create complex effects:
-```berry
-animation pulsing_comet = comet_animation(
-  color=red
-  tail_length = smooth(min_value=5, max_value=15, duration=3s)
-  speed=2
-)
-```
-
-### Color Palettes
-Rich color transitions with predefined or custom palettes:
-```berry
-palette custom_palette = [(0, blue), (128, purple), (255, pink)]
-animation palette_cycle = rich_palette(palette=custom_palette, cycle_period=4s)
-```
-
-## 🎨 Animation Types
-
-### Basic Effects
-- **Pulse** - Breathing/pulsing effects with smooth transitions
-- **Sparkle** - Random twinkling and starfield effects
-- **Fire** - Realistic fire simulation with warm colors
-- **Comet** - Moving comet with customizable tail
-
-### Color Animations  
-- **Rich Palette** - Smooth color transitions using predefined palettes
-- **Color Cycling** - Custom color sequences with smooth blending
-- **Gradient** - Linear and radial color gradients
-- **Plasma** - Classic plasma effects with sine wave interference
-
-### Pattern Effects
-- **Wave** - Mathematical waveforms (sine, triangle, square, sawtooth)
-- **Noise** - Organic patterns using Perlin noise
-- **Position-Based** - Precise control over individual LED positions
-
-### Motion Effects
-- **Bounce** - Physics-based bouncing with gravity and damping
-- **Shift** - Scrolling and translation effects
-- **Scale** - Size transformation and breathing effects
-- **Jitter** - Add random variations to any animation
-
-## 🔧 Installation
-
-### Prerequisites
-- Tasmota firmware with Berry support
-- Addressable LED strip (WS2812, SK6812, etc.)
-
-### Setup
-1. **Enable Berry** in Tasmota configuration
-2. **Configure LED strip** using Tasmota's LED configuration
-3. **Import the framework**:
-   ```berry
-   import animation
-   ```
-4. **Create your first animation** using the DSL
-
-## 🌈 Predefined Palettes
-
-The framework includes several built-in color palettes:
-
-- **PALETTE_RAINBOW** - Standard 7-color rainbow (Red → Orange → Yellow → Green → Blue → Indigo → Violet)
-- **PALETTE_RGB** - Simple RGB cycle (Red → Green → Blue)
-- **PALETTE_FIRE** - Warm fire colors (Black → Dark Red → Red → Orange → Yellow)
-- **PALETTE_SUNSET_TICKS** - Sunset colors (Orange Red → Dark Orange → Gold → Hot Pink → Purple → Midnight Blue)
-- **PALETTE_OCEAN** - Blue and green ocean tones (Navy → Blue → Cyan → Spring Green → Green)
-- **PALETTE_FOREST** - Various green forest tones (Dark Green → Forest Green → Lime Green → Mint Green → Light Green)
-
-```berry
-# Use any predefined palette
-animation ocean_waves = rich_palette(
-  palette=PALETTE_OCEAN
-  cycle_period=8s
-  transition_type=1
-)
-run ocean_waves
-```
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-**Happy Animating!** 🎨✨
+- **[Quick Start Guide](berry_animation_docs/QUICK_START.md)** - Get running in 5 minutes
+- **[DSL Reference](berry_animation_docs/DSL_REFERENCE.md)** - Complete syntax reference
+- **[Examples](berry_animation_docs/EXAMPLES.md)** - Comprehensive examples
+- **[Animation Classes](berry_animation_docs/ANIMATION_CLASS_HIERARCHY.md)** - All animations and parameters
+- **[Oscillation Patterns](berry_animation_docs/OSCILLATION_PATTERNS.md)** - Dynamic value waveforms
+- **[User Functions](berry_animation_docs/USER_FUNCTIONS.md)** - Extend with custom Berry functions
+- **[Troubleshooting](berry_animation_docs/TROUBLESHOOTING.md)** - Common issues and solutions

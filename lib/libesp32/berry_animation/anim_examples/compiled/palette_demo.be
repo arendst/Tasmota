@@ -29,9 +29,6 @@ fire_anim_.cycle_period = 5000
 var ocean_anim_ = animation.rich_palette_animation(engine)
 ocean_anim_.palette = ocean_colors_
 ocean_anim_.cycle_period = 8000
-var forest_anim_ = animation.rich_palette_animation(engine)
-forest_anim_.palette = animation.PALETTE_FOREST
-forest_anim_.cycle_period = 8000
 # Sequence to show both palettes
 var palette_demo_ = animation.sequence_manager(engine)
   .push_play_step(fire_anim_, 10000)
@@ -41,7 +38,6 @@ var palette_demo_ = animation.sequence_manager(engine)
   .push_repeat_subsequence(animation.sequence_manager(engine, 2)
     .push_play_step(fire_anim_, 3000)
     .push_play_step(ocean_anim_, 3000)
-    .push_play_step(forest_anim_, 3000)
     )
 engine.add(palette_demo_)
 engine.run()
@@ -70,8 +66,6 @@ animation fire_anim = rich_palette_animation(palette=fire_colors, cycle_period=5
 
 animation ocean_anim = rich_palette_animation(palette=ocean_colors, cycle_period=8s)
 
-animation forest_anim = rich_palette_animation(palette=PALETTE_FOREST, cycle_period=8s)
-
 # Sequence to show both palettes
 sequence palette_demo {
   play fire_anim for 10s
@@ -81,7 +75,6 @@ sequence palette_demo {
   repeat 2 times {
     play fire_anim for 3s
     play ocean_anim for 3s
-    play forest_anim for 3s
   }
 }
 

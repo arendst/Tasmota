@@ -1,4 +1,4 @@
-# Transition of colors in the background based on palette
+# @desc Smooth color transitions using rich_palette with sine interpolation
 
 # define a palette of rainbow colors including white with constant brightness
 palette rainbow_with_white = [

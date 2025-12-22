@@ -1,4 +1,4 @@
-# Template animation for Cylon like eye
+# @desc Cylon-style scanning eye using template with customizable color
 
 template animation cylon_eye {
   param eye_color type color default red

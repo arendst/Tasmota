@@ -1,4 +1,4 @@
-# Template animation with flags
+# @desc Advanced shutter template with ascending/descending flags
 
 template animation shutter_bidir {
   param colors type palette

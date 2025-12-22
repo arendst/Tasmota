@@ -1,4 +1,4 @@
-# Rotation of colors in the background based on palette
+# @desc Rainbow colors cycling through the entire strip over time
 
 # define a palette of rainbow colors including white with constant brightness
 palette rainbow_with_white = [
