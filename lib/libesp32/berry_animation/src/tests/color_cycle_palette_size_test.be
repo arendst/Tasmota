@@ -22,9 +22,9 @@ def test_palette_size_parameter_access()
   var engine = MockEngine()
   var provider = animation.color_cycle(engine)
   
-  # Test 1: Default palette_size should be 3
+  # Test 1: Default palette_size should be 7
   var default_size = provider.palette_size
-  assert(default_size == 3, f"Default palette_size should be 3, got {default_size}")
+  assert(default_size == 7, f"Default palette_size should be 7, got {default_size}")
   
   # Test 2: palette_size should match _get_palette_size()
   var internal_size = provider._get_palette_size()
@@ -131,15 +131,15 @@ def test_palette_size_with_new_instances()
   var provider1 = animation.color_cycle(engine)
   var provider2 = animation.color_cycle(engine)
   
-  assert(provider1.palette_size == 3, "First provider should have default palette_size of 3")
-  assert(provider2.palette_size == 3, "Second provider should have default palette_size of 3")
+  assert(provider1.palette_size == 7, "First provider should have default palette_size of 7")
+  assert(provider2.palette_size == 7, "Second provider should have default palette_size of 7")
   
   # Test 2: Changing one instance shouldn't affect the other
   var custom_palette = bytes("FFFF0000" "FF00FF00")
   provider1.palette = custom_palette
   
   assert(provider1.palette_size == 2, "First provider should have palette_size of 2 after change")
-  assert(provider2.palette_size == 3, "Second provider should still have palette_size of 3")
+  assert(provider2.palette_size == 7, "Second provider should still have palette_size of 7")
   
   # Test 3: Both instances should maintain read-only behavior
   var caught_exception_1 = false
@@ -161,7 +161,7 @@ def test_palette_size_with_new_instances()
   assert(caught_exception_2, "Second provider should reject palette_size writes")
   
   assert(provider1.palette_size == 2, "First provider palette_size should remain 2")
-  assert(provider2.palette_size == 3, "Second provider palette_size should remain 3")
+  assert(provider2.palette_size == 7, "Second provider palette_size should remain 7")
   
   print("✓ Multiple instance tests passed!")
 end
