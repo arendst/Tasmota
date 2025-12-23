@@ -20,13 +20,7 @@ class ColorCycleColorProvider : animation.color_provider
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
-    "palette": {"type": "bytes", "default":
-      bytes(          # Palette bytes in AARRGGBB format
-        "FF0000FF"    # Blue
-        "FF00FF00"    # Green  
-        "FFFF0000"    # Red
-      )
-    },
+    "palette": {"type": "bytes", "default":nil},
     "cycle_period": {"min": 0, "default": 5000},  # 0 = manual only, >0 = auto cycle time in ms
     "next": {"default": 0},  # Write `<n>` to move to next <n> colors
     "palette_size": {"type": "int", "default": 3}  # Read-only: number of colors in palette
@@ -37,9 +31,11 @@ class ColorCycleColorProvider : animation.color_provider
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
     super(self).init(engine)  # Initialize parameter system
+
+    # Set the default palette
+    self.palette = animation.PALETTE_RAINBOW
     
     # Initialize non-parameter instance variables
-    var palette_bytes = self.palette
     self.current_index = 0      # Start at first color
     
     # Initialize palette_size parameter
@@ -64,7 +60,7 @@ class ColorCycleColorProvider : animation.color_provider
   
   # Get the number of colors in the palette
   def _get_palette_size()
-    return size( self.palette) / 4  # Each color is 4 bytes
+    return size(self.palette) / 4  # Each color is 4 bytes
   end
   
   # Virtual member access - implements the virtual "palette_size" attribute

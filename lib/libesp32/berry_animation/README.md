@@ -22,7 +22,9 @@ The DSL **transpiles to standard Berry code**, so you get the best of both world
 
 Test and create animations without a Tasmota device using the online emulator:
 
-**[https://tasmota.github.io/docs/Tasmota-Berry-emulator/](https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html)**
+[![Tasmota_Berry_LED_emulator](berry_animation_docs/emulator_screenshot.png){width=353}](https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html){target=_blank}
+
+**[https://tasmota.github.io/docs/Tasmota-Berry-emulator/](https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html){target=_blank}**
 
 The emulator runs **entirely in your browser** with no server required. It includes:
 

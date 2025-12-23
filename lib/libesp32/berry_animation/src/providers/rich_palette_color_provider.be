@@ -62,6 +62,9 @@ class RichPaletteColorProvider : animation.color_provider
     import global
     self._light_state = global.light_state(global.light_state.RGB)
 
+    # Set default palette to animation.PALETTE_RAINBOW
+    self.palette = animation.PALETTE_RAINBOW
+
     # We need to register this value provider to receive 'update()'
     engine.add(self)
   end
@@ -524,29 +527,4 @@ class RichPaletteColorProvider : animation.color_provider
   end
 end
 
-# Factory function for rainbow palette (reusing format from Animate_palette)
-#
-# @param engine: AnimationEngine - Animation engine reference
-# @return RichPaletteColorProvider - A new rich palette color provider instance with rainbow palette
-def rich_palette_rainbow(engine)
-  # Standard rainbow palette (exact format from Animate_palette examples)
-  var palette_bytes = bytes(
-    "00FF0000"    # Red (value 0)
-    "24FFA500"    # Orange (value 36)
-    "49FFFF00"    # Yellow (value 73)
-    "6E00FF00"    # Green (value 110)
-    "920000FF"    # Blue (value 146)
-    "B74B0082"    # Indigo (value 183)
-    "DBEE82EE"    # Violet (value 219)
-    "FFFF0000"    # Red (value 255)
-  )
-  
-  # Create provider with rainbow palette and default parameters
-  var provider = animation.rich_palette(engine)
-  provider.palette = palette_bytes
-  
-  return provider
-end
-
-return {'rich_palette': RichPaletteColorProvider,
-        'rich_palette_rainbow': rich_palette_rainbow}
+return {'rich_palette': RichPaletteColorProvider}

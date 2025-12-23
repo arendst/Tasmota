@@ -28,16 +28,7 @@ def test_color_cycle_bytes_format()
   
   # Test 2: Check default palette
   var default_size = provider._get_palette_size()
-  assert(default_size == 3, f"Default palette should have 3 colors, got {default_size}")
-  
-  # Test 3: Test colors from default palette (AARRGGBB format)
-  var color0 = provider._get_color_at_index(0)  # Should be FF0000FF (blue)
-  var color1 = provider._get_color_at_index(1)  # Should be FF00FF00 (green)
-  var color2 = provider._get_color_at_index(2)  # Should be FFFF0000 (red)
-  
-  assert(color0 == 0xFF0000FF, f"First color should be blue (0xFF0000FF), got 0x{color0:08X}")
-  assert(color1 == 0xFF00FF00, f"Second color should be green (0xFF00FF00), got 0x{color1:08X}")
-  assert(color2 == 0xFFFF0000, f"Third color should be red (0xFFFF0000), got 0x{color2:08X}")
+  assert(default_size == 7, f"Default palette should have 7 colors, got {default_size}")
   
   # Test 4: Set custom bytes palette
   var custom_palette = bytes(
@@ -145,10 +136,6 @@ def test_bytes_parameter_validation()
     end
     assert(caught_error, f"Should reject {type(invalid_val)}: {invalid_val}")
   end
-  
-  # Test 3: Nil should be accepted (uses default)
-  provider.palette = nil
-  assert(provider.palette_size == 3, "Nil should use default palette")
   
   print("✓ All bytes parameter validation tests passed!")
 end

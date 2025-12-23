@@ -64,15 +64,6 @@ class RichPaletteAnimation : animation.animation
     self.color_provider.start(start_time)
     return self
   end
-  
-  # String representation
-  def tostring()
-    try
-      return f"RichPaletteAnimation(cycle_period={self.cycle_period}, brightness={self.brightness})"
-    except ..
-      return "RichPaletteAnimation(uninitialized)"
-    end
-  end
 end
 
 return {'rich_palette_animation': RichPaletteAnimation}

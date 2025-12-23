@@ -156,7 +156,7 @@ class Animation : animation.parameterized_object
   
   # String representation of the animation
   def tostring()
-    return f"Animation(priority={self.priority}, duration={self.duration}, loop={self.loop}, running={self.is_running})"
+    return f"{classname(self)}(priority={self.priority})"
   end
 end
 

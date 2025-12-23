@@ -47,7 +47,6 @@ class RichPaletteAnimationTest
     
     self.test_initialization()
     self.test_update_and_render()
-    self.test_factory_method()
     self.test_palette_properties()
     self.test_css_gradient()
     self.test_cycle_period_zero()
@@ -163,30 +162,6 @@ class RichPaletteAnimationTest
     # Just check that we got valid colors - exact color differences depend on palette implementation
     self.assert_equal(pixel_color != 0, true, "Start color is valid")
     self.assert_equal(middle_color != 0, true, "Middle color is valid")
-  end
-  
-  def test_factory_method()
-    # Test the rainbow factory method
-    var provider = animation.rich_palette_rainbow(mock_engine)
-    provider.cycle_period = 5000
-    provider.brightness = 255
-    
-    var anim = animation.solid(mock_engine)
-    anim.color = provider
-    anim.priority = 10  # Priority 10
-    
-    # Check that the animation was created correctly
-    self.assert_equal(anim != nil, true, "Animation was created")
-    self.assert_equal(anim.render != nil, true, "Animation has render method")
-    self.assert_equal(type(anim.color) == 'int', true, "Color is resolved to integer")
-    
-    # Check provider properties directly on the provider object
-    self.assert_equal(provider.cycle_period, 5000, "Cycle period is 5000ms")
-    self.assert_equal(provider.transition_type, animation.LINEAR, "Default transition type is linear")
-    self.assert_equal(provider.brightness, 255, "Brightness is 255")
-    
-    # Check animation properties
-    self.assert_equal(anim.priority, 10, "Priority is 10")
   end
   
   def test_palette_properties()
