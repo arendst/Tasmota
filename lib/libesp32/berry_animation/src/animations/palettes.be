@@ -9,14 +9,14 @@
 
 # Standard rainbow palette (7 colors with roughly constant brightness)
 var PALETTE_RAINBOW = bytes(
-  "00FC0000"    # Red (value 0)
-  "24FF8000"    # Orange (value 36)
-  "49FFFF00"    # Yellow (value 73)
-  "6E00FF00"    # Green (value 110)
-  "9200FFFF"    # Cyan (value 146)
-  "B70080FF"    # Blue (value 183)
-  "DB8000FF"    # Violet (value 219)
-  "FFFF0000"    # Red (value 255)
+  "FFFC0000"    # Red
+  "FFFF8000"    # Orange
+  "FFFFFF00"    # Yellow
+  "FF00FF00"    # Green
+  "FF00FFFF"    # Cyan
+  "FF0080FF"    # Blue
+  "FF8000FF"    # Violet
+  "FFFC0000"    # Red
 )
 
 # Simple RGB palette (3 colors)
