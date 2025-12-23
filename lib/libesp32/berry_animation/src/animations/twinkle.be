@@ -16,9 +16,9 @@ class TwinkleAnimation : animation.animation
   
   # Parameter definitions with constraints
   static var PARAMS = animation.enc_params({
-    "color": {"default": 0xFFFFFFFF},
-    "density": {"min": 0, "max": 255, "default": 128},
-    "twinkle_speed": {"min": 1, "max": 5000, "default": 6},
+    "color": {"default": 0xFFFFFFBB},       # slightly yellow stars
+    "density": {"min": 0, "max": 255, "default": 64},
+    "twinkle_speed": {"min": 1, "max": 5000, "default": 100},
     "fade_speed": {"min": 0, "max": 255, "default": 180},
     "min_brightness": {"min": 0, "max": 255, "default": 32},
     "max_brightness": {"min": 0, "max": 255, "default": 255}

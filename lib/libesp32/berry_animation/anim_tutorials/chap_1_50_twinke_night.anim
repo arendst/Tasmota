@@ -1,0 +1,16 @@
+# @desc Twinkle night - twinkle stars over a dark night
+
+# Dark blue background
+color space_blue = 0x000066    # Note: opaque 0xFF alpha channel is implicitly added
+animation background = solid(color=space_blue)
+run background
+
+# Note: when parameters are in separate lines, you don't need a comma ','
+animation stars = twinkle_animation(
+  color=0xFFFFAA        # Light yellow sparkles
+  density=8             # density (moderate sparkles)
+  twinkle_speed=100ms   # twinkle speed
+  fade_speed=50         # when no unit, time unit is 'ms'
+  priority=8            # default priority is 10, so being lower than background puts it on top
+)
+run stars
