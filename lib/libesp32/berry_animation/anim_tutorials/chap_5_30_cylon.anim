@@ -1,0 +1,13 @@
+# @desc Moving red beacon - Cylon style
+
+# Because strip_length is dynamic, we need to map it to a variable and can't use the function directly in formulas
+set strip_len = strip_length()
+
+# In this example, the 'cosine_osc' is created within the call
+animation back = beacon_animation(
+    color = red
+    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
+    beacon_size = 3       # small 3 pixels eye
+    slew_size = 2         # with 2 pixel shading around
+)
+run back

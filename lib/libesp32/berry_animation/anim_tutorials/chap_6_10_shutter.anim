@@ -1,0 +1,17 @@
+# @desc Shutter left to right using beacon
+
+# Define 'strip_len' to make calculations
+set strip_len = strip_length()
+
+# Define shutter_size as a sawtootgh from 0 to strip_len
+set shutter_size = sawtooth(min_value = 0, max_value = strip_len,
+                            duration = 1.5s)
+
+# Using beacon_animation to move a shutter from left to right
+    animation shutter_lr_animation = beacon_animation(
+    color = red
+    back_color = blue
+    pos = 0                         # Start from position 0 (left)
+    beacon_size = shutter_size      # Oscillating size from 0 to strip_len
+)
+run shutter_lr_animation
