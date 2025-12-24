@@ -273,6 +273,10 @@ bool Xsns106(uint32_t function) {
         break;
 #endif  // USE_WEBSERVER
     }
+  } else {
+    if (FUNC_EVERY_SECOND == function) {
+      Gdk101Detect();
+    }
   }
   return result;
 }
