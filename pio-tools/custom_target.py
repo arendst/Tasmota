@@ -1,18 +1,17 @@
 # Written by Maximilian Gerhardt <maximilian.gerhardt@rub.de>
 # 29th December 2020
 # and Christian Baars, Johann Obermeier
-# 2023 / 2024
+# 2023 - 2025
 # License: Apache
 # Expanded from functionality provided by PlatformIO's espressif32 and espressif8266 platforms, credited below.
 # This script provides functions to download the filesystem (LittleFS) from a running ESP32 / ESP8266
-# over the serial bootloader using esptool.py, and mklittlefs for extracting.
+# over the serial bootloader using esptool.py, and littlefs-python for extracting.
 # run by either using the VSCode task "Custom" -> "Download Filesystem"
 # or by doing 'pio run -t downloadfs' (with optional '-e <environment>') from the commandline.
 # output will be saved, by default, in the "unpacked_fs" of the project.
 # this folder can be changed by writing 'custom_unpack_dir = some_other_dir' in the corresponding platformio.ini
 # environment.
 import re
-import sys
 from os.path import isfile, join
 from enum import Enum
 import os
@@ -20,7 +19,9 @@ import tasmotapiolib
 import subprocess
 import shutil
 import json
+from pathlib import Path
 from colorama import Fore, Back, Style
+from littlefs import LittleFS
 from platformio.compat import IS_WINDOWS
 from platformio.project.config import ProjectConfig
 
@@ -42,19 +43,12 @@ class FSInfo:
         self.block_size = block_size
     def __repr__(self):
         return f"FS type {self.fs_type} Start {hex(self.start)} Len {self.length} Page size {self.page_size} Block size {self.block_size}"
-    # extract command supposed to be implemented by subclasses
-    def get_extract_cmd(self, input_file, output_dir):
-        raise NotImplementedError()
 
 class FS_Info(FSInfo):
     def __init__(self, start, length, page_size, block_size):
-        self.tool = env["MKFSTOOL"]
-        self.tool = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-mklittlefs", self.tool)
         super().__init__(FSType.LITTLEFS, start, length, page_size, block_size)
     def __repr__(self):
         return f"{self.fs_type} Start {hex(self.start)} Len {hex(self.length)} Page size {hex(self.page_size)} Block size {hex(self.block_size)}"
-    def get_extract_cmd(self, input_file, output_dir):
-        return f'"{self.tool}" -b {self.block_size} -s {self.length} -p {self.page_size} --unpack "{output_dir}" "{input_file}"'
 
 def _parse_size(value):
     if isinstance(value, int):
@@ -150,15 +144,11 @@ switch_off_ldf()
 ## Script interface functions
 def parse_partition_table(content):
     entries = [e for e in content.split(b'\xaaP') if len(e) > 0]
-    #print("Partition data:")
     for entry in entries:
         type = entry[1]
         if type in [0x82,0x83]: # SPIFFS or LITTLEFS
-            offset = int.from_bytes(entry[2:5], byteorder='little', signed=False)
-            size = int.from_bytes(entry[6:9], byteorder='little', signed=False)
-            #print("type:",hex(type))
-            #print("address:",hex(offset))
-            #print("size:",hex(size))
+            offset = int.from_bytes(entry[2:6], byteorder='little', signed=False)
+            size = int.from_bytes(entry[6:10], byteorder='little', signed=False)
             env["FS_START"] = offset
             env["FS_SIZE"] = size
             env["FS_PAGE"] = int("0x100", 16)
@@ -266,20 +256,67 @@ def unpack_fs(fs_info: FSInfo, downloaded_file: str):
     if not os.path.exists(unpack_dir):
         os.makedirs(unpack_dir)
 
-    cmd = fs_info.get_extract_cmd(downloaded_file, unpack_dir)
-    print("Unpack files from filesystem image")
+    print()
     try:
-        returncode = subprocess.call(cmd, shell=True)
+        # Read the downloaded filesystem image
+        with open(downloaded_file, 'rb') as f:
+            fs_data = f.read()
+        
+        # Calculate block count
+        block_count = fs_info.length // fs_info.block_size
+        
+        # Create LittleFS instance and mount the image
+        fs = LittleFS(
+            block_size=fs_info.block_size,
+            block_count=block_count,
+            mount=False
+        )
+        fs.context.buffer = bytearray(fs_data)
+        fs.mount()
+        
+        # Extract all files
+        unpack_path = Path(unpack_dir)
+        for root, dirs, files in fs.walk("/"):
+            if not root.endswith("/"):
+                root += "/"
+            # Create directories
+            for dir_name in dirs:
+                src_path = root + dir_name
+                dst_path = unpack_path / src_path[1:]  # Remove leading '/'
+                dst_path.mkdir(parents=True, exist_ok=True)
+            # Extract files
+            for file_name in files:
+                src_path = root + file_name
+                dst_path = unpack_path / src_path[1:]  # Remove leading '/'
+                dst_path.parent.mkdir(parents=True, exist_ok=True)
+                with fs.open(src_path, "rb") as src:
+                    dst_path.write_bytes(src.read())
+        
+        fs.unmount()
         return (True, unpack_dir)
-    except subprocess.CalledProcessError as exc:
-        print("Unpacking filesystem failed with " + str(exc))
+    except Exception as exc:
+        print("Unpacking filesystem with littlefs-python failed with " + str(exc))
         return (False, "")
 
 def display_fs(extracted_dir):
-    # extract command already nicely lists all extracted files.
-    # no need to display that ourselves. just display a summary
-    file_count = sum([len(files) for r, d, files in os.walk(extracted_dir)])
-    print("Extracted " + str(file_count) + " file(s) from filesystem.")
+    # List all extracted files
+    file_count = 0
+    print(Fore.GREEN + "Extracted files from filesystem image:")
+    print()
+    for root, dirs, files in os.walk(extracted_dir):
+        # Display directories
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            rel_path = os.path.relpath(dir_path, extracted_dir)
+            print(f"  [DIR]  {rel_path}/")
+        # Display files
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            rel_path = os.path.relpath(file_path, extracted_dir)
+            file_size = os.path.getsize(file_path)
+            print(f"  [FILE] {rel_path} ({file_size} bytes)")
+            file_count += 1
+    print(f"\nExtracted {file_count} file(s) from filesystem.")
 
 def command_download_fs(*args, **kwargs):
     info = get_fs_type_start_and_length()
