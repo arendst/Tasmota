@@ -3,7 +3,7 @@
 
 # Define a smooth palette using PALETTE_RAINBOW_W (7 colors + white)
 # 'cycle_period = 0' means that the colors don't change in time, only spatial change
-color rainbow_rich_color = rich_palette(palette=PALETTE_RAINBOW_W, cycle_period=0)
+color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, cycle_period=0)
 
 # Because strip_length is dynamic, we need to map it to a variable and can't use the function directly in formulas
 set strip_len = strip_length()

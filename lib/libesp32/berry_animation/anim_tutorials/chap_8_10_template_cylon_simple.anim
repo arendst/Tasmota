@@ -1,9 +1,11 @@
-# @desc Cylon-style scanning eye using template with customizable color
+# @desc Template example fir Cylon-style scanning eye
 
+# Define a full template with parameters: eye_color, back_color, period, priority
 template animation cylon_eye {
   param eye_color type color default red
   param back_color type color default transparent
   param period type time default 5s
+  param priority default 5
 
   set strip_len = strip_length()
 
@@ -13,7 +15,7 @@ template animation cylon_eye {
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = period)
     beacon_size = 3       # small 3 pixels eye
     slew_size = 2         # with 2 pixel shading around
-    priority = 5
+    priority = priority
   )
 
   run eye_animation

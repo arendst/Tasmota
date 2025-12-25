@@ -1,24 +1,26 @@
-# @desc Advanced shutter template with ascending/descending flags
+# @desc Template to illustrate the parameters and flags
 
+# Define a template to package the shutter in-out-in from 6.40
+# with flags to enable or disable in-out or out-in
 template animation shutter_bidir {
   param colors type palette
   param period default 2s
-  param ascending type bool default true    # define to true to enable 'ascending' part
-  param descending type bool default true   # define to true to enable 'descending' part
+  param inout type bool default true    # define to true to enable 'inout' part
+  param outin type bool default true   # define to true to enable 'outin' part
 
   # since 'strip_length()' is a value provider, it must be assigned to a variable before being used
   set strip_len = strip_length()
 
-  # animated value for the size of the shutter, evolving linearly in time (sawtooth from 0% to 100%)
+  # Define animated value for the size of the shutter, evolving linearly in time (sawtooth from 0% to 100%)
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
 
-  # define two rotating palettes, shifted by one color
-  color col1 = color_cycle(palette=colors, cycle_period=0)
-  color col2 = color_cycle(palette=colors, cycle_period=0)
+  # Define two rotating palettes, shifted by one color
+  color col1 = color_cycle(colors=colors, cycle_period=0)
+  color col2 = color_cycle(colors=colors, cycle_period=0)
   col2.next = 1     # move 'col2' to the next color so it's shifte by one compared to 'col1'
 
-  # shutter moving in ascending
-  animation shutter_lr_animation = beacon_animation(
+  # Shutter moving in in-out
+  animation shutter_inout_animation = beacon_animation(
     color = col2
     back_color = col1
     pos = 0
@@ -27,8 +29,8 @@ template animation shutter_bidir {
     priority = 5
   )
 
-  # shutter moving in descending
-  animation shutter_rl_animation = beacon_animation(
+  # shutter moving in out-in
+  animation shutter_outin_animation = beacon_animation(
     color = col1
     back_color = col2
     pos = 0
@@ -40,24 +42,23 @@ template animation shutter_bidir {
   # this is the overall sequence composed of two sub-sequences
   # the first in ascending mode, the second in descending
   sequence shutter_seq repeat forever {
-    if ascending {                              # un only if 'ascending' is true
+    if inout {                              # un only if 'ascending' is true
       repeat col1.palette_size times {          # run the shutter animation
         restart shutter_size                    # resync all times for this animation, to avoid temporal drift
-        play shutter_lr_animation for period    # run the animation
+        play shutter_inout_animation for period    # run the animation
         col1.next = 1                           # then move to next color for both palettes
         col2.next = 1
       }
     }
-    if descending {                             # run only if 'descending' is true
+    if outin {                             # run only if 'descending' is true
       repeat col1.palette_size times {
         restart shutter_size
-        play shutter_rl_animation for period
+        play shutter_outin_animation for period
         col1.next = 1
         col2.next = 1
       }
     }
   }
-  
   run shutter_seq
 }
 

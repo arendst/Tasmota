@@ -1,0 +1,23 @@
+# @desc Rainbow colors cycling with custom palette
+
+# Define a full template with parameters: colors, cycle_period
+template animation color_cycle2 {
+    param colors type palette
+    param cycle_period default 5s
+
+    # Define a color attribute that cycles over time, cycle is 5 seconds
+    color rainbow_color = color_cycle(colors=colors, cycle_period=cycle_period)
+
+    # Define a solid background with this dynamic color
+    animation back = solid(color=rainbow_color)
+    run back
+}
+
+palette rgb = [
+  0xFC0000        # Red
+  0x00FF00        # Green
+  0x0080FF        # Blue
+]
+
+animation main = color_cycle2(colors = rgb, cycle_period = 2s)
+run main

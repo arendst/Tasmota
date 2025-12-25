@@ -13,7 +13,7 @@ animation mask = crenel_animation(
 )
 
 # Define a smooth palette using PALETTE_RAINBOW_W (7 colors + white)
-color rainbow_rich_color = rich_palette(palette=PALETTE_RAINBOW_W, cycle_period=0)
+color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, cycle_period=0)
 # Define a gradient across the whole strip and use crenel as opacity mask
 animation pattern = palette_gradient_animation(
     color_source = rainbow_rich_color       # use the rainow pattern

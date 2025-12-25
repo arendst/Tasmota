@@ -31,9 +31,6 @@ class ColorCycleColorProvider : animation.color_provider
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
     super(self).init(engine)  # Initialize parameter system
-
-    # Set the default palette
-    self.palette = animation.PALETTE_RAINBOW
     
     # Initialize non-parameter instance variables
     self.current_index = 0      # Start at first color
@@ -71,7 +68,12 @@ class ColorCycleColorProvider : animation.color_provider
     if name == "palette_size"
       return self._get_palette_size()
     else
-      return super(self).member(name)
+      var val = super(self).member(name)
+      # If 'palette' is 'nil', default to 'animation.PALETTE_RAINBOW'
+      if name == "palette" && val == nil
+        val = animation.PALETTE_RAINBOW
+      end
+      return val
     end
   end
 

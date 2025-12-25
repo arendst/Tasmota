@@ -8,7 +8,7 @@ set strip_len = strip_length()
 # Define a pattern that goes from red to blue to red across the strip
 palette red_blue_red_palette = [ red, 0x3333FF, red ]
 # Embed this raw palette into a rich_palette color provider
-color red_blue_red_color = rich_palette(palette=red_blue_red_palette)
+color red_blue_red_color = rich_palette(colors=red_blue_red_palette)
 
 # Define a moving beacon to be used as an opacity mask
 animation moving_eye = beacon_animation(

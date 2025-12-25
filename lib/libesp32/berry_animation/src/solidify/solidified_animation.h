@@ -3744,9 +3744,9 @@ static const bvalue be_ktab_class_ColorCycleColorProvider[27] = {
   /* K19  */  be_nested_str_weak(next),
   /* K20  */  be_nested_str_weak(_adjust_index),
   /* K21  */  be_nested_str_weak(member),
-  /* K22  */  be_nested_str_weak(init),
-  /* K23  */  be_nested_str_weak(animation),
-  /* K24  */  be_nested_str_weak(PALETTE_RAINBOW),
+  /* K22  */  be_nested_str_weak(animation),
+  /* K23  */  be_nested_str_weak(PALETTE_RAINBOW),
+  /* K24  */  be_nested_str_weak(init),
   /* K25  */  be_nested_str_weak(get),
   /* K26  */  be_const_int(-16777216),
 };
@@ -4003,21 +4003,28 @@ be_local_closure(class_ColorCycleColorProvider_member,   /* name */
     &be_ktab_class_ColorCycleColorProvider,     /* shared constants */
     be_str_weak(member),
     &be_const_str_solidified,
-    ( &(const binstruction[14]) {  /* code */
+    ( &(const binstruction[21]) {  /* code */
       0x1C08030F,  //  0000  EQ	R2	R1	K15
       0x780A0003,  //  0001  JMPF	R2	#0006
       0x8C080101,  //  0002  GETMET	R2	R0	K1
       0x7C080200,  //  0003  CALL	R2	1
       0x80040400,  //  0004  RET	1	R2
-      0x70020006,  //  0005  JMP		#000D
+      0x7002000D,  //  0005  JMP		#0014
       0x60080003,  //  0006  GETGBL	R2	G3
       0x5C0C0000,  //  0007  MOVE	R3	R0
       0x7C080200,  //  0008  CALL	R2	1
       0x8C080515,  //  0009  GETMET	R2	R2	K21
       0x5C100200,  //  000A  MOVE	R4	R1
       0x7C080400,  //  000B  CALL	R2	2
-      0x80040400,  //  000C  RET	1	R2
-      0x80000000,  //  000D  RET	0
+      0x1C0C030D,  //  000C  EQ	R3	R1	K13
+      0x780E0004,  //  000D  JMPF	R3	#0013
+      0x4C0C0000,  //  000E  LDNIL	R3
+      0x1C0C0403,  //  000F  EQ	R3	R2	R3
+      0x780E0001,  //  0010  JMPF	R3	#0013
+      0xB80E2C00,  //  0011  GETNGBL	R3	K22
+      0x88080717,  //  0012  GETMBR	R2	R3	K23
+      0x80040400,  //  0013  RET	1	R2
+      0x80000000,  //  0014  RET	0
     })
   )
 );
@@ -4116,22 +4123,19 @@ be_local_closure(class_ColorCycleColorProvider_init,   /* name */
     &be_ktab_class_ColorCycleColorProvider,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
+    ( &(const binstruction[12]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080516,  //  0003  GETMET	R2	R2	K22
+      0x8C080518,  //  0003  GETMET	R2	R2	K24
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0xB80A2E00,  //  0006  GETNGBL	R2	K23
-      0x88080518,  //  0007  GETMBR	R2	R2	K24
-      0x90021A02,  //  0008  SETMBR	R0	K13	R2
-      0x90020903,  //  0009  SETMBR	R0	K4	K3
-      0x88080110,  //  000A  GETMBR	R2	R0	K16
-      0x8C0C0101,  //  000B  GETMET	R3	R0	K1
-      0x7C0C0200,  //  000C  CALL	R3	1
-      0x980A1E03,  //  000D  SETIDX	R2	K15	R3
-      0x80000000,  //  000E  RET	0
+      0x90020903,  //  0006  SETMBR	R0	K4	K3
+      0x88080110,  //  0007  GETMBR	R2	R0	K16
+      0x8C0C0101,  //  0008  GETMET	R3	R0	K1
+      0x7C0C0200,  //  0009  CALL	R3	1
+      0x980A1E03,  //  000A  SETIDX	R2	K15	R3
+      0x80000000,  //  000B  RET	0
     })
   )
 );
