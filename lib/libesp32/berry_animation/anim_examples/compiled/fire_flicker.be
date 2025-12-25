@@ -22,7 +22,7 @@ var fire_colors_ = bytes(
 )
 # Create base fire animation with palette
 var fire_base_color_ = animation.rich_palette(engine)
-fire_base_color_.palette = fire_colors_
+fire_base_color_.colors = fire_colors_
 fire_base_color_.cycle_period = 3000
 fire_base_color_.transition_type = animation.LINEAR
 fire_base_color_.brightness = 255
@@ -38,7 +38,7 @@ fire_base_.opacity = (def (engine)
 end)(engine)
 # Add subtle position variation for more realism
 var flicker_pattern_ = animation.rich_palette(engine)
-flicker_pattern_.palette = fire_colors_
+flicker_pattern_.colors = fire_colors_
 flicker_pattern_.cycle_period = 2000
 flicker_pattern_.transition_type = animation.LINEAR
 flicker_pattern_.brightness = 255
@@ -69,14 +69,14 @@ palette fire_colors = [
 ]
 
 # Create base fire animation with palette
-color fire_base_color = rich_palette(palette=fire_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
+color fire_base_color = rich_palette(colors=fire_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
 animation fire_base = solid(color=fire_base_color)
 
 # Add flickering effect with random intensity changes
 fire_base.opacity = smooth(min_value=180, max_value=255, duration=800ms)
 
 # Add subtle position variation for more realism
-color flicker_pattern = rich_palette(palette=fire_colors, cycle_period=2s, transition_type=LINEAR, brightness=255)
+color flicker_pattern = rich_palette(colors=fire_colors, cycle_period=2s, transition_type=LINEAR, brightness=255)
 animation fire_flicker = twinkle_animation(
   color=flicker_pattern # color source
   density=12            # density (number of flickers)

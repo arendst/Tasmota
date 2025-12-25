@@ -47,7 +47,7 @@ def test_palette_newline_entries()
     "  (192, 0x00AA00)\n" +
     "  (255, 0x00FF00)\n" +
     "]\n" +
-    "color stream_color = rich_palette(palette=matrix_greens, cycle_period=2s)\n" +
+    "color stream_color = rich_palette(colors=matrix_greens, cycle_period=2s)\n" +
     "animation stream = solid(color=stream_color)\n" +
     "run stream"
   
@@ -112,7 +112,7 @@ def test_color_provider_newline_syntax()
   var dsl_source = 
     "palette test_palette = [(0, 0x000000), (255, 0xFFFFFF)]\n" +
     "color dynamic_color = rich_palette(\n" +
-    "  palette=test_palette\n" +
+    "  colors=test_palette\n" +
     "  cycle_period=2s\n" +
     "  transition_type=LINEAR\n" +
     "  brightness=255\n" +
@@ -124,7 +124,7 @@ def test_color_provider_newline_syntax()
   
   assert(berry_code != nil, "Should compile color provider with newline syntax")
   assert(string.find(berry_code, "var dynamic_color_ = animation.rich_palette(engine)") >= 0, "Should generate color provider creation")
-  assert(string.find(berry_code, "dynamic_color_.palette = test_palette_") >= 0, "Should generate palette assignment")
+  assert(string.find(berry_code, "dynamic_color_.colors = test_palette_") >= 0, "Should generate palette assignment")
   assert(string.find(berry_code, "dynamic_color_.cycle_period = 2000") >= 0, "Should generate cycle_period assignment")
   
   print("✓ Color provider newline syntax test passed")
@@ -173,7 +173,7 @@ def test_complex_example()
     "]\n" +
     "\n" +
     "color stream_pattern = rich_palette(\n" +
-    "  palette=matrix_greens\n" +
+    "  colors=matrix_greens\n" +
     "  cycle_period=2s\n" +
     "  transition_type=LINEAR\n" +
     "  brightness=255\n" +

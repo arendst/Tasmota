@@ -34,7 +34,7 @@ var rainbow_with_white = bytes(
 
 # Create a rich palette color provider
 var rainbow_rich_color = animation.rich_palette(engine)
-rainbow_rich_color.palette = rainbow_with_white
+rainbow_rich_color.colors = rainbow_with_white
 rainbow_rich_color.cycle_period = 10000  # 10 seconds
 rainbow_rich_color.transition_type = animation.SINE
 

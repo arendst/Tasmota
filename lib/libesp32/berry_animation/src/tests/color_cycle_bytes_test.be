@@ -38,7 +38,7 @@ def test_color_cycle_bytes_format()
     "FFFFFF00"    # Opaque yellow (alpha=0xFF)
   )
   
-  provider.palette = custom_palette
+  provider.colors = custom_palette
   var custom_size = provider._get_palette_size()
   assert(custom_size == 4, f"Custom palette should have 4 colors, got {custom_size}")
   
@@ -103,7 +103,7 @@ def test_color_cycle_bytes_format()
   
   # Test 11: Test empty palette handling
   var empty_palette = bytes()
-  provider.palette = empty_palette
+  provider.colors = empty_palette
   var empty_size = provider._get_palette_size()
   assert(empty_size == 0, f"Empty palette should have 0 colors")
   
@@ -121,7 +121,7 @@ def test_bytes_parameter_validation()
   
   # Test 1: Valid bytes palette should be accepted
   var valid_palette = bytes("FF0000FFFF00FF00FFFF0000")
-  provider.palette = valid_palette
+  provider.colors = valid_palette
   assert(provider.palette_size == 3, "Valid bytes palette should be accepted")
   
   # Test 2: Invalid types should be rejected
@@ -130,7 +130,7 @@ def test_bytes_parameter_validation()
   for invalid_val : invalid_types
     var caught_error = false
     try
-      provider.palette = invalid_val
+      provider.colors = invalid_val
     except "value_error"
       caught_error = true
     end

@@ -262,7 +262,7 @@ print(repeat_berry_code)
   # Test complex cylon rainbow example
   var cylon_dsl = "set strip_len = strip_length()\n" +
     "palette eye_palette = [ red, yellow, green, violet ]\n" +
-    "color eye_color = color_cycle(palette=eye_palette, cycle_period=0)\n" +
+    "color eye_color = color_cycle(colors=eye_palette, cycle_period=0)\n" +
     "set cosine_val = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = 5s)\n" +
     "set triangle_val = triangle(min_value = 0, max_value = strip_len - 2, duration = 5s)\n" +
     "\n" +
@@ -991,7 +991,7 @@ def test_animation_type_checking()
   
   # Test color provider assigned to animation (should fail at transpile time)
   var color_provider_as_animation_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
-    "animation invalid_anim = rich_palette(palette=breathe_palette)"
+    "animation invalid_anim = rich_palette(colors=breathe_palette)"
   
   try
     var invalid_code = animation_dsl.compile(color_provider_as_animation_dsl)
@@ -1023,7 +1023,7 @@ def test_color_type_checking()
   
   # Test color provider functions (if they exist)
   var color_provider_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
-    "color cycle_colors = color_cycle(palette=[0xFF0000, 0x00FF00, 0x0000FF])\n" +
+    "color cycle_colors = color_cycle(colors=[0xFF0000, 0x00FF00, 0x0000FF])\n" +
     "animation cycle_anim = solid(color=cycle_colors)\n" +
     "run cycle_anim"
   

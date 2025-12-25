@@ -42,7 +42,7 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
-    "palette": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
+    "colors": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR}
     # brightness parameter inherited from ColorProvider base class
@@ -63,7 +63,7 @@ class RichPaletteColorProvider : animation.color_provider
     self._light_state = global.light_state(global.light_state.RGB)
 
     # Set default palette to animation.PALETTE_RAINBOW
-    self.palette = animation.PALETTE_RAINBOW
+    self.colors = animation.PALETTE_RAINBOW
 
     # We need to register this value provider to receive 'update()'
     engine.add(self)
@@ -75,7 +75,7 @@ class RichPaletteColorProvider : animation.color_provider
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
-    if name == "cycle_period" || name == "palette"
+    if name == "cycle_period" || name == "colors"
       if (self._slots_arr != nil) || (self._value_arr != nil)
         # only if they were already computed
         self._recompute_palette()
@@ -83,7 +83,7 @@ class RichPaletteColorProvider : animation.color_provider
     end
     # Mark LUT as dirty when palette or transition_type changes
     # Note: brightness changes do NOT invalidate LUT since brightness is applied after lookup
-    if name == "palette" || name == "transition_type"
+    if name == "colors" || name == "transition_type"
       self._lut_dirty = true
     end
     # Brightness changes do NOT invalidate LUT - brightness is applied after lookup
@@ -104,7 +104,7 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Get palette bytes from parameter with default fallback
   def _get_palette_bytes()
-    var palette_bytes = self.palette
+    var palette_bytes = self.colors
     return (palette_bytes != nil) ? palette_bytes : self._DEFAULT_PALETTE
   end
   static _DEFAULT_PALETTE = bytes(

@@ -66,7 +66,7 @@ def test_multiple_providers_coordination()
   brightness_osc.duration = 2000
   
   var color_cycle = animation.color_cycle(engine)
-  color_cycle.palette = bytes("FFFF0000" "FF00FF00" "FF0000FF")
+  color_cycle.colors = bytes("FFFF0000" "FF00FF00" "FF0000FF")
   color_cycle.cycle_period = 5000
   
   # Create animation using all providers

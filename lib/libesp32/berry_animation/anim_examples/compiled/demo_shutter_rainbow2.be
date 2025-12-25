@@ -22,10 +22,10 @@ var shutter_size_ = (def (engine)
   return provider
 end)(engine)
 var col1_ = animation.color_cycle(engine)
-col1_.palette = animation.PALETTE_RAINBOW
+col1_.colors = animation.PALETTE_RAINBOW
 col1_.cycle_period = 0
 var col2_ = animation.color_cycle(engine)
-col2_.palette = animation.PALETTE_RAINBOW
+col2_.colors = animation.PALETTE_RAINBOW
 col2_.cycle_period = 0
 col2_.next = 1
 var shutter_animation_ = animation.beacon_animation(engine)
@@ -57,8 +57,8 @@ set duration = 3s
   set strip_len = strip_length()
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
 
-  color col1 = color_cycle(palette=PALETTE_RAINBOW, cycle_period=0)
-  color col2 = color_cycle(palette=PALETTE_RAINBOW, cycle_period=0)
+  color col1 = color_cycle(colors=PALETTE_RAINBOW, cycle_period=0)
+  color col2 = color_cycle(colors=PALETTE_RAINBOW, cycle_period=0)
   col2.next = 1
 
   animation shutter_animation = beacon_animation(

@@ -36,7 +36,7 @@ var rainbow_palette = bytes(
 
 # Create the color provider
 var provider = animation.rich_palette(engine)
-provider.palette = rainbow_palette
+provider.colors = rainbow_palette
 provider.cycle_period = 0  # Value-based mode for gradient
 provider.brightness = 255
 

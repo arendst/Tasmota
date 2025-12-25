@@ -237,7 +237,7 @@ end
 # @return SparkleAnimation - A new rainbow sparkle animation instance
 def sparkle_rainbow(engine)
   var rainbow_provider = animation.rich_palette(engine)
-  rainbow_provider.palette = animation.PALETTE_RAINBOW
+  rainbow_provider.colors = animation.PALETTE_RAINBOW
   rainbow_provider.cycle_period = 5000
   rainbow_provider.transition_type = 1  # sine transition
   

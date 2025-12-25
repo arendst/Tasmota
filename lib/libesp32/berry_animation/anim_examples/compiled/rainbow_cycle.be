@@ -15,7 +15,7 @@ var engine = animation.init_strip()
 var rainbow_palette_ = bytes("FFFF0000" "FFFF8000" "FFFFFF00" "FF00FF00" "FF0000FF" "FF8000FF" "FFFF00FF")  # rainbow colors
 # Create smooth rainbow cycle animation
 var rainbow_cycle_ = animation.color_cycle(engine)
-rainbow_cycle_.palette = rainbow_palette_
+rainbow_cycle_.colors = rainbow_palette_
 rainbow_cycle_.cycle_period = 5000  # cycle period
 var rainbow_animation_ = animation.solid(engine)
 rainbow_animation_.color = rainbow_cycle_
@@ -34,7 +34,7 @@ palette rainbow_palette = [0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8
 
 # Create smooth rainbow cycle animation
 color rainbow_cycle = color_cycle(
-  palette=rainbow_palette
+  colors=rainbow_palette
   cycle_period=5s  # cycle period
 )
 animation rainbow_animation = solid(color=rainbow_cycle)

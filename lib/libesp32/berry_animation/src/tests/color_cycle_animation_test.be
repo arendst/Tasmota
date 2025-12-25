@@ -65,12 +65,12 @@ class ColorCycleAnimationTest
     # Check that the color was set correctly
     self.assert_equal(anim.color != nil, true, "Color is set")
     var color_provider = anim.get_param("color")  # Get raw provider object
-    self.assert_equal(color_provider.palette != nil, true, "Color provider has palette property")
+    self.assert_equal(color_provider.colors != nil, true, "Color provider has colors property")
     
     # Test with custom parameters
     var custom_palette = bytes("FFFF0000FF00FF00")  # Red and Green in AARRGGBB format
     var custom_provider = animation.color_cycle(engine)
-    custom_provider.palette = custom_palette
+    custom_provider.colors = custom_palette
     custom_provider.cycle_period = 2000
     
     var anim2 = animation.solid(engine)
@@ -83,18 +83,18 @@ class ColorCycleAnimationTest
     # Check that the color was set correctly
     self.assert_equal(anim2.color != nil, true, "Custom color is set")
     var color_provider2 = anim2.get_param("color")  # Get raw provider object
-    self.assert_equal(color_provider2.palette != nil, true, "Custom color provider has palette property")
+    self.assert_equal(color_provider2.colors != nil, true, "Custom color provider has colors property")
     
     # Check provider properties
-    self.assert_equal(color_provider2._get_palette_size(), 2, "Custom palette has 2 colors")
+    self.assert_equal(color_provider2._get_palette_size(), 2, "Custom colors has 2 colors")
     self.assert_equal(color_provider2.cycle_period, 2000, "Custom cycle period is 2000ms")
   end
   
   def test_update_and_render()
     # Create animation with red and blue colors
-    var palette = bytes("FFFF0000FF0000FF")  # Red and Blue in AARRGGBB format
+    var colors = bytes("FFFF0000FF0000FF")  # Red and Blue in AARRGGBB format
     var provider = animation.color_cycle(engine)
-    provider.palette = palette
+    provider.colors = colors
     provider.cycle_period = 1000  # 1 second cycle
     
     var anim = animation.solid(engine)
@@ -142,7 +142,7 @@ class ColorCycleAnimationTest
     
     # Create animation with manual-only color provider
     var manual_provider = animation.color_cycle(engine)
-    manual_provider.palette = bytes("FF0000FFFF00FF00FFFF0000")  # Blue, Green, Red in AARRGGBB format
+    manual_provider.colors = bytes("FF0000FFFF00FF00FFFF0000")  # Blue, Green, Red in AARRGGBB format
     manual_provider.cycle_period = 0  # Manual-only mode
     
     var manual_anim = animation.solid(engine)
@@ -191,7 +191,7 @@ class ColorCycleAnimationTest
   def test_direct_creation()
     # Test direct creation without factory method (following new parameterized pattern)
     var provider = animation.color_cycle(engine)
-    provider.palette = bytes("FF0000FFFF00FF00FFFF0000")  # Blue, Green, Red in AARRGGBB format
+    provider.colors = bytes("FF0000FFFF00FF00FFFF0000")  # Blue, Green, Red in AARRGGBB format
     provider.cycle_period = 3000  # 3 second cycle period
     
     var anim = animation.solid(engine)
@@ -205,7 +205,7 @@ class ColorCycleAnimationTest
     self.assert_equal(anim != nil, true, "Animation was created")
     self.assert_equal(anim.render != nil, true, "Animation has render method")
     var color_provider3 = anim.get_param("color")  # Get raw provider object
-    self.assert_equal(color_provider3.palette != nil, true, "Color provider has palette property")
+    self.assert_equal(color_provider3.colors != nil, true, "Color provider has colors property")
     
     # Check provider properties
     self.assert_equal(color_provider3._get_palette_size(), 3, "Palette has 3 colors")

@@ -76,25 +76,25 @@ def test_palette_size_updates_with_palette_changes()
   
   # Test 1: 2-color palette
   var palette_2 = bytes("FFFF0000" "FF00FF00")
-  provider.palette = palette_2
+  provider.colors = palette_2
   var size_2 = provider.palette_size
   assert(size_2 == 2, f"palette_size should be 2 for 2-color palette, got {size_2}")
   
   # Test 2: 5-color palette
   var palette_5 = bytes("FFFF0000" "FF00FF00" "FF0000FF" "FFFFFF00" "FFFF00FF")
-  provider.palette = palette_5
+  provider.colors = palette_5
   var size_5 = provider.palette_size
   assert(size_5 == 5, f"palette_size should be 5 for 5-color palette, got {size_5}")
   
   # Test 3: 1-color palette
   var palette_1 = bytes("FFFF0000")
-  provider.palette = palette_1
+  provider.colors = palette_1
   var size_1 = provider.palette_size
   assert(size_1 == 1, f"palette_size should be 1 for 1-color palette, got {size_1}")
   
   # Test 4: Empty palette
   var empty_palette = bytes()
-  provider.palette = empty_palette
+  provider.colors = empty_palette
   var size_0 = provider.palette_size
   assert(size_0 == 0, f"palette_size should be 0 for empty palette, got {size_0}")
   
@@ -103,7 +103,7 @@ def test_palette_size_updates_with_palette_changes()
     "FFFF0000" "FF00FF00" "FF0000FF" "FFFFFF00" "FFFF00FF"
     "FF800000" "FF008000" "FF000080" "FF808000" "FF800080"
   )
-  provider.palette = palette_10
+  provider.colors = palette_10
   var size_10 = provider.palette_size
   assert(size_10 == 10, f"palette_size should be 10 for 10-color palette, got {size_10}")
   
@@ -136,7 +136,7 @@ def test_palette_size_with_new_instances()
   
   # Test 2: Changing one instance shouldn't affect the other
   var custom_palette = bytes("FFFF0000" "FF00FF00")
-  provider1.palette = custom_palette
+  provider1.colors = custom_palette
   
   assert(provider1.palette_size == 2, "First provider should have palette_size of 2 after change")
   assert(provider2.palette_size == 7, "Second provider should still have palette_size of 7")

@@ -119,7 +119,7 @@ class DSLValueProviderValidationTest
   def test_nested_value_providers()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation test = pulsating_animation(color=color_cycle(palette=[0xFF0000FF, 0xFF00FF00], cycle_period=oscillator_value(min_value=1000, bad_param=456)))\n"
+      "animation test = pulsating_animation(color=color_cycle(colors=[0xFF0000FF, 0xFF00FF00], cycle_period=oscillator_value(min_value=1000, bad_param=456)))\n"
       "run test"
     
     var compilation_failed = false

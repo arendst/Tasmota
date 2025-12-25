@@ -24,7 +24,7 @@ print(f"Animation created: {anim}")
 print(f"Animation type: {type(anim)}")
 
 # Test 2: Set parameters using virtual member assignment (parameter forwarding)
-anim.palette = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
+anim.colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
 anim.cycle_period = 3000
 anim.transition_type = 1  # sine
 anim.brightness = 200
@@ -38,7 +38,7 @@ anim.opacity = 255
 print("Set parameters using virtual member assignment")
 
 # Test parameter values (should be forwarded to internal provider)
-print(f"Palette: {bool(anim.palette)}")
+print(f"Palette: {bool(anim.colors)}")
 print(f"Cycle period: {anim.cycle_period}")
 print(f"Transition type: {anim.transition_type}")
 print(f"Brightness: {anim.brightness}")
@@ -104,14 +104,14 @@ var rainbow_palette = bytes(
 )
 
 var rainbow_anim = animation.rich_palette_animation(engine)
-rainbow_anim.palette = rainbow_palette
+rainbow_anim.colors = rainbow_palette
 rainbow_anim.cycle_period = 5000
 rainbow_anim.brightness = 255
 print("Created rainbow animation with custom palette")
 
 # Test 9: Test static mode (cycle_period = 0)
 var static_anim = animation.rich_palette_animation(engine)
-static_anim.palette = rainbow_palette
+static_anim.colors = rainbow_palette
 static_anim.cycle_period = 0  # Static mode
 static_anim.brightness = 150
 print("Created static animation (cycle_period = 0)")

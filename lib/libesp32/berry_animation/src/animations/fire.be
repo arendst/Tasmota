@@ -183,7 +183,7 @@ class FireAnimation : animation.animation
         if resolved_color == nil
           # Create default fire palette on demand
           var fire_provider = animation.rich_palette(self.engine)
-          fire_provider.palette = animation.PALETTE_FIRE
+          fire_provider.colors = animation.PALETTE_FIRE
           fire_provider.cycle_period = 0  # Use value-based color mapping, not time-based
           fire_provider.transition_type = 1  # Use sine transition (smooth)
           fire_provider.brightness = 255

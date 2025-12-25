@@ -19,7 +19,7 @@ var storm_colors_ = bytes(
   "FF220033"  # Slightly lighter purple
 )
 var storm_bg_ = animation.rich_palette_animation(engine)
-storm_bg_.palette = storm_colors_
+storm_bg_.colors = storm_colors_
 storm_bg_.cycle_period = 12000
 storm_bg_.transition_type = animation.SINE
 storm_bg_.brightness = 100
@@ -92,7 +92,7 @@ palette storm_colors = [
   (255, 0x220033)   # Slightly lighter purple
 ]
 
-animation storm_bg = rich_palette_animation(palette=storm_colors, cycle_period=12s, transition_type=SINE, brightness=100)
+animation storm_bg = rich_palette_animation(colors=storm_colors, cycle_period=12s, transition_type=SINE, brightness=100)
 
 # Random lightning flashes - full strip
 animation lightning_main = solid(color=0xFFFFFF)  # Bright white

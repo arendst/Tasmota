@@ -17,7 +17,7 @@ palette daylight_colors = [
 ]
 
 # Main daylight cycle - very slow transition
-animation daylight_cycle = rich_palette_animation(palette=daylight_colors, cycle_period=60s)
+animation daylight_cycle = rich_palette_animation(colors=daylight_colors, cycle_period=60s)
 
 # Add sun position effect - bright spot that moves
 animation sun_position = beacon_animation(

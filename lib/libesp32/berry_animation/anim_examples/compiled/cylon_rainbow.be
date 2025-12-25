@@ -15,7 +15,7 @@ var strip_len_ = animation.strip_length(engine)
 var eye_duration_ = 5000  # duration for a cylon eye cycle
 var eye_palette_ = bytes("FFFF0000" "FFFFFF00" "FF008000" "FFEE82EE")
 var eye_color_ = animation.color_cycle(engine)
-eye_color_.palette = eye_palette_
+eye_color_.colors = eye_palette_
 eye_color_.cycle_period = 0
 var cosine_val_ = (def (engine)
   var provider = animation.cosine_osc(engine)
@@ -58,7 +58,7 @@ set eye_duration = 5s     # duration for a cylon eye cycle
 
 palette eye_palette = [ red, yellow, green, violet ]
 
-color eye_color = color_cycle(palette=eye_palette, cycle_period=0)
+color eye_color = color_cycle(colors=eye_palette, cycle_period=0)
 
 set cosine_val = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = eye_duration)
 set triangle_val = triangle(min_value = 0, max_value = strip_len - 2, duration = eye_duration)

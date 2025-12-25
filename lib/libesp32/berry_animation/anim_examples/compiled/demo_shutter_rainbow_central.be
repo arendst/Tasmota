@@ -30,10 +30,10 @@ class shutter_central_animation : animation.engine_proxy
       return provider
     end)(engine)
     var col1_ = animation.color_cycle(engine)
-    col1_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col1_.colors = animation.create_closure_value(engine, def (engine) return self.colors end)
     col1_.cycle_period = 0
     var col2_ = animation.color_cycle(engine)
-    col2_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col2_.colors = animation.create_closure_value(engine, def (engine) return self.colors end)
     col2_.cycle_period = 0
     col2_.next = 1
     # shutter moving in to out
@@ -101,8 +101,8 @@ template animation shutter_central {
   set strip_len2 = (strip_len + 1) / 2
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
 
-  color col1 = color_cycle(palette=colors, cycle_period=0)
-  color col2 = color_cycle(palette=colors, cycle_period=0)
+  color col1 = color_cycle(colors=colors, cycle_period=0)
+  color col2 = color_cycle(colors=colors, cycle_period=0)
   col2.next = 1
 
   # shutter moving in to out

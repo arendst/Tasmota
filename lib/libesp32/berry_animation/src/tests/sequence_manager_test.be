@@ -652,7 +652,7 @@ def test_sequence_manager_complex_parametric_scenario()
   }
   
   var color_cycle1 = {
-    "palette": rainbow_palette,
+    "colors": rainbow_palette,
     "current_index": 0,
     "palette_size": rainbow_palette["size"]
   }
@@ -753,7 +753,7 @@ def test_sequence_manager_zero_palette_size()
   
   # Create a color cycle with empty palette (palette_size = 0)
   var col1 = animation.color_cycle(engine)
-  col1.palette = bytes()  # Empty palette
+  col1.colors = bytes()  # Empty palette
   col1.cycle_period = 0
   
   # Verify palette size is 0
@@ -780,7 +780,7 @@ def test_sequence_manager_zero_palette_size()
   # Test with non-empty palette for comparison
   execution_count = 0
   var col2 = animation.color_cycle(engine)
-  col2.palette = bytes("FFFF0000" "FF00FF00" "FF0000FF")  # 3 colors
+  col2.colors = bytes("FFFF0000" "FF00FF00" "FF0000FF")  # 3 colors
   col2.cycle_period = 0
   
   assert(col2.palette_size == 3, f"Palette with 3 colors should have size 3, got {col2.palette_size}")

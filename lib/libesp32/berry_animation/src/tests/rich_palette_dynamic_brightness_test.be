@@ -29,7 +29,7 @@ var rgb_palette = bytes(
 )
 
 var provider = animation.rich_palette(engine)
-provider.palette = rgb_palette
+provider.colors = rgb_palette
 provider.cycle_period = 0  # Static mode
 
 # Initialize the provider and build LUT
@@ -143,7 +143,7 @@ log("---------------------------------")
 
 # Create a fresh provider
 var rebuild_provider = animation.rich_palette(engine)
-rebuild_provider.palette = rgb_palette
+rebuild_provider.colors = rgb_palette
 rebuild_provider.cycle_period = 0
 
 # Force initial build
@@ -157,7 +157,7 @@ rebuild_provider.get_color_for_value(128, 0)
 log(f"After lookup with new brightness: lut_dirty = {rebuild_provider._lut_dirty}")
 
 # Change palette - SHOULD trigger rebuild
-rebuild_provider.palette = bytes("00FF0000" "FFFFFF00")
+rebuild_provider.colors = bytes("00FF0000" "FFFFFF00")
 log(f"After palette change: lut_dirty = {rebuild_provider._lut_dirty}")
 rebuild_provider.get_color_for_value(128, 0)
 log(f"After lookup with new palette: lut_dirty = {rebuild_provider._lut_dirty}")
