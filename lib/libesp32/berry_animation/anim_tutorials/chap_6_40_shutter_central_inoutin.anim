@@ -1,0 +1,50 @@
+# @desc Shutter central inout and outin with rotating colors, using sequence
+
+# Define 'strip_len' to make calculations
+set strip_len = strip_length()
+set strip_len_2 = (strip_len + 1) / 2       # half length rounded
+
+# Set a global variable for 'period'
+set period = 1.5s
+
+# Define shutter_size as a sawtootgh from 0 to strip_len
+set shutter_size = sawtooth(min_value = 0, max_value = strip_len,
+                            duration = period)
+
+# Define 2 color providers cycling through palette rainbow with white
+# 'col2' is shifted by 1 color from 'col1'
+color col1 = color_cycle(palette=PALETTE_RAINBOW_W, cycle_period=0)
+color col2 = color_cycle(palette=PALETTE_RAINBOW_W, cycle_period=0)
+col2.next = 1           # Writing 1 to 'next' actually advances the color
+
+# Using beacon_animation to move a shutter from in to out
+animation shutter_inout_animation = beacon_animation(
+    color = col2                    # Use two rotating colors
+    back_color = col1               # Use two rotating colors
+    pos = strip_len_2 - (shutter_size + 1) / 2
+    beacon_size = shutter_size
+)
+
+# Similar but out to in
+animation shutter_outin_animation = beacon_animation(
+    color = col1
+    back_color = col2
+    pos = strip_len_2 - (strip_len - shutter_size + 1) / 2
+    beacon_size = strip_len - shutter_size
+)
+
+sequence shutter_seq repeat forever {
+    repeat col1.palette_size times {
+        restart shutter_size        # Make sure that shutter_size is synced with the sequence
+        play shutter_inout_animation for period
+        col1.next = 1               # set 'col1' to next color
+        col2.next = 1               # set 'col2' to next color
+    }
+    repeat col1.palette_size times {
+        restart shutter_size        # Make sure that shutter_size is synced with the sequence
+        play shutter_outin_animation for period
+        col1.next = 1               # set 'col1' to next color
+        col2.next = 1               # set 'col2' to next color
+    }
+}
+run shutter_seq

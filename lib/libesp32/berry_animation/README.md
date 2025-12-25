@@ -158,7 +158,7 @@ Animation|Description
 `pulsating_animation`|Breathing/pulsing effect with smooth transitions
 `breathe_animation`|Natural breathing effect with customizable curve
 `beacon_animation`|Pulse/highlight at specific position with optional slew
-`crenel_position_animation`|Crenel/square wave pattern
+`crenel_animation`|Crenel/square wave pattern
 `comet_animation`|Moving comet with fading tail
 `twinkle_animation`|Twinkling stars effect
 `fire_animation`|Realistic fire simulation

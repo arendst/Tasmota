@@ -18,7 +18,7 @@ def test_crenel_with_integer_color()
   var red_color = 0xFFFF0000  # Red
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_position_animation(engine)
+  var crenel = animation.crenel_animation(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = red_color
@@ -60,7 +60,7 @@ def test_crenel_with_color_provider()
   color_provider.color = blue_color
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_position_animation(engine)
+  var crenel = animation.crenel_animation(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = color_provider  # ColorProvider
@@ -102,7 +102,7 @@ def test_crenel_with_dynamic_color_provider()
   palette_provider.cycle_period = 2000  # 2 second cycle
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_position_animation(engine)
+  var crenel = animation.crenel_animation(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = palette_provider  # dynamic ColorProvider
@@ -150,7 +150,7 @@ def test_crenel_with_generic_value_provider()
   static_provider.value = 0xFFFF00FF  # Magenta
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_position_animation(engine)
+  var crenel = animation.crenel_animation(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = static_provider  # generic ValueProvider
@@ -187,7 +187,7 @@ def test_crenel_set_color_methods()
   var frame = animation.frame_buffer(5)
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_position_animation(engine)
+  var crenel = animation.crenel_animation(engine)
   
   # Set initial parameters
   crenel.color = 0xFFFF0000  # red
@@ -231,7 +231,7 @@ def test_crenel_tostring()
   var engine = animation.create_engine(strip)
   
   # Test with integer color
-  var crenel_int = animation.crenel_position_animation(engine)
+  var crenel_int = animation.crenel_animation(engine)
   crenel_int.color = 0xFFFF0000
   crenel_int.back_color = 0xFF000000
   crenel_int.pos = 0
@@ -252,7 +252,7 @@ def test_crenel_tostring()
   var color_provider = animation.static_color(engine)
   color_provider.color = 0xFF00FF00
   
-  var crenel_provider = animation.crenel_position_animation(engine)
+  var crenel_provider = animation.crenel_animation(engine)
   crenel_provider.color = color_provider
   crenel_provider.back_color = 0xFF000000
   crenel_provider.pos = 0

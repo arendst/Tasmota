@@ -1,0 +1,10 @@
+# @desc Crenel static
+
+# Define a simple crenel 2+2 red/blue
+animation back = crenel_animation(
+    color = red
+    back_color = blue
+    pulse_size = 2
+    low_size = 2
+)
+run back

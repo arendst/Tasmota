@@ -31,7 +31,7 @@ def run_tests()
   var engine = animation.create_engine(strip)
   
   # Test 1: Basic construction with new parameterized pattern
-  var crenel = animation.crenel_position_animation(engine)
+  var crenel = animation.crenel_animation(engine)
   test_assert(crenel != nil, "Crenel position animation creation")
   
   # Set parameters via virtual member assignment

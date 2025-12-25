@@ -14846,32 +14846,36 @@ be_local_class(OscillatorValueProvider,
 );
 
 /********************************************************************
-** Solidified function: create_closure_value
+** Solidified function: pulsating_animation
 ********************************************************************/
-be_local_closure(create_closure_value,   /* name */
+be_local_closure(pulsating_animation,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
+    4,                          /* nstack */
+    1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
+    ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(animation),
-    /* K1   */  be_nested_str_weak(closure_value),
-    /* K2   */  be_nested_str_weak(closure),
+    /* K1   */  be_nested_str_weak(breathe_animation),
+    /* K2   */  be_nested_str_weak(curve_factor),
+    /* K3   */  be_const_int(1),
+    /* K4   */  be_nested_str_weak(period),
     }),
-    be_str_weak(create_closure_value),
+    be_str_weak(pulsating_animation),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0xB80A0000,  //  0000  GETNGBL	R2	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100000,  //  0002  MOVE	R4	R0
-      0x7C080400,  //  0003  CALL	R2	2
-      0x900A0401,  //  0004  SETMBR	R2	K2	R1
-      0x80040400,  //  0005  RET	1	R2
+    ( &(const binstruction[ 8]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x5C0C0000,  //  0002  MOVE	R3	R0
+      0x7C040400,  //  0003  CALL	R1	2
+      0x90060503,  //  0004  SETMBR	R1	K2	K3
+      0x540A03E7,  //  0005  LDINT	R2	1000
+      0x90060802,  //  0006  SETMBR	R1	K4	R2
+      0x80040200,  //  0007  RET	1	R1
     })
   )
 );
@@ -15479,195 +15483,39 @@ be_local_closure(solid,   /* name */
 );
 /*******************************************************************/
 
-// compact class 'CrenelPositionAnimation' ktab size: 19, total: 24 (saved 40 bytes)
-static const bvalue be_ktab_class_CrenelPositionAnimation[19] = {
-  /* K0   */  be_nested_str_weak(back_color),
-  /* K1   */  be_nested_str_weak(pos),
-  /* K2   */  be_nested_str_weak(pulse_size),
-  /* K3   */  be_nested_str_weak(low_size),
-  /* K4   */  be_nested_str_weak(nb_pulse),
-  /* K5   */  be_nested_str_weak(color),
-  /* K6   */  be_const_int(-16777216),
-  /* K7   */  be_nested_str_weak(fill_pixels),
-  /* K8   */  be_nested_str_weak(pixels),
-  /* K9   */  be_const_int(0),
-  /* K10  */  be_const_int(1),
-  /* K11  */  be_nested_str_weak(set_pixel_color),
-  /* K12  */  be_nested_str_weak(get_param),
-  /* K13  */  be_nested_str_weak(animation),
-  /* K14  */  be_nested_str_weak(is_value_provider),
-  /* K15  */  be_nested_str_weak(0x_X2508x),
-  /* K16  */  be_nested_str_weak(CrenelPositionAnimation_X28color_X3D_X25s_X2C_X20pos_X3D_X25s_X2C_X20pulse_size_X3D_X25s_X2C_X20low_size_X3D_X25s_X2C_X20nb_pulse_X3D_X25s_X2C_X20priority_X3D_X25s_X2C_X20running_X3D_X25s_X29),
-  /* K17  */  be_nested_str_weak(priority),
-  /* K18  */  be_nested_str_weak(is_running),
-};
-
-
-extern const bclass be_class_CrenelPositionAnimation;
 
 /********************************************************************
-** Solidified function: render
+** Solidified function: create_closure_value
 ********************************************************************/
-be_local_closure(class_CrenelPositionAnimation_render,   /* name */
+be_local_closure(create_closure_value,   /* name */
   be_nested_proto(
-    16,                          /* nstack */
-    4,                          /* argc */
-    10,                          /* varg */
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_CrenelPositionAnimation,     /* shared constants */
-    be_str_weak(render),
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(animation),
+    /* K1   */  be_nested_str_weak(closure_value),
+    /* K2   */  be_nested_str_weak(closure),
+    }),
+    be_str_weak(create_closure_value),
     &be_const_str_solidified,
-    ( &(const binstruction[64]) {  /* code */
-      0x88100100,  //  0000  GETMBR	R4	R0	K0
-      0x88140101,  //  0001  GETMBR	R5	R0	K1
-      0x88180102,  //  0002  GETMBR	R6	R0	K2
-      0x881C0103,  //  0003  GETMBR	R7	R0	K3
-      0x88200104,  //  0004  GETMBR	R8	R0	K4
-      0x88240105,  //  0005  GETMBR	R9	R0	K5
-      0x60280009,  //  0006  GETGBL	R10	G9
-      0x002C0C07,  //  0007  ADD	R11	R6	R7
-      0x7C280200,  //  0008  CALL	R10	1
-      0x202C0906,  //  0009  NE	R11	R4	K6
-      0x782E0003,  //  000A  JMPF	R11	#000F
-      0x8C2C0307,  //  000B  GETMET	R11	R1	K7
-      0x88340308,  //  000C  GETMBR	R13	R1	K8
-      0x5C380800,  //  000D  MOVE	R14	R4
-      0x7C2C0600,  //  000E  CALL	R11	3
-      0x182C1509,  //  000F  LE	R11	R10	K9
-      0x782E0000,  //  0010  JMPF	R11	#0012
-      0x5828000A,  //  0011  LDCONST	R10	K10
-      0x1C2C1109,  //  0012  EQ	R11	R8	K9
-      0x782E0001,  //  0013  JMPF	R11	#0016
-      0x502C0200,  //  0014  LDBOOL	R11	1	0
-      0x80041600,  //  0015  RET	1	R11
-      0x142C1109,  //  0016  LT	R11	R8	K9
-      0x782E0006,  //  0017  JMPF	R11	#001F
-      0x002C0A06,  //  0018  ADD	R11	R5	R6
-      0x042C170A,  //  0019  SUB	R11	R11	K10
-      0x102C160A,  //  001A  MOD	R11	R11	R10
-      0x042C1606,  //  001B  SUB	R11	R11	R6
-      0x002C170A,  //  001C  ADD	R11	R11	K10
-      0x5C141600,  //  001D  MOVE	R5	R11
-      0x70020007,  //  001E  JMP		#0027
-      0x442C1400,  //  001F  NEG	R11	R10
-      0x142C0A0B,  //  0020  LT	R11	R5	R11
-      0x782E0004,  //  0021  JMPF	R11	#0027
-      0x202C1109,  //  0022  NE	R11	R8	K9
-      0x782E0002,  //  0023  JMPF	R11	#0027
-      0x00140A0A,  //  0024  ADD	R5	R5	R10
-      0x0420110A,  //  0025  SUB	R8	R8	K10
-      0x7001FFF7,  //  0026  JMP		#001F
-      0x142C0A03,  //  0027  LT	R11	R5	R3
-      0x782E0014,  //  0028  JMPF	R11	#003E
-      0x202C1109,  //  0029  NE	R11	R8	K9
-      0x782E0012,  //  002A  JMPF	R11	#003E
-      0x582C0009,  //  002B  LDCONST	R11	K9
-      0x14300B09,  //  002C  LT	R12	R5	K9
-      0x78320001,  //  002D  JMPF	R12	#0030
-      0x44300A00,  //  002E  NEG	R12	R5
-      0x5C2C1800,  //  002F  MOVE	R11	R12
-      0x14301606,  //  0030  LT	R12	R11	R6
-      0x78320008,  //  0031  JMPF	R12	#003B
-      0x00300A0B,  //  0032  ADD	R12	R5	R11
-      0x14301803,  //  0033  LT	R12	R12	R3
-      0x78320005,  //  0034  JMPF	R12	#003B
-      0x8C30030B,  //  0035  GETMET	R12	R1	K11
-      0x00380A0B,  //  0036  ADD	R14	R5	R11
-      0x5C3C1200,  //  0037  MOVE	R15	R9
-      0x7C300600,  //  0038  CALL	R12	3
-      0x002C170A,  //  0039  ADD	R11	R11	K10
-      0x7001FFF4,  //  003A  JMP		#0030
-      0x00140A0A,  //  003B  ADD	R5	R5	R10
-      0x0420110A,  //  003C  SUB	R8	R8	K10
-      0x7001FFE8,  //  003D  JMP		#0027
-      0x502C0200,  //  003E  LDBOOL	R11	1	0
-      0x80041600,  //  003F  RET	1	R11
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: tostring
-********************************************************************/
-be_local_closure(class_CrenelPositionAnimation_tostring,   /* name */
-  be_nested_proto(
-    12,                          /* nstack */
-    1,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_CrenelPositionAnimation,     /* shared constants */
-    be_str_weak(tostring),
-    &be_const_str_solidified,
-    ( &(const binstruction[30]) {  /* code */
-      0x4C040000,  //  0000  LDNIL	R1
-      0x8C08010C,  //  0001  GETMET	R2	R0	K12
-      0x58100005,  //  0002  LDCONST	R4	K5
+    ( &(const binstruction[ 6]) {  /* code */
+      0xB80A0000,  //  0000  GETNGBL	R2	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100000,  //  0002  MOVE	R4	R0
       0x7C080400,  //  0003  CALL	R2	2
-      0xB80E1A00,  //  0004  GETNGBL	R3	K13
-      0x8C0C070E,  //  0005  GETMET	R3	R3	K14
-      0x5C140400,  //  0006  MOVE	R5	R2
-      0x7C0C0400,  //  0007  CALL	R3	2
-      0x780E0004,  //  0008  JMPF	R3	#000E
-      0x600C0008,  //  0009  GETGBL	R3	G8
-      0x5C100400,  //  000A  MOVE	R4	R2
-      0x7C0C0200,  //  000B  CALL	R3	1
-      0x5C040600,  //  000C  MOVE	R1	R3
-      0x70020004,  //  000D  JMP		#0013
-      0x600C0018,  //  000E  GETGBL	R3	G24
-      0x5810000F,  //  000F  LDCONST	R4	K15
-      0x88140105,  //  0010  GETMBR	R5	R0	K5
-      0x7C0C0400,  //  0011  CALL	R3	2
-      0x5C040600,  //  0012  MOVE	R1	R3
-      0x600C0018,  //  0013  GETGBL	R3	G24
-      0x58100010,  //  0014  LDCONST	R4	K16
-      0x5C140200,  //  0015  MOVE	R5	R1
-      0x88180101,  //  0016  GETMBR	R6	R0	K1
-      0x881C0102,  //  0017  GETMBR	R7	R0	K2
-      0x88200103,  //  0018  GETMBR	R8	R0	K3
-      0x88240104,  //  0019  GETMBR	R9	R0	K4
-      0x88280111,  //  001A  GETMBR	R10	R0	K17
-      0x882C0112,  //  001B  GETMBR	R11	R0	K18
-      0x7C0C1000,  //  001C  CALL	R3	8
-      0x80040600,  //  001D  RET	1	R3
+      0x900A0401,  //  0004  SETMBR	R2	K2	R1
+      0x80040400,  //  0005  RET	1	R2
     })
   )
 );
 /*******************************************************************/
 
-
-/********************************************************************
-** Solidified class: CrenelPositionAnimation
-********************************************************************/
-extern const bclass be_class_Animation;
-be_local_class(CrenelPositionAnimation,
-    0,
-    &be_class_Animation,
-    be_nested_map(3,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(PARAMS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(5,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(nb_pulse, -1), be_const_bytes_instance(0400FF) },
-        { be_const_key_weak(low_size, 4), be_const_bytes_instance(0500000003) },
-        { be_const_key_weak(pos, 1), be_const_bytes_instance(040000) },
-        { be_const_key_weak(pulse_size, -1), be_const_bytes_instance(0500000001) },
-        { be_const_key_weak(back_color, -1), be_const_bytes_instance(0402000000FF) },
-    }))    ) } )) },
-        { be_const_key_weak(render, 2), be_const_closure(class_CrenelPositionAnimation_render_closure) },
-        { be_const_key_weak(tostring, -1), be_const_closure(class_CrenelPositionAnimation_tostring_closure) },
-    })),
-    be_str_weak(CrenelPositionAnimation)
-);
 // compact class 'TwinkleAnimation' ktab size: 40, total: 64 (saved 192 bytes)
 static const bvalue be_ktab_class_TwinkleAnimation[40] = {
   /* K0   */  be_nested_str_weak(get_param),
@@ -17895,43 +17743,195 @@ be_local_closure(twinkle_gentle,   /* name */
 );
 /*******************************************************************/
 
+// compact class 'CrenelPositionAnimation' ktab size: 19, total: 24 (saved 40 bytes)
+static const bvalue be_ktab_class_CrenelPositionAnimation[19] = {
+  /* K0   */  be_nested_str_weak(back_color),
+  /* K1   */  be_nested_str_weak(pos),
+  /* K2   */  be_nested_str_weak(pulse_size),
+  /* K3   */  be_nested_str_weak(low_size),
+  /* K4   */  be_nested_str_weak(nb_pulse),
+  /* K5   */  be_nested_str_weak(color),
+  /* K6   */  be_const_int(-16777216),
+  /* K7   */  be_nested_str_weak(fill_pixels),
+  /* K8   */  be_nested_str_weak(pixels),
+  /* K9   */  be_const_int(0),
+  /* K10  */  be_const_int(1),
+  /* K11  */  be_nested_str_weak(set_pixel_color),
+  /* K12  */  be_nested_str_weak(get_param),
+  /* K13  */  be_nested_str_weak(animation),
+  /* K14  */  be_nested_str_weak(is_value_provider),
+  /* K15  */  be_nested_str_weak(0x_X2508x),
+  /* K16  */  be_nested_str_weak(CrenelPositionAnimation_X28color_X3D_X25s_X2C_X20pos_X3D_X25s_X2C_X20pulse_size_X3D_X25s_X2C_X20low_size_X3D_X25s_X2C_X20nb_pulse_X3D_X25s_X2C_X20priority_X3D_X25s_X2C_X20running_X3D_X25s_X29),
+  /* K17  */  be_nested_str_weak(priority),
+  /* K18  */  be_nested_str_weak(is_running),
+};
+
+
+extern const bclass be_class_CrenelPositionAnimation;
 
 /********************************************************************
-** Solidified function: pulsating_animation
+** Solidified function: render
 ********************************************************************/
-be_local_closure(pulsating_animation,   /* name */
+be_local_closure(class_CrenelPositionAnimation_render,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
+    16,                          /* nstack */
+    4,                          /* argc */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(animation),
-    /* K1   */  be_nested_str_weak(breathe_animation),
-    /* K2   */  be_nested_str_weak(curve_factor),
-    /* K3   */  be_const_int(1),
-    /* K4   */  be_nested_str_weak(period),
-    }),
-    be_str_weak(pulsating_animation),
+    &be_ktab_class_CrenelPositionAnimation,     /* shared constants */
+    be_str_weak(render),
     &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x5C0C0000,  //  0002  MOVE	R3	R0
-      0x7C040400,  //  0003  CALL	R1	2
-      0x90060503,  //  0004  SETMBR	R1	K2	K3
-      0x540A03E7,  //  0005  LDINT	R2	1000
-      0x90060802,  //  0006  SETMBR	R1	K4	R2
-      0x80040200,  //  0007  RET	1	R1
+    ( &(const binstruction[64]) {  /* code */
+      0x88100100,  //  0000  GETMBR	R4	R0	K0
+      0x88140101,  //  0001  GETMBR	R5	R0	K1
+      0x88180102,  //  0002  GETMBR	R6	R0	K2
+      0x881C0103,  //  0003  GETMBR	R7	R0	K3
+      0x88200104,  //  0004  GETMBR	R8	R0	K4
+      0x88240105,  //  0005  GETMBR	R9	R0	K5
+      0x60280009,  //  0006  GETGBL	R10	G9
+      0x002C0C07,  //  0007  ADD	R11	R6	R7
+      0x7C280200,  //  0008  CALL	R10	1
+      0x202C0906,  //  0009  NE	R11	R4	K6
+      0x782E0003,  //  000A  JMPF	R11	#000F
+      0x8C2C0307,  //  000B  GETMET	R11	R1	K7
+      0x88340308,  //  000C  GETMBR	R13	R1	K8
+      0x5C380800,  //  000D  MOVE	R14	R4
+      0x7C2C0600,  //  000E  CALL	R11	3
+      0x182C1509,  //  000F  LE	R11	R10	K9
+      0x782E0000,  //  0010  JMPF	R11	#0012
+      0x5828000A,  //  0011  LDCONST	R10	K10
+      0x1C2C1109,  //  0012  EQ	R11	R8	K9
+      0x782E0001,  //  0013  JMPF	R11	#0016
+      0x502C0200,  //  0014  LDBOOL	R11	1	0
+      0x80041600,  //  0015  RET	1	R11
+      0x142C1109,  //  0016  LT	R11	R8	K9
+      0x782E0006,  //  0017  JMPF	R11	#001F
+      0x002C0A06,  //  0018  ADD	R11	R5	R6
+      0x042C170A,  //  0019  SUB	R11	R11	K10
+      0x102C160A,  //  001A  MOD	R11	R11	R10
+      0x042C1606,  //  001B  SUB	R11	R11	R6
+      0x002C170A,  //  001C  ADD	R11	R11	K10
+      0x5C141600,  //  001D  MOVE	R5	R11
+      0x70020007,  //  001E  JMP		#0027
+      0x442C1400,  //  001F  NEG	R11	R10
+      0x142C0A0B,  //  0020  LT	R11	R5	R11
+      0x782E0004,  //  0021  JMPF	R11	#0027
+      0x202C1109,  //  0022  NE	R11	R8	K9
+      0x782E0002,  //  0023  JMPF	R11	#0027
+      0x00140A0A,  //  0024  ADD	R5	R5	R10
+      0x0420110A,  //  0025  SUB	R8	R8	K10
+      0x7001FFF7,  //  0026  JMP		#001F
+      0x142C0A03,  //  0027  LT	R11	R5	R3
+      0x782E0014,  //  0028  JMPF	R11	#003E
+      0x202C1109,  //  0029  NE	R11	R8	K9
+      0x782E0012,  //  002A  JMPF	R11	#003E
+      0x582C0009,  //  002B  LDCONST	R11	K9
+      0x14300B09,  //  002C  LT	R12	R5	K9
+      0x78320001,  //  002D  JMPF	R12	#0030
+      0x44300A00,  //  002E  NEG	R12	R5
+      0x5C2C1800,  //  002F  MOVE	R11	R12
+      0x14301606,  //  0030  LT	R12	R11	R6
+      0x78320008,  //  0031  JMPF	R12	#003B
+      0x00300A0B,  //  0032  ADD	R12	R5	R11
+      0x14301803,  //  0033  LT	R12	R12	R3
+      0x78320005,  //  0034  JMPF	R12	#003B
+      0x8C30030B,  //  0035  GETMET	R12	R1	K11
+      0x00380A0B,  //  0036  ADD	R14	R5	R11
+      0x5C3C1200,  //  0037  MOVE	R15	R9
+      0x7C300600,  //  0038  CALL	R12	3
+      0x002C170A,  //  0039  ADD	R11	R11	K10
+      0x7001FFF4,  //  003A  JMP		#0030
+      0x00140A0A,  //  003B  ADD	R5	R5	R10
+      0x0420110A,  //  003C  SUB	R8	R8	K10
+      0x7001FFE8,  //  003D  JMP		#0027
+      0x502C0200,  //  003E  LDBOOL	R11	1	0
+      0x80041600,  //  003F  RET	1	R11
     })
   )
 );
 /*******************************************************************/
 
+
+/********************************************************************
+** Solidified function: tostring
+********************************************************************/
+be_local_closure(class_CrenelPositionAnimation_tostring,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_CrenelPositionAnimation,     /* shared constants */
+    be_str_weak(tostring),
+    &be_const_str_solidified,
+    ( &(const binstruction[30]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0x8C08010C,  //  0001  GETMET	R2	R0	K12
+      0x58100005,  //  0002  LDCONST	R4	K5
+      0x7C080400,  //  0003  CALL	R2	2
+      0xB80E1A00,  //  0004  GETNGBL	R3	K13
+      0x8C0C070E,  //  0005  GETMET	R3	R3	K14
+      0x5C140400,  //  0006  MOVE	R5	R2
+      0x7C0C0400,  //  0007  CALL	R3	2
+      0x780E0004,  //  0008  JMPF	R3	#000E
+      0x600C0008,  //  0009  GETGBL	R3	G8
+      0x5C100400,  //  000A  MOVE	R4	R2
+      0x7C0C0200,  //  000B  CALL	R3	1
+      0x5C040600,  //  000C  MOVE	R1	R3
+      0x70020004,  //  000D  JMP		#0013
+      0x600C0018,  //  000E  GETGBL	R3	G24
+      0x5810000F,  //  000F  LDCONST	R4	K15
+      0x88140105,  //  0010  GETMBR	R5	R0	K5
+      0x7C0C0400,  //  0011  CALL	R3	2
+      0x5C040600,  //  0012  MOVE	R1	R3
+      0x600C0018,  //  0013  GETGBL	R3	G24
+      0x58100010,  //  0014  LDCONST	R4	K16
+      0x5C140200,  //  0015  MOVE	R5	R1
+      0x88180101,  //  0016  GETMBR	R6	R0	K1
+      0x881C0102,  //  0017  GETMBR	R7	R0	K2
+      0x88200103,  //  0018  GETMBR	R8	R0	K3
+      0x88240104,  //  0019  GETMBR	R9	R0	K4
+      0x88280111,  //  001A  GETMBR	R10	R0	K17
+      0x882C0112,  //  001B  GETMBR	R11	R0	K18
+      0x7C0C1000,  //  001C  CALL	R3	8
+      0x80040600,  //  001D  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified class: CrenelPositionAnimation
+********************************************************************/
+extern const bclass be_class_Animation;
+be_local_class(CrenelPositionAnimation,
+    0,
+    &be_class_Animation,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(PARAMS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(5,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(nb_pulse, -1), be_const_bytes_instance(0400FF) },
+        { be_const_key_weak(low_size, 4), be_const_bytes_instance(0500000003) },
+        { be_const_key_weak(pos, 1), be_const_bytes_instance(040000) },
+        { be_const_key_weak(pulse_size, -1), be_const_bytes_instance(0500000001) },
+        { be_const_key_weak(back_color, -1), be_const_bytes_instance(0402000000FF) },
+    }))    ) } )) },
+        { be_const_key_weak(render, 2), be_const_closure(class_CrenelPositionAnimation_render_closure) },
+        { be_const_key_weak(tostring, -1), be_const_closure(class_CrenelPositionAnimation_tostring_closure) },
+    })),
+    be_str_weak(CrenelPositionAnimation)
+);
 
 /********************************************************************
 ** Solidified function: noise_fractal
@@ -18969,7 +18969,7 @@ be_local_module(animation,
     "animation",
     be_nested_map(98,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(noise_single_color, 33), be_const_closure(noise_single_color_closure) },
+        { be_const_key_weak(noise_single_color, 35), be_const_closure(noise_single_color_closure) },
         { be_const_key_weak(pulsating_animation, -1), be_const_closure(pulsating_animation_closure) },
         { be_const_key_weak(elastic, 16), be_const_closure(elastic_closure) },
         { be_const_key_weak(TRIANGLE, -1), be_const_int(2) },
@@ -18986,12 +18986,12 @@ be_local_module(animation,
         { be_const_key_weak(square, 47), be_const_closure(square_closure) },
         { be_const_key_weak(wave_single_sine, -1), be_const_closure(wave_single_sine_closure) },
         { be_const_key_weak(_math, 55), be_const_class(be_class_AnimationMath) },
-        { be_const_key_weak(SAWTOOTH, 31), be_const_int(1) },
+        { be_const_key_weak(SAWTOOTH, 32), be_const_int(1) },
         { be_const_key_weak(register_event_handler, -1), be_const_closure(register_event_handler_closure) },
         { be_const_key_weak(init, -1), be_const_closure(animation_init_closure) },
-        { be_const_key_weak(gradient_two_color_linear, 35), be_const_closure(gradient_two_color_linear_closure) },
+        { be_const_key_weak(gradient_two_color_linear, 38), be_const_closure(gradient_two_color_linear_closure) },
         { be_const_key_weak(breathe_animation, 97), be_const_class(be_class_BreatheAnimation) },
-        { be_const_key_weak(gradient_rainbow_radial, 38), be_const_closure(gradient_rainbow_radial_closure) },
+        { be_const_key_weak(gradient_rainbow_radial, 79), be_const_closure(gradient_rainbow_radial_closure) },
         { be_const_key_weak(EASE_IN, -1), be_const_int(6) },
         { be_const_key_weak(LINEAR, -1), be_const_int(1) },
         { be_const_key_weak(color_provider, -1), be_const_class(be_class_ColorProvider) },
@@ -19000,14 +19000,14 @@ be_local_module(animation,
         { be_const_key_weak(COSINE, -1), be_const_int(4) },
         { be_const_key_weak(static_color, 60), be_const_class(be_class_StaticColorProvider) },
         { be_const_key_weak(noise_fractal, 72), be_const_closure(noise_fractal_closure) },
+        { be_const_key_weak(PALETTE_RAINBOW, -1), be_const_bytes_instance(FFFC0000FFFF8000FFFFFF00FF00FF00FF00FFFFFF0080FFFF8000FF) },
         { be_const_key_weak(SQUARE, -1), be_const_int(3) },
         { be_const_key_weak(twinkle_gentle, -1), be_const_closure(twinkle_gentle_closure) },
-        { be_const_key_weak(parameterized_object, -1), be_const_class(be_class_ParameterizedObject) },
         { be_const_key_weak(twinkle_intense, -1), be_const_closure(twinkle_intense_closure) },
-        { be_const_key_weak(twinkle_animation, -1), be_const_class(be_class_TwinkleAnimation) },
+        { be_const_key_weak(parameterized_object, -1), be_const_class(be_class_ParameterizedObject) },
         { be_const_key_weak(cosine_osc, -1), be_const_closure(cosine_osc_closure) },
         { be_const_key_weak(version_string, -1), be_const_closure(animation_version_string_closure) },
-        { be_const_key_weak(linear, -1), be_const_closure(linear_closure) },
+        { be_const_key_weak(twinkle_animation, -1), be_const_class(be_class_TwinkleAnimation) },
         { be_const_key_weak(sequence_manager, -1), be_const_class(be_class_SequenceManager) },
         { be_const_key_weak(init_strip, -1), be_const_closure(animation_init_strip_closure) },
         { be_const_key_weak(list_user_functions, 48), be_const_closure(list_user_functions_closure) },
@@ -19042,17 +19042,17 @@ be_local_module(animation,
         { be_const_key_weak(rich_palette_animation, 89), be_const_class(be_class_RichPaletteAnimation) },
         { be_const_key_weak(animation, -1), be_const_class(be_class_Animation) },
         { be_const_key_weak(wave_animation, -1), be_const_class(be_class_WaveAnimation) },
-        { be_const_key_weak(VERSION, 83), be_const_int(65536) },
+        { be_const_key_weak(VERSION, 31), be_const_int(65536) },
         { be_const_key_weak(SINE, 25), be_const_int(5) },
         { be_const_key_weak(PALETTE_FIRE, -1), be_const_bytes_instance(FF000000FF800000FFFF0000FFFF8000FFFFFF00) },
         { be_const_key_weak(gradient_animation, -1), be_const_class(be_class_GradientAnimation) },
-        { be_const_key_weak(wave_rainbow_sine, 32), be_const_closure(wave_rainbow_sine_closure) },
+        { be_const_key_weak(wave_rainbow_sine, 33), be_const_closure(wave_rainbow_sine_closure) },
         { be_const_key_weak(sawtooth, -1), be_const_closure(sawtooth_closure) },
-        { be_const_key_weak(crenel_position_animation, -1), be_const_class(be_class_CrenelPositionAnimation) },
+        { be_const_key_weak(linear, -1), be_const_closure(linear_closure) },
         { be_const_key_weak(sine_osc, 85), be_const_closure(sine_osc_closure) },
         { be_const_key_weak(static_value, -1), be_const_class(be_class_StaticValueProvider) },
         { be_const_key_weak(get_user_function, -1), be_const_closure(get_user_function_closure) },
-        { be_const_key_weak(PALETTE_RAINBOW, -1), be_const_bytes_instance(FFFC0000FFFF8000FFFFFF00FF00FF00FF00FFFFFF0080FFFF8000FF) },
+        { be_const_key_weak(crenel_animation, -1), be_const_class(be_class_CrenelPositionAnimation) },
         { be_const_key_weak(fire_animation, 90), be_const_class(be_class_FireAnimation) },
         { be_const_key_weak(gradient_rainbow_linear, -1), be_const_closure(gradient_rainbow_linear_closure) },
         { be_const_key_weak(comet_animation, 59), be_const_class(be_class_CometAnimation) },

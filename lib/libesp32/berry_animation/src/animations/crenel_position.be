@@ -121,4 +121,4 @@ class CrenelPositionAnimation : animation.animation
   end
 end
 
-return {'crenel_position_animation': CrenelPositionAnimation}
+return {'crenel_animation': CrenelPositionAnimation}

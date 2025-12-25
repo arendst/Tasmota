@@ -1,0 +1,23 @@
+# @desc Crenel used as opacity mask
+
+# Set a blue background with low priority (background)
+animation back = solid(color = blue, priority = 20)
+run back
+
+# Define a simple crenel 2+2 opaque/transparent
+animation mask = crenel_animation(
+    color = white               # plain color since it's used as opacity mask
+    back_color = transparent    # background is transparent
+    pulse_size = 2
+    low_size = 2
+)
+
+# Define a smooth palette using PALETTE_RAINBOW_W (7 colors + white)
+color rainbow_rich_color = rich_palette(palette=PALETTE_RAINBOW_W, cycle_period=0)
+# Define a gradient across the whole strip and use crenel as opacity mask
+animation pattern = palette_gradient_animation(
+    color_source = rainbow_rich_color       # use the rainow pattern
+    shift_period = 2s                       # shifting over 2s
+    opacity = mask                          # mask it with crenel pattern
+)
+run pattern

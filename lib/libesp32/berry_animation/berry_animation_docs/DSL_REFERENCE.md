@@ -1435,7 +1435,7 @@ Animation classes create visual effects on LED strips:
 | `solid` | Solid color fill |
 | `pulsating_animation` | Pulsing brightness effect |
 | `beacon_animation` | Positioned pulse effect |
-| `crenel_position_animation` | Square wave pulse at specific position |
+| `crenel_animation` | Square wave pulse at specific position |
 | `breathe_animation` | Breathing/fading effect |
 | `comet_animation` | Moving comet with trailing tail |
 | `fire_animation` | Realistic fire simulation |

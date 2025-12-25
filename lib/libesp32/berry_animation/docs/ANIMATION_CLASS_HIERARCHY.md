@@ -916,7 +916,7 @@ The full period of the pattern is `pulse_size + low_size` pixels.
 **Status Indicators:**
 ```berry
 # Slow blinking pattern for status indication
-animation status_indicator = crenel_position_animation(
+animation status_indicator = crenel_animation(
   color=green,
   pulse_size=1,
   low_size=9
@@ -926,7 +926,7 @@ animation status_indicator = crenel_position_animation(
 **Rhythmic Effects:**
 ```berry
 # Fast rhythmic pattern
-animation rhythm_pattern = crenel_position_animation(
+animation rhythm_pattern = crenel_animation(
   color=red,
   pulse_size=2,
   low_size=2
@@ -937,7 +937,7 @@ animation rhythm_pattern = crenel_position_animation(
 ```berry
 # Decorative border pattern
 color gold = 0xFFFFD700
-animation border_pattern = crenel_position_animation(
+animation border_pattern = crenel_animation(
   color=gold,
   pulse_size=3,
   low_size=1,
@@ -948,7 +948,7 @@ animation border_pattern = crenel_position_animation(
 **Progress Indicators:**
 ```berry
 # Progress bar with limited pulses
-animation progress_bar = crenel_position_animation(
+animation progress_bar = crenel_animation(
   color=0xFF0080FF,
   pulse_size=2,
   low_size=1,
@@ -964,7 +964,7 @@ animation progress_bar = crenel_position_animation(
 - **Framework Integration**: Seamless integration with animation engine
 - **Testing**: Comprehensive test suite covering edge cases and performance
 
-**Factory**: `animation.crenel_position_animation(engine)`
+**Factory**: `animation.crenel_animation(engine)`
 
 ### RichPaletteAnimation
 
