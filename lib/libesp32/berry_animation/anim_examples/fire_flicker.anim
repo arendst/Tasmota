@@ -13,14 +13,14 @@ palette fire_colors = [
 ]
 
 # Create base fire animation with palette
-color fire_base_color = rich_palette(colors=fire_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
+color fire_base_color = rich_palette(colors=fire_colors, period=3s, transition_type=LINEAR, brightness=255)
 animation fire_base = solid(color=fire_base_color)
 
 # Add flickering effect with random intensity changes
 fire_base.opacity = smooth(min_value=180, max_value=255, duration=800ms)
 
 # Add subtle position variation for more realism
-color flicker_pattern = rich_palette(colors=fire_colors, cycle_period=2s, transition_type=LINEAR, brightness=255)
+color flicker_pattern = rich_palette(colors=fire_colors, period=2s, transition_type=LINEAR, brightness=255)
 animation fire_flicker = twinkle_animation(
   color=flicker_pattern # color source
   density=12            # density (number of flickers)

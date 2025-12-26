@@ -1,4 +1,4 @@
-# @desc Template example fir Cylon-style scanning eye
+# @desc Template example for Cylon-style scanning eye
 
 # Define a full template with parameters: eye_color, back_color, period, priority
 template animation cylon_eye {

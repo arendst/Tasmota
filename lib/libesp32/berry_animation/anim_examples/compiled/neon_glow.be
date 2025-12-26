@@ -22,7 +22,7 @@ var neon_colors_ = bytes(
 # Main neon glow with color cycling
 var neon_main_ = animation.rich_palette_animation(engine)
 neon_main_.colors = neon_colors_
-neon_main_.cycle_period = 4000
+neon_main_.period = 4000
 neon_main_.transition_type = animation.LINEAR
 neon_main_.brightness = 255
 # Add electrical flickering
@@ -49,7 +49,7 @@ neon_surge_.priority = 20
 # Add neon tube segments with gaps
 var segment_pattern_ = animation.rich_palette(engine)
 segment_pattern_.colors = neon_colors_
-segment_pattern_.cycle_period = 4000
+segment_pattern_.period = 4000
 segment_pattern_.transition_type = animation.LINEAR
 segment_pattern_.brightness = 255
 var segment1_ = animation.beacon_animation(engine)
@@ -101,7 +101,7 @@ palette neon_colors = [
 ]
 
 # Main neon glow with color cycling
-animation neon_main = rich_palette_animation(colors=neon_colors, cycle_period=4s, transition_type=LINEAR, brightness=255)
+animation neon_main = rich_palette_animation(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
 
 # Add electrical flickering
 neon_main.opacity = smooth(min_value=220, max_value=255, duration=200ms)
@@ -112,7 +112,7 @@ neon_surge.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cycl
 neon_surge.priority = 20
 
 # Add neon tube segments with gaps
-color segment_pattern = rich_palette(colors=neon_colors, cycle_period=4s, transition_type=LINEAR, brightness=255)
+color segment_pattern = rich_palette(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
 animation segment1 = beacon_animation(
   color=segment_pattern # color source
   pos=6                 # position

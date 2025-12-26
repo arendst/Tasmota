@@ -1,8 +1,8 @@
 # @desc Rainbow gradient rotating along the strip over 5 seconds
 
 # Define a smooth palette using PALETTE_RAINBOW_W (7 colors + white)
-# 'cycle_period = 0' means that the colors don't change in time, only spatial change
-color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, cycle_period=0)
+# 'period = 0' means that the colors don't change in time, only spatial change
+color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
 
 # define a gradient across the whole strip
 animation back = palette_gradient_animation(color_source = rainbow_rich_color, shift_period = 5s)

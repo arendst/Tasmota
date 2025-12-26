@@ -99,7 +99,7 @@ def test_crenel_with_dynamic_color_provider()
   # Create a palette color provider that changes over time
   var palette_provider = animation.color_cycle(engine)
   palette_provider.colors = bytes("FF0000FFFF00FF00FFFF0000FFFFFF00")  # BGRY palette in AARRGGBB format
-  palette_provider.cycle_period = 2000  # 2 second cycle
+  palette_provider.period = 2000  # 2 second cycle
   
   # Create animation with new parameterized pattern
   var crenel = animation.crenel_animation(engine)

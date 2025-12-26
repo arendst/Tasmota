@@ -14,7 +14,7 @@ palette rainbow_with_white = [
 ]
 
 # Define a color attribute that cycles over time, cycle is 5 seconds
-color rainbow_color = color_cycle(colors=rainbow_with_white, cycle_period=5s)
+color rainbow_color = color_cycle(colors=rainbow_with_white, period=5s)
 
 # Define a solid background with this dynamic color
 animation back = solid(color=rainbow_color)

@@ -373,8 +373,8 @@ color my_white = white              # Reference to predefined color
 
 # Color providers for dynamic colors
 color rainbow_cycle = color_cycle(
-  palette=bytes("FFFF0000" "FF00FF00" "FF0000FF")
-  cycle_period=5s
+  colors=bytes("FFFF0000" "FF00FF00" "FF0000FF")
+  period=5s
 )
 color breathing_red = breathe_color(
   base_color=red
@@ -485,8 +485,8 @@ animation.register_user_function("custom_palette", create_custom_palette)
 ```berry
 # Use in DSL
 animation dynamic_anim = rich_palette(
-  palette=custom_palette(0xFF0000, 200)
-  cycle_period=3s
+  colors=custom_palette(0xFF0000, 200)
+  period=3s
 )
 ```
 
@@ -783,7 +783,7 @@ sequence cylon_eye repeat forever {
 # Option 3: Parametric repeat count
 sequence rainbow_cycle repeat palette.size times {
   play animation for 1s
-  palette.next = 1
+  colors.next = 1
 }
 ```
 
@@ -1064,7 +1064,7 @@ template animation shutter_effect {
   set strip_len = strip_length()
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
   
-  color col = color_cycle(palette=colors, cycle_period=0)
+  color col = color_cycle(colors=colors, period=0)
   
   animation shutter = beacon_animation(
     color = col
@@ -1136,7 +1136,7 @@ template animation fade_effect {
   # 'duration' is an implicit parameter - no need to declare it
   set oscillator = sawtooth(min_value=0, max_value=255, duration=duration)
   
-  color col = color_cycle(palette=colors, cycle_period=0)
+  color col = color_cycle(colors=colors, period=0)
   animation test = solid(color=col)
   
   # 'opacity' is also implicit

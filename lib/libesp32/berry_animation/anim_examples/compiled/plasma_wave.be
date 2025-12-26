@@ -24,13 +24,13 @@ var plasma_colors_ = bytes(
 # Base plasma animation with medium speed
 var plasma_base_ = animation.rich_palette_animation(engine)
 plasma_base_.colors = plasma_colors_
-plasma_base_.cycle_period = 6000
+plasma_base_.period = 6000
 plasma_base_.transition_type = animation.SINE
 plasma_base_.brightness = 200
 # Add multiple wave layers for complexity
 var wave1_pattern_ = animation.rich_palette(engine)
 wave1_pattern_.colors = plasma_colors_
-wave1_pattern_.cycle_period = 4000
+wave1_pattern_.period = 4000
 wave1_pattern_.transition_type = animation.SINE
 wave1_pattern_.brightness = 255
 var plasma_wave1_ = animation.beacon_animation(engine)
@@ -48,7 +48,7 @@ plasma_wave1_.pos = (def (engine)
 end)(engine)
 var wave2_pattern_ = animation.rich_palette(engine)
 wave2_pattern_.colors = plasma_colors_
-wave2_pattern_.cycle_period = 5000
+wave2_pattern_.period = 5000
 wave2_pattern_.transition_type = animation.SINE
 wave2_pattern_.brightness = 180
 var plasma_wave2_ = animation.beacon_animation(engine)
@@ -66,7 +66,7 @@ plasma_wave2_.pos = (def (engine)
 end)(engine)  # Opposite direction
 var wave3_pattern_ = animation.rich_palette(engine)
 wave3_pattern_.colors = plasma_colors_
-wave3_pattern_.cycle_period = 3000
+wave3_pattern_.period = 3000
 wave3_pattern_.transition_type = animation.SINE
 wave3_pattern_.brightness = 220
 var plasma_wave3_ = animation.beacon_animation(engine)
@@ -115,10 +115,10 @@ palette plasma_colors = [
 ]
 
 # Base plasma animation with medium speed
-animation plasma_base = rich_palette_animation(colors=plasma_colors, cycle_period=6s, transition_type=SINE, brightness=200)
+animation plasma_base = rich_palette_animation(colors=plasma_colors, period=6s, transition_type=SINE, brightness=200)
 
 # Add multiple wave layers for complexity
-color wave1_pattern = rich_palette(colors=plasma_colors, cycle_period=4s, transition_type=SINE, brightness=255)
+color wave1_pattern = rich_palette(colors=plasma_colors, period=4s, transition_type=SINE, brightness=255)
 animation plasma_wave1 = beacon_animation(
   color=wave1_pattern # color source
   pos=0               # initial position
@@ -128,7 +128,7 @@ animation plasma_wave1 = beacon_animation(
 plasma_wave1.priority = 10
 plasma_wave1.pos = smooth(min_value=0, max_value=40, duration=8s)
 
-color wave2_pattern = rich_palette(colors=plasma_colors, cycle_period=5s, transition_type=SINE, brightness=180)
+color wave2_pattern = rich_palette(colors=plasma_colors, period=5s, transition_type=SINE, brightness=180)
 animation plasma_wave2 = beacon_animation(
   color=wave2_pattern # color source
   pos=45              # initial position
@@ -138,7 +138,7 @@ animation plasma_wave2 = beacon_animation(
 plasma_wave2.priority = 8
 plasma_wave2.pos = smooth(min_value=45, max_value=15, duration=10s)  # Opposite direction
 
-color wave3_pattern = rich_palette(colors=plasma_colors, cycle_period=3s, transition_type=SINE, brightness=220)
+color wave3_pattern = rich_palette(colors=plasma_colors, period=3s, transition_type=SINE, brightness=220)
 animation plasma_wave3 = beacon_animation(
   color=wave3_pattern # color source
   pos=20              # initial position

@@ -754,7 +754,7 @@ def test_sequence_manager_zero_palette_size()
   # Create a color cycle with empty palette (palette_size = 0)
   var col1 = animation.color_cycle(engine)
   col1.colors = bytes()  # Empty palette
-  col1.cycle_period = 0
+  col1.period = 0
   
   # Verify palette size is 0
   assert(col1.palette_size == 0, f"Empty palette should have size 0, got {col1.palette_size}")
@@ -781,7 +781,7 @@ def test_sequence_manager_zero_palette_size()
   execution_count = 0
   var col2 = animation.color_cycle(engine)
   col2.colors = bytes("FFFF0000" "FF00FF00" "FF0000FF")  # 3 colors
-  col2.cycle_period = 0
+  col2.period = 0
   
   assert(col2.palette_size == 3, f"Palette with 3 colors should have size 3, got {col2.palette_size}")
   

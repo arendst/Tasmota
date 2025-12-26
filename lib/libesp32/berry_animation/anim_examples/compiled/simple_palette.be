@@ -17,7 +17,7 @@ var rainbow_ = bytes("00FF0000" "40FFA500" "80FFFF00" "C0008000" "FF0000FF")
 # Create an animation using the palette
 var rainbow_cycle_ = animation.rich_palette_animation(engine)
 rainbow_cycle_.colors = rainbow_
-rainbow_cycle_.cycle_period = 3000
+rainbow_cycle_.period = 3000
 # Simple sequence
 var demo_ = animation.sequence_manager(engine)
   .push_play_step(rainbow_cycle_, 15000)
@@ -41,7 +41,7 @@ palette rainbow = [
 ]
 
 # Create an animation using the palette
-animation rainbow_cycle = rich_palette_animation(colors=rainbow, cycle_period=3s)
+animation rainbow_cycle = rich_palette_animation(colors=rainbow, period=3s)
 
 # Simple sequence
 sequence demo {

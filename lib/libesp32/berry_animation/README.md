@@ -56,7 +56,7 @@ run pulse
 ### Rainbow Smooth Color Cycling
 
 ```berry
-animation rainbow = rich_palette_animation(palette=PALETTE_RAINBOW)
+animation rainbow = rich_palette_animation(colors=PALETTE_RAINBOW)
 run rainbow
 ```
 

@@ -253,7 +253,7 @@ def test_complex_scenario()
   var dsl_source = "# Complex cylon eye with restart functionality\n" +
     "set strip_len = strip_length()\n" +
     "palette eye_palette = [ red, yellow, green, violet ]\n" +
-    "color eye_color = color_cycle(colors=eye_palette, cycle_period=0)\n" +
+    "color eye_color = color_cycle(colors=eye_palette, period=0)\n" +
     "set cosine_val = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = 5s)\n" +
     "set triangle_val = triangle(min_value = 0, max_value = strip_len - 2, duration = 5s)\n" +
     "\n" +

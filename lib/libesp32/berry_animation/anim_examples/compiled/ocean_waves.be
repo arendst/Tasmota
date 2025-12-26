@@ -23,13 +23,13 @@ var ocean_colors_ = bytes(
 # Base ocean animation with slow color cycling
 var ocean_base_ = animation.rich_palette_animation(engine)
 ocean_base_.colors = ocean_colors_
-ocean_base_.cycle_period = 8000
+ocean_base_.period = 8000
 ocean_base_.transition_type = animation.SINE
 ocean_base_.brightness = 200
 # Add wave motion with moving pulses
 var wave1_pattern_ = animation.rich_palette(engine)
 wave1_pattern_.colors = ocean_colors_
-wave1_pattern_.cycle_period = 6000
+wave1_pattern_.period = 6000
 wave1_pattern_.transition_type = animation.SINE
 wave1_pattern_.brightness = 255
 var wave1_ = animation.beacon_animation(engine)
@@ -47,7 +47,7 @@ wave1_.pos = (def (engine)
 end)(engine)  # 60-12 = 48
 var wave2_pattern_ = animation.rich_palette(engine)
 wave2_pattern_.colors = ocean_colors_
-wave2_pattern_.cycle_period = 4000
+wave2_pattern_.period = 4000
 wave2_pattern_.transition_type = animation.SINE
 wave2_pattern_.brightness = 180
 var wave2_ = animation.beacon_animation(engine)
@@ -93,10 +93,10 @@ palette ocean_colors = [
 ]
 
 # Base ocean animation with slow color cycling
-animation ocean_base = rich_palette_animation(colors=ocean_colors, cycle_period=8s, transition_type=SINE, brightness=200)
+animation ocean_base = rich_palette_animation(colors=ocean_colors, period=8s, transition_type=SINE, brightness=200)
 
 # Add wave motion with moving pulses
-color wave1_pattern = rich_palette(colors=ocean_colors, cycle_period=6s, transition_type=SINE, brightness=255)
+color wave1_pattern = rich_palette(colors=ocean_colors, period=6s, transition_type=SINE, brightness=255)
 animation wave1 = beacon_animation(
   color=wave1_pattern # color source
   pos=0               # initial position
@@ -106,7 +106,7 @@ animation wave1 = beacon_animation(
 wave1.priority = 10
 wave1.pos = sawtooth(min_value=0, max_value=48, duration=5s)  # 60-12 = 48
 
-color wave2_pattern = rich_palette(colors=ocean_colors, cycle_period=4s, transition_type=SINE, brightness=180)
+color wave2_pattern = rich_palette(colors=ocean_colors, period=4s, transition_type=SINE, brightness=180)
 animation wave2 = beacon_animation(
   color=wave2_pattern # color source
   pos=52              # initial position

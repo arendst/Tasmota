@@ -71,7 +71,7 @@ class ColorCycleAnimationTest
     var custom_palette = bytes("FFFF0000FF00FF00")  # Red and Green in AARRGGBB format
     var custom_provider = animation.color_cycle(engine)
     custom_provider.colors = custom_palette
-    custom_provider.cycle_period = 2000
+    custom_provider.period = 2000
     
     var anim2 = animation.solid(engine)
     anim2.color = custom_provider
@@ -87,7 +87,7 @@ class ColorCycleAnimationTest
     
     # Check provider properties
     self.assert_equal(color_provider2._get_palette_size(), 2, "Custom colors has 2 colors")
-    self.assert_equal(color_provider2.cycle_period, 2000, "Custom cycle period is 2000ms")
+    self.assert_equal(color_provider2.period, 2000, "Custom cycle period is 2000ms")
   end
   
   def test_update_and_render()
@@ -95,7 +95,7 @@ class ColorCycleAnimationTest
     var colors = bytes("FFFF0000FF0000FF")  # Red and Blue in AARRGGBB format
     var provider = animation.color_cycle(engine)
     provider.colors = colors
-    provider.cycle_period = 1000  # 1 second cycle
+    provider.period = 1000  # 1 second cycle
     
     var anim = animation.solid(engine)
     anim.color = provider
@@ -138,12 +138,12 @@ class ColorCycleAnimationTest
   end
   
   def test_manual_only_mode()
-    print("Testing manual-only mode (cycle_period = 0)...")
+    print("Testing manual-only mode (period = 0)...")
     
     # Create animation with manual-only color provider
     var manual_provider = animation.color_cycle(engine)
     manual_provider.colors = bytes("FF0000FFFF00FF00FFFF0000")  # Blue, Green, Red in AARRGGBB format
-    manual_provider.cycle_period = 0  # Manual-only mode
+    manual_provider.period = 0  # Manual-only mode
     
     var manual_anim = animation.solid(engine)
     manual_anim.color = manual_provider
@@ -192,7 +192,7 @@ class ColorCycleAnimationTest
     # Test direct creation without factory method (following new parameterized pattern)
     var provider = animation.color_cycle(engine)
     provider.colors = bytes("FF0000FFFF00FF00FFFF0000")  # Blue, Green, Red in AARRGGBB format
-    provider.cycle_period = 3000  # 3 second cycle period
+    provider.period = 3000  # 3 second cycle period
     
     var anim = animation.solid(engine)
     anim.color = provider
@@ -209,7 +209,7 @@ class ColorCycleAnimationTest
     
     # Check provider properties
     self.assert_equal(color_provider3._get_palette_size(), 3, "Palette has 3 colors")
-    self.assert_equal(color_provider3.cycle_period, 3000, "Cycle period is 3000ms")
+    self.assert_equal(color_provider3.period, 3000, "Cycle period is 3000ms")
     
     # Check animation properties
     self.assert_equal(anim.priority, 10, "Priority is 10")

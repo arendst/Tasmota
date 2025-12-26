@@ -12,8 +12,8 @@ set shutter_size = sawtooth(min_value = 0, max_value = strip_len,
 
 # Define 2 color providers cycling through palette rainbow with white
 # 'col2' is shifted by 1 color from 'col1'
-color col1 = color_cycle(colors=PALETTE_RAINBOW_W, cycle_period=0)
-color col2 = color_cycle(colors=PALETTE_RAINBOW_W, cycle_period=0)
+color col1 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
+color col2 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 col2.next = 1           # Writing 1 to 'next' actually advances the color
 
 # Using beacon_animation to move a shutter from left to right

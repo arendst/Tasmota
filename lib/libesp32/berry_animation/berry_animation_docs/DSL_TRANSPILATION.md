@@ -321,7 +321,7 @@ template animation shutter_effect {
   param duration type time min 0 max 3600 default 5 nillable false
   
   set strip_len = strip_length()
-  color col = color_cycle(palette=colors, cycle_period=0)
+  color col = color_cycle(colors=colors, period=0)
   
   animation shutter = beacon_animation(
     color = col
@@ -351,8 +351,8 @@ class shutter_effect_animation : animation.engine_proxy
     
     var strip_len_ = animation.strip_length(engine)
     var col_ = animation.color_cycle(engine)
-    col_.palette = animation.create_closure_value(engine, def (engine) return self.colors end)
-    col_.cycle_period = 0
+    col_.colors = animation.create_closure_value(engine, def (engine) return self.colors end)
+    col_.period = 0
     
     var shutter_ = animation.beacon_animation(engine)
     shutter_.color = col_

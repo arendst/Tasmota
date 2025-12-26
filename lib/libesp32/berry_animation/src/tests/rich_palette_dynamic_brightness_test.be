@@ -30,7 +30,7 @@ var rgb_palette = bytes(
 
 var provider = animation.rich_palette(engine)
 provider.colors = rgb_palette
-provider.cycle_period = 0  # Static mode
+provider.period = 0  # Static mode
 
 # Initialize the provider and build LUT
 provider.produce_value("color", 0)
@@ -144,7 +144,7 @@ log("---------------------------------")
 # Create a fresh provider
 var rebuild_provider = animation.rich_palette(engine)
 rebuild_provider.colors = rgb_palette
-rebuild_provider.cycle_period = 0
+rebuild_provider.period = 0
 
 # Force initial build
 rebuild_provider.get_color_for_value(128, 0)

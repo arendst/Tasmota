@@ -71,7 +71,7 @@ class PlasmaAnimation : animation.animation
     if self.color == nil
       var rainbow_provider = animation.rich_palette(self.engine)
       rainbow_provider.colors = animation.PALETTE_RAINBOW
-      rainbow_provider.cycle_period = 5000
+      rainbow_provider.period = 5000
       rainbow_provider.transition_type = 1
       rainbow_provider.brightness = 255
       self.color = rainbow_provider
@@ -90,7 +90,7 @@ class PlasmaAnimation : animation.animation
       # Reset to default rainbow palette when color is set to nil
       var rainbow_provider = animation.rich_palette(self.engine)
       rainbow_provider.colors = animation.PALETTE_RAINBOW
-      rainbow_provider.cycle_period = 5000
+      rainbow_provider.period = 5000
       rainbow_provider.transition_type = 1
       rainbow_provider.brightness = 255
       # Set the parameter directly to avoid recursion

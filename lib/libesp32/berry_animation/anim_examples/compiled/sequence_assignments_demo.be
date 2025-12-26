@@ -33,7 +33,7 @@ var brightness_low_ = 64
 var eye_palette_ = bytes("FFFF0000" "FFFFFF00" "FF008000" "FFEE82EE")
 var eye_color_ = animation.color_cycle(engine)
 eye_color_.colors = eye_palette_
-eye_color_.cycle_period = 0
+eye_color_.period = 0
 # Create animations
 var red_eye_ = animation.beacon_animation(engine)
 red_eye_.color = eye_color_
@@ -126,7 +126,7 @@ set brightness_low = 64
 
 # Create color palette and cycling color
 palette eye_palette = [red, yellow, green, violet]
-color eye_color = color_cycle(colors=eye_palette, cycle_period=0)
+color eye_color = color_cycle(colors=eye_palette, period=0)
 
 # Create animations
 animation red_eye = beacon_animation(

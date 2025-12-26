@@ -54,7 +54,7 @@ def test_color_cycle_bytes_format()
   assert(custom_color3 == 0xFFFFFF00, f"Custom color 3 should be 0xFFFFFF00 (alpha forced), got 0x{custom_color3:08X}")
   
   # Test 6: Test auto-cycle mode
-  provider.cycle_period = 4000  # 4 seconds for 4 colors = 1 second per color
+  provider.period = 4000  # 4 seconds for 4 colors = 1 second per color
   
   # At time 0, should be first color
   engine.time_ms = 0
@@ -74,7 +74,7 @@ def test_color_cycle_bytes_format()
   assert(cycle_color3 == custom_color3, f"Cycle color at t=3000 should match fourth color")
   
   # Test 7: Test manual mode
-  provider.cycle_period = 0  # Manual mode
+  provider.period = 0  # Manual mode
   provider.current_index = 1
   
   var manual_color = provider.produce_value("color", 5000)

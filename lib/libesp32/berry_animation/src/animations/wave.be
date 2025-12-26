@@ -234,7 +234,7 @@ def wave_rainbow_sine(engine)
   # Set up rainbow color provider
   var rainbow_provider = animation.rich_palette(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
-  rainbow_provider.cycle_period = 5000
+  rainbow_provider.period = 5000
   rainbow_provider.transition_type = 1  # sine transition
   rainbow_provider.brightness = 255
   anim.color = rainbow_provider

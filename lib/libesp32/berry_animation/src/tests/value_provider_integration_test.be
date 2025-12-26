@@ -67,7 +67,7 @@ def test_multiple_providers_coordination()
   
   var color_cycle = animation.color_cycle(engine)
   color_cycle.colors = bytes("FFFF0000" "FF00FF00" "FF0000FF")
-  color_cycle.cycle_period = 5000
+  color_cycle.period = 5000
   
   # Create animation using all providers
   var beacon = animation.beacon_animation(engine)

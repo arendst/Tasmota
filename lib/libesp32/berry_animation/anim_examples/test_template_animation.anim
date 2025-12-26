@@ -9,8 +9,8 @@ template animation shutter_central {
   set strip_len2 = (strip_len + 1) / 2
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
   
-  color col1 = color_cycle(colors=colors, cycle_period=0)
-  color col2 = color_cycle(colors=colors, cycle_period=0)
+  color col1 = color_cycle(colors=colors, period=0)
+  color col2 = color_cycle(colors=colors, period=0)
   col2.next = 1
   
   # shutter moving in to out

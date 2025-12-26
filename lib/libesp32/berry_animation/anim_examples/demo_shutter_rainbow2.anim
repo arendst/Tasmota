@@ -7,8 +7,8 @@ set duration = 3s
   set strip_len = strip_length()
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)
 
-  color col1 = color_cycle(colors=PALETTE_RAINBOW, cycle_period=0)
-  color col2 = color_cycle(colors=PALETTE_RAINBOW, cycle_period=0)
+  color col1 = color_cycle(colors=PALETTE_RAINBOW, period=0)
+  color col2 = color_cycle(colors=PALETTE_RAINBOW, period=0)
   col2.next = 1
 
   animation shutter_animation = beacon_animation(

@@ -233,7 +233,7 @@ class MyColorProvider : animation.color_provider
   # Mark LUT as dirty when parameters change
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
-    if name == "palette" || name == "transition_type"
+    if name == "colors" || name == "transition_type"
       self._lut_dirty = true  # Inherited from ColorProvider
     end
   end

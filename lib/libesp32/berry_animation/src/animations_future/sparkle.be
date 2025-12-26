@@ -238,7 +238,7 @@ end
 def sparkle_rainbow(engine)
   var rainbow_provider = animation.rich_palette(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
-  rainbow_provider.cycle_period = 5000
+  rainbow_provider.period = 5000
   rainbow_provider.transition_type = 1  # sine transition
   
   var anim = animation.sparkle_animation(engine)

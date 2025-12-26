@@ -1,7 +1,7 @@
 # @desc Crenel static with variable color
 
 # Define a color attribute that cycles over time, cycle is 5 seconds
-color rainbow_color = rich_palette(colors=PALETTE_RAINBOW_W2, cycle_period=5s)
+color rainbow_color = rich_palette(colors=PALETTE_RAINBOW_W2, period=5s)
 
 # Define a simple crenel 2+2
 animation back = crenel_animation(

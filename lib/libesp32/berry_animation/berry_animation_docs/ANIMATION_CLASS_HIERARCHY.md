@@ -175,7 +175,7 @@ template animation fade_effect {
   # 'duration' is implicit - no need to declare
   set oscillator = sawtooth(min_value=0, max_value=255, duration=duration)
   
-  color col = color_cycle(palette=colors, cycle_period=0)
+  color col = color_cycle(colors=colors, period=0)
   animation test = solid(color=col)
   test.opacity = oscillator  # 'opacity' is also implicit
   
@@ -386,35 +386,35 @@ Cycles through a palette of colors with brutal switching. Inherits from `ColorPr
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `palette` | bytes | default palette | - | Palette bytes in AARRGGBB format |
-| `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
+| `colors` | bytes | default palette | - | Palette bytes in AARRGGBB format |
+| `period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
 | `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwards by `n` colors |
 | `palette_size` | int | 3 | read-only | Number of colors in the palette (automatically updated when palette changes) |
 | *(inherits brightness from ColorProvider)* | | | | |
 
 **Note**: The `get_color_for_value()` method accepts values in the 0-255 range for value-based color mapping.
 
-**Modes**: Auto-cycle (`cycle_period > 0`) or Manual-only (`cycle_period = 0`)
+**Modes**: Auto-cycle (`period > 0`) or Manual-only (`period = 0`)
 
 #### Usage Examples
 
 ```berry
 # RGB cycle with brutal switching
 color rgb_cycle = color_cycle(
-  palette=bytes("FF0000FF" "FF00FF00" "FFFF0000"),
-  cycle_period=4s
+  colors=bytes("FF0000FF" "FF00FF00" "FFFF0000"),
+  period=4s
 )
 
 # Custom warm colors
 color warm_cycle = color_cycle(
-  palette=bytes("FF4500FF" "FF8C00FF" "FFFF00"),
-  cycle_period=3s
+  colors=bytes("FF4500FF" "FF8C00FF" "FFFF00"),
+  period=3s
 )
 
 # Mixed colors in AARRGGBB format
 color mixed_cycle = color_cycle(
-  palette=bytes("FFFF0000" "FF00FF00" "FF0000FF"),
-  cycle_period=2s
+  colors=bytes("FFFF0000" "FF00FF00" "FF0000FF"),
+  period=2s
 )
 ```
 
@@ -424,8 +424,8 @@ Generates colors from predefined palettes with smooth transitions and profession
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `palette` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
-| `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
+| `colors` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
+| `period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
 | *(inherits brightness from ColorProvider)* | | | | |
 
@@ -442,16 +442,16 @@ Generates colors from predefined palettes with smooth transitions and profession
 ```berry
 # Rainbow palette with smooth ease-in/ease-out transitions
 color rainbow_colors = rich_palette(
-  palette=PALETTE_RAINBOW,
-  cycle_period=5s,
+  colors=PALETTE_RAINBOW,
+  period=5s,
   transition_type=SINE,
   brightness=255
 )
 
 # Fire effect with linear (constant speed) transitions
 color fire_colors = rich_palette(
-  palette=PALETTE_FIRE,
-  cycle_period=3s,
+  colors=PALETTE_FIRE,
+  period=3s,
   transition_type=LINEAR,
   brightness=200
 )
@@ -509,7 +509,7 @@ color deep_breath = breathe_color(
 )
 
 # Using dynamic base color
-color rainbow_cycle = color_cycle(palette=bytes("FF0000FF" "FF00FF00" "FFFF0000"), cycle_period=5s)
+color rainbow_cycle = color_cycle(colors=bytes("FF0000FF" "FF00FF00" "FFFF0000"), period=5s)
 color breathing_rainbow = breathe_color(
   base_color=rainbow_cycle,
   min_brightness=30,
@@ -634,7 +634,7 @@ meter.color_source = rainbow
 meter.level = 128
 
 # Meter with peak hold (1 second)
-color fire_colors = rich_palette(palette=PALETTE_FIRE)
+color fire_colors = rich_palette(colors=PALETTE_FIRE)
 animation vu_meter = gradient_meter_animation(peak_hold=1000)
 vu_meter.color_source = fire_colors
 
@@ -962,14 +962,14 @@ Creates smooth color transitions using rich palette data with direct parameter a
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `palette` | bytes | rainbow palette | - | Palette bytes or predefined palette |
-| `cycle_period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
+| `colors` | bytes | rainbow palette | - | Palette bytes or predefined palette |
+| `period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
 | `brightness` | int | 255 | 0-255 | Overall brightness scaling |
 | *(inherits all Animation parameters)* | | | | |
 
 **Special Features**: 
-- Direct parameter access (set `anim.palette` instead of `anim.color.palette`)
+- Direct parameter access (set `anim.colors` instead of `anim.color.colors`)
 - Parameters are automatically forwarded to internal `RichPaletteColorProvider`
 - Access to specialized methods via `anim.color_provider.method_name()`
 

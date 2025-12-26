@@ -346,7 +346,7 @@ _detect_and_cache_symbol(name)
 
 **Palette Detection:**
 ```berry
-# DSL: animation rainbow = rich_palette_animation(palette=PALETTE_RAINBOW)
+# DSL: animation rainbow = rich_palette_animation(colors=PALETTE_RAINBOW)
 # Detection: PALETTE_RAINBOW exists in animation module, isinstance(obj, bytes)
 # Result: SymbolEntry("PALETTE_RAINBOW", "palette", bytes_instance, true)
 # Reference: "animation.PALETTE_RAINBOW"

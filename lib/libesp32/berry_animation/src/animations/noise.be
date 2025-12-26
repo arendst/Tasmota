@@ -47,7 +47,7 @@ class NoiseAnimation : animation.animation
     if self.color == nil
       var rainbow_provider = animation.rich_palette(engine)
       rainbow_provider.colors = animation.PALETTE_RAINBOW
-      rainbow_provider.cycle_period = 5000
+      rainbow_provider.period = 5000
       rainbow_provider.transition_type = 1
       rainbow_provider.brightness = 255
       self.color = rainbow_provider
@@ -100,7 +100,7 @@ class NoiseAnimation : animation.animation
       
       var gradient_provider = animation.rich_palette(self.engine)
       gradient_provider.colors = palette
-      gradient_provider.cycle_period = 5000
+      gradient_provider.period = 5000
       gradient_provider.transition_type = 1
       gradient_provider.brightness = 255
       
@@ -261,7 +261,7 @@ def noise_rainbow(engine)
   # Set up rainbow color provider
   var rainbow_provider = animation.rich_palette(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
-  rainbow_provider.cycle_period = 5000
+  rainbow_provider.period = 5000
   rainbow_provider.transition_type = 1
   rainbow_provider.brightness = 255
   anim.color = rainbow_provider
@@ -288,7 +288,7 @@ def noise_fractal(engine)
   # Set up rainbow color provider
   var rainbow_provider = animation.rich_palette(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
-  rainbow_provider.cycle_period = 5000
+  rainbow_provider.period = 5000
   rainbow_provider.transition_type = 1
   rainbow_provider.brightness = 255
   anim.color = rainbow_provider

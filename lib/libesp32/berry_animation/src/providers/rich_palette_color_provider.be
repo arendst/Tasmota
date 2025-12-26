@@ -33,7 +33,7 @@ import "./core/param_encoder" as encode_constraints
 #@ solidify:RichPaletteColorProvider,weak
 class RichPaletteColorProvider : animation.color_provider
   # Non-parameter instance variables only
-  var _slots_arr        # Constructed array of timestamp slots, based on cycle_period
+  var _slots_arr        # Constructed array of timestamp slots, based on period
   var _value_arr        # Constructed array of value slots (always 0-255 range)
   var _slots            # Number of slots in the palette
   var _current_color    # Current interpolated color (calculated during update)
@@ -43,7 +43,7 @@ class RichPaletteColorProvider : animation.color_provider
   # Parameter definitions
   static var PARAMS = animation.enc_params({
     "colors": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
-    "cycle_period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
+    "period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR}
     # brightness parameter inherited from ColorProvider base class
   })
@@ -75,7 +75,7 @@ class RichPaletteColorProvider : animation.color_provider
   # @param value: any - New value of the parameter
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
-    if name == "cycle_period" || name == "colors"
+    if name == "period" || name == "colors"
       if (self._slots_arr != nil) || (self._value_arr != nil)
         # only if they were already computed
         self._recompute_palette()
@@ -120,14 +120,14 @@ class RichPaletteColorProvider : animation.color_provider
   
   # Recompute palette slots and metadata
   def _recompute_palette()
-    # Compute slots_arr based on 'cycle_period'
-    var cycle_period = self.cycle_period
+    # Compute slots_arr based on 'period'
+    var period = self.period
     var palette_bytes = self._get_palette_bytes()
     self._slots = size(palette_bytes) / 4
 
     # Recompute palette with new cycle period (only if > 0 for time-based cycling)
-    if cycle_period > 0 && palette_bytes != nil
-      self._slots_arr = self._parse_palette(0, cycle_period - 1)
+    if period > 0 && palette_bytes != nil
+      self._slots_arr = self._parse_palette(0, period - 1)
     else
       self._slots_arr = nil
     end
@@ -271,11 +271,11 @@ class RichPaletteColorProvider : animation.color_provider
     end
     
     # Get parameter values using virtual member access
-    var cycle_period = self.cycle_period
+    var period = self.period
     var brightness = self.brightness
     
-    # If cycle_period is 0, return static color (first color in palette)
-    if cycle_period == 0
+    # If period is 0, return static color (first color in palette)
+    if period == 0
       var bgrt0 = palette_bytes.get(0, 4)
       var r = (bgrt0 >>  8) & 0xFF
       var g = (bgrt0 >> 16) & 0xFF
@@ -295,7 +295,7 @@ class RichPaletteColorProvider : animation.color_provider
     
     # Calculate position in cycle using start_time
     var elapsed = time_ms - self.start_time
-    var past = elapsed % cycle_period
+    var past = elapsed % period
     
     # Find slot (exact algorithm from Animate_palette)
     var slots = self._slots
@@ -520,7 +520,7 @@ class RichPaletteColorProvider : animation.color_provider
   # String representation
   def tostring()
     try
-      return f"RichPaletteColorProvider(slots={self._slots}, cycle_period={self.cycle_period})"
+      return f"RichPaletteColorProvider(slots={self._slots}, period={self.period})"
     except ..
       return "RichPaletteColorProvider(uninitialized)"
     end

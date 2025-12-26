@@ -22,7 +22,7 @@ class rainbow_pulse_animation : animation.engine_proxy
 
     var cycle_color_ = animation.color_cycle(engine)
     cycle_color_.colors = animation.create_closure_value(engine, def (engine) return self.pal1 end)
-    cycle_color_.cycle_period = animation.create_closure_value(engine, def (engine) return self.period end)
+    cycle_color_.period = animation.create_closure_value(engine, def (engine) return self.period end)
     # Create pulsing animation
     var pulse_ = animation.pulsating_animation(engine)
     pulse_.color = cycle_color_
@@ -68,7 +68,7 @@ template animation rainbow_pulse {
   param back_color type color
   
   # Create color cycle using first palette
-  color cycle_color = color_cycle(colors=pal1, cycle_period=period)
+  color cycle_color = color_cycle(colors=pal1, period=period)
   
   # Create pulsing animation
   animation pulse = pulsating_animation(

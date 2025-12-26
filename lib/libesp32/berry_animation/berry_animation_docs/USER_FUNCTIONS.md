@@ -164,8 +164,8 @@ dim_blue.opacity = bright(30)
 ```berry
 def custom_fire(engine, intensity, speed)
   var color_provider = animation.rich_palette(engine)
-  color_provider.palette = animation.PALETTE_FIRE
-  color_provider.cycle_period = speed
+  color_provider.colors = animation.PALETTE_FIRE
+  color_provider.period = speed
   
   var fire_anim = animation.filled(engine)
   fire_anim.color_provider = color_provider
@@ -237,8 +237,8 @@ right_pulse.position = pulse_at(25, 3, 2000)
 def rainbow_twinkle(engine, base_speed, twinkle_density)
   # Create base rainbow animation
   var rainbow_provider = animation.rich_palette(engine)
-  rainbow_provider.palette = animation.PALETTE_RAINBOW
-  rainbow_provider.cycle_period = base_speed
+  rainbow_provider.colors = animation.PALETTE_RAINBOW
+  rainbow_provider.period = base_speed
   
   var base_anim = animation.filled(engine)
   base_anim.color_provider = rainbow_provider
@@ -289,10 +289,10 @@ animation.register_user_function("custom_palette", create_custom_palette)
 ```
 
 ```berry
-# Use dynamic palette in DSL
+# Use dynamic colors in DSL
 animation gradient_effect = rich_palette(
-  palette=custom_palette(0xFF6B35, 5, 255)
-  cycle_period=4s
+  colors=custom_palette(0xFF6B35, 5, 255)
+  period=4s
 )
 
 run gradient_effect

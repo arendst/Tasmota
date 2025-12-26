@@ -27,7 +27,7 @@ var daylight_colors_ = bytes(
 # Main daylight cycle - very slow transition
 var daylight_cycle_ = animation.rich_palette_animation(engine)
 daylight_cycle_.colors = daylight_colors_
-daylight_cycle_.cycle_period = 60000
+daylight_cycle_.period = 60000
 # Add sun position effect - bright spot that moves
 var sun_position_ = animation.beacon_animation(engine)
 sun_position_.color = 0xFFFFFFAA  # Bright yellow sun
@@ -111,7 +111,7 @@ palette daylight_colors = [
 ]
 
 # Main daylight cycle - very slow transition
-animation daylight_cycle = rich_palette_animation(colors=daylight_colors, cycle_period=60s)
+animation daylight_cycle = rich_palette_animation(colors=daylight_colors, period=60s)
 
 # Add sun position effect - bright spot that moves
 animation sun_position = beacon_animation(

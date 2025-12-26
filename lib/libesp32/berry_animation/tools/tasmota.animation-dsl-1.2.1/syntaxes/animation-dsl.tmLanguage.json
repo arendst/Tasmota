@@ -72,7 +72,7 @@
         },
         {
           "name": "keyword.other.animation-dsl",
-          "match": "\\b(opacity|priority|pos|beacon_size|slew_size|direction|tail_length|speed|period|cycle_period|min_value|max_value|duration|next)\\b"
+          "match": "\\b(opacity|priority|pos|beacon_size|slew_size|direction|tail_length|speed|period|period|min_value|max_value|duration|next)\\b"
         },
         {
           "name": "constant.language.boolean.animation-dsl",

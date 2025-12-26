@@ -10,7 +10,7 @@ set brightness_low = 64
 
 # Create color palette and cycling color
 palette eye_palette = [red, yellow, green, violet]
-color eye_color = color_cycle(colors=eye_palette, cycle_period=0)
+color eye_color = color_cycle(colors=eye_palette, period=0)
 
 # Create animations
 animation red_eye = beacon_animation(

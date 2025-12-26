@@ -15,7 +15,7 @@ palette disco_colors = [
 ]
 
 # Fast color cycling base
-color disco_rich_color = rich_palette(colors=disco_colors, cycle_period=1s, transition_type=LINEAR, brightness=255)
+color disco_rich_color = rich_palette(colors=disco_colors, period=1s, transition_type=LINEAR, brightness=255)
 animation disco_base = solid(color=disco_rich_color)
 
 # Add strobe effect
@@ -27,7 +27,7 @@ white_flash.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cyc
 white_flash.priority = 20
 
 # Add colored sparkles
-color sparkle_pattern = rich_palette(colors=disco_colors, cycle_period=500ms, transition_type=LINEAR, brightness=255)
+color sparkle_pattern = rich_palette(colors=disco_colors, period=500ms, transition_type=LINEAR, brightness=255)
 animation disco_sparkles = twinkle_animation(
   color=sparkle_pattern # color source
   density=12            # density (many sparkles)
@@ -36,7 +36,7 @@ animation disco_sparkles = twinkle_animation(
 disco_sparkles.priority = 15
 
 # Add moving pulse for extra effect
-color pulse_pattern = rich_palette(colors=disco_colors, cycle_period=800ms, transition_type=LINEAR, brightness=255)
+color pulse_pattern = rich_palette(colors=disco_colors, period=800ms, transition_type=LINEAR, brightness=255)
 animation disco_pulse = beacon_animation(
   color=pulse_pattern # color source
   pos=4               # initial position

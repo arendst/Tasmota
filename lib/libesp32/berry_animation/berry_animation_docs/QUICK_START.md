@@ -29,8 +29,8 @@ Create smooth color transitions:
 ```berry
 # Use predefined rainbow palette
 animation rainbow_cycle = rich_palette(
-  palette=PALETTE_RAINBOW
-  cycle_period=5s
+  colors=PALETTE_RAINBOW
+  period=5s
   transition_type=1
 )
 
@@ -53,8 +53,8 @@ palette sunset = [
 
 # Create palette animation
 animation sunset_glow = rich_palette(
-  palette=sunset
-  cycle_period=8s
+  colors=sunset
+  period=8s
   transition_type=1
 )
 
@@ -138,8 +138,8 @@ run breathing
 ### Fire Effect
 ```berry
 animation fire = rich_palette(
-  palette=PALETTE_FIRE
-  cycle_period=2s
+  colors=PALETTE_FIRE
+  period=2s
   transition_type=1
 )
 
@@ -170,7 +170,7 @@ template animation shutter_effect {
   param duration type time min 0 max 3600 default 5 nillable false
   
   set strip_len = strip_length()
-  color col = color_cycle(palette=colors, cycle_period=0)
+  color col = color_cycle(colors=colors, period=0)
   
   animation shutter = beacon_animation(
     color = col

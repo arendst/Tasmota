@@ -3,6 +3,6 @@
 # Define a color attribute that cycles over time, cycle is 5 seconds
 # PALETTE_RAINBOW defines 7 rainbow colors at roughly the same brightness
 # PALETTE_RAINBOW_W adds 8th color white
-color rainbow_color = color_cycle(colors=PALETTE_RAINBOW_W, cycle_period=5s)
+color rainbow_color = color_cycle(colors=PALETTE_RAINBOW_W, period=5s)
 animation back = solid(color=rainbow_color)
 run back

@@ -25,7 +25,7 @@ print(f"Animation type: {type(anim)}")
 
 # Test 2: Set parameters using virtual member assignment (parameter forwarding)
 anim.colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
-anim.cycle_period = 3000
+anim.period = 3000
 anim.transition_type = 1  # sine
 anim.brightness = 200
 
@@ -39,7 +39,7 @@ print("Set parameters using virtual member assignment")
 
 # Test parameter values (should be forwarded to internal provider)
 print(f"Palette: {bool(anim.colors)}")
-print(f"Cycle period: {anim.cycle_period}")
+print(f"Cycle period: {anim.period}")
 print(f"Transition type: {anim.transition_type}")
 print(f"Brightness: {anim.brightness}")
 
@@ -50,7 +50,7 @@ print(f"Loop: {anim.loop}")
 print(f"Opacity: {anim.opacity}")
 
 # Test 3: Verify parameter forwarding to internal color provider
-print(f"Internal provider cycle period: {anim.color_provider.cycle_period}")
+print(f"Internal provider cycle period: {anim.color_provider.period}")
 print(f"Internal provider brightness: {anim.color_provider.brightness}")
 print(f"Internal provider transition type: {anim.color_provider.transition_type}")
 
@@ -83,9 +83,9 @@ print(f"Color at t=1500: {color_t1500}")
 print(f"Color at t=3000: {color_t3000}")
 
 # Test 7: Test parameter change propagation
-anim.cycle_period = 2000  # Change cycle period
-print(f"Changed cycle period to: {anim.cycle_period}")
-print(f"Internal provider cycle period: {anim.color_provider.cycle_period}")
+anim.period = 2000  # Change cycle period
+print(f"Changed cycle period to: {anim.period}")
+print(f"Internal provider cycle period: {anim.color_provider.period}")
 
 anim.brightness = 100  # Change brightness
 print(f"Changed brightness to: {anim.brightness}")
@@ -105,16 +105,16 @@ var rainbow_palette = bytes(
 
 var rainbow_anim = animation.rich_palette_animation(engine)
 rainbow_anim.colors = rainbow_palette
-rainbow_anim.cycle_period = 5000
+rainbow_anim.period = 5000
 rainbow_anim.brightness = 255
 print("Created rainbow animation with custom palette")
 
-# Test 9: Test static mode (cycle_period = 0)
+# Test 9: Test static mode (period = 0)
 var static_anim = animation.rich_palette_animation(engine)
 static_anim.colors = rainbow_palette
-static_anim.cycle_period = 0  # Static mode
+static_anim.period = 0  # Static mode
 static_anim.brightness = 150
-print("Created static animation (cycle_period = 0)")
+print("Created static animation (period = 0)")
 
 # Test 10: Test access to internal color provider methods
 var css_gradient = anim.color_provider.to_css_gradient()
@@ -125,9 +125,9 @@ assert(anim != nil, "Rich palette animation should be created")
 assert(type(anim) == "instance", "Animation should be an instance")
 
 # Test parameter forwarding
-assert(anim.cycle_period == 2000, "Cycle period should be forwarded")
+assert(anim.period == 2000, "Cycle period should be forwarded")
 assert(anim.brightness == 100, "Brightness should be forwarded")
-assert(anim.color_provider.cycle_period == 2000, "Internal provider should receive forwarded cycle period")
+assert(anim.color_provider.period == 2000, "Internal provider should receive forwarded cycle period")
 assert(anim.color_provider.brightness == 100, "Internal provider should receive forwarded brightness")
 
 # Test Animation base parameters
@@ -152,8 +152,8 @@ assert(color_t3000 != 0, "Should produce valid colors at t=3000")
 # Test different animations are independent
 assert(rainbow_anim != nil, "Rainbow animation should be created")
 assert(static_anim != nil, "Static animation should be created")
-assert(rainbow_anim.cycle_period == 5000, "Rainbow animation should have correct cycle period")
-assert(static_anim.cycle_period == 0, "Static animation should have cycle period 0")
+assert(rainbow_anim.period == 5000, "Rainbow animation should have correct cycle period")
+assert(static_anim.period == 0, "Static animation should have cycle period 0")
 
 print("All RichPaletteAnimation class tests completed successfully!")
 return true

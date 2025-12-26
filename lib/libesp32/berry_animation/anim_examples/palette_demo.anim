@@ -16,9 +16,9 @@ palette ocean_colors = [
 ]
 
 # Create animations using the palettes
-animation fire_anim = rich_palette_animation(colors=fire_colors, cycle_period=5s)
+animation fire_anim = rich_palette_animation(colors=fire_colors, period=5s)
 
-animation ocean_anim = rich_palette_animation(colors=ocean_colors, cycle_period=8s)
+animation ocean_anim = rich_palette_animation(colors=ocean_colors, period=8s)
 
 # Sequence to show both palettes
 sequence palette_demo {

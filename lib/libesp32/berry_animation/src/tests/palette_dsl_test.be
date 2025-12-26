@@ -608,7 +608,7 @@ def test_alternative_syntax_integration()
     "  0xFFFF00\n" +
     "]\n" +
     "\n" +
-    "color rich_palette2 = color_cycle(colors=fire_colors, cycle_period=3s)\n"
+    "color rich_palette2 = color_cycle(colors=fire_colors, period=3s)\n"
     "animation fire_anim = solid(color=rich_palette2)\n" +
     "\n" +
     "run fire_anim\n"
