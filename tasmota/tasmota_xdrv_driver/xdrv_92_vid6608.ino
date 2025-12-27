@@ -76,6 +76,16 @@
   #define VID6608_RTOS
 #endif
 
+/**
+ * @brief Reset all drives on init?
+ *
+ * Disable if you dont want to perform reset/homing operation on driver init,
+ * usefull for cases, where you have advanced mode (i.e. use saved values from NVRAM to restore and manual reset).
+ */
+#ifndef VID6608_RESET_ON_INIT
+  #define VID6608_RESET_ON_INIT  true
+#endif
+
 #include "vid6608.h"
 
 /**
@@ -178,7 +188,7 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
         ResponseAppend_P(PSTR("\"%d\":{"), (int32_t)(x+1));
         switch (command) {
           case GAUGE_ZERO:
-            driver->zero();
+            driver->zero(payload);
             ResponseAppend_P(PSTR("\"cmd\":\"zero\",\"pos\":0"));
             break;
           case GAUGE_SET:
@@ -287,8 +297,12 @@ void VID6608Init() {
       vid6608Drives[x] = new vid6608(pinStep, pinDir);
 
       // Perform homing operation
-      vid6608Drives[x]->zero();
-      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d done"), x);
+      if (VID6608_RESET_ON_INIT) {
+        vid6608Drives[x]->zero();
+        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d done"), x);
+      } else {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d skipped"), x);
+      }
       vid6608Present = true;
     } else {
       vid6608Drives[x] = nullptr;

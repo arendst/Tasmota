@@ -1,0 +1,15 @@
+# @desc Rainbow gradient with oscillating spatial period between 100% and 50%
+
+# Define a smooth palette using PALETTE_RAINBOW_W (7 colors + white)
+# 'period = 0' means that the colors don't change in time, only spatial change
+color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
+
+# Because strip_length is dynamic, we need to map it to a variable and can't use the function directly in formulas
+set strip_len = strip_length()
+
+# Define the sine oscillator for spatial period between 1/2 strip_len and 3/2
+set period = sine_osc(min_value = (strip_len - 1) / 2, max_value = (3 * strip_len) / 2, duration = 5s)
+
+# Define a gradient across the whole strip with variable spatial_period
+animation back = palette_gradient_animation(color_source = rainbow_rich_color, spatial_period = period)
+run back

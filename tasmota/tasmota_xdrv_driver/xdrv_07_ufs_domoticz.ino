@@ -107,7 +107,7 @@ Domoticz_t* Domoticz;
  * Driver Settings load and save
 \*********************************************************************************************/
 
-#define XDRV_07_KEY           "drvset03"
+#define XDRV_07_KEY           "drvset03"  // Should have been drvset07
 
 bool DomoticzLoadData(void) {
   char key[] = XDRV_07_KEY;
@@ -872,11 +872,7 @@ void CmndDomoticzSend(void) {
 
 #define WEB_HANDLE_DOMOTICZ "dm"
 
-const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
-  "<p></p><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>";
-
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
   "<table>"
   "<tr><td style='width:116px'></td><td style='width:70px'><b>%s</b></td><td style='width:70px'><b>%s</b></td><td style='width:70px'></td></tr>";
@@ -903,7 +899,9 @@ void HandleDomoticzConfiguration(void) {
 
   WSContentStart_P(PSTR(D_CONFIGURE_DOMOTICZ));
   WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_DOMOTICZ, (Domoticz->switches)? D_DOMOTICZ_SWITCH :"", (Domoticz->keys)? D_DOMOTICZ_KEY :"");
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_DOMOTICZ_PARAMETERS));
+  WSContentSend_P(HTTP_FORM_DOMOTICZ, 
+    (Domoticz->switches)? D_DOMOTICZ_SWITCH :"", (Domoticz->keys)? D_DOMOTICZ_KEY :"");
   for (uint32_t i = 0; i < Domoticz->devices; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_INDEX, i +1);
     if (i < Domoticz->switches) {
@@ -996,7 +994,7 @@ bool Xdrv07(uint32_t function) {
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_DOMOTICZ);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_DOMOTICZ), PSTR(D_CONFIGURE_DOMOTICZ));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_DOMOTICZ), HandleDomoticzConfiguration);

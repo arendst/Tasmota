@@ -80,7 +80,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_66_tm1638               | @arendst
 | xdrv_67_mcp23xxx             | @arendst
 | xdrv_68_zerocrossDimmer      | @stefanbode
-| xdrv_69_pca9557              | @cctweaker
+| xdrv_69_pca9557              | @cctweaker, @arendst
 | xdrv_70_1_hdmi_cec           | @s-hadinger
 | xdrv_71_magic_switch         | @barbudor
 | xdrv_72_pipsolar             | @chefpro

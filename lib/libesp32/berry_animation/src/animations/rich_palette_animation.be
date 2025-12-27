@@ -17,8 +17,8 @@ class RichPaletteAnimation : animation.animation
   # Parameter definitions - only RichPaletteColorProvider parameters (Animation params inherited)
   static var PARAMS = animation.enc_params({
     # RichPaletteColorProvider parameters (forwarded to internal provider)
-    "palette": {"type": "instance", "default": nil},
-    "cycle_period": {"min": 0, "default": 5000},
+    "colors": {"type": "instance", "default": nil},
+    "period": {"min": 0, "default": 5000},
     "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
     "brightness": {"min": 0, "max": 255, "default": 255}
   })
@@ -44,7 +44,7 @@ class RichPaletteAnimation : animation.animation
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
     # Forward rich palette parameters to internal color provider
-    if name == "palette" || name == "cycle_period" || name == "transition_type" || 
+    if name == "colors" || name == "period" || name == "transition_type" || 
        name == "brightness"
       # Set parameter on internal color provider
       self.color_provider.set_param(name, value)
@@ -63,15 +63,6 @@ class RichPaletteAnimation : animation.animation
     super(self).start(start_time)
     self.color_provider.start(start_time)
     return self
-  end
-  
-  # String representation
-  def tostring()
-    try
-      return f"RichPaletteAnimation(cycle_period={self.cycle_period}, brightness={self.brightness})"
-    except ..
-      return "RichPaletteAnimation(uninitialized)"
-    end
   end
 end
 

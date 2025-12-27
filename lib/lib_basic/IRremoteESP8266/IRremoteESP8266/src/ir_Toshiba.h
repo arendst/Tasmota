@@ -53,7 +53,11 @@ union ToshibaProtocol{
     ///<   1 (56 bit message)
     ///<   3 (72 bit message)
     ///<   4 (80 bit message)
-    uint8_t Length   :8;
+    uint8_t Length   :4;
+    // Toshiba remote type
+    // 0 - Remote control A
+    // 1 - Remote control B
+    uint8_t Model   :4;
     // Byte[3] - The bit-inverted value of the "length" byte.
     uint8_t          :8;
     // Byte[4]
@@ -111,6 +115,9 @@ const uint8_t kToshibaAcFanMax =  5;   //      0b101
 const uint8_t kToshibaAcTurboOn = 1;       //            0b01
 const uint8_t kToshibaAcEconoOn = 3;       //            0b11
 
+const uint8_t kToshibaAcRemoteA = 0;       // 0b0000
+const uint8_t kToshibaAcRemoteB = 1;       // 0b0001
+
 // Legacy defines. (Deprecated)
 #define TOSHIBA_AC_AUTO kToshibaAcAuto
 #define TOSHIBA_AC_COOL kToshibaAcCool
@@ -140,6 +147,8 @@ class IRToshibaAC {
   void begin(void);
   void on(void);
   void off(void);
+  void setModel(const toshiba_ac_remote_model_t model);
+  toshiba_ac_remote_model_t getModel() const;
   void setPower(const bool on);
   bool getPower(void) const;
   void setTemp(const uint8_t degrees);

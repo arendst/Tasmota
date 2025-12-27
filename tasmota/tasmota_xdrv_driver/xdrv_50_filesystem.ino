@@ -194,14 +194,26 @@ char *fileOnly(char *fname){
 void UfsCheckSDCardInit(void) {
   // Try SPI mode first
   // SPI mode requires SDCARD_CS to be configured
+/*
   if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
     int8_t cs = Pin(GPIO_SDCARD_CS);
+*/
+  uint32_t spi_bus = 0;
+  int8_t cs = -1;
+  if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
+    cs = Pin(GPIO_SDCARD_CS);
+  }
+  if (TasmotaGlobal.spi_enabled2 && PinUsed(GPIO_SDCARD_CS, 1)) {
+    spi_bus = 1;
+    cs = Pin(GPIO_SDCARD_CS, 1);
+  }
+  if (cs > -1) {
 
 #ifdef ESP8266
     SPI.begin();
 #endif // ESP8266
 #ifdef ESP32
-    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    SPI.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
 #endif // ESP32
 
     if (SD.begin(cs)) {
@@ -1271,9 +1283,6 @@ const char UFS_CURRDIR[] PROGMEM =
   #define D_CURR_DIR "Folder"
 #endif
 
-const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
-  "<div id='f1' name='f1' style='display:block;'>"
-  "<fieldset><legend><b>&nbsp;" D_MANAGE_FILE_SYSTEM "&nbsp;</b></legend>";
 const char UFS_FORM_FILE_UPGc[] PROGMEM =
   "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s MB - " D_FS_FREE " %s MB";
 
@@ -1295,7 +1304,7 @@ const char UFS_FORM_SDC_DIRa[] PROGMEM =
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-  "<form method='get' action='ufse'><input type='hidden' name='file' value='%s/" D_NEW_FILE "'>"
+  "<input type='hidden' name='file' value='%s/" D_NEW_FILE "'>"
   "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
 const char UFS_FORM_FILE_UPGb1[] PROGMEM =
   "<label><input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</label>";
@@ -1329,7 +1338,6 @@ const char UFS_FORM_SDC_HREFedit[] PROGMEM =
   "<a href='ufse?file=%s/%s'>&#x1F4DD;</a>"; // 📝
 
 const char HTTP_EDITOR_FORM_START[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
   "<form>"
   "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
   "<textarea id='content' name='content' wrap='off' rows='8' cols='80' style='font-size: 12pt'>";
@@ -1427,7 +1435,8 @@ void UfsDirectory(void) {
 
   WSContentStart_P(PSTR(D_MANAGE_FILE_SYSTEM));
   WSContentSendStyle();
-  WSContentSend_P(UFS_FORM_FILE_UPLOAD);
+  WSContentSend_P(HTTP_DIV_F1_BLOCK);
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_MANAGE_FILE_SYSTEM));
 
   char ts[FLOATSZ];
   dtostrfd((float)UfsInfo(0, ufs_dir == 2 ? 1:0) / 1000, 3, ts);
@@ -1455,6 +1464,7 @@ void UfsDirectory(void) {
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
 #ifdef GUI_EDIT_FILE
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR("ufse"));
   WSContentSend_P(UFS_FORM_FILE_UPGb, ufs_path);
 #endif
   if (!UfsIsSDC()) {
@@ -1756,6 +1766,7 @@ void UfsEditor(void) {
 
   WSContentStart_P(PSTR(D_EDIT_FILE));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_EDIT_FILE));
   char *bfname = fname +1;
   WSContentSend_P(HTTP_EDITOR_FORM_START, bfname);  // Skip leading slash
 

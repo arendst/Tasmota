@@ -202,7 +202,7 @@ TEST(TestSendGree, CompareUint64ToCharResults) {
   irsend_chars.reset();
   irsend_uint64.reset();
   irsend_chars.sendGree(gree_zero_code);
-  irsend_uint64.sendGree((uint64_t)0x0);
+  irsend_uint64.sendGree(static_cast<uint64_t>(0x0));
   ASSERT_EQ(irsend_chars.outputStr(), irsend_uint64.outputStr());
 }
 
@@ -701,6 +701,11 @@ TEST(TestGreeClass, toCommon) {
   ASSERT_FALSE(ac.toCommon().filter);
   ASSERT_FALSE(ac.toCommon().beep);
   ASSERT_EQ(-1, ac.toCommon().clock);
+
+  // Test kGreeSwingLastPos following the pattern in IRac::gree().
+  ASSERT_EQ(kGreeSwingLastPos, ac.convertSwingV(stdAc::swingv_t::kOff));
+  ac.setSwingVertical(false, kGreeSwingLastPos);
+  ASSERT_EQ(stdAc::swingv_t::kOff, ac.toCommon().swingv);
 }
 
 TEST(TestGreeClass, Issue814Power) {

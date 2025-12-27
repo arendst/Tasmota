@@ -47,7 +47,6 @@ class RichPaletteAnimationTest
     
     self.test_initialization()
     self.test_update_and_render()
-    self.test_factory_method()
     self.test_palette_properties()
     self.test_css_gradient()
     self.test_cycle_period_zero()
@@ -95,8 +94,8 @@ class RichPaletteAnimationTest
     # Test with custom parameters using new parameterized class specification
     var custom_palette = bytes("00FF0000" "FFFFFF00")
     var custom_provider = animation.rich_palette(mock_engine)
-    custom_provider.palette = custom_palette
-    custom_provider.cycle_period = 2000
+    custom_provider.colors = custom_palette
+    custom_provider.period = 2000
     custom_provider.transition_type = animation.SINE
     custom_provider.brightness = 128
     
@@ -108,17 +107,17 @@ class RichPaletteAnimationTest
     self.assert_equal(type(anim2.color) == 'int', true, "Custom color is resolved to integer")
     
     # Check provider properties directly on the provider object
-    self.assert_equal(custom_provider.cycle_period, 2000, "Custom cycle period is 2000ms")
+    self.assert_equal(custom_provider.period, 2000, "Custom cycle period is 2000ms")
     self.assert_equal(custom_provider.transition_type, animation.SINE, "Custom transition type is sine")
     self.assert_equal(custom_provider.brightness, 128, "Custom brightness is 128")
   end
   
   def test_update_and_render()
     # Create animation with red and blue colors
-    var palette = bytes("00FF0000" "FF0000FF")  # Red to Blue in VRGB format
+    var colors = bytes("00FF0000" "FF0000FF")  # Red to Blue in VRGB format
     var provider = animation.rich_palette(mock_engine)
-    provider.palette = palette
-    provider.cycle_period = 1000  # 1 second cycle
+    provider.colors = colors
+    provider.period = 1000  # 1 second cycle
     provider.transition_type = animation.LINEAR  # linear transition
     
     var anim = animation.solid(mock_engine)
@@ -165,39 +164,15 @@ class RichPaletteAnimationTest
     self.assert_equal(middle_color != 0, true, "Middle color is valid")
   end
   
-  def test_factory_method()
-    # Test the rainbow factory method
-    var provider = animation.rich_palette_rainbow(mock_engine)
-    provider.cycle_period = 5000
-    provider.brightness = 255
-    
-    var anim = animation.solid(mock_engine)
-    anim.color = provider
-    anim.priority = 10  # Priority 10
-    
-    # Check that the animation was created correctly
-    self.assert_equal(anim != nil, true, "Animation was created")
-    self.assert_equal(anim.render != nil, true, "Animation has render method")
-    self.assert_equal(type(anim.color) == 'int', true, "Color is resolved to integer")
-    
-    # Check provider properties directly on the provider object
-    self.assert_equal(provider.cycle_period, 5000, "Cycle period is 5000ms")
-    self.assert_equal(provider.transition_type, animation.LINEAR, "Default transition type is linear")
-    self.assert_equal(provider.brightness, 255, "Brightness is 255")
-    
-    # Check animation properties
-    self.assert_equal(anim.priority, 10, "Priority is 10")
-  end
-  
   def test_palette_properties()
     # Test palette properties and value-based color generation
-    var palette = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
+    var colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
     var provider = animation.rich_palette(mock_engine)
-    provider.palette = palette
-    provider.cycle_period = 1000
+    provider.colors = colors
+    provider.period = 1000
     
     # Check basic properties
-    self.assert_equal(provider.cycle_period, 1000, "Cycle period is 1000ms")
+    self.assert_equal(provider.period, 1000, "Cycle period is 1000ms")
     
     # Value-based colors now always use 0-255 range
     
@@ -220,10 +195,10 @@ class RichPaletteAnimationTest
   
   def test_css_gradient()
     # Test CSS gradient generation
-    var palette = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
+    var colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
     var provider = animation.rich_palette(mock_engine)
-    provider.palette = palette
-    provider.cycle_period = 1000
+    provider.colors = colors
+    provider.period = 1000
     
     var css = provider.to_css_gradient()
     
@@ -239,23 +214,23 @@ class RichPaletteAnimationTest
   end
   
   def test_cycle_period_zero()
-    # Test the new cycle_period = 0 functionality for value-based color mapping
-    var palette = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
+    # Test the new period = 0 functionality for value-based color mapping
+    var colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
     var provider = animation.rich_palette(mock_engine)
-    provider.palette = palette
-    provider.cycle_period = 0  # Value-based mode
+    provider.colors = colors
+    provider.period = 0  # Value-based mode
     provider.start()
     provider.update()
     
-    # Check that cycle_period can be set to 0
-    self.assert_equal(provider.cycle_period, 0, "Cycle period can be set to 0")
+    # Check that period can be set to 0
+    self.assert_equal(provider.period, 0, "Cycle period can be set to 0")
     
-    # Test that produce_value returns static color when cycle_period = 0
+    # Test that produce_value returns static color when period = 0
     var color_t0 = provider.produce_value("color", 0)
     var color_t1000 = provider.produce_value("color", 1000)
     var color_t2000 = provider.produce_value("color", 2000)
     
-    # All colors should be the same (static) when cycle_period = 0
+    # All colors should be the same (static) when period = 0
     self.assert_equal(color_t0, color_t1000, "Static color at different times (0 vs 1000)")
     self.assert_equal(color_t1000, color_t2000, "Static color at different times (1000 vs 2000)")
     
@@ -273,8 +248,8 @@ class RichPaletteAnimationTest
     self.assert_equal(color_128 != color_255, true, "Value-based colors differ (128 vs 255)")
     
     # Test that we can switch back to time-based mode
-    provider.cycle_period = 1000
-    self.assert_equal(provider.cycle_period, 1000, "Can switch back to time-based mode")
+    provider.period = 1000
+    self.assert_equal(provider.period, 1000, "Can switch back to time-based mode")
     
     # Start the provider for time-based mode
     provider.start(0)
@@ -289,20 +264,20 @@ class RichPaletteAnimationTest
   
   def test_sine_mode()
     # Test SINE mode for smooth ease-in/ease-out transitions
-    var palette = bytes("00FF0000" "FF0000FF")  # Red at 0, Blue at 255
+    var colors = bytes("00FF0000" "FF0000FF")  # Red at 0, Blue at 255
     
     # Create LINEAR provider
     var provider_linear = animation.rich_palette(mock_engine)
-    provider_linear.palette = palette
-    provider_linear.cycle_period = 1000
+    provider_linear.colors = colors
+    provider_linear.period = 1000
     provider_linear.transition_type = animation.LINEAR
     provider_linear.brightness = 255
     provider_linear.start(0)
     
     # Create SINE provider
     var provider_sine = animation.rich_palette(mock_engine)
-    provider_sine.palette = palette
-    provider_sine.cycle_period = 1000
+    provider_sine.colors = colors
+    provider_sine.period = 1000
     provider_sine.transition_type = animation.SINE
     provider_sine.brightness = 255
     provider_sine.start(0)
@@ -350,10 +325,10 @@ class RichPaletteAnimationTest
   
   def test_sine_mode_value_based()
     # Test SINE mode with value-based interpolation
-    var palette = bytes("00FF0000" "FF0000FF")  # Red to Blue
+    var colors = bytes("00FF0000" "FF0000FF")  # Red to Blue
     var provider = animation.rich_palette(mock_engine)
-    provider.palette = palette
-    provider.cycle_period = 0  # Value-based mode
+    provider.colors = colors
+    provider.period = 0  # Value-based mode
     provider.transition_type = animation.SINE
     provider.start()
     provider.update()

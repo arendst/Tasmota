@@ -139,8 +139,8 @@ import "animations/solid" as solid_impl
 register_to_animation(solid_impl)
 import "animations/beacon" as beacon_animation
 register_to_animation(beacon_animation)
-import "animations/crenel_position" as crenel_position_animation
-register_to_animation(crenel_position_animation)
+import "animations/crenel_position" as crenel_animation
+register_to_animation(crenel_animation)
 import "animations/breathe" as breathe_animation
 register_to_animation(breathe_animation)
 import "animations/palette_pattern" as palette_pattern_animation

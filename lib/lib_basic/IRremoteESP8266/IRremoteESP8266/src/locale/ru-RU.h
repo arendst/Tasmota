@@ -143,7 +143,7 @@
 #define D_STR_MESGDESC "Описание Сообщения."
 #define D_STR_TOLERANCE "Допуск"
 #define D_STR_IRRECVDUMP_STARTUP \
-    "IRrecvDump запущен и ождает ИК команды на Входе %d"
+    "IRrecvDump запущен и ожидает ИК команды на Входе %d"
 #define D_WARN_BUFFERFULL \
     "ПРЕДУПРЕЖДЕНИЕ: ИК код слишком велик для буфера (>= %d). " \
     "Этому результату не следует доверять, пока это не будет исправлено. " \

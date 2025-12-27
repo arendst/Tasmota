@@ -295,6 +295,10 @@ IRTEXT_CONST_STRING(kDg11j104Str, D_STR_DG11J104);  ///< "DG11J104"
 IRTEXT_CONST_STRING(kDg11j191Str, D_STR_DG11J191);  ///< "DG11J191"
 IRTEXT_CONST_STRING(kArgoWrem2Str, D_STR_ARGO_WREM2);  ///< "WREM3"
 IRTEXT_CONST_STRING(kArgoWrem3Str, D_STR_ARGO_WREM3);  ///< "WREM3"
+IRTEXT_CONST_STRING(kToshibaGenericRemoteAStr, D_STR_TOSHIBAGENERICREMOTEA);
+// "TOSHIBA REMOTE A"
+IRTEXT_CONST_STRING(kToshibaGenericRemoteBStr, D_STR_TOSHIBAGENERICREMOTEB);
+// "TOSHIBA REMOTE B"
 
 #define D_STR_UNSUPPORTED "?"  // Unsupported protocols will be showing as
                                // a question mark, check for length > 1
@@ -555,6 +559,10 @@ IRTEXT_CONST_BLOB_DECL(kAllProtocolNamesStr) {
             D_STR_CARRIER_AC84, D_STR_UNSUPPORTED) "\x0"
     COND(DECODE_YORK || SEND_YORK,
             D_STR_YORK, D_STR_UNSUPPORTED) "\x0"
+    COND(DECODE_BLUESTARHEAVY || SEND_BLUESTARHEAVY,
+            D_STR_BLUESTARHEAVY, D_STR_UNSUPPORTED) "\x0"
+    COND(DECODE_EUROM || SEND_EUROM,
+            D_STR_EUROM, D_STR_UNSUPPORTED) "\x0"
     ///< New protocol (macro) strings should be added just above this line.
     "\x0"  ///< This string requires double null termination.
 };

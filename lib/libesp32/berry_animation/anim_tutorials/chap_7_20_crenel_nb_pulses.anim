@@ -1,0 +1,16 @@
+# Crenel with variable number of pulses
+
+set strip_len = strip_length()
+set period = 4                    # pulse_size (2) + low_size (2)
+set max_pulses = (strip_len + period - 1) / period
+
+set nb_pulse = triangle(min_value = 0, max_value = max_pulses, duration = 2s)
+
+animation back = crenel_animation(
+    color = red
+    back_color = blue
+    pulse_size = 2
+    low_size = 2
+    nb_pulse = nb_pulse
+)
+run back

@@ -80,7 +80,7 @@ void IRsend::sendPioneer(const uint64_t data, const uint16_t nbits,
 ///    `irsend.sendPioneer(irsend.encodePioneer(0xAA1C, 0xAA1C), 64, 0);`
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1749#issuecomment-1028122645
 uint64_t IRsend::encodePioneer(const uint16_t address, const uint16_t command) {
-  return (((uint64_t)encodeNEC(address >> 8, address & 0xFF)) << 32) |
+  return static_cast<uint64_t>(encodeNEC(address >> 8, address & 0xFF)) << 32 |
          encodeNEC(command >> 8, command & 0xFF);
 }
 #endif  // SEND_PIONEER

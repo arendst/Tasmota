@@ -1,19 +1,23 @@
 /*
-  xdrv_69_pca9557.ino - PCA9557 GPIO Expander support for Tasmota
+  xdrv_69_pca9557.ino - PCA9557 or TCA9554 GPIO Expander support for Tasmota
 
-  SPDX-FileCopyrightText: 2023 Theo Arends
+  SPDX-FileCopyrightText: 2023 @cctweaker and Theo Arends
 
   SPDX-License-Identifier: GPL-3.0-only
 */
 
 #ifdef USE_I2C
-#ifdef USE_PCA9557
+#if defined(USE_PCA9557) || defined(USE_TCA9554)
+#if defined(USE_PCA9557) && defined(USE_TCA9554)
+#warning Dropped PCA9557 in favour of TCA9554
+#undef USE_PCA9557
+#endif
 /*********************************************************************************************\
- * 8-bit PCA9557 I2C GPIO Expander to be used as virtual relay
+ * 8-bit PCA9557/TCA9554 I2C GPIO Expander to be used as virtual relay
  *
  * Docs at https://www.nxp.com/products/interfaces/ic-spi-i3c-interface-devices/general-purpose-i-o-gpio/8-bit-ic-bus-and-smbus-i-o-port-with-reset:PCA9557
  *
- * I2C Addresses: 0x18 - 0x1F
+ * I2C Addresses: 0x18 - 0x1F (PCA9557), 0x20 - 0x27 (TCA9554)
  *
  * The goal of the driver is to provide a sequential list of pins configured as Tasmota template
  * and handle any input and output as configured GPIOs.
@@ -39,8 +43,11 @@
  *
  * Prepare a template to be loaded either by:
  * - a rule like: rule3 on file#pca9557.dat do {"NAME":"PCA9557","GPIO":[224,225,226,227,228,229,230,231]} endon
+ * - a rule like: rule3 on file#tca9554.dat do {"NAME":"TCA9554","GPIO":[224,225,226,227,228,229,230,231]} endon
  * - a script like: -y{"NAME":"PCA9557","GPIO":[224,225,226,227,228,229,230,231]}
+ * - a script like: -y{"NAME":"TCA9554","GPIO":[224,225,226,227,228,229,230,231]}
  * - file called pca9557.dat with contents: {"NAME":"PCA9557","GPIO":[224,225,226,227,228,229,230,231]}
+ * - file called tca9554.dat with contents: {"NAME":"TCA9554","GPIO":[224,225,226,227,228,229,230,231]}
  *
  * Inverted relays           Ri1 Ri2 Ri3 Ri4 Ri5 Ri6 Ri7 Ri8
  * {"NAME":"PCA9557","GPIO":[256,257,258,259,260,261,262,263]}
@@ -54,7 +61,10 @@
  * 16 relays                 R1  R2  R3  R4  R5  R6  R7  R8  R9  R10 R11 R12 R13 R14 R15 R16
  * {"NAME":"PCA9557","GPIO":[224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239]}
  *
- *
+ * Waveshare ESP32-S3-POE-ETH-8DI-8RO TCA9554 configuration:
+ * 8 relays                  R1  R2  R3  R4  R5  R6  R7  R8
+ * {"NAME":"TCA9554","GPIO":[224,225,226,227,228,229,230,231]}
+ * 
 \*********************************************************************************************/
 
 #define XDRV_69                  69
@@ -62,9 +72,24 @@
 
 #define PCA9557_ADDR_START       0x18     // 24
 #define PCA9557_ADDR_END         0x20     // 32 (not included)
+#define PCA9557_LOG              "PCA: "
+#define PCA9557_NAME             "PCA9557"
+#define PCA9557_NAME_LC          "pca9557"
+
+#ifdef USE_TCA9554
+#undef PCA9557_ADDR_START
+#undef PCA9557_ADDR_END
+#undef PCA9557_LOG
+#undef PCA9557_NAME
+#undef PCA9557_NAME_LC
+#define PCA9557_ADDR_START       0x20     // 32
+#define PCA9557_ADDR_END         0x28     // 40 (not included)
+#define PCA9557_LOG              "TCA: "
+#define PCA9557_NAME             "TCA9554"
+#define PCA9557_NAME_LC          "tca9554"
+#endif
 
 #define PCA9557_MAX_DEVICES      8        
-
 
 /*********************************************************************************************\
  * PCA9557 support
@@ -110,7 +135,7 @@ void PCA9557DumpRegs(void) {
   for (Pca9557.chip = 0; Pca9557.chip < Pca9557.max_devices; Pca9557.chip++) {
     uint32_t data_size = sizeof(data);
     I2cReadBuffer(Pca9557.device[Pca9557.chip].address, 0, data, data_size);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PCA: Intf %d, Address %02X, Regs %*_H"), Pca9557.device[Pca9557.chip].address, data_size, data);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(PCA9557_LOG "Intf %d, Address %02X, Regs %*_H"), Pca9557.device[Pca9557.chip].address, data_size, data);
   }
 }
 
@@ -242,11 +267,11 @@ uint32_t PCA9557GetPin(uint32_t lpin) {
 String PCA9557TemplateLoadFile(void) {
   String pcatmplt = "";
 #ifdef USE_UFILESYS
-  pcatmplt = TfsLoadString("/pca9557.dat");
+  pcatmplt = TfsLoadString("/" PCA9557_NAME_LC ".dat");
 #endif  // USE_UFILESYS
 #ifdef USE_RULES
   if (!pcatmplt.length()) {
-    pcatmplt = RuleLoadFile("PCA9557.DAT");
+    pcatmplt = RuleLoadFile(PCA9557_NAME ".DAT");
   }
 #endif  // USE_RULES
 #ifdef USE_SCRIPT
@@ -266,6 +291,7 @@ bool PCA9557LoadTemplate(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }
 
+  // rule3 on file#tca9554.dat do {"NAME":"TCA9554","GPIO":[224,225,226,227,228,229,230,231]} endon
   // rule3 on file#pca9557.dat do {"NAME":"PCA9557","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]} endon
   // rule3 on file#pca9557.dat do {"NAME":"PCA9557","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
   // rule3 on file#pca9557.dat do {"NAME":"PCA9557 A=Ri8-1, B=B1-8","GPIO":[263,262,261,260,259,258,257,256,32,33,34,35,36,37,38,39]} endon
@@ -279,7 +305,7 @@ bool PCA9557LoadTemplate(void) {
   }
   val = root[PSTR(D_JSON_NAME)];
   if (val) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PCA: Base %d, Template '%s'"), Pca9557.base, val.getStr());
+    AddLog(LOG_LEVEL_DEBUG, PSTR(PCA9557_LOG "Base %d, Template '%s'"), Pca9557.base, val.getStr());
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
@@ -329,14 +355,14 @@ bool PCA9557LoadTemplate(void) {
       if ((Pca9557.switch_max >= MAX_SWITCHES_SET) ||
           (Pca9557.button_max >= MAX_KEYS_SET) ||
           (Pca9557.relay_max >= MAX_RELAYS_SET)) {
-        AddLog(LOG_LEVEL_INFO, PSTR("PCA: Max reached (S%d/B%d/R%d)"), Pca9557.switch_max, Pca9557.button_max, Pca9557.relay_max);
+        AddLog(LOG_LEVEL_INFO, PSTR(PCA9557_LOG "Max reached (S%d/B%d/R%d)"), Pca9557.switch_max, Pca9557.button_max, Pca9557.relay_max);
         break;
       }
     }
     Pca9557.max_pins = pin;                             // Max number of configured pins
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("PCA: Pins %d, Pca9557_gpio_pin %*_V"), Pca9557.max_pins, Pca9557.max_pins, (uint8_t*)Pca9557_gpio_pin);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(PCA9557_LOG "Pins %d, Pca9557_gpio_pin %*_V"), Pca9557.max_pins, Pca9557.max_pins, (uint8_t*)Pca9557_gpio_pin);
 
   return true;
 }
@@ -360,35 +386,39 @@ uint32_t PCA9557TemplateGpio(void) {
 void PCA9557ModuleInit(void) {
   int32_t pins_needed = PCA9557TemplateGpio();
   if (!pins_needed) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PCA: Invalid template"));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(PCA9557_LOG "Invalid template"));
     return;
   }
 
+  uint8_t pca9557_address = PCA9557_ADDR_START;
+  while ((Pca9557.max_devices < PCA9557_MAX_DEVICES) && (pca9557_address < PCA9557_ADDR_END)) {
+    Pca9557.chip = Pca9557.max_devices;
+    if (I2cSetDevice(pca9557_address)) {
+      Pca9557.device[Pca9557.chip].address = pca9557_address;
 
-   uint8_t pca9557_address = PCA9557_ADDR_START;
-    while ((Pca9557.max_devices < PCA9557_MAX_DEVICES) && (pca9557_address < PCA9557_ADDR_END)) {
-      Pca9557.chip = Pca9557.max_devices;
-      if (I2cSetDevice(pca9557_address)) {
-        Pca9557.device[Pca9557.chip].address = pca9557_address;
-
-        uint8_t buffer;
-        if (PCA9557ValidRead(PCA9557_R2, &buffer)) {
-          I2cSetActiveFound(pca9557_address, "PCA9557");
-          Pca9557.device[Pca9557.chip].pins = 8;
-          PCA9557Write(PCA9557_R2, 0b00000000);     // disable polarity inversion
-          Pca9557.max_devices++;
-
-          Pca9557.max_pins += Pca9557.device[Pca9557.chip].pins;
-          pins_needed -= Pca9557.device[Pca9557.chip].pins;
+      uint8_t buffer;
+      if (PCA9557ValidRead(PCA9557_R2, &buffer)) {
+        I2cSetActiveFound(pca9557_address, PCA9557_NAME);
+        Pca9557.device[Pca9557.chip].pins = 8;
+#ifdef USE_TCA9554
+        if (ResetReasonPowerOn()) {               // Fix power on relay toggle
+          PCA9557Write(PCA9557_R1, 0x00);         // Output state (TCA9554 power on is 0xFF, PCA9557 is 0x00)
+//          PCA9557Write(PCA9557_R3, 0x00);       // Config direction as output
         }
-      }
-      if (pins_needed) {
-        pca9557_address++;
-      } else {
-        pca9557_address = PCA9557_ADDR_END;
+#endif  // USE_TCA9554
+        PCA9557Write(PCA9557_R2, 0b00000000);     // Disable polarity inversion
+        Pca9557.max_devices++;
+
+        Pca9557.max_pins += Pca9557.device[Pca9557.chip].pins;
+        pins_needed -= Pca9557.device[Pca9557.chip].pins;
       }
     }
-
+    if (pins_needed) {
+      pca9557_address++;
+    } else {
+      pca9557_address = PCA9557_ADDR_END;
+    }
+  }
 
   if (!Pca9557.max_devices) { return; }
 
@@ -396,7 +426,7 @@ void PCA9557ModuleInit(void) {
   if (!Pca9557_gpio_pin) { return; }
 
   if (!PCA9557LoadTemplate()) {
-    AddLog(LOG_LEVEL_INFO, PSTR("PCA: No valid template found"));  // Too many GPIO's
+    AddLog(LOG_LEVEL_INFO, PSTR(PCA9557_LOG "No valid template found"));  // Too many GPIO's
     Pca9557.max_devices = 0;
     return;
   }
@@ -417,7 +447,7 @@ void PCA9557ServiceInput(void) {
   for (Pca9557.chip = 0; Pca9557.chip < Pca9557.max_devices; Pca9557.chip++) {
     gpio = PCA9557Read(PCA9557_R0);             // Read PCA9557 gpio
 
-//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PCA: Chip %d, State %02X"), Pca9557.chip, gpio);
+//    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(PCA9557_LOG "Chip %d, State %02X"), Pca9557.chip, gpio);
 
     uint32_t mask = 1;
     for (uint32_t pin = 0; pin < Pca9557.device[Pca9557.chip].pins; pin++) {
@@ -435,10 +465,6 @@ void PCA9557ServiceInput(void) {
     }
     pin_offset += Pca9557.device[Pca9557.chip].pins;
   }
-}
-
-void PCA9557Init(void) {
-  PCA9557Write(PCA9557_R2, 0b00000000);     // disable polarity inversion
 }
 
 void PCA9557Power(void) {
@@ -518,9 +544,6 @@ bool Xdrv69(uint32_t function) {
       case FUNC_SET_POWER:
         PCA9557Power();
         break;
-      case FUNC_INIT:
-        PCA9557Init();
-        break;
       case FUNC_ADD_BUTTON:
         result = PCA9557AddButton();
         break;
@@ -535,5 +558,5 @@ bool Xdrv69(uint32_t function) {
   return result;
 }
 
-#endif  // USE_PCA9557_DRV
+#endif  // USE_PCA9557 or USE_TCA9554
 #endif  // USE_I2C

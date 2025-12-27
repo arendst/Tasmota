@@ -1,0 +1,25 @@
+# @desc Moving rainbow beacon and stars
+# In this example we combine a Twinkle star as background,
+# a moving beacon with a dynamic color using the rainbow palette
+
+# Because strip_length is dynamic, we need to map it to a variable and can't use the function directly in formulas
+set strip_len = strip_length()
+
+animation stars = twinkle_animation(
+  color=0xFFFFAA        # Light yellow sparkles
+  density=2             # density (moderate sparkles)
+  twinkle_speed=100ms   # twinkle speed
+  fade_speed=100        # when no unit, time unit is 'ms'
+  # priority = 10       # this is the implicit priority
+)
+run stars
+
+# We can combine a dynamic 'pos' value with a dynamic 'color'
+animation back = beacon_animation(
+    color = rich_palette(colors=PALETTE_RAINBOW_W2, period=5s)
+    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
+    beacon_size = 3       # small 3 pixels eye
+    slew_size = 2         # with 2 pixel shading around
+    priority = 5          # priority below 10 so it's on top of twinkle
+)
+run back

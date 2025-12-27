@@ -3,7 +3,44 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.1.0.3]
+## [15.2.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP8266 platform update from 2025.10.00 to 2025.12.00 (#24254)
+- ESP32 Platform from 2025.12.30 to 2025.12.31, Framework (Arduino Core) from v3.1.7 to v3.1.8 and IDF from v5.3.4.251205 to v5.3.4.251223 (#24254)
+
+### Fixed
+- ESP32 BLE not starting (#24240)
+
+### Removed
+
+## [15.2.0.1]
+### Added
+- Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
+
+### Changed
+- Vid6608 library from v1.0.2 to v1.0.3 (#24218)
+- IRremoteESP8266 library from v2.8.6 to v2.8.6-ca474a6 (#24226)
+- Update Zigbee WebUI (#24224)
+
+### Fixed
+- DALI watchdog exception
+- TuyaMCU v1 exception 28 regression from v15.1.0.1 reverted PR24063 (#24220)
+- ESP8266 TasmotaSerial flush receive buffer on executing `TasmotaSerial.flush();`
+- ESP32-P4 unique MQTT Client based on hosted MCU MAC address
+
+### Removed
+- Berry `animate` to be replaced with `animation` framework (#24241)
+
+## [Released]
+
+## [15.2.0]
+- Release Stephan
+
+## [15.1.0.3] 20251212
 ### Added
 - Support for ESP32-P4 rev.3 (#24146)
 - Support for Analog Gauges (#24153)
@@ -11,11 +48,11 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.micros()` to get time in microseconds (#24192)
 - Support for AGS02MA TVOC sensor (#24109)
 
-### Breaking Changed
-
+## [15.0.1.5] 20251011
 ### Changed
 - ESP32 Platform from 2025.11.30 to 2025.11.31, Framework (Arduino Core) from v3.1.5 to v3.1.6 and IDF from v5.3.4.251110 to v5.3.4.251110 (#24146)
 - Refactored DALI using TasmotaDali library v1.0.0 adding frame receive buffer
+- ESP32 Platform from 2025.11.31 to 2025.12.30, Framework (Arduino Core) from v3.1.6 to v3.1.7 and IDF from v5.3.4.251110 to v5.3.4.20251205 (#24212)
 
 ### Fixed
 - ESP32-P4 Hosted MCU updated to v2.6.6 solving WiFi boot issues (#24146)
@@ -23,8 +60,8 @@ All notable changes to this project will be documented in this file.
 - PCA9685 V2 driver PWMTO fading logic and overflow (#24159)
 - RGBW handling in TasmotaLED and xlgt_01_ws2812_esp32 (#24172)
 - ArtNet single light color mapping using `ChannelRemap` (#24058)
-
-### Removed
+- Thermostat temperature unit (#24213)
+- Display rotate regression from v15.1.0.1 (#24214)
 
 ## [15.1.0.2] 20251122
 ### Added
@@ -67,8 +104,6 @@ All notable changes to this project will be documented in this file.
 - Scripter UDP and switch case (#24060)
 - TuyaMCU v1 soft lock when WIFI_SELECT / WIFI_RESET is initiated (#24063)
 - HASPmota `scale` and `angle` for images (#24089)
-
-## [Released]
 
 ## [15.1.0] 20251011
 - Release Stella

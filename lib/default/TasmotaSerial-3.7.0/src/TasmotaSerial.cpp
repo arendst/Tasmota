@@ -353,14 +353,15 @@ bool TasmotaSerial::overflow(void) {
 void TasmotaSerial::flush(void) {
   if (m_hardserial) {
 #ifdef ESP8266
-    Serial.flush();
+    Serial.flush();    // Flushes Tx only
+    while (Serial.available()) { Serial.read(); }  // Flushes Rx
 #endif  // ESP8266
 #ifdef ESP32
     TSerial->flush();  // Flushes Tx only https://github.com/espressif/arduino-esp32/pull/4263
-    while (TSerial->available()) { TSerial->read(); }
+    while (TSerial->available()) { TSerial->read(); }  // Flushes Rx
 #endif  // ESP32
   } else {
-    m_in_pos = 0;
+    m_in_pos = 0;      // Flushes Rx, Tx is always flushed
     m_out_pos = 0;
   }
 }

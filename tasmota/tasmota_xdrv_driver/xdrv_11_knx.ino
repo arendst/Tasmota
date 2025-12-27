@@ -1050,9 +1050,6 @@ void KnxSensor(uint8_t sensor_type, float value)
 
 #ifdef USE_WEBSERVER
 #ifdef USE_KNX_WEB_MENU
-const char HTTP_BTN_MENU_KNX[] PROGMEM =
-  "<p></p><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>";
-
 const char HTTP_FORM_KNX[] PROGMEM =
   "<fieldset style='min-width:530px;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b></legend>"
@@ -1583,7 +1580,7 @@ bool Xdrv11(uint32_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_KNX_WEB_MENU
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_KNX);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR("kn"), PSTR(D_CONFIGURE_KNX));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/kn"), HandleKNXConfiguration);

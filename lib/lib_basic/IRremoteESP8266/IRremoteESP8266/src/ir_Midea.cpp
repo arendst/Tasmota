@@ -566,7 +566,7 @@ uint16_t IRMideaAC::getOnTimer(void) const {
 ///          Setting it will disable that mode/settings.
 void IRMideaAC::setOnTimer(const uint16_t mins) {
   setEnableSensorTemp(false);
-  uint8_t halfhours = std::min((uint16_t)(24 * 60), mins) / 30;
+  uint8_t halfhours = std::min(static_cast<uint16_t>(24 * 60), mins) / 30;
   if (halfhours)
     _.SensorTemp = ((halfhours - 1) << 1) | 1;
   else
@@ -589,7 +589,7 @@ uint16_t IRMideaAC::getOffTimer(void) const { return _.OffTimer * 30 + 30; }
 ///       of the actual device/protocol.
 /// @note A value of less than 30 will disable the Timer.
 void IRMideaAC::setOffTimer(const uint16_t mins) {
-  uint8_t halfhours = std::min((uint16_t)(24 * 60), mins) / 30;
+  uint8_t halfhours = std::min(static_cast<uint16_t>(24 * 60), mins) / 30;
   if (halfhours)
     _.OffTimer = halfhours - 1;
   else

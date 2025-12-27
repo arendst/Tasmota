@@ -42,15 +42,15 @@ end
 log("")
 
 var provider = animation.rich_palette(engine)
-provider.palette = rainbow_palette
-provider.cycle_period = 0  # Static mode for testing
+provider.colors = rainbow_palette
+provider.period = 0  # Static mode for testing
 
 # Trigger initialization by calling produce_value once
 # This will initialize value_arr and slots
 provider.produce_value("color", 0)
 
 # Debug: Check palette
-log(f"Palette size: {size(provider.palette)} bytes")
+log(f"Palette size: {size(provider.colors)} bytes")
 log(f"Slots: {provider._slots}")
 log("Range: 0 to 255 (fixed)")
 
@@ -86,7 +86,7 @@ provider.transition_type = animation.SINE
 log(f"After transition_type change: _lut_dirty = {provider._lut_dirty}")
 
 provider._lut_dirty = false
-provider.palette = bytes("00FF0000" "FFFFFF00" "FF00FF00")
+provider.colors = bytes("00FF0000" "FFFFFF00" "FF00FF00")
 log(f"After palette change: _lut_dirty = {provider._lut_dirty}")
 
 log("")
@@ -97,8 +97,8 @@ log("-------------------------------")
 
 # Create a fresh provider for performance testing
 var perf_provider = animation.rich_palette(engine)
-perf_provider.palette = rainbow_palette
-perf_provider.cycle_period = 0
+perf_provider.colors = rainbow_palette
+perf_provider.period = 0
 
 # Warm up the LUT
 perf_provider.get_color_for_value(128, 0)

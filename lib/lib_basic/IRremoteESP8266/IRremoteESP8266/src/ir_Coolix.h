@@ -15,6 +15,7 @@
 //   Brand: Midea, Model: RG52D/BGE Remote
 //   Brand: Midea, Model: MS12FU-10HRDN1-QRD0GW(B) A/C
 //   Brand: Midea, Model: MSABAU-07HRFN1-QRD0GW A/C (circa 2016)
+//   Brand: Comfee (Midea), Model: Breezy Cool Pro 2.6
 //   Brand: Tokio, Model: AATOEMF17-12CHR1SW split-type RG51|50/BGE Remote
 //   Brand: Airwell, Model: RC08B remote
 //   Brand: Kastron, Model: RG57A7/BGEF Inverter remote
@@ -25,6 +26,7 @@
 //   Brand: Toshiba, Model: WH-E1YE remote
 //   Brand: Bosch, Model: RG36B4/BGE remote
 //   Brand: Bosch, Model: B1ZAI2441W/B1ZAO2441W A/C
+//   Brand: Fisher,  Model: R51L1/BGE remote
 
 #ifndef IR_COOLIX_H_
 #define IR_COOLIX_H_
@@ -77,6 +79,42 @@ const uint8_t kCoolixTempMap[kCoolixTempRange] = {
     0b1000,  // 28C
     0b1010,  // 29C
     0b1011   // 30C
+};
+const uint8_t kCoolixTempLowFMin = 63;
+const uint8_t kCoolixTempLowFMax = 75;
+const uint8_t kCoolixTempLowFRange =
+    kCoolixTempLowFMax - kCoolixTempLowFMin + 1;
+const uint8_t kCoolixTempHighFMin = kCoolixTempLowFMax + 1;
+const uint8_t kCoolixTempHighFMax = 86;
+const uint8_t kCoolixTempHighFRange =
+    kCoolixTempHighFMax - kCoolixTempHighFMin + 1;
+const uint8_t kCoolixTempMapLowF[kCoolixTempLowFRange] = {
+  0b1100,  // 63F
+  0b0010,  // 64F
+  0b1010,  // 65F
+  0b0110,  // 66F
+  0b1110,  // 67F
+  0b0001,  // 68F
+  0b1001,  // 69F
+  0b0101,  // 70F
+  0b1101,  // 71F
+  0b0011,  // 72F
+  0b1011,  // 73F
+  0b0111,  // 74F
+  0b1111   // 75F
+};
+const uint8_t kCoolixTempMapHighF[kCoolixTempHighFRange] = {
+  0b0000,  // 76F
+  0b1000,  // 77F
+  0b0100,  // 78F
+  0b1100,  // 79F
+  0b0010,  // 80F
+  0b1010,  // 81F
+  0b0110,  // 82F
+  0b1110,  // 83F
+  0b0001,  // 84F
+  0b1001,  // 85F
+  0b0101   // 86F
 };
 const uint8_t kCoolixSensorTempMax = 30;  // Celsius
 const uint8_t kCoolixSensorTempIgnoreCode = 0b11111;  // 0x1F / 31 (DEC)
@@ -135,6 +173,8 @@ class IRCoolixAC {
   void off(void);
   void setPower(const bool on);
   bool getPower(void) const;
+  void setTempFRange(const bool high = false);
+  void clearTempFRange();
   void setTemp(const uint8_t temp);
   uint8_t getTemp(void) const;
   void setSensorTemp(const uint8_t temp);
@@ -159,6 +199,8 @@ class IRCoolixAC {
   bool getZoneFollow(void) const;
   uint32_t getRaw(void) const;
   void setRaw(const uint32_t new_code);
+  // Convert from Coolix48 with Fahrenheit handling.
+  void setRawFromCoolix48(const uint64_t new_code);
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(const stdAc::fanspeed_t speed);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
@@ -185,6 +227,8 @@ class IRCoolixAC {
   bool cleanFlag;
   bool sleepFlag;
   bool swingFlag;
+  bool tempLowF;   // Indicates low-range F temperatures.
+  bool tempHighF;  // Indicates high-range F temperatures.
   uint8_t savedFan;
 
   void setTempRaw(const uint8_t code);

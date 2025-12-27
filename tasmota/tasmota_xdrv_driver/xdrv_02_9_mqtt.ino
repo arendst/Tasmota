@@ -1112,6 +1112,9 @@ void MqttConnected(void) {
 }
 
 void MqttReconnect(void) {
+  if (!strlen(TasmotaGlobal.mqtt_client)) {  // Do it here as it needs the MAC address from a possible hosted MCU available after WiFi connection
+    Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
+  }
   Mqtt.allowed = Settings->flag.mqtt_enabled && (TasmotaGlobal.restart_flag == 0);  // SetOption3 - Enable MQTT, and don't connect if restart in process
   if (Mqtt.allowed) {
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
@@ -2049,14 +2052,7 @@ void CmndTlsDump(void) {
 
 #define WEB_HANDLE_MQTT "mq"
 
-const char S_CONFIGURE_MQTT[] PROGMEM = D_CONFIGURE_MQTT;
-
-const char HTTP_BTN_MENU_MQTT[] PROGMEM =
-  "<p></p><form action='" WEB_HANDLE_MQTT "' method='get'><button>" D_CONFIGURE_MQTT "</button></form>";
-
 const char HTTP_FORM_MQTT1[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='" WEB_HANDLE_MQTT "'>"
   "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
 #ifdef USE_MQTT_TLS
@@ -2085,6 +2081,8 @@ void HandleMqttConfiguration(void)
 
   WSContentStart_P(PSTR(D_CONFIGURE_MQTT));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_MQTT_PARAMETERS));
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR(WEB_HANDLE_MQTT));
   WSContentSend_P(HTTP_FORM_MQTT1,
     SettingsTextEscaped(SET_MQTT_HOST).c_str(),
     Settings->mqtt_port,
@@ -2135,7 +2133,7 @@ bool Xdrv02(uint32_t function)
 #ifdef USE_WEBSERVER
 #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_MQTT);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_MQTT), PSTR(D_CONFIGURE_MQTT));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);

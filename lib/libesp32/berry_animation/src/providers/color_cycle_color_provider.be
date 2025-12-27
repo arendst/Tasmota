@@ -4,8 +4,8 @@
 # No transitions or interpolation - just instant color changes.
 #
 # Modes:
-# - Auto-cycle: cycle_period > 0 - colors change automatically at regular intervals
-# - Manual-only: cycle_period = 0 - colors only change when 'next' parameter is set to 1
+# - Auto-cycle: period > 0 - colors change automatically at regular intervals
+# - Manual-only: period = 0 - colors only change when 'next' parameter is set to 1
 #
 # Follows the parameterized class specification:
 # - Constructor takes only 'engine' parameter
@@ -20,14 +20,8 @@ class ColorCycleColorProvider : animation.color_provider
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
-    "palette": {"type": "bytes", "default":
-      bytes(          # Palette bytes in AARRGGBB format
-        "FF0000FF"    # Blue
-        "FF00FF00"    # Green  
-        "FFFF0000"    # Red
-      )
-    },
-    "cycle_period": {"min": 0, "default": 5000},  # 0 = manual only, >0 = auto cycle time in ms
+    "colors": {"type": "bytes", "default":nil},
+    "period": {"min": 0, "default": 5000},  # 0 = manual only, >0 = auto cycle time in ms
     "next": {"default": 0},  # Write `<n>` to move to next <n> colors
     "palette_size": {"type": "int", "default": 3}  # Read-only: number of colors in palette
   })
@@ -39,7 +33,6 @@ class ColorCycleColorProvider : animation.color_provider
     super(self).init(engine)  # Initialize parameter system
     
     # Initialize non-parameter instance variables
-    var palette_bytes = self.palette
     self.current_index = 0      # Start at first color
     
     # Initialize palette_size parameter
@@ -49,7 +42,7 @@ class ColorCycleColorProvider : animation.color_provider
   # Get color at a specific index from bytes palette
   # We force alpha channel to 0xFF to force opaque colors
   def _get_color_at_index(idx)
-    var palette_bytes = self.palette
+    var palette_bytes = self.colors
     var palette_size = size(palette_bytes) / 4  # Each color is 4 bytes (AARRGGBB)
     
     if (palette_size == 0) || (idx >= palette_size) || (idx < 0)
@@ -64,7 +57,7 @@ class ColorCycleColorProvider : animation.color_provider
   
   # Get the number of colors in the palette
   def _get_palette_size()
-    return size( self.palette) / 4  # Each color is 4 bytes
+    return size(self.colors) / 4  # Each color is 4 bytes
   end
   
   # Virtual member access - implements the virtual "palette_size" attribute
@@ -75,7 +68,12 @@ class ColorCycleColorProvider : animation.color_provider
     if name == "palette_size"
       return self._get_palette_size()
     else
-      return super(self).member(name)
+      var val = super(self).member(name)
+      # If 'palette' is 'nil', default to 'animation.PALETTE_RAINBOW'
+      if name == "colors" && val == nil
+        val = animation.PALETTE_RAINBOW
+      end
+      return val
     end
   end
 
@@ -129,12 +127,12 @@ class ColorCycleColorProvider : animation.color_provider
   # @return int - Color in ARGB format (0xAARRGGBB)
   def produce_value(name, time_ms)
     # Get parameter values using virtual member access
-    var cycle_period = self.cycle_period
+    var period = self.period
     
     # Get the number of colors in the palette
     var palette_size = self._get_palette_size()
 
-    if (palette_size <= 1) || (cycle_period == 0)          # no cycling stop here
+    if (palette_size <= 1) || (period == 0)          # no cycling stop here
       var idx = self.current_index
       if (idx >= palette_size)    idx = palette_size - 1    end
       if (idx < 0)                idx = 0                   end
@@ -150,8 +148,8 @@ class ColorCycleColorProvider : animation.color_provider
     end
     
     # Auto-cycle mode: calculate which color to show based on time (brutal switching using integer math)
-    var time_in_cycle = time_ms % cycle_period
-    var color_index = tasmota.scale_uint(time_in_cycle, 0, cycle_period - 1, 0, palette_size - 1)
+    var time_in_cycle = time_ms % period
+    var color_index = tasmota.scale_uint(time_in_cycle, 0, period - 1, 0, palette_size - 1)
     
     # Clamp to valid range (safety check)
     if color_index >= palette_size
@@ -219,7 +217,7 @@ class ColorCycleColorProvider : animation.color_provider
   
   # String representation of the provider
   def tostring()
-    return f"ColorCycleColorProvider(palette_size={self._get_palette_size()}, cycle_period={self.cycle_period}, mode={self.cycle_period ? 'manual' :: 'auto'}, current_index={self.current_index})"
+    return f"ColorCycleColorProvider(palette_size={self._get_palette_size()}, period={self.period}, mode={self.period ? 'manual' :: 'auto'}, current_index={self.current_index})"
   end
 end
 

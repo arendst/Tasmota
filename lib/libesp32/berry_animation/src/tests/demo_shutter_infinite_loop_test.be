@@ -17,7 +17,7 @@ def test_demo_shutter_patterns()
                      "    param colors type palette\n" +
                      "    param duration\n" +
                      "    \n" +
-                     "    color col1 = color_cycle(palette=colors, cycle_period=0)\n" +
+                     "    color col1 = color_cycle(palette=colors, period=0)\n" +
                      "    animation test_anim = solid(color=col1)\n" +
                      "    \n" +
                      "    sequence shutter_seq repeat forever {\n" +
@@ -44,7 +44,7 @@ def test_demo_shutter_patterns()
   
   # Test 2: The col1.next = 1 pattern
   print("  Testing color.next assignment...")
-  var color_next = "color col1 = color_cycle(palette=[red, green], cycle_period=0)\n" +
+  var color_next = "color col1 = color_cycle(palette=[red, green], period=0)\n" +
                    "col1.next = 1\n" +
                    "animation test_anim = solid(color=col1)\n" +
                    "run test_anim"
@@ -87,7 +87,7 @@ def test_demo_shutter_patterns()
                       "    set strip_len2 = (strip_len + 1) / 2\n" +
                       "    set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)\n" +
                       "    \n" +
-                      "    color col1 = color_cycle(palette=colors, cycle_period=0)\n" +
+                      "    color col1 = color_cycle(palette=colors, period=0)\n" +
                       "    \n" +
                       "    animation shutter_anim = beacon_animation(\n" +
                       "      color = col1\n" +
@@ -123,8 +123,8 @@ def test_demo_shutter_patterns()
                      "    set strip_len2 = (strip_len + 1) / 2\n" +
                      "    set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = duration)\n" +
                      "    \n" +
-                     "    color col1 = color_cycle(palette=colors, cycle_period=0)\n" +
-                     "    color col2 = color_cycle(palette=colors, cycle_period=0)\n" +
+                     "    color col1 = color_cycle(palette=colors, period=0)\n" +
+                     "    color col2 = color_cycle(palette=colors, period=0)\n" +
                      "    col2.next = 1\n" +
                      "    \n" +
                      "    animation shutter_inout = beacon_animation(\n" +
