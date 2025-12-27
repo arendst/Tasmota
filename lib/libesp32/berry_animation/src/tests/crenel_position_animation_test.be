@@ -36,7 +36,7 @@ def run_tests()
   
   # Set parameters via virtual member assignment
   crenel.color = 0xFFFF0000
-  crenel.back_color = 0xFF000000
+  crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 4
   crenel.pulse_size = 2
   crenel.low_size = 3
@@ -95,7 +95,7 @@ def run_tests()
   crenel.pulse_size = 2
   crenel.low_size = 3
   crenel.nb_pulse = -1  # Infinite
-  crenel.back_color = 0xFF000000  # Transparent
+  crenel.back_color = 0x00000000  # Transparent (default)
   crenel.start()
   
   var rendered = crenel.render(frame, engine.time_ms, engine.strip_length)
@@ -124,7 +124,7 @@ def run_tests()
   
   # Test 7: Limited number of pulses
   frame.clear()
-  crenel.back_color = 0xFF000000  # Transparent background
+  crenel.back_color = 0x00000000  # Transparent background (default)
   crenel.nb_pulse = 2  # Only 2 pulses
   crenel.render(frame, engine.time_ms, engine.strip_length)
   

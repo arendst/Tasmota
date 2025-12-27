@@ -1,9 +1,11 @@
-# @desc Crenel static with variable number of pulses
+# Crenel with variable number of pulses
 
-# Move from 0 to 5 and back
-set nb_pulse = triangle(min_value = 0, max_value = 5, duration = 2s)
+set strip_len = strip_length()
+set period = 4                    # pulse_size (2) + low_size (2)
+set max_pulses = (strip_len + period - 1) / period
 
-# Define a simple crenel 2+2 red/blue
+set nb_pulse = triangle(min_value = 0, max_value = max_pulses, duration = 2s)
+
 animation back = crenel_animation(
     color = red
     back_color = blue

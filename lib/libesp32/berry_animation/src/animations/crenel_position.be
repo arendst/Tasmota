@@ -27,7 +27,7 @@ class CrenelPositionAnimation : animation.animation
   # Parameter definitions with constraints
   static var PARAMS = animation.enc_params({
     # 'color' for the comet head (32-bit ARGB value), inherited from animation class
-    "back_color": {"default": 0xFF000000},      # background color, TODO change to transparent
+    "back_color": {"default": 0x00000000},      # background color (transparent by default)
     "pos": {"default": 0},                      # start of the pulse (in pixel)
     "pulse_size": {"min": 0, "default": 1},     # number of pixels of the pulse
     "low_size": {"min": 0, "default": 3},       # number of pixel until next pos - full cycle is 2 + 3
@@ -52,7 +52,7 @@ class CrenelPositionAnimation : animation.animation
     var period = int(pulse_size + low_size)
     
     # Fill background if not transparent
-    if back_color != 0xFF000000
+    if back_color != 0x00000000
       frame.fill_pixels(frame.pixels, back_color)
     end
     

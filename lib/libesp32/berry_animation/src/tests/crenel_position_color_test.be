@@ -22,7 +22,7 @@ def test_crenel_with_integer_color()
   
   # Set parameters via virtual member assignment
   crenel.color = red_color
-  crenel.back_color = 0xFF000000  # transparent
+  crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 0
   crenel.pulse_size = 3
   crenel.low_size = 2
@@ -64,7 +64,7 @@ def test_crenel_with_color_provider()
   
   # Set parameters via virtual member assignment
   crenel.color = color_provider  # ColorProvider
-  crenel.back_color = 0xFF000000  # transparent
+  crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 1
   crenel.pulse_size = 2
   crenel.low_size = 3
@@ -106,7 +106,7 @@ def test_crenel_with_dynamic_color_provider()
   
   # Set parameters via virtual member assignment
   crenel.color = palette_provider  # dynamic ColorProvider
-  crenel.back_color = 0xFF000000  # transparent
+  crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 0
   crenel.pulse_size = 4
   crenel.low_size = 1
@@ -154,7 +154,7 @@ def test_crenel_with_generic_value_provider()
   
   # Set parameters via virtual member assignment
   crenel.color = static_provider  # generic ValueProvider
-  crenel.back_color = 0xFF000000  # transparent
+  crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 2
   crenel.pulse_size = 3
   crenel.low_size = 2
@@ -191,7 +191,7 @@ def test_crenel_set_color_methods()
   
   # Set initial parameters
   crenel.color = 0xFFFF0000  # red
-  crenel.back_color = 0xFF000000  # transparent
+  crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 0
   crenel.pulse_size = 2
   crenel.low_size = 1
@@ -233,7 +233,7 @@ def test_crenel_tostring()
   # Test with integer color
   var crenel_int = animation.crenel_animation(engine)
   crenel_int.color = 0xFFFF0000
-  crenel_int.back_color = 0xFF000000
+  crenel_int.back_color = 0x00000000  # transparent (default)
   crenel_int.pos = 0
   crenel_int.pulse_size = 2
   crenel_int.low_size = 1
@@ -254,7 +254,7 @@ def test_crenel_tostring()
   
   var crenel_provider = animation.crenel_animation(engine)
   crenel_provider.color = color_provider
-  crenel_provider.back_color = 0xFF000000
+  crenel_provider.back_color = 0x00000000  # transparent (default)
   crenel_provider.pos = 0
   crenel_provider.pulse_size = 2
   crenel_provider.low_size = 1
