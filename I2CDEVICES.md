@@ -93,7 +93,8 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   55  | USE_EZODO           | xsns_78  | EZODO    | 0x61 - 0x70 |      | Disolved Oxygen sensor
   55  | USE_EZORGB          | xsns_78  | EZORGB   | 0x61 - 0x70 |      | Color sensor
   55  | USE_EZOPMP          | xsns_78  | EZOPMP   | 0x61 - 0x70 |      | Peristaltic Pump
-  56  | USE_SEESAW_SOIL     | xsns_81  | SEESOIL  | 0x36 - 0x39 |      | Adafruit seesaw soil moisture sensor
+  56  | USE_SEESAW_SOIL     | xsns_81  | SEESOIL  | 0x36 - 0x39 |      | Adafruit Seesaw soil moisture & temp sensor
+  56  | USE_SEESAW_ENCODER  | xsns_81  | SEEENC   | 0x36 - 0x39 |      | Adafruit Seesaw rotary encoder
   57  | USE_TOF10120        | xsns_84  | TOF10120 | 0x52        |      | Time-of-flight (ToF) distance sensor
   58  | USE_MPU_ACCEL       | xsns_85  | MPU_ACCEL| 0x68        | Yes  | MPU6886/MPU9250 6-axis MotionTracking sensor from M5Stack
   59  | USE_BM8563          | xdrv_56  | BM8563   | 0x51        | Yes  | BM8563 RTC from M5Stack
@@ -119,6 +120,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   79  | USE_GDK101          | xsns_106 | GDK101   | 0x18 - 0x1B |      | Gamma Radiation Sensor
   80  | USE_TC74            | xsns_108 | TC74     | 0x48 - 0x4F |      | Temperature sensor
   81  | USE_PCA9557         | xdrv_69  | PCA95xx  | 0x18 - 0x1F |      | 8-bit I/O expander as virtual button/switch/relay
+  81  | USE_TCA9554         | xdrv_69  | TCA95xx  | 0x20 - 0x27 |      | 8-bit I/O expander as virtual button/switch/relay
   82  | USE_SGP4X           | xsns_109 | SGP4X    | 0x59        |      | Gas (TVOC/NOx index)
   83  | USE_MAX17043        | xsns_110 | MAX17043 | 0x36        |      | Fuel-gauge for 3.7 Volt Lipo battery
   84  | USE_ENS16x          | xsns_111 | ENS16x   | 0x52 - 0x53 |      | Gas (TVOC, eCO2) and air quality sensor

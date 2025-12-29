@@ -32,9 +32,6 @@ extern "C" {
   #include "berry_matter.h"
 #endif
 #ifdef USE_WS2812
-  #ifdef USE_BERRY_ANIMATE
-    #include "berry_animate.h"
-  #endif // USE_BERRY_ANIMATE
   #ifdef USE_BERRY_ANIMATION
     #include "berry_animation.h"
   #endif // USE_BERRY_ANIMATION
@@ -745,10 +742,6 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
 #endif // USE_BERRY_DEBUG
   ;
 
-const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
-  "<p></p><form action='bc' method='get'><button>Berry Scripting console</button></form>";
-
-
 void HandleBerryConsoleRefresh(void)
 {
   String svalue = Webserver->arg(F("c1"));
@@ -1048,7 +1041,7 @@ bool Xdrv52(uint32_t function)
       if (XdrvMailbox.index) {
         XdrvMailbox.index++;
       } else {
-        WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR("bc"), PSTR("Berry Scripting console"));
         HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
         callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);

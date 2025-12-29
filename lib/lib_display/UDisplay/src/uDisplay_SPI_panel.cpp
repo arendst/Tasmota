@@ -293,7 +293,7 @@ bool SPIPanel::displayOnff(int8_t on) {
     spi->csHigh();
     spi->endTransaction();
     
-    return true;
+    return false; //true;
 }
 
 bool SPIPanel::invertDisplay(bool invert) {

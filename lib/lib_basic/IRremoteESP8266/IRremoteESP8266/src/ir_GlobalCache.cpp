@@ -37,7 +37,8 @@ void IRsend::sendGC(uint16_t buf[], uint16_t len) {
   enableIROut(hz);
   uint32_t periodic_time = calcUSecPeriod(hz, false);
   uint8_t emits =
-      std::min(buf[kGlobalCacheRptIndex], (uint16_t)kGlobalCacheMaxRepeat);
+      std::min(buf[kGlobalCacheRptIndex],
+               static_cast<uint16_t>(kGlobalCacheMaxRepeat));
   // Repeat
   for (uint8_t repeat = 0; repeat < emits; repeat++) {
     // First time through, start at the beginning (kGlobalCacheStartIndex),

@@ -24,10 +24,12 @@ from genericpath import exists
 import os
 from os.path import join, getsize
 import csv
+from littlefs import LittleFS
 import requests
 import shutil
 import subprocess
 import codecs
+from pathlib import Path
 from colorama import Fore
 from SCons.Script import COMMAND_LINE_TARGETS
 
@@ -134,7 +136,7 @@ def esp32_build_filesystem(fs_size):
         os.makedirs(filesystem_dir)
     if num_entries > 1:
         print()
-        print(Fore.GREEN + "Will create filesystem with the following files:")
+        print(Fore.GREEN + "Will create filesystem with the following file(s):")
         print()
     for file in files:
         if "no_files" in file:
@@ -146,21 +148,66 @@ def esp32_build_filesystem(fs_size):
                 if len(file.split(" ")) > 1:
                     target = os.path.normpath(join(filesystem_dir, file.split(" ")[1]))
                     print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
+                else:
+                    print(file.split(os.path.sep)[-1])
                 open(target, "wb").write(response.content)
             else:
                 print(Fore.RED + "Failed to download: ",file)
             continue
         if os.path.isdir(file):
+            print(f"{file}/ (directory)")
             shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
         else:
+            print(file)
             shutil.copy(file, filesystem_dir)
     if not os.listdir(filesystem_dir):
         #print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
         return False
-    tool = env.subst(env["MKFSTOOL"])
-    cmd = (tool,"-c",filesystem_dir,"-s",fs_size,join(env.subst("$BUILD_DIR"),"littlefs.bin"))
-    returncode = subprocess.call(cmd, shell=False)
-    # print(returncode)
+    
+    # Use littlefs-python
+    output_file = join(env.subst("$BUILD_DIR"), "littlefs.bin")
+
+    # Parse fs_size (can be hex string like "0x2f0000")
+    if isinstance(fs_size, str):
+        if fs_size.startswith("0x"):
+            fs_size_bytes = int(fs_size, 16)
+        else:
+            fs_size_bytes = int(fs_size)
+    else:
+        fs_size_bytes = int(fs_size)
+    
+    # LittleFS parameters for ESP32
+    block_size = 4096
+    block_count = fs_size_bytes // block_size
+    
+    # Create LittleFS instance with disk version 2.0 for Tasmota
+    fs = LittleFS(
+        block_size=block_size,
+        block_count=block_count,
+        disk_version=0x00020000,
+        mount=True
+    )
+    
+    # Add all files from filesystem_dir
+    source_path = Path(filesystem_dir)
+    for item in source_path.rglob("*"):
+        rel_path = item.relative_to(source_path)
+        if item.is_dir():
+            fs.makedirs(rel_path.as_posix(), exist_ok=True)
+        else:
+            # Ensure parent directories exist
+            if rel_path.parent != Path("."):
+                fs.makedirs(rel_path.parent.as_posix(), exist_ok=True)
+            # Copy file
+            with fs.open(rel_path.as_posix(), "wb") as dest:
+                dest.write(item.read_bytes())
+    
+    # Write filesystem image
+    with open(output_file, "wb") as f:
+        f.write(fs.context.buffer)
+    
+    print()
+    print(Fore.GREEN + f"LittleFS image created: {output_file}")
     return True
 
 def esp32_fetch_safeboot_bin(tasmota_platform):

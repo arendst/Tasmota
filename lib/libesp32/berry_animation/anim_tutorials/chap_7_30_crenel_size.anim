@@ -1,0 +1,13 @@
+# @desc Crenel static with variable size
+
+# Move from 0 to 5 and back
+set pulse_size = triangle(min_value = 0, max_value = 4, duration = 2s)
+
+# Define a simple crenel 2+2 red/blue
+animation back = crenel_animation(
+    color = red
+    back_color = blue
+    pulse_size = pulse_size
+    low_size = 2
+)
+run back

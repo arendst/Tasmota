@@ -656,7 +656,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RC522_RST),                         // RC522 Rfid Reset
 #endif
 #ifdef USE_SDCARD
-  AGPIO(GPIO_SDCARD_CS),                         // SDCard in SPI mode
+  AGPIO(GPIO_SDCARD_CS) + AGMAX(MAX_SPI),        // SDCard in SPI mode
 #endif  // USE_SDCARD
 #if defined(USE_MCP2515) || defined(USE_CANSNIFFER)
   AGPIO(GPIO_MCP2515_CS),

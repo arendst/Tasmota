@@ -9,33 +9,27 @@ on:
       - 'I2CDEVICES.md'
 
 jobs:
-
   copy_change:
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
+    strategy:
+      matrix:
+        file:
+          - name: 'I2CDEVICES.md'
+            message: 'I2CDevices.md changed'
+          - name: 'BUILDS.md'
+            message: 'Builds.md changed'
     steps:
     - uses: actions/checkout@v4
-    - name: Push I2CDevices.md to https://github.com/Tasmota/docs
+    - name: Push ${{ matrix.file.name }} to docs repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'I2CDEVICES.md'
+        source_file: ${{ matrix.file.name }}
         destination_repo: 'Tasmota/docs'
         destination_branch: 'development'
         destination_folder: 'docs'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
-        commit_message: 'I2CDevices.md changed'
-    - name: Push Builds.md to https://github.com/Tasmota/docs
-      uses: Jason2866/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-      with:
-        source_file: 'BUILDS.md'
-        destination_repo: 'Tasmota/docs'
-        destination_branch: 'development'
-        destination_folder: 'docs'
-        user_email: 'github-actions@github.com'
-        user_name: 'github-actions'
-        commit_message: 'Builds.md changed'
+        commit_message: ${{ matrix.file.message }}

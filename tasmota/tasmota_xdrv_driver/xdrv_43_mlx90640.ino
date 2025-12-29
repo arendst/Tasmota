@@ -41,7 +41,6 @@ const char MLX90640type[] PROGMEM = "MLX90640";
 
 #ifdef USE_WEBSERVER
 #define WEB_HANDLE_MLX90640 "mlx"
-const char HTTP_BTN_MENU_MLX90640[] PROGMEM = "<p></p><form action='" WEB_HANDLE_MLX90640 "' method='get'><button>MLX90640</button></form>";
 #endif // USE_WEBSERVER
 
 struct {
@@ -608,7 +607,7 @@ bool Xdrv43(uint32_t function)
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_MLX90640);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_MLX90640), PSTR("MLX90640"));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/mlx"), MLX90640HandleWebGui);

@@ -1,0 +1,27 @@
+# @desc Moving beacon used as opacity filter on pattern
+# In this example we use the moving beacon as an opacity mask
+# on top of a pattern
+
+# Define 'strip_len' to make calculations
+set strip_len = strip_length()
+
+# Define a pattern that goes from red to blue to red across the strip
+palette red_blue_red_palette = [ red, 0x3333FF, red ]
+# Embed this raw palette into a rich_palette color provider
+color red_blue_red_color = rich_palette(colors=red_blue_red_palette)
+
+# Define a moving beacon to be used as an opacity mask
+animation moving_eye = beacon_animation(
+    color = white           # the color is not important, only the opacity counts here
+    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
+    beacon_size = 3         # small 3 pixels eye
+    slew_size = 2           # with 2 pixel shading around
+)
+
+# The palette gradient animation is used with an animation as opacity
+animation eye_pattern = palette_gradient_animation(
+  color_source = red_blue_red_color   # the beacon animation used as opacity
+  # spatial_period = strip_len  # implicit
+  opacity = moving_eye
+)
+run eye_pattern

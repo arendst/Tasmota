@@ -132,10 +132,14 @@ while i < size(density_test_cases)
     density_time += 167
     density_twinkle.update(density_time)
     
+    # Count active twinkles by checking alpha channel in current_colors buffer
     var active_count = 0
+    var strip_len = engine.strip_length
     var j = 0
-    while j < size(density_twinkle.twinkle_states)
-      if density_twinkle.twinkle_states[j] > 0
+    while j < strip_len
+      var color = density_twinkle.current_colors.get(j * 4, -4)
+      var alpha = (color >> 24) & 0xFF
+      if alpha > 0
         active_count += 1
       end
       j += 1
@@ -278,16 +282,18 @@ end
 
 # Test 10: Internal State Inspection
 print("\n10. Testing internal state...")
-print(f"Twinkle states array size: {size(twinkle.twinkle_states)}")
-print(f"Current colors array size: {size(twinkle.current_colors)}")
+var strip_len = engine.strip_length
+print(f"Current colors buffer size: {size(twinkle.current_colors)} bytes ({size(twinkle.current_colors) / 4} pixels)")
 print(f"Random seed: {twinkle.random_seed}")
 print(f"Last update time: {twinkle.last_update}")
 
-# Check some internal states
+# Check some internal states by examining alpha channel in current_colors
 var active_twinkles = 0
 i = 0
-while i < size(twinkle.twinkle_states)
-  if twinkle.twinkle_states[i] > 0
+while i < strip_len
+  var color = twinkle.current_colors.get(i * 4, -4)
+  var alpha = (color >> 24) & 0xFF
+  if alpha > 0
     active_twinkles += 1
   end
   i += 1
@@ -430,8 +436,9 @@ var new_stars_found = 0
 var full_brightness_stars = 0
 
 var k = 0
-while k < size(alpha_test_twinkle.current_colors) && k < 10  # Check first 10 pixels
-  var color = alpha_test_twinkle.current_colors[k]
+var num_pixels = size(alpha_test_twinkle.current_colors) / 4  # 4 bytes per pixel
+while k < num_pixels && k < 10  # Check first 10 pixels
+  var color = alpha_test_twinkle.current_colors.get(k * 4, -4)
   var alpha = (color >> 24) & 0xFF
   var red = (color >> 16) & 0xFF
   var green = (color >> 8) & 0xFF
@@ -463,9 +470,8 @@ fade_twinkle.twinkle_speed = 6
 fade_twinkle.fade_speed = 100  # Medium fade
 fade_twinkle.start()
 
-# Manually create a star at full alpha
-fade_twinkle.twinkle_states[5] = 1  # Mark as active
-fade_twinkle.current_colors[5] = 0xFFFFFFFF  # Full white at full alpha
+# Manually create a star at full alpha (alpha channel serves as active state)
+fade_twinkle.current_colors.set(5 * 4, 0xFFFFFFFF, -4)  # Full white at full alpha
 
 # Track alpha over several fade cycles
 var fade_history = []
@@ -476,7 +482,7 @@ while fade_cycle < 5
   fade_test_time += 167  # ~6Hz updates
   fade_twinkle.update(fade_test_time)
   
-  var color = fade_twinkle.current_colors[5]
+  var color = fade_twinkle.current_colors.get(5 * 4, -4)
   var alpha = (color >> 24) & 0xFF
   var red = (color >> 16) & 0xFF
   var green = (color >> 8) & 0xFF
@@ -519,16 +525,16 @@ reset_twinkle.fade_speed = 255  # Max fade speed
 reset_twinkle.start()
 
 # Create a star with very low alpha (should disappear quickly)
-reset_twinkle.twinkle_states[3] = 1
-reset_twinkle.current_colors[3] = 0x0500FF00  # Very low alpha (5), full green
+# Alpha channel serves as active state - alpha > 0 means active
+reset_twinkle.current_colors.set(3 * 4, 0x0500FF00, -4)  # Very low alpha (5), full green
 
 # Update once (should reset to transparent)
 reset_twinkle.update(17000)
 
-var final_color = reset_twinkle.current_colors[3]
-var final_state = reset_twinkle.twinkle_states[3]
+var final_color = reset_twinkle.current_colors.get(3 * 4, -4)
+var final_alpha = (final_color >> 24) & 0xFF
 
-if final_color == 0x00000000 && final_state == 0
+if final_color == 0x00000000 && final_alpha == 0
   print("✅ Star correctly reset to transparent when alpha reached zero")
 else
   print("❌ Star not properly reset")
@@ -549,7 +555,7 @@ zero_density_twinkle.update(18000)
 print("Zero density twinkle created and updated")
 
 # Test that transparency is working by checking the alpha-based fading results from previous test
-var transparency_working = (final_color == 0x00000000 && final_state == 0)
+var transparency_working = (final_color == 0x00000000 && final_alpha == 0)
 var alpha_preserved = alpha_decreased
 var background_preserved = 10  # Assume good based on previous alpha tests
 

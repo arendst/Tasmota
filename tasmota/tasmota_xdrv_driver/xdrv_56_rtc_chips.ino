@@ -20,6 +20,9 @@
  * #define USE_BM8563
  *   BM8563 at I2C address 0x51
  *   Used by M5Stack and IOTTIMER (v3)
+ * #define USE_PCF85063
+ *   PCF85063 at I2C address 0x51
+ *   Used by Waveshare ESP32-S3-POE-ETH-8DI-8RO
  * #define USE_PCF85363
  *   PCF85363 at I2C address 0x51
  *   Used by Shelly 3EM
@@ -50,13 +53,11 @@ struct {
   char name[10];
 } RtcChip;
 
-
 /*********************************************************************************************\
  * RV-3028-C7 RTC Controller
  *
  * I2C Address: 0x52
 \*********************************************************************************************/
-
 #ifdef USE_RV3028
 
 #define XI2C_94             94      // See I2CDEVICES.md
@@ -78,11 +79,9 @@ struct {
 // Status register bits
 #define RV3028_PORF         0       // Power-on Reset flag (bit 0 in STATUS register)
 
-
 /*-------------------------------------------------------------------------------------------*\
  * Init register to activate BSM from VBACKUP (Direct Switching Mode)
 \*-------------------------------------------------------------------------------------------*/
-
 void RV3028_EnableDSM(void) {
   uint8_t current_eeprom;
 
@@ -115,7 +114,6 @@ uint32_t RV3028ReadTime(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("RV3028: PORF detected, RTC time invalid"));
     return 0;  // Invalid RTC time data
   }
-
 
   TIME_T tm;
   tm.second       = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_SECONDS, RtcChip.bus) & 0x7F);
@@ -152,9 +150,7 @@ void RV3028SetTime(uint32_t epoch_time) {
 
   // Enable LSM mode (VBACKUP)
   RV3028_EnableDSM();
-
 }
-
 
 /*-------------------------------------------------------------------------------------------*\
  * Detection
@@ -280,7 +276,6 @@ void D3231ShowSensor(bool json) {
 }
 #endif // #ifdef DS3231_ENABLE_TEMP
 
-
 /*-------------------------------------------------------------------------------------------*\
  * Get time as TIME_T and set the DS3231 time to this value
 \*-------------------------------------------------------------------------------------------*/
@@ -324,8 +319,6 @@ void DS3231Detected(void) {
 }
 #endif  // USE_DS3231
 
-
- 
 /*********************************************************************************************\
  * PCF85063 support
  *
@@ -336,7 +329,6 @@ void DS3231Detected(void) {
 #define XI2C_92             92       // Unique ID for I2C device search
 
 #define PCF85063_ADDRESS    0x51     // PCF85063 I2C Address
-
 
 #define PCF85063_REG_CTRL1      0x00
 #define PCF85063_REG_CTRL2      0x01
@@ -349,7 +341,9 @@ void DS3231Detected(void) {
 #define PCF85063_REG_MONTHS     0x09
 #define PCF85063_REG_YEARS      0x0A
 
-
+/*-------------------------------------------------------------------------------------------*\
+ * Read time and return the epoch time (second since 1-1-1970 00:00)
+\*-------------------------------------------------------------------------------------------*/
 uint32_t Pcf85063ReadTime(void) {
   Wire.beginTransmission(RtcChip.address);
   Wire.write(PCF85063_REG_SECONDS);
@@ -376,11 +370,12 @@ uint32_t Pcf85063ReadTime(void) {
   return MakeTime(tm);
 }
 
-
+/*-------------------------------------------------------------------------------------------*\
+ * Get time as TIME_T and set time to this value
+\*-------------------------------------------------------------------------------------------*/
 void Pcf85063SetTime(uint32_t epoch_time) {
   TIME_T tm;
   BreakTime(epoch_time, tm);
-
 
   uint8_t year = (tm.year -30); 
   if (year > 99) { year = 99; } 
@@ -427,8 +422,6 @@ void Pcf85063Detected(void) {
   }
 }
 #endif // USE_PCF85063
-
-
 
 /*********************************************************************************************\
  * BM8563 - Real Time Clock

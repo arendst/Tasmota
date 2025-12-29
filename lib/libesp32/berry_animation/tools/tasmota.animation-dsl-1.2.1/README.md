@@ -27,56 +27,6 @@ This extension provides syntax highlighting, snippets, and language support for 
 
 This extension automatically activates for files with the `.anim` extension.
 
-## Example Usage
-
-```dsl
-# Fire Effect Animation with Templates
-import user_functions
-
-# Define fire palette
-palette fire_colors = [
-  (0, 0x000000)    # Black
-  (64, 0x800000)   # Dark red
-  (128, 0xFF0000)  # Red
-  (192, 0xFF8000)  # Orange
-  (255, 0xFFFF00)  # Yellow
-]
-
-# Template for reusable fire effect
-template fire_effect {
-  param base_palette type palette
-  param intensity type number
-  param duration
-  
-  animation campfire = rich_palette_animation(
-    palette=base_palette
-    cycle_period=duration
-  )
-  
-  # Use computed values and user functions
-  campfire.priority = max(5, intensity / 10)
-  campfire.opacity = user.breathing_effect()
-  
-  run campfire
-}
-
-# Use the template
-fire_effect(fire_colors, 200, 3s)
-
-# Sequence with dynamic property changes
-sequence fire_demo {
-  play campfire for 5s
-  campfire.opacity = abs(strip_length() * 4)
-  play campfire for 3s
-  reset campfire
-  play campfire for 2s
-}
-
-run fire_demo
-```
-
-
-
 ## Theme Compatibility
 
 The extension uses semantic token scopes that work with any VSCode theme:

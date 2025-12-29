@@ -14,8 +14,9 @@ class TestRawToPronto(unittest.TestCase):
     input_str = """
         uint16_t rawData[7] = {
             20100, 20472, 15092, 30704, 20102, 20472, 15086};"""
-    pronto.parse_and_report(input_str, 38000, 100000, True, False, False,
-                            output)
+    pronto.parse_and_report(input_str, hertz=38000, end_usecs=100000,
+                            use_initial=True, generate_code=False,
+                            verbose=False, output=output)
     self.assertEqual(
         output.getvalue(),
         "Pronto code = "
@@ -28,8 +29,9 @@ class TestRawToPronto(unittest.TestCase):
     input_str = """
         uint16_t rawData[7] = {
             20100, 20472, 15092, 30704, 20102, 20472, 15086};"""
-    pronto.parse_and_report(input_str, 36000, 100000, True, False, False,
-                            output)
+    pronto.parse_and_report(input_str, hertz=36000, end_usecs=100000,
+                            use_initial=True, generate_code=False,
+                            verbose=False, output=output)
     self.assertEqual(
         output.getvalue(),
         "Pronto code = "
@@ -42,8 +44,9 @@ class TestRawToPronto(unittest.TestCase):
     input_str = """
       uint16_t rawData[7] = {
           20100, 20472, 15092, 30704, 20102, 20472, 15086};"""
-    pronto.parse_and_report(input_str, 57600, 100000, True, False, False,
-                            output)
+    pronto.parse_and_report(input_str, hertz=57600, end_usecs=100000,
+                            use_initial=True, generate_code=False,
+                            verbose=False, output=output)
     self.assertEqual(
         output.getvalue(),
         "Pronto code = "
@@ -56,8 +59,9 @@ class TestRawToPronto(unittest.TestCase):
     input_str = """
         uint16_t rawData[7] = {
             20100, 20472, 15092, 30704, 20102, 20472, 15086};"""
-    pronto.parse_and_report(input_str, 38000, 30000, False, False, False,
-                            output)
+    pronto.parse_and_report(input_str, hertz=38000, end_usecs=30000,
+                            use_initial=False, generate_code=False,
+                            verbose=False, output=output)
     self.assertEqual(
         output.getvalue(),
         "Pronto code = "
@@ -70,7 +74,9 @@ class TestRawToPronto(unittest.TestCase):
     input_str = """
         uint16_t rawData[7] = {
             20100, 20472, 15092, 30704, 20102, 20472, 15086};"""
-    pronto.parse_and_report(input_str, 38000, 30000, True, True, False, output)
+    pronto.parse_and_report(input_str, 38000, end_usecs=30000,
+                            use_initial=True, generate_code=True,
+                            verbose=False, output=output)
     self.assertEqual(
         output.getvalue(),
         "uint16_t pronto[12] = {0x0000, 0x006D, 0x0004, 0x0000, 0x02fb, "

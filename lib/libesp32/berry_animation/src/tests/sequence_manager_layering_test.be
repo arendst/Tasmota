@@ -455,7 +455,7 @@ def test_dsl_if_statement_dynamic()
   # Test 2: if with property access (dynamic)
   var dsl_source2 = "color my_red = 0xFF0000\n" +
     "color my_blue = 0x0000FF\n" +
-    "color col1 = color_cycle(cycle_period=0)\n" +
+    "color col1 = color_cycle(period=0)\n" +
     "animation solid_red = solid(color=my_red)\n" +
     "set some_value = 1\n" +
     "sequence test repeat forever {\n" +
