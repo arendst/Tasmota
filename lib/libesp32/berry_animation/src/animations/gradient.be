@@ -204,27 +204,6 @@ class GradientAnimation : animation.animation
     
     return true
   end
-  
-
-  
-  # String representation
-  def tostring()
-    var gradient_type = self.gradient_type
-    var color = self.color
-    var movement_speed = self.movement_speed
-    var priority = self.priority
-    
-    var type_str = gradient_type == 0 ? "linear" : "radial"
-    var color_str
-    if animation.is_value_provider(color)
-      color_str = str(color)
-    elif color == nil
-      color_str = "rainbow"
-    else
-      color_str = f"0x{color :08x}"
-    end
-    return f"GradientAnimation({type_str}, color={color_str}, movement={movement_speed}, priority={priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions following parameterized class specification

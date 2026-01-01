@@ -190,12 +190,6 @@ class PaletteGradientAnimation : animation.animation
       self._initialize_value_buffer()
     end
   end
-
-  # String representation of the animation
-  def tostring()
-    var strip_length = self.engine.strip_length
-    return f"{classname(self)}(strip_length={strip_length}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 return {

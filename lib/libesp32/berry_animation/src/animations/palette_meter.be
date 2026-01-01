@@ -136,13 +136,6 @@ class GradientMeterAnimation : animation.palette_gradient_animation
 
     return true
   end
-
-  # String representation
-  def tostring()
-    var level = self.level
-    var peak_hold = self.peak_hold
-    return f"GradientMeterAnimation(level={level}, peak_hold={peak_hold}ms, peak={self.peak_level})"
-  end
 end
 
 return {'palette_meter_animation': GradientMeterAnimation}

@@ -104,11 +104,6 @@ class BreatheColorProvider : animation.oscillator_value
     # Reconstruct color
     return (alpha << 24) | (red << 16) | (green << 8) | blue
   end
-  
-  # String representation of the color provider
-  def tostring()
-    return f"BreatheColorProvider(base_color=0x{self.base_color :08x}, min_brightness={self.min_brightness}, max_brightness={self.max_brightness}, duration={self.duration}, curve_factor={self.curve_factor})"
-  end
 end
 
 # Factory function to create a pulsating color provider (sine wave)

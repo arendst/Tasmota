@@ -196,14 +196,6 @@ class OscillatorValueProvider : animation.value_provider
     
     return self.value
   end
-  
-
-  
-  # String representation of the provider
-  def tostring()
-    var form_name = self.form >= 1 && self.form <= 9 ? self.form_names[self.form] : "UNKNOWN"
-    return f"OscillatorValueProvider(min_value={self.min_value}, max_value={self.max_value}, duration={self.duration}ms, form={form_name})"
-  end
 end
 
 # Static constructor functions for common use cases

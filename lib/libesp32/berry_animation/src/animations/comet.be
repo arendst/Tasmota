@@ -168,17 +168,6 @@ class CometAnimation : animation.animation
     
     return true
   end
-  
-  # String representation of the animation
-  def tostring()
-    var color_str
-    if animation.is_value_provider(self.color)
-      color_str = str(self.color)
-    else
-      color_str = f"0x{self.color :08x}"
-    end
-    return f"CometAnimation(color={color_str}, head_pos={self.head_position / 256:.1f}, tail_length={self.tail_length}, speed={self.speed}, direction={self.direction}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 return {'comet_animation': CometAnimation}

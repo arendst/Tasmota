@@ -242,16 +242,6 @@ class ScaleAnimation : animation.animation
     
     return true
   end
-  
-  # String representation
-  def tostring()
-    var mode_names = ["static", "oscillate", "grow", "shrink"]
-    var current_scale_mode = self.scale_mode
-    var current_scale_factor = self.scale_factor
-    var current_scale_speed = self.scale_speed
-    var mode_name = mode_names[current_scale_mode] != nil ? mode_names[current_scale_mode] : "unknown"
-    return f"ScaleAnimation({mode_name}, factor={current_scale_factor}, speed={current_scale_speed})"
-  end
 end
 
 # Factory functions following parameterized class specification

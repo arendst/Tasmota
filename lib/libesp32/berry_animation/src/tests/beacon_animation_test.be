@@ -170,11 +170,9 @@ def run_tests()
   pulse.slew_size = 3
   test_assert(pulse.slew_size == 3, "Slew size parameter updated")
   
-  # Test 12: String representation
-  var str_repr = pulse.tostring()
+  # Test 12: String representation (uses default from Berry)
+  var str_repr = str(pulse)
   test_assert(type(str_repr) == "string", "String representation returns string")
-  import string
-  test_assert(string.find(str_repr, "BeaconAnimation") >= 0, "String representation contains class name")
   
   print("==================================================")
   print(f"Tests completed: {passed_count}/{test_count} passed")

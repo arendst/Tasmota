@@ -458,9 +458,10 @@ class ParameterizedObject
     return true
   end
 
-  # String representation
+  # Minimal string representation - returns class name only
+  # Subclasses no longer override this to reduce code size
   def tostring()
-    return f"{classname(self)}(running={self.is_running})"
+    return f"<instance: {classname(self)}>"
   end
 
   # Inequality operator for object identity comparison

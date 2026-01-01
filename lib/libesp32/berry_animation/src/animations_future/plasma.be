@@ -191,20 +191,6 @@ class PlasmaAnimation : animation.animation
     
     return true
   end
-  
-
-  
-  # String representation
-  def tostring()
-    var color_str
-    var current_color = self.color
-    if animation.is_value_provider(current_color)
-      color_str = str(current_color)
-    else
-      color_str = f"0x{current_color :08x}"
-    end
-    return f"PlasmaAnimation(color={color_str}, freq_x={self.freq_x}, freq_y={self.freq_y}, time_speed={self.time_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions

@@ -456,20 +456,6 @@ class SequenceManager : animation.parameterized_object
     return self.is_running
   end
   
-  # String representation of the sequence manager
-  def tostring()
-    var repeat_str = ""
-    if self.is_repeat_sequence
-      var resolved_count = self.get_resolved_repeat_count()
-      if resolved_count == -1
-        repeat_str = f", repeat=forever, iter={self.current_iteration}"
-      else
-        repeat_str = f", repeat={resolved_count}, iter={self.current_iteration}"
-      end
-    end
-    return f"SequenceManager(steps={size(self.steps)}, current={self.step_index}, running={self.is_running}{repeat_str})"
-  end
-  
   # # Get current step info for debugging
   # def get_current_step_info()
   #   if !self.is_running || self.step_index >= size(self.steps)

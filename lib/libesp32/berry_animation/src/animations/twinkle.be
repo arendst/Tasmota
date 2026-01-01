@@ -215,20 +215,6 @@ class TwinkleAnimation : animation.animation
   # obj.fade_speed = value
   # obj.min_brightness = value
   # obj.max_brightness = value
-  
-
-  
-  # String representation of the animation
-  def tostring()
-    var color_str
-    var raw_color = self.get_param("color")
-    if animation.is_value_provider(raw_color)
-      color_str = str(raw_color)
-    else
-      color_str = f"0x{self.color :08x}"
-    end
-    return f"TwinkleAnimation(color={color_str}, density={self.density}, twinkle_speed={self.twinkle_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory function to create a classic white twinkle animation

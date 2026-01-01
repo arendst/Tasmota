@@ -214,11 +214,6 @@ class ColorCycleColorProvider : animation.color_provider
     end
     return color
   end
-  
-  # String representation of the provider
-  def tostring()
-    return f"ColorCycleColorProvider(palette_size={self._get_palette_size()}, period={self.period}, mode={self.period ? 'manual' :: 'auto'}, current_index={self.current_index})"
-  end
 end
 
 return {'color_cycle': ColorCycleColorProvider}

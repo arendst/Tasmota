@@ -116,11 +116,6 @@ class BeaconAnimation : animation.animation
     
     return true
   end
-  
-  # String representation of the animation
-  def tostring()
-    return f"BeaconAnimation(color=0x{self.color :08x}, pos={self.pos}, beacon_size={self.beacon_size}, slew_size={self.slew_size})"
-  end
 end
 
 # Export class directly - no redundant factory function needed

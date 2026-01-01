@@ -474,10 +474,6 @@ class EngineProxy : animation.animation
     return nil
   end
   
-  # String representation
-  def tostring()
-    return f"{classname(self)}(animations={size(self.animations)}, sequences={size(self.sequences)}, value_providers={size(self.value_providers)}, running={self.is_running})"
-  end
 end
 
 return {'engine_proxy': EngineProxy}

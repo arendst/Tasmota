@@ -205,20 +205,6 @@ class SparkleAnimation : animation.animation
     
     return true
   end
-  
-
-  
-  # String representation
-  def tostring()
-    var color_param = self.get_param("color")
-    var color_str
-    if animation.is_value_provider(color_param)
-      color_str = str(color_param)
-    else
-      color_str = f"0x{self.color :08x}"
-    end
-    return f"SparkleAnimation(color={color_str}, density={self.density}, fade_speed={self.fade_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions following parameterized class specification

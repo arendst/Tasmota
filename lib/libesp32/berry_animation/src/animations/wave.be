@@ -204,23 +204,6 @@ class WaveAnimation : animation.animation
     
     return true
   end
-  
-
-  
-  # String representation
-  def tostring()
-    var wave_names = ["sine", "triangle", "square", "sawtooth"]
-    var current_wave_type = self.wave_type
-    var wave_name = wave_names[current_wave_type] != nil ? wave_names[current_wave_type] : "unknown"
-    var current_color = self.color
-    var color_str
-    if animation.is_value_provider(current_color)
-      color_str = str(current_color)
-    else
-      color_str = f"0x{current_color :08x}"
-    end
-    return f"WaveAnimation({wave_name}, color={color_str}, freq={self.frequency}, speed={self.wave_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions

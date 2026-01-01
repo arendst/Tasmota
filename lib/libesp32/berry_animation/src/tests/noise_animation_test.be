@@ -177,9 +177,6 @@ def test_noise_tostring()
   var str_repr = str(noise_anim)
   
   assert(type(str_repr) == "string", "String representation should be a string")
-  assert(string.find(str_repr, "NoiseAnimation") >= 0, "String should contain 'NoiseAnimation'")
-  assert(string.find(str_repr, "75") >= 0, "String should contain scale value")
-  assert(string.find(str_repr, "45") >= 0, "String should contain speed value")
   
   print("✓ NoiseAnimation string representation test passed")
 end
