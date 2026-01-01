@@ -237,20 +237,6 @@ class NoiseAnimation : animation.animation
     
     return true
   end
-  
-
-  
-  # String representation
-  def tostring()
-    var current_color = self.color
-    var color_str
-    if animation.is_value_provider(current_color)
-      color_str = str(current_color)
-    else
-      color_str = f"0x{current_color :08x}"
-    end
-    return f"NoiseAnimation(color={color_str}, scale={self.scale}, speed={self.speed}, octaves={self.octaves}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions following new specification

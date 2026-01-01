@@ -80,17 +80,6 @@ class BreatheAnimation : animation.animation
   # The render method is inherited from Animation base class
   # It automatically uses self.color (which is set to self.breathe_provider)
   # The breathe_provider produces the breathing color effect
-
-  # String representation of the animation
-  def tostring()
-    var base_color_str
-    if animation.is_value_provider(self.breathe_provider.base_color)
-      base_color_str = str(self.breathe_provider.base_color)
-    else
-      base_color_str = f"0x{self.breathe_provider.base_color :08x}"
-    end
-    return f"BreatheAnimation(color={base_color_str}, min_brightness={self.min_brightness}, max_brightness={self.max_brightness}, period={self.period}, curve_factor={self.curve_factor}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory method to create a pulsating animation (sine wave, equivalent to old pulse.be)

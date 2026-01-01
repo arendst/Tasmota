@@ -154,10 +154,6 @@ class Animation : animation.parameterized_object
     return self.get_color_at(0, time_ms)
   end
   
-  # String representation of the animation
-  def tostring()
-    return f"{classname(self)}(priority={self.priority})"
-  end
 end
 
 return {'animation': Animation}

@@ -194,8 +194,8 @@ var alpha_color = alpha_test.produce_value("color", engine.time_ms)
 var alpha_actual = (alpha_color >> 24) & 0xFF
 print(f"Alpha preservation test - expected 128, got: {alpha_actual}")
 
-# Test tostring method
-print(f"Provider string representation: {blue_breathe.tostring()}")
+# Test string representation (uses default from Berry)
+print(f"Provider string representation: {str(blue_breathe)}")
 
 # Validate key test results
 assert(provider != nil, "Default breathe color provider should be created")

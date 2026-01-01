@@ -155,11 +155,6 @@ class CompositeColorProvider : animation.color_provider
     
     return (a << 24) | (b << 16) | (g << 8) | r
   end
-  
-  # String representation of the provider
-  def tostring()
-    return f"CompositeColorProvider(providers={size(self.providers)}, blend_mode={self.blend_mode})"
-  end
 end
 
 return {'composite_color': CompositeColorProvider}

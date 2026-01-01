@@ -191,13 +191,11 @@ frame.clear()
 result = no_color_anim.render(frame, mock_engine.time_ms, mock_engine.strip_length)
 assert(!result, "Render should return false when no color source is set")
 
-# Test 8: String representation
+# Test 8: String representation (uses default from Berry)
 print("Test 8: String representation")
 var str_anim = animation.palette_gradient_animation(mock_engine)
-var str_repr = str_anim.tostring()
+var str_repr = str(str_anim)
 print(f"String representation: {str_repr}")
 assert(str_repr != nil, "String representation should not be nil")
-# The string representation might use the base class name, so let's check for that
-assert(string.find(str_repr, "Animation") >= 0, "String should contain Animation in class name")
 
 print("All palette pattern animation tests passed!")

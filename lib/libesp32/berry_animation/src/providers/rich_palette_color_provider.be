@@ -516,15 +516,6 @@ class RichPaletteColorProvider : animation.color_provider
     ret += ");"
     return ret
   end
-  
-  # String representation
-  def tostring()
-    try
-      return f"RichPaletteColorProvider(slots={self._slots}, period={self.period})"
-    except ..
-      return "RichPaletteColorProvider(uninitialized)"
-    end
-  end
 end
 
 return {'rich_palette': RichPaletteColorProvider}

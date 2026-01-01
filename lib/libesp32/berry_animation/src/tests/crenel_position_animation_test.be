@@ -222,11 +222,9 @@ def run_tests()
   crenel.nb_pulse = 10
   test_assert(crenel.nb_pulse == 10, "Nb_pulse parameter updated")
   
-  # Test 15: String representation
-  var str_repr = crenel.tostring()
+  # Test 15: String representation (uses default from Berry)
+  var str_repr = str(crenel)
   test_assert(type(str_repr) == "string", "String representation returns string")
-  import string
-  test_assert(string.find(str_repr, "CrenelPositionAnimation") >= 0, "String representation contains class name")
   
   # Test 16: Edge case - very large frame
   var large_frame = animation.frame_buffer(100)

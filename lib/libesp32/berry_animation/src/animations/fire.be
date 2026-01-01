@@ -250,11 +250,6 @@ class FireAnimation : animation.animation
     
     return self
   end
-  
-  # String representation of the animation
-  def tostring()
-    return f"FireAnimation(intensity={self.intensity}, flicker_speed={self.flicker_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 return {'fire_animation': FireAnimation}

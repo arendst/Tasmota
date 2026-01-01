@@ -32,18 +32,6 @@ class IterationNumberProvider : animation.value_provider
     # Get the current iteration number from the engine's sequence stack
     return self.engine.get_current_iteration_number()
   end
-  
-  # String representation for debugging
-  #
-  # @return string - Human-readable description of the provider
-  def tostring()
-    var current_iteration = self.engine.get_current_iteration_number()
-    if current_iteration != nil
-      return f"IterationNumberProvider(current: {current_iteration})"
-    else
-      return "IterationNumberProvider(not_in_sequence)"
-    end
-  end
 end
 
 return {'iteration_number': IterationNumberProvider}

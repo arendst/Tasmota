@@ -107,18 +107,6 @@ class CrenelPositionAnimation : animation.animation
   # obj.pulse_size = value
   # obj.low_size = value
   # obj.nb_pulse = value
-  
-  # String representation of the animation
-  def tostring()
-    var color_str
-    var raw_color = self.get_param("color")
-    if animation.is_value_provider(raw_color)
-      color_str = str(raw_color)
-    else
-      color_str = f"0x{self.color :08x}"
-    end
-    return f"CrenelPositionAnimation(color={color_str}, pos={self.pos}, pulse_size={self.pulse_size}, low_size={self.low_size}, nb_pulse={self.nb_pulse}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 return {'crenel_animation': CrenelPositionAnimation}

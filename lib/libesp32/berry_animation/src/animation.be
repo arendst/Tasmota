@@ -33,16 +33,6 @@ global.animation = animation
 # Format: 0xAABBCCDD (AA=major, BB=minor, CC=patch, DD=build)
 animation.VERSION = 0x00010000
 
-# Convert version number to human-readable string format "major.minor.patch"
-def animation_version_string(version_num)
-  if version_num == nil version_num = animation.VERSION end
-  var major = (version_num >> 24) & 0xFF
-  var minor = (version_num >> 16) & 0xFF
-  var patch = (version_num >> 8) & 0xFF
-  return f"{major}.{minor}.{patch}"
-end
-animation.version_string = animation_version_string
-
 import sys
 
 # Helper function to register all exports from imported modules into the main animation object

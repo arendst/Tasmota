@@ -52,13 +52,6 @@ class ClosureValueProvider : animation.value_provider
     # Call the closure with the parameter self, name and time
     return closure(self.engine, name, time_ms)
   end
-
-  # String representation for debugging
-  #
-  # @return string - Human-readable description of the provider
-  def tostring()
-    return f"ClosureValueProvider({self._closure ? 'closure set' :: 'no closure'})"
-  end
 end
 
 # Create a ClosureValueProvider in a single call, by passing the closure argument

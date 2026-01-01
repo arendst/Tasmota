@@ -182,11 +182,9 @@ def test_ease_tostring()
   ease_out_provider.max_value = 200
   ease_out_provider.duration = 2500
   
-  var ease_in_str = ease_in_provider.tostring()
-  var ease_out_str = ease_out_provider.tostring()
-  
-  assert(string.find(ease_in_str, "EASE_IN") >= 0, "EASE_IN tostring should contain 'EASE_IN'")
-  assert(string.find(ease_out_str, "EASE_OUT") >= 0, "EASE_OUT tostring should contain 'EASE_OUT'")
+  # Verify form values are set correctly
+  assert(ease_in_provider.form == animation.EASE_IN, "EASE_IN form should be set")
+  assert(ease_out_provider.form == animation.EASE_OUT, "EASE_OUT form should be set")
   
   print("✓ Ease tostring test passed")
 end

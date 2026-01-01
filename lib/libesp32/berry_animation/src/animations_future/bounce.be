@@ -227,11 +227,6 @@ class BounceAnimation : animation.animation
     
     return true
   end
-  
-  # String representation
-  def tostring()
-    return f"BounceAnimation(speed={self.bounce_speed}, damping={self.damping}, gravity={self.gravity}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions following parameterized class specification

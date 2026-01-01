@@ -159,16 +159,6 @@ class ShiftAnimation : animation.animation
     
     return true
   end
-  
-  # String representation
-  def tostring()
-    var current_direction = self.direction
-    var current_shift_speed = self.shift_speed
-    var current_wrap_around = self.wrap_around
-    var current_priority = self.priority
-    var dir_str = current_direction > 0 ? "right" : "left"
-    return f"ShiftAnimation({dir_str}, speed={current_shift_speed}, wrap={current_wrap_around}, priority={current_priority}, running={self.is_running})"
-  end
 end
 
 # Factory functions

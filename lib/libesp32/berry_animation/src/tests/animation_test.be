@@ -162,6 +162,6 @@ assert(render_result == true, "Base render method should return true (renders co
 
 # Test tostring method
 var anim_str = str(anim)
-assert(string.find(anim_str, "Animation") >= 0, "String representation should contain 'Animation'")
+assert(type(anim_str) == "string", "String representation should be a string")
 
 print("All Animation tests passed!")

@@ -244,14 +244,6 @@ class JitterAnimation : animation.animation
     
     return true
   end
-  
-  # String representation
-  def tostring()
-    var type_names = ["position", "color", "brightness", "all"]
-    var jitter_type = self.jitter_type
-    var type_name = type_names[jitter_type] != nil ? type_names[jitter_type] : "unknown"
-    return f"JitterAnimation({type_name}, intensity={self.jitter_intensity}, frequency={self.jitter_frequency})"
-  end
 end
 
 # Factory functions for common jitter presets
