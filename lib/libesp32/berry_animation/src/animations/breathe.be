@@ -46,7 +46,7 @@ class BreatheAnimation : animation.animation
     if name == "color"
       # When color is set, update the breathe_provider's base_color
       # but keep the breathe_provider as the actual color source for rendering
-      if type(value) == 'int'
+      if type(value) == 'int' || animation.is_value_provider(value)
         self.breathe_provider.base_color = value
         # Restore the breathe_provider as the color source (bypass on_param_changed)
         self.values["color"] = self.breathe_provider
@@ -83,7 +83,13 @@ class BreatheAnimation : animation.animation
 
   # String representation of the animation
   def tostring()
-    return f"BreatheAnimation(color=0x{self.breathe_provider.base_color :08x}, min_brightness={self.min_brightness}, max_brightness={self.max_brightness}, period={self.period}, curve_factor={self.curve_factor}, priority={self.priority}, running={self.is_running})"
+    var base_color_str
+    if animation.is_value_provider(self.breathe_provider.base_color)
+      base_color_str = str(self.breathe_provider.base_color)
+    else
+      base_color_str = f"0x{self.breathe_provider.base_color :08x}"
+    end
+    return f"BreatheAnimation(color={base_color_str}, min_brightness={self.min_brightness}, max_brightness={self.max_brightness}, period={self.period}, curve_factor={self.curve_factor}, priority={self.priority}, running={self.is_running})"
   end
 end
 

@@ -3,28 +3,30 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'BreatheAnimation' ktab size: 20, total: 30 (saved 80 bytes)
-static const bvalue be_ktab_class_BreatheAnimation[20] = {
+// compact class 'BreatheAnimation' ktab size: 22, total: 35 (saved 104 bytes)
+static const bvalue be_ktab_class_BreatheAnimation[22] = {
   /* K0   */  be_nested_str_weak(on_param_changed),
   /* K1   */  be_nested_str_weak(color),
   /* K2   */  be_nested_str_weak(int),
-  /* K3   */  be_nested_str_weak(breathe_provider),
-  /* K4   */  be_nested_str_weak(base_color),
-  /* K5   */  be_nested_str_weak(values),
-  /* K6   */  be_nested_str_weak(min_brightness),
-  /* K7   */  be_nested_str_weak(max_brightness),
-  /* K8   */  be_nested_str_weak(period),
-  /* K9   */  be_nested_str_weak(duration),
-  /* K10  */  be_nested_str_weak(curve_factor),
-  /* K11  */  be_nested_str_weak(BreatheAnimation_X28color_X3D0x_X2508x_X2C_X20min_brightness_X3D_X25s_X2C_X20max_brightness_X3D_X25s_X2C_X20period_X3D_X25s_X2C_X20curve_factor_X3D_X25s_X2C_X20priority_X3D_X25s_X2C_X20running_X3D_X25s_X29),
-  /* K12  */  be_nested_str_weak(priority),
-  /* K13  */  be_nested_str_weak(is_running),
-  /* K14  */  be_nested_str_weak(init),
-  /* K15  */  be_nested_str_weak(animation),
-  /* K16  */  be_nested_str_weak(breathe_color),
-  /* K17  */  be_nested_str_weak(start),
-  /* K18  */  be_nested_str_weak(engine),
-  /* K19  */  be_nested_str_weak(time_ms),
+  /* K3   */  be_nested_str_weak(animation),
+  /* K4   */  be_nested_str_weak(is_value_provider),
+  /* K5   */  be_nested_str_weak(breathe_provider),
+  /* K6   */  be_nested_str_weak(base_color),
+  /* K7   */  be_nested_str_weak(values),
+  /* K8   */  be_nested_str_weak(min_brightness),
+  /* K9   */  be_nested_str_weak(max_brightness),
+  /* K10  */  be_nested_str_weak(period),
+  /* K11  */  be_nested_str_weak(duration),
+  /* K12  */  be_nested_str_weak(curve_factor),
+  /* K13  */  be_nested_str_weak(0x_X2508x),
+  /* K14  */  be_nested_str_weak(BreatheAnimation_X28color_X3D_X25s_X2C_X20min_brightness_X3D_X25s_X2C_X20max_brightness_X3D_X25s_X2C_X20period_X3D_X25s_X2C_X20curve_factor_X3D_X25s_X2C_X20priority_X3D_X25s_X2C_X20running_X3D_X25s_X29),
+  /* K15  */  be_nested_str_weak(priority),
+  /* K16  */  be_nested_str_weak(is_running),
+  /* K17  */  be_nested_str_weak(init),
+  /* K18  */  be_nested_str_weak(breathe_color),
+  /* K19  */  be_nested_str_weak(start),
+  /* K20  */  be_nested_str_weak(engine),
+  /* K21  */  be_nested_str_weak(time_ms),
 };
 
 
@@ -46,7 +48,7 @@ be_local_closure(class_BreatheAnimation_on_param_changed,   /* name */
     &be_ktab_class_BreatheAnimation,     /* shared constants */
     be_str_weak(on_param_changed),
     &be_const_str_solidified,
-    ( &(const binstruction[40]) {  /* code */
+    ( &(const binstruction[45]) {  /* code */
       0x600C0003,  //  0000  GETGBL	R3	G3
       0x5C100000,  //  0001  MOVE	R4	R0
       0x7C0C0200,  //  0002  CALL	R3	1
@@ -55,38 +57,43 @@ be_local_closure(class_BreatheAnimation_on_param_changed,   /* name */
       0x5C180400,  //  0005  MOVE	R6	R2
       0x7C0C0600,  //  0006  CALL	R3	3
       0x1C0C0301,  //  0007  EQ	R3	R1	K1
-      0x780E000A,  //  0008  JMPF	R3	#0014
+      0x780E000F,  //  0008  JMPF	R3	#0019
       0x600C0004,  //  0009  GETGBL	R3	G4
       0x5C100400,  //  000A  MOVE	R4	R2
       0x7C0C0200,  //  000B  CALL	R3	1
       0x1C0C0702,  //  000C  EQ	R3	R3	K2
-      0x780E0004,  //  000D  JMPF	R3	#0013
-      0x880C0103,  //  000E  GETMBR	R3	R0	K3
-      0x900E0802,  //  000F  SETMBR	R3	K4	R2
-      0x880C0105,  //  0010  GETMBR	R3	R0	K5
-      0x88100103,  //  0011  GETMBR	R4	R0	K3
-      0x980E0204,  //  0012  SETIDX	R3	K1	R4
-      0x70020012,  //  0013  JMP		#0027
-      0x1C0C0306,  //  0014  EQ	R3	R1	K6
-      0x780E0002,  //  0015  JMPF	R3	#0019
-      0x880C0103,  //  0016  GETMBR	R3	R0	K3
-      0x900E0C02,  //  0017  SETMBR	R3	K6	R2
-      0x7002000D,  //  0018  JMP		#0027
-      0x1C0C0307,  //  0019  EQ	R3	R1	K7
+      0x740E0004,  //  000D  JMPT	R3	#0013
+      0xB80E0600,  //  000E  GETNGBL	R3	K3
+      0x8C0C0704,  //  000F  GETMET	R3	R3	K4
+      0x5C140400,  //  0010  MOVE	R5	R2
+      0x7C0C0400,  //  0011  CALL	R3	2
+      0x780E0004,  //  0012  JMPF	R3	#0018
+      0x880C0105,  //  0013  GETMBR	R3	R0	K5
+      0x900E0C02,  //  0014  SETMBR	R3	K6	R2
+      0x880C0107,  //  0015  GETMBR	R3	R0	K7
+      0x88100105,  //  0016  GETMBR	R4	R0	K5
+      0x980E0204,  //  0017  SETIDX	R3	K1	R4
+      0x70020012,  //  0018  JMP		#002C
+      0x1C0C0308,  //  0019  EQ	R3	R1	K8
       0x780E0002,  //  001A  JMPF	R3	#001E
-      0x880C0103,  //  001B  GETMBR	R3	R0	K3
-      0x900E0E02,  //  001C  SETMBR	R3	K7	R2
-      0x70020008,  //  001D  JMP		#0027
-      0x1C0C0308,  //  001E  EQ	R3	R1	K8
+      0x880C0105,  //  001B  GETMBR	R3	R0	K5
+      0x900E1002,  //  001C  SETMBR	R3	K8	R2
+      0x7002000D,  //  001D  JMP		#002C
+      0x1C0C0309,  //  001E  EQ	R3	R1	K9
       0x780E0002,  //  001F  JMPF	R3	#0023
-      0x880C0103,  //  0020  GETMBR	R3	R0	K3
+      0x880C0105,  //  0020  GETMBR	R3	R0	K5
       0x900E1202,  //  0021  SETMBR	R3	K9	R2
-      0x70020003,  //  0022  JMP		#0027
+      0x70020008,  //  0022  JMP		#002C
       0x1C0C030A,  //  0023  EQ	R3	R1	K10
-      0x780E0001,  //  0024  JMPF	R3	#0027
-      0x880C0103,  //  0025  GETMBR	R3	R0	K3
-      0x900E1402,  //  0026  SETMBR	R3	K10	R2
-      0x80000000,  //  0027  RET	0
+      0x780E0002,  //  0024  JMPF	R3	#0028
+      0x880C0105,  //  0025  GETMBR	R3	R0	K5
+      0x900E1602,  //  0026  SETMBR	R3	K11	R2
+      0x70020003,  //  0027  JMP		#002C
+      0x1C0C030C,  //  0028  EQ	R3	R1	K12
+      0x780E0001,  //  0029  JMPF	R3	#002C
+      0x880C0105,  //  002A  GETMBR	R3	R0	K5
+      0x900E1802,  //  002B  SETMBR	R3	K12	R2
+      0x80000000,  //  002C  RET	0
     })
   )
 );
@@ -98,7 +105,7 @@ be_local_closure(class_BreatheAnimation_on_param_changed,   /* name */
 ********************************************************************/
 be_local_closure(class_BreatheAnimation_tostring,   /* name */
   be_nested_proto(
-    10,                          /* nstack */
+    11,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -109,19 +116,37 @@ be_local_closure(class_BreatheAnimation_tostring,   /* name */
     &be_ktab_class_BreatheAnimation,     /* shared constants */
     be_str_weak(tostring),
     &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0x60040018,  //  0000  GETGBL	R1	G24
-      0x5808000B,  //  0001  LDCONST	R2	K11
-      0x880C0103,  //  0002  GETMBR	R3	R0	K3
-      0x880C0704,  //  0003  GETMBR	R3	R3	K4
-      0x88100106,  //  0004  GETMBR	R4	R0	K6
-      0x88140107,  //  0005  GETMBR	R5	R0	K7
-      0x88180108,  //  0006  GETMBR	R6	R0	K8
-      0x881C010A,  //  0007  GETMBR	R7	R0	K10
-      0x8820010C,  //  0008  GETMBR	R8	R0	K12
-      0x8824010D,  //  0009  GETMBR	R9	R0	K13
-      0x7C041000,  //  000A  CALL	R1	8
-      0x80040200,  //  000B  RET	1	R1
+    ( &(const binstruction[30]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0xB80A0600,  //  0001  GETNGBL	R2	K3
+      0x8C080504,  //  0002  GETMET	R2	R2	K4
+      0x88100105,  //  0003  GETMBR	R4	R0	K5
+      0x88100906,  //  0004  GETMBR	R4	R4	K6
+      0x7C080400,  //  0005  CALL	R2	2
+      0x780A0005,  //  0006  JMPF	R2	#000D
+      0x60080008,  //  0007  GETGBL	R2	G8
+      0x880C0105,  //  0008  GETMBR	R3	R0	K5
+      0x880C0706,  //  0009  GETMBR	R3	R3	K6
+      0x7C080200,  //  000A  CALL	R2	1
+      0x5C040400,  //  000B  MOVE	R1	R2
+      0x70020005,  //  000C  JMP		#0013
+      0x60080018,  //  000D  GETGBL	R2	G24
+      0x580C000D,  //  000E  LDCONST	R3	K13
+      0x88100105,  //  000F  GETMBR	R4	R0	K5
+      0x88100906,  //  0010  GETMBR	R4	R4	K6
+      0x7C080400,  //  0011  CALL	R2	2
+      0x5C040400,  //  0012  MOVE	R1	R2
+      0x60080018,  //  0013  GETGBL	R2	G24
+      0x580C000E,  //  0014  LDCONST	R3	K14
+      0x5C100200,  //  0015  MOVE	R4	R1
+      0x88140108,  //  0016  GETMBR	R5	R0	K8
+      0x88180109,  //  0017  GETMBR	R6	R0	K9
+      0x881C010A,  //  0018  GETMBR	R7	R0	K10
+      0x8820010C,  //  0019  GETMBR	R8	R0	K12
+      0x8824010F,  //  001A  GETMBR	R9	R0	K15
+      0x88280110,  //  001B  GETMBR	R10	R0	K16
+      0x7C081000,  //  001C  CALL	R2	8
+      0x80040400,  //  001D  RET	1	R2
     })
   )
 );
@@ -148,16 +173,16 @@ be_local_closure(class_BreatheAnimation_init,   /* name */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C08050E,  //  0003  GETMET	R2	R2	K14
+      0x8C080511,  //  0003  GETMET	R2	R2	K17
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0xB80A1E00,  //  0006  GETNGBL	R2	K15
-      0x8C080510,  //  0007  GETMET	R2	R2	K16
+      0xB80A0600,  //  0006  GETNGBL	R2	K3
+      0x8C080512,  //  0007  GETMET	R2	R2	K18
       0x5C100200,  //  0008  MOVE	R4	R1
       0x7C080400,  //  0009  CALL	R2	2
-      0x90020602,  //  000A  SETMBR	R0	K3	R2
-      0x88080105,  //  000B  GETMBR	R2	R0	K5
-      0x880C0103,  //  000C  GETMBR	R3	R0	K3
+      0x90020A02,  //  000A  SETMBR	R0	K5	R2
+      0x88080107,  //  000B  GETMBR	R2	R0	K7
+      0x880C0105,  //  000C  GETMBR	R3	R0	K5
       0x980A0203,  //  000D  SETIDX	R2	K1	R3
       0x80000000,  //  000E  RET	0
     })
@@ -186,7 +211,7 @@ be_local_closure(class_BreatheAnimation_start,   /* name */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080511,  //  0003  GETMET	R2	R2	K17
+      0x8C080513,  //  0003  GETMET	R2	R2	K19
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
       0x4C080000,  //  0006  LDNIL	R2
@@ -194,10 +219,10 @@ be_local_closure(class_BreatheAnimation_start,   /* name */
       0x780A0001,  //  0008  JMPF	R2	#000B
       0x5C080200,  //  0009  MOVE	R2	R1
       0x70020001,  //  000A  JMP		#000D
-      0x88080112,  //  000B  GETMBR	R2	R0	K18
-      0x88080513,  //  000C  GETMBR	R2	R2	K19
-      0x880C0103,  //  000D  GETMBR	R3	R0	K3
-      0x8C0C0711,  //  000E  GETMET	R3	R3	K17
+      0x88080114,  //  000B  GETMBR	R2	R0	K20
+      0x88080515,  //  000C  GETMBR	R2	R2	K21
+      0x880C0105,  //  000D  GETMBR	R3	R0	K5
+      0x8C0C0713,  //  000E  GETMET	R3	R3	K19
       0x5C140400,  //  000F  MOVE	R5	R2
       0x7C0C0400,  //  0010  CALL	R3	2
       0x80040000,  //  0011  RET	1	R0
