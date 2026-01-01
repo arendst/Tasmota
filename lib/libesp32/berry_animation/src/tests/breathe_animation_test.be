@@ -50,6 +50,15 @@ red_breathe.period = 3000
 red_breathe.curve_factor = 2
 print(f"Red breathe animation color: 0x{red_breathe.breathe_provider.base_color :08x}")
 
+# Create green breathe animation with color as a closure value provider
+var green_breathe = animation.breathe_animation(engine)
+green_breathe.color = animation.create_closure_value(engine, def (engine) return 0xFF00FF00 end)
+green_breathe.min_brightness = 10
+green_breathe.max_brightness = 180
+green_breathe.period = 3000
+green_breathe.curve_factor = 2
+print(f"Green breathe animation color: {green_breathe.breathe_provider.base_color}")
+
 # Test parameter updates using virtual member assignment
 blue_breathe.min_brightness = 30
 blue_breathe.max_brightness = 220
@@ -133,6 +142,8 @@ print("✓ Animation added to engine successfully")
 assert(anim != nil, "Default breathe animation should be created")
 assert(blue_breathe != nil, "Custom breathe animation should be created")
 assert(red_breathe != nil, "Red breathe animation should be created")
+assert(green_breathe != nil, "Green breathe animation should be created")
+assert(animation.is_value_provider(green_breathe.breathe_provider.base_color), "Green breathe should have color as a value provider")
 assert(blue_breathe.breathe_provider.base_color == 0xFF0000FF, "Blue breathe should have correct color")
 assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
