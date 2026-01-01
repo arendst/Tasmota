@@ -1,0 +1,9 @@
+#Z2Tv1
+# Tuya Zigbee Carbon Monoxide Smoke Detector Alarm https://pt.aliexpress.com/item/1005009777806881.html
+:TS0601,_TZE284_6ycgarab
+0000/FFE2,TuyaAppVersion
+EF00/0111,Alarm         # Present and set to 1 when test button pressed
+EF00/020F,SmokeDensity  # Smoke density 0-100
+EF00/0401,DeviceStatus  # Present and set to 1 when test button pressed
+EF00/0405,AlarmType     # Alarm type: 2 - smoke; 3 - CO
+EF00/0412,TestButton    # set to 1 when test button pressed; 0 in case of a real alarm
