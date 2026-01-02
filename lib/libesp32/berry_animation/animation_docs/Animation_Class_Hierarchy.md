@@ -22,13 +22,14 @@ ParameterizedObject (base class with parameter management and playable interface
 │   ├── BeaconAnimation (pulse at specific position)
 │   ├── CrenelPositionAnimation (crenel/square wave pattern)
 │   ├── BreatheAnimation (breathing effect)
+│   ├── BeaconAnimation (pulse at specific position)
+│   │   └── GradientAnimation (linear/radial color gradients)
 │   ├── PaletteGradientAnimation (gradient patterns with palette colors)
 │   │   ├── PaletteMeterAnimation (meter/bar patterns)
 │   │   └── GradientMeterAnimation (VU meter with gradient colors and peak hold)
 │   ├── CometAnimation (moving comet with tail)
 │   ├── FireAnimation (realistic fire effect)
 │   ├── TwinkleAnimation (twinkling stars effect)
-│   ├── GradientAnimation (color gradients)
 │   ├── NoiseAnimation (Perlin noise patterns)
 │   ├── WaveAnimation (wave motion effects)
 │   └── RichPaletteAnimation (smooth palette transitions)
@@ -590,19 +591,25 @@ Creates a realistic fire effect with flickering flames. Inherits from `Animation
 
 ### GradientAnimation
 
-Creates smooth color gradients that can be linear or radial. Inherits from `Animation`.
+Creates smooth two-color gradients. Subclass of `BeaconAnimation` that uses beacon slew regions to create gradient effects.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `color` | instance | nil | nillable | Color provider (nil = rainbow gradient) |
-| `gradient_type` | int | 0 | 0-1 | 0=linear, 1=radial |
-| `direction` | int | 0 | 0-255 | Gradient direction/orientation |
-| `center_pos` | int | 128 | 0-255 | Center position for radial gradients |
-| `spread` | int | 255 | 1-255 | Gradient spread/compression |
-| `movement_speed` | int | 0 | 0-255 | Speed of gradient movement |
-| *(inherits all Animation parameters)* | | | | |
+| `color1` | int | 0xFFFF0000 | - | First color (default red) |
+| `color2` | int | 0xFF0000FF | - | Second color (default blue) |
+| `direction` | int | 0 | enum: [0, 1] | 0=forward (color1→color2), 1=reverse (color2→color1) |
+| `gradient_type` | int | 0 | enum: [0, 1] | 0=linear, 1=radial |
+| *(inherits all BeaconAnimation parameters)* | | | | |
 
-**Factories**: `animation.gradient_animation(engine)`, `animation.gradient_rainbow_linear(engine)`, `animation.gradient_rainbow_radial(engine)`, `animation.gradient_two_color_linear(engine)`
+**Gradient Types:**
+- **Linear (0)**: Creates a 2-color gradient from `color1` to `color2` (or reversed if `direction=1`). Implemented as the left slew of a large beacon positioned at the right edge.
+- **Radial (1)**: Creates a symmetric gradient with `color1` at center and `color2` at edges (or reversed if `direction=1`). Implemented as a centered beacon with size=1 and slew regions extending to the edges.
+
+**Implementation Details:**
+- Linear gradient uses a beacon with `beacon_size=1000` (off-screen) and `slew_size=strip_length`
+- Radial gradient uses a centered beacon with `beacon_size=1` and `slew_size=strip_length/2`
+
+**Factory**: `animation.gradient_animation(engine)`
 
 ### GradientMeterAnimation
 
@@ -737,6 +744,7 @@ Creates a pulse effect at a specific position with optional fade regions. Inheri
 
 #### Visual Pattern
 
+**right_edge=0 (default, left edge):**
 ```
          pos (1)
            |
@@ -748,8 +756,20 @@ Creates a pulse effect at a specific position with optional fade regions. Inheri
          |2|  3  |2|
 ```
 
+**right_edge=1 (right edge):**
+```
+                        pos (1)
+                          |
+                          v
+           _______        |
+          /       \       |
+  _______/         \______|__
+         | |     | |
+         |2|  3  |2|
+```
+
 Where:
-1. `pos` - Start of the pulse (in pixels)
+1. `pos` - Position of the beacon edge (left edge for right_edge=0, right edge for right_edge=1)
 2. `slew_size` - Number of pixels to fade from back to fore color (can be 0)
 3. `beacon_size` - Number of pixels of the pulse
 
@@ -764,29 +784,52 @@ The pulse consists of:
 |-----------|------|---------|-------------|-------------|
 | `color` | int | 0xFFFFFFFF | - | Pulse color in ARGB format |
 | `back_color` | int | 0xFF000000 | - | Background color in ARGB format |
-| `pos` | int | 0 | - | Pulse start position in pixels |
+| `pos` | int | 0 | - | Beacon edge position (left edge for right_edge=0, right edge for right_edge=1) |
 | `beacon_size` | int | 1 | min: 0 | Size of core pulse in pixels |
 | `slew_size` | int | 0 | min: 0 | Fade region size on each side in pixels |
+| `right_edge` | int | 0 | enum: [0, 1] | 0=left edge (default), 1=right edge |
 | *(inherits all Animation parameters)* | | | | |
+
+#### right_edge Behavior
+
+- **right_edge=0 (default)**: `pos` specifies the left edge of the beacon. `pos=0` places the beacon starting at the leftmost pixel.
+- **right_edge=1**: `pos` specifies the right edge of the beacon from the right side of the strip. `pos=0` places the beacon's right edge at the rightmost pixel.
+
+The effective left position is calculated as:
+- `right_edge=0`: `effective_pos = pos`
+- `right_edge=1`: `effective_pos = strip_length - pos - beacon_size`
 
 #### Pattern Behavior
 
 - **Sharp Pulse** (`slew_size = 0`): Rectangular pulse with hard edges
 - **Soft Pulse** (`slew_size > 0`): Pulse with smooth fade-in/fade-out regions
-- **Positioning**: `pos` defines the start of the core pulse region
+- **Positioning**: `pos` defines the beacon edge from the specified side
 - **Fade Calculation**: Linear fade from full brightness to background color
 - **Boundary Handling**: Fade regions are clipped to frame boundaries
 
 #### Usage Examples
 
 ```berry
-# Sharp pulse at center
-animation sharp_pulse = beacon_animation(
+# Sharp pulse at left edge (right_edge=0, default)
+animation left_pulse = beacon_animation(
   color=red,
-  pos=10,
+  pos=0,
   beacon_size=3,
-  slew_size=0
+  slew_size=0,
+  right_edge=0
 )
+# Shows 3 red pixels at positions 0, 1, 2
+
+# Pulse from right edge
+animation right_pulse = beacon_animation(
+  color=blue,
+  pos=0,
+  beacon_size=3,
+  slew_size=0,
+  right_edge=1
+)
+# With pos=0 and right_edge=1, shows 3 pixels at the right edge
+# (positions strip_length-3, strip_length-2, strip_length-1)
 
 # Soft pulse with fade regions
 animation soft_pulse = beacon_animation(
@@ -845,6 +888,30 @@ animation breathing_spot = beacon_animation(
   slew_size=2
 )
 breathing_spot.opacity = smooth(min_value=50, max_value=255, period=2s)
+```
+
+**Bidirectional Animations:**
+```berry
+# Two beacons moving from opposite edges toward center
+set strip_len = strip_length()
+set sweep = triangle(min_value=0, max_value=strip_len/2, period=2s)
+
+animation left_beacon = beacon_animation(
+  color=red,
+  beacon_size=2,
+  right_edge=0
+)
+left_beacon.pos = sweep
+
+animation right_beacon = beacon_animation(
+  color=blue,
+  beacon_size=2,
+  right_edge=1
+)
+right_beacon.pos = sweep
+
+run left_beacon
+run right_beacon
 ```
 
 **Factory**: `animation.beacon_animation(engine)`

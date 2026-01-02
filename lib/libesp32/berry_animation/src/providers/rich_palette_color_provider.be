@@ -44,7 +44,7 @@ class RichPaletteColorProvider : animation.color_provider
   static var PARAMS = animation.enc_params({
     "colors": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
-    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR}
+    "transition_type": {"enum": [1 #-animation.LINEAR-#, 5 #-animation.SINE-#], "default": 1 #-animation.LINEAR-#}
     # brightness parameter inherited from ColorProvider base class
   })
   
@@ -212,7 +212,7 @@ class RichPaletteColorProvider : animation.color_provider
   def _interpolate(value, from_min, from_max, to_min, to_max)
     var transition_type = self.transition_type
     
-    if transition_type == animation.SINE
+    if transition_type == 5 #-animation.SINE-#
       # Cosine interpolation for smooth transitions
       # Map value to 0..255 range first
       var t = tasmota.scale_uint(value, from_min, from_max, 0, 255)

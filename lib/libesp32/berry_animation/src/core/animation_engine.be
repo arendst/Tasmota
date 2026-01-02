@@ -444,7 +444,7 @@ class AnimationEngine
     # var cpu_percent = (self.tick_time_sum * 100) / period_ms
     
     # Format and log stats - split into animation calc vs hardware output
-    var stats_msg = f"AnimEngine: ticks={self.tick_count} total={mean_time:.2f}ms({self.tick_time_min}-{self.tick_time_max}) events={mean_phase1:.2f}ms({self.phase1_time_min}-{self.phase1_time_max}) update={mean_phase2:.2f}ms({self.phase2_time_min}-{self.phase2_time_max}) anim={mean_anim:.2f}ms({self.anim_time_min}-{self.anim_time_max}) hw={mean_hw:.2f}ms({self.hw_time_min}-{self.hw_time_max})"
+    var stats_msg = f"ANI: ticks={self.tick_count} total={mean_time:.2f}ms({self.tick_time_min}-{self.tick_time_max}) events={mean_phase1:.2f}ms({self.phase1_time_min}-{self.phase1_time_max}) update={mean_phase2:.2f}ms({self.phase2_time_min}-{self.phase2_time_max}) anim={mean_anim:.2f}ms({self.anim_time_min}-{self.anim_time_max}) hw={mean_hw:.2f}ms({self.hw_time_min}-{self.hw_time_max})"
     tasmota.log(stats_msg, 3)  # Log level 3 (DEBUG)
   end
   

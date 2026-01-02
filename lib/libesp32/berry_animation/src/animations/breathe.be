@@ -46,7 +46,7 @@ class BreatheAnimation : animation.animation
     if name == "color"
       # When color is set, update the breathe_provider's base_color
       # but keep the breathe_provider as the actual color source for rendering
-      if type(value) == 'int' || animation.is_value_provider(value)
+      if type(value) == 'int'
         self.breathe_provider.base_color = value
         # Restore the breathe_provider as the color source (bypass on_param_changed)
         self.values["color"] = self.breathe_provider

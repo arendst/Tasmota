@@ -98,7 +98,7 @@ def test_ease_constructors()
   assert(ease_in_provider.min_value == 10, "ease_in should set correct start value")
   assert(ease_in_provider.max_value == 90, "ease_in should set correct end value")
   assert(ease_in_provider.duration == 2000, "ease_in should set correct duration")
-  assert(ease_in_provider.form == animation.EASE_IN, "ease_in should set EASE_IN form")
+  assert(ease_in_provider.form == 6 #-EASE_IN-#, "ease_in should set EASE_IN form")
   
   # Test ease_out constructor
   var ease_out_provider = animation.ease_out(engine)
@@ -108,7 +108,7 @@ def test_ease_constructors()
   assert(ease_out_provider.min_value == 20, "ease_out should set correct start value")
   assert(ease_out_provider.max_value == 80, "ease_out should set correct end value")
   assert(ease_out_provider.duration == 1500, "ease_out should set correct duration")
-  assert(ease_out_provider.form == animation.EASE_OUT, "ease_out should set EASE_OUT form")
+  assert(ease_out_provider.form == 7 #-EASE_OUT-#, "ease_out should set EASE_OUT form")
   
   print("✓ Ease constructor functions test passed")
 end
@@ -183,8 +183,8 @@ def test_ease_tostring()
   ease_out_provider.duration = 2500
   
   # Verify form values are set correctly
-  assert(ease_in_provider.form == animation.EASE_IN, "EASE_IN form should be set")
-  assert(ease_out_provider.form == animation.EASE_OUT, "EASE_OUT form should be set")
+  assert(ease_in_provider.form == 6 #-EASE_IN-#, "EASE_IN form should be set")
+  assert(ease_out_provider.form == 7 #-EASE_OUT-#, "EASE_OUT form should be set")
   
   print("✓ Ease tostring test passed")
 end
@@ -198,16 +198,16 @@ def test_ease_constants()
   direct_ease_in.min_value = 0
   direct_ease_in.max_value = 100
   direct_ease_in.duration = 1000
-  direct_ease_in.form = animation.EASE_IN
+  direct_ease_in.form = 6 #-EASE_IN-#
   
   var direct_ease_out = animation.oscillator_value(engine)
   direct_ease_out.min_value = 0
   direct_ease_out.max_value = 100
   direct_ease_out.duration = 1000
-  direct_ease_out.form = animation.EASE_OUT
+  direct_ease_out.form = 7 #-EASE_OUT-#
   
-  assert(direct_ease_in.form == animation.EASE_IN, "Direct EASE_IN should work")
-  assert(direct_ease_out.form == animation.EASE_OUT, "Direct EASE_OUT should work")
+  assert(direct_ease_in.form == 6 #-EASE_IN-#, "Direct EASE_IN should work")
+  assert(direct_ease_out.form == 7 #-EASE_OUT-#, "Direct EASE_OUT should work")
   
   print("✓ Ease constants test passed")
 end

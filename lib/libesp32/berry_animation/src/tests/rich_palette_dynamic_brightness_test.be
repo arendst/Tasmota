@@ -163,7 +163,7 @@ rebuild_provider.get_color_for_value(128, 0)
 log(f"After lookup with new palette: lut_dirty = {rebuild_provider._lut_dirty}")
 
 # Change transition_type - SHOULD trigger rebuild
-rebuild_provider.transition_type = animation.SINE
+rebuild_provider.transition_type = 5 #-SINE-#
 log(f"After transition_type change: lut_dirty = {rebuild_provider._lut_dirty}")
 rebuild_provider.get_color_for_value(128, 0)
 log(f"After lookup with new transition: lut_dirty = {rebuild_provider._lut_dirty}")

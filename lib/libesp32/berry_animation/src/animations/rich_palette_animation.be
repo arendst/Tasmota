@@ -19,7 +19,7 @@ class RichPaletteAnimation : animation.animation
     # RichPaletteColorProvider parameters (forwarded to internal provider)
     "colors": {"type": "instance", "default": nil},
     "period": {"min": 0, "default": 5000},
-    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.SINE},
+    "transition_type": {"enum": [1 #-LINEAR-#, 5 #-SINE-#], "default": 5 #-SINE-#},
     "brightness": {"min": 0, "max": 255, "default": 255}
   })
     

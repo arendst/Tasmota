@@ -207,7 +207,7 @@ assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 3
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
 assert(blue_breathe.duration == 3500, "Duration should be updated to 3500")
 assert(blue_breathe.curve_factor == 4, "Curve factor should be updated to 4")
-assert(blue_breathe.form == animation.COSINE, "Form should be COSINE")
+assert(blue_breathe.form == 4 #-COSINE-#, "Form should be COSINE")
 assert(blue_breathe.min_value == 0, "Inherited min_value should be 0")
 assert(blue_breathe.max_value == 255, "Inherited max_value should be 255")
 assert(blue_breathe.engine == engine, "Provider should have correct engine reference")

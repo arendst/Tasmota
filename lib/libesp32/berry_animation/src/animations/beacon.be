@@ -3,7 +3,7 @@
 # This animation creates a beacon effect at a specific position on the LED strip.
 # It displays a color beacon with optional slew (fade) regions on both sides.
 #
-# Beacon diagram:
+# Beacon diagram (right_edge=0, default, left edge):
 #         pos (1)
 #           |
 #           v
@@ -13,9 +13,20 @@
 #         | |     | |
 #         |2|  3  |2|
 #
-# 1: `pos`, start of the beacon (in pixel)
+# Beacon diagram (right_edge=1, right edge):
+#               pos (1)
+#                 |
+#                 v
+#           _______
+#          /       \
+#  _______/         \_________
+#         | |     | |
+#         |2|  3  |2|
+#
+# 1: `pos`, position of the beacon edge (left edge for right_edge=0, right edge for right_edge=1)
 # 2: `slew_size`, number of pixels to fade from back to fore color, can be `0`
 # 3: `beacon_size`, number of pixels of the beacon
+# When right_edge=1, pos=0 shows 1 pixel at the right edge (rightmost pixel of strip)
 
 import "./core/param_encoder" as encode_constraints
 
@@ -28,7 +39,8 @@ class BeaconAnimation : animation.animation
     "back_color": {"default": 0xFF000000},
     "pos": {"default": 0},
     "beacon_size": {"min": 0, "default": 1},
-    "slew_size": {"min": 0, "default": 0}
+    "slew_size": {"min": 0, "default": 0},
+    "right_edge": {"enum": [0, 1], "default": 0}
   })
 
   # Render the beacon to the provided frame buffer
@@ -44,15 +56,28 @@ class BeaconAnimation : animation.animation
     var slew_size = self.slew_size
     var beacon_size = self.beacon_size
     var color = self.color
+    var right_edge = self.right_edge
     
     # Fill background if not transparent
     if (back_color != 0xFF000000) && ((back_color & 0xFF000000) != 0x00)
       frame.fill_pixels(frame.pixels, back_color)
     end
     
+    # Calculate effective position based on right_edge
+    # right_edge=0: pos is the left edge of the beacon (default)
+    # right_edge=1: pos is the right edge of the beacon (from right side of strip)
+    var effective_pos
+    if right_edge == 1
+      # Right edge mode: pos indicates right edge of beacon from right side of strip
+      # effective_pos is the left edge of the beacon in absolute coordinates
+      effective_pos = pos - beacon_size + 1
+    else
+      effective_pos = pos
+    end
+    
     # Calculate beacon boundaries
-    var beacon_min = pos
-    var beacon_max = pos + beacon_size
+    var beacon_min = effective_pos
+    var beacon_max = effective_pos + beacon_size
     
     # Clamp to frame boundaries
     if beacon_min < 0
@@ -65,17 +90,12 @@ class BeaconAnimation : animation.animation
     # Draw the main beacon
     frame.fill_pixels(frame.pixels, color, beacon_min, beacon_max)
     var i
-    # var i = beacon_min
-    # while i < beacon_max
-    #   frame.set_pixel_color(i, color)
-    #   i += 1
-    # end
     
     # Draw slew regions if slew_size > 0
     if slew_size > 0
       # Left slew (fade from background to beacon color)
-      var left_slew_min = pos - slew_size
-      var left_slew_max = pos
+      var left_slew_min = effective_pos - slew_size
+      var left_slew_max = effective_pos
       
       if left_slew_min < 0
         left_slew_min = 0
@@ -87,15 +107,15 @@ class BeaconAnimation : animation.animation
       i = left_slew_min
       while i < left_slew_max
         # Calculate blend factor - blend from 255 (back) to 0 (fore) like original
-        var blend_factor = tasmota.scale_int(i, pos - slew_size - 1, pos, 255, 0)
+        var blend_factor = tasmota.scale_int(i, effective_pos - slew_size - 1, effective_pos, 255, 0)
         var blended_color = frame.blend_linear(back_color, color, blend_factor)
         frame.set_pixel_color(i, blended_color)
         i += 1
       end
       
       # Right slew (fade from beacon color to background)
-      var right_slew_min = pos + beacon_size
-      var right_slew_max = pos + beacon_size + slew_size
+      var right_slew_min = effective_pos + beacon_size
+      var right_slew_max = effective_pos + beacon_size + slew_size
       
       if right_slew_min < 0
         right_slew_min = 0
@@ -107,7 +127,7 @@ class BeaconAnimation : animation.animation
       i = right_slew_min
       while i < right_slew_max
         # Calculate blend factor - blend from 0 (fore) to 255 (back) like original
-        var blend_factor = tasmota.scale_int(i, pos + beacon_size - 1, pos + beacon_size + slew_size, 0, 255)
+        var blend_factor = tasmota.scale_int(i, effective_pos + beacon_size - 1, effective_pos + beacon_size + slew_size, 0, 255)
         var blended_color = frame.blend_linear(back_color, color, blend_factor)
         frame.set_pixel_color(i, blended_color)
         i += 1

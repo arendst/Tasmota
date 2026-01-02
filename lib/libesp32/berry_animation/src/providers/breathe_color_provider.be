@@ -31,7 +31,7 @@ class BreatheColorProvider : animation.oscillator_value
     super(self).init(engine)
     
     # Configure the inherited oscillator for breathing behavior
-    self.form = animation.COSINE  # Use cosine wave for smooth breathing
+    self.form = 4 #-animation.COSINE-#  # Use cosine wave for smooth breathing
     self.min_value = 0            # Fixed range 0-255 for normalized oscillation
     self.max_value = 255          # Fixed range 0-255 for normalized oscillation
     self.duration = 3000          # Default duration
@@ -43,11 +43,7 @@ class BreatheColorProvider : animation.oscillator_value
     if name == "curve_factor"
       # For curve_factor = 1, use pure cosine
       # For curve_factor > 1, we'll apply the curve in produce_value
-      if value == 1
-        self.form = animation.COSINE
-      else
-        self.form = animation.COSINE  # Still use cosine as base, apply curve later
-      end
+      self.form = 4 #-animation.COSINE-#
     end
     
     # Call parent's parameter change handler

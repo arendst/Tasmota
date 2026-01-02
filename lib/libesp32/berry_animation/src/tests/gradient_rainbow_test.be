@@ -1,27 +1,29 @@
-# Test for gradient rainbow functionality with light_state HSV conversion
+# Test for gradient color variation
 import animation
 
-print("Testing gradient rainbow with light_state HSV conversion...")
+print("Testing gradient color variation...")
 
 # Create LED strip and engine
 var strip = global.Leds(10)
 var engine = animation.create_engine(strip)
 
-# Test rainbow gradient (nil color)
-var rainbow_gradient = animation.gradient_animation(engine)
-rainbow_gradient.color = nil  # Should use rainbow
-rainbow_gradient.movement_speed = 0  # Static for testing
+# Test linear gradient with two colors
+var gradient = animation.gradient_animation(engine)
+gradient.color1 = 0xFF0000FF  # Blue
+gradient.color2 = 0xFFFF0000  # Red
+gradient.gradient_type = 0  # Linear
+gradient.direction = 0  # Forward (blue to red)
 
 # Start and update
-rainbow_gradient.start(1000)
-rainbow_gradient.update(1000)
+gradient.start(1000)
+gradient.update(1000)
 
 # Create frame and render
-var frame = animation.frame_buffer(10, 1)
-var result = rainbow_gradient.render(frame, 1000, engine.strip_length)
-assert(result == true, "Should render rainbow gradient successfully")
+var frame = animation.frame_buffer(10)
+var result = gradient.render(frame, 1000, engine.strip_length)
+assert(result == true, "Should render gradient successfully")
 
-# Check that different pixels have different colors (rainbow effect)
+# Check that different pixels have different colors (gradient effect)
 var colors = []
 var i = 0
 while i < 10
@@ -31,17 +33,10 @@ end
 
 # Verify that we have some color variation (not all the same)
 var first_color = colors[0]
-var has_variation = false
-i = 1
-while i < size(colors)
-  if colors[i] != first_color
-    has_variation = true
-    break
-  end
-  i += 1
-end
+var last_color = colors[9]
+var has_variation = first_color != last_color
 
-assert(has_variation, "Rainbow gradient should have color variation across pixels")
+assert(has_variation, "Gradient should have color variation across pixels")
 
 # Test that colors have proper alpha channel (should be 0xFF)
 i = 0
@@ -51,6 +46,10 @@ while i < size(colors)
   i += 1
 end
 
-print("✓ Gradient rainbow with light_state HSV conversion test passed!")
+# Print colors for debugging
+print(f"  First pixel: 0x{first_color:08X}")
+print(f"  Last pixel: 0x{last_color:08X}")
+
+print("✓ Gradient color variation test passed!")
 
 return true
