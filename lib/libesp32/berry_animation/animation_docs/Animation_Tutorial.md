@@ -1186,62 +1186,65 @@ run main
 
 ### 8.3 Advanced Template with Conditional Flags
 
-<a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_8_30_template_shutter" target="_blank"><img src="../../_media/berry_animation/chap_8_30.png" alt="Template Shutter"></a>
+<a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_8_30_template_shutter_bidir_flags" target="_blank"><img src="../../_media/berry_animation/chap_8_30.png" alt="Template Shutter"></a>
 
-Templates support `bool` parameters that can be used with `if` statements inside sequences. This allows users to enable or disable parts of the animation at instantiation time. Here we create a bidirectional shutter that can optionally run in-out, out-in, or both directions.
+Templates support `bool` parameters that can be used with `if` statements inside sequences. This allows users to enable or disable parts of the animation at instantiation time. Here we create a bidirectional shutter (based on chapter 6.4) that can optionally run in-out, out-in, or both directions.
 
 **Dynamic parameter changes:**
 
 You can also modify template parameters at runtime using Berry code. Note that DSL variable names get an underscore suffix in Berry to avoid collisions with reserved words (e.g., `main` becomes `main_`). For example: `main_.inout = false` disables the in-out animation while it's running.
 
 ```berry
-# Template with conditional flags for bidirectional shutter
+# Template to illustrate the parameters and flags
 
+# Define a template to package the shutter in-out-in from 6.40
+# with flags to enable or disable in-out or out-in
 template animation shutter_bidir {
   param colors type palette
   param period default 2s
-  param inout type bool default true    # Enable in-out animation
-  param outin type bool default true    # Enable out-in animation
+  param inout type bool default true    # define to true to enable 'inout' part
+  param outin type bool default true    # define to true to enable 'outin' part
 
+  # since 'strip_length()' is a value provider, it must be assigned to a variable before being used
   set strip_len = strip_length()
+  set strip_len_2 = (strip_len + 1) / 2       # half length rounded
+
+  # Define animated value for the size of the shutter, evolving linearly in time (sawtooth from 0% to 100%)
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
 
-  # Two rotating color providers
+  # Define two rotating palettes, shifted by one color
   color col1 = color_cycle(colors=colors, period=0)
   color col2 = color_cycle(colors=colors, period=0)
-  col2.next = 1
+  col2.next = 1     # move 'col2' to the next color so it's shifte by one compared to 'col1'
 
-  # In-out shutter
+  # Shutter moving in in-out
   animation shutter_inout_animation = beacon_animation(
-    color = col2
-    back_color = col1
-    pos = 0
+    color = col2                    # Use two rotating colors
+    back_color = col1               # Use two rotating colors
+    pos = strip_len_2 - (shutter_size + 1) / 2
     beacon_size = shutter_size
-    slew_size = 0
-    priority = 5
   )
 
-  # Out-in shutter
+  # shutter moving in out-in
   animation shutter_outin_animation = beacon_animation(
     color = col1
     back_color = col2
-    pos = 0
+    pos = strip_len_2 - (strip_len - shutter_size + 1) / 2
     beacon_size = strip_len - shutter_size
-    slew_size = 0
-    priority = 5
   )
 
-  # Sequence with conditional blocks
+  # this is the overall sequence composed of two sub-sequences
+  # the first in ascending mode, the second in descending
   sequence shutter_seq repeat forever {
-    if inout {                              # Only if inout is true
-      repeat col1.palette_size times {
-        restart shutter_size
-        play shutter_inout_animation for period
-        col1.next = 1
+    if inout {                              # un only if 'ascending' is true
+      repeat col1.palette_size times {          # run the shutter animation
+        restart shutter_size                    # resync all times for this animation, to avoid temporal drift
+        play shutter_inout_animation for period    # run the animation
+        col1.next = 1                           # then move to next color for both palettes
         col2.next = 1
       }
     }
-    if outin {                              # Only if outin is true
+    if outin {                             # run only if 'descending' is true
       repeat col1.palette_size times {
         restart shutter_size
         play shutter_outin_animation for period
@@ -1253,7 +1256,7 @@ template animation shutter_bidir {
   run shutter_seq
 }
 
-# Define palette
+# define a palette of rainbow colors including white with constant brightness
 palette rainbow_with_white = [
   0xFC0000        # Red
   0xFF8000        # Orange
@@ -1265,7 +1268,6 @@ palette rainbow_with_white = [
   0xCCCCCC        # White
 ]
 
-# Use the template
 animation main = shutter_bidir(colors = rainbow_with_white, period = 1.5s)
 run main
 ```

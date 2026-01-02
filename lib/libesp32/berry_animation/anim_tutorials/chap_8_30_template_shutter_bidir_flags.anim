@@ -6,10 +6,11 @@ template animation shutter_bidir {
   param colors type palette
   param period default 2s
   param inout type bool default true    # define to true to enable 'inout' part
-  param outin type bool default true   # define to true to enable 'outin' part
+  param outin type bool default true    # define to true to enable 'outin' part
 
   # since 'strip_length()' is a value provider, it must be assigned to a variable before being used
   set strip_len = strip_length()
+  set strip_len_2 = (strip_len + 1) / 2       # half length rounded
 
   # Define animated value for the size of the shutter, evolving linearly in time (sawtooth from 0% to 100%)
   set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = period)
@@ -21,22 +22,18 @@ template animation shutter_bidir {
 
   # Shutter moving in in-out
   animation shutter_inout_animation = beacon_animation(
-    color = col2
-    back_color = col1
-    pos = 0
+    color = col2                    # Use two rotating colors
+    back_color = col1               # Use two rotating colors
+    pos = strip_len_2 - (shutter_size + 1) / 2
     beacon_size = shutter_size
-    slew_size = 0
-    priority = 5
   )
 
   # shutter moving in out-in
   animation shutter_outin_animation = beacon_animation(
     color = col1
     back_color = col2
-    pos = 0
+    pos = strip_len_2 - (strip_len - shutter_size + 1) / 2
     beacon_size = strip_len - shutter_size
-    slew_size = 0
-    priority = 5
   )
 
   # this is the overall sequence composed of two sub-sequences

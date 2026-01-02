@@ -21,8 +21,10 @@ def test_sequence_manager_basic()
   # Test initialization
   var seq_manager = animation.sequence_manager(engine)
   assert(seq_manager.engine == engine, "Engine should be set correctly")
-  assert(seq_manager.steps != nil, "Steps list should be initialized")
-  assert(seq_manager.steps.size() == 0, "Steps list should be empty initially")
+  assert(seq_manager.step_durations != nil, "Step durations list should be initialized")
+  assert(seq_manager.step_refs != nil, "Step refs list should be initialized")
+  assert(size(seq_manager.step_durations) == 0, "Step durations list should be empty initially")
+  assert(size(seq_manager.step_refs) == 0, "Step refs list should be empty initially")
   assert(seq_manager.step_index == 0, "Step index should be 0 initially")
   assert(seq_manager.is_running == false, "Sequence should not be running initially")
   
@@ -48,26 +50,22 @@ def test_sequence_manager_step_creation()
   
   # Test push_play_step
   seq_manager.push_play_step(test_anim, 5000)
-  assert(seq_manager.steps.size() == 1, "Should have one step after push_play_step")
-  var play_step = seq_manager.steps[0]
-  assert(play_step["type"] == "play", "Play step should have correct type")
-  assert(play_step["animation"] == test_anim, "Play step should have correct animation")
-  assert(play_step["duration"] == 5000, "Play step should have correct duration")
+  assert(size(seq_manager.step_durations) == 1, "Should have one step after push_play_step")
+  assert(seq_manager.step_durations[0] == 5000, "Play step should have correct duration")
+  assert(seq_manager.step_refs[0] == test_anim, "Play step should have correct animation")
   
   # Test push_wait_step
   seq_manager.push_wait_step(2000)
-  assert(seq_manager.steps.size() == 2, "Should have two steps after push_wait_step")
-  var wait_step = seq_manager.steps[1]
-  assert(wait_step["type"] == "wait", "Wait step should have correct type")
-  assert(wait_step["duration"] == 2000, "Wait step should have correct duration")
+  assert(size(seq_manager.step_durations) == 2, "Should have two steps after push_wait_step")
+  assert(seq_manager.step_durations[1] == 2000, "Wait step should have correct duration")
+  assert(seq_manager.step_refs[1] == nil, "Wait step should have nil ref")
   
   # Test push_closure_step
   var test_closure = def (engine) test_anim.opacity = 128 end
   seq_manager.push_closure_step(test_closure)
-  assert(seq_manager.steps.size() == 3, "Should have three steps after push_closure_step")
-  var assign_step = seq_manager.steps[2]
-  assert(assign_step["type"] == "closure", "Assign step should have correct type")
-  assert(assign_step["closure"] == test_closure, "Assign step should have correct closure")
+  assert(size(seq_manager.step_durations) == 3, "Should have three steps after push_closure_step")
+  assert(seq_manager.step_durations[2] == -2, "Closure step should have correct duration marker (-2)")
+  assert(seq_manager.step_refs[2] == test_closure, "Closure step should have correct closure")
   
   print("✓ Step creation tests passed")
 end
@@ -109,7 +107,7 @@ def test_sequence_manager_execution()
   seq_manager.start()
   
   assert(seq_manager.is_running == true, "Sequence should be running after start")
-  assert(seq_manager.steps.size() == 3, "Sequence should have 3 steps")
+  assert(size(seq_manager.step_durations) == 3, "Sequence should have 3 steps")
   assert(seq_manager.step_index == 0, "Should start at step 0")
   
   # Check that first animation was started
@@ -921,6 +919,189 @@ def test_sequence_manager_boolean_repeat_counts()
   print("✓ Boolean repeat count tests passed")
 end
 
+def test_sequence_manager_false_conditional_immediate_skip()
+  print("=== SequenceManager False Conditional Immediate Skip Tests ===")
+  
+  # This test verifies that when a conditional subsequence (if block) has a false condition,
+  # the parent sequence immediately advances to the next step without waiting for a tick.
+  # This prevents the "black frame" issue where no animation runs for one tick.
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create test animations
+  var color_provider1 = animation.static_color(engine)
+  color_provider1.color = 0xFFFF0000  # Red
+  var anim1 = animation.solid(engine)
+  anim1.color = color_provider1
+  anim1.priority = 0
+  anim1.duration = 0
+  anim1.loop = true
+  
+  var color_provider2 = animation.static_color(engine)
+  color_provider2.color = 0xFF00FF00  # Green
+  var anim2 = animation.solid(engine)
+  anim2.color = color_provider2
+  anim2.priority = 0
+  anim2.duration = 0
+  anim2.loop = true
+  
+  # Create a parent sequence with:
+  # 1. A conditional subsequence that is FALSE (should skip immediately)
+  # 2. A play step for anim2
+  
+  # Create the false conditional subsequence (simulating "if false { ... }")
+  var false_condition = def (engine) return false end
+  var false_subseq = animation.sequence_manager(engine, false_condition)
+  false_subseq.push_play_step(anim1, 1000)  # This should never execute
+  
+  # Create the parent sequence
+  var parent_seq = animation.sequence_manager(engine, 1)  # Run once
+  parent_seq.push_repeat_subsequence(false_subseq)  # This should skip immediately
+  parent_seq.push_play_step(anim2, 500)  # This should start immediately after the skip
+  
+  # Start the parent sequence
+  tasmota.set_millis(200000)
+  engine.add(parent_seq)
+  engine.run()
+  engine.on_tick(200000)
+  
+  # At this point, the false subsequence should have been skipped immediately,
+  # and anim2 should already be playing (step_index should be 1)
+  assert(parent_seq.is_running == true, "Parent sequence should be running")
+  assert(parent_seq.step_index == 1, f"Parent should have advanced past false conditional to step 1, got {parent_seq.step_index}")
+  
+  # Verify anim2 is in the engine (not anim1)
+  var animations = engine.get_animations()
+  var anim2_found = false
+  var anim1_found = false
+  for anim : animations
+    if anim == anim2
+      anim2_found = true
+    end
+    if anim == anim1
+      anim1_found = true
+    end
+  end
+  assert(anim2_found == true, "anim2 should be playing after false conditional skip")
+  assert(anim1_found == false, "anim1 should NOT be playing (false conditional was skipped)")
+  
+  # Test 2: Multiple consecutive false conditionals should all skip immediately
+  # Create fresh engine and animations
+  var strip2 = global.Leds(30)
+  var engine2 = animation.create_engine(strip2)
+  
+  var color_provider3 = animation.static_color(engine2)
+  color_provider3.color = 0xFFFF0000  # Red
+  var anim3 = animation.solid(engine2)
+  anim3.color = color_provider3
+  anim3.priority = 0
+  anim3.duration = 0
+  anim3.loop = true
+  
+  var color_provider4 = animation.static_color(engine2)
+  color_provider4.color = 0xFF00FF00  # Green
+  var anim4 = animation.solid(engine2)
+  anim4.color = color_provider4
+  anim4.priority = 0
+  anim4.duration = 0
+  anim4.loop = true
+  
+  var false_condition2 = def (engine) return false end
+  
+  var false_subseq2 = animation.sequence_manager(engine2, false_condition2)
+  false_subseq2.push_play_step(anim3, 1000)
+  
+  var false_subseq3 = animation.sequence_manager(engine2, false_condition2)
+  false_subseq3.push_play_step(anim3, 1000)
+  
+  var parent_seq2 = animation.sequence_manager(engine2, 1)
+  parent_seq2.push_repeat_subsequence(false_subseq2)  # Skip
+  parent_seq2.push_repeat_subsequence(false_subseq3)  # Skip
+  parent_seq2.push_play_step(anim4, 500)  # Should start immediately
+  
+  engine2.add(parent_seq2)
+  
+  tasmota.set_millis(201000)
+  engine2.run()
+  engine2.on_tick(201000)
+  
+  # Should have skipped both false conditionals and be at step 2
+  assert(parent_seq2.is_running == true, "Parent sequence 2 should be running")
+  assert(parent_seq2.step_index == 2, f"Parent should have advanced past both false conditionals to step 2, got {parent_seq2.step_index}")
+  
+  print("✓ False conditional immediate skip tests passed")
+end
+
+def test_sequence_manager_all_false_conditionals_no_infinite_loop()
+  print("=== SequenceManager All False Conditionals No Infinite Loop Tests ===")
+  
+  # This test verifies that when ALL conditional subsequences in a repeat-forever
+  # sequence are false, the sequence doesn't go into an infinite loop.
+  # Instead, it should yield control back after one pass through all steps.
+  
+  # Create strip and engine
+  var strip = global.Leds(30)
+  var engine = animation.create_engine(strip)
+  
+  # Create test animation (should never be used)
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  
+  # Track how many times closures are executed
+  var closure_count = 0
+  
+  # Create two false conditional subsequences (simulating "if inout" and "if outin" both false)
+  var false_condition = def (engine) return false end
+  
+  var false_subseq1 = animation.sequence_manager(engine, false_condition)
+  false_subseq1.push_play_step(test_anim, 1000)
+  
+  var false_subseq2 = animation.sequence_manager(engine, false_condition)
+  false_subseq2.push_play_step(test_anim, 1000)
+  
+  # Create parent sequence that repeats forever with both false conditionals
+  var parent_seq = animation.sequence_manager(engine, -1)  # Repeat forever
+  parent_seq.push_closure_step(def (engine) closure_count += 1 end)  # Track iterations
+  parent_seq.push_repeat_subsequence(false_subseq1)  # if inout (false)
+  parent_seq.push_repeat_subsequence(false_subseq2)  # if outin (false)
+  
+  # Start the sequence
+  tasmota.set_millis(300000)
+  engine.add(parent_seq)
+  engine.run()
+  engine.on_tick(300000)
+  
+  # The sequence should be running but not in an infinite loop
+  assert(parent_seq.is_running == true, "Parent sequence should still be running")
+  
+  # The closure should have been executed a limited number of times (not infinite)
+  # With skip_budget, it should execute at most a few times before yielding
+  assert(closure_count < 100, f"Closure should not execute infinitely, got {closure_count}")
+  
+  # Simulate a few update cycles - should not hang
+  var update_count = 0
+  var max_updates = 10
+  while update_count < max_updates
+    tasmota.set_millis(300000 + update_count * 100)
+    engine.on_tick(300000 + update_count * 100)
+    parent_seq.update(300000 + update_count * 100)
+    update_count += 1
+  end
+  
+  # Should still be running (repeat forever) but not have executed infinitely
+  assert(parent_seq.is_running == true, "Parent sequence should still be running after updates")
+  assert(closure_count < 1000, f"Closure count should be bounded, got {closure_count}")
+  
+  print("✓ All false conditionals no infinite loop tests passed")
+end
+
 # Run all tests
 def run_all_sequence_manager_tests()
   print("Starting SequenceManager Unit Tests...")
@@ -943,6 +1124,8 @@ def run_all_sequence_manager_tests()
   test_sequence_manager_zero_iterations()
   test_sequence_manager_zero_palette_size()
   test_sequence_manager_boolean_repeat_counts()
+  test_sequence_manager_false_conditional_immediate_skip()
+  test_sequence_manager_all_false_conditionals_no_infinite_loop()
   
   print("\n🎉 All SequenceManager tests passed!")
   return true
@@ -970,5 +1153,7 @@ return {
   "test_sequence_manager_complex_parametric_scenario": test_sequence_manager_complex_parametric_scenario,
   "test_sequence_manager_zero_iterations": test_sequence_manager_zero_iterations,
   "test_sequence_manager_zero_palette_size": test_sequence_manager_zero_palette_size,
-  "test_sequence_manager_boolean_repeat_counts": test_sequence_manager_boolean_repeat_counts
+  "test_sequence_manager_boolean_repeat_counts": test_sequence_manager_boolean_repeat_counts,
+  "test_sequence_manager_false_conditional_immediate_skip": test_sequence_manager_false_conditional_immediate_skip,
+  "test_sequence_manager_all_false_conditionals_no_infinite_loop": test_sequence_manager_all_false_conditionals_no_infinite_loop
 }
