@@ -30,7 +30,6 @@ ParameterizedObject (base class with parameter management and playable interface
 │   ├── CometAnimation (moving comet with tail)
 │   ├── FireAnimation (realistic fire effect)
 │   ├── TwinkleAnimation (twinkling stars effect)
-│   ├── NoiseAnimation (Perlin noise patterns)
 │   ├── WaveAnimation (wave motion effects)
 │   └── RichPaletteAnimation (smooth palette transitions)
 ├── SequenceManager (orchestrates animation sequences)
@@ -654,76 +653,6 @@ audio_meter.level = audio_level
 
 **Factory**: `animation.gradient_meter_animation(engine)`
 
-### NoiseAnimation
-
-Creates pseudo-random noise patterns with configurable scale, speed, and fractal complexity. Perfect for organic, natural-looking effects like clouds, fire textures, or abstract patterns. Inherits from `Animation`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `color` | instance | nil | - | Color provider for noise mapping (nil = rainbow) |
-| `scale` | int | 50 | 1-255 | Noise scale/frequency (lower = larger patterns) |
-| `speed` | int | 30 | 0-255 | Animation speed (0 = static pattern) |
-| `octaves` | int | 1 | 1-4 | Number of noise octaves for fractal complexity |
-| `persistence` | int | 128 | 0-255 | How much each octave contributes to final pattern |
-| `seed` | int | 12345 | 0-65535 | Random seed for reproducible patterns |
-| *(inherits all Animation parameters)* | | | | |
-
-#### Noise Characteristics
-
-**Scale Effects:**
-- **Low scale (10-30)**: Large, flowing patterns
-- **Medium scale (40-80)**: Balanced detail and flow  
-- **High scale (100-200)**: Fine, detailed textures
-
-**Octave Effects:**
-- **1 octave**: Smooth, simple patterns
-- **2 octaves**: Added medium-frequency detail
-- **3+ octaves**: Complex, natural-looking textures
-
-**Speed Effects:**
-- **Static (0)**: Fixed pattern for backgrounds
-- **Slow (10-40)**: Gentle, organic movement
-- **Fast (80-200)**: Dynamic, energetic patterns
-
-#### Usage Examples
-
-```berry
-# Rainbow noise with medium detail
-animation rainbow_noise = noise_animation(
-  scale=60,
-  speed=40,
-  octaves=1
-)
-
-# Blue fire texture with fractal detail
-color blue_fire = 0xFF0066FF
-animation blue_texture = noise_animation(
-  color=blue_fire,
-  scale=120,
-  speed=60,
-  octaves=3,
-  persistence=100
-)
-
-# Static cloud pattern
-animation cloud_pattern = noise_animation(
-  color=white,
-  scale=30,
-  speed=0,
-  octaves=2
-)
-```
-
-#### Common Use Cases
-
-- **Ambient Lighting**: Slow, low-scale noise for background ambiance
-- **Fire Effects**: Orange/red colors with medium scale and speed
-- **Water Effects**: Blue/cyan colors with flowing movement
-- **Cloud Simulation**: White/gray colors with large-scale patterns
-- **Abstract Art**: Rainbow colors with high detail and multiple octaves
-
-
-
 ### PulseAnimation
 
 Creates a pulsing effect oscillating between min and max brightness. Inherits from `Animation`.
@@ -1230,7 +1159,6 @@ run gradient_wave
 - Each animation uses approximately 4 bytes per pixel for color storage
 - Fire animation includes additional flicker calculations
 - Gradient animation requires color interpolation calculations
-- Noise animation includes pseudo-random pattern generation
 - Consider strip length impact on transformation calculations
 
 ## Parameter Constraints

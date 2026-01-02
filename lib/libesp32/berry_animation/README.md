@@ -167,7 +167,6 @@ Animation|Description
 `palette_gradient_animation`|Gradient patterns with palette colors
 `palette_meter_animation`|Meter/bar patterns
 `gradient_meter_animation`|VU meter with gradient and peak hold
-`noise_animation`|Perlin noise patterns
 `wave_animation`|Wave motion effects
 
 ## Documentation

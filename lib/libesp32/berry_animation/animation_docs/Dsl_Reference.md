@@ -1441,7 +1441,6 @@ Animation classes create visual effects on LED strips:
 | `fire_animation` | Realistic fire simulation |
 | `twinkle_animation` | Twinkling stars effect |
 | `gradient_animation` | Color gradient effects |
-| `noise_animation` | Perlin noise-based patterns |
 | `wave_animation` | Wave propagation effects |
 | `rich_palette_animation` | Palette-based color cycling |
 | `palette_wave_animation` | Wave patterns using palettes |
