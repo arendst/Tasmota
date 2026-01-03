@@ -42,7 +42,7 @@ sun_glow.pos = smooth(min_value=5, max_value=55, duration=30s)  # Follow sun
 sun_glow.opacity = smooth(min_value=0, max_value=150, duration=30s)  # Dimmer glow
 
 # Add twinkling stars during night phases
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFFF  # White stars
   density=6       # density (star count)
   twinkle_speed=1s # twinkle speed (slow twinkle)

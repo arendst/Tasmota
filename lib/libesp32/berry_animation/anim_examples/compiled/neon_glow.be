@@ -47,7 +47,7 @@ neon_surge_.opacity = (def (engine)
 end)(engine)  # Quick bright surges
 neon_surge_.priority = 20
 # Add neon tube segments with gaps
-var segment_pattern_ = animation.rich_palette(engine)
+var segment_pattern_ = animation.rich_palette_color(engine)
 segment_pattern_.colors = neon_colors_
 segment_pattern_.period = 4000
 segment_pattern_.transition_type = animation.LINEAR
@@ -71,7 +71,7 @@ segment3_.beacon_size = 12  # segment length
 segment3_.slew_size = 1  # sharp edges
 segment3_.priority = 10
 # Add electrical arcing between segments
-var arc_sparkles_ = animation.twinkle_animation(engine)
+var arc_sparkles_ = animation.twinkle(engine)
 arc_sparkles_.color = 0xFFAAAAFF  # Electric blue
 arc_sparkles_.density = 4  # density (few arcs)
 arc_sparkles_.twinkle_speed = 100  # twinkle speed (quick arcs)
@@ -112,7 +112,7 @@ neon_surge.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cycl
 neon_surge.priority = 20
 
 # Add neon tube segments with gaps
-color segment_pattern = rich_palette(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
+color segment_pattern = rich_palette_color(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
 animation segment1 = beacon_animation(
   color=segment_pattern # color source
   pos=6                 # position
@@ -138,7 +138,7 @@ animation segment3 = beacon_animation(
 segment3.priority = 10
 
 # Add electrical arcing between segments
-animation arc_sparkles = twinkle_animation(
+animation arc_sparkles = twinkle(
   color=0xAAAAFF  # Electric blue
   density=4       # density (few arcs)
   twinkle_speed=100ms # twinkle speed (quick arcs)

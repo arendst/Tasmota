@@ -28,7 +28,7 @@ var breathe_palette_ = bytes(
   "FF800080"  # Purple
 )
 # Create a rich palette color provider
-var palette_pattern_ = animation.rich_palette(engine)
+var palette_pattern_ = animation.rich_palette_color(engine)
 palette_pattern_.colors = breathe_palette_  # palette
 palette_pattern_.period = 15000  # cycle period (defaults: smooth transition, 255 brightness)
 # Create breathing animation using the palette
@@ -74,7 +74,7 @@ palette breathe_palette = [
 ]
 
 # Create a rich palette color provider
-color palette_pattern = rich_palette(
+color palette_pattern = rich_palette_color(
   colors=breathe_palette # palette
   period=15s        # cycle period (defaults: smooth transition, 255 brightness)
 )

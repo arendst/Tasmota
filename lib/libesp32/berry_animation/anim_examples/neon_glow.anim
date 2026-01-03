@@ -23,7 +23,7 @@ neon_surge.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cycl
 neon_surge.priority = 20
 
 # Add neon tube segments with gaps
-color segment_pattern = rich_palette(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
+color segment_pattern = rich_palette_color(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
 animation segment1 = beacon_animation(
   color=segment_pattern # color source
   pos=6                 # position
@@ -49,7 +49,7 @@ animation segment3 = beacon_animation(
 segment3.priority = 10
 
 # Add electrical arcing between segments
-animation arc_sparkles = twinkle_animation(
+animation arc_sparkles = twinkle(
   color=0xAAAAFF  # Electric blue
   density=4       # density (few arcs)
   twinkle_speed=100ms # twinkle speed (quick arcs)

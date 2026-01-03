@@ -29,7 +29,7 @@ ParameterizedObject (base class with parameter management and playable interface
 │   │   └── GradientMeterAnimation (VU meter with gradient colors and peak hold)
 │   ├── CometAnimation (moving comet with tail)
 │   ├── FireAnimation (realistic fire effect)
-│   ├── TwinkleAnimation (twinkling stars effect)
+│   ├── twinkle (twinkling stars effect)
 │   ├── WaveAnimation (wave motion effects)
 │   └── RichPaletteAnimation (smooth palette transitions)
 ├── SequenceManager (orchestrates animation sequences)
@@ -42,7 +42,7 @@ ParameterizedObject (base class with parameter management and playable interface
     └── ColorProvider (dynamic color generation)
         ├── StaticColorProvider (solid color)
         ├── ColorCycleColorProvider (cycles through palette)
-        ├── RichPaletteColorProvider (smooth palette transitions)
+        ├── rich_palette_color (smooth palette transitions)
         ├── BreatheColorProvider (breathing color effect)
         └── CompositeColorProvider (blends multiple colors)
 ```
@@ -418,7 +418,7 @@ color mixed_cycle = color_cycle(
 )
 ```
 
-### RichPaletteColorProvider
+### rich_palette_color
 
 Generates colors from predefined palettes with smooth transitions and professional color schemes. Inherits from `ColorProvider`.
 
@@ -441,7 +441,7 @@ Generates colors from predefined palettes with smooth transitions and profession
 
 ```berry
 # Rainbow palette with smooth ease-in/ease-out transitions
-color rainbow_colors = rich_palette(
+color rainbow_colors = rich_palette_color(
   colors=PALETTE_RAINBOW,
   period=5s,
   transition_type=SINE,
@@ -449,7 +449,7 @@ color rainbow_colors = rich_palette(
 )
 
 # Fire effect with linear (constant speed) transitions
-color fire_colors = rich_palette(
+color fire_colors = rich_palette_color(
   colors=PALETTE_FIRE,
   period=3s,
   transition_type=LINEAR,
@@ -634,13 +634,13 @@ filled gradient area
 
 ```berry
 # Simple meter with rainbow gradient
-color rainbow = rich_palette()
+color rainbow = rich_palette_color()
 animation meter = gradient_meter_animation()
 meter.color_source = rainbow
 meter.level = 128
 
 # Meter with peak hold (1 second)
-color fire_colors = rich_palette(colors=PALETTE_FIRE)
+color fire_colors = rich_palette_color(colors=PALETTE_FIRE)
 animation vu_meter = gradient_meter_animation(peak_hold=1000)
 vu_meter.color_source = fire_colors
 
@@ -966,12 +966,12 @@ Creates smooth color transitions using rich palette data with direct parameter a
 
 **Special Features**: 
 - Direct parameter access (set `anim.colors` instead of `anim.color.colors`)
-- Parameters are automatically forwarded to internal `RichPaletteColorProvider`
+- Parameters are automatically forwarded to internal `rich_palette_color`
 - Access to specialized methods via `anim.color_provider.method_name()`
 
 **Factory**: `animation.rich_palette_animation(engine)`
 
-### TwinkleAnimation
+### twinkle
 
 Creates a twinkling stars effect with random lights appearing and fading. Inherits from `Animation`.
 
@@ -985,7 +985,7 @@ Creates a twinkling stars effect with random lights appearing and fading. Inheri
 | `max_brightness` | int | 255 | 0-255 | Maximum twinkle brightness |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factories**: `animation.twinkle_animation(engine)`, `animation.twinkle_classic(engine)`, `animation.twinkle_solid(engine)`, `animation.twinkle_rainbow(engine)`, `animation.twinkle_gentle(engine)`, `animation.twinkle_intense(engine)`
+**Factories**: `animation.twinkle(engine)`
 
 ### WaveAnimation
 

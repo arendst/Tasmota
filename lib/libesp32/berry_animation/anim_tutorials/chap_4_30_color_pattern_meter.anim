@@ -13,7 +13,7 @@ palette vue_meter_palette = [
 ]
 
 # Define a color palette pattern for 'vue_meter_palette'
-color rainbow_rich_color = rich_palette(colors=vue_meter_palette, period=0, transition_type=LINEAR)
+color rainbow_rich_color = rich_palette_color(colors=vue_meter_palette, period=0, transition_type=LINEAR)
 
 # Define a sawtooth value from 0% to 100%
 set level = sawtooth(min_value = 0%, max_value=100%, duration = 2s)

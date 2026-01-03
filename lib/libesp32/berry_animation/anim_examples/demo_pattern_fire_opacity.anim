@@ -9,7 +9,7 @@ palette fire_colors = [
 ]
 
 set strip_len = strip_length()
-color fire_color = rich_palette(colors=fire_colors)
+color fire_color = rich_palette_color(colors=fire_colors)
 
 animation background = solid(color=0x000088, priority=20)
 run background

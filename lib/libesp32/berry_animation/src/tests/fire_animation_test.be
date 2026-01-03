@@ -110,7 +110,7 @@ fire.color = 0xFFFF0000  # Red
 print("Set to solid red color")
 
 # Set back to fire palette
-var fire_palette = animation.rich_palette(engine)
+var fire_palette = animation.rich_palette_color(engine)
 fire_palette.colors = animation.PALETTE_FIRE
 fire_palette.period = 5000
 fire_palette.transition_type = 1  # Use sine transition (smooth)

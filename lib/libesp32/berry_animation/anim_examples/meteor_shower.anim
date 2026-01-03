@@ -37,7 +37,7 @@ animation meteor4 = comet_animation(
 meteor4.priority = 8
 
 # Add distant stars
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xCCCCCC  # Dim white
   density=12      # density (many stars)
   twinkle_speed=2s # twinkle speed (slow twinkle)
@@ -45,7 +45,7 @@ animation stars = twinkle_animation(
 stars.priority = 5
 
 # Add occasional bright flash (meteor explosion)
-animation meteor_flash = twinkle_animation(
+animation meteor_flash = twinkle(
   color=0xFFFFFF  # Bright white
   density=1       # density (single flash)
   twinkle_speed=100ms # twinkle speed (very quick)

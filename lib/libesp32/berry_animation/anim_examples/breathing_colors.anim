@@ -21,7 +21,7 @@ palette breathe_palette = [
 ]
 
 # Create a rich palette color provider
-color palette_pattern = rich_palette(
+color palette_pattern = rich_palette_color(
   colors=breathe_palette # palette
   period=15s        # cycle period (defaults: smooth transition, 255 brightness)
 )

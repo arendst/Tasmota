@@ -33,7 +33,7 @@ afterglow.opacity = square(min_value=0, max_value=80, duration=200ms, duty_cycle
 afterglow.priority = 10
 
 # Distant thunder (dim flashes)
-animation distant_flash = twinkle_animation(
+animation distant_flash = twinkle(
   color=0x666699  # Dim blue-white
   density=4       # density (few flashes)
   twinkle_speed=300ms # twinkle speed (medium duration)

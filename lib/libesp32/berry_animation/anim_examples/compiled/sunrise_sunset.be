@@ -71,7 +71,7 @@ sun_glow_.opacity = (def (engine)
   return provider
 end)(engine)  # Dimmer glow
 # Add twinkling stars during night phases
-var stars_ = animation.twinkle_animation(engine)
+var stars_ = animation.twinkle(engine)
 stars_.color = 0xFFFFFFFF  # White stars
 stars_.density = 6  # density (star count)
 stars_.twinkle_speed = 1000  # twinkle speed (slow twinkle)
@@ -136,7 +136,7 @@ sun_glow.pos = smooth(min_value=5, max_value=55, duration=30s)  # Follow sun
 sun_glow.opacity = smooth(min_value=0, max_value=150, duration=30s)  # Dimmer glow
 
 # Add twinkling stars during night phases
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFFF  # White stars
   density=6       # density (star count)
   twinkle_speed=1s # twinkle speed (slow twinkle)

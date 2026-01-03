@@ -5,7 +5,7 @@
 #@ solidify:animation_palettes,weak
 
 # Define common palette constants (in VRGB format: Value, Red, Green, Blue)
-# These palettes are compatible with the RichPaletteColorProvider
+# These palettes are compatible with the rich_palette_color
 
 # Standard rainbow palette (7 colors with roughly constant brightness)
 var PALETTE_RAINBOW = bytes(

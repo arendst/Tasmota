@@ -28,7 +28,7 @@ Create smooth color transitions:
 
 ```berry
 # Use predefined rainbow palette
-animation rainbow_cycle = rich_palette(
+animation rainbow_cycle = rich_palette_color(
   colors=PALETTE_RAINBOW
   period=5s
   transition_type=1
@@ -52,7 +52,7 @@ palette sunset = [
 ]
 
 # Create palette animation
-animation sunset_glow = rich_palette(
+animation sunset_glow = rich_palette_color(
   colors=sunset
   period=8s
   transition_type=1
@@ -124,7 +124,7 @@ animation comet = comet_animation(
 )
 
 # Twinkling effect
-animation sparkles = twinkle_animation(
+animation sparkles = twinkle(
   color=white
   count=8
   period=800ms
@@ -137,7 +137,7 @@ run breathing
 
 ### Fire Effect
 ```berry
-animation fire = rich_palette(
+animation fire = rich_palette_color(
   colors=PALETTE_FIRE
   period=2s
   transition_type=1
@@ -226,7 +226,7 @@ For complex logic, create custom functions in Berry:
 ```berry
 # Define custom function - engine must be first parameter
 def my_twinkle(engine, color, count, period)
-  var anim = animation.twinkle_animation(engine)
+  var anim = animation.twinkle(engine)
   anim.color = color
   anim.count = count
   anim.period = period

@@ -5,8 +5,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:TwinkleAnimation,weak
-class TwinkleAnimation : animation.animation
+#@ solidify:twinkle,weak
+class twinkle : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Non-parameter instance variables only
@@ -207,97 +207,6 @@ class TwinkleAnimation : animation.animation
     
     return modified
   end
-  
-  # NO setter/getter methods - use direct assignment instead:
-  # obj.color = value
-  # obj.density = value
-  # obj.twinkle_speed = value
-  # obj.fade_speed = value
-  # obj.min_brightness = value
-  # obj.max_brightness = value
 end
 
-# Factory function to create a classic white twinkle animation
-#
-# @param engine: AnimationEngine - The animation engine
-# @return TwinkleAnimation - A new twinkle animation instance
-def twinkle_classic(engine)
-  var anim = animation.twinkle_animation(engine)
-  anim.color = 0xFFFFFFFF
-  anim.density = 150
-  anim.twinkle_speed = 6
-  anim.fade_speed = 180
-  anim.min_brightness = 32
-  anim.max_brightness = 255
-  return anim
-end
-
-# Factory function to create a colored twinkle animation
-#
-# @param engine: AnimationEngine - The animation engine
-# @return TwinkleAnimation - A new twinkle animation instance
-def twinkle_solid(engine)
-  var anim = animation.twinkle_animation(engine)
-  anim.color = 0xFF0080FF  # Blue
-  anim.density = 100
-  anim.twinkle_speed = 6
-  anim.fade_speed = 180
-  anim.min_brightness = 32
-  anim.max_brightness = 255
-  return anim
-end
-
-# Factory function to create a rainbow twinkle animation
-#
-# @param engine: AnimationEngine - The animation engine
-# @return TwinkleAnimation - A new twinkle animation instance
-def twinkle_rainbow(engine)
-  var anim = animation.twinkle_animation(engine)
-  # TODO: Set up rainbow color provider when available
-  anim.color = 0xFFFFFFFF  # White for now
-  anim.density = 120
-  anim.twinkle_speed = 6
-  anim.fade_speed = 180
-  anim.min_brightness = 32
-  anim.max_brightness = 255
-  return anim
-end
-
-# Factory function to create a gentle twinkle animation (low density, slow fade)
-#
-# @param engine: AnimationEngine - The animation engine
-# @return TwinkleAnimation - A new twinkle animation instance
-def twinkle_gentle(engine)
-  var anim = animation.twinkle_animation(engine)
-  anim.color = 0xFFFFD700  # Gold
-  anim.density = 64
-  anim.twinkle_speed = 3
-  anim.fade_speed = 120
-  anim.min_brightness = 16
-  anim.max_brightness = 180
-  return anim
-end
-
-# Factory function to create an intense twinkle animation (high density, fast fade)
-#
-# @param engine: AnimationEngine - The animation engine
-# @return TwinkleAnimation - A new twinkle animation instance
-def twinkle_intense(engine)
-  var anim = animation.twinkle_animation(engine)
-  anim.color = 0xFFFF0000  # Red
-  anim.density = 200
-  anim.twinkle_speed = 12
-  anim.fade_speed = 220
-  anim.min_brightness = 64
-  anim.max_brightness = 255
-  return anim
-end
-
-return {
-  'twinkle_animation': TwinkleAnimation,
-  'twinkle_classic': twinkle_classic,
-  'twinkle_solid': twinkle_solid,
-  'twinkle_rainbow': twinkle_rainbow,
-  'twinkle_gentle': twinkle_gentle,
-  'twinkle_intense': twinkle_intense
-}
+return { 'twinkle': twinkle }

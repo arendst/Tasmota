@@ -38,13 +38,13 @@ meteor4_.tail_length = 14  # long trail
 meteor4_.speed = 2500  # slower speed
 meteor4_.priority = 8
 # Add distant stars
-var stars_ = animation.twinkle_animation(engine)
+var stars_ = animation.twinkle(engine)
 stars_.color = 0xFFCCCCCC  # Dim white
 stars_.density = 12  # density (many stars)
 stars_.twinkle_speed = 2000  # twinkle speed (slow twinkle)
 stars_.priority = 5
 # Add occasional bright flash (meteor explosion)
-var meteor_flash_ = animation.twinkle_animation(engine)
+var meteor_flash_ = animation.twinkle(engine)
 meteor_flash_.color = 0xFFFFFFFF  # Bright white
 meteor_flash_.density = 1  # density (single flash)
 meteor_flash_.twinkle_speed = 100  # twinkle speed (very quick)
@@ -100,7 +100,7 @@ animation meteor4 = comet_animation(
 meteor4.priority = 8
 
 # Add distant stars
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xCCCCCC  # Dim white
   density=12      # density (many stars)
   twinkle_speed=2s # twinkle speed (slow twinkle)
@@ -108,7 +108,7 @@ animation stars = twinkle_animation(
 stars.priority = 5
 
 # Add occasional bright flash (meteor explosion)
-animation meteor_flash = twinkle_animation(
+animation meteor_flash = twinkle(
   color=0xFFFFFF  # Bright white
   density=1       # density (single flash)
   twinkle_speed=100ms # twinkle speed (very quick)

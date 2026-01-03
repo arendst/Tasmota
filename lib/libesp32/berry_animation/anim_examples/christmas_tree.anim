@@ -17,8 +17,8 @@ palette ornament_colors = [
 ]
 
 # Colorful ornaments as twinkling lights
-color ornament_pattern = rich_palette(colors=ornament_colors, period=3s, transition_type=LINEAR, brightness=255)
-animation ornaments = twinkle_animation(
+color ornament_pattern = rich_palette_color(colors=ornament_colors, period=3s, transition_type=LINEAR, brightness=255)
+animation ornaments = twinkle(
   color=ornament_pattern # color source
   density=15             # density (many ornaments)
   twinkle_speed=800ms    # twinkle speed (slow twinkle)
@@ -36,7 +36,7 @@ tree_star.priority = 20
 tree_star.opacity = smooth(min_value=200, max_value=255, duration=2s)  # Gentle pulsing
 
 # Add some white sparkles for snow/magic
-animation snow_sparkles = twinkle_animation(
+animation snow_sparkles = twinkle(
   color=0xFFFFFF  # White snow
   density=8       # density (sparkle count)
   twinkle_speed=400ms # twinkle speed (quick sparkles)
@@ -44,7 +44,7 @@ animation snow_sparkles = twinkle_animation(
 snow_sparkles.priority = 15
 
 # Garland effect - moving colored lights
-color garland_pattern = rich_palette(colors=ornament_colors, period=2s, transition_type=LINEAR, brightness=200)
+color garland_pattern = rich_palette_color(colors=ornament_colors, period=2s, transition_type=LINEAR, brightness=200)
 animation garland = comet_animation(
   color=garland_pattern # color source
   tail_length=6         # garland length (tail length)

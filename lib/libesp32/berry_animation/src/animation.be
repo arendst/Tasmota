@@ -139,8 +139,8 @@ import "animations/comet" as comet_animation
 register_to_animation(comet_animation)
 import "animations/fire" as fire_animation
 register_to_animation(fire_animation)
-import "animations/twinkle" as twinkle_animation
-register_to_animation(twinkle_animation)
+import "animations/twinkle" as twinkle
+register_to_animation(twinkle)
 import "animations/gradient" as gradient_animation
 register_to_animation(gradient_animation)
 import "animations/palette_meter" as palette_meter_animation

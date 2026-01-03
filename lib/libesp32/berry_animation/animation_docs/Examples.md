@@ -338,7 +338,7 @@ base_layer.opacity = breathing
 
 # Accent layer - twinkling stars
 color star_white = 0xFFFFFF
-animation stars = twinkle_animation(color=star_white, count=5, period=800ms)
+animation stars = twinkle(color=star_white, count=5, period=800ms)
 stars.opacity = 150
 
 sequence layered_effect {

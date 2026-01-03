@@ -88,7 +88,7 @@ def test_gradient_meter_rendering()
   var meter = animation.palette_meter_animation(engine)
 
   # Use a color provider (required for PaletteGradientAnimation)
-  var color_source = animation.rich_palette(engine)
+  var color_source = animation.rich_palette_color(engine)
   meter.color_source = color_source
 
   var frame = animation.frame_buffer(10, 1)
@@ -128,7 +128,7 @@ def test_gradient_meter_peak_indicator()
   var meter = animation.palette_meter_animation(engine)
 
   # Use a color provider
-  var color_source = animation.rich_palette(engine)
+  var color_source = animation.rich_palette_color(engine)
   meter.color_source = color_source
   meter.peak_hold = 2000
 

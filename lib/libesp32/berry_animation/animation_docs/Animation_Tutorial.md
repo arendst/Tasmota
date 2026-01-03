@@ -39,7 +39,7 @@ Before diving into code, let's understand the building blocks:
 
 | Concept | What It Does | Example |
 |---------|--------------|---------|
-| **Animation** | A visual effect on the LED strip | `solid`, `twinkle_animation`, `beacon_animation` |
+| **Animation** | A visual effect on the LED strip | `solid`, `twinkle`, `beacon_animation` |
 | **Color** | Either a static value or a dynamic provider that changes over time | `red`, `0xFF0000`, `color_cycle(...)` |
 | **Palette** | A collection of colors for gradients or cycling | `PALETTE_RAINBOW`, custom arrays |
 | **Value Provider** | A number that changes over time (oscillates) | `sine_osc`, `triangle`, `sawtooth` |
@@ -112,12 +112,12 @@ The DSL also provides `transparent` as a predefined color, equivalent to `0x0000
 
 <a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_1_30_twinkle" target="_blank"><img src="../../_media/berry_animation/chap_1_30.png" alt="Twinkle Stars"></a>
 
-Beyond `solid`, the DSL includes many ready-to-use animation types. Each creates a different visual effect. Let's try `twinkle_animation`, which creates a twinkling stars effect.
+Beyond `solid`, the DSL includes many ready-to-use animation types. Each creates a different visual effect. Let's try `twinkle`, which creates a twinkling stars effect.
 
 ```berry
 # Twinkle stars - using predefined animations
 
-animation stars = twinkle_animation()
+animation stars = twinkle()
 run stars
 ```
 
@@ -133,7 +133,7 @@ Most animations accept **parameters** to customize their behavior. Parameters us
 # Twinkle stars with parameters - using animation parameters
 
 # Note: when parameters are in separate lines, you don't need a comma ','
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFAA        # Light yellow sparkles
   density=8             # density (moderate sparkles)
   twinkle_speed=100ms   # twinkle speed
@@ -166,7 +166,7 @@ animation background = solid(color=space_blue)
 run background
 
 # Twinkle stars on top
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFAA        # Light yellow sparkles
   density=8             # density (moderate sparkles)
   twinkle_speed=100ms   # twinkle speed
@@ -259,7 +259,7 @@ The `palette` keyword creates a named color collection. Colors are listed in ord
 
 ## Chapter 3: Smooth Color Transitions
 
-Chapter 2 showed `color_cycle`, which steps discretely between colors. This chapter introduces `rich_palette`, which creates **smooth, interpolated transitions** - the color gradually morphs from one to the next.
+Chapter 2 showed `color_cycle`, which steps discretely between colors. This chapter introduces `rich_palette_color`, which creates **smooth, interpolated transitions** - the color gradually morphs from one to the next.
 
 ### 3.1 Rich Palette Animation
 
@@ -283,7 +283,7 @@ With no parameters, it uses sensible defaults. The `transition_type=SINE` create
 
 <a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_3_20_color_transition_palette" target="_blank"><img src="../../_media/berry_animation/chap_3_20.png" alt="Rich Palette Custom"></a>
 
-For more control, use `rich_palette` as a **color provider** (not an animation). This lets you use smooth color transitions with any animation type.
+For more control, use `rich_palette_color` as a **color provider** (not an animation). This lets you use smooth color transitions with any animation type.
 
 ```berry
 # Smooth cycling through rainbow colors with custom palette
@@ -301,7 +301,7 @@ palette rainbow_with_white = [
 ]
 
 # Define a color that cycles over time with smooth transitions
-color rainbow_color_rollover = rich_palette(period=10s)
+color rainbow_color_rollover = rich_palette_color(period=10s)
 
 # Use the dynamic color in a solid animation
 animation back = solid(color=rainbow_color_rollover)
@@ -333,7 +333,7 @@ A gradient maps colors to positions along the strip. The `palette_gradient_anima
 # Rainbow pattern across the strip
 
 # Define a palette with period=0 (no time-based change, only spatial)
-color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
+color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
 # Create a gradient across the whole strip
 animation back_pattern = palette_gradient_animation(color_source = rainbow_rich_color)
@@ -351,7 +351,7 @@ By default, the gradient spans the entire strip once. Use `spatial_period` to co
 ```berry
 # Rainbow gradient with 2 repetitions across the strip
 
-color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
+color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
 # Get the strip length as a variable
 set strip_len = strip_length()
@@ -378,7 +378,7 @@ Here's where things get interesting: you can make **any parameter dynamic** by u
 ```berry
 # Rainbow gradient with oscillating spatial period
 
-color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
+color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
 set strip_len = strip_length()
 
@@ -411,7 +411,7 @@ Make the gradient rotate along the strip:
 ```berry
 # Rainbow gradient rotating along the strip over 5 seconds
 
-color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
+color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
 animation back = palette_gradient_animation(
   color_source = rainbow_rich_color
@@ -443,7 +443,7 @@ palette vue_meter_palette = [
   (255, 0xFF0000)     # Red at 100%
 ]
 
-color rainbow_rich_color = rich_palette(colors=vue_meter_palette, period=0, transition_type=LINEAR)
+color rainbow_rich_color = rich_palette_color(colors=vue_meter_palette, period=0, transition_type=LINEAR)
 
 # Sawtooth value from 0% to 100%
 set level = sawtooth(min_value = 0%, max_value=100%, duration = 2s)
@@ -495,7 +495,7 @@ palette vue_meter_palette = [
   (255, 0xFF0000)
 ]
 
-color rainbow_rich_color = rich_palette(colors=vue_meter_palette, period=0, transition_type=LINEAR)
+color rainbow_rich_color = rich_palette_color(colors=vue_meter_palette, period=0, transition_type=LINEAR)
 
 # Step 3: Use the custom function as a parameter
 # Call it with () - the engine parameter is passed automatically
@@ -636,7 +636,7 @@ Let's combine everything we've learned: layered animations, dynamic colors, and 
 set strip_len = strip_length()
 
 # Twinkling stars background
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFAA
   density=2
   twinkle_speed=100ms
@@ -648,7 +648,7 @@ run stars
 # Moving beacon with dynamic color
 # back_color defaults to transparent, so stars show through
 animation back = beacon_animation(
-    color = rich_palette(colors=PALETTE_RAINBOW_W2, period=5s)
+    color = rich_palette_color(colors=PALETTE_RAINBOW_W2, period=5s)
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3
     slew_size = 2
@@ -686,7 +686,7 @@ set strip_len = strip_length()
 
 # Define a red-blue-red gradient palette
 palette red_blue_red_palette = [ red, 0x3333FF, red ]
-color red_blue_red_color = rich_palette(colors=red_blue_red_palette)
+color red_blue_red_color = rich_palette_color(colors=red_blue_red_palette)
 
 # Moving beacon as opacity mask
 # The color is white but it doesn't matter - only brightness counts
@@ -1022,12 +1022,12 @@ run back
 
 <a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_7_40_crenel_color" target="_blank"><img src="../../_media/berry_animation/chap_7_40.png" alt="Dynamic Colors"></a>
 
-The `color` parameter also accepts a color provider instead of a static color. This example uses `rich_palette` to cycle through rainbow colors over 5 seconds, making the crenel pulses continuously change color while the blue background remains fixed:
+The `color` parameter also accepts a color provider instead of a static color. This example uses `rich_palette_color` to cycle through rainbow colors over 5 seconds, making the crenel pulses continuously change color while the blue background remains fixed:
 
 ```berry
 # Crenel with dynamic color
 
-color rainbow_color = rich_palette(colors=PALETTE_RAINBOW_W2, period=5s)
+color rainbow_color = rich_palette_color(colors=PALETTE_RAINBOW_W2, period=5s)
 
 animation back = crenel_animation(
     color = rainbow_color
@@ -1074,7 +1074,7 @@ animation mask = crenel_animation(
 )
 
 # Rainbow gradient masked by crenel
-color rainbow_rich_color = rich_palette(colors=PALETTE_RAINBOW_W, period=0)
+color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 animation pattern = palette_gradient_animation(
     color_source = rainbow_rich_color
     shift_period = 2s           # Rotating gradient
@@ -1279,7 +1279,7 @@ run main
 | Animation | Description | Key Parameters |
 |-----------|-------------|----------------|
 | `solid` | Solid color fill | `color` |
-| `twinkle_animation` | Twinkling stars effect | `color`, `density`, `twinkle_speed`, `fade_speed` |
+| `twinkle` | Twinkling stars effect | `color`, `density`, `twinkle_speed`, `fade_speed` |
 | `beacon_animation` | Positioned pulse/highlight | `color`, `pos`, `beacon_size`, `slew_size` |
 | `crenel_animation` | Square wave pattern | `color`, `back_color`, `pulse_size`, `low_size` |
 | `rich_palette_animation` | Smooth palette cycling | `colors`, `period`, `transition_type` |

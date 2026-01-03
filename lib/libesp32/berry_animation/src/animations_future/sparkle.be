@@ -222,7 +222,7 @@ end
 # @param engine: AnimationEngine - Required animation engine reference
 # @return SparkleAnimation - A new rainbow sparkle animation instance
 def sparkle_rainbow(engine)
-  var rainbow_provider = animation.rich_palette(engine)
+  var rainbow_provider = animation.rich_palette_color(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
   rainbow_provider.period = 5000
   rainbow_provider.transition_type = 1  # sine transition

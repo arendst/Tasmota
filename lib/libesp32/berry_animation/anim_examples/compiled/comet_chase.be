@@ -30,7 +30,7 @@ comet_secondary_.speed = 3000  # slower speed
 comet_secondary_.direction = (-1)  # other direction
 comet_secondary_.priority = 5
 # Add sparkle trail behind comets but on top of blue background
-var comet_sparkles_ = animation.twinkle_animation(engine)
+var comet_sparkles_ = animation.twinkle(engine)
 comet_sparkles_.color = 0xFFAAAAFF  # Light blue sparkles
 comet_sparkles_.density = 8  # density (moderate sparkles)
 comet_sparkles_.twinkle_speed = 400  # twinkle speed (quick sparkle)
@@ -71,7 +71,7 @@ animation comet_secondary = comet_animation(
 )
 
 # Add sparkle trail behind comets but on top of blue background
-animation comet_sparkles = twinkle_animation(
+animation comet_sparkles = twinkle(
   color=0xAAAAFF  # Light blue sparkles
   density=8       # density (moderate sparkles)
   twinkle_speed=400ms # twinkle speed (quick sparkle)

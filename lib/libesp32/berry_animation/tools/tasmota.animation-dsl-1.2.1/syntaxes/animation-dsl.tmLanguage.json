@@ -192,7 +192,7 @@
       "patterns": [
         {
           "name": "entity.name.function.animation.animation-dsl",
-          "match": "\\b(solid|pulsating_animation|beacon_animation|comet_animation|rich_palette_animation|twinkle_animation|breathe_animation|fire_animation|crenel_animation)\\b"
+          "match": "\\b(solid|pulsating_animation|beacon_animation|comet_animation|rich_palette_animation|twinkle|breathe_animation|fire_animation|crenel_animation)\\b"
         }
       ]
     },

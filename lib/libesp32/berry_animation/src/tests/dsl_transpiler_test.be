@@ -991,7 +991,7 @@ def test_animation_type_checking()
   
   # Test color provider assigned to animation (should fail at transpile time)
   var color_provider_as_animation_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
-    "animation invalid_anim = rich_palette(colors=breathe_palette)"
+    "animation invalid_anim = rich_palette_color(colors=breathe_palette)"
   
   try
     var invalid_code = animation_dsl.compile(color_provider_as_animation_dsl)

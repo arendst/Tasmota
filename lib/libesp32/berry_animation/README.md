@@ -160,9 +160,9 @@ Animation|Description
 `beacon_animation`|Pulse/highlight at specific position with optional slew
 `crenel_animation`|Crenel/square wave pattern
 `comet_animation`|Moving comet with fading tail
-`twinkle_animation`|Twinkling stars effect
+`twinkle`|Twinkling stars effect
 `fire_animation`|Realistic fire simulation
-`rich_palette`|Smooth palette color transitions
+`rich_palette_color`|Smooth palette color transitions
 `gradient_animation`|Linear or radial color gradients
 `palette_gradient_animation`|Gradient patterns with palette colors
 `palette_meter_animation`|Meter/bar patterns

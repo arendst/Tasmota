@@ -155,7 +155,7 @@ animation solid_red = solid(color=custom_color)
 **Built-in Symbols** (resolved to `animation.<symbol>`):
 - Animation factory functions: `solid`, `pulsating_animation`, `comet_animation`
 - Value providers: `triangle`, `smooth`, `sine`, `static_value`
-- Color providers: `color_cycle`, `breathe_color`, `rich_palette`
+- Color providers: `color_cycle`, `breathe_color`, `rich_palette_color`
 - Constants: `PALETTE_RAINBOW`, `SINE`, `TRIANGLE`, etc.
 
 **User-defined Symbols** (resolved to `<symbol>_`):
@@ -423,7 +423,7 @@ Register custom Berry functions for use in DSL. User functions must take `engine
 ```berry
 # Define custom function in Berry - engine must be first parameter
 def custom_twinkle(engine, color, count, period)
-  var anim = animation.twinkle_animation(engine)
+  var anim = animation.twinkle(engine)
   anim.color = color
   anim.count = count
   atml:parameter>

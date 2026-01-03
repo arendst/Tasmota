@@ -18,7 +18,7 @@ var fire_colors_ = bytes(
   "FFFFFF00"  # Yellow
 )
 var strip_len_ = animation.strip_length(engine)
-var fire_color_ = animation.rich_palette(engine)
+var fire_color_ = animation.rich_palette_color(engine)
 fire_color_.colors = fire_colors_
 var background_ = animation.solid(engine)
 background_.color = 0xFF000088
@@ -58,7 +58,7 @@ palette fire_colors = [
 ]
 
 set strip_len = strip_length()
-color fire_color = rich_palette(colors=fire_colors)
+color fire_color = rich_palette_color(colors=fire_colors)
 
 animation background = solid(color=0x000088, priority=20)
 run background

@@ -51,7 +51,7 @@ var sunset_sky_ = bytes(
 # Create animations using each palette
 var fire_effect_ = animation.solid(engine)
 fire_effect_.color = (def (engine)
-  var provider = animation.rich_palette(engine)
+  var provider = animation.rich_palette_color(engine)
   provider.colors = fire_gradient_
   provider.period = 3000
   return provider
@@ -143,7 +143,7 @@ palette sunset_sky = [
 ]
 
 # Create animations using each palette
-animation fire_effect = solid(color=rich_palette(colors=fire_gradient, period=3s))
+animation fire_effect = solid(color=rich_palette_color(colors=fire_gradient, period=3s))
 
 animation ocean_waves = rich_palette_animation(colors=ocean_depths, period=8s, transition_type=SINE, brightness=200)
 

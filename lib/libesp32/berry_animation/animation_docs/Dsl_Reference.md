@@ -484,7 +484,7 @@ animation.register_user_function("custom_palette", create_custom_palette)
 
 ```berry
 # Use in DSL
-animation dynamic_anim = rich_palette(
+animation dynamic_anim = rich_palette_color(
   colors=custom_palette(0xFF0000, 200)
   period=3s
 )
@@ -1421,7 +1421,7 @@ Color providers create dynamic colors that change over time:
 |----------|-------------|
 | `static_color` | Solid color with optional dynamic opacity |
 | `color_cycle` | Cycles through a palette of colors |
-| `rich_palette` | Advanced palette-based color cycling with smooth transitions |
+| `rich_palette_color` | Advanced palette-based color cycling with smooth transitions |
 | `composite_color` | Combines multiple color providers |
 | `breathe_color` | Breathing/pulsing color effect with brightness modulation |
 | `pulsating_color` | Fast pulsing color effect (alias for breathe_color with curve_factor=1) |
@@ -1439,7 +1439,7 @@ Animation classes create visual effects on LED strips:
 | `breathe_animation` | Breathing/fading effect |
 | `comet_animation` | Moving comet with trailing tail |
 | `fire_animation` | Realistic fire simulation |
-| `twinkle_animation` | Twinkling stars effect |
+| `twinkle` | Twinkling stars effect |
 | `gradient_animation` | Color gradient effects |
 | `wave_animation` | Wave propagation effects |
 | `rich_palette_animation` | Palette-based color cycling |

@@ -23,7 +23,7 @@ var disco_colors_ = bytes(
   "FFFF00FF"  # Magenta
 )
 # Fast color cycling base
-var disco_rich_color_ = animation.rich_palette(engine)
+var disco_rich_color_ = animation.rich_palette_color(engine)
 disco_rich_color_.colors = disco_colors_
 disco_rich_color_.period = 1000
 disco_rich_color_.transition_type = animation.LINEAR
@@ -52,18 +52,18 @@ white_flash_.opacity = (def (engine)
 end)(engine)  # Quick white flashes
 white_flash_.priority = 20
 # Add colored sparkles
-var sparkle_pattern_ = animation.rich_palette(engine)
+var sparkle_pattern_ = animation.rich_palette_color(engine)
 sparkle_pattern_.colors = disco_colors_
 sparkle_pattern_.period = 500
 sparkle_pattern_.transition_type = animation.LINEAR
 sparkle_pattern_.brightness = 255
-var disco_sparkles_ = animation.twinkle_animation(engine)
+var disco_sparkles_ = animation.twinkle(engine)
 disco_sparkles_.color = sparkle_pattern_  # color source
 disco_sparkles_.density = 12  # density (many sparkles)
 disco_sparkles_.twinkle_speed = 80  # twinkle speed (very quick)
 disco_sparkles_.priority = 15
 # Add moving pulse for extra effect
-var pulse_pattern_ = animation.rich_palette(engine)
+var pulse_pattern_ = animation.rich_palette_color(engine)
 pulse_pattern_.colors = disco_colors_
 pulse_pattern_.period = 800
 pulse_pattern_.transition_type = animation.LINEAR
@@ -107,7 +107,7 @@ palette disco_colors = [
 ]
 
 # Fast color cycling base
-color disco_rich_color = rich_palette(colors=disco_colors, period=1s, transition_type=LINEAR, brightness=255)
+color disco_rich_color = rich_palette_color(colors=disco_colors, period=1s, transition_type=LINEAR, brightness=255)
 animation disco_base = solid(color=disco_rich_color)
 
 # Add strobe effect
@@ -119,8 +119,8 @@ white_flash.opacity = square(min_value=0, max_value=255, duration=50ms, duty_cyc
 white_flash.priority = 20
 
 # Add colored sparkles
-color sparkle_pattern = rich_palette(colors=disco_colors, period=500ms, transition_type=LINEAR, brightness=255)
-animation disco_sparkles = twinkle_animation(
+color sparkle_pattern = rich_palette_color(colors=disco_colors, period=500ms, transition_type=LINEAR, brightness=255)
+animation disco_sparkles = twinkle(
   color=sparkle_pattern # color source
   density=12            # density (many sparkles)
   twinkle_speed=80ms    # twinkle speed (very quick)
@@ -128,7 +128,7 @@ animation disco_sparkles = twinkle_animation(
 disco_sparkles.priority = 15
 
 # Add moving pulse for extra effect
-color pulse_pattern = rich_palette(colors=disco_colors, period=800ms, transition_type=LINEAR, brightness=255)
+color pulse_pattern = rich_palette_color(colors=disco_colors, period=800ms, transition_type=LINEAR, brightness=255)
 animation disco_pulse = beacon_animation(
   color=pulse_pattern # color source
   pos=4               # initial position

@@ -65,7 +65,7 @@ afterglow_.opacity = (def (engine)
 end)(engine)  # Longer, dimmer glow
 afterglow_.priority = 10
 # Distant thunder (dim flashes)
-var distant_flash_ = animation.twinkle_animation(engine)
+var distant_flash_ = animation.twinkle(engine)
 distant_flash_.color = 0xFF666699  # Dim blue-white
 distant_flash_.density = 4  # density (few flashes)
 distant_flash_.twinkle_speed = 300  # twinkle speed (medium duration)
@@ -115,7 +115,7 @@ afterglow.opacity = square(min_value=0, max_value=80, duration=200ms, duty_cycle
 afterglow.priority = 10
 
 # Distant thunder (dim flashes)
-animation distant_flash = twinkle_animation(
+animation distant_flash = twinkle(
   color=0x666699  # Dim blue-white
   density=4       # density (few flashes)
   twinkle_speed=300ms # twinkle speed (medium duration)
