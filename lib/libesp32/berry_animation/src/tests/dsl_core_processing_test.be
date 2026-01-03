@@ -116,8 +116,8 @@ def test_animation_processing()
   # Test pulse animations with named arguments
   var pulse_tests = [
     ["animation solid_red = solid(color=red)\n"
-     "animation pulse_red = pulsating_animation(color=red, period=2000)",
-     "var pulse_red_ = animation.pulsating_animation(engine)\npulse_red_.color = 0xFFFF0000\npulse_red_.period = 2000"]
+     "animation pulse_red = breathe(color=red, period=2000)",
+     "var pulse_red_ = animation.breathe(engine)\npulse_red_.color = 0xFFFF0000\npulse_red_.period = 2000"]
   ]
   
   for test : pulse_tests
@@ -282,7 +282,7 @@ def test_property_assignments()
      "red_anim_.priority = 15"],
     ["animation test_anim = solid(color=red)\ntest_anim.opacity = 128", 
      "test_anim_.opacity = 128"],
-    ["animation solid_red = solid(color=red)\nanimation pulse_anim = pulsating_animation(color=red, period=2000)\npulse_anim.priority = 5", 
+    ["animation solid_red = solid(color=red)\nanimation pulse_anim = breathe(color=red, period=2000)\npulse_anim.priority = 5", 
      "pulse_anim_.priority = 5"]
   ]
   

@@ -15,7 +15,7 @@ animation background = solid(color=0x000088, priority=20)
 run background
 
 set eye_pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 6s)
-animation eye_mask = beacon_animation(
+animation eye_mask = beacon(
   color = white
   back_color = transparent
   pos = eye_pos
@@ -24,7 +24,7 @@ animation eye_mask = beacon_animation(
   priority = 5
 )
 
-animation fire_pattern = palette_gradient_animation(
+animation fire_pattern = palette_gradient(
   color_source = fire_color
   spatial_period = strip_len / 4
   opacity = eye_mask

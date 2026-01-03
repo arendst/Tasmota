@@ -68,7 +68,7 @@ pulse_pattern_.colors = disco_colors_
 pulse_pattern_.period = 800
 pulse_pattern_.transition_type = animation.LINEAR
 pulse_pattern_.brightness = 255
-var disco_pulse_ = animation.beacon_animation(engine)
+var disco_pulse_ = animation.beacon(engine)
 disco_pulse_.color = pulse_pattern_  # color source
 disco_pulse_.pos = 4  # initial position
 disco_pulse_.beacon_size = 8  # pulse width
@@ -129,7 +129,7 @@ disco_sparkles.priority = 15
 
 # Add moving pulse for extra effect
 color pulse_pattern = rich_palette_color(colors=disco_colors, period=800ms, transition_type=LINEAR, brightness=255)
-animation disco_pulse = beacon_animation(
+animation disco_pulse = beacon(
   color=pulse_pattern # color source
   pos=4               # initial position
   beacon_size=8       # pulse width

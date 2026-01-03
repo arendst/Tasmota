@@ -14,7 +14,7 @@ def test_animation_newline_parameters()
   
   var dsl_source = 
     "color custom_red = 0xFF0000\n" +
-    "animation stream1 = comet_animation(\n" +
+    "animation stream1 = comet(\n" +
     "  color=custom_red\n" +
     "  tail_length=15\n" +
     "  speed=1.5s\n" +
@@ -25,7 +25,7 @@ def test_animation_newline_parameters()
   var berry_code = animation_dsl.compile(dsl_source)
   
   assert(berry_code != nil, "Should compile DSL with newline parameters")
-  assert(string.find(berry_code, "var stream1_ = animation.comet_animation(engine)") >= 0, "Should generate animation creation")
+  assert(string.find(berry_code, "var stream1_ = animation.comet(engine)") >= 0, "Should generate animation creation")
   assert(string.find(berry_code, "stream1_.color = custom_red_") >= 0, "Should generate color assignment")
   assert(string.find(berry_code, "stream1_.tail_length = 15") >= 0, "Should generate tail_length assignment")
   assert(string.find(berry_code, "stream1_.speed = 1500") >= 0, "Should generate speed assignment")
@@ -66,7 +66,7 @@ def test_mixed_syntax()
   
   var dsl_source = 
     "color custom_red = 0xFF0000\n" +
-    "animation mixed = comet_animation(\n" +
+    "animation mixed = comet(\n" +
     "  color=custom_red, tail_length=15\n" +
     "  speed=1.5s\n" +
     "  priority=10, direction=1\n" +
@@ -92,7 +92,7 @@ def test_traditional_comma_syntax()
   
   var dsl_source = 
     "color custom_red = 0xFF0000\n" +
-    "animation traditional = comet_animation(color=custom_red, tail_length=15, speed=1.5s, priority=10)\n" +
+    "animation traditional = comet(color=custom_red, tail_length=15, speed=1.5s, priority=10)\n" +
     "run traditional"
   
   var berry_code = animation_dsl.compile(dsl_source)
@@ -136,7 +136,7 @@ def test_nested_function_calls()
   print("Testing nested function calls with newline syntax...")
   
   var dsl_source = 
-    "animation nested = pulsating_animation(\n" +
+    "animation nested = breathe(\n" +
     "  color=solid(color=red)\n" +
     "  period=triangle(\n" +
     "    min_value=1000\n" +
@@ -149,7 +149,7 @@ def test_nested_function_calls()
   var berry_code = animation_dsl.compile(dsl_source)
   
   assert(berry_code != nil, "Should compile nested function calls with newline syntax")
-  assert(string.find(berry_code, "var nested_ = animation.pulsating_animation(engine)") >= 0, "Should generate main animation")
+  assert(string.find(berry_code, "var nested_ = animation.breathe(engine)") >= 0, "Should generate main animation")
   assert(string.find(berry_code, "nested_.color = (def (engine)") >= 0, "Should generate nested solid call as anonymous function")
   assert(string.find(berry_code, "nested_.period = (def (engine)") >= 0, "Should generate nested triangle call as anonymous function")
   assert(string.find(berry_code, "var provider = animation.solid(engine)") >= 0, "Should generate solid provider in anonymous function")
@@ -179,7 +179,7 @@ def test_complex_example()
     "  brightness=255\n" +
     ")\n" +
     "\n" +
-    "animation stream = comet_animation(\n" +
+    "animation stream = comet(\n" +
     "  color=stream_pattern  # color source\n" +
     "  tail_length=15        # long tail\n" +
     "  speed=1.5s            # speed\n" +
@@ -193,7 +193,7 @@ def test_complex_example()
   assert(berry_code != nil, "Should compile complex real-world example")
   assert(string.find(berry_code, "var matrix_greens_ = bytes(") >= 0, "Should generate palette")
   assert(string.find(berry_code, "var stream_pattern_ = animation.rich_palette_color(engine)") >= 0, "Should generate color provider")
-  assert(string.find(berry_code, "var stream_ = animation.comet_animation(engine)") >= 0, "Should generate animation")
+  assert(string.find(berry_code, "var stream_ = animation.comet(engine)") >= 0, "Should generate animation")
   
   print("✓ Complex example test passed")
   return true

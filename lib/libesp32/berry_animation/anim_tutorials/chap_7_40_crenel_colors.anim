@@ -4,7 +4,7 @@
 color rainbow_color = rich_palette_color(colors=PALETTE_RAINBOW_W2, period=5s)
 
 # Define a simple crenel 2+2
-animation back = crenel_animation(
+animation back = crenel(
     color = rainbow_color
     back_color = blue
     pulse_size = 2

@@ -23,10 +23,10 @@ var ocean_colors_ = bytes(
   "FF008000"  # Green
 )
 # Create animations using the palettes
-var fire_anim_ = animation.rich_palette_animation(engine)
+var fire_anim_ = animation.rich_palette(engine)
 fire_anim_.colors = fire_colors_
 fire_anim_.period = 5000
-var ocean_anim_ = animation.rich_palette_animation(engine)
+var ocean_anim_ = animation.rich_palette(engine)
 ocean_anim_.colors = ocean_colors_
 ocean_anim_.period = 8000
 # Sequence to show both palettes
@@ -62,9 +62,9 @@ palette ocean_colors = [
 ]
 
 # Create animations using the palettes
-animation fire_anim = rich_palette_animation(colors=fire_colors, period=5s)
+animation fire_anim = rich_palette(colors=fire_colors, period=5s)
 
-animation ocean_anim = rich_palette_animation(colors=ocean_colors, period=8s)
+animation ocean_anim = rich_palette(colors=ocean_colors, period=8s)
 
 # Sequence to show both palettes
 sequence palette_demo {

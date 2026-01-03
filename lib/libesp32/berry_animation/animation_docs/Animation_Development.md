@@ -445,13 +445,13 @@ for i: 0..(frame.width-1)
 end
 ```
 
-## Complete Example: BeaconAnimation
+## Complete Example: beacon
 
 Here's a complete example showing all concepts:
 
 ```berry
-#@ solidify:BeaconAnimation,weak
-class BeaconAnimation : animation.animation
+#@ solidify:beacon,weak
+class beacon : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions following the new specification
@@ -575,12 +575,12 @@ class BeaconAnimation : animation.animation
   
   # String representation of the animation
   def tostring()
-    return f"BeaconAnimation(color=0x{self.color :08x}, pos={self.pos}, beacon_size={self.beacon_size}, slew_size={self.slew_size})"
+    return f"beacon(color=0x{self.color :08x}, pos={self.pos}, beacon_size={self.beacon_size}, slew_size={self.slew_size})"
   end
 end
 
 # Export class directly - no redundant factory function needed
-return {'beacon_animation': BeaconAnimation}
+return {'beacon': beacon}
 ```
 
 ## Testing Your Animation

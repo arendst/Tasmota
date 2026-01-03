@@ -25,11 +25,11 @@ var daylight_colors_ = bytes(
   "FF220011"  # Night - dark red
 )
 # Main daylight cycle - very slow transition
-var daylight_cycle_ = animation.rich_palette_animation(engine)
+var daylight_cycle_ = animation.rich_palette(engine)
 daylight_cycle_.colors = daylight_colors_
 daylight_cycle_.period = 60000
 # Add sun position effect - bright spot that moves
-var sun_position_ = animation.beacon_animation(engine)
+var sun_position_ = animation.beacon(engine)
 sun_position_.color = 0xFFFFFFAA  # Bright yellow sun
 sun_position_.pos = 5  # initial position
 sun_position_.beacon_size = 8  # sun size
@@ -50,7 +50,7 @@ sun_position_.opacity = (def (engine)
   return provider
 end)(engine)  # Fade in and out
 # Add atmospheric glow around sun
-var sun_glow_ = animation.beacon_animation(engine)
+var sun_glow_ = animation.beacon(engine)
 sun_glow_.color = 0xFFFFCC88  # Warm glow
 sun_glow_.pos = 5  # initial position
 sun_glow_.beacon_size = 16  # larger glow
@@ -111,10 +111,10 @@ palette daylight_colors = [
 ]
 
 # Main daylight cycle - very slow transition
-animation daylight_cycle = rich_palette_animation(colors=daylight_colors, period=60s)
+animation daylight_cycle = rich_palette(colors=daylight_colors, period=60s)
 
 # Add sun position effect - bright spot that moves
-animation sun_position = beacon_animation(
+animation sun_position = beacon(
   color=0xFFFFAA  # Bright yellow sun
   pos=5           # initial position
   beacon_size=8   # sun size
@@ -125,7 +125,7 @@ sun_position.pos = smooth(min_value=5, max_value=55, duration=30s)  # Sun arc ac
 sun_position.opacity = smooth(min_value=0, max_value=255, duration=30s)  # Fade in and out
 
 # Add atmospheric glow around sun
-animation sun_glow = beacon_animation(
+animation sun_glow = beacon(
   color=0xFFCC88  # Warm glow
   pos=5           # initial position
   beacon_size=16  # larger glow

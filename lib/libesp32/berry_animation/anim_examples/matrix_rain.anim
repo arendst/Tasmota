@@ -18,7 +18,7 @@ palette matrix_greens = [
 
 # Create multiple cascading streams
 color stream1_pattern = rich_palette_color(colors=matrix_greens, period=2s, transition_type=LINEAR, brightness=255)
-animation stream1 = comet_animation(
+animation stream1 = comet(
   color=stream1_pattern # color source
   tail_length=15        # long tail
   speed=1.5s            # speed
@@ -27,7 +27,7 @@ animation stream1 = comet_animation(
 
 
 color stream2_pattern = rich_palette_color(colors=matrix_greens, period=1.8s, transition_type=LINEAR, brightness=200)
-animation stream2 = comet_animation(
+animation stream2 = comet(
   color=stream2_pattern # color source
   tail_length=12        # medium tail
   speed=2.2s            # different speed
@@ -35,7 +35,7 @@ animation stream2 = comet_animation(
 )
 
 color stream3_pattern = rich_palette_color(colors=matrix_greens, period=2.5s, transition_type=LINEAR, brightness=180)
-animation stream3 = comet_animation(
+animation stream3 = comet(
   color=stream3_pattern # color source
   tail_length=10        # shorter tail
   speed=1.8s            # another speed

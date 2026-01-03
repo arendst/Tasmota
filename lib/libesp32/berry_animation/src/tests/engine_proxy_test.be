@@ -93,7 +93,7 @@ print("\n=== Test 9: Engine Proxy with Own Rendering ===")
 var proxy2 = animation.engine_proxy(engine)
 proxy2.color = 0xFF0000FF  # Blue background
 
-var pulse = animation.breathe_animation(engine)
+var pulse = animation.breathe(engine)
 pulse.color = 0xFFFFFF00  # Yellow
 pulse.period = 2000
 

@@ -46,7 +46,7 @@ assert(success == true, "Should accept valid value for non-nillable parameter")
 assert(test_obj.non_nillable_param == 100, "Should store valid value for non-nillable parameter")
 
 # Test gradient animation color parameter
-var gradient = animation.gradient_animation(engine)
+var gradient = animation.gradient(engine)
 
 # Test setting a valid color (should work)
 gradient.color = 0xFFFF0000

@@ -18,20 +18,18 @@ parameterized_object (base class with parameter management and playable interfac
 ├── Animation (unified base class for all visual elements)
 │   ├── engine_proxy (combines rendering and orchestration)
 │   │   └── (user-defined template animations)
-│   ├── SolidAnimation (solid color fill)
-│   ├── BeaconAnimation (pulse at specific position)
-│   ├── CrenelPositionAnimation (crenel/square wave pattern)
-│   ├── BreatheAnimation (breathing effect)
-│   ├── BeaconAnimation (pulse at specific position)
-│   │   └── GradientAnimation (linear/radial color gradients)
-│   ├── PaletteGradientAnimation (gradient patterns with palette colors)
-│   │   ├── PaletteMeterAnimation (meter/bar patterns)
-│   │   └── GradientMeterAnimation (VU meter with gradient colors and peak hold)
-│   ├── CometAnimation (moving comet with tail)
-│   ├── FireAnimation (realistic fire effect)
+│   ├── solid (solid color fill)
+│   ├── crenel (crenel/square wave pattern)
+│   ├── breathe (breathing effect)
+│   ├── beacon (pulse at specific position)
+│   │   └── gradient (linear/radial color gradients)
+│   ├── palette_gradient (gradient patterns with palette colors)
+│   │   └── palette_meter (VU meter with gradient colors and peak hold)
+│   ├── comet (moving comet with tail)
+│   ├── fire (realistic fire effect)
 │   ├── twinkle (twinkling stars effect)
-│   ├── WaveAnimation (wave motion effects)
-│   └── RichPaletteAnimation (smooth palette transitions)
+│   ├── wave (wave motion effects)
+│   └── rich_palette (smooth palette transitions)
 ├── sequence_manager (orchestrates animation sequences)
 └── value_provider (dynamic value generation)
     ├── static_value (wraps static values)
@@ -41,7 +39,7 @@ parameterized_object (base class with parameter management and playable interfac
     ├── closure_value (computed values, internal use only)
     └── color_provider (dynamic color generation)
         ├── static_color (solid color)
-        ├── ColorCycleColorProvider (cycles through palette)
+        ├── color_cycle (cycles through palette)
         ├── rich_palette_color (smooth palette transitions)
         └── breathe_color (breathing color effect)
 ```
@@ -323,7 +321,7 @@ These methods are automatically available in DSL computed expressions:
 ```berry
 # Example: Dynamic brightness based on strip position
 set strip_len = strip_length()
-animation pulse = pulsating_animation(
+animation pulse = breathe(
   color=red
   brightness=strip_len / 4 + 50    # Uses built-in arithmetic
 )
@@ -379,7 +377,7 @@ color static_accent = solid(color=accent)
 
 **Note**: The `solid()` function is the recommended shorthand for `static_color()`.
 
-### ColorCycleColorProvider
+### color_cycle
 
 Cycles through a palette of colors with brutal switching. Inherits from `color_provider`.
 
@@ -524,7 +522,7 @@ color breathing_rainbow = breathe_color(
 
 All animation classes extend the base `Animation` class and inherit its parameters.
 
-### BreatheAnimation
+### breathe
 
 Creates a smooth breathing effect with natural breathing curves. Inherits from `Animation`.
 
@@ -537,9 +535,9 @@ Creates a smooth breathing effect with natural breathing curves. Inherits from `
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (higher = sharper) |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.breathe_animation(engine)`
+**Factory**: `animation.breathe(engine)`
 
-### CometAnimation
+### comet
 
 Creates a comet effect with a bright head and fading tail. Inherits from `Animation`.
 
@@ -553,12 +551,12 @@ Creates a comet effect with a bright head and fading tail. Inherits from `Animat
 | `fade_factor` | int | 179 | 0-255 | How quickly the tail fades |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.comet_animation(engine)`
+**Factory**: `animation.comet(engine)`
 
 
 
 
-### FireAnimation
+### fire
 
 Creates a realistic fire effect with flickering flames. Inherits from `Animation`.
 
@@ -572,11 +570,11 @@ Creates a realistic fire effect with flickering flames. Inherits from `Animation
 | `sparking_rate` | int | 120 | 0-255 | Rate of new spark generation |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.fire_animation(engine)`
+**Factory**: `animation.fire(engine)`
 
-### GradientAnimation
+### gradient
 
-Creates smooth two-color gradients. Subclass of `BeaconAnimation` that uses beacon slew regions to create gradient effects.
+Creates smooth two-color gradients. Subclass of `beacon` that uses beacon slew regions to create gradient effects.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -584,7 +582,7 @@ Creates smooth two-color gradients. Subclass of `BeaconAnimation` that uses beac
 | `color2` | int | 0xFF0000FF | - | Second color (default blue) |
 | `direction` | int | 0 | enum: [0, 1] | 0=forward (color1→color2), 1=reverse (color2→color1) |
 | `gradient_type` | int | 0 | enum: [0, 1] | 0=linear, 1=radial |
-| *(inherits all BeaconAnimation parameters)* | | | | |
+| *(inherits all beacon parameters)* | | | | |
 
 **Gradient Types:**
 - **Linear (0)**: Creates a 2-color gradient from `color1` to `color2` (or reversed if `direction=1`). Implemented as the left slew of a large beacon positioned at the right edge.
@@ -594,17 +592,17 @@ Creates smooth two-color gradients. Subclass of `BeaconAnimation` that uses beac
 - Linear gradient uses a beacon with `beacon_size=1000` (off-screen) and `slew_size=strip_length`
 - Radial gradient uses a centered beacon with `beacon_size=1` and `slew_size=strip_length/2`
 
-**Factory**: `animation.gradient_animation(engine)`
+**Factory**: `animation.gradient(engine)`
 
-### GradientMeterAnimation
+### palette_meter
 
-VU meter style animation that displays a gradient-colored bar from the start of the strip up to a configurable level. Includes optional peak hold indicator. Inherits from `PaletteGradientAnimation`.
+VU meter style animation that displays a gradient-colored bar from the start of the strip up to a configurable level. Includes optional peak hold indicator. Inherits from `palette_gradient`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `level` | int | 255 | 0-255 | Current meter level (0=empty, 255=full) |
 | `peak_hold` | int | 1000 | min: 0 | Peak hold time in ms (0=disabled) |
-| *(inherits all PaletteGradientAnimation parameters)* | | | | |
+| *(inherits all palette_gradient parameters)* | | | | |
 
 #### Visual Representation
 
@@ -651,9 +649,9 @@ Creates a pulsing effect oscillating between min and max brightness. Inherits fr
 | `period` | int | 1000 | min: 100 | Pulse period in milliseconds |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.pulsating_animation(engine)`
+**Factory**: `animation.breathe(engine)`
 
-### BeaconAnimation
+### beacon
 
 Creates a pulse effect at a specific position with optional fade regions. Inherits from `Animation`.
 
@@ -726,7 +724,7 @@ The effective left position is calculated as:
 
 ```berry
 # Sharp pulse at left edge (right_edge=0, default)
-animation left_pulse = beacon_animation(
+animation left_pulse = beacon(
   color=red,
   pos=0,
   beacon_size=3,
@@ -736,7 +734,7 @@ animation left_pulse = beacon_animation(
 # Shows 3 red pixels at positions 0, 1, 2
 
 # Pulse from right edge
-animation right_pulse = beacon_animation(
+animation right_pulse = beacon(
   color=blue,
   pos=0,
   beacon_size=3,
@@ -747,7 +745,7 @@ animation right_pulse = beacon_animation(
 # (positions strip_length-3, strip_length-2, strip_length-1)
 
 # Soft pulse with fade regions
-animation soft_pulse = beacon_animation(
+animation soft_pulse = beacon(
   color=green,
   pos=5,
   beacon_size=2,
@@ -757,7 +755,7 @@ animation soft_pulse = beacon_animation(
 
 # Spotlight effect
 color dark_blue = 0xFF000040
-animation spotlight = beacon_animation(
+animation spotlight = beacon(
   color=white,
   back_color=dark_blue,
   pos=15,
@@ -773,7 +771,7 @@ run spotlight
 **Spotlight Effects:**
 ```berry
 # Moving spotlight with soft edges
-animation moving_spotlight = beacon_animation(
+animation moving_spotlight = beacon(
   color=white,
   back_color=0xFF000040,
   beacon_size=1,
@@ -785,7 +783,7 @@ moving_spotlight.pos = triangle(min_value=0, max_value=29, period=3s)
 **Position Markers:**
 ```berry
 # Sharp position marker
-animation position_marker = beacon_animation(
+animation position_marker = beacon(
   color=red,
   pos=15,
   beacon_size=1,
@@ -796,7 +794,7 @@ animation position_marker = beacon_animation(
 **Breathing Spots:**
 ```berry
 # Breathing effect at specific position
-animation breathing_spot = beacon_animation(
+animation breathing_spot = beacon(
   color=blue,
   pos=10,
   beacon_size=3,
@@ -811,14 +809,14 @@ breathing_spot.opacity = smooth(min_value=50, max_value=255, period=2s)
 set strip_len = strip_length()
 set sweep = triangle(min_value=0, max_value=strip_len/2, period=2s)
 
-animation left_beacon = beacon_animation(
+animation left_beacon = beacon(
   color=red,
   beacon_size=2,
   right_edge=0
 )
 left_beacon.pos = sweep
 
-animation right_beacon = beacon_animation(
+animation right_beacon = beacon(
   color=blue,
   beacon_size=2,
   right_edge=1
@@ -829,9 +827,9 @@ run left_beacon
 run right_beacon
 ```
 
-**Factory**: `animation.beacon_animation(engine)`
+**Factory**: `animation.beacon(engine)`
 
-### CrenelPositionAnimation
+### crenel
 
 Creates a crenel (square wave) pattern with repeating rectangular pulses. Inherits from `Animation`.
 
@@ -888,7 +886,7 @@ The full period of the pattern is `pulse_size + low_size` pixels.
 **Status Indicators:**
 ```berry
 # Slow blinking pattern for status indication
-animation status_indicator = crenel_animation(
+animation status_indicator = crenel(
   color=green,
   pulse_size=1,
   low_size=9
@@ -898,7 +896,7 @@ animation status_indicator = crenel_animation(
 **Rhythmic Effects:**
 ```berry
 # Fast rhythmic pattern
-animation rhythm_pattern = crenel_animation(
+animation rhythm_pattern = crenel(
   color=red,
   pulse_size=2,
   low_size=2
@@ -909,7 +907,7 @@ animation rhythm_pattern = crenel_animation(
 ```berry
 # Decorative border pattern
 color gold = 0xFFFFD700
-animation border_pattern = crenel_animation(
+animation border_pattern = crenel(
   color=gold,
   pulse_size=3,
   low_size=1,
@@ -920,7 +918,7 @@ animation border_pattern = crenel_animation(
 **Progress Indicators:**
 ```berry
 # Progress bar with limited pulses
-animation progress_bar = crenel_animation(
+animation progress_bar = crenel(
   color=0xFF0080FF,
   pulse_size=2,
   low_size=1,
@@ -936,9 +934,9 @@ animation progress_bar = crenel_animation(
 - **Framework Integration**: Seamless integration with animation engine
 - **Testing**: Comprehensive test suite covering edge cases and performance
 
-**Factory**: `animation.crenel_animation(engine)`
+**Factory**: `animation.crenel(engine)`
 
-### RichPaletteAnimation
+### rich_palette
 
 Creates smooth color transitions using rich palette data with direct parameter access. Inherits from `Animation`.
 
@@ -955,7 +953,7 @@ Creates smooth color transitions using rich palette data with direct parameter a
 - Parameters are automatically forwarded to internal `rich_palette_color`
 - Access to specialized methods via `anim.color_provider.method_name()`
 
-**Factory**: `animation.rich_palette_animation(engine)`
+**Factory**: `animation.rich_palette(engine)`
 
 ### twinkle
 
@@ -973,7 +971,7 @@ Creates a twinkling stars effect with random lights appearing and fading. Inheri
 
 **Factories**: `animation.twinkle(engine)`
 
-### WaveAnimation
+### wave
 
 Creates mathematical waveforms that can move along the LED strip. Perfect for rhythmic patterns, breathing effects, or mathematical visualizations. Inherits from `Animation`.
 
@@ -1023,7 +1021,7 @@ Creates mathematical waveforms that can move along the LED strip. Perfect for rh
 
 ```berry
 # Rainbow sine wave
-animation rainbow_wave = wave_animation(
+animation rainbow_wave = wave(
   wave_type=0,
   frequency=40,
   wave_speed=80,
@@ -1031,7 +1029,7 @@ animation rainbow_wave = wave_animation(
 )
 
 # Green breathing effect
-animation breathing = wave_animation(
+animation breathing = wave(
   color=green,
   wave_type=0,
   amplitude=150,
@@ -1040,7 +1038,7 @@ animation breathing = wave_animation(
 )
 
 # Fast square wave strobe
-animation strobe = wave_animation(
+animation strobe = wave(
   color=white,
   wave_type=2,
   frequency=80,
@@ -1058,7 +1056,7 @@ animation strobe = wave_animation(
 
 
 
-### PaletteGradientAnimation
+### palette_gradient
 
 Creates shifting gradient patterns with palette colors. Inherits from `Animation`.
 
@@ -1087,16 +1085,16 @@ Creates shifting gradient patterns with palette colors. Inherits from `Animation
 - **phase_shift**: Shifts the gradient pattern spatially by a percentage of the spatial period
 - Each pixel's value calculated using optimized fixed-point arithmetic
 
-**Factory**: `animation.palette_gradient_animation(engine)`
+**Factory**: `animation.palette_gradient(engine)`
 
 ### PaletteMeterAnimation
 
-Creates meter/bar patterns based on a value function. Inherits from `PaletteGradientAnimation`.
+Creates meter/bar patterns based on a value function. Inherits from `palette_gradient`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `value_func` | function | nil | - | Function that provides meter values (0-255 range) |
-| *(inherits all PaletteGradientAnimation parameters)* | | | | |
+| *(inherits all palette_gradient parameters)* | | | | |
 
 **Pattern Generation:**
 - Value function signature: `value_func(engine, time_ms, self)` where:
@@ -1107,7 +1105,7 @@ Creates meter/bar patterns based on a value function. Inherits from `PaletteGrad
 - Pixels within meter range get value 255, others get value 0
 - Meter position calculated as: `position = tasmota.scale_uint(value, 0, 255, 0, strip_length)`
 
-**Factory**: `animation.palette_meter_animation(engine)`
+**Factory**: `animation.palette_meter(engine)`
 
 ## Motion Effects
 
@@ -1119,16 +1117,16 @@ Motion effects can be chained to create sophisticated transformations:
 
 ```berry
 # Base animation
-animation base_pulse = pulsating_animation(color=blue, period=3s)
+animation base_pulse = breathe(color=blue, period=3s)
 
 # Simple animation composition
-animation fire_effect = fire_animation(
+animation fire_effect = fire(
   color=fire_colors,
   intensity=180,
   flicker_speed=8
 )
 
-animation gradient_wave = gradient_animation(
+animation gradient_wave = gradient(
   color=rainbow_cycle,
   gradient_type=0,
   movement_speed=50

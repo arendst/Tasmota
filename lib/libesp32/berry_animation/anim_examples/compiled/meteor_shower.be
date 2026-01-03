@@ -17,22 +17,22 @@ var space_bg_ = 0xFF000011
 var background_ = animation.solid(engine)
 background_.color = space_bg_
 # Multiple meteors with different speeds and colors
-var meteor1_ = animation.comet_animation(engine)
+var meteor1_ = animation.comet(engine)
 meteor1_.color = 0xFFFFFFFF  # Bright white
 meteor1_.tail_length = 12  # long trail
 meteor1_.speed = 1500  # fast speed
 meteor1_.priority = 15
-var meteor2_ = animation.comet_animation(engine)
+var meteor2_ = animation.comet(engine)
 meteor2_.color = 0xFFFFAA00  # Orange
 meteor2_.tail_length = 10  # medium trail
 meteor2_.speed = 2000  # medium speed
 meteor2_.priority = 12
-var meteor3_ = animation.comet_animation(engine)
+var meteor3_ = animation.comet(engine)
 meteor3_.color = 0xFFAAAAFF  # Blue-white
 meteor3_.tail_length = 8  # shorter trail
 meteor3_.speed = 1800  # fast speed
 meteor3_.priority = 10
-var meteor4_ = animation.comet_animation(engine)
+var meteor4_ = animation.comet(engine)
 meteor4_.color = 0xFFFFAAAA  # Pink-white
 meteor4_.tail_length = 14  # long trail
 meteor4_.speed = 2500  # slower speed
@@ -71,28 +71,28 @@ color space_bg = 0x000011
 animation background = solid(color=space_bg)
 
 # Multiple meteors with different speeds and colors
-animation meteor1 = comet_animation(
+animation meteor1 = comet(
   color=0xFFFFFF  # Bright white
   tail_length=12  # long trail
   speed=1.5s      # fast speed
 )
 meteor1.priority = 15
 
-animation meteor2 = comet_animation(
+animation meteor2 = comet(
   color=0xFFAA00  # Orange
   tail_length=10  # medium trail
   speed=2s        # medium speed
 )
 meteor2.priority = 12
 
-animation meteor3 = comet_animation(
+animation meteor3 = comet(
   color=0xAAAAFF  # Blue-white
   tail_length=8   # shorter trail
   speed=1.8s      # fast speed
 )
 meteor3.priority = 10
 
-animation meteor4 = comet_animation(
+animation meteor4 = comet(
   color=0xFFAAAA  # Pink-white
   tail_length=14  # long trail
   speed=2.5s      # slower speed

@@ -127,30 +127,30 @@ register_to_animation(breathe_color_provider)
 # Import animations
 import "animations/solid" as solid_impl
 register_to_animation(solid_impl)
-import "animations/beacon" as beacon_animation
-register_to_animation(beacon_animation)
-import "animations/crenel_position" as crenel_animation
-register_to_animation(crenel_animation)
-import "animations/breathe" as breathe_animation
-register_to_animation(breathe_animation)
-import "animations/palette_pattern" as palette_pattern_animation
+import "animations/beacon" as beacon
+register_to_animation(beacon)
+import "animations/crenel" as crenel
+register_to_animation(crenel)
+import "animations/breathe" as breathe
+register_to_animation(breathe)
+import "animations/palette_gradient" as palette_pattern_animation
 register_to_animation(palette_pattern_animation)
-import "animations/comet" as comet_animation
-register_to_animation(comet_animation)
-import "animations/fire" as fire_animation
-register_to_animation(fire_animation)
+import "animations/comet" as comet
+register_to_animation(comet)
+import "animations/fire" as fire
+register_to_animation(fire)
 import "animations/twinkle" as twinkle
 register_to_animation(twinkle)
-import "animations/gradient" as gradient_animation
-register_to_animation(gradient_animation)
-import "animations/palette_meter" as palette_meter_animation
-register_to_animation(palette_meter_animation)
+import "animations/gradient" as gradient
+register_to_animation(gradient)
+import "animations/palette_meter" as palette_meter
+register_to_animation(palette_meter)
 # import "animations/plasma" as plasma_animation
 # register_to_animation(plasma_animation)
 # import "animations/sparkle" as sparkle_animation
 # register_to_animation(sparkle_animation)
-import "animations/wave" as wave_animation
-register_to_animation(wave_animation)
+import "animations/wave" as wave
+register_to_animation(wave)
 # import "animations/shift" as shift_animation
 # register_to_animation(shift_animation)
 # import "animations/bounce" as bounce_animation
@@ -165,8 +165,8 @@ import "animations/palettes" as palettes
 register_to_animation(palettes)
 
 # Import specialized animation classes
-import "animations/rich_palette_animation" as rich_palette_animation
-register_to_animation(rich_palette_animation)
+import "animations/rich_palette" as rich_palette
+register_to_animation(rich_palette)
 
 # DSL components are now in separate animation_dsl module
 

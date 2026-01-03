@@ -8,7 +8,7 @@ color space_blue = 0x000066    # Note: opaque 0xFF alpha channel is implicitly a
 animation background = solid(color=space_blue)
 
 # Main comet with bright white head
-animation comet_main = comet_animation(
+animation comet_main = comet(
   color=0xFFFFFF  # White head
   tail_length=10  # tail length
   speed=2s        # speed
@@ -16,7 +16,7 @@ animation comet_main = comet_animation(
 )
 
 # Secondary comet in different color, opposite direction
-animation comet_secondary = comet_animation(
+animation comet_secondary = comet(
   color=0xFF4500  # Orange head
   tail_length=8   # shorter tail
   speed=3s        # slower speed

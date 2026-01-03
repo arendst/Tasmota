@@ -20,7 +20,7 @@ class pulse_effect_animation : animation.engine_proxy
   def setup_template()
     var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
 
-    var pulse_ = animation.pulsating_animation(engine)
+    var pulse_ = animation.breathe(engine)
     pulse_.color = animation.create_closure_value(engine, def (engine) return self.base_color end)
     pulse_.period = animation.create_closure_value(engine, def (engine) return self.period end)
     pulse_.opacity = animation.create_closure_value(engine, def (engine) return self.brightness end)
@@ -49,7 +49,7 @@ template animation pulse_effect {
   param period type time
   param brightness type percentage
   
-  animation pulse = pulsating_animation(
+  animation pulse = breathe(
     color=base_color
     period=period
   )

@@ -11,7 +11,7 @@ Write a Berry function that creates and returns an animation:
 ```berry
 # Define a custom breathing effect
 def my_breathing(engine, color, speed)
-  var anim = animation.pulsating_animation(engine)
+  var anim = animation.breathe(engine)
   anim.color = color
   anim.min_brightness = 50
   anim.max_brightness = 255
@@ -210,7 +210,7 @@ fairy_dust.opacity = twinkles(8, 600ms)
 
 ```berry
 def pulse_at(engine, color, position, width, speed)
-  var anim = animation.beacon_animation(engine)
+  var anim = animation.beacon(engine)
   anim.color = color
   anim.position = position
   anim.width = width
@@ -302,7 +302,7 @@ run gradient_effect
 
 ```berry
 def police_lights(engine, flash_speed)
-  var anim = animation.pulsating_animation(engine)
+  var anim = animation.breathe(engine)
   anim.color = 0xFFFF0000  # Red
   anim.min_brightness = 0
   anim.max_brightness = 255
@@ -406,7 +406,7 @@ def flexible_pulse(engine, color, period, min_brightness, max_brightness)
   if min_brightness == nil min_brightness = 50 end
   if max_brightness == nil max_brightness = 255 end
   
-  var anim = animation.pulsating_animation(engine)
+  var anim = animation.breathe(engine)
   anim.color = color
   anim.period = period
   anim.min_brightness = min_brightness
@@ -424,7 +424,7 @@ def safe_comet(engine, color, tail_length, speed)
   if tail_length > 20 tail_length = 20 end
   if speed < 100 speed = 100 end
   
-  var anim = animation.comet_animation(engine)
+  var anim = animation.comet(engine)
   anim.color = color
   anim.tail_length = tail_length
   anim.speed = speed

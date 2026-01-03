@@ -47,7 +47,7 @@ All notable changes to the Animation DSL extension will be documented in this fi
 - Initial release of Animation DSL syntax highlighting
 - Complete syntax highlighting for all DSL constructs:
   - Keywords (strip, color, palette, animation, sequence, etc.)
-  - Animation functions (solid, rich_palette_animation, beacon_animation, etc.)
+  - Animation functions (solid, rich_palette, beacon, etc.)
   - Oscillator functions (ramp, linear, smooth, square)
   - Colors (hex colors and 30+ named colors)
   - Time literals (ms, s, m, h)

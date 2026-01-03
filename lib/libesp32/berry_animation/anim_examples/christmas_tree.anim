@@ -26,7 +26,7 @@ animation ornaments = twinkle(
 ornaments.priority = 10
 
 # Star on top (bright yellow pulse)
-animation tree_star = beacon_animation(
+animation tree_star = beacon(
   color=0xFFFF00  # Bright yellow
   pos=58          # position (near the top)
   beacon_size=3   # star size
@@ -45,7 +45,7 @@ snow_sparkles.priority = 15
 
 # Garland effect - moving colored lights
 color garland_pattern = rich_palette_color(colors=ornament_colors, period=2s, transition_type=LINEAR, brightness=200)
-animation garland = comet_animation(
+animation garland = comet(
   color=garland_pattern # color source
   tail_length=6         # garland length (tail length)
   speed=4s              # slow movement (speed)

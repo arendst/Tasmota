@@ -1,11 +1,11 @@
 # Test file for Breathe animation effect
 #
-# This file contains tests for the BreatheAnimation class following parameterized class specification
+# This file contains tests for the breathe class following parameterized class specification
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/breathe_animation_test.be
 
-print("Testing BreatheAnimation...")
+print("Testing breathe...")
 
 # Import the core animation module
 import animation
@@ -17,7 +17,7 @@ var engine = animation.create_engine(strip)
 print("Created LED strip and animation engine")
 
 # Create a breathe animation with engine-only parameter
-var anim = animation.breathe_animation(engine)
+var anim = animation.breathe(engine)
 print("Created breathe animation with defaults")
 
 # Test default values
@@ -28,7 +28,7 @@ print(f"Default period: {anim.period}")
 print(f"Default curve_factor: {anim.curve_factor}")
 
 # Create another breathe animation and set custom parameters using virtual member assignment
-var blue_breathe = animation.breathe_animation(engine)
+var blue_breathe = animation.breathe(engine)
 blue_breathe.color = 0xFF0000FF
 blue_breathe.min_brightness = 20
 blue_breathe.max_brightness = 200
@@ -42,7 +42,7 @@ print(f"Blue breathe animation period: {blue_breathe.period}")
 print(f"Blue breathe animation curve_factor: {blue_breathe.curve_factor}")
 
 # Create red breathe animation with different parameters
-var red_breathe = animation.breathe_animation(engine)
+var red_breathe = animation.breathe(engine)
 red_breathe.color = 0xFFFF0000
 red_breathe.min_brightness = 10
 red_breathe.max_brightness = 180

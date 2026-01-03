@@ -17,7 +17,7 @@ var engine = animation.create_engine(strip)
 print("Created engine and LED strip")
 
 # Create a pulse animation with new constructor (engine only)
-var anim = animation.pulsating_animation(engine)
+var anim = animation.breathe(engine)
 print("Created pulse animation with defaults")
 
 # Test default values
@@ -28,7 +28,7 @@ print(f"Default period: {anim.period}")
 print(f"Default curve_factor: {anim.curve_factor}")  # Should be 1 for pulsating
 
 # Test with custom parameters using virtual member assignment
-var blue_pulse = animation.pulsating_animation(engine)
+var blue_pulse = animation.breathe(engine)
 blue_pulse.color = 0xFF0000FF
 blue_pulse.min_brightness = 50
 blue_pulse.max_brightness = 200
@@ -40,7 +40,7 @@ print(f"Blue pulse animation period: {blue_pulse.period}")
 print(f"Blue pulse animation curve_factor: {blue_pulse.curve_factor}")
 
 # Test creating another pulse with different parameters
-var red_pulse = animation.pulsating_animation(engine)
+var red_pulse = animation.breathe(engine)
 red_pulse.color = 0xFFFF0000  # Red color
 red_pulse.min_brightness = 20
 red_pulse.max_brightness = 180

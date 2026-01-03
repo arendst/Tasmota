@@ -10,7 +10,7 @@ Writing LED animations in pure Berry code requires understanding the animation e
 
 - **Declarative, not imperative** - Just specify *what* you want and *how long* it should take; the framework handles all intermediate states and timing
 - **No state machines** - Forget about tracking animation phases, transitions, and timing manually
-- **Readable syntax** - Write `animation pulse = pulsating_animation(color=red, period=2s)` instead of dozens of lines of Berry code
+- **Readable syntax** - Write `animation pulse = breathe(color=red, period=2s)` instead of dozens of lines of Berry code
 - **Automatic engine management** - No need to create engines, manage frame buffers, or handle timing
 - **Built-in effects** - Access to pulse, breathe, fire, comet, sparkle, wave, and many more effects
 - **Dynamic parameters** - Oscillating values (sine, triangle, smooth) without manual math
@@ -49,22 +49,22 @@ Without `USE_BERRY_ANIMATION_DSL`, use the online emulator to create animations 
 ### Simple Breathing Animation
 
 ```berry
-animation pulse = breathe_animation(color=red, period=2s)
+animation pulse = breathe(color=red, period=2s)
 run pulse
 ```
 
 ### Rainbow Smooth Color Cycling
 
 ```berry
-animation rainbow = rich_palette_animation(colors=PALETTE_RAINBOW)
+animation rainbow = rich_palette(colors=PALETTE_RAINBOW)
 run rainbow
 ```
 
 ### Animation Sequence
 
 ```berry
-animation red_pulse = breathe_animation(color=red, period=2s)
-animation blue_pulse = breathe_animation(color=blue, period=1.5s)
+animation red_pulse = breathe(color=red, period=2s)
+animation blue_pulse = breathe(color=blue, period=1.5s)
 
 sequence show repeat forever {
   play red_pulse for 4s
@@ -136,7 +136,7 @@ template animation pulse_effect {
   param pulse_color type color
   param speed
   
-  animation pulse = pulsating_animation(color=pulse_color, period=speed)
+  animation pulse = breathe(color=pulse_color, period=speed)
   run pulse
 }
 
@@ -155,19 +155,17 @@ run show
 Animation|Description
 :---|:---
 `solid`|Solid color fill
-`pulsating_animation`|Breathing/pulsing effect with smooth transitions
-`breathe_animation`|Natural breathing effect with customizable curve
-`beacon_animation`|Pulse/highlight at specific position with optional slew
-`crenel_animation`|Crenel/square wave pattern
-`comet_animation`|Moving comet with fading tail
+`breathe`|Natural breathing effect with customizable curve
+`beacon`|Pulse/highlight at specific position with optional slew
+`crenel`|Crenel/square wave pattern
+`comet`|Moving comet with fading tail
 `twinkle`|Twinkling stars effect
-`fire_animation`|Realistic fire simulation
+`fire`|Realistic fire simulation
 `rich_palette_color`|Smooth palette color transitions
-`gradient_animation`|Linear or radial color gradients
-`palette_gradient_animation`|Gradient patterns with palette colors
-`palette_meter_animation`|Meter/bar patterns
-`gradient_meter_animation`|VU meter with gradient and peak hold
-`wave_animation`|Wave motion effects
+`gradient`|Linear or radial color gradients
+`palette_gradient`|Gradient patterns with palette colors
+`palette_meter`|VU meter with gradient and peak hold
+`wave`|Wave motion effects
 
 ## Documentation
 

@@ -9,6 +9,6 @@ color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0
 set strip_len = strip_length()
 
 # define a gradient across the whole strip
-animation back_pattern = palette_gradient_animation(color_source = rainbow_rich_color,
+animation back_pattern = palette_gradient(color_source = rainbow_rich_color,
                                                     spatial_period = strip_len / 2)
 run back_pattern

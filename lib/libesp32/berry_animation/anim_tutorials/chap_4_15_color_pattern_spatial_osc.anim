@@ -11,5 +11,5 @@ set strip_len = strip_length()
 set period = sine_osc(min_value = (strip_len - 1) / 2, max_value = (3 * strip_len) / 2, duration = 5s)
 
 # Define a gradient across the whole strip with variable spatial_period
-animation back = palette_gradient_animation(color_source = rainbow_rich_color, spatial_period = period)
+animation back = palette_gradient(color_source = rainbow_rich_color, spatial_period = period)
 run back

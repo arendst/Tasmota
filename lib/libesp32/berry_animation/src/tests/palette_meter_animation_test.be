@@ -1,4 +1,4 @@
-# Test suite for GradientMeterAnimation (palette_meter_animation)
+# Test suite for palette_meter (palette_meter)
 #
 # Tests the VU meter style animation with gradient colors and peak hold.
 
@@ -6,27 +6,27 @@ import animation
 
 # Test basic creation
 def test_gradient_meter_creation()
-  print("Testing GradientMeterAnimation creation...")
+  print("Testing palette_meter creation...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
 
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
   assert(meter != nil, "Should create gradient meter animation")
   assert(meter.level == 255, "Should default to level 255")
   assert(meter.peak_hold == 1000, "Should default to peak_hold 1000ms")
   assert(meter.shift_period == 0, "Should default to static gradient")
 
-  print("✓ GradientMeterAnimation creation test passed")
+  print("✓ palette_meter creation test passed")
 end
 
 # Test level parameter
 def test_gradient_meter_level()
-  print("Testing GradientMeterAnimation level...")
+  print("Testing palette_meter level...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
 
   # Test level setting
   meter.level = 128
@@ -42,16 +42,16 @@ def test_gradient_meter_level()
   assert(meter.set_param("level", 300) == false, "Should reject level > 255")
   assert(meter.set_param("level", -1) == false, "Should reject level < 0")
 
-  print("✓ GradientMeterAnimation level test passed")
+  print("✓ palette_meter level test passed")
 end
 
 # Test peak hold functionality
 def test_gradient_meter_peak_hold()
-  print("Testing GradientMeterAnimation peak hold...")
+  print("Testing palette_meter peak hold...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
 
   # Enable peak hold
   meter.peak_hold = 1000  # 1 second hold
@@ -76,18 +76,18 @@ def test_gradient_meter_peak_hold()
   meter.update(2100)
   assert(meter.peak_level == 100, "Peak should drop to current level after hold expires")
 
-  print("✓ GradientMeterAnimation peak hold test passed")
+  print("✓ palette_meter peak hold test passed")
 end
 
 # Test rendering
 def test_gradient_meter_rendering()
-  print("Testing GradientMeterAnimation rendering...")
+  print("Testing palette_meter rendering...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
 
-  # Use a color provider (required for PaletteGradientAnimation)
+  # Use a color provider (required for palette_gradient)
   var color_source = animation.rich_palette_color(engine)
   meter.color_source = color_source
 
@@ -116,16 +116,16 @@ def test_gradient_meter_rendering()
   meter.update(200)
   meter.render(frame, 200, 10)
 
-  print("✓ GradientMeterAnimation rendering test passed")
+  print("✓ palette_meter rendering test passed")
 end
 
 # Test peak indicator rendering
 def test_gradient_meter_peak_indicator()
-  print("Testing GradientMeterAnimation peak indicator...")
+  print("Testing palette_meter peak indicator...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
 
   # Use a color provider
   var color_source = animation.rich_palette_color(engine)
@@ -159,16 +159,16 @@ def test_gradient_meter_peak_indicator()
   var peak_color = frame.get_pixel_color(peak_pixel)
   assert(peak_color != 0x00000000, "Peak indicator pixel should have color")
 
-  print("✓ GradientMeterAnimation peak indicator test passed")
+  print("✓ palette_meter peak indicator test passed")
 end
 
 # Test with color provider
 def test_gradient_meter_with_color_provider()
-  print("Testing GradientMeterAnimation with color provider...")
+  print("Testing palette_meter with color provider...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
 
   # Use a color cycle provider
   var color_cycle = animation.color_cycle(engine)
@@ -184,16 +184,16 @@ def test_gradient_meter_with_color_provider()
   var result = meter.render(frame, 0, 10)
   assert(result == true, "Should render with color provider")
 
-  print("✓ GradientMeterAnimation with color provider test passed")
+  print("✓ palette_meter with color provider test passed")
 end
 
 # Test tostring
 def test_gradient_meter_tostring()
-  print("Testing GradientMeterAnimation tostring...")
+  print("Testing palette_meter tostring...")
 
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var meter = animation.palette_meter_animation(engine)
+  var meter = animation.palette_meter(engine)
   meter.level = 150
   meter.peak_hold = 500
 
@@ -201,12 +201,12 @@ def test_gradient_meter_tostring()
   assert(s != nil, "Should have string representation")
   assert(type(s) == "string", "Should be a string")
 
-  print("✓ GradientMeterAnimation tostring test passed")
+  print("✓ palette_meter tostring test passed")
 end
 
 # Run all tests
 def run_palette_meter_animation_tests()
-  print("=== GradientMeterAnimation Tests ===")
+  print("=== palette_meter Tests ===")
 
   try
     test_gradient_meter_creation()
@@ -217,7 +217,7 @@ def run_palette_meter_animation_tests()
     test_gradient_meter_with_color_provider()
     test_gradient_meter_tostring()
 
-    print("=== All GradientMeterAnimation tests passed! ===")
+    print("=== All palette_meter tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

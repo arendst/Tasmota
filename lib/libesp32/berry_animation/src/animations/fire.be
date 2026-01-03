@@ -5,8 +5,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:FireAnimation,weak
-class FireAnimation : animation.animation
+#@ solidify:fire,weak
+class fire : animation.animation
   # Non-parameter instance variables only
   var heat_map         # bytes() buffer storing heat values for each pixel (0-255)
   var current_colors   # bytes() buffer storing ARGB colors (4 bytes per pixel)
@@ -27,6 +27,7 @@ class FireAnimation : animation.animation
   #
   # @param engine: AnimationEngine - The animation engine (required)
   def init(engine)
+    log("ANI: `fire` animation is still in alpha and will be refactored")
     # Call parent constructor with engine
     super(self).init(engine)
     
@@ -252,4 +253,4 @@ class FireAnimation : animation.animation
   end
 end
 
-return {'fire_animation': FireAnimation}
+return {'fire': fire}

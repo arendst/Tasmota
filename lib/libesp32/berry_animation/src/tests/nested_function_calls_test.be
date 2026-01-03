@@ -13,7 +13,7 @@ def test_basic_nested_calls()
   var dsl_code = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
-    "animation pulse_red = pulsating_animation(color=static_color(color=custom_red), period=3s)\n"
+    "animation pulse_red = breathe(color=static_color(color=custom_red), period=3s)\n"
     "run pulse_red"
   
   try
@@ -22,8 +22,8 @@ def test_basic_nested_calls()
     
     # Check that the generated code contains the new engine-based pattern
     import string
-    assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, 
-           "Generated code should contain pulsating_animation with engine parameter")
+    assert(string.find(berry_code, "animation.breathe(engine)") >= 0, 
+           "Generated code should contain breathe with engine parameter")
     assert(string.find(berry_code, "animation.static_color(engine)") >= 0, 
            "Generated code should contain nested static_color function call")
   except "dsl_compilation_error" as e, msg
@@ -39,7 +39,7 @@ def test_deep_nesting()
   
   var dsl_code = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
-    "animation complex = pulsating_animation(color=static_color(color=red), period=2s)\n"
+    "animation complex = breathe(color=static_color(color=red), period=2s)\n"
     "run complex"
   
   try
@@ -48,7 +48,7 @@ def test_deep_nesting()
     
     # Check that the generated code contains nested calls
     import string
-    assert(string.find(berry_code, "animation.pulsating_animation(") >= 0, "Should contain pulsating_animation function")
+    assert(string.find(berry_code, "animation.breathe(") >= 0, "Should contain breathe function")
     assert(string.find(berry_code, "animation.static_color(") >= 0, "Should contain static_color function")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
@@ -63,7 +63,7 @@ def test_mixed_parameter_types()
   
   var dsl_code = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
-    "animation mixed = pulsating_animation(color=static_color(color=blue), period=2s, max_brightness=80%)\n"
+    "animation mixed = breathe(color=static_color(color=blue), period=2s, max_brightness=80%)\n"
     "run mixed"
   
   try
@@ -89,7 +89,7 @@ def test_nested_calls_in_arrays()
   
   var dsl_code = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
-    "animation cycle = pulsating_animation(color=static_color(color=red), period=5s)\n"
+    "animation cycle = breathe(color=static_color(color=red), period=5s)\n"
     "run cycle"
   
   try
@@ -98,8 +98,8 @@ def test_nested_calls_in_arrays()
     
     # Check that nested calls in arrays work
     import string
-    assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, 
-           "Should contain pulsating_animation function call")
+    assert(string.find(berry_code, "animation.breathe(engine)") >= 0, 
+           "Should contain breathe function call")
     assert(string.find(berry_code, "animation.static_color(engine)") >= 0, 
            "Should contain nested static_color function call")
   except "dsl_compilation_error" as e, msg
@@ -116,7 +116,7 @@ def test_error_handling()
   # Test unclosed parentheses
   var dsl_code1 = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
-    "animation bad = pulsating_animation(color=static_color(color=red)\n"  # Missing closing paren
+    "animation bad = breathe(color=static_color(color=red)\n"  # Missing closing paren
     "run bad"
   
   try
@@ -150,7 +150,7 @@ def test_complex_real_world_example()
   var dsl_code = 
     "# strip length 60  # TEMPORARILY DISABLED\n"
     "color sunset_red = 0xFF4500\n"
-    "animation evening = pulsating_animation(\n"
+    "animation evening = breathe(\n"
     "  color=static_color(color=sunset_red),\n"
     "  period=10s\n"
     ")\n"
@@ -162,7 +162,7 @@ def test_complex_real_world_example()
     
     # Verify the structure is preserved
     import string
-    assert(string.find(berry_code, "animation.pulsating_animation(") >= 0, "Should contain pulsating_animation")
+    assert(string.find(berry_code, "animation.breathe(") >= 0, "Should contain breathe")
     assert(string.find(berry_code, "animation.static_color(") >= 0, "Should contain static_color")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
@@ -178,7 +178,7 @@ def test_generated_code_validity()
   var dsl_code = 
     "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
-    "animation test = pulsating_animation(color=static_color(color=custom_red), period=3s)\n"
+    "animation test = breathe(color=static_color(color=custom_red), period=3s)\n"
     "run test"
   
   try

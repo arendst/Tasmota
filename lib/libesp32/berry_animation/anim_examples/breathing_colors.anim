@@ -27,7 +27,7 @@ color palette_pattern = rich_palette_color(
 )
 
 # Create breathing animation using the palette
-animation breathing = breathe_animation(
+animation breathing = breathe(
   color=palette_pattern # base animation
   min_brightness=100    # min brightness
   max_brightness=255    # max brightness

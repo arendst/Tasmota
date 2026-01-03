@@ -209,7 +209,7 @@ assert_equal(animation.parameterized_object.constraint_mask(encoded_4_3, "nillab
 # ============================================================================
 print("\n--- Test Group 5: Real-World PARAMS ---")
 
-# Test 5.1: BeaconAnimation PARAMS
+# Test 5.1: beacon PARAMS
 var beacon_params = {
   "color": {"default": 0xFFFFFFFF},
   "back_color": {"default": 0xFF000000},
@@ -221,7 +221,7 @@ var beacon_encoded = animation.enc_params(beacon_params)
 assert_equal(animation.parameterized_object.constraint_find(beacon_encoded["color"], "default", nil), 0xFFFFFFFF, "5.1a: beacon color")
 assert_equal(animation.parameterized_object.constraint_find(beacon_encoded["beacon_size"], "min", nil), 0, "5.1b: beacon_size min")
 
-# Test 5.2: CometAnimation PARAMS
+# Test 5.2: comet PARAMS
 var comet_params = {
   "tail_length": {"min": 1, "max": 50, "default": 5},
   "speed": {"min": 1, "max": 25600, "default": 2560},
@@ -250,7 +250,7 @@ assert_equal(animation.parameterized_object.constraint_find(animation_encoded["n
 assert_equal(animation.parameterized_object.constraint_find(animation_encoded["loop"], "type", nil), "bool", "5.3c: loop type")
 assert_equal(animation.parameterized_object.constraint_find(animation_encoded["opacity"], "type", nil), "any", "5.3d: opacity type")
 
-# Test 5.4: GradientAnimation PARAMS (with nillable)
+# Test 5.4: gradient PARAMS (with nillable)
 var gradient_params = {
   "color": {"default": nil, "nillable": true},
   "gradient_type": {"min": 0, "max": 1, "default": 0},
@@ -272,7 +272,7 @@ var oscillator_encoded = animation.enc_params(oscillator_params)
 var form_enum = animation.parameterized_object.constraint_find(oscillator_encoded["form"], "enum", nil)
 assert_array_equal(form_enum, [1, 2, 3, 4, 5, 6, 7, 8, 9], "5.5a: form enum")
 
-# Test 5.6: BreatheAnimation PARAMS
+# Test 5.6: breathe PARAMS
 var breathe_params = {
   "base_color": {"default": 0xFFFFFFFF},
   "min_brightness": {"min": 0, "max": 255, "default": 0},

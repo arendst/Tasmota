@@ -1,7 +1,7 @@
 # @desc Smooth cycling through rainbow colors with custom palette
 
-animation back = rich_palette_animation()
+animation back = rich_palette()
 # Equivalent to
-# animation back = rich_palette_animation(colors=PALETTE_PALETTE_RAINBOW, period=5s,
+# animation back = rich_palette(colors=PALETTE_PALETTE_RAINBOW, period=5s,
 #                                         transition_type=SINE, brightness=100%)
 run back

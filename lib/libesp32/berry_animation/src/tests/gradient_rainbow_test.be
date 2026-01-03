@@ -8,7 +8,7 @@ var strip = global.Leds(10)
 var engine = animation.create_engine(strip)
 
 # Test linear gradient with two colors
-var gradient = animation.gradient_animation(engine)
+var gradient = animation.gradient(engine)
 gradient.color1 = 0xFF0000FF  # Blue
 gradient.color2 = 0xFFFF0000  # Red
 gradient.gradient_type = 0  # Linear

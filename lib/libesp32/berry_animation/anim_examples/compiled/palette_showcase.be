@@ -56,17 +56,17 @@ fire_effect_.color = (def (engine)
   provider.period = 3000
   return provider
 end)(engine)
-var ocean_waves_ = animation.rich_palette_animation(engine)
+var ocean_waves_ = animation.rich_palette(engine)
 ocean_waves_.colors = ocean_depths_
 ocean_waves_.period = 8000
 ocean_waves_.transition_type = animation.SINE
 ocean_waves_.brightness = 200
-var aurora_lights_ = animation.rich_palette_animation(engine)
+var aurora_lights_ = animation.rich_palette(engine)
 aurora_lights_.colors = aurora_borealis_
 aurora_lights_.period = 12000
 aurora_lights_.transition_type = animation.SINE
 aurora_lights_.brightness = 180
-var sunset_glow_ = animation.rich_palette_animation(engine)
+var sunset_glow_ = animation.rich_palette(engine)
 sunset_glow_.colors = sunset_sky_
 sunset_glow_.period = 6000
 sunset_glow_.transition_type = animation.SINE
@@ -145,11 +145,11 @@ palette sunset_sky = [
 # Create animations using each palette
 animation fire_effect = solid(color=rich_palette_color(colors=fire_gradient, period=3s))
 
-animation ocean_waves = rich_palette_animation(colors=ocean_depths, period=8s, transition_type=SINE, brightness=200)
+animation ocean_waves = rich_palette(colors=ocean_depths, period=8s, transition_type=SINE, brightness=200)
 
-animation aurora_lights = rich_palette_animation(colors=aurora_borealis, period=12s, transition_type=SINE, brightness=180)
+animation aurora_lights = rich_palette(colors=aurora_borealis, period=12s, transition_type=SINE, brightness=180)
 
-animation sunset_glow = rich_palette_animation(colors=sunset_sky, period=6s, transition_type=SINE, brightness=220)
+animation sunset_glow = rich_palette(colors=sunset_sky, period=6s, transition_type=SINE, brightness=220)
 
 # Sequence to showcase all palettes
 sequence palette_showcase {

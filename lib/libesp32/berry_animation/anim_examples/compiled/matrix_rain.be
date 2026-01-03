@@ -31,7 +31,7 @@ stream1_pattern_.colors = matrix_greens_
 stream1_pattern_.period = 2000
 stream1_pattern_.transition_type = animation.LINEAR
 stream1_pattern_.brightness = 255
-var stream1_ = animation.comet_animation(engine)
+var stream1_ = animation.comet(engine)
 stream1_.color = stream1_pattern_  # color source
 stream1_.tail_length = 15  # long tail
 stream1_.speed = 1500  # speed
@@ -41,7 +41,7 @@ stream2_pattern_.colors = matrix_greens_
 stream2_pattern_.period = 1800
 stream2_pattern_.transition_type = animation.LINEAR
 stream2_pattern_.brightness = 200
-var stream2_ = animation.comet_animation(engine)
+var stream2_ = animation.comet(engine)
 stream2_.color = stream2_pattern_  # color source
 stream2_.tail_length = 12  # medium tail
 stream2_.speed = 2200  # different speed
@@ -51,7 +51,7 @@ stream3_pattern_.colors = matrix_greens_
 stream3_pattern_.period = 2500
 stream3_pattern_.transition_type = animation.LINEAR
 stream3_pattern_.brightness = 180
-var stream3_ = animation.comet_animation(engine)
+var stream3_ = animation.comet(engine)
 stream3_.color = stream3_pattern_  # color source
 stream3_.tail_length = 10  # shorter tail
 stream3_.speed = 1800  # another speed
@@ -92,7 +92,7 @@ palette matrix_greens = [
 
 # Create multiple cascading streams
 color stream1_pattern = rich_palette_color(colors=matrix_greens, period=2s, transition_type=LINEAR, brightness=255)
-animation stream1 = comet_animation(
+animation stream1 = comet(
   color=stream1_pattern # color source
   tail_length=15        # long tail
   speed=1.5s            # speed
@@ -101,7 +101,7 @@ animation stream1 = comet_animation(
 
 
 color stream2_pattern = rich_palette_color(colors=matrix_greens, period=1.8s, transition_type=LINEAR, brightness=200)
-animation stream2 = comet_animation(
+animation stream2 = comet(
   color=stream2_pattern # color source
   tail_length=12        # medium tail
   speed=2.2s            # different speed
@@ -109,7 +109,7 @@ animation stream2 = comet_animation(
 )
 
 color stream3_pattern = rich_palette_color(colors=matrix_greens, period=2.5s, transition_type=LINEAR, brightness=180)
-animation stream3 = comet_animation(
+animation stream3 = comet(
   color=stream3_pattern # color source
   tail_length=10        # shorter tail
   speed=1.8s            # another speed

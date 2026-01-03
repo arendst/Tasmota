@@ -36,7 +36,7 @@ ornaments_.density = 15  # density (many ornaments)
 ornaments_.twinkle_speed = 800  # twinkle speed (slow twinkle)
 ornaments_.priority = 10
 # Star on top (bright yellow pulse)
-var tree_star_ = animation.beacon_animation(engine)
+var tree_star_ = animation.beacon(engine)
 tree_star_.color = 0xFFFFFF00  # Bright yellow
 tree_star_.pos = 58  # position (near the top)
 tree_star_.beacon_size = 3  # star size
@@ -61,7 +61,7 @@ garland_pattern_.colors = ornament_colors_
 garland_pattern_.period = 2000
 garland_pattern_.transition_type = animation.LINEAR
 garland_pattern_.brightness = 200
-var garland_ = animation.comet_animation(engine)
+var garland_ = animation.comet(engine)
 garland_.color = garland_pattern_  # color source
 garland_.tail_length = 6  # garland length (tail length)
 garland_.speed = 4000  # slow movement (speed)
@@ -104,7 +104,7 @@ animation ornaments = twinkle(
 ornaments.priority = 10
 
 # Star on top (bright yellow pulse)
-animation tree_star = beacon_animation(
+animation tree_star = beacon(
   color=0xFFFF00  # Bright yellow
   pos=58          # position (near the top)
   beacon_size=3   # star size
@@ -123,7 +123,7 @@ snow_sparkles.priority = 15
 
 # Garland effect - moving colored lights
 color garland_pattern = rich_palette_color(colors=ornament_colors, period=2s, transition_type=LINEAR, brightness=200)
-animation garland = comet_animation(
+animation garland = comet(
   color=garland_pattern # color source
   tail_length=6         # garland length (tail length)
   speed=4s              # slow movement (speed)

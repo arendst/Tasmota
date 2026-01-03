@@ -144,7 +144,7 @@ The framework has updated timing behavior where:
    animation red_anim = solid(color=red, opacity=255)  # Full brightness
    
    # Or assign after creation
-   animation pulse_red = pulsating_animation(color=red, period=2s)
+   animation pulse_red = breathe(color=red, period=2s)
    pulse_red.opacity = 200  # Adjust brightness
    
    # Use value providers for dynamic brightness
@@ -162,17 +162,17 @@ The framework has updated timing behavior where:
 1. **Check Time Units:**
    ```berry
    # DSL uses time units (converted to milliseconds)
-   animation pulse_anim = pulsating_animation(color=red, period=2s)    # 2 seconds
-   animation fast_pulse = pulsating_animation(color=blue, period=500ms) # 0.5 seconds
+   animation pulse_anim = breathe(color=red, period=2s)    # 2 seconds
+   animation fast_pulse = breathe(color=blue, period=500ms) # 0.5 seconds
    ```
 
 2. **Adjust Periods:**
    ```berry
    # Too fast - increase period
-   animation slow_pulse = pulsating_animation(color=red, period=5s)   # 5 seconds
+   animation slow_pulse = breathe(color=red, period=5s)   # 5 seconds
    
    # Too slow - decrease period
-   animation fast_pulse = pulsating_animation(color=red, period=500ms) # 0.5 seconds
+   animation fast_pulse = breathe(color=red, period=500ms) # 0.5 seconds
    ```
 
 3. **Performance Limitations:**
@@ -231,10 +231,10 @@ end
 3. **Missing Time Units:**
    ```berry
    # Wrong - no time unit
-   animation pulse_anim = pulsating_animation(color=red, period=2000)
+   animation pulse_anim = breathe(color=red, period=2000)
    
    # Correct - with time unit
-   animation pulse_anim = pulsating_animation(color=red, period=2s)
+   animation pulse_anim = breathe(color=red, period=2s)
    ```
 
 4. **Reserved Name Conflicts:**
@@ -249,11 +249,11 @@ end
 5. **Invalid Parameter Names:**
    ```berry
    # Wrong - invalid parameter name
-   animation pulse_anim = pulsating_animation(color=red, invalid_param=123)
-   # Error: "Parameter 'invalid_param' is not valid for pulsating_animation"
+   animation pulse_anim = breathe(color=red, invalid_param=123)
+   # Error: "Parameter 'invalid_param' is not valid for breathe"
    
    # Correct - use valid parameters (see Dsl_Reference.md for complete list)
-   animation pulse_anim = pulsating_animation(color=red, period=2s)
+   animation pulse_anim = breathe(color=red, period=2s)
    ```
 
 6. **Variable Duration Support:**
@@ -299,7 +299,7 @@ end
      param color type color
      param speed
      
-     animation pulse = pulsating_animation(
+     animation pulse = breathe(
        color=color
        period=speed
      )
@@ -328,7 +328,7 @@ end
      param color type color
      param speed
      
-     animation pulse = pulsating_animation(color=color, period=speed)
+     animation pulse = breathe(color=color, period=speed)
      run pulse
    }
    
@@ -338,16 +338,16 @@ end
 6. **Parameter Constraint Violations:**
    ```berry
    # Wrong - negative period not allowed
-   animation bad_pulse = pulsating_animation(color=red, period=-2s)
+   animation bad_pulse = breathe(color=red, period=-2s)
    # Error: "Parameter 'period' value -2000 violates constraint: min=1"
    
    # Wrong - invalid enum value
-   animation bad_comet = comet_animation(color=red, direction=5)
+   animation bad_comet = comet(color=red, direction=5)
    # Error: "Parameter 'direction' value 5 not in allowed values: [-1, 1]"
    
    # Correct - valid parameters within constraints
-   animation good_pulse = pulsating_animation(color=red, period=2s)
-   animation good_comet = comet_animation(color=red, direction=1)
+   animation good_pulse = breathe(color=red, period=2s)
+   animation good_comet = comet(color=red, direction=1)
    ```
 
 7. **Repeat Syntax Errors:**
@@ -406,7 +406,7 @@ end
      param color type color
      param speed
      
-     animation pulse = pulsating_animation(color=color, period=speed)
+     animation pulse = breathe(color=color, period=speed)
      run pulse
    }
    ```
@@ -507,13 +507,13 @@ template pulse_effect {
   param color type color
   param speed
   
-  animation pulse = pulsating_animation(color=color, period=speed)
+  animation pulse = breathe(color=color, period=speed)
   run pulse
 }
 
 # User Function (Berry-native) - For complex logic
 def create_pulse_effect(engine, color, speed)
-  var pulse = animation.pulsating_animation(engine)
+  var pulse = animation.breathe(engine)
   pulse.color = color
   pulse.period = speed
   return pulse
@@ -765,10 +765,10 @@ complex_anim.period = 2000  # 2 seconds instead of 100ms
 2. **Increase Animation Periods:**
    ```berry
    # Smooth - longer periods
-   animation smooth_pulse = pulsating_animation(color=red, period=3s)
+   animation smooth_pulse = breathe(color=red, period=3s)
    
    # Choppy - very short periods
-   animation choppy_pulse = pulsating_animation(color=red, period=50ms)
+   animation choppy_pulse = breathe(color=red, period=50ms)
    ```
 
 3. **Optimize Value Providers:**
@@ -779,10 +779,10 @@ complex_anim.period = 2000  # 2 seconds instead of 100ms
    color red = 0xFF0000
    color blue = 0x0000FF
    
-   animation anim1 = pulsating_animation(color=red, period=2s)
+   animation anim1 = breathe(color=red, period=2s)
    anim1.opacity = breathing
    
-   animation anim2 = pulsating_animation(color=blue, period=2s)
+   animation anim2 = breathe(color=blue, period=2s)
    anim2.opacity = breathing  # Reuse same provider
    ```
 
@@ -1160,7 +1160,7 @@ template pulse_effect {
   param base_color type color    # Use descriptive names
   param speed type time          # Add type annotations for clarity
   
-  animation pulse = pulsating_animation(color=base_color, period=speed)
+  animation pulse = breathe(color=base_color, period=speed)
   run pulse
 }
 
@@ -1197,7 +1197,7 @@ template unused_param_example {
 ### Animation with Parameters
 ```berry
 color blue = 0x0000FF
-animation blue_pulse = pulsating_animation(color=blue, period=2s, opacity=200)
+animation blue_pulse = breathe(color=blue, period=2s, opacity=200)
 run blue_pulse
 ```
 

@@ -21,7 +21,7 @@ class cylon_effect_animation : animation.engine_proxy
     var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
 
     var strip_len_ = animation.strip_length(engine)
-    var eye_animation_ = animation.beacon_animation(engine)
+    var eye_animation_ = animation.beacon(engine)
     eye_animation_.color = animation.create_closure_value(engine, def (engine) return self.eye_color end)
     eye_animation_.back_color = animation.create_closure_value(engine, def (engine) return self.back_color end)
     eye_animation_.pos = (def (engine)
@@ -51,7 +51,7 @@ template animation cylon_effect {
   
   set strip_len = strip_length()
 
-  animation eye_animation = beacon_animation(
+  animation eye_animation = beacon(
     color = eye_color
     back_color = back_color
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = period)

@@ -31,7 +31,7 @@ def run_tests()
   
   # Test 1: right_edge=0 (default, left edge), pos=0, beacon_size=1
   # Should show 1 pixel at position 0 (left edge)
-  var beacon1 = animation.beacon_animation(engine)
+  var beacon1 = animation.beacon(engine)
   beacon1.color = 0xFFFF0000  # Red
   beacon1.back_color = 0xFF000000  # Black
   beacon1.pos = 0
@@ -51,7 +51,7 @@ def run_tests()
   # Test 2: right_edge=1 (right edge), pos=0, beacon_size=1
   # With right_edge=1: effective_pos = pos - beacon_size + 1 = 0 - 1 + 1 = 0
   # So pixel 0 should be lit
-  var beacon2 = animation.beacon_animation(engine)
+  var beacon2 = animation.beacon(engine)
   beacon2.color = 0xFF00FF00  # Green
   beacon2.back_color = 0xFF000000  # Black
   beacon2.pos = 0
@@ -70,7 +70,7 @@ def run_tests()
   # Test 3: right_edge=1, pos=5, beacon_size=3
   # With right_edge=1: effective_pos = pos - beacon_size + 1 = 5 - 3 + 1 = 3
   # So pixels 3,4,5 should be lit (beacon from 3 to 5, with right edge at 5)
-  var beacon3 = animation.beacon_animation(engine)
+  var beacon3 = animation.beacon(engine)
   beacon3.color = 0xFF0000FF  # Blue
   beacon3.back_color = 0xFF000000  # Black
   beacon3.pos = 5
@@ -90,7 +90,7 @@ def run_tests()
   
   # Test 4: right_edge=0, pos=2, beacon_size=3 (same params, different right_edge)
   # Should show pixels 2,3,4 lit
-  var beacon4 = animation.beacon_animation(engine)
+  var beacon4 = animation.beacon(engine)
   beacon4.color = 0xFFFFFF00  # Yellow
   beacon4.back_color = 0xFF000000  # Black
   beacon4.pos = 2
@@ -109,7 +109,7 @@ def run_tests()
   test_assert(frame.get_pixel_color(5) == 0xFF000000, "right_edge=0, pos=2, size=3: pixel 5 is black")
   
   # Test 5: Default right_edge should be 0
-  var beacon5 = animation.beacon_animation(engine)
+  var beacon5 = animation.beacon(engine)
   test_assert(beacon5.right_edge == 0, "Default right_edge is 0")
   
   # Test 6: Invalid right_edge value should be rejected

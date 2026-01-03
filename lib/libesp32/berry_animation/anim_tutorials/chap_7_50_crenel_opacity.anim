@@ -5,7 +5,7 @@ animation back = solid(color = blue, priority = 20)
 run back
 
 # Define a simple crenel 2+2 opaque/transparent
-animation mask = crenel_animation(
+animation mask = crenel(
     color = white               # plain color since it's used as opacity mask
     back_color = transparent    # background is transparent
     pulse_size = 2
@@ -15,7 +15,7 @@ animation mask = crenel_animation(
 # Define a smooth palette using PALETTE_RAINBOW_W (7 colors + white)
 color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 # Define a gradient across the whole strip and use crenel as opacity mask
-animation pattern = palette_gradient_animation(
+animation pattern = palette_gradient(
     color_source = rainbow_rich_color       # use the rainow pattern
     shift_period = 2s                       # shifting over 2s
     opacity = mask                          # mask it with crenel pattern

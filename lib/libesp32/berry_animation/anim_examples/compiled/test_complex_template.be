@@ -24,7 +24,7 @@ class rainbow_pulse_animation : animation.engine_proxy
     cycle_color_.colors = animation.create_closure_value(engine, def (engine) return self.pal1 end)
     cycle_color_.period = animation.create_closure_value(engine, def (engine) return self.period end)
     # Create pulsing animation
-    var pulse_ = animation.pulsating_animation(engine)
+    var pulse_ = animation.breathe(engine)
     pulse_.color = cycle_color_
     pulse_.period = animation.create_closure_value(engine, def (engine) return self.period end)
     # Create background
@@ -71,7 +71,7 @@ template animation rainbow_pulse {
   color cycle_color = color_cycle(colors=pal1, period=period)
   
   # Create pulsing animation
-  animation pulse = pulsating_animation(
+  animation pulse = breathe(
     color=cycle_color
     period=period
   )

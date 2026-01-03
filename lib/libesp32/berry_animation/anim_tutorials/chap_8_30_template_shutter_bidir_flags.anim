@@ -21,7 +21,7 @@ template animation shutter_bidir {
   col2.next = 1     # move 'col2' to the next color so it's shifte by one compared to 'col1'
 
   # Shutter moving in in-out
-  animation shutter_inout_animation = beacon_animation(
+  animation shutter_inout_animation = beacon(
     color = col2                    # Use two rotating colors
     back_color = col1               # Use two rotating colors
     pos = strip_len_2 - (shutter_size + 1) / 2
@@ -29,7 +29,7 @@ template animation shutter_bidir {
   )
 
   # shutter moving in out-in
-  animation shutter_outin_animation = beacon_animation(
+  animation shutter_outin_animation = beacon(
     color = col1
     back_color = col2
     pos = strip_len_2 - (strip_len - shutter_size + 1) / 2

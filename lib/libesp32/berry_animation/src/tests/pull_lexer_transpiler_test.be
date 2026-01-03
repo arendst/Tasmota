@@ -8,7 +8,7 @@ def test_pull_lexer_basic()
   
   var dsl_source = "# Simple DSL test\n" +
                    "color my_red = 0xFF0000\n" +
-                   "animation pulse = pulsating_animation(color=my_red, period=2s)\n" +
+                   "animation pulse = breathe(color=my_red, period=2s)\n" +
                    "run pulse"
   
   # Test with new create_lexer interface (uses pull lexer internally)
@@ -75,7 +75,7 @@ def test_pull_lexer_position_info()
   print("=== Testing Pull Lexer Position Information ===")
   
   var dsl_source = "color red = 0xFF0000\n" +
-                   "animation pulse = pulsating_animation(color=red)"
+                   "animation pulse = breathe(color=red)"
   
   var pull_lexer = animation_dsl.create_lexer(dsl_source)
   

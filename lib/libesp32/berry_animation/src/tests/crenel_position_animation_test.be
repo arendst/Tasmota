@@ -1,6 +1,6 @@
 # Unit tests for Crenel Position Animation
 #
-# This file contains comprehensive tests for the CrenelPositionAnimation class
+# This file contains comprehensive tests for the crenel class
 # to ensure it works correctly with various parameters and edge cases.
 #
 # Command to run tests:
@@ -31,7 +31,7 @@ def run_tests()
   var engine = animation.create_engine(strip)
   
   # Test 1: Basic construction with new parameterized pattern
-  var crenel = animation.crenel_animation(engine)
+  var crenel = animation.crenel(engine)
   test_assert(crenel != nil, "Crenel position animation creation")
   
   # Set parameters via virtual member assignment

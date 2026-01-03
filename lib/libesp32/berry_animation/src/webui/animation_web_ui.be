@@ -16,7 +16,7 @@ class AnimationWebUI
     "\n"
     "set strip_len = strip_length()\n"
     "\n"
-    "animation red_eye = beacon_animation(\n"
+    "animation red_eye = beacon(\n"
     "  color = red\n"
     "  pos = smooth(min_value = 0, max_value = strip_len - 2, duration = 5s)\n"
     "  beacon_size = 3       # small 3 pixels eye\n"

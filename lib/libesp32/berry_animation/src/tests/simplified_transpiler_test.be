@@ -13,7 +13,7 @@ def test_basic_transpilation()
     "color my_red = 0xFF0000\n"
     "color my_blue = 0x0000FF\n"
     "animation solid_red = solid(color=my_red)\n"
-    "animation pulse_red = pulsating_animation(color=my_red, period=2000)\n"
+    "animation pulse_red = breathe(color=my_red, period=2000)\n"
     "sequence demo {\n"
     "  play pulse_red for 3s\n"
     "  wait 1s\n"
@@ -66,7 +66,7 @@ def test_function_calls()
   var dsl_code = 
     "# strip length 20  # TEMPORARILY DISABLED\n"
     "animation solid_red = solid(color=red)\n"
-    "animation test_anim = pulsating_animation(color=red, period=1000)\n"
+    "animation test_anim = breathe(color=red, period=1000)\n"
     "run test_anim"
   
   var berry_code = animation_dsl.compile(dsl_code)
@@ -78,7 +78,7 @@ def test_function_calls()
   
   # Check that function calls are properly generated
   import string
-  if string.find(berry_code, "animation.pulsating_animation(engine)") == -1
+  if string.find(berry_code, "animation.breathe(engine)") == -1
     print("✗ Function call not properly generated")
     return false
   end

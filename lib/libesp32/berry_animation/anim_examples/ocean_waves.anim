@@ -13,11 +13,11 @@ palette ocean_colors = [
 ]
 
 # Base ocean animation with slow color cycling
-animation ocean_base = rich_palette_animation(colors=ocean_colors, period=8s, transition_type=SINE, brightness=200)
+animation ocean_base = rich_palette(colors=ocean_colors, period=8s, transition_type=SINE, brightness=200)
 
 # Add wave motion with moving pulses
 color wave1_pattern = rich_palette_color(colors=ocean_colors, period=6s, transition_type=SINE, brightness=255)
-animation wave1 = beacon_animation(
+animation wave1 = beacon(
   color=wave1_pattern # color source
   pos=0               # initial position
   beacon_size=12      # wave width
@@ -27,7 +27,7 @@ wave1.priority = 10
 wave1.pos = sawtooth(min_value=0, max_value=48, duration=5s)  # 60-12 = 48
 
 color wave2_pattern = rich_palette_color(colors=ocean_colors, period=4s, transition_type=SINE, brightness=180)
-animation wave2 = beacon_animation(
+animation wave2 = beacon(
   color=wave2_pattern # color source
   pos=52              # initial position
   beacon_size=8       # smaller wave

@@ -21,7 +21,7 @@ var lava_colors_ = bytes(
   "FFFFAA00"  # Yellow-orange
 )
 # Base lava animation - very slow color changes
-var lava_base_ = animation.rich_palette_animation(engine)
+var lava_base_ = animation.rich_palette(engine)
 lava_base_.colors = lava_colors_
 lava_base_.period = 15000
 lava_base_.transition_type = animation.SINE
@@ -32,7 +32,7 @@ blob1_pattern_.colors = lava_colors_
 blob1_pattern_.period = 12000
 blob1_pattern_.transition_type = animation.SINE
 blob1_pattern_.brightness = 255
-var lava_blob1_ = animation.beacon_animation(engine)
+var lava_blob1_ = animation.beacon(engine)
 lava_blob1_.color = blob1_pattern_  # color source
 lava_blob1_.pos = 9  # initial position
 lava_blob1_.beacon_size = 18  # large blob
@@ -50,7 +50,7 @@ blob2_pattern_.colors = lava_colors_
 blob2_pattern_.period = 10000
 blob2_pattern_.transition_type = animation.SINE
 blob2_pattern_.brightness = 220
-var lava_blob2_ = animation.beacon_animation(engine)
+var lava_blob2_ = animation.beacon(engine)
 lava_blob2_.color = blob2_pattern_  # color source
 lava_blob2_.pos = 46  # initial position
 lava_blob2_.beacon_size = 14  # medium blob
@@ -68,7 +68,7 @@ blob3_pattern_.colors = lava_colors_
 blob3_pattern_.period = 8000
 blob3_pattern_.transition_type = animation.SINE
 blob3_pattern_.brightness = 200
-var lava_blob3_ = animation.beacon_animation(engine)
+var lava_blob3_ = animation.beacon(engine)
 lava_blob3_.color = blob3_pattern_  # color source
 lava_blob3_.pos = 25  # initial position
 lava_blob3_.beacon_size = 10  # smaller blob
@@ -117,11 +117,11 @@ palette lava_colors = [
 ]
 
 # Base lava animation - very slow color changes
-animation lava_base = rich_palette_animation(colors=lava_colors, period=15s, transition_type=SINE, brightness=180)
+animation lava_base = rich_palette(colors=lava_colors, period=15s, transition_type=SINE, brightness=180)
 
 # Add slow-moving lava blobs
 color blob1_pattern = rich_palette_color(colors=lava_colors, period=12s, transition_type=SINE, brightness=255)
-animation lava_blob1 = beacon_animation(
+animation lava_blob1 = beacon(
   color=blob1_pattern # color source
   pos=9               # initial position
   beacon_size=18      # large blob
@@ -131,7 +131,7 @@ lava_blob1.priority = 10
 lava_blob1.pos = smooth(min_value=9, max_value=51, duration=20s)  # Very slow movement
 
 color blob2_pattern = rich_palette_color(colors=lava_colors, period=10s, transition_type=SINE, brightness=220)
-animation lava_blob2 = beacon_animation(
+animation lava_blob2 = beacon(
   color=blob2_pattern # color source
   pos=46              # initial position
   beacon_size=14      # medium blob
@@ -141,7 +141,7 @@ lava_blob2.priority = 8
 lava_blob2.pos = smooth(min_value=46, max_value=14, duration=25s)  # Opposite direction, slower
 
 color blob3_pattern = rich_palette_color(colors=lava_colors, period=8s, transition_type=SINE, brightness=200)
-animation lava_blob3 = beacon_animation(
+animation lava_blob3 = beacon(
   color=blob3_pattern # color source
   pos=25              # initial position
   beacon_size=10      # smaller blob

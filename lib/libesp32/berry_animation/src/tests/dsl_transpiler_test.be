@@ -266,7 +266,7 @@ print(repeat_berry_code)
     "set cosine_val = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = 5s)\n" +
     "set triangle_val = triangle(min_value = 0, max_value = strip_len - 2, duration = 5s)\n" +
     "\n" +
-    "animation red_eye = beacon_animation(\n" +
+    "animation red_eye = beacon(\n" +
     "  color = eye_color\n" +
     "  pos = cosine_val\n" +
     "  beacon_size = 3\n" +
@@ -489,7 +489,7 @@ def test_computed_values()
   
   # Test computed values with single resolve calls (regression test for double resolve issue)
   var computed_dsl = "set strip_len = strip_length()\n" +
-    "animation stream1 = comet_animation(\n" +
+    "animation stream1 = comet(\n" +
     "  color=red\n" +
     "  tail_length=abs(strip_len / 4)\n" +
     "  speed=1.5\n" +
@@ -519,7 +519,7 @@ def test_computed_values()
   # Test complex expressions with single closure (regression test for nested closure issue)
   var complex_expr_dsl = "set strip_len = strip_length()\n" +
     "set base_value = 5\n" +
-    "animation stream2 = comet_animation(\n" +
+    "animation stream2 = comet(\n" +
     "  color=blue\n" +
     "  tail_length=strip_len / 8 + (2 * strip_len) - 10\n" +
     "  speed=(base_value + strip_len) * 2.5\n" +
@@ -575,7 +575,7 @@ def test_computed_values()
   
   # Test simple expressions that don't need closures
   var simple_expr_dsl = "set strip_len = strip_length()\n" +
-    "animation simple = comet_animation(\n" +
+    "animation simple = comet(\n" +
     "  color=red\n" +
     "  tail_length=strip_len\n" +
     "  speed=1.5\n" +
@@ -590,7 +590,7 @@ def test_computed_values()
   
   # Test mathematical functions in computed expressions
   var math_expr_dsl = "set strip_len = strip_length()\n" +
-    "animation math_test = comet_animation(\n" +
+    "animation math_test = comet(\n" +
     "  color=red\n" +
     "  tail_length=max(1, min(strip_len, 20))\n" +
     "  speed=abs(strip_len - 30)\n" +
@@ -641,7 +641,7 @@ def test_forward_references()
   print("Testing forward references...")
   
   var dsl_source = "# Forward reference: animation uses color defined later\n" +
-    "animation fire_gradient = gradient_animation(color=red)\n" +
+    "animation fire_gradient = gradient(color=red)\n" +
     "color red = 0xFF0000\n" +
     "color orange = 0xFF8000"
   
@@ -686,8 +686,8 @@ def test_complex_dsl()
     "set brightness = 80%\n" +
     "\n" +
     "# Animation Definitions\n" +
-    "animation red_pulse = pulsating_animation(color=red, period=2000)\n" +
-    "animation blue_breathe = breathe_animation(color=blue, period=4000)\n" +
+    "animation red_pulse = breathe(color=red, period=2000)\n" +
+    "animation blue_breathe = breathe(color=blue, period=4000)\n" +
     "\n" +
     "# Sequence Definition with Control Flow\n" +
     "sequence demo {\n" +
@@ -758,11 +758,11 @@ def test_core_processing_methods()
   # Test pulse animation generation
   var pulse_dsl = "color custom_red = 0xFF0000\n" +
     "animation solid_red = solid(color=custom_red)\n" +
-    "animation pulse_red = pulsating_animation(color=custom_red, period=2000)"
+    "animation pulse_red = breathe(color=custom_red, period=2000)"
   
   var berry_code = animation_dsl.compile(pulse_dsl)
   assert(berry_code != nil, "Should compile pulse animation")
-  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should generate pulse animation")
+  assert(string.find(berry_code, "animation.breathe(engine)") >= 0, "Should generate pulse animation")
   
   # Test control flow
   var control_dsl = "color custom_blue = 0x0000FF\n" +
@@ -969,13 +969,13 @@ def test_animation_type_checking()
   # Test valid animation factory functions
   var valid_animation_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
-    "animation pulse_red = pulsating_animation(color=custom_red, period=2000)\n" +
+    "animation pulse_red = breathe(color=custom_red, period=2000)\n" +
     "animation solid_blue = solid(color=0x0000FF)\n" +
     "run pulse_red"
   
   var berry_code = animation_dsl.compile(valid_animation_dsl)
   assert(berry_code != nil, "Should compile valid animation factories")
-  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should generate pulsating_animation call")
+  assert(string.find(berry_code, "animation.breathe(engine)") >= 0, "Should generate breathe call")
   assert(string.find(berry_code, "animation.solid(engine)") >= 0, "Should generate solid call")
   
   # Test invalid animation factory function (should fail at transpile time)

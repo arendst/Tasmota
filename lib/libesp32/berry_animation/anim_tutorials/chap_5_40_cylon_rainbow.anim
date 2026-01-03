@@ -15,7 +15,7 @@ animation stars = twinkle(
 run stars
 
 # We can combine a dynamic 'pos' value with a dynamic 'color'
-animation back = beacon_animation(
+animation back = beacon(
     color = rich_palette_color(colors=PALETTE_RAINBOW_W2, period=5s)
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3       # small 3 pixels eye

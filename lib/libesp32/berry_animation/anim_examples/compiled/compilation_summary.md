@@ -12,13 +12,13 @@ This document contains a summary of the DSL compilation process, including symbo
 
 | Symbol               | Type                       | Builtin | Dangerous | Takes Args |
 |----------------------|----------------------------|---------|-----------|------------|
-| `breathe_animation`  | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 | `breathe_blue`       | color                      |         |           |            |
 | `breathe_green`      | color                      |         |           |            |
 | `breathe_orange`     | color                      |         |           |            |
 | `breathe_palette`    | palette                    |         |           |            |
 | `breathe_purple`     | color                      |         |           |            |
 | `breathe_red`        | color                      |         |           |            |
+| `breathe`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 | `breathing`          | animation                  |         |           |            |
 | `palette_pattern`    | color                      |         |           |            |
 | `rich_palette_color` | color_constructor          |    ✓    |    ⚠️     |     ✓      |
@@ -36,24 +36,24 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------|----------------------------|---------|-----------|------------|
-| `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `candy_red`        | color                      |         |           |            |
-| `candy_white`      | color                      |         |           |            |
-| `closure_value`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `move_speed`       | variable                   |         |           |            |
-| `sawtooth`         | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `stripe10`         | animation                  |         |           |            |
-| `stripe1`          | animation                  |         |           |            |
-| `stripe2`          | animation                  |         |           |            |
-| `stripe3`          | animation                  |         |           |            |
-| `stripe4`          | animation                  |         |           |            |
-| `stripe5`          | animation                  |         |           |            |
-| `stripe6`          | animation                  |         |           |            |
-| `stripe7`          | animation                  |         |           |            |
-| `stripe8`          | animation                  |         |           |            |
-| `stripe9`          | animation                  |         |           |            |
+| Symbol          | Type                       | Builtin | Dangerous | Takes Args |
+|-----------------|----------------------------|---------|-----------|------------|
+| `beacon`        | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `candy_red`     | color                      |         |           |            |
+| `candy_white`   | color                      |         |           |            |
+| `closure_value` | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `move_speed`    | variable                   |         |           |            |
+| `sawtooth`      | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `stripe10`      | animation                  |         |           |            |
+| `stripe1`       | animation                  |         |           |            |
+| `stripe2`       | animation                  |         |           |            |
+| `stripe3`       | animation                  |         |           |            |
+| `stripe4`       | animation                  |         |           |            |
+| `stripe5`       | animation                  |         |           |            |
+| `stripe6`       | animation                  |         |           |            |
+| `stripe7`       | animation                  |         |           |            |
+| `stripe8`       | animation                  |         |           |            |
+| `stripe9`       | animation                  |         |           |            |
 
 ### Compilation Output
 
@@ -70,8 +70,8 @@ SUCCESS
 | Symbol               | Type                       | Builtin | Dangerous | Takes Args |
 |----------------------|----------------------------|---------|-----------|------------|
 | `LINEAR`             | constant                   |    ✓    |           |            |
-| `beacon_animation`   | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `comet_animation`    | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `comet`              | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 | `garland_pattern`    | color                      |         |           |            |
 | `garland`            | animation                  |         |           |            |
 | `ornament_colors`    | palette                    |         |           |            |
@@ -101,10 +101,10 @@ SUCCESS
 | Symbol            | Type                  | Builtin | Dangerous | Takes Args |
 |-------------------|-----------------------|---------|-----------|------------|
 | `background`      | animation             |         |           |            |
-| `comet_animation` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
 | `comet_main`      | animation             |         |           |            |
 | `comet_secondary` | animation             |         |           |            |
 | `comet_sparkles`  | animation             |         |           |            |
+| `comet`           | animation_constructor |    ✓    |    ⚠️     |     ✓      |
 | `solid`           | animation_constructor |    ✓    |    ⚠️     |     ✓      |
 | `space_blue`      | color                 |         |           |            |
 | `twinkle`         | animation_constructor |    ✓    |    ⚠️     |     ✓      |
@@ -121,18 +121,18 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol            | Type                       | Builtin | Dangerous | Takes Args |
-|-------------------|----------------------------|---------|-----------|------------|
-| `abs`             | math_function              |    ✓    |           |     ✓      |
-| `base_speed`      | variable                   |         |           |            |
-| `blue`            | color                      |    ✓    |           |            |
-| `closure_value`   | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `comet_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `red`             | color                      |    ✓    |           |            |
-| `stream1`         | animation                  |         |           |            |
-| `stream2`         | animation                  |         |           |            |
-| `strip_len`       | value_provider             |         |           |            |
-| `strip_length`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| Symbol          | Type                       | Builtin | Dangerous | Takes Args |
+|-----------------|----------------------------|---------|-----------|------------|
+| `abs`           | math_function              |    ✓    |           |     ✓      |
+| `base_speed`    | variable                   |         |           |            |
+| `blue`          | color                      |    ✓    |           |            |
+| `closure_value` | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `comet`         | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `red`           | color                      |    ✓    |           |            |
+| `stream1`       | animation                  |         |           |            |
+| `stream2`       | animation                  |         |           |            |
+| `strip_len`     | value_provider             |         |           |            |
+| `strip_length`  | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -165,26 +165,26 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------|----------------------------|---------|-----------|------------|
-| `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `closure_value`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `color_cycle`      | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `cosine_osc`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `cosine_val`       | value_provider             |         |           |            |
-| `cylon_eye`        | sequence                   |         |           |            |
-| `eye_color`        | color                      |         |           |            |
-| `eye_duration`     | variable                   |         |           |            |
-| `eye_palette`      | palette                    |         |           |            |
-| `green`            | color                      |    ✓    |           |            |
-| `red_eye`          | animation                  |         |           |            |
-| `red`              | color                      |    ✓    |           |            |
-| `strip_len`        | value_provider             |         |           |            |
-| `strip_length`     | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `triangle_val`     | value_provider             |         |           |            |
-| `triangle`         | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `violet`           | color                      |    ✓    |           |            |
-| `yellow`           | color                      |    ✓    |           |            |
+| Symbol          | Type                       | Builtin | Dangerous | Takes Args |
+|-----------------|----------------------------|---------|-----------|------------|
+| `beacon`        | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `closure_value` | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `color_cycle`   | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `cosine_osc`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `cosine_val`    | value_provider             |         |           |            |
+| `cylon_eye`     | sequence                   |         |           |            |
+| `eye_color`     | color                      |         |           |            |
+| `eye_duration`  | variable                   |         |           |            |
+| `eye_palette`   | palette                    |         |           |            |
+| `green`         | color                      |    ✓    |           |            |
+| `red_eye`       | animation                  |         |           |            |
+| `red`           | color                      |    ✓    |           |            |
+| `strip_len`     | value_provider             |         |           |            |
+| `strip_length`  | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `triangle_val`  | value_provider             |         |           |            |
+| `triangle`      | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `violet`        | color                      |    ✓    |           |            |
+| `yellow`        | color                      |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -198,15 +198,15 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------|----------------------------|---------|-----------|------------|
-| `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `closure_value`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `cosine_osc`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `red_eye`          | animation                  |         |           |            |
-| `red`              | color                      |    ✓    |           |            |
-| `strip_len`        | value_provider             |         |           |            |
-| `strip_length`     | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| Symbol          | Type                       | Builtin | Dangerous | Takes Args |
+|-----------------|----------------------------|---------|-----------|------------|
+| `beacon`        | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `closure_value` | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `cosine_osc`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `red_eye`       | animation                  |         |           |            |
+| `red`           | color                      |    ✓    |           |            |
+| `strip_len`     | value_provider             |         |           |            |
+| `strip_length`  | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -220,24 +220,24 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                       | Type                       | Builtin | Dangerous | Takes Args |
-|------------------------------|----------------------------|---------|-----------|------------|
-| `background`                 | animation                  |         |           |            |
-| `beacon_animation`           | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `closure_value`              | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `cosine_osc`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `eye_mask`                   | animation                  |         |           |            |
-| `eye_pos`                    | value_provider             |         |           |            |
-| `fire_color`                 | color                      |         |           |            |
-| `fire_colors`                | palette                    |         |           |            |
-| `fire_pattern`               | animation                  |         |           |            |
-| `palette_gradient_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette_color`         | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `solid`                      | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `strip_len`                  | value_provider             |         |           |            |
-| `strip_length`               | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `transparent`                | color                      |    ✓    |           |            |
-| `white`                      | color                      |    ✓    |           |            |
+| Symbol               | Type                       | Builtin | Dangerous | Takes Args |
+|----------------------|----------------------------|---------|-----------|------------|
+| `background`         | animation                  |         |           |            |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `closure_value`      | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `cosine_osc`         | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `eye_mask`           | animation                  |         |           |            |
+| `eye_pos`            | value_provider             |         |           |            |
+| `fire_color`         | color                      |         |           |            |
+| `fire_colors`        | palette                    |         |           |            |
+| `fire_pattern`       | animation                  |         |           |            |
+| `palette_gradient`   | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette_color` | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `solid`              | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `strip_len`          | value_provider             |         |           |            |
+| `strip_length`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `transparent`        | color                      |    ✓    |           |            |
+| `white`              | color                      |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -322,7 +322,7 @@ SUCCESS
 | Symbol              | Type                       | Builtin | Dangerous | Takes Args |
 |---------------------|----------------------------|---------|-----------|------------|
 | `PALETTE_RAINBOW`   | palette_constant           |    ✓    |           |            |
-| `beacon_animation`  | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `beacon`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 | `closure_value`     | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 | `col1`              | color                      |         |           |            |
 | `col2`              | color                      |         |           |            |
@@ -347,13 +347,13 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                    | Type                       | Builtin | Dangerous | Takes Args |
-|---------------------------|----------------------------|---------|-----------|------------|
-| `back_pattern`            | animation                  |         |           |            |
-| `closure_value`           | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `palette_meter_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rainbow_with_white`      | palette                    |         |           |            |
-| `rand_meter`              | user_function              |         |           |     ✓      |
+| Symbol               | Type                       | Builtin | Dangerous | Takes Args |
+|----------------------|----------------------------|---------|-----------|------------|
+| `back_pattern`       | animation                  |         |           |            |
+| `closure_value`      | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `palette_meter`      | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `rainbow_with_white` | palette                    |         |           |            |
+| `rand_meter`         | user_function              |         |           |     ✓      |
 
 ### Compilation Output
 
@@ -370,7 +370,7 @@ SUCCESS
 | Symbol               | Type                       | Builtin | Dangerous | Takes Args |
 |----------------------|----------------------------|---------|-----------|------------|
 | `LINEAR`             | constant                   |    ✓    |           |            |
-| `beacon_animation`   | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 | `disco_base`         | animation                  |         |           |            |
 | `disco_colors`       | palette                    |         |           |            |
 | `disco_pulse`        | animation                  |         |           |            |
@@ -466,18 +466,18 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------|----------------------------|---------|-----------|------------|
-| `background`       | animation                  |         |           |            |
-| `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `center_pulse`     | animation                  |         |           |            |
-| `heart_bg`         | color                      |         |           |            |
-| `heart_glow`       | animation                  |         |           |            |
-| `heartbeat1`       | animation                  |         |           |            |
-| `heartbeat2`       | animation                  |         |           |            |
-| `smooth`           | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `solid`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `square`           | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| Symbol         | Type                       | Builtin | Dangerous | Takes Args |
+|----------------|----------------------------|---------|-----------|------------|
+| `background`   | animation                  |         |           |            |
+| `beacon`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `center_pulse` | animation                  |         |           |            |
+| `heart_bg`     | color                      |         |           |            |
+| `heart_glow`   | animation                  |         |           |            |
+| `heartbeat1`   | animation                  |         |           |            |
+| `heartbeat2`   | animation                  |         |           |            |
+| `smooth`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `solid`        | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `square`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -519,24 +519,24 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `SINE`                   | constant                   |    ✓    |           |            |
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `blob1_pattern`          | color                      |         |           |            |
-| `blob2_pattern`          | color                      |         |           |            |
-| `blob3_pattern`          | color                      |         |           |            |
-| `heat_shimmer`           | animation                  |         |           |            |
-| `lava_base`              | animation                  |         |           |            |
-| `lava_blob1`             | animation                  |         |           |            |
-| `lava_blob2`             | animation                  |         |           |            |
-| `lava_blob3`             | animation                  |         |           |            |
-| `lava_colors`            | palette                    |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette_color`     | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `shimmer_pattern`        | color                      |         |           |            |
-| `smooth`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `twinkle`                | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| Symbol               | Type                       | Builtin | Dangerous | Takes Args |
+|----------------------|----------------------------|---------|-----------|------------|
+| `SINE`               | constant                   |    ✓    |           |            |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `blob1_pattern`      | color                      |         |           |            |
+| `blob2_pattern`      | color                      |         |           |            |
+| `blob3_pattern`      | color                      |         |           |            |
+| `heat_shimmer`       | animation                  |         |           |            |
+| `lava_base`          | animation                  |         |           |            |
+| `lava_blob1`         | animation                  |         |           |            |
+| `lava_blob2`         | animation                  |         |           |            |
+| `lava_blob3`         | animation                  |         |           |            |
+| `lava_colors`        | palette                    |         |           |            |
+| `rich_palette_color` | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `shimmer_pattern`    | color                      |         |           |            |
+| `smooth`             | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `twinkle`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -550,20 +550,20 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `SINE`                   | constant                   |    ✓    |           |            |
-| `afterglow`              | animation                  |         |           |            |
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `distant_flash`          | animation                  |         |           |            |
-| `lightning_main`         | animation                  |         |           |            |
-| `lightning_partial`      | animation                  |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `solid`                  | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `square`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `storm_bg`               | animation                  |         |           |            |
-| `storm_colors`           | palette                    |         |           |            |
-| `twinkle`                | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| Symbol              | Type                       | Builtin | Dangerous | Takes Args |
+|---------------------|----------------------------|---------|-----------|------------|
+| `SINE`              | constant                   |    ✓    |           |            |
+| `afterglow`         | animation                  |         |           |            |
+| `beacon`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `distant_flash`     | animation                  |         |           |            |
+| `lightning_main`    | animation                  |         |           |            |
+| `lightning_partial` | animation                  |         |           |            |
+| `rich_palette`      | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `solid`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `square`            | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `storm_bg`          | animation                  |         |           |            |
+| `storm_colors`      | palette                    |         |           |            |
+| `twinkle`           | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -582,7 +582,7 @@ SUCCESS
 | `LINEAR`             | constant              |    ✓    |           |            |
 | `background`         | animation             |         |           |            |
 | `code_flash`         | animation             |         |           |            |
-| `comet_animation`    | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `comet`              | animation_constructor |    ✓    |    ⚠️     |     ✓      |
 | `matrix_bg`          | color                 |         |           |            |
 | `matrix_greens`      | palette               |         |           |            |
 | `rich_palette_color` | color_constructor     |    ✓    |    ⚠️     |     ✓      |
@@ -607,19 +607,19 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol            | Type                  | Builtin | Dangerous | Takes Args |
-|-------------------|-----------------------|---------|-----------|------------|
-| `background`      | animation             |         |           |            |
-| `comet_animation` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
-| `meteor1`         | animation             |         |           |            |
-| `meteor2`         | animation             |         |           |            |
-| `meteor3`         | animation             |         |           |            |
-| `meteor4`         | animation             |         |           |            |
-| `meteor_flash`    | animation             |         |           |            |
-| `solid`           | animation_constructor |    ✓    |    ⚠️     |     ✓      |
-| `space_bg`        | color                 |         |           |            |
-| `stars`           | animation             |         |           |            |
-| `twinkle`         | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| Symbol         | Type                  | Builtin | Dangerous | Takes Args |
+|----------------|-----------------------|---------|-----------|------------|
+| `background`   | animation             |         |           |            |
+| `comet`        | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `meteor1`      | animation             |         |           |            |
+| `meteor2`      | animation             |         |           |            |
+| `meteor3`      | animation             |         |           |            |
+| `meteor4`      | animation             |         |           |            |
+| `meteor_flash` | animation             |         |           |            |
+| `solid`        | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `space_bg`     | color                 |         |           |            |
+| `stars`        | animation             |         |           |            |
+| `twinkle`      | animation_constructor |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -633,24 +633,24 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `LINEAR`                 | constant                   |    ✓    |           |            |
-| `arc_sparkles`           | animation                  |         |           |            |
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `neon_colors`            | palette                    |         |           |            |
-| `neon_main`              | animation                  |         |           |            |
-| `neon_surge`             | animation                  |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette_color`     | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `segment1`               | animation                  |         |           |            |
-| `segment2`               | animation                  |         |           |            |
-| `segment3`               | animation                  |         |           |            |
-| `segment_pattern`        | color                      |         |           |            |
-| `smooth`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `solid`                  | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `square`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `twinkle`                | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| Symbol               | Type                       | Builtin | Dangerous | Takes Args |
+|----------------------|----------------------------|---------|-----------|------------|
+| `LINEAR`             | constant                   |    ✓    |           |            |
+| `arc_sparkles`       | animation                  |         |           |            |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `neon_colors`        | palette                    |         |           |            |
+| `neon_main`          | animation                  |         |           |            |
+| `neon_surge`         | animation                  |         |           |            |
+| `rich_palette_color` | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `segment1`           | animation                  |         |           |            |
+| `segment2`           | animation                  |         |           |            |
+| `segment3`           | animation                  |         |           |            |
+| `segment_pattern`    | color                      |         |           |            |
+| `smooth`             | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `solid`              | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `square`             | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `twinkle`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -664,21 +664,21 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `SINE`                   | constant                   |    ✓    |           |            |
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `foam`                   | animation                  |         |           |            |
-| `ocean_base`             | animation                  |         |           |            |
-| `ocean_colors`           | palette                    |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette_color`     | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `sawtooth`               | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `twinkle`                | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `wave1_pattern`          | color                      |         |           |            |
-| `wave1`                  | animation                  |         |           |            |
-| `wave2_pattern`          | color                      |         |           |            |
-| `wave2`                  | animation                  |         |           |            |
+| Symbol               | Type                       | Builtin | Dangerous | Takes Args |
+|----------------------|----------------------------|---------|-----------|------------|
+| `SINE`               | constant                   |    ✓    |           |            |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `foam`               | animation                  |         |           |            |
+| `ocean_base`         | animation                  |         |           |            |
+| `ocean_colors`       | palette                    |         |           |            |
+| `rich_palette_color` | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `sawtooth`           | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `twinkle`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `wave1_pattern`      | color                      |         |           |            |
+| `wave1`              | animation                  |         |           |            |
+| `wave2_pattern`      | color                      |         |           |            |
+| `wave2`              | animation                  |         |           |            |
 
 ### Compilation Output
 
@@ -692,14 +692,14 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                  | Builtin | Dangerous | Takes Args |
-|--------------------------|-----------------------|---------|-----------|------------|
-| `fire_anim`              | animation             |         |           |            |
-| `fire_colors`            | palette               |         |           |            |
-| `ocean_anim`             | animation             |         |           |            |
-| `ocean_colors`           | palette               |         |           |            |
-| `palette_demo`           | sequence              |         |           |            |
-| `rich_palette_animation` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| Symbol         | Type                  | Builtin | Dangerous | Takes Args |
+|----------------|-----------------------|---------|-----------|------------|
+| `fire_anim`    | animation             |         |           |            |
+| `fire_colors`  | palette               |         |           |            |
+| `ocean_anim`   | animation             |         |           |            |
+| `ocean_colors` | palette               |         |           |            |
+| `palette_demo` | sequence              |         |           |            |
+| `rich_palette` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -713,29 +713,29 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                  | Builtin | Dangerous | Takes Args |
-|--------------------------|-----------------------|---------|-----------|------------|
-| `SINE`                   | constant              |    ✓    |           |            |
-| `aurora_borealis`        | palette               |         |           |            |
-| `aurora_lights`          | animation             |         |           |            |
-| `black`                  | color                 |    ✓    |           |            |
-| `blue`                   | color                 |    ✓    |           |            |
-| `cyan`                   | color                 |    ✓    |           |            |
-| `fire_effect`            | animation             |         |           |            |
-| `fire_gradient`          | palette               |         |           |            |
-| `navy`                   | color                 |    ✓    |           |            |
-| `ocean_depths`           | palette               |         |           |            |
-| `ocean_waves`            | animation             |         |           |            |
-| `orange`                 | color                 |    ✓    |           |            |
-| `palette_showcase`       | sequence              |         |           |            |
-| `purple`                 | color                 |    ✓    |           |            |
-| `rich_palette_animation` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette_color`     | color_constructor     |    ✓    |    ⚠️     |     ✓      |
-| `solid`                  | animation_constructor |    ✓    |    ⚠️     |     ✓      |
-| `sunset_glow`            | animation             |         |           |            |
-| `sunset_sky`             | palette               |         |           |            |
-| `white`                  | color                 |    ✓    |           |            |
-| `yellow`                 | color                 |    ✓    |           |            |
+| Symbol               | Type                  | Builtin | Dangerous | Takes Args |
+|----------------------|-----------------------|---------|-----------|------------|
+| `SINE`               | constant              |    ✓    |           |            |
+| `aurora_borealis`    | palette               |         |           |            |
+| `aurora_lights`      | animation             |         |           |            |
+| `black`              | color                 |    ✓    |           |            |
+| `blue`               | color                 |    ✓    |           |            |
+| `cyan`               | color                 |    ✓    |           |            |
+| `fire_effect`        | animation             |         |           |            |
+| `fire_gradient`      | palette               |         |           |            |
+| `navy`               | color                 |    ✓    |           |            |
+| `ocean_depths`       | palette               |         |           |            |
+| `ocean_waves`        | animation             |         |           |            |
+| `orange`             | color                 |    ✓    |           |            |
+| `palette_showcase`   | sequence              |         |           |            |
+| `purple`             | color                 |    ✓    |           |            |
+| `rich_palette_color` | color_constructor     |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette`       | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `solid`              | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `sunset_glow`        | animation             |         |           |            |
+| `sunset_sky`         | palette               |         |           |            |
+| `white`              | color                 |    ✓    |           |            |
+| `yellow`             | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -749,21 +749,21 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `SINE`                   | constant                   |    ✓    |           |            |
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `plasma_base`            | animation                  |         |           |            |
-| `plasma_colors`          | palette                    |         |           |            |
-| `plasma_wave1`           | animation                  |         |           |            |
-| `plasma_wave2`           | animation                  |         |           |            |
-| `plasma_wave3`           | animation                  |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `rich_palette_color`     | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `smooth`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `wave1_pattern`          | color                      |         |           |            |
-| `wave2_pattern`          | color                      |         |           |            |
-| `wave3_pattern`          | color                      |         |           |            |
+| Symbol               | Type                       | Builtin | Dangerous | Takes Args |
+|----------------------|----------------------------|---------|-----------|------------|
+| `SINE`               | constant                   |    ✓    |           |            |
+| `beacon`             | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `plasma_base`        | animation                  |         |           |            |
+| `plasma_colors`      | palette                    |         |           |            |
+| `plasma_wave1`       | animation                  |         |           |            |
+| `plasma_wave2`       | animation                  |         |           |            |
+| `plasma_wave3`       | animation                  |         |           |            |
+| `rich_palette_color` | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `rich_palette`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `smooth`             | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `wave1_pattern`      | color                      |         |           |            |
+| `wave2_pattern`      | color                      |         |           |            |
+| `wave3_pattern`      | color                      |         |           |            |
 
 ### Compilation Output
 
@@ -777,15 +777,15 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------|----------------------------|---------|-----------|------------|
-| `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `half_length`      | variable                   |         |           |            |
-| `left_red`         | animation                  |         |           |            |
-| `right_blue`       | animation                  |         |           |            |
-| `solid`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `square`           | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `white_strobe`     | animation                  |         |           |            |
+| Symbol         | Type                       | Builtin | Dangerous | Takes Args |
+|----------------|----------------------------|---------|-----------|------------|
+| `beacon`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `half_length`  | variable                   |         |           |            |
+| `left_red`     | animation                  |         |           |            |
+| `right_blue`   | animation                  |         |           |            |
+| `solid`        | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `square`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `white_strobe` | animation                  |         |           |            |
 
 ### Compilation Output
 
@@ -799,16 +799,16 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                  | Builtin | Dangerous | Takes Args |
-|--------------------|-----------------------|---------|-----------|------------|
-| `beacon_animation` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
-| `blue_custom`      | color                 |         |           |            |
-| `center_pulse`     | animation             |         |           |            |
-| `demo`             | sequence              |         |           |            |
-| `green_custom`     | color                 |         |           |            |
-| `left_pulse`       | animation             |         |           |            |
-| `red_custom`       | color                 |         |           |            |
-| `right_pulse`      | animation             |         |           |            |
+| Symbol         | Type                  | Builtin | Dangerous | Takes Args |
+|----------------|-----------------------|---------|-----------|------------|
+| `beacon`       | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `blue_custom`  | color                 |         |           |            |
+| `center_pulse` | animation             |         |           |            |
+| `demo`         | sequence              |         |           |            |
+| `green_custom` | color                 |         |           |            |
+| `left_pulse`   | animation             |         |           |            |
+| `red_custom`   | color                 |         |           |            |
+| `right_pulse`  | animation             |         |           |            |
 
 ### Compilation Output
 
@@ -842,17 +842,17 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol             | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------|----------------------------|---------|-----------|------------|
-| `background`       | animation                  |         |           |            |
-| `beacon_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `closure_value`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `pos_test`         | value_provider             |         |           |            |
-| `scanner_bg`       | color                      |         |           |            |
-| `scanner_trail`    | animation                  |         |           |            |
-| `scanner`          | animation                  |         |           |            |
-| `solid`            | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `triangle`         | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| Symbol          | Type                       | Builtin | Dangerous | Takes Args |
+|-----------------|----------------------------|---------|-----------|------------|
+| `background`    | animation                  |         |           |            |
+| `beacon`        | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `closure_value` | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `pos_test`      | value_provider             |         |           |            |
+| `scanner_bg`    | color                      |         |           |            |
+| `scanner_trail` | animation                  |         |           |            |
+| `scanner`       | animation                  |         |           |            |
+| `solid`         | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `triangle`      | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 
@@ -866,34 +866,34 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                | Type                       | Builtin | Dangerous | Takes Args |
-|-----------------------|----------------------------|---------|-----------|------------|
-| `beacon_animation`    | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `blue`                | color                      |    ✓    |           |            |
-| `brightness_demo`     | sequence                   |         |           |            |
-| `brightness_high`     | variable                   |         |           |            |
-| `brightness_low`      | variable                   |         |           |            |
-| `closure_value`       | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `color_cycle`         | color_constructor          |    ✓    |    ⚠️     |     ✓      |
-| `cosine_osc`          | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `cosine_val`          | value_provider             |         |           |            |
-| `cylon_eye`           | sequence                   |         |           |            |
-| `eye_color`           | color                      |         |           |            |
-| `eye_palette`         | palette                    |         |           |            |
-| `green`               | color                      |    ✓    |           |            |
-| `main_demo`           | sequence                   |         |           |            |
-| `multi_change`        | sequence                   |         |           |            |
-| `pulsating_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `pulse_demo`          | animation                  |         |           |            |
-| `red_eye`             | animation                  |         |           |            |
-| `red`                 | color                      |    ✓    |           |            |
-| `repeat_demo`         | sequence                   |         |           |            |
-| `strip_len`           | value_provider             |         |           |            |
-| `strip_length`        | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `triangle_val`        | value_provider             |         |           |            |
-| `triangle`            | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `violet`              | color                      |    ✓    |           |            |
-| `yellow`              | color                      |    ✓    |           |            |
+| Symbol            | Type                       | Builtin | Dangerous | Takes Args |
+|-------------------|----------------------------|---------|-----------|------------|
+| `beacon`          | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `blue`            | color                      |    ✓    |           |            |
+| `breathe`         | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `brightness_demo` | sequence                   |         |           |            |
+| `brightness_high` | variable                   |         |           |            |
+| `brightness_low`  | variable                   |         |           |            |
+| `closure_value`   | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `color_cycle`     | color_constructor          |    ✓    |    ⚠️     |     ✓      |
+| `cosine_osc`      | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `cosine_val`      | value_provider             |         |           |            |
+| `cylon_eye`       | sequence                   |         |           |            |
+| `eye_color`       | color                      |         |           |            |
+| `eye_palette`     | palette                    |         |           |            |
+| `green`           | color                      |    ✓    |           |            |
+| `main_demo`       | sequence                   |         |           |            |
+| `multi_change`    | sequence                   |         |           |            |
+| `pulse_demo`      | animation                  |         |           |            |
+| `red_eye`         | animation                  |         |           |            |
+| `red`             | color                      |    ✓    |           |            |
+| `repeat_demo`     | sequence                   |         |           |            |
+| `strip_len`       | value_provider             |         |           |            |
+| `strip_length`    | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `triangle_val`    | value_provider             |         |           |            |
+| `triangle`        | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `violet`          | color                      |    ✓    |           |            |
+| `yellow`          | color                      |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -907,17 +907,17 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                  | Builtin | Dangerous | Takes Args |
-|--------------------------|-----------------------|---------|-----------|------------|
-| `blue`                   | color                 |    ✓    |           |            |
-| `demo`                   | sequence              |         |           |            |
-| `green`                  | color                 |    ✓    |           |            |
-| `orange`                 | color                 |    ✓    |           |            |
-| `rainbow_cycle`          | animation             |         |           |            |
-| `rainbow`                | palette               |         |           |            |
-| `red`                    | color                 |    ✓    |           |            |
-| `rich_palette_animation` | animation_constructor |    ✓    |    ⚠️     |     ✓      |
-| `yellow`                 | color                 |    ✓    |           |            |
+| Symbol          | Type                  | Builtin | Dangerous | Takes Args |
+|-----------------|-----------------------|---------|-----------|------------|
+| `blue`          | color                 |    ✓    |           |            |
+| `demo`          | sequence              |         |           |            |
+| `green`         | color                 |    ✓    |           |            |
+| `orange`        | color                 |    ✓    |           |            |
+| `rainbow_cycle` | animation             |         |           |            |
+| `rainbow`       | palette               |         |           |            |
+| `red`           | color                 |    ✓    |           |            |
+| `rich_palette`  | animation_constructor |    ✓    |    ⚠️     |     ✓      |
+| `yellow`        | color                 |    ✓    |           |            |
 
 ### Compilation Output
 
@@ -931,17 +931,17 @@ SUCCESS
 
 ## Symbol Table
 
-| Symbol                   | Type                       | Builtin | Dangerous | Takes Args |
-|--------------------------|----------------------------|---------|-----------|------------|
-| `beacon_animation`       | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `daylight_colors`        | palette                    |         |           |            |
-| `daylight_cycle`         | animation                  |         |           |            |
-| `rich_palette_animation` | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
-| `smooth`                 | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
-| `stars`                  | animation                  |         |           |            |
-| `sun_glow`               | animation                  |         |           |            |
-| `sun_position`           | animation                  |         |           |            |
-| `twinkle`                | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| Symbol            | Type                       | Builtin | Dangerous | Takes Args |
+|-------------------|----------------------------|---------|-----------|------------|
+| `beacon`          | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `daylight_colors` | palette                    |         |           |            |
+| `daylight_cycle`  | animation                  |         |           |            |
+| `rich_palette`    | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
+| `smooth`          | value_provider_constructor |    ✓    |    ⚠️     |     ✓      |
+| `stars`           | animation                  |         |           |            |
+| `sun_glow`        | animation                  |         |           |            |
+| `sun_position`    | animation                  |         |           |            |
+| `twinkle`         | animation_constructor      |    ✓    |    ⚠️     |     ✓      |
 
 ### Compilation Output
 

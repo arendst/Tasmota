@@ -5,5 +5,5 @@
 color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
 # define a gradient across the whole strip
-animation back = palette_gradient_animation(color_source = rainbow_rich_color, shift_period = 5s)
+animation back = palette_gradient(color_source = rainbow_rich_color, shift_period = 5s)
 run back

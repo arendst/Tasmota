@@ -40,7 +40,7 @@ class DSLvalue_providerValidationTest
   def test_valid_value_provider_parameters()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation test = pulsating_animation(color=0xFF0000FF, min_brightness=oscillator_value(min_value=0, max_value=100))\n"
+      "animation test = breathe(color=0xFF0000FF, min_brightness=oscillator_value(min_value=0, max_value=100))\n"
       "run test"
     
     var berry_code = animation_dsl.compile_dsl(dsl_code)
@@ -59,7 +59,7 @@ class DSLvalue_providerValidationTest
   def test_invalid_value_provider_parameter()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation test = pulsating_animation(color=0xFF0000FF, min_brightness=oscillator_value(min_value=0, invalid_param=123))\n"
+      "animation test = breathe(color=0xFF0000FF, min_brightness=oscillator_value(min_value=0, invalid_param=123))\n"
       "run test"
     
     var compilation_failed = false
@@ -89,7 +89,7 @@ class DSLvalue_providerValidationTest
   def test_nonexistent_value_provider()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation test = pulsating_animation(color=0xFF0000FF, min_brightness=nonexistent_provider(param=123))\n"
+      "animation test = breathe(color=0xFF0000FF, min_brightness=nonexistent_provider(param=123))\n"
       "run test"
     
     var compilation_failed = false
@@ -119,7 +119,7 @@ class DSLvalue_providerValidationTest
   def test_nested_value_providers()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation test = pulsating_animation(color=color_cycle(colors=[0xFF0000FF, 0xFF00FF00], period=oscillator_value(min_value=1000, bad_param=456)))\n"
+      "animation test = breathe(color=color_cycle(colors=[0xFF0000FF, 0xFF00FF00], period=oscillator_value(min_value=1000, bad_param=456)))\n"
       "run test"
     
     var compilation_failed = false

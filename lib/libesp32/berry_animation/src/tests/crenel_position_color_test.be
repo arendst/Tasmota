@@ -1,14 +1,14 @@
-# Test suite for CrenelPositionAnimation color handling
+# Test suite for crenel color handling
 #
-# This test verifies that CrenelPositionAnimation correctly handles both
+# This test verifies that crenel correctly handles both
 # integer colors and color_provider instances.
 
 import string
 import animation
 
-# Test CrenelPositionAnimation with integer color
+# Test crenel with integer color
 def test_crenel_with_integer_color()
-  print("Testing CrenelPositionAnimation with integer color...")
+  print("Testing crenel with integer color...")
   
   # Create engine and strip for testing
   var strip = global.Leds(10)
@@ -18,7 +18,7 @@ def test_crenel_with_integer_color()
   var red_color = 0xFFFF0000  # Red
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_animation(engine)
+  var crenel = animation.crenel(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = red_color
@@ -41,12 +41,12 @@ def test_crenel_with_integer_color()
   assert(result == true, "Render should succeed with integer color")
   assert(crenel.is_running == true, "Animation should be running")
   
-  print("✓ CrenelPositionAnimation with integer color test passed")
+  print("✓ crenel with integer color test passed")
 end
 
-# Test CrenelPositionAnimation with color_provider
+# Test crenel with color_provider
 def test_crenel_with_color_provider()
-  print("Testing CrenelPositionAnimation with color_provider...")
+  print("Testing crenel with color_provider...")
   
   # Create engine and strip for testing
   var strip = global.Leds(10)
@@ -60,7 +60,7 @@ def test_crenel_with_color_provider()
   color_provider.color = blue_color
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_animation(engine)
+  var crenel = animation.crenel(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = color_provider  # color_provider
@@ -83,12 +83,12 @@ def test_crenel_with_color_provider()
   assert(result == true, "Render should succeed with color_provider")
   assert(crenel.is_running == true, "Animation should be running")
   
-  print("✓ CrenelPositionAnimation with color_provider test passed")
+  print("✓ crenel with color_provider test passed")
 end
 
-# Test CrenelPositionAnimation with dynamic color_provider
+# Test crenel with dynamic color_provider
 def test_crenel_with_dynamic_color_provider()
-  print("Testing CrenelPositionAnimation with dynamic color_provider...")
+  print("Testing crenel with dynamic color_provider...")
   
   # Create engine and strip for testing
   var strip = global.Leds(10)
@@ -102,7 +102,7 @@ def test_crenel_with_dynamic_color_provider()
   palette_provider.period = 2000  # 2 second cycle
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_animation(engine)
+  var crenel = animation.crenel(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = palette_provider  # dynamic color_provider
@@ -132,12 +132,12 @@ def test_crenel_with_dynamic_color_provider()
   var result2 = crenel.render(frame, engine.time_ms, engine.strip_length)
   assert(result2 == true, "Second render should succeed")
   
-  print("✓ CrenelPositionAnimation with dynamic color_provider test passed")
+  print("✓ crenel with dynamic color_provider test passed")
 end
 
-# Test CrenelPositionAnimation with generic value_provider
+# Test crenel with generic value_provider
 def test_crenel_with_generic_value_provider()
-  print("Testing CrenelPositionAnimation with generic value_provider...")
+  print("Testing crenel with generic value_provider...")
   
   # Create engine and strip for testing
   var strip = global.Leds(10)
@@ -150,7 +150,7 @@ def test_crenel_with_generic_value_provider()
   static_provider.value = 0xFFFF00FF  # Magenta
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_animation(engine)
+  var crenel = animation.crenel(engine)
   
   # Set parameters via virtual member assignment
   crenel.color = static_provider  # generic value_provider
@@ -173,12 +173,12 @@ def test_crenel_with_generic_value_provider()
   assert(result == true, "Render should succeed with generic value_provider")
   assert(crenel.is_running == true, "Animation should be running")
   
-  print("✓ CrenelPositionAnimation with generic value_provider test passed")
+  print("✓ crenel with generic value_provider test passed")
 end
 
 # Test direct color assignment with both types
 def test_crenel_set_color_methods()
-  print("Testing CrenelPositionAnimation direct color assignment...")
+  print("Testing crenel direct color assignment...")
   
   # Create engine and strip for testing
   var strip = global.Leds(5)
@@ -187,7 +187,7 @@ def test_crenel_set_color_methods()
   var frame = animation.frame_buffer(5)
   
   # Create animation with new parameterized pattern
-  var crenel = animation.crenel_animation(engine)
+  var crenel = animation.crenel(engine)
   
   # Set initial parameters
   crenel.color = 0xFFFF0000  # red
@@ -219,19 +219,19 @@ def test_crenel_set_color_methods()
   var result2 = crenel.render(frame, engine.time_ms, engine.strip_length)
   assert(result2 == true, "Render with color_provider should succeed")
   
-  print("✓ CrenelPositionAnimation direct color assignment test passed")
+  print("✓ crenel direct color assignment test passed")
 end
 
 # Test tostring method with both color types
 def test_crenel_tostring()
-  print("Testing CrenelPositionAnimation tostring method...")
+  print("Testing crenel tostring method...")
   
   # Create engine and strip for testing
   var strip = global.Leds(5)
   var engine = animation.create_engine(strip)
   
   # Test with integer color
-  var crenel_int = animation.crenel_animation(engine)
+  var crenel_int = animation.crenel(engine)
   crenel_int.color = 0xFFFF0000
   crenel_int.back_color = 0x00000000  # transparent (default)
   crenel_int.pos = 0
@@ -252,7 +252,7 @@ def test_crenel_tostring()
   var color_provider = animation.static_color(engine)
   color_provider.color = 0xFF00FF00
   
-  var crenel_provider = animation.crenel_animation(engine)
+  var crenel_provider = animation.crenel(engine)
   crenel_provider.color = color_provider
   crenel_provider.back_color = 0x00000000  # transparent (default)
   crenel_provider.pos = 0
@@ -269,12 +269,12 @@ def test_crenel_tostring()
   assert(size(str_provider) > 0, "String representation should not be empty")
   print(f"color_provider string: {str_provider}")
   
-  print("✓ CrenelPositionAnimation tostring method test passed")
+  print("✓ crenel tostring method test passed")
 end
 
 # Run all tests
 def run_crenel_color_tests()
-  print("=== CrenelPositionAnimation Color Handling Tests ===")
+  print("=== crenel Color Handling Tests ===")
   
   try
     test_crenel_with_integer_color()
@@ -284,7 +284,7 @@ def run_crenel_color_tests()
     test_crenel_set_color_methods()
     test_crenel_tostring()
     
-    print("=== All CrenelPositionAnimation color tests passed! ===")
+    print("=== All crenel color tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

@@ -37,7 +37,7 @@ class shutter_central_animation : animation.engine_proxy
     col2_.period = 0
     col2_.next = 1
     # shutter moving in to out
-    var shutter_inout_animation_ = animation.beacon_animation(engine)
+    var shutter_inout_animation_ = animation.beacon(engine)
     shutter_inout_animation_.color = col2_
     shutter_inout_animation_.back_color = col1_
     shutter_inout_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len2_) - (animation.resolve(shutter_size_) + 1) / 2 end)
@@ -45,7 +45,7 @@ class shutter_central_animation : animation.engine_proxy
     shutter_inout_animation_.slew_size = 0
     shutter_inout_animation_.priority = 5
     # shutter moving out to in
-    var shutter_outin_animation_ = animation.beacon_animation(engine)
+    var shutter_outin_animation_ = animation.beacon(engine)
     shutter_outin_animation_.color = col1_
     shutter_outin_animation_.back_color = col2_
     shutter_outin_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len2_) - (animation.resolve(strip_len_) - animation.resolve(shutter_size_) + 1) / 2 end)
@@ -106,7 +106,7 @@ template animation shutter_central {
   col2.next = 1
 
   # shutter moving in to out
-  animation shutter_inout_animation = beacon_animation(
+  animation shutter_inout_animation = beacon(
     color = col2
     back_color = col1
     pos = strip_len2 - (shutter_size + 1) / 2
@@ -116,7 +116,7 @@ template animation shutter_central {
   )
 
   # shutter moving out to in
-  animation shutter_outin_animation = beacon_animation(
+  animation shutter_outin_animation = beacon(
     color = col1
     back_color = col2
     pos = strip_len2 - (strip_len - shutter_size + 1) / 2

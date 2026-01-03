@@ -31,7 +31,7 @@ Traditional LED programming requires managing frame buffers, timing loops, and c
 - **No timing code** - Just specify durations like `period=2s` and the framework handles the rest
 - **No state machines** - Animations automatically manage their internal state
 - **Composable** - Layer multiple animations, use one as an opacity mask for another
-- **Readable** - Code reads almost like English: "animation pulse = breathe_animation(color=red, period=2s)"
+- **Readable** - Code reads almost like English: "animation pulse = breathe(color=red, period=2s)"
 
 ### Key Concepts
 
@@ -39,7 +39,7 @@ Before diving into code, let's understand the building blocks:
 
 | Concept | What It Does | Example |
 |---------|--------------|---------|
-| **Animation** | A visual effect on the LED strip | `solid`, `twinkle`, `beacon_animation` |
+| **Animation** | A visual effect on the LED strip | `solid`, `twinkle`, `beacon` |
 | **Color** | Either a static value or a dynamic provider that changes over time | `red`, `0xFF0000`, `color_cycle(...)` |
 | **Palette** | A collection of colors for gradients or cycling | `PALETTE_RAINBOW`, custom arrays |
 | **Value Provider** | A number that changes over time (oscillates) | `sine_osc`, `triangle`, `sawtooth` |
@@ -265,14 +265,14 @@ Chapter 2 showed `color_cycle`, which steps discretely between colors. This chap
 
 <a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_3_10_color_transition" target="_blank"><img src="../../_media/berry_animation/chap_3_10.png" alt="Rich Palette"></a>
 
-The `rich_palette_animation` is a complete animation that handles both the color transitions and rendering. It's the easiest way to get smooth rainbow effects.
+The `rich_palette` is a complete animation that handles both the color transitions and rendering. It's the easiest way to get smooth rainbow effects.
 
 ```berry
 # Smooth cycling through rainbow colors
 
-animation back = rich_palette_animation()
+animation back = rich_palette()
 # Equivalent to:
-# animation back = rich_palette_animation(colors=PALETTE_RAINBOW, period=5s,
+# animation back = rich_palette(colors=PALETTE_RAINBOW, period=5s,
 #                                         transition_type=SINE, brightness=100%)
 run back
 ```
@@ -327,7 +327,7 @@ The key insight is that color providers can work in two dimensions:
 
 <a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_4_10_color_pattern" target="_blank"><img src="../../_media/berry_animation/chap_4_10.png" alt="Color Pattern"></a>
 
-A gradient maps colors to positions along the strip. The `palette_gradient_animation` does exactly this.
+A gradient maps colors to positions along the strip. The `palette_gradient` does exactly this.
 
 ```berry
 # Rainbow pattern across the strip
@@ -336,7 +336,7 @@ A gradient maps colors to positions along the strip. The `palette_gradient_anima
 color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
 # Create a gradient across the whole strip
-animation back_pattern = palette_gradient_animation(color_source = rainbow_rich_color)
+animation back_pattern = palette_gradient(color_source = rainbow_rich_color)
 run back_pattern
 ```
 
@@ -357,7 +357,7 @@ color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0
 set strip_len = strip_length()
 
 # Create gradient with half the strip length as spatial period
-animation back_pattern = palette_gradient_animation(
+animation back_pattern = palette_gradient(
   color_source = rainbow_rich_color
   spatial_period = strip_len / 2
 )
@@ -385,7 +385,7 @@ set strip_len = strip_length()
 # Oscillate spatial period between 1/2 and 3/2 of strip length
 set period = sine_osc(min_value = (strip_len - 1) / 2, max_value = (3 * strip_len) / 2, duration = 5s)
 
-animation back = palette_gradient_animation(color_source = rainbow_rich_color, spatial_period = period)
+animation back = palette_gradient(color_source = rainbow_rich_color, spatial_period = period)
 run back
 ```
 
@@ -413,7 +413,7 @@ Make the gradient rotate along the strip:
 
 color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
 
-animation back = palette_gradient_animation(
+animation back = palette_gradient(
   color_source = rainbow_rich_color
   shift_period = 5s    # Complete rotation in 5 seconds
 )
@@ -449,7 +449,7 @@ color rainbow_rich_color = rich_palette_color(colors=vue_meter_palette, period=0
 set level = sawtooth(min_value = 0%, max_value=100%, duration = 2s)
 
 # Create the meter animation
-animation back = palette_meter_animation(color_source = rainbow_rich_color, level = level)
+animation back = palette_meter(color_source = rainbow_rich_color, level = level)
 run back
 ```
 
@@ -499,7 +499,7 @@ color rainbow_rich_color = rich_palette_color(colors=vue_meter_palette, period=0
 
 # Step 3: Use the custom function as a parameter
 # Call it with () - the engine parameter is passed automatically
-animation back = palette_meter_animation(color_source = rainbow_rich_color, level = rand_meter())
+animation back = palette_meter(color_source = rainbow_rich_color, level = rand_meter())
 run back
 ```
 
@@ -530,7 +530,7 @@ Let's start with a stationary beacon - a red highlight on a blue background.
 ```berry
 # Static beacon
 
-animation back = beacon_animation(
+animation back = beacon(
   back_color = blue
   color = red
   pos = 5              # Start at pixel 5
@@ -557,7 +557,7 @@ Hard edges can look harsh. The `slew_size` parameter adds a gradual fade on each
 ```berry
 # Static beacon with slew
 
-animation back = beacon_animation(
+animation back = beacon(
   back_color = blue
   color = red
   pos = 5
@@ -578,7 +578,7 @@ Remember: any numeric parameter can be replaced with a value provider. Here we m
 
 set slew = cosine_osc(min_value = 0, max_value = 4, duration = 2s)
 
-animation back = beacon_animation(
+animation back = beacon(
   back_color = blue
   color = red
   pos = 5
@@ -599,7 +599,7 @@ Now for the classic effect: a beacon that moves back and forth across the strip.
 
 set strip_len = strip_length()
 
-animation back = beacon_animation(
+animation back = beacon(
     color = red
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3       # small 3 pixels eye
@@ -647,7 +647,7 @@ run stars
 
 # Moving beacon with dynamic color
 # back_color defaults to transparent, so stars show through
-animation back = beacon_animation(
+animation back = beacon(
     color = rich_palette_color(colors=PALETTE_RAINBOW_W2, period=5s)
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3
@@ -690,7 +690,7 @@ color red_blue_red_color = rich_palette_color(colors=red_blue_red_palette)
 
 # Moving beacon as opacity mask
 # The color is white but it doesn't matter - only brightness counts
-animation moving_eye = beacon_animation(
+animation moving_eye = beacon(
     color = white           # Color doesn't matter, only brightness/alpha
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3
@@ -699,7 +699,7 @@ animation moving_eye = beacon_animation(
 
 # Apply the mask to a gradient
 # The gradient exists everywhere, but only shows where the beacon is
-animation eye_pattern = palette_gradient_animation(
+animation eye_pattern = palette_gradient(
   color_source = red_blue_red_color
   opacity = moving_eye      # Use beacon as opacity mask
 )
@@ -734,7 +734,7 @@ set strip_len = strip_length()
 # Sawtooth from 0 to strip_len - grows linearly, then resets
 set shutter_size = sawtooth(min_value = 0, max_value = strip_len, duration = 1.5s)
 
-animation shutter_lr_animation = beacon_animation(
+animation shutter_lr_animation = beacon(
     color = red
     back_color = blue
     pos = 0                         # Start from left
@@ -770,7 +770,7 @@ color col1 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 color col2 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 col2.next = 1           # Shift col2 by one color at startup
 
-animation shutter_lr_animation = beacon_animation(
+animation shutter_lr_animation = beacon(
     color = col2
     back_color = col1
     pos = 0
@@ -840,7 +840,7 @@ color col2 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 col2.next = 1
 
 # Position calculated to center the beacon as it grows
-animation shutter_inout_animation = beacon_animation(
+animation shutter_inout_animation = beacon(
     color = col2
     back_color = col1
     pos = strip_len_2 - (shutter_size + 1) / 2
@@ -893,7 +893,7 @@ color col2 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 col2.next = 1
 
 # In-out animation: beacon grows from center outward
-animation shutter_inout_animation = beacon_animation(
+animation shutter_inout_animation = beacon(
     color = col2
     back_color = col1
     pos = strip_len_2 - (shutter_size + 1) / 2
@@ -902,7 +902,7 @@ animation shutter_inout_animation = beacon_animation(
 
 # Out-in animation: beacon shrinks from edges toward center
 # Uses inverted size (strip_len - shutter_size) and swapped colors
-animation shutter_outin_animation = beacon_animation(
+animation shutter_outin_animation = beacon(
     color = col1
     back_color = col2
     pos = strip_len_2 - (strip_len - shutter_size + 1) / 2
@@ -960,7 +960,7 @@ The pattern repeats with a period of `pulse_size + low_size` pixels.
 ```berry
 # Static crenel pattern
 
-animation back = crenel_animation(
+animation back = crenel(
     color = red
     back_color = blue
     pulse_size = 2        # 2 pixels of 'color'
@@ -988,7 +988,7 @@ set max_pulses = (strip_len + period - 1) / period
 
 set nb_pulse = triangle(min_value = 0, max_value = max_pulses, duration = 2s)
 
-animation back = crenel_animation(
+animation back = crenel(
     color = red
     back_color = blue
     pulse_size = 2
@@ -1009,7 +1009,7 @@ Instead of a fixed `pulse_size`, you can use a value provider to animate the pul
 
 set pulse_size = triangle(min_value = 0, max_value = 4, duration = 2s)
 
-animation back = crenel_animation(
+animation back = crenel(
     color = red
     back_color = blue
     pulse_size = pulse_size
@@ -1029,7 +1029,7 @@ The `color` parameter also accepts a color provider instead of a static color. T
 
 color rainbow_color = rich_palette_color(colors=PALETTE_RAINBOW_W2, period=5s)
 
-animation back = crenel_animation(
+animation back = crenel(
     color = rainbow_color
     back_color = blue
     pulse_size = 2
@@ -1066,7 +1066,7 @@ animation back = solid(color = blue, priority = 20)
 run back
 
 # Crenel mask (white = visible, transparent = hidden)
-animation mask = crenel_animation(
+animation mask = crenel(
     color = white
     back_color = transparent
     pulse_size = 2
@@ -1075,7 +1075,7 @@ animation mask = crenel_animation(
 
 # Rainbow gradient masked by crenel
 color rainbow_rich_color = rich_palette_color(colors=PALETTE_RAINBOW_W, period=0)
-animation pattern = palette_gradient_animation(
+animation pattern = palette_gradient(
     color_source = rainbow_rich_color
     shift_period = 2s           # Rotating gradient
     opacity = mask              # Apply crenel mask
@@ -1096,7 +1096,7 @@ Think of templates like functions in programming: define once, use many times wi
 
 <a href="https://tasmota.github.io/docs/Tasmota-Berry-emulator/index.html?example=chap_8_10_template_cylon" target="_blank"><img src="../../_media/berry_animation/chap_8_10.png" alt="Template Cylon"></a>
 
-The `template animation` keyword creates a new animation type that can be instantiated just like built-in animations (`solid`, `beacon_animation`, etc.). Once defined, you use it by calling `animation my_anim = template_name(param1=value1, ...)` - exactly like native animations.
+The `template animation` keyword creates a new animation type that can be instantiated just like built-in animations (`solid`, `beacon`, etc.). Once defined, you use it by calling `animation my_anim = template_name(param1=value1, ...)` - exactly like native animations.
 
 **Defining parameters:**
 
@@ -1137,7 +1137,7 @@ template animation cylon_eye {
 
   set strip_len = strip_length()
 
-  animation eye_animation = beacon_animation(
+  animation eye_animation = beacon(
     color = eye_color
     back_color = back_color
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = period)
@@ -1218,7 +1218,7 @@ template animation shutter_bidir {
   col2.next = 1     # move 'col2' to the next color so it's shifte by one compared to 'col1'
 
   # Shutter moving in in-out
-  animation shutter_inout_animation = beacon_animation(
+  animation shutter_inout_animation = beacon(
     color = col2                    # Use two rotating colors
     back_color = col1               # Use two rotating colors
     pos = strip_len_2 - (shutter_size + 1) / 2
@@ -1226,7 +1226,7 @@ template animation shutter_bidir {
   )
 
   # shutter moving in out-in
-  animation shutter_outin_animation = beacon_animation(
+  animation shutter_outin_animation = beacon(
     color = col1
     back_color = col2
     pos = strip_len_2 - (strip_len - shutter_size + 1) / 2
@@ -1280,13 +1280,13 @@ run main
 |-----------|-------------|----------------|
 | `solid` | Solid color fill | `color` |
 | `twinkle` | Twinkling stars effect | `color`, `density`, `twinkle_speed`, `fade_speed` |
-| `beacon_animation` | Positioned pulse/highlight | `color`, `pos`, `beacon_size`, `slew_size` |
-| `crenel_animation` | Square wave pattern | `color`, `back_color`, `pulse_size`, `low_size` |
-| `rich_palette_animation` | Smooth palette cycling | `colors`, `period`, `transition_type` |
-| `palette_gradient_animation` | Gradient across strip | `color_source`, `spatial_period`, `shift_period` |
-| `palette_meter_animation` | VU-meter style bar | `color_source`, `level` |
-| `breathe_animation` | Breathing/pulsing effect | `color`, `period` |
-| `comet_animation` | Moving comet with tail | `color`, `tail_length`, `speed` |
+| `beacon` | Positioned pulse/highlight | `color`, `pos`, `beacon_size`, `slew_size` |
+| `crenel` | Square wave pattern | `color`, `back_color`, `pulse_size`, `low_size` |
+| `rich_palette` | Smooth palette cycling | `colors`, `period`, `transition_type` |
+| `palette_gradient` | Gradient across strip | `color_source`, `spatial_period`, `shift_period` |
+| `palette_meter` | VU-meter style bar | `color_source`, `level` |
+| `breathe` | Breathing/pulsing effect | `color`, `period` |
+| `comet` | Moving comet with tail | `color`, `tail_length`, `speed` |
 
 ### Colors
 

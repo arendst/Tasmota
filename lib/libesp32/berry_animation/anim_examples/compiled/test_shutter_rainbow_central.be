@@ -36,7 +36,7 @@ class shutter_central_animation : animation.engine_proxy
     col2_.period = 0
     col2_.next = 1
     # shutter moving from left to right
-    var shutter_central_animation_ = animation.beacon_animation(engine)
+    var shutter_central_animation_ = animation.beacon(engine)
     shutter_central_animation_.color = col2_
     shutter_central_animation_.back_color = col1_
     shutter_central_animation_.pos = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) - animation.resolve(shutter_size_) / 2 end)
@@ -88,7 +88,7 @@ template animation shutter_central {
   col2.next = 1
 
   # shutter moving from left to right
-  animation shutter_central_animation = beacon_animation(
+  animation shutter_central_animation = beacon(
     color = col2
     back_color = col1
     pos = strip_len - shutter_size / 2

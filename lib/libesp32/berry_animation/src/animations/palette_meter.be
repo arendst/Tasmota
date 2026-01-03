@@ -1,4 +1,4 @@
-# GradientMeterAnimation - VU meter style animation with palette gradient colors
+# palette_meter - VU meter style animation with palette gradient colors
 #
 # Displays a gradient-colored bar from the start of the strip up to a level (0-255).
 # Includes optional peak hold indicator that shows the maximum level for a configurable time.
@@ -12,22 +12,22 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:GradientMeterAnimation,weak
-class GradientMeterAnimation : animation.palette_gradient_animation
+#@ solidify:palette_meter,weak
+class palette_meter : animation.palette_gradient
   # Instance variables for peak tracking
   var peak_level        # Current peak level (0-255)
   var peak_time         # Time when peak was set (ms)
   var _level            # Cached value for 'self.level'
 
-  # Parameter definitions - extends PaletteGradientAnimation params
+  # Parameter definitions - extends palette_gradient params
   static var PARAMS = animation.enc_params({
-    # Inherited from PaletteGradientAnimation: color_source, shift_period, spatial_period, phase_shift
+    # Inherited from palette_gradient: color_source, shift_period, spatial_period, phase_shift
     # New meter-specific parameters
     "level": {"min": 0, "max": 255, "default": 255},
     "peak_hold": {"min": 0, "default": 1000}  # 0 = disabled, >0 = hold time in ms
   })
 
-  # Initialize a new GradientMeterAnimation
+  # Initialize a new palette_meter
   def init(engine)
     super(self).init(engine)
 
@@ -138,4 +138,4 @@ class GradientMeterAnimation : animation.palette_gradient_animation
   end
 end
 
-return {'palette_meter_animation': GradientMeterAnimation}
+return {'palette_meter': palette_meter}

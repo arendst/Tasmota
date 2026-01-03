@@ -30,8 +30,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BeaconAnimation,weak
-class BeaconAnimation : animation.animation
+#@ solidify:beacon,weak
+class beacon : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions following the new specification
@@ -139,4 +139,4 @@ class BeaconAnimation : animation.animation
 end
 
 # Export class directly - no redundant factory function needed
-return {'beacon_animation': BeaconAnimation}
+return {'beacon': beacon}

@@ -11,7 +11,7 @@ palette red_blue_red_palette = [ red, 0x3333FF, red ]
 color red_blue_red_color = rich_palette_color(colors=red_blue_red_palette)
 
 # Define a moving beacon to be used as an opacity mask
-animation moving_eye = beacon_animation(
+animation moving_eye = beacon(
     color = white           # the color is not important, only the opacity counts here
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3         # small 3 pixels eye
@@ -19,7 +19,7 @@ animation moving_eye = beacon_animation(
 )
 
 # The palette gradient animation is used with an animation as opacity
-animation eye_pattern = palette_gradient_animation(
+animation eye_pattern = palette_gradient(
   color_source = red_blue_red_color   # the beacon animation used as opacity
   # spatial_period = strip_len  # implicit
   opacity = moving_eye

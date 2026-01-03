@@ -1,4 +1,4 @@
-# ColorCycleColorProvider for Berry Animation Framework
+# color_cycle for Berry Animation Framework
 #
 # This color provider cycles through a list of colors with brutal switching.
 # No transitions or interpolation - just instant color changes.
@@ -13,8 +13,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:ColorCycleColorProvider,weak
-class ColorCycleColorProvider : animation.color_provider
+#@ solidify:color_cycle,weak
+class color_cycle : animation.color_provider
   # Non-parameter instance variables only
   var current_index   # Current color index for next functionality
   
@@ -26,7 +26,7 @@ class ColorCycleColorProvider : animation.color_provider
     "palette_size": {"type": "int", "default": 3}  # Read-only: number of colors in palette
   })
   
-  # Initialize a new ColorCycleColorProvider
+  # Initialize a new color_cycle
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
@@ -216,4 +216,4 @@ class ColorCycleColorProvider : animation.color_provider
   end
 end
 
-return {'color_cycle': ColorCycleColorProvider}
+return {'color_cycle': color_cycle}

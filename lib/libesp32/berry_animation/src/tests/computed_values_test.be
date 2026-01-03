@@ -13,7 +13,7 @@ def test_basic_computed_values()
   print("Testing basic computed values...")
   
   var dsl_source = "set strip_len = strip_length()\n" +
-    "animation stream1 = comet_animation(\n" +
+    "animation stream1 = comet(\n" +
     "  color=red\n" +
     "  tail_length=strip_len / 4\n" +
     "  speed=1.5\n" +
@@ -66,7 +66,7 @@ def test_complex_computed_values()
   
   var dsl_source = "set strip_len = strip_length()\n" +
     "set base_speed = 2.0\n" +
-    "animation complex_anim = comet_animation(\n" +
+    "animation complex_anim = comet(\n" +
     "  color=blue\n" +
     "  tail_length=strip_len / 4 + 2\n" +
     "  speed=base_speed * 1.5\n" +
@@ -96,7 +96,7 @@ end
 def test_static_values_no_closures()
   print("Testing static values don't create closures...")
   
-  var dsl_source = "animation simple_anim = comet_animation(\n" +
+  var dsl_source = "animation simple_anim = comet(\n" +
     "  color=red\n" +
     "  tail_length=5\n" +
     "  speed=1.0\n" +

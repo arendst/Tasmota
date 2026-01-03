@@ -20,8 +20,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:CrenelPositionAnimation,weak
-class CrenelPositionAnimation : animation.animation
+#@ solidify:crenel,weak
+class crenel : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions with constraints
@@ -109,4 +109,4 @@ class CrenelPositionAnimation : animation.animation
   # obj.nb_pulse = value
 end
 
-return {'crenel_animation': CrenelPositionAnimation}
+return {'crenel': crenel}

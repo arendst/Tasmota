@@ -10,7 +10,7 @@ palette storm_colors = [
   (255, 0x220033)   # Slightly lighter purple
 ]
 
-animation storm_bg = rich_palette_animation(colors=storm_colors, period=12s, transition_type=SINE, brightness=100)
+animation storm_bg = rich_palette(colors=storm_colors, period=12s, transition_type=SINE, brightness=100)
 
 # Random lightning flashes - full strip
 animation lightning_main = solid(color=0xFFFFFF)  # Bright white
@@ -18,7 +18,7 @@ lightning_main.opacity = square(min_value=0, max_value=255, duration=80ms, duty_
 lightning_main.priority = 20
 
 # Secondary lightning - partial strip
-animation lightning_partial = beacon_animation(
+animation lightning_partial = beacon(
   color=0xFFFFAA  # Slightly yellow white
   pos=30          # center position
   beacon_size=20  # covers part of strip

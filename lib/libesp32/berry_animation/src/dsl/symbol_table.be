@@ -262,7 +262,7 @@ class SymbolEntry
     return _class(name, _class.TYPE_VALUE_PROVIDER, instance, is_builtin)
   end
   
-  # Create a symbol entry for an animation constructor (built-in like solid, pulsating_animation)
+  # Create a symbol entry for an animation constructor (built-in like solid, breathe)
   static def create_animation_constructor(name, instance, is_builtin)
     return _class(name, _class.TYPE_ANIMATION_CONSTRUCTOR, instance, is_builtin)
   end

@@ -72,7 +72,7 @@ Loads DSL source from a file and executes it.
 # Create a DSL file
 var f = open("my_animation.dsl", "w")
 f.write("color green = 0x00FF00\n"
-        "animation pulse_green = pulsating_animation(color=green, period=2s)\n"
+        "animation pulse_green = breathe(color=green, period=2s)\n"
         "run pulse_green")
 f.close()
 
@@ -109,8 +109,8 @@ color red = 0xFF0000
 color blue = 0x0000FF
 
 # Animation definitions with named parameters
-animation pulse_red = pulsating_animation(color=red, period=2s)
-animation comet_blue = comet_animation(color=blue, tail_length=10, speed=1500)
+animation pulse_red = breathe(color=red, period=2s)
+animation comet_blue = comet(color=blue, tail_length=10, speed=1500)
 
 # Property assignments with user functions
 pulse_red.priority = 10
@@ -134,7 +134,7 @@ When the DSL encounters an identifier (like `SINE` or `red`), it checks at trans
 
 ```berry
 # If SINE exists in animation module
-animation wave = wave_animation(waveform=SINE)
+animation wave = wave(waveform=SINE)
 # Transpiles to: animation.SINE (direct access)
 
 # If custom_color doesn't exist in animation module  
@@ -153,7 +153,7 @@ animation solid_red = solid(color=custom_color)
 ### Symbol Categories
 
 **Built-in Symbols** (resolved to `animation.<symbol>`):
-- Animation factory functions: `solid`, `pulsating_animation`, `comet_animation`
+- Animation factory functions: `solid`, `breathe`, `comet`
 - Value providers: `triangle`, `smooth`, `sine`, `static_value`
 - Color providers: `color_cycle`, `breathe_color`, `rich_palette_color`
 - Constants: `PALETTE_RAINBOW`, `SINE`, `TRIANGLE`, etc.
@@ -288,14 +288,14 @@ Berry code can interact with DSL-generated objects by using the underscore suffi
 
 ```berry
 # DSL Code
-animation pulse = pulsating_animation(color=red, period=2s)
+animation pulse = breathe(color=red, period=2s)
 berry """
 pulse_.opacity = 200
 pulse_.priority = 10
 """
 
 # Transpiles to Berry Code
-var pulse_ = animation.pulsating_animation(engine)
+var pulse_ = animation.breathe(engine)
 pulse_.color = animation.red
 pulse_.period = 2000
 # Berry code block
@@ -323,7 +323,7 @@ template animation shutter_effect {
   set strip_len = strip_length()
   color col = color_cycle(colors=colors, period=0)
   
-  animation shutter = beacon_animation(
+  animation shutter = beacon(
     color = col
     beacon_size = strip_len / 2
   )
@@ -354,7 +354,7 @@ class shutter_effect_animation : animation.engine_proxy
     col_.colors = animation.create_closure_value(engine, def (engine) return self.colors end)
     col_.period = 0
     
-    var shutter_ = animation.beacon_animation(engine)
+    var shutter_ = animation.beacon(engine)
     shutter_.color = col_
     shutter_.beacon_size = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 2 end)
     
@@ -383,7 +383,7 @@ template pulse_effect {
   param color type color
   param speed
   
-  animation pulse = pulsating_animation(color=color, period=speed)
+  animation pulse = breathe(color=color, period=speed)
   run pulse
 }
 ```
@@ -392,7 +392,7 @@ template pulse_effect {
 
 ```berry
 def pulse_effect_template(engine, color_, speed_)
-  var pulse_ = animation.pulsating_animation(engine)
+  var pulse_ = animation.breathe(engine)
   pulse_.color = color_
   pulse_.period = speed_
   engine.add(pulse_)
@@ -456,7 +456,7 @@ color normal = 0x000080
 color alert = 0xFF0000
 
 animation normal_state = solid(color=normal)
-animation alert_state = pulsating_animation(color=alert, period=500ms)
+animation alert_state = breathe(color=alert, period=500ms)
 
 # Event handlers
 on button_press {
@@ -480,14 +480,14 @@ DSL supports nested function calls for complex compositions:
 
 ```berry
 # Nested calls in animation definitions (now supported)
-animation complex = pulsating_animation(
+animation complex = breathe(
   color=red,
   period=2s
 )
 
 # Nested calls in run statements
 sequence demo {
-  play pulsating_animation(color=blue, period=1s) for 10s
+  play breathe(color=blue, period=1s) for 10s
 }
 ```
 
@@ -498,7 +498,7 @@ The DSL compiler validates classes and parameters at transpilation time, catchin
 ```berry
 var invalid_dsl = "color red = #INVALID_COLOR\n"
                   "animation bad = unknown_function(red)\n"
-                  "animation pulse = pulsating_animation(invalid_param=123)"
+                  "animation pulse = breathe(invalid_param=123)"
 
 try
   animation_dsl.execute(invalid_dsl)
@@ -525,16 +525,16 @@ animation bad2 = math_function(value=10)
 **Parameter Validation:**
 ```berry
 # Error: Invalid parameter name in constructor
-animation pulse = pulsating_animation(invalid_param=123)
-# Transpiler error: "Parameter 'invalid_param' is not valid for pulsating_animation"
+animation pulse = breathe(invalid_param=123)
+# Transpiler error: "Parameter 'invalid_param' is not valid for breathe"
 
 # Error: Invalid parameter name in property assignment
-animation pulse = pulsating_animation(color=red, period=2s)
+animation pulse = breathe(color=red, period=2s)
 pulse.wrong_arg = 15
 # Transpiler error: "Animation 'PulseAnimation' does not have parameter 'wrong_arg'"
 
 # Error: Parameter constraint violation
-animation comet = comet_animation(tail_length=-5)
+animation comet = comet(tail_length=-5)
 # Transpiler error: "Parameter 'tail_length' value -5 violates constraint: min=1"
 ```
 
@@ -545,14 +545,14 @@ color bad = nonexistent_color_provider(period=2s)
 # Transpiler error: "Color provider factory 'nonexistent_color_provider' does not exist"
 
 # Error: Function exists but doesn't create color provider
-color bad2 = pulsating_animation(color=red)
-# Transpiler error: "Function 'pulsating_animation' does not create a color provider instance"
+color bad2 = breathe(color=red)
+# Transpiler error: "Function 'breathe' does not create a color provider instance"
 ```
 
 **Reference Validation:**
 ```berry
 # Error: Undefined color reference
-animation pulse = pulsating_animation(color=undefined_color)
+animation pulse = breathe(color=undefined_color)
 # Transpiler error: "Undefined reference: 'undefined_color'"
 
 # Error: Undefined animation reference in run statement
@@ -697,11 +697,11 @@ import animation_dsl
 def handle_rule_trigger(event)
   if event == "motion"
     animation_dsl.execute("color alert = 0xFF0000\n"
-                          "animation alert_anim = pulsating_animation(color=alert, period=500ms)\n"
+                          "animation alert_anim = breathe(color=alert, period=500ms)\n"
                           "run alert_anim for 5s")
   elif event == "door"
     animation_dsl.execute("color welcome = 0x00FF00\n"
-                          "animation welcome_anim = breathe_animation(color=welcome, period=2s)\n"
+                          "animation welcome_anim = breathe(color=welcome, period=2s)\n"
                           "run welcome_anim for 8s")
   end
 end
@@ -746,7 +746,7 @@ webserver.on("/execute_dsl", web_execute_dsl)
    
    # Animations with named parameters
    animation red_solid = solid(color=red)
-   animation pulse_red = pulsating_animation(color=red, period=2s)
+   animation pulse_red = breathe(color=red, period=2s)
    
    # Property assignments
    pulse_red.priority = 10
@@ -764,11 +764,11 @@ webserver.on("/execute_dsl", web_execute_dsl)
    ```berry
    # Good
    color warning_red = 0xFF0000
-   animation door_alert = pulsating_animation(color=warning_red, period=500ms)
+   animation door_alert = breathe(color=warning_red, period=500ms)
    
    # Avoid
    color c1 = 0xFF0000
-   animation a1 = pulsating_animation(color=c1, period=500ms)
+   animation a1 = breathe(color=c1, period=500ms)
    ```
 
 3. **Comment your DSL**:
@@ -781,8 +781,8 @@ webserver.on("/execute_dsl", web_execute_dsl)
    # Main security animation sequence
    sequence security_demo {
      play solid(color=normal_blue) for 10s                    # Normal operation
-     play pulsating_animation(color=alert_red, period=500ms) for 3s  # Alert
-     play breathe_animation(color=success_green, period=2s) for 5s  # Success confirmation
+     play breathe(color=alert_red, period=500ms) for 3s  # Alert
+     play breathe(color=success_green, period=2s) for 5s  # Success confirmation
    }
    ```
 

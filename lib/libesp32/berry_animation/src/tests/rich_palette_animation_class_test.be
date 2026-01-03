@@ -1,6 +1,6 @@
-# Test file for RichPaletteAnimation class
+# Test file for rich_palette class
 #
-# This file contains tests for the new RichPaletteAnimation class with parameter forwarding
+# This file contains tests for the new rich_palette class with parameter forwarding
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/rich_palette_animation_class_test.be
@@ -16,7 +16,7 @@ var engine = animation.create_engine(strip)
 print("Created test engine with 10 LEDs")
 
 # Test 1: Create a rich palette animation with engine-only constructor
-var anim = animation.rich_palette_animation(engine)
+var anim = animation.rich_palette(engine)
 print("Created rich palette animation with engine-only constructor")
 
 # Test that it's created successfully
@@ -103,14 +103,14 @@ var rainbow_palette = bytes(
   "FFFF0000"    # Red (value 255)
 )
 
-var rainbow_anim = animation.rich_palette_animation(engine)
+var rainbow_anim = animation.rich_palette(engine)
 rainbow_anim.colors = rainbow_palette
 rainbow_anim.period = 5000
 rainbow_anim.brightness = 255
 print("Created rainbow animation with custom palette")
 
 # Test 9: Test static mode (period = 0)
-var static_anim = animation.rich_palette_animation(engine)
+var static_anim = animation.rich_palette(engine)
 static_anim.colors = rainbow_palette
 static_anim.period = 0  # Static mode
 static_anim.brightness = 150
@@ -155,5 +155,5 @@ assert(static_anim != nil, "Static animation should be created")
 assert(rainbow_anim.period == 5000, "Rainbow animation should have correct cycle period")
 assert(static_anim.period == 0, "Static animation should have cycle period 0")
 
-print("All RichPaletteAnimation class tests completed successfully!")
+print("All rich_palette class tests completed successfully!")
 return true

@@ -1,20 +1,20 @@
-# Test suite for GradientAnimation
+# Test suite for gradient
 #
-# This test verifies that the simplified GradientAnimation works correctly
+# This test verifies that the simplified gradient works correctly
 # with linear and radial gradients using beacon-based rendering.
 
 import animation
 
 # Test basic gradient animation creation
 def test_gradient_creation()
-  print("Testing GradientAnimation creation...")
+  print("Testing gradient creation...")
   
   # Create LED strip and engine for testing
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
   
   # Test default gradient
-  var gradient = animation.gradient_animation(engine)
+  var gradient = animation.gradient(engine)
   assert(gradient != nil, "Should create gradient animation")
   assert(gradient.gradient_type == 0, "Should default to linear gradient")
   assert(gradient.direction == 0, "Should default to forward direction")
@@ -22,23 +22,23 @@ def test_gradient_creation()
   assert(gradient.color2 == 0xFF0000FF, "Should default to blue color2")
   
   # Test radial gradient
-  var radial_gradient = animation.gradient_animation(engine)
+  var radial_gradient = animation.gradient(engine)
   radial_gradient.gradient_type = 1
   radial_gradient.color1 = 0xFF000000
   radial_gradient.color2 = 0xFFFFFFFF
   assert(radial_gradient != nil, "Should create radial gradient")
   assert(radial_gradient.gradient_type == 1, "Should be radial gradient")
   
-  print("✓ GradientAnimation creation test passed")
+  print("✓ gradient creation test passed")
 end
 
 # Test gradient parameter changes
 def test_gradient_parameters()
-  print("Testing GradientAnimation parameters...")
+  print("Testing gradient parameters...")
   
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var gradient = animation.gradient_animation(engine)
+  var gradient = animation.gradient(engine)
   
   # Test parameter setting via virtual members
   gradient.gradient_type = 1
@@ -57,16 +57,16 @@ def test_gradient_parameters()
   assert(gradient.set_param("gradient_type", 5) == false, "Should reject invalid gradient type")
   assert(gradient.set_param("direction", 5) == false, "Should reject invalid direction")
   
-  print("✓ GradientAnimation parameters test passed")
+  print("✓ gradient parameters test passed")
 end
 
 # Test gradient animation updates
 def test_gradient_updates()
-  print("Testing GradientAnimation updates...")
+  print("Testing gradient updates...")
   
   var strip = global.Leds(5)
   var engine = animation.create_engine(strip)
-  var gradient = animation.gradient_animation(engine)
+  var gradient = animation.gradient(engine)
   gradient.color1 = 0xFF000000
   gradient.color2 = 0xFF00FF00
   
@@ -81,16 +81,16 @@ def test_gradient_updates()
   gradient.update(1500)
   assert(gradient.is_running == true, "Should be running after update at 500ms")
   
-  print("✓ GradientAnimation updates test passed")
+  print("✓ gradient updates test passed")
 end
 
 # Test gradient rendering
 def test_gradient_rendering()
-  print("Testing GradientAnimation rendering...")
+  print("Testing gradient rendering...")
   
   var strip = global.Leds(5)
   var engine = animation.create_engine(strip)
-  var gradient = animation.gradient_animation(engine)
+  var gradient = animation.gradient(engine)
   gradient.color1 = 0xFF000000  # Black
   gradient.color2 = 0xFFFF0000  # Red
   
@@ -112,18 +112,18 @@ def test_gradient_rendering()
   # Colors should be different in a gradient (black to red)
   assert(first_color != last_color, "First and last pixels should be different in gradient")
   
-  print("✓ GradientAnimation rendering test passed")
+  print("✓ gradient rendering test passed")
 end
 
 # Test linear gradient direction
 def test_gradient_direction()
-  print("Testing GradientAnimation direction...")
+  print("Testing gradient direction...")
   
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
   
   # Test forward direction (color1 -> color2)
-  var forward_gradient = animation.gradient_animation(engine)
+  var forward_gradient = animation.gradient(engine)
   forward_gradient.color1 = 0xFF000000  # Black
   forward_gradient.color2 = 0xFFFF0000  # Red
   forward_gradient.direction = 0
@@ -137,7 +137,7 @@ def test_gradient_direction()
   var forward_last = frame1.get_pixel_color(9)
   
   # Test reverse direction (color2 -> color1)
-  var reverse_gradient = animation.gradient_animation(engine)
+  var reverse_gradient = animation.gradient(engine)
   reverse_gradient.color1 = 0xFF000000  # Black
   reverse_gradient.color2 = 0xFFFF0000  # Red
   reverse_gradient.direction = 1
@@ -155,17 +155,17 @@ def test_gradient_direction()
   print(f"  Forward: first=0x{forward_first:08X}, last=0x{forward_last:08X}")
   print(f"  Reverse: first=0x{reverse_first:08X}, last=0x{reverse_last:08X}")
   
-  print("✓ GradientAnimation direction test passed")
+  print("✓ gradient direction test passed")
 end
 
 # Test radial gradient
 def test_radial_gradient()
-  print("Testing GradientAnimation radial mode...")
+  print("Testing gradient radial mode...")
   
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
   
-  var radial_gradient = animation.gradient_animation(engine)
+  var radial_gradient = animation.gradient(engine)
   radial_gradient.gradient_type = 1  # Radial
   radial_gradient.color1 = 0xFF000000  # Black at center
   radial_gradient.color2 = 0xFFFFFFFF  # White at edges
@@ -188,12 +188,12 @@ def test_radial_gradient()
   var center_brightness = ((center_color >> 16) & 0xFF) + ((center_color >> 8) & 0xFF) + (center_color & 0xFF)
   assert(edge_brightness > center_brightness, "Edge should be brighter than center in radial gradient")
   
-  print("✓ GradientAnimation radial mode test passed")
+  print("✓ gradient radial mode test passed")
 end
 
 # Run all tests
 def run_gradient_animation_tests()
-  print("=== GradientAnimation Tests ===")
+  print("=== gradient Tests ===")
   
   try
     test_gradient_creation()
@@ -203,7 +203,7 @@ def run_gradient_animation_tests()
     test_gradient_direction()
     test_radial_gradient()
     
-    print("=== All GradientAnimation tests passed! ===")
+    print("=== All gradient tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

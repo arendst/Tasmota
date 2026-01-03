@@ -198,14 +198,14 @@ def test_dsl_parameter_validation()
   import animation_dsl
   
   # Test valid animation parameter
-  var valid_dsl = "animation red_eye = beacon_animation(color = red)\n" +
+  var valid_dsl = "animation red_eye = beacon(color = red)\n" +
                   "red_eye.back_color = blue"
   
   var result = animation_dsl.compile(valid_dsl)
   assert(result != nil, "Valid parameter should compile successfully")
   
   # Test invalid animation parameter
-  var invalid_dsl = "animation red_eye = beacon_animation(color = red)\n" +
+  var invalid_dsl = "animation red_eye = beacon(color = red)\n" +
                     "red_eye.invalid_param = 123"
   
   try
@@ -250,14 +250,14 @@ def test_dsl_object_reference_validation()
   import animation_dsl
   
   # Test valid run statement
-  var valid_run = "animation red_eye = beacon_animation(color = red)\n" +
+  var valid_run = "animation red_eye = beacon(color = red)\n" +
                   "run red_eye"
   
   var result = animation_dsl.compile(valid_run)
   assert(result != nil, "Valid run statement should compile successfully")
   
   # Test invalid run statement (undefined object)
-  var invalid_run = "animation red_eye = beacon_animation(color = red)\n" +
+  var invalid_run = "animation red_eye = beacon(color = red)\n" +
                     "run undefined_animation"
   
   try
@@ -269,7 +269,7 @@ def test_dsl_object_reference_validation()
   end
   
   # Test valid sequence with play statement
-  var valid_sequence = "animation red_eye = beacon_animation(color = red)\n" +
+  var valid_sequence = "animation red_eye = beacon(color = red)\n" +
                        "sequence demo {\n" +
                        "  play red_eye for 5s\n" +
                        "  wait 1s\n" +
@@ -279,7 +279,7 @@ def test_dsl_object_reference_validation()
   assert(result2 != nil, "Valid sequence should compile successfully")
   
   # Test invalid sequence with undefined play reference
-  var invalid_sequence = "animation red_eye = beacon_animation(color = red)\n" +
+  var invalid_sequence = "animation red_eye = beacon(color = red)\n" +
                          "sequence demo {\n" +
                          "  play undefined_animation for 5s\n" +
                          "  wait 1s\n" +
@@ -303,7 +303,7 @@ def test_dsl_sequence_symbol_table_registration()
   import animation_dsl
   
   # Test 1: Valid sequence should be registered and runnable
-  var valid_sequence_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var valid_sequence_dsl = "animation red_anim = beacon(color = red)\n" +
                            "sequence demo {\n" +
                            "  play red_anim for 2s\n" +
                            "}\n" +
@@ -351,7 +351,7 @@ def test_dsl_symbol_table_mixed_types()
   import animation_dsl
   
   # Test 1: Valid property assignment on animation (instance in symbol table)
-  var animation_property_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var animation_property_dsl = "animation red_anim = beacon(color = red)\n" +
                                "red_anim.back_color = blue"
   
   var result1 = animation_dsl.compile(animation_property_dsl)
@@ -365,7 +365,7 @@ def test_dsl_symbol_table_mixed_types()
   assert(result2 != nil, "Color provider property assignment should work")
   
   # Test 3: Invalid property assignment on sequence (string in symbol table)
-  var sequence_property_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var sequence_property_dsl = "animation red_anim = beacon(color = red)\n" +
                               "sequence demo {\n" +
                               "  play red_anim for 2s\n" +
                               "}\n" +
@@ -380,7 +380,7 @@ def test_dsl_symbol_table_mixed_types()
   end
   
   # Test 4: Mixed symbol table with sequences and instances
-  var mixed_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var mixed_dsl = "animation red_anim = beacon(color = red)\n" +
                   "color solid_blue = static_color(color = blue)\n" +
                   "sequence demo {\n" +
                   "  play red_anim for 2s\n" +

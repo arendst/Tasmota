@@ -32,7 +32,7 @@ var palette_pattern_ = animation.rich_palette_color(engine)
 palette_pattern_.colors = breathe_palette_  # palette
 palette_pattern_.period = 15000  # cycle period (defaults: smooth transition, 255 brightness)
 # Create breathing animation using the palette
-var breathing_ = animation.breathe_animation(engine)
+var breathing_ = animation.breathe(engine)
 breathing_.color = palette_pattern_  # base animation
 breathing_.min_brightness = 100  # min brightness
 breathing_.max_brightness = 255  # max brightness
@@ -80,7 +80,7 @@ color palette_pattern = rich_palette_color(
 )
 
 # Create breathing animation using the palette
-animation breathing = breathe_animation(
+animation breathing = breathe(
   color=palette_pattern # base animation
   min_brightness=100    # min brightness
   max_brightness=255    # max brightness

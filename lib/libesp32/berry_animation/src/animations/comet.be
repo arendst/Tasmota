@@ -8,8 +8,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:CometAnimation,weak
-class CometAnimation : animation.animation
+#@ solidify:comet,weak
+class comet : animation.animation
   # Non-parameter instance variables only
   var head_position    # Current position of the comet head (in 1/256th pixels for smooth movement)
   
@@ -170,4 +170,4 @@ class CometAnimation : animation.animation
   end
 end
 
-return {'comet_animation': CometAnimation}
+return {'comet': comet}

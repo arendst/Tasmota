@@ -31,7 +31,7 @@ def run_tests()
   print("==================================================")
   
   # Test 1: Basic construction
-  var pulse = animation.beacon_animation(engine)
+  var pulse = animation.beacon(engine)
   test_assert(pulse != nil, "Pulse position animation creation")
   
   # Set parameters using virtual member assignment

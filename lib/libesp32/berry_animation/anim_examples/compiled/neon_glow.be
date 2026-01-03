@@ -20,7 +20,7 @@ var neon_colors_ = bytes(
   "FFFF8000"  # Neon orange
 )
 # Main neon glow with color cycling
-var neon_main_ = animation.rich_palette_animation(engine)
+var neon_main_ = animation.rich_palette(engine)
 neon_main_.colors = neon_colors_
 neon_main_.period = 4000
 neon_main_.transition_type = animation.LINEAR
@@ -52,19 +52,19 @@ segment_pattern_.colors = neon_colors_
 segment_pattern_.period = 4000
 segment_pattern_.transition_type = animation.LINEAR
 segment_pattern_.brightness = 255
-var segment1_ = animation.beacon_animation(engine)
+var segment1_ = animation.beacon(engine)
 segment1_.color = segment_pattern_  # color source
 segment1_.pos = 6  # position
 segment1_.beacon_size = 12  # segment length
 segment1_.slew_size = 1  # sharp edges
 segment1_.priority = 10
-var segment2_ = animation.beacon_animation(engine)
+var segment2_ = animation.beacon(engine)
 segment2_.color = segment_pattern_  # color source
 segment2_.pos = 24  # position
 segment2_.beacon_size = 12  # segment length
 segment2_.slew_size = 1  # sharp edges
 segment2_.priority = 10
-var segment3_ = animation.beacon_animation(engine)
+var segment3_ = animation.beacon(engine)
 segment3_.color = segment_pattern_  # color source
 segment3_.pos = 42  # position
 segment3_.beacon_size = 12  # segment length
@@ -101,7 +101,7 @@ palette neon_colors = [
 ]
 
 # Main neon glow with color cycling
-animation neon_main = rich_palette_animation(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
+animation neon_main = rich_palette(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
 
 # Add electrical flickering
 neon_main.opacity = smooth(min_value=220, max_value=255, duration=200ms)
@@ -113,7 +113,7 @@ neon_surge.priority = 20
 
 # Add neon tube segments with gaps
 color segment_pattern = rich_palette_color(colors=neon_colors, period=4s, transition_type=LINEAR, brightness=255)
-animation segment1 = beacon_animation(
+animation segment1 = beacon(
   color=segment_pattern # color source
   pos=6                 # position
   beacon_size=12        # segment length
@@ -121,7 +121,7 @@ animation segment1 = beacon_animation(
 )
 segment1.priority = 10
 
-animation segment2 = beacon_animation(
+animation segment2 = beacon(
   color=segment_pattern # color source
   pos=24                # position
   beacon_size=12        # segment length
@@ -129,7 +129,7 @@ animation segment2 = beacon_animation(
 )
 segment2.priority = 10
 
-animation segment3 = beacon_animation(
+animation segment3 = beacon(
   color=segment_pattern # color source
   pos=42                # position
   beacon_size=12        # segment length

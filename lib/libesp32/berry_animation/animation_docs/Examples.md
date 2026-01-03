@@ -14,14 +14,14 @@ run red_solid
 ### 2. Pulsing Effect
 ```berry
 color blue = 0x0000FF
-animation blue_pulse = pulsating_animation(color=blue, period=2s)
+animation blue_pulse = breathe(color=blue, period=2s)
 run blue_pulse
 ```
 
 ### 3. Moving Comet
 ```berry
 color cyan = 0x00FFFF
-animation comet_trail = comet_animation(color=cyan, tail_length=8, speed=100ms, direction=1)
+animation comet_trail = comet(color=cyan, tail_length=8, speed=100ms, direction=1)
 run comet_trail
 ```
 
@@ -85,7 +85,7 @@ color orange = 0xFFA500
 color yellow = 0xFFFF00
 
 animation night = solid(color=deep_blue)
-animation sunrise = pulsating_animation(color=orange, period=3s)
+animation sunrise = breathe(color=orange, period=3s)
 animation day = solid(color=yellow)
 
 sequence sunrise_show {
@@ -134,7 +134,7 @@ palette eye_palette = [red, yellow, green, violet]
 color eye_color = color_cycle(colors=eye_palette, period=0)
 
 # Create beacon animation
-animation red_eye = beacon_animation(
+animation red_eye = beacon(
   color=eye_color
   pos=cosine_val
   beacon_size=3
@@ -177,7 +177,7 @@ run demo
 ```berry
 # Create oscillator and animation
 set wave_osc = triangle(min_value=0, max_value=29, period=4s)
-animation wave = beacon_animation(color=blue, pos=wave_osc, beacon_size=5)
+animation wave = beacon(color=blue, pos=wave_osc, beacon_size=5)
 
 sequence sync_demo {
   play wave for 3s
@@ -192,7 +192,7 @@ run sync_demo
 ### 12. Assignments in Repeat Blocks
 ```berry
 set brightness = smooth(min_value=50, max_value=255, period=2s)
-animation pulse = pulsating_animation(color=white, period=1s)
+animation pulse = breathe(color=white, period=1s)
 
 sequence breathing_cycle {
   repeat 3 times {
@@ -291,7 +291,7 @@ set triangle_pos = triangle(min_value=0, max_value=29, period=3s)
 set cosine_pos = cosine_osc(min_value=0, max_value=29, period=3s)
 
 color eye_color = color_cycle(colors=[red, yellow, green, blue], period=0)
-animation moving_eye = beacon_animation(
+animation moving_eye = beacon(
   color=eye_color
   pos=triangle_pos
   beacon_size=2
@@ -319,7 +319,7 @@ strip length 60
 set moving_position = smooth(min_value=5, max_value=55, period=4s)
 color purple = 0x8000FF
 
-animation moving_pulse = beacon_animation(
+animation moving_pulse = beacon(
   color=purple,
   position=moving_position,
   beacon_size=3,
@@ -362,11 +362,11 @@ run simple
 ```berry
 # Good - descriptive names
 color sunset_orange = 0xFF8C00
-animation evening_glow = pulsating_animation(color=sunset_orange, period=4s)
+animation evening_glow = breathe(color=sunset_orange, period=4s)
 
 # Avoid - unclear names
 color c1 = 0xFF8C00
-animation a1 = pulsating_animation(color=c1, period=4s)
+animation a1 = breathe(color=c1, period=4s)
 ```
 
 ### Test Incrementally
@@ -393,7 +393,7 @@ template blink_effect {
   param speed
   param intensity
   
-  animation blink = pulsating_animation(
+  animation blink = breathe(
     color=color
     period=speed
   )
@@ -421,7 +421,7 @@ template comet_chase {
   background.priority = 1
   
   # Comet effect layer
-  animation comet = comet_animation(
+  animation comet = comet(
     color=trail_color
     tail_length=tail_size
     speed=chase_speed
@@ -457,7 +457,7 @@ template breathing_rainbow {
   )
   
   # Create breathing animation with rainbow colors
-  animation breath = pulsating_animation(
+  animation breath = breathe(
     color=rainbow_cycle
     period=breath_time
   )

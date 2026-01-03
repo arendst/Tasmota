@@ -6,8 +6,8 @@
 import "./core/param_encoder" as encode_constraints
 
 # Gradient pattern animation - creates shifting gradient patterns
-#@ solidify:PaletteGradientAnimation,weak
-class PaletteGradientAnimation : animation.animation
+#@ solidify:palette_gradient
+class palette_gradient : animation.animation
   var value_buffer     # Buffer to store values for each pixel (bytes object)
   var _spatial_period  # Cached spatial_period for static pattern optimization
   var _phase_shift     # Cached phase_shift for static pattern optimization
@@ -192,6 +192,4 @@ class PaletteGradientAnimation : animation.animation
   end
 end
 
-return {
-  'palette_gradient_animation': PaletteGradientAnimation
-}
+return { 'palette_gradient': palette_gradient }

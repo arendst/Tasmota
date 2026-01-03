@@ -53,12 +53,12 @@ def test_successful_compilation()
   
   # Test animation definitions
   var animation_dsl_code = 
-    "animation test = pulsating_animation(color=0xFF0000FF, min_brightness=(0+1))\n" +
+    "animation test = breathe(color=0xFF0000FF, min_brightness=(0+1))\n" +
     "test.priority = 10\n"
   
   berry_code = animation_dsl.compile(animation_dsl_code)
   assert(berry_code != nil, "Should compile animation definitions")
-  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should create pulsating animation")
+  assert(string.find(berry_code, "animation.breathe(engine)") >= 0, "Should create pulsating animation")
   assert(string.find(berry_code, "test_.color = 0xFF0000FF") >= 0, "Should set color parameter")
   assert(string.find(berry_code, "test_.priority = 10") >= 0, "Should set priority property")
   
@@ -175,7 +175,7 @@ def test_compilation_failures()
   end
   
   # Test invalid parameter name
-  var invalid_param_dsl = "animation pulse = pulsating_animation(invalid_param=123)"
+  var invalid_param_dsl = "animation pulse = breathe(invalid_param=123)"
   
   try
     var berry_code = animation_dsl.compile(invalid_param_dsl)
@@ -188,7 +188,7 @@ def test_compilation_failures()
   
   # Test invalid property assignment
   var invalid_property_dsl = 
-    "animation pulse = pulsating_animation(color=red, period=2s)\n" +
+    "animation pulse = breathe(color=red, period=2s)\n" +
     "pulse.wrong_property = 15"
   
   try
@@ -201,7 +201,7 @@ def test_compilation_failures()
   end
   
   # Test undefined color reference
-  var undefined_color_dsl = "animation pulse = pulsating_animation(color=undefined_color)"
+  var undefined_color_dsl = "animation pulse = breathe(color=undefined_color)"
   
   try
     var berry_code = animation_dsl.compile(undefined_color_dsl)
@@ -378,7 +378,7 @@ def test_complete_example()
     "shutter_size.min_value = rand_demo()\n" +
     "shutter_size.max_value = strip_len\n" +
     "shutter_size.min_value = strip_len / 2\n" +
-    "animation test = pulsating_animation(color=0xFF0000FF, min_brightness=(0+1))\n" +
+    "animation test = breathe(color=0xFF0000FF, min_brightness=(0+1))\n" +
     "palette col1 = [red, orange, yellow, green, blue, indigo, white]\n" +
     "set zz = strip_len - 2\n" +
     "set z1 = x\n" +
@@ -407,7 +407,7 @@ def test_complete_example()
   assert(string.find(berry_code, "var r1_ = animation.create_closure_value(engine") >= 0, "Should create user function closures")
   assert(string.find(berry_code, "var x_ = 3000") >= 0, "Should convert time values")
   assert(string.find(berry_code, "animation.sawtooth(engine)") >= 0, "Should create sawtooth providers")
-  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should create animations")
+  assert(string.find(berry_code, "animation.breathe(engine)") >= 0, "Should create animations")
   assert(string.find(berry_code, 'bytes("FFFF0000"') >= 0, "Should create palette bytes")
   assert(string.find(berry_code, "animation.sequence_manager(engine") >= 0, "Should create sequences")
   assert(string.find(berry_code, "push_repeat_subsequence") >= 0, "Should create repeat loops")

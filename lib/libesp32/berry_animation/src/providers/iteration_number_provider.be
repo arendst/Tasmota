@@ -8,7 +8,7 @@
 #
 # Usage:
 #   set iteration = iteration_number()
-#   animation pulse = pulsating_animation(color=red, period=2s)
+#   animation pulse = breathe(color=red, period=2s)
 #   pulse.opacity = iteration * 50 + 100  # Brightness increases with each iteration
 #
 # In sequences:

@@ -11,7 +11,7 @@ set duration = 3s
   color col2 = color_cycle(colors=PALETTE_RAINBOW, period=0)
   col2.next = 1
 
-  animation shutter_animation = beacon_animation(
+  animation shutter_animation = beacon(
     color = col1
     back_color = col2
     pos = 0

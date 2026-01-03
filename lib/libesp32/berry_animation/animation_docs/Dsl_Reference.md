@@ -33,7 +33,7 @@ color bordeaux = 0x6F2C4F
 color majorelle = 0x6050DC
 
 # Animation definitions
-animation pulse_bordeaux = pulsating_animation(color=bordeaux, period=2s)
+animation pulse_bordeaux = breathe(color=bordeaux, period=2s)
 
 # Property assignments
 pulse_red.priority = 10
@@ -284,7 +284,7 @@ end
 
 **Example with DSL Integration:**
 ```berry
-animation pulse = pulsating_animation(color=red, period=2s)
+animation pulse = breathe(color=red, period=2s)
 
 berry """
 # Modify animation using Berry code
@@ -322,7 +322,7 @@ extern function rand_meter
 extern function breathing_effect
 
 # Now they can be used in DSL expressions
-animation back_pattern = palette_meter_animation(value_func = rand_meter)
+animation back_pattern = palette_meter(value_func = rand_meter)
 animation breathing_light = solid(color=blue)
 breathing_light.opacity = breathing_effect
 
@@ -498,12 +498,12 @@ The `animation` keyword defines instances of animation classes (subclasses of An
 ```berry
 animation red_solid = solid(color=red)
 
-animation pulse_effect = pulsating_animation(
+animation pulse_effect = breathe(
   color=blue
   period=2s
 )
 
-animation comet_trail = comet_animation(
+animation comet_trail = comet(
   color=white
   tail_length=10
   speed=1500
@@ -521,7 +521,7 @@ animation comet_trail = comet_animation(
 Animation properties can be modified after creation:
 
 ```berry
-animation pulse_red = pulsating_animation(color=red, period=2s)
+animation pulse_red = breathe(color=red, period=2s)
 
 # Set properties
 pulse_red.priority = 10
@@ -538,7 +538,7 @@ pulse_red.position = strip_len / 2      # Center position
 pulse_red.opacity = strip_len * 4       # Scale with strip size
 
 # Animation opacity (using another animation as opacity mask)
-animation opacity_mask = pulsating_animation(period=2s)
+animation opacity_mask = breathe(period=2s)
 pulse_red.opacity = opacity_mask        # Dynamic opacity from animation
 ```
 
@@ -563,7 +563,7 @@ set strip_len = strip_length()
 set strip_len2 = (strip_len + 1) / 2
 
 # Use computed values in animation parameters
-animation stream1 = comet_animation(
+animation stream1 = comet(
   color=red
   tail_length=strip_len / 4    # Computed: quarter of strip length
   speed=1.5
@@ -608,7 +608,7 @@ set strip_len3 = (strip_len + 1) / 2  # Computation with existing value
 ```berry
 # Complex expressions with multiple operations
 set base_speed = 2.0
-animation stream2 = comet_animation(
+animation stream2 = comet(
   color=blue
   tail_length=strip_len / 8 + 2    # Computed: eighth of strip + 2
   speed=base_speed * 1.5           # Computed: base speed × 1.5
@@ -619,7 +619,7 @@ stream1.position = strip_len / 2     # Center of strip
 stream2.opacity = strip_len * 4      # Scale opacity with strip size
 
 # Using mathematical functions in computed values
-animation pulse = pulsating_animation(
+animation pulse = breathe(
   color=red
   period=2s
 )
@@ -652,7 +652,7 @@ The following mathematical functions are available in computed parameters and ar
 ```berry
 # Basic math functions
 set strip_len = strip_length()
-animation test = pulsating_animation(color=red, period=2s)
+animation test = breathe(color=red, period=2s)
 
 # Absolute value for ensuring positive results
 test.opacity = abs(strip_len - 200)
@@ -1067,7 +1067,7 @@ template animation shutter_effect {
   
   color col = color_cycle(colors=colors, period=0)
   
-  animation shutter = beacon_animation(
+  animation shutter = beacon(
     color = col
     pos = strip_len / 2
     beacon_size = shutter_size
@@ -1319,17 +1319,17 @@ function_name(
 ```berry
 # Traditional single-line syntax
 solid(color=red)
-pulsating_animation(color=blue, period=2s)
+breathe(color=blue, period=2s)
 
 # New multi-line syntax (no commas needed)
-pulsating_animation(
+breathe(
   color=blue
   period=2s
   brightness=255
 )
 
 # Mixed syntax
-comet_animation(
+comet(
   color=stream_pattern, tail_length=15
   speed=1.5s
   priority=10
@@ -1338,7 +1338,7 @@ comet_animation(
 
 **Nested Function Calls:**
 ```berry
-pulsating_animation(
+breathe(
   color=solid(color=red)
   period=smooth(
     min_value=1000
@@ -1352,7 +1352,7 @@ pulsating_animation(
 Mathematical functions can be used in computed parameter expressions and are automatically detected by the transpiler:
 
 ```berry
-animation wave = pulsating_animation(
+animation wave = breathe(
   color=blue
   period=2s
 )
@@ -1432,19 +1432,18 @@ Animation classes create visual effects on LED strips:
 | Function | Description |
 |----------|-------------|
 | `solid` | Solid color fill |
-| `pulsating_animation` | Pulsing brightness effect |
-| `beacon_animation` | Positioned pulse effect |
-| `crenel_animation` | Square wave pulse at specific position |
-| `breathe_animation` | Breathing/fading effect |
-| `comet_animation` | Moving comet with trailing tail |
-| `fire_animation` | Realistic fire simulation |
+| `breathe` | Pulsing brightness effect |
+| `gradient` | Gradient patterns using palettes |
+| `beacon` | Positioned pulse effect |
+| `crenel` | Square wave pulse at specific position |
+| `breathe` | Breathing/fading effect |
+| `comet` | Moving comet with trailing tail |
+| `fire` | Realistic fire simulation |
 | `twinkle` | Twinkling stars effect |
-| `gradient_animation` | Color gradient effects |
-| `wave_animation` | Wave propagation effects |
-| `rich_palette_animation` | Palette-based color cycling |
-| `palette_wave_animation` | Wave patterns using palettes |
-| `palette_gradient_animation` | Gradient patterns using palettes |
-| `palette_meter_animation` | Meter/bar patterns using palettes |
+| `gradient` | Color gradient effects |
+| `wave` | Wave propagation effects |
+| `rich_palette` | Palette-based color cycling |
+| `meter` | Meter/bar patterns using palettes |
 
 ## Error Handling
 
@@ -1476,10 +1475,10 @@ The DSL validates class and parameter existence during compilation, catching err
 color red = 0x800000                # Error: Cannot redefine 'red'
 
 # Invalid: Unknown parameter in constructor
-animation bad = pulsating_animation(invalid_param=123)  # Error: Unknown parameter
+animation bad = breathe(invalid_param=123)  # Error: Unknown parameter
 
 # Invalid: Unknown parameter in property assignment
-animation pulse = pulsating_animation(color=red, period=2s)
+animation pulse = breathe(color=red, period=2s)
 pulse.wrong_arg = 15                # Error: Parameter 'wrong_arg' not valid for PulseAnimation
 
 # Invalid: Undefined reference in color definition
@@ -1495,7 +1494,7 @@ sequence demo {
 
 # Valid alternatives
 color my_red = 0x800000             # OK: Different name
-animation good = pulsating_animation(color=red, period=2s)  # OK: Valid parameters
+animation good = breathe(color=red, period=2s)  # OK: Valid parameters
 good.priority = 10                  # OK: Valid parameter assignment
 ```
 
@@ -1621,12 +1620,12 @@ The DSL supports flexible parameter syntax that makes multi-line function calls 
 
 ### Traditional Syntax (Commas Required)
 ```berry
-animation stream = comet_animation(color=red, tail_length=15, speed=1.5s, priority=10)
+animation stream = comet(color=red, tail_length=15, speed=1.5s, priority=10)
 ```
 
 ### New Multi-Line Syntax (Commas Optional)
 ```berry
-animation stream = comet_animation(
+animation stream = comet(
   color=red
   tail_length=15
   speed=1.5s
@@ -1636,7 +1635,7 @@ animation stream = comet_animation(
 
 ### Mixed Syntax (Both Supported)
 ```berry
-animation stream = comet_animation(
+animation stream = comet(
   color=red, tail_length=15
   speed=1.5s
   priority=10

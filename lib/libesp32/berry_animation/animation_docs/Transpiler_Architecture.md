@@ -346,7 +346,7 @@ _detect_and_cache_symbol(name)
 
 **Palette Detection:**
 ```berry
-# DSL: animation rainbow = rich_palette_animation(colors=PALETTE_RAINBOW)
+# DSL: animation rainbow = rich_palette(colors=PALETTE_RAINBOW)
 # Detection: PALETTE_RAINBOW exists in animation module, isinstance(obj, bytes)
 # Result: SymbolEntry("PALETTE_RAINBOW", "palette", bytes_instance, true)
 # Reference: "animation.PALETTE_RAINBOW"
@@ -354,7 +354,7 @@ _detect_and_cache_symbol(name)
 
 **Constant Detection:**
 ```berry
-# DSL: animation wave = wave_animation(waveform=LINEAR)
+# DSL: animation wave = wave(waveform=LINEAR)
 # Detection: LINEAR exists in animation module, type(LINEAR) == "int"
 # Result: SymbolEntry("LINEAR", "constant", 1, true)
 # Reference: "animation.LINEAR"
@@ -532,12 +532,12 @@ _validate_value_provider_reference(object_name, context)
 ### Engine-First Pattern (Consistent)
 All factory functions use the engine-first pattern with **automatic strip initialization**:
 ```berry
-# DSL: animation pulse = pulsating_animation(color=red, period=2s)
+# DSL: animation pulse = breathe(color=red, period=2s)
 # Generated:
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var pulse_ = animation.pulsating_animation(engine)
+var pulse_ = animation.breathe(engine)
 pulse_.color = animation.red
 pulse_.period = 2000
 ```
@@ -585,13 +585,13 @@ template pulse_effect {
   param color type color
   param speed
   
-  animation pulse = pulsating_animation(color=color, period=speed)
+  animation pulse = breathe(color=color, period=speed)
   run pulse
 }
 
 # Generated:
 def pulse_effect_template(engine, color_, speed_)
-  var pulse_ = animation.pulsating_animation(engine)
+  var pulse_ = animation.breathe(engine)
   pulse_.color = color_
   pulse_.period = speed_
   engine.add(pulse_)
@@ -820,7 +820,7 @@ The transpiler has been significantly refactored to leverage the `symbol_table.b
 - **Integer Constants**: `LINEAR`, `SINE`, `COSINE` → `animation.LINEAR`, `animation.SINE`, `animation.COSINE`
 - **Math Functions**: `max`, `min` → `animation.max`, `animation.min` (transformed to `animation._math.*` in closures)
 - **Value Providers**: `triangle`, `smooth` → `animation.triangle`, `animation.smooth`
-- **Animation Constructors**: `solid`, `pulsating_animation` → `animation.solid`, `animation.pulsating_animation`
+- **Animation Constructors**: `solid`, `breathe` → `animation.solid`, `animation.breathe`
 - **User-defined Symbols**: `my_color`, `my_animation` → `my_color_`, `my_animation_`
 
 **Validation Improvements:**

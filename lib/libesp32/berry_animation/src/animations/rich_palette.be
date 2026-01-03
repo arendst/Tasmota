@@ -1,4 +1,4 @@
-# RichPaletteAnimation - Animation with integrated rich palette color provider
+# rich_palette - Animation with integrated rich palette color provider
 #
 # This animation class provides direct access to rich palette parameters,
 # forwarding them to an internal rich_palette_colornce.
@@ -9,8 +9,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:RichPaletteAnimation,weak
-class RichPaletteAnimation : animation.animation
+#@ solidify:rich_palette,weak
+class rich_palette : animation.animation
   # Non-parameter instance variables only
   var color_provider   # Internal rich_palette_color instance
   
@@ -23,7 +23,7 @@ class RichPaletteAnimation : animation.animation
     "brightness": {"min": 0, "max": 255, "default": 255}
   })
     
-  # Initialize a new RichPaletteAnimation
+  # Initialize a new rich_palette
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
@@ -66,4 +66,4 @@ class RichPaletteAnimation : animation.animation
   end
 end
 
-return {'rich_palette_animation': RichPaletteAnimation}
+return {'rich_palette': rich_palette}
