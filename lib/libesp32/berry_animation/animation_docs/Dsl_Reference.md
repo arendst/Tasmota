@@ -383,7 +383,8 @@ color breathing_red = breathe_color(
   duration=3s
   curve_factor=2
 )
-color pulsing_blue = pulsating_color(
+color pulsing_blue = breathe_color(
+  curve_factor=1
   base_color=blue
   min_brightness=20%
   max_brightness=80%
@@ -685,7 +686,7 @@ test.opacity = min(255, max(50, scale(sqrt(strip_len), 0, 16, 100, 255)))
 - **Closure Context**: In computed parameters, mathematical functions are called as `animation._math.<function>()` in the generated closure context
 
 **How It Works:**
-When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `animation._math.` in the closure context to access the ClosureValueProvider's mathematical methods.
+When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `animation._math.` in the closure context to access the closure_value's mathematical methods.
 
 **User Functions in Computed Parameters:**
 User-defined functions can also be used in computed parameter expressions, providing powerful custom effects:
@@ -1422,9 +1423,7 @@ Color providers create dynamic colors that change over time:
 | `static_color` | Solid color with optional dynamic opacity |
 | `color_cycle` | Cycles through a palette of colors |
 | `rich_palette_color` | Advanced palette-based color cycling with smooth transitions |
-| `composite_color` | Combines multiple color providers |
 | `breathe_color` | Breathing/pulsing color effect with brightness modulation |
-| `pulsating_color` | Fast pulsing color effect (alias for breathe_color with curve_factor=1) |
 
 ### Animation Classes
 

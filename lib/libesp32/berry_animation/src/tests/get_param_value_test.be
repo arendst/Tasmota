@@ -23,7 +23,7 @@ var mock_engine = MockEngine()
 
 # Test that get_param_value() calls produce_value() for ColorProviders
 def test_get_param_value_with_color_provider()
-  print("Testing get_param_value() with ColorProvider...")
+  print("Testing get_param_value() with color_provider...")
   
   # Create a test animation using new constructor pattern
   var test_anim = animation.animation(mock_engine)
@@ -32,7 +32,7 @@ def test_get_param_value_with_color_provider()
   test_anim.loop = false
   test_anim.opacity = 255
   
-  # Create a ColorProvider that we can track calls on
+  # Create a color_provider that we can track calls on
   class TrackingColorProvider : animation.color_provider
     var color
     var produce_value_called
@@ -55,7 +55,7 @@ def test_get_param_value_with_color_provider()
   
   var tracking_provider = TrackingColorProvider(mock_engine, 0xFF00FF00)  # Green
   
-  # Set the ColorProvider (using the 'color' parameter that exists in base Animation)
+  # Set the color_provider (using the 'color' parameter that exists in base Animation)
   test_anim.color = tracking_provider
   
   # Call get_param_value() - should call produce_value()
@@ -64,7 +64,7 @@ def test_get_param_value_with_color_provider()
   assert(result == 0xFF00FF00, "Should return the color value")
   assert(tracking_provider.produce_value_called == 1, "Should call produce_value() once")
   
-  print("✓ get_param_value() with ColorProvider test passed")
+  print("✓ get_param_value() with color_provider test passed")
 end
 
 # Test that get_param_value() calls produce_value() for generic ValueProviders

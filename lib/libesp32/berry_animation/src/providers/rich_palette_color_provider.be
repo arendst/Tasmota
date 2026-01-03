@@ -45,7 +45,7 @@ class rich_palette_color : animation.color_provider
     "colors": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
     "transition_type": {"enum": [1 #-animation.LINEAR-#, 5 #-animation.SINE-#], "default": 1 #-animation.LINEAR-#}
-    # brightness parameter inherited from ColorProvider base class
+    # brightness parameter inherited from color_provider base class
   })
   
   # Initialize a new rich_palette_color

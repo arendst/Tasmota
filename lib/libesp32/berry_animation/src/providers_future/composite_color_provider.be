@@ -31,7 +31,7 @@ class CompositeColorProvider : animation.color_provider
   
   # Add a provider to the list
   #
-  # @param provider: ColorProvider - Provider to add
+  # @param provider: color_provider - Provider to add
   # @return self for method chaining
   def add_provider(provider)
     self.providers.push(provider)

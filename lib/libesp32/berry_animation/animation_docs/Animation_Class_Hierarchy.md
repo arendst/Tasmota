@@ -35,16 +35,15 @@ ParameterizedObject (base class with parameter management and playable interface
 ├── SequenceManager (orchestrates animation sequences)
 └── ValueProvider (dynamic value generation)
     ├── StaticValueProvider (wraps static values)
-    ├── StripLengthProvider (provides LED strip length)
+    ├── strip_length (provides LED strip length)
     ├── IterationNumberProvider (provides sequence iteration number)
     ├── OscillatorValueProvider (oscillating values with waveforms)
-    ├── ClosureValueProvider (computed values, internal use only)
-    └── ColorProvider (dynamic color generation)
+    ├── closure_value (computed values, internal use only)
+    └── color_provider (dynamic color generation)
         ├── StaticColorProvider (solid color)
         ├── ColorCycleColorProvider (cycles through palette)
         ├── rich_palette_color (smooth palette transitions)
-        ├── BreatheColorProvider (breathing color effect)
-        └── CompositeColorProvider (blends multiple colors)
+        └── breathe_color (breathing color effect)
 ```
 
 ## Base Classes
@@ -228,7 +227,7 @@ Wraps static values to provide ValueProvider interface. Inherits from `ValueProv
 
 **Factory**: `animation.static_value(engine)`
 
-### StripLengthProvider
+### strip_length
 
 Provides access to the LED strip length as a dynamic value. Inherits from `ValueProvider`.
 
@@ -270,7 +269,7 @@ Generates oscillating values using various waveforms. Inherits from `ValueProvid
 
 **See Also**: [Oscillation Patterns](Oscillation_Patterns.md) - Visual examples and usage patterns for oscillation waveforms
 
-### ClosureValueProvider
+### closure_value
 
 **⚠️ INTERNAL USE ONLY - NOT FOR DIRECT USE**
 
@@ -284,7 +283,7 @@ Wraps a closure/function as a value provider for internal transpiler use. This c
 
 #### Mathematical Helper Methods
 
-The ClosureValueProvider includes built-in mathematical helper methods that can be used within closures for computed values:
+The closure_value includes built-in mathematical helper methods that can be used within closures for computed values:
 
 | Method | Description | Parameters | Return Type | Example |
 |--------|-------------|------------|-------------|---------|
@@ -307,7 +306,7 @@ The ClosureValueProvider includes built-in mathematical helper methods that can 
 
 #### Closure Signature
 
-Closures used with ClosureValueProvider must follow this signature:
+Closures used with closure_value must follow this signature:
 ```berry
 def closure_func(engine, param_name, time_ms)
   # engine: AnimationEngine reference
@@ -335,13 +334,13 @@ animation pulse = pulsating_animation(
 
 **Factory**: `animation.closure_value(engine)` (internal use only)
 
-**Note**: Users should not create ClosureValueProvider instances directly. Instead, use the DSL's computed value syntax which automatically creates these providers as needed.
+**Note**: Users should not create closure_value instances directly. Instead, use the DSL's computed value syntax which automatically creates these providers as needed.
 
 ## Color Providers
 
 Color providers generate dynamic colors over time, extending ValueProvider for color-specific functionality.
 
-### ColorProvider
+### color_provider
 
 Base interface for all color providers. Inherits from `ValueProvider`.
 
@@ -356,12 +355,12 @@ Base interface for all color providers. Inherits from `ValueProvider`.
 
 ### StaticColorProvider
 
-Returns a single, static color. Inherits from `ColorProvider`.
+Returns a single, static color. Inherits from `color_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `color` | int | 0xFFFFFFFF | - | The solid color to return |
-| *(inherits brightness from ColorProvider)* | | | | |
+| *(inherits brightness from color_provider)* | | | | |
 
 #### Usage Examples
 
@@ -382,7 +381,7 @@ color static_accent = solid(color=accent)
 
 ### ColorCycleColorProvider
 
-Cycles through a palette of colors with brutal switching. Inherits from `ColorProvider`.
+Cycles through a palette of colors with brutal switching. Inherits from `color_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -390,7 +389,7 @@ Cycles through a palette of colors with brutal switching. Inherits from `ColorPr
 | `period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
 | `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwards by `n` colors |
 | `palette_size` | int | 3 | read-only | Number of colors in the palette (automatically updated when palette changes) |
-| *(inherits brightness from ColorProvider)* | | | | |
+| *(inherits brightness from color_provider)* | | | | |
 
 **Note**: The `get_color_for_value()` method accepts values in the 0-255 range for value-based color mapping.
 
@@ -420,14 +419,14 @@ color mixed_cycle = color_cycle(
 
 ### rich_palette_color
 
-Generates colors from predefined palettes with smooth transitions and professional color schemes. Inherits from `ColorProvider`.
+Generates colors from predefined palettes with smooth transitions and professional color schemes. Inherits from `color_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `colors` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
 | `period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
-| *(inherits brightness from ColorProvider)* | | | | |
+| *(inherits brightness from color_provider)* | | | | |
 
 #### Available Predefined Palettes
 
@@ -457,9 +456,9 @@ color fire_colors = rich_palette_color(
 )
 ```
 
-### BreatheColorProvider
+### breathe_color
 
-Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `ColorProvider`.
+Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `color_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -468,12 +467,12 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 | `max_brightness` | int | 255 | 0-255 | Maximum brightness level (breathing effect) |
 | `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
-| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied after breathing effect |
+| *(inherits brightness from color_provider)* | | | | Overall brightness scaling applied after breathing effect |
 | *(inherits all OscillatorValueProvider parameters)* | | | | |
 
 **Curve Factor Effects:**
-- `1`: Pure cosine wave (smooth pulsing, equivalent to pulsating_color)
-- `2`: Natural breathing with slight pauses at peaks
+- `1`: Pure cosine wave (smooth pulsing)
+- `2`: Natural breathing with slight pauses at peaks (default)
 - `3`: More pronounced breathing with longer pauses
 - `4`: Deep breathing with extended pauses
 - `5`: Most pronounced pauses at peaks (dramatic breathing effect)
@@ -490,7 +489,7 @@ color breathing_red = breathe_color(
   curve_factor=3
 )
 
-# Fast pulsing effect (equivalent to pulsating_color)
+# Fast pulsing effect
 color pulse_blue = breathe_color(
   base_color=blue,
   min_brightness=50,
@@ -519,20 +518,7 @@ color breathing_rainbow = breathe_color(
 )
 ```
 
-**Factories**: `animation.breathe_color(engine)`, `animation.pulsating_color(engine)`
-
-**Note**: The `pulsating_color()` factory creates a BreatheColorProvider with `curve_factor=1` and `duration=1000ms` for fast pulsing effects.
-
-### CompositeColorProvider
-
-Combines multiple color providers with blending. Inherits from `ColorProvider`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `blend_mode` | int | 0 | enum: [0,1,2] | 0=overlay, 1=add, 2=multiply |
-| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied to final composite color |
-
-**Factory**: `animation.composite_color(engine)`
+**Factories**: `animation.breathe_color(engine)`
 
 ## Animation Classes
 

@@ -742,7 +742,7 @@ get_error_report()
 - **Factory function discovery** via introspection with existence checking
 - **Parameter validation** using instance methods and has_param()
 - **Symbol resolution** using module contents with fallback handling
-- **Mathematical function detection** using dynamic introspection of ClosureValueProvider
+- **Mathematical function detection** using dynamic introspection of closure_value
 - **Automatic strip initialization** when no explicit strip configuration
 
 ### User Function Integration

@@ -1,7 +1,7 @@
 # StaticColorProvider for Berry Animation Framework
 #
 # This color provider returns a single, static color.
-# It's the simplest implementation of the ColorProvider interface.
+# It's the simplest implementation of the color_provider interface.
 #
 # Follows the parameterized class specification:
 # - Constructor takes only 'engine' parameter

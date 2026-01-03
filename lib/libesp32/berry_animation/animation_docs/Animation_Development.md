@@ -217,7 +217,7 @@ end
 
 ### Color Provider LUT Optimization
 
-For color providers that perform expensive color calculations (like palette interpolation), the base `ColorProvider` class provides a Lookup Table (LUT) mechanism for caching pre-computed colors:
+For color providers that perform expensive color calculations (like palette interpolation), the base `color_provider` class provides a Lookup Table (LUT) mechanism for caching pre-computed colors:
 
 ```berry
 #@ solidify:MyColorProvider,weak
@@ -234,7 +234,7 @@ class MyColorProvider : animation.color_provider
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
     if name == "colors" || name == "transition_type"
-      self._lut_dirty = true  # Inherited from ColorProvider
+      self._lut_dirty = true  # Inherited from color_provider
     end
   end
   
@@ -296,7 +296,7 @@ class MyColorProvider : animation.color_provider
   end
   
   # Access LUT from outside (returns bytes() or nil)
-  # Inherited from ColorProvider: get_lut()
+  # Inherited from color_provider: get_lut()
 end
 ```
 
@@ -320,7 +320,7 @@ end
 
 **Brightness Handling:**
 
-The `ColorProvider` base class includes a `brightness` parameter (0-255, default 255) and a static method for applying brightness scaling:
+The `color_provider` base class includes a `brightness` parameter (0-255, default 255) and a static method for applying brightness scaling:
 
 ```berry
 # Static method for brightness scaling (only scales if brightness != 255)

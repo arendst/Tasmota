@@ -11,8 +11,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BreatheColorProvider,weak
-class BreatheColorProvider : animation.oscillator_value
+#@ solidify:breathe_color,weak
+class breathe_color : animation.oscillator_value
   # Additional parameter definitions for color-specific functionality
   # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited
   static var PARAMS = animation.enc_params({
@@ -102,12 +102,4 @@ class BreatheColorProvider : animation.oscillator_value
   end
 end
 
-# Factory function to create a pulsating color provider (sine wave)
-def pulsating_color_provider(engine)
-  var provider = animation.breathe_color(engine)
-  provider.curve_factor = 1  # Pure cosine wave for pulsing effect
-  provider.duration = 1000   # Faster default duration for pulsing
-  return provider
-end
-
-return {'breathe_color': BreatheColorProvider, 'pulsating_color': pulsating_color_provider}
+return {'breathe_color': breathe_color}
