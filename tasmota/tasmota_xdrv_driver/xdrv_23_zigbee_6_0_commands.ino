@@ -549,7 +549,7 @@ void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
       attr.setUInt(buf.get8(i));
       break;
     case 0x02:      // 4 bytes value (signed? Yes, signed!)
-      attr.setInt(buf.get32BigEndian(i));
+      attr.setInt(buf.get32IBigEndian(i));
       break;
     case 0x03:      // String (we expect it is not ended with \00)
      {
