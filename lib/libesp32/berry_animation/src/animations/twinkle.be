@@ -162,7 +162,7 @@ class twinkle : animation.animation
           # Create new star at full brightness with random intensity alpha
           var star_alpha = min_brightness + self._random_range(max_brightness - min_brightness + 1)
           
-          # Get base color (automatically resolves ValueProviders)
+          # Get base color (automatically resolves value_providers)
           var base_color = color
           
           # Extract RGB components (ignore original alpha)
@@ -180,7 +180,7 @@ class twinkle : animation.animation
   
   # Render the twinkle to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise

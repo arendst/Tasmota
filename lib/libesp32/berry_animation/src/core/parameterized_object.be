@@ -1,8 +1,8 @@
-# ParameterizedObject - Base class for parameter management and playable behavior
+# parameterized_object - Base class for parameter management and playable behavior
 #
 # This class provides a common parameter management system that can be shared
-# between Animation and ValueProvider classes. It handles parameter validation,
-# storage, and retrieval with support for ValueProvider instances.
+# between Animation and value_provider classes. It handles parameter validation,
+# storage, and retrieval with support for value_provider instances.
 #
 # It also provides the common interface for playable objects (animations and sequences)
 # that can be started, stopped, and updated over time. This enables:
@@ -16,7 +16,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class ParameterizedObject
+class parameterized_object
   var values          # Map storing all parameter values
   var engine          # Reference to the animation engine
   var start_time      # Time when object started (ms) (int), value is set at first call to update() or render()
@@ -101,7 +101,7 @@ class ParameterizedObject
   # This is called when accessing a member that doesn't exist as a real instance variable
   #
   # @param name: string - Parameter name being accessed
-  # @return any - Resolved parameter value (ValueProvider resolved to actual value)
+  # @return any - Resolved parameter value (value_provider resolved to actual value)
   def member(name)
     # if global.debug_animation
     #   log(f">>> member {name=}", 3)
@@ -137,7 +137,7 @@ class ParameterizedObject
   # This is called when setting a member that doesn't exist as a real instance variable
   #
   # @param name: string - Parameter name being set
-  # @param value: any - Value to set (can be static value or ValueProvider)
+  # @param value: any - Value to set (can be static value or value_provider)
   def setmember(name, value)
     # Check if it's a parameter in the class hierarchy and set it with validation
     if self.has_param(name)
@@ -151,9 +151,9 @@ class ParameterizedObject
   # Internal method to set a parameter value with validation
   #
   # @param name: string - Parameter name
-  # @param value: any - Value to set (can be static value or ValueProvider)
+  # @param value: any - Value to set (can be static value or value_provider)
   def _set_parameter_value(name, value)
-    # Validate the value (skip validation for ValueProvider instances)
+    # Validate the value (skip validation for value_provider instances)
     if !animation.is_value_provider(value)
       value = self._validate_param(name, value)  # Get potentially converted value
     end
@@ -165,11 +165,11 @@ class ParameterizedObject
     self.on_param_changed(name, value)
   end
   
-  # Internal method to resolve a parameter value (handles ValueProviders)
+  # Internal method to resolve a parameter value (handles value_providers)
   #
   # @param name: string - Parameter name
-  # @param time_ms: int - Current time in milliseconds for ValueProvider resolution
-  # @return any - Resolved value (static or from ValueProvider)
+  # @param time_ms: int - Current time in milliseconds for value_provider resolution
+  # @return any - Resolved value (static or from value_provider)
   def _resolve_parameter_value(name, time_ms)
     if !self.values.contains(name)
       # Return default if available from class hierarchy
@@ -182,7 +182,7 @@ class ParameterizedObject
     
     var value = self.values[name]
     
-    # Apply produce_value() if it' a ValueProvider
+    # Apply produce_value() if it' a value_provider
     return self.resolve_value(value, name, time_ms)
   end
   
@@ -198,7 +198,7 @@ class ParameterizedObject
       raise "attribute_error", f"'{classname(self)}' object has no attribute '{name}'"
     end
     
-    # Accept ValueProvider instances for all parameters
+    # Accept value_provider instances for all parameters
     if animation.is_value_provider(value)
       return value
     end
@@ -315,7 +315,7 @@ class ParameterizedObject
   #
   # @param name: string - Parameter name
   # @param default_value: any - Default value if parameter not found
-  # @return any - Parameter value or default (may be ValueProvider)
+  # @return any - Parameter value or default (may be value_provider)
   def get_param(name, default_value)
     # Check stored values
     if self.values.contains(name)
@@ -546,13 +546,13 @@ class ParameterizedObject
   #   var encoded = param_encoder.animation.enc_params({"min": 0, "max": 255, "default": 128})
   #
   # Checking if constraint contains a field:
-  #   if ParameterizedObject.constraint_mask(encoded, "min")
+  #   if parameterized_object.constraint_mask(encoded, "min")
   #     print("Has min constraint")
   #   end
   #
   # Getting constraint field value:
-  #   var min_val = ParameterizedObject.constraint_find(encoded, "min", 0)
-  #   var max_val = ParameterizedObject.constraint_find(encoded, "max", 255)
+  #   var min_val = parameterized_object.constraint_find(encoded, "min", 0)
+  #   var max_val = parameterized_object.constraint_find(encoded, "max", 255)
   # ============================================================================
   # Check if an encoded constraint contains a specific field (monolithic, no sub-calls)
   #
@@ -566,8 +566,8 @@ class ParameterizedObject
   #
   # Example:
   #   var encoded = bytes("07 00 00 FF 80")  # min=0, max=255, default=128
-  #   ParameterizedObject.constraint_mask(encoded, "min")      # => true
-  #   ParameterizedObject.constraint_mask(encoded, "enum")     # => false
+  #   parameterized_object.constraint_mask(encoded, "min")      # => true
+  #   parameterized_object.constraint_mask(encoded, "enum")     # => false
   static var _MASK = [
     "min",      #- 0x01 HAS_MIN-#
     "max",      #- 0x02, HAS_MAX-#
@@ -616,10 +616,10 @@ class ParameterizedObject
   #
   # Example:
   #   var encoded = bytes("07 00 00 FF 80")  # min=0, max=255, default=128
-  #   ParameterizedObject.constraint_find(encoded, "min", 0)       # => 0
-  #   ParameterizedObject.constraint_find(encoded, "max", 255)     # => 255
-  #   ParameterizedObject.constraint_find(encoded, "default", 100) # => 128
-  #   ParameterizedObject.constraint_find(encoded, "enum", nil)    # => nil (not present)
+  #   parameterized_object.constraint_find(encoded, "min", 0)       # => 0
+  #   parameterized_object.constraint_find(encoded, "max", 255)     # => 255
+  #   parameterized_object.constraint_find(encoded, "default", 100) # => 128
+  #   parameterized_object.constraint_find(encoded, "enum", nil)    # => nil (not present)
   
   static def constraint_find(encoded_bytes, name, default)
 
@@ -728,4 +728,4 @@ class ParameterizedObject
   end
 end
 
-return {'parameterized_object': ParameterizedObject}
+return {'parameterized_object': parameterized_object}

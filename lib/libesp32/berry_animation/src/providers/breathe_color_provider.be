@@ -1,7 +1,7 @@
 # Breathe Color Provider for Berry Animation Framework
 #
 # This color provider creates breathing/pulsing color effects by modulating the brightness
-# of a base color over time. It inherits from OscillatorValueProvider to leverage its
+# of a base color over time. It inherits from oscillator_value to leverage its
 # robust time management and waveform generation, then applies the oscillator value
 # as brightness modulation to a base color.
 #
@@ -27,7 +27,7 @@ class breathe_color : animation.oscillator_value
   #
   # @param engine: AnimationEngine - The animation engine (required)
   def init(engine)
-    # Call parent constructor (OscillatorValueProvider)
+    # Call parent constructor (oscillator_value)
     super(self).init(engine)
     
     # Configure the inherited oscillator for breathing behavior

@@ -1,4 +1,4 @@
-# Unit tests for the SequenceManager class
+# Unit tests for the sequence_manager class
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/sequence_manager_test.be
@@ -9,10 +9,10 @@ import global
 import tasmota
 
 def test_sequence_manager_basic()
-  print("=== SequenceManager Basic Tests ===")
+  print("=== sequence_manager Basic Tests ===")
   
-  # Test SequenceManager class exists
-  assert(animation.sequence_manager != nil, "SequenceManager class should be defined")
+  # Test sequence_manager class exists
+  assert(animation.sequence_manager != nil, "sequence_manager class should be defined")
   
   # Create strip and engine for testing
   var strip = global.Leds(30)
@@ -32,7 +32,7 @@ def test_sequence_manager_basic()
 end
 
 def test_sequence_manager_step_creation()
-  print("=== SequenceManager Step Creation Tests ===")
+  print("=== sequence_manager Step Creation Tests ===")
   
   # Create test animation using new parameterized API
   var strip = global.Leds(30)
@@ -71,7 +71,7 @@ def test_sequence_manager_step_creation()
 end
 
 def test_sequence_manager_execution()
-  print("=== SequenceManager Execution Tests ===")
+  print("=== sequence_manager Execution Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -117,7 +117,7 @@ def test_sequence_manager_execution()
 end
 
 def test_sequence_manager_timing()
-  print("=== SequenceManager Timing Tests ===")
+  print("=== sequence_manager Timing Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -170,7 +170,7 @@ def test_sequence_manager_timing()
 end
 
 def test_sequence_manager_step_info()
-  print("=== SequenceManager Step Info Tests ===")
+  print("=== sequence_manager Step Info Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -199,7 +199,7 @@ def test_sequence_manager_step_info()
 end
 
 def test_sequence_manager_stop()
-  print("=== SequenceManager Stop Tests ===")
+  print("=== sequence_manager Stop Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -233,7 +233,7 @@ def test_sequence_manager_stop()
 end
 
 def test_sequence_manager_is_running()
-  print("=== SequenceManager Running State Tests ===")
+  print("=== sequence_manager Running State Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -270,7 +270,7 @@ def test_sequence_manager_is_running()
 end
 
 def test_sequence_manager_assignment_steps()
-  print("=== SequenceManager Assignment Steps Tests ===")
+  print("=== sequence_manager Assignment Steps Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -328,7 +328,7 @@ def test_sequence_manager_assignment_steps()
 end
 
 def test_sequence_manager_complex_sequence()
-  print("=== SequenceManager Complex Sequence Tests ===")
+  print("=== sequence_manager Complex Sequence Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -405,7 +405,7 @@ def test_sequence_manager_complex_sequence()
 end
 
 def test_sequence_manager_integration()
-  print("=== SequenceManager Integration Tests ===")
+  print("=== sequence_manager Integration Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -450,7 +450,7 @@ def test_sequence_manager_integration()
 end
 
 def test_sequence_manager_parametric_repeat_counts()
-  print("=== SequenceManager Parametric Repeat Count Tests ===")
+  print("=== sequence_manager Parametric Repeat Count Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -489,7 +489,7 @@ def test_sequence_manager_parametric_repeat_counts()
 end
 
 def test_sequence_manager_repeat_execution_with_functions()
-  print("=== SequenceManager Repeat Execution with Functions Tests ===")
+  print("=== sequence_manager Repeat Execution with Functions Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -532,7 +532,7 @@ def test_sequence_manager_repeat_execution_with_functions()
 end
 
 def test_sequence_manager_palette_size_simulation()
-  print("=== SequenceManager Palette Size Simulation Tests ===")
+  print("=== sequence_manager Palette Size Simulation Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -577,7 +577,7 @@ def test_sequence_manager_palette_size_simulation()
 end
 
 def test_sequence_manager_dynamic_repeat_changes()
-  print("=== SequenceManager Dynamic Repeat Changes Tests ===")
+  print("=== sequence_manager Dynamic Repeat Changes Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -634,7 +634,7 @@ def test_sequence_manager_dynamic_repeat_changes()
 end
 
 def test_sequence_manager_complex_parametric_scenario()
-  print("=== SequenceManager Complex Parametric Scenario Tests ===")
+  print("=== sequence_manager Complex Parametric Scenario Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -689,7 +689,7 @@ def test_sequence_manager_complex_parametric_scenario()
 end
 
 def test_sequence_manager_zero_iterations()
-  print("=== SequenceManager Zero Iterations Tests ===")
+  print("=== sequence_manager Zero Iterations Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -743,7 +743,7 @@ def test_sequence_manager_zero_iterations()
 end
 
 def test_sequence_manager_zero_palette_size()
-  print("=== SequenceManager Zero Palette Size Tests ===")
+  print("=== sequence_manager Zero Palette Size Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -811,7 +811,7 @@ def test_sequence_manager_zero_palette_size()
 end
 
 def test_sequence_manager_boolean_repeat_counts()
-  print("=== SequenceManager Boolean Repeat Count Tests ===")
+  print("=== sequence_manager Boolean Repeat Count Tests ===")
   
   # Create strip and engine
   var strip = global.Leds(30)
@@ -920,7 +920,7 @@ def test_sequence_manager_boolean_repeat_counts()
 end
 
 def test_sequence_manager_false_conditional_immediate_skip()
-  print("=== SequenceManager False Conditional Immediate Skip Tests ===")
+  print("=== sequence_manager False Conditional Immediate Skip Tests ===")
   
   # This test verifies that when a conditional subsequence (if block) has a false condition,
   # the parent sequence immediately advances to the next step without waiting for a tick.
@@ -1035,7 +1035,7 @@ def test_sequence_manager_false_conditional_immediate_skip()
 end
 
 def test_sequence_manager_all_false_conditionals_no_infinite_loop()
-  print("=== SequenceManager All False Conditionals No Infinite Loop Tests ===")
+  print("=== sequence_manager All False Conditionals No Infinite Loop Tests ===")
   
   # This test verifies that when ALL conditional subsequences in a repeat-forever
   # sequence are false, the sequence doesn't go into an infinite loop.
@@ -1104,7 +1104,7 @@ end
 
 # Run all tests
 def run_all_sequence_manager_tests()
-  print("Starting SequenceManager Unit Tests...")
+  print("Starting sequence_manager Unit Tests...")
   
   test_sequence_manager_basic()
   test_sequence_manager_step_creation()
@@ -1127,7 +1127,7 @@ def run_all_sequence_manager_tests()
   test_sequence_manager_false_conditional_immediate_skip()
   test_sequence_manager_all_false_conditionals_no_infinite_loop()
   
-  print("\n🎉 All SequenceManager tests passed!")
+  print("\n🎉 All sequence_manager tests passed!")
   return true
 end
 

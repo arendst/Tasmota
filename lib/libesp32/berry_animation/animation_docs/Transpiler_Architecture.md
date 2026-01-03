@@ -162,7 +162,7 @@ _add_inherited_params_to_template(template_params_map)
 └── Fallback to static list if instance creation fails
 ```
 
-**Inherited Parameters (from Animation and ParameterizedObject):**
+**Inherited Parameters (from Animation and parameterized_object):**
 - `id` (string, default: "animation")
 - `priority` (int, default: 10)
 - `duration` (int, default: 0)

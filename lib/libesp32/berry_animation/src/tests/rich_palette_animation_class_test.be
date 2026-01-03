@@ -138,7 +138,7 @@ assert(anim.opacity == 255, "Opacity should be set correctly")
 
 # Test color provider integration
 assert(anim.color_provider != nil, "Internal color provider should exist")
-assert(animation.is_value_provider(anim.color_provider), "Internal provider should be a ValueProvider")
+assert(animation.is_value_provider(anim.color_provider), "Internal provider should be a value_provider")
 
 # Test that color parameter is set to internal provider
 var raw_color_param = anim.get_param("color")

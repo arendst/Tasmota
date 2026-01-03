@@ -1,6 +1,6 @@
 # Berry Animation Framework - Class Hierarchy and Parameters Reference
 
-This document provides a comprehensive reference for all classes in the Berry Animation Framework that extend `ParameterizedObject`, including their parameters and factory functions.
+This document provides a comprehensive reference for all classes in the Berry Animation Framework that extend `parameterized_object`, including their parameters and factory functions.
 
 ## Table of Contents
 
@@ -14,9 +14,9 @@ This document provides a comprehensive reference for all classes in the Berry An
 ## Class Hierarchy
 
 ```
-ParameterizedObject (base class with parameter management and playable interface)
+parameterized_object (base class with parameter management and playable interface)
 ├── Animation (unified base class for all visual elements)
-│   ├── EngineProxy (combines rendering and orchestration)
+│   ├── engine_proxy (combines rendering and orchestration)
 │   │   └── (user-defined template animations)
 │   ├── SolidAnimation (solid color fill)
 │   ├── BeaconAnimation (pulse at specific position)
@@ -32,15 +32,15 @@ ParameterizedObject (base class with parameter management and playable interface
 │   ├── twinkle (twinkling stars effect)
 │   ├── WaveAnimation (wave motion effects)
 │   └── RichPaletteAnimation (smooth palette transitions)
-├── SequenceManager (orchestrates animation sequences)
-└── ValueProvider (dynamic value generation)
-    ├── StaticValueProvider (wraps static values)
+├── sequence_manager (orchestrates animation sequences)
+└── value_provider (dynamic value generation)
+    ├── static_value (wraps static values)
     ├── strip_length (provides LED strip length)
-    ├── IterationNumberProvider (provides sequence iteration number)
-    ├── OscillatorValueProvider (oscillating values with waveforms)
+    ├── iteration_number (provides sequence iteration number)
+    ├── oscillator_value (oscillating values with waveforms)
     ├── closure_value (computed values, internal use only)
     └── color_provider (dynamic color generation)
-        ├── StaticColorProvider (solid color)
+        ├── static_color (solid color)
         ├── ColorCycleColorProvider (cycles through palette)
         ├── rich_palette_color (smooth palette transitions)
         └── breathe_color (breathing color effect)
@@ -48,7 +48,7 @@ ParameterizedObject (base class with parameter management and playable interface
 
 ## Base Classes
 
-### ParameterizedObject
+### parameterized_object
 
 Base class for all parameterized objects in the framework. Provides parameter management with validation, storage, and retrieval, as well as the playable interface for lifecycle management (start/stop/update).
 
@@ -71,7 +71,7 @@ This unified base class enables:
 
 ### Animation
 
-Unified base class for all visual elements. Inherits from `ParameterizedObject`.
+Unified base class for all visual elements. Inherits from `parameterized_object`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -80,7 +80,7 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 | `priority` | int | 10 | 0-255 | Rendering priority (higher = on top) |
 | `duration` | int | 0 | min: 0 | Animation duration in ms (0 = infinite) |
 | `loop` | bool | false | - | Whether to loop when duration is reached |
-| `opacity` | any | 255 | - | Animation opacity (number, FrameBuffer, or Animation) |
+| `opacity` | any | 255 | - | Animation opacity (number, frame_buffer, or Animation) |
 | `color` | int | 0xFFFFFFFF | - | Base color in ARGB format |
 
 **Special Behavior**: Setting `is_running = true/false` starts/stops the animation.
@@ -89,7 +89,7 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 
 **Factory**: `animation.animation(engine)`
 
-### EngineProxy
+### engine_proxy
 
 A specialized animation class that combines rendering and orchestration capabilities. Extends `Animation` and can contain child animations and sequences. Inherits from `Animation`.
 
@@ -119,7 +119,7 @@ A specialized animation class that combines rendering and orchestration capabili
 
 ### Template Animations
 
-Template animations are user-defined classes that extend `EngineProxy`, created using the DSL's `template animation` syntax. They provide reusable, parameterized animation patterns.
+Template animations are user-defined classes that extend `engine_proxy`, created using the DSL's `template animation` syntax. They provide reusable, parameterized animation patterns.
 
 **DSL Definition**:
 ```berry
@@ -157,7 +157,7 @@ Template animation parameters support all standard constraints:
 - `nillable` - Whether parameter can be nil (true/false)
 
 **Implicit Parameters**:
-Template animations automatically inherit parameters from the `EngineProxy` class hierarchy without explicit declaration:
+Template animations automatically inherit parameters from the `engine_proxy` class hierarchy without explicit declaration:
 - `id` (string, default: "animation") - Animation name
 - `priority` (int, default: 10) - Rendering priority
 - `duration` (int, default: 0) - Animation duration in milliseconds
@@ -203,9 +203,9 @@ run my_shutter
 
 Value providers generate dynamic values over time for use as animation parameters.
 
-### ValueProvider
+### value_provider
 
-Base interface for all value providers. Inherits from `ParameterizedObject`.
+Base interface for all value providers. Inherits from `parameterized_object`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -217,9 +217,9 @@ Base interface for all value providers. Inherits from `ParameterizedObject`.
 
 **Factory**: N/A (base interface)
 
-### StaticValueProvider
+### static_value
 
-Wraps static values to provide ValueProvider interface. Inherits from `ValueProvider`.
+Wraps static values to provide value_provider interface. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -229,7 +229,7 @@ Wraps static values to provide ValueProvider interface. Inherits from `ValueProv
 
 ### strip_length
 
-Provides access to the LED strip length as a dynamic value. Inherits from `ValueProvider`.
+Provides access to the LED strip length as a dynamic value. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -239,9 +239,9 @@ Provides access to the LED strip length as a dynamic value. Inherits from `Value
 
 **Factory**: `animation.strip_length(engine)`
 
-### OscillatorValueProvider
+### oscillator_value
 
-Generates oscillating values using various waveforms. Inherits from `ValueProvider`.
+Generates oscillating values using various waveforms. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -338,11 +338,11 @@ animation pulse = pulsating_animation(
 
 ## Color Providers
 
-Color providers generate dynamic colors over time, extending ValueProvider for color-specific functionality.
+Color providers generate dynamic colors over time, extending value_provider for color-specific functionality.
 
 ### color_provider
 
-Base interface for all color providers. Inherits from `ValueProvider`.
+Base interface for all color providers. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -353,7 +353,7 @@ Base interface for all color providers. Inherits from `ValueProvider`.
 
 **Factory**: N/A (base interface)
 
-### StaticColorProvider
+### static_color
 
 Returns a single, static color. Inherits from `color_provider`.
 
@@ -468,7 +468,7 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 | `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
 | *(inherits brightness from color_provider)* | | | | Overall brightness scaling applied after breathing effect |
-| *(inherits all OscillatorValueProvider parameters)* | | | | |
+| *(inherits all oscillator_value parameters)* | | | | |
 
 **Curve Factor Effects:**
 - `1`: Pure cosine wave (smooth pulsing)

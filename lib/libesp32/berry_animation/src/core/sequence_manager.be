@@ -2,7 +2,7 @@
 # Handles async execution of animation sequences without blocking delays
 # Supports sub-sequences and repeat logic through recursive composition
 #
-# Extends ParameterizedObject to provide parameter management and playable interface,
+# Extends parameterized_object to provide parameter management and playable interface,
 # allowing sequences to be treated uniformly with animations by the engine.
 #
 # Memory-optimized: Uses two parallel arrays instead of array of maps
@@ -16,7 +16,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class SequenceManager : animation.parameterized_object
+class sequence_manager : animation.parameterized_object
   # static var DURATION_CLOSURE = -2
   # static var DURATION_SUBSEQUENCE = -3
   
@@ -441,4 +441,4 @@ class SequenceManager : animation.parameterized_object
   end
 end
 
-return {'sequence_manager': SequenceManager }
+return {'sequence_manager': sequence_manager }

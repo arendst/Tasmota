@@ -1,7 +1,7 @@
-# OscillatorValueProvider for Berry Animation Framework
+# oscillator_value for Berry Animation Framework
 #
 # This value provider generates oscillating values based on time using various waveforms.
-# It's based on the original Animate_oscillator class but adapted to work as a ValueProvider.
+# It's based on the original Animate_oscillator class but adapted to work as a value_provider.
 #
 # Supported waveforms:
 # - SAWTOOTH (1): Linear ramp from a to b
@@ -23,8 +23,8 @@ var EASE_OUT = 7
 var ELASTIC = 8
 var BOUNCE = 9
 
-#@ solidify:OscillatorValueProvider,weak
-class OscillatorValueProvider : animation.value_provider
+#@ solidify:oscillator_value,weak
+class oscillator_value : animation.value_provider
   # Non-parameter instance variables only
   var value             # current calculated value
   
@@ -38,7 +38,7 @@ class OscillatorValueProvider : animation.value_provider
     "duty_cycle": {"min": 0, "max": 255, "default": 127}
   })
   
-  # Initialize a new OscillatorValueProvider
+  # Initialize a new oscillator_value
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
@@ -171,7 +171,7 @@ end
 # Create a ramp (same as oscillator, for semantic clarity)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New ramp instance
+# @return oscillator_value - New ramp instance
 def ramp(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 1 #-animation.SAWTOOTH-#
@@ -181,7 +181,7 @@ end
 # Create a linear oscillator (triangle wave)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New linear oscillator instance
+# @return oscillator_value - New linear oscillator instance
 def linear(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 2 #-animation.TRIANGLE-#
@@ -191,7 +191,7 @@ end
 # Create a smooth oscillator (cosine wave)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New smooth oscillator instance
+# @return oscillator_value - New smooth oscillator instance
 def smooth(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 4 #-animation.COSINE-#
@@ -201,7 +201,7 @@ end
 # Create a cosine oscillator (alias for smooth - cosine wave)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New cosine oscillator instance
+# @return oscillator_value - New cosine oscillator instance
 def cosine_osc(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 4 #-animation.COSINE-#
@@ -211,7 +211,7 @@ end
 # Create a sine wave oscillator
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New sine wave instance
+# @return oscillator_value - New sine wave instance
 def sine_osc(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 5 #-animation.SINE-#
@@ -221,7 +221,7 @@ end
 # Create a square wave oscillator
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New square wave instance
+# @return oscillator_value - New square wave instance
 def square(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 3 #-animation.SQUARE-#
@@ -231,7 +231,7 @@ end
 # Create an ease-in oscillator (quadratic acceleration)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New ease-in instance
+# @return oscillator_value - New ease-in instance
 def ease_in(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 6 #-animation.EASE_IN-#
@@ -241,7 +241,7 @@ end
 # Create an ease-out oscillator (quadratic deceleration)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New ease-out instance
+# @return oscillator_value - New ease-out instance
 def ease_out(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 7 #-animation.EASE_OUT-#
@@ -251,7 +251,7 @@ end
 # Create an elastic oscillator (spring-like overshoot and oscillation)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New elastic instance
+# @return oscillator_value - New elastic instance
 def elastic(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 8 #-animation.ELASTIC-#
@@ -261,7 +261,7 @@ end
 # Create a bounce oscillator (ball-like bouncing with decreasing amplitude)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New bounce instance
+# @return oscillator_value - New bounce instance
 def bounce(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 9 #-animation.BOUNCE-#
@@ -271,7 +271,7 @@ end
 # Create a sawtooth oscillator (alias for ramp - linear progression from min_value to max_value)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New sawtooth instance
+# @return oscillator_value - New sawtooth instance
 def sawtooth(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 1 #-animation.SAWTOOTH-#
@@ -281,7 +281,7 @@ end
 # Create a triangle oscillator (alias for linear - triangle wave from min_value to max_value and back)
 #
 # @param engine: AnimationEngine - Animation engine reference
-# @return OscillatorValueProvider - New triangle instance
+# @return oscillator_value - New triangle instance
 def triangle(engine)
   var osc = animation.oscillator_value(engine)
   osc.form = 2 #-animation.TRIANGLE-#
@@ -310,4 +310,4 @@ return {'ramp': ramp,
         'EASE_OUT': EASE_OUT,
         'ELASTIC': ELASTIC,
         'BOUNCE': BOUNCE,
-        'oscillator_value': OscillatorValueProvider}
+        'oscillator_value': oscillator_value}

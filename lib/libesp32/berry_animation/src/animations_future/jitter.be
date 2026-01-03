@@ -60,7 +60,7 @@ class JitterAnimation : animation.animation
   
   # Override start method for lifecycle control
   def start(time_ms)
-    # Call parent start first (handles ValueProvider propagation)
+    # Call parent start first (handles value_provider propagation)
     super(self).start(time_ms)
     
     # Reset jitter timing

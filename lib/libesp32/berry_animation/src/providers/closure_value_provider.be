@@ -1,4 +1,4 @@
-# closure_value - ValueProvider that wraps a closure/function
+# closure_value - value_provider that wraps a closure/function
 #
 # This provider allows using closures (functions) as value providers.
 # The closure is called with (self, param_name, time_ms) parameters when

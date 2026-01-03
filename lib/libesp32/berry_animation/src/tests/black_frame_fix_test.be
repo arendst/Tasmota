@@ -1,4 +1,4 @@
-# Black Frame Fix Test for SequenceManager
+# Black Frame Fix Test for sequence_manager
 # Tests the atomic transition functionality that eliminates black frames
 # between animation transitions with closure steps
 #

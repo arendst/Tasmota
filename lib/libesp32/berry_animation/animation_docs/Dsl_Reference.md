@@ -1156,7 +1156,7 @@ my_fade.opacity = 200    # Set the implicit opacity parameter
 - Implicit parameters can be overridden by explicit declarations if needed
 - They follow the same constraint rules as explicit parameters
 - They are accessed as `self.<param>` within the template body
-- All implicit parameters come from the `Animation` and `ParameterizedObject` base classes
+- All implicit parameters come from the `Animation` and `parameterized_object` base classes
 
 **Key Features:**
 - Generates reusable animation classes extending `engine_proxy`

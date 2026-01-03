@@ -979,7 +979,7 @@ class SimpleDSLTranspiler
     
     if is_repeat_syntax
       # Second syntax: sequence name repeat N times { ... }
-      # Create a single SequenceManager with fluent interface
+      # Create a single sequence_manager with fluent interface
       self.add(f"var {name}_ = animation.sequence_manager(engine, {repeat_count})")
       
       # Process sequence body - add steps using fluent interface
@@ -2810,7 +2810,7 @@ class SimpleDSLTranspiler
     self.add("")
     
     # Generate setup_template method (contains all template code)
-    self.add("  # Template setup method - overrides EngineProxy placeholder")
+    self.add("  # Template setup method - overrides engine_proxy placeholder")
     self.add("  def setup_template()")
     self.add("    var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')")
     self.add("")
@@ -3101,7 +3101,7 @@ class SimpleDSLTranspiler
       return false
     end
     
-    # For template animations, check if parameter masks an existing parameter from EngineProxy or Animation
+    # For template animations, check if parameter masks an existing parameter from engine_proxy or Animation
     if is_template_animation
       var base_class_params = [
         "name", "is_running", "priority", "duration", "loop", "opacity", "color"
@@ -3109,7 +3109,7 @@ class SimpleDSLTranspiler
       
       for base_param : base_class_params
         if param_name == base_param
-          self.warning(f"Template animation parameter '{param_name}' masks existing parameter from EngineProxy base class. This may cause unexpected behavior. Consider using a different name like 'custom_{param_name}' or '{param_name}_value'.")
+          self.warning(f"Template animation parameter '{param_name}' masks existing parameter from engine_proxy base class. This may cause unexpected behavior. Consider using a different name like 'custom_{param_name}' or '{param_name}_value'.")
           break
         end
       end

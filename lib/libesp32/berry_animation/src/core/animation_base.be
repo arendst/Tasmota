@@ -7,7 +7,7 @@
 # This is the unified base class for all visual elements in the framework.
 # A Pattern is simply an Animation with infinite duration (duration = 0).
 #
-# Extends ParameterizedObject to provide parameter management and playable interface.
+# Extends parameterized_object to provide parameter management and playable interface.
 
 import "./core/param_encoder" as encode_constraints
 
@@ -66,12 +66,12 @@ class Animation : animation.parameterized_object
   # Render the animation to the provided frame buffer
   # Default implementation renders a solid color (makes Animation equivalent to solid pattern)
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms, strip_length)
-    # Access parameters via virtual members (auto-resolves ValueProviders)
+    # Access parameters via virtual members (auto-resolves value_providers)
     var current_color = self.member("color")
     
     # Fill the entire frame with the current color if not transparent
@@ -84,7 +84,7 @@ class Animation : animation.parameterized_object
   
   # Post-processing of rendering
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   def post_render(frame, time_ms, strip_length)
@@ -104,7 +104,7 @@ class Animation : animation.parameterized_object
 
   # Apply opacity to frame buffer - handles numbers and animations
   #
-  # @param frame: FrameBuffer - The frame buffer to apply opacity to
+  # @param frame: frame_buffer - The frame buffer to apply opacity to
   # @param opacity: int|Animation - Opacity value or animation
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels

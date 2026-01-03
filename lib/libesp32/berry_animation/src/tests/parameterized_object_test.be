@@ -1,6 +1,6 @@
-# Test suite for ParameterizedObject
+# Test suite for parameterized_object
 #
-# This test verifies that the ParameterizedObject base class works correctly
+# This test verifies that the parameterized_object base class works correctly
 # and provides proper virtual parameter management.
 
 import animation
@@ -24,11 +24,11 @@ end
 
 var mock_engine = MockEngine()
 
-# Test basic ParameterizedObject functionality
+# Test basic parameterized_object functionality
 def test_parameterized_object_basic()
-  print("Testing basic ParameterizedObject functionality...")
+  print("Testing basic parameterized_object functionality...")
   
-  # Create a simple test class that extends ParameterizedObject
+  # Create a simple test class that extends parameterized_object
   class TestObject : animation.parameterized_object
     # No instance variables for parameters - they're handled by the virtual system
     
@@ -92,7 +92,7 @@ def test_parameterized_object_basic()
   # Test non-existent parameter
   assert(obj.set_param("invalid_param", 42) == false, "Should reject unknown parameter")
   
-  print("✓ Basic ParameterizedObject test passed")
+  print("✓ Basic parameterized_object test passed")
 end
 
 # Test class hierarchy parameter inheritance
@@ -144,9 +144,9 @@ def test_parameter_hierarchy()
   print("✓ Parameter hierarchy test passed")
 end
 
-# Test ValueProvider as parameter
+# Test value_provider as parameter
 def test_value_provider_as_parameter()
-  print("Testing ValueProvider as parameter...")
+  print("Testing value_provider as parameter...")
   
   # Create a simple test class
   class TestClass : animation.parameterized_object
@@ -161,8 +161,8 @@ def test_value_provider_as_parameter()
   
   var obj = TestClass(mock_engine)
   
-  # Create a mock ValueProvider
-  class MockValueProvider : animation.value_provider
+  # Create a mock value_provider
+  class Mockvalue_provider : animation.value_provider
     var test_value
     def init(engine, value)
       super(self).init(engine)
@@ -176,10 +176,10 @@ def test_value_provider_as_parameter()
     end
   end
   
-  var provider = MockValueProvider(mock_engine, 75)
+  var provider = Mockvalue_provider(mock_engine, 75)
   
-  # Set ValueProvider as parameter (should bypass validation)
-  assert(obj.set_param("dynamic_value", provider) == true, "Should accept ValueProvider as parameter")
+  # Set value_provider as parameter (should bypass validation)
+  assert(obj.set_param("dynamic_value", provider) == true, "Should accept value_provider as parameter")
   
   # Test that get_param returns the provider itself
   var returned_provider = obj.get_param("dynamic_value")
@@ -189,12 +189,12 @@ def test_value_provider_as_parameter()
   assert(returned_provider.produce_value("test", 1000) == 75, "Returned provider should produce expected value")
   
   # Test that virtual member access resolves the provider
-  assert(obj.dynamic_value == 75, "Virtual member should resolve ValueProvider")
+  assert(obj.dynamic_value == 75, "Virtual member should resolve value_provider")
   
   # Test get_param_value explicitly
-  assert(obj.get_param_value("dynamic_value", 1000) == 75, "Should resolve ValueProvider value")
+  assert(obj.get_param_value("dynamic_value", 1000) == 75, "Should resolve value_provider value")
   
-  print("✓ ValueProvider as parameter test passed")
+  print("✓ value_provider as parameter test passed")
 end
 
 # Test parameter metadata
@@ -460,7 +460,7 @@ end
 
 # Run all tests
 def run_parameterized_object_tests()
-  print("=== ParameterizedObject Tests ===")
+  print("=== parameterized_object Tests ===")
   
   try
     test_parameterized_object_basic()
@@ -472,7 +472,7 @@ def run_parameterized_object_tests()
     test_engine_requirement()
     test_equality_operator()
     
-    print("=== All ParameterizedObject tests passed! ===")
+    print("=== All parameterized_object tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

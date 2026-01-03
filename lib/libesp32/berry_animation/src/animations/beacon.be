@@ -45,12 +45,12 @@ class BeaconAnimation : animation.animation
 
   # Render the beacon to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms, strip_length)
-    # Use virtual parameter access - automatically resolves ValueProviders
+    # Use virtual parameter access - automatically resolves value_providers
     var back_color = self.back_color
     var pos = self.pos
     var slew_size = self.slew_size

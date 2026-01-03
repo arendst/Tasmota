@@ -16,7 +16,7 @@ class shutter_lr_animation : animation.engine_proxy
     "period": {}
   })
 
-  # Template setup method - overrides EngineProxy placeholder
+  # Template setup method - overrides engine_proxy placeholder
   def setup_template()
     var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
 

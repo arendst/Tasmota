@@ -1009,10 +1009,10 @@ be_local_closure(class_strip_length_produce_value,   /* name */
 /********************************************************************
 ** Solidified class: strip_length
 ********************************************************************/
-extern const bclass be_class_ValueProvider;
+extern const bclass be_class_value_provider;
 be_local_class(strip_length,
     0,
-    &be_class_ValueProvider,
+    &be_class_value_provider,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(produce_value, -1), be_const_closure(class_strip_length_produce_value_closure) },
@@ -2123,10 +2123,10 @@ be_local_closure(class_breathe_color_on_param_changed,   /* name */
 /********************************************************************
 ** Solidified class: breathe_color
 ********************************************************************/
-extern const bclass be_class_OscillatorValueProvider;
+extern const bclass be_class_oscillator_value;
 be_local_class(breathe_color,
     0,
-    &be_class_OscillatorValueProvider,
+    &be_class_oscillator_value,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(PARAMS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
@@ -2350,10 +2350,10 @@ be_local_closure(class_color_provider_init,   /* name */
 /********************************************************************
 ** Solidified class: color_provider
 ********************************************************************/
-extern const bclass be_class_ValueProvider;
+extern const bclass be_class_value_provider;
 be_local_class(color_provider,
     2,
-    &be_class_ValueProvider,
+    &be_class_value_provider,
     be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(LUT_FACTOR, 8), be_const_int(1) },
@@ -4197,12 +4197,12 @@ be_local_closure(register_event_handler,   /* name */
 /*******************************************************************/
 
 
-extern const bclass be_class_StaticValueProvider;
+extern const bclass be_class_static_value;
 
 /********************************************************************
 ** Solidified function: produce_value
 ********************************************************************/
-be_local_closure(class_StaticValueProvider_produce_value,   /* name */
+be_local_closure(class_static_value_produce_value,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     3,                          /* argc */
@@ -4227,25 +4227,25 @@ be_local_closure(class_StaticValueProvider_produce_value,   /* name */
 
 
 /********************************************************************
-** Solidified class: StaticValueProvider
+** Solidified class: static_value
 ********************************************************************/
-extern const bclass be_class_ValueProvider;
-be_local_class(StaticValueProvider,
+extern const bclass be_class_value_provider;
+be_local_class(static_value,
     0,
-    &be_class_ValueProvider,
+    &be_class_value_provider,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(produce_value, -1), be_const_closure(class_StaticValueProvider_produce_value_closure) },
+        { be_const_key_weak(produce_value, -1), be_const_closure(class_static_value_produce_value_closure) },
         { be_const_key_weak(PARAMS, 0), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(value, -1), be_const_bytes_instance(0C0604) },
     }))    ) } )) },
     })),
-    be_str_weak(StaticValueProvider)
+    be_str_weak(static_value)
 );
-// compact class 'SequenceManager' ktab size: 34, total: 122 (saved 704 bytes)
-static const bvalue be_ktab_class_SequenceManager[34] = {
+// compact class 'sequence_manager' ktab size: 34, total: 122 (saved 704 bytes)
+static const bvalue be_ktab_class_sequence_manager[34] = {
   /* K0   */  be_nested_str_weak(step_durations),
   /* K1   */  be_nested_str_weak(push),
   /* K2   */  be_nested_str_weak(step_refs),
@@ -4283,12 +4283,12 @@ static const bvalue be_ktab_class_SequenceManager[34] = {
 };
 
 
-extern const bclass be_class_SequenceManager;
+extern const bclass be_class_sequence_manager;
 
 /********************************************************************
 ** Solidified function: push_wait_step
 ********************************************************************/
-be_local_closure(class_SequenceManager_push_wait_step,   /* name */
+be_local_closure(class_sequence_manager_push_wait_step,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -4298,7 +4298,7 @@ be_local_closure(class_SequenceManager_push_wait_step,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(push_wait_step),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
@@ -4320,7 +4320,7 @@ be_local_closure(class_SequenceManager_push_wait_step,   /* name */
 /********************************************************************
 ** Solidified function: get_resolved_repeat_count
 ********************************************************************/
-be_local_closure(class_SequenceManager_get_resolved_repeat_count,   /* name */
+be_local_closure(class_sequence_manager_get_resolved_repeat_count,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -4330,7 +4330,7 @@ be_local_closure(class_SequenceManager_get_resolved_repeat_count,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(get_resolved_repeat_count),
     &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
@@ -4359,7 +4359,7 @@ be_local_closure(class_SequenceManager_get_resolved_repeat_count,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(class_SequenceManager_init,   /* name */
+be_local_closure(class_sequence_manager_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     3,                          /* argc */
@@ -4369,7 +4369,7 @@ be_local_closure(class_SequenceManager_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[36]) {  /* code */
@@ -4418,7 +4418,7 @@ be_local_closure(class_SequenceManager_init,   /* name */
 /********************************************************************
 ** Solidified function: push_repeat_subsequence
 ********************************************************************/
-be_local_closure(class_SequenceManager_push_repeat_subsequence,   /* name */
+be_local_closure(class_sequence_manager_push_repeat_subsequence,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -4428,7 +4428,7 @@ be_local_closure(class_SequenceManager_push_repeat_subsequence,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(push_repeat_subsequence),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
@@ -4450,7 +4450,7 @@ be_local_closure(class_SequenceManager_push_repeat_subsequence,   /* name */
 /********************************************************************
 ** Solidified function: complete_iteration
 ********************************************************************/
-be_local_closure(class_SequenceManager_complete_iteration,   /* name */
+be_local_closure(class_sequence_manager_complete_iteration,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -4460,7 +4460,7 @@ be_local_closure(class_SequenceManager_complete_iteration,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(complete_iteration),
     &be_const_str_solidified,
     ( &(const binstruction[71]) {  /* code */
@@ -4544,7 +4544,7 @@ be_local_closure(class_SequenceManager_complete_iteration,   /* name */
 /********************************************************************
 ** Solidified function: update
 ********************************************************************/
-be_local_closure(class_SequenceManager_update,   /* name */
+be_local_closure(class_sequence_manager_update,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -4554,7 +4554,7 @@ be_local_closure(class_SequenceManager_update,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(update),
     &be_const_str_solidified,
     ( &(const binstruction[64]) {  /* code */
@@ -4631,7 +4631,7 @@ be_local_closure(class_SequenceManager_update,   /* name */
 /********************************************************************
 ** Solidified function: stop_all_subsequences
 ********************************************************************/
-be_local_closure(class_SequenceManager_stop_all_subsequences,   /* name */
+be_local_closure(class_sequence_manager_stop_all_subsequences,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -4641,7 +4641,7 @@ be_local_closure(class_SequenceManager_stop_all_subsequences,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(stop_all_subsequences),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
@@ -4672,7 +4672,7 @@ be_local_closure(class_SequenceManager_stop_all_subsequences,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(class_SequenceManager_start,   /* name */
+be_local_closure(class_sequence_manager_start,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -4682,7 +4682,7 @@ be_local_closure(class_SequenceManager_start,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(start),
     &be_const_str_solidified,
     ( &(const binstruction[59]) {  /* code */
@@ -4754,7 +4754,7 @@ be_local_closure(class_SequenceManager_start,   /* name */
 /********************************************************************
 ** Solidified function: advance_to_next_step
 ********************************************************************/
-be_local_closure(class_SequenceManager_advance_to_next_step,   /* name */
+be_local_closure(class_sequence_manager_advance_to_next_step,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     3,                          /* argc */
@@ -4764,7 +4764,7 @@ be_local_closure(class_SequenceManager_advance_to_next_step,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(advance_to_next_step),
     &be_const_str_solidified,
     ( &(const binstruction[49]) {  /* code */
@@ -4826,7 +4826,7 @@ be_local_closure(class_SequenceManager_advance_to_next_step,   /* name */
 /********************************************************************
 ** Solidified function: is_sequence_running
 ********************************************************************/
-be_local_closure(class_SequenceManager_is_sequence_running,   /* name */
+be_local_closure(class_sequence_manager_is_sequence_running,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -4836,7 +4836,7 @@ be_local_closure(class_SequenceManager_is_sequence_running,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(is_sequence_running),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
@@ -4851,7 +4851,7 @@ be_local_closure(class_SequenceManager_is_sequence_running,   /* name */
 /********************************************************************
 ** Solidified function: execute_closure_steps_batch_atomic
 ********************************************************************/
-be_local_closure(class_SequenceManager_execute_closure_steps_batch_atomic,   /* name */
+be_local_closure(class_sequence_manager_execute_closure_steps_batch_atomic,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
@@ -4861,7 +4861,7 @@ be_local_closure(class_SequenceManager_execute_closure_steps_batch_atomic,   /* 
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(execute_closure_steps_batch_atomic),
     &be_const_str_solidified,
     ( &(const binstruction[83]) {  /* code */
@@ -4957,7 +4957,7 @@ be_local_closure(class_SequenceManager_execute_closure_steps_batch_atomic,   /* 
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-be_local_closure(class_SequenceManager_stop,   /* name */
+be_local_closure(class_sequence_manager_stop,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -4967,7 +4967,7 @@ be_local_closure(class_SequenceManager_stop,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(stop),
     &be_const_str_solidified,
     ( &(const binstruction[40]) {  /* code */
@@ -5020,7 +5020,7 @@ be_local_closure(class_SequenceManager_stop,   /* name */
 /********************************************************************
 ** Solidified function: execute_current_step
 ********************************************************************/
-be_local_closure(class_SequenceManager_execute_current_step,   /* name */
+be_local_closure(class_sequence_manager_execute_current_step,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -5030,7 +5030,7 @@ be_local_closure(class_SequenceManager_execute_current_step,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(execute_current_step),
     &be_const_str_solidified,
     ( &(const binstruction[85]) {  /* code */
@@ -5128,7 +5128,7 @@ be_local_closure(class_SequenceManager_execute_current_step,   /* name */
 /********************************************************************
 ** Solidified function: push_play_step
 ********************************************************************/
-be_local_closure(class_SequenceManager_push_play_step,   /* name */
+be_local_closure(class_sequence_manager_push_play_step,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     3,                          /* argc */
@@ -5138,7 +5138,7 @@ be_local_closure(class_SequenceManager_push_play_step,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(push_play_step),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
@@ -5165,7 +5165,7 @@ be_local_closure(class_SequenceManager_push_play_step,   /* name */
 /********************************************************************
 ** Solidified function: push_closure_step
 ********************************************************************/
-be_local_closure(class_SequenceManager_push_closure_step,   /* name */
+be_local_closure(class_sequence_manager_push_closure_step,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -5175,7 +5175,7 @@ be_local_closure(class_SequenceManager_push_closure_step,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(push_closure_step),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
@@ -5197,7 +5197,7 @@ be_local_closure(class_SequenceManager_push_closure_step,   /* name */
 /********************************************************************
 ** Solidified function: execute_closure_steps_batch
 ********************************************************************/
-be_local_closure(class_SequenceManager_execute_closure_steps_batch,   /* name */
+be_local_closure(class_sequence_manager_execute_closure_steps_batch,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -5207,7 +5207,7 @@ be_local_closure(class_SequenceManager_execute_closure_steps_batch,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_SequenceManager,     /* shared constants */
+    &be_ktab_class_sequence_manager,     /* shared constants */
     be_str_weak(execute_closure_steps_batch),
     &be_const_str_solidified,
     ( &(const binstruction[36]) {  /* code */
@@ -5254,41 +5254,41 @@ be_local_closure(class_SequenceManager_execute_closure_steps_batch,   /* name */
 
 
 /********************************************************************
-** Solidified class: SequenceManager
+** Solidified class: sequence_manager
 ********************************************************************/
-extern const bclass be_class_ParameterizedObject;
-be_local_class(SequenceManager,
+extern const bclass be_class_parameterized_object;
+be_local_class(sequence_manager,
     9,
-    &be_class_ParameterizedObject,
+    &be_class_parameterized_object,
     be_nested_map(25,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(is_repeat_sequence, -1), be_const_var(8) },
         { be_const_key_weak(current_iteration, -1), be_const_var(7) },
         { be_const_key_weak(step_refs, -1), be_const_var(5) },
-        { be_const_key_weak(push_wait_step, -1), be_const_closure(class_SequenceManager_push_wait_step_closure) },
-        { be_const_key_weak(advance_to_next_step, -1), be_const_closure(class_SequenceManager_advance_to_next_step_closure) },
-        { be_const_key_weak(init, 4), be_const_closure(class_SequenceManager_init_closure) },
-        { be_const_key_weak(push_repeat_subsequence, -1), be_const_closure(class_SequenceManager_push_repeat_subsequence_closure) },
-        { be_const_key_weak(is_sequence_running, -1), be_const_closure(class_SequenceManager_is_sequence_running_closure) },
+        { be_const_key_weak(push_wait_step, -1), be_const_closure(class_sequence_manager_push_wait_step_closure) },
+        { be_const_key_weak(advance_to_next_step, -1), be_const_closure(class_sequence_manager_advance_to_next_step_closure) },
+        { be_const_key_weak(init, 4), be_const_closure(class_sequence_manager_init_closure) },
+        { be_const_key_weak(push_repeat_subsequence, -1), be_const_closure(class_sequence_manager_push_repeat_subsequence_closure) },
+        { be_const_key_weak(is_sequence_running, -1), be_const_closure(class_sequence_manager_is_sequence_running_closure) },
         { be_const_key_weak(step_start_time, 24), be_const_var(3) },
-        { be_const_key_weak(update, -1), be_const_closure(class_SequenceManager_update_closure) },
-        { be_const_key_weak(stop_all_subsequences, -1), be_const_closure(class_SequenceManager_stop_all_subsequences_closure) },
-        { be_const_key_weak(start, 1), be_const_closure(class_SequenceManager_start_closure) },
+        { be_const_key_weak(update, -1), be_const_closure(class_sequence_manager_update_closure) },
+        { be_const_key_weak(stop_all_subsequences, -1), be_const_closure(class_sequence_manager_stop_all_subsequences_closure) },
+        { be_const_key_weak(start, 1), be_const_closure(class_sequence_manager_start_closure) },
         { be_const_key_weak(sequence_state, -1), be_const_var(1) },
-        { be_const_key_weak(complete_iteration, 7), be_const_closure(class_SequenceManager_complete_iteration_closure) },
-        { be_const_key_weak(execute_closure_steps_batch_atomic, 12), be_const_closure(class_SequenceManager_execute_closure_steps_batch_atomic_closure) },
-        { be_const_key_weak(execute_current_step, -1), be_const_closure(class_SequenceManager_execute_current_step_closure) },
+        { be_const_key_weak(complete_iteration, 7), be_const_closure(class_sequence_manager_complete_iteration_closure) },
+        { be_const_key_weak(execute_closure_steps_batch_atomic, 12), be_const_closure(class_sequence_manager_execute_closure_steps_batch_atomic_closure) },
+        { be_const_key_weak(execute_current_step, -1), be_const_closure(class_sequence_manager_execute_current_step_closure) },
         { be_const_key_weak(step_durations, -1), be_const_var(4) },
-        { be_const_key_weak(stop, -1), be_const_closure(class_SequenceManager_stop_closure) },
-        { be_const_key_weak(get_resolved_repeat_count, 15), be_const_closure(class_SequenceManager_get_resolved_repeat_count_closure) },
-        { be_const_key_weak(push_play_step, -1), be_const_closure(class_SequenceManager_push_play_step_closure) },
+        { be_const_key_weak(stop, -1), be_const_closure(class_sequence_manager_stop_closure) },
+        { be_const_key_weak(get_resolved_repeat_count, 15), be_const_closure(class_sequence_manager_get_resolved_repeat_count_closure) },
+        { be_const_key_weak(push_play_step, -1), be_const_closure(class_sequence_manager_push_play_step_closure) },
         { be_const_key_weak(repeat_count, -1), be_const_var(6) },
         { be_const_key_weak(active_sequence, -1), be_const_var(0) },
-        { be_const_key_weak(push_closure_step, -1), be_const_closure(class_SequenceManager_push_closure_step_closure) },
-        { be_const_key_weak(execute_closure_steps_batch, -1), be_const_closure(class_SequenceManager_execute_closure_steps_batch_closure) },
+        { be_const_key_weak(push_closure_step, -1), be_const_closure(class_sequence_manager_push_closure_step_closure) },
+        { be_const_key_weak(execute_closure_steps_batch, -1), be_const_closure(class_sequence_manager_execute_closure_steps_batch_closure) },
         { be_const_key_weak(step_index, -1), be_const_var(2) },
     })),
-    be_str_weak(SequenceManager)
+    be_str_weak(sequence_manager)
 );
 
 /********************************************************************
@@ -5755,10 +5755,10 @@ be_local_closure(class_Animation_update,   /* name */
 /********************************************************************
 ** Solidified class: Animation
 ********************************************************************/
-extern const bclass be_class_ParameterizedObject;
+extern const bclass be_class_parameterized_object;
 be_local_class(Animation,
     1,
-    &be_class_ParameterizedObject,
+    &be_class_parameterized_object,
     be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(update, 1), be_const_closure(class_Animation_update_closure) },
@@ -7474,8 +7474,8 @@ be_local_class(CometAnimation,
     })),
     be_str_weak(CometAnimation)
 );
-// compact class 'OscillatorValueProvider' ktab size: 22, total: 24 (saved 16 bytes)
-static const bvalue be_ktab_class_OscillatorValueProvider[22] = {
+// compact class 'oscillator_value' ktab size: 22, total: 24 (saved 16 bytes)
+static const bvalue be_ktab_class_oscillator_value[22] = {
   /* K0   */  be_nested_str_weak(init),
   /* K1   */  be_nested_str_weak(value),
   /* K2   */  be_const_int(0),
@@ -7501,12 +7501,12 @@ static const bvalue be_ktab_class_OscillatorValueProvider[22] = {
 };
 
 
-extern const bclass be_class_OscillatorValueProvider;
+extern const bclass be_class_oscillator_value;
 
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(class_OscillatorValueProvider_init,   /* name */
+be_local_closure(class_oscillator_value_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -7516,7 +7516,7 @@ be_local_closure(class_OscillatorValueProvider_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_OscillatorValueProvider,     /* shared constants */
+    &be_ktab_class_oscillator_value,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
@@ -7537,7 +7537,7 @@ be_local_closure(class_OscillatorValueProvider_init,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(class_OscillatorValueProvider_start,   /* name */
+be_local_closure(class_oscillator_value_start,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -7547,7 +7547,7 @@ be_local_closure(class_OscillatorValueProvider_start,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_OscillatorValueProvider,     /* shared constants */
+    &be_ktab_class_oscillator_value,     /* shared constants */
     be_str_weak(start),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
@@ -7567,7 +7567,7 @@ be_local_closure(class_OscillatorValueProvider_start,   /* name */
 /********************************************************************
 ** Solidified function: produce_value
 ********************************************************************/
-be_local_closure(class_OscillatorValueProvider_produce_value,   /* name */
+be_local_closure(class_oscillator_value_produce_value,   /* name */
   be_nested_proto(
     24,                          /* nstack */
     3,                          /* argc */
@@ -7577,7 +7577,7 @@ be_local_closure(class_OscillatorValueProvider_produce_value,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_OscillatorValueProvider,     /* shared constants */
+    &be_ktab_class_oscillator_value,     /* shared constants */
     be_str_weak(produce_value),
     &be_const_str_solidified,
     ( &(const binstruction[349]) {  /* code */
@@ -7937,17 +7937,17 @@ be_local_closure(class_OscillatorValueProvider_produce_value,   /* name */
 
 
 /********************************************************************
-** Solidified class: OscillatorValueProvider
+** Solidified class: oscillator_value
 ********************************************************************/
-extern const bclass be_class_ValueProvider;
-be_local_class(OscillatorValueProvider,
+extern const bclass be_class_value_provider;
+be_local_class(oscillator_value,
     1,
-    &be_class_ValueProvider,
+    &be_class_value_provider,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(class_OscillatorValueProvider_init_closure) },
-        { be_const_key_weak(start, -1), be_const_closure(class_OscillatorValueProvider_start_closure) },
-        { be_const_key_weak(produce_value, 4), be_const_closure(class_OscillatorValueProvider_produce_value_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_oscillator_value_init_closure) },
+        { be_const_key_weak(start, -1), be_const_closure(class_oscillator_value_start_closure) },
+        { be_const_key_weak(produce_value, 4), be_const_closure(class_oscillator_value_produce_value_closure) },
         { be_const_key_weak(PARAMS, 2), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -7960,7 +7960,7 @@ be_local_class(OscillatorValueProvider,
     }))    ) } )) },
         { be_const_key_weak(value, -1), be_const_var(0) },
     })),
-    be_str_weak(OscillatorValueProvider)
+    be_str_weak(oscillator_value)
 );
 
 /********************************************************************
@@ -8150,10 +8150,10 @@ be_local_closure(class_closure_value_on_param_changed,   /* name */
 /********************************************************************
 ** Solidified class: closure_value
 ********************************************************************/
-extern const bclass be_class_ValueProvider;
+extern const bclass be_class_value_provider;
 be_local_class(closure_value,
     1,
-    &be_class_ValueProvider,
+    &be_class_value_provider,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(_closure, -1), be_const_var(0) },
@@ -10665,10 +10665,10 @@ be_local_closure(wave_rainbow_sine,   /* name */
 );
 /*******************************************************************/
 
-extern const bclass be_class_ParameterizedObject;
-// compact class 'ParameterizedObject' ktab size: 59, total: 123 (saved 512 bytes)
-static const bvalue be_ktab_class_ParameterizedObject[59] = {
-  /* K0   */  be_const_class(be_class_ParameterizedObject),
+extern const bclass be_class_parameterized_object;
+// compact class 'parameterized_object' ktab size: 59, total: 123 (saved 512 bytes)
+static const bvalue be_ktab_class_parameterized_object[59] = {
+  /* K0   */  be_const_class(be_class_parameterized_object),
   /* K1   */  be_const_int(1),
   /* K2   */  be_const_int(0),
   /* K3   */  be_nested_str_weak(_MASK),
@@ -10730,12 +10730,12 @@ static const bvalue be_ktab_class_ParameterizedObject[59] = {
 };
 
 
-extern const bclass be_class_ParameterizedObject;
+extern const bclass be_class_parameterized_object;
 
 /********************************************************************
 ** Solidified function: constraint_find
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_constraint_find,   /* name */
+be_local_closure(class_parameterized_object_constraint_find,   /* name */
   be_nested_proto(
     17,                          /* nstack */
     3,                          /* argc */
@@ -10919,7 +10919,7 @@ be_local_closure(class_ParameterizedObject_constraint_find,   /* name */
       ),
     }),
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(constraint_find),
     &be_const_str_solidified,
     ( &(const binstruction[112]) {  /* code */
@@ -11044,7 +11044,7 @@ be_local_closure(class_ParameterizedObject_constraint_find,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_setmember,   /* name */
+be_local_closure(class_parameterized_object_setmember,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -11054,7 +11054,7 @@ be_local_closure(class_ParameterizedObject_setmember,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(setmember),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
@@ -11085,7 +11085,7 @@ be_local_closure(class_ParameterizedObject_setmember,   /* name */
 /********************************************************************
 ** Solidified function: _validate_param
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__validate_param,   /* name */
+be_local_closure(class_parameterized_object__validate_param,   /* name */
   be_nested_proto(
     15,                          /* nstack */
     3,                          /* argc */
@@ -11095,7 +11095,7 @@ be_local_closure(class_ParameterizedObject__validate_param,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_validate_param),
     &be_const_str_solidified,
     ( &(const binstruction[186]) {  /* code */
@@ -11294,7 +11294,7 @@ be_local_closure(class_ParameterizedObject__validate_param,   /* name */
 /********************************************************************
 ** Solidified function: update
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_update,   /* name */
+be_local_closure(class_parameterized_object_update,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -11304,7 +11304,7 @@ be_local_closure(class_ParameterizedObject_update,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(update),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
@@ -11318,7 +11318,7 @@ be_local_closure(class_ParameterizedObject_update,   /* name */
 /********************************************************************
 ** Solidified function: _resolve_parameter_value
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__resolve_parameter_value,   /* name */
+be_local_closure(class_parameterized_object__resolve_parameter_value,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -11328,7 +11328,7 @@ be_local_closure(class_ParameterizedObject__resolve_parameter_value,   /* name *
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_resolve_parameter_value),
     &be_const_str_solidified,
     ( &(const binstruction[31]) {  /* code */
@@ -11372,7 +11372,7 @@ be_local_closure(class_ParameterizedObject__resolve_parameter_value,   /* name *
 /********************************************************************
 ** Solidified function: constraint_mask
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_constraint_mask,   /* name */
+be_local_closure(class_parameterized_object_constraint_mask,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -11382,7 +11382,7 @@ be_local_closure(class_ParameterizedObject_constraint_mask,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(constraint_mask),
     &be_const_str_solidified,
     ( &(const binstruction[21]) {  /* code */
@@ -11416,7 +11416,7 @@ be_local_closure(class_ParameterizedObject_constraint_mask,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_member,   /* name */
+be_local_closure(class_parameterized_object_member,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -11426,7 +11426,7 @@ be_local_closure(class_ParameterizedObject_member,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(member),
     &be_const_str_solidified,
     ( &(const binstruction[58]) {  /* code */
@@ -11497,7 +11497,7 @@ be_local_closure(class_ParameterizedObject_member,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_start,   /* name */
+be_local_closure(class_parameterized_object_start,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -11507,7 +11507,7 @@ be_local_closure(class_ParameterizedObject_start,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(start),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
@@ -11533,7 +11533,7 @@ be_local_closure(class_ParameterizedObject_start,   /* name */
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_stop,   /* name */
+be_local_closure(class_parameterized_object_stop,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -11543,7 +11543,7 @@ be_local_closure(class_ParameterizedObject_stop,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(stop),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
@@ -11559,7 +11559,7 @@ be_local_closure(class_ParameterizedObject_stop,   /* name */
 /********************************************************************
 ** Solidified function: _init_parameter_values
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__init_parameter_values,   /* name */
+be_local_closure(class_parameterized_object__init_parameter_values,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
@@ -11569,7 +11569,7 @@ be_local_closure(class_ParameterizedObject__init_parameter_values,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_init_parameter_values),
     &be_const_str_solidified,
     ( &(const binstruction[47]) {  /* code */
@@ -11629,7 +11629,7 @@ be_local_closure(class_ParameterizedObject__init_parameter_values,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_init,   /* name */
+be_local_closure(class_parameterized_object_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -11639,7 +11639,7 @@ be_local_closure(class_ParameterizedObject_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
@@ -11670,7 +11670,7 @@ be_local_closure(class_ParameterizedObject_init,   /* name */
 /********************************************************************
 ** Solidified function: _fix_time_ms
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__fix_time_ms,   /* name */
+be_local_closure(class_parameterized_object__fix_time_ms,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -11680,7 +11680,7 @@ be_local_closure(class_ParameterizedObject__fix_time_ms,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_fix_time_ms),
     &be_const_str_solidified,
     ( &(const binstruction[11]) {  /* code */
@@ -11704,7 +11704,7 @@ be_local_closure(class_ParameterizedObject__fix_time_ms,   /* name */
 /********************************************************************
 ** Solidified function: has_param
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_has_param,   /* name */
+be_local_closure(class_parameterized_object_has_param,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -11714,7 +11714,7 @@ be_local_closure(class_ParameterizedObject_has_param,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(has_param),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
@@ -11733,7 +11733,7 @@ be_local_closure(class_ParameterizedObject_has_param,   /* name */
 /********************************************************************
 ** Solidified function: ==
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__X3D_X3D,   /* name */
+be_local_closure(class_parameterized_object__X3D_X3D,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -11743,7 +11743,7 @@ be_local_closure(class_ParameterizedObject__X3D_X3D,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_X3D_X3D),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
@@ -11765,7 +11765,7 @@ be_local_closure(class_ParameterizedObject__X3D_X3D,   /* name */
 /********************************************************************
 ** Solidified function: set_param
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_set_param,   /* name */
+be_local_closure(class_parameterized_object_set_param,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -11775,7 +11775,7 @@ be_local_closure(class_ParameterizedObject_set_param,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(set_param),
     &be_const_str_solidified,
     ( &(const binstruction[24]) {  /* code */
@@ -11812,7 +11812,7 @@ be_local_closure(class_ParameterizedObject_set_param,   /* name */
 /********************************************************************
 ** Solidified function: on_param_changed
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_on_param_changed,   /* name */
+be_local_closure(class_parameterized_object_on_param_changed,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
@@ -11822,7 +11822,7 @@ be_local_closure(class_ParameterizedObject_on_param_changed,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(on_param_changed),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
@@ -11836,7 +11836,7 @@ be_local_closure(class_ParameterizedObject_on_param_changed,   /* name */
 /********************************************************************
 ** Solidified function: !=
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__X21_X3D,   /* name */
+be_local_closure(class_parameterized_object__X21_X3D,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -11846,7 +11846,7 @@ be_local_closure(class_ParameterizedObject__X21_X3D,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_X21_X3D),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
@@ -11864,7 +11864,7 @@ be_local_closure(class_ParameterizedObject__X21_X3D,   /* name */
 /********************************************************************
 ** Solidified function: _set_parameter_value
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__set_parameter_value,   /* name */
+be_local_closure(class_parameterized_object__set_parameter_value,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -11874,7 +11874,7 @@ be_local_closure(class_ParameterizedObject__set_parameter_value,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_set_parameter_value),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
@@ -11904,7 +11904,7 @@ be_local_closure(class_ParameterizedObject__set_parameter_value,   /* name */
 /********************************************************************
 ** Solidified function: tobool
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_tobool,   /* name */
+be_local_closure(class_parameterized_object_tobool,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -11914,7 +11914,7 @@ be_local_closure(class_ParameterizedObject_tobool,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(tobool),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
@@ -11929,7 +11929,7 @@ be_local_closure(class_ParameterizedObject_tobool,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_tostring,   /* name */
+be_local_closure(class_parameterized_object_tostring,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -11939,7 +11939,7 @@ be_local_closure(class_ParameterizedObject_tostring,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(tostring),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
@@ -11959,7 +11959,7 @@ be_local_closure(class_ParameterizedObject_tostring,   /* name */
 /********************************************************************
 ** Solidified function: resolve_value
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_resolve_value,   /* name */
+be_local_closure(class_parameterized_object_resolve_value,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
@@ -11969,7 +11969,7 @@ be_local_closure(class_ParameterizedObject_resolve_value,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(resolve_value),
     &be_const_str_solidified,
     ( &(const binstruction[34]) {  /* code */
@@ -12016,7 +12016,7 @@ be_local_closure(class_ParameterizedObject_resolve_value,   /* name */
 /********************************************************************
 ** Solidified function: get_param_value
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_get_param_value,   /* name */
+be_local_closure(class_parameterized_object_get_param_value,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -12026,7 +12026,7 @@ be_local_closure(class_ParameterizedObject_get_param_value,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(get_param_value),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
@@ -12043,7 +12043,7 @@ be_local_closure(class_ParameterizedObject_get_param_value,   /* name */
 /********************************************************************
 ** Solidified function: _get_param_def
 ********************************************************************/
-be_local_closure(class_ParameterizedObject__get_param_def,   /* name */
+be_local_closure(class_parameterized_object__get_param_def,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -12053,7 +12053,7 @@ be_local_closure(class_ParameterizedObject__get_param_def,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(_get_param_def),
     &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
@@ -12092,7 +12092,7 @@ be_local_closure(class_ParameterizedObject__get_param_def,   /* name */
 /********************************************************************
 ** Solidified function: get_param
 ********************************************************************/
-be_local_closure(class_ParameterizedObject_get_param,   /* name */
+be_local_closure(class_parameterized_object_get_param,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -12102,7 +12102,7 @@ be_local_closure(class_ParameterizedObject_get_param,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_ParameterizedObject,     /* shared constants */
+    &be_ktab_class_parameterized_object,     /* shared constants */
     be_str_weak(get_param),
     &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
@@ -12139,18 +12139,18 @@ be_local_closure(class_ParameterizedObject_get_param,   /* name */
 
 
 /********************************************************************
-** Solidified class: ParameterizedObject
+** Solidified class: parameterized_object
 ********************************************************************/
-be_local_class(ParameterizedObject,
+be_local_class(parameterized_object,
     4,
     NULL,
     be_nested_map(30,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(constraint_find, 10), be_const_static_closure(class_ParameterizedObject_constraint_find_closure) },
-        { be_const_key_weak(setmember, 20), be_const_closure(class_ParameterizedObject_setmember_closure) },
-        { be_const_key_weak(get_param, -1), be_const_closure(class_ParameterizedObject_get_param_closure) },
+        { be_const_key_weak(constraint_find, 10), be_const_static_closure(class_parameterized_object_constraint_find_closure) },
+        { be_const_key_weak(setmember, 20), be_const_closure(class_parameterized_object_setmember_closure) },
+        { be_const_key_weak(get_param, -1), be_const_closure(class_parameterized_object_get_param_closure) },
         { be_const_key_weak(values, -1), be_const_var(0) },
-        { be_const_key_weak(update, -1), be_const_closure(class_ParameterizedObject_update_closure) },
+        { be_const_key_weak(update, -1), be_const_closure(class_parameterized_object_update_closure) },
         { be_const_key_weak(_TYPES, 18), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(7,
     ( (struct bvalue*) &(const bvalue[]) {
@@ -12162,10 +12162,10 @@ be_local_class(ParameterizedObject,
         be_nested_str_weak(instance),
         be_nested_str_weak(function),
     }))    ) } )) },
-        { be_const_key_weak(_resolve_parameter_value, -1), be_const_closure(class_ParameterizedObject__resolve_parameter_value_closure) },
-        { be_const_key_weak(constraint_mask, 21), be_const_static_closure(class_ParameterizedObject_constraint_mask_closure) },
-        { be_const_key_weak(_get_param_def, -1), be_const_closure(class_ParameterizedObject__get_param_def_closure) },
-        { be_const_key_weak(get_param_value, -1), be_const_closure(class_ParameterizedObject_get_param_value_closure) },
+        { be_const_key_weak(_resolve_parameter_value, -1), be_const_closure(class_parameterized_object__resolve_parameter_value_closure) },
+        { be_const_key_weak(constraint_mask, 21), be_const_static_closure(class_parameterized_object_constraint_mask_closure) },
+        { be_const_key_weak(_get_param_def, -1), be_const_closure(class_parameterized_object__get_param_def_closure) },
+        { be_const_key_weak(get_param_value, -1), be_const_closure(class_parameterized_object_get_param_value_closure) },
         { be_const_key_weak(_MASK, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(6,
     ( (struct bvalue*) &(const bvalue[]) {
@@ -12176,27 +12176,27 @@ be_local_class(ParameterizedObject,
         be_nested_str_weak(enum),
         be_nested_str_weak(nillable),
     }))    ) } )) },
-        { be_const_key_weak(start, -1), be_const_closure(class_ParameterizedObject_start_closure) },
+        { be_const_key_weak(start, -1), be_const_closure(class_parameterized_object_start_closure) },
         { be_const_key_weak(is_running, -1), be_const_var(3) },
-        { be_const_key_weak(_init_parameter_values, -1), be_const_closure(class_ParameterizedObject__init_parameter_values_closure) },
-        { be_const_key_weak(has_param, 13), be_const_closure(class_ParameterizedObject_has_param_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(class_ParameterizedObject_init_closure) },
-        { be_const_key_weak(_fix_time_ms, -1), be_const_closure(class_ParameterizedObject__fix_time_ms_closure) },
-        { be_const_key_weak(stop, 14), be_const_closure(class_ParameterizedObject_stop_closure) },
-        { be_const_key_weak(_X3D_X3D, -1), be_const_closure(class_ParameterizedObject__X3D_X3D_closure) },
-        { be_const_key_weak(set_param, -1), be_const_closure(class_ParameterizedObject_set_param_closure) },
-        { be_const_key_weak(_X21_X3D, 26), be_const_closure(class_ParameterizedObject__X21_X3D_closure) },
-        { be_const_key_weak(on_param_changed, -1), be_const_closure(class_ParameterizedObject_on_param_changed_closure) },
-        { be_const_key_weak(_set_parameter_value, -1), be_const_closure(class_ParameterizedObject__set_parameter_value_closure) },
+        { be_const_key_weak(_init_parameter_values, -1), be_const_closure(class_parameterized_object__init_parameter_values_closure) },
+        { be_const_key_weak(has_param, 13), be_const_closure(class_parameterized_object_has_param_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_parameterized_object_init_closure) },
+        { be_const_key_weak(_fix_time_ms, -1), be_const_closure(class_parameterized_object__fix_time_ms_closure) },
+        { be_const_key_weak(stop, 14), be_const_closure(class_parameterized_object_stop_closure) },
+        { be_const_key_weak(_X3D_X3D, -1), be_const_closure(class_parameterized_object__X3D_X3D_closure) },
+        { be_const_key_weak(set_param, -1), be_const_closure(class_parameterized_object_set_param_closure) },
+        { be_const_key_weak(_X21_X3D, 26), be_const_closure(class_parameterized_object__X21_X3D_closure) },
+        { be_const_key_weak(on_param_changed, -1), be_const_closure(class_parameterized_object_on_param_changed_closure) },
+        { be_const_key_weak(_set_parameter_value, -1), be_const_closure(class_parameterized_object__set_parameter_value_closure) },
         { be_const_key_weak(engine, -1), be_const_var(1) },
-        { be_const_key_weak(tobool, -1), be_const_closure(class_ParameterizedObject_tobool_closure) },
-        { be_const_key_weak(tostring, -1), be_const_closure(class_ParameterizedObject_tostring_closure) },
-        { be_const_key_weak(member, 12), be_const_closure(class_ParameterizedObject_member_closure) },
+        { be_const_key_weak(tobool, -1), be_const_closure(class_parameterized_object_tobool_closure) },
+        { be_const_key_weak(tostring, -1), be_const_closure(class_parameterized_object_tostring_closure) },
+        { be_const_key_weak(member, 12), be_const_closure(class_parameterized_object_member_closure) },
         { be_const_key_weak(start_time, 9), be_const_var(2) },
-        { be_const_key_weak(_validate_param, 8), be_const_closure(class_ParameterizedObject__validate_param_closure) },
-        { be_const_key_weak(resolve_value, 2), be_const_closure(class_ParameterizedObject_resolve_value_closure) },
+        { be_const_key_weak(_validate_param, 8), be_const_closure(class_parameterized_object__validate_param_closure) },
+        { be_const_key_weak(resolve_value, 2), be_const_closure(class_parameterized_object_resolve_value_closure) },
     })),
-    be_str_weak(ParameterizedObject)
+    be_str_weak(parameterized_object)
 );
 
 /********************************************************************
@@ -12332,20 +12332,20 @@ be_local_closure(triangle,   /* name */
 );
 /*******************************************************************/
 
-// compact class 'StaticColorProvider' ktab size: 3, total: 6 (saved 24 bytes)
-static const bvalue be_ktab_class_StaticColorProvider[3] = {
+// compact class 'static_color' ktab size: 3, total: 6 (saved 24 bytes)
+static const bvalue be_ktab_class_static_color[3] = {
   /* K0   */  be_nested_str_weak(color),
   /* K1   */  be_nested_str_weak(brightness),
   /* K2   */  be_nested_str_weak(apply_brightness),
 };
 
 
-extern const bclass be_class_StaticColorProvider;
+extern const bclass be_class_static_color;
 
 /********************************************************************
 ** Solidified function: produce_value
 ********************************************************************/
-be_local_closure(class_StaticColorProvider_produce_value,   /* name */
+be_local_closure(class_static_color_produce_value,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -12355,7 +12355,7 @@ be_local_closure(class_StaticColorProvider_produce_value,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_StaticColorProvider,     /* shared constants */
+    &be_ktab_class_static_color,     /* shared constants */
     be_str_weak(produce_value),
     &be_const_str_solidified,
     ( &(const binstruction[11]) {  /* code */
@@ -12379,7 +12379,7 @@ be_local_closure(class_StaticColorProvider_produce_value,   /* name */
 /********************************************************************
 ** Solidified function: get_color_for_value
 ********************************************************************/
-be_local_closure(class_StaticColorProvider_get_color_for_value,   /* name */
+be_local_closure(class_static_color_get_color_for_value,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -12389,7 +12389,7 @@ be_local_closure(class_StaticColorProvider_get_color_for_value,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_StaticColorProvider,     /* shared constants */
+    &be_ktab_class_static_color,     /* shared constants */
     be_str_weak(get_color_for_value),
     &be_const_str_solidified,
     ( &(const binstruction[11]) {  /* code */
@@ -12411,23 +12411,23 @@ be_local_closure(class_StaticColorProvider_get_color_for_value,   /* name */
 
 
 /********************************************************************
-** Solidified class: StaticColorProvider
+** Solidified class: static_color
 ********************************************************************/
 extern const bclass be_class_color_provider;
-be_local_class(StaticColorProvider,
+be_local_class(static_color,
     0,
     &be_class_color_provider,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(produce_value, 1), be_const_closure(class_StaticColorProvider_produce_value_closure) },
+        { be_const_key_weak(produce_value, 1), be_const_closure(class_static_color_produce_value_closure) },
         { be_const_key_weak(PARAMS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(color, -1), be_const_bytes_instance(0400FF) },
     }))    ) } )) },
-        { be_const_key_weak(get_color_for_value, -1), be_const_closure(class_StaticColorProvider_get_color_for_value_closure) },
+        { be_const_key_weak(get_color_for_value, -1), be_const_closure(class_static_color_get_color_for_value_closure) },
     })),
-    be_str_weak(StaticColorProvider)
+    be_str_weak(static_color)
 );
 // compact class 'PaletteGradientAnimation' ktab size: 32, total: 47 (saved 120 bytes)
 static const bvalue be_ktab_class_PaletteGradientAnimation[32] = {
@@ -12838,8 +12838,8 @@ be_local_class(PaletteGradientAnimation,
     })),
     be_str_weak(PaletteGradientAnimation)
 );
-// compact class 'EngineProxy' ktab size: 40, total: 109 (saved 552 bytes)
-static const bvalue be_ktab_class_EngineProxy[40] = {
+// compact class 'engine_proxy' ktab size: 40, total: 109 (saved 552 bytes)
+static const bvalue be_ktab_class_engine_proxy[40] = {
   /* K0   */  be_nested_str_weak(engine),
   /* K1   */  be_nested_str_weak(strip_length),
   /* K2   */  be_nested_str_weak(animation),
@@ -12866,7 +12866,7 @@ static const bvalue be_ktab_class_EngineProxy[40] = {
   /* K23  */  be_nested_str_weak(_add_value_provider),
   /* K24  */  be_nested_str_weak(_add_animation),
   /* K25  */  be_nested_str_weak(type_error),
-  /* K26  */  be_nested_str_weak(only_X20Animation_X2C_X20SequenceManager_X2C_X20or_X20ValueProvider),
+  /* K26  */  be_nested_str_weak(only_X20Animation_X2C_X20sequence_manager_X2C_X20or_X20value_provider),
   /* K27  */  be_nested_str_weak(update),
   /* K28  */  be_nested_str_weak(start_time),
   /* K29  */  be_nested_str_weak(pop),
@@ -12883,12 +12883,12 @@ static const bvalue be_ktab_class_EngineProxy[40] = {
 };
 
 
-extern const bclass be_class_EngineProxy;
+extern const bclass be_class_engine_proxy;
 
 /********************************************************************
 ** Solidified function: get_strip_length
 ********************************************************************/
-be_local_closure(class_EngineProxy_get_strip_length,   /* name */
+be_local_closure(class_engine_proxy_get_strip_length,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -12898,7 +12898,7 @@ be_local_closure(class_EngineProxy_get_strip_length,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(get_strip_length),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
@@ -12914,7 +12914,7 @@ be_local_closure(class_EngineProxy_get_strip_length,   /* name */
 /********************************************************************
 ** Solidified function: remove
 ********************************************************************/
-be_local_closure(class_EngineProxy_remove,   /* name */
+be_local_closure(class_engine_proxy_remove,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -12924,7 +12924,7 @@ be_local_closure(class_EngineProxy_remove,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(remove),
     &be_const_str_solidified,
     ( &(const binstruction[34]) {  /* code */
@@ -12971,7 +12971,7 @@ be_local_closure(class_EngineProxy_remove,   /* name */
 /********************************************************************
 ** Solidified function: size_animations
 ********************************************************************/
-be_local_closure(class_EngineProxy_size_animations,   /* name */
+be_local_closure(class_engine_proxy_size_animations,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -12981,7 +12981,7 @@ be_local_closure(class_EngineProxy_size_animations,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(size_animations),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
@@ -12998,7 +12998,7 @@ be_local_closure(class_EngineProxy_size_animations,   /* name */
 /********************************************************************
 ** Solidified function: _add_animation
 ********************************************************************/
-be_local_closure(class_EngineProxy__add_animation,   /* name */
+be_local_closure(class_engine_proxy__add_animation,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -13008,7 +13008,7 @@ be_local_closure(class_EngineProxy__add_animation,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_add_animation),
     &be_const_str_solidified,
     ( &(const binstruction[25]) {  /* code */
@@ -13046,7 +13046,7 @@ be_local_closure(class_EngineProxy__add_animation,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(class_EngineProxy_start,   /* name */
+be_local_closure(class_engine_proxy_start,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -13056,7 +13056,7 @@ be_local_closure(class_EngineProxy_start,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(start),
     &be_const_str_solidified,
     ( &(const binstruction[46]) {  /* code */
@@ -13115,7 +13115,7 @@ be_local_closure(class_EngineProxy_start,   /* name */
 /********************************************************************
 ** Solidified function: _remove_value_provider
 ********************************************************************/
-be_local_closure(class_EngineProxy__remove_value_provider,   /* name */
+be_local_closure(class_engine_proxy__remove_value_provider,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -13125,7 +13125,7 @@ be_local_closure(class_EngineProxy__remove_value_provider,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_remove_value_provider),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
@@ -13155,7 +13155,7 @@ be_local_closure(class_EngineProxy__remove_value_provider,   /* name */
 /********************************************************************
 ** Solidified function: _remove_animation
 ********************************************************************/
-be_local_closure(class_EngineProxy__remove_animation,   /* name */
+be_local_closure(class_engine_proxy__remove_animation,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -13165,7 +13165,7 @@ be_local_closure(class_EngineProxy__remove_animation,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_remove_animation),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
@@ -13195,7 +13195,7 @@ be_local_closure(class_EngineProxy__remove_animation,   /* name */
 /********************************************************************
 ** Solidified function: setup_template
 ********************************************************************/
-be_local_closure(class_EngineProxy_setup_template,   /* name */
+be_local_closure(class_engine_proxy_setup_template,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -13205,7 +13205,7 @@ be_local_closure(class_EngineProxy_setup_template,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(setup_template),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
@@ -13219,7 +13219,7 @@ be_local_closure(class_EngineProxy_setup_template,   /* name */
 /********************************************************************
 ** Solidified function: update_current_iteration
 ********************************************************************/
-be_local_closure(class_EngineProxy_update_current_iteration,   /* name */
+be_local_closure(class_engine_proxy_update_current_iteration,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -13229,7 +13229,7 @@ be_local_closure(class_EngineProxy_update_current_iteration,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(update_current_iteration),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
@@ -13251,7 +13251,7 @@ be_local_closure(class_EngineProxy_update_current_iteration,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-be_local_closure(class_EngineProxy_clear,   /* name */
+be_local_closure(class_engine_proxy_clear,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -13261,7 +13261,7 @@ be_local_closure(class_EngineProxy_clear,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(clear),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
@@ -13286,7 +13286,7 @@ be_local_closure(class_EngineProxy_clear,   /* name */
 /********************************************************************
 ** Solidified function: _add_value_provider
 ********************************************************************/
-be_local_closure(class_EngineProxy__add_value_provider,   /* name */
+be_local_closure(class_engine_proxy__add_value_provider,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -13296,7 +13296,7 @@ be_local_closure(class_EngineProxy__add_value_provider,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_add_value_provider),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
@@ -13326,7 +13326,7 @@ be_local_closure(class_EngineProxy__add_value_provider,   /* name */
 /********************************************************************
 ** Solidified function: _add_sequence_manager
 ********************************************************************/
-be_local_closure(class_EngineProxy__add_sequence_manager,   /* name */
+be_local_closure(class_engine_proxy__add_sequence_manager,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -13336,7 +13336,7 @@ be_local_closure(class_EngineProxy__add_sequence_manager,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_add_sequence_manager),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
@@ -13366,7 +13366,7 @@ be_local_closure(class_EngineProxy__add_sequence_manager,   /* name */
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-be_local_closure(class_EngineProxy_stop,   /* name */
+be_local_closure(class_engine_proxy_stop,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -13376,7 +13376,7 @@ be_local_closure(class_EngineProxy_stop,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(stop),
     &be_const_str_solidified,
     ( &(const binstruction[30]) {  /* code */
@@ -13419,7 +13419,7 @@ be_local_closure(class_EngineProxy_stop,   /* name */
 /********************************************************************
 ** Solidified function: add
 ********************************************************************/
-be_local_closure(class_EngineProxy_add,   /* name */
+be_local_closure(class_engine_proxy_add,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -13429,7 +13429,7 @@ be_local_closure(class_EngineProxy_add,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(add),
     &be_const_str_solidified,
     ( &(const binstruction[35]) {  /* code */
@@ -13477,7 +13477,7 @@ be_local_closure(class_EngineProxy_add,   /* name */
 /********************************************************************
 ** Solidified function: update
 ********************************************************************/
-be_local_closure(class_EngineProxy_update,   /* name */
+be_local_closure(class_engine_proxy_update,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -13487,7 +13487,7 @@ be_local_closure(class_EngineProxy_update,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(update),
     &be_const_str_solidified,
     ( &(const binstruction[73]) {  /* code */
@@ -13573,7 +13573,7 @@ be_local_closure(class_EngineProxy_update,   /* name */
 /********************************************************************
 ** Solidified function: pop_iteration_context
 ********************************************************************/
-be_local_closure(class_EngineProxy_pop_iteration_context,   /* name */
+be_local_closure(class_engine_proxy_pop_iteration_context,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -13583,7 +13583,7 @@ be_local_closure(class_EngineProxy_pop_iteration_context,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(pop_iteration_context),
     &be_const_str_solidified,
     ( &(const binstruction[11]) {  /* code */
@@ -13607,7 +13607,7 @@ be_local_closure(class_EngineProxy_pop_iteration_context,   /* name */
 /********************************************************************
 ** Solidified function: _remove_sequence_manager
 ********************************************************************/
-be_local_closure(class_EngineProxy__remove_sequence_manager,   /* name */
+be_local_closure(class_engine_proxy__remove_sequence_manager,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -13617,7 +13617,7 @@ be_local_closure(class_EngineProxy__remove_sequence_manager,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_remove_sequence_manager),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
@@ -13647,7 +13647,7 @@ be_local_closure(class_EngineProxy__remove_sequence_manager,   /* name */
 /********************************************************************
 ** Solidified function: is_empty
 ********************************************************************/
-be_local_closure(class_EngineProxy_is_empty,   /* name */
+be_local_closure(class_engine_proxy_is_empty,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -13657,7 +13657,7 @@ be_local_closure(class_EngineProxy_is_empty,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(is_empty),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
@@ -13688,7 +13688,7 @@ be_local_closure(class_EngineProxy_is_empty,   /* name */
 /********************************************************************
 ** Solidified function: _sort_animations_by_priority
 ********************************************************************/
-be_local_closure(class_EngineProxy__sort_animations_by_priority,   /* name */
+be_local_closure(class_engine_proxy__sort_animations_by_priority,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
@@ -13698,7 +13698,7 @@ be_local_closure(class_EngineProxy__sort_animations_by_priority,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(_sort_animations_by_priority),
     &be_const_str_solidified,
     ( &(const binstruction[48]) {  /* code */
@@ -13759,7 +13759,7 @@ be_local_closure(class_EngineProxy__sort_animations_by_priority,   /* name */
 /********************************************************************
 ** Solidified function: render
 ********************************************************************/
-be_local_closure(class_EngineProxy_render,   /* name */
+be_local_closure(class_engine_proxy_render,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     4,                          /* argc */
@@ -13769,7 +13769,7 @@ be_local_closure(class_EngineProxy_render,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(render),
     &be_const_str_solidified,
     ( &(const binstruction[45]) {  /* code */
@@ -13827,7 +13827,7 @@ be_local_closure(class_EngineProxy_render,   /* name */
 /********************************************************************
 ** Solidified function: get_current_iteration_number
 ********************************************************************/
-be_local_closure(class_EngineProxy_get_current_iteration_number,   /* name */
+be_local_closure(class_engine_proxy_get_current_iteration_number,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -13837,7 +13837,7 @@ be_local_closure(class_EngineProxy_get_current_iteration_number,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(get_current_iteration_number),
     &be_const_str_solidified,
     ( &(const binstruction[11]) {  /* code */
@@ -13861,7 +13861,7 @@ be_local_closure(class_EngineProxy_get_current_iteration_number,   /* name */
 /********************************************************************
 ** Solidified function: push_iteration_context
 ********************************************************************/
-be_local_closure(class_EngineProxy_push_iteration_context,   /* name */
+be_local_closure(class_engine_proxy_push_iteration_context,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -13871,7 +13871,7 @@ be_local_closure(class_EngineProxy_push_iteration_context,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(push_iteration_context),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
@@ -13889,7 +13889,7 @@ be_local_closure(class_EngineProxy_push_iteration_context,   /* name */
 /********************************************************************
 ** Solidified function: get_animations
 ********************************************************************/
-be_local_closure(class_EngineProxy_get_animations,   /* name */
+be_local_closure(class_engine_proxy_get_animations,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -13899,7 +13899,7 @@ be_local_closure(class_EngineProxy_get_animations,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(get_animations),
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
@@ -13934,7 +13934,7 @@ be_local_closure(class_EngineProxy_get_animations,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(class_EngineProxy_init,   /* name */
+be_local_closure(class_engine_proxy_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -13944,7 +13944,7 @@ be_local_closure(class_EngineProxy_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_EngineProxy,     /* shared constants */
+    &be_ktab_class_engine_proxy,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[25]) {  /* code */
@@ -13980,47 +13980,47 @@ be_local_closure(class_EngineProxy_init,   /* name */
 
 
 /********************************************************************
-** Solidified class: EngineProxy
+** Solidified class: engine_proxy
 ********************************************************************/
 extern const bclass be_class_Animation;
-be_local_class(EngineProxy,
+be_local_class(engine_proxy,
     7,
     &be_class_Animation,
     be_nested_map(31,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(get_strip_length, -1), be_const_closure(class_EngineProxy_get_strip_length_closure) },
-        { be_const_key_weak(remove, -1), be_const_closure(class_EngineProxy_remove_closure) },
-        { be_const_key_weak(size_animations, 23), be_const_closure(class_EngineProxy_size_animations_closure) },
-        { be_const_key_weak(_add_animation, 24), be_const_closure(class_EngineProxy__add_animation_closure) },
-        { be_const_key_weak(start, -1), be_const_closure(class_EngineProxy_start_closure) },
+        { be_const_key_weak(get_strip_length, -1), be_const_closure(class_engine_proxy_get_strip_length_closure) },
+        { be_const_key_weak(remove, -1), be_const_closure(class_engine_proxy_remove_closure) },
+        { be_const_key_weak(size_animations, 23), be_const_closure(class_engine_proxy_size_animations_closure) },
+        { be_const_key_weak(_add_animation, 24), be_const_closure(class_engine_proxy__add_animation_closure) },
+        { be_const_key_weak(start, -1), be_const_closure(class_engine_proxy_start_closure) },
         { be_const_key_weak(value_providers, 19), be_const_var(2) },
-        { be_const_key_weak(setup_template, -1), be_const_closure(class_EngineProxy_setup_template_closure) },
-        { be_const_key_weak(_remove_animation, -1), be_const_closure(class_EngineProxy__remove_animation_closure) },
+        { be_const_key_weak(setup_template, -1), be_const_closure(class_engine_proxy_setup_template_closure) },
+        { be_const_key_weak(_remove_animation, -1), be_const_closure(class_engine_proxy__remove_animation_closure) },
         { be_const_key_weak(animations, 6), be_const_var(0) },
-        { be_const_key_weak(update_current_iteration, -1), be_const_closure(class_EngineProxy_update_current_iteration_closure) },
-        { be_const_key_weak(clear, -1), be_const_closure(class_EngineProxy_clear_closure) },
-        { be_const_key_weak(_add_value_provider, 12), be_const_closure(class_EngineProxy__add_value_provider_closure) },
-        { be_const_key_weak(stop, -1), be_const_closure(class_EngineProxy_stop_closure) },
+        { be_const_key_weak(update_current_iteration, -1), be_const_closure(class_engine_proxy_update_current_iteration_closure) },
+        { be_const_key_weak(clear, -1), be_const_closure(class_engine_proxy_clear_closure) },
+        { be_const_key_weak(_add_value_provider, 12), be_const_closure(class_engine_proxy__add_value_provider_closure) },
+        { be_const_key_weak(stop, -1), be_const_closure(class_engine_proxy_stop_closure) },
         { be_const_key_weak(strip_length, -1), be_const_var(3) },
-        { be_const_key_weak(_add_sequence_manager, -1), be_const_closure(class_EngineProxy__add_sequence_manager_closure) },
-        { be_const_key_weak(push_iteration_context, 22), be_const_closure(class_EngineProxy_push_iteration_context_closure) },
-        { be_const_key_weak(add, -1), be_const_closure(class_EngineProxy_add_closure) },
-        { be_const_key_weak(update, -1), be_const_closure(class_EngineProxy_update_closure) },
-        { be_const_key_weak(_remove_value_provider, 27), be_const_closure(class_EngineProxy__remove_value_provider_closure) },
-        { be_const_key_weak(pop_iteration_context, -1), be_const_closure(class_EngineProxy_pop_iteration_context_closure) },
-        { be_const_key_weak(_remove_sequence_manager, -1), be_const_closure(class_EngineProxy__remove_sequence_manager_closure) },
-        { be_const_key_weak(is_empty, -1), be_const_closure(class_EngineProxy_is_empty_closure) },
+        { be_const_key_weak(_add_sequence_manager, -1), be_const_closure(class_engine_proxy__add_sequence_manager_closure) },
+        { be_const_key_weak(push_iteration_context, 22), be_const_closure(class_engine_proxy_push_iteration_context_closure) },
+        { be_const_key_weak(add, -1), be_const_closure(class_engine_proxy_add_closure) },
+        { be_const_key_weak(update, -1), be_const_closure(class_engine_proxy_update_closure) },
+        { be_const_key_weak(_remove_value_provider, 27), be_const_closure(class_engine_proxy__remove_value_provider_closure) },
+        { be_const_key_weak(pop_iteration_context, -1), be_const_closure(class_engine_proxy_pop_iteration_context_closure) },
+        { be_const_key_weak(_remove_sequence_manager, -1), be_const_closure(class_engine_proxy__remove_sequence_manager_closure) },
+        { be_const_key_weak(is_empty, -1), be_const_closure(class_engine_proxy_is_empty_closure) },
         { be_const_key_weak(sequences, -1), be_const_var(1) },
         { be_const_key_weak(time_ms, 8), be_const_var(6) },
-        { be_const_key_weak(_sort_animations_by_priority, -1), be_const_closure(class_EngineProxy__sort_animations_by_priority_closure) },
-        { be_const_key_weak(render, 15), be_const_closure(class_EngineProxy_render_closure) },
-        { be_const_key_weak(get_current_iteration_number, -1), be_const_closure(class_EngineProxy_get_current_iteration_number_closure) },
+        { be_const_key_weak(_sort_animations_by_priority, -1), be_const_closure(class_engine_proxy__sort_animations_by_priority_closure) },
+        { be_const_key_weak(render, 15), be_const_closure(class_engine_proxy_render_closure) },
+        { be_const_key_weak(get_current_iteration_number, -1), be_const_closure(class_engine_proxy_get_current_iteration_number_closure) },
         { be_const_key_weak(iteration_stack, -1), be_const_var(5) },
-        { be_const_key_weak(get_animations, -1), be_const_closure(class_EngineProxy_get_animations_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(class_EngineProxy_init_closure) },
+        { be_const_key_weak(get_animations, -1), be_const_closure(class_engine_proxy_get_animations_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_engine_proxy_init_closure) },
         { be_const_key_weak(temp_buffer, -1), be_const_var(4) },
     })),
-    be_str_weak(EngineProxy)
+    be_str_weak(engine_proxy)
 );
 
 /********************************************************************
@@ -14088,80 +14088,39 @@ be_local_closure(clear_all_event_handlers,   /* name */
 );
 /*******************************************************************/
 
-// compact class 'FrameBuffer' ktab size: 21, total: 43 (saved 176 bytes)
-static const bvalue be_ktab_class_FrameBuffer[21] = {
-  /* K0   */  be_const_int(0),
-  /* K1   */  be_nested_str_weak(value_error),
-  /* K2   */  be_nested_str_weak(width_X20must_X20be_X20positive),
-  /* K3   */  be_nested_str_weak(width),
-  /* K4   */  be_nested_str_weak(pixels),
-  /* K5   */  be_nested_str_weak(resize),
-  /* K6   */  be_nested_str_weak(clear),
-  /* K7   */  be_nested_str_weak(int),
-  /* K8   */  be_nested_str_weak(instance),
-  /* K9   */  be_nested_str_weak(copy),
-  /* K10  */  be_nested_str_weak(argument_X20must_X20be_X20either_X20int_X20or_X20instance),
-  /* K11  */  be_nested_str_weak(index_error),
-  /* K12  */  be_nested_str_weak(pixel_X20index_X20out_X20of_X20range),
-  /* K13  */  be_nested_str_weak(set),
-  /* K14  */  be_nested_str_weak(tohex),
-  /* K15  */  be_nested_str_weak(FrameBuffer_X28width_X3D_X25s_X2C_X20pixels_X3D_X25s_X29),
-  /* K16  */  be_nested_str_weak(set_pixel_color),
-  /* K17  */  be_nested_str_weak(animation),
-  /* K18  */  be_nested_str_weak(frame_buffer),
-  /* K19  */  be_nested_str_weak(get),
-  /* K20  */  be_nested_str_weak(get_pixel_color),
+// compact class 'frame_buffer' ktab size: 20, total: 40 (saved 160 bytes)
+static const bvalue be_ktab_class_frame_buffer[20] = {
+  /* K0   */  be_nested_str_weak(pixels),
+  /* K1   */  be_nested_str_weak(tohex),
+  /* K2   */  be_nested_str_weak(int),
+  /* K3   */  be_const_int(0),
+  /* K4   */  be_nested_str_weak(value_error),
+  /* K5   */  be_nested_str_weak(width_X20must_X20be_X20positive),
+  /* K6   */  be_nested_str_weak(width),
+  /* K7   */  be_nested_str_weak(resize),
+  /* K8   */  be_nested_str_weak(clear),
+  /* K9   */  be_nested_str_weak(instance),
+  /* K10  */  be_nested_str_weak(copy),
+  /* K11  */  be_nested_str_weak(argument_X20must_X20be_X20either_X20int_X20or_X20instance),
+  /* K12  */  be_nested_str_weak(animation),
+  /* K13  */  be_nested_str_weak(frame_buffer),
+  /* K14  */  be_nested_str_weak(index_error),
+  /* K15  */  be_nested_str_weak(pixel_X20index_X20out_X20of_X20range),
+  /* K16  */  be_nested_str_weak(get),
+  /* K17  */  be_nested_str_weak(set_pixel_color),
+  /* K18  */  be_nested_str_weak(set),
+  /* K19  */  be_nested_str_weak(get_pixel_color),
 };
 
 
-extern const bclass be_class_FrameBuffer;
+extern const bclass be_class_frame_buffer;
 
 /********************************************************************
-** Solidified function: resize
+** Solidified function: tohex
 ********************************************************************/
-be_local_closure(class_FrameBuffer_resize,   /* name */
+be_local_closure(class_frame_buffer_tohex,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(resize),
-    &be_const_str_solidified,
-    ( &(const binstruction[17]) {  /* code */
-      0x18080300,  //  0000  LE	R2	R1	K0
-      0x780A0000,  //  0001  JMPF	R2	#0003
-      0xB0060302,  //  0002  RAISE	1	K1	K2
-      0x88080103,  //  0003  GETMBR	R2	R0	K3
-      0x1C080202,  //  0004  EQ	R2	R1	R2
-      0x780A0000,  //  0005  JMPF	R2	#0007
-      0x80000400,  //  0006  RET	0
-      0x90020601,  //  0007  SETMBR	R0	K3	R1
-      0x88080104,  //  0008  GETMBR	R2	R0	K4
-      0x8C080505,  //  0009  GETMET	R2	R2	K5
-      0x88100103,  //  000A  GETMBR	R4	R0	K3
-      0x54160003,  //  000B  LDINT	R5	4
-      0x08100805,  //  000C  MUL	R4	R4	R5
-      0x7C080400,  //  000D  CALL	R2	2
-      0x8C080106,  //  000E  GETMET	R2	R0	K6
-      0x7C080200,  //  000F  CALL	R2	1
-      0x80000000,  //  0010  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: clear
-********************************************************************/
-be_local_closure(class_FrameBuffer_clear,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -14169,28 +14128,14 @@ be_local_closure(class_FrameBuffer_clear,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(clear),
+    &be_ktab_class_frame_buffer,     /* shared constants */
+    be_str_weak(tohex),
     &be_const_str_solidified,
-    ( &(const binstruction[18]) {  /* code */
-      0x88040104,  //  0000  GETMBR	R1	R0	K4
-      0x8C040306,  //  0001  GETMET	R1	R1	K6
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
       0x7C040200,  //  0002  CALL	R1	1
-      0x6004000C,  //  0003  GETGBL	R1	G12
-      0x88080104,  //  0004  GETMBR	R2	R0	K4
-      0x7C040200,  //  0005  CALL	R1	1
-      0x88080103,  //  0006  GETMBR	R2	R0	K3
-      0x540E0003,  //  0007  LDINT	R3	4
-      0x08080403,  //  0008  MUL	R2	R2	R3
-      0x20040202,  //  0009  NE	R1	R1	R2
-      0x78060005,  //  000A  JMPF	R1	#0011
-      0x88040104,  //  000B  GETMBR	R1	R0	K4
-      0x8C040305,  //  000C  GETMET	R1	R1	K5
-      0x880C0103,  //  000D  GETMBR	R3	R0	K3
-      0x54120003,  //  000E  LDINT	R4	4
-      0x080C0604,  //  000F  MUL	R3	R3	R4
-      0x7C040400,  //  0010  CALL	R1	2
-      0x80000000,  //  0011  RET	0
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -14200,7 +14145,7 @@ be_local_closure(class_FrameBuffer_clear,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(class_FrameBuffer_init,   /* name */
+be_local_closure(class_frame_buffer_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -14210,46 +14155,178 @@ be_local_closure(class_FrameBuffer_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[36]) {  /* code */
       0x60080004,  //  0000  GETGBL	R2	G4
       0x5C0C0200,  //  0001  MOVE	R3	R1
       0x7C080200,  //  0002  CALL	R2	1
-      0x1C080507,  //  0003  EQ	R2	R2	K7
+      0x1C080502,  //  0003  EQ	R2	R2	K2
       0x780A0010,  //  0004  JMPF	R2	#0016
       0x5C080200,  //  0005  MOVE	R2	R1
-      0x180C0500,  //  0006  LE	R3	R2	K0
+      0x180C0503,  //  0006  LE	R3	R2	K3
       0x780E0000,  //  0007  JMPF	R3	#0009
-      0xB0060302,  //  0008  RAISE	1	K1	K2
-      0x90020602,  //  0009  SETMBR	R0	K3	R2
+      0xB0060905,  //  0008  RAISE	1	K4	K5
+      0x90020C02,  //  0009  SETMBR	R0	K6	R2
       0x600C0015,  //  000A  GETGBL	R3	G21
       0x54120003,  //  000B  LDINT	R4	4
       0x08100404,  //  000C  MUL	R4	R2	R4
       0x7C0C0200,  //  000D  CALL	R3	1
-      0x8C100705,  //  000E  GETMET	R4	R3	K5
+      0x8C100707,  //  000E  GETMET	R4	R3	K7
       0x541A0003,  //  000F  LDINT	R6	4
       0x08180406,  //  0010  MUL	R6	R2	R6
       0x7C100400,  //  0011  CALL	R4	2
-      0x90020803,  //  0012  SETMBR	R0	K4	R3
-      0x8C100106,  //  0013  GETMET	R4	R0	K6
+      0x90020003,  //  0012  SETMBR	R0	K0	R3
+      0x8C100108,  //  0013  GETMET	R4	R0	K8
       0x7C100200,  //  0014  CALL	R4	1
       0x7002000C,  //  0015  JMP		#0023
       0x60080004,  //  0016  GETGBL	R2	G4
       0x5C0C0200,  //  0017  MOVE	R3	R1
       0x7C080200,  //  0018  CALL	R2	1
-      0x1C080508,  //  0019  EQ	R2	R2	K8
+      0x1C080509,  //  0019  EQ	R2	R2	K9
       0x780A0006,  //  001A  JMPF	R2	#0022
-      0x88080303,  //  001B  GETMBR	R2	R1	K3
-      0x90020602,  //  001C  SETMBR	R0	K3	R2
-      0x88080304,  //  001D  GETMBR	R2	R1	K4
-      0x8C080509,  //  001E  GETMET	R2	R2	K9
+      0x88080306,  //  001B  GETMBR	R2	R1	K6
+      0x90020C02,  //  001C  SETMBR	R0	K6	R2
+      0x88080300,  //  001D  GETMBR	R2	R1	K0
+      0x8C08050A,  //  001E  GETMET	R2	R2	K10
       0x7C080200,  //  001F  CALL	R2	1
-      0x90020802,  //  0020  SETMBR	R0	K4	R2
+      0x90020002,  //  0020  SETMBR	R0	K0	R2
       0x70020000,  //  0021  JMP		#0023
-      0xB006030A,  //  0022  RAISE	1	K1	K10
+      0xB006090B,  //  0022  RAISE	1	K4	K11
       0x80000000,  //  0023  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: copy
+********************************************************************/
+be_local_closure(class_frame_buffer_copy,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
+    be_str_weak(copy),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0xB8061800,  //  0000  GETNGBL	R1	K12
+      0x8C04030D,  //  0001  GETMET	R1	R1	K13
+      0x5C0C0000,  //  0002  MOVE	R3	R0
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80040200,  //  0004  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_pixel_color
+********************************************************************/
+be_local_closure(class_frame_buffer_get_pixel_color,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
+    be_str_weak(get_pixel_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[13]) {  /* code */
+      0x14080303,  //  0000  LT	R2	R1	K3
+      0x740A0002,  //  0001  JMPT	R2	#0005
+      0x88080106,  //  0002  GETMBR	R2	R0	K6
+      0x28080202,  //  0003  GE	R2	R1	R2
+      0x780A0000,  //  0004  JMPF	R2	#0006
+      0xB0061D0F,  //  0005  RAISE	1	K14	K15
+      0x88080100,  //  0006  GETMBR	R2	R0	K0
+      0x8C080510,  //  0007  GETMET	R2	R2	K16
+      0x54120003,  //  0008  LDINT	R4	4
+      0x08100204,  //  0009  MUL	R4	R1	R4
+      0x54160003,  //  000A  LDINT	R5	4
+      0x7C080600,  //  000B  CALL	R2	3
+      0x80040400,  //  000C  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: resize
+********************************************************************/
+be_local_closure(class_frame_buffer_resize,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
+    be_str_weak(resize),
+    &be_const_str_solidified,
+    ( &(const binstruction[17]) {  /* code */
+      0x18080303,  //  0000  LE	R2	R1	K3
+      0x780A0000,  //  0001  JMPF	R2	#0003
+      0xB0060905,  //  0002  RAISE	1	K4	K5
+      0x88080106,  //  0003  GETMBR	R2	R0	K6
+      0x1C080202,  //  0004  EQ	R2	R1	R2
+      0x780A0000,  //  0005  JMPF	R2	#0007
+      0x80000400,  //  0006  RET	0
+      0x90020C01,  //  0007  SETMBR	R0	K6	R1
+      0x88080100,  //  0008  GETMBR	R2	R0	K0
+      0x8C080507,  //  0009  GETMET	R2	R2	K7
+      0x88100106,  //  000A  GETMBR	R4	R0	K6
+      0x54160003,  //  000B  LDINT	R5	4
+      0x08100805,  //  000C  MUL	R4	R4	R5
+      0x7C080400,  //  000D  CALL	R2	2
+      0x8C080108,  //  000E  GETMET	R2	R0	K8
+      0x7C080200,  //  000F  CALL	R2	1
+      0x80000000,  //  0010  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: setitem
+********************************************************************/
+be_local_closure(class_frame_buffer_setitem,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    3,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
+    be_str_weak(setitem),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C0C0111,  //  0000  GETMET	R3	R0	K17
+      0x5C140200,  //  0001  MOVE	R5	R1
+      0x5C180400,  //  0002  MOVE	R6	R2
+      0x7C0C0600,  //  0003  CALL	R3	3
+      0x80000000,  //  0004  RET	0
     })
   )
 );
@@ -14259,7 +14336,7 @@ be_local_closure(class_FrameBuffer_init,   /* name */
 /********************************************************************
 ** Solidified function: set_pixel_color
 ********************************************************************/
-be_local_closure(class_FrameBuffer_set_pixel_color,   /* name */
+be_local_closure(class_frame_buffer_set_pixel_color,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -14269,18 +14346,18 @@ be_local_closure(class_FrameBuffer_set_pixel_color,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
     be_str_weak(set_pixel_color),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
-      0x140C0300,  //  0000  LT	R3	R1	K0
+      0x140C0303,  //  0000  LT	R3	R1	K3
       0x740E0002,  //  0001  JMPT	R3	#0005
-      0x880C0103,  //  0002  GETMBR	R3	R0	K3
+      0x880C0106,  //  0002  GETMBR	R3	R0	K6
       0x280C0203,  //  0003  GE	R3	R1	R3
       0x780E0000,  //  0004  JMPF	R3	#0006
-      0xB006170C,  //  0005  RAISE	1	K11	K12
-      0x880C0104,  //  0006  GETMBR	R3	R0	K4
-      0x8C0C070D,  //  0007  GETMET	R3	R3	K13
+      0xB0061D0F,  //  0005  RAISE	1	K14	K15
+      0x880C0100,  //  0006  GETMBR	R3	R0	K0
+      0x8C0C0712,  //  0007  GETMET	R3	R3	K18
       0x54160003,  //  0008  LDINT	R5	4
       0x08140205,  //  0009  MUL	R5	R1	R5
       0x5C180400,  //  000A  MOVE	R6	R2
@@ -14294,36 +14371,9 @@ be_local_closure(class_FrameBuffer_set_pixel_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: tohex
+** Solidified function: clear
 ********************************************************************/
-be_local_closure(class_FrameBuffer_tohex,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(tohex),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x88040104,  //  0000  GETMBR	R1	R0	K4
-      0x8C04030E,  //  0001  GETMET	R1	R1	K14
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: tostring
-********************************************************************/
-be_local_closure(class_FrameBuffer_tostring,   /* name */
+be_local_closure(class_frame_buffer_clear,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -14333,108 +14383,28 @@ be_local_closure(class_FrameBuffer_tostring,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(tostring),
+    &be_ktab_class_frame_buffer,     /* shared constants */
+    be_str_weak(clear),
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x60040018,  //  0000  GETGBL	R1	G24
-      0x5808000F,  //  0001  LDCONST	R2	K15
-      0x880C0103,  //  0002  GETMBR	R3	R0	K3
-      0x88100104,  //  0003  GETMBR	R4	R0	K4
-      0x7C040600,  //  0004  CALL	R1	3
-      0x80040200,  //  0005  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: setitem
-********************************************************************/
-be_local_closure(class_FrameBuffer_setitem,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(setitem),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C0C0110,  //  0000  GETMET	R3	R0	K16
-      0x5C140200,  //  0001  MOVE	R5	R1
-      0x5C180400,  //  0002  MOVE	R6	R2
-      0x7C0C0600,  //  0003  CALL	R3	3
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: copy
-********************************************************************/
-be_local_closure(class_FrameBuffer_copy,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    1,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(copy),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0xB8062200,  //  0000  GETNGBL	R1	K17
-      0x8C040312,  //  0001  GETMET	R1	R1	K18
-      0x5C0C0000,  //  0002  MOVE	R3	R0
-      0x7C040400,  //  0003  CALL	R1	2
-      0x80040200,  //  0004  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_pixel_color
-********************************************************************/
-be_local_closure(class_FrameBuffer_get_pixel_color,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
-    be_str_weak(get_pixel_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
-      0x14080300,  //  0000  LT	R2	R1	K0
-      0x740A0002,  //  0001  JMPT	R2	#0005
-      0x88080103,  //  0002  GETMBR	R2	R0	K3
-      0x28080202,  //  0003  GE	R2	R1	R2
-      0x780A0000,  //  0004  JMPF	R2	#0006
-      0xB006170C,  //  0005  RAISE	1	K11	K12
-      0x88080104,  //  0006  GETMBR	R2	R0	K4
-      0x8C080513,  //  0007  GETMET	R2	R2	K19
-      0x54120003,  //  0008  LDINT	R4	4
-      0x08100204,  //  0009  MUL	R4	R1	R4
-      0x54160003,  //  000A  LDINT	R5	4
-      0x7C080600,  //  000B  CALL	R2	3
-      0x80040400,  //  000C  RET	1	R2
+    ( &(const binstruction[18]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040308,  //  0001  GETMET	R1	R1	K8
+      0x7C040200,  //  0002  CALL	R1	1
+      0x6004000C,  //  0003  GETGBL	R1	G12
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x7C040200,  //  0005  CALL	R1	1
+      0x88080106,  //  0006  GETMBR	R2	R0	K6
+      0x540E0003,  //  0007  LDINT	R3	4
+      0x08080403,  //  0008  MUL	R2	R2	R3
+      0x20040202,  //  0009  NE	R1	R1	R2
+      0x78060005,  //  000A  JMPF	R1	#0011
+      0x88040100,  //  000B  GETMBR	R1	R0	K0
+      0x8C040307,  //  000C  GETMET	R1	R1	K7
+      0x880C0106,  //  000D  GETMBR	R3	R0	K6
+      0x54120003,  //  000E  LDINT	R4	4
+      0x080C0604,  //  000F  MUL	R3	R3	R4
+      0x7C040400,  //  0010  CALL	R1	2
+      0x80000000,  //  0011  RET	0
     })
   )
 );
@@ -14444,7 +14414,7 @@ be_local_closure(class_FrameBuffer_get_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: item
 ********************************************************************/
-be_local_closure(class_FrameBuffer_item,   /* name */
+be_local_closure(class_frame_buffer_item,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -14454,11 +14424,11 @@ be_local_closure(class_FrameBuffer_item,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    &be_ktab_class_FrameBuffer,     /* shared constants */
+    &be_ktab_class_frame_buffer,     /* shared constants */
     be_str_weak(item),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
-      0x8C080114,  //  0000  GETMET	R2	R0	K20
+      0x8C080113,  //  0000  GETMET	R2	R0	K19
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x80040400,  //  0003  RET	1	R2
@@ -14469,28 +14439,27 @@ be_local_closure(class_FrameBuffer_item,   /* name */
 
 
 /********************************************************************
-** Solidified class: FrameBuffer
+** Solidified class: frame_buffer
 ********************************************************************/
 extern const bclass be_class_FrameBufferNtv;
-be_local_class(FrameBuffer,
+be_local_class(frame_buffer,
     2,
     &be_class_FrameBufferNtv,
-    be_nested_map(12,
+    be_nested_map(11,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(pixels, -1), be_const_var(0) },
-        { be_const_key_weak(resize, 6), be_const_closure(class_FrameBuffer_resize_closure) },
-        { be_const_key_weak(clear, -1), be_const_closure(class_FrameBuffer_clear_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(class_FrameBuffer_init_closure) },
-        { be_const_key_weak(set_pixel_color, -1), be_const_closure(class_FrameBuffer_set_pixel_color_closure) },
-        { be_const_key_weak(tohex, -1), be_const_closure(class_FrameBuffer_tohex_closure) },
-        { be_const_key_weak(tostring, -1), be_const_closure(class_FrameBuffer_tostring_closure) },
-        { be_const_key_weak(copy, -1), be_const_closure(class_FrameBuffer_copy_closure) },
-        { be_const_key_weak(setitem, 9), be_const_closure(class_FrameBuffer_setitem_closure) },
-        { be_const_key_weak(get_pixel_color, 7), be_const_closure(class_FrameBuffer_get_pixel_color_closure) },
-        { be_const_key_weak(item, -1), be_const_closure(class_FrameBuffer_item_closure) },
+        { be_const_key_weak(tohex, 1), be_const_closure(class_frame_buffer_tohex_closure) },
         { be_const_key_weak(width, -1), be_const_var(1) },
+        { be_const_key_weak(clear, -1), be_const_closure(class_frame_buffer_clear_closure) },
+        { be_const_key_weak(copy, -1), be_const_closure(class_frame_buffer_copy_closure) },
+        { be_const_key_weak(pixels, -1), be_const_var(0) },
+        { be_const_key_weak(get_pixel_color, -1), be_const_closure(class_frame_buffer_get_pixel_color_closure) },
+        { be_const_key_weak(resize, -1), be_const_closure(class_frame_buffer_resize_closure) },
+        { be_const_key_weak(setitem, -1), be_const_closure(class_frame_buffer_setitem_closure) },
+        { be_const_key_weak(set_pixel_color, -1), be_const_closure(class_frame_buffer_set_pixel_color_closure) },
+        { be_const_key_weak(init, 2), be_const_closure(class_frame_buffer_init_closure) },
+        { be_const_key_weak(item, -1), be_const_closure(class_frame_buffer_item_closure) },
     })),
-    be_str_weak(FrameBuffer)
+    be_str_weak(frame_buffer)
 );
 // compact class 'WaveAnimation' ktab size: 32, total: 52 (saved 160 bytes)
 static const bvalue be_ktab_class_WaveAnimation[32] = {
@@ -15129,12 +15098,12 @@ be_local_closure(animation_init_strip,   /* name */
 /*******************************************************************/
 
 
-extern const bclass be_class_IterationNumberProvider;
+extern const bclass be_class_iteration_number;
 
 /********************************************************************
 ** Solidified function: produce_value
 ********************************************************************/
-be_local_closure(class_IterationNumberProvider_produce_value,   /* name */
+be_local_closure(class_iteration_number_produce_value,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     3,                          /* argc */
@@ -15162,17 +15131,17 @@ be_local_closure(class_IterationNumberProvider_produce_value,   /* name */
 
 
 /********************************************************************
-** Solidified class: IterationNumberProvider
+** Solidified class: iteration_number
 ********************************************************************/
-extern const bclass be_class_ValueProvider;
-be_local_class(IterationNumberProvider,
+extern const bclass be_class_value_provider;
+be_local_class(iteration_number,
     0,
-    &be_class_ValueProvider,
+    &be_class_value_provider,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(produce_value, -1), be_const_closure(class_IterationNumberProvider_produce_value_closure) },
+        { be_const_key_weak(produce_value, -1), be_const_closure(class_iteration_number_produce_value_closure) },
     })),
-    be_str_weak(IterationNumberProvider)
+    be_str_weak(iteration_number)
 );
 
 /********************************************************************
@@ -15209,12 +15178,12 @@ be_local_closure(sawtooth,   /* name */
 /*******************************************************************/
 
 
-extern const bclass be_class_ValueProvider;
+extern const bclass be_class_value_provider;
 
 /********************************************************************
 ** Solidified function: produce_value
 ********************************************************************/
-be_local_closure(class_ValueProvider_produce_value,   /* name */
+be_local_closure(class_value_provider_produce_value,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     3,                          /* argc */
@@ -15241,17 +15210,17 @@ be_local_closure(class_ValueProvider_produce_value,   /* name */
 
 
 /********************************************************************
-** Solidified class: ValueProvider
+** Solidified class: value_provider
 ********************************************************************/
-extern const bclass be_class_ParameterizedObject;
-be_local_class(ValueProvider,
+extern const bclass be_class_parameterized_object;
+be_local_class(value_provider,
     0,
-    &be_class_ParameterizedObject,
+    &be_class_parameterized_object,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(produce_value, -1), be_const_closure(class_ValueProvider_produce_value_closure) },
+        { be_const_key_weak(produce_value, -1), be_const_closure(class_value_provider_produce_value_closure) },
     })),
-    be_str_weak(ValueProvider)
+    be_str_weak(value_provider)
 );
 
 /********************************************************************
@@ -15298,7 +15267,7 @@ be_local_module(animation,
         { be_const_key_weak(EASE_OUT, 17), be_const_int(7) },
         { be_const_key_weak(event_handler, 25), be_const_class(be_class_EventHandler) },
         { be_const_key_weak(resolve, -1), be_const_closure(animation_resolve_closure) },
-        { be_const_key_weak(value_provider, 37), be_const_class(be_class_ValueProvider) },
+        { be_const_key_weak(value_provider, 37), be_const_class(be_class_value_provider) },
         { be_const_key_weak(palette_meter_animation, -1), be_const_class(be_class_GradientMeterAnimation) },
         { be_const_key_weak(EventManager, -1), be_const_class(be_class_EventManager) },
         { be_const_key_weak(SAWTOOTH, 24), be_const_int(1) },
@@ -15310,19 +15279,19 @@ be_local_module(animation,
         { be_const_key_weak(twinkle, 7), be_const_class(be_class_twinkle) },
         { be_const_key_weak(init_strip, 68), be_const_closure(animation_init_strip_closure) },
         { be_const_key_weak(ramp, 31), be_const_closure(ramp_closure) },
-        { be_const_key_weak(oscillator_value, -1), be_const_class(be_class_OscillatorValueProvider) },
+        { be_const_key_weak(oscillator_value, -1), be_const_class(be_class_oscillator_value) },
         { be_const_key_weak(color_provider, 70), be_const_class(be_class_color_provider) },
-        { be_const_key_weak(engine_proxy, -1), be_const_class(be_class_EngineProxy) },
+        { be_const_key_weak(engine_proxy, -1), be_const_class(be_class_engine_proxy) },
         { be_const_key_weak(trigger_event, -1), be_const_closure(trigger_event_closure) },
         { be_const_key_weak(wave_animation, 53), be_const_class(be_class_WaveAnimation) },
-        { be_const_key_weak(frame_buffer, -1), be_const_class(be_class_FrameBuffer) },
+        { be_const_key_weak(frame_buffer, -1), be_const_class(be_class_frame_buffer) },
         { be_const_key_weak(clear_all_event_handlers, -1), be_const_closure(clear_all_event_handlers_closure) },
         { be_const_key_weak(linear, -1), be_const_closure(linear_closure) },
         { be_const_key_weak(ease_in, -1), be_const_closure(ease_in_closure) },
         { be_const_key_weak(cosine_osc, -1), be_const_closure(cosine_osc_closure) },
         { be_const_key_weak(wave_rainbow_sine, -1), be_const_closure(wave_rainbow_sine_closure) },
         { be_const_key_weak(is_color_provider, -1), be_const_closure(is_color_provider_closure) },
-        { be_const_key_weak(static_color, -1), be_const_class(be_class_StaticColorProvider) },
+        { be_const_key_weak(static_color, -1), be_const_class(be_class_static_color) },
         { be_const_key_weak(wave_custom, -1), be_const_closure(wave_custom_closure) },
         { be_const_key_weak(is_value_provider, 28), be_const_closure(is_value_provider_closure) },
         { be_const_key_weak(pulsating_animation, -1), be_const_closure(pulsating_animation_closure) },
@@ -15344,7 +15313,7 @@ be_local_module(animation,
         { be_const_key_weak(smooth, -1), be_const_closure(smooth_closure) },
         { be_const_key_weak(PALETTE_FIRE, -1), be_const_bytes_instance(FF000000FF800000FFFF0000FFFF8000FFFFFF00) },
         { be_const_key_weak(COSINE, -1), be_const_int(4) },
-        { be_const_key_weak(parameterized_object, -1), be_const_class(be_class_ParameterizedObject) },
+        { be_const_key_weak(parameterized_object, -1), be_const_class(be_class_parameterized_object) },
         { be_const_key_weak(strip_length, 51), be_const_class(be_class_strip_length) },
         { be_const_key_weak(square, -1), be_const_closure(square_closure) },
         { be_const_key_weak(palette_gradient_animation, -1), be_const_class(be_class_PaletteGradientAnimation) },
@@ -15355,12 +15324,12 @@ be_local_module(animation,
         { be_const_key_weak(create_closure_value, 58), be_const_closure(create_closure_value_closure) },
         { be_const_key_weak(PALETTE_RAINBOW_W2, 13), be_const_bytes_instance(FFFC0000FFFF8000FFFFFF00FF00FF00FF00FFFFFF0080FFFF8000FFFFCCCCCCFFFC0000) },
         { be_const_key_weak(sine_osc, -1), be_const_closure(sine_osc_closure) },
-        { be_const_key_weak(iteration_number, -1), be_const_class(be_class_IterationNumberProvider) },
+        { be_const_key_weak(iteration_number, -1), be_const_class(be_class_iteration_number) },
         { be_const_key_weak(bounce, -1), be_const_closure(bounce_closure) },
         { be_const_key_weak(enc_params, -1), be_const_closure(encode_constraints_closure) },
         { be_const_key_weak(create_engine, -1), be_const_class(be_class_AnimationEngine) },
         { be_const_key_weak(is_user_function, -1), be_const_closure(is_user_function_closure) },
-        { be_const_key_weak(sequence_manager, 67), be_const_class(be_class_SequenceManager) },
+        { be_const_key_weak(sequence_manager, 67), be_const_class(be_class_sequence_manager) },
         { be_const_key_weak(list_user_functions, -1), be_const_closure(list_user_functions_closure) },
         { be_const_key_weak(comet_animation, -1), be_const_class(be_class_CometAnimation) },
         { be_const_key_weak(crenel_animation, 60), be_const_class(be_class_CrenelPositionAnimation) },
@@ -15368,7 +15337,7 @@ be_local_module(animation,
         { be_const_key_weak(LINEAR, -1), be_const_int(1) },
         { be_const_key_weak(elastic, 0), be_const_closure(elastic_closure) },
         { be_const_key_weak(TRIANGLE, 29), be_const_int(2) },
-        { be_const_key_weak(static_value, -1), be_const_class(be_class_StaticValueProvider) },
+        { be_const_key_weak(static_value, -1), be_const_class(be_class_static_value) },
         { be_const_key_weak(color_cycle, 48), be_const_class(be_class_ColorCycleColorProvider) },
         { be_const_key_weak(PALETTE_RAINBOW_W, -1), be_const_bytes_instance(FFFC0000FFFF8000FFFFFF00FF00FF00FF00FFFFFF0080FFFF8000FFFFCCCCCC) },
         { be_const_key_weak(ease_out, 47), be_const_closure(ease_out_closure) },

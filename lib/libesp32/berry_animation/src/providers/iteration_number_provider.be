@@ -1,4 +1,4 @@
-# IterationNumberProvider - ValueProvider that returns current sequence iteration number
+# iteration_number - value_provider that returns current sequence iteration number
 #
 # This provider returns the current iteration number (0-based) for the innermost
 # sequence context, or nil if not called within a sequence.
@@ -21,8 +21,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:IterationNumberProvider,weak
-class IterationNumberProvider : animation.value_provider
+#@ solidify:iteration_number,weak
+class iteration_number : animation.value_provider
   # Produce the current iteration number from the animation engine
   #
   # @param name: string - Parameter name being requested (ignored)
@@ -34,4 +34,4 @@ class IterationNumberProvider : animation.value_provider
   end
 end
 
-return {'iteration_number': IterationNumberProvider}
+return {'iteration_number': iteration_number}

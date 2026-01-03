@@ -1,11 +1,11 @@
-# Unit tests for EngineProxy class
+# Unit tests for engine_proxy class
 #
 # Tests the ability to create animations that combine both rendering
 # and orchestration of sub-animations and sequences.
 
 import animation
 
-print("Starting EngineProxy Tests...")
+print("Starting engine_proxy Tests...")
 
 # Create test engine
 var strip = global.Leds(30)
@@ -15,7 +15,7 @@ var engine = animation.create_engine(strip)
 print("\n=== Test 1: Basic Creation ===")
 var proxy = animation.engine_proxy(engine)
 assert(proxy != nil, "Engine proxy should be created")
-assert(isinstance(proxy, animation.parameterized_object), "Engine proxy should be a ParameterizedObject")
+assert(isinstance(proxy, animation.parameterized_object), "Engine proxy should be a parameterized_object")
 assert(isinstance(proxy, animation.animation), "Engine proxy should be an Animation")
 assert(proxy.is_running == false, "Engine proxy should not be running initially")
 print("✓ Basic creation test passed")
@@ -112,16 +112,16 @@ var proxy3 = animation.engine_proxy(engine)
 proxy3.color = 0xFFFF00FF  # Magenta
 proxy3.priority = 15
 
-# Add to engine (should work since EngineProxy is a Playable)
+# Add to engine (should work since engine_proxy is a Playable)
 engine.add(proxy3)
 assert(size(engine.get_animations()) == 1, "Engine should have 1 animation")
 print("✓ Engine integration test passed")
 
 # Test 11: Type checking
 print("\n=== Test 11: Type Checking ===")
-assert(isinstance(proxy, animation.parameterized_object), "Engine proxy is a ParameterizedObject")
+assert(isinstance(proxy, animation.parameterized_object), "Engine proxy is a parameterized_object")
 assert(isinstance(proxy, animation.animation), "Engine proxy is an Animation")
-assert(!isinstance(proxy, animation.sequence_manager), "Engine proxy is not a SequenceManager")
+assert(!isinstance(proxy, animation.sequence_manager), "Engine proxy is not a sequence_manager")
 print("✓ Type checking test passed")
 
 # Test 12: String representation
@@ -132,5 +132,5 @@ print(f"Engine proxy string: {str_repr}")
 print("✓ String representation test passed")
 
 print("\n" + "="*50)
-print("🎉 All EngineProxy tests passed!")
+print("🎉 All engine_proxy tests passed!")
 print("="*50)

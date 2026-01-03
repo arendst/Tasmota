@@ -135,9 +135,9 @@ def test_crenel_with_dynamic_color_provider()
   print("✓ CrenelPositionAnimation with dynamic color_provider test passed")
 end
 
-# Test CrenelPositionAnimation with generic ValueProvider
+# Test CrenelPositionAnimation with generic value_provider
 def test_crenel_with_generic_value_provider()
-  print("Testing CrenelPositionAnimation with generic ValueProvider...")
+  print("Testing CrenelPositionAnimation with generic value_provider...")
   
   # Create engine and strip for testing
   var strip = global.Leds(10)
@@ -153,7 +153,7 @@ def test_crenel_with_generic_value_provider()
   var crenel = animation.crenel_animation(engine)
   
   # Set parameters via virtual member assignment
-  crenel.color = static_provider  # generic ValueProvider
+  crenel.color = static_provider  # generic value_provider
   crenel.back_color = 0x00000000  # transparent (default)
   crenel.pos = 2
   crenel.pulse_size = 3
@@ -170,10 +170,10 @@ def test_crenel_with_generic_value_provider()
   frame.clear()
   var result = crenel.render(frame, engine.time_ms, engine.strip_length)
   
-  assert(result == true, "Render should succeed with generic ValueProvider")
+  assert(result == true, "Render should succeed with generic value_provider")
   assert(crenel.is_running == true, "Animation should be running")
   
-  print("✓ CrenelPositionAnimation with generic ValueProvider test passed")
+  print("✓ CrenelPositionAnimation with generic value_provider test passed")
 end
 
 # Test direct color assignment with both types

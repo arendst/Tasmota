@@ -1,4 +1,4 @@
-# StaticColorProvider for Berry Animation Framework
+# static_color for Berry Animation Framework
 #
 # This color provider returns a single, static color.
 # It's the simplest implementation of the color_provider interface.
@@ -9,8 +9,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:StaticColorProvider,weak
-class StaticColorProvider : animation.color_provider
+#@ solidify:static_color,weak
+class static_color : animation.color_provider
   # Parameter definitions
   static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFFFFFF}  # Default to white
@@ -45,4 +45,4 @@ class StaticColorProvider : animation.color_provider
   end
 end
 
-return {'static_color': StaticColorProvider}
+return {'static_color': static_color}

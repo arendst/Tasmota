@@ -1,16 +1,16 @@
 # Test suite for parameter validation system
 #
 # This test verifies that the parameter validation system correctly accepts
-# ValueProvider instances for integer and real parameters.
+# value_provider instances for integer and real parameters.
 
 import animation
 import global
 
 import "./core/param_encoder" as encode_constraints
 
-# Test that parameters accept ValueProviders and integers only
+# Test that parameters accept value_providers and integers only
 def test_parameter_accepts_value_providers()
-  print("Testing parameter validation with ValueProviders...")
+  print("Testing parameter validation with value_providers...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -27,20 +27,20 @@ def test_parameter_accepts_value_providers()
   assert(test_anim.set_param("opacity", 42) == true, "Should accept static integer")
   assert(test_anim.get_param("opacity", 0) == 42, "Should return static integer")
   
-  # Test with StaticValueProvider
+  # Test with static_value
   var static_provider = animation.static_value(engine)
   static_provider.value = 123
-  assert(test_anim.set_param("opacity", static_provider) == true, "Should accept StaticValueProvider")
+  assert(test_anim.set_param("opacity", static_provider) == true, "Should accept static_value")
   
-  # Test with OscillatorValueProvider
+  # Test with oscillator_value
   var oscillator = animation.oscillator_value(engine)
   oscillator.min_value = 0
   oscillator.max_value = 255
   oscillator.duration = 1000
   oscillator.form = animation.SAWTOOTH
-  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept OscillatorValueProvider")
+  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept oscillator_value")
   
-  print("✓ Parameter validation with ValueProviders test passed")
+  print("✓ Parameter validation with value_providers test passed")
 end
 
 # Test that loop parameter handles boolean values correctly
@@ -91,9 +91,9 @@ def test_range_validation()
   print("✓ Range validation test passed")
 end
 
-# Test range validation is skipped for ValueProviders
+# Test range validation is skipped for value_providers
 def test_range_validation_with_providers()
-  print("Testing range validation with ValueProviders...")
+  print("Testing range validation with value_providers...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -107,15 +107,15 @@ def test_range_validation_with_providers()
   assert(test_anim.set_param("opacity", 0) == true, "Should accept minimum value")
   assert(test_anim.set_param("opacity", 255) == true, "Should accept maximum value")
   
-  # Test that ValueProviders bypass range validation
+  # Test that value_providers bypass range validation
   # (since they provide dynamic values that can't be validated at set time)
   var oscillator = animation.oscillator_value(engine)
   oscillator.min_value = -50  # Outside range
   oscillator.max_value = 300  # Outside range
   oscillator.duration = 1000
-  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept ValueProvider even if it might produce out-of-range values")
+  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept value_provider even if it might produce out-of-range values")
   
-  print("✓ Range validation with ValueProviders test passed")
+  print("✓ Range validation with value_providers test passed")
 end
 
 # Test type validation
@@ -181,12 +181,12 @@ def test_type_validation()
   assert(test_obj.set_param("any_param", test_instance) == true, "Should accept instance for any_param")
   assert(test_obj.set_param("any_param", 3.14) == true, "Should accept real for any_param")
   
-  # Test that ValueProviders bypass type validation
+  # Test that value_providers bypass type validation
   var static_provider = animation.static_value(engine)
   static_provider.value = 42  # Use a valid value for the provider itself
-  assert(test_obj.set_param("int_param", static_provider) == true, "Should accept ValueProvider for any type")
-  assert(test_obj.set_param("string_param", static_provider) == true, "Should accept ValueProvider for any type")
-  assert(test_obj.set_param("bool_param", static_provider) == true, "Should accept ValueProvider for any type")
+  assert(test_obj.set_param("int_param", static_provider) == true, "Should accept value_provider for any type")
+  assert(test_obj.set_param("string_param", static_provider) == true, "Should accept value_provider for any type")
+  assert(test_obj.set_param("bool_param", static_provider) == true, "Should accept value_provider for any type")
   
   print("✓ Type validation test passed")
 end

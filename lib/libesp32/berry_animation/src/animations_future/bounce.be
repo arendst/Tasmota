@@ -63,9 +63,9 @@ class BounceAnimation : animation.animation
     end
   end
   
-  # Override start method for timing control and ValueProvider propagation
+  # Override start method for timing control and value_provider propagation
   def start(time_ms)
-    # Call parent start first (handles ValueProvider propagation)
+    # Call parent start first (handles value_provider propagation)
     super(self).start(time_ms)
     
     # Reset physics state for fresh start/restart

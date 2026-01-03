@@ -1,4 +1,4 @@
-# FrameBuffer class for Berry Animation Framework
+# frame_buffer class for Berry Animation Framework
 #
 # This class provides a buffer for storing and manipulating pixel data
 # for LED animations. It uses a bytes object for efficient storage and
@@ -17,12 +17,12 @@
 # so that it is not solidified
 import "./core/frame_buffer_ntv" as FrameBufferNtv
 
-class FrameBuffer : FrameBufferNtv
+class frame_buffer : FrameBufferNtv
   var pixels          # Pixel data (bytes object)
   var width           # Number of pixels
   
   # Initialize a new frame buffer with the specified width
-  # Takes either an int (width) or an instance of FrameBuffer (instance)
+  # Takes either an int (width) or an instance of frame_buffer (instance)
   def init(width_or_buffer)
     if type(width_or_buffer) == 'int'
       var width = width_or_buffer
@@ -135,11 +135,6 @@ class FrameBuffer : FrameBufferNtv
   def copy()
     return animation.frame_buffer(self)   # return using the self copying constructor
   end
-
-  # String representation of the frame buffer
-  def tostring()
-    return f"FrameBuffer(width={self.width}, pixels={self.pixels})"
-  end
 end
 
-return {'frame_buffer': FrameBuffer}
+return {'frame_buffer': frame_buffer}

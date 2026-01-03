@@ -4,8 +4,8 @@
 # Color providers generate colors based on time or values, which can be used by
 # renderers or other components that need color information.
 #
-# color_provider now inherits from ValueProvider, making it a specialized value provider
-# for color values. This provides consistency with the ValueProvider system while
+# color_provider now inherits from value_provider, making it a specialized value provider
+# for color values. This provides consistency with the value_provider system while
 # maintaining the specific color-related methods.
 #
 # Follows the parameterized class specification:
@@ -92,8 +92,8 @@ class color_provider : animation.value_provider
 end
 
 # Add a method to check if an object is a color provider
-# Note: Since color_provider now inherits from ValueProvider, all ColorProviders
-# are also ValueProviders and will be detected by animation.is_value_provider()
+# Note: Since color_provider now inherits from value_provider, all ColorProviders
+# are also value_providers and will be detected by animation.is_value_provider()
 def is_color_provider(obj)
   return isinstance(obj, animation.color_provider)
 end

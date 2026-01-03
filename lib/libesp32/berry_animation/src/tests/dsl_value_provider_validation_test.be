@@ -17,7 +17,7 @@ import animation_dsl
 import string
 
 # Test class to verify value provider parameter validation and arithmetic expression fixes
-class DSLValueProviderValidationTest
+class DSLvalue_providerValidationTest
   var test_results
   
   def init()
@@ -457,10 +457,10 @@ class DSLValueProviderValidationTest
 end
 
 # Run tests
-var test_runner = DSLValueProviderValidationTest()
+var test_runner = DSLvalue_providerValidationTest()
 test_runner.run_all_tests()
 
 # Export for use in other test files
 return {
-  "DSLValueProviderValidationTest": DSLValueProviderValidationTest
+  "DSLvalue_providerValidationTest": DSLvalue_providerValidationTest
 }

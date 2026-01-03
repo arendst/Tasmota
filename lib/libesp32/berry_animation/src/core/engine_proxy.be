@@ -1,6 +1,6 @@
 # Engine Proxy - Combines rendering and orchestration
 # 
-# An EngineProxy is a Playable that can both render visual content
+# An engine_proxy is a Playable that can both render visual content
 # AND orchestrate sub-animations and sequences. This enables complex
 # composite effects that combine multiple animations with timing control.
 #
@@ -11,7 +11,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class EngineProxy : animation.animation
+class engine_proxy : animation.animation
   # Non-parameter instance variables
   var animations          # List of child animations
   var sequences           # List of child sequence managers
@@ -80,12 +80,12 @@ class EngineProxy : animation.animation
   
   # Add a child animation, sequence, or value provider
   #
-  # @param obj: Animation|SequenceManager|ValueProvider - The child to add
+  # @param obj: Animation|sequence_manager|value_provider - The child to add
   # @return self for method chaining
   def add(obj)
     if isinstance(obj, animation.sequence_manager)
       return self._add_sequence_manager(obj)
-    # Check if it's a ValueProvider (before Animation check, as some animations might also be providers)
+    # Check if it's a value_provider (before Animation check, as some animations might also be providers)
     elif isinstance(obj, animation.value_provider)
       return self._add_value_provider(obj)
     # Check if it's an Animation (or subclass)
@@ -93,7 +93,7 @@ class EngineProxy : animation.animation
       return self._add_animation(obj)
     else
       # Unknown type - provide helpful error message
-      raise "type_error", "only Animation, SequenceManager, or ValueProvider"
+      raise "type_error", "only Animation, sequence_manager, or value_provider"
     end
   end
 
@@ -109,7 +109,7 @@ class EngineProxy : animation.animation
 
   # Add a value provider
   #
-  # @param provider: ValueProvider - The value provider instance to add
+  # @param provider: value_provider - The value provider instance to add
   # @return true if successful, false if already in list
   def _add_value_provider(provider)
     if (self.value_providers.find(provider) == nil)
@@ -206,7 +206,7 @@ class EngineProxy : animation.animation
 
   # Remove a value provider
   #
-  # @param obj: ValueProvider instance
+  # @param obj: value_provider instance
   # @return true if actually removed
   def _remove_value_provider(obj)
     var idx = self.value_providers.find(obj)
@@ -219,13 +219,13 @@ class EngineProxy : animation.animation
   end
 
   # Generic remove method that delegates to specific remove methods
-  # @param obj: Animation, SequenceManager, or ValueProvider - The object to remove
+  # @param obj: Animation, sequence_manager, or value_provider - The object to remove
   # @return self for method chaining
   def remove(obj)
-    # Check if it's a SequenceManager
+    # Check if it's a sequence_manager
     if isinstance(obj, animation.sequence_manager)
       return self._remove_sequence_manager(obj)
-    # Check if it's a ValueProvider (before Animation check)
+    # Check if it's a value_provider (before Animation check)
     elif isinstance(obj, animation.value_provider)
       return self._remove_value_provider(obj)
     # Check if it's an Animation (or subclass)
@@ -373,7 +373,7 @@ class EngineProxy : animation.animation
   # Render the hybrid animation
   # Renders own content first, then all child animations
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels (optional, defaults to self.strip_length)
   # @return bool - True if frame was modified, false otherwise
@@ -464,7 +464,7 @@ class EngineProxy : animation.animation
   end
   
   # Get the current iteration number from the innermost sequence context
-  # Used by IterationNumberProvider to return the current iteration
+  # Used by iteration_number to return the current iteration
   #
   # @return int|nil - Current iteration number (0-based) or nil if not in sequence
   def get_current_iteration_number()
@@ -476,4 +476,4 @@ class EngineProxy : animation.animation
   
 end
 
-return {'engine_proxy': EngineProxy}
+return {'engine_proxy': engine_proxy}

@@ -1,6 +1,6 @@
 # Constraint Encoding Test Suite
 #
-# Comprehensive tests for animation.enc_params() and ParameterizedObject static methods:
+# Comprehensive tests for animation.enc_params() and parameterized_object static methods:
 # - constraint_mask()
 # - constraint_find()
 #
@@ -260,7 +260,7 @@ var gradient_encoded = animation.enc_params(gradient_params)
 assert_equal(animation.parameterized_object.constraint_mask(gradient_encoded["color"], "nillable"), 0x20, "5.4a: color nillable")
 assert_equal(animation.parameterized_object.constraint_find(gradient_encoded["color"], "default", 999), nil, "5.4b: color default nil")
 
-# Test 5.5: OscillatorValueProvider PARAMS (large enum)
+# Test 5.5: oscillator_value PARAMS (large enum)
 var oscillator_params = {
   "min_value": {"default": 0},
   "max_value": {"default": 100},

@@ -63,7 +63,7 @@ class ColorCycleColorProvider : animation.color_provider
   # Virtual member access - implements the virtual "palette_size" attribute
   #
   # @param name: string - Parameter name being accessed
-  # @return any - Resolved parameter value (ValueProvider resolved to actual value)
+  # @return any - Resolved parameter value (value_provider resolved to actual value)
   def member(name)
     if name == "palette_size"
       return self._get_palette_size()
