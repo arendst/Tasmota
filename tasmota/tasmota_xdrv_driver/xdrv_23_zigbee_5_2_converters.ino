@@ -730,7 +730,7 @@ void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
         attr_list.removeAttribute(&attr);
       } else {
         attr.setKeyId(syn.new_cluster, syn.new_attribute);
-        if ((syn.multiplier > 1) || (syn.divider > 1) || (syn.base)) {
+        if ((syn.multiplier > 1) || (syn.divider > 1) || (syn.base != 0)) {
           // we need to change the value
           float fval = attr.getFloat();
           if (syn.multiplier > 1) {
@@ -739,7 +739,7 @@ void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
           if (syn.divider > 1) {
             fval /= syn.divider;
           }
-          if (syn.base) {
+          if (syn.base != 0) {
             fval += syn.base;
           }
           attr.setFloat(fval);
