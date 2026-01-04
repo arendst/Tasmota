@@ -11,7 +11,6 @@
 # - Constructor takes only 'engine' parameter
 # - No additional parameters needed since strip length is obtained from engine
 
-#@ solidify:strip_length,weak
 class strip_length : animation.value_provider
   # Produce the strip length value
   #

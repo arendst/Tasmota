@@ -13,7 +13,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:static_value,weak
 class static_value : animation.value_provider
   # Parameter definitions
   static var PARAMS = animation.enc_params({

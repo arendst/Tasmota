@@ -10,7 +10,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:breathe,weak
 class breathe : animation.animation
   # Non-parameter instance variables only
   var breathe_provider # Internal breathe color provider

@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:ShiftAnimation,weak
 class ShiftAnimation : animation.animation
   # Non-parameter instance variables only
   var current_offset     # Current shift offset in 1/256th pixels

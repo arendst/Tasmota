@@ -1,7 +1,6 @@
 # Token Types and Token Class for Animation DSL
 # Defines all token types and the Token class with line/column tracking
 
-#@ solidify:Token,weak
 class Token
   # Basic token types
   # static var KEYWORD = 0        # strip, color, animation, sequence, etc.

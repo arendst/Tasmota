@@ -11,7 +11,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:breathe_color,weak
 class breathe_color : animation.oscillator_value
   # Additional parameter definitions for color-specific functionality
   # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited

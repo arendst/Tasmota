@@ -17,7 +17,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:closure_value,weak
 class closure_value : animation.value_provider
   var _closure                # We keep the closure as instance variable for faster dereferencing, in addition to PARAMS
 

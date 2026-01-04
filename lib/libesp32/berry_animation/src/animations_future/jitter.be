@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:JitterAnimation,weak
 class JitterAnimation : animation.animation
   # Non-parameter instance variables only
   var random_seed        # Seed for random number generation

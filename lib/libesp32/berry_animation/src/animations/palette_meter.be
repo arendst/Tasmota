@@ -12,7 +12,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:palette_meter,weak
 class palette_meter : animation.palette_gradient
   # Instance variables for peak tracking
   var peak_level        # Current peak level (0-255)

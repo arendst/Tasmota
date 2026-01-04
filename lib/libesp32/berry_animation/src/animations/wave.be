@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:wave,weak
 class wave : animation.animation
   # Non-parameter instance variables only
   var current_colors     # Array of current colors for each pixel

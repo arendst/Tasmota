@@ -2,7 +2,6 @@
 # Single-pass transpiler with minimal complexity
 # Leverages Berry's runtime for symbol resolution
 
-#@ solidify:SimpleDSLTranspiler,weak
 class SimpleDSLTranspiler
   var pull_lexer      # Pull lexer instance
   var output          # Generated Berry code lines
@@ -28,7 +27,6 @@ class SimpleDSLTranspiler
   static var CONTEXT_COLOR_PROVIDER = 11
   
   # Helper class to track expression metadata for closure detection
-  #@ solidify:ExpressionResult,weak
   static class ExpressionResult
     var expr              # The expression string
     var has_dynamic       # Boolean: true if contains dynamic content that may change over time, hence needs to wrap into a closure

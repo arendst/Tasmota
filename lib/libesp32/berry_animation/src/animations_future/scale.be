@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:ScaleAnimation,weak
 class ScaleAnimation : animation.animation
   # Non-parameter instance variables only
   var scale_phase        # Current phase for animated scaling

@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BounceAnimation,weak
 class BounceAnimation : animation.animation
   # Non-parameter instance variables only
   var current_position   # Current position in 1/256th pixels

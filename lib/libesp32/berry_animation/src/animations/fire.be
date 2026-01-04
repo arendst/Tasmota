@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:fire,weak
 class fire : animation.animation
   # Non-parameter instance variables only
   var heat_map         # bytes() buffer storing heat values for each pixel (0-255)

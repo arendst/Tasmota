@@ -2,8 +2,6 @@
 # This file contains predefined color palettes for use with animations
 # All palettes are in VRGB format: Value, Red, Green, Blue
 
-#@ solidify:animation_palettes,weak
-
 # Define common palette constants (in VRGB format: Value, Red, Green, Blue)
 # These palettes are compatible with the rich_palette_color
 

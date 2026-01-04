@@ -15,7 +15,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:gradient,weak
 class gradient : animation.beacon
   # Parameter definitions - gradient-specific parameters
   static var PARAMS = animation.enc_params({

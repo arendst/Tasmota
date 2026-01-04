@@ -23,7 +23,6 @@ var EASE_OUT = 7
 var ELASTIC = 8
 var BOUNCE = 9
 
-#@ solidify:oscillator_value,weak
 class oscillator_value : animation.value_provider
   # Non-parameter instance variables only
   var value             # current calculated value

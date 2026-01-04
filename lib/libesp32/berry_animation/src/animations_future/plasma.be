@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:PlasmaAnimation,weak
 class PlasmaAnimation : animation.animation
   # Non-parameter instance variables only
   var current_colors     # Array of current colors for each pixel

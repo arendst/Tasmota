@@ -9,7 +9,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:static_color,weak
 class static_color : animation.color_provider
   # Parameter definitions
   static var PARAMS = animation.enc_params({

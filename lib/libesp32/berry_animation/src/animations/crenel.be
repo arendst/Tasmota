@@ -20,7 +20,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:crenel,weak
 class crenel : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   

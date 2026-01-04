@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:twinkle,weak
 class twinkle : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   

@@ -13,7 +13,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:color_cycle,weak
 class color_cycle : animation.color_provider
   # Non-parameter instance variables only
   var current_index   # Current color index for next functionality

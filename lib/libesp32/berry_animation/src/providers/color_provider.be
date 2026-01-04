@@ -12,7 +12,6 @@
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
-#@ solidify:color_provider,weak
 class color_provider : animation.value_provider
   # LUT (Lookup Table) management for color providers
   # Subclasses can use this to cache pre-computed colors for performance

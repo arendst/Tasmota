@@ -14,7 +14,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:value_provider,weak
 class value_provider : animation.parameterized_object
   
   # Produce a value for a specific parameter name and time

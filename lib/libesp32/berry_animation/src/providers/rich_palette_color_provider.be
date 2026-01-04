@@ -30,7 +30,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:rich_palette_color,weak
 class rich_palette_color : animation.color_provider
   # Non-parameter instance variables only
   var _slots_arr        # Constructed array of timestamp slots, based on period

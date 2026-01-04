@@ -9,7 +9,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:rich_palette,weak
 class rich_palette : animation.animation
   # Non-parameter instance variables only
   var color_provider   # Internal rich_palette_color instance

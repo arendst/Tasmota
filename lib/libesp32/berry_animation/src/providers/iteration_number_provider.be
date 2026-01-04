@@ -21,7 +21,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:iteration_number,weak
 class iteration_number : animation.value_provider
   # Produce the current iteration number from the animation engine
   #
