@@ -15,7 +15,7 @@ palette rainbow_with_white = [
 ]
 
 # Define a color attribute that cycles over time, cycle is 10 seconds
-color rainbow_color_rollover = rich_palette(period=10s)
+color rainbow_color_rollover = rich_palette_color(period=10s)
 
 # Use the dynamic color in a simple 'solid' animation
 animation back = solid(color=rainbow_color_rollover)

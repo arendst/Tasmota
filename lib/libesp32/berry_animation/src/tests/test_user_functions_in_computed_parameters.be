@@ -58,7 +58,7 @@ def test_user_function_detection()
   end
   
   # Check that non-user functions are not detected as user functions
-  var non_user_functions = ["pulsating_animation", "solid", "abs", "min", "max", "breathing", "fire", "sparkle"]
+  var non_user_functions = ["breathe", "solid", "abs", "min", "max", "breathing", "fire", "sparkle"]
   
   for func_name : non_user_functions
     if animation.is_user_function(func_name)
@@ -79,7 +79,7 @@ def test_user_function_in_computed_parameter()
   var dsl_code1 = 
     "import user_functions\n"
     "set strip_len = strip_length()\n"
-    "animation test = pulsating_animation(color=red, period=2s)\n"
+    "animation test = breathe(color=red, period=2s)\n"
     "test.opacity = rand_demo()\n"
     "run test"
   

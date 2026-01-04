@@ -105,7 +105,7 @@ end
 def test_peek_functionality()
   print("Testing peek functionality...")
   
-  var dsl_code = "animation pulse = pulsating_animation(color=red_custom, period=2s)"
+  var dsl_code = "animation pulse = breathe(color=red_custom, period=2s)"
   var lexer = Lexer(dsl_code)
   
   # Test peek without consuming
@@ -196,7 +196,7 @@ def test_position_information()
   print("Testing position information...")
   
   var dsl_code = "color red_custom = 0xFF0000\n" +
-                 "animation pulse = pulsating_animation(color=red_custom)"
+                 "animation pulse = breathe(color=red_custom)"
   var lexer = Lexer(dsl_code)
   
   
@@ -264,7 +264,7 @@ def test_complex_dsl_scenarios()
   var complex_dsl = "color red_custom = 0xFF0000\n" +
                     "color blue_custom = 0x0000FF\n" +
                     "\n" +
-                    "animation pulse_red = pulsating_animation(\n" +
+                    "animation pulse_red = breathe(\n" +
                     "  color=red_custom,\n" +
                     "  period=2s,\n" +
                     "  min_brightness=50%,\n" +
@@ -371,7 +371,7 @@ def test_dsl_integration()
   print("Testing DSL integration...")
   
   var dsl_code = "color red_custom = 0xFF0000\n" +
-                 "animation pulse = pulsating_animation(color=red_custom, period=2s)\n" +
+                 "animation pulse = breathe(color=red_custom, period=2s)\n" +
                  "run pulse"
   
   var lexer = Lexer(dsl_code)
@@ -449,7 +449,7 @@ def test_interleaved_lexer_operations()
   
   var dsl_code = "color red_custom = 0xFF0000\n" +
                  "color blue_custom = 0x0000FF\n" +
-                 "animation pulse = pulsating_animation(\n" +
+                 "animation pulse = breathe(\n" +
                  "  color=red_custom,\n" +
                  "  period=2s\n" +
                  ")\n" +
@@ -635,7 +635,7 @@ def test_full_template_parsing()
                      "  \n" +
                      "  set strip_len = strip_length()\n" +
                      "\n" +
-                     "  animation eye_animation = beacon_animation(\n" +
+                     "  animation eye_animation = beacon(\n" +
                      "    color = eye_color\n" +
                      "    back_color = back_color\n" +
                      "    pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = duration)\n" +
@@ -813,7 +813,7 @@ def test_full_template_parsing()
   assert(is_type(anim_assign, 8 #-animation_dsl.Token.ASSIGN-#), "Should have assignment")
   
   var anim_func = lexer.next_token()
-  assert(is_identifier(anim_func, "beacon_animation"), "Should be 'beacon_animation' function")
+  assert(is_identifier(anim_func, "beacon"), "Should be 'beacon' function")
   
   # Test 6: Parse function parameters with peek ahead
   print("  Testing function parameter parsing...")

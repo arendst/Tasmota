@@ -29,68 +29,96 @@
 \*********************************************************************************************/
 
 #define XSNS_26                 26
-#define XI2C_20                 20  // See I2CDEVICES.md
+#define XI2C_20                 20    // See I2CDEVICES.md
 
-#define LM75AD_ADDRESS1					0x48
-#define LM75AD_ADDRESS2					0x49
-#define LM75AD_ADDRESS3					0x4A
-#define LM75AD_ADDRESS4					0x4B
-#define LM75AD_ADDRESS5					0x4C
-#define LM75AD_ADDRESS6					0x4D
-#define LM75AD_ADDRESS7					0x4E
-#define LM75AD_ADDRESS8					0x4F
+#ifndef LM75AD_MAX_SENSORS
+#define LM75AD_MAX_SENSORS      8
+#endif
+
+#define LM75AD_ADDRESS          0x48  // Start address
+#define LM75AD_COUNT            8     // Number of sequential addresses
 
 #define LM75_TEMP_REGISTER      0x00
 #define LM75_CONF_REGISTER      0x01
 #define LM75_THYST_REGISTER     0x02
 #define LM75_TOS_REGISTER       0x03
 
-bool lm75ad_type = false;
-uint8_t lm75ad_address;
-uint8_t lm75ad_bus;
-uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
+struct {
+  uint8_t address[LM75AD_MAX_SENSORS];
+  uint8_t bus[LM75AD_MAX_SENSORS];
+  uint8_t count;
+} Lm75;
 
 void LM75ADDetect(void) {
-  for (lm75ad_bus = 0; lm75ad_bus < 2; lm75ad_bus++) {
-    for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
-      lm75ad_address = lm75ad_addresses[i];
-      if (!I2cSetDevice(lm75ad_address, lm75ad_bus)) { continue; } // do not make the next step without a confirmed device on the bus
+  if ((LM75AD_MAX_SENSORS < 1) || (LM75AD_MAX_SENSORS > 16)) { return; }  // Safeguard user changed LM75AD_MAX_SENSORS out of bounds
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    for (uint32_t address = LM75AD_ADDRESS; address < LM75AD_ADDRESS + LM75AD_COUNT; address++) {
+      if (!I2cSetDevice(address, bus)) { continue; } // Do not make the next step without a confirmed device on the bus
       uint16_t buffer;
-      if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER, lm75ad_bus)) {
+      if (I2cValidRead16(&buffer, address, LM75_THYST_REGISTER, bus)) {
         if (buffer == 0x4B00) {
-          lm75ad_type = true;
-          I2cSetActiveFound(lm75ad_address, "LM75AD", lm75ad_bus);
-          return;
+          I2cSetActiveFound(address, "LM75AD", bus);
+          Lm75.address[Lm75.count] = address;
+          Lm75.bus[Lm75.count] = bus;
+          Lm75.count++;
+          if (LM75AD_MAX_SENSORS == Lm75.count) { return; }
         }
       }
     }
   }
 }
 
-float LM75ADGetTemp(void) {
-  int16_t sign = 1;
-
-  uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER, lm75ad_bus);
-  if (t & 0x8000) { // we are getting a negative temperature value
-    t = (~t) +0x20;
-    sign = -1;
+float LM75ADGetTemp(uint32_t sensor) {
+  uint16_t t;
+  if (I2cValidRead16(&t, Lm75.address[sensor], LM75_TEMP_REGISTER, Lm75.bus[sensor])) {
+    int16_t sign = 1;
+    if (t & 0x8000) { // We are getting a negative temperature value
+      t = (~t) +0x20;
+      sign = -1;
+    }
+    t = t >> 5; // Shift value into place (5 LSB not used)
+    return ConvertTemp(sign * t * 0.125f);
   }
-  t = t >> 5; // shift value into place (5 LSB not used)
-  return ConvertTemp(sign * t * 0.125f);
+  return NAN;  // Will be changed to "null" by ext_vsprintf_P()
 }
 
 void LM75ADShow(bool json) {
-  float t = LM75ADGetTemp();
+  for (uint32_t sensor = 0; sensor < Lm75.count; sensor++) {
+    float t = LM75ADGetTemp(sensor);
+//    if (!isnan(t)) {
+      char name[16];
+      // LM75AD
+      strlcpy(name, "LM75AD", sizeof(name));
+      if (Lm75.count > 1) {
+        // LM75AD-49
+        snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), Lm75.address[sensor]);
+#ifdef USE_I2C_BUS2
+        if (TasmotaGlobal.i2c_enabled[1]) {  // Second bus enabled
+          uint8_t bus = Lm75.bus[0];
+          for (uint32_t i = 1; i < Lm75.count; i++) {
+            if (bus != Lm75.bus[i]) {        // Different busses
+              // LM75AD-49-1
+              snprintf_P(name, sizeof(name), PSTR("%s%c%d"), name, IndexSeparator(), Lm75.bus[sensor] +1);
+              break;
+            }
+          }
+        }
+#endif  // USE_I2C_BUS2
+      }
 
-  if (json) {
-    ResponseAppend_P(JSON_SNS_F_TEMP, "LM75AD", Settings->flag2.temperature_resolution, &t);
+      if (json) {
+        ResponseAppend_P(JSON_SNS_F_TEMP, name, Settings->flag2.temperature_resolution, &t);
 #ifdef USE_DOMOTICZ
-    if (0 == TasmotaGlobal.tele_period) { DomoticzFloatSensor(DZ_TEMP, t); }
+        if ((0 == TasmotaGlobal.tele_period) && (0 == sensor)) {
+          DomoticzFloatSensor(DZ_TEMP, t);
+        }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_Temp("LM75AD", t);
+      } else {
+        WSContentSend_Temp(name, t);
 #endif  // USE_WEBSERVER
+      }
+//    }
   }
 }
 
@@ -107,7 +135,7 @@ bool Xsns26(uint32_t function)
   if (FUNC_INIT == function) {
     LM75ADDetect();
   }
-  else if (lm75ad_type) {
+  else if (Lm75.count) {
     switch (function) {
       case FUNC_JSON_APPEND:
         LM75ADShow(1);

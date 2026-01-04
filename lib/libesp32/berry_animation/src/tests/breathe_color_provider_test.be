@@ -1,11 +1,11 @@
 # Test file for Breathe Color Provider
 #
-# This file contains tests for the BreatheColorProvider class following parameterized class specification
+# This file contains tests for the breathe_color class following parameterized class specification
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/breathe_color_provider_test.be
 
-print("Testing BreatheColorProvider...")
+print("Testing breathe_color...")
 
 # Import the core animation module
 import animation
@@ -130,11 +130,6 @@ var curve_5_color = curve_5_provider.produce_value("color", engine.time_ms)
 print(f"Curve factor 1 at 3/8 cycle: 0x{curve_1_color :08x}")
 print(f"Curve factor 5 at 3/8 cycle: 0x{curve_5_color :08x}")
 
-# Test pulsating color provider factory
-var pulsating = animation.pulsating_color(engine)
-print(f"Pulsating provider curve_factor: {pulsating.curve_factor}")
-print(f"Pulsating provider duration: {pulsating.duration}")
-
 # Test parameter validation
 try
   blue_breathe.min_brightness = 300  # Should fail validation (max is 255)
@@ -194,25 +189,22 @@ var alpha_color = alpha_test.produce_value("color", engine.time_ms)
 var alpha_actual = (alpha_color >> 24) & 0xFF
 print(f"Alpha preservation test - expected 128, got: {alpha_actual}")
 
-# Test tostring method
-print(f"Provider string representation: {blue_breathe.tostring()}")
+# Test string representation (uses default from Berry)
+print(f"Provider string representation: {str(blue_breathe)}")
 
 # Validate key test results
 assert(provider != nil, "Default breathe color provider should be created")
 assert(blue_breathe != nil, "Custom breathe color provider should be created")
 assert(red_breathe != nil, "Red breathe color provider should be created")
-assert(pulsating != nil, "Pulsating color provider should be created")
 assert(blue_breathe.base_color == 0xFF0000FF, "Blue breathe should have correct base color")
 assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
 assert(blue_breathe.duration == 3500, "Duration should be updated to 3500")
 assert(blue_breathe.curve_factor == 4, "Curve factor should be updated to 4")
-assert(blue_breathe.form == animation.COSINE, "Form should be COSINE")
+assert(blue_breathe.form == 4 #-COSINE-#, "Form should be COSINE")
 assert(blue_breathe.min_value == 0, "Inherited min_value should be 0")
 assert(blue_breathe.max_value == 255, "Inherited max_value should be 255")
 assert(blue_breathe.engine == engine, "Provider should have correct engine reference")
-assert(pulsating.curve_factor == 1, "Pulsating provider should have curve_factor 1")
-assert(pulsating.duration == 1000, "Pulsating provider should have duration 1000")
 assert(alpha_actual == 128, "Alpha channel should be preserved")
 
 # Test that colors are different at different cycle points (breathing effect working)

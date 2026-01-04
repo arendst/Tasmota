@@ -558,7 +558,11 @@ void ESPKNXIP::__loop_knx()
 
   DEBUG_PRINTLN(F(""));
 
+#ifdef ESP8266
+  while (udp.available()) { udp.read(); }  // ESP8266 does endPacket() on flush() which in turn does send() which is NOT what we want
+#else
   udp.flush();
+#endif
 
   knx_ip_pkt_t *knx_pkt = (knx_ip_pkt_t *)buf;
 

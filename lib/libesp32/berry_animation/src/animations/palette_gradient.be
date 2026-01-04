@@ -6,8 +6,7 @@
 import "./core/param_encoder" as encode_constraints
 
 # Gradient pattern animation - creates shifting gradient patterns
-#@ solidify:PaletteGradientAnimation,weak
-class PaletteGradientAnimation : animation.animation
+class palette_gradient : animation.animation
   var value_buffer     # Buffer to store values for each pixel (bytes object)
   var _spatial_period  # Cached spatial_period for static pattern optimization
   var _phase_shift     # Cached phase_shift for static pattern optimization
@@ -127,7 +126,7 @@ class PaletteGradientAnimation : animation.animation
   
   # Render the pattern to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
@@ -190,14 +189,6 @@ class PaletteGradientAnimation : animation.animation
       self._initialize_value_buffer()
     end
   end
-
-  # String representation of the animation
-  def tostring()
-    var strip_length = self.engine.strip_length
-    return f"{classname(self)}(strip_length={strip_length}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
-return {
-  'palette_gradient_animation': PaletteGradientAnimation
-}
+return { 'palette_gradient': palette_gradient }

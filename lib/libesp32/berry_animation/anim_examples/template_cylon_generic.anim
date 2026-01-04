@@ -8,7 +8,7 @@ template animation cylon_effect {
   
   set strip_len = strip_length()
 
-  animation eye_animation = beacon_animation(
+  animation eye_animation = beacon(
     color = eye_color
     back_color = back_color
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = period)

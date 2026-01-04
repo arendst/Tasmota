@@ -10,7 +10,7 @@ template animation rainbow_pulse {
   color cycle_color = color_cycle(colors=pal1, period=period)
   
   # Create pulsing animation
-  animation pulse = pulsating_animation(
+  animation pulse = breathe(
     color=cycle_color
     period=period
   )

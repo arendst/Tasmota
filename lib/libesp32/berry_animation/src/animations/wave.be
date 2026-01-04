@@ -5,14 +5,13 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:WaveAnimation,weak
-class WaveAnimation : animation.animation
+class wave : animation.animation
   # Non-parameter instance variables only
   var current_colors     # Array of current colors for each pixel
   var time_offset        # Current time offset for movement
   var wave_table         # Pre-computed wave table for performance
   
-  # Parameter definitions for WaveAnimation
+  # Parameter definitions for wave
   static var PARAMS = animation.enc_params({
     "color": {"default": 0xFFFF0000},
     "back_color": {"default": 0xFF000000},
@@ -28,6 +27,7 @@ class WaveAnimation : animation.animation
   #
   # @param engine: AnimationEngine - The animation engine (required)
   def init(engine)
+    log("ANI: `wave` animation is still in alpha and will be refactored")
     # Call parent constructor
     super(self).init(engine)
     
@@ -204,70 +204,6 @@ class WaveAnimation : animation.animation
     
     return true
   end
-  
-
-  
-  # String representation
-  def tostring()
-    var wave_names = ["sine", "triangle", "square", "sawtooth"]
-    var current_wave_type = self.wave_type
-    var wave_name = wave_names[current_wave_type] != nil ? wave_names[current_wave_type] : "unknown"
-    var current_color = self.color
-    var color_str
-    if animation.is_value_provider(current_color)
-      color_str = str(current_color)
-    else
-      color_str = f"0x{current_color :08x}"
-    end
-    return f"WaveAnimation({wave_name}, color={color_str}, freq={self.frequency}, speed={self.wave_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
-# Factory functions
-
-# Create a rainbow sine wave animation
-#
-# @param engine: AnimationEngine - The animation engine
-# @return WaveAnimation - A new wave animation instance
-def wave_rainbow_sine(engine)
-  var anim = animation.wave_animation(engine)
-  # Set up rainbow color provider
-  var rainbow_provider = animation.rich_palette(engine)
-  rainbow_provider.colors = animation.PALETTE_RAINBOW
-  rainbow_provider.period = 5000
-  rainbow_provider.transition_type = 1  # sine transition
-  rainbow_provider.brightness = 255
-  anim.color = rainbow_provider
-  anim.wave_type = 0  # sine wave
-  anim.frequency = 32
-  anim.wave_speed = 50
-  return anim
-end
-
-# Create a single color sine wave animation
-#
-# @param engine: AnimationEngine - The animation engine
-# @return WaveAnimation - A new wave animation instance
-def wave_single_sine(engine)
-  var anim = animation.wave_animation(engine)
-  anim.color = 0xFFFF0000  # Default red color
-  anim.wave_type = 0  # sine wave
-  anim.frequency = 32
-  anim.wave_speed = 50
-  return anim
-end
-
-# Create a custom wave animation
-#
-# @param engine: AnimationEngine - The animation engine
-# @return WaveAnimation - A new wave animation instance
-def wave_custom(engine)
-  var anim = animation.wave_animation(engine)
-  anim.color = 0xFFFFFF00  # Default yellow color
-  anim.wave_type = 2  # square wave
-  anim.frequency = 40
-  anim.wave_speed = 30
-  return anim
-end
-
-return {'wave_animation': WaveAnimation, 'wave_rainbow_sine': wave_rainbow_sine, 'wave_single_sine': wave_single_sine, 'wave_custom': wave_custom}
+return {'wave': wave}

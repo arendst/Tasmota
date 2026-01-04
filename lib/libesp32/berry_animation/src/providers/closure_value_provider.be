@@ -1,4 +1,4 @@
-# ClosureValueProvider - ValueProvider that wraps a closure/function
+# closure_value - value_provider that wraps a closure/function
 #
 # This provider allows using closures (functions) as value providers.
 # The closure is called with (self, param_name, time_ms) parameters when
@@ -17,8 +17,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:ClosureValueProvider,weak
-class ClosureValueProvider : animation.value_provider
+class closure_value : animation.value_provider
   var _closure                # We keep the closure as instance variable for faster dereferencing, in addition to PARAMS
 
   # Static parameter definitions
@@ -52,22 +51,15 @@ class ClosureValueProvider : animation.value_provider
     # Call the closure with the parameter self, name and time
     return closure(self.engine, name, time_ms)
   end
-
-  # String representation for debugging
-  #
-  # @return string - Human-readable description of the provider
-  def tostring()
-    return f"ClosureValueProvider({self._closure ? 'closure set' :: 'no closure'})"
-  end
 end
 
-# Create a ClosureValueProvider in a single call, by passing the closure argument
+# Create a closure_value in a single call, by passing the closure argument
 #
 # This is used only by the transpiler, and is not usable in the DSL by itself
 #
 # @param engine: AnimationEngine - Animation engine reference
 # @param closure: function - the closure to evaluate at run-time
-# @return ClosureValueProvider - New ClosureValueProvider instance
+# @return closure_value - New closure_value instance
 def create_closure_value(engine, closure)
   var provider = animation.closure_value(engine)
   provider.closure = closure
@@ -96,6 +88,6 @@ def animation_resolve(value, param_name, time_ms)
   end
 end
 
-return {'closure_value': ClosureValueProvider,
+return {'closure_value': closure_value,
         'create_closure_value': create_closure_value,
         'resolve': animation_resolve}

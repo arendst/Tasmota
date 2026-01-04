@@ -13,7 +13,7 @@ palette rainbow = [
 ]
 
 # Create an animation using the palette
-animation rainbow_cycle = rich_palette_animation(colors=rainbow, period=3s)
+animation rainbow_cycle = rich_palette(colors=rainbow, period=3s)
 
 # Simple sequence
 sequence demo {

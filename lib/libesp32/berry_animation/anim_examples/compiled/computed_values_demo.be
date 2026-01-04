@@ -14,14 +14,14 @@ var engine = animation.init_strip()
 
 var strip_len_ = animation.strip_length(engine)
 # Create animation with computed values
-var stream1_ = animation.comet_animation(engine)
+var stream1_ = animation.comet(engine)
 stream1_.color = 0xFFFF0000
 stream1_.tail_length = animation.create_closure_value(engine, def (engine) return animation._math.abs(animation.resolve(strip_len_) / 4) end)  # computed value
 stream1_.speed = 1.5
 stream1_.priority = 10
 # More complex computed values
 var base_speed_ = 2.0
-var stream2_ = animation.comet_animation(engine)
+var stream2_ = animation.comet(engine)
 stream2_.color = 0xFF0000FF
 stream2_.tail_length = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 8 + (2 * animation.resolve(strip_len_)) - 10 end)  # computed with addition
 stream2_.speed = animation.create_closure_value(engine, def (engine) return animation.resolve(base_speed_) * 1.5 end)  # computed with multiplication
@@ -44,7 +44,7 @@ engine.run()
 set strip_len = strip_length()
 
 # Create animation with computed values
-animation stream1 = comet_animation(
+animation stream1 = comet(
   color=red
   tail_length=abs(strip_len / 4)  # computed value
   speed=1.5
@@ -53,7 +53,7 @@ animation stream1 = comet_animation(
 
 # More complex computed values
 set base_speed = 2.0
-animation stream2 = comet_animation(
+animation stream2 = comet(
   color=blue
   tail_length=strip_len / 8 + (2 * strip_len) -10  # computed with addition
   speed=base_speed * 1.5         # computed with multiplication

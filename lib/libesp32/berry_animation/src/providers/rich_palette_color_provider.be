@@ -1,4 +1,4 @@
-# RichPaletteColorProvider for Berry Animation Framework
+# rich_palette_color for Berry Animation Framework
 #
 # This color provider generates colors from a palette with smooth transitions.
 # Reuses optimizations from Animate_palette class for maximum efficiency.
@@ -30,8 +30,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:RichPaletteColorProvider,weak
-class RichPaletteColorProvider : animation.color_provider
+class rich_palette_color : animation.color_provider
   # Non-parameter instance variables only
   var _slots_arr        # Constructed array of timestamp slots, based on period
   var _value_arr        # Constructed array of value slots (always 0-255 range)
@@ -44,11 +43,11 @@ class RichPaletteColorProvider : animation.color_provider
   static var PARAMS = animation.enc_params({
     "colors": {"type": "bytes", "default": nil},  # Palette bytes or predefined palette constant
     "period": {"min": 0, "default": 5000},  # 5 seconds default, 0 = value-based only
-    "transition_type": {"enum": [animation.LINEAR, animation.SINE], "default": animation.LINEAR}
-    # brightness parameter inherited from ColorProvider base class
+    "transition_type": {"enum": [1 #-animation.LINEAR-#, 5 #-animation.SINE-#], "default": 1 #-animation.LINEAR-#}
+    # brightness parameter inherited from color_provider base class
   })
   
-  # Initialize a new RichPaletteColorProvider
+  # Initialize a new rich_palette_color
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
@@ -212,7 +211,7 @@ class RichPaletteColorProvider : animation.color_provider
   def _interpolate(value, from_min, from_max, to_min, to_max)
     var transition_type = self.transition_type
     
-    if transition_type == animation.SINE
+    if transition_type == 5 #-animation.SINE-#
       # Cosine interpolation for smooth transitions
       # Map value to 0..255 range first
       var t = tasmota.scale_uint(value, from_min, from_max, 0, 255)
@@ -516,15 +515,6 @@ class RichPaletteColorProvider : animation.color_provider
     ret += ");"
     return ret
   end
-  
-  # String representation
-  def tostring()
-    try
-      return f"RichPaletteColorProvider(slots={self._slots}, period={self.period})"
-    except ..
-      return "RichPaletteColorProvider(uninitialized)"
-    end
-  end
 end
 
-return {'rich_palette': RichPaletteColorProvider}
+return {'rich_palette_color': rich_palette_color}

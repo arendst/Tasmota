@@ -22,8 +22,8 @@ def test_mathematical_integration()
     'end\n' +
     '"""\n' +
     'color wave_color = 0x0080FF\n' +
-    'animation wave1 = pulsating_animation(color=wave_color, period=2s)\n' +
-    'animation wave2 = pulsating_animation(color=wave_color, period=3s)\n' +
+    'animation wave1 = breathe(color=wave_color, period=2s)\n' +
+    'animation wave2 = breathe(color=wave_color, period=3s)\n' +
     'berry """\n' +
     'wave1_.period = calculate_period(4000, 2.0)  # 2000ms\n' +
     'wave1_.opacity = calculate_opacity(80)       # 204\n' +
@@ -80,10 +80,10 @@ def test_configuration_management()
     '"""\n' +
     'color fire_red = 0xFF4500\n' +
     'color ocean_blue = 0x006994\n' +
-    'animation fire_anim = pulsating_animation(color=fire_red, period=2s)\n' +
-    'animation ocean_anim = pulsating_animation(color=ocean_blue, period=3s)\n' +
+    'animation fire_anim = breathe(color=fire_red, period=2s)\n' +
+    'animation ocean_anim = breathe(color=ocean_blue, period=3s)\n' +
     'berry """\n' +
-    'apply_config_to_animation(fire_anim_, "fire_animation")\n' +
+    'apply_config_to_animation(fire_anim_, "fire")\n' +
     'apply_config_to_animation(ocean_anim_, "ocean_animation")\n' +
     'log_debug("Configuration applied to all animations")\n' +
     '"""\n' +
@@ -121,7 +121,7 @@ def test_dynamic_animation_creation()
     'var animation_counter = 0\n' +
     'def create_numbered_animation(base_color, period_ms)\n' +
     '  animation_counter += 1\n' +
-    '  var anim = animation.pulsating_animation(engine)\n' +
+    '  var anim = animation.breathe(engine)\n' +
     '  anim.color = base_color\n' +
     '  anim.period = period_ms\n' +
     '  anim.priority = animation_counter\n' +
@@ -146,7 +146,7 @@ def test_dynamic_animation_creation()
   
   # Verify dynamic creation function is included
   assert(string.find(berry_code, "def create_numbered_animation(base_color, period_ms)") >= 0, "Should include dynamic creation function")
-  assert(string.find(berry_code, "var anim = animation.pulsating_animation(engine)") >= 0, "Should create animations dynamically")
+  assert(string.find(berry_code, "var anim = animation.breathe(engine)") >= 0, "Should create animations dynamically")
   assert(string.find(berry_code, "engine.add(anim)") >= 0, "Should add animations to engine")
   
   # Test execution
@@ -186,7 +186,7 @@ def test_state_management()
     'end\n' +
     '"""\n' +
     'color status_color = 0x00FFFF\n' +
-    'animation status_anim = pulsating_animation(color=status_color, period=2s)\n' +
+    'animation status_anim = breathe(color=status_color, period=2s)\n' +
     'berry """\n' +
     'set_mode("bright")\n' +
     'status_anim_.opacity = get_brightness_for_mode()\n' +
@@ -243,7 +243,7 @@ def test_error_handling_integration()
     'end\n' +
     '"""\n' +
     'color safe_color = 0xFF8000\n' +
-    'animation safe_anim = pulsating_animation(color=safe_color, period=1s)\n' +
+    'animation safe_anim = breathe(color=safe_color, period=1s)\n' +
     'berry """\n' +
     'var calculated_period = safe_divide(4000, 2)  # Should work\n' +
     'safe_set_period(safe_anim_, int(calculated_period * 1000))\n' +

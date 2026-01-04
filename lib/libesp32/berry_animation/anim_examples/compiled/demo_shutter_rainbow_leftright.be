@@ -16,7 +16,7 @@ class shutter_lr_animation : animation.engine_proxy
     "period": {}
   })
 
-  # Template setup method - overrides EngineProxy placeholder
+  # Template setup method - overrides engine_proxy placeholder
   def setup_template()
     var engine = self   # using 'self' as a proxy to engine object (instead of 'self.engine')
 
@@ -36,7 +36,7 @@ class shutter_lr_animation : animation.engine_proxy
     col2_.period = 0
     col2_.next = 1
     # shutter moving from left to right
-    var shutter_lr_animation_ = animation.beacon_animation(engine)
+    var shutter_lr_animation_ = animation.beacon(engine)
     shutter_lr_animation_.color = col2_
     shutter_lr_animation_.back_color = col1_
     shutter_lr_animation_.pos = 0
@@ -88,7 +88,7 @@ template animation shutter_lr {
   col2.next = 1
 
   # shutter moving from left to right
-  animation shutter_lr_animation = beacon_animation(
+  animation shutter_lr_animation = beacon(
     color = col2
     back_color = col1
     pos = 0

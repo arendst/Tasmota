@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:PlasmaAnimation,weak
 class PlasmaAnimation : animation.animation
   # Non-parameter instance variables only
   var current_colors     # Array of current colors for each pixel
@@ -69,7 +68,7 @@ class PlasmaAnimation : animation.animation
     
     # Initialize default color if not set
     if self.color == nil
-      var rainbow_provider = animation.rich_palette(self.engine)
+      var rainbow_provider = animation.rich_palette_color(self.engine)
       rainbow_provider.colors = animation.PALETTE_RAINBOW
       rainbow_provider.period = 5000
       rainbow_provider.transition_type = 1
@@ -88,7 +87,7 @@ class PlasmaAnimation : animation.animation
     super(self).on_param_changed(name, value)
     if name == "color" && value == nil
       # Reset to default rainbow palette when color is set to nil
-      var rainbow_provider = animation.rich_palette(self.engine)
+      var rainbow_provider = animation.rich_palette_color(self.engine)
       rainbow_provider.colors = animation.PALETTE_RAINBOW
       rainbow_provider.period = 5000
       rainbow_provider.transition_type = 1
@@ -190,20 +189,6 @@ class PlasmaAnimation : animation.animation
     end
     
     return true
-  end
-  
-
-  
-  # String representation
-  def tostring()
-    var color_str
-    var current_color = self.color
-    if animation.is_value_provider(current_color)
-      color_str = str(current_color)
-    else
-      color_str = f"0x{current_color :08x}"
-    end
-    return f"PlasmaAnimation(color={color_str}, freq_x={self.freq_x}, freq_y={self.freq_y}, time_speed={self.time_speed}, priority={self.priority}, running={self.is_running})"
   end
 end
 

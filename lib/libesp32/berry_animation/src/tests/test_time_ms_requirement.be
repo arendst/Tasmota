@@ -1,12 +1,12 @@
 #!/usr/bin/env berry
 
-# Test to verify that time_ms is correctly passed to ValueProvider methods
+# Test to verify that time_ms is correctly passed to value_provider methods
 
 # Mock the animation module
 var animation = {}
 
-# Define the ValueProvider base class
-class ValueProvider
+# Define the value_provider base class
+class value_provider
   def get_value(time_ms)
     return nil
   end
@@ -16,8 +16,8 @@ class ValueProvider
   end
 end
 
-# Define the StaticValueProvider with member() construct
-class StaticValueProvider : ValueProvider
+# Define the static_value with member() construct
+class static_value : value_provider
   var value
   
   def init(value)
@@ -46,9 +46,9 @@ end
 def test_time_ms_requirement()
   print("=== Testing time_ms Requirement ===")
   
-  # Test 1: StaticValueProvider universal methods accept time_ms
-  print("1. Testing StaticValueProvider universal methods...")
-  var static_provider = StaticValueProvider(42)
+  # Test 1: static_value universal methods accept time_ms
+  print("1. Testing static_value universal methods...")
+  var static_provider = static_value(42)
   
   var pulse_size_method = static_provider.member("get_pulse_size")
   assert(type(pulse_size_method) == "function", "Should return function")
@@ -61,7 +61,7 @@ def test_time_ms_requirement()
   # Test 2: Custom provider with time-aware methods
   print("2. Testing custom provider with time-aware methods...")
   
-  class TimeAwareProvider : ValueProvider
+  class TimeAwareProvider : value_provider
     var last_time_received
     
     def init()
@@ -107,7 +107,7 @@ def test_time_ms_requirement()
   print("3. Testing parameter resolution with time_ms...")
   
   def resolve_parameter(param_value, param_name, time_ms)
-    if isinstance(param_value, ValueProvider)
+    if isinstance(param_value, value_provider)
       # Try specific method first using introspection
       import introspect
       var method_name = "get_" + param_name
@@ -141,7 +141,7 @@ def test_time_ms_requirement()
   print("=== All time_ms requirement tests passed! ===")
   print()
   print("Verified:")
-  print("- StaticValueProvider universal methods accept time_ms")
+  print("- static_value universal methods accept time_ms")
   print("- Custom provider methods receive time_ms correctly")
   print("- Parameter resolution always passes time_ms")
   print("- Both specific and generic methods work with time_ms")

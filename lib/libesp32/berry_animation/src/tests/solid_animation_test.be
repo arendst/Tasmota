@@ -56,11 +56,11 @@ blue_anim.loop = true
 blue_anim.opacity = 200
 print(f"Blue animation - priority: {blue_anim.priority}, duration: {blue_anim.duration}, loop: {blue_anim.loop}")
 
-# Test 4: Create animation with ValueProvider
+# Test 4: Create animation with value_provider
 var solid_provider = animation.static_color(engine)
 solid_provider.color = 0xFF00FF00  # Green
 var green_anim = animation.solid(engine)
-green_anim.color = solid_provider  # Use ValueProvider as dynamic parameter
+green_anim.color = solid_provider  # Use value_provider as dynamic parameter
 print("Green animation with color provider created")
 
 # Test 5: Test rendering
@@ -86,11 +86,11 @@ assert(anim.color == 0xFFFFFFFF, "Color parameter should be accessible")
 assert(red_anim.color == 0xFFFF0000, "Red color should be set correctly")
 assert(blue_anim.priority == 20, "Priority should be set correctly")
 
-# Test ValueProvider integration
-assert(animation.is_value_provider(solid_provider), "Should recognize ValueProvider")
-# Use get_param to get raw ValueProvider (not resolved value)
+# Test value_provider integration
+assert(animation.is_value_provider(solid_provider), "Should recognize value_provider")
+# Use get_param to get raw value_provider (not resolved value)
 var raw_color_param = green_anim.get_param("color")
-assert(raw_color_param == solid_provider, "Should store ValueProvider as parameter")
+assert(raw_color_param == solid_provider, "Should store value_provider as parameter")
 
 print("All parameterized solid() tests completed successfully!")
 return true

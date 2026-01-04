@@ -1,12 +1,12 @@
 #!/usr/bin/env berry
 
-# Core ValueProvider system test - focuses only on the essential functionality
+# Core value_provider system test - focuses only on the essential functionality
 
 # Mock the animation module for testing
 var animation = {}
 
-# Define the ValueProvider base class
-class ValueProvider
+# Define the value_provider base class
+class value_provider
   def get_value(time_ms)
     return nil
   end
@@ -16,8 +16,8 @@ class ValueProvider
   end
 end
 
-# Define the StaticValueProvider
-class StaticValueProvider : ValueProvider
+# Define the static_value
+class static_value : value_provider
   var value
   
   def init(value)
@@ -41,29 +41,29 @@ class StaticValueProvider : ValueProvider
   end
   
   def tostring()
-    return f"StaticValueProvider(value={self.value})"
+    return f"static_value(value={self.value})"
   end
 end
 
 # Helper function to check if object is a value provider
 def is_value_provider(obj)
-  return obj != nil && type(obj) == "instance" && isinstance(obj, ValueProvider)
+  return obj != nil && type(obj) == "instance" && isinstance(obj, value_provider)
 end
 
 # Test the core functionality
 def test_core_functionality()
-  print("=== Core ValueProvider System Test ===")
+  print("=== Core value_provider System Test ===")
   
-  # Test 1: Basic ValueProvider interface
-  print("1. Testing ValueProvider interface...")
-  var base_provider = ValueProvider()
+  # Test 1: Basic value_provider interface
+  print("1. Testing value_provider interface...")
+  var base_provider = value_provider()
   assert(base_provider.get_value(1000) == nil, "Base provider should return nil")
   assert(base_provider.update(1000) == false, "Base provider update should return false")
   print("   ✓ Base interface works")
   
-  # Test 2: StaticValueProvider basic functionality
-  print("2. Testing StaticValueProvider...")
-  var static_provider = StaticValueProvider(42)
+  # Test 2: static_value basic functionality
+  print("2. Testing static_value...")
+  var static_provider = static_value(42)
   assert(static_provider.get_value(1000) == 42, "Should return static value")
   assert(static_provider.update(1000) == false, "Update should return false")
   print("   ✓ Static provider basic functionality works")
@@ -85,8 +85,8 @@ def test_core_functionality()
   
   # Test 4: Provider detection
   print("4. Testing provider detection...")
-  assert(is_value_provider(static_provider) == true, "Should detect StaticValueProvider")
-  assert(is_value_provider(base_provider) == true, "Should detect ValueProvider")
+  assert(is_value_provider(static_provider) == true, "Should detect static_value")
+  assert(is_value_provider(base_provider) == true, "Should detect value_provider")
   assert(is_value_provider(42) == false, "Should not detect integer")
   assert(is_value_provider("hello") == false, "Should not detect string")
   assert(is_value_provider(nil) == false, "Should not detect nil")
@@ -124,9 +124,9 @@ def test_core_functionality()
   
   print("=== All core tests passed! ===")
   print()
-  print("Core ValueProvider system is working correctly:")
-  print("- ValueProvider base interface")
-  print("- StaticValueProvider with universal method support")
+  print("Core value_provider system is working correctly:")
+  print("- value_provider base interface")
+  print("- static_value with universal method support")
   print("- Provider detection")
   print("- Parameter resolution with method-specific fallback")
   

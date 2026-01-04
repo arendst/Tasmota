@@ -71,9 +71,9 @@ def test_non_math_functions(dsl_code)
     print("    ✅ Found 'animation._math.scale(' in generated code")
   end
   
-  # Check that animation functions like 'pulsating_animation' are NOT prefixed with animation._math.
-  if string.find(generated_code, "animation._math.pulsating_animation") >= 0
-    print("    ❌ Found 'animation._math.pulsating_animation' - animation functions should NOT be prefixed")
+  # Check that animation functions like 'breathe' are NOT prefixed with animation._math.
+  if string.find(generated_code, "animation._math.breathe") >= 0
+    print("    ❌ Found 'animation._math.breathe' - animation functions should NOT be prefixed")
     return false
   else
     print("    ✅ Animation functions correctly NOT prefixed with animation._math.")
@@ -102,7 +102,7 @@ def test_is_math_method_function()
   end
   
   # Test non-mathematical methods
-  var non_math_methods = ["pulsating_animation", "solid", "color_cycle", "unknown_method"]
+  var non_math_methods = ["breathe", "solid", "color_cycle", "unknown_method"]
   for method : non_math_methods
     var entry = transpiler.symbol_table.get(method)
     if entry != nil && entry.type == animation_dsl._symbol_entry.TYPE_MATH_FUNCTION
@@ -122,7 +122,7 @@ def test_math_method_transpilation()
   # Test case 1: Simple mathematical function in computed parameter
   var dsl_code1 = 
     "set value = 50\n"
-    "animation test = pulsating_animation(color=red, period=2s)\n"
+    "animation test = breathe(color=red, period=2s)\n"
     "test.opacity = abs(value - 100)\n"
     "run test"
   
@@ -135,9 +135,9 @@ def test_math_method_transpilation()
   var dsl_code2 = 
     "set x = 10\n"
     "set y = 20\n"
-    "animation wave = pulsating_animation(color=blue, period=3s)\n"
-    "wave.min_brightness = max(min(x, y), sqrt(abs(x - y)))\n"
-    "run wave"
+    "animation w = breathe(color=blue, period=3s)\n"
+    "w.min_brightness = max(min(x, y), sqrt(abs(x - y)))\n"
+    "run w"
   
   var result2 = test_transpilation_case(dsl_code2, ["max", "min", "sqrt", "abs"], "Multiple math functions")
   if !result2
@@ -147,7 +147,7 @@ def test_math_method_transpilation()
   # Test case 3: Mathematical functions with complex expressions
   var dsl_code3 = 
     "set angle = 45\n"
-    "animation rotate = pulsating_animation(color=green, period=2s)\n"
+    "animation rotate = breathe(color=green, period=2s)\n"
     "rotate.min_brightness = round(sin(angle) * 180 + cos(angle) * 90)\n"
     "run rotate"
   
@@ -158,7 +158,7 @@ def test_math_method_transpilation()
   
   # Test case 4: Ensure non-math functions are NOT prefixed with animation._math.
   var dsl_code4 = 
-    "animation pulse = pulsating_animation(color=red, period=2s)\n"
+    "animation pulse = breathe(color=red, period=2s)\n"
     "pulse.min_brightness = scale(50, 0, 100)\n"
     "run pulse"
   

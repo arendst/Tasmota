@@ -1,4 +1,4 @@
-# StripLengthProvider for Berry Animation Framework
+# strip_length for Berry Animation Framework
 #
 # This value provider returns the length of the LED strip from the animation engine.
 # It provides access to the strip length as a dynamic value that can be used by
@@ -11,8 +11,7 @@
 # - Constructor takes only 'engine' parameter
 # - No additional parameters needed since strip length is obtained from engine
 
-#@ solidify:StripLengthProvider,weak
-class StripLengthProvider : animation.value_provider
+class strip_length : animation.value_provider
   # Produce the strip length value
   #
   # @param name: string - Parameter name being requested (ignored)
@@ -21,12 +20,6 @@ class StripLengthProvider : animation.value_provider
   def produce_value(name, time_ms)
     return self.engine.strip_length
   end
-  
-  # String representation of the provider
-  def tostring()
-    var strip_width = (self.engine != nil) ? self.engine.strip_length : 'unknown'
-    return f"StripLengthProvider(length={strip_width})"
-  end
 end
 
-return {'strip_length': StripLengthProvider}
+return {'strip_length': strip_length}

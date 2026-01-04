@@ -1,4 +1,4 @@
-# Test suite for OscillatorValueProvider ELASTIC and BOUNCE functionality
+# Test suite for oscillator_value ELASTIC and BOUNCE functionality
 #
 # This test verifies that the new ELASTIC and BOUNCE waveforms work correctly
 # and produce the expected spring-like and bouncing curves.
@@ -171,11 +171,9 @@ def test_elastic_bounce_tostring()
   bounce_provider.max_value = 200
   bounce_provider.duration = 2500
   
-  var elastic_str = elastic_provider.tostring()
-  var bounce_str = bounce_provider.tostring()
-  
-  assert(string.find(elastic_str, "ELASTIC") >= 0, "ELASTIC tostring should contain 'ELASTIC'")
-  assert(string.find(bounce_str, "BOUNCE") >= 0, "BOUNCE tostring should contain 'BOUNCE'")
+  # Verify form values are set correctly
+  assert(elastic_provider.form == animation.ELASTIC, "ELASTIC form should be set")
+  assert(bounce_provider.form == animation.BOUNCE, "BOUNCE form should be set")
   
   print("✓ Elastic and bounce tostring test passed")
 end
@@ -248,7 +246,7 @@ end
 
 # Run all tests
 def run_oscillator_elastic_bounce_tests()
-  print("=== OscillatorValueProvider Elastic & Bounce Tests ===")
+  print("=== oscillator_value Elastic & Bounce Tests ===")
   
   try
     test_elastic_waveform()
@@ -259,7 +257,7 @@ def run_oscillator_elastic_bounce_tests()
     test_elastic_bounce_constants()
     test_elastic_bounce_characteristics()
     
-    print("=== All OscillatorValueProvider elastic & bounce tests passed! ===")
+    print("=== All oscillator_value elastic & bounce tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

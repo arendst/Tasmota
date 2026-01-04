@@ -91,7 +91,7 @@ def test_builtin_reference_handling()
   
   # DSL using built-in color names and animation functions
   var dsl_source = "animation red_pattern = solid(color=red)\n" +
-    "animation pulse_anim = pulsating_animation(color=red, period=2000)"
+    "animation pulse_anim = breathe(color=red, period=2000)"
   
   var lexer = animation_dsl.create_lexer(dsl_source)
   var transpiler = animation_dsl.SimpleDSLTranspiler(lexer)
@@ -104,7 +104,7 @@ def test_builtin_reference_handling()
   
   # Check generated code
   assert(string.find(berry_code, "red_pattern_.color = 0xFFFF0000") >= 0, "Should use built-in red color")
-  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should use built-in pulsating_animation function")
+  assert(string.find(berry_code, "animation.breathe(engine)") >= 0, "Should use built-in breathe function")
   
   print("✓ Built-in reference handling test passed")
   return true
@@ -139,7 +139,7 @@ def test_complex_symbol_dependencies()
   
   # Complex DSL with proper symbol ordering (no forward references)
   var dsl_source = "color primary_color = 0xFF8000\n" +
-    "animation complex_anim = pulsating_animation(color=primary_color, period=3000)\n" +
+    "animation complex_anim = breathe(color=primary_color, period=3000)\n" +
     "animation gradient_pattern = solid(color=primary_color)\n" +
     "sequence demo {\n" +
     "  play complex_anim for 5s\n" +

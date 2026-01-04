@@ -18,7 +18,7 @@ var fire_colors_ = bytes(
   "FFFFFF00"  # Yellow
 )
 var strip_len_ = animation.strip_length(engine)
-var fire_color_ = animation.rich_palette(engine)
+var fire_color_ = animation.rich_palette_color(engine)
 fire_color_.colors = fire_colors_
 var background_ = animation.solid(engine)
 background_.color = 0xFF000088
@@ -30,14 +30,14 @@ var eye_pos_ = (def (engine)
   provider.duration = 6000
   return provider
 end)(engine)
-var eye_mask_ = animation.beacon_animation(engine)
+var eye_mask_ = animation.beacon(engine)
 eye_mask_.color = 0xFFFFFFFF
 eye_mask_.back_color = 0x00000000
 eye_mask_.pos = eye_pos_
 eye_mask_.beacon_size = 4  # small 3 pixels eye
 eye_mask_.slew_size = 2  # with 2 pixel shading around
 eye_mask_.priority = 5
-var fire_pattern_ = animation.palette_gradient_animation(engine)
+var fire_pattern_ = animation.palette_gradient(engine)
 fire_pattern_.color_source = fire_color_
 fire_pattern_.spatial_period = animation.create_closure_value(engine, def (engine) return animation.resolve(strip_len_) / 4 end)
 fire_pattern_.opacity = eye_mask_
@@ -58,13 +58,13 @@ palette fire_colors = [
 ]
 
 set strip_len = strip_length()
-color fire_color = rich_palette(colors=fire_colors)
+color fire_color = rich_palette_color(colors=fire_colors)
 
 animation background = solid(color=0x000088, priority=20)
 run background
 
 set eye_pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 6s)
-animation eye_mask = beacon_animation(
+animation eye_mask = beacon(
   color = white
   back_color = transparent
   pos = eye_pos
@@ -73,7 +73,7 @@ animation eye_mask = beacon_animation(
   priority = 5
 )
 
-animation fire_pattern = palette_gradient_animation(
+animation fire_pattern = palette_gradient(
   color_source = fire_color
   spatial_period = strip_len / 4
   opacity = eye_mask

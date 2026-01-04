@@ -1,19 +1,18 @@
-# ColorProvider interface for Berry Animation Framework
+# color_provider interface for Berry Animation Framework
 #
 # This defines the core interface for color providers in the animation framework.
 # Color providers generate colors based on time or values, which can be used by
 # renderers or other components that need color information.
 #
-# ColorProvider now inherits from ValueProvider, making it a specialized value provider
-# for color values. This provides consistency with the ValueProvider system while
+# color_provider now inherits from value_provider, making it a specialized value provider
+# for color values. This provides consistency with the value_provider system while
 # maintaining the specific color-related methods.
 #
 # Follows the parameterized class specification:
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
-#@ solidify:ColorProvider,weak
-class ColorProvider : animation.value_provider
+class color_provider : animation.value_provider
   # LUT (Lookup Table) management for color providers
   # Subclasses can use this to cache pre-computed colors for performance
   # If a subclass doesn't use a LUT, this remains nil
@@ -92,11 +91,11 @@ class ColorProvider : animation.value_provider
 end
 
 # Add a method to check if an object is a color provider
-# Note: Since ColorProvider now inherits from ValueProvider, all ColorProviders
-# are also ValueProviders and will be detected by animation.is_value_provider()
+# Note: Since color_provider now inherits from value_provider, all ColorProviders
+# are also value_providers and will be detected by animation.is_value_provider()
 def is_color_provider(obj)
   return isinstance(obj, animation.color_provider)
 end
 
-return {'color_provider': ColorProvider,
+return {'color_provider': color_provider,
         'is_color_provider': is_color_provider}

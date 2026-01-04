@@ -1,4 +1,4 @@
-# StaticValueProvider for Berry Animation Framework
+# static_value for Berry Animation Framework
 #
 # This value provider returns a single, static value for any parameter type.
 # It's a dummy implementation that serves as a wrapper for static values,
@@ -13,47 +13,46 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:StaticValueProvider,weak
-class StaticValueProvider : animation.value_provider
+class static_value : animation.value_provider
   # Parameter definitions
   static var PARAMS = animation.enc_params({
     "value": {"default": nil, "type": "any"}
   })
   
-  # Comparison operators to make StaticValueProvider work with validation code
-  def <(other)
-    return self.value < int(other)
-  end
+  # # Comparison operators to make static_value work with validation code
+  # def <(other)
+  #   return self.value < int(other)
+  # end
   
-  def >(other)
-    return self.value > int(other)
-  end
+  # def >(other)
+  #   return self.value > int(other)
+  # end
   
-  def <=(other)
-    return self.value <= int(other)
-  end
+  # def <=(other)
+  #   return self.value <= int(other)
+  # end
   
-  def >=(other)
-    return self.value >= int(other)
-  end
+  # def >=(other)
+  #   return self.value >= int(other)
+  # end
   
-  def ==(other)
-    if type(other) == 'instance'
-      import introspect
-      return introspect.toptr(self) == introspect.toptr(other)
-    else
-      return self.value == int(other)
-    end
-  end
+  # def ==(other)
+  #   if type(other) == 'instance'
+  #     import introspect
+  #     return introspect.toptr(self) == introspect.toptr(other)
+  #   else
+  #     return self.value == int(other)
+  #   end
+  # end
   
-  def !=(other)
-    if type(other) == 'instance'
-      import introspect
-      return introspect.toptr(self) != introspect.toptr(other)
-    else
-      return self.value != int(other)
-    end
-  end
+  # def !=(other)
+  #   if type(other) == 'instance'
+  #     import introspect
+  #     return introspect.toptr(self) != introspect.toptr(other)
+  #   else
+  #     return self.value != int(other)
+  #   end
+  # end
   
   # Produce the static value for any parameter name
   #
@@ -65,9 +64,9 @@ class StaticValueProvider : animation.value_provider
   end
   
   # String representation of the provider
-  def tostring()
-    return f"StaticValueProvider(value={self.value})"
-  end
+  # def tostring()
+  #   return f"static_value(value={self.value})"
+  # end
 end
 
-return {'static_value': StaticValueProvider}
+return {'static_value': static_value}

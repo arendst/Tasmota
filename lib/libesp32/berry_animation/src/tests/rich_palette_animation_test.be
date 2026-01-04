@@ -1,4 +1,4 @@
-# Test file for animation.solid with RichPaletteColorProvider
+# Test file for animation.solid with rich_palette_color
 #
 # This file contains tests for the animation.solid class with rich palette provider
 #
@@ -43,7 +43,7 @@ class RichPaletteAnimationTest
     self.passed = 0
     self.failed = 0
     
-    print("Running animation.solid with RichPaletteColorProvider Tests")
+    print("Running animation.solid with rich_palette_color Tests")
     
     self.test_initialization()
     self.test_update_and_render()
@@ -53,7 +53,7 @@ class RichPaletteAnimationTest
     self.test_sine_mode()
     self.test_sine_mode_value_based()
     
-    print(f"animation.solid with RichPaletteColorProvider Tests: {self.passed} passed, {self.failed} failed")
+    print(f"animation.solid with rich_palette_color Tests: {self.passed} passed, {self.failed} failed")
     if self.failed > 0
       raise "test_failed"
     end
@@ -82,7 +82,7 @@ class RichPaletteAnimationTest
   
   def test_initialization()
     # Test default initialization with rich palette provider
-    var provider = animation.rich_palette(mock_engine)
+    var provider = animation.rich_palette_color(mock_engine)
     var anim = animation.solid(mock_engine)
     anim.color = provider
     
@@ -93,7 +93,7 @@ class RichPaletteAnimationTest
     
     # Test with custom parameters using new parameterized class specification
     var custom_palette = bytes("00FF0000" "FFFFFF00")
-    var custom_provider = animation.rich_palette(mock_engine)
+    var custom_provider = animation.rich_palette_color(mock_engine)
     custom_provider.colors = custom_palette
     custom_provider.period = 2000
     custom_provider.transition_type = animation.SINE
@@ -115,7 +115,7 @@ class RichPaletteAnimationTest
   def test_update_and_render()
     # Create animation with red and blue colors
     var colors = bytes("00FF0000" "FF0000FF")  # Red to Blue in VRGB format
-    var provider = animation.rich_palette(mock_engine)
+    var provider = animation.rich_palette_color(mock_engine)
     provider.colors = colors
     provider.period = 1000  # 1 second cycle
     provider.transition_type = animation.LINEAR  # linear transition
@@ -167,7 +167,7 @@ class RichPaletteAnimationTest
   def test_palette_properties()
     # Test palette properties and value-based color generation
     var colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
-    var provider = animation.rich_palette(mock_engine)
+    var provider = animation.rich_palette_color(mock_engine)
     provider.colors = colors
     provider.period = 1000
     
@@ -196,7 +196,7 @@ class RichPaletteAnimationTest
   def test_css_gradient()
     # Test CSS gradient generation
     var colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
-    var provider = animation.rich_palette(mock_engine)
+    var provider = animation.rich_palette_color(mock_engine)
     provider.colors = colors
     provider.period = 1000
     
@@ -216,7 +216,7 @@ class RichPaletteAnimationTest
   def test_cycle_period_zero()
     # Test the new period = 0 functionality for value-based color mapping
     var colors = bytes("00FF0000" "80FFFF00" "FF0000FF")  # Red to Yellow to Blue
-    var provider = animation.rich_palette(mock_engine)
+    var provider = animation.rich_palette_color(mock_engine)
     provider.colors = colors
     provider.period = 0  # Value-based mode
     provider.start()
@@ -267,7 +267,7 @@ class RichPaletteAnimationTest
     var colors = bytes("00FF0000" "FF0000FF")  # Red at 0, Blue at 255
     
     # Create LINEAR provider
-    var provider_linear = animation.rich_palette(mock_engine)
+    var provider_linear = animation.rich_palette_color(mock_engine)
     provider_linear.colors = colors
     provider_linear.period = 1000
     provider_linear.transition_type = animation.LINEAR
@@ -275,7 +275,7 @@ class RichPaletteAnimationTest
     provider_linear.start(0)
     
     # Create SINE provider
-    var provider_sine = animation.rich_palette(mock_engine)
+    var provider_sine = animation.rich_palette_color(mock_engine)
     provider_sine.colors = colors
     provider_sine.period = 1000
     provider_sine.transition_type = animation.SINE
@@ -326,7 +326,7 @@ class RichPaletteAnimationTest
   def test_sine_mode_value_based()
     # Test SINE mode with value-based interpolation
     var colors = bytes("00FF0000" "FF0000FF")  # Red to Blue
-    var provider = animation.rich_palette(mock_engine)
+    var provider = animation.rich_palette_color(mock_engine)
     provider.colors = colors
     provider.period = 0  # Value-based mode
     provider.transition_type = animation.SINE

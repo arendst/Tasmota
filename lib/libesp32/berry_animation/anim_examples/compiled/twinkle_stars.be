@@ -17,13 +17,13 @@ var night_sky_ = 0xFF000033
 var background_ = animation.solid(engine)
 background_.color = night_sky_
 # White twinkling stars
-var stars_ = animation.twinkle_animation(engine)
+var stars_ = animation.twinkle(engine)
 stars_.color = 0xFFFFFFFF  # White stars
 stars_.density = 8  # density (number of stars)
 stars_.twinkle_speed = 500  # twinkle speed (twinkle duration)
 stars_.priority = 10
 # Add occasional bright flash
-var bright_flash_ = animation.twinkle_animation(engine)
+var bright_flash_ = animation.twinkle(engine)
 bright_flash_.color = 0xFFFFFFAA  # Bright yellow-white
 bright_flash_.density = 2  # density (fewer bright flashes)
 bright_flash_.twinkle_speed = 300  # twinkle speed (quick flash)
@@ -46,7 +46,7 @@ color night_sky = 0x000033
 animation background = solid(color=night_sky)
 
 # White twinkling stars
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFFF  # White stars
   density=8       # density (number of stars)
   twinkle_speed=500ms # twinkle speed (twinkle duration)
@@ -54,7 +54,7 @@ animation stars = twinkle_animation(
 stars.priority = 10
 
 # Add occasional bright flash
-animation bright_flash = twinkle_animation(
+animation bright_flash = twinkle(
   color=0xFFFFAA  # Bright yellow-white
   density=2       # density (fewer bright flashes)
   twinkle_speed=300ms # twinkle speed (quick flash)

@@ -14,7 +14,7 @@ template animation shutter_bidir {
   col2.next = 1
 
   # shutter moving from left to right
-  animation shutter_lr_animation = beacon_animation(
+  animation shutter_lr_animation = beacon(
     color = col2
     back_color = col1
     pos = 0
@@ -24,7 +24,7 @@ template animation shutter_bidir {
   )
 
   # shutter moving from right to left
-  animation shutter_rl_animation = beacon_animation(
+  animation shutter_rl_animation = beacon(
     color = col1
     back_color = col2
     pos = 0

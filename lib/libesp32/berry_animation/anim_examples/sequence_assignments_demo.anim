@@ -13,7 +13,7 @@ palette eye_palette = [red, yellow, green, violet]
 color eye_color = color_cycle(colors=eye_palette, period=0)
 
 # Create animations
-animation red_eye = beacon_animation(
+animation red_eye = beacon(
   color=eye_color
   pos=cosine_val
   beacon_size=3
@@ -21,7 +21,7 @@ animation red_eye = beacon_animation(
   priority=10
 )
 
-animation pulse_demo = pulsating_animation(
+animation pulse_demo = breathe(
   color=blue
   period=2s
   priority=5

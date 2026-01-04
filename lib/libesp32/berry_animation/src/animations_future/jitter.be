@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:JitterAnimation,weak
 class JitterAnimation : animation.animation
   # Non-parameter instance variables only
   var random_seed        # Seed for random number generation
@@ -60,7 +59,7 @@ class JitterAnimation : animation.animation
   
   # Override start method for lifecycle control
   def start(time_ms)
-    # Call parent start first (handles ValueProvider propagation)
+    # Call parent start first (handles value_provider propagation)
     super(self).start(time_ms)
     
     # Reset jitter timing
@@ -243,14 +242,6 @@ class JitterAnimation : animation.animation
     end
     
     return true
-  end
-  
-  # String representation
-  def tostring()
-    var type_names = ["position", "color", "brightness", "all"]
-    var jitter_type = self.jitter_type
-    var type_name = type_names[jitter_type] != nil ? type_names[jitter_type] : "unknown"
-    return f"JitterAnimation({type_name}, intensity={self.jitter_intensity}, frequency={self.jitter_frequency})"
   end
 end
 

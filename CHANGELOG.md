@@ -13,10 +13,13 @@ All notable changes to this project will be documented in this file.
 - ESP8266 platform update from 2025.10.00 to 2025.12.00 (#24254)
 - ESP32 Platform from 2025.12.30 to 2025.12.31, Framework (Arduino Core) from v3.1.7 to v3.1.8 and IDF from v5.3.4.251205 to v5.3.4.251223 (#24254)
 - Refactor Adafruit Seesaw soil driver (#24270)
+- LM75AD output when no valid reading received from 0 to null (#24263)
 
 ### Fixed
 - ESP32 BLE not starting (#24240)
 - GDK101 power on detection (#24242)
+- Udisplay backlight with SPI displays (#24277)
+- ESP8266 KNX unwanted reply (#24267)
 
 ### Removed
 

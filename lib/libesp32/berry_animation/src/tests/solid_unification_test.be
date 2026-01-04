@@ -86,7 +86,7 @@ def test_solid_color_provider()
   
   # Create solid animation with color provider
   var yellow_solid = animation.solid(engine)
-  yellow_solid.color = color_provider  # Use ValueProvider as dynamic parameter
+  yellow_solid.color = color_provider  # Use value_provider as dynamic parameter
   yellow_solid.priority = 10
   yellow_solid.duration = 0
   yellow_solid.loop = false
@@ -96,9 +96,9 @@ def test_solid_color_provider()
   assert(yellow_solid != nil, "Should create animation with color provider")
   assert(type(yellow_solid) == "instance", "Should be an instance")
   
-  # Verify ValueProvider is stored correctly
+  # Verify value_provider is stored correctly
   var raw_color_param = yellow_solid.get_param("color")
-  assert(raw_color_param == color_provider, "Should store ValueProvider as parameter")
+  assert(raw_color_param == color_provider, "Should store value_provider as parameter")
   
   print("✅ Solid with color provider test passed")
 end
@@ -165,7 +165,7 @@ def run_tests()
     print("\nKey Achievements:")
     print("- solid() uses engine-only constructor pattern")
     print("- Parameters set via virtual member assignment")
-    print("- Full ValueProvider integration")
+    print("- Full value_provider integration")
     print("- Engine-controlled timing system")
     print("- Parameterized class system working correctly")
     return true

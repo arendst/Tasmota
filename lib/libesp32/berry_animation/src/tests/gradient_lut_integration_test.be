@@ -1,7 +1,7 @@
 # Integration test for gradient animation with LUT optimization
 #
-# This test verifies that palette_gradient_animation works correctly
-# with the LUT-optimized RichPaletteColorProvider
+# This test verifies that palette_gradient works correctly
+# with the LUT-optimized rich_palette_color
 
 import animation
 import animation_dsl
@@ -33,7 +33,7 @@ var rainbow_with_white = bytes(
 )
 
 # Create a rich palette color provider
-var rainbow_rich_color = animation.rich_palette(engine)
+var rainbow_rich_color = animation.rich_palette_color(engine)
 rainbow_rich_color.colors = rainbow_with_white
 rainbow_rich_color.period = 10000  # 10 seconds
 rainbow_rich_color.transition_type = animation.SINE
@@ -49,7 +49,7 @@ period_osc.max_value = (3 * strip_len) / 2
 period_osc.duration = 5000  # 5 seconds
 
 # Create gradient animation
-var back_pattern = animation.palette_gradient_animation(engine)
+var back_pattern = animation.palette_gradient(engine)
 back_pattern.color_source = rainbow_rich_color
 back_pattern.spatial_period = strip_len  # Start with full strip
 back_pattern.shift_period = 0  # Static for testing

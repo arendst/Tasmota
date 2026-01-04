@@ -1,25 +1,27 @@
-# Simple test for GradientAnimation
+# Simple test for gradient
 import animation
 
-print("Testing basic GradientAnimation functionality...")
+print("Testing basic gradient functionality...")
 
 # Create LED strip and engine
 var strip = global.Leds(5)
 var engine = animation.create_engine(strip)
 
 # Test basic creation
-var gradient = animation.gradient_animation(engine)
+var gradient = animation.gradient(engine)
 assert(gradient != nil, "Should create gradient animation")
 
 # Test parameter setting
-gradient.color = 0xFFFF0000
+gradient.color1 = 0xFF000000
+gradient.color2 = 0xFFFF0000
 gradient.gradient_type = 0
-gradient.movement_speed = 50
+gradient.direction = 0
 
 # Test parameter access
-assert(gradient.color == 0xFFFF0000, "Should set color")
+assert(gradient.color1 == 0xFF000000, "Should set color1")
+assert(gradient.color2 == 0xFFFF0000, "Should set color2")
 assert(gradient.gradient_type == 0, "Should set gradient type")
-assert(gradient.movement_speed == 50, "Should set movement speed")
+assert(gradient.direction == 0, "Should set direction")
 
 # Test start and update
 gradient.start(1000)
@@ -29,10 +31,10 @@ gradient.update(1000)
 assert(gradient.is_running == true, "Should still be running after update")
 
 # Test rendering
-var frame = animation.frame_buffer(5, 1)
-result = gradient.render(frame, 1000, engine.strip_length)
+var frame = animation.frame_buffer(5)
+var result = gradient.render(frame, 1000, engine.strip_length)
 assert(result == true, "Should render successfully")
 
-print("✓ Basic GradientAnimation test passed!")
+print("✓ Basic gradient test passed!")
 
 return true

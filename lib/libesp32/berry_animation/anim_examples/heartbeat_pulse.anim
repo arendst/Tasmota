@@ -25,7 +25,7 @@ heart_glow.opacity = smooth(min_value=30, max_value=100, duration=1s)  # Gentle 
 heart_glow.priority = 5
 
 # Add center pulse for emphasis
-animation center_pulse = beacon_animation(
+animation center_pulse = beacon(
   color=0xFFFFFF  # White center
   pos=30          # center of strip
   beacon_size=4   # small center

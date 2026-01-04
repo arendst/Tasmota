@@ -623,7 +623,7 @@
 // #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)
   #define USE_LIGHT_ARTNET_MCAST 239,255,25,54   // Multicast address used to listen: 239.255.25.54
 
-  // #define USE_BERRY_ANIMATION                    // New animation framework with dedicated language (ESP32x only, experimental, 94k not yet optimized)
+  // #define USE_BERRY_ANIMATION                    // New animation framework with dedicated language (ESP32x only, experimental, 81k not yet optimized)
     // #define USE_BERRY_ANIMATION_DSL                // DSL transpiler for new animation framework (not mandatory if DSL is transpiled externally, +98k not optimized yet)
 
 // -- Counter input -------------------------------
@@ -668,7 +668,8 @@
 //  #define USE_SGP4X                              // [I2cDriver82] Enable SGP41 sensor (I2C address 0x59) (+7k2 code)
 //  #define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
-//  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
+//  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k6 code)
+//    #define LM75AD_MAX_SENSORS    8              // Max number of LM75AD sensors supported (default = 8 on 2 busses, max = 16 on 2 busses)
 //  #define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
     #define USE_APDS9960_GESTURE                   // Enable APDS9960 Gesture feature (+2k code)
     #define USE_APDS9960_PROXIMITY                 // Enable APDS9960 Proximity feature (>50 code)

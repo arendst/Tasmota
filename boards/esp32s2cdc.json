@@ -33,7 +33,7 @@
     "maximum_ram_size": 327680,
     "maximum_size": 4194304,
     "require_upload_port": true,
-    "before_reset": "usb_reset",
+    "before_reset": "usb-reset",
     "speed": 2000000
   },
   "download": {

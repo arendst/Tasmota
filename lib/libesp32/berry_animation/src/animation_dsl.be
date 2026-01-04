@@ -30,9 +30,6 @@ import animation
 var animation_dsl = module("animation_dsl")
 global.animation_dsl = animation_dsl
 
-# Version information for compatibility tracking
-animation_dsl.VERSION = animation.VERSION
-
 # Helper function to register all exports from imported modules into the DSL module
 def register_to_dsl(m)
   for k: m.keys()

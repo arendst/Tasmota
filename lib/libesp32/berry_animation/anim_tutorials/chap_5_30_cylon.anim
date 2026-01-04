@@ -4,7 +4,7 @@
 set strip_len = strip_length()
 
 # In this example, the 'cosine_osc' is created within the call
-animation back = beacon_animation(
+animation back = beacon(
     color = red
     pos = cosine_osc(min_value = -1, max_value = strip_len - 2, duration = 5s)
     beacon_size = 3       # small 3 pixels eye

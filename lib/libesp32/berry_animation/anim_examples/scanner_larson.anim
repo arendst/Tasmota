@@ -8,7 +8,7 @@ color scanner_bg = 0x110000
 animation background = solid(color=scanner_bg)
 
 # Main scanner pulse that bounces
-animation scanner = beacon_animation(
+animation scanner = beacon(
   color=0xFF0000  # Bright red
   pos=2           # initial position
   beacon_size=3   # pulse width
@@ -20,7 +20,7 @@ scanner.priority = 10
 scanner.pos = triangle(min_value=2, max_value=57, duration=2s)
 
 # Add trailing glow effect
-animation scanner_trail = beacon_animation(
+animation scanner_trail = beacon(
   color=0x660000  # Dim red trail
   pos=2           # initial position
   beacon_size=6   # wider trail
