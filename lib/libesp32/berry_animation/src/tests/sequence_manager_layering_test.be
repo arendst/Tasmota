@@ -26,7 +26,7 @@ def test_multiple_sequence_managers()
   assert(size(engine.root_animation.sequences) == 3, "Engine should have 3 sequence managers")
   
   # Create test animations using new parameterized API
-  var red_provider = animation.static_color(engine)
+  var red_provider = animation.color_provider(engine)
   red_provider.color = 0xFFFF0000
   var red_anim = animation.solid(engine)
   red_anim.color = red_provider
@@ -35,7 +35,7 @@ def test_multiple_sequence_managers()
   red_anim.loop = false
   red_anim.opacity = 255
   
-  var green_provider = animation.static_color(engine)
+  var green_provider = animation.color_provider(engine)
   green_provider.color = 0xFF00FF00
   var green_anim = animation.solid(engine)
   green_anim.color = green_provider
@@ -44,7 +44,7 @@ def test_multiple_sequence_managers()
   green_anim.loop = false
   green_anim.opacity = 255
   
-  var blue_provider = animation.static_color(engine)
+  var blue_provider = animation.color_provider(engine)
   blue_provider.color = 0xFF0000FF
   var blue_anim = animation.solid(engine)
   blue_anim.color = blue_provider
@@ -94,7 +94,7 @@ def test_sequence_manager_coordination()
   engine.add(seq_manager2)
   
   # Create test animations using new parameterized API
-  var provider1 = animation.static_color(engine)
+  var provider1 = animation.color_provider(engine)
   provider1.color = 0xFFFF0000
   var anim1 = animation.solid(engine)
   anim1.color = provider1
@@ -103,7 +103,7 @@ def test_sequence_manager_coordination()
   anim1.loop = false
   anim1.opacity = 255
   
-  var provider2 = animation.static_color(engine)
+  var provider2 = animation.color_provider(engine)
   provider2.color = 0xFF00FF00
   var anim2 = animation.solid(engine)
   anim2.color = provider2
@@ -159,7 +159,7 @@ def test_sequence_manager_engine_integration()
   engine.add(seq_manager2)
   
   # Create test animations using new parameterized API
-  var provider1 = animation.static_color(engine)
+  var provider1 = animation.color_provider(engine)
   provider1.color = 0xFFFF0000
   var test_anim1 = animation.solid(engine)
   test_anim1.color = provider1
@@ -168,7 +168,7 @@ def test_sequence_manager_engine_integration()
   test_anim1.loop = false
   test_anim1.opacity = 255
   
-  var provider2 = animation.static_color(engine)
+  var provider2 = animation.color_provider(engine)
   provider2.color = 0xFF00FF00
   var test_anim2 = animation.solid(engine)
   test_anim2.color = provider2
@@ -259,7 +259,7 @@ def test_sequence_manager_clear_all()
   engine.add(seq_manager2)
   
   # Create test animations and sequences using new parameterized API
-  var provider1 = animation.static_color(engine)
+  var provider1 = animation.color_provider(engine)
   provider1.color = 0xFFFF0000
   var test_anim1 = animation.solid(engine)
   test_anim1.color = provider1
@@ -268,7 +268,7 @@ def test_sequence_manager_clear_all()
   test_anim1.loop = false
   test_anim1.opacity = 255
   
-  var provider2 = animation.static_color(engine)
+  var provider2 = animation.color_provider(engine)
   provider2.color = 0xFF00FF00
   var test_anim2 = animation.solid(engine)
   test_anim2.color = provider2
@@ -324,7 +324,7 @@ def test_sequence_manager_stress()
   engine.on_tick(120000)  # Update engine time
   
   for i : 0..9
-    var provider = animation.static_color(engine)
+    var provider = animation.color_provider(engine)
     provider.color = 0xFF000000 + (i * 0x001100)
     var test_anim = animation.solid(engine)
     test_anim.color = provider

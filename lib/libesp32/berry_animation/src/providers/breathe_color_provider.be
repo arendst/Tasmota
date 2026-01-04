@@ -15,7 +15,7 @@ class breathe_color : animation.oscillator_value
   # Additional parameter definitions for color-specific functionality
   # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited
   static var PARAMS = animation.enc_params({
-    "base_color": {"default": 0xFFFFFFFF},               # The base color to modulate (32-bit ARGB value)
+    "color": {"default": 0xFFFFFFFF},                            # The base color to modulate (32-bit ARGB value)
     "min_brightness": {"min": 0, "max": 255, "default": 0},      # Minimum brightness level (0-255)
     "max_brightness": {"min": 0, "max": 255, "default": 255},    # Maximum brightness level (0-255)
     "curve_factor": {"min": 1, "max": 5, "default": 2}   # Factor to control breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses)
@@ -82,14 +82,14 @@ class breathe_color : animation.oscillator_value
     # Now map the curved value to the brightness range
     var brightness = tasmota.scale_uint(curved_value, 0, 255, self.min_brightness, self.max_brightness)
     
-    # Apply brightness to the base color
-    var current_base_color = self.base_color
+    # Apply brightness to the base color (using inherited 'color' parameter)
+    var current_color = self.color
     
     # Extract RGB components
-    var alpha = (current_base_color >> 24) & 0xFF
-    var red = (current_base_color >> 16) & 0xFF
-    var green = (current_base_color >> 8) & 0xFF
-    var blue = current_base_color & 0xFF
+    var alpha = (current_color >> 24) & 0xFF
+    var red = (current_color >> 16) & 0xFF
+    var green = (current_color >> 8) & 0xFF
+    var blue = current_color & 0xFF
     
     # Apply brightness scaling using tasmota.scale_uint
     red = tasmota.scale_uint(red, 0, 255, 0, brightness)

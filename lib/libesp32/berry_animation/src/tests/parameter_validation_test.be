@@ -217,14 +217,14 @@ def test_dsl_parameter_validation()
   end
   
   # Test valid color provider parameter
-  var valid_color_dsl = "color solid_red = static_color(color = red)\n" +
+  var valid_color_dsl = "color solid_red = color_provider(color = red)\n" +
                         "solid_red.color = blue"
   
   var result2 = animation_dsl.compile(valid_color_dsl)
   assert(result2 != nil, "Valid color provider parameter should compile successfully")
   
   # Test invalid color provider parameter
-  var invalid_color_dsl = "color solid_red = static_color(color = red)\n" +
+  var invalid_color_dsl = "color solid_red = color_provider(color = red)\n" +
                           "solid_red.invalid_param = 123"
   
   try
@@ -358,7 +358,7 @@ def test_dsl_symbol_table_mixed_types()
   assert(result1 != nil, "Animation property assignment should work")
   
   # Test 2: Valid property assignment on color provider (instance in symbol table)
-  var color_property_dsl = "color solid_red = static_color(color = red)\n" +
+  var color_property_dsl = "color solid_red = color_provider(color = red)\n" +
                            "solid_red.color = blue"
   
   var result2 = animation_dsl.compile(color_property_dsl)
@@ -381,7 +381,7 @@ def test_dsl_symbol_table_mixed_types()
   
   # Test 4: Mixed symbol table with sequences and instances
   var mixed_dsl = "animation red_anim = beacon(color = red)\n" +
-                  "color solid_blue = static_color(color = blue)\n" +
+                  "color solid_blue = color_provider(color = blue)\n" +
                   "sequence demo {\n" +
                   "  play red_anim for 2s\n" +
                   "}\n" +
@@ -420,7 +420,7 @@ def test_dsl_identifier_reference_symbol_table()
   assert(result2 != nil, "Parameter validation on referenced animation should work")
   
   # Test 3: Color provider reference should be added to symbol table
-  var color_ref_dsl = "color base_red = static_color(color=red)\n" +
+  var color_ref_dsl = "color base_red = color_provider(color=red)\n" +
                       "color my_red = base_red\n" +
                       "animation red_anim = solid(color=my_red)\n" +
                       "my_red.color = blue"

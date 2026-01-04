@@ -22,6 +22,7 @@ class color_provider : animation.value_provider
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
+    "color": {"default": 0xFFFFFFFF},  # Default to white
     "brightness": {"min": 0, "max": 255, "default": 255}
   })
   
@@ -43,20 +44,24 @@ class color_provider : animation.value_provider
   end
   
   # Produce a color value for any parameter name
-  # This is the main method that subclasses should override
+  # Returns the solid color with brightness applied
   #
-  # @param name: string - Parameter name being requested
-  # @param time_ms: int - Current time in milliseconds
+  # @param name: string - Parameter name being requested (ignored)
+  # @param time_ms: int - Current time in milliseconds (ignored)
   # @return int - Color in ARGB format (0xAARRGGBB)
   def produce_value(name, time_ms)
-    return 0xFFFFFFFF  # Default white
+    var color = self.color
+    var brightness = self.brightness
+    if brightness != 255
+      return self.apply_brightness(color, brightness)
+    end
+    return color
   end
   
-  # Get a color based on a value (0-255 range)
-  # This method is useful for mapping values to colors in different contexts
+  # Get the solid color for a value (ignores the value)
   #
-  # @param value: int/float - Value to map to a color (0-255 range)
-  # @param time_ms: int - Optional current time for time-based effects
+  # @param value: int/float - Value to map to a color (ignored)
+  # @param time_ms: int - Current time in milliseconds (ignored)
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color_for_value(value, time_ms)
     return self.produce_value("color", time_ms)  # Default: use time-based color

@@ -117,8 +117,6 @@ import "providers/color_cycle_color_provider.be" as color_cycle_color_provider
 register_to_animation(color_cycle_color_provider)
 # import "providers/composite_color_provider.be" as composite_color_provider
 # register_to_animation(composite_color_provider)
-import "providers/static_color_provider.be" as static_color_provider
-register_to_animation(static_color_provider)
 import "providers/rich_palette_color_provider.be" as rich_palette_color_provider
 register_to_animation(rich_palette_color_provider)
 import "providers/breathe_color_provider.be" as breathe_color_provider

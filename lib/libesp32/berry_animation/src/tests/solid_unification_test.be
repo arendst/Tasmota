@@ -81,7 +81,7 @@ def test_solid_color_provider()
   print("Testing solid() with color provider...")
   
   # Create a color provider using engine-only constructor
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFFFF00  # Yellow
   
   # Create solid animation with color provider

@@ -36,12 +36,11 @@ parameterized_object (base class with parameter management and playable interfac
     ├── strip_length (provides LED strip length)
     ├── iteration_number (provides sequence iteration number)
     ├── oscillator_value (oscillating values with waveforms)
+    │   └── breathe_color (breathing color effect)
     ├── closure_value (computed values, internal use only)
-    └── color_provider (dynamic color generation)
-        ├── static_color (solid color)
+    └── color_provider (solid color, base for color providers)
         ├── color_cycle (cycles through palette)
-        ├── rich_palette_color (smooth palette transitions)
-        └── breathe_color (breathing color effect)
+        └── rich_palette_color (smooth palette transitions)
 ```
 
 ## Base Classes
@@ -340,42 +339,32 @@ Color providers generate dynamic colors over time, extending value_provider for 
 
 ### color_provider
 
-Base interface for all color providers. Inherits from `value_provider`.
+Base class for color providers that returns a solid color. Inherits from `value_provider`. Can be used directly for static colors or subclassed for dynamic color generation.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `brightness` | int | 255 | 0-255 | Overall brightness scaling for all colors |
+| `color` | int | 0xFFFFFFFF | - | The color to return (32-bit ARGB value) |
+| `brightness` | int | 255 | 0-255 | Overall brightness scaling |
 
 **Static Methods**:
 - `apply_brightness(color, brightness)` - Applies brightness scaling to a color (ARGB format). Only performs scaling if brightness is not 255 (full brightness). This is a static utility method that can be called without an instance.
 
-**Factory**: N/A (base interface)
-
-### static_color
-
-Returns a single, static color. Inherits from `color_provider`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `color` | int | 0xFFFFFFFF | - | The solid color to return |
-| *(inherits brightness from color_provider)* | | | | |
+**Factory**: `animation.color_provider(engine)`
 
 #### Usage Examples
 
 ```berry
 # Using predefined colors
-color static_red = solid(color=red)
-color static_blue = solid(color=blue)
+color static_red = color_provider(color=red)
+color static_blue = color_provider(color=blue)
 
 # Using hex colors
-color static_orange = solid(color=0xFF8C00)
+color static_orange = color_provider(color=0xFF8C00)
 
 # Using custom defined colors
 color accent = 0xFF6B35
-color static_accent = solid(color=accent)
+color static_accent = color_provider(color=accent)
 ```
-
-**Note**: The `solid()` function is the recommended shorthand for `static_color()`.
 
 ### color_cycle
 
@@ -456,16 +445,15 @@ color fire_colors = rich_palette_color(
 
 ### breathe_color
 
-Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `color_provider`.
+Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `oscillator_value`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `base_color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
+| `color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
 | `min_brightness` | int | 0 | 0-255 | Minimum brightness level (breathing effect) |
 | `max_brightness` | int | 255 | 0-255 | Maximum brightness level (breathing effect) |
 | `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
-| *(inherits brightness from color_provider)* | | | | Overall brightness scaling applied after breathing effect |
 | *(inherits all oscillator_value parameters)* | | | | |
 
 **Curve Factor Effects:**
@@ -480,7 +468,7 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 ```berry
 # Natural breathing effect
 color breathing_red = breathe_color(
-  base_color=red,
+  color=red,
   min_brightness=20,
   max_brightness=255,
   duration=4s,
@@ -489,7 +477,7 @@ color breathing_red = breathe_color(
 
 # Fast pulsing effect
 color pulse_blue = breathe_color(
-  base_color=blue,
+  color=blue,
   min_brightness=50,
   max_brightness=200,
   duration=1s,
@@ -498,7 +486,7 @@ color pulse_blue = breathe_color(
 
 # Slow, deep breathing
 color deep_breath = breathe_color(
-  base_color=purple,
+  color=purple,
   min_brightness=5,
   max_brightness=255,
   duration=6s,
@@ -508,7 +496,7 @@ color deep_breath = breathe_color(
 # Using dynamic base color
 color rainbow_cycle = color_cycle(colors=bytes("FF0000FF" "FF00FF00" "FFFF0000"), period=5s)
 color breathing_rainbow = breathe_color(
-  base_color=rainbow_cycle,
+  color=rainbow_cycle,
   min_brightness=30,
   max_brightness=255,
   duration=3s,

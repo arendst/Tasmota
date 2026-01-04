@@ -377,7 +377,7 @@ color rainbow_cycle = color_cycle(
   period=5s
 )
 color breathing_red = breathe_color(
-  base_color=red
+  color=red
   min_brightness=5%
   max_brightness=100%
   duration=3s
@@ -385,7 +385,7 @@ color breathing_red = breathe_color(
 )
 color pulsing_blue = breathe_color(
   curve_factor=1
-  base_color=blue
+  color=blue
   min_brightness=20%
   max_brightness=80%
   duration=1s
@@ -1420,7 +1420,7 @@ Color providers create dynamic colors that change over time:
 
 | Function | Description |
 |----------|-------------|
-| `static_color` | Solid color with optional dynamic opacity |
+| `color_provider` | Solid color (base class for all color providers) |
 | `color_cycle` | Cycles through a palette of colors |
 | `rich_palette_color` | Advanced palette-based color cycling with smooth transitions |
 | `breathe_color` | Breathing/pulsing color effect with brightness modulation |

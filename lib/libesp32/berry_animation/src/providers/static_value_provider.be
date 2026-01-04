@@ -19,41 +19,7 @@ class static_value : animation.value_provider
     "value": {"default": nil, "type": "any"}
   })
   
-  # # Comparison operators to make static_value work with validation code
-  # def <(other)
-  #   return self.value < int(other)
-  # end
-  
-  # def >(other)
-  #   return self.value > int(other)
-  # end
-  
-  # def <=(other)
-  #   return self.value <= int(other)
-  # end
-  
-  # def >=(other)
-  #   return self.value >= int(other)
-  # end
-  
-  # def ==(other)
-  #   if type(other) == 'instance'
-  #     import introspect
-  #     return introspect.toptr(self) == introspect.toptr(other)
-  #   else
-  #     return self.value == int(other)
-  #   end
-  # end
-  
-  # def !=(other)
-  #   if type(other) == 'instance'
-  #     import introspect
-  #     return introspect.toptr(self) != introspect.toptr(other)
-  #   else
-  #     return self.value != int(other)
-  #   end
-  # end
-  
+
   # Produce the static value for any parameter name
   #
   # @param name: string - Parameter name being requested (ignored)
@@ -62,11 +28,6 @@ class static_value : animation.value_provider
   def produce_value(name, time_ms)
     return self.value
   end
-  
-  # String representation of the provider
-  # def tostring()
-  #   return f"static_value(value={self.value})"
-  # end
 end
 
 return {'static_value': static_value}

@@ -21,7 +21,7 @@ var provider = animation.breathe_color(engine)
 print("Created breathe color provider with defaults")
 
 # Test default values
-print(f"Default base_color: 0x{provider.base_color :08x}")
+print(f"Default color: 0x{provider.color :08x}")
 print(f"Default min_brightness: {provider.min_brightness}")
 print(f"Default max_brightness: {provider.max_brightness}")
 print(f"Default duration: {provider.duration}")
@@ -34,12 +34,12 @@ print(f"Inherited max_value: {provider.max_value}")
 
 # Create another breathe color provider and set custom parameters using virtual member assignment
 var blue_breathe = animation.breathe_color(engine)
-blue_breathe.base_color = 0xFF0000FF
+blue_breathe.color = 0xFF0000FF
 blue_breathe.min_brightness = 20
 blue_breathe.max_brightness = 200
 blue_breathe.duration = 4000
 blue_breathe.curve_factor = 3
-print(f"Blue breathe color provider base_color: 0x{blue_breathe.base_color :08x}")
+print(f"Blue breathe color provider color: 0x{blue_breathe.color :08x}")
 print(f"Blue breathe color provider min_brightness: {blue_breathe.min_brightness}")
 print(f"Blue breathe color provider max_brightness: {blue_breathe.max_brightness}")
 print(f"Blue breathe color provider duration: {blue_breathe.duration}")
@@ -47,12 +47,12 @@ print(f"Blue breathe color provider curve_factor: {blue_breathe.curve_factor}")
 
 # Create red breathe color provider with different parameters
 var red_breathe = animation.breathe_color(engine)
-red_breathe.base_color = 0xFFFF0000
+red_breathe.color = 0xFFFF0000
 red_breathe.min_brightness = 10
 red_breathe.max_brightness = 180
 red_breathe.duration = 3000
 red_breathe.curve_factor = 2
-print(f"Red breathe color provider base_color: 0x{red_breathe.base_color :08x}")
+print(f"Red breathe color provider color: 0x{red_breathe.color :08x}")
 
 # Test parameter updates using virtual member assignment
 blue_breathe.min_brightness = 30
@@ -105,7 +105,7 @@ print(f"Color at full cycle: 0x{color_full :08x}")
 
 # Test curve factor effects
 var curve_1_provider = animation.breathe_color(engine)
-curve_1_provider.base_color = 0xFF00FF00  # Green
+curve_1_provider.color = 0xFF00FF00  # Green
 curve_1_provider.curve_factor = 1
 curve_1_provider.duration = 2000
 curve_1_provider.min_brightness = 50  # Set non-zero minimum to see differences
@@ -114,7 +114,7 @@ curve_1_provider.start(engine.time_ms)
 curve_1_provider.produce_value(nil, start_time)   # force first tick
 
 var curve_5_provider = animation.breathe_color(engine)
-curve_5_provider.base_color = 0xFF00FF00  # Green
+curve_5_provider.color = 0xFF00FF00  # Green
 curve_5_provider.curve_factor = 5
 curve_5_provider.duration = 2000
 curve_5_provider.min_brightness = 50  # Set non-zero minimum to see differences
@@ -161,7 +161,7 @@ end
 
 # Test brightness range behavior
 var brightness_test = animation.breathe_color(engine)
-brightness_test.base_color = 0xFFFFFFFF  # White
+brightness_test.color = 0xFFFFFFFF  # White
 brightness_test.min_brightness = 50
 brightness_test.max_brightness = 200
 brightness_test.duration = 1000
@@ -182,7 +182,7 @@ print(f"Max brightness test - expected around 200, got: {max_brightness_actual}"
 
 # Test color preservation (alpha channel should be preserved)
 var alpha_test = animation.breathe_color(engine)
-alpha_test.base_color = 0x80FF0000  # Red with 50% alpha
+alpha_test.color = 0x80FF0000  # Red with 50% alpha
 alpha_test.start(engine.time_ms)
 alpha_test.produce_value(nil, start_time)   # force first tick
 var alpha_color = alpha_test.produce_value("color", engine.time_ms)
@@ -196,7 +196,7 @@ print(f"Provider string representation: {str(blue_breathe)}")
 assert(provider != nil, "Default breathe color provider should be created")
 assert(blue_breathe != nil, "Custom breathe color provider should be created")
 assert(red_breathe != nil, "Red breathe color provider should be created")
-assert(blue_breathe.base_color == 0xFF0000FF, "Blue breathe should have correct base color")
+assert(blue_breathe.color == 0xFF0000FF, "Blue breathe should have correct color")
 assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
 assert(blue_breathe.duration == 3500, "Duration should be updated to 3500")

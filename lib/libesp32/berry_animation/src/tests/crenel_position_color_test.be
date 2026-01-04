@@ -56,7 +56,7 @@ def test_crenel_with_color_provider()
   var blue_color = 0xFF0000FF  # Blue
   
   # Create a solid color provider
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = blue_color
   
   # Create animation with new parameterized pattern
@@ -211,7 +211,7 @@ def test_crenel_set_color_methods()
   assert(result1 == true, "Render with new integer color should succeed")
   
   # Test setting color provider via direct assignment
-  var yellow_provider = animation.static_color(engine)
+  var yellow_provider = animation.color_provider(engine)
   yellow_provider.color = 0xFFFFFF00  # Yellow
   crenel.color = yellow_provider
   crenel.update(1000)
@@ -249,7 +249,7 @@ def test_crenel_tostring()
   print(f"Integer color string: {str_int}")
   
   # Test with color provider
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFF00FF00
   
   var crenel_provider = animation.crenel(engine)
