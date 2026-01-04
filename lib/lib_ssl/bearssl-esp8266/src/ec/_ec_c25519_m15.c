@@ -21,7 +21,7 @@
  */
 
 #if defined(USE_SHA_ROM)
-#if defined(ESP_PLATFORM) && !defined(ESP8266) && !defined(CONFIG_IDF_TARGET_ESP32)
+#if defined(ESP_PLATFORM) && !defined(ESP8266)// && !defined(CONFIG_IDF_TARGET_ESP32)
 
 #if __has_include("soc/sha_caps.h")
 # include "soc/sha_caps.h"
@@ -38,14 +38,37 @@
 
 #define WORDS 8  /* 8×32-bit limbs */
 
-/* Prime p = 2^255 - 19 (little-endian 32-bit limbs) */
-static const uint32_t P_LE[WORDS] = {
-    0xFFFFFFED, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF
-};
-
-/* R^2 mod p (with R = 2^256 mod p = 38) */
-static const uint32_t RR_LE[WORDS] = { 1444, 0,0,0,0,0,0,0 };
+/* 
+ * CONSTANTS SETUP 
+ * ESP32-Original needs 16-word globals for Zero-Copy Hardware access.
+ * Others use standard 8-word constants.
+ */
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    /* 
+     * Prime p = 2^255 - 19 
+     * Defined as 16 words so we can pass it directly to the 512-bit hardware.
+     * Software functions (add_mod etc) will only read the first 8 words (WORDS=8).
+     */
+    static const uint32_t P_LE[16] = {
+        0xFFFFFFED, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+        0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF,
+        0, 0, 0, 0, 0, 0, 0, 0
+    };
+    
+    /* Correction Factor: 2^1024 mod P */
+    static const uint32_t CINV2_1024_LE[16] = {
+        0x001FD110, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+    };
+#else
+    /* STANDARD S2/S3/C3/C6 */
+    static const uint32_t P_LE[WORDS] = {
+        0xFFFFFFED, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+        0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF
+    };
+    /* R^2 mod p (with R = 2^256 mod p = 38) */
+    static const uint32_t RR_LE[WORDS] = { 1444, 0,0,0,0,0,0,0 };
+#endif
 
 /* A24 = 121665 (normal-domain constant) */
 static const uint32_t A24_LE[WORDS] = { 121665, 0,0,0,0,0,0,0 };
@@ -103,11 +126,37 @@ static inline void sub_mod(uint32_t *d, const uint32_t *a, const uint32_t *b) {
 }
 
 static inline void field_mul(uint32_t *dst, const uint32_t *a, const uint32_t *b) {
+#if !defined(CONFIG_IDF_TARGET_ESP32)
     ets_bigint_enable();
     ets_bigint_modmult(a, b, P_LE, MPRIME, RR_LE, WORDS);
     ets_bigint_wait_finish();
     ets_bigint_getz(dst, WORDS);
     ets_bigint_disable();
+#else
+#include "dport_access.h"
+    uint32_t ram_a[16]   __attribute__((aligned(16)));
+    uint32_t ram_b[16]   __attribute__((aligned(16)));
+    uint32_t ram_tmp[16] __attribute__((aligned(16)));
+
+    memcpy(ram_a, a, 32);
+    memset(ram_a + 8, 0, 32);
+    memcpy(ram_b, b, 32);
+    memset(ram_b + 8, 0, 32);
+
+    DPORT_STALL_OTHER_CPU_START();
+    /* Pass 1: A * B * R^-1 -> tmp */
+    ets_bigint_montgomery_mult_prepare(ram_a, ram_b, P_LE, MPRIME, 512, 0);
+    ets_bigint_wait_finish();
+    ets_bigint_montgomery_mult_getz(ram_tmp, 512);
+
+    /* Pass 2: Correction -> tmp */
+    ets_bigint_montgomery_mult_prepare(ram_tmp, CINV2_1024_LE, P_LE, MPRIME, 512, 1);
+    ets_bigint_wait_finish();
+    ets_bigint_montgomery_mult_getz(ram_tmp, 512);
+    DPORT_STALL_OTHER_CPU_END();
+
+    memcpy(dst, ram_tmp, 32);
+#endif
 }
 
 static inline void field_sqr(uint32_t *dst, const uint32_t *a) {
@@ -218,6 +267,9 @@ api_mul(unsigned char *G, size_t Glen,
     uint32_t a[WORDS], aa[WORDS], b[WORDS], bb[WORDS];
     uint32_t c[WORDS], d[WORDS], e[WORDS], da[WORDS], cb[WORDS];
     uint32_t t[WORDS];
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_enable();
+#endif
 
     uint32_t swap = 0;
     for (int i = 254; i >= 0; i--) {
@@ -260,6 +312,10 @@ api_mul(unsigned char *G, size_t Glen,
     uint32_t z2i[WORDS], unorm[WORDS];
     field_inv(z2i, z2);
     field_mul(unorm, x2, z2i);
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_disable();
+#endif
 
     /* Final reduction if needed and serialize */
     if (ge_ct(unorm, P_LE)) {
