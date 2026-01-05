@@ -17,17 +17,17 @@ var red_custom_ = 0xFFFF0000
 var blue_custom_ = 0xFF0000FF
 var green_custom_ = 0xFF00FF00
 # Create animations
-var left_pulse_ = animation.beacon_animation(engine)
+var left_pulse_ = animation.beacon(engine)
 left_pulse_.color = red_custom_
 left_pulse_.pos = 15
 left_pulse_.beacon_size = 15
 left_pulse_.slew_size = 3
-var center_pulse_ = animation.beacon_animation(engine)
+var center_pulse_ = animation.beacon(engine)
 center_pulse_.color = blue_custom_
 center_pulse_.pos = 30
 center_pulse_.beacon_size = 15
 center_pulse_.slew_size = 3
-var right_pulse_ = animation.beacon_animation(engine)
+var right_pulse_ = animation.beacon(engine)
 right_pulse_.color = green_custom_
 right_pulse_.pos = 45
 right_pulse_.beacon_size = 15
@@ -71,9 +71,9 @@ color blue_custom = 0x0000FF
 color green_custom = 0x00FF00
 
 # Create animations
-animation left_pulse = beacon_animation(color=red_custom, pos=15, beacon_size=15, slew_size=3)
-animation center_pulse = beacon_animation(color=blue_custom, pos=30, beacon_size=15, slew_size=3)
-animation right_pulse = beacon_animation(color=green_custom, pos=45, beacon_size=15, slew_size=3)
+animation left_pulse = beacon(color=red_custom, pos=15, beacon_size=15, slew_size=3)
+animation center_pulse = beacon(color=blue_custom, pos=30, beacon_size=15, slew_size=3)
+animation right_pulse = beacon(color=green_custom, pos=45, beacon_size=15, slew_size=3)
 
 # Set different opacities
 left_pulse.opacity = 255    # Full slew_size

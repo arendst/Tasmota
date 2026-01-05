@@ -4,6 +4,6 @@
 set slew = cosine_osc(min_value = 0, max_value = 4, duration = 2s)
 
 # Simple beacon starting at pixel 6 with size of 7 pixels, no border
-animation back = beacon_animation(back_color = blue, color = red,
+animation back = beacon(back_color = blue, color = red,
                                   pos = 5, beacon_size = 7, slew_size = slew)
 run back

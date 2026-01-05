@@ -195,7 +195,7 @@ strip length 60
 color red = 0xFF0000
 set sweeping_position = linear(min_value=0, max_value=59, duration=3000)
 
-animation position_sweep = beacon_animation(
+animation position_sweep = beacon(
   color=red,
   position=sweeping_position,
   beacon_size=3,
@@ -219,7 +219,7 @@ run wave_effect
 color green = 0x00FF00
 set bounce_size = triangle(min_value=1, max_value=8, duration=1000)
 
-animation bouncing_pulse = beacon_animation(
+animation bouncing_pulse = beacon(
   color=green,
   position=30,
   beacon_size=bounce_size,

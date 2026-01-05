@@ -5,8 +5,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:FireAnimation,weak
-class FireAnimation : animation.animation
+class fire : animation.animation
   # Non-parameter instance variables only
   var heat_map         # bytes() buffer storing heat values for each pixel (0-255)
   var current_colors   # bytes() buffer storing ARGB colors (4 bytes per pixel)
@@ -27,6 +26,7 @@ class FireAnimation : animation.animation
   #
   # @param engine: AnimationEngine - The animation engine (required)
   def init(engine)
+    log("ANI: `fire` animation is still in alpha and will be refactored")
     # Call parent constructor with engine
     super(self).init(engine)
     
@@ -182,7 +182,7 @@ class FireAnimation : animation.animation
         # If color is nil, create default fire palette
         if resolved_color == nil
           # Create default fire palette on demand
-          var fire_provider = animation.rich_palette(self.engine)
+          var fire_provider = animation.rich_palette_color(self.engine)
           fire_provider.colors = animation.PALETTE_FIRE
           fire_provider.period = 0  # Use value-based color mapping, not time-based
           fire_provider.transition_type = 1  # Use sine transition (smooth)
@@ -219,7 +219,7 @@ class FireAnimation : animation.animation
   
   # Render the fire to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
@@ -250,11 +250,6 @@ class FireAnimation : animation.animation
     
     return self
   end
-  
-  # String representation of the animation
-  def tostring()
-    return f"FireAnimation(intensity={self.intensity}, flicker_speed={self.flicker_speed}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
-return {'fire_animation': FireAnimation}
+return {'fire': fire}

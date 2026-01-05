@@ -93,7 +93,8 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   55  | USE_EZODO           | xsns_78  | EZODO    | 0x61 - 0x70 |      | Disolved Oxygen sensor
   55  | USE_EZORGB          | xsns_78  | EZORGB   | 0x61 - 0x70 |      | Color sensor
   55  | USE_EZOPMP          | xsns_78  | EZOPMP   | 0x61 - 0x70 |      | Peristaltic Pump
-  56  | USE_SEESAW_SOIL     | xsns_81  | SEESOIL  | 0x36 - 0x39 |      | Adafruit seesaw soil moisture sensor
+  56  | USE_SEESAW_SOIL     | xsns_81  | SEESOIL  | 0x36 - 0x39 |      | Adafruit Seesaw soil moisture & temp sensor
+  56  | USE_SEESAW_ENCODER  | xsns_81  | SEEENC   | 0x36 - 0x39 |      | Adafruit Seesaw rotary encoder
   57  | USE_TOF10120        | xsns_84  | TOF10120 | 0x52        |      | Time-of-flight (ToF) distance sensor
   58  | USE_MPU_ACCEL       | xsns_85  | MPU_ACCEL| 0x68        | Yes  | MPU6886/MPU9250 6-axis MotionTracking sensor from M5Stack
   59  | USE_BM8563          | xdrv_56  | BM8563   | 0x51        | Yes  | BM8563 RTC from M5Stack

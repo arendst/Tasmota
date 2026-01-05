@@ -35,13 +35,13 @@ var eye_color_ = animation.color_cycle(engine)
 eye_color_.colors = eye_palette_
 eye_color_.period = 0
 # Create animations
-var red_eye_ = animation.beacon_animation(engine)
+var red_eye_ = animation.beacon(engine)
 red_eye_.color = eye_color_
 red_eye_.pos = cosine_val_
 red_eye_.beacon_size = 3
 red_eye_.slew_size = 2
 red_eye_.priority = 10
-var pulse_demo_ = animation.pulsating_animation(engine)
+var pulse_demo_ = animation.breathe(engine)
 pulse_demo_.color = 0xFF0000FF
 pulse_demo_.period = 2000
 pulse_demo_.priority = 5
@@ -129,7 +129,7 @@ palette eye_palette = [red, yellow, green, violet]
 color eye_color = color_cycle(colors=eye_palette, period=0)
 
 # Create animations
-animation red_eye = beacon_animation(
+animation red_eye = beacon(
   color=eye_color
   pos=cosine_val
   beacon_size=3
@@ -137,7 +137,7 @@ animation red_eye = beacon_animation(
   priority=10
 )
 
-animation pulse_demo = pulsating_animation(
+animation pulse_demo = breathe(
   color=blue
   period=2s
   priority=5

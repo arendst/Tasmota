@@ -1,7 +1,7 @@
 # Breathe Color Provider for Berry Animation Framework
 #
 # This color provider creates breathing/pulsing color effects by modulating the brightness
-# of a base color over time. It inherits from OscillatorValueProvider to leverage its
+# of a base color over time. It inherits from oscillator_value to leverage its
 # robust time management and waveform generation, then applies the oscillator value
 # as brightness modulation to a base color.
 #
@@ -11,12 +11,11 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BreatheColorProvider,weak
-class BreatheColorProvider : animation.oscillator_value
+class breathe_color : animation.oscillator_value
   # Additional parameter definitions for color-specific functionality
   # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited
   static var PARAMS = animation.enc_params({
-    "base_color": {"default": 0xFFFFFFFF},               # The base color to modulate (32-bit ARGB value)
+    "color": {"default": 0xFFFFFFFF},                            # The base color to modulate (32-bit ARGB value)
     "min_brightness": {"min": 0, "max": 255, "default": 0},      # Minimum brightness level (0-255)
     "max_brightness": {"min": 0, "max": 255, "default": 255},    # Maximum brightness level (0-255)
     "curve_factor": {"min": 1, "max": 5, "default": 2}   # Factor to control breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses)
@@ -27,11 +26,11 @@ class BreatheColorProvider : animation.oscillator_value
   #
   # @param engine: AnimationEngine - The animation engine (required)
   def init(engine)
-    # Call parent constructor (OscillatorValueProvider)
+    # Call parent constructor (oscillator_value)
     super(self).init(engine)
     
     # Configure the inherited oscillator for breathing behavior
-    self.form = animation.COSINE  # Use cosine wave for smooth breathing
+    self.form = 4 #-animation.COSINE-#  # Use cosine wave for smooth breathing
     self.min_value = 0            # Fixed range 0-255 for normalized oscillation
     self.max_value = 255          # Fixed range 0-255 for normalized oscillation
     self.duration = 3000          # Default duration
@@ -43,11 +42,7 @@ class BreatheColorProvider : animation.oscillator_value
     if name == "curve_factor"
       # For curve_factor = 1, use pure cosine
       # For curve_factor > 1, we'll apply the curve in produce_value
-      if value == 1
-        self.form = animation.COSINE
-      else
-        self.form = animation.COSINE  # Still use cosine as base, apply curve later
-      end
+      self.form = 4 #-animation.COSINE-#
     end
     
     # Call parent's parameter change handler
@@ -87,14 +82,14 @@ class BreatheColorProvider : animation.oscillator_value
     # Now map the curved value to the brightness range
     var brightness = tasmota.scale_uint(curved_value, 0, 255, self.min_brightness, self.max_brightness)
     
-    # Apply brightness to the base color
-    var current_base_color = self.base_color
+    # Apply brightness to the base color (using inherited 'color' parameter)
+    var current_color = self.color
     
     # Extract RGB components
-    var alpha = (current_base_color >> 24) & 0xFF
-    var red = (current_base_color >> 16) & 0xFF
-    var green = (current_base_color >> 8) & 0xFF
-    var blue = current_base_color & 0xFF
+    var alpha = (current_color >> 24) & 0xFF
+    var red = (current_color >> 16) & 0xFF
+    var green = (current_color >> 8) & 0xFF
+    var blue = current_color & 0xFF
     
     # Apply brightness scaling using tasmota.scale_uint
     red = tasmota.scale_uint(red, 0, 255, 0, brightness)
@@ -104,19 +99,6 @@ class BreatheColorProvider : animation.oscillator_value
     # Reconstruct color
     return (alpha << 24) | (red << 16) | (green << 8) | blue
   end
-  
-  # String representation of the color provider
-  def tostring()
-    return f"BreatheColorProvider(base_color=0x{self.base_color :08x}, min_brightness={self.min_brightness}, max_brightness={self.max_brightness}, duration={self.duration}, curve_factor={self.curve_factor})"
-  end
 end
 
-# Factory function to create a pulsating color provider (sine wave)
-def pulsating_color_provider(engine)
-  var provider = animation.breathe_color(engine)
-  provider.curve_factor = 1  # Pure cosine wave for pulsing effect
-  provider.duration = 1000   # Faster default duration for pulsing
-  return provider
-end
-
-return {'breathe_color': BreatheColorProvider, 'pulsating_color': pulsating_color_provider}
+return {'breathe_color': breathe_color}

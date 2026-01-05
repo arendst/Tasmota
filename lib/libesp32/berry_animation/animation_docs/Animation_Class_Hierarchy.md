@@ -1,6 +1,6 @@
 # Berry Animation Framework - Class Hierarchy and Parameters Reference
 
-This document provides a comprehensive reference for all classes in the Berry Animation Framework that extend `ParameterizedObject`, including their parameters and factory functions.
+This document provides a comprehensive reference for all classes in the Berry Animation Framework that extend `parameterized_object`, including their parameters and factory functions.
 
 ## Table of Contents
 
@@ -14,42 +14,38 @@ This document provides a comprehensive reference for all classes in the Berry An
 ## Class Hierarchy
 
 ```
-ParameterizedObject (base class with parameter management and playable interface)
+parameterized_object (base class with parameter management and playable interface)
 ├── Animation (unified base class for all visual elements)
-│   ├── EngineProxy (combines rendering and orchestration)
+│   ├── engine_proxy (combines rendering and orchestration)
 │   │   └── (user-defined template animations)
-│   ├── SolidAnimation (solid color fill)
-│   ├── BeaconAnimation (pulse at specific position)
-│   ├── CrenelPositionAnimation (crenel/square wave pattern)
-│   ├── BreatheAnimation (breathing effect)
-│   ├── PaletteGradientAnimation (gradient patterns with palette colors)
-│   │   ├── PaletteMeterAnimation (meter/bar patterns)
-│   │   └── GradientMeterAnimation (VU meter with gradient colors and peak hold)
-│   ├── CometAnimation (moving comet with tail)
-│   ├── FireAnimation (realistic fire effect)
-│   ├── TwinkleAnimation (twinkling stars effect)
-│   ├── GradientAnimation (color gradients)
-│   ├── NoiseAnimation (Perlin noise patterns)
-│   ├── WaveAnimation (wave motion effects)
-│   └── RichPaletteAnimation (smooth palette transitions)
-├── SequenceManager (orchestrates animation sequences)
-└── ValueProvider (dynamic value generation)
-    ├── StaticValueProvider (wraps static values)
-    ├── StripLengthProvider (provides LED strip length)
-    ├── IterationNumberProvider (provides sequence iteration number)
-    ├── OscillatorValueProvider (oscillating values with waveforms)
-    ├── ClosureValueProvider (computed values, internal use only)
-    └── ColorProvider (dynamic color generation)
-        ├── StaticColorProvider (solid color)
-        ├── ColorCycleColorProvider (cycles through palette)
-        ├── RichPaletteColorProvider (smooth palette transitions)
-        ├── BreatheColorProvider (breathing color effect)
-        └── CompositeColorProvider (blends multiple colors)
+│   ├── solid (solid color fill)
+│   ├── crenel (crenel/square wave pattern)
+│   ├── breathe (breathing effect)
+│   ├── beacon (pulse at specific position)
+│   │   └── gradient (linear/radial color gradients)
+│   ├── palette_gradient (gradient patterns with palette colors)
+│   │   └── palette_meter (VU meter with gradient colors and peak hold)
+│   ├── comet (moving comet with tail)
+│   ├── fire (realistic fire effect)
+│   ├── twinkle (twinkling stars effect)
+│   ├── wave (wave motion effects)
+│   └── rich_palette (smooth palette transitions)
+├── sequence_manager (orchestrates animation sequences)
+└── value_provider (dynamic value generation)
+    ├── static_value (wraps static values)
+    ├── strip_length (provides LED strip length)
+    ├── iteration_number (provides sequence iteration number)
+    ├── oscillator_value (oscillating values with waveforms)
+    │   └── breathe_color (breathing color effect)
+    ├── closure_value (computed values, internal use only)
+    └── color_provider (solid color, base for color providers)
+        ├── color_cycle (cycles through palette)
+        └── rich_palette_color (smooth palette transitions)
 ```
 
 ## Base Classes
 
-### ParameterizedObject
+### parameterized_object
 
 Base class for all parameterized objects in the framework. Provides parameter management with validation, storage, and retrieval, as well as the playable interface for lifecycle management (start/stop/update).
 
@@ -72,7 +68,7 @@ This unified base class enables:
 
 ### Animation
 
-Unified base class for all visual elements. Inherits from `ParameterizedObject`.
+Unified base class for all visual elements. Inherits from `parameterized_object`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -81,7 +77,7 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 | `priority` | int | 10 | 0-255 | Rendering priority (higher = on top) |
 | `duration` | int | 0 | min: 0 | Animation duration in ms (0 = infinite) |
 | `loop` | bool | false | - | Whether to loop when duration is reached |
-| `opacity` | any | 255 | - | Animation opacity (number, FrameBuffer, or Animation) |
+| `opacity` | any | 255 | - | Animation opacity (number, frame_buffer, or Animation) |
 | `color` | int | 0xFFFFFFFF | - | Base color in ARGB format |
 
 **Special Behavior**: Setting `is_running = true/false` starts/stops the animation.
@@ -90,7 +86,7 @@ Unified base class for all visual elements. Inherits from `ParameterizedObject`.
 
 **Factory**: `animation.animation(engine)`
 
-### EngineProxy
+### engine_proxy
 
 A specialized animation class that combines rendering and orchestration capabilities. Extends `Animation` and can contain child animations and sequences. Inherits from `Animation`.
 
@@ -120,7 +116,7 @@ A specialized animation class that combines rendering and orchestration capabili
 
 ### Template Animations
 
-Template animations are user-defined classes that extend `EngineProxy`, created using the DSL's `template animation` syntax. They provide reusable, parameterized animation patterns.
+Template animations are user-defined classes that extend `engine_proxy`, created using the DSL's `template animation` syntax. They provide reusable, parameterized animation patterns.
 
 **DSL Definition**:
 ```berry
@@ -158,7 +154,7 @@ Template animation parameters support all standard constraints:
 - `nillable` - Whether parameter can be nil (true/false)
 
 **Implicit Parameters**:
-Template animations automatically inherit parameters from the `EngineProxy` class hierarchy without explicit declaration:
+Template animations automatically inherit parameters from the `engine_proxy` class hierarchy without explicit declaration:
 - `id` (string, default: "animation") - Animation name
 - `priority` (int, default: 10) - Rendering priority
 - `duration` (int, default: 0) - Animation duration in milliseconds
@@ -204,9 +200,9 @@ run my_shutter
 
 Value providers generate dynamic values over time for use as animation parameters.
 
-### ValueProvider
+### value_provider
 
-Base interface for all value providers. Inherits from `ParameterizedObject`.
+Base interface for all value providers. Inherits from `parameterized_object`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -218,9 +214,9 @@ Base interface for all value providers. Inherits from `ParameterizedObject`.
 
 **Factory**: N/A (base interface)
 
-### StaticValueProvider
+### static_value
 
-Wraps static values to provide ValueProvider interface. Inherits from `ValueProvider`.
+Wraps static values to provide value_provider interface. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -228,9 +224,9 @@ Wraps static values to provide ValueProvider interface. Inherits from `ValueProv
 
 **Factory**: `animation.static_value(engine)`
 
-### StripLengthProvider
+### strip_length
 
-Provides access to the LED strip length as a dynamic value. Inherits from `ValueProvider`.
+Provides access to the LED strip length as a dynamic value. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -240,9 +236,9 @@ Provides access to the LED strip length as a dynamic value. Inherits from `Value
 
 **Factory**: `animation.strip_length(engine)`
 
-### OscillatorValueProvider
+### oscillator_value
 
-Generates oscillating values using various waveforms. Inherits from `ValueProvider`.
+Generates oscillating values using various waveforms. Inherits from `value_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -270,7 +266,7 @@ Generates oscillating values using various waveforms. Inherits from `ValueProvid
 
 **See Also**: [Oscillation Patterns](Oscillation_Patterns.md) - Visual examples and usage patterns for oscillation waveforms
 
-### ClosureValueProvider
+### closure_value
 
 **⚠️ INTERNAL USE ONLY - NOT FOR DIRECT USE**
 
@@ -284,7 +280,7 @@ Wraps a closure/function as a value provider for internal transpiler use. This c
 
 #### Mathematical Helper Methods
 
-The ClosureValueProvider includes built-in mathematical helper methods that can be used within closures for computed values:
+The closure_value includes built-in mathematical helper methods that can be used within closures for computed values:
 
 | Method | Description | Parameters | Return Type | Example |
 |--------|-------------|------------|-------------|---------|
@@ -307,7 +303,7 @@ The ClosureValueProvider includes built-in mathematical helper methods that can 
 
 #### Closure Signature
 
-Closures used with ClosureValueProvider must follow this signature:
+Closures used with closure_value must follow this signature:
 ```berry
 def closure_func(engine, param_name, time_ms)
   # engine: AnimationEngine reference
@@ -324,7 +320,7 @@ These methods are automatically available in DSL computed expressions:
 ```berry
 # Example: Dynamic brightness based on strip position
 set strip_len = strip_length()
-animation pulse = pulsating_animation(
+animation pulse = breathe(
   color=red
   brightness=strip_len / 4 + 50    # Uses built-in arithmetic
 )
@@ -335,54 +331,44 @@ animation pulse = pulsating_animation(
 
 **Factory**: `animation.closure_value(engine)` (internal use only)
 
-**Note**: Users should not create ClosureValueProvider instances directly. Instead, use the DSL's computed value syntax which automatically creates these providers as needed.
+**Note**: Users should not create closure_value instances directly. Instead, use the DSL's computed value syntax which automatically creates these providers as needed.
 
 ## Color Providers
 
-Color providers generate dynamic colors over time, extending ValueProvider for color-specific functionality.
+Color providers generate dynamic colors over time, extending value_provider for color-specific functionality.
 
-### ColorProvider
+### color_provider
 
-Base interface for all color providers. Inherits from `ValueProvider`.
+Base class for color providers that returns a solid color. Inherits from `value_provider`. Can be used directly for static colors or subclassed for dynamic color generation.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `brightness` | int | 255 | 0-255 | Overall brightness scaling for all colors |
+| `color` | int | 0xFFFFFFFF | - | The color to return (32-bit ARGB value) |
+| `brightness` | int | 255 | 0-255 | Overall brightness scaling |
 
 **Static Methods**:
 - `apply_brightness(color, brightness)` - Applies brightness scaling to a color (ARGB format). Only performs scaling if brightness is not 255 (full brightness). This is a static utility method that can be called without an instance.
 
-**Factory**: N/A (base interface)
-
-### StaticColorProvider
-
-Returns a single, static color. Inherits from `ColorProvider`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `color` | int | 0xFFFFFFFF | - | The solid color to return |
-| *(inherits brightness from ColorProvider)* | | | | |
+**Factory**: `animation.color_provider(engine)`
 
 #### Usage Examples
 
 ```berry
 # Using predefined colors
-color static_red = solid(color=red)
-color static_blue = solid(color=blue)
+color static_red = color_provider(color=red)
+color static_blue = color_provider(color=blue)
 
 # Using hex colors
-color static_orange = solid(color=0xFF8C00)
+color static_orange = color_provider(color=0xFF8C00)
 
 # Using custom defined colors
 color accent = 0xFF6B35
-color static_accent = solid(color=accent)
+color static_accent = color_provider(color=accent)
 ```
 
-**Note**: The `solid()` function is the recommended shorthand for `static_color()`.
+### color_cycle
 
-### ColorCycleColorProvider
-
-Cycles through a palette of colors with brutal switching. Inherits from `ColorProvider`.
+Cycles through a palette of colors with brutal switching. Inherits from `color_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -390,7 +376,7 @@ Cycles through a palette of colors with brutal switching. Inherits from `ColorPr
 | `period` | int | 5000 | min: 0 | Cycle time in ms (0 = manual only) |
 | `next` | int | 0 | - | Write 1 to move to next color manually, or any number to go forward or backwards by `n` colors |
 | `palette_size` | int | 3 | read-only | Number of colors in the palette (automatically updated when palette changes) |
-| *(inherits brightness from ColorProvider)* | | | | |
+| *(inherits brightness from color_provider)* | | | | |
 
 **Note**: The `get_color_for_value()` method accepts values in the 0-255 range for value-based color mapping.
 
@@ -418,16 +404,16 @@ color mixed_cycle = color_cycle(
 )
 ```
 
-### RichPaletteColorProvider
+### rich_palette_color
 
-Generates colors from predefined palettes with smooth transitions and professional color schemes. Inherits from `ColorProvider`.
+Generates colors from predefined palettes with smooth transitions and professional color schemes. Inherits from `color_provider`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `colors` | bytes | rainbow palette | - | Palette bytes or predefined palette constant |
 | `period` | int | 5000 | min: 0 | Cycle time in ms (0 = value-based only) |
 | `transition_type` | int | animation.LINEAR | enum: [animation.LINEAR, animation.SINE] | LINEAR=constant speed, SINE=smooth ease-in/ease-out |
-| *(inherits brightness from ColorProvider)* | | | | |
+| *(inherits brightness from color_provider)* | | | | |
 
 #### Available Predefined Palettes
 
@@ -441,7 +427,7 @@ Generates colors from predefined palettes with smooth transitions and profession
 
 ```berry
 # Rainbow palette with smooth ease-in/ease-out transitions
-color rainbow_colors = rich_palette(
+color rainbow_colors = rich_palette_color(
   colors=PALETTE_RAINBOW,
   period=5s,
   transition_type=SINE,
@@ -449,7 +435,7 @@ color rainbow_colors = rich_palette(
 )
 
 # Fire effect with linear (constant speed) transitions
-color fire_colors = rich_palette(
+color fire_colors = rich_palette_color(
   colors=PALETTE_FIRE,
   period=3s,
   transition_type=LINEAR,
@@ -457,23 +443,22 @@ color fire_colors = rich_palette(
 )
 ```
 
-### BreatheColorProvider
+### breathe_color
 
-Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `ColorProvider`.
+Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `oscillator_value`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `base_color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
+| `color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
 | `min_brightness` | int | 0 | 0-255 | Minimum brightness level (breathing effect) |
 | `max_brightness` | int | 255 | 0-255 | Maximum brightness level (breathing effect) |
 | `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
-| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied after breathing effect |
-| *(inherits all OscillatorValueProvider parameters)* | | | | |
+| *(inherits all oscillator_value parameters)* | | | | |
 
 **Curve Factor Effects:**
-- `1`: Pure cosine wave (smooth pulsing, equivalent to pulsating_color)
-- `2`: Natural breathing with slight pauses at peaks
+- `1`: Pure cosine wave (smooth pulsing)
+- `2`: Natural breathing with slight pauses at peaks (default)
 - `3`: More pronounced breathing with longer pauses
 - `4`: Deep breathing with extended pauses
 - `5`: Most pronounced pauses at peaks (dramatic breathing effect)
@@ -483,16 +468,16 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 ```berry
 # Natural breathing effect
 color breathing_red = breathe_color(
-  base_color=red,
+  color=red,
   min_brightness=20,
   max_brightness=255,
   duration=4s,
   curve_factor=3
 )
 
-# Fast pulsing effect (equivalent to pulsating_color)
+# Fast pulsing effect
 color pulse_blue = breathe_color(
-  base_color=blue,
+  color=blue,
   min_brightness=50,
   max_brightness=200,
   duration=1s,
@@ -501,7 +486,7 @@ color pulse_blue = breathe_color(
 
 # Slow, deep breathing
 color deep_breath = breathe_color(
-  base_color=purple,
+  color=purple,
   min_brightness=5,
   max_brightness=255,
   duration=6s,
@@ -511,7 +496,7 @@ color deep_breath = breathe_color(
 # Using dynamic base color
 color rainbow_cycle = color_cycle(colors=bytes("FF0000FF" "FF00FF00" "FFFF0000"), period=5s)
 color breathing_rainbow = breathe_color(
-  base_color=rainbow_cycle,
+  color=rainbow_cycle,
   min_brightness=30,
   max_brightness=255,
   duration=3s,
@@ -519,26 +504,13 @@ color breathing_rainbow = breathe_color(
 )
 ```
 
-**Factories**: `animation.breathe_color(engine)`, `animation.pulsating_color(engine)`
-
-**Note**: The `pulsating_color()` factory creates a BreatheColorProvider with `curve_factor=1` and `duration=1000ms` for fast pulsing effects.
-
-### CompositeColorProvider
-
-Combines multiple color providers with blending. Inherits from `ColorProvider`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `blend_mode` | int | 0 | enum: [0,1,2] | 0=overlay, 1=add, 2=multiply |
-| *(inherits brightness from ColorProvider)* | | | | Overall brightness scaling applied to final composite color |
-
-**Factory**: `animation.composite_color(engine)`
+**Factories**: `animation.breathe_color(engine)`
 
 ## Animation Classes
 
 All animation classes extend the base `Animation` class and inherit its parameters.
 
-### BreatheAnimation
+### breathe
 
 Creates a smooth breathing effect with natural breathing curves. Inherits from `Animation`.
 
@@ -551,9 +523,9 @@ Creates a smooth breathing effect with natural breathing curves. Inherits from `
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (higher = sharper) |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.breathe_animation(engine)`
+**Factory**: `animation.breathe(engine)`
 
-### CometAnimation
+### comet
 
 Creates a comet effect with a bright head and fading tail. Inherits from `Animation`.
 
@@ -567,12 +539,12 @@ Creates a comet effect with a bright head and fading tail. Inherits from `Animat
 | `fade_factor` | int | 179 | 0-255 | How quickly the tail fades |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.comet_animation(engine)`
+**Factory**: `animation.comet(engine)`
 
 
 
 
-### FireAnimation
+### fire
 
 Creates a realistic fire effect with flickering flames. Inherits from `Animation`.
 
@@ -586,33 +558,39 @@ Creates a realistic fire effect with flickering flames. Inherits from `Animation
 | `sparking_rate` | int | 120 | 0-255 | Rate of new spark generation |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.fire_animation(engine)`
+**Factory**: `animation.fire(engine)`
 
-### GradientAnimation
+### gradient
 
-Creates smooth color gradients that can be linear or radial. Inherits from `Animation`.
+Creates smooth two-color gradients. Subclass of `beacon` that uses beacon slew regions to create gradient effects.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| `color` | instance | nil | nillable | Color provider (nil = rainbow gradient) |
-| `gradient_type` | int | 0 | 0-1 | 0=linear, 1=radial |
-| `direction` | int | 0 | 0-255 | Gradient direction/orientation |
-| `center_pos` | int | 128 | 0-255 | Center position for radial gradients |
-| `spread` | int | 255 | 1-255 | Gradient spread/compression |
-| `movement_speed` | int | 0 | 0-255 | Speed of gradient movement |
-| *(inherits all Animation parameters)* | | | | |
+| `color1` | int | 0xFFFF0000 | - | First color (default red) |
+| `color2` | int | 0xFF0000FF | - | Second color (default blue) |
+| `direction` | int | 0 | enum: [0, 1] | 0=forward (color1→color2), 1=reverse (color2→color1) |
+| `gradient_type` | int | 0 | enum: [0, 1] | 0=linear, 1=radial |
+| *(inherits all beacon parameters)* | | | | |
 
-**Factories**: `animation.gradient_animation(engine)`, `animation.gradient_rainbow_linear(engine)`, `animation.gradient_rainbow_radial(engine)`, `animation.gradient_two_color_linear(engine)`
+**Gradient Types:**
+- **Linear (0)**: Creates a 2-color gradient from `color1` to `color2` (or reversed if `direction=1`). Implemented as the left slew of a large beacon positioned at the right edge.
+- **Radial (1)**: Creates a symmetric gradient with `color1` at center and `color2` at edges (or reversed if `direction=1`). Implemented as a centered beacon with size=1 and slew regions extending to the edges.
 
-### GradientMeterAnimation
+**Implementation Details:**
+- Linear gradient uses a beacon with `beacon_size=1000` (off-screen) and `slew_size=strip_length`
+- Radial gradient uses a centered beacon with `beacon_size=1` and `slew_size=strip_length/2`
 
-VU meter style animation that displays a gradient-colored bar from the start of the strip up to a configurable level. Includes optional peak hold indicator. Inherits from `PaletteGradientAnimation`.
+**Factory**: `animation.gradient(engine)`
+
+### palette_meter
+
+VU meter style animation that displays a gradient-colored bar from the start of the strip up to a configurable level. Includes optional peak hold indicator. Inherits from `palette_gradient`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `level` | int | 255 | 0-255 | Current meter level (0=empty, 255=full) |
 | `peak_hold` | int | 1000 | min: 0 | Peak hold time in ms (0=disabled) |
-| *(inherits all PaletteGradientAnimation parameters)* | | | | |
+| *(inherits all palette_gradient parameters)* | | | | |
 
 #### Visual Representation
 
@@ -628,13 +606,13 @@ filled gradient area
 
 ```berry
 # Simple meter with rainbow gradient
-color rainbow = rich_palette()
+color rainbow = rich_palette_color()
 animation meter = gradient_meter_animation()
 meter.color_source = rainbow
 meter.level = 128
 
 # Meter with peak hold (1 second)
-color fire_colors = rich_palette(colors=PALETTE_FIRE)
+color fire_colors = rich_palette_color(colors=PALETTE_FIRE)
 animation vu_meter = gradient_meter_animation(peak_hold=1000)
 vu_meter.color_source = fire_colors
 
@@ -646,76 +624,6 @@ audio_meter.level = audio_level
 ```
 
 **Factory**: `animation.gradient_meter_animation(engine)`
-
-### NoiseAnimation
-
-Creates pseudo-random noise patterns with configurable scale, speed, and fractal complexity. Perfect for organic, natural-looking effects like clouds, fire textures, or abstract patterns. Inherits from `Animation`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `color` | instance | nil | - | Color provider for noise mapping (nil = rainbow) |
-| `scale` | int | 50 | 1-255 | Noise scale/frequency (lower = larger patterns) |
-| `speed` | int | 30 | 0-255 | Animation speed (0 = static pattern) |
-| `octaves` | int | 1 | 1-4 | Number of noise octaves for fractal complexity |
-| `persistence` | int | 128 | 0-255 | How much each octave contributes to final pattern |
-| `seed` | int | 12345 | 0-65535 | Random seed for reproducible patterns |
-| *(inherits all Animation parameters)* | | | | |
-
-#### Noise Characteristics
-
-**Scale Effects:**
-- **Low scale (10-30)**: Large, flowing patterns
-- **Medium scale (40-80)**: Balanced detail and flow  
-- **High scale (100-200)**: Fine, detailed textures
-
-**Octave Effects:**
-- **1 octave**: Smooth, simple patterns
-- **2 octaves**: Added medium-frequency detail
-- **3+ octaves**: Complex, natural-looking textures
-
-**Speed Effects:**
-- **Static (0)**: Fixed pattern for backgrounds
-- **Slow (10-40)**: Gentle, organic movement
-- **Fast (80-200)**: Dynamic, energetic patterns
-
-#### Usage Examples
-
-```berry
-# Rainbow noise with medium detail
-animation rainbow_noise = noise_animation(
-  scale=60,
-  speed=40,
-  octaves=1
-)
-
-# Blue fire texture with fractal detail
-color blue_fire = 0xFF0066FF
-animation blue_texture = noise_animation(
-  color=blue_fire,
-  scale=120,
-  speed=60,
-  octaves=3,
-  persistence=100
-)
-
-# Static cloud pattern
-animation cloud_pattern = noise_animation(
-  color=white,
-  scale=30,
-  speed=0,
-  octaves=2
-)
-```
-
-#### Common Use Cases
-
-- **Ambient Lighting**: Slow, low-scale noise for background ambiance
-- **Fire Effects**: Orange/red colors with medium scale and speed
-- **Water Effects**: Blue/cyan colors with flowing movement
-- **Cloud Simulation**: White/gray colors with large-scale patterns
-- **Abstract Art**: Rainbow colors with high detail and multiple octaves
-
-
 
 ### PulseAnimation
 
@@ -729,14 +637,15 @@ Creates a pulsing effect oscillating between min and max brightness. Inherits fr
 | `period` | int | 1000 | min: 100 | Pulse period in milliseconds |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factory**: `animation.pulsating_animation(engine)`
+**Factory**: `animation.breathe(engine)`
 
-### BeaconAnimation
+### beacon
 
 Creates a pulse effect at a specific position with optional fade regions. Inherits from `Animation`.
 
 #### Visual Pattern
 
+**right_edge=0 (default, left edge):**
 ```
          pos (1)
            |
@@ -748,8 +657,20 @@ Creates a pulse effect at a specific position with optional fade regions. Inheri
          |2|  3  |2|
 ```
 
+**right_edge=1 (right edge):**
+```
+                        pos (1)
+                          |
+                          v
+           _______        |
+          /       \       |
+  _______/         \______|__
+         | |     | |
+         |2|  3  |2|
+```
+
 Where:
-1. `pos` - Start of the pulse (in pixels)
+1. `pos` - Position of the beacon edge (left edge for right_edge=0, right edge for right_edge=1)
 2. `slew_size` - Number of pixels to fade from back to fore color (can be 0)
 3. `beacon_size` - Number of pixels of the pulse
 
@@ -764,32 +685,55 @@ The pulse consists of:
 |-----------|------|---------|-------------|-------------|
 | `color` | int | 0xFFFFFFFF | - | Pulse color in ARGB format |
 | `back_color` | int | 0xFF000000 | - | Background color in ARGB format |
-| `pos` | int | 0 | - | Pulse start position in pixels |
+| `pos` | int | 0 | - | Beacon edge position (left edge for right_edge=0, right edge for right_edge=1) |
 | `beacon_size` | int | 1 | min: 0 | Size of core pulse in pixels |
 | `slew_size` | int | 0 | min: 0 | Fade region size on each side in pixels |
+| `right_edge` | int | 0 | enum: [0, 1] | 0=left edge (default), 1=right edge |
 | *(inherits all Animation parameters)* | | | | |
+
+#### right_edge Behavior
+
+- **right_edge=0 (default)**: `pos` specifies the left edge of the beacon. `pos=0` places the beacon starting at the leftmost pixel.
+- **right_edge=1**: `pos` specifies the right edge of the beacon from the right side of the strip. `pos=0` places the beacon's right edge at the rightmost pixel.
+
+The effective left position is calculated as:
+- `right_edge=0`: `effective_pos = pos`
+- `right_edge=1`: `effective_pos = strip_length - pos - beacon_size`
 
 #### Pattern Behavior
 
 - **Sharp Pulse** (`slew_size = 0`): Rectangular pulse with hard edges
 - **Soft Pulse** (`slew_size > 0`): Pulse with smooth fade-in/fade-out regions
-- **Positioning**: `pos` defines the start of the core pulse region
+- **Positioning**: `pos` defines the beacon edge from the specified side
 - **Fade Calculation**: Linear fade from full brightness to background color
 - **Boundary Handling**: Fade regions are clipped to frame boundaries
 
 #### Usage Examples
 
 ```berry
-# Sharp pulse at center
-animation sharp_pulse = beacon_animation(
+# Sharp pulse at left edge (right_edge=0, default)
+animation left_pulse = beacon(
   color=red,
-  pos=10,
+  pos=0,
   beacon_size=3,
-  slew_size=0
+  slew_size=0,
+  right_edge=0
 )
+# Shows 3 red pixels at positions 0, 1, 2
+
+# Pulse from right edge
+animation right_pulse = beacon(
+  color=blue,
+  pos=0,
+  beacon_size=3,
+  slew_size=0,
+  right_edge=1
+)
+# With pos=0 and right_edge=1, shows 3 pixels at the right edge
+# (positions strip_length-3, strip_length-2, strip_length-1)
 
 # Soft pulse with fade regions
-animation soft_pulse = beacon_animation(
+animation soft_pulse = beacon(
   color=green,
   pos=5,
   beacon_size=2,
@@ -799,7 +743,7 @@ animation soft_pulse = beacon_animation(
 
 # Spotlight effect
 color dark_blue = 0xFF000040
-animation spotlight = beacon_animation(
+animation spotlight = beacon(
   color=white,
   back_color=dark_blue,
   pos=15,
@@ -815,7 +759,7 @@ run spotlight
 **Spotlight Effects:**
 ```berry
 # Moving spotlight with soft edges
-animation moving_spotlight = beacon_animation(
+animation moving_spotlight = beacon(
   color=white,
   back_color=0xFF000040,
   beacon_size=1,
@@ -827,7 +771,7 @@ moving_spotlight.pos = triangle(min_value=0, max_value=29, period=3s)
 **Position Markers:**
 ```berry
 # Sharp position marker
-animation position_marker = beacon_animation(
+animation position_marker = beacon(
   color=red,
   pos=15,
   beacon_size=1,
@@ -838,7 +782,7 @@ animation position_marker = beacon_animation(
 **Breathing Spots:**
 ```berry
 # Breathing effect at specific position
-animation breathing_spot = beacon_animation(
+animation breathing_spot = beacon(
   color=blue,
   pos=10,
   beacon_size=3,
@@ -847,9 +791,33 @@ animation breathing_spot = beacon_animation(
 breathing_spot.opacity = smooth(min_value=50, max_value=255, period=2s)
 ```
 
-**Factory**: `animation.beacon_animation(engine)`
+**Bidirectional Animations:**
+```berry
+# Two beacons moving from opposite edges toward center
+set strip_len = strip_length()
+set sweep = triangle(min_value=0, max_value=strip_len/2, period=2s)
 
-### CrenelPositionAnimation
+animation left_beacon = beacon(
+  color=red,
+  beacon_size=2,
+  right_edge=0
+)
+left_beacon.pos = sweep
+
+animation right_beacon = beacon(
+  color=blue,
+  beacon_size=2,
+  right_edge=1
+)
+right_beacon.pos = sweep
+
+run left_beacon
+run right_beacon
+```
+
+**Factory**: `animation.beacon(engine)`
+
+### crenel
 
 Creates a crenel (square wave) pattern with repeating rectangular pulses. Inherits from `Animation`.
 
@@ -906,7 +874,7 @@ The full period of the pattern is `pulse_size + low_size` pixels.
 **Status Indicators:**
 ```berry
 # Slow blinking pattern for status indication
-animation status_indicator = crenel_animation(
+animation status_indicator = crenel(
   color=green,
   pulse_size=1,
   low_size=9
@@ -916,7 +884,7 @@ animation status_indicator = crenel_animation(
 **Rhythmic Effects:**
 ```berry
 # Fast rhythmic pattern
-animation rhythm_pattern = crenel_animation(
+animation rhythm_pattern = crenel(
   color=red,
   pulse_size=2,
   low_size=2
@@ -927,7 +895,7 @@ animation rhythm_pattern = crenel_animation(
 ```berry
 # Decorative border pattern
 color gold = 0xFFFFD700
-animation border_pattern = crenel_animation(
+animation border_pattern = crenel(
   color=gold,
   pulse_size=3,
   low_size=1,
@@ -938,7 +906,7 @@ animation border_pattern = crenel_animation(
 **Progress Indicators:**
 ```berry
 # Progress bar with limited pulses
-animation progress_bar = crenel_animation(
+animation progress_bar = crenel(
   color=0xFF0080FF,
   pulse_size=2,
   low_size=1,
@@ -954,9 +922,9 @@ animation progress_bar = crenel_animation(
 - **Framework Integration**: Seamless integration with animation engine
 - **Testing**: Comprehensive test suite covering edge cases and performance
 
-**Factory**: `animation.crenel_animation(engine)`
+**Factory**: `animation.crenel(engine)`
 
-### RichPaletteAnimation
+### rich_palette
 
 Creates smooth color transitions using rich palette data with direct parameter access. Inherits from `Animation`.
 
@@ -970,12 +938,12 @@ Creates smooth color transitions using rich palette data with direct parameter a
 
 **Special Features**: 
 - Direct parameter access (set `anim.colors` instead of `anim.color.colors`)
-- Parameters are automatically forwarded to internal `RichPaletteColorProvider`
+- Parameters are automatically forwarded to internal `rich_palette_color`
 - Access to specialized methods via `anim.color_provider.method_name()`
 
-**Factory**: `animation.rich_palette_animation(engine)`
+**Factory**: `animation.rich_palette(engine)`
 
-### TwinkleAnimation
+### twinkle
 
 Creates a twinkling stars effect with random lights appearing and fading. Inherits from `Animation`.
 
@@ -989,9 +957,9 @@ Creates a twinkling stars effect with random lights appearing and fading. Inheri
 | `max_brightness` | int | 255 | 0-255 | Maximum twinkle brightness |
 | *(inherits all Animation parameters)* | | | | |
 
-**Factories**: `animation.twinkle_animation(engine)`, `animation.twinkle_classic(engine)`, `animation.twinkle_solid(engine)`, `animation.twinkle_rainbow(engine)`, `animation.twinkle_gentle(engine)`, `animation.twinkle_intense(engine)`
+**Factories**: `animation.twinkle(engine)`
 
-### WaveAnimation
+### wave
 
 Creates mathematical waveforms that can move along the LED strip. Perfect for rhythmic patterns, breathing effects, or mathematical visualizations. Inherits from `Animation`.
 
@@ -1041,7 +1009,7 @@ Creates mathematical waveforms that can move along the LED strip. Perfect for rh
 
 ```berry
 # Rainbow sine wave
-animation rainbow_wave = wave_animation(
+animation rainbow_wave = wave(
   wave_type=0,
   frequency=40,
   wave_speed=80,
@@ -1049,7 +1017,7 @@ animation rainbow_wave = wave_animation(
 )
 
 # Green breathing effect
-animation breathing = wave_animation(
+animation breathing = wave(
   color=green,
   wave_type=0,
   amplitude=150,
@@ -1058,7 +1026,7 @@ animation breathing = wave_animation(
 )
 
 # Fast square wave strobe
-animation strobe = wave_animation(
+animation strobe = wave(
   color=white,
   wave_type=2,
   frequency=80,
@@ -1076,7 +1044,7 @@ animation strobe = wave_animation(
 
 
 
-### PaletteGradientAnimation
+### palette_gradient
 
 Creates shifting gradient patterns with palette colors. Inherits from `Animation`.
 
@@ -1105,16 +1073,16 @@ Creates shifting gradient patterns with palette colors. Inherits from `Animation
 - **phase_shift**: Shifts the gradient pattern spatially by a percentage of the spatial period
 - Each pixel's value calculated using optimized fixed-point arithmetic
 
-**Factory**: `animation.palette_gradient_animation(engine)`
+**Factory**: `animation.palette_gradient(engine)`
 
 ### PaletteMeterAnimation
 
-Creates meter/bar patterns based on a value function. Inherits from `PaletteGradientAnimation`.
+Creates meter/bar patterns based on a value function. Inherits from `palette_gradient`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `value_func` | function | nil | - | Function that provides meter values (0-255 range) |
-| *(inherits all PaletteGradientAnimation parameters)* | | | | |
+| *(inherits all palette_gradient parameters)* | | | | |
 
 **Pattern Generation:**
 - Value function signature: `value_func(engine, time_ms, self)` where:
@@ -1125,7 +1093,7 @@ Creates meter/bar patterns based on a value function. Inherits from `PaletteGrad
 - Pixels within meter range get value 255, others get value 0
 - Meter position calculated as: `position = tasmota.scale_uint(value, 0, 255, 0, strip_length)`
 
-**Factory**: `animation.palette_meter_animation(engine)`
+**Factory**: `animation.palette_meter(engine)`
 
 ## Motion Effects
 
@@ -1137,16 +1105,16 @@ Motion effects can be chained to create sophisticated transformations:
 
 ```berry
 # Base animation
-animation base_pulse = pulsating_animation(color=blue, period=3s)
+animation base_pulse = breathe(color=blue, period=3s)
 
 # Simple animation composition
-animation fire_effect = fire_animation(
+animation fire_effect = fire(
   color=fire_colors,
   intensity=180,
   flicker_speed=8
 )
 
-animation gradient_wave = gradient_animation(
+animation gradient_wave = gradient(
   color=rainbow_cycle,
   gradient_type=0,
   movement_speed=50
@@ -1163,7 +1131,6 @@ run gradient_wave
 - Each animation uses approximately 4 bytes per pixel for color storage
 - Fire animation includes additional flicker calculations
 - Gradient animation requires color interpolation calculations
-- Noise animation includes pseudo-random pattern generation
 - Consider strip length impact on transformation calculations
 
 ## Parameter Constraints

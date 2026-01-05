@@ -1,11 +1,11 @@
 # Test file for Breathe animation effect
 #
-# This file contains tests for the BreatheAnimation class following parameterized class specification
+# This file contains tests for the breathe class following parameterized class specification
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/breathe_animation_test.be
 
-print("Testing BreatheAnimation...")
+print("Testing breathe...")
 
 # Import the core animation module
 import animation
@@ -17,38 +17,38 @@ var engine = animation.create_engine(strip)
 print("Created LED strip and animation engine")
 
 # Create a breathe animation with engine-only parameter
-var anim = animation.breathe_animation(engine)
+var anim = animation.breathe(engine)
 print("Created breathe animation with defaults")
 
 # Test default values
-print(f"Default color: 0x{anim.breathe_provider.base_color :08x}")
+print(f"Default color: 0x{anim.breathe_provider.color :08x}")
 print(f"Default min_brightness: {anim.min_brightness}")
 print(f"Default max_brightness: {anim.max_brightness}")
 print(f"Default period: {anim.period}")
 print(f"Default curve_factor: {anim.curve_factor}")
 
 # Create another breathe animation and set custom parameters using virtual member assignment
-var blue_breathe = animation.breathe_animation(engine)
+var blue_breathe = animation.breathe(engine)
 blue_breathe.color = 0xFF0000FF
 blue_breathe.min_brightness = 20
 blue_breathe.max_brightness = 200
 blue_breathe.period = 4000
 blue_breathe.curve_factor = 3
 blue_breathe.priority = 15
-print(f"Blue breathe animation color: 0x{blue_breathe.breathe_provider.base_color :08x}")
+print(f"Blue breathe animation color: 0x{blue_breathe.breathe_provider.color :08x}")
 print(f"Blue breathe animation min_brightness: {blue_breathe.min_brightness}")
 print(f"Blue breathe animation max_brightness: {blue_breathe.max_brightness}")
 print(f"Blue breathe animation period: {blue_breathe.period}")
 print(f"Blue breathe animation curve_factor: {blue_breathe.curve_factor}")
 
 # Create red breathe animation with different parameters
-var red_breathe = animation.breathe_animation(engine)
+var red_breathe = animation.breathe(engine)
 red_breathe.color = 0xFFFF0000
 red_breathe.min_brightness = 10
 red_breathe.max_brightness = 180
 red_breathe.period = 3000
 red_breathe.curve_factor = 2
-print(f"Red breathe animation color: 0x{red_breathe.breathe_provider.base_color :08x}")
+print(f"Red breathe animation color: 0x{red_breathe.breathe_provider.color :08x}")
 
 # Test parameter updates using virtual member assignment
 blue_breathe.min_brightness = 30
@@ -133,7 +133,7 @@ print("✓ Animation added to engine successfully")
 assert(anim != nil, "Default breathe animation should be created")
 assert(blue_breathe != nil, "Custom breathe animation should be created")
 assert(red_breathe != nil, "Red breathe animation should be created")
-assert(blue_breathe.breathe_provider.base_color == 0xFF0000FF, "Blue breathe should have correct color")
+assert(blue_breathe.breathe_provider.color == 0xFF0000FF, "Blue breathe should have correct color")
 assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
 assert(blue_breathe.period == 3500, "Breathe period should be updated to 3500")

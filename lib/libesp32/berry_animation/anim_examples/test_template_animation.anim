@@ -14,7 +14,7 @@ template animation shutter_central {
   col2.next = 1
   
   # shutter moving in to out
-  animation shutter_inout_animation = beacon_animation(
+  animation shutter_inout_animation = beacon(
     color = col2
     back_color = col1
     pos = strip_len2 - (shutter_size + 1) / 2
@@ -24,7 +24,7 @@ template animation shutter_central {
   )
   
   # shutter moving out to in
-  animation shutter_outin_animation = beacon_animation(
+  animation shutter_outin_animation = beacon(
     color = col1
     back_color = col2
     pos = strip_len2 - (strip_len - shutter_size + 1) / 2

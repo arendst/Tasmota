@@ -14,7 +14,7 @@ template animation shutter_central {
   col2.next = 1
 
   # shutter moving from left to right
-  animation shutter_central_animation = beacon_animation(
+  animation shutter_central_animation = beacon(
     color = col2
     back_color = col1
     pos = strip_len - shutter_size / 2

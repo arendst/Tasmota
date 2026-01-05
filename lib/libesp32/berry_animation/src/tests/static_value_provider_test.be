@@ -1,14 +1,14 @@
-# Test suite for StaticValueProvider class
+# Test suite for static_value class
 #
-# This test verifies that the StaticValueProvider class works correctly
+# This test verifies that the static_value class works correctly
 # and follows the parameterized class specification.
 
 import string
 import animation
 
-# Test the basic StaticValueProvider interface
+# Test the basic static_value interface
 def test_static_value_provider_interface()
-  print("Testing StaticValueProvider interface...")
+  print("Testing static_value interface...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -25,12 +25,12 @@ def test_static_value_provider_interface()
   assert(provider.produce_value("test", 1000) == 42, "Should return set value")
   assert(provider.produce_value("test", 2000) == 42, "Should return same value regardless of time")
   
-  print("✓ StaticValueProvider interface test passed")
+  print("✓ static_value interface test passed")
 end
 
 # Test with different value types
 def test_static_value_provider_types()
-  print("Testing StaticValueProvider with different types...")
+  print("Testing static_value with different types...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -51,7 +51,7 @@ def test_static_value_provider_types()
   color_provider.value = 0xFF00FF00
   assert(color_provider.produce_value("test", 1000) == 0xFF00FF00, "Should handle color values")
   
-  print("✓ StaticValueProvider types test passed")
+  print("✓ static_value types test passed")
 end
 
 # Test produce_value method with different parameter names
@@ -98,7 +98,7 @@ end
 
 # Test parameterized object integration
 def test_parameterized_object_integration()
-  print("Testing ParameterizedObject integration...")
+  print("Testing parameterized_object integration...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -119,7 +119,7 @@ def test_parameterized_object_integration()
   assert(provider.get_param("value", nil) == 777, "Should retrieve value via parameter system")
   assert(provider.value == 777, "Virtual member should reflect parameter value")
   
-  print("✓ ParameterizedObject integration test passed")
+  print("✓ parameterized_object integration test passed")
 end
 
 # Test value changes
@@ -160,7 +160,7 @@ def test_string_representation()
   provider.value = 42
   
   var str_repr = str(provider)
-  assert(string.find(str_repr, "StaticValueProvider") >= 0, "String representation should contain class name")
+  assert(string.find(str_repr, "static_value") >= 0, "String representation should contain class name")
   assert(string.find(str_repr, "42") >= 0, "String representation should contain the value")
   
   print("✓ String representation test passed")
@@ -168,7 +168,7 @@ end
 
 # Run all tests
 def run_static_value_provider_tests()
-  print("=== StaticValueProvider Tests ===")
+  print("=== static_value Tests ===")
   
   try
     test_static_value_provider_interface()
@@ -179,7 +179,7 @@ def run_static_value_provider_tests()
     test_value_changes()
     test_string_representation()
     
-    print("=== All StaticValueProvider tests passed! ===")
+    print("=== All static_value tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

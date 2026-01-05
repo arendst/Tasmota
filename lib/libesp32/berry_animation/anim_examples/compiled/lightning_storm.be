@@ -18,7 +18,7 @@ var storm_colors_ = bytes(
   "80110022"  # Dark purple
   "FF220033"  # Slightly lighter purple
 )
-var storm_bg_ = animation.rich_palette_animation(engine)
+var storm_bg_ = animation.rich_palette(engine)
 storm_bg_.colors = storm_colors_
 storm_bg_.period = 12000
 storm_bg_.transition_type = animation.SINE
@@ -37,7 +37,7 @@ lightning_main_.opacity = (def (engine)
 end)(engine)  # Quick bright flashes
 lightning_main_.priority = 20
 # Secondary lightning - partial strip
-var lightning_partial_ = animation.beacon_animation(engine)
+var lightning_partial_ = animation.beacon(engine)
 lightning_partial_.color = 0xFFFFFFAA  # Slightly yellow white
 lightning_partial_.pos = 30  # center position
 lightning_partial_.beacon_size = 20  # covers part of strip
@@ -65,7 +65,7 @@ afterglow_.opacity = (def (engine)
 end)(engine)  # Longer, dimmer glow
 afterglow_.priority = 10
 # Distant thunder (dim flashes)
-var distant_flash_ = animation.twinkle_animation(engine)
+var distant_flash_ = animation.twinkle(engine)
 distant_flash_.color = 0xFF666699  # Dim blue-white
 distant_flash_.density = 4  # density (few flashes)
 distant_flash_.twinkle_speed = 300  # twinkle speed (medium duration)
@@ -92,7 +92,7 @@ palette storm_colors = [
   (255, 0x220033)   # Slightly lighter purple
 ]
 
-animation storm_bg = rich_palette_animation(colors=storm_colors, period=12s, transition_type=SINE, brightness=100)
+animation storm_bg = rich_palette(colors=storm_colors, period=12s, transition_type=SINE, brightness=100)
 
 # Random lightning flashes - full strip
 animation lightning_main = solid(color=0xFFFFFF)  # Bright white
@@ -100,7 +100,7 @@ lightning_main.opacity = square(min_value=0, max_value=255, duration=80ms, duty_
 lightning_main.priority = 20
 
 # Secondary lightning - partial strip
-animation lightning_partial = beacon_animation(
+animation lightning_partial = beacon(
   color=0xFFFFAA  # Slightly yellow white
   pos=30          # center position
   beacon_size=20  # covers part of strip
@@ -115,7 +115,7 @@ afterglow.opacity = square(min_value=0, max_value=80, duration=200ms, duty_cycle
 afterglow.priority = 10
 
 # Distant thunder (dim flashes)
-animation distant_flash = twinkle_animation(
+animation distant_flash = twinkle(
   color=0x666699  # Dim blue-white
   density=4       # density (few flashes)
   twinkle_speed=300ms # twinkle speed (medium duration)

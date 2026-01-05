@@ -623,7 +623,7 @@
 // #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)
   #define USE_LIGHT_ARTNET_MCAST 239,255,25,54   // Multicast address used to listen: 239.255.25.54
 
-  // #define USE_BERRY_ANIMATION                    // New animation framework with dedicated language (ESP32x only, experimental, 94k not yet optimized)
+  // #define USE_BERRY_ANIMATION                    // New animation framework with dedicated language (ESP32x only, experimental, 81k not yet optimized)
     // #define USE_BERRY_ANIMATION_DSL                // DSL transpiler for new animation framework (not mandatory if DSL is transpiled externally, +98k not optimized yet)
 
 // -- Counter input -------------------------------
@@ -668,7 +668,8 @@
 //  #define USE_SGP4X                              // [I2cDriver82] Enable SGP41 sensor (I2C address 0x59) (+7k2 code)
 //  #define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
-//  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
+//  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k6 code)
+//    #define LM75AD_MAX_SENSORS    8              // Max number of LM75AD sensors supported (default = 8 on 2 busses, max = 16 on 2 busses)
 //  #define USE_APDS9960                           // [I2cDriver21] Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
     #define USE_APDS9960_GESTURE                   // Enable APDS9960 Gesture feature (+2k code)
     #define USE_APDS9960_PROXIMITY                 // Enable APDS9960 Proximity feature (>50 code)
@@ -750,7 +751,8 @@
 //  #define USE_EZODO                              // [I2cDriver55] Enable support for EZO's DO sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
 //  #define USE_EZORGB                             // [I2cDriver55] Enable support for EZO's RGB sensor (+0k5 code) - Shared EZO code required for any EZO device (+1k2 code)
 //  #define USE_EZOPMP                             // [I2cDriver55] Enable support for EZO's PMP sensor (+0k3 code) - Shared EZO code required for any EZO device (+1k2 code)
-//  #define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Capacitice Soil Moisture & Temperature Sensor (I2C addresses 0x36 - 0x39) (+1k3 code)
+//  #define USE_SEESAW_SOIL                        // [I2cDriver56] Enable Adafruit Soil Moisture & Temp Sensor (I2C addresses 0x36 - 0x39) (+1k code) - Shared Seesaw code required (+1k code)
+//  #define USE_SEESAW_ENCODER                     // [I2cDriver56] Enable Adafruit Rotary Encoder (I2C addresses 0x36 - 0x39) (+2k code) - Shared Seesaw code required (+1k code)
 //  #define USE_MPU_ACCEL                          // [I2cDriver58] Enable MPU6886/MPU9250 - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x68) (+2k code)
 //  #define USE_AM2320                             // [I2cDriver60] Enable AM2320 temperature and humidity Sensor (I2C address 0x5C) (+1k code)
 //  #define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)

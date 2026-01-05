@@ -10,8 +10,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BreatheAnimation,weak
-class BreatheAnimation : animation.animation
+class breathe : animation.animation
   # Non-parameter instance variables only
   var breathe_provider # Internal breathe color provider
   
@@ -44,10 +43,10 @@ class BreatheAnimation : animation.animation
     super(self).on_param_changed(name, value)
     # Propagate relevant parameters to the breathe provider
     if name == "color"
-      # When color is set, update the breathe_provider's base_color
+      # When color is set, update the breathe_provider's color
       # but keep the breathe_provider as the actual color source for rendering
       if type(value) == 'int'
-        self.breathe_provider.base_color = value
+        self.breathe_provider.color = value
         # Restore the breathe_provider as the color source (bypass on_param_changed)
         self.values["color"] = self.breathe_provider
       end
@@ -80,19 +79,6 @@ class BreatheAnimation : animation.animation
   # The render method is inherited from Animation base class
   # It automatically uses self.color (which is set to self.breathe_provider)
   # The breathe_provider produces the breathing color effect
-
-  # String representation of the animation
-  def tostring()
-    return f"BreatheAnimation(color=0x{self.breathe_provider.base_color :08x}, min_brightness={self.min_brightness}, max_brightness={self.max_brightness}, period={self.period}, curve_factor={self.curve_factor}, priority={self.priority}, running={self.is_running})"
-  end
 end
 
-# Factory method to create a pulsating animation (sine wave, equivalent to old pulse.be)
-def pulsating_animation(engine)
-  var anim = animation.breathe_animation(engine)
-  anim.curve_factor = 1  # Pure sine wave for pulsing effect
-  anim.period = 1000     # Faster default period for pulsing
-  return anim
-end
-
-return {'breathe_animation': BreatheAnimation, 'pulsating_animation': pulsating_animation}
+return {'breathe': breathe }

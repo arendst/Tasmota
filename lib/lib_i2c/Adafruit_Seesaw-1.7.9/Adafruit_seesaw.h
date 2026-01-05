@@ -21,12 +21,8 @@
 #ifndef LIB_SEESAW_H
 #define LIB_SEESAW_H
 
-#if (ARDUINO >= 100)
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
+#include "Adafruit_I2CDevice.h"
+#include <Arduino.h>
 #include <Wire.h>
 
 /*=========================================================================
@@ -57,9 +53,10 @@ enum {
   SEESAW_TOUCH_BASE = 0x0F,
   SEESAW_KEYPAD_BASE = 0x10,
   SEESAW_ENCODER_BASE = 0x11,
+  SEESAW_SPECTRUM_BASE = 0x12,
 };
 
-/** GPIO module function addres registers
+/** GPIO module function address registers
  */
 enum {
   SEESAW_GPIO_DIRSET_BULK = 0x02,
@@ -75,7 +72,7 @@ enum {
   SEESAW_GPIO_PULLENCLR = 0x0C,
 };
 
-/** status module function addres registers
+/** status module function address registers
  */
 enum {
   SEESAW_STATUS_HW_ID = 0x01,
@@ -85,7 +82,7 @@ enum {
   SEESAW_STATUS_SWRST = 0x7F,
 };
 
-/** timer module function addres registers
+/** timer module function address registers
  */
 enum {
   SEESAW_TIMER_STATUS = 0x00,
@@ -93,7 +90,7 @@ enum {
   SEESAW_TIMER_FREQ = 0x02,
 };
 
-/** ADC module function addres registers
+/** ADC module function address registers
  */
 enum {
   SEESAW_ADC_STATUS = 0x00,
@@ -104,7 +101,7 @@ enum {
   SEESAW_ADC_CHANNEL_OFFSET = 0x07,
 };
 
-/** Sercom module function addres registers
+/** Sercom module function address registers
  */
 enum {
   SEESAW_SERCOM_STATUS = 0x00,
@@ -114,7 +111,7 @@ enum {
   SEESAW_SERCOM_DATA = 0x05,
 };
 
-/** neopixel module function addres registers
+/** neopixel module function address registers
  */
 enum {
   SEESAW_NEOPIXEL_STATUS = 0x00,
@@ -125,13 +122,13 @@ enum {
   SEESAW_NEOPIXEL_SHOW = 0x05,
 };
 
-/** touch module function addres registers
+/** touch module function address registers
  */
 enum {
   SEESAW_TOUCH_CHANNEL_OFFSET = 0x10,
 };
 
-/** keypad module function addres registers
+/** keypad module function address registers
  */
 enum {
   SEESAW_KEYPAD_STATUS = 0x00,
@@ -155,10 +152,24 @@ enum {
  */
 enum {
   SEESAW_ENCODER_STATUS = 0x00,
-  SEESAW_ENCODER_INTENSET = 0x02,
-  SEESAW_ENCODER_INTENCLR = 0x03,
-  SEESAW_ENCODER_POSITION = 0x04,
-  SEESAW_ENCODER_DELTA = 0x05,
+  SEESAW_ENCODER_INTENSET = 0x10,
+  SEESAW_ENCODER_INTENCLR = 0x20,
+  SEESAW_ENCODER_POSITION = 0x30,
+  SEESAW_ENCODER_DELTA = 0x40,
+};
+
+/** Audio spectrum module function address registers
+ */
+enum {
+  SEESAW_SPECTRUM_RESULTS_LOWER = 0x00, // Audio spectrum bins 0-31
+  SEESAW_SPECTRUM_RESULTS_UPPER = 0x01, // Audio spectrum bins 32-63
+  // If some future device supports a larger spectrum, can add additional
+  // "bins" working upward from here. Configurable setting registers then
+  // work downward from the top to avoid collision between spectrum bins
+  // and configurables.
+  SEESAW_SPECTRUM_CHANNEL = 0xFD,
+  SEESAW_SPECTRUM_RATE = 0xFE,
+  SEESAW_SPECTRUM_STATUS = 0xFF,
 };
 
 #define ADC_INPUT_0_PIN 2 ///< default ADC input pin
@@ -178,11 +189,15 @@ enum {
 #endif
 
 /*=========================================================================*/
-
-#define SEESAW_HW_ID_CODE 0x55 ///< seesaw HW ID code
-#define SEESAW_EEPROM_I2C_ADDR                                                 \
-  0x3F ///< EEPROM address of i2c address to start up with (for devices that
-       ///< support this feature)
+// clang-format off
+#define SEESAW_HW_ID_CODE_SAMD09 0x55 ///< seesaw HW ID code for SAMD09
+#define SEESAW_HW_ID_CODE_TINY806 0x84 ///< seesaw HW ID code for ATtiny806
+#define SEESAW_HW_ID_CODE_TINY807 0x85 ///< seesaw HW ID code for ATtiny807
+#define SEESAW_HW_ID_CODE_TINY816 0x86 ///< seesaw HW ID code for ATtiny816
+#define SEESAW_HW_ID_CODE_TINY817 0x87 ///< seesaw HW ID code for ATtiny817
+#define SEESAW_HW_ID_CODE_TINY1616 0x88 ///< seesaw HW ID code for ATtiny1616
+#define SEESAW_HW_ID_CODE_TINY1617 0x89 ///< seesaw HW ID code for ATtiny1617
+// clang-format on
 
 /** raw key event stucture for keypad module */
 union keyEventRaw {
@@ -227,13 +242,17 @@ public:
              bool reset = true);
   uint32_t getOptions();
   uint32_t getVersion();
-  void SWReset();
+  bool getProdDatecode(uint16_t *pid, uint8_t *year, uint8_t *mon,
+                       uint8_t *day);
+
+  bool SWReset();
 
   void pinMode(uint8_t pin, uint8_t mode);
   void pinModeBulk(uint32_t pins, uint8_t mode);
   void pinModeBulk(uint32_t pinsa, uint32_t pinsb, uint8_t mode);
   virtual void analogWrite(uint8_t pin, uint16_t value, uint8_t width = 8);
   void digitalWrite(uint8_t pin, uint8_t value);
+  void digitalWriteBulk(uint32_t port_values);
   void digitalWriteBulk(uint32_t pins, uint8_t value);
   void digitalWriteBulk(uint32_t pinsa, uint32_t pinsb, uint8_t value);
 
@@ -267,32 +286,34 @@ public:
   void enableKeypadInterrupt();
   void disableKeypadInterrupt();
   uint8_t getKeypadCount();
-  void readKeypad(keyEventRaw *buf, uint8_t count);
+  bool readKeypad(keyEventRaw *buf, uint8_t count);
 
   float getTemp();
 
-  int32_t getEncoderPosition();
-  int32_t getEncoderDelta();
-  void enableEncoderInterrupt();
-  void disableEncoderInterrupt();
-  void setEncoderPosition(int32_t pos);
+  int32_t getEncoderPosition(uint8_t encoder = 0);
+  int32_t getEncoderDelta(uint8_t encoder = 0);
+  bool enableEncoderInterrupt(uint8_t encoder = 0);
+  bool disableEncoderInterrupt(uint8_t encoder = 0);
+  void setEncoderPosition(int32_t pos, uint8_t encoder = 0);
 
   virtual size_t write(uint8_t);
   virtual size_t write(const char *str);
 
 protected:
-  uint8_t _i2caddr; /*!< The I2C address used to communicate with the seesaw */
   TwoWire *_i2cbus; /*!< The I2C Bus used to communicate with the seesaw */
-  int8_t _flow;     /*!< The flow control pin to use */
+  Adafruit_I2CDevice *_i2c_dev = NULL; ///< The BusIO device for I2C control
 
-  void write8(byte regHigh, byte regLow, byte value);
-  uint8_t read8(byte regHigh, byte regLow, uint16_t delay = 125);
+  int8_t _flow; /*!< The flow control pin to use */
 
-  void read(uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num,
-            uint16_t delay = 125);
-  void write(uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num);
-  void writeEmpty(uint8_t regHigh, uint8_t regLow);
-  void _i2c_init();
+  uint8_t _hardwaretype = 0; /*!< what hardware type is attached! */
+  uint8_t getI2CaddrEEPROMloc();
+
+  bool write8(byte regHigh, byte regLow, byte value);
+  uint8_t read8(byte regHigh, byte regLow, uint16_t delay = 250);
+
+  bool read(uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num,
+            uint16_t delay = 250);
+  bool write(uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num);
 
   /*=========================================================================
           REGISTER BITFIELDS

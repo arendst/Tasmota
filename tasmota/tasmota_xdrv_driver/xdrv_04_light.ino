@@ -894,10 +894,10 @@ public:
     calcLevels();
   }
 
-  void changeRGB(uint8_t r, uint8_t g, uint8_t b, bool keep_bri = false) {
+  void changeRGB(uint8_t r, uint8_t g, uint8_t b, bool keep_bri = false, bool save_settings = true) {
     _state->setRGB(r, g, b, keep_bri);
     if (_ct_rgb_linked) { _state->setColorMode(LCM_RGB); }   // try to force RGB
-    saveSettings();
+    if (save_settings) { saveSettings(); }
     calcLevels();
   }
 
@@ -1425,7 +1425,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
   if (Settings->flag.light_signal) {  // SetOption18 - Pair light signal with CO2 sensor
     uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
 //    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
-    light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
+    light_controller.changeRGB(signal, 255 - signal, 0, true, false);  // keep bri
     LightSetScheme(LS_POWER);
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);

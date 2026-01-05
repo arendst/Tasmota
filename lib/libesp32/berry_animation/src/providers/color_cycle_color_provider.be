@@ -1,4 +1,4 @@
-# ColorCycleColorProvider for Berry Animation Framework
+# color_cycle for Berry Animation Framework
 #
 # This color provider cycles through a list of colors with brutal switching.
 # No transitions or interpolation - just instant color changes.
@@ -13,8 +13,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:ColorCycleColorProvider,weak
-class ColorCycleColorProvider : animation.color_provider
+class color_cycle : animation.color_provider
   # Non-parameter instance variables only
   var current_index   # Current color index for next functionality
   
@@ -26,7 +25,7 @@ class ColorCycleColorProvider : animation.color_provider
     "palette_size": {"type": "int", "default": 3}  # Read-only: number of colors in palette
   })
   
-  # Initialize a new ColorCycleColorProvider
+  # Initialize a new color_cycle
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)
   def init(engine)
@@ -63,7 +62,7 @@ class ColorCycleColorProvider : animation.color_provider
   # Virtual member access - implements the virtual "palette_size" attribute
   #
   # @param name: string - Parameter name being accessed
-  # @return any - Resolved parameter value (ValueProvider resolved to actual value)
+  # @return any - Resolved parameter value (value_provider resolved to actual value)
   def member(name)
     if name == "palette_size"
       return self._get_palette_size()
@@ -214,11 +213,6 @@ class ColorCycleColorProvider : animation.color_provider
     end
     return color
   end
-  
-  # String representation of the provider
-  def tostring()
-    return f"ColorCycleColorProvider(palette_size={self._get_palette_size()}, period={self.period}, mode={self.period ? 'manual' :: 'auto'}, current_index={self.current_index})"
-  end
 end
 
-return {'color_cycle': ColorCycleColorProvider}
+return {'color_cycle': color_cycle}

@@ -1,6 +1,6 @@
 #!/usr/bin/env berry
 
-# Test for ColorCycleColorProvider with bytes palette in AARRGGBB format
+# Test for color_cycle with bytes palette in AARRGGBB format
 import animation
 import animation_dsl
 
@@ -18,7 +18,7 @@ class MockEngine
 end
 
 def test_color_cycle_bytes_format()
-  print("Testing ColorCycleColorProvider with bytes palette (AARRGGBB format)...")
+  print("Testing color_cycle with bytes palette (AARRGGBB format)...")
   
   var engine = MockEngine()
   
@@ -110,7 +110,7 @@ def test_color_cycle_bytes_format()
   var empty_color = provider.produce_value("color", 1000)
   assert(empty_color == 0x00000000, f"Empty palette should return transparent")
   
-  print("✓ All ColorCycleColorProvider bytes format tests passed!")
+  print("✓ All color_cycle bytes format tests passed!")
 end
 
 def test_bytes_parameter_validation()
@@ -143,4 +143,4 @@ end
 # Run the tests
 test_color_cycle_bytes_format()
 test_bytes_parameter_validation()
-print("✓ All ColorCycleColorProvider tests completed successfully!")
+print("✓ All color_cycle tests completed successfully!")

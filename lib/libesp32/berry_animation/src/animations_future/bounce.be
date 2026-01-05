@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BounceAnimation,weak
 class BounceAnimation : animation.animation
   # Non-parameter instance variables only
   var current_position   # Current position in 1/256th pixels
@@ -63,9 +62,9 @@ class BounceAnimation : animation.animation
     end
   end
   
-  # Override start method for timing control and ValueProvider propagation
+  # Override start method for timing control and value_provider propagation
   def start(time_ms)
-    # Call parent start first (handles ValueProvider propagation)
+    # Call parent start first (handles value_provider propagation)
     super(self).start(time_ms)
     
     # Reset physics state for fresh start/restart
@@ -226,11 +225,6 @@ class BounceAnimation : animation.animation
     end
     
     return true
-  end
-  
-  # String representation
-  def tostring()
-    return f"BounceAnimation(speed={self.bounce_speed}, damping={self.damping}, gravity={self.gravity}, priority={self.priority}, running={self.is_running})"
   end
 end
 

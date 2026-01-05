@@ -34,7 +34,7 @@ var rainbow_with_white_ = bytes(
   "FFFC0000"  # Red - need to add the first color at last position to ensure roll-over
 )
 # define a gradient across the whole strip
-var back_pattern_ = animation.palette_meter_animation(engine)
+var back_pattern_ = animation.palette_meter(engine)
 back_pattern_.level = animation.create_closure_value(engine, def (engine) return animation.get_user_function('rand_meter')(engine) end)
 engine.add(back_pattern_)
 engine.run()
@@ -67,7 +67,7 @@ palette rainbow_with_white = [
 ]
 
 # define a gradient across the whole strip
-animation back_pattern = palette_meter_animation(level = rand_meter())
+animation back_pattern = palette_meter(level = rand_meter())
 
 run back_pattern
 

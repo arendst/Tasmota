@@ -57,7 +57,6 @@ class EventHandler
   # end
 end
 
-#@ solidify:EventManager,weak
 class EventManager
   var handlers        # Map of event_name -> list of handlers
   var global_handlers # Handlers that respond to all events

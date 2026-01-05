@@ -10,7 +10,6 @@ class AnimationMath
   #
   # @param *args: number - Values to compare
   # @return number - Minimum value
-  #@ solidify:min,weak
   static def min(*args)
     import math
     return call(math.min, args)
@@ -20,7 +19,6 @@ class AnimationMath
   #
   # @param *args: number - Values to compare
   # @return number - Maximum value
-  #@ solidify:max,weak
   static def max(*args)
     import math
     return call(math.max, args)
@@ -30,7 +28,6 @@ class AnimationMath
   #
   # @param x: number - Input value
   # @return number - Absolute value
-  #@ solidify:abs,weak
   static def abs(x)
     import math
     return math.abs(x)
@@ -40,7 +37,6 @@ class AnimationMath
   #
   # @param x: number - Input value
   # @return int - Rounded value
-  #@ solidify:round,weak
   static def round(x)
     import math
     return int(math.round(x))
@@ -51,7 +47,6 @@ class AnimationMath
   #
   # @param x: number - Input value
   # @return number - Square root
-  #@ solidify:sqrt,weak
   static def sqrt(x)
     import math
     # If x is an integer in 0-255 range, scale to 0-1 for sqrt, then back
@@ -71,7 +66,6 @@ class AnimationMath
   # @param to_min: number - Target range minimum
   # @param to_max: number - Target range maximum
   # @return int - Scaled value
-  #@ solidify:scale,weak
   static def scale(v, from_min, from_max, to_min, to_max)
     return tasmota.scale_int(v, from_min, from_max, to_min, to_max)
   end
@@ -82,7 +76,6 @@ class AnimationMath
   #
   # @param angle: number - Angle in 0-255 range (0-360 degrees)
   # @return int - Sine value in -255 to 255 range
-  #@ solidify:sin,weak
   static def sin(angle)
     # Map angle from 0-255 to 0-32767 (tasmota.sine_int input range)
     var tasmota_angle = tasmota.scale_int(angle, 0, 255, 0, 32767)
@@ -101,7 +94,6 @@ class AnimationMath
   #
   # @param angle: number - Angle in 0-255 range (0-360 degrees)
   # @return int - Cosine value in -255 to 255 range
-  #@ solidify:cos,weak
   static def cos(angle)
     # Map angle from 0-255 to 0-32767 (tasmota.sine_int input range)
     var tasmota_angle = tasmota.scale_int(angle, 0, 255, 0, 32767)

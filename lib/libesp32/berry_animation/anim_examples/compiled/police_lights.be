@@ -15,7 +15,7 @@ var engine = animation.init_strip()
 
 var half_length_ = 30
 # Left side red flashing
-var left_red_ = animation.beacon_animation(engine)
+var left_red_ = animation.beacon(engine)
 left_red_.color = 0xFFFF0000  # Bright red
 left_red_.pos = 15  # center of left half
 left_red_.beacon_size = 15  # half the strip
@@ -30,7 +30,7 @@ left_red_.opacity = (def (engine)
   return provider
 end)(engine)  # 50% duty cycle
 # Right side blue flashing (opposite phase)
-var right_blue_ = animation.beacon_animation(engine)
+var right_blue_ = animation.beacon(engine)
 right_blue_.color = 0xFF0000FF  # Bright blue
 right_blue_.pos = 45  # center of right half
 right_blue_.beacon_size = 15  # half the strip
@@ -73,7 +73,7 @@ engine.run()
 set half_length = 30
 
 # Left side red flashing
-animation left_red = beacon_animation(
+animation left_red = beacon(
   color=0xFF0000  # Bright red
   pos=15          # center of left half
   beacon_size=15  # half the strip
@@ -83,7 +83,7 @@ left_red.priority = 10
 left_red.opacity = square(min_value=0, max_value=255, duration=400ms, duty_cycle=50)  # 50% duty cycle
 
 # Right side blue flashing (opposite phase)
-animation right_blue = beacon_animation(
+animation right_blue = beacon(
   color=0x0000FF  # Bright blue
   pos=45          # center of right half
   beacon_size=15  # half the strip

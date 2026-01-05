@@ -17,8 +17,8 @@ color col1 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 color col2 = color_cycle(colors=PALETTE_RAINBOW_W, period=0)
 col2.next = 1           # Writing 1 to 'next' actually advances the color
 
-# Using beacon_animation to move a shutter from in to out
-animation shutter_inout_animation = beacon_animation(
+# Using beacon to move a shutter from in to out
+animation shutter_inout_animation = beacon(
     color = col2                    # Use two rotating colors
     back_color = col1               # Use two rotating colors
     pos = strip_len_2 - (shutter_size + 1) / 2
@@ -26,7 +26,7 @@ animation shutter_inout_animation = beacon_animation(
 )
 
 # Similar but out to in
-animation shutter_outin_animation = beacon_animation(
+animation shutter_outin_animation = beacon(
     color = col1
     back_color = col2
     pos = strip_len_2 - (strip_len - shutter_size + 1) / 2

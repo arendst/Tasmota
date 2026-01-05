@@ -82,7 +82,7 @@ provider.brightness = 200
 log(f"After brightness change: _lut_dirty = {provider._lut_dirty}")
 
 provider._lut_dirty = false
-provider.transition_type = animation.SINE
+provider.transition_type = 5 #-SINE-#
 log(f"After transition_type change: _lut_dirty = {provider._lut_dirty}")
 
 provider._lut_dirty = false

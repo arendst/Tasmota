@@ -6,7 +6,7 @@ template animation pulse_effect {
   param period type time
   param brightness type percentage
   
-  animation pulse = pulsating_animation(
+  animation pulse = breathe(
     color=base_color
     period=period
   )

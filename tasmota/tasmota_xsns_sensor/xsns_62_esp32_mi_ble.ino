@@ -2387,7 +2387,7 @@ void MI32EverySecond(bool restart){
       MI32.secondsCounter = 0;
     }
   }
-  MI32.secondsCounter ++;
+  MI32.secondsCounter++;
 
   if (MI32.secondsCounter2 >= MI32.period){
     if (MI32.mqttCurrentSlot >= MIBLEsensors.size()){
@@ -2766,19 +2766,9 @@ const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s Impedance{m}%u{e}";
 const char HTTP_MISCALE_IMPEDANCE_STABILIZED[] PROGMEM = "{s}%s Impedance stabilized{m}%s{e}";
 const char HTTP_SJWS01LM_FLOODING[] PROGMEM = "{s}%s Flooding{m}%u{e}";
 
-//const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-//  "https://atc1441.github.io/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-//  "\">%s</a>{m}{e}";
+const char HTTP_NEEDKEY[] PROGMEM = "{s}%s Key{m}<a target='_blank' href='https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey'>%s</a>{e}";
 
-//const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-//  "http://127.0.0.1:8887/keys/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-//  "\">%s</a>{m}{e}";
-const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-  "https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-  "\">%s</a>{m}{e}";
-
-
-const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair Button Pressed{m} {e}";
+const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair button pressed{m} {e}";
 
 const char HTTP_KEY_ERROR[] PROGMEM = "Key error %s";
 const char HTTP_MAC_ERROR[] PROGMEM = "MAC error %s";
