@@ -448,26 +448,56 @@ class OV5647 : CSI_Sensor
         print(format("OV5647: WARNING - Stream register = 0x%02X", stream_reg))
       end
       
-      # Write back to config struct if provided
-      # C++ struct: uint16_t width, uint16_t height, uint8_t format, 
-      #             uint8_t has_isp, uint32_t lane_bitrate, uint8_t lane_num
-      if raw != nil
-        raw[0] = 800 & 0xFF           # Width low byte
-        raw[1] = (800 >> 8) & 0xFF    # Width high byte
-        raw[2] = 640 & 0xFF           # Height low byte
-        raw[3] = (640 >> 8) & 0xFF    # Height high byte
-        raw[4] = 0                    # RAW8 format
-        raw[5] = 0                    # No onboard ISP
+      # Zero-copy: idx contains the memory address of C++ CSI_Config struct
+      if idx != 0
+        import introspect
+        print(format("OV5647: Zero-copy config at 0x%08X", idx))
         
-        # lane_bitrate is uint32_t (4 bytes!)
-        # Official: OV5647_MIPI_CSI_LINE_RATE = 400 Mbps total, but lane_bit_rate = 400/2 = 200 Mbps per lane
-        var bitrate = 200
-        raw[6] = bitrate & 0xFF
-        raw[7] = (bitrate >> 8) & 0xFF
-        raw[8] = (bitrate >> 16) & 0xFF
-        raw[9] = (bitrate >> 24) & 0xFF
+        # Create pointer and map to bytes (direct memory access)
+        var p = introspect.toptr(idx)
+        var b = bytes(p, 28)  # 28-byte CSI_Config struct (was 24)
         
-        raw[10] = 2                   # 2 lanes
+        print(format("OV5647: Mapped buffer type=%s size=%d", type(b), size(b)))
+        
+        # Fill struct directly in C++ memory
+        # 0-1:   uint16_t width
+        # 2-3:   uint16_t height
+        # 4-5:   uint16_t max_width
+        # 6-7:   uint16_t max_height
+        # 8:     uint8_t format
+        # 9:     uint8_t lane_num
+        # 10-11: uint16_t mipi_clock
+        # 12-13: uint16_t crop_x
+        # 14-15: uint16_t crop_y
+        # 16:    uint8_t binning
+        # 17:    uint8_t flags
+        # 18-25: char name[8]
+        # 26-27: uint8_t reserved[2]
+        
+        b.set(0, 800, 2)        # width
+        b.set(2, 640, 2)        # height
+        b.set(4, 2592, 2)       # max_width (OV5647 native: 2592x1944)
+        b.set(6, 1944, 2)       # max_height
+        b[8] = 0                # format: RAW8
+        b[9] = 2                # lanes: 2
+        b.set(10, 200, 2)       # mipi_clock: 200 Mbps/lane
+        b.set(12, 500, 2)       # crop_x: 500 (from register config)
+        b.set(14, 0, 2)         # crop_y: 0
+        b[16] = 0               # binning: 0 (1x1)
+        b[17] = 0               # flags: 0
+        b.setbytes(18, bytes().fromstring("OV5647"))
+        
+        b[26] = 0               # reserved
+        b[27] = 0               # reserved
+        
+        # Verify what we wrote
+        print(format("OV5647: Verify - width=%d height=%d", b.get(0, 2), b.get(2, 2)))
+        print(format("OV5647: Verify - max=%dx%d", b.get(4, 2), b.get(6, 2)))
+        print(format("OV5647: Verify - format=%d lanes=%d clock=%d", b[8], b[9], b.get(10, 2)))
+        print(format("OV5647: Verify - crop_x=%d crop_y=%d", b.get(12, 2), b.get(14, 2)))
+        print(format("OV5647: Verify - name[0-3]=%02X %02X %02X %02X", b[18], b[19], b[20], b[21]))
+        
+        print("OV5647: Zero-copy config complete")
       end
       
       self.is_initialized = true

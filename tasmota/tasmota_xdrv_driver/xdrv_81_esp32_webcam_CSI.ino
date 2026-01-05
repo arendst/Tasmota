@@ -51,15 +51,26 @@
 
 /*********************************************************************************************/
 
-// Configuration - what Berry tells us about the sensor
+// Configuration - what Berry tells us about the sensor (28 bytes)
 struct CSI_Config {
-  uint16_t width;
-  uint16_t height;
-  uint8_t format;           // 0=RAW8, 1=RAW10, 2=RGB565, 3=YUV422
-  uint8_t has_isp;          // Sensor has onboard ISP?
-  uint32_t lane_bitrate;    // MIPI lane bitrate
-  uint8_t lane_num;         // Number of CSI lanes
-};
+  uint16_t width;           // 0-1: Active pixels per line
+  uint16_t height;          // 2-3: Active lines per frame
+  uint16_t max_width;       // 4-5: Maximum sensor resolution width
+  uint16_t max_height;      // 6-7: Maximum sensor resolution height
+  uint8_t format;           // 8: 0=RAW8, 1=RAW10, 2=RGB565, 3=YUV422
+  uint8_t lane_num;         // 9: Number of CSI lanes (typically 2)
+  uint16_t mipi_clock;      // 10-11: Mbps per lane (e.g. 200)
+  uint16_t crop_x;          // 12-13: Sensor X-offset
+  uint16_t crop_y;          // 14-15: Sensor Y-offset
+  uint8_t binning;          // 16: 0=None/1x1, 1=2x2, 2=4x4
+  uint8_t flags;            // 17: Bit 0=V-Flip, Bit 1=H-Mirror, Bit 2=Has_ISP
+  char name[8];             // 18-25: Sensor name (null-terminated)
+  uint8_t reserved[2];      // 26-27: Reserved for future use
+} __attribute__((packed));
+
+#define CSI_FLAG_VFLIP    (1 << 0)
+#define CSI_FLAG_HMIRROR  (1 << 1)
+#define CSI_FLAG_HAS_ISP  (1 << 2)
 
 // Runtime state - handles and buffers
 struct {
@@ -83,6 +94,9 @@ struct {
   volatile int read_idx;       // Buffer available for reading (finished)
   
   TaskHandle_t cam_task_handle;  // FreeRTOS task for frame processing
+  
+  SemaphoreHandle_t client_mutex;  // Protects client_ptr access
+  SemaphoreHandle_t jpeg_mutex;    // Protects JPEG encoder access
   
   uint8_t up;
   bool streaming;
@@ -163,52 +177,70 @@ void CamProcessingTask(void *pvParameters) {
       // We have a frame!
       uint32_t frame_start = millis();
       
-      // Only process if we have a client connected to stream
-      if (Wc.stream_active == 2 && Wc.client_ptr && Wc.client_ptr->connected()) {
-        uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
-        
-        // Cache Sync (Hardware M2C)
-        esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-        
-        uint32_t jpeg_size = 0;
-        esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
-                                              &Wc.jpeg_cfg,
-                                              source_buf, 
-                                              Wc.frame_buffer_size,
-                                              (uint8_t*)Wc.jpeg_buffer, 
-                                              Wc.jpeg_buffer_size,
-                                              &jpeg_size);
-        
-        // Auto-Reset on 0x103 (Engine Stuck)
-        if (ret == ESP_ERR_INVALID_STATE) {
-          jpeg_del_encoder_engine(Wc.jpeg_handle);
-          jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
-          jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
-          WcStats.jpeg_resets++;
-          continue;
-        }
+      // Lock client access to prevent race with WcLoop
+      if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        // Only process if we have a client connected to stream
+        if (Wc.stream_active == 2 && Wc.client_ptr && Wc.client_ptr->connected()) {
+          uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+          
+          // Cache Sync (Hardware M2C)
+          esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+          
+          // Lock JPEG encoder to prevent race with HandleImage
+          if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            uint32_t jpeg_size = 0;
+            esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
+                                                  &Wc.jpeg_cfg,
+                                                  source_buf, 
+                                                  Wc.frame_buffer_size,
+                                                  (uint8_t*)Wc.jpeg_buffer, 
+                                                  Wc.jpeg_buffer_size,
+                                                  &jpeg_size);
+            
+            // Auto-Reset on 0x103 (Engine Stuck)
+            if (ret == ESP_ERR_INVALID_STATE) {
+              jpeg_del_encoder_engine(Wc.jpeg_handle);
+              jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
+              jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+              WcStats.jpeg_resets++;
+              xSemaphoreGive(Wc.jpeg_mutex);
+              xSemaphoreGive(Wc.client_mutex);
+              continue;
+            }
 
-        if (ret == ESP_OK && jpeg_size > 0) {
-          Wc.client_ptr->print("--" BOUNDARY "\r\n");
-          Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
-          Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
-          Wc.client_ptr->print("\r\n");
-          
-          // Statistics
-          WcStats.frames_processed++;
-          WcStats.bytes_sent += jpeg_size;
-          frames_in_second++;
-          
-          // Yield to let network stack process
-          taskYIELD();
+            if (ret == ESP_OK && jpeg_size > 0) {
+              Wc.client_ptr->print("--" BOUNDARY "\r\n");
+              Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
+              Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
+              Wc.client_ptr->print("\r\n");
+              
+              // Statistics
+              WcStats.frames_processed++;
+              WcStats.bytes_sent += jpeg_size;
+              frames_in_second++;
+              
+              // Yield to let network stack process
+              taskYIELD();
+            } else {
+              WcStats.jpeg_errors++;
+            }
+            
+            xSemaphoreGive(Wc.jpeg_mutex);
+            
+            // Track frame processing time
+            WcStats.last_frame_time_ms = millis() - frame_start;
+          } else {
+            // Couldn't get JPEG mutex
+            WcStats.frames_dropped++;
+          }
         } else {
-          WcStats.jpeg_errors++;
+          // No client or not streaming - frame dropped
+          WcStats.frames_dropped++;
         }
         
-        // Track frame processing time
-        WcStats.last_frame_time_ms = millis() - frame_start;
+        xSemaphoreGive(Wc.client_mutex);
       } else {
-        // No client or not streaming - frame dropped
+        // Couldn't get client mutex
         WcStats.frames_dropped++;
       }
       
@@ -250,27 +282,66 @@ uint32_t WcSetup() {
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI PHY LDO enabled"));
 
-  // PRE-FILL CONFIG WITH DEFAULTS
+  // PRE-FILL CONFIG WITH DEFAULTS (for Berry to potentially read)
+  memset(&Wc.config, 0, sizeof(Wc.config));
   Wc.config.width = 800;
   Wc.config.height = 640;
+  Wc.config.max_width = 0;
+  Wc.config.max_height = 0;
   Wc.config.format = 0;        // RAW8
-  Wc.config.has_isp = 0;
-  Wc.config.lane_bitrate = 200;
   Wc.config.lane_num = 2;
+  Wc.config.mipi_clock = 200;
+  Wc.config.crop_x = 0;
+  Wc.config.crop_y = 0;
+  Wc.config.binning = 0;
+  Wc.config.flags = 0;
 
-  // 2. Call Berry to initialize sensor
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry init for sensor..."));
-  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), 0, (char*)&Wc.config, sizeof(CSI_Config));
+  // 2. Call Berry to initialize sensor (zero-copy: pass struct address as idx)
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== CALLING BERRY INIT ====="));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Config buffer addr=0x%08X size=%d bytes"), (uint32_t)&Wc.config, sizeof(CSI_Config));
   
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Berry init result=%d"), result);
+  uint32_t config_addr = (uint32_t)&Wc.config;
+  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== BERRY INIT RESULT=%d ====="), result);
   
   if (result == 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed or no driver loaded"));
     return 0;
   }
   
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Berry configured %dx%d format=%d bitrate=%d lanes=%d"), 
-    Wc.config.width, Wc.config.height, Wc.config.format, Wc.config.lane_bitrate, Wc.config.lane_num);
+  // Log raw bytes for debugging
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Raw bytes [0-7]: %02X %02X %02X %02X %02X %02X %02X %02X"),
+    ((uint8_t*)&Wc.config)[0], ((uint8_t*)&Wc.config)[1], ((uint8_t*)&Wc.config)[2], ((uint8_t*)&Wc.config)[3],
+    ((uint8_t*)&Wc.config)[4], ((uint8_t*)&Wc.config)[5], ((uint8_t*)&Wc.config)[6], ((uint8_t*)&Wc.config)[7]);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Raw bytes [18-25]: %02X %02X %02X %02X %02X %02X %02X %02X"),
+    ((uint8_t*)&Wc.config)[18], ((uint8_t*)&Wc.config)[19], ((uint8_t*)&Wc.config)[20], ((uint8_t*)&Wc.config)[21],
+    ((uint8_t*)&Wc.config)[22], ((uint8_t*)&Wc.config)[23], ((uint8_t*)&Wc.config)[24], ((uint8_t*)&Wc.config)[25]);
+  
+  // Log what Berry sent us (DRY RUN - verify data exchange)
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== CONFIG FROM BERRY ====="));
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor Name: %.8s"), Wc.config.name);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution: %dx%d"), Wc.config.width, Wc.config.height);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Max Resolution: %dx%d"), Wc.config.max_width, Wc.config.max_height);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (0=RAW8, 1=RAW10)"), Wc.config.format);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.config.mipi_clock);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.config.lane_num);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Crop: X=%d Y=%d"), Wc.config.crop_x, Wc.config.crop_y);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (0=1x1, 1=2x2, 2=4x4)"), Wc.config.binning);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Flags: 0x%02X (VFlip=%d HMirror=%d HasISP=%d)"), 
+    Wc.config.flags,
+    (Wc.config.flags & CSI_FLAG_VFLIP) ? 1 : 0,
+    (Wc.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0,
+    (Wc.config.flags & CSI_FLAG_HAS_ISP) ? 1 : 0);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
+  
+  // DRY RUN: Use hardcoded values for now (ignore Berry config)
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: DRY RUN MODE - Using hardcoded 800x640 RAW8"));
+  Wc.config.width = 800;
+  Wc.config.height = 640;
+  Wc.config.format = 0;
+  Wc.config.lane_num = 2;
+  Wc.config.mipi_clock = 200;
 
   // 3. Allocate Two Frame Buffers (Aligned 64-byte for JPEG DMA)
   Wc.frame_buffer_size = Wc.config.width * Wc.config.height * 2; // RGB565 = 2 bytes per pixel
@@ -294,7 +365,7 @@ uint32_t WcSetup() {
     .h_res = Wc.config.width,
     .v_res = Wc.config.height,
     .data_lane_num = Wc.config.lane_num,
-    .lane_bit_rate_mbps = (int)Wc.config.lane_bitrate,
+    .lane_bit_rate_mbps = (int)Wc.config.mipi_clock,
     .input_data_color_type = CAM_CTLR_COLOR_RAW8,
     .output_data_color_type = CAM_CTLR_COLOR_YUV422,
     .queue_items = 1,
@@ -422,7 +493,25 @@ uint32_t WcSetup() {
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
 
-  // 9. Create camera processing task
+  // 9. Create mutexes for thread safety
+  Wc.client_mutex = xSemaphoreCreateMutex();
+  Wc.jpeg_mutex = xSemaphoreCreateMutex();
+  
+  if (!Wc.client_mutex || !Wc.jpeg_mutex) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create mutexes"));
+    // Cleanup
+    if (Wc.client_mutex) vSemaphoreDelete(Wc.client_mutex);
+    if (Wc.jpeg_mutex) vSemaphoreDelete(Wc.jpeg_mutex);
+    jpeg_del_encoder_engine(Wc.jpeg_handle);
+    esp_isp_disable(Wc.isp_handle);
+    esp_isp_del_processor(Wc.isp_handle);
+    esp_cam_ctlr_stop(Wc.cam_handle);
+    esp_cam_ctlr_disable(Wc.cam_handle);
+    return 0;
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Mutexes created"));
+
+  // 10. Create camera processing task
   BaseType_t task_created = xTaskCreatePinnedToCore(
     CamProcessingTask,
     "CamTask",
@@ -436,6 +525,8 @@ uint32_t WcSetup() {
   if (task_created != pdPASS) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create processing task"));
     // Cleanup
+    vSemaphoreDelete(Wc.client_mutex);
+    vSemaphoreDelete(Wc.jpeg_mutex);
     jpeg_del_encoder_engine(Wc.jpeg_handle);
     esp_isp_disable(Wc.isp_handle);
     esp_isp_del_processor(Wc.isp_handle);
@@ -508,6 +599,16 @@ uint32_t WcStop(void) {
     Wc.cam_task_handle = NULL;
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task deleted"));
   }
+  
+  // Delete mutexes
+  if (Wc.client_mutex) {
+    vSemaphoreDelete(Wc.client_mutex);
+    Wc.client_mutex = NULL;
+  }
+  if (Wc.jpeg_mutex) {
+    vSemaphoreDelete(Wc.jpeg_mutex);
+    Wc.jpeg_mutex = NULL;
+  }
 
   // Call Berry to stop sensor streaming
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream"));
@@ -578,9 +679,19 @@ void CmndWcStatus(void) {
 
 void CmndWcConfig(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcConfig called"));
-  // TODO: Implement config display
-  Response_P(PSTR("{\"WcConfig\":{\"Width\":%d,\"Height\":%d,\"Format\":%d,\"Bitrate\":%d,\"Lanes\":%d}}"),
-    Wc.config.width, Wc.config.height, Wc.config.format, Wc.config.lane_bitrate, Wc.config.lane_num);
+  Response_P(PSTR("{\"WcConfig\":{\"Sensor\":\"%.8s\",\"Width\":%d,\"Height\":%d,\"MaxWidth\":%d,\"MaxHeight\":%d,\"Format\":%d,\"MipiClock\":%d,\"Lanes\":%d,\"CropX\":%d,\"CropY\":%d,\"Binning\":%d,\"Flags\":\"0x%02X\"}}"),
+    Wc.config.name,
+    Wc.config.width, 
+    Wc.config.height,
+    Wc.config.max_width,
+    Wc.config.max_height,
+    Wc.config.format, 
+    Wc.config.mipi_clock, 
+    Wc.config.lane_num,
+    Wc.config.crop_x,
+    Wc.config.crop_y,
+    Wc.config.binning,
+    Wc.config.flags);
 }
 
 /*********************************************************************************************/
@@ -633,25 +744,31 @@ void HandleWebcamMjpeg(void) {
     return;
   }
   
-  // Allocate client on heap to avoid stack issues
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Allocating client..."));
-  if (Wc.client_ptr) {
-    delete Wc.client_ptr;
-    Wc.client_ptr = nullptr;
+  // Lock client access
+  if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
+    // Allocate client on heap to avoid stack issues
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Allocating client..."));
+    if (Wc.client_ptr) {
+      delete Wc.client_ptr;
+      Wc.client_ptr = nullptr;
+    }
+    
+    Wc.client_ptr = new WiFiClient();
+    if (!Wc.client_ptr) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate client!"));
+      xSemaphoreGive(Wc.client_mutex);
+      return;
+    }
+    
+    *Wc.client_ptr = Wc.CamServer->client();
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client allocated, connected=%d"), Wc.client_ptr->connected());
+    
+    // Send HTTP header
+    Wc.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
+    Wc.stream_active = 2;
+    
+    xSemaphoreGive(Wc.client_mutex);
   }
-  
-  Wc.client_ptr = new WiFiClient();
-  if (!Wc.client_ptr) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate client!"));
-    return;
-  }
-  
-  *Wc.client_ptr = Wc.CamServer->client();
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client allocated, connected=%d"), Wc.client_ptr->connected());
-  
-  // Send HTTP header
-  Wc.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
-  Wc.stream_active = 2;
 }
 
 void HandleImage(void) {
@@ -671,14 +788,20 @@ void HandleImage(void) {
   // Wait for next frame (simple delay to let task process)
   delay(100);
   
-  uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
-  esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+  // Lock JPEG encoder to prevent race with CamProcessingTask
+  if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
+    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
 
-  uint32_t jpeg_size = 0;
-  esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &Wc.jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
-  if (ret == ESP_OK && jpeg_size > 0) {
-    client.write((char *)Wc.jpeg_buffer, jpeg_size);
+    uint32_t jpeg_size = 0;
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &Wc.jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
+    if (ret == ESP_OK && jpeg_size > 0) {
+      client.write((char *)Wc.jpeg_buffer, jpeg_size);
+    }
+    
+    xSemaphoreGive(Wc.jpeg_mutex);
   }
+  
   client.stop();
 }
 
@@ -792,12 +915,15 @@ void WcLoop(void) {
   if (Wc.CamServer) {
     Wc.CamServer->handleClient();
     
-    // Monitor client connection - cleanup if disconnected
-    if (Wc.stream_active && Wc.client_ptr && !Wc.client_ptr->connected()) {
-      delete Wc.client_ptr;
-      Wc.client_ptr = nullptr;
-      Wc.stream_active = 0;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client disconnected"));
+    // Monitor client connection - cleanup if disconnected (with mutex protection)
+    if (Wc.stream_active && xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+      if (Wc.client_ptr && !Wc.client_ptr->connected()) {
+        delete Wc.client_ptr;
+        Wc.client_ptr = nullptr;
+        Wc.stream_active = 0;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client disconnected"));
+      }
+      xSemaphoreGive(Wc.client_mutex);
     }
   }
 }
