@@ -81,7 +81,8 @@ struct {
   
   volatile int write_idx;      // Buffer CSI is currently writing to (0 or 1)
   volatile int read_idx;       // Buffer available for reading (finished)
-  volatile bool frame_ready;   // Flag set by ISR
+  
+  TaskHandle_t cam_task_handle;  // FreeRTOS task for frame processing
   
   uint8_t up;
   bool streaming;
@@ -90,7 +91,21 @@ struct {
   ESP8266WebServer *CamServer;
 } Wc;
 
+// Statistics
+struct {
+  uint32_t frames_captured;    // Total frames from ISR
+  uint32_t frames_processed;   // Frames successfully encoded
+  uint32_t frames_dropped;     // Frames dropped (client disconnected/slow)
+  uint32_t jpeg_errors;        // JPEG encoding errors
+  uint32_t jpeg_resets;        // JPEG encoder resets (0x103 errors)
+  uint32_t bytes_sent;         // Total bytes sent to clients
+  uint32_t uptime_seconds;     // Streaming uptime
+  uint32_t last_fps;           // Calculated FPS (updated every second)
+  uint32_t last_frame_time_ms; // Last frame processing time
+  uint32_t start_time;         // millis() when streaming started
+} WcStats;
 
+#define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
 /*********************************************************************************************/
 
@@ -113,17 +128,104 @@ static bool IRAM_ATTR csi_on_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ct
   return false; 
 }
 
-// Callback: Frame transfer finished
+// Callback: Frame transfer finished - Wake processing task
 static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data) {
   cb_finished_count++;
   
   // The buffer we just finished writing is now the readable one
-  Wc.read_idx = Wc.write_idx; 
-  Wc.frame_ready = true;
+  Wc.read_idx = Wc.write_idx;
   
-  return false; 
+  // Statistics: increment frames captured
+  WcStats.frames_captured++;
+  
+  // Wake up the processing task immediately
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  vTaskNotifyGiveFromISR(Wc.cam_task_handle, &xHigherPriorityTaskWoken);
+  
+  return xHigherPriorityTaskWoken == pdTRUE;
 }
 
+
+/*********************************************************************************************/
+// Camera Processing Task - Dedicated FreeRTOS task for frame processing
+
+void CamProcessingTask(void *pvParameters) {
+  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(500); // 500ms timeout
+  uint32_t last_fps_calc = millis();
+  uint32_t frames_in_second = 0;
+  
+  while (true) {
+    // Wait here until ISR signals "Frame Ready"
+    // This consumes 0% CPU while waiting
+    uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
+    
+    if (ulNotificationValue > 0) {
+      // We have a frame!
+      uint32_t frame_start = millis();
+      
+      // Only process if we have a client connected to stream
+      if (Wc.stream_active == 2 && Wc.client_ptr && Wc.client_ptr->connected()) {
+        uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+        
+        // Cache Sync (Hardware M2C)
+        esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+        
+        uint32_t jpeg_size = 0;
+        esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
+                                              &Wc.jpeg_cfg,
+                                              source_buf, 
+                                              Wc.frame_buffer_size,
+                                              (uint8_t*)Wc.jpeg_buffer, 
+                                              Wc.jpeg_buffer_size,
+                                              &jpeg_size);
+        
+        // Auto-Reset on 0x103 (Engine Stuck)
+        if (ret == ESP_ERR_INVALID_STATE) {
+          jpeg_del_encoder_engine(Wc.jpeg_handle);
+          jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
+          jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+          WcStats.jpeg_resets++;
+          continue;
+        }
+
+        if (ret == ESP_OK && jpeg_size > 0) {
+          Wc.client_ptr->print("--" BOUNDARY "\r\n");
+          Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
+          Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
+          Wc.client_ptr->print("\r\n");
+          
+          // Statistics
+          WcStats.frames_processed++;
+          WcStats.bytes_sent += jpeg_size;
+          frames_in_second++;
+          
+          // Yield to let network stack process
+          taskYIELD();
+        } else {
+          WcStats.jpeg_errors++;
+        }
+        
+        // Track frame processing time
+        WcStats.last_frame_time_ms = millis() - frame_start;
+      } else {
+        // No client or not streaming - frame dropped
+        WcStats.frames_dropped++;
+      }
+      
+      // Calculate FPS every second
+      if (millis() - last_fps_calc >= 1000) {
+        WcStats.last_fps = frames_in_second;
+        frames_in_second = 0;
+        last_fps_calc = millis();
+        
+        // Update uptime
+        if (WcStats.start_time > 0) {
+          WcStats.uptime_seconds = (millis() - WcStats.start_time) / 1000;
+        }
+      }
+    }
+  }
+}
 
 /*********************************************************************************************/
 
@@ -320,6 +422,29 @@ uint32_t WcSetup() {
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
 
+  // 9. Create camera processing task
+  BaseType_t task_created = xTaskCreatePinnedToCore(
+    CamProcessingTask,
+    "CamTask",
+    4096,
+    NULL,
+    5,
+    &Wc.cam_task_handle,
+    1  // Pin to Core 1 (App Core)
+  );
+  
+  if (task_created != pdPASS) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create processing task"));
+    // Cleanup
+    jpeg_del_encoder_engine(Wc.jpeg_handle);
+    esp_isp_disable(Wc.isp_handle);
+    esp_isp_del_processor(Wc.isp_handle);
+    esp_cam_ctlr_stop(Wc.cam_handle);
+    esp_cam_ctlr_disable(Wc.cam_handle);
+    return 0;
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task created"));
+
   Wc.up = 1;
   Wc.streaming = false;
 
@@ -339,6 +464,10 @@ uint32_t WcStart(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Already streaming"));
     return 1;
   }
+
+  // Reset statistics
+  memset(&WcStats, 0, sizeof(WcStats));
+  WcStats.start_time = millis();
 
   // CSI controller is already started during setup
   // Just need to start sensor streaming via Berry
@@ -366,10 +495,18 @@ uint32_t WcStop(void) {
     return 0;
   }
 
+  // Stop CSI controller
   esp_err_t ret = esp_cam_ctlr_stop(Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to stop CSI (0x%x)"), ret);
     return 0;
+  }
+
+  // Delete processing task
+  if (Wc.cam_task_handle) {
+    vTaskDelete(Wc.cam_task_handle);
+    Wc.cam_task_handle = NULL;
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task deleted"));
   }
 
   // Call Berry to stop sensor streaming
@@ -421,9 +558,22 @@ void CmndWcStream(void) {
 
 void CmndWcStatus(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
-  // TODO: Implement full status display
-  Response_P(PSTR("{\"WcStatus\":{\"Sensor\":\"OV5647\",\"Mode\":3,\"Resolution\":\"%dx%d\",\"Streaming\":\"%s\"}}"),
-    Wc.config.width, Wc.config.height, Wc.streaming ? "ON" : "OFF");
+  
+  Response_P(PSTR("{\"WcStatus\":{\"Streaming\":\"%s\",\"Resolution\":\"%dx%d\","
+                  "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesDropped\":%u,"
+                  "\"JpegErrors\":%u,\"JpegResets\":%u,\"BytesSent\":%u,"
+                  "\"UptimeSeconds\":%u,\"FPS\":%u,\"LastFrameTimeMs\":%u}}"),
+    Wc.streaming ? "ON" : "OFF",
+    Wc.config.width, Wc.config.height,
+    WcStats.frames_captured,
+    WcStats.frames_processed,
+    WcStats.frames_dropped,
+    WcStats.jpeg_errors,
+    WcStats.jpeg_resets,
+    WcStats.bytes_sent,
+    WcStats.uptime_seconds,
+    WcStats.last_fps,
+    WcStats.last_frame_time_ms);
 }
 
 void CmndWcConfig(void) {
@@ -455,7 +605,6 @@ void WcInit(void) {
 // - http://IP:81/stream     -> MJPEG stream
 // - http://IP/wc.jpg        -> single frame capture
 
-#define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
@@ -500,55 +649,9 @@ void HandleWebcamMjpeg(void) {
   *Wc.client_ptr = Wc.CamServer->client();
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client allocated, connected=%d"), Wc.client_ptr->connected());
   
-  Wc.stream_active = 1;
-}
-
-void HandleWebcamMjpegTask(void) {
-  if (!Wc.stream_active || !Wc.client_ptr || !Wc.client_ptr->connected()) {
-    if (Wc.client_ptr) { delete Wc.client_ptr; Wc.client_ptr = nullptr; }
-    Wc.stream_active = 0;
-    return;
-  }
-  
-  if (Wc.stream_active == 1) {
-    Wc.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
-    Wc.stream_active = 2;
-  }
-
-  if (Wc.stream_active == 2 && Wc.frame_ready) {
-    
-    // 1. Grab 'readable' buffer (Ping-Pong)
-    // Hardware is writing to write_idx, we read from read_idx
-    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
-    Wc.frame_ready = false; 
-
-    // 2. Sync Cache (M2C) - No memcpy needed!
-    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-    
-    uint32_t jpeg_size = 0;
-    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
-                                          &Wc.jpeg_cfg,
-                                          source_buf, 
-                                          Wc.frame_buffer_size,
-                                          (uint8_t*)Wc.jpeg_buffer, 
-                                          Wc.jpeg_buffer_size,
-                                          &jpeg_size);
-    
-    // Auto-Reset on 0x103 (Engine Stuck)
-    if (ret == ESP_ERR_INVALID_STATE) {
-      jpeg_del_encoder_engine(Wc.jpeg_handle);
-      jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
-      jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
-      return; 
-    }
-
-    if (ret == ESP_OK && jpeg_size > 0) {
-       Wc.client_ptr->print("--" BOUNDARY "\r\n");
-       Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
-       Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
-       Wc.client_ptr->print("\r\n");
-    }
-  }
+  // Send HTTP header
+  Wc.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
+  Wc.stream_active = 2;
 }
 
 void HandleImage(void) {
@@ -565,20 +668,16 @@ void HandleImage(void) {
     return;
   }
 
-  // Poll for next frame
-  Wc.frame_ready = false;
-  uint32_t start = millis();
-  while(!Wc.frame_ready && millis() - start < 1000) { delay(1); }
+  // Wait for next frame (simple delay to let task process)
+  delay(100);
   
-  if (Wc.frame_ready) {
-    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
-    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+  uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+  esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
 
-    uint32_t jpeg_size = 0;
-    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &Wc.jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
-    if (ret == ESP_OK && jpeg_size > 0) {
-      client.write((char *)Wc.jpeg_buffer, jpeg_size);
-    }
+  uint32_t jpeg_size = 0;
+  esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &Wc.jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
+  if (ret == ESP_OK && jpeg_size > 0) {
+    client.write((char *)Wc.jpeg_buffer, jpeg_size);
   }
   client.stop();
 }
@@ -685,8 +784,6 @@ void WcTestReceive(void) {
 }
 
 void WcLoop(void) {
-  // ;WcTestReceive();
-  
   if (Wc.streaming && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting stream server..."));
     WcSetStreamserver(1);
@@ -694,8 +791,13 @@ void WcLoop(void) {
   
   if (Wc.CamServer) {
     Wc.CamServer->handleClient();
-    if (Wc.stream_active) { 
-      HandleWebcamMjpegTask(); 
+    
+    // Monitor client connection - cleanup if disconnected
+    if (Wc.stream_active && Wc.client_ptr && !Wc.client_ptr->connected()) {
+      delete Wc.client_ptr;
+      Wc.client_ptr = nullptr;
+      Wc.stream_active = 0;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client disconnected"));
     }
   }
 }
