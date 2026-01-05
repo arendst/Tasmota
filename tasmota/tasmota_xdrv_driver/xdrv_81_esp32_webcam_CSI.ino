@@ -238,37 +238,51 @@ uint32_t WcSetup() {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI controller started"));
 
   // 7. Configure ISP
-  esp_isp_processor_cfg_t isp_config = {
-    .clk_hz = 80 * 1000 * 1000,
-    .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
-    .input_data_color_type = ISP_COLOR_RAW8,
-    .output_data_color_type = ISP_COLOR_YUV422,
-    .h_res = Wc.config.width,
-    .v_res = Wc.config.height,
-  };
+  extern isp_proc_handle_t tasmota_wc_isp_handle;
+  if (tasmota_wc_isp_handle != nullptr) {
+    Wc.isp_handle = tasmota_wc_isp_handle;
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Using Berry ISP handle"));
+    
+    ret = esp_isp_enable(Wc.isp_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable Berry ISP (0x%x)"), ret);
+      return 0;
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
+  } else {
+    // Fallback: Create ISP until Berry ISP driver is ready
+    esp_isp_processor_cfg_t isp_config = {
+      .clk_hz = 80 * 1000 * 1000,
+      .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
+      .input_data_color_type = ISP_COLOR_RAW8,
+      .output_data_color_type = ISP_COLOR_YUV422,
+      .h_res = Wc.config.width,
+      .v_res = Wc.config.height,
+    };
 
-  ret = esp_isp_new_processor(&isp_config, &Wc.isp_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP init failed (0x%x)"), ret);
-    esp_cam_ctlr_stop(Wc.cam_handle);
-    esp_cam_ctlr_disable(Wc.cam_handle);
-    return 0;
-  }
+    ret = esp_isp_new_processor(&isp_config, &Wc.isp_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP init failed (0x%x)"), ret);
+      esp_cam_ctlr_stop(Wc.cam_handle);
+      esp_cam_ctlr_disable(Wc.cam_handle);
+      return 0;
+    }
 
-  // esp_isp_bf_config_t bf_config = {
-  //   .input_data_color_type = ISP_COLOR_RAW8,
-  //   .pattern = ISP_BAYER_PATTERN_BGGR, 
-  // };
-  // esp_isp_bf_configure(Wc.isp_handle, &bf_config);
-  
-  ret = esp_isp_enable(Wc.isp_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable ISP (0x%x)"), ret);
-    esp_isp_del_processor(Wc.isp_handle);
-    esp_cam_ctlr_stop(Wc.cam_handle);
-    return 0;
+    // esp_isp_bf_config_t bf_config = {
+    //   .input_data_color_type = ISP_COLOR_RAW8,
+    //   .pattern = ISP_BAYER_PATTERN_BGGR, 
+    // };
+    // esp_isp_bf_configure(Wc.isp_handle, &bf_config);
+    
+    ret = esp_isp_enable(Wc.isp_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable ISP (0x%x)"), ret);
+      esp_isp_del_processor(Wc.isp_handle);
+      esp_cam_ctlr_stop(Wc.cam_handle);
+      return 0;
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
 
   // 8. Initialize JPEG encoder engine (100ms Timeout)
   jpeg_encode_engine_cfg_t jpeg_eng_cfg = {
@@ -374,6 +388,50 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
     return Wc.frame_buffer[Wc.read_idx];
 }
 
+
+/*********************************************************************************************/
+// Command definitions
+
+#define D_PREFX_WEBCAM "Wc"
+#define D_CMND_WC_RES "Res"
+#define D_CMND_WC_STREAM "Stream"
+#define D_CMND_WC_STATUS "Status"
+#define D_CMND_WC_CONFIG "Config"
+
+const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG;
+
+void (* const WCCommand[])(void) PROGMEM = {
+  &CmndWcRes, &CmndWcStream, &CmndWcStatus, &CmndWcConfig
+};
+
+// Command handlers (mockup/stub implementations)
+
+void CmndWcRes(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcRes called, payload=%d"), XdrvMailbox.payload);
+  // TODO: Implement mode selection (0-3)
+  ResponseCmndNumber(3);  // Always return mode 3 for now (current working mode)
+}
+
+void CmndWcStream(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStream called, payload=%d"), XdrvMailbox.payload);
+  // TODO: Implement stream control
+  ResponseCmndStateText(Wc.streaming);  // Return current streaming state
+}
+
+void CmndWcStatus(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
+  // TODO: Implement full status display
+  Response_P(PSTR("{\"WcStatus\":{\"Sensor\":\"OV5647\",\"Mode\":3,\"Resolution\":\"%dx%d\",\"Streaming\":\"%s\"}}"),
+    Wc.config.width, Wc.config.height, Wc.streaming ? "ON" : "OFF");
+}
+
+void CmndWcConfig(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcConfig called"));
+  // TODO: Implement config display
+  Response_P(PSTR("{\"WcConfig\":{\"Width\":%d,\"Height\":%d,\"Format\":%d,\"Bitrate\":%d,\"Lanes\":%d}}"),
+    Wc.config.width, Wc.config.height, Wc.config.format, Wc.config.lane_bitrate, Wc.config.lane_num);
+}
 
 /*********************************************************************************************/
 
@@ -671,6 +729,9 @@ bool Xdrv81(uint32_t function) {
       if (Wc.up && !Wc.streaming && !TasmotaGlobal.global_state.network_down) {
         WcStart();
       }
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kWCCommands, WCCommand);
       break;
     case FUNC_ACTIVE:
       result = true;
