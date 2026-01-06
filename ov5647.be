@@ -76,6 +76,10 @@ class OV5647 : CSI_Sensor
   var is_streaming
   var is_initialized
   var line_sync_enable
+  var mipi_clock
+  var width
+  var height
+  var format
   
   def init()
     super(self).init("OV5647", self.ADDR)
@@ -206,6 +210,15 @@ class OV5647 : CSI_Sensor
   # Register configuration for 800x640 RAW8 @ 50fps
   # EXACT copy from official ESP-IDF driver: ov5647_input_24M_MIPI_2lane_raw8_800x640_50fps
   def regs_800x640_raw8()
+    print("OV5647: Configuring 800x640 RAW8...")
+    
+    # Set resolution and clock parameters
+    self.width = 800
+    self.height = 640
+    self.format = 0  # COLOR_PIXEL_RAW8
+    # IDI Clock: 100 MHz, Multiplier: 4, Per lane: (100 * 4) / 2 = 200 Mbps
+    self.mipi_clock = 200
+    
     return [
       # PLL and clock configuration
       [0x3034, 0x18],           # RAW8 mode (OV5647_8BIT_MODE)
@@ -339,6 +352,147 @@ class OV5647 : CSI_Sensor
     ]
   end
   
+  # Register configuration for 1280x960 RAW10 @ 45fps
+  # From official ESP-IDF driver: ov5647_mipi_2lane_24Minput_1280x960_raw10_45fps
+  def regs_1280x960_raw10()
+    print("OV5647: Configuring 1280x960 RAW10...")
+    
+    # Set resolution and clock parameters
+    self.width = 1280
+    self.height = 960
+    self.format = 1  # COLOR_PIXEL_RAW10
+    # IDI Clock: 88.333 MHz, Multiplier: 5, Per lane: (88.333 * 5) / 2 = 220.833 ≈ 221 Mbps
+    self.mipi_clock = 221
+    
+    return [
+      # PLL and clock configuration
+      [0x3034, 0x1a],           # RAW10 mode (OV5647_10BIT_MODE)
+      [0x3035, 0x21],           # system clk div
+      [0x3036, 0x6a],           # PLL multiplier
+      [0x303c, 0x11],
+      [0x3106, 0xf5],           # PLL clock divider
+      
+      # Flip/mirror and binning
+      [0x3820, 0x01],           # horizontal: bit1=mirror, bit0=binning
+      [0x3821, 0x03],           # vertical: bit1=flip, bit0=binning
+      
+      # Timing and analog
+      [0x3827, 0xec],
+      [0x370c, 0x03],
+      [0x3612, 0x59],
+      [0x3618, 0x00],
+      
+      # ISP control
+      [0x5000, 0xff],           # LENC enable
+      [0x583e, 0xf0],           # LSC max gain
+      [0x583f, 0x40],           # LSC min gain
+      [0x5003, 0x08],
+      [0x5a00, 0x08],
+      
+      # Pad control
+      [0x3000, 0x00],
+      [0x3001, 0x00],
+      [0x3002, 0x00],
+      [0x3016, 0x08],
+      [0x3017, 0xe0],
+      [0x3018, 0x44],           # 2 lane MIPI
+      [0x301c, 0xf8],
+      [0x301d, 0xf0],
+      
+      # AEC/AGC
+      [0x3a18, 0x03],           # gain ceiling
+      [0x3a19, 0xff],           # gain ceiling
+      [0x3c00, 0x40],
+      [0x3b07, 0x0c],
+      
+      # HTS (line time) = 1796
+      [0x380c, 0x07],           # HTS high: (1796 >> 8) = 0x07
+      [0x380d, 0x04],           # HTS low: 1796 & 0xFF = 0x04
+      
+      # VTS (frame time) = 1093
+      [0x380e, 0x04],           # VTS high: (1093 >> 8) = 0x04
+      [0x380f, 0x45],           # VTS low: 1093 & 0xFF = 0x45
+      
+      # Subsampling
+      [0x3814, 0x31],
+      [0x3815, 0x31],
+      
+      # Output size: 1280x960
+      [0x3808, 0x05],           # Width high
+      [0x3809, 0x00],           # Width low (1280 = 0x500)
+      [0x380a, 0x03],           # Height high
+      [0x380b, 0xc0],           # Height low (960 = 0x3c0)
+      
+      # Window: X start = 24
+      [0x3800, 0x00],           # X start high
+      [0x3801, 0x18],           # X start low (24 = 0x18)
+      
+      # Window: Y start = 12
+      [0x3802, 0x00],           # Y start high
+      [0x3803, 0x0c],           # Y start low (12 = 0x0c)
+      
+      # Window: X end = 2600
+      [0x3804, 0x0a],           # X end high
+      [0x3805, 0x27],           # X end low (2600 = 0xa27)
+      
+      # Window: Y end = 1944
+      [0x3806, 0x07],           # Y end high
+      [0x3807, 0x97],           # Y end low (1944 = 0x797)
+      
+      # Timing offset
+      [0x3811, 0x05],           # X offset = 4 + 1 to fix BAYER alignment issue
+      [0x3813, 0x02],           # Y offset = 2
+      
+      # Analog settings
+      [0x3630, 0x2e],
+      [0x3632, 0xe2],
+      [0x3633, 0x23],
+      [0x3634, 0x44],
+      [0x3636, 0x06],
+      [0x3620, 0x64],
+      [0x3621, 0xe0],
+      [0x3600, 0x37],
+      [0x3704, 0xa0],
+      [0x3703, 0x5a],
+      [0x3715, 0x78],
+      [0x3717, 0x01],
+      [0x3731, 0x02],
+      [0x370b, 0x60],
+      [0x3705, 0x1a],
+      [0x3f05, 0x02],
+      [0x3f06, 0x10],
+      [0x3f01, 0x0a],
+      
+      # AEC control
+      [0x3a08, 0x01],
+      [0x3a09, 0x28],
+      [0x3a0a, 0x00],
+      [0x3a0b, 0xf6],
+      [0x3a0d, 0x08],
+      [0x3a0e, 0x06],
+      [0x3a0f, 0x58],
+      [0x3a10, 0x50],
+      [0x3a1b, 0x58],
+      [0x3a1e, 0x50],
+      [0x3a11, 0x60],
+      [0x3a1f, 0x28],
+      
+      # BLC
+      [0x4001, 0x02],
+      [0x4004, 0x04],           # BLC line number
+      [0x4000, 0x09],
+      
+      # MIPI timing
+      [0x4837, 0x16],           # MIPI pclk period
+      [0x4800, 0x24],
+      
+      # Group hold
+      [0x3212, 0xa0],
+      
+      [self.REG_END, 0x00]
+    ]
+  end
+  
   # Check sensor status - read back critical registers to verify configuration
   def check_status()
     if !self.wire return false end
@@ -430,8 +584,7 @@ class OV5647 : CSI_Sensor
         return 0
       end
       
-      # Configure for 800x640 RAW8
-      print("OV5647: Configuring 800x640 RAW8...")
+      # Configure sensor (calls regs_* function which sets width/height/mipi_clock)
       if !self.write_array(self.regs_800x640_raw8())
         print("OV5647: Config failed")
         return 0
@@ -474,13 +627,13 @@ class OV5647 : CSI_Sensor
         # 18-25: char name[8]
         # 26-27: uint8_t reserved[2]
         
-        b.set(0, 800, 2)        # width
-        b.set(2, 640, 2)        # height
+        b.set(0, self.width, 2)   # width
+        b.set(2, self.height, 2)  # height
         b.set(4, 2592, 2)       # max_width (OV5647 native: 2592x1944)
         b.set(6, 1944, 2)       # max_height
-        b[8] = 0                # format: RAW8
+        b[8] = self.format      # format: COLOR_PIXEL_RAW8/RAW10/RAW12
         b[9] = 2                # lanes: 2
-        b.set(10, 200, 2)       # mipi_clock: 200 Mbps/lane
+        b.set(10, self.mipi_clock, 2)  # mipi_clock: calculated by regs function
         b.set(12, 500, 2)       # crop_x: 500 (from register config)
         b.set(14, 0, 2)         # crop_y: 0
         b[16] = 0               # binning: 0 (1x1)

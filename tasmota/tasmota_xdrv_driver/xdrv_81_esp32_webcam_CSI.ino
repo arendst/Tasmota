@@ -109,7 +109,7 @@ struct {
 struct {
   uint32_t frames_captured;    // Total frames from ISR
   uint32_t frames_processed;   // Frames successfully encoded
-  uint32_t frames_dropped;     // Frames dropped (client disconnected/slow)
+  uint32_t frames_unsent;      // Frames captured but not sent to client
   uint32_t jpeg_errors;        // JPEG encoding errors
   uint32_t jpeg_resets;        // JPEG encoder resets (0x103 errors)
   uint32_t bytes_sent;         // Total bytes sent to clients
@@ -231,17 +231,17 @@ void CamProcessingTask(void *pvParameters) {
             WcStats.last_frame_time_ms = millis() - frame_start;
           } else {
             // Couldn't get JPEG mutex
-            WcStats.frames_dropped++;
+            WcStats.frames_unsent++;
           }
         } else {
-          // No client or not streaming - frame dropped
-          WcStats.frames_dropped++;
+          // No client or not streaming - frame unsent
+          WcStats.frames_unsent++;
         }
         
         xSemaphoreGive(Wc.client_mutex);
       } else {
         // Couldn't get client mutex
-        WcStats.frames_dropped++;
+        WcStats.frames_unsent++;
       }
       
       // Calculate FPS every second
@@ -334,14 +334,6 @@ uint32_t WcSetup() {
     (Wc.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0,
     (Wc.config.flags & CSI_FLAG_HAS_ISP) ? 1 : 0);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
-  
-  // DRY RUN: Use hardcoded values for now (ignore Berry config)
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: DRY RUN MODE - Using hardcoded 800x640 RAW8"));
-  Wc.config.width = 800;
-  Wc.config.height = 640;
-  Wc.config.format = 0;
-  Wc.config.lane_num = 2;
-  Wc.config.mipi_clock = 200;
 
   // 3. Allocate Two Frame Buffers (Aligned 64-byte for JPEG DMA)
   Wc.frame_buffer_size = Wc.config.width * Wc.config.height * 2; // RGB565 = 2 bytes per pixel
@@ -661,14 +653,14 @@ void CmndWcStatus(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
   
   Response_P(PSTR("{\"WcStatus\":{\"Streaming\":\"%s\",\"Resolution\":\"%dx%d\","
-                  "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesDropped\":%u,"
+                  "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesUnsent\":%u,"
                   "\"JpegErrors\":%u,\"JpegResets\":%u,\"BytesSent\":%u,"
                   "\"UptimeSeconds\":%u,\"FPS\":%u,\"LastFrameTimeMs\":%u}}"),
     Wc.streaming ? "ON" : "OFF",
     Wc.config.width, Wc.config.height,
     WcStats.frames_captured,
     WcStats.frames_processed,
-    WcStats.frames_dropped,
+    WcStats.frames_unsent,
     WcStats.jpeg_errors,
     WcStats.jpeg_resets,
     WcStats.bytes_sent,
