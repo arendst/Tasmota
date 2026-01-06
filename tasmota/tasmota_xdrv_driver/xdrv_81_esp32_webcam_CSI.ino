@@ -57,7 +57,7 @@ struct CSI_Config {
   uint16_t height;          // 2-3: Active lines per frame
   uint16_t max_width;       // 4-5: Maximum sensor resolution width
   uint16_t max_height;      // 6-7: Maximum sensor resolution height
-  uint8_t format;           // 8: 0=RAW8, 1=RAW10, 2=RGB565, 3=YUV422
+  uint8_t format;           // 8: COLOR_PIXEL_RAW8/RAW10/RAW12 (pixel format part only)
   uint8_t lane_num;         // 9: Number of CSI lanes (typically 2)
   uint16_t mipi_clock;      // 10-11: Mbps per lane (e.g. 200)
   uint16_t crop_x;          // 12-13: Sensor X-offset
@@ -323,7 +323,7 @@ uint32_t WcSetup() {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor Name: %.8s"), Wc.config.name);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution: %dx%d"), Wc.config.width, Wc.config.height);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Max Resolution: %dx%d"), Wc.config.max_width, Wc.config.max_height);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (0=RAW8, 1=RAW10)"), Wc.config.format);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (COLOR_PIXEL_RAW8/10/12)"), Wc.config.format);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.config.mipi_clock);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.config.lane_num);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Crop: X=%d Y=%d"), Wc.config.crop_x, Wc.config.crop_y);
@@ -366,7 +366,7 @@ uint32_t WcSetup() {
     .v_res = Wc.config.height,
     .data_lane_num = Wc.config.lane_num,
     .lane_bit_rate_mbps = (int)Wc.config.mipi_clock,
-    .input_data_color_type = CAM_CTLR_COLOR_RAW8,
+    .input_data_color_type = (cam_ctlr_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
     .output_data_color_type = CAM_CTLR_COLOR_YUV422,
     .queue_items = 1,
     .byte_swap_en = false,
@@ -427,7 +427,7 @@ uint32_t WcSetup() {
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 80 * 1000 * 1000,
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
-      .input_data_color_type = ISP_COLOR_RAW8,
+      .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
       .output_data_color_type = ISP_COLOR_YUV422,
       .h_res = Wc.config.width,
       .v_res = Wc.config.height,
