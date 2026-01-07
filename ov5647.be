@@ -80,12 +80,19 @@ class OV5647 : CSI_Sensor
   var width
   var height
   var format
+  var resolutions  # Array of resolution configuration closures
   
   def init()
     super(self).init("OV5647", self.ADDR)
     self.is_streaming = false
     self.is_initialized = false
     self.line_sync_enable = false  # Match CONFIG_CAMERA_OV5647_CSI_LINESYNC_ENABLE default
+    
+    # Resolution configuration array (index matches WcRes command)
+    self.resolutions = [
+      /-> self.regs_800x640_raw8(),
+      /-> self.regs_1280x960_raw10()
+    ]
   end
   
   def detect()
@@ -560,18 +567,16 @@ class OV5647 : CSI_Sensor
     if cmd == "init"
       print("OV5647: ========== INIT START ==========")
       
-      if self.is_initialized
-        print("OV5647: Already initialized")
-        return 1
+      # Detect sensor only on first init
+      if !self.is_initialized
+        if !self.detect()
+          print("OV5647: Not detected")
+          return 0
+        end
+        self.is_initialized = true
       end
       
-      # Detect sensor
-      if !self.detect()
-        print("OV5647: Not detected")
-        return 0
-      end
-      
-      # Software reset
+      # Software reset (always)
       if !self.software_reset()
         return 0
       end
@@ -584,8 +589,24 @@ class OV5647 : CSI_Sensor
         return 0
       end
       
-      # Configure sensor (calls regs_* function which sets width/height/mipi_clock)
-      if !self.write_array(self.regs_800x640_raw8())
+      # Read resolution index from byte 26 (reserved[0])
+      var res_idx = 0
+      if idx != 0
+        import introspect
+        var p = introspect.toptr(idx)
+        var b = bytes(p, 28)
+        res_idx = b[26]  # Read resolution index from reserved byte
+        print(format("OV5647: Resolution index from C++: %d", res_idx))
+      end
+      
+      # Validate and apply resolution configuration
+      if res_idx < 0 || res_idx >= size(self.resolutions)
+        print(format("OV5647: Invalid resolution index %d, using 0", res_idx))
+        res_idx = 0
+      end
+      
+      # Call selected resolution configuration function
+      if !self.write_array(self.resolutions[res_idx]())
         print("OV5647: Config failed")
         return 0
       end
@@ -653,7 +674,6 @@ class OV5647 : CSI_Sensor
         print("OV5647: Zero-copy config complete")
       end
       
-      self.is_initialized = true
       print("OV5647: ========== INIT COMPLETE ==========")
       print("OV5647: 800x640 RAW8, GBRG Bayer, 2-lane MIPI @ 400 Mbps")
       return 1

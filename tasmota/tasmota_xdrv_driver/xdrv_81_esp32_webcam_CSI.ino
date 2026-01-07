@@ -261,7 +261,7 @@ void CamProcessingTask(void *pvParameters) {
 
 /*********************************************************************************************/
 
-uint32_t WcSetup() {
+uint32_t WcSetup(bool reset_config) {
   if (Wc.up) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI already initialized"));
     return Wc.up;
@@ -282,19 +282,22 @@ uint32_t WcSetup() {
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI PHY LDO enabled"));
 
-  // PRE-FILL CONFIG WITH DEFAULTS (for Berry to potentially read)
-  memset(&Wc.config, 0, sizeof(Wc.config));
-  Wc.config.width = 800;
-  Wc.config.height = 640;
-  Wc.config.max_width = 0;
-  Wc.config.max_height = 0;
-  Wc.config.format = 0;        // RAW8
-  Wc.config.lane_num = 2;
-  Wc.config.mipi_clock = 200;
-  Wc.config.crop_x = 0;
-  Wc.config.crop_y = 0;
-  Wc.config.binning = 0;
-  Wc.config.flags = 0;
+  // PRE-FILL CONFIG WITH DEFAULTS (only on first boot, not on resolution change)
+  if (reset_config) {
+    memset(&Wc.config, 0, sizeof(Wc.config));
+    Wc.config.width = 800;
+    Wc.config.height = 640;
+    Wc.config.max_width = 0;
+    Wc.config.max_height = 0;
+    Wc.config.format = 0;        // RAW8
+    Wc.config.lane_num = 2;
+    Wc.config.mipi_clock = 200;
+    Wc.config.crop_x = 0;
+    Wc.config.crop_y = 0;
+    Wc.config.binning = 0;
+    Wc.config.flags = 0;
+    // reserved[0] = 0 (resolution index 0)
+  }
 
   // 2. Call Berry to initialize sensor (zero-copy: pass struct address as idx)
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== CALLING BERRY INIT ====="));
@@ -336,6 +339,14 @@ uint32_t WcSetup() {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
 
   // 3. Allocate Two Frame Buffers (Aligned 64-byte for JPEG DMA)
+  // Free old buffers if they exist (resolution change scenario)
+  for (int i = 0; i < 2; i++) {
+    if (Wc.frame_buffer[i]) {
+      free(Wc.frame_buffer[i]);
+      Wc.frame_buffer[i] = NULL;
+    }
+  }
+  
   Wc.frame_buffer_size = Wc.config.width * Wc.config.height * 2; // RGB565 = 2 bytes per pixel
   
   for (int i = 0; i < 2; i++) {
@@ -417,7 +428,7 @@ uint32_t WcSetup() {
   } else {
     // Fallback: Create ISP until Berry ISP driver is ready
     esp_isp_processor_cfg_t isp_config = {
-      .clk_hz = 80 * 1000 * 1000,
+      .clk_hz = 120 * 1000 * 1000, //TODO: eventually calculate this based on configured AV session
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
       .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
       .output_data_color_type = ISP_COLOR_YUV422,
@@ -511,7 +522,7 @@ uint32_t WcSetup() {
     NULL,
     5,
     &Wc.cam_task_handle,
-    1  // Pin to Core 1 (App Core)
+    0  // Pin to Core 0
   );
   
   if (task_created != pdPASS) {
@@ -578,19 +589,84 @@ uint32_t WcStop(void) {
     return 0;
   }
 
-  // Stop CSI controller
+  // Call Berry to stop sensor streaming first
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream stop"));
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0); // idx=0 (stop)
+  
+  // Give sensor time to stop streaming
+  delay(50);
+
+  // Stop CSI controller (stops ISR callbacks)
   esp_err_t ret = esp_cam_ctlr_stop(Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to stop CSI (0x%x)"), ret);
-    return 0;
   }
-
-  // Delete processing task
+  
+  // Disable CSI controller BEFORE deleting task (prevents ISR race)
+  ret = esp_cam_ctlr_disable(Wc.cam_handle);
+  if (ret != ESP_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to disable CSI (0x%x)"), ret);
+  }
+  
+  // Let hardware settle after disable
+  delay(100);
+  
+  // Give task time to exit current iteration (client_ptr stays alive for seamless resolution change)
+  delay(50);
+  
+  // Delete processing task (now safe - ISR disabled, client cleared)
   if (Wc.cam_task_handle) {
     vTaskDelete(Wc.cam_task_handle);
     Wc.cam_task_handle = NULL;
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task deleted"));
   }
+  
+  // Delete CSI controller
+  ret = esp_cam_ctlr_del(Wc.cam_handle);
+  if (ret != ESP_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete CSI (0x%x)"), ret);
+  }
+  Wc.cam_handle = NULL;
+  
+  // Disable ISP
+  if (Wc.isp_handle) {
+    ret = esp_isp_disable(Wc.isp_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to disable ISP (0x%x)"), ret);
+    }
+    
+    // Delete ISP
+    ret = esp_isp_del_processor(Wc.isp_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete ISP (0x%x)"), ret);
+    }
+    Wc.isp_handle = NULL;
+  }
+  
+  // Delete JPEG encoder
+  if (Wc.jpeg_handle) {
+    ret = jpeg_del_encoder_engine(Wc.jpeg_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete JPEG encoder (0x%x)"), ret);
+    }
+    Wc.jpeg_handle = NULL;
+  }
+  
+  // Free JPEG buffer
+  if (Wc.jpeg_buffer) {
+    free(Wc.jpeg_buffer);
+    Wc.jpeg_buffer = NULL;
+    Wc.jpeg_buffer_size = 0;
+  }
+  
+  // Free frame buffers
+  for (int i = 0; i < 2; i++) {
+    if (Wc.frame_buffer[i]) {
+      free(Wc.frame_buffer[i]);
+      Wc.frame_buffer[i] = NULL;
+    }
+  }
+  Wc.frame_buffer_size = 0;
   
   // Delete mutexes
   if (Wc.client_mutex) {
@@ -602,11 +678,8 @@ uint32_t WcStop(void) {
     Wc.jpeg_mutex = NULL;
   }
 
-  // Call Berry to stop sensor streaming
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream"));
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0); // idx=0 (stop)
-
   Wc.streaming = false;
+  Wc.up = 0;
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming stopped"));
   return 1;
 }
@@ -639,8 +712,36 @@ void (* const WCCommand[])(void) PROGMEM = {
 
 void CmndWcRes(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcRes called, payload=%d"), XdrvMailbox.payload);
-  // TODO: Implement mode selection (0-3)
-  ResponseCmndNumber(3);  // Always return mode 3 for now (current working mode)
+  
+  if (XdrvMailbox.payload < 0) {
+    ResponseCmndNumber(Wc.config.reserved[0]);
+    return;
+  }
+  
+  // Stop streaming if active
+  if (Wc.streaming) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping stream before resolution change"));
+    WcStop();
+  }
+  
+  // Mark as uninitialized
+  Wc.up = 0;
+  
+  // Store resolution index in reserved byte
+  Wc.config.reserved[0] = (uint8_t)XdrvMailbox.payload;
+  
+  // Reinitialize with new resolution
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing with resolution mode %d"), XdrvMailbox.payload);
+  uint32_t result = WcSetup(false);  // Don't reset config - keep resolution index
+  
+  if (result == 0) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Setup failed for resolution %d"), XdrvMailbox.payload);
+    ResponseCmndFailed();
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed to mode %d (%dx%d)"), 
+      XdrvMailbox.payload, Wc.config.width, Wc.config.height);
+    ResponseCmndNumber(XdrvMailbox.payload);
+  }
 }
 
 void CmndWcStream(void) {
@@ -851,7 +952,7 @@ void WcPicSetup(void) {
 
 void WcShowStream(void) {
   if (Wc.CamServer && Wc.up) {
-    WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream' style='width:99%%;'></center><p></p>"),(uint32_t)WiFi.localIP());
+    WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream''></center><p></p>"),(uint32_t)WiFi.localIP());
   }
 }
 
@@ -941,7 +1042,7 @@ bool Xdrv81(uint32_t function) {
       break;
     case FUNC_INIT:
       if(Wc.up == 0) {
-        WcSetup();
+        WcSetup(true);  // First boot - reset config to defaults
       }
       break;
     case FUNC_EVERY_SECOND:
