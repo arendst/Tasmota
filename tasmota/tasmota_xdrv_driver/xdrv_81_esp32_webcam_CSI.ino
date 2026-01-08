@@ -60,17 +60,17 @@ struct CSI_Config {
   uint8_t format;           // 8: COLOR_PIXEL_RAW8/RAW10/RAW12 (pixel format part only)
   uint8_t lane_num;         // 9: Number of CSI lanes (typically 2)
   uint16_t mipi_clock;      // 10-11: Mbps per lane (e.g. 200)
-  uint16_t crop_x;          // 12-13: Sensor X-offset
-  uint16_t crop_y;          // 14-15: Sensor Y-offset
-  uint8_t binning;          // 16: 0=None/1x1, 1=2x2, 2=4x4
-  uint8_t flags;            // 17: Bit 0=V-Flip, Bit 1=H-Mirror, Bit 2=Has_ISP
+  uint16_t offset_x;        // 12-13: Sensor X-offset (Ignored by C++, used by Berry for ROI)
+  uint16_t offset_y;        // 14-15: Sensor Y-offset (Ignored by C++, used by Berry for ROI)
+  uint8_t binning;          // 16: 1=None/1x1, 2=2x2, ...
+  uint8_t fps;              // 17: Target FPS (e.g., 30)
   char name[8];             // 18-25: Sensor name (null-terminated)
-  uint8_t reserved[2];      // 26-27: Reserved for future use
+  uint8_t res_index;        // 26: Resolution Index (0-255)
+  uint8_t flags;            // 27: Bitmask (Bit 0=V-Flip, Bit 1=H-Mirror)
 } __attribute__((packed));
 
 #define CSI_FLAG_VFLIP    (1 << 0)
 #define CSI_FLAG_HMIRROR  (1 << 1)
-#define CSI_FLAG_HAS_ISP  (1 << 2)
 
 // Runtime state - handles and buffers
 struct {
@@ -292,11 +292,12 @@ uint32_t WcSetup(bool reset_config) {
     Wc.config.format = 0;        // RAW8
     Wc.config.lane_num = 2;
     Wc.config.mipi_clock = 200;
-    Wc.config.crop_x = 0;
-    Wc.config.crop_y = 0;
+    Wc.config.offset_x = 0;
+    Wc.config.offset_y = 0;
     Wc.config.binning = 0;
+    Wc.config.fps = 0;
+    Wc.config.res_index = 0;
     Wc.config.flags = 0;
-    // reserved[0] = 0 (resolution index 0)
   }
 
   // 2. Call Berry to initialize sensor (zero-copy: pass struct address as idx)
@@ -329,13 +330,14 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (COLOR_PIXEL_RAW8/10/12)"), Wc.config.format);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.config.mipi_clock);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.config.lane_num);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Crop: X=%d Y=%d"), Wc.config.crop_x, Wc.config.crop_y);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Offset: X=%d Y=%d"), Wc.config.offset_x, Wc.config.offset_y);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (0=1x1, 1=2x2, 2=4x4)"), Wc.config.binning);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Flags: 0x%02X (VFlip=%d HMirror=%d HasISP=%d)"), 
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS: %d"), Wc.config.fps);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ResIndex: %d"), Wc.config.res_index);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Flags: 0x%02X (VFlip=%d HMirror=%d)"), 
     Wc.config.flags,
     (Wc.config.flags & CSI_FLAG_VFLIP) ? 1 : 0,
-    (Wc.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0,
-    (Wc.config.flags & CSI_FLAG_HAS_ISP) ? 1 : 0);
+    (Wc.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
 
   // 3. Allocate Two Frame Buffers (Aligned 64-byte for JPEG DMA)
@@ -700,12 +702,13 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
 #define D_CMND_WC_STREAM "Stream"
 #define D_CMND_WC_STATUS "Status"
 #define D_CMND_WC_CONFIG "Config"
+#define D_CMND_WC_WINDOW "Window"
 
 const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG;
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStatus, &CmndWcConfig
+  &CmndWcRes, &CmndWcStream, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow
 };
 
 // Command handlers (mockup/stub implementations)
@@ -714,7 +717,7 @@ void CmndWcRes(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcRes called, payload=%d"), XdrvMailbox.payload);
   
   if (XdrvMailbox.payload < 0) {
-    ResponseCmndNumber(Wc.config.reserved[0]);
+    ResponseCmndNumber(Wc.config.res_index);
     return;
   }
   
@@ -727,8 +730,8 @@ void CmndWcRes(void) {
   // Mark as uninitialized
   Wc.up = 0;
   
-  // Store resolution index in reserved byte
-  Wc.config.reserved[0] = (uint8_t)XdrvMailbox.payload;
+  // Store resolution index
+  Wc.config.res_index = (uint8_t)XdrvMailbox.payload;
   
   // Reinitialize with new resolution
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing with resolution mode %d"), XdrvMailbox.payload);
@@ -772,7 +775,7 @@ void CmndWcStatus(void) {
 
 void CmndWcConfig(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcConfig called"));
-  Response_P(PSTR("{\"WcConfig\":{\"Sensor\":\"%.8s\",\"Width\":%d,\"Height\":%d,\"MaxWidth\":%d,\"MaxHeight\":%d,\"Format\":%d,\"MipiClock\":%d,\"Lanes\":%d,\"CropX\":%d,\"CropY\":%d,\"Binning\":%d,\"Flags\":\"0x%02X\"}}"),
+  Response_P(PSTR("{\"WcConfig\":{\"Sensor\":\"%.8s\",\"Width\":%d,\"Height\":%d,\"MaxWidth\":%d,\"MaxHeight\":%d,\"Format\":%d,\"MipiClock\":%d,\"Lanes\":%d,\"OffsetX\":%d,\"OffsetY\":%d,\"Binning\":%d,\"FPS\":%d,\"ResIndex\":%d,\"Flags\":\"0x%02X\"}}"),
     Wc.config.name,
     Wc.config.width, 
     Wc.config.height,
@@ -781,11 +784,58 @@ void CmndWcConfig(void) {
     Wc.config.format, 
     Wc.config.mipi_clock, 
     Wc.config.lane_num,
-    Wc.config.crop_x,
-    Wc.config.crop_y,
+    Wc.config.offset_x,
+    Wc.config.offset_y,
     Wc.config.binning,
+    Wc.config.fps,
+    Wc.config.res_index,
     Wc.config.flags);
 }
+
+void CmndWcWindow(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcWindow called"));
+  
+  int x = 0, y = 0, w = 0, h = 0, bin = 0, fps = 0;
+  int parsed = sscanf(XdrvMailbox.data, "%d,%d,%d,%d,%d,%d", &x, &y, &w, &h, &bin, &fps);
+  
+  if (parsed != 6) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to parse (got %d, expected 6)"), parsed);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid. Use: x,y,w,h,bin,fps\"}}"));
+    return;
+  }
+
+  // Basic validation
+  if (w <= 0 || h <= 0 || w > 2592 || h > 1944) {
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry\"}}"));
+    return;
+  }
+
+  // 1. Stop current stream
+  if (Wc.streaming) {
+    WcStop();
+  }
+  Wc.up = 0; // Mark down so WcSetup runs
+
+  // 2. Pre-fill Config for Berry
+  // We use the struct as a "Message Passing" buffer here
+  Wc.config.offset_x = (uint16_t)x;
+  Wc.config.offset_y = (uint16_t)y;
+  Wc.config.width = (uint16_t)w;
+  Wc.config.height = (uint16_t)h;
+  Wc.config.binning = (uint8_t)bin;
+  Wc.config.fps = (uint8_t)fps;
+  Wc.config.res_index = 255; // Signal "Custom Mode"
+
+  // 3. Re-Init (Calls Berry 'init')
+  // Pass 'false' to NOT reset config to defaults
+  if (WcSetup(false)) {
+    Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"FPS\":%d}}"), 
+      Wc.config.width, Wc.config.height, Wc.config.fps);
+  } else {
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Setup Failed\"}}"));
+  }
+}
+
 
 /*********************************************************************************************/
 

@@ -615,6 +615,82 @@ class OV5647 : CSI_Sensor
   end
 
 
+  # NEW: Custom Resolution Calculator (Universal Binned Window)
+  def regs_custom(x, y, w, h, bin, fps)
+    print(format("OV5647: Configuring Custom Window %dx%d at (%d,%d) FPS=%d", w, h, x, y, fps))
+    
+    self.width = w
+    self.height = h
+    self.format = 0 # RAW8
+    self.mipi_clock = 200 # Standard 200Mbps lane rate
+
+    # Base Offsets from working 1296x972 mode
+    # 0x3810/11 = 0x0009
+    # 0x3812/13 = 0x0000
+    var base_x = 9
+    var base_y = 0
+    
+    # Calculate new offsets (Base + Requested X/Y)
+    var final_x = base_x + x
+    var final_y = base_y + y
+    
+    # Calculate VTS for Target FPS
+    # PCLK ≈ 100 MHz. HTS = 1896.
+    # FrameTime = HTS * VTS / PCLK
+    # FPS = PCLK / (HTS * VTS)
+    # VTS = PCLK / (HTS * FPS)
+    # VTS = 100,000,000 / (1896 * fps)
+    # Example: 30fps -> 1758. 50fps -> 1054.
+    if fps == 0 fps = 30 end # Default safety
+    var vts = 100000000 / (1896 * fps)
+    if vts < h vts = h + 4 end # Minimum VTS safety
+
+    return [
+      # === STANDARD BINNED CONFIG (Base: Mode 5) ===
+      [0x3034,0x18], [0x3035,0x41], [0x3036,0x80], [0x303c,0x11], [0x3106,0xf5],
+      
+      # Binning Enabled
+      [0x3814,0x31], [0x3815,0x31], 
+      [0x3820,0x41], [0x3821,0x03], 
+      
+      # Analog
+      [0x3827,0xec], [0x370c,0x0f], [0x3612,0x59], [0x3618,0x00],
+      [0x5000,0xff], [0x583e,0xf0], [0x583f,0x20], [0x5002,0x41], [0x5003,0x08], [0x5a00,0x08],
+      [0x3000,0x00], [0x3001,0x00], [0x3002,0x00], [0x3016,0x08], [0x3017,0xe0], [0x3018,0x44], [0x301c,0xf8], [0x301d,0xf0],
+      [0x3a18,0x00], [0x3a19,0xf8], [0x3c01,0x80], [0x3c00,0x40], [0x3b07,0x0c],
+      
+      # Timing (HTS fixed, VTS dynamic)
+      [0x380c,0x07], [0x380d,0x68], # HTS = 1896
+      [0x380e, (vts >> 8) & 0xFF],  [0x380f, vts & 0xFF],
+      
+      # === INPUT WINDOW (Always Full Array for stability) ===
+      [0x3800,0x00], [0x3801,0x00], 
+      [0x3802,0x00], [0x3803,0x00], 
+      [0x3804,0x0a], [0x3805,0x3f], 
+      [0x3806,0x07], [0x3807,0xa1], 
+      
+      # === DYNAMIC OUTPUT SIZE ===
+      [0x3808, (w >> 8) & 0xFF], [0x3809, w & 0xFF],
+      [0x380a, (h >> 8) & 0xFF], [0x380b, h & 0xFF],
+      
+      # === DYNAMIC OFFSETS ===
+      [0x3810, (final_x >> 8) & 0xFF], [0x3811, final_x & 0xFF],
+      [0x3812, (final_y >> 8) & 0xFF], [0x3813, final_y & 0xFF],
+      
+      # Analog 2 / BLC / MIPI
+      [0x3630,0x2e], [0x3632,0xe2], [0x3633,0x23], [0x3634,0x44], [0x3636,0x06], [0x3620,0x64], [0x3621,0xe0], [0x3600,0x37],
+      [0x3704,0xa0], [0x3703,0x5a], [0x3715,0x78], [0x3717,0x01], [0x3731,0x02], [0x370b,0x60], [0x3705,0x1a],
+      [0x3f05,0x02], [0x3f06,0x10], [0x3f01,0x0a],
+      [0x3a08,0x01], [0x3a09,0x27], [0x3a0a,0x00], [0x3a0b,0xf6], [0x3a0d,0x04], [0x3a0e,0x03], [0x3a0f,0x58], [0x3a10,0x50], [0x3a1b,0x58], [0x3a1e,0x50], [0x3a11,0x60], [0x3a1f,0x28],
+      
+      [0x4001,0x02], [0x4004,0x02], [0x4000,0x09],
+      [0x4837,0x28], [0x4050,0x6e], [0x4051,0x8f], 
+      
+      [self.REG_END,0x00]
+    ]
+  end
+
+
   
   # Check sensor status - read back critical registers to verify configuration
   def check_status()
@@ -705,24 +781,53 @@ class OV5647 : CSI_Sensor
         return 0
       end
       
-      # Read resolution index from byte 26 (reserved[0])
+      # Variables for resolution logic
       var res_idx = 0
+      var req_x = 0
+      var req_y = 0
+      var req_w = 0
+      var req_h = 0
+      var req_bin = 0
+      var req_fps = 0
+      
+      # Read Configuration from C++ Struct (Byte 26 = res_index)
       if idx != 0
         import introspect
         var p = introspect.toptr(idx)
         var b = bytes(p, 28)
-        res_idx = b[26]  # Read resolution index from reserved byte
-        print(format("OV5647: Resolution index from C++: %d", res_idx))
+        res_idx = b[26]
+        
+        # Check for Custom Mode (255)
+        if res_idx == 255
+           req_x = b.get(12, 2)   # offset_x
+           req_y = b.get(14, 2)   # offset_y
+           req_w = b.get(0, 2)    # width (proposed)
+           req_h = b.get(2, 2)    # height (proposed)
+           req_bin = b[16]        # binning
+           req_fps = b[17]        # fps
+           print(format("OV5647: Custom Mode Requested: %dx%d @ (%d,%d) FPS=%d", req_w, req_h, req_x, req_y, req_fps))
+        else
+           print(format("OV5647: Resolution index from C++: %d", res_idx))
+        end
       end
       
-      # Validate and apply resolution configuration
-      if res_idx < 0 || res_idx >= size(self.resolutions)
-        print(format("OV5647: Invalid resolution index %d, using 0", res_idx))
-        res_idx = 0
+      # Select Configuration Registers
+      var regs = nil
+      if res_idx == 255
+         # Call custom calculator
+         regs = self.regs_custom(req_x, req_y, req_w, req_h, req_bin, req_fps)
+      else
+         # Validate standard index
+         if res_idx < 0 || res_idx >= size(self.resolutions)
+           print(format("OV5647: Invalid resolution index %d, using 0", res_idx))
+           res_idx = 0
+         end
+         # Call standard preset
+         regs = self.resolutions[res_idx]()
       end
       
-      # Call selected resolution configuration function
-      if !self.write_array(self.resolutions[res_idx]())
+      # Apply Registers
+      if !self.write_array(regs)
         print("OV5647: Config failed")
         return 0
       end
@@ -738,56 +843,35 @@ class OV5647 : CSI_Sensor
         print(format("OV5647: WARNING - Stream register = 0x%02X", stream_reg))
       end
       
-      # Zero-copy: idx contains the memory address of C++ CSI_Config struct
+      # Write-Back Actual Configuration to C++ Struct (Zero-Copy)
       if idx != 0
         import introspect
-        print(format("OV5647: Zero-copy config at 0x%08X", idx))
+        print(format("OV5647: Zero-copy config update at 0x%08X", idx))
         
-        # Create pointer and map to bytes (direct memory access)
         var p = introspect.toptr(idx)
-        var b = bytes(p, 28)  # 28-byte CSI_Config struct (was 24)
+        var b = bytes(p, 28)
         
-        print(format("OV5647: Mapped buffer type=%s size=%d", type(b), size(b)))
-        
-        # Fill struct directly in C++ memory
-        # 0-1:   uint16_t width
-        # 2-3:   uint16_t height
-        # 4-5:   uint16_t max_width
-        # 6-7:   uint16_t max_height
-        # 8:     uint8_t format
-        # 9:     uint8_t lane_num
-        # 10-11: uint16_t mipi_clock
-        # 12-13: uint16_t crop_x
-        # 14-15: uint16_t crop_y
-        # 16:    uint8_t binning
-        # 17:    uint8_t flags
-        # 18-25: char name[8]
-        # 26-27: uint8_t reserved[2]
-        
+        # Update C++ struct with what we ACTUALLY configured
         b.set(0, self.width, 2)   # width
         b.set(2, self.height, 2)  # height
-        b.set(4, 2592, 2)       # max_width (OV5647 native: 2592x1944)
-        b.set(6, 1944, 2)       # max_height
-        b[8] = self.format      # format: COLOR_PIXEL_RAW8/RAW10/RAW12
-        b[9] = 2                # lanes: 2
-        b.set(10, self.mipi_clock, 2)  # mipi_clock: calculated by regs function
-        b.set(12, 500, 2)       # crop_x: 500 (from register config)
-        b.set(14, 0, 2)         # crop_y: 0
-        b[16] = 0               # binning: 0 (1x1)
-        b[17] = 0               # flags: 0
+        b.set(4, 2592, 2)         # max_width
+        b.set(6, 1944, 2)         # max_height
+        b[8] = self.format        # format
+        b[9] = 2                  # lanes
+        b.set(10, self.mipi_clock, 2) # mipi_clock
+        
+        # Don't overwrite request parameters (offset_x/y) unless needed
+        # b.set(12, req_x, 2) 
+        # b.set(14, req_y, 2)
+        
+        b[16] = 2                 # binning (Assuming 2x2 for now, logic in regs_custom sets this)
+        b[17] = req_fps           # fps (Echo back requested FPS or calculated?)
         b.setbytes(18, bytes().fromstring("OV5647"))
         
-        b[26] = 0               # reserved
-        b[27] = 0               # reserved
+        b[26] = res_idx           # res_index
+        b[27] = 0                 # flags
         
-        # Verify what we wrote
-        print(format("OV5647: Verify - width=%d height=%d", b.get(0, 2), b.get(2, 2)))
-        print(format("OV5647: Verify - max=%dx%d", b.get(4, 2), b.get(6, 2)))
-        print(format("OV5647: Verify - format=%d lanes=%d clock=%d", b[8], b[9], b.get(10, 2)))
-        print(format("OV5647: Verify - crop_x=%d crop_y=%d", b.get(12, 2), b.get(14, 2)))
-        print(format("OV5647: Verify - name[0-3]=%02X %02X %02X %02X", b[18], b[19], b[20], b[21]))
-        
-        print("OV5647: Zero-copy config complete")
+        print(format("OV5647: Config updated back to C++: %dx%d", self.width, self.height))
       end
       
       print("OV5647: ========== INIT COMPLETE ==========")
@@ -796,8 +880,6 @@ class OV5647 : CSI_Sensor
     elif cmd == "stream"
       print("OV5647: Stream command:", idx)
       var result = self.stream_on(idx == 1) ? 1 : 0
-      # tasmota.delay(10)
-      # self.check_status()
       return result
     
     elif cmd == "status"
