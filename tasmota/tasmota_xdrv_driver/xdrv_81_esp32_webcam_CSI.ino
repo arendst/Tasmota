@@ -100,6 +100,7 @@ struct {
   
   uint8_t up;
   bool streaming;
+  bool changing_state;         // Lock to prevent re-entrance in WcStart/WcStop
   uint8_t stream_active;
   WiFiClient *client_ptr;   // Pointer to avoid client() issues
   ESP8266WebServer *CamServer;
@@ -549,7 +550,7 @@ uint32_t WcSetup(bool reset_config) {
 }
 
 uint32_t WcStart(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcStart called - up=%d streaming=%d"), Wc.up, Wc.streaming);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcStart called - up=%d streaming=%d changing=%d"), Wc.up, Wc.streaming, Wc.changing_state);
   
   if (!Wc.up) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI not initialized"));
@@ -560,6 +561,13 @@ uint32_t WcStart(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Already streaming"));
     return 1;
   }
+  
+  // Prevent re-entrance
+  if (Wc.changing_state) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: State change in progress, ignoring WcStart"));
+    return 0;
+  }
+  Wc.changing_state = true;
 
   // Reset statistics
   memset(&WcStats, 0, sizeof(WcStats));
@@ -573,6 +581,7 @@ uint32_t WcStart(void) {
   
   if (berry_result == 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
+    Wc.changing_state = false;
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor streaming started"));
@@ -581,6 +590,7 @@ uint32_t WcStart(void) {
   delay(100);
 
   Wc.streaming = true;
+  Wc.changing_state = false;
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Ready - backup buffer should update automatically"));
   return 1;
@@ -590,6 +600,13 @@ uint32_t WcStop(void) {
   if (!Wc.up || !Wc.streaming) {
     return 0;
   }
+  
+  // Prevent re-entrance
+  if (Wc.changing_state) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: State change in progress, ignoring WcStop"));
+    return 0;
+  }
+  Wc.changing_state = true;
 
   // Call Berry to stop sensor streaming first
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream stop"));
@@ -682,6 +699,9 @@ uint32_t WcStop(void) {
 
   Wc.streaming = false;
   Wc.up = 0;
+  Wc.stream_active = 0;  // Signal WcLoop to clean up server
+  Wc.changing_state = false;
+  
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming stopped"));
   return 1;
 }
@@ -700,15 +720,16 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
 #define D_PREFX_WEBCAM "Wc"
 #define D_CMND_WC_RES "Res"
 #define D_CMND_WC_STREAM "Stream"
+#define D_CMND_WC_STOP "Stop"
 #define D_CMND_WC_STATUS "Status"
 #define D_CMND_WC_CONFIG "Config"
 #define D_CMND_WC_WINDOW "Window"
 
 const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW;
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow
+  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow
 };
 
 // Command handlers (mockup/stub implementations)
@@ -751,6 +772,18 @@ void CmndWcStream(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStream called, payload=%d"), XdrvMailbox.payload);
   // TODO: Implement stream control
   ResponseCmndStateText(Wc.streaming);  // Return current streaming state
+}
+
+void CmndWcStop(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStop called"));
+  
+  uint32_t result = WcStop();
+  
+  if (result) {
+    ResponseCmndChar_P(PSTR("Stopped"));
+  } else {
+    ResponseCmndChar_P(PSTR("Already stopped or not initialized"));
+  }
 }
 
 void CmndWcStatus(void) {
@@ -804,20 +837,38 @@ void CmndWcWindow(void) {
     return;
   }
 
-  // Basic validation
-  if (w <= 0 || h <= 0 || w > 2592 || h > 1944) {
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry\"}}"));
+  // Validate geometry
+  if (w < 16 || h < 16 || w > 2592 || h > 1944) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid geometry %dx%d"), w, h);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry. W/H must be 16-2592/1944\"}}"));
     return;
   }
+  
+  // Validate binning (1=1x1, 2=2x2, 4=4x4)
+  if (bin < 1 || bin > 4 || (bin != 1 && bin != 2 && bin != 4)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid binning %d"), bin);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid binning. Use 1, 2, or 4\"}}"));
+    return;
+  }
+  
+  // Validate FPS (1-120 range, default to 30 if 0)
+  if (fps < 0 || fps > 120) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid FPS %d"), fps);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid FPS. Use 1-120\"}}"));
+    return;
+  }
+  if (fps == 0) {
+    fps = 30;  // Default
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS not specified, using default 30"));
+  }
 
-  // 1. Stop current stream
+  // Stop current stream
   if (Wc.streaming) {
     WcStop();
   }
-  Wc.up = 0; // Mark down so WcSetup runs
+  Wc.up = 0;
 
-  // 2. Pre-fill Config for Berry
-  // We use the struct as a "Message Passing" buffer here
+  // Pre-fill Config for Berry (safe assignment with validation)
   Wc.config.offset_x = (uint16_t)x;
   Wc.config.offset_y = (uint16_t)y;
   Wc.config.width = (uint16_t)w;
@@ -826,11 +877,10 @@ void CmndWcWindow(void) {
   Wc.config.fps = (uint8_t)fps;
   Wc.config.res_index = 255; // Signal "Custom Mode"
 
-  // 3. Re-Init (Calls Berry 'init')
-  // Pass 'false' to NOT reset config to defaults
+  // Re-Init (Calls Berry 'init')
   if (WcSetup(false)) {
-    Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"FPS\":%d}}"), 
-      Wc.config.width, Wc.config.height, Wc.config.fps);
+    Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d}}"), 
+      Wc.config.width, Wc.config.height, Wc.config.binning, Wc.config.fps);
   } else {
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Setup Failed\"}}"));
   }
