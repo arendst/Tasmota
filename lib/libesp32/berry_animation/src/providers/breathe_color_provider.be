@@ -1,9 +1,8 @@
 # Breathe Color Provider for Berry Animation Framework
 #
 # This color provider creates breathing/pulsing color effects by modulating the brightness
-# of a base color over time. It inherits from oscillator_value to leverage its
-# robust time management and waveform generation, then applies the oscillator value
-# as brightness modulation to a base color.
+# of a base color over time. It inherits from color_provider to leverage its color handling
+# and maintains an internal oscillator_value for time-based brightness modulation.
 #
 # The effect uses the oscillator's COSINE waveform with optional curve factor:
 # - curve_factor 1: Pure cosine wave (smooth pulsing)
@@ -11,14 +10,17 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class breathe_color : animation.oscillator_value
-  # Additional parameter definitions for color-specific functionality
-  # The oscillator parameters (min_value, max_value, duration, form, etc.) are inherited
+class breathe_color : animation.color_provider
+  # Internal oscillator for brightness modulation
+  var _oscillator
+  
+  # Parameter definitions for breathing-specific functionality
+  # The 'color' and 'brightness' parameters are inherited from color_provider
   static var PARAMS = animation.enc_params({
-    "color": {"default": 0xFFFFFFFF},                            # The base color to modulate (32-bit ARGB value)
     "min_brightness": {"min": 0, "max": 255, "default": 0},      # Minimum brightness level (0-255)
     "max_brightness": {"min": 0, "max": 255, "default": 255},    # Maximum brightness level (0-255)
-    "curve_factor": {"min": 1, "max": 5, "default": 2}   # Factor to control breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses)
+    "period": {"min": 1, "default": 3000},                       # Breathing cycle time in ms (renamed from duration for consistency)
+    "curve_factor": {"min": 1, "max": 5, "default": 2}           # Factor to control breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses)
   })
   
   # Initialize a new Breathe Color Provider
@@ -26,23 +28,23 @@ class breathe_color : animation.oscillator_value
   #
   # @param engine: AnimationEngine - The animation engine (required)
   def init(engine)
-    # Call parent constructor (oscillator_value)
+    # Call parent constructor (color_provider)
     super(self).init(engine)
     
-    # Configure the inherited oscillator for breathing behavior
-    self.form = 4 #-animation.COSINE-#  # Use cosine wave for smooth breathing
-    self.min_value = 0            # Fixed range 0-255 for normalized oscillation
-    self.max_value = 255          # Fixed range 0-255 for normalized oscillation
-    self.duration = 3000          # Default duration
+    # Create internal oscillator for brightness modulation
+    self._oscillator = animation.oscillator_value(engine)
+    self._oscillator.form = 4 #-animation.COSINE-#  # Use cosine wave for smooth breathing
+    self._oscillator.min_value = 0            # Fixed range 0-255 for normalized oscillation
+    self._oscillator.max_value = 255          # Fixed range 0-255 for normalized oscillation
+    self._oscillator.duration = 3000          # Default period (synced with our 'period' param)
+    engine.add(self._oscillator)              # register so it receives start()
   end
   
-  # Handle parameter changes - no need to sync oscillator min/max since they're fixed
+  # Handle parameter changes - sync period to internal oscillator
   def on_param_changed(name, value)
-    # Only handle curve_factor changes for oscillator form
-    if name == "curve_factor"
-      # For curve_factor = 1, use pure cosine
-      # For curve_factor > 1, we'll apply the curve in produce_value
-      self.form = 4 #-animation.COSINE-#
+    # Sync period changes to the internal oscillator's duration
+    if name == "period"
+      self._oscillator.duration = value
     end
     
     # Call parent's parameter change handler
@@ -50,14 +52,14 @@ class breathe_color : animation.oscillator_value
   end
   
   # Produce color value based on current time
-  # This overrides the parent's produce_value to return colors instead of raw values
+  # This overrides the parent's produce_value to return colors with modulated brightness
   #
   # @param name: string - Parameter name (ignored for color providers)
   # @param time_ms: int - Current time in milliseconds
   # @return int - 32-bit ARGB color value with modulated brightness
   def produce_value(name, time_ms)
-    # Get the normalized oscillator value (0-255) from parent class
-    var normalized_value = super(self).produce_value(name, time_ms)
+    # Get the normalized oscillator value (0-255) from internal oscillator
+    var normalized_value = self._oscillator.produce_value(name, time_ms)
     
     # Apply curve factor if > 1 for natural breathing effect
     var current_curve_factor = self.curve_factor
@@ -82,22 +84,11 @@ class breathe_color : animation.oscillator_value
     # Now map the curved value to the brightness range
     var brightness = tasmota.scale_uint(curved_value, 0, 255, self.min_brightness, self.max_brightness)
     
-    # Apply brightness to the base color (using inherited 'color' parameter)
+    # Get the base color (inherited from color_provider)
     var current_color = self.color
-    
-    # Extract RGB components
-    var alpha = (current_color >> 24) & 0xFF
-    var red = (current_color >> 16) & 0xFF
-    var green = (current_color >> 8) & 0xFF
-    var blue = current_color & 0xFF
-    
-    # Apply brightness scaling using tasmota.scale_uint
-    red = tasmota.scale_uint(red, 0, 255, 0, brightness)
-    green = tasmota.scale_uint(green, 0, 255, 0, brightness)
-    blue = tasmota.scale_uint(blue, 0, 255, 0, brightness)
-    
-    # Reconstruct color
-    return (alpha << 24) | (red << 16) | (green << 8) | blue
+
+    # Apply brightness
+    return self.apply_brightness(current_color, brightness)
   end
 end
 

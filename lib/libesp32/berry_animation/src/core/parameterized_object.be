@@ -21,7 +21,27 @@ class parameterized_object
   var engine          # Reference to the animation engine
   var start_time      # Time when object started (ms) (int), value is set at first call to update() or render()
   var is_running      # Whether the object is active
+  static var VALUE_PROVIDER = false  # Set to true in value_provider subclasses
     
+  # Produce a value for a specific parameter name and time
+  # This is the main method that value_provider subclasses should override
+  #
+  # `name` argument is generally ignored and the same value
+  # is returned for any name, however this allows to have
+  # special value providers that return coordinated distinct
+  # values for different parameter names.
+  #
+  # For value providers, start is typically not called because instances
+  # can be embedded in closures. So value providers must consider the first
+  # call to `produce_value()` as a start of their internal time reference.
+  #
+  # @param name: string - Parameter name being requested
+  # @param time_ms: int - Current time in milliseconds
+  # @return any - Value appropriate for the parameter type
+  def produce_value(name, time_ms)
+    return module("undefined")  # Default behavior - return undefined
+  end
+
   # Initialize parameter system
   #
   # @param engine: AnimationEngine - Reference to the animation engine (required)

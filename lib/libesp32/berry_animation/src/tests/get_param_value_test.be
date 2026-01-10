@@ -79,7 +79,8 @@ def test_get_param_value_with_generic_provider()
   test_anim.opacity = 255
   
   # Create a generic value_provider that we can track calls on
-  class Trackingvalue_provider : animation.value_provider
+  class Trackingvalue_provider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     var value
     var produce_value_called
     
@@ -125,7 +126,8 @@ def test_get_param_value_with_context_aware_provider()
   test_anim.opacity = 255
   
   # Create a value_provider that returns different values based on parameter name
-  class ContextAwareProvider : animation.value_provider
+  class ContextAwareProvider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     var base_value
     var produce_value_called
     var last_param_name

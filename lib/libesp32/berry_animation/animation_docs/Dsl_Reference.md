@@ -380,7 +380,7 @@ color breathing_red = breathe_color(
   color=red
   min_brightness=5%
   max_brightness=100%
-  duration=3s
+  period=3s
   curve_factor=2
 )
 color pulsing_blue = breathe_color(
@@ -388,7 +388,7 @@ color pulsing_blue = breathe_color(
   color=blue
   min_brightness=20%
   max_brightness=80%
-  duration=1s
+  period=1s
 )
 ```
 

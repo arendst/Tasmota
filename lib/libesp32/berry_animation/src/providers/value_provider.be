@@ -1,45 +1,17 @@
-# value_provider interface for Berry Animation Framework
+# value_provider utilities for Berry Animation Framework
 #
-# This defines the core interface for value providers in the animation framework.
-# Value providers generate values based on time, which can be used by animations
+# Value providers are parameterized_object subclasses with VALUE_PROVIDER = true.
+# They generate values based on time, which can be used by animations
 # for any parameter that needs to be dynamic over time.
 #
-# This is the super-class for all value provider variants and provides the interface
-# that animations can use to get dynamic values for their parameters.
-#
-# value_providers follow the parameterized class specification:
-# - Constructor takes only 'engine' parameter
-# - All other parameters set via virtual member assignment
-# - No setter/getter methods for parameters
+# The value_provider class has been removed from the hierarchy.
+# All value providers now inherit directly from parameterized_object
+# and set `static var VALUE_PROVIDER = true`.
 
-import "./core/param_encoder" as encode_constraints
-
-class value_provider : animation.parameterized_object
-  
-  # Produce a value for a specific parameter name and time
-  # This is the main method that subclasses should override
-  #
-  # `name` argument is generally ignored and the same value
-  # is returned for any name, however this allows to have
-  # special value providers that return coordinated distinct
-  # values for different parameter names.
-  #
-  # For value providers, start is typically not called because instances
-  # can be embedded in closures. So value providers must consider the first
-  # call to `produce_value()` as a start of their internal time reference.
-  #
-  # @param name: string - Parameter name being requested
-  # @param time_ms: int - Current time in milliseconds
-  # @return any - Value appropriate for the parameter type
-  def produce_value(name, time_ms)
-    return module("undefined")  # Default behavior - return undefined
-  end
-end
-
-# Add a method to check if an object is a value provider
+# Check if an object is a value provider
+# Returns true if obj is a parameterized_object with VALUE_PROVIDER = true
 def is_value_provider(obj)
-  return isinstance(obj, animation.value_provider)
+  return obj != nil && type(obj) == "instance" && isinstance(obj, animation.parameterized_object) && obj.VALUE_PROVIDER
 end
 
-return {'value_provider': value_provider,
-        'is_value_provider': is_value_provider}
+return {'is_value_provider': is_value_provider}

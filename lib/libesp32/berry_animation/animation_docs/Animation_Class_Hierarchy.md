@@ -15,6 +15,7 @@ This document provides a comprehensive reference for all classes in the Berry An
 
 ```
 parameterized_object (base class with parameter management and playable interface)
+│
 ├── Animation (unified base class for all visual elements)
 │   ├── engine_proxy (combines rendering and orchestration)
 │   │   └── (user-defined template animations)
@@ -30,18 +31,25 @@ parameterized_object (base class with parameter management and playable interfac
 │   ├── twinkle (twinkling stars effect)
 │   ├── wave (wave motion effects)
 │   └── rich_palette (smooth palette transitions)
+│
 ├── sequence_manager (orchestrates animation sequences)
-└── value_provider (dynamic value generation)
+│
+└── Value Providers (VALUE_PROVIDER = true)
+    │
     ├── static_value (wraps static values)
     ├── strip_length (provides LED strip length)
     ├── iteration_number (provides sequence iteration number)
     ├── oscillator_value (oscillating values with waveforms)
-    │   └── breathe_color (breathing color effect)
     ├── closure_value (computed values, internal use only)
-    └── color_provider (solid color, base for color providers)
+    │
+    └── Color Providers
+        ├── color_provider (solid color, base for color providers)
+        ├── breathe_color (breathing color effect with internal oscillator)
         ├── color_cycle (cycles through palette)
         └── rich_palette_color (smooth palette transitions)
 ```
+
+**Note on Value Providers**: Value providers inherit directly from `parameterized_object` and are identified by the static class variable `VALUE_PROVIDER = true`. Use `animation.is_value_provider(obj)` to check if an object is a value provider. This flat hierarchy reduces class overhead while maintaining clear semantic distinction.
 
 ## Base Classes
 
@@ -198,25 +206,41 @@ run my_shutter
 
 ## Value Providers
 
-Value providers generate dynamic values over time for use as animation parameters.
+Value providers generate dynamic values over time for use as animation parameters. They inherit directly from `parameterized_object` and are identified by the static class variable `VALUE_PROVIDER = true`.
 
-### value_provider
+**Identifying Value Providers**: Use `animation.is_value_provider(obj)` to check if an object is a value provider. This function checks for the `VALUE_PROVIDER = true` static variable.
 
-Base interface for all value providers. Inherits from `parameterized_object`.
+**Creating Custom Value Providers**: To create a custom value provider, inherit from `parameterized_object` and set `static var VALUE_PROVIDER = true`:
+
+```berry
+class my_custom_provider : animation.parameterized_object
+  static var VALUE_PROVIDER = true
+  
+  def produce_value(name, time_ms)
+    # Return computed value based on time
+    return computed_value
+  end
+end
+```
+
+### Common Value Provider Interface
+
+All value providers share these characteristics from `parameterized_object`:
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
-| *(none)* | - | - | - | Base interface has no parameters |
+| *(none specific)* | - | - | - | Value providers typically have no base parameters |
+
+**Key Method**:
+- `produce_value(name, time_ms)` - Returns a value for the given parameter name at the specified time
 
 **Timing Behavior**: For value providers, `start()` is typically not called because instances can be embedded in closures. Value providers consider the first call to `produce_value()` as the start of their internal time reference. The `start()` method only resets the time origin if the provider was already started previously (i.e., `self.start_time` is not nil).
 
 **Update Method**: The `update(time_ms)` method does not return any value. Subclasses should check `self.is_running` to determine if the object is still active.
 
-**Factory**: N/A (base interface)
-
 ### static_value
 
-Wraps static values to provide value_provider interface. Inherits from `value_provider`.
+Wraps static values to provide value_provider interface. Inherits from `parameterized_object` with `VALUE_PROVIDER = true`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -226,7 +250,7 @@ Wraps static values to provide value_provider interface. Inherits from `value_pr
 
 ### strip_length
 
-Provides access to the LED strip length as a dynamic value. Inherits from `value_provider`.
+Provides access to the LED strip length as a dynamic value. Inherits from `parameterized_object` with `VALUE_PROVIDER = true`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -238,7 +262,7 @@ Provides access to the LED strip length as a dynamic value. Inherits from `value
 
 ### oscillator_value
 
-Generates oscillating values using various waveforms. Inherits from `value_provider`.
+Generates oscillating values using various waveforms. Inherits from `parameterized_object` with `VALUE_PROVIDER = true`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -270,7 +294,7 @@ Generates oscillating values using various waveforms. Inherits from `value_provi
 
 **⚠️ INTERNAL USE ONLY - NOT FOR DIRECT USE**
 
-Wraps a closure/function as a value provider for internal transpiler use. This class is used internally by the DSL transpiler to handle computed values and should not be used directly by users.
+Wraps a closure/function as a value provider for internal transpiler use. This class is used internally by the DSL transpiler to handle computed values and should not be used directly by users. Inherits from `parameterized_object` with `VALUE_PROVIDER = true`.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -335,11 +359,11 @@ animation pulse = breathe(
 
 ## Color Providers
 
-Color providers generate dynamic colors over time, extending value_provider for color-specific functionality.
+Color providers generate dynamic colors over time. They inherit from `parameterized_object` with `VALUE_PROVIDER = true`, providing color-specific functionality while maintaining the value provider interface.
 
 ### color_provider
 
-Base class for color providers that returns a solid color. Inherits from `value_provider`. Can be used directly for static colors or subclassed for dynamic color generation.
+Base class for color providers that returns a solid color. Inherits from `parameterized_object` with `VALUE_PROVIDER = true`. Can be used directly for static colors or subclassed for dynamic color generation.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
@@ -445,16 +469,16 @@ color fire_colors = rich_palette_color(
 
 ### breathe_color
 
-Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `oscillator_value`.
+Creates breathing/pulsing color effects by modulating the brightness of a base color over time. Inherits from `color_provider` and uses an internal `oscillator_value` for time-based brightness modulation.
 
 | Parameter | Type | Default | Constraints | Description |
 |-----------|------|---------|-------------|-------------|
 | `color` | int | 0xFFFFFFFF | - | The base color to modulate (32-bit ARGB value) |
 | `min_brightness` | int | 0 | 0-255 | Minimum brightness level (breathing effect) |
 | `max_brightness` | int | 255 | 0-255 | Maximum brightness level (breathing effect) |
-| `duration` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
+| `period` | int | 3000 | min: 1 | Time for one complete breathing cycle in ms |
 | `curve_factor` | int | 2 | 1-5 | Breathing curve shape (1=cosine wave, 2-5=curved breathing with pauses) |
-| *(inherits all oscillator_value parameters)* | | | | |
+| *(inherits color, brightness from color_provider)* | | | | |
 
 **Curve Factor Effects:**
 - `1`: Pure cosine wave (smooth pulsing)
@@ -471,7 +495,7 @@ color breathing_red = breathe_color(
   color=red,
   min_brightness=20,
   max_brightness=255,
-  duration=4s,
+  period=4s,
   curve_factor=3
 )
 
@@ -480,7 +504,7 @@ color pulse_blue = breathe_color(
   color=blue,
   min_brightness=50,
   max_brightness=200,
-  duration=1s,
+  period=1s,
   curve_factor=1
 )
 
@@ -489,7 +513,7 @@ color deep_breath = breathe_color(
   color=purple,
   min_brightness=5,
   max_brightness=255,
-  duration=6s,
+  period=6s,
   curve_factor=4
 )
 
@@ -499,7 +523,7 @@ color breathing_rainbow = breathe_color(
   color=rainbow_cycle,
   min_brightness=30,
   max_brightness=255,
-  duration=3s,
+  period=3s,
   curve_factor=2
 )
 ```

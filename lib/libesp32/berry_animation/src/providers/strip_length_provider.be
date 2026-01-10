@@ -11,7 +11,8 @@
 # - Constructor takes only 'engine' parameter
 # - No additional parameters needed since strip length is obtained from engine
 
-class strip_length : animation.value_provider
+class strip_length : animation.parameterized_object
+  static var VALUE_PROVIDER = true
   # Produce the strip length value
   #
   # @param name: string - Parameter name being requested (ignored)

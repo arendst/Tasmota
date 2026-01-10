@@ -17,7 +17,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class closure_value : animation.value_provider
+class closure_value : animation.parameterized_object
+  static var VALUE_PROVIDER = true
   var _closure                # We keep the closure as instance variable for faster dereferencing, in addition to PARAMS
 
   # Static parameter definitions

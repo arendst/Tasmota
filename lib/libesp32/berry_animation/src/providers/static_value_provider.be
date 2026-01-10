@@ -13,7 +13,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class static_value : animation.value_provider
+class static_value : animation.parameterized_object
+  static var VALUE_PROVIDER = true
   # Parameter definitions
   static var PARAMS = animation.enc_params({
     "value": {"default": nil, "type": "any"}
