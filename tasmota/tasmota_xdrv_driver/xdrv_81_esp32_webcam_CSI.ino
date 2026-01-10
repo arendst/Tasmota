@@ -94,39 +94,39 @@ struct CSI_Config {
 
 // Runtime state - handles and buffers
 struct {
+  // === Camera Core (shared by all session types) ===
   esp_cam_ctlr_handle_t cam_handle;
   isp_proc_handle_t isp_handle;
-  jpeg_encoder_handle_t jpeg_handle;
   esp_ldo_channel_handle_t ldo_mipi_phy;
   
-  // Buffers (Double-Buffered / Ping-Pong)
-  uint8_t *frame_buffer[2];    // Two buffers for ping-pong
+  uint8_t *frame_buffer[2];        // Double-buffered ping-pong
   size_t frame_buffer_size;
   
+  CSI_Config config;               // Sensor configuration from Berry
+  esp_cam_ctlr_trans_t cam_trans;  // CSI transaction struct
+  
+  volatile int write_idx;          // Buffer CSI is writing to (0 or 1)
+  volatile int read_idx;           // Buffer ready for reading
+  
+  volatile camera_state_t state;   // Pipeline lifecycle state
+  camera_session_t session_type;   // Active session type
+  
+  TaskHandle_t cam_task_handle;    // Frame processing task
+  SemaphoreHandle_t frame_mutex;   // Protects frame buffer access
+  SemaphoreHandle_t resume_sem;    // Task pause/resume sync
+  
+  // === MJPEG Session (HTTP streaming, snapshots) ===
+  jpeg_encoder_handle_t jpeg_handle;
   void *jpeg_buffer;
   size_t jpeg_buffer_size;
   jpeg_encode_cfg_t jpeg_cfg;
+  uint8_t jpeg_quality;            // 1-100, default 50
   
-  CSI_Config config;        // Sensor configuration
-  esp_cam_ctlr_trans_t cam_trans;  // Transaction struct
+  SemaphoreHandle_t jpeg_mutex;    // Protects JPEG encoder
   
-  volatile int write_idx;      // Buffer CSI is currently writing to (0 or 1)
-  volatile int read_idx;       // Buffer available for reading (finished)
-  
-  TaskHandle_t cam_task_handle;  // FreeRTOS task for frame processing
-  
-  SemaphoreHandle_t client_mutex;  // Protects client_ptr access
-  SemaphoreHandle_t jpeg_mutex;    // Protects JPEG encoder access
-  SemaphoreHandle_t resume_sem;    // Task waits on this when paused
-  
-  // State management
-  volatile camera_state_t state;   // Pipeline lifecycle state
-  camera_session_t session_type;   // Current session type (MJPEG_HTTP, etc.)
-  
-  uint8_t stream_active;           // HTTP client streaming state (0=none, 2=streaming)
-  uint8_t jpeg_quality;            // JPEG quality (1-100, default 50)
-  WiFiClient *client_ptr;          // Pointer to avoid client() issues
-  ESP8266WebServer *CamServer;
+  ESP8266WebServer *CamServer;     // HTTP stream server (port 81)
+  WiFiClient *client_ptr;          // Active streaming client
+  uint8_t stream_active;           // 0=none, 2=streaming
 } Wc;
 
 // Statistics
@@ -143,7 +143,7 @@ struct {
   uint32_t start_time;         // millis() when streaming started
   
   // Detailed timing breakdown (in microseconds for precision)
-  uint32_t last_mutex_wait_us;      // Time waiting for client_mutex
+  uint32_t last_mutex_wait_us;      // Time waiting for frame_mutex
   uint32_t last_cache_sync_us;      // Cache sync duration
   uint32_t last_jpeg_encode_us;     // JPEG encoding duration
   uint32_t last_network_write_us;   // Network transmission duration
@@ -251,9 +251,9 @@ void CamProcessingTask(void *pvParameters) {
     // We have a frame!
     uint32_t frame_start = millis();
     
-    // Lock client access to prevent race with WcLoop
+    // Lock frame access to prevent race with WcLoop
     uint32_t mutex_start = micros();
-    if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+    if (xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
       WcStats.frames_unsent++;
       continue;
     }
@@ -265,14 +265,14 @@ void CamProcessingTask(void *pvParameters) {
     
     // Check state after acquiring mutex - exit quickly if stopping
     if (Wc.state == CAM_STOPPING) {
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
       break;
     }
     
     // Only process if we have a client connected to stream
     if (Wc.stream_active != 2 || !Wc.client_ptr || !Wc.client_ptr->connected()) {
       WcStats.frames_unsent++;
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
       continue;
     }
     
@@ -287,14 +287,14 @@ void CamProcessingTask(void *pvParameters) {
     uint32_t jpeg_mutex_start = micros();
     if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
       WcStats.frames_unsent++;
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
       continue;
     }
     
     // Check state after acquiring mutex - exit quickly if stopping
     if (Wc.state == CAM_STOPPING) {
       xSemaphoreGive(Wc.jpeg_mutex);
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
       break;
     }
     
@@ -321,7 +321,7 @@ void CamProcessingTask(void *pvParameters) {
       jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
       WcStats.jpeg_resets++;
       xSemaphoreGive(Wc.jpeg_mutex);
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
       continue;
     }
 
@@ -341,7 +341,7 @@ void CamProcessingTask(void *pvParameters) {
       // Check state before starting network write - don't start new writes if stopping
       if (Wc.state == CAM_STOPPING) {
         xSemaphoreGive(Wc.jpeg_mutex);
-        xSemaphoreGive(Wc.client_mutex);
+        xSemaphoreGive(Wc.frame_mutex);
         break;
       }
       
@@ -367,7 +367,7 @@ void CamProcessingTask(void *pvParameters) {
     }
     
     xSemaphoreGive(Wc.jpeg_mutex);
-    xSemaphoreGive(Wc.client_mutex);
+    xSemaphoreGive(Wc.frame_mutex);
     
     // Track frame processing time
     WcStats.last_frame_time_ms = millis() - frame_start;
@@ -647,14 +647,14 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
 
   // 9. Create mutexes for thread safety
-  Wc.client_mutex = xSemaphoreCreateMutex();
+  Wc.frame_mutex = xSemaphoreCreateMutex();
   Wc.jpeg_mutex = xSemaphoreCreateMutex();
   Wc.resume_sem = xSemaphoreCreateBinary();  // For pause/resume
   
-  if (!Wc.client_mutex || !Wc.jpeg_mutex || !Wc.resume_sem) {
+  if (!Wc.frame_mutex || !Wc.jpeg_mutex || !Wc.resume_sem) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create mutexes"));
     // Cleanup
-    if (Wc.client_mutex) vSemaphoreDelete(Wc.client_mutex);
+    if (Wc.frame_mutex) vSemaphoreDelete(Wc.frame_mutex);
     if (Wc.jpeg_mutex) vSemaphoreDelete(Wc.jpeg_mutex);
     if (Wc.resume_sem) vSemaphoreDelete(Wc.resume_sem);
     jpeg_del_encoder_engine(Wc.jpeg_handle);
@@ -679,7 +679,7 @@ uint32_t WcSetup(bool reset_config) {
   
   if (task_created != pdPASS) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create processing task"));
-    vSemaphoreDelete(Wc.client_mutex);
+    vSemaphoreDelete(Wc.frame_mutex);
     vSemaphoreDelete(Wc.jpeg_mutex);
     vSemaphoreDelete(Wc.resume_sem);
     jpeg_del_encoder_engine(Wc.jpeg_handle);
@@ -885,9 +885,9 @@ uint32_t WcStop(void) {
   }
   
   // 12. Delete mutexes
-  if (Wc.client_mutex) {
-    vSemaphoreDelete(Wc.client_mutex);
-    Wc.client_mutex = NULL;
+  if (Wc.frame_mutex) {
+    vSemaphoreDelete(Wc.frame_mutex);
+    Wc.frame_mutex = NULL;
   }
   if (Wc.jpeg_mutex) {
     vSemaphoreDelete(Wc.jpeg_mutex);
@@ -1073,16 +1073,16 @@ void CmndWcWindow(void) {
   }
 
   // Validate geometry
-  if (w < 16 || h < 16 || w > 2592 || h > 1944) {
+  if (w < 16 || h < 16 || w > Wc.config.max_width || h > Wc.config.max_height) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid geometry %dx%d"), w, h);
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry. W/H must be 16-2592/1944\"}}"));
     return;
   }
   
-  // Validate binning (1=1x1, 2=2x2, 4=4x4)
-  if (bin < 1 || bin > 4 || (bin != 1 && bin != 2 && bin != 4)) {
+  // Validate binning (1=1x1, 2=2x2)
+  if (bin < 1 || bin > 2 || (bin != 1 && bin != 2)) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid binning %d"), bin);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid binning. Use 1, 2, or 4\"}}"));
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid binning. Use 1 or 2\"}}"));
     return;
   }
   
@@ -1223,8 +1223,8 @@ void HandleWebcamMjpeg(void) {
     return;
   }
   
-  // Lock client access
-  if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
+  // Lock frame access for client setup
+  if (xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
     // Allocate client on heap to avoid stack issues
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Allocating client..."));
     if (Wc.client_ptr) {
@@ -1235,7 +1235,7 @@ void HandleWebcamMjpeg(void) {
     Wc.client_ptr = new WiFiClient();
     if (!Wc.client_ptr) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate client!"));
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
       return;
     }
     
@@ -1246,7 +1246,7 @@ void HandleWebcamMjpeg(void) {
     Wc.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
     Wc.stream_active = 2;
     
-    xSemaphoreGive(Wc.client_mutex);
+    xSemaphoreGive(Wc.frame_mutex);
   }
 }
 
@@ -1358,14 +1358,14 @@ void WcLoop(void) {
     Wc.CamServer->handleClient();
     
     // Monitor client connection - cleanup if disconnected (with mutex protection)
-    if (Wc.stream_active && xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    if (Wc.stream_active && xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
       if (Wc.client_ptr && !Wc.client_ptr->connected()) {
         delete Wc.client_ptr;
         Wc.client_ptr = nullptr;
         Wc.stream_active = 0;
         AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client disconnected"));
       }
-      xSemaphoreGive(Wc.client_mutex);
+      xSemaphoreGive(Wc.frame_mutex);
     }
   }
 }
