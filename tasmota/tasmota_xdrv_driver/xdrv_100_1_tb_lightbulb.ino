@@ -1,14 +1,13 @@
+#ifdef USE_THINGSBOARD
 #ifdef USE_TB_LIGHTBULB
-
-Tele = new Telementary_data[3]{
-    {"POWER", "", false},
-    {"Color", "", false},
-    {"CT", "", false}};
-
-#define XDRV_100 100
 
 bool Xdrv100(uint32_t function)
 {
+    Tele = new Telementary_data[3]{
+        {"POWER", "", false},
+        {"Color", "", false},
+        {"CT", "", false}};
+
     switch (function)
     {
     case FUNC_INIT:
@@ -49,3 +48,4 @@ bool Xdrv100(uint32_t function)
 }
 
 #endif // USE_TB_LIGHTBULB
+#endif // USE_THINGSBOARD
