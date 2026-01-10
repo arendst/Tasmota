@@ -102,6 +102,7 @@ struct {
   bool streaming;
   bool changing_state;         // Lock to prevent re-entrance in WcStart/WcStop
   uint8_t stream_active;
+  uint8_t jpeg_quality;        // JPEG quality (1-100, default 50)
   WiFiClient *client_ptr;   // Pointer to avoid client() issues
   ESP8266WebServer *CamServer;
 } Wc;
@@ -118,6 +119,31 @@ struct {
   uint32_t last_fps;           // Calculated FPS (updated every second)
   uint32_t last_frame_time_ms; // Last frame processing time
   uint32_t start_time;         // millis() when streaming started
+  
+  // Detailed timing breakdown (in microseconds for precision)
+  uint32_t last_mutex_wait_us;      // Time waiting for client_mutex
+  uint32_t last_cache_sync_us;      // Cache sync duration
+  uint32_t last_jpeg_encode_us;     // JPEG encoding duration
+  uint32_t last_network_write_us;   // Network transmission duration
+  uint32_t last_jpeg_mutex_wait_us; // Time waiting for jpeg_mutex
+  
+  // Averages over last second
+  uint32_t avg_mutex_wait_us;
+  uint32_t avg_cache_sync_us;
+  uint32_t avg_jpeg_encode_us;
+  uint32_t avg_network_write_us;
+  
+  // Max values (to catch spikes)
+  uint32_t max_mutex_wait_us;
+  uint32_t max_jpeg_encode_us;
+  uint32_t max_network_write_us;
+  
+  // JPEG size tracking
+  uint32_t last_jpeg_size;        // Last JPEG size in bytes
+  uint32_t avg_jpeg_size;         // Average JPEG size over last second
+  uint32_t min_jpeg_size;         // Minimum JPEG size seen
+  uint32_t max_jpeg_size;         // Maximum JPEG size seen
+  uint32_t compression_ratio_x100; // Compression ratio * 100 (e.g., 1500 = 15.00x)
 } WcStats;
 
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
@@ -168,6 +194,7 @@ void CamProcessingTask(void *pvParameters) {
   const TickType_t xMaxBlockTime = pdMS_TO_TICKS(500); // 500ms timeout
   uint32_t last_fps_calc = millis();
   uint32_t frames_in_second = 0;
+  static uint32_t last_profile_log = 0;
   
   while (true) {
     // Wait here until ISR signals "Frame Ready"
@@ -179,17 +206,28 @@ void CamProcessingTask(void *pvParameters) {
       uint32_t frame_start = millis();
       
       // Lock client access to prevent race with WcLoop
+      uint32_t mutex_start = micros();
       if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        WcStats.last_mutex_wait_us = micros() - mutex_start;
+        if (WcStats.last_mutex_wait_us > WcStats.max_mutex_wait_us) {
+          WcStats.max_mutex_wait_us = WcStats.last_mutex_wait_us;
+        }
         // Only process if we have a client connected to stream
         if (Wc.stream_active == 2 && Wc.client_ptr && Wc.client_ptr->connected()) {
           uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
           
           // Cache Sync (Hardware M2C)
+          uint32_t cache_start = micros();
           esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+          WcStats.last_cache_sync_us = micros() - cache_start;
           
           // Lock JPEG encoder to prevent race with HandleImage
+          uint32_t jpeg_mutex_start = micros();
           if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            WcStats.last_jpeg_mutex_wait_us = micros() - jpeg_mutex_start;
+            
             uint32_t jpeg_size = 0;
+            uint32_t jpeg_start = micros();
             esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
                                                   &Wc.jpeg_cfg,
                                                   source_buf, 
@@ -197,6 +235,10 @@ void CamProcessingTask(void *pvParameters) {
                                                   (uint8_t*)Wc.jpeg_buffer, 
                                                   Wc.jpeg_buffer_size,
                                                   &jpeg_size);
+            WcStats.last_jpeg_encode_us = micros() - jpeg_start;
+            if (WcStats.last_jpeg_encode_us > WcStats.max_jpeg_encode_us) {
+              WcStats.max_jpeg_encode_us = WcStats.last_jpeg_encode_us;
+            }
             
             // Auto-Reset on 0x103 (Engine Stuck)
             if (ret == ESP_ERR_INVALID_STATE) {
@@ -210,10 +252,27 @@ void CamProcessingTask(void *pvParameters) {
             }
 
             if (ret == ESP_OK && jpeg_size > 0) {
+              // Track JPEG size statistics
+              WcStats.last_jpeg_size = jpeg_size;
+              if (WcStats.min_jpeg_size == 0 || jpeg_size < WcStats.min_jpeg_size) {
+                WcStats.min_jpeg_size = jpeg_size;
+              }
+              if (jpeg_size > WcStats.max_jpeg_size) {
+                WcStats.max_jpeg_size = jpeg_size;
+              }
+              // Calculate compression ratio (raw YUV422 size / JPEG size)
+              uint32_t raw_size = Wc.frame_buffer_size;
+              WcStats.compression_ratio_x100 = (raw_size * 100) / jpeg_size;
+              
+              uint32_t network_start = micros();
               Wc.client_ptr->print("--" BOUNDARY "\r\n");
               Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
               Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
               Wc.client_ptr->print("\r\n");
+              WcStats.last_network_write_us = micros() - network_start;
+              if (WcStats.last_network_write_us > WcStats.max_network_write_us) {
+                WcStats.max_network_write_us = WcStats.last_network_write_us;
+              }
               
               // Statistics
               WcStats.frames_processed++;
@@ -248,6 +307,16 @@ void CamProcessingTask(void *pvParameters) {
       // Calculate FPS every second
       if (millis() - last_fps_calc >= 1000) {
         WcStats.last_fps = frames_in_second;
+        
+        // Calculate averages (if we processed frames)
+        if (frames_in_second > 0) {
+          WcStats.avg_mutex_wait_us = WcStats.last_mutex_wait_us;
+          WcStats.avg_cache_sync_us = WcStats.last_cache_sync_us;
+          WcStats.avg_jpeg_encode_us = WcStats.last_jpeg_encode_us;
+          WcStats.avg_network_write_us = WcStats.last_network_write_us;
+          WcStats.avg_jpeg_size = WcStats.last_jpeg_size;
+        }
+        
         frames_in_second = 0;
         last_fps_calc = millis();
         
@@ -255,6 +324,19 @@ void CamProcessingTask(void *pvParameters) {
         if (WcStats.start_time > 0) {
           WcStats.uptime_seconds = (millis() - WcStats.start_time) / 1000;
         }
+      }
+      
+      // Periodic profiling log (every 5 seconds)
+      if (millis() - last_profile_log >= 5000) {
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: Profile - JPEG:%uus(%uKB,%.2fx) Net:%uus Cache:%uus Mutex:%uus FPS:%u"),
+          WcStats.last_jpeg_encode_us,
+          WcStats.last_jpeg_size / 1024,
+          WcStats.compression_ratio_x100 / 100.0f,
+          WcStats.last_network_write_us,
+          WcStats.last_cache_sync_us,
+          WcStats.last_mutex_wait_us,
+          WcStats.last_fps);
+        last_profile_log = millis();
       }
     }
   }
@@ -494,7 +576,7 @@ uint32_t WcSetup(bool reset_config) {
     .width = Wc.config.width,
     .src_type = JPEG_ENCODE_IN_FORMAT_YUV422, // from ISP
     .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
-    .image_quality = 70,
+    .image_quality = Wc.jpeg_quality,
   };
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
@@ -525,7 +607,7 @@ uint32_t WcSetup(bool reset_config) {
     NULL,
     5,
     &Wc.cam_task_handle,
-    0  // Pin to Core 0
+    1  // Pin to Core 1 (seems not to be better that Core 0, more tests needed)
   );
   
   if (task_created != pdPASS) {
@@ -724,12 +806,13 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
 #define D_CMND_WC_STATUS "Status"
 #define D_CMND_WC_CONFIG "Config"
 #define D_CMND_WC_WINDOW "Window"
+#define D_CMND_WC_QUALITY "Quality"
 
 const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW;
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow
+  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality
 };
 
 // Command handlers (mockup/stub implementations)
@@ -792,7 +875,14 @@ void CmndWcStatus(void) {
   Response_P(PSTR("{\"WcStatus\":{\"Streaming\":\"%s\",\"Resolution\":\"%dx%d\","
                   "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesUnsent\":%u,"
                   "\"JpegErrors\":%u,\"JpegResets\":%u,\"BytesSent\":%u,"
-                  "\"UptimeSeconds\":%u,\"FPS\":%u,\"LastFrameTimeMs\":%u}}"),
+                  "\"UptimeSeconds\":%u,\"FPS\":%u,\"LastFrameTimeMs\":%u,"
+                  "\"Timing\":{"
+                    "\"MutexWaitUs\":%u,\"CacheSyncUs\":%u,\"JpegEncodeUs\":%u,\"NetworkWriteUs\":%u,"
+                    "\"MaxMutexUs\":%u,\"MaxJpegUs\":%u,\"MaxNetworkUs\":%u"
+                  "},"
+                  "\"JPEG\":{"
+                    "\"LastSize\":%u,\"AvgSize\":%u,\"MinSize\":%u,\"MaxSize\":%u,\"CompressionRatio\":\"%.2f\""
+                  "}}}"),
     Wc.streaming ? "ON" : "OFF",
     Wc.config.width, Wc.config.height,
     WcStats.frames_captured,
@@ -803,7 +893,19 @@ void CmndWcStatus(void) {
     WcStats.bytes_sent,
     WcStats.uptime_seconds,
     WcStats.last_fps,
-    WcStats.last_frame_time_ms);
+    WcStats.last_frame_time_ms,
+    WcStats.last_mutex_wait_us,
+    WcStats.last_cache_sync_us,
+    WcStats.last_jpeg_encode_us,
+    WcStats.last_network_write_us,
+    WcStats.max_mutex_wait_us,
+    WcStats.max_jpeg_encode_us,
+    WcStats.max_network_write_us,
+    WcStats.last_jpeg_size,
+    WcStats.avg_jpeg_size,
+    WcStats.min_jpeg_size,
+    WcStats.max_jpeg_size,
+    WcStats.compression_ratio_x100 / 100.0f);
 }
 
 void CmndWcConfig(void) {
@@ -889,8 +991,34 @@ void CmndWcWindow(void) {
 
 /*********************************************************************************************/
 
+void CmndWcQuality(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcQuality called, payload=%d"), XdrvMailbox.payload);
+  
+  // Query current quality
+  if (XdrvMailbox.payload < 0) {
+    ResponseCmndNumber(Wc.jpeg_quality);
+    return;
+  }
+  
+  // Validate quality (1-100)
+  if (XdrvMailbox.payload < 1 || XdrvMailbox.payload > 100) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid quality %d (must be 1-100)"), XdrvMailbox.payload);
+    ResponseCmndFailed();
+    return;
+  }
+  
+  // Set new quality (will take effect on next stream start)
+  Wc.jpeg_quality = (uint8_t)XdrvMailbox.payload;
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG quality set to %d"), Wc.jpeg_quality);
+  ResponseCmndNumber(Wc.jpeg_quality);
+}
+
+
+/*********************************************************************************************/
+
 void WcInit(void) {
   memset(&Wc, 0, sizeof(Wc));
+  Wc.jpeg_quality = 50;  // Default JPEG quality
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
 
 }
@@ -1056,48 +1184,6 @@ void WcShowStream(void) {
   }
 }
 
-// TEST: Read buffer 0 directly
-void WcTestReceive(void) {
-  static uint32_t test_count = 0;
-  static uint8_t last_frame[8] = {0};
-  
-  if (!Wc.up || !Wc.streaming) {
-    return;
-  }
-  
-  // Test every 50 loop iterations (~1 second at 50fps)
-  test_count++;
-  if (test_count < 50) {
-    return;
-  }
-  test_count = 0;
-  
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: === TEST: Checking buffers ==="));
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Callbacks: get_new=%d finished=%d"), cb_get_new_count, cb_finished_count);
-  
-  // Check our first allocated frame buffer
-  if (Wc.frame_buffer[0]) {
-    esp_cache_msync(Wc.frame_buffer[0], 64, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-    uint8_t *buf = (uint8_t*)Wc.frame_buffer[0];
-    
-    bool changed = false;
-    for (int i = 0; i < 8; i++) {
-      if (buf[i] != last_frame[i]) {
-        changed = true;
-        break;
-      }
-    }
-    
-    if (changed) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: FRAME buffer[0] CHANGED: %02X %02X %02X %02X %02X %02X %02X %02X"), 
-        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
-      memcpy(last_frame, buf, 8);
-    } else {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FRAME buffer[0] static: %02X %02X %02X %02X %02X %02X %02X %02X"), 
-        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
-    }
-  }
-}
 
 void WcLoop(void) {
   if (Wc.streaming && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
