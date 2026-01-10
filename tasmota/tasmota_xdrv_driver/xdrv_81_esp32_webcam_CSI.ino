@@ -51,6 +51,26 @@
 
 /*********************************************************************************************/
 
+// Session type - what kind of output we're producing
+typedef enum {
+  SESSION_NONE = 0,
+  SESSION_MJPEG_HTTP,
+  SESSION_WEBRTC,      // Direct browser OR Matter 1.5
+  SESSION_DSI_DISPLAY
+} camera_session_t;
+
+// Pipeline lifecycle state
+typedef enum {
+  CAM_IDLE = 0,        // Nothing initialized
+  CAM_INIT,            // CSI created & enabled, not started
+  CAM_STREAMING,       // CSI started, ISR active, task running
+  CAM_PAUSING,         // Requesting task to pause
+  CAM_PAUSED,          // Task paused, safe to reconfigure
+  CAM_STOPPING         // Full shutdown in progress, reject all work
+} camera_state_t;
+
+/*********************************************************************************************/
+
 // Configuration - what Berry tells us about the sensor (28 bytes)
 struct CSI_Config {
   uint16_t width;           // 0-1: Active pixels per line
@@ -97,13 +117,15 @@ struct {
   
   SemaphoreHandle_t client_mutex;  // Protects client_ptr access
   SemaphoreHandle_t jpeg_mutex;    // Protects JPEG encoder access
+  SemaphoreHandle_t resume_sem;    // Task waits on this when paused
   
-  uint8_t up;
-  bool streaming;
-  bool changing_state;         // Lock to prevent re-entrance in WcStart/WcStop
-  uint8_t stream_active;
-  uint8_t jpeg_quality;        // JPEG quality (1-100, default 50)
-  WiFiClient *client_ptr;   // Pointer to avoid client() issues
+  // State management
+  volatile camera_state_t state;   // Pipeline lifecycle state
+  camera_session_t session_type;   // Current session type (MJPEG_HTTP, etc.)
+  
+  uint8_t stream_active;           // HTTP client streaming state (0=none, 2=streaming)
+  uint8_t jpeg_quality;            // JPEG quality (1-100, default 50)
+  WiFiClient *client_ptr;          // Pointer to avoid client() issues
   ESP8266WebServer *CamServer;
 } Wc;
 
@@ -171,6 +193,9 @@ static bool IRAM_ATTR csi_on_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ct
 
 // Callback: Frame transfer finished - Wake processing task
 static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data) {
+  // Reject if not streaming (shutdown in progress)
+  if (Wc.state != CAM_STREAMING) return false;
+  
   cb_finished_count++;
   
   // The buffer we just finished writing is now the readable one
@@ -191,163 +216,209 @@ static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_ca
 // Camera Processing Task - Dedicated FreeRTOS task for frame processing
 
 void CamProcessingTask(void *pvParameters) {
-  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(500); // 500ms timeout
+  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100); // 100ms timeout
   uint32_t last_fps_calc = millis();
   uint32_t frames_in_second = 0;
   static uint32_t last_profile_log = 0;
   
+  // Loop forever, exit only on CAM_STOPPING
   while (true) {
     // Wait here until ISR signals "Frame Ready"
-    // This consumes 0% CPU while waiting
     uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
     
-    if (ulNotificationValue > 0) {
-      // We have a frame!
-      uint32_t frame_start = millis();
-      
-      // Lock client access to prevent race with WcLoop
-      uint32_t mutex_start = micros();
-      if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-        WcStats.last_mutex_wait_us = micros() - mutex_start;
-        if (WcStats.last_mutex_wait_us > WcStats.max_mutex_wait_us) {
-          WcStats.max_mutex_wait_us = WcStats.last_mutex_wait_us;
-        }
-        // Only process if we have a client connected to stream
-        if (Wc.stream_active == 2 && Wc.client_ptr && Wc.client_ptr->connected()) {
-          uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
-          
-          // Cache Sync (Hardware M2C)
-          uint32_t cache_start = micros();
-          esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-          WcStats.last_cache_sync_us = micros() - cache_start;
-          
-          // Lock JPEG encoder to prevent race with HandleImage
-          uint32_t jpeg_mutex_start = micros();
-          if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-            WcStats.last_jpeg_mutex_wait_us = micros() - jpeg_mutex_start;
-            
-            uint32_t jpeg_size = 0;
-            uint32_t jpeg_start = micros();
-            esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
-                                                  &Wc.jpeg_cfg,
-                                                  source_buf, 
-                                                  Wc.frame_buffer_size,
-                                                  (uint8_t*)Wc.jpeg_buffer, 
-                                                  Wc.jpeg_buffer_size,
-                                                  &jpeg_size);
-            WcStats.last_jpeg_encode_us = micros() - jpeg_start;
-            if (WcStats.last_jpeg_encode_us > WcStats.max_jpeg_encode_us) {
-              WcStats.max_jpeg_encode_us = WcStats.last_jpeg_encode_us;
-            }
-            
-            // Auto-Reset on 0x103 (Engine Stuck)
-            if (ret == ESP_ERR_INVALID_STATE) {
-              jpeg_del_encoder_engine(Wc.jpeg_handle);
-              jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
-              jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
-              WcStats.jpeg_resets++;
-              xSemaphoreGive(Wc.jpeg_mutex);
-              xSemaphoreGive(Wc.client_mutex);
-              continue;
-            }
+    // Exit on stop signal
+    if (Wc.state == CAM_STOPPING) {
+      break;
+    }
+    
+    // Handle pause request - signal we're paused, then wait for resume
+    if (Wc.state == CAM_PAUSING) {
+      Wc.state = CAM_PAUSED;  // Signal that we're safely paused
+      // Wait for resume signal (blocks until semaphore given)
+      xSemaphoreTake(Wc.resume_sem, portMAX_DELAY);
+      // After resume, check state again
+      if (Wc.state == CAM_STOPPING) {
+        break;
+      }
+      continue;  // Go back to top of loop
+    }
+    
+    // Only process frames when streaming and we got a notification
+    if (Wc.state != CAM_STREAMING || ulNotificationValue == 0) {
+      continue;
+    }
+    
+    // We have a frame!
+    uint32_t frame_start = millis();
+    
+    // Lock client access to prevent race with WcLoop
+    uint32_t mutex_start = micros();
+    if (xSemaphoreTake(Wc.client_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+      WcStats.frames_unsent++;
+      continue;
+    }
+    
+    WcStats.last_mutex_wait_us = micros() - mutex_start;
+    if (WcStats.last_mutex_wait_us > WcStats.max_mutex_wait_us) {
+      WcStats.max_mutex_wait_us = WcStats.last_mutex_wait_us;
+    }
+    
+    // Check state after acquiring mutex - exit quickly if stopping
+    if (Wc.state == CAM_STOPPING) {
+      xSemaphoreGive(Wc.client_mutex);
+      break;
+    }
+    
+    // Only process if we have a client connected to stream
+    if (Wc.stream_active != 2 || !Wc.client_ptr || !Wc.client_ptr->connected()) {
+      WcStats.frames_unsent++;
+      xSemaphoreGive(Wc.client_mutex);
+      continue;
+    }
+    
+    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+    
+    // Cache Sync (Hardware M2C)
+    uint32_t cache_start = micros();
+    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    WcStats.last_cache_sync_us = micros() - cache_start;
+    
+    // Lock JPEG encoder to prevent race with HandleImage
+    uint32_t jpeg_mutex_start = micros();
+    if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+      WcStats.frames_unsent++;
+      xSemaphoreGive(Wc.client_mutex);
+      continue;
+    }
+    
+    // Check state after acquiring mutex - exit quickly if stopping
+    if (Wc.state == CAM_STOPPING) {
+      xSemaphoreGive(Wc.jpeg_mutex);
+      xSemaphoreGive(Wc.client_mutex);
+      break;
+    }
+    
+    WcStats.last_jpeg_mutex_wait_us = micros() - jpeg_mutex_start;
+    
+    uint32_t jpeg_size = 0;
+    uint32_t jpeg_start = micros();
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
+                                          &Wc.jpeg_cfg,
+                                          source_buf, 
+                                          Wc.frame_buffer_size,
+                                          (uint8_t*)Wc.jpeg_buffer, 
+                                          Wc.jpeg_buffer_size,
+                                          &jpeg_size);
+    WcStats.last_jpeg_encode_us = micros() - jpeg_start;
+    if (WcStats.last_jpeg_encode_us > WcStats.max_jpeg_encode_us) {
+      WcStats.max_jpeg_encode_us = WcStats.last_jpeg_encode_us;
+    }
+    
+    // Auto-Reset on 0x103 (Engine Stuck)
+    if (ret == ESP_ERR_INVALID_STATE) {
+      jpeg_del_encoder_engine(Wc.jpeg_handle);
+      jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
+      jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+      WcStats.jpeg_resets++;
+      xSemaphoreGive(Wc.jpeg_mutex);
+      xSemaphoreGive(Wc.client_mutex);
+      continue;
+    }
 
-            if (ret == ESP_OK && jpeg_size > 0) {
-              // Track JPEG size statistics
-              WcStats.last_jpeg_size = jpeg_size;
-              if (WcStats.min_jpeg_size == 0 || jpeg_size < WcStats.min_jpeg_size) {
-                WcStats.min_jpeg_size = jpeg_size;
-              }
-              if (jpeg_size > WcStats.max_jpeg_size) {
-                WcStats.max_jpeg_size = jpeg_size;
-              }
-              // Calculate compression ratio (raw YUV422 size / JPEG size)
-              uint32_t raw_size = Wc.frame_buffer_size;
-              WcStats.compression_ratio_x100 = (raw_size * 100) / jpeg_size;
-              
-              uint32_t network_start = micros();
-              Wc.client_ptr->print("--" BOUNDARY "\r\n");
-              Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
-              Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
-              Wc.client_ptr->print("\r\n");
-              WcStats.last_network_write_us = micros() - network_start;
-              if (WcStats.last_network_write_us > WcStats.max_network_write_us) {
-                WcStats.max_network_write_us = WcStats.last_network_write_us;
-              }
-              
-              // Statistics
-              WcStats.frames_processed++;
-              WcStats.bytes_sent += jpeg_size;
-              frames_in_second++;
-              
-              // Yield to let network stack process
-              taskYIELD();
-            } else {
-              WcStats.jpeg_errors++;
-            }
-            
-            xSemaphoreGive(Wc.jpeg_mutex);
-            
-            // Track frame processing time
-            WcStats.last_frame_time_ms = millis() - frame_start;
-          } else {
-            // Couldn't get JPEG mutex
-            WcStats.frames_unsent++;
-          }
-        } else {
-          // No client or not streaming - frame unsent
-          WcStats.frames_unsent++;
-        }
-        
+    if (ret == ESP_OK && jpeg_size > 0) {
+      // Track JPEG size statistics
+      WcStats.last_jpeg_size = jpeg_size;
+      if (WcStats.min_jpeg_size == 0 || jpeg_size < WcStats.min_jpeg_size) {
+        WcStats.min_jpeg_size = jpeg_size;
+      }
+      if (jpeg_size > WcStats.max_jpeg_size) {
+        WcStats.max_jpeg_size = jpeg_size;
+      }
+      // Calculate compression ratio (raw YUV422 size / JPEG size)
+      uint32_t raw_size = Wc.frame_buffer_size;
+      WcStats.compression_ratio_x100 = (raw_size * 100) / jpeg_size;
+      
+      // Check state before starting network write - don't start new writes if stopping
+      if (Wc.state == CAM_STOPPING) {
+        xSemaphoreGive(Wc.jpeg_mutex);
         xSemaphoreGive(Wc.client_mutex);
-      } else {
-        // Couldn't get client mutex
-        WcStats.frames_unsent++;
+        break;
       }
       
-      // Calculate FPS every second
-      if (millis() - last_fps_calc >= 1000) {
-        WcStats.last_fps = frames_in_second;
-        
-        // Calculate averages (if we processed frames)
-        if (frames_in_second > 0) {
-          WcStats.avg_mutex_wait_us = WcStats.last_mutex_wait_us;
-          WcStats.avg_cache_sync_us = WcStats.last_cache_sync_us;
-          WcStats.avg_jpeg_encode_us = WcStats.last_jpeg_encode_us;
-          WcStats.avg_network_write_us = WcStats.last_network_write_us;
-          WcStats.avg_jpeg_size = WcStats.last_jpeg_size;
-        }
-        
-        frames_in_second = 0;
-        last_fps_calc = millis();
-        
-        // Update uptime
-        if (WcStats.start_time > 0) {
-          WcStats.uptime_seconds = (millis() - WcStats.start_time) / 1000;
-        }
+      uint32_t network_start = micros();
+      Wc.client_ptr->print("--" BOUNDARY "\r\n");
+      Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
+      Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
+      Wc.client_ptr->print("\r\n");
+      WcStats.last_network_write_us = micros() - network_start;
+      if (WcStats.last_network_write_us > WcStats.max_network_write_us) {
+        WcStats.max_network_write_us = WcStats.last_network_write_us;
       }
       
-      // Periodic profiling log (every 5 seconds)
-      if (millis() - last_profile_log >= 5000) {
-        AddLog(LOG_LEVEL_INFO, PSTR("CAM: Profile - JPEG:%uus(%uKB,%.2fx) Net:%uus Cache:%uus Mutex:%uus FPS:%u"),
-          WcStats.last_jpeg_encode_us,
-          WcStats.last_jpeg_size / 1024,
-          WcStats.compression_ratio_x100 / 100.0f,
-          WcStats.last_network_write_us,
-          WcStats.last_cache_sync_us,
-          WcStats.last_mutex_wait_us,
-          WcStats.last_fps);
-        last_profile_log = millis();
+      // Statistics
+      WcStats.frames_processed++;
+      WcStats.bytes_sent += jpeg_size;
+      frames_in_second++;
+      
+      // Yield to let network stack process
+      taskYIELD();
+    } else {
+      WcStats.jpeg_errors++;
+    }
+    
+    xSemaphoreGive(Wc.jpeg_mutex);
+    xSemaphoreGive(Wc.client_mutex);
+    
+    // Track frame processing time
+    WcStats.last_frame_time_ms = millis() - frame_start;
+    
+    // Calculate FPS every second
+    if (millis() - last_fps_calc >= 1000) {
+      WcStats.last_fps = frames_in_second;
+      
+      // Calculate averages (if we processed frames)
+      if (frames_in_second > 0) {
+        WcStats.avg_mutex_wait_us = WcStats.last_mutex_wait_us;
+        WcStats.avg_cache_sync_us = WcStats.last_cache_sync_us;
+        WcStats.avg_jpeg_encode_us = WcStats.last_jpeg_encode_us;
+        WcStats.avg_network_write_us = WcStats.last_network_write_us;
+        WcStats.avg_jpeg_size = WcStats.last_jpeg_size;
+      }
+      
+      frames_in_second = 0;
+      last_fps_calc = millis();
+      
+      // Update uptime
+      if (WcStats.start_time > 0) {
+        WcStats.uptime_seconds = (millis() - WcStats.start_time) / 1000;
       }
     }
+    
+    // Periodic profiling log (every 5 seconds)
+    if (millis() - last_profile_log >= 5000) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Profile - JPEG:%uus(%uKB,%.2fx) Net:%uus Cache:%uus Mutex:%uus FPS:%u"),
+        WcStats.last_jpeg_encode_us,
+        WcStats.last_jpeg_size / 1024,
+        WcStats.compression_ratio_x100 / 100.0f,
+        WcStats.last_network_write_us,
+        WcStats.last_cache_sync_us,
+        WcStats.last_mutex_wait_us,
+        WcStats.last_fps);
+      last_profile_log = millis();
+    }
   }
+  
+  // Task exiting - delete ourselves
+  Wc.cam_task_handle = NULL;
+  vTaskDelete(NULL);
 }
 
 /*********************************************************************************************/
 
 uint32_t WcSetup(bool reset_config) {
-  if (Wc.up) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI already initialized"));
-    return Wc.up;
+  if (Wc.state != CAM_IDLE) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI already initialized (state=%d)"), Wc.state);
+    return 1;
   }
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== SETUP START (Double-Buffered) ====="));
@@ -490,13 +561,7 @@ uint32_t WcSetup(bool reset_config) {
     esp_cam_ctlr_del(Wc.cam_handle);
     return 0;
   }
-
-  ret = esp_cam_ctlr_start(Wc.cam_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to start CSI (0x%x)"), ret);
-    return 0;
-  }
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI controller started"));
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI controller enabled (not started yet)"));
 
   // 7. Configure ISP
   extern isp_proc_handle_t tasmota_wc_isp_handle;
@@ -584,12 +649,14 @@ uint32_t WcSetup(bool reset_config) {
   // 9. Create mutexes for thread safety
   Wc.client_mutex = xSemaphoreCreateMutex();
   Wc.jpeg_mutex = xSemaphoreCreateMutex();
+  Wc.resume_sem = xSemaphoreCreateBinary();  // For pause/resume
   
-  if (!Wc.client_mutex || !Wc.jpeg_mutex) {
+  if (!Wc.client_mutex || !Wc.jpeg_mutex || !Wc.resume_sem) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create mutexes"));
     // Cleanup
     if (Wc.client_mutex) vSemaphoreDelete(Wc.client_mutex);
     if (Wc.jpeg_mutex) vSemaphoreDelete(Wc.jpeg_mutex);
+    if (Wc.resume_sem) vSemaphoreDelete(Wc.resume_sem);
     jpeg_del_encoder_engine(Wc.jpeg_handle);
     esp_isp_disable(Wc.isp_handle);
     esp_isp_del_processor(Wc.isp_handle);
@@ -599,7 +666,7 @@ uint32_t WcSetup(bool reset_config) {
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Mutexes created"));
 
-  // 10. Create camera processing task
+  // 10. Create camera processing task (runs forever, waits for CAM_STREAMING)
   BaseType_t task_created = xTaskCreatePinnedToCore(
     CamProcessingTask,
     "CamTask",
@@ -607,63 +674,61 @@ uint32_t WcSetup(bool reset_config) {
     NULL,
     5,
     &Wc.cam_task_handle,
-    1  // Pin to Core 1 (seems not to be better that Core 0, more tests needed)
+    1  // Pin to Core 1
   );
   
   if (task_created != pdPASS) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create processing task"));
-    // Cleanup
     vSemaphoreDelete(Wc.client_mutex);
     vSemaphoreDelete(Wc.jpeg_mutex);
+    vSemaphoreDelete(Wc.resume_sem);
     jpeg_del_encoder_engine(Wc.jpeg_handle);
     esp_isp_disable(Wc.isp_handle);
     esp_isp_del_processor(Wc.isp_handle);
-    esp_cam_ctlr_stop(Wc.cam_handle);
     esp_cam_ctlr_disable(Wc.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task created"));
 
-  Wc.up = 1;
-  Wc.streaming = false;
+  Wc.state = CAM_INIT;
+  Wc.session_type = SESSION_MJPEG_HTTP;  // Only session type for now
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Setup complete"));
-  return Wc.up;
+  return 1;
 }
 
 uint32_t WcStart(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcStart called - up=%d streaming=%d changing=%d"), Wc.up, Wc.streaming, Wc.changing_state);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcStart called - state=%d"), Wc.state);
   
-  if (!Wc.up) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI not initialized"));
+  if (Wc.state != CAM_INIT) {
+    if (Wc.state == CAM_STREAMING) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Already streaming"));
+      return 1;
+    }
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Cannot start from state %d"), Wc.state);
     return 0;
   }
-
-  if (Wc.streaming) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Already streaming"));
-    return 1;
-  }
-  
-  // Prevent re-entrance
-  if (Wc.changing_state) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: State change in progress, ignoring WcStart"));
-    return 0;
-  }
-  Wc.changing_state = true;
 
   // Reset statistics
   memset(&WcStats, 0, sizeof(WcStats));
   WcStats.start_time = millis();
 
-  // CSI controller is already started during setup
-  // Just need to start sensor streaming via Berry
+  // Start CSI controller (ISR callbacks will begin firing)
+  esp_err_t ret = esp_cam_ctlr_start(Wc.cam_handle);
+  if (ret != ESP_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to start CSI (0x%x)"), ret);
+    return 0;
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI controller started"));
+
+  // Start sensor streaming via Berry
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream"));
   int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0); // idx=1 (start)
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Berry stream_on result: %d"), berry_result);
   
   if (berry_result == 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
-    Wc.changing_state = false;
+    esp_cam_ctlr_stop(Wc.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor streaming started"));
@@ -671,96 +736,140 @@ uint32_t WcStart(void) {
   // Give sensor time to start streaming
   delay(100);
 
-  Wc.streaming = true;
-  Wc.changing_state = false;
+  Wc.state = CAM_STREAMING;
   
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Ready - backup buffer should update automatically"));
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming active"));
+  return 1;
+}
+
+// Pause the task for reconfiguration - task stays alive but stops processing
+uint32_t WcPause(void) {
+  if (Wc.state != CAM_STREAMING) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Cannot pause from state %d"), Wc.state);
+    return 0;
+  }
+  
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Pausing task"));
+  
+  // Signal task to pause
+  Wc.state = CAM_PAUSING;
+  
+  // Wake task so it sees the state change
+  xTaskNotifyGive(Wc.cam_task_handle);
+  
+  // Wait for task to acknowledge pause (max 500ms)
+  for (int i = 0; i < 50 && Wc.state != CAM_PAUSED; i++) {
+    delay(10);
+  }
+  
+  if (Wc.state != CAM_PAUSED) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Task didn't pause"));
+    return 0;
+  }
+  
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task paused"));
+  return 1;
+}
+
+// Resume the task after reconfiguration
+uint32_t WcResume(void) {
+  if (Wc.state != CAM_PAUSED) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Cannot resume from state %d"), Wc.state);
+    return 0;
+  }
+  
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Resuming task"));
+  
+  // Set state back to streaming
+  Wc.state = CAM_STREAMING;
+  
+  // Signal task to resume
+  xSemaphoreGive(Wc.resume_sem);
+  
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task resumed"));
   return 1;
 }
 
 uint32_t WcStop(void) {
-  if (!Wc.up || !Wc.streaming) {
+  if (Wc.state == CAM_IDLE || Wc.state == CAM_STOPPING) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Nothing to stop (state=%d)"), Wc.state);
     return 0;
   }
+
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping (state=%d)"), Wc.state);
   
-  // Prevent re-entrance
-  if (Wc.changing_state) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: State change in progress, ignoring WcStop"));
-    return 0;
+  // 1. Set state to STOPPING - task will exit on next iteration
+  Wc.state = CAM_STOPPING;
+  
+  // 2. If task was paused, release it so it can see STOPPING and exit
+  xSemaphoreGive(Wc.resume_sem);
+  
+  // 3. Wake task and wait for it to exit
+  if (Wc.cam_task_handle) {
+    xTaskNotifyGive(Wc.cam_task_handle);
+    
+    // Wait for task to exit (task sets handle to NULL before deleting itself)
+    for (int i = 0; i < 50 && Wc.cam_task_handle != NULL; i++) {
+      delay(10);
+    }
+    
+    // Force delete if task didn't exit
+    if (Wc.cam_task_handle != NULL) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task didn't exit, force deleting"));
+      vTaskDelete(Wc.cam_task_handle);
+      Wc.cam_task_handle = NULL;
+    }
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task stopped"));
   }
-  Wc.changing_state = true;
-
-  // Call Berry to stop sensor streaming first
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream stop"));
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0); // idx=0 (stop)
   
-  // Give sensor time to stop streaming
-  delay(50);
-
-  // Stop CSI controller (stops ISR callbacks)
+  // 4. Stop CSI controller - no more ISR callbacks
   esp_err_t ret = esp_cam_ctlr_stop(Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to stop CSI (0x%x)"), ret);
   }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: CSI stopped"));
   
-  // Disable CSI controller BEFORE deleting task (prevents ISR race)
+  // 4. Stop sensor streaming via Berry
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream stop"));
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
+  
+  // 5. Unregister callbacks
+  esp_cam_ctlr_evt_cbs_t null_cbs = {0};
+  esp_cam_ctlr_register_event_callbacks(Wc.cam_handle, &null_cbs, NULL);
+  
+  // 6. Disable CSI controller
   ret = esp_cam_ctlr_disable(Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to disable CSI (0x%x)"), ret);
   }
   
-  // Let hardware settle after disable
-  delay(100);
-  
-  // Give task time to exit current iteration (client_ptr stays alive for seamless resolution change)
-  delay(50);
-  
-  // Delete processing task (now safe - ISR disabled, client cleared)
-  if (Wc.cam_task_handle) {
-    vTaskDelete(Wc.cam_task_handle);
-    Wc.cam_task_handle = NULL;
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task deleted"));
-  }
-  
-  // Delete CSI controller
+  // 7. Delete CSI controller
   ret = esp_cam_ctlr_del(Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete CSI (0x%x)"), ret);
   }
   Wc.cam_handle = NULL;
   
-  // Disable ISP
+  // 8. Disable and delete ISP
   if (Wc.isp_handle) {
-    ret = esp_isp_disable(Wc.isp_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to disable ISP (0x%x)"), ret);
-    }
-    
-    // Delete ISP
-    ret = esp_isp_del_processor(Wc.isp_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete ISP (0x%x)"), ret);
-    }
+    esp_isp_disable(Wc.isp_handle);
+    esp_isp_del_processor(Wc.isp_handle);
     Wc.isp_handle = NULL;
   }
   
-  // Delete JPEG encoder
+  // 9. Delete JPEG encoder
   if (Wc.jpeg_handle) {
-    ret = jpeg_del_encoder_engine(Wc.jpeg_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete JPEG encoder (0x%x)"), ret);
-    }
+    jpeg_del_encoder_engine(Wc.jpeg_handle);
     Wc.jpeg_handle = NULL;
   }
   
-  // Free JPEG buffer
+  // 10. Free buffers
   if (Wc.jpeg_buffer) {
     free(Wc.jpeg_buffer);
     Wc.jpeg_buffer = NULL;
     Wc.jpeg_buffer_size = 0;
   }
   
-  // Free frame buffers
   for (int i = 0; i < 2; i++) {
     if (Wc.frame_buffer[i]) {
       free(Wc.frame_buffer[i]);
@@ -769,7 +878,13 @@ uint32_t WcStop(void) {
   }
   Wc.frame_buffer_size = 0;
   
-  // Delete mutexes
+  // 11. Clean up client pointer before deleting mutex
+  if (Wc.client_ptr) {
+    delete Wc.client_ptr;
+    Wc.client_ptr = nullptr;
+  }
+  
+  // 12. Delete mutexes
   if (Wc.client_mutex) {
     vSemaphoreDelete(Wc.client_mutex);
     Wc.client_mutex = NULL;
@@ -778,20 +893,23 @@ uint32_t WcStop(void) {
     vSemaphoreDelete(Wc.jpeg_mutex);
     Wc.jpeg_mutex = NULL;
   }
+  if (Wc.resume_sem) {
+    vSemaphoreDelete(Wc.resume_sem);
+    Wc.resume_sem = NULL;
+  }
 
-  Wc.streaming = false;
-  Wc.up = 0;
-  Wc.stream_active = 0;  // Signal WcLoop to clean up server
-  Wc.changing_state = false;
+  // 13. Final state
+  Wc.state = CAM_IDLE;
+  Wc.stream_active = 0;
   
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming stopped"));
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopped"));
   return 1;
 }
 
 // Get Frame logic is now internal to HandleWebcamMjpegTask (Zero Copy)
 uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
     // Legacy function support - just returns current read buffer
-    if (!Wc.up || !Wc.streaming) return NULL;
+    if (Wc.state != CAM_STREAMING) return NULL;
     return Wc.frame_buffer[Wc.read_idx];
 }
 
@@ -825,19 +943,31 @@ void CmndWcRes(void) {
     return;
   }
   
-  // Stop streaming if active
-  if (Wc.streaming) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping stream before resolution change"));
-    WcStop();
+  // Reject if busy
+  if (Wc.state == CAM_STOPPING || Wc.state == CAM_PAUSING || Wc.state == CAM_PAUSED) {
+    ResponseCmndChar_P(PSTR("Busy"));
+    return;
   }
   
-  // Mark as uninitialized
-  Wc.up = 0;
+  // Pause task first if streaming (ensures clean state)
+  bool was_streaming = (Wc.state == CAM_STREAMING);
+  if (was_streaming) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for resolution change"));
+    if (!WcPause()) {
+      ResponseCmndChar_P(PSTR("Pause failed"));
+      return;
+    }
+  }
+  
+  // Now safe to stop - task is paused
+  if (Wc.state == CAM_PAUSED || Wc.state == CAM_INIT) {
+    WcStop();
+  }
   
   // Store resolution index
   Wc.config.res_index = (uint8_t)XdrvMailbox.payload;
   
-  // Reinitialize with new resolution
+  // Reinitialize with new resolution and start streaming
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing with resolution mode %d"), XdrvMailbox.payload);
   uint32_t result = WcSetup(false);  // Don't reset config - keep resolution index
   
@@ -845,6 +975,7 @@ void CmndWcRes(void) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Setup failed for resolution %d"), XdrvMailbox.payload);
     ResponseCmndFailed();
   } else {
+    WcStart();
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed to mode %d (%dx%d)"), 
       XdrvMailbox.payload, Wc.config.width, Wc.config.height);
     ResponseCmndNumber(XdrvMailbox.payload);
@@ -853,8 +984,7 @@ void CmndWcRes(void) {
 
 void CmndWcStream(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStream called, payload=%d"), XdrvMailbox.payload);
-  // TODO: Implement stream control
-  ResponseCmndStateText(Wc.streaming);  // Return current streaming state
+  ResponseCmndStateText(Wc.state == CAM_STREAMING);
 }
 
 void CmndWcStop(void) {
@@ -872,7 +1002,10 @@ void CmndWcStop(void) {
 void CmndWcStatus(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
   
-  Response_P(PSTR("{\"WcStatus\":{\"Streaming\":\"%s\",\"Resolution\":\"%dx%d\","
+  const char* state_names[] = {"IDLE", "INIT", "STREAMING", "PAUSING", "PAUSED", "STOPPING"};
+  const char* state_name = (Wc.state < 6) ? state_names[Wc.state] : "UNKNOWN";
+  
+  Response_P(PSTR("{\"WcStatus\":{\"State\":\"%s\",\"Resolution\":\"%dx%d\","
                   "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesUnsent\":%u,"
                   "\"JpegErrors\":%u,\"JpegResets\":%u,\"BytesSent\":%u,"
                   "\"UptimeSeconds\":%u,\"FPS\":%u,\"LastFrameTimeMs\":%u,"
@@ -883,7 +1016,7 @@ void CmndWcStatus(void) {
                   "\"JPEG\":{"
                     "\"LastSize\":%u,\"AvgSize\":%u,\"MinSize\":%u,\"MaxSize\":%u,\"CompressionRatio\":\"%.2f\""
                   "}}}"),
-    Wc.streaming ? "ON" : "OFF",
+    state_name,
     Wc.config.width, Wc.config.height,
     WcStats.frames_captured,
     WcStats.frames_processed,
@@ -971,11 +1104,26 @@ void CmndWcWindow(void) {
     return;
   }
 
-  // Stop current stream
-  if (Wc.streaming) {
+  // Reject if busy
+  if (Wc.state == CAM_STOPPING || Wc.state == CAM_PAUSING || Wc.state == CAM_PAUSED) {
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Busy\"}}"));
+    return;
+  }
+
+  // Pause task first if streaming (ensures clean state)
+  bool was_streaming = (Wc.state == CAM_STREAMING);
+  if (was_streaming) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for window change"));
+    if (!WcPause()) {
+      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pause failed\"}}"));
+      return;
+    }
+  }
+
+  // Now safe to stop - task is paused
+  if (Wc.state == CAM_PAUSED || Wc.state == CAM_INIT) {
     WcStop();
   }
-  Wc.up = 0;
 
   // Pre-fill Config for Berry (safe assignment with validation)
   Wc.config.offset_x = (uint16_t)x;
@@ -987,8 +1135,9 @@ void CmndWcWindow(void) {
   Wc.config.format = (uint8_t)format;
   Wc.config.res_index = 255; // Signal "Custom Mode"
 
-  // Re-Init (Calls Berry 'init')
+  // Re-Init (Calls Berry 'init') and start streaming
   if (WcSetup(false)) {
+    WcStart();
     Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d,\"Format\":%d}}"), 
       Wc.config.width, Wc.config.height, Wc.config.binning, Wc.config.fps, Wc.config.format);
   } else {
@@ -1026,9 +1175,10 @@ void CmndWcQuality(void) {
 
 void WcInit(void) {
   memset(&Wc, 0, sizeof(Wc));
+  Wc.state = CAM_IDLE;
+  Wc.session_type = SESSION_NONE;
   Wc.jpeg_quality = 50;  // Default JPEG quality
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
-
 }
 
 /*********************************************************************************************/
@@ -1060,15 +1210,15 @@ void HandleWebcamRoot(void) {
 }
 
 void HandleWebcamMjpeg(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver - up=%d streaming=%d"), Wc.up, Wc.streaming);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver - state=%d"), Wc.state);
   
   if (!Wc.CamServer) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CamServer is NULL!"));
     return;
   }
   
-  if (!Wc.up || !Wc.streaming) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Not ready - rejecting stream request"));
+  if (Wc.state != CAM_STREAMING) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Not streaming - rejecting request"));
     Wc.CamServer->send(503, "text/plain", "Camera not ready");
     return;
   }
@@ -1187,14 +1337,19 @@ void WcPicSetup(void) {
 }
 
 void WcShowStream(void) {
-  if (Wc.CamServer && Wc.up) {
+  if (Wc.CamServer && Wc.state == CAM_STREAMING) {
     WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream''></center><p></p>"),(uint32_t)WiFi.localIP());
   }
 }
 
 
 void WcLoop(void) {
-  if (Wc.streaming && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
+  // Skip during state transitions
+  if (Wc.state == CAM_STOPPING || Wc.state == CAM_IDLE) {
+    return;
+  }
+  
+  if (Wc.state == CAM_STREAMING && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting stream server..."));
     WcSetStreamserver(1);
   }
@@ -1235,13 +1390,13 @@ bool Xdrv81(uint32_t function) {
       WcInit();
       break;
     case FUNC_INIT:
-      if(Wc.up == 0) {
+      if (Wc.state == CAM_IDLE) {
         WcSetup(true);  // First boot - reset config to defaults
       }
       break;
     case FUNC_EVERY_SECOND:
       // Auto-start streaming once WiFi is available
-      if (Wc.up && !Wc.streaming && !TasmotaGlobal.global_state.network_down) {
+      if (Wc.state == CAM_INIT && !TasmotaGlobal.global_state.network_down) {
         WcStart();
       }
       break;
