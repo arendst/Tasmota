@@ -646,75 +646,60 @@ class OV5647 : CSI_Sensor
   end
 
   # Register configuration for 1920x1080 RAW8 @ 15fps
-  # Strategy: Lower speed to 200Mbps (PHY Safe) + RAW8 (Bandwidth Safe) + 15fps
+  # Strategy: Medium Speed (326 Mbps) - Derived from Mode 2 PLL
   def regs_1920x1080_raw8_15fps()
-    print("OV5647: Configuring 1920x1080 RAW8 @ 15fps (Slow Clock Mode)...")
+    print("OV5647: Configuring 1920x1080 RAW8 @ 15fps (Medium Speed 326Mbps)...")
     
     # 1. Geometry & Format
     self.width = 1920
     self.height = 1080
-    self.format = 0  # COLOR_PIXEL_RAW8 (Critical change from 0x1A)
+    self.format = 0  # COLOR_PIXEL_RAW8
     self.bin_mode = 1
     
-    # 2. Clock: Use the conservative 200 Mbps setting
-    # This guarantees the ESP32-P4 PHY will lock
-    self.mipi_clock = 200
+    # 2. Clock: 326 Mbps (Derived from 81.6MHz IDI)
+    self.mipi_clock = 326
     
-    # 3. Timing Calculation for 15 FPS
-    # PCLK = 100 MHz (Standard for Slow config)
-    # HTS (Line Length) = 2271 (Borrowed from Espressif 1080p config)
-    # VTS (Frame Length) = PCLK / (HTS * FPS)
-    # VTS = 100,000,000 / (2271 * 15) = 2935
+    # 3. Timing Calculation
+    # PCLK = 81.66 MHz (Mode 2 PLL)
+    # VTS = 2398 (0x095E) -> 15 FPS
     var hts = 2271
-    var vts = 2935
+    var vts = 2398 
 
     return [
-      # === CLOCK: SLOW CONFIG (200 Mbps/lane) ===
-      [0x3034, 0x18],           # RAW8 Mode (OV5647_8BIT_MODE) <--- KEY CHANGE
-      [0x3035, 0x41],           # SysDiv = 4 (Standard defensive)
-      [0x3036, 0x80],           # Mult = 128 -> 200 Mbps/lane
+      # === CLOCK: REUSED FROM MODE 2 (81.6 MHz IDI) ===
+      [0x3034, 0x18],           # RAW8 Mode (OV5647_8BIT_MODE)
+      [0x3035, 0x21],           # SysDiv = 2 
+      [0x3036, 0x62],           # Mult = 98 (Same as Mode 2)
       [0x303c, 0x11], 
       [0x3106, 0xf5],
       
       # === BINNING: DISABLED ===
-      [0x3821, 0x02],           # Vertical: Flip=1, Bin=0
-      [0x3820, 0x00],           # Horizontal: Mirror=0, Bin=0
-      [0x3814, 0x11],           # No Subsampling
-      [0x3815, 0x11],
+      [0x3821, 0x02], [0x3820, 0x00],
+      [0x3814, 0x11], [0x3815, 0x11],
       
-      # === GEOMETRY: INPUT CROP ===
-      # We use Espressif's 1080p window coordinates.
-      # We MUST crop at input because 200Mbps is too slow for full array readout.
-      
-      # Window: X start = 348 (0x015C)
+      # === GEOMETRY: 1080p CROP ===
       [0x3800, 0x01], [0x3801, 0x5c],
-      
-      # Window: Y start = 434 (0x01B2)
       [0x3802, 0x01], [0x3803, 0xb2],
-      
-      # Window: X end = 2275 (0x08E3)
       [0x3804, 0x08], [0x3805, 0xe3],
-      
-      # Window: Y end = 1521 (0x05F1)
       [0x3806, 0x05], [0x3807, 0xf1],
       
-      # Output Size: 1920x1080
+      # Output Size
       [0x3808, 0x07], [0x3809, 0x80],
       [0x380a, 0x04], [0x380b, 0x38],
       
-      # ISP Offsets (Matches Espressif)
+      # ISP Offsets
       [0x3810, 0x00], [0x3811, 0x05],
       [0x3812, 0x00], [0x3813, 0x02],
       
-      # === TIMING (Adjusted for 15 FPS) ===
-      # HTS = 2271
+      # === TIMING (15 FPS @ 81.6MHz) ===
       [0x380c, (hts >> 8) & 0xFF], [0x380d, hts & 0xFF],
       
-      # VTS = 2935 (Slows down frame rate to 15fps)
+      # VTS = 2398 (0x095E)
       [0x380e, (vts >> 8) & 0xFF], [0x380f, vts & 0xFF],
       
-      # === ANALOG/ISP (Standard 1080p Settings) ===
-      [0x3827,0xec], [0x370c,0x03], [0x3612,0x5b], [0x3618,0x04],
+      # === ANALOG/ISP (Mode 2 Settings) ===
+      [0x3827,0xec], [0x370c,0x03], 
+      [0x3612,0x5b], [0x3618,0x04],
       [0x5000,0xff], [0x583e,0xf0], [0x583f,0x4f],
       [0x5003,0x08], [0x5a00,0x08],
       
@@ -727,154 +712,172 @@ class OV5647 : CSI_Sensor
       [0x4001,0x02], [0x4004,0x04], [0x4000,0x09],
       
       # === MIPI TIMING ===
-      # 0x28 = 40. Matches the 200Mbps clock (100MHz / 4 lanes logic)
-      [0x4837, 0x28], 
-      [0x4800, 0x24],
+      # 0x19 = 25. Matches the ~326 Mbps speed
+      [0x4837, 0x19], 
+      [0x4800, 0x34],
       
       [self.REG_END, 0x00]
     ]
   end
 
 
-
-  # NEW: Custom Resolution Calculator
-  # Supports Bin 2 (Proven) and Bin 1 (Proven)
-  def regs_custom(x, y, w, h, bin, fps)
+  # Custom Resolution Calculator - Restored "Proven Working" Logic
+  def regs_custom(x, y, w, h, bin, fps, fmt)
     
-    # 1. Enforce Width Alignment
-    if (w % 8) != 0
-      w = (w / 8) * 8
-    end
-    
-    # 2. Minimum dimensions
+    # 1. Align Geometry
+    w = (w / 8) * 8
     if w < 16 w = 16 end
     if h < 16 h = 16 end
+    if fps < 1 fps = 1 end
 
-    print(format("OV5647: Configuring Custom Window %dx%d at (%d,%d) FPS=%d Bin=%d", w, h, x, y, fps, bin))
-    
+    # 2. Select Clock Speed (Physics)
+    if bin == 2
+       # PROVEN CONFIG: 100MHz IDI (Matches regs_800x640)
+       if fmt == 1 
+          self.mipi_clock = 250 # RAW10
+       else        
+          self.mipi_clock = 200 # RAW8 (Verified 200)
+       end
+    else
+       # PROVEN CONFIG: 81.6MHz IDI (Matches regs_1080p)
+       if fmt == 1 
+          self.mipi_clock = 408 # RAW10
+       else        
+          self.mipi_clock = 326 # RAW8
+       end
+    end
+
     self.width = w
     self.height = h
-    self.format = 0 # RAW8
-    self.mipi_clock = 200 # Standard 200Mbps
-
-    var regs = []
+    self.format = fmt
+    self.bin_mode = bin
     
+    print(format("OV5647: Custom %dx%d Bin=%d Fmt=%s Clock=%d", 
+                 w, h, bin, fmt == 0 ? "RAW8" : "RAW10", self.mipi_clock))
+
+    # 3. Generate Registers
     if bin == 2
-      self.bin_mode = 2
-      # === BIN 2 (2x2) CONFIGURATION (Proven Working) ===
+      # ==========================================================
+      # BIN 2: RESTORED PROVEN WORKING LOGIC
+      # Strategy: Open full array, use ISP Offsets (3810/3812) to pan
+      # ==========================================================
+      
       var base_x = 9
       var base_y = 0
       var final_x = base_x + x
       var final_y = base_y + y
       
-      if fps == 0 fps = 30 end
+      # VTS Logic from Proven Code
       var vts = 100000000 / (1896 * fps)
       if vts < h vts = h + 4 end
 
       return [
-        [0x3034,0x18], [0x3035,0x41], [0x3036,0x80], [0x303c,0x11], [0x3106,0xf5],
+        # Clock: 100MHz IDI
+        [0x3034, fmt == 0 ? 0x18 : 0x1a], # <--- Only change: Format
+        [0x3035,0x41], [0x3036,0x80], [0x303c,0x11], [0x3106,0xf5],
+        
         [0x3814,0x31], [0x3815,0x31], 
         [0x3820,0x41], [0x3821,0x03], 
+        
         [0x3827,0xec], [0x370c,0x0f], [0x3612,0x59], [0x3618,0x00],
         [0x5000,0xff], [0x583e,0xf0], [0x583f,0x20], [0x5002,0x41], [0x5003,0x08], [0x5a00,0x08],
-        [0x3000,0x00], [0x3001,0x00], [0x3002,0x00], [0x3016,0x08], [0x3017,0xe0], [0x3018,0x44], [0x301c,0xf8], [0x301d,0xf0],
+        
+        [0x3000,0x00], [0x3001,0x00], [0x3002,0x00], [0x3016,0x08], [0x3017,0xe0], 
+        [0x3018,0x44], [0x301c,0xf8], [0x301d,0xf0],
+        
         [0x3a18,0x00], [0x3a19,0xf8], [0x3c01,0x80], [0x3c00,0x40], [0x3b07,0x0c],
+        
         [0x380c,0x07], [0x380d,0x68], 
         [0x380e, (vts >> 8) & 0xFF],  [0x380f, vts & 0xFF],
+        
+        # Window: OPEN FULL ARRAY (Fixed values from verified code)
         [0x3800,0x00], [0x3801,0x00], 
         [0x3802,0x00], [0x3803,0x00], 
         [0x3804,0x0a], [0x3805,0x3f], 
         [0x3806,0x07], [0x3807,0xa1], 
+        
+        # Output Size: Dynamic
         [0x3808, (w >> 8) & 0xFF], [0x3809, w & 0xFF],
         [0x380a, (h >> 8) & 0xFF], [0x380b, h & 0xFF],
+        
+        # Panning: Use ISP Offsets
         [0x3810, (final_x >> 8) & 0xFF], [0x3811, final_x & 0xFF],
         [0x3812, (final_y >> 8) & 0xFF], [0x3813, final_y & 0xFF],
-        [0x3630,0x2e], [0x3632,0xe2], [0x3633,0x23], [0x3634,0x44], [0x3636,0x06], [0x3620,0x64], [0x3621,0xe0], [0x3600,0x37],
-        [0x3704,0xa0], [0x3703,0x5a], [0x3715,0x78], [0x3717,0x01], [0x3731,0x02], [0x370b,0x60], [0x3705,0x1a],
+        
+        [0x3630,0x2e], [0x3632,0xe2], [0x3633,0x23], [0x3634,0x44], [0x3636,0x06], 
+        [0x3620,0x64], [0x3621,0xe0], [0x3600,0x37],
+        [0x3704,0xa0], [0x3703,0x5a], [0x3715,0x78], [0x3717,0x01], [0x3731,0x02], 
+        [0x370b,0x60], [0x3705,0x1a],
         [0x3f05,0x02], [0x3f06,0x10], [0x3f01,0x0a],
-        [0x3a08,0x01], [0x3a09,0x27], [0x3a0a,0x00], [0x3a0b,0xf6], [0x3a0d,0x04], [0x3a0e,0x03], [0x3a0f,0x58], [0x3a10,0x50], [0x3a1b,0x58], [0x3a1e,0x50], [0x3a11,0x60], [0x3a1f,0x28],
+        [0x3a08,0x01], [0x3a09,0x27], [0x3a0a,0x00], [0x3a0b,0xf6], [0x3a0d,0x04], 
+        [0x3a0e,0x03], [0x3a0f,0x58], [0x3a10,0x50], [0x3a1b,0x58], [0x3a1e,0x50], 
+        [0x3a11,0x60], [0x3a1f,0x28],
         [0x4001,0x02], [0x4004,0x02], [0x4000,0x09],
+        
         [0x4837,0x28], [0x4050,0x6e], [0x4051,0x8f], 
         [self.REG_END,0x00]
       ]
       
-   else # Bin == 1 (1080p / Full Res / Cropped)
-      self.bin_mode = 1
-      if fps > 15 || fps == 0
-        fps = 15
-      end
+    else 
+      # ==========================================================
+      # BIN 1: 1080p LOGIC (Proven stable today)
+      # ==========================================================
       
-      # === GEOMETRY CALCULATION ===
-      # Base Center + Offset Logic to match Espressif Preset
-      # Preset 1920x1080 uses: StartX=348, StartY=434
-      # Naive Center (2592-1920)/2 = 336. Diff = +12
-      # Naive Center (1944-1080)/2 = 432. Diff = +2
-      
-      var start_x = (2592 - w) / 2 + 12
-      var start_y = (1944 - h) / 2 + 2
-      
-      # Apply user pan
-      start_x = start_x + x
-      start_y = start_y + y
+      var start_x = (2592 - w) / 2 + 12 + x
+      var start_y = (1944 - h) / 2 + 2 + y
       
       # Alignment
-      # X must be multiple of 4 (Bayer). Y must be multiple of 2 (Bayer).
       start_x = (start_x / 4) * 4
       start_y = (start_y / 2) * 2
       
-      # Input Size Logic (+8 Padding Requirement)
-      # Input Window must be larger than Output Size for ISP interpolation.
-      # Preset Input: 1928x1088 (Output 1920x1080) -> +8 Padding
       var end_x = start_x + w + 8 - 1
       var end_y = start_y + h + 8 - 1
       
-      # VTS Calculation (HTS 2271)
+      if end_x > 2592 
+         var diff = end_x - 2592
+         start_x = start_x - diff
+         end_x = 2592
+      end
+      if end_y > 1944 end_y = 1944 end
+      
       var hts = 2271
-      var vts = 100000000 / (hts * fps)
+      var vts = 81666700 / (hts * fps) # 81.6MHz IDI
       if vts < h vts = h + 50 end
 
       return [
-        # Clock: 200 Mbps (Golden Config)
-        [0x3034, 0x18], [0x3035, 0x41], [0x3036, 0x80], [0x303c, 0x11], [0x3106, 0xf5],
+        [0x3034, fmt == 0 ? 0x18 : 0x1a], 
+        [0x3035, 0x21], [0x3036, 0x62], [0x303c, 0x11], [0x3106, 0xf5],
         
-        # Binning DISABLED
         [0x3814, 0x11], [0x3815, 0x11], [0x3820, 0x00], [0x3821, 0x02],
         
-        # Input Window (Padded)
         [0x3800, (start_x >> 8) & 0xFF], [0x3801, start_x & 0xFF],
         [0x3802, (start_y >> 8) & 0xFF], [0x3803, start_y & 0xFF],
         [0x3804, (end_x >> 8) & 0xFF],   [0x3805, end_x & 0xFF],
         [0x3806, (end_y >> 8) & 0xFF],   [0x3807, end_y & 0xFF],
         
-        # Output Size (Original Requested w/h)
         [0x3808, (w >> 8) & 0xFF], [0x3809, w & 0xFF],
         [0x380a, (h >> 8) & 0xFF], [0x380b, h & 0xFF],
         
-        # ISP Offsets (Matches Preset: 5, 2)
         [0x3810, 0x00], [0x3811, 0x05],
         [0x3812, 0x00], [0x3813, 0x02],
         
-        # Timing
         [0x380c, (hts >> 8) & 0xFF], [0x380d, hts & 0xFF], 
         [0x380e, (vts >> 8) & 0xFF], [0x380f, vts & 0xFF],
         
-        # Analog & AEC (Matches Preset Exactly)
         [0x3827,0xec], [0x370c,0x03], [0x3612,0x5b], [0x3618,0x04],
         [0x5000,0xff], [0x583e,0xf0], [0x583f,0x4f], [0x5003,0x08], [0x5a00,0x08],
-        [0x3000,0x00], [0x3001,0x00], [0x3002,0x00], [0x3016,0x08], [0x3017,0xe0], [0x3018,0x44], [0x301c,0xf8], [0x301d,0xf0],
+        [0x3000,0x00], [0x3001,0x00], [0x3002,0x00], [0x3016,0x08], [0x3017,0xe0], 
+        [0x3018,0x44], [0x301c,0xf8], [0x301d,0xf0],
         [0x3a18,0x03], [0x3a19,0xff], [0x3c00,0x40], [0x3b07,0x0c],
         
-        # BLC Line Number (Matches Preset: 4)
         [0x4001,0x02], [0x4004,0x04], [0x4000,0x09],
         
-        # MIPI Timing
-        [0x4837, 0x28], [0x4800, 0x24],
+        [0x4837, 0x19], [0x4800, 0x24],
         
         [self.REG_END,0x00]
       ]
     end
   end
-
 
   
   # Check sensor status - read back critical registers to verify configuration
@@ -974,6 +977,7 @@ class OV5647 : CSI_Sensor
       var req_h = 0
       var req_bin = 0
       var req_fps = 0
+      var req_fmt = 0
       
       # Read Configuration from C++ Struct (Byte 26 = res_index)
       if idx != 0
@@ -990,7 +994,8 @@ class OV5647 : CSI_Sensor
            req_h = b.get(2, 2)    # height (proposed)
            req_bin = b[16]        # binning
            req_fps = b[17]        # fps
-           print(format("OV5647: Custom Mode Requested: %dx%d @ (%d,%d) FPS=%d", req_w, req_h, req_x, req_y, req_fps))
+           req_fmt = b[8]         # format (0=RAW8, 1=RAW10, 2=RAW12)
+           print(format("OV5647: Custom Mode Requested: %dx%d @ (%d,%d) FPS=%d Fmt=%d", req_w, req_h, req_x, req_y, req_fps, req_fmt))
         else
            print(format("OV5647: Resolution index from C++: %d", res_idx))
         end
@@ -1000,7 +1005,7 @@ class OV5647 : CSI_Sensor
       var regs = nil
       if res_idx == 255
          # Call custom calculator
-         regs = self.regs_custom(req_x, req_y, req_w, req_h, req_bin, req_fps)
+         regs = self.regs_custom(req_x, req_y, req_w, req_h, req_bin, req_fps, req_fmt)
       else
          # Validate standard index
          if res_idx < 0 || res_idx >= size(self.resolutions)

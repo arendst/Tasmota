@@ -930,12 +930,12 @@ void CmndWcConfig(void) {
 void CmndWcWindow(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcWindow called"));
   
-  int x = 0, y = 0, w = 0, h = 0, bin = 0, fps = 0;
-  int parsed = sscanf(XdrvMailbox.data, "%d,%d,%d,%d,%d,%d", &x, &y, &w, &h, &bin, &fps);
+  int x = 0, y = 0, w = 0, h = 0, bin = 0, fps = 0, format = 0;
+  int parsed = sscanf(XdrvMailbox.data, "%d,%d,%d,%d,%d,%d,%d", &x, &y, &w, &h, &bin, &fps, &format);
   
-  if (parsed != 6) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to parse (got %d, expected 6)"), parsed);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid. Use: x,y,w,h,bin,fps\"}}"));
+  if (parsed != 7) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to parse (got %d, expected 7)"), parsed);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid. Use: x,y,w,h,bin,fps,format\"}}"));
     return;
   }
 
@@ -963,6 +963,13 @@ void CmndWcWindow(void) {
     fps = 30;  // Default
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS not specified, using default 30"));
   }
+  
+  // Validate format (0=RAW8, 1=RAW10, 2=RAW12)
+  if (format < 0 || format > 2) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid format %d"), format);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid format. Use 0=RAW8, 1=RAW10, 2=RAW12\"}}"));
+    return;
+  }
 
   // Stop current stream
   if (Wc.streaming) {
@@ -977,12 +984,13 @@ void CmndWcWindow(void) {
   Wc.config.height = (uint16_t)h;
   Wc.config.binning = (uint8_t)bin;
   Wc.config.fps = (uint8_t)fps;
+  Wc.config.format = (uint8_t)format;
   Wc.config.res_index = 255; // Signal "Custom Mode"
 
   // Re-Init (Calls Berry 'init')
   if (WcSetup(false)) {
-    Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d}}"), 
-      Wc.config.width, Wc.config.height, Wc.config.binning, Wc.config.fps);
+    Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d,\"Format\":%d}}"), 
+      Wc.config.width, Wc.config.height, Wc.config.binning, Wc.config.fps, Wc.config.format);
   } else {
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Setup Failed\"}}"));
   }
