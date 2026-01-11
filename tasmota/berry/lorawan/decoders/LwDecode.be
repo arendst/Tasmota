@@ -445,6 +445,11 @@ class webPageLoRaWAN : Driver
       tasmota.cmd(format('LoRaWanNode%i %s', inode, cmdArg), true)
     end
 
+    if webserver.has_arg('add')
+     inode = int(webserver.arg('node'))
+     tasmota.cmd(format('LoRaWanappkey%i', inode), true)
+    end 
+
     var appKey, decoder, name, enabled
     var hintAK = '32 character Application Key'
     var hintDecoder = 'Decoder file, ending in .be'
@@ -523,6 +528,16 @@ class webPageLoRaWAN : Driver
        "<input type='hidden' name='node' value='%i'>"
       "</form>"
       "</div>", node, enabled, hintAK, hintAK, appKey, hintAN, name, hintDecoder, hintDecoder, decoder, node))
+    end
+
+    if maxnode < 16  ### HARDCODED NUMBER. Don't like this. But not sure how to get max number of LoRaWAN nodes at run time in Berry
+     webserver.content_send(format(
+     "<div>"
+      "<form action='' method='post'>"
+       "<button name='add' class='button bgrn'>Add node</button>"
+       "<input type='hidden' name='node' value='%i'>"
+      "</form>"
+     "</div>", maxnode+1))
     end
 
     webserver.content_send("</fieldset>")
