@@ -49,6 +49,15 @@
 #include "driver/jpeg_encode.h"
 #include "esp_ldo_regulator.h"
 
+// H.264 encoder for RTP session (ESP32-P4 hardware)
+extern "C" {
+#include "esp_h264_enc_single_hw.h"
+#include "esp_h264_alloc.h"
+}
+
+// UDP for RTP transport
+#include <WiFiUdp.h>
+
 /*********************************************************************************************/
 
 // Session type - what kind of output we're producing
@@ -129,16 +138,19 @@ struct {
   WiFiClient *client_ptr;          // Active streaming client
   uint8_t stream_active;           // 0=none, 2=streaming
   
-  // === RTP Session (H.264 over UDP) - PLACEHOLDER ===
-  // esp_h264_enc_t *h264_handle;     // H.264 hardware encoder
-  // void *h264_buffer;               // H.264 output buffer
-  // size_t h264_buffer_size;
-  // WiFiUDP *rtp_socket;             // UDP socket for RTP
-  // IPAddress rtp_dest_ip;           // Destination IP
-  // uint16_t rtp_dest_port;          // Destination port (default 5004)
-  // uint16_t rtp_sequence;           // RTP sequence number
-  // uint32_t rtp_timestamp;          // RTP timestamp
-  // uint32_t rtp_ssrc;               // RTP synchronization source ID
+  // === RTP Session (H.264 over UDP) ===
+  esp_h264_enc_handle_t h264_handle;  // H.264 hardware encoder
+  uint8_t *h264_buffer;            // H.264 input buffer (raw YUV from ISP)
+  size_t h264_buffer_size;
+  uint8_t *h264_out_buffer;        // H.264 output buffer (encoded NAL units)
+  size_t h264_out_buffer_size;
+  
+  WiFiUDP rtp_udp;                 // UDP socket for RTP
+  IPAddress rtp_dest_ip;           // Destination IP
+  uint16_t rtp_dest_port;          // Destination port (default 5004)
+  uint16_t rtp_sequence;           // RTP sequence number (increments per packet)
+  uint32_t rtp_timestamp;          // RTP timestamp (90kHz clock)
+  uint32_t rtp_ssrc;               // Synchronization source ID
 } Wc;
 
 // Statistics
@@ -225,9 +237,9 @@ static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_ca
 
 
 /*********************************************************************************************/
-// Camera Processing Task - Dedicated FreeRTOS task for frame processing
+// MJPEG Processing Task - Dedicated FreeRTOS task for JPEG encoding and HTTP streaming
 
-void CamProcessingTask(void *pvParameters) {
+void MjpegProcessingTask(void *pvParameters) {
   const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100); // 100ms timeout
   uint32_t last_fps_calc = millis();
   uint32_t frames_in_second = 0;
@@ -423,6 +435,228 @@ void CamProcessingTask(void *pvParameters) {
   // Task exiting - delete ourselves
   Wc.cam_task_handle = NULL;
   vTaskDelete(NULL);
+}
+
+/*********************************************************************************************/
+// H.264 Processing Task - Dedicated FreeRTOS task for H.264 encoding (RTP/WebRTC/Matter)
+
+void H264ProcessingTask(void *pvParameters) {
+  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100); // 100ms timeout
+  uint32_t last_fps_calc = millis();
+  uint32_t frames_in_second = 0;
+  static uint32_t last_profile_log = 0;
+  
+  // H.264 encoder frame structures
+  esp_h264_enc_in_frame_t in_frame = {};
+  esp_h264_enc_out_frame_t out_frame = {};
+  
+  // Loop forever, exit only on CAM_STOPPING
+  while (true) {
+    // Wait here until ISR signals "Frame Ready"
+    uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
+    
+    // Exit on stop signal
+    if (Wc.state == CAM_STOPPING) {
+      break;
+    }
+    
+    // Handle pause request - signal we're paused, then wait for resume
+    if (Wc.state == CAM_PAUSING) {
+      Wc.state = CAM_PAUSED;
+      xSemaphoreTake(Wc.resume_sem, portMAX_DELAY);
+      if (Wc.state == CAM_STOPPING) {
+        break;
+      }
+      continue;
+    }
+    
+    // Only process frames when streaming and we got a notification
+    if (Wc.state != CAM_STREAMING || ulNotificationValue == 0) {
+      continue;
+    }
+    
+    // We have a frame!
+    uint32_t frame_start = millis();
+    
+    // Lock frame access
+    if (xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+      WcStats.frames_unsent++;
+      continue;
+    }
+    
+    // Check state after acquiring mutex
+    if (Wc.state == CAM_STOPPING) {
+      xSemaphoreGive(Wc.frame_mutex);
+      break;
+    }
+    
+    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+    
+    // Cache Sync (Hardware M2C)
+    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    
+    // Copy frame data to H.264 input buffer
+    memcpy(Wc.h264_buffer, source_buf, Wc.frame_buffer_size);
+    
+    xSemaphoreGive(Wc.frame_mutex);
+    
+    // Setup input frame
+    in_frame.raw_data.buffer = Wc.h264_buffer;
+    in_frame.raw_data.len = Wc.h264_buffer_size;
+    in_frame.pts = WcStats.frames_captured;
+    
+    // Setup output frame buffer
+    out_frame.raw_data.buffer = Wc.h264_out_buffer;
+    out_frame.raw_data.len = Wc.h264_out_buffer_size;
+    
+    // Encode H.264
+    uint32_t encode_start = micros();
+    esp_h264_err_t ret = esp_h264_enc_process(Wc.h264_handle, &in_frame, &out_frame);
+    uint32_t encode_time = micros() - encode_start;
+    
+    if (ret == ESP_H264_ERR_OK && out_frame.length > 0) {
+      WcStats.frames_processed++;
+      frames_in_second++;
+      
+      // TODO: Send NAL units via RTP/WebRTC/Matter based on session_type
+      // For now, just log success
+      
+      WcStats.bytes_sent += out_frame.length;
+    }
+    
+    // Track frame processing time
+    WcStats.last_frame_time_ms = millis() - frame_start;
+    
+    // Calculate FPS every second
+    if (millis() - last_fps_calc >= 1000) {
+      WcStats.last_fps = frames_in_second;
+      frames_in_second = 0;
+      last_fps_calc = millis();
+      
+      if (WcStats.start_time > 0) {
+        WcStats.uptime_seconds = (millis() - WcStats.start_time) / 1000;
+      }
+    }
+    
+    // Periodic profiling log (every 5 seconds)
+    if (millis() - last_profile_log >= 5000) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CAM: H264 Profile - Encode:%uus Size:%u FPS:%u"),
+        encode_time,
+        out_frame.length,
+        WcStats.last_fps);
+      last_profile_log = millis();
+    }
+  }
+  
+  // Task exiting - delete ourselves
+  Wc.cam_task_handle = NULL;
+  vTaskDelete(NULL);
+}
+
+/*********************************************************************************************/
+// Encoder Setup Helper Functions
+
+static uint32_t WcSetupJpegEncoder(void) {
+  jpeg_encode_engine_cfg_t jpeg_eng_cfg = {
+    .intr_priority = 0,
+    .timeout_ms = 100,
+  };
+  
+  esp_err_t ret = jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+  if (ret != ESP_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: JPEG encoder init failed (0x%x)"), ret);
+    return 0;
+  }
+  
+  // Allocate JPEG output buffer
+  jpeg_encode_memory_alloc_cfg_t jpeg_mem_cfg = {
+    .buffer_direction = JPEG_ENC_ALLOC_OUTPUT_BUFFER,
+  };
+  
+  size_t actual_size = 0;
+  Wc.jpeg_buffer = jpeg_alloc_encoder_mem(Wc.config.width * Wc.config.height / 2, &jpeg_mem_cfg, &actual_size);
+  if (!Wc.jpeg_buffer) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate JPEG buffer"));
+    jpeg_del_encoder_engine(Wc.jpeg_handle);
+    return 0;
+  }
+  Wc.jpeg_buffer_size = actual_size;
+
+  Wc.jpeg_cfg = {
+    .height = Wc.config.height,
+    .width = Wc.config.width,
+    .src_type = JPEG_ENCODE_IN_FORMAT_YUV422,
+    .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
+    .image_quality = Wc.jpeg_quality,
+  };
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
+  return 1;
+}
+
+static uint32_t WcSetupH264Encoder(void) {
+  // Width/height must be 16-byte aligned (macroblock size)
+  uint16_t width = ((Wc.config.width + 15) >> 4) << 4;
+  uint16_t height = ((Wc.config.height + 15) >> 4) << 4;
+  
+  esp_h264_enc_cfg_hw_t cfg = {
+    .pic_type = ESP_H264_RAW_FMT_O_UYY_E_VYY,  // HW encoder requires this YUV420 format
+    .gop = 30,
+    .fps = (uint8_t)(Wc.config.fps ? Wc.config.fps : 30),
+    .res = {.width = width, .height = height},
+    .rc = {
+      .bitrate = (uint32_t)(width * height / 10),  // ~10% of raw size
+      .qp_min = 26,
+      .qp_max = 30
+    }
+  };
+  
+  // Allocate input frame buffer (raw YUV from ISP)
+  size_t in_size = (size_t)((float)width * height * ESP_H264_GET_BPP_BY_PIC_TYPE(cfg.pic_type));
+  Wc.h264_buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, in_size, &in_size, ESP_H264_MEM_SPIRAM);
+  if (!Wc.h264_buffer) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 input buffer alloc failed"));
+    return 0;
+  }
+  Wc.h264_buffer_size = in_size;
+  
+  // Allocate output frame buffer (encoded NAL units) - same size as input
+  size_t out_size = in_size;
+  Wc.h264_out_buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, out_size, &out_size, ESP_H264_MEM_SPIRAM);
+  if (!Wc.h264_out_buffer) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 output buffer alloc failed"));
+    esp_h264_free(Wc.h264_buffer);
+    Wc.h264_buffer = NULL;
+    return 0;
+  }
+  Wc.h264_out_buffer_size = out_size;
+  
+  // Create encoder
+  esp_h264_err_t ret = esp_h264_enc_hw_new(&cfg, &Wc.h264_handle);
+  if (ret != ESP_H264_ERR_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 encoder create failed (0x%x)"), ret);
+    esp_h264_free(Wc.h264_buffer);
+    esp_h264_free(Wc.h264_out_buffer);
+    Wc.h264_buffer = NULL;
+    Wc.h264_out_buffer = NULL;
+    return 0;
+  }
+  
+  // Open encoder
+  ret = esp_h264_enc_open(Wc.h264_handle);
+  if (ret != ESP_H264_ERR_OK) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 encoder open failed (0x%x)"), ret);
+    esp_h264_enc_del(Wc.h264_handle);
+    esp_h264_free(Wc.h264_buffer);
+    esp_h264_free(Wc.h264_out_buffer);
+    Wc.h264_handle = NULL;
+    Wc.h264_buffer = NULL;
+    Wc.h264_out_buffer = NULL;
+    return 0;
+  }
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: H.264 encoder initialized (%dx%d, buffer=%d bytes)"), width, height, in_size);
+  return 1;
 }
 
 /*********************************************************************************************/
@@ -622,41 +856,28 @@ uint32_t WcSetup(bool reset_config) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
   }
 
-  // 8. Initialize JPEG encoder engine (100ms Timeout)
-  jpeg_encode_engine_cfg_t jpeg_eng_cfg = {
-    .intr_priority = 0,
-    .timeout_ms = 100,
-  };
-  
-  ret = jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: JPEG encoder init failed (0x%x)"), ret);
-    return 0;
+  // 8. Initialize encoder based on session type
+  if (Wc.session_type == SESSION_MJPEG_HTTP) {
+    if (!WcSetupJpegEncoder()) {
+      esp_isp_disable(Wc.isp_handle);
+      esp_isp_del_processor(Wc.isp_handle);
+      esp_cam_ctlr_disable(Wc.cam_handle);
+      esp_cam_ctlr_del(Wc.cam_handle);
+      Wc.cam_handle = NULL;
+      Wc.isp_handle = NULL;
+      return 0;
+    }
+  } else if (Wc.session_type == SESSION_RTP) {
+    if (!WcSetupH264Encoder()) {
+      esp_isp_disable(Wc.isp_handle);
+      esp_isp_del_processor(Wc.isp_handle);
+      esp_cam_ctlr_disable(Wc.cam_handle);
+      esp_cam_ctlr_del(Wc.cam_handle);
+      Wc.cam_handle = NULL;
+      Wc.isp_handle = NULL;
+      return 0;
+    }
   }
-  
-  // Allocate JPEG output buffer
-  jpeg_encode_memory_alloc_cfg_t jpeg_mem_cfg = {
-    .buffer_direction = JPEG_ENC_ALLOC_OUTPUT_BUFFER,
-  };
-  
-  size_t actual_size = 0;
-  Wc.jpeg_buffer = jpeg_alloc_encoder_mem(Wc.config.width * Wc.config.height / 2, &jpeg_mem_cfg, &actual_size);
-  if (!Wc.jpeg_buffer) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate JPEG buffer"));
-    jpeg_del_encoder_engine(Wc.jpeg_handle);
-    return 0;
-  }
-  Wc.jpeg_buffer_size = actual_size;
-
-  Wc.jpeg_cfg = {
-    .height = Wc.config.height,
-    .width = Wc.config.width,
-    .src_type = JPEG_ENCODE_IN_FORMAT_YUV422, // from ISP
-    .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
-    .image_quality = Wc.jpeg_quality,
-  };
-  
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
 
   // 9. Create mutexes for thread safety
   Wc.frame_mutex = xSemaphoreCreateMutex();
@@ -678,10 +899,21 @@ uint32_t WcSetup(bool reset_config) {
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Mutexes created"));
 
-  // 10. Create camera processing task (runs forever, waits for CAM_STREAMING)
+  // 10. Create processing task based on session type
+  TaskFunction_t task_func;
+  const char *task_name;
+  
+  if (Wc.session_type == SESSION_MJPEG_HTTP) {
+    task_func = MjpegProcessingTask;
+    task_name = "MjpegTask";
+  } else {
+    task_func = H264ProcessingTask;
+    task_name = "H264Task";
+  }
+  
   BaseType_t task_created = xTaskCreatePinnedToCore(
-    CamProcessingTask,
-    "CamTask",
+    task_func,
+    task_name,
     4096,
     NULL,
     5,
@@ -703,9 +935,9 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task created"));
 
   Wc.state = CAM_INIT;
-  Wc.session_type = SESSION_MJPEG_HTTP;  // Only session type for now
+  // session_type is already set by caller (WcSession command or default)
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Setup complete"));
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Setup complete (session=%d)"), Wc.session_type);
   return 1;
 }
 
@@ -875,11 +1107,30 @@ uint32_t WcStop(void) {
     Wc.jpeg_handle = NULL;
   }
   
-  // 10. Free buffers
+  // 10. Delete H.264 encoder
+  if (Wc.h264_handle) {
+    esp_h264_enc_close(Wc.h264_handle);
+    esp_h264_enc_del(Wc.h264_handle);
+    Wc.h264_handle = NULL;
+  }
+  
+  // 11. Free buffers
   if (Wc.jpeg_buffer) {
     free(Wc.jpeg_buffer);
     Wc.jpeg_buffer = NULL;
     Wc.jpeg_buffer_size = 0;
+  }
+  
+  if (Wc.h264_buffer) {
+    esp_h264_free(Wc.h264_buffer);
+    Wc.h264_buffer = NULL;
+    Wc.h264_buffer_size = 0;
+  }
+  
+  if (Wc.h264_out_buffer) {
+    esp_h264_free(Wc.h264_out_buffer);
+    Wc.h264_out_buffer = NULL;
+    Wc.h264_out_buffer_size = 0;
   }
   
   for (int i = 0; i < 2; i++) {
@@ -890,13 +1141,13 @@ uint32_t WcStop(void) {
   }
   Wc.frame_buffer_size = 0;
   
-  // 11. Clean up client pointer before deleting mutex
+  // 12. Clean up client pointer before deleting mutex
   if (Wc.client_ptr) {
     delete Wc.client_ptr;
     Wc.client_ptr = nullptr;
   }
   
-  // 12. Delete mutexes
+  // 13. Delete mutexes
   if (Wc.frame_mutex) {
     vSemaphoreDelete(Wc.frame_mutex);
     Wc.frame_mutex = NULL;
@@ -910,7 +1161,7 @@ uint32_t WcStop(void) {
     Wc.resume_sem = NULL;
   }
 
-  // 13. Final state
+  // 14. Final state
   Wc.state = CAM_IDLE;
   Wc.stream_active = 0;
   
@@ -1189,32 +1440,68 @@ void CmndWcSession(void) {
   
   // Query current session type
   if (XdrvMailbox.payload < 0) {
-    Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
+    Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\",\"State\":%d}}"), 
       Wc.session_type, 
-      (Wc.session_type <= 4) ? session_names[Wc.session_type] : "Unknown");
+      (Wc.session_type <= 4) ? session_names[Wc.session_type] : "Unknown",
+      Wc.state);
     return;
   }
   
   // Validate session type
-  if (XdrvMailbox.payload < 0 || XdrvMailbox.payload > 4) {
+  if (XdrvMailbox.payload > 4) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid session type %d"), XdrvMailbox.payload);
     ResponseCmndFailed();
     return;
   }
   
-  // Only MJPEG is implemented
-  if (XdrvMailbox.payload != SESSION_MJPEG_HTTP && XdrvMailbox.payload != SESSION_NONE) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type %d not yet implemented"), XdrvMailbox.payload);
-    Response_P(PSTR("{\"WcSession\":{\"Error\":\"Not implemented\",\"Requested\":%d}}"), XdrvMailbox.payload);
+  camera_session_t new_type = (camera_session_t)XdrvMailbox.payload;
+  
+  // Same session type - do nothing
+  if (new_type == Wc.session_type) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Session type unchanged"));
+    Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
+      Wc.session_type, session_names[Wc.session_type]);
     return;
   }
   
-  // Set session type (takes effect on next WcSetup)
-  Wc.session_type = (camera_session_t)XdrvMailbox.payload;
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type set to %d (%s)"), 
+  // Check if implemented
+  if (new_type == SESSION_WEBRTC || new_type == SESSION_DSI_DISPLAY) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type %d not yet implemented"), new_type);
+    Response_P(PSTR("{\"WcSession\":{\"Error\":\"Not implemented\",\"Requested\":%d}}"), new_type);
+    return;
+  }
+  
+  // Stop current session if running
+  if (Wc.state != CAM_IDLE) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping current session for switch"));
+    WcStop();
+  }
+  
+  // Set new session type
+  Wc.session_type = new_type;
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type changed to %d (%s)"), 
     Wc.session_type, session_names[Wc.session_type]);
-  Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
-    Wc.session_type, session_names[Wc.session_type]);
+  
+  // Force H.264-compatible resolution for RTP session
+  if (new_type == SESSION_RTP) {
+    Wc.config.width = 1280;
+    Wc.config.height = 720;
+    Wc.config.binning = 2;
+    Wc.config.fps = 30;
+    Wc.config.format = 0;  // RAW8
+    Wc.config.res_index = 255;  // Custom mode
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP session forcing 1280x720@30fps"));
+  }
+  
+  // Setup and start new session (unless SESSION_NONE)
+  if (new_type != SESSION_NONE) {
+    if (WcSetup(false)) {
+      WcStart();
+    }
+  }
+  
+  Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\",\"State\":%d}}"), 
+    Wc.session_type, session_names[Wc.session_type], Wc.state);
 }
 
 
@@ -1223,7 +1510,7 @@ void CmndWcSession(void) {
 void WcInit(void) {
   memset(&Wc, 0, sizeof(Wc));
   Wc.state = CAM_IDLE;
-  Wc.session_type = SESSION_NONE;
+  Wc.session_type = SESSION_MJPEG_HTTP;  // Default to MJPEG
   Wc.jpeg_quality = 50;  // Default JPEG quality
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
 }
@@ -1330,6 +1617,79 @@ void HandleImage(void) {
   
   client.stop();
 }
+
+/*********************************************************************************************/
+// RTP Session Functions (H.264 over UDP)
+//
+// DEPRECATED: These stub functions are probably subject to be removed.
+// H.264 encoder setup is now handled by WcSetupH264Encoder() called from WcSetup().
+// RTP packet sending will be integrated into CamProcessingTask.
+
+uint32_t WcRtpSetup(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("RTP: Setup - NOT IMPLEMENTED"));
+  
+  // TODO: Initialize H.264 encoder (from Espressif example)
+  // Width/height must be 16-byte aligned (macroblock size)
+  // uint16_t width = ((Wc.config.width + 15) >> 4 << 4);
+  // uint16_t height = ((Wc.config.height + 15) >> 4 << 4);
+  //
+  // esp_h264_enc_cfg_hw_t cfg = {
+  //   .gop = 30,
+  //   .fps = 30,
+  //   .res = {.width = width, .height = height},
+  //   .rc = {.bitrate = width * height / 10, .qp_min = 26, .qp_max = 30},
+  //   .pic_type = ESP_H264_RAW_FMT_UYVY  // ISP outputs YUV422
+  // };
+  //
+  // Allocate input buffer (from camera)
+  // in_frame.raw_data.len = width * height * ESP_H264_GET_BPP_BY_PIC_TYPE(cfg.pic_type);
+  // in_frame.raw_data.buffer = esp_h264_aligned_calloc(16, 1, in_frame.raw_data.len, ...);
+  //
+  // Allocate output buffer (H.264 NAL units)
+  // out_frame.raw_data.len = in_frame.raw_data.len / 10;  // Compressed ~10x
+  // out_frame.raw_data.buffer = esp_h264_aligned_calloc(16, 1, out_frame.raw_data.len, ...);
+  //
+  // esp_h264_enc_hw_new(&cfg, &Wc.h264_handle);
+  // esp_h264_enc_open(Wc.h264_handle);
+  
+  // TODO: Initialize RTP state
+  // Wc.rtp_sequence = 0;
+  // Wc.rtp_timestamp = 0;
+  // Wc.rtp_ssrc = esp_random();  // Random SSRC
+  // Wc.rtp_dest_port = 5004;     // Default RTP port
+  
+  return 0;  // Not implemented
+}
+
+void WcRtpStop(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("RTP: Stop - NOT IMPLEMENTED"));
+  
+  // TODO: Close H.264 encoder
+  // if (Wc.h264_handle) {
+  //   esp_h264_enc_close(Wc.h264_handle);
+  //   esp_h264_enc_del(Wc.h264_handle);
+  //   Wc.h264_handle = NULL;
+  // }
+  
+  // TODO: Free H.264 buffer
+  // TODO: Close UDP socket
+}
+
+// Send one H.264 frame as RTP packets
+void WcRtpSendFrame(uint8_t *nal_data, size_t nal_size) {
+  // TODO: Implement RTP packetization (RFC 6184)
+  // - Single NAL unit mode for small NALs (< MTU)
+  // - FU-A fragmentation for large NALs (> MTU)
+  
+  // RTP header (12 bytes):
+  // Byte 0: V=2, P=0, X=0, CC=0 → 0x80
+  // Byte 1: M=marker, PT=96 (dynamic)
+  // Bytes 2-3: Sequence number
+  // Bytes 4-7: Timestamp (90kHz)
+  // Bytes 8-11: SSRC
+}
+
+/*********************************************************************************************/
 
 uint32_t WcSetStreamserver(uint32_t flag) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver flag=%d CamServer=%p"), flag, Wc.CamServer);
