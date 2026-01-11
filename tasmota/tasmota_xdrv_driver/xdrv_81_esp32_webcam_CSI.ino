@@ -55,7 +55,8 @@
 typedef enum {
   SESSION_NONE = 0,
   SESSION_MJPEG_HTTP,
-  SESSION_WEBRTC,      // Direct browser OR Matter 1.5
+  SESSION_RTP,         // H.264 over RTP/UDP
+  SESSION_WEBRTC,      // H.264 over SRTP (encrypted RTP + signaling)
   SESSION_DSI_DISPLAY
 } camera_session_t;
 
@@ -127,6 +128,17 @@ struct {
   ESP8266WebServer *CamServer;     // HTTP stream server (port 81)
   WiFiClient *client_ptr;          // Active streaming client
   uint8_t stream_active;           // 0=none, 2=streaming
+  
+  // === RTP Session (H.264 over UDP) - PLACEHOLDER ===
+  // esp_h264_enc_t *h264_handle;     // H.264 hardware encoder
+  // void *h264_buffer;               // H.264 output buffer
+  // size_t h264_buffer_size;
+  // WiFiUDP *rtp_socket;             // UDP socket for RTP
+  // IPAddress rtp_dest_ip;           // Destination IP
+  // uint16_t rtp_dest_port;          // Destination port (default 5004)
+  // uint16_t rtp_sequence;           // RTP sequence number
+  // uint32_t rtp_timestamp;          // RTP timestamp
+  // uint32_t rtp_ssrc;               // RTP synchronization source ID
 } Wc;
 
 // Statistics
@@ -925,12 +937,13 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
 #define D_CMND_WC_CONFIG "Config"
 #define D_CMND_WC_WINDOW "Window"
 #define D_CMND_WC_QUALITY "Quality"
+#define D_CMND_WC_SESSION "Session"
 
 const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY;
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality
+  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession
 };
 
 // Command handlers (mockup/stub implementations)
@@ -1168,6 +1181,40 @@ void CmndWcQuality(void) {
   Wc.jpeg_quality = (uint8_t)XdrvMailbox.payload;
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG quality set to %d"), Wc.jpeg_quality);
   ResponseCmndNumber(Wc.jpeg_quality);
+}
+
+void CmndWcSession(void) {
+  // Session types: 0=None, 1=MJPEG, 2=RTP, 3=WebRTC, 4=DSI
+  const char* session_names[] = {"None", "MJPEG", "RTP", "WebRTC", "DSI"};
+  
+  // Query current session type
+  if (XdrvMailbox.payload < 0) {
+    Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
+      Wc.session_type, 
+      (Wc.session_type <= 4) ? session_names[Wc.session_type] : "Unknown");
+    return;
+  }
+  
+  // Validate session type
+  if (XdrvMailbox.payload < 0 || XdrvMailbox.payload > 4) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid session type %d"), XdrvMailbox.payload);
+    ResponseCmndFailed();
+    return;
+  }
+  
+  // Only MJPEG is implemented
+  if (XdrvMailbox.payload != SESSION_MJPEG_HTTP && XdrvMailbox.payload != SESSION_NONE) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type %d not yet implemented"), XdrvMailbox.payload);
+    Response_P(PSTR("{\"WcSession\":{\"Error\":\"Not implemented\",\"Requested\":%d}}"), XdrvMailbox.payload);
+    return;
+  }
+  
+  // Set session type (takes effect on next WcSetup)
+  Wc.session_type = (camera_session_t)XdrvMailbox.payload;
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type set to %d (%s)"), 
+    Wc.session_type, session_names[Wc.session_type]);
+  Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
+    Wc.session_type, session_names[Wc.session_type]);
 }
 
 
