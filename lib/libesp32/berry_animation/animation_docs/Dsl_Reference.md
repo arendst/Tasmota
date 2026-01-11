@@ -1436,14 +1436,12 @@ Animation classes create visual effects on LED strips:
 | `gradient` | Gradient patterns using palettes |
 | `beacon` | Positioned pulse effect |
 | `crenel` | Square wave pulse at specific position |
-| `breathe` | Breathing/fading effect |
 | `comet` | Moving comet with trailing tail |
-| `fire` | Realistic fire simulation |
 | `twinkle` | Twinkling stars effect |
-| `gradient` | Color gradient effects |
-| `wave` | Wave propagation effects |
 | `rich_palette` | Palette-based color cycling |
 | `meter` | Meter/bar patterns using palettes |
+
+**Supplementary animations** (in `animations_future/`): `fire`, `wave`, `plasma`, `sparkle`, etc.
 
 ## Error Handling
 

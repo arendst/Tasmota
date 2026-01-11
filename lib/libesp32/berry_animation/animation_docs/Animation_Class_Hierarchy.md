@@ -27,9 +27,7 @@ parameterized_object (base class with parameter management and playable interfac
 │   ├── palette_gradient (gradient patterns with palette colors)
 │   │   └── palette_meter (VU meter with gradient colors and peak hold)
 │   ├── comet (moving comet with tail)
-│   ├── fire (realistic fire effect)
 │   ├── twinkle (twinkling stars effect)
-│   ├── wave (wave motion effects)
 │   └── rich_palette (smooth palette transitions)
 │
 ├── sequence_manager (orchestrates animation sequences)
@@ -48,6 +46,8 @@ parameterized_object (base class with parameter management and playable interfac
         ├── color_cycle (cycles through palette)
         └── rich_palette_color (smooth palette transitions)
 ```
+
+**Note:** Supplementary animations (fire, wave, plasma, sparkle, etc.) are available in `animations_future/` but not included in the standard build.
 
 **Note on Value Providers**: Value providers inherit directly from `parameterized_object` and are identified by the static class variable `VALUE_PROVIDER = true`. Use `animation.is_value_provider(obj)` to check if an object is a value provider. This flat hierarchy reduces class overhead while maintaining clear semantic distinction.
 
@@ -566,24 +566,6 @@ Creates a comet effect with a bright head and fading tail. Inherits from `Animat
 **Factory**: `animation.comet(engine)`
 
 
-
-
-### fire
-
-Creates a realistic fire effect with flickering flames. Inherits from `Animation`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `color` | instance | nil | - | Color provider for fire palette (nil = default fire palette) |
-| `intensity` | int | 180 | 0-255 | Overall fire intensity |
-| `flicker_speed` | int | 8 | 1-20 | Flicker update frequency in Hz |
-| `flicker_amount` | int | 100 | 0-255 | Amount of random flicker |
-| `cooling_rate` | int | 55 | 0-255 | How quickly flames cool down |
-| `sparking_rate` | int | 120 | 0-255 | Rate of new spark generation |
-| *(inherits all Animation parameters)* | | | | |
-
-**Factory**: `animation.fire(engine)`
-
 ### gradient
 
 Creates smooth two-color gradients. Subclass of `beacon` that uses beacon slew regions to create gradient effects.
@@ -983,90 +965,6 @@ Creates a twinkling stars effect with random lights appearing and fading. Inheri
 
 **Factories**: `animation.twinkle(engine)`
 
-### wave
-
-Creates mathematical waveforms that can move along the LED strip. Perfect for rhythmic patterns, breathing effects, or mathematical visualizations. Inherits from `Animation`.
-
-| Parameter | Type | Default | Constraints | Description |
-|-----------|------|---------|-------------|-------------|
-| `color` | int | 0xFFFF0000 | - | Wave color |
-| `back_color` | int | 0xFF000000 | - | Background color shown in wave valleys |
-| `wave_type` | int | 0 | 0-3 | 0=sine, 1=triangle, 2=square, 3=sawtooth |
-| `amplitude` | int | 128 | 0-255 | Wave height/intensity range |
-| `frequency` | int | 32 | 0-255 | How many wave cycles fit on the strip |
-| `phase` | int | 0 | 0-255 | Horizontal wave pattern shift |
-| `wave_speed` | int | 50 | 0-255 | Movement speed (0 = static wave) |
-| `center_level` | int | 128 | 0-255 | Baseline intensity around which wave oscillates |
-| *(inherits all Animation parameters)* | | | | |
-
-#### Wave Types
-
-**Sine Wave (0):**
-- **Characteristics**: Smooth, natural oscillation
-- **Best for**: Breathing effects, natural rhythms, ambient lighting
-
-**Triangle Wave (1):**
-- **Characteristics**: Linear ramps up and down with sharp peaks
-- **Best for**: Scanning effects, linear fades
-
-**Square Wave (2):**
-- **Characteristics**: Sharp on/off transitions
-- **Best for**: Strobing, digital effects, alerts
-
-**Sawtooth Wave (3):**
-- **Characteristics**: Gradual rise, instant drop
-- **Best for**: Scanning beams, ramp effects
-
-#### Wave Characteristics
-
-**Frequency Effects:**
-- **Low frequency (10-30)**: Long, flowing waves
-- **Medium frequency (40-80)**: Balanced wave patterns
-- **High frequency (100-200)**: Dense, detailed patterns
-
-**Amplitude Effects:**
-- **Low amplitude (50-100)**: Subtle intensity variation
-- **Medium amplitude (100-180)**: Noticeable wave pattern
-- **High amplitude (200-255)**: Dramatic intensity swings
-
-#### Usage Examples
-
-```berry
-# Rainbow sine wave
-animation rainbow_wave = wave(
-  wave_type=0,
-  frequency=40,
-  wave_speed=80,
-  amplitude=150
-)
-
-# Green breathing effect
-animation breathing = wave(
-  color=green,
-  wave_type=0,
-  amplitude=150,
-  frequency=20,
-  wave_speed=30
-)
-
-# Fast square wave strobe
-animation strobe = wave(
-  color=white,
-  wave_type=2,
-  frequency=80,
-  wave_speed=150
-)
-```
-
-#### Common Use Cases
-
-- **Breathing Effects**: Slow sine waves for calming ambiance
-- **Scanning Beams**: Sawtooth waves for radar-like effects
-- **Strobing**: Square waves for attention-getting flashes
-- **Color Cycling**: Rainbow waves for spectrum effects
-- **Pulse Patterns**: Triangle waves for rhythmic pulses
-
-
 
 ### palette_gradient
 
@@ -1153,7 +1051,6 @@ run gradient_wave
 ### Performance Considerations
 
 - Each animation uses approximately 4 bytes per pixel for color storage
-- Fire animation includes additional flicker calculations
 - Gradient animation requires color interpolation calculations
 - Consider strip length impact on transformation calculations
 
@@ -1186,3 +1083,45 @@ run gradient_wave
 2. **No Redundant Factories**: If a factory only calls the constructor, export the class directly
 3. **Preset Factories**: Factory functions should provide useful presets or complex configurations
 4. **Parameter Assignment**: Set parameters via virtual member assignment after creation
+
+## Supplementary Animations
+
+These animations are available in `src/animations_future/` but not included in the standard build. To use them, manually import and register them in your animation.be file.
+
+### fire
+
+Creates a realistic fire effect with flickering flames. Inherits from `Animation`.
+
+| Parameter | Type | Default | Constraints | Description |
+|-----------|------|---------|-------------|-------------|
+| `color` | instance | nil | - | Color provider for fire palette (nil = default fire palette) |
+| `intensity` | int | 180 | 0-255 | Overall fire intensity |
+| `flicker_speed` | int | 8 | 1-20 | Flicker update frequency in Hz |
+| `flicker_amount` | int | 100 | 0-255 | Amount of random flicker |
+| `cooling_rate` | int | 55 | 0-255 | How quickly flames cool down |
+| `sparking_rate` | int | 120 | 0-255 | Rate of new spark generation |
+
+**Factory**: `animation.fire(engine)`
+
+### wave
+
+Creates mathematical waveforms that can move along the LED strip. Inherits from `Animation`.
+
+| Parameter | Type | Default | Constraints | Description |
+|-----------|------|---------|-------------|-------------|
+| `color` | int | 0xFFFF0000 | - | Wave color |
+| `back_color` | int | 0xFF000000 | - | Background color shown in wave valleys |
+| `wave_type` | int | 0 | 0-3 | 0=sine, 1=triangle, 2=square, 3=sawtooth |
+| `amplitude` | int | 128 | 0-255 | Wave height/intensity range |
+| `frequency` | int | 32 | 0-255 | How many wave cycles fit on the strip |
+| `phase` | int | 0 | 0-255 | Horizontal wave pattern shift |
+| `wave_speed` | int | 50 | 0-255 | Movement speed (0 = static wave) |
+| `center_level` | int | 128 | 0-255 | Baseline intensity around which wave oscillates |
+
+**Wave Types**: sine (0), triangle (1), square (2), sawtooth (3)
+
+**Factory**: `animation.wave(engine)`
+
+### Other Supplementary Animations
+
+Additional animations in `animations_future/`: bounce, jitter, plasma, scale, shift, sparkle.
