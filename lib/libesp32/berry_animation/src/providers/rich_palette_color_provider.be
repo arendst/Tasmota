@@ -35,8 +35,6 @@ class rich_palette_color : animation.color_provider
   var _slots_arr        # Constructed array of timestamp slots, based on period
   var _value_arr        # Constructed array of value slots (always 0-255 range)
   var _slots            # Number of slots in the palette
-  var _current_color    # Current interpolated color (calculated during update)
-  var _light_state      # light_state instance for proper color calculations
   var _brightness       # Cached value for `self.brightness` used during render()
   
   # Parameter definitions
@@ -54,13 +52,8 @@ class rich_palette_color : animation.color_provider
     super(self).init(engine)  # Initialize parameter system (also initializes LUT variables)
     
     # Initialize non-parameter instance variables
-    self._current_color = 0xFFFFFFFF
     self._slots = 0
     
-    # Create light_state instance for proper color calculations (reuse from Animate_palette)
-    import global
-    self._light_state = global.light_state(global.light_state.RGB)
-
     # Set default palette to animation.PALETTE_RAINBOW
     self.colors = animation.PALETTE_RAINBOW
 
@@ -136,11 +129,6 @@ class rich_palette_color : animation.color_provider
       self._value_arr = self._parse_palette(0, 255)
     else
       self._value_arr = nil
-    end
-    
-    # Set initial color
-    if self._slots > 0
-      self._current_color = self._get_color_at_index(0)
     end
     
     return self
@@ -288,7 +276,6 @@ class rich_palette_color : animation.color_provider
       end
       
       var final_color = (0xFF << 24) | (r << 16) | (g << 8) | b
-      self._current_color = final_color
       return final_color
     end
     
@@ -314,20 +301,6 @@ class rich_palette_color : animation.color_provider
     var g = self._interpolate(past, t0, t1, (bgrt0 >> 16) & 0xFF, (bgrt1 >> 16) & 0xFF)
     var b = self._interpolate(past, t0, t1, (bgrt0 >> 24) & 0xFF, (bgrt1 >> 24) & 0xFF)
 
-    # Use light_state for proper brightness calculation (from Animate_palette)
-    var light_state = self._light_state
-    light_state.set_rgb((bgrt0 >>  8) & 0xFF, (bgrt0 >> 16) & 0xFF, (bgrt0 >> 24) & 0xFF)
-    var bri0 = light_state.bri
-    light_state.set_rgb((bgrt1 >>  8) & 0xFF, (bgrt1 >> 16) & 0xFF, (bgrt1 >> 24) & 0xFF)
-    var bri1 = light_state.bri
-    var bri2 = self._interpolate(past, t0, t1, bri0, bri1)
-    light_state.set_rgb(r, g, b)
-    light_state.set_bri(bri2)
-
-    r = light_state.r
-    g = light_state.g
-    b = light_state.b
-
     # Apply brightness scaling (inline for speed)
     if brightness != 255
       r = tasmota.scale_uint(r, 0, 255, 0, brightness)
@@ -337,7 +310,6 @@ class rich_palette_color : animation.color_provider
 
     # Create final color in ARGB format
     var final_color = (0xFF << 24) | (r << 16) | (g << 8) | b
-    self._current_color = final_color
     
     return final_color
   end
