@@ -438,6 +438,121 @@ void MjpegProcessingTask(void *pvParameters) {
 }
 
 /*********************************************************************************************/
+// RTP Helper Function
+
+#define RTP_MAX_PAYLOAD 1400  // MTU safety margin
+#define RTP_HEADER_SIZE 12
+
+void SendNalUnitRTP(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t nalnri) {
+  // Buffer for RTP packet construction
+  // 12 (RTP Header) + 2 (FU-A Headers) + Payload
+  uint8_t rtppacket[RTP_MAX_PAYLOAD + RTP_HEADER_SIZE + 2];
+
+  // ---------------------------------------------------------
+  // Case A: Small NAL - Send as Single NAL Unit Packet
+  // ---------------------------------------------------------
+  if (nallen <= RTP_MAX_PAYLOAD) {
+    // Build RTP header
+    rtppacket[0] = 0x80;  // V=2, P=0, X=0, CC=0
+    rtppacket[1] = 96;    // PT=96 (H.264)
+    
+    // Set Marker Bit (M) if this is the last NAL of a frame (Video Coding Layer NALs)
+    if (naltype == 1 || naltype == 5) {
+      rtppacket[1] |= 0x80;
+    }
+
+    // Sequence Number (Big Endian)
+    rtppacket[2] = (Wc.rtp_sequence >> 8) & 0xFF;
+    rtppacket[3] = Wc.rtp_sequence & 0xFF;
+
+    // Timestamp (Big Endian)
+    rtppacket[4] = (Wc.rtp_timestamp >> 24) & 0xFF;
+    rtppacket[5] = (Wc.rtp_timestamp >> 16) & 0xFF;
+    rtppacket[6] = (Wc.rtp_timestamp >> 8) & 0xFF;
+    rtppacket[7] = Wc.rtp_timestamp & 0xFF;
+
+    // SSRC (Big Endian)
+    rtppacket[8] = (Wc.rtp_ssrc >> 24) & 0xFF;
+    rtppacket[9] = (Wc.rtp_ssrc >> 16) & 0xFF;
+    rtppacket[10] = (Wc.rtp_ssrc >> 8) & 0xFF;
+    rtppacket[11] = Wc.rtp_ssrc & 0xFF;
+
+    // Copy NAL unit directly after RTP header
+    memcpy(rtppacket + RTP_HEADER_SIZE, naldata, nallen);
+
+    // Send UDP Packet
+    Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp_dest_port);
+    Wc.rtp_udp.write(rtppacket, RTP_HEADER_SIZE + nallen);
+    Wc.rtp_udp.endPacket();
+
+    Wc.rtp_sequence++;
+  } 
+  // ---------------------------------------------------------
+  // Case B: Large NAL - Fragment using FU-A (RFC 3984)
+  // ---------------------------------------------------------
+  else {
+    size_t payloadsize = RTP_MAX_PAYLOAD - 2;  // Reserve 2 bytes for FU indicator & header
+    size_t offset = 1;  // Skip the original NAL header (byte 0)
+    bool firstfragment = true;
+
+    while (offset < nallen) {
+      // Calculate size of this chunk
+      size_t chunksize = (nallen - offset > payloadsize) ? payloadsize : (nallen - offset);
+      bool lastfragment = (offset + chunksize >= nallen);
+
+      // Build RTP Header
+      rtppacket[0] = 0x80;
+      rtppacket[1] = 96; // PT=96
+
+      // Set Marker Bit ONLY on the very last fragment of a VCL NAL
+      if (lastfragment && (naltype == 1 || naltype == 5)) {
+        rtppacket[1] |= 0x80; 
+      }
+
+      rtppacket[2] = (Wc.rtp_sequence >> 8) & 0xFF;
+      rtppacket[3] = Wc.rtp_sequence & 0xFF;
+      rtppacket[4] = (Wc.rtp_timestamp >> 24) & 0xFF;
+      rtppacket[5] = (Wc.rtp_timestamp >> 16) & 0xFF;
+      rtppacket[6] = (Wc.rtp_timestamp >> 8) & 0xFF;
+      rtppacket[7] = Wc.rtp_timestamp & 0xFF;
+      rtppacket[8] = (Wc.rtp_ssrc >> 24) & 0xFF;
+      rtppacket[9] = (Wc.rtp_ssrc >> 16) & 0xFF;
+      rtppacket[10] = (Wc.rtp_ssrc >> 8) & 0xFF;
+      rtppacket[11] = Wc.rtp_ssrc & 0xFF;
+
+      // --- FU-A Specific Headers ---
+      // Byte 12: FU Indicator (F + NRI + Type 28)
+      rtppacket[12] = (nalnri << 5) | 28;
+
+      // Byte 13: FU Header (S + E + R + Original Type)
+      rtppacket[13] = naltype & 0x1F; 
+      
+      if (firstfragment) {
+        rtppacket[13] |= 0x80;  // Set S bit
+      }
+      if (lastfragment) {
+        rtppacket[13] |= 0x40;  // Set E bit
+      }
+
+      // Copy payload fragment
+      memcpy(rtppacket + 14, naldata + offset, chunksize);
+
+      // Send UDP Packet
+      Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp_dest_port);
+      Wc.rtp_udp.write(rtppacket, 14 + chunksize);
+      Wc.rtp_udp.endPacket();
+
+      // Traffic Shaping for ESP32 UDP stability (Reduces possible green artifacts)
+      delayMicroseconds(50);
+
+      Wc.rtp_sequence++;
+      offset += chunksize;
+      firstfragment = false;
+    }
+  }
+}
+
+/*********************************************************************************************/
 // H.264 Processing Task - Dedicated FreeRTOS task for H.264 encoding (RTP/WebRTC/Matter)
 
 void H264ProcessingTask(void *pvParameters) {
@@ -515,12 +630,55 @@ void H264ProcessingTask(void *pvParameters) {
     uint32_t encode_time = micros() - encode_start;
     
     if (ret == ESP_H264_ERR_OK && out_frame.length > 0) {
+      // Parse and send NAL units via RTP
+      if (Wc.session_type == SESSION_RTP) {
+        uint8_t* nal_data = Wc.h264_out_buffer;
+        size_t remaining = out_frame.length;
+        
+        while (remaining > 0) {
+          // Find start code (0x00000001 or 0x000001)
+          size_t start_code_len = 0;
+          if (remaining >= 4 && nal_data[0] == 0 && nal_data[1] == 0 && nal_data[2] == 0 && nal_data[3] == 1) {
+            start_code_len = 4;
+          } else if (remaining >= 3 && nal_data[0] == 0 && nal_data[1] == 0 && nal_data[2] == 1) {
+            start_code_len = 3;
+          } else {
+            break; // No more NAL units
+          }
+          
+          // Skip start code
+          nal_data += start_code_len;
+          remaining -= start_code_len;
+          
+          // Find next start code to determine NAL length
+          size_t nal_length = 0;
+          for (size_t i = 0; i < remaining - 2; i++) {
+            if (i >= 2 && nal_data[i] == 0 && nal_data[i+1] == 0 && (nal_data[i+2] == 0 || nal_data[i+2] == 1)) {
+              nal_length = (nal_data[i+2] == 1) ? i : i + 1;
+              break;
+            }
+          }
+          if (nal_length == 0) nal_length = remaining; // Last NAL
+          
+          // Extract NAL type
+          uint8_t nal_header = nal_data[0];
+          uint8_t nal_type = nal_header & 0x1F;
+          uint8_t nal_nri = (nal_header >> 5) & 0x03;
+          
+          // Send NAL unit via RTP
+          SendNalUnitRTP(nal_data, nal_length, nal_type, nal_nri);
+          
+          // Move to next NAL
+          nal_data += nal_length;
+          remaining -= nal_length;
+        }
+        
+        // Increment RTP timestamp (90kHz clock)
+        Wc.rtp_timestamp += (90000 / Wc.config.fps);
+      }
+      
       WcStats.frames_processed++;
       frames_in_second++;
-      
-      // TODO: Send NAL units via RTP/WebRTC/Matter based on session_type
-      // For now, just log success
-      
       WcStats.bytes_sent += out_frame.length;
     }
     
@@ -765,6 +923,9 @@ uint32_t WcSetup(bool reset_config) {
   Wc.read_idx = 1;
 
   // 4. Configure CSI controller
+  // RTP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
+  cam_ctlr_color_t csi_output_format = (Wc.session_type == SESSION_RTP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
+  
   esp_cam_ctlr_csi_config_t csi_config = {
     .ctlr_id = 0,
     .h_res = Wc.config.width,
@@ -772,10 +933,13 @@ uint32_t WcSetup(bool reset_config) {
     .data_lane_num = Wc.config.lane_num,
     .lane_bit_rate_mbps = (int)Wc.config.mipi_clock,
     .input_data_color_type = (cam_ctlr_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
-    .output_data_color_type = CAM_CTLR_COLOR_YUV422,
+    .output_data_color_type = csi_output_format,
     .queue_items = 1,
     .byte_swap_en = false,
   };
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI output format: %s"), 
+    (csi_output_format == CAM_CTLR_COLOR_YUV420) ? "YUV420" : "YUV422");
 
   ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.cam_handle);
   if (ret != ESP_OK) {
@@ -823,14 +987,20 @@ uint32_t WcSetup(bool reset_config) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
   } else {
     // Fallback: Create ISP until Berry ISP driver is ready
+    // RTP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
+    isp_color_t isp_output_format = (Wc.session_type == SESSION_RTP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
+    
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 120 * 1000 * 1000, //TODO: eventually calculate this based on configured AV session
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
       .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
-      .output_data_color_type = ISP_COLOR_YUV422,
+      .output_data_color_type = isp_output_format,
       .h_res = Wc.config.width,
       .v_res = Wc.config.height,
     };
+    
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP output format: %s"), 
+      (isp_output_format == ISP_COLOR_YUV420) ? "YUV420" : "YUV422");
 
     ret = esp_isp_new_processor(&isp_config, &Wc.isp_handle);
     if (ret != ESP_OK) {
@@ -1189,12 +1359,13 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
 #define D_CMND_WC_WINDOW "Window"
 #define D_CMND_WC_QUALITY "Quality"
 #define D_CMND_WC_SESSION "Session"
+#define D_CMND_WC_RTP_DEST "RtpDest"
 
 const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION;
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION "|" D_CMND_WC_RTP_DEST;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession
+  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession, &CmndWcRtpDest
 };
 
 // Command handlers (mockup/stub implementations)
@@ -1482,6 +1653,37 @@ void CmndWcSession(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type changed to %d (%s)"), 
     Wc.session_type, session_names[Wc.session_type]);
   
+  // Initialize RTP session
+  if (new_type == SESSION_RTP) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP init start"));
+    
+    Wc.rtp_sequence = random(0, 65535);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP sequence=%u"), Wc.rtp_sequence);
+    
+    Wc.rtp_timestamp = random(0, UINT32_MAX);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP timestamp=%u"), Wc.rtp_timestamp);
+    
+    Wc.rtp_ssrc = random(0, UINT32_MAX);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP ssrc=%u"), Wc.rtp_ssrc);
+    
+    // Set default destination only if not configured yet
+    if (Wc.rtp_dest_ip == IPAddress(0, 0, 0, 0)) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP setting default dest IP"));
+      Wc.rtp_dest_ip.fromString("192.168.1.100");
+      AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP default dest IP set"));
+    }
+    
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP dest port=%u"), Wc.rtp_dest_port);
+    
+    // Start UDP socket
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP starting UDP socket"));
+    Wc.rtp_udp.begin(5004);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP UDP socket started"));
+    
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP initialized, dest %s:%d"), 
+      Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+  }
+  
   // Force H.264-compatible resolution for RTP session
   if (new_type == SESSION_RTP) {
     Wc.config.width = 1280;
@@ -1504,14 +1706,101 @@ void CmndWcSession(void) {
     Wc.session_type, session_names[Wc.session_type], Wc.state);
 }
 
+void CmndWcRtpDest(void) {
+  // Query current RTP destination
+  if (XdrvMailbox.data_len == 0) {
+    Response_P(PSTR("{\"WcRtpDest\":{\"IP\":\"%s\",\"Port\":%d}}"), 
+      Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+    return;
+  }
+  
+  // Parse IP and port from data
+  // Format: "192.168.1.100 5004"
+  char ip_str[16] = {0};
+  uint16_t port = 5004;  // Default port
+  
+  // Find space separator
+  char* space_pos = strchr(XdrvMailbox.data, ' ');
+  if (space_pos) {
+    // Copy IP part
+    size_t ip_len = space_pos - XdrvMailbox.data;
+    if (ip_len < sizeof(ip_str)) {
+      strncpy(ip_str, XdrvMailbox.data, ip_len);
+      ip_str[ip_len] = '\0';
+      
+      // Parse port
+      port = atoi(space_pos + 1);
+    }
+  } else {
+    // Only IP provided, use default port
+    strncpy(ip_str, XdrvMailbox.data, sizeof(ip_str) - 1);
+  }
+  
+  // Validate IP
+  IPAddress new_ip;
+  if (!new_ip.fromString(ip_str)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid IP address: %s"), ip_str);
+    ResponseCmndFailed();
+    return;
+  }
+  
+  // Validate port
+  if (port == 0 || port > 65535) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid port: %d"), port);
+    ResponseCmndFailed();
+    return;
+  }
+  
+  // Update destination
+  Wc.rtp_dest_ip = new_ip;
+  Wc.rtp_dest_port = port;
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP destination set to %s:%d"), 
+    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+  
+  Response_P(PSTR("{\"WcRtpDest\":{\"IP\":\"%s\",\"Port\":%d}}"), 
+    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+}
+
 
 /*********************************************************************************************/
 
 void WcInit(void) {
-  memset(&Wc, 0, sizeof(Wc));
+  // Cannot use memset on struct with C++ objects (WiFiUDP has vtable)
+  // Manually initialize critical members
+  Wc.cam_handle = NULL;
+  Wc.isp_handle = NULL;
+  Wc.ldo_mipi_phy = NULL;
+  Wc.frame_buffer[0] = NULL;
+  Wc.frame_buffer[1] = NULL;
+  Wc.frame_buffer_size = 0;
+  Wc.write_idx = 0;
+  Wc.read_idx = 0;
   Wc.state = CAM_IDLE;
-  Wc.session_type = SESSION_MJPEG_HTTP;  // Default to MJPEG
-  Wc.jpeg_quality = 50;  // Default JPEG quality
+  Wc.session_type = SESSION_MJPEG_HTTP;
+  Wc.cam_task_handle = NULL;
+  Wc.frame_mutex = NULL;
+  Wc.resume_sem = NULL;
+  Wc.jpeg_handle = NULL;
+  Wc.jpeg_buffer = NULL;
+  Wc.jpeg_buffer_size = 0;
+  Wc.jpeg_quality = 50;
+  Wc.jpeg_mutex = NULL;
+  Wc.CamServer = NULL;
+  Wc.client_ptr = NULL;
+  Wc.stream_active = 0;
+  Wc.h264_handle = NULL;
+  Wc.h264_buffer = NULL;
+  Wc.h264_buffer_size = 0;
+  Wc.h264_out_buffer = NULL;
+  Wc.h264_out_buffer_size = 0;
+  Wc.rtp_dest_port = 5004;
+  Wc.rtp_sequence = 0;
+  Wc.rtp_timestamp = 0;
+  Wc.rtp_ssrc = 0;
+  
+  // WiFiUDP and IPAddress have constructors, don't touch them
+  
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
 }
 
