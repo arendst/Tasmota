@@ -103,7 +103,7 @@ void CounterIsrArg(void *arg) {
 void CounterInterruptDisable(bool state)
 {
   if (state) {   // Disable interrupts
-    if (Settings->flag4.zerocross_dimmer) {
+    if (Settings->flag4.zerocross_dimmer) {    // SetOption99  - (PWM Dimmer) Enable zerocross dimmer (1)
         return;
     }
     if (Counter.any_counter) {
@@ -164,15 +164,15 @@ uint32_t CounterPinSet(int32_t counter, int32_t value, bool add) {
   return 0;
 }
 
-
 void CounterInit(void)
 {
-
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
-      if ((0 == Settings->pulse_counter_debounce_low) && (0 == Settings->pulse_counter_debounce_high) && !Settings->flag4.zerocross_dimmer) {
+      if ((0 == Settings->pulse_counter_debounce_low) &&   // CounterDebounceLow
+          (0 == Settings->pulse_counter_debounce_high) &&  // CounterDebounceHigh
+          !Settings->flag4.zerocross_dimmer) {             // SetOption99  - (PWM Dimmer) Enable zerocross dimmer (1)
         Counter.pin_state = 0;
         attachInterruptArg(Pin(GPIO_CNTR1, i), CounterIsrArg, &ctr_index[i], FALLING);
       } else {

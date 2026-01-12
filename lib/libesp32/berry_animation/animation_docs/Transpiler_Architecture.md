@@ -336,7 +336,7 @@ _detect_and_cache_symbol(name)
 │   ├── Detect user functions via animation.is_user_function() → create_user_function()
 │   ├── Test constructors with MockEngine:
 │   │   ├── Create instance with mock_engine
-│   │   ├── Check isinstance(instance, animation.value_provider) → create_value_provider()
+│   │   ├── Check animation.is_value_provider(instance) → create_value_provider()
 │   │   └── Check isinstance(instance, animation.animation) → create_animation()
 │   └── Cache result for future lookups
 └── Return nil if not found (handled as user-defined)
@@ -371,7 +371,7 @@ _detect_and_cache_symbol(name)
 **Value Provider Detection:**
 ```berry
 # DSL: set oscillator = triangle(min_value=0, max_value=100, period=2s)
-# Detection: triangle(mock_engine) creates instance, isinstance(instance, animation.value_provider)
+# Detection: triangle(mock_engine) creates instance, animation.is_value_provider(instance)
 # Result: SymbolEntry("triangle", "value_provider", instance, true)
 # Reference: "animation.triangle"
 ```
@@ -442,8 +442,8 @@ MockEngine
 # Test if function creates value provider
 try
   var instance = factory_func(self.mock_engine)
-  if isinstance(instance, animation.value_provider)
-    return SymbolEntry.create_value_provider(name, instance, animation.value_provider)
+  if animation.is_value_provider(instance)
+    return SymbolEntry.create_value_provider(name, instance)
   end
 except .. as e, msg
   # Constructor failed - not a valid provider

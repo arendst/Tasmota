@@ -41,10 +41,12 @@ class comet : animation.animation
     if name == "direction"
       # Reset position when direction changes
       var strip_length = self.engine.strip_length
-      if value > 0
-        self.head_position = 0  # Start at beginning for forward movement
-      else
-        self.head_position = (strip_length - 1) * 256  # Start at end for backward movement
+      if type(value) == 'int'
+        if value > 0
+          self.head_position = 0  # Start at beginning for forward movement
+        else
+          self.head_position = (strip_length - 1) * 256  # Start at end for backward movement
+        end
       end
     end
   end

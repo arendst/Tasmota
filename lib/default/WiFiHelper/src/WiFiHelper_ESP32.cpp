@@ -156,8 +156,8 @@ void WiFiHelper::setSleepMode(int iSleepMode) {
 
 int WiFiHelper::getPhyMode() {
   /*
-    typedef enum
-    {
+    // IDF v5.2.6
+    typedef enum {
       WIFI_PHY_MODE_LR,   // PHY mode for Low Rate
       WIFI_PHY_MODE_11B,  // PHY mode for 11b
       WIFI_PHY_MODE_11G,  // PHY mode for 11g
@@ -165,19 +165,54 @@ int WiFiHelper::getPhyMode() {
       WIFI_PHY_MODE_HT40, // PHY mode for Bandwidth HT40 (11n)
       WIFI_PHY_MODE_HE20, // PHY mode for Bandwidth HE20 (11ax)
     } wifi_phy_mode_t;
+
+    // IDF v5.3.4
+    typedef enum {
+      WIFI_PHY_MODE_LR,   // PHY mode for Low Rate
+      WIFI_PHY_MODE_11B,  // PHY mode for 11b
+      WIFI_PHY_MODE_11G,  // PHY mode for 11g
+      WIFI_PHY_MODE_11A,  // PHY mode for 11a
+      WIFI_PHY_MODE_HT20, // PHY mode for Bandwidth HT20
+      WIFI_PHY_MODE_HT40, // PHY mode for Bandwidth HT40
+      WIFI_PHY_MODE_HE20, // PHY mode for Bandwidth HE20
+      WIFI_PHY_MODE_VHT20,// PHY mode for Bandwidth VHT20
+    } wifi_phy_mode_t;
   */
-  int phy_mode = 0;  // "low rate|11b|11g|HT20|HT40|HE20"
+  int phy_mode = 0;  // "low rate|11b|11g|11a|HT20|HT40|HE20|VHT20"
   wifi_phy_mode_t WiFiMode;
   if (esp_wifi_sta_get_negotiated_phymode(&WiFiMode) == ESP_OK) {
     phy_mode = (int)WiFiMode;
-    if (phy_mode > 5) {
-      phy_mode = 5;
+    if (phy_mode > 7) {
+      phy_mode = 7;
     }
   }
   return phy_mode;
 }
 
 bool WiFiHelper::setPhyMode(WiFiPhyMode_t mode) {
+  /*
+    mode 1 = B
+    mode 2 = BG
+    mode 3 = BGN
+    mode 4 = BGNAX
+  */
+  /*
+    ESPEasy:
+    HT20 = 20 MHz channel width.
+    HT40 = 40 MHz channel width.
+    In theory, HT40 can offer upto 150 Mbps connection speed.
+    However since HT40 is using nearly all channels on 2.4 GHz WiFi,
+    Thus you are more likely to experience disturbances.
+    The response speed and stability is better at HT20 for ESP units.
+  */
+  esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20);
+  /*
+    ESPEasy:
+    Set to use "Long GI" making it more resilliant to reflections
+    See: https://www.tp-link.com/us/configuration-guides/q_a_basic_wireless_concepts/?configurationId=2958#_idTextAnchor038
+  */
+  esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_MCS3_LGI);
+
   uint8_t protocol_bitmap = WIFI_PROTOCOL_11B;      // 1
   switch (mode) {
     case 4: protocol_bitmap |= WIFI_PROTOCOL_11AX;  // 16

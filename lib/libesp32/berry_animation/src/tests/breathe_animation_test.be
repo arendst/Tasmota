@@ -21,7 +21,7 @@ var anim = animation.breathe(engine)
 print("Created breathe animation with defaults")
 
 # Test default values
-print(f"Default color: 0x{anim.breathe_provider.base_color :08x}")
+print(f"Default color: 0x{anim.breathe_provider.color :08x}")
 print(f"Default min_brightness: {anim.min_brightness}")
 print(f"Default max_brightness: {anim.max_brightness}")
 print(f"Default period: {anim.period}")
@@ -35,7 +35,7 @@ blue_breathe.max_brightness = 200
 blue_breathe.period = 4000
 blue_breathe.curve_factor = 3
 blue_breathe.priority = 15
-print(f"Blue breathe animation color: 0x{blue_breathe.breathe_provider.base_color :08x}")
+print(f"Blue breathe animation color: 0x{blue_breathe.breathe_provider.color :08x}")
 print(f"Blue breathe animation min_brightness: {blue_breathe.min_brightness}")
 print(f"Blue breathe animation max_brightness: {blue_breathe.max_brightness}")
 print(f"Blue breathe animation period: {blue_breathe.period}")
@@ -48,7 +48,7 @@ red_breathe.min_brightness = 10
 red_breathe.max_brightness = 180
 red_breathe.period = 3000
 red_breathe.curve_factor = 2
-print(f"Red breathe animation color: 0x{red_breathe.breathe_provider.base_color :08x}")
+print(f"Red breathe animation color: 0x{red_breathe.breathe_provider.color :08x}")
 
 # Test parameter updates using virtual member assignment
 blue_breathe.min_brightness = 30
@@ -133,7 +133,7 @@ print("✓ Animation added to engine successfully")
 assert(anim != nil, "Default breathe animation should be created")
 assert(blue_breathe != nil, "Custom breathe animation should be created")
 assert(red_breathe != nil, "Red breathe animation should be created")
-assert(blue_breathe.breathe_provider.base_color == 0xFF0000FF, "Blue breathe should have correct color")
+assert(blue_breathe.breathe_provider.color == 0xFF0000FF, "Blue breathe should have correct color")
 assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
 assert(blue_breathe.period == 3500, "Breathe period should be updated to 3500")

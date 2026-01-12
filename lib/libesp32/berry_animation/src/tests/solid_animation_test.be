@@ -57,7 +57,7 @@ blue_anim.opacity = 200
 print(f"Blue animation - priority: {blue_anim.priority}, duration: {blue_anim.duration}, loop: {blue_anim.loop}")
 
 # Test 4: Create animation with value_provider
-var solid_provider = animation.static_color(engine)
+var solid_provider = animation.color_provider(engine)
 solid_provider.color = 0xFF00FF00  # Green
 var green_anim = animation.solid(engine)
 green_anim.color = solid_provider  # Use value_provider as dynamic parameter

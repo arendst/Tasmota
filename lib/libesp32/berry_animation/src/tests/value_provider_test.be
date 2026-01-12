@@ -1,11 +1,22 @@
-# Test suite for value_provider base class
+# Test suite for value_provider functionality
 #
-# This test verifies that the base value_provider class works correctly
-# and follows the parameterized class specification with produce_value() API.
+# This test verifies that value providers work correctly
+# and follow the parameterized class specification with produce_value() API.
+# Note: value_provider class has been removed; providers now inherit from parameterized_object
+# with VALUE_PROVIDER = true.
 
 import animation
 
 import "./core/param_encoder" as encode_constraints
+
+# Simple test provider class (since value_provider class was removed)
+class TestValueProvider : animation.parameterized_object
+  static var VALUE_PROVIDER = true
+  
+  def produce_value(name, time_ms)
+    return module("undefined")  # Default behavior
+  end
+end
 
 # Test the basic value_provider interface
 def test_value_provider_interface()
@@ -15,7 +26,7 @@ def test_value_provider_interface()
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
-  var provider = animation.value_provider(engine)
+  var provider = TestValueProvider(engine)
   
   # Test default produce_value method
   var result = provider.produce_value("test_param", 1000)
@@ -37,7 +48,8 @@ def test_custom_value_provider()
   var engine = animation.create_engine(strip)
   
   # Create a simple time-based provider using new API
-  class TimeBasedProvider : animation.value_provider
+  class TimeBasedProvider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     # Parameter definitions
     static var PARAMS = animation.enc_params({
       "multiplier": {"default": 1}
@@ -75,7 +87,7 @@ def test_is_value_provider()
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
-  var base_provider = animation.value_provider(engine)
+  var base_provider = TestValueProvider(engine)
   
   assert(animation.is_value_provider(base_provider) == true, "value_provider should be detected")
   assert(animation.is_value_provider(42) == false, "Integer should not be detected")
@@ -93,7 +105,7 @@ def test_parameterized_object_integration()
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
-  var provider = animation.value_provider(engine)
+  var provider = TestValueProvider(engine)
   
   # Test that it has the engine reference
   assert(provider.engine != nil, "Provider should have engine reference")
@@ -118,7 +130,8 @@ def test_lifecycle_methods()
   var engine = animation.create_engine(strip)
   
   # Create a provider that tracks start calls
-  class LifecycleProvider : animation.value_provider
+  class LifecycleProvider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     var start_called
     var start_time
     

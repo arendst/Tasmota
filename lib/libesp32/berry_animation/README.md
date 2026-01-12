@@ -12,7 +12,7 @@ Writing LED animations in pure Berry code requires understanding the animation e
 - **No state machines** - Forget about tracking animation phases, transitions, and timing manually
 - **Readable syntax** - Write `animation pulse = breathe(color=red, period=2s)` instead of dozens of lines of Berry code
 - **Automatic engine management** - No need to create engines, manage frame buffers, or handle timing
-- **Built-in effects** - Access to pulse, breathe, fire, comet, sparkle, wave, and many more effects
+- **Built-in effects** - Access to pulse, breathe, comet, twinkle, beacon, and many more effects
 - **Dynamic parameters** - Oscillating values (sine, triangle, smooth) without manual math
 - **Sequences and templates** - Orchestrate complex shows with simple syntax
 
@@ -160,12 +160,12 @@ Animation|Description
 `crenel`|Crenel/square wave pattern
 `comet`|Moving comet with fading tail
 `twinkle`|Twinkling stars effect
-`fire`|Realistic fire simulation
 `rich_palette_color`|Smooth palette color transitions
 `gradient`|Linear or radial color gradients
 `palette_gradient`|Gradient patterns with palette colors
 `palette_meter`|VU meter with gradient and peak hold
-`wave`|Wave motion effects
+
+**Supplementary animations** (in `src/animations_future/`): `fire`, `wave`, `plasma`, `sparkle`, etc.
 
 ## Documentation
 

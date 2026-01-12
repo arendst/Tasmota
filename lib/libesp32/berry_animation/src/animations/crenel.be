@@ -98,14 +98,6 @@ class crenel : animation.animation
     
     return true
   end
-  
-  # NO setter/getter methods - use direct assignment instead:
-  # obj.color = value
-  # obj.back_color = value
-  # obj.pos = value
-  # obj.pulse_size = value
-  # obj.low_size = value
-  # obj.nb_pulse = value
 end
 
 return {'crenel': crenel}

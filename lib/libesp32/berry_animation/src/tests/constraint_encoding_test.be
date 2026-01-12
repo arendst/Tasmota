@@ -274,7 +274,6 @@ assert_array_equal(form_enum, [1, 2, 3, 4, 5, 6, 7, 8, 9], "5.5a: form enum")
 
 # Test 5.6: breathe PARAMS
 var breathe_params = {
-  "base_color": {"default": 0xFFFFFFFF},
   "min_brightness": {"min": 0, "max": 255, "default": 0},
   "max_brightness": {"min": 0, "max": 255, "default": 255},
   "period": {"min": 100, "default": 3000},

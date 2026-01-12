@@ -377,18 +377,18 @@ color rainbow_cycle = color_cycle(
   period=5s
 )
 color breathing_red = breathe_color(
-  base_color=red
+  color=red
   min_brightness=5%
   max_brightness=100%
-  duration=3s
+  period=3s
   curve_factor=2
 )
 color pulsing_blue = breathe_color(
   curve_factor=1
-  base_color=blue
+  color=blue
   min_brightness=20%
   max_brightness=80%
-  duration=1s
+  period=1s
 )
 ```
 
@@ -1420,7 +1420,7 @@ Color providers create dynamic colors that change over time:
 
 | Function | Description |
 |----------|-------------|
-| `static_color` | Solid color with optional dynamic opacity |
+| `color_provider` | Solid color (base class for all color providers) |
 | `color_cycle` | Cycles through a palette of colors |
 | `rich_palette_color` | Advanced palette-based color cycling with smooth transitions |
 | `breathe_color` | Breathing/pulsing color effect with brightness modulation |
@@ -1436,14 +1436,12 @@ Animation classes create visual effects on LED strips:
 | `gradient` | Gradient patterns using palettes |
 | `beacon` | Positioned pulse effect |
 | `crenel` | Square wave pulse at specific position |
-| `breathe` | Breathing/fading effect |
 | `comet` | Moving comet with trailing tail |
-| `fire` | Realistic fire simulation |
 | `twinkle` | Twinkling stars effect |
-| `gradient` | Color gradient effects |
-| `wave` | Wave propagation effects |
 | `rich_palette` | Palette-based color cycling |
 | `meter` | Meter/bar patterns using palettes |
+
+**Supplementary animations** (in `animations_future/`): `fire`, `wave`, `plasma`, `sparkle`, etc.
 
 ## Error Handling
 

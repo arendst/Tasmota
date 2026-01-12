@@ -162,7 +162,8 @@ def test_value_provider_as_parameter()
   var obj = TestClass(mock_engine)
   
   # Create a mock value_provider
-  class Mockvalue_provider : animation.value_provider
+  class Mockvalue_provider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     var test_value
     def init(engine, value)
       super(self).init(engine)

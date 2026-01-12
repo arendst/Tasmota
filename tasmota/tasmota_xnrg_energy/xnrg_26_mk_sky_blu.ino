@@ -637,8 +637,6 @@ static void MkSkyBluShow(uint32_t function)
 
     if ( FUNC_JSON_APPEND == function ) { 
         phase = 0;
-        // Efficiency: not used for JSON
-        phase += Energy->phase_count;
         // Temperature
         ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"),
             EnergyFmt(&pMksbInstance_FloatArrays[phase], Settings->flag2.temperature_resolution));

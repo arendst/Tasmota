@@ -117,8 +117,6 @@ import "providers/color_cycle_color_provider.be" as color_cycle_color_provider
 register_to_animation(color_cycle_color_provider)
 # import "providers/composite_color_provider.be" as composite_color_provider
 # register_to_animation(composite_color_provider)
-import "providers/static_color_provider.be" as static_color_provider
-register_to_animation(static_color_provider)
 import "providers/rich_palette_color_provider.be" as rich_palette_color_provider
 register_to_animation(rich_palette_color_provider)
 import "providers/breathe_color_provider.be" as breathe_color_provider
@@ -137,8 +135,8 @@ import "animations/palette_gradient" as palette_pattern_animation
 register_to_animation(palette_pattern_animation)
 import "animations/comet" as comet
 register_to_animation(comet)
-import "animations/fire" as fire
-register_to_animation(fire)
+# import "animations/fire" as fire
+# register_to_animation(fire)
 import "animations/twinkle" as twinkle
 register_to_animation(twinkle)
 import "animations/gradient" as gradient
@@ -149,8 +147,8 @@ register_to_animation(palette_meter)
 # register_to_animation(plasma_animation)
 # import "animations/sparkle" as sparkle_animation
 # register_to_animation(sparkle_animation)
-import "animations/wave" as wave
-register_to_animation(wave)
+# import "animations/wave" as wave
+# register_to_animation(wave)
 # import "animations/shift" as shift_animation
 # register_to_animation(shift_animation)
 # import "animations/bounce" as bounce_animation

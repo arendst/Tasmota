@@ -19,7 +19,7 @@ def test_atomic_closure_batch_execution()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create two test animations
-  var red_provider = animation.static_color(engine)
+  var red_provider = animation.color_provider(engine)
   red_provider.color = 0xFFFF0000
   var red_anim = animation.solid(engine)
   red_anim.color = red_provider
@@ -27,7 +27,7 @@ def test_atomic_closure_batch_execution()
   red_anim.duration = 0
   red_anim.loop = true
   
-  var blue_provider = animation.static_color(engine)
+  var blue_provider = animation.color_provider(engine)
   blue_provider.color = 0xFF0000FF
   var blue_anim = animation.solid(engine)
   blue_anim.color = blue_provider
@@ -87,7 +87,7 @@ def test_multiple_consecutive_closures()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test animations
-  var green_provider = animation.static_color(engine)
+  var green_provider = animation.color_provider(engine)
   green_provider.color = 0xFF00FF00
   var green_anim = animation.solid(engine)
   green_anim.color = green_provider
@@ -95,7 +95,7 @@ def test_multiple_consecutive_closures()
   green_anim.duration = 0
   green_anim.loop = true
   
-  var yellow_provider = animation.static_color(engine)
+  var yellow_provider = animation.color_provider(engine)
   yellow_provider.color = 0xFFFFFF00
   var yellow_anim = animation.solid(engine)
   yellow_anim.color = yellow_provider
@@ -154,7 +154,7 @@ def test_closure_batch_at_sequence_start()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test animation
-  var purple_provider = animation.static_color(engine)
+  var purple_provider = animation.color_provider(engine)
   purple_provider.color = 0xFF8000FF
   var purple_anim = animation.solid(engine)
   purple_anim.color = purple_provider
@@ -192,7 +192,7 @@ def test_repeat_sequence_closure_batching()
   var engine = animation.create_engine(strip)
   
   # Create test animation
-  var cyan_provider = animation.static_color(engine)
+  var cyan_provider = animation.color_provider(engine)
   cyan_provider.color = 0xFF00FFFF
   var cyan_anim = animation.solid(engine)
   cyan_anim.color = cyan_provider
@@ -262,7 +262,7 @@ def test_black_frame_fix_integration()
   var engine = animation.create_engine(strip)
   
   # Simulate shutter animation
-  var shutter_provider = animation.static_color(engine)
+  var shutter_provider = animation.color_provider(engine)
   shutter_provider.color = 0xFFFFFFFF
   var shutter_anim = animation.solid(engine)
   shutter_anim.color = shutter_provider

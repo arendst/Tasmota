@@ -730,17 +730,17 @@ void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
         attr_list.removeAttribute(&attr);
       } else {
         attr.setKeyId(syn.new_cluster, syn.new_attribute);
-        if ((syn.multiplier != 1 && syn.multiplier != 0) || (syn.divider != 1 && syn.divider != 0) || (syn.base != 0)) {
+        if ((syn.multiplier > 1) || (syn.divider > 1) || (syn.base != 0)) {
           // we need to change the value
           float fval = attr.getFloat();
-          if (syn.multiplier != 1 && syn.multiplier != 0) {
-            fval = fval * syn.multiplier;
+          if (syn.multiplier > 1) {
+            fval *= syn.multiplier;
           }
-          if (syn.divider != 1 && syn.divider != 0) {
-            fval = fval / syn.divider;
+          if (syn.divider > 1) {
+            fval /= syn.divider;
           }
           if (syn.base != 0) {
-            fval = fval + syn.base;
+            fval += syn.base;
           }
           attr.setFloat(fval);
         }
@@ -1514,11 +1514,11 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint8_t * attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + matched_attr.map_offset;
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
-        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) matched_attr.matched_attr, matched_attr.map_offset, matched_attr.zigbee_type, ival32);
+        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) matched_attr.map_type, matched_attr.map_offset, matched_attr.zigbee_type, ival32);
         switch (ccccaaaa) {
           case 0xEF000202:
           case 0xEF000203:    // need to convert Tuya temperatures from 1/10 to 1/00 °C
-            ival32 = ival32 * 10;
+            ival32 *= 10;
             break;
         }
 

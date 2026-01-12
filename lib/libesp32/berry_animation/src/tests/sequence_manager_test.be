@@ -37,7 +37,7 @@ def test_sequence_manager_step_creation()
   # Create test animation using new parameterized API
   var strip = global.Leds(30)
   var engine = animation.create_engine(strip)
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -79,7 +79,7 @@ def test_sequence_manager_execution()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test animations using new parameterized API
-  var color_provider1 = animation.static_color(engine)
+  var color_provider1 = animation.color_provider(engine)
   color_provider1.color = 0xFFFF0000
   var anim1 = animation.solid(engine)
   anim1.color = color_provider1
@@ -87,7 +87,7 @@ def test_sequence_manager_execution()
   anim1.duration = 0
   anim1.loop = true
   
-  var color_provider2 = animation.static_color(engine)
+  var color_provider2 = animation.color_provider(engine)
   color_provider2.color = 0xFF00FF00
   var anim2 = animation.solid(engine)
   anim2.color = color_provider2
@@ -125,7 +125,7 @@ def test_sequence_manager_timing()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test animation using new parameterized API
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -178,7 +178,7 @@ def test_sequence_manager_step_info()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test sequence using new parameterized API
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -207,7 +207,7 @@ def test_sequence_manager_stop()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test sequence using new parameterized API
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -244,7 +244,7 @@ def test_sequence_manager_is_running()
   assert(seq_manager.is_sequence_running() == false, "Sequence should not be running initially")
   
   # Create and start sequence using new parameterized API
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -278,7 +278,7 @@ def test_sequence_manager_assignment_steps()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create test animation using new parameterized API
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -336,7 +336,7 @@ def test_sequence_manager_complex_sequence()
   var seq_manager = animation.sequence_manager(engine)
   
   # Create multiple test animations using new parameterized API
-  var red_provider = animation.static_color(engine)
+  var red_provider = animation.color_provider(engine)
   red_provider.color = 0xFFFF0000
   var red_anim = animation.solid(engine)
   red_anim.color = red_provider
@@ -344,7 +344,7 @@ def test_sequence_manager_complex_sequence()
   red_anim.duration = 0
   red_anim.loop = true
   
-  var green_provider = animation.static_color(engine)
+  var green_provider = animation.color_provider(engine)
   green_provider.color = 0xFF00FF00
   var green_anim = animation.solid(engine)
   green_anim.color = green_provider
@@ -352,7 +352,7 @@ def test_sequence_manager_complex_sequence()
   green_anim.duration = 0
   green_anim.loop = true
   
-  var blue_provider = animation.static_color(engine)
+  var blue_provider = animation.color_provider(engine)
   blue_provider.color = 0xFF0000FF
   var blue_anim = animation.solid(engine)
   blue_anim.color = blue_provider
@@ -416,7 +416,7 @@ def test_sequence_manager_integration()
   engine.add(seq_manager)
   
   # Create test sequence using new parameterized API
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -496,7 +496,7 @@ def test_sequence_manager_repeat_execution_with_functions()
   var engine = animation.create_engine(strip)
   
   # Create test animation
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFF00FF00
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -584,7 +584,7 @@ def test_sequence_manager_dynamic_repeat_changes()
   var engine = animation.create_engine(strip)
   
   # Create test animation
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFF0080FF
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -696,7 +696,7 @@ def test_sequence_manager_zero_iterations()
   var engine = animation.create_engine(strip)
   
   # Create test animation
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -818,7 +818,7 @@ def test_sequence_manager_boolean_repeat_counts()
   var engine = animation.create_engine(strip)
   
   # Create test animation
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFF00FF00
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider
@@ -931,7 +931,7 @@ def test_sequence_manager_false_conditional_immediate_skip()
   var engine = animation.create_engine(strip)
   
   # Create test animations
-  var color_provider1 = animation.static_color(engine)
+  var color_provider1 = animation.color_provider(engine)
   color_provider1.color = 0xFFFF0000  # Red
   var anim1 = animation.solid(engine)
   anim1.color = color_provider1
@@ -939,7 +939,7 @@ def test_sequence_manager_false_conditional_immediate_skip()
   anim1.duration = 0
   anim1.loop = true
   
-  var color_provider2 = animation.static_color(engine)
+  var color_provider2 = animation.color_provider(engine)
   color_provider2.color = 0xFF00FF00  # Green
   var anim2 = animation.solid(engine)
   anim2.color = color_provider2
@@ -992,7 +992,7 @@ def test_sequence_manager_false_conditional_immediate_skip()
   var strip2 = global.Leds(30)
   var engine2 = animation.create_engine(strip2)
   
-  var color_provider3 = animation.static_color(engine2)
+  var color_provider3 = animation.color_provider(engine2)
   color_provider3.color = 0xFFFF0000  # Red
   var anim3 = animation.solid(engine2)
   anim3.color = color_provider3
@@ -1000,7 +1000,7 @@ def test_sequence_manager_false_conditional_immediate_skip()
   anim3.duration = 0
   anim3.loop = true
   
-  var color_provider4 = animation.static_color(engine2)
+  var color_provider4 = animation.color_provider(engine2)
   color_provider4.color = 0xFF00FF00  # Green
   var anim4 = animation.solid(engine2)
   anim4.color = color_provider4
@@ -1046,7 +1046,7 @@ def test_sequence_manager_all_false_conditionals_no_infinite_loop()
   var engine = animation.create_engine(strip)
   
   # Create test animation (should never be used)
-  var color_provider = animation.static_color(engine)
+  var color_provider = animation.color_provider(engine)
   color_provider.color = 0xFFFF0000
   var test_anim = animation.solid(engine)
   test_anim.color = color_provider

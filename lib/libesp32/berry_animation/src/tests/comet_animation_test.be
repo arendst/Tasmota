@@ -263,7 +263,7 @@ assert_test(head_alpha > tail_alpha, f"Head should be less transparent than tail
 print("\n--- Test 8: Color Provider Integration ---")
 
 # Test with solid color provider
-var solid_provider = animation.static_color(engine)
+var solid_provider = animation.color_provider(engine)
 solid_provider.color = 0xFF00FFFF
 var provider_comet = animation.comet(engine)
 provider_comet.color = solid_provider

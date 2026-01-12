@@ -21,7 +21,7 @@ var anim = animation.breathe(engine)
 print("Created pulse animation with defaults")
 
 # Test default values
-print(f"Default color: 0x{anim.breathe_provider.base_color :08x}")
+print(f"Default color: 0x{anim.breathe_provider.color :08x}")
 print(f"Default min_brightness: {anim.min_brightness}")
 print(f"Default max_brightness: {anim.max_brightness}")
 print(f"Default period: {anim.period}")
@@ -33,7 +33,7 @@ blue_pulse.color = 0xFF0000FF
 blue_pulse.min_brightness = 50
 blue_pulse.max_brightness = 200
 blue_pulse.period = 2000
-print(f"Blue pulse animation color: 0x{blue_pulse.breathe_provider.base_color :08x}")
+print(f"Blue pulse animation color: 0x{blue_pulse.breathe_provider.color :08x}")
 print(f"Blue pulse animation min_brightness: {blue_pulse.min_brightness}")
 print(f"Blue pulse animation max_brightness: {blue_pulse.max_brightness}")
 print(f"Blue pulse animation period: {blue_pulse.period}")
@@ -45,7 +45,7 @@ red_pulse.color = 0xFFFF0000  # Red color
 red_pulse.min_brightness = 20
 red_pulse.max_brightness = 180
 red_pulse.period = 1500
-print(f"Red pulse animation color: 0x{red_pulse.breathe_provider.base_color :08x}")
+print(f"Red pulse animation color: 0x{red_pulse.breathe_provider.color :08x}")
 
 # Test parameter updates using virtual member assignment
 blue_pulse.min_brightness = 30
@@ -104,7 +104,7 @@ print(f"First pixel after rendering: 0x{frame.get_pixel_color(0) :08x}")
 # Validate key test results
 assert(anim != nil, "Default pulse animation should be created")
 assert(blue_pulse != nil, "Custom pulse animation should be created")
-assert(blue_pulse.breathe_provider.base_color == 0xFF0000FF, "Blue pulse should have correct color")
+assert(blue_pulse.breathe_provider.color == 0xFF0000FF, "Blue pulse should have correct color")
 assert(blue_pulse.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_pulse.max_brightness == 220, "Max brightness should be updated to 220")
 assert(blue_pulse.period == 1800, "Pulse period should be updated to 1800")
