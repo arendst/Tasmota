@@ -763,9 +763,9 @@ static uint32_t WcSetupH264Encoder(void) {
     .fps = (uint8_t)(Wc.config.fps ? Wc.config.fps : 30),
     .res = {.width = width, .height = height},
     .rc = {
-      .bitrate = (uint32_t)(width * height / 10),  // ~10% of raw size
-      .qp_min = 26,
-      .qp_max = 30
+      .bitrate = (uint32_t)(width * height * 2),  // ~10% of raw size
+      .qp_min = 15,
+      .qp_max = 26
     }
   };
   
@@ -1655,31 +1655,21 @@ void CmndWcSession(void) {
   
   // Initialize RTP session
   if (new_type == SESSION_RTP) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP init start"));
-    
+
     Wc.rtp_sequence = random(0, 65535);
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP sequence=%u"), Wc.rtp_sequence);
-    
     Wc.rtp_timestamp = random(0, UINT32_MAX);
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP timestamp=%u"), Wc.rtp_timestamp);
-    
     Wc.rtp_ssrc = random(0, UINT32_MAX);
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP ssrc=%u"), Wc.rtp_ssrc);
     
     // Set default destination only if not configured yet
     if (Wc.rtp_dest_ip == IPAddress(0, 0, 0, 0)) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP setting default dest IP"));
       Wc.rtp_dest_ip.fromString("192.168.1.100");
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP default dest IP set"));
     }
     
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP dest port=%u"), Wc.rtp_dest_port);
     
-    // Start UDP socket
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP starting UDP socket"));
     Wc.rtp_udp.begin(5004);
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP UDP socket started"));
-    
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP initialized, dest %s:%d"), 
       Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
   }
@@ -1907,78 +1897,6 @@ void HandleImage(void) {
   client.stop();
 }
 
-/*********************************************************************************************/
-// RTP Session Functions (H.264 over UDP)
-//
-// DEPRECATED: These stub functions are probably subject to be removed.
-// H.264 encoder setup is now handled by WcSetupH264Encoder() called from WcSetup().
-// RTP packet sending will be integrated into CamProcessingTask.
-
-uint32_t WcRtpSetup(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("RTP: Setup - NOT IMPLEMENTED"));
-  
-  // TODO: Initialize H.264 encoder (from Espressif example)
-  // Width/height must be 16-byte aligned (macroblock size)
-  // uint16_t width = ((Wc.config.width + 15) >> 4 << 4);
-  // uint16_t height = ((Wc.config.height + 15) >> 4 << 4);
-  //
-  // esp_h264_enc_cfg_hw_t cfg = {
-  //   .gop = 30,
-  //   .fps = 30,
-  //   .res = {.width = width, .height = height},
-  //   .rc = {.bitrate = width * height / 10, .qp_min = 26, .qp_max = 30},
-  //   .pic_type = ESP_H264_RAW_FMT_UYVY  // ISP outputs YUV422
-  // };
-  //
-  // Allocate input buffer (from camera)
-  // in_frame.raw_data.len = width * height * ESP_H264_GET_BPP_BY_PIC_TYPE(cfg.pic_type);
-  // in_frame.raw_data.buffer = esp_h264_aligned_calloc(16, 1, in_frame.raw_data.len, ...);
-  //
-  // Allocate output buffer (H.264 NAL units)
-  // out_frame.raw_data.len = in_frame.raw_data.len / 10;  // Compressed ~10x
-  // out_frame.raw_data.buffer = esp_h264_aligned_calloc(16, 1, out_frame.raw_data.len, ...);
-  //
-  // esp_h264_enc_hw_new(&cfg, &Wc.h264_handle);
-  // esp_h264_enc_open(Wc.h264_handle);
-  
-  // TODO: Initialize RTP state
-  // Wc.rtp_sequence = 0;
-  // Wc.rtp_timestamp = 0;
-  // Wc.rtp_ssrc = esp_random();  // Random SSRC
-  // Wc.rtp_dest_port = 5004;     // Default RTP port
-  
-  return 0;  // Not implemented
-}
-
-void WcRtpStop(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("RTP: Stop - NOT IMPLEMENTED"));
-  
-  // TODO: Close H.264 encoder
-  // if (Wc.h264_handle) {
-  //   esp_h264_enc_close(Wc.h264_handle);
-  //   esp_h264_enc_del(Wc.h264_handle);
-  //   Wc.h264_handle = NULL;
-  // }
-  
-  // TODO: Free H.264 buffer
-  // TODO: Close UDP socket
-}
-
-// Send one H.264 frame as RTP packets
-void WcRtpSendFrame(uint8_t *nal_data, size_t nal_size) {
-  // TODO: Implement RTP packetization (RFC 6184)
-  // - Single NAL unit mode for small NALs (< MTU)
-  // - FU-A fragmentation for large NALs (> MTU)
-  
-  // RTP header (12 bytes):
-  // Byte 0: V=2, P=0, X=0, CC=0 → 0x80
-  // Byte 1: M=marker, PT=96 (dynamic)
-  // Bytes 2-3: Sequence number
-  // Bytes 4-7: Timestamp (90kHz)
-  // Bytes 8-11: SSRC
-}
-
-/*********************************************************************************************/
 
 uint32_t WcSetStreamserver(uint32_t flag) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver flag=%d CamServer=%p"), flag, Wc.CamServer);
