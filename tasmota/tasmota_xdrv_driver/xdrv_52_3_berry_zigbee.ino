@@ -361,7 +361,7 @@ extern "C" {
   void zfn_set_bytes(void* sbuf_ptr, const uint8_t* bytes, size_t len_bytes) {
     if (sbuf_ptr == NULL || bytes == NULL) { return; }
 
-    SBuffer &sbuf = (SBuffer&) sbuf_ptr;
+    SBuffer& sbuf = *reinterpret_cast<SBuffer*>(sbuf_ptr);  // Cast pointer first, then dereference
 
     sbuf.reserve(len_bytes);  // make sure it's large enough
     sbuf.setLen(0);           // clear content
