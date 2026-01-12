@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.2.0.2]
 ### Added
 - Support for Adafruit I2C QT Rotary Encoder (#24270)
+- Zigbee support for `int24` type
 
 ### Breaking Changed
 

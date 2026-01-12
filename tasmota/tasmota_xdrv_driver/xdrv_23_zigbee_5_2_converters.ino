@@ -303,12 +303,12 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
     case Zmap16:      // map16
       buf.add16(u32);
       break;
-    // unisgned 32
+    // unisgned 24
     case Zuint24:
       buf.add16(u32);
       buf.add8(u32 >> 16);
       break;
-    // unisgned 24
+    // unisgned 32
     case Zuint32:     // uint32
     case Zdata32:     // data32
     case Zmap32:      // map32
@@ -320,9 +320,16 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
     case Zint8:      // int8
       buf.add8(nan ? 0x80 : i32);
       break;
+    // signed 16
     case Zint16:      // int16
       buf.add16(nan ? 0x8000 : i32);
       break;
+    // signed 24
+    case Zint24:
+      buf.add16(nan ? 0x0000 : i32);
+      buf.add8(nan ? 0x80 : i32 >> 16);
+      break;
+    // signed 32
     case Zint32:      // int32
       buf.add32(nan ? 0x80000000 : i32);
       break;
@@ -468,6 +475,16 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
         // i += 2;
         if (0x8000 != int16_val) {
           attr.setInt(int16_val);
+        }
+      }
+      break;
+    case Zint24:
+      {
+        uint32_t uint24_val = buf.get16(i) + (buf.get8(i+2) >> 16);
+        int32_t int24_val = (int32_t)(uint24_val << 8) >> 8;    // extend sign
+        // i += 3;
+        if (0x800000 != int24_val) {
+          attr.setInt(int24_val);
         }
       }
       break;
