@@ -665,7 +665,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
 // list of clusters that need bindings
 const uint8_t Z_bindings[] PROGMEM = {
   Cx0001, Cx0006, Cx0008, Cx0102, Cx0201, Cx0300,
-  Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
+  Cx0400, Cx0402, Cx0403, Cx0405, Cx0406, Cx040D,
   Cx0500, Cx0B04,
 };
 
@@ -1564,6 +1564,7 @@ const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
   { 0x0403, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_PRESSURE    },      // Pressure (1 hPa)
   { 0x0405, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_HUMIDITY    },      // Humidity (1 %)
   { 0x0406, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // Occupancy
+  { 0x040D, 0x0000,       60,   USE_ZIGBEE_MAXTIME_SENSOR,  0.00005 },  // CO2
   { 0x0500, 0x0002,        1,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // ZoneStatus
 };
 

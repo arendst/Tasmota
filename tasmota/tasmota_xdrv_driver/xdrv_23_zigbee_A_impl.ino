@@ -2285,42 +2285,49 @@ void ZigbeeShow(void)
 
       WSContentSend_PD(msg[ZB_WEB_END_STATUS], dhm);
 
-      // Sensors
-      const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
+      for (uint8_t i = 0; i < endpoints_max; i++) {
+        if (0 == device.endpoints[i]) continue;
+        uint8_t endpoint = device.endpoints[i];
+        // Sensors
+        const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>(endpoint);
 
-      if (&thermo != &z_data_unk) {
-        bool validTemp = thermo.validTemperature();
-        bool validTempTarget = thermo.validTempTarget();
-        bool validThSetpoint = thermo.validThSetpoint();
-        bool validHumidity = thermo.validHumidity();
-        bool validPressure = thermo.validPressure();
+        if (&thermo != &z_data_unk) {
+          bool validTemp = thermo.validTemperature();
+          bool validTempTarget = thermo.validTempTarget();
+          bool validThSetpoint = thermo.validThSetpoint();
+          bool validHumidity = thermo.validHumidity();
+          bool validPressure = thermo.validPressure();
+          bool validCO2      = thermo.validCO2();
 
-        if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
-          WSContentSend_P(msg[ZB_WEB_LINE_START]);
-          if (validTemp) {
-            char buf[12];
-            dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
-            WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
-          }
-          if (validTempTarget) {
-            char buf[12];
-            dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
-            WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
-          }
-          if (validThSetpoint) {
-            WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
-          }
-          if (validHumidity) {
-            WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
-          }
-          if (validPressure) {
-            WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
-          }
+          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure || validCO2) {
+            WSContentSend_P(msg[ZB_WEB_LINE_START]);
+            if (validTemp) {
+              char buf[12];
+              dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
+              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+            }
+            if (validTempTarget) {
+              char buf[12];
+              dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
+              WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+            }
+            if (validThSetpoint) {
+              WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
+            }
+            if (validHumidity) {
+              WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
+            }
+            if (validPressure) {
+              WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
+            }
+            if (validCO2) {
+              WSContentSend_P(PSTR(" &#x1FAE7; %.0f ppm"), 1000000*thermo.getCO2());
+            }
 
-          WSContentSend_P(PSTR("{e}"));
+            WSContentSend_P(PSTR("{e}"));
+          }
         }
       }
-
       // Light, switches and plugs
       const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
       bool onoff_display = (&onoff != &z_data_unk) ? onoff.validPower() : false;

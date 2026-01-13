@@ -46,9 +46,9 @@ class Z_attribute_match Z_findAttributeMatcherByName(uint16_t shortaddr, const c
         matched_attr.cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         matched_attr.attribute = pgm_read_word(&converter->attribute);
         matched_attr.name = (Z_strings + pgm_read_word(&converter->name_offset));
-        int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-        if (multiplier8 > 1) { matched_attr.multiplier = multiplier8; }
-        if (multiplier8 < 0) { matched_attr.divider = -multiplier8; }
+        int32_t multiplier32 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        if (multiplier32 > 1) { matched_attr.multiplier = multiplier32; }
+        if (multiplier32 < 0) { matched_attr.divider = -multiplier32; }
         matched_attr.zigbee_type = pgm_read_byte(&converter->type);
         uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
         matched_attr.map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
@@ -79,9 +79,9 @@ class Z_attribute_match Z_findAttributeMatcherById(uint16_t shortaddr, uint16_t 
         matched_attr.cluster = cluster;
         matched_attr.attribute = attr_id;
         matched_attr.name = (Z_strings + pgm_read_word(&converter->name_offset));
-        int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-        if (multiplier8 > 1) { matched_attr.multiplier = multiplier8; }
-        if (multiplier8 < 0) { matched_attr.divider = -multiplier8; }
+        int32_t multiplier32 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        if (multiplier32 > 1) { matched_attr.multiplier = multiplier32; }
+        if (multiplier32 < 0) { matched_attr.divider = -multiplier32; }
         matched_attr.zigbee_type = pgm_read_byte(&converter->type);
         uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
         matched_attr.map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
@@ -1531,6 +1531,8 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint8_t * attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + matched_attr.map_offset;
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
+        float    fval  = attr.getFloat();     // call converter to int only once
+        
         // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) matched_attr.map_type, matched_attr.map_offset, matched_attr.zigbee_type, ival32);
         switch (ccccaaaa) {
           case 0xEF000202:
@@ -1551,6 +1553,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
           case Zint8:   *(int8_t*)attr_address   = ival32;           break;
           case Zint16:  *(int16_t*)attr_address  = ival32;           break;
           case Zint32:  *(int32_t*)attr_address  = ival32;           break;
+          case Zsingle: *(float*)attr_address    = fval;             break;
         }
         if (Z_Data_Set::updateData(data)) {
           zigbee_devices.dirty();
@@ -1723,11 +1726,11 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
-    uint16_t multiplier = 1;
-    uint16_t divider = 1;
-    int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-    if (multiplier8 > 1) { multiplier = multiplier8; }
-    if (multiplier8 < 0) { divider = -multiplier8; }
+    uint32_t multiplier = 1;
+    uint32_t divider = 1;
+    int32_t multiplier32 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+    if (multiplier32 > 1) { multiplier = multiplier32; }
+    if (multiplier32 < 0) { divider = -multiplier32; }
     Z_Data_Type map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
     uint8_t map_offset = (conv_mapping & 0x0F);
 
