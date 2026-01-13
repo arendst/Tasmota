@@ -1998,7 +1998,7 @@ const char ZB_WEB_U[] PROGMEM =
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_LIGHT_CT
-    " <span title=\"CT %d\"><small>&#9898; </small>%dK</span>"
+    " <span title=\"CT %d\"><small>&#9898; </small>%d%s</span>"
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_END_STATUS
@@ -2029,11 +2029,11 @@ enum {
   ZB_WEB_COLOR_RGB=1495,
   ZB_WEB_LINE_START=1556,
   ZB_WEB_LIGHT_CT=1594,
-  ZB_WEB_END_STATUS=1649,
-  ZB_WEB_LINE_END=1666,
+  ZB_WEB_END_STATUS=1650,
+  ZB_WEB_LINE_END=1667,
 };
 
-// Compressed from 1678 to 1128, -32.8%
+// Compressed from 1679 to 1129, -32.8%
 const char ZB_WEB[] PROGMEM = "\x00\x69\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF4\xF5\x19\x04\xCF\xC1\xC2\xEA\xB3\x8F\x31"
                              "\x37\xD6\x38\x26\x21\xED\x1D\x61\x9A\x0F\x7F\x05\xF0\x87\x58\x78\x16\x7C\xF3\x33"
                              "\xBF\x9D\xD3\xAC\xEB\x0C\xFD\x98\xF8\xD3\xBC\x7B\x8E\x86\xDA\x11\x50\x87\x9F\x65"
@@ -2089,8 +2089,8 @@ const char ZB_WEB[] PROGMEM = "\x00\x69\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF4\xF5\x19\
                              "\x77\x34\x09\x14\x01\x1F\x8B\x50\x43\xE2\xC5\x07\x81\x78\x65\xF1\xF0\xE6\x1F\x87"
                              "\xE8\xF2\x59\xEF\x9E\x0A\x70\xBE\x81\x1F\x82\x83\xD8\x41\x95\x23\xE8\x43\xD8\x7E"
                              "\x1E\x9E\x1B\x61\x04\x7E\x1F\xA3\xC8\xE2\xFA\xF9\xE0\xEE\x1E\x87\x61\x02\x0C\xC3"
-                             "\xE8\x42\x34\x04\x4E\x09\x81\x07\xA1\x5C\x76\x50\x87\xE1\xF5\xE3\xDA\xCF\x74\xE1"
-                             "\x7C\x10\xFA\x7B\xC7\xB6\x8F\x74\xE1\x7C";
+                             "\xE8\x43\xEB\xC0\x89\xC1\x38\x20\xF4\x2B\xCE\xCA\x10\xFC\x3E\xBC\x7B\x59\xEE\x9C"
+                             "\x2F\x82\x1F\x4F\x7C\xF6\xD1\xEE\x9C\x2F\x9B";
 
 // ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
 // ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
@@ -2304,12 +2304,12 @@ void ZigbeeShow(void)
             if (validTemp) {
               char buf[12];
               dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
-              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s" D_UNIT_DEGREE D_UNIT_CELSIUS), buf);
             }
             if (validTempTarget) {
               char buf[12];
               dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
-              WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+              WSContentSend_PD(PSTR(" &#127919; %s" D_UNIT_DEGREE D_UNIT_CELSIUS), buf);
             }
             if (validThSetpoint) {
               WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
@@ -2318,10 +2318,10 @@ void ZigbeeShow(void)
               WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
             }
             if (validPressure) {
-              WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
+              WSContentSend_P(PSTR(" &#x26C5; %d" D_UNIT_PRESSURE), thermo.getPressure());
             }
             if (validCO2) {
-              WSContentSend_P(PSTR(" &#x1FAE7; %.0f ppm"), 1000000*thermo.getCO2());
+              WSContentSend_P(PSTR(" &#x1FAE7; %.0f" D_UNIT_PARTS_PER_MILLION), 1000000 * thermo.getCO2());
             }
 
             WSContentSend_P(PSTR("{e}"));
@@ -2351,7 +2351,7 @@ void ZigbeeShow(void)
             uint16_t ct = light.getCT();
             if (ct != 0) {        // ct == 0 means undefined value
               uint32_t ct_k = (((1000000 / ct) + 25) / 50) * 50;
-              WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k);
+              WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k, D_UNIT_KELVIN);
             }
           }
           if (light.validHue() && light.validSat() && (channels >= 3)) {
@@ -2369,11 +2369,11 @@ void ZigbeeShow(void)
           WSContentSend_P(PSTR(" &#9889; "));
           if (plug_voltage) {
             float mains_voltage = plug.getMainsVoltage();
-            WSContentSend_P(PSTR(" %-1_fV"), &mains_voltage);
+            WSContentSend_P(PSTR(" %-1_f" D_UNIT_VOLT), &mains_voltage);
           }
           if (plug_power) {
             float mains_power = plug.getMainsPower();
-            WSContentSend_P(PSTR(" %-1_fW"), &mains_power);
+            WSContentSend_P(PSTR(" %-1_f" D_UNIT_WATT), &mains_power);
           }
         }
         WSContentSend_P(PSTR("{e}"));
