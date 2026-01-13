@@ -2301,8 +2301,10 @@ void ZigbeeShow(void)
 
           if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure || validCO2) {
             WSContentSend_P(msg[ZB_WEB_LINE_START]);
-            if (onoff_display) {
-              WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
+            if (validTemp) {
+              char buf[12];
+              dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
+              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
             }
             if (validTempTarget) {
               char buf[12];
