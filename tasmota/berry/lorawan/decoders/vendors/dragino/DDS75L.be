@@ -30,7 +30,7 @@ class LwDecoDDS75LB
     end
 
     ## SENSOR DATA ##
-    if 2 == FPort && 8 == Bytes.size() &&  0 == ( Bytes[0] & 0x10 )
+    if 2 == FPort && 8 == Bytes.size() 
       last_seen = tasmota.rtc('local')
 	  	  
 	  battery_last_seen = tasmota.rtc('local')

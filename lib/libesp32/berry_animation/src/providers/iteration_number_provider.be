@@ -21,7 +21,8 @@
 
 import "./core/param_encoder" as encode_constraints
 
-class iteration_number : animation.value_provider
+class iteration_number : animation.parameterized_object
+  static var VALUE_PROVIDER = true
   # Produce the current iteration number from the animation engine
   #
   # @param name: string - Parameter name being requested (ignored)

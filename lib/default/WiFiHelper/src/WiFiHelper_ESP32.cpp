@@ -26,8 +26,8 @@ extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
 
-#ifdef USE_IPV6
 ip_addr_t dns_save4[2] = {};      // IPv4 DNS servers
+#ifdef USE_IPV6
 ip_addr_t dns_save6[2] = {};      // IPv6 DNS servers
 #endif // USE_IPV6
 
@@ -84,27 +84,31 @@ void WiFiHelper::scrubDNS(void) {
 
   // scan DNS entries
   bool has_v4 = WifiHasIPv4() || EthernetHasIPv4();
-  bool has_v6 = false;
 #ifdef USE_IPV6
-  has_v6 = WifiHasIPv6() || EthernetHasIPv6();
+  bool has_v6 = WifiHasIPv6() || EthernetHasIPv6();
 #endif
   // AddLog(LOG_LEVEL_DEBUG, "IP>1: DNS: (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), has_v4, has_v6);
 
-#ifdef USE_IPV6
   // First pass, save values
   for (uint32_t i=0; i<2; i++) {
-    const IPAddress ip_dns = IPAddress(dns_getserver(i));
+    const ip_addr_t* ip_dns = dns_getserver(i);
     // Step 1. save valid values from DNS
-    if (!ip_addr_isany_val((const ip_addr_t &)ip_dns)) {
-      if (ip_dns.type() == IPv4 && (has_v4 || !has_v6)) {
-        ip_dns.to_ip_addr_t(&dns_save4[i]);       // dns entry is populated, save it in v4 slot
-      } else if (has_v6) {
-        ip_dns.to_ip_addr_t(&dns_save6[i]);       // dns entry is populated, save it in v6 slot
+    if (ip_dns && !ip_addr_isany_val(*ip_dns)) {
+#ifdef USE_IPV6
+      if (IP_IS_V4(ip_dns)) {
+#endif // USE_IPV6
+        dns_save4[i] = *ip_dns;       // dns entry is populated, save it in v4 slot
+#ifdef USE_IPV6
       }
+      else if (has_v6) {
+        dns_save6[i] = *ip_dns;       // dns entry is populated, save it in v6 slot
+      }
+#endif // USE_IPV6
     }
   }
 
   // Step 2. scrub addresses not supported
+#ifdef USE_IPV6
   if (!has_v4 && has_v6) {            // v6 only
     dns_save4[0] = *IP4_ADDR_ANY;
     dns_save4[1] = *IP4_ADDR_ANY;
@@ -133,8 +137,10 @@ void WiFiHelper::scrubDNS(void) {
     dns_setserver(0, &dns_save6[0]);
     dns_setserver(1, &dns_save6[1]);
   } else {                                  // no v6, we use v4 even if not connected
+#endif // USE_IPV6
     dns_setserver(0, &dns_save4[0]);
     dns_setserver(1, &dns_save4[1]);
+#ifdef USE_IPV6
   }
 #endif // USE_IPV6
   // AddLog(LOG_LEVEL_DEBUG, "IP>2: DNS: from(%s %s) to (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), IPAddress(dns_getserver(0)).toString().c_str(),  IPAddress(dns_getserver(1)).toString().c_str(), has_v4, has_v6);
@@ -143,7 +149,6 @@ void WiFiHelper::scrubDNS(void) {
   //     IPAddress(&dns_save4[0]).toString().c_str(),IPAddress(&dns_save4[1]).toString().c_str(),
   //     IPAddress(&dns_save6[0]).toString().c_str(),IPAddress(&dns_save6[1]).toString().c_str());
 }
-
 
 void WiFiHelper::hostname(const char* aHostname) {
   WiFi.setHostname(aHostname);

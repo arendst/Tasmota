@@ -394,7 +394,7 @@ class SymbolTable
               var entry = animation_dsl._symbol_entry.create_color_constructor(name, instance, true)
               self.entries[name] = entry
               return entry
-            elif isinstance(instance, animation.value_provider)
+            elif animation.is_value_provider(instance)
               var entry = animation_dsl._symbol_entry.create_value_provider_constructor(name, instance, true)
               self.entries[name] = entry
               return entry

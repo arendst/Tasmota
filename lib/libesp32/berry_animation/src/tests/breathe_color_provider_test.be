@@ -1,9 +1,10 @@
 # Test file for Breathe Color Provider
 #
 # This file contains tests for the breathe_color class following parameterized class specification
+# breathe_color now inherits from color_provider and uses an internal oscillator
 #
 # Command to run test is:
-#    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/breathe_color_provider_test.be
+#    ./berry -s -g -m lib/libesp32/berry_animation/src -e "import tasmota def log(x) print(x) end import animation import animation_dsl " lib/libesp32/berry_animation/src/tests/breathe_color_provider_test.be
 
 print("Testing breathe_color...")
 
@@ -24,25 +25,24 @@ print("Created breathe color provider with defaults")
 print(f"Default color: 0x{provider.color :08x}")
 print(f"Default min_brightness: {provider.min_brightness}")
 print(f"Default max_brightness: {provider.max_brightness}")
-print(f"Default duration: {provider.duration}")
+print(f"Default period: {provider.period}")
 print(f"Default curve_factor: {provider.curve_factor}")
-print(f"Default form: {provider.form}")
 
-# Verify inherited oscillator defaults
-print(f"Inherited min_value: {provider.min_value}")
-print(f"Inherited max_value: {provider.max_value}")
+# Verify it inherits from color_provider
+assert(animation.is_color_provider(provider), "breathe_color should be a color_provider")
+print("✓ breathe_color is a color_provider")
 
 # Create another breathe color provider and set custom parameters using virtual member assignment
 var blue_breathe = animation.breathe_color(engine)
 blue_breathe.color = 0xFF0000FF
 blue_breathe.min_brightness = 20
 blue_breathe.max_brightness = 200
-blue_breathe.duration = 4000
+blue_breathe.period = 4000
 blue_breathe.curve_factor = 3
 print(f"Blue breathe color provider color: 0x{blue_breathe.color :08x}")
 print(f"Blue breathe color provider min_brightness: {blue_breathe.min_brightness}")
 print(f"Blue breathe color provider max_brightness: {blue_breathe.max_brightness}")
-print(f"Blue breathe color provider duration: {blue_breathe.duration}")
+print(f"Blue breathe color provider period: {blue_breathe.period}")
 print(f"Blue breathe color provider curve_factor: {blue_breathe.curve_factor}")
 
 # Create red breathe color provider with different parameters
@@ -50,18 +50,18 @@ var red_breathe = animation.breathe_color(engine)
 red_breathe.color = 0xFFFF0000
 red_breathe.min_brightness = 10
 red_breathe.max_brightness = 180
-red_breathe.duration = 3000
+red_breathe.period = 3000
 red_breathe.curve_factor = 2
 print(f"Red breathe color provider color: 0x{red_breathe.color :08x}")
 
 # Test parameter updates using virtual member assignment
 blue_breathe.min_brightness = 30
 blue_breathe.max_brightness = 220
-blue_breathe.duration = 3500
+blue_breathe.period = 3500
 blue_breathe.curve_factor = 4
 print(f"Updated blue breathe min_brightness: {blue_breathe.min_brightness}")
 print(f"Updated blue breathe max_brightness: {blue_breathe.max_brightness}")
-print(f"Updated blue breathe duration: {blue_breathe.duration}")
+print(f"Updated blue breathe period: {blue_breathe.period}")
 print(f"Updated blue breathe curve_factor: {blue_breathe.curve_factor}")
 
 # Test start method using engine time
@@ -71,35 +71,35 @@ blue_breathe.start(start_time)
 blue_breathe.produce_value(nil, start_time)   # force first tick
 print(f"Started blue breathe color provider at time: {start_time}")
 
-# Cache duration for performance (following specification)
-var current_duration = blue_breathe.duration
+# Cache period for performance (following specification)
+var current_period = blue_breathe.period
 
 # Test produce_value method at different points in the cycle
-engine.time_ms = start_time + (current_duration / 10)
+engine.time_ms = start_time + (current_period / 10)
 var color_1_10 = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at 1/10 cycle: 0x{color_1_10 :08x}")
 
-engine.time_ms = start_time + (current_duration / 8)
+engine.time_ms = start_time + (current_period / 8)
 var color_1_8 = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at 1/8 cycle: 0x{color_1_8 :08x}")
 
-engine.time_ms = start_time + (3 * current_duration / 10)
+engine.time_ms = start_time + (3 * current_period / 10)
 var color_3_10 = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at 3/10 cycle: 0x{color_3_10 :08x}")
 
-engine.time_ms = start_time + (current_duration / 4)
+engine.time_ms = start_time + (current_period / 4)
 var color_1_4 = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at 1/4 cycle: 0x{color_1_4 :08x}")
 
-engine.time_ms = start_time + (current_duration / 2)
+engine.time_ms = start_time + (current_period / 2)
 var color_1_2 = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at 1/2 cycle: 0x{color_1_2 :08x}")
 
-engine.time_ms = start_time + (3 * current_duration / 4)
+engine.time_ms = start_time + (3 * current_period / 4)
 var color_3_4 = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at 3/4 cycle: 0x{color_3_4 :08x}")
 
-engine.time_ms = start_time + current_duration
+engine.time_ms = start_time + current_period
 var color_full = blue_breathe.produce_value("color", engine.time_ms)
 print(f"Color at full cycle: 0x{color_full :08x}")
 
@@ -107,7 +107,7 @@ print(f"Color at full cycle: 0x{color_full :08x}")
 var curve_1_provider = animation.breathe_color(engine)
 curve_1_provider.color = 0xFF00FF00  # Green
 curve_1_provider.curve_factor = 1
-curve_1_provider.duration = 2000
+curve_1_provider.period = 2000
 curve_1_provider.min_brightness = 50  # Set non-zero minimum to see differences
 curve_1_provider.max_brightness = 255
 curve_1_provider.start(engine.time_ms)
@@ -116,7 +116,7 @@ curve_1_provider.produce_value(nil, start_time)   # force first tick
 var curve_5_provider = animation.breathe_color(engine)
 curve_5_provider.color = 0xFF00FF00  # Green
 curve_5_provider.curve_factor = 5
-curve_5_provider.duration = 2000
+curve_5_provider.period = 2000
 curve_5_provider.min_brightness = 50  # Set non-zero minimum to see differences
 curve_5_provider.max_brightness = 255
 curve_5_provider.start(engine.time_ms)
@@ -164,7 +164,7 @@ var brightness_test = animation.breathe_color(engine)
 brightness_test.color = 0xFFFFFFFF  # White
 brightness_test.min_brightness = 50
 brightness_test.max_brightness = 200
-brightness_test.duration = 1000
+brightness_test.period = 1000
 brightness_test.start(engine.time_ms)
 brightness_test.produce_value(nil, start_time)   # force first tick
 
@@ -199,11 +199,8 @@ assert(red_breathe != nil, "Red breathe color provider should be created")
 assert(blue_breathe.color == 0xFF0000FF, "Blue breathe should have correct color")
 assert(blue_breathe.min_brightness == 30, "Min brightness should be updated to 30")
 assert(blue_breathe.max_brightness == 220, "Max brightness should be updated to 220")
-assert(blue_breathe.duration == 3500, "Duration should be updated to 3500")
+assert(blue_breathe.period == 3500, "Period should be updated to 3500")
 assert(blue_breathe.curve_factor == 4, "Curve factor should be updated to 4")
-assert(blue_breathe.form == 4 #-COSINE-#, "Form should be COSINE")
-assert(blue_breathe.min_value == 0, "Inherited min_value should be 0")
-assert(blue_breathe.max_value == 255, "Inherited max_value should be 255")
 assert(blue_breathe.engine == engine, "Provider should have correct engine reference")
 assert(alpha_actual == 128, "Alpha channel should be preserved")
 

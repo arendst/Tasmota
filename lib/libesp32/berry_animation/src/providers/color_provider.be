@@ -12,7 +12,8 @@
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
-class color_provider : animation.value_provider
+class color_provider : animation.parameterized_object
+  static var VALUE_PROVIDER = true
   # LUT (Lookup Table) management for color providers
   # Subclasses can use this to cache pre-computed colors for performance
   # If a subclass doesn't use a LUT, this remains nil
@@ -80,6 +81,7 @@ class color_provider : animation.value_provider
     end
     
     # Extract RGB components (preserve alpha channel)
+    var alpha = (color >> 24) & 0xFF
     var r = (color >> 16) & 0xFF
     var g = (color >> 8) & 0xFF
     var b = color & 0xFF
@@ -90,7 +92,7 @@ class color_provider : animation.value_provider
     b = tasmota.scale_uint(b, 0, 255, 0, brightness)
     
     # Reconstruct color with scaled brightness (preserve alpha)
-    return (color & 0xFF000000) | (r << 16) | (g << 8) | b
+    return (alpha << 24) | (r << 16) | (g << 8) | b
   end
 
 end

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.2.0.2]
 ### Added
 - Support for Adafruit I2C QT Rotary Encoder (#24270)
+- Zigbee support for `int24` type
 
 ### Breaking Changed
 
@@ -20,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - GDK101 power on detection (#24242)
 - Udisplay backlight with SPI displays (#24277)
 - ESP8266 KNX unwanted reply (#24267)
+- Zigbee compilation warning in Berry mapping
 
 ### Removed
 
