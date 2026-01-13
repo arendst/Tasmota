@@ -2295,91 +2295,99 @@ void ZigbeeShow(bool json)
 
         WSContentSend_PD(msg[ZB_WEB_END_STATUS], dhm );
 
-        // Sensors
-        const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
+        for (uint32_t i = 0; i < endpoints_max; i++) {
+          if (0 == device.endpoints[i]) continue;
+          uint8_t endpoint = device.endpoints[i];
 
-        if (&thermo != &z_data_unk) {
-          bool validTemp = thermo.validTemperature();
-          bool validTempTarget = thermo.validTempTarget();
-          bool validThSetpoint = thermo.validThSetpoint();
-          bool validHumidity = thermo.validHumidity();
-          bool validPressure = thermo.validPressure();
+          // Sensors
+          const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>(endpoint);
 
-          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
+          if (&thermo != &z_data_unk) {
+            bool validTemp = thermo.validTemperature();
+            bool validTempTarget = thermo.validTempTarget();
+            bool validThSetpoint = thermo.validThSetpoint();
+            bool validHumidity = thermo.validHumidity();
+            bool validCO2      = thermo.validCO2();
+            bool validPressure = thermo.validPressure();
+
+            if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure || validCO2) {
+              WSContentSend_P(msg[ZB_WEB_LINE_START]);
+              if (validTemp) {
+                char buf[12];
+                dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
+                WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+              }
+              if (validTempTarget) {
+                char buf[12];
+                dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
+                WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+              }
+              if (validThSetpoint) {
+                WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
+              }
+              if (validHumidity) {
+                WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
+              }
+              if (validCO2) {
+                WSContentSend_P(PSTR(" &#x1FAE7; %.0f ppm"), 1000000*thermo.getCO2());
+              }
+              if (validPressure) {
+                WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
+              }
+
+              WSContentSend_P(PSTR("{e}"));
+            }
+          }
+          // Light, switches and plugs
+          const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>(endpoint);
+          bool onoff_display = (&onoff != &z_data_unk) ? onoff.validPower() : false;
+          const Z_Data_Light & light = device.data.find<Z_Data_Light>(endpoint);
+          bool light_display = (&light != &z_data_unk) ? light.validDimmer() : false;
+          const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>(endpoint);
+          bool plug_voltage = (&plug != &z_data_unk) ? plug.validMainsVoltage() : false;
+          bool plug_power = (&plug != &z_data_unk) ? plug.validMainsPower() : false;
+          if (onoff_display || light_display || plug_voltage || plug_power) {
+            int8_t channels = device.getLightChannels();
+            if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
             WSContentSend_P(msg[ZB_WEB_LINE_START]);
-            if (validTemp) {
-              char buf[12];
-              dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
-              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+            if (onoff_display) {
+              WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
             }
-            if (validTempTarget) {
-              char buf[12];
-              dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
-              WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
-            }
-            if (validThSetpoint) {
-              WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
-            }
-            if (validHumidity) {
-              WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
-            }
-            if (validPressure) {
-              WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
-            }
-
-            WSContentSend_P(PSTR("{e}"));
-          }
-        }
-
-        // Light, switches and plugs
-        const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
-        bool onoff_display = (&onoff != &z_data_unk) ? onoff.validPower() : false;
-        const Z_Data_Light & light = device.data.find<Z_Data_Light>();
-        bool light_display = (&light != &z_data_unk) ? light.validDimmer() : false;
-        const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
-        bool plug_voltage = (&plug != &z_data_unk) ? plug.validMainsVoltage() : false;
-        bool plug_power = (&plug != &z_data_unk) ? plug.validMainsPower() : false;
-        if (onoff_display || light_display || plug_voltage || plug_power) {
-          int8_t channels = device.getLightChannels();
-          if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
-          WSContentSend_P(msg[ZB_WEB_LINE_START]);
-          if (onoff_display) {
-            WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
-          }
-          if (&light != &z_data_unk) {
-            if (light.validDimmer() && (channels >= 1)) {
-              WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
-            }
-            if (light.validCT() && ((channels == 2) || (channels == 5))) {
-              uint16_t ct = light.getCT();
-              if (ct != 0) {        // ct == 0 means undefined value
-                uint32_t ct_k = (((1000000 / ct) + 25) / 50) * 50;
-                WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k);
+            if (&light != &z_data_unk) {
+              if (light.validDimmer() && (channels >= 1)) {
+                WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
+              }
+              if (light.validCT() && ((channels == 2) || (channels == 5))) {
+                uint16_t ct = light.getCT();
+                if (ct != 0) {        // ct == 0 means undefined value
+                  uint32_t ct_k = (((1000000 / ct) + 25) / 50) * 50;
+                  WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k);
+                }
+              }
+              if (light.validHue() && light.validSat() && (channels >= 3)) {
+                uint8_t r,g,b;
+                uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
+                HsToRgb(light.getHue(), sat, &r, &g, &b);
+                WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
+              } else if (light.validX() && light.validY() && (channels >= 3)) {
+                uint8_t r,g,b;
+                XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
+                WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
               }
             }
-            if (light.validHue() && light.validSat() && (channels >= 3)) {
-              uint8_t r,g,b;
-              uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
-              HsToRgb(light.getHue(), sat, &r, &g, &b);
-              WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
-            } else if (light.validX() && light.validY() && (channels >= 3)) {
-              uint8_t r,g,b;
-              XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
-              WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
+            if (plug_voltage || plug_power) {
+              WSContentSend_P(PSTR(" &#9889; "));
+              if (plug_voltage) {
+                float mains_voltage = plug.getMainsVoltage();
+                WSContentSend_P(PSTR(" %-1_fV"), &mains_voltage);
+              }
+              if (plug_power) {
+                float mains_power = plug.getMainsPower();
+                WSContentSend_P(PSTR(" %-1_fW"), &mains_power);
+              }
             }
+            WSContentSend_P(PSTR("{e}"));
           }
-          if (plug_voltage || plug_power) {
-            WSContentSend_P(PSTR(" &#9889; "));
-            if (plug_voltage) {
-              float mains_voltage = plug.getMainsVoltage();
-              WSContentSend_P(PSTR(" %-1_fV"), &mains_voltage);
-            }
-            if (plug_power) {
-              float mains_power = plug.getMainsPower();
-              WSContentSend_P(PSTR(" %-1_fW"), &mains_power);
-            }
-          }
-          WSContentSend_P(PSTR("{e}"));
         }
 #ifdef USE_BERRY
         // Berry hook to display additional customized information
