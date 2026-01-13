@@ -64,7 +64,7 @@ extern "C" {
 typedef enum {
   SESSION_NONE = 0,
   SESSION_MJPEG_HTTP,
-  SESSION_RTP,         // H.264 over RTP/UDP
+  SESSION_RTSP,        // H.264 over RTP/UDP with RTSP control
   SESSION_WEBRTC,      // H.264 over SRTP (encrypted RTP + signaling)
   SESSION_DSI_DISPLAY
 } camera_session_t;
@@ -138,7 +138,7 @@ struct {
   WiFiClient *client_ptr;          // Active streaming client
   uint8_t stream_active;           // 0=none, 2=streaming
   
-  // === RTP Session (H.264 over UDP) ===
+  // === RTSP/RTP Session (H.264 over RTP/UDP with RTSP control) ===
   esp_h264_enc_handle_t h264_handle;  // H.264 hardware encoder
   uint8_t *h264_buffer;            // H.264 input buffer (raw YUV from ISP)
   size_t h264_buffer_size;
@@ -146,11 +146,18 @@ struct {
   size_t h264_out_buffer_size;
   
   WiFiUDP rtp_udp;                 // UDP socket for RTP
-  IPAddress rtp_dest_ip;           // Destination IP
-  uint16_t rtp_dest_port;          // Destination port (default 5004)
+  IPAddress rtp_dest_ip;           // Destination IP (set by RTSP SETUP)
+  uint16_t rtp_dest_port;          // Destination port (set by RTSP SETUP)
   uint16_t rtp_sequence;           // RTP sequence number (increments per packet)
   uint32_t rtp_timestamp;          // RTP timestamp (90kHz clock)
   uint32_t rtp_ssrc;               // Synchronization source ID
+  
+  WiFiServer *rtsp_server;         // RTSP control server (TCP port 554)
+  WiFiClient rtsp_client;          // Active RTSP client connection
+  uint32_t rtsp_session_id;        // RTSP session ID
+  uint16_t client_rtp_port;        // Client's RTP port (from SETUP)
+  uint16_t client_rtcp_port;       // Client's RTCP port (from SETUP)
+  bool rtsp_streaming;             // RTSP session is in PLAY state
 } Wc;
 
 // Statistics
@@ -630,8 +637,8 @@ void H264ProcessingTask(void *pvParameters) {
     uint32_t encode_time = micros() - encode_start;
     
     if (ret == ESP_H264_ERR_OK && out_frame.length > 0) {
-      // Parse and send NAL units via RTP
-      if (Wc.session_type == SESSION_RTP) {
+      // Parse and send NAL units via RTP (only if RTSP session is in PLAY state)
+      if (Wc.session_type == SESSION_RTSP && Wc.rtsp_streaming) {
         uint8_t* nal_data = Wc.h264_out_buffer;
         size_t remaining = out_frame.length;
         
@@ -923,8 +930,8 @@ uint32_t WcSetup(bool reset_config) {
   Wc.read_idx = 1;
 
   // 4. Configure CSI controller
-  // RTP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
-  cam_ctlr_color_t csi_output_format = (Wc.session_type == SESSION_RTP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
+  // RTSP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
+  cam_ctlr_color_t csi_output_format = (Wc.session_type == SESSION_RTSP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
   
   esp_cam_ctlr_csi_config_t csi_config = {
     .ctlr_id = 0,
@@ -987,8 +994,8 @@ uint32_t WcSetup(bool reset_config) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
   } else {
     // Fallback: Create ISP until Berry ISP driver is ready
-    // RTP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
-    isp_color_t isp_output_format = (Wc.session_type == SESSION_RTP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
+    // RTSP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
+    isp_color_t isp_output_format = (Wc.session_type == SESSION_RTSP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
     
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 120 * 1000 * 1000, //TODO: eventually calculate this based on configured AV session
@@ -1037,7 +1044,7 @@ uint32_t WcSetup(bool reset_config) {
       Wc.isp_handle = NULL;
       return 0;
     }
-  } else if (Wc.session_type == SESSION_RTP) {
+  } else if (Wc.session_type == SESSION_RTSP) {
     if (!WcSetupH264Encoder()) {
       esp_isp_disable(Wc.isp_handle);
       esp_isp_del_processor(Wc.isp_handle);
@@ -1317,7 +1324,18 @@ uint32_t WcStop(void) {
     Wc.client_ptr = nullptr;
   }
   
-  // 13. Delete mutexes
+  // 13. Stop RTSP server and close client
+  if (Wc.rtsp_server) {
+    Wc.rtsp_server->stop();
+    delete Wc.rtsp_server;
+    Wc.rtsp_server = NULL;
+  }
+  if (Wc.rtsp_client) {
+    Wc.rtsp_client.stop();
+  }
+  Wc.rtsp_streaming = false;
+  
+  // 14. Delete mutexes
   if (Wc.frame_mutex) {
     vSemaphoreDelete(Wc.frame_mutex);
     Wc.frame_mutex = NULL;
@@ -1331,7 +1349,7 @@ uint32_t WcStop(void) {
     Wc.resume_sem = NULL;
   }
 
-  // 14. Final state
+  // 15. Final state
   Wc.state = CAM_IDLE;
   Wc.stream_active = 0;
   
@@ -1344,6 +1362,116 @@ uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
     // Legacy function support - just returns current read buffer
     if (Wc.state != CAM_STREAMING) return NULL;
     return Wc.frame_buffer[Wc.read_idx];
+}
+
+/*********************************************************************************************/
+// RTSP Server Handler
+
+void HandleRtsp() {
+  if (!Wc.rtsp_server) return;
+  
+  // Accept new RTSP client (only one at a time)
+  if (Wc.rtsp_server->hasClient()) {
+    if (Wc.rtsp_client && Wc.rtsp_client.connected()) {
+      WiFiClient reject = Wc.rtsp_server->available();
+      reject.stop();
+    } else {
+      Wc.rtsp_client = Wc.rtsp_server->available();
+      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Client connected from %s"), Wc.rtsp_client.remoteIP().toString().c_str());
+    }
+  }
+  
+  // Handle RTSP requests
+  if (Wc.rtsp_client && Wc.rtsp_client.connected() && Wc.rtsp_client.available()) {
+    String request = Wc.rtsp_client.readStringUntil('\n');
+    request.trim();
+    
+    if (request.length() == 0) return;
+    
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RTSP: %s"), request.c_str());
+    
+    // Parse ALL headers in one pass (TCP stream can only be read once)
+    uint32_t cseq = 0;
+    String transport_line = "";
+    
+    while (Wc.rtsp_client.available()) {
+      String line = Wc.rtsp_client.readStringUntil('\n');
+      line.trim();
+      if (line.length() == 0) break; // End of headers
+      
+      if (line.startsWith("CSeq:")) {
+        cseq = line.substring(5).toInt();
+      }
+      else if (line.startsWith("Transport:")) {
+        transport_line = line;
+      }
+    }
+    
+    // Handle RTSP methods
+    if (request.indexOf("OPTIONS") >= 0) {
+      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nPublic: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n\r\n", cseq);
+      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Sent OPTIONS"));
+    }
+    else if (request.indexOf("DESCRIBE") >= 0) {
+      String sdp = "v=0\r\n";
+      sdp += "o=- 0 0 IN IP4 " + WiFi.localIP().toString() + "\r\n";
+      sdp += "s=Tasmota H264 Stream\r\n";
+      sdp += "c=IN IP4 0.0.0.0\r\n";
+      sdp += "t=0 0\r\n";
+      sdp += "m=video 0 RTP/AVP 96\r\n";
+      sdp += "a=rtpmap:96 H264/90000\r\n";
+      sdp += "a=fmtp:96 packetization-mode=1;profile-level-id=42001E\r\n";
+      sdp += "a=control:track0\r\n";
+      
+      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nContent-Type: application/sdp\r\nContent-Length: %d\r\n\r\n%s",
+        cseq, sdp.length(), sdp.c_str());
+      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Sent DESCRIBE"));
+    }
+    else if (request.indexOf("SETUP") >= 0) {
+      // Use the transport_line we already parsed
+      if (transport_line.length() > 0) {
+        int port_idx = transport_line.indexOf("client_port=");
+        if (port_idx >= 0) {
+          String port_str = transport_line.substring(port_idx + 12);
+          int dash_idx = port_str.indexOf('-');
+          if (dash_idx >= 0) {
+            Wc.client_rtp_port = port_str.substring(0, dash_idx).toInt();
+            Wc.client_rtcp_port = port_str.substring(dash_idx + 1).toInt();
+          } else {
+            Wc.client_rtp_port = port_str.toInt();
+            Wc.client_rtcp_port = Wc.client_rtp_port + 1;
+          }
+          
+          Wc.rtp_dest_ip = Wc.rtsp_client.remoteIP();
+          Wc.rtp_dest_port = Wc.client_rtp_port;
+          Wc.rtsp_session_id = random(100000, 999999);
+          
+          AddLog(LOG_LEVEL_INFO, PSTR("RTSP: SETUP - dest %s:%d"), Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+          
+          Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nTransport: RTP/AVP;unicast;client_port=%u-%u;server_port=%u-%u\r\n\r\n",
+            cseq, Wc.rtsp_session_id, Wc.client_rtp_port, Wc.client_rtcp_port, Wc.rtp_dest_port, Wc.rtp_dest_port + 1);
+        }
+      } else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("RTSP: SETUP failed - No Transport header"));
+      }
+    }
+    else if (request.indexOf("PLAY") >= 0) {
+      Wc.rtsp_streaming = true;
+      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: PLAY"));
+      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nRange: npt=0.000-\r\n\r\n", cseq, Wc.rtsp_session_id);
+    }
+    else if (request.indexOf("TEARDOWN") >= 0) {
+      Wc.rtsp_streaming = false;
+      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: TEARDOWN"));
+      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\n\r\n", cseq, Wc.rtsp_session_id);
+      Wc.rtsp_client.stop();
+    }
+  }
+  
+  if (Wc.rtsp_client && !Wc.rtsp_client.connected()) {
+    Wc.rtsp_streaming = false;
+    Wc.rtsp_client.stop();
+  }
 }
 
 
@@ -1606,8 +1734,8 @@ void CmndWcQuality(void) {
 }
 
 void CmndWcSession(void) {
-  // Session types: 0=None, 1=MJPEG, 2=RTP, 3=WebRTC, 4=DSI
-  const char* session_names[] = {"None", "MJPEG", "RTP", "WebRTC", "DSI"};
+  // Session types: 0=None, 1=MJPEG, 2=RTSP, 3=WebRTC, 4=DSI
+  const char* session_names[] = {"None", "MJPEG", "RTSP", "WebRTC", "DSI"};
   
   // Query current session type
   if (XdrvMailbox.payload < 0) {
@@ -1653,36 +1781,32 @@ void CmndWcSession(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type changed to %d (%s)"), 
     Wc.session_type, session_names[Wc.session_type]);
   
-  // Initialize RTP session
-  if (new_type == SESSION_RTP) {
-
+  // Initialize RTSP session
+  if (new_type == SESSION_RTSP) {
     Wc.rtp_sequence = random(0, 65535);
     Wc.rtp_timestamp = random(0, UINT32_MAX);
     Wc.rtp_ssrc = random(0, UINT32_MAX);
+    Wc.rtsp_streaming = false;
     
-    // Set default destination only if not configured yet
-    if (Wc.rtp_dest_ip == IPAddress(0, 0, 0, 0)) {
-      Wc.rtp_dest_ip.fromString("192.168.1.100");
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP default dest IP set"));
-    }
+    // Start RTSP server on port 554
+    Wc.rtsp_server = new WiFiServer(554);
+    Wc.rtsp_server->begin();
     
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP dest port=%u"), Wc.rtp_dest_port);
-    
+    // Start UDP socket for RTP
     Wc.rtp_udp.begin(5004);
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP UDP socket started"));
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP initialized, dest %s:%d"), 
-      Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+    
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP server started on port 554"));
   }
   
-  // Force H.264-compatible resolution for RTP session
-  if (new_type == SESSION_RTP) {
+  // Force H.264-compatible resolution for RTSP session
+  if (new_type == SESSION_RTSP) {
     Wc.config.width = 1280;
     Wc.config.height = 720;
     Wc.config.binning = 2;
     Wc.config.fps = 30;
     Wc.config.format = 0;  // RAW8
     Wc.config.res_index = 255;  // Custom mode
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP session forcing 1280x720@30fps"));
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP session forcing 1280x720@30fps"));
   }
   
   // Setup and start new session (unless SESSION_NONE)
@@ -1788,8 +1912,13 @@ void WcInit(void) {
   Wc.rtp_sequence = 0;
   Wc.rtp_timestamp = 0;
   Wc.rtp_ssrc = 0;
+  Wc.rtsp_server = NULL;
+  Wc.rtsp_session_id = 0;
+  Wc.client_rtp_port = 0;
+  Wc.client_rtcp_port = 0;
+  Wc.rtsp_streaming = false;
   
-  // WiFiUDP and IPAddress have constructors, don't touch them
+  // WiFiUDP, WiFiClient, and IPAddress have constructors, don't touch them
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
 }
@@ -1961,6 +2090,11 @@ void WcLoop(void) {
   // Skip during state transitions
   if (Wc.state == CAM_STOPPING || Wc.state == CAM_IDLE) {
     return;
+  }
+  
+  // Handle RTSP control connections
+  if (Wc.session_type == SESSION_RTSP) {
+    HandleRtsp();
   }
   
   if (Wc.state == CAM_STREAMING && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
