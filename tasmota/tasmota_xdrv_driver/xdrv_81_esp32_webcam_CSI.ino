@@ -550,7 +550,7 @@ void SendNalUnitRTP(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t na
       Wc.rtp_udp.endPacket();
 
       // Traffic Shaping for ESP32 UDP stability (Reduces possible green artifacts)
-      delayMicroseconds(50);
+      // delayMicroseconds(50);
 
       Wc.rtp_sequence++;
       offset += chunksize;
@@ -657,15 +657,29 @@ void H264ProcessingTask(void *pvParameters) {
           nal_data += start_code_len;
           remaining -= start_code_len;
           
-          // Find next start code to determine NAL length
-          size_t nal_length = 0;
-          for (size_t i = 0; i < remaining - 2; i++) {
-            if (i >= 2 && nal_data[i] == 0 && nal_data[i+1] == 0 && (nal_data[i+2] == 0 || nal_data[i+2] == 1)) {
-              nal_length = (nal_data[i+2] == 1) ? i : i + 1;
+          // Find next start code to determine NAL length (SAFE VERSION)
+          size_t nal_length = remaining; // Default: take everything left as the last NAL
+          
+          for (size_t i = 0; i + 2 < remaining; i++) {
+            // Check for 00 00 01 (3-byte start code)
+            if (nal_data[i] == 0 && nal_data[i+1] == 0 && nal_data[i+2] == 1) {
+              nal_length = i;
+              break;
+            }
+            // Check for 00 00 00 01 (4-byte start code)
+            // We need 4 bytes available to check this
+            if (i + 3 < remaining && nal_data[i] == 0 && nal_data[i+1] == 0 && nal_data[i+2] == 0 && nal_data[i+3] == 1) {
+              nal_length = i;
               break;
             }
           }
-          if (nal_length == 0) nal_length = remaining; // Last NAL
+          
+          // CRITICAL SAFETY: If length is 0 (start code at very beginning?), force skip to avoid infinite loop
+          if (nal_length == 0 && remaining > 0) {
+             // This implies malformed data or start code immediately found. 
+             // Skip 1 byte to progress.
+             nal_length = 1; 
+          }
           
           // Extract NAL type
           uint8_t nal_header = nal_data[0];

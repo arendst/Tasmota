@@ -721,7 +721,7 @@ class OV5647 : CSI_Sensor
   end
 
 
-  # Custom Resolution Calculator - Final Fix (Missing Registers Added)
+  # Custom Resolution Calculator - Final Fix (Corrected for 0xBC clock)
   def regs_custom(x, y, w, h, bin, fps, fmt)
     
     # 1. Align Geometry
@@ -730,18 +730,18 @@ class OV5647 : CSI_Sensor
     if h < 16 h = 16 end
     if fps < 1 fps = 1 end
 
-    # 2. Select Clock Speed
+    # 2. Select Clock Speed and set internal state
     if bin == 2
        if fmt == 1 
-          self.mipi_clock = 250 # RAW10
+          self.mipi_clock = 291 # RAW10 (Scaled for 0xBC)
        else        
-          self.mipi_clock = 200 # RAW8
+          self.mipi_clock = 233 # RAW8  (Scaled for 0xBC)
        end
     else
        if fmt == 1 
-          self.mipi_clock = 408 # RAW10
+          self.mipi_clock = 408 # RAW10 (Bin 1 legacy)
        else        
-          self.mipi_clock = 326 # RAW8
+          self.mipi_clock = 326 # RAW8  (Bin 1 legacy)
        end
     end
 
@@ -755,25 +755,41 @@ class OV5647 : CSI_Sensor
 
     # 3. Generate Registers
     if bin == 2
-       # ... [BIN 2 Logic remains unchanged] ...
+       # ==========================================================
+       # BIN 2: HIGH SPEED MODE (0xBC = 188x Multiplier)
+       # ==========================================================
        var base_x = 9
        var base_y = 0
        var final_x = base_x + x
        var final_y = base_y + y
-       var vts = 100000000 / (1896 * fps)
+       
+       # FIXED PCLK for 0xBC (188x) multiplier
+       # Previous 0x80 (128x) was ~63MHz effective
+       # New 0xBC (188x) is ~93.3 MHz effective
+       var pclk_real = 93312000 
+       
+       var vts = pclk_real / (1896 * fps)
        if vts < h vts = h + 4 end
 
        return [
         [0x3034, fmt == 0 ? 0x18 : 0x1a],
-        [0x3035,0x41], [0x3036,0x80], [0x303c,0x11], [0x3106,0xf5],
+        [0x3035,0x41], 
+        [0x3036,0xbc], # FIXED: 0xBC (188x) for stable 30fps
+        [0x303c,0x11], 
+        [0x3106,0xf5],
+        
         [0x3814,0x31], [0x3815,0x31], [0x3820,0x41], [0x3821,0x03], 
         [0x3827,0xec], [0x370c,0x0f], [0x3612,0x59], [0x3618,0x00],
         [0x5000,0xff], [0x583e,0xf0], [0x583f,0x20], [0x5002,0x41], [0x5003,0x08], [0x5a00,0x08],
         [0x3000,0x00], [0x3001,0x00], [0x3002,0x00], [0x3016,0x08], [0x3017,0xe0], 
         [0x3018,0x44], [0x301c,0xf8], [0x301d,0xf0],
         [0x3a18,0x00], [0x3a19,0xf8], [0x3c01,0x80], [0x3c00,0x40], [0x3b07,0x0c],
-        [0x380c,0x07], [0x380d,0x68], 
+        
+        [0x380c,0x07], [0x380d,0x68], # HTS = 1896
+        
+        # Calculated VTS
         [0x380e, (vts >> 8) & 0xFF],  [0x380f, vts & 0xFF],
+        
         [0x3800,0x00], [0x3801,0x00], [0x3802,0x00], [0x3803,0x00], 
         [0x3804,0x0a], [0x3805,0x3f], [0x3806,0x07], [0x3807,0xa1], 
         [0x3808, (w >> 8) & 0xFF], [0x3809, w & 0xFF],
