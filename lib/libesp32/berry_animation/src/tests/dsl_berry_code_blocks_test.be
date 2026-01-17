@@ -114,7 +114,7 @@ def test_complex_berry_content()
     'print("Complex berry block initialized")\n' +
     '"""\n' +
     'color purple_custom = 0x800080\n' +
-    'animation pulse = pulsating_animation(color=purple_custom, period=2s)\n' +
+    'animation pulse = breathe(color=purple_custom, period=2s)\n' +
     'run pulse'
   
   var berry_code = animation_dsl.compile(dsl_source)
@@ -136,7 +136,7 @@ def test_berry_dsl_interaction()
   print("Testing berry code block interaction with DSL objects...")
   
   var dsl_source = 'color red_custom = 0xFF0000\n' +
-    'animation test_anim = pulsating_animation(color=red_custom, period=3s)\n' +
+    'animation test_anim = breathe(color=red_custom, period=3s)\n' +
     'berry """\n' +
     '# Modify DSL-generated animation\n' +
     'test_anim_.opacity = 150\n' +
@@ -148,7 +148,7 @@ def test_berry_dsl_interaction()
   var berry_code = animation_dsl.compile(dsl_source)
   
   assert(berry_code != nil, "Should generate Berry code")
-  assert(string.find(berry_code, "var test_anim_ = animation.pulsating_animation(engine)") >= 0, "Should create animation")
+  assert(string.find(berry_code, "var test_anim_ = animation.breathe(engine)") >= 0, "Should create animation")
   assert(string.find(berry_code, "test_anim_.opacity = 150") >= 0, "Should modify animation opacity")
   assert(string.find(berry_code, "test_anim_.priority = 10") >= 0, "Should modify animation priority")
   assert(string.find(berry_code, 'print("Animation modified via berry code")') >= 0, "Should include print statement")
@@ -396,7 +396,7 @@ def test_external_function_complex()
     'extern function rand_meter\n' +
     'extern function breathing_effect\n' +
     'palette rainbow = [0xFF0000, 0x00FF00, 0x0000FF]\n' +
-    'animation meter = palette_meter_animation(level = rand_meter())\n' +
+    'animation meter = palette_meter(level = rand_meter())\n' +
     'animation breath = solid(color=blue)\n' +
     'breath.opacity = breathing_effect\n' +
     'run meter'

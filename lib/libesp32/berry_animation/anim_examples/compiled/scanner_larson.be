@@ -17,7 +17,7 @@ var scanner_bg_ = 0xFF110000
 var background_ = animation.solid(engine)
 background_.color = scanner_bg_
 # Main scanner pulse that bounces
-var scanner_ = animation.beacon_animation(engine)
+var scanner_ = animation.beacon(engine)
 scanner_.color = 0xFFFF0000  # Bright red
 scanner_.pos = 2  # initial position
 scanner_.beacon_size = 3  # pulse width
@@ -32,7 +32,7 @@ scanner_.pos = (def (engine)
   return provider
 end)(engine)
 # Add trailing glow effect
-var scanner_trail_ = animation.beacon_animation(engine)
+var scanner_trail_ = animation.beacon(engine)
 scanner_trail_.color = 0xFF660000  # Dim red trail
 scanner_trail_.pos = 2  # initial position
 scanner_trail_.beacon_size = 6  # wider trail
@@ -65,7 +65,7 @@ color scanner_bg = 0x110000
 animation background = solid(color=scanner_bg)
 
 # Main scanner pulse that bounces
-animation scanner = beacon_animation(
+animation scanner = beacon(
   color=0xFF0000  # Bright red
   pos=2           # initial position
   beacon_size=3   # pulse width
@@ -77,7 +77,7 @@ scanner.priority = 10
 scanner.pos = triangle(min_value=2, max_value=57, duration=2s)
 
 # Add trailing glow effect
-animation scanner_trail = beacon_animation(
+animation scanner_trail = beacon(
   color=0x660000  # Dim red trail
   pos=2           # initial position
   beacon_size=6   # wider trail

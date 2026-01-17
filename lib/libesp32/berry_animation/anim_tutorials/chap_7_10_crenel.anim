@@ -1,7 +1,7 @@
 # @desc Crenel static
 
 # Define a simple crenel 2+2 red/blue
-animation back = crenel_animation(
+animation back = crenel(
     color = red
     back_color = blue
     pulse_size = 2

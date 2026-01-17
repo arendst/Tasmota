@@ -6,7 +6,6 @@
 import "dsl/token.be" as token_module
 var Token = token_module["Token"]
 
-#@ solidify:Lexer,weak
 class Lexer
   var source          # String - DSL source code
   var position        # Integer - current character position

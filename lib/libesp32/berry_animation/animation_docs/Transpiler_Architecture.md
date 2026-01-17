@@ -162,7 +162,7 @@ _add_inherited_params_to_template(template_params_map)
 └── Fallback to static list if instance creation fails
 ```
 
-**Inherited Parameters (from Animation and ParameterizedObject):**
+**Inherited Parameters (from Animation and parameterized_object):**
 - `id` (string, default: "animation")
 - `priority` (int, default: 10)
 - `duration` (int, default: 0)
@@ -336,7 +336,7 @@ _detect_and_cache_symbol(name)
 │   ├── Detect user functions via animation.is_user_function() → create_user_function()
 │   ├── Test constructors with MockEngine:
 │   │   ├── Create instance with mock_engine
-│   │   ├── Check isinstance(instance, animation.value_provider) → create_value_provider()
+│   │   ├── Check animation.is_value_provider(instance) → create_value_provider()
 │   │   └── Check isinstance(instance, animation.animation) → create_animation()
 │   └── Cache result for future lookups
 └── Return nil if not found (handled as user-defined)
@@ -346,7 +346,7 @@ _detect_and_cache_symbol(name)
 
 **Palette Detection:**
 ```berry
-# DSL: animation rainbow = rich_palette_animation(colors=PALETTE_RAINBOW)
+# DSL: animation rainbow = rich_palette(colors=PALETTE_RAINBOW)
 # Detection: PALETTE_RAINBOW exists in animation module, isinstance(obj, bytes)
 # Result: SymbolEntry("PALETTE_RAINBOW", "palette", bytes_instance, true)
 # Reference: "animation.PALETTE_RAINBOW"
@@ -354,7 +354,7 @@ _detect_and_cache_symbol(name)
 
 **Constant Detection:**
 ```berry
-# DSL: animation wave = wave_animation(waveform=LINEAR)
+# DSL: animation wave = wave(waveform=LINEAR)
 # Detection: LINEAR exists in animation module, type(LINEAR) == "int"
 # Result: SymbolEntry("LINEAR", "constant", 1, true)
 # Reference: "animation.LINEAR"
@@ -371,7 +371,7 @@ _detect_and_cache_symbol(name)
 **Value Provider Detection:**
 ```berry
 # DSL: set oscillator = triangle(min_value=0, max_value=100, period=2s)
-# Detection: triangle(mock_engine) creates instance, isinstance(instance, animation.value_provider)
+# Detection: triangle(mock_engine) creates instance, animation.is_value_provider(instance)
 # Result: SymbolEntry("triangle", "value_provider", instance, true)
 # Reference: "animation.triangle"
 ```
@@ -442,8 +442,8 @@ MockEngine
 # Test if function creates value provider
 try
   var instance = factory_func(self.mock_engine)
-  if isinstance(instance, animation.value_provider)
-    return SymbolEntry.create_value_provider(name, instance, animation.value_provider)
+  if animation.is_value_provider(instance)
+    return SymbolEntry.create_value_provider(name, instance)
   end
 except .. as e, msg
   # Constructor failed - not a valid provider
@@ -532,12 +532,12 @@ _validate_value_provider_reference(object_name, context)
 ### Engine-First Pattern (Consistent)
 All factory functions use the engine-first pattern with **automatic strip initialization**:
 ```berry
-# DSL: animation pulse = pulsating_animation(color=red, period=2s)
+# DSL: animation pulse = breathe(color=red, period=2s)
 # Generated:
 # Auto-generated strip initialization (using Tasmota configuration)
 var engine = animation.init_strip()
 
-var pulse_ = animation.pulsating_animation(engine)
+var pulse_ = animation.breathe(engine)
 pulse_.color = animation.red
 pulse_.period = 2000
 ```
@@ -585,13 +585,13 @@ template pulse_effect {
   param color type color
   param speed
   
-  animation pulse = pulsating_animation(color=color, period=speed)
+  animation pulse = breathe(color=color, period=speed)
   run pulse
 }
 
 # Generated:
 def pulse_effect_template(engine, color_, speed_)
-  var pulse_ = animation.pulsating_animation(engine)
+  var pulse_ = animation.breathe(engine)
   pulse_.color = color_
   pulse_.period = speed_
   engine.add(pulse_)
@@ -742,7 +742,7 @@ get_error_report()
 - **Factory function discovery** via introspection with existence checking
 - **Parameter validation** using instance methods and has_param()
 - **Symbol resolution** using module contents with fallback handling
-- **Mathematical function detection** using dynamic introspection of ClosureValueProvider
+- **Mathematical function detection** using dynamic introspection of closure_value
 - **Automatic strip initialization** when no explicit strip configuration
 
 ### User Function Integration
@@ -820,7 +820,7 @@ The transpiler has been significantly refactored to leverage the `symbol_table.b
 - **Integer Constants**: `LINEAR`, `SINE`, `COSINE` → `animation.LINEAR`, `animation.SINE`, `animation.COSINE`
 - **Math Functions**: `max`, `min` → `animation.max`, `animation.min` (transformed to `animation._math.*` in closures)
 - **Value Providers**: `triangle`, `smooth` → `animation.triangle`, `animation.smooth`
-- **Animation Constructors**: `solid`, `pulsating_animation` → `animation.solid`, `animation.pulsating_animation`
+- **Animation Constructors**: `solid`, `breathe` → `animation.solid`, `animation.breathe`
 - **User-defined Symbols**: `my_color`, `my_animation` → `my_color_`, `my_animation_`
 
 **Validation Improvements:**

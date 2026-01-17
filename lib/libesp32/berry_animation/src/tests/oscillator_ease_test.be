@@ -1,4 +1,4 @@
-# Test suite for OscillatorValueProvider ease_in and ease_out functionality
+# Test suite for oscillator_value ease_in and ease_out functionality
 #
 # This test verifies that the new EASE_IN and EASE_OUT waveforms work correctly
 # and produce the expected easing curves.
@@ -214,7 +214,7 @@ end
 
 # Run all tests
 def run_oscillator_ease_tests()
-  print("=== OscillatorValueProvider Ease Tests ===")
+  print("=== oscillator_value Ease Tests ===")
   
   try
     test_ease_in_waveform()
@@ -225,7 +225,7 @@ def run_oscillator_ease_tests()
     test_ease_tostring()
     test_ease_constants()
     
-    print("=== All OscillatorValueProvider ease tests passed! ===")
+    print("=== All oscillator_value ease tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

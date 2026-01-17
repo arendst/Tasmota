@@ -30,8 +30,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BeaconAnimation,weak
-class BeaconAnimation : animation.animation
+class beacon : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions following the new specification
@@ -45,18 +44,19 @@ class BeaconAnimation : animation.animation
 
   # Render the beacon to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms, strip_length)
-    # Use virtual parameter access - automatically resolves ValueProviders
-    var back_color = self.back_color
-    var pos = self.pos
-    var slew_size = self.slew_size
-    var beacon_size = self.beacon_size
-    var color = self.color
-    var right_edge = self.right_edge
+    # Use virtual parameter access - automatically resolves value_providers
+    var member = self.member
+    var back_color = member(self, "back_color")
+    var pos = member(self, "pos")
+    var slew_size = member(self, "slew_size")
+    var beacon_size = member(self, "beacon_size")
+    var color = member(self, "color")
+    var right_edge = member(self, "right_edge")
     
     # Fill background if not transparent
     if (back_color != 0xFF000000) && ((back_color & 0xFF000000) != 0x00)
@@ -139,4 +139,4 @@ class BeaconAnimation : animation.animation
 end
 
 # Export class directly - no redundant factory function needed
-return {'beacon_animation': BeaconAnimation}
+return {'beacon': beacon}

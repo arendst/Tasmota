@@ -11,7 +11,7 @@ Write a Berry function that creates and returns an animation:
 ```berry
 # Define a custom breathing effect
 def my_breathing(engine, color, speed)
-  var anim = animation.pulsating_animation(engine)
+  var anim = animation.breathe(engine)
   anim.color = color
   anim.min_brightness = 50
   anim.max_brightness = 255
@@ -163,7 +163,7 @@ dim_blue.opacity = bright(30)
 
 ```berry
 def custom_fire(engine, intensity, speed)
-  var color_provider = animation.rich_palette(engine)
+  var color_provider = animation.rich_palette_color(engine)
   color_provider.colors = animation.PALETTE_FIRE
   color_provider.period = speed
   
@@ -188,7 +188,7 @@ torch.opacity = fire(255, 500)
 
 ```berry
 def twinkles(engine, color, count, period)
-  var anim = animation.twinkle_animation(engine)
+  var anim = animation.twinkle(engine)
   anim.color = color
   anim.count = count
   anim.period = period
@@ -210,7 +210,7 @@ fairy_dust.opacity = twinkles(8, 600ms)
 
 ```berry
 def pulse_at(engine, color, position, width, speed)
-  var anim = animation.beacon_animation(engine)
+  var anim = animation.beacon(engine)
   anim.color = color
   anim.position = position
   anim.width = width
@@ -236,7 +236,7 @@ right_pulse.position = pulse_at(25, 3, 2000)
 ```berry
 def rainbow_twinkle(engine, base_speed, twinkle_density)
   # Create base rainbow animation
-  var rainbow_provider = animation.rich_palette(engine)
+  var rainbow_provider = animation.rich_palette_color(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
   rainbow_provider.period = base_speed
   
@@ -290,7 +290,7 @@ animation.register_user_function("custom_palette", create_custom_palette)
 
 ```berry
 # Use dynamic colors in DSL
-animation gradient_effect = rich_palette(
+animation gradient_effect = rich_palette_color(
   colors=custom_palette(0xFF6B35, 5, 255)
   period=4s
 )
@@ -302,7 +302,7 @@ run gradient_effect
 
 ```berry
 def police_lights(engine, flash_speed)
-  var anim = animation.pulsating_animation(engine)
+  var anim = animation.breathe(engine)
   anim.color = 0xFFFF0000  # Red
   anim.min_brightness = 0
   anim.max_brightness = 255
@@ -406,7 +406,7 @@ def flexible_pulse(engine, color, period, min_brightness, max_brightness)
   if min_brightness == nil min_brightness = 50 end
   if max_brightness == nil max_brightness = 255 end
   
-  var anim = animation.pulsating_animation(engine)
+  var anim = animation.breathe(engine)
   anim.color = color
   anim.period = period
   anim.min_brightness = min_brightness
@@ -424,7 +424,7 @@ def safe_comet(engine, color, tail_length, speed)
   if tail_length > 20 tail_length = 20 end
   if speed < 100 speed = 100 end
   
-  var anim = animation.comet_animation(engine)
+  var anim = animation.comet(engine)
   anim.color = color
   anim.tail_length = tail_length
   anim.speed = speed

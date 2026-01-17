@@ -1,4 +1,4 @@
 # @desc Twinkle stars - using predefined animations
 
-animation stars = twinkle_animation()
+animation stars = twinkle()
 run stars

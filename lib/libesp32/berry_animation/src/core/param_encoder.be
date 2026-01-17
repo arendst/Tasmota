@@ -280,7 +280,7 @@ end
 
 # Export only the encode function (decode not needed - use constraint_mask/constraint_find instead)
 # Note: constraint_mask() and constraint_find() are static methods
-# in ParameterizedObject class for accessing encoded constraints
+# in parameterized_object class for accessing encoded constraints
 return {
   'enc_params': encode_constraints
 }

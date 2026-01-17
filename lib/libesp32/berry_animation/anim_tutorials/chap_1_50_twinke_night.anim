@@ -6,7 +6,7 @@ animation background = solid(color=space_blue)
 run background
 
 # Note: when parameters are in separate lines, you don't need a comma ','
-animation stars = twinkle_animation(
+animation stars = twinkle(
   color=0xFFFFAA        # Light yellow sparkles
   density=8             # density (moderate sparkles)
   twinkle_speed=100ms   # twinkle speed

@@ -268,7 +268,9 @@ struct TasmotaGlobal_t {
   uint32_t zc_code_offset;                  // Zero cross moment offset due to executing power code (microseconds)
   uint32_t zc_interval;                     // Zero cross interval around 8333 (60Hz) or 10000 (50Hz) (microseconds)
   GpioOptionABits gpio_optiona;             // GPIO Option_A flags
+#ifdef ESP32
   void *log_buffer_mutex;                   // Control access to log buffer
+#endif
 
   power_t power;                            // Current copy of Settings->power
   power_t power_latching;                   // Current state of single pin latching power

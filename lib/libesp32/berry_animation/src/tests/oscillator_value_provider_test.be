@@ -1,6 +1,6 @@
-# Test suite for OscillatorValueProvider
+# Test suite for oscillator_value
 #
-# This test verifies that the OscillatorValueProvider works correctly
+# This test verifies that the oscillator_value works correctly
 # with all waveform types and parameter configurations using the new parameterized API.
 
 import animation
@@ -23,7 +23,7 @@ var mock_engine = MockEngine()
 
 # Test basic oscillator functionality
 def test_oscillator_basic()
-  print("Testing OscillatorValueProvider basic functionality...")
+  print("Testing oscillator_value basic functionality...")
   
   # Create oscillator using new parameterized API
   var osc = animation.oscillator_value(mock_engine)
@@ -53,7 +53,7 @@ def test_oscillator_basic()
   assert(osc.min_value == 10, "Starting value should be set to 10")
   assert(osc.max_value == 90, "End value should be set to 90")
   
-  print("✓ OscillatorValueProvider basic functionality test passed")
+  print("✓ oscillator_value basic functionality test passed")
 end
 
 # Test sawtooth waveform
@@ -373,14 +373,14 @@ def test_produce_value_method()
   print("✓ produce_value method test passed")
 end
 
-# Test ValueProvider interface compliance
+# Test value_provider interface compliance
 def test_value_provider_interface()
-  print("Testing ValueProvider interface compliance...")
+  print("Testing value_provider interface compliance...")
   
   var osc = animation.oscillator_value(mock_engine)
   
   # Test that it's recognized as a value provider
-  assert(animation.is_value_provider(osc) == true, "OscillatorValueProvider should be recognized as ValueProvider")
+  assert(animation.is_value_provider(osc) == true, "oscillator_value should be recognized as value_provider")
   
   # Test that produce_value() works with time parameter
   var value = osc.produce_value("test", mock_engine.time_ms)
@@ -390,7 +390,7 @@ def test_value_provider_interface()
   var result = osc.start(mock_engine.time_ms)
   assert(result == osc, "start() should return self for method chaining")
   
-  print("✓ ValueProvider interface compliance test passed")
+  print("✓ value_provider interface compliance test passed")
 end
 
 # Test edge cases and error handling
@@ -526,7 +526,7 @@ end
 
 # Run all tests
 def run_oscillator_value_provider_tests()
-  print("=== OscillatorValueProvider Tests ===")
+  print("=== oscillator_value Tests ===")
   
   try
     test_oscillator_basic()
@@ -543,7 +543,7 @@ def run_oscillator_value_provider_tests()
     test_edge_cases()
     test_tostring()
     
-    print("=== All OscillatorValueProvider tests passed! ===")
+    print("=== All oscillator_value tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

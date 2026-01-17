@@ -1,4 +1,4 @@
-# Test file for animation.solid with ColorCycleColorProvider
+# Test file for animation.solid with color_cycle
 #
 # This file contains tests for the animation.solid class with color cycle provider
 #
@@ -21,14 +21,14 @@ class ColorCycleAnimationTest
     self.passed = 0
     self.failed = 0
     
-    print("Running animation.solid with ColorCycleColorProvider Tests")
+    print("Running animation.solid with color_cycle Tests")
     
     self.test_initialization()
     self.test_update_and_render()
     self.test_manual_only_mode()
     self.test_direct_creation()
     
-    print(f"animation.solid with ColorCycleColorProvider Tests: {self.passed} passed, {self.failed} failed")
+    print(f"animation.solid with color_cycle Tests: {self.passed} passed, {self.failed} failed")
   end
   
   def assert_equal(actual, expected, test_name)

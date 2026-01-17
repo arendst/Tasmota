@@ -1,4 +1,4 @@
-# Test suite for OscillatorValueProvider ELASTIC and BOUNCE functionality
+# Test suite for oscillator_value ELASTIC and BOUNCE functionality
 #
 # This test verifies that the new ELASTIC and BOUNCE waveforms work correctly
 # and produce the expected spring-like and bouncing curves.
@@ -246,7 +246,7 @@ end
 
 # Run all tests
 def run_oscillator_elastic_bounce_tests()
-  print("=== OscillatorValueProvider Elastic & Bounce Tests ===")
+  print("=== oscillator_value Elastic & Bounce Tests ===")
   
   try
     test_elastic_waveform()
@@ -257,7 +257,7 @@ def run_oscillator_elastic_bounce_tests()
     test_elastic_bounce_constants()
     test_elastic_bounce_characteristics()
     
-    print("=== All OscillatorValueProvider elastic & bounce tests passed! ===")
+    print("=== All oscillator_value elastic & bounce tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

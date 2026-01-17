@@ -49,7 +49,7 @@ class MyAnimation : animation.animation
       return false
     end
     
-    # Use virtual parameter access - automatically resolves ValueProviders
+    # Use virtual parameter access - automatically resolves value_providers
     var param1 = self.my_param1
     var param2 = self.my_param2
     
@@ -79,7 +79,7 @@ The `PARAMS` static variable defines all parameters specific to your animation c
 - **Parameter validation** with min/max constraints and type checking
 - **Default value handling** for initialization
 - **Virtual parameter access** through getmember/setmember
-- **Automatic ValueProvider resolution**
+- **Automatic value_provider resolution**
 
 #### Parameter Definition Format
 
@@ -152,13 +152,13 @@ end
 
 ## Value Provider Integration
 
-### Automatic ValueProvider Resolution
+### Automatic value_provider Resolution
 
-The virtual parameter system automatically resolves ValueProviders when you access parameters:
+The virtual parameter system automatically resolves value_providers when you access parameters:
 
 ```berry
 def render(frame, time_ms, strip_length)
-  # Virtual parameter access automatically resolves ValueProviders
+  # Virtual parameter access automatically resolves value_providers
   var color = self.color      # Returns current color value, not the provider
   var position = self.pos     # Returns current position value
   var size = self.size        # Returns current size value
@@ -177,7 +177,7 @@ end
 
 ### Setting Dynamic Parameters
 
-Users can set both static values and ValueProviders using the same syntax:
+Users can set both static values and value_providers using the same syntax:
 
 ```berry
 # Create animation
@@ -217,7 +217,7 @@ end
 
 ### Color Provider LUT Optimization
 
-For color providers that perform expensive color calculations (like palette interpolation), the base `ColorProvider` class provides a Lookup Table (LUT) mechanism for caching pre-computed colors:
+For color providers that perform expensive color calculations (like palette interpolation), the base `color_provider` class provides a Lookup Table (LUT) mechanism for caching pre-computed colors:
 
 ```berry
 #@ solidify:MyColorProvider,weak
@@ -234,7 +234,7 @@ class MyColorProvider : animation.color_provider
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
     if name == "colors" || name == "transition_type"
-      self._lut_dirty = true  # Inherited from ColorProvider
+      self._lut_dirty = true  # Inherited from color_provider
     end
   end
   
@@ -296,7 +296,7 @@ class MyColorProvider : animation.color_provider
   end
   
   # Access LUT from outside (returns bytes() or nil)
-  # Inherited from ColorProvider: get_lut()
+  # Inherited from color_provider: get_lut()
 end
 ```
 
@@ -320,7 +320,7 @@ end
 
 **Brightness Handling:**
 
-The `ColorProvider` base class includes a `brightness` parameter (0-255, default 255) and a static method for applying brightness scaling:
+The `color_provider` base class includes a `brightness` parameter (0-255, default 255) and a static method for applying brightness scaling:
 
 ```berry
 # Static method for brightness scaling (only scales if brightness != 255)
@@ -370,13 +370,13 @@ var success = anim.set_param("size", -1)  # Returns false, no exception
 ### Accessing Raw Parameters
 
 ```berry
-# Get current parameter value (resolved if ValueProvider)
+# Get current parameter value (resolved if value_provider)
 var current_color = anim.color
 
-# Get raw parameter (returns ValueProvider if set)
+# Get raw parameter (returns value_provider if set)
 var raw_color = anim.get_param("color")
 
-# Check if parameter is a ValueProvider
+# Check if parameter is a value_provider
 if animation.is_value_provider(raw_color)
   print("Color is dynamic")
 else
@@ -445,13 +445,13 @@ for i: 0..(frame.width-1)
 end
 ```
 
-## Complete Example: BeaconAnimation
+## Complete Example: beacon
 
 Here's a complete example showing all concepts:
 
 ```berry
-#@ solidify:BeaconAnimation,weak
-class BeaconAnimation : animation.animation
+#@ solidify:beacon,weak
+class beacon : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions following the new specification
@@ -486,7 +486,7 @@ class BeaconAnimation : animation.animation
     end
     
     var pixel_size = strip_length
-    # Use virtual parameter access - automatically resolves ValueProviders
+    # Use virtual parameter access - automatically resolves value_providers
     var back_color = self.back_color
     var pos = self.pos
     var slew_size = self.slew_size
@@ -575,12 +575,12 @@ class BeaconAnimation : animation.animation
   
   # String representation of the animation
   def tostring()
-    return f"BeaconAnimation(color=0x{self.color :08x}, pos={self.pos}, beacon_size={self.beacon_size}, slew_size={self.slew_size})"
+    return f"beacon(color=0x{self.color :08x}, pos={self.pos}, beacon_size={self.beacon_size}, slew_size={self.slew_size})"
   end
 end
 
 # Export class directly - no redundant factory function needed
-return {'beacon_animation': BeaconAnimation}
+return {'beacon': beacon}
 ```
 
 ## Testing Your Animation

@@ -16,7 +16,7 @@ Create a simple pulsing red light:
 color bordeaux = 0x6F2C4F
 
 # Create pulsing animation
-animation pulse_bordeaux = pulsating_animation(color=bordeaux, period=3s)
+animation pulse_bordeaux = breathe(color=bordeaux, period=3s)
 
 # Run it
 run pulse_bordeaux
@@ -28,7 +28,7 @@ Create smooth color transitions:
 
 ```berry
 # Use predefined rainbow palette
-animation rainbow_cycle = rich_palette(
+animation rainbow_cycle = rich_palette_color(
   colors=PALETTE_RAINBOW
   period=5s
   transition_type=1
@@ -52,7 +52,7 @@ palette sunset = [
 ]
 
 # Create palette animation
-animation sunset_glow = rich_palette(
+animation sunset_glow = rich_palette_color(
   colors=sunset
   period=8s
   transition_type=1
@@ -66,9 +66,9 @@ run sunset_glow
 Create complex shows with sequences:
 
 ```berry
-animation red_pulse = pulsating_animation(color=red, period=2s)
-animation green_pulse = pulsating_animation(color=green, period=2s)
-animation blue_pulse = pulsating_animation(color=blue, period=2s)
+animation red_pulse = breathe(color=red, period=2s)
+animation green_pulse = breathe(color=green, period=2s)
+animation blue_pulse = breathe(color=blue, period=2s)
 
 sequence rgb_show {
   play red_pulse for 3s
@@ -109,7 +109,7 @@ Add movement and variation to your animations:
 
 ```berry
 # Breathing effect with smooth oscillation
-animation breathing = pulsating_animation(
+animation breathing = breathe(
   color=blue
   min_brightness=20%
   max_brightness=100%
@@ -117,14 +117,14 @@ animation breathing = pulsating_animation(
 )
 
 # Moving comet effect
-animation comet = comet_animation(
+animation comet = comet(
   color=white
   tail_length=8
   speed=2000
 )
 
 # Twinkling effect
-animation sparkles = twinkle_animation(
+animation sparkles = twinkle(
   color=white
   count=8
   period=800ms
@@ -137,7 +137,7 @@ run breathing
 
 ### Fire Effect
 ```berry
-animation fire = rich_palette(
+animation fire = rich_palette_color(
   colors=PALETTE_FIRE
   period=2s
   transition_type=1
@@ -172,7 +172,7 @@ template animation shutter_effect {
   set strip_len = strip_length()
   color col = color_cycle(colors=colors, period=0)
   
-  animation shutter = beacon_animation(
+  animation shutter = beacon(
     color = col
     beacon_size = strip_len / 2
   )
@@ -210,7 +210,7 @@ template pulse_effect {
   param color type color
   param speed
   
-  animation pulse = pulsating_animation(color=color, period=speed)
+  animation pulse = breathe(color=color, period=speed)
   run pulse
 }
 
@@ -226,7 +226,7 @@ For complex logic, create custom functions in Berry:
 ```berry
 # Define custom function - engine must be first parameter
 def my_twinkle(engine, color, count, period)
-  var anim = animation.twinkle_animation(engine)
+  var anim = animation.twinkle(engine)
   anim.color = color
   anim.count = count
   anim.period = period

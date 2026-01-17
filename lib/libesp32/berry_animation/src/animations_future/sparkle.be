@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:SparkleAnimation,weak
 class SparkleAnimation : animation.animation
   # Non-parameter instance variables only
   var current_colors     # Array of current colors for each pixel
@@ -80,7 +79,7 @@ class SparkleAnimation : animation.animation
   
   # Override start method for timing control (acts as both start and restart)
   def start(time_ms)
-    # Call parent start first (handles ValueProvider propagation)
+    # Call parent start first (handles value_provider propagation)
     super(self).start(time_ms)
     
     # Reset random seed for consistent restarts
@@ -171,7 +170,7 @@ class SparkleAnimation : animation.animation
     # Get base color using virtual parameter access
     var base_color = 0xFFFFFFFF
     
-    # Access color parameter (automatically resolves ValueProviders)
+    # Access color parameter (automatically resolves value_providers)
     var color_param = self.color
     if animation.is_color_provider(color_param) && color_param.get_color_for_value != nil
       base_color = color_param.get_color_for_value(brightness, 0)
@@ -222,7 +221,7 @@ end
 # @param engine: AnimationEngine - Required animation engine reference
 # @return SparkleAnimation - A new rainbow sparkle animation instance
 def sparkle_rainbow(engine)
-  var rainbow_provider = animation.rich_palette(engine)
+  var rainbow_provider = animation.rich_palette_color(engine)
   rainbow_provider.colors = animation.PALETTE_RAINBOW
   rainbow_provider.period = 5000
   rainbow_provider.transition_type = 1  # sine transition

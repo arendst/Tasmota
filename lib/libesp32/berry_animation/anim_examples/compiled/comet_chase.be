@@ -17,20 +17,20 @@ var space_blue_ = 0xFF000066  # Note: opaque 0xFF alpha channel is implicitly ad
 var background_ = animation.solid(engine)
 background_.color = space_blue_
 # Main comet with bright white head
-var comet_main_ = animation.comet_animation(engine)
+var comet_main_ = animation.comet(engine)
 comet_main_.color = 0xFFFFFFFF  # White head
 comet_main_.tail_length = 10  # tail length
 comet_main_.speed = 2000  # speed
 comet_main_.priority = 7
 # Secondary comet in different color, opposite direction
-var comet_secondary_ = animation.comet_animation(engine)
+var comet_secondary_ = animation.comet(engine)
 comet_secondary_.color = 0xFFFF4500  # Orange head
 comet_secondary_.tail_length = 8  # shorter tail
 comet_secondary_.speed = 3000  # slower speed
 comet_secondary_.direction = (-1)  # other direction
 comet_secondary_.priority = 5
 # Add sparkle trail behind comets but on top of blue background
-var comet_sparkles_ = animation.twinkle_animation(engine)
+var comet_sparkles_ = animation.twinkle(engine)
 comet_sparkles_.color = 0xFFAAAAFF  # Light blue sparkles
 comet_sparkles_.density = 8  # density (moderate sparkles)
 comet_sparkles_.twinkle_speed = 400  # twinkle speed (quick sparkle)
@@ -54,7 +54,7 @@ color space_blue = 0x000066    # Note: opaque 0xFF alpha channel is implicitly a
 animation background = solid(color=space_blue)
 
 # Main comet with bright white head
-animation comet_main = comet_animation(
+animation comet_main = comet(
   color=0xFFFFFF  # White head
   tail_length=10  # tail length
   speed=2s        # speed
@@ -62,7 +62,7 @@ animation comet_main = comet_animation(
 )
 
 # Secondary comet in different color, opposite direction
-animation comet_secondary = comet_animation(
+animation comet_secondary = comet(
   color=0xFF4500  # Orange head
   tail_length=8   # shorter tail
   speed=3s        # slower speed
@@ -71,7 +71,7 @@ animation comet_secondary = comet_animation(
 )
 
 # Add sparkle trail behind comets but on top of blue background
-animation comet_sparkles = twinkle_animation(
+animation comet_sparkles = twinkle(
   color=0xAAAAFF  # Light blue sparkles
   density=8       # density (moderate sparkles)
   twinkle_speed=400ms # twinkle speed (quick sparkle)

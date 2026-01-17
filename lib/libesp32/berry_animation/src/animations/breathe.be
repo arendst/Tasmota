@@ -10,10 +10,9 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:BreatheAnimation,weak
-class BreatheAnimation : animation.animation
+class breathe : animation.animation
   # Non-parameter instance variables only
-  var breathe_provider # Internal breathe color provider
+  var _breathe # Internal breathe color provider
   
   # Parameter definitions following parameterized class specification
   # Note: 'color' is inherited from Animation base class
@@ -33,10 +32,10 @@ class BreatheAnimation : animation.animation
     super(self).init(engine)
     
     # Create internal breathe color provider
-    self.breathe_provider = animation.breathe_color(engine)
+    self._breathe = animation.breathe_color(engine)
     
     # Set the animation's color parameter to use the breathe provider
-    self.values["color"] = self.breathe_provider
+    self.values["color"] = self._breathe
   end
   
   # Handle parameter changes - propagate to internal breathe provider
@@ -44,21 +43,21 @@ class BreatheAnimation : animation.animation
     super(self).on_param_changed(name, value)
     # Propagate relevant parameters to the breathe provider
     if name == "color"
-      # When color is set, update the breathe_provider's base_color
-      # but keep the breathe_provider as the actual color source for rendering
+      # When color is set, update the _breathe's color
+      # but keep the _breathe as the actual color source for rendering
       if type(value) == 'int'
-        self.breathe_provider.base_color = value
-        # Restore the breathe_provider as the color source (bypass on_param_changed)
-        self.values["color"] = self.breathe_provider
+        self._breathe.color = value
+        # Restore the _breathe as the color source (bypass on_param_changed)
+        self.values["color"] = self._breathe
       end
     elif name == "min_brightness"
-      self.breathe_provider.min_brightness = value
+      self._breathe.min_brightness = value
     elif name == "max_brightness"
-      self.breathe_provider.max_brightness = value
+      self._breathe.max_brightness = value
     elif name == "period"
-      self.breathe_provider.duration = value
+      self._breathe.period = value
     elif name == "curve_factor"
-      self.breathe_provider.curve_factor = value
+      self._breathe.curve_factor = value
     end
   end
   
@@ -69,25 +68,13 @@ class BreatheAnimation : animation.animation
   def start(start_time)
     # Call parent start method first
     super(self).start(start_time)
-    
-    # Start the breathe provider with the same time
-    var actual_start_time = start_time != nil ? start_time : self.engine.time_ms
-    self.breathe_provider.start(actual_start_time)
-    
+    self._breathe.start(start_time)
     return self
   end
   
   # The render method is inherited from Animation base class
-  # It automatically uses self.color (which is set to self.breathe_provider)
-  # The breathe_provider produces the breathing color effect
+  # It automatically uses self.color (which is set to self._breathe)
+  # The _breathe produces the breathing color effect
 end
 
-# Factory method to create a pulsating animation (sine wave, equivalent to old pulse.be)
-def pulsating_animation(engine)
-  var anim = animation.breathe_animation(engine)
-  anim.curve_factor = 1  # Pure sine wave for pulsing effect
-  anim.period = 1000     # Faster default period for pulsing
-  return anim
-end
-
-return {'breathe_animation': BreatheAnimation, 'pulsating_animation': pulsating_animation}
+return {'breathe': breathe }

@@ -1,21 +1,21 @@
-# Test suite for WaveAnimation
+# Test suite for wave
 #
-# This test verifies that the WaveAnimation works correctly
+# This test verifies that the wave works correctly
 # with different parameters and color providers.
 
 import animation
 import string
 
-# Test basic WaveAnimation creation and functionality
+# Test basic wave creation and functionality
 def test_wave_animation_basic()
-  print("Testing basic WaveAnimation...")
+  print("Testing basic wave...")
   
   # Create engine and animation
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var wave_anim = animation.wave_animation(engine)
+  var wave_anim = animation.wave(engine)
   
-  assert(wave_anim != nil, "WaveAnimation should be created")
+  assert(wave_anim != nil, "wave should be created")
   assert(wave_anim.back_color == 0xFF000000, "Default background should be black")
   assert(wave_anim.wave_type == 0, "Default wave_type should be 0 (sine)")
   assert(wave_anim.amplitude == 128, "Default amplitude should be 128")
@@ -25,17 +25,17 @@ def test_wave_animation_basic()
   assert(wave_anim.center_level == 128, "Default center_level should be 128")
   assert(wave_anim.is_running == false, "Animation should not be running initially")
   
-  print("✓ Basic WaveAnimation test passed")
+  print("✓ Basic wave test passed")
 end
 
-# Test WaveAnimation with custom parameters
+# Test wave with custom parameters
 def test_wave_animation_custom()
-  print("Testing WaveAnimation with custom parameters...")
+  print("Testing wave with custom parameters...")
   
   # Create engine and animation with custom parameters
   var strip = global.Leds(20)
   var engine = animation.create_engine(strip)
-  var wave_anim = animation.wave_animation(engine)
+  var wave_anim = animation.wave(engine)
   
   # Set custom parameters using virtual member access
   wave_anim.color = 0xFF00FF00
@@ -61,16 +61,16 @@ def test_wave_animation_custom()
   assert(wave_anim.duration == 5000, "Custom duration should be 5000")
   assert(wave_anim.loop == false, "Custom loop should be false")
   
-  print("✓ Custom WaveAnimation test passed")
+  print("✓ Custom wave test passed")
 end
 
-# Test WaveAnimation parameter changes
+# Test wave parameter changes
 def test_wave_animation_parameters()
-  print("Testing WaveAnimation parameter changes...")
+  print("Testing wave parameter changes...")
   
   var strip = global.Leds(15)
   var engine = animation.create_engine(strip)
-  var wave_anim = animation.wave_animation(engine)
+  var wave_anim = animation.wave(engine)
   
   # Test parameter changes using virtual member access
   wave_anim.wave_type = 1
@@ -88,16 +88,16 @@ def test_wave_animation_parameters()
   wave_anim.back_color = 0xFF222222
   assert(wave_anim.back_color == 0xFF222222, "Background color should be updated")
   
-  print("✓ WaveAnimation parameter test passed")
+  print("✓ wave parameter test passed")
 end
 
-# Test WaveAnimation update and render
+# Test wave update and render
 def test_wave_animation_update_render()
-  print("Testing WaveAnimation update and render...")
+  print("Testing wave update and render...")
   
   var strip = global.Leds(10)
   var engine = animation.create_engine(strip)
-  var wave_anim = animation.wave_animation(engine)
+  var wave_anim = animation.wave(engine)
   
   # Set parameters
   wave_anim.color = 0xFFFF0000
@@ -135,7 +135,7 @@ def test_wave_animation_update_render()
   end
   assert(has_non_black == true, "Frame should have non-black pixels after render")
   
-  print("✓ WaveAnimation update/render test passed")
+  print("✓ wave update/render test passed")
 end
 
 # Test different wave types
@@ -150,7 +150,7 @@ def test_wave_types()
   var wave_types = [0, 1, 2, 3]  # sine, triangle, square, sawtooth
   var i = 0
   while i < 4
-    var wave_anim = animation.wave_animation(engine)
+    var wave_anim = animation.wave(engine)
     wave_anim.color = 0xFFFF0000
     wave_anim.back_color = 0xFF000000
     wave_anim.wave_type = wave_types[i]
@@ -170,44 +170,13 @@ def test_wave_types()
   print("✓ Wave types test passed")
 end
 
-# Test global constructor functions
-def test_wave_constructors()
-  print("Testing wave constructor functions...")
-  
-  var strip = global.Leds(30)
-  var engine = animation.create_engine(strip)
-  
-  # Test wave_rainbow_sine
-  var rainbow_wave = animation.wave_rainbow_sine(engine)
-  assert(rainbow_wave != nil, "wave_rainbow_sine should create animation")
-  assert(rainbow_wave.frequency == 32, "Rainbow wave should have default frequency")
-  assert(rainbow_wave.wave_speed == 50, "Rainbow wave should have default wave_speed")
-  assert(rainbow_wave.wave_type == 0, "Rainbow wave should be sine type")
-  
-  # Test wave_single_sine
-  var single_wave = animation.wave_single_sine(engine)
-  assert(single_wave != nil, "wave_single_sine should create animation")
-  assert(single_wave.frequency == 32, "Single wave should have default frequency")
-  assert(single_wave.wave_speed == 50, "Single wave should have default wave_speed")
-  assert(single_wave.wave_type == 0, "Single wave should be sine type")
-  
-  # Test wave_custom
-  var custom_wave = animation.wave_custom(engine)
-  assert(custom_wave != nil, "wave_custom should create animation")
-  assert(custom_wave.wave_type == 2, "Custom wave should have square wave type")
-  assert(custom_wave.frequency == 40, "Custom wave should have correct frequency")
-  assert(custom_wave.wave_speed == 30, "Custom wave should have correct wave_speed")
-  
-  print("✓ Wave constructor functions test passed")
-end
-
-# Test WaveAnimation string representation
+# Test wave string representation
 def test_wave_tostring()
-  print("Testing WaveAnimation string representation...")
+  print("Testing wave string representation...")
   
   var strip = global.Leds(12)
   var engine = animation.create_engine(strip)
-  var wave_anim = animation.wave_animation(engine)
+  var wave_anim = animation.wave(engine)
   
   # Set parameters
   wave_anim.wave_type = 1
@@ -220,12 +189,12 @@ def test_wave_tostring()
   
   assert(type(str_repr) == "string", "String representation should be a string")
   
-  print("✓ WaveAnimation string representation test passed")
+  print("✓ wave string representation test passed")
 end
 
 # Run all tests
 def run_wave_animation_tests()
-  print("=== WaveAnimation Tests ===")
+  print("=== wave Tests ===")
   
   try
     test_wave_animation_basic()
@@ -233,10 +202,9 @@ def run_wave_animation_tests()
     test_wave_animation_parameters()
     test_wave_animation_update_render()
     test_wave_types()
-    test_wave_constructors()
     test_wave_tostring()
     
-    print("=== All WaveAnimation tests passed! ===")
+    print("=== All wave tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

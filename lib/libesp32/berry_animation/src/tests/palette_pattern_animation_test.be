@@ -38,9 +38,9 @@ class MockColorSource
 end
 var mock_color_source = MockColorSource()
 
-# Test 1: PaletteGradientAnimation
-print("Test 3: PaletteGradientAnimation")
-var gradient_anim = animation.palette_gradient_animation(mock_engine)
+# Test 1: palette_gradient
+print("Test 3: palette_gradient")
+var gradient_anim = animation.palette_gradient(mock_engine)
 gradient_anim.color_source = mock_color_source
 gradient_anim.shift_period = 3000  # 3 second shift period
 gradient_anim.priority = 10
@@ -81,7 +81,7 @@ assert(gradient_anim.shift_period == 0, "Shift period should be updated to 0 (st
 
 # Test 3: Changing color sources dynamically
 print("Test 3: Changing color sources dynamically")
-var dynamic_anim = animation.palette_gradient_animation(mock_engine)
+var dynamic_anim = animation.palette_gradient(mock_engine)
 dynamic_anim.color_source = mock_color_source
 dynamic_anim.shift_period = 1000
 dynamic_anim.spatial_period = 3
@@ -116,7 +116,7 @@ assert(result, "Render should return true")
 
 # Test 4: Parameter validation
 print("Test 4: Parameter validation")
-var validation_anim = animation.palette_gradient_animation(mock_engine)
+var validation_anim = animation.palette_gradient(mock_engine)
 
 # Test valid parameter values
 validation_anim.shift_period = 500
@@ -144,7 +144,7 @@ class MockRainbowColorSource
 end
 var rainbow_color_source = MockRainbowColorSource()
 
-var rich_anim = animation.palette_gradient_animation(mock_engine)
+var rich_anim = animation.palette_gradient(mock_engine)
 rich_anim.color_source = rainbow_color_source
 rich_anim.shift_period = 1000
 
@@ -165,7 +165,7 @@ print("Test 6: Animation timing and synchronization")
 var sync_time = mock_engine.time_ms + 1000
 
 # Create multiple animations
-var anim1 = animation.palette_gradient_animation(mock_engine)
+var anim1 = animation.palette_gradient(mock_engine)
 anim1.color_source = mock_color_source
 anim1.shift_period = 1000
 anim1.spatial_period = 4
@@ -179,7 +179,7 @@ assert(anim1.start_time == sync_time, "Animation 1 should have correct start tim
 
 # Test 7: Animation without color source (should handle gracefully)
 print("Test 7: Animation without color source")
-var no_color_anim = animation.palette_gradient_animation(mock_engine)
+var no_color_anim = animation.palette_gradient(mock_engine)
 no_color_anim.shift_period = 1000
 no_color_anim.spatial_period = 3
 # Note: no color_source set
@@ -193,7 +193,7 @@ assert(!result, "Render should return false when no color source is set")
 
 # Test 8: String representation (uses default from Berry)
 print("Test 8: String representation")
-var str_anim = animation.palette_gradient_animation(mock_engine)
+var str_anim = animation.palette_gradient(mock_engine)
 var str_repr = str(str_anim)
 print(f"String representation: {str_repr}")
 assert(str_repr != nil, "String representation should not be nil")

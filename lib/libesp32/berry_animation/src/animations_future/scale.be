@@ -5,7 +5,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:ScaleAnimation,weak
 class ScaleAnimation : animation.animation
   # Non-parameter instance variables only
   var scale_phase        # Current phase for animated scaling
@@ -52,7 +51,7 @@ class ScaleAnimation : animation.animation
   
   # Start/restart the animation
   def start(time_ms)
-    # Call parent start first (handles ValueProvider propagation)
+    # Call parent start first (handles value_provider propagation)
     super(self).start(time_ms)
     
     # Reset scale phase for animated modes

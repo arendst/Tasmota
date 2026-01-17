@@ -1,21 +1,32 @@
-# Test suite for ValueProvider base class
+# Test suite for value_provider functionality
 #
-# This test verifies that the base ValueProvider class works correctly
-# and follows the parameterized class specification with produce_value() API.
+# This test verifies that value providers work correctly
+# and follow the parameterized class specification with produce_value() API.
+# Note: value_provider class has been removed; providers now inherit from parameterized_object
+# with VALUE_PROVIDER = true.
 
 import animation
 
 import "./core/param_encoder" as encode_constraints
 
-# Test the basic ValueProvider interface
+# Simple test provider class (since value_provider class was removed)
+class TestValueProvider : animation.parameterized_object
+  static var VALUE_PROVIDER = true
+  
+  def produce_value(name, time_ms)
+    return module("undefined")  # Default behavior
+  end
+end
+
+# Test the basic value_provider interface
 def test_value_provider_interface()
-  print("Testing ValueProvider interface...")
+  print("Testing value_provider interface...")
   
   # Create engine for testing
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
-  var provider = animation.value_provider(engine)
+  var provider = TestValueProvider(engine)
   
   # Test default produce_value method
   var result = provider.produce_value("test_param", 1000)
@@ -25,19 +36,20 @@ def test_value_provider_interface()
   assert(provider.engine != nil, "Provider should have engine reference")
   assert(provider.engine == engine, "Provider should have correct engine reference")
   
-  print("✓ ValueProvider interface test passed")
+  print("✓ value_provider interface test passed")
 end
 
 # Test with a custom value provider
 def test_custom_value_provider()
-  print("Testing custom ValueProvider...")
+  print("Testing custom value_provider...")
   
   # Create engine for testing
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
   # Create a simple time-based provider using new API
-  class TimeBasedProvider : animation.value_provider
+  class TimeBasedProvider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     # Parameter definitions
     static var PARAMS = animation.enc_params({
       "multiplier": {"default": 1}
@@ -64,7 +76,7 @@ def test_custom_value_provider()
   # Test parameter access
   assert(provider.multiplier == 2, "Should access parameter via virtual member")
   
-  print("✓ Custom ValueProvider test passed")
+  print("✓ Custom value_provider test passed")
 end
 
 # Test is_value_provider function
@@ -75,9 +87,9 @@ def test_is_value_provider()
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
-  var base_provider = animation.value_provider(engine)
+  var base_provider = TestValueProvider(engine)
   
-  assert(animation.is_value_provider(base_provider) == true, "ValueProvider should be detected")
+  assert(animation.is_value_provider(base_provider) == true, "value_provider should be detected")
   assert(animation.is_value_provider(42) == false, "Integer should not be detected")
   assert(animation.is_value_provider("hello") == false, "String should not be detected")
   assert(animation.is_value_provider(nil) == false, "nil should not be detected")
@@ -87,13 +99,13 @@ end
 
 # Test parameterized object integration
 def test_parameterized_object_integration()
-  print("Testing ParameterizedObject integration...")
+  print("Testing parameterized_object integration...")
   
   # Create engine for testing
   var strip = global.Leds()
   var engine = animation.create_engine(strip)
   
-  var provider = animation.value_provider(engine)
+  var provider = TestValueProvider(engine)
   
   # Test that it has the engine reference
   assert(provider.engine != nil, "Provider should have engine reference")
@@ -106,7 +118,7 @@ def test_parameterized_object_integration()
   # Test lifecycle method exists
   assert(type(provider.start) == "function", "Should have start method")
   
-  print("✓ ParameterizedObject integration test passed")
+  print("✓ parameterized_object integration test passed")
 end
 
 # Test lifecycle methods
@@ -118,7 +130,8 @@ def test_lifecycle_methods()
   var engine = animation.create_engine(strip)
   
   # Create a provider that tracks start calls
-  class LifecycleProvider : animation.value_provider
+  class LifecycleProvider : animation.parameterized_object
+    static var VALUE_PROVIDER = true
     var start_called
     var start_time
     
@@ -159,9 +172,9 @@ def test_lifecycle_methods()
   print("✓ Lifecycle methods test passed")
 end
 
-# Test value provider registration in EngineProxy
+# Test value provider registration in engine_proxy
 def test_value_provider_registration()
-  print("Testing ValueProvider registration in EngineProxy...")
+  print("Testing value_provider registration in engine_proxy...")
   
   # Create a mock LED strip
   var strip = Leds(30)
@@ -216,12 +229,12 @@ def test_value_provider_registration()
   assert(removed == true, "Value provider should be removed successfully")
   assert(size(proxy.value_providers) == 0, "Proxy should have no value providers after remove")
   
-  print("✓ ValueProvider registration test passed")
+  print("✓ value_provider registration test passed")
 end
 
 # Test multiple value providers
 def test_multiple_value_providers()
-  print("Testing multiple ValueProviders in EngineProxy...")
+  print("Testing multiple value_providers in engine_proxy...")
   
   var strip = Leds(30)
   var engine = animation.create_engine(strip)
@@ -261,12 +274,12 @@ def test_multiple_value_providers()
   osc2.stop()
   osc3.stop()
   
-  print("✓ Multiple ValueProviders test passed")
+  print("✓ Multiple value_providers test passed")
 end
 
 # Test is_empty() includes value_providers
 def test_is_empty_with_value_providers()
-  print("Testing is_empty() with ValueProviders...")
+  print("Testing is_empty() with value_providers...")
   
   var strip = Leds(30)
   var engine = animation.create_engine(strip)
@@ -280,12 +293,12 @@ def test_is_empty_with_value_providers()
   proxy.clear()
   assert(proxy.is_empty() == true, "Proxy should be empty after clear")
   
-  print("✓ is_empty() with ValueProviders test passed")
+  print("✓ is_empty() with value_providers test passed")
 end
 
 # Run all tests
 def run_value_provider_tests()
-  print("=== ValueProvider Base Class Tests ===")
+  print("=== value_provider Base Class Tests ===")
   
   try
     test_value_provider_interface()
@@ -294,12 +307,12 @@ def run_value_provider_tests()
     test_parameterized_object_integration()
     test_lifecycle_methods()
     
-    print("\n=== ValueProvider Registration Tests ===")
+    print("\n=== value_provider Registration Tests ===")
     test_value_provider_registration()
     test_multiple_value_providers()
     test_is_empty_with_value_providers()
     
-    print("\n=== All ValueProvider tests passed! ===")
+    print("\n=== All value_provider tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

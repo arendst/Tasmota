@@ -31,7 +31,7 @@ var triangle_val_ = (def (engine)
   provider.duration = eye_duration_
   return provider
 end)(engine)
-var red_eye_ = animation.beacon_animation(engine)
+var red_eye_ = animation.beacon(engine)
 red_eye_.color = eye_color_  # palette that will advance when we do `eye_color.next = 1`
 red_eye_.pos = cosine_val_  # oscillator for position
 red_eye_.beacon_size = 3  # small 3 pixels eye
@@ -63,7 +63,7 @@ color eye_color = color_cycle(colors=eye_palette, period=0)
 set cosine_val = cosine_osc(min_value = 0, max_value = strip_len - 2, duration = eye_duration)
 set triangle_val = triangle(min_value = 0, max_value = strip_len - 2, duration = eye_duration)
 
-animation red_eye = beacon_animation(
+animation red_eye = beacon(
   color = eye_color     # palette that will advance when we do `eye_color.next = 1`
   pos = cosine_val      # oscillator for position
   beacon_size = 3       # small 3 pixels eye

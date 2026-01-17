@@ -29,7 +29,7 @@ class DSLParameterValidationTest
   def test_valid_parameters()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation breathe_test = breathe_animation(color=0xFF0000FF, period=2000, min_brightness=50)\n"
+      "animation breathe_test = breathe(color=0xFF0000FF, period=2000, min_brightness=50)\n"
       "run breathe_test"
     
     var berry_code = animation_dsl.compile_dsl(dsl_code)
@@ -56,7 +56,7 @@ class DSLParameterValidationTest
   def test_invalid_parameter()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation breathe_test = breathe_animation(color=0xFF0000FF, invalid_param=123)\n"
+      "animation breathe_test = breathe(color=0xFF0000FF, invalid_param=123)\n"
       "run breathe_test"
     
     var compilation_failed = false
@@ -86,7 +86,7 @@ class DSLParameterValidationTest
   def test_mixed_parameters()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation breathe_test = breathe_animation(color=0xFF0000FF, period=2000, nonexistent_param=456)\n"
+      "animation breathe_test = breathe(color=0xFF0000FF, period=2000, nonexistent_param=456)\n"
       "run breathe_test"
     
     var compilation_failed = false
@@ -116,7 +116,7 @@ class DSLParameterValidationTest
   def test_nested_function_invalid_parameters()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation main_anim = pulsating_animation(color=breathe_animation(color=0xFF0000FF, bad_param=789))\n"
+      "animation main_anim = breathe(color=breathe(color=0xFF0000FF, bad_param=789))\n"
       "run main_anim"
     
     var compilation_failed = false
@@ -146,7 +146,7 @@ class DSLParameterValidationTest
   def test_user_function_not_validated()
     # First register a user function
     animation.register_user_function("my_custom_anim", def(engine, param1, param2) 
-      return animation.breathe_animation(engine)
+      return animation.breathe(engine)
     end)
     
     var dsl_code = 
@@ -171,8 +171,8 @@ class DSLParameterValidationTest
   def test_multiple_animations_validation()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation valid_anim = breathe_animation(color=0xFF0000FF, period=2000)\n"
-      "animation invalid_anim = breathe_animation(color=0xFF00FF00, wrong_param=999)\n"
+      "animation valid_anim = breathe(color=0xFF0000FF, period=2000)\n"
+      "animation invalid_anim = breathe(color=0xFF00FF00, wrong_param=999)\n"
       "run valid_anim"
     
     var compilation_failed = false
@@ -201,8 +201,8 @@ class DSLParameterValidationTest
   # Test valid object property references - should compile successfully
   def test_valid_object_property_references()
     var dsl_code = 
-      "animation red_eye = beacon_animation(color=red, pos=10)\n"
-      "animation green_eye = beacon_animation(color=green, pos=red_eye.pos)\n"
+      "animation red_eye = beacon(color=red, pos=10)\n"
+      "animation green_eye = beacon(color=green, pos=red_eye.pos)\n"
       "run red_eye\n"
       "run green_eye"
     
@@ -222,8 +222,8 @@ class DSLParameterValidationTest
   def test_invalid_object_property_references()
     var dsl_code = 
       "# strip length 30  # TEMPORARILY DISABLED\n"
-      "animation red_eye = beacon_animation(color=red, pos=10)\n"
-      "animation green_eye = beacon_animation(color=green, pos=red_eye.invalid_param)\n"
+      "animation red_eye = beacon(color=red, pos=10)\n"
+      "animation green_eye = beacon(color=green, pos=red_eye.invalid_param)\n"
       "run red_eye\n"
       "run green_eye"
     
@@ -249,9 +249,9 @@ class DSLParameterValidationTest
       raise "error_message_error", f"Error message should mention 'invalid_param', got: {error_message}"
     end
     
-    # Check that the error message mentions it's a BeaconAnimation parameter issue
-    if string.find(error_message, "BeaconAnimation") == -1
-      raise "error_message_error", f"Error message should mention 'BeaconAnimation', got: {error_message}"
+    # Check that the error message mentions it's a beacon parameter issue
+    if string.find(error_message, "beacon") == -1
+      raise "error_message_error", f"Error message should mention 'beacon', got: {error_message}"
     end
   end
   
@@ -259,8 +259,8 @@ class DSLParameterValidationTest
   def test_object_property_references_in_expressions()
     var dsl_code = 
       "set strip_len = strip_length()\n"
-      "animation red_eye = beacon_animation(color=red, pos=10)\n"
-      "animation blue_eye = beacon_animation(color=blue, pos=strip_len - red_eye.nonexistent)\n"
+      "animation red_eye = beacon(color=red, pos=10)\n"
+      "animation blue_eye = beacon(color=blue, pos=strip_len - red_eye.nonexistent)\n"
       "run red_eye\n"
       "run blue_eye"
     
@@ -293,7 +293,7 @@ class DSLParameterValidationTest
       "sequence demo {\n"
       "  play solid(color=red) for 5s\n"
       "}\n"
-      "animation test = beacon_animation(color=blue, pos=demo.pos)\n"
+      "animation test = beacon(color=blue, pos=demo.pos)\n"
       "run test"
     
     var compilation_failed = false
@@ -323,8 +323,8 @@ class DSLParameterValidationTest
   def test_valid_computed_object_property_references()
     var dsl_code = 
       "set strip_len = strip_length()\n"
-      "animation red_eye = beacon_animation(color=red, pos=10)\n"
-      "animation blue_eye = beacon_animation(color=blue, pos=strip_len - red_eye.pos)\n"
+      "animation red_eye = beacon(color=red, pos=10)\n"
+      "animation blue_eye = beacon(color=blue, pos=strip_len - red_eye.pos)\n"
       "run red_eye\n"
       "run blue_eye"
     

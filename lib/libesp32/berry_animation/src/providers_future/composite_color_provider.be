@@ -9,7 +9,6 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:CompositeColorProvider,weak
 class CompositeColorProvider : animation.color_provider
   # Non-parameter instance variables only
   var providers        # List of color providers
@@ -31,7 +30,7 @@ class CompositeColorProvider : animation.color_provider
   
   # Add a provider to the list
   #
-  # @param provider: ColorProvider - Provider to add
+  # @param provider: color_provider - Provider to add
   # @return self for method chaining
   def add_provider(provider)
     self.providers.push(provider)

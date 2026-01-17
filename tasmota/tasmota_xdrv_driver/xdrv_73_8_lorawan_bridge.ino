@@ -1004,13 +1004,19 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 #define D_CMND_LORAWANDECODER "Decoder"
 #define D_CMND_LORAWANSEND    "Send"
 
-const char kLoraWanCommands[] PROGMEM = "LoRaWan"  // Prefix
+const char kLoraWanCommands[] PROGMEM = "LoRaWan|"  // Prefix
   "|" D_CMND_LORAWANBRIDGE "|" D_CMND_LORAWANNODE "|" D_CMND_LORAWANAPPKEY
   "|" D_CMND_LORAWANNAME "|" D_CMND_LORAWANDECODER "|" D_CMND_LORAWANSEND;
 
-void (* const LoraWanCommand[])(void) PROGMEM = {
+void (* const LoraWanCommand[])(void) PROGMEM = { &CmndLoraWan,
   &CmndLoraWanBridge, &CmndLoraWanNode, &CmndLoraWanAppKey,
   &CmndLoraWanName, &CmndLoraWanDecoder, &CmndLoraWanSend };
+
+void CmndLoraWan(void) {
+  // Display LoraWan status information
+  //  LoraWan
+  Response_P(PSTR("{\"LoRaWan\":{\"MaxNodes\":%d}}"), TAS_LORAWAN_ENDNODES);
+}
 
 void CmndLoraWanBridge(void) {
   // Enable LoraWan bridge

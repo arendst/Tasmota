@@ -28,7 +28,7 @@ var col2_ = animation.color_cycle(engine)
 col2_.colors = animation.PALETTE_RAINBOW
 col2_.period = 0
 col2_.next = 1
-var shutter_animation_ = animation.beacon_animation(engine)
+var shutter_animation_ = animation.beacon(engine)
 shutter_animation_.color = col1_
 shutter_animation_.back_color = col2_
 shutter_animation_.pos = 0
@@ -61,7 +61,7 @@ set duration = 3s
   color col2 = color_cycle(colors=PALETTE_RAINBOW, period=0)
   col2.next = 1
 
-  animation shutter_animation = beacon_animation(
+  animation shutter_animation = beacon(
     color = col1
     back_color = col2
     pos = 0

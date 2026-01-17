@@ -1,16 +1,16 @@
 # Test suite for parameter validation system
 #
 # This test verifies that the parameter validation system correctly accepts
-# ValueProvider instances for integer and real parameters.
+# value_provider instances for integer and real parameters.
 
 import animation
 import global
 
 import "./core/param_encoder" as encode_constraints
 
-# Test that parameters accept ValueProviders and integers only
+# Test that parameters accept value_providers and integers only
 def test_parameter_accepts_value_providers()
-  print("Testing parameter validation with ValueProviders...")
+  print("Testing parameter validation with value_providers...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -27,20 +27,20 @@ def test_parameter_accepts_value_providers()
   assert(test_anim.set_param("opacity", 42) == true, "Should accept static integer")
   assert(test_anim.get_param("opacity", 0) == 42, "Should return static integer")
   
-  # Test with StaticValueProvider
+  # Test with static_value
   var static_provider = animation.static_value(engine)
   static_provider.value = 123
-  assert(test_anim.set_param("opacity", static_provider) == true, "Should accept StaticValueProvider")
+  assert(test_anim.set_param("opacity", static_provider) == true, "Should accept static_value")
   
-  # Test with OscillatorValueProvider
+  # Test with oscillator_value
   var oscillator = animation.oscillator_value(engine)
   oscillator.min_value = 0
   oscillator.max_value = 255
   oscillator.duration = 1000
   oscillator.form = animation.SAWTOOTH
-  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept OscillatorValueProvider")
+  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept oscillator_value")
   
-  print("✓ Parameter validation with ValueProviders test passed")
+  print("✓ Parameter validation with value_providers test passed")
 end
 
 # Test that loop parameter handles boolean values correctly
@@ -91,9 +91,9 @@ def test_range_validation()
   print("✓ Range validation test passed")
 end
 
-# Test range validation is skipped for ValueProviders
+# Test range validation is skipped for value_providers
 def test_range_validation_with_providers()
-  print("Testing range validation with ValueProviders...")
+  print("Testing range validation with value_providers...")
   
   # Create engine for testing
   var strip = global.Leds()
@@ -107,15 +107,15 @@ def test_range_validation_with_providers()
   assert(test_anim.set_param("opacity", 0) == true, "Should accept minimum value")
   assert(test_anim.set_param("opacity", 255) == true, "Should accept maximum value")
   
-  # Test that ValueProviders bypass range validation
+  # Test that value_providers bypass range validation
   # (since they provide dynamic values that can't be validated at set time)
   var oscillator = animation.oscillator_value(engine)
   oscillator.min_value = -50  # Outside range
   oscillator.max_value = 300  # Outside range
   oscillator.duration = 1000
-  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept ValueProvider even if it might produce out-of-range values")
+  assert(test_anim.set_param("opacity", oscillator) == true, "Should accept value_provider even if it might produce out-of-range values")
   
-  print("✓ Range validation with ValueProviders test passed")
+  print("✓ Range validation with value_providers test passed")
 end
 
 # Test type validation
@@ -181,12 +181,12 @@ def test_type_validation()
   assert(test_obj.set_param("any_param", test_instance) == true, "Should accept instance for any_param")
   assert(test_obj.set_param("any_param", 3.14) == true, "Should accept real for any_param")
   
-  # Test that ValueProviders bypass type validation
+  # Test that value_providers bypass type validation
   var static_provider = animation.static_value(engine)
   static_provider.value = 42  # Use a valid value for the provider itself
-  assert(test_obj.set_param("int_param", static_provider) == true, "Should accept ValueProvider for any type")
-  assert(test_obj.set_param("string_param", static_provider) == true, "Should accept ValueProvider for any type")
-  assert(test_obj.set_param("bool_param", static_provider) == true, "Should accept ValueProvider for any type")
+  assert(test_obj.set_param("int_param", static_provider) == true, "Should accept value_provider for any type")
+  assert(test_obj.set_param("string_param", static_provider) == true, "Should accept value_provider for any type")
+  assert(test_obj.set_param("bool_param", static_provider) == true, "Should accept value_provider for any type")
   
   print("✓ Type validation test passed")
 end
@@ -198,14 +198,14 @@ def test_dsl_parameter_validation()
   import animation_dsl
   
   # Test valid animation parameter
-  var valid_dsl = "animation red_eye = beacon_animation(color = red)\n" +
+  var valid_dsl = "animation red_eye = beacon(color = red)\n" +
                   "red_eye.back_color = blue"
   
   var result = animation_dsl.compile(valid_dsl)
   assert(result != nil, "Valid parameter should compile successfully")
   
   # Test invalid animation parameter
-  var invalid_dsl = "animation red_eye = beacon_animation(color = red)\n" +
+  var invalid_dsl = "animation red_eye = beacon(color = red)\n" +
                     "red_eye.invalid_param = 123"
   
   try
@@ -217,14 +217,14 @@ def test_dsl_parameter_validation()
   end
   
   # Test valid color provider parameter
-  var valid_color_dsl = "color solid_red = static_color(color = red)\n" +
+  var valid_color_dsl = "color solid_red = color_provider(color = red)\n" +
                         "solid_red.color = blue"
   
   var result2 = animation_dsl.compile(valid_color_dsl)
   assert(result2 != nil, "Valid color provider parameter should compile successfully")
   
   # Test invalid color provider parameter
-  var invalid_color_dsl = "color solid_red = static_color(color = red)\n" +
+  var invalid_color_dsl = "color solid_red = color_provider(color = red)\n" +
                           "solid_red.invalid_param = 123"
   
   try
@@ -250,14 +250,14 @@ def test_dsl_object_reference_validation()
   import animation_dsl
   
   # Test valid run statement
-  var valid_run = "animation red_eye = beacon_animation(color = red)\n" +
+  var valid_run = "animation red_eye = beacon(color = red)\n" +
                   "run red_eye"
   
   var result = animation_dsl.compile(valid_run)
   assert(result != nil, "Valid run statement should compile successfully")
   
   # Test invalid run statement (undefined object)
-  var invalid_run = "animation red_eye = beacon_animation(color = red)\n" +
+  var invalid_run = "animation red_eye = beacon(color = red)\n" +
                     "run undefined_animation"
   
   try
@@ -269,7 +269,7 @@ def test_dsl_object_reference_validation()
   end
   
   # Test valid sequence with play statement
-  var valid_sequence = "animation red_eye = beacon_animation(color = red)\n" +
+  var valid_sequence = "animation red_eye = beacon(color = red)\n" +
                        "sequence demo {\n" +
                        "  play red_eye for 5s\n" +
                        "  wait 1s\n" +
@@ -279,7 +279,7 @@ def test_dsl_object_reference_validation()
   assert(result2 != nil, "Valid sequence should compile successfully")
   
   # Test invalid sequence with undefined play reference
-  var invalid_sequence = "animation red_eye = beacon_animation(color = red)\n" +
+  var invalid_sequence = "animation red_eye = beacon(color = red)\n" +
                          "sequence demo {\n" +
                          "  play undefined_animation for 5s\n" +
                          "  wait 1s\n" +
@@ -303,7 +303,7 @@ def test_dsl_sequence_symbol_table_registration()
   import animation_dsl
   
   # Test 1: Valid sequence should be registered and runnable
-  var valid_sequence_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var valid_sequence_dsl = "animation red_anim = beacon(color = red)\n" +
                            "sequence demo {\n" +
                            "  play red_anim for 2s\n" +
                            "}\n" +
@@ -351,21 +351,21 @@ def test_dsl_symbol_table_mixed_types()
   import animation_dsl
   
   # Test 1: Valid property assignment on animation (instance in symbol table)
-  var animation_property_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var animation_property_dsl = "animation red_anim = beacon(color = red)\n" +
                                "red_anim.back_color = blue"
   
   var result1 = animation_dsl.compile(animation_property_dsl)
   assert(result1 != nil, "Animation property assignment should work")
   
   # Test 2: Valid property assignment on color provider (instance in symbol table)
-  var color_property_dsl = "color solid_red = static_color(color = red)\n" +
+  var color_property_dsl = "color solid_red = color_provider(color = red)\n" +
                            "solid_red.color = blue"
   
   var result2 = animation_dsl.compile(color_property_dsl)
   assert(result2 != nil, "Color provider property assignment should work")
   
   # Test 3: Invalid property assignment on sequence (string in symbol table)
-  var sequence_property_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+  var sequence_property_dsl = "animation red_anim = beacon(color = red)\n" +
                               "sequence demo {\n" +
                               "  play red_anim for 2s\n" +
                               "}\n" +
@@ -380,8 +380,8 @@ def test_dsl_symbol_table_mixed_types()
   end
   
   # Test 4: Mixed symbol table with sequences and instances
-  var mixed_dsl = "animation red_anim = beacon_animation(color = red)\n" +
-                  "color solid_blue = static_color(color = blue)\n" +
+  var mixed_dsl = "animation red_anim = beacon(color = red)\n" +
+                  "color solid_blue = color_provider(color = blue)\n" +
                   "sequence demo {\n" +
                   "  play red_anim for 2s\n" +
                   "}\n" +
@@ -420,7 +420,7 @@ def test_dsl_identifier_reference_symbol_table()
   assert(result2 != nil, "Parameter validation on referenced animation should work")
   
   # Test 3: Color provider reference should be added to symbol table
-  var color_ref_dsl = "color base_red = static_color(color=red)\n" +
+  var color_ref_dsl = "color base_red = color_provider(color=red)\n" +
                       "color my_red = base_red\n" +
                       "animation red_anim = solid(color=my_red)\n" +
                       "my_red.color = blue"

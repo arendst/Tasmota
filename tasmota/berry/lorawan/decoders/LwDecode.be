@@ -426,6 +426,11 @@ class webPageLoRaWAN : Driver
     if !webserver.check_privileged_access() return nil end
 
     var inode = 1
+    if webserver.has_arg('add')
+      inode = int(webserver.arg('nextnode'))
+      tasmota.cmd(format('LoRaWanappkey%i', inode), true)
+    end 
+
     var cmdArg
     if webserver.has_arg('save')
       inode = int(webserver.arg('node'))
@@ -452,6 +457,12 @@ class webPageLoRaWAN : Driver
     var arg = 'LoRaWanNode'
     var enables = string.split(tasmota.cmd(arg, true).find(arg), ',') # [1,!2,!3,!4,5,6]
     var maxnode = enables.size()
+    var maxnodes
+    try
+      maxnodes = tasmota.cmd('_LoRaWan',true)['LoRaWan']['MaxNodes']  # Tasmota >= v15.2.0.2
+    except ..  as e, m
+      maxnodes = 16                              #- is TAS_LORAWAN_ENDNODES = 16 -#
+    end
 
     webserver.content_start("LoRaWAN")           #- title of the web page -#
     webserver.content_send_style()               #- send standard Tasmota styles -#
@@ -489,6 +500,24 @@ class webPageLoRaWAN : Driver
     for node:1 .. maxnode
      webserver.content_send(format("<button type='button' onclick='selNode(%i)' id='n%i' class='tl inactive'>%i</button>", node, node, node))
     end
+
+    if maxnode < maxnodes
+      var add_tab = (maxnode == 0)               #- No tabs visible -#
+      if !add_tab
+        arg = format('LoRaWanName%i', maxnode)
+        name = tasmota.cmd(arg, true).find(arg)
+        add_tab = (size(name) > 0)               #- Last tab is not empty -#
+      end
+      if add_tab
+        webserver.content_send(
+        format(
+        "<form action='' method='post'>"
+         "<button name='add' class='bl'>+</button>"
+         "<input type='hidden' name='nextnode' value='%i'>"
+        "</form>", maxnode +1))
+       end
+    end
+
     webserver.content_send("</div><br><br><br><br>")    #- Terminate indent and add space -#
 
     for node:1 .. maxnode
@@ -526,7 +555,6 @@ class webPageLoRaWAN : Driver
     end
 
     webserver.content_send("</fieldset>")
-
 
     webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to conf page -#
     webserver.content_stop()                                 #- end of web page -#

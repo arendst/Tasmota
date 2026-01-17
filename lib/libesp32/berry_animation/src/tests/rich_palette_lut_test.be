@@ -1,4 +1,4 @@
-# Test for RichPaletteColorProvider LUT optimization
+# Test for rich_palette_color LUT optimization
 #
 # This test verifies that the LUT cache produces correct colors
 # and measures the performance improvement
@@ -13,7 +13,7 @@ end
 # Create a test engine
 var engine = animation.init_strip()
 
-log("=== RichPaletteColorProvider LUT Cache Test ===")
+log("=== rich_palette_color LUT Cache Test ===")
 log("")
 
 # Test 1: Verify LUT produces correct colors
@@ -41,7 +41,7 @@ while i < size(rainbow_palette)
 end
 log("")
 
-var provider = animation.rich_palette(engine)
+var provider = animation.rich_palette_color(engine)
 provider.colors = rainbow_palette
 provider.period = 0  # Static mode for testing
 
@@ -96,7 +96,7 @@ log("Test 3: Performance measurement")
 log("-------------------------------")
 
 # Create a fresh provider for performance testing
-var perf_provider = animation.rich_palette(engine)
+var perf_provider = animation.rich_palette_color(engine)
 perf_provider.colors = rainbow_palette
 perf_provider.period = 0
 

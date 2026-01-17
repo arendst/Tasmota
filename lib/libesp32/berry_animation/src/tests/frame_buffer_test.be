@@ -1,13 +1,13 @@
-# Test file for FrameBuffer class
+# Test file for frame_buffer class
 #
-# This file contains tests for the FrameBuffer class
+# This file contains tests for the frame_buffer class
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/frame_buffer_test.be
 
 import animation
 
-print("Testing FrameBuffer...")
+print("Testing frame_buffer...")
 
 # Create a frame buffer with 10 pixels
 var fb = animation.frame_buffer(10)
@@ -248,5 +248,5 @@ var max_pixel = max_test.get_pixel_color(0)
 var max_alpha = (max_pixel >> 24) & 0xFF
 assert(max_alpha == 255, f"Alpha should be capped at 255, got {max_alpha}")
 
-print("All FrameBuffer tests passed!")
+print("All frame_buffer tests passed!")
 return true

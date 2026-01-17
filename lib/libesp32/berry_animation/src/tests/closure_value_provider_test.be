@@ -1,12 +1,12 @@
-# Test for ClosureValueProvider
+# Test for closure_value
 #
-# This test verifies that the ClosureValueProvider correctly wraps
+# This test verifies that the closure_value correctly wraps
 # closures and evaluates them when producing values.
 
 import animation
 
 def test_closure_value_provider()
-  print("Testing ClosureValueProvider...")
+  print("Testing closure_value...")
   
   # Create a mock engine
   class MockEngine
@@ -244,7 +244,7 @@ def test_closure_value_provider()
   assert(boundary3 == 0, f"Expected 0, got {boundary3}")
   print("✓ Edge cases with zero, negative, and boundary values work")
   
-  print("All ClosureValueProvider tests passed!")
+  print("All closure_value tests passed!")
   
   # Fake add() method for value provider auto-registration
   def add(obj)
@@ -254,7 +254,7 @@ end
 
 # Test mathematical helper methods
 def test_closure_math_methods()
-  print("Testing ClosureValueProvider mathematical methods...")
+  print("Testing closure_value mathematical methods...")
   
   # Create a mock engine
   class MockEngine

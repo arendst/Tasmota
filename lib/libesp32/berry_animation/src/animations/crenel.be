@@ -20,8 +20,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:CrenelPositionAnimation,weak
-class CrenelPositionAnimation : animation.animation
+class crenel : animation.animation
   # NO instance variables for parameters - they are handled by the virtual parameter system
   
   # Parameter definitions with constraints
@@ -36,12 +35,12 @@ class CrenelPositionAnimation : animation.animation
   
   # Render the crenel pattern to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
   def render(frame, time_ms, strip_length)
-    # Access parameters via virtual members (automatically resolves ValueProviders)
+    # Access parameters via virtual members (automatically resolves value_providers)
     var back_color = self.back_color
     var pos = self.pos
     var pulse_size = self.pulse_size
@@ -99,14 +98,6 @@ class CrenelPositionAnimation : animation.animation
     
     return true
   end
-  
-  # NO setter/getter methods - use direct assignment instead:
-  # obj.color = value
-  # obj.back_color = value
-  # obj.pos = value
-  # obj.pulse_size = value
-  # obj.low_size = value
-  # obj.nb_pulse = value
 end
 
-return {'crenel_animation': CrenelPositionAnimation}
+return {'crenel': crenel}

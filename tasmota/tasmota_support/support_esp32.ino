@@ -11,8 +11,8 @@
  * ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-H2, ESP32-P4, ESP32-S2 and ESP32-S3 Support
 \*********************************************************************************************/
 
-//                                                   11b 11g 11n  11n  11ax
-const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|HT20|HT40|HE20"; // Wi-Fi Modes
+//                                                   11b 11g 11a 11n  11n  11ax 11ac
+const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|11a|HT20|HT40|HE20|VHT20"; // Wi-Fi Modes
 
 #include "soc/soc.h"
 #include "soc/spi_reg.h"

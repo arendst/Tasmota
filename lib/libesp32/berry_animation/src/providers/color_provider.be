@@ -1,19 +1,19 @@
-# ColorProvider interface for Berry Animation Framework
+# color_provider interface for Berry Animation Framework
 #
 # This defines the core interface for color providers in the animation framework.
 # Color providers generate colors based on time or values, which can be used by
 # renderers or other components that need color information.
 #
-# ColorProvider now inherits from ValueProvider, making it a specialized value provider
-# for color values. This provides consistency with the ValueProvider system while
+# color_provider now inherits from value_provider, making it a specialized value provider
+# for color values. This provides consistency with the value_provider system while
 # maintaining the specific color-related methods.
 #
 # Follows the parameterized class specification:
 # - Constructor takes only 'engine' parameter
 # - All other parameters set via virtual member assignment after creation
 
-#@ solidify:ColorProvider,weak
-class ColorProvider : animation.value_provider
+class color_provider : animation.parameterized_object
+  static var VALUE_PROVIDER = true
   # LUT (Lookup Table) management for color providers
   # Subclasses can use this to cache pre-computed colors for performance
   # If a subclass doesn't use a LUT, this remains nil
@@ -23,6 +23,7 @@ class ColorProvider : animation.value_provider
   
   # Parameter definitions
   static var PARAMS = animation.enc_params({
+    "color": {"default": 0xFFFFFFFF},  # Default to white
     "brightness": {"min": 0, "max": 255, "default": 255}
   })
   
@@ -44,20 +45,24 @@ class ColorProvider : animation.value_provider
   end
   
   # Produce a color value for any parameter name
-  # This is the main method that subclasses should override
+  # Returns the solid color with brightness applied
   #
-  # @param name: string - Parameter name being requested
-  # @param time_ms: int - Current time in milliseconds
+  # @param name: string - Parameter name being requested (ignored)
+  # @param time_ms: int - Current time in milliseconds (ignored)
   # @return int - Color in ARGB format (0xAARRGGBB)
   def produce_value(name, time_ms)
-    return 0xFFFFFFFF  # Default white
+    var color = self.color
+    var brightness = self.brightness
+    if brightness != 255
+      return self.apply_brightness(color, brightness)
+    end
+    return color
   end
   
-  # Get a color based on a value (0-255 range)
-  # This method is useful for mapping values to colors in different contexts
+  # Get the solid color for a value (ignores the value)
   #
-  # @param value: int/float - Value to map to a color (0-255 range)
-  # @param time_ms: int - Optional current time for time-based effects
+  # @param value: int/float - Value to map to a color (ignored)
+  # @param time_ms: int - Current time in milliseconds (ignored)
   # @return int - Color in ARGB format (0xAARRGGBB)
   def get_color_for_value(value, time_ms)
     return self.produce_value("color", time_ms)  # Default: use time-based color
@@ -76,6 +81,7 @@ class ColorProvider : animation.value_provider
     end
     
     # Extract RGB components (preserve alpha channel)
+    var alpha = (color >> 24) & 0xFF
     var r = (color >> 16) & 0xFF
     var g = (color >> 8) & 0xFF
     var b = color & 0xFF
@@ -86,17 +92,17 @@ class ColorProvider : animation.value_provider
     b = tasmota.scale_uint(b, 0, 255, 0, brightness)
     
     # Reconstruct color with scaled brightness (preserve alpha)
-    return (color & 0xFF000000) | (r << 16) | (g << 8) | b
+    return (alpha << 24) | (r << 16) | (g << 8) | b
   end
 
 end
 
 # Add a method to check if an object is a color provider
-# Note: Since ColorProvider now inherits from ValueProvider, all ColorProviders
-# are also ValueProviders and will be detected by animation.is_value_provider()
+# Note: Since color_provider now inherits from value_provider, all ColorProviders
+# are also value_providers and will be detected by animation.is_value_provider()
 def is_color_provider(obj)
   return isinstance(obj, animation.color_provider)
 end
 
-return {'color_provider': ColorProvider,
+return {'color_provider': color_provider,
         'is_color_provider': is_color_provider}

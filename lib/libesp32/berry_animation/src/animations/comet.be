@@ -8,8 +8,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:CometAnimation,weak
-class CometAnimation : animation.animation
+class comet : animation.animation
   # Non-parameter instance variables only
   var head_position    # Current position of the comet head (in 1/256th pixels for smooth movement)
   
@@ -42,10 +41,12 @@ class CometAnimation : animation.animation
     if name == "direction"
       # Reset position when direction changes
       var strip_length = self.engine.strip_length
-      if value > 0
-        self.head_position = 0  # Start at beginning for forward movement
-      else
-        self.head_position = (strip_length - 1) * 256  # Start at end for backward movement
+      if type(value) == 'int'
+        if value > 0
+          self.head_position = 0  # Start at beginning for forward movement
+        else
+          self.head_position = (strip_length - 1) * 256  # Start at end for backward movement
+        end
       end
     end
   end
@@ -101,7 +102,7 @@ class CometAnimation : animation.animation
   
   # Render the comet to the provided frame buffer
   #
-  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param frame: frame_buffer - The frame buffer to render to
   # @param time_ms: int - Current time in milliseconds
   # @param strip_length: int - Length of the LED strip in pixels
   # @return bool - True if frame was modified, false otherwise
@@ -109,7 +110,7 @@ class CometAnimation : animation.animation
     # Get the integer position of the head (convert from 1/256th pixels to pixels)
     var head_pixel = self.head_position / 256
     
-    # Get current parameter values using virtual member access (resolves ValueProviders automatically)
+    # Get current parameter values using virtual member access (resolves value_providers automatically)
     var current_color = self.color
     var tail_length = self.tail_length
     var direction = self.direction
@@ -170,4 +171,4 @@ class CometAnimation : animation.animation
   end
 end
 
-return {'comet_animation': CometAnimation}
+return {'comet': comet}

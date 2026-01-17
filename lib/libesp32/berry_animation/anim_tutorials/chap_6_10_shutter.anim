@@ -7,8 +7,8 @@ set strip_len = strip_length()
 set shutter_size = sawtooth(min_value = 0, max_value = strip_len,
                             duration = 1.5s)
 
-# Using beacon_animation to move a shutter from left to right
-    animation shutter_lr_animation = beacon_animation(
+# Using beacon to move a shutter from left to right
+    animation shutter_lr_animation = beacon(
     color = red
     back_color = blue
     pos = 0                         # Start from position 0 (left)

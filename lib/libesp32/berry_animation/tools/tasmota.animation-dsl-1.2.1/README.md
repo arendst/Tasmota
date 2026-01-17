@@ -6,7 +6,7 @@ This extension provides syntax highlighting, snippets, and language support for 
 
 ### Syntax Highlighting
 - **Keywords**: `strip`, `color`, `palette`, `animation`, `sequence`, `template`, `import`, `set`, `play`, `run`, `if`, `repeat`, `reset`, `restart`, `log`, etc.
-- **Animation Functions**: `solid`, `pulsating_animation`, `rich_palette_animation`, `beacon_animation`, `comet_animation`, etc.
+- **Animation Functions**: `solid`, `breathe`, `rich_palette`, `beacon`, `comet`, etc.
 - **Value Providers**: `triangle`, `cosine_osc`, `sawtooth`, `color_cycle`, `strip_length`, `ramp`, `linear`, `smooth`, `square`
 - **Mathematical Functions**: `abs`, `max`, `min`, `round`, `sqrt`, `scale`, `sin`, `cos`
 - **User Functions**: `user.function_name()` syntax with proper highlighting

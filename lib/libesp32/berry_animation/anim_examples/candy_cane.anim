@@ -9,16 +9,16 @@ color candy_white = 0xFFFFFF
 
 # Create alternating red and white animation
 # Using multiple pulse positions to create stripes
-animation stripe1 = beacon_animation(color=candy_red, pos=3, beacon_size=4, slew_size=1)
-animation stripe2 = beacon_animation(color=candy_white, pos=9, beacon_size=4, slew_size=1)
-animation stripe3 = beacon_animation(color=candy_red, pos=15, beacon_size=4, slew_size=1)
-animation stripe4 = beacon_animation(color=candy_white, pos=21, beacon_size=4, slew_size=1)
-animation stripe5 = beacon_animation(color=candy_red, pos=27, beacon_size=4, slew_size=1)
-animation stripe6 = beacon_animation(color=candy_white, pos=33, beacon_size=4, slew_size=1)
-animation stripe7 = beacon_animation(color=candy_red, pos=39, beacon_size=4, slew_size=1)
-animation stripe8 = beacon_animation(color=candy_white, pos=45, beacon_size=4, slew_size=1)
-animation stripe9 = beacon_animation(color=candy_red, pos=51, beacon_size=4, slew_size=1)
-animation stripe10 = beacon_animation(color=candy_white, pos=57, beacon_size=4, slew_size=1)
+animation stripe1 = beacon(color=candy_red, pos=3, beacon_size=4, slew_size=1)
+animation stripe2 = beacon(color=candy_white, pos=9, beacon_size=4, slew_size=1)
+animation stripe3 = beacon(color=candy_red, pos=15, beacon_size=4, slew_size=1)
+animation stripe4 = beacon(color=candy_white, pos=21, beacon_size=4, slew_size=1)
+animation stripe5 = beacon(color=candy_red, pos=27, beacon_size=4, slew_size=1)
+animation stripe6 = beacon(color=candy_white, pos=33, beacon_size=4, slew_size=1)
+animation stripe7 = beacon(color=candy_red, pos=39, beacon_size=4, slew_size=1)
+animation stripe8 = beacon(color=candy_white, pos=45, beacon_size=4, slew_size=1)
+animation stripe9 = beacon(color=candy_red, pos=51, beacon_size=4, slew_size=1)
+animation stripe10 = beacon(color=candy_white, pos=57, beacon_size=4, slew_size=1)
 
 # Add gentle movement to make it more dynamic
 set move_speed = 8s

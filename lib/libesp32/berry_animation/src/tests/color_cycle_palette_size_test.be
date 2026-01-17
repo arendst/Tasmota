@@ -1,6 +1,6 @@
 #!/usr/bin/env berry
 
-# Test for ColorCycleColorProvider palette_size read-only parameter
+# Test for color_cycle palette_size read-only parameter
 import animation
 
 # Mock engine for testing
@@ -194,4 +194,4 @@ test_palette_size_updates_with_palette_changes()
 test_palette_size_with_new_instances()
 test_palette_size_parameter_metadata()
 
-print("✓ All ColorCycleColorProvider palette_size tests completed successfully!")
+print("✓ All color_cycle palette_size tests completed successfully!")

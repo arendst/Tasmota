@@ -1,7 +1,7 @@
 # Gradient animation effect for Berry Animation Framework
 #
 # Creates smooth color gradients between two colors.
-# Reimplemented as a subclass of BeaconAnimation for simplicity.
+# Reimplemented as a subclass of beacon for simplicity.
 #
 # Parameters:
 #   - color1: First color (default: red 0xFFFF0000)
@@ -15,8 +15,7 @@
 
 import "./core/param_encoder" as encode_constraints
 
-#@ solidify:GradientAnimation,weak
-class GradientAnimation : animation.beacon_animation
+class gradient : animation.beacon
   # Parameter definitions - gradient-specific parameters
   static var PARAMS = animation.enc_params({
     "color1": {"default": 0xFFFF0000},                  # First color (default red)
@@ -58,6 +57,4 @@ class GradientAnimation : animation.beacon_animation
   end
 end
 
-return {
-  'gradient_animation': GradientAnimation
-}
+return { 'gradient': gradient }

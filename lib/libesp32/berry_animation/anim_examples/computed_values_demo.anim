@@ -5,7 +5,7 @@
 set strip_len = strip_length()
 
 # Create animation with computed values
-animation stream1 = comet_animation(
+animation stream1 = comet(
   color=red
   tail_length=abs(strip_len / 4)  # computed value
   speed=1.5
@@ -14,7 +14,7 @@ animation stream1 = comet_animation(
 
 # More complex computed values
 set base_speed = 2.0
-animation stream2 = comet_animation(
+animation stream2 = comet(
   color=blue
   tail_length=strip_len / 8 + (2 * strip_len) -10  # computed with addition
   speed=base_speed * 1.5         # computed with multiplication
