@@ -109,7 +109,7 @@ class Matter_UDPServer
   # Stops the server and remove driver
   def stop()
     if self.listening
-      self.udp_socket.stop()
+      self.udp_socket.close()
       self.listening = false
       # tasmota.remove_driver(self)
       tasmota.remove_fast_loop(self.loop_cb)
@@ -170,6 +170,10 @@ class Matter_UDPServer
     else
       if tasmota.loglevel(3)
         log(format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 3)
+      end
+      # Trigger check for network interface change
+      if self.device.handle_send_error
+        self.device.handle_send_error()
       end
     end
     return ok

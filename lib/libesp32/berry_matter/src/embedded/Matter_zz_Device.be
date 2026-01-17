@@ -57,6 +57,7 @@ class Matter_Device
   var probe_sensor_time               # number of milliseconds to wait between each `read_sensors()` or `nil` if none active
   var probe_sensor_timestamp          # timestamp for `read_sensors()` probe (in millis())
                                       # if timestamp is `0`, this should be scheduled in priority
+  var last_ip6local                   # keep track of ipv6 link local address to detect interface change (st1 -> st2)
 
 
   #############################################################
@@ -75,6 +76,7 @@ class Matter_Device
     self.next_ep = self.EP                        # start at endpoint 2 for dynamically allocated endpoints (1 reserved for aggregator)
     self.ipv4only = false
     self.disable_bridge_mode = false
+    self.last_ip6local = ""
     self.commissioning = matter.Commissioning(self)
     self.load_param()
 
@@ -101,6 +103,31 @@ class Matter_Device
     self._start_udp(self.UDP_PORT)
 
     self.commissioning.start_mdns_announce_hostnames()
+
+    # Store current IPv6 link local to detect interface changes later
+    var wifi = tasmota.wifi()
+    if wifi.contains('ip6local')
+      self.last_ip6local = wifi['ip6local']
+    end
+  end
+
+  #####################################################################
+  # Check if network interface changed (IPv6 link local change) and restart if needed
+  # Called by UDPServer on send error
+  def handle_send_error()
+    var wifi = tasmota.wifi()
+    var current_ip6local = wifi.find('ip6local', "")
+    
+    # If IPv6 Link Local changed (e.g. fe80::...%st1 -> fe80::...%st2), we MUST restart
+    if (current_ip6local != "" && self.last_ip6local != "" && current_ip6local != self.last_ip6local)
+      log(f"MTR: Network change detected ({self.last_ip6local} -> {current_ip6local}), restarting...", 2)
+      # Force UDP server stop so it can be restarted cleanly
+      if self.udp_server
+        self.udp_server.stop()
+        self.udp_server = nil
+      end
+      self.start()
+    end
   end
 
   #####################################################################
