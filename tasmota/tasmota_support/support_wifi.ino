@@ -318,7 +318,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 #endif
 
 #ifdef USE_WIFI_RANGE_EXTENDER
-  }
+  if (WiFi.getMode() != WIFI_AP_STA || !RgxApUp()) {  // Preserve range extender connections (#17103)
 #endif  // USE_WIFI_RANGE_EXTENDER
 
 #if defined(ESP32) && defined(USE_DISCOVERY)
