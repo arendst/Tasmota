@@ -3,12 +3,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.2.0.2]
+## [15.2.0.3]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP8266 platform update from 2025.12.00 to 2026.01.00 (#24354)
+- ESP32 Platform from 2025.12.31 to 2026.01.30, Framework (Arduino Core) from v3.1.8 to v3.1.9 and IDF from v5.3.4.251223 to v5.3.4.251226 (#24354)
+
+### Fixed
+
+### Removed
+
+## [15.2.0.2] 20260117
 ### Added
 - Support for Adafruit I2C QT Rotary Encoder (#24270)
 - Zigbee support for `int24` type (#24334)
-
-### Breaking Changed
 
 ### Changed
 - ESP8266 platform update from 2025.10.00 to 2025.12.00 (#24254)
@@ -23,8 +34,6 @@ All notable changes to this project will be documented in this file.
 - ESP8266 KNX unwanted reply (#24267)
 - Zigbee compilation warning in Berry mapping (#24333)
 - ScrubDNS() function (#23886)
-
-### Removed
 
 ## [15.2.0.1]
 ### Added

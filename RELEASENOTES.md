@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.8** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **v3.1.7**.
+This release will be supported from ESP32/Arduino library Core version **v3.1.9**.
 
-Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.7 have been removed.
+Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.9 have been removed.
 
 ## Initial configuration tools
 
@@ -76,7 +76,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-P4, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.7**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.9**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
@@ -112,15 +112,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.2.0.2
+## Changelog v15.2.0.3
 ### Added
 - Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
 - Support for Adafruit I2C QT Rotary Encoder [#24270](https://github.com/arendst/Tasmota/issues/24270)
 - Zigbee support for `int24` type [#24334](https://github.com/arendst/Tasmota/issues/24334)
 
 ### Changed
-- ESP8266 platform update from 2025.10.00 to 2025.12.00 [#24254](https://github.com/arendst/Tasmota/issues/24254)
-- ESP32 Platform from 2025.12.30 to 2025.12.31, Framework (Arduino Core) from v3.1.7 to v3.1.8 and IDF from v5.3.4.251205 to v5.3.4.251223 [#24254](https://github.com/arendst/Tasmota/issues/24254)
+- ESP8266 platform update from 2025.10.00 to 2026.01.00 [#24354](https://github.com/arendst/Tasmota/issues/24354)
+- ESP32 Platform from 2025.12.30 to 2026.01.30, Framework (Arduino Core) from v3.1.7 to v3.1.9 and IDF from v5.3.4.251205 to v5.3.4.251226 [#24354](https://github.com/arendst/Tasmota/issues/24354)
 - Vid6608 library from v1.0.2 to v1.0.3 [#24218](https://github.com/arendst/Tasmota/issues/24218)
 - IRremoteESP8266 library from v2.8.6 to v2.8.6-ca474a6 [#24226](https://github.com/arendst/Tasmota/issues/24226)
 - Refactor Adafruit Seesaw soil driver [#24270](https://github.com/arendst/Tasmota/issues/24270)
