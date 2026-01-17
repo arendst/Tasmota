@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 KNX unwanted reply (#24267)
 - Zigbee compilation warning in Berry mapping (#24333)
 - ScrubDNS() function (#23886)
+- Wireguard crash on RISC-V (esp32c3, esp32c6)
 
 ### Removed
 

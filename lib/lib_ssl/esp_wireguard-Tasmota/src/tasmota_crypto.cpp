@@ -38,33 +38,61 @@ static struct dh_curve25519_t {
   uint8_t q[32];
   uint8_t n[32];
   int result;
+#ifdef ESP32
+  SemaphoreHandle_t crypto_done_sem;
+  TaskHandle_t crypto_task_handle;
+#endif // ESP32
 } g_dh_curve25519;
 
 static void run_crypto_scalarmult_curve25519(void) {
   g_dh_curve25519.result = BR_EC25519_IMPL.mul(g_dh_curve25519.q, 32, g_dh_curve25519.n, 32, BR_EC_curve25519);
 }
 
+#ifdef ESP32
+// In case we are short in stack size, we run a FreeRTOS task instead with this entry point
+static void task_crypto_scalarmult_curve25519(void* pvParameters) {
+  run_crypto_scalarmult_curve25519();
+  if(g_dh_curve25519.crypto_done_sem) {
+      xSemaphoreGive(g_dh_curve25519.crypto_done_sem);
+  }
+  vTaskDelete(NULL);
+}
+#endif // ESP32
+
 extern "C" int crypto_scalarmult_curve25519(unsigned char *q, const unsigned char *n,const unsigned char *p) {
   for (int32_t i=0; i<32; i++) {
     g_dh_curve25519.q[i] = p[i];
     g_dh_curve25519.n[i] = n[31-i];
   }
-
+  g_dh_curve25519.result = 0;
 #ifdef ESP32
+  g_dh_curve25519.crypto_done_sem = NULL;
+  g_dh_curve25519.crypto_task_handle = NULL;
+
   const char *taskName = pcTaskGetName(NULL);
   if (uxTaskGetStackHighWaterMark(nullptr) < 2000) {
-    //Allocate a stack buffer, from heap or as a static form:
-    StackType_t *shared_stack = (StackType_t*) heap_caps_malloc(4096 * sizeof(StackType_t), MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
-    //Allocate a mutex to protect its usage:
-    SemaphoreHandle_t lock = xSemaphoreCreateMutex();
-    //Call the desired function using the macro helper:
-    esp_execute_shared_stack_function(lock,
-                                    shared_stack,
-                                    4096,
-                                    run_crypto_scalarmult_curve25519);
+    // we don't get the actual stack size but the lowest observed. Unfortunately we don't get the actual stack
+    // so uxTaskGetStackHighWaterMark() is the best proxy we've got
 
-    vSemaphoreDelete(lock);
-    free(shared_stack);
+    // create a new FreeRTOS task and a Semaphore to indicate the computation is done
+    g_dh_curve25519.crypto_done_sem = xSemaphoreCreateBinary();
+    if (g_dh_curve25519.crypto_done_sem != NULL) {
+      xTaskCreatePinnedToCore(task_crypto_scalarmult_curve25519, "crypto_scalarmult_curve25519",
+                              4096, NULL, 5/*Medium-High*/, &g_dh_curve25519.crypto_task_handle, 0);
+
+      // Wait for completion (timeout 1s)
+      if (xSemaphoreTake(g_dh_curve25519.crypto_done_sem, pdMS_TO_TICKS(1000)) == pdTRUE) {
+        // all good
+      } else {
+        if (g_dh_curve25519.crypto_task_handle) {
+            vTaskDelete(g_dh_curve25519.crypto_task_handle);
+        }
+      }
+
+      vSemaphoreDelete(g_dh_curve25519.crypto_done_sem);
+      g_dh_curve25519.crypto_done_sem = NULL;
+      g_dh_curve25519.crypto_task_handle = NULL;
+    }
   } else {
     run_crypto_scalarmult_curve25519();
   }
@@ -78,6 +106,7 @@ extern "C" int crypto_scalarmult_curve25519(unsigned char *q, const unsigned cha
     }
     return 0;   // Success
   } else {
+    AddLog(LOG_LEVEL_INFO, "WG : crypto_scalarmult_curve25519 failed (not enough memory)");
     return 1;   // Failure
   }
 }
