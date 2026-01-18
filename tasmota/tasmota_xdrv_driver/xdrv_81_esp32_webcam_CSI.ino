@@ -910,7 +910,7 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.config.mipi_clock);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.config.lane_num);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Offset: X=%d Y=%d"), Wc.config.offset_x, Wc.config.offset_y);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (0=1x1, 1=2x2, 2=4x4)"), Wc.config.binning);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (1=1x1, 2=2x2, 3=2_analog)"), Wc.config.binning);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS: %d"), Wc.config.fps);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ResIndex: %d"), Wc.config.res_index);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Flags: 0x%02X (VFlip=%d HMirror=%d)"), 
@@ -1031,12 +1031,6 @@ uint32_t WcSetup(bool reset_config) {
       return 0;
     }
 
-    // esp_isp_bf_config_t bf_config = {
-    //   .input_data_color_type = ISP_COLOR_RAW8,
-    //   .pattern = ISP_BAYER_PATTERN_BGGR, 
-    // };
-    // esp_isp_bf_configure(Wc.isp_handle, &bf_config);
-    
     ret = esp_isp_enable(Wc.isp_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable ISP (0x%x)"), ret);

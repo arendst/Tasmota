@@ -1,8 +1,4 @@
-# IMX219 CSI Camera Driver - Direct port from Linux kernel driver
-# Register sequences from imx219.c (Raspberry Pi / Sony official)
-
 class CSI_Sensor
-  # ... (exactly same as OV5647 - unchanged)
   var name
   var wire
   var addr
@@ -38,18 +34,10 @@ class CSI_Sensor
     return nil
   end
   
-  def set_reg_bits(reg, offset, length, value)
-    var reg_data = self.read_reg16(reg)
-    if reg_data == nil return false end
-    var mask = ((1 << length) - 1) << offset
-    var new_val = (reg_data & ~mask) | ((value << offset) & mask)
-    return self.write_reg16(reg, new_val)
-  end
-  
   def write_array(reg_array)
     var i = 0
-    var count = 0
-    while i < size(reg_array)
+    var sz = size(reg_array)
+    while i < sz
       var reg = reg_array[i][0]
       var val = reg_array[i][1]
       if reg == self.REG_END
@@ -61,265 +49,208 @@ class CSI_Sensor
           print(format("%s: FAILED at reg 0x%04X", self.name, reg))
           return false
         end
-        count += 1
       end
       i += 1
     end
-    print(format("%s: Wrote %d registers", self.name, count))
     return true
   end
 end
 
 class IMX219 : CSI_Sensor
-  static ADDR = 0x10      # Confirmed from Linux driver [web:244]
-  static CHIP_ID = 0x0219 # 0x0000 register
+  static ADDR = 0x10
+  static CHIP_ID = 0x0219
   var is_streaming
   var is_initialized
-  var line_sync_enable
-
+  var width, height
+  var mipi_clock
+  var format, bin_mode
+  
   def init()
     super(self).init("IMX219", self.ADDR)
     self.is_streaming = false
     self.is_initialized = false
-    self.line_sync_enable = false
+    self.width = 640
+    self.height = 480
+    self.mipi_clock = 456
+    self.format = 1 
+    self.bin_mode = 2 
   end
-
-  # Exact Linux chip ID detection
+  
   def detect()
     self.wire = tasmota.wire_scan(self.addr)
     if !self.wire 
       print("IMX219: I2C scan failed")
       return false 
     end
-    
     tasmota.delay(10)
-    var chip_id = self.read_reg16(0x0000)  # IMX219_REG_CHIP_ID
-    if chip_id == nil 
-      print("IMX219: Cannot read chip ID")
-      return false 
+    var id_h = self.read_reg16(0x0000)
+    if id_h == 0x02
+       var id_l = self.read_reg16(0x0001)
+       var chip_id = (id_h << 8) | id_l
+       print(format("IMX219: Chip ID = 0x%04X", chip_id))
+       return chip_id == self.CHIP_ID
     end
-    
-    print(format("IMX219: Chip ID = 0x%04X", chip_id))
-    return chip_id == self.CHIP_ID
+    return false
   end
-
-  # IMX219 software standby (matches Linux driver flow)
-  def software_reset()
-    print("IMX219: Entering standby...")
-    self.write_reg16(0x0100, 0x00)  # IMX219_MODE_STANDBY
-    tasmota.delay(10)
-    
-    # Verify responsive
-    var id = self.read_reg16(0x0000)
-    if id == nil
-      print("IMX219: Sensor not responding after standby!")
-      return false
-    end
-    
-    print("IMX219: Standby complete")
-    return true
-  end
-
-  # Exact Linux common registers (imx219_common_regs[])
-  def common_regs()
-    return [
-      [0x0100, 0x00],  # Mode Select -> STANDBY
-      
-      # Access 3000-5fff registers (Linux sequence)
-      [0x30eb, 0x05],
-      [0x30eb, 0x0c],
-      [0x300a, 0xff],
-      [0x300b, 0xff],
-      [0x30eb, 0x05],
-      [0x30eb, 0x09],
-      
-      # Undocumented registers (direct from Linux)
-      [0x455e, 0x00],
-      [0x471e, 0x4b],
-      [0x4767, 0x0f],
-      [0x4750, 0x14],
-      [0x4540, 0x00],
-      [0x47b4, 0x14],
-      [0x4713, 0x30],
-      [0x478b, 0x10],
-      [0x478f, 0x10],
-      [0x4793, 0x10],
-      [0x4797, 0x0e],
-      [0x479b, 0x0e],
-      
-      # Frame Bank A setup
-      [0x0170, 0x01],  # X_ODD_INC_A
-      [0x0171, 0x01],  # Y_ODD_INC_A
-      
-      # Output setup
-      [0x0128, 0x00],  # DPHY_CTRL_TIMING_AUTO
-      [0x012a, 0x60],  # EXCK_FREQ(24MHz) = 24 * 256 = 0x0060
-      
-      [self.REG_END, 0x00]
-    ]
-  end
-
-  # Exact Linux 2-lane PLL (imx219_2lane_regs[])
-  def pll_2lane_regs()
-    return [
-      [0x0301, 0x05],  # VTPXCK_DIV
-      [0x0303, 0x01],  # VTSYCK_DIV
-      [0x0304, 0x03],  # PREPLLCK_VT_DIV (AUTO)
-      [0x0305, 0x03],  # PREPLLCK_OP_DIV (AUTO)
-      [0x0306, 0x0039], # PLL_VT_MPY = 57 (0x39)
-      [0x030b, 0x01],  # OPSYCK_DIV
-      [0x030c, 0x0072], # PLL_OP_MPY = 114 (0x72)
-      
-      [0x0114, 0x01],  # CSI_2_LANE_MODE
-      
-      [self.REG_END, 0x00]
-    ]
-  end
-
-  # Mode 0: 1920x1080 RAW10 @ 30fps (supported_modes[1])
-  def regs_mode0()
-    return [
-      # Windowing for 1920x1080 (calculate from Linux logic)
-      [0x0164, 0x00a0],  # X_ADD_STA_A (offset from pixel array)
-      [0x0166, 0x089f],  # X_ADD_END_A
-      [0x0168, 0x0008],  # Y_ADD_STA_A
-      [0x016a, 0x0437],  # Y_ADD_END_A
-      
-      [0x016c, 0x0780],  # X_OUTPUT_SIZE = 1920
-      [0x016e, 0x0438],  # Y_OUTPUT_SIZE = 1080
-      
-      [0x0624, 0x0780],  # TP_WINDOW_WIDTH
-      [0x0626, 0x0438],  # TP_WINDOW_HEIGHT
-      
-      # Timing (from mode table)
-      [0x0160, 0x06e3],  # FRM_LENGTH_A = 1763
-      [0x0162, 0x0d78],  # LINE_LENGTH_A (min)
-      
-      # CSI Data Format RAW10
-      [0x018c, 0x0a0a],  # (10<<8) | 10
-      
-      [0x0309, 0x0a],    # OPPXCK_DIV = bpp
-      
-      [self.REG_END, 0x00]
-    ]
-  end
-
+  
   def stream_on(on)
     if !self.wire return false end
-    
     if on
-      if self.is_streaming
-        print("IMX219: Already streaming")
-        return true
-      end
-      
-      # Exact Linux: 0x0100 = STREAMING
-      if !self.write_reg16(0x0100, 0x01)
-        print("IMX219: Failed to enable stream")
-        return false
-      end
-      
+      if self.is_streaming return true end
+      if !self.write_reg16(0x0100, 0x01) return false end
       self.is_streaming = true
       print("IMX219: Stream ON")
     else
-      if !self.write_reg16(0x0100, 0x00)
-        print("IMX219: Failed to disable stream")
-        return false
-      end
-      
+      if !self.write_reg16(0x0100, 0x00) return false end
       self.is_streaming = false
       print("IMX219: Stream OFF")
     end
     return true
   end
 
-  def set_AE_target(target)
-    # Linux uses separate analog/digital gain + exposure
-    # For now, placeholder
-    return true
+  def common_regs()
+    return [
+      [0x0103, 0x01], [self.REG_DELAY, 10], [0x0100, 0x00],
+      [0x30eb, 0x05], [0x30eb, 0x0c], [0x300a, 0xff], [0x300b, 0xff],
+      [0x30eb, 0x05], [0x30eb, 0x09],
+      [0x455e, 0x00], [0x471e, 0x4b], [0x4767, 0x0f], [0x4750, 0x14],
+      [0x4540, 0x00], [0x47b4, 0x14], [0x4713, 0x30], [0x478b, 0x10],
+      [0x478f, 0x10], [0x4793, 0x10], [0x4797, 0x0e], [0x479b, 0x0e],
+      [0x0114, 0x01], [0x0128, 0x00], [0x012a, 0x18], [0x012b, 0x00],
+      [0x0301, 0x05], [0x0303, 0x01], [0x0304, 0x03], [0x0305, 0x03],
+      [0x0306, 0x00], [0x0307, 0x39], [0x030b, 0x01], 
+      [0x030c, 0x00], [0x030d, 0x39], # 456 Mbps
+      [self.REG_END, 0x00]
+    ]
   end
 
-  def check_status()
-    if !self.wire return false end
+  def regs_custom(x, y, w, h, bin, fps, fmt)
+    self.width = w
+    self.height = h
+    self.bin_mode = bin
+    self.format = fmt
     
-    print("IMX219: ===== REGISTER READBACK =====")
+    var reg_fmt = (fmt == 0) ? 0x08 : 0x0A      
+    var reg_bin = (bin == 2) ? 0x03 : 0x00      
+    var scale = (bin == 2) ? 2 : 1
+    var eff_w = w * scale
+    var eff_h = h * scale
+    var native_w = 3280
+    var native_h = 2464
     
-    var r_0100 = self.read_reg16(0x0100)
-    var r_0114 = self.read_reg16(0x0114)
-    print(format("IMX219: 0x0100 Mode=%s", r_0100 != nil ? format("0x%02X", r_0100) : "ERR"))
-    print(format("IMX219: 0x0114 Lanes=%s (expect 0x01=2lane)", r_0114 != nil ? format("0x%02X", r_0114) : "ERR"))
-    
-    # Output size
-    var r_016c = self.read_reg16(0x016c)
-    var r_016e = self.read_reg16(0x016e)
-    if r_016c != nil && r_016e != nil
-      var w = r_016c
-      var h = r_016e
-      print(format("IMX219: Output=%dx%d", w, h))
+    var sx = x
+    var sy = y
+    if x == 0 && y == 0
+       sx = (native_w - eff_w) / 2
+       sy = (native_h - eff_h) / 2
     end
     
-    print("IMX219: ===== END READBACK =====")
-    return true
+    # Standard Even Alignment
+    sx = (sx / 2) * 2
+    sy = (sy / 2) * 2
+    var ex = sx + eff_w - 1
+    var ey = sy + eff_h - 1
+    
+    var pclk = 182400000 # empirically found 
+    var hts = 3448
+    var vts = pclk / (hts * (fps==0?30:fps))
+    if vts < h+50 vts = h+50 end
+    
+    var reg_oppxck = (fmt == 0) ? 0x08 : 0x0A
+
+    print(format("IMX219: CFG %dx%d (Crop %d,%d) Bin=%d Fmt=%d FPS=%d", w, h, sx, sy, bin, fmt, fps))
+    
+    return [
+      [0x0164, (sx>>8)], [0x0165, (sx&0xFF)], [0x0166, (ex>>8)], [0x0167, (ex&0xFF)],
+      [0x0168, (sy>>8)], [0x0169, (sy&0xFF)], [0x016a, (ey>>8)], [0x016b, (ey&0xFF)],
+      [0x016c, (w>>8)], [0x016d, (w&0xFF)],   
+      [0x016e, (h>>8)], [0x016f, (h&0xFF)],
+      [0x0174, reg_bin], [0x0175, reg_bin],
+      [0x018c, reg_fmt], [0x018d, reg_fmt],
+      [0x0309, reg_oppxck], 
+      [0x0160, (vts>>8)], [0x0161, (vts&0xFF)],
+      [0x0162, (hts>>8)], [0x0163, (hts&0xFF)],
+      [self.REG_END, 0x00]
+    ]
   end
 
-  # EXACT SAME camera() interface as OV5647
   def camera(cmd, idx, payload, raw)
     if cmd == "init"
       print("IMX219: ========== INIT START ==========")
       
-      if self.is_initialized
-        print("IMX219: Already initialized")
-        return 1
+      if !self.is_initialized
+        if !self.detect() return 0 end
+        self.is_initialized = true
       end
       
-      if !self.detect()
-        print("IMX219: Not detected")
-        return 0
+      self.write_reg16(0x0100, 0x00); tasmota.delay(10)
+      self.write_reg16(0x0100, 0x01); tasmota.delay(10)
+      self.write_reg16(0x0100, 0x00); tasmota.delay(10)
+      
+      if !self.write_array(self.common_regs()) return 0 end
+      
+      var req_w=640; var req_h=480; var req_bin=2; var req_fps=30; var req_fmt=1
+      var req_x=0; var req_y=0
+      var res_idx = 0
+      
+      if idx != 0
+        import introspect
+        var p = introspect.toptr(idx)
+        var b = bytes(p, 28)
+        res_idx = b[26]
+        
+        if res_idx == 255
+           # MANUAL (wcwindow)
+           req_w = b.get(0, 2); req_h = b.get(2, 2)
+           req_fmt = b[8]; req_bin = b[16]; req_fps = b[17]
+           req_x = b.get(12, 2); req_y = b.get(14, 2)
+        elif res_idx == 0 
+           # VGA: 640x480, Bin 2, RAW10 (0.3 MP)
+           req_w=640; req_h=480; req_bin=2; req_fmt=1
+        elif res_idx == 1 
+           # 720p: 1280x720, Bin 1, RAW8 (0.9 MP)
+           req_w=1280; req_h=720; req_bin=1; req_fmt=0 
+        elif res_idx == 2 
+           # Full Bin 2: 1640x1232, Bin 2, RAW8 (2.0 MP)
+           req_w=1640; req_h=1232; req_bin=2; req_fmt=0
+        elif res_idx == 3 
+           # 1080p: 1920x1080, Bin 1, RAW8 (2.1 MP)
+           req_w=1920; req_h=1080; req_bin=1; req_fmt=0
+        elif res_idx == 4
+           # Full Native: 3280x2464, Bin 1, RAW8 (8.0 MP)
+           # Limit FPS to 10 for bandwidth/stability
+           req_w=3280; req_h=2464; req_bin=1; req_fmt=0; req_fps=10
+        end
       end
       
-      if !self.software_reset()
-        return 0
+      var regs = self.regs_custom(req_x, req_y, req_w, req_h, req_bin, req_fps, req_fmt)
+      if !self.write_array(regs) return 0 end
+      
+      if idx != 0
+        import introspect
+        var p = introspect.toptr(idx)
+        var b = bytes(p, 28)
+        b.set(0, self.width, 2)
+        b.set(2, self.height, 2)
+        b.set(4, 3280, 2)
+        b.set(6, 2464, 2)
+        b[8] = self.format
+        b[9] = 2 
+        b.set(10, self.mipi_clock, 2)
+        b[16] = self.bin_mode
+        b[17] = req_fps       # CRITICAL for RTSP
+        b.setbytes(18, bytes().fromstring("IMX219"))
       end
       
-      # Linux sequence: common -> PLL -> mode
-      if !self.write_array(self.common_regs())     return 0 end
-      if !self.write_array(self.pll_2lane_regs())  return 0 end
-      if !self.write_array(self.regs_mode0())      return 0 end
-      
-      if raw != nil
-        # Mode 0: 1920x1080 RAW10, 2 lanes, 456MHz link (from Linux)
-        raw[0] = 1920 & 0xFF;      raw[1] = (1920 >> 8) & 0xFF
-        raw[2] = 1080 & 0xFF;      raw[3] = (1080 >> 8) & 0xFF
-        raw[4] = 1                 # RAW10 (1), RAW8=0
-        raw[5] = 0                 # No onboard ISP
-        var bitrate = 456          # Mbps/lane from Linux
-        raw[6] = bitrate & 0xFF;   raw[7] = (bitrate >> 8) & 0xFF
-        raw[8] = (bitrate >> 16) & 0xFF; raw[9] = (bitrate >> 24) & 0xFF
-        raw[10] = 2                # 2 lanes
-      end
-      
-      self.is_initialized = true
       print("IMX219: ========== INIT COMPLETE ==========")
-      print("IMX219: 1920x1080 RAW10, 2-lane MIPI @ 456 Mbps/lane")
       return 1
       
     elif cmd == "stream"
       return self.stream_on(idx == 1) ? 1 : 0
-    
-    elif cmd == "status"
-      return self.check_status() ? 1 : 0
-    
-    else
-      print(format("IMX219: Unknown '%s'", cmd))
-      return 0
     end
+    return 0
   end
 end
 
 var imx219 = IMX219()
 tasmota.add_driver(imx219)
-print("========================================")
-print("IMX219 Driver - Linux kernel port")
-print("1920x1080 RAW10 @ 30fps, 2-lane CSI")
-print("ChipID=0x0219, Addr=0x10")
-print("========================================")
