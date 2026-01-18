@@ -110,7 +110,7 @@ be_local_class(Matter_UDPPacket_sent,
     be_str_weak(Matter_UDPPacket_sent)
 );
 extern const bclass be_class_Matter_UDPServer;
-// compact class 'Matter_UDPServer' ktab size: 62, total: 106 (saved 352 bytes)
+// compact class 'Matter_UDPServer' ktab size: 62, total: 108 (saved 368 bytes)
 static const bvalue be_ktab_class_Matter_UDPServer[62] = {
   /* K0   */  be_nested_str_weak(loop),
   /* K1   */  be_nested_str_weak(matter),
@@ -541,23 +541,23 @@ be_local_closure(class_Matter_UDPServer__resend_packets,   /* name */
     &be_ktab_class_Matter_UDPServer,     /* shared constants */
     be_str_weak(_resend_packets),
     &be_const_str_solidified,
-    ( &(const binstruction[62]) {  /* code */
+    ( &(const binstruction[68]) {  /* code */
       0x58040009,  //  0000  LDCONST	R1	K9
       0x6008000C,  //  0001  GETGBL	R2	G12
       0x880C0105,  //  0002  GETMBR	R3	R0	K5
       0x7C080200,  //  0003  CALL	R2	1
       0x14080202,  //  0004  LT	R2	R1	R2
-      0x780A0036,  //  0005  JMPF	R2	#003D
+      0x780A003C,  //  0005  JMPF	R2	#0043
       0x540A0003,  //  0006  LDINT	R2	4
       0x14080202,  //  0007  LT	R2	R1	R2
-      0x780A0033,  //  0008  JMPF	R2	#003D
+      0x780A0039,  //  0008  JMPF	R2	#0043
       0x88080105,  //  0009  GETMBR	R2	R0	K5
       0x94080401,  //  000A  GETIDX	R2	R2	R1
       0xB80E1600,  //  000B  GETNGBL	R3	K11
       0x8C0C0726,  //  000C  GETMET	R3	R3	K38
       0x88140527,  //  000D  GETMBR	R5	R2	K39
       0x7C0C0400,  //  000E  CALL	R3	2
-      0x780E002A,  //  000F  JMPF	R3	#003B
+      0x780E0030,  //  000F  JMPF	R3	#0041
       0x880C0528,  //  0010  GETMBR	R3	R2	K40
       0x88100129,  //  0011  GETMBR	R4	R0	K41
       0x180C0604,  //  0012  LE	R3	R3	R4
@@ -585,7 +585,7 @@ be_local_closure(class_Matter_UDPServer__resend_packets,   /* name */
       0x000C0710,  //  0028  ADD	R3	R3	K16
       0x900A5003,  //  0029  SETMBR	R2	K40	R3
       0x00040310,  //  002A  ADD	R1	R1	K16
-      0x7002000D,  //  002B  JMP		#003A
+      0x70020013,  //  002B  JMP		#0040
       0x880C0105,  //  002C  GETMBR	R3	R0	K5
       0x8C0C070A,  //  002D  GETMET	R3	R3	K10
       0x5C140200,  //  002E  MOVE	R5	R1
@@ -600,10 +600,16 @@ be_local_closure(class_Matter_UDPServer__resend_packets,   /* name */
       0x7C100A00,  //  0037  CALL	R4	5
       0x5814000D,  //  0038  LDCONST	R5	K13
       0x7C0C0400,  //  0039  CALL	R3	2
-      0x70020000,  //  003A  JMP		#003C
-      0x00040310,  //  003B  ADD	R1	R1	K16
-      0x7001FFC3,  //  003C  JMP		#0001
-      0x80000000,  //  003D  RET	0
+      0x880C0121,  //  003A  GETMBR	R3	R0	K33
+      0x880C0722,  //  003B  GETMBR	R3	R3	K34
+      0x780E0002,  //  003C  JMPF	R3	#0040
+      0x880C0121,  //  003D  GETMBR	R3	R0	K33
+      0x8C0C0722,  //  003E  GETMET	R3	R3	K34
+      0x7C0C0200,  //  003F  CALL	R3	1
+      0x70020000,  //  0040  JMP		#0042
+      0x00040310,  //  0041  ADD	R1	R1	K16
+      0x7001FFBD,  //  0042  JMP		#0001
+      0x80000000,  //  0043  RET	0
     })
   )
 );

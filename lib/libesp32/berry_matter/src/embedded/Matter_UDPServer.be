@@ -202,6 +202,10 @@ class Matter_UDPServer
         else
           self.packets_sent.remove(idx)
           log(format("MTR: .          (%6i) Unacked packet '[%s]:%i' msg_id=%i", packet.session_id, packet.addr, packet.port, packet.msg_id), 3)
+          # If a packet is unacked, check if network interface changed
+          if self.device.handle_send_error
+            self.device.handle_send_error()
+          end
         end
       else
         idx += 1
