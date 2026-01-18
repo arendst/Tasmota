@@ -126,6 +126,8 @@ class Matter_Device
         self.udp_server.stop()
         self.udp_server = nil
       end
+      # we need to shutdown mdns: start needs this clean
+      self.commissioning.mdns_remove_op_discovery_all_fabrics()
       self.start()
     end
   end
