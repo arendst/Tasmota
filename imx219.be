@@ -145,31 +145,56 @@ class IMX219 : CSI_Sensor
        sy = (native_h - eff_h) / 2
     end
     
-    # Standard Even Alignment
+    # 1. Force Even Alignment
     sx = (sx / 2) * 2
     sy = (sy / 2) * 2
+    
     var ex = sx + eff_w - 1
     var ey = sy + eff_h - 1
     
-    var pclk = 182400000 # empirically found 
+    # 3. Timing Calculation (Calibrated PCLK = 182.4 MHz)
+    var pclk = 182400000 
     var hts = 3448
     var vts = pclk / (hts * (fps==0?30:fps))
     if vts < h+50 vts = h+50 end
+    
+    # 4. Exposure & Gain Calculation
+    var exposure = vts - 50  # Max integration time
+    var gain = 0xE0          # MAX Analog Gain (Was 0xA0)
     
     var reg_oppxck = (fmt == 0) ? 0x08 : 0x0A
 
     print(format("IMX219: CFG %dx%d (Crop %d,%d) Bin=%d Fmt=%d FPS=%d", w, h, sx, sy, bin, fmt, fps))
     
     return [
+      # Geometry & Format
       [0x0164, (sx>>8)], [0x0165, (sx&0xFF)], [0x0166, (ex>>8)], [0x0167, (ex&0xFF)],
       [0x0168, (sy>>8)], [0x0169, (sy&0xFF)], [0x016a, (ey>>8)], [0x016b, (ey&0xFF)],
       [0x016c, (w>>8)], [0x016d, (w&0xFF)],   
       [0x016e, (h>>8)], [0x016f, (h&0xFF)],
+      
+      # FIX COLOR SWAP (Red/Blue) by rotating readout
+      [0x0172, 0x03], 
+      
       [0x0174, reg_bin], [0x0175, reg_bin],
       [0x018c, reg_fmt], [0x018d, reg_fmt],
       [0x0309, reg_oppxck], 
+      
+      # Timing
       [0x0160, (vts>>8)], [0x0161, (vts&0xFF)],
       [0x0162, (hts>>8)], [0x0163, (hts&0xFF)],
+      
+      # Analog Controls (Group Hold Protected)
+      [0x0104, 0x01],                 # Group Hold ON
+      
+      [0x0157, gain],                 # Analog Gain (Max)
+      [0x0158, 0x01], [0x0159, 0x80], # Digital Gain (x1.5) to lift shadows - probably not perfect!!
+      
+      [0x015a, (exposure >> 8) & 0xFF], # Exposure High
+      [0x015b, exposure & 0xFF],        # Exposure Low
+      
+      [0x0104, 0x00],                 # Group Hold OFF (Commit)
+      
       [self.REG_END, 0x00]
     ]
   end

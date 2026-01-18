@@ -1807,15 +1807,15 @@ void CmndWcSession(void) {
   }
   
   // Force H.264-compatible resolution for RTSP session
-  if (new_type == SESSION_RTSP) {
-    Wc.config.width = 1280;
-    Wc.config.height = 720;
-    Wc.config.binning = 2;
-    Wc.config.fps = 30;
-    Wc.config.format = 0;  // RAW8
-    Wc.config.res_index = 255;  // Custom mode
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP session forcing 1280x720@30fps"));
-  }
+  // if (new_type == SESSION_RTSP) {
+  //   Wc.config.width = 1280;
+  //   Wc.config.height = 720;
+  //   Wc.config.binning = 2;
+  //   Wc.config.fps = 30;
+  //   Wc.config.format = 0;  // RAW8
+  //   Wc.config.res_index = 255;  // Custom mode
+  //   AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP session forcing 1280x720@30fps"));
+  // }
   
   // Setup and start new session (unless SESSION_NONE)
   if (new_type != SESSION_NONE) {
