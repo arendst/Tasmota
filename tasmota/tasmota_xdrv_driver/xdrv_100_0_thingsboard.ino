@@ -1,5 +1,7 @@
 #ifdef USE_THINGSBOARD
 
+#define XDRV_100 100
+
 struct Telementary_data
 {
     const char *key;
@@ -8,6 +10,7 @@ struct Telementary_data
 };
 
 Telementary_data *Tele = nullptr;
+uint8_t TeleSize = 0;
 
 void SendThingsBoardTelemetry()
 {
@@ -15,9 +18,8 @@ void SendThingsBoardTelemetry()
         return;
 
     String payload = "{";
-    uint8_t size = sizeof(Tele) / sizeof(Tele[0]);
 
-    for (uint8_t i = 0; i < size; i++)
+    for (uint8_t i = 0; i < TeleSize; i++)
     {
         if (Tele[i].change == true)
         {
@@ -120,6 +122,27 @@ void FetchThingsBoardRPC()
             char cmd[30];
             snprintf(cmd, sizeof(cmd), "Power %u", on);
             ExecuteCommand(cmd, SRC_WEBGUI);
+        }
+        else if (method == "setFanSpeed")
+        { // params: 0-100
+            char speed = root[PSTR("params")].getStr()[0];
+
+            switch (speed)
+            {
+            case 'L':
+                LightSetDimmer(60);
+                break;
+            case 'M':
+                LightSetDimmer(80);
+                break;
+            case 'H':
+                LightSetDimmer(100);
+                break;
+            default:
+                LightSetDimmer(20);
+                break;
+            }
+            LightPreparePower(2);
         }
     }
     http.end();

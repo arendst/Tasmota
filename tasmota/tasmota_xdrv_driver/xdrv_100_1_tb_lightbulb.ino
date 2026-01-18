@@ -1,21 +1,27 @@
-#ifdef USE_THINGSBOARD
 #ifdef USE_TB_LIGHTBULB
+#ifdef USE_THINGSBOARD
 
 bool Xdrv100(uint32_t function)
 {
-    Tele = new Telementary_data[3]{
-        {"POWER", "", false},
-        {"Color", "", false},
-        {"CT", "", false}};
-
     switch (function)
     {
     case FUNC_INIT:
+    {
+        Tele = new Telementary_data[3]{
+            {"POWER", "", false},
+            {"Color", "", false},
+            {"CT", "", false}};
+        TeleSize = 3;
         AddLog(LOG_LEVEL_INFO, PSTR("TB : ThingsBoard HTTP Initialized"));
         break;
+    }
 
     case FUNC_SET_POWER:
     {
+        if (!Tele)
+        {
+            break;
+        }
         snprintf_P(Tele[0].value, sizeof(Tele[0].value), PSTR("%s"), (XdrvMailbox.index == 1) ? "ON" : "OFF");
         Tele[0].change = true;
         break;
@@ -47,5 +53,5 @@ bool Xdrv100(uint32_t function)
     return false;
 }
 
-#endif // USE_TB_LIGHTBULB
 #endif // USE_THINGSBOARD
+#endif // USE_TB_LIGHTBULB
