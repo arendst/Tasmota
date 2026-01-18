@@ -1100,7 +1100,6 @@ void WifiCheckIp(void) {
 
   if ((WL_CONNECTED == WiFi.status()) && WifiHasIP()) {
     WifiSetState(1);
-    Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
     Wifi.max_retry = 0;
     if (Wifi.status != WL_CONNECTED) {

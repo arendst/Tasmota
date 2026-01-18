@@ -21,7 +21,7 @@
  */
 
 #if defined(USE_SHA_ROM)
-#if defined(ESP_PLATFORM) && !defined(ESP8266) && !defined(CONFIG_IDF_TARGET_ESP32)
+#if defined(ESP_PLATFORM) && !defined(ESP8266)// && !defined(CONFIG_IDF_TARGET_ESP32)
 
 #if __has_include("soc/sha_caps.h")
 # include "soc/sha_caps.h"
@@ -39,10 +39,20 @@
 
 #define WORDS 8
 
-/* ESP32 ROM Montgomery parameters (little-endian).*/
+#if defined(CONFIG_IDF_TARGET_ESP32)
+// #include <sys/lock.h>
+#include "dport_access.h"
+// static _lock_t bearssl_mpi_lock;
+
+static const uint32_t P_LE[16] = {
+#else
 static const uint32_t P_LE[8] = {
+#endif
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000,
     0x00000000, 0x00000000, 0x00000001, 0xFFFFFFFF
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ,0, 0, 0, 0, 0, 0, 0, 0
+#endif
 };
 
 static const uint32_t RR_LE[8] = {
@@ -53,11 +63,21 @@ static const uint32_t RR_LE[8] = {
 /* -p^{-1} mod 2^32 */
 static const uint32_t MPRIME = 0x00000001;
 
+#if defined(CONFIG_IDF_TARGET_ESP32)
+static const uint32_t CINV2_1024_LE[16] = {
+    /* The 256-bit Value */
+    0x00000015, 0xFFFFFFD9, 0xFFFFFFC6, 0xFFFFFFBC, 
+    0x00000011, 0x00000040, 0x00000032, 0x00000069,
+    /* Padding to 512 bits */
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+#else
 /* Factor to convert ROM Montgomery output back to normal domain (8 limbs) */
 static const uint32_t CINV2_LE[8] = {
     0xB15F7DC9, 0x21BC7192, 0xF82DEBEB, 0xF2086906,
     0x8AD3BB54, 0xE34453E4, 0xB2B4EF16, 0x5FF55809
 };
+#endif
 
 /* Generator point G in little-endian 32-bit limbs (LSW first) */
 static const uint32_t Gx[WORDS] = {
@@ -74,7 +94,7 @@ typedef struct {
     uint32_t X[WORDS];
     uint32_t Y[WORDS];
     uint32_t Z[WORDS];
-} p256_pt;
+} __attribute__((aligned(16))) p256_pt;
 
 /* ---------- small utilities ---------- */
 
@@ -163,23 +183,39 @@ static void field_sub_mod(uint32_t *dst, const uint32_t *a, const uint32_t *b) {
     }
 }
 
-/* ROM-backed modular multiply returning normal-domain result (8 limbs) */
 static void rom_field_mul(uint32_t *dst, const uint32_t *a, const uint32_t *b) {
+#if !defined(CONFIG_IDF_TARGET_ESP32)
     uint32_t tmp[WORDS];
-
     ets_bigint_enable();
-
-    /* Montgomery multiply in ROM (returns Montgomery residue) */
     ets_bigint_modmult(a, b, P_LE, MPRIME, RR_LE, WORDS);
     ets_bigint_wait_finish();
     ets_bigint_getz(tmp, WORDS);
-
-    /* Convert out of Montgomery domain using the proven CINV2_LE */
     ets_bigint_modmult(tmp, CINV2_LE, P_LE, MPRIME, RR_LE, WORDS);
     ets_bigint_wait_finish();
     ets_bigint_getz(dst, WORDS);
-
     ets_bigint_disable();
+#else
+    uint32_t ram_a[16]   __attribute__((aligned(16)));
+    uint32_t ram_b[16]   __attribute__((aligned(16)));
+    uint32_t ram_tmp[16] __attribute__((aligned(16)));
+    
+    memcpy(ram_a, a, 32);
+    memcpy(ram_b, b, 32);
+    memset(ram_a + 8, 0, 32);
+    memset(ram_b + 8, 0, 32);
+
+    DPORT_STALL_OTHER_CPU_START();
+    ets_bigint_montgomery_mult_prepare(ram_a, ram_b, P_LE, MPRIME, 512, 0);
+    ets_bigint_wait_finish();
+    ets_bigint_montgomery_mult_getz(ram_tmp, 512);
+    
+    ets_bigint_montgomery_mult_prepare(ram_tmp, CINV2_1024_LE, P_LE, MPRIME, 512, 1);
+    ets_bigint_wait_finish();
+    ets_bigint_montgomery_mult_getz(ram_tmp, 512);
+    DPORT_STALL_OTHER_CPU_END();
+
+    memcpy(dst, ram_tmp, 32);
+#endif
 }
 
 static inline void field_mul(uint32_t *dst, const uint32_t *a, const uint32_t *b) {
@@ -407,9 +443,14 @@ static uint32_t api_mul(unsigned char *G, size_t Glen,
     (void)curve;
     p256_pt Pp, R;
     if (!load_point_uncompressed(&Pp, G, Glen)) return 0;
-
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_enable();
+#endif
     scalar_mul_point(&R, &Pp, x, xlen);
     to_affine(&R);
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_disable();
+#endif
     store_point_uncompressed(G, &R);
     return 1;
 }
@@ -420,9 +461,17 @@ static size_t api_mulgen(unsigned char *Rbuf,
     (void)curve;
     p256_pt Gp, R;
     load_generator(&Gp);
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_enable();
+#endif
 
     scalar_mul_point(&R, &Gp, x, xlen);
     to_affine(&R);
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_disable();
+#endif
+
     store_point_uncompressed(Rbuf, &R);
     return 65;
 }
@@ -437,18 +486,26 @@ static uint32_t api_muladd(unsigned char *A, const unsigned char *B,
 
     if (!load_point_uncompressed(&Pp, A, Glen)) return 0;
 
-    scalar_mul_point(&R, &Pp, x, xlen);
-
+    /* Pre-loading points can be done before lock */
     if (B) {
         if (!load_point_uncompressed(&Qp, B, Glen)) return 0;
     } else {
         load_generator(&Qp);
     }
 
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_enable();
+#endif
+
+    scalar_mul_point(&R, &Pp, x, xlen);
     scalar_mul_point(&T, &Qp, y, ylen);
     p256_point_add(&R, &R, &T);
-
     to_affine(&R);
+
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    ets_bigint_disable();
+#endif
+
     store_point_uncompressed(A, &R);
     return 1;
 }
