@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.2.0.3]
 ### Added
+- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives
 
 ### Breaking Changed
 
