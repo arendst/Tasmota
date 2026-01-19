@@ -131,7 +131,7 @@ class IMX219 : CSI_Sensor
     self.format = fmt
     
     var reg_fmt = (fmt == 0) ? 0x08 : 0x0A      
-    var reg_bin = (bin == 2) ? 0x03 : 0x00      
+    var reg_bin = (bin == 2) ? 0x01 : 0x00      
     var scale = (bin == 2) ? 2 : 1
     var eff_w = w * scale
     var eff_h = h * scale
@@ -234,7 +234,7 @@ class IMX219 : CSI_Sensor
            req_w=640; req_h=480; req_bin=2; req_fmt=1
         elif res_idx == 1 
            # 720p: 1280x720, Bin 1, RAW8 (0.9 MP)
-           req_w=1280; req_h=720; req_bin=1; req_fmt=0 
+           req_w=1280; req_h=720; req_bin=2; req_fmt=0 
         elif res_idx == 2 
            # Full Bin 2: 1640x1232, Bin 2, RAW8 (2.0 MP)
            req_w=1640; req_h=1232; req_bin=2; req_fmt=0
