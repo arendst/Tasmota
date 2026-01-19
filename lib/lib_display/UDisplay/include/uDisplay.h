@@ -84,6 +84,20 @@ enum {
 #define DISPLAY_INIT_PARTIAL 1
 #define DISPLAY_INIT_FULL 2
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t bp_invert : 1;
+    uint8_t bp_nopwm : 1;
+    uint8_t nutu3 : 1;
+    uint8_t nutu4 : 1;
+    uint8_t nutu5 : 1;
+    uint8_t nutu6 : 1;
+    uint8_t nutu7 : 1;
+    uint8_t nutu8 : 1;  
+  };
+} BP_MODE;
+
 
 class uDisplay : public Renderer {
  public:
@@ -93,6 +107,7 @@ class uDisplay : public Renderer {
   void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
   void Updateframe();
   void DisplayOnff(int8_t on);
+  void HandeBP(int8_t on);
   void Splash(void);
   char *devname(void);
   uint16_t fgcol(void);
@@ -206,12 +221,12 @@ private:
     int8_t i2c_sda;
     int8_t reset;
     int8_t splash_font;
-    int8_t bpmode;
+    BP_MODE bp_mode;
     // int8_t spi_cs;
     // int8_t spi_clk;
     // int8_t spi_mosi;
     // int8_t spi_dc;
-    int8_t bpanel;
+    int8_t bpanel; // pin
     // int8_t spi_miso;
     // int8_t busy_pin;  // MOVED to EPDPanelConfig.busy_pin (EPD-only)
 
@@ -226,9 +241,9 @@ private:
     void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
     void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
     uint32_t str2c(char **sp, char *vp, uint32_t len);
+    void clearDisplay(void);
 
     void i2c_command(uint8_t val);
-
 
     uint8_t strlen_ln(char *str);
     int32_t next_val(char **sp);
@@ -255,7 +270,7 @@ private:
 
   uint8_t ut_array[16];
   uint8_t ut_i2caddr;
-  uint8_t ut_spi_cs = -1;
+  int8_t ut_spi_cs = -1;
   int8_t ut_reset = -1;
   int8_t ut_irq = -1;
   uint8_t ut_spi_nr;
