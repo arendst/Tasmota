@@ -1005,7 +1005,7 @@ uint16_t index = 0;
       
       uint8_t args = dsp_cmds[cmd_offset++];
       index++;
-#ifdef xUDSP_DEBUG
+#ifdef UDSP_DEBUG
       AddLog(LOG_LEVEL_DEBUG, "UDisplay: cmd, args %02x, %d", iob, args & 0x1f);
 #endif
       switch (iob) {
@@ -1067,7 +1067,7 @@ uint16_t index = 0;
           }
           break;
       }
-#ifdef xUDSP_DEBUG
+#ifdef UDSP_DEBUG
       if (args & 1) {
         AddLog(LOG_LEVEL_DEBUG, "UDisplay: %02x", iob);
       }
@@ -1090,13 +1090,13 @@ uint16_t index = 0;
       spiController->writeCommand(iob);
       uint8_t args = dsp_cmds[cmd_offset++];
       index++;
-#ifdef xUDSP_DEBUG
+#ifdef UDSP_DEBUG
       AddLog(LOG_LEVEL_DEBUG, "UDisplay: cmd, args %02x, %d", iob, args & 0x1f);
 #endif
       for (uint32_t cnt = 0; cnt < (args & 0x1f); cnt++) {
         iob = dsp_cmds[cmd_offset++];
         index++;
-#ifdef xUDSP_DEBUG
+#ifdef UDSP_DEBUG
         AddLog(LOG_LEVEL_DEBUG, "%02x ", iob );
 #endif
         if (!allcmd_mode) {
