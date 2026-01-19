@@ -104,7 +104,7 @@ class uDisplay : public Renderer {
   void setRotation(uint8_t m);
   void fillScreen(uint16_t color);
   void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-  void pushColors(uint16_t *data, uint16_t len, boolean first);
+  void pushColors(uint16_t *data, uint32_t len, boolean first);
   void TS_RotConvert(int16_t *x, int16_t *y);
   void invertDisplay(boolean i);
   void SetPwrCB(pwr_cb cb) { pwr_cbp = cb; };
@@ -234,7 +234,7 @@ private:
     int32_t next_val(char **sp);
     uint32_t next_hex(char **sp);
     void setAddrWindow_int(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
-    void pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap = false);
+    void pushColorsMono(uint16_t *data, uint32_t len, bool rgb16_swap = false);
     void delay_sync(int32_t time);
     void reset_pin(int32_t delayl, int32_t delayh);
     void delay_arg(uint32_t arg);

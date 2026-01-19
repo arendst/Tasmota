@@ -63,7 +63,7 @@ bool RGBPanel::setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
     return true; // Handled by RGB panel
 }
 
-bool RGBPanel::pushColors(uint16_t *data, uint16_t len, bool first) {
+bool RGBPanel::pushColors(uint16_t *data, uint32_t len, bool first) {
     esp_lcd_panel_draw_bitmap(panel_handle, window_x1, window_y1, window_x2, window_y2, data);
     return true; // Handled by RGB panel
 }

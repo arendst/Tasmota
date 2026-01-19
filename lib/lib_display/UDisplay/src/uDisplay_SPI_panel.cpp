@@ -105,7 +105,7 @@ bool SPIPanel::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     return false; // Let uDisplay handle framebuffer cases (monochrome OLEDs)
 }
 
-bool SPIPanel::pushColors(uint16_t *data, uint16_t len, bool not_swapped) {
+bool SPIPanel::pushColors(uint16_t *data, uint32_t len, bool not_swapped) {
     // Only handle direct rendering for color displays
     if (cfg.bpp < 16) {
         return false;

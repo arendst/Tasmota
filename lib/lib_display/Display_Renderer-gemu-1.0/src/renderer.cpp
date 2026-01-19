@@ -66,7 +66,7 @@ void Renderer::dim10(uint8_t contrast, uint16_t contrast_gamma) {
 
 }
 
-void Renderer::pushColors(uint16_t *data, uint16_t len, boolean first) {
+void Renderer::pushColors(uint16_t *data, uint32_t len, boolean first) {
 
 }
 

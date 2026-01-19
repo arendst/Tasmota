@@ -947,7 +947,7 @@ void RA8876::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 }
 
 // pixel color is swapped in contrast to other controllers
-void RA8876::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
+void RA8876::pushColors(uint16_t *data, uint32_t len, boolean not_swapped) {
 
   if (not_swapped == false) {
     // coming from LVGL
