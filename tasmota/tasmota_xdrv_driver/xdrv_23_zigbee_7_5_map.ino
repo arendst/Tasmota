@@ -173,7 +173,7 @@ void Z_Mapper::dumpInternals(void) const {
     snprintf(hex, sizeof(hex), PSTR("%d"), edge.lqi);
 
     WSContentSend_P(PSTR("{from:'0x%04X',to:'0x%04X',label:'%s',width:%d},"),
-                  edge.node_1, edge.node_2, (edge.lqi > 0) ? hex : "", changeUIntScale(edge.lqi, 0, 254, 1, 4));
+                edge.node_1, edge.node_2, (edge.lqi > 0) ? hex : "", changeUIntScale(edge.lqi, 0, 254, 1, 4));
   }
   WSContentSend_P(PSTR("],"));
 }
