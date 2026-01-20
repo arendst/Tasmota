@@ -169,8 +169,11 @@ void Z_Mapper::dumpInternals(void) const {
 
   WSContentSend_P(PSTR("edges:["));
   for (auto & edge : edges) {
+    char hex[8];
+    snprintf(hex, sizeof(hex), PSTR("%d"), edge.lqi);
+
     WSContentSend_P(PSTR("{from:'0x%04X',to:'0x%04X',label:'%s',width:%d},"),
-                  edge.node_1, edge.node_2, (edge.lqi > 0) ? String(edge.lqi) : "", changeUIntScale(edge.lqi, 0, 254, 1, 4));
+                  edge.node_1, edge.node_2, (edge.lqi > 0) ? hex : "", changeUIntScale(edge.lqi, 0, 254, 1, 4));
   }
   WSContentSend_P(PSTR("],"));
 }
