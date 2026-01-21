@@ -1200,24 +1200,6 @@ uint32_t WcPause(void) {
   return 1;
 }
 
-// Resume the task after reconfiguration
-uint32_t WcResume(void) {
-  if (Wc.state != CAM_PAUSED) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Cannot resume from state %d"), Wc.state);
-    return 0;
-  }
-  
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Resuming task"));
-  
-  // Set state back to streaming
-  Wc.state = CAM_STREAMING;
-  
-  // Signal task to resume
-  xSemaphoreGive(Wc.resume_sem);
-  
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task resumed"));
-  return 1;
-}
 
 uint32_t WcStop(void) {
   if (Wc.state == CAM_IDLE || Wc.state == CAM_STOPPING) {
@@ -1365,12 +1347,6 @@ uint32_t WcStop(void) {
   return 1;
 }
 
-// Get Frame logic is now internal to HandleWebcamMjpegTask (Zero Copy)
-uint8_t* WcGetFrameCSI(uint32_t timeout_ms) {
-    // Legacy function support - just returns current read buffer
-    if (Wc.state != CAM_STREAMING) return NULL;
-    return Wc.frame_buffer[Wc.read_idx];
-}
 
 /*********************************************************************************************/
 // RTSP Server Handler
@@ -1805,17 +1781,6 @@ void CmndWcSession(void) {
     
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP server started on port 554"));
   }
-  
-  // Force H.264-compatible resolution for RTSP session
-  // if (new_type == SESSION_RTSP) {
-  //   Wc.config.width = 1280;
-  //   Wc.config.height = 720;
-  //   Wc.config.binning = 2;
-  //   Wc.config.fps = 30;
-  //   Wc.config.format = 0;  // RAW8
-  //   Wc.config.res_index = 255;  // Custom mode
-  //   AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP session forcing 1280x720@30fps"));
-  // }
   
   // Setup and start new session (unless SESSION_NONE)
   if (new_type != SESSION_NONE) {
