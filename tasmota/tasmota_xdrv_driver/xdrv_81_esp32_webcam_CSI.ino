@@ -571,6 +571,11 @@ void H264ProcessingTask(void *pvParameters) {
   // H.264 encoder frame structures
   esp_h264_enc_in_frame_t in_frame = {};
   esp_h264_enc_out_frame_t out_frame = {};
+
+  // Copy frame data to H.264 input buffer
+  size_t h264_expected_size = Wc.config.width * Wc.config.height * 3 / 2; // 1.5 because YUV420
+  // Protection: don't copy more than the destination can hold
+  if (h264_expected_size > Wc.h264_buffer_size) h264_expected_size = Wc.h264_buffer_size;
   
   // Loop forever, exit only on CAM_STOPPING
   while (true) {
@@ -617,8 +622,7 @@ void H264ProcessingTask(void *pvParameters) {
     // Cache Sync (Hardware M2C)
     esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
     
-    // Copy frame data to H.264 input buffer
-    memcpy(Wc.h264_buffer, source_buf, Wc.frame_buffer_size);
+    memcpy(Wc.h264_buffer, source_buf, h264_expected_size);
     
     xSemaphoreGive(Wc.frame_mutex);
     
@@ -726,7 +730,7 @@ void H264ProcessingTask(void *pvParameters) {
       last_profile_log = millis();
     }
   }
-  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: H264 task exited correctly"));
   // Task exiting - delete ourselves
   Wc.cam_task_handle = NULL;
   vTaskDelete(NULL);
@@ -1214,6 +1218,7 @@ uint32_t WcStop(void) {
   
   // 2. If task was paused, release it so it can see STOPPING and exit
   xSemaphoreGive(Wc.resume_sem);
+  if (Wc.frame_mutex) xSemaphoreGive(Wc.frame_mutex);
   
   // 3. Wake task and wait for it to exit
   if (Wc.cam_task_handle) {
@@ -1232,18 +1237,17 @@ uint32_t WcStop(void) {
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task stopped"));
   }
+
+  // 4a. Stop sensor streaming via Berry
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Called Berry stream stop"));
   
-  // 4. Stop CSI controller - no more ISR callbacks
+  // 4b. Stop CSI controller - no more ISR callbacks
   esp_err_t ret = esp_cam_ctlr_stop(Wc.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to stop CSI (0x%x)"), ret);
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: CSI stopped"));
-  
-  // 4. Stop sensor streaming via Berry
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Calling Berry stream stop"));
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
-  
+
   // 5. Unregister callbacks
   esp_cam_ctlr_evt_cbs_t null_cbs = {0};
   esp_cam_ctlr_register_event_callbacks(Wc.cam_handle, &null_cbs, NULL);
