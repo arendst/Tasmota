@@ -848,6 +848,116 @@ static uint32_t WcSetupH264Encoder(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: H.264 encoder initialized (%dx%d, buffer=%d bytes)"), width, height, in_size);
   return 1;
 }
+/*********************************************************************************************/
+
+// De-initialize only the resolution-dependent hardware
+void WcDeinitPipeline() {
+  // 1. Delete Encoder
+  if (Wc.h264.handle) {
+    esp_h264_enc_del(Wc.h264.handle); // Only if using helper that doesn't double-free
+    Wc.h264.handle = NULL;
+  }
+  if (Wc.h264.buffer) { esp_h264_free(Wc.h264.buffer); Wc.h264.buffer = NULL; }
+  if (Wc.h264.out_buffer) { esp_h264_free(Wc.h264.out_buffer); Wc.h264.out_buffer = NULL; }
+
+  if (Wc.jpeg.handle) {
+    jpeg_del_encoder_engine(Wc.jpeg.handle);
+    Wc.jpeg.handle = NULL;
+  }
+  if (Wc.jpeg.buffer) { free(Wc.jpeg.buffer); Wc.jpeg.buffer = NULL; }
+
+  // 2. Stop & Delete CSI
+  if (Wc.core.cam_handle) {
+    esp_cam_ctlr_stop(Wc.core.cam_handle);
+    esp_cam_ctlr_disable(Wc.core.cam_handle);
+    esp_cam_ctlr_del(Wc.core.cam_handle);
+    Wc.core.cam_handle = NULL;
+  }
+
+  // 3. Delete ISP (Only if we own it)
+  if (Wc.core.isp_handle) {
+    esp_isp_disable(Wc.core.isp_handle);
+    if (!tasmota_wc_isp_handle) {
+      esp_isp_del_processor(Wc.core.isp_handle);
+    }
+    Wc.core.isp_handle = NULL;
+  }
+
+  // 4. Free Frame Buffers
+  for (int i = 0; i < 2; i++) {
+    if (Wc.core.frame_buffer[i]) {
+      free(Wc.core.frame_buffer[i]);
+      Wc.core.frame_buffer[i] = NULL;
+    }
+  }
+}
+
+// Initialize the resolution-dependent hardware
+// Returns 1 on success, 0 on failure
+uint32_t WcInitPipeline() {
+  esp_err_t ret;
+
+  // 1. Allocate Frame Buffers
+  Wc.core.frame_buffer_size = Wc.core.config.width * Wc.core.config.height * 2;
+  for (int i = 0; i < 2; i++) {
+    Wc.core.frame_buffer[i] = (uint8_t*)heap_caps_aligned_calloc(64, 1, Wc.core.frame_buffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!Wc.core.frame_buffer[i]) return 0;
+    esp_cache_msync(Wc.core.frame_buffer[i], Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+  }
+  Wc.core.write_idx = 0;
+  Wc.core.read_idx = 1;
+
+  // 2. Configure CSI
+  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
+  
+  esp_cam_ctlr_csi_config_t csi_config = {
+    .ctlr_id = 0,
+    .h_res = Wc.core.config.width,
+    .v_res = Wc.core.config.height,
+    .data_lane_num = Wc.core.config.lane_num,
+    .lane_bit_rate_mbps = (int)Wc.core.config.mipi_clock,
+    .input_data_color_type = (cam_ctlr_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.core.config.format),
+    .output_data_color_type = csi_output_format,
+    .queue_items = 1,
+    .byte_swap_en = false,
+  };
+  if (esp_cam_new_csi_ctlr(&csi_config, &Wc.core.cam_handle) != ESP_OK) return 0;
+
+  // 3. Callbacks
+  esp_cam_ctlr_evt_cbs_t cbs = { .on_get_new_trans = csi_on_get_new_vb, .on_trans_finished = csi_on_trans_finished };
+  Wc.core.cam_trans.buffer = Wc.core.frame_buffer[0];
+  Wc.core.cam_trans.buflen = Wc.core.frame_buffer_size;
+  if (esp_cam_ctlr_register_event_callbacks(Wc.core.cam_handle, &cbs, &Wc.core.cam_trans) != ESP_OK) return 0;
+  if (esp_cam_ctlr_enable(Wc.core.cam_handle) != ESP_OK) return 0;
+
+  // 4. ISP
+  if (tasmota_wc_isp_handle) {
+    Wc.core.isp_handle = tasmota_wc_isp_handle;
+    esp_isp_enable(Wc.core.isp_handle);
+  } else {
+    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
+    esp_isp_processor_cfg_t isp_config = {
+      .clk_hz = 120 * 1000 * 1000,
+      .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
+      .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.core.config.format),
+      .output_data_color_type = isp_output_format,
+      .h_res = Wc.core.config.width,
+      .v_res = Wc.core.config.height,
+    };
+    if (esp_isp_new_processor(&isp_config, &Wc.core.isp_handle) != ESP_OK) return 0;
+    esp_isp_enable(Wc.core.isp_handle);
+  }
+
+  // 5. Encoders
+  if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
+    if (!WcSetupJpegEncoder()) return 0;
+  } else if (Wc.core.session_type == SESSION_RTSP) {
+    if (!WcSetupH264Encoder()) return 0;
+  }
+
+  return 1;
+}
+
 
 /*********************************************************************************************/
 
@@ -877,17 +987,9 @@ uint32_t WcSetup(bool reset_config) {
     memset(&Wc.core.config, 0, sizeof(Wc.core.config));
     Wc.core.config.width = 800;
     Wc.core.config.height = 640;
-    Wc.core.config.max_width = 0;
-    Wc.core.config.max_height = 0;
-    Wc.core.config.format = 0;        // RAW8
     Wc.core.config.lane_num = 2;
     Wc.core.config.mipi_clock = 200;
-    Wc.core.config.offset_x = 0;
-    Wc.core.config.offset_y = 0;
-    Wc.core.config.binning = 0;
-    Wc.core.config.fps = 0;
-    Wc.core.config.res_index = 0;
-    Wc.core.config.flags = 0;
+    Wc.core.config.fps = 1; // Default to 1 to avoid div-by-zero later
   }
 
   // 2. Call Berry to initialize sensor (zero-copy: pass struct address as idx)
@@ -908,194 +1010,39 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Raw bytes [0-7]: %02X %02X %02X %02X %02X %02X %02X %02X"),
     ((uint8_t*)&Wc.core.config)[0], ((uint8_t*)&Wc.core.config)[1], ((uint8_t*)&Wc.core.config)[2], ((uint8_t*)&Wc.core.config)[3],
     ((uint8_t*)&Wc.core.config)[4], ((uint8_t*)&Wc.core.config)[5], ((uint8_t*)&Wc.core.config)[6], ((uint8_t*)&Wc.core.config)[7]);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Raw bytes [18-25]: %02X %02X %02X %02X %02X %02X %02X %02X"),
-    ((uint8_t*)&Wc.core.config)[18], ((uint8_t*)&Wc.core.config)[19], ((uint8_t*)&Wc.core.config)[20], ((uint8_t*)&Wc.core.config)[21],
-    ((uint8_t*)&Wc.core.config)[22], ((uint8_t*)&Wc.core.config)[23], ((uint8_t*)&Wc.core.config)[24], ((uint8_t*)&Wc.core.config)[25]);
   
-  // Log what Berry sent us (DRY RUN - verify data exchange)
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== CONFIG FROM BERRY ====="));
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor Name: %.8s"), Wc.core.config.name);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution: %dx%d"), Wc.core.config.width, Wc.core.config.height);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Max Resolution: %dx%d"), Wc.core.config.max_width, Wc.core.config.max_height);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (COLOR_PIXEL_RAW8/10/12)"), Wc.core.config.format);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d"), Wc.core.config.format);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.core.config.mipi_clock);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.core.config.lane_num);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Offset: X=%d Y=%d"), Wc.core.config.offset_x, Wc.core.config.offset_y);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (1=1x1, 2=2x2, 3=2_analog)"), Wc.core.config.binning);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS: %d"), Wc.core.config.fps);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ResIndex: %d"), Wc.core.config.res_index);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Flags: 0x%02X (VFlip=%d HMirror=%d)"), 
-    Wc.core.config.flags,
-    (Wc.core.config.flags & CSI_FLAG_VFLIP) ? 1 : 0,
-    (Wc.core.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
 
-  // 3. Allocate Two Frame Buffers (Aligned 64-byte for JPEG DMA)
-  // Free old buffers if they exist (resolution change scenario)
-  for (int i = 0; i < 2; i++) {
-    if (Wc.core.frame_buffer[i]) {
-      free(Wc.core.frame_buffer[i]);
-      Wc.core.frame_buffer[i] = NULL;
-    }
-  }
-  
-  Wc.core.frame_buffer_size = Wc.core.config.width * Wc.core.config.height * 2; // RGB565 = 2 bytes per pixel
-  
-  for (int i = 0; i < 2; i++) {
-      Wc.core.frame_buffer[i] = (uint8_t*)heap_caps_aligned_calloc(64, 1, Wc.core.frame_buffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-      if (!Wc.core.frame_buffer[i]) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Alloc failed for buffer %d"), i);
-        return 0;
-      }
-      // Pre-flush cache
-      esp_cache_msync(Wc.core.frame_buffer[i], Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
-  }
-  
-  Wc.core.write_idx = 0;
-  Wc.core.read_idx = 1;
-
-  // 4. Configure CSI controller
-  // RTSP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
-  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
-  
-  esp_cam_ctlr_csi_config_t csi_config = {
-    .ctlr_id = 0,
-    .h_res = Wc.core.config.width,
-    .v_res = Wc.core.config.height,
-    .data_lane_num = Wc.core.config.lane_num,
-    .lane_bit_rate_mbps = (int)Wc.core.config.mipi_clock,
-    .input_data_color_type = (cam_ctlr_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.core.config.format),
-    .output_data_color_type = csi_output_format,
-    .queue_items = 1,
-    .byte_swap_en = false,
-  };
-  
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI output format: %s"), 
-    (csi_output_format == CAM_CTLR_COLOR_YUV420) ? "YUV420" : "YUV422");
-
-  ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.core.cam_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI controller init failed (0x%x)"), ret);
+  // 3. Initialize Resolution-Dependent Hardware (Buffers, CSI, ISP, Encoders)
+  if (!WcInitPipeline()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
+    // WcInitPipeline calls Deinit internally on failure, so we are safe
     return 0;
   }
 
-  // 5. Register Callbacks
-  esp_cam_ctlr_evt_cbs_t cbs = {
-    .on_get_new_trans = csi_on_get_new_vb,
-    .on_trans_finished = csi_on_trans_finished,
-  };
-  
-  // Start with buffer 0
-  Wc.core.cam_trans.buffer = Wc.core.frame_buffer[0];
-  Wc.core.cam_trans.buflen = Wc.core.frame_buffer_size;
-
-  ret = esp_cam_ctlr_register_event_callbacks(Wc.core.cam_handle, &cbs, &Wc.core.cam_trans);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to register callbacks (0x%x)"), ret);
-    esp_cam_ctlr_del(Wc.core.cam_handle);
-    return 0;
-  }
-
-  // 6. Enable and Start CSI
-  ret = esp_cam_ctlr_enable(Wc.core.cam_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable CSI (0x%x)"), ret);
-    esp_cam_ctlr_del(Wc.core.cam_handle);
-    return 0;
-  }
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI controller enabled (not started yet)"));
-
-  // 7. Configure ISP
-  extern isp_proc_handle_t tasmota_wc_isp_handle;
-  if (tasmota_wc_isp_handle != nullptr) {
-    Wc.core.isp_handle = tasmota_wc_isp_handle;
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Using Berry ISP handle"));
-    
-    ret = esp_isp_enable(Wc.core.isp_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable Berry ISP (0x%x)"), ret);
-      return 0;
-    }
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
-  } else {
-    // Fallback: Create ISP until Berry ISP driver is ready
-    // RTSP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
-    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
-    
-    esp_isp_processor_cfg_t isp_config = {
-      .clk_hz = 120 * 1000 * 1000, //TODO: eventually calculate this based on configured AV session
-      .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
-      .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.core.config.format),
-      .output_data_color_type = isp_output_format,
-      .h_res = Wc.core.config.width,
-      .v_res = Wc.core.config.height,
-    };
-    
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP output format: %s"), 
-      (isp_output_format == ISP_COLOR_YUV420) ? "YUV420" : "YUV422");
-
-    ret = esp_isp_new_processor(&isp_config, &Wc.core.isp_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP init failed (0x%x)"), ret);
-      esp_cam_ctlr_stop(Wc.core.cam_handle);
-      esp_cam_ctlr_disable(Wc.core.cam_handle);
-      return 0;
-    }
-
-    ret = esp_isp_enable(Wc.core.isp_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable ISP (0x%x)"), ret);
-      esp_isp_del_processor(Wc.core.isp_handle);
-      esp_cam_ctlr_stop(Wc.core.cam_handle);
-      return 0;
-    }
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
-  }
-
-  // 8. Initialize encoder based on session type
-  if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
-    if (!WcSetupJpegEncoder()) {
-      esp_isp_disable(Wc.core.isp_handle);
-      esp_isp_del_processor(Wc.core.isp_handle);
-      esp_cam_ctlr_disable(Wc.core.cam_handle);
-      esp_cam_ctlr_del(Wc.core.cam_handle);
-      Wc.core.cam_handle = NULL;
-      Wc.core.isp_handle = NULL;
-      return 0;
-    }
-  } else if (Wc.core.session_type == SESSION_RTSP) {
-    if (!WcSetupH264Encoder()) {
-      esp_isp_disable(Wc.core.isp_handle);
-      esp_isp_del_processor(Wc.core.isp_handle);
-      esp_cam_ctlr_disable(Wc.core.cam_handle);
-      esp_cam_ctlr_del(Wc.core.cam_handle);
-      Wc.core.cam_handle = NULL;
-      Wc.core.isp_handle = NULL;
-      return 0;
-    }
-  }
-
-  // 9. Create mutexes for thread safety
+  // 4. Create mutexes for thread safety
   Wc.core.frame_mutex = xSemaphoreCreateMutex();
   Wc.jpeg.mutex = xSemaphoreCreateMutex();
   Wc.core.resume_sem = xSemaphoreCreateBinary();  // For pause/resume
   
   if (!Wc.core.frame_mutex || !Wc.jpeg.mutex || !Wc.core.resume_sem) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create mutexes"));
-    // Cleanup
+    WcDeinitPipeline(); // Cleanup hardware
+    // Cleanup mutexes
     if (Wc.core.frame_mutex) vSemaphoreDelete(Wc.core.frame_mutex);
     if (Wc.jpeg.mutex) vSemaphoreDelete(Wc.jpeg.mutex);
     if (Wc.core.resume_sem) vSemaphoreDelete(Wc.core.resume_sem);
-    jpeg_del_encoder_engine(Wc.jpeg.handle);
-    esp_isp_disable(Wc.core.isp_handle);
-    esp_isp_del_processor(Wc.core.isp_handle);
-    esp_cam_ctlr_stop(Wc.core.cam_handle);
-    esp_cam_ctlr_disable(Wc.core.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Mutexes created"));
 
-  // 10. Create processing task based on session type
+  // 5. Create processing task based on session type
   TaskFunction_t task_func;
   const char *task_name;
   
@@ -1110,7 +1057,7 @@ uint32_t WcSetup(bool reset_config) {
   BaseType_t task_created = xTaskCreatePinnedToCore(
     task_func,
     task_name,
-    4096,
+    8192, // 8KB Stack
     NULL,
     5,
     &Wc.core.cam_task_handle,
@@ -1119,20 +1066,15 @@ uint32_t WcSetup(bool reset_config) {
   
   if (task_created != pdPASS) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create processing task"));
+    WcDeinitPipeline();
     vSemaphoreDelete(Wc.core.frame_mutex);
     vSemaphoreDelete(Wc.jpeg.mutex);
     vSemaphoreDelete(Wc.core.resume_sem);
-    jpeg_del_encoder_engine(Wc.jpeg.handle);
-    esp_isp_disable(Wc.core.isp_handle);
-    esp_isp_del_processor(Wc.core.isp_handle);
-    esp_cam_ctlr_disable(Wc.core.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task created"));
 
   Wc.core.state = CAM_INIT;
-  // session_type is already set by caller (WcSession command or default)
-
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Setup complete (session=%d)"), Wc.core.session_type);
   return 1;
 }
@@ -1211,7 +1153,6 @@ uint32_t WcPause(void) {
   return 1;
 }
 
-
 uint32_t WcStop(void) {
   if (Wc.core.state == CAM_IDLE || Wc.core.state == CAM_STOPPING) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Nothing to stop (state=%d)"), Wc.core.state);
@@ -1224,7 +1165,7 @@ uint32_t WcStop(void) {
   Wc.core.state = CAM_STOPPING;
   
   // 2. If task was paused, release it so it can see STOPPING and exit
-  xSemaphoreGive(Wc.core.resume_sem);
+  if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
   if (Wc.core.frame_mutex) xSemaphoreGive(Wc.core.frame_mutex);
   
   // 3. Wake task and wait for it to exit
@@ -1238,94 +1179,27 @@ uint32_t WcStop(void) {
     
     // Force delete if task didn't exit
     if (Wc.core.cam_task_handle != NULL) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task didn't exit, force deleting"));
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Task didn't exit cleanly, force deleting"));
       vTaskDelete(Wc.core.cam_task_handle);
       Wc.core.cam_task_handle = NULL;
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task stopped"));
   }
 
-  // 4a. Stop sensor streaming via Berry
+  // 4. Stop sensor streaming via Berry
   callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Called Berry stream stop"));
   
-  // 4b. Stop CSI controller - no more ISR callbacks
-  esp_err_t ret = esp_cam_ctlr_stop(Wc.core.cam_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to stop CSI (0x%x)"), ret);
-  }
-
-  // 5. Unregister callbacks
-  esp_cam_ctlr_evt_cbs_t null_cbs = {0};
-  esp_cam_ctlr_register_event_callbacks(Wc.core.cam_handle, &null_cbs, NULL);
+  // 5. Deinitialize hardware pipeline (Buffers, CSI, ISP, Encoders)
+  WcDeinitPipeline();
   
-  // 6. Disable CSI controller
-  ret = esp_cam_ctlr_disable(Wc.core.cam_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to disable CSI (0x%x)"), ret);
-  }
-  
-  // 7. Delete CSI controller
-  ret = esp_cam_ctlr_del(Wc.core.cam_handle);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete CSI (0x%x)"), ret);
-  }
-  Wc.core.cam_handle = NULL;
-  
-  // 8. Disable and delete ISP
-  if (Wc.core.isp_handle) {
-    esp_isp_disable(Wc.core.isp_handle);
-    esp_isp_del_processor(Wc.core.isp_handle);
-    Wc.core.isp_handle = NULL;
-  }
-  
-  // 9. Delete JPEG encoder
-  if (Wc.jpeg.handle) {
-    jpeg_del_encoder_engine(Wc.jpeg.handle);
-    Wc.jpeg.handle = NULL;
-  }
-  
-  // 10. Delete H.264 encoder
-  if (Wc.h264.handle) {
-    esp_h264_enc_close(Wc.h264.handle);
-    esp_h264_enc_del(Wc.h264.handle);
-    Wc.h264.handle = NULL;
-  }
-  
-  // 11. Free buffers
-  if (Wc.jpeg.buffer) {
-    free(Wc.jpeg.buffer);
-    Wc.jpeg.buffer = NULL;
-    Wc.jpeg.buffer_size = 0;
-  }
-  
-  if (Wc.h264.buffer) {
-    esp_h264_free(Wc.h264.buffer);
-    Wc.h264.buffer = NULL;
-    Wc.h264.buffer_size = 0;
-  }
-  
-  if (Wc.h264.out_buffer) {
-    esp_h264_free(Wc.h264.out_buffer);
-    Wc.h264.out_buffer = NULL;
-    Wc.h264.out_buffer_size = 0;
-  }
-  
-  for (int i = 0; i < 2; i++) {
-    if (Wc.core.frame_buffer[i]) {
-      free(Wc.core.frame_buffer[i]);
-      Wc.core.frame_buffer[i] = NULL;
-    }
-  }
-  Wc.core.frame_buffer_size = 0;
-  
-  // 12. Clean up client pointer before deleting mutex
+  // 6. Clean up network clients
   if (Wc.jpeg.client_ptr) {
     delete Wc.jpeg.client_ptr;
     Wc.jpeg.client_ptr = nullptr;
   }
   
-  // 13. Stop RTSP server and close client
+  // 7. Stop RTSP server and close client
   if (Wc.rtsp.server) {
     Wc.rtsp.server->stop();
     delete Wc.rtsp.server;
@@ -1336,7 +1210,7 @@ uint32_t WcStop(void) {
   }
   Wc.rtsp.streaming = false;
   
-  // 14. Delete mutexes
+  // 8. Delete mutexes
   if (Wc.core.frame_mutex) {
     vSemaphoreDelete(Wc.core.frame_mutex);
     Wc.core.frame_mutex = NULL;
@@ -1350,12 +1224,88 @@ uint32_t WcStop(void) {
     Wc.core.resume_sem = NULL;
   }
 
-  // 15. Final state
+  // 9. Final state
   Wc.core.state = CAM_IDLE;
   Wc.jpeg.stream_active = 0;
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopped"));
   return 1;
+}
+
+// Change resolution dynamically without dropping the connection (Hot Swap)
+// Returns true if successful
+bool WcChangeResolution(uint16_t width, uint16_t height) {
+  // 1. Validate input
+  if (width == 0 || height == 0) return false;
+  if (width == Wc.core.config.width && height == Wc.core.config.height) return true; // No change needed
+
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Changing resolution to %dx%d"), width, height);
+
+  // 2. If Idle, just update config and return
+  if (Wc.core.state == CAM_IDLE) {
+    Wc.core.config.width = width;
+    Wc.core.config.height = height;
+    return true;
+  }
+
+  // 3. Pause the Pipeline (if running)
+  camera_state_t prev_state = Wc.core.state;
+  if (prev_state == CAM_STREAMING) {
+    Wc.core.state = CAM_PAUSING;
+    
+    // Ensure task isn't blocked on resume_sem
+    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+
+    // Wait for task to enter PAUSED state (timeout 500ms)
+    for (int i = 0; i < 50; i++) {
+      if (Wc.core.state == CAM_PAUSED) break;
+      delay(10);
+    }
+    
+    if (Wc.core.state != CAM_PAUSED) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to pause for resolution change"));
+      Wc.core.state = prev_state; // Try to resume
+      return false;
+    }
+  }
+
+  // 4. Tear down hardware (Keep Task & Client Alive)
+  WcDeinitPipeline();
+
+  // 5. Update Configuration
+  Wc.core.config.width = width;
+  Wc.core.config.height = height;
+  
+  // 6. Notify Sensor Driver (Berry) to update physical sensor
+  // We reuse the existing 'init' command which passes the updated config struct
+  uint32_t config_addr = (uint32_t)&Wc.core.config;
+  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
+  if (result == 0) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry sensor resize failed"));
+      // We are in a bad state now (Hardware gone, Sensor failed). 
+      // Force full stop.
+      WcStop(); 
+      return false;
+  }
+
+  // 7. Re-Initialize Hardware Pipeline
+  if (!WcInitPipeline()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline re-init failed"));
+    WcStop();
+    return false;
+  }
+
+  // 8. Resume Pipeline
+  if (prev_state == CAM_STREAMING) {
+    Wc.core.state = CAM_STREAMING;
+    // Release the task to start processing again
+    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+  } else {
+    Wc.core.state = CAM_INIT;
+  }
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed successfully"));
+  return true;
 }
 
 
@@ -1506,42 +1456,235 @@ void CmndWcRes(void) {
   }
   
   // Reject if busy
-  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING || Wc.core.state == CAM_PAUSED) {
+  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING) {
     ResponseCmndChar_P(PSTR("Busy"));
     return;
   }
   
-  // Pause task first if streaming (ensures clean state)
+  // Determine current state
   bool was_streaming = (Wc.core.state == CAM_STREAMING);
+  
+  // 1. Pause task first if streaming
   if (was_streaming) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for resolution change"));
-    if (!WcPause()) {
+    Wc.core.state = CAM_PAUSING;
+    
+    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+
+    for (int i = 0; i < 50; i++) {
+      if (Wc.core.state == CAM_PAUSED) break;
+      delay(10);
+    }
+    
+    if (Wc.core.state != CAM_PAUSED) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to pause"));
       ResponseCmndChar_P(PSTR("Pause failed"));
       return;
     }
   }
   
-  // Now safe to stop - task is paused
-  if (Wc.core.state == CAM_PAUSED || Wc.core.state == CAM_INIT) {
-    WcStop();
+  // 2. Stop CSI and sensor streaming
+  if (Wc.core.cam_handle) {
+    esp_cam_ctlr_stop(Wc.core.cam_handle);
   }
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
   
-  // Store resolution index
+  // 3. Teardown hardware
+  WcDeinitPipeline();
+  
+  // 4. Update Config
   Wc.core.config.res_index = (uint8_t)XdrvMailbox.payload;
   
-  // Reinitialize with new resolution and start streaming
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing with resolution mode %d"), XdrvMailbox.payload);
-  uint32_t result = WcSetup(false);  // Don't reset config - keep resolution index
+  // 5. Notify Sensor (Berry)
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing sensor with mode %d"), XdrvMailbox.payload);
+  uint32_t config_addr = (uint32_t)&Wc.core.config;
+  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
   
   if (result == 0) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Setup failed for resolution %d"), XdrvMailbox.payload);
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed"));
+    WcStop();
     ResponseCmndFailed();
-  } else {
-    WcStart();
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed to mode %d (%dx%d)"), 
-      XdrvMailbox.payload, Wc.core.config.width, Wc.core.config.height);
-    ResponseCmndNumber(XdrvMailbox.payload);
+    return;
   }
+  
+  // 6. Re-Initialize Hardware Pipeline
+  if (!WcInitPipeline()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
+    WcStop();
+    ResponseCmndFailed();
+    return;
+  }
+  
+  // 7. Restart CSI and sensor streaming (if we were streaming before)
+  if (was_streaming) {
+    esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to restart CSI (0x%x)"), ret);
+      WcStop();
+      ResponseCmndFailed();
+      return;
+    }
+    
+    int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0);
+    if (berry_result == 0) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
+      WcStop();
+      ResponseCmndFailed();
+      return;
+    }
+    
+    delay(100); // Give sensor time to start
+    
+    // Resume task
+    Wc.core.state = CAM_STREAMING;
+    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resumed streaming"));
+  } else {
+    Wc.core.state = CAM_INIT;
+  }
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed to mode %d (%dx%d)"), 
+      XdrvMailbox.payload, Wc.core.config.width, Wc.core.config.height);
+  ResponseCmndNumber(XdrvMailbox.payload);
+}
+
+void CmndWcWindow(void) {
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcWindow called"));
+  
+  int x = 0, y = 0, w = 0, h = 0, bin = 0, fps = 0, format = 0;
+  int parsed = sscanf(XdrvMailbox.data, "%d,%d,%d,%d,%d,%d,%d", &x, &y, &w, &h, &bin, &fps, &format);
+  
+  if (parsed != 7) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to parse (got %d, expected 7)"), parsed);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid. Use: x,y,w,h,bin,fps,format\"}}"));
+    return;
+  }
+
+  // Validate geometry
+  if (w < 16 || h < 16 || w > Wc.core.config.max_width || h > Wc.core.config.max_height) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid geometry %dx%d"), w, h);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry. W/H must be 16-2592/1944\"}}"));
+    return;
+  }
+  
+  // Validate binning
+  if (bin < 1 || bin > 2) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid binning %d"), bin);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid binning. Use 1 or 2\"}}"));
+    return;
+  }
+  
+  // Validate FPS
+  if (fps < 0 || fps > 120) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid FPS %d"), fps);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid FPS. Use 1-120\"}}"));
+    return;
+  }
+  if (fps == 0) fps = 30;
+  
+  // Validate format
+  if (format < 0 || format > 2) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid format %d"), format);
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid format. Use 0=RAW8, 1=RAW10, 2=RAW12\"}}"));
+    return;
+  }
+
+  // Reject if busy
+  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING) {
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Busy\"}}"));
+    return;
+  }
+
+  bool was_streaming = (Wc.core.state == CAM_STREAMING);
+
+  // 1. Pause task
+  if (was_streaming) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for window change"));
+    Wc.core.state = CAM_PAUSING;
+    
+    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+
+    for (int i = 0; i < 50; i++) {
+      if (Wc.core.state == CAM_PAUSED) break;
+      delay(10);
+    }
+    
+    if (Wc.core.state != CAM_PAUSED) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to pause"));
+      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pause Failed\"}}"));
+      return;
+    }
+  }
+
+  // 2. Stop CSI and sensor streaming
+  if (Wc.core.cam_handle) {
+    esp_cam_ctlr_stop(Wc.core.cam_handle);
+  }
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
+
+  // 3. Teardown hardware
+  WcDeinitPipeline();
+
+  // 4. Update Config
+  Wc.core.config.offset_x = (uint16_t)x;
+  Wc.core.config.offset_y = (uint16_t)y;
+  Wc.core.config.width = (uint16_t)w;
+  Wc.core.config.height = (uint16_t)h;
+  Wc.core.config.binning = (uint8_t)bin;
+  Wc.core.config.fps = (uint8_t)fps;
+  Wc.core.config.format = (uint8_t)format;
+  Wc.core.config.res_index = 255;
+
+  // 5. Notify Sensor
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing sensor with custom window"));
+  uint32_t config_addr = (uint32_t)&Wc.core.config;
+  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
+
+  if (result == 0) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed"));
+    WcStop();
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Sensor Init Failed\"}}"));
+    return;
+  }
+
+  // 6. Re-Initialize Hardware
+  if (!WcInitPipeline()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
+    WcStop();
+    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pipeline Init Failed\"}}"));
+    return;
+  }
+
+  // 7. Restart CSI and sensor streaming (if we were streaming before)
+  if (was_streaming) {
+    esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to restart CSI (0x%x)"), ret);
+      WcStop();
+      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"CSI Start Failed\"}}"));
+      return;
+    }
+    
+    int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0);
+    if (berry_result == 0) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
+      WcStop();
+      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Stream Start Failed\"}}"));
+      return;
+    }
+    
+    delay(100); // Give sensor time to start
+    
+    // Resume task
+    Wc.core.state = CAM_STREAMING;
+    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resumed streaming"));
+  } else {
+    Wc.core.state = CAM_INIT;
+  }
+
+  Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d,\"Format\":%d}}"), 
+    Wc.core.config.width, Wc.core.config.height, Wc.core.config.binning, Wc.core.config.fps, Wc.core.config.format);
 }
 
 void CmndWcStream(void) {
@@ -1620,91 +1763,6 @@ void CmndWcConfig(void) {
     Wc.core.config.fps,
     Wc.core.config.res_index,
     Wc.core.config.flags);
-}
-
-void CmndWcWindow(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcWindow called"));
-  
-  int x = 0, y = 0, w = 0, h = 0, bin = 0, fps = 0, format = 0;
-  int parsed = sscanf(XdrvMailbox.data, "%d,%d,%d,%d,%d,%d,%d", &x, &y, &w, &h, &bin, &fps, &format);
-  
-  if (parsed != 7) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to parse (got %d, expected 7)"), parsed);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid. Use: x,y,w,h,bin,fps,format\"}}"));
-    return;
-  }
-
-  // Validate geometry
-  if (w < 16 || h < 16 || w > Wc.core.config.max_width || h > Wc.core.config.max_height) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid geometry %dx%d"), w, h);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry. W/H must be 16-2592/1944\"}}"));
-    return;
-  }
-  
-  // Validate binning (1=1x1, 2=2x2)
-  if (bin < 1 || bin > 2 || (bin != 1 && bin != 2)) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid binning %d"), bin);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid binning. Use 1 or 2\"}}"));
-    return;
-  }
-  
-  // Validate FPS (1-120 range, default to 30 if 0)
-  if (fps < 0 || fps > 120) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid FPS %d"), fps);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid FPS. Use 1-120\"}}"));
-    return;
-  }
-  if (fps == 0) {
-    fps = 30;  // Default
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS not specified, using default 30"));
-  }
-  
-  // Validate format (0=RAW8, 1=RAW10, 2=RAW12)
-  if (format < 0 || format > 2) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid format %d"), format);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid format. Use 0=RAW8, 1=RAW10, 2=RAW12\"}}"));
-    return;
-  }
-
-  // Reject if busy
-  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING || Wc.core.state == CAM_PAUSED) {
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Busy\"}}"));
-    return;
-  }
-
-  // Pause task first if streaming (ensures clean state)
-  bool was_streaming = (Wc.core.state == CAM_STREAMING);
-  if (was_streaming) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for window change"));
-    if (!WcPause()) {
-      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pause failed\"}}"));
-      return;
-    }
-  }
-
-  // Now safe to stop - task is paused
-  if (Wc.core.state == CAM_PAUSED || Wc.core.state == CAM_INIT) {
-    WcStop();
-  }
-
-  // Pre-fill Config for Berry (safe assignment with validation)
-  Wc.core.config.offset_x = (uint16_t)x;
-  Wc.core.config.offset_y = (uint16_t)y;
-  Wc.core.config.width = (uint16_t)w;
-  Wc.core.config.height = (uint16_t)h;
-  Wc.core.config.binning = (uint8_t)bin;
-  Wc.core.config.fps = (uint8_t)fps;
-  Wc.core.config.format = (uint8_t)format;
-  Wc.core.config.res_index = 255; // Signal "Custom Mode"
-
-  // Re-Init (Calls Berry 'init') and start streaming
-  if (WcSetup(false)) {
-    WcStart();
-    Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d,\"Format\":%d}}"), 
-      Wc.core.config.width, Wc.core.config.height, Wc.core.config.binning, Wc.core.config.fps, Wc.core.config.format);
-  } else {
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Setup Failed\"}}"));
-  }
 }
 
 
