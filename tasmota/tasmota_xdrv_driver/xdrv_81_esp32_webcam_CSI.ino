@@ -1408,18 +1408,22 @@ void HandleRtsp() {
       AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Sent OPTIONS"));
     }
     else if (request.indexOf("DESCRIBE") >= 0) {
-      String sdp = "v=0\r\n";
-      sdp += "o=- 0 0 IN IP4 " + WiFi.localIP().toString() + "\r\n";
-      sdp += "s=Tasmota H264 Stream\r\n";
-      sdp += "c=IN IP4 0.0.0.0\r\n";
-      sdp += "t=0 0\r\n";
-      sdp += "m=video 0 RTP/AVP 96\r\n";
-      sdp += "a=rtpmap:96 H264/90000\r\n";
-      sdp += "a=fmtp:96 packetization-mode=1;profile-level-id=42001E\r\n";
-      sdp += "a=control:track0\r\n";
-      
-      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nContent-Type: application/sdp\r\nContent-Length: %d\r\n\r\n%s",
-        cseq, sdp.length(), sdp.c_str());
+      IPAddress local_ip = WiFi.localIP();
+      char sdp_buffer[256];
+      snprintf_P(sdp_buffer, sizeof(sdp_buffer),
+        PSTR("v=0\r\n"
+             "o=- 0 0 IN IP4 %d.%d.%d.%d\r\n"
+             "s=Tasmota H264 Stream\r\n"
+             "c=IN IP4 0.0.0.0\r\n"
+             "t=0 0\r\n"
+             "m=video 0 RTP/AVP 96\r\n"
+             "a=rtpmap:96 H264/90000\r\n"
+             "a=fmtp:96 packetization-mode=1;profile-level-id=42001E\r\n"
+             "a=control:track0\r\n"),
+             local_ip[0], local_ip[1], local_ip[2], local_ip[3]);
+
+      Wc.rtsp_client.printf_P(PSTR("RTSP/1.0 200 OK\r\nCSeq: %u\r\nContent-Type: application/sdp\r\nContent-Length: %u\r\n\r\n%s"),
+        cseq, strlen(sdp_buffer), sdp_buffer);
       AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Sent DESCRIBE"));
     }
     else if (request.indexOf("SETUP") >= 0) {
