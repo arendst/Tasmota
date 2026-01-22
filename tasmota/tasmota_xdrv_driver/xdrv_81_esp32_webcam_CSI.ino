@@ -2102,7 +2102,26 @@ void WcPicSetup(void) {
 
 void WcShowStream(void) {
   if (Wc.jpeg.server && Wc.core.state == CAM_STREAMING) {
-    WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream''></center><p></p>"),(uint32_t)WiFi.localIP());
+    uint32_t ip = (uint32_t)WiFi.localIP();
+    
+    // Container and Status Label
+    WSContentSend_P(PSTR("<div><div id='wc_s'>Loading...</div>"));
+    
+    // Image with ID 'wc_img'
+    WSContentSend_P(PSTR("<img id='wc_img' style='max-width:100%%;' "
+                         "src='http://%_I:81/stream' "
+                         "onerror='setTimeout(()=>{this.src=this.src;},1000)'>"), ip);
+
+    // JS using Tasmota's eb() helper
+    WSContentSend_P(PSTR(
+      "<script>"
+      "setInterval(function(){"
+      "  var i=eb('wc_img');"
+      "  if(i && i.naturalWidth){"
+      "    eb('wc_s').innerHTML='MJPEG: '+i.naturalWidth+'x'+i.naturalHeight;"
+      "  }"
+      "},1000);"
+      "</script></div>"));
   }
 }
 
@@ -2139,6 +2158,47 @@ void WcLoop(void) {
   }
 }
 
+// Web UI Strings
+const char HTTP_WC_MODE[] PROGMEM = "{s}Camera Mode{m}%s{e}";
+const char HTTP_WC_RES[]  PROGMEM = "{s}Resolution{m}%dx%d{e}";
+const char HTTP_WC_FPS[]  PROGMEM = "{s}Frame Rate{m}%d fps{e}";
+
+void WcWebInfo(bool json) {
+  if (json) {
+    // Optional: If Tasmota asks for JSON (e.g. /cm?cmnd=status 10), appends to response
+    // But usually FUNC_WEB_SENSOR passes json=false for the Main Page HTML
+    return;
+  }
+
+  // 1. Determine Session Name
+  const char* mode_str = "Standby";
+  if (Wc.core.state == CAM_STREAMING) {
+    switch (Wc.core.session_type) {
+      case SESSION_MJPEG_HTTP: mode_str = "MJPEG Server"; break;
+      case SESSION_RTSP:       mode_str = "RTSP Stream"; break;
+      case SESSION_WEBRTC:     mode_str = "WebRTC"; break;
+      case SESSION_DSI_DISPLAY:mode_str = "Local Display"; break;
+      default:                 mode_str = "Active"; break;
+    }
+  } else if (Wc.core.state == CAM_INIT || Wc.core.state == CAM_PAUSED) {
+    mode_str = "Ready";
+  }
+
+  // 2. Send Table Rows to Web Page
+  // Mode
+  WSContentSend_PD(HTTP_WC_MODE, mode_str);
+
+  // Resolution
+  WSContentSend_PD(HTTP_WC_RES, Wc.core.config.width, Wc.core.config.height);
+
+  // FPS (Only show if streaming)
+  if (Wc.core.state == CAM_STREAMING) {
+    WSContentSend_PD(HTTP_WC_FPS, WcStats.last_fps);
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("_"));
+}
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -2155,6 +2215,11 @@ bool Xdrv81(uint32_t function) {
     case FUNC_WEB_ADD_MAIN_BUTTON:
       WcShowStream();
       break;
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      WcWebInfo(false);
+      break;
+#endif
     case FUNC_PRE_INIT:
       WcInit();
       break;
