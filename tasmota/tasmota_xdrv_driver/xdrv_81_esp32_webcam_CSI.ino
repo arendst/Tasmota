@@ -104,60 +104,67 @@ struct CSI_Config {
 
 // Runtime state - handles and buffers
 struct {
-  // === Camera Core (shared by all session types) ===
-  esp_cam_ctlr_handle_t cam_handle;
-  isp_proc_handle_t isp_handle;
-  esp_ldo_channel_handle_t ldo_mipi_phy;
+  // --- 1. Core Camera State (POD) ---
+  struct {
+    esp_cam_ctlr_handle_t cam_handle;
+    isp_proc_handle_t isp_handle;
+    esp_ldo_channel_handle_t ldo_mipi_phy;
+    uint8_t *frame_buffer[2];
+    size_t frame_buffer_size;
+    CSI_Config config;
+    esp_cam_ctlr_trans_t cam_trans;
+    volatile int write_idx;
+    volatile int read_idx;
+    volatile camera_state_t state;
+    camera_session_t session_type;
+    TaskHandle_t cam_task_handle;
+    SemaphoreHandle_t frame_mutex;
+    SemaphoreHandle_t resume_sem;
+  } core;
   
-  uint8_t *frame_buffer[2];        // Double-buffered ping-pong
-  size_t frame_buffer_size;
+  // --- 2. JPEG Session (POD) ---
+  struct {
+    jpeg_encoder_handle_t handle;
+    void *buffer;
+    size_t buffer_size;
+    jpeg_encode_cfg_t cfg;
+    uint8_t quality;
+    SemaphoreHandle_t mutex;
+    ESP8266WebServer *server;
+    WiFiClient *client_ptr;
+    uint8_t stream_active;
+  } jpeg;
   
-  CSI_Config config;               // Sensor configuration from Berry
-  esp_cam_ctlr_trans_t cam_trans;  // CSI transaction struct
+  // --- 3. H.264 Session (POD) ---
+  struct {
+    esp_h264_enc_handle_t handle;
+    uint8_t *buffer;
+    size_t buffer_size;
+    uint8_t *out_buffer;
+    size_t out_buffer_size;
+  } h264;
   
-  volatile int write_idx;          // Buffer CSI is writing to (0 or 1)
-  volatile int read_idx;           // Buffer ready for reading
+  // --- 4. RTP Protocol (POD) ---
+  struct {
+    uint16_t dest_port;
+    uint16_t sequence;
+    uint32_t timestamp;
+    uint32_t ssrc;
+  } rtp;
   
-  volatile camera_state_t state;   // Pipeline lifecycle state
-  camera_session_t session_type;   // Active session type
+  // --- 5. RTSP Protocol (POD) ---
+  struct {
+    WiFiServer *server;
+    uint32_t session_id;
+    uint16_t client_rtp_port;
+    uint16_t client_rtcp_port;
+    bool streaming;
+  } rtsp;
   
-  TaskHandle_t cam_task_handle;    // Frame processing task
-  SemaphoreHandle_t frame_mutex;   // Protects frame buffer access
-  SemaphoreHandle_t resume_sem;    // Task pause/resume sync
-  
-  // === MJPEG Session (HTTP streaming, snapshots) ===
-  jpeg_encoder_handle_t jpeg_handle;
-  void *jpeg_buffer;
-  size_t jpeg_buffer_size;
-  jpeg_encode_cfg_t jpeg_cfg;
-  uint8_t jpeg_quality;            // 1-100, default 50
-  
-  SemaphoreHandle_t jpeg_mutex;    // Protects JPEG encoder
-  
-  ESP8266WebServer *CamServer;     // HTTP stream server (port 81)
-  WiFiClient *client_ptr;          // Active streaming client
-  uint8_t stream_active;           // 0=none, 2=streaming
-  
-  // === RTSP/RTP Session (H.264 over RTP/UDP with RTSP control) ===
-  esp_h264_enc_handle_t h264_handle;  // H.264 hardware encoder
-  uint8_t *h264_buffer;            // H.264 input buffer (raw YUV from ISP)
-  size_t h264_buffer_size;
-  uint8_t *h264_out_buffer;        // H.264 output buffer (encoded NAL units)
-  size_t h264_out_buffer_size;
-  
-  WiFiUDP rtp_udp;                 // UDP socket for RTP
-  IPAddress rtp_dest_ip;           // Destination IP (set by RTSP SETUP)
-  uint16_t rtp_dest_port;          // Destination port (set by RTSP SETUP)
-  uint16_t rtp_sequence;           // RTP sequence number (increments per packet)
-  uint32_t rtp_timestamp;          // RTP timestamp (90kHz clock)
-  uint32_t rtp_ssrc;               // Synchronization source ID
-  
-  WiFiServer *rtsp_server;         // RTSP control server (TCP port 554)
-  WiFiClient rtsp_client;          // Active RTSP client connection
-  uint32_t rtsp_session_id;        // RTSP session ID
-  uint16_t client_rtp_port;        // Client's RTP port (from SETUP)
-  uint16_t client_rtcp_port;       // Client's RTCP port (from SETUP)
-  bool rtsp_streaming;             // RTSP session is in PLAY state
+  // --- 6. C++ Objects (Complex types - NO MEMSET) ---
+  IPAddress rtp_dest_ip;
+  WiFiUDP rtp_udp;
+  WiFiClient rtsp_client;
 } Wc;
 
 // Statistics
@@ -212,12 +219,12 @@ static bool IRAM_ATTR csi_on_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ct
   cb_get_new_count++;
   
   // Switch to the OTHER buffer for the next write
-  int next_idx = (Wc.write_idx + 1) % 2;
-  Wc.write_idx = next_idx;
+  int next_idx = (Wc.core.write_idx + 1) % 2;
+  Wc.core.write_idx = next_idx;
   
   // Give hardware the address of the new write buffer
-  trans->buffer = Wc.frame_buffer[next_idx];
-  trans->buflen = Wc.frame_buffer_size;
+  trans->buffer = Wc.core.frame_buffer[next_idx];
+  trans->buflen = Wc.core.frame_buffer_size;
   
   return false; 
 }
@@ -225,19 +232,19 @@ static bool IRAM_ATTR csi_on_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ct
 // Callback: Frame transfer finished - Wake processing task
 static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data) {
   // Reject if not streaming (shutdown in progress)
-  if (Wc.state != CAM_STREAMING) return false;
+  if (Wc.core.state != CAM_STREAMING) return false;
   
   cb_finished_count++;
   
   // The buffer we just finished writing is now the readable one
-  Wc.read_idx = Wc.write_idx;
+  Wc.core.read_idx = Wc.core.write_idx;
   
   // Statistics: increment frames captured
   WcStats.frames_captured++;
   
   // Wake up the processing task immediately
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  vTaskNotifyGiveFromISR(Wc.cam_task_handle, &xHigherPriorityTaskWoken);
+  vTaskNotifyGiveFromISR(Wc.core.cam_task_handle, &xHigherPriorityTaskWoken);
   
   return xHigherPriorityTaskWoken == pdTRUE;
 }
@@ -258,24 +265,24 @@ void MjpegProcessingTask(void *pvParameters) {
     uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
     
     // Exit on stop signal
-    if (Wc.state == CAM_STOPPING) {
+    if (Wc.core.state == CAM_STOPPING) {
       break;
     }
     
     // Handle pause request - signal we're paused, then wait for resume
-    if (Wc.state == CAM_PAUSING) {
-      Wc.state = CAM_PAUSED;  // Signal that we're safely paused
+    if (Wc.core.state == CAM_PAUSING) {
+      Wc.core.state = CAM_PAUSED;  // Signal that we're safely paused
       // Wait for resume signal (blocks until semaphore given)
-      xSemaphoreTake(Wc.resume_sem, portMAX_DELAY);
+      xSemaphoreTake(Wc.core.resume_sem, portMAX_DELAY);
       // After resume, check state again
-      if (Wc.state == CAM_STOPPING) {
+      if (Wc.core.state == CAM_STOPPING) {
         break;
       }
       continue;  // Go back to top of loop
     }
     
     // Only process frames when streaming and we got a notification
-    if (Wc.state != CAM_STREAMING || ulNotificationValue == 0) {
+    if (Wc.core.state != CAM_STREAMING || ulNotificationValue == 0) {
       continue;
     }
     
@@ -284,7 +291,7 @@ void MjpegProcessingTask(void *pvParameters) {
     
     // Lock frame access to prevent race with WcLoop
     uint32_t mutex_start = micros();
-    if (xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+    if (xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
       WcStats.frames_unsent++;
       continue;
     }
@@ -295,37 +302,37 @@ void MjpegProcessingTask(void *pvParameters) {
     }
     
     // Check state after acquiring mutex - exit quickly if stopping
-    if (Wc.state == CAM_STOPPING) {
-      xSemaphoreGive(Wc.frame_mutex);
+    if (Wc.core.state == CAM_STOPPING) {
+      xSemaphoreGive(Wc.core.frame_mutex);
       break;
     }
     
     // Only process if we have a client connected to stream
-    if (Wc.stream_active != 2 || !Wc.client_ptr || !Wc.client_ptr->connected()) {
+    if (Wc.jpeg.stream_active != 2 || !Wc.jpeg.client_ptr || !Wc.jpeg.client_ptr->connected()) {
       WcStats.frames_unsent++;
-      xSemaphoreGive(Wc.frame_mutex);
+      xSemaphoreGive(Wc.core.frame_mutex);
       continue;
     }
     
-    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+    uint8_t *source_buf = Wc.core.frame_buffer[Wc.core.read_idx];
     
     // Cache Sync (Hardware M2C)
     uint32_t cache_start = micros();
-    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    esp_cache_msync(source_buf, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
     WcStats.last_cache_sync_us = micros() - cache_start;
     
     // Lock JPEG encoder to prevent race with HandleImage
     uint32_t jpeg_mutex_start = micros();
-    if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+    if (xSemaphoreTake(Wc.jpeg.mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
       WcStats.frames_unsent++;
-      xSemaphoreGive(Wc.frame_mutex);
+      xSemaphoreGive(Wc.core.frame_mutex);
       continue;
     }
     
     // Check state after acquiring mutex - exit quickly if stopping
-    if (Wc.state == CAM_STOPPING) {
-      xSemaphoreGive(Wc.jpeg_mutex);
-      xSemaphoreGive(Wc.frame_mutex);
+    if (Wc.core.state == CAM_STOPPING) {
+      xSemaphoreGive(Wc.jpeg.mutex);
+      xSemaphoreGive(Wc.core.frame_mutex);
       break;
     }
     
@@ -333,12 +340,12 @@ void MjpegProcessingTask(void *pvParameters) {
     
     uint32_t jpeg_size = 0;
     uint32_t jpeg_start = micros();
-    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, 
-                                          &Wc.jpeg_cfg,
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg.handle, 
+                                          &Wc.jpeg.cfg,
                                           source_buf, 
-                                          Wc.frame_buffer_size,
-                                          (uint8_t*)Wc.jpeg_buffer, 
-                                          Wc.jpeg_buffer_size,
+                                          Wc.core.frame_buffer_size,
+                                          (uint8_t*)Wc.jpeg.buffer, 
+                                          Wc.jpeg.buffer_size,
                                           &jpeg_size);
     WcStats.last_jpeg_encode_us = micros() - jpeg_start;
     if (WcStats.last_jpeg_encode_us > WcStats.max_jpeg_encode_us) {
@@ -347,12 +354,12 @@ void MjpegProcessingTask(void *pvParameters) {
     
     // Auto-Reset on 0x103 (Engine Stuck)
     if (ret == ESP_ERR_INVALID_STATE) {
-      jpeg_del_encoder_engine(Wc.jpeg_handle);
+      jpeg_del_encoder_engine(Wc.jpeg.handle);
       jpeg_encode_engine_cfg_t jpeg_eng_cfg = { .intr_priority = 0, .timeout_ms = 100 };
-      jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+      jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg.handle);
       WcStats.jpeg_resets++;
-      xSemaphoreGive(Wc.jpeg_mutex);
-      xSemaphoreGive(Wc.frame_mutex);
+      xSemaphoreGive(Wc.jpeg.mutex);
+      xSemaphoreGive(Wc.core.frame_mutex);
       continue;
     }
 
@@ -366,21 +373,21 @@ void MjpegProcessingTask(void *pvParameters) {
         WcStats.max_jpeg_size = jpeg_size;
       }
       // Calculate compression ratio (raw YUV422 size / JPEG size)
-      uint32_t raw_size = Wc.frame_buffer_size;
+      uint32_t raw_size = Wc.core.frame_buffer_size;
       WcStats.compression_ratio_x100 = (raw_size * 100) / jpeg_size;
       
       // Check state before starting network write - don't start new writes if stopping
-      if (Wc.state == CAM_STOPPING) {
-        xSemaphoreGive(Wc.jpeg_mutex);
-        xSemaphoreGive(Wc.frame_mutex);
+      if (Wc.core.state == CAM_STOPPING) {
+        xSemaphoreGive(Wc.jpeg.mutex);
+        xSemaphoreGive(Wc.core.frame_mutex);
         break;
       }
       
       uint32_t network_start = micros();
-      Wc.client_ptr->print("--" BOUNDARY "\r\n");
-      Wc.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
-      Wc.client_ptr->write((const uint8_t*)Wc.jpeg_buffer, jpeg_size);
-      Wc.client_ptr->print("\r\n");
+      Wc.jpeg.client_ptr->print("--" BOUNDARY "\r\n");
+      Wc.jpeg.client_ptr->printf("Content-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n", jpeg_size);
+      Wc.jpeg.client_ptr->write((const uint8_t*)Wc.jpeg.buffer, jpeg_size);
+      Wc.jpeg.client_ptr->print("\r\n");
       WcStats.last_network_write_us = micros() - network_start;
       if (WcStats.last_network_write_us > WcStats.max_network_write_us) {
         WcStats.max_network_write_us = WcStats.last_network_write_us;
@@ -397,8 +404,8 @@ void MjpegProcessingTask(void *pvParameters) {
       WcStats.jpeg_errors++;
     }
     
-    xSemaphoreGive(Wc.jpeg_mutex);
-    xSemaphoreGive(Wc.frame_mutex);
+    xSemaphoreGive(Wc.jpeg.mutex);
+    xSemaphoreGive(Wc.core.frame_mutex);
     
     // Track frame processing time
     WcStats.last_frame_time_ms = millis() - frame_start;
@@ -440,7 +447,7 @@ void MjpegProcessingTask(void *pvParameters) {
   }
   
   // Task exiting - delete ourselves
-  Wc.cam_task_handle = NULL;
+  Wc.core.cam_task_handle = NULL;
   vTaskDelete(NULL);
 }
 
@@ -469,30 +476,30 @@ void SendNalUnitRTP(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t na
     }
 
     // Sequence Number (Big Endian)
-    rtppacket[2] = (Wc.rtp_sequence >> 8) & 0xFF;
-    rtppacket[3] = Wc.rtp_sequence & 0xFF;
+    rtppacket[2] = (Wc.rtp.sequence >> 8) & 0xFF;
+    rtppacket[3] = Wc.rtp.sequence & 0xFF;
 
     // Timestamp (Big Endian)
-    rtppacket[4] = (Wc.rtp_timestamp >> 24) & 0xFF;
-    rtppacket[5] = (Wc.rtp_timestamp >> 16) & 0xFF;
-    rtppacket[6] = (Wc.rtp_timestamp >> 8) & 0xFF;
-    rtppacket[7] = Wc.rtp_timestamp & 0xFF;
+    rtppacket[4] = (Wc.rtp.timestamp >> 24) & 0xFF;
+    rtppacket[5] = (Wc.rtp.timestamp >> 16) & 0xFF;
+    rtppacket[6] = (Wc.rtp.timestamp >> 8) & 0xFF;
+    rtppacket[7] = Wc.rtp.timestamp & 0xFF;
 
     // SSRC (Big Endian)
-    rtppacket[8] = (Wc.rtp_ssrc >> 24) & 0xFF;
-    rtppacket[9] = (Wc.rtp_ssrc >> 16) & 0xFF;
-    rtppacket[10] = (Wc.rtp_ssrc >> 8) & 0xFF;
-    rtppacket[11] = Wc.rtp_ssrc & 0xFF;
+    rtppacket[8] = (Wc.rtp.ssrc >> 24) & 0xFF;
+    rtppacket[9] = (Wc.rtp.ssrc >> 16) & 0xFF;
+    rtppacket[10] = (Wc.rtp.ssrc >> 8) & 0xFF;
+    rtppacket[11] = Wc.rtp.ssrc & 0xFF;
 
     // Copy NAL unit directly after RTP header
     memcpy(rtppacket + RTP_HEADER_SIZE, naldata, nallen);
 
     // Send UDP Packet
-    Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp_dest_port);
+    Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp.dest_port);
     Wc.rtp_udp.write(rtppacket, RTP_HEADER_SIZE + nallen);
     Wc.rtp_udp.endPacket();
 
-    Wc.rtp_sequence++;
+    Wc.rtp.sequence++;
   } 
   // ---------------------------------------------------------
   // Case B: Large NAL - Fragment using FU-A (RFC 3984)
@@ -516,16 +523,16 @@ void SendNalUnitRTP(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t na
         rtppacket[1] |= 0x80; 
       }
 
-      rtppacket[2] = (Wc.rtp_sequence >> 8) & 0xFF;
-      rtppacket[3] = Wc.rtp_sequence & 0xFF;
-      rtppacket[4] = (Wc.rtp_timestamp >> 24) & 0xFF;
-      rtppacket[5] = (Wc.rtp_timestamp >> 16) & 0xFF;
-      rtppacket[6] = (Wc.rtp_timestamp >> 8) & 0xFF;
-      rtppacket[7] = Wc.rtp_timestamp & 0xFF;
-      rtppacket[8] = (Wc.rtp_ssrc >> 24) & 0xFF;
-      rtppacket[9] = (Wc.rtp_ssrc >> 16) & 0xFF;
-      rtppacket[10] = (Wc.rtp_ssrc >> 8) & 0xFF;
-      rtppacket[11] = Wc.rtp_ssrc & 0xFF;
+      rtppacket[2] = (Wc.rtp.sequence >> 8) & 0xFF;
+      rtppacket[3] = Wc.rtp.sequence & 0xFF;
+      rtppacket[4] = (Wc.rtp.timestamp >> 24) & 0xFF;
+      rtppacket[5] = (Wc.rtp.timestamp >> 16) & 0xFF;
+      rtppacket[6] = (Wc.rtp.timestamp >> 8) & 0xFF;
+      rtppacket[7] = Wc.rtp.timestamp & 0xFF;
+      rtppacket[8] = (Wc.rtp.ssrc >> 24) & 0xFF;
+      rtppacket[9] = (Wc.rtp.ssrc >> 16) & 0xFF;
+      rtppacket[10] = (Wc.rtp.ssrc >> 8) & 0xFF;
+      rtppacket[11] = Wc.rtp.ssrc & 0xFF;
 
       // --- FU-A Specific Headers ---
       // Byte 12: FU Indicator (F + NRI + Type 28)
@@ -545,14 +552,14 @@ void SendNalUnitRTP(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t na
       memcpy(rtppacket + 14, naldata + offset, chunksize);
 
       // Send UDP Packet
-      Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp_dest_port);
+      Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp.dest_port);
       Wc.rtp_udp.write(rtppacket, 14 + chunksize);
       Wc.rtp_udp.endPacket();
 
       // Traffic Shaping for ESP32 UDP stability (Reduces possible green artifacts)
       // delayMicroseconds(50);
 
-      Wc.rtp_sequence++;
+      Wc.rtp.sequence++;
       offset += chunksize;
       firstfragment = false;
     }
@@ -573,9 +580,9 @@ void H264ProcessingTask(void *pvParameters) {
   esp_h264_enc_out_frame_t out_frame = {};
 
   // Copy frame data to H.264 input buffer
-  size_t h264_expected_size = Wc.config.width * Wc.config.height * 3 / 2; // 1.5 because YUV420
+  size_t h264_expected_size = Wc.core.config.width * Wc.core.config.height * 3 / 2; // 1.5 because YUV420
   // Protection: don't copy more than the destination can hold
-  if (h264_expected_size > Wc.h264_buffer_size) h264_expected_size = Wc.h264_buffer_size;
+  if (h264_expected_size > Wc.h264.buffer_size) h264_expected_size = Wc.h264.buffer_size;
   
   // Loop forever, exit only on CAM_STOPPING
   while (true) {
@@ -583,22 +590,22 @@ void H264ProcessingTask(void *pvParameters) {
     uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
     
     // Exit on stop signal
-    if (Wc.state == CAM_STOPPING) {
+    if (Wc.core.state == CAM_STOPPING) {
       break;
     }
     
     // Handle pause request - signal we're paused, then wait for resume
-    if (Wc.state == CAM_PAUSING) {
-      Wc.state = CAM_PAUSED;
-      xSemaphoreTake(Wc.resume_sem, portMAX_DELAY);
-      if (Wc.state == CAM_STOPPING) {
+    if (Wc.core.state == CAM_PAUSING) {
+      Wc.core.state = CAM_PAUSED;
+      xSemaphoreTake(Wc.core.resume_sem, portMAX_DELAY);
+      if (Wc.core.state == CAM_STOPPING) {
         break;
       }
       continue;
     }
     
     // Only process frames when streaming and we got a notification
-    if (Wc.state != CAM_STREAMING || ulNotificationValue == 0) {
+    if (Wc.core.state != CAM_STREAMING || ulNotificationValue == 0) {
       continue;
     }
     
@@ -606,44 +613,44 @@ void H264ProcessingTask(void *pvParameters) {
     uint32_t frame_start = millis();
     
     // Lock frame access
-    if (xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+    if (xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
       WcStats.frames_unsent++;
       continue;
     }
     
     // Check state after acquiring mutex
-    if (Wc.state == CAM_STOPPING) {
-      xSemaphoreGive(Wc.frame_mutex);
+    if (Wc.core.state == CAM_STOPPING) {
+      xSemaphoreGive(Wc.core.frame_mutex);
       break;
     }
     
-    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
+    uint8_t *source_buf = Wc.core.frame_buffer[Wc.core.read_idx];
     
     // Cache Sync (Hardware M2C)
-    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    esp_cache_msync(source_buf, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
     
-    memcpy(Wc.h264_buffer, source_buf, h264_expected_size);
+    memcpy(Wc.h264.buffer, source_buf, h264_expected_size);
     
-    xSemaphoreGive(Wc.frame_mutex);
+    xSemaphoreGive(Wc.core.frame_mutex);
     
     // Setup input frame
-    in_frame.raw_data.buffer = Wc.h264_buffer;
-    in_frame.raw_data.len = Wc.h264_buffer_size;
+    in_frame.raw_data.buffer = Wc.h264.buffer;
+    in_frame.raw_data.len = Wc.h264.buffer_size;
     in_frame.pts = WcStats.frames_captured;
     
     // Setup output frame buffer
-    out_frame.raw_data.buffer = Wc.h264_out_buffer;
-    out_frame.raw_data.len = Wc.h264_out_buffer_size;
+    out_frame.raw_data.buffer = Wc.h264.out_buffer;
+    out_frame.raw_data.len = Wc.h264.out_buffer_size;
     
     // Encode H.264
     uint32_t encode_start = micros();
-    esp_h264_err_t ret = esp_h264_enc_process(Wc.h264_handle, &in_frame, &out_frame);
+    esp_h264_err_t ret = esp_h264_enc_process(Wc.h264.handle, &in_frame, &out_frame);
     uint32_t encode_time = micros() - encode_start;
     
     if (ret == ESP_H264_ERR_OK && out_frame.length > 0) {
       // Parse and send NAL units via RTP (only if RTSP session is in PLAY state)
-      if (Wc.session_type == SESSION_RTSP && Wc.rtsp_streaming) {
-        uint8_t* nal_data = Wc.h264_out_buffer;
+      if (Wc.core.session_type == SESSION_RTSP && Wc.rtsp.streaming) {
+        uint8_t* nal_data = Wc.h264.out_buffer;
         size_t remaining = out_frame.length;
         
         while (remaining > 0) {
@@ -699,7 +706,7 @@ void H264ProcessingTask(void *pvParameters) {
         }
         
         // Increment RTP timestamp (90kHz clock)
-        Wc.rtp_timestamp += (90000 / Wc.config.fps);
+        Wc.rtp.timestamp += (90000 / Wc.core.config.fps);
       }
       
       WcStats.frames_processed++;
@@ -732,7 +739,7 @@ void H264ProcessingTask(void *pvParameters) {
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: H264 task exited correctly"));
   // Task exiting - delete ourselves
-  Wc.cam_task_handle = NULL;
+  Wc.core.cam_task_handle = NULL;
   vTaskDelete(NULL);
 }
 
@@ -745,7 +752,7 @@ static uint32_t WcSetupJpegEncoder(void) {
     .timeout_ms = 100,
   };
   
-  esp_err_t ret = jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg_handle);
+  esp_err_t ret = jpeg_new_encoder_engine(&jpeg_eng_cfg, &Wc.jpeg.handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: JPEG encoder init failed (0x%x)"), ret);
     return 0;
@@ -757,20 +764,20 @@ static uint32_t WcSetupJpegEncoder(void) {
   };
   
   size_t actual_size = 0;
-  Wc.jpeg_buffer = jpeg_alloc_encoder_mem(Wc.config.width * Wc.config.height / 2, &jpeg_mem_cfg, &actual_size);
-  if (!Wc.jpeg_buffer) {
+  Wc.jpeg.buffer = jpeg_alloc_encoder_mem(Wc.core.config.width * Wc.core.config.height / 2, &jpeg_mem_cfg, &actual_size);
+  if (!Wc.jpeg.buffer) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate JPEG buffer"));
-    jpeg_del_encoder_engine(Wc.jpeg_handle);
+    jpeg_del_encoder_engine(Wc.jpeg.handle);
     return 0;
   }
-  Wc.jpeg_buffer_size = actual_size;
+  Wc.jpeg.buffer_size = actual_size;
 
-  Wc.jpeg_cfg = {
-    .height = Wc.config.height,
-    .width = Wc.config.width,
+  Wc.jpeg.cfg = {
+    .height = Wc.core.config.height,
+    .width = Wc.core.config.width,
     .src_type = JPEG_ENCODE_IN_FORMAT_YUV422,
     .sub_sample = JPEG_DOWN_SAMPLING_YUV422,
-    .image_quality = Wc.jpeg_quality,
+    .image_quality = Wc.jpeg.quality,
   };
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG encoder initialized, buffer=%d bytes"), actual_size);
@@ -779,13 +786,13 @@ static uint32_t WcSetupJpegEncoder(void) {
 
 static uint32_t WcSetupH264Encoder(void) {
   // Width/height must be 16-byte aligned (macroblock size)
-  uint16_t width = ((Wc.config.width + 15) >> 4) << 4;
-  uint16_t height = ((Wc.config.height + 15) >> 4) << 4;
+  uint16_t width = ((Wc.core.config.width + 15) >> 4) << 4;
+  uint16_t height = ((Wc.core.config.height + 15) >> 4) << 4;
   
   esp_h264_enc_cfg_hw_t cfg = {
     .pic_type = ESP_H264_RAW_FMT_O_UYY_E_VYY,  // HW encoder requires this YUV420 format
     .gop = 30,
-    .fps = (uint8_t)(Wc.config.fps ? Wc.config.fps : 30),
+    .fps = (uint8_t)(Wc.core.config.fps ? Wc.core.config.fps : 30),
     .res = {.width = width, .height = height},
     .rc = {
       .bitrate = (uint32_t)(width * height * 2),  // ~10% of raw size
@@ -796,45 +803,45 @@ static uint32_t WcSetupH264Encoder(void) {
   
   // Allocate input frame buffer (raw YUV from ISP)
   size_t in_size = (size_t)((float)width * height * ESP_H264_GET_BPP_BY_PIC_TYPE(cfg.pic_type));
-  Wc.h264_buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, in_size, &in_size, ESP_H264_MEM_SPIRAM);
-  if (!Wc.h264_buffer) {
+  Wc.h264.buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, in_size, &in_size, ESP_H264_MEM_SPIRAM);
+  if (!Wc.h264.buffer) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 input buffer alloc failed"));
     return 0;
   }
-  Wc.h264_buffer_size = in_size;
+  Wc.h264.buffer_size = in_size;
   
   // Allocate output frame buffer (encoded NAL units) - same size as input
   size_t out_size = in_size;
-  Wc.h264_out_buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, out_size, &out_size, ESP_H264_MEM_SPIRAM);
-  if (!Wc.h264_out_buffer) {
+  Wc.h264.out_buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, out_size, &out_size, ESP_H264_MEM_SPIRAM);
+  if (!Wc.h264.out_buffer) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 output buffer alloc failed"));
-    esp_h264_free(Wc.h264_buffer);
-    Wc.h264_buffer = NULL;
+    esp_h264_free(Wc.h264.buffer);
+    Wc.h264.buffer = NULL;
     return 0;
   }
-  Wc.h264_out_buffer_size = out_size;
+  Wc.h264.out_buffer_size = out_size;
   
   // Create encoder
-  esp_h264_err_t ret = esp_h264_enc_hw_new(&cfg, &Wc.h264_handle);
+  esp_h264_err_t ret = esp_h264_enc_hw_new(&cfg, &Wc.h264.handle);
   if (ret != ESP_H264_ERR_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 encoder create failed (0x%x)"), ret);
-    esp_h264_free(Wc.h264_buffer);
-    esp_h264_free(Wc.h264_out_buffer);
-    Wc.h264_buffer = NULL;
-    Wc.h264_out_buffer = NULL;
+    esp_h264_free(Wc.h264.buffer);
+    esp_h264_free(Wc.h264.out_buffer);
+    Wc.h264.buffer = NULL;
+    Wc.h264.out_buffer = NULL;
     return 0;
   }
   
   // Open encoder
-  ret = esp_h264_enc_open(Wc.h264_handle);
+  ret = esp_h264_enc_open(Wc.h264.handle);
   if (ret != ESP_H264_ERR_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 encoder open failed (0x%x)"), ret);
-    esp_h264_enc_del(Wc.h264_handle);
-    esp_h264_free(Wc.h264_buffer);
-    esp_h264_free(Wc.h264_out_buffer);
-    Wc.h264_handle = NULL;
-    Wc.h264_buffer = NULL;
-    Wc.h264_out_buffer = NULL;
+    esp_h264_enc_del(Wc.h264.handle);
+    esp_h264_free(Wc.h264.buffer);
+    esp_h264_free(Wc.h264.out_buffer);
+    Wc.h264.handle = NULL;
+    Wc.h264.buffer = NULL;
+    Wc.h264.out_buffer = NULL;
     return 0;
   }
   
@@ -845,8 +852,8 @@ static uint32_t WcSetupH264Encoder(void) {
 /*********************************************************************************************/
 
 uint32_t WcSetup(bool reset_config) {
-  if (Wc.state != CAM_IDLE) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI already initialized (state=%d)"), Wc.state);
+  if (Wc.core.state != CAM_IDLE) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI already initialized (state=%d)"), Wc.core.state);
     return 1;
   }
 
@@ -858,7 +865,7 @@ uint32_t WcSetup(bool reset_config) {
     .voltage_mv = 2500,  // 2.5V for MIPI PHY
   };
   
-  esp_err_t ret = esp_ldo_acquire_channel(&ldo_mipi_phy_config, &Wc.ldo_mipi_phy);
+  esp_err_t ret = esp_ldo_acquire_channel(&ldo_mipi_phy_config, &Wc.core.ldo_mipi_phy);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to acquire MIPI LDO (0x%x)"), ret);
     return 0;
@@ -867,27 +874,27 @@ uint32_t WcSetup(bool reset_config) {
 
   // PRE-FILL CONFIG WITH DEFAULTS (only on first boot, not on resolution change)
   if (reset_config) {
-    memset(&Wc.config, 0, sizeof(Wc.config));
-    Wc.config.width = 800;
-    Wc.config.height = 640;
-    Wc.config.max_width = 0;
-    Wc.config.max_height = 0;
-    Wc.config.format = 0;        // RAW8
-    Wc.config.lane_num = 2;
-    Wc.config.mipi_clock = 200;
-    Wc.config.offset_x = 0;
-    Wc.config.offset_y = 0;
-    Wc.config.binning = 0;
-    Wc.config.fps = 0;
-    Wc.config.res_index = 0;
-    Wc.config.flags = 0;
+    memset(&Wc.core.config, 0, sizeof(Wc.core.config));
+    Wc.core.config.width = 800;
+    Wc.core.config.height = 640;
+    Wc.core.config.max_width = 0;
+    Wc.core.config.max_height = 0;
+    Wc.core.config.format = 0;        // RAW8
+    Wc.core.config.lane_num = 2;
+    Wc.core.config.mipi_clock = 200;
+    Wc.core.config.offset_x = 0;
+    Wc.core.config.offset_y = 0;
+    Wc.core.config.binning = 0;
+    Wc.core.config.fps = 0;
+    Wc.core.config.res_index = 0;
+    Wc.core.config.flags = 0;
   }
 
   // 2. Call Berry to initialize sensor (zero-copy: pass struct address as idx)
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== CALLING BERRY INIT ====="));
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Config buffer addr=0x%08X size=%d bytes"), (uint32_t)&Wc.config, sizeof(CSI_Config));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Config buffer addr=0x%08X size=%d bytes"), (uint32_t)&Wc.core.config, sizeof(CSI_Config));
   
-  uint32_t config_addr = (uint32_t)&Wc.config;
+  uint32_t config_addr = (uint32_t)&Wc.core.config;
   int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== BERRY INIT RESULT=%d ====="), result);
@@ -899,65 +906,65 @@ uint32_t WcSetup(bool reset_config) {
   
   // Log raw bytes for debugging
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Raw bytes [0-7]: %02X %02X %02X %02X %02X %02X %02X %02X"),
-    ((uint8_t*)&Wc.config)[0], ((uint8_t*)&Wc.config)[1], ((uint8_t*)&Wc.config)[2], ((uint8_t*)&Wc.config)[3],
-    ((uint8_t*)&Wc.config)[4], ((uint8_t*)&Wc.config)[5], ((uint8_t*)&Wc.config)[6], ((uint8_t*)&Wc.config)[7]);
+    ((uint8_t*)&Wc.core.config)[0], ((uint8_t*)&Wc.core.config)[1], ((uint8_t*)&Wc.core.config)[2], ((uint8_t*)&Wc.core.config)[3],
+    ((uint8_t*)&Wc.core.config)[4], ((uint8_t*)&Wc.core.config)[5], ((uint8_t*)&Wc.core.config)[6], ((uint8_t*)&Wc.core.config)[7]);
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Raw bytes [18-25]: %02X %02X %02X %02X %02X %02X %02X %02X"),
-    ((uint8_t*)&Wc.config)[18], ((uint8_t*)&Wc.config)[19], ((uint8_t*)&Wc.config)[20], ((uint8_t*)&Wc.config)[21],
-    ((uint8_t*)&Wc.config)[22], ((uint8_t*)&Wc.config)[23], ((uint8_t*)&Wc.config)[24], ((uint8_t*)&Wc.config)[25]);
+    ((uint8_t*)&Wc.core.config)[18], ((uint8_t*)&Wc.core.config)[19], ((uint8_t*)&Wc.core.config)[20], ((uint8_t*)&Wc.core.config)[21],
+    ((uint8_t*)&Wc.core.config)[22], ((uint8_t*)&Wc.core.config)[23], ((uint8_t*)&Wc.core.config)[24], ((uint8_t*)&Wc.core.config)[25]);
   
   // Log what Berry sent us (DRY RUN - verify data exchange)
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== CONFIG FROM BERRY ====="));
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor Name: %.8s"), Wc.config.name);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution: %dx%d"), Wc.config.width, Wc.config.height);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Max Resolution: %dx%d"), Wc.config.max_width, Wc.config.max_height);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (COLOR_PIXEL_RAW8/10/12)"), Wc.config.format);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.config.mipi_clock);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.config.lane_num);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Offset: X=%d Y=%d"), Wc.config.offset_x, Wc.config.offset_y);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (1=1x1, 2=2x2, 3=2_analog)"), Wc.config.binning);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS: %d"), Wc.config.fps);
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ResIndex: %d"), Wc.config.res_index);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor Name: %.8s"), Wc.core.config.name);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution: %dx%d"), Wc.core.config.width, Wc.core.config.height);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Max Resolution: %dx%d"), Wc.core.config.max_width, Wc.core.config.max_height);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d (COLOR_PIXEL_RAW8/10/12)"), Wc.core.config.format);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.core.config.mipi_clock);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.core.config.lane_num);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Offset: X=%d Y=%d"), Wc.core.config.offset_x, Wc.core.config.offset_y);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Binning: %d (1=1x1, 2=2x2, 3=2_analog)"), Wc.core.config.binning);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: FPS: %d"), Wc.core.config.fps);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: ResIndex: %d"), Wc.core.config.res_index);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Flags: 0x%02X (VFlip=%d HMirror=%d)"), 
-    Wc.config.flags,
-    (Wc.config.flags & CSI_FLAG_VFLIP) ? 1 : 0,
-    (Wc.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0);
+    Wc.core.config.flags,
+    (Wc.core.config.flags & CSI_FLAG_VFLIP) ? 1 : 0,
+    (Wc.core.config.flags & CSI_FLAG_HMIRROR) ? 1 : 0);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
 
   // 3. Allocate Two Frame Buffers (Aligned 64-byte for JPEG DMA)
   // Free old buffers if they exist (resolution change scenario)
   for (int i = 0; i < 2; i++) {
-    if (Wc.frame_buffer[i]) {
-      free(Wc.frame_buffer[i]);
-      Wc.frame_buffer[i] = NULL;
+    if (Wc.core.frame_buffer[i]) {
+      free(Wc.core.frame_buffer[i]);
+      Wc.core.frame_buffer[i] = NULL;
     }
   }
   
-  Wc.frame_buffer_size = Wc.config.width * Wc.config.height * 2; // RGB565 = 2 bytes per pixel
+  Wc.core.frame_buffer_size = Wc.core.config.width * Wc.core.config.height * 2; // RGB565 = 2 bytes per pixel
   
   for (int i = 0; i < 2; i++) {
-      Wc.frame_buffer[i] = (uint8_t*)heap_caps_aligned_calloc(64, 1, Wc.frame_buffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-      if (!Wc.frame_buffer[i]) {
+      Wc.core.frame_buffer[i] = (uint8_t*)heap_caps_aligned_calloc(64, 1, Wc.core.frame_buffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      if (!Wc.core.frame_buffer[i]) {
         AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Alloc failed for buffer %d"), i);
         return 0;
       }
       // Pre-flush cache
-      esp_cache_msync(Wc.frame_buffer[i], Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+      esp_cache_msync(Wc.core.frame_buffer[i], Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
   }
   
-  Wc.write_idx = 0;
-  Wc.read_idx = 1;
+  Wc.core.write_idx = 0;
+  Wc.core.read_idx = 1;
 
   // 4. Configure CSI controller
   // RTSP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
-  cam_ctlr_color_t csi_output_format = (Wc.session_type == SESSION_RTSP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
+  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
   
   esp_cam_ctlr_csi_config_t csi_config = {
     .ctlr_id = 0,
-    .h_res = Wc.config.width,
-    .v_res = Wc.config.height,
-    .data_lane_num = Wc.config.lane_num,
-    .lane_bit_rate_mbps = (int)Wc.config.mipi_clock,
-    .input_data_color_type = (cam_ctlr_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
+    .h_res = Wc.core.config.width,
+    .v_res = Wc.core.config.height,
+    .data_lane_num = Wc.core.config.lane_num,
+    .lane_bit_rate_mbps = (int)Wc.core.config.mipi_clock,
+    .input_data_color_type = (cam_ctlr_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.core.config.format),
     .output_data_color_type = csi_output_format,
     .queue_items = 1,
     .byte_swap_en = false,
@@ -966,7 +973,7 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI output format: %s"), 
     (csi_output_format == CAM_CTLR_COLOR_YUV420) ? "YUV420" : "YUV422");
 
-  ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.cam_handle);
+  ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI controller init failed (0x%x)"), ret);
     return 0;
@@ -979,21 +986,21 @@ uint32_t WcSetup(bool reset_config) {
   };
   
   // Start with buffer 0
-  Wc.cam_trans.buffer = Wc.frame_buffer[0];
-  Wc.cam_trans.buflen = Wc.frame_buffer_size;
+  Wc.core.cam_trans.buffer = Wc.core.frame_buffer[0];
+  Wc.core.cam_trans.buflen = Wc.core.frame_buffer_size;
 
-  ret = esp_cam_ctlr_register_event_callbacks(Wc.cam_handle, &cbs, &Wc.cam_trans);
+  ret = esp_cam_ctlr_register_event_callbacks(Wc.core.cam_handle, &cbs, &Wc.core.cam_trans);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to register callbacks (0x%x)"), ret);
-    esp_cam_ctlr_del(Wc.cam_handle);
+    esp_cam_ctlr_del(Wc.core.cam_handle);
     return 0;
   }
 
   // 6. Enable and Start CSI
-  ret = esp_cam_ctlr_enable(Wc.cam_handle);
+  ret = esp_cam_ctlr_enable(Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable CSI (0x%x)"), ret);
-    esp_cam_ctlr_del(Wc.cam_handle);
+    esp_cam_ctlr_del(Wc.core.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI controller enabled (not started yet)"));
@@ -1001,10 +1008,10 @@ uint32_t WcSetup(bool reset_config) {
   // 7. Configure ISP
   extern isp_proc_handle_t tasmota_wc_isp_handle;
   if (tasmota_wc_isp_handle != nullptr) {
-    Wc.isp_handle = tasmota_wc_isp_handle;
+    Wc.core.isp_handle = tasmota_wc_isp_handle;
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Using Berry ISP handle"));
     
-    ret = esp_isp_enable(Wc.isp_handle);
+    ret = esp_isp_enable(Wc.core.isp_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable Berry ISP (0x%x)"), ret);
       return 0;
@@ -1013,77 +1020,77 @@ uint32_t WcSetup(bool reset_config) {
   } else {
     // Fallback: Create ISP until Berry ISP driver is ready
     // RTSP session needs YUV420 for H.264 encoder, MJPEG uses YUV422
-    isp_color_t isp_output_format = (Wc.session_type == SESSION_RTSP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
+    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
     
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 120 * 1000 * 1000, //TODO: eventually calculate this based on configured AV session
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
-      .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.config.format),
+      .input_data_color_type = (isp_color_t)COLOR_TYPE_ID(COLOR_SPACE_RAW, (color_pixel_raw_format_t)Wc.core.config.format),
       .output_data_color_type = isp_output_format,
-      .h_res = Wc.config.width,
-      .v_res = Wc.config.height,
+      .h_res = Wc.core.config.width,
+      .v_res = Wc.core.config.height,
     };
     
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP output format: %s"), 
       (isp_output_format == ISP_COLOR_YUV420) ? "YUV420" : "YUV422");
 
-    ret = esp_isp_new_processor(&isp_config, &Wc.isp_handle);
+    ret = esp_isp_new_processor(&isp_config, &Wc.core.isp_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP init failed (0x%x)"), ret);
-      esp_cam_ctlr_stop(Wc.cam_handle);
-      esp_cam_ctlr_disable(Wc.cam_handle);
+      esp_cam_ctlr_stop(Wc.core.cam_handle);
+      esp_cam_ctlr_disable(Wc.core.cam_handle);
       return 0;
     }
 
-    ret = esp_isp_enable(Wc.isp_handle);
+    ret = esp_isp_enable(Wc.core.isp_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to enable ISP (0x%x)"), ret);
-      esp_isp_del_processor(Wc.isp_handle);
-      esp_cam_ctlr_stop(Wc.cam_handle);
+      esp_isp_del_processor(Wc.core.isp_handle);
+      esp_cam_ctlr_stop(Wc.core.cam_handle);
       return 0;
     }
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: ISP enabled"));
   }
 
   // 8. Initialize encoder based on session type
-  if (Wc.session_type == SESSION_MJPEG_HTTP) {
+  if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
     if (!WcSetupJpegEncoder()) {
-      esp_isp_disable(Wc.isp_handle);
-      esp_isp_del_processor(Wc.isp_handle);
-      esp_cam_ctlr_disable(Wc.cam_handle);
-      esp_cam_ctlr_del(Wc.cam_handle);
-      Wc.cam_handle = NULL;
-      Wc.isp_handle = NULL;
+      esp_isp_disable(Wc.core.isp_handle);
+      esp_isp_del_processor(Wc.core.isp_handle);
+      esp_cam_ctlr_disable(Wc.core.cam_handle);
+      esp_cam_ctlr_del(Wc.core.cam_handle);
+      Wc.core.cam_handle = NULL;
+      Wc.core.isp_handle = NULL;
       return 0;
     }
-  } else if (Wc.session_type == SESSION_RTSP) {
+  } else if (Wc.core.session_type == SESSION_RTSP) {
     if (!WcSetupH264Encoder()) {
-      esp_isp_disable(Wc.isp_handle);
-      esp_isp_del_processor(Wc.isp_handle);
-      esp_cam_ctlr_disable(Wc.cam_handle);
-      esp_cam_ctlr_del(Wc.cam_handle);
-      Wc.cam_handle = NULL;
-      Wc.isp_handle = NULL;
+      esp_isp_disable(Wc.core.isp_handle);
+      esp_isp_del_processor(Wc.core.isp_handle);
+      esp_cam_ctlr_disable(Wc.core.cam_handle);
+      esp_cam_ctlr_del(Wc.core.cam_handle);
+      Wc.core.cam_handle = NULL;
+      Wc.core.isp_handle = NULL;
       return 0;
     }
   }
 
   // 9. Create mutexes for thread safety
-  Wc.frame_mutex = xSemaphoreCreateMutex();
-  Wc.jpeg_mutex = xSemaphoreCreateMutex();
-  Wc.resume_sem = xSemaphoreCreateBinary();  // For pause/resume
+  Wc.core.frame_mutex = xSemaphoreCreateMutex();
+  Wc.jpeg.mutex = xSemaphoreCreateMutex();
+  Wc.core.resume_sem = xSemaphoreCreateBinary();  // For pause/resume
   
-  if (!Wc.frame_mutex || !Wc.jpeg_mutex || !Wc.resume_sem) {
+  if (!Wc.core.frame_mutex || !Wc.jpeg.mutex || !Wc.core.resume_sem) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create mutexes"));
     // Cleanup
-    if (Wc.frame_mutex) vSemaphoreDelete(Wc.frame_mutex);
-    if (Wc.jpeg_mutex) vSemaphoreDelete(Wc.jpeg_mutex);
-    if (Wc.resume_sem) vSemaphoreDelete(Wc.resume_sem);
-    jpeg_del_encoder_engine(Wc.jpeg_handle);
-    esp_isp_disable(Wc.isp_handle);
-    esp_isp_del_processor(Wc.isp_handle);
-    esp_cam_ctlr_stop(Wc.cam_handle);
-    esp_cam_ctlr_disable(Wc.cam_handle);
+    if (Wc.core.frame_mutex) vSemaphoreDelete(Wc.core.frame_mutex);
+    if (Wc.jpeg.mutex) vSemaphoreDelete(Wc.jpeg.mutex);
+    if (Wc.core.resume_sem) vSemaphoreDelete(Wc.core.resume_sem);
+    jpeg_del_encoder_engine(Wc.jpeg.handle);
+    esp_isp_disable(Wc.core.isp_handle);
+    esp_isp_del_processor(Wc.core.isp_handle);
+    esp_cam_ctlr_stop(Wc.core.cam_handle);
+    esp_cam_ctlr_disable(Wc.core.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Mutexes created"));
@@ -1092,7 +1099,7 @@ uint32_t WcSetup(bool reset_config) {
   TaskFunction_t task_func;
   const char *task_name;
   
-  if (Wc.session_type == SESSION_MJPEG_HTTP) {
+  if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
     task_func = MjpegProcessingTask;
     task_name = "MjpegTask";
   } else {
@@ -1106,39 +1113,39 @@ uint32_t WcSetup(bool reset_config) {
     4096,
     NULL,
     5,
-    &Wc.cam_task_handle,
+    &Wc.core.cam_task_handle,
     1  // Pin to Core 1
   );
   
   if (task_created != pdPASS) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to create processing task"));
-    vSemaphoreDelete(Wc.frame_mutex);
-    vSemaphoreDelete(Wc.jpeg_mutex);
-    vSemaphoreDelete(Wc.resume_sem);
-    jpeg_del_encoder_engine(Wc.jpeg_handle);
-    esp_isp_disable(Wc.isp_handle);
-    esp_isp_del_processor(Wc.isp_handle);
-    esp_cam_ctlr_disable(Wc.cam_handle);
+    vSemaphoreDelete(Wc.core.frame_mutex);
+    vSemaphoreDelete(Wc.jpeg.mutex);
+    vSemaphoreDelete(Wc.core.resume_sem);
+    jpeg_del_encoder_engine(Wc.jpeg.handle);
+    esp_isp_disable(Wc.core.isp_handle);
+    esp_isp_del_processor(Wc.core.isp_handle);
+    esp_cam_ctlr_disable(Wc.core.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Processing task created"));
 
-  Wc.state = CAM_INIT;
+  Wc.core.state = CAM_INIT;
   // session_type is already set by caller (WcSession command or default)
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Setup complete (session=%d)"), Wc.session_type);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Setup complete (session=%d)"), Wc.core.session_type);
   return 1;
 }
 
 uint32_t WcStart(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcStart called - state=%d"), Wc.state);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcStart called - state=%d"), Wc.core.state);
   
-  if (Wc.state != CAM_INIT) {
-    if (Wc.state == CAM_STREAMING) {
+  if (Wc.core.state != CAM_INIT) {
+    if (Wc.core.state == CAM_STREAMING) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Already streaming"));
       return 1;
     }
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Cannot start from state %d"), Wc.state);
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Cannot start from state %d"), Wc.core.state);
     return 0;
   }
 
@@ -1147,7 +1154,7 @@ uint32_t WcStart(void) {
   WcStats.start_time = millis();
 
   // Start CSI controller (ISR callbacks will begin firing)
-  esp_err_t ret = esp_cam_ctlr_start(Wc.cam_handle);
+  esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to start CSI (0x%x)"), ret);
     return 0;
@@ -1161,7 +1168,7 @@ uint32_t WcStart(void) {
   
   if (berry_result == 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
-    esp_cam_ctlr_stop(Wc.cam_handle);
+    esp_cam_ctlr_stop(Wc.core.cam_handle);
     return 0;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Sensor streaming started"));
@@ -1169,7 +1176,7 @@ uint32_t WcStart(void) {
   // Give sensor time to start streaming
   delay(100);
 
-  Wc.state = CAM_STREAMING;
+  Wc.core.state = CAM_STREAMING;
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Streaming active"));
   return 1;
@@ -1177,25 +1184,25 @@ uint32_t WcStart(void) {
 
 // Pause the task for reconfiguration - task stays alive but stops processing
 uint32_t WcPause(void) {
-  if (Wc.state != CAM_STREAMING) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Cannot pause from state %d"), Wc.state);
+  if (Wc.core.state != CAM_STREAMING) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Cannot pause from state %d"), Wc.core.state);
     return 0;
   }
   
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Pausing task"));
   
   // Signal task to pause
-  Wc.state = CAM_PAUSING;
+  Wc.core.state = CAM_PAUSING;
   
   // Wake task so it sees the state change
-  xTaskNotifyGive(Wc.cam_task_handle);
+  xTaskNotifyGive(Wc.core.cam_task_handle);
   
   // Wait for task to acknowledge pause (max 500ms)
-  for (int i = 0; i < 50 && Wc.state != CAM_PAUSED; i++) {
+  for (int i = 0; i < 50 && Wc.core.state != CAM_PAUSED; i++) {
     delay(10);
   }
   
-  if (Wc.state != CAM_PAUSED) {
+  if (Wc.core.state != CAM_PAUSED) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Task didn't pause"));
     return 0;
   }
@@ -1206,34 +1213,34 @@ uint32_t WcPause(void) {
 
 
 uint32_t WcStop(void) {
-  if (Wc.state == CAM_IDLE || Wc.state == CAM_STOPPING) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Nothing to stop (state=%d)"), Wc.state);
+  if (Wc.core.state == CAM_IDLE || Wc.core.state == CAM_STOPPING) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Nothing to stop (state=%d)"), Wc.core.state);
     return 0;
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping (state=%d)"), Wc.state);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping (state=%d)"), Wc.core.state);
   
   // 1. Set state to STOPPING - task will exit on next iteration
-  Wc.state = CAM_STOPPING;
+  Wc.core.state = CAM_STOPPING;
   
   // 2. If task was paused, release it so it can see STOPPING and exit
-  xSemaphoreGive(Wc.resume_sem);
-  if (Wc.frame_mutex) xSemaphoreGive(Wc.frame_mutex);
+  xSemaphoreGive(Wc.core.resume_sem);
+  if (Wc.core.frame_mutex) xSemaphoreGive(Wc.core.frame_mutex);
   
   // 3. Wake task and wait for it to exit
-  if (Wc.cam_task_handle) {
-    xTaskNotifyGive(Wc.cam_task_handle);
+  if (Wc.core.cam_task_handle) {
+    xTaskNotifyGive(Wc.core.cam_task_handle);
     
     // Wait for task to exit (task sets handle to NULL before deleting itself)
-    for (int i = 0; i < 50 && Wc.cam_task_handle != NULL; i++) {
+    for (int i = 0; i < 50 && Wc.core.cam_task_handle != NULL; i++) {
       delay(10);
     }
     
     // Force delete if task didn't exit
-    if (Wc.cam_task_handle != NULL) {
+    if (Wc.core.cam_task_handle != NULL) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task didn't exit, force deleting"));
-      vTaskDelete(Wc.cam_task_handle);
-      Wc.cam_task_handle = NULL;
+      vTaskDelete(Wc.core.cam_task_handle);
+      Wc.core.cam_task_handle = NULL;
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task stopped"));
   }
@@ -1243,109 +1250,109 @@ uint32_t WcStop(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Called Berry stream stop"));
   
   // 4b. Stop CSI controller - no more ISR callbacks
-  esp_err_t ret = esp_cam_ctlr_stop(Wc.cam_handle);
+  esp_err_t ret = esp_cam_ctlr_stop(Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to stop CSI (0x%x)"), ret);
   }
 
   // 5. Unregister callbacks
   esp_cam_ctlr_evt_cbs_t null_cbs = {0};
-  esp_cam_ctlr_register_event_callbacks(Wc.cam_handle, &null_cbs, NULL);
+  esp_cam_ctlr_register_event_callbacks(Wc.core.cam_handle, &null_cbs, NULL);
   
   // 6. Disable CSI controller
-  ret = esp_cam_ctlr_disable(Wc.cam_handle);
+  ret = esp_cam_ctlr_disable(Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to disable CSI (0x%x)"), ret);
   }
   
   // 7. Delete CSI controller
-  ret = esp_cam_ctlr_del(Wc.cam_handle);
+  ret = esp_cam_ctlr_del(Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to delete CSI (0x%x)"), ret);
   }
-  Wc.cam_handle = NULL;
+  Wc.core.cam_handle = NULL;
   
   // 8. Disable and delete ISP
-  if (Wc.isp_handle) {
-    esp_isp_disable(Wc.isp_handle);
-    esp_isp_del_processor(Wc.isp_handle);
-    Wc.isp_handle = NULL;
+  if (Wc.core.isp_handle) {
+    esp_isp_disable(Wc.core.isp_handle);
+    esp_isp_del_processor(Wc.core.isp_handle);
+    Wc.core.isp_handle = NULL;
   }
   
   // 9. Delete JPEG encoder
-  if (Wc.jpeg_handle) {
-    jpeg_del_encoder_engine(Wc.jpeg_handle);
-    Wc.jpeg_handle = NULL;
+  if (Wc.jpeg.handle) {
+    jpeg_del_encoder_engine(Wc.jpeg.handle);
+    Wc.jpeg.handle = NULL;
   }
   
   // 10. Delete H.264 encoder
-  if (Wc.h264_handle) {
-    esp_h264_enc_close(Wc.h264_handle);
-    esp_h264_enc_del(Wc.h264_handle);
-    Wc.h264_handle = NULL;
+  if (Wc.h264.handle) {
+    esp_h264_enc_close(Wc.h264.handle);
+    esp_h264_enc_del(Wc.h264.handle);
+    Wc.h264.handle = NULL;
   }
   
   // 11. Free buffers
-  if (Wc.jpeg_buffer) {
-    free(Wc.jpeg_buffer);
-    Wc.jpeg_buffer = NULL;
-    Wc.jpeg_buffer_size = 0;
+  if (Wc.jpeg.buffer) {
+    free(Wc.jpeg.buffer);
+    Wc.jpeg.buffer = NULL;
+    Wc.jpeg.buffer_size = 0;
   }
   
-  if (Wc.h264_buffer) {
-    esp_h264_free(Wc.h264_buffer);
-    Wc.h264_buffer = NULL;
-    Wc.h264_buffer_size = 0;
+  if (Wc.h264.buffer) {
+    esp_h264_free(Wc.h264.buffer);
+    Wc.h264.buffer = NULL;
+    Wc.h264.buffer_size = 0;
   }
   
-  if (Wc.h264_out_buffer) {
-    esp_h264_free(Wc.h264_out_buffer);
-    Wc.h264_out_buffer = NULL;
-    Wc.h264_out_buffer_size = 0;
+  if (Wc.h264.out_buffer) {
+    esp_h264_free(Wc.h264.out_buffer);
+    Wc.h264.out_buffer = NULL;
+    Wc.h264.out_buffer_size = 0;
   }
   
   for (int i = 0; i < 2; i++) {
-    if (Wc.frame_buffer[i]) {
-      free(Wc.frame_buffer[i]);
-      Wc.frame_buffer[i] = NULL;
+    if (Wc.core.frame_buffer[i]) {
+      free(Wc.core.frame_buffer[i]);
+      Wc.core.frame_buffer[i] = NULL;
     }
   }
-  Wc.frame_buffer_size = 0;
+  Wc.core.frame_buffer_size = 0;
   
   // 12. Clean up client pointer before deleting mutex
-  if (Wc.client_ptr) {
-    delete Wc.client_ptr;
-    Wc.client_ptr = nullptr;
+  if (Wc.jpeg.client_ptr) {
+    delete Wc.jpeg.client_ptr;
+    Wc.jpeg.client_ptr = nullptr;
   }
   
   // 13. Stop RTSP server and close client
-  if (Wc.rtsp_server) {
-    Wc.rtsp_server->stop();
-    delete Wc.rtsp_server;
-    Wc.rtsp_server = NULL;
+  if (Wc.rtsp.server) {
+    Wc.rtsp.server->stop();
+    delete Wc.rtsp.server;
+    Wc.rtsp.server = NULL;
   }
   if (Wc.rtsp_client) {
     Wc.rtsp_client.stop();
   }
-  Wc.rtsp_streaming = false;
+  Wc.rtsp.streaming = false;
   
   // 14. Delete mutexes
-  if (Wc.frame_mutex) {
-    vSemaphoreDelete(Wc.frame_mutex);
-    Wc.frame_mutex = NULL;
+  if (Wc.core.frame_mutex) {
+    vSemaphoreDelete(Wc.core.frame_mutex);
+    Wc.core.frame_mutex = NULL;
   }
-  if (Wc.jpeg_mutex) {
-    vSemaphoreDelete(Wc.jpeg_mutex);
-    Wc.jpeg_mutex = NULL;
+  if (Wc.jpeg.mutex) {
+    vSemaphoreDelete(Wc.jpeg.mutex);
+    Wc.jpeg.mutex = NULL;
   }
-  if (Wc.resume_sem) {
-    vSemaphoreDelete(Wc.resume_sem);
-    Wc.resume_sem = NULL;
+  if (Wc.core.resume_sem) {
+    vSemaphoreDelete(Wc.core.resume_sem);
+    Wc.core.resume_sem = NULL;
   }
 
   // 15. Final state
-  Wc.state = CAM_IDLE;
-  Wc.stream_active = 0;
+  Wc.core.state = CAM_IDLE;
+  Wc.jpeg.stream_active = 0;
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopped"));
   return 1;
@@ -1356,15 +1363,15 @@ uint32_t WcStop(void) {
 // RTSP Server Handler
 
 void HandleRtsp() {
-  if (!Wc.rtsp_server) return;
+  if (!Wc.rtsp.server) return;
   
   // Accept new RTSP client (only one at a time)
-  if (Wc.rtsp_server->hasClient()) {
+  if (Wc.rtsp.server->hasClient()) {
     if (Wc.rtsp_client && Wc.rtsp_client.connected()) {
-      WiFiClient reject = Wc.rtsp_server->available();
+      WiFiClient reject = Wc.rtsp.server->available();
       reject.stop();
     } else {
-      Wc.rtsp_client = Wc.rtsp_server->available();
+      Wc.rtsp_client = Wc.rtsp.server->available();
       AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Client connected from %s"), Wc.rtsp_client.remoteIP().toString().c_str());
     }
   }
@@ -1423,41 +1430,41 @@ void HandleRtsp() {
           String port_str = transport_line.substring(port_idx + 12);
           int dash_idx = port_str.indexOf('-');
           if (dash_idx >= 0) {
-            Wc.client_rtp_port = port_str.substring(0, dash_idx).toInt();
-            Wc.client_rtcp_port = port_str.substring(dash_idx + 1).toInt();
+            Wc.rtsp.client_rtp_port = port_str.substring(0, dash_idx).toInt();
+            Wc.rtsp.client_rtcp_port = port_str.substring(dash_idx + 1).toInt();
           } else {
-            Wc.client_rtp_port = port_str.toInt();
-            Wc.client_rtcp_port = Wc.client_rtp_port + 1;
+            Wc.rtsp.client_rtp_port = port_str.toInt();
+            Wc.rtsp.client_rtcp_port = Wc.rtsp.client_rtp_port + 1;
           }
           
           Wc.rtp_dest_ip = Wc.rtsp_client.remoteIP();
-          Wc.rtp_dest_port = Wc.client_rtp_port;
-          Wc.rtsp_session_id = random(100000, 999999);
+          Wc.rtp.dest_port = Wc.rtsp.client_rtp_port;
+          Wc.rtsp.session_id = random(100000, 999999);
           
-          AddLog(LOG_LEVEL_INFO, PSTR("RTSP: SETUP - dest %s:%d"), Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+          AddLog(LOG_LEVEL_INFO, PSTR("RTSP: SETUP - dest %s:%d"), Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
           
           Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nTransport: RTP/AVP;unicast;client_port=%u-%u;server_port=%u-%u\r\n\r\n",
-            cseq, Wc.rtsp_session_id, Wc.client_rtp_port, Wc.client_rtcp_port, Wc.rtp_dest_port, Wc.rtp_dest_port + 1);
+            cseq, Wc.rtsp.session_id, Wc.rtsp.client_rtp_port, Wc.rtsp.client_rtcp_port, Wc.rtp.dest_port, Wc.rtp.dest_port + 1);
         }
       } else {
         AddLog(LOG_LEVEL_ERROR, PSTR("RTSP: SETUP failed - No Transport header"));
       }
     }
     else if (request.indexOf("PLAY") >= 0) {
-      Wc.rtsp_streaming = true;
+      Wc.rtsp.streaming = true;
       AddLog(LOG_LEVEL_INFO, PSTR("RTSP: PLAY"));
-      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nRange: npt=0.000-\r\n\r\n", cseq, Wc.rtsp_session_id);
+      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nRange: npt=0.000-\r\n\r\n", cseq, Wc.rtsp.session_id);
     }
     else if (request.indexOf("TEARDOWN") >= 0) {
-      Wc.rtsp_streaming = false;
+      Wc.rtsp.streaming = false;
       AddLog(LOG_LEVEL_INFO, PSTR("RTSP: TEARDOWN"));
-      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\n\r\n", cseq, Wc.rtsp_session_id);
+      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\n\r\n", cseq, Wc.rtsp.session_id);
       Wc.rtsp_client.stop();
     }
   }
   
   if (Wc.rtsp_client && !Wc.rtsp_client.connected()) {
-    Wc.rtsp_streaming = false;
+    Wc.rtsp.streaming = false;
     Wc.rtsp_client.stop();
   }
 }
@@ -1490,18 +1497,18 @@ void CmndWcRes(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcRes called, payload=%d"), XdrvMailbox.payload);
   
   if (XdrvMailbox.payload < 0) {
-    ResponseCmndNumber(Wc.config.res_index);
+    ResponseCmndNumber(Wc.core.config.res_index);
     return;
   }
   
   // Reject if busy
-  if (Wc.state == CAM_STOPPING || Wc.state == CAM_PAUSING || Wc.state == CAM_PAUSED) {
+  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING || Wc.core.state == CAM_PAUSED) {
     ResponseCmndChar_P(PSTR("Busy"));
     return;
   }
   
   // Pause task first if streaming (ensures clean state)
-  bool was_streaming = (Wc.state == CAM_STREAMING);
+  bool was_streaming = (Wc.core.state == CAM_STREAMING);
   if (was_streaming) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for resolution change"));
     if (!WcPause()) {
@@ -1511,12 +1518,12 @@ void CmndWcRes(void) {
   }
   
   // Now safe to stop - task is paused
-  if (Wc.state == CAM_PAUSED || Wc.state == CAM_INIT) {
+  if (Wc.core.state == CAM_PAUSED || Wc.core.state == CAM_INIT) {
     WcStop();
   }
   
   // Store resolution index
-  Wc.config.res_index = (uint8_t)XdrvMailbox.payload;
+  Wc.core.config.res_index = (uint8_t)XdrvMailbox.payload;
   
   // Reinitialize with new resolution and start streaming
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing with resolution mode %d"), XdrvMailbox.payload);
@@ -1528,14 +1535,14 @@ void CmndWcRes(void) {
   } else {
     WcStart();
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed to mode %d (%dx%d)"), 
-      XdrvMailbox.payload, Wc.config.width, Wc.config.height);
+      XdrvMailbox.payload, Wc.core.config.width, Wc.core.config.height);
     ResponseCmndNumber(XdrvMailbox.payload);
   }
 }
 
 void CmndWcStream(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStream called, payload=%d"), XdrvMailbox.payload);
-  ResponseCmndStateText(Wc.state == CAM_STREAMING);
+  ResponseCmndStateText(Wc.core.state == CAM_STREAMING);
 }
 
 void CmndWcStop(void) {
@@ -1554,7 +1561,7 @@ void CmndWcStatus(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
   
   const char* state_names[] = {"IDLE", "INIT", "STREAMING", "PAUSING", "PAUSED", "STOPPING"};
-  const char* state_name = (Wc.state < 6) ? state_names[Wc.state] : "UNKNOWN";
+  const char* state_name = (Wc.core.state < 6) ? state_names[Wc.core.state] : "UNKNOWN";
   
   Response_P(PSTR("{\"WcStatus\":{\"State\":\"%s\",\"Resolution\":\"%dx%d\","
                   "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesUnsent\":%u,"
@@ -1568,7 +1575,7 @@ void CmndWcStatus(void) {
                     "\"LastSize\":%u,\"AvgSize\":%u,\"MinSize\":%u,\"MaxSize\":%u,\"CompressionRatio\":\"%.2f\""
                   "}}}"),
     state_name,
-    Wc.config.width, Wc.config.height,
+    Wc.core.config.width, Wc.core.config.height,
     WcStats.frames_captured,
     WcStats.frames_processed,
     WcStats.frames_unsent,
@@ -1595,20 +1602,20 @@ void CmndWcStatus(void) {
 void CmndWcConfig(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcConfig called"));
   Response_P(PSTR("{\"WcConfig\":{\"Sensor\":\"%.8s\",\"Width\":%d,\"Height\":%d,\"MaxWidth\":%d,\"MaxHeight\":%d,\"Format\":%d,\"MipiClock\":%d,\"Lanes\":%d,\"OffsetX\":%d,\"OffsetY\":%d,\"Binning\":%d,\"FPS\":%d,\"ResIndex\":%d,\"Flags\":\"0x%02X\"}}"),
-    Wc.config.name,
-    Wc.config.width, 
-    Wc.config.height,
-    Wc.config.max_width,
-    Wc.config.max_height,
-    Wc.config.format, 
-    Wc.config.mipi_clock, 
-    Wc.config.lane_num,
-    Wc.config.offset_x,
-    Wc.config.offset_y,
-    Wc.config.binning,
-    Wc.config.fps,
-    Wc.config.res_index,
-    Wc.config.flags);
+    Wc.core.config.name,
+    Wc.core.config.width, 
+    Wc.core.config.height,
+    Wc.core.config.max_width,
+    Wc.core.config.max_height,
+    Wc.core.config.format, 
+    Wc.core.config.mipi_clock, 
+    Wc.core.config.lane_num,
+    Wc.core.config.offset_x,
+    Wc.core.config.offset_y,
+    Wc.core.config.binning,
+    Wc.core.config.fps,
+    Wc.core.config.res_index,
+    Wc.core.config.flags);
 }
 
 void CmndWcWindow(void) {
@@ -1624,7 +1631,7 @@ void CmndWcWindow(void) {
   }
 
   // Validate geometry
-  if (w < 16 || h < 16 || w > Wc.config.max_width || h > Wc.config.max_height) {
+  if (w < 16 || h < 16 || w > Wc.core.config.max_width || h > Wc.core.config.max_height) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid geometry %dx%d"), w, h);
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry. W/H must be 16-2592/1944\"}}"));
     return;
@@ -1656,13 +1663,13 @@ void CmndWcWindow(void) {
   }
 
   // Reject if busy
-  if (Wc.state == CAM_STOPPING || Wc.state == CAM_PAUSING || Wc.state == CAM_PAUSED) {
+  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING || Wc.core.state == CAM_PAUSED) {
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Busy\"}}"));
     return;
   }
 
   // Pause task first if streaming (ensures clean state)
-  bool was_streaming = (Wc.state == CAM_STREAMING);
+  bool was_streaming = (Wc.core.state == CAM_STREAMING);
   if (was_streaming) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for window change"));
     if (!WcPause()) {
@@ -1672,25 +1679,25 @@ void CmndWcWindow(void) {
   }
 
   // Now safe to stop - task is paused
-  if (Wc.state == CAM_PAUSED || Wc.state == CAM_INIT) {
+  if (Wc.core.state == CAM_PAUSED || Wc.core.state == CAM_INIT) {
     WcStop();
   }
 
   // Pre-fill Config for Berry (safe assignment with validation)
-  Wc.config.offset_x = (uint16_t)x;
-  Wc.config.offset_y = (uint16_t)y;
-  Wc.config.width = (uint16_t)w;
-  Wc.config.height = (uint16_t)h;
-  Wc.config.binning = (uint8_t)bin;
-  Wc.config.fps = (uint8_t)fps;
-  Wc.config.format = (uint8_t)format;
-  Wc.config.res_index = 255; // Signal "Custom Mode"
+  Wc.core.config.offset_x = (uint16_t)x;
+  Wc.core.config.offset_y = (uint16_t)y;
+  Wc.core.config.width = (uint16_t)w;
+  Wc.core.config.height = (uint16_t)h;
+  Wc.core.config.binning = (uint8_t)bin;
+  Wc.core.config.fps = (uint8_t)fps;
+  Wc.core.config.format = (uint8_t)format;
+  Wc.core.config.res_index = 255; // Signal "Custom Mode"
 
   // Re-Init (Calls Berry 'init') and start streaming
   if (WcSetup(false)) {
     WcStart();
     Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d,\"Format\":%d}}"), 
-      Wc.config.width, Wc.config.height, Wc.config.binning, Wc.config.fps, Wc.config.format);
+      Wc.core.config.width, Wc.core.config.height, Wc.core.config.binning, Wc.core.config.fps, Wc.core.config.format);
   } else {
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Setup Failed\"}}"));
   }
@@ -1704,7 +1711,7 @@ void CmndWcQuality(void) {
   
   // Query current quality
   if (XdrvMailbox.payload < 0) {
-    ResponseCmndNumber(Wc.jpeg_quality);
+    ResponseCmndNumber(Wc.jpeg.quality);
     return;
   }
   
@@ -1716,9 +1723,9 @@ void CmndWcQuality(void) {
   }
   
   // Set new quality (will take effect on next stream start)
-  Wc.jpeg_quality = (uint8_t)XdrvMailbox.payload;
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG quality set to %d"), Wc.jpeg_quality);
-  ResponseCmndNumber(Wc.jpeg_quality);
+  Wc.jpeg.quality = (uint8_t)XdrvMailbox.payload;
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG quality set to %d"), Wc.jpeg.quality);
+  ResponseCmndNumber(Wc.jpeg.quality);
 }
 
 void CmndWcSession(void) {
@@ -1728,9 +1735,9 @@ void CmndWcSession(void) {
   // Query current session type
   if (XdrvMailbox.payload < 0) {
     Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\",\"State\":%d}}"), 
-      Wc.session_type, 
-      (Wc.session_type <= 4) ? session_names[Wc.session_type] : "Unknown",
-      Wc.state);
+      Wc.core.session_type, 
+      (Wc.core.session_type <= 4) ? session_names[Wc.core.session_type] : "Unknown",
+      Wc.core.state);
     return;
   }
   
@@ -1744,10 +1751,10 @@ void CmndWcSession(void) {
   camera_session_t new_type = (camera_session_t)XdrvMailbox.payload;
   
   // Same session type - do nothing
-  if (new_type == Wc.session_type) {
+  if (new_type == Wc.core.session_type) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Session type unchanged"));
     Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
-      Wc.session_type, session_names[Wc.session_type]);
+      Wc.core.session_type, session_names[Wc.core.session_type]);
     return;
   }
   
@@ -1759,26 +1766,26 @@ void CmndWcSession(void) {
   }
   
   // Stop current session if running
-  if (Wc.state != CAM_IDLE) {
+  if (Wc.core.state != CAM_IDLE) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping current session for switch"));
     WcStop();
   }
   
   // Set new session type
-  Wc.session_type = new_type;
+  Wc.core.session_type = new_type;
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type changed to %d (%s)"), 
-    Wc.session_type, session_names[Wc.session_type]);
+    Wc.core.session_type, session_names[Wc.core.session_type]);
   
   // Initialize RTSP session
   if (new_type == SESSION_RTSP) {
-    Wc.rtp_sequence = random(0, 65535);
-    Wc.rtp_timestamp = random(0, UINT32_MAX);
-    Wc.rtp_ssrc = random(0, UINT32_MAX);
-    Wc.rtsp_streaming = false;
+    Wc.rtp.sequence = random(0, 65535);
+    Wc.rtp.timestamp = random(0, UINT32_MAX);
+    Wc.rtp.ssrc = random(0, UINT32_MAX);
+    Wc.rtsp.streaming = false;
     
     // Start RTSP server on port 554
-    Wc.rtsp_server = new WiFiServer(554);
-    Wc.rtsp_server->begin();
+    Wc.rtsp.server = new WiFiServer(554);
+    Wc.rtsp.server->begin();
     
     // Start UDP socket for RTP
     Wc.rtp_udp.begin(5004);
@@ -1794,14 +1801,14 @@ void CmndWcSession(void) {
   }
   
   Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\",\"State\":%d}}"), 
-    Wc.session_type, session_names[Wc.session_type], Wc.state);
+    Wc.core.session_type, session_names[Wc.core.session_type], Wc.core.state);
 }
 
 void CmndWcRtpDest(void) {
   // Query current RTP destination
   if (XdrvMailbox.data_len == 0) {
     Response_P(PSTR("{\"WcRtpDest\":{\"IP\":\"%s\",\"Port\":%d}}"), 
-      Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+      Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
     return;
   }
   
@@ -1844,58 +1851,33 @@ void CmndWcRtpDest(void) {
   
   // Update destination
   Wc.rtp_dest_ip = new_ip;
-  Wc.rtp_dest_port = port;
+  Wc.rtp.dest_port = port;
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP destination set to %s:%d"), 
-    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
   
   Response_P(PSTR("{\"WcRtpDest\":{\"IP\":\"%s\",\"Port\":%d}}"), 
-    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp_dest_port);
+    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
 }
 
 
 /*********************************************************************************************/
 
 void WcInit(void) {
-  // Cannot use memset on struct with C++ objects (WiFiUDP has vtable)
-  // Manually initialize critical members
-  Wc.cam_handle = NULL;
-  Wc.isp_handle = NULL;
-  Wc.ldo_mipi_phy = NULL;
-  Wc.frame_buffer[0] = NULL;
-  Wc.frame_buffer[1] = NULL;
-  Wc.frame_buffer_size = 0;
-  Wc.write_idx = 0;
-  Wc.read_idx = 0;
-  Wc.state = CAM_IDLE;
-  Wc.session_type = SESSION_MJPEG_HTTP;
-  Wc.cam_task_handle = NULL;
-  Wc.frame_mutex = NULL;
-  Wc.resume_sem = NULL;
-  Wc.jpeg_handle = NULL;
-  Wc.jpeg_buffer = NULL;
-  Wc.jpeg_buffer_size = 0;
-  Wc.jpeg_quality = 50;
-  Wc.jpeg_mutex = NULL;
-  Wc.CamServer = NULL;
-  Wc.client_ptr = NULL;
-  Wc.stream_active = 0;
-  Wc.h264_handle = NULL;
-  Wc.h264_buffer = NULL;
-  Wc.h264_buffer_size = 0;
-  Wc.h264_out_buffer = NULL;
-  Wc.h264_out_buffer_size = 0;
-  Wc.rtp_dest_port = 5004;
-  Wc.rtp_sequence = 0;
-  Wc.rtp_timestamp = 0;
-  Wc.rtp_ssrc = 0;
-  Wc.rtsp_server = NULL;
-  Wc.rtsp_session_id = 0;
-  Wc.client_rtp_port = 0;
-  Wc.client_rtcp_port = 0;
-  Wc.rtsp_streaming = false;
+  // POD sections can be safely memset
+  memset(&Wc.core, 0, sizeof(Wc.core));
+  memset(&Wc.jpeg, 0, sizeof(Wc.jpeg));
+  memset(&Wc.h264, 0, sizeof(Wc.h264));
+  memset(&Wc.rtp, 0, sizeof(Wc.rtp));
+  memset(&Wc.rtsp, 0, sizeof(Wc.rtsp));
   
-  // WiFiUDP, WiFiClient, and IPAddress have constructors, don't touch them
+  // Set non-zero defaults
+  Wc.core.state = CAM_IDLE;
+  Wc.core.session_type = SESSION_MJPEG_HTTP;
+  Wc.jpeg.quality = 50;
+  Wc.rtp.dest_port = 5004;
+  
+  // C++ objects (rtp_dest_ip, rtp_udp, rtsp_client) have constructors - don't touch
   
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
 }
@@ -1919,53 +1901,53 @@ bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
 
 void HandleWebcamRoot(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Root called - CamServer=%p"), Wc.CamServer);
-  if (!Wc.CamServer) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Root called - CamServer=%p"), Wc.jpeg.server);
+  if (!Wc.jpeg.server) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CamServer is NULL in Root!"));
     return;
   }
-  Wc.CamServer->sendHeader("Location", "/cam.mjpeg");
-  Wc.CamServer->send(302, "", "");
+  Wc.jpeg.server->sendHeader("Location", "/cam.mjpeg");
+  Wc.jpeg.server->send(302, "", "");
 }
 
 void HandleWebcamMjpeg(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver - state=%d"), Wc.state);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver - state=%d"), Wc.core.state);
   
-  if (!Wc.CamServer) {
+  if (!Wc.jpeg.server) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CamServer is NULL!"));
     return;
   }
   
-  if (Wc.state != CAM_STREAMING) {
+  if (Wc.core.state != CAM_STREAMING) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Not streaming - rejecting request"));
-    Wc.CamServer->send(503, "text/plain", "Camera not ready");
+    Wc.jpeg.server->send(503, "text/plain", "Camera not ready");
     return;
   }
   
   // Lock frame access for client setup
-  if (xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
+  if (xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
     // Allocate client on heap to avoid stack issues
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Allocating client..."));
-    if (Wc.client_ptr) {
-      delete Wc.client_ptr;
-      Wc.client_ptr = nullptr;
+    if (Wc.jpeg.client_ptr) {
+      delete Wc.jpeg.client_ptr;
+      Wc.jpeg.client_ptr = nullptr;
     }
     
-    Wc.client_ptr = new WiFiClient();
-    if (!Wc.client_ptr) {
+    Wc.jpeg.client_ptr = new WiFiClient();
+    if (!Wc.jpeg.client_ptr) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate client!"));
-      xSemaphoreGive(Wc.frame_mutex);
+      xSemaphoreGive(Wc.core.frame_mutex);
       return;
     }
     
-    *Wc.client_ptr = Wc.CamServer->client();
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client allocated, connected=%d"), Wc.client_ptr->connected());
+    *Wc.jpeg.client_ptr = Wc.jpeg.server->client();
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client allocated, connected=%d"), Wc.jpeg.client_ptr->connected());
     
     // Send HTTP header
-    Wc.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
-    Wc.stream_active = 2;
+    Wc.jpeg.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
+    Wc.jpeg.stream_active = 2;
     
-    xSemaphoreGive(Wc.frame_mutex);
+    xSemaphoreGive(Wc.core.frame_mutex);
   }
 }
 
@@ -1978,7 +1960,7 @@ void HandleImage(void) {
   response += "Content-type: image/jpeg\r\n\r\n";
   Webserver->sendContent(response);
 
-  if (!Wc.jpeg_handle || !Wc.jpeg_buffer) {
+  if (!Wc.jpeg.handle || !Wc.jpeg.buffer) {
     client.stop();
     return;
   }
@@ -1987,17 +1969,17 @@ void HandleImage(void) {
   delay(100);
   
   // Lock JPEG encoder to prevent race with CamProcessingTask
-  if (xSemaphoreTake(Wc.jpeg_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
-    uint8_t *source_buf = Wc.frame_buffer[Wc.read_idx];
-    esp_cache_msync(source_buf, Wc.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+  if (xSemaphoreTake(Wc.jpeg.mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
+    uint8_t *source_buf = Wc.core.frame_buffer[Wc.core.read_idx];
+    esp_cache_msync(source_buf, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
 
     uint32_t jpeg_size = 0;
-    esp_err_t ret = jpeg_encoder_process(Wc.jpeg_handle, &Wc.jpeg_cfg, source_buf, Wc.frame_buffer_size, (uint8_t*)Wc.jpeg_buffer, Wc.jpeg_buffer_size, &jpeg_size);
+    esp_err_t ret = jpeg_encoder_process(Wc.jpeg.handle, &Wc.jpeg.cfg, source_buf, Wc.core.frame_buffer_size, (uint8_t*)Wc.jpeg.buffer, Wc.jpeg.buffer_size, &jpeg_size);
     if (ret == ESP_OK && jpeg_size > 0) {
-      client.write((char *)Wc.jpeg_buffer, jpeg_size);
+      client.write((char *)Wc.jpeg.buffer, jpeg_size);
     }
     
-    xSemaphoreGive(Wc.jpeg_mutex);
+    xSemaphoreGive(Wc.jpeg.mutex);
   }
   
   client.stop();
@@ -2005,45 +1987,45 @@ void HandleImage(void) {
 
 
 uint32_t WcSetStreamserver(uint32_t flag) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver flag=%d CamServer=%p"), flag, Wc.CamServer);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver flag=%d CamServer=%p"), flag, Wc.jpeg.server);
   
   if (TasmotaGlobal.global_state.network_down) { 
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Network down, aborting"));
-    Wc.stream_active = 0;
+    Wc.jpeg.stream_active = 0;
     return 0; 
   }
 
   if (flag) {
-    if (!Wc.CamServer) {
+    if (!Wc.jpeg.server) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: Creating stream server on port 81..."));
-      Wc.stream_active = 0;
-      Wc.CamServer = new ESP8266WebServer(81);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: CamServer created at %p"), Wc.CamServer);
+      Wc.jpeg.stream_active = 0;
+      Wc.jpeg.server = new ESP8266WebServer(81);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: CamServer created at %p"), Wc.jpeg.server);
       
-      if (!Wc.CamServer) {
+      if (!Wc.jpeg.server) {
         AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate CamServer!"));
         return 0;
       }
       
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Registering handlers..."));
-      Wc.CamServer->on("/", HandleWebcamRoot);
-      Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
-      Wc.CamServer->on("/cam.jpg", HandleWebcamMjpeg);
-      Wc.CamServer->on("/stream", HandleWebcamMjpeg);
+      Wc.jpeg.server->on("/", HandleWebcamRoot);
+      Wc.jpeg.server->on("/cam.mjpeg", HandleWebcamMjpeg);
+      Wc.jpeg.server->on("/cam.jpg", HandleWebcamMjpeg);
+      Wc.jpeg.server->on("/stream", HandleWebcamMjpeg);
       
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting server..."));
-      Wc.CamServer->begin();
+      Wc.jpeg.server->begin();
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stream server started on port 81"));
     } else {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Stream server already running"));
     }
   } else {
-    if (Wc.CamServer) {
+    if (Wc.jpeg.server) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping stream server..."));
-      Wc.stream_active = 0;
-      Wc.CamServer->stop();
-      delete Wc.CamServer;
-      Wc.CamServer = NULL;
+      Wc.jpeg.stream_active = 0;
+      Wc.jpeg.server->stop();
+      delete Wc.jpeg.server;
+      Wc.jpeg.server = NULL;
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stream server stopped"));
     }
   }
@@ -2057,7 +2039,7 @@ void WcPicSetup(void) {
 }
 
 void WcShowStream(void) {
-  if (Wc.CamServer && Wc.state == CAM_STREAMING) {
+  if (Wc.jpeg.server && Wc.core.state == CAM_STREAMING) {
     WSContentSend_P(PSTR("<p></p><center><img onerror='setTimeout(()=>{this.src=this.src;},1000)' src='http://%_I:81/stream' alt='Webcam stream''></center><p></p>"),(uint32_t)WiFi.localIP());
   }
 }
@@ -2065,32 +2047,32 @@ void WcShowStream(void) {
 
 void WcLoop(void) {
   // Skip during state transitions
-  if (Wc.state == CAM_STOPPING || Wc.state == CAM_IDLE) {
+  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_IDLE) {
     return;
   }
   
   // Handle RTSP control connections
-  if (Wc.session_type == SESSION_RTSP) {
+  if (Wc.core.session_type == SESSION_RTSP) {
     HandleRtsp();
   }
   
-  if (Wc.state == CAM_STREAMING && !Wc.CamServer && !TasmotaGlobal.global_state.network_down) {
+  if (Wc.core.state == CAM_STREAMING && !Wc.jpeg.server && !TasmotaGlobal.global_state.network_down) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting stream server..."));
     WcSetStreamserver(1);
   }
   
-  if (Wc.CamServer) {
-    Wc.CamServer->handleClient();
+  if (Wc.jpeg.server) {
+    Wc.jpeg.server->handleClient();
     
     // Monitor client connection - cleanup if disconnected (with mutex protection)
-    if (Wc.stream_active && xSemaphoreTake(Wc.frame_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-      if (Wc.client_ptr && !Wc.client_ptr->connected()) {
-        delete Wc.client_ptr;
-        Wc.client_ptr = nullptr;
-        Wc.stream_active = 0;
+    if (Wc.jpeg.stream_active && xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+      if (Wc.jpeg.client_ptr && !Wc.jpeg.client_ptr->connected()) {
+        delete Wc.jpeg.client_ptr;
+        Wc.jpeg.client_ptr = nullptr;
+        Wc.jpeg.stream_active = 0;
         AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client disconnected"));
       }
-      xSemaphoreGive(Wc.frame_mutex);
+      xSemaphoreGive(Wc.core.frame_mutex);
     }
   }
 }
@@ -2115,13 +2097,13 @@ bool Xdrv81(uint32_t function) {
       WcInit();
       break;
     case FUNC_INIT:
-      if (Wc.state == CAM_IDLE) {
+      if (Wc.core.state == CAM_IDLE) {
         WcSetup(true);  // First boot - reset config to defaults
       }
       break;
     case FUNC_EVERY_SECOND:
       // Auto-start streaming once WiFi is available
-      if (Wc.state == CAM_INIT && !TasmotaGlobal.global_state.network_down) {
+      if (Wc.core.state == CAM_INIT && !TasmotaGlobal.global_state.network_down) {
         WcStart();
       }
       break;
