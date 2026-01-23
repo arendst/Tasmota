@@ -260,7 +260,7 @@ bool EPDPanel::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     return true;
 }
 
-bool EPDPanel::pushColors(uint16_t *data, uint16_t len, bool first) {
+bool EPDPanel::pushColors(uint16_t *data, uint32_t len, bool first) {
     // Convert RGB565 to monochrome and write to framebuffer
     // Pixel is white if at least one of the 3 RGB components is above 50%
     static constexpr uint16_t RGB16_TO_MONO = 0x8410;

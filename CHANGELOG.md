@@ -5,14 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ## [15.2.0.3]
 ### Added
+- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives (#24367)
 
 ### Breaking Changed
 
 ### Changed
 - ESP8266 platform update from 2025.12.00 to 2026.01.00 (#24354)
 - ESP32 Platform from 2025.12.31 to 2026.01.30, Framework (Arduino Core) from v3.1.8 to v3.1.9 and IDF from v5.3.4.251223 to v5.3.4.251226 (#24354)
+- JPEG decoder (#24368)
 
 ### Fixed
+- Display ST77xx and Parallel issues introduced after refactor UDisplay (#24368)
 
 ### Removed
 

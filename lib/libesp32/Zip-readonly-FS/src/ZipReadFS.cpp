@@ -434,6 +434,76 @@ bool ZipArchive::parse(void) {
 
 
 /********************************************************************
+** Iterate over all files in a ZIP archive
+** This is a lightweight iterator that doesn't store entries in memory
+********************************************************************/
+bool ZipArchiveIterator(File &zipfile, ZipIteratorCallback callback, void *user_data) {
+  ZipHeader header;
+  zipfile.seek(0);    // start of file
+  int32_t offset = 0;
+  const size_t zip_header_size = sizeof(header) - sizeof(header.padding);
+
+  while (1) {
+    zipfile.seek(offset);
+    int32_t bytes_read = zipfile.read(sizeof(header.padding) + (uint8_t*) &header, zip_header_size);
+    if (bytes_read != (int32_t)zip_header_size) {
+      break;
+    }
+
+    // Check ZIP local file header signature (0x04034B50 split as 0x4B50 and 0x0403)
+    if (header.signature1 != 0x4B50) {
+      break;  // Invalid signature
+    }
+    if (header.signature2 != 0x0403) {
+      break;  // End of local file headers (could be central directory)
+    }
+
+    // Check for unsupported features
+    if (header.gen_purpose_flags != 0x0000) {
+      break;  // Unsupported flags
+    }
+    if (header.compression != 0x0000) {
+      break;  // Compressed files not supported
+    }
+
+    // Check file name size
+    if (header.filename_size > 256 || header.filename_size == 0) {
+      break;  // Filename too long or empty
+    }
+
+    // Read filename
+    char fname[header.filename_size + 1];
+    if (zipfile.read((uint8_t*)fname, header.filename_size) != header.filename_size) {
+      break;
+    }
+    fname[header.filename_size] = '\0';
+
+    // Extract just the filename suffix after the last '#' (same logic as ZipArchive::parse)
+    char *fname_suffix;
+    char *saveptr;
+    fname_suffix = strtok_r(fname, "#", &saveptr);
+    char *res = fname_suffix;
+    while (res) {
+      res = strtok_r(nullptr, "#", &saveptr);
+      if (res) { fname_suffix = res; }
+    }
+
+    // Call the callback with the filename
+    if (fname_suffix && fname_suffix[0] != '\0') {
+      if (!callback(fname_suffix, user_data)) {
+        break;  // Callback requested to stop iteration
+      }
+    }
+
+    // Move to next entry
+    offset += zip_header_size + header.filename_size + header.extra_field_size + header.size_uncompressed;
+  }
+
+  return true;
+}
+
+
+/********************************************************************
 ** Encapsulation of FS and File to piggyback on Arduino
 **
 ********************************************************************/

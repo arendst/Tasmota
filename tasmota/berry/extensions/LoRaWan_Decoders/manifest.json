@@ -1,6 +1,6 @@
 {
   "name": "LoRaWan Decoders",
-  "version": "0x1A011200",
+  "version": "0x1A011300",
   "description": "Decode LoRaWan devices",
   "author": "Theo Arends",
   "min_tasmota": "0x0E060001",

@@ -38,19 +38,19 @@
 #endif
 
 typedef struct {
-  uint8_t rows = 1;     // number of rows (min:1)
-  uint8_t cols = 0;     // number of columns (if cols == 0 then apply to the entire light)
-  uint8_t offs = 0;     // offset in the led strip where the matrix starts (min: 0)
-  bool    alt = false;  // are the rows in alternate directions
-  uint16_t univ = 0;    // start at universe number (+1)
-  uint16_t port = 6454; // UDP port number
-  uint8_t dimm = 100;   // Dimmer 0..100
-  bool    on = true;
-  bool    matrix = true;  // true if light is a WS2812 matrix, false if single light
   // metrics
   uint32_t packet_received = 0;
   uint32_t packet_accepted = 0;
   uint32_t strip_refresh = 0;
+  uint16_t offs = 0;            // offset in the led strip where the matrix starts (min: 0)
+  uint16_t univ = 0;            // start at universe number (+1)
+  uint16_t port = 6454;         // UDP port number
+  uint8_t dimm = 100;           // Dimmer 0..100
+  uint8_t rows = 1;             // number of rows (min:1)
+  uint8_t cols = 0;             // number of columns (if cols == 0 then apply to the entire light)
+  bool    alt = false;          // are the rows in alternate directions
+  bool    on = true;
+  bool    matrix = true;        // true if light is a WS2812 matrix, false if single light
 } ArtNetConfig;
 
 uint32_t * packets_per_row = nullptr;

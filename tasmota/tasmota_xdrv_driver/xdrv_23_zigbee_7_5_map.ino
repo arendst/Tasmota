@@ -169,19 +169,11 @@ void Z_Mapper::dumpInternals(void) const {
 
   WSContentSend_P(PSTR("edges:["));
   for (auto & edge : edges) {
-    uint32_t lqi_color = 0x000;
-    // if (edge.lqi >= 192) {
-    //   lqi_color = 0x364;
-    // } else if (edge.lqi >= 128) {
-    //   lqi_color = 0x346;
-    // } else if (edge.lqi > 0) {
-    //   lqi_color = 0xd56;
-    // }
     char hex[8];
     snprintf(hex, sizeof(hex), PSTR("%d"), edge.lqi);
 
-    WSContentSend_P(PSTR("{from:\"0x%04X\",to:\"0x%04X\",label:\"%s\",color:\"#%03X\"},"),
-                edge.node_1, edge.node_2, (edge.lqi > 0) ? hex : "", lqi_color);
+    WSContentSend_P(PSTR("{from:'0x%04X',to:'0x%04X',label:'%s',width:%d},"),
+                edge.node_1, edge.node_2, (edge.lqi > 0) ? hex : "", changeUIntScale(edge.lqi, 0, 254, 1, 4));
   }
   WSContentSend_P(PSTR("],"));
 }

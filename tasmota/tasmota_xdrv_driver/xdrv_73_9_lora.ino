@@ -175,12 +175,12 @@ void LoraSettingsLoad(bool erase) {
 void LoraSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 #ifdef USE_UFILESYS
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&Lora->settings +4, sizeof(LoraSettings_t) -4);  // Skip crc32
+#ifdef USE_LORAWAN_BRIDGE
   if (Lora->delay_settings_save) {       // Delay settings update when expecting cascading changes
     Lora->delay_settings_save--;
     return;
   }
-  uint32_t crc32 = GetCfgCrc32((uint8_t*)&Lora->settings +4, sizeof(LoraSettings_t) -4);  // Skip crc32
-#ifdef USE_LORAWAN_BRIDGE
   crc32 += LoraWanGetCfgCrc();
 #endif  // USE_LORAWAN_BRIDGE
   if (crc32 != Lora->settings.crc32) {
@@ -291,6 +291,18 @@ void LoraInit(void) {
       // Need this as following `else if`s may not be present
     }
 #ifdef USE_LORA_SX127X
+    else if (PinUsed(GPIO_LORA_DI0) && PinUsed(GPIO_LORA_DI1)) {
+      // SX1276, RFM95W
+      if (LoraSx127xV2Init()) {
+        Lora->Config    = &LoraSx127xV2Config;
+        Lora->Available = &LoraSx127xV2Available;
+        Lora->Receive   = &LoraSx127xV2Receive;
+        Lora->Send      = &LoraSx127xV2Send;
+        Lora->Init      = &LoraSx127xV2Init;
+        strcpy_P(hardware, PSTR("SX127x"));
+        present = true;
+      }
+    }
     else if (PinUsed(GPIO_LORA_DI0)) {
       // SX1276, RFM95W
       if (LoraSx127xInit()) {
@@ -336,12 +348,24 @@ void LoraInit(void) {
 #define D_CMND_LORACONFIG     "Config"
 #define D_CMND_LORACOMMAND    "Command"
 #define D_CMND_LORAOPTION     "Option"
+#define D_CMND_LORAINIT       "Init"
 
 const char kLoraCommands[] PROGMEM = "LoRa|"  // Prefix
-  D_CMND_LORASEND "|" D_CMND_LORACONFIG "|" D_CMND_LORACOMMAND "|" D_CMND_LORAOPTION;
+  D_CMND_LORASEND "|" D_CMND_LORACONFIG "|" D_CMND_LORACOMMAND "|" D_CMND_LORAOPTION
+  "|" D_CMND_LORAINIT;
 
 void (* const LoraCommand[])(void) PROGMEM = {
-  &CmndLoraSend, &CmndLoraConfig, &CmndLoraCommand, &CmndLoraOption };
+  &CmndLoraSend, &CmndLoraConfig, &CmndLoraCommand, &CmndLoraOption,
+  &CmndLoraInit };
+
+void CmndLoraInit(void) {
+  // LoraInit  - Reset and init SXxxxx chip
+  if (Lora->Init()) {
+    ResponseCmndDone();
+  } else {
+    ResponseCmndFailed();
+  }
+}
 
 void CmndLoraOption(void) {
   // LoraOption1 1 - Enable LoRaWanBridge

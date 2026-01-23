@@ -55,7 +55,7 @@ public:
     
     bool drawPixel(int16_t x, int16_t y, uint16_t color) override { return false; }
     bool fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override { return false; }
-    bool pushColors(uint16_t *data, uint16_t len, bool first = false) override { return false; }
+    bool pushColors(uint16_t *data, uint32_t len, bool first = false) override { return false; }
     bool setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) override { return false; }
     bool drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) override { return false; }
     bool drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) override { return false; }

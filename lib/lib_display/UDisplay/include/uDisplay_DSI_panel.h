@@ -65,7 +65,7 @@ public:
     // Core graphics API (must return bool)
     bool drawPixel(int16_t x, int16_t y, uint16_t color) override;
     bool fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override;
-    bool pushColors(uint16_t *data, uint16_t len, bool not_swapped) override;
+    bool pushColors(uint16_t *data, uint32_t len, bool not_swapped) override;
     bool setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) override;
     bool drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) override;
     bool drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) override;

@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
 - Support for Adafruit I2C QT Rotary Encoder [#24270](https://github.com/arendst/Tasmota/issues/24270)
 - Zigbee support for `int24` type [#24334](https://github.com/arendst/Tasmota/issues/24334)
+- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives [#24367](https://github.com/arendst/Tasmota/issues/24367)
 
 ### Changed
 - ESP8266 platform update from 2025.10.00 to 2026.01.00 [#24354](https://github.com/arendst/Tasmota/issues/24354)
@@ -126,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactor Adafruit Seesaw soil driver [#24270](https://github.com/arendst/Tasmota/issues/24270)
 - LM75AD output when no valid reading received from 0 to null [#24263](https://github.com/arendst/Tasmota/issues/24263)
 - Update Zigbee WebUI [#24224](https://github.com/arendst/Tasmota/issues/24224)
+- JPEG decoder [#24368](https://github.com/arendst/Tasmota/issues/24368)
 
 ### Fixed
 - ESP8266 TasmotaSerial flush receive buffer on executing `TasmotaSerial.flush();`
@@ -134,6 +136,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ScrubDNS() function [#23886](https://github.com/arendst/Tasmota/issues/23886)
 - GDK101 power on detection [#24242](https://github.com/arendst/Tasmota/issues/24242)
 - Udisplay backlight with SPI displays [#24277](https://github.com/arendst/Tasmota/issues/24277)
+- Display ST77xx and Parallel issues introduced after refactor UDisplay [#24368](https://github.com/arendst/Tasmota/issues/24368)
 - DALI watchdog exception
 - TuyaMCU v1 exception 28 regression from v15.1.0.1 reverted PR24063 [#24220](https://github.com/arendst/Tasmota/issues/24220)
 - ESP32 BLE not starting [#24240](https://github.com/arendst/Tasmota/issues/24240)

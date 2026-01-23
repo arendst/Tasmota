@@ -24,7 +24,7 @@
 #include "tasmota_options.h"
 
 
-// #define UDSP_DEBUG
+//#define UDSP_DEBUG
 
 #ifndef UDSP_LBSIZE
 #define UDSP_LBSIZE 256
@@ -69,7 +69,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   sa_mode = 16;
   saw_3 = 0xff;
   dim_op = 0xff;
-  bpmode = 0;
+  bp_mode.data = 0;
   dsp_off = 0xff;
   dsp_on = 0xff;
   // busy_pin = -1;  // MOVED to EPDPanelConfig.busy_pin
@@ -757,7 +757,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             rotmap_ymax = next_val(&lp1);
             break;
           case 'b':
-            bpmode = next_val(&lp1);
+            bp_mode.data = next_hex(&lp1);
             break;
 #ifdef USE_UNIVERSAL_TOUCH
           case 'U':
@@ -1175,21 +1175,18 @@ Renderer *uDisplay::Init(void) {
 
 if (interface == _UDSP_SPI) {
 
-    if (bpanel >= 0) {
-#ifdef ESP32
-        analogWrite(bpanel, 32);
-#else
-        pinMode(bpanel, OUTPUT);
-        digitalWrite(bpanel, HIGH);
-#endif // ESP32
-    }
-    // spiController->beginTransaction();
+    HandeBP(-1);
 
+    spiController->beginTransaction();
+ 
     if (reset >= 0) {
       pinMode(reset, OUTPUT);
       digitalWrite(reset, HIGH);
       delay(50);
       reset_pin(50, 200);
+#ifdef UDSP_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, "UDisplay: resetting device");
+#endif
     }
     
     if (ep_mode) {
@@ -1243,14 +1240,15 @@ if (interface == _UDSP_SPI) {
         panel_config->spi.all_commands_mode = allcmd_mode;
         
         send_spi_cmds(0, dsp_ncmds);  // Send init commands for regular SPI
+      
         universal_panel = new SPIPanel(panel_config->spi, spiController, frame_buffer);
 #ifdef ESP32
         spiController->initDMA(panel_config->spi.width, lvgl_param.flushlines, lvgl_param.data);
 #endif
     }
 
-    // spiController->endTransaction();
-
+    spiController->endTransaction();
+    
     // EPD LUT initialization is now handled inside EPDPanel constructor
     // so we don't need to call Init_EPD here anymore
 }
@@ -1264,9 +1262,7 @@ if (interface == _UDSP_SPI) {
       return NULL;
     }
 
-    if (bpanel >= 0) {
-      analogWrite(bpanel, 32);
-    }
+    HandeBP(-1);
 
     panel_config->rgb.clk_src = LCD_CLK_SRC_PLL160M;
     panel_config->rgb.timings.pclk_hz = spi_speed*1000000;
@@ -1311,9 +1307,7 @@ if (interface == _UDSP_SPI) {
         universal_panel = new DSIPanel(panel_config->dsi);
         rgb_fb = universal_panel->framebuffer;
                 
-        if (bpanel >= 0) {
-          analogWrite(bpanel, 32);
-        }
+        HandeBP(-1);
      }
 #endif
 
@@ -1345,9 +1339,8 @@ if (interface == _UDSP_SPI) {
       
       universal_panel = new I80Panel(panel_config->i80);
 
-      if (bpanel >= 0) {
-          analogWrite(bpanel, 32);
-      }
+      HandeBP(-1);
+
   #endif
   }
   

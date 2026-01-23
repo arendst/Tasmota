@@ -174,7 +174,7 @@ void Epd47::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
 static inline void lvgl_color_swap2(uint16_t *data, uint16_t len) { for (uint32_t i = 0; i < len; i++) (data[i] = data[i] << 8 | data[i] >> 8); }
 
-void Epd47::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
+void Epd47::pushColors(uint16_t *data, uint32_t len, boolean not_swapped) {
 
   if (not_swapped == false) {
     lvgl_color_swap2(data, len);

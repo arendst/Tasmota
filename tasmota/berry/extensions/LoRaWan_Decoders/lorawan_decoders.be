@@ -95,30 +95,34 @@ class lorawan_settings
       maxnodes = 16                              # Is TAS_LORAWAN_ENDNODES = 16
     end
 
-#    var decoders = ["D20","DDS75L","DW10","LDS02","LHT52","LHT65","PS-L-I5","SE01-L","SN50v3L","walker","WS202","WS301","WS522"]
-#-
-    # List of files in .tapp doesn't seem to work
     import path
-    var filelist = path.listdir(".extensions/LoRaWan_Decoders.tapp#")
--#
-    var f = open(".extensions/LoRaWan_Decoders.tapp#filelist", "r")
-    var filelist = f.read()                                          # Read filelist to string
-    f.close()
-    filelist = string.replace(filelist, "\r\n", "|")                 # Change carriage return and linefeed to | (windows)
-    filelist = string.replace(filelist, "\n", "|")                   # Change linefeed to | (linux)
-    filelist = string.replace(filelist, "filelist|", "")             # Delete file
-    filelist = string.replace(filelist, "changelog.md|", "")         # Delete file
-    filelist = string.replace(filelist, "autoexec.be|", "")          # Delete file
-    filelist = string.replace(filelist, "lorawan_decoders.be|", "")  # Delete file
-    filelist = string.replace(filelist, "manifest.json|", "")        # Delete file
-    filelist = string.replace(filelist, ".be", "")                   # Remove file type
-    var decoders = string.split(filelist, "|")                       # Convert String to list
-    decoders.pop()                                                   # Remove last empty slot
-#-
-    for fd:decoders
-      tasmota.log(format("TEO: Decoders '%s'", fd), 2)
+    var decoders = path.listdir("/.extensions/LoRaWan_Decoders.tapp#")
+    if size(decoders) == 0                                 # Fallback to filelist
+#      log("LWD: Decoders filelist", 3)
+      var f = open(".extensions/LoRaWan_Decoders.tapp#filelist", "r")
+      var filelist = f.read()                              # Read filelist to string
+      f.close()
+      filelist = string.replace(filelist, "\r\n", "|")     # Change carriage return and linefeed to | (windows)
+      filelist = string.replace(filelist, "\n", "|")       # Change linefeed to | (linux)
+      decoders = string.split(filelist, "|")               # Convert String to list
+      decoders.pop()                                       # Remove last empty slot
     end
--#
+#    print(decoders)
+#    ['D20.be', 'DDS75L.be', 'DW10.be', 'LDS02.be', 'LHT52.be', 'LHT65.be', 'PS-L-I5.be', 'SE01-L.be', 'SN50v3L.be', 'WS202.be', 'WS301.be', 'WS522.be', 'autoexec.be', 'changelog.md', 'filelist', 'lorawan_decoders.be', 'manifest.json', 'walker.be']
+    decoders.remove(decoders.find("filelist"))             # Delete file
+    decoders.remove(decoders.find("changelog.md"))         # Delete file
+    decoders.remove(decoders.find("autoexec.be"))          # Delete file
+    decoders.remove(decoders.find("lorawan_decoders.be"))  # Delete file
+    decoders.remove(decoders.find("manifest.json"))        # Delete file
+    for i: decoders.keys()
+      decoders[i] = string.replace(decoders[i], ".be", "") # Remove file type
+    end
+#    print(decoders)
+#    ['D20', 'DDS75L', 'DW10', 'LDS02', 'LHT52', 'LHT65', 'PS-L-I5', 'SE01-L', 'SN50v3L', 'WS202', 'WS301', 'WS522', 'walker']
+    if size(decoders) == 0                                 # Final fallback
+#      log("LWD: Decoders hardcoded", 3)
+      decoders = ['D20', 'DDS75L', 'DW10', 'LDS02', 'LHT52', 'LHT65', 'PS-L-I5', 'SE01-L', 'SN50v3L', 'WS202', 'WS301', 'WS522', 'walker']
+    end
 
     webserver.content_start("LoRaWAN")           # Title of the web page
     webserver.content_send_style()               # Send standard Tasmota styles

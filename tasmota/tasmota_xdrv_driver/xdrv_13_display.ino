@@ -553,11 +553,17 @@ void DisplayText(void)
             break;
           case 'i':
             // init display with partial update
-            DisplayInit(DISPLAY_INIT_PARTIAL);
+            //DisplayInit(DISPLAY_INIT_PARTIAL);
+            if (renderer) {
+              renderer->DisplayInit(DISPLAY_INIT_PARTIAL, Settings->display_size, Settings->display_rotate, Settings->display_font);
+            }
             break;
           case 'I':
             // init display with full refresh
-            DisplayInit(DISPLAY_INIT_FULL);
+            //DisplayInit(DISPLAY_INIT_FULL);
+            if (renderer) {
+              renderer->DisplayInit(DISPLAY_INIT_FULL, Settings->display_size, Settings->display_rotate, Settings->display_font);
+            }
             break;
           case 'o':
             DisplayOnOff(0);
@@ -2402,10 +2408,18 @@ char ppath[16];
 
 #ifdef ESP32
 #ifdef JPEG_PICTS
+
+#define USE_NEW_JPG
 #include "img_converters.h"
 #include "jpeg_decoder.h"
+
+#ifndef USE_NEW_JPG
+#include "esp_jpg_decode.h"
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 bool jpg2rgb565(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
+#endif
+
+
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
 #endif // JPEG_PICTS
 #endif // ESP32
@@ -2511,12 +2525,33 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
           }
           //Serial.printf(" x,y,fs %d - %d - %d\n",xsize, ysize, size );
           if (xsize && ysize) {
+#ifdef USE_NEW_JPG
+            uint16_t *out_buf = (uint16_t *)special_malloc((xsize * ysize * 2) + 4);
+            if (out_buf) {
+              uint32_t outsize = xsize * ysize * 2;
+              esp_jpeg_image_cfg_t jpeg_cfg = {
+                .indata = (uint8_t *)mem,
+                .indata_size = size,
+                .outbuf = (uint8_t*)out_buf,
+                .outbuf_size = outsize,
+                .out_format = JPEG_IMAGE_FORMAT_RGB565,
+                .out_scale = JPEG_IMAGE_SCALE_0,
+                .flags = {  .swap_color_bytes = inverted,}
+              };
+              esp_jpeg_image_output_t outimg;
+              esp_jpeg_decode(&jpeg_cfg, &outimg);
+              renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+              renderer->pushColors(out_buf, outsize / 2, true);
+              renderer->setAddrWindow(0, 0, 0, 0);
+              free(out_buf);
+            }
+#else
             uint8_t *out_buf = (uint8_t *)special_malloc((xsize * ysize * 3) + 4);
             if (out_buf) {
               uint16_t *pixb = (uint16_t *)special_malloc((xsize * 2) + 4);
               if (pixb) {
                 uint8_t *ob = out_buf;
-                if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {
+                if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {                  
                   //renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
                   for (int32_t j = 0; j < ysize; j++) {
                     if (inverted == false) {
@@ -2537,6 +2572,7 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
                 free(out_buf);
               }
             }
+#endif
           }
         }
         free(mem);
@@ -2564,14 +2600,40 @@ void Draw_jpeg(uint8_t *mem, uint16_t jpgsize, uint16_t xp, uint16_t yp, uint8_t
     uint8_t fac = 1 << scale;
     xsize /= fac;
     ysize /= fac;
-    renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
-    uint8_t *rgbmem = (uint8_t *)special_malloc(xsize * ysize * 2);
+
+#ifdef USE_NEW_JPG
+    uint32_t osize = xsize * ysize * 2;
+    uint16_t *rgbmem = (uint16_t *)special_malloc(osize);
     if (rgbmem) {
-      //jpg2rgb565(mem, jpgsize, rgbmem, JPG_SCALE_NONE);
-      jpg2rgb565(mem, jpgsize, rgbmem, (jpg_scale_t)scale);
-      renderer->pushColors((uint16_t*)rgbmem, xsize * ysize, true);
+      esp_jpeg_image_cfg_t jpeg_cfg = {
+                .indata = (uint8_t *)mem,
+                .indata_size = jpgsize,
+                .outbuf = (uint8_t*)rgbmem,
+                .outbuf_size = osize,
+                .out_format = JPEG_IMAGE_FORMAT_RGB565,
+                .out_scale = (esp_jpeg_image_scale_t)scale,
+                .flags = {  .swap_color_bytes = 0,}
+              };
+      esp_jpeg_image_output_t outimg;
+      esp_jpeg_decode(&jpeg_cfg, &outimg);
+      renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+      renderer->pushColors(rgbmem, osize / 2, true);
       free(rgbmem);
     }
+#else
+    
+    uint8_t *rgbmem = (uint8_t *)special_malloc(xsize * ysize * 2);
+    if (rgbmem) {     
+      jpg2rgb565(mem, jpgsize, rgbmem, (jpg_scale_t)scale);
+      uint16_t *ob = (uint16_t*)rgbmem;
+      for (int32_t j = 0; j < ysize; j++) {
+        renderer->setAddrWindow(xp, yp + j, xp + xsize, yp + j + 1);
+        renderer->pushColors((uint16_t*)ob, xsize, true);
+        ob += xsize;
+      }
+      free(rgbmem);
+    }
+#endif
     renderer->setAddrWindow(0, 0, 0, 0);
   }
 }

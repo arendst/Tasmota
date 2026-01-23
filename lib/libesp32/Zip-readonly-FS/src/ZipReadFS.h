@@ -13,6 +13,25 @@
 class ZipReadFSImpl;
 typedef std::shared_ptr<FSImpl> ZipReadFSImplPtr;
 
+/********************************************************************
+** Callback type for iterating over ZIP archive entries
+** Parameters:
+**   filename: the filename (after '#' separator processing)
+**   user_data: user-provided context pointer
+** Return: true to continue iteration, false to stop
+********************************************************************/
+typedef bool (*ZipIteratorCallback)(const char *filename, void *user_data);
+
+/********************************************************************
+** Iterate over all files in a ZIP archive
+** Parameters:
+**   zipfile: an open File object pointing to the ZIP archive
+**   callback: function to call for each file entry
+**   user_data: user-provided context pointer passed to callback
+** Returns: true if archive was parsed successfully
+********************************************************************/
+bool ZipArchiveIterator(File &zipfile, ZipIteratorCallback callback, void *user_data);
+
 
 class ZipReadFSImpl : public FSImpl {
 public:

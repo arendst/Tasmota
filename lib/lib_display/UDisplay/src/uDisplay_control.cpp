@@ -11,54 +11,78 @@ void udisp_dimm(uint8_t dim);
 // }
 
 // ===== Power Management =====
+#define AW_PWMRES 1024
+
+void uDisplay::HandeBP(int8_t on) {
+
+    if (bpanel < 0) {
+        return;
+    }
+    if (on < 0) {
+        // initial default
+#ifdef ESP32
+        if (!bp_mode.bp_nopwm) {
+          analogWrite(bpanel, 32);
+        } else {
+          pinMode(bpanel, OUTPUT);
+          digitalWrite(bpanel, HIGH);         
+        }
+#else
+        pinMode(bpanel, OUTPUT);
+        digitalWrite(bpanel, HIGH);
+#endif // ESP32
+        return;
+    }
+#ifdef ESP32
+    if (on) { 
+        if (!bp_mode.bp_nopwm) {
+            if (!bp_mode.bp_invert) {
+                analogWrite(bpanel, dimmer10_gamma);
+            } else {
+                analogWrite(bpanel, AW_PWMRES - dimmer10_gamma);
+            }
+        } else {
+            if (!bp_mode.bp_invert) {
+                digitalWrite(bpanel, HIGH);
+            } else {
+                digitalWrite(bpanel, LOW);
+            }
+        }
+    } else {
+        if (!bp_mode.bp_nopwm) {
+            if (!bp_mode.bp_invert) {
+                analogWrite(bpanel, 0);
+            }   else {
+                analogWrite(bpanel, AW_PWMRES - 1);
+            }
+        } else {
+             if (!bp_mode.bp_invert) {
+                digitalWrite(bpanel, LOW);
+            } else {
+                digitalWrite(bpanel, HIGH);
+            }           
+        }
+    }
+#else
+    if (!bp_mode.bp_invert) {
+        digitalWrite(bpanel, on);
+    } else {
+        digitalWrite(bpanel, !on);
+    }
+#endif
+}
 
 void uDisplay::DisplayOnff(int8_t on) {
     if (ep_mode) {
         return;
     }
-
     if (pwr_cbp) {
         pwr_cbp(on);
     }
     if (universal_panel->displayOnff(on)) {
         return;
     }
-
-#define AW_PWMRES 1024
-
-    if (on) {
-        if (bpanel >= 0) {
-#ifdef ESP32
-            if (!bpmode) {
-                analogWrite(bpanel, dimmer10_gamma);
-            } else {
-                analogWrite(bpanel, AW_PWMRES - dimmer10_gamma);
-            }
-#else
-            if (!bpmode) {
-                digitalWrite(bpanel, HIGH);
-            } else {
-                digitalWrite(bpanel, LOW);
-            }
-#endif
-        }
-    } else {
-        if (bpanel >= 0) {
-#ifdef ESP32
-            if (!bpmode) {
-                analogWrite(bpanel, 0);
-            } else {
-                analogWrite(bpanel, AW_PWMRES - 1);
-            }
-#else
-            if (!bpmode) {
-                digitalWrite(bpanel, LOW);
-            } else {
-                digitalWrite(bpanel, HIGH);
-            }
-#endif
-        }
-    }
+    HandeBP(on);
 }
 
 // ===== Brightness/Dimming Control =====
@@ -73,7 +97,10 @@ void uDisplay::dim10(uint8_t dim, uint16_t dim_gamma) {
 
 #ifdef ESP32
     if (bpanel >= 0) {
-        if (!bpmode) {
+        if (bp_mode.bp_nopwm) {
+            return;
+        }
+        if (!bp_mode.bp_invert) {
             analogWrite(bpanel, dimmer10_gamma);
         } else {
             analogWrite(bpanel, AW_PWMRES - dimmer10_gamma);

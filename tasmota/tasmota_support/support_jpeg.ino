@@ -24,6 +24,10 @@
 #include "img_converters.h"
 #include "jpeg_decoder.h"
 
+#define USE_NEW_JPG
+
+
+#ifndef USE_NEW_JPG
 void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len) {
 uint8_t red, grn, blu;
 uint16_t b , g, r;
@@ -137,6 +141,8 @@ bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t s
     }
     return true;
 }
+#endif //USE_NEW_JPG
+
 
 // https://web.archive.org/web/20131016210645/http://www.64lines.com/jpeg-width-height
 //Gets the JPEG size from the array of data passed to the function, file reference: http://www.obrador.com/essentialjpeg/headerinfo.htm
