@@ -176,7 +176,6 @@ typedef int SerConfu8;
 
 // memmove ...
 #define memcpy_P memcpy
-#define memmove_P memmove
 #define strncpy_P strncpy
 #define strcmp_P strcmp
 #define memccpy_P memccpy
