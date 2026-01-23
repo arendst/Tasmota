@@ -985,8 +985,8 @@ uint32_t WcSetup(bool reset_config) {
   // PRE-FILL CONFIG WITH DEFAULTS (only on first boot, not on resolution change)
   if (reset_config) {
     memset(&Wc.core.config, 0, sizeof(Wc.core.config));
-    Wc.core.config.width = 800;
-    Wc.core.config.height = 640;
+    Wc.core.config.width = 640;
+    Wc.core.config.height = 480;
     Wc.core.config.lane_num = 2;
     Wc.core.config.mipi_clock = 200;
     Wc.core.config.fps = 1; // Default to 1 to avoid div-by-zero later
@@ -1153,6 +1153,19 @@ uint32_t WcPause(void) {
   return 1;
 }
 
+void WcRtspStop(void) {
+  if (Wc.rtsp.server) {
+    Wc.rtsp.server->stop();
+    delete Wc.rtsp.server;
+    Wc.rtsp.server = NULL;
+  }
+  if (Wc.rtsp_client) {
+    Wc.rtsp_client.stop();
+  }
+  Wc.rtsp.streaming = false;
+}
+
+
 uint32_t WcStop(void) {
   if (Wc.core.state == CAM_IDLE || Wc.core.state == CAM_STOPPING) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Nothing to stop (state=%d)"), Wc.core.state);
@@ -1200,15 +1213,7 @@ uint32_t WcStop(void) {
   }
   
   // 7. Stop RTSP server and close client
-  if (Wc.rtsp.server) {
-    Wc.rtsp.server->stop();
-    delete Wc.rtsp.server;
-    Wc.rtsp.server = NULL;
-  }
-  if (Wc.rtsp_client) {
-    Wc.rtsp_client.stop();
-  }
-  Wc.rtsp.streaming = false;
+  WcRtspStop();
   
   // 8. Delete mutexes
   if (Wc.core.frame_mutex) {
@@ -1312,117 +1317,108 @@ bool WcChangeResolution(uint16_t width, uint16_t height) {
 /*********************************************************************************************/
 // RTSP Server Handler
 
-void HandleRtsp() {
-  if (!Wc.rtsp.server) return;
+// Helper to send RTSP responses
+void RtspResp(uint32_t cseq, const char* extra = nullptr, const char* body = nullptr) {
+  // Use _P for PSTR format string
+  Wc.rtsp_client.printf_P(PSTR("RTSP/1.0 200 OK\r\nCSeq: %u\r\n"), cseq);
   
-  // Accept new RTSP client (only one at a time)
-  if (Wc.rtsp.server->hasClient()) {
-    if (Wc.rtsp_client && Wc.rtsp_client.connected()) {
-      WiFiClient reject = Wc.rtsp.server->available();
-      reject.stop();
-    } else {
-      Wc.rtsp_client = Wc.rtsp.server->available();
-      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Client connected from %s"), Wc.rtsp_client.remoteIP().toString().c_str());
-    }
-  }
+  if (extra) Wc.rtsp_client.print(extra); // extra is already a char* (likely from PSTR)
   
-  // Handle RTSP requests
-  if (Wc.rtsp_client && Wc.rtsp_client.connected() && Wc.rtsp_client.available()) {
-    String request = Wc.rtsp_client.readStringUntil('\n');
-    request.trim();
-    
-    if (request.length() == 0) return;
-    
-    AddLog(LOG_LEVEL_DEBUG, PSTR("RTSP: %s"), request.c_str());
-    
-    // Parse ALL headers in one pass (TCP stream can only be read once)
-    uint32_t cseq = 0;
-    String transport_line = "";
-    
-    while (Wc.rtsp_client.available()) {
-      String line = Wc.rtsp_client.readStringUntil('\n');
-      line.trim();
-      if (line.length() == 0) break; // End of headers
-      
-      if (line.startsWith("CSeq:")) {
-        cseq = line.substring(5).toInt();
-      }
-      else if (line.startsWith("Transport:")) {
-        transport_line = line;
-      }
-    }
-    
-    // Handle RTSP methods
-    if (request.indexOf("OPTIONS") >= 0) {
-      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nPublic: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n\r\n", cseq);
-      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Sent OPTIONS"));
-    }
-    else if (request.indexOf("DESCRIBE") >= 0) {
-      IPAddress local_ip = WiFi.localIP();
-      char sdp_buffer[256];
-      snprintf_P(sdp_buffer, sizeof(sdp_buffer),
-        PSTR("v=0\r\n"
-             "o=- 0 0 IN IP4 %d.%d.%d.%d\r\n"
-             "s=Tasmota H264 Stream\r\n"
-             "c=IN IP4 0.0.0.0\r\n"
-             "t=0 0\r\n"
-             "m=video 0 RTP/AVP 96\r\n"
-             "a=rtpmap:96 H264/90000\r\n"
-             "a=fmtp:96 packetization-mode=1;profile-level-id=42001E\r\n"
-             "a=control:track0\r\n"),
-             local_ip[0], local_ip[1], local_ip[2], local_ip[3]);
-
-      Wc.rtsp_client.printf_P(PSTR("RTSP/1.0 200 OK\r\nCSeq: %u\r\nContent-Type: application/sdp\r\nContent-Length: %u\r\n\r\n%s"),
-        cseq, strlen(sdp_buffer), sdp_buffer);
-      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Sent DESCRIBE"));
-    }
-    else if (request.indexOf("SETUP") >= 0) {
-      // Use the transport_line we already parsed
-      if (transport_line.length() > 0) {
-        int port_idx = transport_line.indexOf("client_port=");
-        if (port_idx >= 0) {
-          String port_str = transport_line.substring(port_idx + 12);
-          int dash_idx = port_str.indexOf('-');
-          if (dash_idx >= 0) {
-            Wc.rtsp.client_rtp_port = port_str.substring(0, dash_idx).toInt();
-            Wc.rtsp.client_rtcp_port = port_str.substring(dash_idx + 1).toInt();
-          } else {
-            Wc.rtsp.client_rtp_port = port_str.toInt();
-            Wc.rtsp.client_rtcp_port = Wc.rtsp.client_rtp_port + 1;
-          }
-          
-          Wc.rtp_dest_ip = Wc.rtsp_client.remoteIP();
-          Wc.rtp.dest_port = Wc.rtsp.client_rtp_port;
-          Wc.rtsp.session_id = random(100000, 999999);
-          
-          AddLog(LOG_LEVEL_INFO, PSTR("RTSP: SETUP - dest %s:%d"), Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
-          
-          Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nTransport: RTP/AVP;unicast;client_port=%u-%u;server_port=%u-%u\r\n\r\n",
-            cseq, Wc.rtsp.session_id, Wc.rtsp.client_rtp_port, Wc.rtsp.client_rtcp_port, Wc.rtp.dest_port, Wc.rtp.dest_port + 1);
-        }
-      } else {
-        AddLog(LOG_LEVEL_ERROR, PSTR("RTSP: SETUP failed - No Transport header"));
-      }
-    }
-    else if (request.indexOf("PLAY") >= 0) {
-      Wc.rtsp.streaming = true;
-      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: PLAY"));
-      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\nRange: npt=0.000-\r\n\r\n", cseq, Wc.rtsp.session_id);
-    }
-    else if (request.indexOf("TEARDOWN") >= 0) {
-      Wc.rtsp.streaming = false;
-      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: TEARDOWN"));
-      Wc.rtsp_client.printf("RTSP/1.0 200 OK\r\nCSeq: %u\r\nSession: %u\r\n\r\n", cseq, Wc.rtsp.session_id);
-      Wc.rtsp_client.stop();
-    }
-  }
-  
-  if (Wc.rtsp_client && !Wc.rtsp_client.connected()) {
-    Wc.rtsp.streaming = false;
-    Wc.rtsp_client.stop();
+  if (body) {
+    Wc.rtsp_client.printf_P(PSTR("Content-Length: %u\r\n\r\n%s"), strlen(body), body);
+  } else {
+    Wc.rtsp_client.print(PSTR("\r\n"));
   }
 }
 
+void HandleRtsp() {
+  if (!Wc.rtsp.server) return;
+
+  // 1. Connection Management
+  if (Wc.rtsp.server->hasClient()) {
+    if (Wc.rtsp_client && Wc.rtsp_client.connected()) {
+      Wc.rtsp.server->available().stop(); // Reject busy
+    } else {
+      Wc.rtsp_client = Wc.rtsp.server->available();
+      AddLog(LOG_LEVEL_INFO, PSTR("RTSP: Client connected"));
+    }
+  }
+
+  if (!Wc.rtsp_client || !Wc.rtsp_client.connected()) {
+    if (Wc.rtsp.streaming) Wc.rtsp.streaming = false;
+    return;
+  }
+
+  // 2. Request Handling
+  if (!Wc.rtsp_client.available()) return;
+
+  String req = Wc.rtsp_client.readStringUntil('\n');
+  req.trim();
+  if (req.length() == 0) return;
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTSP: %s"), req.c_str());
+
+  // Header Parsing
+  uint32_t cseq = 0;
+  int client_port = 0;
+  
+  while (Wc.rtsp_client.available()) {
+    String h = Wc.rtsp_client.readStringUntil('\n');
+    h.trim();
+    if (h.length() == 0) break;
+    
+    if (h.startsWith(PSTR("CSeq:"))) {
+      cseq = h.substring(5).toInt();
+    }
+    if (h.startsWith(PSTR("Transport:"))) {
+      int idx = h.indexOf(PSTR("client_port="));
+      if (idx > 0) client_port = h.substring(idx + 12).toInt();
+    }
+  }
+
+  // 3. Command Dispatch
+  if (req.indexOf(PSTR("OPTIONS")) >= 0) {
+    RtspResp(cseq, PSTR("Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n"));
+  } 
+  else if (req.indexOf(PSTR("DESCRIBE")) >= 0) {
+    char sdp[256];
+    IPAddress ip = WiFi.localIP();
+    snprintf_P(sdp, sizeof(sdp), 
+      PSTR("v=0\r\no=- 0 0 IN IP4 %s\r\ns=Tasmota Stream\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=fmtp:96 packetization-mode=1;profile-level-id=42001E\r\na=control:track0\r\n"),
+      ip.toString().c_str());
+      
+    RtspResp(cseq, PSTR("Content-Type: application/sdp\r\n"), sdp);
+  } 
+  else if (req.indexOf(PSTR("SETUP")) >= 0) {
+    if (client_port > 0) {
+      Wc.rtsp.client_rtp_port = client_port;
+      Wc.rtsp.client_rtcp_port = client_port + 1;
+      Wc.rtp_dest_ip = Wc.rtsp_client.remoteIP();
+      Wc.rtp.dest_port = client_port;
+      Wc.rtsp.session_id = random(100000, 999999);
+      
+      char trans[128];
+      snprintf_P(trans, sizeof(trans), 
+        PSTR("Session: %u\r\nTransport: RTP/AVP;unicast;client_port=%u-%u;server_port=%u-%u\r\n"),
+        Wc.rtsp.session_id, Wc.rtsp.client_rtp_port, Wc.rtsp.client_rtcp_port, Wc.rtp.dest_port, Wc.rtp.dest_port+1);
+      
+      RtspResp(cseq, trans);
+    }
+  } 
+  else if (req.indexOf(PSTR("PLAY")) >= 0) {
+    Wc.rtsp.streaming = true;
+    char sess[64];
+    snprintf_P(sess, sizeof(sess), PSTR("Session: %u\r\nRange: npt=0.000-\r\n"), Wc.rtsp.session_id);
+    RtspResp(cseq, sess);
+  } 
+  else if (req.indexOf(PSTR("TEARDOWN")) >= 0) {
+    Wc.rtsp.streaming = false;
+    char sess[64];
+    snprintf_P(sess, sizeof(sess), PSTR("Session: %u\r\n"), Wc.rtsp.session_id);
+    RtspResp(cseq, sess);
+    Wc.rtsp_client.stop();
+  }
+}
 
 /*********************************************************************************************/
 // Command definitions
