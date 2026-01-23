@@ -1113,7 +1113,6 @@
 //  #define HX711_CAL_PRECISION     1              // When HX711 calibration is to course, raise this value
 
 //#define USE_DINGTIAN_RELAY                       // Add support for the Dingian board using 74'595 et 74'165 shift registers
-//  #define DINGTIAN_INPUTS_INVERTED               // Invert input states (Hi => OFF, Low => ON)
 //  #define DINGTIAN_USE_AS_BUTTON                 // Inputs as Tasmota's virtual Buttons
 //  #define DINGTIAN_USE_AS_SWITCH                 // Inputs as Tasmota's virtual Switches
 

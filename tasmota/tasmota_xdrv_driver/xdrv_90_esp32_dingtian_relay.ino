@@ -16,6 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+// SetOption133: Inverts 74HC595 shift register outputs at runtime
+// SetOption81: Inverts 74HC165 shift register inputs at runtime
 
 #ifdef ESP32
 #ifdef USE_DINGTIAN_RELAY
@@ -55,9 +57,10 @@ struct DINGTIAN_DATA {
 
 uint32_t DingtianReadWrite(uint32_t outputs)
 {
-  #ifdef DINGTIAN_OUTPUTS_INVERTED
+  // SetOption133: invert outputs (74HC595)
+  if (Settings->flag5.shift595_invert_outputs) {
     outputs = ~outputs;
-  #endif
+  }
   
   uint32_t inputs = 0;
   uint32_t in_bit = 1;
@@ -86,11 +89,12 @@ uint32_t DingtianReadWrite(uint32_t outputs)
     Dingtian->outputs_initialized = true;
   }
 
-#ifdef DINGTIAN_INPUTS_INVERTED
-  return ~inputs;
-#else
-  return inputs;
-#endif
+  // SetOption81: invert inputs (74HC165)
+  if (Settings->flag3.pcf8574_ports_inverted) {
+    return ~inputs;
+  } else {
+    return inputs;
+  }
 }
 
 /********************************************************************************************************
@@ -117,6 +121,9 @@ void DingtianInit(void) {
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: clk:%d, sdi:%d, q7:%d, pl:%d, oe:%d, rck:%d, count:%d"),
         Dingtian->pin_clk, Dingtian->pin_sdi, Dingtian->pin_q7, Dingtian->pin_pl, Dingtian->pin_oe, Dingtian->pin_rck, Dingtian->count);
+      
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: SetOption133 (Output invert): %d, SetOption81 (Input invert): %d"),
+        Settings->flag5.shift595_invert_outputs, Settings->flag3.pcf8574_ports_inverted);
 
       DINGTIAN_SET_OUTPUT(Dingtian->pin_clk, 0);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_sdi, 0);
