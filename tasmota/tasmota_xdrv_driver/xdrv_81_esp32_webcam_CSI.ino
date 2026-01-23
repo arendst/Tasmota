@@ -457,111 +457,62 @@ void MjpegProcessingTask(void *pvParameters) {
 #define RTP_MAX_PAYLOAD 1400  // MTU safety margin
 #define RTP_HEADER_SIZE 12
 
-void SendNalUnitRTP(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t nalnri) {
-  // Buffer for RTP packet construction
-  // 12 (RTP Header) + 2 (FU-A Headers) + Payload
-  uint8_t rtppacket[RTP_MAX_PAYLOAD + RTP_HEADER_SIZE + 2];
+// Helper: Builds RTP header and sends packet
+void WcRtpSend(bool marker, const uint8_t* payload, size_t len, const uint8_t* fu_header = nullptr) {
+  uint8_t header[12];
+  
+  // RTP Header: V=2, P=0, X=0, CC=0, PT=96
+  header[0] = 0x80;
+  header[1] = 96 | (marker ? 0x80 : 0x00);
+  
+  // Big Endian Headers
+  header[2] = (Wc.rtp.sequence >> 8) & 0xFF;
+  header[3] = Wc.rtp.sequence & 0xFF;
+  header[4] = (Wc.rtp.timestamp >> 24) & 0xFF;
+  header[5] = (Wc.rtp.timestamp >> 16) & 0xFF;
+  header[6] = (Wc.rtp.timestamp >> 8) & 0xFF;
+  header[7] = Wc.rtp.timestamp & 0xFF;
+  header[8] = (Wc.rtp.ssrc >> 24) & 0xFF;
+  header[9] = (Wc.rtp.ssrc >> 16) & 0xFF;
+  header[10] = (Wc.rtp.ssrc >> 8) & 0xFF;
+  header[11] = Wc.rtp.ssrc & 0xFF;
 
-  // ---------------------------------------------------------
-  // Case A: Small NAL - Send as Single NAL Unit Packet
-  // ---------------------------------------------------------
+  Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp.dest_port);
+  Wc.rtp_udp.write(header, 12);
+  if (fu_header) Wc.rtp_udp.write(fu_header, 2);
+  Wc.rtp_udp.write(payload, len);
+  Wc.rtp_udp.endPacket();
+
+  Wc.rtp.sequence++;
+}
+
+void WcSendNalUnit(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t nalnri) {
+  // Case A: Small NAL - Send as Single Packet
   if (nallen <= RTP_MAX_PAYLOAD) {
-    // Build RTP header
-    rtppacket[0] = 0x80;  // V=2, P=0, X=0, CC=0
-    rtppacket[1] = 96;    // PT=96 (H.264)
-    
-    // Set Marker Bit (M) if this is the last NAL of a frame (Video Coding Layer NALs)
-    if (naltype == 1 || naltype == 5) {
-      rtppacket[1] |= 0x80;
-    }
-
-    // Sequence Number (Big Endian)
-    rtppacket[2] = (Wc.rtp.sequence >> 8) & 0xFF;
-    rtppacket[3] = Wc.rtp.sequence & 0xFF;
-
-    // Timestamp (Big Endian)
-    rtppacket[4] = (Wc.rtp.timestamp >> 24) & 0xFF;
-    rtppacket[5] = (Wc.rtp.timestamp >> 16) & 0xFF;
-    rtppacket[6] = (Wc.rtp.timestamp >> 8) & 0xFF;
-    rtppacket[7] = Wc.rtp.timestamp & 0xFF;
-
-    // SSRC (Big Endian)
-    rtppacket[8] = (Wc.rtp.ssrc >> 24) & 0xFF;
-    rtppacket[9] = (Wc.rtp.ssrc >> 16) & 0xFF;
-    rtppacket[10] = (Wc.rtp.ssrc >> 8) & 0xFF;
-    rtppacket[11] = Wc.rtp.ssrc & 0xFF;
-
-    // Copy NAL unit directly after RTP header
-    memcpy(rtppacket + RTP_HEADER_SIZE, naldata, nallen);
-
-    // Send UDP Packet
-    Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp.dest_port);
-    Wc.rtp_udp.write(rtppacket, RTP_HEADER_SIZE + nallen);
-    Wc.rtp_udp.endPacket();
-
-    Wc.rtp.sequence++;
+    bool marker = (naltype == 1 || naltype == 5);
+    WcRtpSend(marker, naldata, nallen);
   } 
-  // ---------------------------------------------------------
-  // Case B: Large NAL - Fragment using FU-A (RFC 3984)
-  // ---------------------------------------------------------
+  // Case B: Large NAL - Fragment (FU-A)
   else {
-    size_t payloadsize = RTP_MAX_PAYLOAD - 2;  // Reserve 2 bytes for FU indicator & header
-    size_t offset = 1;  // Skip the original NAL header (byte 0)
-    bool firstfragment = true;
+    size_t offset = 1; // Skip NAL header
+    size_t payload_cap = RTP_MAX_PAYLOAD - 2; 
+    uint8_t fu_indicator = (nalnri << 5) | 28; 
 
     while (offset < nallen) {
-      // Calculate size of this chunk
-      size_t chunksize = (nallen - offset > payloadsize) ? payloadsize : (nallen - offset);
-      bool lastfragment = (offset + chunksize >= nallen);
-
-      // Build RTP Header
-      rtppacket[0] = 0x80;
-      rtppacket[1] = 96; // PT=96
-
-      // Set Marker Bit ONLY on the very last fragment of a VCL NAL
-      if (lastfragment && (naltype == 1 || naltype == 5)) {
-        rtppacket[1] |= 0x80; 
-      }
-
-      rtppacket[2] = (Wc.rtp.sequence >> 8) & 0xFF;
-      rtppacket[3] = Wc.rtp.sequence & 0xFF;
-      rtppacket[4] = (Wc.rtp.timestamp >> 24) & 0xFF;
-      rtppacket[5] = (Wc.rtp.timestamp >> 16) & 0xFF;
-      rtppacket[6] = (Wc.rtp.timestamp >> 8) & 0xFF;
-      rtppacket[7] = Wc.rtp.timestamp & 0xFF;
-      rtppacket[8] = (Wc.rtp.ssrc >> 24) & 0xFF;
-      rtppacket[9] = (Wc.rtp.ssrc >> 16) & 0xFF;
-      rtppacket[10] = (Wc.rtp.ssrc >> 8) & 0xFF;
-      rtppacket[11] = Wc.rtp.ssrc & 0xFF;
-
-      // --- FU-A Specific Headers ---
-      // Byte 12: FU Indicator (F + NRI + Type 28)
-      rtppacket[12] = (nalnri << 5) | 28;
-
-      // Byte 13: FU Header (S + E + R + Original Type)
-      rtppacket[13] = naltype & 0x1F; 
+      size_t chunk = (nallen - offset > payload_cap) ? payload_cap : (nallen - offset);
+      bool is_last  = (offset + chunk >= nallen);
+      bool is_first = (offset == 1);
       
-      if (firstfragment) {
-        rtppacket[13] |= 0x80;  // Set S bit
-      }
-      if (lastfragment) {
-        rtppacket[13] |= 0x40;  // Set E bit
-      }
+      uint8_t fu_header_byte = naltype;
+      if (is_first) fu_header_byte |= 0x80; 
+      if (is_last)  fu_header_byte |= 0x40; 
 
-      // Copy payload fragment
-      memcpy(rtppacket + 14, naldata + offset, chunksize);
-
-      // Send UDP Packet
-      Wc.rtp_udp.beginPacket(Wc.rtp_dest_ip, Wc.rtp.dest_port);
-      Wc.rtp_udp.write(rtppacket, 14 + chunksize);
-      Wc.rtp_udp.endPacket();
-
-      // Traffic Shaping for ESP32 UDP stability (Reduces possible green artifacts)
-      // delayMicroseconds(50);
-
-      Wc.rtp.sequence++;
-      offset += chunksize;
-      firstfragment = false;
+      uint8_t fu_data[2] = { fu_indicator, fu_header_byte };
+      bool marker = is_last && (naltype == 1 || naltype == 5);
+      
+      WcRtpSend(marker, naldata + offset, chunk, fu_data);
+      
+      offset += chunk;
     }
   }
 }
@@ -698,7 +649,7 @@ void H264ProcessingTask(void *pvParameters) {
           uint8_t nal_nri = (nal_header >> 5) & 0x03;
           
           // Send NAL unit via RTP
-          SendNalUnitRTP(nal_data, nal_length, nal_type, nal_nri);
+          WcSendNalUnit(nal_data, nal_length, nal_type, nal_nri);
           
           // Move to next NAL
           nal_data += nal_length;
@@ -2161,12 +2112,10 @@ const char HTTP_WC_FPS[]  PROGMEM = "{s}Frame Rate{m}%d fps{e}";
 
 void WcWebInfo(bool json) {
   if (json) {
-    // Optional: If Tasmota asks for JSON (e.g. /cm?cmnd=status 10), appends to response
-    // But usually FUNC_WEB_SENSOR passes json=false for the Main Page HTML
+    // TODO: JSON output
     return;
   }
 
-  // 1. Determine Session Name
   const char* mode_str = "Standby";
   if (Wc.core.state == CAM_STREAMING) {
     switch (Wc.core.session_type) {
@@ -2180,18 +2129,11 @@ void WcWebInfo(bool json) {
     mode_str = "Ready";
   }
 
-  // 2. Send Table Rows to Web Page
-  // Mode
   WSContentSend_PD(HTTP_WC_MODE, mode_str);
-
-  // Resolution
   WSContentSend_PD(HTTP_WC_RES, Wc.core.config.width, Wc.core.config.height);
-
-  // FPS (Only show if streaming)
   if (Wc.core.state == CAM_STREAMING) {
     WSContentSend_PD(HTTP_WC_FPS, WcStats.last_fps);
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("_"));
 }
 
 
