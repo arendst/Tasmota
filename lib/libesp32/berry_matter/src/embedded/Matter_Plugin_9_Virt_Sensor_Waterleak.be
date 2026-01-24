@@ -1,6 +1,6 @@
 
 #
-# Matter_Plugin_9_Virt_Sensor_Waterleak.be - implements the behavior for a Virtual Waterleak Sensor
+# Matter_Plugin_9_Virt_Sensor_Waterleak.be - implements Virtual Water Leak Sensor
 #
 # Copyright (C) 2024  Stephan Hadinger & Theo Arends
 #
@@ -17,6 +17,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Virtual Variant - Matter Bridge Protocol Water Leak Detector
+#################################################################################
+# This is a VIRTUAL variant that inherits from Matter_Plugin_Sensor_Waterleak.
+# It exposes a virtual sensor that can be controlled via Matter bridge protocol.
+#
+# DEVICE TYPE: Water Leak Detector (0x0043)
+# See Matter_Plugin_3_Sensor_Waterleak.be for complete Matter 1.4.1 specifications
+# including Boolean State cluster (0x0045) details.
+#
+# VIRTUAL BEHAVIOR:
+# - Exposes a virtual water leak detector endpoint
+# - Values can be set via Matter commands from controller
+# - No physical sensor or HTTP polling required
+# - Useful for testing, simulation, or custom integrations
+# - Inherits all cluster implementations from base class
+#
+# CONFIGURATION:
+# - TYPE: "v_waterleak" - Plugin identifier in Matter configuration
+# - DISPLAY_NAME: "v.Waterleak" - Shows as virtual water leak in UI
+# - VIRTUAL: true - Marks this as a virtual device
+# - ARG: "" - No argument needed (no physical sensor to map)
+#################################################################################
 
 import matter
 

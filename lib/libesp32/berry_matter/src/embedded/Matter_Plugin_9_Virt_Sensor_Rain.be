@@ -1,6 +1,6 @@
 
 #
-# Matter_Plugin_9_Virt_Sensor_Rain.be - implements the behavior for a Virtual Rain Sensor
+# Matter_Plugin_9_Virt_Sensor_Rain.be - implements Virtual Rain Sensor
 #
 # Copyright (C) 2024  Stephan Hadinger & Theo Arends
 #
@@ -17,6 +17,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Virtual Variant - Matter Bridge Protocol Rain Sensor
+#################################################################################
+# This is a VIRTUAL variant that inherits from Matter_Plugin_Sensor_Rain.
+# It exposes a virtual sensor that can be controlled via Matter bridge protocol.
+#
+# DEVICE TYPE: Rain Sensor (0x0044)
+# See Matter_Plugin_3_Sensor_Rain.be for complete Matter 1.4.1 specifications
+# including Boolean State cluster (0x0045) details.
+#
+# VIRTUAL BEHAVIOR:
+# - Exposes a virtual rain sensor endpoint
+# - Values can be set via Matter commands from controller
+# - No physical sensor or HTTP polling required
+# - Useful for testing, simulation, or custom integrations
+# - Inherits all cluster implementations from base class
+#
+# CONFIGURATION:
+# - TYPE: "v_rain" - Plugin identifier in Matter configuration
+# - DISPLAY_NAME: "v.Rain" - Shows as virtual rain in UI
+# - VIRTUAL: true - Marks this as a virtual device
+# - ARG: "" - No argument needed (no physical sensor to map)
+#################################################################################
 
 import matter
 

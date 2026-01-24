@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Virtual Variant - Dimmable Light
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light1 (Matter_Plugin_3_Light1.be)
+# VARIANT TYPE: Virtual (Matter Bridge Protocol)
+# DEVICE TYPE: Dimmable Light (0x0101) - See base class for full specification
+# CLUSTERS: On/Off + Level Control - See Matter_Plugin_3_Light1.be
+# TYPE: "v_light1" | VIRTUAL: true
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

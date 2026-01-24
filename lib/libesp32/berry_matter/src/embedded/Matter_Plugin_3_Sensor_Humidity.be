@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Pressure.be - implements the behavior for a Pressure Sensor
+# Matter_Plugin_Sensor_Humidity.be - implements the behavior for a Humidity Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,78 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Device Specification
+#################################################################################
+# Device Type: Humidity Sensor (0x0307)
+# Device Type Revision: 2 (Matter 1.4.1)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0405: Relative Humidity Measurement (M)
+# - 0x0003: Identify (M)
+# - 0x0004: Groups (C, [Zigbee])
+#
+# NOTES:
+# - Simple sensor device that reports relative humidity measurements
+# - Groups cluster only required for Zigbee devices
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Relative Humidity Measurement Cluster (0x0405)
+#################################################################################
+# Cluster Revision: 3 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# PURPOSE:
+# Provides relative humidity measurement capability with configurable range.
+#
+# ATTRIBUTES:
+# ID     | Name              | Type   | Constraint                      | Quality | Default | Access | Conf
+# -------|-------------------|--------|---------------------------------|---------|---------|--------|-----
+# 0x0000 | MeasuredValue     | uint16 | MinMeasuredValue-MaxMeasuredValue| XP     | null    | R V    | M
+# 0x0001 | MinMeasuredValue  | uint16 | max9999                         | X       | null    | R V    | M
+# 0x0002 | MaxMeasuredValue  | uint16 | (MinMeasuredValue+1)-10000      | X       | null    | R V    | M
+# 0x0003 | Tolerance         | uint16 | max2048                         |         | 0       | R V    | O
+# 0xFFFC | FeatureMap        | map32  | all                             | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision   | uint16 | all                             | F       | 3       | R V    | M
+#
+# DATA TYPES:
+# - MeasuredValue: uint16 in units of 0.01% (1/100th of a percent)
+#   - Range: 0-10000 (0.00% to 100.00%)
+#   - Example: 5000 = 50.00%, 9550 = 95.50%
+#   - null (0xFFFF) indicates value is not available
+#
+# QUALITY FLAGS:
+# - X: Nullable (can be null if measurement unavailable)
+# - P: Periodic reporting (changes reported automatically)
+#
+# ATTRIBUTES DETAIL:
+# - MeasuredValue: Current relative humidity reading in 0.01% units
+#   - null when sensor is not available or reading is invalid
+#   - Must be within MinMeasuredValue and MaxMeasuredValue range
+#
+# - MinMeasuredValue: Minimum humidity the sensor can measure
+#   - null if minimum is unknown
+#   - Typically 0 (0%) or 500 (5%) based on sensor capabilities
+#
+# - MaxMeasuredValue: Maximum humidity the sensor can measure
+#   - null if maximum is unknown
+#   - Typically 10000 (100%) or 9500 (95%) based on sensor capabilities
+#   - Must be greater than MinMeasuredValue
+#
+# - Tolerance: Maximum expected measurement error in 0.01% units
+#   - 0 if tolerance is unknown
+#   - Example: 200 = ±2.00% tolerance
+#
+# IMPLEMENTATION NOTES:
+# - Tasmota reports humidity as percentage (0-100)
+# - This plugin multiplies by 100 to convert to Matter's 0.01% units
+# - Typical range: 0-100% (0-10000 in Matter units)
+# - Sensor readings are filtered and matched from Tasmota's JSON sensor data
+# - Value is stored in shadow_value as int (0-10000)
+#################################################################################
 
 import matter
 

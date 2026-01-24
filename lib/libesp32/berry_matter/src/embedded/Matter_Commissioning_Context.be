@@ -639,14 +639,11 @@ class Matter_Commisioning_Context
 
     if !sigma3_tbs_valid
       log("MTR: sigma3_tbs does not have a valid signature", 2)
-      log("MTR: ******************* Invalid signature, trying anyways", 2)
-      # log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
-      # self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
-      # return false
-    else
-      # All good, compute new keys
-      log("MTR: Sigma3 verified, computing new keys", 3)
+      log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+      self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+      return false
     end
+    log("MTR: Sigma3 verified, computing new keys", 3)
 
     TranscriptHash = crypto.SHA256().update(session.__Msg1).update(session.__Msg2).update(sigma3.Msg3).out()
     # log("MTR: * __Msg1            = " + session.__Msg1.tohex(), 4)

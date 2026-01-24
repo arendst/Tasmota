@@ -17,6 +17,88 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Light Sensor (0x0106)
+#################################################################################
+# Device Type: Light Sensor (0x0106)
+# Device Type Revision: 3 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0400: Illuminance Measurement (M) - Light level measurement
+# - 0x0003: Identify (M) - Device identification
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# CLUSTERS (Client):
+# - 0x0004: Groups (O) - [Zigbee] Group management
+#
+# NOTES:
+# - Measures illuminance in lux (lx)
+# - Logarithmic scale for wide dynamic range (1 lx to 3.576 Mlx)
+# - Suitable for ambient light sensing, daylight harvesting
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Illuminance Measurement Cluster (0x0400)
+#################################################################################
+# Cluster Revision: 3 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# DATA TYPES:
+# - LightSensorTypeEnum(enum8):
+#   * 0: Photodiode
+#   * 1: CMOS
+#   * 64-254: Manufacturer specific
+#
+# ATTRIBUTES:
+# ID     | Name              | Type  | Constraint              | Quality | Default | Access | Conf
+# -------|-------------------|-------|-------------------------|---------|---------|--------|-----
+# 0x0000 | MeasuredValue     | uint16| 0, MinMeasuredValue-    | P,X     | 0       | R V    | M
+#        |                   |       | MaxMeasuredValue        |         |         |        |
+# 0x0001 | MinMeasuredValue  | uint16| 1-65533                 | X       | null    | R V    | M
+# 0x0002 | MaxMeasuredValue  | uint16| min(MinMeasuredValue+1) | X       | null    | R V    | M
+# 0x0003 | Tolerance         | uint16| max 2048                |         | 0       | R V    | O
+# 0x0004 | LightSensorType   | Light-| all                     | X       | null    | R V    | O
+#        |                   | Sensor|                         |         |         |        |
+#        |                   | Type- |                         |         |         |        |
+#        |                   | Enum  |                         |         |         |        |
+#
+# Quality Flags:
+# - P: Periodic reporting (changes reported automatically)
+# - X: Nullable (null = unknown/invalid)
+#
+# Access Control:
+# - R: Read
+# - V: View privilege required
+#
+# VALUE ENCODING:
+# - MeasuredValue = 10000 × log₁₀(Illuminance[lx]) + 1
+# - Valid range: 1 lx ≤ Illuminance ≤ 3.576 Mlx
+# - Formula provides logarithmic scale for wide dynamic range
+#
+# EXAMPLES:
+# - 1 lx → MeasuredValue = 10000 × log₁₀(1) + 1 = 1
+# - 10 lx → MeasuredValue = 10000 × log₁₀(10) + 1 = 10001
+# - 100 lx → MeasuredValue = 10000 × log₁₀(100) + 1 = 20001
+# - 1000 lx → MeasuredValue = 10000 × log₁₀(1000) + 1 = 30001
+# - 10000 lx → MeasuredValue = 10000 × log₁₀(10000) + 1 = 40001
+#
+# TYPICAL RANGES:
+# - Moonlight: ~0.1 lx
+# - Indoor lighting: 100-500 lx
+# - Office lighting: 320-500 lx
+# - Overcast day: 1000 lx
+# - Full daylight: 10000-25000 lx
+# - Direct sunlight: 32000-100000 lx
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads illuminance from Tasmota sensor JSON (Status 10)
+# - Converts using logarithmic formula: log10(val + 1) * 10000
+# - Handles negative values by returning 0
+# - MinMeasuredValue: 1 (minimum detectable light)
+# - MaxMeasuredValue: 0xFFFE (65534, maximum range)
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
@@ -31,7 +113,7 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0400: [0,1,2],                                # Illuminance Measurement p.95 - no writable
   })
-  static var TYPES = { 0x0106: 2 }                  # Illuminance Sensor, rev 2
+  static var TYPES = { 0x0106: 3 }                  # Illuminance Sensor - Matter 1.4.1 Device Library Rev 3
 
   #############################################################
   # Pre-process value

@@ -692,7 +692,7 @@ be_local_class(Matter_Plugin_Light2,
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(268, -1), be_const_int(2) },
+        { be_const_key_int(268, -1), be_const_int(4) },
     }))    ) } )) },
         { be_const_key_weak(web_value_ct, -1), be_const_closure(class_Matter_Plugin_Light2_web_value_ct_closure) },
         { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Light2_web_values_closure) },

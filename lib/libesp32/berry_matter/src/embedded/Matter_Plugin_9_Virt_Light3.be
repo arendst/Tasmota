@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Virtual Variant - Extended Color Light
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light3 (Matter_Plugin_4_Light3.be)
+# VARIANT TYPE: Virtual (Matter Bridge Protocol)
+# DEVICE TYPE: Extended Color Light (0x010D) - See base class
+# CLUSTERS: On/Off + Level Control + Color Control (HS) - See Matter_Plugin_4_Light3.be
+# TYPE: "v_light3" | VIRTUAL: true
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

@@ -237,14 +237,14 @@ be_local_closure(class_Matter_Plugin_Light3_read_attribute,   /* name */
     &be_ktab_class_Matter_Plugin_Light3,     /* shared constants */
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[96]) {  /* code */
+    ( &(const binstruction[87]) {  /* code */
       0xB8120000,  //  0000  GETNGBL	R4	K0
       0x88100901,  //  0001  GETMBR	R4	R4	K1
       0x88140502,  //  0002  GETMBR	R5	R2	K2
       0x88180513,  //  0003  GETMBR	R6	R2	K19
       0x541E02FF,  //  0004  LDINT	R7	768
       0x1C1C0A07,  //  0005  EQ	R7	R5	R7
-      0x781E004F,  //  0006  JMPF	R7	#0057
+      0x781E0046,  //  0006  JMPF	R7	#004E
       0x8C1C0104,  //  0007  GETMET	R7	R0	K4
       0x7C1C0200,  //  0008  CALL	R7	1
       0x1C1C0D05,  //  0009  EQ	R7	R6	K5
@@ -254,7 +254,7 @@ be_local_closure(class_Matter_Plugin_Light3_read_attribute,   /* name */
       0x88280116,  //  000D  GETMBR	R10	R0	K22
       0x7C1C0600,  //  000E  CALL	R7	3
       0x80040E00,  //  000F  RET	1	R7
-      0x70020045,  //  0010  JMP		#0057
+      0x7002003C,  //  0010  JMP		#004E
       0x1C1C0D0C,  //  0011  EQ	R7	R6	K12
       0x781E0005,  //  0012  JMPF	R7	#0019
       0x8C1C0714,  //  0013  GETMET	R7	R3	K20
@@ -262,17 +262,17 @@ be_local_closure(class_Matter_Plugin_Light3_read_attribute,   /* name */
       0x88280117,  //  0015  GETMBR	R10	R0	K23
       0x7C1C0600,  //  0016  CALL	R7	3
       0x80040E00,  //  0017  RET	1	R7
-      0x7002003D,  //  0018  JMP		#0057
-      0x541E0006,  //  0019  LDINT	R7	7
+      0x70020034,  //  0018  JMP		#004E
+      0x541E0007,  //  0019  LDINT	R7	8
       0x1C1C0C07,  //  001A  EQ	R7	R6	R7
       0x781E0005,  //  001B  JMPF	R7	#0022
       0x8C1C0718,  //  001C  GETMET	R7	R3	K24
-      0x88240919,  //  001D  GETMBR	R9	R4	K25
+      0x88240915,  //  001D  GETMBR	R9	R4	K21
       0x58280005,  //  001E  LDCONST	R10	K5
       0x7C1C0600,  //  001F  CALL	R7	3
       0x80040E00,  //  0020  RET	1	R7
-      0x70020034,  //  0021  JMP		#0057
-      0x541E0007,  //  0022  LDINT	R7	8
+      0x7002002B,  //  0021  JMP		#004E
+      0x541E000E,  //  0022  LDINT	R7	15
       0x1C1C0C07,  //  0023  EQ	R7	R6	R7
       0x781E0005,  //  0024  JMPF	R7	#002B
       0x8C1C0718,  //  0025  GETMET	R7	R3	K24
@@ -280,8 +280,8 @@ be_local_closure(class_Matter_Plugin_Light3_read_attribute,   /* name */
       0x58280005,  //  0027  LDCONST	R10	K5
       0x7C1C0600,  //  0028  CALL	R7	3
       0x80040E00,  //  0029  RET	1	R7
-      0x7002002B,  //  002A  JMP		#0057
-      0x541E000E,  //  002B  LDINT	R7	15
+      0x70020022,  //  002A  JMP		#004E
+      0x541E4000,  //  002B  LDINT	R7	16385
       0x1C1C0C07,  //  002C  EQ	R7	R6	R7
       0x781E0005,  //  002D  JMPF	R7	#0034
       0x8C1C0718,  //  002E  GETMET	R7	R3	K24
@@ -289,51 +289,42 @@ be_local_closure(class_Matter_Plugin_Light3_read_attribute,   /* name */
       0x58280005,  //  0030  LDCONST	R10	K5
       0x7C1C0600,  //  0031  CALL	R7	3
       0x80040E00,  //  0032  RET	1	R7
-      0x70020022,  //  0033  JMP		#0057
-      0x541E4000,  //  0034  LDINT	R7	16385
+      0x70020019,  //  0033  JMP		#004E
+      0x541E4009,  //  0034  LDINT	R7	16394
       0x1C1C0C07,  //  0035  EQ	R7	R6	R7
       0x781E0005,  //  0036  JMPF	R7	#003D
       0x8C1C0718,  //  0037  GETMET	R7	R3	K24
-      0x88240915,  //  0038  GETMBR	R9	R4	K21
-      0x58280005,  //  0039  LDCONST	R10	K5
+      0x88240919,  //  0038  GETMBR	R9	R4	K25
+      0x5828000C,  //  0039  LDCONST	R10	K12
       0x7C1C0600,  //  003A  CALL	R7	3
       0x80040E00,  //  003B  RET	1	R7
-      0x70020019,  //  003C  JMP		#0057
-      0x541E4009,  //  003D  LDINT	R7	16394
+      0x70020010,  //  003C  JMP		#004E
+      0x541E000F,  //  003D  LDINT	R7	16
       0x1C1C0C07,  //  003E  EQ	R7	R6	R7
       0x781E0005,  //  003F  JMPF	R7	#0046
       0x8C1C0718,  //  0040  GETMET	R7	R3	K24
-      0x88240919,  //  0041  GETMBR	R9	R4	K25
-      0x5828000C,  //  0042  LDCONST	R10	K12
+      0x88240915,  //  0041  GETMBR	R9	R4	K21
+      0x58280005,  //  0042  LDCONST	R10	K5
       0x7C1C0600,  //  0043  CALL	R7	3
       0x80040E00,  //  0044  RET	1	R7
-      0x70020010,  //  0045  JMP		#0057
-      0x541E000F,  //  0046  LDINT	R7	16
+      0x70020007,  //  0045  JMP		#004E
+      0x541EFFFB,  //  0046  LDINT	R7	65532
       0x1C1C0C07,  //  0047  EQ	R7	R6	R7
-      0x781E0005,  //  0048  JMPF	R7	#004F
+      0x781E0004,  //  0048  JMPF	R7	#004E
       0x8C1C0718,  //  0049  GETMET	R7	R3	K24
-      0x88240915,  //  004A  GETMBR	R9	R4	K21
-      0x58280005,  //  004B  LDCONST	R10	K5
+      0x8824091A,  //  004A  GETMBR	R9	R4	K26
+      0x5828000C,  //  004B  LDCONST	R10	K12
       0x7C1C0600,  //  004C  CALL	R7	3
       0x80040E00,  //  004D  RET	1	R7
-      0x70020007,  //  004E  JMP		#0057
-      0x541EFFFB,  //  004F  LDINT	R7	65532
-      0x1C1C0C07,  //  0050  EQ	R7	R6	R7
-      0x781E0004,  //  0051  JMPF	R7	#0057
-      0x8C1C0718,  //  0052  GETMET	R7	R3	K24
-      0x8824091A,  //  0053  GETMBR	R9	R4	K26
-      0x5828000C,  //  0054  LDCONST	R10	K12
-      0x7C1C0600,  //  0055  CALL	R7	3
+      0x601C0003,  //  004E  GETGBL	R7	G3
+      0x5C200000,  //  004F  MOVE	R8	R0
+      0x7C1C0200,  //  0050  CALL	R7	1
+      0x8C1C0F1B,  //  0051  GETMET	R7	R7	K27
+      0x5C240200,  //  0052  MOVE	R9	R1
+      0x5C280400,  //  0053  MOVE	R10	R2
+      0x5C2C0600,  //  0054  MOVE	R11	R3
+      0x7C1C0800,  //  0055  CALL	R7	4
       0x80040E00,  //  0056  RET	1	R7
-      0x601C0003,  //  0057  GETGBL	R7	G3
-      0x5C200000,  //  0058  MOVE	R8	R0
-      0x7C1C0200,  //  0059  CALL	R7	1
-      0x8C1C0F1B,  //  005A  GETMET	R7	R7	K27
-      0x5C240200,  //  005B  MOVE	R9	R1
-      0x5C280400,  //  005C  MOVE	R10	R2
-      0x5C2C0600,  //  005D  MOVE	R11	R3
-      0x7C1C0800,  //  005E  CALL	R7	4
-      0x80040E00,  //  005F  RET	1	R7
     })
   )
 );
@@ -913,7 +904,7 @@ be_local_class(Matter_Plugin_Light3,
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(269, -1), be_const_int(2) },
+        { be_const_key_int(269, -1), be_const_int(4) },
     }))    ) } )) },
         { be_const_key_weak(UPDATE_COMMANDS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(4,
@@ -942,7 +933,7 @@ be_local_class(Matter_Plugin_Light3,
         { be_const_key_int(4, -1), be_const_bytes_instance(0000FFF8FFF9FFFAFFFBFFFCFFFD) },
         { be_const_key_int(5, 2), be_const_bytes_instance(000000010002000300040005FFF8FFF9FFFAFFFBFFFCFFFD) },
         { be_const_key_int(6, -1), be_const_bytes_instance(0000FFF8FFF9FFFAFFFBFFFCFFFD) },
-        { be_const_key_int(768, -1), be_const_bytes_instance(0000000100070008000F4001400AFFF8FFF9FFFAFFFBFFFCFFFD) },
+        { be_const_key_int(768, -1), be_const_bytes_instance(000000010008000F4001400AFFF8FFF9FFFAFFFBFFFCFFFD) },
     }))    ) } )) },
         { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Light3_web_values_closure) },
         { be_const_key_weak(set_hue_sat, 12), be_const_closure(class_Matter_Plugin_Light3_set_hue_sat_closure) },

@@ -17,6 +17,104 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Base Device Class
+#################################################################################
+# CLASS: Matter_Plugin_Device (Base class for all device endpoints)
+# INHERITS FROM: Matter_Plugin
+#
+# PURPOSE:
+# - Base class for all Matter device implementations
+# - Provides common device functionality (Identify, Groups, Scenes)
+# - Handles bridge mode for remote Tasmota devices
+# - Manages Bridged Device Basic Information cluster
+# - Supports both local and remote (HTTP) devices
+# - Provides Zigbee device integration support
+#
+# CLUSTERS (Common to all devices):
+# - 0x0039: Bridged Device Basic Information (M) - Device metadata
+# - 0x0003: Identify (M) - Device identification
+# - 0x0004: Groups (M) - Group management
+# - 0x0005: Scenes (M) - Scene management (deprecated, use 0x0062)
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# BRIDGE MODE:
+# - Supports remote Tasmota devices via HTTP
+# - Automatic device discovery and status polling
+# - Configurable update intervals and timeouts
+# - HTTP command execution with retry logic
+# - Reachability monitoring
+#
+# ZIGBEE SUPPORT:
+# - Integration with Tasmota Zigbee devices
+# - Automatic attribute mapping
+# - Event-driven updates from Zigbee coordinator
+#
+# VIRTUAL DEVICE SUPPORT:
+# - Receives updates via Matter bridge protocol
+# - JSON-based state updates
+# - Supports all device types as virtual endpoints
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Bridged Device Basic Information Cluster (0x0039)
+#################################################################################
+# Cluster Revision: 3 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# ATTRIBUTES:
+# ID     | Name                  | Type   | Constraint | Quality | Default | Access | Conf
+# -------|-----------------------|--------|------------|---------|---------|--------|-----
+# 0x0003 | ProductName           | string | max 32     |         | MS      | R V    | O
+# 0x0005 | NodeLabel             | string | max 32     | N       | ""      | RW VM  | M
+# 0x000A | SoftwareVersionString | string | max 64     |         | MS      | R V    | O
+# 0x000F | SerialNumber          | string | max 32     |         | MS      | R V    | O
+# 0x0011 | Reachable             | bool   | all        |         | TRUE    | R V    | M
+# 0x0012 | UniqueID              | string | max 32     |         | MS      | R V    | O
+#
+# Quality Flags:
+# - N: Non-volatile (persists across reboots)
+# - MS: Manufacturer specific
+#
+# Access Control:
+# - R: Read, W: Write
+# - V: View privilege, M: Manage privilege
+#
+# TASMOTA IMPLEMENTATION:
+# - ProductName: From DeviceName (local) or remote device name
+# - NodeLabel: User-configurable endpoint name
+# - SoftwareVersionString: Tasmota version (e.g., "13.4.0")
+# - SerialNumber/UniqueID: MAC address
+# - Reachable: true for local, HTTP ping status for remote
+#
+# BRIDGE MODE SPECIFICS:
+# - Remote device info cached from HTTP responses
+# - Periodic reachability checks
+# - Automatic reconnection on network recovery
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Identify Cluster (0x0003)
+#################################################################################
+# See earlier documentation for full Identify cluster specification
+# Provides device identification functionality (visual/audible indication)
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Groups Cluster (0x0004)
+#################################################################################
+# See earlier documentation for full Groups cluster specification
+# Enables grouping multiple devices for simultaneous control
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Scenes Cluster (0x0005) - DEPRECATED
+#################################################################################
+# NOTE: Scenes cluster 0x0005 is deprecated in Matter 1.4.1
+# Use Scenes Management cluster 0x0062 instead (PROVISIONAL)
+# Retained for backward compatibility
+#################################################################################
+
 import matter
 
 #@ solidify:Matter_Plugin_Device.GetOptionReader,weak

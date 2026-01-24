@@ -17,6 +17,111 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Air Quality Sensor (0x002C)
+#################################################################################
+# Device Type: Air Quality Sensor (0x002C)
+# Device Type Revision: 1 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x005B: Air Quality (M) - Overall air quality index
+# - 0x040D: Carbon Dioxide Concentration Measurement (O) - CO2 levels
+# - 0x042C: PM1 Concentration Measurement (O) - Particulate Matter 1.0µm
+# - 0x042A: PM2.5 Concentration Measurement (O) - Particulate Matter 2.5µm
+# - 0x042D: PM10 Concentration Measurement (O) - Particulate Matter 10µm
+# - 0x042E: Total VOC Concentration Measurement (O) - Volatile Organic Compounds
+# - 0x0413: Nitrogen Dioxide Concentration Measurement (O) - NO2 levels
+# - 0x0003: Identify (M) - Device identification
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# NOTES:
+# - Multi-sensor device for comprehensive air quality monitoring
+# - Supports multiple concentration measurement types
+# - Automatic air quality index calculation from CO2 if not provided
+# - Typical applications: indoor air quality monitoring, HVAC control
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Air Quality Cluster (0x005B)
+#################################################################################
+# Cluster Revision: 1 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# DATA TYPES:
+# - AirQualityEnum(enum8):
+#   * 0: Unknown
+#   * 1: Good
+#   * 2: Fair
+#   * 3: Moderate
+#   * 4: Poor
+#   * 5: VeryPoor
+#   * 6: ExtremelyPoor
+#
+# ATTRIBUTES:
+# ID     | Name       | Type          | Constraint | Quality | Default | Access | Conf
+# -------|------------|---------------|------------|---------|---------|--------|-----
+# 0x0000 | AirQuality | AirQuality-   | desc       |         | -       | R V    | M
+#        |            | Enum          |            |         |         |        |
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads AirQuality from sensor JSON if available
+# - Auto-calculates from CO2 if not provided:
+#   * ≤750 ppm: Good (1)
+#   * ≤1000 ppm: Fair (2)
+#   * ≤1250 ppm: Moderate (3)
+#   * ≤1500 ppm: Poor (4)
+#   * ≤1750 ppm: VeryPoor (5)
+#   * >1750 ppm: ExtremelyPoor (6)
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Concentration Measurement Clusters (0x040D, 0x042C, 0x042A, 0x042D, 0x042E, 0x0413)
+#################################################################################
+# Cluster Revision: 3 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# FEATURES (Tasmota Implementation):
+# - Bit 0 (MEA): NumericMeasurement - Numeric concentration values (M)
+#
+# ATTRIBUTES (Common to all concentration clusters):
+# ID     | Name              | Type   | Constraint | Quality | Default | Access | Conf
+# -------|-------------------|--------|------------|---------|---------|--------|-----
+# 0x0000 | MeasuredValue     | single | all        | X,P,Q   | null    | R V    | MEA
+# 0x0001 | MinMeasuredValue  | single | all        | X       | null    | R V    | MEA
+# 0x0002 | MaxMeasuredValue  | single | all        | X       | null    | R V    | MEA
+# 0x0008 | MeasurementUnit   | Measure| desc       | F       | 0       | R V    | MEA
+#        |                   | mentUnit|           |         |         |        |
+#        |                   | Enum    |           |         |         |        |
+# 0x0009 | MeasurementMedium | Measure| desc       | F       | 0       | R V    | MEA
+#        |                   | mentMed|            |         |         |        |
+#        |                   | iumEnum|            |         |         |        |
+#
+# MeasurementUnitEnum: PPM=0, PPB=1, PPT=2, MGM3=3, UGM3=4, NGM3=5, PM3=6
+# MeasurementMediumEnum: Air=0, Water=1, Soil=2
+#
+# Quality Flags:
+# - X: Nullable (null = not available)
+# - P: Periodic reporting
+# - Q: Quieter reporting
+# - F: Fixed value
+#
+# CLUSTER MAPPING:
+# - 0x040D: Carbon Dioxide (CO2) - PPM
+# - 0x042C: PM1 - µg/m³
+# - 0x042A: PM2.5 - µg/m³
+# - 0x042D: PM10 - µg/m³
+# - 0x042E: Total VOC - PPM
+# - 0x0413: Nitrogen Dioxide (NO2) - PPM
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads from sensor JSON with configurable prefix (e.g., "SCD40")
+# - MeasurementUnit: 0 (PPM) for all
+# - MeasurementMedium: 0 (Air) for all
+# - Values as floating point numbers
+# - Update interval: 10 seconds
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Waterleak.be - implements Waterleak Sensor via HTTP to Tasmota
+# Matter_Plugin_Bridge_Sensor_Waterleak.be - implements Water Leak Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2024  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Bridge Variant - HTTP Remote Water Leak Detector
+#################################################################################
+# This is a BRIDGE variant that inherits from Matter_Plugin_Sensor_Waterleak.
+# It communicates with a remote Tasmota device via HTTP to read water leak state.
+#
+# DEVICE TYPE: Water Leak Detector (0x0043)
+# See Matter_Plugin_3_Sensor_Waterleak.be for complete Matter 1.4.1 specifications
+# including Boolean State cluster (0x0045) details.
+#
+# BRIDGE BEHAVIOR:
+# - Polls remote Tasmota device via HTTP using UPDATE_CMD ("Status 10")
+# - Parses JSON response to extract leak detection state from Switch<x>
+# - Maps Tasmota switch state to Matter StateValue (true=leak detected, false=no leak)
+# - Inherits all cluster implementations from base class
+# - UPDATE_TIME: 5000ms (5 seconds) for responsive leak detection
+#
+# CONFIGURATION:
+# - TYPE: "http_waterleak" - Plugin identifier in Matter configuration
+# - BRIDGE: true - Marks this as a bridged device
+# - Requires endpoint configuration with remote device URL
+# - ARG: Switch number on remote device (e.g., "1" for Switch1)
+#################################################################################
 
 import matter
 

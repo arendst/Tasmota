@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_9_Zigbee_Temperature.be - implements the behavior for a Zigbee Light1
+# Matter_Plugin_9_Zigbee_Light1.be - implements Zigbee Dimmable Light
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Zigbee Variant - Zigbee2Matter Bridge Dimmable Light
+#################################################################################
+# This is a ZIGBEE variant that inherits from Matter_Plugin_Light1.
+# It bridges Zigbee dimmable lights to Matter protocol.
+#
+# DEVICE TYPE: Dimmable Light (0x0101)
+# See Matter_Plugin_3_Light1.be for complete Matter 1.4.1 specifications
+# including On/Off cluster (0x0006) and Level Control cluster (0x0008) details.
+#
+# ZIGBEE BEHAVIOR:
+# - Bridges Zigbee dimmable lights to Matter using zigbee_mapper
+# - Listens for Zigbee attribute reports (Power, Dimmer)
+# - Sends Zigbee commands when Matter controller changes state or level
+# - Automatically converts between Zigbee and Matter formats
+# - Maps Zigbee device to Matter endpoint
+# - Inherits all cluster implementations from base class
+# - VIRTUAL: true - Required for Zigbee device mapping
+#
+# CONFIGURATION:
+# - TYPE: "z_light1" - Plugin identifier in Matter configuration
+# - DISPLAY_NAME: "Zig Light 1 Dimmer" - Shows as Zigbee dimmable light in UI
+# - ZIGBEE: true - Marks this as a Zigbee bridge device
+# - ARG: "zigbee_device" - Zigbee device identifier (short address or friendly name)
+# - Requires Tasmota Zigbee coordinator functionality
+#################################################################################
 
 import matter
 

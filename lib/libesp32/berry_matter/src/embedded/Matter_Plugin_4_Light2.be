@@ -17,6 +17,84 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification
+#################################################################################
+# Device Type: Color Temperature Light (0x010C)
+# Device Type Revision: 4 (Matter 1.4.1)
+# Class: Simple | Scope: Endpoint
+# Superset: Dimmable Light (0x0101)
+#
+# CLUSTERS (Server):
+# - 0x0003: Identify (M)
+# - 0x0004: Groups (M)
+# - 0x0062: Scenes Management (P, M)
+# - 0x0006: On/Off (M)
+# - 0x0008: Level Control (M)
+# - 0x0300: Color Control (M)
+# - 0x0406: Occupancy Sensing (C, O)
+#
+# ELEMENT OVERRIDES:
+# - Identify: TriggerEffect cmd M
+# - Scenes Management: CopyScene cmd P, M
+# - On/Off: Lighting feature M
+# - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
+# - Color Control: ColorTemperature feature M, RemainingTime attr M
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Color Control Cluster (0x0300) - CT Mode Attributes
+#################################################################################
+# Cluster Revision: 7 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# FEATURES (for CT mode):
+# - Bit 4 (CT): ColorTemperature (M for this device)
+#
+# ATTRIBUTES (CT Mode):
+# ID     | Name                          | Type   | Constraint        | Quality | Default | Access | Conf
+# -------|-------------------------------|--------|-------------------|---------|---------|--------|-----
+# 0x0007 | ColorTemperatureMireds        | uint16 | 0,PhysMin-PhysMax | SN      | 0x00FA  | RW VO  | CT
+# 0x0008 | ColorMode                     | enum8  | desc              | S       | 0       | R V    | M
+# 0x000F | Options                       | map8   | all               |         | 0       | RW VO  | M
+# 0x0010 | NumberOfPrimaries             | uint8  | 0-6               | FX      | null    | R V    | O
+# 0x4001 | EnhancedColorMode             | enum8  | desc              | S       | 0       | R V    | M
+# 0x400A | ColorCapabilities             | map16  | all               | F       | 0       | R V    | M
+# 0x400B | ColorTempPhysicalMinMireds    | uint16 | 0-0xFEFF          | F       | 0       | R V    | CT
+# 0x400C | ColorTempPhysicalMaxMireds    | uint16 | 0-0xFEFF          | F       | 0xFEFF  | R V    | CT
+# 0xFFFC | FeatureMap                    | map32  | all               | F       | 0       | R V    | M
+#
+# ColorMode/EnhancedColorMode values:
+# - 0: CurrentHue and CurrentSaturation
+# - 1: CurrentX and CurrentY
+# - 2: ColorTemperatureMireds (used by this device)
+#
+# ColorCapabilities bitmap:
+# - Bit 0: HueSaturation
+# - Bit 1: EnhancedHue
+# - Bit 2: ColorLoop
+# - Bit 3: XY
+# - Bit 4: ColorTemperature (0x10 - used by this device)
+#
+# COMMANDS (CT Mode):
+# ID   | Name                    | Dir  | Response | Access | Conf
+# -----|-------------------------|------|----------|--------|-----
+# 0x000A | MoveToColorTemperature | C→S  | Y        | O      | CT
+# 0x0047 | StopMoveStep           | C→S  | Y        | O      | M
+# 0x004B | MoveColorTemperature   | C→S  | Y        | O      | CT
+# 0x004C | StepColorTemperature   | C→S  | Y        | O      | CT
+#
+# MoveToColorTemperature: {ColorTemperatureMireds:uint16, TransitionTime:uint16, OptionsMask:map8, OptionsOverride:map8}
+# MoveColorTemperature: {MoveMode:enum8, Rate:uint16, ColorTemperatureMinimumMireds:uint16, ColorTemperatureMaximumMireds:uint16, OptionsMask:map8, OptionsOverride:map8}
+# StepColorTemperature: {StepMode:enum8, StepSize:uint16, TransitionTime:uint16, ColorTemperatureMinimumMireds:uint16, ColorTemperatureMaximumMireds:uint16, OptionsMask:map8, OptionsOverride:map8}
+#
+# NOTES:
+# - ColorTemperatureMireds: 1,000,000 / Kelvin (e.g., 153 = 6535K, 500 = 2000K)
+# - Standard range: 153-500 mireds (2000K-6535K)
+# - Alexa emulation mode (SetOption82): 200-380 mireds (2632K-5000K)
+# - RemainingTime attribute (0x0001) is mandatory in Matter 1.4.1 for CT lights
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
@@ -32,13 +110,13 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
     # 0x0004: inherited                                     # Groups 1.3 p.21
-    # 0x0005: inherited                                     # Scenes 1.4 p.30 - no writable
+    # 0x0062: inherited                                     # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
     # 0x0006: inherited                                     # On/Off 1.5 p.48
     # 0x0008: inherited                                     # Level Control 1.6 p.57
-    0x0300: [7,8,0xF,0x10,0x4001,0x400A,0x400B,0x400C],     # Color Control 3.2 p.111
+    0x0300: [7,8,0xF,0x10,0x4001,0x400A,0x400B,0x400C],     # Color Control 3.2 p.111 (CT mode)
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "CT")
-  static var TYPES = { 0x010C: 2 }                  # Color Temperature Light
+  static var TYPES = { 0x010C: 4 }                  # Color Temperature Light - Matter 1.4.1 Device Library Rev 4
 
   # Inherited
   # var device                                        # reference to the `device` global object

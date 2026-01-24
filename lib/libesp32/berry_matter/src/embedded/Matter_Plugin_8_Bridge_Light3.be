@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Bridge Variant - Extended Color Light via HTTP
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light3 (Matter_Plugin_4_Light3.be)
+# VARIANT TYPE: Bridge (Remote HTTP Device)
+# DEVICE TYPE: Extended Color Light (0x010D) - See base class
+# CLUSTERS: On/Off + Level Control + Color Control (HS) - See Matter_Plugin_4_Light3.be
+# TYPE: "http_light3" | UPDATE_TIME: 3000ms
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

@@ -17,6 +17,95 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification
+#################################################################################
+# Device Type: On/Off Light (0x0100)
+# Device Type Revision: 3 (Matter 1.4.1)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0003: Identify (M)
+# - 0x0004: Groups (M)
+# - 0x0062: Scenes Management (P, M)
+# - 0x0006: On/Off (M)
+# - 0x0008: Level Control (O)
+# - 0x0406: Occupancy Sensing (C, O)
+#
+# ELEMENT OVERRIDES:
+# - Identify: TriggerEffect cmd M
+# - Scenes Management: CopyScene cmd P, M
+# - On/Off: Lighting feature M
+# - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
+#
+# NOTES:
+# - Base class for all lighting devices
+# - Supports basic on/off control
+# - Can optionally support dimming via Level Control cluster
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 On/Off Cluster (0x0006)
+#################################################################################
+# Cluster Revision: 6 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# PURPOSE:
+# Provides on/off control for lights, switches, and plugs with optional
+# lighting-specific features like timed operations and scene recall.
+#
+# FEATURES:
+# Bit | Code    | Feature              | Conf      | Summary
+# ----|---------|----------------------|-----------|---------------------------
+# 0   | LT      | Lighting             | [!OFFONLY]| Lighting behavior
+# 1   | DF      | DeadFrontBehavior    | [!OFFONLY]| Dead front when off
+# 2   | OFFONLY | OffOnly              | [!(LT\|DF)]| Only Off command
+#
+# ATTRIBUTES:
+# ID     | Name                  | Type              | Constraint | Quality | Default | Access | Conf
+# -------|-----------------------|-------------------|------------|---------|---------|--------|-----
+# 0x0000 | OnOff                 | bool              | all        | SN      | FALSE   | R V    | M
+# 0x4000 | GlobalSceneControl    | bool              | all        |         | TRUE    | R V    | LT
+# 0x4001 | OnTime                | uint16            | all        |         | 0       | RW VO  | LT
+# 0x4002 | OffWaitTime           | uint16            | all        |         | 0       | RW VO  | LT
+# 0x4003 | StartUpOnOff          | StartUpOnOffEnum  | desc       | XN      | MS      | RW VM  | LT
+# 0xFFFC | FeatureMap            | map32             | all        | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision       | uint16            | all        | F       | 6       | R V    | M
+#
+# DATA TYPES:
+# - StartUpOnOffEnum: Off=0, On=1, Toggle=2 (previous state)
+# - OnOffControlBitmap: AcceptOnlyWhenOn=Bit0
+#
+# COMMANDS:
+# ID   | Name                      | Dir  | Response | Access | Conf
+# -----|---------------------------|------|----------|--------|----------
+# 0x00 | Off                       | C→S  | Y        | O      | M
+# 0x01 | On                        | C→S  | Y        | O      | !OFFONLY
+# 0x02 | Toggle                    | C→S  | Y        | O      | !OFFONLY
+# 0x40 | OffWithEffect             | C→S  | Y        | O      | LT
+# 0x41 | OnWithRecallGlobalScene   | C→S  | Y        | O      | LT
+# 0x42 | OnWithTimedOff            | C→S  | Y        | O      | LT
+#
+# Off: No parameters
+# On: No parameters
+# Toggle: No parameters
+# OffWithEffect: {EffectIdentifier:EffectIdentifierEnum, EffectVariant:enum8}
+# OnWithTimedOff: {OnOffControl:OnOffControlBitmap(0-1), OnTime:uint16(max0xFFFE), OffWaitTime:uint16(max0xFFFE)}
+#
+# QUALITY FLAGS:
+# - S: Scene (can be stored in scenes)
+# - N: NonVolatile (persists across power cycles)
+# - X: Nullable
+#
+# IMPLEMENTATION NOTES:
+# - OnOff attribute: true=On, false=Off
+# - Lighting feature (bit 0) is mandatory for light devices
+# - For Tasmota: Maps to Power<x> commands and relay control
+# - StartUpOnOff: Determines power-on behavior (requires Lighting feature)
+# - GlobalSceneControl: Used with scene recall (requires Lighting feature)
+# - OnTime/OffWaitTime: For timed operations (requires Lighting feature)
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
@@ -34,11 +123,11 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
-    # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
+    # 0x0062: inherited                             # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
     0x0006: [0],                                    # On/Off 1.5 p.48
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Power")
-  static var TYPES = { 0x0100: 2 }                  # OnOff Light, but not actually used because Relay is managed by OnOff
+  static var TYPES = { 0x0100: 3 }                  # OnOff Light - Matter 1.4.1 Device Library Rev 3
 
   # Inherited
   # var device                                        # reference to the `device` global object

@@ -17,6 +17,93 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Generic Switch (0x000F)
+#################################################################################
+# Device Type: Generic Switch (0x000F)
+# Device Type Revision: 3 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x003B: Switch (M) - Switch state and events
+# - 0x0003: Identify (M) - Device identification
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# NOTES:
+# - Maps Tasmota Button<x> to Matter Generic Switch
+# - Supports multi-press detection (up to 5 presses)
+# - Event-driven architecture for button state changes
+# - Typical applications: wall switches, remote controls, button panels
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Switch Cluster (0x003B)
+#################################################################################
+# Cluster Revision: 2 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# FEATURES (Tasmota Implementation):
+# - Bit 1 (MS): MomentarySwitch - Momentary button (M)
+# - Bit 2 (MSR): MomentarySwitchRelease - Release detection (M)
+# - Bit 4 (MSM): MomentarySwitchMultiPress - Multi-press detection (M)
+# - FeatureMap = 0x16 (bits 1,2,4 = 22 decimal)
+#
+# ATTRIBUTES:
+# ID     | Name              | Type  | Constraint | Quality | Default | Access | Conf
+# -------|-------------------|-------|------------|---------|---------|--------|-----
+# 0x0000 | NumberOfPositions | uint8 | min 2      | F       | 2       | R V    | M
+# 0x0001 | CurrentPosition   | uint8 | 0-(Number- | -       | 0       | R V    | M
+#        |                   |       | OfPositions|         |         |        |
+#        |                   |       | -1)        |         |         |        |
+# 0x0002 | MultiPressMax     | uint8 | min 2      | F       | 2       | R V    | MSM
+#
+# Quality Flags:
+# - F: Fixed (cannot be changed)
+#
+# Access Control:
+# - R: Read
+# - V: View privilege required
+#
+# EVENTS:
+# ID   | Name              | Priority | Access | Conf
+# -----|-------------------|----------|--------|-----
+# 0x01 | InitialPress      | INFO     | V      | MS
+# 0x03 | ShortRelease      | INFO     | V      | MSR
+# 0x05 | MultiPressOngoing | INFO     | V      | MSM
+# 0x06 | MultiPressComplete| INFO     | V      | MSM
+#
+# Event Fields:
+# - InitialPress: {NewPosition:uint8}
+# - ShortRelease: {PreviousPosition:uint8}
+# - MultiPressOngoing: {NewPosition:uint8, CurrentNumberOfPressesCounted:uint8}
+# - MultiPressComplete: {PreviousPosition:uint8, TotalNumberOfPressesCounted:uint8}
+#
+# TASMOTA IMPLEMENTATION:
+# - Maps to Tasmota Button<x> input
+# - NumberOfPositions: 2 (pressed/released)
+# - MultiPressMax: 5 (supports up to penta-press)
+# - Button events trigger Matter events:
+#   * Button press → InitialPress event
+#   * Button release → ShortRelease event
+#   * Multi-press ongoing → MultiPressOngoing event
+#   * Multi-press complete → MultiPressComplete event
+#
+# BUTTON HANDLER MODES:
+# - mode=0: Static report every second (position update)
+# - mode=1: Button state changed (immediate event)
+# - mode=2: Multi-press status (delayed event)
+#
+# CONFIGURATION:
+# - ARG: "button" - Tasmota Button number (1-based)
+# - Example: button=1 uses Button1 input
+#
+# TYPICAL USAGE:
+# - Wall switches for lighting control
+# - Scene activation buttons
+# - Remote control buttons
+# - Multi-function button panels
+#################################################################################
+
 # Matter plug-in for core behavior
 
 #@ solidify:Matter_Plugin_Sensor_GenericSwitch_Btn,weak
@@ -36,7 +123,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
     # 0x0005: [0,1,2,3,4,5],                          # Scenes 1.4 p.30 - no writable
     0x003B: [0, 1, 2],                              # Switch 1.12
   })
-  static var TYPES = { 0x000F: 2 }                  # Generic Switch, rev 2
+  static var TYPES = { 0x000F: 3 }                  # Generic Switch - Matter 1.4.1 Device Library Rev 3
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_position

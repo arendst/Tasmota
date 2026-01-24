@@ -17,6 +17,77 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification
+#################################################################################
+# Device Type: Temperature Sensor (0x0302)
+# Device Type Revision: 2 (Matter 1.4.1)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0402: Temperature Measurement (M)
+# - 0x0003: Identify (M)
+# - 0x0004: Groups (C, [Zigbee])
+#
+# NOTES:
+# - Simple sensor device that reports temperature measurements
+# - Groups cluster only required for Zigbee devices
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Temperature Measurement Cluster (0x0402)
+#################################################################################
+# Cluster Revision: 4 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# PURPOSE:
+# Provides temperature measurement capability with configurable range and tolerance.
+#
+# ATTRIBUTES:
+# ID     | Name              | Type        | Constraint                      | Quality | Default | Access | Conf
+# -------|-------------------|-------------|---------------------------------|---------|---------|--------|-----
+# 0x0000 | MeasuredValue     | temperature | MinMeasuredValue-MaxMeasuredValue| XP      | null    | R V    | M
+# 0x0001 | MinMeasuredValue  | temperature | -27315-32766                    | X       | null    | R V    | M
+# 0x0002 | MaxMeasuredValue  | temperature | min(MinMeasuredValue+1)         | X       | null    | R V    | M
+# 0x0003 | Tolerance         | uint16      | max2048                         |         | 0       | R V    | O
+# 0xFFFC | FeatureMap        | map32       | all                             | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision   | uint16      | all                             | F       | 4       | R V    | M
+#
+# DATA TYPES:
+# - temperature: int16 in units of 0.01°C
+#   - Range: -273.15°C to 327.67°C (-27315 to 32767)
+#   - Example: 2500 = 25.00°C, -500 = -5.00°C
+#   - null (0x8000) indicates value is not available
+#
+# QUALITY FLAGS:
+# - X: Nullable (can be null if measurement unavailable)
+# - P: Periodic reporting (changes reported automatically)
+#
+# ATTRIBUTES DETAIL:
+# - MeasuredValue: Current temperature reading in 0.01°C units
+#   - null when sensor is not available or reading is invalid
+#   - Must be within MinMeasuredValue and MaxMeasuredValue range
+#
+# - MinMeasuredValue: Minimum temperature the sensor can measure
+#   - null if minimum is unknown
+#   - Typically set based on sensor hardware capabilities
+#
+# - MaxMeasuredValue: Maximum temperature the sensor can measure
+#   - null if maximum is unknown
+#   - Must be greater than MinMeasuredValue
+#
+# - Tolerance: Maximum expected measurement error in 0.01°C units
+#   - 0 if tolerance is unknown
+#   - Example: 50 = ±0.50°C tolerance
+#
+# IMPLEMENTATION NOTES:
+# - Tasmota reports temperature in Celsius or Fahrenheit based on SetOption8
+# - This plugin converts Fahrenheit to Celsius before reporting to Matter
+# - Temperature is multiplied by 100 to convert to Matter's 0.01°C units
+# - Typical range: -50°C to 150°C (-5000 to 15000 in Matter units)
+# - Sensor readings are filtered and matched from Tasmota's JSON sensor data
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

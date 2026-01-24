@@ -17,6 +17,123 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Window Covering (0x0202)
+#################################################################################
+# Device Type: Window Covering (0x0202)
+# Device Type Revision: 3 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0102: Window Covering (M) - Lift position control
+# - 0x0003: Identify (M) - Device identification
+# - 0x0004: Groups (M) - Group management
+# - 0x0062: Scenes Management (P) - Scene control (PROVISIONAL)
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# NOTES:
+# - Controls window coverings (shutters, blinds, shades, curtains)
+# - Supports lift (up/down) position control
+# - Position-aware with percentage-based control (0-100%)
+# - Typical applications: roller shutters, blinds, shades, awnings
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Window Covering Cluster (0x0102)
+#################################################################################
+# Cluster Revision: 5 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# FEATURES (Tasmota Shutter Implementation):
+# - Bit 0 (LF): Lift - Lift control (M)
+# - Bit 2 (PA_LF): PositionAwareLift - Position aware lift (M)
+#
+# DATA TYPES:
+# - TypeEnum(enum8): Rollershade=0, Shutter=6, TiltBlind=7/8, Awning=5, Unknown=255
+# - EndProductTypeEnum(enum8): RollerShade=0, InteriorBlind=10, RollerShutter=17, etc.
+# - ConfigStatusBitmap(map8):
+#   * Bit 0: Operational
+#   * Bit 3: LiftPositionAware
+#   * Bit 4: TiltPositionAware
+# - OperationalStatusBitmap(map8):
+#   * Bits 0-1: Global (0=Stopped, 1=Opening, 2=Closing)
+#   * Bits 2-3: Lift
+#   * Bits 4-5: Tilt
+#
+# ATTRIBUTES (Lift-only implementation):
+# ID     | Name                              | Type    | Constraint | Quality | Default | Access | Conf
+# -------|-----------------------------------|---------|------------|---------|---------|--------|-----
+# 0x0000 | Type                              | Type-   | desc       | F       | 0       | R V    | M
+#        |                                   | Enum    |            |         |         |        |
+# 0x0005 | NumberOfActuationsLift            | uint16  | all        |         | 0       | R V    | LF
+# 0x0007 | ConfigStatus                      | Config- | all        | P       | 0       | R V    | M
+#        |                                   | Status- |            |         |         |        |
+#        |                                   | Bitmap  |            |         |         |        |
+# 0x000A | OperationalStatus                 | Opera-  | all        | P       | 0       | R V    | M
+#        |                                   | tional- |            |         |         |        |
+#        |                                   | Status- |            |         |         |        |
+#        |                                   | Bitmap  |            |         |         |        |
+# 0x000B | TargetPositionLiftPercent100ths   | percent-| all        | X,P,Q   | null    | R V    | LF&
+#        |                                   | 100ths  |            |         |         |        | PA_LF
+# 0x000D | EndProductType                    | EndPro- | desc       | F       | 0       | R V    | M
+#        |                                   | ductType|            |         |         |        |
+#        |                                   | Enum    |            |         |         |        |
+# 0x000E | CurrentPositionLiftPercent100ths  | percent-| all        | X,P,Q   | null    | R V    | LF&
+#        |                                   | 100ths  |            |         |         |        | PA_LF
+# 0x0017 | Mode                              | Mode-   | all        | N       | 0       | RW VM  | M
+#        |                                   | Bitmap  |            |         |         |        |
+#
+# Quality Flags:
+# - N: Non-volatile (persists across reboots)
+# - P: Periodic reporting (changes reported automatically)
+# - Q: Quieter reporting (less frequent updates)
+# - X: Nullable (null = unknown/invalid)
+# - F: Fixed (cannot be changed)
+#
+# Access Control:
+# - R: Read, W: Write
+# - V: View privilege, M: Manage privilege
+#
+# COMMANDS:
+# ID   | Name              | Dir  | Response | Access | Conf
+# -----|-------------------|------|----------|--------|-----
+# 0x00 | UpOrOpen          | C→S  | Y        | O      | M
+# 0x01 | DownOrClose       | C→S  | Y        | O      | M
+# 0x02 | StopMotion        | C→S  | Y        | O      | M
+# 0x05 | GoToLiftPercentage| C→S  | Y        | O      | LF&PA_LF
+#
+# GoToLiftPercentage: {LiftPercent100thsValue:percent100ths (0-10000)}
+#
+# POSITION ENCODING:
+# - Matter uses 0-10000 (0.00% to 100.00% in hundredths)
+# - Tasmota uses 0-100 (0% to 100%)
+# - Conversion: Matter = Tasmota × 100
+#
+# POSITION SEMANTICS:
+# - 0% = Fully open (top position)
+# - 100% = Fully closed (bottom position)
+# - Tasmota may invert this based on SetOption80
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads position from ShutterPosition<x> command
+# - Commands: ShutterStopOpen, ShutterStopClose, ShutterStop, ShutterPosition
+# - Supports inverted mode via SetOption80 (checked in Status 13)
+# - Direction: 0=Stopped, 1=Opening, -1=Closing
+# - Position range: 0-100 (Tasmota) → 0-10000 (Matter)
+#
+# CONFIGURATION:
+# - ARG: "shutter" - Tasmota Shutter number (1-based)
+# - Example: shutter=1 uses Shutter1
+#
+# EXAMPLES:
+# - Fully open: CurrentPositionLiftPercent100ths=0
+# - Half open: CurrentPositionLiftPercent100ths=5000
+# - Fully closed: CurrentPositionLiftPercent100ths=10000
+# - Opening: OperationalStatus=1 (bits 0-1)
+# - Closing: OperationalStatus=2 (bits 0-1)
+# - Stopped: OperationalStatus=0 (bits 0-1)
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
@@ -33,10 +150,10 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
-    # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
+    # 0x0062: inherited                             # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
     0x0102: [0,5,7,0xA,0xB,0xD,0xE,0x17],           # Window Covering 5.3 p.289
   })
-  static var TYPES = { 0x0202: 2 }                  # New data model format and notation
+  static var TYPES = { 0x0202: 3 }                  # Window Covering - Matter 1.4.1 Device Library Rev 3
 
   var tasmota_shutter_index                         # Shutter number in Tasmota (zero based)
   var shadow_shutter_pos

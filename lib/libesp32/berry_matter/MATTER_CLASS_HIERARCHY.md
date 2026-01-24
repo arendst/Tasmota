@@ -1,8 +1,21 @@
 # Matter Plugin Class Hierarchy Documentation
 
+**Last Updated**: January 23, 2026  
+**Matter Version**: 1.4.1 Compliant  
+**Data Model Revision**: 18 (Matter 1.3+)
+
 ## Overview
 
 This document describes the complete class hierarchy for Matter endpoint plugins in the Berry Matter implementation. The hierarchy follows a structured approach with base classes providing common functionality and specialized classes implementing specific device behaviors.
+
+**Recent Updates (Matter 1.4.1)**:
+- ✅ All device type revisions updated to Matter 1.4.1 Device Library specifications
+- ✅ Data Model Revision updated from 17 (Matter 1.2) to 18 (Matter 1.3+)
+- ✅ Migrated from Scenes (0x0005) to Scenes Management (0x0062) cluster
+- ✅ Extended Color Light now supports both HueSaturation AND ColorTemperature modes
+- ✅ Added RemainingTime attribute to Color Control clusters
+- ✅ Added Unit Localization cluster (0x002D) to Root Node
+- ✅ Updated all cluster revisions to Matter 1.4.1 specifications
 
 ## Class Hierarchy Tree
 
@@ -102,15 +115,20 @@ static var CLUSTERS = { 0x001D: [0,1,2,3] }  # Descriptor cluster
 **File**: `Matter_Plugin_1_Root.be`
 - **Type**: `"root"`
 - **Display Name**: `"Root node"`
-- **Matter Device Type**: `0x0016` (Root node)
+- **Matter Device Type**: `0x0016` (Root node) - **Rev 3** (Matter 1.4.1)
 - **Purpose**: Implements core Matter device functionality
 - **Key Clusters**:
   - `0x001F`: Access Control
-  - `0x0028`: Basic Information
+  - `0x0028`: Basic Information (Data Model Rev 18)
+  - `0x002B`: Localization Configuration
+  - `0x002C`: Time Format Localization
+  - `0x002D`: Unit Localization (Matter 1.3+)
   - `0x0030`: General Commissioning
   - `0x0031`: Network Commissioning
   - `0x003C`: Administrator Commissioning
   - `0x003E`: Node Operational Credentials
+  - `0x003F`: Group Key Management
+  - `0x0046`: ICD Management (SIT mode)
 
 ### Matter_Plugin_Aggregator
 **File**: `Matter_Plugin_1_Aggregator.be`
@@ -138,34 +156,36 @@ static var CLUSTERS = { 0x001D: [0,1,2,3] }  # Descriptor cluster
 **File**: `Matter_Plugin_2_Light0.be`
 - **Type**: `"light0"`
 - **Display Name**: `"Light 0 OnOff"`
-- **Matter Device Type**: `0x0100` (OnOff Light)
+- **Matter Device Type**: `0x0100` (OnOff Light) - **Rev 3** (Matter 1.4.1)
 - **Purpose**: Basic on/off lighting control
-- **Key Clusters**: `0x0006` (On/Off)
+- **Key Clusters**: `0x0006` (On/Off), `0x0062` (Scenes Management)
 - **Argument**: `"relay"` (Relay number)
 
 ### Matter_Plugin_Light1
 **File**: `Matter_Plugin_3_Light1.be`
 - **Type**: `"light1"`
 - **Display Name**: `"Light 1 Dimmer"`
-- **Matter Device Type**: `0x0101` (Dimmable Light)
+- **Matter Device Type**: `0x0101` (Dimmable Light) - **Rev 3** (Matter 1.4.1)
 - **Purpose**: Dimmable lighting control
-- **Additional Clusters**: `0x0008` (Level Control)
+- **Additional Clusters**: `0x0008` (Level Control), `0x0062` (Scenes Management)
 
 ### Matter_Plugin_Light2
 **File**: `Matter_Plugin_4_Light2.be`
 - **Type**: `"light2"`
 - **Display Name**: `"Light 2 Color Temp"`
-- **Matter Device Type**: `0x010C` (Color Temperature Light)
+- **Matter Device Type**: `0x010C` (Color Temperature Light) - **Rev 4** (Matter 1.4.1)
 - **Purpose**: Color temperature control
-- **Additional Clusters**: `0x0300` (Color Control)
+- **Additional Clusters**: `0x0300` (Color Control with RemainingTime), `0x0062` (Scenes Management)
+- **Features**: ColorTemperature mode, RemainingTime attribute
 
 ### Matter_Plugin_Light3
 **File**: `Matter_Plugin_4_Light3.be`
 - **Type**: `"light3"`
 - **Display Name**: `"Light 3 RGB"`
-- **Matter Device Type**: `0x010D` (Extended Color Light)
-- **Purpose**: Full RGB color control
-- **Additional Clusters**: `0x0300` (Color Control - extended)
+- **Matter Device Type**: `0x010D` (Extended Color Light) - **Rev 4** (Matter 1.4.1)
+- **Purpose**: Full RGB+CT color control
+- **Additional Clusters**: `0x0300` (Color Control - HS + CT modes), `0x0062` (Scenes Management)
+- **Features**: HueSaturation AND ColorTemperature modes (both required in 1.4.1), RemainingTime attribute
 
 ## Sensor Classes (Level 2+)
 
@@ -315,26 +335,26 @@ The Matter implementation uses a hierarchical approach for plugin selection:
 
 ## Matter Device Type Mapping
 
-| Plugin Type | Matter Device Type | Hex | Description |
-|-------------|-------------------|-----|-------------|
-| root | Root Node | 0x0016 | Matter root device |
-| aggregator | Aggregator | 0x000E | Endpoint aggregator |
-| light0 | OnOff Light | 0x0100 | Basic on/off light |
-| light1 | Dimmable Light | 0x0101 | Dimmable light |
-| light2 | Color Temperature Light | 0x010C | CT adjustable light |
-| light3 | Extended Color Light | 0x010D | Full RGB light |
-| relay | On/Off Plug-in Unit | 0x010A | Generic relay/switch |
-| fan | Fan | 0x002B | Fan control |
-| shutter | Window Covering | 0x0202 | Window covering |
-| temperature | Temperature Sensor | 0x0302 | Temperature measurement |
-| humidity | Humidity Sensor | 0x0307 | Humidity measurement |
-| pressure | Pressure Sensor | 0x0305 | Pressure measurement |
-| illuminance | Light Sensor | 0x0106 | Illuminance measurement |
-| contact | Contact Sensor | 0x0015 | Contact/door sensor |
-| occupancy | Occupancy Sensor | 0x0107 | Motion/occupancy sensor |
-| flow | Flow Sensor | 0x0306 | Flow measurement |
-| airquality | Air Quality Sensor | 0x002C | Air quality measurement |
-| gensw_btn | Generic Switch | 0x000F | Button/switch |
+| Plugin Type | Matter Device Type | Hex | Rev | Description |
+|-------------|-------------------|-----|-----|-------------|
+| root | Root Node | 0x0016 | 3 | Matter root device |
+| aggregator | Aggregator | 0x000E | 2 | Endpoint aggregator |
+| light0 | OnOff Light | 0x0100 | 3 | Basic on/off light |
+| light1 | Dimmable Light | 0x0101 | 3 | Dimmable light |
+| light2 | Color Temperature Light | 0x010C | 4 | CT adjustable light |
+| light3 | Extended Color Light | 0x010D | 4 | Full RGB+CT light |
+| relay | On/Off Plug-in Unit | 0x010A | 3 | Generic relay/switch |
+| fan | Fan | 0x002B | 3 | Fan control |
+| shutter | Window Covering | 0x0202 | 3 | Window covering |
+| temperature | Temperature Sensor | 0x0302 | 2 | Temperature measurement |
+| humidity | Humidity Sensor | 0x0307 | 2 | Humidity measurement |
+| pressure | Pressure Sensor | 0x0305 | 2 | Pressure measurement |
+| illuminance | Light Sensor | 0x0106 | 3 | Illuminance measurement |
+| contact | Contact Sensor | 0x0015 | 2 | Contact/door sensor |
+| occupancy | Occupancy Sensor | 0x0107 | 4 | Motion/occupancy sensor |
+| flow | Flow Sensor | 0x0306 | 2 | Flow measurement |
+| airquality | Air Quality Sensor | 0x002C | 1 | Air quality measurement |
+| gensw_btn | Generic Switch | 0x000F | 3 | Button/switch |
 
 ## Cluster Support Matrix
 
