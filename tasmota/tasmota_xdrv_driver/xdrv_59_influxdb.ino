@@ -312,7 +312,7 @@ char* InfluxDbNumber(char* alternative, JsonParserToken value) {
   return nullptr;
 }
 
-void InfluxDbProcessJsonNode(JsonParserKey key, JsonParserToken value, const char* sensor_name, String *data) {
+void InfluxDbProcessJsonValue(JsonParserKey key, JsonParserToken value, const char* sensor_name, String *data) {
   char type[64];         // 'temperature'
   LowerCase(type, key.getStr());
   bool is_id = (!strcmp_P(type, PSTR("id")));  // Index for DS18B20
@@ -324,7 +324,6 @@ void InfluxDbProcessJsonNode(JsonParserKey key, JsonParserToken value, const cha
   }
   char number[12];       // '1' to '255'
   char* my_value = InfluxDbNumber(number, (is_array) ? (value.getArray())[0] : value);
-
   if ((my_value != nullptr) && key.isValid()) {
     char sensor[64];     // 'ds18b20'
     LowerCase(sensor, sensor_name);
@@ -350,6 +349,17 @@ void InfluxDbProcessJsonNode(JsonParserKey key, JsonParserToken value, const cha
   }
 }
 
+void InfluxDbProcessJsonObject(JsonParserObject Object, const char* sensor, String *data) {
+  for (auto key : Object) {
+    JsonParserToken value = key.getValue();
+    if (value.isObject()) {
+      InfluxDbProcessJsonObject(value.getObject(), key.getStr(), data);
+    } else {
+      InfluxDbProcessJsonValue(key, value, sensor, data);
+    }
+  }
+}
+
 void InfluxDbProcessJson(bool use_copy = false) {
   if (!IFDB.init) { return; }
 
@@ -365,40 +375,9 @@ void InfluxDbProcessJson(bool use_copy = false) {
   JsonParser parser(json_data);  // Destroys json_data
   JsonParserObject root = parser.getRootObject();
   if (root) {
-    String data = "";    // Multiple linebufs
-
-    for (auto key1 : root) {
-      JsonParserToken value1 = key1.getValue();
-      if (value1.isObject()) {
-        JsonParserObject Object2 = value1.getObject();
-        for (auto key2 : Object2) {
-          JsonParserToken value2 = key2.getValue();
-          if (value2.isObject()) {
-            JsonParserObject Object3 = value2.getObject();
-            for (auto key3 : Object3) {
-              JsonParserToken value3 = key3.getValue();
-              if (value3.isObject()) {
-                // Not expected
-              } else {
-                // Level 3
-                if (!key1.isValid() || !key2.isValid() || !value3.isValid()) { continue; }
-                InfluxDbProcessJsonNode(key3, value3, key2.getStr(), &data);
-              }
-            }
-          } else {
-            // Level 2
-            // { ... "ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":24.88},"HTU21":{"Temperature":25.32,"Humidity":49.2,"DewPoint":13.88},"Global":{"Temperature":24.88,"Humidity":49.2,"DewPoint":13.47}, ... }
-            if (!key1.isValid() || !value2.isValid()) { continue; }
-            InfluxDbProcessJsonNode(key2, value2, key1.getStr(), &data);
-          }
-        }
-      } else {
-        // Level 1
-        if (!key1.isValid() || !value1.isValid()) { continue; }
-        const char sensor[10] = "device\0";
-        InfluxDbProcessJsonNode(key1, value1, sensor, &data);
-      }
-    }
+    String data = "";            // Multiple linebufs
+    const char sensor[10] = "device\0";
+    InfluxDbProcessJsonObject(root, sensor, &data);
     if (data.length() > 0 ) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Sensor data:\n%s"), data.c_str());
       InfluxDbPostData(data.c_str());

@@ -17,6 +17,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Aggregator (0x000E)
+#################################################################################
+# Device Type: Aggregator (0x000E)
+# Device Type Revision: 2 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0003: Identify (O) - Device identification
+# - 0x0025: Actions (O) - Action management
+# - 0x0751: Commissioner Control (O) - Fabric synchronization
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# CLUSTERS (Client):
+# - 0x001E: Binding (M) - Binding management for aggregated devices
+#
+# COMPOSITION:
+# - PartsList contains all aggregated endpoints (full-family pattern)
+# - Aggregates multiple device endpoints into a single logical endpoint
+# - Used in bridge mode to group multiple devices
+#
+# NOTES:
+# - Special endpoint for Matter bridge implementations
+# - Provides a single point of control for multiple devices
+# - PartsList dynamically includes all active endpoints except itself
+# - Endpoint number: 0x01 (AGGREGATOR_ENDPOINT constant)
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Identify Cluster (0x0003) - Aggregator Usage
+#################################################################################
+# See Matter_Plugin_1_Device.be for full Identify cluster specification
+# Aggregator implements basic Identify functionality for endpoint identification
+#################################################################################
+
 import matter
 
 # Matter plug-in for root behavior

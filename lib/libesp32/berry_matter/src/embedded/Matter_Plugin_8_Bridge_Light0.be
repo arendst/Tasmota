@@ -17,6 +17,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Bridge Variant - On/Off Light via HTTP
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light0 (Matter_Plugin_2_Light0.be)
+# VARIANT TYPE: Bridge (Remote HTTP Device)
+#
+# DEVICE TYPE: On/Off Light (0x0100) - See base class for full specification
+# CLUSTERS: Same as Matter_Plugin_Light0 - See base class documentation
+#
+# BRIDGE MODE SPECIFICS:
+# - BRIDGE flag: true (enables HTTP remote device mode)
+# - Communicates with remote Tasmota device via HTTP API
+# - UPDATE_TIME: 3000ms (polls remote device every 3 seconds)
+# - Inherits all cluster implementations from base class
+# - Automatic state synchronization with remote device
+# - Reachability monitoring via HTTP ping
+#
+# CONFIGURATION:
+# - TYPE: "http_light0" (JSON configuration identifier)
+# - Requires "url" parameter for remote device address
+# - Example: {"type":"http_light0","url":"192.168.1.100"}
+#
+# NOTES:
+# - All Matter cluster behavior inherited from Matter_Plugin_Light0
+# - Only adds HTTP bridge communication layer
+# - See Matter_Plugin_2_Light0.be for complete cluster specifications
+# - See Matter_Plugin_1_Device.be for bridge mode implementation details
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

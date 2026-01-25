@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_9_Zigbee_Temperature.be - implements the behavior for a Zigbee Temperature sensor
+# Matter_Plugin_9_Zigbee_Temperature.be - implements Zigbee Temperature Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Zigbee Variant - Zigbee2Matter Bridge Temperature Sensor
+#################################################################################
+# This is a ZIGBEE variant that inherits from Matter_Plugin_Sensor_Temp.
+# It bridges Zigbee temperature sensors to Matter protocol.
+#
+# DEVICE TYPE: Temperature Sensor (0x0302)
+# See Matter_Plugin_3_Sensor_Temp.be for complete Matter 1.4.1 specifications
+# including Temperature Measurement cluster (0x0402) details.
+#
+# ZIGBEE BEHAVIOR:
+# - Bridges Zigbee devices to Matter using zigbee_mapper
+# - Listens for Zigbee attribute reports (ZIGBEE_NAME: "Temperature")
+# - Automatically converts Zigbee temperature values to Matter format
+# - Maps Zigbee device to Matter endpoint
+# - Inherits all cluster implementations from base class
+# - VIRTUAL: true - Required for Zigbee device mapping
+#
+# CONFIGURATION:
+# - TYPE: "z_temp" - Plugin identifier in Matter configuration
+# - DISPLAY_NAME: "Zig Temperature" - Shows as Zigbee temperature in UI
+# - ZIGBEE: true - Marks this as a Zigbee bridge device
+# - ARG: "zigbee_device" - Zigbee device identifier (short address or friendly name)
+# - Requires Tasmota Zigbee coordinator functionality
+#################################################################################
 
 import matter
 

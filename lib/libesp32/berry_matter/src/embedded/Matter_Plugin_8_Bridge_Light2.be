@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Bridge Variant - Color Temperature Light via HTTP
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light2 (Matter_Plugin_4_Light2.be)
+# VARIANT TYPE: Bridge (Remote HTTP Device)
+# DEVICE TYPE: Color Temperature Light (0x010C) - See base class
+# CLUSTERS: On/Off + Level Control + Color Control (CT) - See Matter_Plugin_4_Light2.be
+# TYPE: "http_light2" | UPDATE_TIME: 3000ms
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

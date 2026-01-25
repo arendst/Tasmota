@@ -17,6 +17,58 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Base Sensor Class
+#################################################################################
+# CLASS: Matter_Plugin_Sensor (Base class for all sensor devices)
+# INHERITS FROM: Matter_Plugin_Device
+#
+# PURPOSE:
+# - Provides common functionality for all Matter sensor implementations
+# - Handles sensor value reading from Tasmota JSON payloads
+# - Manages sensor filtering and value conversion
+# - Supports both physical and virtual sensors
+#
+# SENSOR READING MECHANISM:
+# - Physical sensors: Reads from Tasmota Status 10 (sensor JSON)
+# - Virtual sensors: Receives updates via update_virtual() method
+# - Uses Rule_Matcher for flexible sensor filtering (e.g., "ESP32#Temperature")
+# - Automatic periodic updates every 5 seconds (UPDATE_TIME)
+#
+# DERIVED CLASSES MUST IMPLEMENT:
+# - pre_value(val): Convert raw sensor value to target format
+# - value_changed(): Handle attribute updates when value changes
+# - JSON_NAME: Name of sensor attribute in JSON payloads
+#
+# UNIT CONVERSION SUPPORT:
+# - Temperature: Celsius (C) or Fahrenheit (F) via TempUnit
+# - Pressure: hPa, mmHg, or inHg via PressureUnit
+# - Units read from Tasmota Status 10 response
+#
+# CONFIGURATION:
+# - ARG: "filter" - Rule-type filter pattern (e.g., "BME280#Temperature")
+# - ARG_HINT: "Filter pattern" - User guidance for configuration
+# - UPDATE_CMD: "Status 10" - Command to request sensor data
+# - UPDATE_TIME: 5000ms - Sensor reading interval
+#
+# TASMOTA INTEGRATION:
+# - Parses Status 10 JSON response for sensor values
+# - Supports nested JSON paths via Rule_Matcher
+# - Handles multiple sensors of same type via filtering
+# - Extracts unit settings (TempUnit, PressureUnit)
+#
+# EXAMPLES:
+# - Filter: "BME280#Temperature" → Reads Temperature from BME280 sensor
+# - Filter: "DS18B20#Temperature" → Reads from DS18B20 sensor
+# - Filter: "ANALOG#A0" → Reads analog input A0
+# - Filter: "Energy#Power" → Reads power consumption
+#
+# VIRTUAL SENSOR SUPPORT:
+# - Virtual sensors receive updates via Matter bridge
+# - No Tasmota command execution for virtual devices
+# - Values updated directly via update_virtual() method
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

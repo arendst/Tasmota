@@ -696,7 +696,7 @@ void RulesVarReplace(String &commands, const String &sfind, const String &replac
   char *found_at;
   while ((found_at = strstr(read_from, find)) != nullptr) {
     write_to += (found_at - read_from);
-    memmove_P(write_to, find, flen);                      // Make variable Uppercase
+    memmove(write_to, find, flen);                      // Make variable Uppercase
     write_to += flen;
     read_from = found_at + flen;
   }

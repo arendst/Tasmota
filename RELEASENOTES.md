@@ -112,10 +112,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.2.0.3
+## Changelog v15.2.0.4
 ### Added
 - Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
 - Support for Adafruit I2C QT Rotary Encoder [#24270](https://github.com/arendst/Tasmota/issues/24270)
+- Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output [#24364](https://github.com/arendst/Tasmota/issues/24364)
 - Zigbee support for `int24` type [#24334](https://github.com/arendst/Tasmota/issues/24334)
 - Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives [#24367](https://github.com/arendst/Tasmota/issues/24367)
 
@@ -126,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - IRremoteESP8266 library from v2.8.6 to v2.8.6-ca474a6 [#24226](https://github.com/arendst/Tasmota/issues/24226)
 - Refactor Adafruit Seesaw soil driver [#24270](https://github.com/arendst/Tasmota/issues/24270)
 - LM75AD output when no valid reading received from 0 to null [#24263](https://github.com/arendst/Tasmota/issues/24263)
+- Dingtian define `DINGTIAN_INPUTS_INVERTED` replaced by `SetOption81` [#24364](https://github.com/arendst/Tasmota/issues/24364)
 - Update Zigbee WebUI [#24224](https://github.com/arendst/Tasmota/issues/24224)
 - JPEG decoder [#24368](https://github.com/arendst/Tasmota/issues/24368)
 

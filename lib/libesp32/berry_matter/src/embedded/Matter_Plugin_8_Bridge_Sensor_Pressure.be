@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Temp.be - implements base class for a Pressure Sensor via HTTP to Tasmota
+# Matter_Plugin_Bridge_Sensor_Pressure.be - implements Pressure Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Bridge Variant - HTTP Remote Pressure Sensor
+#################################################################################
+# This is a BRIDGE variant that inherits from Matter_Plugin_Sensor_Pressure.
+# It communicates with a remote Tasmota device via HTTP to read pressure values.
+#
+# DEVICE TYPE: Pressure Sensor (0x0305)
+# See Matter_Plugin_3_Sensor_Pressure.be for complete Matter 1.4.1 specifications
+# including Pressure Measurement cluster (0x0403) details.
+#
+# BRIDGE BEHAVIOR:
+# - Polls remote Tasmota device via HTTP using UPDATE_CMD
+# - Parses JSON response to extract pressure value
+# - Converts pressure to 0.1 kPa units for Matter
+# - Inherits all cluster implementations from base class
+#
+# CONFIGURATION:
+# - TYPE: "http_pressure" - Plugin identifier in Matter configuration
+# - BRIDGE: true - Marks this as a bridged device
+# - Requires endpoint configuration with remote device URL
+#################################################################################
 
 import matter
 

@@ -17,6 +17,117 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification
+#################################################################################
+# Device Type: Dimmable Light (0x0101)
+# Device Type Revision: 3 (Matter 1.4.1)
+# Class: Simple | Scope: Endpoint
+# Superset: On/Off Light (0x0100)
+#
+# CLUSTERS (Server):
+# - 0x0003: Identify (M)
+# - 0x0004: Groups (M)
+# - 0x0062: Scenes Management (P, M)
+# - 0x0006: On/Off (M)
+# - 0x0008: Level Control (M)
+# - 0x0406: Occupancy Sensing (C, O)
+#
+# ELEMENT OVERRIDES:
+# - Identify: TriggerEffect cmd M
+# - Scenes Management: CopyScene cmd P, M
+# - On/Off: Lighting feature M
+# - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
+#
+# NOTES:
+# - Extends On/Off Light with dimming capability
+# - Level Control cluster is mandatory for this device type
+# - CurrentLevel range is 1-254 (0 and 255 are not allowed for lights)
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Level Control Cluster (0x0008)
+#################################################################################
+# Cluster Revision: 6 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# PURPOSE:
+# Provides brightness/level control for dimmable lights and other devices
+# with adjustable output levels. Supports smooth transitions and on/off
+# integration.
+#
+# FEATURES:
+# Bit | Code | Feature      | Conf | Summary
+# ----|------|--------------|------|---------------------------
+# 0   | OO   | OnOff        | M    | Dependency on On/Off
+# 1   | LT   | Lighting     | O    | Lighting behavior
+# 2   | FQ   | Frequency    | P    | Frequency control
+#
+# ATTRIBUTES:
+# ID     | Name                  | Type         | Constraint      | Quality | Default | Access | Conf
+# -------|-----------------------|--------------|-----------------|---------|---------|--------|-----
+# 0x0000 | CurrentLevel          | uint8        | 1-254           | XQN     | null    | R V    | M
+# 0x0001 | RemainingTime         | uint16       | all             | Q       | 0       | R V    | LT
+# 0x0002 | MinLevel              | uint8        | 1-254           |         | 1/0     | R V    | O
+# 0x0003 | MaxLevel              | uint8        | MinLevel-254    |         | 254     | R V    | O
+# 0x0004 | CurrentFrequency      | uint16       | MinFreq-MaxFreq | QP      | 0       | R V    | FQ
+# 0x0005 | MinFrequency          | uint16       | 0-MaxFreq       | F       | 0       | R V    | FQ
+# 0x0006 | MaxFrequency          | uint16       | MinFreq-65535   | F       | 0       | R V    | FQ
+# 0x000F | Options               | OptionsBitmap| all             |         | 0       | RW VO  | M
+# 0x0010 | OnOffTransitionTime   | uint16       | all             |         | 0       | RW VO  | O
+# 0x0011 | OnLevel               | uint8        | MinLevel-MaxLevel| XN     | null    | RW VO  | M
+# 0x0012 | OnTransitionTime      | uint16       | all             | XN      | null    | RW VO  | O
+# 0x0013 | OffTransitionTime     | uint16       | all             | XN      | null    | RW VO  | O
+# 0x0014 | DefaultMoveRate       | uint8        | all             | XN      | null    | RW VO  | O
+# 0x4000 | StartUpCurrentLevel   | uint8        | 1-254           | XN      | MS      | RW VM  | LT
+# 0xFFFC | FeatureMap            | map32        | all             | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision       | uint16       | all             | F       | 6       | R V    | M
+#
+# DATA TYPES:
+# - OptionsBitmap: ExecuteIfOff=Bit0, CoupleColorTempToLevel=Bit1
+# - MoveModeEnum: Up=0, Down=1
+# - StepModeEnum: Up=0, Down=1
+#
+# COMMANDS:
+# ID   | Name                  | Dir  | Response | Access | Conf
+# -----|----------------------|------|----------|--------|-----
+# 0x00 | MoveToLevel          | C→S  | Y        | O      | M
+# 0x01 | Move                 | C→S  | Y        | O      | M
+# 0x02 | Step                 | C→S  | Y        | O      | M
+# 0x03 | Stop                 | C→S  | Y        | O      | M
+# 0x04 | MoveToLevelWithOnOff | C→S  | Y        | O      | M
+# 0x05 | MoveWithOnOff        | C→S  | Y        | O      | M
+# 0x06 | StepWithOnOff        | C→S  | Y        | O      | M
+# 0x07 | StopWithOnOff        | C→S  | Y        | O      | M
+# 0x08 | MoveToClosestFrequency| C→S | Y        | O      | FQ
+#
+# MoveToLevel: {Level:uint8(0-254), TransitionTime:uint16|X, OptionsMask:OptionsBitmap, OptionsOverride:OptionsBitmap}
+# Move: {MoveMode:MoveModeEnum, Rate:uint8|X, OptionsMask:OptionsBitmap, OptionsOverride:OptionsBitmap}
+# Step: {StepMode:StepModeEnum, StepSize:uint8, TransitionTime:uint16|X, OptionsMask:OptionsBitmap, OptionsOverride:OptionsBitmap}
+# Stop: {OptionsMask:OptionsBitmap, OptionsOverride:OptionsBitmap}
+# MoveToLevelWithOnOff: Same as MoveToLevel (also controls On/Off)
+# MoveWithOnOff: Same as Move (also controls On/Off)
+# StepWithOnOff: Same as Step (also controls On/Off)
+# StopWithOnOff: Same as Stop (also controls On/Off)
+# MoveToClosestFrequency: {Frequency:uint16}
+#
+# QUALITY FLAGS:
+# - X: Nullable
+# - Q: Quieter reporting (less frequent updates)
+# - N: NonVolatile (persists across power cycles)
+# - P: Periodic reporting
+#
+# IMPLEMENTATION NOTES:
+# - CurrentLevel: 0=Off, 1-254=brightness levels, 255 not allowed for lights
+# - For Tasmota: Maps to Dimmer (0-100%) scaled to 0-254
+# - OnLevel: Level to use when turning on (null = use previous level)
+# - MinLevel/MaxLevel: Constrain the usable range (default 1-254)
+# - OnOff feature (bit 0) is mandatory - level changes can affect on/off state
+# - Lighting feature (bit 1) adds StartUpCurrentLevel and RemainingTime
+# - WithOnOff commands: Automatically turn on when increasing level from 0
+# - TransitionTime: In 1/10th second units (null = use default)
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
@@ -33,12 +144,12 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
     # 0x0004: inherited                                     # Groups 1.3 p.21
-    # 0x0005: inherited                                     # Scenes 1.4 p.30 - no writable
+    # 0x0062: inherited                                     # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
     # 0x0006: [0],                                    # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11],                      # Level Control 1.6 p.57
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Bri")
-  static var TYPES = { 0x0101: 2 }                  # Dimmable Light
+  static var TYPES = { 0x0101: 3 }                  # Dimmable Light - Matter 1.4.1 Device Library Rev 3
 
   # Inherited
   # var device                                        # reference to the `device` global object

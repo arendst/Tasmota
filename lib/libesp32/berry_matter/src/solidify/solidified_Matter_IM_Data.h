@@ -171,7 +171,7 @@ extern const bclass be_class_Matter_IM_Message_base;
 ********************************************************************/
 be_local_closure(class_Matter_IM_Message_base_init,   /* name */
   be_nested_proto(
-    1,                          /* nstack */
+    2,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -179,15 +179,15 @@ be_local_closure(class_Matter_IM_Message_base_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(InteractionModelRevision),
-    /* K1   */  be_const_int(1),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x90020101,  //  0000  SETMBR	R0	K0	K1
-      0x80000000,  //  0001  RET	0
+    ( &(const binstruction[ 3]) {  /* code */
+      0x5406000A,  //  0000  LDINT	R1	11
+      0x90020001,  //  0001  SETMBR	R0	K0	R1
+      0x80000000,  //  0002  RET	0
     })
   )
 );

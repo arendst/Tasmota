@@ -17,6 +17,76 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Base Boolean Sensor Class
+#################################################################################
+# CLASS: Matter_Plugin_Sensor_Boolean (Base class for boolean/binary sensors)
+# INHERITS FROM: Matter_Plugin_Device
+#
+# PURPOSE:
+# - Provides common functionality for binary state sensors
+# - Handles boolean sensor value reading from Tasmota Switch inputs
+# - Manages state change detection and reporting
+# - Supports both physical and virtual boolean sensors
+#
+# TYPICAL USE CASES:
+# - Contact sensors (door/window open/closed)
+# - Water leak detectors (leak detected/no leak)
+# - Rain sensors (rain detected/no rain)
+# - Motion sensors (occupied/unoccupied)
+# - Any binary state sensor
+#
+# BOOLEAN SENSOR READING MECHANISM:
+# - Physical sensors: Reads from Tasmota Status 10 Switch<x> state
+# - Virtual sensors: Receives updates via update_virtual() method
+# - Automatic periodic updates every 750ms (UPDATE_TIME)
+# - State changes trigger value_updated() callback
+#
+# DERIVED CLASSES MUST IMPLEMENT:
+# - value_updated(): Handle attribute updates when state changes
+# - JSON_NAME: Name of boolean attribute in JSON payloads
+# - CLUSTERS: Define appropriate cluster (typically Boolean State 0x0045)
+# - TYPES: Define device type ID
+#
+# CONFIGURATION:
+# - ARG: "switch" - Tasmota Switch number (1-based)
+# - ARG_HINT: "Switch<x> number" - User guidance
+# - ARG_TYPE: int(x) - Converts argument to integer
+# - UPDATE_TIME: 750ms - Fast update for responsive binary sensors
+#
+# TASMOTA INTEGRATION:
+# - Reads Switch<x> state from Status 10 JSON response
+# - Switch states: "ON" (true) or "OFF" (false)
+# - Supports multiple switches via switch index configuration
+# - Example JSON: {"Switch1":"ON", "Switch2":"OFF"}
+#
+# STATE MANAGEMENT:
+# - shadow_bool_value: Cached boolean state
+# - State changes detected by comparing new vs cached value
+# - value_updated() called only when state actually changes
+# - Reduces unnecessary Matter attribute updates
+#
+# EXAMPLES:
+# - Contact Sensor: Switch1 → Boolean State cluster
+#   * true = Contact (closed), false = No contact (open)
+# - Water Leak: Switch2 → Boolean State cluster
+#   * true = Leak detected, false = No leak
+# - Rain Sensor: Switch3 → Boolean State cluster
+#   * true = Rain detected, false = No rain
+#
+# VIRTUAL SENSOR SUPPORT:
+# - Virtual sensors receive boolean updates via Matter bridge
+# - No Tasmota command execution for virtual devices
+# - Values updated directly via update_virtual() method
+# - Supports JSON payload with boolean or integer values
+#
+# MATTER CLUSTER MAPPING:
+# - Most boolean sensors use Boolean State cluster (0x0045)
+# - Attribute 0x0000 (StateValue): bool
+# - true/false mapped to sensor-specific meanings
+# - Derived classes define semantic meaning of states
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

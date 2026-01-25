@@ -566,7 +566,7 @@ class Matter_IM_Message_base : Matter_IM_base
   var InteractionModelRevision              # 0xFF
 
   def init()
-    self.InteractionModelRevision = 1
+    self.InteractionModelRevision = 11    # 11 = Matter 1.2+ Interaction Model revision
   end
 end
 

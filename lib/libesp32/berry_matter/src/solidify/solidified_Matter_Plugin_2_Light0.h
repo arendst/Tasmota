@@ -737,7 +737,7 @@ be_local_class(Matter_Plugin_Light0,
         { be_const_key_weak(TYPES, 21), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(256, -1), be_const_int(2) },
+        { be_const_key_int(256, -1), be_const_int(3) },
     }))    ) } )) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Light_X200_X20OnOff) },
         { be_const_key_weak(light_index, 1), be_const_var(1) },

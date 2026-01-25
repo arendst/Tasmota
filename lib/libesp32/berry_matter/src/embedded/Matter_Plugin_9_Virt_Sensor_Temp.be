@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Virtual Variant - Temperature Sensor
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Sensor_Temp (Matter_Plugin_3_Sensor_Temp.be)
+# VARIANT TYPE: Virtual (Matter Bridge Protocol)
+# DEVICE TYPE: Temperature Sensor (0x0302) - See base class for specification
+# CLUSTERS: Temperature Measurement (0x0402) - See Matter_Plugin_3_Sensor_Temp.be
+# TYPE: "v_temp" | VIRTUAL: true
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

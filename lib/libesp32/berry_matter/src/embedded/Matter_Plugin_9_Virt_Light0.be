@@ -17,6 +17,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Virtual Variant - On/Off Light
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light0 (Matter_Plugin_2_Light0.be)
+# VARIANT TYPE: Virtual (Matter Bridge Protocol)
+#
+# DEVICE TYPE: On/Off Light (0x0100) - See base class for full specification
+# CLUSTERS: Same as Matter_Plugin_Light0 - See base class documentation
+#
+# VIRTUAL MODE SPECIFICS:
+# - VIRTUAL flag: true (enables virtual device mode)
+# - Receives state updates via Matter bridge protocol (MtrUpdate)
+# - No direct hardware control - state managed by external controller
+# - No ARG parameter required (virtual devices don't map to hardware)
+# - State updates via JSON messages: {"Power":1} or {"Power":0}
+#
+# CONFIGURATION:
+# - TYPE: "v_light0" (JSON configuration identifier)
+# - DISPLAY_NAME: "v.Light 0 OnOff" (prefix 'v.' indicates virtual)
+# - No hardware mapping required
+# - Example: {"type":"v_light0","name":"Virtual Light"}
+#
+# USE CASES:
+# - Matter bridge aggregating devices from other ecosystems
+# - Virtual representations of cloud-connected devices
+# - Testing and development without physical hardware
+# - Multi-protocol bridges (Zigbee, Z-Wave, etc. to Matter)
+#
+# NOTES:
+# - All Matter cluster behavior inherited from Matter_Plugin_Light0
+# - Only changes state update mechanism (virtual vs hardware)
+# - See Matter_Plugin_2_Light0.be for complete cluster specifications
+# - See Matter_Plugin_1_Device.be for virtual device implementation
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

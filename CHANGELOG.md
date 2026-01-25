@@ -3,11 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.2.0.3]
+## [15.2.0.4]
 ### Added
-- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives (#24367)
+- Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output (#24364)
 
 ### Breaking Changed
+
+### Changed
+- Dingtian define `DINGTIAN_INPUTS_INVERTED` replaced by `SetOption81` (#24364)
+
+### Fixed
+
+### Removed
+
+## [15.2.0.3] 20260124
+### Added
+- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives (#24367)
 
 ### Changed
 - ESP8266 platform update from 2025.12.00 to 2026.01.00 (#24354)
@@ -16,8 +27,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Display ST77xx and Parallel issues introduced after refactor UDisplay (#24368)
-
-### Removed
 
 ## [15.2.0.2] 20260117
 ### Added

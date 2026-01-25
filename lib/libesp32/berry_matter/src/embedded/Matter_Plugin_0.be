@@ -17,6 +17,65 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter Base Plugin Class
+#################################################################################
+# This is the root base class for all Matter plugins in Tasmota.
+# It provides:
+# - Common plugin interface and behavior
+# - Cluster and command management
+# - Basic attribute handling
+# - Update timing and virtual device flags
+# - Descriptor cluster (0x001D) implementation
+#
+# All device-specific plugins inherit from this class either directly or
+# through intermediate classes (Matter_Plugin_Root, Matter_Plugin_Device, etc.)
+#
+# MANDATORY CLUSTER (all devices):
+# - 0x001D: Descriptor Cluster (Rev 2, Matter 1.4.1)
+#
+# Subclasses must define:
+# - TYPE: Plugin type identifier string
+# - DISPLAY_NAME: Human-readable name
+# - CLUSTERS: Map of cluster IDs to attribute lists
+# - TYPES: Map of Matter device type IDs to revisions
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Descriptor Cluster (0x001D) - Base Implementation
+#################################################################################
+# Cluster Revision: 2 (Matter 1.4.1)
+# Role: Utility | Scope: Endpoint
+#
+# PURPOSE:
+# The Descriptor cluster provides metadata about an endpoint, including:
+# - Device types supported by the endpoint
+# - Server and client clusters
+# - Parts list (for composed devices)
+# - Semantic tags (for disambiguation)
+#
+# ATTRIBUTES (Base Implementation):
+# ID     | Name           | Type                    | Constraint | Quality | Default | Access | Conf
+# -------|----------------|-------------------------|------------|---------|---------|--------|-----
+# 0x0000 | DeviceTypeList | list[DeviceTypeStruct]  | max1       | F       | MS      | R V    | M
+# 0x0001 | ServerList     | list[cluster-id]        | all        | F       | MS      | R V    | M
+# 0x0002 | ClientList     | list[cluster-id]        | all        | F       | MS      | R V    | M
+# 0x0003 | PartsList      | list[endpoint-no]       | all        | F       | MS      | R V    | M
+# 0x0004 | TagList        | list[SemanticTagStruct] | max6       | F       | empty   | R V    | Duplicate
+# 0xFFFC | FeatureMap     | map32                   | all        | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision| uint16                  | all        | F       | 2       | R V    | M
+#
+# DeviceTypeStruct: {DeviceType:uint16, Revision:uint16}
+# SemanticTagStruct: {MfgCode:vendor-id|null, Value:enum8}
+#
+# NOTES:
+# - DeviceTypeList: Must contain at least one device type
+# - ServerList: Lists all server clusters implemented by this endpoint
+# - ClientList: Lists all client clusters (typically empty for simple devices)
+# - PartsList: For composed devices, lists child endpoints (empty for simple devices)
+# - TagList: Used for disambiguation in multi-endpoint devices (e.g., multiple switches)
+#################################################################################
+
 import matter
 
 # Matter modules for extensibility
@@ -47,57 +106,64 @@ class Matter_Plugin
   # static var TYPES = { <device_type>: <revision> }    # needs to be defined for each endpoint
   # `FEATURE_MAPS` contains any non-zero value per cluster, if not present default to `0`
   static var FEATURE_MAPS = {               # feature map per cluster
-    0x0008: 0x03,                           # Level Control: On/Off + Lighting
-    0x0031: 0x04,                           # Put Eth for now which should work for any on-network
-    # 0x0046: 0x04,                           # LITS: LongIdleTimeSupport
-    0x0102: 1 + 4,                          # Lift + PA_LF
-    0x0202: 2,                              # Fan: Auto
+    # 0x0003: 0x00,                           # Identify: no optional features
+    0x0006: 0x01,                           # On/Off: Lighting feature (bit 0)
+    0x0008: 0x03,                           # Level Control: On/Off (bit 0) + Lighting (bit 1)
+    0x0031: 0x04,                           # Network Commissioning: Ethernet (for WiFi/Ethernet devices)
+    0x0046: 0x00,                           # ICD Management: 0x00 = no optional features (base SIT mode, no CIP/UAT/LITS)
+    0x0062: 0x01,                           # Scenes Management: SceneNames (bit 0)
+    0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
+    0x0202: 2,                              # Fan Control: Auto (bit 1)
   }
   # `CLUSTER_REVISIONS` contains revision numbers for each cluster, or `1` if not present
   static var CLUSTER_REVISIONS = {
-    0x0003: 4,                              # New data model format and notation
-    0x0004: 4,                              # New data model format and notation
-    0x0005: 5,                              # "new data model format and notation"
-    0x0006: 5,                              # Addition of Dead Front behavior and associated FeatureMap entry
-    0x0008: 5,                              # "new data model format and notation"
-    0x001D: 2,                              # Semantic tag list; TagList feature
-    # 0x001F: 1,                            # Initial Release
-    0x0028: 2,                              # Added ProductAppearance attribute
-    # 0x002A: 1,                            # Initial Release
-    # 0x002B: 1,                            # Initial Release
-    # 0x002C: 1,                            # Initial Release
-    # 0x0030: 1,                            # Initial Release
-    # 0x0031: 1,                            # Initial Release
-    # 0x0032: 1,                            # Initial Release
-    # 0x0033: 1,                            # Initial Release
-    # 0x0034: 1,                            # Initial Release
-    0x0038: 2,                              #
-    # 0x003B: 1,                            # Initial Release
-    # 0x003C: 1,                            # Initial Release
-    # 0x003E: 1,                            # Initial Release
-    0x003F: 2,                              # Clarify KeySetWrite validation and behavior on invalid epoch key lengths
-    # 0x0040: 1,                            # Initial Release
-    # 0x0041: 1,                            # Initial Release
-    # 0x0042: 1,                            # Initial Release
-    # 0x0046: 3,                              # ICD v3
-    # 0x005B: 1,                            # Initial Release
-    # 0x005C: 1,                            # Initial Release
-    0x0101: 7,                              # Added support for European door locks (unbolt feature)
-    0x0102: 5,                              # New data model format and notation
-    0x0200: 4,                              # Added feature map
-    0x0201: 6,                              # Introduced the LTNE feature and adapted text (spec issue #5778)
-    0x0202: 4,                              # Change conformance for FanModeSe­ quenceEnum
-    0x0204: 2,                              # New data model format and notation, added "Conversion of Temperature Values for Display" section
-    0x0300: 6,                              # Added clarifications to Scenes support for Matter
-    0x0301: 4,                              # New data model format and notation
-    0x0400: 3,                              # New data model format and notation
-    0x0402: 4,                              # New data model format and notation
-    0x0403: 3,                              # New data model format and notation
-    0x0404: 3,                              # New data model format and notation
-    0x0405: 3,                              # New data model format and notation
-    0x0406: 3,                              # New data model format and notation
-    0x0407: 3,                              # New data model format and notation
-    0x0408: 3,                              # New data model format and notation
+    0x0003: 5,                              # Identify - Matter 1.4.1 (TriggerEffect mandatory)
+    0x0004: 4,                              # Groups - New data model format and notation
+    0x0005: 5,                              # Scenes - "new data model format and notation"
+    0x0006: 6,                              # On/Off - Matter 1.4.1 (OffOnly feature)
+    0x0008: 6,                              # Level Control - Matter 1.4.1 (Frequency feature)
+    0x001D: 2,                              # Descriptor - Semantic tag list; TagList feature
+    # 0x001F: 1,                            # Access Control - Initial Release
+    0x0028: 3,                              # Basic Information - Matter 1.4.1 (SpecificationVersion)
+    # 0x002A: 1,                            # OTA Software Update Requestor - Initial Release
+    # 0x002B: 1,                            # Localization Configuration - Initial Release
+    # 0x002C: 1,                            # Time Format Localization - Initial Release
+    0x002D: 1,                              # Unit Localization - Matter 1.3+
+    # 0x0030: 1,                            # General Commissioning - Initial Release
+    # 0x0031: 1,                            # Network Commissioning - Initial Release
+    # 0x0032: 1,                            # Diagnostic Logs - Initial Release
+    # 0x0033: 1,                            # General Diagnostics - Initial Release
+    # 0x0034: 1,                            # Software Diagnostics - Initial Release
+    0x0038: 2,                              # Time Synchronization
+    # 0x003B: 1,                            # Switch - Initial Release
+    # 0x003C: 1,                            # Administrator Commissioning - Initial Release
+    # 0x003E: 1,                            # Node Operational Credentials - Initial Release
+    0x003F: 2,                              # Group Key Management - Clarify KeySetWrite validation and behavior on invalid epoch key lengths
+    # 0x0040: 1,                            # Fixed Label - Initial Release
+    # 0x0041: 1,                            # User Label - Initial Release
+    # 0x0042: 1,                            # Boolean State - Initial Release
+    0x0045: 1,                              # Boolean State - Initial Release
+    0x0046: 3,                              # ICD Management Cluster revision 3 (Matter 1.4.1)
+    # 0x005B: 1,                            # Air Quality - Initial Release
+    # 0x005C: 1,                            # Smoke CO Alarm - Initial Release
+    0x0062: 1,                              # Scenes Management - Matter 1.4.1 (PROVISIONAL)
+    0x0080: 1,                              # Boolean State Configuration - Initial Release
+    0x0101: 7,                              # Door Lock - Added support for European door locks (unbolt feature)
+    0x0102: 5,                              # Window Covering - New data model format and notation
+    0x0200: 4,                              # Pump Configuration and Control - Added feature map
+    0x0201: 6,                              # Thermostat - Introduced the LTNE feature and adapted text (spec issue #5778)
+    0x0202: 4,                              # Fan Control - Change conformance for FanModeSequence
+    0x0204: 2,                              # Thermostat User Interface Configuration - New data model format and notation, added "Conversion of Temperature Values for Display" section
+    0x0300: 6,                              # Color Control - Added clarifications to Scenes support for Matter
+    0x0301: 4,                              # Ballast Configuration - New data model format and notation
+    0x0400: 3,                              # Illuminance Measurement - New data model format and notation
+    0x0402: 4,                              # Temperature Measurement - New data model format and notation
+    0x0403: 3,                              # Pressure Measurement - New data model format and notation
+    0x0404: 3,                              # Flow Measurement - New data model format and notation
+    0x0405: 3,                              # Relative Humidity Measurement - New data model format and notation
+    0x0406: 5,                              # Occupancy Sensing - Matter 1.4.1 (HoldTime features)
+    0x0407: 3,                              # Leaf Wetness Measurement - New data model format and notation
+    0x0408: 3,                              # Soil Moisture Measurement - New data model format and notation
   }
   # Accepted Update commands for virtual devices
   static var UPDATE_COMMANDS = []

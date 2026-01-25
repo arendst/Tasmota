@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Bridge Variant - Dimmable Light via HTTP
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Light1 (Matter_Plugin_3_Light1.be)
+# VARIANT TYPE: Bridge (Remote HTTP Device)
+# DEVICE TYPE: Dimmable Light (0x0101) - See base class for full specification
+# CLUSTERS: On/Off + Level Control - See Matter_Plugin_3_Light1.be
+# TYPE: "http_light1" | UPDATE_TIME: 3000ms
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

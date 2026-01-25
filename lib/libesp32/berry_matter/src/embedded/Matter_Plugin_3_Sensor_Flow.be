@@ -17,6 +17,69 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Flow Sensor (0x0306)
+#################################################################################
+# Device Type: Flow Sensor (0x0306)
+# Device Type Revision: 2 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0404: Flow Measurement (M) - Fluid flow rate measurement
+# - 0x0003: Identify (M) - Device identification
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# CLUSTERS (Client):
+# - 0x0004: Groups (O) - [Zigbee] Group management
+#
+# NOTES:
+# - Measures volumetric flow rate in m³/h
+# - Typical applications: water flow, gas flow, air flow
+# - Wide range support: 0-6553.4 m³/h
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Flow Measurement Cluster (0x0404)
+#################################################################################
+# Cluster Revision: 3 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# ATTRIBUTES:
+# ID     | Name              | Type  | Constraint              | Quality | Default | Access | Conf
+# -------|-------------------|-------|-------------------------|---------|---------|--------|-----
+# 0x0000 | MeasuredValue     | uint16| MinMeasuredValue-       | X,P     | null    | R V    | M
+#        |                   |       | MaxMeasuredValue        |         |         |        |
+# 0x0001 | MinMeasuredValue  | uint16| max 65533               | X       | null    | R V    | M
+# 0x0002 | MaxMeasuredValue  | uint16| min(MinMeasuredValue+1) | X       | null    | R V    | M
+# 0x0003 | Tolerance         | uint16| max 2048                |         | 0       | R V    | O
+#
+# Quality Flags:
+# - X: Nullable (null = unknown/invalid)
+# - P: Periodic reporting (changes reported automatically)
+#
+# Access Control:
+# - R: Read
+# - V: View privilege required
+#
+# VALUE ENCODING:
+# - MeasuredValue = 10 × Flow[m³/h]
+#   Example: 5.5 m³/h → MeasuredValue = 55
+#
+# TYPICAL RANGES:
+# - Water tap: 0.1-0.5 m³/h (1-5 units)
+# - Shower: 0.5-1.0 m³/h (5-10 units)
+# - Garden hose: 1-3 m³/h (10-30 units)
+# - Industrial: 10-1000 m³/h (100-10000 units)
+# - Maximum: 6553.4 m³/h (65534 units)
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads flow from Tasmota sensor JSON (Status 10)
+# - Converts to uint16 in units of 0.1 m³/h
+# - MinMeasuredValue: 0 (no flow)
+# - MaxMeasuredValue: 65534 (6553.4 m³/h)
+# - pre_value() multiplies by 10 for proper encoding
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
@@ -31,7 +94,7 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0404: [0,1,2],                            # Flow Measurement
   })
-  static var TYPES = { 0x0306: 1 }              # Flow Sensor, rev 1
+  static var TYPES = { 0x0306: 2 }              # Flow Sensor - Matter 1.4.1 Device Library Rev 2
 
   #############################################################
   # Pre-process value

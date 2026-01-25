@@ -17,6 +17,90 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Water Leak Detector (0x0043)
+#################################################################################
+# Device Type: Water Leak Detector (0x0043)
+# Device Type Revision: 1 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0045: Boolean State (M) - Water leak detection state
+# - 0x0080: Boolean State Configuration (O) - Alarm configuration
+# - 0x0003: Identify (M) - Device identification
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# BOOLEAN STATE SEMANTICS:
+# - true: Leak detected
+# - false: No leak
+#
+# ELEMENT OVERRIDES:
+# - Boolean State: StateChange event is MANDATORY (not optional)
+#
+# NOTES:
+# - Critical safety device for water damage prevention
+# - Binary sensor for water/moisture detection
+# - Typically uses conductivity or capacitive sensing
+# - Fast response time essential for leak detection
+# - Inherits from Matter_Plugin_Sensor_Boolean base class
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Boolean State Cluster (0x0045) - Water Leak Detector Usage
+#################################################################################
+# Cluster Revision: 1 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# ATTRIBUTES:
+# ID     | Name       | Type | Constraint | Quality | Default | Access | Conf
+# -------|------------|------|------------|---------|---------|--------|-----
+# 0x0000 | StateValue | bool | all        | P       | -       | R V    | M
+#
+# Quality Flags:
+# - P: Periodic reporting (changes reported automatically)
+#
+# Access Control:
+# - R: Read
+# - V: View privilege required
+#
+# EVENTS:
+# ID   | Name        | Priority | Access | Conf
+# -----|-------------|----------|--------|-----
+# 0x00 | StateChange | INFO     | V      | M (overridden from O)
+#
+# StateChange Event Fields:
+# - StateValue: bool - New state value
+#
+# STATE VALUE SEMANTICS FOR WATER LEAK DETECTOR:
+# - true (1): Leak detected - water/moisture present
+# - false (0): No leak - dry conditions
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads from Tasmota Switch<x> input (Status 10)
+# - Switch ON = Leak detected (true)
+# - Switch OFF = No leak (false)
+# - Update interval: 750ms for fast leak detection
+# - StateChange event sent on every state transition
+#
+# TYPICAL APPLICATIONS:
+# - Under sinks and appliances
+# - Basement and crawl space monitoring
+# - Water heater leak detection
+# - Washing machine overflow protection
+# - Bathroom and kitchen leak prevention
+# - Smart home water shutoff automation
+#
+# SAFETY CONSIDERATIONS:
+# - StateChange event is MANDATORY for immediate notification
+# - Fast update interval (750ms) for quick response
+# - Critical for preventing water damage
+# - Should trigger immediate alerts/actions
+#
+# CONFIGURATION:
+# - ARG: "switch" - Tasmota Switch number (1-based)
+# - Example: switch=1 uses Switch1 input
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior
