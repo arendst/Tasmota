@@ -28,10 +28,12 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+// clang-format off
 #ifndef CTASSERT
 #define CTASSERT(x)		extern char  _ctassert[(x) ? 1 : -1 ]	\
 				    __attribute__((__unused__))
 #endif
+// clang-format on
 
 #define MIEL_HVAC_LOGNAME "MiElHVAC"
 
@@ -43,8 +45,10 @@
 #define D_CMND_MIEL_HVAC_SETSWINGH "HVACSetSwingH"
 #define D_CMND_MIEL_HVAC_SETAIRDIRECTION "HVACSetAirDirection"
 #define D_CMND_MIEL_HVAC_SETPROHIBIT "HVACSetProhibit"
+#define D_CMND_MIEL_HVAC_SETPURIFY "HVACSetPurify"
 #define D_CMND_MIEL_HVAC_REMOTETEMP "HVACRemoteTemp"
 #define D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME "HVACRemoteTempClearTime"
+#define D_CMND_MIEL_HVAC_SEND_COMMAND "HVACSendCommand"
 
 #include <TasmotaSerial.h>
 
@@ -119,21 +123,23 @@ struct miel_hvac_data_settings
 	uint8_t _pad2[1];
 	uint8_t widevane;
 #define MIEL_HVAC_SETTINGS_WIDEVANE_MASK 0x0f
-#define MIEL_HVAC_SETTINGS_WIDEVANE_AUTO 0x00
 #define MIEL_HVAC_SETTINGS_WIDEVANE_LL 0x01
 #define MIEL_HVAC_SETTINGS_WIDEVANE_L 0x02
 #define MIEL_HVAC_SETTINGS_WIDEVANE_C 0x03
 #define MIEL_HVAC_SETTINGS_WIDEVANE_R 0x04
 #define MIEL_HVAC_SETTINGS_WIDEVANE_RR 0x05
-#define MIEL_HVAC_SETTINGS_WIDEVANE_LR 0x08
+#define MIEL_HVAC_SETTINGS_WIDEVANE_LC 0x06
+#define MIEL_HVAC_SETTINGS_WIDEVANE_RC 0x07
+#define MIEL_HVAC_SETTINGS_WIDEVANE_SPLIT 0x08
 #define MIEL_HVAC_SETTINGS_WIDEVANE_SWING 0x0c
-#define MIEL_HVAC_SETTINGS_WIDEVANE_ADJ 0x80
+#define MIEL_HVAC_SETTINGS_WIDEVANE_ISEE 0x80
 	uint8_t temp05;
 	uint8_t _pad3[2];
 	uint8_t airdirection;
 #define MIEL_HVAC_SETTINGS_AIRDIRECTION_EVEN 0x00
 #define MIEL_HVAC_SETTINGS_AIRDIRECTION_INDIRECT 0x01
 #define MIEL_HVAC_SETTINGS_AIRDIRECTION_DIRECT 0x02
+#define MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF 0x03
 };
 
 struct miel_hvac_data_roomtemp
@@ -284,13 +290,13 @@ struct miel_hvac_msg_update_settings
 	uint8_t one;
 	uint16_t flags;
 #define MIEL_HVAC_SETTINGS_F_WIDEVANE (1 << 0)
+#define MIEL_HVAC_SETTINGS_F_AIRDIRECTION (1 << 3)
 #define MIEL_HVAC_SETTINGS_F_POWER (1 << 8)
 #define MIEL_HVAC_SETTINGS_F_MODE (1 << 9)
 #define MIEL_HVAC_SETTINGS_F_TEMP (1 << 10)
 #define MIEL_HVAC_SETTINGS_F_FAN (1 << 11)
 #define MIEL_HVAC_SETTINGS_F_VANE (1 << 12)
 #define MIEL_HVAC_SETTINGS_F_PROHIBIT (1 << 13)
-#define MIEL_HVAC_SETTINGS_F_AIRDIRECTION (1 << 14)
 	uint8_t power;
 	uint8_t mode;
 	uint8_t temp;
@@ -435,14 +441,16 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
 };
 
 static const struct miel_hvac_map miel_hvac_widevane_map[] = {
-	{MIEL_HVAC_SETTINGS_WIDEVANE_AUTO, "auto"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LL, "left"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_L, "left_middle"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_C, "center"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_R, "right"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_RR, "right_middle"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_LR, "split"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_LC, "left_center"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_RC, "right_center"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_SPLIT, "split"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SWING, "swing"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_ISEE, "isee"},
 };
 
 static const struct miel_hvac_map miel_hvac_prohibit_map[] = {
@@ -457,10 +465,16 @@ static const struct miel_hvac_map miel_hvac_prohibit_map[] = {
 };
 
 static const struct miel_hvac_map miel_hvac_airdirection_map[] = {
-	{MIEL_HVAC_SETTINGS_AIRDIRECTION_EVEN, "even"},
 	{MIEL_HVAC_SETTINGS_AIRDIRECTION_INDIRECT, "indirect"},
 	{MIEL_HVAC_SETTINGS_AIRDIRECTION_DIRECT, "direct"},
+	{MIEL_HVAC_SETTINGS_AIRDIRECTION_EVEN, "even"},
+	{MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF, "off"},
 };
+
+// static const struct miel_hvac_map miel_hvac_purify_map[] = {
+//	{MIEL_HVAC_SETTINGS_PURIFY_OFF "off"},
+//	{MIEL_HVAC_SETTINGS_PURIFY_ON, "on"},
+// };
 
 static const struct miel_hvac_map miel_hvac_compressor_map[] = {
 	{MIEL_HVAC_STATUS_COMPRESSOR_OFF, "off"},
@@ -659,6 +673,9 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 			return (MIEL_HVAC_P_SKIP_CKSUM);
 		return (nstate);
 	case MIEL_HVAC_P_SKIP_CKSUM:
+		return (MIEL_HVAC_P_START);
+	default:
+		AddLog(LOG_LEVEL_ERROR, PSTR(MIEL_HVAC_LOGNAME ": unknown parser state %d, resetting"), p->p_state);
 		return (MIEL_HVAC_P_START);
 	}
 	p->p_sum += byte;
@@ -875,11 +892,12 @@ miel_hvac_cmnd_settemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+	float degc;
 
 	if (XdrvMailbox.data_len == 0)
 		return;
 
-	float degc = CharToFloat(XdrvMailbox.data);
+	degc = strtof(XdrvMailbox.data, nullptr);
 	if (degc < MIEL_HVAC_SETTINGS_TEMP_MIN || degc > MIEL_HVAC_SETTINGS_TEMP_MAX)
 	{
 		miel_hvac_respond_unsupported();
@@ -898,7 +916,7 @@ miel_hvac_cmnd_settemp(void)
 		update->temp05 = miel_hvac_deg2temp(degc);
 	}
 
-	ResponseCmndFloat(degc, Settings->flag2.temperature_resolution);
+	ResponseCmndNumber(degc);
 }
 
 static void
@@ -961,6 +979,7 @@ miel_hvac_cmnd_setwidevane(void)
 		miel_hvac_respond_unsupported();
 		return;
 	}
+
 	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
 	update->widevane = e->byte;
 
@@ -983,8 +1002,52 @@ miel_hvac_cmnd_setairdirection(void)
 		miel_hvac_respond_unsupported();
 		return;
 	}
-	update->flags |= htons(MIEL_HVAC_SETTINGS_F_AIRDIRECTION);
-	update->airdirection = e->byte;
+
+	switch (e->byte)
+	{
+	case MIEL_HVAC_SETTINGS_AIRDIRECTION_INDIRECT: // 0x80
+		update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE) | htons(MIEL_HVAC_SETTINGS_F_AIRDIRECTION);
+		update->widevane = 0x80;
+		update->airdirection = e->byte;
+		break;
+	case MIEL_HVAC_SETTINGS_AIRDIRECTION_DIRECT: // 0xaa
+		update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE) | htons(MIEL_HVAC_SETTINGS_F_AIRDIRECTION);
+		update->widevane = 0x80;
+		update->airdirection = e->byte;
+		break;
+	case MIEL_HVAC_SETTINGS_AIRDIRECTION_EVEN: // 0x28
+		update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE) | htons(MIEL_HVAC_SETTINGS_F_AIRDIRECTION);
+		update->widevane = 0x80;
+		update->airdirection = e->byte;
+		break;
+	case MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF: // 0x8c
+		update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+		update->widevane = 0x8c;
+		break;
+	}
+
+	ResponseCmndChar_P(e->name);
+}
+
+static void
+miel_hvac_cmnd_setpurify(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+	const struct miel_hvac_map *e;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	e = miel_hvac_map_byname(XdrvMailbox.data, miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map));
+	if (e == NULL)
+	{
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+	update->widevane = e->byte;
 
 	ResponseCmndChar_P(e->name);
 }
@@ -1089,6 +1152,34 @@ miel_hvac_cmnd_remotetemp(void)
 	remotetemp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
 }
 
+static void
+miel_hvac_cmnd_send_command(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+	uint8_t val;
+
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	// Parse hex or decimal string input (e.g., "0x08" or "08")
+	char *endptr;
+	long parsed = strtol(XdrvMailbox.data, &endptr, 0); // base 0 allows hex or decimal
+
+	if (endptr == XdrvMailbox.data || parsed < 0 || parsed > 255)
+	{
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	val = (uint8_t)parsed;
+
+	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+	update->widevane = val;
+
+	ResponseCmndChar_P(XdrvMailbox.data);
+}
+
 #ifdef MIEL_HVAC_DEBUG
 static void
 miel_hvac_cmnd_request(void)
@@ -1131,7 +1222,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	char hex[(sizeof(sc->sc_settings) + 1) * 2];
 	char temp[33];
 	const char *name;
-	const char *name_swing_h;
+	bool widevane_isee = (set->widevane == 0x80 || set->widevane == 0xaa || set->widevane == 0x28);
 
 	name = miel_hvac_map_byval(set->power, miel_hvac_power_map, nitems(miel_hvac_power_map));
 	if (name != NULL)
@@ -1168,16 +1259,16 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGV "\":\"%s\""), name);
 	}
 
-	name_swing_h = miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK, miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
-	if (name_swing_h != NULL)
-	{
-		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name_swing_h);
-	}
-
-	name = miel_hvac_map_byval(set->airdirection, miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map));
+	name = widevane_isee ? "isee" : miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK, miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
 	if (name != NULL)
 	{
-		ResponseAppend_P(PSTR(",\"AirDirection\":\"%s\""), name_swing_h == "auto" ? name : "OFF");
+		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
+	}
+
+	name = widevane_isee ? miel_hvac_map_byval(set->airdirection, miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map)) : "off";
+	if (name != NULL)
+	{
+		ResponseAppend_P(PSTR(",\"AirDirection\":\"%s\""), name);
 	}
 
 	name = miel_hvac_map_byval(set->prohibit, miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map));
@@ -1351,7 +1442,6 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 {
 	const char *name;
 	const char *mode;
-	const char *name_swing_h;
 
 	ResponseAppend_P(PSTR(",\"MiElHVAC\":{"));
 
@@ -1360,6 +1450,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		const struct miel_hvac_data_settings *set = &sc->sc_settings.data.settings;
 		char hex[(sizeof(sc->sc_settings) + 1) * 2];
 		char temp[33];
+		bool widevane_isee = (set->widevane == 0x80 || set->widevane == 0xaa || set->widevane == 0x28);
 
 		name = miel_hvac_map_byval(set->power, miel_hvac_power_map, nitems(miel_hvac_power_map));
 		if (name != NULL)
@@ -1396,16 +1487,16 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			ResponseAppend_P(PSTR(",\"SwingV\":\"%s\""), name);
 		}
 
-		name_swing_h = miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK, miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
-		if (name_swing_h != NULL)
-		{
-			ResponseAppend_P(PSTR(",\"SwingH\":\"%s\""), name_swing_h);
-		}
-
-		name = miel_hvac_map_byval(set->airdirection, miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map));
+		name = widevane_isee ? "isee" : miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK, miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"AirDirection\":\"%s\""), name_swing_h == "auto" ? name : "off");
+			ResponseAppend_P(PSTR(",\"SwingH\":\"%s\""), name);
+		}
+
+		name = widevane_isee ? miel_hvac_map_byval(set->airdirection, miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map)) : "off";
+		if (name != NULL)
+		{
+			ResponseAppend_P(PSTR(",\"AirDirection\":\"%s\""), name);
 		}
 
 		name = miel_hvac_map_byval(set->prohibit, miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map));
@@ -1557,10 +1648,10 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 enum miel_hvac_connect_states
 {
+	MIEL_HVAC_CONNECT_S_2400,
 	MIEL_HVAC_CONNECT_S_2400_MSG,
 	MIEL_HVAC_CONNECT_S_9600,
 	MIEL_HVAC_CONNECT_S_9600_MSG,
-	MIEL_HVAC_CONNECT_S_2400,
 	MIEL_HVAC_CONNECT_S_COUNT,
 };
 
@@ -1650,7 +1741,6 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
 static const char miel_hvac_cmnd_names[] PROGMEM =
 	// No prefix
 	"|" D_CMND_MIEL_HVAC_SETFANSPEED
@@ -1661,8 +1751,10 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 	"|" D_CMND_MIEL_HVAC_SETSWINGH
 	"|" D_CMND_MIEL_HVAC_SETAIRDIRECTION
 	"|" D_CMND_MIEL_HVAC_SETPROHIBIT
+	"|" D_CMND_MIEL_HVAC_SETPURIFY
 	"|" D_CMND_MIEL_HVAC_REMOTETEMP
 	"|" D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME
+	"|" D_CMND_MIEL_HVAC_SEND_COMMAND
 #ifdef MIEL_HVAC_DEBUG
 	"|"
 	"HVACRequest"
@@ -1678,8 +1770,10 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 	&miel_hvac_cmnd_setwidevane,
 	&miel_hvac_cmnd_setairdirection,
 	&miel_hvac_cmnd_setprohibit,
+	&miel_hvac_cmnd_setpurify,
 	&miel_hvac_cmnd_remotetemp,
 	&miel_hvac_cmnd_remotetemp_auto_clear_time,
+	&miel_hvac_cmnd_send_command,
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
 #endif
@@ -1687,18 +1781,15 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 
 bool Xdrv44(uint32_t function)
 {
-	bool result = false;
-	struct miel_hvac_softc *sc = miel_hvac_sc;
-
-	switch (function)
+	if (function == FUNC_PRE_INIT)
 	{
-	case FUNC_PRE_INIT:
 		miel_hvac_pre_init();
-		return (false);
+		return false;
 	}
 
+	struct miel_hvac_softc *sc = miel_hvac_sc;
 	if (sc == NULL)
-		return (false);
+		return false;
 
 	switch (function)
 	{
@@ -1706,8 +1797,7 @@ bool Xdrv44(uint32_t function)
 		miel_hvac_loop(sc);
 		break;
 	case FUNC_SET_DEVICE_POWER:
-		result = miel_hvac_set_power(sc);
-		break;
+		return miel_hvac_set_power(sc);
 	case FUNC_EVERY_250_MSECOND:
 		if (sc->sc_connected)
 			miel_hvac_tick(sc);
@@ -1718,7 +1808,9 @@ bool Xdrv44(uint32_t function)
 	case FUNC_EVERY_100_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_SECOND:
-		if (remotetemp_clear && ((millis() - remotetemp_last_call_time) > remotetemp_auto_clear_time || remotetemp_last_call_time == 0))
+		if (remotetemp_clear &&
+			(remotetemp_last_call_time == 0 ||
+			 millis() - remotetemp_last_call_time > remotetemp_auto_clear_time))
 		{
 			miel_hvac_remotetemp_auto_clear();
 		}
@@ -1731,13 +1823,12 @@ bool Xdrv44(uint32_t function)
 			miel_hvac_publish_settings(sc);
 		break;
 	case FUNC_COMMAND:
-		result = DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
-		break;
+		return DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
 	case FUNC_ACTIVE:
-		result = true;
-		break;
+		return true;
 	}
-	return (result);
+
+	return false;
 }
 
 #endif // USE_MIEL_HVAC
