@@ -249,6 +249,10 @@ static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_ca
   return xHigherPriorityTaskWoken == pdTRUE;
 }
 
+/*********************************************************************************************/
+// Overlay section - will later use Berry in the first place to provide overlays
+// maybe it will be possible to use the PPA for YUV modes in the future
+// Just keeping as reference for now
 
 /*********************************************************************************************/
 // MJPEG Processing Task - Dedicated FreeRTOS task for JPEG encoding and HTTP streaming
@@ -1384,12 +1388,12 @@ void HandleRtsp() {
 #define D_CMND_WC_QUALITY "Quality"
 #define D_CMND_WC_SESSION "Session"
 #define D_CMND_WC_RTP_DEST "RtpDest"
+#define D_CMND_WC_OVERLAY "Overlay"
 
-const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION "|" D_CMND_WC_RTP_DEST;
+const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|" D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION "|" D_CMND_WC_RTP_DEST "|" D_CMND_WC_OVERLAY;
 
 void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession, &CmndWcRtpDest
+  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession, &CmndWcRtpDest, &CmndWcOverlay
 };
 
 // Command handlers (mockup/stub implementations)
@@ -1649,6 +1653,25 @@ void CmndWcStop(void) {
   } else {
     ResponseCmndChar_P(PSTR("Already stopped or not initialized"));
   }
+}
+
+void CmndWcOverlay(void) { // just a mockup, we will probably have a Berry function in the future for maximum flexibility
+    /* 
+     * OVERLAY DISABLED: 
+     * Software implementation caused persistent image glitches (DMA/Cache contention).
+     * PPA Hardware Accelerator is required for robust blending, but YUV support 
+     * is missing in ESP-IDF 5.3 driver. Waiting for stable framework update to enable PPA.
+     */
+    if (XdrvMailbox.data_len > 0) {
+        if (XdrvMailbox.payload == 1) {
+            ResponseCmndChar_P(PSTR("On")); // Placeholder
+        } else {
+            // Ovl.active = false;
+            ResponseCmndChar_P(PSTR("Off"));
+        }
+    } else {
+        ResponseCmndChar_P(PSTR("Off"));
+    }
 }
 
 void CmndWcStatus(void) {
