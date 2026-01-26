@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Dingtian define `DINGTIAN_INPUTS_INVERTED` replaced by `SetOption81` (#24364)
 
 ### Fixed
+- Udisplay SPI driver display dimension parameters regression from v15.1.0.1 (#24376)
 
 ### Removed
 

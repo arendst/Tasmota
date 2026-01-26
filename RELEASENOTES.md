@@ -138,6 +138,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ScrubDNS() function [#23886](https://github.com/arendst/Tasmota/issues/23886)
 - GDK101 power on detection [#24242](https://github.com/arendst/Tasmota/issues/24242)
 - Udisplay backlight with SPI displays [#24277](https://github.com/arendst/Tasmota/issues/24277)
+- Udisplay SPI driver display dimension parameters regression from v15.1.0.1 [#24376](https://github.com/arendst/Tasmota/issues/24376)
 - Display ST77xx and Parallel issues introduced after refactor UDisplay [#24368](https://github.com/arendst/Tasmota/issues/24368)
 - DALI watchdog exception
 - TuyaMCU v1 exception 28 regression from v15.1.0.1 reverted PR24063 [#24220](https://github.com/arendst/Tasmota/issues/24220)

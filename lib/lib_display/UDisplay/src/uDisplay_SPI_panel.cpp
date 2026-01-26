@@ -14,6 +14,8 @@ SPIPanel::SPIPanel(const SPIPanelConfig& config,
     : spi(spi_ctrl), cfg(config), fb_buffer(framebuffer), 
       rotation(0), display_on(true), inverted(false)
 {
+    width = cfg.width;
+    height = cfg.height;
     // Initialize address window state
     window_x0 = 0;
     window_y0 = 0;
@@ -31,7 +33,7 @@ SPIPanel::~SPIPanel() {
 
 bool SPIPanel::drawPixel(int16_t x, int16_t y, uint16_t color) {
     // From original uDisplay::drawPixel - only handle direct SPI drawing for color TFTs
-    if ((x < 0) || (x >= cfg.width) || (y < 0) || (y >= cfg.height)) return true;
+    if ((x < 0) || (x >= width) || (y < 0) || (y >= height)) return true;
 
     // Only handle direct SPI drawing for color displays without framebuffer
     if (!fb_buffer && cfg.bpp >= 16) {
@@ -64,9 +66,9 @@ bool SPIPanel::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 bool SPIPanel::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
     // From original uDisplay::fillRect
-    if((x >= cfg.width) || (y >= cfg.height)) return true;
-    if((x + w - 1) >= cfg.width)  w = cfg.width - x;
-    if((y + h - 1) >= cfg.height) h = cfg.height - y;
+    if((x >= width) || (y >= height)) return true;
+    if((x + w - 1) >= width)  w = width - x;
+    if((y + h - 1) >= height) h = height - y;
 
     // Only handle direct SPI drawing for color displays without framebuffer
     if (!fb_buffer && cfg.bpp >= 16) {
@@ -327,6 +329,18 @@ bool SPIPanel::setRotation(uint8_t rot) {
         }
         spi->csHigh();
         spi->endTransaction();
+        switch (rotation) {
+            case 0:
+            case 2:
+                width = cfg.width;
+                height = cfg.height;
+                break;
+            case 1:
+            case 3:
+                width = cfg.height;
+                height = cfg.width;
+                break;
+        }
         return true;
     }
     spi->csHigh();
@@ -340,8 +354,8 @@ bool SPIPanel::updateFrame() {
     if (!fb_buffer || cfg.bpp != 1) return false;
     
     // OLED page-based framebuffer update (from original code)
-    uint8_t ys = cfg.height >> 3;
-    uint8_t xs = cfg.width >> 3;
+    uint8_t ys = height >> 3;
+    uint8_t xs = width >> 3;
     uint8_t m_row = cfg.cmd_set_addr_y; // saw_2 in original
     uint8_t m_col = 0; // i2c_col_start in original
 
