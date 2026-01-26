@@ -88,7 +88,7 @@ Examples :
 */
 
 
-
+#define USE_LD2410
 
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
