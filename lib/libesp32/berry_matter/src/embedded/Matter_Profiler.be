@@ -80,14 +80,14 @@ class Matter_Profiler
   def dump(loglevel)
     if !self.active  return end
     self.log("<--end-->")
-    tasmota.log("MTR: Profiler dump:", loglevel)
+    log("MTR: Profiler dump:", loglevel)
     var origin = self.millis[0]
     var allocs0 = self.allocs[0]
     var reallocs0 = self.reallocs[0]
     var idx = 1
     while idx < self.len
-      # tasmota.log(f"MTR:   {self.millis[idx] - origin:4i} [{self.allocs[idx] - allocs0:4i}|{self.reallocs[idx] - reallocs0:4i}]'{self.names[idx]}'", loglevel)
-      tasmota.log(f"MTR:   {self.millis[idx] - origin:4i} [{self.allocs[idx] - allocs0:4i}]'{self.names[idx]}'", loglevel)
+      # log(f"MTR:   {self.millis[idx] - origin:4i} [{self.allocs[idx] - allocs0:4i}|{self.reallocs[idx] - reallocs0:4i}]'{self.names[idx]}'", loglevel)
+      log(f"MTR:   {self.millis[idx] - origin:4i} [{self.allocs[idx] - allocs0:4i}]'{self.names[idx]}'", loglevel)
       idx += 1
     end
   end

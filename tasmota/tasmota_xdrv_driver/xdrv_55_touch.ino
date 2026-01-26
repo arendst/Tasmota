@@ -36,11 +36,7 @@
 \*******************************************************************************************/
 
 
-#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_GT911) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS) || defined(SIMPLE_RES_TOUCH)
-
-#ifdef USE_DISPLAY_LVGL_ONLY
-#undef USE_TOUCH_BUTTONS
-#endif
+#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_GT911) || defined(USE_LILYGO47) || defined(USE_UNIVERSAL_TOUCH) || defined(USE_TOUCH_BUTTONS) || defined(SIMPLE_RES_TOUCH)
 
 #include <renderer.h>
 
@@ -71,10 +67,12 @@ typedef struct TSGlobal_t {
 
 TSGlobal_t TSGlobal;
 
+bool CST816S_found = false;
 bool FT5206_found = false;
 bool GT911_found = false;
 bool XPT2046_found = false;
 bool SRES_found = false;
+bool utouch_found = false;
 
 #ifndef MAX_TOUCH_BUTTONS
 #define MAX_TOUCH_BUTTONS 16
@@ -84,20 +82,22 @@ bool SRES_found = false;
 VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
-void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t gesture) {
+void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t gesture, bool force_no_convert) {
   TSGlobal.external_ts = true;
   TSGlobal.gesture = gesture;
   TSGlobal.touches = touches;
   TSGlobal.touched = (TSGlobal.touches > 0);
   TSGlobal.touch_xp = TSGlobal.raw_touch_xp = raw_x;
   TSGlobal.touch_yp = TSGlobal.raw_touch_yp = raw_y;
-  TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
+  if (!force_no_convert) {
+    TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
+  }
 }
 
 // return true if succesful, false if not configured
 bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gesture,
                      uint16_t* raw_x, uint16_t* raw_y) {
-  if (TSGlobal.external_ts || FT5206_found || XPT2046_found) {
+  if (TSGlobal.external_ts || CST816S_found || FT5206_found || XPT2046_found || utouch_found) {
     if (touches)    { *touches = TSGlobal.touches; }
     if (x)          { *x = TSGlobal.touch_xp; }
     if (y)          { *y = TSGlobal.touch_yp; }
@@ -110,7 +110,7 @@ bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gestur
 }
 
 uint32_t Touch_Status(int32_t sel) {
-  if (TSGlobal.external_ts || FT5206_found || GT911_found || XPT2046_found || SRES_found) {
+  if (TSGlobal.external_ts || CST816S_found || FT5206_found || GT911_found || XPT2046_found || utouch_found || SRES_found) {
     switch (sel) {
       case 0:
         return  TSGlobal.touched;
@@ -128,11 +128,6 @@ uint32_t Touch_Status(int32_t sel) {
     return 0;
   }
 }
-
-#ifdef USE_M5STACK_CORE2
-uint8_t tbstate[3];
-#endif // USE_M5STACK_CORE2
-
 
 // simple resistive touch pins
 // with dma it should check for active transfers
@@ -185,6 +180,101 @@ int16_t SRES_y() {
 }
 #endif
 
+#ifdef USE_CST816S
+#undef CST816S_address
+#define CST816S_address 0x15
+
+bool CST816S_event_available = false;
+uint8_t CST816S_bus = 0;
+
+uint8_t CST816S_map_gesture(uint8_t gesture) {
+  switch (gesture) {
+    case 0x01: return TS_Gest_Move_Up;    // SWIPE_UP
+    case 0x02: return TS_Gest_Move_Down;  // SWIPE_DOWN
+    case 0x03: return TS_Gest_Move_Left;  // SWIPE_LEFT
+    case 0x04: return TS_Gest_Move_Right; // SWIPE_RIGHT
+    case 0x05: return TS_Gest_None;       // SINGLE_CLICK
+    case 0x0B: return TS_Gest_None;       // DOUBLE_CLICK
+    case 0x0C: return TS_Gest_None;       // LONG_PRESS
+    default: return TS_Gest_None;         // NONE
+  }
+}
+
+bool CST816S_available() {
+  if (CST816S_event_available) {
+    byte data_raw[8];
+    I2cReadBuffer(CST816S_address, 0x01, data_raw, 6, CST816S_bus);
+    TSGlobal.raw_touch_xp = ((data_raw[2] & 0xF) << 8) + data_raw[3];
+    TSGlobal.raw_touch_yp = ((data_raw[4] & 0xF) << 8) + data_raw[5];
+    TSGlobal.gesture = CST816S_map_gesture(data_raw[0]);
+    CST816S_event_available = false;
+    return true;
+  }
+  return false;
+}
+
+bool CST816S_Touch_Init(uint8_t bus, int8_t irq_pin, int8_t rst_pin, int interrupt = RISING) {
+  CST816S_found = false;
+  CST816S_bus = bus;
+  pinMode(irq_pin, INPUT);
+  pinMode(rst_pin, OUTPUT);
+  digitalWrite(rst_pin, HIGH);
+  delay(50);
+  digitalWrite(rst_pin, LOW);
+  delay(5);
+  digitalWrite(rst_pin, HIGH);
+  delay(50);
+  uint8_t version;
+  I2cReadBuffer(CST816S_address, 0x15, &version, 1, CST816S_bus);
+  delay(5);
+  uint8_t versionInfo[3];
+  I2cReadBuffer(CST816S_address, 0xA7, versionInfo, 3, CST816S_bus);
+  attachInterrupt(irq_pin, []{ CST816S_event_available = true; }, interrupt);
+  CST816S_found = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("UTI: CST816S, version: %d, versionInfo: %d.%d.%d"), version, versionInfo[0], versionInfo[1], versionInfo[2]);
+  return CST816S_found;
+}
+#endif // USE_CST816S
+
+
+#ifdef USE_UNIVERSAL_TOUCH
+
+void utouch_Touch_Init() {
+  if (renderer) {
+    char *name;
+    utouch_found = renderer->utouch_Init(&name);
+    if (utouch_found) {
+      AddLog(LOG_LEVEL_INFO, PSTR("UTI: %s initialized"), name);
+    }
+  }
+}
+
+bool utouch_touched() {
+  if (renderer) {
+    uint16 status = renderer->touched();
+    if (status & 1) {
+      TSGlobal.gesture = status >> 8;
+      return true;
+    }
+  }
+  return false;
+}
+int16_t utouch_x() {
+  if (renderer) {
+    return renderer->getPoint_x();
+  } else {
+    return 0;
+  }
+}
+int16_t utouch_y() {
+  if (renderer) {
+    return renderer->getPoint_y();
+  } else {
+    return 0;
+  }
+}
+#endif // USE_UNIVERSAL_TOUCH
+
 #ifdef USE_FT5206
 #include <FT5206.h>
 // touch panel controller
@@ -197,10 +287,10 @@ bool FT5206_Touch_Init(TwoWire &i2c) {
   FT5206_found = false;
   FT5206_touchp = new FT5206_Class();
   if (FT5206_touchp->begin(i2c, FT5206_address)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TI: FT5206"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UTI: FT5206 initialized"));
     FT5206_found = true;
   }
-  //AddLog(LOG_LEVEL_INFO, PSTR("TS: FT5206 %d"),FT5206_found);
+  //AddLog(LOG_LEVEL_INFO, PSTR("UTI: FT5206 %d"),FT5206_found);
   return FT5206_found;
 }
 
@@ -226,10 +316,10 @@ bool GT911_Touch_Init(TwoWire *i2c, int8_t irq_pin, int8_t rst_pin, uint16_t xs,
   GT911_found = false;
   GT911_touchp = new GT911();
   if (ESP_OK == GT911_touchp->begin(i2c, irq_pin, rst_pin, xs, ys)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TI: GT911"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UTI: GT911 initialized"));
     GT911_found = true;
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("TI: GT911 failed"));
+    AddLog(LOG_LEVEL_INFO, PSTR("UTI: GT911 failed"));
   }
   return GT911_found;
 }
@@ -307,6 +397,22 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   }
 #endif
 
+#ifdef USE_CST816S
+  if (CST816S_found) {
+    TSGlobal.touched = CST816S_available();
+  }
+#endif // USE_CST816S
+
+#ifdef USE_UNIVERSAL_TOUCH
+  if (utouch_found) {
+    TSGlobal.touched = utouch_touched();
+    if (TSGlobal.touched) {
+      TSGlobal.raw_touch_xp = utouch_x();
+      TSGlobal.raw_touch_yp = utouch_y();
+    }
+  }
+#endif // USE_UNIVERSAL_TOUCH
+
 #ifdef USE_FT5206
   if (FT5206_found) {
     TSGlobal.touched = FT5206_touched();
@@ -338,46 +444,14 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 
   if (TSGlobal.touched) {
     was_touched = true;
-#ifdef USE_TOUCH_BUTTONS
-#ifdef USE_M5STACK_CORE2
-    // handle  3 built in touch buttons
-    uint16_t xcenter = 80;
-#define TDELTA 30
-#define TYPOS 275
-    for (uint32_t tbut = 0; tbut < 3; tbut++) {
-      if (TSGlobal.touch_xp > (xcenter - TDELTA) && TSGlobal.touch_xp < (xcenter + TDELTA) && TSGlobal.touch_yp > (TYPOS - TDELTA) && TSGlobal.touch_yp < (TYPOS + TDELTA)) {
-        // hit a button
-        if (!(tbstate[tbut] & 1)) {
-          // pressed
-          tbstate[tbut] |= 1;
-          //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d pressed"), tbut);
-          Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
-        }
-      }
-      xcenter += 100;
-    }
-#endif  // USE_M5STACK_CORE2
-#endif // USE_TOUCH_BUTTONS
-
     rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
-    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : touched  x=%i y=%i gest=0x%02x (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.gesture, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
 
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(TSGlobal.touched, TSGlobal.touch_xp, TSGlobal.touch_yp);
 #endif // USE_TOUCH_BUTTONS
 
   } else {
-#ifdef USE_M5STACK_CORE2
-    for (uint32_t tbut = 0; tbut < 3; tbut++) {
-      if (tbstate[tbut] & 1) {
-        // released
-        tbstate[tbut] &= 0xfe;
-        Touch_MQTT(tbut, "BIB", tbstate[tbut] & 1);
-        //AddLog(LOG_LEVEL_INFO, PSTR("tbut: %d released"), tbut);
-      }
-    }
-#endif  // USE_M5STACK_CORE2
-
     rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);   // still do rot convert if not TSGlobal.touched
     if (was_touched) {
       AddLog(LOG_LEVEL_DEBUG_MORE, "TS : released x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
@@ -395,6 +469,9 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
 #ifdef USE_FT5206
   if (FT5206_found) ResponseTime_P(PSTR(",\"FT5206\":{\"%s%d\":\"%d\"}}"), cp, index + 1, val);
+#endif
+#ifdef USE_UNIVERSAL_TOUCH
+  if (utouch_found) ResponseTime_P(PSTR(",\"UTOUCH\":{\"%s%d\":\"%d\"}}"), cp, index + 1, val);
 #endif
 #ifdef USE_XPT2046
   if (XPT2046_found) ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index + 1, val);
@@ -522,9 +599,12 @@ bool Xdrv55(uint32_t function) {
     case FUNC_INIT:
       break;
     case FUNC_EVERY_100_MSECOND:
-      if (FT5206_found || XPT2046_found || GT911_found || SRES_found) {
+      if (CST816S_found || FT5206_found || XPT2046_found || GT911_found || utouch_found || SRES_found) {
         Touch_Check(TS_RotConvert);
       }
+      break;
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

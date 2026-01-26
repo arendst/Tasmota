@@ -14,15 +14,15 @@ extern "C" {
  *      INCLUDES
  *********************/
 #include "../lv_conf_internal.h"
-
-#include <stdint.h>
-#include <stdbool.h>
+#include "lv_types.h"
 
 /*********************
  *      DEFINES
  *********************/
 #define LV_FS_MAX_FN_LENGTH 64
 #define LV_FS_MAX_PATH_LENGTH 256
+
+#define LV_FS_CACHE_FROM_BUFFER   UINT32_MAX
 
 /**********************
  *      TYPEDEFS
@@ -31,7 +31,7 @@ extern "C" {
 /**
  * Errors in the file system module.
  */
-enum {
+typedef enum {
     LV_FS_RES_OK = 0,
     LV_FS_RES_HW_ERR,     /*Low level hardware error*/
     LV_FS_RES_FS_ERR,     /*Error in the file system structure*/
@@ -45,18 +45,15 @@ enum {
     LV_FS_RES_OUT_OF_MEM, /*Not enough memory for an internal operation*/
     LV_FS_RES_INV_PARAM,  /*Invalid parameter among arguments*/
     LV_FS_RES_UNKNOWN,    /*Other unknown error*/
-};
-typedef uint8_t lv_fs_res_t;
+} lv_fs_res_t;
 
 /**
  * File open mode.
  */
-enum {
+typedef enum {
     LV_FS_MODE_WR = 0x01,
     LV_FS_MODE_RD = 0x02,
-};
-typedef uint8_t lv_fs_mode_t;
-
+} lv_fs_mode_t;
 
 /**
  * Seek modes.
@@ -67,33 +64,26 @@ typedef enum {
     LV_FS_SEEK_END = 0x02,      /**< Set the position from the end of the file*/
 } lv_fs_whence_t;
 
-typedef struct _lv_fs_drv_t {
+struct _lv_fs_drv_t;
+typedef struct _lv_fs_drv_t lv_fs_drv_t;
+struct _lv_fs_drv_t {
     char letter;
-    uint16_t cache_size;
-    bool (*ready_cb)(struct _lv_fs_drv_t * drv);
+    uint32_t cache_size;
+    bool (*ready_cb)(lv_fs_drv_t * drv);
 
-    void * (*open_cb)(struct _lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode);
-    lv_fs_res_t (*close_cb)(struct _lv_fs_drv_t * drv, void * file_p);
-    lv_fs_res_t (*read_cb)(struct _lv_fs_drv_t * drv, void * file_p, void * buf, uint32_t btr, uint32_t * br);
-    lv_fs_res_t (*write_cb)(struct _lv_fs_drv_t * drv, void * file_p, const void * buf, uint32_t btw, uint32_t * bw);
-    lv_fs_res_t (*seek_cb)(struct _lv_fs_drv_t * drv, void * file_p, uint32_t pos, lv_fs_whence_t whence);
-    lv_fs_res_t (*tell_cb)(struct _lv_fs_drv_t * drv, void * file_p, uint32_t * pos_p);
+    void * (*open_cb)(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode);
+    lv_fs_res_t (*close_cb)(lv_fs_drv_t * drv, void * file_p);
+    lv_fs_res_t (*read_cb)(lv_fs_drv_t * drv, void * file_p, void * buf, uint32_t btr, uint32_t * br);
+    lv_fs_res_t (*write_cb)(lv_fs_drv_t * drv, void * file_p, const void * buf, uint32_t btw, uint32_t * bw);
+    lv_fs_res_t (*seek_cb)(lv_fs_drv_t * drv, void * file_p, uint32_t pos, lv_fs_whence_t whence);
+    lv_fs_res_t (*tell_cb)(lv_fs_drv_t * drv, void * file_p, uint32_t * pos_p);
 
-    void * (*dir_open_cb)(struct _lv_fs_drv_t * drv, const char * path);
-    lv_fs_res_t (*dir_read_cb)(struct _lv_fs_drv_t * drv, void * rddir_p, char * fn);
-    lv_fs_res_t (*dir_close_cb)(struct _lv_fs_drv_t * drv, void * rddir_p);
+    void * (*dir_open_cb)(lv_fs_drv_t * drv, const char * path);
+    lv_fs_res_t (*dir_read_cb)(lv_fs_drv_t * drv, void * rddir_p, char * fn, uint32_t fn_len);
+    lv_fs_res_t (*dir_close_cb)(lv_fs_drv_t * drv, void * rddir_p);
 
-#if LV_USE_USER_DATA
     void * user_data; /**< Custom file user data*/
-#endif
-} lv_fs_drv_t;
-
-typedef struct {
-    uint32_t start;
-    uint32_t end;
-    uint32_t file_position;
-    void * buffer;
-} lv_fs_file_cache_t;
+};
 
 typedef struct {
     void * file_d;
@@ -101,23 +91,26 @@ typedef struct {
     lv_fs_file_cache_t * cache;
 } lv_fs_file_t;
 
+
 typedef struct {
     void * dir_d;
     lv_fs_drv_t * drv;
 } lv_fs_dir_t;
+
+
+/** Extended path object to specify buffer for memory-mapped files */
+typedef struct {
+    char path[64];   /**<  Store the driver letter address and size*/
+} lv_fs_path_ex_t;
+
 
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 
 /**
- * Initialize the File system interface
- */
-void _lv_fs_init(void);
-
-/**
  * Initialize a file system driver with default values.
- * It is used to surly have known values in the fields ant not memory junk.
+ * It is used to ensure all fields have known values and not memory junk.
  * After it you can set the fields.
  * @param drv     pointer to driver variable to initialize
  */
@@ -133,7 +126,7 @@ void lv_fs_drv_register(lv_fs_drv_t * drv);
 
 /**
  * Give a pointer to a driver from its letter
- * @param letter    the driver letter
+ * @param letter    the driver-identifier letter
  * @return          pointer to a driver or NULL if not found
  */
 lv_fs_drv_t * lv_fs_get_drv(char letter);
@@ -154,6 +147,36 @@ bool lv_fs_is_ready(char letter);
  * @return          LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
 lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mode);
+
+/**
+ * Create a special object from buffer/ memory address which looks like a file and can be passed
+ * as path to `lv_fs_open` and other functions accepting a path.
+ *
+ * For example
+ * @code
+ *      //Create a PNG file from t a buffer and use it
+ *      lv_fs_path_ex_t p;
+ *      lv_fs_make_path_from_buffer(&p, 'A', my_buf, my_buf_size, "png");
+ *      lv_image_set_src(image1, &p);
+ *
+ * @endcode
+ * @param path      path to a lv_fs_path_ex object
+ * @param letter    the identifier letter of the driver. E.g. `LV_FS_MEMFS_LETTER`
+ * @param buf       address of the memory buffer
+ * @param size      size of the memory buffer in bytes
+ * @param ext       the extension, e.g. "png", if NULL no extension will be added.
+ */
+void lv_fs_make_path_from_buffer(lv_fs_path_ex_t * path, char letter, const void * buf, uint32_t size,
+                                 const char * ext);
+
+/**
+ * Get the buffer address and size from a path object
+ * @param path      pointer to an initialized `lv_fs_path_ex` data
+ * @param buffer    pointer to a `void *` variable to store the address
+ * @param size      pointer to an `uint32_t` data to store the size
+ * @return          LV_RESULT_OK: buffer and size are set; LV_RESULT_INVALID: an error happened.
+ */
+lv_result_t lv_fs_get_buffer_from_path(lv_fs_path_ex_t * path, void ** buffer, uint32_t * size);
 
 /**
  * Close an already opened file
@@ -186,7 +209,7 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
  * Set the position of the 'cursor' (read write pointer) in a file
  * @param file_p    pointer to a lv_fs_file_t variable
  * @param pos       the new position expressed in bytes index (0: start of file)
- * @param whence    tells from where set the position. See @lv_fs_whence_t
+ * @param whence    tells from where to set position. See lv_fs_whence_t
  * @return          LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
 lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos, lv_fs_whence_t whence);
@@ -194,10 +217,38 @@ lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos, lv_fs_whence_t whenc
 /**
  * Give the position of the read write pointer
  * @param file_p    pointer to a lv_fs_file_t variable
- * @param pos_p     pointer to store the position of the read write pointer
+ * @param pos       pointer to store the position of the read write pointer
  * @return          LV_FS_RES_OK or any error from 'fs_res_t'
  */
 lv_fs_res_t lv_fs_tell(lv_fs_file_t * file_p, uint32_t * pos);
+
+/**
+ * Get the size in bytes of an open file.
+ * The file read/write position will not be affected.
+ * @param file_p    pointer to a lv_fs_file_t variable
+ * @param size_res  pointer to store the file size
+ * @return          LV_FS_RES_OK or any error from `lv_fs_res_t`
+ */
+lv_fs_res_t lv_fs_get_size(lv_fs_file_t * file_p, uint32_t * size_res);
+
+/**
+ * Get the size in bytes of a file at the given path.
+ * @param path      the path of the file
+ * @param size_res  pointer to store the file size
+ * @return          LV_FS_RES_OK or any error from `lv_fs_res_t`
+ */
+lv_fs_res_t lv_fs_path_get_size(const char * path, uint32_t * size_res);
+
+/**
+ * Read the contents of a file at the given path into a buffer.
+ * @param buf        a buffer to read the contents of the file into
+ * @param buf_size   the size of the buffer and the amount to read from the file
+ * @param path       the path of the file
+ * @return           LV_FS_RES_OK on success, LV_FS_RES_UNKNOWN if fewer than
+ *                   `buf_size` bytes could be read from the file,
+ *                   or any error from `lv_fs_res_t`
+ */
+lv_fs_res_t lv_fs_load_to_buf(void * buf, uint32_t buf_size, const char * path);
 
 /**
  * Initialize a 'fs_dir_t' variable for directory reading
@@ -212,9 +263,10 @@ lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path);
  * The name of the directories will begin with '/'
  * @param rddir_p   pointer to an initialized 'fs_dir_t' variable
  * @param fn        pointer to a buffer to store the filename
+ * @param fn_len    length of the buffer to store the filename
  * @return          LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
-lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn);
+lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn, uint32_t fn_len);
 
 /**
  * Close the directory reading
@@ -250,6 +302,19 @@ char * lv_fs_up(char * path);
  * @return          pointer to the beginning of the last element in the path
  */
 const char * lv_fs_get_last(const char * path);
+
+/**
+ * Concatenate two path components and automatically add/remove a separator as needed.
+ * buf, buf_sz, and the return value are analogous to lv_snprintf
+ * @param buf     the buffer to place the result in
+ * @param buf_sz  the size of buf. At most buf_sz - 1 characters will be written to buf,
+ *                and a null terminator
+ * @param base    the first path component
+ * @param end     the second path component
+ * @return        the number of characters (not including the null terminator)
+ *                that would be written to buf, even if buf_sz-1 was smaller
+ */
+int lv_fs_path_join(char * buf, size_t buf_sz, const char * base, const char * end);
 
 /**********************
  *      MACROS

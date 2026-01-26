@@ -246,6 +246,9 @@ void PzemSnsInit(void)
     if (PzemSerial->hardwareSerial()) {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PZM: Serial UART%d"), PzemSerial->getUart());
+#endif
     Energy->phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
     Pzem.phase = 0;
     Pzem.read_state = 1;

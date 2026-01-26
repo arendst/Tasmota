@@ -32,13 +32,13 @@
 # - `cc.cmd_get_chip_id()` returns the chip ID
 #
 # - `cc.flash_read(addr, len)` reads `len` bytes from address `addr``
-#   len must be a multiple of 4 and less or equal than 128 bytes
+#   len must be less or equal than 128 bytes
 #   Returns a bytes() object
 #
 # - `cc.flash_crc32(addr, len)` returns the CRC32 of a flash region
 #
 # - `cc.flash_write(addr, data)` writes bytes to the flash
-#   `data` is a bytes() buffer, its len must be a multiple of 4 and less or equal than 128
+#   `data` is a bytes() buffer, its len must be less or equal than 128
 #   This call does not erase the flash, so it must have been erased before.
 #   The bootloader checks that the bytes were correctly written, i.e. that
 #   the appropriate bits were changed from `1` to `0`.
@@ -107,7 +107,6 @@ class cc2652_flasher
 
   # restart the MCU in BSL mode and establish communication
   def start(debug)
-    if debug == nil    debug = false end
     self.debug = bool(debug)
     self.reset_bsl()
     #
@@ -134,9 +133,9 @@ class cc2652_flasher
 
     self.ser.write(bytes("5555"))          # trigger auto baudrate detector
     var ret = self.recv_raw(100)
-    if self.debug print("ret=", ret) end
-    if ret != bytes('CC')
-      raise "protocol_error"
+    if self.debug print(f"reset_bsl ret='{ret}'") end
+    if ret[-1] != 0xCC
+      raise "protocol_error", f"received '{ret}'"
     end
   end
 
@@ -218,7 +217,7 @@ class cc2652_flasher
     if self.debug print("sending:", payload) end
     self.ser.write(payload)
     var ret = self.recv_raw(500)
-    if self.debug print("ret=", ret) end
+    if self.debug print(f"ret={ret}") end
     if no_response == true
       #ignore
       self.decode_ack(ret)
@@ -248,7 +247,6 @@ class cc2652_flasher
   end
 
   def cmd_memory_read(addr, len)
-    if (len % 4 != 0) raise "value_error", "len must be a multiple of 4" end
     if len > 128      raise "value_error", "len is bigger than 128" end
     var b = bytes("2A")
     b.add(addr, -4)
@@ -261,7 +259,6 @@ class cc2652_flasher
   # does not look to be implemented
   # def cmd_memory_write(addr, data)
   #   var sz = size(data)
-  #   if (sz % 4 != 0) raise "value_error", "len must be a multiple of 4" end
   #   if sz > 128      raise "value_error", "len is bigger than 128" end
   #   var b = bytes("2B")
   #   b.add(addr, -4)
@@ -273,7 +270,6 @@ class cc2652_flasher
   # end
 
   def cmd_download(addr, sz)
-    if (sz % 4 != 0) raise "value_error", "len must be a multiple of 4" end
     if sz > 128      raise "value_error", "len is bigger than 128" end
     var b = bytes("21")
     b.add(addr, -4)
@@ -285,7 +281,6 @@ class cc2652_flasher
 
   def cmd_send_data(data)
     var sz = size(data)
-    if (sz % 4 != 0) raise "value_error", "len must be a multiple of 4" end
     if sz > 128      raise "value_error", "len is bigger than 128" end
     var b = bytes("24")
     b += data
@@ -336,7 +331,6 @@ class cc2652_flasher
   # higher level
   def flash_write(addr, data)
     var sz = size(data)
-    if (sz % 4 != 0) raise "value_error", "len must be a multiple of 4" end
     if sz > 128      raise "value_error", "len is bigger than 128" end
 
     var ret

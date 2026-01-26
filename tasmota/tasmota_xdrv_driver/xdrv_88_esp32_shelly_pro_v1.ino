@@ -153,22 +153,25 @@ bool Xdrv88(uint32_t function) {
 
   if (FUNC_PRE_INIT == function) {
     ShellyProPreInit();
-    } else if (SPro.detected) {
-      switch (function) {
-        case FUNC_EVERY_SECOND:
-          ShellyProLedLinkWifiOff();
-          break;
-        case FUNC_SET_POWER:
-          ShellyProPower();
-          break;
-        case FUNC_LED_LINK:
-          ShellyProLedLink();
-          break;
-        case FUNC_INIT:
-          ShellyProInit();
-          break;
-      }
+  } else if (SPro.detected) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        ShellyProLedLinkWifiOff();
+        break;
+      case FUNC_SET_POWER:
+        ShellyProPower();
+        break;
+      case FUNC_LED_LINK:
+        ShellyProLedLink();
+        break;
+      case FUNC_INIT:
+        ShellyProInit();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
+  }
   return result;
 }
 

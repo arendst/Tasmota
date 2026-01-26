@@ -9,7 +9,7 @@ extern const bclass be_class_Driver;
 /********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
-be_local_closure(Driver_add_cmd,   /* name */
+be_local_closure(class_Driver_add_cmd,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -70,33 +70,27 @@ be_local_closure(Driver_add_cmd,   /* name */
 ** Solidified class: Driver
 ********************************************************************/
 be_local_class(Driver,
-    13,
+    14,
     NULL,
-    be_nested_map(14,
+    be_nested_map(15,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(web_add_console_button, 6), be_const_var(7) },
-        { be_const_key(web_add_config_button, -1), be_const_var(6) },
-        { be_const_key(button_pressed, 9), be_const_var(11) },
-        { be_const_key(every_second, 1), be_const_var(0) },
-        { be_const_key(web_add_handler, 11), be_const_var(2) },
-        { be_const_key(add_cmd, -1), be_const_closure(Driver_add_cmd_closure) },
-        { be_const_key(web_sensor, -1), be_const_var(9) },
-        { be_const_key(display, -1), be_const_var(12) },
-        { be_const_key(web_add_main_button, 2), be_const_var(4) },
-        { be_const_key(save_before_restart, -1), be_const_var(8) },
-        { be_const_key(web_add_management_button, 0), be_const_var(5) },
-        { be_const_key(every_100ms, 13), be_const_var(1) },
-        { be_const_key(json_append, -1), be_const_var(10) },
+        { be_const_key(web_add_config_button, 12), be_const_var(6) },
+        { be_const_key(web_add_main_button, -1), be_const_var(4) },
+        { be_const_key(web_add_handler, 10), be_const_var(2) },
+        { be_const_key(save_before_restart, 5), be_const_var(8) },
+        { be_const_key(add_cmd, -1), be_const_closure(class_Driver_add_cmd_closure) },
         { be_const_key(web_add_button, -1), be_const_var(3) },
+        { be_const_key(web_add_management_button, -1), be_const_var(5) },
+        { be_const_key(display, -1), be_const_var(13) },
+        { be_const_key(after_teleperiod, -1), be_const_var(11) },
+        { be_const_key(every_100ms, -1), be_const_var(1) },
+        { be_const_key(web_add_console_button, 13), be_const_var(7) },
+        { be_const_key(button_pressed, -1), be_const_var(12) },
+        { be_const_key(every_second, -1), be_const_var(0) },
+        { be_const_key(web_sensor, -1), be_const_var(9) },
+        { be_const_key(json_append, 1), be_const_var(10) },
     })),
     (bstring*) &be_const_str_Driver
 );
-/*******************************************************************/
-
-void be_load_Driver_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Driver);
-    be_setglobal(vm, "Driver");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

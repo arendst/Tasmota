@@ -3,6 +3,7 @@
  *******************************************************************/
 #include "be_constobj.h"
 #include <string.h>
+#include "be_ctypes.h"
 
 extern __attribute__((noreturn)) void be_raisef(bvm *vm, const char *except, const char *msg, ...);
 
@@ -33,62 +34,6 @@ int32_t bin_search_ctypes(const char * needle, const void * table, size_t elt_si
         return -1;
     }
 }
-
-enum {
-    ctypes_i32    =  14,
-    ctypes_i16    =  12,
-    ctypes_i8     =  11,
-    ctypes_u32    =   4,
-    ctypes_u16    =   2,
-    ctypes_u8     =   1,
-
-    // big endian
-    ctypes_be_i32 = -14,
-    ctypes_be_i16 = -12,
-    ctypes_be_i8  = -11,
-    ctypes_be_u32 =  -4,
-    ctypes_be_u16 =  -2,
-    ctypes_be_u8  =  -1,
-
-    // floating point
-    ctypes_float  =   5,
-    ctypes_double =  10,
-
-    // pointer
-    ctypes_ptr32  =   9,
-    ctypes_ptr64  =  -9,
-
-    ctypes_bf     =   0,    //bif-field
-};
-
-typedef struct be_ctypes_structure_item_t {
-    const char * name;
-    uint16_t  offset_bytes;
-    uint8_t   offset_bits : 3;
-    uint8_t   len_bits : 5;
-    int8_t    type : 5;
-    uint8_t   mapping : 3;
-} be_ctypes_structure_item_t;
-
-typedef struct be_ctypes_structure_t {
-    uint16_t  size_bytes;       /* size in bytes */
-    uint16_t  size_elt;         /* number of elements */
-    const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */
-    const be_ctypes_structure_item_t * items;
-} be_ctypes_structure_t;
-
-typedef struct be_ctypes_class_t {
-    const char * name;
-    const be_ctypes_structure_t * definitions;
-} be_ctypes_class_t;
-
-typedef struct be_ctypes_classes_t {
-    uint16_t  size;
-    const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */
-    const be_ctypes_class_t * classes;
-} be_ctypes_classes_t;
-
-// const be_ctypes_class_t * g_ctypes_classes = NULL;
 
 //
 // Constructor for ctypes structure
@@ -229,6 +174,15 @@ int be_ctypes_member(bvm *vm) {
             int32_t val = be_toint(vm, -1);
             be_pop(vm, 1);
             be_pushcomptr(vm, (void*) val);
+        } else if (ctypes_addr == member->type) {
+            be_getmember(vm, 1, "_buffer");   // self.get or self.geti
+            be_pushvalue(vm, 1);        // push self
+            be_call(vm, 1);
+            be_pop(vm, 1);
+            uint8_t *addr = (uint8_t*) be_tocomptr(vm, -1);
+            be_pop(vm, 1);
+            addr += member->offset_bytes;
+            be_pushcomptr(vm, addr);
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian
@@ -250,16 +204,21 @@ int be_ctypes_member(bvm *vm) {
             be_pop(vm, 3);
             // int result at top of stack
         }
-        // the int result is at top of the stack
+        // the int or comptr result is at top of the stack
         // check if we need an instance mapping
         if (member->mapping > 0 && definitions->instance_mapping) {
             const char * mapping_name = definitions->instance_mapping[member->mapping - 1];
             if (mapping_name) {
-                be_getglobal(vm, mapping_name);     // stack: class
-                be_pushvalue(vm, -2);               // stack: class, value
-                be_pushint(vm, -1);                 // stack; class, value, -1
-                be_call(vm, 2);                     // call constructor with 2 parameters
-                be_pop(vm, 2);                      // leave new instance on top of stack
+                int32_t found = be_find_global_or_module_member(vm, mapping_name);
+                if (found == 1) {
+                    // we have found only one element from a module, which is expected
+                    be_pushvalue(vm, -2);               // stack: class, value
+                    be_pushint(vm, -1);                 // stack; class, value, -1
+                    be_call(vm, 2);                     // call constructor with 2 parameters
+                    be_pop(vm, 2);                      // leave new instance on top of stack
+                } else {
+                    be_raisef(vm, "internal_error", "mapping for  '%s' not found", mapping_name);
+                }
             }
         }
         be_return(vm);
@@ -354,6 +313,9 @@ int be_ctypes_setmember(bvm *vm) {
             be_call(vm, 4);
             be_pop(vm, 5);
             be_return_nil(vm);
+        } else if (ctypes_addr == member->type) {
+            be_raisef(vm, "attribute_error", "class '%s' cannot assign to attribute '%s'",
+                    be_classname(vm, 1), be_tostring(vm, 2));
         } else {
             // general int support
             int size = member->type;       // eventually 1/2/4, positive if little endian, negative if big endian

@@ -25,9 +25,6 @@
 #include <stdlib.h>
 #include <Arduino.h>
 
-// #define strcmp_P(x, y) strcmp(x,y)
-// #define strcasecmp_P(x,y) strcasecmp(x,y)
-// #define pgm_read_byte(x)  (*(uint8_t*)(x))
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif

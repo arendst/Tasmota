@@ -665,7 +665,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
 // list of clusters that need bindings
 const uint8_t Z_bindings[] PROGMEM = {
   Cx0001, Cx0006, Cx0008, Cx0102, Cx0201, Cx0300,
-  Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
+  Cx0400, Cx0402, Cx0403, Cx0405, Cx0406, Cx040D,
   Cx0500, Cx0B04,
 };
 
@@ -884,7 +884,6 @@ int32_t ZNP_DataConfirm(int32_t res, const SBuffer &buf) {
 int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
   uint8_t           state = buf.get8(2);
   const char *      msg = nullptr;
-
   switch (state) {
     case ZDO_DEV_NWK_DISC:                        // 0x02
       msg = PSTR("Scanning Zigbee network");
@@ -908,6 +907,9 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
     case ZDO_DEV_NWK_ORPHAN:                      // 0x0A
       msg = PSTR("Device has lost its parent");
       break;
+    case ZDO_DEV_HOLD:
+      msg = PSTR("Failed to start in coordinator mode, try changing PanID");
+      break;
   };
 
   if (msg) {
@@ -921,6 +923,8 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
 
   if ((ZDO_DEV_END_DEVICE == state) || (ZDO_DEV_ROUTER == state) || (ZDO_DEV_ZB_COORD == state)) {
     return 0;         // device sucessfully started
+  } else if (ZDO_DEV_HOLD == state) {
+    return -2;        // device failed to start, try changing PanID
   } else {
     return -1;        // ignore
   }
@@ -1560,6 +1564,7 @@ const Z_autoAttributeReporting_t Z_autoAttributeReporting[] PROGMEM = {
   { 0x0403, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_PRESSURE    },      // Pressure (1 hPa)
   { 0x0405, 0x0000,       30,   USE_ZIGBEE_MAXTIME_SENSOR,  USE_ZIGBEE_AUTOBIND_HUMIDITY    },      // Humidity (1 %)
   { 0x0406, 0x0000,       10,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // Occupancy
+  { 0x040D, 0x0000,       60,   USE_ZIGBEE_MAXTIME_SENSOR,  0.00005 },  // CO2
   { 0x0500, 0x0002,        1,   USE_ZIGBEE_MAXTIME_SENSOR,    0 },      // ZoneStatus
 };
 
@@ -2274,10 +2279,10 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         attr.setUInt((Rtc.utc_time > START_VALID_TIME) ? 0x02 : 0x00);
         break;
       case 0x000A0002:    // TimeZone
-        attr.setUInt(Settings->toffset[0] * 60);
+        attr.setUInt(Rtc.time_timezone * 60);
         break;
       case 0x000A0007:    // LocalTime    // TODO take DST
-        attr.setUInt(Settings->toffset[0] * 60 + ((Rtc.utc_time > START_VALID_TIME) ? Rtc.utc_time - 946684800 : Rtc.utc_time));
+        attr.setUInt(Rtc.time_timezone * 60 + ((Rtc.utc_time > START_VALID_TIME) ? Rtc.utc_time - 946684800 : Rtc.utc_time));
         break;
     }
     if (!attr.isNone()) {

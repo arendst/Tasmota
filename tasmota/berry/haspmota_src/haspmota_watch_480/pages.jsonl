@@ -1,0 +1,29 @@
+{"page":0,"comment":"---------- Upper stat line ----------"}
+{"id":0,"text_color":"#FFFF44"}
+
+{"id":90,"obj":"flex","x":0,"y":0,"w%":100,"h":24,"bg_color":"#4f4f4f","bg_opa":255,"radius":0,"border_side":1,"border_width":1,"border_color":"#FFFF44","text_color":"#FFFF44"}
+  {"id":91,"obj":"label","parentid":90,"x":0,"y":0,"w":100,"h%":100,"long_mode":3,"text":"Tasmota","flex_grow":1}
+  {"id":92,"obj":"fixed","parentid":90,"w":102,"text_color":"#FFFF44"}
+    {"id":95,"parentid":92,"comment":"-- Clock --","obj":"lv_clock","x":0,"y":3,"w":55,"h":16,"radius":0,"border_side":0}
+    {"id":96,"parentid":92,"comment":"-- Battery indicator --","obj":"label","x":57,"y":0,"w":20,"h":20,"text":"\uE6A5","align":0,"text_font":"icons-18"}
+    {"id":97,"parentid":92,"comment":"-- Wifi indicator --","obj":"lv_wifi_arcs","x":73,"y":0,"w":29,"h":20,"radius":0,"border_side":0,"bg_color":"#000000","line_color":"#FFFF44"}
+
+{"comment":"---------- Bottom buttons - prev/home/next ----------"}
+{"id":100,"obj":"flex","x":0,"y%":84,"h%":16,"w%":100,"flex_main_place":3}
+  {"id":101,"obj":"btn","parentid":100,"w%":25,"h%":100,"action":"prev","bg_color":"#4f4f4f","text_color":"#FFFF44","radius":10,"text":"\uF053","text_font":"montserrat-20","border_width":3,"border_side":15,"border_color":"#FFFF44","border_opa":210}
+  {"id":102,"obj":"btn","parentid":100,"w%":25,"h%":100,"action":"back","bg_color":"#4f4f4f","text_color":"#FFFF44","radius":10,"text":"\uF015","text_font":"montserrat-20","border_width":3,"border_side":15,"border_color":"#FFFF44","border_opa":210}
+  {"id":103,"obj":"btn","parentid":100,"w%":25,"h%":100,"action":"next","bg_color":"#4f4f4f","text_color":"#FFFF44","radius":10,"text":"\uF054","text_font":"montserrat-20","border_width":3,"border_side":15,"border_color":"#FFFF44","border_opa":210}
+
+{"page":1,"comment":"---------- Page 1 Obj ----------"}
+{"id":0,"bg_color":"#000000","text_color":"#FFFFFF"}
+
+{"id":10,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"Demo of Renaissance watch 480x480","text_font":"montserrat-20"}
+
+{"page":100,"comment":"---------- Page 100 Renaissance Watch ----------"}
+{"id":0,"bg_color":"#000000","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#000000"}
+
+{"id":10,"obj":"img","src":"A:haspmota_watch_480.tapp#/ren_back_480.png","x":0,"y":0,"w":480,"h":480}
+{"id":15,"obj":"label","parentid":10,"x":367,"y":225,"w":36,"h":36,"text":"29","align":"right","text_font":"montserrat-28"}
+{"id":11,"obj":"img","parentid":10,"src":"A:/haspmota_watch_480.tapp#ren_hour_480.png","x":218,"y":94,"angle":-550}
+{"id":12,"obj":"img","parentid":10,"src":"A:/haspmota_watch_480.tapp#ren_min_480.png","angle":500}
+{"id":13,"obj":"img","parentid":10,"src":"A:/haspmota_watch_480.tapp#ren_sec_480.png","x":220,"y":20,"angle":1400,"hidden":true}

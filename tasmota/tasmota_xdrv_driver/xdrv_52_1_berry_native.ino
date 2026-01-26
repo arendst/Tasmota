@@ -110,6 +110,7 @@ void BrTimeoutStart(void)  {
   if (0 == berry.timeout) {
     berry.timeout = 1;    // rare case when value accidentally computes to zero
   }
+  yield();
 }
 
 void BrTimeoutYield(void) {

@@ -34,7 +34,7 @@ class A4988_Stepper {
     void  setRPM  (int   whatRPM     );
     int   getRPM  (void              );
 
-    void  setMIS  (short OneToSixteen);
+    void  setMIS  (short oneToSixteen);
     short getMIS  (void              );
 
     void  setSPR  (int   howMany     );

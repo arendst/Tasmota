@@ -32,7 +32,7 @@
 #endif
 
 #ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
-#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3 || defined CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_BLE_ESP32
 
 /*
@@ -108,6 +108,11 @@
       BLEEnableUnsaved
         *0/1 - if BLE is disabled, this can be used to enable BLE without
         it being saved - useful as the last command in autoexec.bat
+      BLEFilterNames
+        BLEFilterNames0 - clear filter list
+        BLEFilterNames1 - <name1>,<name2> - set one or more device names
+      BLEMinRssiLevel
+        BLEMinRssiLevel <value> - Sets the minimum allowable RSSI level for detected devices
 
   Other drivers can add callbacks to receive advertisements
   Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
@@ -134,6 +139,8 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 */
 
 #define BLE_ESP32_ALIASES
+#define BLE_ESP32_FILTER_BY_NAME
+#define BLE_ESP32_FILTER_BY_RSSI
 
 // uncomment for more diagnostic/information messages - + more flash use.
 //#define BLE_ESP32_DEBUG
@@ -147,12 +154,25 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 #include <NimBLEDevice.h>
 #include <NimBLEAdvertisedDevice.h>
-#include "NimBLEEddystoneURL.h"
+// #include "NimBLEEddystoneURL.h"
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
 
+// The LOG_LEVEL macros are used to set the log level for the NimBLE stack, but they pollute the global namespace and would override the loglevel enum of Tasmota.
+// So we undefine them here to avoid conflicts.
+#undef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_INFO
+#undef LOG_LEVEL_WARN
+#undef LOG_LEVEL_ERROR
+#undef LOG_LEVEL_CRITICAL
+#undef LOG_LEVEL_NONE
+
+// assume this hack is still valid.
+#define DEPENDSONNIMBLEARDUINO 1
+#ifdef DEPENDSONNIMBLEARDUINO        
 // from ble_gap.c
 extern "C" void ble_gap_conn_broken(uint16_t conn_handle, int reason);
+#endif
 
 #ifdef BLE_ESP32_EXAMPLES
 void installExamples();
@@ -243,7 +263,7 @@ struct generic_sensor_t {
 ////////////////////////////////////////////////////////////////
 // structure for callbacks from other drivers from advertisements.
 struct ble_advertisment_t {
-  BLEAdvertisedDevice *advertisedDevice; // the full NimBLE advertisment, in case people need MORE info.
+  const BLEAdvertisedDevice *advertisedDevice; // the full NimBLE advertisment, in case people need MORE info.
   uint32_t totalCount;
 
   uint8_t addr[6];
@@ -468,6 +488,12 @@ std::deque<BLE_ESP32::SCANCOMPLETE_CALLBACK*> scancompleteCallbacks;
 std::deque<BLE_ESP32::ble_alias_t*> aliases;
 #endif
 
+#ifdef BLE_ESP32_FILTER_BY_NAME
+std::vector<String> bleFilterNames;
+#endif
+#ifdef BLE_ESP32_FILTER_BY_RSSI
+int minRSSI = -100;
+#endif
 
 /*********************************************************************************************\
  * constants
@@ -476,7 +502,7 @@ std::deque<BLE_ESP32::ble_alias_t*> aliases;
 #define D_CMND_BLE "BLE"
 
 const char kBLE_Commands[] PROGMEM = D_CMND_BLE "|"
-  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved";
+  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved|FilterNames|MinRssiLevel";
 
 static void CmndBLEPeriod(void);
 static void CmndBLEAdv(void);
@@ -491,6 +517,8 @@ static void CmndBLEDevices(void);
 static void CmndBLEMaxAge(void);
 static void CmndBLEAddrFilter(void);
 static void CmndBLEEnableUnsaved(void);
+static void CmndBleFilterNames(void);
+static void CmndSetMinRSSI(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEPeriod,
@@ -505,7 +533,9 @@ void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEDevices,
   &BLE_ESP32::CmndBLEMaxAge,
   &BLE_ESP32::CmndBLEAddrFilter,
-  &BLE_ESP32::CmndBLEEnableUnsaved
+  &BLE_ESP32::CmndBLEEnableUnsaved,
+  &BLE_ESP32::CmndBleFilterNames,
+  &BLE_ESP32::CmndSetMinRSSI
 };
 
 const char *successStates[] PROGMEM = {
@@ -1124,7 +1154,24 @@ void ReverseMAC(uint8_t _mac[]){
 }
 
 
-
+/**
+ * @brief Search for device name in filer list
+ *
+ * @param deviceName device name string 
+ */
+#ifdef BLE_ESP32_FILTER_BY_NAME
+bool isDeviceInFilter(const String& deviceName) {
+#ifdef BLE_ESP32_DEBUG
+    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Device chcked in filter %s"), deviceName);
+#endif  
+  for (const auto& filterName : bleFilterNames) {
+    if (deviceName == filterName) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
 
 /*********************************************************************************************\
  * Advertisment details
@@ -1194,10 +1241,10 @@ void setDetails(ble_advertisment_t *ad){
     maxlen -= len;
   }
 
-  BLEAdvertisedDevice *advertisedDevice = ad->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = ad->advertisedDevice;
 
-  uint8_t* payload = advertisedDevice->getPayload();
-  size_t payloadlen = advertisedDevice->getPayloadLength();
+  const uint8_t* payload = advertisedDevice->getPayload().data();
+  size_t payloadlen = advertisedDevice->getPayload().size();
   if (payloadlen  && (maxlen > 30)){ // will truncate if not enough space
     strcpy(p, ",\"p\":\"");
     p += 6;
@@ -1286,7 +1333,7 @@ class BLESensorCallback : public NimBLEClientCallbacks {
     if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
   }
-  void onDisconnect(NimBLEClient* pClient) {
+  void onDisconnect(NimBLEClient* pClient, int reason) {
 #ifdef BLE_ESP32_DEBUG
     if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
@@ -1328,8 +1375,12 @@ class BLESensorCallback : public NimBLEClientCallbacks {
 static BLESensorCallback clientCB;
 
 
-class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
-  void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
+class BLEAdvCallbacks: public NimBLEScanCallbacks {
+  void onScanEnd(const NimBLEScanResults& results, int reason) {
+    BLEscanEndedCB(results);
+  }
+
+  void onResult(const NimBLEAdvertisedDevice* advertisedDevice) {
     TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEAddCB");
     uint64_t now = esp_timer_get_time();
     BLEScanLastAdvertismentAt = now; // note the time of the last advertisment
@@ -1346,7 +1397,7 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 
     BLEAdvertisment.addrtype = address.getType();
 
-    memcpy(BLEAdvertisment.addr, address.getNative(), 6);
+    memcpy(BLEAdvertisment.addr, address.getVal(), 6);
     ReverseMAC(BLEAdvertisment.addr);
 
     BLEAdvertisment.RSSI = RSSI;
@@ -1364,9 +1415,24 @@ class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
       BLEAdvertisment.name[sizeof(BLEAdvertisment.name)-1] = 0;
     }
 
+    int filter = 0;
+#ifdef BLE_ESP32_FILTER_BY_NAME
+    if (!bleFilterNames.empty()) {
+      if (!advertisedDevice->haveName() || !isDeviceInFilter(namestr))
+      {
+        filter = 1;
+      }
+    }
+#endif
+
+#ifdef BLE_ESP32_FILTER_BY_RSSI
+    if (advertisedDevice->getRSSI() < minRSSI) { 
+      filter = 1;
+    }
+#endif
 
     // log this device safely
-    if (BLEAdvertisment.addrtype <= BLEAddressFilter){
+    if ((BLEAdvertisment.addrtype <= BLEAddressFilter) && (0 == filter) ){
       addSeenDevice(BLEAdvertisment.addr, BLEAdvertisment.addrtype, BLEAdvertisment.name, BLEAdvertisment.RSSI);
     }
 
@@ -1472,7 +1538,7 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
   if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Notified length: %u"),length);
 #endif
   // find the operation this is associated with
-  NimBLERemoteService *pSvc = pRemoteCharacteristic->getRemoteService();
+  const NimBLERemoteService *pSvc = pRemoteCharacteristic->getRemoteService();
 
   if (!pSvc){
 #ifdef BLE_ESP32_DEBUG
@@ -1660,7 +1726,7 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 #endif
 
     if (ble32Scan){
-      ble32Scan->setAdvertisedDeviceCallbacks(nullptr,true);
+      ble32Scan->setScanCallbacks(nullptr,true);
       ble32Scan->stop();
       ble32Scan = nullptr;
     }
@@ -1684,7 +1750,9 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
      */
     (*ppClient)->setConnectionParams(12,12,0,51);
     /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
-    (*ppClient)->setConnectTimeout(15);
+    // this is now in ms!!!! despite docs.
+    // let's just leave it at the default 30s?
+    //(*ppClient)->setConnectTimeout(15 * 1000);
   }
 
   uint64_t now = esp_timer_get_time();
@@ -1719,7 +1787,8 @@ int BLETaskStartScan(int time){
 #endif
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   ble32Scan->setActiveScan(BLEScanActiveMode ? 1: 0);
-
+  // we read the results dynamically as they come in.
+  ble32Scan->setMaxResults(0);
 
   // seems we could get the callback within the start call....
   // so set these before starting
@@ -1729,7 +1798,11 @@ int BLETaskStartScan(int time){
     time = BLETriggerScan;
     BLETriggerScan = 0;
   }
-  ble32Scan->start(time, BLEscanEndedCB, (BLEScanActiveMode == 2)); // 20s scans, restarted when then finish
+
+  // note: this is documented as being seconds.  However, experience and Apache docs tells us ms.
+  time = time * 1000;
+  ble32Scan->start(time, false); // 20s scans, restarted when then finish
+  
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   return 0;
 }
@@ -1846,6 +1919,10 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   int newstate = GEN_STATE_STARTED;
   op->state = GEN_STATE_STARTED;
 
+  char addrstr[13];
+  const uint8_t* m_address = op->addr.getVal();
+  snprintf(addrstr, sizeof(addrstr), "%02X%02X%02X%02X%02X%02X", m_address[5], m_address[4], m_address[3], m_address[2], m_address[1], m_address[0]);
+
 #ifdef BLE_ESP32_DEBUG
   if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: attempt connect %s"), ((std::string)op->addr).c_str());
 #endif
@@ -1890,12 +1967,27 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got notify characteristic"));
 #endif
           op->notifylen = 0;
+          bool response = false;
+
+          /* although it FEELS like this would do the job, it does not for EQ3.
+          // when SHOULD we pass the default true?  Is it just that EQ3 is a bad BLE implementation?
+          bool response = true;
+          if (pNCharacteristic->canWriteNoResponse()){
+            response = false;
+          }
+          */
+          uint8_t props = pNCharacteristic->getProperties();
+#ifdef BLE_ESP32_DEBUG
+          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: characteristic props 0x%02X"), props);
+#endif
+
           if(pNCharacteristic->canNotify()) {
             uint64_t now = esp_timer_get_time();
             op->notifytimer = now;
-            if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB)) {
+
+            if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB, response)) {
 #ifdef BLE_ESP32_DEBUG
-              if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for notify"));
+              if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for notify - resp %d"), response? 1:0);
 #endif
               // this will get changed to read or write,
               // but here in case it's notify only (can that happen?)
@@ -1903,7 +1995,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
               waitNotify = true;
             } else {
 #ifdef BLE_ESP32_DEBUG
-              AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for notify"));
+              AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for notify - resp %d"), response? 1:0);
 #endif
               newstate = GEN_STATE_FAILED_NOTIFY;
               op->notifytimer = 0L;
@@ -1912,15 +2004,15 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
             if(pNCharacteristic->canIndicate()) {
               uint64_t now = esp_timer_get_time();
               op->notifytimer = now;
-              if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB)) {
+              if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB, response)) {
 #ifdef BLE_ESP32_DEBUG
-                AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for indicate"));
+                AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for indicate - resp %d"), response? 1:0);
 #endif
                 notifystate = GEN_STATE_WAITINDICATE;
                 waitNotify = true;
               } else {
 #ifdef BLE_ESP32_DEBUG
-                AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for indicate"));
+                AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for indicate - resp %d"), response? 1:0);
 #endif
                 newstate = GEN_STATE_FAILED_INDICATE;
                 op->notifytimer = 0L;
@@ -2037,29 +2129,25 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
   } else { // connect itself failed
     newstate = GEN_STATE_FAILED_CONNECT;
-//#define NIMBLE_CLIENT_HAS_RESULT 1
-#ifdef NIMBLE_CLIENT_HAS_RESULT
-    int rc = pClient->m_result;
+    int rc = pClient->getLastError();
 
     switch (rc){
       case (0x0200+BLE_ERR_CONN_LIMIT ):
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Hit connection limit? - restarting NimBLE"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Hit connection limit? - restarting NimBLE"), addrstr);
         BLERestartNimBLE = 1;
         BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_LIMIT;
         break;
       case (0x0200+BLE_ERR_ACL_CONN_EXISTS):
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Connection exists? - restarting NimBLE"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Connection exists? - restarting NimBLE"), addrstr);
         BLERestartNimBLE = 1;
         BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_EXISTS;
         break;
     }
     if (rc){
-      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device low level rc 0x%x"), rc);
+      AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Failed to connect to device low level rc 0x%X"), addrstr, rc);
     }
-#else
     // failed to connect
-    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device"));
-#endif
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Failed to connect to device"), addrstr);
   }
   op->state = newstate;
 }
@@ -2090,8 +2178,10 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
       }
       waits++;
       if (waits == 5){
-        int conn_id = (*ppClient)->getConnId();
+        int conn_id = (*ppClient)->getConnHandle();
+#ifdef DEPENDSONNIMBLEARDUINO        
         ble_gap_conn_broken(conn_id, -1);
+#endif        
 #ifdef BLE_ESP32_DEBUG
         AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
 #endif
@@ -2163,7 +2253,7 @@ static void BLEOperationTask(void *pvParameters){
         //ble32Scan->setWindow(50);
         ble32Scan->setInterval(0x40);
         ble32Scan->setWindow(0x20);
-        ble32Scan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
+        ble32Scan->setScanCallbacks(&BLEScanCallbacks,true);
       }
 
       BLE_ESP32::BLETaskStartScan(20);
@@ -2398,7 +2488,7 @@ int extQueueOperation(BLE_ESP32::generic_sensor_t** op){
   }
 
   if (!BLEMasterEnable){
-    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: extQueueOperation: BLE is deiabled"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLE: extQueueOperation: BLE is disabled"));
     return 0;
   }
 
@@ -2587,7 +2677,7 @@ void CmndBLEAdv(void){
 
 
 //////////////////////////////////////////////////////////////
-// Determine what to do with advertismaents
+// Determine what to do with advertisements
 // BLEAdv0 -> suppress MQTT about devices found
 // BLEAdv1 -> send MQTT about devices found after each scan
 void CmndBLEDebug(void){
@@ -2634,10 +2724,10 @@ void CmndBLEAddrFilter(void){
 
 //////////////////////////////////////////////////////////////
 // Scan options
-// BLEScan0 -> do a scan now if BLEMode == BLEModeScanByCommand
-// BLEScan0 <timesec> -> do a scan now if BLEMode == BLEModeScanByCommand for timesec seconds
-// BLEScan1 0 -> Scans are passive
-// BLEScan1 1 -> Scans are active
+// BLEScan0 0 -> Scans are passive
+// BLEScan0 1 -> Scans are active
+// BLEScan1 -> do a scan now if BLEMode == BLEModeScanByCommand
+// BLEScan1 <timesec> -> do a scan now if BLEMode == BLEModeScanByCommand for timesec seconds
 // more options could be added...
 void CmndBLEScan(void){
   switch(XdrvMailbox.index){
@@ -2805,6 +2895,58 @@ void CmndBLEDetails(void){
 }
 
 
+void CmndBleFilterNames(void) {
+#ifdef BLE_ESP32_FILTER_BY_NAME
+  int op = XdrvMailbox.index;
+#ifdef BLE_ESP32_DEBUG
+  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Name %d %s"), op, XdrvMailbox.data);
+#endif
+
+  switch(op){
+    case 0:{
+      bleFilterNames.clear();
+      ResponseCmndDone();      
+    } break;
+    case 1:{
+      if (XdrvMailbox.data_len) {
+        String filters = XdrvMailbox.data;
+        bleFilterNames.clear();
+        
+        int start = 0;
+        int end = filters.indexOf(',');
+        while (end != -1) {
+          bleFilterNames.push_back(filters.substring(start, end));
+          start = end + 1;
+          end = filters.indexOf(',', start);
+        }
+        bleFilterNames.push_back(filters.substring(start));
+        
+        Response_P(PSTR("{\"BLEFilterNames\":\"%s\"}"), filters.c_str());
+      } else {
+        String filterList;
+        for (const auto& name : bleFilterNames) {
+          if (!filterList.isEmpty()) {
+            filterList += ", ";
+          }
+          filterList += name;
+        }
+
+        Response_P(PSTR("{\"BLEFilterNames\":\"%s\"}"), filterList.c_str());
+      }
+    } break;
+  }
+#endif
+}
+
+void CmndSetMinRSSI(void) {
+#ifdef BLE_ESP32_FILTER_BY_RSSI  
+  if (XdrvMailbox.data_len) {
+    minRSSI = atoi(XdrvMailbox.data);
+  } 
+  Response_P(PSTR("{\"MinRSSI\":\"%d\"}"), minRSSI);
+#endif
+}
+
 void CmndBLEAlias(void){
 #ifdef BLE_ESP32_ALIASES
   int op = XdrvMailbox.index;
@@ -2848,7 +2990,7 @@ void CmndBLEAlias(void){
           return;
         }
 
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Add Alias mac %s = name %s"), mac, p);
+        AddLog(LOG_LEVEL_INFO, PSTR("BLE: Add Alias mac %s = name %s"), mac, p);
         if (addAlias( addr, name )){
           added++;
         }
@@ -3123,7 +3265,6 @@ static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
   nextSeenDev = 0;
 
-#ifdef MQTT_DATA_STRING
   int maxlen = 1024;
   char dest[maxlen];
   do {
@@ -3132,20 +3273,6 @@ static void BLEPostMQTTSeenDevices(int type) {
     // no retain - this is present devices, not historic
     MqttPublishPrefixTopicRulesProcess_P((1 == type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
-#else
-  memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
-  int timelen = ResponseTime_P(PSTR(""));
-  char *dest = TasmotaGlobal.mqtt_data + timelen;
-  int maxlen = ResponseSize() -20 -timelen;
-
-//  if (!TasmotaGlobal.ota_state_flag){
-  do {
-    remains = getSeenDevicesToJson(dest, maxlen);
-    // no retain - this is present devices, not historic
-    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
-  } while (remains);
-//  }
-#endif
 }
 
 static void BLEPostMQTT(bool onlycompleted) {
@@ -3398,7 +3525,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   if (toSend->addr != NimBLEAddress()){
     out = out + "\",\"MAC\":\"";
     uint8_t addrrev[6];
-    memcpy(addrrev, toSend->addr.getNative(), 6);
+    memcpy(addrrev, toSend->addr.getVal(), 6);
     ReverseMAC(addrrev);
     dump(temp, 13, addrrev, 6);
     out = out + temp;
@@ -3452,26 +3579,19 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_BLE "ble"
-#define D_CONFIGURE_BLE "Configure BLE"
-#define D_BLE_PARAMETERS "Bluetooth Settings"
-#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
-#define D_BLE_DEVICES "Devices Seen"
 
-const char HTTP_BTN_MENU_BLE[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_BLE "' method='get'><button>" D_CONFIGURE_BLE "</button></form></p>";
+//const char HTTP_BTN_MENU_BLE[] PROGMEM =
+//  "<p></p><form action='" WEB_HANDLE_BLE "' method='get'><button>" D_CONFIGURE_BLE "</button></form>";
 
 const char HTTP_FORM_BLE[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_BLE_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='" WEB_HANDLE_BLE "'>"
-  "<p><label><input id='e0' type='checkbox'%s><b>" D_MQTT_BLE_ENABLE "</b></label></p>"
-  "<p><label><input id='e1' type='checkbox'%s><b>" D_MQTT_BLE_ACTIVESCAN "</b></label></p>"
-  "<p>items marked (*) are not stored in config</p>";
+  "<p><label><input id='e0' type='checkbox'%s><b>" D_BLE_ENABLE "</b></label></p>"
+  "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label></p>"
+  "<p>" D_BLE_REMARK "</p>";
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";
 const char HTTP_BLE_DEV_START[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_BLE_DEVICES "&nbsp;</b></legend><table>"
+  "<table>"
   "<tr><th><label>mac(type)</label></th><th><label>alias</label></th><th><label>name</label></th><th><label>RSSI</label></th><th><label>Age(max)</label></th></tr>";
 const char HTTP_BLE_DEV[] PROGMEM =
   "<tr><td><label>%s(%d)</label></td><td><label>%s</label></td><td><label>%s</label></td><td><label>%d</label></td><td><label>%d(%d)</label></td></tr>";
@@ -3522,6 +3642,8 @@ void HandleBleConfiguration(void)
   WSContentStart_P(PSTR(D_CONFIGURE_BLE));
   WSContentSendStyle_P(HTTP_BLE_DEV_STYLE);
   //WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_BLE_PARAMETERS));
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR(WEB_HANDLE_BLE));
   WSContentSend_P(HTTP_FORM_BLE,
     (Settings->flag5.mi32_enable) ? " checked" : "",
     (BLEScanActiveMode) ? " checked" : ""
@@ -3533,6 +3655,7 @@ void HandleBleConfiguration(void)
     //TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEConf");
     int number = seenDevices.size();
     if (number){
+      WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_BLE_DEVICES));
       WSContentSend_P(HTTP_BLE_DEV_START);
       uint64_t now = esp_timer_get_time();
       now = now/1000L;
@@ -3628,12 +3751,16 @@ bool Xdrv79(uint32_t function)
 */
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
-      WSContentSend_P(BLE_ESP32::HTTP_BTN_MENU_BLE);
+//      WSContentSend_P(BLE_ESP32::HTTP_BTN_MENU_BLE);
+      WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_BLE), PSTR(D_CONFIGURE_BLE));
       break;
     case FUNC_WEB_ADD_HANDLER:
       WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   return result;
 }

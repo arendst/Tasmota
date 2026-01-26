@@ -465,6 +465,9 @@ bool Xdrv21(uint32_t function)
       case FUNC_NETWORK_DOWN:
         UdpDisconnect();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

@@ -52,7 +52,14 @@ void BuzzerSet(uint32_t state) {
     if (last_state != state) {
       // Set 50% duty cycle for frequency output
       // Set 0% (or 100% for inverted PWM) duty cycle which turns off frequency output either way
-      analogWrite(Pin(GPIO_BUZZER), (state) ? Settings->pwm_range / 2 : 0);  // set duty cycle for frequency output
+#ifdef ESP8266
+      AnalogWrite(Pin(GPIO_BUZZER), (state) ? Settings->pwm_range / 2 : 0);  // set duty cycle for frequency output
+#else
+      int32_t pin = Pin(GPIO_BUZZER);
+      if (analogAttach(pin, Buzzer.inverted) >= 0) {
+        analogWritePhase(pin, (state) ? Settings->pwm_range / 2 : 0, 0);
+      }
+#endif
       last_state = state;
     }
   } else {
@@ -245,6 +252,9 @@ bool Xdrv24(uint32_t function) {
         break;
       case FUNC_PIN_STATE:
         result = BuzzerPinState();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

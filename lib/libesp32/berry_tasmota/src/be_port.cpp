@@ -100,6 +100,57 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
 
 // provides MPATH_ constants
 #include "be_port.h"
+
+#ifdef USE_UFILESYS
+// Callback context for listing archive files
+struct ZipListContext {
+    bvm *vm;
+};
+
+// Callback function for ZipArchiveIterator
+static bool _zip_list_callback(const char *filename, void *user_data) {
+    ZipListContext *ctx = (ZipListContext *)user_data;
+    be_pushstring(ctx->vm, filename);
+    be_data_push(ctx->vm, -2);
+    be_pop(ctx->vm, 1);
+    return true;  // continue iteration
+}
+
+// Helper function to list files in a ZIP archive
+// Returns true if the path ends with '#' and archive listing was attempted
+// The list object should already be on the Berry stack
+static bool _be_list_archive_files(bvm *vm, const char *path) {
+    size_t path_len = strlen(path);
+    if (path_len == 0 || path[path_len - 1] != '#') {
+        return false;  // not an archive path
+    }
+
+    // Extract the archive path (without the trailing '#')
+    char archive_path[path_len + 2];
+    if (path[0] == '/') {
+        strncpy(archive_path, path, path_len - 1);
+        archive_path[path_len - 1] = '\0';
+    } else {
+        archive_path[0] = '/';
+        strncpy(archive_path + 1, path, path_len - 1);
+        archive_path[path_len] = '\0';
+    }
+
+    // Open the archive file
+    File zipfile = ffsp->open(archive_path, "r");
+    if (!zipfile) {
+        return true;  // path ends with '#' but archive not found, return empty list
+    }
+
+    // Use ZipArchiveIterator from Zip-readonly-FS module
+    ZipListContext ctx = { vm };
+    ZipArchiveIterator(zipfile, _zip_list_callback, &ctx);
+
+    zipfile.close();
+    return true;
+}
+#endif // USE_UFILESYS
+
 extern "C" {
     // this combined action is called from be_path_tasmota_lib.c
     // by using a single function, we save >200 bytes of flash
@@ -119,7 +170,8 @@ extern "C" {
                 break;
         }
 
-        if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
+        int argc = be_top(vm);
+        if (argc >= 1 && be_isstring(vm, 1)) {
             const char *path = be_tostring(vm, 1);
             if (path != nullptr) {
                 switch (action){
@@ -135,9 +187,25 @@ extern "C" {
                     case MPATH_MKDIR:
                         res = zip_ufsp.mkdir(path);
                         break;
+                    case MPATH_RENAME:
+                        {
+                            if (argc >= 2 && be_isstring(vm, 2)) {
+                                const char *path2 = be_tostring(vm, 2);
+                                res = zip_ufsp.rename(path, path2);
+                            } else {
+                                res = -1;
+                            }
+                        }
+                        break;
                     case MPATH_LISTDIR:
-                        be_newobject(vm, "list"); // add our list object and fall through
+                        be_newobject(vm, "list"); // add our list object
                         returnit = 1;
+                        // Check if path ends with '#' for archive listing
+                        if (_be_list_archive_files(vm, path)) {
+                            // Archive listing handled, skip normal directory listing
+                            break;
+                        }
+                        // Fall through to normal directory listing
                     case MPATH_ISDIR:
                     case MPATH_MODIFIED: {
                         //isdir needs to open the file, listdir does not
@@ -205,7 +273,10 @@ extern "C" {
 
 BERRY_API char* be_readstring(char *buffer, size_t size)
 {
-    return be_fgets(stdin, buffer, (int)size);
+    if ((size > 0) && (buffer != NULL)) {
+        *buffer = 0;
+    }
+    return buffer;
 }
 
 /* use the standard library implementation file API. */
@@ -301,11 +372,13 @@ char* be_fgets(void *hfile, void *buffer, int size)
     uint8_t * buf = (uint8_t*) buffer;
     if (hfile != nullptr && buffer != nullptr && size > 0) {
         File * f_ptr = (File*) hfile;
-        int ret = f_ptr->readBytesUntil('\n', buf, size - 2);
-        // Serial.printf("be_fgets ret=%d\n", ret);
+        int ret = f_ptr->readBytesUntil('\n', buf, size - 1);
+        // Serial.printf("be_fgets size=%d ret=%d, tell=%i, fsize=%i\n", size, ret, f_ptr->position(), f_ptr->size());
         if (ret >= 0) {
             buf[ret] = 0;           // add string terminator
-            if (ret > 0 && ret < size - 2) {
+            if ((ret == 0) && (f_ptr->position() >= f_ptr->size())) {
+                return NULL;
+            } else if (ret < size - 1) {
                 buf[ret] = '\n';
                 buf[ret+1] = 0;
             }
@@ -313,7 +386,7 @@ char* be_fgets(void *hfile, void *buffer, int size)
         }
     }
 #endif // USE_UFILESYS
-    return nullptr;
+    return NULL;
     // return fgets(buffer, size, hfile);
 }
 

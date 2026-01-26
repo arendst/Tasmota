@@ -1063,6 +1063,12 @@ const uint8_t kXdrvList[] = {
 
 /*********************************************************************************************/
 
+uint32_t Xdrv_active[4] = { 0 };
+
+bool XdrvActive(uint32_t drv_index) {
+  return bitRead(Xdrv_active[drv_index / 32], drv_index % 32);
+}
+
 void XsnsDriverState(void) {
   ResponseAppend_P(PSTR(",\"Drivers\":\""));  // Use string for future enable/disable signal
   for (uint32_t i = 0; i < sizeof(kXdrvList); i++) {
@@ -1071,7 +1077,7 @@ void XsnsDriverState(void) {
 #else
     uint32_t driverid = kXdrvList[i];
 #endif
-    ResponseAppend_P(PSTR("%s%d"), (i) ? "," : "", driverid);
+    ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (!XdrvActive(i)) ? "!" : "", driverid);
   }
   ResponseAppend_P(PSTR("\""));
 }
@@ -1086,7 +1092,7 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
   // events are sent to Berry in Rules driver, or here if USE_RULES is not defined (only on a subset)
   bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
   rule_handled |= berry_handled;
-#endif
+#endif  // USE_BERRY and No USE_RULES
   XdrvMailbox.data = data_save;
   return rule_handled;
 }
@@ -1099,10 +1105,10 @@ bool XdrvRulesProcess(bool teleperiod) {
 
 #ifdef USE_DEBUG_DRIVER
 void ShowFreeMem(const char *where) {
-  char stemp[30];
-  snprintf_P(stemp, sizeof(stemp), where);
-  XdrvMailbox.data = stemp;
+  char *XdrvMailboxData = XdrvMailbox.data;
+  XdrvMailbox.data = (char*)where;
   XdrvCall(FUNC_FREE_MEM);
+  XdrvMailbox.data = XdrvMailboxData;
 }
 #endif
 
@@ -1128,18 +1134,71 @@ bool XdrvCallDriver(uint32_t driver, uint32_t function) {
  * Function call to all xdrv
 \*********************************************************************************************/
 
+bool XdrvCallNextJsonAppend(void) {
+  static int xdrv_index = -1;
+
+  do {
+    xdrv_index++;
+    if (xdrv_index == xdrv_present) { 
+      xdrv_index = -1;
+      return false;
+    }
+  } while (!XdrvActive(xdrv_index));
+  xdrv_func_ptr[xdrv_index](FUNC_JSON_APPEND);
+  return true;
+}
+
 bool XdrvCall(uint32_t function) {
   bool result = false;
 
 //  DEBUG_TRACE_LOG(PSTR("DRV: %d"), function);
 
+#ifdef USE_PROFILE_FUNCTION
   uint32_t profile_driver_start = millis();
+#endif  // USE_PROFILE_FUNCTION
+
+#ifdef DEBUG_COMMAND_HANG
+  char tstchr[10];
+  if (FUNC_COMMAND == function) { 
+    sprintf(tstchr, "DRV: ");
+    TasConsole.printf(tstchr);
+  }
+#endif  // DEBUG_COMMAND_HANG
 
   for (uint32_t x = 0; x < xdrv_present; x++) {
 
+#ifdef USE_PROFILE_FUNCTION
     uint32_t profile_function_start = millis();
+#endif  // USE_PROFILE_FUNCTION
+
+#ifdef DEBUG_COMMAND_HANG
+    if (FUNC_COMMAND == function) { 
+#ifdef XFUNC_PTR_IN_ROM
+      uint32_t driverid = pgm_read_byte(kXdrvList + x);
+#else
+      uint32_t driverid = kXdrvList[x];
+#endif
+      sprintf(tstchr, "%d,", driverid);
+      TasConsole.printf(tstchr);
+    }
+#endif  // DEBUG_COMMAND_HANG
 
     result = xdrv_func_ptr[x](function);
+
+#ifdef USE_WEBSERVER
+    if (FUNC_WEB_SENSOR == function) { 
+#ifdef XFUNC_PTR_IN_ROM
+      uint32_t index = pgm_read_byte(kXdrvList + x);
+#else
+      uint32_t index = kXdrvList[x];
+#endif
+      if (52 == index) {        // Skip berry
+        WSContentSeparator(3);  // Don't print separator on next WSContentSeparator(1)
+      } else {
+        WSContentSeparator(1);  // Print separator if needed
+      }
+    }  // Show separator if needed
+#endif // USE_WEBSERVER
 
 #ifdef USE_PROFILE_FUNCTION
 #ifdef XFUNC_PTR_IN_ROM
@@ -1150,10 +1209,19 @@ bool XdrvCall(uint32_t function) {
     PROFILE_FUNCTION("drv", index, function, profile_function_start);
 #endif  // USE_PROFILE_FUNCTION
 
+    if (FUNC_ACTIVE == function) {
+      bitWrite(Xdrv_active[x / 32], x % 32, result);
+    }
     if (result && (function > FUNC_return_result)) {
       break;
     }
   }
+
+#ifdef DEBUG_COMMAND_HANG
+  if (FUNC_COMMAND == function) { 
+    TasConsole.println();
+  }
+#endif  // DEBUG_COMMAND_HANG
 
   PROFILE_DRIVER("drv", function, profile_driver_start);
 

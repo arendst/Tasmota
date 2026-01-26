@@ -5,7 +5,7 @@
 
 CRtspSession::CRtspSession(SOCKET aRtspClient, CStreamer * aStreamer) : m_RtspClient(aRtspClient),m_Streamer(aStreamer)
 {
-    printf("Creating RTSP session\n");
+//    printf("Creating RTSP session\n");
     Init();
 
     m_RtspSessionID  = getRandom();         // create a session ID
@@ -95,11 +95,11 @@ bool CRtspSession::ParseRtspRequest(char const * aRequest, unsigned aRequestSize
     }
     CmdName[i] = '\0';
     if (!parseSucceeded) {
-        printf("failed to parse RTSP\n");
+//        printf("failed to parse RTSP\n");
         return false;
     }
 
-    printf("RTSP received %s\n", CmdName);
+//    printf("RTSP received %s\n", CmdName);
 
     // find out the command type
     if (strstr(CmdName,"OPTIONS")   != nullptr) m_RtspCmdType = RTSP_OPTIONS; else
@@ -400,7 +400,7 @@ bool CRtspSession::handleRequests(uint32_t readTimeoutMs)
         return true;
     }
     else if(res == 0) {
-        printf("client closed socket, exiting\n");
+//        printf("client closed socket, exiting\n");
         m_stopped = true;
         return true;
     }

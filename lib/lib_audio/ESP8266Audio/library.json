@@ -19,5 +19,9 @@
     "frameworks": "Arduino",
     "examples": [
         "examples/*/*.ino"
-    ]
+    ],
+	"build": {
+		"includeDir": ".",
+		"flags": [ "-Wno-stringop-overread" ]
+	}
 }

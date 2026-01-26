@@ -69,7 +69,7 @@ public:
 #endif // USE_ZIGBEE_EEPROM
   {}
 
-  bool active = true;                 // is Zigbee active for this device, i.e. GPIOs configured
+  bool active = false;                // is Zigbee active for this device, i.e. GPIOs configured
   bool state_machine = false;		      // the state machine is running
   bool state_waiting = false;         // the state machine is waiting for external event or timeout
   bool state_no_timeout = false;      // the current wait loop does not generate a timeout but only continues running

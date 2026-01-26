@@ -215,7 +215,7 @@ class Matter_Frame
     raw.add(self.x_flags, 1)
     # opcode (mandatory)
     raw.add(self.opcode, 1)
-    raw.add(self.exchange_id & 0xFFFF, 2)
+    raw.add((self.exchange_id != nil) ? self.exchange_id & 0xFFFF : 0, 2)
     raw.add(self.protocol_id, 2)
     if self.x_flag_a    raw.add(self.ack_message_counter, 4) end
     # finally payload
@@ -224,7 +224,6 @@ class Matter_Frame
       raw .. payload
     end
 
-    # self.debug(raw)
     self.raw = raw
     return raw
   end
@@ -304,7 +303,7 @@ class Matter_Frame
     if resp.local_session_id == 0
       var op_name = matter.get_opcode_name(resp.opcode)
       if !op_name   op_name = format("0x%02X", resp.opcode) end
-      tasmota.log(format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 3)
+      log(format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 3)
     end
     return resp
   end
@@ -363,7 +362,7 @@ class Matter_Frame
     # check privacy flag, p.127
     if self.sec_p
       # compute privacy key, p.71
-      tasmota.log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
+      log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
       var k = session.get_i2r_privacy()
       var mic = raw[-16..]      # take last 16 bytes as signature
       var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
@@ -376,10 +375,10 @@ class Matter_Frame
     # recompute nonce
     var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation
     n.clear()
-    n.add(self.flags, 1)
+    n.add(self.sec_flags, 1)
     n.add(self.message_counter, 4)
     if self.source_node_id
-      n .. source_node_id
+      n .. self.source_node_id
     else
       if session.peer_node_id
         n .. session.peer_node_id
@@ -387,13 +386,13 @@ class Matter_Frame
       n.resize(13)        # add zeros
     end
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: raw         =" + raw.tohex(), 4)
-    # tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
-    # tasmota.log("MTR: p           =" + raw[payload_idx .. -17].tohex(), 4)
-    # tasmota.log("MTR: a           =" + raw[0 .. payload_idx - 1].tohex(), 4)
-    # tasmota.log("MTR: n           =" + n.tohex(), 4)
-    # tasmota.log("MTR: mic         =" + raw[-16..].tohex(), 4)
+    # log("MTR: ******************************", 4)
+    # log("MTR: raw         =" + raw.tohex(), 4)
+    # log("MTR: i2r         =" + i2r.tohex(), 4)
+    # log("MTR: p           =" + raw[payload_idx .. -17].tohex(), 4)
+    # log("MTR: a           =" + raw[0 .. payload_idx - 1].tohex(), 4)
+    # log("MTR: n           =" + n.tohex(), 4)
+    # log("MTR: mic         =" + raw[-16..].tohex(), 4)
 
     # decrypt
     var ret = crypto.AES_CCM.decrypt1(i2r,                    # secret key
@@ -405,7 +404,7 @@ class Matter_Frame
       # succcess
       raw.resize(size(raw) - tag_len)   # remove MIC
     else
-      tasmota.log("MTR: rejected packet due to invalid MIC", 3)
+      log("MTR: rejected packet due to invalid MIC", 3)
     end
     return ret
   end
@@ -427,7 +426,7 @@ class Matter_Frame
     # recompute nonce
     var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation
     n.clear()
-    n.add(self.flags, 1)
+    n.add(self.sec_flags, 1)
     n.add(self.message_counter, 4)
     if session.is_CASE() && session.get_device_id()
       n .. session.get_device_id()
@@ -445,13 +444,21 @@ class Matter_Frame
   end
 
   #############################################################
+  # compute the node_id for this message, via session and fabric
+  #
+  # returns bytes(8)
+  def get_node_id()
+    return self.session ? self.session.get_node_id() : nil
+  end
+
+  #############################################################
   # Decode a message we are about to send, to ease debug
   def debug(raw)
     return      # disable logging for now
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    # tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
+    # log("MTR: sending decode: " + matter.inspect(r), 4)
   end
 end
 matter.Frame = Matter_Frame

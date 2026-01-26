@@ -1,0 +1,4 @@
+version: "2.0.0"
+description: "Drive parallel e-Paper displays with epdiy-based boards."
+url: "https://github.com/vroland/epdiy"
+license: LGPL-3.0-or-later

@@ -25,6 +25,66 @@
  * and a section >m is found, the lines in this section (until #) are sent as email body
 \*********************************************************************************************/
 
+//
+// Black magic necessary for BearSSL and BearSSL in libmail to live in parallel
+//
+extern "C" {
+typedef struct {
+
+	/* Structure for returning the public key. */
+	br_x509_pkey pkey;
+
+	/* CPU for the T0 virtual machine. */
+	struct {
+		uint32_t *dp;
+		uint32_t *rp;
+		const unsigned char *ip;
+	} cpu;
+	uint32_t dp_stack[32];
+	uint32_t rp_stack[32];
+	int err;
+
+	/* The pad serves as destination for various operations. */
+	unsigned char pad[256];
+
+	/* Flag set when decoding succeeds. */
+	unsigned char decoded;
+
+	/* Validity dates. */
+	uint32_t notbefore_days, notbefore_seconds;
+	uint32_t notafter_days, notafter_seconds;
+
+	/* The "CA" flag. This is set to true if the certificate contains
+	   a Basic Constraints extension that asserts CA status. */
+	unsigned char isCA;
+
+	/* DN processing: the subject DN is extracted and pushed to the
+	   provided callback. */
+	unsigned char copy_dn;
+	void *append_dn_ctx;
+	void (*append_dn)(void *ctx, const void *buf, size_t len);
+
+	/* Certificate data chunk. */
+	const unsigned char *hbuf;
+	size_t hlen;
+
+	/* Buffer for decoded public key. */
+	unsigned char pkey_data[BR_X509_BUFSIZE_KEY];
+
+	/* Type of key and hash function used in the certificate signature. */
+	unsigned char signer_key_type;
+	unsigned char signer_hash_id;
+
+} br_x509_decoder_context_libmail;
+
+
+  void br_x509_decoder_push_libmail(br_x509_decoder_context_libmail *ctx, const void *data, size_t len);
+  void br_x509_decoder_init_libmail(br_x509_decoder_context_libmail *ctx,
+    void (*append_dn)(void *ctx, const void *buf, size_t len),
+    void *append_dn_ctx);
+}
+
+#include "SSLClient/ESP_SSLClient.h"
 #include <ESP_Mail_Client.h>
 
 // #define DEBUG_EMAIL_PORT    // Enable debugging
@@ -134,11 +194,10 @@ uint16_t SendMail(char *buffer) {
 
 #ifdef DEBUG_EMAIL_PORT
                 smtp->debug(true);
+                smtp->callback(smtpCallback);
 #else
                 smtp->debug(false);
 #endif
-
-              //  smtp->callback(smtpCallback);
 
                 SMTP_Message message;
                 email_mptr = &message;
@@ -234,7 +293,11 @@ void attach_File(char *path) {
     }
     att.descr.filename = cp;
     att.descr.mime = "application/octet-stream"; //binary data
+#if ESP_MAIL_VERSION_NUM<30409
     att.file.storage_type = esp_mail_file_storage_type_univ;
+#else
+    att.file.storage_type = esp_mail_file_storage_type_flash;
+#endif
     att.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
     email_mptr->addAttachment(att);
     email_mptr->resetAttachItem(att);
@@ -326,28 +389,40 @@ void send_message_txt(char *txt) {
 /* Callback function to get the Email sending status */
 void smtpCallback(SMTP_Status status) {
   /* Print the current status */
-  Serial.println(status.info());
+  //Serial.println(status.info());
+  AddLog(LOG_LEVEL_INFO, PSTR("MAI: %s"),status.info());
 
   /* Print the sending result */
   if (status.success()) {
-    Serial.println("----------------");
-    Serial.printf("Message sent success: %d\n", status.completedCount());
-    Serial.printf("Message sent failled: %d\n", status.failedCount());
-    Serial.println("----------------\n");
+    //Serial.println("----------------");
+    //Serial.printf("Message sent success: %d\n", status.completedCount());
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message sent success: %d"),status.completedCount());
+
+    //Serial.printf("Message sent failled: %d\n", status.failedCount());
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message sent failed: %d"),status.failedCount());
+
+    //Serial.println("----------------\n");
     struct tm dt;
 
     for (size_t i = 0; i < smtp->sendingResult.size(); i++) {
       /* Get the result item */
       SMTP_Result result = smtp->sendingResult.getItem(i);
-      localtime_r(&result.timesstamp, &dt);
+      localtime_r((time_t*)&result.timestamp, &dt);
 
-      Serial.printf("Message No: %d\n", i + 1);
-      Serial.printf("Status: %s\n", result.completed ? "success" : "failed");
-      Serial.printf("Date/Time: %d/%d/%d %d:%d:%d\n", dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
-      Serial.printf("Recipient: %s\n", result.recipients);
-      Serial.printf("Subject: %s\n", result.subject);
+      //Serial.printf("Message No: %d\n", i + 1);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message No: %d"),i + 1);
+
+      //Serial.printf("Status: %s\n", result.completed ? "success" : "failed");
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Status: %s"),result.completed ? "success" : "failed");
+
+      //Serial.printf("Date/Time: %d/%d/%d %d:%d:%d\n", dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Date/Time: %d/%d/%d %d:%d:%d"), dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
+      //Serial.printf("Recipient: %s\n", result.recipients);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Recipient: %s"),result.recipients.c_str());
+      //Serial.printf("Subject: %s\n", result.subject);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Subject: %s"),result.subject.c_str());
     }
-    Serial.println("----------------\n");
+    //Serial.println("----------------\n");
   }
 }
 

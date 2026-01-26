@@ -9,11 +9,7 @@
   },
   "version": "2.6.7",
   "frameworks": "arduino",
-  "platforms": "*",
-  "dependencies": [
-    {
-      "name": "SPI"
-    }
-  ]
+  "libCompatMode": "strict",
+  "platforms": ["espressif8266"]
 }
 

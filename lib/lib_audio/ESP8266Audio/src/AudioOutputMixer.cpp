@@ -190,7 +190,7 @@ bool AudioOutputMixer::loop()
       }
     }
     if (avail) {
-      int16_t s[2];
+      int16_t s[2] = {0};
       if (leftAccum[readPtr] > 32767) {
         s[LEFTCHANNEL] = 32767;
       } else if (leftAccum[readPtr] < -32767) {

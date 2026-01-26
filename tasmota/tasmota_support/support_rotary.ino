@@ -70,6 +70,7 @@ struct tEncoder {
   volatile int8_t pinb;
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
   int8_t abs_position[2] = { 0 };
+  int8_t rel_position = 0;                     // Relative position for scripter. Cleared after being read.
   bool changed = false;
 };
 tEncoder Encoder[MAX_ROTARIES];
@@ -106,7 +107,7 @@ bool RotaryButtonPressed(uint32_t button_index) {
   return false;
 }
 
-void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
+static void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
@@ -124,7 +125,7 @@ void IRAM_ATTR RotaryIsrArgMiDesk(void *arg) {
   encoder->state = (state >> 2);
 }
 
-void IRAM_ATTR RotaryIsrArg(void *arg) {
+static void IRAM_ATTR RotaryIsrArg(void *arg) {
   tEncoder* encoder = static_cast<tEncoder*>(arg);
 
   // Theo Arends
@@ -145,9 +146,9 @@ void RotaryInitMaxSteps(void) {
   }
   uint8_t max_steps = Settings->param[P_ROTARY_MAX_STEP];
   if (!Rotary.model) { max_steps *= 3; }
-  Rotary.dimmer_increment = 100 / max_steps;  // Dimmer 1..100 = 100
-  Rotary.ct_increment =     350 / max_steps;  // Ct 153..500 = 347
-  Rotary.color_increment =  360 / max_steps;  // Hue 0..359 = 360
+  Rotary.dimmer_increment = 100 / min((uint8_t)100, max_steps);  // Dimmer 1..100 = 100
+  Rotary.ct_increment =     350 / min((uint8_t)350, max_steps);  // Ct 153..500 = 347
+  Rotary.color_increment =  360 / min((uint8_t)360, max_steps);  // Hue 0..359 = 360
 }
 
 void RotaryInit(void) {
@@ -260,6 +261,14 @@ void RotaryHandler(void) {
       if (Encoder[index].abs_position[button_pressed] > Settings->param[P_ROTARY_MAX_STEP]) {  // SetOption43 - Rotary steps
         Encoder[index].abs_position[button_pressed] = Settings->param[P_ROTARY_MAX_STEP];      // SetOption43 - Rotary steps
       }
+      Encoder[index].rel_position += rotary_position;
+      if (Encoder[index].rel_position > Settings->param[P_ROTARY_MAX_STEP]) {
+        Encoder[index].rel_position = Settings->param[P_ROTARY_MAX_STEP];
+      }
+      if (Encoder[index].rel_position < -(Settings->param[P_ROTARY_MAX_STEP])) {
+        Encoder[index].rel_position = -(Settings->param[P_ROTARY_MAX_STEP]);
+      }
+
       Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position[0], Encoder[index].abs_position[1]);
       XdrvRulesProcess(0);
 #ifdef USE_LIGHT

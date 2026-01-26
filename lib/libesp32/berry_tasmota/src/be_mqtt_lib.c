@@ -25,7 +25,7 @@ class be_class_MQTT_ntv (scope: global, name: MQTT_ntv) {
 
 // mqtt module
 extern const bclass be_class_MQTT;
-static int zigbee_init(bvm *vm) {
+static int mqtt_init(bvm *vm) {
   be_pushntvclass(vm, &be_class_MQTT);
   be_call(vm, 0);
   be_return(vm);
@@ -34,7 +34,7 @@ static int zigbee_init(bvm *vm) {
 #include "be_fixed_mqtt.h"
 /* @const_object_info_begin
 module mqtt (scope: global) {
-  init, func(zigbee_init)
+  init, func(mqtt_init)
 }
 @const_object_info_end */
 

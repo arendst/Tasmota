@@ -1,0 +1,37 @@
+{
+    "name": "berry",
+    "displayName": "Berry Script Language",
+    "description": "A small embedded script language.",
+    "version": "1.2.0",
+    "icon": "berry-icon.png",
+    "publisher": "skiars",
+    "engines": {
+        "vscode": "^1.15.1"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "berry",
+                "aliases": [
+                    "Berry",
+                    "berry"
+                ],
+                "extensions": [
+                    ".be"
+                ],
+                "configuration": "./berry-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "berry",
+                "scopeName": "source.berry",
+                "path": "./syntaxes/berry.json"
+            }
+        ]
+    },
+    "__metadata": null
+}

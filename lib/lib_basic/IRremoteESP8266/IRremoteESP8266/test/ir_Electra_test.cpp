@@ -102,7 +102,7 @@ TEST(TestDecodeElectraAC, RealExampleDecode) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
   stdAc::state_t r, p;
   ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &r, &p));
@@ -237,7 +237,7 @@ TEST(TestIRElectraAcClass, HumanReadable) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 32C, Fan: 5 (Auto), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       ac.toString());
   uint8_t on_cool_16C_auto_voff[13] = {
       0xC3, 0x47, 0xE0, 0x00, 0xA0, 0x00, 0x20,
@@ -246,7 +246,7 @@ TEST(TestIRElectraAcClass, HumanReadable) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 16C, Fan: 5 (Auto), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       ac.toString());
   uint8_t on_cool_16C_low_voff[13] = {
       0xC3, 0x47, 0xE0, 0x00, 0x60, 0x00, 0x20,
@@ -255,7 +255,7 @@ TEST(TestIRElectraAcClass, HumanReadable) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 16C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       ac.toString());
 }
 
@@ -280,7 +280,7 @@ TEST(TestIRElectraAcClass, Clean) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       ac.toString());
 }
 
@@ -307,7 +307,7 @@ TEST(TestIRElectraAcClass, Turbo) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: On, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       ac.toString());
 }
 
@@ -332,7 +332,7 @@ TEST(TestIRElectraAcClass, LightToggle) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
        ac.toString());
 }
 
@@ -360,7 +360,7 @@ TEST(TestIRElectraAcClass, ConstructKnownState) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
       "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off, "
-      "IFeel: Off",
+      "Quiet: Off, IFeel: Off",
       ac.toString());
   EXPECT_STATE_EQ(on_cool_24C_fan1_swing_off_turbo_off_clean_on,
                   ac.getRaw(), kElectraAcBits);
@@ -379,7 +379,7 @@ TEST(TestIRElectraAcClass, IFeelAndSensor) {
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 21C, Fan: 5 (Auto), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
-      "IFeel: On, Sensor Temp: 26C",
+      "Quiet: Off, IFeel: On, Sensor Temp: 26C",
       ac.toString());
 
   ac.stateReset();
@@ -429,6 +429,6 @@ TEST(TestIRElectraAcClass, IFeelAndSensor) {
   EXPECT_EQ(
       "Power: On, Mode: 4 (Heat), Temp: 27C, Fan: 5 (Auto), "
       "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
-      "IFeel: On, Sensor Temp: 28C",
+      "Quiet: Off, IFeel: On, Sensor Temp: 28C",
       ac.toString());
 }

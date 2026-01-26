@@ -9,6 +9,8 @@
 #include "be_mem.h"
 #include "be_sys.h"
 #include "be_gc.h"
+#include "be_bytecode.h"
+#include "be_vm.h"
 #include <string.h>
 
 #define READLINE_STEP           100
@@ -26,7 +28,10 @@ static int i_write(bvm *vm)
         } else {
             data = be_tobytes(vm, 2, &size);
         }
-        be_fwrite(fh, data, size);
+        size_t bw = be_fwrite(fh, data, size);
+        if (bw != size) {
+            be_raise(vm, "io_error", "write failed");
+        }
     }
     be_return_nil(vm);
 }
@@ -67,27 +72,40 @@ static int i_readbytes(bvm *vm)
         void *fh = be_tocomptr(vm, -1);
         size_t size = readsize(vm, argc, fh);
         if (size) {
+            if (size > vm->bytesmaxsize) {
+                be_raise(vm, "memory_error", "size exceeds maximum allowed for bytes");
+            }
             /* avoid double allocation, using directly the internal buffer of bytes() */
             be_getbuiltin(vm, "bytes");
             be_pushint(vm, size);
             be_call(vm, 1);  /* call bytes() constructor with pre-sized buffer */
             be_pop(vm, 1);  /* bytes() instance is at top */
 
+            /* read back the actual buffer size */
+            be_getmember(vm, -1, ".size");
+            int32_t bytes_size = be_toint(vm, -1);
+            be_pop(vm, 1);
+            if (bytes_size < (int32_t)size) {
+                be_raise(vm, "memory_error", "could not allocated buffer");
+            }
+
             be_getmember(vm, -1, "resize");
             be_pushvalue(vm, -2);
             be_pushint(vm, size);
             be_call(vm, 2); /* call b.resize(size) */
             be_pop(vm, 3);  /* bytes() instance is at top */
 
-            char *buffer = (char*) be_tobytes(vm, -1, NULL); /* we get the address of the internam buffer of size 'size' */
-            size = be_fread(fh, buffer, size);
+            char *buffer = (char*) be_tobytes(vm, -1, NULL); /* we get the address of the internal buffer of size 'size' */
+            size_t read_size = be_fread(fh, buffer, size);
 
-            /* resize if something went wrong */
-            be_getmember(vm, -1, "resize");
-            be_pushvalue(vm, -2);
-            be_pushint(vm, size);
-            be_call(vm, 2); /* call b.resize(size) */
-            be_pop(vm, 3);  /* bytes() instance is at top */
+            if (size != read_size) {
+                /* resize if something went wrong */
+                be_getmember(vm, -1, "resize");
+                be_pushvalue(vm, -2);
+                be_pushint(vm, read_size);
+                be_call(vm, 2); /* call b.resize(size) */
+                be_pop(vm, 3);  /* bytes() instance is at top */
+            }
         } else {
             be_pushbytes(vm, NULL, 0);
         }
@@ -176,6 +194,26 @@ static int i_close(bvm *vm)
     be_return_nil(vm);
 }
 
+static int i_savecode(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 2 && be_isclosure(vm, 2)) {
+        be_getmember(vm, 1, ".p");
+        if (be_iscomptr(vm, -1)) {
+            void *fh = be_tocomptr(vm, -1);
+            bvalue *v = be_indexof(vm, 2);
+            if (var_isclosure(v)) {
+                bclosure *cl = var_toobj(v);
+                bproto *pr = cl->proto;
+                be_bytecode_save_to_fs(vm, fh, pr);
+            }
+        }
+    } else {
+        be_raise(vm, "type_error", "closure expected");
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 static int m_open(bvm *vm)
 #else
@@ -196,6 +234,9 @@ int be_nfunc_open(bvm *vm)
         { "flush", i_flush },
         { "close", i_close },
         { "deinit", i_close },
+#if BE_USE_BYTECODE_SAVER
+        { "savecode", i_savecode },
+#endif
         { NULL, NULL }
     };
     fname = argc >= 1 && be_isstring(vm, 1) ? be_tostring(vm, 1) : NULL;

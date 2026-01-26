@@ -214,17 +214,17 @@ void HueRespondToMSearch(void)
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST1], uuid.c_str());
     PortUdp.write((const uint8_t*)response, strlen(response));
     PortUdp.endPacket();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST2], uuid.c_str(), uuid.c_str());
     PortUdp.write((const uint8_t*)response, strlen(response));
     PortUdp.endPacket();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST3], uuid.c_str());
     PortUdp.write((const uint8_t*)response, strlen(response));
     PortUdp.endPacket();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {
@@ -415,14 +415,31 @@ const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\
 
 /********************************************************************************************/
 
+// Since Oct 2024, Alexa does not distinguish anymore if the only the last 2 digits differ after '-'
+// Ex: 78:e3:6d:09:1d:a4:00:11-01
+//     78:e3:6d:09:1d:a4:00:11-02
+//     78:e3:6d:09:1d:a4:00:11-03
+// are mixed up in the Alexa app
+//
+// We now change the encoding like this:
+//     78:e3:6d:09:1d:a4:XX:YY-01
+// where XX is the high 8 bits of id (unchanged) and YY is the low 8 bits xor 0x10 (so default `1` becomes `0x11`)
+// if the endpoint is not zero, XOR the second byte (rare case)
 String GetHueDeviceId(uint16_t id, uint8_t ep = 0)
 {
   char s[32];
-  String deviceid = WiFi.macAddress();
+  String deviceid = WiFiHelper::macAddress();
   deviceid.toLowerCase();
-  if (0x11 == ep) { ep = 0xFE; }    // avoid collision with 0x11 which is used as default for `0`
-  if (0 == ep) { ep = 0x11; }   // if ep is zero, revert to original value
-  snprintf(s, sizeof(s), "%s:%02x:%02X-%02x", deviceid.c_str(), (id >> 8) & 0xFF, ep, id & 0xFF);
+  snprintf(s, sizeof(s), "%s:%02x:%02X-01", deviceid.c_str(), (id >> 8) & 0xFF, (id & 0xFF) ^ 0x10);
+
+  if (ep != 0 && ep != 1) {
+    uint32_t mac2 = strtol(&s[3], NULL, 16);
+    mac2 ^= ep;
+    char mac2_s[4];
+    snprintf(mac2_s, sizeof(mac2_s), "%02x", mac2);
+    s[3] = mac2_s[0];
+    s[4] = mac2_s[1];
+  }
   return String(s);  // 5c:cf:7f:13:9f:3d:00:11-01
 }
 
@@ -454,7 +471,7 @@ void HueNotImplemented(String *path)
 void HueConfigResponse(String *response)
 {
   *response += Decompress(HueConfigResponse_JSON, HueConfigResponse_JSON_SIZE);
-  response->replace(F("{ma"), WiFi.macAddress());
+  response->replace(F("{ma"), WiFiHelper::macAddress());
   response->replace(F("{ip"), WiFi.localIP().toString());
   response->replace(F("{ms"), WiFi.subnetMask().toString());
   response->replace(F("{gw"), WiFi.gatewayIP().toString());
@@ -763,7 +780,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
   if (Webserver->args()) {
     response = "[";
 
-#ifdef ESP82666   // ESP8266 memory is limited, avoid copying and modify in place
+#ifdef ESP8266   // ESP8266 memory is limited, avoid copying and modify in place
     JsonParser parser((char*) Webserver->arg((Webserver->args())-1).c_str());
 #else             // does not work on ESP32, we need to get a fresh copy of the string
     String request_arg = Webserver->arg((Webserver->args())-1);
@@ -1167,6 +1184,9 @@ bool Xdrv20(uint32_t function)
         break;
       case FUNC_NETWORK_DOWN:
         UdpDisconnect();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

@@ -51,11 +51,16 @@ void CB_MESHDataSent(const uint8_t *MAC, esp_now_send_status_t sendStatus) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Sent to %s status %d"), _destMAC, sendStatus);
 }
 
-void CB_MESHDataReceived(const uint8_t *MAC, const uint8_t *packet, int len) {
+//void CB_MESHDataReceived(const uint8_t *MAC, const uint8_t *packet, int len) {
+void CB_MESHDataReceived(const esp_now_recv_info_t *esp_now_info, const uint8_t *packet, int len);
+void CB_MESHDataReceived(const esp_now_recv_info_t *esp_now_info, const uint8_t *packet, int len) {
   static bool _locked = false;
   if (_locked) { return; }
 
   _locked = true;
+
+  uint8_t *MAC = esp_now_info->src_addr;
+
   char _srcMAC[18];
   ToHex_P(MAC, 6, _srcMAC, 18, ':');
   AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Rcvd from %s"), _srcMAC);
@@ -377,7 +382,7 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
 #ifdef ESP8266 // for now only ESP8266, might be added for the ESP32 later
   MESH.channel = _channel;
   WiFi.mode(WIFI_STA);
-  WiFi.begin("", "", MESH.channel, nullptr, false); //fake connection attempt to set channel
+  WiFiHelper::begin("", "", MESH.channel, nullptr, false); //fake connection attempt to set channel
   wifi_promiscuous_enable(1);
   wifi_set_channel(MESH.channel);
   wifi_promiscuous_enable(0);
@@ -417,6 +422,7 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
 void MESHstartBroker(void) {       // Must be called after WiFi is initialized!! Rule - on system#boot do meshbroker endon
 #ifdef ESP32
   WiFi.mode(WIFI_AP_STA);
+  WiFi.AP.begin();
   AddLog(LOG_LEVEL_INFO, PSTR("MSH: Broker MAC %s"), WiFi.softAPmacAddress().c_str());
   WiFi.softAPmacAddress(MESH.broker); //set MESH.broker to the needed MAC
   uint32_t _channel = WiFi.channel();
@@ -471,6 +477,22 @@ void MESHevery50MSecond(void) {
 
     // do something on the node
     // AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: %30_H), (uint8_t *)&MESH.packetToConsume.front());
+
+#ifdef USE_TASMESH_HEARTBEAT
+    for (auto &_peer : MESH.peers){
+      if (memcmp(_peer.MAC, MESH.packetToConsume.front().sender, 6) == 0) {
+        _peer.lastHeartbeatFromPeer = millis();
+
+        if (!_peer.isAlive) {
+          _peer.isAlive = true;
+          char stopic[TOPSZ];
+          GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
+          MqttPublishPayload(stopic, PSTR(MQTT_LWT_ONLINE));
+        }
+        break;
+      }
+    }
+#endif // USE_TASMESH_HEARTBEAT
 
     MESHencryptPayload(&MESH.packetToConsume.front(), 0);
     switch (MESH.packetToConsume.front().type) {
@@ -546,6 +568,11 @@ void MESHevery50MSecond(void) {
 //          AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize, (uint8_t *)&MESH.packetToConsume.front().payload);
         }
         break;
+#ifdef USE_TASMESH_HEARTBEAT
+      case PACKET_TYPE_HEARTBEAT:
+        break;
+#endif  // USE_TASMESH_HEARTBEAT
+
       default:
         AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&MESH.packetToConsume.front(), MESH.packetToConsume.front().chunkSize +5);
       break;
@@ -582,6 +609,17 @@ void MESHEverySecond(void) {
     AddLog(LOG_LEVEL_INFO, PSTR("MSH: Multi packets in buffer %u"), MESH.multiPackets.size());
     MESH.multiPackets.erase(MESH.multiPackets.begin());
   }
+
+#ifdef USE_TASMESH_HEARTBEAT
+  for (auto &_peer : MESH.peers){
+    if (_peer.isAlive && TimePassedSince(_peer.lastHeartbeatFromPeer) > TASMESH_OFFLINE_DELAY * 1000) {
+      _peer.isAlive = false;
+      char stopic[TOPSZ];
+      GetTopic_P(stopic, TELE, _peer.topic, S_LWT);
+      MqttPublishPayload(stopic, PSTR(MQTT_LWT_OFFLINE));
+    }
+  }
+#endif // USE_TASMESH_HEARTBEAT
 }
 
 #else  // ESP8266
@@ -649,6 +687,16 @@ void MESHEverySecond(void) {
       MESHsetWifi(1);
       WifiBegin(3, MESH.channel);
     }
+
+#ifdef USE_TASMESH_HEARTBEAT
+    MESH.sendPacket.counter++;
+    MESH.sendPacket.TTL = 2;
+    MESH.sendPacket.chunks = 0;
+    MESH.sendPacket.chunk = 0;
+    MESH.sendPacket.chunkSize = 0;
+    MESH.sendPacket.type = PACKET_TYPE_HEARTBEAT;
+    MESHsendPacket(&MESH.sendPacket);
+#endif // USE_TASMESH_HEARTBEAT
   }
 }
 
@@ -678,6 +726,7 @@ void MESHshow(bool json) {
     }
   } else {
 #ifdef ESP32 //web UI only on the the broker = ESP32
+#ifdef USE_WEBSERVER
     if (ROLE_BROKER == MESH.role) {
 //      WSContentSend_PD(PSTR("TAS-MESH:<br>"));
       WSContentSend_PD(PSTR("<b>Broker MAC</b> %s<br>"), WiFi.softAPmacAddress().c_str());
@@ -718,6 +767,7 @@ void MESHshow(bool json) {
         idx++;
       }
     }
+#endif  // USE_WEBSERVER
 #endif  // ESP32
   }
 }
@@ -781,7 +831,7 @@ void CmndMeshPeer(void) {
       MESHaddPeer(_MAC);
       MESHcountPeers();
       ResponseCmndChar(_peerMAC);
-    } else if (WiFi.macAddress() == String(_peerMAC) || WiFi.softAPmacAddress() == String(_peerMAC)){
+    } else if (WiFiHelper::macAddress() == String(_peerMAC) || WiFi.softAPmacAddress() == String(_peerMAC)){
       // a device can be added as its own peer, but every send will result in a ESP_NOW_SEND_FAIL
       AddLog(LOG_LEVEL_DEBUG,PSTR("MSH: device %s cannot be a peer of itself"), XdrvMailbox.data, _peerMAC);
     } else {
@@ -853,6 +903,9 @@ bool Xdrv57(uint32_t function) {
         MESHdeInit();
         break;
 #endif  // USE_DEEPSLEEP
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

@@ -38,6 +38,11 @@ Adafruit_TSL2591 tsl = Adafruit_TSL2591();
 uint8_t tsl2591_type = 0;
 uint8_t tsl2591_valid = 0;
 float tsl2591_lux = 0;
+uint16_t tsl2591_lux_bb = 0;
+uint16_t tsl2591_lux_ir = 0;
+
+tsl2591Gain_t gain_enum_array[4] = {TSL2591_GAIN_LOW,TSL2591_GAIN_MED,TSL2591_GAIN_HIGH,TSL2591_GAIN_MAX};
+tsl2591IntegrationTime_t int_enum_array[6] = {TSL2591_INTEGRATIONTIME_100MS,TSL2591_INTEGRATIONTIME_200MS,TSL2591_INTEGRATIONTIME_300MS,TSL2591_INTEGRATIONTIME_400MS,TSL2591_INTEGRATIONTIME_500MS,TSL2591_INTEGRATIONTIME_600MS};
 
 void Tsl2591Init(void)
 {
@@ -59,6 +64,8 @@ void Tsl2591Read(void)
   ir = lum >> 16;
   full = lum & 0xFFFF;
   tsl2591_lux = tsl.calculateLux(full, ir);
+  tsl2591_lux_bb = full;
+  tsl2591_lux_ir = ir;
   tsl2591_valid = 1;
 }
 
@@ -78,7 +85,8 @@ void Tsl2591Show(bool json)
     char lux_str[10];
     dtostrf(tsl2591_lux, sizeof(lux_str)-1, 3, lux_str);
     if (json) {
-      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s}"), lux_str);
+      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s,\"IR\":%u,\"Broadband\":%u}"),
+        lux_str,tsl2591_lux_ir,tsl2591_lux_bb);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
 #endif  // USE_DOMOTICZ
@@ -88,6 +96,26 @@ void Tsl2591Show(bool json)
 #endif  // USE_WEBSERVER
     }
   }
+}
+
+bool tsl2591CommandSensor() {
+  bool serviced = true;
+  char argument[XdrvMailbox.data_len];
+  long value = 0;
+
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
+    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
+  }
+
+  bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
+  if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
+
+  tsl.setGain(gain_enum_array[XdrvMailbox.payload-1]);
+  tsl.setTiming(int_enum_array[value-1]);
+
+  Response_P(PSTR("{\"Gain input\":%d,\"Gain hex\":0x%x,"),XdrvMailbox.payload,tsl.getGain());
+  ResponseAppend_P(PSTR("\"Timing input\":%d,\"Timing hex\":0x0%x}"),value,tsl.getTiming());
+  return serviced;
 }
 
 /*********************************************************************************************\
@@ -116,6 +144,11 @@ bool Xsns57(uint32_t function)
         Tsl2591Show(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_57 == XdrvMailbox.index) {
+          result = tsl2591CommandSensor();
+        }
+        break;
     }
   }
   return result;

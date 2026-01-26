@@ -657,11 +657,11 @@ void CCLoadershow(bool json) {
     if (json) {
         // unused
     } else {
-        WSContentSend_PD(PSTR("<h3>CCLoader</h3>"));
+        WSContentSend_P(PSTR("<h3>CCLoader</h3>"));
         if (CCL.chip.ID!=0){
-            WSContentSend_PD(PSTR("Chip ID: %x<br>"),CCL.chip.ID);
-            WSContentSend_PD(PSTR("Chip Revision: %x<br>"),CCL.chip.rev);
-            WSContentSend_PD(PSTR("Chip Name: %s<br>"),CCLChipName(CCL.chip.ID).c_str());
+            WSContentSend_P(PSTR("Chip ID: %x<br>"),CCL.chip.ID);
+            WSContentSend_P(PSTR("Chip Revision: %x<br>"),CCL.chip.rev);
+            WSContentSend_P(PSTR("Chip Name: %s<br>"),CCLChipName(CCL.chip.ID).c_str());
         }
     }
 }
@@ -689,6 +689,9 @@ bool Xdrv46(uint32_t function) {
         CCLoadershow(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

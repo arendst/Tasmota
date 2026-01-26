@@ -14,14 +14,19 @@
 #define comp_set_named_gbl(vm)      ((vm)->compopt |= (1<<COMP_NAMED_GBL))
 #define comp_clear_named_gbl(vm)    ((vm)->compopt &= ~(1<<COMP_NAMED_GBL))
 
-#define comp_is_strict(vm)       ((vm)->compopt & (1<<COMP_STRICT))
-#define comp_set_strict(vm)      ((vm)->compopt |= (1<<COMP_STRICT))
-#define comp_clear_strict(vm)    ((vm)->compopt &= ~(1<<COMP_STRICT))
+#define comp_is_strict(vm)          ((vm)->compopt & (1<<COMP_STRICT))
+#define comp_set_strict(vm)         ((vm)->compopt |= (1<<COMP_STRICT))
+#define comp_clear_strict(vm)       ((vm)->compopt &= ~(1<<COMP_STRICT))
+
+#define comp_is_gc_debug(vm)       ((vm)->compopt & (1<<COMP_GC_DEBUG))
+#define comp_set_gc_debug(vm)      ((vm)->compopt |= (1<<COMP_GC_DEBUG))
+#define comp_clear_gc_debug(vm)    ((vm)->compopt &= ~(1<<COMP_GC_DEBUG))
 
 /* Compilation options */
 typedef enum {
-    COMP_NAMED_GBL = 0x00, /* compile with named globals */
-    COMP_STRICT = 0x01, /* compile with named globals */
+    COMP_NAMED_GBL = 0x00,  /* compile with named globals */
+    COMP_STRICT = 0x01,     /* compile with named globals */
+    COMP_GC_DEBUG = 0x02,   /* compile with gc debug */
 } compoptmask;
 
 typedef struct {
@@ -105,7 +110,7 @@ struct bvm {
     struct bgc gc;
     bctypefunc ctypefunc; /* handler to ctype_func */
     bbyte compopt; /* compilation options */
-    int32_t bytesmaxsize; /* max allowed size for bytes() object, default 32kb but can be increased */
+    size_t bytesmaxsize; /* max allowed size for bytes() object, default 32kb but can be increased */
     bobshook obshook;
     bmicrosfnct microsfnct; /* fucntion to get time as a microsecond resolution */
 #if BE_USE_PERF_COUNTERS

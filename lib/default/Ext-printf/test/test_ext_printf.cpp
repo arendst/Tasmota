@@ -66,10 +66,13 @@ void test_ext_snprintf_P(void) {
   Serial.printf("--> out=%s\n", c);
   ext_snprintf_P(c, sizeof(c), "Float default=%*_f, int(3)=%*_f, int(3)=%*_f, int(3)=%*_f, 6dec=%*_f", 1, &fpi, 4, &f3, -4, &f3, -4, &f31, -8, &fpi);
   Serial.printf("--> out=%s\n", c);
-  uint64_t u641 = 0x1122334455667788LL;
-  uint64_t u642 = 0x0123456789ABCDEFLL;
-  uint64_t u643 = 0xFEDCBA9876543210LL;
+
+  uint64_t u641 = 0x1122334455667788LL;  // 1234605616436508552
+  uint64_t u642 = 0x0123456789ABCDEFLL;  // 81985529216486895
+  uint64_t u643 = 0xFEDCBA9876543210LL;  // 18364758544493064720
   ext_snprintf_P(c, sizeof(c), "Int64 0x%_X 0x%_X 0x%_X", &u641, &u642, &u643);
+  Serial.printf("--> out=%s\n", c);
+  ext_snprintf_P(c, sizeof(c), "Int64 decimal %_U %_U %_U", &u641, &u642, &u643);
   Serial.printf("--> out=%s\n", c);
 
   // ext_snprintf_P(c, sizeof(c), "Float default=%*_f, int(3)=%*_f, int(3)=%*_f, int(3)=%*_f, 6dec=%*_f", &fpi, &f3, &f3, &f31, &fpi);

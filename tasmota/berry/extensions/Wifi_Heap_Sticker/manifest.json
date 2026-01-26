@@ -1,0 +1,8 @@
+{
+  "name": "Wifi Heap Sticker",
+  "version": "0x190A0100",
+  "description": "Display top left sticker with Wifi strength and memory heap",
+  "author": "Stephan Hadinger",
+  "min_tasmota": "0x0F010001",
+  "features": ""
+}

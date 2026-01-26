@@ -38,19 +38,19 @@
 #endif
 
 typedef struct {
-  uint8_t rows = 1;     // number of rows (min:1)
-  uint8_t cols = 0;     // number of columns (if cols == 0 then apply to the entire light)
-  uint8_t offs = 0;     // offset in the led strip where the matrix starts (min: 0)
-  bool    alt = false;  // are the rows in alternate directions
-  uint16_t univ = 0;    // start at universe number (+1)
-  uint16_t port = 6454; // UDP port number
-  uint8_t dimm = 100;   // Dimmer 0..100
-  bool    on = true;
-  bool    matrix = true;  // true if light is a WS2812 matrix, false if single light
   // metrics
   uint32_t packet_received = 0;
   uint32_t packet_accepted = 0;
   uint32_t strip_refresh = 0;
+  uint16_t offs = 0;            // offset in the led strip where the matrix starts (min: 0)
+  uint16_t univ = 0;            // start at universe number (+1)
+  uint16_t port = 6454;         // UDP port number
+  uint8_t dimm = 100;           // Dimmer 0..100
+  uint8_t rows = 1;             // number of rows (min:1)
+  uint8_t cols = 0;             // number of columns (if cols == 0 then apply to the entire light)
+  bool    alt = false;          // are the rows in alternate directions
+  bool    on = true;
+  bool    matrix = true;        // true if light is a WS2812 matrix, false if single light
 } ArtNetConfig;
 
 uint32_t * packets_per_row = nullptr;
@@ -212,8 +212,13 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
     color[2] = changeUIntScale(b8, 0, 255, 0, b_dimmer);
     color[3] = changeUIntScale(w8, 0, 255, 0, w_dimmer);
     color[4] = changeUIntScale(ww8, 0, 255, 0, ww_dimmer);
+
     // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: %02X-%02X-%02X univ=%i rows=%i max_univ=%i"), buf[idx+1], buf[idx], buf[idx+2], universe, row, artnet_conf.univ + artnet_conf.rows);
-    LightSetOutputs(color);
+    uint16_t mapped_color[LST_MAX] = {0};
+    for (uint32_t i = 0; i < LST_MAX; i++) {
+      mapped_color[i] = color[Light.color_remap[i]];
+    }
+    LightSetOutputs(mapped_color);
   }
   // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: ok universe=%i datalen=%i"), universe, datalen);
   artnet_conf.packet_accepted++;
@@ -384,9 +389,9 @@ bool ArtNetStart(void) {
         if ((Settings->light_pixels != artnet_conf.rows * artnet_conf.cols + artnet_conf.offs) || (Settings->light_rotation != 0)) {
           Settings->light_pixels = artnet_conf.rows * artnet_conf.cols + artnet_conf.offs;
           Settings->light_rotation = 0;
-          Ws2812ReinitStrip();
+          Ws2812InitStrip();
         } else {
-          Ws2812Clear();
+          Ws2812Clear(true);
         }
       }
 

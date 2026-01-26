@@ -65,6 +65,9 @@ void LOXInit()
       if (LOXSerial->hardwareSerial())
         ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("LOX: Serial UART%d"), LOXSerial->getUart());
+#endif
   }
 }
 

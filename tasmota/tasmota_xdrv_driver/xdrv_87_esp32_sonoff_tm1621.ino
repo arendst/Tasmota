@@ -9,7 +9,7 @@
 #ifdef ESP32
 #ifdef USE_DISPLAY_TM1621_SONOFF
 /*********************************************************************************************\
- * Sonoff POWR3xxD and THR3xxD LCD support
+ * Sonoff POWR3xxD, POWCT and THR3xxD LCD support
  *
  * {"NAME":"Sonoff POWR316D","GPIO":[32,0,0,0,0,576,0,0,0,224,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff POWR320D","GPIO":[32,0,9313,0,9312,576,0,0,0,0,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
@@ -17,6 +17,7 @@
  * {"NAME":"Sonoff THR316D GPIO26","GPIO":[32,0,0,0,225,9280,0,0,0,321,0,576,320,9184,9216,0,0,224,0,9248,0,1,1,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff THR320D","GPIO":[32,0,0,0,226,9280,0,0,0,321,0,576,320,9184,9216,9312,0,0,9313,9248,0,1,0,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff THR320D GPIO26","GPIO":[32,0,0,0,226,9280,0,0,0,321,0,576,320,9184,9216,9312,0,0,9313,9248,0,1,1,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff POWCT","GPIO":[32,0,0,0,0,9280,0,0,0,320,0,576,0,9184,9216,0,0,224,0,9248,0,7329,7296,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * DspSpeed 2..127 = Display rotation speed in seconds if more than one value is requested
  * DspLine<1|2> <index>,<unit>,<index>,<unit>,... = Display specific JSON value and rotate between them
@@ -41,6 +42,8 @@
 #define TM1621_ROTATE        5     // Seconds display rotation speed
 #define TM1621_MAX_VALUES    8     // Default 8 x two different lines
 
+//#define TM1621_DEBUG
+
 #define TM1621_PULSE_WIDTH   10    // microseconds (Sonoff = 100)
 
 #define TM1621_SYS_EN        0x01  // 0b00000001
@@ -51,15 +54,20 @@
 #define TM1621_BIAS          0x29  // 0b00101001 = LCD 1/3 bias 4 commons option
 #define TM1621_IRQ_DIS       0x80  // 0b100x0xxx
 
-enum Tm1621Device { TM1621_USER, TM1621_POWR316D, TM1621_THR316D };
+enum Tm1621Device { TM1621_USER, TM1621_POWR316D, TM1621_THR316D, TM1621_POWCT };
+const char tm1621_device PROGMEM[] = "User|PowR3|THR3|PowCT";
+
 enum Tm1621Units  { TM1621_NONE, TM1621_TEMPERATURE, TM1621_HUMIDITY, TM1621_VOLTAGE_CURRENT, TM1621_ENERGY_POWER };
 
 const uint8_t tm1621_commands[] = { TM1621_SYS_EN, TM1621_LCD_ON, TM1621_BIAS, TM1621_TIMER_DIS, TM1621_WDT_DIS, TM1621_TONE_OFF, TM1621_IRQ_DIS };
 
-const char tm1621_kchar[] PROGMEM = { "0|1|2|3|4|5|6|7|8|9|-| " };
-//                                          0     1     2     3     4     5     6     7     8     9     -     off
-const uint8_t tm1621_digit_row[2][12] = {{ 0x5F, 0x50, 0x3D, 0x79, 0x72, 0x6B, 0x6F, 0x51, 0x7F, 0x7B, 0x20, 0x00 },
-                                         { 0xF5, 0x05, 0xB6, 0x97, 0x47, 0xD3, 0xF3, 0x85, 0xF7, 0xD7, 0x02, 0x00 }};
+const char tm1621_kchar[] PROGMEM = " |0|1|2|3|4|5|6|7|8|9|-|E";
+//    b0 ---
+//   b1 /  / b4
+//      --- b5
+//  b2 /  / b6
+// b3  ---                        off   0     1     2     3     4     5     6     7     8     9     -     E
+const uint8_t tm1621_digit[] = { 0x00, 0x5F, 0x50, 0x3D, 0x79, 0x72, 0x6B, 0x6F, 0x51, 0x7F, 0x7B, 0x20, 0x2F };
 
 struct Tm1621 {
   uint8_t buffer[8];
@@ -228,16 +236,29 @@ void TM1621SendCommon(uint8_t common) {
   }
 }
 
+uint32_t TM1621Row2(uint32_t row1) {
+  uint32_t row2 = 0;
+  bitWrite(row2, 0, bitRead(row1, 6));
+  bitWrite(row2, 1, bitRead(row1, 5));
+  bitWrite(row2, 2, bitRead(row1, 4));
+  bitWrite(row2, 3, bitRead(row1, 7));
+  bitWrite(row2, 4, bitRead(row1, 3));
+  bitWrite(row2, 5, bitRead(row1, 2));
+  bitWrite(row2, 6, bitRead(row1, 1));
+  bitWrite(row2, 7, bitRead(row1, 0));
+  return row2;  
+}
+
 void TM1621SendRows(void) {
   // Tm1621.row[x] = "text", "----", "    " or a number with one decimal like "0.4", "237.5", "123456.7"
-  // "123456.7" will be shown as "9999" being a four digit overflow
+  // "123456.7" will be shown as "12E4" being a four digit overflow
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TM1: Row1 '%s', Row2 '%s'"), Tm1621.row[0], Tm1621.row[1]);
 
   uint8_t buffer[8] = { 0 };  // TM1621 16-segment 4-bit common buffer
   char row[4];
   for (uint32_t j = 0; j < 2; j++) {
-    // 0.4V => "  04", 0.0A => "  ", 1234.5V => "1234"
+    // 0.4V => "  04", 0.0A => "  ", 1234.5V => "1234", 12345.6V => "12E3"
     uint32_t len = strlen(Tm1621.row[j]);
     char *dp = nullptr;           // Expect number larger than "123"
     int row_idx = len -3;         // "1234.5"
@@ -245,8 +266,9 @@ void TM1621SendRows(void) {
       dp = strchr(Tm1621.row[j], '.');
       row_idx = len -1;
     }
-    else if (len > 6) {           // "12345.6"
-      snprintf_P(Tm1621.row[j], sizeof(Tm1621.row[j]), PSTR("9999"));
+    else if (len > 6) {           // "1234567890.3" = "12E8"
+      Tm1621.row[j][2] = 'E';
+      Tm1621.row[j][3] = '0' + len -4;
       row_idx = 3;
     }
     row[3] = (row_idx >= 0) ? Tm1621.row[j][row_idx--] : ' ';
@@ -262,16 +284,11 @@ void TM1621SendRows(void) {
     for (uint32_t i = 0; i < 4; i++) {
       needle[0] = row[i];
       int index = GetCommandCode(command, sizeof(command), (const char*)needle, tm1621_kchar);
-      if (-1 == index) { index = 11; }
-      uint32_t bidx = (0 == j) ? i : 7 -i;
-      buffer[bidx] = tm1621_digit_row[j][index];
-    }
-    if (dp) {
-      if (0 == j) {
-        buffer[2] |= 0x80;   // Row 1 decimal point
-      } else {
-        buffer[5] |= 0x08;   // Row 2 decimal point
-      }
+      if (-1 == index) { index = 0; }         // Off
+      uint32_t digit = tm1621_digit[index];
+      if ((2 == i) && dp) { digit |= 0x80; }  // Decimal point
+      uint32_t bidx = (!j) ? i : 7 -i;
+      buffer[bidx] = (j) ? TM1621Row2(digit) : digit;
     }
   }
 
@@ -293,7 +310,18 @@ void TM1621SendRows(void) {
 void TM1621PreInit(void) {
   if (!PinUsed(GPIO_TM1621_CS) || !PinUsed(GPIO_TM1621_WR) || !PinUsed(GPIO_TM1621_RD) || !PinUsed(GPIO_TM1621_DAT)) { return; }
 
-  Tm1621.device = (14 == Pin(GPIO_TM1621_DAT)) ? TM1621_POWR316D : (5 == Pin(GPIO_TM1621_DAT)) ? TM1621_THR316D : TM1621_USER;
+  Tm1621.device = TM1621_USER;
+  uint32_t pin_tm1621_dat = Pin(GPIO_TM1621_DAT);
+  if (5 == Pin(GPIO_TM1621_DAT)) {
+    if (25 == Pin(GPIO_CSE7761_RX, 1)) {
+      Tm1621.device = TM1621_POWCT;
+    } else {
+      Tm1621.device = TM1621_THR316D;
+    }
+  }
+  else if (14 == Pin(GPIO_TM1621_DAT)) {
+    Tm1621.device = TM1621_POWR316D;
+  }
   Tm1621.present = true;
   Tm1621.pin_da = Pin(GPIO_TM1621_DAT);
   Tm1621.pin_cs = Pin(GPIO_TM1621_CS);
@@ -312,7 +340,9 @@ void TM1621PreInit(void) {
 
   Tm1621.state = 200;
 
-  AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1621"));
+  char stemp[8];
+  AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1621 for %s"), 
+    GetTextIndexed(stemp, sizeof(stemp), Tm1621.device, tm1621_device));
 }
 
 void TM1621Init(void) {
@@ -437,7 +467,9 @@ void TM1621Show(void) {
     return;
   }
 
-  if (TM1621_POWR316D == Tm1621.device) {
+#ifdef USE_ENERGY_SENSOR
+  if ((TM1621_POWR316D == Tm1621.device) ||
+      (TM1621_POWCT == Tm1621.device)) {
     if (0 == Tm1621.display_rotate) {
       ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy->voltage[0]);
       ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy->current[0]);
@@ -452,6 +484,7 @@ void TM1621Show(void) {
     TM1621SendRows();
     return;
   }
+#endif  // USE_ENERGY_SENSOR
 
   if (TM1621_THR316D == Tm1621.device) {
     if (!isnan(TasmotaGlobal.temperature_celsius)) {
@@ -510,9 +543,17 @@ void TM1621EverySecond(void) {
 \*********************************************************************************************/
 
 const char kTm1621Commands[] PROGMEM = "Dsp|"  // No prefix
-  "Line|Speed";
+  "Line|"
+#ifdef TM1621_DEBUG
+  "Test|"
+#endif  // TM1621_DEBUG
+  "Speed";
 void (*const kTm1621Command[])(void) PROGMEM = {
-  &CmndDspLine, &CmndDspSpeed };
+  &CmndDspLine,
+#ifdef TM1621_DEBUG
+  &CmndDspTest,
+#endif  // TM1621_DEBUG
+  &CmndDspSpeed };
 
 void CmndDspLine(void) {
   // DspLine1 <index>,<unit>,<index>,<unit>,... = Display specific JSON value and rotate between them
@@ -558,7 +599,7 @@ void CmndDspLine(void) {
     // Example 2: PZEM016 serial connected (GPIO25 = PZEM0XX Tx, GPIO26 = PZEM016 Rx)
     //      {"ENERGY":{"TotalStartTime":"2022-07-05T16:01:39","Total":0.000,"Yesterday":0.000,"Today":0.000,"Power":0.00,"ApparentPower":0.00,"ReactivePower":0.00,"Factor":0.00,"Frequency":50,"Voltage":231.7,"Current":0.000}}
     // index: 1         2                                      3             4                 5             6            7                    8                    9             10             11              12
-    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (VAr)              0             0              3 (V)           3 (A)
+    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (var)              0             0              3 (V)           3 (A)
     TM1621GetSensors(1);
   }
 }
@@ -572,6 +613,22 @@ void CmndDspSpeed(void) {
   }
   ResponseCmndNumber(Xdrv87Settings.rotate);
 }
+
+#ifdef TM1621_DEBUG
+void CmndDspTest(void) {
+  // Only one decimal is supported !!!
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
+    if (XdrvMailbox.data_len > 0) {
+      uint32_t line = XdrvMailbox.index -1;
+      snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("----"));
+      snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("----"));
+      snprintf_P(Tm1621.row[line], sizeof(Tm1621.row[line]), PSTR("%s"), XdrvMailbox.data);
+      TM1621SendRows();
+    }
+  }
+  ResponseCmndDone();
+}
+#endif  // TM1621_DEBUG
 
 /*********************************************************************************************\
  * Interface
@@ -599,6 +656,9 @@ bool Xdrv87(uint32_t function) {
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kTm1621Commands, kTm1621Command);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

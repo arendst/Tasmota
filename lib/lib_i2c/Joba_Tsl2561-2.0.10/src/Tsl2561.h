@@ -42,7 +42,7 @@ public:
     ADDR_VDD   = 0b1001001
   } address_t;
 
-  typedef enum {
+  typedef enum : uint8_t {
     REG_CONTROL,        // Control of basic functions
     REG_TIMING,         // Integration time/gain control
     REG_THRESHLOWLOW,   // Low byte of low interrupt threshold
@@ -61,7 +61,7 @@ public:
     REG_DATA1HIGH       // High byte of ADC channel 1
   } register_t;
 
-  enum {
+  enum : uint8_t{
     CONTROL_CMD     = 0b10000000,
     CONTROL_CLEAR   = 0b01000000,
     CONTROL_WORD    = 0b00100000, // SPI only?

@@ -1,0 +1,29 @@
+{
+  "name": "esp-nimble-cpp",
+  "version": "2.3.3",
+  "description": "C++ wrapper for the NimBLE BLE stack",
+  "keywords": [
+    "BLE",
+    "espidf",
+    "espressif",
+    "esp32",
+    "nimble"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/h2zero/esp-nimble-cpp"
+  },
+  "authors": {
+    "name": "Ryan Powell",
+    "email": "ryan@nable-embedded.io",
+    "url": "https://github.com/h2zero/esp-nimble-cpp",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [
+      "-DCONFIG_NIMBLE_CPP_IDF"
+    ],
+    "libArchive": false
+  }
+}

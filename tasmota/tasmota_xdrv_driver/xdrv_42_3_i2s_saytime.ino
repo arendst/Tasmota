@@ -17,7 +17,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#if (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX))
+#if (defined(USE_I2S_AUDIO) || defined(ESP32S3_BOX))
 #ifdef USE_I2S_SAY_TIME
 long timezone = 2;
 byte daysavetime = 1;
@@ -120,7 +120,7 @@ AudioGeneratorTalkie *talkie = nullptr;
 }
 
 void Cmd_Time(void) {
-  if (!audio_i2s.out) return;
+  if (I2SPrepareTx() != I2S_OK) return;
   sayTime(RtcTime.hour, RtcTime.minute);
   ResponseCmndDone();
 }

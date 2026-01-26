@@ -9,7 +9,7 @@ extern const bclass be_class_Matter_Base38;
 /********************************************************************
 ** Solidified function: encode
 ********************************************************************/
-be_local_closure(Matter_Base38_encode,   /* name */
+be_local_closure(class_Matter_Base38_encode,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -137,16 +137,9 @@ be_local_class(Matter_Base38,
     NULL,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(encode, -1), be_const_static_closure(Matter_Base38_encode_closure) },
+        { be_const_key_weak(encode, -1), be_const_static_closure(class_Matter_Base38_encode_closure) },
     })),
     be_str_weak(Matter_Base38)
 );
-/*******************************************************************/
-
-void be_load_Matter_Base38_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Base38);
-    be_setglobal(vm, "Matter_Base38");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

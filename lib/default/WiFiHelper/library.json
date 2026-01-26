@@ -1,0 +1,8 @@
+{
+    "name": "WiFiHelper",
+    "keywords": "esp32, esp8266",
+    "description": "Bridges differences in Arduino WiFi between ESP32 and ESP8266",
+    "version": "1.0.0",
+    "frameworks": "arduino",
+    "platforms": "*"
+}

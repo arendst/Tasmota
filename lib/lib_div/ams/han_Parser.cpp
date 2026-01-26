@@ -44,7 +44,7 @@ int16_t Han_Parser::serial_readBytes(uint8_t *buf, uint16_t size) {
   return size;
 }
 
-bool Han_Parser::readHanPort(uint8_t **out, uint16_t *size) {
+bool Han_Parser::readHanPort(uint8_t **out, uint16_t *size, uint8_t flags) {
 
 	if (!serial_available()) return false;
 
@@ -56,6 +56,7 @@ bool Han_Parser::readHanPort(uint8_t **out, uint16_t *size) {
 	}
 
 	DataParserContext ctx = {0};
+	ctx.flags = flags;
 	int pos = DATA_PARSE_INCOMPLETE;
 	// For each byte received, check if we have a complete frame we can handle
 	while (serial_available() && pos == DATA_PARSE_INCOMPLETE) {

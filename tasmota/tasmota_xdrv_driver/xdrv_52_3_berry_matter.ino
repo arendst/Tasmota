@@ -76,4 +76,101 @@ extern "C" uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit,
   return 0;
 }
 
+
+//
+// internal function to publish a command received from the Matter controller
+//
+// `matter.publish_command("MtrReceived", 2, "buld", '"Power":1')`
+// matter_publish_command(const char * json_prefix, uint32_t ep, const char * friendly_name, const char * payload) {
+extern "C" int matter_publish_command(bvm *vm) {
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 4 && be_isstring(vm, 1) && be_isint(vm, 2) && be_isstring(vm, 3) && be_isstring(vm, 4)) {
+    const char * json_prefix = be_tostring(vm, 1);
+    uint32_t ep = be_toint(vm, 2);
+    const char * friendly_name = be_tostring(vm, 3);
+    const char * payload = be_tostring(vm, 4);
+    be_pop(vm, be_top(vm));   // avoid `Error be_top is non zero`
+
+    bool use_fname = (Settings->flag4.zigbee_use_names) && (friendly_name && strlen(friendly_name));    // should we replace shortaddr with friendlyname?
+
+    ResponseClear(); // clear string
+
+    // Do we prefix with `ZbReceived`?
+    if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
+      if (Settings->flag5.zigbee_include_time && Rtc.utc_time >= START_VALID_TIME) {
+        // Add time if needed (and if time is valide)
+        ResponseAppendTimeFormat(Settings->flag2.time_format);
+        ResponseAppend_P(PSTR(",\"%s\":"), json_prefix);
+      } else {
+        ResponseAppend_P(PSTR("{\"%s\":"), json_prefix);
+      }
+    }
+
+    // What key do we use, shortaddr or name?
+    if (!Settings->flag5.zb_omit_json_addr) {
+      if (use_fname) {
+        ResponseAppend_P(PSTR("{\"%s\":"), friendly_name);
+      } else {
+        ResponseAppend_P(PSTR("{\"%i\":"), ep);
+      }
+    }
+    ResponseAppend_P(PSTR("{"));
+
+    // Add "Ep":<ep>
+    ResponseAppend_P(PSTR("\"" "Ep" "\":%i,"), ep);
+
+    // Add "Name":"xxx" if name is present
+    if (friendly_name && strlen(friendly_name)) {
+      ResponseAppend_P(PSTR("\"" "Name" "\":\"%s\","), EscapeJSONString(friendly_name).c_str());
+    }
+    // Add all other attributes
+    ResponseAppend_P(PSTR("%s}"), payload);
+
+    if (!Settings->flag5.zb_omit_json_addr) {
+      ResponseAppend_P(PSTR("}"));
+    }
+
+    if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
+      ResponseAppend_P(PSTR("}"));
+    }
+
+  #ifdef USE_INFLUXDB
+    InfluxDbProcess(1);        // Use a copy of ResponseData
+  #endif
+
+    if (Settings->flag4.zigbee_distinct_topics) {
+      char subtopic[TOPSZ];
+      if (Settings->flag4.zb_topic_fname && friendly_name && strlen(friendly_name)) {
+        // Clean special characters
+        char stemp[TOPSZ];
+        strlcpy(stemp, friendly_name, sizeof(stemp));
+        MakeValidMqtt(0, stemp);
+        if (Settings->flag5.zigbee_hide_bridge_topic) {
+          snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
+        } else {
+          snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
+        }
+      } else {
+        if (Settings->flag5.zigbee_hide_bridge_topic) {
+          snprintf_P(subtopic, sizeof(subtopic), PSTR("%i"), ep);
+        } else {
+          snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%i"), TasmotaGlobal.mqtt_topic, ep);
+        }
+      }
+      char stopic[TOPSZ];
+      if (Settings->flag5.zb_received_as_subtopic) {
+        GetTopic_P(stopic, STAT, subtopic, json_prefix);
+      } else {
+        GetTopic_P(stopic, STAT, subtopic, PSTR(D_RSLT_COMMAND));
+      }
+      MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
+    } else {
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_COMMAND), Settings->flag.mqtt_sensor_retain);
+    }
+    XdrvRulesProcess(0);     // apply rules
+    be_return_nil(vm);
+  }
+  be_raise(vm, kTypeError, nullptr);
+}
+
 #endif  // USE_BERRY

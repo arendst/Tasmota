@@ -164,7 +164,7 @@ bool SonoffD1ModuleSelected(void)
   SetSerial(9600, TS_SERIAL_8N1);
 
   UpdateDevicesPresent(1);
-  TasmotaGlobal.light_type = LT_SERIAL1;
+  TasmotaGlobal.light_type = LT_W;
 
   return true;
 }
@@ -190,6 +190,9 @@ bool Xdrv37(uint32_t function)
         break;
       case FUNC_MODULE_INIT:
         result = SonoffD1ModuleSelected();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

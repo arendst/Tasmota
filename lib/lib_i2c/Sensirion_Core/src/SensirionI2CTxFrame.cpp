@@ -68,7 +68,7 @@ SensirionI2CTxFrame SensirionI2CTxFrame::createWithUInt16Command(
 
 uint16_t SensirionI2CTxFrame::addCommand(uint16_t command) {
     if (_bufferSize < 2) {
-        return TxFrameError | BufferSizeError;
+        return static_cast<uint16_t>(TxFrameError) | static_cast<uint16_t>(BufferSizeError);
     }
     _buffer[0] = static_cast<uint8_t>((command & 0xFF00) >> 8);
     _buffer[1] = static_cast<uint8_t>((command & 0x00FF) >> 0);
@@ -130,12 +130,12 @@ uint16_t SensirionI2CTxFrame::addBytes(const uint8_t data[],
 
 uint16_t SensirionI2CTxFrame::_addByte(uint8_t data) {
     if (_bufferSize <= _index) {
-        return TxFrameError | BufferSizeError;
+        return static_cast<uint16_t>(TxFrameError) | static_cast<uint16_t>(BufferSizeError);
     }
     _buffer[_index++] = data;
     if ((_index - _numCommandBytes) % 3 == 2) {
         if (_bufferSize <= _index) {
-            return TxFrameError | BufferSizeError;
+            return static_cast<uint16_t>(TxFrameError) | static_cast<uint16_t>(BufferSizeError);
         }
         uint8_t crc = generateCRC(&_buffer[_index - 2], 2, _polynomial_type);
         _buffer[_index++] = crc;

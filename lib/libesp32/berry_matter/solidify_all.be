@@ -12,11 +12,10 @@ import sys
 sys.path().push('src/embedded')   # allow to import from src/embedded
 
 # globals that need to exist to make compilation succeed
-var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,tcpclientasync,"
+var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,tcpclientasync,log,"
             "lv_clock,lv_clock_icon,lv_signal_arcs,lv_signal_bars,lv_wifi_arcs_icon,lv_wifi_arcs,"
             "lv_wifi_bars_icon,lv_wifi_bars,"
             "_lvgl,"
-            "int64"
 
 for g:string2.split(globs, ",")
   global.(g) = nil
@@ -24,6 +23,20 @@ end
 
 var prefix_dir = "src/embedded/"
 var prefix_out = "src/solidify/"
+
+def sort(l)
+  # insertion sort
+  for i:1..size(l)-1
+    var k = l[i]
+    var j = i
+    while (j > 0) && (l[j-1] > k)
+      l[j] = l[j-1]
+      j -= 1
+    end
+    l[j] = k
+  end
+  return l
+end
 
 def clean_directory(dir)
   var file_list = os.listdir(dir)
@@ -66,6 +79,11 @@ def parse_file(fname, prefix_out)
       o = o.(subname)
       cl_name = obj_name
       obj_name = subname
+      if   (type(o) == 'class')
+        obj_name = 'class_' + obj_name
+      elif (type(o) == 'module')
+        obj_name = 'module_' + obj_name
+      end
     end
     solidify.dump(o, weak, fout, cl_name)
   end
@@ -78,6 +96,7 @@ end
 clean_directory(prefix_out)
 
 var src_file_list = os.listdir(prefix_dir)
+src_file_list = sort(src_file_list)
 for src_file : src_file_list
   if src_file[0] == '.'  continue end
   parse_file(src_file, prefix_out)

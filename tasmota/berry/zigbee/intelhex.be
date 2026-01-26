@@ -118,7 +118,7 @@ class intelhex
 
       offset_low = b_get(b, 1, -2)                    # b.get(1,-2)
       var checksum = crc_sum(b)
-      if checksum != 0   raise "value_error", "invalid checksum" end
+      if checksum != 0   raise "value_error", f"invalid checksum 0x{checksum:02X}" end
 
       if record_type == 1    break end    # end of file
       if record_type == 0

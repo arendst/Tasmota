@@ -91,7 +91,7 @@ bool ShellyProButton(void) {
   if (button_index > 2) { return false; }           // Only support Up, Down, Ok
 
   uint32_t button = XdrvMailbox.payload;
-  uint32_t last_state = XdrvMailbox.command_code;
+  uint32_t last_state = (XdrvMailbox.command_code & 0xFF);
   if ((PRESSED == button) && (NOT_PRESSED == last_state)) {  // Button pressed
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Button %d pressed"), button_index +1);
@@ -240,27 +240,30 @@ bool Xdrv88(uint32_t function) {
 
   if (FUNC_PRE_INIT == function) {
     ShellyProPreInit();
-    } else if (SPro.detected) {
-      switch (function) {
+  } else if (SPro.detected) {
+    switch (function) {
 /*
-        case FUNC_BUTTON_PRESSED:
-          result = ShellyProButton();
-          break;
+      case FUNC_BUTTON_PRESSED:
+        result = ShellyProButton();
+        break;
 */
-        case FUNC_EVERY_SECOND:
-          ShellyProLedLinkWifiOff();
-          break;
-        case FUNC_SET_POWER:
-          ShellyProPower();
-          break;
-        case FUNC_INIT:
-          ShellyProInit();
-          break;
-        case FUNC_LED_LINK:
-          ShellyProLedLink();
-          break;
-      }
+      case FUNC_EVERY_SECOND:
+        ShellyProLedLinkWifiOff();
+        break;
+      case FUNC_SET_POWER:
+        ShellyProPower();
+        break;
+      case FUNC_INIT:
+        ShellyProInit();
+        break;
+      case FUNC_LED_LINK:
+        ShellyProLedLink();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
+  }
   return result;
 }
 

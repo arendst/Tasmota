@@ -1,0 +1,10 @@
+esp-nimble-cpp
+NimBLE-Arduino
+Copyright 2020-2025 Ryan Powell <ryan@nable-embedded.io> and
+esp-nimble-cpp, NimBLE-Arduino contributors.
+
+The Initial Developer of some parts of this library, which are copied from, 
+derived from, or inspired by is, esp32-snippets, Copyright 2017 Neil Kolban.
+
+If this library is used for commercial purposes, it is requested that the user consider
+making a donation and/or sponsoring this project to support it's ongoing development.

@@ -1,0 +1,15 @@
+{
+    "name": "HASPmota",
+    "version": "1.0",
+    "description": "HASPmota is a tool for easy display interfaces, inspired from OpenHASP",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "authors":
+    {
+      "name": "Stephan Hadinger",
+      "maintainer": true
+    },
+    "build": {
+      "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+    }
+  }

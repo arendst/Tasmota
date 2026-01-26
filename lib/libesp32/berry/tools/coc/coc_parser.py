@@ -22,14 +22,18 @@ class coc_parser:
         self.objects = []
         self.strtab = set()
         self.strtab_weak = set()
+        self.strtab_long = set()
+        self.bintab = set()
         self.text = text
         self.parsers = {
             "@const_object_info_begin": self.parse_object,
             "be_const_str_": self.parse_string,
+            "be_const_bytes_instance(": self.parse_bin,
             "be_const_key(": self.parse_string,
             "be_nested_str(": self.parse_string,
             "be_const_key_weak(": self.parse_string_weak,
             "be_nested_str_weak(": self.parse_string_weak,
+            "be_nested_str_long(": self.parse_string_long,
             "be_str_weak(": self.parse_string_weak,
         }
 
@@ -75,6 +79,7 @@ class coc_parser:
     def parse_word(self):
         self.skip_space()
         r = re.match(r"\w+", self.text)
+        if not r: return None
         self.text = self.text[r.end(0):]
         return r[0]
 
@@ -104,7 +109,7 @@ class coc_parser:
         return r[0]
 
     def parse_object(self):
-        self.text = re.sub("\s+//.*?$", "", self.text, flags=re.MULTILINE)      # remove trailing comments
+        self.text = re.sub(r"\s+//.*?$", "", self.text, flags=re.MULTILINE)      # remove trailing comments
         while True:
             obj = self.parse_block()
             self.objects.append(obj)
@@ -118,6 +123,7 @@ class coc_parser:
     def parse_string(self):
         if not self.text[0].isalnum() and self.text[0] != '_': return      # do not proceed, maybe false positive in solidify
         ident = self.parse_word()
+        if not ident: return
         literal = unescape_operator(ident)
         if not literal in self.strtab:
             self.strtab.add(literal)
@@ -126,9 +132,26 @@ class coc_parser:
     def parse_string_weak(self):
         if not self.text[0].isalnum() and self.text[0] != '_': return      # do not proceed, maybe false positive in solidify
         ident = self.parse_word()
+        if not ident: return
         literal = unescape_operator(ident)
         if not literal in self.strtab:
             self.strtab_weak.add(literal)
+            # print(f"str '{ident}' -> {literal}")
+
+    def parse_string_long(self):
+        if not self.text[0].isalnum() and self.text[0] != '_': return      # do not proceed, maybe false positive in solidify
+        ident = self.parse_word()
+        if not ident: return
+        literal = unescape_operator(ident)
+        if not literal in self.strtab:
+            self.strtab_long.add(literal)
+
+    def parse_bin(self):
+        ident = self.parse_word()
+        if not ident: return
+        if not re.fullmatch(r"[0-9A-Za-z]*", ident): return
+        if not ident in self.bintab:
+            self.bintab.add(ident)
             # print(f"str '{ident}' -> {literal}")
 
     #################################################################################

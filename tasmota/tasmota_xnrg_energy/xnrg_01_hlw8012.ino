@@ -208,16 +208,15 @@ void HlwEverySecond(void) {
     Hlw.cf1_current_pulse_length = 0;
     Hlw.cf_power_pulse_length  = 0;
   } else {
-    uint32_t hlw_len;
-
     if (Hlw.energy_period_counter) {
 
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HLW: EPC %u, CFlen %d usec"), Hlw.energy_period_counter, Hlw.cf_pulse_length);
 
-      hlw_len = 10000 * 100 / Hlw.energy_period_counter;  // Add *100 to fix rounding on loads at 3.6kW (#9160)
+      uint32_t hlw_len = 10000 * 100 / Hlw.energy_period_counter;  // Add *100 to fix rounding on loads at 3.6kW (#9160)
       Hlw.energy_period_counter = 0;
       if (hlw_len) {
         Energy->kWhtoday_delta[0] += (((Hlw.power_ratio * EnergyGetCalibration(ENERGY_POWER_CALIBRATION)) / 36) * 100) / hlw_len;
+//        Energy->kWhtoday_delta[0] += Energy->active_power[0] * 1000 / 36;
         EnergyUpdateToday();
       }
     }
@@ -285,22 +284,26 @@ void HlwDrvInit(void) {
 bool HlwCommand(void) {
   bool serviced = true;
 
-  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
+  float value = CharToFloat(XdrvMailbox.data);
+
+  if ((CMND_POWERCAL == Energy->command_code) ||
+      (CMND_VOLTAGECAL == Energy->command_code) ||
+      (CMND_CURRENTCAL == Energy->command_code)) {
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy->command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {    // xxx.x W
     if (XdrvMailbox.data_len && Hlw.cf_power_pulse_length ) {
-      XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
+      XdrvMailbox.payload = ((uint32_t)(value * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
     }
   }
-  else if (CMND_VOLTAGESET == Energy->command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {  // xxx.x V
     if (XdrvMailbox.data_len && Hlw.cf1_voltage_pulse_length ) {
-      XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
+      XdrvMailbox.payload = ((uint32_t)(value * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
     }
   }
-  else if (CMND_CURRENTSET == Energy->command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {  // xxx mA
     if (XdrvMailbox.data_len && Hlw.cf1_current_pulse_length) {
-      XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
+      XdrvMailbox.payload = ((uint32_t)(value) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
     }
   }
   else serviced = false;  // Unknown command

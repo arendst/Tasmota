@@ -1,5 +1,5 @@
 # OpenHASP demo
-# rm haspmota_demo.tapp ; zip -j -0 haspmota_demo.tapp haspmota_demo/* haspmota_core/haspmota.be
+# rm haspmota_demo.tapp ; zip -j -0 haspmota_demo.tapp ../haspmota_src/haspmota_demo/*
 
 if !tasmota.memory().contains("psram")
     print("HSP: Error: OpenHASP demo requires PSRAM")

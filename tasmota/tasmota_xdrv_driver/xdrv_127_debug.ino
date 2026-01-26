@@ -667,7 +667,7 @@ void CmndFlashDump(void)
 void CmndI2cWrite(void)
 {
   // I2cWrite <address>,<data>..
-  if (TasmotaGlobal.i2c_enabled) {
+  if (TasmotaGlobal.i2c_enabled[0]) {
     char* parms = XdrvMailbox.data;
     uint8_t buffer[100];
     uint32_t index = 0;
@@ -696,7 +696,7 @@ void CmndI2cWrite(void)
 void CmndI2cRead(void)
 {
   // I2cRead <address>,<size>
-  if (TasmotaGlobal.i2c_enabled) {
+  if (TasmotaGlobal.i2c_enabled[0]) {
     char* parms = XdrvMailbox.data;
     uint8_t buffer[100];
     uint32_t index = 0;
@@ -729,7 +729,7 @@ void CmndI2cRead(void)
 void CmndI2cStretch(void)
 {
 #ifdef ESP8266
-  if (TasmotaGlobal.i2c_enabled && (XdrvMailbox.payload > 0)) {
+  if (TasmotaGlobal.i2c_enabled[0] && (XdrvMailbox.payload > 0)) {
     Wire.setClockStretchLimit(XdrvMailbox.payload);
   }
   ResponseCmndDone();
@@ -738,7 +738,7 @@ void CmndI2cStretch(void)
 
 void CmndI2cClock(void)
 {
-  if (TasmotaGlobal.i2c_enabled && (XdrvMailbox.payload > 0)) {
+  if (TasmotaGlobal.i2c_enabled[0] && (XdrvMailbox.payload > 0)) {
     Wire.setClock(XdrvMailbox.payload);
   }
   ResponseCmndDone();
@@ -811,6 +811,9 @@ bool Xdrv127(uint32_t function)
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kDebugCommands, DebugCommand);
+      break;
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

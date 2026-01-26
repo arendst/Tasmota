@@ -27,6 +27,17 @@
         .s = _s                                                    \
     }
 
+#define be_define_const_str_long(_name, _s, _len)                  \
+    BERRY_LOCAL const bclstring be_const_str_##_name = {           \
+        .next = (bgcobject *)NULL,                                 \
+        .type = BE_STRING,                                         \
+        .marked = GC_CONST,                                        \
+        .extra = 0,                                                \
+        .slen = 255,                                               \
+        .llen = _len,                                              \
+        .s = _s                                                    \
+    }
+
 /* const string table */
 struct bconststrtab {
     const bstring* const *table;
@@ -268,18 +279,18 @@ void be_gcstrtab(bvm *vm)
             }
         }
     }
-#if BE_USE_DEBUG_GC == 0
-    if (tab->count < size >> 2 && size > 8) {
-        resize(vm, size >> 1);
+    if (BE_USE_DEBUG_GC || comp_is_gc_debug(vm)) {
+        resize(vm, tab->count + 4);
+    } else {
+        if (tab->count < size >> 2 && size > 8) {
+            resize(vm, size >> 1);
+        }
     }
-#else
-    resize(vm, tab->count + 4);
-#endif
 }
 
 uint32_t be_strhash(const bstring *s)
 {
-    if (gc_isconst(s)) {
+    if (gc_isconst(s) && (s->slen != 255)) {
         bcstring* cs = cast(bcstring*, s);
         if (cs->hash) {  /* if hash is null we need to compute it */
             return cs->hash;
@@ -298,11 +309,11 @@ uint32_t be_strhash(const bstring *s)
 const char* be_str2cstr(const bstring *s)
 {
     be_assert(cast_str(s) != NULL);
-    if (gc_isconst(s)) {
-        return cstr(s);
-    }
     if (s->slen == 255) {
         return lstr(s);
+    }
+    if (gc_isconst(s)) {
+        return cstr(s);
     }
     return sstr(s);
 }

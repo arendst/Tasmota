@@ -14,16 +14,23 @@ extern "C" {
  *      INCLUDES
  *********************/
 #include "../lv_conf_internal.h"
-#include <stdint.h>
+#include "lv_types.h"
 
 /*********************
  *      DEFINES
  *********************/
-#define LV_TRIGO_SIN_MAX 32767
+#define LV_TRIGO_SIN_MAX 32768
 #define LV_TRIGO_SHIFT 15 /**<  >> LV_TRIGO_SHIFT to normalize*/
 
-#define LV_BEZIER_VAL_MAX 1024 /**< Max time in Bezier functions (not [0..1] to use integers)*/
 #define LV_BEZIER_VAL_SHIFT 10 /**< log2(LV_BEZIER_VAL_MAX): used to normalize up scaled values*/
+#define LV_BEZIER_VAL_MAX (1L << LV_BEZIER_VAL_SHIFT) /**< Max time in Bezier functions (not [0..1] to use integers)*/
+#define LV_BEZIER_VAL_FLOAT(f) ((int32_t)((f) * LV_BEZIER_VAL_MAX)) /**< Convert const float number cubic-bezier values to fix-point value*/
+
+/** Align up value x to align, align must be a power of two */
+#define LV_ALIGN_UP(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
+
+/** Round up value x to round, round can be any integer number */
+#define LV_ROUND_UP(x, round) ((((x) + ((round) - 1)) / (round)) * (round))
 
 /**********************
  *      TYPEDEFS
@@ -38,31 +45,37 @@ typedef struct {
  * GLOBAL PROTOTYPES
  **********************/
 
-//! @cond Doxygen_Suppress
 /**
  * Return with sinus of an angle
  * @param angle
  * @return sinus of 'angle'. sin(-90) = -32767, sin(90) = 32767
  */
-LV_ATTRIBUTE_FAST_MEM int16_t lv_trigo_sin(int16_t angle);
+int32_t /* LV_ATTRIBUTE_FAST_MEM */ lv_trigo_sin(int16_t angle);
 
-static inline LV_ATTRIBUTE_FAST_MEM int16_t lv_trigo_cos(int16_t angle)
-{
-    return lv_trigo_sin(angle + 90);
-}
+int32_t LV_ATTRIBUTE_FAST_MEM lv_trigo_cos(int16_t angle);
 
-//! @endcond
+/**
+ * Calculate the y value of cubic-bezier(x1, y1, x2, y2) function as specified x.
+ * @param x time in range of [0..LV_BEZIER_VAL_MAX]
+ * @param x1 x of control point 1 in range of [0..LV_BEZIER_VAL_MAX]
+ * @param y1 y of control point 1 in range of [0..LV_BEZIER_VAL_MAX]
+ * @param x2 x of control point 2 in range of [0..LV_BEZIER_VAL_MAX]
+ * @param y2 y of control point 2 in range of [0..LV_BEZIER_VAL_MAX]
+ * @return the value calculated
+ */
+int32_t lv_cubic_bezier(int32_t x, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 
 /**
  * Calculate a value of a Cubic Bezier function.
  * @param t time in range of [0..LV_BEZIER_VAL_MAX]
- * @param u0 start values in range of [0..LV_BEZIER_VAL_MAX]
+ * @param u0 must be 0
  * @param u1 control value 1 values in range of [0..LV_BEZIER_VAL_MAX]
  * @param u2 control value 2 in range of [0..LV_BEZIER_VAL_MAX]
- * @param u3 end values in range of [0..LV_BEZIER_VAL_MAX]
+ * @param u3 must be LV_BEZIER_VAL_MAX
  * @return the value calculated from the given parameters in range of [0..LV_BEZIER_VAL_MAX]
  */
-uint32_t lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3);
+int32_t lv_bezier3(int32_t t, int32_t u0, uint32_t u1, int32_t u2, int32_t u3);
+
 
 /**
  * Calculate the atan2 of a vector.
@@ -71,8 +84,6 @@ uint32_t lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t 
  * @return the angle in degree calculated from the given parameters in range of [0..360]
  */
 uint16_t lv_atan2(int x, int y);
-
-//! @cond Doxygen_Suppress
 
 /**
  * Get the square root of a number
@@ -84,14 +95,28 @@ uint16_t lv_atan2(int x, int y);
  * If root < 256: mask = 0x800
  * Else: mask = 0x8000
  */
-LV_ATTRIBUTE_FAST_MEM void lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask);
+void /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask);
 
-//! @endcond
+/**
+ * Alternative (fast, approximate) implementation for getting the square root of an integer.
+ * @param x integer which square root should be calculated
+ */
+int32_t /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt32(uint32_t x);
+
+/**
+ * Calculate the square of an integer (input range is 0..32767).
+ * @param x input
+ * @return square
+ */
+static inline int32_t lv_sqr(int32_t x)
+{
+    return x * x;
+}
 
 /**
  * Calculate the integer exponents.
  * @param base
- * @param power
+ * @param exp
  * @return base raised to the power exponent
  */
 int64_t lv_pow(int64_t base, int8_t exp);
@@ -106,6 +131,12 @@ int64_t lv_pow(int64_t base, int8_t exp);
  * @return the mapped number
  */
 int32_t lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min_out, int32_t max_out);
+
+/**
+ * Set the seed of the pseudo random number generator
+ * @param seed a number to initialize the random generator
+ */
+void lv_rand_set_seed(uint32_t seed);
 
 /**
  * Get a pseudo random number in the given range

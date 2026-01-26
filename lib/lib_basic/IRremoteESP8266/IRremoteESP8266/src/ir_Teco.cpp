@@ -231,7 +231,8 @@ uint16_t IRTecoAc::getTimer(void) const {
 ///   `0` will clear the timer. Max is 24 hrs.
 /// @note Time is stored internally in increments of 30 mins.
 void IRTecoAc::setTimer(const uint16_t nr_mins) {
-  uint16_t mins = std::min(nr_mins, (uint16_t)(24 * 60));  // Limit to 24 hrs.
+  // Limit to 24 hrs
+  uint16_t mins = std::min(nr_mins, static_cast<uint16_t>(24 * 60));
   uint8_t hours = mins / 60;
   _.TimerOn = mins > 0;  // Set the timer flag.
   _.HalfHour = (mins % 60) >= 30;

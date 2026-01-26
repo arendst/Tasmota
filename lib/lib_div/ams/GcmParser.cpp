@@ -36,13 +36,19 @@ int8_t GCMParser::parse(uint8_t *d, DataParserContext &ctx) {
     int len = 0;
     int headersize = 2 + systemTitleLength;
     ptr += systemTitleLength;
-    if(((*ptr) & 0xFF) == 0x81) {
+
+    if (ctx.flags & 1) {
+      len = *ptr;
+        ptr++;
+        headersize++;
+    } else {
+      if(((*ptr) & 0xFF) == 0x81) {
         ptr++;
         len = *ptr;
         // 1-byte payload length
         ptr++;
         headersize += 2;
-    } else if(((*ptr) & 0xFF) == 0x82) {
+      } else if(((*ptr) & 0xFF) == 0x82) {
         GCMSizeDef* h = (GCMSizeDef*) ptr;
 
         // 2-byte payload length
@@ -50,14 +56,19 @@ int8_t GCMParser::parse(uint8_t *d, DataParserContext &ctx) {
 
         ptr += 3;
         headersize += 3;
-    } else  if(((*ptr) & 0xFF) == 0x4f) {
-    // ???????? single frame did only decode with this compare
+      } else  if(((*ptr) & 0xFF) == 0x4f) {
+        // ???????? single frame did only decode with this compare
         ptr++;
         headersize++;
-    } else  if(((*ptr) & 0xFF) == 0x5e) {
-    // ???????? single frame did only decode with this compare
+      } else  if(((*ptr) & 0xFF) == 0x5e) {
+        // ???????? single frame did only decode with this compare
         ptr++;
         headersize++;
+      } else {
+        len = *ptr;
+        ptr++;
+        headersize++;
+      }
     }
     if(len + headersize > ctx.length)
         return DATA_PARSE_INCOMPLETE;

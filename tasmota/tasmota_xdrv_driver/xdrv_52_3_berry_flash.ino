@@ -181,6 +181,18 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // return current OTA partition
+  // Typically `0` or `1`, or `-1` if safeboot
+  int p_cur_ota() {
+    uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;   // 0
+    const esp_partition_t *running_ota = esp_ota_get_running_partition();
+    if (running_ota) { cur_part = running_ota->subtype; }    // 16 - 32
+    if (cur_part >= (uint32_t)ESP_PARTITION_SUBTYPE_APP_OTA_MIN /*16*/ && cur_part < (uint32_t)ESP_PARTITION_SUBTYPE_APP_OTA_MAX /*32*/) {
+      return cur_part - (uint32_t)ESP_PARTITION_SUBTYPE_APP_OTA_MIN /*16*/;
+    }
+    return -1;
+  }
+
   // Forces the next restart to use the `factory` partition if any is present
   void p_factory(bbool force_ota) {
     const esp_partition_t *otadata_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, NULL);

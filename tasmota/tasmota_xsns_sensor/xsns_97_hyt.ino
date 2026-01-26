@@ -36,6 +36,7 @@
 struct HYT {
   float   humidity = NAN;
   float   temperature = NAN;
+  uint8_t bus;
   uint8_t valid = 0;
   uint8_t count = 0;
   char    name[6] = "HYT";
@@ -43,15 +44,17 @@ struct HYT {
 
 bool HYT_Read(void) {
   if (HYT.valid) { HYT.valid--; }
-
-  Wire.beginTransmission(HYT_ADDR);
-  Wire.requestFrom(HYT_ADDR, 4);
-  if (Wire.available() == 4) {
-    uint8_t data1      = Wire.read();
-    uint8_t data2      = Wire.read();
-    uint8_t data3      = Wire.read();
-    uint8_t data4      = Wire.read();
-    Wire.endTransmission();
+/*
+  TwoWire& myWire = I2cGetWire(HYT.bus);
+  if (&myWire == nullptr) { return false; }  // No valid I2c bus
+  myWire.beginTransmission(HYT_ADDR);
+  myWire.requestFrom(HYT_ADDR, 4);
+  if (myWire.available() == 4) {
+    uint8_t data1      = myWire.read();
+    uint8_t data2      = myWire.read();
+    uint8_t data3      = myWire.read();
+    uint8_t data4      = myWire.read();
+    myWire.endTransmission();
 
     // Convert the data to 14-bits
     float humidity = ((((data1 & 0x3F) * 256) + data2) * 100.0) / 16383.0;
@@ -61,6 +64,18 @@ bool HYT_Read(void) {
     HYT.humidity = ConvertHumidity(humidity);
     HYT.temperature  = ConvertTemp(temperature);
   }
+*/
+  uint8_t data[4];
+  if (!I2cReadBuffer(HYT_ADDR, -1, data, 4, HYT.bus)) {
+    // Convert the data to 14-bits
+    float humidity = ((((data[0] & 0x3F) * 256) + data[1]) * 100.0) / 16383.0;
+    int temp = ((data[2] * 256) + (data[3] & 0xFC)) / 4;
+    float temperature = (temp / 16384.0) * 165.0 - 40.0;
+
+    HYT.humidity = ConvertHumidity(humidity);
+    HYT.temperature  = ConvertTemp(temperature);
+  }
+
   if (isnan(HYT.temperature) || isnan(HYT.humidity)) { return false; }
 
   HYT.valid = SENSOR_MAX_MISS;
@@ -72,9 +87,13 @@ bool HYT_Read(void) {
 /********************************************************************************************/
 
 void HYT_Detect(void) {
-  if (I2cSetDevice(HYT_ADDR)) {
-    I2cSetActiveFound(HYT_ADDR, "HYT");
-    HYT.count = 1;
+  for (HYT.bus = 0; HYT.bus < 2; HYT.bus++) {
+    if (!I2cSetDevice(HYT_ADDR, HYT.bus)) { continue; }
+    if (HYT_Read()) {
+      I2cSetActiveFound(HYT_ADDR, "HYT", HYT.bus);
+      HYT.count = 1;
+      break;
+    }
   }
 }
 

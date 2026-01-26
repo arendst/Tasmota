@@ -26,7 +26,7 @@ class ArtNet_UI
   # Displays a "DMX ArtNet" button on the configuration page
   def web_add_config_button()
     import webserver
-    webserver.content_send("<p><form id=artnet_ui action='artnet_ui' style='display: block;' method='get'><button>Configure ArtNet animations</button></form></p>")
+    webserver.content_send("<p></p><form id=artnet_ui action='artnet_ui' style='display: block;' method='get'><button>Configure ArtNet animations</button></form>")
   end
 
   # ####################################################################################################
@@ -101,7 +101,7 @@ class ArtNet_UI
     webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
     webserver.content_send(format("<legend><b title='ArtNet'>&nbsp;ArtNet configuration</b></legend>"))
 
-    webserver.content_send("<p><form id=artnet_ui style='display: block;' action='/artnet_ui' method='post'>")
+    webserver.content_send("<p></p><form id=artnet_ui style='display: block;' action='/artnet_ui' method='post'>")
 
     # WS2812 bus configuration
     webserver.content_send(format("<p>WS2812 configuration: </p>"))
@@ -168,7 +168,7 @@ class ArtNet_UI
 
     # button
     webserver.content_send("<button name='artnetapply' class='button bgrn'>Apply and Run</button>")
-    webserver.content_send("</form></p>")
+    webserver.content_send("</form>")
 
     webserver.content_send("<p></p></fieldset><p></p>")
     webserver.content_button(webserver.BUTTON_CONFIGURATION)

@@ -8,14 +8,17 @@
 
 enum {
     ctypes_i32    =  14,
+    ctypes_i24    =  13,
     ctypes_i16    =  12,
     ctypes_i8     =  11,
     ctypes_u32    =   4,
+    ctypes_u24    =   3,
     ctypes_u16    =   2,
     ctypes_u8     =   1,
 
     // big endian
     ctypes_be_i32 = -14,
+    ctypes_be_i24 = -13,
     ctypes_be_i16 = -12,
     ctypes_be_i8  = -11,
     ctypes_be_u32 =  -4,
@@ -30,6 +33,10 @@ enum {
     ctypes_ptr32  =   9,
     ctypes_ptr64  =  -9,
 
+    // address (no acces to the value)
+    ctypes_addr   =  15,
+
+    // special
     ctypes_bf     =   0,    //bif-field
 };
 
@@ -48,17 +55,6 @@ typedef struct be_ctypes_structure_t {
     const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */
     const be_ctypes_structure_item_t * items;
 } be_ctypes_structure_t;
-
-typedef struct be_ctypes_class_t {
-    const char * name;
-    const be_ctypes_structure_t * definitions;
-} be_ctypes_class_t;
-
-typedef struct be_ctypes_classes_t {
-    uint16_t  size;
-    const char **instance_mapping;  /* array of instance class names for automatic instanciation of class */
-    const be_ctypes_class_t * classes;
-} be_ctypes_classes_t;
 
 #ifdef __cplusplus
 extern "C" {

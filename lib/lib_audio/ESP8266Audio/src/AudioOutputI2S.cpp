@@ -19,6 +19,7 @@
 */
 
 #include <Arduino.h>
+#if ESP_IDF_VERSION_MAJOR < 5   // TODO Arduino 3.0 Port I2S
 #ifdef ESP32
   #include "driver/i2s.h"
 #elif defined(ARDUINO_ARCH_RP2040) || ARDUINO_ESP8266_MAJOR >= 3
@@ -374,3 +375,4 @@ bool AudioOutputI2S::stop()
   i2sOn = false;
   return true;
 }
+#endif  // TODO Arduino 3.0 Port I2S

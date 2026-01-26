@@ -53,7 +53,7 @@ uint16_t SensirionShdlcTxFrame::finish(void) {
         return error;
     }
     if (_index + 1 > _bufferSize) {
-        return TxFrameError | BufferSizeError;
+        return  static_cast<uint16_t>(TxFrameError) | BufferSizeError;
     }
     _buffer[_index++] = 0x7e;
     _isFinished = true;
@@ -84,7 +84,7 @@ uint16_t SensirionShdlcTxFrame::addInt16(int16_t data) {
 
 uint16_t SensirionShdlcTxFrame::addUInt8(uint8_t data) {
     if (_index + 2 > _bufferSize) {
-        return TxFrameError | BufferSizeError;
+        return static_cast<uint16_t>(TxFrameError) | BufferSizeError;
     }
     switch (data) {
         case 0x11:

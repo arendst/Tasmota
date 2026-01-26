@@ -14,6 +14,7 @@ class Driver
   var save_before_restart
   var web_sensor
   var json_append
+  var after_teleperiod
   var button_pressed
   var display
 

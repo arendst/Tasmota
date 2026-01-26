@@ -54,7 +54,7 @@ const char HTTP_HEAD_LAST_SCRIPT32[] PROGMEM =
         "var s=x.responseText;"
         // "console.log('responseText:'+s);"
         "if(s=='false')setTimeout(()=>{fct(t);},6000);"
-        "if(s=='true')su(t);"
+        "if(s=='true')setTimeout(()=>{su(t);},1000);"
       "}else if(x.readyState==4&&x.status==0){"
         "setTimeout(()=>{fct(t);},2000);"             // retry in 2 seconds
       "};"

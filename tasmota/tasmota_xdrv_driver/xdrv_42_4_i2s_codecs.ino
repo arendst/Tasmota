@@ -124,7 +124,7 @@ uint32_t ES8311_init() {
 }
 
 void S3boxInit(void) {
-  if (TasmotaGlobal.i2c_enabled_2) {
+  if (TasmotaGlobal.i2c_enabled[1]) {
     // box lite
     ES8156_init();
     es7243e_init();
@@ -143,7 +143,7 @@ void S3boxInit(void) {
 #include <wm8960.h>
 
 void W8960_Init1(void) {
-  if (TasmotaGlobal.i2c_enabled_2) {
+  if (TasmotaGlobal.i2c_enabled[1]) {
     if (I2cSetDevice(W8960_ADDR, 1)) {
       I2cSetActiveFound(W8960_ADDR, "W8960-I2C", 1);
       W8960_Init(&Wire1);

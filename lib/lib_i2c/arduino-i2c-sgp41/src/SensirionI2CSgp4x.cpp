@@ -178,6 +178,28 @@ uint16_t SensirionI2CSgp4x::readSelfTestValue(uint16_t& testResult) {
     return error;
 }
 
+uint16_t SensirionI2CSgp4x::getFeaturesValue(uint16_t& featureResult) {
+    uint16_t error;
+    uint8_t buffer[3];
+    SensirionI2CTxFrame txFrame =
+        SensirionI2CTxFrame::createWithUInt16Command(0x202F, buffer, 3);
+
+    error = SensirionI2CCommunication::sendFrame(SGP4X_I2C_ADDRESS, txFrame,
+                                                 *_i2cBus);
+
+    if (error) {
+        return error;
+    }
+
+    delay(1); // 1ms delay for feature request
+    SensirionI2CRxFrame rxFrame(buffer, 3);
+    error = SensirionI2CCommunication::receiveFrame(SGP4X_I2C_ADDRESS, 3,
+                                                    rxFrame, *_i2cBus);
+
+    error |= rxFrame.getUInt16(featureResult);
+    return error;
+}
+
 uint16_t SensirionI2CSgp4x::turnHeaterOff() {
     uint16_t error;
     uint8_t buffer[2];

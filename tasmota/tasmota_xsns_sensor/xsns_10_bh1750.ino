@@ -62,6 +62,7 @@ struct {
 
 struct {
   uint8_t address;
+  uint8_t bus;
   uint8_t valid = 0;
   uint8_t mtreg = 69;                          // Default Measurement Time
   uint16_t illuminance = 0;
@@ -78,29 +79,52 @@ uint8_t Bh1750Resolution(uint32_t sensor_index) {
 }
 
 bool Bh1750SetResolution(uint32_t sensor_index) {
-  Wire.beginTransmission(Bh1750_sensors[sensor_index].address);
-  Wire.write(Bh1750.resolution[Bh1750Resolution(sensor_index)]);
-  return (!Wire.endTransmission());
+/*
+  TwoWire& myWire = I2cGetWire(Bh1750_sensors[sensor_index].bus);
+  myWire.beginTransmission(Bh1750_sensors[sensor_index].address);
+  myWire.write(Bh1750.resolution[Bh1750Resolution(sensor_index)]);
+  return (!myWire.endTransmission());
+*/
+  return I2cWrite0(Bh1750_sensors[sensor_index].address, Bh1750.resolution[Bh1750Resolution(sensor_index)], Bh1750_sensors[sensor_index].bus);
 }
 
 bool Bh1750SetMTreg(uint32_t sensor_index) {
-  Wire.beginTransmission(Bh1750_sensors[sensor_index].address);
+/*
+  TwoWire& myWire = I2cGetWire(Bh1750_sensors[sensor_index].bus);
+  if (&myWire == nullptr) { return false; }  // No valid I2c bus
+  myWire.beginTransmission(Bh1750_sensors[sensor_index].address);
   uint8_t data = BH1750_MEASUREMENT_TIME_HIGH | ((Bh1750_sensors[sensor_index].mtreg >> 5) & 0x07);
-  Wire.write(data);
-  if (Wire.endTransmission()) { return false; }
-  Wire.beginTransmission(Bh1750_sensors[sensor_index].address);
+  myWire.write(data);
+  if (myWire.endTransmission()) { return false; }
+  myWire.beginTransmission(Bh1750_sensors[sensor_index].address);
   data = BH1750_MEASUREMENT_TIME_LOW | (Bh1750_sensors[sensor_index].mtreg & 0x1F);
-  Wire.write(data);
-  if (Wire.endTransmission()) { return false; }
+  myWire.write(data);
+  if (myWire.endTransmission()) { return false; }
+*/
+  uint8_t reg = BH1750_MEASUREMENT_TIME_HIGH | ((Bh1750_sensors[sensor_index].mtreg >> 5) & 0x07);
+  if (!I2cWrite0(Bh1750_sensors[sensor_index].address, reg, Bh1750_sensors[sensor_index].bus)) {
+    return false;
+  }
+  reg = BH1750_MEASUREMENT_TIME_LOW | (Bh1750_sensors[sensor_index].mtreg & 0x1F);
+  if (!I2cWrite0(Bh1750_sensors[sensor_index].address, reg, Bh1750_sensors[sensor_index].bus)) {
+    return false;
+  }
   return Bh1750SetResolution(sensor_index);
 }
 
 bool Bh1750Read(uint32_t sensor_index) {
   if (Bh1750_sensors[sensor_index].valid) { Bh1750_sensors[sensor_index].valid--; }
+/*
+  TwoWire& myWire = I2cGetWire(Bh1750_sensors[sensor_index].bus);
+  if (2 != myWire.requestFrom(Bh1750_sensors[sensor_index].address, (uint8_t)2)) { return false; }
 
-  if (2 != Wire.requestFrom(Bh1750_sensors[sensor_index].address, (uint8_t)2)) { return false; }
-
-  float illuminance = (Wire.read() << 8) | Wire.read();
+  float illuminance = (myWire.read() << 8) | myWire.read();
+*/
+  uint8_t data[2];
+  if (I2cReadBuffer0(Bh1750_sensors[sensor_index].address, data, 2, Bh1750_sensors[sensor_index].bus)) {
+    return false;
+  }
+  float illuminance = (data[0] << 8) | data[1];
   illuminance *= 57.5 / (float)Bh1750_sensors[sensor_index].mtreg;  // Fix #16022
   if (1 == Bh1750Resolution(sensor_index)) {
     illuminance /= 2;
@@ -114,13 +138,17 @@ bool Bh1750Read(uint32_t sensor_index) {
 /********************************************************************************************/
 
 void Bh1750Detect(void) {
-  for (uint32_t i = 0; i < sizeof(Bh1750.addresses); i++) {
-    if (!I2cSetDevice(Bh1750.addresses[i])) { continue; }
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    for (uint32_t i = 0; i < sizeof(Bh1750.addresses); i++) {
+      if (!I2cSetDevice(Bh1750.addresses[i], bus)) { continue; }
 
-    Bh1750_sensors[Bh1750.count].address = Bh1750.addresses[i];
-    if (Bh1750SetMTreg(Bh1750.count)) {
-      I2cSetActiveFound(Bh1750_sensors[Bh1750.count].address, Bh1750.types);
-      Bh1750.count++;
+      Bh1750_sensors[Bh1750.count].address = Bh1750.addresses[i];
+      Bh1750_sensors[Bh1750.count].bus = bus;
+      if (Bh1750SetMTreg(Bh1750.count)) {
+        I2cSetActiveFound(Bh1750_sensors[Bh1750.count].address, Bh1750.types, Bh1750_sensors[Bh1750.count].bus);
+        Bh1750.count++;
+        if (2 == Bh1750.count) { return; }
+      }
     }
   }
 }

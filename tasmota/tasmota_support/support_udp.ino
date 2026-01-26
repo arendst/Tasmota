@@ -24,6 +24,8 @@
 #endif
 #define UDP_MSEARCH_DEBOUNCE  300        // Don't send new response if same request within 300 ms
 
+#define UDP_TASMOTA_DEBUG     true
+
 uint32_t  udp_last_received = 0;         // timestamp of last udp received packet
                                          // if non-zero we keep silend and don't send response
                                          // there is a very low probability that after 53 days the timestamp is
@@ -122,7 +124,16 @@ void PollUdp(void)
       packet->buf[packet->len] = 0;   // add NULL at the end of the packet
       char * packet_buffer = (char*) &packet->buf;
       int32_t len = packet->len;
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
+      if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
+#if UDP_TASMOTA_DEBUG
+        char buf[2 * len + 1];
+        buf[2*len] = 0;
+        ToHex_P((const uint8_t*)packet_buffer, len, buf, sizeof(buf));
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d) '%s'"), len, buf);
+#else
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
+#endif
+      }
 #endif  // ESP8266
 #ifdef ESP32
     while (uint32_t pack_len = PortUdp.parsePacket()) {
@@ -131,7 +142,15 @@ void PollUdp(void)
       int32_t len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
       packet_buffer[len] = 0;
       PortUdp.flush();
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d)"), len, pack_len);
+      if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
+#if UDP_TASMOTA_DEBUG
+        char buf[2 * len + 1];
+        ToHex_P((const uint8_t*)packet_buffer, len, buf, sizeof(buf));
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d) '%s'"), len, pack_len, buf);
+#else
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d)"), len, pack_len);
+#endif
+      }
 #endif  // ESP32
 
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);

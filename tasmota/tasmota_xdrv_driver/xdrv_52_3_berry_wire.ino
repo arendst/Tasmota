@@ -24,6 +24,40 @@
 
 #include <berry.h>
 #include <Wire.h>
+// #include <byteswap.h>
+
+#ifndef __bswap_16
+#ifdef __GNUC__
+# define __bswap_16(x) \
+    (__extension__							      \
+     ({ unsigned short int __bsx = (x);					      \
+        ((((__bsx) >> 8) & 0xff) | (((__bsx) & 0xff) << 8)); }))
+#else
+static INLINE unsigned short int
+__bswap_16 (unsigned short int __bsx)
+{
+  return ((((__bsx) >> 8) & 0xff) | (((__bsx) & 0xff) << 8));
+}
+#endif
+#endif // __bswap_16
+
+/* Swap bytes in 32 bit value.  */
+#ifndef __bswap_32
+#ifdef __GNUC__
+# define __bswap_32(x) \
+    (__extension__							      \
+     ({ unsigned int __bsx = (x);					      \
+        ((((__bsx) & 0xff000000) >> 24) | (((__bsx) & 0x00ff0000) >>  8) |    \
+	 (((__bsx) & 0x0000ff00) <<  8) | (((__bsx) & 0x000000ff) << 24)); }))
+#else
+static INLINE unsigned int
+__bswap_32 (unsigned int __bsx)
+{
+  return ((((__bsx) & 0xff000000) >> 24) | (((__bsx) & 0x00ff0000) >>  8) |
+	  (((__bsx) & 0x0000ff00) <<  8) | (((__bsx) & 0x000000ff) << 24));
+}
+#endif
+#endif // __bswap_32
 
 // read the `bus` attribute and return `Wire` or `Wire1`
 // Can return nullptr reference if the bus is not initialized
@@ -32,10 +66,12 @@ TwoWire & getWire(bvm *vm) {
   be_getmember(vm, 1, "bus");
   int32_t bus = be_toint(vm, -1); // bus is 1 or 2
   be_pop(vm, 1);
-  if (1 == bus && TasmotaGlobal.i2c_enabled) {
+  if (1 == bus && TasmotaGlobal.i2c_enabled[0]) {
     return Wire;
-  } else if (2 == bus && TasmotaGlobal.i2c_enabled_2) {
+#ifdef USE_I2C_BUS2
+  } else if (2 == bus && TasmotaGlobal.i2c_enabled[1]) {
     return Wire1;
+#endif  // USE_I2C_BUS2
   } else {
     be_raise(vm, "configuration_error", "I2C bus not initiliazedd");
     return *(TwoWire*)nullptr;
@@ -47,9 +83,9 @@ bool I2cEnabled(bvm *vm) {
   be_getmember(vm, 1, "bus");
   int32_t bus = be_toint(vm, -1); // bus is 1 or 2
   be_pop(vm, 1);
-  if (1 == bus && TasmotaGlobal.i2c_enabled) {
+  if (1 == bus && TasmotaGlobal.i2c_enabled[0]) {
     return true;
-  } else if (2 == bus && TasmotaGlobal.i2c_enabled_2) {
+  } else if (2 == bus && TasmotaGlobal.i2c_enabled[1]) {
     return true;
   } else {
     return false;
@@ -96,7 +132,7 @@ extern "C" {
     TwoWire & myWire = getWire(vm);
     if (top == 2 && be_isint(vm, 2)) {  // only 1 argument of type string accepted
       int32_t address = be_toint(vm, 2);
-      myWire.beginTransmission(address);
+      myWire.beginTransmission((int)address);
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
@@ -164,7 +200,7 @@ extern "C" {
         myWire.write(value);
       } else if (be_isstring(vm, 2)) {
         const char * s = be_tostring(vm, 1);
-        myWire.write(s);
+        myWire.write((uint8_t*) s, strlen(s));
       } else if ((buf = be_tobytes(vm, 2, &len)) != nullptr) {
         myWire.write((uint8_t*) buf, len);
       } else {
@@ -217,8 +253,8 @@ extern "C" {
     if (top == 5 && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5)) {
       uint8_t addr = be_toint(vm, 2);
       uint8_t reg = be_toint(vm, 3);
-      uint8_t val = be_toint(vm, 4);
-      uint8_t size = be_toint(vm, 5);
+      int32_t val = be_toint(vm, 4);
+      int32_t size = be_toint(vm, 5);
       bool ok = I2cWrite(addr, reg, val, size, bus);
       be_pushbool(vm, ok);
       be_return(vm); // Return
@@ -234,10 +270,24 @@ extern "C" {
     if (top == 4 && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4)) {
       uint8_t addr = be_toint(vm, 2);
       uint8_t reg = be_toint(vm, 3);
-      uint8_t size = be_toint(vm, 4);
-      bool ok = I2cValidRead(addr, reg, size, bus);  // TODO
+      int32_t size = be_toint(vm, 4);
+      bool little_endian = false;
+      if (size < 0) {
+        little_endian = true;
+        size = -size;
+      }
+      bool ok = I2cValidRead(addr, reg, size, bus, true);  // force sendStop
       if (ok) {
-        be_pushint(vm, i2c_buffer);
+        int32_t val = I2C.buffer;
+        if (little_endian) {
+          if (size == 2) {
+            val = __bswap_16(val);
+          }
+          else if (size == 4) {
+            val = __bswap_32(val);
+          }
+        }
+        be_pushint(vm, val);
       } else {
         be_pushnil(vm);
       }

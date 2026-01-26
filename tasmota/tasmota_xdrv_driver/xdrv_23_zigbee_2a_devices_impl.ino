@@ -323,7 +323,7 @@ bool Z_Device::setEPName(uint8_t ep, const char * name) {
 }
 
 void Z_Device::setStringAttribute(char*& attr, const char * str) {
-  if (nullptr == str)  { str = PSTR(""); }    // nullptr is considered empty string
+  if (nullptr == str)  { str = ""; }    // nullptr is considered empty string, don't use PROGMEM to avoid crash
   size_t str_len = strlen(str);
 
   if ((nullptr == attr) && (0 == str_len)) { return; } // if both empty, don't do anything
@@ -587,6 +587,11 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list
 // internal function to publish device information with respect to all `SetOption`s
 //
 void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list, bool include_time) const {
+#ifdef USE_BERRY
+    // Publish to Berry
+    callBerryZigbeeDispatcher("attributes_final", nullptr, &attr_list, shortaddr);
+#endif // USE_BERRY
+
   const char * local_friendfly_name;     // friendlyname publish can depend on the source endpoint
   local_friendfly_name = ep_names.getEPName(attr_list.src_ep);    // check if this ep has a specific name
   if (local_friendfly_name == nullptr) {
@@ -795,7 +800,7 @@ void Z_Device::jsonAddEndpoints(Z_attribute_list & attr_list) const {
   for (uint32_t i = 0; i < endpoints_max; i++) {
     uint8_t endpoint = endpoints[i];
     if (0x00 == endpoint) { break; }
-    arr_ep.add(endpoint);
+    arr_ep.add((uint32_t)endpoint);
   }
   attr_list.addAttributePMEM(PSTR("Endpoints")).setStrRaw(arr_ep.toString().c_str());
 }
@@ -814,6 +819,11 @@ void Z_Device::jsonAddConfig(Z_attribute_list & attr_list) const {
   }
   attr_list.addAttributePMEM(PSTR("Config")).setStrRaw(arr_data.toString().c_str());
 }
+// Add "HueEmulation":false, "Matter":false
+void Z_Device::jsonAddEmulation(Z_attribute_list & attr_list) const {
+  if (!isAdvertizeHue())      { attr_list.addAttributePMEM(PSTR("HueEmulation")).setBool(false); }
+  if (!isAdvertizeMatter())   { attr_list.addAttributePMEM(PSTR("Matter")).setBool(false); }
+}
 // Add All data attributes
 void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
   // show internal data - mostly last known values
@@ -824,7 +834,7 @@ void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
     }
   }
 }
-// Add "BatteryPercentage", "LastSeen", "LastSeenEpoch", "LinkQuality"
+// Add "BatteryPercentage", "LastSeen", "LastSeenEpoch", "LinkQuality", "HueEmulation" (opt) and "Matter" (opt)
 void Z_Device::jsonAddDeviceAttributes(Z_attribute_list & attr_list) const {
   attr_list.addAttributePMEM(PSTR("Reachable")).setBool(getReachable());
   if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batt_percent); }
@@ -879,6 +889,7 @@ void Z_Device::jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_
     jsonAddModelManuf(attr_list);
     jsonAddEndpoints(attr_list);
     jsonAddConfig(attr_list);
+    jsonAddEmulation(attr_list);
   }
   if (dump_mode >= 3) {
     jsonAddDataAttributes(attr_list);
@@ -928,7 +939,7 @@ String Z_Devices::dumpDevice(uint32_t dump_mode, const Z_Device & device) const 
 //  0 : Ok
 // <0 : Error
 //
-// Ex: {"Device":"0x5ADF","Name":"IKEA_Light","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
+// Ex: {"Device":"0x5ADF","Name":"IKEA_Light","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"],"HueEmulation":false}
 int32_t Z_Devices::deviceRestore(JsonParserObject json) {
 
   // params
@@ -1006,6 +1017,12 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
       }
     }
   }
+
+  // read "HueEmulation" and "Matter"
+  bool hue_emulation = json.getBool(PSTR("HueEmulation"), false);
+  bool matter        = json.getBool(PSTR("Matter"), false);
+  device.setAdvertizeHue(hue_emulation);
+  device.setAdvertizeMatter(matter);
 
   return 0;
 }

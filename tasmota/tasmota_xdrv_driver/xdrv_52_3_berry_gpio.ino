@@ -23,9 +23,6 @@
 #include <berry.h>
 #include "esp8266toEsp32.h"
 
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
-#include <driver/dac.h>
-#endif
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -36,6 +33,10 @@
 extern "C" {
 
   #include "berry/include/be_gpio_defines.h"
+#ifdef SOC_DAC_SUPPORTED
+  #include "soc/dac_channel.h"
+  #include <driver/dac_oneshot.h>
+#endif // SOC_DAC_SUPPORTED
 
   // virtual member
   int gp_member(bvm *vm);
@@ -53,31 +54,17 @@ extern "C" {
       if (pin >= 0) {
         if (mode > 0) {
           // standard ESP mode
+          analogDetach(pin);
           pinMode(pin, mode);
         } else {
           // synthetic mode
           if (-1 == mode) {
             // DAC
-#if   defined(CONFIG_IDF_TARGET_ESP32)
-            if (25 == pin || 26 == pin) {
-              dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-              esp_err_t err = dac_output_enable(channel);
-              if (err) {
-                be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
-              }
-            } else {
-              be_raise(vm, "value_error", "DAC only supported on GPIO25-26");
+#ifdef SOC_DAC_SUPPORTED
+            if (pin != DAC_CHAN0_GPIO_NUM && pin != DAC_CHAN1_GPIO_NUM) {
+              be_raisef(vm, "value_error", "DAC only supported on GPIO%i-%i", DAC_CHAN0_GPIO_NUM, DAC_CHAN1_GPIO_NUM);
             }
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-            if (17 == pin || 18 == pin) {
-              dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-              esp_err_t err = dac_output_enable(channel);
-              if (err) {
-                be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
-              }
-            } else {
-              be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
-            }
+            // DEPRECATED - this is not needed anymore, the GPIO is configured when first write occurs
 #else
             be_raise(vm, "value_error", "DAC unsupported in this chip");
 #endif
@@ -121,41 +108,26 @@ extern "C" {
 
   int gp_dac_voltage(bvm *vm);
   int gp_dac_voltage(bvm *vm) {
+#ifdef SOC_DAC_SUPPORTED
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+    if (argc == 2 && be_isint(vm, 1) && be_isnumber(vm, 2)) {
       int32_t pin = be_toint(vm, 1);
       int32_t mV = be_toint(vm, 2);
+      if (pin != DAC_CHAN0_GPIO_NUM && pin != DAC_CHAN1_GPIO_NUM) {
+        be_raisef(vm, "value_error", "DAC only supported on GPIO%i-%i", DAC_CHAN0_GPIO_NUM, DAC_CHAN1_GPIO_NUM);
+      }
       if (mV < 0) { mV = 0; }
       uint32_t dac_value = changeUIntScale(mV, 0, 3300, 0, 255);    // convert from 0..3300 ms to 0..255
-#if   defined(CONFIG_IDF_TARGET_ESP32)
-      if (25 == pin || 26 == pin) {
-        dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-        esp_err_t err = dac_output_voltage(channel, dac_value);
-        if (err) {
-          be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
-        }
-      } else {
-        be_raise(vm, "value_error", "DAC only supported on GPIO25-26");
+      if (!dacWrite(pin, dac_value)) {
+        be_raise(vm, "value_error", "Error: dacWrite failed");
       }
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-      if (17 == pin || 18 == pin) {
-        dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-        esp_err_t err = dac_output_voltage(channel, dac_value);
-        if (err) {
-          be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
-        }
-      } else {
-        be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
-      }
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-      be_raise(vm, "value_error", "DAC unsupported in this chip");
-#else
-      be_raise(vm, "value_error", "DAC unsupported in this chip");
-#endif
-      be_pushint(vm, changeUIntScale(dac_value, 0, 255, 0, 3300));
+      be_pushint(vm, changeUIntScale(dac_value, 0, 255, 0, 3300));  // convert back to mV to indicate the actual value
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
+#else // defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+    be_raise(vm, "value_error", "DAC unsupported in this chip");
+#endif // defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
   }
 
 // Tasmota specific
@@ -199,6 +171,112 @@ extern "C" {
 
   void gp_set_duty(int32_t pin, int32_t duty, int32_t hpoint) {
     analogWritePhase(pin, duty, hpoint);
+  }
+
+  void gp_set_frequency(int32_t pin, int32_t frequency) {
+    analogWriteFreq(frequency, pin);
+  }
+
+  // gpio.counter_read(counter:int) -> int or nil
+  //
+  // Read counter value, or return nil if counter is not used
+  int gp_counter_read(bvm *vm);
+  int gp_counter_read(bvm *vm) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isint(vm, 1)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinRead(counter));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+
+  int gp_counter_set_add(bvm *vm, bool add) {
+#ifdef USE_COUNTER
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+      int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
+      int32_t value = be_toint(vm, 2);
+
+      // is `index` refering to a counter?
+      if (CounterPinConfigured(counter)) {
+        be_pushint(vm, CounterPinSet(counter, value, add));
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+#else
+    be_return_nil(vm);
+#endif
+  }
+
+  // gpio.counter_set(counter:int, value:int) -> int or nil
+  //
+  // Set the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_set(bvm *vm);
+  int gp_counter_set(bvm *vm) {
+    return gp_counter_set_add(vm, false);
+  }
+
+  // gpio.counter_add(counter:int, value:int) -> int or nil
+  //
+  // Add to the counter value, return the actual value, or return nil if counter is not used
+  int gp_counter_add(bvm *vm);
+  int gp_counter_add(bvm *vm) {
+    return gp_counter_set_add(vm, true);
+  }
+
+  // gpio.get_duty(pin:int) -> int
+  //
+  // Read the value of a PWM within resolution
+  // Returns -1 if pin is not a PWM pin
+  int gp_get_duty(int32_t pin);
+  int gp_get_duty(int32_t pin) {
+    return ledcRead2(pin);
+  }
+
+  // gpio.get_duty_resolution(pin:int) -> int
+  //
+  // Read the resolution of a PWM
+  // Returns -1 if pin is not a PWM pin
+  int gp_get_duty_resolution(int32_t pin);
+  int gp_get_duty_resolution(int32_t pin) {
+    int32_t channel = analogGetChannel2(pin);
+    if (channel >= 0) {
+      return (1 << ledcReadResolution(channel));
+    }
+    return -1;
+  }
+
+  // gpio.get_pin_type(phy_gpio:int) -> int
+  //
+  // Get the type configured for physical GPIO
+  // Return 0 if GPIO is not configured
+  extern int gp_get_pin(int32_t pin);
+  extern int gp_get_pin(int32_t pin) {
+    return GetPin(pin) / 32;
+  }
+
+  // gpio.get_pin_type_index(phy_gpio:int) -> int
+  //
+  // Get the sub-index for the type configured for physical GPIO
+  // Return 0 if GPIO is not configured
+  extern int gp_get_pin_index(int32_t pin);
+  extern int gp_get_pin_index(int32_t pin) {
+    return GetPin(pin) % 32;
   }
 
 }

@@ -47,20 +47,23 @@ extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t
   uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 extern "C" void setTimer1Callback(uint32_t (*fn)());
 #ifdef USE_SERIAL_BRIDGE
-void SerialBridgePrintf(PGM_P formatP, ...);
+void SerialBridgeWrite(char *line, uint32_t len);
 #endif
+#ifdef USE_TELNET
+void TelnetWrite(char *line, uint32_t len);
+#endif  // USE_TELNET
 #ifdef USE_INFLUXDB
 void InfluxDbProcess(bool use_copy = false);
 #endif
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
+//#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #ifdef USE_ETHERNET
 IPAddress EthernetLocalIP(void);
 char* EthernetHostname(void);
 String EthernetMacAddress(void);
 #endif  // USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32
+//#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 /*********************************************************************************************\
@@ -69,15 +72,23 @@ String EthernetMacAddress(void);
 
 #include "include/tasmota_configurations.h"            // Preconfigured configurations
 
+/*********************************************************************************************\
+ * Finale overrides
+\*********************************************************************************************/
+
+const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_config_override.h
+
 /*-------------------------------------------------------------------------------------------*\
  * ESP8266 and ESP32 build time definitions
 \*-------------------------------------------------------------------------------------------*/
 
 // created in pio-tools/pre_source_dir.py
-#if defined(CONFIG_TASMOTA_FLASHMODE_QIO)
+#if defined(CONFIG_TASMOTA_FLASHMODE_OPI)
+  #define D_TASMOTA_FLASHMODE "OPI"
+#elif (CONFIG_TASMOTA_FLASHMODE_QIO)
   #define D_TASMOTA_FLASHMODE "QIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_QOUT)
-   #define D_TASMOTA_FLASHMODE "QOUT"
+  #define D_TASMOTA_FLASHMODE "QOUT"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_DIO)
   #define D_TASMOTA_FLASHMODE "DIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_DOUT)
@@ -102,7 +113,8 @@ String EthernetMacAddress(void);
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
+//#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE  // 2_7_8
+#define ARDUINO_CORE_RELEASE        "2.7.8"
 #endif  // ARDUINO_ESP8266_RELEASE
 
 #ifndef USE_ADC_VCC
@@ -127,9 +139,9 @@ String EthernetMacAddress(void);
 
 
 #else   // Disable features not present in other ESP32 like ESP32C3, ESP32S2, ESP32S3 etc.
-#ifdef USE_ETHERNET
-#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
-#endif
+//#ifdef USE_ETHERNET
+//#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
+//#endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 
 /*-------------------------------------------------------------------------------------------*\
@@ -137,15 +149,15 @@ String EthernetMacAddress(void);
 \*-------------------------------------------------------------------------------------------*/
 
 /*-------------------------------------------------------------------------------------------*\
- * Start ESP32-C32 specific parameters - disable features not present in ESP32-C3
+ * Start ESP32-C3/C5/C6 specific parameters - disable features not present in ESP32-C3/C5/C6
 \*-------------------------------------------------------------------------------------------*/
 
-#if CONFIG_IDF_TARGET_ESP32C3                      // ESP32-C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6   // ESP32-C3/C5/C6
 //#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // ESP32-C3 does not support ethernet
+//#undef USE_ETHERNET                                // ESP32-C3/C5/C6 does not support ethernet
 //#endif
 
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+#endif  // CONFIG_IDF_TARGET_ESP32C3/C5/C6
 
 /*-------------------------------------------------------------------------------------------*\
  * End ESP32-C3 specific parameters
@@ -183,8 +195,16 @@ String EthernetMacAddress(void);
 #ifndef ARDUINO_ESP32_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
+//#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE  // 3_3_0
+#define ARDUINO_CORE_RELEASE        ESP_ARDUINO_VERSION_STR  // 3.3.0
 #endif  // ARDUINO_ESP32_RELEASE
+
+#ifdef USE_I2C_BUS2                                // If defined for ESP8266 undefine first
+#undef USE_I2C_BUS2
+#endif  // USE_I2C_BUS2
+#if SOC_HP_I2C_NUM > 1
+#define USE_I2C_BUS2                               // Redefine based on hardware support
+#endif  // SOC_HP_I2C_NUM
 
 // Hardware has no ESP32
 #undef USE_EXS_DIMMER
@@ -311,6 +331,9 @@ String EthernetMacAddress(void);
 #endif
 #ifndef MQTT_LWT_ONLINE
 #define MQTT_LWT_ONLINE             "Online"   // MQTT LWT online topic message
+#endif
+#ifndef MQTT_DISABLE_MODBUSRECEIVED
+#define MQTT_DISABLE_MODBUSRECEIVED 0         // 1 = Disable ModbusReceived mqtt messages, 0 = Enable ModbusReceived mqtt messages (default)
 #endif
 
 #ifndef MESSZ
@@ -485,13 +508,16 @@ String EthernetMacAddress(void);
 #ifndef COLOR_TITLE_TEXT
 #define COLOR_TITLE_TEXT			      COLOR_TEXT // Title text color defaults to global text color either dark or light
 #endif
+#ifndef COLOR_BUTTON_OFF
+#define COLOR_BUTTON_OFF			      "#08405e"  // Button color when off - Darkest blueish
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
   COL_INPUT_TEXT, COL_INPUT, COL_CONSOLE_TEXT, COL_CONSOLE,
   COL_TEXT_WARNING, COL_TEXT_SUCCESS,
   COL_BUTTON_TEXT, COL_BUTTON, COL_BUTTON_HOVER, COL_BUTTON_RESET, COL_BUTTON_RESET_HOVER, COL_BUTTON_SAVE, COL_BUTTON_SAVE_HOVER,
-  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND, COL_TITLE,
+  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND, COL_TITLE, COL_BUTTON_OFF,
   COL_LAST };
 
 const char kWebColors[] PROGMEM =
@@ -499,7 +525,7 @@ const char kWebColors[] PROGMEM =
   COLOR_INPUT_TEXT "|" COLOR_INPUT "|" COLOR_CONSOLE_TEXT "|" COLOR_CONSOLE "|"
   COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
   COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
-  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
+  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT "|" COLOR_BUTTON_OFF;
 
 /*********************************************************************************************\
  * Macros
@@ -522,6 +548,7 @@ const char kWebColors[] PROGMEM =
 
 #define AGPIO(x) ((x)<<5)
 #define BGPIO(x) ((x)>>5)
+#define AGMAX(x) ((x)?(x-1):0)
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)

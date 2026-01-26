@@ -194,7 +194,7 @@ int Pcf8574Pin(uint32_t gpio, uint32_t index) {
     real_gpio += index;
     mask = 0xFFFF;
   }
-  for (uint32_t i = 0; i < Pcf8574.max_connected_ports; i++) {
+  for (uint32_t i = 0; i <= Pcf8574.max_connected_ports; i++) {
     if ((Pcf8574_pin[i] & mask) == real_gpio) {
       return i;                                        // Pin number configured for gpio
     }
@@ -208,7 +208,7 @@ bool Pcf8574PinUsed(uint32_t gpio, uint32_t index) {
 }
 
 uint32_t Pcf8574GetPin(uint32_t lpin) {
-  if (lpin < Pcf8574.max_connected_ports) {
+  if (lpin <= Pcf8574.max_connected_ports) {
     return Pcf8574_pin[lpin];
   } else {
     return GPIO_NONE;
@@ -374,6 +374,7 @@ void Pcf8574Power(void) {
     rpower >>= Pcf8574.relay_offset;
     relay_max = Pcf8574.relay_max;
   }
+  DevicesPresentNonDisplayOrLight(relay_max);     // Skip display and/or light(s)
   for (uint32_t index = 0; index < relay_max; index++) {
     power_t state = rpower &1;
     if (Pcf8574PinUsed(GPIO_REL1, index)) {
@@ -425,14 +426,15 @@ bool Pcf8574AddSwitch(void) {
 \*********************************************************************************************/
 
 void Pcf8574SwitchRelay(void) {
-  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-    uint8_t relay_state = bitRead(XdrvMailbox.index, i);
+  uint32_t devices_present = TasmotaGlobal.devices_present - Pcf8574.relay_offset;
+  for (uint32_t i = 0; i < devices_present; i++) {
+    uint8_t relay_state = bitRead(XdrvMailbox.index, Pcf8574.relay_offset + i);
 
     if (Pcf8574.max_devices > 0 && Pcf8574_pin[i] < 99) {
       uint8_t board = Pcf8574_pin[i]>>3;
       uint8_t pin = Pcf8574_pin[i]&0x7;
       uint8_t oldpinmask = Pcf8574.pin_mask[board];
-      uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, i) ? !relay_state : relay_state;
+      uint8_t _val = bitRead(TasmotaGlobal.rel_inverted, Pcf8574.relay_offset + i) ? !relay_state : relay_state;
 
       //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: SwitchRelay %d=%d => PCF-%d.D%d=%d"), i, relay_state, board +1, pin, _val);
       bitWrite(Pcf8574.pin_mask[board], pin, _val);
@@ -485,9 +487,10 @@ void Pcf8574ModuleInitMode1(void) {
 
     for (uint32_t i = 0; i < 8; i++, gpio>>=1) {
       uint8_t _result = Settings->pcf8574_config[idx] >> i &1;
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, TasmotaGlobal.devices_present: %d"), i,_result, Settings->power>>i&1, TasmotaGlobal.devices_present);
+      uint32_t devices_present = TasmotaGlobal.devices_present - Pcf8574.relay_offset;
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings->power>>i&1, devices_present);
       if (_result > 0) {
-        Pcf8574_pin[TasmotaGlobal.devices_present] = i + 8 * idx;
+        Pcf8574_pin[devices_present] = i + 8 * idx;
         bitWrite(TasmotaGlobal.rel_inverted, TasmotaGlobal.devices_present, Settings->flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
         if (!Settings->flag.save_state && !Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
           //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Set power from from chip state"));
@@ -512,12 +515,7 @@ void Pcf8574ModuleInitMode1(void) {
 #ifdef USE_WEBSERVER
 #define WEB_HANDLE_PCF8574 "pcf"
 
-const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_PCF8574 "' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form></p>";
-
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_PCF8574_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='" WEB_HANDLE_PCF8574 "'>"
   "<p><label><input id='b1' name='b1' type='checkbox'%s><b>" D_INVERT_PORTS "</b></label></p><hr/>";
 
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
@@ -541,6 +539,8 @@ void HandlePcf8574(void) {
 
   WSContentStart_P(D_CONFIGURE_PCF8574);
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_PCF8574_PARAMETERS));
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR(WEB_HANDLE_PCF8574));
   WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings->flag3.pcf8574_ports_inverted) ? PSTR(" checked") : "");  // SetOption81 - Invert all ports on PCF8574 devices
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
@@ -575,7 +575,8 @@ void Pcf8574SaveSettings(void) {
       n = n&(n-1);
       count++;
     }
-    if (count <= TasmotaGlobal.devices_present) {
+    uint32_t devices_present = TasmotaGlobal.devices_present - Pcf8574.relay_offset;
+    if (count <= devices_present) {
       UpdateDevicesPresent(-count);
     }
     for (byte i = 0; i < 8; i++) {
@@ -662,12 +663,12 @@ void Pcf8574ModuleInit(void) {
   if (Pcf8574.mode) {
     Pcf8574_pin = (uint16_t*)malloc(Pcf8574.max_connected_ports * sizeof(uint16_t));
     if (Pcf8574_pin) {
+      Pcf8574.relay_offset = TasmotaGlobal.devices_present;
 #ifdef USE_PCF8574_MODE2
       if (Pcf8574LoadTemplate()) {
         Pcf8574.mode = 2;
         Pcf8574.button_offset = -1;
         Pcf8574.switch_offset = -1;
-        Pcf8574.relay_offset = TasmotaGlobal.devices_present;
         Pcf8574.relay_max -= UpdateDevicesPresent(Pcf8574.relay_max);
       } else
 #endif  // USE_PCF8574_MODE2
@@ -706,7 +707,7 @@ bool Xdrv28(uint32_t function) {
 #endif  // USE_PCF8574_SENSOR
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_PCF8574);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_PCF8574), PSTR(D_CONFIGURE_PCF8574));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_PCF8574), HandlePcf8574);
@@ -717,6 +718,9 @@ bool Xdrv28(uint32_t function) {
         break;
 #endif  // USE_PCF8574_DISPLAYINPUT
 #endif  // USE_WEBSERVER
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
 #ifdef USE_PCF8574_MODE2
   } else if (2 == Pcf8574.mode) {
@@ -743,6 +747,9 @@ bool Xdrv28(uint32_t function) {
         break;
       case FUNC_ADD_SWITCH:
         result = Pcf8574AddSwitch();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
 #endif  // USE_PCF8574_MODE2

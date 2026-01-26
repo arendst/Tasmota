@@ -79,12 +79,16 @@ struct {
   uint16_t distance;
   uint16_t distance_prev;
   uint16_t buffer[5];
-  uint8_t ready = 0;
+  bool ready = false;
   uint8_t index;
 } Vl53l0x_data[VL53LXX_MAX_SENSORS];
 
 bool VL53L0X_xshut = false;
 bool VL53L0X_detected = false;
+
+#ifdef USE_DEEPSLEEP
+bool VL53L0X_standby = false;  // Prevent updating measurments once VL53L0X has been put to standby (just before ESP enters deepsleep)
+#endif
 
 /********************************************************************************************/
 
@@ -133,7 +137,7 @@ void Vl53l0Detect(void) {
             // ms (e.g. sensor.startContinuous(100)).
             VL53L0X_device[i].startContinuous();
 
-            Vl53l0x_data[i].ready = 1;
+            Vl53l0x_data[i].ready = true;
             Vl53l0x_data[i].index = 0;
             VL53L0X_detected = true;
             if (!VL53L0X_xshut) { break; }
@@ -145,6 +149,10 @@ void Vl53l0Detect(void) {
 }
 
 void Vl53l0Every_250MSecond(void) {
+#ifdef USE_DEEPSLEEP
+  // Prevent updating measurments once VL53L0X has been put to sleep (just before ESP enters deepsleep)
+  if (VL53L0X_standby) return;
+#endif
   for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
     if (PinUsed(GPIO_VL53LXX_XSHUT1, i) || (!VL53L0X_xshut)) {
         uint16_t dist = VL53L0X_device[i].readRangeContinuousMillimeters();
@@ -188,6 +196,10 @@ void Vl53l0Every_250MSecond(void) {
 
 #ifdef USE_DOMOTICZ
 void Vl53l0Every_Second(void) {
+#ifdef USE_DEEPSLEEP
+  // Prevent updating measurments once VL53L0X has been put to sleep (just before ESP enters deepsleep)
+  if (VL53L0X_standby) return;
+#endif
   if (abs(Vl53l0x_data[0].distance - Vl53l0x_data[0].distance_prev) > 8) {
     Vl53l0x_data[0].distance_prev = Vl53l0x_data[0].distance;
     float distance = (float)Vl53l0x_data[0].distance / 10;  // cm
@@ -225,6 +237,28 @@ void Vl53l0Show(boolean json) {
 #endif  // USE_DOMOTICZ
 }
 
+#ifdef USE_DEEPSLEEP
+
+void VL53L0EnterStandby(void) {
+  if (DeepSleepEnabled()) {
+    for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
+      if (PinUsed(GPIO_VL53LXX_XSHUT1, i) || (!VL53L0X_xshut)) {
+        if (Vl53l0x_data[i].ready) {
+          // VL53L0X_device[i].stopContinuous();
+          // Calling stopContinuous() does not lead to a stable standby state.
+          // The current is approx. 300 µA, but should be much lower.
+          // Restart is bumpy and sometimes blocks the startup sequence completely.
+          VL53L0X_device[i].init();
+          Vl53l0x_data[i].ready = false;
+        }
+      }
+    }
+    VL53L0X_standby = true;
+  }
+}
+
+#endif // USE_DEEPSLEEP
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -255,6 +289,11 @@ bool Xsns45(uint32_t function) {
         Vl53l0Show(0);
         break;
 #endif  // USE_WEBSERVER
+#ifdef USE_DEEPSLEEP
+      case FUNC_SAVE_BEFORE_RESTART:
+        VL53L0EnterStandby();
+        break;
+#endif // USE_DEEPSLEEP
     }
   }
   return result;

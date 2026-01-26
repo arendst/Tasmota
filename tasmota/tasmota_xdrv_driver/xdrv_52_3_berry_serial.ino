@@ -26,10 +26,7 @@
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
- * import wire
- * 
- * wire.get_free_heap() -> int
- * 
+ * `ser = serial(4, 5, 9600, serial.SERIAL_7E1)`
 \*********************************************************************************************/
 extern "C" {
   TasmotaSerial * b_serial_get(struct bvm *vm) {
@@ -39,7 +36,7 @@ extern "C" {
     return ow;
   }
 
-  // Berry: `init(rx_gpio:int, tx_gpio:int, speed:int [, config:int])`
+  // Berry: `init(rx_gpio:int, tx_gpio:int, speed:int [, config:int, inverted:bool])`
   int32_t b_serial_init(struct bvm *vm);
   int32_t b_serial_init(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
@@ -48,20 +45,60 @@ extern "C" {
       int32_t tx = be_toint(vm, 3);
       int32_t speed = be_toint(vm, 4);
       int32_t mode = SERIAL_8N1;
+      bool inverted = false;
       if (argc >= 5 && be_isint(vm, 5)) {
         mode = be_toint(vm, 5);
       }
-      TasmotaSerial * ser = new TasmotaSerial(rx, tx);
+      if (argc >= 6 && be_isbool(vm, 6)) {
+        inverted = be_tobool(vm, 6);
+      }
+      TasmotaSerial * ser = new TasmotaSerial(rx, tx, 0, 0, TM_SERIAL_BUFFER_SIZE, inverted);
       bool ok = ser->begin(speed, mode);
       if (!ok) {
         delete ser;
         be_raise(vm, "internal_error", "Unable to start serial");
+      } else {
+        if (ser->hardwareSerial()) {
+          ClaimSerial();  // Disable console using uart0
+        }
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BRY: Serial UART%d"), ser->getUart());
       }
       be_pushcomptr(vm, (void*) ser);
       be_setmember(vm, 1, ".p");
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: `config_tx_en(tx_en_gpio:int) -> nil`
+  int32_t b_config_tx_en(struct bvm *vm);
+  int32_t b_config_tx_en(struct bvm *vm) {
+    be_getmember(vm, 1, ".p");
+    TasmotaSerial * ser = (TasmotaSerial *) be_tocomptr(vm, -1);
+    if (ser) {
+      int32_t tx_en = be_toint(vm, 2);
+      if (tx_en >= 0) {
+        ser->setTransmitEnablePin(tx_en);
+      } else {
+        ser->clearTransmitEnablePin();
+      }
+    }
+    be_return_nil(vm);
+  }
+
+  // Berry: `config(config:int) -> nil or exception`
+  int32_t b_serial_config(struct bvm *vm);
+  int32_t b_serial_config(struct bvm *vm) {
+    be_getmember(vm, 1, ".p");
+    TasmotaSerial * ser = (TasmotaSerial *) be_tocomptr(vm, -1);
+    if (ser) {
+      uint32_t config = be_toint(vm, 2);
+      int32_t err = ser->setConfig(config);
+      if (err) {
+        be_raisef(vm, "internal_error", "Unable to set serial config err %d", err);
+      }
+    }
+    be_return_nil(vm);
   }
 
   // Berry: `deinit(void)`
@@ -106,10 +143,18 @@ extern "C" {
   int32_t b_serial_read(struct bvm *vm) {
     be_getmember(vm, 1, ".p");
     TasmotaSerial * ser = (TasmotaSerial *) be_tocomptr(vm, -1);
+    int32_t max_lex = -1;     // -1 means unlimited
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 2)) {
+      max_lex = be_toint(vm, 2);
+    }
     if (ser) {
       int32_t len = ser->available();
       if (len < 0) { len = 0; }
       if (len > 0) {
+        if (max_lex >= 0 && len > max_lex) {
+          len = max_lex;
+        }
         // read bytes on stack
         char * rx_buf = new char[len];
         len = ser->read(rx_buf, len);

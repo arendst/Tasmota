@@ -54,7 +54,8 @@ typedef enum {
     OptNot,         /* operator, ! */
     OptFlip,        /* operator, ~ */
     /* postfix operator or bracket */
-    OptLBK,         /* operator, ( bracket */
+    OptSpaceLBK,    /* operator, ( bracket (with space/newline before) */
+    OptCallLBK,     /* operator, ( bracket (call - no space before) */
     OptRBK,         /* operator, ) bracket */
     OptLSB,         /* operator, [ square bracket */
     OptRSB,         /* operator, ] square bracket */
@@ -67,6 +68,7 @@ typedef enum {
     OptColon,       /* operator, : */
     OptQuestion,    /* operator, ? */
     OptArrow,       /* operator, -> */
+    OptWalrus,      /* operator, := */
     /* keyword */
     KeyIf,          /* keyword if */
     KeyElif,        /* keyword elif */
@@ -90,8 +92,6 @@ typedef enum {
     KeyExcept,      /* keyword except */
     KeyRaise,       /* keyword raise */
     KeyStatic,      /* keyword static */
-    /* Walrus operator */
-    OptWalrus,      /* operator, := */
 } btokentype;
 
 struct blexerreader {
@@ -126,6 +126,7 @@ typedef struct blexer {
     struct blexerreader reader;
     bmap *strtab;
     bvm *vm;
+    int had_whitespace; /* track if whitespace/newline preceded current token */
 } blexer;
 
 void be_lexer_init(blexer *lexer, bvm *vm,
@@ -136,5 +137,6 @@ int be_lexer_scan_next(blexer *lexer);
 bstring* be_lexer_newstr(blexer *lexer, const char *str);
 const char *be_token2str(bvm *vm, btoken *token);
 const char* be_tokentype2str(btokentype type);
+char* be_load_unicode(char *dst, const char *src);
 
 #endif

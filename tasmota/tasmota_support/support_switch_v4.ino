@@ -349,27 +349,27 @@ void SwitchHandler(void) {
 
     if (button != Switch.last_state[i]) {  // This implies if ((PRESSED == button) then (NOT_PRESSED == Switch.last_state[i]))
       switch (switchmode) {
-      case TOGGLE:
-      case PUSHBUTTON_TOGGLE:
+      case TOGGLE:                         // SwitchMode 0
+      case PUSHBUTTON_TOGGLE:              // SwitchMode 7
         switchflag = POWER_TOGGLE;         // Toggle
         break;
-      case FOLLOW:
+      case FOLLOW:                         // SwitchMode 1
         switchflag = button &1;            // Follow wall switch state
         break;
-      case FOLLOW_INV:
+      case FOLLOW_INV:                     // SwitchMode 2
         switchflag = ~button &1;           // Follow inverted wall switch state
         break;
-      case PUSHBUTTON:
+      case PUSHBUTTON:                     // SwitchMode 3
         if (PRESSED == button) {
           switchflag = POWER_TOGGLE;       // Toggle with pushbutton to Gnd
         }
         break;
-      case PUSHBUTTON_INV:
+      case PUSHBUTTON_INV:                 // SwitchMode 4
         if (NOT_PRESSED == button) {
           switchflag = POWER_TOGGLE;       // Toggle with releasing pushbutton from Gnd
         }
         break;
-      case PUSHBUTTONHOLD:
+      case PUSHBUTTONHOLD:                 // SwitchMode 5
         if (PRESSED == button) {
           Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press
         }
@@ -378,7 +378,7 @@ void SwitchHandler(void) {
           switchflag = POWER_TOGGLE;       // ...and Toggle
         }
         break;
-      case PUSHBUTTONHOLD_INV:
+      case PUSHBUTTONHOLD_INV:             // SwitchMode 6
         if (NOT_PRESSED == button) {
           Switch.hold_timer[i] = loops_per_second * Settings->param[P_HOLD_TIME] / 10;  // Start timer on button press...
         }
@@ -387,9 +387,9 @@ void SwitchHandler(void) {
           switchflag = POWER_TOGGLE;       // ...and Toggle
         }
         break;
-      case TOGGLEMULTI:
-      case FOLLOWMULTI:
-      case FOLLOWMULTI_INV:
+      case TOGGLEMULTI:                    // SwitchMode 8
+      case FOLLOWMULTI:                    // SwitchMode 9
+      case FOLLOWMULTI_INV:                // SwitchMode 10
         if (Switch.hold_timer[i]) {
           Switch.hold_timer[i] = 0;
           SendKey(KEY_SWITCH, i +1, POWER_HOLD);              // Execute command via MQTT
@@ -398,7 +398,7 @@ void SwitchHandler(void) {
           Switch.hold_timer[i] = loops_per_second / 2;        // 0.5 second multi press window
         }
         break;
-      case PUSHHOLDMULTI:
+      case PUSHHOLDMULTI:                  // SwitchMode 11
         if (NOT_PRESSED == button) {
           if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
             Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
@@ -424,7 +424,7 @@ void SwitchHandler(void) {
         }
         Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
         break;
-      case PUSHHOLDMULTI_INV:
+      case PUSHHOLDMULTI_INV:              // SwitchMode 12
         if (PRESSED == button) {
           if ((Switch.hold_timer[i] & SM_TIMER_MASK) != 0) {
             Switch.hold_timer[i] = ((Switch.hold_timer[i] & ~SM_TIMER_MASK) == SM_FIRST_PRESS) ? SM_SECOND_PRESS : 0;
@@ -450,18 +450,18 @@ void SwitchHandler(void) {
         }
         Switch.hold_timer[i] = (Switch.hold_timer[i] & ~SM_TIMER_MASK) | loops_per_second * Settings->param[P_HOLD_TIME] / 10;
         break;
-      case PUSHON:
+      case PUSHON:                         // SwitchMode 13
         if (PRESSED == button) {
           switchflag = POWER_ON;                              // Power ON with pushbutton to Gnd
         }
         break;
-      case PUSHON_INV:
+      case PUSHON_INV:                     // SwitchMode 14
         if (NOT_PRESSED == button) {
           switchflag = POWER_ON;                              // Power ON with releasing pushbutton from Gnd
         }
         break;
-      case PUSH_IGNORE:
-      case PUSH_IGNORE_INV:
+      case PUSH_IGNORE:                    // SwitchMode 15
+      case PUSH_IGNORE_INV:                // SwitchMode 16
         Switch.last_state[i] = button;                        // Update switch state before publishing
         MqttPublishSensor();
         break;
@@ -469,14 +469,14 @@ void SwitchHandler(void) {
       Switch.last_state[i] = button;
     }
     if (switchflag <= POWER_TOGGLE) {
-      if (!Settings->flag5.mqtt_switches) {                    // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
+      if (!Settings->flag5.mqtt_switches) {                   // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
         if (!SendKey(KEY_SWITCH, i +1, switchflag)) {         // Execute command via MQTT
           ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < TasmotaGlobal.devices_present)
         }
       } else { mqtt_action = switchflag; }
     }
     if ((mqtt_action != POWER_NONE) && Settings->flag5.mqtt_switches) {  // SetOption114 (0) - Detach Switches from relays and enable MQTT action state for all the SwitchModes
-      if (!Settings->flag.hass_discovery) {                    // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
+      if (!Settings->flag.hass_discovery) {                   // SetOption19 - Control Home Assistant automatic discovery (See SetOption59)
         char mqtt_state_str[16];
         char *mqtt_state = mqtt_state_str;
         if (mqtt_action <= 3) {

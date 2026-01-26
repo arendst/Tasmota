@@ -142,8 +142,10 @@ class Matter_Expirable_list : list
   # remove - override
   #
   def remove(i)
-    if i >= 0 && i < size(self)   self[i].before_remove()   end
-    return super(self).remove(i)
+    if i != nil
+      if i >= 0 && i < size(self)   self[i].before_remove()   end
+      return super(self).remove(i)
+    end
   end
 
   #############################################################

@@ -76,15 +76,21 @@ struct {
   char name[17];
   uint8_t sensors;
   uint8_t gpios;    // Count of GPIO found
+  uint8_t retryRead;
 } DS18X20Data;
 
 /********************************************************************************************/
 
 void Ds18x20Init(void) {
+  DS18X20Data.retryRead = 0;
   DS18X20Data.gpios = 0;
   for (uint32_t pins = 0; pins < MAX_DSB; pins++) {
     if (PinUsed(GPIO_DSB, pins)) {
-      ds18x20_gpios[pins] = new OneWire(Pin(GPIO_DSB, pins));
+      int8_t pin_out = -1;
+      if (PinUsed(GPIO_DSB_OUT, pins)) {
+        pin_out = Pin(GPIO_DSB_OUT, pins);
+      }
+      ds18x20_gpios[pins] = new OneWire(Pin(GPIO_DSB, pins), pin_out);
       DS18X20Data.gpios++;
     }
   }
@@ -210,35 +216,42 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
 }
 
 void Ds18x20Name(uint8_t sensor) {
-  uint8_t index = sizeof(ds18x20_chipids);
+  uint32_t sensor_index = ds18x20_sensor[sensor].index;
+
+  uint32_t index = sizeof(ds18x20_chipids);
   while (--index) {
-    if (ds18x20_sensor[ds18x20_sensor[sensor].index].address[0] == ds18x20_chipids[index]) {
+    if (ds18x20_sensor[sensor_index].address[0] == ds18x20_chipids[index]) {
       break;
     }
   }
+  // DS18B20
   GetTextIndexed(DS18X20Data.name, sizeof(DS18X20Data.name), index, kDs18x20Types);
 
 #ifdef DS18x20_USE_ID_AS_NAME
   char address[17];
   for (uint32_t j = 0; j < 3; j++) {
-    sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[sensor].index].address[3-j]);  // Only last 3 bytes
+    sprintf(address+2*j, "%02X", ds18x20_sensor[sensor_index].address[3-j]);  // Only last 3 bytes
   }
+  // DS18B20-8EC44C
   snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
+  return;
 #elif defined(DS18x20_USE_ID_ALIAS)
-  if (ds18x20_sensor[sensor].alias[0] != '0') {
-    if (isdigit(ds18x20_sensor[sensor].alias[0])) {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens%c%d"), IndexSeparator(), atoi(ds18x20_sensor[sensor].alias));
+  if (ds18x20_sensor[sensor_index].alias[0] && (ds18x20_sensor[sensor_index].alias[0] != '0')) {
+    if (isdigit(ds18x20_sensor[sensor_index].alias[0])) {
+      // DS18Sens-1
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens%c%d"), IndexSeparator(), atoi(ds18x20_sensor[sensor_index].alias));
     } else {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s"), ds18x20_sensor[sensor].alias);
+      // UserText
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s"), ds18x20_sensor[sensor_index].alias);
     }
-  } else {
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor + 1);
+    return;
   }
-#else // no #defines set
+#endif  // DS18x20_USE_ID_AS_NAME or DS18x20_USE_ID_ALIAS
+
   if (DS18X20Data.sensors > 1) {
+    // DS18B20-1
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor + 1);
   }
-#endif
 }
 
 /********************************************************************************************/
@@ -254,7 +267,18 @@ void Ds18x20EverySecond(void) {
     float t;
     for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
       // 12mS per device
-      if (Ds18x20Read(i, t)) {   // Read temperature
+      bool result = false;
+      uint8_t counter = 0;
+      while (counter++ < DS18X20Data.retryRead+1) {
+        if(Ds18x20Read(i, t)) {
+          result =  true;
+          break;
+        }
+      }
+      if (!result)
+        AddLog(LOG_LEVEL_ERROR, PSTR("Read sensor %u failed in Ds18x20EverySecond."), i);
+
+      if (result) {   // Read temperature
         if (Settings->flag5.ds18x20_mean) {
           if (ds18x20_sensor[i].numread++ == 0) {
             ds18x20_sensor[i].temp_sum = 0;
@@ -279,7 +303,17 @@ void Ds18x20Show(bool json) {
     if (ds18x20_sensor[i].valid) {
       t = ds18x20_sensor[i].temperature;
 #else
-    if (Ds18x20Read(i, t)) {           // Check if read failed
+      bool result = false;
+      uint8_t counter = 0;
+      while (counter++ < DS18X20Data.retryRead+1) {
+        if(Ds18x20Read(i, t)) {
+          result =  true;
+          break;
+        }
+      }
+      if (!result)
+        AddLog(LOG_LEVEL_ERROR, PSTR("Read sensor %u failed in Ds18x20Show."), i);
+    if (result) {           // Check if read failed
 #endif
       Ds18x20Name(i);
 
@@ -317,18 +351,61 @@ void Ds18x20Show(bool json) {
 }
 
 #ifdef DS18x20_USE_ID_ALIAS
-const char kds18Commands[] PROGMEM = "|"  // No prefix
-  D_CMND_DS_ALIAS;
+const char kds18Commands[] PROGMEM = "DS18|"  // prefix
+  D_CMND_DS_ALIAS "|" D_CMND_DS_RESCAN "|" D_CMND_DS_RETRYREAD;
 
 void (* const DSCommand[])(void) PROGMEM = {
-  &CmndDSAlias };
+  &CmndDSAlias, &CmndDSRescan ,&CmndDSRetryRead };
+
+void CmndDSRetryRead(void) {
+  char argument[XdrvMailbox.data_len];
+
+  if (ArgC() == 1) {
+    DS18X20Data.retryRead = atoi(ArgV(argument, 1));
+  }
+  Response_P(PSTR("{\"DS18" D_CMND_DS_RETRYREAD "\": %d}"), DS18X20Data.retryRead);
+} 
+
+void CmndDSRescan(void) {
+  char argument[XdrvMailbox.data_len];
+  uint8_t retries = 1;
+  uint8_t sensorsToFind = 1;
+  if ((ArgC() > 0) && (ArgC() < 3)) {
+    sensorsToFind = atoi(ArgV(argument, 1));
+  }
+  if (ArgC() == 2) {
+    retries = atoi(ArgV(argument, 2));
+  }
+  
+  DS18X20Data.sensors = 0;
+  memset(&ds18x20_sensor, 0, sizeof(ds18x20_sensor));
+
+  while ((DS18X20Data.sensors < sensorsToFind) && (retries-- > 0)) {
+    Ds18x20Search();
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
+  }
+
+  Response_P(PSTR("{"));
+  for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+    Ds18x20Name(i);
+    char address[17];
+    for (uint32_t j = 0; j < 8; j++) {
+      sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[7-j]);  // Skip sensor type and crc
+    }
+    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"), DS18X20Data.name, address);
+    if (i < DS18X20Data.sensors-1) { ResponseAppend_P(PSTR(",")); }
+  }
+  ResponseAppend_P(PSTR("}"));
+}
 
 void CmndDSAlias(void) {
+  // Ds18Alias 430516707FA6FF28,SensorName - Use SensorName instead of DS18B20
+  // Ds18Alias 430516707FA6FF28,0          - Disable alias (default)
   char Argument1[XdrvMailbox.data_len];
   char Argument2[XdrvMailbox.data_len];
   char address[17];
 
-  if (ArgC()==2) {
+  if (ArgC() == 2) {
     ArgV(Argument1, 1);
     ArgV(Argument2, 2);
     TrimSpace(Argument2);
@@ -349,14 +426,14 @@ void CmndDSAlias(void) {
     Ds18x20Name(i);
     char address[17];
     for (uint32_t j = 0; j < 8; j++) {
-      sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);  // Skip sensor type and crc
+      sprintf(address+2*j, "%02X", ds18x20_sensor[ds18x20_sensor[i].index].address[7-j]);  // Skip sensor type and crc
     }
-    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"),DS18X20Data.name, address);
-    if (i < DS18X20Data.sensors-1) ResponseAppend_P(PSTR(","));
+    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"), DS18X20Data.name, address);
+    if (i < DS18X20Data.sensors-1) { ResponseAppend_P(PSTR(",")); }
   }
   ResponseAppend_P(PSTR("}"));
 }
-#endif // DS18x20_USE_ID_ALIAS
+#endif  // DS18x20_USE_ID_ALIAS
 
 /*********************************************************************************************\
  * Interface

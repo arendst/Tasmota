@@ -211,6 +211,9 @@ void me007_init( void )
         {
             ClaimSerial();
         }
+#ifdef ESP32
+        AddLog(LOG_LEVEL_DEBUG, PSTR(ME007_DEBUG_MSG_TAG "Serial UART%d"), gp_serial_if->getUart());
+#endif
 
         pinMode( me007_data_s.pin_trig_u8, OUTPUT );    /**< @details Configure trigger pin as output */
         digitalWrite( me007_data_s.pin_trig_u8, HIGH ); /**< @details Set trigger pin to high-level as it ME007 requires a falling edge to initiate measurement */

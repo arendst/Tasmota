@@ -71,6 +71,9 @@ void HpmaInit(void)
       if (HpmaSerial->hardwareSerial()) {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("HPM: Serial UART%d"), HpmaSerial->getUart());
+#endif
       hpma_type = 1;
       hpma115S0->Init();
       hpma115S0->StartParticleMeasurement();

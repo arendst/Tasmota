@@ -282,7 +282,7 @@ uint16_t IREcoclimAc::getClock(void) const { return _.Clock; }
 /// Set the clock time on the A/C unit.
 /// @param[in] nr_of_mins Nr. of minutes past midnight.
 void IREcoclimAc::setClock(const uint16_t nr_of_mins) {
-  _.Clock = std::min(nr_of_mins, (uint16_t)(24 * 60 - 1));
+  _.Clock = std::min(nr_of_mins, static_cast<uint16_t>(24 * 60 - 1));
 }
 
 /// Get the Unit type/DIP switch settings of the remote.

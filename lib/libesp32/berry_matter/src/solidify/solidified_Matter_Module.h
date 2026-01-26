@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-be_local_closure(matter_setmember,   /* name */
+be_local_closure(module_matter_setmember,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -45,7 +45,7 @@ be_local_closure(matter_setmember,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-be_local_closure(matter_member,   /* name */
+be_local_closure(module_matter_member,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */

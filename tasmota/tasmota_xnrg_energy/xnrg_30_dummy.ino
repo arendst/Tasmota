@@ -90,7 +90,9 @@ bool NrgDummyCommand(void) {
   int32_t value = (int32_t)(CharToFloat(XdrvMailbox.data) * 1000);  // 1.234 = 1234, -1.234 = -1234
   uint32_t abs_value = abs(value) / 10;                             // 1.23 = 123,   -1.23 = 123
 
-  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
+  if ((CMND_POWERCAL == Energy->command_code) ||
+      (CMND_VOLTAGECAL == Energy->command_code) ||
+      (CMND_CURRENTCAL == Energy->command_code)) {
     // Service in xdrv_03_energy.ino
   }
   else if (CMND_POWERSET == Energy->command_code) {

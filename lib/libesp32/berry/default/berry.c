@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "be_mapping.h"
+
 /* using GNU/readline library */
 #if defined(USE_READLINE_LIB)
     #include <readline/readline.h>
@@ -59,6 +61,13 @@
     FULL_VERSION " (build in " __DATE__ ", " __TIME__ ")\n"         \
     "[" COMPILER "] on " OS_NAME " (default)\n"                     \
 
+#if defined(_WIN32)
+#define PATH_SEPARATOR ";"
+#else
+#define PATH_SEPARATOR ":"
+#endif
+
+
 /* command help information */
 #define help_information                                            \
     "Usage: berry [options] [script [args]]\n"                      \
@@ -66,6 +75,7 @@
     "  -i        enter interactive mode after executing 'file'\n"   \
     "  -l        all variables in 'file' are parsed as local\n"     \
     "  -e        load 'script' source string and execute\n"         \
+    "  -m <path> custom module search path(s) separated by '" PATH_SEPARATOR "'\n"\
     "  -c <file> compile script 'file' to bytecode file\n"          \
     "  -o <file> save bytecode to 'file'\n"                         \
     "  -g        force named globals in VM\n"                       \
@@ -87,6 +97,7 @@
 #define arg_g       (1 << 7)
 #define arg_s       (1 << 8)
 #define arg_err     (1 << 9)
+#define arg_m       (1 << 10)
 
 struct arg_opts {
     int idx;
@@ -95,6 +106,8 @@ struct arg_opts {
     const char *errarg;
     const char *src;
     const char *dst;
+    const char *modulepath;
+    const char *execute;
 };
 
 /* check if the character is a letter */
@@ -202,9 +215,7 @@ static int handle_result(bvm *vm, int res)
 /* execute a script source or file and output a result or error */
 static int doscript(bvm *vm, const char *name, int args)
 {
-    /* load string, bytecode file or compile script file */
-    int res = args & arg_e ? /* check script source string */
-        be_loadstring(vm, name) : be_loadmode(vm, name, args & arg_l);
+    int res = be_loadmode(vm, name, args & arg_l);
     if (res == BE_OK) { /* parsing succeeded */
         res = be_pcall(vm, 0); /* execute */
     }
@@ -214,17 +225,25 @@ static int doscript(bvm *vm, const char *name, int args)
 /* load a Berry script string or file and execute
  * args: the enabled options mask
  * */
-static int load_script(bvm *vm, int argc, char *argv[], int args)
+static int load_script(bvm *vm, int argc, char *argv[], int args, const char * script)
 {
     int res = 0;
     int repl_mode = args & arg_i || (args == 0 && argc == 0);
     if (repl_mode) { /* enter the REPL mode after executing the script file */
         be_writestring(repl_prelude);
     }
-    if (argc > 0) { /* check file path or source string argument */
+    /* compile script file */
+    if (script) {
+        res = be_loadstring(vm, script);
+        if (res == BE_OK) { /* parsing succeeded */
+            res = be_pcall(vm, 0); /* execute */
+        }
+        res = handle_result(vm, res);
+    }
+    if (res == BE_OK && argc > 0) { /* check file path or source string argument */
         res = doscript(vm, argv[0], args);
     }
-    if (repl_mode) { /* enter the REPL mode */
+    if (res == BE_OK && repl_mode) { /* enter the REPL mode */
         res = be_repl(vm, get_line, free_line);
         if (res == -BE_MALLOC_FAIL) {
             be_writestring("error: memory allocation failed.\n");
@@ -254,9 +273,16 @@ static int parse_arg(struct arg_opts *opt, int argc, char *argv[])
         case 'v': args |= arg_v; break;
         case 'i': args |= arg_i; break;
         case 'l': args |= arg_l; break;
-        case 'e': args |= arg_e; break;
         case 'g': args |= arg_g; break;
         case 's': args |= arg_s; break;
+        case 'e':
+            args |= arg_e;
+            opt->execute = opt->optarg;
+            break;
+        case 'm':
+            args |= arg_m;
+            opt->modulepath = opt->optarg;
+            break;
         case '?': return args | arg_err;
         case 'c':
             args |= arg_c;
@@ -286,12 +312,47 @@ static void push_args(bvm *vm, int argc, char *argv[])
     be_pop(vm, 1);
 }
 
+#if defined(_WIN32)
+#define BERRY_ROOT "\\Windows\\system32"
+static const char *module_paths[] = {
+    BERRY_ROOT "\\berry\\packages",
+};
+#else
+#define BERRY_ROOT "/usr/local"
+static const char *module_paths[] = {
+    BERRY_ROOT "/lib/berry/packages",
+};
+#endif
+
+static void berry_paths(bvm * vm)
+{
+    size_t i;
+    for (i = 0; i < array_count(module_paths); ++i) {
+        be_module_path_set(vm, module_paths[i]);
+    }
+}
+
+static void berry_custom_paths(bvm *vm, const char *modulepath)
+{
+    const char delim[] = PATH_SEPARATOR;
+    char *copy = malloc(strlen(modulepath) + 1);
+    strcpy(copy, modulepath);
+    char *ptr = strtok(copy, delim);
+
+    while (ptr != NULL) {
+        be_module_path_set(vm, ptr);
+        ptr = strtok(NULL, delim);
+    }
+    free(copy);
+}
+
 /* 
  * command format: berry [options] [script [args]]
  *  command options:
  *   -i: enter interactive mode after executing 'script'
  *   -b: load code from bytecode file
  *   -e: load 'script' source and execute
+ *   -m: specify custom module search path(s)
  * command format: berry options
  *  command options:
  *   -v: show version information
@@ -305,7 +366,7 @@ static int analysis_args(bvm *vm, int argc, char *argv[])
 {
     int args = 0;
     struct arg_opts opt = { 0 };
-    opt.pattern = "vhilegsc?o?";
+    opt.pattern = "m?vhile?gsc?o?";
     args = parse_arg(&opt, argc, argv);
     argc -= opt.idx;
     argv += opt.idx;
@@ -315,6 +376,16 @@ static int analysis_args(bvm *vm, int argc, char *argv[])
         be_pop(vm, 1);
         return -1;
     }
+    
+    if (args & arg_m) {
+        berry_custom_paths(vm, opt.modulepath);        
+        args &= ~arg_m;
+    }
+    else {
+        // use default module paths
+        berry_paths(vm);
+    }
+    
     if (args & arg_g) {
         comp_set_named_gbl(vm); /* forced named global in VM code */
         args &= ~arg_g;         /* clear the flag for this option not to interfere with other options */
@@ -336,34 +407,15 @@ static int analysis_args(bvm *vm, int argc, char *argv[])
         }
         return build_file(vm, opt.dst, opt.src, args);
     }
-    return load_script(vm, argc, argv, args);
+    return load_script(vm, argc, argv, args, opt.execute);
 }
 
-#if defined(_WIN32)
-#define BERRY_ROOT "\\Windows\\system32"
-static const char *module_paths[] = {
-    BERRY_ROOT "\\berry\\packages",
-};
-#else
-#define BERRY_ROOT "/usr/local"
-static const char *module_paths[] = {
-    BERRY_ROOT "/lib/berry/packages",
-};
-#endif
-
-static void berry_paths(bvm * vm)
-{
-    size_t i;
-    for (i = 0; i < array_count(module_paths); ++i) {
-        be_module_path_set(vm, module_paths[i]);
-    }
-}
 
 int main(int argc, char *argv[])
 {
     int res;
     bvm *vm = be_vm_new(); /* create a virtual machine instance */
-    berry_paths(vm);
+    be_set_ctype_func_handler(vm, be_call_ctype_func);
     res = analysis_args(vm, argc, argv);
     be_vm_delete(vm); /* free all objects and vm */
     return res;

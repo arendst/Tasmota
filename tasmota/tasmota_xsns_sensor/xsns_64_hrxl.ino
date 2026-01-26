@@ -43,6 +43,9 @@ void HRXLInit(void) {
       if (HRXLSerial->hardwareSerial()) {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("HRX: Serial UART%d"), HRXLSerial->getUart());
+#endif
       HRXLSerial->setTimeout(HRXL_READ_TIMEOUT);
     }
   }

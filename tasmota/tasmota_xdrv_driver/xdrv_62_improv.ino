@@ -353,6 +353,9 @@ bool Xdrv62(uint32_t function) {
     case FUNC_PRE_INIT:
       ImprovInit();
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

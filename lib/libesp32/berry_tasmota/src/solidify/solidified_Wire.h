@@ -7,9 +7,9 @@
 /********************************************************************
 ** Solidified function: read_bytes
 ********************************************************************/
-be_local_closure(Wire_read_bytes,   /* name */
+be_local_closure(class_Wire_read_bytes,   /* name */
   be_nested_proto(
-    8,                          /* nstack */
+    9,                          /* nstack */
     4,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -17,17 +17,18 @@ be_local_closure(Wire_read_bytes,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
+    ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(_begin_transmission),
     /* K1   */  be_nested_str(_write),
     /* K2   */  be_nested_str(_end_transmission),
     /* K3   */  be_nested_str(_request_from),
     /* K4   */  be_nested_str(_available),
-    /* K5   */  be_nested_str(_read),
+    /* K5   */  be_nested_str(append),
+    /* K6   */  be_nested_str(_read),
     }),
     &be_const_str_read_bytes,
     &be_const_str_solidified,
-    ( &(const binstruction[24]) {  /* code */
+    ( &(const binstruction[28]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x5C180200,  //  0001  MOVE	R6	R1
       0x7C100400,  //  0002  CALL	R4	2
@@ -35,7 +36,7 @@ be_local_closure(Wire_read_bytes,   /* name */
       0x5C180400,  //  0004  MOVE	R6	R2
       0x7C100400,  //  0005  CALL	R4	2
       0x8C100102,  //  0006  GETMET	R4	R0	K2
-      0x50180000,  //  0007  LDBOOL	R6	0	0
+      0x50180200,  //  0007  LDBOOL	R6	1	0
       0x7C100400,  //  0008  CALL	R4	2
       0x8C100103,  //  0009  GETMET	R4	R0	K3
       0x5C180200,  //  000A  MOVE	R6	R1
@@ -46,12 +47,16 @@ be_local_closure(Wire_read_bytes,   /* name */
       0x7C100200,  //  000F  CALL	R4	1
       0x8C140104,  //  0010  GETMET	R5	R0	K4
       0x7C140200,  //  0011  CALL	R5	1
-      0x78160003,  //  0012  JMPF	R5	#0017
-      0x8C140105,  //  0013  GETMET	R5	R0	K5
-      0x7C140200,  //  0014  CALL	R5	1
-      0x40140805,  //  0015  CONNECT	R5	R4	R5
-      0x7001FFF8,  //  0016  JMP		#0010
-      0x80040800,  //  0017  RET	1	R4
+      0x78160004,  //  0012  JMPF	R5	#0018
+      0x8C140905,  //  0013  GETMET	R5	R4	K5
+      0x8C1C0106,  //  0014  GETMET	R7	R0	K6
+      0x7C1C0200,  //  0015  CALL	R7	1
+      0x7C140400,  //  0016  CALL	R5	2
+      0x7001FFF7,  //  0017  JMP		#0010
+      0x8C140102,  //  0018  GETMET	R5	R0	K2
+      0x501C0200,  //  0019  LDBOOL	R7	1	0
+      0x7C140400,  //  001A  CALL	R5	2
+      0x80040800,  //  001B  RET	1	R4
     })
   )
 );
@@ -61,7 +66,7 @@ be_local_closure(Wire_read_bytes,   /* name */
 /********************************************************************
 ** Solidified function: write_bytes
 ********************************************************************/
-be_local_closure(Wire_write_bytes,   /* name */
+be_local_closure(class_Wire_write_bytes,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     4,                          /* argc */

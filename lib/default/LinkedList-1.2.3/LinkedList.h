@@ -7,6 +7,8 @@
 
 	Created by Ivan Seidel Gomes, March, 2013.
 	Released into the public domain.
+
+	20240118 - Removed sort functions not used by Tasmota (@arendst)
 */
 
 
@@ -38,8 +40,6 @@ protected:
 	bool isCached;
 
 	ListNode<T>* getNode(int index);
-
-	ListNode<T>* findEndOfSortedString(ListNode<T> *p, int (*cmp)(T &, T &));
 
 public:
 	LinkedList();
@@ -95,11 +95,6 @@ public:
 		Clear the entire array
 	*/
 	virtual void clear();
-
-	/*
-		Sort the list, given a comparison function
-	*/
-	virtual void sort(int (*cmp)(T &, T &));
 
 		// add support to array brakets [] operator
 	inline T& operator[](int index); 
@@ -345,75 +340,6 @@ template<typename T>
 void LinkedList<T>::clear(){
 	while(size() > 0)
 		shift();
-}
-
-template<typename T>
-void LinkedList<T>::sort(int (*cmp)(T &, T &)){
-	if(_size < 2) return; // trivial case;
-
-	for(;;) {	
-
-		ListNode<T> **joinPoint = &root;
-
-		while(*joinPoint) {
-			ListNode<T> *a = *joinPoint;
-			ListNode<T> *a_end = findEndOfSortedString(a, cmp);
-	
-			if(!a_end->next	) {
-				if(joinPoint == &root) {
-					last = a_end;
-					isCached = false;
-					return;
-				}
-				else {
-					break;
-				}
-			}
-
-			ListNode<T> *b = a_end->next;
-			ListNode<T> *b_end = findEndOfSortedString(b, cmp);
-
-			ListNode<T> *tail = b_end->next;
-
-			a_end->next = NULL;
-			b_end->next = NULL;
-
-			while(a && b) {
-				if(cmp(a->data, b->data) <= 0) {
-					*joinPoint = a;
-					joinPoint = &a->next;
-					a = a->next;	
-				}
-				else {
-					*joinPoint = b;
-					joinPoint = &b->next;
-					b = b->next;	
-				}
-			}
-
-			if(a) {
-				*joinPoint = a;
-				while(a->next) a = a->next;
-				a->next = tail;
-				joinPoint = &a->next;
-			}
-			else {
-				*joinPoint = b;
-				while(b->next) b = b->next;
-				b->next = tail;
-				joinPoint = &b->next;
-			}
-		}
-	}
-}
-
-template<typename T>
-ListNode<T>* LinkedList<T>::findEndOfSortedString(ListNode<T> *p, int (*cmp)(T &, T &)) {
-	while(p->next && cmp(p->data, p->next->data) <= 0) {
-		p = p->next;
-	}
-	
-	return p;
 }
 
 #endif

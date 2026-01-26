@@ -6,6 +6,25 @@
 #include "be_mem.h"
 
 #include <stdio.h>
+#include <string.h>
+
+// Backport configuration from LVGL 8 to LVGL 9
+#ifdef BE_LV_WIDGET_BTN
+  #undef BE_LV_WIDGET_BUTTON
+  #define BE_LV_WIDGET_BUTTON
+#endif
+#ifdef BE_LV_WIDGET_BTNMATRIX
+  #undef BE_LV_WIDGET_BUTTONMATRIX
+  #define BE_LV_WIDGET_BUTTONMATRIX
+#endif
+#ifdef BE_LV_WIDGET_IMG
+  #undef BE_LV_WIDGET_IMAGE
+  #define BE_LV_WIDGET_IMAGE
+#endif
+#ifdef BE_LV_WIDGET_IMGBTN
+  #undef BE_LV_WIDGET_IMAGEBUTTON
+  #define BE_LV_WIDGET_IMAGEBUTTON
+#endif
 
 #include "../generate/be_lv_c_mapping.h"
 
@@ -64,11 +83,24 @@ int lv_be_style_init(bvm *vm) {
     if (style == NULL) {
         be_throw(vm, BE_MALLOC_FAIL);
     }
-    if (style != NULL) {
-      lv_style_init(style);
-    }
+    lv_style_init(style);
   }
   be_pushcomptr(vm, style);
+  be_setmember(vm, 1, "_p");
+  be_return_nil(vm);
+}
+/*********************************************************************************************\
+ * Delete style
+ * 
+ * Use with caution, it shouldn't be referenced after this call
+\*********************************************************************************************/
+int lv_be_style_del(bvm *vm) {
+  be_getmember(vm, 1, "_p");
+  lv_style_t * style = be_tocomptr(vm, -1);
+  if (style != NULL) {
+    be_free(vm, style, sizeof(lv_style_t));
+  }
+  be_pushcomptr(vm, NULL);
   be_setmember(vm, 1, "_p");
   be_return_nil(vm);
 }
@@ -163,7 +195,9 @@ int lv_x_member(bvm *vm) {
       be_pop(vm, 1);
     }
     // berry_log_C("lv_x_member method not found");
-    be_return_nil(vm);
+    /* not found, return module 'undefined' */
+    be_getmodule(vm, "undefined");
+    be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
 }
@@ -179,37 +213,34 @@ int lv_x_member(bvm *vm) {
 //        3/ if no Arg2, color is 0x000000 (black)
 int lco_init(bvm *vm) {
   int argc = be_top(vm);
-  lv_color_t lv_color = {};       // default value is all zeroes (black)
+  uint32_t color32 = 0;
 
   if (argc > 1) {
     if (be_isint(vm, 2)) {        // color is RGB 24 bits
-      lv_color = lv_color_hex(be_toint(vm, 2));
+      color32 = be_toint(vm, 2);
     } else if (be_iscomptr(vm, 2)) {
-      lv_color.full = (intptr_t) be_tocomptr(vm, 2);
+      color32 = (intptr_t) be_tocomptr(vm, 2);
     }
   }
-  be_pushint(vm, lv_color_to_uint32(lv_color));
+  be_pushint(vm, color32);
   be_setmember(vm, 1, "_p");
   be_return_nil(vm);
 }
 
 int lco_tostring(bvm *vm) {
-  lv_color_t lv_color = {};
   be_getmember(vm, 1, "_p");
-  uint32_t ntv_color = be_toint(vm, -1);
-  lv_color = lv_color_from_uint32(ntv_color);
-  uint32_t color = lv_color_to32(lv_color) & 0xFFFFFF;
+  uint32_t color32 = be_toint(vm, -1);
   be_pop(vm, 1);  // remove attribute
-  char s[48];
-  snprintf(s, sizeof(s), "lv_color(0x%06x - native:0x%04x)", color, ntv_color);
+  char s[32];
+  snprintf(s, sizeof(s), "lv_color(0x%06x)", color32);
   be_pushnstring(vm, s, strlen(s)); /* make escape string from buffer */
   be_return(vm);
 }
 
 int lco_toint(bvm *vm) {
   be_getmember(vm, 1, "_p");
-  uint32_t ntv_color = be_toint(vm, -1);
-  be_pushint(vm, ntv_color);
+  uint32_t color32 = be_toint(vm, -1);
+  be_pushint(vm, color32);
   be_return(vm);
 }
 
@@ -234,7 +265,7 @@ int lv0_lvobj__void_call(bvm *vm, fn_lvobj__void func) {
 int lv0_load_font(bvm *vm) {
   int argc = be_top(vm);
   if (argc == 1 && be_isstring(vm, 1)) {
-    lv_font_t * font = lv_font_load(be_tostring(vm, 1));
+    lv_font_t * font = lv_binfont_create(be_tostring(vm, 1));
     if (font != NULL) {
       be_find_global_or_module_member(vm, "lv.lv_font");
       be_pushcomptr(vm, font);
@@ -336,4 +367,32 @@ int lv0_member(bvm *vm) {
   }
   be_module_load(vm, be_newstr(vm, "undefined"));
   be_return(vm);
+}
+
+/*********************************************************************************************\
+ * Return a hash of all LV int constants
+\*********************************************************************************************/
+int lv0_constants_as_hash(bvm *vm) {
+  be_newobject(vm, "map");
+
+  for (int i = 0; i < lv0_constants_size; i++) {
+    char first_char = lv0_constants[i].name[0];
+    if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
+      continue;
+    }
+    be_pushstring(vm, lv0_constants[i].name);
+    be_pushint(vm, lv0_constants[i].value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
+  be_pop(vm, 1);
+  be_return(vm);
+}
+
+/*********************************************************************************************\
+ * temporarily fix lv_span_get_style()
+\*********************************************************************************************/
+#include "widgets/bar/lv_bar_private.h"
+lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar) {
+  return &((lv_bar_t*)bar)->indic_area;
 }

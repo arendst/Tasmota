@@ -90,7 +90,7 @@ a_setoption = [[
     "(Restart) Number of restarts to start detecting boot loop (default 1)",
     "(Light) RGB and White channel separation (default 0)",
     "(IR) Set the smallest sized UNKNOWN message packets we actually care about (default 6, max 255)",
-    "(CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurments (default 128)",
+    "(CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurements (default 128)",
     "(Button/Shutter) Ignore button change in seconds (default 0)",
     "(Wifi) Interval in seconds between gratuitous ARP requests (default 60)",
     "(Energy) Turn all power off at or above this temperature (default 90C)",
@@ -121,7 +121,7 @@ a_setoption = [[
     "(Tuya) Enable (1) TuyaMcuReceived messages over Mqtt",
     "(Buzzer) Enable (1) buzzer when available",
     "(Light) Enable multi-channels PWM (1) instead of Color PWM (0)",
-    "(not used) Limits Tuya dimmers to minimum of 10% (25) when enabled",
+    "(Serial) Invert Serial receive on SerialBridge (1)",
     "(Energy) Enable Weekend Energy Tariff",
     "(DDS2382) Select different Modbus registers (1) for Active Energy (#6531)",
     "(Energy) Enable (1) hardware energy total counter as reference (#6561)",
@@ -211,9 +211,16 @@ a_setoption = [[
     "(Berry) Disable autoexec.be on restart (1)",
     "(Berry) Handle berry led using RMT0 as additional WS2812 scheme",
     "(ZCDimmer) Enable rare falling Edge dimmer instead of leading edge",
-    "","",
-    "","","","",
-    "","","","",
+    "(Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval",
+    "(NeoPool) Output sensitive data (1)",
+    "(MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead",
+    "(Counter) Enable counting on both rising and falling edge (1)",
+    "(LD2410) Disable generate moving event by sensor report - use LD2410 out pin for events (1)",
+    "(GUI) Disable display of state text (1)",
+    "(Energy) Do not add export energy to energy today (1)",
+    "(GUI) Disable display of GUI device name (1)",
+    "(WizMote) Enable WiZ Smart Remote support (1)",
+    "(TLS) Enable ECDSA validation in addition to RSA",
     "","","","",
     "","","","",
     "","","",""
@@ -298,7 +305,16 @@ a_features = [[
     "USE_DISPLAY_TM1650","USE_PCA9632","USE_TUYAMCUBR","USE_SEN5X",
     "USE_BIOPDU","USE_MCP23XXX_DRV","USE_PMSA003I","USE_LOX_O2",
     "USE_GDK101","USE_GM861","USE_TC74","USE_PCA9557",
-    "USE_SGP4X","USE_MAX17043","","",
+    "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
+    "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
+    ],[
+    "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
+    "USE_SPI_LORA","USE_SPL06_007","USE_QMP6988","USE_WOOLIIS",
+    "USE_HX711_M5SCALES","USE_RX8010","USE_PCF85063","USE_ESP32_TWAI",
+    "USE_C8_CO2_5K","USE_WIZMOTE","USE_V9240","USE_TELNET",
+    "USE_XYZMODEM","USE_WIREGUARD","USE_AP33772S","USE_VID6608",
+    "","","","",
+    "","","","",
     "","","",""
     ]]
 
@@ -327,7 +343,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v13.0.0.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v15.1.0.3 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

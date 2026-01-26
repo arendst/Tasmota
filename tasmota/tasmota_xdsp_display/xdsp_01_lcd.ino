@@ -56,7 +56,7 @@ void LcdInit(uint8_t mode)
 }
 
 void LcdInitDriver(void) {
-  if (!TasmotaGlobal.i2c_enabled) { return; }
+  if (!TasmotaGlobal.i2c_enabled[0]) { return; }
 
   if (!Settings->display_model) {
     if (I2cSetDevice(LCD_ADDRESS1)) {
@@ -149,9 +149,6 @@ bool LcdPrintLog(void)
       }
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
-
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
-
       lcd->setCursor(0, last_row);
       lcd->print(disp_screen_buffer[last_row]);
 

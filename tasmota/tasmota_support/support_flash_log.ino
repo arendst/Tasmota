@@ -19,13 +19,11 @@
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
-
-
+  2.0.0.0 20240625  expand    - Add support for ESP32
   ---
   1.0.0.0 20190923  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
                     forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
                     base      - code base from arendst and              - written from scratch
-
 */
 
 /********************************************************************************************\
@@ -37,7 +35,6 @@
 \*********************************************************************************************/
 
 #ifdef USE_FLOG
-#ifdef ESP8266
 
 class FLOG
 
@@ -84,8 +81,8 @@ public:
   bool  recording = false;          // ready for recording
 
   union sector_t{
-  uint32_t dword_buffer[FLASH_SECTOR_SIZE/4];
-  uint8_t byte_buffer[FLASH_SECTOR_SIZE];
+  uint32_t dword_buffer[SPI_FLASH_SEC_SIZE/4];
+  uint8_t byte_buffer[SPI_FLASH_SEC_SIZE];
   header_t header; // should be 4-byte-aligned
   } sector; // the global buffer of 4096 bytes, used for reading and writing
 
@@ -100,20 +97,16 @@ public:
   void startDownload(size_t size, CallbackNoArgs sendHeader, CallbackWithArgs sendRecord, CallbackNoArgs sendFooter);
 };
 
-extern "C" uint32_t _SPIFFS_start; // we make shure later, that only one of the two is really used ...
-extern "C" uint32_t _FS_start;     // ... depending on core-sdk-version
-
 /**
  * @brief Will examine the start and end of the OTA-partition. Then the sector size will be computed, saved data should be found and the initial state will be configured.
  */
 void FLOG::init(void)
 {
 DEBUG_SENSOR_LOG(PSTR("FLOG: init ..."));
-size = ESP.getSketchSize();
-// round one sector up
-start = (size + FLASH_SECTOR_SIZE - 1) & (~(FLASH_SECTOR_SIZE - 1));
-end = (uint32_t)&_FS_start - 0x40200000;
-num_sectors = (end - start)/FLASH_SECTOR_SIZE;
+size = ESP_getSketchSize();
+start = FlashWriteStartSector() * SPI_FLASH_SEC_SIZE;
+end = FlashWriteMaxSector() * SPI_FLASH_SEC_SIZE;
+num_sectors = (end - start) / SPI_FLASH_SEC_SIZE;
 DEBUG_SENSOR_LOG(PSTR("FLOG: size: 0x%lx, start: 0x%lx, end: 0x%lx, num_sectors(dec): %lu"), size, start, end, num_sectors );
 _findFirstErasedSector();
 if(first_erased_sector == 0xffff){
@@ -138,7 +131,7 @@ ready = true;
  */
 void FLOG::_readSector(uint8_t one_sector){
   DEBUG_SENSOR_LOG(PSTR("FLOG: read sector number: %u" ), one_sector);
-  ESP.flashRead(start+(one_sector * FLASH_SECTOR_SIZE),(uint32_t *)&sector.dword_buffer, FLASH_SECTOR_SIZE);
+  ESP.flashRead(start+(one_sector * SPI_FLASH_SEC_SIZE),(uint32_t *)&sector.dword_buffer, SPI_FLASH_SEC_SIZE);
 }
 /**
  * @brief Erase the given sector og the OTA-partition
@@ -147,7 +140,7 @@ void FLOG::_readSector(uint8_t one_sector){
  */
 void FLOG::_eraseSector(uint8_t one_sector){ // Erase sector of FLOG/OTA
   DEBUG_SENSOR_LOG(PSTR("FLOG: erasing sector number: %u" ), one_sector);
-  ESP.flashEraseSector((start/FLASH_SECTOR_SIZE)+one_sector);
+  ESP.flashEraseSector((start/SPI_FLASH_SEC_SIZE)+one_sector);
 }
 /**
  * @brief Write the global buffer to the given sector
@@ -156,7 +149,7 @@ void FLOG::_eraseSector(uint8_t one_sector){ // Erase sector of FLOG/OTA
  */
 void FLOG::_writeSector(uint8_t one_sector){ // Write sector of FLOG/OTA
   DEBUG_SENSOR_LOG(PSTR("FLOG: write buffer to sector number: %u" ), one_sector);
-  ESP.flashWrite(start+(one_sector * FLASH_SECTOR_SIZE),(uint32_t *)&sector.dword_buffer, FLASH_SECTOR_SIZE);
+  ESP.flashWrite(start+(one_sector * SPI_FLASH_SEC_SIZE),(uint32_t *)&sector.dword_buffer, SPI_FLASH_SEC_SIZE);
 }
 /**
  * @brief Clear the global buffer, but leave the header intact
@@ -301,8 +294,8 @@ void FLOG::addToBuffer(uint8_t src[], uint32_t size){
         return; // we ignore additional calls and are done, TODO: maybe use meaningful return values
       }
     }
-  if((FLASH_SECTOR_SIZE-sector.header.buf_pointer-sizeof(sector.header))>size){
-    // DEBUG_SENSOR_LOG(PSTR("FLOG: enough space left in buffer: %u"), FLASH_SECTOR_SIZE - sector.header.buf_pointer - sizeof(sector.header));
+  if((SPI_FLASH_SEC_SIZE-sector.header.buf_pointer-sizeof(sector.header))>size){
+    // DEBUG_SENSOR_LOG(PSTR("FLOG: enough space left in buffer: %u"), SPI_FLASH_SEC_SIZE - sector.header.buf_pointer - sizeof(sector.header));
     // DEBUG_SENSOR_LOG(PSTR("FLOG: current buf_pointer: %u, size of added: %u"), sector.header.buf_pointer, size);
 
     memcpy(sector.byte_buffer + sector.header.buf_pointer, src, size);
@@ -315,7 +308,7 @@ void FLOG::addToBuffer(uint8_t src[], uint32_t size){
     _saveBufferToSector();
     sectors_left++;
     // but now save the data to the fresh buffer
-    if((FLASH_SECTOR_SIZE-sector.header.buf_pointer-sizeof(sector.header))>size){
+    if((SPI_FLASH_SEC_SIZE-sector.header.buf_pointer-sizeof(sector.header))>size){
       memcpy(sector.byte_buffer + sector.header.buf_pointer, src, size);
       sector.header.buf_pointer+=size; // this is the next free spot
     }
@@ -426,5 +419,4 @@ void FLOG::stopRecording(void){
   _initBuffer();
   }
 
- #endif  // ESP8266
- #endif  // USE_FLOG
+#endif  // USE_FLOG

@@ -26,6 +26,7 @@
  * Supported template fields:
  * NAME  - Template name
  * BASE  - Optional. 0 = use relative buttons and switches (default), 1 = use absolute buttons and switches
+ * IOCON - Optional. IOCON I/O Expander configuration register (bitmap: 0 MIRROR 0 DISSLW HAEN ODR INTPOL 0. Default 0b01011000 = 0x58)
  * GPIO  - Sequential list of pin 1 and up with configured GPIO function
  *         Function             Code      Description
  *         -------------------  --------  ----------------------------------------
@@ -60,6 +61,9 @@
  *
  * Buttons and relays                        B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8
  * {"NAME":"MCP23017 A=B1-8, B=R1-8","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
+ * 
+ * Buttons and relays with open-drain INT    B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8
+ * {"NAME":"MCP23017 A=B1-8, B=R1-8","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231],"IOCON":0x5C}
  *
  * Buttons, relays, buttons and relays                         B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8  B9 B10B11B12B13B14B15B16R9  R10 R11 R12 R13 R14 R15 R16
  * {"NAME":"MCP23017 A=B1-8, B=R1-8, C=B9-16, D=R9-16","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
@@ -75,8 +79,12 @@
 #define XDRV_67                  67
 #define XI2C_77                  77       // See I2CDEVICES.md
 
+#ifndef MCP23XXX_ADDR_START
 #define MCP23XXX_ADDR_START      0x20     // 32
+#endif
+#ifndef MCP23XXX_ADDR_END
 #define MCP23XXX_ADDR_END        0x26     // 38
+#endif
 
 #define MCP23XXX_MAX_DEVICES     6
 
@@ -85,6 +93,8 @@
 /*********************************************************************************************\
  * MCP23017 support
 \*********************************************************************************************/
+
+#define D_JSON_IOCON "IOCON"
 
 enum MCP23S08GPIORegisters {
   MCP23X08_IODIR = 0x00,
@@ -136,10 +146,24 @@ typedef struct {
   uint8_t olatb;
   uint8_t address;
   uint8_t interface;
-  uint8_t pins;                                        // 8 (MCP23008) or 16 (MCP23017 / MCP23S17)
+  uint8_t pins;                           // 8 (MCP23x08) or 16 (MCP23x17)
   int8_t pin_cs;
   int8_t pin_int;
 } tMcp23xDevice;
+
+typedef union {                           // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint8_t reg;                            // Allow bit manipulation using template IOCON
+  struct {
+    uint8_t spare0 : 1;                   // 0   Unimplemented
+    uint8_t INTPOL : 1;                   // (0) INT pin active-low. (1) active-high
+    uint8_t ODR : 1;                      // (0) INT pin active driver output. (1) Open-drain output (overrides INTPOL)
+    uint8_t HAEN : 1;                     // (1) Hardware Address enabled (MCS23S17 only)
+    uint8_t DISSLW : 1;                   // (0) SDA output slew rate disabled
+    uint8_t SEQOP : 1;                    // 0   Sequential operation enabled, address pointer increments
+    uint8_t MIRROR : 1;                   // (1) INT pins are internally connected
+    uint8_t BANK : 1;                     // 0   Registers are in the same bank (addresses are sequential) (MCS23x17 only)
+  };
+} tIOCON;
 
 struct MCP230 {
   tMcp23xDevice device[MCP23XXX_MAX_DEVICES];
@@ -152,6 +176,7 @@ struct MCP230 {
   uint8_t relay_offset;
   uint8_t button_max;
   uint8_t switch_max;
+  tIOCON iocon;
   int8_t button_offset;
   int8_t switch_offset;
   bool base;
@@ -312,7 +337,7 @@ void MCP23xUpdate(uint8_t pin, bool pin_value, uint8_t reg_addr) {
 /*********************************************************************************************/
 
 uint32_t MCP23xSetChip(uint8_t pin) {
-  // Calculate chip based on number of pins per chip. 8 for MCP23008, 16 for MCP23x17
+  // Calculate chip based on number of pins per chip. 8 for MCP23x08, 16 for MCP23x17
   // pin 0 - 63
   for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
     if (Mcp23x.device[Mcp23x.chip].pins > pin) { break; }
@@ -335,15 +360,15 @@ void MCP23xPinMode(uint8_t pin, uint8_t flags) {
   }
   switch (flags) {
     case INPUT:
-      MCP23xUpdate(pin, true, iodir);
-      MCP23xUpdate(pin, false, gppu);
+      MCP23xUpdate(pin, true, iodir);                  // Pin is configured as an input
+      MCP23xUpdate(pin, false, gppu);                  // Pull-up disabled
       break;
     case INPUT_PULLUP:
-      MCP23xUpdate(pin, true, iodir);
-      MCP23xUpdate(pin, true, gppu);
+      MCP23xUpdate(pin, true, iodir);                  // Pin is configured as an input
+      MCP23xUpdate(pin, true, gppu);                   // Pull-up enabled
       break;
     case OUTPUT:
-      MCP23xUpdate(pin, false, iodir);
+      MCP23xUpdate(pin, false, iodir);                 // Pin is configured as an output
       break;
   }
 
@@ -367,21 +392,21 @@ void MCP23xPinInterruptMode(uint8_t pin, uint8_t interrupt_mode) {
   }
   switch (interrupt_mode) {
     case MCP23XXX_CHANGE:
-      MCP23xUpdate(pin, true, gpinten);
-      MCP23xUpdate(pin, false, intcon);
+      MCP23xUpdate(pin, true, gpinten);                // Enable GPIO input pin for interrupt-on-change event
+      MCP23xUpdate(pin, false, intcon);                // Pin value is compared against the previous pin value
       break;
     case MCP23XXX_RISING:
-      MCP23xUpdate(pin, true, gpinten);
-      MCP23xUpdate(pin, true, intcon);
-      MCP23xUpdate(pin, true, defval);
+      MCP23xUpdate(pin, true, gpinten);                // Enable GPIO input pin for interrupt-on-change event
+      MCP23xUpdate(pin, true, intcon);                 // Controls how the associated pin value is compared for interrupt-on-change
+      MCP23xUpdate(pin, false, defval);                // If the associated pin level is the opposite from the register bit, an interrupt occurs.
       break;
     case MCP23XXX_FALLING:
-      MCP23xUpdate(pin, true, gpinten);
-      MCP23xUpdate(pin, true, intcon);
-      MCP23xUpdate(pin, false, defval);
+      MCP23xUpdate(pin, true, gpinten);                // Enable GPIO input pin for interrupt-on-change event
+      MCP23xUpdate(pin, true, intcon);                 // Controls how the associated pin value is compared for interrupt-on-change
+      MCP23xUpdate(pin, true, defval);                 // If the associated pin level is the opposite from the register bit, an interrupt occurs.
       break;
     case MCP23XXX_NO_INTERRUPT:
-      MCP23xUpdate(pin, false, gpinten);
+      MCP23xUpdate(pin, false, gpinten);               // Disable GPIO input pin for interrupt-on-change event
       break;
   }
 }
@@ -390,7 +415,7 @@ void MCP23xSetPinModes(uint8_t pin, uint8_t flags) {
   // pin 0 - 63
   MCP23xPinMode(pin, flags);
   if (Mcp23x.device[Mcp23x.chip].pin_int > -1) {       // Mcp23x.chip is updated by call to MCP23xPinMode
-    MCP23xPinInterruptMode(pin, MCP23XXX_CHANGE);
+    MCP23xPinInterruptMode(pin, (Mcp23x.iocon.ODR) ? MCP23XXX_FALLING : MCP23XXX_CHANGE);
   }
 }
 
@@ -430,7 +455,7 @@ int MCP23xPin(uint32_t gpio, uint32_t index) {
     real_gpio += index;
     mask = 0xFFFF;
   }
-  for (uint32_t i = 0; i < Mcp23x.max_pins; i++) {
+  for (uint32_t i = 0; i <= Mcp23x.max_pins; i++) {
     if ((Mcp23x_gpio_pin[i] & mask) == real_gpio) {
       return i;                                        // Pin number configured for gpio
     }
@@ -444,7 +469,7 @@ bool MCP23xPinUsed(uint32_t gpio, uint32_t index) {
 }
 
 uint32_t MCP23xGetPin(uint32_t lpin) {
-  if (lpin < Mcp23x.max_pins) {
+  if (lpin <= Mcp23x.max_pins) {
     return Mcp23x_gpio_pin[lpin];
   } else {
     return GPIO_NONE;
@@ -452,6 +477,15 @@ uint32_t MCP23xGetPin(uint32_t lpin) {
 }
 
 /*********************************************************************************************/
+
+bool MCP23xAddItem(uint8_t &item) {
+  if (item >= MAX_RELAYS_SET) {                        // MAX_RELAYS_SET = MAX_SWITCHES_SET = MAX_KEYS_SET = 32
+    AddLog(LOG_LEVEL_INFO, PSTR("MCP: Max reached"));
+    return false;
+  }
+  item++;
+  return true;
+}
 
 String MCP23xTemplateLoadFile(void) {
   String mcptmplt = "";
@@ -493,7 +527,7 @@ bool MCP23xLoadTemplate(void) {
   }
   val = root[PSTR(D_JSON_NAME)];
   if (val) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Base %d, Template '%s'"), Mcp23x.base, val.getStr());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: IOCON 0x%02X, Base %d, Template '%s'"), Mcp23x.iocon, Mcp23x.base, val.getStr());
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
@@ -503,44 +537,36 @@ bool MCP23xLoadTemplate(void) {
       if (!val) { break; }
       uint16_t mpin = val.getUInt();
       if (mpin) {                                      // Above GPIO_NONE
-        if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET))) {
-          Mcp23x.switch_max++;
+        if ((mpin >= AGPIO(GPIO_SWT1)) && (mpin < (AGPIO(GPIO_SWT1) + MAX_SWITCHES_SET)) && MCP23xAddItem(Mcp23x.switch_max)) {
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
-        else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET))) {
+        else if ((mpin >= AGPIO(GPIO_SWT1_NP)) && (mpin < (AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES_SET)) && MCP23xAddItem(Mcp23x.switch_max)) {
           mpin -= (AGPIO(GPIO_SWT1_NP) - AGPIO(GPIO_SWT1));
-          Mcp23x.switch_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
-        else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET))) {
-          Mcp23x.button_max++;
+        else if ((mpin >= AGPIO(GPIO_KEY1)) && (mpin < (AGPIO(GPIO_KEY1) + MAX_KEYS_SET)) && MCP23xAddItem(Mcp23x.button_max)) {
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
-        else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET))) {
+        else if ((mpin >= AGPIO(GPIO_KEY1_NP)) && (mpin < (AGPIO(GPIO_KEY1_NP) + MAX_KEYS_SET)) && MCP23xAddItem(Mcp23x.button_max)) {
           mpin -= (AGPIO(GPIO_KEY1_NP) - AGPIO(GPIO_KEY1));
-          Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
-        else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET))) {
+        else if ((mpin >= AGPIO(GPIO_KEY1_INV)) && (mpin < (AGPIO(GPIO_KEY1_INV) + MAX_KEYS_SET)) && MCP23xAddItem(Mcp23x.button_max)) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV));
           mpin -= (AGPIO(GPIO_KEY1_INV) - AGPIO(GPIO_KEY1));
-          Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT_PULLUP);
         }
-        else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET))) {
+        else if ((mpin >= AGPIO(GPIO_KEY1_INV_NP)) && (mpin < (AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS_SET)) && MCP23xAddItem(Mcp23x.button_max)) {
           bitSet(Mcp23x.button_inverted, mpin - AGPIO(GPIO_KEY1_INV_NP));
           mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
-          Mcp23x.button_max++;
           MCP23xSetPinModes(pin, INPUT);
         }
-        else if ((mpin >= AGPIO(GPIO_REL1)) && (mpin < (AGPIO(GPIO_REL1) + MAX_RELAYS_SET))) {
-          Mcp23x.relay_max++;
+        else if ((mpin >= AGPIO(GPIO_REL1)) && (mpin < (AGPIO(GPIO_REL1) + MAX_RELAYS_SET)) && MCP23xAddItem(Mcp23x.relay_max)) {
           MCP23xPinMode(pin, OUTPUT);
         }
-        else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS_SET))) {
+        else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS_SET)) && MCP23xAddItem(Mcp23x.relay_max)) {
           bitSet(Mcp23x.relay_inverted, mpin - AGPIO(GPIO_REL1_INV));
           mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
-          Mcp23x.relay_max++;
           MCP23xPinMode(pin, OUTPUT);
         }
         else if (mpin == AGPIO(GPIO_OUTPUT_HI)) {
@@ -554,14 +580,9 @@ bool MCP23xLoadTemplate(void) {
         else { mpin = 0; }
         Mcp23x_gpio_pin[pin] = mpin;
       }
-      if ((Mcp23x.switch_max >= MAX_SWITCHES_SET) ||
-          (Mcp23x.button_max >= MAX_KEYS_SET) ||
-          (Mcp23x.relay_max >= MAX_RELAYS_SET)) {
-        AddLog(LOG_LEVEL_INFO, PSTR("MCP: Max reached (S%d/B%d/R%d)"), Mcp23x.switch_max, Mcp23x.button_max, Mcp23x.relay_max);
-        break;
-      }
     }
     Mcp23x.max_pins = pin;                             // Max number of configured pins
+    AddLog(LOG_LEVEL_INFO, PSTR("MCP: Pins %d (S%d/B%d/R%d)"), Mcp23x.max_pins, Mcp23x.switch_max, Mcp23x.button_max, Mcp23x.relay_max);
   }
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Pins %d, Mcp23x_gpio_pin %*_V"), Mcp23x.max_pins, Mcp23x.max_pins, (uint8_t*)Mcp23x_gpio_pin);
@@ -578,6 +599,10 @@ uint32_t MCP23xTemplateGpio(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return 0; }
 
+  JsonParserToken val = root[PSTR(D_JSON_IOCON)];
+  if (val) {
+    Mcp23x.iocon.reg = val.getUInt() & 0x5E;          // Only allow 0 MIRROR 0 DISSLW HAEN ODR INTPOL 0
+  }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr.isArray()) {
     return arr.size();                                // Number of requested pins
@@ -586,9 +611,10 @@ uint32_t MCP23xTemplateGpio(void) {
 }
 
 void MCP23xModuleInit(void) {
+  Mcp23x.iocon.reg = 0b01011000;                      // Default 0x58 = Enable INT mirror, Disable Slew rate, HAEN pins for addressing
   int32_t pins_needed = MCP23xTemplateGpio();
   if (!pins_needed) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Invalid template"));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MCP: Invalid template"));
     return;
   }
 
@@ -602,17 +628,32 @@ void MCP23xModuleInit(void) {
 #endif
     while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && PinUsed(GPIO_MCP23SXX_CS, Mcp23x.max_devices)) {
       Mcp23x.chip = Mcp23x.max_devices;
-      Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, Mcp23x.chip)) ? Pin(GPIO_MCP23XXX_INT, Mcp23x.chip) : -1;
+      uint32_t pin_int = (Mcp23x.iocon.ODR) ? 0 : Mcp23x.chip;  // INT ODR pins are open-drain outputs and supposedly connected together to one GPIO
+      Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, pin_int)) ? Pin(GPIO_MCP23XXX_INT, pin_int) : -1;
       Mcp23x.device[Mcp23x.chip].pin_cs = Pin(GPIO_MCP23SXX_CS, Mcp23x.max_devices);
       digitalWrite(Mcp23x.device[Mcp23x.chip].pin_cs, 1);
       pinMode(Mcp23x.device[Mcp23x.chip].pin_cs, OUTPUT);
       Mcp23x.device[Mcp23x.chip].interface = MCP23X_SPI;
       Mcp23x.device[Mcp23x.chip].address = MCP23XXX_ADDR_START << 1;
-      AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found at CS%d"), Mcp23x.chip +1);
-      Mcp23x.device[Mcp23x.chip].pins = 16;
-      MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
-      Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
-      Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+
+      MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23x17, so its the best way to detect the different chips 23x08 vs 23x17
+      uint8_t buffer;
+      if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
+        if (0x00 == buffer) { // MCP23S08
+          AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S08 found at CS%d"), Mcp23x.chip +1);
+          Mcp23x.device[Mcp23x.chip].pins = 8;
+//          MCP23xWrite(MCP23X08_IOCON, 0b00011000);  // Slew rate disabled, HAEN pins for addressing
+          MCP23xWrite(MCP23X08_IOCON, Mcp23x.iocon.reg & 0x3E);
+          Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
+        } else if (0x80 == buffer) { // MCP23S17
+          AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found at CS%d"), Mcp23x.chip +1);
+          Mcp23x.device[Mcp23x.chip].pins = 16;
+//          MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+          MCP23xWrite(MCP23X17_IOCONA, Mcp23x.iocon.reg);
+          Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
+          Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+        }
+      }
       Mcp23x.max_devices++;
 
       Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
@@ -625,18 +666,20 @@ void MCP23xModuleInit(void) {
     uint8_t mcp23xxx_address = MCP23XXX_ADDR_START;
     while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && (mcp23xxx_address < MCP23XXX_ADDR_END)) {
       Mcp23x.chip = Mcp23x.max_devices;
+      uint32_t pin_int = (Mcp23x.iocon.ODR) ? 0 : Mcp23x.chip;  // INT pins are open-drain outputs and supposedly connected together to one GPIO
       if (I2cSetDevice(mcp23xxx_address)) {
-        Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, Mcp23x.chip)) ? Pin(GPIO_MCP23XXX_INT, Mcp23x.chip) : -1;
+        Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, pin_int)) ? Pin(GPIO_MCP23XXX_INT, pin_int) : -1;
         Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
         Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
 
-        MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
+        MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23x17, so its the best way to detect the different chips 23x08 vs 23x17
         uint8_t buffer;
         if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
           if (0x00 == buffer) {
             I2cSetActiveFound(mcp23xxx_address, "MCP23008");
             Mcp23x.device[Mcp23x.chip].pins = 8;
-            MCP23xWrite(MCP23X08_IOCON, 0b00011000);     // Slew rate disabled, HAEN pins for addressing
+//            MCP23xWrite(MCP23X08_IOCON, 0b00011000);   // Slew rate disabled, HAEN pins for addressing
+            MCP23xWrite(MCP23X08_IOCON, Mcp23x.iocon.reg & 0x3E);
             Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
             Mcp23x.max_devices++;
           }
@@ -644,7 +687,8 @@ void MCP23xModuleInit(void) {
             I2cSetActiveFound(mcp23xxx_address, "MCP23017");
             Mcp23x.device[Mcp23x.chip].pins = 16;
             MCP23xWrite(MCP23X08_IOCON, 0x00);           // Reset bank mode to 0 (MCP23X17_GPINTENB)
-            MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+//            MCP23xWrite(MCP23X17_IOCONA, 0b01011000);  // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+            MCP23xWrite(MCP23X17_IOCONA, Mcp23x.iocon.reg);
             Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
             Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
             Mcp23x.max_devices++;
@@ -675,6 +719,8 @@ void MCP23xModuleInit(void) {
     return;
   }
 
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MCP: INT open-drain %d"), Mcp23x.iocon.ODR);
+
   Mcp23x.relay_offset = TasmotaGlobal.devices_present;
   Mcp23x.relay_max -= UpdateDevicesPresent(Mcp23x.relay_max);
 
@@ -690,7 +736,7 @@ void MCP23xServiceInput(void) {
   uint32_t gpio;
   for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
     if (8 == Mcp23x.device[Mcp23x.chip].pins) {
-      gpio = MCP23xRead(MCP23X08_GPIO);                // Read MCP23008 gpio
+      gpio = MCP23xRead(MCP23X08_GPIO);                // Read MCP23x08 gpio
     } else {
       gpio = MCP23xRead16(MCP23X17_GPIOA);             // Read MCP23x17 gpio
     }
@@ -725,12 +771,14 @@ void MCP23xInit(void) {
     for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
       if (Mcp23x.device[Mcp23x.chip].pin_int > -1) {
         if (8 == Mcp23x.device[Mcp23x.chip].pins) {
-          gpio = MCP23xRead(MCP23X08_GPIO);            // Clear MCP23008 interrupt
+          gpio = MCP23xRead(MCP23X08_GPIO);            // Clear MCP23x08 interrupt
         } else {
           gpio = MCP23xRead16(MCP23X17_GPIOA);         // Clear MCP23x17 interrupt
         }
+        if (Mcp23x.iocon.ODR && Mcp23x.chip) { continue; }
+//        pinMode(Mcp23x.device[Mcp23x.chip].pin_int, (Mcp23x.iocon.ODR) ? INPUT_PULLUP : INPUT);
         pinMode(Mcp23x.device[Mcp23x.chip].pin_int, INPUT_PULLUP);
-        attachInterrupt(Mcp23x.device[Mcp23x.chip].pin_int, MCP23xInputIsr, CHANGE);
+        attachInterrupt(Mcp23x.device[Mcp23x.chip].pin_int, MCP23xInputIsr, (Mcp23x.iocon.ODR) ? FALLING : CHANGE);
       }
     }
   }
@@ -746,6 +794,7 @@ void MCP23xPower(void) {
     rpower >>= Mcp23x.relay_offset;
     relay_max = Mcp23x.relay_max;
   }
+  DevicesPresentNonDisplayOrLight(relay_max);          // Skip display and/or light(s)
   for (uint32_t index = 0; index < relay_max; index++) {
     power_t state = rpower &1;
     if (MCP23xPinUsed(GPIO_REL1, index)) {
@@ -833,6 +882,9 @@ bool Xdrv67(uint32_t function) {
         break;
       case FUNC_ADD_SWITCH:
         result = MCP23xAddSwitch();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

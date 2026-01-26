@@ -97,6 +97,9 @@ void TfmpInit(void)
                 {
                     ClaimSerial();
                 }
+#ifdef ESP32
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TFM: Serial UART%d"), TfmpSerial->getUart());
+#endif
                 tfminiplus_sensor.ready = true;
                 TfmpSerial->flush();
             }

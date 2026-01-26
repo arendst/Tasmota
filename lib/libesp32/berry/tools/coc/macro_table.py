@@ -22,7 +22,7 @@ class macro_table:
     
     def scan_file(self, filename):
         str = ""
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
            str = f.read()
         r = macro_table.pat.findall(str)
         for it in r:

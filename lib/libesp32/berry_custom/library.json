@@ -1,0 +1,17 @@
+{
+  "name": "Berry custom template",
+  "version": "0.1",
+  "description": "Berry library to solidify external scripts in the build process",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "authors":
+  {
+    "name": "Christian Baars",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+  }
+}

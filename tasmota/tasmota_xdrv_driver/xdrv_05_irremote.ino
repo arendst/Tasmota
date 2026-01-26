@@ -296,7 +296,11 @@ void IrReceiveCheck(void)
       }
 
       ResponseJsonEndEnd();
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
+      if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish IRReceived MQTT messages, but it will proccess event trigger rules
+        XdrvRulesProcess(0);
+      } else {
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
+      }
 
 #ifdef USE_DOMOTICZ
       if (iridx) {
@@ -443,6 +447,9 @@ bool Xdrv05(uint32_t function)
         if (PinUsed(GPIO_IRSEND)) {
           result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
         }
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

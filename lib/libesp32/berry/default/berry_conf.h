@@ -259,6 +259,7 @@
   #undef BE_USE_SOLIDIFY_MODULE
   #define BE_USE_DEBUG_MODULE             1
   #define BE_USE_SOLIDIFY_MODULE          1
+  #define BE_MAPPING_ENABLE_INPUT_VALIDATION   1    // input validation for lv_mapping
 #endif // USE_BERRY_DEBUG
 
 /* Macro: BE_EXPLICIT_XXX

@@ -32,6 +32,9 @@
 extern "C" {
 #endif
 
+extern void stack_thunk_yield();
+
+extern void stack_thunk_light_set_size(bool _rsa_only);
 extern void stack_thunk_light_add_ref();
 extern void stack_thunk_light_del_ref();
 extern void stack_thunk_light_repaint();

@@ -48,7 +48,7 @@ struct {
   uint32_t  crc32;    // To detect file changes
   uint16_t  version;  // To detect driver function changes
   uint16_t  spare;
-  char      drv_text[DRV_DEMO_MAX_DRV_TEXT -1][10];
+  char      drv_text[DRV_DEMO_MAX_DRV_TEXT][10];
 } DrvDemoSettings;
 
 // Global structure containing driver non-saved variables
@@ -109,11 +109,11 @@ void DrvDemoSettingsLoad(bool erase) {
     if (DrvDemoSettings.version != DRV_DEMO_VERSION) {      // Fix version dependent changes
 
       // *** Start fix possible setting deltas ***
-      if (Settings->version < 0x01010100) {
+      if (DrvDemoSettings.version < 0x01010100) {
         AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update oldest version restore"));
 
       }
-      if (Settings->version < 0x01010101) {
+      if (DrvDemoSettings.version < 0x01010101) {
         AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update old version restore"));
 
       }
@@ -187,6 +187,9 @@ bool Xdrv122(uint32_t function) {
       break;
     case FUNC_SAVE_BEFORE_RESTART:
       // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!
+      break;
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

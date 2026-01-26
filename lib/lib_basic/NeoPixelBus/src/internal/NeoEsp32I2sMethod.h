@@ -26,12 +26,16 @@ License along with NeoPixel.  If not, see
 
 #pragma once
 
+#if ESP_IDF_VERSION_MAJOR <= 4
 // ESP32C3 I2S is not supported yet due to significant changes to interface
 #if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3)
 
 extern "C"
 {
 #include <Arduino.h>
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include <rom/gpio.h>
+#endif
 #include "Esp32_i2s.h"
 }
 
@@ -376,5 +380,5 @@ typedef NeoEsp32I2s1Ws2812xInvertedMethod Neo800KbpsInvertedMethod;
 typedef NeoEsp32I2s1400KbpsInvertedMethod Neo400KbpsInvertedMethod;
 
 #endif // !defined(NEOPIXEL_ESP32_RMT_DEFAULT) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
-
 #endif
+#endif // ESP_IDF_VERSION_MAJOR < 5

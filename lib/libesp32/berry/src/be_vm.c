@@ -463,6 +463,25 @@ static void make_range(bvm *vm, bvalue lower, bvalue upper)
     vm->top -= 3;
 }
 
+static void multiply_str(bvm *vm, bvalue *a_value, bvalue *count)
+{
+    bint n = 0;
+    bstring *result;
+    bstring *str = var_tostr(a_value);
+    
+    /* Convert count to integer */
+    if (var_isint(count)) {
+        n = var_toint(count);
+    } else if (var_isbool(count)) {
+        n = var_tobool(count) ? 1 : 0;
+    } else {
+        binop_error(vm, "*", a_value, count);
+    }
+    
+    result = be_strmul(vm, str, n);
+    var_setstr(vm->top, result);
+}
+
 static void connect_str(bvm *vm, bstring *a, bvalue *b)
 {
     bstring *s;
@@ -591,7 +610,7 @@ newframe: /* a new call frame */
             if (var_isstr(b)) {
                 bstring *name = var_tostr(b);
                 int idx = be_global_find(vm, name);
-                if (idx > -1) {
+                if (idx >= 0) {
                     *v = *be_global_var(vm, idx);
                 } else {
                     vm_error(vm, "attribute_error", "'%s' undeclared", str(name));
@@ -661,6 +680,10 @@ newframe: /* a new call frame */
                 var_setstr(dst, s);
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "+", ins);
+            } else if (var_iscomptr(a) && var_isint(b)) {
+                uint8_t * p = (uint8_t*) var_toobj(a);
+                p += var_toint(b);
+                var_setcomptr(dst, p);
             } else {
                 binop_error(vm, "+", a, b);
             }
@@ -671,10 +694,23 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(-, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                if (var_isint(a)) { x.r = (breal) x.i; }
+                y.i = b->v.i;
+                if (var_isint(b)) { y.r = (breal) y.i; }
+                var_setreal(dst, x.r - y.r);
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x - y);
+#endif // CONFIG_IDF_TARGET_ESP32
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "-", ins);
+            } else if (var_iscomptr(a) && var_isint(b)) {
+                uint8_t * p = (uint8_t*) var_toobj(a);
+                p -= var_toint(b);
+                var_setcomptr(dst, p);
             } else {
                 binop_error(vm, "-", a, b);
             }
@@ -685,8 +721,21 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(*, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                if (var_isint(a)) { x.r = (breal) x.i; }
+                y.i = b->v.i;
+                if (var_isint(b)) { y.r = (breal) y.i; }
+                var_setreal(dst, x.r * y.r);
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x * y);
+#endif // CONFIG_IDF_TARGET_ESP32
+            } else if (var_isstr(a) && (var_isint(b) || var_isbool(b))) {
+                multiply_str(vm, a, b);
+                reg = vm->reg;
+                *RA() = *vm->top; /* copy result to R(A) */
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "*", ins);
             } else {
@@ -704,11 +753,21 @@ newframe: /* a new call frame */
                     var_setint(dst, x / y);
                 }
             } else if (var_isnumber(a) && var_isnumber(b)) {
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x0, y0;        // TASMOTA workaround for ESP32 rev0 bug
+                x0.i = a->v.i;
+                if (var_isint(a)) { x0.r = (breal) x0.i; }
+                y0.i = b->v.i;
+                if (var_isint(b)) { y0.r = (breal) y0.i; }
+                breal x = x0.r, y = y0.r;
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
+#endif // CONFIG_IDF_TARGET_ESP32
                 if (y == cast(breal, 0)) {
                     vm_error(vm, "divzero_error", "division by zero");
+                } else {
+                    var_setreal(dst, x / y);
                 }
-                var_setreal(dst, x / y);
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "/", ins);
             } else {
@@ -719,9 +778,28 @@ newframe: /* a new call frame */
         opcase(MOD): {
             bvalue *dst = RA(), *a = RKB(), *b = RKC();
             if (var_isint(a) && var_isint(b)) {
-                var_setint(dst, ibinop(%, a, b));
+                bint x = var_toint(a), y = var_toint(b);
+                if (y == 0) {
+                    vm_error(vm, "divzero_error", "division by zero");
+                } else {
+                    var_setint(dst, x % y);
+                }
             } else if (var_isnumber(a) && var_isnumber(b)) {
-                var_setreal(dst, mathfunc(fmod)(var_toreal(a), var_toreal(b)));
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+                union bvaldata x0, y0;        // TASMOTA workaround for ESP32 rev0 bug
+                x0.i = a->v.i;
+                if (var_isint(a)) { x0.r = (breal) x0.i; }
+                y0.i = b->v.i;
+                if (var_isint(b)) { y0.r = (breal) y0.i; }
+                breal x = x0.r, y = y0.r;
+#else
+                breal x = var2real(a), y = var2real(b);
+#endif
+                if (y == cast(breal, 0)) {
+                    vm_error(vm, "divzero_error", "division by zero");
+                } else {
+                    var_setreal(dst, mathfunc(fmod)(x, y));
+                }
             } else if (var_isinstance(a)) {
                 ins_binop(vm, "%", ins);
             } else {
@@ -922,7 +1000,7 @@ newframe: /* a new call frame */
                     }
                 } else if (var_isclass(a)) {
                     /* in this case we have a class in a static or non-static member */
-                    /* it's always treated like a statif function */
+                    /* it's always treated like a static function */
                     a[1] = result;
                     var_settype(a, NOT_METHOD);
                 } else {
@@ -1016,6 +1094,9 @@ newframe: /* a new call frame */
                 bstring *s = be_strindex(vm, var_tostr(b), c);
                 reg = vm->reg;
                 var_setstr(RA(), s);
+            } else if (var_iscomptr(b) && var_isint(c)) {
+                uint8_t * p = var_toobj(b);
+                var_setint(RA(), p[var_toint(c)]);
             } else {
                 vm_error(vm, "type_error",
                     "value '%s' does not support subscriptable",
@@ -1036,6 +1117,9 @@ newframe: /* a new call frame */
                 be_dofunc(vm, top, 3); /* call method 'setitem' */
                 vm->top -= 4;
                 reg = vm->reg;
+            } else if (var_iscomptr(a) && var_isint(b) && var_isint(c)) {
+                uint8_t * p = var_toobj(a);
+                p[var_toint(b)] = var_toint(c);
             } else {
                 vm_error(vm, "type_error",
                     "value '%s' does not support index assignment",
@@ -1361,7 +1445,7 @@ BERRY_API void be_set_obs_micros(bvm *vm, bmicrosfnct micros)
     vm->microsfnct = micros;
 }
 
-BERRY_API void be_set_ctype_func_hanlder(bvm *vm, bctypefunc handler)
+BERRY_API void be_set_ctype_func_handler(bvm *vm, bctypefunc handler)
 {
     vm->ctypefunc = handler;
 }

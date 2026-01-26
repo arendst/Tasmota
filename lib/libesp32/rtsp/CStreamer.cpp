@@ -6,7 +6,7 @@
 
 CStreamer::CStreamer(SOCKET aClient, u_short width, u_short height) : m_Client(aClient)
 {
-    printf("Creating TSP streamer\n");
+//    printf("Creating TSP streamer\n");
     m_RtpServerPort  = 0;
     m_RtcpServerPort = 0;
     m_RtpClientPort  = 0;
@@ -228,7 +228,7 @@ bool findJPEGheader(BufPtr *start, uint32_t *len, uint8_t marker) {
     while(bytes - *start < *len) {
         uint8_t framing = *bytes++; // better be 0xff
         if(framing != 0xff) {
-            printf("malformed jpeg, framing=%x\n", framing);
+//            printf("malformed jpeg, framing=%x\n", framing);
             return false;
         }
         uint8_t typecode = *bytes++;
@@ -263,13 +263,13 @@ bool findJPEGheader(BufPtr *start, uint32_t *len, uint8_t marker) {
                 break;
             }
             default:
-                printf("unexpected jpeg typecode 0x%x\n", typecode);
+//                printf("unexpected jpeg typecode 0x%x\n", typecode);
                 break;
             }
         }
     }
 
-    printf("failed to find jpeg marker 0x%x", marker);
+//    printf("failed to find jpeg marker 0x%x", marker);
     return false;
 }
 
@@ -309,7 +309,7 @@ bool decodeJPEGfile(BufPtr *start, uint32_t *len, BufPtr *qtable0, BufPtr *qtabl
     BufPtr quantstart = *start;
     uint32_t quantlen = *len;
     if(!findJPEGheader(&quantstart, &quantlen, 0xdb)) {
-        printf("error can't find quant table 0\n");
+//        printf("error can't find quant table 0\n");
     }
     else {
         // printf("found quant table %x\n", quantstart[2]);
@@ -317,7 +317,7 @@ bool decodeJPEGfile(BufPtr *start, uint32_t *len, BufPtr *qtable0, BufPtr *qtabl
         *qtable0 = quantstart + 3;     // 3 bytes of header skipped
         nextJpegBlock(&quantstart);
         if(!findJPEGheader(&quantstart, &quantlen, 0xdb)) {
-            printf("error can't find quant table 1\n");
+//            printf("error can't find quant table 1\n");
         }
         else {
             // printf("found quant table %x\n", quantstart[2]);

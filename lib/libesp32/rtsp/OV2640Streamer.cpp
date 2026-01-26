@@ -6,7 +6,7 @@
 
 OV2640Streamer::OV2640Streamer(SOCKET aClient, OV2640 &cam) : CStreamer(aClient, cam.getWidth(), cam.getHeight()), m_cam(cam)
 {
-    Serial.printf("Created streamer width=%d, height=%d\n", cam.getWidth(), cam.getHeight());
+//    Serial.printf("Created streamer width=%d, height=%d\n", cam.getWidth(), cam.getHeight());
 }
 
 void OV2640Streamer::streamImage(uint32_t curMsec)
@@ -15,5 +15,5 @@ void OV2640Streamer::streamImage(uint32_t curMsec)
 
     BufPtr bytes = m_cam.getfb();
     streamFrame(bytes, m_cam.getSize(), curMsec);
-    Serial.printf("get frame: %d\n",m_cam.getSize());
+//    Serial.printf("get frame: %d\n",m_cam.getSize());
 }

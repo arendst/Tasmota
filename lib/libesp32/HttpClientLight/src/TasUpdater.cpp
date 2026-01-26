@@ -1,6 +1,10 @@
 #include "TasUpdate.h"
 #include "Arduino.h"
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include "spi_flash_mmap.h"
+#else
 #include "esp_spi_flash.h"
+#endif
 #include "esp_ota_ops.h"
 #include "esp_image_format.h"
 
@@ -388,7 +392,7 @@ size_t TasUpdateClass::writeStream(Stream &data) {
             return written;
         written += toRead;
 
-        delay(1);  // Fix solo WDT
+        yield();  // Ensure WDT does not trigger
     }
     return written;
 }

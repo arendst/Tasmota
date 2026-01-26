@@ -26,6 +26,12 @@ typedef struct {
     /* char s[]; */
 } blstring;
 
+typedef struct {        /* const long string */
+    bstring_header;
+    int llen;
+    char s[];
+} bclstring;
+
 typedef struct {
     bstring_header;
     uint32_t hash;

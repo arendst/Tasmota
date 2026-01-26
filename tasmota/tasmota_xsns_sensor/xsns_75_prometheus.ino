@@ -298,7 +298,7 @@ void HandleMetrics(void) {
             JsonParserObject Object3 = value2.getObject();
             for (auto key3 : Object3) {
               const char *value = key3.getValue().getStr(nullptr);
-              if (value != nullptr && isdigit(value[0])) {
+              if (value != nullptr && (isdigit(value[0]) || (value[0] == '-') || (value[0] == '.'))) {
                 String sensor = FormatMetricName(key2.getStr());
                 String type = FormatMetricName(key3.getStr());
 
@@ -311,7 +311,7 @@ void HandleMetrics(void) {
             }
           } else {
             const char *value = value2.getStr(nullptr);
-            if (value != nullptr && isdigit(value[0])) {
+            if (value != nullptr && (isdigit(value[0]) || (value[0] == '-') || (value[0] == '.'))) {
               String sensor = FormatMetricName(key1.getStr());
               String type = FormatMetricName(key2.getStr());
               if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes Prometheus of fail
@@ -336,7 +336,7 @@ void HandleMetrics(void) {
         const char *value = value1.getStr(nullptr);
         String sensor = FormatMetricName(key1.getStr());
 
-        if (value != nullptr && isdigit(value[0] && strcmp(sensor.c_str(), "time") != 0)) {  //remove false 'time' metric
+        if (value != nullptr && (isdigit(value[0]) || (value[0] == '-') || (value[0] == '.')) && strcmp(sensor.c_str(), "time") != 0) {  //remove false 'time' metric
           WritePromMetricStr(PSTR("sensors"), kPromMetricGauge, value,
             PSTR("sensor"), sensor.c_str(),
             nullptr);

@@ -16,7 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifdef USE_I2C
 #ifdef USE_BMP
 /*********************************************************************************************\
@@ -48,7 +47,7 @@
 
 #define BMP_CMND_RESET       0xB6  // I2C Parameter for RESET to put BMP into reset state
 
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
   #define BMP_MAX_SENSORS    4     // 2 busses
 #else
   #define BMP_MAX_SENSORS    2
@@ -558,8 +557,8 @@ void BmpShow(bool json) {
       if (bmp_count > 1) {
         // BMP280-77
         snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);
-#ifdef ESP32
-        if (TasmotaGlobal.i2c_enabled_2) {           // Second bus enabled
+#ifdef USE_I2C_BUS2
+        if (TasmotaGlobal.i2c_enabled[1]) {           // Second bus enabled
           uint8_t bus = bmp_sensors[0].bmp_bus;
           for (uint32_t i = 1; i < bmp_count; i++) {
             if (bus != bmp_sensors[i].bmp_bus) {     // Different busses
@@ -569,7 +568,7 @@ void BmpShow(bool json) {
             }
           }
         }
-#endif
+#endif  // USE_I2C_BUS2
       }
 
       char pressure[33];
@@ -583,14 +582,23 @@ void BmpShow(bool json) {
       float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_humidity);
       char dewpoint[33];
       dtostrfd(f_dewpoint, Settings->flag2.temperature_resolution, dewpoint);
+#ifdef USE_HEAT_INDEX
+      float f_heatindex = CalcTemHumToHeatIndex(bmp_temperature, bmp_humidity);
+      char heatindex[33];
+      dtostrfd(f_heatindex, Settings->flag2.temperature_resolution, heatindex);
+#endif  // USE_HEAT_INDEX
 #ifdef USE_BME68X
       char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
 #endif  // USE_BME68X
 
       if (json) {
-        char json_humidity[80];
+        char json_humidity[100];
+#ifdef USE_HEAT_INDEX
+        snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s,\"" D_JSON_HEATINDEX "\":%s"), humidity, dewpoint, heatindex);
+#else
         snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, dewpoint);
+#endif  // USE_HEAT_INDEX
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME68X
@@ -631,6 +639,9 @@ void BmpShow(bool json) {
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
           WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
           WSContentSend_PD(HTTP_SNS_DEW, name, dewpoint, TempUnit());
+#ifdef USE_HEAT_INDEX
+          WSContentSend_PD(HTTP_SNS_HEATINDEX, name, heatindex, TempUnit());
+#endif  // USE_HEAT_INDEX
         }
         WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
         if (Settings->altitude != 0) {

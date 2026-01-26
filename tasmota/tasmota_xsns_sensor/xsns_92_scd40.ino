@@ -117,7 +117,7 @@ void Scd40Detect(void)
 {
   if (!I2cSetDevice(SCD40_ADDRESS)) { return; }
 
-  scd40.begin();
+  scd40.begin(&I2cGetWire());
 
   // don't stop in case of error, try to continue
   delay(10); // not sure whether this is needed
@@ -173,13 +173,13 @@ void Scd40Update(void)
 
         case ERROR_SCD40_NO_DATA:
           scd40DataNotAvailable_count++;
-          AddLog(LOG_LEVEL_DEBUG, PSTR("SCD40: no data available."));
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SCD40: no data available."));
           break;
 
         case ERROR_SCD40_CRC_ERROR:
           scd40CrcError_count++;
 #ifdef SCD40_DEBUG
-          AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: CRC error, CRC error: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
+          AddLog(LOG_LEVEL_INFO, PSTR("SCD40: CRC error, CRC error: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
             scd40CrcError_count, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
 #endif
           break;
@@ -187,7 +187,7 @@ void Scd40Update(void)
         default: {
           scd40ErrorState = SCD40_STATE_ERROR_READ_MEAS;
 #ifdef SCD40_DEBUG
-          AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd40Loop_count);
+          AddLog(LOG_LEVEL_INFO, PSTR("SCD40: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd40Loop_count);
 #endif
           return;
         }
@@ -198,22 +198,22 @@ void Scd40Update(void)
 
     case SCD40_STATE_ERROR_READ_MEAS: {
 #ifdef SCD40_DEBUG
-      AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: (rd) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: (rd) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
         scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
-      AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: not answering, sending soft reset, counter: %ld"), scd40Loop_count);
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: not answering, sending soft reset, counter: %ld"), scd40Loop_count);
 #endif
       scd40Reset_count++;
       error = scd40.stopPeriodicMeasurement();
       if (error) {
         scd40ErrorState = SCD40_STATE_ERROR_SOFT_RESET;
 #ifdef SCD40_DEBUG
-        AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: stopPeriodicMeasurement got error: 0x%lX"), error);
+        AddLog(LOG_LEVEL_INFO, PSTR("SCD40: stopPeriodicMeasurement got error: 0x%lX"), error);
 #endif
       } else {
         error = scd40.reinit();
         if (error) {
 #ifdef SCD40_DEBUG
-          AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: resetting got error: 0x%lX"), error);
+          AddLog(LOG_LEVEL_INFO, PSTR("SCD40: resetting got error: 0x%lX"), error);
 #endif
           scd40ErrorState = SCD40_STATE_ERROR_SOFT_RESET;
         } else {
@@ -225,16 +225,16 @@ void Scd40Update(void)
 
     case SCD40_STATE_ERROR_SOFT_RESET: {
 #ifdef SCD40_DEBUG
-      AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: (rst) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: (rst) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
         scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
-      AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: clearing i2c bus"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: clearing i2c bus"));
 #endif
       scd40i2cReset_count++;
       error = scd40.clearI2CBus();
       if (error) {
         scd40ErrorState = SCD40_STATE_ERROR_I2C_RESET;
 #ifdef SCD40_DEBUG
-        AddLog(LOG_LEVEL_ERROR, PSTR("SCD40: error clearing i2c bus: 0x%lX"), error);
+        AddLog(LOG_LEVEL_INFO, PSTR("SCD40: error clearing i2c bus: 0x%lX"), error);
 #endif
       } else {
         scd40ErrorState = ERROR_SCD40_NO_ERROR;

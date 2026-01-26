@@ -376,8 +376,8 @@ float sqrt1(const float x)
 //
 // New version, you don't need the "to_min < to_max" precondition anymore
 //
-// PRE-CONDITIONS (if not satisfied, you may 'halt and catch fire')
-//    from_min < from_max  (not checked)
+// PRE-CONDITIONS (if not satisfied, returns the smallest between to_min and to_max')
+//    from_min < from_max  (checked)
 //    from_min <= num <= from_max  (checked)
 // POST-CONDITIONS
 //    to_min <= result <= to_max
@@ -412,14 +412,51 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
 
   uint32_t result;
   if ((num - from_min) < 0x8000L) {   // no overflow possible
-    uint32_t numerator = ((num - from_min) * 2 + 1) * (to_max - to_min + 1);
-    result = numerator / ((from_max - from_min + 1) * 2) + to_min;
+    if (to_max - to_min > from_max - from_min) {
+      uint32_t numerator = (num - from_min) * (to_max - to_min) * 2;
+      result = ((numerator / (from_max - from_min)) + 1 ) / 2 + to_min;
+    } else {
+      uint32_t numerator = ((num - from_min) * 2 + 1) * (to_max - to_min + 1);
+      result = numerator / ((from_max - from_min + 1) * 2) + to_min;
+    }
   } else {    // no pre-rounding since it might create an overflow
     uint32_t numerator = (num - from_min) * (to_max - to_min + 1);
     result = numerator / (from_max - from_min) + to_min;
   }
 
   return (uint32_t) (result > to_max ? to_max : (result < to_min ? to_min : result));
+}
+
+//
+// changeIntScale
+// Change a value for range a..b to c..d, for signed ints (16 bits max to avoid overflow)
+//
+// PRE-CONDITIONS (if not satisfied, returns the smallest between to_min and to_max')
+//    from_min < from_max  (checked)
+//    from_min <= num <= from_max  (checked)
+// POST-CONDITIONS
+//    to_min <= result <= to_max
+//
+int16_t changeIntScale(int16_t num, int16_t from_min, int16_t from_max,
+                                    int16_t to_min, int16_t to_max) {
+
+  // guard-rails
+  if (from_min >= from_max) {
+    return (to_min > to_max ? to_max : to_min);  // invalid input, return arbitrary value
+  }
+  int32_t from_offset = 0;
+  if (from_min < 0) {
+    from_offset = - from_min;
+  }
+  int32_t to_offset = 0;
+  if (to_min < 0) {
+    to_offset = - to_min;
+  }
+  if (to_max < (- to_offset)) {
+    to_offset = - to_max;
+  }
+
+  return changeUIntScale(num + from_offset, from_min + from_offset, from_max + from_offset, to_min + to_offset, to_max + to_offset) - to_offset;
 }
 
 // Force a float value between two ranges, and adds or substract the range until we fit
@@ -443,4 +480,8 @@ float Polynomialf(const float *factors, uint32_t degree, float x) {
     r = r * x + factors[i];
   }
   return r;
+}
+
+float map_float(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

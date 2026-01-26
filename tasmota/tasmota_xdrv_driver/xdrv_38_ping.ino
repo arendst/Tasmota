@@ -311,7 +311,7 @@ extern "C" {
     ip_addr_t ip;
     ip_addr_set_any_val(false, ip);
 #ifdef USE_IPV6
-    ip = (ip_addr_t)ipfull;
+    ipfull.to_ip_addr_t(&ip);
 #else
     ip_addr_set_ip4_u32_val(ip, (uint32_t)ipfull);
 #endif
@@ -384,7 +384,7 @@ void PingResponsePoll(void) {
                         ping->hostname.c_str(),
                         success ? PSTR("true") : PSTR("false"),
 #ifdef USE_IPV6
-                        IPAddress(ping->ip).toString().c_str(),
+                        IPAddress(&ping->ip).toString(true).c_str(),
 #else
                         IPAddress(ip_addr_get_ip4_u32(&ping->ip)).toString().c_str(),
 #endif
@@ -442,11 +442,14 @@ bool Xdrv38(uint32_t function)
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
-    PingResponsePoll();   // TODO
-    break;
+      PingResponsePoll();   // TODO
+      break;
     case FUNC_COMMAND:
-    result = DecodeCommand(kPingCommands, PingCommand);
-    break;
+      result = DecodeCommand(kPingCommands, PingCommand);
+      break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

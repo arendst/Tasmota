@@ -188,27 +188,24 @@ uint16_t si1145_infrared;
 uint16_t si1145_uvindex;
 
 bool si1145_type = false;
+uint8_t si1145_bus = 0;
 uint8_t si1145_valid = 0;
 
 /********************************************************************************************/
 
-uint8_t Si1145ReadByte(uint8_t reg)
-{
-  return I2cRead8(SI114X_ADDR, reg);
+uint8_t Si1145ReadByte(uint8_t reg) {
+  return I2cRead8(SI114X_ADDR, reg, si1145_bus);
 }
 
-uint16_t Si1145ReadHalfWord(uint8_t reg)
-{
-  return I2cRead16LE(SI114X_ADDR, reg);
+uint16_t Si1145ReadHalfWord(uint8_t reg) {
+  return I2cRead16LE(SI114X_ADDR, reg, si1145_bus);
 }
 
-void Si1145WriteByte(uint8_t reg, uint16_t val)
-{
-  I2cWrite8(SI114X_ADDR, reg, val);
+void Si1145WriteByte(uint8_t reg, uint16_t val) {
+  I2cWrite8(SI114X_ADDR, reg, val, si1145_bus);
 }
 
-uint8_t Si1145WriteParamData(uint8_t p, uint8_t v)
-{
+uint8_t Si1145WriteParamData(uint8_t p, uint8_t v) {
   Si1145WriteByte(SI114X_WR, v);
   Si1145WriteByte(SI114X_COMMAND, p | SI114X_SET);
   return Si1145ReadByte(SI114X_RD);
@@ -324,13 +321,15 @@ bool Si1145Read(void)
   return true;
 }
 
-void Si1145Detect(void)
-{
-  if (!I2cSetDevice(SI114X_ADDR)) { return; }
+void Si1145Detect(void) {
+  for (si1145_bus = 0; si1145_bus < 2; si1145_bus++) {
+    if (!I2cSetDevice(SI114X_ADDR, si1145_bus)) { continue; }
 
-  if (Si1145Begin()) {
-    si1145_type = true;
-    I2cSetActiveFound(SI114X_ADDR, "SI1145");
+    if (Si1145Begin()) {
+      si1145_type = true;
+      I2cSetActiveFound(SI114X_ADDR, "SI1145", si1145_bus);
+      return;
+    }
   }
 }
 

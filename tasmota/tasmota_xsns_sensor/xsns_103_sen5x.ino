@@ -32,6 +32,7 @@
 #define XI2C_76 76 // See I2CDEVICES.md
 
 #define SEN5X_ADDRESS 0x69
+#define SEN5X_PASSIVE_MODE_INTERVAL 10
 
 #include <SensirionI2CSen5x.h>
 #include <Wire.h>
@@ -55,7 +56,7 @@ void sen5x_Init(void) {
 #ifdef ESP32
   if (!I2cSetDevice(SEN5X_ADDRESS, 0)) {
     DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 0"));
-    if (TasmotaGlobal.i2c_enabled_2 ) {
+    if (TasmotaGlobal.i2c_enabled[1] ) {
       if(!I2cSetDevice(SEN5X_ADDRESS, 1)) {
         DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 1"));
         return;
@@ -74,7 +75,7 @@ void sen5x_Init(void) {
 
   sen5x = new SensirionI2CSen5x();
   if (1 == usingI2cBus) {
-#ifdef ESP32
+#if defined(ESP32) && defined(USE_I2C_BUS2)
     sen5x->begin(Wire1);
 #else
     sen5x->begin(Wire);
@@ -83,24 +84,25 @@ void sen5x_Init(void) {
   else {
     sen5x->begin(Wire);
   }
-  int error_stop = sen5x->deviceReset();
-  if (error_stop != 0) {
-    DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to reset device (I2C Bus %d)"), usingI2cBus);
-    return;
-  }
-  // Wait 1 second for sensors to start recording + 100ms for reset command
-  delay(1100);
-  int error_start = sen5x->startMeasurement();
-  if (error_start != 0) {
-    DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to start measurement (I2C Bus %d)"), usingI2cBus);
-    return;
+  
+  if (!Settings->flag6.sen5x_passive_mode) {
+    int error_stop = sen5x->deviceReset();
+    if (error_stop != 0) {
+      DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to reset device (I2C Bus %d)"), usingI2cBus);
+      return;
+    }
+    // Wait 1 second for sensors to start recording + 100ms for reset command
+    delay(1100);
+    int error_start = sen5x->startMeasurement();
+    if (error_start != 0) {
+      DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to start measurement (I2C Bus %d)"), usingI2cBus);
+      return;
+    }
   }
 
   SEN5XDATA = (SEN5XDATA_s *)calloc(1, sizeof(struct SEN5XDATA_s));
   I2cSetActiveFound(SEN5X_ADDRESS, "SEN5X", usingI2cBus);
 }
-
-#define SAVE_PERIOD 30
 
 void SEN5XUpdate(void) {  // Perform every second to ensure proper operation of the baseline compensation algorithm
   uint16_t error;
@@ -215,7 +217,14 @@ bool Xsns103(uint32_t function) {
   else if (SEN5XDATA != nullptr) {
     switch (function) {
     case FUNC_EVERY_SECOND:
-      SEN5XUpdate();
+      if (Settings->flag6.sen5x_passive_mode) {
+        if (TasmotaGlobal.uptime % SEN5X_PASSIVE_MODE_INTERVAL == 0) {
+          SEN5XUpdate();
+        }
+      }
+      else {
+        SEN5XUpdate();
+      }
       break;
     case FUNC_JSON_APPEND:
       SEN5XShow(1);

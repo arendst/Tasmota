@@ -186,7 +186,9 @@ bool AudioGeneratorMP3::GetOneSample(int16_t sample[2])
   // If we're here, we have one decoded frame and sent 0 or more samples out
   if (samplePtr < synth->pcm.length) {
     sample[AudioOutput::LEFTCHANNEL ] = synth->pcm.samples[0][samplePtr];
-    sample[AudioOutput::RIGHTCHANNEL] = synth->pcm.samples[1][samplePtr];
+    if(lastChannels == 2) {
+      sample[AudioOutput::RIGHTCHANNEL] = synth->pcm.samples[1][samplePtr];
+    }
     samplePtr++;
   } else {
     samplePtr = 0;
@@ -200,7 +202,9 @@ bool AudioGeneratorMP3::GetOneSample(int16_t sample[2])
     }
     // for IGNORE and CONTINUE, just play what we have now
     sample[AudioOutput::LEFTCHANNEL ] = synth->pcm.samples[0][samplePtr];
-    sample[AudioOutput::RIGHTCHANNEL] = synth->pcm.samples[1][samplePtr];
+    if(lastChannels == 2) {
+      sample[AudioOutput::RIGHTCHANNEL] = synth->pcm.samples[1][samplePtr];
+    }
     samplePtr++;
   }
   return true;

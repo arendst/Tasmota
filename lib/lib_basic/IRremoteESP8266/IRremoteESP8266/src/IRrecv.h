@@ -879,10 +879,22 @@ class IRrecv {
 #endif  // DECODE_WOWWEE
 #if DECODE_YORK
   bool decodeYork(decode_results *results,
-                  uint16_t kStartOffset,
-                  const uint16_t kYorkBits,
+                  uint16_t offset = kStartOffset,
+                  const uint16_t nbits = kYorkBits,
                   const bool strict = true);
 #endif  // DECODE_YORK
+#if DECODE_BLUESTARHEAVY
+  bool decodeBluestarHeavy(decode_results *results,
+                  uint16_t offset = kStartOffset,
+                  const uint16_t nbits = kBluestarHeavyBits,
+                  const bool strict = true);
+#endif  // DECODE_BLUESTARHEAVY
+#if DECODE_EUROM
+  bool decodeEurom(decode_results *results,
+                   uint16_t offset = kStartOffset,
+                   const uint16_t nbits = kEuromBits,
+                   const bool strict = true);
+#endif  // DECODE_EUROM
 };
 
 #endif  // IRRECV_H_

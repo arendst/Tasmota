@@ -1,9 +1,10 @@
+# Test os module path functions
 import os
 
-# os.path.join test
+# Test os.path.join function
 assert(os.path.join('') == '')
 assert(os.path.join('abc', 'de') == 'abc/de')
-assert(os.path.join('abc', '/de') == '/de')
+assert(os.path.join('abc', '/de') == '/de')  # Absolute path overrides
 assert(os.path.join('a', 'de') == 'a/de')
 assert(os.path.join('abc/', 'de') == 'abc/de')
 assert(os.path.join('abc', 'de', '') == 'abc/de/')
@@ -11,7 +12,7 @@ assert(os.path.join('abc', '', '', 'de') == 'abc/de')
 assert(os.path.join('abc', '/de', 'fghij') == '/de/fghij')
 assert(os.path.join('abc', 'xyz', '/de', 'fghij') == '/de/fghij')
 
-# os.path.split test
+# Test os.path.split function
 def split(st, lst)
     var res = os.path.split(st)
     assert(res[0] == lst[0] && res[1] == lst[1],
@@ -30,7 +31,7 @@ split('a/../b', ['a/..', 'b'])
 split('abcd////ef/////', ['abcd////ef', ''])
 split('abcd////ef', ['abcd', 'ef'])
 
-# os.path.splitext test
+# Test os.path.splitext function
 def splitext(st, lst)
     var res = os.path.splitext(st)
     assert(res[0] == lst[0] && res[1] == lst[1],

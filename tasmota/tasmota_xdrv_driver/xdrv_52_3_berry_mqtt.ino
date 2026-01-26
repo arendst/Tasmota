@@ -38,7 +38,7 @@ extern "C" {
       if (top >= 5) {
         if (!is_binary) { be_raise(vm, "argument_error", "start and len are not allowed with string payloads"); }
         payload_start = be_toint(vm, 5);
-        if (payload_start < 0) payload_start = 0;
+        if (payload_start < 0) { payload_start = 0; }
       }
       if (top >= 6) { len = be_toint(vm, 6); }
       const char * topic = be_tostring(vm, 2);
@@ -63,6 +63,9 @@ extern "C" {
       be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
 
       MqttPublishPayload(topic, payload, is_binary ? len : 0 /*if string don't send length*/, retain);
+      if (!is_binary) {
+        XdrvRulesProcess(0, payload);  // Process rules on berry publish
+      }
 
       be_return_nil(vm); // Return
     }

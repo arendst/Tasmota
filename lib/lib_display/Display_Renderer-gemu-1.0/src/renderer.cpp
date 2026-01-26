@@ -66,7 +66,7 @@ void Renderer::dim10(uint8_t contrast, uint16_t contrast_gamma) {
 
 }
 
-void Renderer::pushColors(uint16_t *data, uint16_t len, boolean first) {
+void Renderer::pushColors(uint16_t *data, uint32_t len, boolean first) {
 
 }
 
@@ -621,6 +621,22 @@ uint16_t Renderer::bgcol(void) {
 }
 int8_t Renderer::color_type(void) {
  return 0;
+}
+
+bool Renderer::utouch_Init(char **name) {
+  return false;
+}
+
+uint16_t Renderer::touched(void) {
+  return false;
+}
+
+int16_t Renderer::getPoint_x(void) {
+  return 0;
+}
+
+int16_t Renderer::getPoint_y(void) {
+  return 0;
 }
 
 void Renderer::Splash(void) {

@@ -593,7 +593,7 @@ bool mountSpiffs(void) {
 bool saveConfig(void) {
   debug("Saving the config.");
   bool success = false;
-  DynamicJsonDocument json(kJsonConfigMaxSize);
+  JsonDocument json;
 #if MQTT_ENABLE
   json[kMqttServerKey] = MqttServer;
   json[kMqttPortKey] = MqttPort;
@@ -611,6 +611,8 @@ bool saveConfig(void) {
     const String key = KEY_TX_GPIO + String(i);
     json[key] = static_cast<int>(txGpioTable[i]);
   }
+  if (json.overflowed())
+    debug("ERROR: no enough memory to store the entire json document");
 
   if (mountSpiffs()) {
     File configFile = FILESYSTEM.open(kConfigFile, "w");
@@ -642,7 +644,7 @@ bool loadConfigFile(void) {
         std::unique_ptr<char[]> buf(new char[size]);
 
         configFile.readBytes(buf.get(), size);
-        DynamicJsonDocument json(kJsonConfigMaxSize);
+        JsonDocument json;
         if (!deserializeJson(json, buf.get(), kJsonConfigMaxSize)) {
           debug("Json config file parsed ok.");
 #if MQTT_ENABLE
@@ -1659,11 +1661,13 @@ bool parseStringAndSendAirCon(IRsend *irsend, const decode_type_t irType,
       stateSize = inputLength / 2;  // Every two hex chars is a byte.
       // Use at least the minimum size.
       stateSize = std::max(stateSize,
-                           (uint16_t) (kFujitsuAcStateLengthShort - 1));
+                           static_cast<uint16_t>(kFujitsuAcStateLengthShort -
+                                                 1));
       // If we think it isn't a "short" message.
       if (stateSize > kFujitsuAcStateLengthShort)
         // Then it has to be at least the smaller version of the "normal" size.
-        stateSize = std::max(stateSize, (uint16_t) (kFujitsuAcStateLength - 1));
+        stateSize = std::max(stateSize,
+                             static_cast<uint16_t>(kFujitsuAcStateLength - 1));
       // Lastly, it should never exceed the maximum "normal" size.
       stateSize = std::min(stateSize, kFujitsuAcStateLength);
       break;
@@ -1675,12 +1679,12 @@ bool parseStringAndSendAirCon(IRsend *irsend, const decode_type_t irType,
       stateSize = inputLength / 2;  // Every two hex chars is a byte.
       // Use at least the minimum size.
       stateSize = std::max(stateSize,
-                           (uint16_t) (kHitachiAc3MinStateLength));
+                           static_cast<uint16_t>(kHitachiAc3MinStateLength));
       // If we think it isn't a "short" message.
       if (stateSize > kHitachiAc3MinStateLength)
         // Then it probably the "normal" size.
         stateSize = std::max(stateSize,
-                             (uint16_t) (kHitachiAc3StateLength));
+                             static_cast<uint16_t>(kHitachiAc3StateLength));
       // Lastly, it should never exceed the maximum "normal" size.
       stateSize = std::min(stateSize, kHitachiAc3StateLength);
       break;
@@ -1691,7 +1695,7 @@ bool parseStringAndSendAirCon(IRsend *irsend, const decode_type_t irType,
       // the correct length/byte size.
       stateSize = inputLength / 2;  // Every two hex chars is a byte.
       // Use at least the minimum size.
-      stateSize = std::max(stateSize, (uint16_t) 3);
+      stateSize = std::max(stateSize, static_cast<uint16_t>(3));
       // Cap the maximum size.
       stateSize = std::min(stateSize, kStateSizeMax);
       break;
@@ -1702,12 +1706,13 @@ bool parseStringAndSendAirCon(IRsend *irsend, const decode_type_t irType,
       // the correct length/byte size.
       stateSize = inputLength / 2;  // Every two hex chars is a byte.
       // Use at least the minimum size.
-      stateSize = std::max(stateSize, (uint16_t) (kSamsungAcStateLength));
+      stateSize = std::max(stateSize,
+                           static_cast<uint16_t>(kSamsungAcStateLength));
       // If we think it isn't a "normal" message.
       if (stateSize > kSamsungAcStateLength)
         // Then it probably the extended size.
-        stateSize = std::max(stateSize,
-                             (uint16_t) (kSamsungAcExtendedStateLength));
+        stateSize = std::max(
+            stateSize, static_cast<uint16_t>(kSamsungAcExtendedStateLength));
       // Lastly, it should never exceed the maximum "extended" size.
       stateSize = std::min(stateSize, kSamsungAcExtendedStateLength);
       break;
@@ -2671,7 +2676,8 @@ void receivingMQTT(String const topic_name, String const callback_str) {
     switch (ircommand[0]) {
       case kPauseChar:
         {  // It's a pause. Everything after the 'P' should be a number.
-          int32_t msecs = std::min((int32_t) strtoul(ircommand + 1, NULL, 10),
+          int32_t msecs = std::min(static_cast<int32_t>(strtoul(ircommand + 1,
+                                                        NULL, 10)),
                                    kMaxPauseMs);
           delay(msecs);
           mqtt_client.publish(MqttAck.c_str(),
@@ -3142,7 +3148,7 @@ bool sendFloat(const String topic, const float_t temp, const bool retain) {
 #if MQTT_CLIMATE_JSON
 void sendJsonState(const stdAc::state_t state, const String topic,
                    const bool retain, const bool ha_mode) {
-  DynamicJsonDocument json(kJsonAcStateMaxSize);
+  JsonDocument json;
   json[KEY_PROTOCOL] = typeToString(state.protocol);
   json[KEY_MODEL] = state.model;
   json[KEY_COMMAND] = IRac::commandToString(state.command);
@@ -3168,6 +3174,8 @@ void sendJsonState(const stdAc::state_t state, const String topic,
   json[KEY_CLEAN] = IRac::boolToString(state.clean);
   json[KEY_BEEP] = IRac::boolToString(state.beep);
   json[KEY_SLEEP] = state.sleep;
+  if (json.overflowed())
+    debug("ERROR: no enough memory to store the entire json document");
 
   String payload = "";
   payload.reserve(200);
@@ -3175,16 +3183,16 @@ void sendJsonState(const stdAc::state_t state, const String topic,
   sendString(topic, payload, retain);
 }
 
-bool validJsonStr(DynamicJsonDocument doc, const char* key) {
+bool validJsonStr(JsonDocument doc, const char* key) {
   return doc.containsKey(key) && doc[key].is<char*>();
 }
 
-bool validJsonInt(DynamicJsonDocument doc, const char* key) {
+bool validJsonInt(JsonDocument doc, const char* key) {
   return doc.containsKey(key) && doc[key].is<signed int>();
 }
 
 stdAc::state_t jsonToState(const stdAc::state_t current, const char *str) {
-  DynamicJsonDocument json(kJsonAcStateMaxSize);
+  JsonDocument json;
   if (deserializeJson(json, str, kJsonAcStateMaxSize)) {
     debug("json MQTT message did not parse. Skipping!");
     return current;

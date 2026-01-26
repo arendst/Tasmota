@@ -36,6 +36,31 @@ check(45.1e2, 4510)
 check(45.e2, 4500)
 check(45.e+2, 4500)
 
+# unicode encoding from JSON
+assert(bytes().fromstring("a").tohex() == "61")
+assert(bytes().fromstring("\uF054").tohex() == "EF8194")
+assert(bytes().fromstring("\uF054\uF055").tohex() == "EF8194EF8195")
+assert(bytes().fromstring("a\uF054b").tohex() == "61EF819462")
+# 1 byte
+assert(bytes().fromstring("\u0061").tohex() == "61")
+# 2 bytes
+assert(bytes().fromstring("\u0088").tohex() == "C288")
+assert(bytes().fromstring("\u0288").tohex() == "CA88")
+# 3 bytes
+assert(bytes().fromstring("\u1288").tohex() == "E18A88")
+
+assert(bytes().fromstring("\uFFFF").tohex() == "EFBFBF")
+
+# bad unicode encoding
+test_source('"\\u"', "incorrect '\\u' encoding")
+test_source('"\\u1"', "incorrect '\\u' encoding")
+test_source('"\\u22"', "incorrect '\\u' encoding")
+test_source('"\\u333"', "incorrect '\\u' encoding")
+
+# Ensure pathologically long numbers don't crash the lexer (or cause an buffer overflow)
+assert(000000000000000000000000000000000000E0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 == 0.0);
+
+
 test_source('x = 5; 0...x;', 'unexpected symbol near \'.\'')
 test_source('x = 5; 0...x;', 'unexpected symbol near \'.\'')
 test_source('0xg', 'invalid hexadecimal number')
@@ -59,3 +84,6 @@ var malformed_numbers = [
 for i : malformed_numbers
     test_source(i, 'malformed number')
 end
+
+#- ensure that string literal with NULL character is truncated -#
+assert(size('aa\000bb\000cc') == 2)

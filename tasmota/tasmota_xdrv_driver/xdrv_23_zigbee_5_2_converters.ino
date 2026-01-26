@@ -46,9 +46,9 @@ class Z_attribute_match Z_findAttributeMatcherByName(uint16_t shortaddr, const c
         matched_attr.cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         matched_attr.attribute = pgm_read_word(&converter->attribute);
         matched_attr.name = (Z_strings + pgm_read_word(&converter->name_offset));
-        int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-        if (multiplier8 > 1) { matched_attr.multiplier = multiplier8; }
-        if (multiplier8 < 0) { matched_attr.divider = -multiplier8; }
+        int32_t multiplier32 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        if (multiplier32 > 1) { matched_attr.multiplier = multiplier32; }
+        if (multiplier32 < 0) { matched_attr.divider = -multiplier32; }
         matched_attr.zigbee_type = pgm_read_byte(&converter->type);
         uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
         matched_attr.map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
@@ -79,9 +79,9 @@ class Z_attribute_match Z_findAttributeMatcherById(uint16_t shortaddr, uint16_t 
         matched_attr.cluster = cluster;
         matched_attr.attribute = attr_id;
         matched_attr.name = (Z_strings + pgm_read_word(&converter->name_offset));
-        int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-        if (multiplier8 > 1) { matched_attr.multiplier = multiplier8; }
-        if (multiplier8 < 0) { matched_attr.divider = -multiplier8; }
+        int32_t multiplier32 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        if (multiplier32 > 1) { matched_attr.multiplier = multiplier32; }
+        if (multiplier32 < 0) { matched_attr.divider = -multiplier32; }
         matched_attr.zigbee_type = pgm_read_byte(&converter->type);
         uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
         matched_attr.map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
@@ -303,12 +303,12 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
     case Zmap16:      // map16
       buf.add16(u32);
       break;
-    // unisgned 32
+    // unisgned 24
     case Zuint24:
       buf.add16(u32);
       buf.add8(u32 >> 16);
       break;
-    // unisgned 24
+    // unisgned 32
     case Zuint32:     // uint32
     case Zdata32:     // data32
     case Zmap32:      // map32
@@ -320,15 +320,30 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
     case Zint8:      // int8
       buf.add8(nan ? 0x80 : i32);
       break;
+    // signed 16
     case Zint16:      // int16
       buf.add16(nan ? 0x8000 : i32);
       break;
+    // signed 24
+    case Zint24:
+      buf.add16(nan ? 0x0000 : i32);
+      buf.add8(nan ? 0x80 : i32 >> 16);
+      break;
+    // signed 32
     case Zint32:      // int32
       buf.add32(nan ? 0x80000000 : i32);
       break;
 
     case Zsingle:      // float
       buf.add32( *((uint32_t*)&f32) );    // cast float as uint32_t
+      break;
+
+    case Zuint48:       // added for energy value
+      {
+        uint64_t u64 = val_d;
+        buf.add32(u64);
+        buf.add8(u64 >> 32);
+      }
       break;
 
     case Zstring:
@@ -460,6 +475,16 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
         // i += 2;
         if (0x8000 != int16_val) {
           attr.setInt(int16_val);
+        }
+      }
+      break;
+    case Zint24:
+      {
+        uint32_t uint24_val = buf.get16(i) + (buf.get8(i+2) >> 16);
+        int32_t int24_val = (int32_t)(uint24_val << 8) >> 8;    // extend sign
+        // i += 3;
+        if (0x800000 != int24_val) {
+          attr.setInt(int24_val);
         }
       }
       break;
@@ -722,17 +747,17 @@ void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
         attr_list.removeAttribute(&attr);
       } else {
         attr.setKeyId(syn.new_cluster, syn.new_attribute);
-        if ((syn.multiplier != 1 && syn.multiplier != 0) || (syn.divider != 1 && syn.divider != 0) || (syn.base != 0)) {
+        if ((syn.multiplier > 1) || (syn.divider > 1) || (syn.base != 0)) {
           // we need to change the value
           float fval = attr.getFloat();
-          if (syn.multiplier != 1 && syn.multiplier != 0) {
-            fval = fval * syn.multiplier;
+          if (syn.multiplier > 1) {
+            fval *= syn.multiplier;
           }
-          if (syn.divider != 1 && syn.divider != 0) {
-            fval = fval / syn.divider;
+          if (syn.divider > 1) {
+            fval /= syn.divider;
           }
           if (syn.base != 0) {
-            fval = fval + syn.base;
+            fval += syn.base;
           }
           attr.setFloat(fval);
         }
@@ -931,7 +956,7 @@ void ZCLFrame::parseReadAttributes(uint16_t shortaddr, Z_attribute_list& attr_li
   Z_attribute_list attr_names;
   while (len >= 2 + i) {
     uint16_t attrid = payload.get16(i);
-    attr_numbers.add(attrid);
+    attr_numbers.add((uint32_t)attrid);
     read_attr_ids[i/2] = attrid;
 
     // find the attribute name
@@ -1304,42 +1329,36 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {   // only for Aqara cube
     int32_t val = attr.getInt();
-#ifdef ESP8266
-    const __FlashStringHelper *aqara_cube = F("AqaraCube");
-    const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
-    const __FlashStringHelper *aqara_cube_from_side = F("AqaraCubeFromSide");
-#else
-    const char *aqara_cube = "AqaraCube";
-    const char *aqara_cube_side = "AqaraCubeSide";
-    const char *aqara_cube_from_side = "AqaraCubeFromSide";
-#endif
+    static const char *aqara_cube = PSTR("AqaraCube");
+    static const char *aqara_cube_side = PSTR("AqaraCubeSide");
+    static const char *aqara_cube_from_side = PSTR("AqaraCubeFromSide");
 
     switch (val) {
       case 0:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("shake"));
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("shake"));
         break;
       case 2:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("wakeup"));
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("wakeup"));
         break;
       case 3:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("fall"));
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("fall"));
         break;
       case 64 ... 127:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("flip90"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val % 8);
-        attr_list.addAttribute(aqara_cube_from_side).setInt((val - 64) / 8);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("flip90"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val % 8);
+        attr_list.addAttributePMEM(aqara_cube_from_side).setInt((val - 64) / 8);
         break;
       case 128 ... 132:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("flip180"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val - 128);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("flip180"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val - 128);
         break;
       case 256 ... 261:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("slide"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val - 256);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("slide"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val - 256);
         break;
       case 512 ... 517:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("tap"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val - 512);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("tap"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val - 512);
         break;
     }
     attr_list.removeAttribute(&attr);
@@ -1363,26 +1382,21 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 512 = double tap while side x is on top
   } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_swit"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM, 'swit' because of #9923
     int32_t val = attr.getInt();
-#ifdef ESP8266
-    const __FlashStringHelper *aqara_click = F("click");    // deprecated
-    const __FlashStringHelper *aqara_action = F("action");  // deprecated
-#else
-    const char *aqara_click = "click";    // deprecated
-    const char *aqara_action = "action";  // deprecated
-#endif
+    static const char *aqara_click = PSTR("click");    // deprecated
+    static const char *aqara_action = PSTR("action");  // deprecated
     Z_attribute & attr_click = attr_list.addAttribute(PSTR("Click"), true);
 
     switch (val) {
       case 0:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("hold"));            // deprecated
         attr_click.setStr(PSTR("hold"));
         break;
       case 1:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("single"));            // deprecated
+        attr_list.addAttributePMEM(aqara_click).setStr(PSTR("single"));            // deprecated
         attr_click.setStr(PSTR("single"));
         break;
       case 2:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("double"));            // deprecated
+        attr_list.addAttributePMEM(aqara_click).setStr(PSTR("double"));            // deprecated
         attr_click.setStr(PSTR("double"));
         break;
       case 3:
@@ -1392,23 +1406,23 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
         attr_click.setStr(PSTR("quadruple"));
         break;
       case 16:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("hold"));            // deprecated
         attr_click.setStr(PSTR("hold"));
         break;
       case 17:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("release"));            // deprecated
         attr_click.setStr(PSTR("release"));
         break;
       case 18:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("shake"));            // deprecated
         attr_click.setStr(PSTR("shake"));
         break;
       case 255:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("release"));            // deprecated
         attr_click.setStr(PSTR("release"));
         break;
       default:
-        attr_list.addAttribute(aqara_click).setUInt(val);
+        attr_list.addAttributePMEM(aqara_click).setUInt(val);
         attr_click.setStr(PSTR("release"));
         break;
     }
@@ -1517,11 +1531,13 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
         uint8_t * attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + matched_attr.map_offset;
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
-        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) matched_attr.matched_attr, matched_attr.map_offset, matched_attr.zigbee_type, ival32);
+        float    fval  = attr.getFloat();     // call converter to int only once
+        
+        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) matched_attr.map_type, matched_attr.map_offset, matched_attr.zigbee_type, ival32);
         switch (ccccaaaa) {
           case 0xEF000202:
           case 0xEF000203:    // need to convert Tuya temperatures from 1/10 to 1/00 °C
-            ival32 = ival32 * 10;
+            ival32 *= 10;
             break;
         }
 
@@ -1537,6 +1553,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
           case Zint8:   *(int8_t*)attr_address   = ival32;           break;
           case Zint16:  *(int16_t*)attr_address  = ival32;           break;
           case Zint32:  *(int32_t*)attr_address  = ival32;           break;
+          case Zsingle: *(float*)attr_address    = fval;             break;
         }
         if (Z_Data_Set::updateData(data)) {
           zigbee_devices.dirty();
@@ -1709,11 +1726,11 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
-    uint16_t multiplier = 1;
-    uint16_t divider = 1;
-    int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
-    if (multiplier8 > 1) { multiplier = multiplier8; }
-    if (multiplier8 < 0) { divider = -multiplier8; }
+    uint32_t multiplier = 1;
+    uint32_t divider = 1;
+    int32_t multiplier32 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+    if (multiplier32 > 1) { multiplier = multiplier32; }
+    if (multiplier32 < 0) { divider = -multiplier32; }
     Z_Data_Type map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
     uint8_t map_offset = (conv_mapping & 0x0F);
 

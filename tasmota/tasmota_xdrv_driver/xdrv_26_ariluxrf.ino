@@ -187,6 +187,9 @@ bool Xdrv26(uint32_t function)
     case FUNC_INTERRUPT_START:
       AriluxRfInit();
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

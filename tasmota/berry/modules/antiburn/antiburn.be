@@ -21,7 +21,7 @@ antiburn.init = def (m)
                 lv.start()
 
                 if self.antiburn == nil
-                    var antiburn = lv.obj(lv.layer_top())
+                    var antiburn = lv.obj(lv.layer_sys())
                     antiburn.set_style_radius(0, 0)
                     antiburn.set_style_border_width(0, 0)
                     antiburn.set_style_bg_opa(255, 0)

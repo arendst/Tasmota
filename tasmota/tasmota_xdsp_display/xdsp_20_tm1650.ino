@@ -253,7 +253,7 @@ void TM1650Init(uint8_t mode)
 \*********************************************************************************************/
 void TM1650InitDriver(void)
 {
-  if (!TasmotaGlobal.i2c_enabled) {
+  if (!TasmotaGlobal.i2c_enabled[0]) {
     return;
   }
 

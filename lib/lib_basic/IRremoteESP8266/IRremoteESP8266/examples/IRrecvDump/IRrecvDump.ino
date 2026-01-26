@@ -87,7 +87,7 @@ void dump(decode_results *results) {
       Serial.print(results->rawbuf[i] * kRawTick, DEC);
     } else {
       Serial.print(", ");
-      Serial.print((uint32_t) results->rawbuf[i] * kRawTick, DEC);
+      Serial.print(static_cast<uint32_t>(results->rawbuf[i] * kRawTick), DEC);
     }
   }
   Serial.println("};");

@@ -24,9 +24,6 @@
 
 #define XDRV_68             68
 
-
-#if !defined(ESP32) || (ESP_IDF_VERSION_MAJOR < 5)      // temporarily disable for IDF 5.0
-
 static const uint8_t TRIGGER_PERIOD = 75;
 
 #define ZCDIMMERSET_SHOW 1
@@ -64,7 +61,7 @@ void (* const ZCDimmerCommand[])(void) PROGMEM = {
   &CmndZCDimmerSet//,&CmndZCGateEnableTime
   };
 
-void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
+extern "C" void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
   ac_zero_cross_dimmer.dimmer_in_use = false;
   ac_zero_cross_dimmer.cycle_time_us = time - ac_zero_cross_dimmer.crossed_zero_at;
   ac_zero_cross_dimmer.crossed_zero_at = time;
@@ -76,12 +73,6 @@ void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
   }
 }
 
-uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
-  //ACDimmerTimer_intr();
-  ACDimmerTimer_intr();
-  return ac_zero_cross_dimmer.actual_tigger_Period * 80;
-}
-
 void ACDimmerInit()
 {
   for (uint8_t i = 0 ; i < 5; i++) {
@@ -90,40 +81,7 @@ void ACDimmerInit()
   }
 }
 
-void ACDimmerInterruptDisable(bool disable)
-{ 
-  AddLog(LOG_LEVEL_INFO, PSTR("ZCD: Zero-CrossDimmer enabled: %d"),!disable);
-  ac_zero_cross_dimmer.timer_iterrupt_started = !disable;
-  if (disable) {
-    //stop the interrupt
-#ifdef ESP32   
-    if (dimmer_timer != nullptr) { 
-     timerAlarmDisable(dimmer_timer);
-    }
-#endif  
-  } else {
-    for (uint8_t i = 0 ; i < MAX_PWMS; i++) {
-      if (Pin(GPIO_PWM1, i) != -1) {
-        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-        AddLog(LOG_LEVEL_INFO, PSTR("ZCD: Zero-CrossDimmer Pin %d set"),Pin(GPIO_PWM1, i));
-      }
-    }
-#ifdef ESP32
-    if (dimmer_timer == nullptr) {
-      // 80 Divider -> 1 count=1µs
-      dimmer_timer = timerBegin(0, 80, true);
-      timerAttachInterrupt(dimmer_timer, &ACDimmerTimer_intr, true);
-      // For ESP32, we can't use dynamic interval calculation because the timerX functions
-      // are not callable from ISR (placed in flash storage).
-      // Here we just use an interrupt firing every 75 µs.
-      timerAlarmWrite(dimmer_timer, TRIGGER_PERIOD , true);
-    }
-    timerAlarmEnable(dimmer_timer);
-#endif
-  }
-}
-
-void IRAM_ATTR ACDimmerTimer_intr() {
+extern "C" void IRAM_ATTR ACDimmerTimer_intr() {
 
   uint32_t time_since_zc = micros() - ac_zero_cross_dimmer.crossed_zero_at;
   // If no ZC signal received yet.
@@ -162,6 +120,62 @@ void IRAM_ATTR ACDimmerTimer_intr() {
         digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer );
       }    
     }
+  }
+}
+
+#ifdef ESP8266
+extern "C" uint32_t IRAM_ATTR ACDimmerTimer_intr_ESP8266() {
+  ACDimmerTimer_intr();
+  return ac_zero_cross_dimmer.actual_tigger_Period * 80;
+}
+#endif // ESP8266
+
+void ACDimmerInterruptDisable(bool disable)
+{ 
+  AddLog(LOG_LEVEL_INFO, PSTR("ZCD: Zero-CrossDimmer enabled: %d"),!disable);
+  ac_zero_cross_dimmer.timer_iterrupt_started = !disable;
+  if (disable) {
+    //stop the interrupt
+#ifdef ESP32   
+    if (dimmer_timer != nullptr) { 
+#if ( defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3) )
+      timerStop(dimmer_timer);
+#else // ESP_ARDUINO_VERSION_MAJOR >= 3
+      timerAlarmDisable(dimmer_timer);
+#endif // ESP_ARDUINO_VERSION_MAJOR >= 3
+    }
+#endif  
+  } else {
+    for (uint8_t i = 0 ; i < MAX_PWMS; i++) {
+      if (Pin(GPIO_PWM1, i) != -1) {
+        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+        AddLog(LOG_LEVEL_INFO, PSTR("ZCD: Zero-CrossDimmer Pin %d set"),Pin(GPIO_PWM1, i));
+      }
+    }
+#ifdef ESP32
+#if ( defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3) )
+    if (dimmer_timer == nullptr) {
+      dimmer_timer = timerBegin(1000000);      // 1 MHz
+      timerAttachInterrupt(dimmer_timer, &ACDimmerTimer_intr);
+      // For ESP32, we can't use dynamic interval calculation because the timerX functions
+      // are not callable from ISR (placed in flash storage).
+      // Here we just use an interrupt firing every 75 µs.
+      timerAlarm(dimmer_timer, TRIGGER_PERIOD, true, 0);
+    }
+    timerStart(dimmer_timer);
+#else // ESP_ARDUINO_VERSION_MAJOR >= 3
+    if (dimmer_timer == nullptr) {
+      // 80 Divider -> 1 count=1µs
+      dimmer_timer = timerBegin(0, 80, true);
+      timerAttachInterrupt(dimmer_timer, &ACDimmerTimer_intr, true);
+      // For ESP32, we can't use dynamic interval calculation because the timerX functions
+      // are not callable from ISR (placed in flash storage).
+      // Here we just use an interrupt firing every 75 µs.
+      timerAlarmWrite(dimmer_timer, TRIGGER_PERIOD , true);
+    }
+    timerAlarmEnable(dimmer_timer);
+#endif // ESP_ARDUINO_VERSION_MAJOR >= 3
+#endif
   }
 }
 
@@ -204,10 +218,15 @@ void ACDimmerLogging(void)
     bool alarmEnabled = false;
     uint32_t timercounter = ac_zero_cross_dimmer.intr_counter;
 
-#ifdef ESP32    
+#ifdef ESP32
     if (dimmer_timer != nullptr) {
+#if ( defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3) )
+      alarmEnabled = true;    // we assume it's started, there is no API to check whether it's running
+      timercounter = (uint32_t)timerRead(dimmer_timer);
+#else // ESP_ARDUINO_VERSION_MAJOR >= 3
       alarmEnabled = timerAlarmEnabled(dimmer_timer);
       timercounter = (uint32_t)timerRead(dimmer_timer);
+#endif // ESP_ARDUINO_VERSION_MAJOR >= 3
     }
 #endif    
 
@@ -297,11 +316,12 @@ bool Xdrv68(uint32_t function)
         break;
 #endif  // ZCDIMMERSET_SHOW
 #endif  // USE_WEBSERVER        
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;
 }
-
-#endif // !enabled(ESP32) || (ESP_IDF_VERSION_MAJOR < 5)
 
 #endif  // USE_AC_ZERO_CROSS_DIMMER

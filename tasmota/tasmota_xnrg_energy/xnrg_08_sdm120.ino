@@ -54,8 +54,8 @@ const uint16_t sdm120_start_addresses[] {
 
   0X0048,   // SDM220_IMPORT_ACTIVE        [kWh]
   0X004A,   // SDM220_EXPORT_ACTIVE        [kWh]
-  0X004C,   // SDM220_IMPORT_REACTIVE      [kVArh]
-  0X004E,   // SDM220_EXPORT_REACTIVE      [kVArh]
+  0X004C,   // SDM220_IMPORT_REACTIVE      [kvarh]
+  0X004E,   // SDM220_EXPORT_REACTIVE      [kvarh]
   0X0024    // SDM220_PHASE_ANGLE          [Degree]
 };
 
@@ -138,11 +138,11 @@ void SDM120Every250ms(void)
           break;
 
         case 10:
-          Sdm120.import_reactive = value;  // 172.750 kVArh
+          Sdm120.import_reactive = value;  // 172.750 kvarh
           break;
 
         case 11:
-          Sdm120.export_reactive = value;  // 2.844 kVArh
+          Sdm120.export_reactive = value;  // 2.844 kvarh
           break;
 
         case 12:
@@ -181,6 +181,9 @@ void Sdm120SnsInit(void)
   uint8_t result = Sdm120Modbus->Begin(SDM120_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Serial UART%d"), Sdm120Modbus->getUart());
+#endif
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

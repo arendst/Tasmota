@@ -269,7 +269,7 @@ ZBR(ZBS_WNV_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(ZNP_HAS_CONFIGURED), 
 // Z_ZDO:startupFromApp
 ZBM(ZBS_STARTUPFROMAPP, Z_SREQ | Z_ZDO, ZDO_STARTUP_FROM_APP, 100, 0 /* delay */)   // 25406400
 ZBM(ZBR_STARTUPFROMAPP, Z_SRSP | Z_ZDO, ZDO_STARTUP_FROM_APP )   // 6540 + 01 for new network, 00 for exisitng network, 02 for error
-ZBM(AREQ_STARTUPFROMAPP, Z_AREQ | Z_ZDO, ZDO_STATE_CHANGE_IND )    // 45C00xx - state change
+ZBM(AREQ_STARTUPFROMAPP, Z_AREQ | Z_ZDO, ZDO_STATE_CHANGE_IND )    // 45C0xx - state change
 ZBM(AREQ_STARTUPFROMAPP_COORD, Z_AREQ | Z_ZDO, ZDO_STATE_CHANGE_IND, ZDO_DEV_ZB_COORD )    // 45C009 + 08 = starting, 09 = started
 ZBM(AREQ_STARTUPFROMAPP_ROUTER, Z_AREQ | Z_ZDO, ZDO_STATE_CHANGE_IND, ZDO_DEV_ROUTER )    // 45C009 + 02 = looking PanID, 07 = started
 ZBM(AREQ_STARTUPFROMAPP_DEVICE, Z_AREQ | Z_ZDO, ZDO_STATE_CHANGE_IND, ZDO_DEV_END_DEVICE )    // 45C009 + 02 = looking PanID, 06 = started
@@ -335,11 +335,11 @@ ZBM(ZBS_AF_REGISTERF2, Z_SREQ | Z_AF, AF_REGISTER, 0xF2 /* endpoint */, Z_B0(Z_P
 // Z_AF:register profile:104, ep:01 - main clusters for router or device
 ZBM(ZBS_AF_REGISTER_ALL, Z_SREQ | Z_AF, AF_REGISTER, 0x01 /* endpoint */, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),    // 24000401050000000000
                         0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
-                        0x0E /* AppNumInClusters */,                        // actually all clusters will be received
+                        0x0F /* AppNumInClusters */,                        // actually all clusters will be received
                         0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
                         0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
                         0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
-                        0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
+                        0x05,0x04,  0x06,0x04,  0x0D,0x04,                  // 0x0405, 0x0406, 0x040D
                         0x00 /* AppNumOutClusters */)
 
 // Z_ZDO:mgmtPermitJoinReq
@@ -425,7 +425,27 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&ZNP_Recv_Default)
+
+    ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "Loading Zigbee data")
+    ZI_CALL(&Z_Prepare_Storage, 0)
+    ZI_CALL(&Z_Load_Devices, 0)
+    ZI_CALL(&Z_Load_Data, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
+#ifndef USE_ZIGBEE_DEBUG
     ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
+#else
+    ZI_WAIT(30000)                             // wait for cumulated 5 minutes
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+#endif
 
     //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
     ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting ZNP device")
@@ -433,7 +453,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&ZNP_Reset_Device, 0)         // LOW = reset
     ZI_WAIT(100)                          // wait for .1 second
     ZI_CALL(&ZNP_Reset_Device, 1)         // HIGH = release reset
-    ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &ZNP_Reboot)             // timeout 5s
+    ZI_WAIT_RECV_FUNC(10000, ZBR_RESET, &ZNP_Reboot)             // timeout 5s
     ZI_WAIT(100)
     ZI_LOG(LOG_LEVEL_DEBUG, kCheckingDeviceConfiguration)     // Log Debug: checking device configuration
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
@@ -535,11 +555,6 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
-    ZI_CALL(&Z_Prepare_Storage, 0)
-    ZI_CALL(&Z_Load_Devices, 0)
-    ZI_CALL(&Z_Load_Data, 0)
-    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
-    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
@@ -709,16 +724,16 @@ ZBR(ZBR_SET_OK2, EZSP_setConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)
 // Add Endpoints
 ZBM(ZBS_ADD_ENDPOINT1,    EZSP_addEndpoint, 0x00 /*high*/, 0x01 /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
-                          0x0F /* inputClusterCount */,                         // actually all clusters will be received
-                          0X0F /* outputClusterCount */,                        // 02000104010500000F0F0000040005000600070008000A00020100030004020403040504060400050000040005000600070008000A0002010003000402040304050406040005
+                          0x10 /* inputClusterCount */,                         // actually all clusters will be received
+                          0X10 /* outputClusterCount */,                        // 02000104010500000F0F0000040005000600070008000A00020100030004020403040504060400050000040005000600070008000A0002010003000402040304050406040005
                           0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
                           0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
                           0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
-                          0x05,0x04,  0x06,0x04,  0x00,0x05,                  // 0x0405, 0x0406, 0x0500
+                          0x05,0x04,  0x06,0x04,  0x0D,0x04,  0x00,0x05,      // 0x0405, 0x0406, 0x040D, 0x0500
                           0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
                           0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
                           0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
-                          0x05,0x04,  0x06,0x04,  0x00,0x05,                  // 0x0405, 0x0406, 0x0500
+                          0x05,0x04,  0x06,0x04,  0x0D,0x04,  0x00,0x05,      // 0x0405, 0x0406, 0x040D, 0x0500
                           )
 ZBM(ZBS_ADD_ENDPOINTB,    EZSP_addEndpoint, 0x00 /*high*/, 0x0B /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
@@ -881,7 +896,27 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&EZ_Recv_Default)
+    
+    ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "Loading Zigbee data")
+    ZI_CALL(&Z_Prepare_Storage, 0)
+    ZI_CALL(&Z_Load_Devices, 0)
+    ZI_CALL(&Z_Load_Data, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
+#ifndef USE_ZIGBEE_DEBUG
     ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
+#else
+    ZI_WAIT(30000)                             // wait for cumulated 5 minutes
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+#endif
 
     // Hardware reset
     ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
@@ -890,7 +925,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&EZ_Reset_Device, 1)         // HIGH = release reset
 
     // wait for device to start
-    ZI_WAIT_UNTIL(5000, ZBR_RSTACK)     // wait for RSTACK message
+    ZI_WAIT_UNTIL(10000, ZBR_RSTACK)     // wait for RSTACK message
 
     // Init device and probe version
     ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(5000, ZBR_VERSION, &EZ_ReceiveCheckVersion)       // check EXT PAN ID
@@ -978,15 +1013,10 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeGroup0)
     ZI_SEND(ZBS_SET_MCAST_ENTRY)        ZI_WAIT_RECV(2500, ZBR_SET_MCAST_ENTRY)
 
-  // ZI_LABEL(ZIGBEE_LABEL_READY)
+  ZI_LABEL(ZIGBEE_LABEL_READY)
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
-    ZI_CALL(&Z_Prepare_Storage, 0)
-    ZI_CALL(&Z_Load_Devices, 0)
-    ZI_CALL(&Z_Load_Data, 0)
-    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
-    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
@@ -1088,6 +1118,7 @@ void ZigbeeStateMachine_Run(void) {
     }
     if (zigbee.pc < 0) {
       zigbee.state_machine = false;
+      zigbee.active = false;
       return;
     }
 
@@ -1133,6 +1164,7 @@ void ZigbeeStateMachine_Run(void) {
         zigbee.state_machine = false;
         if (cur_d8) {
           AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Stopping (%d)"), cur_d8);
+          zigbee.active = false;
         }
         break;
       case ZGB_INSTR_CALL:

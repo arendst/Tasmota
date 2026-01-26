@@ -150,7 +150,7 @@ struct {
   volatile uint32_t pulse = 0;
 } as3935_sensor;
 
-void IRAM_ATTR AS3935Isr(void) {
+static void IRAM_ATTR AS3935Isr(void) {
   as3935_sensor.detected = true;
   as3935_sensor.icount++;
 }
@@ -176,7 +176,7 @@ void AS3935WriteRegister(uint8_t reg, uint8_t mask, uint8_t shift, uint8_t data)
 
 /********************************************************************************************/
 // Autotune Caps
-void IRAM_ATTR AS3935CountFreq(void) {
+static void IRAM_ATTR AS3935CountFreq(void) {
   if (as3935_sensor.dispLCO)
     as3935_sensor.pulse++;
 }

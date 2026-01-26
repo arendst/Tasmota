@@ -3,21 +3,1522 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.0.0.4]
+## [15.2.0.4]
 ### Added
-- ESP32 prepare for Arduino Core v3 and esp-idf v5 (#19264)
+- Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output (#24364)
 
 ### Breaking Changed
+
+### Changed
+- Dingtian define `DINGTIAN_INPUTS_INVERTED` replaced by `SetOption81` (#24364)
+
+### Fixed
+
+### Removed
+
+## [15.2.0.3] 20260124
+### Added
+- Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives (#24367)
+
+### Changed
+- ESP8266 platform update from 2025.12.00 to 2026.01.00 (#24354)
+- ESP32 Platform from 2025.12.31 to 2026.01.30, Framework (Arduino Core) from v3.1.8 to v3.1.9 and IDF from v5.3.4.251223 to v5.3.4.251226 (#24354)
+- JPEG decoder (#24368)
+
+### Fixed
+- Display ST77xx and Parallel issues introduced after refactor UDisplay (#24368)
+
+## [15.2.0.2] 20260117
+### Added
+- Support for Adafruit I2C QT Rotary Encoder (#24270)
+- Zigbee support for `int24` type (#24334)
+
+### Changed
+- ESP8266 platform update from 2025.10.00 to 2025.12.00 (#24254)
+- ESP32 Platform from 2025.12.30 to 2025.12.31, Framework (Arduino Core) from v3.1.7 to v3.1.8 and IDF from v5.3.4.251205 to v5.3.4.251223 (#24254)
+- Refactor Adafruit Seesaw soil driver (#24270)
+- LM75AD output when no valid reading received from 0 to null (#24263)
+
+### Fixed
+- ESP32 BLE not starting (#24240)
+- GDK101 power on detection (#24242)
+- Udisplay backlight with SPI displays (#24277)
+- ESP8266 KNX unwanted reply (#24267)
+- Zigbee compilation warning in Berry mapping (#24333)
+- ScrubDNS() function (#23886)
+- Wireguard crash on RISC-V (esp32c3, esp32c6)
+
+## [15.2.0.1]
+### Added
+- Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
+
+### Changed
+- Vid6608 library from v1.0.2 to v1.0.3 (#24218)
+- IRremoteESP8266 library from v2.8.6 to v2.8.6-ca474a6 (#24226)
+- Update Zigbee WebUI (#24224)
+
+### Fixed
+- DALI watchdog exception
+- TuyaMCU v1 exception 28 regression from v15.1.0.1 reverted PR24063 (#24220)
+- ESP8266 TasmotaSerial flush receive buffer on executing `TasmotaSerial.flush();`
+- ESP32-P4 unique MQTT Client based on hosted MCU MAC address
+
+### Removed
+- Berry `animate` to be replaced with `animation` framework (#24241)
+
+## [Released]
+
+## [15.2.0]
+- Release Stephan
+
+## [15.1.0.3] 20251212
+### Added
+- Support for ESP32-P4 rev.3 (#24146)
+- Support for Analog Gauges (#24153)
+- Support for MakeSkyBlue Solar Charger Energy Monitor (#24151)
+- Berry `tasmota.micros()` to get time in microseconds (#24192)
+- Support for AGS02MA TVOC sensor (#24109)
+
+## [15.0.1.5] 20251011
+### Changed
+- ESP32 Platform from 2025.11.30 to 2025.11.31, Framework (Arduino Core) from v3.1.5 to v3.1.6 and IDF from v5.3.4.251110 to v5.3.4.251110 (#24146)
+- Refactored DALI using TasmotaDali library v1.0.0 adding frame receive buffer
+- ESP32 Platform from 2025.11.31 to 2025.12.30, Framework (Arduino Core) from v3.1.6 to v3.1.7 and IDF from v5.3.4.251110 to v5.3.4.20251205 (#24212)
+
+### Fixed
+- ESP32-P4 Hosted MCU updated to v2.6.6 solving WiFi boot issues (#24146)
+- ESP32-Solo1 using pre-compiled Arduino libraries (#24146)
+- PCA9685 V2 driver PWMTO fading logic and overflow (#24159)
+- RGBW handling in TasmotaLED and xlgt_01_ws2812_esp32 (#24172)
+- ArtNet single light color mapping using `ChannelRemap` (#24058)
+- Thermostat temperature unit (#24213)
+- Display rotate regression from v15.1.0.1 (#24214)
+
+## [15.1.0.2] 20251122
+### Added
+- WS2812 and Berry animation support for reverse-order LED strip (#24138)
+- DALI persistence for `DaliTarget` and `DaliChannels` if filesystem is present
+- DALI DT8 RGBWAF color support using Tasmota light control
+
+### Changed
+- ESP32 Platform from 2025.10.30 to 2025.11.30, Framework (Arduino Core) from v3.1.4 to v3.1.5 and IDF from v5.3.4.250826 to v5.3.4.251110 (#24118)
+- JPEGDEC library from v1.8.3 to v1.8.4 (#24120)
+
+### Fixed
+- DALI protocol errors
+
+## [15.1.0.1] 20251115
+### Added
+- TLS enabled ECDSA by default for ESP8266 (#24009)
+- Berry `cb.free_cb` for extension manager (#24014)
+- Berry `light.get()` direct access to values (#24033)
+- HostedMCU file update using command `HostedLoad <version>|<filename>`
+- Berry `gc_heap` and `gc_time` to `tasmota.memory()` (#24054)
+- Scripter array transfer via UFS (#24060)
+- ESP8266 GPIOViewer memory map if enabled with `#define GV_USE_ESPINFO`
+- Berry `tcp.write()` add `offset` and `len` (#24076)
+- NeoPool command `NPReadLSB`, `NPReadMSB`, `NPWriteLSB`, `NWriteMSB` for directly read/write LSB/MSB of 16-bit register (#24083)
+- Commands `DaliSend` and `DaliQuery` allow extended commands with prefix for DeviceType defaulting to DT6
+
+### Changed
+- Refactored library UDisplay (#24007)
+- LVGL library from v9.3.0 to v9.4.0 (#24028)
+- Increased filesystem file name size from 48 to 50 characters
+- GPIOViewer from v1.6.3 to v1.7.0
+
+### Fixed
+- TLS fix ECDSA and add `SetOption165 1` to enable ECDSA in addition to RSA (#24000)
+- Extension Manager exception when `OtaUrl` is not defined or invalid
+- HASPmota exception in `cpicker` (colorwheel) (#24010)
+- Extension Manager Light Theme support and Extensions input field control
+- InfluxDb receives IPAddress as a value regression from v15.0.1.3 (#24031)
+- Scripter UDP and switch case (#24060)
+- TuyaMCU v1 soft lock when WIFI_SELECT / WIFI_RESET is initiated (#24063)
+- HASPmota `scale` and `angle` for images (#24089)
+
+## [15.1.0] 20251011
+- Release Stella
+
+## [15.0.1.5] 20251011
+### Changed
+- ESP8266 platform update from 2025.09.00 to 2025.10.00 (#23971)
+- ESP32 Platform from 2025.09.30 to 2025.10.30, Framework (Arduino Core) from v3.1.3.250808 to v3.1.4 and IDF from v5.3.3.250801 to v5.3.4.250826 (#23971)
+- Extension Manager show current version in UI (#23995)
+
+### Fixed
+- Berry fixed 'be_top is non zero' warning when calling C mapped functions (#23989)
+- Berry fixed 'be_top is non zero' when `Br` command fails (#23990)
+
+## [15.0.1.4] 20251002
+### Added
+- ESP32 Extension Manager, replacing loading of Partition Wizard (#23955)
+- Berry animation framework web ui to compile DSL (#23962)
+
+### Changed
+- ESP32 Platform from 2025.08.30 to 2025.09.30, Framework (Arduino Core) from v3.1.3.250808 to v3.1.4 and IDF from v5.3.3.250801 to v5.3.4.250826 (#23888)
+- Use HAL instead of ROM for SHA HW acceleration as used by TLS (#23902)
+- Berry add argument to `werbserver.content_send_style` (#23953)
+- Make GUI Timer parameters mobile phone friendly (#23959)
+
+## [15.0.1.3] 20250908
+### Added
+- ESP32 ROM SHA Hardware Acceleration to BearSSL (#23819)
+- Extend state JSON message with functional hostname and ipaddress which could be WiFi or Ethernet
+- Berry multiplication between string and int (#23850)
+- Support for RX8030 RTC (#23855)
+
+### Breaking Changed
+- Berry `animate` framework is DEPRECATED, will be replace by `animation` framework (#23854)
+
+### Changed
+- ESP32 Platform from 2025.07.31 to 2025.08.30, Framework (Arduino Core) from v3.1.3.250712 to v3.1.3.250808 and IDF from v5.3.3.250707 to v5.3.3.250801 (#23778)
+- Epdiy library from v1.0.0 to v2.0.0
+- ESP8266 platform update from 2025.07.00 to 2025.08.00 (#23801)
+- Support for ESP32-C5 (#23804)
+- Berry update of preview of animation framework (#23816)
+- ESP8266 platform update from 2025.08.00 to 2025.09.00 (#23801)
+- JPEGDEC library from v1.5.0 to v1.8.3 (#23883)
+- Web UI styles and HTML syntax (#23847)
+
+### Fixed
+- Syslog RFC5424 compliance (#23509)
+- Berry calling `setmember` with a function (#23825)
+- Unable to use default serial GPIOs by TasmotaSerial regression from v14.5.0 with IDF 5.3.2.250120 (#23775)
+
+### Removed
+- `user-scalable=no` from HTTP HEADER (#23798)
+
+## [15.0.1.2] 20250803
+### Added
+- Command `I2sPause` (#23646)
+- Basic support for ESP32-P4 (#23663)
+- ESP32-P4 command `HostedOta` (#23675)
+- Support for RV3028 RTC (#23672)
+- Berry preview of animation framework (#23740)
+- Berry `call()` now works for classes (#23744)
+
+### Changed
+- ESP32 Platform from 2025.05.30 to 2025.07.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.3.250707 and IDF from v5.3.3.250501 to v5.3.3.250707 (#23642)
+- Domoticz supports persistent settings for all relays, keys and switches when filesystem `#define USE_UFILESYS` is enabled
+- ESP32 Platform from 2025.07.30 to 2025.07.31, Framework (Arduino Core) from v3.1.3.250707 to v3.1.3.250712 and IDF from v5.3.3.250707 to v5.3.3.250707 (#23685)
+- ESP8266 platform update from 2025.05.00 to 2025.07.00 (#23700)
+- OpenTherm library from v0.9.0 to v1.1.5 (#23704)
+- Berry raise webserver hooks from 16 to 32 (#23748)
+
+### Fixed
+- NeoPool reset to default settings (#23734)
+
+## [15.0.1.1] 20250708
+### Added
+- I2S additions (#23543)
+- NeoPool add Redox tank alarm (#19811)
+- Berry f-strings now support ':' in expression (#23618)
+- Universal display driver for ZJY169S0800TG01 ST7789 280x240 (#23638)
+- Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name (#23394)
+- Internal function 'WSContentSendRaw_P' (#23641)
+
+### Changed
+- BLE updates for esp-nimble-cpp v2.x (#23553)
+- Library names (#23560)
+- ESP32 LoRaWan decoding won't duplicate non-decoded message if `SO147 0`
+- VEML6070 and AHT2x device detection (#23581)
+- CSS uses named colors variables (#23597)
+
+### Fixed
+- LVGL restore `lv_chart.set_range` removed in LVGL 9.3.0 in favor of `lv_chart.set_axis_range` (#23567)
+- Berry vulnerability in JSON parsing for unicode (#23603)
+- Berry security issues in `int64` and improve documentation (#23605)
+- Berry security issues in `berry_mapping` and improve documentation (#23606)
+- Berry Hue regression from #23429 (#23623)
+- AHT30 sensor start with null values after deep sleep (#23624)
+
+## [15.0.1] 20250614
+- Release Sharon
+
+## [15.0.0.1] 20250614
+### Fixed
+- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON` (#23544)
+- Berry fix `realline` (#23546)
+- LVGL HASPmota fix regression introduced with LVGL 9.3.0 (#23547)
+
+## [15.0.0] 20250613
+- Release Sharon
+
+## [14.6.0.2] 20250613
+### Added
+- Allow temporary change of DisplayDimmer (#23406)
+- Support for LoRaWan Rx1 and Rx2 profiles (#23394)
+- HASPmota auto-dimming when no touch (#23425)
+- Provide serial upload port from VSC to PIO (#23436)
+- Berry support for `sortedmap` (#23441)
+- Berry `introspect.module` option to not cache module entry (#23451)
+- Berry `webserver.remove_route` to revert `webserver.on` (#23452)
+- Berry `compile` and `tasmota.compile` option to compile in local context (#23457)
+- Support for AP33772S USB PD Sink Controller as used in CentyLab RotoPD
+- Berry mqtt publish rule processing
+- Berry `tasmota.is_network_up()` (#23532)
+
+### Changed
+- ESP32 Platform from 2025.04.30 to 2025.05.40, Framework (Arduino Core) from v3.1.3.250411 to v3.2.0.250504 and IDF from v5.3.2.250403 to v5.4.1.250501 (#23397)
+- ESP32 Platform from 2025.05.40 to 2025.05.30, Framework (Arduino Core) from v3.2.0.250504 to v3.1.3.250504 and IDF from v5.4.1.250501 to v5.3.3.250501 (#23404)
+- ESP8266 platform update from 2024.09.00 to 2025.05.00 (#23448)
+- Increase number of supported LoRaWan nodes from 4 to 16
+- Berry change number parser for json to reuse same parser as lexer (#23505)
+- Berry increase web hooks from 16 to 32 (#23507)
+- ESP32 LVGL library from v9.2.2 to v9.3.0 (#23518)
+- Zigbee improved message when coordinator failed to start (#23525)
+- Format syslog messages according to RFC5424 adding local log time (#23509)
+
+### Fixed
+- Haspmota `haspmota.parse()` page parsing (#23403)
+- ESP32-S3 display stability regression from #23397 (#23404)
+- DNS setting with `IPAddress4/5` not persisted (#23426)
+- Berry avoid json parsing for unmatched commands (#23494)
+- Berry integer and real parser to handle overflows (#23495)
+- Berry potential pointer underflow with `string.endswith` (#23496)
+- Autoconf failing when last line has no trailing LF (#23537)
+- LVGL Tasmota logo splash screen (#23538)
+
+## [14.6.0.1] 20250510
+### Added
+- Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
+- Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
+- WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS` event (#23326)
+- Wireguard VPN (#23347)
+- Optional Wifi strength indicator in WebUI status line (#23352)
+- WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
+- WebUI heap status (#23356)
+- Support for multi channel AU915-928 LoRaWanBridge by Rob Clark (#23372)
+- HASPmota `antiburn()` (#23400)
+
+### Changed
+- Allow command `WebRefresh` minimum from 1000 to 400 mSec
+- GPIOViewer from v1.6.2 to v1.6.3 (No functional change)
+
+### Fixed
+- Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
+- Berry string literals containing NULL are truncated (#23312)
+- Berry `display.touch_update` wrongly applies resistive calibration (#23363)
+- NimBLE log_level definition conflict (#23366)
+- Matter and mDNS can be enabled at the same time (#23373)
+- Berry `introspect.module()` failed to load modules in files (#23376)
+
+## [14.6.0] 20250416
+- Release Ryan
+
+## [14.5.0.3] 20250416
+### Added
+- Extend command `GPIO` with different display options and allowing updating of module GPIO's in one go
+- Berry `bytes.add()` now accepts 3-bytes values (#23200)
+- Berry expose `esp_http_server` for websockets (#23206)
+- AlpineJS 2.8.2 - optional for now (#23259)
+- Support for XMODEM over serial and telnet if enabled with `#define USE_XYZMODEM`
+- PZEM_AC device address in JSON and GUI (#23268)
+- Filesystem command ``UfsList[2]``
+- ESP32 show network interface priority in `Status 5` debug logging (#23302)
+
+### Breaking Changed
+- HASPmota added `y2_min` and `y2_max` to control the second series of `chart` (#23287)
+- HASPmota default theme is now Tasmota-style (#23288)
+
+### Changed
+- Output of commands `GPIO` and `GPIOs` swapped
+- Smoothen light gamma curve when using `Fade` (#23230)
+- ESP32 Platform from 2025.03.30 to 2025.04.30, Framework (Arduino Core) from v3.1.3.250302 to v3.1.3.250411 and IDF from v5.3.2.250228 to 5.3.2.250403 (#23280)
+- HLK-LD2402 updates for firmware 3.3.5+ (#23281)
+
+### Fixed
+- INA226 driver fixes (#23197)
+- TLS increase timeout and fix crash (#23249)
+- Berry `readline` when a line is exactly 98 characters (#23276)
+
+## [14.5.0.2] 20250325
+### Added
+- Berry load `.tapp` files in `/.extensions/` then in `/` (#23113)
+- Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
+- Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
+- Matter prepare for ICD cluster (#23158)
+- Berry `re.dump()` (#23162)
+- Support for Telnet server using command `Telnet <0|1|port>[,<IP filter>]` if enabled with `#define USE_TELNET`
+- HASPmota autostart when `pages.jsonl` exists (#23181)
+
+### Breaking Changed
+- Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
+
+### Changed
+- ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 (#23088)
+- ESP32 enable webcam version 2 (#18732)
+- ESP8266 enable FTP for >= 4MB variants (#23120)
+- Berry update flasher for Sonoff ZBBridge Pro (#23136)
+- Berry `re` now accepts `bytes()` as precompiled patterns, added `re.compilebytes()` (#23149)
+- RCSwitch `RCSWITCH_SEPARATION_LIMIT` from 4100 to 3600
+
+### Fixed
+- Berry prevent `import` from hiding a solidified class (#23112)
+- ESP32-C3 WiFi sleep (#23096)
+- ESP32 intermittent exception on WiFi AP cannot be reached (#23115)
+- ESP32 receive incomplete serial data over 128 bytes (#23156)
+
+## [14.5.0.1] 20250302
+### Added
+- Berry experimental driver for AXP2101 for M5Core2v1.1 (#23039)
+- LVGL experimental mirroring of display on Web UI (#23041)
+- Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` (#22998)
+- Berry `tasmota.when_network_up()` and simplified Matter using it (#23057)
+- Berry `introspect.solidified()` to know if a Berry object is solidified or in RAM (#23063)
+- Berry `global.undef()` to undefine a global variable (#23073)
+
+### Changed
+- LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 (#23040)
+- LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) (#23047)
+- Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) (#23048)
+- GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
+
+### Fixed
+- Too many zeros in RCSwitch received data regression from v14.4.1.4 (#23050)
+
+## [14.5.0] 20250219
+- Release Ruth
+
+## [14.4.1.4] 20250219
+### Added
+- Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
+- Support for RC-switch decoding of 64-bit received data
+- Berry `tasmota.defer()` (#22976)
+- Support for Lithuanian language translations by zzdovydas (#22971)
+- `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted (#22995)
+- Support for WiZ Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
+- Berry `bytes().appendb64()` (#22767)
+
+### Changed
+- ESP32 Platform from 2025.01.31 to 2025.02.30, Framework (Arduino Core) from v3.1.1.250109 to v3.1.1.250203 and IDF to 5.3.2 (#22943)
+- ESP32 Webcam resolution changes since v14.4.0 (#22901)
+
+### Fixed
+- Berry parser error in rare case (#22997)
+- ESP32 TasMesh broker MAC address all zeros (#23005)
+- Wrong RMT channels for ESP32S3, now depends on `soc_caps.h` (#23021)
+- HASPmota exception when clicking on a checkbox (#23022)
+
+## [14.4.1.3] 20250204
+### Added
+- Command `FileLog 0..4` to enable logging to filesystem using up to 16 rotating log files of 100kB (`#define FILE_LOG_SIZE 100`)
+- Command `FileLog 10..14` to enable logging to filesystem using up to 16 log files of 100kB (`#define FILE_LOG_SIZE 100`)
+- I2S Opus stream and file support for opus/aac (#22795)
+- I2S command I2sLoop (#22807)
+- Berry `serial.read()` read only `n` bytes (#22835)
+- Display template for Waveshare ESP32-C6 LCD 1.47 (#22863)
+- Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` (#22865)
+- ESP32 command `PixelType` to change the WS2812 color order and channel number (#22876)
+- Berry driver for AXP2102 and M5CoreS3 (#22878)
+- GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) (#22869)
+- LVLG/HASPmota add color names from OpenHASP (#22879)
+- HASPmota support for `buttonmatrix` events (#22898)
+- Berry driver for PN532 NFC/Mifare reader (#22899)
+- Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id (#22900)
+- Berry example for HeatFan WiFi Controller
+- LVGL `lv.set_paint_cb()` to register a callback when screen is refreshed (#22909)
+- Berry `tasmota.settings` entries for PixelType (#22912)
+- Support for C8-CO2-5K CO2 sensor (#22905)
+- `#define FIX_JSON_HEXADECIMAL` to change JSON hexadecimal value "FF5F78" into "0xFF5F78" (#22919)
+
+### Changed
+- ESP32 Platform from 2024.12.30 to 2025.01.30, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 (#22792)
+- Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters (#22809)
+- GPIOViewer from v1.5.9 to v1.6.0 (No functional change)
+- ESP32 Platform from 2025.01.30 to 2025.01.31 (#22832)
+- Berry `gpio.pin_mode` frees PWM on pin
+- GPIOViewer from v1.6.0 to v1.6.1 (No functional change)
+- Berry callback now passes 5 arguments instead of 4 (in line with documentation) (#22908)
+
+### Fixed
+- Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
+- ESP32-Cx compilation fails on Windows (#22832)
+- LoraWan decoding of Dragino LDS02 and MerryIoT DW10 (#22880)
+
+## [14.4.1.2] 20250110
+### Added
+- Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
+- Support for Senseair S88 CO2 sensor (#22733)
+- ESP32 TasmotaLED change dynamically the number of pixels (#22754)
+- ESP32 expand `Pixels` with reverse, height and alternate (#22755)
+- Berry add light_pixels values to `tasmota.settings` (#22762)
+- Berry add `bytes().appendhex()` (#22767)
+- I2S AAC support for web radio (#22787)
+- Berry WS2812 real-time Leds panel as app (#22788)
+
+### Changed
+- GPIOViewer from v1.5.8 to v1.5.9 (No functional change)
+- `Pixels` has backwards compatible arguments fixing #22755 (#22791)
+
+### Fixed
+- Shutter discovery message regression from v14.4.1 (#22730)
+
+## [14.4.1.1] 20241231
+### Added
+- Command ``SetOption163 1`` to disable display of Device name in GUI header
+- Berry `animate.crenel` primitive (#22673)
+- Berry scroll to Leds_matrix (#22693)
+- HASPmota support for `tabview` (#22707)
+- Berry bit-shift operators to `int64` (#22709)
+- Berry add unicode encoding to string parsing (#22713)
+- Berry `tasmota.int(v, min, max)` function (#22723)
+- Berry driver for M5Stack 8encoder (#22724)
+- Support for PCF85063 RTC (#22727)
+
+### Changed
+- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` (#21266)
+- TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
+- GPIOViewer from v1.5.6 to v1.5.8
+- HASPmota use 'roboto.ttf' for automatic sizing of default font (#22697)
+- HASPmota add 'tag' attribute for free-form JSON (#22698)
+- Postpone save_data during light animation when fade is Off
+
+### Fixed
+- Berry Zigbee fix wrong attributes (#22684)
+- Berry walrus operator (#22685)
+- Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
+- LVGL updated `Antiburn.tapp` (#22699)
+- Matter Air Quality sensor (#22708)
+
+## [14.4.1] 20241215
+- Release Rudolph
+
+## [14.4.0.1] 20241215
+### Added
+- MCP23XXX_DRV control register IOCON in template (#22622)
+- ESP32 support for TLS ECDSA (#22649)
+
+### Changed
+- Berry make Leds animate calls reentrant (#22643)
+- SSL clean up remnants of old fingerprint algorithm (#22645)
+- Display removed PWM control of backlight GPIO regression from v14.1.0
+
+### Fixed
+- ESP32 rules operation priority regression from v13.3.0.4 (#22636)
+- GUI display power button regression from v14.3.0.5 (#15788)
+- MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
+- Display DisplayMode adds a display device while not configured
+- GUI timing related divide by zero exception on screen updates
+
+## [14.4.0] 20241211
+- Release Rudolph
+
+## [14.3.0.7] 20241211
+### Added
+- Support for TM1640 based IoTTimer by Stefan Oskamp (#21376)
+- Command `SetOption161 1` to disable display of state text (#22515)
+- ESP32 new BLE filters by name and minimum RSSI (#22530)
+- ESP32 Hybrid compile take custom boards settings in account (#22542)
+- ESP32 ULP lp_core to Berry ULP module (#22567)
+- Shelly 1 Gen3 template {"NAME":"Shelly 1 Gen3","GPIO":[0,0,0,4736,0,224,0,0,1,1,192,0,0,0,0,0,0,0,0,576,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+- Shelly 1PM Gen3 template {"NAME":"Shelly 1PM Gen3","GPIO":[0,32,0,4736,224,0,3200,8161,576,1,192,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+- Shelly 2PM Gen3 template {"NAME":"Shelly 2PM Gen3","GPIO":[9472,3458,576,225,4736,224,640,608,1,1,193,0,0,0,0,0,0,0,192,32,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio4 10000,10000,4000"}
+- Shelly i4 Gen3 template {"NAME":"Shelly i4 Gen3","GPIO":[0,0,0,4736,32,195,194,193,1,1,192,0,0,0,0,0,0,0,0,0,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000}
+- Show Active Power Total with any multi-phase energy monitoring (#22579)
+- Command `SetOption162 1` to disable adding export energy to energy today (#22578)
+- ESP32 support for WPA2/3 Enterprise conditional in core v3.1.0.241206 (#22600)
+- Support for Sonoff POWCT Energy Export Active (#22596)
+- Improved auto-selection of LED hardware support (RMT, SPI) (#22618)
+
+### Breaking Changed
+- ESP32 ArtNet switches from GRB to RGB encoding (#22556)
+
+### Changed
+- ESP32 max number of supported switches/buttons/relays from 28 to 32
+- ESP32 max number of interlocks from 14 to 16
+- ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
+- Prevent active BLE operations with unencrypted MI-format beacons (#22453)
+- ESP32 replaced NeoPixelBus with TasmotaLED (#22556)
+- ESP32 Platform from 2024.11.31 to 2024.12.30, Framework (Arduino Core) from v3.1.0.241117 to v3.1.0.241206 and IDF to 5.3.2 (#22600)
+- RG-15 sensor name from RG-15 to RG15 (#22612)
+
+### Fixed
+- ESP32 upgrade by file upload response based on file size (#22500)
+- Wrong GUI Module and Template drop down list indexes regression
+- Use HTML escape on File System Edit File load (#22492)
+- Magic switch applying masking window to any power change (#22535)
+- Shift595 output offsets and restart relay toggles
+- Shutter wrong power ON state (#22548)
+- ESP32-C2 TasmotaLED from not present I2S to SPI (#22575)
+- KNX Scenes index change regression from v14.2.0.4 (#22405)
+- Add GUI submenu headers and refresh configuration button text (#22592)
+- ESP8266 Device Group exception due to lack of stack space (#22271)
+
+## [14.3.0.6] 20241116
+### Added
+- Add command ``WebColor20`` to control color of Button when Off
+
+### Fixed
+- Matter provisioning with matter.js controller (#22470)
+- Prevent crashing when `display.ini` is missing end `#` (#22471)
+
+## [14.3.0.5] 20241111
+### Added
+- ESP32 MI32 legacy add config operations (#22458)
+
+### Changed
+- Redesign GUI adding feedback to buttons, shutters and lights
+- Use command `WebButton1` to change GUI shutter 1 name
+
+### Removed
+- Command ``SetOption161 1`` to disable web page slider updates by commands
+
+## [14.3.0.4] 20241111
+### Added
+- DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
+- Support for I2C over Serial (#22444)
+- Support KNX for scripts (#22429)
+- Support deep sleep (standby) for VL53L0X (#22441)
+- Support for MS5837 pressure and temperature sensor (#22376)
+- Berry add I2C read16/write16 supporting Little Endian (#22448)
+- Berry drivers for PCA9535 (generic and in SenseCAP D1) (#22451)
+- Shelly DALI Dimmer Gen3 template {"NAME":"Shelly DALI Dimmer Gen3","GPIO":[34,4736,0,3840,11360,11392,128,129,0,1,576,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio1 10000,10000,4000}
+
+### Changed
+- AHT1X/AHT2X/AHT3X ready for virtual I2C (#22427)
+- SGP4X ready for virtual I2C (#22427)
+- SCD40 reduce logging levels (#22443)
+- SCD40 ready for virtual I2C (#22443)
+- Unit (k)VAr(h) to (k)var(h) (#22435)
+
+### Fixed
+- ESP32-S3 UART output mode for Tx (#22426)
+- Mitsubishi Electric HVAC Standby Stage for MiElHVAC (#22430)
+- FUNC_COMMAND linked list command buffer corruption by shutter driver
+- ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons (#22446)
+
+## [14.3.0.3] 20241031
+### Added
+- Support for I2C over Serial, preliminary stub (#22388)
+
+### Changed
+- ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
+- ESP32 LVGL library from v9.2.0 to v9.2.2 (#22385)
+- Refactored `i2c_enabled` as array (#22387)
+
+### Fixed
+- ESP32 Arduino Core IPv6 zones used by Matter (#22378)
+
+## [14.3.0.2] 20241030
+### Added
+- DALI command `DaliGear` to set max found gear to speed up scan response
+- DALI command `DaliGroup` to add gear to groups
+- DALI command `DaliTarget` to set light control broadcast, group number or gear number
+- Mitsubishi Electric HVAC Operation time for MiElHVAC (#22334)
+- Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC (#22345)
+- Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC (#22347)
+- SolaxX1 Meter mode (#22330)
+- DALI inverted signal configuration using GPIO DALI RX_i/TX_i
+- Support for Shelly DALI Dimmer Gen3 (See tips and template in file xdrv_75_dali.ino)
+- HASPmota `haspmota.get_pages()` to get the sorted list of pages (#22358)
+- Support for US AQI and EPA AQI in PMS5003x sensors (#22294)
+- HLK-LD2410 Engineering mode (#21880)
+- Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
+- Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC (#22370)
+- Command ``SetOption161 1`` to disable web page slider updates by commands
+
+### Changed
+- DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
+- DALI set Tasmota light control as default
+- ESP32 Framework (Arduino Core) from v3.1.0.241015 to v3.1.0.241023 (#22351)
+- Shutter optimized behavior to publish shutter data with sensor request (#22353)
+
+### Fixed
+- Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 (#22367)
+- Alexa Hue with multiple devices (#22383)
+
+### Removed
+- DALI inverted signal configuration using compile time defines
+
+## [14.3.0.1] 20241022
+### Added
+- BLE track devices with RPA (#22300)
+- DALI support for short addresses and groups
+
+### Changed
+- ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 (#22299)
+- HASPmota support for page delete and object updates (#22311)
+
+### Fixed
+- EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic (#22328)
+
+## [14.3.0] 20241015
+- Release Robert
+
+## [14.2.0.6] 20241015
+### Added
+- Support for Sonoff SPM v1.3.0 (#13447)
+- LVGL port `colorwheel` from LVGL 8 (#22244)
+- HASPmota `cpicker` and `msgbox` (#22244)
+- Support for DALI on ESP8266
+- Command ``DaliWeb 1`` to enable light control for DALI broadcast address
+- Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
+- Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
+- Berry Serial `config` to change parity on-the-fly for RS-485 (#22285)
+- Mitsubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
+- Mitsubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
+- Mitsubishi Electric HVAC Air Direction Control (#22241)
+- Mitsubishi Electric HVAC prohibit function (#22269)
+- Mitsubishi Electric HVAC compressor map and operation power and energy (#22290)
+
+### Changed
+- ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
+- Berry improve `persist` dirty data handling (#22246)
+- HASPmota `delete` instead of `delete()` (#22245)
+- Command ``DaliDimmer`` range from 0..254 to 0..100
+
+### Fixed
+- ESP32 Range Extender compile error with core 3.0.0 (#22205)
+- HASPmota error when page '1' is not defined (#22220)
+- ESP32-S3 uDisplay force cache writes to RGB display (#22222)
+- ESP32 DALI compile error with core 3.x (#22214)
+- DALI received data decoding
+- ESP32 Ethernet using EthClockMode 3 (#22248)
+- ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) (#22264)
+- Sonoff WTS01 temperature sensor shows incorrect negative temperature (#19373)
+
+### Removed
+- Berry Zigbee removed test code (#22263)
+
+## [14.2.0.5] 20240926
+### Added
+- ESP8266 support for I2C CLK on GPIO16 (#22199)
+- ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO (#21376)
+- Support for BL0906 up to 6 channel energy monitor as used in Athom EM2/EM6 (#22167)
+
+### Changed
+- ESP8266 platform update from 2024.06.00 to 2024.09.00 and Framework (Arduino Core) from v2.7.7 to v2.7.8 (#22199)
+
+### Fixed
+- HASPmota broken `changed` event (#22194)
+
+## [14.2.0.4] 20240924
+### Added
+- HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 20 (#13983)
+- Matter support for Zigbee Occupancy and Light 0/1/2 (OnOff / Dimmer / White Color Temperature) (#22110)
+- KNX additional KnxTx functions and define KNX_USE_DPT9 (#22071)
+- Support for I2C M5Unit (Mini)Scales using HX711 driver
+- Berry virtual Energy driver (#22134)
+- Support for RX8010 RTC as used in IOTTIMER (#21376)
+- ESP8266 experimental support for second I2C bus
+- Berry improve `int64` constructor (#22172)
+- MQTT warning if trying to connect without TLS on a port that normally uses TLS (#22175)
+
+### Changed
+- Refactored I2C drivers HTU21, BH1750, SHT3x, iAQ and HYT
+- Add command entered to command error and command unknown message
+- ESP32 platform update from 2024.08.11 to 2024.09.10 and Framework (Arduino Core) from v3.0.4 to v3.0.5 (#22163)
+- SCD30 Lowered I2C clock from 100k to 50k (#15438)
+- Refactor and fix PID sensor (PID_USE_LOCAL_SENSOR) read race condition (#22162)
+
+### Fixed
+- Shutter missing HOLD on shutterbutton (#22108)
+- ModbusBridge request and response logic (#22075)
+- Berry energy missing attributes (#22116)
+- Zigbee flashing CC2562P with latest firmware (#22117)
+- SML trx pin error (#22119)
+- Shutter remaining issues on shutterinvert (#22120)
+- Berry I2C to prepare M5Stack I2C STM32 based devices (#22143)
+- Autoconf prevent 'init.bat' from stopping on empty lines (#22158)
+- Compilation exception when metrics not found (#22170)
+- ESP8266 Exception 3 on tasmota-minimal caused by unaligned PROGMEM (#22169)
+- LVGL compilation of lv_menu (#22188)
+
+## [14.2.0.3] 20240908
+### Added
+- Command ``SetOption69 1`` to enable Serial Bridge inverted Receive (#22000)
+- Support nexus protocol and calculation of separation limit to rc-switch library (#21886)
+- Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro (#22076)
+- Berry Zigbee improvements to prepare Matter (#22083)
+- Matter support for Zigbee Temperature, Humidity and Pressure sensors (#22084)
+- SML multi TRX line (#22056)
+
+### Breaking Changed
+- Berry make `energy` modules changes from #21887 backwards compatible (#22046)
+
+### Changed
+- ESP32 platform update from 2024.08.10 to 2024.08.11 (#22021)
+- ESP32 LVGL library from v9.1.0 to v9.2.0 (#22031)
+
+### Fixed
+- Matter fixed UI bug when no endpoints configured (#22008)
+- Zigbee extend timeout for MCU reboot from 5s to 10s (#22009)
+- Matter fix when Rules are disabled (#22016)
+- BearSSL panic on ESP8266 in rare conditions (#22017)
+- Crash when calling TasmotaSerial destructor when initialized with incorrect arguments (#22036)
+- LVGL Added OpenHASP icons to font `montserrat-28` (#22048)
+- Matter fail to report Shutter status if no shutter is configured in Tasmota (#22049)
+- Matter fix Waterleak broken after Berry solidification optimisation #21885 (#22052)
+- Berry avoid `readbytes()` from crashing when file is too large (#22057)
+- Zigbee avoid disabling console serial on ESP32 and improved log messages (#22082)
+
+### Removed
+- Berry remove reuse of methods for interface-like code reuse #21500 (#22055)
+
+## [14.2.0.2] 20240823
+### Changed
+- Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
+- GPIOViewer from v1.5.5 to v1.5.6
+
+## [14.2.0.1] 20240821
+### Added
+- Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration (#20653)
+- Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
+- Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
+
+### Changed
+- Energy force Apparent Power equals Active Power when (Calculated) Apparent Power is less than Active Power (#20653)
+
+### Fixed
+- Shutter timing registers overflow (#21966)
+- PZEM continue energy monitoring when one phase fails (#21968)
+- Energy calculation (#20653)
+
+### Removed
+- ESP8266 Analog input support using energy driver as only one channel is available
+
+## [14.2.0] 20240814
+- Release Rita
+
+## [14.1.0.4] 20240814
+### Added
+- Support for Sonoff iFan04-H using template (#16402)
+- Matter improve internal `inspect`for superclasses (#21824)
+- Matter support for split lights (`SetOption68 1` and `SetOption37 128`) (#21834)
+- Berry `webserver_async` (#21836)
+- NeoPool command `NPSetOption<x>` to enabled/disable data validation/connection statistics (#21850)
+- Analog GPIO ``ADC Input`` with ``AdcGpio<pin> <start_range>,<end_range>,<margin>,1`` provide direct light control 
+- Analog GPIO ``ADC Voltage`` with ``AdcGpio<pin> <start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
+- Analog GPIO ``ADC Current`` with ``AdcGpio<pin> <start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage
+- Berry new type "addr" to ctypes mapping (#21883)
+- Berry `file.savecode()` (#21884)
+- Berry `solidify.nocompact()` and reduce size of Matter UI (#21885)
+- Berry `zigbee.find()` (#21889)
+- Berry `zigbee.started()` (#21895)
+- Command ``AdcGpio<gpio> <parameters>`` to better support ADC configuration
+- Rule and Scripter xdrv sensor polling
+
+### Breaking Changed
+- Berry `energy` module support for 8 phases and move to pseudo-arrays (#21887)
+
+### Changed
+- Berry consolidated constants for solidified classes reduces Flash size (#2185)
+- Berry updated precompiled Windows binary (#21858)
+- Matter improve encoding of attributes to reduce flash size (#21864)
+- ESP32 platform update from 2024.07.11 to 2024.08.10 (#21893)
+- ESP32 Framework (Arduino Core) from v3.0.2 to v3.0.4 (#21893)
+- Refactored Analog driver to better support multiple channels
+- Zigbee loads device data early before MCU startup (#21917)
+- Rule and Scripter sensor polling
+- GUI name of Analog<x> to ADC<x>
+
+### Fixed
+- Berry `light.get` for separate RGB/CT (#21818)
+- Berry `bytes` setters and getters with negative offsets (#21835)
+- Berry `file.write()` raises an exception on failure (ex: disk full) (#21849)
+- Filesystem SD MMC free space display (#21869)
+
+### Removed
+- Berry internal: remove class from closure to simplify code (#21839)
+
+## [14.1.0.3] 20240722
+### Added
+- ESP32 support for power and energy limit checks, like ``MaxEnergy2`` per phase (#21695)
+- Berry `tasmota.rtc("config_time")` (#21698)
+- Berry `math.min()` and `math.max()` (#21705)
+- Berry `FUNC_ANY_KEY` event calling `any_key()` (#21708)
+- Berry `FUNC_BUTTON_MULTI_PRESSED` event and make `FUNC_BUTTON_PRESSED` called only on state changes and once per second (#21711)
+- Support for Sonoff POWCT Ring (#21131)
+- NeoPool data validation and communication statistics default enabled for ESP32 only (#21721)
+- `FUNC_BUTTON_PRESSED` now contains `press_counter` encoded in `XdrvMailbox.command_code` (#21724)
+- Berry `int64` added `low32()` and `high32()` methods, used in Matter (#21728)
+- Matter support for 'Generic Switch' based on Tasmota Buttons (#21731)
+- Berry cam module and img class (#21743)
+- Skip MQTT response if command is prefixed with underscore (#21740)
+- Skip MQTT response if commands are executed prefixed with ``Backlog2`` (no delay) or ``Backlog3`` (#21740)
+- Support for Wooliis Hall Effect Coulometer or Battery capacity monitor (#21732)
+
+### Changed
+- ESP32 support for energy margin checks, like ``MaxPower2`` per phase (#21695)
+- ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
+- ESP32 platform update from 2024.06.11 to 2024.07.10 (#21745)
+- ESP32 platform update from 2024.07.10 to 2024.07.11 (#21765)
+- Berry simplified `module persist` (#21812)
+- GPIOViewer from v1.5.4 to v1.5.5 (No functional change)
+
+### Fixed
+- Berry `bytes.resize()` for large sizes (#21716)
+- On universal display remove default backlight power if a single PWM channel is used for backlight. Regression from 14.0.0.1 (#21726)
+- ESP32 I2S fixes (#21770)
+- ESP32 Resistive Touch xpt for 2 spi buses (#21814)
+
+## [14.1.0.2] 20240627
+### Added
+- Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
+- Berry `classof` extended to class methods (#21615)
+- Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages (#21574)
+- Matter support for Rain sensor (#21633)
+- Matter internal debug option (#21634)
+- Matter Fan support (virtual only) (#21637)
+- Matter show event name in logs (#21649)
+- Matter full support of events (#21698)
+
+### Changed
+- SerialBridge command ``SSerialSend9`` replaced by ``SSerialMode``
+- SML replace vars in descriptor and line (#21622)
+- NeoPool using temperature as only frequently changing value for NPTeleperiod (#21628)
+- NeoPool make compiler setting available by `user_config_override.h` (#21645)
+- ESP32 MI32 improve parser (#21648)
+- ESP8266 platform update from 2024.01.01 to 2024.06.00 (#21668)
+- ESP8266 Framework (Arduino Core) from v2.7.6 to v2.7.7 (#21668)
+- Matter refactor reading of multiple attributes to reduce memory pressure (#21675)
+- ESP32 platform update from 2024.06.10 to 2024.06.11 (#21694)
+- ESP32 Framework (Arduino Core) from v3.0.1 to v3.0.2 (#21694)
+
+### Fixed
+- Matter interverted attributes 0xFFF9 and 0xFFFB (#21636)
+- Matter CASE Sigma1 resumption mode for faster reconnection (#21644)
+- Shutter MQTT on inverted shutter (#21663)
+- Scripter TCP server (#21660)
+- Matter TLV.U8 unsigned encoding (#21672)
+- Matter resumption final ack (#21673)
+- ESP32 allow use of UART0 with enabled USB_CDC_CONSOLE (#21496)
+
+## [14.1.0.1] 20240611
+### Added
+- Berry solidification of `bytes` instances (#21558)
+- Matter support for Air Quality sensors (#21559)
+- Matter support for bridged Air Quality (#21597)
+- HASPmota rounds to nearest int values passed as 'real' (#21599)
+- Berry automatic rounding of float to int when calling C mapped functions (#21601)
+- Berry add `math.round` (#21602)
+- Support for QMP6988 temperature and pressure sensor
+
+### Changed
+- Matter refactoring of bridged devices (#21575)
+- ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 (#21569)
+- Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
+- Matter filter suffix automatically added for sensors (#21589)
+- Display timing splash screen with display modes 1 to 5
+- ESP32 MI32 refactoring, bugfixes, generic device scanning (#21603)
+- Allow receive or send using SerialBridge
+
+### Fixed
+- Berry `input()` returns empty string and does not crash (#21565)
+
+## [14.1.0] 20240603
+- Release Rachel
+
+## [14.0.0.4] 20240603
+### Added
+- SML FastExit for binary SML parsing (#21497)
+
+### Changed
+- GPIOViewer from v1.5.3 to v1.5.4 (No functional change)
+- TCP bridge increased baudrate selection (#21528)
+- Berry coc parser keeps order of variables (#21542)
+
+### Fixed
+- uDisplay Parallel display on Core3 (#21529)
+- LVGL exception when using tjpegd (#21544)
+
+### Removed
+- Deprecated code from drivers, `USE_TTGO_WATCH` and `USE_M5STACK_CORE2` (#21533)
+
+## [14.0.0.3] 20240530
+### Changed
+- ESP32 Core3 platform update from 2024.05.12 to 2024.05.13 (#21524)
+
+### Fixed
+- ESP32 slow response when using UDP as in emulation (#21470)
+
+## [14.0.0.2] 20240529
+### Added
+- Disabled watchdog for ESP32 and variants (#21509)
+
+### Changed
+- Update Telegram CA (Go Daddy Root Certificate Authority - G2)
+
+### Fixed
+- Telegram TLS fingerprint, remove CA validation (#21514)
+- ESP32 I2S multiple fixes (#21511)
+
+## [14.0.0.1] 20240527
+### Added
+- Enabled watchdog for ESP32 and variants (#21422)
+- Optional command ``WebRun`` (as WebQuery extension) (#21364)
+- Support for Knx dimmer and color (#21434)
+- Support for Matter 1.3 Water leak detectors (#21456)
+- Berry add reuse of methods for interface-like code reuse (#21500)
+
+### Changed
+- ESP32 compiler option from `target-align` to `no-target-align` (#21407)
+- On universal display remove default backlight power if a PWM channel is used for backlight
+- Berry binary compiled with gcc (#21426)
+- GPIOViewer from v1.5.2 to v1.5.3 (No functional change)
+- Berry allow easy solidification of external Berry (#21430)
+- ESP32 I2S audio improvements (#21433)
+- Support W5500 SPI ethernet using four SPI GPIOs only without IRQ and RESET
+- Berry change internal storage of parent class for methods (#21490)
+- ESP32 Core3 platform update from 2024.05.11 to 2024.05.12 (#21493)
+
+### Fixed
+- Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
+- Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)
+- Avoid connection errors when switching to safeboot to upload OTA firmware (#21428)
+- Berry Leds matrix alternate more and error about 'bri' attribute (#21431)
+- Wrong timeout in `WebQuery` and `webclient` since Core3 (#21442)
+- Webradio crash with invalid url (#21446)
+- Zigbee crash when removing `ZbName` (#21449)
+- ESP32 BLE fix scanning (#21451)
+- I2S APLL not supported on all SOCs (#21483)
+- UfsServe watchdog on large folder (#21486)
+- Matter auto-fix IPv6 link-local zone id when network reconnects (#21494)
+- SML compile error when median-filter is disabled (#21495)
+- Hydreon RG15 malformed JSON string (#21508)
+
+### Removed
+- Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
+
+## [14.0.0] 20240515
+- Release Rodney
+
+## [13.4.1.2] 20240515
+### Added
+- ESP32 esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3 (#21241)
+- TCP Serial bridge GPIO type `TCP Tx En` (#21269)
+- Berry `webserver.content_close()` (#21276)
+- ESP32 Compile option disabling PSRam check to avoid "blinking" of GPIO 16/17 at startup (#21282)
+- HASPmota demo of Renaissance Watch for 480x480 displays (#21290)
+- PlatformIO target reset (#21292)
+- Support for AHT30 Temperature and Humidity Sensor (#19922)
+- Berry wave file recorder (#21315)
+- Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot (21329)
+- Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)
+- Berry `after_teleperiod` event matching `FUNC_AFTER_TELEPERIOD` (#21351)
+- GPIOViewer pin mode support
+
+### Breaking Changed
+- ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
+- ESP32-C6 OTA binary name from `tasmota32c6cdc.bin` to `tasmota32c6.bin` with USB HWCDC and fallback to serial (#21212)
+- ESP32-S3 OTA binary name from `tasmota32s3cdc.bin` to `tasmota32s3.bin` with USB HWCDC and fallback to serial (#21212)
+
+### Changed
+- uDisplay fast drawing on RGB displays (#21257)
+- HDMI CEC synchronously sends messages (#21270)
+- Refactor I2S (#21291)
+- Command ``EthType`` option selection (#21317)
+- Zigbee startup event triggered after plugins are loaded (#21320)
+- Reduced safeboot size by 2.9KB (#21322)
+- Internal macro `APP_SLEEP` to `TASMOTA_SLEEP` to specify default sleep in ms (#21324)
+- ESP32 Core3 platform update from 2024.04.12 to 2024.05.10 (#21347)
+- Refactor Tensorflow (#21327)
+- Seriallog set to `SERIAL_LOG_LEVEL` at boot (#21363)
+- TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 (#21352)
+- GPIOViewer from v1.5.0 to v1.5.2
+- ESP32 Core3 platform update from 2024.05.10 to 2024.05.11 (#21381)
+- Berry `Leds` uses native WS2812 driver by default (#21406)
+- Command ``Pixels`` initiates a restart before activation due to changed NeoPixelBus library (#21406)
+
+### Fixed
+- HASPmota `align` attribute and expand PNG cache (#21228)
+- LVGL restore `lv_palette` functions (#21232)
+- IPv6 support in safeboot (#21233)
+- LVGL fix memory allocation of flush buffers (#21256)
+- Neopool prevent possible multiple bus requests (#21267)
+- Berry `web_add_handler` called before `Webserver` is initialized (#21272)
+- Put back wifi IPv6 workaround (#21274)
+- Async HDMI CEC (#21287)
+- Berry `math.inf`, `math.isinf()` and fixed json output for `inf` and `nan` (#21304)
+- Compilation of Ethernet when SPI drivers are disabled (#21321)
+- Conflicting log_level definitions in NimBLE (#21337)
+- Avoid unwanted OTA upgrade when safeboot starts for the first time (#21360)
+- Matter broken NOCStruct types preventing pairing with HA (#21365)
+- jpeg compile core3 (#21387)
+- Berry `gpio.dac_voltage()` (#21403)
+
+### Removed
+- LVGL disabled vector graphics (#21242)
+- ESP32 IDF 4.4 based I2S code (#21188)
+- Crash recorder from safeboot (#21332)
+
+## [13.4.1.1] 20240418
+### Added
+- HASPmota `dropdown_list` and fixes (#21208)
+- Support for SPL06_007 pressure and temperature sensor (#21185)
+
+### Breaking Changed
+- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)
+
+### Changed
+- ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
+- ESP32 Core3 platform update from 2024.04.11 to 2024.04.12 (#21199)
+
+### Fixed
+- HASPmota dropdown class "options" attribute (#21203)
+- ESP8266 physical button/switch control when no rules activated (#21187)
+
+### Removed
+- Support for ESP32 Arduino Core 2 (#21180)
+- SSD1351 driver replaced with uDisplay (#21184)
+- ST7789 driver replaced with uDisplay (#21184)
+
+## [13.4.0.4] 20240415
+### Added
+- Command ``PowerLock`` to disable power control of selected outputs (#21081)
+- Command ``Wifi 6`` to enable 11ax on ESP32 Core3
+- Berry `flash.current_ota` (#21097)
+
+### Breaking Changed
+- Removed dedicated touch drivers in favour of Universal Touch driver (#21146)
+
+### Changed
+- ESP32 refactored Wifi for ESP32 Core3 release (#21106)
+- ESP32 Core3 platform update from 2024.02.10 to 2024.04.10 (#21114)
+- ESP32 Core3 platform update from 2024.04.10 to 2024.04.11 (#21142)
+- SGP4x Domoticz air quality value from raw to computed (#18880)
+- ESP32 Framework (Arduino Core) from v2.0.14 to v2.0.15
+
+### Fixed
+- NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
+- M5Core2 LoRa868 module receive exception
+- Fade out on CCT bulb with `SO92 1` (#21159)
+
+### Removed
+- Unused `#define MQTT_DATA_STRING` support
+- ILI9341 driver replaced with uDisplay (#21169)
+- SSD1306 driver replaced with uDisplay (#21176)
+- SSD1331 driver replaced with uDisplay (#21177)
+- SSH1106 driver replaced with uDisplay (#21183)
+
+## [13.4.0.3] 20240402
+### Added
+- Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
+- Support for single channel EU863-870 LoRaWanBridge (#17790)
+- Support Azure iothub direct method (#21013)
+- Added GPIO for SPI for Universal Touch Screen (#21025)
+- Berry added `close()` to class `serial` (#21042)
+- Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` and disabling DOMOTICZ_OUT_TOPIC subscribe using command ``DzIdx0 0`` (#21019)
+
+### Breaking Changed
+- Berry loading .be file does not generated .bec anymore (#21075)
+
+### Changed
+- ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
+- berry.exe (pre-compiled for Windows) updated to latest Berry patches (#21024)
+- Some `display.ini` to utouch (#21029)
+- ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 (#19350)
+- KNX format of energy to match specifications (#21074)
+
+### Fixed
+- BTHome, prep BLE5 (#20989)
+- Scripter google char memory leak (#20995)
+- HASPmota demo and robotocondensed fonts (#21014)
+- Berry walrus bug when assigning to self (#21015)
+- Too restrictive checksum checks in Lib_teleinfo (#21033)
+- Color swap option for rgb displaytext (#21049)
+
+### Removed
+- Berry `print "a"` syntax no longer supported (#21048)
+
+## [13.4.0.2] 20240318
+### Added
+- Berry `path.rename()` (#20840)
+- HASPmota support for spangroup (styled text) (#20852)
+- HASPmota support for led (#20857)
+- HASPmota improve arc and img (#20894)
+- Berry `string.startswith`, `string.endswith` and `%q` format (#20909)
+- LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` (#20936)
+- HASPmota support for scale, percentages (#20974)
+- Support for ESP32-S3 120Mhz (#20973)
+- Support for MCP23S08 (#20971)
+
+### Breaking Changed
+- Drop support for old (insecure) fingerprint format (#20842)
+- LVGL remove embedded typicons font (#20872)
+- LVGL remove `textarea` and `spinbox` from binaries (#20916)
+
+### Changed
+- LVGL optimize fonts and add icons (#20880)
+- LVGL improved readability of montserrat-10 (#20900)
+- HASPmota moved to a distinct library `lv_haspmota` (#20929)
+- HASPmota solidify server-side (#20938)
+- Refactor Platformio script `post_esp32.py` (#20966)
+
+### Fixed
+- Berry bug when parsing ternary operator (#20839)
+- HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
+- Filesystem save of JSON settings data
+- Berry fix walrus with member or index (#20939)
+- TuyaV2 suppressed dimmer updates from MQTT (#20950)
+
+## [13.4.0.1] 20240229
+### Added
+- Support for LoRa
+- HASPmota `p<x>b<y>.delete` to delete an object (#20735)
+- LVGL and HASPmota typicons font (#20742)
+- HASPmota more attributes (#20744)
+- QMC5883l check for overflow and scale reading (#20643)
+- TasMesh support for LWT messages (#20392)
+- Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` (#4771)
+- Berry add explicit error log when memory allocation fails (#20807)
+- Support for AMS5915/AMS6915 temperature and pressure sensors (#20814)
+- IR support data larger than 64 bits (#20831)
+
+### Changed
+- ESP32 Core3 SPI ethernet support for all models
+- Berry class `int64` made immutable (#20727)
+- LVGL make lv_touch_3_buttons more responsive (#20728)
+- ESP32 Core3 platform update from 2024.01.12 to 2024.02.10 (#20730)
+- HASPmota fix and improve demo with pixel-perfect fonts (#20734)
+- NeoPool webUI pH alarms (4 & 5) completed (#20743)
+- Matter reduce memory usage when reading with wildcards (#20809)
+- Prevent shutter MQTT broadcast with activated ShutterLock (#20827)
+
+### Fixed
+- ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
+- Shutter inverted using internal commands (#20752)
+- HASPmota PSRAM memory leak (#20818)
+- Berry Memory leak in `import re` (#20823)
+
+## [13.4.0] 20240214
+- Release Quinta
+
+## [13.3.0.5] 20240214
+### Added
+- Internal support for persistent JSON settings using single file
+- Command ``SetOption158 1`` to disable publish of ModbusReceived MQTT messages (#20678)
+- ESP32 Core3 support for SPI ethernet on DM9051, W5500 and KSZ8851
+- Berry option to invert serial
+- Command ``SetOption159 1`` to enable counting on both rising and falling edge (#20712)
+
+### Breaking Changed
+- ESP32 LVGL library from v8.3.11 to v9.0.0, some small breaking changes in C, none in HASPmota (#20659)
+
+### Changed
+- Matter improve `MtrInfo` (#20686)
+- Matter implement auto-attributes (#20694)
+- GPIO Viewer user selection of assets website is `https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/` v2.0.8
+
+### Fixed
+- Matter redirects for Advanced Matter configuration UI (#20690)
+- LVGL9 restore missing layouts (#20701)
+
+## [13.3.0.4] 20240205
+### Added
+- HASPmota support for `min` and `max` attribute in `slider` (#20582)
+- ESP32-C3 support for GPIO11 (#18350)
+- ESP32 support for Shelly Plus Add-On using DS18x20 or DHT11/AM2301/DHT21/DHT22/AM2302/AM2321/SI7021 on GPIO0/1 (#20580)
+- ESP32 MI32 Legacy initial support for sensors using BTHOME packet format (#20625)
+- Berry `introspect.contains` and `bytes.addfloat` (#20635)
+- Matter add human readable names for TimeSync cluster (#20666)
+
+### Breaking Changed
+- Matter aggregator relocated to endpoint 1 for Google compatibility, may break existing associations (#20654)
+
+### Changed
+- Library OneWire-Stickbreaker by TasmotaOneWire supporting Shelly Plus Add-On (#20580)
+- Refactored rules ``Subscribe`` using LList allowing full message size and enabled by default
+- Refactored rules USE_EXPRESSION and SUPPORT_IF_STATEMENT replacing LinkedList with arrays and enabled by default
+- ESP32 Core3 platform update from 2024.01.11 to 2024.01.12 (#20576)
+- Utouch optimizations, rgb i2c init (#20596)
+- GPIO Viewer update from 1.0.7 to 1.5.0
+- Miel HVAC lower the minimum temperature to 10C (#20628)
+
+### Fixed
+- Berry C mapping, raise an error if too many arguments are sent (#20604)
+- Matter error when removing device from Google Home (#20665)
+- Matter exception when fabrics is not initialized (#20667)
+
+## [13.3.0.3] 20240122
+### Added
+- Berry `debug.caller` (#20470)
+- GPIO Viewer user selection of assets website now defaults to `https://ota.tasmota.com/tasmota|tasmota32/gpio_viewer/assets`
+- Support for HardwareSerial invert (#15461)
+- SML support for IM350 (#20474)
+- LVGL `lv.str_arr` (#20480)
+- ESP32 MI BLE support for Xiaomi LYWSD02MMC (#20381)
+- LVGL option to add `lv.keyboard` extra widget (#20496)
+- GUI sensor separators (#20495)
+- Command ``TimedPower<index> <milliseconds>[,ON|OFF|TOGGLE|BLINK]`` executes ``Power<index> [ON|OFF|TOGGLE|BLINK] `` and after <millisecond> executes ``Power<index> [OFF|ON|TOGGLE|BLINK_OFF]``
+- Berry solidification of strings longer than 255 bytes (#20529)
+- Berry syntax coloring for Notepad++ by FransO (#20541)
+- Berry/Zigbee web hook per device for customized status display (#20542)
+- Zigbee ``ZbEmulation`` to selectively exclude some devices from Hue/Alexa emulation (#20552)
+
+### Changed
+- ESP32 Core2 platform update from 2024.01.00 to 2024.01.01 (#20508)
+- IP stack compatible with new Core3 IPv6 implementation (#20509)
+- Command ``TimedPower`` from erasing all timers to showing remaining timers
+- ESP8266 platform update from 2024.01.00 to 2024.01.01 (#20539)
+- ESP8266 Framework (Arduino Core) from v2.7.5 to v2.7.6 (#20539)
+- Refactored Pio filesystem download script (#20544)
+- Command ``TimedPower`` refactored from String to LList
+
+### Fixed
+- Scripter memory leak in `>w x` (#20473)
+- ESP8266 GPIO Viewer exception 9 on reading Analog GPIO
+- GPIO Viewer single instance
+- Zigbee ramdom crash in main page (#20481)
+- Web file upload response on upload error (#20340)
+- ESP32 shutter exception 6 (divide by zero) on ``ShutterMode 4`` (#20524)
+- GPIOViewer exception 3
+- Berry assignment to list with negative index (#20537)
+- Matter support for Alexa (#20545)
+- ESP8266 IPv6 support (#20539)
+- ESP32 Audio for Core3, MP3Stream and Shine (#20540)
+- ESP32 Core3 reset GPIOs 16/17 when PSRAM is not used (20547)
+
+### Removed
+- Max number of 30 backlog entries
+
+## [13.3.0.2] 20240111
+### Added
+- HASPmota type `chart` (#20372)
+- Berry add support for `tcpclientasync` in `tcpserver` (#20401)
+- Berry add `tasmota.urlbecload(url:string) -> bool` (#20412)
+- GPIO Viewer to see realtime GPIO states. Enable with define USE_GPIO_VIEWER
+- Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` (#20414)
+- Berry `gpio.get_pin_type` and `gpio.ger_pin_type_index` (#20415)
+- Berry `gpio.read_pwm` and `gpio.read_pwm_resolution` (#20414)
+- Berry GPIO viewer initial version using async webserver (#20416)
+- Berry add `string` to `bytes()` (#20420)
+- Berry button to dynamically load GPIO Viewer with Berry backend (#20424)
+- Berry `debug_panel.tapp` to display real-time heap and wifi rssi (#20436)
+- Berry `webserver.header` to read browser sent headers (#20447)
+- Berry provide lightweight options for `tasmota.wifi/eth/memory/rtc` (#20448)
+- Berry `tasmota.webcolor` (#20454)
+- Support for pipsolar inverter (#20408)
+
+### Changed
+- Renamed button "Consoles" to "Tools"
+- ESP32 platform update from 2023.12.00 to 2024.01.00 (#20445)
+- Header `Host` is now collected by Webserver (#20446)
+- Webcam tweaks (#20451)
+- ESP8266 platform update from 2023.04.00 to 2024.01.00 (#20467)
+- ESP8266 Framework (Arduino Core) from v2.7.4.9 to v2.7.5 (#20467)
+
+### Fixed
+- ESP32 Zigbee Aqara attributes (#20452)
+
+## [13.3.0.1] 20240101
+### Added
+- Support for Sonoff Basic R4 Magic Switch (#20247)
+- Support for CST816S touch interface (#20213)
+- NeoPool hydrolysis FL1 and Redox flag (#20258)
+- Matter support for password for remote Tasmota devices (#20296)
+- Display of active drivers using command ``status 4``
+- ESP32 used UART information
+- HASPmota `haspmota.page_show()` to change page (#20333)
+- Berry `introspect.set()` for class attributes (#20339)
+- Support negative power on BL0942 using index 5..8 (#20322)
+
+### Breaking Changed
+- Refactoring of Berry `animate` module for WS2812 Leds (#20236)
+
+### Changed
+- Support syslog updates every sleep or every second if `#define SYSLOG_UPDATE_SECOND` (#20260)
+- ESP32 platform update from 2023.11.01 to 2023.12.00 (#20298)
+- Moved Berry animate to its own `berry_animate` lib (#20309)
+- Relax checks of Partition Wizard for newest Shelly (#20349)
+
+### Fixed
+- Matter Contact sensor was not triggering any update (#20232)
+- CVE-2021-36603 Cross Site Scripting (XSS) vulnerability (#12221)
+- ESP32 piezo ceramic buzzer doesn't buzz (#20118)
+- Syslog server warning caused by lack of <PRI> field and hostname starting with 'z' (#14689)
+- Support for Domoticz floor/room topics. Regression from v12.0.1 (#20299)
+- Berry claiming UART0 if needed (#20324)
+- LVGL fix type for lv_imgbtn (#20354)
+
+## [13.3.0] 20231213
+- Release Quinlan
+
+## [13.2.0.3] 20231213
+### Added
+- DeepSleep support through TIMERS (#20117)
+- Command ``WebCanvas linear-gradient(#F02 7%,#F93,#FF4,#082,#00F,#708 93%)`` to set GUI canvas
+
+### Breaking Changed
+- Remove Berry `every_200ms` event which didn't work anyways (#20205)
+
+### Changed
+- ESP32 LVGL library from v8.3.10 to v8.3.11 (no functional change)
+- Berry ULP API changes for Core3/IDF5 (#20198)
+- Berry leds animation refactoring stage 1 (#20197)
+
+### Fixed
+- TUYA state machine (in TUYA v1) (#20110)
+- ESP32 Neopixel flicker for Core3/IDF5 (#20196)
+- HASPmota `bar` fixed `val` attribute (#20208)
+
+## [13.2.0.2] 20231130
+### Added
+- Scripter TCP client (#19914)
+- Berry ``debug.gcdebug()`` to enable GC debugging (#19936)
+- Berry AES_CBC to crypto module (#19964)
+- NeoPool sensor delta trigger (command ``NPTelePeriod``) (#19973)
+- NeoPool store settings on unified file system (#19973)
+- NeoPool command ``NPBoost`` (#19973)
+- ESP32 Partition Wizard can be loaded dynamically (#19980)
+- Berry `scale_int`, equivalent of `scale_uint` for signed integers (#20090)
+- ESP32 support for Avago Tech Bluetooth Buttons (#20088)
+
+### Changed
+- Matter update hierarchy of plugins (#19915)
+- NeoPool ``NPHydrolysis`` percent and unit (#19924)
+- Thermostat JSON index from 0 to 1 (#20011)
+- ESP32 platform update from 2023.11.00 to 2023.11.01 (#20087)
+
+### Fixed
+- Scripter timer issue (#19914)
+- Zero-Cross Dimmer for ESP32 with Core3 (#19929)
+- Matter flow sensor (#19961)
+- Berry ``gpio.dac_voltage()`` regression from v13.1.0.1 (#19997)
+- ESP32-C3 ledlink functionality regression from v13.1.0.2
+- Berry parser error in specific cases (#20059)
+- ``changeUIntScale`` for linearity when expanding range (#20089)
+- ESP32 remove restart energy logging if no energy monitoring is selected
+- ``WebQuery`` response buffer corruption and format character ``%`` (#20111)
+
+## [13.2.0.1] 20231103
+### Added
+- I2C bus2 support to iAQ core sensor (#19799)
+- I2C bus2 support to HTU temperature and humidity sensor
+- I2C bus2 support to BH1750 ambient light sensor
+- I2C bus2 support to ADS1115 A/D Converter
+- I2C bus2 support to SHTxX temperature and humidity sensor
+- I2C bus2 support to HYTxxx temperature and humidity sensor
+- I2C bus2 support to SI1145/6/7 Ultra violet index and light sensor
+- I2C bus2 support to LM75AD temperature sensor
+- Command ``GpioRead`` to show input state (#19810)
+- ESP32 core v3 auto TasConsole USB or Serial connection by @staars
+- Support for Winsen XH03x dust particle sensors using USE_PMS5003 and PMS_MODEL_ZH03X (#19850)
+- NeoPool hydrolysis setpoint and max
+- NeoPool command ``NPFiltrationSpeed`` to set non-standard filtration type speed (#19857)
+- NeoPool ``SetOption157`` to output sensitive data (#19857)
+- NeoPool enhancements for HA (#19857)
+- ST7735S display.ini for 1.44 inch 128x128 red SPI display (#19862)
+- HASPmota add styling properties (#19912)
+- Matter flow sensor support (#19852)
+
+### Breaking Changed
+- NeoPool SENSOR topic ``Power`` renamed to ``Powerunit`` (#19857)
+
+### Changed
+- Prepare I2C drivers for bus2 support
+- Matter Light0 now accept a Relay number (#19809)
+- ESP32 keep FS intact when over flashing with VSC (#19816)
+- Increase MAX_HUE_DEVICES to 32 (#19820)
+- MI32 updates (#19893)
+
+### Fixed
+- NeoPool filtration mode display (#19801)
+- Compile USE_PID (#19890)
+- ESP32 I2C allow bus2 support when bus1 is not enabled
+- ESP32 IR receive with Arduino Core 3 (#19904)
+
+## [13.2.0] 20231019
+- Release Quincy
+
+## [13.1.0.4] 20231019
+### Added
+- Support for HC8 CO2 sensor (#19714)
+- ESP32 commands ``Ds18Rescan`` and ``Ds18RetryRead`` (#19700)
+
+### Breaking Changed
+- Removed support for Homekit in favour of Matter (#19738)
+
+### Changed
+- ESP32 Framework (Arduino Core) from v2.0.13 to v2.0.14
+- MAX31855/MAX6675 sensors driver support up to 6 (#19329)
+- ESP32 analog from `analogRead()` to calibrated `analogReadMilliVolts()` (#19732)
+- I2S refactoring in preparation for core 3 (#19749)
+- Teleinfo use Apparent Power as Active Power approximation (#19756)
+
+### Fixed
+- ESP32 shutter frequency (#19717)
+- ModbusBridge write memory leak (#19758)
+- Zigbee timezone when device reads LocalTime attribute (#19772)
+
+### Removed
+- WiFiClientSecure in favour of WiFiClientSecureLightBearSSL (#19725)
+
+## [13.1.0.3] 20231003
+### Added
+- Support for Shelly PlusPMMini, Plus1Mini and Plus1PMMini
+- Matter support for Virtual Devices controllable via Rules or Berry (#19520)
+- Berry read and write Counters (#19558)
+- ESP32 support for influxdb access using https (#19582)
+- Support for ENS16x (air quality) and ENS210 (temp & RH) sensors (#19479)
+- Support for non-persistent ``WebButton17`` to ``WebButton32`` (#19580)
+- Command ``Mi32Name`` (#19619)
+
+### Changed
+- ESP32 Framework (Arduino Core) from v2.0.12 to v2.0.13
+- ESP32 LVGL library from v8.3.9 to v8.3.10 (no functional change)
+- Consolidate SGP40 and SGP41 into SGP4x driver (#19560)
+- ESP32 Audio preparation for Arduino Core v3 (#19637)
+- ESP32 LittleFS updated to version with grow option (#19635)
+- ESP32 Partition Wizard grow filesystem support (#19645)
+
+### Fixed
+- ESP32 DS18x20 driver support extended over GPIO33
+- ESP32 Shutter button quad press (#19589)
+- Compile error with new email lib (#19608)
+- ESP32 Arduino Core v2 wifi client flush (#19642)
+
+## [13.1.0.2] 20230914
+### Added
+- Support for HDMI CEC protocol (#19434)
+- Support different baudrates on BL0942
+
+### Breaking Changed
+- `Sendmail` upgraded to ESP-Mail-Client v3.4.9 from v1.2.0, using BearSSL instead of MbedTLS (#19460)
+
+### Changed
+- Berry fast_loop is now called every 5ms whatever the Sleep value (#19436)
+- Reduce IRAM consumption of HDMI CEC to 1453 bytes (#19452)
+- ESP32 Framework (Arduino Core) from v2.0.11 to v2.0.12
+- ESP32 LVGL library from v8.3.8 to v8.3.9 (no functional change)
+
+### Fixed
+- PCF8574 mode 1 with base relays exception 3/28 regression from v12.4.0.4 (#19408)
+- Berry make mdns compatible with non-IPv6 builds
+- ESP32 Shutter migration (#19454)
+- ESP32 Shutter multi press button events (#19465)
+- Support for IPv6 link-local zones for esp-idf 5.1 (necessary for Matter)
+- ESP32-C3 relay click on restart
+
+## [13.1.0.1] 20230831
+### Added
+- Commands to allow setting of timeprop parameters (#19310)
+- Variables ``%power<1..28>%`` and  ``%switch<1..28>%`` to rules (#19331)
+- Experimental support for ESP32-C2 and ESP32-C6 using Arduino core v3.0 
+
+### Changed
+- Display invert setting after tasmota start in uDisplay driver (#19337)
+
+### Fixed
+- Shutter invert (#19341, #19374)
+- Teleinfo power (#19381)
+- Exception 3 in IRHVAC (#19389)
+
+## [13.1.0] 20230815
+- Release Quentin
+
+## [13.0.0.4] 20230815
+### Added
+- ESP32 prepare for Arduino Core v3 and esp-idf v5 (#19264)
 
 ### Changed
 - Console height from default 318 pixels to viewport (#19241)
 - Shutter button hold behaviour with grouptopic (#19263)
 - Thermostat improvements (#19279)
 - PID controller improvements (#19285)
-
-### Fixed
-
-### Removed
+- HDC1080 detect device offline (#19298)
+- ADE7953 lowered no load threshold (#19302)
 
 ## [13.0.0.3] 20230805
 ### Added
@@ -43,7 +1544,7 @@ All notable changes to this project will be documented in this file.
 - Zero cross dimmer minimum interrupt time (#19211)
 - Fade would fail when the difference between start and target would be too small (#19248)
 - Inverted shutter (#19243)
-- Matter support for large atribute responses (#19252)
+- Matter support for large attribute responses (#19252)
 - Matter auto-configuration Relay indices (#19255)
 
 ## [13.0.0.2] 20230721
@@ -89,9 +1590,7 @@ All notable changes to this project will be documented in this file.
 - `BrRestart` now supports web handlers to work after Berry restart
 
 ### Removed
-- Support for ESP32-C3 with chip rev below 3 (old development boards)
-
-## [Released]
+- Support for ESP32-C3 with chip revision below 0.3 (old development boards)
 
 ## [13.0.0] 20230626
 - Release Qasim
@@ -148,7 +1647,7 @@ All notable changes to this project will be documented in this file.
 - Shutter bootloop using more than 4 shutters (#18673)
 - AIThinker webcam issues (#18652)
 - Berry `tasmota.wifi()` would wrongly report wifi as up
-- Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistant (#18701)
+- Inverted shutter now reflect status also in WEBGUI and several minor fixes to make "inverted" consistent (#18701)
 - Matter fix fabric provisioning from CASE session for iOS 16.5 (#18709)
 - ESP32 SPI initialization for MFRC522 (#18711)
 - Freeze BMP readings before deepsleep (#18720)
@@ -168,7 +1667,7 @@ All notable changes to this project will be documented in this file.
 - Support for PCA9557 8-bit I/O expander (#18632)
 - Matter support for async HTTP for bridged devices (#18656)
 - Zigbee support for air sensors (#18665)
-- Command ``I2cScan0`` to scan both busses on ESP32 with one command
+- Command ``I2cScan0`` to scan both buses on ESP32 with one command
 
 ### Breaking Changed
 - Change command ``FileUpload`` index binary data detection from >199 to >299
@@ -284,7 +1783,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ADC Range oversample from 2 to 32 (#17975)
 - ESP32 Framework (Core) from v2.0.6 to v2.0.7
-- Move #define OTA_URL from user_config.h to board files for better inital support (#18008)
+- Move #define OTA_URL from user_config.h to board files for better initial support (#18008)
 - Increase number of (virtual)relays and (virtual)buttons to 32
 - LibTeleinfo from v1.1.3 to v1.1.5 (#18050)
 
@@ -351,7 +1850,7 @@ All notable changes to this project will be documented in this file.
 - Support for PCA9632 4-channel 8-bit PWM driver as light driver by Pascal Heinrich (#17557)
 - Berry `bytes()` now evaluates to `false` if empty
 - Berry ``crypto.AES_CCM`` (required by Matter protocol)
-- ESP32 support for BMPxxx sensors on two I2C busses (#17643)
+- ESP32 support for BMPxxx sensors on two I2C buses (#17643)
 - Berry add implicit ``_class`` parameter to static methods
 
 ### Changed
@@ -614,6 +2113,7 @@ All notable changes to this project will be documented in this file.
 - DNS lookup for .local domains (#16273)
 - Button response delay regression from v12.0.2.4 (#16319)
 - Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
+- LVGL fix descriptors Berry mapping
 
 ## [12.1.0.1] 20220825
 ### Added
@@ -662,9 +2162,9 @@ All notable changes to this project will be documented in this file.
 
 ## [12.0.2.2] 20220701
 ### Added
-- Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data (#15834)
-- Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data (#15834)
-- Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data (#15834)
+- Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurrence data (#15834)
+- Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurrence data (#15834)
+- Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurrence data (#15834)
 
 ## [12.0.2.1] 20220622
 ### Added
@@ -735,7 +2235,7 @@ All notable changes to this project will be documented in this file.
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only (#13515)
 - Sonoff SPM delayed SetPowerOnState (#13447)
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` (#15350)
-- Support for flowrate meters like YF-DN50 and similary (#15474)
+- Support for flowrate meters like YF-DN50 and similar (#15474)
 - Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy (#15513)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) (#15530)
 
@@ -892,14 +2392,14 @@ All notable changes to this project will be documented in this file.
 - Support for MQ analog sensor for air quality by Francesco Adriani (#14581)
 - Command ``SetOption134 1`` to disable PWM auto-phasing for lights by default (new behavior) (#14590)
 - Increase PWM channels to 16 (Esp32 only)
-- Initial support for ESP32S3 with support for 38 configurable GPIOs
+- Initial support for ESP32-S3 with support for 38 configurable GPIOs
 
 ### Changed
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7
 - ESP32 core library from v2.0.2 to v2.0.2.1 (#14553)
 
 ### Fixed
-- OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
+- OneWire-Stickbreaker (DS18x20) library support for ESP32-S2 (#14338)
 
 ## [2022.01.2 = 10.1.0.5] 20220116
 ### Added
@@ -992,7 +2492,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - (Internal) Range conversion edge values
 - NimBLE to v.1.3.3
-- MQTT TLS dual mode (CA or fingeprint) in same firmware, ``SetOption132 1`` to force fingerprint
+- MQTT TLS dual mode (CA or fingerprint) in same firmware, ``SetOption132 1`` to force fingerprint
 - Toolchains for ESP32x changed from 8.4.0-2021r1 to 8.4.0-2021r2
 
 ### Fixed
@@ -1007,7 +2507,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 fix leftover GPIO configuration after restart
 - ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) (#13447)
 - WS2812 scheme 13 stairs effect (#13595)
-- ESP32 Preliminary support for Tasmota Apps (.tapp extesions)
+- ESP32 Preliminary support for Tasmota Apps (.tapp extensions)
 - ESP32 Berry support for neopixel (WS2812, SK6812)
 - Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages (#13750)
 - ESP32 OTA over HTTPS
@@ -1016,7 +2516,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
-- Removed ILI9488 driver in favor of Unversal Display Driver
+- Removed ILI9488 driver in favor of Universal Display Driver
 - IRremoteESP8266 library from v2.7.20 to v2.8.0 (#13738)
 - Ethernet hostname ending in ``_eth`` to ``-eth`` according to RFC952
 - ESP32 core library from v2.0.1 to v2.0.1.1 (#13768)
@@ -1088,10 +2588,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``WebGetConfig <url>`` if ``#define USE_WEBGETCONFIG`` is enabled to restore/init configuration from external webserver (#13034)
 - Berry class ``webclient`` for HTTP/HTTPS requests
-- Support for ESP32S2 GPIOs
+- Support for ESP32-S2 GPIOs
 - ESP32 add GPIO 6/7/8/11 to template and remove GPIO 28-31 (remapping so backwards compatible)
-- Crash recorder ``Status 12`` for ESP32/ESP32S2/ESP32C3, supporting Esp-idf 3.3/4.4
-- Support for ESP32/ESP32S2 DAC gpio via Berry
+- Crash recorder ``Status 12`` for ESP32/ESP32-S2/ESP32-C3, supporting Esp-idf 3.3/4.4
+- Support for ESP32/ESP32-S2 DAC gpio via Berry
 - Berry support for Serial
 - Support for Sensirion SCD40/SCD41 CO2 sensor (#13139)
 - Support for BL0939 energy monitor as used in ESP32 based Sonoff Dual R3 V2 Pow (#13195)
@@ -1137,13 +2637,13 @@ All notable changes to this project will be documented in this file.
 
 ## [9.5.0.6] 20210820
 ### Added
-- Version bump to monitor possible HTTP issues releated to ``SetOption128``
+- Version bump to monitor possible HTTP issues related to ``SetOption128``
 
 ### Changed
 - Berry now compiling in ``strict`` mode to catch more bugs
 
 ### Fixed
-- Fixed PWM5 on ESP32C3
+- ESP32-C3 PWM5
 
 ## [9.5.0.5] 20210815
 ### Added
@@ -1792,7 +3292,7 @@ All notable changes to this project will be documented in this file.
 - Exception 28 due to device group buffer overflow (#9459)
 - Shutter timing problem due to buffer overflow in calibration matrix (#9458)
 - Light wakeup exception 0 (divide by zero) when ``WakeupDuration`` is not initialised (#9466)
-- ADC initalization sequence (#9473)
+- ADC initialization sequence (#9473)
 - Thermostat sensor status corruption regression from v8.5.0.1 (#9449)
 
 ### Removed
@@ -1886,7 +3386,7 @@ All notable changes to this project will be documented in this file.
 - Command ``DzSend<type> <index>,<value1(;value2)|state>`` to send values or state to Domoticz
 - Command ``SetOption100 0/1`` to remove Zigbee ``ZbReceived`` value from ``{"ZbReceived":{xxx:yyy}}`` JSON message
 - Command ``SetOption101 0/1`` to add the Zigbee source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
-- Command (``S``)``SerialSend6`` \<comma seperated values\> (#8937)
+- Command (``S``)``SerialSend6`` \<comma separated values\> (#8937)
 - Support for Sonoff Zigbee Bridge as module 75 (#8583)
 
 ### Changed
@@ -1905,7 +3405,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption97 0/1`` to switch between Tuya serial speeds 9600 bps (0) or 115200 bps (1)
 - Command ``SetOption98 0/1`` to provide rotary rule triggers (1) instead of controlling light (0)
 - Command ``SetOption99 0/1`` to enable zero cross detection on PWM dimmer
-- Support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adaptater. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
+- Support for Energy sensor (Denky) for French Smart Metering meter provided by global Energy Providers, need a adapter. See dedicated full [blog](http://hallard.me/category/tinfo/) about French teleinformation stuff
 - Library to be used for decoding Teleinfo (French Metering Smart Meter)
 - Support for single wire LMT01 temperature Sensor by justifiably (#8713)
 - Compile time interlock parameters (#8759)
@@ -2346,7 +3846,7 @@ All notable changes to this project will be documented in this file.
 - Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
 - Fix WS2812 power control (#7090)
 - Change light color schemes 2, 3 and 4 from color wheel to Hue driven with user Saturation control
-- Change log buffer size from 520 to 700 characters accomodating full rule text (#7110)
+- Change log buffer size from 520 to 700 characters accommodating full rule text (#7110)
 
 ### 7.1.1 20191201
 
@@ -2708,7 +4208,7 @@ All notable changes to this project will be documented in this file.
 - Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
 - Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
 - Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
-- Add all 5 PWM channels individually adressable with LEDs. (#5741)
+- Add all 5 PWM channels individually addressable with LEDs. (#5741)
 - Add reset of Energy values when connection to sensor is lost for over 4 seconds (#5874, #5881)
 - Add checkbox to GUI password field enabling visibility during password entry only (#5934)
 
@@ -2736,7 +4236,7 @@ All notable changes to this project will be documented in this file.
 - Fix mDNS addService (#4938, #4951)
 - Fix HAss discovery of MHZ19(B) sensors (#4992)
 - Fix some exceptions and watchdogs due to lack of stack space (#5215)
-- Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
+- Fix GUI wifi password acception starting with asterisks (*) (#5231, #5242)
 - Fix command WebSend intermittent results (#5273, #5304)
 - Fix additional characters in fallbacktopic, hostname and mqttclient on core 2.5.0 (#5359, #5417)
 - Fix Energy TotalStartTime when commands EnergyReset0 and/or EnergyReset3 used (#5373)
@@ -2986,7 +4486,7 @@ All notable changes to this project will be documented in this file.
 - Remove forced restart when sleep command is executed (#3554)
 - Fix invalid response using more than 4 switches and domoticz
 - Fix sonoff-minimal not using default settings
-- Fix unsecure main webpage update
+- Fix insecure main webpage update
 - Fix DHT driver mixing values for different sensors (#1797)
 - Fix EnergyReset3 regression not clearing total energy (#2723)
 - Fix rules once regression from v6.1.0 (#3198, #3226)
@@ -3061,10 +4561,10 @@ All notable changes to this project will be documented in this file.
 - Add CRC to Settings making future upgrades more fail-safe
 - Add feature information to Status 4
 - Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
-- Add Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
+- Add Slots on the KNX Web Menu to select Group Address to receive data to trigger rules
 - Add two rule sets of 511 characters using commands rule1, rule2 and rule3
 - Add Console Commands to send KNX Commands and KNX Values
-- Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
+- Add Slots on the KNX Web Menu to select Group Address to send data from console commands
 - Add Events to trigger rules when a command or read requests is received from KNX
 - Add command SetOption30 to enforce Hass discovery as light group (#1784)
 - Add support for BlitzWolf BW-SHP2 (and Homecube, Gosund SP1) Energy Monitoring Smart Socket (#2223)
@@ -3137,8 +4637,8 @@ All notable changes to this project will be documented in this file.
 - Change user_config_override usage by providing user_config_override_sample.h (#2228)
 - Change MQTT response topic for Energy changes from ENERGY to SENSOR (#2229, #2251)
 - Change default Reset configuration time from 4 seconds to 40 seconds on Button hold (#2268)
-- Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accomodate rules (#2560)
-- Change Counter JSON message from {"Counter1":0,"Counter3":0} to {"COUNTER":{"C1":0,"C3":0}} to accomodate rules
+- Change ESP8266 Analog JSON message from {"Analog0:123"} to {"ANALOG":{"A0:123"}} to accommodate rules (#2560)
+- Change Counter JSON message from {"Counter1":0,"Counter3":0} to {"COUNTER":{"C1":0,"C3":0}} to accommodate rules
 - Change ADS1115 JSON message from {"ADS1115":{"Analog0":123,"Analog1":123}} to {"ADS1115":{"A0":123,"A1":123}}
 - Fix intermittent exception when dns lookup is used while sleep is enabled
 - Fix 5.4.0 regression turning off single press after button hold during 4x hold time
@@ -3146,7 +4646,7 @@ All notable changes to this project will be documented in this file.
 - Fix NTP sync to Thu Jan 01 08:00:10 1970 results in uptime 17651+ days (core2.4.1/sdk2.2.1)
 - Fix MAX31850 higher temperatures (#1269)
 - Fix freeing more code space when emulation is disabled (#1592)
-- Fix providing web page configuratin option for Friendly Name when no device (relay or light) is configured (#1850)
+- Fix providing web page configuration option for Friendly Name when no device (relay or light) is configured (#1850)
 - Fix compile error when define HOME_ASSISTANT_DISCOVERY_ENABLE is not set (#1937)
 - Fix MQTT TLS fingerprint validation (#2033)
 - Fix update temperature on DS18x20 drivers (#2328)
@@ -3210,7 +4710,7 @@ All notable changes to this project will be documented in this file.
 - Add multiple color entry support for command Led like Led2 120000 001200 000012 setting led2 as Red, Led3 as Green and Led4 as Blue (#2303)
 - Add hexadecimal RGB color entry on RGBCW leds (#2304)
 - Add support for SGP30 gas and air quality sensor (#2307)
-- Add optional Sunrise and Sunset timers with commands Latitide and Longitude to be enabled with define USE_SUNRISE in user_config.h (#2317)
+- Add optional Sunrise and Sunset timers with commands Latitude and Longitude to be enabled with define USE_SUNRISE in user_config.h (#2317)
 - Add timer sunrise and sunset offset (#2378)
 - Add user selectable defines for Sunrise/set Dawn option (#2378)
 - Add optional KNX IP Protocol Support (#2402)
@@ -3237,7 +4737,7 @@ All notable changes to this project will be documented in this file.
 - Change weblog memory usage (#1730, #1793, #1819)
 - Update TasmotaSerial library to 1.1.0
 - Update language files Italian (#1594), Dutch (#1723) and Spanish (#1722)
-- Fix Non-English JSON temperature unit attachement
+- Fix Non-English JSON temperature unit attachment
 - Fix Arilux RF induced exception by moving interrupt handler to iram on non ESP8266/Arduino lib v2.3.0
 - Fix truncated command names and wrong response for DomoticzSwitchIdx (#1571)
 - Fix %-sign issue as printf escape character in Humidity and Sonoff SC (#1579)
@@ -3505,7 +5005,7 @@ All notable changes to this project will be documented in this file.
 - Add Sonoff T1 support (#582)
 - Add AnalogInput0 if configured as Analog Input to webpage (#697, #746)
 - Add command SetOption14 0|1 to enable interlock mode (#719, #721)
-- Fix Mitsubishi HVAC IR power controll (#740)
+- Fix Mitsubishi HVAC IR power control (#740)
 
 ### 5.5.2 20170808
 
@@ -3535,9 +5035,9 @@ All notable changes to this project will be documented in this file.
 - Smoothing WS2812 animation poll, invert fade speed and max allowed wakeup time down to 3000 seconds
 - Fix initial button press detection
 - Add support for Sonoff RF Bridge 433 using command RfKey
-- Fix regression from 5.0.7 by increasing message buffer size from 360 to 368 to accomodate 4 x DS18x20 sensors (#637)
+- Fix regression from 5.0.7 by increasing message buffer size from 360 to 368 to accommodate 4 x DS18x20 sensors (#637)
 - Add GroupTopic to Topic test when using ButtonTopic/SwitchTopic to send either ON/OFF or TOGGLE (#642)
-- Adjust HLW calibration limits to accomodate HuaFan device and add commands HlwPSet, HlwUSet and HlwISet (#654)
+- Adjust HLW calibration limits to accommodate HuaFan device and add commands HlwPSet, HlwUSet and HlwISet (#654)
 
 ### 5.4.0 20170725
 
@@ -3715,7 +5215,7 @@ All notable changes to this project will be documented in this file.
 
 ### 4.1.3 20170410
 
-- Add user configuarble GPIO to module S20 Socket and Slampher
+- Add user configurable GPIO to module S20 Socket and Slampher
 - Add support for Sonoff SC (#112)
 - Set PWM frequency from 1000Hz to 910Hz as used on iTead Sonoff Led firmware (#122)
 - Set Sonoff Led unconfigured floating outputs to 0 to reduce exceptions due to power supply instabilities (#122)
@@ -3776,7 +5276,7 @@ All notable changes to this project will be documented in this file.
 - Add PWM output control with commands PWM1 to PWM5 using user selectable GPIOs (#211)
 - Fix exceptions due to low values of commands HlwPCal (10000), HlwUCal (1000) and HlwICal (2500) (#223)
 - Add Switch state to sensor status (#227, #233)
-- Add user configuarble GPIO to module Sonoff Touch (#228)
+- Add user configurable GPIO to module Sonoff Touch (#228)
 - Add define WEB_PORT to user_config.h to change default web server port from 80 (#232)
 - Fix failed Ota Firmware upgrade started from Web page (#235)
 
@@ -4180,7 +5680,7 @@ All notable changes to this project will be documented in this file.
 
 - Add optional EXPERIMENTAL TLS to MQTT (#49)
 - Fix MQTT payload handling (#111)
-- Optimzed WeMo code
+- Optimized WeMo code
 
 ### 2.0.21a 20161201
 
@@ -4276,7 +5776,7 @@ All notable changes to this project will be documented in this file.
 ### 2.0.8 20161108
 
 - Add initial status after power on
-- Seperate driver files
+- Separate driver files
 - Fix hlw code and calibrate Pow
 - Move user config defines to user_config.h (#61)
 
@@ -4339,7 +5839,7 @@ All notable changes to this project will be documented in this file.
 
 - Add more lines to console
 - Add timeout and disable MQTT on web upload
-- Add command SAVEDATA to control parameter save (for flash wear afficionados) (#30)
+- Add command SAVEDATA to control parameter save (for flash wear aficionados) (#30)
 
 ### 1.0.34 20160926
 
@@ -4364,7 +5864,7 @@ All notable changes to this project will be documented in this file.
 
 - Fix DS18B20 misread if teleperiod = 2
 - Tuned sensor code
-- Updated prefered ElectroDragon connection to Relay 1 and Button 1
+- Updated preferred ElectroDragon connection to Relay 1 and Button 1
 - Moved SONOFF and ELECTRO_DRAGON port config to user_config.h
 
 ### 1.0.30 20160902
@@ -4495,7 +5995,7 @@ All notable changes to this project will be documented in this file.
 
 ### 1.0.14 20160722
 
-- Seperate user config from sonoff.ino to user_config.h (pucebaboon)
+- Separate user config from sonoff.ino to user_config.h (pucebaboon)
 - Change defaults from sidnas2 to domus1
 - Add MQTT status message as status 6 (pucebaboon)
 - Add status type to message (pucebaboon)
@@ -4540,7 +6040,7 @@ All notable changes to this project will be documented in this file.
 - Add UDP syslog support
 - Change HOST command to MQTTHOST command
 - Add commands SYSLOG, SERIALLOG and LOGHOST
-- Change hostname to lower case to distinguise between open-sdk version
+- Change hostname to lower case to distinguish between open-sdk version
 - Add support for ESP-12F used in my modified wkaku power socket switch
 - Fix timezone command
 - Add RTC month names for future use

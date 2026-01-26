@@ -228,6 +228,13 @@ enum argo_ac_remote_model_t {
   SAC_WREM3        // (2) ARGO WREM3 remote (touch buttons), bit-len vary by cmd
 };
 
+/// Toshiba A/C model numbers
+enum toshiba_ac_remote_model_t {
+  kToshibaGenericRemote_A = 0,  // Default from existing codebase
+  kToshibaGenericRemote_B = 1,  // Newly discovered remote control b, applies to
+  // many remote models such as WA-TH03A, WA-TH04A etc.
+};
+
 // Classes
 
 /// Class for sending all basic IR protocols.
@@ -619,11 +626,13 @@ class IRsend {
                         uint16_t nbytes = kCarrierAc128StateLength,
                         uint16_t repeat = kCarrierAc128MinRepeat);
 #endif  // SEND_CARRIER_AC128
-#if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
+#if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC160 || \
+    SEND_HAIER_AC176)
   void sendHaierAC(const unsigned char data[],
                    const uint16_t nbytes = kHaierACStateLength,
                    const uint16_t repeat = kHaierAcDefaultRepeat);
-#endif  // (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
+#endif  // (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC160 ||
+        //  SEND_HAIER_AC176)
 #if SEND_HAIER_AC_YRW02
   void sendHaierACYRW02(const unsigned char data[],
                         const uint16_t nbytes = kHaierACYRW02StateLength,
@@ -885,6 +894,16 @@ class IRsend {
                     const uint16_t nbytes = kYorkStateLength,
                     const uint16_t repeat = kNoRepeat);
 #endif  // SEND_YORK
+#if SEND_BLUESTARHEAVY
+  void sendBluestarHeavy(const unsigned char data[],
+                       const uint16_t nbytes = kBluestarHeavyStateLength,
+                       const uint16_t repeat = kNoRepeat);
+#endif  // SEND_BLUESTARHEAVY
+#if SEND_EUROM
+  void sendEurom(const uint8_t data[],
+                 const uint16_t nbytes = kEuromStateLength,
+                 const uint16_t repeat = kNoRepeat);
+#endif  // SEND_EUROM
 
  protected:
 #ifdef UNIT_TEST

@@ -2783,7 +2783,7 @@ FLAC__bool read_residual_partitioned_rice_(FLAC__StreamDecoder *decoder, uint32_
 		if(rice_parameter < pesc) {
 			partitioned_rice_contents->raw_bits[partition] = 0;
 			u = (partition_order == 0 || partition > 0)? partition_samples : partition_samples - predictor_order;
-			if(!FLAC__bitreader_read_rice_signed_block(decoder->private_->input, residual + sample, u, rice_parameter))
+			if(!FLAC__bitreader_read_rice_signed_block(decoder->private_->input, (int*) residual + sample, u, rice_parameter))
 				return false; /* read_callback_ sets the state for us */
 			sample += u;
 		}
@@ -2792,7 +2792,7 @@ FLAC__bool read_residual_partitioned_rice_(FLAC__StreamDecoder *decoder, uint32_
 				return false; /* read_callback_ sets the state for us */
 			partitioned_rice_contents->raw_bits[partition] = rice_parameter;
 			for(u = (partition_order == 0 || partition > 0)? 0 : predictor_order; u < partition_samples; u++, sample++) {
-				if(!FLAC__bitreader_read_raw_int32(decoder->private_->input, &i, rice_parameter))
+				if(!FLAC__bitreader_read_raw_int32(decoder->private_->input, (long int*) &i, rice_parameter))
 					return false; /* read_callback_ sets the state for us */
 				residual[sample] = i;
 			}

@@ -6,7 +6,7 @@
 #include "DataParsers.h"
 #include "DataParser.h"
 #include "Cosem.h"
-#include "ntohll.h"
+#include "ntohll_ams.h"
 
 #define BUF_SIZE_HAN (1280)
 
@@ -18,7 +18,7 @@ class Han_Parser
 public:
     Han_Parser(uint16_t (*)(uint8_t, uint8_t), uint8_t, uint8_t *, uint8_t *);
     ~Han_Parser(void);
-    bool readHanPort(uint8_t **out, uint16_t *size);
+    bool readHanPort(uint8_t **out, uint16_t *size, uint8_t flags);
 		int16_t unwrapData(uint8_t *buf, DataParserContext &context);
 		void printHanReadError(int16_t pos);
 		uint8_t encryptionKey[16];

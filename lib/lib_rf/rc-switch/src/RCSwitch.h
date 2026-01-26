@@ -57,15 +57,16 @@
 #endif
 
 // Number of maximum high/Low changes per packet.
-// We can handle up to (unsigned long) => 32 bit * 2 H/L changes per bit + 2 for sync
+// We can handle up to 36 bit * 2 H/L changes per bit + 2 for sync
 // Для keeloq нужно увеличить RCSWITCH_MAX_CHANGES до 23+1+66*2+1=157
-#define RCSWITCH_MAX_CHANGES 67        // default 67
+//#define RCSWITCH_MAX_CHANGES 75        // default 75 - longest protocol that requires this buffer size is 38/nexus
+#define RCSWITCH_MAX_CHANGES 131        // default 75 - Supports 64 too
 
 // separationLimit: minimum microseconds between received codes, closer codes are ignored.
 // according to discussion on issue #14 it might be more suitable to set the separation
 // limit to the same time as the 'low' part of the sync signal for the current protocol.
 // should be set to the minimum value of pulselength * the sync signal
-#define RCSWITCH_SEPARATION_LIMIT 4100
+#define RCSWITCH_SEPARATION_LIMIT 3600
 
 class RCSwitch {
 
@@ -108,7 +109,7 @@ class RCSwitch {
     void setRepeatTransmit(int nRepeatTransmit);
     #if not defined( RCSwitchDisableReceiving )
     void setReceiveTolerance(int nPercent);
-    void setReceiveProtocolMask(unsigned long long mask);
+    bool setReceiveProtocolMask(unsigned long long mask);
     #endif
 
     /**
@@ -171,6 +172,7 @@ class RCSwitch {
     #if not defined( RCSwitchDisableReceiving )
     static void handleInterrupt();
     static bool receiveProtocol(const int p, unsigned int changeCount);
+    static bool updateSeparationLimit();
     int nReceiverInterrupt;
     #endif
     int nTransmitterPin;
@@ -184,7 +186,7 @@ class RCSwitch {
     volatile static unsigned int nReceivedBitlength;
     volatile static unsigned int nReceivedDelay;
     volatile static unsigned int nReceivedProtocol;
-    const static unsigned int nSeparationLimit;
+    static unsigned int nSeparationLimit;
     /*
      * timings[0] contains sync timing, followed by a number of bits
      */

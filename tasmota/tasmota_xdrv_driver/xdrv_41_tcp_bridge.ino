@@ -37,6 +37,7 @@ uint8_t      client_next = 0;
 uint8_t     *tcp_buf = nullptr;     // data transfer buffer
 bool         ip_filter_enabled = false;
 IPAddress    ip_filter;
+bool         tcp_serial = false;
 
 #include <TasmotaSerial.h>
 TasmotaSerial *TCPSerial = nullptr;
@@ -58,13 +59,20 @@ void TCPLoop(void)
   bool busy;    // did we transfer some data?
   int32_t buf_len;
 
-  if (!TCPSerial) return;
-
   // check for a new client connection
   if ((server_tcp) && (server_tcp->hasClient())) {
     WiFiClient new_client = server_tcp->available();
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s"), new_client.remoteIP().toString().c_str());
+    // count already connected ports
+    uint32_t connected = 0;
+    for (uint32_t i=0; i<nitems(client_tcp); i++) {
+      WiFiClient &client = client_tcp[i];
+      if (client.connected()) {
+        connected++;
+      }
+    }
+
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s (%i already connected)"), new_client.remoteIP().toString().c_str(), connected);
     // Check for IP filtering if it's enabled.
     if (ip_filter_enabled) {
       if (ip_filter != new_client.remoteIP()) {
@@ -81,13 +89,17 @@ void TCPLoop(void)
       WiFiClient &client = client_tcp[i];
       if (!client) {
         client = new_client;
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "Adding connection to slot %i"), i);
         break;
       }
     }
     if (i >= nitems(client_tcp)) {
       i = client_next++ % nitems(client_tcp);
       WiFiClient &client = client_tcp[i];
-      client.stop();
+      if (client.connected()) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "Replacing connection in slot %i, closing connection from %s"), i, client.remoteIP().toString().c_str());
+        client.stop();
+      }
       client = new_client;
     }
   }
@@ -138,19 +150,36 @@ void TCPLoop(void)
 
 void TCPInit(void) {
   if (PinUsed(GPIO_TCP_RX) && PinUsed(GPIO_TCP_TX)) {
-    if (0 == (0x80 & Settings->tcp_config)) // !0x80 means unitialized
-      Settings->tcp_config = 0x80 | ParseSerialConfig("8N1"); // default as 8N1 for backward compatibility
+    if (0 == (0x80 & Settings->tcp_config)) {  // !0x80 means unitialized
+      Settings->tcp_config = 0x80 | ParseSerialConfig("8N1");  // default as 8N1 for backward compatibility
+    }
     tcp_buf = (uint8_t*) malloc(TCP_BRIDGE_BUF_SIZE);
-    if (!tcp_buf) { AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "could not allocate buffer")); return; }
+    if (!tcp_buf) { 
+      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "could not allocate buffer"));
+      return;
+    }
 
-    if (!Settings->tcp_baudrate)  { Settings->tcp_baudrate = 115200 / 1200; }
+    if (!Settings->tcp_baudrate) { 
+      Settings->tcp_baudrate = 115200 / 300;
+    }
+    // patch for ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
+    pinMode(Pin(GPIO_TCP_TX), OUTPUT);
+    digitalWrite(Pin(GPIO_TCP_TX), HIGH);
+    sleep(1);
+#endif // CONFIG_IDF_TARGET_ESP32S3
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
-    if (TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+    tcp_serial = TCPSerial->begin(Settings->tcp_baudrate * 300, ConvertSerialConfig(0x7F & Settings->tcp_config));
+    if (PinUsed(GPIO_TCP_TX_EN)) {
+      TCPSerial->setTransmitEnablePin(Pin(GPIO_TCP_TX_EN));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "TCP Bridge EN is used on Pin %d"), Pin(GPIO_TCP_TX_EN));
+    }
+    if (tcp_serial) {
       if (TCPSerial->hardwareSerial()) {
         ClaimSerial();
       }
 #ifdef ESP32
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "using hardserial %d"), TCPSerial->getUart());
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "Serial UART%d"), TCPSerial->getUart());
 #endif
     } else {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed init serial"));
@@ -167,9 +196,6 @@ void TCPInit(void) {
 // Params: port,<IPv4 allow>
 //
 void CmndTCPStart(void) {
-
-  if (!TCPSerial) { return; }
-
   int32_t tcp_port = XdrvMailbox.payload;
   if (ArgC() == 2) {
     char sub_string[XdrvMailbox.data_len];
@@ -205,28 +231,24 @@ void CmndTCPStart(void) {
 }
 
 void CmndTCPBaudrate(void) {
-  if (!TCPSerial) { return; }
-
-  if ((XdrvMailbox.payload >= 1200) && (XdrvMailbox.payload <= 115200)) {
-    XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
+  if (XdrvMailbox.payload >= 300) {
+    XdrvMailbox.payload /= 300;  // Make it a valid baudrate
     if (Settings->tcp_baudrate != XdrvMailbox.payload) {
       Settings->tcp_baudrate = XdrvMailbox.payload;
-      if (!TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+      if (!TCPSerial->begin(Settings->tcp_baudrate * 300, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed reinit serial"));
       }  // Reinitialize serial port with new baud rate
     }
   }
-  ResponseCmndNumber(Settings->tcp_baudrate * 1200);
+  ResponseCmndNumber(Settings->tcp_baudrate * 300);
 }
 
 void CmndTCPConfig(void) {
-  if (!TCPSerial) { return; }
-
   if (XdrvMailbox.data_len > 0) {
     uint8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
     if ((serial_config >= 0) && (Settings->tcp_config != (0x80 | serial_config))) {
       Settings->tcp_config = 0x80 | serial_config; // default 0x00 should be 8N1
-      if (!TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+      if (!TCPSerial->begin(Settings->tcp_baudrate * 300, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed reinit serial"));
       }  // Reinitialize serial port with new config
     }
@@ -240,8 +262,6 @@ void CmndTCPConfig(void) {
 //
 void CmndTCPConnect(void) {
   int32_t tcp_port = XdrvMailbox.payload;
-
-  if (!TCPSerial) { return; }
 
   if (ArgC() == 2) {
     char sub_string[XdrvMailbox.data_len];
@@ -283,16 +303,20 @@ bool Xdrv41(uint32_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_LOOP:
-      TCPLoop();
-      break;
-    case FUNC_PRE_INIT:
-      TCPInit();
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(kTCPCommands, TCPCommand);
-      break;
+  if (FUNC_PRE_INIT == function) {
+    TCPInit();
+  } else if (tcp_serial) {
+    switch (function) {
+      case FUNC_LOOP:
+        TCPLoop();
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kTCPCommands, TCPCommand);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
+    }
   }
   return result;
 }

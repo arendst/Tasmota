@@ -44,6 +44,7 @@ struct PZEMAC {
   uint8_t send_retry = 0;
   uint8_t phase = 0;
   uint8_t address = 0;
+  uint8_t addr[ENERGY_MAX_PHASES];
   uint8_t address_step = ADDR_IDLE;
 } PzemAc;
 
@@ -68,6 +69,7 @@ void PzemAcEverySecond(void)
     } else {
       Energy->data_valid[PzemAc.phase] = 0;
       if (10 == registers) {
+        PzemAc.addr[PzemAc.phase] = PZEM_AC_DEVICE_ADDRESS + PzemAc.phase;
 
         //           0     1     2     3     4     5     6     7     8     9           = ModBus register
         //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24  = Buffer index
@@ -79,11 +81,11 @@ void PzemAcEverySecond(void)
         Energy->frequency[PzemAc.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0f;                                              // 50.0 Hz
         Energy->power_factor[PzemAc.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0f;                                          // 1.00
         Energy->import_active[PzemAc.phase] = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]) / 1000.0f;  // 4294967.295 kWh
-        if (PzemAc.phase == Energy->phase_count -1) {
-          if (TasmotaGlobal.uptime > (PZEM_AC_STABILIZE * ENERGY_MAX_PHASES)) {
-            EnergyUpdateTotal();
-          }
-        }
+      }
+    }
+    if (PzemAc.phase == Energy->phase_count -1) {
+      if (TasmotaGlobal.uptime > (PZEM_AC_STABILIZE * ENERGY_MAX_PHASES)) {
+        EnergyUpdateTotal();
       }
     }
   }
@@ -120,6 +122,9 @@ void PzemAcSnsInit(void)
   uint8_t result = PzemAcModbus->Begin(9600);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PAC: Serial UART%d"), PzemAcModbus->getUart());
+#endif
     Energy->phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
     PzemAc.phase = 0;
   } else {
@@ -147,6 +152,20 @@ bool PzemAcCommand(void)
   return serviced;
 }
 
+void PzemAcShow(bool json) {
+  float address[ENERGY_MAX_PHASES];
+  for (uint32_t i = 0; i < ENERGY_MAX_PHASES; i++) {
+    address[i] = PzemAc.addr[i];
+  }
+  if (json) {
+    ResponseAppend_P(PSTR(",\"Address\":%s"), EnergyFmt(address, 0));
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_SNS_ADDRESS, WebEnergyFmt(address, 0));
+#endif  // USE_WEBSERVER
+  }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -159,6 +178,14 @@ bool Xnrg05(uint32_t function)
     case FUNC_ENERGY_EVERY_SECOND:
       if (TasmotaGlobal.uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
       break;
+    case FUNC_JSON_APPEND:
+      PzemAcShow(1);
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_COL_SENSOR:
+      PzemAcShow(0);
+      break;
+#endif  // USE_WEBSERVER
     case FUNC_COMMAND:
       result = PzemAcCommand();
       break;

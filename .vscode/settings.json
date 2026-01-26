@@ -52,7 +52,7 @@
       },
       {
         "text": "$(arrow-right)",
-        "tooltip": "PlatformIO: Upload and Monitor",
+        "tooltip": "PlatformIO: Build, Upload and Monitor",
         "commands": "platformio-ide.uploadAndMonitor"
       },
       {
@@ -70,5 +70,6 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
-    ]
+    ],
+    "C_Cpp.dimInactiveRegions": false
   }

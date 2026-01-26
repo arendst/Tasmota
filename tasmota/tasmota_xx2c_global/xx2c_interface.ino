@@ -413,7 +413,11 @@ const uint8_t kI2cList[] = {
 /*********************************************************************************************/
 
 bool I2cEnabled(uint32_t i2c_index) {
-  return (TasmotaGlobal.i2c_enabled && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
+  return ((TasmotaGlobal.i2c_enabled[0]
+#ifdef USE_I2C_BUS2
+   || TasmotaGlobal.i2c_enabled[1]
+#endif
+   ) && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
 }
 
 void I2cDriverState(void) {

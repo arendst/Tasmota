@@ -21,8 +21,6 @@
 
 #ifdef USE_BERRY
 
-#ifdef USE_WEBCLIENT
-
 #include <berry.h>
 // #include "be_sys.h"
 #include <lwip/sockets.h>
@@ -45,6 +43,13 @@ public:
 
   AsyncTCPClient() : sockfd(-1), state(AsyncTCPState::INPROGRESS), _timeout_ms(1), local_port(-1) {
 
+  }
+
+  // following is used when accepting a new connection as server
+  AsyncTCPClient(int fd) : sockfd(fd), state(AsyncTCPState::CONNECTED), _timeout_ms(1), local_port(-1) {
+    if (sockfd < 0) {
+      state = AsyncTCPState::REFUSED;
+    }
   }
 
   ~AsyncTCPClient() {
@@ -75,6 +80,9 @@ public:
         tmpaddr->sin6_family = AF_INET6;
         memcpy(tmpaddr->sin6_addr.un.u8_addr, &ip[0], 16);
         tmpaddr->sin6_port = htons(port);
+#if ESP_IDF_VERSION_MAJOR >= 5
+        tmpaddr->sin6_scope_id = ip.zone();
+#endif
     } else {
 #endif
         struct sockaddr_in *tmpaddr = (struct sockaddr_in *)&serveraddr;
@@ -176,8 +184,7 @@ public:
             stop();
             break;
           default:
-            // AddLog(LOG_LEVEL_DEBUG, "BRY: tcpclientasync unexpected: RES: %d, ERR: %d", res, errno);
-            stop();
+            // AddLog(LOG_LEVEL_DEBUG, "BRY: tcpclientasync unexpected: RES: %d, ERR: %d, sockfd=%d", res, errno, sockfd);
             break;
         }
       } else {
@@ -314,7 +321,6 @@ public:
           struct sockaddr_in *s = (struct sockaddr_in *)&local_address;
           local_port = ntohs(s->sin_port);
           local_addr = IPAddress((uint32_t)(s->sin_addr.s_addr));
-          // return IPAddress((uint32_t)(s->sin_addr.s_addr));
       }
 #ifdef USE_IPV6
       // IPv6, but it might be IPv4 mapped address
@@ -322,23 +328,58 @@ public:
           struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&local_address;
           local_port = ntohs(saddr6->sin6_port);
           if (T_IN6_IS_ADDR_V4MAPPED(saddr6->sin6_addr.un.u32_addr)) {
-              local_addr = IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12);
-              // return IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12);
+              local_addr = IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12, 0);
           } else {
-              local_addr = IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr));
-              // return IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr));
+              local_addr = IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr), saddr6->sin6_scope_id);
           }
       }
 #endif // USE_IPV6
     }
   }
 
+
+  IPAddress remoteIP() const {
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof addr;
+    getpeername(sockfd, (struct sockaddr*)&addr, &len);
+
+    // IPv4 socket, old way
+    if (((struct sockaddr*)&addr)->sa_family == AF_INET) {
+        struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+        return IPAddress((uint32_t)(s->sin_addr.s_addr));
+    }
+
+#if LWIP_IPV6
+    // IPv6, but it might be IPv4 mapped address
+    if (((struct sockaddr*)&addr)->sa_family == AF_INET6) {
+        struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&addr;
+        if (T_IN6_IS_ADDR_V4MAPPED(saddr6->sin6_addr.un.u32_addr)) {
+            return IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12, 0);
+        } else {
+            return IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr), saddr6->sin6_scope_id);
+        }
+    }
+#endif
+    return (IPAddress(0,0,0,0));
+
+  }
+  uint16_t remotePort() const {
+
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof addr;
+    getpeername(sockfd, (struct sockaddr*)&addr, &len);
+    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+    return ntohs(s->sin_port);
+  }
+
+  const IPAddress localIP() const { return local_addr; }
+  uint16_t localPort() const {  return local_port; }
+
+
 public:
   int           sockfd;
   AsyncTCPState state;
   uint32_t      _timeout_ms;
-  String        remota_addr;       // address in numerical format (after DNS resolution), either IPv4 or IPv6
-  uint16_t      remote_port;       // remote port number
   IPAddress     local_addr;
   int32_t       local_port;       // -1 if unknown or invalid
 };
@@ -461,17 +502,21 @@ extern "C" {
       tcp->update_local_addr_port();
       if (tcp->local_port > 0) {
         be_map_insert_int(vm, "local_port", tcp->local_port);
-        be_map_insert_str(vm, "local_addr", tcp->local_addr.toString().c_str());
+        be_map_insert_str(vm, "local_addr", tcp->local_addr.toString(true).c_str());
       }
+      be_map_insert_int(vm, "remote_port", tcp->remotePort());
+      be_map_insert_str(vm, "remote_addr", tcp->remoteIP().toString(true).c_str());
     }
     be_pop(vm, 1);
     be_return(vm);
   }
 
-  // tcp.write(bytes | string) -> int
+  // tcp.write(bytes | string[, offset:int, len:int]) -> int
   int32_t wc_tcpasync_write(struct bvm *vm);
   int32_t wc_tcpasync_write(struct bvm *vm) {
     int32_t argc = be_top(vm);
+    int32_t offset = 0;
+    int32_t len = -1;   // send all of it
     if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
       AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
       const char * buf = nullptr;
@@ -482,8 +527,22 @@ extern "C" {
       } else { // bytes
         buf = (const char*) be_tobytes(vm, 2, &buf_len);
       }
-      size_t bw = tcp->write(buf, buf_len);
-      be_pushint(vm, bw);
+      if (argc >= 3 && be_isint(vm, 3)) { offset = be_toint(vm, 3); }
+      if (argc >= 4 && be_isint(vm, 4)) { len = be_toint(vm, 4); }
+
+      if (offset < 0) { offset = 0; }  // default to the beginning of the buffer
+      if (offset >= buf_len) { len = 0; offset = 0; }  // default to the end of the buffer (nothing to write)
+      else if (len < 0) { len = buf_len - offset; }  // default to the end of the buffer
+      else if (offset + len > buf_len) { len = buf_len - offset; }    // len is too long, adjust
+
+      if (len > 0) {
+        // now adjust the buffer with offset
+        buf_len += offset;
+        size_t bw = tcp->write(buf, buf_len);
+        be_pushint(vm, bw);
+      } else {
+        be_pushint(vm, 0);    // nothing to send
+      }
       be_return(vm);  /* return code */
     }
     be_raise(vm, kTypeError, nullptr);
@@ -535,5 +594,4 @@ extern "C" {
 
 }
 
-#endif // USE_WEBCLIENT
 #endif  // USE_BERRY

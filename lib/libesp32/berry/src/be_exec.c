@@ -79,6 +79,10 @@ void be_throw(bvm *vm, int errorcode)
 #if BE_USE_PERF_COUNTERS
     vm->counter_exc++;
 #endif
+    /* if BE_MALLOC_FAIL then call */
+    if (errorcode == BE_MALLOC_FAIL) {
+        if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_MALLOC_FAIL, vm->gc.usage);
+    }
     if (vm->errjmp) {
         vm->errjmp->status = errorcode;
         exec_throw(vm->errjmp);
@@ -213,6 +217,15 @@ BERRY_API int be_loadbuffer(bvm *vm,
     sbuf.s = buffer;
     sbuf.len = length;
     return be_protectedparser(vm, name, _sgets, &sbuf, bfalse);
+}
+
+BERRY_API int be_loadbuffer_local(bvm *vm,
+    const char *name, const char *buffer, size_t length, bbool islocal)
+{
+    struct strbuf sbuf;
+    sbuf.s = buffer;
+    sbuf.len = length;
+    return be_protectedparser(vm, name, _sgets, &sbuf, islocal);
 }
 
 static int fileparser(bvm *vm, const char *name, bbool islocal)

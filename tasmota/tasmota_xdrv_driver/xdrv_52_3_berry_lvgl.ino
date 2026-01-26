@@ -22,11 +22,21 @@
 #ifdef USE_LVGL
 
 #include <berry.h>
+
+// silence warning with Core3
+#pragma GCC diagnostic push
+#if defined(__GNUC__) && (__GNUC__ >= 10)
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#endif
 #include "lvgl.h"
+#pragma GCC diagnostic pop
+
 #include "be_mapping.h"
 #include "be_ctypes.h"
 #include "lv_berry.h"
-#include "Adafruit_LvGL_Glue.h"
+#ifdef USE_LVGL_HASPMOTA
+  #include "be_lv_haspmota.h"
+#endif // USE_LVGL_HASPMOTA
 
 // Berry easy logging
 extern "C" {
@@ -35,7 +45,13 @@ extern "C" {
   extern const size_t lv_classes_size;
 }
 
-extern Adafruit_LvGL_Glue * glue;
+// Forward declaration of helper functions
+extern bool lvgl_started(void);
+extern void lvgl_set_screenshot_file(File * file);
+extern void lvgl_reset_screenshot_file(void);
+File * lvgl_get_screenshot_file(void);
+extern void lv_set_paint_cb(void* cb);
+extern void* lv_get_paint_cb(void);
 
 /********************************************************************
  * Structures used by LVGL_Berry
@@ -87,7 +103,7 @@ public:
 
 class LVBE_globals {
 public:
-  lv_indev_drv_t indev_drv;
+  lv_indev_t * indev;               // TODO still needed? or `indev_list` is enough?
   LList<lv_indev_t*> indev_list;
   // input devices
   LVBE_button btn[3];
@@ -121,12 +137,16 @@ extern "C" {
 #ifdef USE_LVGL_FREETYPE
     int argc = be_top(vm);
     if (argc == 3 && be_isstring(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3)) {
-      lv_ft_info_t info = {};
-      info.name = be_tostring(vm, 1);
-      info.weight = be_toint(vm, 2);
-      info.style = be_toint(vm, 3);
-      lv_ft_font_init(&info);
-      lv_font_t * font = info.font;
+
+// lv_font_t * lv_freetype_font_create(const char * pathname, lv_freetype_font_render_mode_t render_mode, uint32_t size,
+//                                     lv_freetype_font_style_t style);
+      // lv_ft_info_t info = {};
+      const char * name = be_tostring(vm, 1);
+      int32_t weight = be_toint(vm, 2);
+      lv_freetype_font_style_t style = (lv_freetype_font_style_t) be_toint(vm, 3);
+      lv_font_t * font = lv_freetype_font_create(name, LV_FREETYPE_FONT_RENDER_MODE_BITMAP, weight, style);
+      // lv_ft_font_init(&info);
+      // lv_font_t * font = info.font;
 
       if (font != nullptr) {
         be_find_global_or_module_member(vm, "lv.lv_font");
@@ -167,11 +187,17 @@ extern "C" {
   #if LV_FONT_MONTSERRAT_10
     { 10, &lv_font_montserrat_10 },
   #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_10
+    { 10, &lv_font_montserrat_tasmota_10 },
+  #endif
   #if LV_FONT_MONTSERRAT_12
     { 12, &lv_font_montserrat_12 },
   #endif
   #if LV_FONT_MONTSERRAT_14
     { 14, &lv_font_montserrat_14 },
+  #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_14
+    { 14, &lv_font_montserrat_tasmota_14 },
   #endif
   #if LV_FONT_MONTSERRAT_16
     { 16, &lv_font_montserrat_16 },
@@ -181,6 +207,9 @@ extern "C" {
   #endif
   #if LV_FONT_MONTSERRAT_20
     { 20, &lv_font_montserrat_20 },
+  #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_20
+    { 20, &lv_font_montserrat_tasmota_20 },
   #endif
   #if LV_FONT_MONTSERRAT_22
     { 22, &lv_font_montserrat_22 },
@@ -193,6 +222,9 @@ extern "C" {
   #endif
   #if LV_FONT_MONTSERRAT_28
     { 28, &lv_font_montserrat_28 },
+  #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_28
+    { 28, &lv_font_montserrat_tasmota_28 },
   #endif
   #if LV_FONT_MONTSERRAT_28_COMPRESSED
     { 28, &lv_font_montserrat_28_compressed, },
@@ -257,6 +289,72 @@ extern "C" {
     { 0, nullptr}
   };
 
+  // icons Font for sizes not covered by montserrat
+  // if montserrat is defined, use it, else import icons font
+  const lv_font_table_t lv_icons_fonts[] = {
+#if LV_FONT_MONTSERRAT_TASMOTA_10
+    { 10, &lv_font_montserrat_tasmota_10 },
+#elif defined(FONT_ICONS_10)
+    { 10, &lv_font_icons_10 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_12
+    { 12, &lv_font_montserrat_tasmota_12 },
+#elif defined(FONT_ICONS_12)
+    { 12, &lv_font_icons_12 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_14
+    { 14, &lv_font_montserrat_tasmota_14 },
+#elif defined(FONT_ICONS_14)
+    { 14, &lv_font_icons_14 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_16
+    { 16, &lv_font_montserrat_tasmota_16 },
+#elif defined(FONT_ICONS_16)
+    { 16, &lv_font_icons_16 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_18
+    { 18, &lv_font_montserrat_tasmota_18 },
+#elif defined(FONT_ICONS_18)
+    { 18, &lv_font_icons_18 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_20
+    { 20, &lv_font_montserrat_tasmota_20 },
+#elif defined(FONT_ICONS_20)
+    { 20, &lv_font_icons_20 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_22
+    { 22, &lv_font_montserrat_tasmota_22 },
+#elif defined(FONT_ICONS_22)
+    { 22, &lv_font_icons_22 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_24
+    { 24, &lv_font_montserrat_tasmota_24 },
+#elif defined(FONT_ICONS_24)
+    { 24, &lv_font_icons_24 },
+#endif
+
+#if LV_FONT_MONTSERRAT_TASMOTA_28
+    { 28, &lv_font_montserrat_tasmota_28 },
+#elif defined(FONT_ICONS_28)
+    { 28, &lv_font_icons_28 },
+#endif
+
+    { 0, nullptr}
+  };
+
+  // // typicons Font
+  // const lv_font_table_t lv_typicons_fonts[] = {
+  //   { 24, &typicons24 },
+  //   { 0, nullptr}
+  // };
+
   // robotocondensed-latin1
   const lv_font_table_t lv_robotocondensed_fonts[] = {
 #if ROBOTOCONDENSED_REGULAR_12_LATIN1
@@ -303,12 +401,14 @@ extern "C" {
 
   // register all included fonts
   const lv_font_names_t lv_embedded_fonts[] = {
+    { "icons", lv_icons_fonts },
     { "montserrat", lv_montserrat_fonts },
     { "seg7", lv_seg7_fonts },
-    { "unscii", lv_unscii_fonts},
+    // { "typicons", lv_typicons_fonts },
 #ifdef USE_LVGL_HASPMOTA
     { "robotocondensed", lv_robotocondensed_fonts },
 #endif
+    { "unscii", lv_unscii_fonts},
     { nullptr, nullptr}
   };
 
@@ -371,10 +471,14 @@ extern "C" {
   /*********************************************************************************************\
    * Tasmota Logo
   \*********************************************************************************************/
-  #include "lvgl_berry/tasmota_logo_64_truecolor_alpha.h"
+  extern const lv_img_dsc_t TASMOTA_Symbol_64;
+  extern const lv_img_dsc_t TASMOTA_Symbol_36_white;
 
-  void lv_img_set_tasmota_logo(lv_obj_t * img) {
-    lv_img_set_src(img, &tasmota_logo_64_truecolor);
+  void lv_image_set_tasmota_logo(lv_obj_t * img) {
+    lv_image_set_src(img, &TASMOTA_Symbol_64);
+  }
+  void lv_image_set_tasmota_logo36(lv_obj_t * img) {    // 36x36 for splash screen
+    lv_image_set_src(img, &TASMOTA_Symbol_36_white);
   }
 
   /*********************************************************************************************\
@@ -415,7 +519,7 @@ extern "C" {
    * 
    * lv.register_button_encoder([inv: bool]) -> nil
   \*********************************************************************************************/
-  void lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
+  void lvbe_encoder_with_keys_read(lv_indev_t * drv, lv_indev_data_t*data);
 
   int lv0_register_button_encoder(bvm *vm);   // add buttons with encoder logic
   int lv0_register_button_encoder(bvm *vm) {
@@ -440,15 +544,14 @@ extern "C" {
     lvbe.btn[2].set_inverted(inverted);
     berry_log_C(D_LOG_LVGL "Button Rotary encoder using GPIOs %d,%d,%d%s", btn0, btn1, btn2, inverted ? " (inverted)" : "");
 
-    lv_indev_drv_init(&lvbe.indev_drv);
-    lvbe.indev_drv.type = LV_INDEV_TYPE_ENCODER;
-    lvbe.indev_drv.read_cb = lvbe_encoder_with_keys_read;
+    lvbe.indev = lv_indev_create();
+    lv_indev_set_type(lvbe.indev, LV_INDEV_TYPE_ENCODER);
+    lv_indev_set_read_cb(lvbe.indev, lvbe_encoder_with_keys_read);
 
-    lv_indev_t * indev = lv_indev_drv_register(&lvbe.indev_drv);
-    lvbe.indev_list.addHead(indev);   // keep track of indevs
+    lvbe.indev_list.addHead(lvbe.indev);   // keep track of indevs      // TODO what do we do with it?
 
-    be_find_global_or_module_member(vm, "lv.lv_indev");
-    be_pushint(vm, (int32_t) indev);
+    be_find_global_or_module_member(vm, "lv.indev");
+    be_pushcomptr(vm, (void*)lvbe.indev);
     be_call(vm, 1);
     be_pop(vm, 1);
 
@@ -468,7 +571,7 @@ extern "C" {
   //   lv_indev_state_t state; /**< LV_INDEV_STATE_REL or LV_INDEV_STATE_PR*/
   // } lv_indev_data_t;
 
-  void lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t *data){
+  void lvbe_encoder_with_keys_read(lv_indev_t * drv, lv_indev_data_t *data){
     // scan through buttons if we need to report something
     uint32_t i;
     for (i = 0; i < 3; i++) {
@@ -500,16 +603,16 @@ extern "C" {
   \********************************************************************************************/
   int lv0_screenshot(bvm *vm);
   int lv0_screenshot(bvm *vm) {
-    if (!glue) { be_return_nil(vm); }
+    if (!lvgl_started()) { be_return_nil(vm); }
 
     char fname[32];
     snprintf(fname, sizeof(fname), "/screenshot-%d.bmp", Rtc.utc_time);
     File f = dfsp->open(fname, "w");
     if (f) {
-      glue->setScreenshotFile(&f);
+      lvgl_set_screenshot_file(&f);
 
-      uint32_t bmp_width = lv_disp_get_hor_res(nullptr);
-      uint32_t bmp_height = lv_disp_get_ver_res(nullptr);
+      uint32_t bmp_width = lv_display_get_horizontal_resolution(nullptr);
+      uint32_t bmp_height = lv_display_get_vertical_resolution(nullptr);
 
       // write BMP header
       static const uint8_t bmp_sign[] = { 0x42, 0x4d };   // BM = Windows
@@ -552,13 +655,26 @@ extern "C" {
       // now we can write the pixels array
 
       // redraw screen
-      lv_obj_invalidate(lv_scr_act());
+      lv_obj_invalidate(lv_screen_active());
       lv_refr_now(lv_disp_get_default());            
 
-      glue->stopScreenshot();
+      lvgl_reset_screenshot_file();
       f.close();
     }
     be_pushstring(vm, fname);
+    be_return(vm);
+  }
+
+  /*********************************************************************************************\
+   * Screenshot in raw format
+  \********************************************************************************************/
+  int lv0_set_paint_cb(bvm *vm);
+  int lv0_set_paint_cb(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_iscomptr(vm, 1)) {
+      lv_set_paint_cb(be_tocomptr(vm, 1));
+    }
+    be_pushcomptr(vm, lv_get_paint_cb());
     be_return(vm);
   }
 }

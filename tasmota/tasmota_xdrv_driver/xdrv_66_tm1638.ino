@@ -232,6 +232,9 @@ bool Xdrv66(uint32_t function) {
 #endif
         result = TmAddKey();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

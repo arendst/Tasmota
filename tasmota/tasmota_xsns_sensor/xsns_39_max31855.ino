@@ -30,51 +30,61 @@
 const char kMax31855Types[] PROGMEM = "MAX31855|MAX6675";
 
 bool max31855_initialized = false;
+uint8_t max31855_pins_used = 0;       //used as a bit array
+uint8_t max31855_count = 0;
 
 struct MAX31855_ResultStruct {
   uint8_t ErrorCode;                  // Error Codes: 0 = No Error / 1 = TC open circuit / 2 = TC short to GND / 4 = TC short to VCC
   float ProbeTemperature;             // Measured temperature of the 'hot' TC junction (probe temp)
   float ReferenceTemperature;         // Measured temperature of the 'cold' TC junction (reference temp)
-} MAX31855_Result;
+} MAX31855_Result[MAX_MAX31855S];
 
 void MAX31855_Init(void) {
-  if (PinUsed(GPIO_MAX31855CS) && PinUsed(GPIO_MAX31855CLK) && PinUsed(GPIO_MAX31855DO)) {
-
+  if (PinUsed(GPIO_MAX31855CLK) && PinUsed(GPIO_MAX31855DO)) {
     // Set GPIO modes for SW-SPI
-    pinMode(Pin(GPIO_MAX31855CS), OUTPUT);
     pinMode(Pin(GPIO_MAX31855CLK), OUTPUT);
     pinMode(Pin(GPIO_MAX31855DO), INPUT);
-
-    // Chip not selected / Clock low
-    digitalWrite(Pin(GPIO_MAX31855CS), HIGH);
+    // Clock low
     digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
 
-    max31855_initialized = true;
+    for (uint32_t i = 0; i < MAX_MAX31855S; i++) {
+      if (PinUsed(GPIO_MAX31855CS, i)) {
+        max31855_pins_used |= 1 << i;  //set lowest bit
+        max31855_count ++;
+        // Set GPIO modes for SW-SPI
+        pinMode(Pin(GPIO_MAX31855CS, i), OUTPUT);
+
+        // Chip not selected
+        digitalWrite(Pin(GPIO_MAX31855CS, i), HIGH);
+
+        max31855_initialized = true;
+      }
+    }
   }
 }
 
 /*
-*   MAX31855_ShiftIn(uint8_t Length)
+*   MAX31855_ShiftIn(uint8_t Length, uint32_t index)
 *   Communicates with MAX31855 via SW-SPI and returns the raw data read from the chip
 */
-int32_t MAX31855_ShiftIn(uint8_t Length) {
+int32_t MAX31855_ShiftIn(uint8_t Length, uint32_t index) {
   int32_t dataIn = 0;
 
-  digitalWrite(Pin(GPIO_MAX31855CS), LOW);       // CS = LOW -> Start SPI communication
-  delayMicroseconds(1);                          // CS fall to output enable = max. 100ns
+  digitalWrite(Pin(GPIO_MAX31855CS, index), LOW);  // CS = LOW -> Start SPI communication
+  delayMicroseconds(1);                             // CS fall to output enable = max. 100ns
 
   for (uint32_t i = 0; i < Length; i++) {
     digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
-    delayMicroseconds(1);                        // CLK pulse width low = min. 100ns / CLK fall to output valid = max. 40ns
+    delayMicroseconds(1);                           // CLK pulse width low = min. 100ns / CLK fall to output valid = max. 40ns
     dataIn <<= 1;
     if (digitalRead(Pin(GPIO_MAX31855DO))) {
       dataIn |= 1;
     }
     digitalWrite(Pin(GPIO_MAX31855CLK), HIGH);
-    delayMicroseconds(1);                        // CLK pulse width high = min. 100ns
+    delayMicroseconds(1);                           // CLK pulse width high = min. 100ns
   }
 
-  digitalWrite(Pin(GPIO_MAX31855CS), HIGH);      // CS = HIGH -> End SPI communication
+  digitalWrite(Pin(GPIO_MAX31855CS, index), HIGH); // CS = HIGH -> End SPI communication
   digitalWrite(Pin(GPIO_MAX31855CLK), LOW);
   return dataIn;
 }
@@ -114,54 +124,67 @@ float MAX31855_GetReferenceTemperature(int32_t RawData) {
 *   Acquires the raw data via SPI, checks for MAX31855 errors and fills result structure
 */
 void MAX31855_GetResult(void) {
-  if (Settings->flag4.max6675) {                  // SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
-    int32_t RawData = MAX31855_ShiftIn(16);
-    int32_t temp = (RawData >> 3) & ((1 << 12) - 1);
+  for (uint32_t i = 0; i < MAX_MAX31855S; i++) {
+    if (max31855_pins_used & (1 << i)) {
+      if (Settings->flag4.max6675) {                  // SetOption94 - Implement simpler MAX6675 protocol instead of MAX31855
+        int32_t RawData = MAX31855_ShiftIn(16, i);
+        int32_t temp = (RawData >> 3) & ((1 << 12) - 1);
 
-    /* Occasionally the sensor returns 0xfff, consider it an error */
-    if (temp == ((1 << 12) - 1)) { return; }
+        /* Occasionally the sensor returns 0xfff, consider it an error */
+        if (temp == ((1 << 12) - 1)) { return; }
 
-    MAX31855_Result.ErrorCode = 0;
-    MAX31855_Result.ReferenceTemperature = NAN;
-    MAX31855_Result.ProbeTemperature = ConvertTemp(0.25f * temp);
-  } else {
-    int32_t RawData = MAX31855_ShiftIn(32);
-    uint8_t probeerror = RawData & 0x7;
+        MAX31855_Result[i].ErrorCode = 0;
+        MAX31855_Result[i].ReferenceTemperature = NAN;
+        MAX31855_Result[i].ProbeTemperature = ConvertTemp(0.25f * temp);
+      } else {
+        int32_t RawData = MAX31855_ShiftIn(32, i);
+        uint8_t probeerror = RawData & 0x7;
 
-    MAX31855_Result.ErrorCode = probeerror;
-    MAX31855_Result.ReferenceTemperature = MAX31855_GetReferenceTemperature(RawData);
-    if (probeerror) {
-      MAX31855_Result.ProbeTemperature = NAN;    // Return NaN if MAX31855 reports an error
-    } else {
-      MAX31855_Result.ProbeTemperature = MAX31855_GetProbeTemperature(RawData);
+        MAX31855_Result[i].ErrorCode = probeerror;
+        MAX31855_Result[i].ReferenceTemperature = MAX31855_GetReferenceTemperature(RawData);
+        if (probeerror) {
+          MAX31855_Result[i].ProbeTemperature = NAN;    // Return NaN if MAX31855 reports an error
+        } else {
+          MAX31855_Result[i].ProbeTemperature = MAX31855_GetProbeTemperature(RawData);
+        }
+      }
     }
   }
 }
 
 void MAX31855_Show(bool Json) {
-  char sensor_name[10];
-  GetTextIndexed(sensor_name, sizeof(sensor_name), Settings->flag4.max6675, kMax31855Types);
+  char sensor_name_text[10];
+  char sensor_name[12];
+  uint8_t report_once = 0;
+  GetTextIndexed(sensor_name_text, sizeof(sensor_name_text), Settings->flag4.max6675, kMax31855Types);
+  sprintf(sensor_name, "%s",sensor_name_text);
+  for (uint32_t i = 0; i < MAX_MAX31855S; i++) {
+    if (max31855_pins_used & (1 << i)) {
+      if (max31855_count > 1) {
+        sprintf(sensor_name, "%s%c%d",sensor_name_text, IndexSeparator(), i);
+      }
 
-  if (Json) {
-    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
-      sensor_name,
-      Settings->flag2.temperature_resolution, &MAX31855_Result.ProbeTemperature,
-      Settings->flag2.temperature_resolution, &MAX31855_Result.ReferenceTemperature,
-      MAX31855_Result.ErrorCode);
+      if (Json) {
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_REFERENCETEMPERATURE "\":%*_f,\"" D_JSON_ERROR "\":%d}"), \
+          sensor_name,
+          Settings->flag2.temperature_resolution, &MAX31855_Result[i].ProbeTemperature,
+          Settings->flag2.temperature_resolution, &MAX31855_Result[i].ReferenceTemperature,
+          MAX31855_Result[i].ErrorCode);
+        if ((0 == TasmotaGlobal.tele_period) && (!report_once)) {
 #ifdef USE_DOMOTICZ
-    if (0 == TasmotaGlobal.tele_period) {
-      DomoticzFloatSensor(DZ_TEMP, MAX31855_Result.ProbeTemperature);
-    }
+          DomoticzFloatSensor(DZ_TEMP, MAX31855_Result[i].ProbeTemperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-    if (0 == TasmotaGlobal.tele_period) {
-      KnxSensor(KNX_TEMPERATURE, MAX31855_Result.ProbeTemperature);
-    }
+          KnxSensor(KNX_TEMPERATURE, MAX31855_Result[i].ProbeTemperature);
 #endif  // USE_KNX
+          report_once++;
+        }
 #ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_Temp(sensor_name, MAX31855_Result.ProbeTemperature);
+      } else {
+        WSContentSend_Temp(sensor_name, MAX31855_Result[i].ProbeTemperature);
 #endif  // USE_WEBSERVER
+      }
+    }
   }
 }
 

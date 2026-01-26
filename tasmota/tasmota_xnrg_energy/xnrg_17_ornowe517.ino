@@ -31,7 +31,7 @@
 
 // can be user defined in my_user_config.h
 #ifndef WE517_SPEED
-  #define WE517_SPEED      9600    // default WE517 Modbus address
+  #define WE517_SPEED      9600    // default WE517 baudrate
 #endif
 // can be user defined in my_user_config.h
 #ifndef WE517_ADDR
@@ -54,9 +54,9 @@ const uint16_t we517_start_addresses[] {
   /*  6  */ 0x001E,  //  +   -   +   kW   Phase 1 power
   /*  7  */ 0x0020,  //  +   -   +   kW   Phase 2 power
   /*  8  */ 0x0022,  //  +   -   -   kW   Phase 3 power
-  /*  9  */ 0x0026,  //  +   -   +   VAr  Phase 1 volt amps reactive
-  /* 10  */ 0x0028,  //  +   -   -   VAr  Phase 2 volt amps reactive
-  /* 11  */ 0x002A,  //  +   -   -   VAr  Phase 3 volt amps reactive
+  /*  9  */ 0x0026,  //  +   -   +   var  Phase 1 volt amps reactive
+  /* 10  */ 0x0028,  //  +   -   -   var  Phase 2 volt amps reactive
+  /* 11  */ 0x002A,  //  +   -   -   var  Phase 3 volt amps reactive
   /* 12  */ 0x0036,  //  +   -   +        Phase 1 power factor
   /* 13  */ 0x0038,  //  +   -   -        Phase 2 power factor
   /* 14  */ 0x003A,  //  +   -   -        Phase 3 power factor
@@ -82,7 +82,7 @@ void WE517Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, We517Modbus->ReceiveCount());
 
     if (error) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ORN: WE517 error %d"), error);
     } else {
       Energy->data_valid[0] = 0;
       Energy->data_valid[1] = 0;
@@ -192,6 +192,9 @@ void We517SnsInit(void) {
           Serial.begin(WE517_SPEED, SERIAL_8E1);
           ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ORN: Serial UART%d"), We517Modbus->getUart());
+#endif
       Energy->phase_count = 3;
       Energy->frequency_common = true; // Use common frequency
   } else {

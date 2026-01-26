@@ -53,7 +53,7 @@
  */
 
 #include "Arduino.h"
-#include <EEPROM.h>
+//#include <EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ESP8266WebServer.h>

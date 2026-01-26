@@ -23,7 +23,7 @@ bool NtpServer::beginListening()
   return false;
 }
 
-bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs) 
+bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
 {
   // millisecs is millis() at the time of the last iTOW reception, where iTOW%1000 == 0
   uint32_t refMillis = millis()-millisecs;
@@ -33,7 +33,7 @@ bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
   }
 
   bool processed = false;
-  
+
   int packetDataSize = timeServerPort_.parsePacket();
   if (packetDataSize && packetDataSize >= NtpPacket::PACKET_SIZE)
   {
@@ -54,7 +54,7 @@ bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
       // TODO: verify packet.
 
       // Populate response.
-      packet.swapEndian();        
+      packet.swapEndian();
       packet.leapIndicator(0);
       packet.versionNumber(4);
       packet.mode(4);
@@ -73,16 +73,17 @@ bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
       packet.originTimestampFraction = packet.transmitTimestampFraction;
       packet.receiveTimestampSeconds = recvSecs;
       packet.receiveTimestampFraction = recvFract;
-      
+
       // ...and the transmit time.
-      // the latency has been between 135 and 175 microseconds in internal testing, so we harcode 150 
-      uint32_t transFract = recvFract+(150*(10^3)/(2^32)); // microsec/((10^3)/(2^32))
+      // the latency has been between 135 and 175 microseconds in internal testing, so we hardcode 150
+      constexpr uint32_t latency = (150*1000) / (1LL << 32);
+      uint32_t transFract = recvFract + latency;
       if (recvFract>transFract){
         recvSecs++; //overflow
       }
       packet.transmitTimestampSeconds = recvSecs;
-      packet.transmitTimestampFraction = transFract; 
-      
+      packet.transmitTimestampFraction = transFract;
+
       // Now transmit the response to the client.
       packet.swapEndian();
 
@@ -91,7 +92,7 @@ bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
       timeServerPort_.endPacket();
 
       processed = true;
-  } 
-  
+  }
+
   return processed;
 }

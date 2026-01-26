@@ -31,6 +31,10 @@
 #define XSNS_29                   29
 #define XI2C_22                   22  // See I2CDEVICES.md
 
+#ifndef USE_MCP230xx_ADDR
+#define USE_MCP230xx_ADDR 0x20        // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
+#endif
+
 /*
    Default register locations for MCP23008 - They change for MCP23017 in default bank mode
 */
@@ -167,7 +171,7 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
 void MCP230xx_ApplySettings(void)
 {
 #ifdef USE_MCP230xx_OUTPUT
-  TasmotaGlobal.devices_present -= mcp230xx_outpincount;
+  UpdateDevicesPresent(-mcp230xx_outpincount);
   mcp230xx_outpincount = 0;
   for (uint32_t idx = 0; idx < mcp230xx_pincount; idx++) {
     if (Settings->mcp230xx_config[idx].pinmode >= 5) {
@@ -176,7 +180,7 @@ void MCP230xx_ApplySettings(void)
     }
     int_millis[idx]=millis();
   }
-  TasmotaGlobal.devices_present += mcp230xx_outpincount;
+  UpdateDevicesPresent(mcp230xx_outpincount);
 #endif // USE_MCP230xx_OUTPUT
   uint8_t int_en = 0;
   uint8_t reg_portpins[mcp230xx_type];
@@ -793,6 +797,7 @@ bool MCP230xx_Command(void)
   return serviced;
 }
 
+#ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
 
@@ -815,8 +820,9 @@ void MCP230xx_UpdateWebData(void)
   }
 }
 
-#endif // USE_MCP230xx_DISPLAYOUTPUT
-#endif // USE_MCP230xx_OUTPUT
+#endif  // USE_MCP230xx_DISPLAYOUTPUT
+#endif  // USE_MCP230xx_OUTPUT
+#endif  // USE_WEBSERVER
 
 /*
 #ifdef USE_MCP230xx_OUTPUT

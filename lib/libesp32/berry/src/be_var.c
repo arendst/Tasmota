@@ -67,19 +67,39 @@ static int global_find(bvm *vm, bstring *name)
 {
     bvalue *res = be_map_findstr(vm, global(vm).vtab, name);
     if (res) {
-        return var_toidx(res) + be_builtin_count(vm);
+        int idx = var_toidx(res);
+        if (idx >= 0) {
+            return idx + be_builtin_count(vm);
+        } else {
+            return idx;     /* the global does not exist (-1) or was underfined (< -1)*/
+        }
     }
     return -1; /* not found */
 }
 
+bbool be_global_undef(bvm *vm, bstring *name)
+{
+    int idx = global_find(vm, name);
+    if (idx >= 0) {
+        bvalue *desc = be_map_findstr(vm, global(vm).vtab, name);
+        int index = var_toidx(desc);
+        var_setint(desc, -index - 2);   /* negate the index to mark it as undefined */
+
+        bvalue* val = be_vector_at(&global(vm).vlist, index);
+        var_setnil(val);
+        return btrue;
+    }
+    return bfalse;
+}
+
 int be_global_find(bvm *vm, bstring *name)
 {
-    int res = global_find(vm, name);
+    int res = global_find(vm, name);                /* returns negative if not found, -1 if does not exist, < -1 if existed but undefined */
     if (res < 0) {
-        res = be_builtin_find(vm, name);
+        res = be_builtin_find(vm, name);            /* returns -1 if not found */
     }
     if (res < 0) {
-        res = global_native_class_find(vm, name);
+        res = global_native_class_find(vm, name);   /* returns -1 if not found */
     }
     return res;
 }
@@ -97,11 +117,18 @@ static int global_new_anonymous(bvm *vm)
 int be_global_new(bvm *vm, bstring *name)
 {
     int idx = global_find(vm, name);
-    if (idx == -1) {
+    if (idx < 0) {
         bvalue *desc;
-        idx = global_new_anonymous(vm);
-        desc = be_map_insertstr(vm, global(vm).vtab, name, NULL);
-        var_setint(desc, idx);
+        if (idx == -1) {
+            idx = global_new_anonymous(vm);
+            desc = be_map_insertstr(vm, global(vm).vtab, name, NULL);
+            var_setint(desc, idx);
+        } else {
+            /* the global exists but was undefined */
+            idx = -idx - 2;
+            desc = be_map_findstr(vm, global(vm).vtab, name);
+            var_setint(desc, idx);
+        }
         idx += be_builtin_count(vm);
     }
     return idx;

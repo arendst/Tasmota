@@ -232,6 +232,9 @@ void CseSnsInit(void) {
       SetSerial(4800, TS_SERIAL_8E1);
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CSE: Serial UART%d"), CseSerial->getUart());
+#endif
     if (0 == Settings->param[P_CSE7766_INVALID_POWER]) {
       Settings->param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
@@ -255,22 +258,26 @@ void CseDrvInit(void) {
 bool CseCommand(void) {
   bool serviced = true;
 
-  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
+  float value = CharToFloat(XdrvMailbox.data);
+
+  if ((CMND_POWERCAL == Energy->command_code) ||
+      (CMND_VOLTAGECAL == Energy->command_code) ||
+      (CMND_CURRENTCAL == Energy->command_code)) {
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy->command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {    // xxx W
     if (XdrvMailbox.data_len && Cse.power_cycle) {
-      XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.power_cycle) / CSE_PREF;
+      XdrvMailbox.payload = (uint32_t)(value * Cse.power_cycle) / CSE_PREF;
     }
   }
-  else if (CMND_VOLTAGESET == Energy->command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {  // xxx V
     if (XdrvMailbox.data_len && Cse.voltage_cycle) {
-      XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.voltage_cycle) / CSE_UREF;
+      XdrvMailbox.payload = (uint32_t)(value * Cse.voltage_cycle) / CSE_UREF;
     }
   }
-  else if (CMND_CURRENTSET == Energy->command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {  // xxx mA
     if (XdrvMailbox.data_len && Cse.current_cycle) {
-      XdrvMailbox.payload = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.current_cycle) / 1000;
+      XdrvMailbox.payload = (uint32_t)(value * Cse.current_cycle) / 1000;
     }
   }
   else serviced = false;  // Unknown command

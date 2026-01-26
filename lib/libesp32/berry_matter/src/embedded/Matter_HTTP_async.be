@@ -31,6 +31,7 @@ class Matter_HTTP_async : Matter_TCP_async
   # var tcp                                         # instance of tcpclientasync
   # var time_start                                  # timestamp when starting connection
   # var tcp_connected                               # is tcp connected, true/false/nil (nil is in-progress)
+  var auth                                        # web authentication string (Basic Auth) or `nil`, in format `user:password` as bade64
   var cmd                                         # GET url command
   var response                                    # aggrated response
   var response_offset                             # offset to parse in response
@@ -42,8 +43,16 @@ class Matter_HTTP_async : Matter_TCP_async
   var phase                                       # parsing phase: 0/ status line, 1/ headers, 2/ payload chunked
   var is_chunked                                  # true if the content is chunked
   var chunk_size                                  # nil or int, size of the current chunk
-  static var HTTP_GET = "GET %s HTTP/1.1\r\nHost %s:%s\r\nConnection: close\r\n\r\n"    # see https://stackoverflow.com/questions/6686261/what-at-the-bare-minimum-is-required-for-an-http-request
+  static var HTTP_GET = "GET %s HTTP/1.1\r\n"     # see https://stackoverflow.com/questions/6686261/what-at-the-bare-minimum-is-required-for-an-http-request
+                        "Host %s:%s\r\n"
+                        "Connection: close\r\n"
+                        "\r\n"
 
+  static var HTTP_GET_AUTH =  "GET %s HTTP/1.1\r\n"     # same with auth
+                              "Host %s:%s\r\n"
+                              "Authorization: Basic %s\r\n"
+                              "Connection: close\r\n"
+                              "\r\n"
   static var HTTP_STATUS_REGEX = "HTTP/1\\.[0-1] (\\d+) .*?\r\n"    # extract stattus code from first line
   static var HTTP_HEADER_REGEX = "([A-Za-z0-9-]+): (.*?)\r\n"       # extract a header with its 2 parts
   static var HTTP_BODY_REGEX   = "\r\n"                             # end of headers
@@ -53,6 +62,15 @@ class Matter_HTTP_async : Matter_TCP_async
   #############################################################
   # init
   def init(addr, port, timeout, fastloop)
+    # extract auth from add first
+    import string
+    addr = str(addr)      # force string
+    var x = string.find(addr, "@")
+    if x >= 0
+      self.auth = bytes().fromstring(addr[0 .. x-1]).tob64()
+      addr = addr[x+1 .. ]
+    end
+    # `addr` is cleaned from authentication information
     super(self).init(addr, port, timeout, fastloop)
     self.compile_re()
   end
@@ -253,7 +271,13 @@ class Matter_HTTP_async : Matter_TCP_async
       addr = "[" + addr + "]"       # IPv6 must be enclosed in brakets
     end
 
-    var req = format(self.HTTP_GET, self.cmd, addr, self.port)
+    var req
+    if (self.auth == nil)
+      req = format(self.HTTP_GET, self.cmd, addr, self.port)
+    else
+      # use AUTH information
+      req = format(self.HTTP_GET_AUTH, self.cmd, addr, self.port, self.auth)
+    end
     var ret = self.write(req)
     if ret != size(req)
       # print("Could not send","size=",size(req),"ret=",ret)

@@ -135,8 +135,8 @@ void ExsSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
     ExsSerial->flush();
 
     // wait for any response
-    uint32_t snd_time = millis();
-    while ((TimePassedSince(snd_time) < EXS_ACK_TIMEOUT) &&
+    uint32_t snd_time = millis() + EXS_ACK_TIMEOUT;
+    while ((!TimeReached(snd_time)) &&
            (!ExsSerial->available()))
       ;
 
@@ -355,7 +355,7 @@ bool ExsModuleSelected(void)
   SetSeriallog(LOG_LEVEL_NONE);
 
   UpdateDevicesPresent(2);
-  TasmotaGlobal.light_type = LT_SERIAL2;
+  TasmotaGlobal.light_type = LT_CW;
   return true;
 }
 
@@ -415,6 +415,9 @@ void ExsInit(void)
       {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Serial UART%d"), ExsSerial->getUart());
+#endif  // ESP32
       ExsSerial->flush();
       EsxMcuStart();
       ExsSendCmd(EXS_CH_LOCK, 0);
@@ -547,8 +550,8 @@ void CmndExsState(void)
   ExsSendCmd(EXS_GET_VALUES, 0);
 
   // wait for data
-  uint32_t snd_time = millis();
-  while ((TimePassedSince(snd_time) < EXS_ACK_TIMEOUT) &&
+  uint32_t snd_time = millis() + EXS_ACK_TIMEOUT;
+  while ((!TimeReached(snd_time)) &&
          (!ExsSerial->available()))
     ;
   ExsSerialInput();
@@ -611,6 +614,9 @@ bool Xdrv30(uint32_t function)
       result = DecodeCommand(kExsCommands, ExsCommand);
       break;
 #endif
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   }
   return result;

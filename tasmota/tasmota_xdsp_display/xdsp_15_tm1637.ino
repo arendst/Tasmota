@@ -1131,7 +1131,7 @@ void TM1637Dim(void)
   {
     for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
     {
-      max7219display->setIntensity(MAX7219_ADDR, brightness); // 0 - 7
+      max7219display->setIntensity(MAX7219_ADDR  + dev_addr, brightness); // 0 - 7
     }
   }
 }
@@ -1203,9 +1203,6 @@ bool TM1637PrintLog(void) {
 
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
-
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
-
       TM1637Print(disp_screen_buffer[last_row]);
 
       result = true;

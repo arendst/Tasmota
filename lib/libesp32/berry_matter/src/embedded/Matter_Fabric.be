@@ -43,6 +43,7 @@ class Matter_Fabric : Matter_Expirable
   var _store                      # reference back to session store
   # timestamp
   var created
+  var deleted                     # timestamp when the deletion of fabric was requested, and deferred
   # fabric-index
   var fabric_index                # index number for fabrics, starts with `1`
   var fabric_parent               # index of the parent fabric, i.e. the fabric that triggered the provisioning (if nested)
@@ -76,6 +77,7 @@ class Matter_Fabric : Matter_Expirable
     self._sessions = matter.Expirable_list()
     self.fabric_label = ""
     self.created = tasmota.rtc_utc()
+    # self.deleted = nil      # no need to actually set to nil
     # init group counters
     self._counter_group_data_snd_impl = matter.Counter()
     self._counter_group_ctrl_snd_impl  = matter.Counter()
@@ -94,6 +96,13 @@ class Matter_Fabric : Matter_Expirable
   def get_admin_vendor()      return self.admin_vendor      end
   def get_ca()                return self.root_ca_certificate end
   def get_fabric_index()      return self.fabric_index      end
+
+  def get_fabric_id_as_int64()
+    return int64.frombytes(self.fabric_id)
+  end
+  def get_device_id_as_int64()
+    return int64.frombytes(self.device_id)
+  end
 
   def get_admin_vendor_name()
     var vnd = self.admin_vendor
@@ -184,7 +193,7 @@ class Matter_Fabric : Matter_Expirable
   #
   def counter_group_data_snd_next()
     var next = self._counter_group_data_snd_impl.next()
-    tasmota.log(f"MTR: .          Counter_group_data_snd={next:i}", 3)
+    log(f"MTR: .          Counter_group_data_snd={next:i}", 3)
     if matter.Counter.is_greater(next, self.counter_group_data_snd)
       self.counter_group_data_snd = next + self._GROUP_SND_INCR
       if self.does_persist()
@@ -199,7 +208,7 @@ class Matter_Fabric : Matter_Expirable
   #
   def counter_group_ctrl_snd_next()
     var next = self._counter_group_ctrl_snd_impl.next()
-    tasmota.log(f"MTR: .          Counter_group_ctrl_snd={next:i}", 3)
+    log(f"MTR: .          Counter_group_ctrl_snd={next:i}", 3)
     if matter.Counter.is_greater(next, self.counter_group_ctrl_snd)
       self.counter_group_ctrl_snd = next + self._GROUP_SND_INCR
       if self.does_persist()
@@ -213,13 +222,13 @@ class Matter_Fabric : Matter_Expirable
   #############################################################
   # Called before removal
   def log_new_fabric()
-    tasmota.log(format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 3)
+    log(format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 3)
   end
 
   #############################################################
   # Called before removal
   def before_remove()
-    tasmota.log(format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 3)
+    log(format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 3)
   end
 
   #############################################################
@@ -277,6 +286,16 @@ class Matter_Fabric : Matter_Expirable
   end
 
   #############################################################
+  # Mark for deleteion in the near future
+  #
+  def mark_for_deletion()
+    self.deleted = tasmota.rtc_utc()
+  end
+  def is_marked_for_deletion()
+    return self.deleted != nil
+  end
+
+  #############################################################
   # Fabric::tojson()
   #
   # convert a single entry as json
@@ -314,6 +333,55 @@ class Matter_Fabric : Matter_Expirable
 
     self.persist_post()
     return "{" + r.concat(",") + "}"
+  end
+
+  #############################################################
+  # Fabric::writejson(f)
+  #
+  # convert a single entry as json
+  # write to file
+  #############################################################
+  def writejson(f)
+    import json
+    import introspect
+
+    f.write("{")
+
+    self.persist_pre()
+    var keys = []
+    for k : introspect.members(self)
+      var v = introspect.get(self, k)
+      if type(v) != 'function' && k[0] != '_'   keys.push(k) end
+    end
+    keys = matter.sort(keys)
+
+    var first = true
+    for k : keys
+      var v = introspect.get(self, k)
+      if v == nil     continue end
+      if  isinstance(v, bytes)      v = "$$" + v.tob64() end    # bytes
+      if (!first) f.write(",")  end
+      f.write(format("%s:%s", json.dump(str(k)), json.dump(v)))
+      first = false
+    end
+
+    # add sessions
+    var first_session = true
+    for sess : self._sessions.persistables()
+      if first_session
+        f.write(',"_sessions":[')
+      else
+        f.write(",")
+      end
+      f.write(sess.tojson())
+      first_session = false
+    end
+    if !first_session
+      f.write("]")
+    end
+
+    self.persist_post()
+    f.write("}")
   end
 
   #############################################################

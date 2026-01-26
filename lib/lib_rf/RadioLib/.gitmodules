@@ -1,0 +1,3 @@
+[submodule "examples/NonArduino/Tock/libtock-c"]
+	path = examples/NonArduino/Tock/libtock-c
+	url = https://github.com/tock/libtock-c.git

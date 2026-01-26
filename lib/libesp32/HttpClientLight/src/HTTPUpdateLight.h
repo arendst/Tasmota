@@ -28,6 +28,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiHelper.h>
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 #include <HttpClientLight.h>

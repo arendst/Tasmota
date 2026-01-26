@@ -465,7 +465,7 @@ run_code(jacobian *P1, const jacobian *P2,
 	memcpy(t[P1x], P1->c, 3 * I15_LEN * sizeof(uint16_t));
 	memcpy(t[P2x], P2->c, 3 * I15_LEN * sizeof(uint16_t));
 
-	optimistic_yield(10000);
+	stack_thunk_yield();
 
 	/*
 	 * Run formulas.

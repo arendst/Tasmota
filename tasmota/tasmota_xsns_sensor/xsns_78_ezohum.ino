@@ -43,10 +43,12 @@ struct EZOHUM : public EZOStruct {
   virtual void Show(bool json, const char *name)
   {
     if (isnan(temperature)) {
+#ifdef USE_WEBSERVER
       char parameter[FLOATSZ];
 
       dtostrfd(humidity, Settings->flag2.humidity_resolution, parameter);
       WSContentSend_PD(HTTP_SNS_HUM, name, parameter);
+#endif  // USE_WEBSERVER
     } else {
       TempHumDewShow(json, (0 == TasmotaGlobal.tele_period), name, temperature, humidity);
     }

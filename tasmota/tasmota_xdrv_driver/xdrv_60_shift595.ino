@@ -31,15 +31,28 @@ struct Shift595 {
   uint8_t pinOE;
   uint8_t outputs;
   uint8_t first;
-  bool connected = false;
 } *Shift595 = nullptr;
+
+/*********************************************************************************************\
+ * Low level Shift 74x595
+\*********************************************************************************************/
 
 void Shift595ConfigurePin(uint8_t pin, uint8_t value = 0) {
   pinMode(pin, OUTPUT);
   digitalWrite(pin, value);
 }
 
-void Shift595Init(void) {
+void Shift595LatchPin(uint8_t pin) {
+  digitalWrite(pin, 1);
+  digitalWrite(pin, 0);
+}
+
+/*********************************************************************************************\
+ * FUNC_SETUP_RING2 at T +1
+ * Claim devices_present
+\*********************************************************************************************/
+
+void Shift595ModuleInit(void) {
   if (PinUsed(GPIO_SHIFT595_SRCLK) && PinUsed(GPIO_SHIFT595_RCLK) && PinUsed(GPIO_SHIFT595_SER)) {
     Shift595 = (struct Shift595*)calloc(1, sizeof(struct Shift595));
     if (Shift595) {
@@ -50,45 +63,70 @@ void Shift595Init(void) {
       Shift595ConfigurePin(Shift595->pinSRCLK);
       Shift595ConfigurePin(Shift595->pinRCLK);
       Shift595ConfigurePin(Shift595->pinSER);
+#ifdef ESP32
+      // Release hold on clocks (if set before restart)
+      gpio_hold_dis((gpio_num_t)Shift595->pinSRCLK);
+      gpio_hold_dis((gpio_num_t)Shift595->pinRCLK);
+#endif
 
       if (PinUsed(GPIO_SHIFT595_OE)) {
         Shift595->pinOE = Pin(GPIO_SHIFT595_OE);
-        Shift595ConfigurePin(Shift595->pinOE, 1);
+        // Fix relay toggle at restart
+        // On power ON set all outputs to 3-state (3-state converted to OFF by ULN2803 relay drivers)
+        Shift595ConfigurePin(Shift595->pinOE, ResetReasonPowerOn());
       }
 
-      Shift595->first = TasmotaGlobal.devices_present;
-      Shift595->outputs = Settings->shift595_device_count * 8;
+      Shift595->first = TasmotaGlobal.devices_present; // devices_present offset
+      Shift595->outputs = Settings->shift595_device_count * 8;  // Max number of outputs present
       UpdateDevicesPresent(Shift595->outputs);
-
-      Shift595->connected = true;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("595: Controlling relays POWER%d to POWER%d"), Shift595->first + 1, Shift595->first + Shift595->outputs);
     }
   }
 }
 
-void Shift595LatchPin(uint8_t pin) {
-  digitalWrite(pin, 1);
-  digitalWrite(pin, 0);
-}
+/*********************************************************************************************\
+ * FUNC_SET_POWER at T +2
+ * Reduce devices_present with display and/or lights not known before
+ * Add offset for previous defined relays
+\*********************************************************************************************/
 
 void Shift595SwitchRelay(void) {
-  if (Shift595 && Shift595->connected == true) {
-    for (uint32_t i = 0; i < Shift595->outputs; i++) {
-      uint8_t relay_state = bitRead(XdrvMailbox.index, Shift595->first + Shift595->outputs -1 -i);
-      digitalWrite(Shift595->pinSER, Settings->flag5.shift595_invert_outputs ? !relay_state : relay_state);
-      Shift595LatchPin(Shift595->pinSRCLK);
-    }
+  // XdrvMailbox.index = 32-bit rpower bit mask
+  // Use relative and sequential relay indexes
+  power_t rpower = XdrvMailbox.index;
+  uint32_t relay_max = Shift595->outputs;              // Total number of outputs
+  DevicesPresentNonDisplayOrLight(relay_max);          // Skip display and/or light(s)
+  uint32_t relay_offset = Shift595->outputs - relay_max + Shift595->first;
 
-    Shift595LatchPin(Shift595->pinRCLK);
+  static bool first = false;
+  if (!first) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("595: Output 1 to %d use POWER%d to POWER%d"), Shift595->outputs - relay_offset, Shift595->first + 1, relay_max);
+    first = true;
+  }
 
-    if (PinUsed(GPIO_SHIFT595_OE)) {
-        digitalWrite(Shift595->pinOE, 0);
+  uint32_t power_bit = relay_max -1;                   // Start at highest non display and/or light power bit
+  for (uint32_t i = 0; i < Shift595->outputs; i++) {   // We need to set all shift outputs even if not used
+    uint32_t relay_state = 0;                          // Unused state
+    if (i >= relay_offset) {
+      relay_state = bitRead(rpower, power_bit);        // Shift-in from high to low
+      power_bit--;
     }
+    digitalWrite(Shift595->pinSER, Settings->flag5.shift595_invert_outputs ? !relay_state : relay_state);  // SetOption133 - (Shift595) Invert outputs of 74x595 shift registers
+    Shift595LatchPin(Shift595->pinSRCLK);
+  }
+
+  Shift595LatchPin(Shift595->pinRCLK);
+
+  if (PinUsed(GPIO_SHIFT595_OE)) {
+    digitalWrite(Shift595->pinOE, 0);
   }
 }
 
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
 void CmndShift595Devices(void) {
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 3)) {
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload * 8 <= MAX_RELAYS_SET - Shift595->first)) {
     Settings->shift595_device_count = (1 == XdrvMailbox.payload) ? SHIFT595_DEVICE_COUNT : XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
@@ -102,18 +140,28 @@ void CmndShift595Devices(void) {
 bool Xdrv60(uint32_t function) {
   bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    Shift595Init();
-    } else if (Shift595) {
-      switch (function) {
-        case FUNC_SET_POWER:
-          Shift595SwitchRelay();
-          break;
-        case FUNC_COMMAND:
-          result = DecodeCommand(kShift595Commands, Shift595Command);
-          break;
-      }
+  if (FUNC_SETUP_RING2 == function) {
+    Shift595ModuleInit();
+  } else if (Shift595) {
+    switch (function) {
+      case FUNC_SET_POWER:
+        Shift595SwitchRelay();
+        break;
+#ifdef ESP32
+      case FUNC_SAVE_BEFORE_RESTART:
+        // Set hold on clocks to disable relay click on restart
+        gpio_hold_en((gpio_num_t)Shift595->pinSRCLK);
+        gpio_hold_en((gpio_num_t)Shift595->pinRCLK);
+        break;
+#endif  // ESP32
+      case FUNC_COMMAND:
+        result = DecodeCommand(kShift595Commands, Shift595Command);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
+  }
   return result;
 }
 

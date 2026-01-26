@@ -94,6 +94,9 @@ bool Xdrv32(uint32_t function)
     case FUNC_PRE_INIT:
       HotPlugInit();
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
   }
   return result;
 }

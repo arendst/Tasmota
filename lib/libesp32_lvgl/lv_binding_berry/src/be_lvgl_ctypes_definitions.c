@@ -12,570 +12,354 @@
 
 static const char * be_ctypes_instance_mappings[];    /* forward definition */
 
-const be_ctypes_structure_t be_lv_coord = {
-  2,  /* size in bytes */
-  1,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[1]) {
-    { "v", 0, 0, 0, ctypes_i16, 0 },
-}};
-
 const be_ctypes_structure_t be_lv_point = {
-  4,  /* size in bytes */
+  8,  /* size in bytes */
   2,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[2]) {
-    { "x", 0, 0, 0, ctypes_i16, 0 },
-    { "y", 2, 0, 0, ctypes_i16, 0 },
+    { "x", 0, 0, 0, ctypes_i32, 0 },
+    { "y", 4, 0, 0, ctypes_i32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_point_precise = {
+  8,  /* size in bytes */
+  2,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[2]) {
+    { "x", 0, 0, 0, ctypes_i32, 0 },
+    { "y", 4, 0, 0, ctypes_i32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_area = {
-  8,  /* size in bytes */
+  16,  /* size in bytes */
   4,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[4]) {
-    { "x1", 0, 0, 0, ctypes_i16, 0 },
-    { "x2", 4, 0, 0, ctypes_i16, 0 },
-    { "y1", 2, 0, 0, ctypes_i16, 0 },
-    { "y2", 6, 0, 0, ctypes_i16, 0 },
+    { "x1", 0, 0, 0, ctypes_i32, 0 },
+    { "x2", 8, 0, 0, ctypes_i32, 0 },
+    { "y1", 4, 0, 0, ctypes_i32, 0 },
+    { "y2", 12, 0, 0, ctypes_i32, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_gradient_stop = {
-  4,  /* size in bytes */
-  2,  /* number of elements */
+const be_ctypes_structure_t be_lv_grad_stop = {
+  8,  /* size in bytes */
+  3,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[2]) {
-    { "color", 0, 0, 0, ctypes_u16, 1 },
-    { "frac", 2, 0, 0, ctypes_u8, 0 },
+  (const be_ctypes_structure_item_t[3]) {
+    { "color", 0, 0, 0, ctypes_u24, 1 },
+    { "frac", 4, 0, 0, ctypes_u8, 0 },
+    { "opa", 3, 0, 0, ctypes_u8, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_grad_dsc = {
   12,  /* size in bytes */
+  9,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[9]) {
+    { "dir", 11, 0, 4, ctypes_bf, 0 },
+    { "extend", 11, 4, 3, ctypes_bf, 0 },
+    { "stops_0_color", 0, 0, 0, ctypes_u24, 1 },
+    { "stops_0_frac", 4, 0, 0, ctypes_u8, 0 },
+    { "stops_0_opa", 3, 0, 0, ctypes_u8, 0 },
+    { "stops_1_color", 5, 0, 0, ctypes_u24, 1 },
+    { "stops_1_frac", 9, 0, 0, ctypes_u8, 0 },
+    { "stops_1_opa", 8, 0, 0, ctypes_u8, 0 },
+    { "stops_count", 10, 0, 0, ctypes_u8, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_draw_dsc_base = {
+  28,  /* size in bytes */
   7,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[7]) {
-    { "dir", 8, 0, 3, ctypes_bf, 0 },
-    { "dither", 8, 3, 3, ctypes_bf, 0 },
-    { "stops_0_color", 0, 0, 0, ctypes_u16, 1 },
-    { "stops_0_frac", 2, 0, 0, ctypes_u8, 0 },
-    { "stops_1_color", 4, 0, 0, ctypes_u16, 1 },
-    { "stops_1_frac", 6, 0, 0, ctypes_u8, 0 },
-    { "stops_count", 7, 0, 0, ctypes_u8, 0 },
+    { "dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "id1", 8, 0, 0, ctypes_u32, 0 },
+    { "id2", 12, 0, 0, ctypes_u32, 0 },
+    { "layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "part", 4, 0, 0, ctypes_u32, 0 },
+    { "user_data", 24, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_rect_dsc = {
-  60,  /* size in bytes */
-  32,  /* number of elements */
+  112,  /* size in bytes */
+  41,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[32]) {
-    { "bg_color", 4, 0, 0, ctypes_u16, 1 },
-    { "bg_grad_dir", 16, 0, 3, ctypes_bf, 0 },
-    { "bg_grad_dither", 16, 3, 3, ctypes_bf, 0 },
-    { "bg_grad_stops_0_color", 8, 0, 0, ctypes_u16, 1 },
-    { "bg_grad_stops_0_frac", 10, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_stops_1_color", 12, 0, 0, ctypes_u16, 1 },
-    { "bg_grad_stops_1_frac", 14, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_stops_count", 15, 0, 0, ctypes_u8, 0 },
-    { "bg_img_opa", 30, 0, 0, ctypes_u8, 0 },
-    { "bg_img_recolor", 28, 0, 0, ctypes_u16, 1 },
-    { "bg_img_recolor_opa", 31, 0, 0, ctypes_u8, 0 },
-    { "bg_img_src", 20, 0, 0, ctypes_ptr32, 0 },
-    { "bg_img_symbol_font", 24, 0, 0, ctypes_ptr32, 0 },
-    { "bg_img_tiled", 32, 0, 0, ctypes_u8, 0 },
-    { "bg_opa", 3, 0, 0, ctypes_u8, 0 },
-    { "blend_mode", 2, 0, 0, ctypes_u8, 0 },
-    { "border_color", 34, 0, 0, ctypes_u16, 1 },
-    { "border_opa", 38, 0, 0, ctypes_u8, 0 },
-    { "border_post", 39, 0, 1, ctypes_bf, 0 },
-    { "border_side", 39, 1, 5, ctypes_bf, 0 },
-    { "border_width", 36, 0, 0, ctypes_i16, 0 },
-    { "outline_color", 40, 0, 0, ctypes_u16, 1 },
-    { "outline_opa", 46, 0, 0, ctypes_u8, 0 },
-    { "outline_pad", 44, 0, 0, ctypes_i16, 0 },
-    { "outline_width", 42, 0, 0, ctypes_i16, 0 },
-    { "radius", 0, 0, 0, ctypes_i16, 0 },
-    { "shadow_color", 48, 0, 0, ctypes_u16, 1 },
-    { "shadow_ofs_x", 52, 0, 0, ctypes_i16, 0 },
-    { "shadow_ofs_y", 54, 0, 0, ctypes_i16, 0 },
-    { "shadow_opa", 58, 0, 0, ctypes_u8, 0 },
-    { "shadow_spread", 56, 0, 0, ctypes_i16, 0 },
-    { "shadow_width", 50, 0, 0, ctypes_i16, 0 },
+  (const be_ctypes_structure_item_t[41]) {
+    { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "base_id1", 8, 0, 0, ctypes_u32, 0 },
+    { "base_id2", 12, 0, 0, ctypes_u32, 0 },
+    { "base_layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "base_part", 4, 0, 0, ctypes_u32, 0 },
+    { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "bg_color", 56, 0, 0, ctypes_u24, 1 },
+    { "bg_grad_dir", 71, 0, 4, ctypes_bf, 0 },
+    { "bg_grad_extend", 71, 4, 3, ctypes_bf, 0 },
+    { "bg_grad_stops_0_color", 60, 0, 0, ctypes_u24, 1 },
+    { "bg_grad_stops_0_frac", 64, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_0_opa", 63, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_1_color", 65, 0, 0, ctypes_u24, 1 },
+    { "bg_grad_stops_1_frac", 69, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_1_opa", 68, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_count", 70, 0, 0, ctypes_u8, 0 },
+    { "bg_image_colorkey", 52, 0, 0, ctypes_ptr32, 0 },
+    { "bg_img_opa", 43, 0, 0, ctypes_u8, 0 },
+    { "bg_img_recolor", 40, 0, 0, ctypes_u24, 1 },
+    { "bg_img_recolor_opa", 44, 0, 0, ctypes_u8, 0 },
+    { "bg_img_src", 32, 0, 0, ctypes_ptr32, 0 },
+    { "bg_img_symbol_font", 36, 0, 0, ctypes_ptr32, 0 },
+    { "bg_img_tiled", 45, 0, 0, ctypes_u8, 0 },
+    { "bg_opa", 46, 0, 0, ctypes_u8, 0 },
+    { "border_color", 72, 0, 0, ctypes_u24, 1 },
+    { "border_opa", 47, 0, 0, ctypes_u8, 0 },
+    { "border_post", 80, 5, 1, ctypes_bf, 0 },
+    { "border_side", 80, 0, 5, ctypes_bf, 0 },
+    { "border_width", 76, 0, 0, ctypes_i32, 0 },
+    { "outline_color", 81, 0, 0, ctypes_u24, 1 },
+    { "outline_opa", 48, 0, 0, ctypes_u8, 0 },
+    { "outline_pad", 88, 0, 0, ctypes_i32, 0 },
+    { "outline_width", 84, 0, 0, ctypes_i32, 0 },
+    { "radius", 28, 0, 0, ctypes_i32, 0 },
+    { "shadow_color", 92, 0, 0, ctypes_u24, 1 },
+    { "shadow_ofs_x", 100, 0, 0, ctypes_i32, 0 },
+    { "shadow_ofs_y", 104, 0, 0, ctypes_i32, 0 },
+    { "shadow_opa", 49, 0, 0, ctypes_u8, 0 },
+    { "shadow_spread", 108, 0, 0, ctypes_i32, 0 },
+    { "shadow_width", 96, 0, 0, ctypes_i32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_line_dsc = {
-  12,  /* size in bytes */
-  9,  /* number of elements */
+  64,  /* size in bytes */
+  19,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[9]) {
-    { "blend_mode", 9, 0, 2, ctypes_bf, 0 },
-    { "color", 0, 0, 0, ctypes_u16, 1 },
-    { "dash_gap", 6, 0, 0, ctypes_i16, 0 },
-    { "dash_width", 4, 0, 0, ctypes_i16, 0 },
-    { "opa", 8, 0, 0, ctypes_u8, 0 },
-    { "raw_end", 9, 4, 1, ctypes_bf, 0 },
-    { "round_end", 9, 3, 1, ctypes_bf, 0 },
-    { "round_start", 9, 2, 1, ctypes_bf, 0 },
-    { "width", 2, 0, 0, ctypes_i16, 0 },
+  (const be_ctypes_structure_item_t[19]) {
+    { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "base_id1", 8, 0, 0, ctypes_u32, 0 },
+    { "base_id2", 12, 0, 0, ctypes_u32, 0 },
+    { "base_layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "base_part", 4, 0, 0, ctypes_u32, 0 },
+    { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "color", 44, 0, 0, ctypes_u24, 1 },
+    { "dash_gap", 56, 0, 0, ctypes_i32, 0 },
+    { "dash_width", 52, 0, 0, ctypes_i32, 0 },
+    { "opa", 60, 0, 0, ctypes_u8, 0 },
+    { "p1_x", 28, 0, 0, ctypes_i32, 0 },
+    { "p1_y", 32, 0, 0, ctypes_i32, 0 },
+    { "p2_x", 36, 0, 0, ctypes_i32, 0 },
+    { "p2_y", 40, 0, 0, ctypes_i32, 0 },
+    { "raw_end", 61, 2, 1, ctypes_bf, 0 },
+    { "round_end", 61, 1, 1, ctypes_bf, 0 },
+    { "round_start", 61, 0, 1, ctypes_bf, 0 },
+    { "width", 48, 0, 0, ctypes_i32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_arc_dsc = {
-  16,  /* size in bytes */
-  8,  /* number of elements */
+  60,  /* size in bytes */
+  17,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[8]) {
-    { "blend_mode", 13, 0, 2, ctypes_bf, 0 },
-    { "color", 0, 0, 0, ctypes_u16, 1 },
-    { "end_angle", 6, 0, 0, ctypes_u16, 0 },
-    { "img_src", 8, 0, 0, ctypes_ptr32, 0 },
-    { "opa", 12, 0, 0, ctypes_u8, 0 },
-    { "rounded", 13, 2, 1, ctypes_bf, 0 },
-    { "start_angle", 4, 0, 0, ctypes_u16, 0 },
-    { "width", 2, 0, 0, ctypes_i16, 0 },
+  (const be_ctypes_structure_item_t[17]) {
+    { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "base_id1", 8, 0, 0, ctypes_u32, 0 },
+    { "base_id2", 12, 0, 0, ctypes_u32, 0 },
+    { "base_layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "base_part", 4, 0, 0, ctypes_u32, 0 },
+    { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "center_x", 44, 0, 0, ctypes_i32, 0 },
+    { "center_y", 48, 0, 0, ctypes_i32, 0 },
+    { "color", 28, 0, 0, ctypes_u24, 1 },
+    { "end_angle", 40, 0, 0, ctypes_i32, 0 },
+    { "img_src", 52, 0, 0, ctypes_ptr32, 0 },
+    { "opa", 58, 0, 0, ctypes_u8, 0 },
+    { "radius", 56, 0, 0, ctypes_u16, 0 },
+    { "rounded", 59, 0, 1, ctypes_bf, 0 },
+    { "start_angle", 36, 0, 0, ctypes_i32, 0 },
+    { "width", 32, 0, 0, ctypes_i32, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_img_dsc = {
-  24,  /* size in bytes */
-  10,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[10]) {
-    { "angle", 0, 0, 0, ctypes_i16, 0 },
-    { "antialias", 20, 0, 1, ctypes_bf, 0 },
-    { "blend_mode", 12, 0, 4, ctypes_bf, 0 },
-    { "frame_id", 16, 0, 0, ctypes_i32, 0 },
-    { "opa", 11, 0, 0, ctypes_u8, 0 },
-    { "pivot_x", 4, 0, 0, ctypes_i16, 0 },
-    { "pivot_y", 6, 0, 0, ctypes_i16, 0 },
-    { "recolor", 8, 0, 0, ctypes_u16, 1 },
-    { "recolor_opa", 10, 0, 0, ctypes_u8, 0 },
-    { "zoom", 2, 0, 0, ctypes_u16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_obj_draw_part_dsc = {
-  72,  /* size in bytes */
-  18,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[18]) {
-    { "arc_dsc", 32, 0, 0, ctypes_ptr32, 0 },
-    { "class_p", 4, 0, 0, ctypes_ptr32, 0 },
-    { "draw_area", 12, 0, 0, ctypes_ptr32, 0 },
-    { "draw_ctx", 0, 0, 0, ctypes_ptr32, 0 },
-    { "id", 56, 0, 0, ctypes_u32, 0 },
-    { "img_dsc", 28, 0, 0, ctypes_ptr32, 0 },
-    { "label_dsc", 20, 0, 0, ctypes_ptr32, 0 },
-    { "line_dsc", 24, 0, 0, ctypes_ptr32, 0 },
-    { "p1", 36, 0, 0, ctypes_ptr32, 0 },
-    { "p2", 40, 0, 0, ctypes_ptr32, 0 },
-    { "part", 52, 0, 0, ctypes_u32, 0 },
-    { "radius", 60, 0, 0, ctypes_i16, 0 },
-    { "rect_dsc", 16, 0, 0, ctypes_ptr32, 0 },
-    { "sub_part_ptr", 68, 0, 0, ctypes_ptr32, 0 },
-    { "text", 44, 0, 0, ctypes_ptr32, 0 },
-    { "text_length", 48, 0, 0, ctypes_u32, 0 },
-    { "type", 8, 0, 0, ctypes_u32, 0 },
-    { "value", 64, 0, 0, ctypes_i32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_layer_ctx = {
-  40,  /* size in bytes */
-  14,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[14]) {
-    { "area_act_x1", 8, 0, 0, ctypes_i16, 0 },
-    { "area_act_x2", 12, 0, 0, ctypes_i16, 0 },
-    { "area_act_y1", 10, 0, 0, ctypes_i16, 0 },
-    { "area_act_y2", 14, 0, 0, ctypes_i16, 0 },
-    { "area_full_x1", 0, 0, 0, ctypes_i16, 0 },
-    { "area_full_x2", 4, 0, 0, ctypes_i16, 0 },
-    { "area_full_y1", 2, 0, 0, ctypes_i16, 0 },
-    { "area_full_y2", 6, 0, 0, ctypes_i16, 0 },
-    { "buf", 32, 0, 0, ctypes_ptr32, 0 },
-    { "buf_area", 28, 0, 0, ctypes_ptr32, 0 },
-    { "clip_area", 24, 0, 0, ctypes_ptr32, 0 },
-    { "max_row_with_alpha", 16, 0, 0, ctypes_i16, 0 },
-    { "max_row_with_no_alpha", 18, 0, 0, ctypes_i16, 0 },
-    { "screen_transp", 36, 0, 0, ctypes_u8, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_common_dsc = {
-  8,  /* size in bytes */
-  2,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[2]) {
-    { "cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "type", 4, 0, 0, ctypes_u8, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_line_param_cfg = {
+const be_ctypes_structure_t be_lv_image_header = {
   12,  /* size in bytes */
-  5,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[5]) {
-    { "p1_x", 0, 0, 0, ctypes_i16, 0 },
-    { "p1_y", 2, 0, 0, ctypes_i16, 0 },
-    { "p2_x", 4, 0, 0, ctypes_i16, 0 },
-    { "p2_y", 6, 0, 0, ctypes_i16, 0 },
-    { "side", 8, 0, 2, ctypes_bf, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_line_param = {
-  44,  /* size in bytes */
-  15,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[15]) {
-    { "cfg_p1_x", 8, 0, 0, ctypes_i16, 0 },
-    { "cfg_p1_y", 10, 0, 0, ctypes_i16, 0 },
-    { "cfg_p2_x", 12, 0, 0, ctypes_i16, 0 },
-    { "cfg_p2_y", 14, 0, 0, ctypes_i16, 0 },
-    { "cfg_side", 16, 0, 2, ctypes_bf, 0 },
-    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
-    { "flat", 40, 0, 1, ctypes_bf, 0 },
-    { "inv", 40, 1, 1, ctypes_bf, 0 },
-    { "origo_x", 20, 0, 0, ctypes_i16, 0 },
-    { "origo_y", 22, 0, 0, ctypes_i16, 0 },
-    { "spx", 36, 0, 0, ctypes_i32, 0 },
-    { "steep", 32, 0, 0, ctypes_i32, 0 },
-    { "xy_steep", 24, 0, 0, ctypes_i32, 0 },
-    { "yx_steep", 28, 0, 0, ctypes_i32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_angle_param_cfg = {
-  8,  /* size in bytes */
-  4,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[4]) {
-    { "end_angle", 6, 0, 0, ctypes_i16, 0 },
-    { "start_angle", 4, 0, 0, ctypes_i16, 0 },
-    { "vertex_p_x", 0, 0, 0, ctypes_i16, 0 },
-    { "vertex_p_y", 2, 0, 0, ctypes_i16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_angle_param = {
-  104,  /* size in bytes */
-  37,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[37]) {
-    { "cfg_end_angle", 14, 0, 0, ctypes_i16, 0 },
-    { "cfg_start_angle", 12, 0, 0, ctypes_i16, 0 },
-    { "cfg_vertex_p_x", 8, 0, 0, ctypes_i16, 0 },
-    { "cfg_vertex_p_y", 10, 0, 0, ctypes_i16, 0 },
-    { "delta_deg", 102, 0, 0, ctypes_u16, 0 },
-    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
-    { "end_line_cfg_p1_x", 68, 0, 0, ctypes_i16, 0 },
-    { "end_line_cfg_p1_y", 70, 0, 0, ctypes_i16, 0 },
-    { "end_line_cfg_p2_x", 72, 0, 0, ctypes_i16, 0 },
-    { "end_line_cfg_p2_y", 74, 0, 0, ctypes_i16, 0 },
-    { "end_line_cfg_side", 76, 0, 2, ctypes_bf, 0 },
-    { "end_line_dsc_cb", 60, 0, 0, ctypes_ptr32, 0 },
-    { "end_line_dsc_type", 64, 0, 0, ctypes_u8, 0 },
-    { "end_line_flat", 100, 0, 1, ctypes_bf, 0 },
-    { "end_line_inv", 100, 1, 1, ctypes_bf, 0 },
-    { "end_line_origo_x", 80, 0, 0, ctypes_i16, 0 },
-    { "end_line_origo_y", 82, 0, 0, ctypes_i16, 0 },
-    { "end_line_spx", 96, 0, 0, ctypes_i32, 0 },
-    { "end_line_steep", 92, 0, 0, ctypes_i32, 0 },
-    { "end_line_xy_steep", 84, 0, 0, ctypes_i32, 0 },
-    { "end_line_yx_steep", 88, 0, 0, ctypes_i32, 0 },
-    { "start_line_cfg_p1_x", 24, 0, 0, ctypes_i16, 0 },
-    { "start_line_cfg_p1_y", 26, 0, 0, ctypes_i16, 0 },
-    { "start_line_cfg_p2_x", 28, 0, 0, ctypes_i16, 0 },
-    { "start_line_cfg_p2_y", 30, 0, 0, ctypes_i16, 0 },
-    { "start_line_cfg_side", 32, 0, 2, ctypes_bf, 0 },
-    { "start_line_dsc_cb", 16, 0, 0, ctypes_ptr32, 0 },
-    { "start_line_dsc_type", 20, 0, 0, ctypes_u8, 0 },
-    { "start_line_flat", 56, 0, 1, ctypes_bf, 0 },
-    { "start_line_inv", 56, 1, 1, ctypes_bf, 0 },
-    { "start_line_origo_x", 36, 0, 0, ctypes_i16, 0 },
-    { "start_line_origo_y", 38, 0, 0, ctypes_i16, 0 },
-    { "start_line_spx", 52, 0, 0, ctypes_i32, 0 },
-    { "start_line_steep", 48, 0, 0, ctypes_i32, 0 },
-    { "start_line_xy_steep", 40, 0, 0, ctypes_i32, 0 },
-    { "start_line_yx_steep", 44, 0, 0, ctypes_i32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_radius_param_cfg = {
-  12,  /* size in bytes */
-  6,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[6]) {
-    { "outer", 10, 0, 1, ctypes_bf, 0 },
-    { "radius", 8, 0, 0, ctypes_i16, 0 },
-    { "rect_x1", 0, 0, 0, ctypes_i16, 0 },
-    { "rect_x2", 4, 0, 0, ctypes_i16, 0 },
-    { "rect_y1", 2, 0, 0, ctypes_i16, 0 },
-    { "rect_y2", 6, 0, 0, ctypes_i16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_radius_circle_dsc = {
-  28,  /* size in bytes */
   7,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[7]) {
-    { "buf", 0, 0, 0, ctypes_ptr32, 0 },
-    { "cir_opa", 4, 0, 0, ctypes_ptr32, 0 },
-    { "life", 16, 0, 0, ctypes_i32, 0 },
-    { "opa_start_on_y", 12, 0, 0, ctypes_ptr32, 0 },
-    { "radius", 24, 0, 0, ctypes_i16, 0 },
-    { "used_cnt", 20, 0, 0, ctypes_u32, 0 },
-    { "x_start_on_y", 8, 0, 0, ctypes_ptr32, 0 },
+    { "cf", 1, 0, 0, ctypes_u8, 0 },
+    { "flags", 2, 0, 0, ctypes_u16, 0 },
+    { "h", 6, 0, 0, ctypes_u16, 0 },
+    { "magic", 0, 0, 0, ctypes_u8, 0 },
+    { "reserved_2", 10, 0, 0, ctypes_u16, 0 },
+    { "stride", 8, 0, 0, ctypes_u16, 0 },
+    { "w", 4, 0, 0, ctypes_u16, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_radius_param = {
-  48,  /* size in bytes */
-  15,  /* number of elements */
+const be_ctypes_structure_t be_lv_draw_image_dsc = {
+  112,  /* size in bytes */
+  36,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[15]) {
-    { "cfg_outer", 18, 0, 1, ctypes_bf, 0 },
-    { "cfg_radius", 16, 0, 0, ctypes_i16, 0 },
-    { "cfg_rect_x1", 8, 0, 0, ctypes_i16, 0 },
-    { "cfg_rect_x2", 12, 0, 0, ctypes_i16, 0 },
-    { "cfg_rect_y1", 10, 0, 0, ctypes_i16, 0 },
-    { "cfg_rect_y2", 14, 0, 0, ctypes_i16, 0 },
-    { "circle_buf", 20, 0, 0, ctypes_ptr32, 0 },
-    { "circle_cir_opa", 24, 0, 0, ctypes_ptr32, 0 },
-    { "circle_life", 36, 0, 0, ctypes_i32, 0 },
-    { "circle_opa_start_on_y", 32, 0, 0, ctypes_ptr32, 0 },
-    { "circle_radius", 44, 0, 0, ctypes_i16, 0 },
-    { "circle_used_cnt", 40, 0, 0, ctypes_u32, 0 },
-    { "circle_x_start_on_y", 28, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
+  (const be_ctypes_structure_item_t[36]) {
+    { "antialias", 81, 4, 1, ctypes_bf, 0 },
+    { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "base_id1", 8, 0, 0, ctypes_u32, 0 },
+    { "base_id2", 12, 0, 0, ctypes_u32, 0 },
+    { "base_layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "base_part", 4, 0, 0, ctypes_u32, 0 },
+    { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "bitmap_mask_src", 108, 0, 0, ctypes_ptr32, 0 },
+    { "blend_mode", 81, 0, 4, ctypes_bf, 0 },
+    { "clip_radius", 44, 0, 0, ctypes_i32, 0 },
+    { "header_cf", 33, 0, 0, ctypes_u8, 0 },
+    { "header_flags", 34, 0, 0, ctypes_u16, 0 },
+    { "header_h", 38, 0, 0, ctypes_u16, 0 },
+    { "header_magic", 32, 0, 0, ctypes_u8, 0 },
+    { "header_reserved_2", 42, 0, 0, ctypes_u16, 0 },
+    { "header_stride", 40, 0, 0, ctypes_u16, 0 },
+    { "header_w", 36, 0, 0, ctypes_u16, 0 },
+    { "image_area_x1", 92, 0, 0, ctypes_i32, 0 },
+    { "image_area_x2", 100, 0, 0, ctypes_i32, 0 },
+    { "image_area_y1", 96, 0, 0, ctypes_i32, 0 },
+    { "image_area_y2", 104, 0, 0, ctypes_i32, 0 },
+    { "lv_image_colorkey_t", 84, 0, 0, ctypes_ptr32, 0 },
+    { "opa", 80, 0, 0, ctypes_u8, 0 },
+    { "pivot_x", 68, 0, 0, ctypes_i32, 0 },
+    { "pivot_y", 72, 0, 0, ctypes_i32, 0 },
+    { "recolor", 76, 0, 0, ctypes_u24, 1 },
+    { "recolor_opa", 79, 0, 0, ctypes_u8, 0 },
+    { "rotation", 48, 0, 0, ctypes_i32, 0 },
+    { "scale_x", 52, 0, 0, ctypes_i32, 0 },
+    { "scale_y", 56, 0, 0, ctypes_i32, 0 },
+    { "skew_x", 60, 0, 0, ctypes_i32, 0 },
+    { "skew_y", 64, 0, 0, ctypes_i32, 0 },
+    { "src", 28, 0, 0, ctypes_ptr32, 0 },
+    { "sup", 88, 0, 0, ctypes_ptr32, 0 },
+    { "tile", 81, 5, 1, ctypes_bf, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_mask_fade_param_cfg = {
-  16,  /* size in bytes */
-  8,  /* number of elements */
+const be_ctypes_structure_t be_lv_draw_label_dsc = {
+  108,  /* size in bytes */
+  35,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[8]) {
-    { "coords_x1", 0, 0, 0, ctypes_i16, 0 },
-    { "coords_x2", 4, 0, 0, ctypes_i16, 0 },
-    { "coords_y1", 2, 0, 0, ctypes_i16, 0 },
-    { "coords_y2", 6, 0, 0, ctypes_i16, 0 },
-    { "opa_bottom", 13, 0, 0, ctypes_u8, 0 },
-    { "opa_top", 12, 0, 0, ctypes_u8, 0 },
-    { "y_bottom", 10, 0, 0, ctypes_i16, 0 },
-    { "y_top", 8, 0, 0, ctypes_i16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_fade_param = {
-  24,  /* size in bytes */
-  10,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[10]) {
-    { "cfg_coords_x1", 8, 0, 0, ctypes_i16, 0 },
-    { "cfg_coords_x2", 12, 0, 0, ctypes_i16, 0 },
-    { "cfg_coords_y1", 10, 0, 0, ctypes_i16, 0 },
-    { "cfg_coords_y2", 14, 0, 0, ctypes_i16, 0 },
-    { "cfg_opa_bottom", 21, 0, 0, ctypes_u8, 0 },
-    { "cfg_opa_top", 20, 0, 0, ctypes_u8, 0 },
-    { "cfg_y_bottom", 18, 0, 0, ctypes_i16, 0 },
-    { "cfg_y_top", 16, 0, 0, ctypes_i16, 0 },
-    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_map_param_cfg = {
-  12,  /* size in bytes */
-  5,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[5]) {
-    { "coords_x1", 0, 0, 0, ctypes_i16, 0 },
-    { "coords_x2", 4, 0, 0, ctypes_i16, 0 },
-    { "coords_y1", 2, 0, 0, ctypes_i16, 0 },
-    { "coords_y2", 6, 0, 0, ctypes_i16, 0 },
-    { "map", 8, 0, 0, ctypes_ptr32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_map_param = {
-  20,  /* size in bytes */
-  7,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[7]) {
-    { "cfg_coords_x1", 8, 0, 0, ctypes_i16, 0 },
-    { "cfg_coords_x2", 12, 0, 0, ctypes_i16, 0 },
-    { "cfg_coords_y1", 10, 0, 0, ctypes_i16, 0 },
-    { "cfg_coords_y2", 14, 0, 0, ctypes_i16, 0 },
-    { "cfg_map", 16, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_polygon_param_cfg = {
-  8,  /* size in bytes */
-  2,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[2]) {
-    { "point_cnt", 4, 0, 0, ctypes_u16, 0 },
-    { "points", 0, 0, 0, ctypes_ptr32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_polygon_param = {
-  16,  /* size in bytes */
-  4,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[4]) {
-    { "cfg_point_cnt", 12, 0, 0, ctypes_u16, 0 },
-    { "cfg_points", 8, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
-    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_mask_saved = {
-  8,  /* size in bytes */
-  2,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[2]) {
-    { "custom_id", 4, 0, 0, ctypes_ptr32, 0 },
-    { "param", 0, 0, 0, ctypes_ptr32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_meter_scale = {
-  36,  /* size in bytes */
-  15,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[15]) {
-    { "angle_range", 30, 0, 0, ctypes_u16, 0 },
-    { "label_color", 18, 0, 0, ctypes_i16, 0 },
-    { "label_gap", 16, 0, 0, ctypes_i16, 0 },
-    { "max", 24, 0, 0, ctypes_i32, 0 },
-    { "min", 20, 0, 0, ctypes_i32, 0 },
-    { "r_mod", 28, 0, 0, ctypes_i16, 0 },
-    { "rotation", 32, 0, 0, ctypes_i16, 0 },
-    { "tick_cnt", 2, 0, 0, ctypes_u16, 0 },
-    { "tick_color", 0, 0, 0, ctypes_u16, 1 },
-    { "tick_length", 4, 0, 0, ctypes_u16, 0 },
-    { "tick_major_color", 8, 0, 0, ctypes_u16, 1 },
-    { "tick_major_length", 12, 0, 0, ctypes_u16, 0 },
-    { "tick_major_nth", 10, 0, 0, ctypes_u16, 0 },
-    { "tick_major_width", 14, 0, 0, ctypes_u16, 0 },
-    { "tick_width", 6, 0, 0, ctypes_u16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_meter_indicator = {
-  28,  /* size in bytes */
-  8,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[8]) {
-    { "data0", 16, 0, 0, ctypes_ptr32, 0 },
-    { "data1", 20, 0, 0, ctypes_ptr32, 0 },
-    { "data2", 24, 0, 0, ctypes_ptr32, 0 },
-    { "end_value", 12, 0, 0, ctypes_i32, 0 },
-    { "opa", 5, 0, 0, ctypes_u8, 0 },
-    { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 8, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_u8, 0 },
+  (const be_ctypes_structure_item_t[35]) {
+    { "align", 88, 0, 0, ctypes_u8, 0 },
+    { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "base_id1", 8, 0, 0, ctypes_u32, 0 },
+    { "base_id2", 12, 0, 0, ctypes_u32, 0 },
+    { "base_layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "base_part", 4, 0, 0, ctypes_u32, 0 },
+    { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "bidi_dir", 89, 0, 0, ctypes_u8, 0 },
+    { "blend_mode", 94, 0, 3, ctypes_bf, 0 },
+    { "color", 44, 0, 0, ctypes_u24, 1 },
+    { "decor", 93, 0, 3, ctypes_bf, 0 },
+    { "flag", 93, 3, 5, ctypes_bf, 0 },
+    { "font", 40, 0, 0, ctypes_ptr32, 0 },
+    { "has_bided", 94, 5, 1, ctypes_bf, 0 },
+    { "hint", 96, 0, 0, ctypes_ptr32, 0 },
+    { "letter_space", 52, 0, 0, ctypes_i32, 0 },
+    { "line_space", 48, 0, 0, ctypes_i32, 0 },
+    { "ofs_x", 56, 0, 0, ctypes_i32, 0 },
+    { "ofs_y", 60, 0, 0, ctypes_i32, 0 },
+    { "opa", 90, 0, 0, ctypes_u8, 0 },
+    { "outline_stroke_color", 100, 0, 0, ctypes_u24, 1 },
+    { "outline_stroke_opa", 91, 0, 0, ctypes_u8, 0 },
+    { "outline_stroke_width", 104, 0, 0, ctypes_i32, 0 },
+    { "rotation", 64, 0, 0, ctypes_i32, 0 },
+    { "sel_bg_color", 79, 0, 0, ctypes_u24, 1 },
+    { "sel_color", 76, 0, 0, ctypes_u24, 1 },
+    { "sel_end", 72, 0, 0, ctypes_u32, 0 },
+    { "sel_start", 68, 0, 0, ctypes_u32, 0 },
+    { "text", 28, 0, 0, ctypes_ptr32, 0 },
+    { "text_length", 84, 0, 0, ctypes_u32, 0 },
+    { "text_local", 94, 3, 1, ctypes_bf, 0 },
+    { "text_size_x", 32, 0, 0, ctypes_i32, 0 },
+    { "text_size_y", 36, 0, 0, ctypes_i32, 0 },
+    { "text_static", 94, 4, 1, ctypes_bf, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_chart_series = {
-  16,  /* size in bytes */
+  20,  /* size in bytes */
   9,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[9]) {
-    { "color", 8, 0, 0, ctypes_u16, 1 },
-    { "hidden", 12, 0, 1, ctypes_bf, 0 },
-    { "start_point", 10, 0, 0, ctypes_u16, 0 },
-    { "x_axis_sec", 12, 3, 1, ctypes_bf, 0 },
-    { "x_ext_buf_assigned", 12, 1, 1, ctypes_bf, 0 },
+    { "color", 8, 0, 0, ctypes_u24, 1 },
+    { "hidden", 16, 0, 1, ctypes_bf, 0 },
+    { "start_point", 12, 0, 0, ctypes_u32, 0 },
+    { "x_axis_sec", 16, 3, 1, ctypes_bf, 0 },
+    { "x_ext_buf_assigned", 16, 1, 1, ctypes_bf, 0 },
     { "x_points", 0, 0, 0, ctypes_ptr32, 0 },
-    { "y_axis_sec", 12, 4, 1, ctypes_bf, 0 },
-    { "y_ext_buf_assigned", 12, 2, 1, ctypes_bf, 0 },
+    { "y_axis_sec", 16, 4, 1, ctypes_bf, 0 },
+    { "y_ext_buf_assigned", 16, 2, 1, ctypes_bf, 0 },
     { "y_points", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_chart_cursor = {
-  16,  /* size in bytes */
+  24,  /* size in bytes */
   7,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[7]) {
-    { "color", 6, 0, 0, ctypes_u16, 1 },
-    { "dir", 12, 0, 0, ctypes_u8, 0 },
-    { "point_id", 4, 0, 0, ctypes_u16, 0 },
-    { "pos_set", 13, 0, 1, ctypes_bf, 0 },
-    { "pos_x", 0, 0, 0, ctypes_i16, 0 },
-    { "pos_y", 2, 0, 0, ctypes_i16, 0 },
-    { "ser", 8, 0, 0, ctypes_ptr32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_chart_tick_dsc = {
-  12,  /* size in bytes */
-  6,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[6]) {
-    { "draw_size", 4, 0, 0, ctypes_i16, 0 },
-    { "label_en", 9, 6, 1, ctypes_bf, 0 },
-    { "major_cnt", 7, 7, 15, ctypes_bf, 0 },
-    { "major_len", 0, 0, 0, ctypes_i16, 0 },
-    { "minor_cnt", 6, 0, 15, ctypes_bf, 0 },
-    { "minor_len", 2, 0, 0, ctypes_i16, 0 },
+    { "color", 12, 0, 0, ctypes_u24, 1 },
+    { "dir", 20, 0, 0, ctypes_u8, 0 },
+    { "point_id", 8, 0, 0, ctypes_i32, 0 },
+    { "pos_set", 21, 0, 1, ctypes_bf, 0 },
+    { "pos_x", 0, 0, 0, ctypes_i32, 0 },
+    { "pos_y", 4, 0, 0, ctypes_i32, 0 },
+    { "ser", 16, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_obj_class = {
-  28,  /* size in bytes */
-  10,  /* number of elements */
+  36,  /* size in bytes */
+  12,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[10]) {
+  (const be_ctypes_structure_item_t[12]) {
     { "base_class", 0, 0, 0, ctypes_ptr32, 0 },
     { "constructor_cb", 4, 0, 0, ctypes_ptr32, 0 },
     { "destructor_cb", 8, 0, 0, ctypes_ptr32, 0 },
-    { "editable", 24, 0, 2, ctypes_bf, 0 },
-    { "event_cb", 16, 0, 0, ctypes_ptr32, 0 },
-    { "group_def", 24, 2, 2, ctypes_bf, 0 },
-    { "height_def", 22, 0, 0, ctypes_i16, 0 },
-    { "instance_size", 24, 4, 16, ctypes_bf, 0 },
-    { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
-    { "width_def", 20, 0, 0, ctypes_i16, 0 },
+    { "editable", 32, 0, 2, ctypes_bf, 0 },
+    { "event_cb", 12, 0, 0, ctypes_ptr32, 0 },
+    { "group_def", 32, 2, 2, ctypes_bf, 0 },
+    { "height_def", 28, 0, 0, ctypes_i32, 0 },
+    { "instance_size", 32, 4, 16, ctypes_bf, 0 },
+    { "name", 20, 0, 0, ctypes_ptr32, 0 },
+    { "theme_inheritable", 34, 4, 1, ctypes_bf, 0 },
+    { "user_data", 16, 0, 0, ctypes_ptr32, 0 },
+    { "width_def", 24, 0, 0, ctypes_i32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_event = {
   28,  /* size in bytes */
-  9,  /* number of elements */
+  10,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[9]) {
+  (const be_ctypes_structure_item_t[10]) {
     { "code", 8, 0, 0, ctypes_i32, 0 },
-    { "current_target", 4, 0, 0, ctypes_ptr32, 0 },
+    { "current_target", 0, 0, 0, ctypes_ptr32, 0 },
     { "deleted", 24, 0, 1, ctypes_bf, 0 },
+    { "original_target", 4, 0, 0, ctypes_ptr32, 0 },
     { "param", 16, 0, 0, ctypes_ptr32, 0 },
     { "prev", 20, 0, 0, ctypes_ptr32, 0 },
     { "stop_bubbling", 24, 2, 1, ctypes_bf, 0 },
     { "stop_processing", 24, 1, 1, ctypes_bf, 0 },
-    { "target", 0, 0, 0, ctypes_ptr32, 0 },
+    { "stop_trickling", 24, 3, 1, ctypes_bf, 0 },
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_sqrt_res = {
-  4,  /* size in bytes */
-  2,  /* number of elements */
+const be_ctypes_structure_t be_lv_image_dsc = {
+  28,  /* size in bytes */
+  11,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[2]) {
-    { "f", 2, 0, 0, ctypes_u16, 0 },
-    { "i", 0, 0, 0, ctypes_u16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_img_header = {
-  4,  /* size in bytes */
-  5,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[5]) {
-    { "always_zero", 0, 5, 3, ctypes_bf, 0 },
-    { "cf", 0, 0, 5, ctypes_bf, 0 },
-    { "h", 2, 5, 11, ctypes_bf, 0 },
-    { "reserved", 1, 0, 2, ctypes_bf, 0 },
-    { "w", 1, 2, 11, ctypes_bf, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_img_dsc = {
-  12,  /* size in bytes */
-  7,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[7]) {
-    { "data", 8, 0, 0, ctypes_ptr32, 0 },
-    { "data_size", 4, 0, 0, ctypes_u32, 0 },
-    { "header_always_zero", 0, 5, 3, ctypes_bf, 0 },
-    { "header_cf", 0, 0, 5, ctypes_bf, 0 },
-    { "header_h", 2, 5, 11, ctypes_bf, 0 },
-    { "header_reserved", 1, 0, 2, ctypes_bf, 0 },
-    { "header_w", 1, 2, 11, ctypes_bf, 0 },
+  (const be_ctypes_structure_item_t[11]) {
+    { "data", 16, 0, 0, ctypes_ptr32, 0 },
+    { "data_size", 12, 0, 0, ctypes_u32, 0 },
+    { "header_cf", 1, 0, 0, ctypes_u8, 0 },
+    { "header_flags", 2, 0, 0, ctypes_u16, 0 },
+    { "header_h", 6, 0, 0, ctypes_u16, 0 },
+    { "header_magic", 0, 0, 0, ctypes_u8, 0 },
+    { "header_reserved_2", 10, 0, 0, ctypes_u16, 0 },
+    { "header_stride", 8, 0, 0, ctypes_u16, 0 },
+    { "header_w", 4, 0, 0, ctypes_u16, 0 },
+    { "reserved", 20, 0, 0, ctypes_ptr32, 0 },
+    { "reserved_2", 24, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_style_transition_dsc = {
@@ -590,6 +374,48 @@ const be_ctypes_structure_t be_lv_style_transition_dsc = {
     { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_anim_timeline_dsc = {
+  28,  /* size in bytes */
+  7,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[7]) {
+    { "act_time", 8, 0, 0, ctypes_u32, 0 },
+    { "anim_dsc", 0, 0, 0, ctypes_ptr32, 0 },
+    { "anim_dsc_cnt", 4, 0, 0, ctypes_u32, 0 },
+    { "delay", 12, 0, 0, ctypes_u32, 0 },
+    { "repeat_count", 16, 0, 0, ctypes_u32, 0 },
+    { "repeat_delay", 20, 0, 0, ctypes_u32, 0 },
+    { "user_data", 24, 0, 0, ctypes_ptr32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_layer = {
+  84,  /* size in bytes */
+  21,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[21]) {
+    { "_clip_area_x1", 52, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_x2", 60, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_y1", 56, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_y2", 64, 0, 0, ctypes_i32, 0 },
+    { "buf_area_x1", 20, 0, 0, ctypes_i32, 0 },
+    { "buf_area_x2", 28, 0, 0, ctypes_i32, 0 },
+    { "buf_area_y1", 24, 0, 0, ctypes_i32, 0 },
+    { "buf_area_y2", 32, 0, 0, ctypes_i32, 0 },
+    { "color_format", 76, 0, 0, ctypes_u32, 0 },
+    { "draw_buf", 0, 0, 0, ctypes_ptr32, 0 },
+    { "draw_task_head", 4, 0, 0, ctypes_ptr32, 0 },
+    { "next", 12, 0, 0, ctypes_ptr32, 0 },
+    { "opa", 80, 0, 0, ctypes_u8, 0 },
+    { "parent", 8, 0, 0, ctypes_ptr32, 0 },
+    { "partial_y_offset", 68, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_x1", 36, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_x2", 44, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_y1", 40, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_y2", 48, 0, 0, ctypes_i32, 0 },
+    { "recolor", 72, 0, 0, ctypes_u32, 0 },
+    { "user_data", 16, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_color_filter_dsc = {
   8,  /* size in bytes */
   2,  /* number of elements */
@@ -600,224 +426,161 @@ const be_ctypes_structure_t be_lv_color_filter_dsc = {
 }};
 
 const be_ctypes_structure_t be_lv_timer_ntv = {
-  24,  /* size in bytes */
-  6,  /* number of elements */
+  28,  /* size in bytes */
+  7,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[6]) {
+  (const be_ctypes_structure_item_t[7]) {
+    { "auto_delete", 24, 0, 1, ctypes_bf, 0 },
     { "last_run", 4, 0, 0, ctypes_u32, 0 },
-    { "paused", 20, 0, 1, ctypes_bf, 0 },
+    { "paused", 20, 0, 0, ctypes_i32, 0 },
     { "period", 0, 0, 0, ctypes_u32, 0 },
     { "repeat_count", 16, 0, 0, ctypes_i32, 0 },
     { "timer_cb", 8, 0, 0, ctypes_ptr32, 0 },
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_anim_ntv = {
-  72,  /* size in bytes */
-  21,  /* number of elements */
+const be_ctypes_structure_t be_lv_event_dsc = {
+  12,  /* size in bytes */
+  3,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[21]) {
-    { "act_time", 48, 0, 0, ctypes_i32, 0 },
-    { "current_value", 36, 0, 0, ctypes_i32, 0 },
-    { "deleted_cb", 16, 0, 0, ctypes_ptr32, 0 },
-    { "early_apply", 68, 0, 1, ctypes_bf, 0 },
-    { "end_value", 40, 0, 0, ctypes_i32, 0 },
-    { "exec_cb", 4, 0, 0, ctypes_ptr32, 0 },
-    { "get_value_cb", 20, 0, 0, ctypes_ptr32, 0 },
-    { "path_cb", 28, 0, 0, ctypes_ptr32, 0 },
-    { "playback_delay", 52, 0, 0, ctypes_u32, 0 },
-    { "playback_now", 68, 1, 1, ctypes_bf, 0 },
-    { "playback_time", 56, 0, 0, ctypes_u32, 0 },
-    { "ready_cb", 12, 0, 0, ctypes_ptr32, 0 },
-    { "repeat_cnt", 64, 0, 0, ctypes_u32, 0 },
-    { "repeat_delay", 60, 0, 0, ctypes_u32, 0 },
-    { "run_round", 68, 2, 1, ctypes_bf, 0 },
-    { "start_cb", 8, 0, 0, ctypes_ptr32, 0 },
-    { "start_cb_called", 68, 3, 1, ctypes_bf, 0 },
-    { "start_value", 32, 0, 0, ctypes_i32, 0 },
-    { "time", 44, 0, 0, ctypes_i32, 0 },
-    { "user_data", 24, 0, 0, ctypes_ptr32, 0 },
-    { "var", 0, 0, 0, ctypes_ptr32, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_draw_ctx = {
-  88,  /* size in bytes */
-  26,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[26]) {
-    { "buf", 0, 0, 0, ctypes_ptr32, 0 },
-    { "buf_area_x1", 4, 0, 0, ctypes_i16, 0 },
-    { "buf_area_x2", 8, 0, 0, ctypes_i16, 0 },
-    { "buf_area_y1", 6, 0, 0, ctypes_i16, 0 },
-    { "buf_area_y2", 10, 0, 0, ctypes_i16, 0 },
-    { "buffer_copy", 60, 0, 0, ctypes_ptr32, 0 },
-    { "clip_area_x1", 12, 0, 0, ctypes_i16, 0 },
-    { "clip_area_x2", 16, 0, 0, ctypes_i16, 0 },
-    { "clip_area_y1", 14, 0, 0, ctypes_i16, 0 },
-    { "clip_area_y2", 18, 0, 0, ctypes_i16, 0 },
-    { "draw_arc", 24, 0, 0, ctypes_ptr32, 0 },
-    { "draw_bg", 52, 0, 0, ctypes_ptr32, 0 },
-    { "draw_img", 32, 0, 0, ctypes_ptr32, 0 },
-    { "draw_img_decoded", 28, 0, 0, ctypes_ptr32, 0 },
-    { "draw_letter", 36, 0, 0, ctypes_ptr32, 0 },
-    { "draw_line", 40, 0, 0, ctypes_ptr32, 0 },
-    { "draw_polygon", 44, 0, 0, ctypes_ptr32, 0 },
-    { "draw_rect", 20, 0, 0, ctypes_ptr32, 0 },
-    { "draw_transform", 48, 0, 0, ctypes_ptr32, 0 },
-    { "layer_adjust", 68, 0, 0, ctypes_ptr32, 0 },
-    { "layer_blend", 72, 0, 0, ctypes_ptr32, 0 },
-    { "layer_destroy", 76, 0, 0, ctypes_ptr32, 0 },
-    { "layer_init", 64, 0, 0, ctypes_ptr32, 0 },
-    { "layer_instance_size", 80, 0, 0, ctypes_u32, 0 },
-    { "user_data", 84, 0, 0, ctypes_ptr32, 0 },
-    { "wait_for_finish", 56, 0, 0, ctypes_ptr32, 0 },
+  (const be_ctypes_structure_item_t[3]) {
+    { "cb", 0, 0, 0, ctypes_ptr32, 0 },
+    { "filter", 8, 0, 0, ctypes_u32, 0 },
+    { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_ts_calibration = {
-  12,  /* size in bytes */
+  20,  /* size in bytes */
   5,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[5]) {
-    { "raw_x", 0, 0, 0, ctypes_i16, 0 },
-    { "raw_y", 2, 0, 0, ctypes_i16, 0 },
-    { "state", 8, 0, 0, ctypes_i32, 0 },
-    { "x", 4, 0, 0, ctypes_i16, 0 },
-    { "y", 6, 0, 0, ctypes_i16, 0 },
+    { "raw_x", 0, 0, 0, ctypes_i32, 0 },
+    { "raw_y", 4, 0, 0, ctypes_i32, 0 },
+    { "state", 16, 0, 0, ctypes_i32, 0 },
+    { "x", 8, 0, 0, ctypes_i32, 0 },
+    { "y", 12, 0, 0, ctypes_i32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_span_coords = {
+  48,  /* size in bytes */
+  12,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[12]) {
+    { "heading_x1", 0, 0, 0, ctypes_i32, 0 },
+    { "heading_x2", 8, 0, 0, ctypes_i32, 0 },
+    { "heading_y1", 4, 0, 0, ctypes_i32, 0 },
+    { "heading_y2", 12, 0, 0, ctypes_i32, 0 },
+    { "middle_x1", 16, 0, 0, ctypes_i32, 0 },
+    { "middle_x2", 24, 0, 0, ctypes_i32, 0 },
+    { "middle_y1", 20, 0, 0, ctypes_i32, 0 },
+    { "middle_y2", 28, 0, 0, ctypes_i32, 0 },
+    { "trailing_x1", 32, 0, 0, ctypes_i32, 0 },
+    { "trailing_x2", 40, 0, 0, ctypes_i32, 0 },
+    { "trailing_y1", 36, 0, 0, ctypes_i32, 0 },
+    { "trailing_y2", 44, 0, 0, ctypes_i32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_font_info = {
+  24,  /* size in bytes */
+  6,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[6]) {
+    { "class_p", 4, 0, 0, ctypes_ptr32, 0 },
+    { "kerning", 20, 0, 0, ctypes_u32, 0 },
+    { "name", 0, 0, 0, ctypes_ptr32, 0 },
+    { "render_mode", 12, 0, 0, ctypes_u32, 0 },
+    { "size", 8, 0, 0, ctypes_u32, 0 },
+    { "style", 16, 0, 0, ctypes_u32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_draw_letter_dsc = {
+  80,  /* size in bytes */
+  23,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[23]) {
+    { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
+    { "base_id1", 8, 0, 0, ctypes_u32, 0 },
+    { "base_id2", 12, 0, 0, ctypes_u32, 0 },
+    { "base_layer", 16, 0, 0, ctypes_ptr32, 0 },
+    { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
+    { "base_part", 4, 0, 0, ctypes_u32, 0 },
+    { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "blend_mode", 69, 3, 4, ctypes_bf, 0 },
+    { "color", 36, 0, 0, ctypes_u24, 1 },
+    { "decor", 69, 0, 3, ctypes_bf, 0 },
+    { "font", 32, 0, 0, ctypes_ptr32, 0 },
+    { "opa", 68, 0, 0, ctypes_u8, 0 },
+    { "outline_stroke_color", 76, 0, 0, ctypes_u24, 1 },
+    { "outline_stroke_opa", 70, 0, 0, ctypes_u8, 0 },
+    { "outline_stroke_width", 72, 0, 0, ctypes_i32, 0 },
+    { "pivot_x", 60, 0, 0, ctypes_i32, 0 },
+    { "pivot_y", 64, 0, 0, ctypes_i32, 0 },
+    { "rotation", 40, 0, 0, ctypes_i32, 0 },
+    { "scale_x", 44, 0, 0, ctypes_i32, 0 },
+    { "scale_y", 48, 0, 0, ctypes_i32, 0 },
+    { "skew_x", 52, 0, 0, ctypes_i32, 0 },
+    { "skew_y", 56, 0, 0, ctypes_i32, 0 },
+    { "unicode", 28, 0, 0, ctypes_u32, 0 },
 }};
 
 static const char * be_ctypes_instance_mappings[] = {
-  "lv_color",
+  "lv.color",
   NULL
 };
 
-static be_define_ctypes_class(lv_anim_ntv, &be_lv_anim_ntv, &be_class_ctypes_bytes, "lv_anim_ntv");
+static be_define_ctypes_class(lv_anim_timeline_dsc, &be_lv_anim_timeline_dsc, &be_class_ctypes_bytes, "lv_anim_timeline_dsc");
 static be_define_ctypes_class(lv_area, &be_lv_area, &be_class_ctypes_bytes, "lv_area");
 static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ctypes_bytes, "lv_chart_cursor");
 static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes_bytes, "lv_chart_series");
-static be_define_ctypes_class(lv_chart_tick_dsc, &be_lv_chart_tick_dsc, &be_class_ctypes_bytes, "lv_chart_tick_dsc");
 static be_define_ctypes_class(lv_color_filter_dsc, &be_lv_color_filter_dsc, &be_class_ctypes_bytes, "lv_color_filter_dsc");
-static be_define_ctypes_class(lv_coord, &be_lv_coord, &be_class_ctypes_bytes, "lv_coord");
 static be_define_ctypes_class(lv_draw_arc_dsc, &be_lv_draw_arc_dsc, &be_class_ctypes_bytes, "lv_draw_arc_dsc");
-static be_define_ctypes_class(lv_draw_ctx, &be_lv_draw_ctx, &be_class_ctypes_bytes, "lv_draw_ctx");
-static be_define_ctypes_class(lv_draw_img_dsc, &be_lv_draw_img_dsc, &be_class_ctypes_bytes, "lv_draw_img_dsc");
-static be_define_ctypes_class(lv_draw_layer_ctx, &be_lv_draw_layer_ctx, &be_class_ctypes_bytes, "lv_draw_layer_ctx");
+static be_define_ctypes_class(lv_draw_dsc_base, &be_lv_draw_dsc_base, &be_class_ctypes_bytes, "lv_draw_dsc_base");
+static be_define_ctypes_class(lv_draw_image_dsc, &be_lv_draw_image_dsc, &be_class_ctypes_bytes, "lv_draw_image_dsc");
+static be_define_ctypes_class(lv_draw_label_dsc, &be_lv_draw_label_dsc, &be_class_ctypes_bytes, "lv_draw_label_dsc");
+static be_define_ctypes_class(lv_draw_letter_dsc, &be_lv_draw_letter_dsc, &be_class_ctypes_bytes, "lv_draw_letter_dsc");
 static be_define_ctypes_class(lv_draw_line_dsc, &be_lv_draw_line_dsc, &be_class_ctypes_bytes, "lv_draw_line_dsc");
-static be_define_ctypes_class(lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param, &be_class_ctypes_bytes, "lv_draw_mask_angle_param");
-static be_define_ctypes_class(lv_draw_mask_angle_param_cfg, &be_lv_draw_mask_angle_param_cfg, &be_class_ctypes_bytes, "lv_draw_mask_angle_param_cfg");
-static be_define_ctypes_class(lv_draw_mask_common_dsc, &be_lv_draw_mask_common_dsc, &be_class_ctypes_bytes, "lv_draw_mask_common_dsc");
-static be_define_ctypes_class(lv_draw_mask_fade_param, &be_lv_draw_mask_fade_param, &be_class_ctypes_bytes, "lv_draw_mask_fade_param");
-static be_define_ctypes_class(lv_draw_mask_fade_param_cfg, &be_lv_draw_mask_fade_param_cfg, &be_class_ctypes_bytes, "lv_draw_mask_fade_param_cfg");
-static be_define_ctypes_class(lv_draw_mask_line_param, &be_lv_draw_mask_line_param, &be_class_ctypes_bytes, "lv_draw_mask_line_param");
-static be_define_ctypes_class(lv_draw_mask_line_param_cfg, &be_lv_draw_mask_line_param_cfg, &be_class_ctypes_bytes, "lv_draw_mask_line_param_cfg");
-static be_define_ctypes_class(lv_draw_mask_map_param, &be_lv_draw_mask_map_param, &be_class_ctypes_bytes, "lv_draw_mask_map_param");
-static be_define_ctypes_class(lv_draw_mask_map_param_cfg, &be_lv_draw_mask_map_param_cfg, &be_class_ctypes_bytes, "lv_draw_mask_map_param_cfg");
-static be_define_ctypes_class(lv_draw_mask_polygon_param, &be_lv_draw_mask_polygon_param, &be_class_ctypes_bytes, "lv_draw_mask_polygon_param");
-static be_define_ctypes_class(lv_draw_mask_polygon_param_cfg, &be_lv_draw_mask_polygon_param_cfg, &be_class_ctypes_bytes, "lv_draw_mask_polygon_param_cfg");
-static be_define_ctypes_class(lv_draw_mask_radius_circle_dsc, &be_lv_draw_mask_radius_circle_dsc, &be_class_ctypes_bytes, "lv_draw_mask_radius_circle_dsc");
-static be_define_ctypes_class(lv_draw_mask_radius_param, &be_lv_draw_mask_radius_param, &be_class_ctypes_bytes, "lv_draw_mask_radius_param");
-static be_define_ctypes_class(lv_draw_mask_radius_param_cfg, &be_lv_draw_mask_radius_param_cfg, &be_class_ctypes_bytes, "lv_draw_mask_radius_param_cfg");
-static be_define_ctypes_class(lv_draw_mask_saved, &be_lv_draw_mask_saved, &be_class_ctypes_bytes, "lv_draw_mask_saved");
 static be_define_ctypes_class(lv_draw_rect_dsc, &be_lv_draw_rect_dsc, &be_class_ctypes_bytes, "lv_draw_rect_dsc");
 static be_define_ctypes_class(lv_event, &be_lv_event, &be_class_ctypes_bytes, "lv_event");
+static be_define_ctypes_class(lv_event_dsc, &be_lv_event_dsc, &be_class_ctypes_bytes, "lv_event_dsc");
+static be_define_ctypes_class(lv_font_info, &be_lv_font_info, &be_class_ctypes_bytes, "lv_font_info");
 static be_define_ctypes_class(lv_grad_dsc, &be_lv_grad_dsc, &be_class_ctypes_bytes, "lv_grad_dsc");
-static be_define_ctypes_class(lv_gradient_stop, &be_lv_gradient_stop, &be_class_ctypes_bytes, "lv_gradient_stop");
-static be_define_ctypes_class(lv_img_dsc, &be_lv_img_dsc, &be_class_ctypes_bytes, "lv_img_dsc");
-static be_define_ctypes_class(lv_img_header, &be_lv_img_header, &be_class_ctypes_bytes, "lv_img_header");
-static be_define_ctypes_class(lv_meter_indicator, &be_lv_meter_indicator, &be_class_ctypes_bytes, "lv_meter_indicator");
-static be_define_ctypes_class(lv_meter_scale, &be_lv_meter_scale, &be_class_ctypes_bytes, "lv_meter_scale");
+static be_define_ctypes_class(lv_grad_stop, &be_lv_grad_stop, &be_class_ctypes_bytes, "lv_grad_stop");
+static be_define_ctypes_class(lv_image_dsc, &be_lv_image_dsc, &be_class_ctypes_bytes, "lv_image_dsc");
+static be_define_ctypes_class(lv_image_header, &be_lv_image_header, &be_class_ctypes_bytes, "lv_image_header");
+static be_define_ctypes_class(lv_layer, &be_lv_layer, &be_class_ctypes_bytes, "lv_layer");
 static be_define_ctypes_class(lv_obj_class, &be_lv_obj_class, &be_class_ctypes_bytes, "lv_obj_class");
-static be_define_ctypes_class(lv_obj_draw_part_dsc, &be_lv_obj_draw_part_dsc, &be_class_ctypes_bytes, "lv_obj_draw_part_dsc");
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes_bytes, "lv_point");
-static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes_bytes, "lv_sqrt_res");
+static be_define_ctypes_class(lv_point_precise, &be_lv_point_precise, &be_class_ctypes_bytes, "lv_point_precise");
+static be_define_ctypes_class(lv_span_coords, &be_lv_span_coords, &be_class_ctypes_bytes, "lv_span_coords");
 static be_define_ctypes_class(lv_style_transition_dsc, &be_lv_style_transition_dsc, &be_class_ctypes_bytes, "lv_style_transition_dsc");
 static be_define_ctypes_class(lv_timer_ntv, &be_lv_timer_ntv, &be_class_ctypes_bytes, "lv_timer_ntv");
 static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes_bytes, "lv_ts_calibration");
 
-void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
-  ctypes_register_class(vm, &be_class_lv_anim_ntv);
-  ctypes_register_class(vm, &be_class_lv_area);
-  ctypes_register_class(vm, &be_class_lv_chart_cursor);
-  ctypes_register_class(vm, &be_class_lv_chart_series);
-  ctypes_register_class(vm, &be_class_lv_chart_tick_dsc);
-  ctypes_register_class(vm, &be_class_lv_color_filter_dsc);
-  ctypes_register_class(vm, &be_class_lv_coord);
-  ctypes_register_class(vm, &be_class_lv_draw_arc_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_ctx);
-  ctypes_register_class(vm, &be_class_lv_draw_img_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_layer_ctx);
-  ctypes_register_class(vm, &be_class_lv_draw_line_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_common_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_circle_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_saved);
-  ctypes_register_class(vm, &be_class_lv_draw_rect_dsc);
-  ctypes_register_class(vm, &be_class_lv_event);
-  ctypes_register_class(vm, &be_class_lv_grad_dsc);
-  ctypes_register_class(vm, &be_class_lv_gradient_stop);
-  ctypes_register_class(vm, &be_class_lv_img_dsc);
-  ctypes_register_class(vm, &be_class_lv_img_header);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator);
-  ctypes_register_class(vm, &be_class_lv_meter_scale);
-  ctypes_register_class(vm, &be_class_lv_obj_class);
-  ctypes_register_class(vm, &be_class_lv_obj_draw_part_dsc);
-  ctypes_register_class(vm, &be_class_lv_point);
-  ctypes_register_class(vm, &be_class_lv_sqrt_res);
-  ctypes_register_class(vm, &be_class_lv_style_transition_dsc);
-  ctypes_register_class(vm, &be_class_lv_timer_ntv);
-  ctypes_register_class(vm, &be_class_lv_ts_calibration);
-}
-
 be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
-  { "lv_anim_ntv", &be_class_lv_anim_ntv },
+  { "lv_anim_timeline_dsc", &be_class_lv_anim_timeline_dsc },
   { "lv_area", &be_class_lv_area },
   { "lv_chart_cursor", &be_class_lv_chart_cursor },
   { "lv_chart_series", &be_class_lv_chart_series },
-  { "lv_chart_tick_dsc", &be_class_lv_chart_tick_dsc },
   { "lv_color_filter_dsc", &be_class_lv_color_filter_dsc },
-  { "lv_coord", &be_class_lv_coord },
   { "lv_draw_arc_dsc", &be_class_lv_draw_arc_dsc },
-  { "lv_draw_ctx", &be_class_lv_draw_ctx },
-  { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
-  { "lv_draw_layer_ctx", &be_class_lv_draw_layer_ctx },
+  { "lv_draw_dsc_base", &be_class_lv_draw_dsc_base },
+  { "lv_draw_image_dsc", &be_class_lv_draw_image_dsc },
+  { "lv_draw_label_dsc", &be_class_lv_draw_label_dsc },
+  { "lv_draw_letter_dsc", &be_class_lv_draw_letter_dsc },
   { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
-  { "lv_draw_mask_angle_param", &be_class_lv_draw_mask_angle_param },
-  { "lv_draw_mask_angle_param_cfg", &be_class_lv_draw_mask_angle_param_cfg },
-  { "lv_draw_mask_common_dsc", &be_class_lv_draw_mask_common_dsc },
-  { "lv_draw_mask_fade_param", &be_class_lv_draw_mask_fade_param },
-  { "lv_draw_mask_fade_param_cfg", &be_class_lv_draw_mask_fade_param_cfg },
-  { "lv_draw_mask_line_param", &be_class_lv_draw_mask_line_param },
-  { "lv_draw_mask_line_param_cfg", &be_class_lv_draw_mask_line_param_cfg },
-  { "lv_draw_mask_map_param", &be_class_lv_draw_mask_map_param },
-  { "lv_draw_mask_map_param_cfg", &be_class_lv_draw_mask_map_param_cfg },
-  { "lv_draw_mask_polygon_param", &be_class_lv_draw_mask_polygon_param },
-  { "lv_draw_mask_polygon_param_cfg", &be_class_lv_draw_mask_polygon_param_cfg },
-  { "lv_draw_mask_radius_circle_dsc", &be_class_lv_draw_mask_radius_circle_dsc },
-  { "lv_draw_mask_radius_param", &be_class_lv_draw_mask_radius_param },
-  { "lv_draw_mask_radius_param_cfg", &be_class_lv_draw_mask_radius_param_cfg },
-  { "lv_draw_mask_saved", &be_class_lv_draw_mask_saved },
   { "lv_draw_rect_dsc", &be_class_lv_draw_rect_dsc },
   { "lv_event", &be_class_lv_event },
+  { "lv_event_dsc", &be_class_lv_event_dsc },
+  { "lv_font_info", &be_class_lv_font_info },
   { "lv_grad_dsc", &be_class_lv_grad_dsc },
-  { "lv_gradient_stop", &be_class_lv_gradient_stop },
-  { "lv_img_dsc", &be_class_lv_img_dsc },
-  { "lv_img_header", &be_class_lv_img_header },
-  { "lv_meter_indicator", &be_class_lv_meter_indicator },
-  { "lv_meter_scale", &be_class_lv_meter_scale },
+  { "lv_grad_stop", &be_class_lv_grad_stop },
+  { "lv_image_dsc", &be_class_lv_image_dsc },
+  { "lv_image_header", &be_class_lv_image_header },
+  { "lv_layer", &be_class_lv_layer },
   { "lv_obj_class", &be_class_lv_obj_class },
-  { "lv_obj_draw_part_dsc", &be_class_lv_obj_draw_part_dsc },
   { "lv_point", &be_class_lv_point },
-  { "lv_sqrt_res", &be_class_lv_sqrt_res },
+  { "lv_point_precise", &be_class_lv_point_precise },
+  { "lv_span_coords", &be_class_lv_span_coords },
   { "lv_style_transition_dsc", &be_class_lv_style_transition_dsc },
   { "lv_timer_ntv", &be_class_lv_timer_ntv },
   { "lv_ts_calibration", &be_class_lv_ts_calibration },

@@ -266,6 +266,9 @@ bool Xdrv64(uint32_t function) {
           result = PCA9632_Command();
         }
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

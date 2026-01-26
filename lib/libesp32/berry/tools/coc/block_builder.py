@@ -23,6 +23,7 @@ class block_builder:
         self.block = block()
         self.strtab = []
         self.strtab_weak = []
+        self.strtab_long = []
 
         self.block.name = obj.name
         if depend(obj, macro):
@@ -159,7 +160,7 @@ class block_builder:
     
     def writefile(self, filename, text):
         otext = "#include \"be_constobj.h\"\n\n" + text
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding='utf-8') as f:
             f.write(otext)
 
     def dumpfile(self, path):

@@ -52,7 +52,7 @@ uint16_t SensirionI2CCommunication::sendFrame(uint8_t address,
     size_t writtenBytes = i2cBus.write(frame._buffer, frame._index);
     uint8_t i2c_error = i2cBus.endTransmission();
     if (writtenBytes != frame._index) {
-        return WriteError | I2cOtherError;
+        return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(I2cOtherError);
     }
     // translate Arduino errors, see
     // https://www.arduino.cc/en/Reference/WireEndTransmission
@@ -60,13 +60,13 @@ uint16_t SensirionI2CCommunication::sendFrame(uint8_t address,
         case 0:
             return NoError;
         case 1:
-            return WriteError | InternalBufferSizeError;
+            return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(InternalBufferSizeError);
         case 2:
-            return WriteError | I2cAddressNack;
+            return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(I2cAddressNack);
         case 3:
-            return WriteError | I2cDataNack;
+            return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(I2cDataNack);
         default:
-            return WriteError | I2cOtherError;
+            return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(I2cOtherError);
     }
 }
 
@@ -89,19 +89,19 @@ uint16_t SensirionI2CCommunication::receiveFrame(uint8_t address,
 #endif
 
     if (numBytes % 3) {
-        return ReadError | WrongNumberBytesError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(WrongNumberBytesError);
     }
     if ((numBytes / 3) * 2 > frame._bufferSize) {
-        return ReadError | BufferSizeError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(BufferSizeError);
     }
     if (numBytes > sizeBuffer) {
-        return ReadError | InternalBufferSizeError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(InternalBufferSizeError);
     }
 
     readAmount = i2cBus.requestFrom(address, static_cast<uint8_t>(numBytes),
                                     static_cast<uint8_t>(true));
     if (numBytes != readAmount) {
-        return ReadError | NotEnoughDataError;
+        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(NotEnoughDataError);
     }
     do {
         frame._buffer[i++] = i2cBus.read();
@@ -110,7 +110,7 @@ uint16_t SensirionI2CCommunication::receiveFrame(uint8_t address,
         uint8_t expectedCRC = generateCRC(&frame._buffer[i - 2], 2, poly);
         if (actualCRC != expectedCRC) {
             clearRxBuffer(i2cBus);
-            return ReadError | CRCError;
+            return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(CRCError);
         }
         readAmount -= 3;
     } while (readAmount > 0);

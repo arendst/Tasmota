@@ -155,3 +155,12 @@ assert(A.a == 1)
 assert(A.b == A)
 assert(A.c == [1, A])
 assert(A.f(1) == A)
+
+# bug when superclass is a member
+# the following would break with:
+#
+# attribute_error: class 'B' cannot assign to static attribute 'aa'
+# stack traceback:
+#     stdin:1: in function `main`
+class B end m = module('m') m.B = B
+class A : m.B static aa = 1 end

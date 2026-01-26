@@ -74,11 +74,11 @@ class MPU_accel {
       uint32_t model = 6886;    // MPU model number
     public:
       MPU_accel(void) {};
-  #ifdef ESP32
+#if SOC_HP_I2C_NUM > 1
       void setBus(uint32_t _bus) { myWire = _bus ? &Wire1 : &Wire; };
-  #else
+#else
       void setBus(uint32_t _bus) { myWire = &Wire; };
-  #endif
+#endif
       int Init(void);
       uint32_t getModel(void) const { return model; }
       void getAccelAdc(int16_t* ax, int16_t* ay, int16_t* az);

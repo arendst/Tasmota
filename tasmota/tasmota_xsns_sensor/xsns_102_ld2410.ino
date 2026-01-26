@@ -1,7 +1,7 @@
 /*
   xsns_102_ld2410.ino - HLK-LD2410 24GHz smart wave motion sensor support for Tasmota
 
-  SPDX-FileCopyrightText: 2022 Theo Arends
+  SPDX-FileCopyrightText: 2022 Theo Arends, 2024 md5sum-as (https://github.com/md5sum-as)
 
   SPDX-License-Identifier: GPL-3.0-only
 */
@@ -9,11 +9,20 @@
 #ifdef USE_LD2410
 /*********************************************************************************************\
  * HLK-LD2410 24GHz smart wave motion sensor
- *
+ * 
+ * Attention!
+ * This module works with HLK-LD2410, HLK-LD2410B (md5sum-as tested), HLK-LD2410C (md5sum-as tested) devices. 
+ * The module does not support HLK-LD2410S (md5sum-as tested) and is not guaranteed to work with other devices.
+ * 
+ * 
  * LD2410Duration 0                            - Set factory default settings
  * LD2410Duration 1..65535                     - Set no-one duration in seconds (default 5)
  * LD2410MovingSens 50,50,40,30,20,15,15,15,15 - Set moving distance sensitivity for up to 9 gates (at 0.75 meter interval)
  * LD2410StaticSens 0,0,40,40,30,30,20,20,20   - Set static distance sensitivity for up to 9 gates (at 0.75 meter interval)
+ *
+ * LD2410Get                                   - Read last sensors
+ * LD2410EngineeringStart                      - Start engineering mode
+ * LD2410EngineeringEnd                        - End engineering mode
  *
  * Inspiration:
  * https://community.home-assistant.io/t/mmwave-wars-one-sensor-module-to-rule-them-all/453260/2
@@ -69,6 +78,14 @@ struct {
   uint8_t settings;
   uint8_t byte_counter;
   bool valid_response;
+  uint8_t set_engin_mode;
+  uint8_t web_engin_mode;
+  struct {
+    uint8_t moving_gate_energy[LD2410_MAX_GATES +1];
+    uint8_t static_gate_energy[LD2410_MAX_GATES +1];
+    uint8_t light;
+    uint8_t out_pin;
+  } engineering;
 } LD2410;
 
 /********************************************************************************************/
@@ -80,7 +97,10 @@ uint32_t ToBcd(uint32_t value) {
 /********************************************************************************************/
 
 void Ld1410HandleTargetData(void) {
-  if ((0x0D == LD2410.buffer[4]) && (0x55 == LD2410.buffer[17])) {  // Add bad reception detection
+  uint8_t i;
+
+  if (((0x0D == LD2410.buffer[4]) && (0x55 == LD2410.buffer[17]) && (0x02 == LD2410.buffer[6]))
+      or ((0x23 == LD2410.buffer[4]) && (0x55 == LD2410.buffer[39]) && (0x01 == LD2410.buffer[6]))) {  // Add bad reception detection
     //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
     // F4 F3 F2 F1 0D 00 02 AA 00 00 00 00 00 00 37 00 00 55 00 F8 F7 F6 F5 - No target
     // F4 F3 F2 F1 0D 00 02 AA 00 45 00 3E 00 00 3A 00 00 55 00 F8 F7 F6 F5 - No target
@@ -88,30 +108,55 @@ void Ld1410HandleTargetData(void) {
     // F4 F3 F2 F1 0D 00 02 AA 02 54 00 00 00 00 64 00 00 55 00 F8 F7 F6 F5 - Stationary target
     // F4 F3 F2 F1 0D 00 02 AA 02 96 00 00 00 00 36 00 00 55 00 F8 F7 F6 F5 - Stationary target
     // F4 F3 F2 F1 0D 00 02 AA 03 2A 00 64 00 00 64 00 00 55 00 F8 F7 F6 F5 - Movement and Stationary target
+    //
+    //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44
+    // F4 F3 F2 F1 23 00 01 AA 00 1E 00 00 1E 00 0D 00 00 08 08 13 0E 07 02 05 07 03 04 05 00 00 0D 06 05 05 05 05 05 62 00 55 00 F8 F7 F6 F5
+    //
+    // F4 F3 F2 F1 23 00 01 AA 02 20 01 00 37 01 64 26 01                     
+    //  08 08 - max moving and static dist (17,18)
+    //  12 05 04 09 0C 0D 0F 04 01 - Movement energy (19-27)
+    //  00 00 1F 64 64 64 64 31 1A - Static energy (28-36)
+    //  8C - Photo sens (37)
+    //  01 - Out pin (38)
+    //                                                    55 00 F8 F7 F6 F5
     // header     |len  |dt|hd|st|movin|me|stati|se|detec|tr|ck|trailer
+
+    LD2410.moving_distance = 0;
+    LD2410.moving_energy = 0;
+    LD2410.static_distance = 0;
+    LD2410.static_energy = 0;
+    LD2410.detect_distance = 0;
+
     if (LD2410.buffer[8] != 0x00) {                               // Movement and/or Stationary target
       LD2410.moving_distance = LD2410.buffer[10] << 8 | LD2410.buffer[9];
       LD2410.moving_energy = LD2410.buffer[11];
       LD2410.static_distance = LD2410.buffer[13] << 8 | LD2410.buffer[12];
       LD2410.static_energy = LD2410.buffer[14];
       LD2410.detect_distance = LD2410.buffer[16] << 8 | LD2410.buffer[15];
-  /*
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2: Type %d, State %d, Moving %d/%d%%, Static %d/%d%%, Detect %d"),
-        LD2410.buffer[6], LD2410.buffer[8],
-        LD2410.moving_distance, LD2410.moving_energy,
-        LD2410.static_distance, LD2410.static_energy,
-        LD2410.detect_distance);
-  */
-      if (0x01 == LD2410.buffer[6]) {                             // Engineering mode data
-        // Adds 22 extra bytes of data
 
+    }
+    LD2410.web_engin_mode = LD2410.buffer[6]==1?1:0;
+    if (0x01 == LD2410.buffer[6]) { /* Engineering mode*/
+      if (LD2410.buffer[17] < 9) {
+        for (i=0; i<= LD2410.buffer[17]; i++) {
+          LD2410.engineering.moving_gate_energy[i] = LD2410.buffer[i+19];
+        }
       }
-    } else {
-      LD2410.moving_distance = 0;
-      LD2410.moving_energy = 0;
-      LD2410.static_distance = 0;
-      LD2410.static_energy = 0;
-      LD2410.detect_distance = 0;
+      if (LD2410.buffer[18] < 9) {
+        for (i=0; i<= LD2410.buffer[18]; i++) {
+          LD2410.engineering.static_gate_energy[i] = LD2410.buffer[i+28];
+        }
+      }
+      LD2410.engineering.light=LD2410.buffer[37];
+      LD2410.engineering.out_pin=LD2410.buffer[38];
+      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LD2 Eng: mov: %d %d %d %d %d %d %d %d %d, st: %d %d %d %d %d %d %d %d %d, light: %d, out: %d"), 
+      //     LD2410.engineering.moving_gate_energy[0],LD2410.engineering.moving_gate_energy[1],LD2410.engineering.moving_gate_energy[2],
+      //     LD2410.engineering.moving_gate_energy[3],LD2410.engineering.moving_gate_energy[4],LD2410.engineering.moving_gate_energy[5],
+      //     LD2410.engineering.moving_gate_energy[6],LD2410.engineering.moving_gate_energy[7],LD2410.engineering.moving_gate_energy[8],
+      //     LD2410.engineering.static_gate_energy[0],LD2410.engineering.static_gate_energy[1],LD2410.engineering.static_gate_energy[2],
+      //     LD2410.engineering.static_gate_energy[3],LD2410.engineering.static_gate_energy[4],LD2410.engineering.static_gate_energy[5],
+      //     LD2410.engineering.static_gate_energy[6],LD2410.engineering.static_gate_energy[7],LD2410.engineering.static_gate_energy[8],
+      //     LD2410.engineering.light,LD2410.engineering.out_pin);
     }
   }
 }
@@ -125,7 +170,7 @@ void Ld1410HandleConfigData(void) {
     LD2410.max_moving_distance_gate = LD2410.buffer[12];
     LD2410.max_static_distance_gate = LD2410.buffer[13];
     for (uint32_t i = 0; i <= LD2410_MAX_GATES; i++) {
-      LD2410. moving_sensitivity[i] = LD2410.buffer[14 +i];
+      LD2410.moving_sensitivity[i] = LD2410.buffer[14 +i];
       LD2410.static_sensitivity[i] = LD2410.buffer[23 +i];
     }
     LD2410.no_one_duration = LD2410.buffer[33] << 8 | LD2410.buffer[32];
@@ -355,6 +400,18 @@ void Ld2410Every100MSecond(void) {
         LD2410Serial->begin(57600);
       break;
 */
+      case 17:
+        Ld2410SetConfigMode();                                  // Stop running mode
+        break;
+      case 14:
+        if (0 == LD2410.set_engin_mode) {
+          Ld2410SendCommand(LD2410_CMND_END_ENGINEERING);
+        } else {
+          Ld2410SendCommand(LD2410_CMND_START_ENGINEERING);
+        }
+        LD2410.step = 2;
+        break;
+
       // case 12: Init
       case 5:
         Ld2410SetConfigMode();                                  // Stop running mode
@@ -393,7 +450,8 @@ void Ld2410Every100MSecond(void) {
 }
 
 void Ld2410EverySecond(void) {
-  if (LD2410.moving_energy) {
+  if (LD2410.moving_energy and (!Settings->flag6.ld2410_use_pin)) {
+
     // Send state change to be captured by rules
     // {"Time":"2022-11-26T10:48:16","Switch1":"ON","LD2410":{"Distance":[125.0,0.0,0.0],"Energy":[0,100]}}
     MqttPublishSensor();
@@ -407,10 +465,15 @@ void Ld2410Detect(void) {
     LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2);
     if (LD2410Serial->begin(256000)) {
       if (LD2410Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Serial UART%d"), LD2410Serial->getUart());
+#endif
 
       LD2410.retry = 4;
       LD2410.step = 12;
     }
+    LD2410.set_engin_mode = 0;
+    memset(&LD2410.engineering,0,sizeof(LD2410.engineering));
   }
 }
 
@@ -419,10 +482,10 @@ void Ld2410Detect(void) {
 \*********************************************************************************************/
 
 const char kLd2410Commands[] PROGMEM = "LD2410|"  // Prefix
-  "Duration|MovingSens|StaticSens";
+  "Duration|MovingSens|StaticSens|Get|EngineeringEnd|EngineeringStart";
 
 void (* const Ld2410Command[])(void) PROGMEM = {
-  &CmndLd2410Duration, &CmndLd2410MovingSensitivity, &CmndLd2410StaticSensitivity };
+  &CmndLd2410Duration, &CmndLd2410MovingSensitivity, &CmndLd2410StaticSensitivity, &CmndLd2410last, &CmndLd2410EngineeringEnd, &CmndLd2410EngineeringStart };
 
 void Ld2410Response(void) {
   Response_P(PSTR("{\"LD2410\":{\"Duration\":%d,\"Moving\":{\"Gates\":%d,\"Sensitivity\":["),
@@ -480,6 +543,29 @@ void CmndLd2410StaticSensitivity(void) {
   Ld2410Response();
 }
 
+void CmndLd2410last(void) {
+  Response_P(PSTR("{\"LD2410\":{\"Moving energy\":[%d,%d,%d,%d,%d,%d,%d,%d,%d],\"Static energy\":[%d,%d,%d,%d,%d,%d,%d,%d,%d],\"Light\":%d,\"Out_pin\":%d}}"),
+          LD2410.engineering.moving_gate_energy[0],LD2410.engineering.moving_gate_energy[1],LD2410.engineering.moving_gate_energy[2],
+          LD2410.engineering.moving_gate_energy[3],LD2410.engineering.moving_gate_energy[4],LD2410.engineering.moving_gate_energy[5],
+          LD2410.engineering.moving_gate_energy[6],LD2410.engineering.moving_gate_energy[7],LD2410.engineering.moving_gate_energy[8],
+          LD2410.engineering.static_gate_energy[0],LD2410.engineering.static_gate_energy[1],LD2410.engineering.static_gate_energy[2],
+          LD2410.engineering.static_gate_energy[3],LD2410.engineering.static_gate_energy[4],LD2410.engineering.static_gate_energy[5],
+          LD2410.engineering.static_gate_energy[6],LD2410.engineering.static_gate_energy[7],LD2410.engineering.static_gate_energy[8],
+          LD2410.engineering.light,LD2410.engineering.out_pin);
+}
+
+void CmndLd2410EngineeringEnd(void) {
+    LD2410.set_engin_mode = 0;
+    LD2410.step = 18;
+    Response_P(PSTR("LD2410: End engineering mode"));
+}
+
+void CmndLd2410EngineeringStart(void) {
+    LD2410.set_engin_mode= 1;
+    LD2410.step = 18;
+    Response_P(PSTR("LD2410: Start engineering mode"));
+}
+
 /*********************************************************************************************\
  * Presentation
 \*********************************************************************************************/
@@ -489,6 +575,11 @@ const char HTTP_SNS_LD2410_CM[] PROGMEM =
   "{s}LD2410 " D_MOVING_DISTANCE "{m}%1_f " D_UNIT_CENTIMETER "{e}"
   "{s}LD2410 " D_STATIC_DISTANCE "{m}%1_f " D_UNIT_CENTIMETER "{e}"
   "{s}LD2410 " D_DETECT_DISTANCE "{m}%1_f " D_UNIT_CENTIMETER "{e}";
+const char HTTP_SNS_LD2410_ENG[] PROGMEM =
+  "{s}LD2410 " D_MOVING_ENERGY_T "{m}%d %d %d %d %d %d %d %d %d{e}"
+  "{s}LD2410 " D_STATIC_ENERGY_T "{m}%d %d %d %d %d %d %d %d %d{e}"
+  "{s}LD2410 " D_LD2410_LIGHT "{m}%d{e}"
+  "{s}LD2410 " D_LD2410_PIN_STATE "{m}%d{e}";
 #endif
 
 void Ld2410Show(bool json) {
@@ -502,6 +593,16 @@ void Ld2410Show(bool json) {
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_LD2410_CM, &moving_distance, &static_distance, &detect_distance);
+    if (LD2410.web_engin_mode == 1) {
+      WSContentSend_PD(HTTP_SNS_LD2410_ENG, 
+          LD2410.engineering.moving_gate_energy[0],LD2410.engineering.moving_gate_energy[1],LD2410.engineering.moving_gate_energy[2],
+          LD2410.engineering.moving_gate_energy[3],LD2410.engineering.moving_gate_energy[4],LD2410.engineering.moving_gate_energy[5],
+          LD2410.engineering.moving_gate_energy[6],LD2410.engineering.moving_gate_energy[7],LD2410.engineering.moving_gate_energy[8],
+          LD2410.engineering.static_gate_energy[0],LD2410.engineering.static_gate_energy[1],LD2410.engineering.static_gate_energy[2],
+          LD2410.engineering.static_gate_energy[3],LD2410.engineering.static_gate_energy[4],LD2410.engineering.static_gate_energy[5],
+          LD2410.engineering.static_gate_energy[6],LD2410.engineering.static_gate_energy[7],LD2410.engineering.static_gate_energy[8],
+          LD2410.engineering.light,LD2410.engineering.out_pin);
+    }
 #endif
   }
 }

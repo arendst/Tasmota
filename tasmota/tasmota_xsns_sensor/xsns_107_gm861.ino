@@ -265,6 +265,9 @@ void Gm861Init(void) {
       if (Gm861Serial->hardwareSerial()) {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("GM8: Serial UART%d"), Gm861Serial->getUart());
+#endif
       Gm861->barcode[0] = '0';          // No barcode yet
       Gm861->state = GM861_STATE_INIT_OFFSET;
     }

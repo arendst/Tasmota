@@ -58,6 +58,10 @@
 
 #include "AudioGeneratorMIDI.h"
 
+#if defined(ESP32)
+// Do not build, Espressif's GCC8+ has a compiler bug
+#else // __GNUC__ == 8
+
 #pragma GCC optimize ("O3")
 
 #define TSF_NO_STDIO
@@ -637,3 +641,4 @@ void AudioGeneratorMIDI::MakeStreamFromAFS(AudioFileSource *src, tsf_stream *afs
   afs->size = &afs_size;
 }
 
+#endif //__GNUC__ == 8

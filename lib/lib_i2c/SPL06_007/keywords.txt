@@ -1,0 +1,57 @@
+#######################################
+# Syntax Coloring Map For SHT21
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SPL06-007	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+SPL_init	KEYWORD2
+get_spl_id	KEYWORD2
+get_spl_prs_cfg	KEYWORD2
+get_spl_tmp_cfg	KEYWORD2
+get_spl_meas_cfg	KEYWORD2
+get_spl_cfg_reg	KEYWORD2
+get_spl_int_sts	KEYWORD2
+get_spl_fifo_sts	KEYWORD2
+
+get_traw	KEYWORD2
+get_traw_sc	KEYWORD2
+get_temp_c	KEYWORD2
+get_temperature_scale_factor	KEYWORD2
+
+
+get_pressure_scale_factor	KEYWORD2
+get_pcomp	KEYWORD2
+get_praw_sc	KEYWORD2
+get_praw	KEYWORD2
+get_pressure	KEYWORD2
+
+get_c0	KEYWORD2
+get_c1	KEYWORD2
+get_c00	KEYWORD2
+get_c10	KEYWORD2
+get_c01	KEYWORD2
+get_c11	KEYWORD2
+get_c20	KEYWORD2
+get_c21	KEYWORD2
+get_c30	KEYWORD2
+i2c_eeprom_write_uint8_t	KEYWORD2
+i2c_eeprom_read_uint8_t	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################

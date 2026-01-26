@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType VERSIONINFO resource for Windows DLLs.                      */
 /*                                                                         */
-/*  Copyright (C) 2018-2020 by                                             */
+/*  Copyright (C) 2018-2023 by                                             */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -18,8 +18,8 @@
 
 #include<windows.h>
 
-#define FT_VERSION      2,10,4,0
-#define FT_VERSION_STR  "2.10.4"
+#define FT_VERSION      2,13,2,0
+#define FT_VERSION_STR  "2.13.2"
 
 VS_VERSION_INFO      VERSIONINFO
 FILEVERSION          FT_VERSION
@@ -38,14 +38,14 @@ FILETYPE             VFT_STATIC_LIB
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
-    BLOCK "040904E4"
+    BLOCK "040904B0"
     BEGIN
       VALUE "CompanyName",      "The FreeType Project"
       VALUE "FileDescription",  "Font Rendering Library"
       VALUE "FileVersion",      FT_VERSION_STR
       VALUE "ProductName",      "FreeType"
       VALUE "ProductVersion",   FT_VERSION_STR
-      VALUE "LegalCopyright",   "\251 2000-2020 The FreeType Project www.freetype.org. All rights reserved."
+      VALUE "LegalCopyright",   L"\x00A9 2000-2023 The FreeType Project www.freetype.org. All rights reserved."
       VALUE "InternalName",     "freetype"
       VALUE "OriginalFilename", FT_FILENAME
     END
@@ -56,6 +56,6 @@ BEGIN
     /* The following line should only be modified for localized versions.  */
     /* It consists of any number of WORD,WORD pairs, with each pair        */
     /* describing a "language,codepage" combination supported by the file. */
-    VALUE "Translation", 0x409, 1252
+    VALUE "Translation", 0x409, 1200
   END
 END

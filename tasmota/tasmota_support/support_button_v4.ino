@@ -27,6 +27,10 @@
 
 #define MAX_RELAY_BUTTON1       5            // Max number of relay controlled by BUTTON1
 
+#ifndef DOUBLE_CLICK_WINDOW
+ #define DOUBLE_CLICK_WINDOW 500             // Define Window size to recognize double clicks
+#endif
+
 const uint8_t BUTTON_PROBE_INTERVAL = 10;      // Time in milliseconds between button input probe
 const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between button input probe for AC detection
 const uint8_t BUTTON_AC_PERIOD = (20 + BUTTON_FAST_PROBE_INTERVAL - 1) / BUTTON_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
@@ -403,17 +407,19 @@ void ButtonHandler(void) {
 
     }
 #ifdef USE_ADC
+#ifndef FIRMWARE_MINIMAL
     else if (PinUsed(GPIO_ADC_BUTTON, button_index)) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON, button_index));
     }
     else if (PinUsed(GPIO_ADC_BUTTON_INV, button_index)) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON_INV, button_index));
     }
+#endif  // FIRMWARE_MINIMAL
 #endif  // USE_ADC
 
     XdrvMailbox.index = button_index;
     XdrvMailbox.payload = button;
-    XdrvMailbox.command_code = Button.last_state[button_index];
+    XdrvMailbox.command_code = (Button.last_state[button_index] & 0xFF) | ((Button.press_counter[button_index] & 0xFF) << 8);
     if (XdrvCall(FUNC_BUTTON_PRESSED)) {
       // Serviced
     }
@@ -457,7 +463,7 @@ void ButtonHandler(void) {
         } else {
           Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
           AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Button%d multi-press %d"), button_index +1, Button.press_counter[button_index]);
-          Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
+          Button.window_timer[button_index] = uint32_t(DOUBLE_CLICK_WINDOW * loops_per_second) / 1000;
         }
         TasmotaGlobal.blinks = 201;
       }

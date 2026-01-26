@@ -35,7 +35,6 @@ const uint16_t kRcmmMinGapTicks = 120;
 const uint32_t kRcmmMinGap = 3360;
 // Use a tolerance of +/-10% when matching some data spaces.
 const uint8_t kRcmmTolerance = 10;
-const uint16_t kRcmmExcess = 50;
 
 #if SEND_RCMM
 /// Send a Philips RC-MM packet.
@@ -102,13 +101,15 @@ bool IRrecv::decodeRCMM(decode_results *results, uint16_t offset,
 
   // Calc the maximum size in bits, the message can be, or that we can accept.
   int16_t maxBitSize =
-      std::min((uint16_t)results->rawlen - 5, (uint16_t)sizeof(data) * 8);
+      std::min(static_cast<uint16_t>(results->rawlen) - 5,
+               static_cast<uint16_t>(sizeof(data)) * 8);
   // Compliance
   if (strict) {
     // Technically the spec says bit sizes should be 12 xor 24. however
     // 32 bits has been seen from a device. We are going to assume
     // 12 <= bits <= 32 is the 'required' bit length for the spec.
-    if (maxBitSize < 12 || maxBitSize > 32) return false;
+    if (maxBitSize < 12 || maxBitSize > 32)
+      return false;
     if (maxBitSize < nbits)
       return false;  // Short cut, we can never reach the expected nr. of bits.
   }

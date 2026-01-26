@@ -27,10 +27,14 @@ static void dump_map_keys(bvm *vm, bmap *map)
     bmapiter iter = be_map_iter();
     while ((node = be_map_next(map, &iter)) != NULL) {
         if (var_isstr(&node->key)) {
-            bstring *s = var_tostr(&node->key);
-            be_pushstring(vm, str(s));
-            be_data_push(vm, -2);
-            be_pop(vm, 1);
+            /* check if the global was not undefined/removed */
+            int idx = var_toidx(&node->value);
+            if (idx >= 0) {     /* the key is present in global, and the index is valid */
+                bstring *s = var_tostr(&node->key);
+                be_pushstring(vm, str(s));
+                be_data_push(vm, -2);
+                be_pop(vm, 1);
+            }
         }
     }
 }
@@ -49,7 +53,7 @@ static int m_contains(bvm *vm)
     if (top >= 1 && be_isstring(vm, 1)) {
         const char * name = be_tostring(vm, 1);
         int idx = be_global_find(vm, be_newstr(vm, name));
-        be_pushbool(vm, idx > -1);
+        be_pushbool(vm, idx >= 0);
         be_return(vm);
     }
     be_return_nil(vm);
@@ -76,12 +80,25 @@ static int m_setglobal(bvm *vm)
     be_return_nil(vm);
 }
 
+/* Remove a global variable from global scope */
+/* Internally the global name cannot be removed but it's value is replaced with BE_NONE */
+/* and global function pretend that BE_NONE is equivalent to the name being absent */
+static int m_undef(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1 && be_isstring(vm, 1)) {
+        be_global_undef(vm, be_newstr(vm, be_tostring(vm, 1)));
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(global) {
     be_native_module_function("()", m_globals),
     be_native_module_function("contains", m_contains),
     be_native_module_function("member", m_findglobal),
     be_native_module_function("setmember", m_setglobal),
+    be_native_module_function("undef", m_undef),
 };
 
 be_define_native_module(global, NULL);
@@ -92,6 +109,7 @@ module global (scope: global, depend: BE_USE_GLOBAL_MODULE) {
     contains, func(m_contains)
     member, func(m_findglobal)
     setmember, func(m_setglobal)
+    undef, func(m_undef)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_global.h"

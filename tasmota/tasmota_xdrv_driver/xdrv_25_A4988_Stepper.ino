@@ -137,6 +137,9 @@ bool Xdrv25(uint32_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kA4988Commands, A4988Command);
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

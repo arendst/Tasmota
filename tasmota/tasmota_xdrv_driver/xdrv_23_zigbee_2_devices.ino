@@ -109,6 +109,19 @@ Output:
 00:00:00.231 >>>: v16=65535 out=63000 <> hex=0xFF
 */
 
+/*********************************************************************************************\
+ *
+ * Flag to no advertize for Hue (Alexa) or Matter
+ *
+\*********************************************************************************************/
+
+enum class Z_no_advertize : uint8_t {
+  Z_no_ad_default = 0X00,         // advertize on all 
+  Z_no_ad_hue  = 0x01,            // no-advertize on Hue
+  Z_no_ad_matter = 0x02,          // no-advertize on Matter
+  Z_no_ad_all = 0xFF,             // no-advertize on all
+};
+
 enum class Z_Data_Type : uint8_t {
   Z_Unknown = 0x00,
   Z_Light = 1,              // Lights 1-5 channels
@@ -449,24 +462,28 @@ public:
     pressure(-0x8000),
     humidity(0xFFFF),
     th_setpoint(0xFF),
-    temperature_target(-0x8000)
+    temperature_target(-0x8000),
+    CO2(-1)
     {}
 
   inline bool validTemperature(void)    const { return -0x8000 != temperature; }
   inline bool validPressure(void)       const { return -0x8000 != pressure; }
   inline bool validHumidity(void)       const { return 0xFFFF != humidity; }
+  inline bool validCO2(void)            const { return -1 != CO2; }
   inline bool validThSetpoint(void)     const { return 0xFF != th_setpoint; }
   inline bool validTempTarget(void)     const { return -0x8000 != temperature_target; }
 
   inline int16_t  getTemperature(void)  const { return temperature; }
-  inline int16_t getPressure(void)      const { return pressure; }
+  inline int16_t  getPressure(void)     const { return pressure; }
   inline uint16_t getHumidity(void)     const { return humidity; }
+  inline float    getCO2(void)          const { return CO2; }
   inline uint8_t  getThSetpoint(void)   const { return th_setpoint; }
   inline int16_t  getTempTarget(void)   const { return temperature_target; }
 
   inline void setTemperature(int16_t _temperature)      { temperature = _temperature; }
   inline void setPressure(int16_t _pressure)            { pressure = _pressure; }
   inline void setHumidity(uint16_t _humidity)           { humidity = _humidity; }
+  inline void setCO2(float _CO2)                     { CO2 = _CO2; }
   inline void setThSetpoint(uint8_t _th_setpoint)       { th_setpoint = _th_setpoint; }
   inline void setTempTarget(int16_t _temperature_target){ temperature_target = _temperature_target; }
 
@@ -479,6 +496,7 @@ public:
   // thermostat
   uint8_t               th_setpoint;    // percentage of heat/cool in percent
   int16_t               temperature_target; // settings for the temparature
+  float                 CO2;            // CO2 in ppm, 0..10000, -1 if unknown
 };
 
 /*********************************************************************************************\
@@ -961,7 +979,9 @@ public:
   uint32_t              batt_last_probed;   // Time when the device was last probed for batteyr values
   uint8_t               lqi;                // lqi from last message, 0xFF means unknown
   uint8_t               batt_percent;       // battery percentage (0..100), 0xFF means unknwon
-  uint16_t              reserved_for_alignment;
+  Z_no_advertize        no_advertize;       // no advertize for Hue or Matter
+  uint8_t               reserved_for_alignment;
+
   // Debounce informmation when receiving commands
   // If we receive the same ZCL transaction number from the same device and the same endpoint within 300ms
   // then discard the second packet
@@ -989,7 +1009,8 @@ public:
     batt_last_probed(0),
     lqi(0xFF),
     batt_percent(0xFF),
-    reserved_for_alignment(0xFFFF),
+    no_advertize(Z_no_advertize::Z_no_ad_default),
+    reserved_for_alignment(0xFF),
     debounce_endpoint(0),
     debounce_transact(0)
     { };
@@ -1008,6 +1029,28 @@ public:
   inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
   inline bool validBattLastSeen(void)   const { return (0x0 != batt_last_seen) && (batt_last_seen < 0xFFFFFFF0); }
 
+  inline bool isAdvertizeNone(void)     const { return (no_advertize == Z_no_advertize::Z_no_ad_all); }       // never advertize in bridge mode
+  inline bool isAdvertizeHue(void)      const { return !((uint8_t)no_advertize & (uint8_t)Z_no_advertize::Z_no_ad_hue) ; }      // advertize to Alexa/Hue (if a bulb)
+  inline bool isAdvertizeMatter(void)   const { return !((uint8_t)no_advertize & (uint8_t)Z_no_advertize::Z_no_ad_matter) ; }   // advertize to Matter (type has to be defined in Matter)
+  inline bool isAdvertizeAll(void)      const { return (no_advertize == Z_no_advertize::Z_no_ad_default) ; }  // advertize to all possible (default)
+
+  inline void setAdvertizeNone(void)    { no_advertize = Z_no_advertize::Z_no_ad_all; }
+  inline void setAdvertizeAll(void)     { no_advertize = Z_no_advertize::Z_no_ad_default; }
+  inline void setAdvertizeHue(bool adv) {
+    if (adv) {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize & ~(uint8_t)Z_no_advertize::Z_no_ad_hue);
+    } else {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize | (uint8_t)Z_no_advertize::Z_no_ad_hue);
+    }
+  }
+  inline void setAdvertizeMatter(bool adv) {
+    if (adv) {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize & ~(uint8_t)Z_no_advertize::Z_no_ad_matter);
+    } else {
+      no_advertize = (Z_no_advertize)((uint8_t)no_advertize | (uint8_t)Z_no_advertize::Z_no_ad_matter);
+    }
+  }
+  
   inline void setReachable(bool _reachable)   { reachable = _reachable; }
   inline bool getReachable(void)        const { return reachable; }
   inline bool getPower(uint8_t ep = 0)  const;
@@ -1053,6 +1096,7 @@ public:
   void jsonAddModelManuf(Z_attribute_list & attr_list) const;
   void jsonAddEndpoints(Z_attribute_list & attr_list) const;
   void jsonAddConfig(Z_attribute_list & attr_list) const;
+  void jsonAddEmulation(Z_attribute_list & attr_list) const;
   void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
   void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
   void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;

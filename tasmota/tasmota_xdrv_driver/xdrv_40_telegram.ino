@@ -22,6 +22,8 @@
  * Telegram bot
  *
  * Supported commands:
+ * TmFingerprint 1    - Use default fingerprint 4E 7F F5 6D 1E 29 40 58 AB 84 DE 63 69 7B CD DF 44 2E D2 F6 as defined by USE_TELEGRAM_FINGERPRINT
+ * TmFingerprint <fp> - Set fingerprint
  * TmToken <token>    - Add your BotFather created bot token (default none)
  * TmChatId <chat_id> - Add your BotFather created bot chat id (default none)
  * TmPoll <seconds>   - Telegram receive poll time (default 10 seconds)
@@ -31,24 +33,26 @@
  * TmState 3          - Enable telegram listener
  * TmState 4          - Disable telegram response echo (default)
  * TmState 5          - Enable telegram response echo
+ * TmState 6          - Enable telegram auto fingerprint fix (default)
+ * TmState 7          - Disable telegram auto fingerprint fix but present new fingerprint to user
  * TmSend <data>      - If telegram sending is enabled AND a chat id is present then send data
  *
  * Tested with defines
  * #define USE_TELEGRAM                             // Support for Telegram protocol
- * #define USE_TELEGRAM_FINGERPRINT "\xB2\x72\x47\xA6\x69\x8C\x3C\x69\xF9\x58\x6C\xF3\x60\x02\xFB\x83\xFA\x8B\x1F\x23" // Telegram api.telegram.org TLS public key fingerpring
+ * #define USE_TELEGRAM_FINGERPRINT "\x4E\x7F\xF5\x6D\x1E\x29\x40\x58\xAB\x84\xDE\x63\x69\x7B\xCD\xDF\x44\x2E\xD2\xF6" // Telegram api.telegram.org TLS public key fingerpring
 \*********************************************************************************************/
 
-#define XDRV_40                    40
+#define XDRV_40                     40
 
 #ifndef TELEGRAM_LOOP_WAIT
-#define TELEGRAM_LOOP_WAIT         10   // Seconds
+#define TELEGRAM_LOOP_WAIT          10    // Seconds
 #endif
 
-#define TELEGRAM_SEND_RETRY        4    // Retries
-#define TELEGRAM_MAX_MESSAGES      2
+#define TELEGRAM_SEND_RETRY         4     // Retries
+#define TELEGRAM_MAX_MESSAGES       2
 
-static const uint32_t tls_rx_size = 2048;   // since Telegram CA is bigger than 1024 bytes, we need to increase rx buffer
-static const uint32_t tls_tx_size = 1024;
+static const uint32_t tls_rx_size = 512;  // Max allowed packet size sent from server (Telegram)
+static const uint32_t tls_tx_size = 512;
 
 #include "WiFiClientSecureLightBearSSL.h"
 BearSSL::WiFiClientSecure_light *telegramClient = nullptr;
@@ -64,8 +68,9 @@ typedef struct {
   uint32_t update_id = 0;
 } TelegramMessage;
 
-struct {
+typedef struct {
   TelegramMessage message[TELEGRAM_MAX_MESSAGES];
+  uint8_t fingerprint[20];
   uint32_t next_update_id = 0;
   uint8_t message_count = 0;   // Amount of messages read per time
   uint8_t state = 0;
@@ -75,46 +80,50 @@ struct {
   uint8_t wait = 0;
   bool recv_busy = false;
   bool skip = true;           // Skip first telegram if restarted
-} Telegram;
+} Telegram_t;
+Telegram_t* Telegram = nullptr;
 
-bool TelegramInit(void) {
-  bool init_done = false;
-  if (strlen(SettingsText(SET_TELEGRAM_TOKEN))) {
-    if (!telegramClient) {
-      telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
+void TelegramInit(void) {
+  Telegram = (Telegram_t*)calloc(sizeof(Telegram_t), 1);    // Need calloc to reset registers to 0/false
+}
 
-      if (Settings->flag5.tls_use_fingerprint) {  // SetOption132 - (TLS) Use fingerprint validation instead of CA based
-        telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
-      } else {
-        telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
-      }
+bool TelegramStart(void) {
+  if (!strlen(SettingsText(SET_TELEGRAM_TOKEN))) { return false; }
+  if (telegramClient) { return true; }
 
-      Telegram.message_count = 0;     // Number of received messages
-      Telegram.next_update_id = 0;    // Code of last read Message
-      Telegram.message[0].text = "";
+  telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
+  HexToBytes(SettingsText(SET_TELEGRAM_FINGERPRINT), Telegram->fingerprint, sizeof(Telegram->fingerprint));
+  telegramClient->setPubKeyFingerprint(Telegram->fingerprint, Telegram->fingerprint, false); // check server fingerprint
 
-      AddLog(LOG_LEVEL_INFO, PSTR("TGM: Started"));
-    }
-    init_done = true;
+  Telegram->message_count = 0;     // Number of received messages
+  Telegram->next_update_id = 0;    // Code of last read Message
+  Telegram->message[0].text = "";
+
+  AddLog(LOG_LEVEL_INFO, PSTR("TGM: (Re)started"));
+  return true;
+}
+
+void TelegramStop(void) {
+  if (telegramClient) {
+    telegramClient->stop();
+    delete telegramClient;
+    telegramClient = nullptr;
+    AddLog(LOG_LEVEL_INFO, PSTR("TGM: Stopped"));
   }
-  return init_done;
 }
 
 String TelegramConnectToTelegram(const String &command) {
 //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Cmnd '%s'"), command.c_str());
 
-  if (!TelegramInit()) { return ""; }
+  if (!TelegramStart()) { return ""; }
 
   String response = "";
   String host = F("api.telegram.org");
-  if (!WifiDnsPresent(host.c_str())) {
-    return response;
-  }
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect(host.c_str(), 443)) {
 
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
-
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+    
 //    telegramClient->println("GET /"+command);  // Fails after 20210621
     String request = "GET /" + command + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
     telegramClient->print(request);
@@ -155,6 +164,21 @@ String TelegramConnectToTelegram(const String &command) {
     }
 
     telegramClient->stop();
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: TLS connection error %d"), telegramClient->getLastError());
+
+    const uint8_t *recv_fingerprint = telegramClient->getRecvPubKeyFingerprint();
+    char buf_fingerprint[64];
+    if (!Settings->sbflag1.telegram_disable_af) {  // CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
+      // Replace current fingerprint with the fingerprint received
+      ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint));
+      SettingsUpdateText(SET_TELEGRAM_FINGERPRINT, buf_fingerprint);
+      TelegramStop();
+    } else {
+      // Create a printable version of the fingerprint received
+      ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Telegram fingerprint %s"), buf_fingerprint);
+    }
   }
 
   return response;
@@ -163,7 +187,7 @@ String TelegramConnectToTelegram(const String &command) {
 void TelegramGetUpdates(uint32_t offset) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getUpdates"));
 
-  if (!TelegramInit()) { return; }
+  if (!TelegramStart()) { return; }
 
   String _token = SettingsText(SET_TELEGRAM_TOKEN);
   String command = "bot" + _token + "/getUpdates?offset=" + String(offset);
@@ -233,10 +257,10 @@ void TelegramGetUpdates(uint32_t offset) {
     uint32_t max_updates = arr.size();
 //    if (max_updates > TELEGRAM_MAX_MESSAGES) { max_updates = TELEGRAM_MAX_MESSAGES; }
     if (max_updates > 1) { max_updates = 1; }  // Cannot handle more than one for now
-    Telegram.message_count = 0;                // Returns how many messages are in the array
+    Telegram->message_count = 0;                // Returns how many messages are in the array
     if (max_updates) {
       for (uint32_t i = 0; i < max_updates; i++) {
-        Telegram.message[i].text = "";           // Reset command
+        Telegram->message[i].text = "";           // Reset command
         JsonParserObject result = arr[i].getObject();
         if (result) {
           // {"update_id":14354450,
@@ -245,17 +269,17 @@ void TelegramGetUpdates(uint32_t offset) {
           //             "chat":{"id":139920293,"first_name":"Theo","last_name":"Arends","username":"tjatja","type":"private"},
           //             "date":1602346120,
           //             "text":"Status 1"}}
-          Telegram.message_count++;   // Returns how many messages are in the array
-          Telegram.message[i].update_id = result["update_id"].getUInt();
-//          Telegram.message[i].from_id = result["message"].getObject()["from"].getObject()["id"].getUInt();
-//          Telegram.message[i].from_first_name = result["message"].getObject()["from"].getObject()["first_name"].getStr();
-//          Telegram.message[i].from_last_name = result["message"].getObject()["from"].getObject()["last_name"].getStr();
-          Telegram.message[i].chat_id = result["message"].getObject()["chat"].getObject()["id"].getStr();
-          Telegram.message[i].text = result["message"].getObject()["text"].getStr();
+          Telegram->message_count++;   // Returns how many messages are in the array
+          Telegram->message[i].update_id = result["update_id"].getUInt();
+//          Telegram->.message[i].from_id = result["message"].getObject()["from"].getObject()["id"].getUInt();
+//          Telegram->message[i].from_first_name = result["message"].getObject()["from"].getObject()["first_name"].getStr();
+//          Telegram->message[i].from_last_name = result["message"].getObject()["from"].getObject()["last_name"].getStr();
+          Telegram->message[i].chat_id = result["message"].getObject()["chat"].getObject()["id"].getStr();
+          Telegram->message[i].text = result["message"].getObject()["text"].getStr();
         }
-        Telegram.next_update_id = Telegram.message[i].update_id +1;  // Write id of last read message
+        Telegram->next_update_id = Telegram->message[i].update_id +1;  // Write id of last read message
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram.message[i].update_id, Telegram.message[i].chat_id.c_str(), Telegram.message[i].text.c_str());
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Parsed update_id %d, chat_id %s, text \"%s\""), Telegram->message[i].update_id, Telegram->message[i].chat_id.c_str(), Telegram->message[i].text.c_str());
       }
     } else {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: No new messages"));
@@ -268,7 +292,7 @@ void TelegramGetUpdates(uint32_t offset) {
 bool TelegramSendMessage(const String &chat_id, const String &text) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: sendMessage"));
 
-  if (!TelegramInit()) { return false; }
+  if (!TelegramStart()) { return false; }
 
   bool sent = false;
   if (text != "") {
@@ -291,7 +315,7 @@ bool TelegramSendMessage(const String &chat_id, const String &text) {
 void TelegramSendGetMe(void) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: getMe"));
 
-  if (!TelegramInit()) { return; }
+  if (!TelegramStart()) { return; }
 
   String _token = SettingsText(SET_TELEGRAM_TOKEN);
   String command = "bot" + _token + "/getMe";
@@ -339,52 +363,52 @@ String TelegramExecuteCommand(const char *svalue) {
 
 void TelegramLoop(void) {
   if (!TasmotaGlobal.global_state.network_down && (Settings->sbflag1.telegram_recv_enable || Settings->sbflag1.telegram_echo_enable)) {
-    switch (Telegram.state) {
+    switch (Telegram->state) {
       case 0:
-        TelegramInit();
-        Telegram.state++;
+        TelegramStart();
+        Telegram->state++;
         break;
       case 1:
-        TelegramGetUpdates(Telegram.next_update_id);   // Launch API GetUpdates up to xxx message
-        Telegram.index = 0;
-        Telegram.retry = TELEGRAM_SEND_RETRY;
-        Telegram.state++;
+        TelegramGetUpdates(Telegram->next_update_id);   // Launch API GetUpdates up to xxx message
+        Telegram->index = 0;
+        Telegram->retry = TELEGRAM_SEND_RETRY;
+        Telegram->state++;
         break;
       case 2:
         if (Settings->sbflag1.telegram_echo_enable) {
-          if (Telegram.retry && (Telegram.index < Telegram.message_count)) {
-            if (TelegramSendMessage(Telegram.message[Telegram.index].chat_id, Telegram.message[Telegram.index].text)) {
-              Telegram.index++;
-              Telegram.retry = TELEGRAM_SEND_RETRY;
+          if (Telegram->retry && (Telegram->index < Telegram->message_count)) {
+            if (TelegramSendMessage(Telegram->message[Telegram->index].chat_id, Telegram->message[Telegram->index].text)) {
+              Telegram->index++;
+              Telegram->retry = TELEGRAM_SEND_RETRY;
             } else {
-              Telegram.retry--;
+              Telegram->retry--;
             }
           } else {
-            Telegram.message_count = 0;   // All messages have been replied - reset new messages
-            Telegram.wait = Telegram.poll;
-            Telegram.state++;
+            Telegram->message_count = 0;   // All messages have been replied - reset new messages
+            Telegram->wait = Telegram->poll;
+            Telegram->state++;
           }
         } else {
-          if (Telegram.skip) {  // Skip first update after restart as it may be a restart (again)
-            Telegram.skip = false;
+          if (Telegram->skip) {  // Skip first update after restart as it may be a restart (again)
+            Telegram->skip = false;
           } else {
-            if (Telegram.message_count && (Telegram.message[Telegram.index].text.length() > 0)) {
-              String logging = TelegramExecuteCommand(Telegram.message[Telegram.index].text.c_str());
+            if (Telegram->message_count && (Telegram->message[Telegram->index].text.length() > 0)) {
+              String logging = TelegramExecuteCommand(Telegram->message[Telegram->index].text.c_str());
               if (logging.length() > 0) {
-                TelegramSendMessage(Telegram.message[Telegram.index].chat_id, logging);
+                TelegramSendMessage(Telegram->message[Telegram->index].chat_id, logging);
               }
             }
           }
-          Telegram.message_count = 0;   // All messages have been replied - reset new messages
-          Telegram.wait = Telegram.poll;
-          Telegram.state++;
+          Telegram->message_count = 0;   // All messages have been replied - reset new messages
+          Telegram->wait = Telegram->poll;
+          Telegram->state++;
         }
         break;
       case 3:
-        if (Telegram.wait) {
-          Telegram.wait--;
+        if (Telegram->wait) {
+          Telegram->wait--;
         } else {
-          Telegram.state = 1;
+          Telegram->state = 1;
         }
     }
   }
@@ -399,16 +423,39 @@ void TelegramLoop(void) {
 #define D_CMND_TMSEND "Send"
 #define D_CMND_TMTOKEN "Token"
 #define D_CMND_TMCHATID "ChatId"
+#define D_CMND_TMFINGERPRINT "Fingerprint"
 
 const char kTelegramCommands[] PROGMEM = "Tm|"  // Prefix
-  D_CMND_TMSTATE "|" D_CMND_TMPOLL "|" D_CMND_TMTOKEN "|" D_CMND_TMCHATID "|" D_CMND_TMSEND;
+  D_CMND_TMSTATE "|" D_CMND_TMPOLL "|" D_CMND_TMTOKEN "|" D_CMND_TMCHATID "|" D_CMND_TMSEND "|" D_CMND_TMFINGERPRINT;
 
 void (* const TelegramCommand[])(void) PROGMEM = {
-  &CmndTmState, &CmndTmPoll, &CmndTmToken, &CmndTmChatId, &CmndTmSend };
+  &CmndTmState, &CmndTmPoll, &CmndTmToken, &CmndTmChatId, &CmndTmSend, &CmndTmFingerprint };
+
+void CmndTmFingerprint(void) {
+  // TmFingerprint 1
+  // TmFingerprint 4E 7F F5 6D 1E 29 40 58 AB 84 DE 63 69 7B CD DF 44 2E D2 F6
+  char fingerprint[60];
+  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(fingerprint))) {
+    if (SC_DEFAULT == Shortcut()) {
+      memcpy_P(Telegram->fingerprint, Telegram_Fingerprint, sizeof(Telegram->fingerprint)); 
+    } else {
+      strlcpy(fingerprint, (SC_CLEAR == Shortcut()) ? "" : XdrvMailbox.data, sizeof(fingerprint));
+      char *p = fingerprint;
+      for (uint32_t i = 0; i < 20; i++) {
+        Telegram->fingerprint[i] = strtol(p, &p, 16);
+      }
+    }
+    ToHex_P(Telegram->fingerprint, 20, fingerprint, sizeof(fingerprint));
+    SettingsUpdateText(SET_TELEGRAM_FINGERPRINT, fingerprint);
+    TasmotaGlobal.restart_flag = 2;
+  }
+  HexToBytes(SettingsText(SET_TELEGRAM_FINGERPRINT), Telegram->fingerprint, sizeof(Telegram->fingerprint));
+  ResponseCmndChar(ToHex_P(Telegram->fingerprint, 20, fingerprint, sizeof(fingerprint), ' '));
+}
 
 void CmndTmState(void) {
   if (XdrvMailbox.data_len > 0) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
       switch (XdrvMailbox.payload) {
       case 0: // Off
       case 1: // On
@@ -422,24 +469,34 @@ void CmndTmState(void) {
       case 5: // On
         Settings->sbflag1.telegram_echo_enable = XdrvMailbox.payload &1;
         break;
+      case 6: // Off
+      case 7: // On
+        Settings->sbflag1.telegram_disable_af = XdrvMailbox.payload &1;
+        break;
       }
     }
   }
-  Response_P(PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\"}}"),
+  if (!Settings->sbflag1.telegram_send_enable &&
+      !Settings->sbflag1.telegram_recv_enable &&
+      !Settings->sbflag1.telegram_echo_enable) {
+    TelegramStop();
+  }
+  Response_P(PSTR("{\"%s\":{\"Send\":\"%s\",\"Receive\":\"%s\",\"Echo\":\"%s\",\"NoAutoFingerprint\":\"%s\"}}"),
     XdrvMailbox.command,
     GetStateText(Settings->sbflag1.telegram_send_enable),
     GetStateText(Settings->sbflag1.telegram_recv_enable),
-    GetStateText(Settings->sbflag1.telegram_echo_enable));
+    GetStateText(Settings->sbflag1.telegram_echo_enable),
+    GetStateText(Settings->sbflag1.telegram_disable_af));
 }
 
 void CmndTmPoll(void) {
   if ((XdrvMailbox.payload >= 4) && (XdrvMailbox.payload <= 300)) {
-    Telegram.poll = XdrvMailbox.payload;
-    if (Telegram.poll < Telegram.wait) {
-      Telegram.wait = Telegram.poll;
+    Telegram->poll = XdrvMailbox.payload;
+    if (Telegram->poll < Telegram->wait) {
+      Telegram->wait = Telegram->poll;
     }
   }
-  ResponseCmndNumber(Telegram.poll);
+  ResponseCmndNumber(Telegram->poll);
 }
 
 void CmndTmToken(void) {
@@ -480,13 +537,21 @@ bool Xdrv40(uint32_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      TelegramLoop();
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(kTelegramCommands, TelegramCommand);
-      break;
+  if (FUNC_INIT == function) {
+    TelegramInit();
+  }
+  else if (Telegram) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        TelegramLoop();
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kTelegramCommands, TelegramCommand);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
+    }
   }
   return result;
 }

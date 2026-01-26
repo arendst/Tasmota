@@ -21,7 +21,7 @@ static cron_expr* ccronexpr_init(struct bvm* vm, char* expr) {
   cron_parse_expr(expr, cron, &error);
 
   if (error) {
-    be_raise(vm, "value_error", error);   // TODO any way to pass VM?
+    be_raise(vm, "value_error", error);
   }
   return cron;
 }

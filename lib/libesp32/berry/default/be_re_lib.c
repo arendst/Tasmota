@@ -8,6 +8,7 @@
 #include "be_constobj.h"
 #include "be_mem.h"
 #include "be_object.h"
+#include "be_exec.h"
 #include "../../re1.5/re1.5.h"
 
 /********************************************************************
@@ -46,6 +47,9 @@ int be_re_compile(bvm *vm) {
     }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
+    if (code == NULL) {
+      be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+    }
     int ret = re1_5_compilecode(code, regex_str);
     if (ret != 0) {
       be_raise(vm, "internal_error", "error in regex");
@@ -55,6 +59,25 @@ int be_re_compile(bvm *vm) {
     be_newcomobj(vm, code, &be_commonobj_destroy_generic);
     be_setmember(vm, -2, "_p");
     be_pop(vm, 1);
+    be_return(vm);
+  }
+  be_raise(vm, "type_error", NULL);
+}
+
+// Native functions be_const_func()
+// Berry: `re.compilebytes(pattern:string) -> instance(bytes)`
+int be_re_compilebytes(bvm *vm) {
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 1 && be_isstring(vm, 1)) {
+    const char * regex_str = be_tostring(vm, 1);
+    int sz = re1_5_sizecode(regex_str);
+    if (sz < 0) {
+      be_raise(vm, "internal_error", "error in regex");
+    }
+
+    be_pushbytes(vm, NULL, sizeof(ByteProg) + sz);    
+    ByteProg *code = (ByteProg*) be_tobytes(vm, -1, NULL);
+    re1_5_compilecode(code, regex_str);
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
@@ -95,9 +118,10 @@ const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbo
 
 int be_re_match_search(bvm *vm, bbool is_anchored, bbool size_only) {
   int32_t argc = be_top(vm); // Get the number of arguments
-  if (argc >= 2 && be_isstring(vm, 1) && be_isstring(vm, 2)) {
-    const char * regex_str = be_tostring(vm, 1);
+  if (argc >= 2 && (be_isstring(vm, 1) || be_isbytes(vm, 1)) && be_isstring(vm, 2)) {
     const char * hay = be_tostring(vm, 2);
+    ByteProg *code = NULL;
+
     int32_t offset = 0;
     if (argc >= 3 && be_isint(vm, 3)) {
       offset = be_toint(vm, 3);
@@ -107,17 +131,31 @@ int be_re_match_search(bvm *vm, bbool is_anchored, bbool size_only) {
     if (offset >= hay_len) { be_return_nil(vm); }      // any match of empty string returns nil, this catches implicitly when hay_len == 0
     hay += offset;                  // shift to offset
 
-    int sz = re1_5_sizecode(regex_str);
-    if (sz < 0) {
-      be_raise(vm, "internal_error", "error in regex");
-    }
+    if (be_isstring(vm, 1)) {
+      const char * regex_str = be_tostring(vm, 1);
+      int sz = re1_5_sizecode(regex_str);
+      if (sz < 0) {
+        be_raise(vm, "internal_error", "error in regex");
+      }
 
-    ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
-    int ret = re1_5_compilecode(code, regex_str);
-    if (ret != 0) {
-      be_raise(vm, "internal_error", "error in regex");
+      code = be_os_malloc(sizeof(ByteProg) + sz);
+      if (code == NULL) {
+        be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+      }
+      int ret = re1_5_compilecode(code, regex_str);
+      if (ret != 0) {
+        be_os_free(code);
+        be_raise(vm, "internal_error", "error in regex");
+      }
+    } else {
+      code = (ByteProg *) be_tobytes(vm, 1, NULL);
     }
+    // do the match
     be_re_match_search_run(vm, code, hay, is_anchored, size_only);
+    // cleanup
+    if (be_isstring(vm, 1)) {
+      be_os_free(code);
+    }
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
@@ -125,22 +163,32 @@ int be_re_match_search(bvm *vm, bbool is_anchored, bbool size_only) {
 
 int be_re_match_search_all(bvm *vm, bbool is_anchored) {
   int32_t argc = be_top(vm); // Get the number of arguments
-  if (argc >= 2 && be_isstring(vm, 1) && be_isstring(vm, 2)) {
-    const char * regex_str = be_tostring(vm, 1);
+  if (argc >= 2 && (be_isstring(vm, 1) || be_isbytes(vm, 1)) && be_isstring(vm, 2)) {
     const char * hay = be_tostring(vm, 2);
+    ByteProg *code = NULL;
     int limit = -1;
     if (argc >= 3) {
       limit = be_toint(vm, 3);
     }
-    int sz = re1_5_sizecode(regex_str);
-    if (sz < 0) {
-      be_raise(vm, "internal_error", "error in regex");
-    }
 
-    ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
-    int ret = re1_5_compilecode(code, regex_str);
-    if (ret != 0) {
-      be_raise(vm, "internal_error", "error in regex");
+    if (be_isstring(vm, 1)) {
+      const char * regex_str = be_tostring(vm, 1);
+      int sz = re1_5_sizecode(regex_str);
+      if (sz < 0) {
+        be_raise(vm, "internal_error", "error in regex");
+      }
+
+      code = be_os_malloc(sizeof(ByteProg) + sz);
+      if (code == NULL) {
+        be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+      }
+      int ret = re1_5_compilecode(code, regex_str);
+      if (ret != 0) {
+        be_os_free(code);
+        be_raise(vm, "internal_error", "error in regex");
+      }
+    } else {
+      code = (ByteProg *) be_tobytes(vm, 1, NULL);
     }
 
     be_newobject(vm, "list");
@@ -152,6 +200,10 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
       be_pop(vm, 1);
     }
     be_pop(vm, 1);
+    // cleanup
+    if (be_isstring(vm, 1)) {
+      be_os_free(code);
+    }
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
@@ -177,6 +229,21 @@ int be_re_match_all(bvm *vm) {
 // Berry: `re.search_all`
 int be_re_search_all(bvm *vm) {
   return be_re_match_search_all(vm, bfalse);
+}
+
+// Berry: `re.dump(b:bytes) -> nil``
+int be_re_dump(bvm *vm) {
+#ifdef USE_BERRY_DEBUG
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 1 && be_isbytes(vm, 1)) {
+    ByteProg *code = (ByteProg*) be_tobytes(vm, 1, NULL);
+    re1_5_dumpcode(code);
+    be_return_nil(vm);
+  }
+  be_raise(vm, "type_error", NULL);
+#else // USE_BERRY_DEBUG
+  be_return_nil(vm);
+#endif
 }
 
 // Berry: `re_pattern.search(s:string [, offset:int]) -> list(string)`
@@ -315,24 +382,37 @@ int re_pattern_split(bvm *vm) {
 // Berry: `re.split(pattern:string, s:string [, split_limit:int]) -> list(string)`
 int be_re_split(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
-  if (argc >= 2 && be_isstring(vm, 1) && be_isstring(vm, 2)) {
-    const char * regex_str = be_tostring(vm, 1);
+  if (argc >= 2 && (be_isstring(vm, 1) || be_isbytes(vm, 1)) && be_isstring(vm, 2)) {
     const char * hay = be_tostring(vm, 2);
+    ByteProg *code = NULL;
     int split_limit = -1;
     if (argc >= 3) {
       split_limit = be_toint(vm, 3);
     }
-    int sz = re1_5_sizecode(regex_str);
-    if (sz < 0) {
-      be_raise(vm, "internal_error", "error in regex");
-    }
+    if (be_isstring(vm, 1)) {
+      const char * regex_str = be_tostring(vm, 1);
+      int sz = re1_5_sizecode(regex_str);
+      if (sz < 0) {
+        be_raise(vm, "internal_error", "error in regex");
+      }
 
-    ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
-    int ret = re1_5_compilecode(code, regex_str);
-    if (ret != 0) {
-      be_raise(vm, "internal_error", "error in regex");
+      code = be_os_malloc(sizeof(ByteProg) + sz);
+      if (code == NULL) {
+        be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+      }
+      int ret = re1_5_compilecode(code, regex_str);
+      if (ret != 0) {
+        be_os_free(code);
+        be_raise(vm, "internal_error", "error in regex");
+      }
+    } else {
+      code = (ByteProg *) be_tobytes(vm, 1, NULL);
     }
-    return re_pattern_split_run(vm, code, hay, split_limit);
+    int ret = re_pattern_split_run(vm, code, hay, split_limit);
+    if (be_isstring(vm, 1)) {
+      be_os_free(code);
+    }
+    return ret;
   }
   be_raise(vm, "type_error", NULL);
 }
@@ -343,12 +423,14 @@ int be_re_split(bvm *vm) {
 @const_object_info_begin
 module re (scope: global) {
   compile, func(be_re_compile)
+  compilebytes, func(be_re_compilebytes)
   search, func(be_re_search)
   searchall, func(be_re_search_all)
   match, func(be_re_match)
   match2, func(be_re_match2)
   matchall, func(be_re_match_all)
   split, func(be_re_split)
+  dump, func(be_re_dump)
 }
 @const_object_info_end 
 

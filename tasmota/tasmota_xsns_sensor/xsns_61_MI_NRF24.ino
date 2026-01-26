@@ -1676,7 +1676,7 @@ bool NRFCmd(void) {
  * Presentation
 \*********************************************************************************************/
 
-const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
+const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u%%{e}";
 const char HTTP_MINRF_MAC[] PROGMEM = "{s}%s %s{m}%02x:%02x:%02x:%02x:%02x:%02x%{e}";
 const char HTTP_MINRF_FLORA_DATA[] PROGMEM =  "{s}%s" " Fertility" "{m}%dus/cm{e}";
 const char HTTP_MINRF_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
@@ -1906,7 +1906,7 @@ void MINRFShow(bool json)
           continue;
           }
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, kMINRFDeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
+        WSContentSend_P(HTTP_MINRF_MAC, kMINRFDeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, MIBLEsensors[i].MAC[0], MIBLEsensors[i].MAC[1],MIBLEsensors[i].MAC[2],MIBLEsensors[i].MAC[3],MIBLEsensors[i].MAC[4],MIBLEsensors[i].MAC[5]);
         if (MIBLEsensors[i].type==YEERC) continue;
         if (MIBLEsensors[i].type==FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
@@ -1932,7 +1932,7 @@ void MINRFShow(bool json)
       if(MINRF.beacon.active){
         WSContentSend_PD(HTTP_MINRF_HL);
         WSContentSend_PD(HTTP_MINRF_HL);
-        WSContentSend_PD(HTTP_MINRF_MAC, F("Beacon"), D_MAC_ADDRESS, MINRF.beacon.MAC[0], MINRF.beacon.MAC[1],MINRF.beacon.MAC[2],MINRF.beacon.MAC[3],MINRF.beacon.MAC[4],MINRF.beacon.MAC[5]);
+        WSContentSend_P(HTTP_MINRF_MAC, F("Beacon"), D_MAC_ADDRESS, MINRF.beacon.MAC[0], MINRF.beacon.MAC[1],MINRF.beacon.MAC[2],MINRF.beacon.MAC[3],MINRF.beacon.MAC[4],MINRF.beacon.MAC[5]);
         WSContentSend_PD(PSTR("{s}Beacon Time{m}%u seconds{e}"),MINRF.beacon.time);
       }
 
