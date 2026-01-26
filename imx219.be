@@ -1,3 +1,4 @@
+# in preinit.be: load("/imx219.be")
 class CSI_Sensor
   var name
   var wire
