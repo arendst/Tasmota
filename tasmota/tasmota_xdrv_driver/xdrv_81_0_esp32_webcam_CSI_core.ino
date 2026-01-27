@@ -142,6 +142,8 @@ struct {
     size_t buffer_size;
     uint8_t *out_buffer;
     size_t out_buffer_size;
+    uint32_t motion_val;      // Current rolling average (0-100+)
+    uint32_t motion_raw;      // Raw P-frame size (debug)
   } h264;
   
   // --- 4. RTP Protocol (POD) ---
@@ -1220,187 +1222,6 @@ void WcInit(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: CSI driver loaded"));
 }
 
-/*********************************************************************************************/
-// Webcam streaming support
-//
-// Architecture:
-// - Stream server runs on port 81
-// - Supports MJPEG streaming via /cam.mjpeg, /stream
-// - Supports single frame capture via /wc.jpg, /snapshot.jpg
-//
-// Endpoints:
-// - http://IP:81/           -> redirects to /cam.mjpeg
-// - http://IP:81/cam.mjpeg  -> MJPEG stream
-// - http://IP:81/stream     -> MJPEG stream
-// - http://IP/wc.jpg        -> single frame capture
-
-
-bool HttpCheckPriviledgedAccess(bool);
-extern ESP8266WebServer *Webserver;
-
-void HandleWebcamRoot(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Root called - CamServer=%p"), Wc.jpeg.server);
-  if (!Wc.jpeg.server) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CamServer is NULL in Root!"));
-    return;
-  }
-  Wc.jpeg.server->sendHeader("Location", "/cam.mjpeg");
-  Wc.jpeg.server->send(302, "", "");
-}
-
-void HandleWebcamMjpeg(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver - state=%d"), Wc.core.state);
-  
-  if (!Wc.jpeg.server) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CamServer is NULL!"));
-    return;
-  }
-  
-  if (Wc.core.state != CAM_STREAMING) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Not streaming - rejecting request"));
-    Wc.jpeg.server->send(503, "text/plain", "Camera not ready");
-    return;
-  }
-  
-  // Lock frame access for client setup
-  if (xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
-    // Allocate client on heap to avoid stack issues
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Allocating client..."));
-    if (Wc.jpeg.client_ptr) {
-      delete Wc.jpeg.client_ptr;
-      Wc.jpeg.client_ptr = nullptr;
-    }
-    
-    Wc.jpeg.client_ptr = new WiFiClient();
-    if (!Wc.jpeg.client_ptr) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate client!"));
-      xSemaphoreGive(Wc.core.frame_mutex);
-      return;
-    }
-    
-    *Wc.jpeg.client_ptr = Wc.jpeg.server->client();
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Client allocated, connected=%d"), Wc.jpeg.client_ptr->connected());
-    
-    // Send HTTP header
-    Wc.jpeg.client_ptr->print("HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=" BOUNDARY "\r\n\r\n");
-    Wc.jpeg.stream_active = 2;
-    
-    xSemaphoreGive(Wc.core.frame_mutex);
-  }
-}
-
-void HandleImage(void) {
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
-  WiFiClient client = Webserver->client();
-  String response = "HTTP/1.1 200 OK\r\n";
-  response += "Content-disposition: inline; filename=cap.jpg\r\n";
-  response += "Content-type: image/jpeg\r\n\r\n";
-  Webserver->sendContent(response);
-
-  if (!Wc.jpeg.handle || !Wc.jpeg.buffer) {
-    client.stop();
-    return;
-  }
-
-  // Wait for next frame (simple delay to let task process)
-  delay(100);
-  
-  // Lock JPEG encoder to prevent race with CamProcessingTask
-  if (xSemaphoreTake(Wc.jpeg.mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
-    uint8_t *source_buf = Wc.core.frame_buffer[Wc.core.read_idx];
-    esp_cache_msync(source_buf, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-
-    uint32_t jpeg_size = 0;
-    esp_err_t ret = jpeg_encoder_process(Wc.jpeg.handle, &Wc.jpeg.cfg, source_buf, Wc.core.frame_buffer_size, (uint8_t*)Wc.jpeg.buffer, Wc.jpeg.buffer_size, &jpeg_size);
-    if (ret == ESP_OK && jpeg_size > 0) {
-      client.write((char *)Wc.jpeg.buffer, jpeg_size);
-    }
-    
-    xSemaphoreGive(Wc.jpeg.mutex);
-  }
-  
-  client.stop();
-}
-
-
-uint32_t WcSetStreamserver(uint32_t flag) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver flag=%d CamServer=%p"), flag, Wc.jpeg.server);
-  
-  if (TasmotaGlobal.global_state.network_down) { 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Network down, aborting"));
-    Wc.jpeg.stream_active = 0;
-    return 0; 
-  }
-
-  if (flag) {
-    if (!Wc.jpeg.server) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Creating stream server on port 81..."));
-      Wc.jpeg.stream_active = 0;
-      Wc.jpeg.server = new ESP8266WebServer(81);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: CamServer created at %p"), Wc.jpeg.server);
-      
-      if (!Wc.jpeg.server) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to allocate CamServer!"));
-        return 0;
-      }
-      
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Registering handlers..."));
-      Wc.jpeg.server->on("/", HandleWebcamRoot);
-      Wc.jpeg.server->on("/cam.mjpeg", HandleWebcamMjpeg);
-      Wc.jpeg.server->on("/cam.jpg", HandleWebcamMjpeg);
-      Wc.jpeg.server->on("/stream", HandleWebcamMjpeg);
-      
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting server..."));
-      Wc.jpeg.server->begin();
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stream server started on port 81"));
-    } else {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Stream server already running"));
-    }
-  } else {
-    if (Wc.jpeg.server) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping stream server..."));
-      Wc.jpeg.stream_active = 0;
-      Wc.jpeg.server->stop();
-      delete Wc.jpeg.server;
-      Wc.jpeg.server = NULL;
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stream server stopped"));
-    }
-  }
-  return 0;
-}
-
-void WcPicSetup(void) {
-  WebServer_on(PSTR("/wc.jpg"), HandleImage);
-  WebServer_on(PSTR("/wc.mjpeg"), HandleImage);
-  WebServer_on(PSTR("/snapshot.jpg"), HandleImage);
-}
-
-void WcShowStream(void) {
-  if (Wc.jpeg.server && Wc.core.state == CAM_STREAMING) {
-    uint32_t ip = (uint32_t)WiFi.localIP();
-    
-    // Container and Status Label
-    WSContentSend_P(PSTR("<div><div id='wc_s'>Loading...</div>"));
-    
-    // Image with ID 'wc_img'
-    WSContentSend_P(PSTR("<img id='wc_img' style='max-width:100%%;' "
-                         "src='http://%_I:81/stream' "
-                         "onerror='setTimeout(()=>{this.src=this.src;},1000)'>"), ip);
-
-    // JS using Tasmota's eb() helper
-    WSContentSend_P(PSTR(
-      "<script>"
-      "setInterval(function(){"
-      "  var i=eb('wc_img');"
-      "  if(i && i.naturalWidth){"
-      "    eb('wc_s').innerHTML='MJPEG: '+i.naturalWidth+'x'+i.naturalHeight;"
-      "  }"
-      "},1000);"
-      "</script></div>"));
-  }
-}
-
 
 void WcLoop(void) {
   // Skip during state transitions
@@ -1441,7 +1262,7 @@ const char HTTP_WC_FPS[]  PROGMEM = "{s}Frame Rate{m}%d fps{e}";
 
 void WcWebInfo(bool json) {
   if (json) {
-    // TODO: JSON output
+    ResponseAppend_P(PSTR(",\"Cam\":{\"Sensor\":\"%.8s\",\"State\":%d,\"Res\":\"%dx%d\",\"FPS\":%d,\"Motion\":%d}"), Wc.core.config.name, Wc.core.state, Wc.core.config.width, Wc.core.config.height, WcStats.last_fps, Wc.h264.motion_val);
     return;
   }
 
@@ -1481,6 +1302,9 @@ bool Xdrv81(uint32_t function) {
       break;
     case FUNC_WEB_ADD_MAIN_BUTTON:
       WcShowStream();
+      break;
+    case FUNC_JSON_APPEND:
+      WcWebInfo(true);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:

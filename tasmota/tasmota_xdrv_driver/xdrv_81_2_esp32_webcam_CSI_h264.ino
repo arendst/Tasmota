@@ -103,6 +103,25 @@ void H264ProcessingTask(void *pvParameters) {
     uint32_t encode_time = micros() - encode_start;
     
     if (ret == ESP_H264_ERR_OK && out_frame.length > 0) {
+      // Motion Detection Calculation
+      bool is_keyframe = (out_frame.frame_type == ESP_H264_FRAME_TYPE_IDR || 
+                          out_frame.frame_type == ESP_H264_FRAME_TYPE_I);
+      
+      if (!is_keyframe) {
+          Wc.h264.motion_raw = out_frame.length;
+          // Calculate score (approx 1 unit per 100 bytes of change)
+          uint32_t raw_score = out_frame.length / 128; 
+          
+          // Exponential Moving Average (EMA)
+          // Value = (Old * 4 + New) / 5
+          Wc.h264.motion_val = (Wc.h264.motion_val * 4 + raw_score) / 5;
+          
+          // Optional: Trigger event if high
+          if (Wc.h264.motion_val > 50) { // Threshold 50 (~5KB change)
+             // Debounce logic here if needed
+          }
+      }
+
       // Parse and send NAL units via RTP (only if RTSP session is in PLAY state)
       if (Wc.core.session_type == SESSION_RTSP && Wc.rtsp.streaming) {
         uint8_t* nal_data = Wc.h264.out_buffer;
