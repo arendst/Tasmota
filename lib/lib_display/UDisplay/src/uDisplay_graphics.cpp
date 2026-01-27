@@ -72,7 +72,9 @@ void uDisplay::pushColors(uint16_t *data, uint32_t len, boolean not_swapped) {  
     if (lvgl_param.swap_color) {
         not_swapped = !not_swapped;
     }
-    universal_panel->pushColors(data, len, not_swapped);
+    if (!universal_panel->pushColors(data, len, not_swapped)) {
+        pushColorsMono(data, len, not_swapped);
+    }
 }
 
 // convert to mono, these are framebuffer based
@@ -104,7 +106,12 @@ void uDisplay::pushColorsMono(uint16_t *data, uint32_t len, bool rgb16_swap) {
 }
 
 void uDisplay::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-    universal_panel->setAddrWindow(x0, y0, x1, y1);
+    if (!universal_panel->setAddrWindow(x0, y0, x1, y1)) {
+        seta_xp1 = x0;
+        seta_yp1 = y0;
+        seta_xp2 = x1;
+        seta_yp2 = y1;
+    }
 }
 
 void uDisplay::setRotation(uint8_t rotation) {
