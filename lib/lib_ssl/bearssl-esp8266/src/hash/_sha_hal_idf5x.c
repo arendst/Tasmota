@@ -134,16 +134,18 @@ void br_sha1_out(const br_sha1_context *cc, void *out)
     br_sha1_context ctx = *cc;
     size_t used = (size_t)(ctx.count & 63U);
     uint64_t bit_len = (uint64_t)ctx.count << 3;
+    bool first = (ctx.count < 64);
 
     ctx.buf[used++] = 0x80;
     if (used > 56) {
         memset(ctx.buf + used, 0, 64 - used);
-        sha_hal_process_block(ctx.val, ctx.buf, SHA1, 5, 16, ctx.count <= 64);
+        sha_hal_process_block(ctx.val, ctx.buf, SHA1, 5, 16, first);
         used = 0;
+        first = false;
     }
     memset(ctx.buf + used, 0, 56 - used);
     br_enc64be(ctx.buf + 56, bit_len);
-    sha_hal_process_block(ctx.val, ctx.buf, SHA1, 5, 16, ctx.count <= 64);
+    sha_hal_process_block(ctx.val, ctx.buf, SHA1, 5, 16, first);
     memcpy(out, ctx.val, 20);
 }
 
@@ -172,7 +174,7 @@ const br_hash_class br_sha1_vtable PROGMEM = {
       | BR_HASHDESC_LBLEN(6)
       | BR_HASHDESC_MD_PADDING
       | BR_HASHDESC_MD_PADDING_BE
-      | BR_HASHDESC_STATE(32),
+      | BR_HASHDESC_STATE(20),
     (void (*)(const br_hash_class **)) &br_sha1_init,
     (void (*)(const br_hash_class **, const void *, size_t)) &br_sha1_update,
     (void (*)(const br_hash_class *const *, void *)) &br_sha1_out,
