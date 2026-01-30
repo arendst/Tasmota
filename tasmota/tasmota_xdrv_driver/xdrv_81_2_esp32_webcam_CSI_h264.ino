@@ -618,9 +618,115 @@ void WcSendNalUnit(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t nal
 // Safari may not reliably start the ws:// H.264 pipeline on plain HTTP until triggered by a user gesture,
 // so the WebCodecs demo page uses a Start button (and a small WS “kick” + reconnect) to force the socket
 // into OPEN before decoding; once running, Safari decodes fine with correct key/delta signaling and SPS/PPS+IDR.
-const char WC_H264_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ESP32 H.264</title><style>body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh}canvas{max-width:100%;max-height:100%}#ui{position:fixed;top:10px;left:10px;z-index:10;font:14px sans-serif;color:#fff}button{font:14px sans-serif;padding:6px 10px;margin-right:6px}</style></head><body><div id="ui"><button id="start">Start</button><button id="stop" disabled>Stop</button><span id="st">idle</span></div><canvas id="c"></canvas><script>(()=>{const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');const bStart=document.getElementById('start'),bStop=document.getElementById('stop'),st=document.getElementById('st');console.log('[WC] location=',location.href,'secure=',window.isSecureContext,'proto=',location.protocol);console.log('[WC] VideoDecoder=',('VideoDecoder'in window),typeof VideoDecoder);const wsProto=(location.protocol==='https:')?'wss://':'ws://';const WS_URL=wsProto+location.hostname+':82/';let ws=null,decoder=null,haveKey=false,ts=0,run=false;let frames=0,keyFrames=0,deltaFrames=0,bytes=0,lastLog=performance.now();let lastFps=0,lastKbps=0,vidW=0,vidH=0;const fps=25;const frameDurUs=Math.round(1000000/fps);function setStatus(s){st.textContent=s;}function fmtKbps(kbps){if(!isFinite(kbps))return '0 kbps';if(kbps<1000)return Math.round(kbps)+' kbps';return (kbps/1000).toFixed(2)+' Mbps';}function wsStateName(s){return s===0?'CONNECTING':s===1?'OPEN':s===2?'CLOSING':s===3?'CLOSED':'?';}function drawHud(){try{const w=canvas.width|0,h=canvas.height|0;if(w<10||h<10)return;ctx.save();ctx.font='14px monospace';ctx.textBaseline='top';const lines=[`FPS: ${lastFps}`,`Rate: ${fmtKbps(lastKbps)}`,`Res: ${vidW}x${vidH}`,`Frames: key=${keyFrames} delta=${deltaFrames}`,`WS: ${ws?wsStateName(ws.readyState):'none'} (${ws?ws.readyState:'-'})`,`Dec: ${decoder?decoder.state:'none'} q=${decoder?decoder.decodeQueueSize:'-'}`,`Secure: ${window.isSecureContext}`];let maxW=0;for(const s of lines){maxW=Math.max(maxW,ctx.measureText(s).width);}const pad=8;const boxW=Math.min(w-10,Math.ceil(maxW+pad*2));const boxH=lines.length*18+pad*2;ctx.globalAlpha=0.65;ctx.fillStyle='#000';ctx.fillRect(8,8,boxW,boxH);ctx.globalAlpha=1;ctx.fillStyle='#0f0';let y=8+pad;for(const s of lines){ctx.fillText(s,8+pad,y);y+=18;}ctx.restore();}catch(e){}}function hardStop(){run=false;try{if(ws){ws.onopen=ws.onmessage=ws.onerror=ws.onclose=null;ws.close();}}catch(e){}ws=null;try{if(decoder){decoder.close();}}catch(e){}decoder=null;haveKey=false;ts=0;frames=keyFrames=deltaFrames=bytes=0;lastFps=0;lastKbps=0;setStatus('stopped');bStart.disabled=false;bStop.disabled=true;console.log('[WC] stopped');}function kickWebSocket(url){try{const k=new WebSocket(url);k.onopen=()=>{console.log('[WC] kick WS open/close');try{k.close();}catch(e){}};k.onerror=(e)=>console.log('[WC] kick WS error',e);}catch(e){console.log('[WC] kick WS ctor threw',e);}}function openWebSocket(url,timeoutMs){return new Promise((resolve,reject)=>{let w;try{w=new WebSocket(url);}catch(e){reject(e);return;}const t=setTimeout(()=>{try{console.warn('[WC] WS connect timeout, closing (readyState=',w.readyState,')');w.close();}catch(e){}reject(new Error('WS connect timeout'));},timeoutMs);w.onopen=()=>{clearTimeout(t);resolve(w);};w.onerror=(e)=>{clearTimeout(t);reject(e);};});}function scanAnnexBTypes(u8){const t=new Set();for(let i=0;i+4<u8.length;i++){let sc=0;if(u8[i]===0&&u8[i+1]===0&&u8[i+2]===1)sc=3;else if(u8[i]===0&&u8[i+1]===0&&u8[i+2]===0&&u8[i+3]===1)sc=4;if(!sc)continue;const b=u8[i+sc];if(b!==undefined)t.add(b&31);}return Array.from(t).sort((a,b)=>a-b);}async function startStream(){hardStop();run=true;bStart.disabled=true;bStop.disabled=false;setStatus('starting...');haveKey=false;ts=0;frames=keyFrames=deltaFrames=bytes=0;lastLog=performance.now();decoder=new VideoDecoder({output:f=>{vidW=f.displayWidth;vidH=f.displayHeight;if(canvas.width!==vidW)canvas.width=vidW;if(canvas.height!==vidH)canvas.height=vidH;ctx.drawImage(f,0,0);drawHud();f.close()},error:e=>{console.error('[WC] VideoDecoder error:',e,'state=',decoder&&decoder.state,'q=',decoder&&decoder.decodeQueueSize);setStatus('decoder error');}});const cfg={codec:'avc1.42001E',optimizeForLatency:true};try{if(VideoDecoder.isConfigSupported){const s=await VideoDecoder.isConfigSupported(cfg);console.log('[WC] isConfigSupported=',s);}}catch(e){console.log('[WC] isConfigSupported error',e);}try{decoder.configure(cfg);console.log('[WC] configured',cfg,'state=',decoder.state);setStatus('decoder configured');}catch(e){console.error('[WC] configure failed',e);setStatus('configure failed');return;}console.log('[WC] connecting WS',WS_URL);kickWebSocket(WS_URL);await new Promise(r=>setTimeout(r,80));try{ws=await openWebSocket(WS_URL,1500);console.log('[WC] WS open',ws.url);setStatus('WS open');}catch(e){console.error('[WC] WS open failed',e);setStatus('WS open failed');if(run){console.log('[WC] retry in 500ms');setTimeout(()=>{if(run)startStream();},500);}return;}ws.binaryType='arraybuffer';ws.onclose=(e)=>{console.log('[WC] WS close code=',e.code,'reason=',e.reason,'wasClean=',e.wasClean);setStatus('WS closed');if(run){console.log('[WC] reconnect in 500ms');setTimeout(()=>{if(run)startStream();},500);}};ws.onerror=(e)=>{console.error('[WC] WS error',e);setStatus('WS error');};ws.onmessage=(e)=>{try{const u8=new Uint8Array(e.data);bytes+=u8.byteLength;if(u8.length<2){console.warn('[WC] short packet',u8.length);return;}const isKey=(u8[0]===1);if(!haveKey&&!isKey){console.warn('[WC] drop delta before first key');return;}if(isKey&&!haveKey){haveKey=true;const data0=u8.subarray(1);console.log('[WC] first KEY received bytes=',u8.length);console.log('[WC] key NAL types=',scanAnnexBTypes(data0));console.log('[WC] key head=',Array.from(data0.subarray(0,32)).map(b=>b.toString(16).padStart(2,'0')).join(' '));setStatus('decoding');}if(isKey)keyFrames++;else deltaFrames++;const data=u8.subarray(1);const chunk=new EncodedVideoChunk({type:isKey?'key':'delta',timestamp:ts,data:data});ts+=frameDurUs;decoder.decode(chunk);frames++;const now=performance.now();if(now-lastLog>1000){lastFps=frames;lastKbps=(bytes*8)/1000;console.log('[WC] fps=',frames,'key=',keyFrames,'delta=',deltaFrames,'KB=',Math.round(bytes/1024),'state=',decoder.state,'q=',decoder.decodeQueueSize,'haveKey=',haveKey,'wsState=',ws.readyState);frames=0;bytes=0;lastLog=now;}}catch(x){console.error('[WC] decode exception',x,'state=',decoder&&decoder.state,'q=',decoder&&decoder.decodeQueueSize,'haveKey=',haveKey);setStatus('decode exception');}};}bStart.onclick=()=>{console.log('[WC] Start clicked');startStream();};bStop.onclick=()=>{console.log('[WC] Stop clicked');hardStop();};})();</script></body></html>)rawliteral";
 
-void HandleWebcamH264Html() { if (Webserver) Webserver->send(200, "text/html", WC_H264_HTML); }
+void WcH264SendUi() {
+  
+  // 1. CSS
+  char style_buf[512];
+  snprintf_P(style_buf, sizeof(style_buf), PSTR(
+    "<style>"
+    "#wc_c{position:relative;width:100%%;background:#000;display:flex;justify-content:center;align-items:center;aspect-ratio:%d/%d}"
+    "#wc_cvs{width:100%%;height:100%%;display:block}"
+    "</style>"
+  ), Wc.core.config.width, Wc.core.config.height);
+  WSContentSend(style_buf, strlen(style_buf)); 
+
+  // 2. HTML
+  WSContentSend_P(PSTR(
+    "<div id='wc_c'>"
+      "<canvas id='wc_cvs'></canvas>"
+    "</div>"
+  ));
+
+  // 3. JS (Using eb())
+  WSContentSend_P(PSTR(
+    "<script>"
+    "(()=>{"
+      "const cvs=eb('wc_cvs');"  // <--- Shorthand used here
+      "const ctx=cvs.getContext('2d');"
+      "const WS_URL=(location.protocol==='https:'?'wss://':'ws://')+location.hostname+':82/';"
+      "let ws=null,dec=null,key=false,run=false;"
+      "let fCount=0,bytes=0,lTime=performance.now();"
+      "let s_fps=0,s_kbps=0,s_key=0,s_delta=0,vidW=0,vidH=0;"
+      
+      "function drawHud(){"
+         "if(vidW<10)return;"
+         "ctx.save();"
+         "ctx.font='14px monospace';ctx.textBaseline='top';"
+         "const lines=[`FPS: ${s_fps}`,`KB/s: ${s_kbps}`,`Res: ${vidW}x${vidH}`,`Key: ${s_key} Delta: ${s_delta}`,`WS: ${ws?ws.readyState:'-'}`];"
+         "ctx.globalAlpha=0.6;ctx.fillStyle='#000';"
+         "ctx.fillRect(8,8,160,lines.length*16+8);"
+         "ctx.globalAlpha=1;ctx.fillStyle='#0f0';"
+         "let y=12;"
+         "lines.forEach(l=>{ctx.fillText(l,12,y);y+=16;});"
+         "ctx.restore();"
+      "}"
+      
+      "function kickWebSocket(url){try{const k=new WebSocket(url);k.onopen=()=>{try{k.close();}catch(e){}};k.onerror=(e)=>{console.log(e)};}catch(e){}}"
+      "function openWebSocket(url){return new Promise((resolve,reject)=>{let w;try{w=new WebSocket(url);}catch(e){reject(e);return;}w.onopen=()=>{resolve(w);};w.onerror=(e)=>{reject(e);};});}"
+      
+      "function stop(){"
+        "run=false;"
+        "if(ws){ws.close();ws=null;}"
+        "if(dec){dec.close();dec=null;}"
+      "}"
+      
+      "async function start(){"
+        "stop();"
+        "run=true;"
+        "s_key=0;s_delta=0;"
+        "if(!('VideoDecoder' in window)){console.error('No WebCodecs');return;}"
+        
+        "dec=new VideoDecoder({"
+          "output:f=>{"
+             "vidW=f.displayWidth;vidH=f.displayHeight;"
+             "if(cvs.width!==vidW)cvs.width=vidW;"
+             "if(cvs.height!==vidH)cvs.height=vidH;"
+             "ctx.drawImage(f,0,0);"
+             "drawHud();"
+             "f.close();"
+             "fCount++;"
+          "},"
+          "error:e=>{console.error(e);stop();}"
+        "});"
+        
+        "try{"
+          "dec.configure({codec:'avc1.42001E',optimizeForLatency:true});"
+        "}catch(e){console.error(e);return;}"
+        
+        "kickWebSocket(WS_URL);"
+        "await new Promise(r=>setTimeout(r,80));"
+        
+        "try{"
+          "ws=await openWebSocket(WS_URL);"
+          "ws.binaryType='arraybuffer';"
+          "ws.onclose=()=>{if(run)setTimeout(start,1000);};"
+          "ws.onmessage=e=>{"
+            "bytes+=e.data.byteLength;"
+            "let u8=new Uint8Array(e.data);"
+            "if(u8.length<1)return;"
+            "let isKey=(u8[0]===1);"
+            "if(isKey){key=true;s_key++;}"
+            "else{s_delta++;}"
+            "if(!key)return;"
+            "try{"
+              "dec.decode(new EncodedVideoChunk({type:isKey?'key':'delta',timestamp:performance.now()*1000,data:u8.subarray(1)}));"
+            "}catch(x){console.error(x);}"
+            
+            "if(performance.now()-lTime>1000){"
+              "s_fps=fCount;"
+              "s_kbps=Math.round(bytes/1024);"
+              "fCount=0;bytes=0;lTime=performance.now();"
+            "}"
+          "};"
+        "}catch(e){console.error(e);stop();}"
+      "}"
+      
+      "start();"
+    "})();"
+    "</script>"
+  ));
+}
 
 #endif  // USE_CSI_WEBCAM
 #endif  // ESP32P4

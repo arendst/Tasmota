@@ -381,18 +381,24 @@ void HandleImage(void) {
 }
 
 void WcShowStream(void) {
-  if (Wc.jpeg.server && Wc.core.state == CAM_STREAMING) {
+  if (Wc.core.state != CAM_STREAMING) {
+    return;
+  }
+
+  // ---- Session 1: MJPEG (legacy) ----
+  if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
+    if (!Wc.jpeg.server) {  // port 81 server not up yet
+      return;
+    }
+
     uint32_t ip = (uint32_t)WiFi.localIP();
-    
-    // Container and Status Label
+
     WSContentSend_P(PSTR("<div><div id='wc_s'>Loading...</div>"));
-    
-    // Image with ID 'wc_img'
+
     WSContentSend_P(PSTR("<img id='wc_img' style='max-width:100%%;' "
                          "src='http://%_I:81/stream' "
                          "onerror='setTimeout(()=>{this.src=this.src;},1000)'>"), ip);
 
-    // JS using Tasmota's eb() helper
     WSContentSend_P(PSTR(
       "<script>"
       "setInterval(function(){"
@@ -401,21 +407,30 @@ void WcShowStream(void) {
       "    eb('wc_s').innerHTML='MJPEG: '+i.naturalWidth+'x'+i.naturalHeight;"
       "  }"
       "},1000);"
-      "</script></div>"));
+      "</script></div>"
+    ));
+
+    return;
+  }
+
+  // ---- Session 2: H.264 over WebSockets + WebCodecs page ----
+  if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
+     WcH264SendUi(); // <--- This injects the UI directly
+     return;
   }
 }
 
 
-uint32_t WcSetStreamserver(uint32_t flag) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver flag=%d CamServer=%p"), flag, Wc.jpeg.server);
+uint32_t WcSetStreamserver(uint32_t enable) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver enable=%d CamServer=%p"), enable, Wc.jpeg.server);
   
-  if (TasmotaGlobal.global_state.network_down) { 
+  if (enable && TasmotaGlobal.global_state.network_down) { 
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Network down, aborting"));
     Wc.jpeg.stream_active = 0;
     return 0; 
   }
 
-  if (flag) {
+  if (enable) {
     if (!Wc.jpeg.server) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: Creating stream server on port 81..."));
       Wc.jpeg.stream_active = 0;

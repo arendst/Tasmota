@@ -1235,29 +1235,41 @@ void WcPicSetup(void) {
   WebServer_on(PSTR("/wc.jpg"), HandleImage);
   WebServer_on(PSTR("/wc.mjpeg"), HandleImage);
   WebServer_on(PSTR("/snapshot.jpg"), HandleImage);
-  WebServer_on(PSTR("/wc_h264.html"), HandleWebcamH264Html);
+  // WebServer_on(PSTR("/wc_h264.html"), HandleWebcamH264Html);
 }
-
 
 void WcLoop(void) {
   // Skip during state transitions
   if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_IDLE) {
     return;
   }
-  
-  // Handle RTSP control connections
+
+  // Handle RTSP control connections (Session 2)
   if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
     HandleRtsp();
   }
-  
-  if (Wc.core.state == CAM_STREAMING && !Wc.jpeg.server && !TasmotaGlobal.global_state.network_down) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting stream server..."));
-    WcSetStreamserver(1);
+
+  // MJPEG HTTP server (port 81) must ONLY run in MJPEG session
+  if (Wc.core.state == CAM_STREAMING) {
+
+    if (Wc.core.session_type == SESSION_MJPEG_HTTP && !TasmotaGlobal.global_state.network_down) {
+      if (!Wc.jpeg.server) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting stream server..."));
+        WcSetStreamserver(1);
+      }
+    } else {
+      // Not MJPEG session OR network down -> ensure port 81 server is down
+      if (Wc.jpeg.server) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Stopping MJPEG stream server (not MJPEG session / net down)"));
+        WcSetStreamserver(0);
+      }
+    }
   }
-  
+
+  // Only handle MJPEG clients if the server exists (i.e., MJPEG session)
   if (Wc.jpeg.server) {
     Wc.jpeg.server->handleClient();
-    
+
     // Monitor client connection - cleanup if disconnected (with mutex protection)
     if (Wc.jpeg.stream_active && xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
       if (Wc.jpeg.client_ptr && !Wc.jpeg.client_ptr->connected()) {
@@ -1286,7 +1298,7 @@ void WcWebInfo(bool json) {
   if (Wc.core.state == CAM_STREAMING) {
     switch (Wc.core.session_type) {
       case SESSION_MJPEG_HTTP: mode_str = "MJPEG Server"; break;
-      case SESSION_RTSP_AND_WS:       mode_str = "RTSP Stream"; break;
+      case SESSION_RTSP_AND_WS:       mode_str = "H264 Stream"; break;
       case SESSION_WEBRTC:     mode_str = "WebRTC"; break;
       case SESSION_DSI_DISPLAY:mode_str = "Local Display"; break;
       default:                 mode_str = "Active"; break;
