@@ -76,4 +76,4 @@ class Shift595
 
 end
 
-return Shift595() # allow using 'import' instead of 'load()'
+return Shift595 # allow using 'import' instead of 'load()'
