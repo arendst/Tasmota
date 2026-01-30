@@ -380,12 +380,6 @@ void HandleImage(void) {
   client.stop();
 }
 
-void WcPicSetup(void) {
-  WebServer_on(PSTR("/wc.jpg"), HandleImage);
-  WebServer_on(PSTR("/wc.mjpeg"), HandleImage);
-  WebServer_on(PSTR("/snapshot.jpg"), HandleImage);
-}
-
 void WcShowStream(void) {
   if (Wc.jpeg.server && Wc.core.state == CAM_STREAMING) {
     uint32_t ip = (uint32_t)WiFi.localIP();
