@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.2.0.4]
 ### Added
 - Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output (#24364)
+- Improv USB CDC connected devices
 
 ### Breaking Changed
 
@@ -14,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Udisplay SPI driver display dimension parameters regression from v15.1.0.1 (#24376)
+- ESP32 BearSSL hw accelerated SHA1 (#24397)
 
 ### Removed
 

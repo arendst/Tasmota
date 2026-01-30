@@ -1834,6 +1834,17 @@ void SerialInput(void) {
 #endif  // ESP8266
 /*-------------------------------------------------------------------------------------------*/
 
+#ifdef USE_IMPROV
+    if (ImprovSerialInput(TasmotaGlobal.serial_in_buffer,
+                          TasmotaGlobal.serial_in_byte_counter,
+                          (char)TasmotaGlobal.serial_in_byte)) {
+      TasmotaGlobal.serial_in_byte_counter = 0;
+      continue;
+    }
+#endif  // USE_IMPROV
+
+/*-------------------------------------------------------------------------------------------*/
+
     if (XdrvCall(FUNC_SERIAL)) {
       TasmotaGlobal.serial_in_byte_counter = 0;
       Serial.flush();
@@ -1967,6 +1978,15 @@ void TasConsoleInput(void) {
   while (TasConsole.available()) {
     delay(0);
     char console_in_byte = TasConsole.read();
+
+#ifdef USE_IMPROV
+    if (ImprovSerialInput(console_buffer.c_str(),
+                          console_buffer.length(),
+                          console_in_byte)) {
+      console_buffer = "";
+      continue;
+    }
+#endif  // USE_IMPROV
 
 #ifdef USE_XYZMODEM
     if (XYZModemStart(TXMP_TASCONSOLE, console_in_byte)) { return; }

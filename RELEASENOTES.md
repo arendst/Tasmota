@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
 - Support for Adafruit I2C QT Rotary Encoder [#24270](https://github.com/arendst/Tasmota/issues/24270)
+- Improv USB CDC connected devices
 - Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output [#24364](https://github.com/arendst/Tasmota/issues/24364)
 - Zigbee support for `int24` type [#24334](https://github.com/arendst/Tasmota/issues/24334)
 - Berry `path.listdir("file.tapp#")` to list directory inside '.tapp' archives [#24367](https://github.com/arendst/Tasmota/issues/24367)
@@ -142,6 +143,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Display ST77xx and Parallel issues introduced after refactor UDisplay [#24368](https://github.com/arendst/Tasmota/issues/24368)
 - DALI watchdog exception
 - TuyaMCU v1 exception 28 regression from v15.1.0.1 reverted PR24063 [#24220](https://github.com/arendst/Tasmota/issues/24220)
+- ESP32 BearSSL hw accelerated SHA1 [#24397](https://github.com/arendst/Tasmota/issues/24397)
 - ESP32 BLE not starting [#24240](https://github.com/arendst/Tasmota/issues/24240)
 - Zigbee compilation warning in Berry mapping [#24333](https://github.com/arendst/Tasmota/issues/24333)
 

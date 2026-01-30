@@ -42,6 +42,8 @@ enum ImprovCommand {
   IMPROV_GET_CURRENT_STATE = 0x02,
   IMPROV_GET_DEVICE_INFO = 0x03,
   IMPROV_GET_WIFI_NETWORKS = 0x04,
+  IMPROV_GET_SET_HOSTNAME = 0x05,
+  IMPROV_GET_SET_DEVICENAME = 0x06,
   IMPROV_BAD_CHECKSUM = 0xFF,
 };
 
@@ -55,6 +57,8 @@ enum ImprovSerialType {
 static const uint8_t IMPROV_SERIAL_VERSION = 1;
 
 struct IMPROV {
+  char* serial_in_buffer;
+  int serial_in_counter;
   uint8_t wifi_timeout;
   uint8_t seriallog_level;
   uint8_t version;
@@ -79,9 +83,9 @@ void ImprovWriteData(uint8_t* data, uint32_t size) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IMP: Send '%*_H'"), size, data);
 
   for (uint32_t i = 0; i < size; i++) {
-    Serial.write(data[i]);
+    TasConsole.write(data[i]);
   }
-  Serial.write('\n');
+  TasConsole.write('\n');
 }
 
 void ImprovSendCmndState(uint32_t command, uint32_t state) {
@@ -122,7 +126,7 @@ void ImprovSendResponse(uint8_t* response, uint32_t size) {
     uint32_t str_pos = 11;
     for (uint32_t i = 12; i < sizeof(data); i++) {
       if ('\n' == data[i]) {
-        data[str_pos] = i - str_pos -1;                      // Replace lf with string length
+        data[str_pos] = i - str_pos -1;                        // Replace lf with string length
         str_pos = i;
       }
     }
@@ -142,23 +146,26 @@ void ImprovSendSetting(uint32_t command) {
 }
 
 void ImprovReceived(void) {
-  uint32_t command = TasmotaGlobal.serial_in_buffer[9];
+  // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18
+  // ty le co dl sl s  s  i  d  pl p  a  s  s  w  o  r  d  cr
+  // ty le co dl h  o  s  t  n  a  m  e  cr
+  uint32_t command = Improv.serial_in_buffer[2];
   switch (command) {
     case IMPROV_WIFI_SETTINGS: {                               // 0x01
 //      if (RtcSettings.improv_state != IMPROV_STATE_AUTHORIZED) {
 //        ImprovSendError(IMPROV_ERROR_NOT_AUTHORIZED);          // 0x04
 //      } else {
-        // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
-        // I  M  P  R  O  V  vs ty le co dl sl s  s  i  d  pl p  a  s  s  w  o  r  d  cr
-        uint32_t ssid_length = TasmotaGlobal.serial_in_buffer[11];
-        uint32_t ssid_end = 12 + ssid_length;
-        uint32_t pass_length = TasmotaGlobal.serial_in_buffer[ssid_end];
+        // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18
+        // ty le co dl sl s  s  i  d  pl p  a  s  s  w  o  r  d  cr
+        uint32_t ssid_length = Improv.serial_in_buffer[4];
+        uint32_t ssid_end = 5 + ssid_length;
+        uint32_t pass_length = Improv.serial_in_buffer[ssid_end];
         uint32_t pass_start = ssid_end + 1;
         uint32_t pass_end = pass_start + pass_length;
-        TasmotaGlobal.serial_in_buffer[ssid_end] = '\0';
-        char* ssid = &TasmotaGlobal.serial_in_buffer[12];
-        TasmotaGlobal.serial_in_buffer[pass_end] = '\0';
-        char* password = &TasmotaGlobal.serial_in_buffer[pass_start];
+        Improv.serial_in_buffer[ssid_end] = '\0';
+        char* ssid = &Improv.serial_in_buffer[5];
+        Improv.serial_in_buffer[pass_end] = '\0';
+        char* password = &Improv.serial_in_buffer[pass_start];
 #ifdef IMPROV_DEBUG
         AddLog(LOG_LEVEL_DEBUG, PSTR("IMP: Ssid '%s', Password '%s'"), ssid, password);
 #endif  // IMPROV_DEBUG
@@ -172,6 +179,9 @@ void ImprovReceived(void) {
       break;
     }
     case IMPROV_GET_CURRENT_STATE: {                           // 0x02
+      // 0  1  2  3  4  5 
+      // ty le co dl cr lf
+      // 03 02 02 00 E5 0A
       ImprovSendState(RtcSettings.improv_state);
       if (IMPROV_STATE_PROVISIONED == RtcSettings.improv_state) {
         ImprovSendSetting(command);
@@ -179,6 +189,9 @@ void ImprovReceived(void) {
       break;
     }
     case IMPROV_GET_DEVICE_INFO: {                             // 0x03
+      // 0  1  2  3  4  5 
+      // ty le co dl cr lf
+      // 03 02 03 00 E6 0A
       // Tasmota Zbbridge 11.0.0.7 ESP8266EX Wemos4
       // Tasmota Sensors 11.0.0.7 ESP8266EX Wemos4
       // Tasmota DE 11.0.0.7 ESP8266EX Wemos4
@@ -198,6 +211,9 @@ void ImprovReceived(void) {
       break;
     }
     case IMPROV_GET_WIFI_NETWORKS: {                           // 0x04
+      // 0  1  2  3  4  5 
+      // ty le co dl cr lf
+      // 03 02 04 00 E7 0A
       char data[200];
       int n = WiFi.scanNetworks(false, false);                 // Wait for scan result, hide hidden
       if (n) {
@@ -241,6 +257,30 @@ void ImprovReceived(void) {
       ImprovSendResponse((uint8_t*)data, 3);                   // Empty string
       break;
     }
+    case IMPROV_GET_SET_HOSTNAME:                              // 0x05
+    case IMPROV_GET_SET_DEVICENAME: {                          // 0x06
+      // 0  1  2  3  4  5  6  7  8  9  10 11 12
+      // ty le co dl h  o  s  t  n  a  m  e  cr
+      uint32_t data_length = Improv.serial_in_buffer[3];
+      if (0 == data_length) {
+        char data[100];
+        uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\n%s\n"), 
+          (IMPROV_GET_SET_HOSTNAME == command) ? TasmotaGlobal.hostname : SettingsText(SET_DEVICENAME));
+        data[0] = command;
+        ImprovSendResponse((uint8_t*)data, len);
+      } else {
+        uint32_t data_end = 4 + data_length;
+        Improv.serial_in_buffer[data_end] = '\0';
+        char* name = &Improv.serial_in_buffer[4];
+#ifdef IMPROV_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, PSTR("IMP: Name '%s'"), name);
+#endif  // IMPROV_DEBUG
+        char cmnd[TOPSZ];
+        snprintf_P(cmnd, sizeof(cmnd), PSTR("%s %s"), (IMPROV_GET_SET_HOSTNAME == command) ? D_CMND_HOSTNAME : D_CMND_DEVICENAME, name);
+        ExecuteCommand(cmnd, SRC_SERIAL);                      // Set hostname and restart / devicename
+      }
+      break;
+    }
 /*
     case IMPROV_BAD_CHECKSUM: {                                // 0xFF
       break;
@@ -253,49 +293,61 @@ void ImprovReceived(void) {
 
 /*********************************************************************************************/
 
-bool ImprovSerialInput(void) {
-  // Check if received data is IMPROV data
-  if (6 == TasmotaGlobal.serial_in_byte_counter) {
-    TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;
-    if (!strcmp_P(TasmotaGlobal.serial_in_buffer, PSTR("IMPROV"))) {
-      if (IMPROV_SERIAL_VERSION == TasmotaGlobal.serial_in_byte) {
-        Improv.seriallog_level = TasmotaGlobal.seriallog_level;
-        TasmotaGlobal.seriallog_level = 0;                     // Disable seriallogging interfering with IMPROV
-        Improv.version = IMPROV_SERIAL_VERSION;
-      }
-    }
-  }
+bool ImprovSerialInput(const char *serial_in_buffer,
+                       int serial_in_counter,
+                       char serial_in_byte) {
   if (IMPROV_SERIAL_VERSION == Improv.version) {
-    TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
-    // 0  1  2  3  4  5  6  7  8  9  10 11       8 + le +1
-    // I  M  P  R  O  V  ve ty le co pl data ... \n
-    // 49 4D 50 52 4F 56 01 03 xx yy zz ........ 0A
-    if (TasmotaGlobal.serial_in_byte_counter > 8) {            // Wait for length
-      uint32_t data_len = TasmotaGlobal.serial_in_buffer[8];
-      if (TasmotaGlobal.serial_in_byte_counter > 10 + data_len) {  // Receive including '\n'
+    // 0  1  2  3  4        1 + le +1 (Improv.serial_in_buffer)
+    // ty le co pl data ... \n
+    // 03 xx yy zz ........ 0A
+    Improv.serial_in_buffer[Improv.serial_in_counter++] = serial_in_byte;
+    if (Improv.serial_in_counter > 1) {                        // Wait for length
+      uint32_t data_len = Improv.serial_in_buffer[1];
+      if (Improv.serial_in_counter > 3 + data_len) {           // Receive including '\n'
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IMP: Rcvd '%*_H'"), TasmotaGlobal.serial_in_byte_counter, TasmotaGlobal.serial_in_buffer);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IMP: Rcvd '%*_H'"), Improv.serial_in_counter, Improv.serial_in_buffer);
 
-        uint32_t checksum_pos = TasmotaGlobal.serial_in_byte_counter -2;
-        uint8_t checksum = 0x00;
+        uint32_t checksum_pos = Improv.serial_in_counter -2;
+        uint8_t checksum = 0xDE;                               // Offset 49 4D 50 52 4F 56 01 = IMPROV\01
         for (uint32_t i = 0; i < checksum_pos; i++) {
-          checksum += TasmotaGlobal.serial_in_buffer[i];
+          checksum += Improv.serial_in_buffer[i];
         }
-        if (checksum != TasmotaGlobal.serial_in_buffer[checksum_pos]) {
+        if (checksum != Improv.serial_in_buffer[checksum_pos]) {
           ImprovSendError(IMPROV_ERROR_INVALID_RPC);           // 0x01 - CRC error
         }
-        else if (IMPROV_TYPE_RPC == TasmotaGlobal.serial_in_buffer[7]) {
-          uint32_t data_length = TasmotaGlobal.serial_in_buffer[10];
+        else if (IMPROV_TYPE_RPC == Improv.serial_in_buffer[0]) {
+          uint32_t data_length = Improv.serial_in_buffer[3];
           if (data_length == data_len - 2) {
             ImprovReceived();
           }
         }
         Improv.version = 0;                                    // Done
+        free(Improv.serial_in_buffer);
+        Improv.serial_in_buffer = nullptr;
         TasmotaGlobal.seriallog_level = Improv.seriallog_level;  // Restore seriallogging
+      }
+    }
+    return true;
+  }
+  else if (6 == serial_in_counter) {
+    // 0  1  2  3  4  5  6   (serial_in_buffer)
+    // I  M  P  R  O  V  ve
+    // 49 4D 50 52 4F 56 01
+    // Check if received data is IMPROV data
+    if (!strncmp_P(serial_in_buffer, PSTR("IMPROV"), 6)) {
+      if (IMPROV_SERIAL_VERSION == serial_in_byte) {
+        if (Improv.serial_in_buffer == nullptr) {
+          if (!(Improv.serial_in_buffer = (char*)calloc(1, 260))) {
+            return false;
+          }
+        }
+        Improv.seriallog_level = TasmotaGlobal.seriallog_level;
+        TasmotaGlobal.seriallog_level = 0;                     // Disable seriallogging interfering with IMPROV
+        Improv.serial_in_counter = 0;
+        Improv.version = IMPROV_SERIAL_VERSION;
         return true;
       }
     }
-    TasmotaGlobal.serial_in_byte = 0;
   }
   return false;
 }
@@ -347,9 +399,13 @@ bool Xdrv62(uint32_t function) {
     case FUNC_EVERY_SECOND:
       ImprovEverySecond();
       break;
+/*
     case FUNC_SERIAL:
-      result = ImprovSerialInput();
+      result = ImprovSerialInput(TasmotaGlobal.serial_in_buffer,
+                                 TasmotaGlobal.serial_in_byte_counter,
+                                 (char)TasmotaGlobal.serial_in_byte);
       break;
+*/
     case FUNC_PRE_INIT:
       ImprovInit();
       break;
