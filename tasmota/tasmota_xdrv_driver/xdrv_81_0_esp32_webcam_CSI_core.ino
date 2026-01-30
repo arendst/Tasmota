@@ -64,7 +64,7 @@ extern "C" {
 typedef enum {
   SESSION_NONE = 0,
   SESSION_MJPEG_HTTP,
-  SESSION_RTSP,        // H.264 over RTP/UDP with RTSP control
+  SESSION_RTSP_AND_WS, // H.264 over RTP/UDP with RTSP control or WebSocket
   SESSION_WEBRTC,      // H.264 over SRTP (encrypted RTP + signaling)
   SESSION_DSI_DISPLAY
 } camera_session_t;
@@ -162,8 +162,15 @@ struct {
     uint16_t client_rtcp_port;
     bool streaming;
   } rtsp;
+
+  // --- 6. WebSocket Server (POD) ---
+  struct {
+      WiFiServer *server;
+      WiFiClient *client_ptr; // Use pointer to control lifecycle
+      bool active;
+  } ws;
   
-  // --- 6. C++ Objects (Complex types - NO MEMSET) ---
+  // --- 7. C++ Objects (Complex types - NO MEMSET) ---
   IPAddress rtp_dest_ip;
   WiFiUDP rtp_udp;
   WiFiClient rtsp_client;
@@ -268,7 +275,7 @@ uint32_t WcInitPipeline() {
   Wc.core.read_idx = 1;
 
   // 2. Configure CSI
-  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
+  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
   
   esp_cam_ctlr_csi_config_t csi_config = {
     .ctlr_id = 0,
@@ -295,7 +302,7 @@ uint32_t WcInitPipeline() {
     Wc.core.isp_handle = tasmota_wc_isp_handle;
     esp_isp_enable(Wc.core.isp_handle);
   } else {
-    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
+    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 120 * 1000 * 1000,
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
@@ -311,7 +318,7 @@ uint32_t WcInitPipeline() {
   // 5. Encoders
   if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
     if (!WcSetupJpegEncoder()) return 0;
-  } else if (Wc.core.session_type == SESSION_RTSP) {
+  } else if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
     if (!WcSetupH264Encoder()) return 0;
   }
 
@@ -1117,7 +1124,7 @@ void CmndWcSession(void) {
     Wc.core.session_type, session_names[Wc.core.session_type]);
   
   // Initialize RTSP session
-  if (new_type == SESSION_RTSP) {
+  if (new_type == SESSION_RTSP_AND_WS) {
     Wc.rtp.sequence = random(0, 65535);
     Wc.rtp.timestamp = random(0, UINT32_MAX);
     Wc.rtp.ssrc = random(0, UINT32_MAX);
@@ -1210,6 +1217,7 @@ void WcInit(void) {
   memset(&Wc.h264, 0, sizeof(Wc.h264));
   memset(&Wc.rtp, 0, sizeof(Wc.rtp));
   memset(&Wc.rtsp, 0, sizeof(Wc.rtsp));
+  memset(&Wc.ws, 0, sizeof(Wc.ws));
   
   // Set non-zero defaults
   Wc.core.state = CAM_IDLE;
@@ -1223,6 +1231,14 @@ void WcInit(void) {
 }
 
 
+void WcPicSetup(void) {
+  WebServer_on(PSTR("/wc.jpg"), HandleImage);
+  WebServer_on(PSTR("/wc.mjpeg"), HandleImage);
+  WebServer_on(PSTR("/snapshot.jpg"), HandleImage);
+  WebServer_on(PSTR("/wc_h264.html"), HandleWebcamH264Html);
+}
+
+
 void WcLoop(void) {
   // Skip during state transitions
   if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_IDLE) {
@@ -1230,7 +1246,7 @@ void WcLoop(void) {
   }
   
   // Handle RTSP control connections
-  if (Wc.core.session_type == SESSION_RTSP) {
+  if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
     HandleRtsp();
   }
   
@@ -1270,7 +1286,7 @@ void WcWebInfo(bool json) {
   if (Wc.core.state == CAM_STREAMING) {
     switch (Wc.core.session_type) {
       case SESSION_MJPEG_HTTP: mode_str = "MJPEG Server"; break;
-      case SESSION_RTSP:       mode_str = "RTSP Stream"; break;
+      case SESSION_RTSP_AND_WS:       mode_str = "RTSP Stream"; break;
       case SESSION_WEBRTC:     mode_str = "WebRTC"; break;
       case SESSION_DSI_DISPLAY:mode_str = "Local Display"; break;
       default:                 mode_str = "Active"; break;
