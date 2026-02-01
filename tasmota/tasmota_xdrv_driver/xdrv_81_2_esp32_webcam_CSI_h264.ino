@@ -127,41 +127,51 @@ void H264ProcessingTask(void *pvParameters) {
     
     // We have a frame!
     uint32_t frame_start = millis();
-    
-    // Lock frame access
+
+    // 1. Lock frame access
     if (xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
-      WcStats.frames_unsent++;
-      continue;
+        WcStats.frames_unsent++;
+        continue;
     }
-    
+
     // Check state after acquiring mutex
     if (Wc.core.state == CAM_STOPPING) {
-      xSemaphoreGive(Wc.core.frame_mutex);
-      break;
+        xSemaphoreGive(Wc.core.frame_mutex);
+        break;
     }
-    
+
     uint8_t *source_buf = Wc.core.frame_buffer[Wc.core.read_idx];
-    
-    // Cache Sync (Hardware M2C)
+
+    // 2. Cache Sync is still required (Hardware Memory-to-CPU coherency)
+    // Even for HW-to-HW, we ensure the previous write is visible
     esp_cache_msync(source_buf, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+
+    // --- ZERO-COPY OPTIMIZATION START ---
     
-    memcpy(Wc.h264.buffer, source_buf, h264_expected_size);
+    // OLD: Memcpy (Slow, burns CPU/Bandwidth)
+    // memcpy(Wc.h264.buffer, source_buf, h264_expected_size);
+    // xSemaphoreGive(Wc.core.frame_mutex); // Mutex was released early
+
+    // NEW: Direct Pointer Reference
+    // We do NOT release the mutex yet. We hold it until encoding is done.
+    in_frame.raw_data.buffer = source_buf;
+    in_frame.raw_data.len = h264_expected_size; 
     
-    xSemaphoreGive(Wc.core.frame_mutex);
-    
-    // Setup input frame
-    in_frame.raw_data.buffer = Wc.h264.buffer;
-    in_frame.raw_data.len = Wc.h264.buffer_size;
-    in_frame.pts = WcStats.frames_captured;
-    
-    // Setup output frame buffer
+    // Note: We use h264_expected_size to ensure we don't feed the encoder garbage 
+    // if the buffer is larger than the YUV420 footprint.
+
+    // Setup output frame buffer (unchanged)
     out_frame.raw_data.buffer = Wc.h264.out_buffer;
     out_frame.raw_data.len = Wc.h264.out_buffer_size;
-    
-    // Encode H.264
+
+    // 3. Encode H.264 (Hardware)
     uint32_t encode_start = micros();
     esp_h264_err_t ret = esp_h264_enc_process(Wc.h264.handle, &in_frame, &out_frame);
     uint32_t encode_time = micros() - encode_start;
+
+    // 4. NOW we release the mutex
+    // The encoder is done reading source_buf, so the ISP is free to overwrite it.
+    xSemaphoreGive(Wc.core.frame_mutex);
     
     if (ret == ESP_H264_ERR_OK && out_frame.length > 0) {
       // Motion Detection Calculation
