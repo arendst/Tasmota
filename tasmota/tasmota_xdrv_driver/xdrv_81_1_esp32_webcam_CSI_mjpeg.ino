@@ -380,49 +380,8 @@ void HandleImage(void) {
   client.stop();
 }
 
-void WcShowStream(void) {
-  if (Wc.core.state != CAM_STREAMING) {
-    return;
-  }
-
-  // ---- Session 1: MJPEG (legacy) ----
-  if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
-    if (!Wc.jpeg.server) {  // port 81 server not up yet
-      return;
-    }
-
-    uint32_t ip = (uint32_t)WiFi.localIP();
-
-    WSContentSend_P(PSTR("<div><div id='wc_s'>Loading...</div>"));
-
-    WSContentSend_P(PSTR("<img id='wc_img' style='max-width:100%%;' "
-                         "src='http://%_I:81/stream' "
-                         "onerror='setTimeout(()=>{this.src=this.src;},1000)'>"), ip);
-
-    WSContentSend_P(PSTR(
-      "<script>"
-      "setInterval(function(){"
-      "  var i=eb('wc_img');"
-      "  if(i && i.naturalWidth){"
-      "    eb('wc_s').innerHTML='MJPEG: '+i.naturalWidth+'x'+i.naturalHeight;"
-      "  }"
-      "},1000);"
-      "</script></div>"
-    ));
-
-    return;
-  }
-
-  // ---- Session 2: H.264 over WebSockets + WebCodecs page ----
-  if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
-     WcH264SendUi(); // <--- This injects the UI directly
-     return;
-  }
-}
-
-
-uint32_t WcSetStreamserver(uint32_t enable) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetStreamserver enable=%d CamServer=%p"), enable, Wc.jpeg.server);
+uint32_t WcSetMjpegServer(uint32_t enable) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetMjpegServer enable=%d CamServer=%p"), enable, Wc.jpeg.server);
   
   if (enable && TasmotaGlobal.global_state.network_down) { 
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Network down, aborting"));

@@ -217,6 +217,24 @@ struct {
 
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
+// Command definitions
+#define D_PREFX_WEBCAM "Wc"
+#define D_CMND_WC_RES "Res"
+#define D_CMND_WC_STREAM "Stream"
+#define D_CMND_WC_STOP "Stop"
+#define D_CMND_WC_STATUS "Status"
+#define D_CMND_WC_CONFIG "Config"
+#define D_CMND_WC_WINDOW "Window"
+#define D_CMND_WC_QUALITY "Quality"
+#define D_CMND_WC_SESSION "Session"
+
+const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"
+  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION;
+
+void (* const WCCommand[])(void) PROGMEM = {
+  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession
+};
+
 /*********************************************************************************************/
 
 // Debug counters for callbacks (volatile for ISR access)
@@ -708,506 +726,6 @@ bool WcChangeResolution(uint16_t width, uint16_t height) {
   return true;
 }
 
-
-/*********************************************************************************************/
-// Command definitions
-
-#define D_PREFX_WEBCAM "Wc"
-#define D_CMND_WC_RES "Res"
-#define D_CMND_WC_STREAM "Stream"
-#define D_CMND_WC_STOP "Stop"
-#define D_CMND_WC_STATUS "Status"
-#define D_CMND_WC_CONFIG "Config"
-#define D_CMND_WC_WINDOW "Window"
-#define D_CMND_WC_QUALITY "Quality"
-#define D_CMND_WC_SESSION "Session"
-#define D_CMND_WC_RTP_DEST "RtpDest"
-
-const char kWCCommands[] PROGMEM = D_PREFX_WEBCAM "|"  // Prefix
-  D_CMND_WC_RES "|" D_CMND_WC_STREAM "|" D_CMND_WC_STOP "|" D_CMND_WC_STATUS "|" D_CMND_WC_CONFIG "|" D_CMND_WC_WINDOW "|" D_CMND_WC_QUALITY "|" D_CMND_WC_SESSION "|" D_CMND_WC_RTP_DEST;
-
-void (* const WCCommand[])(void) PROGMEM = {
-  &CmndWcRes, &CmndWcStream, &CmndWcStop, &CmndWcStatus, &CmndWcConfig, &CmndWcWindow, &CmndWcQuality, &CmndWcSession, &CmndWcRtpDest
-};
-
-// Command handlers (mockup/stub implementations)
-
-void CmndWcRes(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcRes called, payload=%d"), XdrvMailbox.payload);
-  
-  if (XdrvMailbox.payload < 0) {
-    ResponseCmndNumber(Wc.core.config.res_index);
-    return;
-  }
-  
-  // Reject if busy
-  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING) {
-    ResponseCmndChar_P(PSTR("Busy"));
-    return;
-  }
-  
-  // Determine current state
-  bool was_streaming = (Wc.core.state == CAM_STREAMING);
-  
-  // 1. Pause task first if streaming
-  if (was_streaming) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for resolution change"));
-    Wc.core.state = CAM_PAUSING;
-    
-    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
-
-    for (int i = 0; i < 50; i++) {
-      if (Wc.core.state == CAM_PAUSED) break;
-      delay(10);
-    }
-    
-    if (Wc.core.state != CAM_PAUSED) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to pause"));
-      ResponseCmndChar_P(PSTR("Pause failed"));
-      return;
-    }
-  }
-  
-  // 2. Stop CSI and sensor streaming
-  if (Wc.core.cam_handle) {
-    esp_cam_ctlr_stop(Wc.core.cam_handle);
-  }
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
-  
-  // 3. Teardown hardware
-  WcDeinitPipeline();
-  
-  // 4. Update Config
-  Wc.core.config.res_index = (uint8_t)XdrvMailbox.payload;
-  
-  // 5. Notify Sensor (Berry)
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing sensor with mode %d"), XdrvMailbox.payload);
-  uint32_t config_addr = (uint32_t)&Wc.core.config;
-  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
-  
-  if (result == 0) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed"));
-    WcStop();
-    ResponseCmndFailed();
-    return;
-  }
-  
-  // 6. Re-Initialize Hardware Pipeline
-  if (!WcInitPipeline()) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
-    WcStop();
-    ResponseCmndFailed();
-    return;
-  }
-  
-  // 7. Restart CSI and sensor streaming (if we were streaming before)
-  if (was_streaming) {
-    esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to restart CSI (0x%x)"), ret);
-      WcStop();
-      ResponseCmndFailed();
-      return;
-    }
-    
-    int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0);
-    if (berry_result == 0) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
-      WcStop();
-      ResponseCmndFailed();
-      return;
-    }
-    
-    delay(100); // Give sensor time to start
-    
-    // Resume task
-    Wc.core.state = CAM_STREAMING;
-    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resumed streaming"));
-  } else {
-    Wc.core.state = CAM_INIT;
-  }
-  
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resolution changed to mode %d (%dx%d)"), 
-      XdrvMailbox.payload, Wc.core.config.width, Wc.core.config.height);
-  ResponseCmndNumber(XdrvMailbox.payload);
-}
-
-void CmndWcWindow(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcWindow called"));
-  
-  int x = 0, y = 0, w = 0, h = 0, bin = 0, fps = 0, format = 0;
-  int parsed = sscanf(XdrvMailbox.data, "%d,%d,%d,%d,%d,%d,%d", &x, &y, &w, &h, &bin, &fps, &format);
-  
-  if (parsed != 7) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to parse (got %d, expected 7)"), parsed);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid. Use: x,y,w,h,bin,fps,format\"}}"));
-    return;
-  }
-
-  // Validate geometry
-  if (w < 16 || h < 16 || w > Wc.core.config.max_width || h > Wc.core.config.max_height) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid geometry %dx%d"), w, h);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid geometry. W/H must be 16-2592/1944\"}}"));
-    return;
-  }
-  
-  // Validate binning
-  if (bin < 1 || bin > 2) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid binning %d"), bin);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid binning. Use 1 or 2\"}}"));
-    return;
-  }
-  
-  // Validate FPS
-  if (fps < 0 || fps > 120) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid FPS %d"), fps);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid FPS. Use 1-120\"}}"));
-    return;
-  }
-  if (fps == 0) fps = 30;
-  
-  // Validate format
-  if (format < 0 || format > 2) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid format %d"), format);
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Invalid format. Use 0=RAW8, 1=RAW10, 2=RAW12\"}}"));
-    return;
-  }
-
-  // Reject if busy
-  if (Wc.core.state == CAM_STOPPING || Wc.core.state == CAM_PAUSING) {
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Busy\"}}"));
-    return;
-  }
-
-  bool was_streaming = (Wc.core.state == CAM_STREAMING);
-
-  // 1. Pause task
-  if (was_streaming) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for window change"));
-    Wc.core.state = CAM_PAUSING;
-    
-    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
-
-    for (int i = 0; i < 50; i++) {
-      if (Wc.core.state == CAM_PAUSED) break;
-      delay(10);
-    }
-    
-    if (Wc.core.state != CAM_PAUSED) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to pause"));
-      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pause Failed\"}}"));
-      return;
-    }
-  }
-
-  // 2. Stop CSI and sensor streaming
-  if (Wc.core.cam_handle) {
-    esp_cam_ctlr_stop(Wc.core.cam_handle);
-  }
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
-
-  // 3. Teardown hardware
-  WcDeinitPipeline();
-
-  // 4. Update Config
-  Wc.core.config.offset_x = (uint16_t)x;
-  Wc.core.config.offset_y = (uint16_t)y;
-  Wc.core.config.width = (uint16_t)w;
-  Wc.core.config.height = (uint16_t)h;
-  Wc.core.config.binning = (uint8_t)bin;
-  Wc.core.config.fps = (uint8_t)fps;
-  Wc.core.config.format = (uint8_t)format;
-  Wc.core.config.res_index = 255;
-
-  // 5. Notify Sensor
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Reinitializing sensor with custom window"));
-  uint32_t config_addr = (uint32_t)&Wc.core.config;
-  int32_t result = callBerryEventDispatcher(PSTR("camera"), PSTR("init"), config_addr, nullptr, 0);
-
-  if (result == 0) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed"));
-    WcStop();
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Sensor Init Failed\"}}"));
-    return;
-  }
-
-  // 6. Re-Initialize Hardware
-  if (!WcInitPipeline()) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
-    WcStop();
-    Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pipeline Init Failed\"}}"));
-    return;
-  }
-
-  // 7. Restart CSI and sensor streaming (if we were streaming before)
-  if (was_streaming) {
-    esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
-    if (ret != ESP_OK) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to restart CSI (0x%x)"), ret);
-      WcStop();
-      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"CSI Start Failed\"}}"));
-      return;
-    }
-    
-    int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0);
-    if (berry_result == 0) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
-      WcStop();
-      Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Stream Start Failed\"}}"));
-      return;
-    }
-    
-    delay(100); // Give sensor time to start
-    
-    // Resume task
-    Wc.core.state = CAM_STREAMING;
-    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resumed streaming"));
-  } else {
-    Wc.core.state = CAM_INIT;
-  }
-
-  Response_P(PSTR("{\"WcWindow\":{\"Status\":\"Applied\",\"Width\":%d,\"Height\":%d,\"Binning\":%d,\"FPS\":%d,\"Format\":%d}}"), 
-    Wc.core.config.width, Wc.core.config.height, Wc.core.config.binning, Wc.core.config.fps, Wc.core.config.format);
-}
-
-void CmndWcStream(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStream called, payload=%d"), XdrvMailbox.payload);
-  ResponseCmndStateText(Wc.core.state == CAM_STREAMING);
-}
-
-void CmndWcStop(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStop called"));
-  
-  uint32_t result = WcStop();
-  
-  if (result) {
-    ResponseCmndChar_P(PSTR("Stopped"));
-  } else {
-    ResponseCmndChar_P(PSTR("Already stopped or not initialized"));
-  }
-}
-
-void CmndWcStatus(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
-  
-  const char* state_names[] = {"IDLE", "INIT", "STREAMING", "PAUSING", "PAUSED", "STOPPING"};
-  const char* state_name = (Wc.core.state < 6) ? state_names[Wc.core.state] : "UNKNOWN";
-  
-  Response_P(PSTR("{\"WcStatus\":{\"State\":\"%s\",\"Resolution\":\"%dx%d\","
-                  "\"FramesCaptured\":%u,\"FramesProcessed\":%u,\"FramesUnsent\":%u,"
-                  "\"JpegErrors\":%u,\"JpegResets\":%u,\"BytesSent\":%u,"
-                  "\"UptimeSeconds\":%u,\"FPS\":%u,\"LastFrameTimeMs\":%u,"
-                  "\"Timing\":{"
-                    "\"MutexWaitUs\":%u,\"CacheSyncUs\":%u,\"JpegEncodeUs\":%u,\"NetworkWriteUs\":%u,"
-                    "\"MaxMutexUs\":%u,\"MaxJpegUs\":%u,\"MaxNetworkUs\":%u"
-                  "},"
-                  "\"JPEG\":{"
-                    "\"LastSize\":%u,\"AvgSize\":%u,\"MinSize\":%u,\"MaxSize\":%u,\"CompressionRatio\":\"%.2f\""
-                  "}}}"),
-    state_name,
-    Wc.core.config.width, Wc.core.config.height,
-    WcStats.frames_captured,
-    WcStats.frames_processed,
-    WcStats.frames_unsent,
-    WcStats.jpeg_errors,
-    WcStats.jpeg_resets,
-    WcStats.bytes_sent,
-    WcStats.uptime_seconds,
-    WcStats.last_fps,
-    WcStats.last_frame_time_ms,
-    WcStats.last_mutex_wait_us,
-    WcStats.last_cache_sync_us,
-    WcStats.last_jpeg_encode_us,
-    WcStats.last_network_write_us,
-    WcStats.max_mutex_wait_us,
-    WcStats.max_jpeg_encode_us,
-    WcStats.max_network_write_us,
-    WcStats.last_jpeg_size,
-    WcStats.avg_jpeg_size,
-    WcStats.min_jpeg_size,
-    WcStats.max_jpeg_size,
-    WcStats.compression_ratio_x100 / 100.0f);
-}
-
-void CmndWcConfig(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcConfig called"));
-  Response_P(PSTR("{\"WcConfig\":{\"Sensor\":\"%.8s\",\"Width\":%d,\"Height\":%d,\"MaxWidth\":%d,\"MaxHeight\":%d,\"Format\":%d,\"MipiClock\":%d,\"Lanes\":%d,\"OffsetX\":%d,\"OffsetY\":%d,\"Binning\":%d,\"FPS\":%d,\"ResIndex\":%d,\"Flags\":\"0x%02X\"}}"),
-    Wc.core.config.name,
-    Wc.core.config.width, 
-    Wc.core.config.height,
-    Wc.core.config.max_width,
-    Wc.core.config.max_height,
-    Wc.core.config.format, 
-    Wc.core.config.mipi_clock, 
-    Wc.core.config.lane_num,
-    Wc.core.config.offset_x,
-    Wc.core.config.offset_y,
-    Wc.core.config.binning,
-    Wc.core.config.fps,
-    Wc.core.config.res_index,
-    Wc.core.config.flags);
-}
-
-
-/*********************************************************************************************/
-
-void CmndWcQuality(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcQuality called, payload=%d"), XdrvMailbox.payload);
-  
-  // Query current quality
-  if (XdrvMailbox.payload < 0) {
-    ResponseCmndNumber(Wc.jpeg.quality);
-    return;
-  }
-  
-  // Validate quality (1-100)
-  if (XdrvMailbox.payload < 1 || XdrvMailbox.payload > 100) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid quality %d (must be 1-100)"), XdrvMailbox.payload);
-    ResponseCmndFailed();
-    return;
-  }
-  
-  // Set new quality (will take effect on next stream start)
-  Wc.jpeg.quality = (uint8_t)XdrvMailbox.payload;
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG quality set to %d"), Wc.jpeg.quality);
-  ResponseCmndNumber(Wc.jpeg.quality);
-}
-
-void CmndWcSession(void) {
-  // Session types: 0=None, 1=MJPEG, 2=RTSP, 3=WebRTC, 4=DSI
-  const char* session_names[] = {"None", "MJPEG", "RTSP", "WebRTC", "DSI"};
-  
-  // Query current session type
-  if (XdrvMailbox.payload < 0) {
-    Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\",\"State\":%d}}"), 
-      Wc.core.session_type, 
-      (Wc.core.session_type <= 4) ? session_names[Wc.core.session_type] : "Unknown",
-      Wc.core.state);
-    return;
-  }
-  
-  // Validate session type
-  if (XdrvMailbox.payload > 4) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid session type %d"), XdrvMailbox.payload);
-    ResponseCmndFailed();
-    return;
-  }
-  
-  camera_session_t new_type = (camera_session_t)XdrvMailbox.payload;
-  
-  // Same session type - do nothing
-  if (new_type == Wc.core.session_type) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Session type unchanged"));
-    Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\"}}"), 
-      Wc.core.session_type, session_names[Wc.core.session_type]);
-    return;
-  }
-  
-  // Check if implemented
-  if (new_type == SESSION_WEBRTC || new_type == SESSION_DSI_DISPLAY) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type %d not yet implemented"), new_type);
-    Response_P(PSTR("{\"WcSession\":{\"Error\":\"Not implemented\",\"Requested\":%d}}"), new_type);
-    return;
-  }
-  
-  // Stop current session if running
-  if (Wc.core.state != CAM_IDLE) {
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping current session for switch"));
-    WcStop();
-  }
-  
-  // Set new session type
-  Wc.core.session_type = new_type;
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type changed to %d (%s)"), 
-    Wc.core.session_type, session_names[Wc.core.session_type]);
-  
-  // Initialize RTSP session
-  if (new_type == SESSION_RTSP_AND_WS) {
-    Wc.rtp.sequence = random(0, 65535);
-    Wc.rtp.timestamp = random(0, UINT32_MAX);
-    Wc.rtp.ssrc = random(0, UINT32_MAX);
-    Wc.rtsp.streaming = false;
-    
-    // Start RTSP server on port 554
-    Wc.rtsp.server = new WiFiServer(554);
-    Wc.rtsp.server->begin();
-    
-    // Start UDP socket for RTP
-    Wc.rtp_udp.begin(5004);
-    
-    AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTSP server started on port 554"));
-  }
-  
-  // Setup and start new session (unless SESSION_NONE)
-  if (new_type != SESSION_NONE) {
-    if (WcSetup(false)) {
-      WcStart();
-    }
-  }
-  
-  Response_P(PSTR("{\"WcSession\":{\"Type\":%d,\"Name\":\"%s\",\"State\":%d}}"), 
-    Wc.core.session_type, session_names[Wc.core.session_type], Wc.core.state);
-}
-
-void CmndWcRtpDest(void) {
-  // Query current RTP destination
-  if (XdrvMailbox.data_len == 0) {
-    Response_P(PSTR("{\"WcRtpDest\":{\"IP\":\"%s\",\"Port\":%d}}"), 
-      Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
-    return;
-  }
-  
-  // Parse IP and port from data
-  // Format: "192.168.1.100 5004"
-  char ip_str[16] = {0};
-  uint16_t port = 5004;  // Default port
-  
-  // Find space separator
-  char* space_pos = strchr(XdrvMailbox.data, ' ');
-  if (space_pos) {
-    // Copy IP part
-    size_t ip_len = space_pos - XdrvMailbox.data;
-    if (ip_len < sizeof(ip_str)) {
-      strncpy(ip_str, XdrvMailbox.data, ip_len);
-      ip_str[ip_len] = '\0';
-      
-      // Parse port
-      port = atoi(space_pos + 1);
-    }
-  } else {
-    // Only IP provided, use default port
-    strncpy(ip_str, XdrvMailbox.data, sizeof(ip_str) - 1);
-  }
-  
-  // Validate IP
-  IPAddress new_ip;
-  if (!new_ip.fromString(ip_str)) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid IP address: %s"), ip_str);
-    ResponseCmndFailed();
-    return;
-  }
-  
-  // Validate port
-  if (port == 0 || port > 65535) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Invalid port: %d"), port);
-    ResponseCmndFailed();
-    return;
-  }
-  
-  // Update destination
-  Wc.rtp_dest_ip = new_ip;
-  Wc.rtp.dest_port = port;
-  
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: RTP destination set to %s:%d"), 
-    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
-  
-  Response_P(PSTR("{\"WcRtpDest\":{\"IP\":\"%s\",\"Port\":%d}}"), 
-    Wc.rtp_dest_ip.toString().c_str(), Wc.rtp.dest_port);
-}
-
-
 /*********************************************************************************************/
 
 void WcInit(void) {
@@ -1255,13 +773,13 @@ void WcLoop(void) {
     if (Wc.core.session_type == SESSION_MJPEG_HTTP && !TasmotaGlobal.global_state.network_down) {
       if (!Wc.jpeg.server) {
         AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Starting stream server..."));
-        WcSetStreamserver(1);
+        WcSetMjpegServer(1);
       }
     } else {
       // Not MJPEG session OR network down -> ensure port 81 server is down
       if (Wc.jpeg.server) {
         AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Stopping MJPEG stream server (not MJPEG session / net down)"));
-        WcSetStreamserver(0);
+        WcSetMjpegServer(0);
       }
     }
   }
@@ -1283,38 +801,6 @@ void WcLoop(void) {
   }
 }
 
-// Web UI Strings
-const char HTTP_WC_MODE[] PROGMEM = "{s}Camera Mode{m}%s{e}";
-const char HTTP_WC_RES[]  PROGMEM = "{s}Resolution{m}%dx%d{e}";
-const char HTTP_WC_FPS[]  PROGMEM = "{s}Frame Rate{m}%d fps{e}";
-
-void WcWebInfo(bool json) {
-  if (json) {
-    ResponseAppend_P(PSTR(",\"Cam\":{\"Sensor\":\"%.8s\",\"State\":%d,\"Res\":\"%dx%d\",\"FPS\":%d,\"Motion\":%d}"), Wc.core.config.name, Wc.core.state, Wc.core.config.width, Wc.core.config.height, WcStats.last_fps, Wc.h264.motion_val);
-    return;
-  }
-
-  const char* mode_str = "Standby";
-  if (Wc.core.state == CAM_STREAMING) {
-    switch (Wc.core.session_type) {
-      case SESSION_MJPEG_HTTP: mode_str = "MJPEG Server"; break;
-      case SESSION_RTSP_AND_WS:       mode_str = "H264 Stream"; break;
-      case SESSION_WEBRTC:     mode_str = "WebRTC"; break;
-      case SESSION_DSI_DISPLAY:mode_str = "Local Display"; break;
-      default:                 mode_str = "Active"; break;
-    }
-  } else if (Wc.core.state == CAM_INIT || Wc.core.state == CAM_PAUSED) {
-    mode_str = "Ready";
-  }
-
-  WSContentSend_PD(HTTP_WC_MODE, mode_str);
-  WSContentSend_PD(HTTP_WC_RES, Wc.core.config.width, Wc.core.config.height);
-  if (Wc.core.state == CAM_STREAMING) {
-    WSContentSend_PD(HTTP_WC_FPS, WcStats.last_fps);
-  }
-}
-
-
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -1332,11 +818,11 @@ bool Xdrv81(uint32_t function) {
       WcShowStream();
       break;
     case FUNC_JSON_APPEND:
-      WcWebInfo(true);
+      WcShowInfo(true);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
-      WcWebInfo(false);
+      WcShowInfo(false);
       break;
 #endif
     case FUNC_PRE_INIT:

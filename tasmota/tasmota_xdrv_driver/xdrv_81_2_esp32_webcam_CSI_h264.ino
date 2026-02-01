@@ -58,8 +58,6 @@ bool WsPerformWsHandshake(WiFiClient* client) {
     br_sha1_update(&ctx, (const void*)concat.c_str(), concat.length());
     br_sha1_out(&ctx, hash);
 
-    AddLog(LOG_LEVEL_INFO, PSTR("WS: Hash[0]: %02X (Expect 52 for key ujrx...)"), hash[0]);
-
     // 3. Base64 Encode (Reference Implementation)
     String acceptKey = "";
     const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
