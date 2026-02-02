@@ -23,63 +23,89 @@
 #include <t_bearssl.h> // Required for WebSocket Handshake (SHA1)
 
 bool WsPerformWsHandshake(WiFiClient* client) {
-    if (!client || !client->connected()) return false;
-    String key = "";
-    bool upgrade = false;
-    
-    // 1. Read Headers
-    unsigned long start = millis();
-    while (client->connected() && millis() - start < 500) {
-        if (client->available()) {
-            String line = client->readStringUntil('\n');
-            line.trim();
-            if (line.length() == 0) break;
-            
-            if (line.indexOf("Upgrade: websocket") >= 0 || line.indexOf("Upgrade: WebSocket") >= 0) upgrade = true;
-            if (line.startsWith("Sec-WebSocket-Key: ")) key = line.substring(19);
-        }
+  if (!client || !client->connected()) return false;
+
+  char buf[512]; // Stack buffer for reading headers (Internal RAM, but temporary)
+  char key[64] = {0}; // To store Sec-WebSocket-Key
+  bool upgrade_found = false;
+  unsigned long start = millis();
+
+  // 1. Read Headers (Line by Line using raw buffer)
+  while (client->connected() && millis() - start < 1000) {
+    if (client->available()) {
+      // Read until newline or buffer full
+      size_t len = client->readBytesUntil('\n', buf, sizeof(buf) - 1);
+      buf[len] = 0; // Null terminate
+      
+      // Trim CR if present
+      if (len > 0 && buf[len - 1] == '\r') buf[len - 1] = 0;
+      
+      // Empty line = End of Headers
+      if (strlen(buf) == 0) break;
+
+      // Check for Upgrade: websocket
+      if (strcasestr(buf, "Upgrade: websocket")) {
+        upgrade_found = true;
+      }
+
+      // Extract Key
+      // Header: "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ=="
+      char* key_ptr = strcasestr(buf, "Sec-WebSocket-Key:");
+      if (key_ptr) {
+        key_ptr += 18; // Skip "Sec-WebSocket-Key:"
+        while (*key_ptr == ' ') key_ptr++; // Skip spaces
+        strncpy(key, key_ptr, sizeof(key) - 1);
+      }
     }
-    
-    if (!upgrade || key.length() == 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("WS: Handshake failed (No Upgrade or Key)"));
-        return false;
-    }
-    
-    AddLog(LOG_LEVEL_INFO, PSTR("WS: Client Key: %s"), key.c_str());
+  }
 
-    // 2. Concatenate & Hash (Using BearSSL)
-    String concat = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    uint8_t hash[20];
-    
-    // BearSSL Implementation
-    // Force alignment to prevent ESP32 load/store errors on the context state
-    br_sha1_context ctx __attribute__((aligned(4)));
-    br_sha1_init(&ctx);
-    br_sha1_update(&ctx, (const void*)concat.c_str(), concat.length());
-    br_sha1_out(&ctx, hash);
+  if (!upgrade_found || strlen(key) == 0) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("WS: Handshake failed (No Upgrade or Key)"));
+    return false;
+  }
 
-    // 3. Base64 Encode (Reference Implementation)
-    String acceptKey = "";
-    const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    
-    for(int i=0; i<18; i+=3) {
-        uint32_t n = (hash[i] << 16) | (hash[i+1] << 8) | hash[i+2];
-        acceptKey += b64[(n >> 18) & 63];
-        acceptKey += b64[(n >> 12) & 63];
-        acceptKey += b64[(n >> 6) & 63];
-        acceptKey += b64[n & 63];
-    }
-    // Final block (18, 19)
-    uint32_t n = (hash[18] << 16) | (hash[19] << 8);
-    acceptKey += b64[(n >> 18) & 63];
-    acceptKey += b64[(n >> 12) & 63];
-    acceptKey += b64[(n >> 6) & 63];
-    acceptKey += '=';
+  // 2. Concatenate & Hash (No String Objects)
+  // GUID: 258EAFA5-E914-47DA-95CA-C5AB0DC85B11
+  // Max Key (24) + GUID (36) + Null = 61 chars. 128 is plenty.
+  char concat[128];
+  snprintf(concat, sizeof(concat), "%s258EAFA5-E914-47DA-95CA-C5AB0DC85B11", key);
 
-    AddLog(LOG_LEVEL_INFO, PSTR("WS: Accept Key: %s"), acceptKey.c_str());
+  uint8_t hash[20];
+  br_sha1_context ctx;
+  br_sha1_init(&ctx);
+  br_sha1_update(&ctx, (const void*)concat, strlen(concat));
+  br_sha1_out(&ctx, hash);
 
-    client->print("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + acceptKey + "\r\n\r\n");
-    return true;
+  // 3. Base64 Encode (Fixed Buffer)
+  // 20 bytes -> 28 Base64 chars
+  char acceptKey[32];
+  const char* b64 PROGMEM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  
+  for (int i = 0, j = 0; i < 18; i += 3, j += 4) {
+    uint32_t n = (hash[i] << 16) | (hash[i+1] << 8) | hash[i+2];
+    acceptKey[j]   = b64[(n >> 18) & 63];
+    acceptKey[j+1] = b64[(n >> 12) & 63];
+    acceptKey[j+2] = b64[(n >> 6) & 63];
+    acceptKey[j+3] = b64[n & 63];
+  }
+  // Final block (padding)
+  uint32_t n = (hash[18] << 16) | (hash[19] << 8);
+  acceptKey[24] = b64[(n >> 18) & 63];
+  acceptKey[25] = b64[(n >> 12) & 63];
+  acceptKey[26] = b64[(n >> 6) & 63];
+  acceptKey[27] = '=';
+  acceptKey[28] = 0;
+
+  // 4. Send Response (Zero String Allocation)
+  // Use client->printf or multiple prints to avoid building one giant string
+  client->print(PSTR("HTTP/1.1 101 Switching Protocols\r\n"
+                "Upgrade: websocket\r\n"
+                "Connection: Upgrade\r\n"
+                "Sec-WebSocket-Accept: "));
+  client->print(acceptKey);
+  client->print("\r\n\r\n");
+
+  return true;
 }
 
 // --- H.264 / RTSP Streaming Module ---
@@ -334,8 +360,24 @@ void H264ProcessingTask(void *pvParameters) {
 
 uint32_t WcSetupH264Encoder(void) {
   // Width/height must be 16-byte aligned (macroblock size)
-  uint16_t width = ((Wc.core.config.width + 15) >> 4) << 4;
-  uint16_t height = ((Wc.core.config.height + 15) >> 4) << 4;
+  uint16_t width = ((Wc.core.config.width) >> 4) << 4; // may cut off up to 15 pixels
+  uint16_t height = ((Wc.core.config.height) >> 4) << 4;
+
+  // --- DYNAMIC QUALITY MAPPING --- subject to change based on testing/feedback ---
+  uint8_t q_user = Wc.jpeg.quality;
+  if (q_user < 5) q_user = 5;
+  if (q_user > 100) q_user = 100;
+
+  // 1. Bitrate: 100 = 6Mbps, 50 = 3Mbps, 10 = 600kbps
+  uint32_t target_bitrate = q_user * 60000; 
+
+  // 2. QP_Min: 100 -> QP15, 50 -> QP37, 10 -> QP47
+  // We aggressively raise QP (lower quality) as the user slider goes down.
+  uint8_t target_qp_min = 50 - (q_user / 4); 
+  if (target_qp_min < 15) target_qp_min = 15; 
+  if (target_qp_min > 25) target_qp_min = 25;
+
+  AddLog(LOG_LEVEL_INFO, PSTR("H264: Quality %d -> Bitrate %d bps, QP_Min %d"), q_user, target_bitrate, target_qp_min);
   
   esp_h264_enc_cfg_hw_t cfg = {
     .pic_type = ESP_H264_RAW_FMT_O_UYY_E_VYY,  // HW encoder requires this YUV420 format
@@ -343,9 +385,9 @@ uint32_t WcSetupH264Encoder(void) {
     .fps = (uint8_t)(Wc.core.config.fps ? Wc.core.config.fps : 30),
     .res = {.width = width, .height = height},
     .rc = {
-      .bitrate = (uint32_t)(width * height * 2),  // ~10% of raw size
-      .qp_min = 15,
-      .qp_max = 26
+      .bitrate = target_bitrate,
+      .qp_min = target_qp_min,
+      .qp_max = 35
     }
   };
   
@@ -407,7 +449,6 @@ uint32_t WcSetupH264Encoder(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: H.264 encoder initialized (%dx%d, buffer=%d bytes)"), width, height, in_size);
   return 1;
 }
-/*********************************************************************************************/
 
 /*********************************************************************************************/
 

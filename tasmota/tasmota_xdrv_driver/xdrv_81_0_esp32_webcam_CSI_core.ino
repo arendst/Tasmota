@@ -128,7 +128,7 @@ struct {
     void *buffer;
     size_t buffer_size;
     jpeg_encode_cfg_t cfg;
-    uint8_t quality;
+    uint8_t quality; // TODO: move to core, as we use it for H264 too
     SemaphoreHandle_t mutex;
     ESP8266WebServer *server;
     WiFiClient *client_ptr;

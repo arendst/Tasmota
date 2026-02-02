@@ -395,7 +395,7 @@ void CmndWcQuality(void) {
   }
   
   Wc.jpeg.quality = (uint8_t)XdrvMailbox.payload;
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: JPEG quality set to %d"), Wc.jpeg.quality);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: encoder quality set to %d"), Wc.jpeg.quality);
   ResponseCmndNumber(Wc.jpeg.quality);
 }
 
