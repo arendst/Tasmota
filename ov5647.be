@@ -159,7 +159,7 @@ class OV5647 : CSI_Sensor
     # 3. Generate Registers
     if bin == 2
        # ==========================================================
-       # BIN 2: HIGH SPEED MODE (0xBC = 188x Multiplier)
+       # BIN 2: HIGH SPEED MODE
        # ==========================================================
        # Center crop calculation for Bin 2 (Max 1296x972)
        var max_w = 1296
@@ -170,7 +170,7 @@ class OV5647 : CSI_Sensor
        var off_x = 9 + start_x
        var off_y = 0 + start_y
        
-       var pclk_real = 93312000 # ~93.3 MHz
+       var pclk_real = 90200000
        var hts = 1896
        var vts = pclk_real / (hts * fps)
        if vts < h + 50 vts = h + 50 end
@@ -178,7 +178,7 @@ class OV5647 : CSI_Sensor
        return [
         [0x3034, fmt == 0 ? 0x18 : 0x1a],
         [0x3035,0x41], 
-        [0x3036,0xbc], # 188x Multiplier
+        [0x3036,fmt == 1 ? 0xD8 : 0xAF],
         [0x303c,0x11], 
         [0x3106,0xf5],
         
@@ -234,13 +234,13 @@ class OV5647 : CSI_Sensor
        if end_y > 1953 end_y = 1953 end
        
        # Timing
-       var hts = 2271
-       var vts = 81666700 / (hts * fps) # 81.6 MHz PCLK
+       var hts = 2500
+       var vts = 84000000 / (hts * fps)
        if vts < h + 50 vts = h + 50 end
 
        return [
          [0x3034, fmt == 0 ? 0x18 : 0x1a], 
-         [0x3035, 0x21], [0x3036, 0x62], [0x303c, 0x11], [0x3106, 0xf5],
+         [0x3035, 0x21], [0x3036, fmt == 1 ? 0x64 : 0x50 ], [0x303c, 0x11], [0x3106, 0xf5],
          
          [0x3814, 0x11], [0x3815, 0x11], [0x3820, 0x00], [0x3821, 0x02],
          
