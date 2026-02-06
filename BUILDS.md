@@ -33,8 +33,8 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SUNRISE               | x     | x / x | x     | x     | x     | x     |
 | USE_RULES                 | x     | x / x | x     | x     | x     | x     |
 | USE_SCRIPT                | -     | - / - | -     | -     | -     | -     |
-| USE_EXPRESSION            | -     | x / x | -     | -     | -     | -     |
-| SUPPORT_IF_STATEMENT      | -     | x / x | -     | -     | -     | -     |
+| USE_EXPRESSION            | x     | x / x | x     | x     | x     | x     |
+| SUPPORT_IF_STATEMENT      | x     | x / x | x     | x     | x     | x     |
 | USE_HOTPLUG               | -     | - / - | -     | -     | -     | -     |
 | USE_INFLUXDB              | -     | - / x | -     | -     | -     | -     |
 | USE_PROMETHEUS            | -     | - / - | -     | -     | -     | -     |
