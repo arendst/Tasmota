@@ -69,6 +69,9 @@ sha_hal_process_block(void *state_buf, const void *blk,
                       size_t block_words, bool first)
 {
     SHA_ENTER();
+#if defined(CONFIG_IDF_TARGET_ESP32P4) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
+    sha_ll_set_mode(type); // required on P4 in IDF 5.5+
+#endif 
     if (!first) {
         sha_ll_write_digest(type, state_buf, digest_words);
     }
