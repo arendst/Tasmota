@@ -56,13 +56,13 @@
 #define D_ADMIN "管理"
 #define D_AIR_QUALITY "空氣品質"
 #define D_AP "存取點 "                    // Access Point, added space to append numbers in code
-#define D_AS "名稱："                  // as
-#define D_AT "at"                    // at (Used for memory addresses)
+#define D_AS "名稱："                     // as
+#define D_AT "at"                        // at (Used for memory addresses)
 #define D_AUTO "自動"
 #define D_AUTO_UPDATE "自動更新"
-#define D_BATT "電池"			// Short for Battery
+#define D_BATT "電池"                    // Short for Battery
 #define D_BATTERY "電池"
-#define D_BATTERY_CHARGE "充電"		// Battery charge in %
+#define D_BATTERY_CHARGE "充電"          // Battery charge in %
 #define D_BLINK "閃爍"
 #define D_BLINKOFF "閃爍關"
 #define D_BOOT_COUNT "啟動次數"
@@ -81,13 +81,13 @@
 #define D_CONNECTED "已連線"
 #define D_CORS_DOMAIN "跨來源資源共享的網域（CORS Domain）"
 #define D_COUNT "數量："
-#define D_COUNTER "計數器 "           // Added space to append numbers in code
+#define D_COUNTER "計數器 "       // Added space to append numbers in code
 #define D_CT_POWER "CT 功率"
 #define D_CURRENT "電流"          // As in Voltage and Current
 #define D_CURRENT_NEUTRAL "中性電流"
 #define D_DARKLIGHT "暗光"
 #define D_DATA "資料："
-#define D_DEBUG "偵錯"
+#define D_DEBUG "除錯"
 #define D_DEWPOINT "露點"
 #define D_DISABLED "已停用"
 #define D_DISCONNECTED "已斷線"
@@ -143,11 +143,11 @@
 #define D_O2 "氧氣"
 #define D_OFF "關閉"
 #define D_OFFLINE "離線"
-#define D_OK "好"
+#define D_OK "確定"
 #define D_ON "開啟"
 #define D_ONLINE "線上"
 #define D_ORP "ORP"                  // Oxidation-Reduction Potential (kept intact)
-#define D_PARTITION "分割區"      // As in flash and firmware partition
+#define D_PARTITION "分割區"          // As in flash and firmware partition
 #define D_PASSWORD "密碼"
 #define D_PH "pH"                    // potential of Hydrogen (kept intact)
 #define D_PORT "通訊埠"
@@ -210,7 +210,7 @@
 #define D_UV_INDEX_4 "危險"
 #define D_UV_INDEX_5 "曬傷風險 L1/2"
 #define D_UV_INDEX_6 "曬傷風險 L3"
-#define D_UV_INDEX_7 "超出範圍"
+#define D_UV_INDEX_7 "超出範圍"              // Out of Range
 #define D_UV_LEVEL "紫外線等級"
 #define D_UV_POWER "紫外線能量"
 #define D_VERSION "版本"
@@ -407,7 +407,7 @@
 #define D_UPLOAD_ERR_3 "檔案簽章無效"
 #define D_UPLOAD_ERR_4 "軟體刷入的大小超出記憶體實際大小"
 #define D_UPLOAD_ERR_5 "上傳緩衝區不符"
-#define D_UPLOAD_ERR_6 "上傳失敗。請開啟日誌記錄 3"
+#define D_UPLOAD_ERR_6 "上傳失敗。請開啟 Logging 3"
 #define D_UPLOAD_ERR_7 "上傳取消"
 #define D_UPLOAD_ERR_8 "檔案無效"
 #define D_UPLOAD_ERR_9 "檔案過大"
@@ -426,7 +426,7 @@
 #define D_FINGERPRINT "驗證 TLS 指紋…"
 #define D_TLS_CONNECT_FAILED_TO "TLS 連線失敗，因為"
 #define D_RETRY_IN "重新嘗試倒數 "              // Added space to append numbers in code
-#define D_VERIFIED "驗證成功"
+#define D_VERIFIED "指紋驗證成功"
 #define D_INSECURE "指紋無效，連線不安全"
 #define D_CONNECT_FAILED_TO "連線失敗："
 
@@ -434,7 +434,7 @@
 #define D_MULTICAST_DISABLED "已停用群播"
 #define D_MULTICAST_REJOINED "已（重新）加入群播"
 #define D_MULTICAST_JOIN_FAILED "加入群播失敗"
-#define D_FAILED_TO_SEND_RESPONSE "發送請求失敗"
+#define D_FAILED_TO_SEND_RESPONSE "回應發送失敗"
 
 #define D_WEMO "WeMo"
 #define D_WEMO_BASIC_EVENT "WeMo 基本事件"
@@ -846,8 +846,8 @@
 #define D_GPIO_LORA_CS         "LoRa CS"
 #define D_GPIO_LORA_RST        "LoRa Rst"
 #define D_GPIO_LORA_BUSY       "LoRa Busy"
-#define D_GPIO_LORA_DI         "LoRa DIO"    // Suffix "0","1","2"
-#define D_SENSOR_NRG_SEL       "HLWBL SEL"  // Suffix "i"
+#define D_GPIO_LORA_DI         "LoRa DIO"            // Suffix "0" .. "5"
+#define D_SENSOR_NRG_SEL       "HLWBL SEL"           // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 CF"
 #define D_SENSOR_HJL_CF        "BL0937 CF"
@@ -1183,16 +1183,16 @@
 #define D_AS3935_ABOVE "閃電在頭上"
 #define D_AS3935_NOISE "偵測到雜訊"
 #define D_AS3935_DISTDET "偵測到干擾物"
-#define D_AS3935_INTNOEV "沒有任何事件觸發中斷！"
-#define D_AS3935_FLICKER "IRQ 閃爍！"
-#define D_AS3935_POWEROFF "關閉"
-#define D_AS3935_NOMESS "聽取中…"
+#define D_AS3935_INTNOEV "觸發中斷但無對應事件！"
+#define D_AS3935_FLICKER "IRQ 腳位閃爍！"
+#define D_AS3935_POWEROFF "已關閉"
+#define D_AS3935_NOMESS "監聽中…"
 #define D_AS3935_ON "開啟"
 #define D_AS3935_OFF "關閉"
 #define D_AS3935_INDOORS "室內"
 #define D_AS3935_OUTDOORS "戶外"
-#define D_AS3935_CAL_FAIL "同步失敗"
-#define D_AS3935_CAL_OK "已同步為："
+#define D_AS3935_CAL_FAIL "校正失敗"
+#define D_AS3935_CAL_OK "已校正為："
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
@@ -1200,7 +1200,7 @@
 
 // xnrg_15_teleinfo Denky (Teleinfo)
 #define D_CONTRACT        "契約"
-#define D_POWER_LOAD      "負載功率"
+#define D_POWER_LOAD      "負載率"
 #define D_CURRENT_TARIFF  "目前電價"
 #define D_TARIFF          "電價"
 #define D_OVERLOAD        "ADPS"
@@ -1218,28 +1218,28 @@
 #define D_FP_ENROLL_ACTIVE "啟動"
 #define D_FP_ENROLL_INACTIVE "未啟動"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "通訊錯誤"    // 0x01 Error when receiving data package
-#define D_FP_NOFINGER ""                   // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "成像錯誤"           // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "影像模糊/品質不佳"         // 0x06
-#define D_FP_FEATUREFAIL "特徵提取失敗（指紋太小）"    // 0x07
-#define D_FP_NOMATCH "指紋不符"             // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "找不到符合的指紋"     // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "指紋不符"      // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "位置錯誤"            // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "資料庫範圍錯誤"       // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "特徵上傳錯誤"   // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "封包回應錯誤"  // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "上傳錯誤"           // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "刪除錯誤"           // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "清除資料庫錯誤"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "密碼錯誤"             // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "影像無效"           // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "快閃記憶體寫入錯誤"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "編號無效"           // 0x1A Invalid register number
-#define D_FP_ADDRCODE "位址碼"               // 0x20 Address code
-#define D_FP_PASSVERIFY "密碼驗證成功"        // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "錯誤"              // Any other error
+#define D_FP_PACKETRECIEVEERR "通訊錯誤"            // 0x01 Error when receiving data package
+#define D_FP_NOFINGER ""                            // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL "成像錯誤"                   // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "影像模糊/品質不佳"          // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "特徵提取失敗（指紋太小）"   // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "指紋不符"                     // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "找不到符合的指紋"            // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "指紋不符"              // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "位置錯誤"                 // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "資料庫範圍錯誤"           // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "特徵上傳錯誤"       // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "封包回應錯誤"      // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "上傳錯誤"                  // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "刪除錯誤"                  // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "清除資料庫錯誤"           // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "密碼錯誤"                    // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "影像無效"                // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "快閃記憶體寫入錯誤"          // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "編號無效"                  // 0x1A Invalid register number
+#define D_FP_ADDRCODE "位址碼"                      // 0x20 Address code
+#define D_FP_PASSVERIFY "密碼驗證成功"              // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "錯誤"                    // Any other error
 
 // xsns_90_hrg15.ino
 #define D_HRG_VALID "有效"
