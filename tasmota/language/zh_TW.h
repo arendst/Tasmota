@@ -35,7 +35,7 @@
 
 #define LANGUAGE_LCID 1028
 // HTML (ISO 639-1) Language Code
-#define D_HTML_LANGUAGE "zh"
+#define D_HTML_LANGUAGE "zh-Hant-TW"
 
 // "2017-03-07T11:08:02" - ISO8601:2004
 #define D_YEAR_MONTH_SEPARATOR "-"
@@ -55,7 +55,7 @@
 #define D_ADDRESS "地址"
 #define D_ADMIN "管理"
 #define D_AIR_QUALITY "空氣品質"
-#define D_AP "存取點"                    // Access Point
+#define D_AP "存取點 "                    // Access Point, added space to append numbers in code
 #define D_AS "名稱："                  // as
 #define D_AT "at"                    // at (Used for memory addresses)
 #define D_AUTO "自動"
@@ -65,14 +65,14 @@
 #define D_BATTERY_CHARGE "充電"		// Battery charge in %
 #define D_BLINK "閃爍"
 #define D_BLINKOFF "閃爍關"
-#define D_BOOT_COUNT "啟動計數"
+#define D_BOOT_COUNT "啟動次數"
 #define D_BRIGHTLIGHT "亮度"
 #define D_BSSID "BSSId"                // Basic Service Set Identifier (kept intact)
-#define D_BUTTON "按鈕"
+#define D_BUTTON "按鈕 "              // Added space to append numbers in code
 #define D_BY "由"                    // Written by me
 #define D_BYTES "大小："
 #define D_CELSIUS "攝氏"
-#define D_CHANNEL "頻道"
+#define D_CHANNEL "頻道 "             // Added space to append numbers in code
 #define D_CO2 "二氧化碳"
 #define D_CODE "代碼"                // Button code
 #define D_COLDLIGHT "冷光"
@@ -81,7 +81,7 @@
 #define D_CONNECTED "已連線"
 #define D_CORS_DOMAIN "跨來源資源共享的網域（CORS Domain）"
 #define D_COUNT "數量："
-#define D_COUNTER "計數器"
+#define D_COUNTER "計數器 "           // Added space to append numbers in code
 #define D_CT_POWER "CT 功率"
 #define D_CURRENT "電流"          // As in Voltage and Current
 #define D_CURRENT_NEUTRAL "中性電流"
@@ -92,7 +92,7 @@
 #define D_DISABLED "已停用"
 #define D_DISCONNECTED "已斷線"
 #define D_DISTANCE "距離"
-#define D_DNS_SERVER "DNS 伺服器"
+#define D_DNS_SERVER "DNS 伺服器 "    // Added space to append numbers in code
 #define D_DO "溶氧量"
 #define D_DONE "完成"
 #define D_DST_TIME "日光節約時間"
@@ -161,14 +161,14 @@
 #define D_PRESSUREATSEALEVEL "海平面氣壓"
 #define D_PROGRAM_FLASH_SIZE "程式記憶體大小"
 #define D_PROGRAM_SIZE "程式大小"
-#define D_PROJECT "項目："
+#define D_PROJECT "專案"
 #define D_PSR_FREE_MEMORY "PS-RAM 可用空間"
 #define D_PSR_MAX_MEMORY "PS-RAM 容量"
 #define D_RAIN "雨"
 #define D_RANGE "範圍"
 #define D_RECEIVED "已接收"
 #define D_RESTART "重新啟動"
-#define D_RESTART_REASON "重新啟動的原因"
+#define D_RESTART_REASON "重新啟動原因"
 #define D_RESTARTING "正在重新啟動"
 #define D_RETAINED "已保留"
 #define D_RULE "規則"
@@ -232,7 +232,7 @@
 #define D_SET_BAUDRATE_TO "將鮑率設定為："
 #define D_RECEIVED_TOPIC "接收到的主題："
 #define D_DATA_SIZE "資料大小："
-#define D_ANALOG_INPUT "類比"
+#define D_ANALOG_INPUT "類比 "         // Added space to append numbers in code
 
 // support.ino
 #define D_OSWATCH "osWatch"            // kept intact
@@ -247,8 +247,8 @@
 #define D_CONNECT_FAILED_AP_NOT_REACHED "連線失敗：無法連線至存取點"
 #define D_CONNECT_FAILED_WRONG_PASSWORD "連線失敗：密碼錯誤"
 #define D_CONNECT_FAILED_AP_TIMEOUT "連線失敗：存取點超時"
-#define D_ATTEMPTING_CONNECTION "正在試圖連線中…"
-#define D_CHECKING_CONNECTION "正在檢查連線中…"
+#define D_ATTEMPTING_CONNECTION "正在試圖連線…"
+#define D_CHECKING_CONNECTION "正在檢查連線…"
 #define D_QUERY_DONE "已完成查詢，找到 MQTT 服務了"
 #define D_MQTT_SERVICE_FOUND "MQTT 服務位於："
 #define D_FOUND_AT "位於"
@@ -256,7 +256,7 @@
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "儲存至快閃記憶體，位於："
-#define D_LOADED_FROM_FLASH_AT "已從快閃記憶體中讀取，從："
+#define D_LOADED_FROM_FLASH_AT "已從快閃記憶體中讀取，位置："
 #define D_USE_DEFAULTS "使用預設值"
 #define D_ERASED_SECTOR "抹除磁區"
 
@@ -294,7 +294,7 @@
 #define D_CONFIRM_RESET_CONFIGURATION "請確認是否要重設設定"
 #define D_RESET_CONFIGURATION "重設設定"
 #define D_BACKUP_CONFIGURATION "備份設定"
-#define D_RESTORE_CONFIGURATION "回復設定"
+#define D_RESTORE_CONFIGURATION "還原設定"
 #define D_START_RESTORE "開始還原"
 #define D_MAIN_MENU "主選單"
 
@@ -318,10 +318,10 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "存取點的 SSID"
-#define D_AP1_SSID_HELP "輸入或選擇您的 Wi-Fi 網路"
+#define D_AP1_SSID "存取點 1 的 SSID"
+#define D_AP1_SSID_HELP "輸入或選擇您的 Wi-Fi 網路名稱"
 #define D_AP2_SSID "存取點 2 的 SSID"
-#define D_AP2_SSID_HELP "輸入您的備用 Wi-Fi 網路"
+#define D_AP2_SSID_HELP "輸入您的備用 Wi-Fi 網路名稱"
 #define D_AP_PASSWORD "Wi-Fi 密碼"
 #define D_AP_PASSWORD_HELP "輸入您的 Wi-Fi 密碼"
 #define D_SELECT_YOUR_WIFI_NETWORK "選擇您的 Wi-Fi 網路"
@@ -425,7 +425,7 @@
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "驗證 TLS 指紋…"
 #define D_TLS_CONNECT_FAILED_TO "TLS 連線失敗，因為"
-#define D_RETRY_IN "重新嘗試倒數"
+#define D_RETRY_IN "重新嘗試倒數 "              // Added space to append numbers in code
 #define D_VERIFIED "驗證成功"
 #define D_INSECURE "指紋無效，連線不安全"
 #define D_CONNECT_FAILED_TO "連線失敗："
@@ -726,15 +726,15 @@
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_DFR562_BUSY   "MP3 Busy"
 #define D_SENSOR_IRSEND        "IRsend"
-#define D_SENSOR_SWITCH        "開關"     // Suffix "1"
-#define D_SENSOR_BUTTON        "按鈕"     // Suffix "1"
-#define D_SENSOR_RELAY         "繼電器"      // Suffix "1i"
+#define D_SENSOR_SWITCH        "Switch"     // Suffix "1"
+#define D_SENSOR_BUTTON        "Button"     // Suffix "1"
+#define D_SENSOR_RELAY         "Relay"      // Suffix "1i"
 #define D_SENSOR_LED           "LED"        // Suffix "1i"
 #define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
-#define D_SENSOR_COUNTER       "計數器"    // Suffix "1"
-#define D_SENSOR_INTERRUPT     "中斷"
-#define D_SENSOR_INPUT         "輸入"
+#define D_SENSOR_COUNTER       "Counter"    // Suffix "1"
+#define D_SENSOR_INTERRUPT     "Interrupt"
+#define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
@@ -767,7 +767,7 @@
 #define D_SENSOR_HSDIO_D1      "HSDIO D1"
 #define D_SENSOR_HSDIO_D2      "HSDIO D2"
 #define D_SENSOR_HSDIO_D3      "HSDIO D3"
-#define D_SENSOR_BACKLIGHT    "背光"
+#define D_SENSOR_BACKLIGHT     "Backlight"
 #define D_SENSOR_PMS5003_TX    "PMS5003 Tx"
 #define D_SENSOR_PMS5003_RX    "PMS5003 Rx"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
@@ -882,7 +882,7 @@
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_ADE7953_RST   "ADE7953 RST"
 #define D_SENSOR_ADE7953_CS    "ADE7953 CS"
-#define D_SENSOR_BUZZER        "蜂鳴器"
+#define D_SENSOR_BUZZER        "Buzzer"
 #define D_SENSOR_DISP_RESET    "Display Rst"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
 #define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
