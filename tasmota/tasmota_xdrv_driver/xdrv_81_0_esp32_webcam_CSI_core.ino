@@ -138,8 +138,6 @@ struct {
   // --- 3. H.264 Session (POD) ---
   struct {
     esp_h264_enc_handle_t handle;
-    uint8_t *buffer;
-    size_t buffer_size;
     uint8_t *out_buffer;
     size_t out_buffer_size;
     uint32_t motion_val;      // Current rolling average (0-100+)
@@ -351,7 +349,6 @@ void WcDeinitPipeline() {
     esp_h264_enc_del(Wc.h264.handle); // Only if using helper that doesn't double-free
     Wc.h264.handle = NULL;
   }
-  if (Wc.h264.buffer) { esp_h264_free(Wc.h264.buffer); Wc.h264.buffer = NULL; }
   if (Wc.h264.out_buffer) { esp_h264_free(Wc.h264.out_buffer); Wc.h264.out_buffer = NULL; }
 
   if (Wc.jpeg.handle) {

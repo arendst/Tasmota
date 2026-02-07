@@ -119,12 +119,9 @@ void H264ProcessingTask(void *pvParameters) {
   // H.264 encoder frame structures
   esp_h264_enc_in_frame_t in_frame = {};
   esp_h264_enc_out_frame_t out_frame = {};
-  memset(Wc.h264.buffer, 0, Wc.h264.buffer_size); 
 
   // Copy frame data to H.264 input buffer
   size_t h264_expected_size = Wc.core.config.width * Wc.core.config.height * 3 / 2; // 1.5 because YUV420
-  // Protection: don't copy more than the destination can hold
-  if (h264_expected_size > Wc.h264.buffer_size) h264_expected_size = Wc.h264.buffer_size;
   
   // Loop forever, exit only on CAM_STOPPING
   while (true) {
@@ -173,12 +170,6 @@ void H264ProcessingTask(void *pvParameters) {
     esp_cache_msync(source_buf, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
 
     // --- ZERO-COPY OPTIMIZATION START ---
-    
-    // OLD: Memcpy (Slow, burns CPU/Bandwidth)
-    // memcpy(Wc.h264.buffer, source_buf, h264_expected_size);
-    // xSemaphoreGive(Wc.core.frame_mutex); // Mutex was released early
-
-    // NEW: Direct Pointer Reference
     // We do NOT release the mutex yet. We hold it until encoding is done.
     in_frame.raw_data.buffer = source_buf;
     in_frame.raw_data.len = h264_expected_size; 
@@ -391,22 +382,11 @@ uint32_t WcSetupH264Encoder(void) {
     }
   };
   
-  // Allocate input frame buffer (raw YUV from ISP)
-  size_t in_size = (size_t)((float)width * height * ESP_H264_GET_BPP_BY_PIC_TYPE(cfg.pic_type));
-  Wc.h264.buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, in_size, &in_size, ESP_H264_MEM_SPIRAM);
-  if (!Wc.h264.buffer) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 input buffer alloc failed"));
-    return 0;
-  }
-  Wc.h264.buffer_size = in_size;
-  
   // Allocate output frame buffer (encoded NAL units) - same size as input
-  size_t out_size = in_size;
+  size_t out_size = (size_t)((float)width * height * ESP_H264_GET_BPP_BY_PIC_TYPE(cfg.pic_type));
   Wc.h264.out_buffer = (uint8_t*)esp_h264_aligned_calloc(16, 1, out_size, &out_size, ESP_H264_MEM_SPIRAM);
   if (!Wc.h264.out_buffer) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 output buffer alloc failed"));
-    esp_h264_free(Wc.h264.buffer);
-    Wc.h264.buffer = NULL;
     return 0;
   }
   Wc.h264.out_buffer_size = out_size;
@@ -415,9 +395,7 @@ uint32_t WcSetupH264Encoder(void) {
   esp_h264_err_t ret = esp_h264_enc_hw_new(&cfg, &Wc.h264.handle);
   if (ret != ESP_H264_ERR_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 encoder create failed (0x%x)"), ret);
-    esp_h264_free(Wc.h264.buffer);
     esp_h264_free(Wc.h264.out_buffer);
-    Wc.h264.buffer = NULL;
     Wc.h264.out_buffer = NULL;
     return 0;
   }
@@ -427,10 +405,8 @@ uint32_t WcSetupH264Encoder(void) {
   if (ret != ESP_H264_ERR_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: H.264 encoder open failed (0x%x)"), ret);
     esp_h264_enc_del(Wc.h264.handle);
-    esp_h264_free(Wc.h264.buffer);
     esp_h264_free(Wc.h264.out_buffer);
     Wc.h264.handle = NULL;
-    Wc.h264.buffer = NULL;
     Wc.h264.out_buffer = NULL;
     return 0;
   }
@@ -446,7 +422,7 @@ uint32_t WcSetupH264Encoder(void) {
       Wc.ws.server->begin(); 
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: H.264 encoder initialized (%dx%d, buffer=%d bytes)"), width, height, in_size);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: H.264 encoder initialized (%dx%d, buffer=%d bytes)"), width, height, out_size);
   return 1;
 }
 
