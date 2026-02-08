@@ -291,7 +291,7 @@ uint32_t WcInitPipeline() {
   Wc.core.read_idx = 1;
 
   // 2. Configure CSI
-  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422;
+  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422; // Very sadly JPEG encoder does not support YUV420 on early P4 chips!!!!
   
   esp_cam_ctlr_csi_config_t csi_config = {
     .ctlr_id = 0,
