@@ -1,8 +1,8 @@
 {
   "name": "LVGL Panel",
-  "version": "0x190A0100",
-  "description": "Realtime display of the LVGL display in browser",
-  "author": "Stephan Hadinger",
+  "version": "0x1A020200",
+  "description": "Realtime mirror of the LVGL display in browser",
+  "author": "Stephan Hadinger & Milko Daskalov",
   "min_tasmota": "0x0F010002",
   "features": "display"
 }
