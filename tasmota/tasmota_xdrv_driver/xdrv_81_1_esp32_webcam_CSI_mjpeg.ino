@@ -289,11 +289,6 @@ void MjpegProcessingTask(void *pvParameters) {
 // - http://IP/wc.jpg        -> single frame capture
 
 
-bool HttpCheckPriviledgedAccess(bool);
-extern ESP8266WebServer *Webserver;
-
-
-
 void HandleWebcamRoot(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Root called - CamServer=%p"), Wc.jpeg.server);
   if (!Wc.jpeg.server) {
