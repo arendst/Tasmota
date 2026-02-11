@@ -787,8 +787,8 @@ class Matter_IM
 
       self.attributedata2raw(raw, ctx, res)
 
-      # add suffix 1824FF0118
-      raw.add(0x1824FF01, -4)        # add 1824FF01
+      # add suffix 1824FF0C18
+      raw.add(0x1824FF0C, -4)        # add 1824FF0C - InteractionModelRevision 12
       raw.add(0x18, 1)               # add 18
 
     elif ctx.status != nil
@@ -801,8 +801,8 @@ class Matter_IM
 
       self.attributestatus2raw(raw, ctx, ctx.status)
       
-      # add suffix 1824FF0118
-      raw.add(0x1824FF01, -4)        # add 1824FF01
+      # add suffix 1824FF0C18
+      raw.add(0x1824FF0C, -4)        # add 1824FF0C - InteractionModelRevision 12
       raw.add(0x18, 1)               # add 18
 
     else
@@ -1022,8 +1022,8 @@ class Matter_IM
       # ignore if content is nil and status is undefined
       return false
     end
-    # add suffix 1824FF0118
-    raw.add(0x1824FF01, -4)       # add 1824FF01
+    # add suffix 1824FF0C18
+    raw.add(0x1824FF0C, -4)       # add 1824FF0C - InteractionModelRevision 12
     raw.add(0x18, 1)              # add 18
 
     # log(f"MTR: raw={raw.tohex()}", 3)
