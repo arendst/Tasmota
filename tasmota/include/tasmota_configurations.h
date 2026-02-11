@@ -688,6 +688,179 @@
 
 
 /*********************************************************************************************\
+ * [tasmota-nous-a1t.bin]
+ * Minimal image for NOUS A1T smart plug (ESP8285 + BL0937 energy monitor)
+ * Only supports: 1 relay, 1 button, 1 LED, BL0937/HJL-01 energy monitoring
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_NOUS_A1T
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "nous-a1t"
+#endif
+
+#undef  MODULE
+#define MODULE                 USER_MODULE
+#undef  FALLBACK_MODULE
+#define FALLBACK_MODULE        USER_MODULE
+#ifndef USER_TEMPLATE
+#define USER_TEMPLATE          "{\"NAME\":\"NOUS A1T\",\"GPIO\":[32,0,0,0,2720,2656,0,0,2624,320,224,0,0,0],\"FLAG\":0,\"BASE\":49}"
+#endif
+
+// -- Disable communication extras -----------------
+#undef USE_DOMOTICZ                              // Disable Domoticz (-6k code)
+#undef USE_HOME_ASSISTANT                        // Disable Home Assistant
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery (+2k code)
+#undef USE_KNX                                   // Disable KNX (-9.4k code)
+#undef USE_DISCOVERY                             // Disable mDNS (-8k code)
+
+// -- Disable emulation ----------------------------
+#undef USE_EMULATION                             // Disable Wemo or Hue emulation
+#undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation (-14k code, -2k mem)
+#undef USE_EMULATION_WEMO                        // Disable WeMo emulation (-6k code, -2k mem)
+
+// -- Disable optional modules ---------------------
+#undef ROTARY_V1                                 // Disable rotary encoder (-0.8k)
+#undef USE_SONOFF_RF                             // Disable Sonoff RF Bridge (-3.2k)
+  #undef USE_RF_FLASH                            // Disable RF flash (-2.7k)
+#undef USE_SONOFF_SC                             // Disable Sonoff SC (-1.1k)
+#undef USE_TUYA_MCU                              // Disable Tuya MCU
+#undef USE_ARMTRONIX_DIMMERS                     // Disable Armtronix Dimmers (-1.4k)
+#undef USE_PS_16_DZ                              // Disable PS-16-DZ Dimmer (-2k)
+#undef USE_SONOFF_IFAN                           // Disable Sonoff iFan (-2k)
+#undef USE_BUZZER                                // Disable buzzer (-0.6k)
+#undef USE_ARILUX_RF                             // Disable Arilux RF (-0.8k)
+#undef USE_SHUTTER                               // Disable Shutter support (-11k)
+#undef USE_DEEPSLEEP                             // Disable deepsleep (-1k)
+#undef USE_EXS_DIMMER                            // Disable EXS dimmer (-1.5k)
+#undef USE_HOTPLUG                               // Disable HotPlug
+#undef USE_DEVICE_GROUPS                         // Disable device groups (-5.5k)
+#undef USE_PWM_DIMMER                            // Disable PWM dimmer (-2.3k)
+#undef USE_PWM_DIMMER_REMOTE                     // Disable remote PWM dimmer
+#undef USE_KEELOQ                                // Disable Keeloq (-4.5k)
+#undef USE_SONOFF_D1                             // Disable Sonoff D1 (-0.7k)
+#undef USE_SHELLY_DIMMER                         // Disable Shelly Dimmer (-3k)
+#undef USE_AC_ZERO_CROSS_DIMMER                  // Disable zero-cross dimmer
+#undef USE_IMPROV                                // Disable IMPROV serial (-2k)
+#undef USE_DALI                                  // Disable DALI gateway
+
+// -- Disable all light/LED drivers ----------------
+#undef USE_LIGHT                                 // Disable entire light subsystem
+#undef USE_LIGHT_VIRTUAL_CT                      // Disable Virtual CT
+#undef USE_WS2812                                // Disable WS2812 (-5k, -1k mem)
+#undef USE_MY92X1                                // Disable MY92X1 RGBCW
+#undef USE_SM16716                               // Disable SM16716 RGB (-0.7k)
+#undef USE_SM2135                                // Disable SM2135 (-0.6k)
+#undef USE_SM2335                                // Disable SM2335 (-0.7k)
+#undef USE_BP1658CJ                              // Disable BP1658CJ
+#undef USE_BP5758D                               // Disable BP5758D (-0.8k)
+#undef USE_SONOFF_L1                             // Disable Sonoff L1
+#undef USE_ELECTRIQ_MOODL                        // Disable ElectriQ (-0.3k)
+#undef USE_LIGHT_PALETTE                         // Disable color palette (-0.7k)
+#undef USE_DGR_LIGHT_SEQUENCE                    // Disable light sequence (-0.2k)
+
+// -- Disable sensor buses -------------------------
+#undef USE_COUNTER                               // Disable counters (-0.8k)
+#define USE_ADC_VCC                              // Display Vcc in Power status
+#undef USE_DS18x20                               // Disable DS18x20 (-2.6k)
+#undef USE_I2C                                   // Disable all I2C (-10k)
+#undef USE_SPI                                   // Disable all SPI
+#undef USE_DISPLAY                               // Disable Display support
+
+// -- Disable serial sensors -----------------------
+#undef USE_MHZ19                                 // Disable MH-Z19 CO2
+#undef USE_SENSEAIR                              // Disable SenseAir CO2
+#undef USE_PMS5003                               // Disable PMS5003 particle sensor
+#undef USE_NOVA_SDS                              // Disable SDS011 particle sensor
+#undef USE_HPMA                                  // Disable Honeywell particle sensor
+#undef USE_SR04                                  // Disable HC-SR04 ultrasonic (-1k)
+#undef USE_ME007                                 // Disable ME007 ultrasonic
+#undef USE_DYP                                   // Disable DYP ultrasonic
+#undef USE_SERIAL_BRIDGE                         // Disable Serial Bridge (-2k)
+#undef USE_MODBUS_BRIDGE                         // Disable Modbus Bridge
+#undef USE_TCP_BRIDGE                            // Disable TCP Bridge
+#undef USE_MP3_PLAYER                            // Disable MP3 Player
+#undef USE_AZ7798                                // Disable AZ7798 CO2
+#undef USE_PN532_HSU                             // Disable NFC reader (-1.8k)
+#undef USE_ZIGBEE                                // Disable Zigbee
+#undef USE_RDM6300                               // Disable RFID reader (-0.8k)
+#undef USE_IBEACON                               // Disable iBeacon
+#undef USE_GPS                                   // Disable GPS
+#undef USE_HM10                                  // Disable HM-10 BLE (-5.1k)
+#undef USE_BLE_ESP32                             // Disable ESP32 BLE
+#undef USE_MI_ESP32                              // Disable ESP32 MI BLE
+#undef USE_HRXL                                  // Disable MaxBotix sonar
+#undef USE_TASMOTA_CLIENT                        // Disable Arduino client
+#undef USE_OPENTHERM                             // Disable OpenTherm (-15k)
+#undef USE_MIEL_HVAC                             // Disable Mitsubishi HVAC (-5k)
+#undef USE_PROJECTOR_CTRL                        // Disable projector control
+#undef USE_AS608                                 // Disable fingerprint sensor
+#undef USE_TFMINIPLUS                            // Disable LiDAR
+#undef USE_HRG15                                 // Disable rain sensor
+#undef USE_VINDRIKTNING                          // Disable IKEA air sensor
+#undef USE_LOX_O2                                // Disable O2 sensor
+
+// -- Disable IR remote ----------------------------
+#undef USE_IR_REMOTE                             // Disable IR driver (-4.3k)
+
+// -- Disable misc sensors -------------------------
+#undef USE_DHT                                   // Disable DHT sensors (-1.6k)
+#undef USE_MAX31855                              // Disable thermocouple
+#undef USE_MAX31865                              // Disable RTD sensor
+#undef USE_LMT01                                 // Disable LMT01 temp
+#undef USE_WIEGAND                               // Disable Wiegand RFID
+#undef USE_RC_SWITCH                             // Disable RF transceiver
+#undef USE_RF_SENSOR                             // Disable RF sensor
+#undef USE_TM1638                                // Disable TM1638
+#undef USE_HX711                                 // Disable load cell
+#undef USE_TX20_WIND_SENSOR                      // Disable anemometer
+#undef USE_TX23_WIND_SENSOR                      // Disable anemometer
+#undef USE_WINDMETER                             // Disable wind meter
+#undef USE_FTC532                                // Disable touch controller
+#undef USE_SHIFT595                              // Disable shift registers
+#undef USE_HRE                                   // Disable water meter
+#undef USE_A4988_STEPPER                         // Disable stepper motor
+#undef USE_THERMOSTAT                            // Disable thermostat
+#undef USE_NEOPOOL                               // Disable pool controller
+#undef USE_PROMETHEUS                            // Disable Prometheus
+
+// -- Energy: keep ONLY HLW8012/BL0937 ------------
+// USE_ENERGY_SENSOR - KEEP (framework)
+// USE_ENERGY_MARGIN_DETECTION - KEEP
+// USE_HLW8012 - KEEP (BL0937 is HLW8012 compatible)
+#undef USE_ENERGY_DUMMY                          // Disable dummy monitor (-0.7k)
+#undef USE_CSE7766                               // Disable CSE7766
+#undef USE_CSE7761                               // Disable CSE7761
+#undef USE_PZEM004T                              // Disable PZEM004T (-2k)
+#undef USE_PZEM_AC                               // Disable PZEM AC (-1.1k)
+#undef USE_PZEM_DC                               // Disable PZEM DC (-1.1k)
+#undef USE_MCP39F501                             // Disable MCP39F501 (-3.1k)
+#undef USE_SDM72                                 // Disable SDM72 Modbus
+#undef USE_SDM120                                // Disable SDM120 Modbus
+#undef USE_SDM230                                // Disable SDM230 Modbus
+#undef USE_SDM630                                // Disable SDM630 Modbus
+#undef USE_DDS2382                               // Disable DDS2382 Modbus
+#undef USE_DDSU666                               // Disable DDSU666 Modbus
+#undef USE_SOLAX_X1                              // Disable Solax X1
+#undef USE_LE01MR                                // Disable LE-01MR
+#undef USE_BL09XX                                // Disable BL09XX (-1.6k)
+#undef USE_BL6523                                // Disable BL6523
+#undef USE_TELEINFO                              // Disable French Teleinfo
+#undef USE_IEM3000                               // Disable IEM3000
+#undef USE_WE517                                 // Disable Orno WE517
+#undef USE_MODBUS_ENERGY                         // Disable generic Modbus energy
+#undef USE_ADE7880                               // Disable ADE7880
+#undef USE_ADE7953                               // Disable ADE7953
+
+// -- Disable scripts ------------------------------
+#undef USE_SCRIPT                                // Disable scripting engine
+
+#undef DEBUG_THEO                                // Disable debug code
+#undef USE_DEBUG_DRIVER                          // Disable debug code
+#endif  // FIRMWARE_NOUS_A1T
+
+
+/*********************************************************************************************\
  * [tasmota-lite.bin]
  * Provide an image without sensors
 \*********************************************************************************************/
