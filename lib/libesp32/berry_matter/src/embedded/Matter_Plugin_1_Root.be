@@ -1022,7 +1022,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # ID=1
         #  0=Certificate (octstr)
         var ccr = TLV.Matter_TLV_struct()
-        ccr.add_TLV(0, TLV.B2, CertificateType == 1 ? matter.DAC_Cert_FFF1_8000() : matter.PAI_Cert_FFF1())      # send DAC_Cert_FFF1_8000 or PAI_Cert_FFF1
+        ccr.add_TLV(0, TLV.B2, CertificateType == 1 ? matter.Certs.DAC_Cert_FFF1_8000 : matter.Certs.PAI_Cert_FFF1)      # send DAC_Cert_FFF1_8000 or PAI_Cert_FFF1
         ctx.command = 0x03              # CertificateChainResponse
         return ccr
 
@@ -1033,7 +1033,7 @@ class Matter_Plugin_Root : Matter_Plugin
 
         # build Attestation Elements 11.17.5.4 p.707
         var att_elts = TLV.Matter_TLV_struct()
-        att_elts.add_TLV(1, TLV.B2, matter.CD_FFF1_8000())    # certification_declaration
+        att_elts.add_TLV(1, TLV.B2, matter.Certs.CD_FFF1_8000)    # certification_declaration
         att_elts.add_TLV(2, TLV.B1, AttestationNonce)         # attestation_nonce
         att_elts.add_TLV(3, TLV.U4, tasmota.rtc_utc())     # timestamp in epoch-s
         var attestation_message = att_elts.tlv2raw()
@@ -1042,7 +1042,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var attestation_tbs = attestation_message + ac
         # log("MTR: attestation_tbs=" + attestation_tbs.tohex(), 4)
 
-        var attestation_signature = crypto.EC_P256().ecdsa_sign_sha256(matter.DAC_Priv_FFF1_8000(), attestation_tbs)
+        var attestation_signature = crypto.EC_P256().ecdsa_sign_sha256(matter.Certs.DAC_Priv_FFF1_8000, attestation_tbs)
 
         # create AttestationResponse
         # 0=AttestationElements (octstr max 900 bytes)
@@ -1069,7 +1069,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # sign with attestation challenge
         var nocsr_tbs = nocsr_elements_message + session.get_ac()
         # log("MTR: nocsr_tbs=" + nocsr_tbs.tohex(), 4)
-        var attestation_signature = crypto.EC_P256().ecdsa_sign_sha256(matter.DAC_Priv_FFF1_8000(), nocsr_tbs)
+        var attestation_signature = crypto.EC_P256().ecdsa_sign_sha256(matter.Certs.DAC_Priv_FFF1_8000, nocsr_tbs)
         
         # create CSRResponse
         # 0=NOCSRElements (octstr max 900 bytes)

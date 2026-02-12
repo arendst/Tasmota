@@ -239,7 +239,7 @@ void EthernetInit(void) {
 
   if (eth_uses_spi) {
     // Uses SPI Ethernet and needs at least SPI CS being ETH MDC
-    if (!PinUsed(GPIO_ETH_PHY_MDC)) {
+    if (!PinUsed(GPIO_ETH_PHY_MDC, GPIO_ANY)) {
 #ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC as SPI CS GPIO defined"));
 #endif // FIRMWARE_MINIMAL
@@ -247,7 +247,7 @@ void EthernetInit(void) {
     }
   } else {
     // Native ESP32
-    if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
+    if (!PinUsed(GPIO_ETH_PHY_MDC, GPIO_ANY) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
 #ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
 #endif // FIRMWARE_MINIMAL
@@ -262,9 +262,10 @@ void EthernetInit(void) {
 
   WiFi.onEvent(EthernetEvent);
 
-  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);       // Ethernet SPI CS (chip select)
-  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);     // Ethernet SPI IRQ
-  int eth_power = Pin(GPIO_ETH_PHY_POWER);   // Ethernet SPI RST
+  int eth_mdc = Pin(GPIO_ETH_PHY_MDC, GPIO_ANY);  // Ethernet SPI CS (chip select)
+  uint32_t spi_bus = GetPin(eth_mdc) - AGPIO(GPIO_ETH_PHY_MDC); // 0 or 1
+  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);          // Ethernet SPI IRQ
+  int eth_power = Pin(GPIO_ETH_PHY_POWER);        // Ethernet SPI RST
 
 #ifdef USE_IPV6
   ETH.enableIPv6();   // enable Link-Local
@@ -282,8 +283,16 @@ void EthernetInit(void) {
   } else {
     // ETH_SPI_SUPPORTS_CUSTOM
     // SPISettings(ETH_PHY_SPI_FREQ_MHZ * 1000 * 1000, MSBFIRST, SPI_MODE0);  // 20MHz
+/*
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
     init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
+*/
+#if CONFIG_SOC_SPI_PERIPH_NUM > 2 
+    if ((1 == spi_bus) && TasmotaGlobal.spi_enabled2)
+      init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI3_HOST, Pin(GPIO_SPI_CLK, 1), Pin(GPIO_SPI_MISO, 1), Pin(GPIO_SPI_MOSI, 1), ETH_PHY_SPI_FREQ_MHZ));
+    else
+#endif
+      init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI2_HOST, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), ETH_PHY_SPI_FREQ_MHZ));
   }
   if (!init_ok) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType %i or init error"),eth_type);
