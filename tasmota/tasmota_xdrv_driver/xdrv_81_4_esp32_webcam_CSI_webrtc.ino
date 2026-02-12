@@ -420,9 +420,9 @@ void WcInitDTLS(void) {
   if (WebRTC->ice_ufrag[0] == 0) {
     snprintf(WebRTC->ice_ufrag, sizeof(WebRTC->ice_ufrag), "%08X", esp_random());
     snprintf(WebRTC->ice_pwd, sizeof(WebRTC->ice_pwd), "%08X%08X%08X%08X", esp_random(), esp_random(), esp_random(), esp_random());
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Generated ICE credentials ufrag=%s pwd=%s"), WebRTC->ice_ufrag, WebRTC->ice_pwd);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Generated ICE credentials ufrag=%s pwd=%s"), WebRTC->ice_ufrag, WebRTC->ice_pwd);
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Reusing ICE credentials ufrag=%s pwd=%s"), WebRTC->ice_ufrag, WebRTC->ice_pwd);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Reusing ICE credentials ufrag=%s pwd=%s"), WebRTC->ice_ufrag, WebRTC->ice_pwd);
   }
   WebRTC->ice_lite = true;
 
@@ -493,10 +493,10 @@ void wc_hex_dump(const char* label, const uint8_t* data, size_t len) {
     for (size_t j = 0; j < 16 && (i + j) < len; j++) {
       offset += snprintf(hex_str + offset, sizeof(hex_str) - offset, "%02X ", data[i + j]);
     }
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: %s [%04d]: %s"), label, i, hex_str);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: %s [%04d]: %s"), label, i, hex_str);
   }
   if (len > 64) {
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: %s ... (%d more bytes)"), label, len - 64);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: %s ... (%d more bytes)"), label, len - 64);
   }
 }
 
@@ -559,7 +559,7 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
     return;
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Valid STUN Binding Request from %s:%d"), remIP.toString().c_str(), remPort);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Valid STUN Binding Request from %s:%d"), remIP.toString().c_str(), remPort);
   
   // Hex dump the request
   wc_hex_dump("STUN-REQ", msg, len);
@@ -573,9 +573,9 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
     char username_str[129];
     memcpy(username_str, req_username, req_username_len);
     username_str[req_username_len] = 0;
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Request USERNAME='%s' (len=%d)"), username_str, req_username_len);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Request USERNAME='%s' (len=%d)"), username_str, req_username_len);
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Request has no USERNAME attribute"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Request has no USERNAME attribute"));
   }
   
   // Parse PRIORITY (for debugging)
@@ -583,31 +583,31 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
   uint16_t priority_len = 0;
   if (wc_stun_find_attribute(msg, len, 0x0024, &priority_val, &priority_len) && priority_len == 4) {
     uint32_t priority = get_be16(priority_val) << 16 | get_be16(priority_val + 2);
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Request PRIORITY=%u"), priority);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Request PRIORITY=%u"), priority);
   }
   
   // Parse ICE-CONTROLLING / ICE-CONTROLLED
   const uint8_t* ice_controlling = NULL;
   uint16_t ice_controlling_len = 0;
   if (wc_stun_find_attribute(msg, len, 0x802A, &ice_controlling, &ice_controlling_len)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Request has ICE-CONTROLLING"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Request has ICE-CONTROLLING"));
   }
   const uint8_t* ice_controlled = NULL;
   uint16_t ice_controlled_len = 0;
   if (wc_stun_find_attribute(msg, len, 0x8029, &ice_controlled, &ice_controlled_len)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Request has ICE-CONTROLLED"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Request has ICE-CONTROLLED"));
   }
   
   // Latch Remote IP/Port (Critical for ICE-Lite)
   if (WebRTC->remote_port == 0) {
     WebRTC->remote_ip = remIP;
     WebRTC->remote_port = remPort;
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Latching remote peer %s:%d"), remIP.toString().c_str(), remPort);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Latching remote peer %s:%d"), remIP.toString().c_str(), remPort);
   } else if (remPort != WebRTC->remote_port || remIP != WebRTC->remote_ip) {
     // ICE restart or new candidate? Update latch.
     WebRTC->remote_ip = remIP;
     WebRTC->remote_port = remPort;
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Updated remote peer %s:%d"), remIP.toString().c_str(), remPort);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Updated remote peer %s:%d"), remIP.toString().c_str(), remPort);
   }
   
   // 2. Prepare Response Buffer (NO USERNAME - RFC 5389)
@@ -640,7 +640,7 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
   resp[pos++] = remIP[2] ^ 0xA4;
   resp[pos++] = remIP[3] ^ 0x42;
   
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: XOR-MAPPED-ADDRESS added (no USERNAME per RFC 5389)"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: XOR-MAPPED-ADDRESS added (no USERNAME per RFC 5389)"));
   
   // 4. Add MESSAGE-INTEGRITY (Type 0x0008)
   // RFC 5389 §15.4: HMAC-SHA1 over header+attrs BEFORE MI, with length
@@ -653,7 +653,7 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
 
   int hmac_input_len = pos; // bytes BEFORE MI attribute
 
-  AddLog(LOG_LEVEL_INFO,
+  AddLog(LOG_LEVEL_DEBUG,
          PSTR("WebRTC: HMAC input length=%d, using LOCAL password='%s'"),
          hmac_input_len, WebRTC->ice_pwd);
 
@@ -698,7 +698,7 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
   WebRTC_udp.write(resp, pos);
   int sent = WebRTC_udp.endPacket();
   
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Sent STUN Binding Response (%d bytes) to %s:%d, result=%d"), 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Sent STUN Binding Response (%d bytes) to %s:%d, result=%d"), 
       pos, remIP.toString().c_str(), remPort, sent);
 }
 
@@ -914,7 +914,7 @@ static bool dtls_send_server_flight(void) {
   WebRTC->last_flight_len = fpos;
 
   dtls_send_raw(flight, fpos);
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Sent server flight (%d bytes, SH+Cert+SKE+SHD)"), fpos);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Sent server flight (%d bytes, SH+Cert+SKE+SHD)"), fpos);
   return true;
 }
 
@@ -966,7 +966,7 @@ static bool dtls_derive_keys(const uint8_t *premaster, size_t pm_len) {
               (const br_block_ctr_class **)&WebRTC->gcm_dec_aes,
               br_ghash_ctmul32);
 
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: TLS key block derived (EMS)"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: TLS key block derived (EMS)"));
   return true;
 }
 
@@ -994,7 +994,7 @@ static bool dtls_verify_client_finished(const uint8_t* verify_data, size_t vd_le
     return false;
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Client Finished verified OK"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Client Finished verified OK"));
   return true;
 }
 
@@ -1043,7 +1043,7 @@ static bool dtls_send_server_ccs_finished(void) {
   WebRTC->last_flight_len = fpos;
 
   dtls_send_raw(flight, fpos);
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Sent server CCS + Finished"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Sent server CCS + Finished"));
   return true;
 }
 
@@ -1083,7 +1083,7 @@ static void dtls_export_srtp_keys(void) {
     tracks[i]->packet_index = 0;
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: SRTP keys exported"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: SRTP keys exported"));
 }
 
 /*********************************************************************************************/
@@ -1203,7 +1203,7 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
           dtls_send_hello_verify(WebRTC->client_random, WebRTC->remote_ip, WebRTC->remote_port);
           WebRTC->hs_state = DTLS_HS_WAIT_CH_COOKIE;
           WebRTC->state = WEBRTC_DTLS_HANDSHAKING;
-          AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: CH received, sent HVR"));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: CH received, sent HVR"));
         }
         break;
 
@@ -1229,7 +1229,7 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
             // while we are already in WAIT_CH_COOKIE. Re-send the *same*
             // HelloVerifyRequest (same msg_seq / seq_out) instead of
             // generating a fresh one.
-            AddLog(LOG_LEVEL_INFO,
+            AddLog(LOG_LEVEL_DEBUG,
                   PSTR("WebRTC: Retransmit CH without cookie in WAIT_CH_COOKIE, re-sending previous HVR"));
             if (WebRTC->last_flight_len > 0) {
               dtls_send_raw(WebRTC->last_flight, WebRTC->last_flight_len);
@@ -1253,7 +1253,7 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
           WebRTC->client_ke_done  = false;
           WebRTC->client_ccs_done = false;
 
-          AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Cookie OK, seq_out=%d srv_msg_seq=%d"),
+          AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Cookie OK, seq_out=%d srv_msg_seq=%d"),
                 (int)WebRTC->seq_out, WebRTC->srv_msg_seq);
 
           if (!dtls_send_server_flight()) {
@@ -1268,7 +1268,7 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
 
       case DTLS_HS_WAIT_CLIENT_FLIGHT:
         if (hs_type == DTLS_HT_CLIENT_HELLO) {
-          AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Retransmit CH in WAIT_CLIENT_FLIGHT, resending server flight (%d bytes)"),
+          AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Retransmit CH in WAIT_CLIENT_FLIGHT, resending server flight (%d bytes)"),
               WebRTC->last_flight_len);
           dtls_send_raw(WebRTC->last_flight, WebRTC->last_flight_len);
           break;
@@ -1302,7 +1302,7 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
           if (!dtls_derive_keys(premaster, xoff_len)) break;
 
           WebRTC->client_ke_done = true;
-          AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: ClientKeyExchange processed"));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: ClientKeyExchange processed"));
         }
         break;
 
@@ -1333,9 +1333,9 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
         WebRTC->state = WEBRTC_STREAMING;
         WebRTC->video.active = true;
         WebRTC->audio.active = true;
-        AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: DTLS-SRTP established, streaming!"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: DTLS-SRTP established, streaming!"));
       } else {
-        AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: DTLS done but no SRTP profile agreed"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: DTLS done but no SRTP profile agreed"));
       }
       AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: DTLS HANDSHAKE COMPLETE"));
     }
@@ -1359,7 +1359,7 @@ void HandleWebRTCDTLS(void) {
   IPAddress fromIP = WebRTC_udp.remoteIP();
   uint16_t fromPort = WebRTC_udp.remotePort();
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: UDP pkt %d bytes from %s:%d [%02X %02X %02X %02X]"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: UDP pkt %d bytes from %s:%d [%02X %02X %02X %02X]"),
          rlen, fromIP.toString().c_str(), fromPort,
          rlen > 0 ? tmp[0] : 0, rlen > 1 ? tmp[1] : 0,
          rlen > 2 ? tmp[2] : 0, rlen > 3 ? tmp[3] : 0);
@@ -1401,7 +1401,7 @@ void HandleWebRTCDTLS(void) {
       break;
     }
 
-    AddLog(LOG_LEVEL_INFO,
+    AddLog(LOG_LEVEL_DEBUG,
            PSTR("WebRTC: Record type=%d epoch=%d len=%d offset=%d state=%d"),
            content_type, epoch, record_len, offset, WebRTC->hs_state);
 
@@ -1427,7 +1427,7 @@ void HandleWebRTCDTLS(void) {
       if (epoch == 0 && WebRTC->hs_state == DTLS_HS_WAIT_CLIENT_FLIGHT) {
         WebRTC->epoch_in        = 1;
         WebRTC->client_ccs_done = true;
-        AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Client CCS received, epoch_in=1"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Client CCS received, epoch_in=1"));
       } else {
         AddLog(LOG_LEVEL_DEBUG,
                PSTR("WebRTC: Ignoring CCS (epoch=%d hs_state=%d)"),
@@ -1474,7 +1474,7 @@ void HandshakeTask(void *pvParameters) {
   if (!WebRTC->udp_ready) {
     if (WebRTC_udp.begin(WEBRTC_DTLS_PORT)) {
       WebRTC->udp_ready = true;
-      AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: UDP bound port %d (from task)"), WEBRTC_DTLS_PORT);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: UDP bound port %d (from task)"), WEBRTC_DTLS_PORT);
     } else {
       AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: UDP bind FAILED on port %d"), WEBRTC_DTLS_PORT);
     }
@@ -1483,7 +1483,7 @@ void HandshakeTask(void *pvParameters) {
   while (true) {
     if (WebRTC && WebRTC->state >= WEBRTC_SIG_SENT_ANSWER && WebRTC->state < WEBRTC_STREAMING) {
       if (millis() - last_diag > 3000) {
-        AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Waiting STUN/DTLS (state=%d hs=%d udp=%d)"),
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Waiting STUN/DTLS (state=%d hs=%d udp=%d)"),
             WebRTC->state, WebRTC->hs_state, WebRTC->udp_ready);
         last_diag = millis();
       }
@@ -1543,7 +1543,7 @@ void WcParseSDP(const char* sdp) {
         const char* fmtp = strstr(sdp, fmtp_search);
         if (fmtp && strstr(fmtp, "packetization-mode=1")) {
           WebRTC->video.payload_type = (uint8_t)pt;
-          AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Found H264 PT=%d (packetization-mode=1)"), pt);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Found H264 PT=%d (packetization-mode=1)"), pt);
           break;
         }
         // Accept without fmtp check if no packetization-mode=1 found yet
@@ -1555,7 +1555,7 @@ void WcParseSDP(const char* sdp) {
   }
 
   WebRTC->state = WEBRTC_SIG_HAVE_OFFER;
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Parsed SDP, remote ufrag=%s H264_PT=%d"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Parsed SDP, remote ufrag=%s H264_PT=%d"),
          WebRTC->rem_ufrag, WebRTC->video.payload_type);
 }
 
@@ -1627,7 +1627,7 @@ void WcGenerateAnswer(void) {
     wc_base64_encode(Wc.h264.sps_buffer, Wc.h264.sps_len, sps_base64, sizeof(sps_base64));
     wc_base64_encode(Wc.h264.pps_buffer, Wc.h264.pps_len, pps_base64, sizeof(pps_base64));
     
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Including SPS/PPS in SDP (SPS:%d->%d chars, PPS:%d->%d chars)"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Including SPS/PPS in SDP (SPS:%d->%d chars, PPS:%d->%d chars)"),
            Wc.h264.sps_len, strlen(sps_base64), Wc.h264.pps_len, strlen(pps_base64));
     
     // Derive profile-level-id from actual SPS bytes instead of hardcoding
@@ -1696,11 +1696,11 @@ void WcGenerateAnswer(void) {
   WebRTC->client_ke_done = false;
   WebRTC->client_ccs_done = false;
 
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: SDP Answer sent"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: SDP Answer sent"));
 }
 
 void HandleWebRTCOffer(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Got Offer"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Got Offer"));
 
   if (!WebRTC) WcInitDTLS();
   if (!WebRTC) { Webserver->send(500, PSTR("text/plain"), PSTR("Init Failed")); return; }
@@ -1850,7 +1850,7 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
       // ESP32 doesn't support %llu properly, split 64-bit into two 32-bit parts
       uint32_t pkt_idx_high = (uint32_t)(pkt_idx >> 32);
       uint32_t pkt_idx_low = (uint32_t)(pkt_idx & 0xFFFFFFFF);
-      AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: SRTP sent seq=%u ts=%u len=%d to %s:%d (pkt=%u:%u)"),
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: SRTP sent seq=%u ts=%u len=%d to %s:%d (pkt=%u:%u)"),
              track->seq, track->timestamp, len, 
              WebRTC->remote_ip.toString().c_str(), WebRTC->remote_port,
              pkt_idx_high, pkt_idx_low);
@@ -1934,7 +1934,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
     size_t payload_cap = SRTP_MAX_PAYLOAD - 2;
     uint8_t fragment_count = 0;
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Fragmenting NAL %d bytes into FU-A"), nal_len);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: Fragmenting NAL %d bytes into FU-A"), nal_len);
 
     while (offset < nal_len) {
       size_t chunk = nal_len - offset;
@@ -1961,7 +1961,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
     }
     
     if (fragment_count > 0) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: NAL fragmented into %d packets"), fragment_count);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: NAL fragmented into %d packets"), fragment_count);
     }
   }
 }
@@ -1989,7 +1989,7 @@ void WcSendSrtpVideo(uint8_t* data, size_t len) {
   
   uint32_t now = millis();
   if (now - last_log_time >= 5000) { // Log every 5 seconds
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Video frame %u: %u bytes, ts=%u, seq=%u, fps=%u"),
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Video frame %u: %u bytes, ts=%u, seq=%u, fps=%u"),
            frame_count, len, WebRTC->video.timestamp, WebRTC->video.seq, Wc.core.config.fps);
     last_log_time = now;
   }
@@ -2133,11 +2133,11 @@ void WebRTCProcessingTask(void *pvParameters) {
           bool is_idr = (out_frame.frame_type == ESP_H264_FRAME_TYPE_IDR ||
                          out_frame.frame_type == ESP_H264_FRAME_TYPE_I);
           if (!is_idr) {
-            AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Discarding stale P-frame after DTLS connect"));
+            AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Discarding stale P-frame after DTLS connect"));
             continue;  // skip this frame, wait for IDR
           }
           was_streaming = true;
-          AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: First IDR after DTLS connect, starting stream"));
+          AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: First IDR after DTLS connect, starting stream"));
         }
         WcSendSrtpVideo(out_frame.raw_data.buffer, out_frame.length);
       } else {
@@ -2161,7 +2161,7 @@ void WebRTCProcessingTask(void *pvParameters) {
     }
 
     if (millis() - last_profile_log >= 5000) {
-      AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Encode:%uus Size:%u FPS:%u State:%d VidActive:%d"),
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Encode:%uus Size:%u FPS:%u State:%d VidActive:%d"),
         encode_time,
         out_frame.length,
         WcStats.last_fps,
@@ -2171,7 +2171,7 @@ void WebRTCProcessingTask(void *pvParameters) {
     }
   }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Processing task exited"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Processing task exited"));
   Wc.core.cam_task_handle = NULL;
   vTaskDelete(NULL);
 }
@@ -2182,7 +2182,7 @@ void WebRTCProcessingTask(void *pvParameters) {
 
 void WcWebRTCStop(void) {
   if (!WebRTC) return;
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Stopping"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Stopping"));
 
   if (WebRTC->handshake_task) {
     vTaskDelete(WebRTC->handshake_task);
@@ -2204,11 +2204,11 @@ void WcWebRTCStop(void) {
 
   free(WebRTC);
   WebRTC = NULL;
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Stopped"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Stopped"));
 }
 
 uint32_t WcSetupWebRTC(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Setup Start"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Setup Start"));
 
   if (WebRTC == NULL) {
     WebRTC = (WebRTC_State_t*)calloc(1, sizeof(WebRTC_State_t));
@@ -2218,7 +2218,7 @@ uint32_t WcSetupWebRTC(void) {
     if (!WebRTC->mutex) WebRTC->mutex = xSemaphoreCreateMutex();
     WebServer_on(PSTR("/webrtc/offer"), HandleWebRTCOffer);
     WcInitDTLS();
-    AddLog(LOG_LEVEL_INFO, PSTR("WebRTC: Setup Complete"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Setup Complete"));
   }
   return 1;
 }
