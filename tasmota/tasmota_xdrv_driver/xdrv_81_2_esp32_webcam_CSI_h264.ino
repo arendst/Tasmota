@@ -411,6 +411,90 @@ uint32_t WcSetupH264Encoder(void) {
     return 0;
   }
   
+  // --- SPS/PPS Probe: Force-encode one black frame to extract headers ---
+  // ESP32-P4 hardware encoder may not generate SPS/PPS in every frame
+  // We need to capture them once for WebRTC SDP negotiation
+  AddLog(LOG_LEVEL_INFO, PSTR("H264: Probing for SPS/PPS headers"));
+  
+  // Initialize SPS/PPS storage
+  Wc.h264.sps_len = 0;
+  Wc.h264.pps_len = 0;
+  Wc.h264.sps_pps_captured = false;
+  
+  // 1. Allocate a temporary black frame (O_UYY_E_VYY format size = 1.5 * w * h)
+  size_t frame_size = width * height * 3 / 2;
+  uint8_t *dummy_buf = (uint8_t*)heap_caps_malloc(frame_size, MALLOC_CAP_SPIRAM);
+  if (dummy_buf) {
+    memset(dummy_buf, 128, frame_size); // Grayish/Black (Y=128, U=128, V=128)
+    
+    esp_h264_enc_in_frame_t in_f = { .raw_data = { .buffer = dummy_buf, .len = frame_size } };
+    esp_h264_enc_out_frame_t out_f = { .raw_data = { .buffer = Wc.h264.out_buffer, .len = Wc.h264.out_buffer_size } };
+    
+    // 2. Encode one frame to extract headers
+    esp_h264_err_t ret = esp_h264_enc_process(Wc.h264.handle, &in_f, &out_f);
+    
+    if (ret == ESP_H264_ERR_OK && out_f.length > 0) {
+      // 3. Scan for SPS (type 7) and PPS (type 8)
+      uint8_t *p = out_f.raw_data.buffer;
+      uint32_t len = out_f.length;
+      
+      // Simple NAL scanner
+      for (uint32_t i = 0; i < len - 4; i++) {
+        if (p[i] == 0 && p[i+1] == 0 && p[i+2] == 0 && p[i+3] == 1) {
+          uint8_t type = p[i+4] & 0x1F;
+          if (type == 7) { // SPS
+            // Find next start code to determine SPS length
+            uint32_t sps_start = i + 4;
+            uint32_t sps_end = len;
+            for (uint32_t j = i + 4; j < len - 3; j++) {
+              if (p[j] == 0 && p[j+1] == 0 && p[j+2] == 0 && p[j+3] == 1) {
+                sps_end = j;
+                break;
+              }
+            }
+            uint32_t sps_length = sps_end - sps_start;
+            if (sps_length > 0 && sps_length <= sizeof(Wc.h264.sps_buffer)) {
+              memcpy(Wc.h264.sps_buffer, p + sps_start, sps_length);
+              Wc.h264.sps_len = sps_length;
+              AddLog(LOG_LEVEL_INFO, PSTR("🎯 H264: Captured SPS (%d bytes) from HW Encoder!"), sps_length);
+            }
+          } else if (type == 8) { // PPS
+            // Find next start code to determine PPS length
+            uint32_t pps_start = i + 4;
+            uint32_t pps_end = len;
+            for (uint32_t j = i + 4; j < len - 3; j++) {
+              if (p[j] == 0 && p[j+1] == 0 && p[j+2] == 0 && p[j+3] == 1) {
+                pps_end = j;
+                break;
+              }
+            }
+            uint32_t pps_length = pps_end - pps_start;
+            if (pps_length > 0 && pps_length <= sizeof(Wc.h264.pps_buffer)) {
+              memcpy(Wc.h264.pps_buffer, p + pps_start, pps_length);
+              Wc.h264.pps_len = pps_length;
+              AddLog(LOG_LEVEL_INFO, PSTR("🎯 H264: Captured PPS (%d bytes) from HW Encoder!"), pps_length);
+            }
+          }
+        }
+      }
+      
+      // Check if we captured both SPS and PPS
+      if (Wc.h264.sps_len > 0 && Wc.h264.pps_len > 0) {
+        Wc.h264.sps_pps_captured = true;
+        AddLog(LOG_LEVEL_INFO, PSTR("H264: Successfully captured SPS/PPS headers for WebRTC"));
+      } else {
+        AddLog(LOG_LEVEL_ERROR, PSTR("H264: Could not capture SPS/PPS headers from probe frame"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("H264: WebRTC may fail without SPS/PPS in SDP"));
+      }
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("H264: Probe frame encode failed (ret=0x%x, len=%d)"), ret, out_f.length);
+    }
+    free(dummy_buf);
+  } else {
+    AddLog(LOG_LEVEL_ERROR, PSTR("H264: Could not allocate probe buffer (%d bytes)"), frame_size);
+  }
+  // -------------------------------------------------------------------
+  
   // Start Servers for H264 Session (Multicast)
   if (!Wc.rtsp.server) { 
       Wc.rtsp.server = new WiFiServer(554); 

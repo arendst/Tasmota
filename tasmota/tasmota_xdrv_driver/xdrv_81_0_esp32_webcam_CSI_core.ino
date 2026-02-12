@@ -142,6 +142,12 @@ struct {
     size_t out_buffer_size;
     uint32_t motion_val;      // Current rolling average (0-100+)
     uint32_t motion_raw;      // Raw P-frame size (debug)
+    // SPS/PPS storage for WebRTC
+    uint8_t sps_buffer[512];
+    size_t sps_len;
+    uint8_t pps_buffer[256];
+    size_t pps_len;
+    bool sps_pps_captured;
   } h264;
   
   // --- 4. RTP Protocol (POD) ---
@@ -291,7 +297,7 @@ uint32_t WcInitPipeline() {
   Wc.core.read_idx = 1;
 
   // 2. Configure CSI
-  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422; // Very sadly JPEG encoder does not support YUV420 on early P4 chips!!!!
+  cam_ctlr_color_t csi_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS || Wc.core.session_type == SESSION_WEBRTC) ? CAM_CTLR_COLOR_YUV420 : CAM_CTLR_COLOR_YUV422; // H.264 requires YUV420, JPEG needs YUV422 on early P4 chips
   
   esp_cam_ctlr_csi_config_t csi_config = {
     .ctlr_id = 0,
@@ -318,7 +324,7 @@ uint32_t WcInitPipeline() {
     Wc.core.isp_handle = tasmota_wc_isp_handle;
     esp_isp_enable(Wc.core.isp_handle);
   } else {
-    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
+    isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS || Wc.core.session_type == SESSION_WEBRTC) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 120 * 1000 * 1000,
       .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
@@ -467,19 +473,30 @@ uint32_t WcSetup(bool reset_config) {
   // 5. Create processing task based on session type
   TaskFunction_t task_func;
   const char *task_name;
+  void WebRTCProcessingTask(void *pvParameters);
   
   if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
     task_func = MjpegProcessingTask;
     task_name = "MjpegTask";
-  } else {
+  } else if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
     task_func = H264ProcessingTask;
     task_name = "H264Task";
+  } else if (Wc.core.session_type == SESSION_WEBRTC) {
+    // 1. Initialize H.264 Encoder Hardware (Reused from File 2)
+    if (!WcSetupH264Encoder()) return 0;
+    
+    // 2. Initialize WebRTC specific structs/DTLS (File 4)
+    if (!WcSetupWebRTC()) return 0;
+
+    // 3. Set Task
+    task_func = WebRTCProcessingTask;
+    task_name = "WebRTCTask";
   }
   
   BaseType_t task_created = xTaskCreatePinnedToCore(
     task_func,
     task_name,
-    8192, // 8KB Stack
+    16000, // 8KB Stack
     NULL,
     5,
     &Wc.core.cam_task_handle,
@@ -625,6 +642,9 @@ uint32_t WcStop(void) {
   // 7. Stop RTSP server and close client
   WcRtspStop();
   
+  // 7b. Stop WebRTC (UDP, DTLS task, state)
+  WcWebRTCStop();
+  
   // 8. Delete mutexes
   if (Wc.core.frame_mutex) {
     vSemaphoreDelete(Wc.core.frame_mutex);
@@ -763,6 +783,8 @@ void WcLoop(void) {
   if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
     HandleRtsp();
   }
+
+  // WebRTC DTLS is handled by dedicated HandshakeTask (file 4) - no call here
 
   // MJPEG HTTP server (port 81) must ONLY run in MJPEG session
   if (Wc.core.state == CAM_STREAMING) {

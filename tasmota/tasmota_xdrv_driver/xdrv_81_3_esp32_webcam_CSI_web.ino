@@ -49,9 +49,89 @@ void WcShowStream(void) {
   }
 
   // ---- Session 2: H.264 (WebCodecs Canvas) ----
-  if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
+  else if (Wc.core.session_type == SESSION_RTSP_AND_WS) {
     // Dispatch to H.264 module to inject the player
     WcH264SendUi(); // Using global Wc.core.config inside
+    return;
+  }
+
+  // ---- Session 3: WebRTC ----
+  else if (Wc.core.session_type == SESSION_WEBRTC) {
+    WSContentSend_P(PSTR(
+      "<div><video id='wc_vid' autoplay muted playsinline style='width:100%;background:#000'></video></div>"
+      "<div id='wc_dbg' style='font-family:monospace;font-size:10px;margin-top:5px'></div>"
+      "<script>"
+      "const dbg=s=>document.getElementById('wc_dbg').innerHTML+=s+'<br>';"
+      "const rpc = new RTCPeerConnection({"
+      "  iceServers: []," // LAN only, no STUN needed
+      "  sdpSemantics: 'unified-plan'"
+      "});"
+      
+      "rpc.ontrack = function(evt) {"
+      "  dbg('ontrack: '+evt.track.kind+' streams='+evt.streams.length);"
+      "  var v=document.getElementById('wc_vid');"
+      "  if(evt.streams&&evt.streams[0]){"
+      "    v.srcObject=evt.streams[0];"
+      "  }else if(!v.srcObject){"
+      "    var ms=new MediaStream();"
+      "    ms.addTrack(evt.track);"
+      "    v.srcObject=ms;"
+      "  }else{"
+      "    v.srcObject.addTrack(evt.track);"
+      "  }"
+      "};"
+      
+      "rpc.onicecandidate = function(evt) {"
+      "  if(evt.candidate){"
+      "    dbg('ICE candidate: '+evt.candidate.candidate);"
+      "  }else{"
+      "    dbg('ICE gathering complete');"
+      "  }"
+      "};"
+      
+      "rpc.oniceconnectionstatechange=()=>{"
+      "  dbg('ICE state: '+rpc.iceConnectionState);"
+      "  document.title='ICE:'+rpc.iceConnectionState;"
+      "};"
+      
+      "rpc.onicegatheringstatechange=()=>{"
+      "  dbg('ICE gathering: '+rpc.iceGatheringState);"
+      "};"
+      
+      "rpc.onsignalingstatechange=()=>{"
+      "  dbg('Signaling: '+rpc.signalingState);"
+      "};"
+      
+      "rpc.addTransceiver('video', {direction: 'recvonly'});"
+      "rpc.addTransceiver('audio', {direction: 'recvonly'});"
+      
+      "dbg('Creating offer...');"
+      "rpc.createOffer().then(offer=>{"
+      "  dbg('Offer created, setting local desc');"
+      "  return rpc.setLocalDescription(offer);"
+      "}).then(()=>{"
+      "  dbg('Sending offer to server');"
+      "  return fetch('/webrtc/offer',{"
+      "    method:'POST',"
+      "    headers:{'Content-Type':'text/plain'},"
+      "    body:rpc.localDescription.sdp"
+      "  });"
+      "}).then(r=>r.text())"
+      ".then(sdp=>{"
+      "  dbg('Got answer, setting remote desc');"
+      "  console.log('Answer SDP:',sdp);"
+      "  return rpc.setRemoteDescription({type:'answer',sdp:sdp});"
+      "}).then(()=>{"
+      "  dbg('Remote desc set OK');"
+      "  console.log('Remote desc set OK');"
+      "})"
+      ".catch(e=>{"
+      "  dbg('ERROR: '+e.message);"
+      "  document.title='ERR:'+e.message;"
+      "  console.error(e);"
+      "});"
+      "</script>"
+    ));
     return;
   }
 }
@@ -400,7 +480,7 @@ void CmndWcQuality(void) {
 }
 
 void CmndWcSession(void) {
-  // Session types: 0=None, 1=MJPEG, 2=RTSP
+  // Session types: 0=None, 1=MJPEG, 2=RTSP, 3=WebRTC
   const char* session_names[] = {"None", "MJPEG", "RTSP", "WebRTC", "DSI"};
 
   // Query current session type
@@ -413,7 +493,7 @@ void CmndWcSession(void) {
   }
 
   // Validate session type
-  if (XdrvMailbox.payload > 4) {
+  if (XdrvMailbox.payload > 3) {
     ResponseCmndFailed();
     return;
   }
@@ -427,7 +507,7 @@ void CmndWcSession(void) {
   }
   
   // Implemented Checks
-  if (new_type > 2) {
+  if (new_type > 3) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Session type %d not yet implemented"), new_type);
     Response_P(PSTR("{\"WcSession\":{\"Error\":\"Not implemented\",\"Requested\":%d}}"), new_type);
     return;
