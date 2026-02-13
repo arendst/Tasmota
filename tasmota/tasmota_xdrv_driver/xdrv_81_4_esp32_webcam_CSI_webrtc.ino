@@ -40,10 +40,6 @@
 #define SRTP_LABEL_AUTH       0x01
 #define SRTP_LABEL_SALT       0x02
 
-// Record-layer version — must match negotiated DTLS 1.2
-#define DTLS_REC_VERSION   0xFEFD  // DTLS 1.2
-
-// Protocol version in ClientHello/ServerHello
 #define DTLS_PROTO_VERSION 0xFEFD  // DTLS 1.2
 #define DTLS_CT_CCS           20
 #define DTLS_CT_ALERT         21
@@ -141,10 +137,8 @@ struct WebRTC_State_t {
   uint16_t epoch_out;
   uint64_t seq_out;
 
-  uint8_t cert_key_data[32];
   br_ec_private_key cert_sk;
-  uint8_t* cert_data;
-  size_t cert_len;
+  uint8_t cert_key_ram[32];  // Private key copied from PROGMEM for BearSSL
 
   uint8_t ecdhe_priv[32];
   br_ec_private_key ecdhe_sk;
@@ -267,7 +261,7 @@ static inline uint32_t get_be24(const uint8_t* p) { return ((uint32_t)p[0] << 16
 
 static size_t dtls_build_record_header(uint8_t* buf, uint8_t ct, uint16_t epoch, uint64_t seq, uint16_t payload_len) {
   buf[0] = ct;
-  put_be16(buf + 1, DTLS_REC_VERSION);
+  put_be16(buf + 1, DTLS_PROTO_VERSION);
   put_be16(buf + 3, epoch);
   put_be48(buf + 5, seq);
   put_be16(buf + 11, payload_len);
@@ -316,7 +310,7 @@ static bool dtls_encrypt_record(uint8_t* out, size_t* out_len, uint8_t ct,
   put_be16(aad, epoch);
   put_be48(aad + 2, seq);
   aad[8] = ct;
-  put_be16(aad + 9, DTLS_REC_VERSION);
+  put_be16(aad + 9, DTLS_PROTO_VERSION);
   put_be16(aad + 11, (uint16_t)pt_len);
 
   uint16_t rec_payload_len = GCM_EXPLICIT_IV_LEN + pt_len + GCM_TAG_LEN;
@@ -406,16 +400,6 @@ void WcInitDTLS(void) {
 
   if (WebRTC->handshake_task) { vTaskDelete(WebRTC->handshake_task); WebRTC->handshake_task = NULL; }
 
-  if (WebRTC->cert_data == NULL) {
-    WebRTC->cert_data = (uint8_t*)malloc(sizeof(WEBRTC_CERT_DER));
-    if (!WebRTC->cert_data) {
-      if (WebRTC->mutex) xSemaphoreGive(WebRTC->mutex);
-      return;
-    }
-    memcpy_P(WebRTC->cert_data, WEBRTC_CERT_DER, sizeof(WEBRTC_CERT_DER));
-    WebRTC->cert_len = sizeof(WEBRTC_CERT_DER);
-  }
-
   // Generate ICE credentials only once per session
   if (WebRTC->ice_ufrag[0] == 0) {
     snprintf(WebRTC->ice_ufrag, sizeof(WebRTC->ice_ufrag), "%08X", esp_random());
@@ -426,9 +410,12 @@ void WcInitDTLS(void) {
   }
   WebRTC->ice_lite = true;
 
+  // Use PROGMEM certificate - copy to temp buffer for SHA256
   br_sha256_context sha_ctx;
   br_sha256_init(&sha_ctx);
-  br_sha256_update(&sha_ctx, WebRTC->cert_data, WebRTC->cert_len);
+  uint8_t cert_temp[sizeof(WEBRTC_CERT_DER)];
+  memcpy_P(cert_temp, WEBRTC_CERT_DER, sizeof(WEBRTC_CERT_DER));
+  br_sha256_update(&sha_ctx, cert_temp, sizeof(WEBRTC_CERT_DER));
   br_sha256_out(&sha_ctx, WebRTC->fingerprint);
 
   char* ptr = WebRTC->fingerprint_str;
@@ -438,9 +425,10 @@ void WcInitDTLS(void) {
   }
   *ptr = 0;
 
-  memcpy_P(WebRTC->cert_key_data, WEBRTC_KEY_PRIV, 32);
+  // Copy private key from PROGMEM to RAM for BearSSL
+  memcpy_P(WebRTC->cert_key_ram, WEBRTC_KEY_PRIV, 32);
   WebRTC->cert_sk.curve = BR_EC_secp256r1;
-  WebRTC->cert_sk.x = WebRTC->cert_key_data;
+  WebRTC->cert_sk.x = WebRTC->cert_key_ram;
   WebRTC->cert_sk.xlen = 32;
 
   esp_fill_random(WebRTC->cookie_secret, sizeof(WebRTC->cookie_secret));
@@ -829,7 +817,7 @@ static bool dtls_send_server_flight(void) {
 
   // --- Certificate ---
   {
-    uint32_t cert_body_len = 3 + 3 + WebRTC->cert_len;
+    uint32_t cert_body_len = 3 + 3 + sizeof(WEBRTC_CERT_DER);
 
     uint8_t hs_hdr[DTLS_HS_HDR];
     dtls_build_hs_header(hs_hdr, DTLS_HT_CERTIFICATE, cert_body_len, WebRTC->srv_msg_seq++);
@@ -840,9 +828,9 @@ static bool dtls_send_server_flight(void) {
 
     size_t hs_start = fpos;
     memcpy(flight + fpos, hs_hdr, DTLS_HS_HDR); fpos += DTLS_HS_HDR;
-    put_be24(flight + fpos, 3 + WebRTC->cert_len); fpos += 3;
-    put_be24(flight + fpos, WebRTC->cert_len); fpos += 3;
-    memcpy(flight + fpos, WebRTC->cert_data, WebRTC->cert_len); fpos += WebRTC->cert_len;
+    put_be24(flight + fpos, 3 + sizeof(WEBRTC_CERT_DER)); fpos += 3;
+    put_be24(flight + fpos, sizeof(WEBRTC_CERT_DER)); fpos += 3;
+    memcpy_P(flight + fpos, WEBRTC_CERT_DER, sizeof(WEBRTC_CERT_DER)); fpos += sizeof(WEBRTC_CERT_DER);
 
     dtls_hash_hs(flight + hs_start, DTLS_HS_HDR + cert_body_len);
   }
@@ -2191,11 +2179,6 @@ void WcWebRTCStop(void) {
 
   WebRTC_udp.stop();
   WebRTC->udp_ready = false;
-
-  if (WebRTC->cert_data) {
-    free(WebRTC->cert_data);
-    WebRTC->cert_data = NULL;
-  }
 
   if (WebRTC->mutex) {
     vSemaphoreDelete(WebRTC->mutex);
