@@ -170,6 +170,8 @@ struct WebRTC_State_t {
   bool client_ccs_done;
   bool use_srtp_agreed;
 
+  uint32_t session_id;
+
   SemaphoreHandle_t mutex;
   TaskHandle_t handshake_task;
 };
@@ -284,9 +286,11 @@ static void dtls_hash_hs(const uint8_t* hs_hdr_and_body, size_t len) {
 
 static void dtls_send_raw(const uint8_t* data, size_t len) {
   if (!WebRTC || WebRTC->remote_port == 0) return;
+  if (WebRTC->mutex) xSemaphoreTake(WebRTC->mutex, portMAX_DELAY);
   WebRTC_udp.beginPacket(WebRTC->remote_ip, WebRTC->remote_port);
   WebRTC_udp.write(data, len);
   WebRTC_udp.endPacket();
+  if (WebRTC->mutex) xSemaphoreGive(WebRTC->mutex);
 }
 
 /*********************************************************************************************/
@@ -461,6 +465,7 @@ void WcInitDTLS(void) {
   WebRTC->remote_port = 0;
   WebRTC->udp_ready = false;
   WebRTC->state = WEBRTC_IDLE;
+  WebRTC->session_id++;
 
   xTaskCreatePinnedToCore(HandshakeTask, "WcDTLS", 12288, NULL, 5, &WebRTC->handshake_task, 0);
 
@@ -668,7 +673,7 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
   resp[pos++] = 0x80; resp[pos++] = 0x28;
   resp[pos++] = 0x00; resp[pos++] = 0x04;
 
-  // CRC32 over entire message up to (but not including) fingerprint value
+  // CRC32 over message up to (not including) FINGERPRINT attribute (RFC 5389 §15.5)
   uint32_t crc = wc_crc32(resp, pos - 4);
   crc ^= 0x5354554E; // XOR with mask
 
@@ -681,10 +686,12 @@ void WcHandleSTUN(uint8_t* msg, int len, IPAddress remIP, uint16_t remPort) {
   // Hex dump the response
   wc_hex_dump("STUN-RESP", resp, pos);
   
-  // 6. Send
+  // 6. Send (mutex-protected for thread safety with SRTP sender)
+  if (WebRTC->mutex) xSemaphoreTake(WebRTC->mutex, portMAX_DELAY);
   WebRTC_udp.beginPacket(remIP, remPort);
   WebRTC_udp.write(resp, pos);
   int sent = WebRTC_udp.endPacket();
+  if (WebRTC->mutex) xSemaphoreGive(WebRTC->mutex);
   
   AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Sent STUN Binding Response (%d bytes) to %s:%d, result=%d"), 
       pos, remIP.toString().c_str(), remPort, sent);
@@ -801,10 +808,16 @@ static bool dtls_send_server_flight(void) {
 
     put_be16(sh_body + ext_start, bp - ext_start - 2);
 
+    size_t rec_payload = DTLS_HS_HDR + bp;
+    size_t rec_total = DTLS_REC_HDR + rec_payload;
+    if (fpos + rec_total > sizeof(flight)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Server flight overflow at ServerHello"));
+      return false;
+    }
+
     uint8_t hs_hdr[DTLS_HS_HDR];
     dtls_build_hs_header(hs_hdr, DTLS_HT_SERVER_HELLO, bp, WebRTC->srv_msg_seq++);
 
-    size_t rec_payload = DTLS_HS_HDR + bp;
     dtls_build_record_header(flight + fpos, DTLS_CT_HANDSHAKE, 0, WebRTC->seq_out++, rec_payload);
     fpos += DTLS_REC_HDR;
     memcpy(flight + fpos, hs_hdr, DTLS_HS_HDR);
@@ -818,11 +831,16 @@ static bool dtls_send_server_flight(void) {
   // --- Certificate ---
   {
     uint32_t cert_body_len = 3 + 3 + sizeof(WEBRTC_CERT_DER);
+    size_t rec_payload = DTLS_HS_HDR + cert_body_len;
+    size_t rec_total = DTLS_REC_HDR + rec_payload;
+    if (fpos + rec_total > sizeof(flight)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Server flight overflow at Certificate"));
+      return false;
+    }
 
     uint8_t hs_hdr[DTLS_HS_HDR];
     dtls_build_hs_header(hs_hdr, DTLS_HT_CERTIFICATE, cert_body_len, WebRTC->srv_msg_seq++);
 
-    size_t rec_payload = DTLS_HS_HDR + cert_body_len;
     dtls_build_record_header(flight + fpos, DTLS_CT_HANDSHAKE, 0, WebRTC->seq_out++, rec_payload);
     fpos += DTLS_REC_HDR;
 
@@ -862,10 +880,16 @@ static bool dtls_send_server_flight(void) {
     }
 
     uint32_t ske_body_len = ep + 2 + 2 + sig_len;
+    size_t rec_payload = DTLS_HS_HDR + ske_body_len;
+    size_t rec_total = DTLS_REC_HDR + rec_payload;
+    if (fpos + rec_total > sizeof(flight)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Server flight overflow at ServerKeyExchange"));
+      return false;
+    }
+
     uint8_t hs_hdr[DTLS_HS_HDR];
     dtls_build_hs_header(hs_hdr, DTLS_HT_SERVER_KE, ske_body_len, WebRTC->srv_msg_seq++);
 
-    size_t rec_payload = DTLS_HS_HDR + ske_body_len;
     dtls_build_record_header(flight + fpos, DTLS_CT_HANDSHAKE, 0, WebRTC->seq_out++, rec_payload);
     fpos += DTLS_REC_HDR;
 
@@ -882,6 +906,12 @@ static bool dtls_send_server_flight(void) {
 
   // --- ServerHelloDone ---
   {
+    size_t rec_total = DTLS_REC_HDR + DTLS_HS_HDR;
+    if (fpos + rec_total > sizeof(flight)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Server flight overflow at ServerHelloDone"));
+      return false;
+    }
+
     uint8_t hs_hdr[DTLS_HS_HDR];
     dtls_build_hs_header(hs_hdr, DTLS_HT_SERVER_DONE, 0, WebRTC->srv_msg_seq++);
 
@@ -891,11 +921,6 @@ static bool dtls_send_server_flight(void) {
 
     dtls_hash_hs(flight + fpos, DTLS_HS_HDR);
     fpos += DTLS_HS_HDR;
-  }
-
-  if (fpos > sizeof(flight)) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Server flight overflow!"));
-    return false;
   }
 
   memcpy(WebRTC->last_flight, flight, fpos);
@@ -1337,15 +1362,17 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
 void HandleWebRTCDTLS(void) {
   if (!WebRTC || WebRTC->state < WEBRTC_SIG_SENT_ANSWER) return;
 
+  if (WebRTC->mutex) xSemaphoreTake(WebRTC->mutex, portMAX_DELAY);
   int len = WebRTC_udp.parsePacket();
-  if (len <= 0) return;
+  if (len <= 0) { if (WebRTC->mutex) xSemaphoreGive(WebRTC->mutex); return; }
 
   uint8_t tmp[1500];
   int rlen = WebRTC_udp.read(tmp, sizeof(tmp));
-  if (rlen <= 0) return;
-
   IPAddress fromIP = WebRTC_udp.remoteIP();
   uint16_t fromPort = WebRTC_udp.remotePort();
+  if (WebRTC->mutex) xSemaphoreGive(WebRTC->mutex);
+
+  if (rlen <= 0) return;
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: UDP pkt %d bytes from %s:%d [%02X %02X %02X %02X]"),
          rlen, fromIP.toString().c_str(), fromPort,
@@ -1814,8 +1841,10 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
   br_hmac_update(&hmac_ctx, &roc_be, 4);
   br_hmac_out(&hmac_ctx, tag);
 
-  // Debug SRTP authentication tag for first few packets
+  // Debug SRTP authentication tag for first few packets (reset on new session)
   static uint32_t debug_packet_count = 0;
+  static uint32_t debug_session_id = 0;
+  if (debug_session_id != WebRTC->session_id) { debug_packet_count = 0; debug_session_id = WebRTC->session_id; }
   if (debug_packet_count < 5) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: SRTP TAG[0:3]=%02X%02X%02X%02X seq=%u roc=%u pkt_idx=%u:%u"),
            tag[0], tag[1], tag[2], tag[3], track->seq, track->roc,
@@ -1832,8 +1861,10 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
   if (WebRTC->mutex) xSemaphoreGive(WebRTC->mutex);
 
   if (sent > 0) {
-    // Log first few packets and then periodically
+    // Log first few packets and then periodically (reset on new session)
     static uint32_t packet_count = 0;
+    static uint32_t pkt_session_id = 0;
+    if (pkt_session_id != WebRTC->session_id) { packet_count = 0; pkt_session_id = WebRTC->session_id; }
     if (packet_count < 10 || (packet_count % 100) == 0) {
       // ESP32 doesn't support %llu properly, split 64-bit into two 32-bit parts
       uint32_t pkt_idx_high = (uint32_t)(pkt_idx >> 32);
@@ -1870,9 +1901,11 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
   uint8_t nal_header = nal_data[0];
   uint8_t nal_type = nal_header & 0x1F;
   
-  // Log NAL type for debugging
+  // Log NAL type for debugging (reset on new session)
   static uint32_t nal_count = 0;
   static bool idr_seen = false;  // Drop P-frames until first IDR
+  static uint32_t nal_session_id = 0;
+  if (nal_session_id != WebRTC->session_id) { nal_count = 0; idr_seen = false; nal_session_id = WebRTC->session_id; }
   
   if (nal_count < 20 || (nal_count % 100) == 0) {
     const char* nal_name = "Unknown";
@@ -1965,12 +1998,12 @@ void WcSendSrtpVideo(uint8_t* data, size_t len) {
   if (timestamp_inc == 0) timestamp_inc = 3000; // default to 30fps if fps is 0
   WebRTC->video.timestamp += timestamp_inc;
 
-  // Log frame statistics periodically
+  // Log frame statistics periodically (reset on new session)
   static uint32_t frame_count = 0;
   static uint32_t total_bytes = 0;
   static uint32_t last_log_time = 0;
-  static bool sps_sent = false;
-  static bool pps_sent = false;
+  static uint32_t vid_session_id = 0;
+  if (vid_session_id != WebRTC->session_id) { frame_count = 0; total_bytes = 0; last_log_time = 0; vid_session_id = WebRTC->session_id; }
   
   frame_count++;
   total_bytes += len;
@@ -2062,7 +2095,7 @@ void WebRTCProcessingTask(void *pvParameters) {
   esp_h264_enc_in_frame_t in_frame = {};
   esp_h264_enc_out_frame_t out_frame = {};
 
-  size_t yuv_size = Wc.core.config.width * Wc.core.config.height * 3 / 2;
+  size_t yuv_size;
   uint32_t last_fps_calc = millis();
   uint32_t frames_in_second = 0;
   uint32_t last_profile_log = 0;
@@ -2097,6 +2130,7 @@ void WebRTCProcessingTask(void *pvParameters) {
     esp_cache_msync(src, Wc.core.frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
 
     in_frame.raw_data.buffer = src;
+    yuv_size = Wc.core.config.width * Wc.core.config.height * 3 / 2;
     in_frame.raw_data.len = yuv_size;
     out_frame.raw_data.buffer = Wc.h264.out_buffer;
     out_frame.raw_data.len = Wc.h264.out_buffer_size;
@@ -2172,18 +2206,35 @@ void WcWebRTCStop(void) {
   if (!WebRTC) return;
   AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Stopping"));
 
+  // 1. Signal inactive first so other tasks/functions see it and bail out
+  WebRTC->state = WEBRTC_IDLE;
+  WebRTC->video.active = false;
+  WebRTC->audio.active = false;
+
+  // 2. Delete handshake task before touching any shared state
   if (WebRTC->handshake_task) {
     vTaskDelete(WebRTC->handshake_task);
     WebRTC->handshake_task = NULL;
   }
 
+  // 3. Take mutex to ensure no concurrent UDP/SRTP sends are in flight
+  if (WebRTC->mutex) xSemaphoreTake(WebRTC->mutex, portMAX_DELAY);
+
   WebRTC_udp.stop();
   WebRTC->udp_ready = false;
 
   if (WebRTC->mutex) {
+    xSemaphoreGive(WebRTC->mutex);
     vSemaphoreDelete(WebRTC->mutex);
     WebRTC->mutex = NULL;
   }
+
+  // 4. Zero sensitive key material before freeing
+  memset(WebRTC->master_secret, 0, sizeof(WebRTC->master_secret));
+  memset(WebRTC->ecdhe_priv, 0, sizeof(WebRTC->ecdhe_priv));
+  memset(WebRTC->cert_key_ram, 0, sizeof(WebRTC->cert_key_ram));
+  memset(WebRTC->client_write_key, 0, sizeof(WebRTC->client_write_key));
+  memset(WebRTC->server_write_key, 0, sizeof(WebRTC->server_write_key));
 
   free(WebRTC);
   WebRTC = NULL;

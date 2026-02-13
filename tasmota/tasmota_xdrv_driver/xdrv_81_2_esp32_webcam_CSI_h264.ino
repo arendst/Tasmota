@@ -120,8 +120,7 @@ void H264ProcessingTask(void *pvParameters) {
   esp_h264_enc_in_frame_t in_frame = {};
   esp_h264_enc_out_frame_t out_frame = {};
 
-  // Copy frame data to H.264 input buffer
-  size_t h264_expected_size = Wc.core.config.width * Wc.core.config.height * 3 / 2; // 1.5 because YUV420
+  size_t h264_expected_size;
   
   // Loop forever, exit only on CAM_STOPPING
   while (true) {
@@ -172,6 +171,7 @@ void H264ProcessingTask(void *pvParameters) {
     // --- ZERO-COPY OPTIMIZATION START ---
     // We do NOT release the mutex yet. We hold it until encoding is done.
     in_frame.raw_data.buffer = source_buf;
+    h264_expected_size = Wc.core.config.width * Wc.core.config.height * 3 / 2;
     in_frame.raw_data.len = h264_expected_size; 
     
     // Note: We use h264_expected_size to ensure we don't feed the encoder garbage 
@@ -644,14 +644,17 @@ void HandleRtsp() {
 
   // --- 2. Port 82 (WebSocket) Handling ---
   if (Wc.ws.server && Wc.ws.server->hasClient()) {
-    WiFiClient c = Wc.ws.server->available();
-    if (WsPerformWsHandshake(&c)) {
+    WiFiClient* new_client = new WiFiClient(Wc.ws.server->available());
+    if (new_client && new_client->connected() && WsPerformWsHandshake(new_client)) {
         if (Wc.ws.client_ptr) delete Wc.ws.client_ptr;
-        Wc.ws.client_ptr = new WiFiClient(c);
+        Wc.ws.client_ptr = new_client;
         Wc.ws.active = true;
         AddLog(LOG_LEVEL_INFO, PSTR("CAM: WS Client Connected"));
     } else {
-        c.stop();
+        if (new_client) {
+          new_client->stop();
+          delete new_client;
+        }
     }
   }
 }
