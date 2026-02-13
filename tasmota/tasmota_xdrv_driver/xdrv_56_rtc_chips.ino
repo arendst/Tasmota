@@ -32,6 +32,9 @@
  * #define USE_RX8030
  *   RX8010 at I2C address 0x32
  *   Used by #23855 
+ * #define USE_RX8025
+ *   RX8025 at I2C address 0x32
+ *   Used by MSB Master G2
 \*********************************************************************************************/
 
 #define XDRV_56             56
