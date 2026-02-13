@@ -136,5 +136,6 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   93  | USE_AS33772S        | xdrv_119 | AS33772S  | 0x52       | Yes  | AS33772S USB PD Sink Controller
   94  | USE_RV3028          | xdrv_56  | RV3028    | 0x52       | Yes  | RV-3028-C7 RTC Controller
   95  | USE_AGS02MA         | xsns_118 | AGS02MA   | 0x1A       |      | TVOC Gas sensor
+  96  | USE_RX8025          | xdrv_56  | RX8025    | 0x32       | Yes  | RX8025 RTC
 
   NOTE: Bus2 supported on ESP32 only.
