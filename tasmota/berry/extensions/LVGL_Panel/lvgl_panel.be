@@ -80,7 +80,7 @@ class lvgl_panel
     end
 
     if self.server.hasclient() # check for incoming connections
-      var cnx = self.server.accept()
+      var cnx = self.server.acceptasync()
       var req = cnx.read()
       var w = lv.get_hor_res()
       var h = lv.get_ver_res()
@@ -125,6 +125,7 @@ class lvgl_panel
     hdr.set(8, height, 2)
 
     var total_bytes = width * height * 2
+    var data = bytes(introspect.toptr(pixels), total_bytes)
 
     for cnx: self.connections
       var sent = 0
@@ -136,8 +137,7 @@ class lvgl_panel
       while offset < total_bytes && cnx.connected()
         var remaining = total_bytes - offset
         var data_size = (remaining < self.CHUNK_SIZE) ? remaining : self.CHUNK_SIZE
-        var data = bytes(introspect.toptr(pixels + offset), data_size)
-        offset += cnx.write(data)
+        offset += cnx.write(data, offset, data_size)
       end
     end
   end
