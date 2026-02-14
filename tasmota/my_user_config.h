@@ -1235,6 +1235,7 @@
 #define USE_AUTOCONF                             // Enable Esp32(x) autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
 #define USE_EXTENSION_MANAGER                    // Enable Esp32(x) extensions manager, requires USE_BERRY and USE_WEBCLIENT_HTTPS (11KB Flash)
 #define USE_BERRY                                // Enable Berry scripting language
+//  #define USE_BERRY_WEBCLIENT_ASYNC              // Enable ASYNC webclient mode as an additional mode to standary berry webclient.   
   #define USE_BERRY_PYTHON_COMPAT                // Enable by default `import python_compat`
   #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
