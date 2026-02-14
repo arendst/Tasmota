@@ -11,6 +11,10 @@
  * Basic SPI routines supporting two busses
 \*********************************************************************************************/
 
+#ifdef ESP32      
+SPIClass SPI_HSPI(HSPI);         // Uses HSPI
+#endif  // ESP32
+
 SPIClass *SpiBegin(uint32 bus = 1);
 SPIClass *SpiBegin(uint32 bus) {
   SPIClass *spi;
@@ -43,7 +47,6 @@ SPIClass *SpiBegin(uint32 bus) {
 /********************************************************************************************/
 
 void AddLogSpi(uint32_t hardware, int clk, int mosi, int miso) {
-#ifndef FIRMWARE_MINIMAL
   uint32_t enabled = TasmotaGlobal.soft_spi_enabled;
   char hwswbus[8];
   if (hardware) {
@@ -73,5 +76,4 @@ void AddLogSpi(uint32_t hardware, int clk, int mosi, int miso) {
         hwswbus, clk, mosi, miso);
       break;
   }
-#endif // FIRMWARE_MINIMAL
 }

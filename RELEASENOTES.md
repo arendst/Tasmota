@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Support for TCA9554 8-bit I/O expander mutually exclusive with PCA9557
 - Support for Adafruit I2C QT Rotary Encoder [#24270](https://github.com/arendst/Tasmota/issues/24270)
+- Support SPI bus2 for Ethernet and SDCard [#24433](https://github.com/arendst/Tasmota/issues/24433)
 - Improv USB CDC connected devices
 - Dingtian `SetOption81 1` to invert input and `SetOption133 1` to invert output [#24364](https://github.com/arendst/Tasmota/issues/24364)
 - Zigbee support for `int24` type [#24334](https://github.com/arendst/Tasmota/issues/24334)

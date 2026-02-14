@@ -211,12 +211,16 @@ void UfsCheckSDCardInit(void) {
 
 #ifdef ESP8266
     SPI.begin();
+    if (SD.begin(cs)) {
 #endif // ESP8266
 #ifdef ESP32
-    SPI.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
+    if (1 == spi_bus) {
+      SPI_HSPI.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
+    } else {
+      SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    }
+    if (SD.begin(cs, (1 == spi_bus) ? SPI_HSPI : SPI)) {
 #endif // ESP32
-
-    if (SD.begin(cs)) {
 #ifdef ESP8266
       ufsp = &SDFS;
 #endif  // ESP8266
@@ -234,7 +238,7 @@ void UfsCheckSDCardInit(void) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted"));
 #endif // ESP8266
 #ifdef ESP32
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted (SPI mode) with %d kB free"), UfsInfo(1, 0));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted (SPI bus%d) with %d kB free"), spi_bus +1, UfsInfo(1, 0));
 #endif // ESP32
     }
   }
