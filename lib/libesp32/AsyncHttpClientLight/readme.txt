@@ -7,7 +7,7 @@ TLS public-key pinning, optional RSA-only hardening.
 Keep API/error-code compatibility while modernizing internals.
 What changed
 
-AsyncHttpClientLight (new core client)
+AsyncHttpClientLight
 
 HTTP via lwIP sockets (IClientLite + non-blocking AsyncTcpAdapter) with SO_LINGER (RST-close) to reduce TIME_WAIT.
 HTTPS via BearSSL WiFiClientSecure_light, with:
@@ -30,8 +30,10 @@ Dependency note
 
 Compatibility
 
+#define USE_BERRY_WEBCLIENT_ASYNC selector, w/o default sync webclient is used.
 Existing Berry scripts using sync APIs remain compatible.
 OTA/firmware workflows (sync GET + streaming) are unaffected.
+
 Operational notes
 
 Call async_state() at least once after an async job finishes to publish results and clean up before reusing the same instance.
