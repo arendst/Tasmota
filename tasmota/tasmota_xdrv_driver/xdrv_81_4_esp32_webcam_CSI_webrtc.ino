@@ -22,6 +22,7 @@
 
 #include <WiFiUdp.h>
 #include <t_bearssl.h>
+#include "rom/crc.h"
 
 /*********************************************************************************************/
 // Constants
@@ -230,18 +231,11 @@ static const unsigned char WEBRTC_KEY_PRIV[] PROGMEM = {
 };
 
 /*********************************************************************************************/
-// CRC32 for STUN Fingerprint (RFC 5389)
+// CRC32 for STUN Fingerprint (RFC 5389) - use ESP ROM function
 /*********************************************************************************************/
 
 uint32_t wc_crc32(const uint8_t *data, size_t nbytes) {
-    uint32_t crc = 0xFFFFFFFF;
-    for (size_t i = 0; i < nbytes; i++) {
-        crc ^= data[i];
-        for (int j = 0; j < 8; j++) {
-            crc = (crc & 1) ? (crc >> 1) ^ 0xEDB88320 : (crc >> 1);
-        }
-    }
-    return crc ^ 0xFFFFFFFF;   // <-- add this
+  return crc32_le(0, data, nbytes);
 }
 
 /*********************************************************************************************/
