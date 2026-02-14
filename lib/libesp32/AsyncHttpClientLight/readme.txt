@@ -1,5 +1,5 @@
 Introduce a self-contained async HTTP/HTTPS client for ESP32 (AsyncHttpClientLight) and integrate it directly into the Berry webclient module with def selector #define USE_BERRY_WEBCLIENT_ASYNC. 
-Code still include <HTTPClient.h> only for the enum/constant types (e.g., followRedirects_t, transferEncoding_t, HTTPC_TE_*).
+Code still include <HTTPClient.h> only for the enum/constant types (e.g., followRedirects_t, transferEncoding_t, HTTPC_TE_*)
 
 Non-blocking GET/POST for telemetry/RPC without freezing the Berry VM.
 Lower TIME_WAIT pressure and safer connection reuse.
