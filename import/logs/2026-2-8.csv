@@ -1,0 +1,172 @@
+00:15:48;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+00:17:42;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+00:22:41;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+00:24:12;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+00:31:44;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+00:32:48;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+00:46:49;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+01:05:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:05:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:05:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:06:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:06:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:06:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:07:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:07:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:07:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:08:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:08:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:08:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:09:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:09:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:09:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:10:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:10:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:10:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:11:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:11:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:11:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:12:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:12:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:12:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:13:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:13:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:03:48;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+01:03:54;INFO;TICK;Device mqttapi_inverters exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device msbapi_telemetry exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device mqttapi_payload exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device fwupdate_msbos exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device msbapi_attributes exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device mqttapi_batteries exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device mqttapi_autodiscovery exists, but not initiated (not active or disabled by settings)
+01:03:54;INFO;TICK;Device msbapi_rpc exists, but not initiated (not active or disabled by settings)
+01:03:55;INFO;TICK;gcollector device engine initialized.
+01:04:44;INFO;TICK;recorder device engine initialized.
+01:06:54;INFO;TICK;screensaver device engine initialized.
+01:13:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:14:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:14:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:14:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:15:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:15:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:15:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:16:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:16:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:16:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:17:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:17:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:17:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:18:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:18:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:18:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:19:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:19:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:19:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:20:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:20:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:20:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:21:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:21:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:21:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:22:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:22:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:22:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:23:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:23:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:23:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:24:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:24:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:24:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:25:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:25:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:25:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:26:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:26:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:26:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:27:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:27:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:27:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:28:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:28:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:28:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:29:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:29:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:29:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:30:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:30:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:30:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:31:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:31:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:31:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:32:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:32:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:32:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:33:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:33:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:33:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:34:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:34:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:34:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:35:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:35:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:35:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:36:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:36:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:36:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:37:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:37:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:37:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:38:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:38:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:38:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:39:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:39:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:39:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:40:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:40:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:40:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:41:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:41:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:41:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:42:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:42:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:42:52;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:43:12;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:43:32;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:49:41;WARNING;TICK;recorder NOT EXECUTED - Waiting for INV: 1,2,3. Next retry in: 900000ms
+01:50:11;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:50:33;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:50:55;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:51:17;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:51:40;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:52:02;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:52:25;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:52:48;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:53:11;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:53:34;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:53:55;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:54:18;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:54:41;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:55:04;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:55:24;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:55:44;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:56:04;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:56:24;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:56:44;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:57:04;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:57:24;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:57:44;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:58:04;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:58:24;WARNING;LOGIC;Inverter & Relay automation HOLD - inverter data read cycle failed. Retry in next period.
+01:48:45;INFO;FRAM;[INIT] slots=0 next=0x40 range=0x40..0x1FFF
+01:48:50;INFO;TICK;Device mqttapi_inverters exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device msbapi_telemetry exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device mqttapi_payload exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device fwupdate_msbos exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device msbapi_attributes exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device mqttapi_batteries exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device mqttapi_autodiscovery exists, but not initiated (not active or disabled by settings)
+01:48:50;INFO;TICK;Device msbapi_rpc exists, but not initiated (not active or disabled by settings)
+01:48:51;INFO;TICK;gcollector device engine initialized.
+01:49:40;INFO;TICK;recorder device engine initialized.
+01:51:50;INFO;TICK;screensaver device engine initialized.
