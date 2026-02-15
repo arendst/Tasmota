@@ -495,17 +495,6 @@ uint32_t WcSetupH264Encoder(void) {
   }
   // -------------------------------------------------------------------
   
-  // Start Servers for H264 Session (Multicast)
-  if (!Wc.rtsp.server) { 
-      Wc.rtsp.server = new WiFiServer(554); 
-      Wc.rtsp.server->begin(); 
-  }
-  if (!Wc.ws.server) { 
-      AddLog(LOG_LEVEL_INFO, PSTR("CAM: Starting WS Server on 82"));
-      Wc.ws.server = new WiFiServer(82);  
-      Wc.ws.server->begin(); 
-  }
-
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: H.264 encoder initialized (%dx%d, buffer=%d bytes)"), width, height, out_size);
   return 1;
 }

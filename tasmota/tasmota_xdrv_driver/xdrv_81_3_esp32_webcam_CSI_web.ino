@@ -160,8 +160,17 @@ void CmndWcRes(void) {
   
   // Determine current state
   bool was_streaming = (Wc.core.state == CAM_STREAMING);
+  bool was_failed = (Wc.core.state == CAM_FAILED);
   
-  // 1. Pause task first if streaming
+  // If failed, clear failure state first
+  if (was_failed) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Clearing failed state for resolution change"));
+    Wc.core.fail_reason = CAM_FAIL_NONE;
+    Wc.core.fail_esp_err = ESP_OK;
+    Wc.core.state = CAM_IDLE;
+  }
+  
+  // 1. Pause task first if streaming (skip if was failed or idle)
   if (was_streaming) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Pausing for resolution change"));
     Wc.core.state = CAM_PAUSING;
@@ -199,7 +208,6 @@ void CmndWcRes(void) {
   
   if (result == 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed"));
-    WcStop();
     ResponseCmndFailed();
     return;
   }
@@ -207,7 +215,6 @@ void CmndWcRes(void) {
   // 6. Re-Initialize Hardware Pipeline
   if (!WcInitPipeline()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
-    WcStop();
     ResponseCmndFailed();
     return;
   }
@@ -217,7 +224,6 @@ void CmndWcRes(void) {
     esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to restart CSI (0x%x)"), ret);
-      WcStop();
       ResponseCmndFailed();
       return;
     }
@@ -225,7 +231,6 @@ void CmndWcRes(void) {
     int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0);
     if (berry_result == 0) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
-      WcStop();
       ResponseCmndFailed();
       return;
     }
@@ -339,7 +344,6 @@ void CmndWcWindow(void) {
 
   if (result == 0) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry init failed"));
-    WcStop();
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Sensor Init Failed\"}}"));
     return;
   }
@@ -347,7 +351,6 @@ void CmndWcWindow(void) {
   // 6. Re-Initialize Hardware
   if (!WcInitPipeline()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Pipeline Init Failed"));
-    WcStop();
     Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Pipeline Init Failed\"}}"));
     return;
   }
@@ -357,7 +360,6 @@ void CmndWcWindow(void) {
     esp_err_t ret = esp_cam_ctlr_start(Wc.core.cam_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to restart CSI (0x%x)"), ret);
-      WcStop();
       Response_P(PSTR("{\"WcWindow\":{\"Error\":\"CSI Start Failed\"}}"));
       return;
     }
@@ -365,7 +367,6 @@ void CmndWcWindow(void) {
     int32_t berry_result = callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 1, nullptr, 0);
     if (berry_result == 0) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Berry stream_on failed"));
-      WcStop();
       Response_P(PSTR("{\"WcWindow\":{\"Error\":\"Stream Start Failed\"}}"));
       return;
     }
@@ -402,8 +403,11 @@ void CmndWcStop(void) {
 void CmndWcStatus(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcStatus called"));
   
-  const char* state_names[] = {"IDLE", "INIT", "STREAMING", "PAUSING", "PAUSED", "STOPPING"};
-  const char* state_name = (Wc.core.state < 6) ? state_names[Wc.core.state] : "UNKNOWN";
+  const char* state_names[] = {"IDLE", "INIT", "STREAMING", "PAUSING", "PAUSED", "STOPPING", "FAILED"};
+  const char* state_name = (Wc.core.state < 7) ? state_names[Wc.core.state] : "UNKNOWN";
+  
+  const char* fail_names[] = {"NONE", "MEMORY", "BERRY_INIT", "BERRY_STREAM", "CSI_INIT", "ISP_INIT", "ENCODER_INIT", "MUTEX", "TASK", "LDO"};
+  const char* fail_name = (Wc.core.fail_reason < 10) ? fail_names[Wc.core.fail_reason] : "UNKNOWN";
 
   // Detailed Status JSON
   Response_P(PSTR("{\"WcStatus\":{\"State\":\"%s\",\"Resolution\":\"%dx%d\","
@@ -416,6 +420,9 @@ void CmndWcStatus(void) {
                   "},"
                   "\"JPEG\":{"
                   "\"LastSize\":%u,\"AvgSize\":%u,\"MinSize\":%u,\"MaxSize\":%u,\"CompressionRatio\":\"%.2f\""
+                  "},"
+                  "\"Failure\":{"
+                  "\"Reason\":\"%s\",\"EspError\":\"0x%x\""
                   "}}}"),
              state_name,
              Wc.core.config.width, Wc.core.config.height,
@@ -439,7 +446,9 @@ void CmndWcStatus(void) {
              WcStats.avg_jpeg_size,
              WcStats.min_jpeg_size,
              WcStats.max_jpeg_size,
-             WcStats.compression_ratio_x100 / 100.0f);
+             WcStats.compression_ratio_x100 / 100.0f,
+             fail_name,
+             Wc.core.fail_esp_err);
 }
 
 void CmndWcConfig(void) {
@@ -515,8 +524,14 @@ void CmndWcSession(void) {
 
   // --- Perform Switch ---
   
-  if (Wc.core.state != CAM_IDLE) {
+  if (Wc.core.state != CAM_IDLE && Wc.core.state != CAM_FAILED) {
     WcStop();
+  } else if (Wc.core.state == CAM_FAILED) {
+    // Clear failure state
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: Clearing failed state for session change"));
+    Wc.core.fail_reason = CAM_FAIL_NONE;
+    Wc.core.fail_esp_err = ESP_OK;
+    Wc.core.state = CAM_IDLE;
   }
 
   Wc.core.session_type = new_type;
@@ -530,12 +545,27 @@ void CmndWcSession(void) {
     Wc.rtp.ssrc = random(0, UINT32_MAX);
     Wc.rtsp.streaming = false;
     
-    // Start RTSP/RTP Servers
+    // Start RTSP/WS Servers
     if (!Wc.rtsp.server) {
         Wc.rtsp.server = new WiFiServer(554);
         Wc.rtsp.server->begin();
     }
+    if (!Wc.ws.server) {
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: Starting WS Server on 82"));
+        Wc.ws.server = new WiFiServer(82);
+        Wc.ws.server->begin();
+    }
     Wc.rtp_udp.begin(5004);
+  }
+  
+  // Special Setup for WebRTC (Session 3)
+  if (new_type == SESSION_WEBRTC) {
+    // Start WS Server for WebRTC signaling
+    if (!Wc.ws.server) {
+        AddLog(LOG_LEVEL_INFO, PSTR("CAM: Starting WS Server on 82"));
+        Wc.ws.server = new WiFiServer(82);
+        Wc.ws.server->begin();
+    }
   }
 
   // Auto-Start (unless NONE)
