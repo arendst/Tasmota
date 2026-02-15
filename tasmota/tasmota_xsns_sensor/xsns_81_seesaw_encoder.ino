@@ -36,7 +36,8 @@
  *   Add #define SEESAW_ENCODER_LIKE_ROTARY to have driver follow the same patterns
  *   as tasmota_support/support_rotary.ino (ROTARY_V1) and to have consistent behavior
  *   across GPIO rotary encoders and this I2C rotary encoder. See support_rotary.ino
- *   for rotary encoder operation.
+ *   for rotary encoder operation. Add #define SEESAW_ENCODER_HIDE_WEB_DISPLAY to not show
+ *   state in web UI if using USE_WEBSERVER (state will still be available in JSON and rules).
  *
  * Device Numbering:
  *   - Encoders are numbered based on detection order by default (SeeEnc-1, SeeEnc-2, etc.)
@@ -80,10 +81,8 @@
 
 struct SeesawEncoder : public SeesawDevice {
   SeesawEncoder(uint8_t addr) : SeesawDevice(addr),
-    position(0), previous_position(0), delta(0),
-    button(0), button_previous(0), pixel_color(0),
-    timeout(0), rel_position(0), changed(false),
-    last_change_time(0), rotation_occurred(false) {
+    position(0), delta(0), pixel_color(0),
+    timeout(0), rel_position(0), flags(0) {
     type = SEESAW_TYPE_ENCODER;
     abs_position[0] = 0;
     abs_position[1] = 0;
@@ -139,16 +138,17 @@ struct SeesawEncoder : public SeesawDevice {
 
     // Read initial encoder state
     position = GetEncoderPosition();
-    previous_position = position;
-    button = GetButton() ? 1 : 0;
-    button_previous = button;
-    last_change_time = millis();
+
+    // Read initial button state
+    if (GetButton()) {
+      flags |= FLAG_BUTTON | FLAG_BUTTON_PREV;
+    }
 
     valid = true;
 
 #ifdef DEBUG_SEESAW_ENCODER
     AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: Init Encoder ADDR=%02X POS=%d BTN=%d PXL_SPD_OK=%d PXL_LEN_OK=%d PXL_PIN_OK=%d"),
-           address, position, button, speed_ok, len_ok, pin_ok);
+           address, position, (flags & FLAG_BUTTON) ? 1 : 0, speed_ok, len_ok, pin_ok);
 #endif
 
 #if defined(SEESAW_ENCODER_LIKE_ROTARY) && defined(USE_LIGHT)
@@ -159,31 +159,22 @@ struct SeesawEncoder : public SeesawDevice {
 
   virtual void Read() override {
     // Read encoder delta (change since last read)
-    int32_t new_delta = GetEncoderDelta();
+    delta = GetEncoderDelta();
 
     // Read encoder position
-    int32_t new_position = GetEncoderPosition();
-
-    // Update delta
-    delta = new_delta;
-
-    // Update position
-    previous_position = position;
-    position = new_position;
+    position = GetEncoderPosition();
 
     // Read button state
-    button_previous = button;
-    button = GetButton() ? 1 : 0;
-
-    // Update timestamp if changed
-    if (delta != 0 || button != button_previous) {
-      last_change_time = millis();
-    }
+    bool button_was_pressed = (flags & FLAG_BUTTON);
+    bool button_now_pressed = GetButton();
+    flags &= ~(FLAG_BUTTON | FLAG_BUTTON_PREV);  // Clear both flags
+    if (button_was_pressed) { flags |= FLAG_BUTTON_PREV; }  // set previous state
+    if (button_now_pressed) { flags |= FLAG_BUTTON; }  // set new current state
 
 #ifdef DEBUG_SEESAW_ENCODER
-    if (delta != 0 || button != button_previous) {
+    if (delta != 0 || (flags & FLAG_BUTTON) != (flags & FLAG_BUTTON_PREV)) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: READ ADDR=%02X POS=%d DELTA=%d BTN=%d"),
-             address, position, delta, button);
+             address, position, delta, (flags & FLAG_BUTTON) ? 1 : 0);
     }
 #endif
   }
@@ -204,15 +195,19 @@ struct SeesawEncoder : public SeesawDevice {
       }
     }
 
+    // Use stored button state (read once in Read())
+    bool button_current = !!(flags & FLAG_BUTTON);  // Convert to boolean 0 or 1
+    bool button_prev = !!(flags & FLAG_BUTTON_PREV); // Convert to boolean 0 or 1
+
     // Reset changed flag when button released
-    if (button_previous && !button) {
-      if (changed) {
-        changed = false;
+    if (button_prev && !button_current) {
+      if (flags & FLAG_CHANGED) {
+        flags &= ~FLAG_CHANGED;
       }
     }
 
     // Check for rotation or button change
-    if (delta == 0 && button == button_previous) { return; }
+    if (delta == 0 && button_current == button_prev) { return; }
 
     timeout = SEESAW_ENCODER_TIMEOUT;   // Prevent fast direction changes within 100ms
 
@@ -225,40 +220,18 @@ struct SeesawEncoder : public SeesawDevice {
       TasmotaGlobal.save_data_counter = 3;
     }
 
-    bool button_pressed = button;  // Button is pressed: set color temperature
-    if (button_pressed) { changed = true; }
-
-    abs_position[button_pressed] += current_delta;
-    if (abs_position[button_pressed] < 0) {
-      abs_position[button_pressed] = 0;
-    }
-    if (abs_position[button_pressed] > Settings->param[P_ROTARY_MAX_STEP]) {
-      abs_position[button_pressed] = Settings->param[P_ROTARY_MAX_STEP];
-    }
-
-    rel_position += current_delta;
-    if (rel_position > Settings->param[P_ROTARY_MAX_STEP]) {
-      rel_position = Settings->param[P_ROTARY_MAX_STEP];
-    }
-    if (rel_position < -(Settings->param[P_ROTARY_MAX_STEP])) {
-      rel_position = -(Settings->param[P_ROTARY_MAX_STEP]);
-    }
-
-#ifdef DEBUG_SEESAW_ENCODER
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: %s btn=%d delta=%d abs_position[0]=%d abs_position[1]=%d, rel_position=%d"),
-           device_name, button_pressed, current_delta,
-           abs_position[0], abs_position[1], rel_position);
-#endif
+    // Button is pressed: set color temperature
+    if (button_current) { flags |= FLAG_CHANGED; }
 
 #ifdef SEESAW_ENCODER_LIKE_ROTARY
     // Button click handling - toggle relay on a click without rotation
     // On button click - track if rotation occurs
-    if (current_delta != 0 && button) {
-      rotation_occurred = true;
+    if (current_delta != 0 && button_current) {
+      flags |= FLAG_ROTATION_OCCURRED;
     }
     // On button release - check if it was just a click (no rotation)
-    if (button_previous && !button) {
-      if (!changed && !rotation_occurred) {
+    if (button_prev && !button_current) {
+      if (!(flags & FLAG_CHANGED) && !(flags & FLAG_ROTATION_OCCURRED)) {
         // Button released without being used for rotation - toggle relay
         uint8_t relay_index = device_index + 1;  // device_index is 0-based
         ExecuteCommandPower(relay_index, POWER_TOGGLE, SRC_BUTTON);
@@ -266,7 +239,7 @@ struct SeesawEncoder : public SeesawDevice {
         return;
       }
       // Reset rotation flag for next button press
-      rotation_occurred = false;
+      flags &= ~FLAG_ROTATION_OCCURRED;
     }
 
 #ifdef USE_LIGHT
@@ -278,7 +251,7 @@ struct SeesawEncoder : public SeesawDevice {
       bool second_encoder = (SeesawMgr.GetTypeCount(SEESAW_TYPE_ENCODER) > 1);
 
       if (device_index == 0) {  // First encoder (lines 229-247 in support_rotary.ino)
-        if (button_pressed) {
+        if (button_current) {
           // Color or CT control
           if (second_encoder) {
             // With second encoder: control color only
@@ -301,7 +274,7 @@ struct SeesawEncoder : public SeesawDevice {
           }
         }
       } else {  // Second encoder (lines 248-254 in support_rotary.ino)
-        if (button_pressed) {
+        if (button_current) {
           // Color Temperature
           LightColorTempOffset(current_delta * Rotary.ct_increment);
         } else {
@@ -314,13 +287,36 @@ struct SeesawEncoder : public SeesawDevice {
 #endif  // USE_LIGHT
 #endif  // SEESAW_ENCODER_LIKE_ROTARY
 
-    // Trigger rules (when not in direct light control mode)
+    // Position tracking and rules (when not in direct light control mode)
     // Mirrors support_rotary.ino lines 257-273
+    abs_position[button_current] += current_delta;
+    if (abs_position[button_current] < 0) {
+      abs_position[button_current] = 0;
+    }
+    if (abs_position[button_current] > Settings->param[P_ROTARY_MAX_STEP]) {
+      abs_position[button_current] = Settings->param[P_ROTARY_MAX_STEP];
+    }
+
+    rel_position += current_delta;
+    if (rel_position > Settings->param[P_ROTARY_MAX_STEP]) {
+      rel_position = Settings->param[P_ROTARY_MAX_STEP];
+    }
+    if (rel_position < -(Settings->param[P_ROTARY_MAX_STEP])) {
+      rel_position = -(Settings->param[P_ROTARY_MAX_STEP]);
+    }
+
+#ifdef DEBUG_SEESAW_ENCODER
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: %s btn=%d delta=%d abs_position[0]=%d abs_position[1]=%d, rel_position=%d"),
+           device_name, button_current, current_delta,
+           abs_position[0], abs_position[1], rel_position);
+#endif
+
+    // Trigger rules (when not in direct light control mode)
     Response_P(PSTR("{\"%s\":{\"Pos1\":%d,\"Pos2\":%d,\"Button\":%d}}"),
                device_name,
                abs_position[0],
                abs_position[1],
-               button);
+               button_current);
     XdrvRulesProcess(0);
   }
 
@@ -328,17 +324,20 @@ struct SeesawEncoder : public SeesawDevice {
     // Store name for use in Handler() and debug logging
     strlcpy(device_name, name, sizeof(device_name));
 
+    // Use stored button state (read once in Read())
+    bool button_state = (flags & FLAG_BUTTON);
+
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"Pos1\":%d,\"Pos2\":%d,\"Button\":%d,\"Color\":\"%06X\"}"),
         name, abs_position[0], abs_position[1],
-        button, pixel_color);
-#ifdef USE_WEBSERVER
+        button_state, pixel_color);
+#if defined(USE_WEBSERVER) && !defined(SEESAW_ENCODER_HIDE_WEB_DISPLAY)
     } else {
       WSContentSend_PD(PSTR("{s}%s Pos1{m}%d{e}"), name, abs_position[0]);
       WSContentSend_PD(PSTR("{s}%s Pos2{m}%d{e}"), name, abs_position[1]);
-      WSContentSend_PD(PSTR("{s}%s Button{m}%d{e}"), name, button);
+      WSContentSend_PD(PSTR("{s}%s Button{m}%d{e}"), name, button_state);
       WSContentSend_PD(PSTR("{s}%s Color{m}#%06X{e}"), name, pixel_color);
-#endif // USE_WEBSERVER
+#endif // USE_WEBSERVER && !SEESAW_ENCODER_HIDE_WEB_DISPLAY
     }
   }
 
@@ -359,7 +358,6 @@ struct SeesawEncoder : public SeesawDevice {
 
     if (success) {
       position = pos;
-      previous_position = pos;
     }
 
 #ifdef DEBUG_SEESAW_ENCODER
@@ -439,18 +437,19 @@ private:
   }
 #endif  // SEESAW_ENCODER_LIKE_ROTARY && USE_LIGHT
 
+  // Flag bit definitions
+  static const uint8_t FLAG_CHANGED = 0x01;
+  static const uint8_t FLAG_ROTATION_OCCURRED = 0x02;
+  static const uint8_t FLAG_BUTTON = 0x04;
+  static const uint8_t FLAG_BUTTON_PREV = 0x08;
+
   int32_t position;
-  int32_t previous_position;
   int32_t delta;
-  uint8_t button;
-  uint8_t button_previous;
   uint32_t pixel_color;
   uint8_t timeout;
   int8_t abs_position[2];
   int8_t rel_position;
-  bool changed;
-  uint32_t last_change_time;
-  bool rotation_occurred;
+  uint8_t flags;  // Bit 0: changed, Bit 1: rotation_occurred, Bit 2: button, Bit 3: button_previous
 };
 
 const char SeesawEncoder::id[] PROGMEM = "ENCODER";
@@ -464,37 +463,31 @@ SeesawDevice* SeesawManager::CreateEncoderDevice(uint8_t addr) {
 // Returns nullptr if index is out of range
 // Sets total_count to the total number of encoders found
 SeesawEncoder* GetEncoderByIndex(uint8_t cmd_index, uint8_t* total_count = nullptr) {
-  uint8_t encoder_count = 0;
-
-  // Count encoder devices
-  for (uint8_t i = 0; i < SeesawMgr.GetCount(); i++) {
-    SeesawDevice* dev = SeesawMgr.GetDevice(i);
-    if (dev && dev->GetType() == SEESAW_TYPE_ENCODER) {
-      encoder_count++;
-    }
-  }
-
-  if (total_count) {
-    *total_count = encoder_count;
-  }
-
-  if (cmd_index < 1 || cmd_index > encoder_count) {
-    return nullptr;
-  }
-
-  // Find the Nth encoder device
   uint8_t encoder_index = 0;
+  SeesawEncoder* target_encoder = nullptr;
+
+  // Find encoder and count simultaneously
   for (uint8_t i = 0; i < SeesawMgr.GetCount(); i++) {
     SeesawDevice* dev = SeesawMgr.GetDevice(i);
     if (dev && dev->GetType() == SEESAW_TYPE_ENCODER) {
       encoder_index++;
-      if (encoder_index == cmd_index) {
-        return static_cast<SeesawEncoder*>(dev);  // Safe: dev validated above
+      // Capture the target encoder if index matches
+      if (encoder_index == cmd_index && !target_encoder) {
+        target_encoder = static_cast<SeesawEncoder*>(dev);
+        // Continue counting if total_count is requested
+        if (!total_count) {
+          return target_encoder;  // Early exit if count not needed
+        }
       }
     }
   }
 
-  return nullptr;
+  if (total_count) {
+    *total_count = encoder_index;
+  }
+
+  // Return encoder if cmd_index was valid (>= 1 and <= encoder_index)
+  return (cmd_index >= 1 && cmd_index <= encoder_index) ? target_encoder : nullptr;
 }
 
 // Command handlers
