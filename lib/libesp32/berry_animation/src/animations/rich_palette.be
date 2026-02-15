@@ -47,9 +47,6 @@ class rich_palette : animation.animation
        name == "brightness"
       # Set parameter on internal color provider
       self.color_provider.set_param(name, value)
-    else
-      # Let parent handle animation-specific parameters
-      super(self).on_param_changed(name, value)
     end
   end
   
