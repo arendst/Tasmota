@@ -63,7 +63,7 @@ class IMX219 : CSI_Sensor
   var is_streaming
   var is_initialized
   var width, height
-  var mipi_clock
+  var mipi_clock      # Mbps per lane (passed to C++ as CSI_Config.mipi_clock)
   var format, bin_mode
   
   def init()
@@ -119,8 +119,7 @@ class IMX219 : CSI_Sensor
       [0x478f, 0x10], [0x4793, 0x10], [0x4797, 0x0e], [0x479b, 0x0e],
       [0x0114, 0x01], [0x0128, 0x00], [0x012a, 0x18], [0x012b, 0x00],
       [0x0301, 0x05], [0x0303, 0x01], [0x0304, 0x03], [0x0305, 0x03],
-      [0x0306, 0x00], [0x0307, 0x39], [0x030b, 0x01], 
-      [0x030c, 0x00], [0x030d, 0x39], # 456 Mbps
+      [0x030b, 0x01],
       [self.REG_END, 0x00]
     ]
   end
@@ -153,21 +152,42 @@ class IMX219 : CSI_Sensor
     var ex = sx + eff_w - 1
     var ey = sy + eff_h - 1
     
-    # 3. Timing Calculation (Calibrated PCLK = 182.4 MHz)
-    var pclk = 182400000 
+    # 3. PLL Computation (EXCLK=24MHz, pre_div=3, PLL input=8MHz)
+    var bpp = (fmt == 0) ? 8 : 10
     var hts = 3448
-    var vts = pclk / (hts * (fps==0?30:fps))
-    if vts < h+50 vts = h+50 end
+    var act_fps = (fps == 0) ? 30 : fps
     
-    # 4. Exposure & Gain Calculation
-    var exposure = vts - 50  # Max integration time
-    var gain = 0xE0          # MAX Analog Gain (Was 0xA0)
+    # VT PLL: effective_pclk = vt_mpy * 3.2 MHz  (2-pipeline * 8MHz * mpy / vtpxck_div(5))
+    var vt_mpy = (hts * (h + 50) * act_fps + 3199999) / 3200000
+    if vt_mpy < 54 vt_mpy = 54 end
+    if vt_mpy > 114 vt_mpy = 114 end
+    
+    # OP PLL: lane_rate = 8 * op_mpy Mbps  (VCO / OPSYCK(div2) * DDR(x2))
+    # Must output w*bpp bits per line_time, on 2 lanes: op_mpy >= w*bpp*vt_mpy / (HTS*5)
+    var op_mpy = (w * bpp * vt_mpy + hts * 5 - 1) / (hts * 5)
+    if op_mpy < 54 op_mpy = 54 end
+    if op_mpy > 114 op_mpy = 114 end
+    
+    var pclk = vt_mpy * 3200000
+    self.mipi_clock = 8 * op_mpy  # Mbps per lane
+    
+    # 4. Timing
+    var vts = pclk / (hts * act_fps)
+    if vts < h + 50 vts = h + 50 end
+    
+    # 5. Exposure & Gain
+    var exposure = vts - 50
+    var gain = 0xE0
     
     var reg_oppxck = (fmt == 0) ? 0x08 : 0x0A
 
-    print(format("IMX219: CFG %dx%d (Crop %d,%d) Bin=%d Fmt=%d FPS=%d", w, h, sx, sy, bin, fmt, fps))
+    print(format("IMX219: CFG %dx%d Bin=%d Fmt=%d FPS=%d VT=%d OP=%d MIPI=%dMbps", w, h, bin, fmt, act_fps, vt_mpy, op_mpy, self.mipi_clock))
     
     return [
+      # PLL (computed per mode)
+      [0x0306, (vt_mpy >> 8) & 0x07], [0x0307, vt_mpy & 0xFF],
+      [0x030c, (op_mpy >> 8) & 0x07], [0x030d, op_mpy & 0xFF],
+      
       # Geometry & Format
       [0x0164, (sx>>8)], [0x0165, (sx&0xFF)], [0x0166, (ex>>8)], [0x0167, (ex&0xFF)],
       [0x0168, (sy>>8)], [0x0169, (sy&0xFF)], [0x016a, (ey>>8)], [0x016b, (ey&0xFF)],

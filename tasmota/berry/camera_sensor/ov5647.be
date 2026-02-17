@@ -63,7 +63,7 @@ class OV5647 : CSI_Sensor
   var is_streaming
   var is_initialized
   var width, height
-  var mipi_clock
+  var mipi_clock      # Mbps per lane (passed to C++ as CSI_Config.mipi_clock)
   var format, bin_mode
   
   def init()
@@ -133,28 +133,40 @@ class OV5647 : CSI_Sensor
     if h < 16 h = 16 end
     if fps < 1 fps = 1 end
 
-    # 2. Select Clock Speed based on binning and format
-    # Using 0xBC (High Speed) for Bin 2, and Legacy logic for Bin 1
-    if bin == 2
-       if fmt == 1 
-          self.mipi_clock = 291 # RAW10
-       else        
-          self.mipi_clock = 233 # RAW8
-       end
-    else
-       if fmt == 1 
-          self.mipi_clock = 408 # RAW10
-       else        
-          self.mipi_clock = 326 # RAW8
-       end
-    end
-
     self.width = w
     self.height = h
     self.format = fmt
     self.bin_mode = bin
-    
-    print(format("OV5647: CFG %dx%d Bin=%d Fmt=%d FPS=%d Clk=%d", w, h, bin, fmt, fps, self.mipi_clock))
+
+    # 2. Dynamic PLL multiplier computation
+    # OV5647 PLL: pclk = (EXCLK/prediv) * mult / sys_div / pclk_div
+    # Both pclk and MIPI lane rate scale linearly with mult.
+    # From calibration: pclk_per_mult = pclk / mult (constant per bin path)
+    #   bin2: 90200000/216 = 417593 Hz/mult   (sys_div=4)
+    #   bin1: 84000000/100 = 840000 Hz/mult   (sys_div=2)
+    # MIPI clock per lane (Mbps) vs PLL multiplier:
+    #   bin2: 291 Mbps/lane at mult=216 → ~1.347 Mbps/lane per mult unit
+    #   bin1: 408 Mbps/lane at mult=100 → ~4.08 Mbps/lane per mult unit
+    # Minimum mult from fps: mult >= HTS * VTS_min * fps / pclk_per_mult
+    var vts_min = h + 50
+    var pll_mult
+    if bin == 2
+      # pclk_per_mult ≈ 417593, use integer: mult = (HTS*vts*fps + 417592) / 417593
+      pll_mult = (1896 * vts_min * fps + 417592) / 417593
+      if pll_mult < 175 pll_mult = 175 end  # floor: matches RAW8 baseline
+      if pll_mult > 252 pll_mult = 252 end
+      if pll_mult >= 128 pll_mult = (pll_mult + 1) & 0xFE end  # even only above 127
+      self.mipi_clock = (4 * pll_mult + 1) / 3  # ≈ 1.347 * mult
+    else
+      # pclk_per_mult = 840000, use integer: mult = (HTS*vts*fps + 839999) / 840000
+      pll_mult = (2500 * vts_min * fps + 839999) / 840000
+      if pll_mult < 80 pll_mult = 80 end   # floor: matches RAW8 baseline
+      if pll_mult > 252 pll_mult = 252 end
+      if pll_mult >= 128 pll_mult = (pll_mult + 1) & 0xFE end
+      self.mipi_clock = 4 * pll_mult  # ≈ 4.08 * mult
+    end
+
+    print(format("OV5647: CFG %dx%d Bin=%d Fmt=%d FPS=%d PLL=0x%02X(%d) MIPI=%dMbps", w, h, bin, fmt, fps, pll_mult, pll_mult, self.mipi_clock))
 
     # 3. Generate Registers
     if bin == 2
@@ -170,15 +182,14 @@ class OV5647 : CSI_Sensor
        var off_x = 9 + start_x
        var off_y = 0 + start_y
        
-       var pclk_real = 90200000
        var hts = 1896
-       var vts = pclk_real / (hts * fps)
+       var vts = pll_mult * 417593 / (hts * fps)
        if vts < h + 50 vts = h + 50 end
 
        return [
         [0x3034, fmt == 0 ? 0x18 : 0x1a],
         [0x3035,0x41], 
-        [0x3036,fmt == 1 ? 0xD8 : 0xAF],
+        [0x3036, pll_mult],
         [0x303c,0x11], 
         [0x3106,0xf5],
         
@@ -235,14 +246,14 @@ class OV5647 : CSI_Sensor
        
        # Timing
        var hts = 2500
-       var vts = 84000000 / (hts * fps)
+       var vts = pll_mult * 840000 / (hts * fps)
        if vts < h + 50 vts = h + 50 end
 
        return [
          # --- SYSTEM & PLL ---
          [0x3034, fmt == 0 ? 0x18 : 0x1a], # MIPI 8-bit / 10-bit mode
          [0x3035, 0x21],                   # PLL System Control
-         [0x3036, fmt == 1 ? 0x64 : 0x50], # PLL Multiplier (RAW10=100, RAW8=80)
+         [0x3036, pll_mult],                 # PLL Multiplier (dynamic)
          [0x303c, 0x11],                   # PLL divider
          [0x3106, 0xf5],                   # SCLK/PCLK Control
          

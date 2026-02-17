@@ -104,7 +104,7 @@ struct CSI_Config {
   uint16_t max_height;      // 6-7: Maximum sensor resolution height
   uint8_t format;           // 8: COLOR_PIXEL_RAW8/RAW10/RAW12 (pixel format part only)
   uint8_t lane_num;         // 9: Number of CSI lanes (typically 2)
-  uint16_t mipi_clock;      // 10-11: Mbps per lane (e.g. 200)
+  uint16_t mipi_clock;      // 10-11: Mbps per lane (e.g. 200) - Total MIPI bandwidth = mipi_clock * lane_num Mbps
   uint16_t offset_x;        // 12-13: Sensor X-offset (Ignored by C++, used by Berry for ROI)
   uint16_t offset_y;        // 14-15: Sensor Y-offset (Ignored by C++, used by Berry for ROI)
   uint8_t binning;          // 16: 1=None/1x1, 2=2x2, ...
@@ -559,6 +559,7 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Format: %d"), Wc.core.config.format);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI Clock: %d Mbps/lane"), Wc.core.config.mipi_clock);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Lanes: %d"), Wc.core.config.lane_num);
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Total MIPI bandwidth: %d Mbps"), Wc.core.config.mipi_clock * Wc.core.config.lane_num);
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== END CONFIG ====="));
 
   // 3. Initialize Resolution-Dependent Hardware (Buffers, CSI, ISP, Encoders)
