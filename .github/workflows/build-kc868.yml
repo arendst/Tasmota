@@ -28,4 +28,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tasmota32-kc868-a16
-          path: build_output/firmware/tasmota32.factory.bin
+          path: build_output/firmware/
