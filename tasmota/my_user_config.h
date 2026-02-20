@@ -543,8 +543,6 @@
 // Select none or only one of the below defines USE_RULES or USE_SCRIPT
 #define USE_RULES                                // Add support for rules (+13k code, +768 bytes mem)
   #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+1k8 code)
-  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+1k7 code)
-    #define SUPPORT_IF_STATEMENT                 // Add support for IF statement in rules (+2k7)
 //  #define USER_RULE1 "<Any rule1 data>"          // Add rule1 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE2 "<Any rule2 data>"          // Add rule2 data saved at initial firmware load or when command reset is executed
 //  #define USER_RULE3 "<Any rule3 data>"          // Add rule3 data saved at initial firmware load or when command reset is executed
@@ -639,9 +637,11 @@
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
-#define I2CDRIVERS_0_31        0xFFFFFFFF          // Enable I2CDriver0  to I2CDriver31
-#define I2CDRIVERS_32_63       0xFFFFFFFF          // Enable I2CDriver32 to I2CDriver63
-#define I2CDRIVERS_64_95       0xFFFFFFFF          // Enable I2CDriver64 to I2CDriver95
+#define I2CDRIVERS_0_31        0xFFFFFFFF        // Enable I2CDriver0  to I2CDriver31
+#define I2CDRIVERS_32_63       0xFFFFFFFF        // Enable I2CDriver32 to I2CDriver63
+#define I2CDRIVERS_64_95       0xFFFFFFFF        // Enable I2CDriver64 to I2CDriver95
+#define I2CDRIVERS_96_127      0xFFFFFFFF        // Enable I2CDriver96 to I2CDriver127
+#define I2CDRIVERS_128_159     0xFFFFFFFF        // Enable I2CDriver128 to I2CDriver159
 
 #ifdef USE_I2C
 //  #define USE_I2C_BUS2                           // Add experimental support for second I2C bus on ESP8266 (+0k6k code)
@@ -657,15 +657,19 @@
 //  #define USE_INA219                             // [I2cDriver14] Enable INA219 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+1k code)
   //  #define INA219_SHUNT_RESISTOR (0.100)        // 0.1 Ohm default shunt resistor, can be overriden in user_config_override or using Sensor13
 //  #define USE_INA226                             // [I2cDriver35] Enable INA226 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+2k3 code)
-//  #define USE_SHT3X                              // [I2cDriver15] Enable SHT3x (I2C address 0x44 or 0x45) or SHTC3 (I2C address 0x70) sensor (+0k7 code)
 //  #define USE_TSL2561                            // [I2cDriver16] Enable TSL2561 sensor (I2C address 0x29, 0x39 or 0x49) using library Joba_Tsl2561 (+2k3 code)
 //  #define USE_TSL2591                            // [I2cDriver40] Enable TSL2591 sensor (I2C address 0x29) using library Adafruit_TSL2591 (+1k6 code)
 //  #define USE_MGS                                // [I2cDriver17] Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
-//  #define USE_SGP30                              // [I2cDriver18] Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
-//  #define USE_SGP40                              // [I2cDriver69] Enable SGP40 sensor (I2C address 0x59) (+1k4 code)
-//  #define USE_SGP4X                              // [I2cDriver82] Enable SGP41 sensor (I2C address 0x59) (+7k2 code)
-//  #define USE_SEN5X                              // [I2cDriver76] Enable SEN5X sensor (I2C address 0x69) (+3k code)
+//  #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
+//  #define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40/Scd41 CO2 sensor (I2C address 0x62) (+3k5 code)
+//  #define USE_SEN5X                              // [I2cDriver76] Enable Sensiron SEN5X sensor (I2C address 0x69) (+3k code)
+//  #define USE_SEN6X                              // [I2cDriver97] Enable Sensiron SEN6X sensor (I2C address 0x6B) (+7k8 code)
+//  #define USE_SHT3X                              // [I2cDriver15] Enable Sensiron SHT3x (I2C address 0x44 or 0x45) or SHTC3 (I2C address 0x70) sensor (+0k7 code)
+//  #define USE_SGP30                              // [I2cDriver18] Enable Sensiron SGP30 sensor (I2C address 0x58) (+1k1 code)
+//  #define USE_SGP40                              // [I2cDriver69] Enable Sensiron SGP40 sensor (I2C address 0x59) (+1k4 code)
+//  #define USE_SGP4X                              // [I2cDriver82] Enable Sensiron SGP41 sensor (I2C address 0x59) (+7k2 code)
+//  #define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 //  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k6 code)
 //    #define LM75AD_MAX_SENSORS    8              // Max number of LM75AD sensors supported (default = 8 on 2 busses, max = 16 on 2 busses)
@@ -698,9 +702,6 @@
 //    #define USE_MPU6050_DMP                      // Enable in MPU6050 to use the DMP on the chip, should create better results (+8k6 of code)
 //  #define USE_MGC3130                            // [I2cDriver27] Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //  #define USE_MAX44009                           // [I2cDriver28] Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
-//  #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
-//  #define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40/Scd41 CO2 sensor (I2C address 0x62) (+3k5 code)
-//  #define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
 //  #define USE_ADE7880                            // [I2cDriver65] Enable ADE7880 Energy monitor as used on Shelly 3EM (I2C address 0x38) (+3k8)
   #define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 //  #define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
@@ -805,6 +806,7 @@
 //    #define USE_BM8563                           // [I2cDriver59] Enable BM8563 RTC - used by M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2.5k code)
 //    #define USE_PCF85363                         // [I2cDriver66] Enable PCF85363 RTC - used by Shelly 3EM (I2C address 0x51) (+0k7 code)
 //    #define USE_RX8010                           // [I2cDriver90] Enable RX8010 RTC - used by IOTTIMER - support both I2C buses on ESP32 (I2C address 0x32) (+0k7 code)
+//    #define USE_RX8025                           // [I2cDriver90] Enable RX8025 RTC support both I2C buses on ESP32 (I2C address 0x32) 
 //    #define USE_RX8030                           // [I2cDriver90] Enable RX8030 RTC - used by #23855 - support both I2C buses on ESP32 (I2C address 0x32) (+0k7 code)
 //    #define USE_PCF85063                         // [I2cDriver92] Enable PCF85063 RTC support (I2C address 0x51)
 
@@ -839,6 +841,15 @@
 //    #define MAX_DT_VARS     16                   // Defaults to 7
 //    #define USE_GRAPH                            // Enable line charts with displays
 //    #define NUM_GRAPHS     4                     // Max 16
+
+//  #define USE_FM24CXX                           // External FRAM module over I2C accesible via tasmota console / berry. be used to store super volatile data, frequently-changing settings, logs etc... (ps: shall work with AT24C32-AT24C512, but use with care - wear)
+    #define FM24CXX_I2C_ADD             0x57    // Fram I2C address.
+    #define FM24CXX_CAPACITY            8192    // FRAM Module size in bytes. 8192 = 64kbits (FM24C64), 4096 = 32kbits (FM24C32) etc..
+    #define FM24CXX_BLOCK_SIZE          256     // Parsed block size. When 256 and FRAM Size 8192, there are 8192/256 = 32 blocks per 256 bytes.
+    #define FM24CXX_I2C_CHUNK           32      // I2C Read Chunk size. For maximum compatibility, use 32. ESP32 S3,P4 works with 128 (a bit faster writes)
+    #define FM24CXX_MAX_WRITE_BYTES     4096    // Maximum bytes to be written at single cmd
+    #define FM24CXX_JSON_MAX_BYTES      4096    // Maximum bytes to get in single json response in FramReadRaw cmd. Above raise error.
+
 
 #endif  // USE_I2C
 
@@ -1235,6 +1246,7 @@
 #define USE_AUTOCONF                             // Enable Esp32(x) autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
 #define USE_EXTENSION_MANAGER                    // Enable Esp32(x) extensions manager, requires USE_BERRY and USE_WEBCLIENT_HTTPS (11KB Flash)
 #define USE_BERRY                                // Enable Berry scripting language
+//  #define USE_BERRY_WEBCLIENT_ASYNC              // Enable ASYNC webclient mode as an additional mode to standary berry webclient.   
   #define USE_BERRY_PYTHON_COMPAT                // Enable by default `import python_compat`
   #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact

@@ -118,6 +118,7 @@
 #define D_GATEWAY "Brama"
 #define D_GROUP "Grupa"
 #define D_HALL_EFFECT "Efekt Hall'a"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Indeks ciepła"
 #define D_HOST "Serwer"
 #define D_HOSTNAME "Nazwa serwera"

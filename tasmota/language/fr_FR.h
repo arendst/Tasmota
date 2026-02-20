@@ -118,6 +118,7 @@
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
 #define D_HALL_EFFECT "Effet Hall"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Hôte"
 #define D_HOSTNAME "Nom d'Hôte"

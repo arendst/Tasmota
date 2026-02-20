@@ -2336,8 +2336,8 @@ void GpioInit(void)
         else { 
           TasmotaGlobal.i2c_enabled[1] = true;
         }
-        AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus%d using GPIO%02d(SCL) and GPIO%02d(SDA)"), bus +1, Pin(GPIO_I2C_SCL, bus), Pin(GPIO_I2C_SDA, bus));
 #endif  // USE_I2C_BUS2
+        AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus%d using GPIO%02d(SCL) and GPIO%02d(SDA)"), bus +1, Pin(GPIO_I2C_SCL, bus), Pin(GPIO_I2C_SDA, bus));
       }
     }
   }

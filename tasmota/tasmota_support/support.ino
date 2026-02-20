@@ -239,6 +239,15 @@ void TasAutoMutex::take() {
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
+
+void PowerOnDelay(uint32_t msecs) {
+//  if (ResetReasonPowerOn()) {
+    while (millis() < msecs) {
+      delay(1);
+    }
+//  }
+}
+
 /*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;

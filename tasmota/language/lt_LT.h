@@ -118,6 +118,7 @@
 #define D_GATEWAY "Tinklo vartai"
 #define D_GROUP "Grupė"
 #define D_HALL_EFFECT "Holo efektas"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Karščio indeksas"
 #define D_HOST "Serveris"
 #define D_HOSTNAME "Mazgo pavadinimas"

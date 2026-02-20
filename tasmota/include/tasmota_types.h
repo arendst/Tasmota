@@ -889,10 +889,7 @@ typedef struct {
   uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
-
-  uint8_t       free_f64[8];               // F64 - Decrement if adding new Setting variables just above and below
-
-  // Only 32 bit boundary variables below
+  uint32_t      i2c_drivers2[2];           // F64
   float         ms5837_pressure_offset;    // F6C
   uint32_t      touch_threshold;           // F70
   SOBitfield6   flag6;                     // F74

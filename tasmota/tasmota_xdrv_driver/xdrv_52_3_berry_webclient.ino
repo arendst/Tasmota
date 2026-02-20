@@ -1,28 +1,63 @@
 /*
-  xdrv_52_3_berry_webserver.ino - Berry scripting language, webserver module
-
-  Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
-
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * xdrv_52_3_berry_webserver.ino — Berry scripting language, webserver/webclient module
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * Copyright (C) 2021 Stephan Hadinger
+ * Berry language by Guan Wenliang — https://github.com/Skiars/berry
+ *
+ * Modifications (2026): Webclient update and integration with AsyncHttpClientLight
+ * instead of HttpClientLight, adding asynchronous GET/POST and TLS pinning.
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * ----- ASYNC WEBCLIENT UPDATE ----- (VER: 1.0)
+ *
+ *  To use ASYNC Webclient instead of Sync webclient - # DEFINE USE_BERRY_WEBCLIENT_ASYNC
+ * 
+ * Webclient changes:
+ * - Switched to AsyncHttpClientLight backend (replacing HttpClientLight).
+ * - Added asynchronous HTTP on HTTP & HTTPS (TLS):
+ *     * async_get_start() -> int
+ *     * async_post_start(body: string|bytes) -> int
+ *     * async_state()      // call at least once after a job finishes to publish results and cleanup
+ *     * async_abort()      // best-effort cancellation if a job is in progress
+ *
+ * TLS pinning (with optional RSA-only hardening):
+ *   - tls_pin_pubkey(fp1: string [, fp2: string]) -> self
+ *     // Pin server public-key SHA-1 fingerprint ("AA:BB:...:FF" or 40 hex chars, case-insensitive).
+ *   - tls_clear_pins() -> self
+ *   - tls_set_rsa_only(bool) -> self
+ *
+ * Other helpers:
+ *   - set_follow_redirects(bool) -> self
+ *
+ * Notes:
+ * - Always call async_state() at least once after an async job completes to publish
+ *   last_code/last_rx and release internal resources before reusing the same instance.
+ */
 
 // also includes tcp_client
 
 #ifdef USE_BERRY
 
 #include <berry.h>
+// ASYNC EXT
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+#include "AsyncHttpClientLight.h"
+#else
 #include "HttpClientLight.h"
+#endif
+
 #include "be_sys.h"
 
 // Tasmota extension
@@ -81,12 +116,19 @@ String wc_UrlEncode(const String& text) {
 extern "C" {
   // Berry: ``
   //
+
   int32_t wc_init(struct bvm *vm);
   int32_t wc_init(struct bvm *vm) {
     WiFiClient * wcl = new WiFiClient();
     be_pushcomptr(vm, (void*) wcl);
     be_setmember(vm, 1, ".w");
+
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = new AsyncHttpClientLight();
+#else
     HTTPClientLight * cl = new HTTPClientLight();
+#endif
+    
     cl->setUserAgent(USE_BERRY_WEBCLIENT_USERAGENT);
     cl->setConnectTimeout(USE_BERRY_WEBCLIENT_TIMEOUT);   // set default timeout
     be_pushcomptr(vm, (void*) cl);
@@ -108,12 +150,21 @@ extern "C" {
     be_return_nil(vm);
   }
 
-  HTTPClientLight * wc_getclient(struct bvm *vm) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * wc_getclient(struct bvm *vm) {
+    be_getmember(vm, 1, ".p");
+    void *p = be_tocomptr(vm, -1);
+    be_pop(vm, 1);
+    return (AsyncHttpClientLight*) p;
+  }
+#else
+    HTTPClientLight * wc_getclient(struct bvm *vm) {
     be_getmember(vm, 1, ".p");
     void *p = be_tocomptr(vm, -1);
     be_pop(vm, 1);
     return (HTTPClientLight*) p;
   }
+#endif
 
   WiFiClient * wc_getwificlient(struct bvm *vm) {
     be_getmember(vm, 1, ".w");
@@ -133,7 +184,13 @@ extern "C" {
   int32_t wc_deinit(struct bvm *vm);
   int32_t wc_deinit(struct bvm *vm) {
     // int32_t argc = be_top(vm); // Get the number of arguments
+
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
+    
     if (cl != nullptr) { delete cl; }
     be_pushnil(vm);
     be_setmember(vm, 1, ".p");
@@ -170,11 +227,20 @@ extern "C" {
     int32_t argc = be_top(vm);
     if (argc == 1 || !be_tostring(vm, 2)) { be_raise(vm, "attribute_error", "missing URL as string"); }
     const char * url = be_tostring(vm, 2);
+
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+  AsyncHttpClientLight * cl = wc_getclient(vm);
+    // open connection
+    if (!cl->begin(String(url))) {   // tries http, falls back to https path
+      be_raise(vm, "value_error", "begin() failed (unsupported URL?)");
+    }
+#else
     HTTPClientLight * cl = wc_getclient(vm);
     // open connection
     if (!cl->begin(url)) {
       be_raise(vm, "value_error", "unsupported protocol");
     }
+#endif
     be_pushvalue(vm, 1);
     be_return(vm);  /* return self */
   }
@@ -206,7 +272,11 @@ extern "C" {
   // wc.close(void) -> nil
   int32_t wc_close(struct bvm *vm);
   int32_t wc_close(struct bvm *vm) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
     cl->end();
     be_return_nil(vm);
   }
@@ -232,7 +302,11 @@ extern "C" {
   int32_t wc_set_timeouts(struct bvm *vm);
   int32_t wc_set_timeouts(struct bvm *vm) {
     int32_t argc = be_top(vm);
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
     if (argc >= 2) {
       cl->setTimeout(be_toint(vm, 2));
     }
@@ -248,7 +322,11 @@ extern "C" {
   int32_t wc_set_useragent(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       const char * useragent = be_tostring(vm, 2);
       cl->setUserAgent(String(useragent));
       be_pushvalue(vm, 1);
@@ -262,7 +340,11 @@ extern "C" {
   int32_t wc_set_follow_redirects(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isbool(vm, 2)) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       bbool follow = be_tobool(vm, 2);
       cl->setFollowRedirects(follow ? HTTPC_STRICT_FOLLOW_REDIRECTS : HTTPC_DISABLE_FOLLOW_REDIRECTS);
       be_pushvalue(vm, 1);
@@ -276,14 +358,18 @@ extern "C" {
   int32_t wc_collect_headers(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 2) {
-      size_t header_len = argc-1;
-      const char** header_array = (const char**) be_os_malloc((header_len) * sizeof(const char*));
+      size_t header_len = (size_t)(argc - 1);
+      const char** header_array = (const char**) be_os_malloc(header_len * sizeof(const char*));
       if (!header_array) { be_throw(vm, BE_MALLOC_FAIL); }
 
-      for (int32_t i = 0; i < header_len; i++) {
+      for (int32_t i = 0; i < (int32_t)header_len; i++) {
         header_array[i] = be_tostring(vm, i + 2);
       }
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       cl->collectHeaders(header_array, header_len);
 
       be_os_free(header_array);
@@ -297,7 +383,11 @@ extern "C" {
   int32_t wc_get_header(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       const char * header_name = be_tostring(vm, 2);
       String ret = cl->header(header_name);
       be_pushstring(vm, ret.c_str());
@@ -311,7 +401,11 @@ extern "C" {
   int32_t wc_set_auth(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2) && (argc < 3 || be_isstring(vm, 3))) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       const char * user = be_tostring(vm, 2);
       if (argc == 2) {
         cl->setAuthorization(user);
@@ -330,7 +424,11 @@ extern "C" {
   int32_t wc_addheader(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 3 && (be_isstring(vm, 2) || be_isstring(vm, 2))) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
 
       const char * name = be_tostring(vm, 2);
       const char * value = be_tostring(vm, 3);
@@ -349,10 +447,14 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // cw.connected(void) -> bool
+  // wc.connected(void) -> bool
   int32_t wc_connected(struct bvm *vm);
   int32_t wc_connected(struct bvm *vm) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
     be_pushbool(vm, cl->connected());
     be_return(vm);  /* return code */
   }
@@ -445,10 +547,14 @@ extern "C" {
     }
   }
 
-  // cw.GET(void) -> httpCode:int
+  // wc.GET(void) -> httpCode:int
   int32_t wc_GET(struct bvm *vm);
   int32_t wc_GET(struct bvm *vm) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
     uint32_t http_connect_time = millis();
     int32_t httpCode = cl->GET();
     wc_errorCodeMessage(httpCode, http_connect_time);
@@ -467,7 +573,11 @@ extern "C" {
   int32_t wc_PostPutPatchDelete(struct bvm *vm, int32_t op) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       const char * buf = nullptr;
       size_t buf_len = 0;
       if (be_isstring(vm, 2)) {  // string
@@ -501,6 +611,173 @@ extern "C" {
   }
 
 
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+
+  // ---------------- ASYNC MODE - TLS PINNING (Berry API) ----------------
+
+  // wc.tls_pin_pubkey(fprint1 [, fprint2]) -> self
+  int32_t wc_tls_pin_pubkey(struct bvm *vm) {
+    const int32_t argc = be_top(vm);
+    if (argc < 2 || !be_isstring(vm, 2)) {
+      be_raise(vm, "type_error", "tls_pin_pubkey(fp1[, fp2]) expects string");
+    }
+    const char *fp1 = be_tostring(vm, 2);
+    const char *fp2 = (argc >= 3 && be_isstring(vm, 3)) ? be_tostring(vm, 3) : nullptr;
+
+    AsyncHttpClientLight *cl = nullptr;
+    be_getmember(vm, 1, ".p");
+    if (be_iscomptr(vm, -1)) { cl = (AsyncHttpClientLight*) be_tocomptr(vm, -1); }
+    be_pop(vm, 1);
+    if (!cl) { be_raise(vm, "value_error", "HTTP client not initialized"); }
+
+    if (!cl->setPubKeyPins(fp1, fp2)) {
+      be_raise(vm, "value_error", "bad fingerprint (need 40 hex, colons optional)");
+    }
+
+    be_pushvalue(vm, 1);
+    be_return(vm);
+  }
+
+  // wc.tls_clear_pins() -> self
+  int32_t wc_tls_clear_pins(struct bvm *vm) {
+    AsyncHttpClientLight *cl = nullptr;
+    be_getmember(vm, 1, ".p");
+    if (be_iscomptr(vm, -1)) { cl = (AsyncHttpClientLight*) be_tocomptr(vm, -1); }
+    be_pop(vm, 1);
+    if (!cl) { be_raise(vm, "value_error", "HTTP client not initialized"); }
+
+    cl->clearPubKeyPins();
+
+    be_pushvalue(vm, 1);
+    be_return(vm);
+  }
+
+  // wc.tls_set_rsa_only(bool) -> self
+  int32_t wc_tls_set_rsa_only(struct bvm *vm) {
+    const int32_t argc = be_top(vm);
+    if (argc < 2 || !be_isbool(vm, 2)) {
+      be_raise(vm, "type_error", "tls_set_rsa_only(bool) expects boolean");
+    }
+    const bool rsa_only = be_tobool(vm, 2);
+
+    AsyncHttpClientLight *cl = nullptr;
+    be_getmember(vm, 1, ".p");
+    if (be_iscomptr(vm, -1)) { cl = (AsyncHttpClientLight*) be_tocomptr(vm, -1); }
+    be_pop(vm, 1);
+    if (!cl) { be_raise(vm, "value_error", "HTTP client not initialized"); }
+
+    cl->setRSAOnly(rsa_only);
+
+    be_pushvalue(vm, 1);
+    be_return(vm);
+  }
+// ------- ASYNC API (Berry API) ---------------------------------------------
+
+  // wc.async_get_start() -> int (1 started, 0 busy, <0 error)
+  int32_t wc_async_get_start(struct bvm *vm) {
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+    int32_t rc = cl->asyncGETStart();
+    be_pushint(vm, rc);
+    be_return(vm);
+  }
+
+  // wc.async_post_start(str | bytes) -> int (1 started, 0 busy, <0 error)
+  int32_t wc_async_post_start(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc < 2) {
+      be_raise(vm, "type_error", "async_post_start(payload) expects string or bytes");
+    }
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+
+    if (be_isstring(vm, 2)) {
+      const char * s = be_tostring(vm, 2);
+      int32_t rc = cl->asyncPOSTStart(String(s));
+      be_pushint(vm, rc);
+      be_return(vm);
+    } else if (be_isbytes(vm, 2)) {
+      size_t len = 0;
+      const uint8_t * p = (const uint8_t *) be_tobytes(vm, 2, &len);
+      // drž payload, aby ho GC nevyhodil kým beží job
+      be_pushvalue(vm, 2);
+      be_setmember(vm, 1, ".__async_hold");
+      int32_t rc = cl->asyncPOSTStart((uint8_t*)p, len);
+      be_pushint(vm, rc);
+      be_return(vm);
+    }
+    be_raise(vm, "type_error", "async_post_start(payload) expects string or bytes");
+  }
+
+  // wc.async_state() -> int (state)
+  int32_t wc_async_state(struct bvm *vm) {
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+    int http_code = 0;
+    int rx_bytes  = -1;
+    AsyncHttpClientLight::AsyncState_t st = cl->asyncState(&http_code, &rx_bytes);
+
+    // publish meta to object (public & private mirrors)
+    be_pushint(vm, http_code);       be_setmember(vm, 1, "._last_code");
+    be_pushint(vm, http_code);       be_setmember(vm, 1, "last_code");     // <-- public mirror
+
+    be_pushint(vm, rx_bytes);        be_setmember(vm, 1, "._last_rx");
+    be_pushint(vm, rx_bytes);        be_setmember(vm, 1, "last_rx");       // <-- public mirror
+
+    if (st != AsyncHttpClientLight::ASYNC_RUNNING) {
+
+      be_pushnil(vm);
+      be_setmember(vm, 1, ".__async_hold");
+    }
+
+    be_pushint(vm, (int32_t)st);
+    be_return(vm);
+  }
+
+  // wc.async_abort() -> nil
+  int32_t wc_async_abort(struct bvm *vm) {
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+    cl->asyncAbort();
+    be_return_nil(vm);
+  }
+
+#else
+
+  int32_t wc_async_get_start(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_async_get_start command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_tls_set_rsa_only(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_tls_set_rsa_only command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_tls_pin_pubkey(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_tls_pin_pubkey command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_tls_clear_pins(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_tls_clear_pins command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_async_post_start(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_async_post_start command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_async_state(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_async_state command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_async_abort(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_async_abort command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  // ---------------------------------------------------------------------
+#endif
+
   // wc.POST(string | bytes) -> httpCode:int
   int32_t wc_POST(struct bvm *vm);
   int32_t wc_POST(struct bvm *vm) {
@@ -527,7 +804,11 @@ extern "C" {
 
   int32_t wc_getstring(struct bvm *vm);
   int32_t wc_getstring(struct bvm *vm) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
     int32_t sz = cl->getSize();
     // abort if we exceed 32KB size, things will not go well otherwise
     if (sz >= 32767) {
@@ -543,7 +824,11 @@ extern "C" {
   int32_t wc_writefile(struct bvm *vm) {
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isstring(vm, 2)) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       const char * fname = be_tostring(vm, 2);
 
       void * f = be_fopen(fname, "w");
@@ -561,7 +846,11 @@ extern "C" {
 
   int32_t wc_getsize(struct bvm *vm);
   int32_t wc_getsize(struct bvm *vm) {
-    HTTPClientLight * cl = wc_getclient(vm);
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
+      HTTPClientLight * cl = wc_getclient(vm);
+#endif
     be_pushint(vm, cl->getSize());
     be_return(vm);  /* return code */
   }
@@ -614,12 +903,16 @@ extern "C" {
 #if ESP_IDF_VERSION_MAJOR < 5
     int32_t argc = be_top(vm);
     if (argc >= 2 && be_isint(vm, 2)) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+      AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
       HTTPClientLight * cl = wc_getclient(vm);
+#endif
       uint32_t addr = be_toint(vm, 2);
       if (addr < 0x10000 || addr >= 0x400000) {
         be_raisef(vm, "value_error", "invalid flash address 0x04X", addr);
       }
-      if (addr & (SPI_FLASH_SEC_SIZE-1) != 0) {
+      if ((addr & (SPI_FLASH_SEC_SIZE-1)) != 0) {
         be_raisef(vm, "value_error", "invalid flash address, must be at %iKB boundary 0x%04X", SPI_FLASH_SEC_SIZE/1024, addr);
       }
       int32_t size = cl->getSize();
@@ -675,7 +968,7 @@ public:
       AddLog(LOG_LEVEL_INFO, "BE: realloc bytes in StreamBeBytesWriter newsize=%i", newsize);
       be_getmember(vm, -1, "resize");
       be_pushvalue(vm, -2);
-      be_pushint(vm, size);
+      be_pushint(vm, newsize);          // BUGFIX: use newsize
       be_call(vm, 2); /* call b.resize(size) */
       be_pop(vm, 3);  /* bytes() instance is at top */      
 
@@ -730,7 +1023,11 @@ protected:
 extern "C" {
   int32_t wc_getbytes(struct bvm *vm);
   int32_t wc_getbytes(struct bvm *vm) {
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    AsyncHttpClientLight * cl = wc_getclient(vm);
+#else
     HTTPClientLight * cl = wc_getclient(vm);
+#endif
     int32_t sz = cl->getSize();
     // abort if we exceed 32KB size, things will not go well otherwise
     if (sz >= 32767) {
@@ -740,11 +1037,21 @@ extern "C" {
     if (sz < 0) sz = 1024;
     // create a bytes object at top of stack.
     // the streamwriter knows how to get it. 
+
+#ifdef USE_BERRY_WEBCLIENT_ASYNC // No sense closing cl wheen using stream!
+    (void) be_pushbytes(vm, nullptr, sz);
+    StreamBeBytesWriter memory_writer(vm);
+    (void) cl->writeToStream(&memory_writer);
+    be_return(vm);
+#else
     uint8_t * buf = (uint8_t*) be_pushbytes(vm, nullptr, sz);
     StreamBeBytesWriter memory_writer(vm);
     int32_t written = cl->writeToStream(&memory_writer);
     cl->end();  // free allocated memory ~16KB
     be_return(vm);  /* return code */
+#endif
+    
+
   }
 }
 

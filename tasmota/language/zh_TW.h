@@ -118,6 +118,7 @@
 #define D_GATEWAY "閘道器"
 #define D_GROUP "群組："
 #define D_HALL_EFFECT "霍爾效應"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "酷熱指數"
 #define D_HOST "主機"
 #define D_HOSTNAME "主機名稱"

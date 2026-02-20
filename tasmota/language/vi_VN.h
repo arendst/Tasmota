@@ -118,6 +118,7 @@
 #define D_GATEWAY "Cổng kết nối"
 #define D_GROUP "Nhóm"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Máy chủ"
 #define D_HOSTNAME "Tên máy chủ"

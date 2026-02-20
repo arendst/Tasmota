@@ -118,6 +118,7 @@
 #define D_GATEWAY "Predvolená brána"
 #define D_GROUP "Skupina"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Server"
 #define D_HOSTNAME "Názov servera"

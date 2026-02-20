@@ -1,0 +1,17 @@
+{
+  "name": "Async HttpClient Light", 
+  "version": "1.0",
+  "description": "Async extension for HttpClientLight by Stephan Hadinger",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "authors":
+  {
+    "name": "Martin Macak (HexaMaster)",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include" ]
+  }
+}

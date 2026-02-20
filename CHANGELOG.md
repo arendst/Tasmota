@@ -3,18 +3,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.2.0.5]
+## [15.3.0.1]
 ### Added
+- Support for Sensirion SCD43 CO2 sensor
 
 ### Breaking Changed
 
 ### Changed
-- ESP32 Platform from 2025.01.30 to 2026.02.30, Framework (Arduino Core) from v3.1.9 to v3.1.10 and IDF from v5.3.4.251226 to v5.3.4.260127 (#24444)
 
 ### Fixed
 
 ### Removed
 
+
+## [Released]
+
+## [15.3.0]
+- Release Susan
+
+## [15.2.0.6] 20260219
+### Added
+- Support for Sensirion SEN6x indoor air quality sensor (#24386)
+- Support for I2C FM24Cxx FRAM block read/write/format commands (#24457)
+
+### Changed
+- ESP8266 platform update from 2026.01.00 to 2026.02.00 (#24460)
+
+## [15.2.0.5] 20260214
+### Added
+- ESP32 support SPI bus2 for Ethernet and SDCard (#24433)
+- Support for RX8025T RTC (#24445)
+
+### Changed
+- ESP32 Platform from 2025.01.30 to 2026.02.30, Framework (Arduino Core) from v3.1.9 to v3.1.10 and IDF from v5.3.4.251226 to v5.3.4.260127 (#24444)
 
 ## [15.2.0.4] 20260212
 ### Added
@@ -80,8 +101,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Berry `animate` to be replaced with `animation` framework (#24241)
-
-## [Released]
 
 ## [15.2.0]
 - Release Stephan

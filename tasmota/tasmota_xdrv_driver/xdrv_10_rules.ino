@@ -113,27 +113,25 @@
 #define MAXIMUM_COMPARE_OPERATOR              COMPARE_OPERATOR_STRING_NOT_CONTAINS
 const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
 
-#ifdef USE_EXPRESSION
-  const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
-  #define EXPRESSION_OPERATOR_ADD         0
-  #define EXPRESSION_OPERATOR_SUBTRACT    1
-  #define EXPRESSION_OPERATOR_MULTIPLY    2
-  #define EXPRESSION_OPERATOR_DIVIDEDBY   3
-  #define EXPRESSION_OPERATOR_MODULO      4
-  #define EXPRESSION_OPERATOR_POWER       5
+const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
+#define EXPRESSION_OPERATOR_ADD         0
+#define EXPRESSION_OPERATOR_SUBTRACT    1
+#define EXPRESSION_OPERATOR_MULTIPLY    2
+#define EXPRESSION_OPERATOR_DIVIDEDBY   3
+#define EXPRESSION_OPERATOR_MODULO      4
+#define EXPRESSION_OPERATOR_POWER       5
 
-  const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
-  #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
+const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
+#define MAX_EXPRESSION_OPERATOR_PRIORITY    4
 
-  #define LOGIC_OPERATOR_AND        1
-  #define LOGIC_OPERATOR_OR         2
+#define LOGIC_OPERATOR_AND        1
+#define LOGIC_OPERATOR_OR         2
 
-  #define IF_BLOCK_INVALID        -1
-  #define IF_BLOCK_ANY            0
-  #define IF_BLOCK_ELSEIF         1
-  #define IF_BLOCK_ELSE           2
-  #define IF_BLOCK_ENDIF          3
-#endif  // USE_EXPRESSION
+#define IF_BLOCK_INVALID        -1
+#define IF_BLOCK_ANY            0
+#define IF_BLOCK_ELSEIF         1
+#define IF_BLOCK_ELSE           2
+#define IF_BLOCK_ENDIF          3
 
 // Define to indicate that rules are always enabled
 #ifdef USE_BERRY
@@ -148,9 +146,7 @@ const char kRulesCommands[] PROGMEM = "|"  // No prefix
 #ifdef SUPPORT_MQTT_EVENT
   "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE
 #endif
-#ifdef SUPPORT_IF_STATEMENT
   "|" D_CMND_IF
-#endif
   ;
 
 void (* const RulesCommand[])(void) PROGMEM = {
@@ -159,9 +155,7 @@ void (* const RulesCommand[])(void) PROGMEM = {
 #ifdef SUPPORT_MQTT_EVENT
   , &CmndSubscribe, &CmndUnsubscribe
 #endif
-#ifdef SUPPORT_IF_STATEMENT
   , &CmndIf
-#endif
   };
 
 struct RULES {
@@ -824,10 +818,8 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
-#ifdef SUPPORT_IF_STATEMENT
       char *pCmd = command;
       RulesPreprocessCommand(pCmd);                       // Do pre-process for IF statement
-#endif  // SUPPORT_IF_STATEMENT
       ExecuteCommand(command, SRC_RULE);
       serviced = true;
     }
@@ -1355,7 +1347,6 @@ void CmndUnsubscribe(void) {
 
 #endif  // SUPPORT_MQTT_EVENT
 
-#ifdef USE_EXPRESSION
 /********************************************************************************************/
 /*
  * Looking for matched bracket - ")"
@@ -1731,9 +1722,7 @@ float evaluateExpression(const char * expression, unsigned int len) {
 
   return object_values[0];
 }
-#endif  // USE_EXPRESSION
 
-#ifdef  SUPPORT_IF_STATEMENT
 /********************************************************************************************/
 /*
  * Process an if command
@@ -2238,7 +2227,6 @@ void RulesPreprocessCommand(char *pCommands)
   }
   return;
 }
-#endif  // SUPPORT_IF_STATEMENT
 
 /*********************************************************************************************\
  * Commands
@@ -2350,12 +2338,8 @@ void CmndRuleTimer(void)
     i = 1;
     max_i = MAX_RULE_TIMERS;
   }
-#ifdef USE_EXPRESSION
   float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
   timer_set = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
-#else
-  uint32_t timer_set = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
-#endif  // USE_EXPRESSION
   if (XdrvMailbox.data_len > 0) {
     for ( ; i <= max_i ; ++i ) {
       Rules.timer[i -1] = timer_set;
@@ -2390,15 +2374,11 @@ void CmndVariable(void)
       ResponseJsonEnd();
     } else {
       if (XdrvMailbox.data_len > 0) {
-#ifdef USE_EXPRESSION
         if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
           dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         } else {
           strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
         }
-#else
-        strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
-#endif  // USE_EXPRESSION
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
       }
       ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
@@ -2413,7 +2393,6 @@ void CmndMemory(void)
       ResponseCmndAll(SET_MEM1, MAX_RULE_MEMS);
     } else {
       if (XdrvMailbox.data_len > 0) {
-#ifdef USE_EXPRESSION
         if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
           char rules_mem[FLOATSZ];
           dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings->flag2.calc_resolution, rules_mem);
@@ -2421,9 +2400,6 @@ void CmndMemory(void)
         } else {
           SettingsUpdateText(SET_MEM1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
         }
-#else
-        SettingsUpdateText(SET_MEM1 +  XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
-#endif  // USE_EXPRESSION
         bitSet(Rules.mems_event, XdrvMailbox.index -1);
       }
       ResponseCmndIdxChar(SettingsText(SET_MEM1 + XdrvMailbox.index -1));

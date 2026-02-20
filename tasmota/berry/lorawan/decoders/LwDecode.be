@@ -220,6 +220,22 @@ class lwdecode_cls
     return hash
   end
 
+  static def cleanString(s)
+   # cleans string to include only chars [a-zA-Z0-9_-]
+   # alphanumerics, underscore and hyphen
+   var cs=""
+   var c=''
+   for i : 0..size(s)-1
+    c = s[i]
+    if !((c=='-')||(c=='_')||(c>='a' && c<='z')||(c>='A' && c<='Z')||(c>='0' && c<='9'))
+     cs += '_'
+    else 
+     cs += c
+    end
+   end
+   return cs
+  end
+
   def lw_decode(data)
     import json
 
@@ -239,10 +255,60 @@ class lwdecode_cls
         load(decoder)
         if LwDeco
           self.lw_decoders[decoder] = LwDeco
-        else
-          log("LwD: Unable to load decoder",1)
-          return true
-        end
+
+          if tasmota.get_option(19) == 0          
+            #  Send Single Component HA Discovery message
+            #  Reference: https://www.home-assistant.io/integrations/mqtt/#single-component-discovery-payload
+
+            try
+              var sensors = LwDeco.HAssSensors()    # Ask decoder for details of this device ...
+              var deviceInfo = LwDeco.deviceInfo()
+              var tasDeviceName  = tasmota.cmd('_Status',true)['Status']['DeviceName']
+              var MAC=string.replace(tasmota.wifi('mac'),':','')
+              var devEUI = device_data[device_name]['DevEUIh'] + device_data[device_name]['DevEUIl']
+              var LwPrefix = tasmota.get_option(83) == 0?"['LwDecoded']":""   
+ 
+              for k : sensors.keys()
+                var sensName  = k    
+                var stateClass= sensors[sensName][0]
+                var HAName    = sensors[sensName][1]
+                var sensUnit  = sensors[sensName][2]
+                var devClass  = sensors[sensName][3]
+                var icon      = sensors[sensName][4]
+                var sensNameClean=self.cleanString(sensName)
+                var val_tpl = f"{{{{value_json{LwPrefix}['{device_name}']['{sensNameClean}']}}}}"
+                var topic = f"homeassistant/sensor/tasmota_{MAC}_{sensNameClean}/config"
+                var pl = {
+                  "dev":{"ids":MAC[6..],
+                  "name":tasDeviceName,
+                  "mf":deviceInfo['manufacturer'],
+                  "mdl":deviceInfo['model']
+                  },
+                  "o":{"name":tasDeviceName},
+                  "name":HAName,
+                  "device_cla":devClass,
+                  "state_cla":stateClass,
+                  "unit_of_meas":sensUnit,
+                  "ic":icon,
+                  "val_tpl":val_tpl,
+                  "uniq_id":f"tasmota_{MAC}_{sensNameClean}",
+                  "stat_t":f"{self.topic_cached}/{devEUI}",
+                  "avty_t":string.replace(self.topic_cached, 'SENSOR','LWT'),  
+                  "pl_avail":"Online",
+                  "pl_not_avail":"Offline"
+                }
+                mqtt.publish(topic, json.dump(pl),true) #Retain
+              end #for each sensor
+
+            except .. as e, m
+              log(format("LwD: HA Discovery warning: %s", m),1)
+            end # try
+          end # if SO19
+
+      else
+        log("LwD: Unable to load decoder",1)
+        return true
+      end
       except .. as e, m
         log(format("LwD: Decoder load error: %s", m),1)
         return true

@@ -42,13 +42,11 @@ class breathe_color : animation.color_provider
   
   # Handle parameter changes - sync period to internal oscillator
   def on_param_changed(name, value)
+    super(self).on_param_changed(name, value)
     # Sync period changes to the internal oscillator's duration
     if name == "period"
       self._oscillator.duration = value
     end
-    
-    # Call parent's parameter change handler
-    super(self).on_param_changed(name, value)
   end
   
   # Produce color value based on current time

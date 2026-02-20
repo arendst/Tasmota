@@ -118,6 +118,7 @@
 #define D_GATEWAY "Átjáró"
 #define D_GROUP "Csoport"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Hoszt"
 #define D_HOSTNAME "Hosztnév"

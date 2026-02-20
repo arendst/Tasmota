@@ -1,0 +1,70 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2cSen6x	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+readMeasuredValues	KEYWORD2
+readNumberConcentrationValues	KEYWORD2
+startContinuousMeasurement	KEYWORD2
+stopMeasurement	KEYWORD2
+getDataReady	KEYWORD2
+readMeasuredValuesAsIntegers	KEYWORD2
+readNumberConcentrationValuesAsIntegers	KEYWORD2
+readMeasuredRawValues	KEYWORD2
+startFanCleaning	KEYWORD2
+setTemperatureOffsetParameters	KEYWORD2
+setVocAlgorithmTuningParameters	KEYWORD2
+getVocAlgorithmTuningParameters	KEYWORD2
+setNoxAlgorithmTuningParameters	KEYWORD2
+getNoxAlgorithmTuningParameters	KEYWORD2
+setTemperatureAccelerationParameters	KEYWORD2
+setVocAlgorithmState	KEYWORD2
+getVocAlgorithmState	KEYWORD2
+performForcedCo2Recalibration	KEYWORD2
+setCo2SensorAutomaticSelfCalibration	KEYWORD2
+getCo2SensorAutomaticSelfCalibration	KEYWORD2
+setAmbientPressure	KEYWORD2
+getAmbientPressure	KEYWORD2
+setSensorAltitude	KEYWORD2
+getSensorAltitude	KEYWORD2
+activateShtHeater	KEYWORD2
+getShtHeaterMeasurements	KEYWORD2
+getProductName	KEYWORD2
+getSerialNumber	KEYWORD2
+getVersion	KEYWORD2
+readDeviceStatus	KEYWORD2
+readAndClearDeviceStatus	KEYWORD2
+deviceReset	KEYWORD2
+signalMassConcentrationPm1p0	KEYWORD2
+signalMassConcentrationPm2p5	KEYWORD2
+signalMassConcentrationPm4p0	KEYWORD2
+signalMassConcentrationPm10p0	KEYWORD2
+signalNumberConcentrationPm0p5	KEYWORD2
+signalNumberConcentrationPm1p0	KEYWORD2
+signalNumberConcentrationPm2p5	KEYWORD2
+signalNumberConcentrationPm4p0	KEYWORD2
+signalNumberConcentrationPm10p0	KEYWORD2
+signalTemperature	KEYWORD2
+signalHumidity	KEYWORD2
+signalVocIndex	KEYWORD2
+signalNoxIndex	KEYWORD2
+signalCo2	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sensor	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
