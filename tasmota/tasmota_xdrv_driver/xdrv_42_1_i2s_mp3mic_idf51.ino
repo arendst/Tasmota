@@ -249,6 +249,7 @@ void I2sMicTask(void *arg){
   AudioEncoder *mic_enc;
   File rec_file;
   File *rec_file_ptr = nullptr;
+  int16_t *stereo_buf = nullptr;
 
   uint16_t bwritten;
   uint32_t ctime;
@@ -299,16 +300,32 @@ void I2sMicTask(void *arg){
     goto exit;
   }
 
+  if (audio_i2s.Settings->sys.full_duplex) {
+    stereo_buf = (int16_t*)malloc(mic_enc->byteSize * 2);
+    if (!stereo_buf) { error = 6; goto exit; }
+  }
+
   ctime = TasmotaGlobal.uptime;
-  timeForOneRead = 1000 / ((audio_i2s.Settings->rx.sample_rate / (mic_enc->samplesPerPass * audio_i2s.Settings->rx.channels )));
-  // timeForOneRead -= 1; // be very in time
+  timeForOneRead = 1000 / (audio_i2s.in->getRxRate() / (mic_enc->samplesPerPass * audio_i2s.Settings->rx.channels));
   AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: samples %u, bytesize %u, time: %u"),mic_enc->samplesPerPass, mic_enc->byteSize, timeForOneRead);
   xLastWakeTime = xTaskGetTickCount();
 
   while (!audio_i2s_mp3.mic_stop) {
     size_t bytes_read;
     // bytes_read = audio_i2s.in->readMic((uint8_t*)mic_enc->inBuffer, mic_enc->byteSize, true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/, nullptr /*peak_ptr*/);
-    i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)mic_enc->inBuffer, mic_enc->byteSize, &bytes_read, pdMS_TO_TICKS(1));
+
+    if (audio_i2s.Settings->sys.full_duplex) { // if we initiated with 2 channels for TX!! TODO: make it bullteproof for any duplex configuration
+      i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)stereo_buf,
+                      mic_enc->byteSize * 2, &bytes_read, pdMS_TO_TICKS(1));
+      // decimate: extract left channel into encoder's mono buffer
+      for (size_t i = 0; i < mic_enc->samplesPerPass; i++) {
+        mic_enc->inBuffer[i] = stereo_buf[(i * 2)];
+      }
+      bytes_read /= 2;
+    } else {
+      i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)mic_enc->inBuffer,
+                      mic_enc->byteSize, &bytes_read, pdMS_TO_TICKS(1));
+    }
 
     if (gain > 1) {
       // set gain the "old way"
@@ -317,7 +334,6 @@ void I2sMicTask(void *arg){
         mic_enc->inBuffer[cnt] *= _gain;
       }
     }
-
     __enctime = millis();
     if(bytes_read != 0){
       written = mic_enc->encode(bytes_read >> 1); //transmit samples, written is an error code
@@ -347,6 +363,7 @@ void I2sMicTask(void *arg){
 
 exit:
   delete mic_enc;
+  if (stereo_buf) { free(stereo_buf); stereo_buf = nullptr; }
   audio_i2s_mp3.use_stream = false;
   audio_i2s.in->stopRx();
   audio_i2s_mp3.mic_stop = 0;
@@ -366,34 +383,40 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
     if (audio_i2s_mp3.decoder) return 0;
   #endif
 
+  // determine the configured recording sample rate, could be not active yet
+  uint32_t rec_rate = audio_i2s.Settings->rx.sample_rate;
+
   switch(encoder_type){
 #ifdef MP3_MIC_STREAM
     case MP3_ENCODER:
-      switch(audio_i2s.Settings->rx.sample_rate){
+      switch(rec_rate){
         case 32000: case 48000: case 44100:
           break; // supported
         default:
-        AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported sample rate for MP3 encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
-        return -1;
+          rec_rate = 32000; // fallback
+          audio_i2s.Settings->rx.sample_rate = rec_rate;
+          AddLog(LOG_LEVEL_INFO, PSTR("I2S: sample rate not compatible with MP3, using %d Hz"), rec_rate);
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start MP3 encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start MP3 encoding: %d Hz"), rec_rate);
       break;
 #endif // MP3_MIC_STREAM
 #ifdef USE_I2S_OPUS
     case OPUS_ENCODER:
-      switch(audio_i2s.Settings->rx.sample_rate){
+      switch(rec_rate){
         case 48000: case 24000: case 16000: case 12000: case 8000:
-          stack = audio_i2s.Settings->rx.sample_rate/2 + 30000; //not the exact value, but okay'ish
-          break;
+          break; // supported
         default:
-         AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported sample rate for OPUS encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
-         return -1;
+          rec_rate = 24000; // fallback
+          audio_i2s.Settings->rx.sample_rate = rec_rate;
+          AddLog(LOG_LEVEL_INFO, PSTR("I2S: sample rate not compatible with OPUS, using %d Hz"), rec_rate);
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start OPUS encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
+      stack = rec_rate / 2 + 30000; //not the exact value, but okay'ish
+      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start OPUS encoding: %d Hz"), rec_rate);
       break;
 #endif // USE_I2S_OPUS
     default:
       AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported encoder"));
+      return -1;
   }
   audio_i2s_mp3.encoder_type = encoder_type;
 
@@ -407,6 +430,9 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
     strlcpy(audio_i2s_mp3.mic_path, path, sizeof(audio_i2s_mp3.mic_path));
   }
   audio_i2s_mp3.mic_stop = 0;
+
+  // set sample rate for recording (reconfigures hardware if needed)
+  audio_i2s.in->SetRxRate(rec_rate);
 
   audio_i2s.in->startRx();
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
