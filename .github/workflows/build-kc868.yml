@@ -2,7 +2,7 @@ name: Build KC868-A16 Firmware
 
 on:
   push:
-    branches: [ master ]
+    branches: [ development ]
   workflow_dispatch:
 
 jobs:
