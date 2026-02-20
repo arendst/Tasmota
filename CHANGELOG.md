@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- LVGL library from v9.4.0 to v9.5.0
 
 ### Fixed
 
