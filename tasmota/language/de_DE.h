@@ -117,7 +117,7 @@
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppe"
-#define D_HALL_EFFECT "Hall Effekt"
+#define D_HALL_EFFECT "Halleffekt"
 #define D_HCHO "Formaldehyd"
 #define D_HEATINDEX "Hitzeindex"
 #define D_HOST "Host"
