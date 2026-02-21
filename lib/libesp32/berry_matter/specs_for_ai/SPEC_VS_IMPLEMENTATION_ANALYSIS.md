@@ -66,9 +66,9 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| P1 | **Session parameter struct in PBKDFParamResponse only sends SII/SAI (tags 1,2), missing mandatory fields: DATA_MODEL_REVISION (tag 4), INTERACTION_MODEL_REVISION (tag 5), SPECIFICATION_VERSION (tag 6), MAX_PATHS_PER_INVOKE (tag 7)** | §4.10 | **HIGH** | Matter 1.4 made these fields mandatory in the session-parameter-struct. The current implementation only sends SLEEPY_IDLE_INTERVAL and SLEEPY_ACTIVE_INTERVAL. Modern controllers may expect these fields. |
+| P1 | ~~**Session parameter struct in PBKDFParamResponse only sends SII/SAI (tags 1,2), missing mandatory fields: DATA_MODEL_REVISION (tag 4), INTERACTION_MODEL_REVISION (tag 5), SPECIFICATION_VERSION (tag 6), MAX_PATHS_PER_INVOKE (tag 7)**~~ ✅ FIXED | §4.10 | ~~**HIGH**~~ | All mandatory fields now always included in session-parameter-struct. |
 | P2 | PBKDFParamRequest parsing doesn't extract new session parameter fields from initiator | §4.10 | Medium | Should parse and potentially use DATA_MODEL_REVISION, SPECIFICATION_VERSION etc. from the initiator for compatibility negotiation. |
-| P3 | SESSION_ACTIVE_THRESHOLD (tag 3, uint16) not sent in session params | §4.10 | Medium | Default is 4000ms per spec. Should be included. |
+| P3 | ~~SESSION_ACTIVE_THRESHOLD (tag 3, uint16) not sent in session params~~ ✅ FIXED | §4.10 | ~~Medium~~ | Now included with default value 4000ms. |
 
 ---
 
@@ -89,7 +89,7 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| C1 | **Sigma2 and Sigma2Resume don't include responderSessionParams with mandatory fields** | §4.10, §4.12 | **HIGH** | Same as P1 — the session-parameter-struct with DATA_MODEL_REVISION, INTERACTION_MODEL_REVISION, SPECIFICATION_VERSION, MAX_PATHS_PER_INVOKE must be sent. |
+| C1 | ~~**Sigma2 and Sigma2Resume don't include responderSessionParams with mandatory fields**~~ ✅ FIXED | §4.10, §4.12 | ~~**HIGH**~~ | All mandatory session-parameter-struct fields now always included in Sigma2 (tag 5) and Sigma2Resume (tag 4). |
 | C2 | Sigma3 validation doesn't verify NOC chain back to TrustedRCAC | §4.12 | Medium | There's a TODO comment in the code. The NOC signature is verified, but the full certificate chain validation (NOC → ICAC → RCAC) is not performed. This is a known shortcut. |
 | C3 | Sigma3 doesn't verify that the Fabric ID in the initiator's NOC matches the session's fabric | §4.12 | Medium | The code extracts `initiatorFabricId` but doesn't compare it against the session's fabric ID. |
 | C4 | SUPPORTED_TRANSPORTS (tag 8) not sent in session params | §4.10 | Low | Optional but useful for indicating UDP-only support. |
@@ -183,17 +183,19 @@ Matter_MessageHandler (dispatch)
 
 ## 4. Recommended Changes — Detailed Specification
 
-### Change 1: Add Mandatory Session Parameters (HIGH Priority)
+### Change 1: Add Mandatory Session Parameters ~~(HIGH Priority)~~ ✅ DONE
 
-**Files affected:** `Matter_Commissioning_Data.be`, `Matter_Commissioning_Context.be`
+**Files changed:** `Matter_Commissioning_Data.be`
 
 **Rationale:** Matter 1.4 made several fields mandatory in the `session-parameter-struct` (tag 5 in PBKDFParamResponse, Sigma2, Sigma2Resume). Modern controllers (Apple Home, Google Home, Samsung SmartThings) may reject sessions that don't include these fields.
 
 **Spec reference:** §4.10 Session Parameter TLV
 
-**Current behavior:** Only `SESSION_IDLE_INTERVAL` (tag 1) and `SESSION_ACTIVE_INTERVAL` (tag 2) are conditionally sent.
+**Previous behavior:** Only `SESSION_IDLE_INTERVAL` (tag 1) and `SESSION_ACTIVE_INTERVAL` (tag 2) were conditionally sent.
 
-**Required behavior:** The responder session params struct must include:
+**What was done:** The session-parameter-struct is now always included in `PBKDFParamResponse` (tag 5), `Sigma2` (tag 5), and `Sigma2Resume` (tag 4) with all mandatory fields. `SLEEPY_IDLE_INTERVAL` and `SLEEPY_ACTIVE_INTERVAL` are still sent when set (nil-safe via `add_TLV`). The new mandatory fields are always present:
+
+**Required behavior (now implemented):** The responder session params struct includes:
 
 ```
 session-parameter-struct => STRUCTURE [tag-order] {
@@ -346,7 +348,7 @@ mdns.add_service("_matter", "_tcp", 5540, services, op_node, hostname)
 
 | Priority | Change | Impact | Effort |
 |----------|--------|--------|--------|
-| **HIGH** | Session parameter struct with mandatory fields (Change 1) | Compatibility with modern controllers | Medium |
+| **HIGH** | ~~Session parameter struct with mandatory fields (Change 1)~~ ✅ DONE | Compatibility with modern controllers | Medium |
 | **HIGH** | ~~InteractionModelRevision = 12 (Change 2)~~ ✅ DONE | Spec compliance, controller compatibility | Trivial |
 | MEDIUM | Timed interaction enforcement (Change 3) | Security compliance | Low |
 | MEDIUM | Certificate chain validation (Change 4) | Security | High |
