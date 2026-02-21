@@ -135,7 +135,7 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
 | IM1 | ~~**InteractionModelRevision = 11 (Matter 1.2)**. Matter 1.4 requires revision 12.~~ ✅ FIXED | §8.4 | ~~**HIGH**~~ | Updated to 12 in all outgoing paths (TLV-based and raw-encoded). Also fixed incoming solo parser to accept any revision. |
-| IM2 | TimedRequest handling sends SUCCESS but doesn't enforce timed interaction semantics | §8.4 | Medium | The `process_timed_request` method sends a success status but doesn't track the timed window. Subsequent Write/Invoke within the timeout should check `TimedRequest` flag. Currently `timed_request` field in WriteRequest/InvokeRequest is parsed but not validated. |
+| IM2 | ~~TimedRequest handling sends SUCCESS but doesn't enforce timed interaction semantics~~ ✅ FIXED | §8.4 | ~~Medium~~ | Timed interaction is now fully enforced: exchange_id and timeout are tracked, Write/Invoke with `timed_request=true` are validated against the timed window, returning `TIMED_REQUEST_MISMATCH` (0xC9) on failure. |
 | IM3 | DataVersionFilters in ReadRequest are parsed but not used for filtering | §8.5 | Low | The spec says if a DataVersionFilter matches the current cluster data version, the cluster's attributes should be omitted from the response. This optimization is not implemented. |
 | IM4 | No `PATHS_EXHAUSTED` (0xC8) status code handling when too many paths are requested | §8.3 | Low | The spec limits to 9 attribute paths and 10 event paths per request. No enforcement. |
 | IM5 | Subscription max_interval is hardcoded to 60 seconds regardless of requested ceiling | IM_Subscription.be | Low | `max_interval = 60` is forced. The spec allows up to 3600s. This is a deliberate choice for responsiveness but limits battery-powered controller scenarios. |
@@ -260,11 +260,20 @@ end
 
 ---
 
-### Change 3: Timed Interaction Enforcement (MEDIUM Priority)
+### Change 3: Timed Interaction Enforcement ~~(MEDIUM Priority)~~ ✅ DONE
 
-**Files affected:** `Matter_IM.be`
+**Files changed:** `Matter_IM.be`, `Matter_IM_Data.be`
 
-**Rationale:** The current implementation accepts TimedRequest and returns SUCCESS, but doesn't track the timed window. A subsequent Write or Invoke with `timed_request=true` should only succeed if a TimedRequest was received within the timeout window on the same exchange.
+**What was done:**
+- Added `timed_exchanges` map to `Matter_IM` class to track exchange_id → expiration_millis.
+- `process_timed_request()` now records the exchange ID and timeout expiration.
+- Added `check_timed_request()` helper that validates a matching TimedRequest exists and hasn't expired (one-shot consumption).
+- `process_write_request()` and `process_invoke_request()` now check the `timed_request` flag and return `TIMED_REQUEST_MISMATCH` (0xC9) if validation fails.
+- Solo invoke fast-path (`process_invoke_request_solo()`) also enforces timed interaction checks.
+- Fixed bug in `InvokeRequestMessage_solo.from_raw()` where `TimedRequest` field was incorrectly assigned to `SuppressResponse`.
+- Expired timed exchanges are cleaned up in `every_second()`.
+
+**Rationale:** The implementation now accepts TimedRequest, records the exchange and timeout, and enforces the timed window. A subsequent Write or Invoke with `timed_request=true` only succeeds if a TimedRequest was received within the timeout window on the same exchange.
 
 **Spec reference:** §8.4, §8.5
 
@@ -350,7 +359,7 @@ mdns.add_service("_matter", "_tcp", 5540, services, op_node, hostname)
 |----------|--------|--------|--------|
 | **HIGH** | ~~Session parameter struct with mandatory fields (Change 1)~~ ✅ DONE | Compatibility with modern controllers | Medium |
 | **HIGH** | ~~InteractionModelRevision = 12 (Change 2)~~ ✅ DONE | Spec compliance, controller compatibility | Trivial |
-| MEDIUM | Timed interaction enforcement (Change 3) | Security compliance | Low |
+| MEDIUM | ~~Timed interaction enforcement (Change 3)~~ ✅ DONE | Security compliance | Low |
 | MEDIUM | Certificate chain validation (Change 4) | Security | High |
 | LOW | Operational discovery TXT records (Change 5) | Better MRP behavior | Trivial |
 

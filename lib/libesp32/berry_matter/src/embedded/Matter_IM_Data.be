@@ -767,7 +767,7 @@ class Matter_InvokeRequestMessage_solo : Matter_Path
     # check TimedRequest (optional)
     val = raw.get(idx, -2)
     if   val == 0x2801 || val == 0x2901
-      self.SuppressResponse = (val == 0x2901)
+      self.TimedRequest = (val == 0x2901)
       idx += 2
     end
     # start of CommandDataIB

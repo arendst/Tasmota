@@ -33,6 +33,7 @@ class Matter_IM
   var read_request_solo               # instance of ReadRequestMessage_solo to optimize single reads
   var invoke_request_solo             # instance of InvokeRequestMessage_solo to optimize single reads
   var tlv_solo                        # instance of Matter_TLV_item for simple responses
+  var timed_exchanges                 # map: exchange_id -> expiration_millis for timed interactions
   
   def init(device)
     self.device = device
@@ -41,6 +42,7 @@ class Matter_IM
     self.read_request_solo = matter.ReadRequestMessage_solo()
     self.invoke_request_solo = matter.InvokeRequestMessage_solo()
     self.tlv_solo = matter.TLV.Matter_TLV_item()
+    self.timed_exchanges = {}
   end
 
   def process_incoming(msg)
@@ -910,6 +912,13 @@ class Matter_IM
     ctx.msg = msg
 
     var query = matter.InvokeRequestMessage().from_TLV(val)
+
+    # enforce timed interaction (§8.4)
+    if !self.check_timed_request(msg, query.timed_request)
+      self.send_status(msg, matter.TIMED_REQUEST_MISMATCH)
+      return true
+    end
+
     if query.invoke_requests != nil
       # prepare the response
       var ret = matter.InvokeResponseMessage()
@@ -979,6 +988,15 @@ class Matter_IM
   def process_invoke_request_solo(msg, ctx)
     # import debug
     ctx.msg = msg
+
+    # enforce timed interaction (§8.4)
+    if ctx.TimedRequest
+      if !self.check_timed_request(msg, true)
+        self.send_status(msg, matter.TIMED_REQUEST_MISMATCH)
+        return true
+      end
+    end
+
     ctx.status = matter.UNSUPPORTED_COMMAND   #default error if returned `nil`
 
     var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
@@ -1099,8 +1117,13 @@ class Matter_IM
     var ctx_log = matter.Path()         # pre-allocate object for logging
 
     var suppress_response = query.suppress_response
-    # var timed_request = query.timed_request   # TODO not supported
-    # var more_chunked_messages = query.more_chunked_messages # TODO not supported
+    var timed_request = query.timed_request
+
+    # enforce timed interaction (§8.4)
+    if !self.check_timed_request(msg, timed_request)
+      self.send_status(msg, matter.TIMED_REQUEST_MISMATCH)
+      return true
+    end
 
     if query.write_requests != nil
       # prepare the response
@@ -1184,10 +1207,35 @@ class Matter_IM
     # log("MTR: received TimedRequestMessage=" + str(query), 3)
 
     log(format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 3)
-    
+
+    # record the exchange and expiration for timed interaction enforcement (§8.4)
+    self.timed_exchanges[msg.exchange_id] = tasmota.millis() + query.timeout
+
     # Send success status report
     self.send_status(msg, matter.SUCCESS)
 
+    return true
+  end
+
+  #############################################################
+  # check_timed_request
+  #
+  # Validates timed interaction for Write/Invoke requests (§8.4)
+  # If timed_request flag is set, verifies a matching TimedRequest
+  # was received on the same exchange and hasn't expired.
+  # Returns true if ok to proceed, false if mismatch.
+  def check_timed_request(msg, is_timed_request)
+    if !is_timed_request  return true end   # not a timed request, always ok
+    var expiry = self.timed_exchanges.find(msg.exchange_id)
+    self.timed_exchanges.remove(msg.exchange_id)  # one-shot, consume it
+    if expiry == nil
+      log(format("MTR: >Timed     (%6i) TIMED_REQUEST_MISMATCH no prior TimedRequest", msg.session.local_session_id), 3)
+      return false
+    end
+    if tasmota.time_reached(expiry)
+      log(format("MTR: >Timed     (%6i) TIMED_REQUEST_MISMATCH timeout expired", msg.session.local_session_id), 3)
+      return false
+    end
     return true
   end
 
@@ -1248,6 +1296,18 @@ class Matter_IM
   # placeholder, nothing to run for now
   def every_second()
     self.expire_sendqueue()
+    # clean up expired timed exchanges
+    if size(self.timed_exchanges) > 0
+      var to_remove = []
+      for exchange_id : self.timed_exchanges.keys()
+        if tasmota.time_reached(self.timed_exchanges[exchange_id])
+          to_remove.push(exchange_id)
+        end
+      end
+      for exchange_id : to_remove
+        self.timed_exchanges.remove(exchange_id)
+      end
+    end
   end
 
   #############################################################
