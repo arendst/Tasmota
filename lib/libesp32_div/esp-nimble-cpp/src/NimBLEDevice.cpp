@@ -53,6 +53,11 @@
 # endif
 
 # if defined(ESP_PLATFORM) && defined(CONFIG_ENABLE_ARDUINO_DEPENDS)
+// fix for BLE crash Memory management
+// https://github.com/espressif/arduino-esp32/issues/12371
+#  if __has_include("esp32-hal-bt-mem.h")
+#    include "esp32-hal-bt-mem.h"
+#  endif
 #  include "esp32-hal-bt.h"
 # endif
 
