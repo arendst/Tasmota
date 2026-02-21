@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - LVGL library from v9.4.0 to v9.5.0
+- Matter improved parameters handling
 
 ### Fixed
 

@@ -628,15 +628,6 @@ class Matter_Device
   end
 
   #############################################################
-  # get_plugin_class_arg
-  #
-  # get a class name light "light0" and return the name of the json argumen (or empty)
-  def get_plugin_class_arg(name)
-    var cl = self.plugins_classes.find(name)
-    return cl ? cl.ARG : ""
-  end
-
-  #############################################################
   # Dynamic adding and removal of endpoints (bridge mode)
   #############################################################
   # Add endpoint

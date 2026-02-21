@@ -53,7 +53,6 @@ class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Sensor_Contact
   # static var DISPLAY_NAME = "Contact"               # display name of the plug-in
   # static var ARG  = "switch"                        # additional argument name (or empty if none)
   # static var ARG_HINT = "Switch<x> number"
-  # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 5000                     # update every 5s
   static var UPDATE_CMD = "Status 10"               # command to send for updates
 end

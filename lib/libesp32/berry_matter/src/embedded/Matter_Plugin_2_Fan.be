@@ -132,7 +132,7 @@ import matter
 class Matter_Plugin_Fan : Matter_Plugin_Device
   static var TYPE = "fan"                           # name of the plug-in in json
   static var DISPLAY_NAME = "Fan"                   # display name of the plug-in
-  # static var ARG  = ""                              # additional argument name (or empty if none)
+  # static var ARG  = ""                            # no additional argument (inherited from superclass)
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
