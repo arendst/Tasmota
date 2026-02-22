@@ -429,7 +429,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%;max-width:0;'><button id='o%d' onclick='la(\"&o=%d\");'><span style='display:block;overflow:hidden;white-space:nowrap'>%s%s</span></button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
 const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:center;font-weight:%s;font-size:%dpx'>%s</td>";
 
 const char HTTP_STATUS_STICKER[] PROGMEM =
@@ -1596,14 +1596,10 @@ void HandleRoot(void) {
         }
 
         bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
-        char first[2];
-        snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
-        char butt_txt[4];
-        snprintf_P(butt_txt, sizeof(butt_txt), PSTR("%s"), (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : first);
         char number[8];
         WSContentSend_P(PSTR("<tr>"));
         WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
-          butt_txt,
+          (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : PSTR("T"),
           (set_button) ? "" : itoa(button_idx, number, 10));
         button_idx++;
 
@@ -1628,13 +1624,9 @@ void HandleRoot(void) {
 
           if (button_idx < (light_device + light_devices)) {
             bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
-            char first[2];
-            snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
-            char butt_txt[4];
-            snprintf_P(butt_txt, sizeof(butt_txt), PSTR("%s"), (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : first);
             char number[8];
             WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
-              butt_txt,
+              (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : PSTR("T"),
               (set_button) ? "" : itoa(button_idx, number, 10));
             button_idx++;
             width = 85;
@@ -1655,15 +1647,10 @@ void HandleRoot(void) {
         stemp[0] = 'e'; stemp[1] = '0'; stemp[2] = '\0';  // e0
         for (uint32_t i = 0; i < light_devices; i++) {
           bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
-          char first[2];
-          snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
-          char butt_txt[4];
-          snprintf_P(butt_txt, sizeof(butt_txt), PSTR("%s"),
-            (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : first);
           char number[8];
           WSContentSend_P(PSTR("<tr>"));
           WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
-            butt_txt,
+            (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : PSTR("T"),
             (set_button) ? "" : itoa(button_idx, number, 10));
           button_idx++;
 
