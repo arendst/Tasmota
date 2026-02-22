@@ -39,6 +39,7 @@
 #undef WEBRTC_AUDIO_TS_INCREMENT
 #define WEBRTC_AUDIO_TS_INCREMENT    160
 #endif
+#define WEBRTC_G711A_SILENCE 0xD5
 
 /*********************************************************************************************/
 // G.711 A-law encoder (ITU-T G.711) - only when Opus not available
@@ -118,7 +119,7 @@ void WcSendAudioSilence(void) {
   }
 #else
   uint8_t payload[WEBRTC_AUDIO_FRAME_SAMPLES];
-  memset(payload, G711A_SILENCE, sizeof(payload));
+  memset(payload, WEBRTC_G711A_SILENCE, sizeof(payload));
   WcSendSrtpPacket(&WebRTC->audio, payload, sizeof(payload), false);
 #endif
 

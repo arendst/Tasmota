@@ -30,16 +30,13 @@
 
 #define WEBRTC_DTLS_PORT      5005
 #define WEBRTC_SRTP_AUTH_TAG  10
-#define G711A_SILENCE         0xD5
-#define G711U_SILENCE         0xFF
-#define G711_FRAME_SAMPLES    160
-#define SRTP_MASTER_KEY_LEN   16
-#define SRTP_MASTER_SALT_LEN  14
-#define SRTP_MAX_PAYLOAD      1100
+#define WEBRTC_SRTP_MASTER_KEY_LEN   16
+#define WEBRTC_SRTP_MASTER_SALT_LEN  14
+#define WEBRTC_SRTP_MAX_PAYLOAD      1100
 
-#define SRTP_LABEL_ENC        0x00
-#define SRTP_LABEL_AUTH       0x01
-#define SRTP_LABEL_SALT       0x02
+#define WEBRTC_SRTP_LABEL_ENC        0x00
+#define WEBRTC_SRTP_LABEL_AUTH       0x01
+#define WEBRTC_SRTP_LABEL_SALT       0x02
 
 #define DTLS_PROTO_VERSION 0xFEFD  // DTLS 1.2
 #define DTLS_CT_CCS           20
@@ -58,14 +55,14 @@
 #define DTLS_HT_CLIENT_KE     16
 #define DTLS_HT_FINISHED      20
 
-#define TLS_CS_ECDHE_ECDSA_AES128_GCM_SHA256 0xC02B
-#define TLS_NAMED_CURVE_P256  0x0017
-#define TLS_EXT_USE_SRTP      0x000E
-#define TLS_EXT_EC_POINT_FMT  0x000B
-#define TLS_EXT_EXTENDED_MASTER_SECRET 0x0017
-#define SRTP_PROFILE_AES128_CM_SHA1_80 0x0001
-#define GCM_TAG_LEN           16
-#define GCM_EXPLICIT_IV_LEN   8
+#define WEBRTC_TLS_CS_ECDHE_ECDSA_AES128_GCM_SHA256 0xC02B
+#define WEBRTC_TLS_NAMED_CURVE_P256  0x0017
+#define WEBRTC_TLS_EXT_USE_SRTP      0x000E
+#define WEBRTC_TLS_EXT_EC_POINT_FMT  0x000B
+#define WEBRTC_TLS_EXT_EXTENDED_MASTER_SECRET 0x0017
+#define WEBRTC_SRTP_PROFILE_AES128_CM_SHA1_80 0x0001
+#define WEBRTC_GCM_TAG_LEN           16
+#define WEBRTC_GCM_EXPLICIT_IV_LEN   8
 #define DTLS_COOKIE_LEN       32
 
 /*********************************************************************************************/
@@ -91,8 +88,8 @@ enum dtls_hs_state_t {
 };
 
 struct srtp_context_t {
-  uint8_t master_key[SRTP_MASTER_KEY_LEN];
-  uint8_t master_salt[SRTP_MASTER_SALT_LEN];
+  uint8_t master_key[WEBRTC_SRTP_MASTER_KEY_LEN];
+  uint8_t master_salt[WEBRTC_SRTP_MASTER_SALT_LEN];
   uint8_t enc_key[16];
   uint8_t salt_key[14];
   uint8_t auth_key[20];
@@ -311,11 +308,11 @@ static bool dtls_encrypt_record(uint8_t* out, size_t* out_len, uint8_t ct,
   put_be16(aad + 9, DTLS_PROTO_VERSION);
   put_be16(aad + 11, (uint16_t)pt_len);
 
-  uint16_t rec_payload_len = GCM_EXPLICIT_IV_LEN + pt_len + GCM_TAG_LEN;
+  uint16_t rec_payload_len = WEBRTC_GCM_EXPLICIT_IV_LEN + pt_len + WEBRTC_GCM_TAG_LEN;
   size_t pos = dtls_build_record_header(out, ct, epoch, seq, rec_payload_len);
 
-  memcpy(out + pos, explicit_iv, GCM_EXPLICIT_IV_LEN);
-  pos += GCM_EXPLICIT_IV_LEN;
+  memcpy(out + pos, explicit_iv, WEBRTC_GCM_EXPLICIT_IV_LEN);
+  pos += WEBRTC_GCM_EXPLICIT_IV_LEN;
 
   memcpy(out + pos, plaintext, pt_len);
 
@@ -326,7 +323,7 @@ static bool dtls_encrypt_record(uint8_t* out, size_t* out_len, uint8_t ct,
   pos += pt_len;
 
   br_gcm_get_tag(&WebRTC->gcm_enc, out + pos);
-  pos += GCM_TAG_LEN;
+  pos += WEBRTC_GCM_TAG_LEN;
 
   WebRTC->seq_out++;
   *out_len = pos;
@@ -334,7 +331,7 @@ static bool dtls_encrypt_record(uint8_t* out, size_t* out_len, uint8_t ct,
 }
 
 static bool dtls_decrypt_record(const uint8_t* rec, size_t rec_len, uint8_t* pt_out, size_t* pt_len) {
-  if (rec_len < DTLS_REC_HDR + GCM_EXPLICIT_IV_LEN + GCM_TAG_LEN) return false;
+  if (rec_len < DTLS_REC_HDR + WEBRTC_GCM_EXPLICIT_IV_LEN + WEBRTC_GCM_TAG_LEN) return false;
 
   uint16_t epoch = get_be16(rec + 3);
   uint64_t seq = 0;
@@ -342,12 +339,12 @@ static bool dtls_decrypt_record(const uint8_t* rec, size_t rec_len, uint8_t* pt_
   uint16_t payload_len = get_be16(rec + 11);
 
   if ((size_t)(DTLS_REC_HDR + payload_len) > rec_len) return false;
-  if (payload_len < GCM_EXPLICIT_IV_LEN + GCM_TAG_LEN) return false;
+  if (payload_len < WEBRTC_GCM_EXPLICIT_IV_LEN + WEBRTC_GCM_TAG_LEN) return false;
 
-  size_t ct_len = payload_len - GCM_EXPLICIT_IV_LEN - GCM_TAG_LEN;
+  size_t ct_len = payload_len - WEBRTC_GCM_EXPLICIT_IV_LEN - WEBRTC_GCM_TAG_LEN;
 
   const uint8_t* explicit_iv = rec + DTLS_REC_HDR;
-  const uint8_t* ciphertext = explicit_iv + GCM_EXPLICIT_IV_LEN;
+  const uint8_t* ciphertext = explicit_iv + WEBRTC_GCM_EXPLICIT_IV_LEN;
   const uint8_t* tag = ciphertext + ct_len;
 
   uint8_t nonce[12];
@@ -781,7 +778,7 @@ static bool dtls_send_server_flight(void) {
     put_be16(sh_body + bp, DTLS_PROTO_VERSION); bp += 2;
     memcpy(sh_body + bp, WebRTC->server_random, 32); bp += 32;
     sh_body[bp++] = 0; // session_id_len
-    put_be16(sh_body + bp, TLS_CS_ECDHE_ECDSA_AES128_GCM_SHA256); bp += 2;
+    put_be16(sh_body + bp, WEBRTC_TLS_CS_ECDHE_ECDSA_AES128_GCM_SHA256); bp += 2;
     sh_body[bp++] = 0; // compression
 
     // Extensions
@@ -789,19 +786,19 @@ static bool dtls_send_server_flight(void) {
     bp += 2; // placeholder for extensions length
 
     // use_srtp
-    put_be16(sh_body + bp, TLS_EXT_USE_SRTP); bp += 2;
+    put_be16(sh_body + bp, WEBRTC_TLS_EXT_USE_SRTP); bp += 2;
     put_be16(sh_body + bp, 5); bp += 2;      // ext data len
     put_be16(sh_body + bp, 2); bp += 2;      // profile list len
-    put_be16(sh_body + bp, SRTP_PROFILE_AES128_CM_SHA1_80); bp += 2;
+    put_be16(sh_body + bp, WEBRTC_SRTP_PROFILE_AES128_CM_SHA1_80); bp += 2;
     sh_body[bp++] = 0; // mki_len
 
     // ec_point_formats
-    put_be16(sh_body + bp, TLS_EXT_EC_POINT_FMT); bp += 2;
+    put_be16(sh_body + bp, WEBRTC_TLS_EXT_EC_POINT_FMT); bp += 2;
     put_be16(sh_body + bp, 2); bp += 2;
     sh_body[bp++] = 1; // list len
     sh_body[bp++] = 0; // uncompressed
     // extended_master_secret (RFC 7627)
-    put_be16(sh_body + bp, TLS_EXT_EXTENDED_MASTER_SECRET); bp += 2;  // 0x0017
+    put_be16(sh_body + bp, WEBRTC_TLS_EXT_EXTENDED_MASTER_SECRET); bp += 2;  // 0x0017
     put_be16(sh_body + bp, 0);                              bp += 2;  // zero-length data
 
     put_be16(sh_body + ext_start, bp - ext_start - 2);
@@ -856,7 +853,7 @@ static bool dtls_send_server_flight(void) {
     uint8_t ec_params[4 + 65];
     size_t ep = 0;
     ec_params[ep++] = 3; // named_curve
-    put_be16(ec_params + ep, TLS_NAMED_CURVE_P256); ep += 2;
+    put_be16(ec_params + ep, WEBRTC_TLS_NAMED_CURVE_P256); ep += 2;
     ec_params[ep++] = (uint8_t)WebRTC->ecdhe_pub_len;
     memcpy(ec_params + ep, WebRTC->ecdhe_pub, WebRTC->ecdhe_pub_len);
     ep += WebRTC->ecdhe_pub_len;
@@ -1080,12 +1077,12 @@ static void dtls_export_srtp_keys(void) {
 
   media_track_t* tracks[2] = {&WebRTC->video, &WebRTC->audio};
   for (int i = 0; i < 2; i++) {
-    memcpy(tracks[i]->srtp.master_key, srv_key, SRTP_MASTER_KEY_LEN);
-    memcpy(tracks[i]->srtp.master_salt, srv_salt, SRTP_MASTER_SALT_LEN);
+    memcpy(tracks[i]->srtp.master_key, srv_key, WEBRTC_SRTP_MASTER_KEY_LEN);
+    memcpy(tracks[i]->srtp.master_salt, srv_salt, WEBRTC_SRTP_MASTER_SALT_LEN);
 
-    WcSRTPKDF(&tracks[i]->srtp, SRTP_LABEL_ENC);
-    WcSRTPKDF(&tracks[i]->srtp, SRTP_LABEL_SALT);
-    WcSRTPKDF(&tracks[i]->srtp, SRTP_LABEL_AUTH);
+    WcSRTPKDF(&tracks[i]->srtp, WEBRTC_SRTP_LABEL_ENC);
+    WcSRTPKDF(&tracks[i]->srtp, WEBRTC_SRTP_LABEL_SALT);
+    WcSRTPKDF(&tracks[i]->srtp, WEBRTC_SRTP_LABEL_AUTH);
 
     br_aes_big_ctr_init(&tracks[i]->srtp.aes_ctr, tracks[i]->srtp.enc_key, 16);
     br_hmac_key_init(&tracks[i]->srtp.hmac_key, &br_sha1_vtable, tracks[i]->srtp.auth_key, 20);
@@ -1160,11 +1157,11 @@ static bool dtls_parse_client_hello(const uint8_t* hs_body, size_t body_len, boo
     uint16_t ext_len = get_be16(hs_body + p); p += 2;
     if (p + ext_len > ext_end) break;
 
-    if (ext_type == TLS_EXT_USE_SRTP && ext_len >= 4) {
+    if (ext_type == WEBRTC_TLS_EXT_USE_SRTP && ext_len >= 4) {
       uint16_t profile_list_len = get_be16(hs_body + p);
       for (size_t i = 0; i + 1 < profile_list_len; i += 2) {
         uint16_t profile = get_be16(hs_body + p + 2 + i);
-        if (profile == SRTP_PROFILE_AES128_CM_SHA1_80) {
+        if (profile == WEBRTC_SRTP_PROFILE_AES128_CM_SHA1_80) {
           WebRTC->use_srtp_agreed = true;
           break;
         }
@@ -1752,28 +1749,28 @@ void HandleWebRTCOffer(void) {
 void WcSRTPKDF(srtp_context_t* ctx, uint8_t label) {
   uint8_t iv[16];
   memset(iv, 0, 16);
-  memcpy(iv, ctx->master_salt, SRTP_MASTER_SALT_LEN);
+  memcpy(iv, ctx->master_salt, WEBRTC_SRTP_MASTER_SALT_LEN);
   iv[7] ^= label;  // RFC 3711 §4.3.1: IV = master_salt XOR (label || r)
 
   uint8_t out[32];
   memset(out, 0, 32);
 
   br_aes_big_ctr_keys kdf_ctx;
-  br_aes_big_ctr_init(&kdf_ctx, ctx->master_key, SRTP_MASTER_KEY_LEN);
+  br_aes_big_ctr_init(&kdf_ctx, ctx->master_key, WEBRTC_SRTP_MASTER_KEY_LEN);
 
   // BearSSL CTR uses 12-byte IV + 4-byte counter (big-endian at bytes 12-15).
   // SRTP needs 14-byte IV + 2-byte block counter at bytes 14-15.
   // Fold iv[12..13] into the upper 16 bits of the cc parameter.
   uint32_t cc0 = ((uint32_t)iv[12] << 24) | ((uint32_t)iv[13] << 16);
 
-  size_t out_len = (label == SRTP_LABEL_AUTH) ? 20 : 16;
+  size_t out_len = (label == WEBRTC_SRTP_LABEL_AUTH) ? 20 : 16;
   br_aes_big_ctr_run(&kdf_ctx, iv, cc0, out, out_len);
 
-  if (label == SRTP_LABEL_ENC) {
+  if (label == WEBRTC_SRTP_LABEL_ENC) {
     memcpy(ctx->enc_key, out, 16);
-  } else if (label == SRTP_LABEL_SALT) {
+  } else if (label == WEBRTC_SRTP_LABEL_SALT) {
     memcpy(ctx->salt_key, out, 14);
-  } else if (label == SRTP_LABEL_AUTH) {
+  } else if (label == WEBRTC_SRTP_LABEL_AUTH) {
     memcpy(ctx->auth_key, out, 20);
   }
 }
@@ -1793,9 +1790,9 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
     return;
   }
 
-  // Check payload size - must fit in SRTP_MAX_PAYLOAD
-  if (len > SRTP_MAX_PAYLOAD) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Payload too large %d > %d"), len, SRTP_MAX_PAYLOAD);
+  // Check payload size - must fit in WEBRTC_SRTP_MAX_PAYLOAD
+  if (len > WEBRTC_SRTP_MAX_PAYLOAD) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: Payload too large %d > %d"), len, WEBRTC_SRTP_MAX_PAYLOAD);
     return;
   }
 
@@ -1957,10 +1954,10 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
     idr_seen = true;
     if (Wc.h264.sps_pps_captured && Wc.h264.sps_len > 0 && Wc.h264.pps_len > 0) {
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: Sending SPS/PPS before IDR"));
-      if (Wc.h264.sps_len <= SRTP_MAX_PAYLOAD) {
+      if (Wc.h264.sps_len <= WEBRTC_SRTP_MAX_PAYLOAD) {
         WcSendSrtpPacket(&WebRTC->video, Wc.h264.sps_buffer, Wc.h264.sps_len, false);
       }
-      if (Wc.h264.pps_len <= SRTP_MAX_PAYLOAD) {
+      if (Wc.h264.pps_len <= WEBRTC_SRTP_MAX_PAYLOAD) {
         WcSendSrtpPacket(&WebRTC->video, Wc.h264.pps_buffer, Wc.h264.pps_len, false);
       }
     } else {
@@ -1968,7 +1965,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
     }
   }
 
-  if (nal_len <= SRTP_MAX_PAYLOAD) {
+  if (nal_len <= WEBRTC_SRTP_MAX_PAYLOAD) {
     bool marker = (nal_type == 1 || nal_type == 5);  // I/P-frame or IDR
     WcSendSrtpPacket(&WebRTC->video, nal_data, nal_len, marker);
     // Note: seq is incremented inside WcSendSrtpPacket now
@@ -1977,7 +1974,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
     uint8_t fu_indicator = (nal_header & 0xE0) | 28;
     uint8_t fu_type = nal_header & 0x1F;
     size_t offset = 1;
-    size_t payload_cap = SRTP_MAX_PAYLOAD - 2;
+    size_t payload_cap = WEBRTC_SRTP_MAX_PAYLOAD - 2;
     uint8_t fragment_count = 0;
 
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: Fragmenting NAL %d bytes into FU-A"), nal_len);
@@ -1993,7 +1990,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
       if (is_first) fu_header |= 0x80;
       if (is_last)  fu_header |= 0x40;
 
-      uint8_t pkt[SRTP_MAX_PAYLOAD];
+      uint8_t pkt[WEBRTC_SRTP_MAX_PAYLOAD];
       pkt[0] = fu_indicator;
       pkt[1] = fu_header;
       memcpy(pkt + 2, nal_data + offset, chunk);
