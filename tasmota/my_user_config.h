@@ -1268,6 +1268,7 @@
     //#define USE_BERRY_GPIOVIEWER                 // Add a button to dynamocally load the GPIO Viewer from a bec file online
     #define USE_BERRY_GPIOVIEWER_URL            "http://ota.tasmota.com/tapp/gpioviewer.bec"
   #define USE_BERRY_TCPSERVER                    // Enable TCP socket server (+0.6k)
+  // #define USE_BERRY_MQTTCLIENT                  // Enable standalone, independent Berry MQTT client (+5.1k)
   // #define USE_BERRY_ULP                          // Enable ULP (Ultra Low Power) support (+4.9k)
   // Berry crypto extensions below:
   #define USE_BERRY_CRYPTO_AES_GCM               // enable AES GCM 256 bits

@@ -5,6 +5,8 @@
  * Allows connecting to a separate MQTT broker with own credentials.
  *******************************************************************/
 
+#ifdef USE_BERRY_MQTTCLIENT
+
 #include "be_constobj.h"
 
 extern int be_mqttc_init(bvm *vm);
@@ -43,3 +45,5 @@ class be_class_mqttclient (scope: global, name: mqttclient) {
     set_auto_reconnect, func(be_mqttc_set_auto_reconnect)
 }
 @const_object_info_end */
+
+#endif // USE_BERRY_MQTTCLIENT

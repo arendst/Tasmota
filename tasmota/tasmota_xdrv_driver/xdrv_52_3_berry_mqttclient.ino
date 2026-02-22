@@ -29,6 +29,7 @@
 //   tasmota.add_fast_loop(def () client.loop() end)
 
 #ifdef USE_BERRY
+#ifdef USE_BERRY_MQTTCLIENT
 #ifdef ESP32
 
 #include "berry.h"
@@ -598,4 +599,5 @@ extern "C" {
 }  // extern "C"
 
 #endif  // ESP32
+#endif  // USE_BERRY_MQTTCLIENT
 #endif  // USE_BERRY
