@@ -429,7 +429,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%;max-width:0;'><button id='o%d' onclick='la(\"&o=%d\");'><span style='display:block;overflow:hidden;white-space:nowrap'>%s%s</span></button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
 const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:center;font-weight:%s;font-size:%dpx'>%s</td>";
 
 const char HTTP_STATUS_STICKER[] PROGMEM =
@@ -1491,11 +1491,12 @@ void HandleRoot(void) {
         uint32_t button_ptr = 0;
         for (uint32_t button_idx = 1; button_idx <= TasmotaGlobal.devices_present; button_idx++) {
           if (bitRead(Web.light_shutter_button_mask, button_idx -1)) { continue; }  // Skip non-sequential light and/or shutter button
-          bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+          const char* web_button = (button_idx <= MAX_BUTTON_TEXT) ? GetWebButton(button_idx -1) : "";
+          bool has_web_button = (web_button[0] != '\0');
           snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), button_idx);
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, button_idx, button_idx,
-            (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
-            (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
+            (has_web_button) ? HtmlEscape(web_button).c_str() : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
+            (has_web_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
           button_ptr++;
           if (0 == button_ptr % cols) { WSContentSend_P(PSTR("</tr><tr>")); }
         }
@@ -1526,12 +1527,13 @@ void HandleRoot(void) {
           if (1 == j) { break; }           // Both buttons shown
 
           shutter_button_idx--;            // Right button is previous button (up)
-          bool set_button = ((shutter_button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(shutter_button_idx -1)));
+          const char* web_button = (shutter_button_idx <= MAX_BUTTON_TEXT) ? GetWebButton(shutter_button_idx -1) : "";
+          bool has_web_button = (web_button[0] != '\0');
           snprintf_P(stemp, sizeof(stemp), PSTR("Shutter %d"), shutter_idx +1);
           uint32_t shutter_real_to_percent_position = ShutterRealToPercentPosition(-9999, shutter_idx);
           Web.shutter_slider[shutter_idx] = (shutter_options & 1) ? (100 - shutter_real_to_percent_position) : shutter_real_to_percent_position;
           WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER, 
-            (set_button) ? HtmlEscape(GetWebButton(shutter_button_idx -1)).c_str() : stemp,
+            (has_web_button) ? HtmlEscape(web_button).c_str() : stemp,
             shutter_idx +1,
             Web.shutter_slider[shutter_idx],
             shutter_idx +1);
@@ -1593,14 +1595,18 @@ void HandleRoot(void) {
             Web.slider[2],
             'n', 0);         // n0 - Value id
           WSContentSend_P(PSTR("</tr>"));
-        }
+        } 
 
-        bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+        const char* web_button = (button_idx <= MAX_BUTTON_TEXT) ? GetWebButton(button_idx -1) : "";
+        bool has_web_button = (web_button[0] != '\0');
+        // web_button non-empty: truncate to max 4 chars or "visual width" of 4 (e.g. "Ligh", "💡💡", "台灯"). Latin char = 1 width, CJK/emoji char = 2 width
+        // web_button empty: take first char of D_BUTTON_TOGGLE + button index (e.g. "T1", "П1", "开1")
+        String butt_text = (has_web_button) ? HtmlEscape(Utf8Truncate(web_button, 4, 4)) : Utf8Truncate(D_BUTTON_TOGGLE, 1);
         char number[8];
         WSContentSend_P(PSTR("<tr>"));
         WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
-          (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : PSTR(D_BUTTON_TOGGLE),
-          (set_button) ? "" : itoa(button_idx, number, 10));
+          butt_text.c_str(),
+          (has_web_button) ? "" : itoa(button_idx, number, 10));
         button_idx++;
 
         Web.slider[3] = Settings->light_dimmer;
@@ -1623,11 +1629,15 @@ void HandleRoot(void) {
           WSContentSend_P(PSTR("<tr>"));
 
           if (button_idx < (light_device + light_devices)) {
-            bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+            const char* web_button = (button_idx <= MAX_BUTTON_TEXT) ? GetWebButton(button_idx -1) : "";
+            bool has_web_button = (web_button[0] != '\0');
+            // web_button non-empty: truncate to max 4 chars or max "visual width" of 4 (e.g. "Ligh", "💡💡", "台灯"). Latin char = 1 width, CJK/emoji char = 2 width
+            // web_button empty: take first char of D_BUTTON_TOGGLE + button index (e.g. "T1", "П1", "开1")
+            String butt_text = (has_web_button) ? HtmlEscape(Utf8Truncate(web_button, 4, 4)) : Utf8Truncate(D_BUTTON_TOGGLE, 1);
             char number[8];
             WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
-              (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : PSTR(D_BUTTON_TOGGLE),
-              (set_button) ? "" : itoa(button_idx, number, 10));
+              butt_text.c_str(),
+              (has_web_button) ? "" : itoa(button_idx, number, 10));
             button_idx++;
             width = 85;
           }
@@ -1646,12 +1656,16 @@ void HandleRoot(void) {
       } else {  // Settings->flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
         stemp[0] = 'e'; stemp[1] = '0'; stemp[2] = '\0';  // e0
         for (uint32_t i = 0; i < light_devices; i++) {
-          bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+          const char* web_button = (button_idx <= MAX_BUTTON_TEXT) ? GetWebButton(button_idx -1) : "";
+          bool has_web_button = (web_button[0] != '\0');
+          // web_button non-empty: truncate to max 4 chars or "visual width" of 4 (e.g. "Ligh", "💡💡", "台灯"). Latin char = 1 width, CJK/emoji char = 2 width
+          // web_button empty: take first char of D_BUTTON_TOGGLE + button index (e.g. "T1", "П1", "开1")
+          String butt_text = (has_web_button) ? HtmlEscape(Utf8Truncate(web_button, 4, 4)) : Utf8Truncate(D_BUTTON_TOGGLE, 1);
           char number[8];
           WSContentSend_P(PSTR("<tr>"));
           WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
-            (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : PSTR(D_BUTTON_TOGGLE),
-            (set_button) ? "" : itoa(button_idx, number, 10));
+            butt_text.c_str(),
+            (has_web_button) ? "" : itoa(button_idx, number, 10));
           button_idx++;
 
           stemp[1]++;        // e1 to e5 - Make unique ids

@@ -2953,6 +2953,44 @@ String SettingsTextEscaped(uint32_t index) {
   return HtmlEscape(SettingsText(index));
 }
 
+// Truncate src to max_chars UTF-8 codepoints with optional max visual width.
+// max_chars limits codepoints (0 = no limit)
+// max_width limits visual width (0 = no limit):
+//    narrow chars (1-2 byte: ASCII, Latin, Cyrillic) cost 1 unit
+//    wide chars (3-4 byte: CJK, emoji) cost 2 units
+// Multi-byte characters are never split mid-sequence
+// ZWJ sequences and skin tone modifiers are not recognized as single glyphs and may be split
+String Utf8Truncate(const char *src, uint32_t max_chars, uint32_t max_width = 0) {
+  if (!max_chars && !max_width) {
+    return String(src);
+  }
+  size_t slen = strlen(src);
+  size_t bytes = 0;
+  size_t width = 0;
+  size_t chars = 0;
+  while (bytes < slen) {
+    if (max_chars && chars >= max_chars) { break; }
+    uint8_t lead = (uint8_t)src[bytes];
+    size_t clen = 1;
+    if (lead >= 0xF0) { clen = 4; }
+    else if (lead >= 0xE0) { clen = 3; }
+    else if (lead >= 0xC0) { clen = 2; }
+    size_t cwidth = (clen >= 3) ? 2 : 1;
+    if (max_width && (width + cwidth > max_width)) { break; }
+    if (bytes + clen > slen) { break; }
+    width += cwidth;
+    bytes += clen;
+    chars++;
+  }
+  if (!bytes) {
+    return String();
+  }
+  String result;
+  result.reserve(bytes);
+  result.concat(src, bytes);
+  return result;
+}
+
 String UrlEscape(const char *unescaped) {
   static const char *hex = "0123456789ABCDEF";
   String result;
