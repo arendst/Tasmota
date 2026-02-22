@@ -1,5 +1,5 @@
 /*
-  xdrv_81_1_esp32_webcam_CSI_mjpeg.ino - ESP32-P4 CSI webcam support for Tasmota
+  xdrv_81_1_esp32_webcam_CSI_mjpeg.ino - MJPEG Streaming for Tasmota ESP32-P4
 
   Copyright (C) 2025  Christian Baars and Theo Arends
 

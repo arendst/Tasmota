@@ -1,5 +1,5 @@
 /*
-  xdrv_81_2_esp32_webcam_CSI_h264.ino - ESP32-P4 CSI webcam support for Tasmota
+  xdrv_81_2_esp32_webcam_CSI_h264.ino - H.264/RTP/RTSP/WebSocket Streaming for Tasmota ESP32-P4
 
   Copyright (C) 2025  Christian Baars and Theo Arends
 
@@ -652,8 +652,8 @@ void HandleRtsp() {
 /*********************************************************************************************/
 // RTP Helper Function
 
-#define RTP_MAX_PAYLOAD 1400  // MTU safety margin
-#define RTP_HEADER_SIZE 12
+#define WC_RTP_MAX_PAYLOAD 1400  // MTU safety margin
+#define WC_RTP_HEADER_SIZE 12
 
 // Helper: Builds RTP header and sends packet
 void WcRtpSend(bool marker, const uint8_t* payload, size_t len, const uint8_t* fu_header = nullptr) {
@@ -686,14 +686,14 @@ void WcRtpSend(bool marker, const uint8_t* payload, size_t len, const uint8_t* f
 
 void WcSendNalUnit(uint8_t* naldata, size_t nallen, uint8_t naltype, uint8_t nalnri) {
   // Case A: Small NAL - Send as Single Packet
-  if (nallen <= RTP_MAX_PAYLOAD) {
+  if (nallen <= WC_RTP_MAX_PAYLOAD) {
     bool marker = (naltype == 1 || naltype == 5);
     WcRtpSend(marker, naldata, nallen);
   } 
   // Case B: Large NAL - Fragment (FU-A)
   else {
     size_t offset = 1; // Skip NAL header
-    size_t payload_cap = RTP_MAX_PAYLOAD - 2; 
+    size_t payload_cap = WC_RTP_MAX_PAYLOAD - 2; 
     uint8_t fu_indicator = (nalnri << 5) | 28; 
 
     while (offset < nallen) {
@@ -830,4 +830,4 @@ void WcH264SendUi() {
 }
 
 #endif  // USE_CSI_WEBCAM
-#endif  // ESP32P4
+#endif  // ESP32

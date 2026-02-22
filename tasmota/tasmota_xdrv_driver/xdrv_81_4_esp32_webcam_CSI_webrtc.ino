@@ -2089,7 +2089,7 @@ void WcSendSrtpVideo(uint8_t* data, size_t len) {
   }
 }
 
-// Audio silence and mic task are now in xdrv_82_esp32_webcam_CSI_audio.ino
+// Audio task (I2S mic → Opus/G.711 → SRTP) is in xdrv_81_4a_esp32_webcam_CSI_audio.ino
 
 /*********************************************************************************************/
 // WebRTC Processing Task
