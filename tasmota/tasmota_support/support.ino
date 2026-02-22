@@ -2953,15 +2953,15 @@ String SettingsTextEscaped(uint32_t index) {
   return HtmlEscape(SettingsText(index));
 }
 
-// Truncate src to max_chars UTF-8 codepoints with optional max visual width.
-// max_chars limits codepoints (0 = no limit)
-// max_width limits visual width (0 = no limit):
-//    narrow chars (1-2 byte: ASCII, Latin, Cyrillic) cost 1 unit
-//    wide chars (3-4 byte: CJK, emoji) cost 2 units
+// Truncate src to max UTF-8 codepoints with optional max visual width.
+// max_codepoints limits codepoints (0 = no limit)
+// max_width limits *approximated* visual width (0 = no limit):
+//    narrow chars (1-2 byte: ASCII, Latin, Cyrillic) approximated to cost 1 width unit
+//    wide chars (3-4 byte: CJK, emoji) approximated to cost 2 width units
 // Multi-byte characters are never split mid-sequence
 // ZWJ sequences and skin tone modifiers are not recognized as single glyphs and may be split
-String Utf8Truncate(const char *src, uint32_t max_chars, uint32_t max_width = 0) {
-  if (!max_chars && !max_width) {
+String Utf8Truncate(const char *src, uint32_t max_codepoints, uint32_t max_width = 0) {
+  if (!max_codepoints && !max_width) {
     return String(src);
   }
   size_t slen = strlen(src);
@@ -2969,7 +2969,7 @@ String Utf8Truncate(const char *src, uint32_t max_chars, uint32_t max_width = 0)
   size_t width = 0;
   size_t chars = 0;
   while (bytes < slen) {
-    if (max_chars && chars >= max_chars) { break; }
+    if (max_codepoints && chars >= max_codepoints) { break; }
     uint8_t lead = (uint8_t)src[bytes];
     size_t clen = 1;
     if (lead >= 0xF0) { clen = 4; }
