@@ -58,17 +58,28 @@ void WcShowStream(void) {
   // ---- Session 3: WebRTC ----
   else if (Wc.core.session_type == SESSION_WEBRTC) {
     WSContentSend_P(PSTR(
-      "<div><video id='wc_vid' autoplay muted playsinline style='width:100%;background:#000'></video></div>"
-      "<div id='wc_dbg' style='font-family:monospace;font-size:10px;margin-top:5px'></div>"
+      "<div><video id='wc_vid' autoplay muted controls playsinline style='width:100%%;background:#000'></video></div>"
+      "<div style='margin:5px 0'>"
+      "<button id='wc_mute' onclick='wc_toggle_mute()' style='padding:4px 12px;cursor:pointer'>&#x1F507; Unmute</button>"
+      "<span id='wc_astat' style='margin-left:10px;font-family:monospace;font-size:11px'></span>"
+      "</div>"
+      "<div id='wc_dbg' style='font-family:monospace;font-size:10px;margin-top:5px;max-height:200px;overflow-y:auto'></div>"
       "<script>"
-      "const dbg=s=>document.getElementById('wc_dbg').innerHTML+=s+'<br>';"
+      "const dbg=s=>{var d=document.getElementById('wc_dbg');d.innerHTML+=s+'<br>';d.scrollTop=d.scrollHeight;};"
+
+      "function wc_toggle_mute(){"
+      "  var v=document.getElementById('wc_vid');"
+      "  v.muted=!v.muted;"
+      "  document.getElementById('wc_mute').innerHTML=v.muted?'&#x1F507; Unmute':'&#x1F50A; Mute';"
+      "}"
+
       "const rpc = new RTCPeerConnection({"
       "  iceServers: []," // LAN only, no STUN needed
       "  sdpSemantics: 'unified-plan'"
       "});"
       
       "rpc.ontrack = function(evt) {"
-      "  dbg('ontrack: '+evt.track.kind+' streams='+evt.streams.length);"
+      "  dbg('ontrack: kind='+evt.track.kind+' id='+evt.track.id+' state='+evt.track.readyState+' streams='+evt.streams.length);"
       "  var v=document.getElementById('wc_vid');"
       "  if(evt.streams&&evt.streams[0]){"
       "    v.srcObject=evt.streams[0];"
@@ -78,6 +89,17 @@ void WcShowStream(void) {
       "    v.srcObject=ms;"
       "  }else{"
       "    v.srcObject.addTrack(evt.track);"
+      "  }"
+      "  if(evt.track.kind==='audio'){"
+      "    dbg('Audio track attached, muted='+v.muted);"
+      "    evt.track.onended=()=>dbg('Audio track ended');"
+      "    evt.track.onmute=()=>dbg('Audio track muted (remote)');"
+      "    evt.track.onunmute=()=>dbg('Audio track unmuted (remote)');"
+      "  }"
+      "  if(evt.track.kind==='video'){"
+      "    evt.track.onended=()=>dbg('Video track ended');"
+      "    evt.track.onmute=()=>dbg('Video track muted (remote)');"
+      "    evt.track.onunmute=()=>dbg('Video track unmuted (remote)');"
       "  }"
       "};"
       
@@ -94,6 +116,10 @@ void WcShowStream(void) {
       "  document.title='ICE:'+rpc.iceConnectionState;"
       "};"
       
+      "rpc.onconnectionstatechange=()=>{"
+      "  dbg('Connection state: '+rpc.connectionState);"
+      "};"
+      
       "rpc.onicegatheringstatechange=()=>{"
       "  dbg('ICE gathering: '+rpc.iceGatheringState);"
       "};"
@@ -104,6 +130,32 @@ void WcShowStream(void) {
       
       "rpc.addTransceiver('video', {direction: 'recvonly'});"
       "rpc.addTransceiver('audio', {direction: 'recvonly'});"
+
+      "setInterval(()=>{"
+      "  var st=document.getElementById('wc_astat');"
+      "  var v=document.getElementById('wc_vid');"
+      "  if(!v||!v.srcObject){st.textContent='No stream';return;}"
+      "  var at=v.srcObject.getAudioTracks();"
+      "  var vt=v.srcObject.getVideoTracks();"
+      "  var s='V:'+vt.length+'('+((vt[0]&&vt[0].readyState)||'-')+') A:'+at.length+'('+((at[0]&&at[0].readyState)||'-')+')';"
+      "  s+=' muted='+v.muted+' vol='+v.volume.toFixed(1);"
+      "  rpc.getStats().then(stats=>{"
+      "    stats.forEach(r=>{"
+      "      if(r.type==='inbound-rtp'&&r.kind==='audio'){"
+      "        s+=' | Audio: pkts='+r.packetsReceived+' lost='+r.packetsLost+' bytes='+r.bytesReceived;"
+      "        if(r.jitter!==undefined)s+=' jitter='+r.jitter.toFixed(3);"
+      "      }"
+      "      if(r.type==='inbound-rtp'&&r.kind==='video'){"
+      "        s+=' | Video: pkts='+r.packetsReceived+' lost='+r.packetsLost;"
+      "        if(r.framesDecoded!==undefined)s+=' dec='+r.framesDecoded;"
+      "      }"
+      "      if(r.type==='codec'&&r.mimeType&&r.mimeType.startsWith('audio')){"
+      "        s+=' codec='+r.mimeType+'/'+r.clockRate;"
+      "      }"
+      "    });"
+      "    st.textContent=s;"
+      "  });"
+      "},2000);"
       
       "dbg('Creating offer...');"
       "rpc.createOffer().then(offer=>{"
@@ -116,9 +168,15 @@ void WcShowStream(void) {
       "    headers:{'Content-Type':'text/plain'},"
       "    body:rpc.localDescription.sdp"
       "  });"
-      "}).then(r=>r.text())"
+      "}).then(r=>{"
+      "  if(!r.ok)return r.text().then(t=>{throw new Error('Server '+r.status+': '+t)});"
+      "  return r.text();"
+      "})"
       ".then(sdp=>{"
+      "  if(!sdp.startsWith('v=')){throw new Error('Invalid SDP: '+sdp.substring(0,60));}"
       "  dbg('Got answer, setting remote desc');"
+      "  dbg('Answer has audio: '+(sdp.indexOf('m=audio')>=0?'yes':'no'));"
+      "  dbg('Answer has video: '+(sdp.indexOf('m=video')>=0?'yes':'no'));"
       "  console.log('Answer SDP:',sdp);"
       "  return rpc.setRemoteDescription({type:'answer',sdp:sdp});"
       "}).then(()=>{"
@@ -560,6 +618,7 @@ void CmndWcSession(void) {
   
   // Special Setup for WebRTC (Session 3)
   if (new_type == SESSION_WEBRTC) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: WebRTC session selected - audio task will launch after DTLS handshake"));
     // Start WS Server for WebRTC signaling
     if (!Wc.ws.server) {
         AddLog(LOG_LEVEL_INFO, PSTR("CAM: Starting WS Server on 82"));

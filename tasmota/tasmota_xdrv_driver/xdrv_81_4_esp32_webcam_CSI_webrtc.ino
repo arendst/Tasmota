@@ -1341,6 +1341,9 @@ static void dtls_process_handshake_record(const uint8_t* rec, size_t rec_len) {
         WebRTC->video.active = true;
         WebRTC->audio.active = true;
         AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: DTLS-SRTP established, streaming!"));
+#ifdef USE_I2S_AUDIO
+        WcAudioStart();
+#endif
       } else {
         AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: DTLS done but no SRTP profile agreed"));
       }
@@ -1823,6 +1826,8 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
   uint8_t enc_payload[SRTP_MAX_PAYLOAD];
   memcpy(enc_payload, payload, len);
 
+  uint32_t enc_start = micros();
+
   br_aes_big_ctr_run(&track->srtp.aes_ctr, iv, cc0, enc_payload, len);
 
   uint8_t tag[20];
@@ -1834,6 +1839,18 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
   br_hmac_update(&hmac_ctx, enc_payload, len);
   br_hmac_update(&hmac_ctx, &roc_be, 4);
   br_hmac_out(&hmac_ctx, tag);
+
+  uint32_t enc_time = micros() - enc_start;
+
+  // Rolling average encryption time (per packet, AES-CTR + HMAC)
+  static uint32_t enc_avg_us = 0;
+  static uint32_t enc_last_log = 0;
+  enc_avg_us = (enc_avg_us * 7 + enc_time) / 8;  // 8-sample EMA
+  if (millis() - enc_last_log >= 5000) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: SRTP Encrypt avg:%uus (last:%uus) PayloadSize:%u"),
+           enc_avg_us, enc_time, len);
+    enc_last_log = millis();
+  }
 
   // Debug SRTP authentication tag for first few packets (reset on new session)
   static uint32_t debug_packet_count = 0;
@@ -1863,7 +1880,7 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
       // ESP32 doesn't support %llu properly, split 64-bit into two 32-bit parts
       uint32_t pkt_idx_high = (uint32_t)(pkt_idx >> 32);
       uint32_t pkt_idx_low = (uint32_t)(pkt_idx & 0xFFFFFFFF);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: SRTP sent seq=%u ts=%u len=%d to %s:%d (pkt=%u:%u)"),
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: SRTP sent seq=%u ts=%u len=%d to %s:%d (pkt=%u:%u)"),
              track->seq, track->timestamp, len, 
              WebRTC->remote_ip.toString().c_str(), WebRTC->remote_port,
              pkt_idx_high, pkt_idx_low);
@@ -1911,7 +1928,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
       case 8: nal_name = "PPS"; break;
       case 9: nal_name = "AUD"; break;
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: NAL type=%d (%s) len=%d (total=%u idr_seen=%d)"), 
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: NAL type=%d (%s) len=%d (total=%u idr_seen=%d)"), 
            nal_type, nal_name, nal_len, nal_count, idr_seen);
   }
   nal_count++;
@@ -1925,7 +1942,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
   if (nal_type == 5) {
     idr_seen = true;
     if (Wc.h264.sps_pps_captured && Wc.h264.sps_len > 0 && Wc.h264.pps_len > 0) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Sending SPS/PPS before IDR"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: Sending SPS/PPS before IDR"));
       if (Wc.h264.sps_len <= SRTP_MAX_PAYLOAD) {
         WcSendSrtpPacket(&WebRTC->video, Wc.h264.sps_buffer, Wc.h264.sps_len, false);
       }
@@ -1933,7 +1950,7 @@ void WcSendSrtpNal(uint8_t* nal_data, size_t nal_len) {
         WcSendSrtpPacket(&WebRTC->video, Wc.h264.pps_buffer, Wc.h264.pps_len, false);
       }
     } else {
-      AddLog(LOG_LEVEL_ERROR, PSTR("WebRTC: IDR frame but no SPS/PPS captured!"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WebRTC: IDR frame but no SPS/PPS captured!"));
     }
   }
 
@@ -2061,24 +2078,7 @@ void WcSendSrtpVideo(uint8_t* data, size_t len) {
   }
 }
 
-/*********************************************************************************************/
-// G.711 Audio Silence
-/*********************************************************************************************/
-
-void WcSendAudioSilence(void) {
-  if (!WebRTC || WebRTC->state != WEBRTC_STREAMING) return;
-  uint32_t now = millis();
-  if (now - WebRTC->last_audio_time < 20) return;
-
-  uint8_t payload[G711_FRAME_SAMPLES];
-  memset(payload, G711A_SILENCE, sizeof(payload));
-
-  WcSendSrtpPacket(&WebRTC->audio, payload, sizeof(payload), false);
-  // Note: seq is incremented inside WcSendSrtpPacket now
-
-  WebRTC->audio.timestamp += G711_FRAME_SAMPLES;
-  WebRTC->last_audio_time = now;
-}
+// Audio silence and mic task are now in xdrv_82_esp32_webcam_CSI_audio.ino
 
 /*********************************************************************************************/
 // WebRTC Processing Task
@@ -2105,8 +2105,6 @@ void WebRTCProcessingTask(void *pvParameters) {
       if (Wc.core.state == CAM_STOPPING) break;
       continue;
     }
-
-    WcSendAudioSilence();
 
     if (Wc.core.state != CAM_STREAMING || ulNotificationValue == 0) continue;
     if (xSemaphoreTake(Wc.core.frame_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
@@ -2199,6 +2197,11 @@ void WebRTCProcessingTask(void *pvParameters) {
 void WcWebRTCStop(void) {
   if (!WebRTC) return;
   AddLog(LOG_LEVEL_DEBUG, PSTR("WebRTC: Stopping"));
+
+  // 0. Stop audio task first (before invalidating WebRTC state)
+#ifdef USE_I2S_AUDIO
+  WcAudioStop();
+#endif
 
   // 1. Signal inactive first so other tasks/functions see it and bail out
   WebRTC->state = WEBRTC_IDLE;
