@@ -1296,6 +1296,7 @@
   // Main widgets as defined in LVGL8
     #define BE_LV_WIDGET_OBJ
     #define BE_LV_WIDGET_ARC
+    #define BE_LV_WIDGET_ARCLABEL   // LVGL 9.5.0
     #define BE_LV_WIDGET_BAR
     #define BE_LV_WIDGET_BTN        // LVGL 8
     #define BE_LV_WIDGET_BUTTON     // LVGL 9

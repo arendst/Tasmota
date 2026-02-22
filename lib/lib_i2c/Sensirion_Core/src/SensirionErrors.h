@@ -50,8 +50,9 @@ enum HighLevelError : uint16_t {
     SensorSpecificError = 0x8000,
 };
 
-enum LowLevelError : uint16_t {
+enum LowLevelError : uint8_t {
     // general errors
+    Undefined = 0,
     NonemptyFrameError,
     NoDataError,
     BufferSizeError,

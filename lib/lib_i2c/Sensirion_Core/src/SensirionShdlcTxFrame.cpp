@@ -38,7 +38,8 @@
 
 uint16_t SensirionShdlcTxFrame::begin(uint8_t command, uint8_t address,
                                       uint8_t dataLength) {
-    _buffer[_index++] = 0x7e;
+    _index = 0;  // sets the index to point towards the start of the buffer.
+    _buffer[_index] = 0x7e;
     uint16_t error = addUInt8(address);
     error |= addUInt8(command);
     error |= addUInt8(dataLength);
@@ -53,7 +54,8 @@ uint16_t SensirionShdlcTxFrame::finish(void) {
         return error;
     }
     if (_index + 1 > _bufferSize) {
-        return  static_cast<uint16_t>(TxFrameError) | BufferSizeError;
+        return static_cast<uint16_t>(TxFrameError) |
+               static_cast<uint8_t>(BufferSizeError);
     }
     _buffer[_index++] = 0x7e;
     _isFinished = true;
@@ -84,7 +86,8 @@ uint16_t SensirionShdlcTxFrame::addInt16(int16_t data) {
 
 uint16_t SensirionShdlcTxFrame::addUInt8(uint8_t data) {
     if (_index + 2 > _bufferSize) {
-        return static_cast<uint16_t>(TxFrameError) | BufferSizeError;
+        return static_cast<uint16_t>(TxFrameError) |
+               static_cast<uint8_t>(BufferSizeError);
     }
     switch (data) {
         case 0x11:

@@ -37,6 +37,7 @@ lv_widgets = ['obj',
               # added in LVGL 9
               'spangroup', 'span',
               'scale_section', 'scale',   # 'scale_section' needs to be before 'scale' to capture more selective first
+              'arclabel',       # 9.5.0
               ]
 lv_widgets_no_class = ['span', 'scale_section']      # widgets that don't have a lv_obj class
 # extra widgets
@@ -291,6 +292,10 @@ class type_mapper_class:
     "lv_color16_t",
     "uint8_t *",
     "lv_obj_t **",
+    # new in 9.5.0
+    "lv_draw_dsc_base_t *",
+    "lv_draw_blur_dsc_t *",
+    "lv_indev_key_remap_cb_t",
   ]
 
   return_types = {
@@ -476,6 +481,9 @@ class type_mapper_class:
     "lv_arclabel_dir_t": "i",
     "lv_arclabel_text_align_t": "i",
     "lv_anim_timeline_t *": "lv_anim_timeline_dsc",
+    # new in 9.5.0
+    # "lv_blur_quality_t": "i",
+    "lv_arclabel_overflow_t": "i",
 
     # callbacks
     "lv_group_focus_cb_t": "lv_group_focus_cb",

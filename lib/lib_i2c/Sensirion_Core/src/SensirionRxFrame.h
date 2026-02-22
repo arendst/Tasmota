@@ -35,6 +35,17 @@
 #include <stdlib.h>
 
 /**
+ * @brief
+ *
+ */
+typedef enum : uint16_t {
+    Byte = 1,
+    Short = 2,
+    Integer = 4,
+    LongInteger = 8
+} IntegerType;
+
+/**
  * SenirionRxFrame - Base class for SensirionShdlcRxFrame and
  * SensirionI2cRxFrame. It decodes received data into common data types. The
  * data is contained in a buffer which is filled by the one of the two
@@ -54,6 +65,23 @@ class SensirionRxFrame {
      * @param bufferSize Number of bytes in the buffer for the receive frame.
      */
     SensirionRxFrame(uint8_t buffer[], size_t bufferSize);
+
+    /**
+     * getInteger() - Read an integer value of specified type.
+     *
+     * If number of bytes is less than the size of the specified integer, the
+     * value is padded with 0.
+     *
+     * @param destination Pointer to the integer number that shall be read
+     * @param type  specified integer type
+     * @param nrOfBytes Number of bytes read from the buffer. If nrOfBytes is
+     *                  less than the size of the integer value, the value is
+     *                  padded with 0.
+     * @return NoError if the integer can be read from the receive buffer;
+     *         Otherwise a RxFrameError is returned.
+     */
+    uint16_t getInteger(uint8_t* destination, IntegerType type,
+                        uint8_t nrOfBytes);
 
     /**
      * getUInt32() - Get unsigned 32bit integer from the received data.

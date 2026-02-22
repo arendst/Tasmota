@@ -147,7 +147,7 @@ bool CmndSen6xError(int error) {
 /********************************************************************************************/
 
 void Sen6xInit(void) {
-  PowerOnDelay(100);  // Sensor startup time (Time after power-on until I2C communication can be started)
+  PowerOnDelay(110);  // Sensor startup time (Time after power-on until I2C communication can be started)
   for (uint32_t bus = 0; bus < 2; bus++) {
     if (!I2cSetDevice(SEN6X_I2C_ADDR_6B, bus)) { 
 //      Sen6xError("Scan", bus +1);
@@ -193,21 +193,34 @@ void Sen6xInit(void) {
 }
 
 void Sen6xUpdate(void) {
-  int error = 0;
   switch (SEN6XDATA->state) { 
     case SEN6X_STATE_READ_MEASUREMENT:
+      // Use temp vars in case the read fails; Do not store invalid values.
+      uint16_t massConcentrationPm1p0;
+      uint16_t massConcentrationPm2p5;
+      uint16_t massConcentrationPm4p0;
+      uint16_t massConcentrationPm10p0;
+      uint16_t co2;
+      uint16_t hcho;
+      int16_t humidity;
+      int16_t temperature;
+      int16_t vocIndex;
+      int16_t noxIndex;
       if (!Sen6xError("Measurement", sen6x->readMeasuredValuesAsIntegers(
         SEN6XDATA->model,
-        SEN6XDATA->massConcentrationPm1p0,    // Mass concentration in μg/m³ for particles smaller than 1.0 μm.
-        SEN6XDATA->massConcentrationPm2p5,    // Mass concentration in μg/m³ for particles smaller than 2.5 μm.
-        SEN6XDATA->massConcentrationPm4p0,    // Mass concentration in μg/m³ for particles smaller than 4.0 μm.
-        SEN6XDATA->massConcentrationPm10p0,   // Mass concentration in μg/m³ for particles smaller than 10.0 μm.
-        SEN6XDATA->humidity,                  // Measured humidity in %RH.
-        SEN6XDATA->temperature,               // Measured temperature in degrees celsius.
-        SEN6XDATA->vocIndex,                  // Measured VOC Index between 0 and 500.
-        SEN6XDATA->noxIndex,                  // Measured NOx Index between 0 and 500.
-        SEN6XDATA->co2,                       // Measured CO2 concentration in ppm.
-        SEN6XDATA->hcho))) {                  // Measured formaldehyde concentration in ppb.
+        massConcentrationPm1p0, massConcentrationPm2p5,
+        massConcentrationPm4p0, massConcentrationPm10p0,
+        humidity, temperature, vocIndex, noxIndex, co2, hcho))) {
+        SEN6XDATA->massConcentrationPm1p0 = massConcentrationPm1p0;
+        SEN6XDATA->massConcentrationPm2p5 = massConcentrationPm2p5;
+        SEN6XDATA->massConcentrationPm4p0 = massConcentrationPm4p0;
+        SEN6XDATA->massConcentrationPm10p0 = massConcentrationPm10p0;
+        SEN6XDATA->humidity = humidity;
+        SEN6XDATA->temperature = temperature;
+        SEN6XDATA->vocIndex = vocIndex;
+        SEN6XDATA->noxIndex = noxIndex;
+        SEN6XDATA->co2 = co2;
+        SEN6XDATA->hcho = hcho;
 #ifdef USE_LIGHT
         LightSetSignal(CO2_LOW, CO2_HIGH, SEN6XDATA->co2);  // SetOption18 - Pair light signal with CO2 sensor
 #endif  // USE_LIGHT

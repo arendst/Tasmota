@@ -115,9 +115,11 @@ import matter
 class Matter_Plugin_Light0 : Matter_Plugin_Device
   static var TYPE = "light0"                        # name of the plug-in in json
   static var DISPLAY_NAME = "Light 0 OnOff"         # display name of the plug-in
-  static var ARG  = "relay"                         # additional argument name (or empty if none)
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Relay<x> number"
+
+  static var SCHEMA = "relay|"                      # arg name
+                      "l:Relay number|"                    # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Relay<x> number"           # hint
   static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
@@ -154,7 +156,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   def parse_configuration(config)
     super(self).parse_configuration(config)
     # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
-    self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
+    self.tasmota_relay_index = int(config.find('relay', nil))
     if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
   end
 

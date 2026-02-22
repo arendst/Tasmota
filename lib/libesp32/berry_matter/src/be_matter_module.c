@@ -26,36 +26,6 @@
 #include "be_mapping.h"
 #include <stdio.h>
 
-// Matter logo
-static const uint8_t MATTER_LOGO[] = 
-  "<svg style='vertical-align:middle;' width='24' height='24' xmlns='http://www.w3.org/2000/svg' viewBox='100 100 240 240'>"
-  "<defs><style>.cls-1{fill:none}.cls-2{fill:#FFFFFF;}</style></defs><rect class='cls-1' "
-  "width='420' height='420'/><path class='cls-2' d='"
-  "M167,156.88a71,71,0,0,0,32.1,14.73v-62.8l12.79-7.38,12.78,7.38v62.8a71.09,71.09,0,0,0,32.11-14.73"
-  "L280,170.31a96.92,96.92,0,0,1-136.33,0Zm28.22,160.37A96.92,96.92,0,0,0,127,199.19v26.87a71.06,"
-  "71.06,0,0,1,28.82,20.43l-54.39,31.4v14.77L114.22,300l54.38-31.4a71,71,0,0,1,3.29,35.17Zm101.5-"
-  "118.06a96.93,96.93,0,0,0-68.16,118.06l23.27-13.44a71.1,71.1,0,0,1,3.29-35.17L309.46,300l12.78-"
-  "7.38V277.89l-54.39-31.4a71.13,71.13,0,0,1,28.82-20.43Z'/></svg>";
-
-// Matter stylesheet
-static const uint8_t MATTER_STYLESHEET[] = 
-  "<style>"
-  ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
-  ".ztdm td:not(:first-child){width:20px;font-size:70%}"
-  ".ztdm td:last-child{width:45px}"
-  ".ztdm .bt{margin-right:10px;}"
-  ".htrm{line-height:20px}"
-  "</style>";
-
-static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
-  "<script type='text/javascript'>"
-  "function otm(arg_name,val){"
-  "var s=eb(arg_name);"
-  "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
-  "s.title=s.placeholder;"
-  "};"
-  "</script>";
-
 extern uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bbool days);
 
 char* matter_seconds_to_dhm(int32_t seconds) {
@@ -310,9 +280,6 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 /* @const_object_info_begin
 
 module matter (scope: global, strings: weak) {
-  _LOGO, comptr(MATTER_LOGO)
-  _STYLESHEET, comptr(MATTER_STYLESHEET)
-  _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
   AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
   START_ENDPOINT, int(0x0002)         // endpoint where to start devices

@@ -217,8 +217,8 @@ class Matter_UDPServer
       var packet = self.packets_sent[idx]
       if packet.msg_id == id && packet.exchange_id == exch
         self.packets_sent.remove(idx)
-        if tasmota.loglevel(3)
-          log("MTR: .          Removed packet from sending list id=" + str(id), 3)
+        if tasmota.loglevel(4)
+          log("MTR: .          Removed packet from sending list id=" + str(id), 4)
         end
       else
         idx += 1

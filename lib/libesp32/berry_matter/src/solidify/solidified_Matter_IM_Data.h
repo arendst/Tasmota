@@ -3286,7 +3286,7 @@ be_local_class(Matter_InvokeRequestMessage,
     })),
     be_str_weak(Matter_InvokeRequestMessage)
 );
-// compact class 'Matter_InvokeRequestMessage_solo' ktab size: 16, total: 19 (saved 24 bytes)
+// compact class 'Matter_InvokeRequestMessage_solo' ktab size: 16, total: 20 (saved 32 bytes)
 static const bvalue be_ktab_class_Matter_InvokeRequestMessage_solo[16] = {
   /* K0   */  be_nested_str_weak(reset),
   /* K1   */  be_nested_str_weak(SuppressResponse),
@@ -3403,7 +3403,7 @@ be_local_closure(class_Matter_InvokeRequestMessage_solo_from_raw,   /* name */
       0x78160003,  //  0029  JMPF	R5	#002E
       0x54162900,  //  002A  LDINT	R5	10497
       0x1C140805,  //  002B  EQ	R5	R4	R5
-      0x90020205,  //  002C  SETMBR	R0	K1	R5
+      0x90020405,  //  002C  SETMBR	R0	K2	R5
       0x00080506,  //  002D  ADD	R2	R2	K6
       0x8C140304,  //  002E  GETMET	R5	R1	K4
       0x5C1C0400,  //  002F  MOVE	R7	R2

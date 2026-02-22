@@ -99,7 +99,7 @@ enum SCD40_Commands {         // commands useable in console or rules
 
 FrogmoreScd40 scd40;
 
-const char mScd40Names[] PROGMEM = "SCD40|SCD41||||SCD43";
+const char mScd40Names[] PROGMEM = "SCD40|SCD41|SCD42|||SCD43";
 
 bool scd40Found = false;
 bool scd40IsDataValid = false;
@@ -142,6 +142,7 @@ void Scd40Detect(void) {
 
     uint16_t sn[3];
     if (Scd40Error("Serialnumber", scd40.getSerialNumber(sn))) { continue; }
+    uint64_t serial_number = sn[0] << 16 | sn[1] << 8 | sn[2];
     uint16_t sv;
     if (scd40.getSensorVariant(&sv)) { 
       sv = 0;
@@ -159,7 +160,7 @@ void Scd40Detect(void) {
 
     I2cSetActiveFound(SCD40_ADDRESS, scd40_name, bus);
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: %s serialnumber %04X%04X%04X"), scd40_name, sn[0], sn[1], sn[2]);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: %s serialnumber %_U"), scd40_name, &serial_number);
     scd40Found = true;
     return;
   }

@@ -104,8 +104,8 @@ import matter
 class Matter_Plugin_Light2 : Matter_Plugin_Light1
   static var TYPE = "light2"                                # name of the plug-in in json
   static var DISPLAY_NAME = "Light 2 CT"                    # display name of the plug-in
-  static var ARG  = ""                                      # no arg for native light
-  static var ARG_HINT = "_Not used_"                        # Hint for entering the Argument (inside 'placeholder')
+
+  static var SCHEMA = nil                                   # no parameter
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16

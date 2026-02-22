@@ -31,6 +31,9 @@ class LVGLPreprocessor:
             "lv_obj_property_names.h",
             "lv_style_properties.h",
             "lv_3dtexture.h",
+            "lv_observer.h",
+            "lv_ime_pinyin.h",
+            "lv_gif.h",
         }
         
         # Function exclusion patterns
@@ -60,6 +63,9 @@ class LVGLPreprocessor:
             r".*_bind_.*",                # 9.4.0 remove observer methods
             r".*_get_.*_by_name",         # 9.4.0
             r".*_translation_",           # 9.4.0
+            r".*_drop_shadow.*",          # 9.5.0
+            r".*_blur_.*",                # 9.5.0
+            r".*_set_gesture_.*",         # 9.5.0
         ]
         
         # Enum exclusion patterns

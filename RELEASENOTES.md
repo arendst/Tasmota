@@ -114,10 +114,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.3.0.1
 ### Added
-- Support for Sensirion SCD43 CO2 sensor
+- Support for Sensirion SCD42 and SCD43 CO2 sensor
+- I2S full duplex, auto rx sample rate [#24469](https://github.com/arendst/Tasmota/issues/24469)
+- Sen5x power on delay of 60ms [#24452](https://github.com/arendst/Tasmota/issues/24452)
 
 ### Changed
+- Sensirion Core library from v0.6.0 to v0.7.2
+- LVGL library from v9.4.0 to v9.5.0 [#24470](https://github.com/arendst/Tasmota/issues/24470)
+- Matter improved parameters handling [#24471](https://github.com/arendst/Tasmota/issues/24471)
 
 ### Fixed
+- Do not free BT memory when in use [#24480](https://github.com/arendst/Tasmota/issues/24480)
 
 ### Removed

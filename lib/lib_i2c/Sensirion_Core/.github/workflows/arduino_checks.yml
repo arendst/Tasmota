@@ -1,0 +1,17 @@
+name: Arduino-Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  Arduino-Checks:
+    uses: sensirion/.github/.github/workflows/upt.arduino.check.yml@main
+    with:
+      expect-arduino-examples: true
+      lint-lib-manager-check: update
+      dependency-list: "[{'source-path': './'}]"

@@ -406,7 +406,7 @@ be_local_closure(class_Matter_MessageHandler_msg_received,   /* name */
       0x74220017,  //  00C6  JMPT	R8	#00DF
       0xB8221A00,  //  00C7  GETNGBL	R8	K13
       0x8C20110E,  //  00C8  GETMET	R8	R8	K14
-      0x5828002E,  //  00C9  LDCONST	R10	K46
+      0x542A0003,  //  00C9  LDINT	R10	4
       0x7C200400,  //  00CA  CALL	R8	2
       0x7822000B,  //  00CB  JMPF	R8	#00D8
       0xB8221E00,  //  00CC  GETNGBL	R8	K15
@@ -419,7 +419,7 @@ be_local_closure(class_Matter_MessageHandler_msg_received,   /* name */
       0x882C0F3A,  //  00D3  GETMBR	R11	R7	K58
       0x7C280200,  //  00D4  CALL	R10	1
       0x0024120A,  //  00D5  ADD	R9	R9	R10
-      0x5828002E,  //  00D6  LDCONST	R10	K46
+      0x542A0003,  //  00D6  LDINT	R10	4
       0x7C200400,  //  00D7  CALL	R8	2
       0x8C20013B,  //  00D8  GETMET	R8	R0	K59
       0x5C280A00,  //  00D9  MOVE	R10	R5

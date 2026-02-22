@@ -9,6 +9,26 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 `Unreleased`_
 -------------
 
+`0.7.2`_ 2025-11-04
+-------------------
+
+- Fix compiler warnings
+- update to SensirionShdlcTxFrame::begin so the buffer is always filled from position 0.
+- update to SensirionShdlcCommunication::receiveFrame -  if an error frame is recieved, the data part of the frame should not be read even if the length is not 0.
+
+`0.7.1`_ 2024-04-30
+-------------------
+
+- Add undefined low level error to avoid fallback to "Frame already contains data" error.
+- Fix missing low level error when not enough data available for I2C.
+
+
+`0.7.0`_ 2024-04-09
+-------------------
+
+- Reduce error message size to 64 bytes
+- Fix i2c read buffer limitation
+
 
 `0.6.0`_ 2022-06-22
 -------------------
@@ -146,7 +166,8 @@ Removed
 - Initial release
 
 
-.. _Unreleased: https://github.com/Sensirion/arduino-core/compare/0.6.0...main
+.. _Unreleased: https://github.com/Sensirion/arduino-core/compare/0.7.0...main
+.. _0.7.0: https://github.com/Sensirion/arduino-core/compare/0.7.0...0.6.0
 .. _0.6.0: https://github.com/Sensirion/arduino-core/compare/0.6.0...0.5.3
 .. _0.5.3: https://github.com/Sensirion/arduino-core/compare/0.5.2...0.5.3
 .. _0.5.2: https://github.com/Sensirion/arduino-core/compare/0.5.1...0.5.2

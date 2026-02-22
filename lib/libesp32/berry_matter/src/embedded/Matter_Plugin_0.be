@@ -87,9 +87,9 @@ class Matter_Plugin
   # Global type system for plugins
   static var TYPE = ""                      # name of the plug-in in json
   static var DISPLAY_NAME = ""                      # display name of the plug-in
-  static var ARG  = ""                      # additional argument name (or empty if none)
-  static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
-  static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
+
+  # Note: SCHEMA is only defined in subclasses that have UI parameters
+  # Check for presence with: var schema = self.find('SCHEMA')  or  if cl.SCHEMA != nil
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   static var VIRTUAL = false                # set to true only for virtual devices
@@ -544,29 +544,6 @@ matter_device.events.dump()
   #############################################################
   # UI Methods
   #############################################################
-  # ui_conf_to_string
-  #
-  # Convert the current plugin parameters to a single string
-  static def ui_conf_to_string(cl, conf)
-    var arg_name = cl.ARG
-    var arg = arg_name ? str(conf.find(arg_name, '')) : ''
-    # print("MTR: ui_conf_to_string", conf, cl, arg_name, arg)
-    return arg
-  end
-
-  #############################################################
-  # ui_string_to_conf
-  #
-  # Convert the string in UI to actual parameters added to the map
-  static def ui_string_to_conf(cl, conf, arg)
-    var arg_name = cl.ARG
-    var arg_type = cl.ARG_TYPE
-    if arg && arg_name
-      conf[arg_name] = arg_type(arg)
-    end
-    # print("ui_string_to_conf", conf, arg)
-    return conf
-  end
 
   #############################################################
   # append_state_json

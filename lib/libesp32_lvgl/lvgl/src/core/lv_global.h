@@ -28,11 +28,11 @@ extern "C" {
 #include "../misc/lv_style.h"
 #include "../misc/lv_timer.h"
 #include "../osal/lv_os_private.h"
-#include "../others/sysmon/lv_sysmon.h"
+#include "../debugging/sysmon/lv_sysmon.h"
 #include "../stdlib/builtin/lv_tlsf.h"
 
 #if LV_USE_FONT_COMPRESSED
-#include "../font/lv_font_fmt_txt_private.h"
+#include "../font/fmt_txt/lv_font_fmt_txt_private.h"
 #endif
 
 #include "../tick/lv_tick.h"
@@ -48,8 +48,8 @@ extern "C" {
 #include "../draw/sw/lv_draw_sw_private.h"
 #include "../draw/sw/lv_draw_sw_mask_private.h"
 #include "../stdlib/builtin/lv_tlsf_private.h"
-#include "../others/sysmon/lv_sysmon_private.h"
-#include "../others/test/lv_test_private.h"
+#include "../debugging/sysmon/lv_sysmon_private.h"
+#include "../debugging/test/lv_test_private.h"
 #include "../layouts/lv_layout_private.h"
 
 /*********************
@@ -272,12 +272,6 @@ typedef struct _lv_global_t {
 
 #if LV_USE_EVDEV
     lv_evdev_discovery_t * evdev_discovery;
-#endif
-
-#if LV_USE_XML
-    const char * xml_path_prefix;
-    uint32_t lv_event_xml_store_timeline;
-    lv_ll_t xml_loads;
 #endif
 
 #if LV_USE_DRAW_EVE
