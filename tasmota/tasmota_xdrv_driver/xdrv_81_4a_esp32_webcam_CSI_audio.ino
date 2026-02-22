@@ -1,5 +1,7 @@
 /*
-  xdrv_81_4a_esp32_webcam_CSI_audio.ino - WebRTC Audio (I2S Mic → G.711 A-law → SRTP)
+  xdrv_81_4a_esp32_webcam_CSI_audio.ino - WebRTC Audio (I2S Mic → SRTP)
+
+  Codec: Opus (USE_I2S_OPUS) or G.711 A-law fallback
 
   Copyright (C) 2025  Christian Baars and Theo Arends
 
@@ -22,8 +24,27 @@
 #ifdef USE_I2S_AUDIO
 
 /*********************************************************************************************/
-// G.711 A-law encoder (ITU-T G.711)
+// Codec configuration
 /*********************************************************************************************/
+
+// PCM samples per 20ms frame at 8 kHz (common to both codecs)
+#define WEBRTC_AUDIO_FRAME_SAMPLES   160
+// Opus uses 48 kHz RTP clock (960 per 20ms), G.711 uses 8 kHz (160 per 20ms)
+#ifdef USE_I2S_OPUS
+#include "libopus/opus.h"
+#define WEBRTC_OPUS_MAX_PACKET       256    // max encoded bytes per frame
+#define WEBRTC_OPUS_RTP_PT           111    // dynamic payload type
+#define WEBRTC_AUDIO_TS_INCREMENT    960
+#else
+#undef WEBRTC_AUDIO_TS_INCREMENT
+#define WEBRTC_AUDIO_TS_INCREMENT    160
+#endif
+
+/*********************************************************************************************/
+// G.711 A-law encoder (ITU-T G.711) - only when Opus not available
+/*********************************************************************************************/
+
+#ifndef USE_I2S_OPUS
 
 static const uint8_t ALAW_COMPRESS_TABLE[] = {
   1,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
@@ -54,6 +75,8 @@ static inline uint8_t linear_to_alaw(int16_t pcm) {
   return alaw;
 }
 
+#endif  // !USE_I2S_OPUS
+
 /*********************************************************************************************/
 // Audio task state
 /*********************************************************************************************/
@@ -62,6 +85,9 @@ struct WcAudio_State_t {
   TaskHandle_t task_handle;
   uint32_t prev_sample_rate;
   volatile bool stop_requested;
+#ifdef USE_I2S_OPUS
+  OpusEncoder *opus_enc;
+#endif
   // diagnostics
   uint32_t frames_sent;
   uint32_t underruns;
@@ -72,7 +98,7 @@ struct WcAudio_State_t {
 static WcAudio_State_t *WcAudio = nullptr;
 
 /*********************************************************************************************/
-// G.711 Audio Silence (moved from xdrv_81_4)
+// Audio Silence
 /*********************************************************************************************/
 
 void WcSendAudioSilence(void) {
@@ -80,28 +106,45 @@ void WcSendAudioSilence(void) {
   uint32_t now = millis();
   if (now - WebRTC->last_audio_time < 20) return;
 
-  uint8_t payload[G711_FRAME_SAMPLES];
+#ifdef USE_I2S_OPUS
+  // Opus silence: encode a zero-filled PCM frame
+  if (WcAudio && WcAudio->opus_enc) {
+    int16_t silence_pcm[WEBRTC_AUDIO_FRAME_SAMPLES] = {0};
+    uint8_t opus_pkt[WEBRTC_OPUS_MAX_PACKET];
+    opus_int32 len = opus_encode(WcAudio->opus_enc, silence_pcm, WEBRTC_AUDIO_FRAME_SAMPLES, opus_pkt, WEBRTC_OPUS_MAX_PACKET);
+    if (len > 0) {
+      WcSendSrtpPacket(&WebRTC->audio, opus_pkt, len, false);
+    }
+  }
+#else
+  uint8_t payload[WEBRTC_AUDIO_FRAME_SAMPLES];
   memset(payload, G711A_SILENCE, sizeof(payload));
-
   WcSendSrtpPacket(&WebRTC->audio, payload, sizeof(payload), false);
+#endif
 
-  WebRTC->audio.timestamp += G711_FRAME_SAMPLES;
+  WebRTC->audio.timestamp += WEBRTC_AUDIO_TS_INCREMENT;
   WebRTC->last_audio_time = now;
 }
 
 /*********************************************************************************************/
-// I2S Mic → G.711 A-law → SRTP Task
+// I2S Mic → Encode → SRTP Task
 /*********************************************************************************************/
 
 void WcI2sWebRTCAudioTask(void *pvParameters) {
   AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: Task started"));
 
   bool is_duplex = audio_i2s.Settings->sys.full_duplex;
-  int16_t pcm_buf[G711_FRAME_SAMPLES];
-  uint8_t alaw_buf[G711_FRAME_SAMPLES];
+  int16_t pcm_buf[WEBRTC_AUDIO_FRAME_SAMPLES];
   uint16_t rx_gain = audio_i2s.Settings->rx.gain;  // Q12.4 format, 0x10 = 1.0
   int32_t dc_x_prev = 0, dc_y_prev = 0;
   bool dc_primed = false;
+
+#ifdef USE_I2S_OPUS
+  uint8_t opus_pkt[WEBRTC_OPUS_MAX_PACKET];
+  AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: Opus encoder, complexity=1, VOIP mode"));
+#else
+  uint8_t alaw_buf[WEBRTC_AUDIO_FRAME_SAMPLES];
+#endif
 
   // Log I2S configuration for debugging
   AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: I2S cfg: rate=%d gain=0x%04X(%.1fx) duplex=%d bits=%d channels=%d"),
@@ -111,7 +154,7 @@ void WcI2sWebRTCAudioTask(void *pvParameters) {
   // In full duplex the RX channel delivers interleaved stereo frames (L/R),
   // even when only one mic is connected.  We read 2× the data and decimate.
   int16_t *stereo_buf = nullptr;
-  size_t mono_bytes = G711_FRAME_SAMPLES * sizeof(int16_t);   // 320
+  size_t mono_bytes = WEBRTC_AUDIO_FRAME_SAMPLES * sizeof(int16_t);   // 320
   size_t read_bytes = mono_bytes;
 
   if (is_duplex) {
@@ -128,7 +171,7 @@ void WcI2sWebRTCAudioTask(void *pvParameters) {
   }
 
   TickType_t xLastWakeTime = xTaskGetTickCount();
-  const TickType_t xFrameInterval = pdMS_TO_TICKS(20);  // 20ms per G.711 frame
+  const TickType_t xFrameInterval = pdMS_TO_TICKS(20);  // 20ms per frame
 
   while (!WcAudio->stop_requested) {
     // Check WebRTC state - bail if session ended
@@ -142,7 +185,7 @@ void WcI2sWebRTCAudioTask(void *pvParameters) {
       // Full duplex: read stereo, decimate to mono (left channel)
       i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)stereo_buf,
                        read_bytes, &bytes_read, pdMS_TO_TICKS(25));
-      for (int i = 0; i < G711_FRAME_SAMPLES; i++) {
+      for (int i = 0; i < WEBRTC_AUDIO_FRAME_SAMPLES; i++) {
         pcm_buf[i] = stereo_buf[i * 2];
       }
       bytes_read /= 2;  // reflect mono sample count
@@ -151,12 +194,12 @@ void WcI2sWebRTCAudioTask(void *pvParameters) {
       if (bytes_read >= mono_bytes) {
         if (!dc_primed) {
           int32_t sum = 0;
-          for (int i = 0; i < G711_FRAME_SAMPLES; i++) sum += pcm_buf[i];
-          dc_x_prev = sum / G711_FRAME_SAMPLES;
+          for (int i = 0; i < WEBRTC_AUDIO_FRAME_SAMPLES; i++) sum += pcm_buf[i];
+          dc_x_prev = sum / WEBRTC_AUDIO_FRAME_SAMPLES;
           dc_y_prev = 0;
           dc_primed = true;
         }
-        for (int i = 0; i < G711_FRAME_SAMPLES; i++) {
+        for (int i = 0; i < WEBRTC_AUDIO_FRAME_SAMPLES; i++) {
           int32_t x = pcm_buf[i];
           // y[n] = x[n] - x[n-1] + 0.9921875 * y[n-1]  (Q15: 32511/32768)
           int32_t y = x - dc_x_prev + (dc_y_prev * 32511 / 32768);
@@ -181,22 +224,22 @@ void WcI2sWebRTCAudioTask(void *pvParameters) {
       // Compute PCM diagnostics: peak and DC offset
       int32_t sum = 0;
       int16_t peak = 0;
-      for (int i = 0; i < G711_FRAME_SAMPLES; i++) {
+      for (int i = 0; i < WEBRTC_AUDIO_FRAME_SAMPLES; i++) {
         sum += pcm_buf[i];
         int16_t abs_val = (pcm_buf[i] < 0) ? -pcm_buf[i] : pcm_buf[i];
         if (abs_val > peak) peak = abs_val;
       }
-      WcAudio->last_dc = sum / G711_FRAME_SAMPLES;
+      WcAudio->last_dc = sum / WEBRTC_AUDIO_FRAME_SAMPLES;
       WcAudio->last_peak = peak;
       WcAudio->frames_sent++;
 
       // Log every ~5 seconds (250 frames at 50fps)
       if ((WcAudio->frames_sent % 250) == 1) {
-        AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: frame=%u peak=%d dc=%d underruns=%u pcm[0..7]=%d,%d,%d,%d,%d,%d,%d,%d"),
+        AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: frame=%u peak=%d dc=%d underruns=%u stack_free=%u pcm[0..7]=%d,%d,%d,%d,%d,%d,%d,%d"),
                WcAudio->frames_sent, peak, WcAudio->last_dc, WcAudio->underruns,
+               (uint32_t)uxTaskGetStackHighWaterMark(NULL) * 4,
                pcm_buf[0], pcm_buf[1], pcm_buf[2], pcm_buf[3],
                pcm_buf[4], pcm_buf[5], pcm_buf[6], pcm_buf[7]);
-        // In duplex mode, also dump raw stereo interleaved data (L0,R0,L1,R1,...)
         if (is_duplex && stereo_buf) {
           AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: stereo[0..7]=%d,%d,%d,%d,%d,%d,%d,%d"),
                  stereo_buf[0], stereo_buf[1], stereo_buf[2], stereo_buf[3],
@@ -204,12 +247,20 @@ void WcI2sWebRTCAudioTask(void *pvParameters) {
         }
       }
 
+#ifdef USE_I2S_OPUS
+      // Encode PCM16 → Opus
+      opus_int32 enc_len = opus_encode(WcAudio->opus_enc, pcm_buf, WEBRTC_AUDIO_FRAME_SAMPLES, opus_pkt, WEBRTC_OPUS_MAX_PACKET);
+      if (enc_len > 0) {
+        WcSendSrtpPacket(&WebRTC->audio, opus_pkt, enc_len, false);
+      }
+#else
       // Encode PCM16 → G.711 A-law
-      for (int i = 0; i < G711_FRAME_SAMPLES; i++) {
+      for (int i = 0; i < WEBRTC_AUDIO_FRAME_SAMPLES; i++) {
         alaw_buf[i] = linear_to_alaw(pcm_buf[i]);
       }
-      WcSendSrtpPacket(&WebRTC->audio, alaw_buf, G711_FRAME_SAMPLES, false);
-      WebRTC->audio.timestamp += G711_FRAME_SAMPLES;
+      WcSendSrtpPacket(&WebRTC->audio, alaw_buf, WEBRTC_AUDIO_FRAME_SAMPLES, false);
+#endif
+      WebRTC->audio.timestamp += WEBRTC_AUDIO_TS_INCREMENT;
       WebRTC->last_audio_time = millis();
     } else {
       // Underrun or mic not ready - send silence
@@ -258,7 +309,22 @@ void WcAudioStart(void) {
 
   WcAudio->stop_requested = false;
 
-  // Save previous sample rate and switch to 8000 Hz for G.711
+#ifdef USE_I2S_OPUS
+  // Create Opus encoder: 8 kHz, mono, VOIP mode
+  int opus_err;
+  WcAudio->opus_enc = opus_encoder_create(8000, 1, OPUS_APPLICATION_VOIP, &opus_err);
+  if (opus_err != OPUS_OK || !WcAudio->opus_enc) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("WcAudio: Opus encoder create failed (%d)"), opus_err);
+    free(WcAudio);
+    WcAudio = nullptr;
+    return;
+  }
+  opus_encoder_ctl(WcAudio->opus_enc, OPUS_SET_COMPLEXITY(1));
+  opus_encoder_ctl(WcAudio->opus_enc, OPUS_SET_BITRATE(16000));
+  AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: Opus encoder created (8kHz mono, 16kbps, complexity=1)"));
+#endif
+
+  // Save previous sample rate and switch to 8000 Hz
   WcAudio->prev_sample_rate = audio_i2s.Settings->rx.sample_rate;
   AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: Switching I2S RX from %d to 8000 Hz (duplex=%d)"),
          audio_i2s.Settings->rx.sample_rate, audio_i2s.Settings->sys.full_duplex);
@@ -268,17 +334,31 @@ void WcAudioStart(void) {
   // Start I2S RX
   audio_i2s.in->startRx();
 
-  // Create audio task
-  esp_err_t err = xTaskCreatePinnedToCore(WcI2sWebRTCAudioTask, "WcAudio", 4096,
+  // Create audio task - Opus needs more stack than G.711
+#ifdef USE_I2S_OPUS
+  uint32_t stack_size = 8192 * 3;
+#else
+  uint32_t stack_size = 4096;
+#endif
+  esp_err_t err = xTaskCreatePinnedToCore(WcI2sWebRTCAudioTask, "WcAudio", stack_size,
                                            NULL, 3, &WcAudio->task_handle, 1);
   if (err != pdPASS) {
     AddLog(LOG_LEVEL_ERROR, PSTR("WcAudio: Task create failed (0x%x)"), err);
     audio_i2s.in->stopRx();
     audio_i2s.Settings->rx.sample_rate = WcAudio->prev_sample_rate;
+#ifdef USE_I2S_OPUS
+    opus_encoder_destroy(WcAudio->opus_enc);
+#endif
+    free(WcAudio);
+    WcAudio = nullptr;
     return;
   }
 
+#ifdef USE_I2S_OPUS
+  AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: Started (I2S @ 8000 Hz, Opus)"));
+#else
   AddLog(LOG_LEVEL_INFO, PSTR("WcAudio: Started (I2S @ 8000 Hz, G.711 PCMA)"));
+#endif
 }
 
 void WcAudioStop(void) {
@@ -308,6 +388,12 @@ void WcAudioStop(void) {
     audio_i2s.in->SetRxRate(WcAudio->prev_sample_rate);
   }
   audio_i2s.in->stopRx();
+
+#ifdef USE_I2S_OPUS
+  if (WcAudio->opus_enc) {
+    opus_encoder_destroy(WcAudio->opus_enc);
+  }
+#endif
 
   free(WcAudio);
   WcAudio = nullptr;

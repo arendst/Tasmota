@@ -450,7 +450,11 @@ void WcInitDTLS(void) {
   WebRTC->video.roc = 0;
 
   WebRTC->audio.active = false;
-  WebRTC->audio.payload_type = 8;
+#ifdef USE_I2S_OPUS
+  WebRTC->audio.payload_type = 111;  // dynamic PT for Opus
+#else
+  WebRTC->audio.payload_type = 8;    // PCMA
+#endif
   WebRTC->audio.ssrc = esp_random();
   WebRTC->audio.seq = (uint16_t)esp_random();
   WebRTC->audio.timestamp = esp_random();
@@ -1674,7 +1678,11 @@ void WcGenerateAnswer(void) {
   Webserver->sendContent(buf);
 
   snprintf_P(buf, sizeof(buf), PSTR(
+#ifdef USE_I2S_OPUS
+    "m=audio %d UDP/TLS/RTP/SAVPF 111\r\nc=IN IP4 %s\r\na=rtcp-mux\r\n"),
+#else
     "m=audio %d UDP/TLS/RTP/SAVPF 8 0\r\nc=IN IP4 %s\r\na=rtcp-mux\r\n"),
+#endif
     WEBRTC_DTLS_PORT, ip.toString().c_str());
   Webserver->sendContent(buf);
 
@@ -1684,8 +1692,14 @@ void WcGenerateAnswer(void) {
   Webserver->sendContent(buf);
 
   snprintf_P(buf, sizeof(buf), PSTR(
+#ifdef USE_I2S_OPUS
+    "a=mid:1\r\na=sendonly\r\na=rtpmap:111 opus/48000/2\r\n"
+    "a=fmtp:111 minptime=20;useinbandfec=0;stereo=0;sprop-stereo=0\r\n"
+    "a=fingerprint:sha-256 %s\r\n"),
+#else
     "a=mid:1\r\na=sendonly\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"
     "a=fingerprint:sha-256 %s\r\n"),
+#endif
     WebRTC->fingerprint_str);
   Webserver->sendContent(buf);
 
@@ -1823,7 +1837,7 @@ void WcSendSrtpPacket(media_track_t* track, const uint8_t* payload, size_t len, 
   // Fold iv[12..13] into the upper 16 bits of the cc parameter.
   uint32_t cc0 = ((uint32_t)iv[12] << 24) | ((uint32_t)iv[13] << 16);
 
-  uint8_t enc_payload[SRTP_MAX_PAYLOAD];
+  uint8_t enc_payload[len];  // VLA: use actual size, not 1100-byte max (saves stack for audio)
   memcpy(enc_payload, payload, len);
 
   uint32_t enc_start = micros();
