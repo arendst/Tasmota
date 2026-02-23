@@ -47,11 +47,10 @@ void SendThingsBoardTelemetry()
     WiFiClient client;
     HTTPClient http;
 
-    String url = "http://";
-    url += tb_host;
-    url += "/api/v1/";
-    url += tb_token;
-    url += "/telemetry";
+    char url[200];
+    snprintf_P(url, sizeof(url),
+               PSTR("http://%s/api/v1/%s/telemetry"),
+               tb_host, tb_token);
 
     http.begin(client, url);
     http.addHeader("Content-Type", "application/json");
@@ -81,15 +80,12 @@ void FetchThingsBoardRPC()
     }
 
     WiFiClient client;
-    client.setTimeout(1400);
     HTTPClient http;
-    http.setTimeout(1400);
 
-    String url = "http://";
-    url += tb_host;
-    url += "/api/v1/";
-    url += tb_token;
-    url += "/rpc?timeout=5000&limit=5";
+    char url[200];
+    snprintf_P(url, sizeof(url),
+               PSTR("http://%s/api/v1/%s/rpc?timeout=5000&limit=5"),
+               tb_host, tb_token);
 
     http.begin(client, url);
 
