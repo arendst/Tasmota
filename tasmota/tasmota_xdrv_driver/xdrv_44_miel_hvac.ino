@@ -1455,13 +1455,14 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		name = miel_hvac_map_byval(set->power, miel_hvac_power_map, nitems(miel_hvac_power_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR("\"Power\":\"%s\""), name);
+			ResponseAppend_P(PSTR("\"" D_JSON_IRHVAC_POWER "\":\"%s\""), name);
 		}
 
 		mode = miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK, miel_hvac_mode_map, nitems(miel_hvac_mode_map));
 		if (mode != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"Mode\":\"%s\""), mode);
+			ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_MODE "\":\"%s\""), mode);
+			ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""), set->power ? mode : "off");
 		}
 
 		if (set->temp05 == 0)
@@ -1478,19 +1479,19 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		name = miel_hvac_map_byval(set->fan, miel_hvac_fan_map, nitems(miel_hvac_fan_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"FanSpeed\":\"%s\""), name);
+			ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_FANSPEED "\":\"%s\""), name);
 		}
 
 		name = miel_hvac_map_byval(set->vane, miel_hvac_vane_map, nitems(miel_hvac_vane_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"SwingV\":\"%s\""), name);
+			ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGV "\":\"%s\""), name);
 		}
 
 		name = widevane_isee ? "isee" : miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK, miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"SwingH\":\"%s\""), name);
+			ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
 		}
 
 		name = widevane_isee ? miel_hvac_map_byval(set->airdirection, miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map)) : "off";
@@ -1524,7 +1525,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			float temp = miel_hvac_roomtemp2deg(rt->temp05);
 			dtostrfd(ConvertTemp(temp), Settings->flag2.temperature_resolution, room_temp);
 		}
-		ResponseAppend_P(PSTR(",\"Temperature\":\"%s\""), room_temp);
+		ResponseAppend_P(PSTR(",\"RoomTemperature\":\"%s\""), room_temp);
 		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""), remotetemp_clear ? "on" : "off");
 
 		char remotetempautocleartime[33];
@@ -1588,23 +1589,23 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		char hex[(sizeof(sc->sc_status) + 1) * 2];
 
 		name = miel_hvac_map_byval(status->compressor, miel_hvac_compressor_map, nitems(miel_hvac_compressor_map));
-		ResponseAppend_P(PSTR(",\"Compressor\":\"%s\""), name != NULL ? name : "N/A");
+		ResponseAppend_P(PSTR(",\"CompressorState\":\"%s\""), name != NULL ? name : "N/A");
 
 		unsigned int compressor_frequency = status->compressorfrequency;
 		char compressorfrequency[33];
 		utoa(compressor_frequency, compressorfrequency, 10);
-		ResponseAppend_P(PSTR(",\"CompressorFrequency\":\"%s\""), compressorfrequency);
+		ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":\"%s\""), compressorfrequency);
 
 		uint16_t combined_power = ((uint16_t)status->operationpower << 8) | (uint16_t)status->operationpower1;
 		char operationpower[33];
 		dtostrfd((float)combined_power, 0, operationpower);
-		ResponseAppend_P(PSTR(",\"OperationPower\":\"%s\""), operationpower);
+		ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":\"%s\""), operationpower);
 
 		uint16_t combined_energy = ((uint16_t)status->operationenergy << 8) | (uint16_t)status->operationenergy1;
 		float operationenergy_in_kWh = (float)combined_energy / 10.0;
 		char operationenergy[33];
 		dtostrfd((float)operationenergy_in_kWh, 1, operationenergy);
-		ResponseAppend_P(PSTR(",\"OperationEnergy\":\"%s\""), operationenergy);
+		ResponseAppend_P(PSTR(",\"" D_JSON_ENERGY "\":\"%s\""), operationenergy);
 
 		ResponseAppend_P(PSTR(",\"Status\":\"%s\""), ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status), hex, sizeof(hex)));
 	}
