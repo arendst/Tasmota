@@ -12,7 +12,6 @@ bool Xdrv100(uint32_t function)
             {"Color", "", false},
             {"CT", "", false}};
         TeleSize = 3;
-        AddLog(LOG_LEVEL_INFO, PSTR("TB : ThingsBoard HTTP Initialized"));
         break;
     }
 
@@ -28,6 +27,13 @@ bool Xdrv100(uint32_t function)
     }
     case FUNC_EVERY_SECOND:
     {
+        if (strcmp(tb_host, SettingsText(SET_MEM15)) != 0 || strcmp(tb_token, SettingsText(SET_MEM16)) != 0)
+        {
+            snprintf_P(tb_host, sizeof(tb_host), PSTR("%s"), SettingsText(SET_MEM15));
+            snprintf_P(tb_token, sizeof(tb_token), PSTR("%s"), SettingsText(SET_MEM16));
+            AddLog(LOG_LEVEL_INFO, PSTR("TB : ThingsBoard HTTP Initialized"));
+        }
+
         char color_str[20];
 
         FetchThingsBoardRPC();
