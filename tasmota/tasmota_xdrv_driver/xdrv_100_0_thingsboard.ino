@@ -12,10 +12,18 @@ struct Telementary_data
 Telementary_data *Tele = nullptr;
 uint8_t TeleSize = 0;
 
+static char tb_host[50] = "";
+static char tb_token[50] = "";
+
 void SendThingsBoardTelemetry()
 {
     if (!WiFi.isConnected())
         return;
+
+    if (!tb_host || !tb_host[0] || !tb_token || !tb_token[0])
+    {
+        return;
+    }
 
     String payload = "{";
 
@@ -40,9 +48,9 @@ void SendThingsBoardTelemetry()
     HTTPClient http;
 
     String url = "http://";
-    url += THINGSBOARD_HOST;
+    url += tb_host;
     url += "/api/v1/";
-    url += THINGSBOARD_TOKEN;
+    url += tb_token;
     url += "/telemetry";
 
     http.begin(client, url);
@@ -67,13 +75,20 @@ void FetchThingsBoardRPC()
     if (!WiFi.isConnected())
         return;
 
+    if (!tb_host || !tb_host[0] || !tb_token || !tb_token[0])
+    {
+        return;
+    }
+
     WiFiClient client;
+    client.setTimeout(1400);
     HTTPClient http;
+    http.setTimeout(1400);
 
     String url = "http://";
-    url += THINGSBOARD_HOST;
+    url += tb_host;
     url += "/api/v1/";
-    url += THINGSBOARD_TOKEN;
+    url += tb_token;
     url += "/rpc?timeout=5000&limit=5";
 
     http.begin(client, url);
@@ -83,7 +98,12 @@ void FetchThingsBoardRPC()
     if (httpCode == HTTP_CODE_OK)
     {
         String payload = http.getString();
-        http.end();
+
+        if (payload.length() < 10 || payload.indexOf("method") < 0)
+        {
+            http.end();
+            return;
+        }
 
         JsonParser parser((char *)payload.c_str());
         JsonParserObject root = parser.getRootObject();
