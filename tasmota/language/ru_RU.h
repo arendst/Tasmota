@@ -119,6 +119,7 @@
 #define D_GATEWAY "Шлюз"
 #define D_GROUP "Группа"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Хост"
 #define D_HOSTNAME "Имя хоста"

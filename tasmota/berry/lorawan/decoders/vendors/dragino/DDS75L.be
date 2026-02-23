@@ -11,6 +11,31 @@ if !global.dds75lbNodes      # data survive to decoder reload
 end
 
 class LwDecoDDS75LB
+
+  static def deviceInfo()
+   return {"manufacturer":"Dragino", 
+           "model":"DDS75L"
+          }
+  end
+  
+  static def HAssSensors()
+   # The sensors in this device that are included in the MQTT messages, and
+   # should be advertised in HA Discovery MQTT message.
+   # More info: https://www.home-assistant.io/integrations/mqtt/#single-component-discovery-payload
+   # One line per sensor        [0]            [1]                [2]    [3]               [4]
+   #     [MQTT name] (note[1])  state class    HA Display name    Units  device class      icon (note[4])
+   #       
+   #
+   # Note[1]: Must match name used in decodeUplink() below
+   # Note[4]: See https://pictogrammers.com/library/mdi/
+   #
+   var sensors={}
+   sensors["RSSI"]       = ["measurement"     ,"LoRa Signal"      ,"dBm","signal strength","mdi:signal-variant"]
+   sensors["BattV"]      = ["measurement"     ,"Battery Voltage"  ,"V"  ,"voltage"        ,"mdi:current-dc"]
+   sensors["Distance"]   = ["measurement"     ,"Distance"         ,"mm" ,"distance"       ,"mdi:arrow-left-right"]
+   return sensors
+  end
+
   static def decodeUplink(Name, Node, RSSI, FPort, Bytes)
     var data = {"Device":"Dragino DDS75-LB/LS"}
     

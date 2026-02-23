@@ -681,7 +681,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   }
 
 #ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id%02d '%s'"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
 #else
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
 #endif
@@ -1531,6 +1531,8 @@ void SettingsEnableAllI2cDrivers(void) {
   Settings->i2c_drivers[0] = I2CDRIVERS_0_31;
   Settings->i2c_drivers[1] = I2CDRIVERS_32_63;
   Settings->i2c_drivers[2] = I2CDRIVERS_64_95;
+  Settings->i2c_drivers2[0] = I2CDRIVERS_96_127;
+  Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;
 }
 
 /********************************************************************************************/
@@ -1902,6 +1904,10 @@ void SettingsDelta(void) {
 #endif  // DINGTIAN_INPUTS_INVERTED
     }
 #endif  // USE_DINGTIAN_RELAY
+    if (Settings->version < 0x0F020006) {  // 15.2.0.6
+      Settings->i2c_drivers2[0] = I2CDRIVERS_96_127;
+      Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);

@@ -118,6 +118,7 @@
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Group"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "Host"
 #define D_HOSTNAME "Hostname"

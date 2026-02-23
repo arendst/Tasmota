@@ -143,9 +143,11 @@ import matter
 class Matter_Plugin_Shutter : Matter_Plugin_Device
   static var TYPE = "shutter"                       # name of the plug-in in json
   static var DISPLAY_NAME = "Shutter"                       # display name of the plug-in
-  static var ARG  = "shutter"                       # additional argument name (or empty if none)
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Relay<x> number"
+
+  static var SCHEMA = "shutter|"                    # arg name
+                      "l:Shutter|"                  # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Relay<x> number"           # hint
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
@@ -167,7 +169,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.tasmota_shutter_index = config.find(self.ARG #-'relay'-#)
+    self.tasmota_shutter_index = config.find('shutter')
     if self.tasmota_shutter_index == nil     self.tasmota_shutter_index = 0   end
     self.shadow_shutter_inverted = -1
   end

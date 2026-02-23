@@ -47,6 +47,7 @@ extern int be_ntv_lv_anim_init(bvm *vm);
 extern int be_ntv_lv_timer_init(bvm *vm);
 extern int be_ntv_lv_animimg_init(bvm *vm);
 extern int be_ntv_lv_arc_init(bvm *vm);
+extern int be_ntv_lv_arclabel_init(bvm *vm);
 extern int be_ntv_lv_bar_init(bvm *vm);
 extern int be_ntv_lv_button_init(bvm *vm);
 extern int be_ntv_lv_buttonmatrix_init(bvm *vm);
@@ -86,6 +87,7 @@ extern int be_ntv_lv_colorwheel_init(bvm *vm);
 extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_animimg;
 extern const bclass be_class_lv_arc;
+extern const bclass be_class_lv_arclabel;
 extern const bclass be_class_lv_bar;
 extern const bclass be_class_lv_button;
 extern const bclass be_class_lv_buttonmatrix;
@@ -312,6 +314,17 @@ class be_class_lv_animimg (scope: global, name: lv_animimg, super: be_class_lv_i
 class be_class_lv_arc (scope: global, name: lv_arc, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_arc_init)
     _class, comptr(&lv_arc_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_arclabel
+********************************************************************/
+#include "be_fixed_be_class_lv_arclabel.h"
+/* @const_object_info_begin
+class be_class_lv_arclabel (scope: global, name: lv_arclabel, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_arclabel_init)
+    _class, comptr(&lv_arclabel_class)
 }
 @const_object_info_end */
 

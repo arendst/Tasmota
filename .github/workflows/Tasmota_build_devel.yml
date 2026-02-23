@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - uses: actions/download-artifact@v4
@@ -107,17 +107,17 @@ jobs:
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system platformio
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add SHA to footer
         run: |
@@ -158,17 +158,17 @@ jobs:
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system platformio
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -215,17 +215,17 @@ jobs:
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system platformio
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
@@ -266,17 +266,17 @@ jobs:
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system platformio
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4

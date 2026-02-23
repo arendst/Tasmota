@@ -111,9 +111,12 @@
 class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   static var TYPE = "gensw_btn"                     # name of the plug-in in json
   static var DISPLAY_NAME = "Generic Switch/Button" # display name of the plug-in
-  static var ARG  = "button"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Button<x> number"
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+
+  static var SCHEMA = "button|"                     # arg name
+                      "l:Button|"                    # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Button<x> number|"         # hint
+                      "r:1"                         # required
   # static var UPDATE_TIME = 750                      # update every 750ms    - TODO still necessary?
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
@@ -134,7 +137,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'relay'-#, 1))
+    self.tasmota_switch_index = int(config.find('button', 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 

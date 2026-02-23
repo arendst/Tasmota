@@ -52,7 +52,7 @@ class Matter_Zigbee_Mapper
   def parse_configuration(config)
     import zigbee
     import string
-    self.device_arg = config.find(self.pi.ARG #-'zigbee_device'-#, nil)
+    self.device_arg = config.find('zigbee_device', nil)
     # we accept hex integers
     if (type(self.device_arg) == 'string')
       if string.startswith(self.device_arg, "0x") || string.startswith(self.device_arg, "0X")

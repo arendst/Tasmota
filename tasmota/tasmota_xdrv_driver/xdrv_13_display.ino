@@ -1708,7 +1708,7 @@ const char kSensorUnit[] PROGMEM =
   D_UNIT_PARTS_PER_MILLION "|"                                                  // ppm
   D_UNIT_HERTZ;                                                                 // Hz
 
-void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value) {
+void DisplayJsonValue(const char* topic, const char* mkey, const char* value) {
   SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
   char temp[TOPSZ];
@@ -1747,10 +1747,24 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), (size)?topic:"", (size)?"/":"", mkey, buffer);  // pow1/Voltage or Voltage if topic is empty (local sensor or header)
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "topic [%s], device [%s], mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"),
-//    topic, device, mkey, source, value, quantity_code, buffer);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "topic [%s], mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"),
+//    topic, mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
+}
+
+void DisplayAnalyzeJsonObject(const char *topic, JsonParserObject Object) {
+  for (auto key : Object) {
+    JsonParserToken value = key.getValue();
+    if (value.isObject()) {
+      DisplayAnalyzeJsonObject(topic, value.getObject());
+    } else {
+      const char* values = value.getStr(nullptr);
+      if (values != nullptr) {
+        DisplayJsonValue(topic, key.getStr(), values);  // Sensor 56%
+      }
+    }
+  }
 }
 
 void DisplayAnalyzeJson(char *topic, const char *json) {
@@ -1777,34 +1791,8 @@ void DisplayAnalyzeJson(char *topic, const char *json) {
     if (unit) {
       snprintf_P(disp_pres, sizeof(disp_pres), PSTR("%s"), unit);  // hPa or mmHg
     }
-    for (auto key1 : root) {
-      JsonParserToken value1 = key1.getValue();
-      if (value1.isObject()) {
-        JsonParserObject Object2 = value1.getObject();
-        for (auto key2 : Object2) {
-          JsonParserToken value2 = key2.getValue();
-          if (value2.isObject()) {
-            JsonParserObject Object3 = value2.getObject();
-            for (auto key3 : Object3) {
-              const char* value3 = key3.getValue().getStr(nullptr);
-              if (value3 != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
-                DisplayJsonValue(topic, key1.getStr(), key3.getStr(), value3);  // Sensor 56%
-              }
-            }
-          } else {
-            const char* value = value2.getStr(nullptr);
-            if (value != nullptr) {
-              DisplayJsonValue(topic, key1.getStr(), key2.getStr(), value);  // Sensor  56%
-            }
-          }
-        }
-      } else {
-        const char* value = value1.getStr(nullptr);
-        if (value != nullptr) {
-          DisplayJsonValue(topic, key1.getStr(), key1.getStr(), value);  // Topic  56%
-        }
-      }
-    }
+
+    DisplayAnalyzeJsonObject(topic, root);
   }
 }
 

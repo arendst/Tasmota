@@ -173,6 +173,10 @@ register_to_animation(rich_palette)
 # It keeps track of previously created engines and strips to reuse
 # when called with the same arguments
 #
+# Animation brightness is scaled by the bri value saved in `Leds` that is set
+# when `Leds` is initialized. Use engine.strip.set_bri(value) [0-255] to change
+# the brightness scaling applied by `Leds`.
+#
 # Parameters:
 #   l - list of arguments (vararg)
 #

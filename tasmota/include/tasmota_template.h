@@ -1305,7 +1305,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_WEBCAM
 #ifdef USE_ETHERNET
   AGPIO(GPIO_ETH_PHY_POWER),
+#if CONFIG_SOC_SPI_PERIPH_NUM > 2                // This count differs from available usable SPI count based on SPIx_HOST
+  AGPIO(GPIO_ETH_PHY_MDC) + AGMAX(MAX_SPI),
+#else
   AGPIO(GPIO_ETH_PHY_MDC),
+#endif  // CONFIG_SOC_SPI_PERIPH_NUM > 2
   AGPIO(GPIO_ETH_PHY_MDIO),                      // Ethernet
 #endif  // USE_ETHERNET
 #ifdef USE_BIOPDU

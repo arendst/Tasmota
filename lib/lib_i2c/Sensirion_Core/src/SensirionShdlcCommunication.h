@@ -72,7 +72,7 @@ class SensirionShdlcCommunication {
      * @return              NoError on success, an error code otherwise
      */
     static uint16_t receiveFrame(SensirionShdlcRxFrame& frame, Stream& serial,
-                                 unsigned long timeoutMicros);
+                                 uint32_t timeoutMicros);
 
     /**
      * sendAndReceiveFrame() - Send and receive a frame from sensor.
@@ -89,7 +89,7 @@ class SensirionShdlcCommunication {
     static uint16_t sendAndReceiveFrame(Stream& serial,
                                         SensirionShdlcTxFrame& txFrame,
                                         SensirionShdlcRxFrame& rxFrame,
-                                        unsigned long rxTimeoutMicros);
+                                        uint32_t rxTimeoutMicros);
 };
 
 #endif /* SENSIRION_SHDLC_COMMUNICATION_H_ */

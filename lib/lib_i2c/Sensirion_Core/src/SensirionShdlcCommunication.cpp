@@ -38,20 +38,20 @@
 #include "SensirionShdlcRxFrame.h"
 #include "SensirionShdlcTxFrame.h"
 
-static uint16_t readByte(uint8_t& data, Stream& serial, unsigned long startTime,
-                         unsigned long timeoutMicros) {
+static uint16_t readByte(uint8_t& data, Stream& serial, uint32_t startTime,
+                         uint32_t timeoutMicros) {
     do {
         if (micros() - startTime > timeoutMicros) {
-            return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(TimeoutError);
+            return static_cast<uint16_t>(ReadError) |
+                   static_cast<uint8_t>(TimeoutError);
         }
     } while (!serial.available());
     data = serial.read();
     return NoError;
 }
 
-static uint16_t unstuffByte(uint8_t& data, Stream& serial,
-                            unsigned long startTime,
-                            unsigned long timeoutMicros) {
+static uint16_t unstuffByte(uint8_t& data, Stream& serial, uint32_t startTime,
+                            uint32_t timeoutMicros) {
     uint16_t error = readByte(data, serial, startTime, timeoutMicros);
     if (error) {
         return error;
@@ -70,20 +70,23 @@ uint16_t SensirionShdlcCommunication::sendFrame(SensirionShdlcTxFrame& frame,
                                                 Stream& serial) {
     size_t writtenBytes = serial.write(&frame._buffer[0], frame._index);
     if (writtenBytes != frame._index) {
-        return static_cast<uint16_t>(WriteError) | static_cast<uint16_t>(SerialWriteError);
+        return static_cast<uint16_t>(WriteError) |
+               static_cast<uint8_t>(SerialWriteError);
     }
     return NoError;
 }
 
-uint16_t SensirionShdlcCommunication::receiveFrame(
-    SensirionShdlcRxFrame& frame, Stream& serial, unsigned long timeoutMicros) {
-    unsigned long startTime = micros();
+uint16_t SensirionShdlcCommunication::receiveFrame(SensirionShdlcRxFrame& frame,
+                                                   Stream& serial,
+                                                   uint32_t timeoutMicros) {
+    uint32_t startTime = micros();
     uint16_t error;
     uint8_t dataLength;
     uint8_t current = 0;
 
     if (frame._numBytes) {
-        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(NonemptyFrameError);
+        return static_cast<uint16_t>(ReadError) |
+               static_cast<uint8_t>(NonemptyFrameError);
     }
 
     // Wait for start byte and ignore all other bytes in case a partial frame
@@ -121,18 +124,23 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
         frame._address + frame._command + frame._state + dataLength;
 
     if (dataLength > frame._bufferSize) {
-        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(BufferSizeError);
+        return static_cast<uint16_t>(RxFrameError) |
+               static_cast<uint8_t>(BufferSizeError);
     }
 
-    size_t i = 0;
-    while (i < dataLength) {
-        error = unstuffByte(current, serial, startTime, timeoutMicros);
-        if (error) {
-            return error;
+    // An error frame does not have any data eventhough the value of
+    // "dataLength" is not zero. Therefore, only read data from the buffer if
+    // the frame state is 0, i.e, the frame is not of an error frame.
+
+    if (frame._state == 0) {
+        for (size_t i = 0; i < dataLength; i++) {
+            error = unstuffByte(current, serial, startTime, timeoutMicros);
+            if (error) {
+                return error;
+            }
+            frame._buffer[i] = current;
+            checksum += current;
         }
-        frame._buffer[i] = current;
-        checksum += current;
-        i++;
     }
 
     uint8_t expectedChecksum = ~checksum;
@@ -142,7 +150,8 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
         return error;
     }
     if (expectedChecksum != actualChecksum) {
-        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(ChecksumError);
+        return static_cast<uint16_t>(ReadError) |
+               static_cast<uint8_t>(ChecksumError);
     }
 
     uint8_t stop;
@@ -151,10 +160,11 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
         return error;
     }
     if (stop != 0x7e) {
-        return static_cast<uint16_t>(ReadError) | static_cast<uint16_t>(StopByteError);
+        return static_cast<uint16_t>(ReadError) |
+               static_cast<uint8_t>(StopByteError);
     }
     if (frame._state & 0x7F) {
-        return static_cast<uint16_t>(ExecutionError) | frame._state;
+        return ExecutionError | frame._state;
     }
     frame._dataLength = dataLength;
     frame._numBytes = dataLength;
@@ -163,7 +173,7 @@ uint16_t SensirionShdlcCommunication::receiveFrame(
 
 uint16_t SensirionShdlcCommunication::sendAndReceiveFrame(
     Stream& serial, SensirionShdlcTxFrame& txFrame,
-    SensirionShdlcRxFrame& rxFrame, unsigned long rxTimeoutMicros) {
+    SensirionShdlcRxFrame& rxFrame, uint32_t rxTimeoutMicros) {
     uint16_t error;
     error = SensirionShdlcCommunication::sendFrame(txFrame, serial);
     if (error) {
@@ -175,10 +185,12 @@ uint16_t SensirionShdlcCommunication::sendAndReceiveFrame(
         return error;
     }
     if (rxFrame.getCommand() != txFrame.getCommand()) {
-        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(RxCommandError);
+        return static_cast<uint16_t>(RxFrameError) |
+               static_cast<uint8_t>(RxCommandError);
     }
     if (rxFrame.getAddress() != txFrame.getAddress()) {
-        return static_cast<uint16_t>(RxFrameError) | static_cast<uint16_t>(RxAddressError);
+        return static_cast<uint16_t>(RxFrameError) |
+               static_cast<uint8_t>(RxAddressError);
     }
     return NoError;
 }

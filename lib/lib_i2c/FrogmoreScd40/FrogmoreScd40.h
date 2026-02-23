@@ -73,6 +73,7 @@ class FrogmoreScd40
         int setAutomaticSelfCalibrationEnabled(bool isAuto);
         int performForcedRecalibration(uint16_t co2_ppm);
         int getSerialNumber(uint16_t *pSerialNumberArray);
+        int getSensorVariant(uint16_t *pSensorVariant);
         int startLowPowerPeriodicMeasurement(void);
         int persistSettings(void);
         int performSelfTest(uint16_t *pMalfunction);

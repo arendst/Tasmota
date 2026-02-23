@@ -59,14 +59,14 @@ be_local_class(Matter_Plugin_Bridge_OnOff,
     &be_class_Matter_Plugin_Bridge_Light0,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(TYPES, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(266, -1), be_const_int(2) },
     }))    ) } )) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Relay) },
+        { be_const_key_weak(SCHEMA, 3), be_nested_str_weak(relay_X7Cl_X3ARelay_X20number_X7Ct_X3Ai_X7Ch_X3ARelay_X3Cx_X3E_X20number) },
         { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Bridge_OnOff_web_values_closure) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_relay) },
     })),
     be_str_weak(Matter_Plugin_Bridge_OnOff)

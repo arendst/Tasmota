@@ -131,9 +131,28 @@ import matter
 class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   static var TYPE = "airquality"                    # name of the plug-in in json
   static var DISPLAY_NAME = "Air Quality"           # display name of the plug-in
-  static var ARG  = "airquality"                    # additional argument name (or empty if none)
-  static var ARG_HINT = "Device key (ex: SCD40)"
-#   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+
+  static var SCHEMA = "airquality|"                  # arg name
+                      "l:Air Quality|"              # label (display name)
+                      "h:Device key (ex: SCD40)"    # hint (type defaults to text)
+  static var SCHEMA2 = "co2|"                        # CO2 filter parameter
+                       "l:CO2|"                     # label (display name)
+                       "h:CO2 filter (ex: SCD40#CarbonDioxide)"
+  static var SCHEMA3 = "no2|"                        # NO2 filter parameter
+                       "l:NO2|"                     # label (display name)
+                       "h:NO2 filter (ex: SEN55#NO2)"
+  static var SCHEMA4 = "pm1|"                        # PM1 filter parameter
+                       "l:PM1|"                     # label (display name)
+                       "h:PM1 filter (ex: SEN55#PM1)"
+  static var SCHEMA5 = "pm2_5|"                      # PM2.5 filter parameter
+                       "l:PM2.5|"                   # label (display name)
+                       "h:PM2.5 filter (ex: SEN55#PM2.5)"
+  static var SCHEMA6 = "pm10|"                       # PM10 filter parameter
+                       "l:PM10|"                    # label (display name)
+                       "h:PM10 filter (ex: SEN55#PM10)"
+  static var SCHEMA7 = "tvoc|"                       # TVOC filter parameter
+                       "l:TVOC|"                    # label (display name)
+                       "h:TVOC filter (ex: SEN55#TVOC)"
   static var JSON_NAME = "AirQuality"               # Name of the sensor attribute in JSON payloads
   static var UPDATE_TIME = 10000                    # update every 10 s
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "AirQuality", "CO2", "PM1", "PM2.5", "PM10", "TVOC", "NO2")
@@ -149,7 +168,15 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
 
   static var TYPES = { 0x002C: 1 }                  # Air Quality, rev 1
 
-  var prefix                                        # key prefix in JSON
+  # Individual filter prefixes for each measurement type
+  var prefix_co2                                    # CO2 filter prefix
+  var prefix_no2                                    # NO2 filter prefix
+  var prefix_pm1                                    # PM1 filter prefix
+  var prefix_pm2_5                                  # PM2.5 filter prefix
+  var prefix_pm10                                   # PM10 filter prefix
+  var prefix_tvoc                                   # TVOC filter prefix
+  var prefix_airquality                             # AirQuality device key (e.g., "SCD40")
+  var clusters_derived                              # dynamically computed cluster map based on config
   var shadow_air_quality                            # Human readable air quality index
                                                     # 0: Unknown
                                                     # 1: Good
@@ -178,12 +205,57 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   end
 
   #############################################################
+  # get_clusters
+  #
+  # Override to return only clusters for configured sensors.
+  # Air Quality (0x005B) is mandatory and always present.
+  # Optional concentration clusters are included only if their
+  # filter is configured.
+  def get_clusters()
+    if self.clusters_derived != nil
+      return self.clusters_derived
+    end
+    return self.CLUSTERS
+  end
+
+  #############################################################
+  # _build_clusters
+  #
+  # Build the dynamic cluster map based on configured filters.
+  # Called from parse_configuration() after filter prefixes are known.
+  def _build_clusters()
+    # start from the complete CLUSTERS and remove unconfigured ones
+    var cl = {}
+    var base = self.CLUSTERS
+    for k: base.keys()
+      cl[k] = base[k]
+    end
+    # remove optional concentration clusters that are not configured
+    if !self.prefix_co2    cl.remove(0x040D) end  # CO2
+    if !self.prefix_pm1    cl.remove(0x042C) end  # PM1
+    if !self.prefix_pm2_5  cl.remove(0x042A) end  # PM2.5
+    if !self.prefix_pm10   cl.remove(0x042D) end  # PM10
+    if !self.prefix_tvoc   cl.remove(0x042E) end  # TVOC
+    if !self.prefix_no2    cl.remove(0x0413) end  # NO2
+    self.clusters_derived = cl
+  end
+
+  #############################################################
   # parse_configuration
   #
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.prefix = str(config.find(self.ARG))
+    # Extract filter parameters from config map
+    self.prefix_airquality = config.find("airquality")
+    self.prefix_co2 = config.find("co2")
+    self.prefix_no2 = config.find("no2")
+    self.prefix_pm1 = config.find("pm1")
+    self.prefix_pm2_5 = config.find("pm2_5")
+    self.prefix_pm10 = config.find("pm10")
+    self.prefix_tvoc = config.find("tvoc")
+    # Build dynamic cluster map based on configured filters
+    self._build_clusters()
   end
 
 
@@ -203,31 +275,63 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     end
     return old_val
   end
+
+  #############################################################
+  # _parse_sensor_filter
+  #
+  # Parse a sensor value using a filter string (e.g., "SCD40#CarbonDioxide")
+  # Filter format: "DeviceKey#AttributeName" or just "DeviceKey" (uses default attribute)
+  # Returns the new value or old_val if not found
+  def _parse_sensor_filter(payload, filter, default_attr, old_val, func, cluster, attribute)
+    import string
+    var device_key = filter
+    var attr_name = default_attr
+    var hash_idx = string.find(filter, '#')
+    if hash_idx >= 0
+      device_key = filter[0 .. hash_idx - 1]
+      attr_name = filter[hash_idx + 1 ..]
+    end
+    # Find the device in payload
+    var v = payload.find(device_key)
+    if v != nil
+      return self._parse_sensor_entry(v, attr_name, old_val, func, cluster, attribute)
+    end
+    return old_val
+  end
   #
   def parse_sensors(payload)
-    var v = payload.find(self.prefix)
-    if (v != nil)
-      # CO2
-      self.shadow_co2 = self._parse_sensor_entry(v, "CarbonDioxide", self.shadow_co2, number, 0x040D, 0x0000)
-      # PM1
-      self.shadow_pm1 = self._parse_sensor_entry(v, "PM1", self.shadow_pm1, number, 0x042C, 0x0000)
-      # PM2.5
-      self.shadow_pm2_5 = self._parse_sensor_entry(v, "PM2.5", self.shadow_pm2_5, number, 0x042A, 0x0000)
-      # PM10
-      self.shadow_pm10 = self._parse_sensor_entry(v, "PM10", self.shadow_pm10, number, 0x042D, 0x0000)
-      # TVOC
-      self.shadow_tvoc = self._parse_sensor_entry(v, "TVOC", self.shadow_tvoc, number, 0x042E, 0x0000)
-      # NO2
-      self.shadow_no2 = self._parse_sensor_entry(v, "NO2", self.shadow_no2, number, 0x0413, 0x0000)
-      # AirQuality
-      if v.contains("AirQuality")
+    # Parse each measurement type only if its filter is configured
+    if self.prefix_co2
+      self.shadow_co2 = self._parse_sensor_filter(payload, self.prefix_co2, "CarbonDioxide", self.shadow_co2, number, 0x040D, 0x0000)
+    end
+    if self.prefix_no2
+      self.shadow_no2 = self._parse_sensor_filter(payload, self.prefix_no2, "NO2", self.shadow_no2, number, 0x0413, 0x0000)
+    end
+    if self.prefix_pm1
+      self.shadow_pm1 = self._parse_sensor_filter(payload, self.prefix_pm1, "PM1", self.shadow_pm1, number, 0x042C, 0x0000)
+    end
+    if self.prefix_pm2_5
+      self.shadow_pm2_5 = self._parse_sensor_filter(payload, self.prefix_pm2_5, "PM2.5", self.shadow_pm2_5, number, 0x042A, 0x0000)
+    end
+    if self.prefix_pm10
+      self.shadow_pm10 = self._parse_sensor_filter(payload, self.prefix_pm10, "PM10", self.shadow_pm10, number, 0x042D, 0x0000)
+    end
+    if self.prefix_tvoc
+      self.shadow_tvoc = self._parse_sensor_filter(payload, self.prefix_tvoc, "TVOC", self.shadow_tvoc, number, 0x042E, 0x0000)
+    end
+
+    # AirQuality - from device key if available, otherwise compute from CO2
+    if self.prefix_airquality
+      var v = payload.find(self.prefix_airquality)
+      if v != nil && v.contains("AirQuality")
         self.shadow_air_quality = self._parse_sensor_entry(v, "AirQuality", self.shadow_air_quality, number, 0x005B, 0x0000)
       else
-        # try to compute from available values
         self.compute_air_quality()
       end
+    else
+      self.compute_air_quality()
     end
-    super(self).parse_sensors(payload)            # parse other shutter values
+    super(self).parse_sensors(payload)
   end
 
   #############################################################
@@ -368,7 +472,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   # This call is synnchronous and blocking.
   def parse_status(data, index)
     if index == 10                             # Status 10
-      var values = data.find(self.prefix)
+      var values = data.find(self.prefix_airquality)
     end
   end
 
@@ -386,12 +490,12 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
 
     self.web_values_prefix()        # display '| ' and name if present
     web_values_single("Air", self.shadow_air_quality)
-    web_values_single("PM1", self.shadow_pm1)
-    web_values_single("PM2.5", self.shadow_pm2_5)
-    web_values_single("PM10", self.shadow_pm10)
-    web_values_single("CO2", self.shadow_co2)
-    web_values_single("NO2", self.shadow_no2)
-    web_values_single("TVOC", self.shadow_tvoc)
+    if self.prefix_pm1    web_values_single("PM1", self.shadow_pm1)       end
+    if self.prefix_pm2_5  web_values_single("PM2.5", self.shadow_pm2_5)   end
+    if self.prefix_pm10   web_values_single("PM10", self.shadow_pm10)     end
+    if self.prefix_co2    web_values_single("CO2", self.shadow_co2)       end
+    if self.prefix_no2    web_values_single("NO2", self.shadow_no2)       end
+    if self.prefix_tvoc   web_values_single("TVOC", self.shadow_tvoc)     end
   end
   #############################################################
   #############################################################

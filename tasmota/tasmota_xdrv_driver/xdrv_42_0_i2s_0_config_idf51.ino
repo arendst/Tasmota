@@ -73,7 +73,7 @@ typedef struct{
     uint8_t   version = AUDIO_SETTINGS_VERSION;    // B00
 
     // runtime options, will be saved but ignored on setting read
-    bool      duplex = 0;           // B01 - depends on GPIO setting and SOC caps, DIN and DOUT on same port in GPIO means -> try to use duplex if possible
+    bool      full_duplex = 0;      // B01 - depends on GPIO setting and SOC caps, DIN and DOUT on same port in GPIO means ->  use full duplex
     bool      tx = 0;               // B02 - depends on GPIO setting
     bool      rx = 0;               // B03 - depends on GPIO setting
     bool      exclusive = 0;        // B04 - depends on GPIO setting, if WS is shared between 2 ports, drivers needs to be reinstalled before being used (Yuck... but we don't have a choice)

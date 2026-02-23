@@ -118,6 +118,7 @@
 #define D_GATEWAY "שער"
 #define D_GROUP "קבוצה"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "מארח"
 #define D_HOSTNAME "שם מארח"

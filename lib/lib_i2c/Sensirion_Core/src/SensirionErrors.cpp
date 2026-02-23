@@ -55,6 +55,10 @@ void errorToString(uint16_t error, char errorMessage[],
             break;
         case HighLevelError::WriteError:
             switch (lowLevelError) {
+                case LowLevelError::Undefined:
+                    strncpy(errorMessage, "Write error",
+                            errorMessageSize);
+                    return;
                 case LowLevelError::SerialWriteError:
                     strncpy(errorMessage, "Error writing to serial",
                             errorMessageSize);
@@ -81,6 +85,9 @@ void errorToString(uint16_t error, char errorMessage[],
             break;
         case HighLevelError::ReadError:
             switch (lowLevelError) {
+                case LowLevelError::Undefined:
+                    strncpy(errorMessage, "Read error", errorMessageSize);
+                    return;
                 case LowLevelError::NonemptyFrameError:
                     strncpy(errorMessage, "Frame already contains data",
                             errorMessageSize);
@@ -117,6 +124,9 @@ void errorToString(uint16_t error, char errorMessage[],
         }
         case HighLevelError::TxFrameError:
             switch (lowLevelError) {
+                case LowLevelError::Undefined:
+                    strncpy(errorMessage, "Tx frame error", errorMessageSize);
+                    return;
                 case LowLevelError::BufferSizeError:
                     strncpy(errorMessage, "Not enough space in buffer",
                             errorMessageSize);
@@ -125,6 +135,9 @@ void errorToString(uint16_t error, char errorMessage[],
             break;
         case HighLevelError::RxFrameError:
             switch (lowLevelError) {
+                case LowLevelError::Undefined:
+                    strncpy(errorMessage, "Rx frame error", errorMessageSize);
+                    return;
                 case LowLevelError::BufferSizeError:
                     strncpy(errorMessage, "Not enough space in buffer",
                             errorMessageSize);

@@ -38,26 +38,18 @@ class breathe : animation.animation
     self.values["color"] = self._breathe
   end
   
-  # Handle parameter changes - propagate to internal breathe provider
+  # Handle parameter changes
   def on_param_changed(name, value)
     super(self).on_param_changed(name, value)
-    # Propagate relevant parameters to the breathe provider
     if name == "color"
       # When color is set, update the _breathe's color
       # but keep the _breathe as the actual color source for rendering
-      if type(value) == 'int'
-        self._breathe.color = value
-        # Restore the _breathe as the color source (bypass on_param_changed)
-        self.values["color"] = self._breathe
-      end
-    elif name == "min_brightness"
-      self._breathe.min_brightness = value
-    elif name == "max_brightness"
-      self._breathe.max_brightness = value
-    elif name == "period"
-      self._breathe.period = value
-    elif name == "curve_factor"
-      self._breathe.curve_factor = value
+      self._breathe.color = value
+      self.values["color"] = self._breathe
+    elif name == "min_brightness" || name == "max_brightness" ||
+         name == "period" || name == "curve_factor"
+      # Forward other parameters to internal breathe color provider
+      self._breathe.set_param(name, value)
     end
   end
   

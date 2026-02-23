@@ -38,9 +38,11 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Light2
   static var BRIDGE = true
   static var TYPE = "http_light2"                   # name of the plug-in in json
   # static var DISPLAY_NAME = "Light 2 CT"      # display name of the plug-in
-  static var ARG  = "relay"                         # additional argument name (or empty if none)
-  static var ARG_HINT = "Relay<x> number"
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+
+  static var SCHEMA = "relay|"                      # arg name
+                      "l:Relay number|"             # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Relay<x> number"           # hint
   static var UPDATE_TIME = 3000                     # update every 3s
 end
 matter.Plugin_Bridge_Light2 = Matter_Plugin_Bridge_Light2

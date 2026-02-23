@@ -98,6 +98,8 @@ private:
 
     // ===== Display State =====
     uint8_t rotation;              // Current rotation (0-3)
+    uint16_t width;                // Current width
+    uint16_t height;               // Current height
     int16_t window_x0, window_y0, window_x1, window_y1;
     bool display_on;
     bool inverted;

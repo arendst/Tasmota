@@ -406,18 +406,277 @@ const uint8_t kI2cList[] = {
 #endif
 
 #ifdef XI2C_96
-  XI2C_96
+  XI2C_96,
 #endif
+
+#ifdef XI2C_97
+  XI2C_97,
+#endif
+
+#ifdef XI2C_98
+  XI2C_98,
+#endif
+
+#ifdef XI2C_99
+  XI2C_99,
+#endif
+
+#ifdef XI2C_100
+  XI2C_100,
+#endif
+
+#ifdef XI2C_101
+  XI2C_101,
+#endif
+
+#ifdef XI2C_102
+  XI2C_102,
+#endif
+
+#ifdef XI2C_103
+  XI2C_103,
+#endif
+
+#ifdef XI2C_104
+  XI2C_104,
+#endif
+
+#ifdef XI2C_105
+  XI2C_105,
+#endif
+
+#ifdef XI2C_106
+  XI2C_106,
+#endif
+
+#ifdef XI2C_107
+  XI2C_107,
+#endif
+
+#ifdef XI2C_108
+  XI2C_108,
+#endif
+
+#ifdef XI2C_109
+  XI2C_109,
+#endif
+
+#ifdef XI2C_110
+  XI2C_110,
+#endif
+
+#ifdef XI2C_111
+  XI2C_111,
+#endif
+
+#ifdef XI2C_112
+  XI2C_112,
+#endif
+
+#ifdef XI2C_113
+  XI2C_113,
+#endif
+
+#ifdef XI2C_114
+  XI2C_114,
+#endif
+
+#ifdef XI2C_115
+  XI2C_115,
+#endif
+
+#ifdef XI2C_116
+  XI2C_116,
+#endif
+
+#ifdef XI2C_117
+  XI2C_117,
+#endif
+
+#ifdef XI2C_118
+  XI2C_118,
+#endif
+
+#ifdef XI2C_119
+  XI2C_119,
+#endif
+
+#ifdef XI2C_120
+  XI2C_120,
+#endif
+
+#ifdef XI2C_121
+  XI2C_121,
+#endif
+
+#ifdef XI2C_122
+  XI2C_122,
+#endif
+
+#ifdef XI2C_123
+  XI2C_123,
+#endif
+
+#ifdef XI2C_124
+  XI2C_124,
+#endif
+
+#ifdef XI2C_125
+  XI2C_125,
+#endif
+
+#ifdef XI2C_126
+  XI2C_126,
+#endif
+
+#ifdef XI2C_127
+  XI2C_127,
+#endif
+
+#ifdef XI2C_128
+  XI2C_128,
+#endif
+
+#ifdef XI2C_129
+  XI2C_129,
+#endif
+
+#ifdef XI2C_130
+  XI2C_130,
+#endif
+
+#ifdef XI2C_131
+  XI2C_131,
+#endif
+
+#ifdef XI2C_132
+  XI2C_132,
+#endif
+
+#ifdef XI2C_133
+  XI2C_133,
+#endif
+
+#ifdef XI2C_134
+  XI2C_134,
+#endif
+
+#ifdef XI2C_135
+  XI2C_135,
+#endif
+
+#ifdef XI2C_136
+  XI2C_136,
+#endif
+
+#ifdef XI2C_137
+  XI2C_137,
+#endif
+
+#ifdef XI2C_138
+  XI2C_138,
+#endif
+
+#ifdef XI2C_139
+  XI2C_139,
+#endif
+
+#ifdef XI2C_140
+  XI2C_140,
+#endif
+
+#ifdef XI2C_141
+  XI2C_141,
+#endif
+
+#ifdef XI2C_142
+  XI2C_142,
+#endif
+
+#ifdef XI2C_143
+  XI2C_143,
+#endif
+
+#ifdef XI2C_144
+  XI2C_144,
+#endif
+
+#ifdef XI2C_145
+  XI2C_145,
+#endif
+
+#ifdef XI2C_146
+  XI2C_146,
+#endif
+
+#ifdef XI2C_147
+  XI2C_147,
+#endif
+
+#ifdef XI2C_148
+  XI2C_148,
+#endif
+
+#ifdef XI2C_149
+  XI2C_149,
+#endif
+
+#ifdef XI2C_150
+  XI2C_150,
+#endif
+
+#ifdef XI2C_151
+  XI2C_151,
+#endif
+
+#ifdef XI2C_152
+  XI2C_152,
+#endif
+
+#ifdef XI2C_153
+  XI2C_153,
+#endif
+
+#ifdef XI2C_154
+  XI2C_154,
+#endif
+
+#ifdef XI2C_155
+  XI2C_155,
+#endif
+
+#ifdef XI2C_156
+  XI2C_156,
+#endif
+
+#ifdef XI2C_157
+  XI2C_157,
+#endif
+
+#ifdef XI2C_158
+  XI2C_158,
+#endif
+
+#ifdef XI2C_159
+  XI2C_159
+#endif
+
 };
 
 /*********************************************************************************************/
 
 bool I2cEnabled(uint32_t i2c_index) {
+  bool state;
+  if (i2c_index < 96) {
+    state = bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32);
+  } else {
+    state = bitRead(Settings->i2c_drivers2[(i2c_index / 32) -3], i2c_index % 32);
+  }
   return ((TasmotaGlobal.i2c_enabled[0]
 #ifdef USE_I2C_BUS2
    || TasmotaGlobal.i2c_enabled[1]
 #endif
-   ) && bitRead(Settings->i2c_drivers[i2c_index / 32], i2c_index % 32));
+   ) && state);
 }
 
 void I2cDriverState(void) {
@@ -430,7 +689,11 @@ void I2cDriverState(void) {
 #endif
     bool disabled = false;
     if (i2c_driver_id < MAX_I2C_DRIVERS) {
-      disabled = !bitRead(Settings->i2c_drivers[i2c_driver_id / 32], i2c_driver_id % 32);
+      if (i2c_driver_id < 96) {
+        disabled = !bitRead(Settings->i2c_drivers[i2c_driver_id / 32], i2c_driver_id % 32);
+      } else {
+        disabled = !bitRead(Settings->i2c_drivers2[(i2c_driver_id / 32) -3], i2c_driver_id % 32);
+      }
     }
     ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (disabled) ? "!" : "", i2c_driver_id);
   }

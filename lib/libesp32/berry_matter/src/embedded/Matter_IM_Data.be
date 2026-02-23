@@ -566,7 +566,7 @@ class Matter_IM_Message_base : Matter_IM_base
   var InteractionModelRevision              # 0xFF
 
   def init()
-    self.InteractionModelRevision = 11    # 11 = Matter 1.2+ Interaction Model revision
+    self.InteractionModelRevision = 12    # 12 = Matter 1.4+ Interaction Model revision
   end
 end
 
@@ -767,7 +767,7 @@ class Matter_InvokeRequestMessage_solo : Matter_Path
     # check TimedRequest (optional)
     val = raw.get(idx, -2)
     if   val == 0x2801 || val == 0x2901
-      self.SuppressResponse = (val == 0x2901)
+      self.TimedRequest = (val == 0x2901)
       idx += 2
     end
     # start of CommandDataIB
@@ -811,7 +811,10 @@ class Matter_InvokeRequestMessage_solo : Matter_Path
     # close
     if raw.get(idx, -2) != 0x1818     return nil end
     idx += 2
-    if raw.get(idx, -4) != 0x24FF0118 return nil end
+    # skip 24FFxx (InteractionModelRevision, any value)
+    if raw.get(idx, -2) == 0x24FF     idx += 3    end
+    # expect 18
+    if raw.get(idx, 1) != 0x18       return nil end
 
     # all good
     return self

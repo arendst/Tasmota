@@ -55,6 +55,7 @@ SOFTWARE.
 // Advanced features Chapter 3.9
 #define COMMAND_SCD40_PERSIST_SETTINGS                       0x3615
 #define COMMAND_SCD40_GET_SERIAL_NUMBER                      0x3682
+#define COMMAND_SCD40_GET_SENSOR_VARIANT                     0x202f
 #define COMMAND_SCD40_PERFORM_SELF_TEST                      0x3639
 #define COMMAND_SCD40_PERFORM_FACTORY_RESET                  0x3632
 #define COMMAND_SCD40_REINIT                                 0x3646
@@ -730,6 +731,14 @@ int FrogmoreScd40::getSerialNumber(uint16_t *pSerialNumberArray)
     uint16_t value;
     int error = readRegisterCnt(COMMAND_SCD40_GET_SERIAL_NUMBER, pSerialNumberArray, 3);
     return (error);
+}
+
+int FrogmoreScd40::getSensorVariant(uint16_t *pSensorVariant)
+{
+    if (duringMeasurement) {
+         return (ERROR_SCD40_BUSY_MEASURING);
+    }
+    return (readRegister(COMMAND_SCD40_GET_SENSOR_VARIANT, pSensorVariant));
 }
 
 int FrogmoreScd40::performSelfTest(uint16_t *pMalfunction)

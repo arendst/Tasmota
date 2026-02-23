@@ -26,36 +26,6 @@
 #include "be_mapping.h"
 #include <stdio.h>
 
-// Matter logo
-static const uint8_t MATTER_LOGO[] = 
-  "<svg style='vertical-align:middle;' width='24' height='24' xmlns='http://www.w3.org/2000/svg' viewBox='100 100 240 240'>"
-  "<defs><style>.cls-1{fill:none}.cls-2{fill:#FFFFFF;}</style></defs><rect class='cls-1' "
-  "width='420' height='420'/><path class='cls-2' d='"
-  "M167,156.88a71,71,0,0,0,32.1,14.73v-62.8l12.79-7.38,12.78,7.38v62.8a71.09,71.09,0,0,0,32.11-14.73"
-  "L280,170.31a96.92,96.92,0,0,1-136.33,0Zm28.22,160.37A96.92,96.92,0,0,0,127,199.19v26.87a71.06,"
-  "71.06,0,0,1,28.82,20.43l-54.39,31.4v14.77L114.22,300l54.38-31.4a71,71,0,0,1,3.29,35.17Zm101.5-"
-  "118.06a96.93,96.93,0,0,0-68.16,118.06l23.27-13.44a71.1,71.1,0,0,1,3.29-35.17L309.46,300l12.78-"
-  "7.38V277.89l-54.39-31.4a71.13,71.13,0,0,1,28.82-20.43Z'/></svg>";
-
-// Matter stylesheet
-static const uint8_t MATTER_STYLESHEET[] = 
-  "<style>"
-  ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
-  ".ztdm td:not(:first-child){width:20px;font-size:70%}"
-  ".ztdm td:last-child{width:45px}"
-  ".ztdm .bt{margin-right:10px;}"
-  ".htrm{line-height:20px}"
-  "</style>";
-
-static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
-  "<script type='text/javascript'>"
-  "function otm(arg_name,val){"
-  "var s=eb(arg_name);"
-  "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
-  "s.title=s.placeholder;"
-  "};"
-  "</script>";
-
 extern uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bbool days);
 
 char* matter_seconds_to_dhm(int32_t seconds) {
@@ -211,6 +181,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Path_0.h"
 #include "solidify/solidified_Matter_Path_1_PathGenerator.h"
 #include "solidify/solidified_Matter_Path_1_EventGenerator.h"
+#include "solidify/solidified_Matter_Certs.h"
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
@@ -237,8 +208,6 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Profiler.h"
-
-#include "../generate/be_matter_certs.h"
 
 #include "solidify/solidified_Matter_Plugin_1_Root.h"
 #include "solidify/solidified_Matter_Plugin_1_Aggregator.h"
@@ -306,34 +275,11 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_z_All.h"
 #include "solidify/solidified_Matter_zz_Device.h"
 
-/*********************************************************************************************\
- * Get a bytes() object of the certificate DAC/PAI_Cert
-\*********************************************************************************************/
-static int matter_return_static_bytes(bvm *vm, const uint8* addr, size_t len) {
-  be_getbuiltin(vm, "bytes");
-  be_pushcomptr(vm, addr);
-  be_pushint(vm, - len);
-  be_call(vm, 2);
-  be_pop(vm, 2);
-  be_return(vm);
-}
-static int matter_PAI_Cert_FFF1(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentPAI_Cert_FFF1, sizeof(kDevelopmentPAI_Cert_FFF1)); }
-static int matter_PAI_Pub_FFF1(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentPAI_PublicKey_FFF1, sizeof(kDevelopmentPAI_PublicKey_FFF1)); }
-static int matter_PAI_Priv_FFF1(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentPAI_PrivateKey_FFF1, sizeof(kDevelopmentPAI_PrivateKey_FFF1)); }
-static int matter_DAC_Cert_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentDAC_Cert_FFF1_8000, sizeof(kDevelopmentDAC_Cert_FFF1_8000)); }
-static int matter_DAC_Pub_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentDAC_PublicKey_FFF1_8000, sizeof(kDevelopmentDAC_PublicKey_FFF1_8000)); }
-static int matter_DAC_Priv_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentDAC_PrivateKey_FFF1_8000, sizeof(kDevelopmentDAC_PrivateKey_FFF1_8000)); }
-static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kCdForAllExamples, sizeof(kCdForAllExamples)); }
-
-
 #include "be_fixed_matter.h"
 
 /* @const_object_info_begin
 
 module matter (scope: global, strings: weak) {
-  _LOGO, comptr(MATTER_LOGO)
-  _STYLESHEET, comptr(MATTER_STYLESHEET)
-  _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
   MATTER_OPTION, int(151)       // SetOption151 enables Matter
   AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
   START_ENDPOINT, int(0x0002)         // endpoint where to start devices
@@ -494,13 +440,7 @@ module matter (scope: global, strings: weak) {
   Device, class(be_class_Matter_Device)
 
   // credentials from example
-  PAI_Cert_FFF1, func(matter_PAI_Cert_FFF1)
-  PAI_Pub_FFF1, func(matter_PAI_Pub_FFF1)
-  PAI_Priv_FFF1, func(matter_PAI_Priv_FFF1)
-  DAC_Cert_FFF1_8000, func(matter_DAC_Cert_FFF1_8000)
-  DAC_Pub_FFF1_8000, func(matter_DAC_Pub_FFF1_8000)
-  DAC_Priv_FFF1_8000, func(matter_DAC_Priv_FFF1_8000)
-  CD_FFF1_8000, func(matter_CD_FFF1_8000)               // Certification Declaration
+  Certs, class(be_class_Matter_Certs)
 
   // Plugins - only the core classes, all others are taken from `matter_device.plugins_classes`
   Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices

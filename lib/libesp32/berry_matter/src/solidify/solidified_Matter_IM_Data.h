@@ -185,7 +185,7 @@ be_local_closure(class_Matter_IM_Message_base_init,   /* name */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x5406000A,  //  0000  LDINT	R1	11
+      0x5406000B,  //  0000  LDINT	R1	12
       0x90020001,  //  0001  SETMBR	R0	K0	R1
       0x80000000,  //  0002  RET	0
     })
@@ -3286,8 +3286,8 @@ be_local_class(Matter_InvokeRequestMessage,
     })),
     be_str_weak(Matter_InvokeRequestMessage)
 );
-// compact class 'Matter_InvokeRequestMessage_solo' ktab size: 17, total: 20 (saved 24 bytes)
-static const bvalue be_ktab_class_Matter_InvokeRequestMessage_solo[17] = {
+// compact class 'Matter_InvokeRequestMessage_solo' ktab size: 16, total: 20 (saved 32 bytes)
+static const bvalue be_ktab_class_Matter_InvokeRequestMessage_solo[16] = {
   /* K0   */  be_nested_str_weak(reset),
   /* K1   */  be_nested_str_weak(SuppressResponse),
   /* K2   */  be_nested_str_weak(TimedRequest),
@@ -3304,7 +3304,6 @@ static const bvalue be_ktab_class_Matter_InvokeRequestMessage_solo[17] = {
   /* K13  */  be_nested_str_weak(TLV),
   /* K14  */  be_nested_str_weak(parse),
   /* K15  */  be_nested_str_weak(next_idx),
-  /* K16  */  be_const_int(620691736),
 };
 
 
@@ -3359,7 +3358,7 @@ be_local_closure(class_Matter_InvokeRequestMessage_solo_from_raw,   /* name */
     &be_ktab_class_Matter_InvokeRequestMessage_solo,     /* shared constants */
     be_str_weak(from_raw),
     &be_const_str_solidified,
-    ( &(const binstruction[170]) {  /* code */
+    ( &(const binstruction[179]) {  /* code */
       0x8C0C0100,  //  0000  GETMET	R3	R0	K0
       0x7C0C0200,  //  0001  CALL	R3	1
       0x600C000C,  //  0002  GETGBL	R3	G12
@@ -3404,7 +3403,7 @@ be_local_closure(class_Matter_InvokeRequestMessage_solo_from_raw,   /* name */
       0x78160003,  //  0029  JMPF	R5	#002E
       0x54162900,  //  002A  LDINT	R5	10497
       0x1C140805,  //  002B  EQ	R5	R4	R5
-      0x90020205,  //  002C  SETMBR	R0	K1	R5
+      0x90020405,  //  002C  SETMBR	R0	K2	R5
       0x00080506,  //  002D  ADD	R2	R2	K6
       0x8C140304,  //  002E  GETMET	R5	R1	K4
       0x5C1C0400,  //  002F  MOVE	R7	R2
@@ -3523,13 +3522,22 @@ be_local_closure(class_Matter_InvokeRequestMessage_solo_from_raw,   /* name */
       0x00080506,  //  00A0  ADD	R2	R2	K6
       0x8C140304,  //  00A1  GETMET	R5	R1	K4
       0x5C1C0400,  //  00A2  MOVE	R7	R2
-      0x5421FFFB,  //  00A3  LDINT	R8	-4
+      0x5421FFFD,  //  00A3  LDINT	R8	-2
       0x7C140600,  //  00A4  CALL	R5	3
-      0x20140B10,  //  00A5  NE	R5	R5	K16
-      0x78160001,  //  00A6  JMPF	R5	#00A9
-      0x4C140000,  //  00A7  LDNIL	R5
-      0x80040A00,  //  00A8  RET	1	R5
-      0x80040000,  //  00A9  RET	1	R0
+      0x541A24FE,  //  00A5  LDINT	R6	9471
+      0x1C140A06,  //  00A6  EQ	R5	R5	R6
+      0x78160000,  //  00A7  JMPF	R5	#00A9
+      0x00080507,  //  00A8  ADD	R2	R2	K7
+      0x8C140304,  //  00A9  GETMET	R5	R1	K4
+      0x5C1C0400,  //  00AA  MOVE	R7	R2
+      0x58200005,  //  00AB  LDCONST	R8	K5
+      0x7C140600,  //  00AC  CALL	R5	3
+      0x541A0017,  //  00AD  LDINT	R6	24
+      0x20140A06,  //  00AE  NE	R5	R5	R6
+      0x78160001,  //  00AF  JMPF	R5	#00B2
+      0x4C140000,  //  00B0  LDNIL	R5
+      0x80040A00,  //  00B1  RET	1	R5
+      0x80040000,  //  00B2  RET	1	R0
     })
   )
 );

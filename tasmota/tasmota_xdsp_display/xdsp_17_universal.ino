@@ -560,6 +560,7 @@ void UDISP_PrintLog(void) {
     for (byte i = 0; i < last_row; i++) {
       strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
       renderer->println(disp_screen_buffer[i]);
+      delay(0);   // Fix MQTT timeout
     }
     strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
     DisplayFillScreen(last_row);

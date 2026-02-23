@@ -1,5 +1,3 @@
-<!-- Downloaded from https://github.com/Sensirion/arduino-core
-on 10/01/2023 at commit bd2d3ce9355a3a1997beeb820e59072ef9430d5e -->
 # Sensirion Arduino Core Library
 
 This library provides SHDLC and I2C protocol implementations for Sensirion

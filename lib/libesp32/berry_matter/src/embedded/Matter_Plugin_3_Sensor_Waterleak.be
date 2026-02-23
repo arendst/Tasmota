@@ -112,7 +112,6 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Sensor_Boolean
   static var DISPLAY_NAME = "Waterleak"             # display name of the plug-in
   # static var ARG  = "switch"                        # additional argument name (or empty if none)
   # static var ARG_HINT = "Switch<x> number"
-  # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 750                      # update every 750ms
   static var JSON_NAME = "Waterleak"                # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Waterleak")

@@ -33,8 +33,6 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SUNRISE               | x     | x / x | x     | x     | x     | x     |
 | USE_RULES                 | x     | x / x | x     | x     | x     | x     |
 | USE_SCRIPT                | -     | - / - | -     | -     | -     | -     |
-| USE_EXPRESSION            | -     | x / x | -     | -     | -     | -     |
-| SUPPORT_IF_STATEMENT      | -     | x / x | -     | -     | -     | -     |
 | USE_HOTPLUG               | -     | - / - | -     | -     | -     | -     |
 | USE_INFLUXDB              | -     | - / x | -     | -     | -     | -     |
 | USE_PROMETHEUS            | -     | - / - | -     | -     | -     | -     |
@@ -114,6 +112,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | -USE_PCF85063             | -     | - / - | -     | -     | -     | -     |
 | -USE_PCF85363             | -     | - / - | -     | -     | -     | -     |
 | -USE_RX8010               | -     | - / - | -     | -     | -     | -     |
+| -USE_RX8025               | -     | - / - | -     | -     | -     | -     |
 | -USE_RX8030               | -     | - / - | -     | -     | -     | -     |
 | USE_SHT                   | -     | - / x | -     | x     | -     | -     |
 | USE_HTU                   | -     | - / x | -     | x     | -     | -     |
@@ -136,6 +135,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SGP40                 | -     | - / x | -     | x     | -     | -     |
 | USE_SGP4X                 | -     | - / x | -     | -     | -     | -     |
 | USE_SEN5X                 | -     | - / x | -     | x     | -     | -     |
+| USE_SEN6X                 | -     | - / x | -     | -     | -     | -     |
 | USE_SI1145                | -     | - / - | -     | -     | -     | -     |
 | USE_LM75AD                | -     | - / x | -     | x     | -     | -     |
 | USE_APDS9960              | -     | - / - | -     | -     | -     | -     |

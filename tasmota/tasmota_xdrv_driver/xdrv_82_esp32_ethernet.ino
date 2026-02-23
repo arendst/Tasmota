@@ -239,7 +239,7 @@ void EthernetInit(void) {
 
   if (eth_uses_spi) {
     // Uses SPI Ethernet and needs at least SPI CS being ETH MDC
-    if (!PinUsed(GPIO_ETH_PHY_MDC)) {
+    if (!PinUsed(GPIO_ETH_PHY_MDC, GPIO_ANY)) {
 #ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC as SPI CS GPIO defined"));
 #endif // FIRMWARE_MINIMAL
@@ -247,7 +247,7 @@ void EthernetInit(void) {
     }
   } else {
     // Native ESP32
-    if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
+    if (!PinUsed(GPIO_ETH_PHY_MDC, GPIO_ANY) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
 #ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
 #endif // FIRMWARE_MINIMAL
@@ -262,9 +262,10 @@ void EthernetInit(void) {
 
   WiFi.onEvent(EthernetEvent);
 
-  int eth_mdc = Pin(GPIO_ETH_PHY_MDC);       // Ethernet SPI CS (chip select)
-  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);     // Ethernet SPI IRQ
-  int eth_power = Pin(GPIO_ETH_PHY_POWER);   // Ethernet SPI RST
+  int eth_mdc = Pin(GPIO_ETH_PHY_MDC, GPIO_ANY);  // Ethernet SPI CS (chip select)
+  uint32_t spi_bus = GetPin(eth_mdc) - AGPIO(GPIO_ETH_PHY_MDC); // 0 or 1
+  int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);          // Ethernet SPI IRQ
+  int eth_power = Pin(GPIO_ETH_PHY_POWER);        // Ethernet SPI RST
 
 #ifdef USE_IPV6
   ETH.enableIPv6();   // enable Link-Local
@@ -273,17 +274,41 @@ void EthernetInit(void) {
   bool init_ok = false;
   if (!eth_uses_spi) {
 #if CONFIG_ETH_USE_ESP32_EMAC
-    #ifdef CONFIG_IDF_TARGET_ESP32P4
-        init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, EMAC_CLK_EXT_IN));
-    #else
-        init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
-    #endif //CONFIG_IDF_TARGET_ESP32P4
+#ifndef FIRMWARE_MINIMAL
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "Ethernet using RMII"));
+#endif // FIRMWARE_MINIMAL
+#ifdef CONFIG_IDF_TARGET_ESP32P4
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, EMAC_CLK_EXT_IN));
+#else
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+#endif //CONFIG_IDF_TARGET_ESP32P4
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
   } else {
-    // ETH_SPI_SUPPORTS_CUSTOM
-    // SPISettings(ETH_PHY_SPI_FREQ_MHZ * 1000 * 1000, MSBFIRST, SPI_MODE0);  // 20MHz
-    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
-    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
+#if CONFIG_SOC_SPI_PERIPH_NUM > 2 
+    if ((1 == spi_bus) && (SPI_MOSI_MISO != TasmotaGlobal.spi_enabled2)) {
+#ifndef FIRMWARE_MINIMAL
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No SPI bus2 GPIO defined"));
+#endif // FIRMWARE_MINIMAL
+      return;
+    } else
+#endif  // CONFIG_SOC_SPI_PERIPH_NUM > 2
+    if (SPI_MOSI_MISO != TasmotaGlobal.spi_enabled) {
+#ifndef FIRMWARE_MINIMAL
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No SPI bus1 GPIO defined"));
+#endif // FIRMWARE_MINIMAL
+      return;
+    }
+#ifndef FIRMWARE_MINIMAL
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "Ethernet using SPI (bus%d)"), spi_bus +1);
+#endif // FIRMWARE_MINIMAL
+    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address,
+                         eth_mdc, eth_mdio, eth_power,
+#if CONFIG_SOC_SPI_PERIPH_NUM > 2 
+                         (1 == spi_bus) ? SPI3_HOST : SPI2_HOST,
+#else
+                         SPI2_HOST,
+#endif
+                         Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus)));
   }
   if (!init_ok) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType %i or init error"),eth_type);

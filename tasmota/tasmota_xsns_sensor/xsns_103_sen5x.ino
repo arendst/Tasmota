@@ -51,57 +51,39 @@ struct SEN5XDATA_s {
 
 /********************************************************************************************/
 
-void sen5x_Init(void) {
-  int usingI2cBus = 0;
-#ifdef ESP32
-  if (!I2cSetDevice(SEN5X_ADDRESS, 0)) {
-    DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 0"));
-    if (TasmotaGlobal.i2c_enabled[1] ) {
-      if(!I2cSetDevice(SEN5X_ADDRESS, 1)) {
-        DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 1"));
-        return;
-      }
-      usingI2cBus = 1;
-    } else {
-      return;
-    }
+bool Sen5xError(const char* func, int error) {
+  bool result = (error != 0);
+  if (result) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("S5X: %s error %d"), func, error);
   }
-#else
-  if (!I2cSetDevice(SEN5X_ADDRESS)) {
-    DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 0"));
+  return result;
+}
+
+/********************************************************************************************/
+
+void sen5x_Init(void) {
+  PowerOnDelay(60);  // Sensor startup time (Time after power-on until I2C communication can be started)
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    if (!I2cSetDevice(SEN5X_ADDRESS, bus)) { 
+      continue;
+    }
+    sen5x = new SensirionI2CSen5x();
+    sen5x->begin(I2cGetWire(bus));
+
+    if (!Settings->flag6.sen5x_passive_mode) {  // SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
+      if (Sen5xError("Reset", sen5x->deviceReset())) {   // Performs delay(200) if no error
+        continue;
+      }
+      delay(1100);                              // Wait 1 second for sensors to start recording + 100ms for reset command
+      if (Sen5xError("Measurement", sen5x->startMeasurement())) {
+        continue;
+      }
+    }
+
+    SEN5XDATA = (SEN5XDATA_s *)calloc(1, sizeof(struct SEN5XDATA_s));
+    I2cSetActiveFound(SEN5X_ADDRESS, "SEN5X", bus);
     return;
   }
-#endif
-
-  sen5x = new SensirionI2CSen5x();
-  if (1 == usingI2cBus) {
-#if defined(ESP32) && defined(USE_I2C_BUS2)
-    sen5x->begin(Wire1);
-#else
-    sen5x->begin(Wire);
-#endif
-  }
-  else {
-    sen5x->begin(Wire);
-  }
-  
-  if (!Settings->flag6.sen5x_passive_mode) {
-    int error_stop = sen5x->deviceReset();
-    if (error_stop != 0) {
-      DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to reset device (I2C Bus %d)"), usingI2cBus);
-      return;
-    }
-    // Wait 1 second for sensors to start recording + 100ms for reset command
-    delay(1100);
-    int error_start = sen5x->startMeasurement();
-    if (error_start != 0) {
-      DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X failed to start measurement (I2C Bus %d)"), usingI2cBus);
-      return;
-    }
-  }
-
-  SEN5XDATA = (SEN5XDATA_s *)calloc(1, sizeof(struct SEN5XDATA_s));
-  I2cSetActiveFound(SEN5X_ADDRESS, "SEN5X", usingI2cBus);
 }
 
 void SEN5XUpdate(void) {  // Perform every second to ensure proper operation of the baseline compensation algorithm
@@ -189,10 +171,10 @@ void SEN5XShow(bool json) {
     WSContentSend_PD(HTTP_SNS_F_ENVIRONMENTAL_CONCENTRATION, types, "4", &SEN5XDATA->massConcentrationPm4p0);
     WSContentSend_PD(HTTP_SNS_F_ENVIRONMENTAL_CONCENTRATION, types, "10", &SEN5XDATA->massConcentrationPm10p0);
     if (!isnan(SEN5XDATA->noxIndex)) {
-      WSContentSend_PD(HTTP_SNS_F_NOX, types, 0, &SEN5XDATA->noxIndex);
+      WSContentSend_PD(HTTP_SNS_F_NOX, types, &SEN5XDATA->noxIndex);
     }
     if (!isnan(SEN5XDATA->vocIndex)) {
-      WSContentSend_PD(HTTP_SNS_F_VOC, types, 0, &SEN5XDATA->vocIndex);
+      WSContentSend_PD(HTTP_SNS_F_VOC, types, &SEN5XDATA->vocIndex);
     }
     if (ahum_available) {
       WSContentSend_THD(types, temperature, humidity);
@@ -217,7 +199,7 @@ bool Xsns103(uint32_t function) {
   else if (SEN5XDATA != nullptr) {
     switch (function) {
     case FUNC_EVERY_SECOND:
-      if (Settings->flag6.sen5x_passive_mode) {
+      if (Settings->flag6.sen5x_passive_mode) {  // SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
         if (TasmotaGlobal.uptime % SEN5X_PASSIVE_MODE_INTERVAL == 0) {
           SEN5XUpdate();
         }

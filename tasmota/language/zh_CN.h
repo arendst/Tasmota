@@ -118,6 +118,7 @@
 #define D_GATEWAY "网关"
 #define D_GROUP "组:"
 #define D_HALL_EFFECT "Hall Effect"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
 #define D_HOST "主机"
 #define D_HOSTNAME "主机名"

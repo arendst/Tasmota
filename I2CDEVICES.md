@@ -100,7 +100,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   59  | USE_BM8563          | xdrv_56  | BM8563   | 0x51        | Yes  | BM8563 RTC from M5Stack
   60  | USE_AM2320          | xsns_88  | AM2320   | 0x5C        |      | Temperature and Humidity sensor
   61  | USE_T67XX           | xsns_89  | T67XX    | 0x15        |      | CO2 sensor
-  62  | USE_SCD40           | xsns_92  | SCD40    | 0x62        |      | CO2 sensor Sensirion SCD40/SCD41
+  62  | USE_SCD40           | xsns_92  | SCD40    | 0x62        | Yes  | CO2 sensor Sensirion SCD4x
   63  | USE_HM330X          | xsns_93  | HM330X   | 0x40        |      | Particule sensor
   64  | USE_HDC2010         | xsns_94  | HDC2010  | 0x40        |      | Temperature and Humidity sensor
   65  | USE_ADE7880         | xnrg_23  | ADE7880  | 0x38        |      | Energy monitor
@@ -136,5 +136,8 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   93  | USE_AS33772S        | xdrv_119 | AS33772S  | 0x52       | Yes  | AS33772S USB PD Sink Controller
   94  | USE_RV3028          | xdrv_56  | RV3028    | 0x52       | Yes  | RV-3028-C7 RTC Controller
   95  | USE_AGS02MA         | xsns_118 | AGS02MA   | 0x1A       |      | TVOC Gas sensor
-
+  96  | USE_RX8025          | xdrv_56  | RX8025    | 0x32       | Yes  | RX8025 RTC
+  97  | USE_SEN6X           | xsns_119 | SEN6X     | 0x6B       | Yes  | Gas (CO2/VOC/NOx index) and air quality (PPM <1,<2.5,<4,<10)
+  98  | USE_FM24CXX         | xdrv_93  | FM24CXX   | 0x50 - 0x57| Yes  | FM24CXX - External FRAM with console / berry R/W operations
+  
   NOTE: Bus2 supported on ESP32 only.

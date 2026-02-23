@@ -99,6 +99,8 @@ enum SCD40_Commands {         // commands useable in console or rules
 
 FrogmoreScd40 scd40;
 
+const char mScd40Names[] PROGMEM = "SCD40|SCD41|SCD42|||SCD43";
+
 bool scd40Found = false;
 bool scd40IsDataValid = false;
 int scd40ErrorState = SCD40_STATE_NO_ERROR;
@@ -112,42 +114,56 @@ uint16_t scd40_CO2 = 0;
 uint16_t scd40_CO2EAvg = 0;
 float scd40_Humid = 0.0;
 float scd40_Temp = 0.0;
+char scd40_name[8];
 
-void Scd40Detect(void)
-{
-  if (!I2cSetDevice(SCD40_ADDRESS)) { return; }
+/********************************************************************************************/
 
-  scd40.begin(&I2cGetWire());
+bool Scd40Error(const char* func, int error) {
+  bool result = (error != 0);
+  if (result) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: %s error %d"), func, error);
+  }
+  return result;
+}
 
-  // don't stop in case of error, try to continue
-  delay(10); // not sure whether this is needed
-  int error = scd40.forceStopPeriodicMeasurement();  // after reboot, stop (if any) periodic measurement, or reinit may not work
-#ifdef SCD40_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD40 force-stop error: %d"), error);
-#endif
-  delay(550); // wait >500ms after stopPeriodicMeasurement before SCD40 allows any other command
+/********************************************************************************************/
 
-  error = scd40.reinit(); // just in case
-#ifdef SCD40_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD40 reinit error: %d"), error);
-#endif
-  delay(20); // not sure whether this is needed
+void Scd40Detect(void) {
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    if (!I2cSetDevice(SCD40_ADDRESS, bus)) { continue; }
+    scd40.begin(&I2cGetWire(bus));
 
-  uint16_t sn[3];
-  error = scd40.getSerialNumber(sn);
-  AddLog(LOG_LEVEL_INFO, PSTR("SCD40 serial nr 0x%X 0x%X 0x%X") ,sn[0], sn[1], sn[2]);
+    // don't stop in case of error, try to continue
+    delay(10); // not sure whether this is needed
+    Scd40Error("ForceStop", scd40.forceStopPeriodicMeasurement());  // After reboot, stop (if any) periodic measurement, or reinit may not work
+    delay(550); // wait >500ms after stopPeriodicMeasurement before SCD40 allows any other command
+    Scd40Error("Reinit", scd40.reinit()); // just in case
+    delay(20); // not sure whether this is needed
 
-  //  by default, start measurements, only register device if this succeeds
+    uint16_t sn[3];
+    if (Scd40Error("Serialnumber", scd40.getSerialNumber(sn))) { continue; }
+    uint64_t serial_number = sn[0] << 16 | sn[1] << 8 | sn[2];
+    uint16_t sv;
+    if (scd40.getSensorVariant(&sv)) { 
+      sv = 0;
+    }
+
+    //  by default, start measurements, only register device if this succeeds
 #ifdef USE_SCD40_LOWPOWER
-  if (scd40.startLowPowerPeriodicMeasurement()) { return; }
+    if (Scd40Error("LowPowerMeasurement", scd40.startLowPowerPeriodicMeasurement())) { continue; }
 #else
-  if (scd40.startPeriodicMeasurement()) { return; }
+    if (Scd40Error("Measurement", scd40.startPeriodicMeasurement())) { continue; }
 #endif
-  I2cSetActiveFound(SCD40_ADDRESS, "SCD40");
-  scd40Found = true;
-#ifdef SCD40_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD40 found, measurements started."));
-#endif
+
+    sv >>= 12;
+    GetTextIndexed(scd40_name, sizeof(scd40_name), sv, mScd40Names);
+
+    I2cSetActiveFound(SCD40_ADDRESS, scd40_name, bus);
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: %s serialnumber %_U"), scd40_name, &serial_number);
+    scd40Found = true;
+    return;
+  }
 }
 
 // gets data from the sensor
@@ -173,13 +189,13 @@ void Scd40Update(void)
 
         case ERROR_SCD40_NO_DATA:
           scd40DataNotAvailable_count++;
-          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SCD40: no data available."));
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SCD: No data available."));
           break;
 
         case ERROR_SCD40_CRC_ERROR:
           scd40CrcError_count++;
 #ifdef SCD40_DEBUG
-          AddLog(LOG_LEVEL_INFO, PSTR("SCD40: CRC error, CRC error: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
+          AddLog(LOG_LEVEL_INFO, PSTR("SCD: CRC error, CRC error: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
             scd40CrcError_count, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
 #endif
           break;
@@ -187,7 +203,7 @@ void Scd40Update(void)
         default: {
           scd40ErrorState = SCD40_STATE_ERROR_READ_MEAS;
 #ifdef SCD40_DEBUG
-          AddLog(LOG_LEVEL_INFO, PSTR("SCD40: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd40Loop_count);
+          AddLog(LOG_LEVEL_INFO, PSTR("SCD: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd40Loop_count);
 #endif
           return;
         }
@@ -198,22 +214,22 @@ void Scd40Update(void)
 
     case SCD40_STATE_ERROR_READ_MEAS: {
 #ifdef SCD40_DEBUG
-      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: (rd) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD: (rd) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
         scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
-      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: not answering, sending soft reset, counter: %ld"), scd40Loop_count);
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD: Not answering, sending soft reset, counter: %ld"), scd40Loop_count);
 #endif
       scd40Reset_count++;
       error = scd40.stopPeriodicMeasurement();
       if (error) {
         scd40ErrorState = SCD40_STATE_ERROR_SOFT_RESET;
 #ifdef SCD40_DEBUG
-        AddLog(LOG_LEVEL_INFO, PSTR("SCD40: stopPeriodicMeasurement got error: 0x%lX"), error);
+        AddLog(LOG_LEVEL_INFO, PSTR("SCD: stopPeriodicMeasurement got error: 0x%lX"), error);
 #endif
       } else {
         error = scd40.reinit();
         if (error) {
 #ifdef SCD40_DEBUG
-          AddLog(LOG_LEVEL_INFO, PSTR("SCD40: resetting got error: 0x%lX"), error);
+          AddLog(LOG_LEVEL_INFO, PSTR("SCD: Resetting got error: 0x%lX"), error);
 #endif
           scd40ErrorState = SCD40_STATE_ERROR_SOFT_RESET;
         } else {
@@ -225,16 +241,16 @@ void Scd40Update(void)
 
     case SCD40_STATE_ERROR_SOFT_RESET: {
 #ifdef SCD40_DEBUG
-      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: (rst) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD: (rst) in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
         scd40ErrorState, scd40GoodMeas_count, scd40DataNotAvailable_count, scd40Reset_count, scd40i2cReset_count);
-      AddLog(LOG_LEVEL_INFO, PSTR("SCD40: clearing i2c bus"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SCD: Clearing i2c bus"));
 #endif
       scd40i2cReset_count++;
       error = scd40.clearI2CBus();
       if (error) {
         scd40ErrorState = SCD40_STATE_ERROR_I2C_RESET;
 #ifdef SCD40_DEBUG
-        AddLog(LOG_LEVEL_INFO, PSTR("SCD40: error clearing i2c bus: 0x%lX"), error);
+        AddLog(LOG_LEVEL_INFO, PSTR("SCD: Error clearing i2c bus: 0x%lX"), error);
 #endif
       } else {
         scd40ErrorState = ERROR_SCD40_NO_ERROR;
@@ -249,7 +265,7 @@ void Scd40Update(void)
   }
 
   if (scd40Loop_count > SCD40_MAX_MISSED_READS) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD40: max-missed-reads."));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: Max-missed-reads."));
     scd40IsDataValid = false;
   }
 }
@@ -436,7 +452,7 @@ void Scd40Show(bool json)
     float h = ConvertHumidity(scd40_Humid);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"SCD40\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,"), scd40_CO2, scd40_CO2EAvg);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,"), scd40_name, scd40_CO2, scd40_CO2EAvg);
       ResponseAppendTHD(t, h);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
@@ -447,9 +463,9 @@ void Scd40Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_CO2EAVG, "SCD40", scd40_CO2EAvg);
-      WSContentSend_PD(HTTP_SNS_CO2, "SCD40", scd40_CO2);
-      WSContentSend_THD("SCD40", t, h);
+      WSContentSend_PD(HTTP_SNS_CO2EAVG, scd40_name, scd40_CO2EAvg);
+      WSContentSend_PD(HTTP_SNS_CO2, scd40_name, scd40_CO2);
+      WSContentSend_THD(scd40_name, t, h);
 #endif  // USE_WEBSERVER
     }
   }
