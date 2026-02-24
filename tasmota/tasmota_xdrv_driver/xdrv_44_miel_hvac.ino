@@ -1817,7 +1817,6 @@ bool Xdrv44(uint32_t function)
 		miel_hvac_pre_init();
 		return false;
 	}
-
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	if (sc == NULL)
 		return false;

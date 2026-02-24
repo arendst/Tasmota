@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Sensirion SCD43 CO2 sensor
 - I2S full duplex, auto rx sample rate (#24469)
+- Support for Sensirion STCC4 CO2 sensor
 
 ### Breaking Changed
 
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Matter improved parameters handling (#24471)
 - Sensirion Core library from v0.6.0 to v0.7.2
 - Sen5x power on delay of 60ms (#24452)
+- SHT1x software reset I2C bus after initial (un)detection
 
 ### Fixed
 - Do not free BT memory when in use (#24480)

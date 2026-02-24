@@ -51,6 +51,8 @@
 #define XSNS_119                         119
 #define XI2C_97                          97    // See I2CDEVICES.md
 
+//#define SENSIRION_DEBUG                        // Adds 1k2 to code size
+
 #include <SensirionI2cSen6x.h>
 
 #define SEN6X_STATE_READ_MEASUREMENT     0
@@ -60,7 +62,7 @@
 
 enum eSen6xFeatures { SEN6X_VOCNOX = 1, SEN6X_CO2 = 2, SEN6X_HCHO = 4 };
 
-SensirionI2cSen6x *sen6x = nullptr;
+SensirionI2cSen6x sen6x;
 
 const char mSenNames[] PROGMEM = "SEN62|SEN63C||SEN65|SEN66||SEN68|SEN69C";
 
@@ -123,14 +125,20 @@ uint32_t ParseIntParameters(uint32_t count, int *params) {
 
 void Sen6xStopStartMeasurement(void) {
   // Stop measurement and restart after 1 second
-  sen6x->stopMeasurement();                                      // Performs internal delay(1000)
+  sen6x.stopMeasurement();                            // Performs internal delay(1000)
   SEN6XDATA->state = SEN6X_STATE_START_MEASUREMENT;
 }
 
 bool Sen6xError(const char* func, int error) {
   bool result = (error != 0);
   if (result) {
+#ifdef SENSIRION_DEBUG
+    char error_msg[64];
+    errorToString(error, error_msg, sizeof(error_msg));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("S6X: %s error %d %s"), func, error, error_msg);
+#else
     AddLog(LOG_LEVEL_DEBUG, PSTR("S6X: %s error %d"), func, error);
+#endif
   }
   return result;
 }
@@ -139,7 +147,13 @@ bool CmndSen6xError(int error) {
   bool result = (error != 0);
   if (result) {
     ResponseCmnd();
+#ifdef SENSIRION_DEBUG
+    char error_msg[64];
+    errorToString(error, error_msg, sizeof(error_msg));
+    ResponseAppend_P(PSTR("{\"Error\":\"%d %s\"}"), error, error_msg);
+#else
     ResponseAppend_P(PSTR("{\"Error\":%d}"), error);
+#endif
   }
   return result;
 }
@@ -153,26 +167,25 @@ void Sen6xInit(void) {
 //      Sen6xError("Scan", bus +1);
       continue;
     }
-    sen6x = new SensirionI2cSen6x();
-    sen6x->begin(I2cGetWire(bus), SEN6X_I2C_ADDR_6B);
+    sen6x.begin(I2cGetWire(bus), SEN6X_I2C_ADDR_6B);
 
-    if (Sen6xError("Reset", sen6x->deviceReset())) {   // Performs delay(1200) if no error
+    if (Sen6xError("Reset", sen6x.deviceReset())) {   // Performs delay(1200) if no error
       continue;
     }
 
     uint8_t major;
     uint8_t minor;
-    if (Sen6xError("Version", sen6x->getVersion(major, minor))) {
+    if (Sen6xError("Version", sen6x.getVersion(major, minor))) {
       continue;
     }
 
     int8_t serial_number[32] = { 0 };
-    if (Sen6xError("Serialnumber", sen6x->getSerialNumber(serial_number, sizeof(serial_number)))) {
+    if (Sen6xError("Serialnumber", sen6x.getSerialNumber(serial_number, sizeof(serial_number)))) {
       continue;
     }
 
     int8_t product_name[32] = { 0 };
-    if (Sen6xError("Productname", sen6x->getProductName(product_name, sizeof(product_name)))) {
+    if (Sen6xError("Productname", sen6x.getProductName(product_name, sizeof(product_name)))) {
       continue;
     }
 
@@ -206,7 +219,7 @@ void Sen6xUpdate(void) {
       int16_t temperature;
       int16_t vocIndex;
       int16_t noxIndex;
-      if (!Sen6xError("Measurement", sen6x->readMeasuredValuesAsIntegers(
+      if (!Sen6xError("Measurement", sen6x.readMeasuredValuesAsIntegers(
         SEN6XDATA->model,
         massConcentrationPm1p0, massConcentrationPm2p5,
         massConcentrationPm4p0, massConcentrationPm10p0,
@@ -227,7 +240,7 @@ void Sen6xUpdate(void) {
       }
       break;
     case SEN6X_STATE_START_MEASUREMENT -1:
-      if (Sen6xError("StartContinuous", sen6x->startContinuousMeasurement())) {
+      if (Sen6xError("StartContinuous", sen6x.startContinuousMeasurement())) {
         SEN6XDATA->state = SEN6X_STATE_START_MEASUREMENT +2;
       }
       break;
@@ -253,33 +266,33 @@ void (* const Sen6xCommand[])(void) PROGMEM = {
 
 void CmndSen6xState(void) {
   int8_t productname[32] = { 0 };
-  sen6x->getProductName(productname, sizeof(productname));       // No need to stop
+  sen6x.getProductName(productname, sizeof(productname));       // No need to stop
   int8_t serial_number[32] = { 0 };
-  sen6x->getSerialNumber(serial_number, sizeof(serial_number));  // No need to stop
+  sen6x.getSerialNumber(serial_number, sizeof(serial_number));  // No need to stop
   SEN6XDeviceStatus status;
-  sen6x->readDeviceStatus(status);                               // No need to stop
+  sen6x.readDeviceStatus(status);                               // No need to stop
   Response_P(PSTR("{\"SEN6x\":{\"Name\":\"%s\",\"Serial\":\"%s\",\"Version\":\"%d.%d\",\"Status\":\"%04X\""),
                    productname, serial_number, SEN6XDATA->major, SEN6XDATA->minor, status);
 
   bool stop_measurement = false;
 
   if (SEN6XDATA->features & SEN6X_CO2) {
-    Sen6xStopStartMeasurement();                                 // Stop measurement and restart after 1 second
+    Sen6xStopStartMeasurement();                                // Stop measurement and restart after 1 second
     stop_measurement = true;
     uint16_t pressure;
-    sen6x->getAmbientPressure(pressure);                         // No need to stop
+    sen6x.getAmbientPressure(pressure);                         // No need to stop
     uint16_t altitude;
-    sen6x->getSensorAltitude(altitude);                          // Only in idle mode (stopped measurement)
+    sen6x.getSensorAltitude(altitude);                          // Only in idle mode (stopped measurement)
     uint8_t padding;
     bool calstatus;
-    sen6x->getCo2SensorAutomaticSelfCalibration(padding, calstatus);  // Only in idle mode (stopped measurement)
+    sen6x.getCo2SensorAutomaticSelfCalibration(padding, calstatus);  // Only in idle mode (stopped measurement)
     ResponseAppend_P(PSTR(",\"CO2\":{\"Altitude\":%d,\"Pressure\":%d,\"AutoCal\":%d}"),
                           altitude, pressure, calstatus);
   }
 
   if (SEN6XDATA->features & SEN6X_VOCNOX) {
     if (!stop_measurement) {
-      Sen6xStopStartMeasurement();                               // Stop measurement and restart after 1 second
+      Sen6xStopStartMeasurement();                              // Stop measurement and restart after 1 second
       stop_measurement = true;
     }
     int16_t voc_io;
@@ -288,7 +301,7 @@ void CmndSen6xState(void) {
     int16_t voc_gmdm;
     int16_t voc_si;
     int16_t voc_gf;
-    sen6x->getVocAlgorithmTuningParameters(voc_io, voc_ltoh, voc_ltgh, voc_gmdm, voc_si, voc_gf);  // Only in idle mode (stopped measurement)
+    sen6x.getVocAlgorithmTuningParameters(voc_io, voc_ltoh, voc_ltgh, voc_gmdm, voc_si, voc_gf);  // Only in idle mode (stopped measurement)
     ResponseAppend_P(PSTR(",\"VOC\":{\"IdxOffset\":%d,\"LearningTime\":{\"Offset\":%d,\"Gain\":%d},\"GatingMaxDur\":%d,\"StdInit\":%d,\"GainFctr\":%d}"),
                           voc_io, voc_ltoh, voc_ltgh, voc_gmdm, voc_si, voc_gf);
     int16_t nox_io;
@@ -297,7 +310,7 @@ void CmndSen6xState(void) {
     int16_t nox_gmdm;
     int16_t nox_si;
     int16_t nox_gf;
-    sen6x->getNoxAlgorithmTuningParameters(nox_io, nox_ltoh, nox_ltgh, nox_gmdm, nox_si, nox_gf);  // Only in idle mode (stopped measurement)
+    sen6x.getNoxAlgorithmTuningParameters(nox_io, nox_ltoh, nox_ltgh, nox_gmdm, nox_si, nox_gf);  // Only in idle mode (stopped measurement)
     ResponseAppend_P(PSTR(",\"NOx\":{\"IdxOffset\":%d,\"LearningTimeOffset\":%d,\"GatingMaxDur\":%d,\"GainFctr\":%d}"),
                           nox_io, nox_ltoh, nox_gmdm, nox_gf);
   }
@@ -310,7 +323,7 @@ void CmndSen6xAltitude(void) {
   if (SEN6XDATA->features & SEN6X_CO2) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3000)) {
       Sen6xStopStartMeasurement();
-      if (CmndSen6xError(sen6x->setSensorAltitude(XdrvMailbox.payload))) {
+      if (CmndSen6xError(sen6x.setSensorAltitude(XdrvMailbox.payload))) {
         return;
       }
     }
@@ -324,7 +337,7 @@ void CmndSen6xPressure(void) {
   // Sen6xPres <700..1200> - hPa
   if (SEN6XDATA->features & SEN6X_CO2) {
     if ((XdrvMailbox.payload >= 700) && (XdrvMailbox.payload <= 1200)) {
-      if (CmndSen6xError(sen6x->setAmbientPressure(XdrvMailbox.payload))) {
+      if (CmndSen6xError(sen6x.setAmbientPressure(XdrvMailbox.payload))) {
         return;
       }
     }
@@ -340,7 +353,7 @@ void CmndSen6xTemperatureOffset(void) {
   int value[4] = { 0 };
   if (4 == ParseIntParameters(4, value)) {
     Sen6xStopStartMeasurement();
-    if (!CmndSen6xError(sen6x->setTemperatureOffsetParameters(value[0], value[1], value[2], value[3]))) {
+    if (!CmndSen6xError(sen6x.setTemperatureOffsetParameters(value[0], value[1], value[2], value[3]))) {
       ResponseCmndDone();
     }
   }
@@ -353,7 +366,7 @@ void CmndSen6xTemperatureAcceleration(void) {
   uint32_t value[4] = { 0 };
   if (4 == ParseParameters(4, value)) {
     Sen6xStopStartMeasurement();
-    if (!CmndSen6xError(sen6x->setTemperatureAccelerationParameters(value[0], value[1], value[2], value[3]))) {
+    if (!CmndSen6xError(sen6x.setTemperatureAccelerationParameters(value[0], value[1], value[2], value[3]))) {
       ResponseCmndDone();
     }
   }
@@ -370,21 +383,21 @@ void CmndSen6xCo2SelfCalibration(void) {
       delay(400);                        // Wait at least 1400ms
       uint16_t reference = XdrvMailbox.payload;
       uint16_t correction;
-      if (!CmndSen6xError(sen6x->performForcedCo2Recalibration(reference, correction))) {
+      if (!CmndSen6xError(sen6x.performForcedCo2Recalibration(reference, correction))) {
         ResponseCmndNumber(correction);  // FRC = return_value - 0x8000. If the recalibration has failed this returned value is 0xFFFF.
       }
       return;
     }
     else if ((0 == XdrvMailbox.payload) || (1 == XdrvMailbox.payload)) {
       Sen6xStopStartMeasurement();
-      if (CmndSen6xError(sen6x->setCo2SensorAutomaticSelfCalibration(XdrvMailbox.payload))) {
+      if (CmndSen6xError(sen6x.setCo2SensorAutomaticSelfCalibration(XdrvMailbox.payload))) {
         return;
       }
     }
 /*
     else if (2 == XdrvMailbox.payload) {
       Sen6xStopStartMeasurement();
-      if (CmndSen6xError(sen63->sensorFactoryReset())) {  // Implemented for STCC2 in SEN63C
+      if (CmndSen6xError(sen63->sensorFactoryReset())) {  // Implemented for STCC4 in SEN63C
         return;
       }
     }
@@ -402,7 +415,7 @@ void CmndSen6xVocAlgorithmTuningParams(void) {
     int value[6] = { 0 };
     if (6 == ParseIntParameters(6, value)) {
       Sen6xStopStartMeasurement();
-      if (CmndSen6xError(sen6x->setVocAlgorithmTuningParameters(value[0], value[1], value[2], value[3], value[4], value[5]))) {
+      if (CmndSen6xError(sen6x.setVocAlgorithmTuningParameters(value[0], value[1], value[2], value[3], value[4], value[5]))) {
         return;
       }
     }
@@ -421,7 +434,7 @@ void CmndSen6xNoxAlgorithmTuningParams(void) {
       Sen6xStopStartMeasurement();
       uint16_t ltgh = 12;  // This parameter has no impact for NOx and must always be set to 12 hours
       uint16_t si = 50;    // This parameter has no impact for NOx and must always be set to 50
-      if (CmndSen6xError(sen6x->setNoxAlgorithmTuningParameters(value[0], value[1], ltgh, value[2], si, value[3]))) {
+      if (CmndSen6xError(sen6x.setNoxAlgorithmTuningParameters(value[0], value[1], ltgh, value[2], si, value[3]))) {
         return;
       }
     }
@@ -433,7 +446,7 @@ void CmndSen6xFanClean(void) {
   // Sen6xClean   - This command triggers fan cleaning. The fan is set to the maximum speed
   //                for 10 seconds and then automatically stopped.
   Sen6xStopStartMeasurement();
-  if (CmndSen6xError(sen6x->startFanCleaning())) {
+  if (CmndSen6xError(sen6x.startFanCleaning())) {
     return;
   }
   SEN6XDATA->state = SEN6X_STATE_CLEAN_FAN_WAIT;
@@ -444,7 +457,7 @@ void CmndSen6xSHTHeater(void) {
   // Sen6xHeat    - This command activates the SHT sensor heater with 200mW for 1s.
   //                The heater is then automatically deactivated again.
   Sen6xStopStartMeasurement();
-  if (CmndSen6xError(sen6x->activateShtHeater())) {
+  if (CmndSen6xError(sen6x.activateShtHeater())) {
     return;
   }
   SEN6XDATA->state = SEN6X_STATE_SHT_HEATER_WAIT;
@@ -458,12 +471,12 @@ void CmndSen6xVocState(void) {
       // TBD - Restore voc_state after a restart/power cycle - needs filesystem
   /*
       Sen6xStopStartMeasurement();
-      if (CmndSen6xError(sen6x->setVocAlgorithmState(voc_state, sizeof(voc_state)))) {
+      if (CmndSen6xError(sen6x.setVocAlgorithmState(voc_state, sizeof(voc_state)))) {
         return;
       }
   */
     } else {
-      if (CmndSen6xError(sen6x->getVocAlgorithmState(voc_state, sizeof(voc_state)))) {
+      if (CmndSen6xError(sen6x.getVocAlgorithmState(voc_state, sizeof(voc_state)))) {
         return;
       }
       AddLog(LOG_LEVEL_DEBUG, PSTR("S6X: State %12_H"), voc_state);
