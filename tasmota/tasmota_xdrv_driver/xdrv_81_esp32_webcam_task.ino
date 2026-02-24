@@ -895,7 +895,7 @@ void WcSetDefaults(uint32_t upgrade) {
 void WcCamOff() {
   TasAutoMutex localmutex(&WebcamMutex, "WcCamOff", 30000);
   // deinit camera
-  WcSetup(-1);
+  WcSetup((int32_t)-1);
   // kill any existing clients
   WcEndStream();
 #ifdef ENABLE_RTSPSERVER
@@ -1179,7 +1179,7 @@ int32_t WcSetOptions(uint32_t sel, int32_t value) {
       // pixelformat - native formats + 1, 0->jpeg
       if (value >= 0) { Wc.camPixelFormat = value; }
       if (Wc.up){
-        WcSetup(Settings->webcam_config.resolution);
+        WcSetup((int32_t)Settings->webcam_config.resolution);
       }
       return value;
       break;
@@ -2657,7 +2657,7 @@ void CmndWebcamResolution(void) {
     }
     Settings->webcam_config.resolution = XdrvMailbox.payload;
     if (reinit) {
-      WcSetup(Settings->webcam_config.resolution);
+      WcSetup((int32_t)Settings->webcam_config.resolution);
     } else {
       WcSetOptions(0, Settings->webcam_config.resolution);
     }
@@ -2861,7 +2861,7 @@ void CmndWebcamClock(void){
     Settings->webcam_clk = XdrvMailbox.payload;
     // if cam is up, must setup to apply
     if (Wc.up){
-      WcSetup(Settings->webcam_config.resolution);
+      WcSetup((int32_t)Settings->webcam_config.resolution);
     }
   }
   ResponseCmndNumber(Settings->webcam_clk);
@@ -2876,7 +2876,7 @@ void CmndWebcamCamStartStop(void){
 
 
 void CmndWebcamInit(void) {
-  WcSetup(Settings->webcam_config.resolution);
+  WcSetup((int32_t)Settings->webcam_config.resolution);
   WcSetStreamserver(Settings->webcam_config.stream);
   ResponseCmndDone();
 }
@@ -3027,7 +3027,7 @@ bool Xdrv99(uint32_t function) {
       break;
     case FUNC_INIT:
       // starts stream server if configured, and configured camera 
-      WcSetup(Settings->webcam_config.resolution);
+      WcSetup((int32_t)Settings->webcam_config.resolution);
       WcSetStreamserver(Settings->webcam_config.stream);
       WCStartOperationTask();
       break;
