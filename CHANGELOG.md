@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Do not free BT memory when in use (#24480)
 
 ### Removed
+- Berry `tasmota.urlbecload()` superseded by Extension Manager
 
 
 ## [Released]

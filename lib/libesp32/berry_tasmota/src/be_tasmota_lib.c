@@ -73,9 +73,6 @@ extern int tasm_apply_str_op(bvm *vm);
 extern int32_t be_Tasmota_version(void);
 BE_FUNC_CTYPE_DECLARE(be_Tasmota_version, "i", "-");
 
-extern bbool BerryBECLoader(const char * url);
-BE_FUNC_CTYPE_DECLARE(BerryBECLoader, "b", "s")
-
 #include "solidify/solidified_tasmota_class.h"
 #include "solidify/solidified_rule_matcher.h"
 #include "solidify/solidified_trigger_class.h"
@@ -201,7 +198,6 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     time_str, closure(class_Tasmota_time_str_closure)
     urlfetch, closure(class_Tasmota_urlfetch_closure)
     urlfetch_cmd, closure(class_Tasmota_urlfetch_cmd_closure)
-    urlbecload, static_ctype_func(BerryBECLoader)
 
     add_cron, closure(class_Tasmota_add_cron_closure)
     run_cron, closure(class_Tasmota_run_cron_closure)
