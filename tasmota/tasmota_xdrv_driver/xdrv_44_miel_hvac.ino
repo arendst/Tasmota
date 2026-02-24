@@ -1222,6 +1222,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	char hex[(sizeof(sc->sc_settings) + 1) * 2];
 	char temp[33];
 	const char *name;
+	const char *ha_name = "off";
 	bool widevane_isee = (set->widevane == 0x80 || set->widevane == 0xaa || set->widevane == 0x28);
 
 	name = miel_hvac_map_byval(set->power, miel_hvac_power_map, nitems(miel_hvac_power_map));
@@ -1234,7 +1235,36 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	if (name != NULL)
 	{
 		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_MODE "\":\"%s\""), name);
-		ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""), set->power ? name : "off");
+		if (set->power)
+		{
+			switch (set->mode & MIEL_HVAC_SETTINGS_MODE_MASK)
+			{
+			case MIEL_HVAC_SETTINGS_MODE_HEAT:
+			case MIEL_HVAC_SETTINGS_MODE_HEAT_ISEE:
+				ha_name = "heat";
+				break;
+
+			case MIEL_HVAC_SETTINGS_MODE_COOL:
+			case MIEL_HVAC_SETTINGS_MODE_COOL_ISEE:
+				ha_name = "cool";
+				break;
+
+			case MIEL_HVAC_SETTINGS_MODE_DRY:
+			case MIEL_HVAC_SETTINGS_MODE_DRY_ISEE:
+				ha_name = "dry";
+				break;
+
+			case MIEL_HVAC_SETTINGS_MODE_FAN:
+				ha_name = "fan_only";
+				break;
+
+			case MIEL_HVAC_SETTINGS_MODE_AUTO:
+				ha_name = "auto";
+				break;
+			}
+		}
+
+		ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""), ha_name);
 	}
 	if (set->temp05 == 0)
 	{
@@ -1455,7 +1485,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		name = miel_hvac_map_byval(set->power, miel_hvac_power_map, nitems(miel_hvac_power_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR("\"" D_JSON_IRHVAC_POWER "\":\"%s\""), name);
+			ResponseAppend_P(PSTR("\"PowerState\":\"%s\""), name);
 		}
 
 		mode = miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK, miel_hvac_mode_map, nitems(miel_hvac_mode_map));
