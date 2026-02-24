@@ -621,6 +621,18 @@ class Matter_Commisioning_Context
     if type(initiatorFabricId) == 'int'   session.peer_node_id = int64.fromu32(initiatorFabricId).tobytes() else session.peer_node_id = initiatorFabricId.tobytes() end
     # log("MTR: initiatorFabricId="+str(session.peer_node_id), 4)
 
+    # Validate that the Fabric ID in the initiator's NOC matches the session's fabric (§4.12)
+    var noc_fabric_id = initiatorNOCListDN.findsubval(21)
+    if noc_fabric_id != nil && session._fabric && session._fabric.fabric_id
+      var noc_fabric_bytes = (type(noc_fabric_id) == 'int') ? int64.fromu32(noc_fabric_id).tobytes() : noc_fabric_id.tobytes()
+      if noc_fabric_bytes != session._fabric.fabric_id
+        log(f"MTR: Sigma3 Fabric ID mismatch: NOC={noc_fabric_bytes.tohex()} fabric={session._fabric.fabric_id.tohex()}", 3)
+        log("MTR: StatusReport(General Code: FAILURE, ProtocolId: SECURE_CHANNEL, ProtocolCode: INVALID_PARAMETER)", 2)
+        self.send_status_report(msg, 0x01, 0x0000, 0x0002, false)
+        return false
+      end
+    end
+
     var sigma3_tbs = matter.TLV.Matter_TLV_struct()
     sigma3_tbs.add_TLV(1, matter.TLV.B1, initiatorNOC)
     sigma3_tbs.add_TLV(2, matter.TLV.B1, initiatorICAC)
