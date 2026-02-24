@@ -1238,6 +1238,7 @@ const matter_attribute_t matter_Attributes_Common[] = {
 };
 
 const matter_cluster_t matterAllClusters[] = {
+#ifdef USE_MATTER_VERBOSE
   { 0x0003, "Identify", matter_Attributes_0003, matter_Commands_0003 },
   { 0x0004, "Groups", matter_Attributes_0004, matter_Commands_0004 },
   { 0x0005, "Scenes", matter_Attributes_0005, matter_Commands_0005 },
@@ -1303,5 +1304,6 @@ const matter_cluster_t matterAllClusters[] = {
   // { 0x050D, "ApplicationBasic", matter_Attributes_050D, matter_Commands_050D },
   // { 0x050E, "AccountLogin", matter_Attributes_050E, matter_Commands_050E },
   // { 0x0B04, "ElectricalMeasurement", matter_Attributes_0B04, matter_Commands_0B04 },
+#endif // USE_MATTER_VERBOSE
   { 0xFFFF, NULL, NULL },
 };

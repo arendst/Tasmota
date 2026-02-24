@@ -1349,6 +1349,7 @@
 // -- Matter protocol ---------------------------------
   // #define USE_MATTER_DEVICE                      // Enable Matter device support (+380KB)
                                                     // Enabled by default in standard ESP32 binary
+  // #define USE_MATTER_VERBOSE                     // Enable verbose mode in logs (+16KB), automatically enabled with USE_BERRY_DEBUG
 
 #endif  // ESP32
 
