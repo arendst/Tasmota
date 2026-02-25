@@ -3,20 +3,17 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Plugin_Sensor_OnOff' ktab size: 12, total: 14 (saved 16 bytes)
-static const bvalue be_ktab_class_Matter_Plugin_Sensor_OnOff[12] = {
+// compact class 'Matter_Plugin_Sensor_OnOff' ktab size: 9, total: 11 (saved 16 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_OnOff[9] = {
   /* K0   */  be_nested_str_weak(_X2C_X22OnOff_X22_X3A_X25s),
   /* K1   */  be_nested_str_weak(shadow_bool_value),
-  /* K2   */  be_nested_str_weak(matter),
-  /* K3   */  be_nested_str_weak(TLV),
-  /* K4   */  be_nested_str_weak(cluster),
-  /* K5   */  be_nested_str_weak(attribute),
-  /* K6   */  be_nested_str_weak(update_shadow_lazy),
-  /* K7   */  be_const_int(0),
-  /* K8   */  be_nested_str_weak(set),
-  /* K9   */  be_nested_str_weak(BOOL),
-  /* K10  */  be_nested_str_weak(read_attribute),
-  /* K11  */  be_nested_str_weak(attribute_updated),
+  /* K2   */  be_nested_str_weak(cluster),
+  /* K3   */  be_nested_str_weak(attribute),
+  /* K4   */  be_nested_str_weak(update_shadow_lazy),
+  /* K5   */  be_const_int(0),
+  /* K6   */  be_nested_str_weak(set),
+  /* K7   */  be_nested_str_weak(read_attribute),
+  /* K8   */  be_nested_str_weak(attribute_updated),
 };
 
 
@@ -57,7 +54,7 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_append_state_json,   /* name *
 ********************************************************************/
 be_local_closure(class_Matter_Plugin_Sensor_OnOff_read_attribute,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
+    11,                          /* nstack */
     4,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -68,32 +65,30 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_read_attribute,   /* name */
     &be_ktab_class_Matter_Plugin_Sensor_OnOff,     /* shared constants */
     be_str_weak(read_attribute),
     &be_const_str_solidified,
-    ( &(const binstruction[25]) {  /* code */
-      0xB8120400,  //  0000  GETNGBL	R4	K2
-      0x88100903,  //  0001  GETMBR	R4	R4	K3
-      0x88140504,  //  0002  GETMBR	R5	R2	K4
-      0x88180505,  //  0003  GETMBR	R6	R2	K5
-      0x541E0005,  //  0004  LDINT	R7	6
-      0x1C1C0A07,  //  0005  EQ	R7	R5	R7
-      0x781E0008,  //  0006  JMPF	R7	#0010
-      0x8C1C0106,  //  0007  GETMET	R7	R0	K6
-      0x7C1C0200,  //  0008  CALL	R7	1
-      0x1C1C0D07,  //  0009  EQ	R7	R6	K7
-      0x781E0004,  //  000A  JMPF	R7	#0010
-      0x8C1C0708,  //  000B  GETMET	R7	R3	K8
-      0x88240909,  //  000C  GETMBR	R9	R4	K9
-      0x88280101,  //  000D  GETMBR	R10	R0	K1
-      0x7C1C0600,  //  000E  CALL	R7	3
-      0x80040E00,  //  000F  RET	1	R7
-      0x601C0003,  //  0010  GETGBL	R7	G3
-      0x5C200000,  //  0011  MOVE	R8	R0
-      0x7C1C0200,  //  0012  CALL	R7	1
-      0x8C1C0F0A,  //  0013  GETMET	R7	R7	K10
-      0x5C240200,  //  0014  MOVE	R9	R1
-      0x5C280400,  //  0015  MOVE	R10	R2
-      0x5C2C0600,  //  0016  MOVE	R11	R3
-      0x7C1C0800,  //  0017  CALL	R7	4
-      0x80040E00,  //  0018  RET	1	R7
+    ( &(const binstruction[23]) {  /* code */
+      0x88100502,  //  0000  GETMBR	R4	R2	K2
+      0x88140503,  //  0001  GETMBR	R5	R2	K3
+      0x541A0005,  //  0002  LDINT	R6	6
+      0x1C180806,  //  0003  EQ	R6	R4	R6
+      0x781A0008,  //  0004  JMPF	R6	#000E
+      0x8C180104,  //  0005  GETMET	R6	R0	K4
+      0x7C180200,  //  0006  CALL	R6	1
+      0x1C180B05,  //  0007  EQ	R6	R5	K5
+      0x781A0004,  //  0008  JMPF	R6	#000E
+      0x8C180706,  //  0009  GETMET	R6	R3	K6
+      0x54220007,  //  000A  LDINT	R8	8
+      0x88240101,  //  000B  GETMBR	R9	R0	K1
+      0x7C180600,  //  000C  CALL	R6	3
+      0x80040C00,  //  000D  RET	1	R6
+      0x60180003,  //  000E  GETGBL	R6	G3
+      0x5C1C0000,  //  000F  MOVE	R7	R0
+      0x7C180200,  //  0010  CALL	R6	1
+      0x8C180D07,  //  0011  GETMET	R6	R6	K7
+      0x5C200200,  //  0012  MOVE	R8	R1
+      0x5C240400,  //  0013  MOVE	R9	R2
+      0x5C280600,  //  0014  MOVE	R10	R3
+      0x7C180800,  //  0015  CALL	R6	4
+      0x80040C00,  //  0016  RET	1	R6
     })
   )
 );
@@ -117,9 +112,9 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_value_updated,   /* name */
     be_str_weak(value_updated),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0x8C04010B,  //  0000  GETMET	R1	R0	K11
+      0x8C040108,  //  0000  GETMET	R1	R0	K8
       0x540E0005,  //  0001  LDINT	R3	6
-      0x58100007,  //  0002  LDCONST	R4	K7
+      0x58100005,  //  0002  LDCONST	R4	K5
       0x7C040600,  //  0003  CALL	R1	3
       0x80000000,  //  0004  RET	0
     })

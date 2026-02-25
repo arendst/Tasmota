@@ -127,18 +127,17 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
     if   cluster == 0x0405              # ========== Humidity Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- Humidity / u16 ----------
-        return tlv_solo.set_or_nil(TLV.U2, int(self.shadow_value))
+        return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, int(self.shadow_value))
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / u16 ----------
-        return tlv_solo.set(TLV.U2, 500)  # 0%
+        return tlv_solo.set(0x05 #-TLV.U2-#, 500)  # 0%
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / u16 ----------
-        return tlv_solo.set(TLV.U2, 10000)  # 100%
+        return tlv_solo.set(0x05 #-TLV.U2-#, 10000)  # 100%
       end
 
     end

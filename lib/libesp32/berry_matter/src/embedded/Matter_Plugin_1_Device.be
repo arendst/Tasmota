@@ -208,9 +208,9 @@ class Matter_Plugin_Device : Matter_Plugin
     # ====================================================================================================
     if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
       if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
-        return tlv_solo.set(TLV.U2, 0)      # no identification in progress
+        return tlv_solo.set(0x05 #-TLV.U2-#, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
-        return tlv_solo.set(TLV.U1, 0)      # IdentifyType = 0x00 None
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)      # IdentifyType = 0x00 None
       end
 
     # ====================================================================================================
@@ -232,14 +232,14 @@ class Matter_Plugin_Device : Matter_Plugin
         var types = self.TYPES
         for dt: types.keys()
           var d1 = dtl.add_struct()
-          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, types[dt])      # Revision
+          d1.add_TLV(0, 0x05 #-TLV.U2-#, dt)     # DeviceType
+          d1.add_TLV(1, 0x05 #-TLV.U2-#, types[dt])      # Revision
         end
         # if fabric is not Alexa
         if (self.NON_BRIDGE_VENDOR.find(session.get_admin_vendor()) == nil) && (!self.device.disable_bridge_mode)
           var d1 = dtl.add_struct()
-          d1.add_TLV(0, TLV.U2, 0x0013)     # DeviceType
-          d1.add_TLV(1, TLV.U2, 1)      # Revision
+          d1.add_TLV(0, 0x05 #-TLV.U2-#, 0x0013)     # DeviceType
+          d1.add_TLV(1, 0x05 #-TLV.U2-#, 1)      # Revision
         end
         return dtl
       end
@@ -251,40 +251,40 @@ class Matter_Plugin_Device : Matter_Plugin
       if   attribute == 0x0003          #  ---------- ProductName / string ----------
         if self.BRIDGE
           var name = self.http_remote.get_info().find("name")
-          return tlv_solo.set_or_nil(TLV.UTF1, name)
+          return tlv_solo.set_or_nil(0x0C #-TLV.UTF1-#, name)
         else
-          return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+          return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.cmd("DeviceName", true)['DeviceName'])
         end
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
-        return tlv_solo.set(TLV.UTF1, self.get_name())
+        return tlv_solo.set(0x0C #-TLV.UTF1-#, self.get_name())
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         if self.BRIDGE
           var version_full = self.http_remote.get_info().find("version")
           if version_full
             var version_end = string.find(version_full, '(')
             if version_end > 0    version_full = version_full[0..version_end - 1]   end
-            return tlv_solo.set(TLV.UTF1, version_full)
+            return tlv_solo.set(0x0C #-TLV.UTF1-#, version_full)
           else
-            return tlv_solo.set(TLV.NULL, nil)
+            return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
           end
         else
           var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
           var version_end = string.find(version_full, '(')
           if version_end > 0    version_full = version_full[0..version_end - 1]   end
-          return tlv_solo.set(TLV.UTF1, version_full)
+          return tlv_solo.set(0x0C #-TLV.UTF1-#, version_full)
         end
       elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber / string ----------
         if self.BRIDGE
           var mac = self.http_remote.get_info().find("mac")
-          return tlv_solo.set_or_nil(TLV.UTF1, mac)
+          return tlv_solo.set_or_nil(0x0C #-TLV.UTF1-#, mac)
         else
-          return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
+          return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.wifi().find("mac", ""))
         end
       elif attribute == 0x0011          #  ---------- Reachable / bool ----------
         if self.BRIDGE
-          return tlv_solo.set(TLV.BOOL, self.http_remote.reachable)     # TODO find a way to do a ping
+          return tlv_solo.set(0x08 #-TLV.BOOL-#, self.http_remote.reachable)     # TODO find a way to do a ping
         else
-          return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
+          return tlv_solo.set(0x08 #-TLV.BOOL-#, 1)     # by default we are reachable
         end
       end
 
@@ -313,7 +313,7 @@ class Matter_Plugin_Device : Matter_Plugin
         # ID=1
         #  0=Certificate (octstr)
         var iqr = TLV.Matter_TLV_struct()
-        iqr.add_TLV(0, TLV.U2, 0)       # Timeout
+        iqr.add_TLV(0, 0x05 #-TLV.U2-#, 0)       # Timeout
         ctx.command = 0x00              # IdentifyQueryResponse
         return iqr
       elif command == 0x0040            # ---------- TriggerEffect ----------

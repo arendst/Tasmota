@@ -209,7 +209,6 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
@@ -217,7 +216,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
+        return tlv_solo.set(0x08 #-TLV.BOOL-#, self.shadow_onoff)
       end
 
     end

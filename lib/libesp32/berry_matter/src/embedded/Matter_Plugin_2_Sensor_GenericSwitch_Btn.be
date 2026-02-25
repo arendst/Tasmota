@@ -164,7 +164,6 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
@@ -172,14 +171,14 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
     if   cluster == 0x003B              # ========== Generic Switch, 1.12 ==========
     #   self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- NumberOfPositions / uint8 ----------
-        return tlv_solo.set(TLV.U1, 2)  # default to 2 positions
+        return tlv_solo.set(0x04 #-TLV.U1-#, 2)  # default to 2 positions
       elif attribute == 0x0001          #  ---------- CurrentPosition / uint8 ----------
-        return tlv_solo.set_or_nil(TLV.U1, self.shadow_position)
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_position)
       elif attribute == 0x0002          #  ---------- MultiPressMax / uint8 ----------
-        return tlv_solo.set(TLV.U1, 5)  # up to penta press
+        return tlv_solo.set(0x04 #-TLV.U1-#, 5)  # up to penta press
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x16 #-0x02 | 0x04 | 0x10-#)    # MomentarySwitch + MomentarySwitchRelease + MomentarySwitchMultiPress
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0x16 #-0x02 | 0x04 | 0x10-#)    # MomentarySwitch + MomentarySwitchRelease + MomentarySwitchMultiPress
       end
 
     end
@@ -215,19 +214,19 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
     # publish event for (mode==1), InitialPress and ShortRelease
     if (mode == 1)
       if state              # InitialPress
-        self.publish_event(0x003B, 0x01, matter.EVENT_INFO, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1))   # InitialPress, position hardcoded to 1
+        self.publish_event(0x003B, 0x01, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1))   # InitialPress, position hardcoded to 1
       else
-        self.publish_event(0x003B, 0x03, matter.EVENT_INFO, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1))   # ShortRelease, previous position hardcoded to 1
+        self.publish_event(0x003B, 0x03, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1))   # ShortRelease, previous position hardcoded to 1
       end
       # check if there is an ungoing multi-press
       if (state == 1) && (press_counter > 0)
         # MultiPressOngoing
-        self.publish_event(0x003B, 0x05, matter.EVENT_INFO, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1),
-                                                            matter.TLV.Matter_TLV_item().set(matter.TLV.U1, press_counter + 1))   # MultiPressCom­ plete
+        self.publish_event(0x003B, 0x05, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1),
+                                                            matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, press_counter + 1))   # MultiPressCom­ plete
       end
     elif (mode == 2) && (press_counter > 0)       # Multipress
-      self.publish_event(0x003B, 0x06, matter.EVENT_INFO, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1),
-                                                          matter.TLV.Matter_TLV_item().set(matter.TLV.U1, press_counter))   # MultiPressCom­ plete
+      self.publish_event(0x003B, 0x06, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1),
+                                                          matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, press_counter))   # MultiPressCom­ plete
     end
   end
 

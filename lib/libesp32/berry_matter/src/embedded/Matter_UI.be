@@ -1258,10 +1258,10 @@ class Matter_UI
         if matter_enabled_requested != self.matter_enabled
           if matter_enabled_requested
             log(format("MTR: /matterc received '%s' command", 'enable'), 3)
-            tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 1")
+            tasmota.cmd("SetOption" + str(151 #-matter.MATTER_OPTION-#) + " 1")
           else
             log(format("MTR: /matterc received '%s' command", 'disable'), 3)
-            tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 0")
+            tasmota.cmd("SetOption" + str(151 #-matter.MATTER_OPTION-#) + " 0")
           end
           #- and force restart -#
           webserver.redirect("/?rst=")

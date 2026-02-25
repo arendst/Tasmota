@@ -280,9 +280,9 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 /* @const_object_info_begin
 
 module matter (scope: global, strings: weak) {
-  MATTER_OPTION, int(151)       // SetOption151 enables Matter
-  AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
-  START_ENDPOINT, int(0x0002)         // endpoint where to start devices
+  // MATTER_OPTION, int(151)       // SetOption151 enables Matter
+  // AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
+  // START_ENDPOINT, int(0x0002)         // endpoint where to start devices
   seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
   Verhoeff, class(be_class_Matter_Verhoeff)
@@ -309,38 +309,38 @@ module matter (scope: global, strings: weak) {
   Profiler, class(be_class_Matter_Profiler)
 
   // EVents priority levels
-  EVENT_DEBUG, int(0)
-  EVENT_INFO, int(1)
-  EVENT_CRITICAL, int(2)
+  // EVENT_DEBUG, int(0)
+  // EVENT_INFO, int(1)
+  // EVENT_CRITICAL, int(2)
 
   // Status codes
-  SUCCESS, int(0x00)
-  FAILURE, int(0x01)
-  INVALID_SUBSCRIPTION, int(0x7D)
-  UNSUPPORTED_ACCESS, int(0x7E)
-  UNSUPPORTED_ENDPOINT, int(0x7F)
-  INVALID_ACTION, int(0x80)
-  UNSUPPORTED_COMMAND, int(0x81)
-  INVALID_COMMAND, int(0x85)
-  UNSUPPORTED_ATTRIBUTE, int(0x86)
-  CONSTRAINT_ERROR, int(0x87)
-  UNSUPPORTED_WRITE, int(0x88)
-  RESOURCE_EXHAUSTED, int(0x89)
-  NOT_FOUND, int(0x8B)
-  UNREPORTABLE_ATTRIBUTE, int(0x8C)
-  INVALID_DATA_TYPE, int(0x8D)
-  UNSUPPORTED_READ, int(0x8F)
-  DATA_VERSION_MISMATCH, int(0x92)
-  TIMEOUT, int(0x94)
-  UNSUPPORTED_NODE, int(0x9B)
-  BUSY, int(0x9C)
-  UNSUPPORTED_CLUSTER, int(0xC3)
-  NO_UPSTREAM_SUBSCRIP­TION, int(0xC5)
-  NEEDS_TIMED_INTERACTION, int(0xC6)
-  UNSUPPORTED_EVENT, int(0xC7)
-  PATHS_EXHAUSTED, int(0xC8)
-  TIMED_REQUEST_MISMATCH, int(0xC9)
-  FAILSAFE_REQUIRED, int(0xCA)
+  // SUCCESS, int(0x00)
+  // FAILURE, int(0x01)
+  // INVALID_SUBSCRIPTION, int(0x7D)
+  // UNSUPPORTED_ACCESS, int(0x7E)
+  // UNSUPPORTED_ENDPOINT, int(0x7F)
+  // INVALID_ACTION, int(0x80)
+  // UNSUPPORTED_COMMAND, int(0x81)
+  // INVALID_COMMAND, int(0x85)
+  // UNSUPPORTED_ATTRIBUTE, int(0x86)
+  // CONSTRAINT_ERROR, int(0x87)
+  // UNSUPPORTED_WRITE, int(0x88)
+  // RESOURCE_EXHAUSTED, int(0x89)
+  // NOT_FOUND, int(0x8B)
+  // UNREPORTABLE_ATTRIBUTE, int(0x8C)
+  // INVALID_DATA_TYPE, int(0x8D)
+  // UNSUPPORTED_READ, int(0x8F)
+  // DATA_VERSION_MISMATCH, int(0x92)
+  // TIMEOUT, int(0x94)
+  // UNSUPPORTED_NODE, int(0x9B)
+  // BUSY, int(0x9C)
+  // UNSUPPORTED_CLUSTER, int(0xC3)
+  // NO_UPSTREAM_SUBSCRIP­TION, int(0xC5)
+  // NEEDS_TIMED_INTERACTION, int(0xC6)
+  // UNSUPPORTED_EVENT, int(0xC7)
+  // PATHS_EXHAUSTED, int(0xC8)
+  // TIMED_REQUEST_MISMATCH, int(0xC9)
+  // FAILSAFE_REQUIRED, int(0xCA)
 
   // Matter_Data_IM classes
   AttributePathIB, class(be_class_Matter_AttributePathIB)

@@ -137,18 +137,17 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
     if   cluster == 0x0402              # ========== Temperature Measurement 2.3 p.97 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 (*100) ----------
-        return tlv_solo.set_or_nil(TLV.I2, self.shadow_value)
+        return tlv_solo.set_or_nil(0x01 #-TLV.I2-#, self.shadow_value)
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 (*100) ----------
-        return tlv_solo.set(TLV.I2, -5000)  # -50 °C
+        return tlv_solo.set(0x01 #-TLV.I2-#, -5000)  # -50 °C
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 (*100) ----------
-        return tlv_solo.set(TLV.I2, 15000)  # 150 °C
+        return tlv_solo.set(0x01 #-TLV.I2-#, 15000)  # 150 °C
       end
 
     end

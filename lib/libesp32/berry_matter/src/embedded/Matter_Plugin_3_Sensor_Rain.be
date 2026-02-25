@@ -129,14 +129,13 @@ class Matter_Plugin_Sensor_Rain : Matter_Plugin_Sensor_Boolean
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
     if   cluster == 0x0045              # ========== Boolean State ==========
       if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        return tlv_solo.set(TLV.BOOL, self.shadow_bool_value)
+        return tlv_solo.set(0x08 #-TLV.BOOL-#, self.shadow_bool_value)
       end
 
     end
