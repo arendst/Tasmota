@@ -507,11 +507,11 @@ static const struct miel_hvac_map miel_hvac_stage_fan_map[] = {
 };
 
 static const struct miel_hvac_map miel_hvac_stage_mode_map[] = {
-	{MIEL_HVAC_STAGE_MODE_DIRECT, "direct"}, //direct - mode is set to heat, dry, cool or fan
+	{MIEL_HVAC_STAGE_MODE_DIRECT, "direct"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_FAN, "auto_fan"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_HEAT, "auto_heat"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_COOL, "auto_cool"},
-	{MIEL_HVAC_STAGE_MODE_AUTO_LEADER, "auto_leader"}, //in this mode the unit is following the mode of the leader unit in a multi split system
+	{MIEL_HVAC_STAGE_MODE_AUTO_LEADER, "auto_leader"},
 };
 
 enum miel_hvac_parser_state
