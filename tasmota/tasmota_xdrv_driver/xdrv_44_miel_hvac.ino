@@ -54,9 +54,9 @@
 
 /* from hvac */
 bool temp_type = false;
-bool remote_temp_clear = true;
-unsigned long remote_temp_auto_clear_time = 10000;
-unsigned long remote_temp_last_call_time = 0;
+bool remotetemp_clear = true;
+unsigned long remotetemp_auto_clear_time = 10000;
+unsigned long remotetemp_last_call_time = 0;
 
 struct miel_hvac_header
 {
@@ -1084,7 +1084,7 @@ miel_hvac_remotetemp_auto_clear(void)
 	update->control = control;
 	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
-	remote_temp_clear = false;
+	remotetemp_clear = false;
 }
 
 static void
@@ -1099,9 +1099,9 @@ miel_hvac_cmnd_setremote_temp_auto_clear_time(void)
 		miel_hvac_respond_unsupported();
 		return;
 	}
-	remote_temp_auto_clear_time = clear_time;
+	remotetemp_auto_clear_time = clear_time;
 
-	ResponseCmndNumber(remote_temp_auto_clear_time);
+	ResponseCmndNumber(remotetemp_auto_clear_time);
 }
 
 static void
@@ -1148,8 +1148,8 @@ miel_hvac_cmnd_setremote_temp(void)
 	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
 
-	remote_temp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
-	remote_temp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
+	remotetemp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
+	remotetemp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
 }
 
 static void
@@ -1596,10 +1596,10 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			dtostrfd(ConvertTemp(temp), Settings->flag2.temperature_resolution, room_temp);
 		}
 		ResponseAppend_P(PSTR(",\"RoomTemperature\":%s"), room_temp);
-		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""), remote_temp_clear ? "on" : "off");
+		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""), remotetemp_clear ? "on" : "off");
 
 		char remotetempautocleartime[33];
-		ultoa(remote_temp_auto_clear_time, remotetempautocleartime, 10);
+		ultoa(remotetemp_auto_clear_time, remotetempautocleartime, 10);
 		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorAutoClearTime\":\"%s\""), remotetempautocleartime);
 
 		// Outdoor temperature
@@ -1883,9 +1883,9 @@ bool Xdrv44(uint32_t function)
 	case FUNC_EVERY_100_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_SECOND:
-		if (remote_temp_clear &&
-			(remote_temp_last_call_time == 0 ||
-			 millis() - remote_temp_last_call_time > remote_temp_auto_clear_time))
+		if (remotetemp_clear &&
+			(remotetemp_last_call_time == 0 ||
+			 millis() - remotetemp_last_call_time > remotetemp_auto_clear_time))
 		{
 			miel_hvac_remotetemp_auto_clear();
 		}
