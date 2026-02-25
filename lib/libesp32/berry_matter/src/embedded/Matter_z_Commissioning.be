@@ -26,6 +26,13 @@ class Matter_Commissioning
 
   static var PBKDF_ITERATIONS = 1000  # I don't see any reason to choose a different number
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
+  # Operational discovery TXT records per Matter 1.4.1 spec §4.3.2
+  static var OP_DISCOVERY_TXT = {
+    "SII": 500,     # SESSION_IDLE_INTERVAL (ms)
+    "SAI": 300,     # SESSION_ACTIVE_INTERVAL (ms)
+    "SAT": 4000,    # SESSION_ACTIVE_THRESHOLD (ms)
+    "T":   0        # TCP support bitmap: 0 = UDP only
+  }
   # Commissioning open
   var commissioning_open              # timestamp for timeout of commissioning (millis()) or `nil` if closed
   var commissioning_iterations        # current PBKDF number of iterations
@@ -401,17 +408,24 @@ class Matter_Commissioning
       var op_node = k_fabric.tohex() + "-" + device_id.tohex()
       log("MTR: Operational Discovery node = " + op_node, 3)
 
+      # Operational discovery TXT records (Matter 1.4.1 §4.3.2):
+      #   SII = 500   - SESSION_IDLE_INTERVAL (ms), MRP retry interval when idle
+      #   SAI = 300   - SESSION_ACTIVE_INTERVAL (ms), MRP retry interval when active
+      #   SAT = 4000  - SESSION_ACTIVE_THRESHOLD (ms), duration node stays active
+      #   T   = 0     - TCP support bitmap, 0 = UDP only
+      var services = self.OP_DISCOVERY_TXT
+
       # mdns
       if (tasmota.eth().find("up"))
         log(format("MTR: adding mDNS on %s '%s' ptr to `%s.local`", "eth", op_node, self.hostname_eth), 3)
-        mdns.add_service("_matter","_tcp", 5540, nil, op_node, self.hostname_eth)
+        mdns.add_service("_matter","_tcp", 5540, services, op_node, self.hostname_eth)
         var subtype = "_I" + k_fabric.tohex()
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matter", "_tcp", op_node, self.hostname_eth, subtype)
       end
       if (tasmota.wifi().find("up"))
         log(format("MTR: adding mDNS on %s '%s' ptr to `%s.local`", "wifi", op_node, self.hostname_wifi), 3)
-        mdns.add_service("_matter","_tcp", 5540, nil, op_node, self.hostname_wifi)
+        mdns.add_service("_matter","_tcp", 5540, services, op_node, self.hostname_wifi)
         var subtype = "_I" + k_fabric.tohex()
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matter", "_tcp", op_node, self.hostname_wifi, subtype)

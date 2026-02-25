@@ -39,6 +39,13 @@ class Matter_PBKDFParamRequest
   var hasPBKDFParameters
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
+  # Matter 1.4+ session params (tags 4-7) are available in the initiator's session-parameter-struct
+  # but not extracted here because Tasmota doesn't perform version negotiation.
+  # Uncomment if needed for future compatibility checks.
+  # var initiator_data_model_revision
+  # var initiator_im_revision
+  # var initiator_specification_version
+  # var initiator_max_paths_per_invoke
 
   def parse(b, idx)
     var TLV = matter.TLV
@@ -53,6 +60,12 @@ class Matter_PBKDFParamRequest
     if initiatorSEDParams != nil
       self.SLEEPY_IDLE_INTERVAL = initiatorSEDParams.findsubval(1)
       self.SLEEPY_ACTIVE_INTERVAL = initiatorSEDParams.findsubval(2)
+      # Matter 1.4+ fields - parsed but not stored to save memory since Tasmota
+      # doesn't negotiate based on the initiator's capabilities.
+      # self.initiator_data_model_revision = initiatorSEDParams.findsubval(4)
+      # self.initiator_im_revision = initiatorSEDParams.findsubval(5)
+      # self.initiator_specification_version = initiatorSEDParams.findsubval(6)
+      # self.initiator_max_paths_per_invoke = initiatorSEDParams.findsubval(7)
     end
     return self
   end
@@ -156,6 +169,13 @@ class Matter_Sigma1
   # var initiatorSEDParams    # (opt) sed-parameter-struct
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
+  # Matter 1.4+ session params (tags 4-7) are available in the initiator's session-parameter-struct
+  # but not extracted here because Tasmota doesn't perform version negotiation.
+  # Uncomment if needed for future compatibility checks.
+  # var initiator_data_model_revision
+  # var initiator_im_revision
+  # var initiator_specification_version
+  # var initiator_max_paths_per_invoke
   var resumptionID          # (opt) bytes(16)
   var initiatorResumeMIC    # (opt) bytes(16)
   var Msg1
@@ -174,6 +194,12 @@ class Matter_Sigma1
     if initiatorSEDParams != nil
       self.SLEEPY_IDLE_INTERVAL = initiatorSEDParams.findsubval(1)
       self.SLEEPY_ACTIVE_INTERVAL = initiatorSEDParams.findsubval(2)
+      # Matter 1.4+ fields - parsed but not stored to save memory since Tasmota
+      # doesn't negotiate based on the initiator's capabilities.
+      # self.initiator_data_model_revision = initiatorSEDParams.findsubval(4)
+      # self.initiator_im_revision = initiatorSEDParams.findsubval(5)
+      # self.initiator_specification_version = initiatorSEDParams.findsubval(6)
+      # self.initiator_max_paths_per_invoke = initiatorSEDParams.findsubval(7)
     end
     self.resumptionID = val.findsubval(6)
     self.initiatorResumeMIC = val.findsubval(7)

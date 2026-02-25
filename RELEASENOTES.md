@@ -129,3 +129,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Do not free BT memory when in use [#24480](https://github.com/arendst/Tasmota/issues/24480)
 
 ### Removed
+- Berry `tasmota.urlbecload()` superseded by Extension Manager [#24493](https://github.com/arendst/Tasmota/issues/24493)

@@ -598,7 +598,7 @@ class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x11,0x12,0x13],# Basic Information Cluster cluster 11.1 p.565
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x11,0x12,0x13,0x15,0x16],# Basic Information Cluster cluster 11.1 p.565
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
@@ -831,6 +831,10 @@ class Matter_Plugin_Root : Matter_Plugin
         cps.add_TLV(0, TLV.U2, 3)       # CaseSessionsPerFabric = 3
         cps.add_TLV(1, TLV.U2, 3)       # SubscriptionsPerFabric = 5
         return cps
+      elif attribute == 0x0015          #  ---------- SpecificationVersion / uint32 ----------
+        return tlv_solo.set(TLV.U4, 0x01040100)  # Matter 1.4.1.0
+      elif attribute == 0x0016          #  ---------- MaxPathsPerInvoke / uint16 ----------
+        return tlv_solo.set(TLV.U2, 1)
       end
 
     # ====================================================================================================

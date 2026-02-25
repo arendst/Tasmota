@@ -260,6 +260,7 @@
   #define BE_USE_DEBUG_MODULE             1
   #define BE_USE_SOLIDIFY_MODULE          1
   #define BE_MAPPING_ENABLE_INPUT_VALIDATION   1    // input validation for lv_mapping
+  #define USE_MATTER_VERBOSE              1         // enable names for actions and attributes in logs
 #endif // USE_BERRY_DEBUG
 
 /* Macro: BE_EXPLICIT_XXX
