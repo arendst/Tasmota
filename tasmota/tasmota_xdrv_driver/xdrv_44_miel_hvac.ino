@@ -46,17 +46,17 @@
 #define D_CMND_MIEL_HVAC_SETAIRDIRECTION "HVACSetAirDirection"
 #define D_CMND_MIEL_HVAC_SETPROHIBIT "HVACSetProhibit"
 #define D_CMND_MIEL_HVAC_SETPURIFY "HVACSetPurify"
-#define D_CMND_MIEL_HVAC_REMOTETEMP "HVACRemoteTemp"
-#define D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME "HVACRemoteTempClearTime"
+#define D_CMND_MIEL_HVAC_SETREMOTE_TEMP "HVACSetRemoteTemp"
+#define D_CMND_MIEL_HVAC_SETREMOTE_TEMP_AUTO_CLEAR_TIME "HVACSetRemoteTempClearTime"
 #define D_CMND_MIEL_HVAC_SEND_COMMAND "HVACSendCommand"
 
 #include <TasmotaSerial.h>
 
 /* from hvac */
 bool temp_type = false;
-bool remotetemp_clear = true;
-unsigned long remotetemp_auto_clear_time = 10000;
-unsigned long remotetemp_last_call_time = 0;
+bool remote_temp_clear = true;
+unsigned long remote_temp_auto_clear_time = 10000;
+unsigned long remote_temp_last_call_time = 0;
 
 struct miel_hvac_header
 {
@@ -202,7 +202,7 @@ struct miel_hvac_data_stage
 #define MIEL_HVAC_STAGE_FAN_5 0x05
 #define MIEL_HVAC_STAGE_FAN_QUIT 0x06
 	uint8_t mode;
-#define MIEL_HVAC_STAGE_MODE_MANUAL 0x00
+#define MIEL_HVAC_STAGE_MODE_DIRECT 0x00
 #define MIEL_HVAC_STAGE_MODE_AUTO_FAN 0x01
 #define MIEL_HVAC_STAGE_MODE_AUTO_HEAT 0x02
 #define MIEL_HVAC_STAGE_MODE_AUTO_COOL 0x03
@@ -507,11 +507,11 @@ static const struct miel_hvac_map miel_hvac_stage_fan_map[] = {
 };
 
 static const struct miel_hvac_map miel_hvac_stage_mode_map[] = {
-	{MIEL_HVAC_STAGE_MODE_MANUAL, "manual"},
+	{MIEL_HVAC_STAGE_MODE_DIRECT, "direct"}, //direct - mode is set to heat, dry, cool or fan
 	{MIEL_HVAC_STAGE_MODE_AUTO_FAN, "auto_fan"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_HEAT, "auto_heat"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_COOL, "auto_cool"},
-	{MIEL_HVAC_STAGE_MODE_AUTO_LEADER, "auto_leader"},
+	{MIEL_HVAC_STAGE_MODE_AUTO_LEADER, "auto_leader"}, //in this mode the unit is following the mode of the leader unit in a multi split system
 };
 
 enum miel_hvac_parser_state
@@ -1084,11 +1084,11 @@ miel_hvac_remotetemp_auto_clear(void)
 	update->control = control;
 	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
-	remotetemp_clear = false;
+	remote_temp_clear = false;
 }
 
 static void
-miel_hvac_cmnd_remotetemp_auto_clear_time(void)
+miel_hvac_cmnd_setremote_temp_auto_clear_time(void)
 {
 	if (XdrvMailbox.data_len == 0)
 		return;
@@ -1099,13 +1099,13 @@ miel_hvac_cmnd_remotetemp_auto_clear_time(void)
 		miel_hvac_respond_unsupported();
 		return;
 	}
-	remotetemp_auto_clear_time = clear_time;
+	remote_temp_auto_clear_time = clear_time;
 
-	ResponseCmndNumber(remotetemp_auto_clear_time);
+	ResponseCmndNumber(remote_temp_auto_clear_time);
 }
 
 static void
-miel_hvac_cmnd_remotetemp(void)
+miel_hvac_cmnd_setremote_temp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	struct miel_hvac_msg_update_remotetemp *update = &sc->sc_remotetemp_update;
@@ -1148,8 +1148,8 @@ miel_hvac_cmnd_remotetemp(void)
 	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
 
-	remotetemp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
-	remotetemp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
+	remote_temp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
+	remote_temp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
 }
 
 static void
@@ -1596,10 +1596,10 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			dtostrfd(ConvertTemp(temp), Settings->flag2.temperature_resolution, room_temp);
 		}
 		ResponseAppend_P(PSTR(",\"RoomTemperature\":%s"), room_temp);
-		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""), remotetemp_clear ? "on" : "off");
+		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""), remote_temp_clear ? "on" : "off");
 
 		char remotetempautocleartime[33];
-		ultoa(remotetemp_auto_clear_time, remotetempautocleartime, 10);
+		ultoa(remote_temp_auto_clear_time, remotetempautocleartime, 10);
 		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorAutoClearTime\":\"%s\""), remotetempautocleartime);
 
 		// Outdoor temperature
@@ -1705,7 +1705,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		name = miel_hvac_map_byval(stage->mode, miel_hvac_stage_mode_map, nitems(miel_hvac_stage_mode_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"ModeStage\":\"%s\""), name == "manual" ? mode : name);
+			ResponseAppend_P(PSTR(",\"ModeStage\":\"%s\""), name);
 		}
 
 		ResponseAppend_P(PSTR(",\"StageHex\":\"%s\""), ToHex_P((uint8_t *)&sc->sc_stage, sizeof(sc->sc_stage), hex, sizeof(hex)));
@@ -1803,10 +1803,10 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 
 	if (sc->sc_remotetemp_update.seven)
 	{
-		struct miel_hvac_msg_update_remotetemp *remotetemp = &sc->sc_remotetemp_update;
+		struct miel_hvac_msg_update_remotetemp *rt = &sc->sc_remotetemp_update;
 
-		miel_hvac_send_update_remotetemp(sc, remotetemp);
-		memset(remotetemp, 0, sizeof(*remotetemp));
+		miel_hvac_send_update_remotetemp(sc, rt);
+		memset(rt, 0, sizeof(*rt));
 		return;
 	}
 
@@ -1828,8 +1828,8 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 	"|" D_CMND_MIEL_HVAC_SETAIRDIRECTION
 	"|" D_CMND_MIEL_HVAC_SETPROHIBIT
 	"|" D_CMND_MIEL_HVAC_SETPURIFY
-	"|" D_CMND_MIEL_HVAC_REMOTETEMP
-	"|" D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME
+	"|" D_CMND_MIEL_HVAC_SETREMOTE_TEMP
+	"|" D_CMND_MIEL_HVAC_SETREMOTE_TEMP_AUTO_CLEAR_TIME
 	"|" D_CMND_MIEL_HVAC_SEND_COMMAND
 #ifdef MIEL_HVAC_DEBUG
 	"|"
@@ -1847,8 +1847,8 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 	&miel_hvac_cmnd_setairdirection,
 	&miel_hvac_cmnd_setprohibit,
 	&miel_hvac_cmnd_setpurify,
-	&miel_hvac_cmnd_remotetemp,
-	&miel_hvac_cmnd_remotetemp_auto_clear_time,
+	&miel_hvac_cmnd_setremote_temp,
+	&miel_hvac_cmnd_setremote_temp_auto_clear_time,
 	&miel_hvac_cmnd_send_command,
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
@@ -1883,9 +1883,9 @@ bool Xdrv44(uint32_t function)
 	case FUNC_EVERY_100_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_SECOND:
-		if (remotetemp_clear &&
-			(remotetemp_last_call_time == 0 ||
-			 millis() - remotetemp_last_call_time > remotetemp_auto_clear_time))
+		if (remote_temp_clear &&
+			(remote_temp_last_call_time == 0 ||
+			 millis() - remote_temp_last_call_time > remote_temp_auto_clear_time))
 		{
 			miel_hvac_remotetemp_auto_clear();
 		}
