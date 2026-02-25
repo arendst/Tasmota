@@ -1803,10 +1803,10 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 
 	if (sc->sc_remotetemp_update.seven)
 	{
-		struct miel_hvac_msg_update_remotetemp *rt = &sc->sc_remotetemp_update;
+		struct miel_hvac_msg_update_remotetemp *remotetemp = &sc->sc_remotetemp_update;
 
-		miel_hvac_send_update_remotetemp(sc, rt);
-		memset(rt, 0, sizeof(*rt));
+		miel_hvac_send_update_remotetemp(sc, remotetemp);
+		memset(remotetemp, 0, sizeof(*remotetemp));
 		return;
 	}
 
