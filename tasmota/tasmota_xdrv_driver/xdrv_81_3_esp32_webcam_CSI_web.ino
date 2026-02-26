@@ -40,7 +40,7 @@ void WcShowStream(void) {
   if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
     if (!Wc.jpeg.server) return; // Server not ready
 
-    uint32_t ip = (uint32_t)WiFi.localIP();
+    uint32_t ip = (uint32_t)NetworkAddress();
 
     WSContentSend_P(PSTR("<div><div id='wc_s'>Loading...</div>"));
 

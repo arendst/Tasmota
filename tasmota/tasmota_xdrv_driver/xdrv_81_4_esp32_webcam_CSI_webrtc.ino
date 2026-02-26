@@ -1604,7 +1604,7 @@ static void wc_base64_encode(const uint8_t* data, size_t len, char* out, size_t 
 
 void WcGenerateAnswer(void) {
   if (!WebRTC) return;
-  IPAddress ip = WiFi.localIP();
+  IPAddress ip = NetworkAddress();
   char buf[256];
 
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);

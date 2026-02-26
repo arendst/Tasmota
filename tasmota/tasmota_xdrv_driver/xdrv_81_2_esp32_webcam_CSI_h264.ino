@@ -589,7 +589,7 @@ void HandleRtsp() {
             } 
             else if (req.indexOf(PSTR("DESCRIBE")) >= 0) {
                 char sdp[256];
-                IPAddress ip = WiFi.localIP();
+                IPAddress ip = NetworkAddress();
                 snprintf_P(sdp, sizeof(sdp), 
                 PSTR("v=0\r\no=- 0 0 IN IP4 %s\r\ns=Tasmota Stream\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=fmtp:96 packetization-mode=1;profile-level-id=42001E\r\na=control:track0\r\n"),
                 ip.toString().c_str());
