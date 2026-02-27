@@ -737,10 +737,13 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             panel_config->epd.lut_partial_len = panel_config->epd.lutpsize;
             break;
           case 'T':
-            // Parse timing directly into EPD config
-            panel_config->epd.lut_full_time = next_val(&lp1);
-            panel_config->epd.lut_partial_time = next_val(&lp1);
-            panel_config->epd.update_time = next_val(&lp1);
+            // :TI and :TS are touch config lines handled by xdsp_17_universal.ino
+            // Only parse EPD timing when the line is :T,<number> (EPD timing values)
+            if (*lp1 != 'I' && *lp1 != 'S') {
+              panel_config->epd.lut_full_time = next_val(&lp1);
+              panel_config->epd.lut_partial_time = next_val(&lp1);
+              panel_config->epd.update_time = next_val(&lp1);
+            }
             break;
           case 'B':
             lvgl_param.flushlines = next_val(&lp1);
