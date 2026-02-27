@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Do not free BT memory when in use (#24480)
+- Berry avoid `tasmota.wifi()` returning bad values when wifi is turned off
 
 ### Removed
 - Berry `tasmota.urlbecload()` superseded by Extension Manager (#24493)
