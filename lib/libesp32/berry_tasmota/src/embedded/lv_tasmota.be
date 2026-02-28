@@ -26,6 +26,7 @@ def init(lv_tasmota)
   lv.register_button_encoder = lv_tasmota.register_button_encoder
   lv.screenshot = lv_tasmota.screenshot
   lv.set_paint_cb = lv_tasmota.set_paint_cb
+  lv.set_stream_cb = lv_tasmota.set_stream_cb
 
   # add version information
   lv.version = lv.version_major()

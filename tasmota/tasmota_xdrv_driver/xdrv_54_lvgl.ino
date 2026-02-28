@@ -27,12 +27,17 @@
 
 #define XDRV_54             54
 
+#define LV_MAGIC    0x564C //LV
+#define CHUNK_SIZE  1024
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
 // callback type when a screen paint is done
 typedef void (*lv_paint_cb_t)(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint8_t *pixels);
+// callback type when a stream buffer is ready
+typedef void (*lv_stream_cb_t)(const uint8_t *buf, size_t len);
 
 struct LVGL_Glue {
   lv_display_t *lv_display = nullptr;
@@ -42,6 +47,7 @@ struct LVGL_Glue {
   Ticker tick;
   File * screenshot = nullptr;
   lv_paint_cb_t paint_cb = nullptr;
+  lv_stream_cb_t stream_cb = nullptr;
 };
 LVGL_Glue * lvgl_glue;
 
@@ -108,6 +114,11 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
   if (lvgl_glue->paint_cb != nullptr) {
     lvgl_glue->paint_cb(area->x1, area->y1, area->x2, area->y2, color_p);
   }
+
+  // if there is a stream callback, process it
+  if (lvgl_glue->stream_cb != nullptr) {
+    lv_process_stream(area->x1, area->y1, width, height, (const uint16_t*)color_p, pixels_len);
+  }
 }
 
 void lv_set_paint_cb(void* cb);
@@ -120,6 +131,56 @@ void * lv_get_paint_cb(void) {
   return (void*) lvgl_glue->paint_cb;
 }
 
+void lv_set_stream_cb(void* cb);
+void lv_set_stream_cb(void* cb) {
+  lvgl_glue->stream_cb = (lv_stream_cb_t)cb;
+}
+
+void * lv_get_stream_cb(void);
+void * lv_get_stream_cb(void) {
+  return (void*) lvgl_glue->stream_cb;
+}
+
+void lv_process_stream(int32_t x, int32_t y, int32_t width, int32_t height, const uint16_t *pixels, uint32_t len) {
+  static uint16_t chunk[CHUNK_SIZE];
+  size_t chunk_pos = 0;
+
+  auto emit = [&](uint16_t val) {
+      chunk[chunk_pos++] = val;
+      if (chunk_pos >= CHUNK_SIZE) {
+          chunk_pos = 0;
+          lvgl_glue->stream_cb((const uint8_t *)chunk, CHUNK_SIZE * 2);
+      }
+  };
+
+  emit(LV_MAGIC);
+  emit((uint16_t)x);
+  emit((uint16_t)y);
+  emit((uint16_t)width);
+  emit((uint16_t)height);
+
+  const uint16_t *p = pixels;
+  const uint16_t *end = pixels + len;
+  while (p < end) {
+    uint16_t run = 1;
+    uint16_t limit = min(p + 0x7FFF + 2, end) - p;
+    while (run < limit && p[run] == *p) run++;
+    if (run >= 2) {
+      emit(0x8000 | (run - 2));
+      emit(*p);
+      p += run;
+    } else {
+      uint16_t rlen = 0;
+      while (p + rlen + 1 < end && p[rlen] != p[rlen + 1]) rlen++;
+      if (rlen == 0) rlen++;
+      emit(rlen - 1);
+      for (uint16_t j = 0; j < rlen; j++)
+        emit(*p++);
+    }
+  }
+  if (chunk_pos > 0)
+    lvgl_glue->stream_cb((const uint8_t *)chunk, chunk_pos * 2);
+}
 
 /************************************************************
  * Emulation of stdio for FreeType
@@ -182,7 +243,7 @@ extern "C" {
   int lvbe_fseek(lvbe_FILE * stream, long int offset, int origin ) {
     File * f_ptr = (File*) stream;
     // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fseek(%p, %i, %i)", f_ptr, offset, origin);
-    
+
     fs::SeekMode mode = fs::SeekMode::SeekSet;
     if (SEEK_CUR == origin) {
       mode = fs::SeekMode::SeekCur;
