@@ -1,194 +1,194 @@
 <style>
-	.border {
-		display: none;
-		margin-top: 5px;
-		padding: 1px;
-		border: 1px solid var(--c_txt);
-		background-color: black;
-		box-sizing: border-box;
-	}
+  .border {
+    display: none;
+    margin-top: 5px;
+    padding: 1px;
+    border: 1px solid var(--c_txt);
+    background-color: black;
+    box-sizing: border-box;
+  }
 
-	#canvas {
-		display: block;
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		image-rendering: pixelated;
-	}
+  #canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
 </style>
 <table style="width: 100%;">
-	<tbody>
-		<tr>
-			<td>
-				<button id="lvBtn">LVGL screen mirroring</button>
-				<div class="border">
-					<canvas id="canvas"></canvas>
-				</div>
-			</td>
-		</tr>
-	</tbody>
+  <tbody>
+    <tr>
+      <td>
+        <button id="lvBtn">LVGL screen mirroring</button>
+        <div class="border">
+          <canvas id="canvas"></canvas>
+        </div>
+      </td>
+    </tr>
+  </tbody>
 </table>
 <script>
-	const LV_MAGIC = 0x564C;
-	const HEADER_WORDS = 5; // 10 bytes: 2(LV) + 2(x) + 2(y) + 2(w) + 2(h)
-	const RGB565_LUT = new Uint32Array(0x10000);
+  const LV_MAGIC = 0x564C;
+  const HEADER_WORDS = 5; // 10 bytes: 2(LV) + 2(x) + 2(y) + 2(w) + 2(h)
+  const RGB565_LUT = new Uint32Array(0x10000);
 
-	const lvBtn = document.getElementById('lvBtn');
-	const canvas = document.getElementById('canvas');
-	const ctx = canvas.getContext("2d");
+  const lvBtn = document.getElementById('lvBtn');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext("2d");
 
-	let abortController = null;
-	let isStreaming = false;
-	let imageData, argb, sharedBuffer, buf8, buf16;
+  let abortController = null;
+  let isStreaming = false;
+  let imageData, argb, sharedBuffer, buf8, buf16;
 
-	// RGB565 to ARGB8888 (Little Endian: AABBGGRR) using bit replication
-	for (let p = 0; p < 0x10000; p++) {
-		RGB565_LUT[p] = 0xFF000000 | // Alpha (opaque)
-			(((p & 0xF800) >>> 8) | ((p & 0xE000) >>> 13)) | // R 5-bit abcde -> abcdeabc
-			(((p & 0x07E0) << 5) | ((p & 0x0600) >>> 1)) |   // G 6-bit abcdef -> abcdefab
-			(((p & 0x001F) << 19) | ((p & 0x001C) << 14));   // B 5-bit abcde -> abcdeabc
-	}
+  // RGB565 to ARGB8888 (Little Endian: AABBGGRR) using bit replication
+  for (let p = 0; p < 0x10000; p++) {
+    RGB565_LUT[p] = 0xFF000000 | // Alpha (opaque)
+      (((p & 0xF800) >>> 8) | ((p & 0xE000) >>> 13)) | // R 5-bit abcde -> abcdeabc
+      (((p & 0x07E0) << 5) | ((p & 0x0600) >>> 1)) |   // G 6-bit abcdef -> abcdefab
+      (((p & 0x001F) << 19) | ((p & 0x001C) << 14));   // B 5-bit abcde -> abcdeabc
+  }
 
-	async function startStream(url) {
-		const border = canvas.parentElement;
-		border.style.display = 'block';
-		abortController = new AbortController();
-		var width = 0;
-		var height = 0;
-		try {
-			const response = await fetch(url, { signal: abortController.signal });
-			const screenSize = response.headers.get('Screen-Size');
-			if (screenSize) {
-				[width, height] = screenSize.split('x').map(Number);
-				if (!imageData) {
-					const parentWidth = border.parentElement.clientWidth;
-					border.style.width = parentWidth + 'px';
-					border.style.height = (parentWidth * height / width) + 'px';
-					canvas.width = width;
-					canvas.height = height;
-					imageData = ctx.createImageData(width, height);
-					argb = new Uint32Array(imageData.data.buffer);
-					readBuf = new Uint8Array(width * height * 2 + HEADER_WORDS * 2);
-					readBuf16 = new Uint16Array(readBuf.buffer);
-					updateBuffer = new Uint16Array(width * height);
-				}
-				isStreaming = true;
-			} else {
-				console.error('Expecting screen size header.');
-				stopStream();
-				return;
-			}
-			const reader = response.body.getReader();
-			let available = 0;
-			let decompTotal, x, y, w, h;
-			let sIdx, dIdx, dInc, uIdx;
-			let drawnRows = 0;
-			while (isStreaming) {
-				const { value, done } = await reader.read();
-				if (done) break;
-				readBuf.set(value, available * 2);
-				available += value.length / 2;
-				if (!decompTotal) {
-					if (available < HEADER_WORDS) continue;
-					[magic, x, y, w, h] = readBuf16;
-					if (magic !== LV_MAGIC) {
-						console.error("Sync Error: No magic found");
-						stopStream();
-						return;
-					}
-					decompTotal = w * h;
-					decompIdx = 0;
-					drawnRows = 0;
-					sIdx = HEADER_WORDS;
-					dIdx = y * width + x;
-					dInc = width - w;
-					uIdx = 0;
-				}
-				while (decompIdx < decompTotal) {
-					if (available < sIdx + 1) break;
-					const chunkHeader = readBuf16[sIdx];
-					const isRle = chunkHeader & 0x8000;
-					const count = (chunkHeader & 0x7FFF) + (isRle ? 2 : 1);
-					if (available < sIdx + 1 + (isRle ? 1 : count)) break;
-					sIdx++;
-					if (isRle) {
-						updateBuffer.fill(readBuf16[sIdx++], decompIdx, decompIdx + count);
-					} else {
-						updateBuffer.set(readBuf16.subarray(sIdx, sIdx + count), decompIdx);
-						sIdx += count;
-					}
-					decompIdx += count;
-				}
-				const availableRows = Math.floor(decompIdx / w);
-				if (availableRows > drawnRows) {
-					const newRows = availableRows - drawnRows;
-					for (let r = 0; r < newRows; r++, dIdx += dInc) {
-						for (let c = 0; c < w; c++) {
-							argb[dIdx++] = RGB565_LUT[updateBuffer[uIdx++]];
-						}
-					}
-					ctx.putImageData(imageData, 0, 0, x, y + drawnRows, w, newRows);
-					drawnRows = availableRows;
-				}
-				if (decompIdx < decompTotal) continue;
-				available -= sIdx;
-				if (available > 0) {
-					readBuf16.copyWithin(0, sIdx, sIdx + available);
-				}
-				sIdx = 0;
-				decompTotal = undefined;
-			}
-			available -= sIdx;
-			if (available > 0) {
-				readBuf16.copyWithin(0, sIdx, sIdx + available);
-			}
-		} catch (err) {
-			if (err.name !== 'AbortError') console.error("Stream Error: ", err);
-		} finally {
-			stopStream();
-		}
-	}
+  async function startStream(url) {
+    const border = canvas.parentElement;
+    border.style.display = 'block';
+    abortController = new AbortController();
+    var width = 0;
+    var height = 0;
+    try {
+      const response = await fetch(url, { signal: abortController.signal });
+      const screenSize = response.headers.get('Screen-Size');
+      if (screenSize) {
+        [width, height] = screenSize.split('x').map(Number);
+        if (!imageData) {
+          const parentWidth = border.parentElement.clientWidth;
+          border.style.width = parentWidth + 'px';
+          border.style.height = (parentWidth * height / width) + 'px';
+          canvas.width = width;
+          canvas.height = height;
+          imageData = ctx.createImageData(width, height);
+          argb = new Uint32Array(imageData.data.buffer);
+          readBuf = new Uint8Array(width * height * 2 + HEADER_WORDS * 2);
+          readBuf16 = new Uint16Array(readBuf.buffer);
+          updateBuffer = new Uint16Array(width * height);
+        }
+        isStreaming = true;
+      } else {
+        console.error('Expecting screen size header.');
+        stopStream();
+        return;
+      }
+      const reader = response.body.getReader();
+      let available = 0;
+      let decompTotal, x, y, w, h;
+      let sIdx, dIdx, dInc, uIdx;
+      let drawnRows = 0;
+      while (isStreaming) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        readBuf.set(value, available * 2);
+        available += value.length / 2;
+        if (!decompTotal) {
+          if (available < HEADER_WORDS) continue;
+          [magic, x, y, w, h] = readBuf16;
+          if (magic !== LV_MAGIC) {
+            console.error("Sync Error: No magic found");
+            stopStream();
+            return;
+          }
+          decompTotal = w * h;
+          decompIdx = 0;
+          drawnRows = 0;
+          sIdx = HEADER_WORDS;
+          dIdx = y * width + x;
+          dInc = width - w;
+          uIdx = 0;
+        }
+        while (decompIdx < decompTotal) {
+          if (available < sIdx + 1) break;
+          const chunkHeader = readBuf16[sIdx];
+          const isRle = chunkHeader & 0x8000;
+          const count = (chunkHeader & 0x7FFF) + (isRle ? 2 : 1);
+          if (available < sIdx + 1 + (isRle ? 1 : count)) break;
+          sIdx++;
+          if (isRle) {
+            updateBuffer.fill(readBuf16[sIdx++], decompIdx, decompIdx + count);
+          } else {
+            updateBuffer.set(readBuf16.subarray(sIdx, sIdx + count), decompIdx);
+            sIdx += count;
+          }
+          decompIdx += count;
+        }
+        const availableRows = Math.floor(decompIdx / w);
+        if (availableRows > drawnRows) {
+          const newRows = availableRows - drawnRows;
+          for (let r = 0; r < newRows; r++, dIdx += dInc) {
+            for (let c = 0; c < w; c++) {
+              argb[dIdx++] = RGB565_LUT[updateBuffer[uIdx++]];
+            }
+          }
+          ctx.putImageData(imageData, 0, 0, x, y + drawnRows, w, newRows);
+          drawnRows = availableRows;
+        }
+        if (decompIdx < decompTotal) continue;
+        available -= sIdx;
+        if (available > 0) {
+          readBuf16.copyWithin(0, sIdx, sIdx + available);
+        }
+        sIdx = 0;
+        decompTotal = undefined;
+      }
+      available -= sIdx;
+      if (available > 0) {
+        readBuf16.copyWithin(0, sIdx, sIdx + available);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error("Stream Error: ", err);
+    } finally {
+      stopStream();
+    }
+  }
 
-	function stopStream() {
-		canvas.parentElement.style.display = 'none';
-		isStreaming = false;
-		if (abortController) {
-			abortController.abort();
-		}
-		if (imageData) {
-			argb.fill(0);
-			ctx.putImageData(imageData, 0, 0);
-			imageData = undefined
-		}
-	}
+  function stopStream() {
+    canvas.parentElement.style.display = 'none';
+    isStreaming = false;
+    if (abortController) {
+      abortController.abort();
+    }
+    if (imageData) {
+      argb.fill(0);
+      ctx.putImageData(imageData, 0, 0);
+      imageData = undefined
+    }
+  }
 
-	function getCanvasCoordinates(event) {
-		const rect = canvas.getBoundingClientRect();
-		const x = Math.round((event.clientX - rect.left) * (canvas.width / rect.width));
-		const y = Math.round((event.clientY - rect.top) * (canvas.height / rect.height));
-		return { x, y };
-	}
+  function getCanvasCoordinates(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round((event.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.round((event.clientY - rect.top) * (canvas.height / rect.height));
+    return { x, y };
+  }
 
-	canvas.addEventListener("mousedown", (e) => {
-		e.preventDefault();
-		const host = getHost();
-		fetch(`http://${host}/lvgl_touch`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-			},
-			body: new URLSearchParams(getCanvasCoordinates(e)).toString()
-		}).catch(err => {
-			console.error("Touch event error:", err);
-		});
-	});
+  canvas.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const host = getHost();
+    fetch(`http://${host}/lvgl_touch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(getCanvasCoordinates(e)).toString()
+    }).catch(err => {
+      console.error("Touch event error:", err);
+    });
+  });
 
-	lvBtn.addEventListener('click', (e) => {
-		const host = getHost();
-		isStreaming ? stopStream() : startStream(`http://${host}:8881`);
-	});
+  lvBtn.addEventListener('click', (e) => {
+    const host = getHost();
+    isStreaming ? stopStream() : startStream(`http://${host}:8881`);
+  });
 
-	function getHost() {
-		return window.location.hostname || 'localhost';
-	}
+  function getHost() {
+    return window.location.hostname || 'localhost';
+  }
 </script>
