@@ -290,6 +290,35 @@ public:
     return 0;
   }
 
+  bool writebytes(const char *buf, size_t size)
+  {
+    if (state != AsyncTCPState::CONNECTED) {
+      return false;
+    }
+    size_t offset = 0;
+    while (offset < size) {
+      fd_set wfd, efd;
+      FD_ZERO(&wfd);
+      FD_ZERO(&efd);
+      FD_SET(sockfd, &wfd);
+      FD_SET(sockfd, &efd);
+      struct timeval tv = {0, 1000};
+      int sent = 0;
+      int res = ::select(sockfd + 1, NULL, &wfd, &efd, &tv);
+      if (res > 0 && FD_ISSET(sockfd, &wfd)) {
+        sent = ::send(sockfd, buf + offset, size - offset, MSG_DONTWAIT);
+      }
+      if (sent > 0) { offset += sent; }
+      else if ((res < 0) || (sent == 0) || FD_ISSET(sockfd, &efd))
+      {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) { continue; }
+        stop();
+        return false;
+      }
+    }
+    return true;
+  }
+
   size_t read(uint8_t* buf, size_t size) {
     _update_connected();
     if (state == AsyncTCPState::CONNECTED) {
@@ -542,6 +571,32 @@ extern "C" {
         be_pushint(vm, 0);    // nothing to send
       }
       be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // tcp.writebytes(comptr | bytes | string [, len:int]) -> bool
+  int32_t wc_tcpasync_writebytes(struct bvm *vm);
+  int32_t wc_tcpasync_writebytes(struct bvm *vm)
+  {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2) || be_iscomptr(vm, 2))) {
+      AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
+      const char *buf = nullptr;
+      size_t size = (argc >= 3 && be_isint(vm, 3)) ? be_toint(vm, 3) : 0;
+      if (be_iscomptr(vm, 2)) { // comptr
+        buf = (const char *)be_tocomptr(vm, 2);
+      } else  if (be_isbytes(vm, 2)) { // bytes
+        buf = (const char*) be_tobytes(vm, 2, &size);
+      } else if (be_isstring(vm, 2)) {  // string
+        buf = be_tostring(vm, 2);
+        size = strlen(buf);
+      }
+      if ((buf != nullptr) && (size != 0)) {
+        int res = tcp->writebytes(buf, size);
+        be_pushbool(vm, res);
+        be_return(vm);
+      }
     }
     be_raise(vm, kTypeError, nullptr);
   }
