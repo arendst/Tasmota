@@ -122,6 +122,7 @@ enum UserSelectablePins {
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
   GPIO_LMT01,                          // LMT01 input counting pin
   GPIO_IEM3000_TX, GPIO_IEM3000_RX,    // IEM3000 Serial interface
+  GPIO_AOX_RX, GPIO_AOX_TX,            // AOX3000Z01 UART interface
   GPIO_ZIGBEE_RST,                     // Zigbee reset
   GPIO_DYP_RX,
   GPIO_MIEL_HVAC_TX, GPIO_MIEL_HVAC_RX,  // Mitsubishi Electric HVAC
@@ -401,6 +402,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
+    D_SENSOR_AOX_RX "|" D_SENSOR_AOX_TX "|"
   D_SENSOR_ZIGBEE_RST "|"
   D_SENSOR_DYP_RX "|"
   D_SENSOR_MIEL_HVAC_TX "|" D_SENSOR_MIEL_HVAC_RX "|"
@@ -1173,6 +1175,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_C8_CO2_5K_TX),                      // SC8-CO2-5K Serial interface
   AGPIO(GPIO_C8_CO2_5K_RX),                      // SC8-CO2-5K Serial interface
 #endif
+  AGPIO(GPIO_AOX_RX),                            // AOX3000Z01 Serial interface
+  AGPIO(GPIO_AOX_TX),                            // AOX3000Z01 Serial interface
 
 #ifdef ESP32
 #ifdef USE_ESP32_TWAI
