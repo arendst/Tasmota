@@ -46,6 +46,64 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
   #include "esp_netif.h"
 #endif  // ESP32
 
+// Do some cleaning before disconnecting Wifi
+//
+// // 1. BEFORE destroying the old WiFi netif (on user WiFi-off):
+// esp_netif_t *old_sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+// if (old_sta) {
+//     mdns_netif_action(old_sta, MDNS_EVENT_DISABLE_IP4);
+//     mdns_netif_action(old_sta, MDNS_EVENT_DISABLE_IP6);
+// }
+// // Now destroy old_sta, deinit wifi, etc.
+
+// // 2. When WiFi is re-enabled, AFTER you have an IP (in your GOT_IP handler):
+// esp_netif_t *new_sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+// if (new_sta) {
+//     mdns_netif_action(new_sta, MDNS_EVENT_ENABLE_IP4);
+//     mdns_netif_action(new_sta, MDNS_EVENT_ENABLE_IP6);
+// }
+void WifiMDNSBeforeDisconnect(void)
+{
+#if defined(ESP32) && defined(USE_DISCOVERY)
+  esp_netif_t *sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+  if (sta) {
+      mdns_netif_action(sta, MDNS_EVENT_DISABLE_IP4);
+#ifdef USE_IPV6
+      mdns_netif_action(sta, MDNS_EVENT_DISABLE_IP6);
+#endif // USE_IPV6
+  }
+#endif // defined(ESP32) && defined(USE_DISCOVERY)
+}
+
+void WifiMDNSAfterReconnectv4(void)
+{
+#if defined(ESP32) && defined(USE_DISCOVERY)
+  // After WiFi is back up and you have IPs, get the new netif handle:
+  esp_netif_t *sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+
+  // Tell mDNS to re-enable on this interface:
+  if (sta) {
+    char hostname[MDNS_NAME_BUF_LEN];
+    mdns_netif_action(sta, MDNS_EVENT_ENABLE_IP4);
+    mdns_netif_action(sta, MDNS_EVENT_ANNOUNCE_IP4);
+  }
+#endif // defined(ESP32) && defined(USE_DISCOVERY)
+}
+void WifiMDNSAfterReconnectv6(void)
+{
+#if defined(ESP32) && defined(USE_DISCOVERY) && defined(USE_IPV6)
+  // After WiFi is back up and you have IPs, get the new netif handle:
+  esp_netif_t *sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+
+  // Tell mDNS to re-enable on this interface:
+  if (sta) {
+    char hostname[MDNS_NAME_BUF_LEN];
+    mdns_netif_action(sta, MDNS_EVENT_ENABLE_IP6);
+    mdns_netif_action(sta, MDNS_EVENT_ANNOUNCE_IP6);
+  }
+#endif // defined(ESP32) && defined(USE_DISCOVERY) && defined(USE_IPV6)
+}
+
 /**
  * Converts WiFi RSSI (signal strength) to a quality percentage
  * 
@@ -839,62 +897,6 @@ String WifiGetIPv6LinkLocalStr(void)
 {
   IPAddress ip;
   return WifiGetIPv6LinkLocal(&ip) ? ip.toString(true) : String();
-}
-
-// Do some cleaning before disconnecting Wifi
-//
-// // 1. BEFORE destroying the old WiFi netif (on user WiFi-off):
-// esp_netif_t *old_sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-// if (old_sta) {
-//     mdns_netif_action(old_sta, MDNS_EVENT_DISABLE_IP4);
-//     mdns_netif_action(old_sta, MDNS_EVENT_DISABLE_IP6);
-// }
-// // Now destroy old_sta, deinit wifi, etc.
-
-// // 2. When WiFi is re-enabled, AFTER you have an IP (in your GOT_IP handler):
-// esp_netif_t *new_sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-// if (new_sta) {
-//     mdns_netif_action(new_sta, MDNS_EVENT_ENABLE_IP4);
-//     mdns_netif_action(new_sta, MDNS_EVENT_ENABLE_IP6);
-// }
-void WifiMDNSBeforeDisconnect(void)
-{
-#if defined(ESP32) && defined(USE_DISCOVERY)
-  esp_netif_t *sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-  if (sta) {
-      mdns_netif_action(sta, MDNS_EVENT_DISABLE_IP4);
-      mdns_netif_action(sta, MDNS_EVENT_DISABLE_IP6);
-  }
-#endif // defined(ESP32) && defined(USE_DISCOVERY)
-}
-
-void WifiMDNSAfterReconnectv4(void)
-{
-#if defined(ESP32) && defined(USE_DISCOVERY)
-  // After WiFi is back up and you have IPs, get the new netif handle:
-  esp_netif_t *sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-
-  // Tell mDNS to re-enable on this interface:
-  if (sta) {
-    char hostname[MDNS_NAME_BUF_LEN];
-    mdns_netif_action(sta, MDNS_EVENT_ENABLE_IP4);
-    mdns_netif_action(sta, MDNS_EVENT_ANNOUNCE_IP4);
-  }
-#endif // defined(ESP32) && defined(USE_DISCOVERY)
-}
-void WifiMDNSAfterReconnectv6(void)
-{
-#if defined(ESP32) && defined(USE_DISCOVERY)
-  // After WiFi is back up and you have IPs, get the new netif handle:
-  esp_netif_t *sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-
-  // Tell mDNS to re-enable on this interface:
-  if (sta) {
-    char hostname[MDNS_NAME_BUF_LEN];
-    mdns_netif_action(sta, MDNS_EVENT_ENABLE_IP6);
-    mdns_netif_action(sta, MDNS_EVENT_ANNOUNCE_IP6);
-  }
-#endif // defined(ESP32) && defined(USE_DISCOVERY)
 }
 
 
