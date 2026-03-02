@@ -490,10 +490,10 @@ class Matter_Commisioning_Context
       # log("MTR: * shared_secret  = " + session.shared_secret.tohex(), 4)
 
       var sigma2_tbsdata = matter.TLV.Matter_TLV_struct()
-      sigma2_tbsdata.add_TLV(1, matter.TLV.B2, fabric.get_noc())
-      sigma2_tbsdata.add_TLV(2, matter.TLV.B2, fabric.get_icac())
-      sigma2_tbsdata.add_TLV(3, matter.TLV.B2, session.__responder_pub)
-      sigma2_tbsdata.add_TLV(4, matter.TLV.B2, sigma1.initiatorEphPubKey)
+      sigma2_tbsdata.add_TLV(1, 0x11 #-matter.TLV.B2-#, fabric.get_noc())
+      sigma2_tbsdata.add_TLV(2, 0x11 #-matter.TLV.B2-#, fabric.get_icac())
+      sigma2_tbsdata.add_TLV(3, 0x11 #-matter.TLV.B2-#, session.__responder_pub)
+      sigma2_tbsdata.add_TLV(4, 0x11 #-matter.TLV.B2-#, sigma1.initiatorEphPubKey)
 
       var TBSData2Signature = crypto.EC_P256().ecdsa_sign_sha256(fabric.get_pk(), sigma2_tbsdata.tlv2raw())
       # log("****************************************", 4)
@@ -502,10 +502,10 @@ class Matter_Commisioning_Context
       # log("MTR: * TBSData2Signature  = " + TBSData2Signature.tohex(), 4)
 
       var sigma2_tbedata = matter.TLV.Matter_TLV_struct()
-      sigma2_tbedata.add_TLV(1, matter.TLV.B2, fabric.get_noc())
-      sigma2_tbedata.add_TLV(2, matter.TLV.B2, fabric.get_icac())
-      sigma2_tbedata.add_TLV(3, matter.TLV.B2, TBSData2Signature)
-      sigma2_tbedata.add_TLV(4, matter.TLV.B2, session.resumption_id)
+      sigma2_tbedata.add_TLV(1, 0x11 #-matter.TLV.B2-#, fabric.get_noc())
+      sigma2_tbedata.add_TLV(2, 0x11 #-matter.TLV.B2-#, fabric.get_icac())
+      sigma2_tbedata.add_TLV(3, 0x11 #-matter.TLV.B2-#, TBSData2Signature)
+      sigma2_tbedata.add_TLV(4, 0x11 #-matter.TLV.B2-#, session.resumption_id)
 
       # compute TranscriptHash = Crypto_Hash(message = Msg1)
       # log("****************************************", 4)
@@ -634,10 +634,10 @@ class Matter_Commisioning_Context
     end
 
     var sigma3_tbs = matter.TLV.Matter_TLV_struct()
-    sigma3_tbs.add_TLV(1, matter.TLV.B1, initiatorNOC)
-    sigma3_tbs.add_TLV(2, matter.TLV.B1, initiatorICAC)
-    sigma3_tbs.add_TLV(3, matter.TLV.B1, session.__initiator_pub)
-    sigma3_tbs.add_TLV(4, matter.TLV.B1, session.__responder_pub)
+    sigma3_tbs.add_TLV(1, 0x10 #-matter.TLV.B1-#, initiatorNOC)
+    sigma3_tbs.add_TLV(2, 0x10 #-matter.TLV.B1-#, initiatorICAC)
+    sigma3_tbs.add_TLV(3, 0x10 #-matter.TLV.B1-#, session.__initiator_pub)
+    sigma3_tbs.add_TLV(4, 0x10 #-matter.TLV.B1-#, session.__responder_pub)
     # log("MTR: * sigma3_tbs    = " + str(sigma3_tbs), 4)
     var sigma3_tbs_raw = sigma3_tbs.tlv2raw()
     # log("MTR: * sigma3_tbs_raw= " + sigma3_tbs_raw.tohex(), 4)

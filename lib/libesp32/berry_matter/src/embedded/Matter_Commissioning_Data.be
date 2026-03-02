@@ -88,21 +88,21 @@ class Matter_PBKDFParamResponse
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     # initiatorRandom
-    s.add_TLV(1, TLV.B1, self.initiatorRandom)
-    s.add_TLV(2, TLV.B1, self.responderRandom)
-    s.add_TLV(3, TLV.U2, self.responderSessionId)
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.initiatorRandom)
+    s.add_TLV(2, 0x10 #-TLV.B1-#, self.responderRandom)
+    s.add_TLV(3, 0x05 #-TLV.U2-#, self.responderSessionId)
     var s_pbkdf = s.add_struct(4)
-    s_pbkdf.add_TLV(1, TLV.U4, self.pbkdf_parameters_iterations)
-    s_pbkdf.add_TLV(2, TLV.B1, self.pbkdf_parameters_salt)
+    s_pbkdf.add_TLV(1, 0x06 #-TLV.U4-#, self.pbkdf_parameters_iterations)
+    s_pbkdf.add_TLV(2, 0x10 #-TLV.B1-#, self.pbkdf_parameters_salt)
     # Always include session params with mandatory fields (Matter 1.4 §4.10)
     var s2 = s.add_struct(5)
-    s2.add_TLV(1, TLV.U4, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
-    s2.add_TLV(2, TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
-    s2.add_TLV(3, TLV.U2, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
-    s2.add_TLV(4, TLV.U2, 18)                              # DATA_MODEL_REVISION
-    s2.add_TLV(5, TLV.U2, 12)                              # INTERACTION_MODEL_REVISION
-    s2.add_TLV(6, TLV.U4, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
-    s2.add_TLV(7, TLV.U2, 1)                               # MAX_PATHS_PER_INVOKE
+    s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
+    s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
+    s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
 end
@@ -136,8 +136,8 @@ class Matter_Pake2
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     #
-    s.add_TLV(1, TLV.B1, self.pB)
-    s.add_TLV(2, TLV.B1, self.cB)
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.pB)
+    s.add_TLV(2, 0x10 #-TLV.B1-#, self.cB)
     return s.tlv2raw(b)
   end
 end
@@ -223,19 +223,19 @@ class Matter_Sigma2
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     # initiatorRandom
-    s.add_TLV(1, TLV.B1, self.responderRandom)
-    s.add_TLV(2, TLV.U2, self.responderSessionId)
-    s.add_TLV(3, TLV.B1, self.responderEphPubKey)
-    s.add_TLV(4, TLV.B1, self.encrypted2)
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.responderRandom)
+    s.add_TLV(2, 0x05 #-TLV.U2-#, self.responderSessionId)
+    s.add_TLV(3, 0x10 #-TLV.B1-#, self.responderEphPubKey)
+    s.add_TLV(4, 0x10 #-TLV.B1-#, self.encrypted2)
     # Always include session params with mandatory fields (Matter 1.4 §4.10)
     var s2 = s.add_struct(5)
-    s2.add_TLV(1, TLV.U4, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
-    s2.add_TLV(2, TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
-    s2.add_TLV(3, TLV.U2, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
-    s2.add_TLV(4, TLV.U2, 18)                              # DATA_MODEL_REVISION
-    s2.add_TLV(5, TLV.U2, 12)                              # INTERACTION_MODEL_REVISION
-    s2.add_TLV(6, TLV.U4, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
-    s2.add_TLV(7, TLV.U2, 1)                               # MAX_PATHS_PER_INVOKE
+    s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
+    s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
+    s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
 end
@@ -255,18 +255,18 @@ class Matter_Sigma2Resume
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     # initiatorRandom
-    s.add_TLV(1, TLV.B1, self.resumptionID)
-    s.add_TLV(2, TLV.B1, self.sigma2ResumeMIC)
-    s.add_TLV(3, TLV.U2, self.responderSessionID)
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.resumptionID)
+    s.add_TLV(2, 0x10 #-TLV.B1-#, self.sigma2ResumeMIC)
+    s.add_TLV(3, 0x05 #-TLV.U2-#, self.responderSessionID)
     # Always include session params with mandatory fields (Matter 1.4 §4.10)
     var s2 = s.add_struct(4)
-    s2.add_TLV(1, TLV.U4, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
-    s2.add_TLV(2, TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
-    s2.add_TLV(3, TLV.U2, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
-    s2.add_TLV(4, TLV.U2, 18)                              # DATA_MODEL_REVISION
-    s2.add_TLV(5, TLV.U2, 12)                              # INTERACTION_MODEL_REVISION
-    s2.add_TLV(6, TLV.U4, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
-    s2.add_TLV(7, TLV.U2, 1)                               # MAX_PATHS_PER_INVOKE
+    s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
+    s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
+    s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
 end

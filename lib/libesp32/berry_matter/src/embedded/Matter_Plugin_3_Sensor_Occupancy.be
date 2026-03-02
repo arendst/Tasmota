@@ -148,18 +148,17 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
     if   cluster == 0x0406              # ========== Occupancy Sensing ==========
       if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        return tlv_solo.set_or_nil(TLV.U1, self.shadow_bool_value)
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_bool_value)
       elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
-        return tlv_solo.set(TLV.U1, 3)  # physical contact
+        return tlv_solo.set(0x04 #-TLV.U1-#, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
-        return tlv_solo.set(TLV.U1, 0)  # unknown
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)  # unknown
       end
 
     end

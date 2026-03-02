@@ -60,33 +60,33 @@ class Matter_TLV
   # STRUCT<BR>ARRAY<BR>LIST<BR>EOC|(internal) Use through abstractions
   # DOUBLE<BR>UTF4 UTF8<BR>B4 B8|Unsuppored in Tasmota
 
-  static var I1     = 0x00
-  static var I2     = 0x01
-  static var I4     = 0x02
-  static var I8     = 0x03
-  static var U1     = 0x04
-  static var U2     = 0x05
-  static var U4     = 0x06
-  static var U8     = 0x07
-  static var BOOL   = 0x08    # when encoding, use indifferentiate
-  static var BFALSE = 0x08
-  static var BTRUE  = 0x09
-  static var FLOAT  = 0x0A
-  static var DOUBLE = 0x0B
-  static var UTF1   = 0x0C
-  static var UTF2   = 0x0D
-  static var UTF4   = 0x0E
-  static var UTF8   = 0x0F
-  static var B1     = 0x10
-  static var B2     = 0x11
-  static var B4     = 0x12
-  static var B8     = 0x13
-  static var NULL   = 0x14
-  static var STRUCT = 0x15
-  static var ARRAY  = 0x16
-  static var LIST   = 0x17
-  static var EOC    = 0x18
-  static var RAW    = 0xFF  # encodes an anonymous raw value (already encoded in TLV to save memory)
+  # static var I1     = 0x00
+  # static var I2     = 0x01
+  # static var I4     = 0x02
+  # static var I8     = 0x03
+  # static var U1     = 0x04
+  # static var U2     = 0x05
+  # static var U4     = 0x06
+  # static var U8     = 0x07
+  # static var BOOL   = 0x08    # when encoding, use indifferentiate
+  # static var BFALSE = 0x08
+  # static var BTRUE  = 0x09
+  # static var FLOAT  = 0x0A
+  # static var DOUBLE = 0x0B
+  # static var UTF1   = 0x0C
+  # static var UTF2   = 0x0D
+  # static var UTF4   = 0x0E
+  # static var UTF8   = 0x0F
+  # static var B1     = 0x10
+  # static var B2     = 0x11
+  # static var B4     = 0x12
+  # static var B8     = 0x13
+  # static var NULL   = 0x14
+  # static var STRUCT = 0x15
+  # static var ARRAY  = 0x16
+  # static var LIST   = 0x17
+  # static var EOC    = 0x18
+  # static var RAW    = 0xFF  # encodes an anonymous raw value (already encoded in TLV to save memory)
 
   #################################################################################
   # Matter_TLV_item class
@@ -198,13 +198,13 @@ class Matter_TLV
 
         # print value
         if type(self.val) == 'int'        s += format("%i", self.val)
-          if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8   s += "U" end
+          if self.typ >= 0x04 #-self.TLV.U1-# && self.typ <= 0x07 #-self.TLV.U8-#   s += "U" end
         elif type(self.val) == 'bool'     s += self.val ? "true" : "false"
         elif self.val == nil              s += "null"
         elif type(self.val) == 'real'     s += format("%g", self.val)
         elif type(self.val) == 'string'   s += format('"%s"', self.val)
         elif isinstance(self.val, int64)  s += self.val.tostring()
-          if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8   s += "U" end
+          if self.typ >= 0x04 #-self.TLV.U1-# && self.typ <= 0x07 #-self.TLV.U8-#   s += "U" end
         elif type(self.val) == 'instance'
           s += format("%s", self.val.tohex())
         end
@@ -219,7 +219,7 @@ class Matter_TLV
     def to_str_val()
       # print value
       if type(self.val) == 'int'
-        if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8
+        if self.typ >= 0x04 #-self.TLV.U1-# && self.typ <= 0x07 #-self.TLV.U8-#
           return str(self.val) + "U"
         else
           return str(self.val)
@@ -229,7 +229,7 @@ class Matter_TLV
       elif type(self.val) == 'real'     return str(self.val)
       elif type(self.val) == 'string'   return self.val
       elif isinstance(self.val, int64)
-        if self.typ >= self.TLV.U1 && self.typ <= self.TLV.U8
+        if self.typ >= 0x04 #-self.TLV.U1-# && self.typ <= 0x07 #-self.TLV.U8-#
           return self.val.tostring() + "U"
         else
           return self.val.tostring()
@@ -257,12 +257,12 @@ class Matter_TLV
       if item_len == 8                              # i64 / u64 / double
         self.val = int64.frombytes(b, idx)
         idx += 8
-      elif item_type == TLV.BFALSE || item_type == TLV.BTRUE   # bool
-        self.val =  (item_type == TLV.BTRUE)
-      elif item_type < TLV.U8                         # i1/i2/i4 u1/u2/u4
-        self.val = item_type <= TLV.I8 ? b.geti(idx, item_len) : b.get(idx, item_len)
+      elif item_type == 0x08 #-TLV.BFALSE-# || item_type == 0x09 #-TLV.BTRUE-#   # bool
+        self.val =  (item_type == 0x09 #-TLV.BTRUE-#)
+      elif item_type < 0x07 #-TLV.U8-#                         # i1/i2/i4 u1/u2/u4
+        self.val = item_type <= 0x03 #-TLV.I8-# ? b.geti(idx, item_len) : b.get(idx, item_len)
         idx += item_len
-      elif item_type == TLV.FLOAT                        # float
+      elif item_type == 0x0A #-TLV.FLOAT-#                        # float
         self.val = b.getfloat(idx)
         idx += 4
       elif item_len >= -8 && item_len <= -1         # len prefix 1/2/4/8
@@ -271,10 +271,10 @@ class Matter_TLV
         idx += -item_len
         self.val = b[idx .. idx + b_len - 1]
         idx += b_len
-        if (item_type <= TLV.UTF8)  self.val = self.val.asstring() end
-      elif item_type == TLV.NULL                       # null
+        if (item_type <= 0x0F #-TLV.UTF8-#)  self.val = self.val.asstring() end
+      elif item_type == 0x14 #-TLV.NULL-#                       # null
         # do nothing
-      elif item_type == TLV.EOC
+      elif item_type == 0x18 #-TLV.EOC-#
         log("MTR: unexpected eoc", 3)
       else
         log("MTR: unexpected type: " + str(item_type), 3)
@@ -291,45 +291,45 @@ class Matter_TLV
       var TLV = self.TLV
       if b == nil   b = bytes() end     # start new buffer if none passed
 
-      if self.typ == TLV.RAW  b..self.val return b   end
+      if self.typ == 0xFF #-TLV.RAW-#  b..self.val return b   end
 
       # special case for U8/I8 if we have an int, simplify to smaller size
-      if (self.typ == TLV.I8 || self.typ == TLV.U8) && (type(self.val) == 'int')    # don't change if instance of `int64`
-        if self.typ == TLV.I8     self.typ = TLV.I4         # we can safely cast to I4
-        else                      self.typ = TLV.U4         # or to U4, and let further reduction happen below
+      if (self.typ == 0x03 #-TLV.I8-# || self.typ == 0x07 #-TLV.U8-#) && (type(self.val) == 'int')    # don't change if instance of `int64`
+        if self.typ == 0x03 #-TLV.I8-#     self.typ = 0x02 #-TLV.I4-#         # we can safely cast to I4
+        else                      self.typ = 0x06 #-TLV.U4-#         # or to U4, and let further reduction happen below
         end
       end
 
       # special case for bool
       # we need to change the type according to the value
-      if self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
-        self.typ = bool(self.val) ? TLV.BTRUE : TLV.BFALSE
+      if self.typ == 0x08 #-TLV.BFALSE-# || self.typ == 0x09 #-TLV.BTRUE-#
+        self.typ = bool(self.val) ? 0x09 #-TLV.BTRUE-# : 0x08 #-TLV.BFALSE-#
       # try to compress ints
-      elif self.typ >= TLV.I2 && self.typ <= TLV.I4
+      elif self.typ >= 0x01 #-TLV.I2-# && self.typ <= 0x02 #-TLV.I4-#
         var i = int(self.val)
-        if   i <= 127 && i >= -128      self.typ = TLV.I1
-        elif i <= 32767 && i >= -32768  self.typ = TLV.I2
+        if   i <= 127 && i >= -128      self.typ = 0x00 #-TLV.I1-#
+        elif i <= 32767 && i >= -32768  self.typ = 0x01 #-TLV.I2-#
         end
-      elif self.typ >= TLV.U2 && self.typ <= TLV.U4
+      elif self.typ >= 0x05 #-TLV.U2-# && self.typ <= 0x06 #-TLV.U4-#
         var i = int(self.val)
-        if   i <= 255 && i >= 0         self.typ = TLV.U1
-        elif i <= 65535 && i >= 0       self.typ = TLV.U2
+        if   i <= 255 && i >= 0         self.typ = 0x04 #-TLV.U1-#
+        elif i <= 65535 && i >= 0       self.typ = 0x05 #-TLV.U2-#
         end
-      elif self.typ >= TLV.B1 && self.typ <= TLV.B8       # encode length as minimum possible
+      elif self.typ >= 0x10 #-TLV.B1-# && self.typ <= 0x13 #-TLV.B8-#       # encode length as minimum possible
         if size(self.val) <= 255
-          self.typ = TLV.B1
+          self.typ = 0x10 #-TLV.B1-#
         elif size(self.val) <= 65535
-          self.typ = TLV.B2
+          self.typ = 0x11 #-TLV.B2-#
         else
-          self.typ = TLV.B4     # B4 is unlikely, B8 is impossible
+          self.typ = 0x12 #-TLV.B4-#     # B4 is unlikely, B8 is impossible
         end
-      elif self.typ >= TLV.UTF1 && self.typ <= TLV.UTF8
+      elif self.typ >= 0x0C #-TLV.UTF1-# && self.typ <= 0x0F #-TLV.UTF8-#
         if size(self.val) <= 255
-          self.typ = TLV.UTF1
+          self.typ = 0x0C #-TLV.UTF1-#
         elif size(self.val) <= 65535
-          self.typ = TLV.UTF2
+          self.typ = 0x0D #-TLV.UTF2-#
         else
-          self.typ = TLV.UTF4     # UTF4 is unlikely, UTF8 is impossible
+          self.typ = 0x0E #-TLV.UTF4-#     # UTF4 is unlikely, UTF8 is impossible
         end
       end
 
@@ -337,13 +337,13 @@ class Matter_TLV
       self._encode_tag(b)
       # encode value
 
-      if self.typ == TLV.I1 || self.typ == TLV.U1
+      if self.typ == 0x00 #-TLV.I1-# || self.typ == 0x04 #-TLV.U1-#
         b.add(int(self.val), 1)
-      elif self.typ == TLV.I2 || self.typ == TLV.U2
+      elif self.typ == 0x01 #-TLV.I2-# || self.typ == 0x05 #-TLV.U2-#
         b.add(int(self.val), 2)
-      elif self.typ == TLV.I4 || self.typ == TLV.U4
+      elif self.typ == 0x02 #-TLV.I4-# || self.typ == 0x06 #-TLV.U4-#
         b.add(int(self.val), 4)
-      elif self.typ == TLV.I8 || self.typ == TLV.U8
+      elif self.typ == 0x03 #-TLV.I8-# || self.typ == 0x07 #-TLV.U8-#
         # I8/U8 can be encoded from bytes(8)/int64/int
         var i64 = self.val
         if isinstance(i64, bytes)
@@ -351,38 +351,38 @@ class Matter_TLV
         elif isinstance(i64, int64)
           i64 = i64.tobytes()             # bytes(8)
         else
-          if (self.typ == TLV.I8)             # signed
+          if (self.typ == 0x03 #-TLV.I8-#)             # signed
             i64 = int64(int(i64)).tobytes()   # bytes(8)
           else                                # unsigned
             i64 = int64.fromu32(int(i64)).tobytes()   # bytes(8)
           end
         end
         b .. i64
-      elif self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
+      elif self.typ == 0x08 #-TLV.BFALSE-# || self.typ == 0x09 #-TLV.BTRUE-#
         # push nothing
-      elif self.typ == TLV.FLOAT
+      elif self.typ == 0x0A #-TLV.FLOAT-#
         var idx = size(b)
         b.add(0, 4)
         b.setfloat(idx, real(self.val))
-      elif self.typ == TLV.DOUBLE
-        raise "value_error", "Unsupported type TLV.DOUBLE"
-      elif self.typ == TLV.UTF1
+      elif self.typ == 0x0B #-TLV.DOUBLE-#
+        raise "value_error", "Unsupported type 0x0B #-TLV.DOUBLE-#"
+      elif self.typ == 0x0C #-TLV.UTF1-#
         if size(self.val) > 255 raise "value_error", "string too big" end
         b.add(size(self.val), 1)
         b..bytes().fromstring(str(self.val))
-      elif self.typ == TLV.UTF2
+      elif self.typ == 0x0D #-TLV.UTF2-#
         if size(self.val) > 65535 raise "value_error", "string too big" end
         b.add(size(self.val), 2)
         b..bytes().frostring(str(self.val))
-      elif self.typ == TLV.B1
+      elif self.typ == 0x10 #-TLV.B1-#
         if size(self.val) > 255 raise "value_error", "bytes too big" end
         b.add(size(self.val), 1)
         b..self.val
-      elif self.typ == TLV.B2
+      elif self.typ == 0x11 #-TLV.B2-#
         if size(self.val) > 65535 raise "value_error", "bytes too big" end
         b.add(size(self.val), 2)
         b..self.val
-      elif self.typ == TLV.NULL
+      elif self.typ == 0x14 #-TLV.NULL-#
         # push nothing
       else
         raise "value_error", "unsupported type " + str(self.typ)
@@ -400,38 +400,38 @@ class Matter_TLV
       var TLV = self.TLV
       var len = 0
 
-      if self.typ == TLV.RAW  return size(self.val)   end
+      if self.typ == 0xFF #-TLV.RAW-#  return size(self.val)   end
 
       # special case for bool
       # we need to change the type according to the value
-      if self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
-        self.typ = bool(self.val) ? TLV.BTRUE : TLV.BFALSE
+      if self.typ == 0x08 #-TLV.BFALSE-# || self.typ == 0x09 #-TLV.BTRUE-#
+        self.typ = bool(self.val) ? 0x09 #-TLV.BTRUE-# : 0x08 #-TLV.BFALSE-#
       # try to compress ints
-      elif self.typ >= TLV.I2 && self.typ <= TLV.I4
+      elif self.typ >= 0x01 #-TLV.I2-# && self.typ <= 0x02 #-TLV.I4-#
         var i = int(self.val)
-        if   i <= 127 && i >= -128      self.typ = TLV.I1
-        elif i <= 32767 && i >= -32768  self.typ = TLV.I2
+        if   i <= 127 && i >= -128      self.typ = 0x00 #-TLV.I1-#
+        elif i <= 32767 && i >= -32768  self.typ = 0x01 #-TLV.I2-#
         end
-      elif self.typ >= TLV.U2 && self.typ <= TLV.U4
+      elif self.typ >= 0x05 #-TLV.U2-# && self.typ <= 0x06 #-TLV.U4-#
         var i = int(self.val)
-        if   i <= 255 && i >= 0         self.typ = TLV.U1
-        elif i <= 65535 && i >= 0       self.typ = TLV.U2
+        if   i <= 255 && i >= 0         self.typ = 0x04 #-TLV.U1-#
+        elif i <= 65535 && i >= 0       self.typ = 0x05 #-TLV.U2-#
         end
-      elif self.typ >= TLV.B1 && self.typ <= TLV.B8       # encode length as minimum possible
+      elif self.typ >= 0x10 #-TLV.B1-# && self.typ <= 0x13 #-TLV.B8-#       # encode length as minimum possible
         if size(self.val) <= 255
-          self.typ = TLV.B1
+          self.typ = 0x10 #-TLV.B1-#
         elif size(self.val) <= 65535
-          self.typ = TLV.B2
+          self.typ = 0x11 #-TLV.B2-#
         else
-          self.typ = TLV.B4     # B4 is unlikely, B8 is impossible
+          self.typ = 0x12 #-TLV.B4-#     # B4 is unlikely, B8 is impossible
         end
-      elif self.typ >= TLV.UTF1 && self.typ <= TLV.UTF8
+      elif self.typ >= 0x0C #-TLV.UTF1-# && self.typ <= 0x0F #-TLV.UTF8-#
         if size(self.val) <= 255
-          self.typ = TLV.UTF1
+          self.typ = 0x0C #-TLV.UTF1-#
         elif size(self.val) <= 65535
-          self.typ = TLV.UTF2
+          self.typ = 0x0D #-TLV.UTF2-#
         else
-          self.typ = TLV.UTF4     # UTF4 is unlikely, UTF8 is impossible
+          self.typ = 0x0E #-TLV.UTF4-#     # UTF4 is unlikely, UTF8 is impossible
         end
       end
 
@@ -439,29 +439,29 @@ class Matter_TLV
       len += self._encode_tag_len()
       # encode value
 
-      if self.typ == TLV.I1 || self.typ == TLV.U1
+      if self.typ == 0x00 #-TLV.I1-# || self.typ == 0x04 #-TLV.U1-#
         len += 1
-      elif self.typ == TLV.I2 || self.typ == TLV.U2
+      elif self.typ == 0x01 #-TLV.I2-# || self.typ == 0x05 #-TLV.U2-#
         len += 2
-      elif self.typ == TLV.I4 || self.typ == TLV.U4
+      elif self.typ == 0x02 #-TLV.I4-# || self.typ == 0x06 #-TLV.U4-#
         len += 4
-      elif self.typ == TLV.I8 || self.typ == TLV.U8
+      elif self.typ == 0x03 #-TLV.I8-# || self.typ == 0x07 #-TLV.U8-#
         len += 8
-      elif self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
+      elif self.typ == 0x08 #-TLV.BFALSE-# || self.typ == 0x09 #-TLV.BTRUE-#
         # push nothing
-      elif self.typ == TLV.FLOAT
+      elif self.typ == 0x0A #-TLV.FLOAT-#
         len += 4
-      elif self.typ == TLV.DOUBLE
-        raise "value_error", "Unsupported type TLV.DOUBLE"
-      elif self.typ == TLV.UTF1
+      elif self.typ == 0x0B #-TLV.DOUBLE-#
+        raise "value_error", "Unsupported type 0x0B #-TLV.DOUBLE-#"
+      elif self.typ == 0x0C #-TLV.UTF1-#
         len += 1 + size(self.val)
-      elif self.typ == TLV.UTF2
+      elif self.typ == 0x0D #-TLV.UTF2-#
         len += 2 + size(self.val)
-      elif self.typ == TLV.B1
+      elif self.typ == 0x10 #-TLV.B1-#
         len += 1 + size(self.val)
-      elif self.typ == TLV.B2
+      elif self.typ == 0x11 #-TLV.B2-#
         len += 2 + size(self.val)
-      elif self.typ == TLV.NULL
+      elif self.typ == 0x14 #-TLV.NULL-#
         # push nothing
       else
         raise "value_error", "unsupported type " + str(self.typ)
@@ -642,7 +642,7 @@ class Matter_TLV
     #################################################################################
     def init(parent)
       super(self).init(parent)
-      self.typ = self.TLV.LIST
+      self.typ = 0x17 #-self.TLV.LIST-#
       self.val = []
     end
 
@@ -694,7 +694,7 @@ class Matter_TLV
     #################################################################################
     def parse(b, idx)
       # iterate until end of struct
-      while b[idx] != self.TLV.EOC
+      while b[idx] != 0x18 #-self.TLV.EOC-#
         # read next
         var item = self.TLV.parse(b, idx, self)
         idx = item.next_idx
@@ -730,7 +730,7 @@ class Matter_TLV
       end
 
       # add 'end of container'
-      b.add(self.TLV.EOC, 1)
+      b.add(0x18 #-self.TLV.EOC-#, 1)
 
       return b
     end
@@ -801,7 +801,7 @@ class Matter_TLV
     #############################################################
     # adders
     def add_TLV(tag, t, value)
-      if value != nil || t == matter.TLV.NULL
+      if value != nil || t == 0x14 #-matter.TLV.NULL-#
         var v = self.TLV.Matter_TLV_item(self)
         v.tag_sub = tag
         v.typ = t
@@ -861,7 +861,7 @@ class Matter_TLV
 
     def init(parent)
       super(self).init(parent)
-      self.typ = self.TLV.STRUCT
+      self.typ = 0x15 #-self.TLV.STRUCT-#
       self.val = []
     end
 
@@ -881,7 +881,7 @@ class Matter_TLV
 
     def init(parent)
       super(self).init(parent)
-      self.typ = self.TLV.ARRAY
+      self.typ = 0x16 #-self.TLV.ARRAY-#
       self.val = []
     end
 
@@ -893,7 +893,7 @@ class Matter_TLV
     #############################################################
     def parse(b, idx)
       # iterate until end of struct
-      while b[idx] != self.TLV.EOC
+      while b[idx] != 0x18 #-self.TLV.EOC-#
         # read next
         var item = self.TLV.parse(b, idx, self)
         idx = item.next_idx
@@ -934,16 +934,16 @@ class Matter_TLV
     var item_tag_control = b[idx] & 0xE0  # values 0x20 - 0xE0
     idx += 1                              # skip tag/type byte
 
-    if (item_type > TLV.EOC)  raise "TLV_error", "invalid TLV type "+str(item_type) end
+    if (item_type > 0x18 #-TLV.EOC-#)  raise "TLV_error", "invalid TLV type "+str(item_type) end
 
     # ############################################################
     # instanciate TLV item or struct
     var item
-    if item_type == TLV.STRUCT
+    if item_type == 0x15 #-TLV.STRUCT-#
       item = _class.Matter_TLV_struct(parent)
-    elif item_type == TLV.ARRAY
+    elif item_type == 0x16 #-TLV.ARRAY-#
       item = _class.Matter_TLV_array(parent)
-    elif item_type == TLV.LIST
+    elif item_type == 0x17 #-TLV.LIST-#
       item = _class.Matter_TLV_list(parent)
     else
       item = _class.Matter_TLV_item(parent)

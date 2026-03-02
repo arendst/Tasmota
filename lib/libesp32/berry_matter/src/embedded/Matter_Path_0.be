@@ -32,7 +32,7 @@ class Matter_Path
   var attribute               # attribute or `nil` if expansion
   var fabric_filtered         # bool or nil
   var command                 # command
-  var status                  # status to be returned (matter.SUCCESS or matter.<ERROR>)
+  var status                  # status to be returned (0x00 #-matter.SUCCESS-# or matter.<ERROR>)
   var log                     # any string that needs to be logged (used to show significant parameters for commands)
   var msg                     # reference of the original message
 

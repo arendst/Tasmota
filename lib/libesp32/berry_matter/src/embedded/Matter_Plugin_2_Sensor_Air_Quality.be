@@ -370,7 +370,6 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
     var ret
@@ -386,17 +385,17 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     def handle_value(shadow_value, unit)
       if (unit == nil) unit = 0 end     # default unit is `0` = PPM
       if   attribute == 0x0000          #  ---------- Measured­ Value / float ----------
-        return tlv_solo.set_or_nil(TLV.FLOAT, shadow_value)
+        return tlv_solo.set_or_nil(0x0A #-TLV.FLOAT-#, shadow_value)
       elif attribute == 0x0001          #  ---------- MinMeasured Value / float ----------
-        return tlv_solo.set(TLV.NULL, nil)
+        return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       elif attribute == 0x0002          #  ---------- MaxMeasured Value / float ----------
-        return tlv_solo.set(TLV.NULL, nil)
+        return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       elif attribute == 0x0008          #  ---------- MeasurementUnit / u8 ----------
-        return tlv_solo.set(TLV.U1, unit)
+        return tlv_solo.set(0x04 #-TLV.U1-#, unit)
       elif attribute == 0x0009          #  ---------- MeasurementMedium / u8 ----------
-        return tlv_solo.set(TLV.U1, 0)  # 0 = Air
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)  # 0 = Air
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 1)  # MEA = NumericMeasurement
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)  # MEA = NumericMeasurement
       end
       return nil
     end
@@ -404,9 +403,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x005B              # ========== Air Quality ==========
       if   attribute == 0x0000          #  ---------- AirQuality / U8 ----------
-        return tlv_solo.set_or_nil(TLV.U1, self.shadow_air_quality)
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_air_quality)
       # elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-      #   return tlv_solo.set(TLV.U4, 0)  #
+      #   return tlv_solo.set(0x06 #-TLV.U4-#, 0)  #
       end
 
     # ====================================================================================================

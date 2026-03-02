@@ -62,7 +62,7 @@ class Matter_Device
   #############################################################
   def init()
     import crypto
-    if !tasmota.get_option(matter.MATTER_OPTION)
+    if !tasmota.get_option(151 #-matter.MATTER_OPTION-#)
       self.ui = matter.UI(self, false)   # minimal UI
       return
     end    # abort if SetOption 151 is not set
@@ -364,14 +364,14 @@ class Matter_Device
     # look for plugin
     var pi = self.find_plugin_by_endpoint(endpoint)
     if (pi == nil)
-      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      ctx.status = 0x7F #-matter.UNSUPPORTED_ENDPOINT-#
       return nil
     else
       if   !pi.contains_cluster(cluster)
-        ctx.status = matter.UNSUPPORTED_CLUSTER
+        ctx.status = 0xC3 #-matter.UNSUPPORTED_CLUSTER-#
         return nil
       elif !pi.contains_attribute(cluster, attribute)
-        ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+        ctx.status = 0x86 #-matter.UNSUPPORTED_ATTRIBUTE-#
         return nil
       end
     end
@@ -571,7 +571,7 @@ class Matter_Device
 
       idx += 1
     end
-    ctx.status = matter.UNSUPPORTED_ENDPOINT
+    ctx.status = 0x7F #-matter.UNSUPPORTED_ENDPOINT-#
   end
 
   #############################################################
@@ -710,7 +710,7 @@ class Matter_Device
   def signal_endpoints_changed()
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
-    self.attribute_updated(matter.AGGREGATOR_ENDPOINT, 0x001D, 0x0003, false)
+    self.attribute_updated(0x0001 #-matter.AGGREGATOR_ENDPOINT-#, 0x001D, 0x0003, false)
   end
 
   #############################################################
@@ -723,7 +723,7 @@ class Matter_Device
     var keys = []
     for k: self.plugins_config.keys()   keys.push(int(k))    end
     for ep: keys
-      if ep == matter.AGGREGATOR_ENDPOINT
+      if ep == 0x0001 #-matter.AGGREGATOR_ENDPOINT-#
         dirty = true
         log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
         self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]

@@ -320,10 +320,6 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 #ifdef USE_WIFI_RANGE_EXTENDER
   if (WiFi.getMode() != WIFI_AP_STA || !RgxApUp()) {  // Preserve range extender connections (#17103)
 #endif  // USE_WIFI_RANGE_EXTENDER
-
-#if defined(ESP32) && defined(USE_DISCOVERY)
-  MDNS.end();
-#endif
   WiFi.disconnect(true);  // Delete SDK wifi config
   delay(200);
   WifiSetMode(WIFI_STA);  // Disable AP mode

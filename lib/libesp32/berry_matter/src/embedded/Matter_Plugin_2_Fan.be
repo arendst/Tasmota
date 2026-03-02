@@ -223,7 +223,6 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
@@ -231,13 +230,13 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
     if   cluster == 0x0202              # ========== Fan ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- FanMode / enum8 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_fan_mode)
+        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_fan_mode)
       elif attribute == 0x0001          #  ---------- FanModeSequence / enum8 ----------
-        return tlv_solo.set(TLV.U1, 2)  # Off/Low/Med/High/Auto
+        return tlv_solo.set(0x04 #-TLV.U1-#, 2)  # Off/Low/Med/High/Auto
       elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_fan_speed_pct)
+        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_fan_speed_pct)
       elif attribute == 0x0003          #  ---------- PercentSetting / enum8 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_fan_speed_pct)
+        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_fan_speed_pct)
       end
 
     end
@@ -265,7 +264,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
           self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct, 'FanSpeed255', tasmota.scale_uint(self.shadow_fan_speed_pct, 0, 100, 0, 255))
           return true
         else
-          ctx.status = matter.CONSTRAINT_ERROR
+          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
           return false
         end
       elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
@@ -274,7 +273,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
           self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct, 'FanSpeed255', tasmota.scale_uint(self.shadow_fan_speed_pct, 0, 100, 0, 255))
           return true
         else
-          ctx.status = matter.CONSTRAINT_ERROR
+          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
           return false
         end
       end

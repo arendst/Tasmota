@@ -205,7 +205,6 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
     
@@ -213,26 +212,26 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        return tlv_solo.set_or_nil(TLV.U2, self.shadow_ct)   # if `nil` it is replaced with TLV.NULL
+        return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, self.shadow_ct)   # if `nil` it is replaced with 0x14 #-TLV.NULL-#
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return tlv_solo.set(TLV.U1, 2)  # 2 = ColorTemperatureMireds
+        return tlv_solo.set(0x04 #-TLV.U1-#, 2)  # 2 = ColorTemperatureMireds
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
-        return tlv_solo.set(TLV.U1, 2)  # 2 = ColorTemperatureMireds
+        return tlv_solo.set(0x04 #-TLV.U1-#, 2)  # 2 = ColorTemperatureMireds
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return tlv_solo.set(TLV.U2, 0x10)    # CT
+        return tlv_solo.set(0x05 #-TLV.U2-#, 0x10)    # CT
       elif attribute == 0x400B          #  ---------- ColorTempPhysicalMinMireds / u2 ----------
-        return tlv_solo.set(TLV.U2, self.ct_min)
+        return tlv_solo.set(0x05 #-TLV.U2-#, self.ct_min)
       elif attribute == 0x400C          #  ---------- ColorTempPhysicalMaxMireds / u2 ----------
-        return tlv_solo.set(TLV.U2, self.ct_max)
+        return tlv_solo.set(0x05 #-TLV.U2-#, self.ct_max)
       
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)
         
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x10)    # CT
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0x10)    # CT
       end
         
     end
