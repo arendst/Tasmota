@@ -60,7 +60,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 24000;  // milliseconds - Allow
 const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow time for restart and wifi reconnect
 #endif  // ESP32
 
-#include <ESP8266WebServer.h>
+#include "TasmotaWebServer.h"
 #include <DNSServer.h>
 
 #ifdef USE_UNISHOX_COMPRESSION
@@ -482,7 +482,7 @@ enum WebCmndStatus { WEBCMND_DONE, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAI
                    };
 
 DNSServer *DnsServer;
-ESP8266WebServer *Webserver;
+TasmotaWebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
@@ -653,7 +653,7 @@ void StartWebserver(int type) {
     }
 
     if (!Webserver) {
-      Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
+      Webserver = new TasmotaWebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
 
       const char* headerkeys[] = { "Referer", "Host" };
       size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
@@ -1186,9 +1186,11 @@ void WSContentEnd(void) {
 //  _WSContentSend("");                              // Signal end of chunked content using multiple writes
 
   // Fix UDP response #23613
-  const char *footer_empty = "0\r\n\r\n";
-  Webserver->client().write(footer_empty, 5);      // Signal end of chunked content in one write (doesn't clear core _chunked)
-  delay(5);
+  if (Webserver->isChunked()) {
+    const char *footer_empty = "0\r\n\r\n";
+    Webserver->client().write(footer_empty, 5);      // Signal end of chunked content in one write (doesn't clear core _chunked)
+    delay(5);
+  }
 
   Webserver->client().stop();
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
