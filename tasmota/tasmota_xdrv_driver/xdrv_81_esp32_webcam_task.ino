@@ -288,7 +288,7 @@ extern FS *ffsp;
 #endif
 
 bool HttpCheckPriviledgedAccess(bool);
-extern ESP8266WebServer *Webserver;
+extern TasmotaWebServer *Webserver;
 
 SemaphoreHandle_t WebcamMutex = nullptr;
 
@@ -437,7 +437,7 @@ struct {
   volatile uint8_t  camPixelFormat; // 
 
   // our (separate) webserver on port 81
-  ESP8266WebServer *CamServer;
+  TasmotaWebServer *CamServer;
   // pointer to the first http streaming client in a list of multiple clients, or nullptr
   wc_client *client_p;
   struct PICSTORE picstore[MAX_PICSTORE];
@@ -1598,7 +1598,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
   if (flag) {
     if (!Wc.CamServer) {
       TasAutoMutex localmutex(&WebcamMutex, "HandleWebcamMjpeg", 20000);
-      Wc.CamServer = new ESP8266WebServer(81);
+      Wc.CamServer = new TasmotaWebServer(81);
       Wc.CamServer->on("/", HandleWebcamRoot);
       Wc.CamServer->on("/diff.mjpeg", HandleWebcamMjpegDiff);
       Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);

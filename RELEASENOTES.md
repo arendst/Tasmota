@@ -127,6 +127,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Do not free BT memory when in use [#24480](https://github.com/arendst/Tasmota/issues/24480)
+- Berry avoid `tasmota.wifi()` returning bad values when wifi is turned off [#24505](https://github.com/arendst/Tasmota/issues/24505)
+- Don't send extraneous `0\r\n\r\n` with non-chunked HTTP/1.0 [#24518](https://github.com/arendst/Tasmota/issues/24518)
 
 ### Removed
 - Berry `tasmota.urlbecload()` superseded by Extension Manager [#24493](https://github.com/arendst/Tasmota/issues/24493)

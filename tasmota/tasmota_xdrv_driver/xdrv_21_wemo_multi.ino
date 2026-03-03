@@ -232,7 +232,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
 class WemoSwitch {
 
 private:
-  ESP8266WebServer *_webServer = NULL;
+  TasmotaWebServer *_webServer = NULL;
   int _localPort = 80;
   int _deviceId;
 
@@ -255,7 +255,7 @@ private:
   }
 
 public:
-  WemoSwitch(int deviceId, ESP8266WebServer *webServer) {
+  WemoSwitch(int deviceId, TasmotaWebServer *webServer) {
     _deviceId = deviceId;
     _webServer = webServer;
 #ifdef USE_EMULATION_WEMO_DEBUG
@@ -269,7 +269,7 @@ public:
 #ifdef USE_EMULATION_WEMO_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR("WMO: Device #%d listening on port %d"), _deviceId, _localPort);
 #endif
-    _webServer = new ESP8266WebServer(_localPort);
+    _webServer = new TasmotaWebServer(_localPort);
 
     _webServer->begin();
   }
