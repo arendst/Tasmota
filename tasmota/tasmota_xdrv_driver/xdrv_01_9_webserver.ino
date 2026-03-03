@@ -3502,7 +3502,9 @@ void HandleUploadLoop(void) {
   if (Web.upload_error) {
     if (!upload_error_signalled) {
       if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
-      UploadServices(1);
+      if (UPL_UFSFILE != Web.upload_file_type) {
+        UploadServices(1);
+      }
 
 //      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
 
@@ -3522,7 +3524,10 @@ void HandleUploadLoop(void) {
     WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
     upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
 
-    UploadServices(0);
+    // Filesystem uploads don't need to disable interrupts/services
+    if (UPL_UFSFILE != Web.upload_file_type) {
+      UploadServices(0);
+    }
 
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
@@ -3667,7 +3672,9 @@ void HandleUploadLoop(void) {
 
   // ***** Step3: Finish upload file
   else if (UPLOAD_FILE_END == upload.status) {
-    UploadServices(1);
+    if (UPL_UFSFILE != Web.upload_file_type) {
+      UploadServices(1);
+    }
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (!SettingsConfigRestore()) {
         Web.upload_error = 8;  // File invalid
@@ -3733,7 +3740,9 @@ void HandleUploadLoop(void) {
 
   // ***** Step4: Abort upload file
   else {
-    UploadServices(1);
+    if (UPL_UFSFILE != Web.upload_file_type) {
+      UploadServices(1);
+    }
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }
