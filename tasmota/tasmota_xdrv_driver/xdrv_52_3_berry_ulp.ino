@@ -157,7 +157,7 @@ extern "C" {
 
     if (wake_up_s) {
       AddLog(LOG_LEVEL_INFO, PSTR("ULP: will wake up in %u seconds."), wake_up_s);
-      esp_sleep_enable_timer_wakeup(wake_up_s * 1000000);    
+      esp_sleep_enable_timer_wakeup(wake_up_s * 1000000ULL);    
     }
     esp_sleep_enable_ulp_wakeup();
     esp_deep_sleep_start();
