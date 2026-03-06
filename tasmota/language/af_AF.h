@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Ander parameters"
 #define D_TEMPLATE "Sjabloon"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Aktiveer"
 #define D_DEVICE_NAME "Toestel naam"
 #define D_WEB_ADMIN_PASSWORD "Webadministrateurwagwoord"

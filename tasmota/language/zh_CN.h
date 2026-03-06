@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "其他设置"
 #define D_TEMPLATE "模板"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "启用"
 #define D_DEVICE_NAME "设备名称"
 #define D_WEB_ADMIN_PASSWORD "WEB 管理密码"

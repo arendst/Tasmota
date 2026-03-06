@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "פרמטרים שונים"
 #define D_TEMPLATE "תבנית"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "הפעל"
 #define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "סיסמת מנהל"

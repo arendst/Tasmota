@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Други параметри"
 #define D_TEMPLATE "Модел"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Включване"
 #define D_DEVICE_NAME "Име на устройството"
 #define D_WEB_ADMIN_PASSWORD "Парола на интерфейса"

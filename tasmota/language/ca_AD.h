@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Altres paràmetres"
 #define D_TEMPLATE "Plantilla"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Activar"
 #define D_DEVICE_NAME "Nom del dispositiu"
 #define D_WEB_ADMIN_PASSWORD "Mot de pas Admin Web"

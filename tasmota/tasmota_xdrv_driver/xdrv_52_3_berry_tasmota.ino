@@ -1002,7 +1002,7 @@ extern "C" {
   // ESP object
   int32_t l_arch(bvm *vm);
   int32_t l_arch(bvm *vm) {
-    be_pushstring(vm, ESP32_ARCH);
+    be_pushstring(vm, TASMOTA_ARCH);
     be_return(vm);
   }
 

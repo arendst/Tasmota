@@ -397,6 +397,7 @@
 #define D_CMND_SERIALCONFIG "SerialConfig"
 #define D_CMND_TEMPLATE "Template"
   #define D_JSON_NAME "NAME"
+  #define D_JSON_ARCH "ARCH"
   #define D_JSON_GPIO "GPIO"
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"

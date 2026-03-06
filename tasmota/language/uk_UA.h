@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Параметри Інше"
 #define D_TEMPLATE "Шаблони"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Активований"
 #define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Гасло адміністратора Web"
