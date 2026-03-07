@@ -60,7 +60,7 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 24000;  // milliseconds - Allow
 const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow time for restart and wifi reconnect
 #endif  // ESP32
 
-#include <ESP8266WebServer.h>
+#include "TasmotaWebServer.h"
 #include <DNSServer.h>
 
 #ifdef USE_UNISHOX_COMPRESSION
@@ -482,7 +482,7 @@ enum WebCmndStatus { WEBCMND_DONE, WEBCMND_WRONG_PARAMETERS, WEBCMND_CONNECT_FAI
                    };
 
 DNSServer *DnsServer;
-ESP8266WebServer *Webserver;
+TasmotaWebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
@@ -653,7 +653,7 @@ void StartWebserver(int type) {
     }
 
     if (!Webserver) {
-      Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
+      Webserver = new TasmotaWebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
 
       const char* headerkeys[] = { "Referer", "Host" };
       size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
@@ -1186,9 +1186,11 @@ void WSContentEnd(void) {
 //  _WSContentSend("");                              // Signal end of chunked content using multiple writes
 
   // Fix UDP response #23613
-  const char *footer_empty = "0\r\n\r\n";
-  Webserver->client().write(footer_empty, 5);      // Signal end of chunked content in one write (doesn't clear core _chunked)
-  delay(5);
+  if (Webserver->isChunked()) {
+    const char *footer_empty = "0\r\n\r\n";
+    Webserver->client().write(footer_empty, 5);      // Signal end of chunked content in one write (doesn't clear core _chunked)
+    delay(5);
+  }
 
   Webserver->client().stop();
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
@@ -2309,7 +2311,7 @@ void TemplateSaveSettings(void) {
 #endif
 
   WebGetArg(PSTR("s1"), tmp, sizeof(tmp));              // NAME
-  snprintf_P(command, sizeof(command), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_ARCH "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp, ArchName().c_str());
 
   uint32_t j = 0;
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
@@ -2834,10 +2836,14 @@ void HandleOtherConfiguration(void) {
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_OTHER));
 
+  bool tmpl_error = false;
   if (Webserver->hasArg(F("save"))) {
-    OtherSaveSettings();
-    WebRestart(1);
-    return;
+    if (OtherSaveSettings()) {
+      WebRestart(1);
+      return;
+    } else {
+      tmpl_error = true;
+    }
   }
 
   WSContentStart_P(PSTR(D_CONFIGURE_OTHER));
@@ -2848,7 +2854,13 @@ void HandleOtherConfiguration(void) {
   WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_OTHER_PARAMETERS));
   WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR("co"));
   WSContentSend_P(PSTR("<p></p>"));
-  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_TEMPLATE));
+  String arch_template = ArchName();
+  arch_template += " ";
+  arch_template += F(D_TEMPLATE);
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, arch_template.c_str());
+  if (tmpl_error) {
+    WSContentSend_P(PSTR("<p>" D_TEMPLATE_WRONG_ARCH "</p>"));
+  }
   WSContentSend_P(HTTP_FORM_OTHER, 
     HtmlEscape(ResponseData()).c_str(),
     (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
@@ -2903,7 +2915,16 @@ void HandleOtherConfiguration(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void OtherSaveSettings(void) {
+bool OtherSaveSettings(void) {
+  String tmpl = Webserver->arg(F("t1"));    // {"NAME":"12345678901234","ARCH":"ESP8266","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
+  if (tmpl.length() && (tmpl.length() < MQTT_MAX_PACKET_SIZE)) {
+    if (tmpl.indexOf("\"ARCH\":") > -1) {
+      if (tmpl.indexOf("\"ARCH\":\"" + ArchName()) == -1) {
+        return false;                         // Back to Other parameters screen
+      }
+    }
+  }
+
   String cmnd = F(D_CMND_BACKLOG "0 ");
   cmnd += AddWebCommand(PSTR(D_CMND_WEBPASSWORD "2"), PSTR("wp"), PSTR("\""));
   cmnd += F(";" D_CMND_SO "3 ");
@@ -2925,12 +2946,12 @@ void OtherSaveSettings(void) {
 #endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
 #endif  // USE_EMULATION
 
-  String tmpl = Webserver->arg(F("t1"));    // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255,"CMND":"SO123 1;SO99 0"}
   if (tmpl.length() && (tmpl.length() < MQTT_MAX_PACKET_SIZE)) {
     snprintf_P(cmnd2, sizeof(cmnd2), PSTR(";%s" D_CMND_TEMPLATE " "), (Webserver->hasArg(F("t2"))) ? PSTR(D_CMND_MODULE " 0;") : "");
     cmnd += cmnd2 + tmpl;
   }
   ExecuteWebCommand((char*)cmnd.c_str());
+  return true;
 }
 
 /*********************************************************************************************\
@@ -3500,7 +3521,9 @@ void HandleUploadLoop(void) {
   if (Web.upload_error) {
     if (!upload_error_signalled) {
       if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
-      UploadServices(1);
+      if (UPL_UFSFILE != Web.upload_file_type) {
+        UploadServices(1);
+      }
 
 //      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Upload error %d"), Web.upload_error);
 
@@ -3520,7 +3543,10 @@ void HandleUploadLoop(void) {
     WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
     upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
 
-    UploadServices(0);
+    // Filesystem uploads don't need to disable interrupts/services
+    if (UPL_UFSFILE != Web.upload_file_type) {
+      UploadServices(0);
+    }
 
     if (0 == upload.filename.c_str()[0]) {
       Web.upload_error = 1;  // No file selected
@@ -3665,7 +3691,9 @@ void HandleUploadLoop(void) {
 
   // ***** Step3: Finish upload file
   else if (UPLOAD_FILE_END == upload.status) {
-    UploadServices(1);
+    if (UPL_UFSFILE != Web.upload_file_type) {
+      UploadServices(1);
+    }
     if (UPL_SETTINGS == Web.upload_file_type) {
       if (!SettingsConfigRestore()) {
         Web.upload_error = 8;  // File invalid
@@ -3731,7 +3759,9 @@ void HandleUploadLoop(void) {
 
   // ***** Step4: Abort upload file
   else {
-    UploadServices(1);
+    if (UPL_UFSFILE != Web.upload_file_type) {
+      UploadServices(1);
+    }
     Web.upload_error = 7;  // Upload aborted
     if (UPL_TASMOTA == Web.upload_file_type) { Update.end(); }
   }

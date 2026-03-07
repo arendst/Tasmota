@@ -386,6 +386,17 @@ enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 
 enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESULT_OR_TELE };
 
+// Upload type used by HandleUploadLoop() to route incoming data.
+// Value 0 is invalid/unset. Each upload endpoint must set the appropriate
+// type before HandleUploadLoop() processes the first data block.
+// UPL_TASMOTA        - OTA firmware update (/u2)
+// UPL_SETTINGS       - Settings backup restore (/u2)
+// UPL_EFM8BB1        - Sonoff RF bridge EFM8BB1 firmware
+// UPL_TASMOTACLIENT  - Tasmota client (Arduino) hex file
+// UPL_EFR32          - Zigbee EZSP (EFR32) firmware
+// UPL_SHD            - Shelly dimmer firmware
+// UPL_CCL            - CC2530 Zigbee firmware via CCLoader
+// UPL_UFSFILE        - Filesystem file upload (/ufsu)
 enum UploadTypes { UPL_TASMOTA = 1, UPL_SETTINGS, UPL_EFM8BB1, UPL_TASMOTACLIENT, UPL_EFR32, UPL_SHD, UPL_CCL, UPL_UFSFILE };
 
 enum ExecuteCommandPowerOptions { POWER_OFF, POWER_ON, POWER_TOGGLE, POWER_BLINK, POWER_BLINK_STOP, POWER_OFF_FORCE,

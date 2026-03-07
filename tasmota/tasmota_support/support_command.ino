@@ -2163,7 +2163,7 @@ void CmndTemplate(void)
     if (JsonTemplate(XdrvMailbox.data)) {
       if (USER_MODULE == Settings->module) { TasmotaGlobal.restart_flag = 2; }
     } else {
-      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON " or Bad Chip Type"));
       error = true;
     }
 #endif // FIRMWARE_MINIMAL

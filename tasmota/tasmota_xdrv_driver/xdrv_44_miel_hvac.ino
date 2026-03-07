@@ -46,8 +46,8 @@
 #define D_CMND_MIEL_HVAC_SETAIRDIRECTION "HVACSetAirDirection"
 #define D_CMND_MIEL_HVAC_SETPROHIBIT "HVACSetProhibit"
 #define D_CMND_MIEL_HVAC_SETPURIFY "HVACSetPurify"
-#define D_CMND_MIEL_HVAC_SETREMOTE_TEMP "HVACRemoteTemp"
-#define D_CMND_MIEL_HVAC_SETREMOTE_TEMP_AUTO_CLEAR_TIME "HVACRemoteTempClearTime"
+#define D_CMND_MIEL_HVAC_REMOTETEMP "HVACRemoteTemp"
+#define D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME "HVACRemoteTempClearTime"
 #define D_CMND_MIEL_HVAC_SEND_COMMAND "HVACSendCommand"
 
 #include <TasmotaSerial.h>
@@ -57,6 +57,7 @@ bool temp_type = false;
 bool remotetemp_clear = true;
 unsigned long remotetemp_auto_clear_time = 10000;
 unsigned long remotetemp_last_call_time = 0;
+int remotetemp_half = 0;
 
 struct miel_hvac_header
 {
@@ -1053,22 +1054,31 @@ miel_hvac_cmnd_setpurify(void)
 }
 
 static inline uint8_t
-miel_hvac_remotetemp_degc2old(long degc)
+miel_hvac_remotetemp_half2old(int degc_half)
 {
-	/*
-	 * If a remote temperature reading is provided that cannot be
-	 * represented by the temp_old field, implicitly clamp it to the
-	 * supported min or max. The hardware does this anyway if you
-	 * provide a high value, but without this the min value will
-	 * underflow and turn a high value that the hardware thinks is 38.
-	 */
+	int min_half = MIEL_HVAC_REMOTETEMP_OLD_MIN * 2; // 8*2 = 16
+	int max_half = MIEL_HVAC_REMOTETEMP_OLD_MAX * 2; // 38*2 = 76
 
-	if (degc < MIEL_HVAC_REMOTETEMP_OLD_MIN)
-		degc = MIEL_HVAC_REMOTETEMP_OLD_MIN;
-	else if (degc > MIEL_HVAC_REMOTETEMP_OLD_MAX)
-		degc = MIEL_HVAC_REMOTETEMP_OLD_MIN;
+	if (degc_half < min_half)
+		degc_half = min_half;
+	else if (degc_half > max_half)
+		degc_half = max_half;
 
-	return ((degc - MIEL_HVAC_REMOTETEMP_OLD_MIN) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR);
+	return (degc_half - min_half); // bo OLD_FACTOR=2, krok 0.5°C
+}
+
+static inline uint8_t
+miel_hvac_remotetemp_half2new(int degc_half)
+{
+	int min_half = MIEL_HVAC_REMOTETEMP_MIN * 2; // -63*2 = -126
+	int max_half = MIEL_HVAC_REMOTETEMP_MAX * 2; // 63*2 = 126
+
+	if (degc_half < min_half)
+		degc_half = min_half;
+	else if (degc_half > max_half)
+		degc_half = max_half;
+
+	return (degc_half + MIEL_HVAC_REMOTETEMP_OFFSET * 2); // OFFSET=64 → 128 kroków
 }
 
 static void
@@ -1077,18 +1087,18 @@ miel_hvac_remotetemp_auto_clear(void)
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	struct miel_hvac_msg_update_remotetemp *update = &sc->sc_remotetemp_update;
 	uint8_t control = MIEL_HVAC_REMOTETEMP_CLR;
-	long degc = 0;
+	remotetemp_half = 0;
 
 	memset(update, 0, sizeof(*update));
 	update->seven = 0x7;
 	update->control = control;
-	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
-	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+	update->temp_old = miel_hvac_remotetemp_half2old(remotetemp_half);
+	update->temp = miel_hvac_remotetemp_half2new(remotetemp_half);
 	remotetemp_clear = false;
 }
 
 static void
-miel_hvac_cmnd_setremote_temp_auto_clear_time(void)
+miel_hvac_cmnd_remotetemp_auto_clear_time(void)
 {
 	if (XdrvMailbox.data_len == 0)
 		return;
@@ -1105,12 +1115,13 @@ miel_hvac_cmnd_setremote_temp_auto_clear_time(void)
 }
 
 static void
-miel_hvac_cmnd_setremote_temp(void)
+miel_hvac_cmnd_remotetemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	struct miel_hvac_msg_update_remotetemp *update = &sc->sc_remotetemp_update;
 	uint8_t control = MIEL_HVAC_REMOTETEMP_SET;
-	long degc;
+
+	int temp_half = 0; // zmienna pomocnicza dostępna w całej funkcji
 
 	if (XdrvMailbox.data_len == 0)
 		return;
@@ -1118,35 +1129,47 @@ miel_hvac_cmnd_setremote_temp(void)
 	if (strcasecmp(XdrvMailbox.data, "clear") == 0)
 	{
 		control = MIEL_HVAC_REMOTETEMP_CLR;
-		degc = 0;
+		remotetemp_half = 0;
+		temp_half = 0;
 
 		ResponseCmndChar_P("clear");
 	}
 	else
 	{
-		degc = strtol(XdrvMailbox.data, nullptr, 0);
+		char *end;
+		double input = strtod(XdrvMailbox.data, &end);
 
-		/* clamp the argument to supported values */
-		if (degc < MIEL_HVAC_REMOTETEMP_MIN)
-			degc = MIEL_HVAC_REMOTETEMP_MIN;
-		else if (degc > MIEL_HVAC_REMOTETEMP_MAX)
-			degc = MIEL_HVAC_REMOTETEMP_MAX;
+		if (*end != '\0')
+		{
+			ResponseCmndChar_P("invalid");
+			return;
+		}
 
-		ResponseCmndNumber(degc);
+		/* konwersja na pół-stopnie */
+		temp_half = (int)(input * 2.0 + 0.5);
+
+		/* clamp w pół-stopniach */
+		int min_half = MIEL_HVAC_REMOTETEMP_MIN * 2;
+		int max_half = MIEL_HVAC_REMOTETEMP_MAX * 2;
+
+		if (temp_half < min_half)
+			temp_half = min_half;
+		else if (temp_half > max_half)
+			temp_half = max_half;
+
+		/* zapis w pół-stopniach */
+		remotetemp_half = temp_half;
+
+		ResponseCmndFloat(remotetemp_half / 2.0, 1);
 	}
+
+	/* aktualizacja struktury i protokołu */
 	memset(update, 0, sizeof(*update));
 	update->seven = 0x7;
 	update->control = control;
 
-	/*
-	 * Different HVACs (or more likely different generations
-	 * of these HVACs) have different ways to encode the remote
-	 * temperature value. This provides both of them to hopefully
-	 * support all known types of HVACs.
-	 */
-
-	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
-	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+	update->temp_old = miel_hvac_remotetemp_half2old(remotetemp_half);
+	update->temp = miel_hvac_remotetemp_half2new(remotetemp_half);
 
 	remotetemp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
 	remotetemp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
@@ -1582,6 +1605,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		const struct miel_hvac_data_roomtemp *rt = &sc->sc_roomtemp.data.roomtemp;
 		char hex[(sizeof(sc->sc_roomtemp) + 1) * 2];
 		char room_temp[33];
+		char remote_temp[33];
 
 		// Room Temperature
 		if (rt->temp05 == 0)
@@ -1596,6 +1620,10 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			dtostrfd(ConvertTemp(temp), Settings->flag2.temperature_resolution, room_temp);
 		}
 		ResponseAppend_P(PSTR(",\"RoomTemperature\":%s"), room_temp);
+
+		// Remote temperature
+		dtostrfd(remotetemp_half, 1, remote_temp);
+		ResponseAppend_P(PSTR(",\"RemoteTemperature\":%s"), remote_temp);
 		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""), remotetemp_clear ? "on" : "off");
 
 		char remotetempautocleartime[33];
@@ -1828,8 +1856,8 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 	"|" D_CMND_MIEL_HVAC_SETAIRDIRECTION
 	"|" D_CMND_MIEL_HVAC_SETPROHIBIT
 	"|" D_CMND_MIEL_HVAC_SETPURIFY
-	"|" D_CMND_MIEL_HVAC_SETREMOTE_TEMP
-	"|" D_CMND_MIEL_HVAC_SETREMOTE_TEMP_AUTO_CLEAR_TIME
+	"|" D_CMND_MIEL_HVAC_REMOTETEMP
+	"|" D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME
 	"|" D_CMND_MIEL_HVAC_SEND_COMMAND
 #ifdef MIEL_HVAC_DEBUG
 	"|"
@@ -1847,8 +1875,8 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 	&miel_hvac_cmnd_setairdirection,
 	&miel_hvac_cmnd_setprohibit,
 	&miel_hvac_cmnd_setpurify,
-	&miel_hvac_cmnd_setremote_temp,
-	&miel_hvac_cmnd_setremote_temp_auto_clear_time,
+	&miel_hvac_cmnd_remotetemp,
+	&miel_hvac_cmnd_remotetemp_auto_clear_time,
 	&miel_hvac_cmnd_send_command,
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,

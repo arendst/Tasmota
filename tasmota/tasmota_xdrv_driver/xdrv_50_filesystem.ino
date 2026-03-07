@@ -1353,6 +1353,21 @@ const char HTTP_EDITOR_FORM_END[] PROGMEM =
 
 #endif  // #ifdef GUI_EDIT_FILE
 
+// Wrapper around HandleUploadLoop() for /ufsu file uploads.
+// HandleUploadLoop() is shared between OTA firmware updates (/u2) and filesystem
+// uploads (/ufsu), and uses Web.upload_file_type to distinguish them.
+// When uploading via the web UI, the browser first does a GET which calls
+// UfsDirectory() and sets upload_file_type = UPL_UFSFILE. But direct POST
+// requests (e.g. curl -F "file=@..." /ufsu) skip the GET, leaving
+// upload_file_type unset and causing HandleUploadLoop() to treat the file
+// as a firmware image, which fails.
+// This wrapper ensures upload_file_type is always set before entering the
+// shared upload handler.
+void HandleUploadUFSLoop(void) {
+  Web.upload_file_type = UPL_UFSFILE;
+  HandleUploadLoop();
+}
+
 void HandleUploadUFSDone(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -1382,7 +1397,7 @@ void HandleUploadUFSDone(void) {
   }
   WSContentSend_P(PSTR("</div><br>"));
 
-  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+  WSContentSend_PD(UFS_WEB_DIR, "/", PSTR(D_MANAGE_FILE_SYSTEM));
 
   WSContentStop();
 }
@@ -1974,13 +1989,9 @@ bool Xdrv50(uint32_t function) {
       }
       break;
     case FUNC_WEB_ADD_HANDLER:
-//      Webserver->on(F("/ufsd"), UfsDirectory);
-//      Webserver->on(F("/ufsu"), HTTP_GET, UfsDirectory);
-//      Webserver->on(F("/ufsu"), HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      //Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
-      Webserver->on("/ufsu", HTTP_POST, HandleUploadUFSDone, HandleUploadLoop);
+      Webserver->on("/ufsu", HTTP_POST, HandleUploadUFSDone, HandleUploadUFSLoop);
 #ifdef GUI_EDIT_FILE
       Webserver->on("/ufse", HTTP_GET, UfsEditor);
       Webserver->on("/ufse", HTTP_POST, UfsEditorUpload);

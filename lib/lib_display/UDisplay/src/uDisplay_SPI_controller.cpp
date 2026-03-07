@@ -441,7 +441,11 @@ void SPIController::pushPixelsDMA(uint16_t* image, uint32_t len) {
 }
 
 void SPIController::pushPixels3DMA(uint8_t* image, uint32_t len) {
-  if ((len == 0) || (!DMA_Enabled)) return;
+  if (len == 0) return;
+  if (!DMA_Enabled) {
+    getSPI()->writeBytes(image, len * 3);  // fallback: no DMA, write 3 bytes/pixel via HW SPI
+    return;
+  }
 
   dmaWait();
 

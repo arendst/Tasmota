@@ -137,6 +137,7 @@ struct {
     SemaphoreHandle_t resume_sem;
     camera_fail_reason_t fail_reason;
     esp_err_t fail_esp_err;
+    uint32_t isp_gamma_y[16];    
   } core;
   
   // --- 2. JPEG Session (POD) ---
@@ -236,6 +237,10 @@ struct {
   uint32_t compression_ratio_x100; // Compression ratio * 100 (e.g., 1500 = 15.00x)
 } WcStats;
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
+bool WcIspApplyConfig(isp_proc_handle_t handle, const char* sensor_name, int width, int height);
+#endif
+
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
 // Command definitions
@@ -266,11 +271,14 @@ static volatile uint32_t cb_finished_count = 0;
 void WcSetFailed(camera_fail_reason_t reason, esp_err_t esp_err = ESP_OK) {
   AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Entering FAILED state, reason=%d, esp_err=0x%x"), reason, esp_err);
   
-  // 1. Stop task if running
+  // 1. Stop sensor streaming (harmless if not yet started)
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
+  
+  // 2. Gate ISR and wake/join processing task
   if (Wc.core.cam_task_handle) {
     Wc.core.state = CAM_STOPPING;
     if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
-    if (Wc.core.frame_mutex) xSemaphoreGive(Wc.core.frame_mutex);
+    // NOTE: no xSemaphoreGive(frame_mutex) — mutex, not a signal
     xTaskNotifyGive(Wc.core.cam_task_handle);
     
     for (int i = 0; i < 50 && Wc.core.cam_task_handle != NULL; i++) {
@@ -281,10 +289,9 @@ void WcSetFailed(camera_fail_reason_t reason, esp_err_t esp_err = ESP_OK) {
       vTaskDelete(Wc.core.cam_task_handle);
       Wc.core.cam_task_handle = NULL;
     }
+  } else {
+    Wc.core.state = CAM_STOPPING;
   }
-  
-  // 2. Stop sensor streaming
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
   
   // 3. Deinitialize hardware pipeline
   WcDeinitPipeline();
@@ -322,6 +329,7 @@ void WcSetFailed(camera_fail_reason_t reason, esp_err_t esp_err = ESP_OK) {
 
 // Callback: Provide new buffer for next frame (Ping-Pong Logic)
 static bool IRAM_ATTR csi_on_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data) {
+  if (Wc.core.state != CAM_STREAMING) return false;  // ← ADDED
   cb_get_new_count++;
   
   // Switch to the OTHER buffer for the next write
@@ -350,7 +358,9 @@ static bool IRAM_ATTR csi_on_trans_finished(esp_cam_ctlr_handle_t handle, esp_ca
   
   // Wake up the processing task immediately
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  vTaskNotifyGiveFromISR(Wc.core.cam_task_handle, &xHigherPriorityTaskWoken);
+  TaskHandle_t task = Wc.core.cam_task_handle;  // safe capture
+  if (!task) return false;
+  vTaskNotifyGiveFromISR(task, &xHigherPriorityTaskWoken);
   
   return xHigherPriorityTaskWoken == pdTRUE;
 }
@@ -367,7 +377,6 @@ uint32_t WcInitPipeline() {
     Wc.core.frame_buffer[i] = (uint8_t*)heap_caps_aligned_calloc(64, 1, Wc.core.frame_buffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!Wc.core.frame_buffer[i]) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Frame buffer %d allocation failed"), i);
-      WcDeinitPipeline();
       WcSetFailed(CAM_FAIL_MEMORY);
       return 0;
     }
@@ -393,7 +402,6 @@ uint32_t WcInitPipeline() {
   ret = esp_cam_new_csi_ctlr(&csi_config, &Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI init failed (0x%x)"), ret);
-    WcDeinitPipeline();
     WcSetFailed(CAM_FAIL_CSI_INIT, ret);
     return 0;
   }
@@ -405,23 +413,18 @@ uint32_t WcInitPipeline() {
   ret = esp_cam_ctlr_register_event_callbacks(Wc.core.cam_handle, &cbs, &Wc.core.cam_trans);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Callback registration failed (0x%x)"), ret);
-    WcDeinitPipeline();
     WcSetFailed(CAM_FAIL_CSI_INIT, ret);
     return 0;
   }
   ret = esp_cam_ctlr_enable(Wc.core.cam_handle);
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, PSTR("CAM: CSI enable failed (0x%x)"), ret);
-    WcDeinitPipeline();
     WcSetFailed(CAM_FAIL_CSI_INIT, ret);
     return 0;
   }
 
-  // 4. ISP
-  if (tasmota_wc_isp_handle) {
-    Wc.core.isp_handle = tasmota_wc_isp_handle;
-    esp_isp_enable(Wc.core.isp_handle);
-  } else {
+  // 4. ISP — always created here with correct output format for session type
+  {
     isp_color_t isp_output_format = (Wc.core.session_type == SESSION_RTSP_AND_WS || Wc.core.session_type == SESSION_WEBRTC) ? ISP_COLOR_YUV420 : ISP_COLOR_YUV422;
     esp_isp_processor_cfg_t isp_config = {
       .clk_hz = 120 * 1000 * 1000,
@@ -434,23 +437,25 @@ uint32_t WcInitPipeline() {
     ret = esp_isp_new_processor(&isp_config, &Wc.core.isp_handle);
     if (ret != ESP_OK) {
       AddLog(LOG_LEVEL_ERROR, PSTR("CAM: ISP init failed (0x%x)"), ret);
-      WcDeinitPipeline();
       WcSetFailed(CAM_FAIL_ISP_INIT, ret);
       return 0;
     }
+
     esp_isp_enable(Wc.core.isp_handle);
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
+    WcIspApplyConfig(Wc.core.isp_handle, Wc.core.config.name, Wc.core.config.width, Wc.core.config.height);
+#endif
   }
 
   // 5. Encoders
   if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
     if (!WcSetupJpegEncoder()) {
-      WcDeinitPipeline();
       WcSetFailed(CAM_FAIL_ENCODER_INIT);
       return 0;
     }
   } else if (Wc.core.session_type == SESSION_RTSP_AND_WS || Wc.core.session_type == SESSION_WEBRTC) {
     if (!WcSetupH264Encoder()) {
-      WcDeinitPipeline();
       WcSetFailed(CAM_FAIL_ENCODER_INIT);
       return 0;
     }
@@ -462,6 +467,9 @@ uint32_t WcInitPipeline() {
 
 // De-initialize only the resolution-dependent hardware
 void WcDeinitPipeline() {
+  // 0. AWB must go before ISP processor
+  WcIspDeinitAWB();
+  
   // 1. Delete Encoder
   if (Wc.h264.handle) {
     esp_h264_enc_del(Wc.h264.handle); // Only if using helper that doesn't double-free
@@ -483,12 +491,10 @@ void WcDeinitPipeline() {
     Wc.core.cam_handle = NULL;
   }
 
-  // 3. Delete ISP (Only if we own it)
+  // 3. Delete ISP
   if (Wc.core.isp_handle) {
     esp_isp_disable(Wc.core.isp_handle);
-    if (!tasmota_wc_isp_handle) {
-      esp_isp_del_processor(Wc.core.isp_handle);
-    }
+    esp_isp_del_processor(Wc.core.isp_handle);
     Wc.core.isp_handle = NULL;
   }
 
@@ -585,8 +591,8 @@ uint32_t WcSetup(bool reset_config) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Mutexes created"));
 
   // 5. Create processing task based on session type
-  TaskFunction_t task_func;
-  const char *task_name;
+  TaskFunction_t task_func = nullptr;   // ← was uninitialized
+  const char *task_name = nullptr;      // ← was uninitialized
   void WebRTCProcessingTask(void *pvParameters);
   
   if (Wc.core.session_type == SESSION_MJPEG_HTTP) {
@@ -602,6 +608,17 @@ uint32_t WcSetup(bool reset_config) {
     // Set Task
     task_func = WebRTCProcessingTask;
     task_name = "WebRTCTask";
+  }
+  
+  // ← ADDED: guard against unknown/unhandled session type
+  if (!task_func) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Unknown session type %d, no task function"), Wc.core.session_type);
+    WcDeinitPipeline();
+    vSemaphoreDelete(Wc.core.frame_mutex);
+    vSemaphoreDelete(Wc.jpeg.mutex);
+    vSemaphoreDelete(Wc.core.resume_sem);
+    WcSetFailed(CAM_FAIL_TASK);
+    return 0;
   }
   
   BaseType_t task_created = xTaskCreatePinnedToCore(
@@ -694,20 +711,24 @@ uint32_t WcStop(void) {
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Stopping (state=%d)"), Wc.core.state);
   
-  // 1. Set state to STOPPING - task will exit on next iteration
+  // 1. Stop sensor streaming (MIPI stops; harmless if already idle)
+  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Called Berry stream stop"));
+  
+  // 2. Gate ISR immediately
   Wc.core.state = CAM_STOPPING;
   
-  // 2. If task was paused, release it so it can see STOPPING and exit
+  // 3. Wake paused task so it can see STOPPING and exit
   if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
-  if (Wc.core.frame_mutex) xSemaphoreGive(Wc.core.frame_mutex);
+  // NOTE: no xSemaphoreGive(frame_mutex) — mutex not a signal; task unblocked by notify below
   
-  // 3. Wake task and wait for it to exit
+  // 4. Wake task and wait for it to exit
   if (Wc.core.cam_task_handle) {
     xTaskNotifyGive(Wc.core.cam_task_handle);
     
     // Wait for task to exit (task sets handle to NULL before deleting itself)
     for (int i = 0; i < 50 && Wc.core.cam_task_handle != NULL; i++) {
-      delay(10);
+      delay(25);
     }
     
     // Force delete if task didn't exit
@@ -718,10 +739,6 @@ uint32_t WcStop(void) {
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Task stopped"));
   }
-
-  // 4. Stop sensor streaming via Berry
-  callBerryEventDispatcher(PSTR("camera"), PSTR("stream"), 0, nullptr, 0);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Called Berry stream stop"));
   
   // 5. Deinitialize hardware pipeline (Buffers, CSI, ISP, Encoders)
   WcDeinitPipeline();
@@ -735,10 +752,10 @@ uint32_t WcStop(void) {
   // 7. Stop RTSP server and close client
   WcRtspStop();
   
-  // 7b. Stop WebRTC (UDP, DTLS task, state)
+  // 8. Stop WebRTC (UDP, DTLS task, state)
   WcWebRTCStop();
   
-  // 8. Delete mutexes
+  // 9. Delete mutexes
   if (Wc.core.frame_mutex) {
     vSemaphoreDelete(Wc.core.frame_mutex);
     Wc.core.frame_mutex = NULL;
@@ -752,7 +769,7 @@ uint32_t WcStop(void) {
     Wc.core.resume_sem = NULL;
   }
 
-  // 9. Final state
+  // 10. Final state
   Wc.core.state = CAM_IDLE;
   Wc.jpeg.stream_active = 0;
   
@@ -869,6 +886,13 @@ bool Xdrv81(uint32_t function) {
     case FUNC_INIT:
       if (Wc.core.state == CAM_IDLE) {
         WcSetup(true);  // First boot - reset config to defaults
+      }
+      break;
+    case FUNC_EVERY_250_MSECOND:
+      if (Wc.core.state == CAM_STREAMING) {
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
+        WcIspAwbProcess();
+#endif
       }
       break;
     case FUNC_EVERY_SECOND:

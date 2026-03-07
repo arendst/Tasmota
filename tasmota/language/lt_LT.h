@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Kiti parametrai"
 #define D_TEMPLATE "Šablonas"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Aktyvuoti"
 #define D_DEVICE_NAME "Įrenginio pavadinimas"
 #define D_WEB_ADMIN_PASSWORD "Web administratoriaus slaptažodis"

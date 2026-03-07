@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Alți paramatri"
 #define D_TEMPLATE "Template"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Activare"
 #define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Parolă Web Admin"

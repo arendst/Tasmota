@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Einstellungen"
 #define D_TEMPLATE "Vorlage"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Aktivieren"
 #define D_DEVICE_NAME "Gerätename"
 #define D_WEB_ADMIN_PASSWORD "Passwort für Weboberfläche"

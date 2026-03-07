@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "其他參數"
 #define D_TEMPLATE "範本"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "啟動"
 #define D_DEVICE_NAME "裝置名稱"
 #define D_WEB_ADMIN_PASSWORD "網頁管理密碼"

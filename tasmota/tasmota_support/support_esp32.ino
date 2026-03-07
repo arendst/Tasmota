@@ -35,60 +35,45 @@ extern "C" {
 
 #include "bootloader_common.h"
 
-// ESP32_ARCH contains the name of the architecture (used by autoconf)
 // Flash memory mapping - See Esp.cpp
 
-#if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
-  #ifdef CORE32SOLO1
-    #define ESP32_ARCH            "esp32solo1"
-  #else
-    #define ESP32_ARCH            "esp32"
-  #endif
+#if CONFIG_IDF_TARGET_ESP32               // ESP32/PICO-D4
   #include "esp32/rom/rtc.h"
   #include "esp32/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
 #elif CONFIG_IDF_TARGET_ESP32S2
-  #define ESP32_ARCH              "esp32s2"
   #include "esp32s2/rom/rtc.h"
   #include "esp32s2/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
 #elif CONFIG_IDF_TARGET_ESP32S3
-  #define ESP32_ARCH              "esp32s3"
   #include "esp32s3/rom/rtc.h"
   #include "esp32s3/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32C2
-  #define ESP32_ARCH              "esp32c2"
   #include "esp32c2/rom/rtc.h"
   #include "esp32c2/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c2 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32C3
-  #define ESP32_ARCH              "esp32c3"
   #include "esp32c3/rom/rtc.h"
   #include "esp32c3/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32C5
-  #define ESP32_ARCH              "esp32c5"  
   #include "esp32c5/rom/rtc.h"
   #include "esp32c5/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32c5 is located at 0x2000
 #elif CONFIG_IDF_TARGET_ESP32C6
-  #define ESP32_ARCH              "esp32c6"
   #include "esp32c6/rom/rtc.h"
   #include "esp32c6/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32H2
-  #define ESP32_ARCH              "esp32h2"
   #include "esp32h2/rom/rtc.h"
   #include "esp32h2/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32P4
-  #define ESP32_ARCH              "esp32p4"
   #include "esp32p4/rom/rtc.h"
   #include "esp32p4/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32p4 is located at 0x2000
 #else
-  #define ESP32_ARCH              ""
   #error Target CONFIG_IDF_TARGET is not supported
 #endif
 
