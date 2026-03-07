@@ -39,7 +39,7 @@
 
   let abortController = null;
   let isStreaming = false;
-  let imageData, argb, sharedBuffer, buf8, buf16;
+  let imageData, argb, readBuf, readBuf16, updateBuffer;
 
   // RGB565 to ARGB8888 (Little Endian: AABBGGRR) using bit replication
   for (let p = 0; p < 0x10000; p++) {
@@ -80,15 +80,16 @@
       }
       const reader = response.body.getReader();
       let available = 0;
-      let decompTotal, x, y, w, h;
-      let sIdx, dIdx, dInc, uIdx;
+      let expectedPixels, x, y, w, h;
+      let readOffset, dIdx, dInc, uIdx;
       let drawnRows = 0;
+      let drawCount = 0;
       while (isStreaming) {
         const { value, done } = await reader.read();
         if (done) break;
         readBuf.set(value, available * 2);
         available += value.length / 2;
-        if (!decompTotal) {
+        if (!expectedPixels) {
           if (available < HEADER_WORDS) continue;
           [magic, x, y, w, h] = readBuf16;
           if (magic !== LV_MAGIC) {
@@ -96,30 +97,29 @@
             stopStream();
             return;
           }
-          decompTotal = w * h;
-          decompIdx = 0;
+          expectedPixels = w * h;
+          readOffset = HEADER_WORDS;
+          writeOffset = 0;
           drawnRows = 0;
-          sIdx = HEADER_WORDS;
           dIdx = y * width + x;
           dInc = width - w;
           uIdx = 0;
         }
-        while (decompIdx < decompTotal) {
-          if (available < sIdx + 1) break;
-          const chunkHeader = readBuf16[sIdx];
-          const isRle = chunkHeader & 0x8000;
-          const count = (chunkHeader & 0x7FFF) + (isRle ? 2 : 1);
-          if (available < sIdx + 1 + (isRle ? 1 : count)) break;
-          sIdx++;
-          if (isRle) {
-            updateBuffer.fill(readBuf16[sIdx++], decompIdx, decompIdx + count);
+        while (readOffset < available && writeOffset < expectedPixels) {
+          const header = readBuf16[readOffset];
+          const isRun = header & 0x8000;
+          const count = (header & 0x7FFF) + (isRun ? 2 : 1);
+          if (available < readOffset + 1 + (isRun ? 1 : count)) break;
+          readOffset++;
+          if (isRun) {
+            updateBuffer.fill(readBuf16[readOffset++], writeOffset, writeOffset + count);
           } else {
-            updateBuffer.set(readBuf16.subarray(sIdx, sIdx + count), decompIdx);
-            sIdx += count;
+            updateBuffer.set(readBuf16.subarray(readOffset, readOffset + count), writeOffset);
+            readOffset += count;
           }
-          decompIdx += count;
+          writeOffset += count;
         }
-        const availableRows = Math.floor(decompIdx / w);
+        const availableRows = Math.floor(writeOffset / w);
         if (availableRows > drawnRows) {
           const newRows = availableRows - drawnRows;
           for (let r = 0; r < newRows; r++, dIdx += dInc) {
@@ -129,18 +129,16 @@
           }
           ctx.putImageData(imageData, 0, 0, x, y + drawnRows, w, newRows);
           drawnRows = availableRows;
+          drawCount++;
         }
-        if (decompIdx < decompTotal) continue;
-        available -= sIdx;
-        if (available > 0) {
-          readBuf16.copyWithin(0, sIdx, sIdx + available);
+        if (writeOffset < expectedPixels) continue;
+        if (available > readOffset) {
+          readBuf16.copyWithin(0, readOffset, available);
         }
-        sIdx = 0;
-        decompTotal = undefined;
-      }
-      available -= sIdx;
-      if (available > 0) {
-        readBuf16.copyWithin(0, sIdx, sIdx + available);
+        available -= readOffset;
+        drawCount = 0;
+        readOffset = 0;
+        expectedPixels = undefined;
       }
     } catch (err) {
       if (err.name !== 'AbortError') console.error("Stream Error: ", err);
