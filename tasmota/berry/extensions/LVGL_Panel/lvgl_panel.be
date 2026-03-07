@@ -56,6 +56,16 @@ class lvgl_panel
   end
 
   def every_50ms()
+    var idx = 0
+    while idx < size(self.connections)
+      var cnx = self.connections[idx]
+      if !cnx.connected()
+        self.connections.remove(idx)
+      else
+        idx += 1
+      end
+    end
+
     if self.server.hasclient() # check for incoming connections
       var cnx = self.server.acceptasync()
       var req = cnx.read()
@@ -72,14 +82,14 @@ class lvgl_panel
         "Connection: close\r\n\r\n"
       )
       self.connections.push(cnx)
-      if (self.stream_cb == nil)
-        import cb
-        self.stream_cb = cb.gen_cb(/buf, len -> self.stream(buf,len))
-        lv.set_stream_cb(self.stream_cb)
-      end
       lv.scr_act().invalidate()
     end
-    if (size(self.connections) == 0 && self.stream_cb != nil)
+
+    if size(self.connections) > 0 && self.stream_cb == nil
+      import cb
+      self.stream_cb = cb.gen_cb(/buf, len -> self.stream(buf, len))
+      lv.set_stream_cb(self.stream_cb)
+    elif size(self.connections) == 0 && self.stream_cb != nil
       import cb
       import introspect
       lv.set_stream_cb(introspect.toptr(0))
@@ -89,15 +99,10 @@ class lvgl_panel
   end
 
   def stream(buf, len)
-    var idx = 0
-    while idx < size(self.connections)
-      import introspect
-      var cnx = self.connections[idx]
-      if !cnx.writebytes(introspect.toptr(buf),len)
+    import introspect
+    for cnx : self.connections
+      if !cnx.writebytes(introspect.toptr(buf), len)
         cnx.close()
-        self.connections.remove(idx)
-      else
-        idx += 1
       end
     end
   end
