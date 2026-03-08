@@ -706,6 +706,25 @@ void StopWebserver(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+// Close the webserver listening socket so that no new TCP connections
+// can accumulate in the accept backlog during WiFi teardown.
+// Must be called BEFORE WifiShutdown() to prevent dangling pbufs.
+void WebserverStopSocket(void) {
+  if (Webserver) {
+    Webserver->close();
+  }
+}
+
+// Reopen the webserver listening socket after WiFi teardown is complete.
+// This creates a fresh socket with an empty accept backlog.
+void WebserverStartSocket(void) {
+  if (Webserver) {
+    Webserver->begin();
+  }
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void WifiManagerBegin(bool reset_only) {
   // setup AP
   if (!Web.initial_config) { AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES)); }

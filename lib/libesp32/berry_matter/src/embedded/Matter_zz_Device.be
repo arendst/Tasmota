@@ -248,6 +248,26 @@ class Matter_Device
   end
 
   #############################################################
+  # Called on 'network_down' event, before WiFi teardown.
+  # Flush the UDP socket to discard any queued packets whose
+  # pbufs reference the WiFi netif (about to be destroyed).
+  def network_down()
+    if self.udp_server
+      self.udp_server.flush_socket()
+    end
+  end
+
+  #############################################################
+  # Called on 'network_up' event, after WiFi teardown when
+  # Ethernet is still active (or when WiFi reconnects).
+  # Reopen the UDP socket with a clean receive buffer.
+  def network_up()
+    if self.udp_server
+      self.udp_server.reopen_socket()
+    end
+  end
+
+  #############################################################
   # Callback when message is received.
   # Send to `message_handler`
   def msg_received(raw, addr, port)

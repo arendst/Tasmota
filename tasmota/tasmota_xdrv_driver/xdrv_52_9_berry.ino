@@ -981,6 +981,13 @@ bool Xdrv52(uint32_t function)
       callBerryEventDispatcher(PSTR("after_teleperiod"), nullptr, 0, nullptr);
       break;
 
+    case FUNC_NETWORK_UP:
+      callBerryEventDispatcher(PSTR("network_up"), nullptr, 0, nullptr);
+      break;
+    case FUNC_NETWORK_DOWN:
+      callBerryEventDispatcher(PSTR("network_down"), nullptr, 0, nullptr);
+      break;
+
     case FUNC_ACTIVE:
       result = true;
       break;

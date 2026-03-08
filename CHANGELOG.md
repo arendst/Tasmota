@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 redesigned I2C Wire driver to support second I2C bus
 
 ### Fixed
+- Crash when shutting down Wifi with `Wifi 0`
 
 ### Removed
 
