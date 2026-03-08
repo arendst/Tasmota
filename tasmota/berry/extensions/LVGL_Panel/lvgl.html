@@ -160,26 +160,24 @@
     }
   }
 
-  function getCanvasCoordinates(event) {
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.round((event.clientX - rect.left) * (canvas.width / rect.width));
-    const y = Math.round((event.clientY - rect.top) * (canvas.height / rect.height));
-    return { x, y };
-  }
-
-  canvas.addEventListener("mousedown", (e) => {
+  function sendTouchEvent(e) {
     e.preventDefault();
+    if (e.type === "mousemove" && e.buttons !== 1) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round((e.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.round((e.clientY - rect.top) * (canvas.height / rect.height));
+    const t = e.type === "mouseup" ? 0 : 1;
     const host = getHost();
     fetch(`http://${host}/lvgl_touch`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(getCanvasCoordinates(e)).toString()
-    }).catch(err => {
-      console.error("Touch event error:", err);
-    });
-  });
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ x, y, t }).toString()
+    }).catch(err => console.error("Touch event error:", err));
+  }
+
+  canvas.addEventListener("mousemove", sendTouchEvent);
+  canvas.addEventListener("mouseup", sendTouchEvent);
+  canvas.addEventListener("mousedown", sendTouchEvent);
 
   lvBtn.addEventListener('click', (e) => {
     const host = getHost();
