@@ -124,17 +124,16 @@ class lvgl_panel
     import webserver
     import display
     if !webserver.check_privileged_access() return nil end
-    if webserver.has_arg('x') && webserver.has_arg('y')
+    if webserver.has_arg('x') && webserver.has_arg('y') && webserver.has_arg('t')
+      var t = int(webserver.arg('t'))
       var x = int(webserver.arg('x'))
       var y = int(webserver.arg('y'))
-      # log(f'>>>LVG: lvgl_touch x: {x}, y: {y}')
-      display.touch_update(1, x, y, 0)
+      display.touch_update(t, x, y, 0)
     end
-
     webserver.content_send('HTTP/1.1 200 OK\r\n'
         'Access-Control-Allow-Origin: *\r\n'
         'Access-Control-Allow-Methods: POST\r\n'
-        'Content-Length: 5\r\n\r\n'
+        'Content-Length: 0\r\n\r\n'
     )
     webserver.content_close()
   end
