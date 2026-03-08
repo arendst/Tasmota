@@ -83,62 +83,68 @@
       let expectedPixels, x, y, w, h;
       let readOffset, dIdx, dInc, uIdx;
       let drawnRows = 0;
-      let drawCount = 0;
+      let frameStart = 0;
       while (isStreaming) {
         const { value, done } = await reader.read();
         if (done) break;
         readBuf.set(value, available * 2);
         available += value.length / 2;
-        if (!expectedPixels) {
-          if (available < HEADER_WORDS) continue;
-          [magic, x, y, w, h] = readBuf16;
-          if (magic !== LV_MAGIC) {
-            console.error("Sync Error: No magic found");
-            stopStream();
-            return;
-          }
-          expectedPixels = w * h;
-          readOffset = HEADER_WORDS;
-          writeOffset = 0;
-          drawnRows = 0;
-          dIdx = y * width + x;
-          dInc = width - w;
-          uIdx = 0;
-        }
-        while (readOffset < available && writeOffset < expectedPixels) {
-          const header = readBuf16[readOffset];
-          const isRun = header & 0x8000;
-          const count = (header & 0x7FFF) + (isRun ? 2 : 1);
-          if (available < readOffset + 1 + (isRun ? 1 : count)) break;
-          readOffset++;
-          if (isRun) {
-            updateBuffer.fill(readBuf16[readOffset++], writeOffset, writeOffset + count);
-          } else {
-            updateBuffer.set(readBuf16.subarray(readOffset, readOffset + count), writeOffset);
-            readOffset += count;
-          }
-          writeOffset += count;
-        }
-        const availableRows = Math.floor(writeOffset / w);
-        if (availableRows > drawnRows) {
-          const newRows = availableRows - drawnRows;
-          for (let r = 0; r < newRows; r++, dIdx += dInc) {
-            for (let c = 0; c < w; c++) {
-              argb[dIdx++] = RGB565_LUT[updateBuffer[uIdx++]];
+        while (true) {
+          if (!expectedPixels) {
+            if (available - frameStart < HEADER_WORDS) break;
+            [magic, x, y, w, h] = readBuf16.subarray(frameStart);
+            if (magic !== LV_MAGIC) {
+              console.error("Sync Error: No magic found");
+              stopStream();
+              return;
             }
+            expectedPixels = w * h;
+            readOffset = frameStart + HEADER_WORDS;
+            writeOffset = 0;
+            drawnRows = 0;
+            dIdx = y * width + x;
+            dInc = width - w;
+            uIdx = 0;
           }
-          ctx.putImageData(imageData, 0, 0, x, y + drawnRows, w, newRows);
-          drawnRows = availableRows;
-          drawCount++;
+          while (readOffset < available && writeOffset < expectedPixels) {
+            const header = readBuf16[readOffset];
+            const isRun = header & 0x8000;
+            const count = (header & 0x7FFF) + (isRun ? 2 : 1);
+            if (available < readOffset + 1 + (isRun ? 1 : count)) break;
+            readOffset++;
+            if (isRun) {
+              updateBuffer.fill(readBuf16[readOffset++], writeOffset, writeOffset + count);
+            } else {
+              updateBuffer.set(readBuf16.subarray(readOffset, readOffset + count), writeOffset);
+              readOffset += count;
+            }
+            writeOffset += count;
+          }
+          const availableRows = Math.floor(writeOffset / w);
+          if (availableRows > drawnRows) {
+            const newRows = availableRows - drawnRows;
+            for (let r = 0; r < newRows; r++, dIdx += dInc) {
+              for (let c = 0; c < w; c++) {
+                argb[dIdx++] = RGB565_LUT[updateBuffer[uIdx++]];
+              }
+            }
+            ctx.putImageData(imageData, 0, 0, x, y + drawnRows, w, newRows);
+            drawnRows = availableRows;
+          }
+          if (writeOffset < expectedPixels) break;
+          frameStart = readOffset;
+          expectedPixels = undefined;
         }
-        if (writeOffset < expectedPixels) continue;
-        if (available > readOffset) {
-          readBuf16.copyWithin(0, readOffset, available);
+        if (frameStart > 0) {
+          if (frameStart < available) {
+            readBuf16.copyWithin(0, frameStart, available);
+            readOffset -= frameStart;
+          } else {
+            readOffset = 0;
+          }
+          available -= frameStart;
+          frameStart = 0;
         }
-        available -= readOffset;
-        drawCount = 0;
-        readOffset = 0;
-        expectedPixels = undefined;
       }
     } catch (err) {
       if (err.name !== 'AbortError') console.error("Stream Error: ", err);
