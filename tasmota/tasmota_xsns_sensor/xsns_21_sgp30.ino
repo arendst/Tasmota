@@ -41,14 +41,15 @@ float sgp30_abshum;
 
 /********************************************************************************************/
 
-void sgp30_Init(void)
-{
-  if (!I2cSetDevice(SGP30_ADDRESS)) { return; }
-
-  if (sgp.begin()) {
-    sgp30_type = true;
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
-    I2cSetActiveFound(SGP30_ADDRESS, "SGP30");
+void sgp30_Init(void) {
+  for (uint32_t bus = 0; bus < 2; bus++) {
+    if (!I2cSetDevice(SGP30_ADDRESS, bus)) { continue; }
+    if (sgp.begin(&I2cGetWire(bus))) {
+      sgp30_type = true;
+  //    AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
+      I2cSetActiveFound(SGP30_ADDRESS, "SGP30", bus);
+      return;
+    }
   }
 }
 

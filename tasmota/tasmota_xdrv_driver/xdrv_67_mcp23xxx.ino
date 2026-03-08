@@ -145,6 +145,7 @@ typedef struct {
   uint8_t olata;
   uint8_t olatb;
   uint8_t address;
+  uint8_t bus;
   uint8_t interface;
   uint8_t pins;                           // 8 (MCP23x08) or 16 (MCP23x17)
   int8_t pin_cs;
@@ -219,7 +220,7 @@ void MCP23xDumpRegs(void) {
 #endif
 #ifdef USE_I2C
     if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
-      I2cReadBuffer(Mcp23x.device[Mcp23x.chip].address, 0, data, data_size);
+      I2cReadBuffer(Mcp23x.device[Mcp23x.chip].address, 0, data, data_size, Mcp23x.device[Mcp23x.chip].bus);
     }
 #endif
     AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Intf %d, Address %02X, Regs %*_H"), Mcp23x.device[Mcp23x.chip].interface, Mcp23x.device[Mcp23x.chip].address, data_size, data);
@@ -241,7 +242,7 @@ uint32_t MCP23xRead16(uint8_t reg) {
 #endif
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
-    value = I2cRead16LE(Mcp23x.device[Mcp23x.chip].address, reg);
+    value = I2cRead16LE(Mcp23x.device[Mcp23x.chip].address, reg, Mcp23x.device[Mcp23x.chip].bus);
   }
 #endif
   return value;
@@ -260,7 +261,7 @@ uint32_t MCP23xRead(uint8_t reg) {
 #endif
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
-    value = I2cRead8(Mcp23x.device[Mcp23x.chip].address, reg);
+    value = I2cRead8(Mcp23x.device[Mcp23x.chip].address, reg, Mcp23x.device[Mcp23x.chip].bus);
   }
 #endif
   return value;
@@ -279,7 +280,7 @@ bool MCP23xValidRead(uint8_t reg, uint8_t *data) {
 #endif
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
-    return I2cValidRead8(data, Mcp23x.device[Mcp23x.chip].address, reg);
+    return I2cValidRead8(data, Mcp23x.device[Mcp23x.chip].address, reg, Mcp23x.device[Mcp23x.chip].bus);
   }
   return false;
 #endif
@@ -297,7 +298,7 @@ void MCP23xWrite(uint8_t reg, uint8_t value) {
 #endif
 #ifdef USE_I2C
   if (MCP23X_I2C == Mcp23x.device[Mcp23x.chip].interface) {
-    I2cWrite8(Mcp23x.device[Mcp23x.chip].address, reg, value);
+    I2cWrite8(Mcp23x.device[Mcp23x.chip].address, reg, value, Mcp23x.device[Mcp23x.chip].bus);
   }
 #endif
 }
@@ -663,44 +664,51 @@ void MCP23xModuleInit(void) {
   } else {
 #endif  // USE_SPI
 #ifdef USE_I2C
-    uint8_t mcp23xxx_address = MCP23XXX_ADDR_START;
-    while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && (mcp23xxx_address < MCP23XXX_ADDR_END)) {
-      Mcp23x.chip = Mcp23x.max_devices;
-      uint32_t pin_int = (Mcp23x.iocon.ODR) ? 0 : Mcp23x.chip;  // INT pins are open-drain outputs and supposedly connected together to one GPIO
-      if (I2cSetDevice(mcp23xxx_address)) {
-        Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, pin_int)) ? Pin(GPIO_MCP23XXX_INT, pin_int) : -1;
-        Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
-        Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
+    for (uint32_t bus = 0; bus < 2; bus++) {
+      uint8_t mcp23xxx_address = MCP23XXX_ADDR_START;
+      while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && (mcp23xxx_address < MCP23XXX_ADDR_END)) {
+        Mcp23x.chip = Mcp23x.max_devices;
+        uint32_t pin_int = (Mcp23x.iocon.ODR) ? 0 : Mcp23x.chip;  // INT pins are open-drain outputs and supposedly connected together to one GPIO
+        if (I2cSetDevice(mcp23xxx_address, bus)) {
+          Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, pin_int)) ? Pin(GPIO_MCP23XXX_INT, pin_int) : -1;
+          Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
+          Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
+          Mcp23x.device[Mcp23x.chip].bus = bus;
 
-        MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23x17, so its the best way to detect the different chips 23x08 vs 23x17
-        uint8_t buffer;
-        if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
-          if (0x00 == buffer) {
-            I2cSetActiveFound(mcp23xxx_address, "MCP23008");
-            Mcp23x.device[Mcp23x.chip].pins = 8;
-//            MCP23xWrite(MCP23X08_IOCON, 0b00011000);   // Slew rate disabled, HAEN pins for addressing
-            MCP23xWrite(MCP23X08_IOCON, Mcp23x.iocon.reg & 0x3E);
-            Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
-            Mcp23x.max_devices++;
+          MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23x17, so its the best way to detect the different chips 23x08 vs 23x17
+          uint8_t buffer;
+          if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
+            if (0x00 == buffer) {
+              I2cSetActiveFound(mcp23xxx_address, "MCP23008", bus);
+              Mcp23x.device[Mcp23x.chip].pins = 8;
+//              MCP23xWrite(MCP23X08_IOCON, 0b00011000);   // Slew rate disabled, HAEN pins for addressing
+              MCP23xWrite(MCP23X08_IOCON, Mcp23x.iocon.reg & 0x3E);
+              Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
+              Mcp23x.max_devices++;
+            }
+            else if (0x80 == buffer) {
+              I2cSetActiveFound(mcp23xxx_address, "MCP23017", bus);
+              Mcp23x.device[Mcp23x.chip].pins = 16;
+              MCP23xWrite(MCP23X08_IOCON, 0x00);           // Reset bank mode to 0 (MCP23X17_GPINTENB)
+//              MCP23xWrite(MCP23X17_IOCONA, 0b01011000);  // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+              MCP23xWrite(MCP23X17_IOCONA, Mcp23x.iocon.reg);
+              Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
+              Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+              Mcp23x.max_devices++;
+            }
+            Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
+            pins_needed -= Mcp23x.device[Mcp23x.chip].pins;
           }
-          else if (0x80 == buffer) {
-            I2cSetActiveFound(mcp23xxx_address, "MCP23017");
-            Mcp23x.device[Mcp23x.chip].pins = 16;
-            MCP23xWrite(MCP23X08_IOCON, 0x00);           // Reset bank mode to 0 (MCP23X17_GPINTENB)
-//            MCP23xWrite(MCP23X17_IOCONA, 0b01011000);  // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
-            MCP23xWrite(MCP23X17_IOCONA, Mcp23x.iocon.reg);
-            Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
-            Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
-            Mcp23x.max_devices++;
-          }
-          Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
-          pins_needed -= Mcp23x.device[Mcp23x.chip].pins;
+        }
+        if (pins_needed) {
+          mcp23xxx_address++;
+        } else {
+          mcp23xxx_address = MCP23XXX_ADDR_END;
+          break;
         }
       }
-      if (pins_needed) {
-        mcp23xxx_address++;
-      } else {
-        mcp23xxx_address = MCP23XXX_ADDR_END;
+      if (!pins_needed) {
+        break;
       }
     }
 #endif  // USE_I2C

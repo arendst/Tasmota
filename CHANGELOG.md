@@ -3,14 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.3.0.1]
+## [15.3.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP8266 redesigned I2C Wire driver to support second I2C bus
+
+### Fixed
+
+### Removed
+
+## [15.3.0.1] 20260308
 ### Added
 - Support for Sensirion SCD43 CO2 sensor
 - I2S full duplex, auto rx sample rate (#24469)
 - Support for Sensirion STCC4 CO2 sensor
 - Support for JSON value pair `"ARCH"` in template being either ESP8266, ESP32, ESP32C2, ESP32C3, ESP32C5, ESP32C6, ESP32H2, ESP32H4, ESP32P4, ESP32S2 or ESP32S3
-
-### Breaking Changed
 
 ### Changed
 - LVGL library from v9.4.0 to v9.5.0 (#24470)
