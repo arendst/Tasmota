@@ -32,7 +32,7 @@ const char be_berry_init_code[] =
   "import global "
 #ifdef USE_BERRY_PYTHON_COMPAT
   // enable python syntax compatibility mode
-  "import python_compat "
+  "do import python_compat end "      // don't keep 'python_compat' in global namespace
 #endif
   "import cb "
 
@@ -55,8 +55,19 @@ const char be_berry_init_code[] =
 
 #ifdef USE_AUTOCONF
   // autoconf
-  "import autoconf "
+  "do import autoconf end "
 #endif // USE_AUTOCONF
+
+#ifdef USE_EXTENSION_MANAGER
+  "do import extension_manager end "
+#endif
+
+#ifdef USE_BERRY_ANIMATION
+  "import animation "
+  #ifdef USE_BERRY_ANIMATION_DSL
+    "import animation_dsl "
+  #endif // USE_BERRY_ANIMATION_DSL
+#endif // USE_BERRY_ANIMATION
 
 #ifdef USE_LVGL
   "import lv "
@@ -84,7 +95,7 @@ const char be_berry_init_code[] =
   "import hue_bridge "
 #endif
 
-  "import tapp "
+  "do import tapp end "     // we don't need to keep `tapp` in the global namespace
 
 #ifdef USE_BERRY_DEBUG
   "import debug "

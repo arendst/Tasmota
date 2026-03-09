@@ -318,8 +318,9 @@ void IRKelonAc::setTimer(uint16_t mins) {
 /// @return The timer set minutes
 uint16_t IRKelonAc::getTimer() const {
   if (_.TimerHours >= 10)
-    return ((uint16_t) ((_.TimerHours << 1) | _.TimerHalfHour) - 10) * 60;
-  return (((uint16_t) _.TimerHours) * 60) + (_.TimerHalfHour ? 30 : 0);
+    return (static_cast<uint16_t>((_.TimerHours << 1) | _.TimerHalfHour) -
+            10) * 60;
+  return static_cast<uint16_t>(_.TimerHours) * 60 + (_.TimerHalfHour ? 30 : 0);
 }
 
 /// Enable or disable the timer. Note that in order to enable the timer the

@@ -14,7 +14,7 @@
  * Generated code from properties.py
  */
 /* *INDENT-OFF* */
-const lv_property_name_t lv_style_property_names[112] = {
+const lv_property_name_t lv_style_property_names[121] = {
     {"align",                  LV_PROPERTY_STYLE_ALIGN,},
     {"anim",                   LV_PROPERTY_STYLE_ANIM,},
     {"anim_duration",          LV_PROPERTY_STYLE_ANIM_DURATION,},
@@ -64,6 +64,7 @@ const lv_property_name_t lv_style_property_names[112] = {
     {"grid_row_align",         LV_PROPERTY_STYLE_GRID_ROW_ALIGN,},
     {"grid_row_dsc_array",     LV_PROPERTY_STYLE_GRID_ROW_DSC_ARRAY,},
     {"height",                 LV_PROPERTY_STYLE_HEIGHT,},
+    {"image_colorkey",         LV_PROPERTY_STYLE_IMAGE_COLORKEY,},
     {"image_opa",              LV_PROPERTY_STYLE_IMAGE_OPA,},
     {"image_recolor",          LV_PROPERTY_STYLE_IMAGE_RECOLOR,},
     {"image_recolor_opa",      LV_PROPERTY_STYLE_IMAGE_RECOLOR_OPA,},
@@ -93,11 +94,15 @@ const lv_property_name_t lv_style_property_names[112] = {
     {"pad_bottom",             LV_PROPERTY_STYLE_PAD_BOTTOM,},
     {"pad_column",             LV_PROPERTY_STYLE_PAD_COLUMN,},
     {"pad_left",               LV_PROPERTY_STYLE_PAD_LEFT,},
+    {"pad_radial",             LV_PROPERTY_STYLE_PAD_RADIAL,},
     {"pad_right",              LV_PROPERTY_STYLE_PAD_RIGHT,},
     {"pad_row",                LV_PROPERTY_STYLE_PAD_ROW,},
     {"pad_top",                LV_PROPERTY_STYLE_PAD_TOP,},
     {"prop_inv",               LV_PROPERTY_STYLE_PROP_INV,},
+    {"radial_offset",          LV_PROPERTY_STYLE_RADIAL_OFFSET,},
     {"radius",                 LV_PROPERTY_STYLE_RADIUS,},
+    {"recolor",                LV_PROPERTY_STYLE_RECOLOR,},
+    {"recolor_opa",            LV_PROPERTY_STYLE_RECOLOR_OPA,},
     {"rotary_sensitivity",     LV_PROPERTY_STYLE_ROTARY_SENSITIVITY,},
     {"shadow_color",           LV_PROPERTY_STYLE_SHADOW_COLOR,},
     {"shadow_offset_x",        LV_PROPERTY_STYLE_SHADOW_OFFSET_X,},
@@ -112,6 +117,9 @@ const lv_property_name_t lv_style_property_names[112] = {
     {"text_letter_space",      LV_PROPERTY_STYLE_TEXT_LETTER_SPACE,},
     {"text_line_space",        LV_PROPERTY_STYLE_TEXT_LINE_SPACE,},
     {"text_opa",               LV_PROPERTY_STYLE_TEXT_OPA,},
+    {"text_outline_stroke_color", LV_PROPERTY_STYLE_TEXT_OUTLINE_STROKE_COLOR,},
+    {"text_outline_stroke_opa", LV_PROPERTY_STYLE_TEXT_OUTLINE_STROKE_OPA,},
+    {"text_outline_stroke_width", LV_PROPERTY_STYLE_TEXT_OUTLINE_STROKE_WIDTH,},
     {"transform_height",       LV_PROPERTY_STYLE_TRANSFORM_HEIGHT,},
     {"transform_pivot_x",      LV_PROPERTY_STYLE_TRANSFORM_PIVOT_X,},
     {"transform_pivot_y",      LV_PROPERTY_STYLE_TRANSFORM_PIVOT_Y,},
@@ -122,6 +130,7 @@ const lv_property_name_t lv_style_property_names[112] = {
     {"transform_skew_y",       LV_PROPERTY_STYLE_TRANSFORM_SKEW_Y,},
     {"transform_width",        LV_PROPERTY_STYLE_TRANSFORM_WIDTH,},
     {"transition",             LV_PROPERTY_STYLE_TRANSITION,},
+    {"translate_radial",       LV_PROPERTY_STYLE_TRANSLATE_RADIAL,},
     {"translate_x",            LV_PROPERTY_STYLE_TRANSLATE_X,},
     {"translate_y",            LV_PROPERTY_STYLE_TRANSLATE_Y,},
     {"width",                  LV_PROPERTY_STYLE_WIDTH,},

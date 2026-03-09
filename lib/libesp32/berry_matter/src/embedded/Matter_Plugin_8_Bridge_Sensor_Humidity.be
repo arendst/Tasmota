@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Bridge Variant - Humidity Sensor via HTTP
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Sensor_Humidity (Matter_Plugin_3_Sensor_Humidity.be)
+# VARIANT TYPE: Bridge (Remote HTTP Device)
+# DEVICE TYPE: Humidity Sensor (0x0307) - See base class
+# CLUSTERS: Relative Humidity Measurement (0x0405) - See Matter_Plugin_3_Sensor_Humidity.be
+# TYPE: "http_humidity" | BRIDGE: true
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

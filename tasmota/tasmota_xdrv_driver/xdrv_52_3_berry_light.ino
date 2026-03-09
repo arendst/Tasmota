@@ -32,9 +32,18 @@
 extern "C" {
 
   // push the light status object on the vm stack
-  void push_getlight(bvm *vm, uint32_t light_num) {
+  void push_getlight(bvm *vm, uint32_t light_num, int32_t idx_name) { // idx_name is the index of name parameter, or 0 if none
     bool data_present = false;      // do we have relevant data
-    be_newobject(vm, "map");
+
+    if (idx_name != 0) {  // argument is name
+      be_pushnil(vm);
+      be_pushvalue(vm, 2);
+      // (-2) nil, (-1) string -> if key matches then update (-2)
+    } else {
+      be_newobject(vm, "map");
+      // (-2) map instance, (-1) map
+    }
+    
     // check if the light exist
     // TasmotaGlobal.devices_present
     // Light.device
@@ -128,12 +137,19 @@ extern "C" {
   int32_t l_getlight(bvm *vm);
   int32_t l_getlight(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 0 || (top == 1 && be_isint(vm, 1))) {
+    if (top == 0 || (top >= 1 && be_isint(vm, 1))) {
       int32_t light_num = 0;
-      if (top > 0) {
+      if (top >= 1) {
         light_num = be_toint(vm, 1);
       }
-      push_getlight(vm, light_num);
+
+      if (top >= 2 && be_isstring(vm, 2)) { // argument is name
+        push_getlight(vm, light_num, 2);    // pass the name to filter value
+      } else {
+        be_newobject(vm, "map");
+        push_getlight(vm, light_num, 0);    // request the full map
+      }
+      
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
@@ -289,7 +305,7 @@ extern "C" {
         }
       }
 
-      push_getlight(vm, idx);
+      push_getlight(vm, idx, 0);
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);

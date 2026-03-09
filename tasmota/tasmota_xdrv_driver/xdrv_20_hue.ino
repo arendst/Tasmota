@@ -214,17 +214,17 @@ void HueRespondToMSearch(void)
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST1], uuid.c_str());
     PortUdp.write((const uint8_t*)response, strlen(response));
     PortUdp.endPacket();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST2], uuid.c_str(), uuid.c_str());
     PortUdp.write((const uint8_t*)response, strlen(response));
     PortUdp.endPacket();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(response + len, sizeof(response) - len, msg[HUE_RESP_ST3], uuid.c_str());
     PortUdp.write((const uint8_t*)response, strlen(response));
     PortUdp.endPacket();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UPNP "UDP resp=%s"), response);
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {

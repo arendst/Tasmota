@@ -159,6 +159,18 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
+enum DisplayModes { 
+  DM_USER_CONTROL,         // 0
+  DM_TIME,
+  DM_LOCAL_SENSORS,
+  DM_TIME_LOCAL_SENSORS,
+  DM_MQTT_SENSORS,
+  DM_TIME_MQTT_SENSORS,
+  DM_MQTT_TOPIC_UPTIME,
+  DM_MQTT_HOSTNAME_IPADDRESS,
+  DM_MAX
+};
+
 const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_TYPE "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_MODE "|"
   D_CMND_DISP_INVERT "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
@@ -184,6 +196,10 @@ void (* const DisplayCommand[])(void) PROGMEM = {
 };
 
 #ifdef USE_GRAPH
+
+#ifndef NUM_GRAPHS
+#define NUM_GRAPHS      4                    // Max 16
+#endif
 
 typedef union {
   uint8_t data;
@@ -537,11 +553,17 @@ void DisplayText(void)
             break;
           case 'i':
             // init display with partial update
-            DisplayInit(DISPLAY_INIT_PARTIAL);
+            //DisplayInit(DISPLAY_INIT_PARTIAL);
+            if (renderer) {
+              renderer->DisplayInit(DISPLAY_INIT_PARTIAL, Settings->display_size, Settings->display_rotate, Settings->display_font);
+            }
             break;
           case 'I':
             // init display with full refresh
-            DisplayInit(DISPLAY_INIT_FULL);
+            //DisplayInit(DISPLAY_INIT_FULL);
+            if (renderer) {
+              renderer->DisplayInit(DISPLAY_INIT_FULL, Settings->display_size, Settings->display_rotate, Settings->display_font);
+            }
             break;
           case 'o':
             DisplayOnOff(0);
@@ -1686,7 +1708,7 @@ const char kSensorUnit[] PROGMEM =
   D_UNIT_PARTS_PER_MILLION "|"                                                  // ppm
   D_UNIT_HERTZ;                                                                 // Hz
 
-void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value) {
+void DisplayJsonValue(const char* topic, const char* mkey, const char* value) {
   SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
   char temp[TOPSZ];
@@ -1725,10 +1747,24 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), (size)?topic:"", (size)?"/":"", mkey, buffer);  // pow1/Voltage or Voltage if topic is empty (local sensor or header)
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "topic [%s], device [%s], mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"),
-//    topic, device, mkey, source, value, quantity_code, buffer);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "topic [%s], mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"),
+//    topic, mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
+}
+
+void DisplayAnalyzeJsonObject(const char *topic, JsonParserObject Object) {
+  for (auto key : Object) {
+    JsonParserToken value = key.getValue();
+    if (value.isObject()) {
+      DisplayAnalyzeJsonObject(topic, value.getObject());
+    } else {
+      const char* values = value.getStr(nullptr);
+      if (values != nullptr) {
+        DisplayJsonValue(topic, key.getStr(), values);  // Sensor 56%
+      }
+    }
+  }
 }
 
 void DisplayAnalyzeJson(char *topic, const char *json) {
@@ -1755,34 +1791,82 @@ void DisplayAnalyzeJson(char *topic, const char *json) {
     if (unit) {
       snprintf_P(disp_pres, sizeof(disp_pres), PSTR("%s"), unit);  // hPa or mmHg
     }
-    for (auto key1 : root) {
-      JsonParserToken value1 = key1.getValue();
-      if (value1.isObject()) {
-        JsonParserObject Object2 = value1.getObject();
-        for (auto key2 : Object2) {
-          JsonParserToken value2 = key2.getValue();
-          if (value2.isObject()) {
-            JsonParserObject Object3 = value2.getObject();
-            for (auto key3 : Object3) {
-              const char* value3 = key3.getValue().getStr(nullptr);
-              if (value3 != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
-                DisplayJsonValue(topic, key1.getStr(), key3.getStr(), value3);  // Sensor 56%
-              }
-            }
-          } else {
-            const char* value = value2.getStr(nullptr);
-            if (value != nullptr) {
-              DisplayJsonValue(topic, key1.getStr(), key2.getStr(), value);  // Sensor  56%
-            }
-          }
-        }
-      } else {
-        const char* value = value1.getStr(nullptr);
-        if (value != nullptr) {
-          DisplayJsonValue(topic, key1.getStr(), key1.getStr(), value);  // Topic  56%
+
+    DisplayAnalyzeJsonObject(topic, root);
+  }
+}
+
+void DisplayState(const char *topic, const char *json) {
+  // Impact DisplayCols1 and DisplayCols2:
+  // 12345678901234567890123456 = [DisplayCols1] 26   - Visible display columns
+  // leftitem         rightitem   [DisplayCols2] >= 3 - Display both left and rightaligned item, truncate rightaligned if total is too long
+  // leftitem             right   [DisplayCols2] 2    - Display both left and truncated rightaligned item
+  // leftitem                     [DisplayCols2] 1    - Display left item only
+  static uint32_t minute = 61; 
+
+  String jsonStr = json;                           // {"Time":"2025-08-24T14:34:59","Uptime":"0T00:05:10","UptimeSec":310,"Heap":49,...
+  JsonParser parser((char*)jsonStr.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return; }                           // Did JSON parsing went ok?
+
+  const char *leftitem = EmptyStr;
+  const char *rightitem = EmptyStr;
+
+  if (DM_MQTT_TOPIC_UPTIME == Settings->display_mode) {
+    leftitem = topic;
+    if (Settings->display_cols[1] > 1) {           // Need space for displaying topic and uptime
+      rightitem = root.getStr(PSTR(D_JSON_UPTIME), EmptyStr);
+      if (strlen(rightitem)) {
+        if ((2 == Settings->display_cols[1]) ||
+           ((Settings->display_cols[1] > 2) && ((strlen(leftitem) + strlen(rightitem) +1) > Settings->display_cols[0]))) {
+          char *eol = (char*)rightitem + strlen(rightitem) -3;
+          *eol = '\0';                             // Remove uptime seconds
         }
       }
     }
+  }
+  else if (DM_MQTT_HOSTNAME_IPADDRESS == Settings->display_mode) {
+    leftitem = root.getStr(PSTR(D_CMND_HOSTNAME), EmptyStr);
+    if (Settings->display_cols[1] > 1) {           // Need space for displaying hostname and ipaddress
+      rightitem = root.getStr(PSTR(D_CMND_IPADDRESS), EmptyStr);
+      if (strlen(rightitem)) {
+        if ((2 == Settings->display_cols[1]) ||
+           ((Settings->display_cols[1] > 2) && ((strlen(leftitem) + strlen(rightitem) +1) > Settings->display_cols[0]))) {
+          uint32_t netmask = Settings->ipv4_address[2];  // Assume WiFi netmask = Ethernet netmask
+#if defined(ESP32) && defined(USE_ETHERNET)
+          if (0 == netmask) {                      // Assume Ethernet netmask = WiFi netmask
+            netmask = Settings->eth_ipv4_address[2];
+          }
+#endif
+          if (netmask != 0) {
+            for (uint32_t i = 0; i < 3; i++) {
+              if (netmask >= 0x000000FF) {
+                rightitem = strchr(rightitem +1, '.');  // Remove network IP address octets
+              }
+              netmask >>= 8;
+            }
+          } else {
+            rightitem = strrchr(rightitem, '.');   // last IP address octet assuming netmask 255.255.255.0
+          }
+        }
+      }
+    }
+  }
+
+  if (strlen(leftitem)) {
+    char buffer[Settings->display_cols[0] +1];     // Max sized buffer string
+    if (minute != RtcTime.minute) {
+      minute = RtcTime.minute;
+      char buffer2[Settings->display_cols[0] +1];  // Max sized buffer string
+      memset(buffer2, '-', sizeof(buffer2));       // Set to -
+      buffer2[sizeof(buffer2) -1] = '\0';
+      snprintf_P(buffer, sizeof(buffer), PSTR("- %02d" D_HOUR_MINUTE_SEPARATOR "%02d %s"), RtcTime.hour, RtcTime.minute, buffer2);
+      DisplayLogBufferAdd(buffer);
+    }
+    int spaces = Settings->display_cols[0] - strlen(leftitem) - strlen(rightitem);
+    if (spaces < 1) { spaces = 1; }
+    snprintf_P(buffer, sizeof(buffer), PSTR("%s%*s%s"), leftitem, spaces, "", rightitem);
+    DisplayLogBufferAdd(buffer);
   }
 }
 
@@ -1807,7 +1891,7 @@ void DisplayMqttSubscribe(void) {
   }
   strncat(ntopic, SettingsText(SET_MQTTPREFIX3), sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
   strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
-  if (Settings->display_model && (Settings->display_mode &0x04)) {
+  if (Settings->display_model && (Settings->display_mode >= DM_MQTT_SENSORS)) {
     disp_subscribed = true;
     MqttSubscribe(ntopic);
   } else {
@@ -1825,10 +1909,23 @@ bool DisplayMqttData(void) {
     snprintf_P(stopic, sizeof(stopic) , PSTR("%s/"), SettingsText(SET_MQTTPREFIX3));  // tele/
     char *tp = strstr(XdrvMailbox.topic, stopic);
     if (tp) {                                                // tele/tasmota/SENSOR
-      if (Settings->display_mode &0x04) {
-        tp = tp + strlen(stopic);                              // tasmota/SENSOR
-        char *topic = strtok(tp, "/");                         // tasmota
-        DisplayAnalyzeJson(topic, XdrvMailbox.data);
+      if (Settings->display_mode >= DM_MQTT_SENSORS) {       // 4..6
+        tp = tp + strlen(stopic);                            // tasmota/SENSOR
+        char *state = strstr_P(tp, PSTR("STATE"));
+        char *sensor = strstr_P(tp, PSTR("SENSOR"));
+        char *topic = strtok(tp, "/");                       // tasmota
+        if (topic) {
+          if ((DM_MQTT_TOPIC_UPTIME == Settings->display_mode) ||
+             (DM_MQTT_HOSTNAME_IPADDRESS == Settings->display_mode)) {
+            if (state) {
+              DisplayState(topic, XdrvMailbox.data);
+            }
+          } else {                                           // DM_MQTT_SENSORS and DM_TIME_MQTT_SENSORS
+            if (state || sensor) {
+              DisplayAnalyzeJson(topic, XdrvMailbox.data);
+            }
+          }
+        }
       }
       return true;
     }
@@ -1836,9 +1933,10 @@ bool DisplayMqttData(void) {
   return false;
 }
 
-void DisplayLocalSensor(void)
-{
-  if ((Settings->display_mode &0x02) && (0 == TasmotaGlobal.tele_period)) {
+void DisplayLocalSensor(void) {
+  if (((DM_LOCAL_SENSORS == Settings->display_mode) ||
+       (DM_TIME_LOCAL_SENSORS == Settings->display_mode)) &&
+      (0 == TasmotaGlobal.tele_period)) {
     char no_topic[1] = { 0 };
 //    DisplayAnalyzeJson(TasmotaGlobal.mqtt_topic, ResponseData());  // Add local topic
     DisplayAnalyzeJson(no_topic, ResponseData());    // Discard any topic
@@ -1895,7 +1993,7 @@ void DisplayInitDriver(void) {
   disp_device = TasmotaGlobal.devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
-  Settings->display_mode = 0;
+  Settings->display_mode = DM_USER_CONTROL;
 #else
   DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
@@ -1983,19 +2081,20 @@ void CmndDisplayMode(void) {
  * 3 = Day                  Local sensors and time               Local sensors and time
  * 4 = Mqtt left and time   Mqtt (incl local) sensors            Mqtt (incl local) sensors
  * 5 = Mqtt up and time     Mqtt (incl local) sensors and time   Mqtt (incl local) sensors and time
+ * 6 = Mqtt topic           Mqtt topic                           Mqtt topic
 */
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
+  if ((XdrvMailbox.payload >= DM_USER_CONTROL) && (XdrvMailbox.payload < DM_MAX)) {
     uint32_t last_display_mode = Settings->display_mode;
     Settings->display_mode = XdrvMailbox.payload;
     if (last_display_mode != Settings->display_mode) {       // Switch to different mode
-      if ((!last_display_mode && Settings->display_mode) ||  // Switch to mode 1, 2, 3 or 4
+      if ((!last_display_mode && Settings->display_mode) ||  // Switch to mode >0
           (last_display_mode && !Settings->display_mode)) {  // Switch to mode 0
         DisplayInit(DISPLAY_INIT_MODE);
       }
-      if (1 == Settings->display_mode) {                     // Switch to mode 1
+      if (DM_TIME == Settings->display_mode) {               // Switch to mode 1
         DisplayClear();
       }
-      else if (Settings->display_mode > 1) {                 // Switch to mode 2, 3 or 4
+      else if (Settings->display_mode > DM_TIME) {           // Switch to mode 2 .. 6
         DisplayLogBufferInit();
       }
       DisplayMqttSubscribe();
@@ -2006,12 +2105,12 @@ void CmndDisplayMode(void) {
 }
 
 // Apply the current display dimmer
-void ApplyDisplayDimmer(void) {
+void ApplyDisplayDimmer(uint8_t dimmer) {
   disp_apply_display_dimmer_request = true;
   if ((disp_power < 0) || !disp_device) { return; }  // Not initialized yet
   disp_apply_display_dimmer_request = false;
 
-  uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
+  uint8_t dimmer8 = changeUIntScale(dimmer, 0, 100, 0, 255);
   uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
     ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
@@ -2035,7 +2134,7 @@ void CmndDisplayDimmer(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
     uint8_t dimmer = XdrvMailbox.payload;
     SetDisplayDimmer(dimmer);
-    ApplyDisplayDimmer();
+    ApplyDisplayDimmer(dimmer);
   }
   ResponseCmndNumber(GetDisplayDimmer());
 }
@@ -2297,10 +2396,18 @@ char ppath[16];
 
 #ifdef ESP32
 #ifdef JPEG_PICTS
+
+#define USE_NEW_JPG
 #include "img_converters.h"
+#include "jpeg_decoder.h"
+
+#ifndef USE_NEW_JPG
 #include "esp_jpg_decode.h"
 bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
 bool jpg2rgb565(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t scale);
+#endif
+
+
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height);
 #endif // JPEG_PICTS
 #endif // ESP32
@@ -2327,13 +2434,15 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     estr[cnt] = tolower(ending[cnt]);
   }
 
+  uint16_t xsize;
+  uint16_t ysize;
+
   if (!strcmp(estr,"rgb")) {
     // special rgb format
     fp = ufsp->open(file, FS_FILE_READ);
     if (!fp) return;
-    uint16_t xsize;
+    
     fp.read((uint8_t*)&xsize, 2);
-    uint16_t ysize;
     fp.read((uint8_t*)&ysize, 2);
     uint16_t xoffs;
     uint16_t yoffs;
@@ -2346,12 +2455,13 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     }
 
 #ifndef SLOW_RGB16
-    renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+    //renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
     uint16_t *rgb = (uint16_t *)special_malloc(xsize * 2);
     if (rgb) {
       //uint16_t rgb[xsize];
       for (int16_t j = 0; j < ysize; j++) {
         fp.read((uint8_t*)rgb, xsize * 2);
+        renderer->setAddrWindow(xp, yp + j, xp + xsize, yp + j + 1);
         renderer->pushColors(rgb, xsize, true);
         OsWatchLoop();
       }
@@ -2371,6 +2481,9 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
       yp++;
     }
 #endif
+    if (scale) {
+      if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
+    }
     fp.close();
   } else if (!strcmp(estr,"jpg") || !strcmp(estr,"jpeg")) {
     // jpeg files on ESP32 with more memory
@@ -2387,8 +2500,6 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     if (mem) {
       uint8_t res = fp.read(mem, size);
       if (res) {
-        uint16_t xsize;
-        uint16_t ysize;
         uint16_t xoffs;
         uint16_t yoffs;
         if (mem[0] == 0xff && mem[1] == 0xd8) {
@@ -2402,13 +2513,34 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
           }
           //Serial.printf(" x,y,fs %d - %d - %d\n",xsize, ysize, size );
           if (xsize && ysize) {
+#ifdef USE_NEW_JPG
+            uint16_t *out_buf = (uint16_t *)special_malloc((xsize * ysize * 2) + 4);
+            if (out_buf) {
+              uint32_t outsize = xsize * ysize * 2;
+              esp_jpeg_image_cfg_t jpeg_cfg = {
+                .indata = (uint8_t *)mem,
+                .indata_size = size,
+                .outbuf = (uint8_t*)out_buf,
+                .outbuf_size = outsize,
+                .out_format = JPEG_IMAGE_FORMAT_RGB565,
+                .out_scale = JPEG_IMAGE_SCALE_0,
+                .flags = {  .swap_color_bytes = inverted,}
+              };
+              esp_jpeg_image_output_t outimg;
+              esp_jpeg_decode(&jpeg_cfg, &outimg);
+              renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+              renderer->pushColors(out_buf, outsize / 2, true);
+              renderer->setAddrWindow(0, 0, 0, 0);
+              free(out_buf);
+            }
+#else
             uint8_t *out_buf = (uint8_t *)special_malloc((xsize * ysize * 3) + 4);
             if (out_buf) {
               uint16_t *pixb = (uint16_t *)special_malloc((xsize * 2) + 4);
               if (pixb) {
                 uint8_t *ob = out_buf;
-                if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {
-                  renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+                if (jpg2rgb888(mem, size, out_buf, (jpg_scale_t)JPG_SCALE_NONE)) {                  
+                  //renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
                   for (int32_t j = 0; j < ysize; j++) {
                     if (inverted == false) {
                       rgb888_to_565(ob, pixb, xsize);
@@ -2416,6 +2548,7 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
                       rgb888_to_565i(ob, pixb, xsize);
                     }
                     ob += xsize * 3;
+                    renderer->setAddrWindow(xp, yp + j, xp + xsize, yp + j + 1);
                     renderer->pushColors(pixb, xsize, true);
                     OsWatchLoop();
                   }
@@ -2427,12 +2560,13 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
                 free(out_buf);
               }
             }
-          }
-          if (scale) {
-            if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
+#endif
           }
         }
         free(mem);
+      }
+      if (scale) {
+        if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
       }
       fp.close();
     }
@@ -2454,14 +2588,40 @@ void Draw_jpeg(uint8_t *mem, uint16_t jpgsize, uint16_t xp, uint16_t yp, uint8_t
     uint8_t fac = 1 << scale;
     xsize /= fac;
     ysize /= fac;
-    renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
-    uint8_t *rgbmem = (uint8_t *)special_malloc(xsize * ysize * 2);
+
+#ifdef USE_NEW_JPG
+    uint32_t osize = xsize * ysize * 2;
+    uint16_t *rgbmem = (uint16_t *)special_malloc(osize);
     if (rgbmem) {
-      //jpg2rgb565(mem, jpgsize, rgbmem, JPG_SCALE_NONE);
-      jpg2rgb565(mem, jpgsize, rgbmem, (jpg_scale_t)scale);
-      renderer->pushColors((uint16_t*)rgbmem, xsize * ysize, true);
+      esp_jpeg_image_cfg_t jpeg_cfg = {
+                .indata = (uint8_t *)mem,
+                .indata_size = jpgsize,
+                .outbuf = (uint8_t*)rgbmem,
+                .outbuf_size = osize,
+                .out_format = JPEG_IMAGE_FORMAT_RGB565,
+                .out_scale = (esp_jpeg_image_scale_t)scale,
+                .flags = {  .swap_color_bytes = 0,}
+              };
+      esp_jpeg_image_output_t outimg;
+      esp_jpeg_decode(&jpeg_cfg, &outimg);
+      renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
+      renderer->pushColors(rgbmem, osize / 2, true);
       free(rgbmem);
     }
+#else
+    
+    uint8_t *rgbmem = (uint8_t *)special_malloc(xsize * ysize * 2);
+    if (rgbmem) {     
+      jpg2rgb565(mem, jpgsize, rgbmem, (jpg_scale_t)scale);
+      uint16_t *ob = (uint16_t*)rgbmem;
+      for (int32_t j = 0; j < ysize; j++) {
+        renderer->setAddrWindow(xp, yp + j, xp + xsize, yp + j + 1);
+        renderer->pushColors((uint16_t*)ob, xsize, true);
+        ob += xsize;
+      }
+      free(rgbmem);
+    }
+#endif
     renderer->setAddrWindow(0, 0, 0, 0);
   }
 }
@@ -2923,7 +3083,7 @@ bool Xdrv13(uint32_t function) {
         break;
       case FUNC_INIT:
         if (disp_apply_display_dimmer_request) {
-          ApplyDisplayDimmer();  // Allowed here.
+          ApplyDisplayDimmer(GetDisplayDimmer());  // Allowed here.
         }
         break;
       case FUNC_EVERY_50_MSECOND:

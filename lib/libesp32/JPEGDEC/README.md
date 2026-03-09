@@ -14,14 +14,18 @@ I started working with image and video files around 1989 and soon turned my inte
 
 Features:<br>
 ---------<br>
+- *New* JPEGDisplay helper class simplifies displaying images on LCDs supported by my bb_spi_lcd display library.
 - Supports any MCU with at least 20K of RAM (Cortex-M0+ is the simplest I've tested)
 - Optimized for speed; the main limitation will be how fast you can copy the pixels to the display. You can use DMA assisted SPI to help.
+- Includes built-in cropping function that's faster than JPEGTRAN.
 - JPEG image data can come from memory (FLASH/RAM), SDCard or any media you provide.
 - Simple class and callback design allows you to easily add JPEG support to any application.
 - The C code doing the heavy lifting is completely portable and has no external dependencies.
 - Includes fast downscaling options (1/2, 1/4, 1/8).
 - Includes option to detect and decode the embedded Exif thumbnail
-- Supports Baseline Huffman images (grayscale or YCbCr)<br>
+- Supports Baseline Huffman images (grayscale or YCbCr)
+- Supports thumbnail (DC-only) decoding of progressive JPEG images
+- Now with SIMD (ESP32-S3, Arm NEON, X86 SSE2) optimized color conversion
 - Includes optional Floyd-Steinberg dithering to 1, 2 or 4-bpp grayscale output; useful for e-paper displays<br>
 
 <br>
@@ -61,3 +65,9 @@ If you find this code useful, please consider becoming a sponsor or sending a do
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SR4F44J2UR8S4)
 
+## Funding
+
+This project received funding through [NGI Zero Core](https://nlnet.nl/core), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page](https://nlnet.nl/project/ImageCodes-Optimised).
+
+[<img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" width="20%" />](https://nlnet.nl)
+[<img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" width="20%" />](https://nlnet.nl/core)

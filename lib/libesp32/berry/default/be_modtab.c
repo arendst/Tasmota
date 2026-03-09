@@ -34,6 +34,7 @@ be_extern_native_module(re);
 be_extern_native_module(mqtt);
 be_extern_native_module(persist);
 be_extern_native_module(autoconf);
+be_extern_native_module(extension_manager);
 be_extern_native_module(tapp);
 be_extern_native_module(light);
 be_extern_native_module(gpio);
@@ -85,6 +86,14 @@ be_extern_native_module(haspmota);
 #ifdef USE_MATTER_DEVICE
 be_extern_native_module(matter);
 #endif // USE_MATTER_DEVICE
+#ifdef USE_WS2812
+#ifdef USE_BERRY_ANIMATION
+be_extern_native_module(animation);
+#ifdef USE_BERRY_ANIMATION_DSL
+be_extern_native_module(animation_dsl);
+#endif // USE_BERRY_ANIMATION_DSL
+#endif // USE_BERRY_ANIMATION
+#endif // USE_WS2812
 
 /* user-defined modules declare start */
 
@@ -145,6 +154,9 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_AUTOCONF
     &be_native_module(autoconf),
 #endif // USE_AUTOCONF
+#ifdef USE_EXTENSION_MANAGER
+    &be_native_module(extension_manager),
+#endif // USE_EXTENSION_MANAGER
     &be_native_module(tapp),
     &be_native_module(gpio),
 #ifdef USE_DISPLAY
@@ -162,10 +174,6 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_UNISHOX_COMPRESSION
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
-
-#if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
-    &be_native_module(animate),
-#endif // USE_WS2812
 
 #ifdef USE_LVGL
     &be_native_module(lv),
@@ -217,6 +225,14 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_MATTER_DEVICE
     &be_native_module(matter),
 #endif // USE_MATTER_DEVICE
+#ifdef USE_WS2812
+#ifdef USE_BERRY_ANIMATION
+    &be_native_module(animation),
+#ifdef USE_BERRY_ANIMATION_DSL
+    &be_native_module(animation_dsl),
+#endif // USE_BERRY_ANIMATION_DSL
+#endif // USE_BERRY_ANIMATION
+#endif // USE_WS2812
 #endif // TASMOTA
     CUSTOM_NATIVE_MODULES
     /* user-defined modules register end */
@@ -224,6 +240,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 };
 
 be_extern_native_class(dyn);
+be_extern_native_class(sortedmap);
 be_extern_native_class(tasmota);
 be_extern_native_class(Trigger);
 be_extern_native_class(Driver);
@@ -241,6 +258,7 @@ be_extern_native_class(AXP2102);
 be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
 be_extern_native_class(Leds);
+be_extern_native_class(pixmat);
 be_extern_native_class(AudioGenerator);
 be_extern_native_class(AudioFileSource);
 be_extern_native_class(AudioOutputI2S);
@@ -281,6 +299,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef TASMOTA
     /* first list are direct classes */
     &be_native_class(dyn),
+    &be_native_class(sortedmap),
     &be_native_class(tasmota),
     &be_native_class(Trigger),
     &be_native_class(Driver),
@@ -316,6 +335,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
+    &be_native_class(pixmat),
 #endif // USE_WS2812
 #ifdef USE_ENERGY_SENSOR
     &be_native_class(energy_struct),

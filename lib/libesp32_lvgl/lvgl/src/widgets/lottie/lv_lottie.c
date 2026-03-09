@@ -18,6 +18,7 @@
 
 #include "../../misc/lv_timer.h"
 #include "../../core/lv_obj_class_private.h"
+#include "../../misc/cache/lv_cache.h"
 
 /*********************
  *      DEFINES
@@ -46,7 +47,7 @@ const lv_obj_class_t lv_lottie_class = {
     .height_def = LV_DPI_DEF,
     .instance_size = sizeof(lv_lottie_t),
     .base_class = &lv_canvas_class,
-    .name = "lottie",
+    .name = "lv_lottie",
 };
 
 /**********************
@@ -72,12 +73,12 @@ lv_obj_t * lv_lottie_create(lv_obj_t * parent)
 void lv_lottie_set_buffer(lv_obj_t * obj, int32_t w, int32_t h, void * buf)
 {
     lv_lottie_t * lottie = (lv_lottie_t *)obj;
-    int32_t stride = lv_draw_buf_width_to_stride(w, LV_COLOR_FORMAT_ARGB8888);
-    buf = lv_draw_buf_align(buf, LV_COLOR_FORMAT_ARGB8888);
+    int32_t stride = lv_draw_buf_width_to_stride(w, LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED);
+    buf = lv_draw_buf_align(buf, LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED);
 
     tvg_swcanvas_set_target(lottie->tvg_canvas, buf, stride / 4, w, h, TVG_COLORSPACE_ARGB8888);
     tvg_canvas_push(lottie->tvg_canvas, lottie->tvg_paint);
-    lv_canvas_set_buffer(obj, buf, w, h, LV_COLOR_FORMAT_ARGB8888);
+    lv_canvas_set_buffer(obj, buf, w, h, LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED);
     tvg_picture_set_size(lottie->tvg_paint, w, h);
 
     /* Rendered output images are premultiplied */
@@ -92,8 +93,8 @@ void lv_lottie_set_buffer(lv_obj_t * obj, int32_t w, int32_t h, void * buf)
 
 void lv_lottie_set_draw_buf(lv_obj_t * obj, lv_draw_buf_t * draw_buf)
 {
-    if(draw_buf->header.cf != LV_COLOR_FORMAT_ARGB8888) {
-        LV_LOG_WARN("The draw buf needs to have ARGB8888 color format");
+    if(draw_buf->header.cf != LV_COLOR_FORMAT_ARGB8888 && draw_buf->header.cf != LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED) {
+        LV_LOG_WARN("The draw buf needs to have ARGB8888 or ARGB8888_PREMULTIPLIED color format");
         return;
     }
 
@@ -124,10 +125,10 @@ void lv_lottie_set_src_data(lv_obj_t * obj, const void * src, size_t src_size)
 
     float f_total;
     tvg_animation_get_total_frame(lottie->tvg_anim, &f_total);
-    lv_anim_set_time(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
+    lv_anim_set_duration(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
     lottie->anim->act_time = 0;
     lottie->anim->end_value = (int32_t)f_total;
-    lottie->anim->playback_now = false;
+    lottie->anim->reverse_play_in_progress = false;
     lottie_update(lottie, 0);   /*Render immediately*/
 }
 
@@ -142,10 +143,10 @@ void lv_lottie_set_src_file(lv_obj_t * obj, const char * src)
 
     float f_total;
     tvg_animation_get_total_frame(lottie->tvg_anim, &f_total);
-    lv_anim_set_time(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
+    lv_anim_set_duration(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
     lottie->anim->act_time = 0;
     lottie->anim->end_value = (int32_t)f_total;
-    lottie->anim->playback_now = false;
+    lottie->anim->reverse_play_in_progress = false;
     lottie_update(lottie, 0);   /*Render immediately*/
 }
 

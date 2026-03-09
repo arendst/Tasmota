@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_3_Sensor_Occupancy.be - implements the behavior for a Occupany Switch
+# Matter_Plugin_3_Sensor_Occupancy.be - implements the behavior for an Occupancy Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,102 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Device Specification
+#################################################################################
+# Device Type: Occupancy Sensor (0x0107)
+# Device Type Revision: 4 (Matter 1.4.1)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0003: Identify (M)
+# - 0x0080: Boolean State Configuration (O)
+# - 0x0406: Occupancy Sensing (M)
+#
+# NOTES:
+# - Detects presence/occupancy using various sensing technologies
+# - Supports PIR, ultrasonic, physical contact, and other sensor types
+# - Boolean State Configuration cluster for alarm/sensitivity settings
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Occupancy Sensing Cluster (0x0406)
+#################################################################################
+# Cluster Revision: 5 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# PURPOSE:
+# Provides occupancy detection using various sensing technologies including
+# PIR, ultrasonic, physical contact, active infrared, radar, RF, and vision.
+#
+# FEATURES:
+# Bit | Code  | Feature           | Conf  | Summary
+# ----|-------|-------------------|-------|---------------------------
+# 0   | OTHER | Other             | O.a+  | Other sensing technology
+# 1   | PIR   | PIR               | O.a+  | Passive infrared sensing
+# 2   | US    | Ultrasonic        | O.a+  | Ultrasonic sensing
+# 3   | PHY   | PhysicalContact   | O.a+  | Physical contact sensing
+# 4   | AIR   | ActiveInfrared    | O     | Active infrared sensing
+# 5   | RAD   | Radar             | O     | Radar sensing
+# 6   | RFS   | RFSensing         | O     | RF sensing
+# 7   | VIS   | Vision            | O     | Vision-based sensing
+#
+# ATTRIBUTES:
+# ID     | Name                              | Type                    | Constraint | Quality | Default | Access | Conf
+# -------|-----------------------------------|-------------------------|------------|---------|---------|--------|-----
+# 0x0000 | Occupancy                         | OccupancyBitmap         | all        | P       | 0       | R V    | M
+# 0x0001 | OccupancySensorType               | OccupancySensorTypeEnum | desc       | F       | MS      | R V    | M
+# 0x0002 | OccupancySensorTypeBitmap         | OccupancySensorTypeBitmap| desc      | F       | MS      | R V    | M
+# 0x0003 | HoldTime                          | uint16                  | all        | N       | MS      | RW VM  | O
+# 0x0004 | HoldTimeLimits                    | HoldTimeLimitsStruct    |            | F       | MS      | R V    | [HoldTime]
+# 0x0010 | PIROccupiedToUnoccupiedDelay      | uint16                  | all        | N       | 0       | RW VM  | [PIR&HoldTime]
+# 0x0011 | PIRUnoccupiedToOccupiedDelay      | uint16                  | all        | N       | 0       | RW VM  | [PIR&HoldTime]
+# 0x0012 | PIRUnoccupiedToOccupiedThreshold  | uint8                   | 1-254      | N       | 1       | RW VM  | [PIR&HoldTime]
+# 0x0020 | UltrasonicOccupiedToUnoccupiedDelay| uint16                 | all        | N       | 0       | RW VM  | [US&HoldTime]
+# 0x0021 | UltrasonicUnoccupiedToOccupiedDelay| uint16                 | all        | N       | 0       | RW VM  | [US&HoldTime]
+# 0x0022 | UltrasonicUnoccupiedToOccupiedThreshold| uint8              | 1-254      | N       | 1       | RW VM  | [US&HoldTime]
+# 0x0030 | PhysicalContactOccupiedToUnoccupiedDelay| uint16            | all        | N       | 0       | RW VM  | [PHY&HoldTime]
+# 0x0031 | PhysicalContactUnoccupiedToOccupiedDelay| uint16            | all        | N       | 0       | RW VM  | [PHY&HoldTime]
+# 0x0032 | PhysicalContactUnoccupiedToOccupiedThreshold| uint8         | 1-254      | N       | 1       | RW VM  | [PHY&HoldTime]
+# 0xFFFC | FeatureMap                        | map32                   | all        | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision                   | uint16                  | all        | F       | 5       | R V    | M
+#
+# DATA TYPES:
+# - OccupancyBitmap: Occupied=Bit0 (1=occupied, 0=unoccupied)
+# - OccupancySensorTypeEnum: PIR=0, Ultrasonic=1, PIRAndUltrasonic=2, PhysicalContact=3
+# - OccupancySensorTypeBitmap: PIR=Bit0, Ultrasonic=Bit1, PhysicalContact=Bit2
+# - HoldTimeLimitsStruct: {HoldTimeMin:uint16, HoldTimeMax:uint16, HoldTimeDefault:uint16}
+#
+# QUALITY FLAGS:
+# - P: Periodic reporting (changes reported automatically)
+# - F: Fixed (cannot be changed)
+# - N: NonVolatile (persists across power cycles)
+#
+# ATTRIBUTES DETAIL:
+# - Occupancy: Bitmap indicating occupancy state
+#   - Bit 0: 1=occupied, 0=unoccupied
+#   - Other bits reserved
+#
+# - OccupancySensorType: Primary sensing technology (deprecated, use bitmap)
+# - OccupancySensorTypeBitmap: All sensing technologies supported
+#
+# - HoldTime: Minimum time in seconds to remain in occupied state after last detection
+# - Delay attributes: Time delays for state transitions (sensor-type specific)
+# - Threshold attributes: Number of detections required for state change
+#
+# EVENTS:
+# ID   | Name              | Priority | Access | Conf
+# -----|-------------------|----------|--------|-----
+# 0x00 | OccupancyChanged  | INFO     | V      | O
+#
+# IMPLEMENTATION NOTES:
+# - Occupancy bitmap: 0=unoccupied, 1=occupied
+# - For Tasmota: Maps to Switch state or motion sensor
+# - OccupancySensorType: Set to 3 (PhysicalContact) for switch-based detection
+# - HoldTime features added in Matter 1.4.1 for configurable delays
+# - Value is stored in shadow_bool_value as boolean
+#################################################################################
 
 import matter
 
@@ -35,7 +131,7 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0406: [0,1,2],                                # Occupancy Sensing p.105 - no writable
   })
-  static var TYPES = { 0x0107: 2 }                  # Occupancy Sensor, rev 2
+  static var TYPES = { 0x0107: 4 }                  # Occupancy Sensor - Matter 1.4.1 Device Library Rev 4
 
   # var tasmota_switch_index                          # Switch number in Tasmota (one based)
   # var shadow_bool_value

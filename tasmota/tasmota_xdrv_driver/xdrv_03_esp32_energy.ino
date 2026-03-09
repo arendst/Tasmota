@@ -677,9 +677,9 @@ void Energy200ms(void) {
           Energy->Settings.energy_export_kWh[i] = RtcEnergySettings.energy_export_kWh[i];
 
           Energy->period_kWh[i] -= RtcEnergySettings.energy_today_kWh[i];     // this becomes a large unsigned, effectively a negative for EnergyShow calculation
-          Energy->kWhtoday[i] = 0;
+          Energy->kWhtoday[i] = Energy->kWhtoday[i] % 100;            // Roll fractional watt-hours into the next day since kWhtotal truncates to watt-hours.
           Energy->energy_today_offset_kWh[i] = 0;
-          RtcEnergySettings.energy_today_kWh[i] = 0;
+          RtcEnergySettings.energy_today_kWh[i] = Energy->kWhtoday[i];
           Energy->Settings.energy_today_kWh[i] = 0;
 
           Energy->start_energy[i] = 0;

@@ -32,7 +32,9 @@ extern "C" {
   #include "berry_matter.h"
 #endif
 #ifdef USE_WS2812
-  #include "berry_animate.h"
+  #ifdef USE_BERRY_ANIMATION
+    #include "berry_animation.h"
+  #endif // USE_BERRY_ANIMATION
 #endif
 #include "be_vm.h"
 #include "ZipReadFS.h"
@@ -63,7 +65,7 @@ void checkBeTop(void) {
   int32_t top = be_top(berry.vm);
   if (top != 0) {
     be_pop(berry.vm, top);   // TODO should not be there
-    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Error be_top is non zero=%d", top);
+    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Warning be_top is non zero=%d", top);
   }
 }
 
@@ -281,10 +283,15 @@ void BerryObservability(bvm *vm, int event...) {
         size_t slots_allocated_before_gc = va_arg(param, size_t);
         size_t slots_used_after_gc = va_arg(param, size_t);
         size_t slots_allocated_after_gc = va_arg(param, size_t);
-        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms) - slots from %i/%i to %i/%i",
-                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
-                                slots_used_before_gc, slots_allocated_before_gc,
-                                slots_used_after_gc, slots_allocated_after_gc);
+        if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
+          AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms) - slots from %i/%i to %i/%i",
+                                  vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
+                                  slots_used_before_gc, slots_allocated_before_gc,
+                                  slots_used_after_gc, slots_allocated_after_gc);
+        }
+        // record last seen values
+        berry.last_gc_tims_ms = gc_elapsed;
+        berry.last_gc_heap_free = ESP_getFreeHeap();
 
 #ifdef UBE_BERRY_DEBUG_GC
         // Add more in-deptch metrics
@@ -518,7 +525,7 @@ void CmndBrRun(void) {
     be_pop(berry.vm, 1);
   } else {
     Response_P(PSTR("{\"" D_PRFX_BR "\":\"[%s] %s\"}"), EscapeJSONString(be_tostring(berry.vm, -2)).c_str(), EscapeJSONString(be_tostring(berry.vm, -1)).c_str());
-    be_pop(berry.vm, 2);
+    be_pop(berry.vm, 3);
   }
 
   checkBeTop();
@@ -729,15 +736,11 @@ const char HTTP_BERRY_FORM_CMND[] PROGMEM =
   "<button type='submit'>Run code (or press 'Enter' twice)</button>"
   "</form>"
 #ifdef USE_BERRY_DEBUG
-  "<p><form method='post' >"
+  "<p></p><form method='post' >"
   "<button type='submit' name='rst' class='bred' onclick=\"if(confirm('Confirm removing endpoint')){clearTimeout(lt);return true;}else{return false;}\">Restart Berry VM (for devs only)</button>"
-  "</form></p>"
+  "</form>"
 #endif // USE_BERRY_DEBUG
   ;
-
-const char HTTP_BTN_BERRY_CONSOLE[] PROGMEM =
-  "<p><form action='bc' method='get'><button>Berry Scripting console</button></form></p>";
-
 
 void HandleBerryConsoleRefresh(void)
 {
@@ -816,7 +819,7 @@ void HandleBerryBECLoaderButton(void) {
     const BeBECCode_t &bec = BECCode[i];
     if (!(*bec.loaded)) {
       if (be_global_find(vm, be_newstr(vm, bec.id)) < 0) {    // the global name  doesn't exist
-        WSContentSend_P("<form id=but_part_mgr style='display: block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form><p></p>", bec.id, bec.display_name);
+        WSContentSend_P("<p></p><form id=but_part_mgr style='display:block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form>", bec.id, bec.display_name);
       } else {
         *bec.loaded = true;
       }
@@ -1038,7 +1041,7 @@ bool Xdrv52(uint32_t function)
       if (XdrvMailbox.index) {
         XdrvMailbox.index++;
       } else {
-        WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR("bc"), PSTR("Berry Scripting console"));
         HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
         callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);
@@ -1062,8 +1065,11 @@ bool Xdrv52(uint32_t function)
       WebServer_on("/tapp", HandleBerryBECLoader, HTTP_GET);
       break;
 #ifdef USE_WEB_STATUS_LINE
-      case FUNC_WEB_STATUS:
-        callBerryEventDispatcher(PSTR("web_status_line"), nullptr, 0, nullptr);
+      case FUNC_WEB_STATUS_LEFT:
+        callBerryEventDispatcher(PSTR("web_status_line_left"), nullptr, 0, nullptr);
+        break;
+      case FUNC_WEB_STATUS_RIGHT:
+        callBerryEventDispatcher(PSTR("web_status_line_right"), nullptr, 0, nullptr);
         break;
 #endif  // USE_WEB_STATUS_LINE
 #endif // USE_WEBSERVER

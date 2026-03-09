@@ -30,81 +30,81 @@ const uint8_t  kXmpRepeatCodeAlt = 0b1001;
 using irutils::setBits;
 
 namespace IRXmpUtils {
-  /// Get the current checksum value from an XMP data section.
-  /// @param[in] data The value of the data section.
-  /// @param[in] nbits The number of data bits in the section.
-  /// @return The value of the stored checksum.
-  /// @warning Returns 0 if we can't obtain a valid checksum.
-  uint8_t getSectionChecksum(const uint32_t data, const uint16_t nbits) {
-    // The checksum is the 2nd most significant nibble of a section.
-    return (nbits < 2 * kNibbleSize) ? 0 : GETBITS32(data,
-                                                     nbits - (2 * kNibbleSize),
-                                                     kNibbleSize);
-  }
+/// Get the current checksum value from an XMP data section.
+/// @param[in] data The value of the data section.
+/// @param[in] nbits The number of data bits in the section.
+/// @return The value of the stored checksum.
+/// @warning Returns 0 if we can't obtain a valid checksum.
+uint8_t getSectionChecksum(const uint32_t data, const uint16_t nbits) {
+  // The checksum is the 2nd most significant nibble of a section.
+  return (nbits < 2 * kNibbleSize) ? 0 : GETBITS32(data,
+                                                   nbits - (2 * kNibbleSize),
+                                                   kNibbleSize);
+}
 
-  /// Calculate the correct checksum value for an XMP data section.
-  /// @param[in] data The value of the data section.
-  /// @param[in] nbits The number of data bits in the section.
-  /// @return The value of the correct checksum.
-  uint8_t calcSectionChecksum(const uint32_t data, const uint16_t nbits) {
-    return (0xF & ~(irutils::sumNibbles(data, nbits / kNibbleSize, 0xF, false) -
-                    getSectionChecksum(data, nbits)));
-  }
+/// Calculate the correct checksum value for an XMP data section.
+/// @param[in] data The value of the data section.
+/// @param[in] nbits The number of data bits in the section.
+/// @return The value of the correct checksum.
+uint8_t calcSectionChecksum(const uint32_t data, const uint16_t nbits) {
+  return (0xF & ~(irutils::sumNibbles(data, nbits / kNibbleSize, 0xF, false) -
+                  getSectionChecksum(data, nbits)));
+}
 
-  /// Recalculate a XMP message code ensuring it has the checksums valid.
-  /// @param[in] data The value of the XMP message code.
-  /// @param[in] nbits The number of data bits in the entire message code.
-  /// @return The corrected XMP message with valid checksum sections.
-  uint64_t updateChecksums(const uint64_t data, const uint16_t nbits) {
-    const uint16_t sectionbits = nbits / kXmpSections;
-    uint64_t result = data;
-    for (uint16_t sectionOffset = 0; sectionOffset < nbits;
-         sectionOffset += sectionbits) {
-      const uint16_t checksumOffset = sectionOffset + sectionbits -
-                                      (2 * kNibbleSize);
-      setBits(&result, checksumOffset, kNibbleSize,
-              calcSectionChecksum(GETBITS64(data, sectionOffset, sectionbits),
-                                  sectionbits));
-    }
-    return result;
+/// Recalculate a XMP message code ensuring it has the checksums valid.
+/// @param[in] data The value of the XMP message code.
+/// @param[in] nbits The number of data bits in the entire message code.
+/// @return The corrected XMP message with valid checksum sections.
+uint64_t updateChecksums(const uint64_t data, const uint16_t nbits) {
+  const uint16_t sectionbits = nbits / kXmpSections;
+  uint64_t result = data;
+  for (uint16_t sectionOffset = 0; sectionOffset < nbits;
+       sectionOffset += sectionbits) {
+    const uint16_t checksumOffset = sectionOffset + sectionbits -
+                                    (2 * kNibbleSize);
+    setBits(&result, checksumOffset, kNibbleSize,
+            calcSectionChecksum(GETBITS64(data, sectionOffset, sectionbits),
+                                sectionbits));
   }
+  return result;
+}
 
-  /// Calculate the bit offset the repeat nibble in an XMP code.
-  /// @param[in] nbits The number of data bits in the entire message code.
-  /// @return The offset to the start of the XMP repeat nibble.
-  uint16_t calcRepeatOffset(const uint16_t nbits) {
-    return (nbits < 3 * kNibbleSize) ? 0
-                                     : (nbits / kXmpSections) -
-                                       (3 * kNibbleSize);
-  }
+/// Calculate the bit offset the repeat nibble in an XMP code.
+/// @param[in] nbits The number of data bits in the entire message code.
+/// @return The offset to the start of the XMP repeat nibble.
+uint16_t calcRepeatOffset(const uint16_t nbits) {
+  return (nbits < 3 * kNibbleSize) ? 0
+                                   : (nbits / kXmpSections) -
+                                     (3 * kNibbleSize);
+}
 
-  /// Test if an XMP message code is a repeat or not.
-  /// @param[in] data The value of the XMP message code.
-  /// @param[in] nbits The number of data bits in the entire message code.
-  /// @return true, if it looks like a repeat, false if not.
-  bool isRepeat(const uint64_t data, const uint16_t nbits) {
-    switch (GETBITS64(data, calcRepeatOffset(nbits), kNibbleSize)) {
-      case kXmpRepeatCode:
-      case kXmpRepeatCodeAlt:
-        return true;
-      default:
-        return false;
-    }
+/// Test if an XMP message code is a repeat or not.
+/// @param[in] data The value of the XMP message code.
+/// @param[in] nbits The number of data bits in the entire message code.
+/// @return true, if it looks like a repeat, false if not.
+bool isRepeat(const uint64_t data, const uint16_t nbits) {
+  switch (GETBITS64(data, calcRepeatOffset(nbits), kNibbleSize)) {
+    case kXmpRepeatCode:
+    case kXmpRepeatCodeAlt:
+      return true;
+    default:
+      return false;
   }
+}
 
-  /// Adjust an XMP message code to make it a valid repeat or non-repeat code.
-  /// @param[in] data The value of the XMP message code.
-  /// @param[in] nbits The number of data bits in the entire message code.
-  /// @param[in] repeat_code The value of the XMP repeat nibble to use.
-  ///   A value of `8` is the normal value for a repeat. `9` has also been seen.
-  ///   A value of `0` will convert the code to a non-repeat code.
-  /// @return The valud of the modified XMP code.
-  uint64_t adjustRepeat(const uint64_t data, const uint16_t nbits,
-                        const uint8_t repeat_code) {
-    uint64_t result = data;
-    setBits(&result, calcRepeatOffset(nbits), kNibbleSize, repeat_code);
-    return updateChecksums(result, nbits);
-  }
+/// Adjust an XMP message code to make it a valid repeat or non-repeat code.
+/// @param[in] data The value of the XMP message code.
+/// @param[in] nbits The number of data bits in the entire message code.
+/// @param[in] repeat_code The value of the XMP repeat nibble to use.
+///   A value of `8` is the normal value for a repeat. `9` has also been seen.
+///   A value of `0` will convert the code to a non-repeat code.
+/// @return The valud of the modified XMP code.
+uint64_t adjustRepeat(const uint64_t data, const uint16_t nbits,
+                      const uint8_t repeat_code) {
+  uint64_t result = data;
+  setBits(&result, calcRepeatOffset(nbits), kNibbleSize, repeat_code);
+  return updateChecksums(result, nbits);
+}
 }  // namespace IRXmpUtils
 
 using IRXmpUtils::calcSectionChecksum;
@@ -126,7 +126,8 @@ void IRsend::sendXmp(const uint64_t data, const uint16_t nbits,
   uint64_t send_data = data;
   for (uint16_t r = 0; r <= repeat; r++) {
     uint16_t bits_so_far = kXmpWordSize;
-    for (uint64_t mask = ((uint64_t)kXmpMaxWordValue) << (nbits - kXmpWordSize);
+    for (uint64_t mask = static_cast<uint64_t>(kXmpMaxWordValue) <<
+             (nbits - kXmpWordSize);
          mask;
          mask >>= kXmpWordSize) {
       uint8_t word = (send_data & mask) >> (nbits - bits_so_far);

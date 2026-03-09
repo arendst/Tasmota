@@ -1,0 +1,4 @@
+# Cylon Red Eye
+# Automatically adapts to the length of the strip
+
+set abs = 0xFF0000

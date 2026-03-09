@@ -136,6 +136,9 @@ void Sdm72SnsInit(void)
     if (2 == result) {
         ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Serial UART%d"), Sdm72Modbus->getUart());
+#endif
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

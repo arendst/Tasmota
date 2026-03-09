@@ -46,5 +46,6 @@
   ],
   "exclude": [".github", "extras", "docs", "assets"],
   "frameworks": "arduino",
+  "libCompatMode": "strict",
   "platforms": ["espressif8266", "espressif32"]
 }

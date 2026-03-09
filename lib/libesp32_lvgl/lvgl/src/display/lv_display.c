@@ -1,5 +1,5 @@
 /**
- * @file lv_disp.c
+ * @file lv_display.c
  *
  */
 
@@ -77,9 +77,17 @@ lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
     disp->dpi              = LV_DPI_DEF;
     disp->color_format = LV_COLOR_FORMAT_NATIVE;
 
-    disp->layer_head = lv_malloc_zeroed(sizeof(lv_layer_t));
+
+#if defined(LV_DRAW_SW_DRAW_UNIT_CNT) && (LV_DRAW_SW_DRAW_UNIT_CNT != 0)
+    disp->tile_cnt = LV_DRAW_SW_DRAW_UNIT_CNT;
+#else
+    disp->tile_cnt = 1;
+#endif
+
+    disp->layer_head = lv_malloc(sizeof(lv_layer_t));
     LV_ASSERT_MALLOC(disp->layer_head);
     if(disp->layer_head == NULL) return NULL;
+    lv_layer_init(disp->layer_head);
 
     if(disp->layer_init) disp->layer_init(disp, disp->layer_head);
     disp->layer_head->buf_area.x1 = 0;
@@ -118,6 +126,13 @@ lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
     }
     else {
         disp->theme = lv_theme_simple_get();
+    }
+#elif LV_USE_THEME_MONO
+    if(lv_theme_mono_is_inited() == false) {
+        disp->theme = lv_theme_mono_init(disp, false, LV_FONT_DEFAULT);
+    }
+    else {
+        disp->theme = lv_theme_mono_get();
     }
 #endif
 
@@ -163,6 +178,7 @@ void lv_display_delete(lv_display_t * disp)
     if(disp == lv_refr_get_disp_refreshing()) was_refr = true;
 
     lv_display_send_event(disp, LV_EVENT_DELETE, NULL);
+    lv_event_mark_deleted(disp);
     lv_event_remove_all(&(disp->event_list));
 
     /*Detach the input devices*/
@@ -314,6 +330,26 @@ int32_t lv_display_get_vertical_resolution(const lv_display_t * disp)
     }
 }
 
+int32_t lv_display_get_original_horizontal_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) {
+        return 0;
+    }
+
+    return disp->hor_res;
+}
+
+int32_t lv_display_get_original_vertical_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) {
+        return 0;
+    }
+
+    return disp->ver_res;
+}
+
 int32_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
@@ -411,6 +447,19 @@ void lv_display_set_draw_buffers(lv_display_t * disp, lv_draw_buf_t * buf1, lv_d
     disp->buf_1 = buf1;
     disp->buf_2 = buf2;
     disp->buf_act = disp->buf_1;
+
+    disp->stride_is_auto = 0;
+}
+
+void lv_display_set_3rd_draw_buffer(lv_display_t * disp, lv_draw_buf_t * buf3)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return;
+
+    LV_ASSERT_MSG(disp->buf_1 != NULL, "buf1 is null");
+    LV_ASSERT_MSG(disp->buf_2 != NULL, "buf2 is null");
+
+    disp->buf_3 = buf3;
 }
 
 void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint32_t buf_size,
@@ -418,9 +467,8 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
 {
     LV_ASSERT_MSG(buf1 != NULL, "Null buffer");
     lv_color_format_t cf = lv_display_get_color_format(disp);
-    uint32_t w = lv_display_get_horizontal_resolution(disp);
-    uint32_t h = lv_display_get_vertical_resolution(disp);
-
+    uint32_t w = lv_display_get_original_horizontal_resolution(disp);
+    uint32_t h = lv_display_get_original_vertical_resolution(disp);
     LV_ASSERT_MSG(w != 0 && h != 0, "display resolution is 0");
 
     /* buf1 or buf2 is not aligned according to LV_DRAW_BUF_ALIGN */
@@ -428,6 +476,40 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
     LV_ASSERT_FORMAT_MSG(buf2 == NULL || buf2 == lv_draw_buf_align(buf2, cf), "buf2 is not aligned: %p", buf2);
 
     uint32_t stride = lv_draw_buf_width_to_stride(w, cf);
+    if(render_mode == LV_DISPLAY_RENDER_MODE_PARTIAL) {
+        LV_ASSERT_FORMAT_MSG(stride != 0, "stride is 0, check your color format %d and width: %" LV_PRIu32, cf, w);
+        /* for partial mode, we calculate the height based on the buf_size and stride */
+        h = buf_size / stride;
+        LV_ASSERT_MSG(h != 0, "the buffer is too small");
+    }
+    else {
+        LV_ASSERT_FORMAT_MSG(stride * h <= buf_size, "%s mode requires screen sized buffer(s)",
+                             render_mode == LV_DISPLAY_RENDER_MODE_FULL ? "FULL" : "DIRECT");
+    }
+
+    lv_draw_buf_init(&disp->_static_buf1, w, h, cf, stride, buf1, buf_size);
+    lv_draw_buf_init(&disp->_static_buf2, w, h, cf, stride, buf2, buf_size);
+    lv_display_set_draw_buffers(disp, &disp->_static_buf1, buf2 ? &disp->_static_buf2 : NULL);
+    lv_display_set_render_mode(disp, render_mode);
+
+    /* the stride was not set explicitly */
+    disp->stride_is_auto = 1;
+}
+
+void lv_display_set_buffers_with_stride(lv_display_t * disp, void * buf1, void * buf2, uint32_t buf_size,
+                                        uint32_t stride, lv_display_render_mode_t render_mode)
+{
+    if(stride == LV_STRIDE_AUTO) {
+        lv_display_set_buffers(disp, buf1, buf2, buf_size, render_mode);
+        return;
+    }
+
+    LV_ASSERT_MSG(buf1 != NULL, "Null buffer");
+    lv_color_format_t cf = lv_display_get_color_format(disp);
+    uint32_t w = lv_display_get_original_horizontal_resolution(disp);
+    uint32_t h = lv_display_get_original_vertical_resolution(disp);
+    LV_ASSERT_MSG(w != 0 && h != 0, "display resolution is 0");
+
     if(render_mode == LV_DISPLAY_RENDER_MODE_PARTIAL) {
         /* for partial mode, we calculate the height based on the buf_size and stride */
         h = buf_size / stride;
@@ -442,6 +524,8 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
     lv_draw_buf_init(&disp->_static_buf2, w, h, cf, stride, buf2, buf_size);
     lv_display_set_draw_buffers(disp, &disp->_static_buf1, buf2 ? &disp->_static_buf2 : NULL);
     lv_display_set_render_mode(disp, render_mode);
+
+    disp->stride_is_auto = 0;
 }
 
 void lv_display_set_render_mode(lv_display_t * disp, lv_display_render_mode_t render_mode)
@@ -476,6 +560,7 @@ void lv_display_set_color_format(lv_display_t * disp, lv_color_format_t color_fo
     disp->layer_head->color_format = color_format;
     if(disp->buf_1) disp->buf_1->header.cf = color_format;
     if(disp->buf_2) disp->buf_2->header.cf = color_format;
+    if(disp->buf_3) disp->buf_3->header.cf = color_format;
 
     lv_display_send_event(disp, LV_EVENT_COLOR_FORMAT_CHANGED, NULL);
 }
@@ -488,8 +573,28 @@ lv_color_format_t lv_display_get_color_format(lv_display_t * disp)
     return disp->color_format;
 }
 
+void lv_display_set_tile_cnt(lv_display_t * disp, uint32_t tile_cnt)
+{
+    LV_ASSERT_FORMAT_MSG(tile_cnt < 256, "tile_cnt must be smaller than 256 (%" LV_PRId32 " was used)", tile_cnt);
+
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return;
+
+    disp->tile_cnt = tile_cnt;
+}
+
+uint32_t lv_display_get_tile_cnt(lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return 0;
+
+    return disp->tile_cnt;
+}
+
 void lv_display_set_antialiasing(lv_display_t * disp, bool en)
 {
+    LV_LOG_WARN("Disabling anti-aliasing is not supported since v9. This function will be removed.");
+
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return;
 
@@ -532,6 +637,17 @@ lv_obj_t * lv_display_get_screen_active(lv_display_t * disp)
     }
 
     return disp->act_scr;
+}
+
+lv_obj_t * lv_display_get_screen_loading(lv_display_t * disp)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) {
+        LV_LOG_WARN("no display registered to get the current screen being loaded");
+        return NULL;
+    }
+
+    return disp->scr_to_load;
 }
 
 lv_obj_t * lv_display_get_screen_prev(lv_display_t * disp)
@@ -578,9 +694,31 @@ lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp)
     return disp->bottom_layer;
 }
 
-void lv_screen_load(struct lv_obj_t * scr)
+#if LV_USE_OBJ_NAME
+
+lv_obj_t * lv_display_get_screen_by_name(const lv_display_t * disp, const char * screen_name)
 {
-    lv_screen_load_anim(scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) {
+        LV_LOG_WARN("no display registered to get a screen by name");
+        return NULL;
+    }
+
+    uint32_t i;
+    for(i = 0; i < disp->screen_cnt; i++) {
+        const char * n = lv_obj_get_name(disp->screens[i]);
+        if(n && lv_streq(screen_name, n)) return disp->screens[i];
+    }
+
+    return NULL;
+
+}
+
+#endif /*LV_USE_OBJ_NAME*/
+
+void lv_screen_load(struct _lv_obj_t * scr)
+{
+    lv_screen_load_anim(scr, LV_SCREEN_LOAD_ANIM_NONE, 0, 0, false);
 }
 
 void lv_screen_load_anim(lv_obj_t * new_scr, lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay,
@@ -646,76 +784,76 @@ void lv_screen_load_anim(lv_obj_t * new_scr, lv_screen_load_anim_t anim_type, ui
     lv_anim_set_delay(&a_old, delay);
 
     switch(anim_type) {
-        case LV_SCR_LOAD_ANIM_NONE:
+        case LV_SCREEN_LOAD_ANIM_NONE:
             /*Create a dummy animation to apply the delay*/
             lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, 0, 0);
             break;
-        case LV_SCR_LOAD_ANIM_OVER_LEFT:
+        case LV_SCREEN_LOAD_ANIM_OVER_LEFT:
             lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, lv_display_get_horizontal_resolution(d), 0);
             break;
-        case LV_SCR_LOAD_ANIM_OVER_RIGHT:
+        case LV_SCREEN_LOAD_ANIM_OVER_RIGHT:
             lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, -lv_display_get_horizontal_resolution(d), 0);
             break;
-        case LV_SCR_LOAD_ANIM_OVER_TOP:
+        case LV_SCREEN_LOAD_ANIM_OVER_TOP:
             lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, lv_display_get_vertical_resolution(d), 0);
             break;
-        case LV_SCR_LOAD_ANIM_OVER_BOTTOM:
+        case LV_SCREEN_LOAD_ANIM_OVER_BOTTOM:
             lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, -lv_display_get_vertical_resolution(d), 0);
             break;
-        case LV_SCR_LOAD_ANIM_MOVE_LEFT:
+        case LV_SCREEN_LOAD_ANIM_MOVE_LEFT:
             lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, lv_display_get_horizontal_resolution(d), 0);
 
             lv_anim_set_exec_cb(&a_old, set_x_anim);
             lv_anim_set_values(&a_old, 0, -lv_display_get_horizontal_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_MOVE_RIGHT:
+        case LV_SCREEN_LOAD_ANIM_MOVE_RIGHT:
             lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, -lv_display_get_horizontal_resolution(d), 0);
 
             lv_anim_set_exec_cb(&a_old, set_x_anim);
             lv_anim_set_values(&a_old, 0, lv_display_get_horizontal_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_MOVE_TOP:
+        case LV_SCREEN_LOAD_ANIM_MOVE_TOP:
             lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, lv_display_get_vertical_resolution(d), 0);
 
             lv_anim_set_exec_cb(&a_old, set_y_anim);
             lv_anim_set_values(&a_old, 0, -lv_display_get_vertical_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_MOVE_BOTTOM:
+        case LV_SCREEN_LOAD_ANIM_MOVE_BOTTOM:
             lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, -lv_display_get_vertical_resolution(d), 0);
 
             lv_anim_set_exec_cb(&a_old, set_y_anim);
             lv_anim_set_values(&a_old, 0, lv_display_get_vertical_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_FADE_IN:
+        case LV_SCREEN_LOAD_ANIM_FADE_IN:
             lv_anim_set_exec_cb(&a_new, opa_scale_anim);
             lv_anim_set_values(&a_new, LV_OPA_TRANSP, LV_OPA_COVER);
             break;
-        case LV_SCR_LOAD_ANIM_FADE_OUT:
+        case LV_SCREEN_LOAD_ANIM_FADE_OUT:
             lv_anim_set_exec_cb(&a_old, opa_scale_anim);
             lv_anim_set_values(&a_old, LV_OPA_COVER, LV_OPA_TRANSP);
             break;
-        case LV_SCR_LOAD_ANIM_OUT_LEFT:
+        case LV_SCREEN_LOAD_ANIM_OUT_LEFT:
             lv_anim_set_exec_cb(&a_old, set_x_anim);
             lv_anim_set_values(&a_old, 0, -lv_display_get_horizontal_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_OUT_RIGHT:
+        case LV_SCREEN_LOAD_ANIM_OUT_RIGHT:
             lv_anim_set_exec_cb(&a_old, set_x_anim);
             lv_anim_set_values(&a_old, 0, lv_display_get_horizontal_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_OUT_TOP:
+        case LV_SCREEN_LOAD_ANIM_OUT_TOP:
             lv_anim_set_exec_cb(&a_old, set_y_anim);
             lv_anim_set_values(&a_old, 0, -lv_display_get_vertical_resolution(d));
             break;
-        case LV_SCR_LOAD_ANIM_OUT_BOTTOM:
+        case LV_SCREEN_LOAD_ANIM_OUT_BOTTOM:
             lv_anim_set_exec_cb(&a_old, set_y_anim);
             lv_anim_set_values(&a_old, 0, lv_display_get_vertical_resolution(d));
             break;
@@ -779,21 +917,18 @@ uint32_t lv_display_remove_event_cb_with_user_data(lv_display_t * disp, lv_event
 
 lv_result_t lv_display_send_event(lv_display_t * disp, lv_event_code_t code, void * param)
 {
+    return lv_event_push_and_send(&disp->event_list, code, disp, param);
+}
 
-    lv_event_t e;
-    lv_memzero(&e, sizeof(e));
-    e.code = code;
-    e.current_target = disp;
-    e.original_target = disp;
-    e.param = param;
-    lv_result_t res;
-    res = lv_event_send(&disp->event_list, &e, true);
-    if(res != LV_RESULT_OK) return res;
-
-    res = lv_event_send(&disp->event_list, &e, false);
-    if(res != LV_RESULT_OK) return res;
-
-    return res;
+lv_area_t * lv_event_get_invalidated_area(lv_event_t * e)
+{
+    if(e->code == LV_EVENT_INVALIDATE_AREA) {
+        return lv_event_get_param(e);
+    }
+    else {
+        LV_LOG_WARN("Not interpreted with this event code");
+        return NULL;
+    }
 }
 
 void lv_display_set_rotation(lv_display_t * disp, lv_display_rotation_t rotation)
@@ -810,6 +945,32 @@ lv_display_rotation_t lv_display_get_rotation(lv_display_t * disp)
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return LV_DISPLAY_ROTATION_0;
     return disp->rotation;
+}
+
+void lv_display_set_matrix_rotation(lv_display_t * disp, bool enable)
+{
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return;
+
+    if(!(disp->render_mode == LV_DISPLAY_RENDER_MODE_DIRECT || disp->render_mode == LV_DISPLAY_RENDER_MODE_FULL)) {
+        LV_LOG_WARN("Unsupported rendering mode: %d", disp->render_mode);
+        return;
+    }
+
+    disp->matrix_rotation = enable;
+#else
+    (void)disp;
+    (void)enable;
+    LV_LOG_WARN("LV_DRAW_TRANSFORM_USE_MATRIX was not enabled");
+#endif
+}
+
+bool lv_display_get_matrix_rotation(lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return false;
+    return disp->matrix_rotation;
 }
 
 void lv_display_set_theme(lv_display_t * disp, lv_theme_t * th)
@@ -902,6 +1063,49 @@ void lv_display_delete_refr_timer(lv_display_t * disp)
     disp->refr_timer = NULL;
 }
 
+lv_result_t lv_display_send_vsync_event(lv_display_t * disp, void * param)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) return LV_RESULT_INVALID;
+
+    if(disp->vsync_count > 0)
+        return lv_display_send_event(disp, LV_EVENT_VSYNC, param);
+
+    return LV_RESULT_INVALID;
+}
+
+bool lv_display_register_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) return false;
+
+    lv_display_add_event_cb(disp, event_cb, LV_EVENT_VSYNC, user_data);
+
+    /*only send once*/
+    if(disp->vsync_count == 0)
+        lv_display_send_event(disp, LV_EVENT_VSYNC_REQUEST, disp);
+
+    disp->vsync_count++;
+    return true;
+}
+
+bool lv_display_unregister_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) return false;
+
+    uint32_t removed_count = lv_display_remove_event_cb_with_user_data(disp, event_cb, user_data);
+    if(removed_count == 0)
+        return false;
+
+    disp->vsync_count -= removed_count;
+    /*only send once*/
+    if(disp->vsync_count == 0)
+        lv_display_send_event(disp, LV_EVENT_VSYNC_REQUEST, NULL);
+
+    return true;
+}
+
 void lv_display_set_user_data(lv_display_t * disp, void * user_data)
 {
     if(!disp) disp = lv_display_get_default();
@@ -943,12 +1147,12 @@ void lv_display_rotate_area(lv_display_t * disp, lv_area_t * area)
 {
     lv_display_rotation_t rotation = lv_display_get_rotation(disp);
 
+    if(rotation == LV_DISPLAY_ROTATION_0) return;
+
     int32_t w = lv_area_get_width(area);
     int32_t h = lv_area_get_height(area);
 
     switch(rotation) {
-        case LV_DISPLAY_ROTATION_0:
-            return;
         case LV_DISPLAY_ROTATION_90:
             area->y2 = disp->ver_res - area->x1 - 1;
             area->x1 = area->y1;
@@ -967,7 +1171,41 @@ void lv_display_rotate_area(lv_display_t * disp, lv_area_t * area)
             area->x2 = area->x1 + h - 1;
             area->y1 = area->y2 - w + 1;
             break;
+        default:
+            break;
     }
+}
+
+uint32_t lv_display_get_draw_buf_size(lv_display_t * disp)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) return 0;
+
+    if(disp->buf_1) {
+        return disp->buf_1->data_size;
+    }
+    return 0;
+}
+
+uint32_t lv_display_get_invalidated_draw_buf_size(lv_display_t * disp, uint32_t width, uint32_t height)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) return 0;
+
+    if(disp->render_mode == LV_DISPLAY_RENDER_MODE_FULL) {
+        width = lv_display_get_horizontal_resolution(disp);
+        height = lv_display_get_vertical_resolution(disp);
+    }
+
+    lv_color_format_t cf = lv_display_get_color_format(disp);
+    uint32_t stride = lv_draw_buf_width_to_stride(width, cf);
+    uint32_t buf_size = stride * height;
+
+    LV_ASSERT(disp->buf_1 && disp->buf_1->data_size >= buf_size);
+    if(disp->buf_2) LV_ASSERT(disp->buf_2->data_size >= buf_size);
+    if(disp->buf_3) LV_ASSERT(disp->buf_3->data_size >= buf_size);
+
+    return buf_size;
 }
 
 lv_obj_t * lv_screen_active(void)
@@ -1112,11 +1350,11 @@ static void scr_anim_completed(lv_anim_t * a)
 
 static bool is_out_anim(lv_screen_load_anim_t anim_type)
 {
-    return anim_type == LV_SCR_LOAD_ANIM_FADE_OUT  ||
-           anim_type == LV_SCR_LOAD_ANIM_OUT_LEFT  ||
-           anim_type == LV_SCR_LOAD_ANIM_OUT_RIGHT ||
-           anim_type == LV_SCR_LOAD_ANIM_OUT_TOP   ||
-           anim_type == LV_SCR_LOAD_ANIM_OUT_BOTTOM;
+    return anim_type == LV_SCREEN_LOAD_ANIM_FADE_OUT  ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_LEFT  ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_RIGHT ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_TOP   ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_BOTTOM;
 }
 
 static void disp_event_cb(lv_event_t * e)

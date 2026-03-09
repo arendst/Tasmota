@@ -1,0 +1,54 @@
+# User Functions Demo - Advanced Computed Parameters
+# Shows how to use user functions in computed parameters via property assignments
+
+import user_functions
+
+# Get the current strip length for calculations
+set strip_len = strip_length()
+
+# Example 1: Simple user function in computed parameter
+animation random_base = solid(
+  color=blue
+  priority=10
+)
+# Use user function in property assignment
+random_base.opacity = rand_demo()
+
+# Example 2: User function with mathematical operations
+animation random_bounded = solid(
+  color=orange
+  priority=8
+)
+# User function with bounds using math functions
+random_bounded.opacity = max(50, min(255, rand_demo() + 100))
+
+# Example 3: User function in arithmetic expressions
+animation random_variation = solid(
+  color=purple
+  priority=15
+)
+# Mix user function with arithmetic operations
+random_variation.opacity = abs(rand_demo() - 128) + 64
+
+# Example 4: User function affecting different properties
+animation random_multi = solid(
+  color=cyan
+  priority=12
+)
+# Use user function for multiple properties
+random_multi.opacity = max(100, rand_demo())
+
+# Example 5: Complex expression with user function
+animation random_complex = solid(
+  color=white
+  priority=20
+)
+# Complex expression with user function and math operations
+random_complex.opacity = round((rand_demo() + 128) / 2 + abs(rand_demo() - 100))
+
+# Run all animations to demonstrate the effects
+run random_base
+run random_bounded
+run random_variation
+run random_multi
+run random_complex

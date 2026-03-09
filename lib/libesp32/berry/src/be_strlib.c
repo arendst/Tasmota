@@ -16,6 +16,28 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <limits.h>
+#include <float.h>
+#include <math.h>
+
+#if BE_INTGER_TYPE == 0 /* int */
+    #define M_IMAX    INT_MAX
+    #define M_IMIN    INT_MIN
+#elif BE_INTGER_TYPE == 1 /* long */
+    #define M_IMAX    LONG_MAX
+    #define M_IMIN    LONG_MIN
+#else /* int64_t (long long) */
+    #define M_IMAX    LLONG_MAX
+    #define M_IMIN    LLONG_MIN
+#endif
+
+#if BE_USE_SINGLE_FLOAT == 0 /* double */
+    #define BREAL_MAX DBL_MAX
+    #define BREAL_MIN DBL_MIN
+#else
+    #define BREAL_MAX FLT_MAX
+    #define BREAL_MIN FLT_MIN
+#endif
 
 #define is_space(c)     ((c) == ' ' || (c) == '\t' || (c) == '\r' || (c) == '\n')
 #define is_digit(c)     ((c) >= '0' && (c) <= '9')
@@ -52,6 +74,50 @@ bstring* be_strcat(bvm *vm, bstring *s1, bstring *s2)
         strcpy(sbuf, str(s1));
         strcpy(sbuf + str_len(s1), str(s2));
         return s;
+    }
+}
+
+bstring* be_strmul(bvm *vm, bstring *s1, bint n)
+{
+    /* Handle edge cases */
+    if (n == 1) {
+        return s1;
+    }
+
+    size_t string_len = (size_t)str_len(s1);
+    if ((n <= 0) || (string_len == 0)) {
+        return be_newstrn(vm, "", 0);
+    }
+    
+    /* Check for potential overflow */
+    if (n > (bint)(vm->bytesmaxsize / string_len)) {
+        be_raise(vm, "runtime_error", "string multiplication result too large");
+    }
+    
+    size_t total_len = string_len * (size_t)n;
+    
+    /* Use the same pattern as be_strcat for short vs long strings */
+    if (total_len <= SHORT_STR_MAX_LEN) {
+        char buf[SHORT_STR_MAX_LEN + 1];
+        const char *src = str(s1);
+        char *dst = buf;
+        
+        for (bint i = 0; i < n; i++) {
+            memcpy(dst, src, string_len);
+            dst += string_len;
+        }
+        buf[total_len] = '\0';
+        return be_newstrn(vm, buf, total_len);
+    } else {
+        /* Long string */
+        bstring *result = be_newstrn(vm, NULL, total_len);
+        char *dst = (char*)str(result);
+        const char *src = str(s1);
+        
+        for (bint i = 0; i < n; i++) {
+            memcpy(dst + i * string_len, src, string_len);
+        }
+        return result;
     }
 }
 
@@ -292,14 +358,30 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
             c = *str++;
         }
         while (is_digit(c)) {
-            sum = sum * 10 + c - '0';
+            if (sign == '-') {
+                if (sum < M_IMIN / 10) goto overflow_neg;
+                sum = sum * 10 - (c - '0');
+                if (sum > 0) goto overflow_neg; /* overflow check */
+            } else {
+                if (sum > M_IMAX / 10) goto overflow_pos;
+                sum = sum * 10 + (c - '0');
+                if (sum < 0) goto overflow_pos; /* overflow check */
+            }
             c = *str++;
         }
         if (endstr) {
             *endstr = str - 1;
         }
-        return sign == '-' ? -sum : sum;
+        return sum;
     }
+
+overflow_pos:
+    if (endstr) *endstr = str - 1;
+    return M_IMAX;
+
+overflow_neg:
+    if (endstr) *endstr = str - 1;
+    return M_IMIN;
 }
 
 /*******************************************************************
@@ -317,42 +399,67 @@ BERRY_API breal be_str2real(const char *str, const char **endstr)
 {
     int c, sign;
     breal sum = 0, deci = 0, point = (breal)0.1;
+    
     skip_space(str);
     sign = c = *str++;
-    if (c == '+' || c == '-') {
-        c = *str++;
-    }
+    if (c == '+' || c == '-') c = *str++;   /* skip sign if present */
+    
+    /* Integer part with overflow check */
     while (is_digit(c)) {
-        sum = sum * 10 + c - '0';
+        if (sum > BREAL_MAX / 10) goto overflow;
+        sum = sum * 10 + (c - '0');
+        if (sum > BREAL_MAX) goto overflow;
         c = *str++;
     }
+    
+    /* Fractional part */
     if (c == '.') {
         c = *str++;
         while (is_digit(c)) {
-            deci = deci + ((breal)c - '0') * point;
+            breal digit = (c - '0') * point;
+            if (deci + digit < deci) break; /* precision limit reached */
+            deci += digit;
             point *= (breal)0.1;
             c = *str++;
         }
     }
-    sum = sum + deci;
+    
+    sum += deci;
+    if (sum > BREAL_MAX) goto overflow;
+    
+    /* Scientific notation */
     if (c == 'e' || c == 'E') {
-        int e = 0;
-        breal ratio = (c = *str++) == '-' ? (breal)0.1 : 10;
-        if (c == '+' || c == '-') {
-            c = *str++;
-        }
+        int e = 0, esign = 1;
+        c = *str++;
+        if (c == '-') { esign = -1; c = *str++; }
+        else if (c == '+') c = *str++;
+        
         while (is_digit(c)) {
-            e = e * 10 + c - '0';
+            if (e > 300) goto overflow;
+            e = e * 10 + (c - '0');
             c = *str++;
         }
+        
+        e *= esign;
+        breal ratio = (e < 0) ? (breal)0.1 : 10;
+        if (e < 0) e = -e;
+        
         while (e--) {
+            if (e > 0 && sum > BREAL_MAX / ratio) goto overflow;
             sum *= ratio;
         }
     }
-    if (endstr) {
-        *endstr = str - 1;
-    }
+    
+    if (endstr) *endstr = str - 1;
     return sign == '-' ? -sum : sum;
+
+overflow:
+    if (endstr) *endstr = str - 1;
+#if BE_USE_SINGLE_FLOAT == 0
+    return sign == '-' ? -HUGE_VAL : HUGE_VAL;
+#else
+    return sign == '-' ? -HUGE_VALF : HUGE_VALF;
+#endif
 }
 
 /* convert a string to a number (integer or real).
@@ -1009,14 +1116,17 @@ static int str_endswith(bvm *vm)
         bbool result = bfalse;
         const char *s = be_tostring(vm, 1);
         const char *p = be_tostring(vm, 2);
-        size_t len = (size_t)be_strlen(vm, 2);
-        if (case_insensitive) {
-            if (str_strncasecmp(s + (int)strlen(s) - (int)len, p, len) == 0) {
-                result = btrue;
-            }
-        } else {
-            if (strncmp(s + (int)strlen(s) - (int)len, p, len) == 0) {
-                result = btrue;
+        size_t len_s = (size_t)be_strlen(vm, 1);
+        size_t len_p = (size_t)be_strlen(vm, 2);
+        if (len_s >= len_p) {
+            if (case_insensitive) {
+                if (str_strncasecmp(s + (int)len_s - (int)len_p, p, len_p) == 0) {
+                    result = btrue;
+                }
+            } else {
+                if (strncmp(s + (int)len_s - (int)len_p, p, len_p) == 0) {
+                    result = btrue;
+                }
             }
         }
         be_pushbool(vm, result);

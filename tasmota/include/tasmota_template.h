@@ -232,6 +232,11 @@ enum UserSelectablePins {
   GPIO_C8_CO2_5K_TX, GPIO_C8_CO2_5K_RX, // C8-CO2-5K CO2 Sensor
   GPIO_V9240_TX, GPIO_V9240_RX,         //  V9240 serial interface
   GPIO_LD2402_TX, GPIO_LD2402_RX,       // HLK-LD2402
+#ifdef ESP32
+  GPIO_HSDIO_CMD, GPIO_HSDIO_CLK, GPIO_HSDIO_RST, GPIO_HSDIO_D0, GPIO_HSDIO_D1, GPIO_HSDIO_D2, GPIO_HSDIO_D3, // Hosted MCU SDIO interface, including 1-bit and 4-bit modes
+#endif
+  GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
+  GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -460,12 +465,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7880_IRQ "|"
   D_SENSOR_RESET "|"
   D_SENSOR_MS01 "|"
-  D_SENSOR_SDIO_CMD "|"
-  D_SENSOR_SDIO_CLK "|"
-  D_SENSOR_SDIO_D0 "|"
-  D_SENSOR_SDIO_D1 "|"
-  D_SENSOR_SDIO_D2 "|"
-  D_SENSOR_SDIO_D3 "|"
+  D_SENSOR_SDIO_CMD "|" D_SENSOR_SDIO_CLK "|" D_SENSOR_SDIO_D0 "|" D_SENSOR_SDIO_D1 "|" D_SENSOR_SDIO_D2 "|" D_SENSOR_SDIO_D3 "|"
   D_SENSOR_FLOWRATEMETER "|"
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
@@ -510,8 +510,13 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TWAI_TX "|" D_SENSOR_TWAI_RX "|" D_SENSOR_TWAI_BO "|" D_SENSOR_TWAI_CLK "|"
   D_SENSOR_C8_CO2_5K_TX "|" D_SENSOR_C8_CO2_5K_RX "|"
   D_SENSOR_V9240_TX "|" D_SENSOR_V9240_RX "|"
-  D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX
-  ;
+  D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX "|"
+#ifdef ESP32
+  D_SENSOR_HSDIO_CMD "|" D_SENSOR_HSDIO_CLK "|" D_SENSOR_HSDIO_RST "|" D_SENSOR_HSDIO_D0 "|" D_SENSOR_HSDIO_D1 "|" D_SENSOR_HSDIO_D2 "|" D_SENSOR_HSDIO_D3 "|"
+#endif
+  D_VID6608_F "|" D_VID6608_CW "|"
+  D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
+;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
@@ -540,6 +545,11 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_CSE7761              2  // Model 1/2 (DUALR3), 2/2 (POWCT)
 #define MAX_TWAI                 SOC_TWAI_CONTROLLER_NUM
 #define MAX_GPS_RX               3  // Baudrates 1 (9600), 2 (19200), 3 (38400)
+#ifdef ESP32
+#define MAX_MKSKYBLU_IF          8  // MakeSkyBlue solar charger: ESP32-NRG supports up to 8 phases
+#else
+#define MAX_MKSKYBLU_IF          3  // MakeSkyBlue solar charger: ESP82xx-NRG supports up to 3 phases
+#endif
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                                     // Not used
@@ -646,7 +656,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RC522_RST),                         // RC522 Rfid Reset
 #endif
 #ifdef USE_SDCARD
-  AGPIO(GPIO_SDCARD_CS),                         // SDCard in SPI mode
+  AGPIO(GPIO_SDCARD_CS) + AGMAX(MAX_SPI),        // SDCard in SPI mode
 #endif  // USE_SDCARD
 #if defined(USE_MCP2515) || defined(USE_CANSNIFFER)
   AGPIO(GPIO_MCP2515_CS),
@@ -1015,6 +1025,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_V9240_TX),                          //  Serial V9240 interface
   AGPIO(GPIO_V9240_RX),                          //  Serial V9240 interface
 #endif
+#ifdef USE_MAKE_SKY_BLUE
+  AGPIO(GPIO_MKSKYBLU_TX) + AGMAX(MAX_MKSKYBLU_IF),
+  AGPIO(GPIO_MKSKYBLU_RX) + AGMAX(MAX_MKSKYBLU_IF),
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1160,7 +1174,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_C8_CO2_5K_RX),                      // SC8-CO2-5K Serial interface
 #endif
 
-
 #ifdef ESP32
 #ifdef USE_ESP32_TWAI
 #if SOC_TWAI_SUPPORTED
@@ -1292,7 +1305,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_WEBCAM
 #ifdef USE_ETHERNET
   AGPIO(GPIO_ETH_PHY_POWER),
+#if CONFIG_SOC_SPI_PERIPH_NUM > 2                // This count differs from available usable SPI count based on SPIx_HOST
+  AGPIO(GPIO_ETH_PHY_MDC) + AGMAX(MAX_SPI),
+#else
   AGPIO(GPIO_ETH_PHY_MDC),
+#endif  // CONFIG_SOC_SPI_PERIPH_NUM > 2
   AGPIO(GPIO_ETH_PHY_MDIO),                      // Ethernet
 #endif  // USE_ETHERNET
 #ifdef USE_BIOPDU
@@ -1300,6 +1317,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_BIOPDU_PZEM016_RX),
   AGPIO(GPIO_BIOPDU_BIT) + AGMAX(3),
 #endif
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+  AGPIO(GPIO_HSDIO_CMD),                         // Hosted MCU SDIO interface, including 1-bit and 4-bit modes
+  AGPIO(GPIO_HSDIO_CLK),
+  AGPIO(GPIO_HSDIO_RST),
+  AGPIO(GPIO_HSDIO_D0),
+  AGPIO(GPIO_HSDIO_D1),
+  AGPIO(GPIO_HSDIO_D2),
+  AGPIO(GPIO_HSDIO_D3),
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
 
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 multiple Analog / Digital converter inputs
@@ -1318,6 +1344,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_VOLTAGE) + AGMAX(MAX_ADCS),     // Voltage
   AGPIO(GPIO_ADC_CURRENT) + AGMAX(MAX_ADCS),     // Current
 #endif  // ESP32
+
+
+#ifdef USE_VID6608
+  AGPIO(GPIO_VID6608_F) + AGMAX(4),              // VID6608 step interface (max 4 motors)
+  AGPIO(GPIO_VID6608_CW) + AGMAX(4),             // VID6608 direction interface (max 4 motors)
+#endif
+
 };
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1412,6 +1445,18 @@ const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOIOIOIOIOIOIOFLFLFLFLFLFLFLIORXTX";
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021
 const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX";
 
+#elif CONFIG_IDF_TARGET_ESP32C5  // ESP32-C5
+/* ****************************************
+ * ESP32C5
+ * ****************************************/
+#define MAX_GPIO_PIN       29   // Number of supported GPIO
+#define MIN_FLASH_PINS     0    // Number of flash chip pins unusable for configuration (GPIO16-22 SPI0/1)
+#define MAX_USER_PINS      29   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 91011121314151617181920212223242526272829
+const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOIOIOIOIOIOIOIOFLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIO";
+
 #elif CONFIG_IDF_TARGET_ESP32C6
 
 /* ****************************************
@@ -1454,6 +1499,20 @@ const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO-
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748
 const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO--------FLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO";
 
+#elif CONFIG_IDF_TARGET_ESP32P4
+/* ****************************************
+ * ESP32P4
+ * GPIOs 0..54
+ * - 34..38 strapping pins
+ * ****************************************/
+#define MAX_GPIO_PIN       55   // Number of supported GPIO, 0..55
+#define MIN_FLASH_PINS     00   // Number of flash chip pins unusable for configuration (22-25 don't exist, 26-32 for SPI)
+#define MAX_USER_PINS      55   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354
+const char PINS_WEMOS[] PROGMEM = "IOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOAOAOAOAOAOAOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOAOAOAOAO";
+
 #else  // not CONFIG_IDF_TARGET_ESP32C2/C3/C6 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 
 /* ****************************************
@@ -1485,7 +1544,7 @@ const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO-
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
 const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO--------AOAOIAIAIAIAIAIA";
 
-#endif  // ESP32/S2/C2/C3/C6 selection
+#endif  // ESP32/S2/C2/C3/C6/P4 selection
 #endif  // ESP32
 
 /********************************************************************************************\
@@ -3054,6 +3113,66 @@ const mytmplt kModules[] PROGMEM = {
  Known templates
 \*********************************************************************************************/
 
+#elif CONFIG_IDF_TARGET_ESP32C5
+/********************************************************************************************\
+ * ESP32-C5 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModulesESP32C5 {
+  WEMOS,
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32C5|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32C5 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32C5 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0
+    AGPIO(GPIO_USER),            // 1       AO                  GPIO1, ADC1_CH0
+    AGPIO(GPIO_USER),            // 2       AO                  GPIO2, ADC1_CH1  
+    AGPIO(GPIO_USER),            // 3       AO                  GPIO3, ADC1_CH2
+    AGPIO(GPIO_USER),            // 4       AO                  GPIO4, ADC1_CH3
+    AGPIO(GPIO_USER),            // 5       AO                  GPIO5, ADC1_CH4
+    AGPIO(GPIO_USER),            // 6       AO                  GPIO6, ADC1_CH5
+    AGPIO(GPIO_USER),            // 7       AO                  GPIO7, ADC1_CH6
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10
+    AGPIO(GPIO_USER),            // 11      IO                  GPIO11
+    AGPIO(GPIO_USER),            // 12      IO                  GPIO12
+    AGPIO(GPIO_USER),            // 13      IO                  GPIO13
+    AGPIO(GPIO_USER),            // 14      IO                  GPIO14
+    AGPIO(GPIO_USER),            // 15      IO                  GPIO15
+    AGPIO(GPIO_USER),            // 16      IO                  GPIO16
+    AGPIO(GPIO_USER),            // 17      IO                  GPIO17
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19
+    AGPIO(GPIO_USER),            // 20      IO                  GPIO20
+    AGPIO(GPIO_USER),            // 21      IO                  GPIO21
+    AGPIO(GPIO_USER),            // 22      IO                  GPIO22
+    AGPIO(GPIO_USER),            // 23      IO                  GPIO23
+    0,                           // 24      FL                  GPIO24, Flash
+    0,                           // 25      FL                  GPIO25, Flash  
+    0,                           // 26      FL                  GPIO26, Flash
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+
 #elif CONFIG_IDF_TARGET_ESP32C6
 /********************************************************************************************\
  * ESP32-C6 Module templates
@@ -3110,6 +3229,95 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 28      IO                  GPIO28, SPIHD - Free if flash DIO/DOUT
     0,                           // 29      IO                  GPIO29, SPICLK
     0,                           // 30      IO                  GPIO30, SPID
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+#elif CONFIG_IDF_TARGET_ESP32P4
+/********************************************************************************************\
+ * ESP32-P4 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+#define WT32_ETH01         4 //TODO: Why needed?
+
+// Supported hardware modules
+enum SupportedModulesESP32P4 {
+  WEMOS, // not really correct, a placeholder for now
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32P4|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32P4 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32P4 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, LP_GPIO0
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, LP_GPIO1
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, TOUCH0, LP_GPIO2
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, TOUCH1, LP_GPIO3
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, TOUCH2, LP_GPIO4
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, TOUCH3, LP_GPIO5
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6, TOUCH4, LP_GPIO6
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, TOUCH5, LP_GPIO7
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8, TOUCH6, LP_GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9, TOUCH7, LP_GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10, TOUCH8, LP_GPIO10
+    AGPIO(GPIO_USER),            // 11      IO                  GPIO11, TOUCH9, LP_GPIO11
+    AGPIO(GPIO_USER),            // 12      IO                  GPIO12, TOUCH10, LP_GPIO12
+    AGPIO(GPIO_USER),            // 13      IO                  GPIO13, TOUCH11, LP_GPIO13
+    AGPIO(GPIO_USER),            // 14      IO                  GPIO14, TOUCH12, LP_GPIO14, SDIO2_D0 ESPHosted (ESP32C6 GPIO20)
+    AGPIO(GPIO_USER),            // 15      IO                  GPIO15, TOUCH13, LP_GPIO15, SDIO2_D1 ESPHosted (ESP32C6 GPIO21)
+    AGPIO(GPIO_USER),            // 16      IO                  GPIO16, ADC1_CH0, SDIO2_D2 ESPHosted (ESP32C6 GPIO22)
+    AGPIO(GPIO_USER),            // 17      IO                  GPIO17, ADC1_CH1, SDIO2_D3 ESPHosted (ESP32C6 GPIO23)
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18, ADC1_CH2, SDIO2_CLK ESPHosted (ESP32C6 GPIO19)
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, ADC1_CH3, SDIO2_CMD ESPHosted (ESP32C6 GPIO18)
+    AGPIO(GPIO_USER),            // 20      IO                  GPIO20, ADC1_CH4
+    AGPIO(GPIO_USER),            // 21      IO                  GPIO21, ADC1_CH5
+    AGPIO(GPIO_USER),            // 22      IO                  GPIO22, ADC1_CH6
+    AGPIO(GPIO_USER),            // 23      IO                  GPIO23, ADC1_CH7
+    AGPIO(GPIO_USER),            // 24      IO                  GPIO24
+    AGPIO(GPIO_USER),            // 25      IO                  GPIO25
+    AGPIO(GPIO_USER),            // 26      IO                  GPIO26
+    AGPIO(GPIO_USER),            // 27      IO                  GPIO27
+    AGPIO(GPIO_USER),            // 28      IO                  GPIO28
+    AGPIO(GPIO_USER),            // 29      IO                  GPIO29
+    AGPIO(GPIO_USER),            // 30      IO                  GPIO30
+    AGPIO(GPIO_USER),            // 31      IO                  GPIO31
+    AGPIO(GPIO_USER),            // 32      IO                  GPIO32
+    AGPIO(GPIO_USER),            // 33      IO                  GPIO33
+    AGPIO(GPIO_USER),            // 34      IO                  GPIO34, Strapping pin
+    AGPIO(GPIO_USER),            // 35      IO                  GPIO35, Strapping pin
+    AGPIO(GPIO_USER),            // 36      IO                  GPIO36, Strapping pin
+    AGPIO(GPIO_USER),            // 37      IO                  GPIO37, Strapping pin
+    AGPIO(GPIO_USER),            // 38      IO                  GPIO38, Strapping pin
+    AGPIO(GPIO_USER),            // 39      IO                  GPIO39
+    AGPIO(GPIO_USER),            // 40      IO                  GPIO40
+    AGPIO(GPIO_USER),            // 41      IO                  GPIO41
+    AGPIO(GPIO_USER),            // 42      IO                  GPIO42
+    AGPIO(GPIO_USER),            // 43      IO                  GPIO43
+    AGPIO(GPIO_USER),            // 44      IO                  GPIO44
+    AGPIO(GPIO_USER),            // 45      IO                  GPIO45
+    AGPIO(GPIO_USER),            // 46      IO                  GPIO46
+    AGPIO(GPIO_USER),            // 47      IO                  GPIO47
+    AGPIO(GPIO_USER),            // 48      IO                  GPIO48
+    AGPIO(GPIO_USER),            // 49      IO                  GPIO49, ADC1_CH8
+    AGPIO(GPIO_USER),            // 50      IO                  GPIO50, ADC1_CH9
+    AGPIO(GPIO_USER),            // 51      IO                  GPIO51, ADC1_CH10, ANA_CMPR_CH0 reference voltage
+    AGPIO(GPIO_USER),            // 52      IO                  GPIO52, ADC1_CH11, ANA_CMPR_CH0 input (non-inverting)
+    AGPIO(GPIO_USER),            // 53      IO                  GPIO53, ADC1_CH12, ANA_CMPR_CH1 reference voltage
+    AGPIO(GPIO_USER),            // 54      IO                  GPIO54, ADC1_CH13, ANA_CMPR_CH1 input (non-inverting)
     0                            // Flag
   },
 };

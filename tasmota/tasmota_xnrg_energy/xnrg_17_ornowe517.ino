@@ -82,7 +82,7 @@ void WE517Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, We517Modbus->ReceiveCount());
 
     if (error) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ORNO: WE517 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ORN: WE517 error %d"), error);
     } else {
       Energy->data_valid[0] = 0;
       Energy->data_valid[1] = 0;
@@ -192,6 +192,9 @@ void We517SnsInit(void) {
           Serial.begin(WE517_SPEED, SERIAL_8E1);
           ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ORN: Serial UART%d"), We517Modbus->getUart());
+#endif
       Energy->phase_count = 3;
       Energy->frequency_common = true; // Use common frequency
   } else {

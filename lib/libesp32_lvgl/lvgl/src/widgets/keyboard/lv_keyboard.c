@@ -15,6 +15,15 @@
 #include "../../misc/lv_assert.h"
 #include "../../stdlib/lv_string.h"
 
+/*Testing of dependencies*/
+#if LV_USE_BUTTONMATRIX == 0
+    #error "lv_buttonmatrix is required. Enable it in lv_conf.h (LV_USE_BUTTONMATRIX  1) "
+#endif
+
+#if LV_USE_TEXTAREA == 0
+    #error "lv_textarea is required. Enable it in lv_conf.h (LV_USE_TEXTAREA  1) "
+#endif
+
 /*********************
  *      DEFINES
  *********************/
@@ -69,7 +78,7 @@ const lv_obj_class_t lv_keyboard_class = {
     .instance_size = sizeof(lv_keyboard_t),
     .editable = 1,
     .base_class = &lv_buttonmatrix_class,
-    .name = "keyboard",
+    .name = "lv_keyboard",
 #if LV_USE_OBJ_PROPERTY
     .prop_index_start = LV_PROPERTY_KEYBOARD_START,
     .prop_index_end = LV_PROPERTY_KEYBOARD_END,

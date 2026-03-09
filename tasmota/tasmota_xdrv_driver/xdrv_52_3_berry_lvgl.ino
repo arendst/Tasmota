@@ -472,9 +472,13 @@ extern "C" {
    * Tasmota Logo
   \*********************************************************************************************/
   extern const lv_img_dsc_t TASMOTA_Symbol_64;
+  extern const lv_img_dsc_t TASMOTA_Symbol_36_white;
 
   void lv_image_set_tasmota_logo(lv_obj_t * img) {
     lv_image_set_src(img, &TASMOTA_Symbol_64);
+  }
+  void lv_image_set_tasmota_logo36(lv_obj_t * img) {    // 36x36 for splash screen
+    lv_image_set_src(img, &TASMOTA_Symbol_36_white);
   }
 
   /*********************************************************************************************\

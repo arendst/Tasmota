@@ -1,6 +1,6 @@
 # Matter clusters
 #
-# Needs to be reword, this structure is huge...
+# Needs to be reworked, this structure is huge...
 #
 # imported from Python definition
 

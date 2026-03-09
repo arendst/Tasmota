@@ -262,6 +262,7 @@ void MqttInit(void) {
     if (!Settings->flag5.tls_use_fingerprint) {
       tlsClient->setTrustAnchor(Tasmota_TA, nitems(Tasmota_TA));
     }
+    tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
 
     MqttClient.setClient(*tlsClient);
   } else {
@@ -1111,6 +1112,9 @@ void MqttConnected(void) {
 }
 
 void MqttReconnect(void) {
+  if (!strlen(TasmotaGlobal.mqtt_client)) {  // Do it here as it needs the MAC address from a possible hosted MCU available after WiFi connection
+    Format(TasmotaGlobal.mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(TasmotaGlobal.mqtt_client));
+  }
   Mqtt.allowed = Settings->flag.mqtt_enabled && (TasmotaGlobal.restart_flag == 0);  // SetOption3 - Enable MQTT, and don't connect if restart in process
   if (Mqtt.allowed) {
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
@@ -1391,6 +1395,17 @@ void MqttReconnect(void) {
       120 : 376 : BR_ALERT_NO_APPLICATION_PROTOCOL
 */
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
+
+#if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
+      if (tlsClient->getLastError() == 296) {
+        // in this special case of cipher mismatch, we force enable ECDSA
+        // this would be the case for newer letsencrypt certificates now defaulting
+        // to EC certificates requiring ECDSA instead of RSA
+        Settings->flag6.tls_use_ecdsa = true;
+        tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS now enabling ECDSA 'SetOption165 1'"), tlsClient->getLastError());
+      }
+#endif // defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
     }
 #endif
 /*
@@ -1408,6 +1423,18 @@ void MqttReconnect(void) {
 */
     MqttDisconnected(MqttClient.state());
   }
+#ifdef USE_MQTT_TLS
+  if (Mqtt.mqtt_tls) {
+    int32_t cipher_suite = tlsClient->getLastCipherSuite();
+    if (BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_RSA_AES_128_GCM_SHA256"));
+    } else if (BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_ECDSA_AES_128_GCM_SHA256"));
+    } else if (0 != cipher_suite) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: 0x%04X"), cipher_suite);
+    }
+  }
+#endif // USE_MQTT_TLS
 }
 
 void MqttCheck(void) {
@@ -2025,14 +2052,7 @@ void CmndTlsDump(void) {
 
 #define WEB_HANDLE_MQTT "mq"
 
-const char S_CONFIGURE_MQTT[] PROGMEM = D_CONFIGURE_MQTT;
-
-const char HTTP_BTN_MENU_MQTT[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_MQTT "' method='get'><button>" D_CONFIGURE_MQTT "</button></form></p>";
-
 const char HTTP_FORM_MQTT1[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='" WEB_HANDLE_MQTT "'>"
   "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br><input id='mh' placeholder=\"" MQTT_HOST "\" value=\"%s\"></p>"
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
 #ifdef USE_MQTT_TLS
@@ -2061,6 +2081,8 @@ void HandleMqttConfiguration(void)
 
   WSContentStart_P(PSTR(D_CONFIGURE_MQTT));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_MQTT_PARAMETERS));
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR(WEB_HANDLE_MQTT));
   WSContentSend_P(HTTP_FORM_MQTT1,
     SettingsTextEscaped(SET_MQTT_HOST).c_str(),
     Settings->mqtt_port,
@@ -2111,18 +2133,18 @@ bool Xdrv02(uint32_t function)
 #ifdef USE_WEBSERVER
 #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_MQTT);
+        WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_MQTT), PSTR(D_CONFIGURE_MQTT));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);
         break;
 #ifdef USE_WEB_STATUS_LINE
-      case FUNC_WEB_STATUS:
-        // MqttConnectCount(), mqtt_tls
+      case FUNC_WEB_STATUS_RIGHT:
         if (MqttIsConnected()) {
-          WSContentStatusSticker(PSTR("MQTT"), -1);
           if (MqttTLSEnabled()) {
-            WSContentStatusSticker(PSTR("TLS"), -1);
+            WSContentStatusSticker(PSTR(D_MQTT_TLS_ENABLE));
+          } else {
+            WSContentStatusSticker(PSTR(D_MQTT));
           }
         }
         break;

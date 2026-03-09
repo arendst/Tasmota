@@ -95,6 +95,7 @@ struct {
   String _serverUrl;                     // Connection info
   String _writeUrl;                      // Cached full write url
   String _lastErrorResponse;             // Server reponse or library error message for last failed request
+  String sensor_id;
   uint32_t _lastRequestTime = 0;         // Last time in ms we made a request to server
   int interval = 0;
   int _lastStatusCode = 0;               // HTTP status code of last request to server
@@ -292,6 +293,9 @@ char* InfluxDbNumber(char* alternative, JsonParserToken value) {
     char* source = (char*)value.getStr();
     // Test for valid numeric data ('-.0123456789') or ON, OFF etc. as defined in kOptions
     if (source != nullptr) {
+      if (ChrCount(source, ".") > 1) {  // IPAddress like 192.168.2.123
+        return nullptr;
+      }
       char* out = source;
       // Convert special text as found in kOptions to a number
       // Like "OFF" -> 0, "ON" -> 1, "TOGGLE" -> 2
@@ -306,6 +310,54 @@ char* InfluxDbNumber(char* alternative, JsonParserToken value) {
     }
   }
   return nullptr;
+}
+
+void InfluxDbProcessJsonValue(JsonParserKey key, JsonParserToken value, const char* sensor_name, String *data) {
+  char type[64];         // 'temperature'
+  LowerCase(type, key.getStr());
+  bool is_id = (!strcmp_P(type, PSTR("id")));  // Index for DS18B20
+  bool is_array = value.isArray();
+  if (is_id && !is_array) {
+    IFDB.sensor_id = F(",id=");
+    IFDB.sensor_id += value.getStr();          // id=01144A0CB2AA
+    return;
+  }
+  char number[12];       // '1' to '255'
+  char* my_value = InfluxDbNumber(number, (is_array) ? (value.getArray())[0] : value);
+  if ((my_value != nullptr) && key.isValid()) {
+    char sensor[64];     // 'ds18b20'
+    LowerCase(sensor, sensor_name);
+    char linebuf[128];   // 'temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=26.44\n'
+    if (is_array) {
+      JsonParserArray arr = value.getArray();
+      uint32_t i = 0;
+      for (auto val : arr) {
+        i++;
+        // power1,device=shelly25,sensor=energy value=0.00
+        // power2,device=shelly25,sensor=energy value=4.12
+        snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
+          type, i, TasmotaGlobal.mqtt_topic, sensor, IFDB.sensor_id.c_str(), val.getStr());
+        *data += linebuf;
+      }
+    } else {
+      // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
+      snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
+        type, TasmotaGlobal.mqtt_topic, sensor, IFDB.sensor_id.c_str(), my_value);
+      *data += linebuf;
+    }
+    IFDB.sensor_id = "";
+  }
+}
+
+void InfluxDbProcessJsonObject(JsonParserObject Object, const char* sensor, String *data) {
+  for (auto key : Object) {
+    JsonParserToken value = key.getValue();
+    if (value.isObject()) {
+      InfluxDbProcessJsonObject(value.getObject(), key.getStr(), data);
+    } else {
+      InfluxDbProcessJsonValue(key, value, sensor, data);
+    }
+  }
 }
 
 void InfluxDbProcessJson(bool use_copy = false) {
@@ -323,88 +375,9 @@ void InfluxDbProcessJson(bool use_copy = false) {
   JsonParser parser(json_data);  // Destroys json_data
   JsonParserObject root = parser.getRootObject();
   if (root) {
-    char number[12];     // '1' to '255'
-    char linebuf[128];   // 'temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=26.44\n'
-    char sensor[64];     // 'ds18b20'
-    char type[64];       // 'temperature'
-    char sensor_id[32];  // ',id=01144A0CB2AA'
-    sensor_id[0] = '\0';
-
-    String data = "";    // Multiple linebufs
-
-    for (auto key1 : root) {
-      JsonParserToken value1 = key1.getValue();
-      if (value1.isObject()) {
-        JsonParserObject Object2 = value1.getObject();
-        for (auto key2 : Object2) {
-          JsonParserToken value2 = key2.getValue();
-          if (value2.isObject()) {
-            JsonParserObject Object3 = value2.getObject();
-            for (auto key3 : Object3) {
-              char* value = InfluxDbNumber(number, key3.getValue());
-              if ((value != nullptr) && key2.isValid() && key3.isValid()) {
-                // Level 3
-                LowerCase(sensor, key2.getStr());
-                LowerCase(type, key3.getStr());
-                // temperature,device=tasmota1,sensor=DS18B20 value=24.44
-                snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s value=%s\n"),
-                  type, TasmotaGlobal.mqtt_topic, sensor, value);
-                data += linebuf;
-              }
-            }
-          } else {
-            // Level 2
-            // { ... "ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":24.88},"HTU21":{"Temperature":25.32,"Humidity":49.2,"DewPoint":13.88},"Global":{"Temperature":24.88,"Humidity":49.2,"DewPoint":13.47}, ... }
-            if (!key1.isValid() || !value2.isValid()) { continue; }
-            LowerCase(type, key2.getStr());
-            bool is_id = (!strcmp_P(type, PSTR("id")));  // Index for DS18B20
-            bool is_array = value2.isArray();
-            char* value = nullptr;
-            if (is_id && !is_array) {
-              snprintf_P(sensor_id, sizeof(sensor_id), PSTR(",id=%s"), value2.getStr());
-            } else {
-              value = InfluxDbNumber(number, (is_array) ? (value2.getArray())[0] : value2);
-            }
-            if ((value != nullptr) && key2.isValid()) {
-              LowerCase(sensor, key1.getStr());
-
-//              AddLog(LOG_LEVEL_DEBUG, PSTR("IFX2: sensor %s (%s), type %s (%s)"), key1.getStr(), sensor, key2.getStr(), type);
-
-              if (is_array) {
-                JsonParserArray arr = value2.getArray();
-                uint32_t i = 0;
-                for (auto val : arr) {
-                  i++;
-                  // power1,device=shelly25,sensor=energy value=0.00
-                  // power2,device=shelly25,sensor=energy value=4.12
-                  snprintf_P(linebuf, sizeof(linebuf), PSTR("%s%d,device=%s,sensor=%s%s value=%s\n"),
-                    type, i, TasmotaGlobal.mqtt_topic, sensor, sensor_id, val.getStr());
-                  data += linebuf;
-                }
-              } else {
-                // temperature,device=demo,sensor=ds18b20,id=01144A0CB2AA value=22.63
-                snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=%s%s value=%s\n"),
-                  type, TasmotaGlobal.mqtt_topic, sensor, sensor_id, value);
-                data += linebuf;
-              }
-              sensor_id[0] = '\0';
-            }
-          }
-        }
-      } else {
-        // Level 1
-        // {"Time":"2021-08-13T14:15:56","Switch1":"ON","Switch2":"OFF", ... "TempUnit":"C"}
-        char* value = InfluxDbNumber(number, value1);
-        if ((value != nullptr) && key1.isValid()) {
-          LowerCase(type, key1.getStr());
-          // switch1,device=demo,sensor=device value=0
-          // power1,device=demo,sensor=device value=1
-          snprintf_P(linebuf, sizeof(linebuf), PSTR("%s,device=%s,sensor=device value=%s\n"),
-            type, TasmotaGlobal.mqtt_topic, value);
-          data += linebuf;
-        }
-      }
-    }
+    String data = "";            // Multiple linebufs
+    const char sensor[10] = "device\0";
+    InfluxDbProcessJsonObject(root, sensor, &data);
     if (data.length() > 0 ) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Sensor data:\n%s"), data.c_str());
       InfluxDbPostData(data.c_str());

@@ -492,7 +492,7 @@ Renderer *Init_uDisplay(const char *desc) {
     }*/
     renderer->invertDisplay(iniinv);
 
-    ApplyDisplayDimmer();
+    ApplyDisplayDimmer(GetDisplayDimmer());
 
 #ifdef SHOW_SPLASH
     if (!Settings->flag5.display_no_splash) {  // SetOption135 - (Display & LVGL) force disabling default splash screen
@@ -560,6 +560,7 @@ void UDISP_PrintLog(void) {
     for (byte i = 0; i < last_row; i++) {
       strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
       renderer->println(disp_screen_buffer[i]);
+      delay(0);   // Fix MQTT timeout
     }
     strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
     DisplayFillScreen(last_row);
@@ -586,18 +587,11 @@ void UDISP_Time(void) {
 
 void UDISP_Refresh(void) {  // Every second
   if (!renderer) return;
-  if (Settings->display_mode) {  // Mode 0 is User text
-    switch (Settings->display_mode) {
-      case 1:  // Time
-        UDISP_Time();
-        break;
-      case 2:  // Local
-      case 3:  // Local
-      case 4:  // Mqtt
-      case 5:  // Mqtt
-        UDISP_PrintLog();
-        break;
-    }
+  if (DM_TIME == Settings->display_mode) {
+    UDISP_Time();
+  }
+  else if (Settings->display_mode > DM_TIME) {
+    UDISP_PrintLog();
   }
 }
 

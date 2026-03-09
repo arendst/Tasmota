@@ -7,7 +7,7 @@
  *      INCLUDES
  *********************/
 #include "../../../lvgl.h"
-#if LV_USE_FS_WIN32 != '\0'
+#if LV_USE_FS_WIN32
 
 #include <windows.h>
 #include <stdio.h>
@@ -17,27 +17,17 @@
 /*********************
  *      DEFINES
  *********************/
-#if LV_FS_WIN32_LETTER == '\0'
-    #error "LV_FS_WIN32_LETTER must be set to a valid value"
-#else
-    #if (LV_FS_WIN32_LETTER < 'A') || (LV_FS_WIN32_LETTER > 'Z')
-        #if LV_FS_DEFAULT_DRIVE_LETTER != '\0' /*When using default drive letter, strict format (X:) is mandatory*/
-            #error "LV_FS_WIN32_LETTER must be an upper case ASCII letter"
-        #else /*Lean rules for backward compatibility*/
-            #warning LV_FS_WIN32_LETTER should be an upper case ASCII letter. \
-            Using a slash symbol as drive letter should be replaced with LV_FS_DEFAULT_DRIVE_LETTER mechanism
-        #endif
-    #endif
-#endif
 
-#define MAX_PATH_LEN 256
+#if !LV_FS_IS_VALID_LETTER(LV_FS_WIN32_LETTER)
+    #error "Invalid drive letter"
+#endif
 
 /**********************
  *      TYPEDEFS
  **********************/
 typedef struct {
     HANDLE dir_p;
-    char next_fn[MAX_PATH_LEN];
+    char next_fn[LV_FS_MAX_PATH_LEN];
     lv_fs_res_t next_error;
 } dir_handle_t;
 
@@ -379,29 +369,28 @@ static void * fs_dir_open(lv_fs_drv_t * drv, const char * path)
     WIN32_FIND_DATAA fdata;
 
     /*Make the path relative to the current directory (the projects root folder)*/
-    char buf[MAX_PATH_LEN];
-#ifdef LV_FS_WIN32_PATH
+    char buf[LV_FS_MAX_PATH_LEN];
     lv_snprintf(buf, sizeof(buf), LV_FS_WIN32_PATH "%s\\*", path);
-#else
-    lv_snprintf(buf, sizeof(buf), "%s\\*", path);
-#endif
 
     lv_strcpy(handle->next_fn, "");
     handle->dir_p = FindFirstFileA(buf, &fdata);
-    do {
-        if(is_dots_name(fdata.cFileName)) {
-            continue;
-        }
-        else {
-            if(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                lv_snprintf(handle->next_fn, sizeof(handle->next_fn), "/%s", fdata.cFileName);
+
+    if(handle->dir_p != INVALID_HANDLE_VALUE) {
+        do {
+            if(is_dots_name(fdata.cFileName)) {
+                continue;
             }
             else {
-                lv_snprintf(handle->next_fn, sizeof(handle->next_fn), "%s", fdata.cFileName);
+                if(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    lv_snprintf(handle->next_fn, sizeof(handle->next_fn), "/%s", fdata.cFileName);
+                }
+                else {
+                    lv_snprintf(handle->next_fn, sizeof(handle->next_fn), "%s", fdata.cFileName);
+                }
+                break;
             }
-            break;
-        }
-    } while(FindNextFileA(handle->dir_p, &fdata));
+        } while(FindNextFileA(handle->dir_p, &fdata));
+    }
 
     if(handle->dir_p == INVALID_HANDLE_VALUE) {
         lv_free(handle);

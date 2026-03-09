@@ -20,13 +20,18 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.5"
+#define MI32_VERSION "V0.9.2.7"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.7 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
+                              view on UI only when BLE enabled
+  -------
+  0.9.2.6 20250503  changed - display alias instead of type, when present
+  -------
   0.9.2.5 20250319  changed - added support for MI LYWSD02MMC with different device ID
-
+  -------
   0.9.2.4 20240111  changed - Enhancement of debug log output                              
   -------
   0.9.2.3 20240101  changed - added initial support for MI LYWSD02MMC                              
@@ -80,7 +85,7 @@
 #ifdef USE_BLE_ESP32
 
 #ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 
 #ifdef USE_MI_ESP32
 
@@ -675,14 +680,14 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
   }
 
   if (slot >= 0){
-    op->addr = NimBLEAddress(MIBLEsensors[slot].MAC);
+    op->addr = NimBLEAddress(MIBLEsensors[slot].MAC,0);
   } else {
     if (!addr){
       AddLog(LOG_LEVEL_ERROR, PSTR("M32: No addr"));
       BLE_ESP32::freeOperation(&op);
       return 0;
     }
-    op->addr = NimBLEAddress(addr);
+    op->addr = NimBLEAddress(addr, 0);
   }
 
   bool havechar = false;
@@ -990,7 +995,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   uint8_t addrrev[6];
   memcpy(addrrev, MIBLEsensors[slot].MAC, 6);
   //BLE_ESP32::ReverseMAC(addrrev);
-  NimBLEAddress addr(addrrev);
+  NimBLEAddress addr(addrrev, 0);
 
   bool fail = false;
   if (op->addr != addr){
@@ -1075,7 +1080,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   // we will try not to use this...
-  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   // AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
   int RSSI = pStruct->RSSI;
@@ -1104,12 +1109,12 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 
   NimBLEUUID UUIDBig = advertisedDevice->getServiceDataUUID(0);//.getNative()->u16.value;
 
-  const ble_uuid_any_t* native = UUIDBig.getNative();
-  if (native->u.type != 16){
+  const ble_uuid_t* native = UUIDBig.getBase();
+  if (native->type != 16){
     //not interested in 128 bit;
     return 0;
   }
-  uint16_t UUID = native->u16.value;
+  uint16_t UUID = *(uint16_t*)UUIDBig.getValue();
 
   if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: svc[0] UUID (%x)"), MIaddrStr(addr), UUID);
   std::string ServiceDataStr = advertisedDevice->getServiceData(0);
@@ -2382,7 +2387,7 @@ void MI32EverySecond(bool restart){
       MI32.secondsCounter = 0;
     }
   }
-  MI32.secondsCounter ++;
+  MI32.secondsCounter++;
 
   if (MI32.secondsCounter2 >= MI32.period){
     if (MI32.mqttCurrentSlot >= MIBLEsensors.size()){
@@ -2709,7 +2714,7 @@ void CmndMi32Keys(void){
           return;
         }
 
-        AddLog(LOG_LEVEL_ERROR,PSTR("M32: Add key mac %s = key %s"), mac, key);
+        AddLog(LOG_LEVEL_INFO, PSTR("M32: Add key mac %s = key %s"), mac, key);
         char tmp[20];
         // convert mac back to string
         ToHex_P(addr,6,tmp,20,0);
@@ -2745,9 +2750,9 @@ void CmndMi32Keys(void){
 \*********************************************************************************************/
 
 const char HTTP_MI32[] PROGMEM = "{s}MI ESP32 " MI32_VERSION "{m}%u%s / %u{e}";
-const char HTTP_MI32_ALIAS[] PROGMEM = "{s}%s Alias{m}%s{e}";
+const char HTTP_MI32_TYPE[] PROGMEM = "{s}%s " D_SENSOR"{m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
-const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
+const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
 const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u{e}";
 const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
@@ -2761,19 +2766,9 @@ const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s Impedance{m}%u{e}";
 const char HTTP_MISCALE_IMPEDANCE_STABILIZED[] PROGMEM = "{s}%s Impedance stabilized{m}%s{e}";
 const char HTTP_SJWS01LM_FLOODING[] PROGMEM = "{s}%s Flooding{m}%u{e}";
 
-//const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-//  "https://atc1441.github.io/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-//  "\">%s</a>{m}{e}";
+const char HTTP_NEEDKEY[] PROGMEM = "{s}%s Key{m}<a target='_blank' href='https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey'>%s</a>{e}";
 
-//const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-//  "http://127.0.0.1:8887/keys/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-//  "\">%s</a>{m}{e}";
-const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
-  "https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
-  "\">%s</a>{m}{e}";
-
-
-const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair Button Pressed{m} {e}";
+const char HTTP_PAIRING[] PROGMEM = "{s}%s Pair button pressed{m} {e}";
 
 const char HTTP_KEY_ERROR[] PROGMEM = "Key error %s";
 const char HTTP_MAC_ERROR[] PROGMEM = "MAC error %s";
@@ -3525,6 +3520,8 @@ void MI32Show(bool json)
 
 #ifdef USE_WEBSERVER
   } else {
+    if (!Settings->flag5.mi32_enable) return;
+
     static  uint16_t _page = 0;
     static  uint16_t _counter = 0;
     int32_t i = _page * MI32.perPage;
@@ -3545,32 +3542,36 @@ void MI32Show(bool json)
       mi_sensor_t *p;
       p = &MIBLEsensors[i];
 
+      const char *label;
       const char *typeName = kMI32DeviceType[p->type-1];
       const char *alias = BLE_ESP32::getAlias(p->MAC);
       if (alias && *alias){
-        WSContentSend_P(HTTP_MI32_ALIAS, typeName, alias);
+        label = alias;
+        WSContentSend_P(HTTP_MI32_TYPE, label, typeName);
+      } else {
+        label = typeName;
       }
       char _MAC[18];
       ToHex_P(p->MAC,6,_MAC,18);//,':');
-      WSContentSend_P(HTTP_MI32_MAC, typeName, _MAC);
-      WSContentSend_PD(HTTP_MI32_RSSI, typeName, p->RSSI);
+      WSContentSend_P(HTTP_MI32_MAC, label, _MAC);
+      WSContentSend_PD(HTTP_MI32_RSSI, label, WifiGetRssiAsQuality(p->RSSI), p->RSSI);
 
       // for some reason, display flora differently
       switch(p->type){
         case MI_FLORA:{
           if (!isnan(p->temp)) {
-            WSContentSend_Temp(typeName, ConvertTempToFahrenheit(p->temp));  // convert if SO8 on
+            WSContentSend_Temp(label, ConvertTempToFahrenheit(p->temp));  // convert if SO8 on
           }
           if (p->moisture!=0xff) {
-            WSContentSend_PD(HTTP_SNS_MOISTURE, typeName, p->moisture);
+            WSContentSend_PD(HTTP_SNS_MOISTURE, label, p->moisture);
           }
           if (p->fertility!=0xffff) {
-            WSContentSend_PD(HTTP_MI32_FLORA_DATA, typeName, p->fertility);
+            WSContentSend_PD(HTTP_MI32_FLORA_DATA, label, p->fertility);
           }
         } break;
         default:{
           if (!isnan(p->hum) && !isnan(p->temp)) {
-            WSContentSend_THD(typeName, ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
+            WSContentSend_THD(label, ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
           }
         }
       }
@@ -3611,52 +3612,52 @@ void MI32Show(bool json)
       // (future work)
       if (showkey){
         BLE_ESP32::dump(_MAC, 13, p->MAC, 6);
-        WSContentSend_P(HTTP_NEEDKEY, typeName, _MAC, IPGetListeningAddressStr().c_str(), tmp);
+        WSContentSend_P(HTTP_NEEDKEY, label, _MAC, IPGetListeningAddressStr().c_str(), tmp);
       }
 
 #endif //USE_MI_DECRYPTION
 
       if (p->feature.events){
-        WSContentSend_PD(HTTP_MI32_EVENTS, typeName, p->events);
+        WSContentSend_PD(HTTP_MI32_EVENTS, label, p->events);
       }
       if (p->feature.NMT){
         // no motion time
-        if(p->NMT>0) WSContentSend_PD(HTTP_MI32_NMT, typeName, p->NMT);
+        if(p->NMT>0) WSContentSend_PD(HTTP_MI32_NMT, label, p->NMT);
       }
 
       if (p->feature.lux){
         if (p->lux!=0x00ffffff) { // this is the error code -> no valid value
-          WSContentSend_PD(HTTP_SNS_ILLUMINANCE, typeName, p->lux);
+          WSContentSend_PD(HTTP_SNS_ILLUMINANCE, label, p->lux);
         }
       }
       if (p->feature.light){
-        WSContentSend_PD(HTTP_MI32_LIGHT, typeName, p->light);
+        WSContentSend_PD(HTTP_MI32_LIGHT, label, p->light);
       }
       if (p->feature.scale){
-        WSContentSend_PD(HTTP_MISCALE_WEIGHT, typeName, Settings->flag2.weight_resolution, &p->weight, p->weight_unit);
+        WSContentSend_PD(HTTP_MISCALE_WEIGHT, label, Settings->flag2.weight_resolution, &p->weight, p->weight_unit);
         if (MI32.option.directBridgeMode) {
-          WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, typeName, p->weight_removed? PSTR("yes") : PSTR("no"));
-          WSContentSend_PD(HTTP_MISCALE_WEIGHT_STABILIZED, typeName, p->weight_stabilized ? PSTR("yes") : PSTR("no"));
+          WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, label, p->weight_removed? PSTR("yes") : PSTR("no"));
+          WSContentSend_PD(HTTP_MISCALE_WEIGHT_STABILIZED, label, p->weight_stabilized ? PSTR("yes") : PSTR("no"));
         }
         if (p->feature.impedance) {
-          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, typeName, p->impedance);
+          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, label, p->impedance);
           if (MI32.option.directBridgeMode) {
-            WSContentSend_PD(HTTP_MISCALE_IMPEDANCE_STABILIZED, typeName, p->impedance_stabilized? PSTR("yes") : PSTR("no"));
+            WSContentSend_PD(HTTP_MISCALE_IMPEDANCE_STABILIZED, label, p->impedance_stabilized? PSTR("yes") : PSTR("no"));
           }
         }
       }
       if(p->bat!=0x00){
-          WSContentSend_PD(HTTP_MI32_BATTERY, typeName, p->bat);
+          WSContentSend_PD(HTTP_MI32_BATTERY, label, p->bat);
       }
       if (p->feature.Btn){
-        WSContentSend_PD(HTTP_MI32_LASTBUTTON, typeName, p->Btn);
+        WSContentSend_PD(HTTP_MI32_LASTBUTTON, label, p->Btn);
       }
       if (p->feature.flooding)
       {
-        WSContentSend_PD(HTTP_SJWS01LM_FLOODING, typeName, p->flooding);
+        WSContentSend_PD(HTTP_SJWS01LM_FLOODING, label, p->flooding);
       }
       if (p->pairing){
-        WSContentSend_PD(HTTP_PAIRING, typeName);
+        WSContentSend_PD(HTTP_PAIRING, label);
       }
     }
     _counter++;

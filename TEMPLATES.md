@@ -5,7 +5,7 @@
 
 # Templates
 
-Find below the available templates as of April 2025. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of February 2026. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -26,6 +26,7 @@ Kogan 5-Stage 3S             {"NAME":"Kogan Air Purifier 3S","GPIO":[0,2272,0,23
 ## Air Quality Sensor
 ```
 AirGradient Pro Version DIY  {"NAME":"AirGradient Pro","GPIO":[1600,1,1632,0,640,608,1,1,1664,1,1696,1,1,1],"FLAG":0,"BASE":18}
+IoTorero CO2 Sensor          {"NAME":"IoTorero SCD40 Sensor","GPIO":[0,0,0,0,0,0,0,0,608,32,640,0,0,0,0,0,0,0,0,0,0,1376],"FLAG":0,"BASE":1}
 Tuya PM Box                  {"NAME":"PM Box","GPIO":[1,1,1,1,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 99,91 | TuyaMCU 71,2 | TuyaMCU 73,3 | HumRes 1 | TempRes 1 "}
 ```
 
@@ -403,7 +404,6 @@ Shelly Vintage 4W 260lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 SmartDGM 9W 806lm            {"NAME":"L-WB9W1","GPIO":[0,0,0,0,0,416,0,0,160,0,0,0,0,0],"FLAG":0,"BASE":18}
-Smitch 10W 6500K             {"NAME":"Smitch Ambience SB-0110","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Smitch 10W 6500K             {"NAME":"Smitch 10W 6500K Dimmable Bulb (SB0110 - E27)","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":1}
 TCP Smart 806lm Warm White   {"NAME":"TCP Smart Clas","GPIO":[0,0,0,0,0,0,0,0,0,416,0,0,0,0],"FLAG":0,"BASE":1}
 TCP Smart 810lm Filament     {"NAME":"TCP Filament","GPIO":[0,0,0,0,0,0,0,0,0,0,448,0,0,0],"FLAG":0,"BASE":18}
@@ -464,7 +464,7 @@ QS-WiFi-D01-TRIAC 150W       {"NAME":"QS-WiFi-D01-TRIAC","GPIO":[0,3200,0,3232,0
 RJWF-02A                     {"NAME":"RJWF-02A","GPIO":[32,2272,0,2304,0,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":54}
 Shelly Dimmer                {"NAME":"Shelly Dimmer 1","GPIO":[0,3200,0,3232,5568,5600,0,0,192,0,193,288,0,4736],"FLAG":0,"BASE":18}
 Shelly Dimmer 2              {"NAME":"Shelly Dimmer 2","GPIO":[0,3200,0,3232,5568,5600,0,0,193,0,192,0,320,4736],"FLAG":0,"BASE":18}
-Shelly Plus 0-10V Dimmer     {"NAME":"Shelly Plus 0-10V Dimmer","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,193,1,0,0,0,0,0,32,416,0,0,0,0,0,4736,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+Shelly Plus 0-10V Dimmer     {"NAME":"Shelly Plus 0-10V Dimmer","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,193,1,0,0,0,0,0,32,448,0,0,0,0,0,4736,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Sonoff D1                    {"NAME":"Sonoff D1","GPIO":[1,3200,0,3232,0,0,0,0,0,320,0,0,0,0],"FLAG":0,"BASE":74}
 ```
 
@@ -697,6 +697,7 @@ Electrodragon ESP LED Strip Board, Mosfet Drive  {"NAME":"LEDBoard RGBW","GPIO":
 H801                         {"NAME":"H801","GPIO":[1,288,1,1,420,321,0,0,418,417,419,416,0,0],"FLAG":0,"BASE":20}
 Hama Adapter and RGB         {"NAME":"HAMA LED-Strip WLAN-Controller","GPIO":[0,0,0,0,417,419,0,0,0,416,418,0,0,0],"FLAG":0,"BASE":18}
 Holman Garden Light RGB      {"NAME":"Holman RGB","GPIO":[0,0,0,0,0,0,0,0,417,416,418,0,0,0],"FLAG":0,"BASE":18}
+IoTorero PWM RGBCCT & Addressable Dul Mode Strip Controller  {"NAME":"IoTorero RGBCW Controller","GPIO":[0,0,0,418,419,416,417,420,576,32,1088,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Jinvoo SM-WA104 RGB          {"NAME":"Jinvoo LED Controller","GPIO":[0,0,0,0,256,418,0,0,416,32,417,0,257,0],"FLAG":0,"BASE":18}
 Konesky 12V RGB              {"NAME":"RGBwifi","GPIO":[0,0,0,0,416,0,0,0,417,320,418,0,0,0],"FLAG":0,"BASE":18}
 LEDEnet                      {"NAME":"LEDEnet","GPIO":[0,1,320,1,3136,420,0,0,417,418,416,419,0,0],"FLAG":0,"BASE":34}
@@ -1020,7 +1021,7 @@ Ucomen                       {"NAME":"PA-GEH-01SW2","GPIO":[0,0,0,32,2688,2656,0
 WiOn Yard Stake              {"NAME":"WiOn 50053","GPIO":[0,0,320,0,0,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
 WOOX R4051                   {"NAME":"WOOX R4051","GPIO":[32,0,0,0,0,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":18}
 WOOX R4052                   {"NAME":"WOOX R4052","GPIO":[32,0,0,0,0,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":18}
-Wyze                         {"NAME":"Wyze Plug Outdoor","GPIO":[0,0,0,0,0,576,0,0,0,0,0,224,321,7713,7712,320,0,0,0,0,0,2624,2656,2720,0,0,0,0,225,0,4704,0,0,0,0,0],"FLAG":0,"BASE":1}
+Wyze / Roku                  {"NAME":"Wyze Plug Outdoor","GPIO":[0,0,0,0,0,576,0,0,0,0,0,224,321,7713,7712,320,0,0,0,0,0,2624,2656,2720,0,0,0,0,225,0,4704,0,0,0,0,0],"FLAG":0,"BASE":1}
 XtendLan IP66 Double         {"NAME":"XtendLan_ZAS4","GPIO":[32,0,0,0,0,225,33,0,224,0,0,0,0,0],"FLAG":0,"BASE":18}
 ```
 
@@ -2243,7 +2244,7 @@ TH3D EZBulb V1               {"NAME":"EZBulb V1","GPIO":[0,0,0,0,416,419,0,0,417
 TikLOk TL530 A19 7.5W 800lm  {"NAME":"TikLOk WW-CW-L","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
 TVLive 7.5W 800lm            {"NAME":"TVLIVE RGBCW","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
 Utorch LE7 600lm             {"NAME":"Utorch LE7","GPIO":[0,0,0,0,0,417,0,0,418,0,419,416,0,0],"FLAG":0,"BASE":18}
-V-Tac A60 11W 1055lm         {"NAME":"V-TAC LED A60 ","GPIO":[0,0,0,0,4032,0,0,0,0,0,4064,0,0,0],"FLAG":0,"BASE":18}
+V-Tac A60 11W 1055lm         {"NAME":"V-TAC A60 RGBW","GPIO":[0,0,0,0,4032,0,0,0,0,0,4064,0,0,0],"FLAG":0,"BASE":18,"CMND":"SetOption37 30"}
 V-Tac A66 15W 1300lm         {"NAME":"V-TAC VT-5117","GPIO":[0,0,0,0,4032,0,0,0,0,0,4064,0,0,0],"FLAG":0,"BASE":18}
 V-TAC A95 18W 1350lm         {"NAME":"V-TAC VT-5021","GPIO":[0,0,0,0,416,420,0,0,417,419,418,0,0,0],"FLAG":0,"BASE":18}
 V-TAC G45 4.5W 300lm         {"NAME":"V-TAC VT-5124","GPIO":[0,0,0,0,0,0,0,0,4065,0,4032,0,0,0],"FLAG":0,"BASE":18}
@@ -2282,8 +2283,8 @@ Devantech 8x16A              {"NAME":"ESP32LR88","GPIO":[0,0,231,0,32,35,0,0,229
 Dingtian 16 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9729,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 Dingtian 2 Channel           {"NAME":"Dingtian DT-R002","GPIO":[5536,9408,225,9440,0,0,0,0,0,9952,0,0,224,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,576,0,0,0,160,0,0,161],"FLAG":0,"BASE":1}
 Dingtian 32 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9731,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
-Dingtian 4 Channel           {"NAME":"Dingtian DT-R004","GPIO":[0,9408,225,9440,0,0,0,0,227,9952,0,0,224,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,226,162,0,163,160,0,0,161],"FLAG":0,"BASE":1}
-Dingtian 8 Channel           {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9728,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+Dingtian 4 Channel           {"NAME":"Dingtian DT-R004","GPIO":[0,9408,225,9440,0,0,0,0,227,9952,0,0,224,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,226,162,0,163,160,0,0,161],"FLAG":0,"BASE":1}
+Dingtian 8 Channel           {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,5536,9760,9728,9856,9792,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 DoHome HomeKit DIY Switch    {"NAME":"DoHome DIY","GPIO":[1,1,0,1,96,544,0,0,224,0,0,0,0,0],"FLAG":0,"BASE":1}
 Eachen ST-DC2                {"NAME":"Garage Control","GPIO":[162,0,0,0,226,225,33,0,224,288,163,227,0,4704],"FLAG":0,"BASE":18}
 Eachen ST-DC4                {"NAME":"Eachen_ST-DC4","GPIO":[160,1,1,1,226,225,1,1,224,544,1,227,1,0],"FLAG":0,"BASE":54}
@@ -2373,7 +2374,6 @@ Tuya Air Detector 6 in 1     {"NAME":"DCR-KQG","GPIO":[1,2272,544,2304,1,1,1,1,1
 ## Siren
 ```
 Connex Smart Indoor          {"NAME":"Connex Siren","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
-NEO Coolcam Temperature and Humidity 3in1 Alarm  {"NAME":"Neo Siren 3in1","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 ```
 
 ## Smart Meter
@@ -2873,6 +2873,7 @@ Coiaca Humidity and          {"NAME":"Coiaca AWR01THERMt","GPIO":[576,1216,0,32,
 DS18B20 ESP01 DIY            {"NAME":"ESP-01-01S-DS18B20-v1.0","GPIO":[1,1,1312,1,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 ESP01 DHT11 DIY              {"NAME":"ESP01S DHT11","GPIO":[1,1,1184,1,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 IOT4SH01DS                   {"NAME":"IOT4SH01DS","GPIO":[1,1,1,1,1,1,0,0,1,1312,1,1,1,1],"FLAG":0,"BASE":18}
+IoTorero Temperature and Humidity Sensor  {"NAME":"IoTorero SHT40 Sensor","GPIO":[0,0,0,0,0,0,0,0,608,32,640,0,0,0,0,0,0,0,0,0,0,1376],"FLAG":0,"BASE":1}
 Shelly Add-on                {"NAME":"Shelly 1 Temp ","GPIO":[1344,0,0,1312,224,192,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":46}
 Shelly Plus Add-On           {"NAME":"Shelly Plus 1","GPIO":[1344,1312,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,224,0,0,0,0,0,4736,4705,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 ```

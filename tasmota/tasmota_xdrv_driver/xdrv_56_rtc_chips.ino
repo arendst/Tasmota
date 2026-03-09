@@ -11,18 +11,30 @@
 /*********************************************************************************************\
  * RTC chip support
  * 
+ * #define USE_RV3028
+ *   RV-3028-C7 at I2C address 0x52
+ *   Used in MSB Master G1
  * #define USE_DS3231
  *   DS1307 and DS3231 at I2C address 0x68
  *   Used by Ulanzi TC001
  * #define USE_BM8563
  *   BM8563 at I2C address 0x51
  *   Used by M5Stack and IOTTIMER (v3)
+ * #define USE_PCF85063
+ *   PCF85063 at I2C address 0x51
+ *   Used by Waveshare ESP32-S3-POE-ETH-8DI-8RO
  * #define USE_PCF85363
  *   PCF85363 at I2C address 0x51
  *   Used by Shelly 3EM
  * #define USE_RX8010
  *   RX8010 at I2C address 0x32
  *   Used by IOTTIMER (v1 and v2)
+ * #define USE_RX8030
+ *   RX8010 at I2C address 0x32
+ *   Used by #23855 
+ * #define USE_RX8025
+ *   RX8025 at I2C address 0x32
+ *   Used by MSB Master G2
 \*********************************************************************************************/
 
 #define XDRV_56             56
@@ -43,6 +55,130 @@ struct {
   uint8_t bus;
   char name[10];
 } RtcChip;
+
+/*********************************************************************************************\
+ * RV-3028-C7 RTC Controller
+ *
+ * I2C Address: 0x52
+\*********************************************************************************************/
+#ifdef USE_RV3028
+
+#define XI2C_94             94      // See I2CDEVICES.md
+
+#define RV3028_ADDR  0x52           // I2C address of RV-3028-C7
+
+// RV-3028-C7 Register Addresses
+#define RV3028_SECONDS      0x00
+#define RV3028_MINUTES      0x01
+#define RV3028_HOURS        0x02
+#define RV3028_WEEKDAY      0x03
+#define RV3028_DATE         0x04
+#define RV3028_MONTH        0x05
+#define RV3028_YEAR         0x06
+#define RV3028_STATUS       0x0E
+#define RV3028_CONTROL1     0x0F
+#define RV3028_CONTROL2     0x10
+
+// Status register bits
+#define RV3028_PORF         0       // Power-on Reset flag (bit 0 in STATUS register)
+
+/*-------------------------------------------------------------------------------------------*\
+ * Init register to activate BSM from VBACKUP (Direct Switching Mode)
+\*-------------------------------------------------------------------------------------------*/
+void RV3028_EnableDSM(void) {
+  uint8_t current_eeprom;
+
+  I2cWrite8(RtcChip.address, 0x25, 0x37, RtcChip.bus);  // EEADDR = 0x37
+  I2cWrite8(RtcChip.address, 0x27, 0x22, RtcChip.bus);  // EECMD = 0x22 (EEPROM Read)
+  delay(3);  
+
+  current_eeprom = I2cRead8(RtcChip.address, 0x26, RtcChip.bus);  // EEDATA actual data
+
+  if (current_eeprom != 0x14) {
+    I2cWrite8(RtcChip.address, 0x25, 0x37, RtcChip.bus);  // EEADDR = 0x37
+    I2cWrite8(RtcChip.address, 0x26, 0x14, RtcChip.bus);  // EEDATA = 0x14 (FEDE=1, BSM=01 DSM mode)
+    I2cWrite8(RtcChip.address, 0x27, 0x21, RtcChip.bus);  // EECMD = 0x21 (EEPROM Write)
+    delay(25);  
+    AddLog(LOG_LEVEL_INFO, PSTR("RV3028: EEPROM 0x37 updated to DSM mode."));
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RV3028: EEPROM 0x37 already set to DSM mode."));
+  }
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Read time from RV-3028-C7 and return the epoch time (seconds since 1-1-1970 00:00)
+\*-------------------------------------------------------------------------------------------*/
+uint32_t RV3028ReadTime(void) {
+
+  uint8_t status = I2cRead8(RtcChip.address, RV3028_STATUS, RtcChip.bus);
+  
+  // Skontroluj PORF bit (bit 0 registra STATUS)
+  if (status & _BV(RV3028_PORF)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RV3028: PORF detected, RTC time invalid"));
+    return 0;  // Invalid RTC time data
+  }
+
+  TIME_T tm;
+  tm.second       = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_SECONDS, RtcChip.bus) & 0x7F);
+  tm.minute       = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_MINUTES, RtcChip.bus) & 0x7F);
+  tm.hour         = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_HOURS, RtcChip.bus) & 0x3F);       // 24h mode (12_24 bit = 0)
+  tm.day_of_week  = I2cRead8(RtcChip.address, RV3028_WEEKDAY, RtcChip.bus) & 0x07;              // 0..6 (3-bit weekday counter)
+  tm.day_of_month = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_DATE, RtcChip.bus) & 0x3F);
+  tm.month        = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_MONTH, RtcChip.bus) & 0x1F);
+  uint8_t year    = Bcd2Dec(I2cRead8(RtcChip.address, RV3028_YEAR, RtcChip.bus));
+  // RV-3028-C7 holds year 00-99 (representing 2000-2099).
+  // MakeTime requires tm.year as years since 1970.
+  tm.year = year + 30;   // (e.g., 23 -> 53 for year 2023)
+  return MakeTime(tm);
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Set RV-3028-C7 time using the given epoch time (seconds since 1-1-1970 00:00)
+\*-------------------------------------------------------------------------------------------*/
+void RV3028SetTime(uint32_t epoch_time) {
+  TIME_T tm;
+  BreakTime(epoch_time, tm);
+  I2cWrite8(RtcChip.address, RV3028_SECONDS, Dec2Bcd(tm.second), RtcChip.bus);
+  I2cWrite8(RtcChip.address, RV3028_MINUTES, Dec2Bcd(tm.minute), RtcChip.bus);
+  I2cWrite8(RtcChip.address, RV3028_HOURS,   Dec2Bcd(tm.hour),   RtcChip.bus);
+  I2cWrite8(RtcChip.address, RV3028_WEEKDAY, tm.day_of_week,     RtcChip.bus);
+  I2cWrite8(RtcChip.address, RV3028_DATE,    Dec2Bcd(tm.day_of_month), RtcChip.bus);
+  I2cWrite8(RtcChip.address, RV3028_MONTH,   Dec2Bcd(tm.month),  RtcChip.bus);
+  // Convert years since 1970 to RTC register value (00..99)
+  uint8_t true_year = (tm.year < 30) ? (tm.year + 70) : (tm.year - 30);
+  I2cWrite8(RtcChip.address, RV3028_YEAR, Dec2Bcd(true_year), RtcChip.bus);
+  // Clear the power-on reset flag (PORF) in the status register
+  uint8_t status = I2cRead8(RtcChip.address, RV3028_STATUS, RtcChip.bus);
+  I2cWrite8(RtcChip.address, RV3028_STATUS, status & ~_BV(RV3028_PORF), RtcChip.bus);
+
+  // Enable LSM mode (VBACKUP)
+  RV3028_EnableDSM();
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Detection
+\*-------------------------------------------------------------------------------------------*/
+void RV3028Detected(void) {
+  if (!RtcChip.detected && I2cEnabled(XI2C_94)) {
+    RtcChip.address = RV3028_ADDR;
+    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) continue;
+      if (I2cValidRead(RtcChip.address, RV3028_STATUS, 1, RtcChip.bus)) {
+        uint8_t status = I2cRead8(RtcChip.address, RV3028_STATUS, RtcChip.bus);
+        if (status & _BV(RV3028_PORF)) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("RV3028: PORF detected at init, RTC time invalid"));
+        }
+        RtcChip.detected = 1;
+        strcpy_P(RtcChip.name, PSTR("RV3028"));
+        RtcChip.ReadTime = &RV3028ReadTime;
+        RtcChip.SetTime  = &RV3028SetTime;
+        RtcChip.mem_size = 2; // RAM 2 byte
+        break;
+      }
+    }
+  }
+}
+#endif  // USE_RV3028
 
 /*********************************************************************************************\
  * DS1307 and DS3231
@@ -143,7 +279,6 @@ void D3231ShowSensor(bool json) {
 }
 #endif // #ifdef DS3231_ENABLE_TEMP
 
-
 /*-------------------------------------------------------------------------------------------*\
  * Get time as TIME_T and set the DS3231 time to this value
 \*-------------------------------------------------------------------------------------------*/
@@ -187,8 +322,6 @@ void DS3231Detected(void) {
 }
 #endif  // USE_DS3231
 
-
-
 /*********************************************************************************************\
  * PCF85063 support
  *
@@ -199,7 +332,6 @@ void DS3231Detected(void) {
 #define XI2C_92             92       // Unique ID for I2C device search
 
 #define PCF85063_ADDRESS    0x51     // PCF85063 I2C Address
-
 
 #define PCF85063_REG_CTRL1      0x00
 #define PCF85063_REG_CTRL2      0x01
@@ -212,7 +344,9 @@ void DS3231Detected(void) {
 #define PCF85063_REG_MONTHS     0x09
 #define PCF85063_REG_YEARS      0x0A
 
-
+/*-------------------------------------------------------------------------------------------*\
+ * Read time and return the epoch time (second since 1-1-1970 00:00)
+\*-------------------------------------------------------------------------------------------*/
 uint32_t Pcf85063ReadTime(void) {
   Wire.beginTransmission(RtcChip.address);
   Wire.write(PCF85063_REG_SECONDS);
@@ -239,11 +373,12 @@ uint32_t Pcf85063ReadTime(void) {
   return MakeTime(tm);
 }
 
-
+/*-------------------------------------------------------------------------------------------*\
+ * Get time as TIME_T and set time to this value
+\*-------------------------------------------------------------------------------------------*/
 void Pcf85063SetTime(uint32_t epoch_time) {
   TIME_T tm;
   BreakTime(epoch_time, tm);
-
 
   uint8_t year = (tm.year -30); 
   if (year > 99) { year = 99; } 
@@ -290,8 +425,6 @@ void Pcf85063Detected(void) {
   }
 }
 #endif // USE_PCF85063
-
-
 
 /*********************************************************************************************\
  * BM8563 - Real Time Clock
@@ -503,12 +636,12 @@ void Pcf85363Detected(void) {
 #endif // USE_PCF85363
 
 /*********************************************************************************************\
- * RX8010 - Real Time Clock
+ * RX8010 and RX8030 - Real Time Clock
  * based on linux/rtc-rx8010.c
  *
  * I2C Address: 0x32
 \*********************************************************************************************/
-#ifdef USE_RX8010
+#if defined(USE_RX8010) || defined(USE_RX8030)
 
 #define XI2C_90             90       // See I2CDEVICES.md
 
@@ -522,7 +655,13 @@ void Pcf85363Detected(void) {
 #define RX8010_REG_MDAY		  0x14
 #define RX8010_REG_MONTH	  0x15
 #define RX8010_REG_YEAR		  0x16
-#define RX8010_REG_CTRL		  0x1F
+#ifdef USE_RX8030
+#define RX80x0_REG_CTRL     0x1E
+#endif
+#ifdef USE_RX8010
+#undef RX80x0_REG_CTRL
+#define RX80x0_REG_CTRL		  0x1F
+#endif
 
 // Control Register (1Fh) bit positions
 #define RX8010_BIT_CTRL_STOP	6
@@ -553,7 +692,7 @@ void Rx8010SetTime(uint32_t epoch_time) {
   TIME_T tm;
   BreakTime(epoch_time, tm);
 	// Set STOP bit before changing clock/calendar
-  I2cWrite8(RtcChip.address, RX8010_REG_CTRL, I2cRead8(RtcChip.address, RX8010_REG_CTRL, RtcChip.bus) | _BV(RX8010_BIT_CTRL_STOP), RtcChip.bus);
+  I2cWrite8(RtcChip.address, RX80x0_REG_CTRL, I2cRead8(RtcChip.address, RX80x0_REG_CTRL, RtcChip.bus) | _BV(RX8010_BIT_CTRL_STOP), RtcChip.bus);
   uint8_t data[7];
   data[0] = Dec2Bcd(tm.second);
   data[1] = Dec2Bcd(tm.minute);
@@ -564,7 +703,7 @@ void Rx8010SetTime(uint32_t epoch_time) {
   data[6] = Dec2Bcd(tm.day_of_week);
   I2cWriteBuffer(RtcChip.address, RX8010_REG_SEC, data, 7, RtcChip.bus);
 	// Clear STOP bit after changing clock/calendar
-  I2cWrite8(RtcChip.address, RX8010_REG_CTRL, I2cRead8(RtcChip.address, RX8010_REG_CTRL, RtcChip.bus) & ~_BV(RX8010_BIT_CTRL_STOP), RtcChip.bus);
+  I2cWrite8(RtcChip.address, RX80x0_REG_CTRL, I2cRead8(RtcChip.address, RX80x0_REG_CTRL, RtcChip.bus) & ~_BV(RX8010_BIT_CTRL_STOP), RtcChip.bus);
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -575,9 +714,13 @@ void Rx8010Detected(void) {
     RtcChip.address = RX8010_ADDRESS;
     for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
       if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
-      if (I2cValidRead(RtcChip.address, RX8010_REG_CTRL, 1, RtcChip.bus)) {
+      if (I2cValidRead(RtcChip.address, RX80x0_REG_CTRL, 1, RtcChip.bus)) {
         RtcChip.detected = 1;
+#ifdef USE_RX8030
+        strcpy_P(RtcChip.name, PSTR("RX8030"));
+#else
         strcpy_P(RtcChip.name, PSTR("RX8010"));
+#endif
         RtcChip.ReadTime = &Rx8010ReadTime;
         RtcChip.SetTime = &Rx8010SetTime;
         RtcChip.mem_size = -1;
@@ -587,6 +730,239 @@ void Rx8010Detected(void) {
   }
 }
 #endif  // USE_RX8010
+/*********************************************************************************************\
+ * RX8025T - Real Time Clock
+ *
+ * I2C Address: 0x32
+\*********************************************************************************************/
+#if defined(USE_RX8025)
+
+#define XI2C_96             96       // See I2CDEVICES.md
+#define RX8025_ADDRESS      0x32
+
+// RX8025T Register Addresses (per datasheet table 0..F)
+#define RX8025_REG_SEC      0x00
+#define RX8025_REG_MIN      0x01
+#define RX8025_REG_HOUR     0x02
+#define RX8025_REG_WEEK     0x03     // bitfield 6..0 (Sun..Sat)
+#define RX8025_REG_MDAY     0x04
+#define RX8025_REG_MONTH    0x05     // 01..12
+#define RX8025_REG_YEAR     0x06     // 00..99 (2000..2099)
+
+#define RX8025_REG_EXT      0x0D
+#define RX8025_REG_FLAG     0x0E
+#define RX8025_REG_CTRL     0x0F
+
+// FLAG bits (per table: ... VLF VDET)
+#define RX8025_FLAG_VLF     1
+#define RX8025_FLAG_VDET    0
+
+// CTRL RESET bit0 = stop status (datasheet)
+#define RX8025_BIT_CTRL_RESET  0
+
+// WEEK bitfield <-> Tasmota day_of_week (1..7, Sunday=1)
+static uint8_t Rx8025WeekToWday(uint8_t week) {
+  week &= 0x7F;                       // ignore bit7
+  for (uint8_t i = 0; i < 7; i++) {
+    if (week & (1U << i)) { return (uint8_t)(i + 1); }  // Sun=1
+  }
+  return 1;
+}
+
+static uint8_t Rx8025WdayToWeek(uint8_t wday) {
+  if (wday < 1 || wday > 7) { wday = 1; }
+  return (uint8_t)(1U << (wday - 1)); // one-hot bits 0..6
+}
+
+static void Rx8025LogRaw(const char *tag, uint8_t bus, uint8_t addr,
+                         const uint8_t data[7], uint8_t ctrl, uint8_t flag, uint8_t ext) {
+  AddLog(LOG_LEVEL_DEBUG,
+         PSTR("RTC: RX8025T %s bus=%d addr=0x%02X RAW[00..06]=%02X %02X %02X %02X %02X %02X %02X  CTRL=%02X FLAG=%02X EXT=%02X"),
+         tag, bus, addr,
+         data[0], data[1], data[2], data[3], data[4], data[5], data[6],
+         ctrl, flag, ext);
+}
+
+static void Rx8025PreInitIfNeeded(void) {
+  uint8_t ctrl = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+  uint8_t flag = I2cRead8(RtcChip.address, RX8025_REG_FLAG, RtcChip.bus);
+  uint8_t ext  = I2cRead8(RtcChip.address, RX8025_REG_EXT,  RtcChip.bus);
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T PRE-INIT CTRL=%02X FLAG=%02X EXT=%02X"), ctrl, flag, ext);
+
+  // If VLF or VDET is set, datasheet says initialize registers before use.
+  if (flag & (_BV(RX8025_FLAG_VLF) | _BV(RX8025_FLAG_VDET))) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T VLF/VDET set -> clearing EXT/FLAG (arduino-style)"));
+
+    // Keep CTRL upper bits, force reserved bits 2..1 = 0
+    uint8_t ctrl_base = ctrl & 0xF8;
+
+    // Enter stop status (RESET=1)
+    I2cWrite8(RtcChip.address, RX8025_REG_CTRL, ctrl_base | _BV(RX8025_BIT_CTRL_RESET), RtcChip.bus);
+
+    // Clear EXT and FLAG (common minimal init used by reference libs)
+    I2cWrite8(RtcChip.address, RX8025_REG_EXT,  0x00, RtcChip.bus);
+    I2cWrite8(RtcChip.address, RX8025_REG_FLAG, 0x00, RtcChip.bus);
+
+    // Exit stop status (RESET=0)
+    I2cWrite8(RtcChip.address, RX8025_REG_CTRL, ctrl_base, RtcChip.bus);
+
+    ctrl = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+    flag = I2cRead8(RtcChip.address, RX8025_REG_FLAG, RtcChip.bus);
+    ext  = I2cRead8(RtcChip.address, RX8025_REG_EXT,  RtcChip.bus);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T POST-INIT CTRL=%02X FLAG=%02X EXT=%02X"), ctrl, flag, ext);
+  }
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Read time from RX8025T and return epoch time
+\*-------------------------------------------------------------------------------------------*/
+uint32_t Rx8025ReadTime(void) {
+  TIME_T tm;
+
+  uint8_t data[7];
+  I2cReadBuffer(RtcChip.address, RX8025_REG_SEC, data, 7, RtcChip.bus);
+
+  uint8_t ctrl = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+  uint8_t flag = I2cRead8(RtcChip.address, RX8025_REG_FLAG, RtcChip.bus);
+  uint8_t ext  = I2cRead8(RtcChip.address, RX8025_REG_EXT,  RtcChip.bus);
+
+  Rx8025LogRaw("READ", RtcChip.bus, RtcChip.address, data, ctrl, flag, ext);
+
+  tm.second = Bcd2Dec(data[0] & 0x7F);
+  tm.minute = Bcd2Dec(data[1] & 0x7F);
+  tm.hour   = Bcd2Dec(data[2] & 0x3F);
+
+  tm.day_of_week  = Rx8025WeekToWday(data[3]);
+  tm.day_of_month = Bcd2Dec(data[4] & 0x3F);
+
+  // RX8025: MONTH is 01..12 (no -1)
+  tm.month = Bcd2Dec(data[5] & 0x1F);
+
+  // RX8025: YEAR is 00..99 for 2000..2099  => yOff = (2000-1970)+y2k = 30+y2k
+  uint8_t y2k = Bcd2Dec(data[6]);
+  tm.year = (uint8_t)(30 + y2k);
+
+  uint32_t epoch = MakeTime(tm);
+
+  AddLog(LOG_LEVEL_DEBUG,
+         PSTR("RTC: RX8025T DECODE y2k=%u -> yOff=%u (abs=%u) m=%u d=%u w=%u %02u:%02u:%02u -> epoch=%u"),
+         y2k, tm.year, (uint16_t)(1970 + tm.year),
+         tm.month, tm.day_of_month, tm.day_of_week,
+         tm.hour, tm.minute, tm.second,
+         epoch);
+
+  return epoch;
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Set RX8025T time from epoch
+\*-------------------------------------------------------------------------------------------*/
+void Rx8025SetTime(uint32_t epoch_time) {
+  TIME_T tm;
+  BreakTime(epoch_time, tm);
+
+  uint16_t abs_year = (uint16_t)(1970 + tm.year);
+  uint8_t y2k = 0;
+  if (abs_year < 2000) { y2k = 0; }
+  else if (abs_year > 2099) { y2k = 99; }
+  else { y2k = (uint8_t)(abs_year - 2000); }
+
+  AddLog(LOG_LEVEL_DEBUG,
+         PSTR("RTC: RX8025T SET epoch=%u -> yOff=%u (abs=%u) m=%u d=%u w=%u %02u:%02u:%02u"),
+         epoch_time, tm.year, abs_year,
+         tm.month, tm.day_of_month, tm.day_of_week,
+         tm.hour, tm.minute, tm.second);
+
+  // CTRL: clear reserved bits 2..1, preserve others
+  uint8_t ctrl0 = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+  uint8_t ctrl_base = ctrl0 & 0xF8;
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T CTRL before=%02X masked=%02X (set RESET bit0=stop)"), ctrl0, ctrl_base);
+
+  // Enter stop status (RESET=1)
+  I2cWrite8(RtcChip.address, RX8025_REG_CTRL, ctrl_base | _BV(RX8025_BIT_CTRL_RESET), RtcChip.bus);
+
+  uint8_t ctrl1 = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T CTRL after STOP(read)=%02X"), ctrl1);
+
+  uint8_t data[7];
+  data[0] = Dec2Bcd(tm.second);
+  data[1] = Dec2Bcd(tm.minute);
+  data[2] = Dec2Bcd(tm.hour);
+  data[3] = Rx8025WdayToWeek(tm.day_of_week);
+  data[4] = Dec2Bcd(tm.day_of_month);
+
+  // RX8025: MONTH is 01..12 (no +1)
+  data[5] = Dec2Bcd(tm.month);
+
+  data[6] = Dec2Bcd(y2k);
+
+  AddLog(LOG_LEVEL_DEBUG,
+         PSTR("RTC: RX8025T WRITE y2k=%u RAW=%02X %02X %02X %02X %02X %02X %02X"),
+         y2k, data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+
+  I2cWriteBuffer(RtcChip.address, RX8025_REG_SEC, data, 7, RtcChip.bus);
+
+  // Optional readback for verification
+  uint8_t rb[7];
+  I2cReadBuffer(RtcChip.address, RX8025_REG_SEC, rb, 7, RtcChip.bus);
+  uint8_t ctrl_rb = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+  uint8_t flag_rb = I2cRead8(RtcChip.address, RX8025_REG_FLAG, RtcChip.bus);
+  uint8_t ext_rb  = I2cRead8(RtcChip.address, RX8025_REG_EXT,  RtcChip.bus);
+  Rx8025LogRaw("READBACK", RtcChip.bus, RtcChip.address, rb, ctrl_rb, flag_rb, ext_rb);
+
+  // Exit stop status (RESET=0)
+  I2cWrite8(RtcChip.address, RX8025_REG_CTRL, ctrl_base, RtcChip.bus);
+  uint8_t ctrl2 = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T CTRL after CLEAR(read)=%02X"), ctrl2);
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: %s re-synced (" D_UTC_TIME ") %s"), RtcChip.name, GetDateAndTime(DT_UTC).c_str());
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Detection
+\*-------------------------------------------------------------------------------------------*/
+void Rx8025Detected(void) {
+  if (!RtcChip.detected && I2cEnabled(XI2C_96)) {
+    RtcChip.address = RX8025_ADDRESS;
+
+    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
+
+      AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T DETECT try bus=%d addr=0x%02X"), RtcChip.bus, RtcChip.address);
+
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T DETECT bus=%d -> I2cSetDevice FAIL"), RtcChip.bus);
+        continue;
+      }
+
+      // Basic presence check: CTRL must be readable
+      if (!I2cValidRead(RtcChip.address, RX8025_REG_CTRL, 1, RtcChip.bus)) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T DETECT bus=%d -> I2cValidRead(CTRL) FAIL"), RtcChip.bus);
+        continue;
+      }
+
+      // If VLF/VDET set, clear them before using registers (datasheet requirement)
+      Rx8025PreInitIfNeeded();
+
+      // Debug snapshot of time regs at detect
+      uint8_t data[7];
+      I2cReadBuffer(RtcChip.address, RX8025_REG_SEC, data, 7, RtcChip.bus);
+      uint8_t ctrl = I2cRead8(RtcChip.address, RX8025_REG_CTRL, RtcChip.bus);
+      uint8_t flag = I2cRead8(RtcChip.address, RX8025_REG_FLAG, RtcChip.bus);
+      uint8_t ext  = I2cRead8(RtcChip.address, RX8025_REG_EXT,  RtcChip.bus);
+      Rx8025LogRaw("DETECTED", RtcChip.bus, RtcChip.address, data, ctrl, flag, ext);
+
+      RtcChip.detected = 1;
+      strcpy_P(RtcChip.name, PSTR("RX8025T"));
+      RtcChip.ReadTime = &Rx8025ReadTime;
+      RtcChip.SetTime  = &Rx8025SetTime;
+      RtcChip.mem_size = -1;
+      break;
+    }
+  }
+}
+#endif  // USE_RX8025
 
 /*********************************************************************************************\
  * RTC Detect and time set
@@ -596,6 +972,9 @@ void RtcChipDetect(void) {
   RtcChip.detected = 0;
   RtcChip.bus = 0;
 
+#ifdef USE_RV3028
+  RV3028Detected();
+#endif  // USE_RV3028
 #ifdef USE_DS3231
   DS3231Detected();
 #endif  // USE_DS3231
@@ -605,12 +984,16 @@ void RtcChipDetect(void) {
 #ifdef USE_PCF85363
   Pcf85363Detected();
 #endif // USE_PCF85363
-#ifdef USE_RX8010
+#if defined(USE_RX8010) || defined(USE_RX8030)
   Rx8010Detected();
 #endif  // USE_RX8010
 #ifdef USE_PCF85063
   Pcf85063Detected();
 #endif  // USE_PCF85063
+#ifdef USE_RX8025
+  Rx8025Detected();
+#endif  // USE_RX8025
+
 
   if (!RtcChip.detected) { return; }
 

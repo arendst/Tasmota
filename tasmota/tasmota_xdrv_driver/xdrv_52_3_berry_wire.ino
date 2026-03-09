@@ -24,7 +24,40 @@
 
 #include <berry.h>
 #include <Wire.h>
-#include <byteswap.h>
+// #include <byteswap.h>
+
+#ifndef __bswap_16
+#ifdef __GNUC__
+# define __bswap_16(x) \
+    (__extension__							      \
+     ({ unsigned short int __bsx = (x);					      \
+        ((((__bsx) >> 8) & 0xff) | (((__bsx) & 0xff) << 8)); }))
+#else
+static INLINE unsigned short int
+__bswap_16 (unsigned short int __bsx)
+{
+  return ((((__bsx) >> 8) & 0xff) | (((__bsx) & 0xff) << 8));
+}
+#endif
+#endif // __bswap_16
+
+/* Swap bytes in 32 bit value.  */
+#ifndef __bswap_32
+#ifdef __GNUC__
+# define __bswap_32(x) \
+    (__extension__							      \
+     ({ unsigned int __bsx = (x);					      \
+        ((((__bsx) & 0xff000000) >> 24) | (((__bsx) & 0x00ff0000) >>  8) |    \
+	 (((__bsx) & 0x0000ff00) <<  8) | (((__bsx) & 0x000000ff) << 24)); }))
+#else
+static INLINE unsigned int
+__bswap_32 (unsigned int __bsx)
+{
+  return ((((__bsx) & 0xff000000) >> 24) | (((__bsx) & 0x00ff0000) >>  8) |
+	  (((__bsx) & 0x0000ff00) <<  8) | (((__bsx) & 0x000000ff) << 24));
+}
+#endif
+#endif // __bswap_32
 
 // read the `bus` attribute and return `Wire` or `Wire1`
 // Can return nullptr reference if the bus is not initialized

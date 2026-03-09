@@ -1,0 +1,45 @@
+# Complex template test
+
+template animation rainbow_pulse {
+  param pal1 type palette
+  param pal2 type palette
+  param period type time
+  param back_color type color
+  
+  # Create color cycle using first palette
+  color cycle_color = color_cycle(colors=pal1, period=period)
+  
+  # Create pulsing animation
+  animation pulse = breathe(
+    color=cycle_color
+    period=period
+  )
+  
+  # Create background
+  animation background = solid(color=back_color)
+  background.priority = 1
+  
+  # Set pulse priority higher
+  pulse.priority = 10
+  
+  # Run both animations
+  run background
+  run pulse
+}
+
+# Create palettes
+palette fire_palette = [
+  (0, 0x000000)
+  (128, 0xFF0000)
+  (255, 0xFFFF00)
+]
+
+palette ocean_palette = [
+  (0, 0x000080)
+  (128, 0x0080FF)
+  (255, 0x00FFFF)
+]
+
+# Use the template
+animation main = rainbow_pulse(pal1 = fire_palette, pal2 = ocean_palette, perriod = 3s, back_color = 0x001100)
+run main

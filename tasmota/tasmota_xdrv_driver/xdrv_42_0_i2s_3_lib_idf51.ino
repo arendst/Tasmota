@@ -718,7 +718,7 @@ bool TasmotaI2S::updateClockConfig(void) {
   if (_tx_mode != I2S_MODE_DAC) {
     if (_tx_running) {
       esp_err_t err = i2s_channel_disable(_tx_handle);
-      AddLog(LOG_LEVEL_INFO, "I2S: updateClockConfig i2s_channel_disable err=0x%04X", err);
+      AddLog(LOG_LEVEL_DEBUG, "I2S: updateClockConfig i2s_channel_disable err=0x%04X", err);
     }
     i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(hertz);
   #ifdef SOC_I2S_SUPPORTS_APLL
@@ -727,10 +727,10 @@ bool TasmotaI2S::updateClockConfig(void) {
     }
   #endif
     esp_err_t result = i2s_channel_reconfig_std_clock(_tx_handle, &clk_cfg);
-    AddLog(LOG_LEVEL_INFO, "I2S: updateClockConfig i2s_channel_reconfig_std_clock err=0x%04X", result);
+    AddLog(LOG_LEVEL_DEBUG, "I2S: updateClockConfig i2s_channel_reconfig_std_clock err=0x%04X", result);
     if (_tx_running) { 
       esp_err_t err = i2s_channel_enable(_tx_handle);
-      AddLog(LOG_LEVEL_INFO, "I2S: updateClockConfig i2s_channel_enable err=0x%04X", err);
+      AddLog(LOG_LEVEL_DEBUG, "I2S: updateClockConfig i2s_channel_enable err=0x%04X", err);
     }
     AddLog(LOG_LEVEL_DEBUG, "I2S: Updating clock config");
     return result == ESP_OK;

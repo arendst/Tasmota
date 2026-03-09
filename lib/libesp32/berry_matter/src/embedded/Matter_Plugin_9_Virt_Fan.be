@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Virtual Variant - Fan
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Fan (Matter_Plugin_2_Fan.be)
+# VARIANT TYPE: Virtual (Matter Bridge Protocol)
+# DEVICE TYPE: Fan (0x002B) - See base class for full specification
+# CLUSTERS: Fan Control (0x0202) - See Matter_Plugin_2_Fan.be
+# TYPE: "v_fan" | VIRTUAL: true
+# See base class for complete Matter 1.4.1 cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

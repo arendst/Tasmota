@@ -17,6 +17,82 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Device Specification - Rain Sensor (0x0044)
+#################################################################################
+# Device Type: Rain Sensor (0x0044)
+# Device Type Revision: 1 (Matter 1.4.1 Device Library)
+# Class: Simple | Scope: Endpoint
+#
+# CLUSTERS (Server):
+# - 0x0045: Boolean State (M) - Rain detection state
+# - 0x0080: Boolean State Configuration (O) - Alarm configuration
+# - 0x0003: Identify (M) - Device identification
+# - 0x001D: Descriptor (M) - Inherited from base class
+#
+# BOOLEAN STATE SEMANTICS:
+# - true: Rain detected
+# - false: No rain
+#
+# ELEMENT OVERRIDES:
+# - Boolean State: StateChange event is MANDATORY (not optional)
+#
+# NOTES:
+# - Binary sensor for rain detection
+# - Typically uses capacitive or resistive rain detection
+# - Fast response time for weather monitoring
+# - Inherits from Matter_Plugin_Sensor_Boolean base class
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Boolean State Cluster (0x0045) - Rain Sensor Usage
+#################################################################################
+# Cluster Revision: 1 (Matter 1.4.1)
+# Role: Application | Scope: Endpoint
+#
+# ATTRIBUTES:
+# ID     | Name       | Type | Constraint | Quality | Default | Access | Conf
+# -------|------------|------|------------|---------|---------|--------|-----
+# 0x0000 | StateValue | bool | all        | P       | -       | R V    | M
+#
+# Quality Flags:
+# - P: Periodic reporting (changes reported automatically)
+#
+# Access Control:
+# - R: Read
+# - V: View privilege required
+#
+# EVENTS:
+# ID   | Name        | Priority | Access | Conf
+# -----|-------------|----------|--------|-----
+# 0x00 | StateChange | INFO     | V      | M (overridden from O)
+#
+# StateChange Event Fields:
+# - StateValue: bool - New state value
+#
+# STATE VALUE SEMANTICS FOR RAIN SENSOR:
+# - true (1): Rain detected - precipitation is occurring
+# - false (0): No rain - dry conditions
+#
+# TASMOTA IMPLEMENTATION:
+# - Reads from Tasmota Switch<x> input (Status 10)
+# - Switch ON = Rain detected (true)
+# - Switch OFF = No rain (false)
+# - Update interval: 750ms for responsive detection
+# - StateChange event sent on every state transition
+#
+# TYPICAL APPLICATIONS:
+# - Weather stations
+# - Automatic window/skylight control
+# - Irrigation system control
+# - Outdoor equipment protection
+# - Smart home automation triggers
+#
+# CONFIGURATION:
+# - ARG: "switch" - Tasmota Switch number (1-based)
+# - Example: switch=1 uses Switch1 input
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

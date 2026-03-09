@@ -1,13 +1,16 @@
 #include "lv_draw_dave2d.h"
 #if LV_USE_DRAW_DAVE2D
 
-void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_dsc_t * dsc)
+#include "../../../misc/lv_area_private.h"
+
+void lv_draw_dave2d_triangle(lv_draw_task_t * t, const lv_draw_triangle_dsc_t * dsc)
 {
     lv_area_t clipped_area;
     d2_u32      flags = 0;
     d2_u8 current_alpha_mode = 0;
     int32_t x;
     int32_t y;
+    lv_draw_dave2d_unit_t * u = (lv_draw_dave2d_unit_t *)t->draw_unit;
 
     lv_area_t tri_area;
     tri_area.x1 = LV_MIN3(dsc->p[0].x, dsc->p[1].x, dsc->p[2].x);
@@ -15,7 +18,7 @@ void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_d
     tri_area.x2 = LV_MAX3(dsc->p[0].x, dsc->p[1].x, dsc->p[2].x);
     tri_area.y2 = LV_MAX3(dsc->p[0].y, dsc->p[1].y, dsc->p[2].y);
 
-    if(!lv_area_intersect(&clipped_area, &tri_area, u->base_unit.clip_area)) return;
+    if(!lv_area_intersect(&clipped_area, &tri_area, &t->clip_area)) return;
 
 #if LV_USE_OS
     lv_result_t  status;
@@ -23,14 +26,10 @@ void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_d
     LV_ASSERT(LV_RESULT_OK == status);
 #endif
 
-    x = 0 - u->base_unit.target_layer->buf_area.x1;
-    y = 0 - u->base_unit.target_layer->buf_area.y1;
+    x = 0 - t->target_layer->buf_area.x1;
+    y = 0 - t->target_layer->buf_area.y1;
 
     lv_area_move(&clipped_area, x, y);
-
-#if D2_RENDER_EACH_OPERATION
-    d2_selectrenderbuffer(u->d2_handle, u->renderbuffer);
-#endif
 
     lv_point_precise_t p[3];
     p[0] = dsc->p[0];
@@ -76,20 +75,20 @@ void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_d
         }
     }
 
-    p[0].x -= u->base_unit.target_layer->buf_area.x1;
-    p[1].x -= u->base_unit.target_layer->buf_area.x1;
-    p[2].x -= u->base_unit.target_layer->buf_area.x1;
+    p[0].x -= t->target_layer->buf_area.x1;
+    p[1].x -= t->target_layer->buf_area.x1;
+    p[2].x -= t->target_layer->buf_area.x1;
 
-    p[0].y -= u->base_unit.target_layer->buf_area.y1;
-    p[1].y -= u->base_unit.target_layer->buf_area.y1;
-    p[2].y -= u->base_unit.target_layer->buf_area.y1;
+    p[0].y -= t->target_layer->buf_area.y1;
+    p[1].y -= t->target_layer->buf_area.y1;
+    p[2].y -= t->target_layer->buf_area.y1;
 
     p[1].y -= 1;
     p[2].y -= 1;
 
     current_alpha_mode = d2_getalphamode(u->d2_handle);
 
-    if(LV_GRAD_DIR_NONE != dsc->bg_grad.dir) {
+    if(LV_GRAD_DIR_NONE != dsc->grad.dir) {
         float a1;
         float a2;
 
@@ -101,16 +100,14 @@ void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_d
         int32_t y0_i ;
         int32_t y3_i ;
 
-        if(LV_GRAD_DIR_VER == dsc->bg_grad.dir) {
-            a1 = dsc->bg_grad.stops[0].opa;
-            a2 = dsc->bg_grad.stops[dsc->bg_grad.stops_count - 1].opa;
+        if(LV_GRAD_DIR_VER == dsc->grad.dir) {
+            a1 = dsc->grad.stops[0].opa;
+            a2 = dsc->grad.stops[dsc->grad.stops_count - 1].opa;
 
             y1 = LV_MIN3(p[0].y, p[1].y, p[2].y);
             y2 = LV_MAX3(p[0].y, p[1].y, p[2].y);
 
             if(a1 < a2) {
-                /* TODO */
-                LV_ASSERT(0);
                 y0 = 0.0f;//silence the compiler warning
                 y3 = 0.0f;
 
@@ -125,22 +122,19 @@ void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_d
 
             d2_setalphagradient(u->d2_handle, 0, D2_FIX4(0),  D2_FIX4(y0_i), D2_FIX4(0), D2_FIX4((y3_i - y0_i)));
         }
-        else if(LV_GRAD_DIR_HOR == dsc->bg_grad.dir) {
-            /* TODO */
-            LV_ASSERT(0);
-        }
 
-        d2_setcolor(u->d2_handle, 0, lv_draw_dave2d_lv_colour_to_d2_colour(dsc->bg_grad.stops[0].color));
+
+        d2_setcolor(u->d2_handle, 0, lv_draw_dave2d_lv_colour_to_d2_colour(dsc->grad.stops[0].color));
         d2_setalphamode(u->d2_handle, d2_am_gradient1);
     }
     else {
-        d2_setalpha(u->d2_handle, dsc->bg_opa);
+        d2_setalpha(u->d2_handle, dsc->opa);
         d2_setalphamode(u->d2_handle, d2_am_constant);
-        d2_setcolor(u->d2_handle, 0, lv_draw_dave2d_lv_colour_to_d2_colour(dsc->bg_color));
+        d2_setcolor(u->d2_handle, 0, lv_draw_dave2d_lv_colour_to_d2_colour(dsc->color));
 
     }
 
-    d2_framebuffer_from_layer(u->d2_handle, u->base_unit.target_layer);
+    d2_framebuffer_from_layer(u->d2_handle, t->target_layer);
 
     d2_cliprect(u->d2_handle, (d2_border)clipped_area.x1, (d2_border)clipped_area.y1, (d2_border)clipped_area.x2,
                 (d2_border)clipped_area.y2);
@@ -153,14 +147,6 @@ void lv_draw_dave2d_triangle(lv_draw_dave2d_unit_t * u, const lv_draw_triangle_d
                  (d2_point)      D2_FIX4(p[2].x),
                  (d2_point)      D2_FIX4(p[2].y),
                  flags);
-
-    //
-    // Execute render operations
-    //
-#if D2_RENDER_EACH_OPERATION
-    d2_executerenderbuffer(u->d2_handle, u->renderbuffer, 0);
-    d2_flushframe(u->d2_handle);
-#endif
 
     d2_setalphamode(u->d2_handle, current_alpha_mode);
 

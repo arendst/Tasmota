@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file lv_mem.h
  *
  */
@@ -69,6 +69,21 @@ void lv_mem_remove_pool(lv_mem_pool_t pool);
 void * lv_malloc(size_t size);
 
 /**
+ * Allocate a block of zeroed memory dynamically
+ * @param num requested number of element to be allocated.
+ * @param size requested size of each element in bytes.
+ * @return pointer to allocated zeroed memory, or NULL on failure
+ */
+void * lv_calloc(size_t num, size_t size);
+
+/**
+ * Allocate zeroed memory dynamically
+ * @param size requested size in bytes
+ * @return pointer to allocated zeroed memory, or NULL on failure
+ */
+void * lv_zalloc(size_t size);
+
+/**
  * Allocate zeroed memory dynamically
  * @param size requested size in bytes
  * @return pointer to allocated zeroed memory, or NULL on failure
@@ -89,6 +104,16 @@ void lv_free(void * data);
  * @return pointer to the new memory, NULL on failure
  */
 void * lv_realloc(void * data_p, size_t new_size);
+
+/**
+ * Reallocate a memory with a new size. The old content will be kept.
+ * In case of failure, the old pointer is free'd.
+ * @param data_p pointer to an allocated memory.
+ *               Its content will be copied to the new memory block and freed
+ * @param new_size the desired new size in byte
+ * @return pointer to the new memory, NULL on failure
+ */
+void * lv_reallocf(void * data_p, size_t new_size);
 
 /**
  * Used internally to execute a plain `malloc` operation

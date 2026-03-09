@@ -81,7 +81,7 @@ void IEM3000Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Iem3000Modbus->ReceiveCount());
 
     if (error) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Iem3000 error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("IEM: Iem3000 error %d"), error);
     } else {
       Energy->data_valid[0] = 0;
 
@@ -185,6 +185,9 @@ void Iem3000SnsInit(void)
   uint8_t result = Iem3000Modbus->Begin(IEM3000_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("IEM: Serial UART%d"), Iem3000Modbus->getUart());
+#endif
     Energy->phase_count = 3;
     Energy->frequency_common = true;             // Use common frequency
   } else {

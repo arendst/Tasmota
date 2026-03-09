@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_9_Zigbee_Occupancy.be - implements the behavior for a Zigbee Occupancy sensor
+# Matter_Plugin_9_Zigbee_Occupancy.be - implements Zigbee Occupancy Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Zigbee Variant - Zigbee2Matter Bridge Occupancy Sensor
+#################################################################################
+# This is a ZIGBEE variant that inherits from Matter_Plugin_Sensor_Occupancy.
+# It bridges Zigbee occupancy sensors to Matter protocol.
+#
+# DEVICE TYPE: Occupancy Sensor (0x0107)
+# See Matter_Plugin_3_Sensor_Occupancy.be for complete Matter 1.4.1 specifications
+# including Occupancy Sensing cluster (0x0406) details.
+#
+# ZIGBEE BEHAVIOR:
+# - Bridges Zigbee devices to Matter using zigbee_mapper
+# - Listens for Zigbee attribute reports (ZIGBEE_NAME: "Occupancy")
+# - Automatically converts Zigbee occupancy values to Matter format
+# - Maps Zigbee device to Matter endpoint
+# - Inherits all cluster implementations from base class
+# - VIRTUAL: true - Required for Zigbee device mapping
+#
+# CONFIGURATION:
+# - TYPE: "z_occupancy" - Plugin identifier in Matter configuration
+# - DISPLAY_NAME: "Zig Occupancy" - Shows as Zigbee occupancy in UI
+# - ZIGBEE: true - Marks this as a Zigbee bridge device
+# - ARG: "zigbee_device" - Zigbee device identifier (short address or friendly name)
+# - Requires Tasmota Zigbee coordinator functionality
+#################################################################################
 
 import matter
 

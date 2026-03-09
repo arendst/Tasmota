@@ -741,6 +741,9 @@ void EnergyModbusSnsInit(void) {
     uint8_t result = EnergyModbus->Begin(NrgMbsParam.serial_bps, NrgMbsParam.serial_config);
     if (result) {
       if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Serial UART%d"), EnergyModbus->getUart());
+#endif
 
 #ifdef ENERGY_MODBUS_TICKER
       ticker_energy_modbus.attach_ms(NrgMbsParam.ticker_poll, EnergyModbusLoop);

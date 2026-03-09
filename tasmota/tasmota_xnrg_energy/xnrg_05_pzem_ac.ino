@@ -122,6 +122,9 @@ void PzemAcSnsInit(void)
   uint8_t result = PzemAcModbus->Begin(9600);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PAC: Serial UART%d"), PzemAcModbus->getUart());
+#endif
     Energy->phase_count = ENERGY_MAX_PHASES;  // Start off with three phases
     PzemAc.phase = 0;
   } else {

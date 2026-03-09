@@ -33,7 +33,7 @@ const lv_obj_class_t lv_win_class = {
     .height_def = LV_PCT(100),
     .base_class = &lv_obj_class,
     .instance_size = sizeof(lv_win_t),
-    .name = "win",
+    .name = "lv_win",
 };
 /**********************
  *      MACROS
@@ -55,7 +55,7 @@ lv_obj_t * lv_win_add_title(lv_obj_t * win, const char * txt)
 {
     lv_obj_t * header = lv_win_get_header(win);
     lv_obj_t * title = lv_label_create(header);
-    lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
+    lv_label_set_long_mode(title, LV_LABEL_LONG_MODE_DOTS);
     lv_label_set_text(title, txt);
     lv_obj_set_flex_grow(title, 1);
     return title;

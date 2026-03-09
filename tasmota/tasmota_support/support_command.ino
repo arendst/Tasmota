@@ -54,11 +54,11 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_UFILESYS
 
 #ifdef ESP32
-  "|Info|"
+  "Info|"
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
   D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|"
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
-  D_CMND_CPU_FREQUENCY
+  D_CMND_CPU_FREQUENCY "|"
 #endif  // ESP32
 
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON "|" D_CMND_JSON_PP
@@ -912,6 +912,7 @@ void CmndStatus(void)
   char stemp[200];
   char stemp2[TOPSZ];
 
+  // Status
   if ((0 == payload) || (-99 == payload)) {
     uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -979,6 +980,9 @@ void CmndStatus(void)
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
                           "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+                          ",\"HostedMCU\":{\"Hardware\":\"%s\",\"Version\":\"%s\"}"
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
                           "%s}}"),
                           TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str(), GetBuildDateAndTime().c_str()
 #ifdef ESP8266
@@ -986,6 +990,9 @@ void CmndStatus(void)
 #endif
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardwareRevision().c_str(),
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+                          GetHostedMCU().c_str(), GetHostedFwVersion(1).c_str(),
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
                           GetStatistics().c_str());
     CmndStatusResponse(2);
   }
@@ -1028,7 +1035,7 @@ void CmndStatus(void)
                           ESP_getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
 #endif // ESP8266
                           , ESP_getFlashChipId()
-                          , ESP.getFlashChipSpeed()/1000000);
+                          , ESP_getFlashChipSpeed()/1000000);
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1111,6 +1118,7 @@ void CmndStatus(void)
     CmndStatusResponse(6);
   }
 
+  // Status 7 - StatusTIM
   if ((0 == payload) || (7 == payload)) {
     if (99 == Settings->timezone) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%d" ), Settings->timezone);
@@ -1133,6 +1141,7 @@ void CmndStatus(void)
 
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
   if (TasmotaGlobal.energy_driver) {
+    // Status 9 - StatusPTH
     if ((0 == payload) || (9 == payload)) {
       EnergyMarginStatus();
       CmndStatusResponse(9);
@@ -1169,7 +1178,7 @@ void CmndStatus(void)
 #endif // FIRMWARE_MINIMAL
 
 #ifdef USE_SHUTTER
-  // Status 13
+  // Status 13 - StatusSHT
   if ((0 == payload) || (13 == payload)) {
     if (ShutterStatus()) { CmndStatusResponse(13); }
   }
@@ -2134,7 +2143,7 @@ void CmndTemplate(void)
         if (8 == i) { j = 12; }
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
         // No change
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 //        if (22 == i) { j = 33; }  // TODO 20230821 verify
@@ -2963,7 +2972,11 @@ void CmndI2cDriver(void)
 {
   if (XdrvMailbox.index < MAX_I2C_DRIVERS) {
     if (XdrvMailbox.payload >= 0) {
-      bitWrite(Settings->i2c_drivers[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (XdrvMailbox.index < 96) {
+        bitWrite(Settings->i2c_drivers[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      } else {
+        bitWrite(Settings->i2c_drivers2[(XdrvMailbox.index / 32) -3], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      }
       TasmotaGlobal.restart_flag = 2;
     }
   }
@@ -3093,5 +3106,4 @@ void CmndTouchThres(void) {
   ResponseCmndNumber(Settings->touch_threshold);
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
-
 #endif  // ESP32

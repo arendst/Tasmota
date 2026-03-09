@@ -1272,13 +1272,13 @@ bool TuyaSetChannels(void)
   uint8_t idx = 0;
   snprintf_P(hex_char, sizeof(hex_char), PSTR("000000000000"));
 
-  if (LT_SERIAL1 == TasmotaGlobal.light_type) {
+  if (LT_W == TasmotaGlobal.light_type) {
     pTuya->Snapshot[0] = light_state.getDimmer();
   }
 
-  if (LT_SERIAL2 == TasmotaGlobal.light_type || LT_RGBWC == TasmotaGlobal.light_type) {
+  if (LT_CW == TasmotaGlobal.light_type || LT_RGBWC == TasmotaGlobal.light_type) {
     idx = 1;
-    if (LT_SERIAL2 == TasmotaGlobal.light_type &&
+    if (LT_CW == TasmotaGlobal.light_type &&
         Settings->flag3.pwm_multi_channels &&
         (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2) != 0)) {
       // Special setup for dual dimmer (like the MOES 2 Way Dimmer) emulating 2 PWM channels
@@ -1978,9 +1978,9 @@ bool TuyaModuleSelected(void) {
 
   // Possible combinations for Lights:
   // 0: NONE = LT_BASIC
-  // 1: DIMMER = LT_SERIAL1 - Common one channel dimmer
-  // 2: DIMMER, DIMMER2 = LT_SERIAL2 - Two channels dimmer (special setup used with SetOption68)
-  // 3: DIMMER, CT = LT_SERIAL2 - Dimmable light and White Color Temperature
+  // 1: DIMMER = LT_W - Common one channel dimmer
+  // 2: DIMMER, DIMMER2 = LT_CW - Two channels dimmer (special setup used with SetOption68)
+  // 3: DIMMER, CT = LT_CW - Dimmable light and White Color Temperature
   // 4: DIMMER, RGB = LT_RGB - RGB Light
   // 5: DIMMER, RGB, CT = LT_RGBWC - RGB LIght and White Color Temperature
   // 6: DIMMER, RGB, WHITE = LT_RGBW - RGB LIght and White
@@ -1995,8 +1995,8 @@ bool TuyaModuleSelected(void) {
     } else if (TuyaGetDpId(TUYA_MCU_FUNC_CT) != 0 || TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2) != 0) {
       if (TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0) {
         TasmotaGlobal.light_type = LT_RGBWC;
-      } else { TasmotaGlobal.light_type = LT_SERIAL2; }
-    } else { TasmotaGlobal.light_type = LT_SERIAL1; }
+      } else { TasmotaGlobal.light_type = LT_CW; }
+    } else { TasmotaGlobal.light_type = LT_W; }
   } else {
     TasmotaGlobal.light_type = LT_BASIC;
   }

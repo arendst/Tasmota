@@ -23,13 +23,13 @@
  *      TYPEDEFS
  **********************/
 
-struct lv_lru_item_t {
+struct _lv_lru_item_t {
     void * value;
     void * key;
     size_t value_length;
     size_t key_length;
     uint64_t access_count;
-    struct lv_lru_item_t * next;
+    struct _lv_lru_item_t * next;
 };
 
 /**********************
@@ -88,7 +88,7 @@ lv_lru_t * lv_lru_create(size_t cache_size, size_t average_length, lv_lru_free_c
     cache->value_free = value_free ? value_free : lv_free;
     cache->key_free = key_free ? key_free : lv_free;
 
-    // size the hash table to a guestimate of the number of slots required (assuming a perfect hash)
+    // size the hash table to a guesstimate of the number of slots required (assuming a perfect hash)
     cache->items = lv_malloc_zeroed(sizeof(lv_lru_item_t *) * cache->hash_table_size);
     if(!cache->items) {
         LV_LOG_WARN("LRU Cache unable to create cache hash table");

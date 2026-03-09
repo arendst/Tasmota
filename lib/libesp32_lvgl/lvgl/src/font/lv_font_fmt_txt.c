@@ -47,6 +47,11 @@ static int kern_pair_16_compare(const void * ref, const void * element);
     static inline uint8_t rle_next(void);
 #endif /*LV_USE_FONT_COMPRESSED*/
 
+static lv_font_t * builtin_font_create_cb(const lv_font_info_t * info, const void * src);
+static void builtin_font_delete_cb(lv_font_t * font);
+static void * builtin_font_dup_src_cb(const void * src);
+static void builtin_font_free_src_cb(void * src);
+
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -63,6 +68,13 @@ static const uint8_t opa3_table[8] = {0, 36, 73, 109, 146, 182, 218, 255};
 
 static const uint8_t opa2_table[4] = {0, 85, 170, 255};
 
+const lv_font_class_t lv_builtin_font_class = {
+    .create_cb = builtin_font_create_cb,
+    .delete_cb = builtin_font_delete_cb,
+    .dup_src_cb = builtin_font_dup_src_cb,
+    .free_src_cb = builtin_font_free_src_cb,
+};
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -78,7 +90,6 @@ static const uint8_t opa2_table[4] = {0, 85, 170, 255};
 const void * lv_font_get_bitmap_fmt_txt(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf_t * draw_buf)
 {
     const lv_font_t * font = g_dsc->resolved_font;
-    uint8_t * bitmap_out = draw_buf->data;
 
     lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
     uint32_t gid = g_dsc->gid.index;
@@ -86,18 +97,24 @@ const void * lv_font_get_bitmap_fmt_txt(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf
 
     const lv_font_fmt_txt_glyph_dsc_t * gdsc = &fdsc->glyph_dsc[gid];
 
+    if(g_dsc->req_raw_bitmap) return &fdsc->glyph_bitmap[gdsc->bitmap_index];
+
+    uint8_t * bitmap_out = draw_buf->data;
     int32_t gsize = (int32_t) gdsc->box_w * gdsc->box_h;
     if(gsize == 0) return NULL;
+
+    uint32_t stride_in = g_dsc->stride;
+
 
     if(fdsc->bitmap_format == LV_FONT_FMT_TXT_PLAIN) {
         const uint8_t * bitmap_in = &fdsc->glyph_bitmap[gdsc->bitmap_index];
         uint8_t * bitmap_out_tmp = bitmap_out;
         int32_t i = 0;
         int32_t x, y;
-        uint32_t stride = lv_draw_buf_width_to_stride(gdsc->box_w, LV_COLOR_FORMAT_A8);
-
+        uint32_t stride_out = lv_draw_buf_width_to_stride(gdsc->box_w, LV_COLOR_FORMAT_A8);
         if(fdsc->bpp == 1) {
             for(y = 0; y < gdsc->box_h; y ++) {
+                uint16_t line_rem = stride_in != 0 ? stride_in : gdsc->box_w;
                 for(x = 0; x < gdsc->box_w; x++, i++) {
                     i = i & 0x7;
                     if(i == 0) bitmap_out_tmp[x] = (*bitmap_in) & 0x80 ? 0xff : 0x00;
@@ -109,14 +126,21 @@ const void * lv_font_get_bitmap_fmt_txt(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf
                     else if(i == 6) bitmap_out_tmp[x] = (*bitmap_in) & 0x02 ? 0xff : 0x00;
                     else if(i == 7) {
                         bitmap_out_tmp[x] = (*bitmap_in) & 0x01 ? 0xff : 0x00;
+                        line_rem--;
                         bitmap_in++;
                     }
                 }
-                bitmap_out_tmp += stride;
+                /*Handle stride*/
+                if(stride_in) {
+                    i = 0;  /*If there is a stride start from the next byte in the next line*/
+                    bitmap_in += line_rem;
+                }
+                bitmap_out_tmp += stride_out;
             }
         }
         else if(fdsc->bpp == 2) {
             for(y = 0; y < gdsc->box_h; y ++) {
+                uint32_t line_rem = stride_in != 0 ? stride_in : gdsc->box_w;
                 for(x = 0; x < gdsc->box_w; x++, i++) {
                     i = i & 0x3;
                     if(i == 0) bitmap_out_tmp[x] = opa2_table[(*bitmap_in) >> 6];
@@ -124,15 +148,23 @@ const void * lv_font_get_bitmap_fmt_txt(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf
                     else if(i == 2) bitmap_out_tmp[x] = opa2_table[((*bitmap_in) >> 2) & 0x3];
                     else if(i == 3) {
                         bitmap_out_tmp[x] = opa2_table[((*bitmap_in) >> 0) & 0x3];
+                        line_rem--;
                         bitmap_in++;
                     }
                 }
-                bitmap_out_tmp += stride;
+
+                /*Handle stride*/
+                if(stride_in) {
+                    i = 0;  /*If there is a stride start from the next byte in the next line*/
+                    bitmap_in += line_rem;
+                }
+                bitmap_out_tmp += stride_out;
             }
 
         }
         else if(fdsc->bpp == 4) {
             for(y = 0; y < gdsc->box_h; y ++) {
+                uint16_t line_rem = stride_in != 0 ? stride_in : gdsc->box_w;
                 for(x = 0; x < gdsc->box_w; x++, i++) {
                     i = i & 0x1;
                     if(i == 0) {
@@ -140,12 +172,33 @@ const void * lv_font_get_bitmap_fmt_txt(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf
                     }
                     else if(i == 1) {
                         bitmap_out_tmp[x] = opa4_table[(*bitmap_in) & 0xF];
+                        line_rem--;
                         bitmap_in++;
                     }
                 }
-                bitmap_out_tmp += stride;
+
+                /*Handle stride*/
+                if(stride_in) {
+                    i = 0;  /*If there is a stride start from the next byte in the next line*/
+                    bitmap_in += line_rem;
+                }
+                bitmap_out_tmp += stride_out;
             }
         }
+        else if(fdsc->bpp == 8) {
+            for(y = 0; y < gdsc->box_h; y ++) {
+                uint16_t line_rem = stride_in != 0 ? stride_in : gdsc->box_w;
+                for(x = 0; x < gdsc->box_w; x++, i++) {
+                    bitmap_out_tmp[x] = *bitmap_in;
+                    line_rem--;
+                    bitmap_in++;
+                }
+                bitmap_out_tmp += stride_out;
+                bitmap_in += line_rem;
+            }
+        }
+
+        lv_draw_buf_flush_cache(draw_buf, NULL);
         return draw_buf;
     }
     /*Handle compressed bitmap*/
@@ -154,6 +207,7 @@ const void * lv_font_get_bitmap_fmt_txt(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf
         bool prefilter = fdsc->bitmap_format == LV_FONT_FMT_TXT_COMPRESSED;
         decompress(&fdsc->glyph_bitmap[gdsc->bitmap_index], bitmap_out, gdsc->box_w, gdsc->box_h,
                    (uint8_t)fdsc->bpp, prefilter);
+        lv_draw_buf_flush_cache(draw_buf, NULL);
         return draw_buf;
 #else /*!LV_USE_FONT_COMPRESSED*/
         LV_LOG_WARN("Compressed fonts is used but LV_USE_FONT_COMPRESSED is not enabled in lv_conf.h");
@@ -201,6 +255,18 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
     dsc_out->box_w = gdsc->box_w;
     dsc_out->ofs_x = gdsc->ofs_x;
     dsc_out->ofs_y = gdsc->ofs_y;
+
+    if(fdsc->stride == 0) dsc_out->stride = 0;
+    else {
+        /*E.g. w = 5, bpp = 2, means 2 bytes/line*/
+        uint32_t bit_count = dsc_out->box_w * fdsc->bpp;
+        uint32_t width_in_bytes = (bit_count + 7) >> 3; /*No division round up*/
+
+        /*E.g. font_dsc stride == 4 means align to 4 byte boundary.
+         *In glyph_dsc store the actual line length in bytes*/
+        dsc_out->stride = LV_ROUND_UP(width_in_bytes, fdsc->stride);
+    }
+
     dsc_out->format = (uint8_t)fdsc->bpp;
     dsc_out->is_placeholder = false;
     dsc_out->gid.index = gid;
@@ -232,6 +298,10 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
         }
         else if(fdsc->cmaps[i].type == LV_FONT_FMT_TXT_CMAP_FORMAT0_FULL) {
             const uint8_t * gid_ofs_8 = fdsc->cmaps[i].glyph_id_ofs_list;
+            /* The first character is always valid and should have offset = 0
+             * However if a character is missing it also has offset=0.
+             * So if there is a 0 not on the first position then it's a missing character */
+            if(gid_ofs_8[rcp] == 0 && letter != fdsc->cmaps[i].range_start) continue;
             glyph_id = fdsc->cmaps[i].glyph_id_start + gid_ofs_8[rcp];
         }
         else if(fdsc->cmaps[i].type == LV_FONT_FMT_TXT_CMAP_SPARSE_TINY) {
@@ -552,4 +622,62 @@ static inline uint8_t rle_next(void)
 static int unicode_list_compare(const void * ref, const void * element)
 {
     return (*(uint16_t *)ref) - (*(uint16_t *)element);
+}
+
+static lv_font_t * builtin_font_create_cb(const lv_font_info_t * info, const void * src)
+{
+    const lv_builtin_font_src_t * font_src = src;
+
+    /**
+     * If a crash occurs here, please check whether the last font in
+     * the lv_builtin_font_src array is set to NULL as required to mark the end of the array.
+     */
+    while(font_src->font_p) {
+        if(info->size == font_src->size) {
+            return (lv_font_t *)font_src->font_p;
+        }
+        font_src++;
+    }
+
+    LV_LOG_WARN("No built-in font found with size: %" LV_PRIu32, info->size);
+    return NULL;
+}
+
+static void builtin_font_delete_cb(lv_font_t * font)
+{
+    /*Nothing to delete*/
+    LV_UNUSED(font);
+}
+
+static void * builtin_font_dup_src_cb(const void * src)
+{
+    const lv_builtin_font_src_t * font_src = src;
+    uint32_t len = 0;
+
+    /*Measure the size of the source data*/
+
+    /**
+     * If a crash occurs here, please check whether the last font in
+     * the lv_builtin_font_src array is set to NULL as required to mark the end of the array.
+     */
+    while(font_src->font_p) {
+        len++;
+        font_src++;
+    }
+
+    if(len == 0) {
+        LV_LOG_WARN("No source data found");
+        return NULL;
+    }
+
+    lv_builtin_font_src_t * new_src = lv_malloc_zeroed(sizeof(lv_builtin_font_src_t) * (len + 1));
+    LV_ASSERT_MALLOC(new_src);
+    lv_memcpy(new_src, src, sizeof(lv_builtin_font_src_t) * len);
+
+    return new_src;
+}
+
+static void builtin_font_free_src_cb(void * src)
+{
+    lv_free(src);
 }

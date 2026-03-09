@@ -119,16 +119,24 @@ extern "C" {
   int32_t l_millis(struct bvm *vm);
   int32_t l_millis(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 1 || (top == 2 && be_isint(vm, 2))) {  // only 1 argument of type string accepted
+    if (top == 0 || (top == 1 && be_isint(vm, 1))) {  // only 1 argument of type string accepted
       uint32_t delay = 0;
-      if (top == 2) {
-        delay = be_toint(vm, 2);
+      if (top == 1) {
+        delay = be_toint(vm, 1);
       }
       uint32_t ret_millis = millis() + delay;
       be_pushint(vm, ret_millis);
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: tasmota.micros() -> int
+  //
+  int32_t l_micros(struct bvm *vm);
+  int32_t l_micros(struct bvm *vm) {
+    be_pushint(vm, micros());
+    be_return(vm); // Return
   }
 
   // Berry: tasmota.get_option(index:int) -> int
@@ -218,6 +226,13 @@ extern "C" {
     // give info about stack size
     be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
     be_map_insert_real(vm, "stack_low", ((float)uxTaskGetStackHighWaterMark(nullptr)) / 1024);
+    // values seen at last GC
+    if (berry.last_gc_tims_ms >= 0) {
+      be_map_insert_int(vm, "gc_time", berry.last_gc_tims_ms);
+    }
+    if (berry.last_gc_heap_free >= 0) {
+      be_map_insert_int(vm, "gc_heap", berry.last_gc_heap_free / 1024);
+    }
     if (UsePSRAM()) {
       be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
       be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
@@ -266,6 +281,7 @@ extern "C" {
       if (show_rssi) {
         be_map_insert_int(vm, "rssi", rssi);
         be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+        be_map_insert_str(vm, "ssid", SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str());
       }
     }
     be_pop(vm, 1);
@@ -800,7 +816,7 @@ extern "C" {
       const char *msg = be_tostring(vm, 2);
       be_pop(vm, top);  // avoid Error be_top is non zero message
 #ifdef USE_WEBSERVER
-      WSContentSend_P(PSTR("%s"), msg);
+      WSContentSendRaw_P( msg);
 #endif  // USE_WEBSERVER
       be_return_nil(vm); // Return nil when something goes wrong
     }

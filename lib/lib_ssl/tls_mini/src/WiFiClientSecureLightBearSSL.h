@@ -120,6 +120,9 @@ class WiFiClientSecure_light : public WiFiClient {
         return br_ssl_engine_last_error(_eng);
       }
     }
+    int32_t getLastCipherSuite(void) {
+      return _eng->session.cipher_suite;
+    }
     inline void setLastError(int32_t err) {
       _last_error = err;
     }
@@ -131,6 +134,9 @@ class WiFiClientSecure_light : public WiFiClient {
     }
 
     void setInsecure();
+    void setECDSA(bool ecdsa) {
+      _rsa_only = !ecdsa;
+    };
 
     void setDomainName(const char * domain) {
       _domain = domain;

@@ -14,6 +14,7 @@
 #include "../../display/lv_display_private.h"
 #include "../../stdlib/lv_string.h"
 #include "../../core/lv_global.h"
+#include "../../misc/lv_area_private.h"
 
 #if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
     #if LV_USE_THORVG_EXTERNAL
@@ -38,58 +39,6 @@
  *********************/
 #define DRAW_UNIT_ID_SW     1
 
-#ifndef LV_DRAW_SW_RGB565_SWAP
-    #define LV_DRAW_SW_RGB565_SWAP(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE90_ARGB8888
-    #define LV_DRAW_SW_ROTATE90_ARGB8888(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE180_ARGB8888
-    #define LV_DRAW_SW_ROTATE180_ARGB8888(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE270_ARGB8888
-    #define LV_DRAW_SW_ROTATE270_ARGB8888(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE90_RGB888
-    #define LV_DRAW_SW_ROTATE90_RGB888(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE180_RGB888
-    #define LV_DRAW_SW_ROTATE180_RGB888(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE270_RGB888
-    #define LV_DRAW_SW_ROTATE270_RGB888(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE90_RGB565
-    #define LV_DRAW_SW_ROTATE90_RGB565(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE180_RGB565
-    #define LV_DRAW_SW_ROTATE180_RGB565(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE270_RGB565
-    #define LV_DRAW_SW_ROTATE270_RGB565(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE90_L8
-    #define LV_DRAW_SW_ROTATE90_L8(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE180_L8
-    #define LV_DRAW_SW_ROTATE180_L8(...) LV_RESULT_INVALID
-#endif
-
-#ifndef LV_DRAW_SW_ROTATE270_L8
-    #define LV_DRAW_SW_ROTATE270_L8(...) LV_RESULT_INVALID
-#endif
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -101,53 +50,15 @@
     static void render_thread_cb(void * ptr);
 #endif
 
-static void execute_drawing(lv_draw_sw_unit_t * u);
+static void execute_drawing(lv_draw_task_t * t);
 
 static int32_t dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer);
 static int32_t evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task);
 static int32_t lv_draw_sw_delete(lv_draw_unit_t * draw_unit);
-
-#if LV_DRAW_SW_SUPPORT_ARGB8888
-static void rotate90_argb8888(const uint32_t * src, uint32_t * dst, int32_t src_width, int32_t src_height,
-                              int32_t src_stride,
-                              int32_t dst_stride);
-static void rotate180_argb8888(const uint32_t * src, uint32_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                               int32_t dest_stride);
-static void rotate270_argb8888(const uint32_t * src, uint32_t * dst, int32_t src_width, int32_t src_height,
-                               int32_t src_stride,
-                               int32_t dst_stride);
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB888
-static void rotate90_rgb888(const uint8_t * src, uint8_t * dst, int32_t src_width, int32_t src_height,
-                            int32_t src_stride,
-                            int32_t dst_stride);
-static void rotate180_rgb888(const uint8_t * src, uint8_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                             int32_t dest_stride);
-static void rotate270_rgb888(const uint8_t * src, uint8_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                             int32_t dst_stride);
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB565
-static void rotate90_rgb565(const uint16_t * src, uint16_t * dst, int32_t src_width, int32_t src_height,
-                            int32_t src_stride,
-                            int32_t dst_stride);
-static void rotate180_rgb565(const uint16_t * src, uint16_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                             int32_t dest_stride);
-static void rotate270_rgb565(const uint16_t * src, uint16_t * dst, int32_t src_width, int32_t src_height,
-                             int32_t src_stride,
-                             int32_t dst_stride);
+#if LV_USE_PARALLEL_DRAW_DEBUG
+    static void parallel_debug_draw(lv_draw_task_t * t, uint32_t idx);
 #endif
 
-#if LV_DRAW_SW_SUPPORT_L8
-
-static void rotate90_l8(const uint8_t * src, uint8_t * dst, int32_t src_width, int32_t src_height,
-                        int32_t src_stride,
-                        int32_t dst_stride);
-static void rotate180_l8(const uint8_t * src, uint8_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                         int32_t dest_stride);
-static void rotate270_l8(const uint8_t * src, uint8_t * dst, int32_t src_width, int32_t src_height,
-                         int32_t src_stride,
-                         int32_t dst_stride);
-#endif
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -168,22 +79,37 @@ void lv_draw_sw_init(void)
     lv_draw_sw_mask_init();
 #endif
 
-    uint32_t i;
-    for(i = 0; i < LV_DRAW_SW_DRAW_UNIT_CNT; i++) {
-        lv_draw_sw_unit_t * draw_sw_unit = lv_draw_create_unit(sizeof(lv_draw_sw_unit_t));
-        draw_sw_unit->base_unit.dispatch_cb = dispatch;
-        draw_sw_unit->base_unit.evaluate_cb = evaluate;
-        draw_sw_unit->idx = i;
-        draw_sw_unit->base_unit.delete_cb = LV_USE_OS ? lv_draw_sw_delete : NULL;
+    lv_draw_sw_unit_t * draw_sw_unit = lv_draw_create_unit(sizeof(lv_draw_sw_unit_t));
+    draw_sw_unit->base_unit.dispatch_cb = dispatch;
+    draw_sw_unit->base_unit.evaluate_cb = evaluate;
+    draw_sw_unit->base_unit.delete_cb = LV_USE_OS ? lv_draw_sw_delete : NULL;
+#if LV_USE_DRAW_ARM2D_SYNC
+    draw_sw_unit->base_unit.name = "SW_ARM2D";
+#else
+    draw_sw_unit->base_unit.name = "SW";
+#endif
 
 #if LV_USE_OS
-        lv_thread_init(&draw_sw_unit->thread, LV_THREAD_PRIO_HIGH, render_thread_cb, LV_DRAW_THREAD_STACK_SIZE, draw_sw_unit);
-#endif
+    uint32_t i;
+    for(i = 0; i < LV_DRAW_SW_DRAW_UNIT_CNT; i++) {
+        lv_draw_sw_thread_dsc_t * thread_dsc = &draw_sw_unit->thread_dscs[i];
+        thread_dsc->idx = i;
+        thread_dsc->draw_unit = (void *) draw_sw_unit;
+        lv_thread_init(&thread_dsc->thread, "swdraw", LV_DRAW_THREAD_PRIO, render_thread_cb,
+                       LV_DRAW_THREAD_STACK_SIZE, thread_dsc);
     }
+#endif
 
 #if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
-    tvg_engine_init(TVG_ENGINE_SW, 0);
+    if(LV_DRAW_SW_DRAW_UNIT_CNT > 1) {
+        tvg_engine_init(TVG_ENGINE_SW, LV_DRAW_SW_DRAW_UNIT_CNT);
+    }
+    else {
+        tvg_engine_init(TVG_ENGINE_SW, 0);
+    }
 #endif
+
+    lv_ll_init(&LV_GLOBAL_DEFAULT()->draw_sw_blend_handler_ll, sizeof(lv_draw_sw_custom_blend_handler_t));
 }
 
 void lv_draw_sw_deinit(void)
@@ -202,192 +128,82 @@ static int32_t lv_draw_sw_delete(lv_draw_unit_t * draw_unit)
 #if LV_USE_OS
     lv_draw_sw_unit_t * draw_sw_unit = (lv_draw_sw_unit_t *) draw_unit;
 
-    LV_LOG_INFO("cancel software rendering thread");
-    draw_sw_unit->exit_status = true;
+    uint32_t i;
+    for(i = 0; i < LV_DRAW_SW_DRAW_UNIT_CNT; i++) {
+        lv_draw_sw_thread_dsc_t * thread_dsc = &draw_sw_unit->thread_dscs[i];
 
-    if(draw_sw_unit->inited) {
-        lv_thread_sync_signal(&draw_sw_unit->sync);
+        LV_LOG_INFO("cancel software rendering thread");
+        thread_dsc->exit_status = true;
+
+        if(thread_dsc->inited) {
+            lv_thread_sync_signal(&thread_dsc->sync);
+        }
+        lv_thread_delete(&thread_dsc->thread);
     }
 
-    return lv_thread_delete(&draw_sw_unit->thread);
+    return 0;
 #else
     LV_UNUSED(draw_unit);
     return 0;
 #endif
 }
 
-void lv_draw_sw_rgb565_swap(void * buf, uint32_t buf_size_px)
+bool lv_draw_sw_register_blend_handler(lv_draw_sw_custom_blend_handler_t * handler)
 {
-    if(LV_DRAW_SW_RGB565_SWAP(buf, buf_size_px) == LV_RESULT_OK) return;
+    lv_draw_sw_custom_blend_handler_t * existing_handler = NULL;
+    lv_draw_sw_custom_blend_handler_t * new_handler = NULL;
 
-    uint32_t u32_cnt = buf_size_px / 2;
-    uint16_t * buf16 = buf;
-    uint32_t * buf32 = buf;
-
-    while(u32_cnt >= 8) {
-        buf32[0] = ((buf32[0] & 0xff00ff00) >> 8) | ((buf32[0] & 0x00ff00ff) << 8);
-        buf32[1] = ((buf32[1] & 0xff00ff00) >> 8) | ((buf32[1] & 0x00ff00ff) << 8);
-        buf32[2] = ((buf32[2] & 0xff00ff00) >> 8) | ((buf32[2] & 0x00ff00ff) << 8);
-        buf32[3] = ((buf32[3] & 0xff00ff00) >> 8) | ((buf32[3] & 0x00ff00ff) << 8);
-        buf32[4] = ((buf32[4] & 0xff00ff00) >> 8) | ((buf32[4] & 0x00ff00ff) << 8);
-        buf32[5] = ((buf32[5] & 0xff00ff00) >> 8) | ((buf32[5] & 0x00ff00ff) << 8);
-        buf32[6] = ((buf32[6] & 0xff00ff00) >> 8) | ((buf32[6] & 0x00ff00ff) << 8);
-        buf32[7] = ((buf32[7] & 0xff00ff00) >> 8) | ((buf32[7] & 0x00ff00ff) << 8);
-        buf32 += 8;
-        u32_cnt -= 8;
+    // Check if a handler is already registered for the color format
+    LV_LL_READ(&LV_GLOBAL_DEFAULT()->draw_sw_blend_handler_ll, existing_handler) {
+        if(existing_handler->dest_cf == handler->dest_cf) {
+            new_handler = existing_handler;
+            break;
+        }
     }
 
-    while(u32_cnt) {
-        *buf32 = ((*buf32 & 0xff00ff00) >> 8) | ((*buf32 & 0x00ff00ff) << 8);
-        buf32++;
-        u32_cnt--;
+    if(new_handler == NULL) {
+        new_handler = lv_ll_ins_head(&LV_GLOBAL_DEFAULT()->draw_sw_blend_handler_ll);
+        if(new_handler == NULL) {
+            LV_ASSERT_MALLOC(new_handler);
+            return false;
+        }
     }
 
-    if(buf_size_px & 0x1) {
-        uint32_t e = buf_size_px - 1;
-        buf16[e] = ((buf16[e] & 0xff00) >> 8) | ((buf16[e] & 0x00ff) << 8);
-    }
-
+    lv_memcpy(new_handler, handler, sizeof(lv_draw_sw_custom_blend_handler_t));
+    return true;
 }
 
-void lv_draw_sw_i1_invert(void * buf, uint32_t buf_size)
+bool lv_draw_sw_unregister_blend_handler(lv_color_format_t dest_cf)
 {
-    if(buf == NULL) return;
+    lv_draw_sw_custom_blend_handler_t * handler;
 
-    uint8_t * byte_buf = (uint8_t *)buf;
-    uint32_t i;
-
-    /*Make the buffer aligned*/
-    while(((uintptr_t)(byte_buf) & (sizeof(int) - 1)) && buf_size > 0) {
-        *byte_buf = ~(*byte_buf);
-        byte_buf++;
-        buf_size--;
-    }
-
-    if(buf_size >= sizeof(uint32_t)) {
-        uint32_t * aligned_addr = (uint32_t *)byte_buf;
-        uint32_t word_count = buf_size / 4;
-
-        for(i = 0; i < word_count; ++i) {
-            aligned_addr[i] = ~aligned_addr[i];
+    LV_LL_READ(&LV_GLOBAL_DEFAULT()->draw_sw_blend_handler_ll, handler) {
+        if(handler->dest_cf == dest_cf) {
+            lv_ll_remove(&LV_GLOBAL_DEFAULT()->draw_sw_blend_handler_ll, handler);
+            lv_free(handler);
+            return true;
         }
-
-        byte_buf = (uint8_t *)(aligned_addr + word_count);
-        buf_size = buf_size % sizeof(uint32_t);
     }
 
-    for(i = 0; i < buf_size; ++i) {
-        byte_buf[i] = ~byte_buf[i];
-    }
+    return false;
 }
 
-void lv_draw_sw_rotate(const void * src, void * dest, int32_t src_width, int32_t src_height, int32_t src_stride,
-                       int32_t dest_stride, lv_display_rotation_t rotation, lv_color_format_t color_format)
+lv_draw_sw_blend_handler_t lv_draw_sw_get_blend_handler(lv_color_format_t dest_cf)
 {
-    if(rotation == LV_DISPLAY_ROTATION_90) {
-        switch(color_format) {
-#if LV_DRAW_SW_SUPPORT_L8
-            case LV_COLOR_FORMAT_L8:
-                rotate90_l8(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB565
-            case LV_COLOR_FORMAT_RGB565:
-                rotate90_rgb565(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB888
-            case LV_COLOR_FORMAT_RGB888:
-                rotate90_rgb888(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_ARGB8888 || LV_DRAW_SW_SUPPORT_XRGB8888
-            case LV_COLOR_FORMAT_XRGB8888:
-            case LV_COLOR_FORMAT_ARGB8888:
-                rotate90_argb8888(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-            default:
-                break;
-        }
+    lv_draw_sw_custom_blend_handler_t * handler;
 
-        return;
+    LV_LL_READ(&LV_GLOBAL_DEFAULT()->draw_sw_blend_handler_ll, handler) {
+        if(handler->dest_cf == dest_cf) {
+            return handler->handler;
+        }
     }
 
-    if(rotation == LV_DISPLAY_ROTATION_180) {
-        switch(color_format) {
-#if LV_DRAW_SW_SUPPORT_L8
-            case LV_COLOR_FORMAT_L8:
-                rotate180_l8(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB565
-            case LV_COLOR_FORMAT_RGB565:
-                rotate180_rgb565(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB888
-            case LV_COLOR_FORMAT_RGB888:
-                rotate180_rgb888(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_ARGB8888 || LV_DRAW_SW_SUPPORT_XRGB8888
-            case LV_COLOR_FORMAT_XRGB8888:
-            case LV_COLOR_FORMAT_ARGB8888:
-                rotate180_argb8888(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-            default:
-                break;
-        }
-
-        return;
-    }
-
-    if(rotation == LV_DISPLAY_ROTATION_270) {
-        switch(color_format) {
-#if LV_DRAW_SW_SUPPORT_L8
-            case LV_COLOR_FORMAT_L8:
-                rotate270_l8(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB565
-            case LV_COLOR_FORMAT_RGB565:
-                rotate270_rgb565(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_RGB888
-            case LV_COLOR_FORMAT_RGB888:
-                rotate270_rgb888(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-#if LV_DRAW_SW_SUPPORT_ARGB8888 || LV_DRAW_SW_SUPPORT_XRGB8888
-            case LV_COLOR_FORMAT_XRGB8888:
-            case LV_COLOR_FORMAT_ARGB8888:
-                rotate270_argb8888(src, dest, src_width, src_height, src_stride, dest_stride);
-                break;
-#endif
-            default:
-                break;
-        }
-
-        return;
-    }
+    return NULL;
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
-static inline void execute_drawing_unit(lv_draw_sw_unit_t * u)
-{
-    execute_drawing(u);
-
-    u->task_act->state = LV_DRAW_TASK_STATE_READY;
-    u->task_act = NULL;
-
-    /*The draw unit is free now. Request a new dispatching as it can get a new task*/
-    lv_draw_dispatch_request();
-}
 
 static int32_t evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
 {
@@ -403,18 +219,22 @@ static int32_t evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
                     return 0;
                 }
 
-                bool transformed = draw_dsc->rotation != 0 || draw_dsc->scale_x != LV_SCALE_NONE ||
-                                   draw_dsc->scale_y != LV_SCALE_NONE ? true : false;
-
                 bool masked = draw_dsc->bitmap_mask_src != NULL;
-                if(masked && transformed)  return 0;
 
                 lv_color_format_t cf = draw_dsc->header.cf;
                 if(masked && (cf == LV_COLOR_FORMAT_A8 || cf == LV_COLOR_FORMAT_RGB565A8)) {
                     return 0;
                 }
+
+                if(cf >= LV_COLOR_FORMAT_PROPRIETARY_START) {
+                    return 0;
+                }
             }
             break;
+#if LV_USE_3DTEXTURE
+        case LV_DRAW_TASK_TYPE_3D:
+            return 0;
+#endif
         default:
             break;
     }
@@ -429,141 +249,218 @@ static int32_t evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
 
 static int32_t dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
     lv_draw_sw_unit_t * draw_sw_unit = (lv_draw_sw_unit_t *) draw_unit;
 
+#if LV_USE_OS
+    uint32_t i;
+    uint32_t taken_cnt = 0;
+    /* All idle (couldn't take any tasks): return LV_DRAW_UNIT_IDLE;
+     * All busy: return 0; as 0 tasks were taken
+     * Otherwise return taken_cnt;
+     */
+
+    /*If at least one is busy, it's not all idle*/
+    bool all_idle = true;
+    for(i = 0; i < LV_DRAW_SW_DRAW_UNIT_CNT; i++) {
+        if(draw_sw_unit->thread_dscs[i].task_act) {
+            all_idle = false;
+            break;
+        }
+    }
+
+    lv_draw_task_t * t = NULL;
+    for(i = 0; i < LV_DRAW_SW_DRAW_UNIT_CNT; i++) {
+        lv_draw_sw_thread_dsc_t * thread_dsc = &draw_sw_unit->thread_dscs[i];
+
+        /*Do nothing if busy*/
+        if(thread_dsc->task_act) continue;
+
+        /*Find an available task. Start from the previously taken task.*/
+        t = lv_draw_get_next_available_task(layer, t, DRAW_UNIT_ID_SW);
+
+        /*If there is not available task don't try other threads as there won't be available
+         *tasks for then either*/
+        if(t == NULL) {
+            LV_PROFILER_DRAW_END;
+            if(all_idle) return LV_DRAW_UNIT_IDLE;  /*Couldn't start rendering*/
+            else return taken_cnt;
+        }
+
+        /*Allocate a buffer if not done yet.*/
+        void * buf = lv_draw_layer_alloc_buf(layer);
+        /*Do not return is failed. The other thread might already have a buffer can do something. */
+        if(buf == NULL) continue;
+
+        /*Take the task*/
+        all_idle = false;
+        taken_cnt++;
+        t->state = LV_DRAW_TASK_STATE_IN_PROGRESS;
+        thread_dsc->task_act = t;
+
+        /*Let the render thread work*/
+        if(thread_dsc->inited) lv_thread_sync_signal(&thread_dsc->sync);
+    }
+
+    if(all_idle) return LV_DRAW_UNIT_IDLE;  /*Couldn't start rendering*/
+    else return taken_cnt;
+
+#else
     /*Return immediately if it's busy with draw task*/
     if(draw_sw_unit->task_act) {
-        LV_PROFILER_END;
+        LV_PROFILER_DRAW_END;
         return 0;
     }
 
     lv_draw_task_t * t = NULL;
-    t = lv_draw_get_next_available_task(layer, NULL, DRAW_UNIT_ID_SW);
+    t = lv_draw_get_available_task(layer, NULL, DRAW_UNIT_ID_SW);
     if(t == NULL) {
-        LV_PROFILER_END;
+        LV_PROFILER_DRAW_END;
         return LV_DRAW_UNIT_IDLE;  /*Couldn't start rendering*/
     }
 
     void * buf = lv_draw_layer_alloc_buf(layer);
     if(buf == NULL) {
-        LV_PROFILER_END;
+        LV_PROFILER_DRAW_END;
         return LV_DRAW_UNIT_IDLE;  /*Couldn't start rendering*/
     }
 
     t->state = LV_DRAW_TASK_STATE_IN_PROGRESS;
-    draw_sw_unit->base_unit.target_layer = layer;
-    draw_sw_unit->base_unit.clip_area = &t->clip_area;
     draw_sw_unit->task_act = t;
 
-#if LV_USE_OS
-    /*Let the render thread work*/
-    if(draw_sw_unit->inited) lv_thread_sync_signal(&draw_sw_unit->sync);
-#else
-    execute_drawing_unit(draw_sw_unit);
-#endif
-    LV_PROFILER_END;
+    execute_drawing(t);
+    draw_sw_unit->task_act->state = LV_DRAW_TASK_STATE_FINISHED;
+    draw_sw_unit->task_act = NULL;
+
+    /*The draw unit is free now. Request a new dispatching as it can get a new task*/
+    lv_draw_dispatch_request();
+
+    LV_PROFILER_DRAW_END;
     return 1;
+#endif
+
 }
 
 #if LV_USE_OS
 static void render_thread_cb(void * ptr)
 {
-    lv_draw_sw_unit_t * u = ptr;
+    lv_draw_sw_thread_dsc_t * thread_dsc = ptr;
 
-    lv_thread_sync_init(&u->sync);
-    u->inited = true;
+    lv_thread_sync_init(&thread_dsc->sync);
+    thread_dsc->inited = true;
 
     while(1) {
-        while(u->task_act == NULL) {
-            if(u->exit_status) {
+        while(thread_dsc->task_act == NULL) {
+            if(thread_dsc->exit_status) {
                 break;
             }
-            lv_thread_sync_wait(&u->sync);
+            lv_thread_sync_wait(&thread_dsc->sync);
         }
 
-        if(u->exit_status) {
+        if(thread_dsc->exit_status) {
             LV_LOG_INFO("ready to exit software rendering thread");
             break;
         }
 
-        execute_drawing_unit(u);
+        execute_drawing(thread_dsc->task_act);
+#if LV_USE_PARALLEL_DRAW_DEBUG
+        parallel_debug_draw(thread_dsc->task_act, thread_dsc->idx);
+#endif
+        thread_dsc->task_act->state = LV_DRAW_TASK_STATE_FINISHED;
+        thread_dsc->task_act = NULL;
+
+        /*The draw unit is free now. Request a new dispatching as it can get a new task*/
+        lv_draw_dispatch_request();
+
     }
 
-    u->inited = false;
-    lv_thread_sync_delete(&u->sync);
+    thread_dsc->inited = false;
+    lv_thread_sync_delete(&thread_dsc->sync);
     LV_LOG_INFO("exit software rendering thread");
 }
 #endif
 
-static void execute_drawing(lv_draw_sw_unit_t * u)
+static void execute_drawing(lv_draw_task_t * t)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
     /*Render the draw task*/
-    lv_draw_task_t * t = u->task_act;
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_FILL:
-            lv_draw_sw_fill((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_fill(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_BORDER:
-            lv_draw_sw_border((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_border(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_BOX_SHADOW:
-            lv_draw_sw_box_shadow((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_box_shadow(t, t->draw_dsc, &t->area);
+            break;
+        case LV_DRAW_TASK_TYPE_LETTER:
+            lv_draw_sw_letter(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_LABEL:
-            lv_draw_sw_label((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_label(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_IMAGE:
-            lv_draw_sw_image((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_image(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_ARC:
-            lv_draw_sw_arc((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_arc(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_LINE:
-            lv_draw_sw_line((lv_draw_unit_t *)u, t->draw_dsc);
+            lv_draw_sw_line(t, t->draw_dsc);
             break;
         case LV_DRAW_TASK_TYPE_TRIANGLE:
-            lv_draw_sw_triangle((lv_draw_unit_t *)u, t->draw_dsc);
+            lv_draw_sw_triangle(t, t->draw_dsc);
             break;
         case LV_DRAW_TASK_TYPE_LAYER:
-            lv_draw_sw_layer((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_layer(t, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
-            lv_draw_sw_mask_rect((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
+            lv_draw_sw_mask_rect(t, t->draw_dsc);
             break;
 #if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
         case LV_DRAW_TASK_TYPE_VECTOR:
-            lv_draw_sw_vector((lv_draw_unit_t *)u, t->draw_dsc);
+            lv_draw_sw_vector(t, t->draw_dsc);
             break;
 #endif
         default:
             break;
     }
 
+
+    LV_PROFILER_DRAW_END;
+}
+
 #if LV_USE_PARALLEL_DRAW_DEBUG
+static void parallel_debug_draw(lv_draw_task_t * t, uint32_t idx)
+{
     /*Layers manage it for themselves*/
     if(t->type != LV_DRAW_TASK_TYPE_LAYER) {
         lv_area_t draw_area;
-        if(!lv_area_intersect(&draw_area, &t->area, u->base_unit.clip_area)) return;
+        lv_text_attributes_t attributes = {0};
 
-        int32_t idx = 0;
-        lv_draw_unit_t * draw_unit_tmp = _draw_info.unit_head;
-        while(draw_unit_tmp != (lv_draw_unit_t *)u) {
-            draw_unit_tmp = draw_unit_tmp->next;
-            idx++;
-        }
-        lv_draw_rect_dsc_t rect_dsc;
-        lv_draw_rect_dsc_init(&rect_dsc);
-        rect_dsc.bg_color = lv_palette_main(idx % LV_PALETTE_LAST);
-        rect_dsc.border_color = rect_dsc.bg_color;
-        rect_dsc.bg_opa = LV_OPA_10;
-        rect_dsc.border_opa = LV_OPA_80;
-        rect_dsc.border_width = 1;
-        lv_draw_sw_fill((lv_draw_unit_t *)u, &rect_dsc, &draw_area);
+        attributes.text_flags = LV_TEXT_FLAG_NONE;
+        attributes.line_space = 0;
+        attributes.letter_space = 0;
+        attributes.max_width = 100;
+
+        if(!lv_area_intersect(&draw_area, &t->area, &t->clip_area)) return;
+
+        lv_draw_fill_dsc_t fill_dsc;
+        lv_draw_fill_dsc_init(&fill_dsc);
+        fill_dsc.color = lv_palette_main(idx % LV_PALETTE_LAST);
+        fill_dsc.opa = LV_OPA_10;
+        lv_draw_sw_fill(t, &fill_dsc, &draw_area);
+
+        lv_draw_border_dsc_t border_dsc;
+        lv_draw_border_dsc_init(&border_dsc);
+        border_dsc.color = lv_palette_main(idx % LV_PALETTE_LAST);
+        border_dsc.opa = LV_OPA_60;
+        border_dsc.width = 1;
+        lv_draw_sw_border(t, &border_dsc, &draw_area);
 
         lv_point_t txt_size;
-        lv_text_get_size(&txt_size, "W", LV_FONT_DEFAULT, 0, 0, 100, LV_TEXT_FLAG_NONE);
+        lv_text_get_size_attributes(&txt_size, "W", LV_FONT_DEFAULT, &attributes);
 
         lv_area_t txt_area;
         txt_area.x1 = draw_area.x1;
@@ -571,9 +468,9 @@ static void execute_drawing(lv_draw_sw_unit_t * u)
         txt_area.x2 = draw_area.x1 + txt_size.x - 1;
         txt_area.y2 = draw_area.y1 + txt_size.y - 1;
 
-        lv_draw_rect_dsc_init(&rect_dsc);
-        rect_dsc.bg_color = lv_color_white();
-        lv_draw_sw_fill((lv_draw_unit_t *)u, &rect_dsc, &txt_area);
+        lv_draw_fill_dsc_init(&fill_dsc);
+        fill_dsc.color = lv_color_white();
+        lv_draw_sw_fill(t, &fill_dsc, &txt_area);
 
         char buf[8];
         lv_snprintf(buf, sizeof(buf), "%d", idx);
@@ -581,255 +478,10 @@ static void execute_drawing(lv_draw_sw_unit_t * u)
         lv_draw_label_dsc_init(&label_dsc);
         label_dsc.color = lv_color_black();
         label_dsc.text = buf;
-        lv_draw_sw_label((lv_draw_unit_t *)u, &label_dsc, &txt_area);
-    }
-#endif
-    LV_PROFILER_END;
-}
-
-#if LV_DRAW_SW_SUPPORT_ARGB8888
-
-static void rotate270_argb8888(const uint32_t * src, uint32_t * dst, int32_t src_width, int32_t src_height,
-                               int32_t src_stride,
-                               int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE90_ARGB8888(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    src_stride /= sizeof(uint32_t);
-    dst_stride /= sizeof(uint32_t);
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        int32_t dstIndex = x * dst_stride;
-        int32_t srcIndex = x;
-        for(int32_t y = 0; y < src_height; ++y) {
-            dst[dstIndex + (src_height - y - 1)] = src[srcIndex];
-            srcIndex += src_stride;
-        }
+        lv_draw_sw_label(t, &label_dsc, &txt_area);
     }
 }
-
-static void rotate180_argb8888(const uint32_t * src, uint32_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                               int32_t dest_stride)
-{
-    LV_UNUSED(dest_stride);
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE180_ARGB8888(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    src_stride /= sizeof(uint32_t);
-
-    for(int32_t y = 0; y < height; ++y) {
-        int32_t dstIndex = (height - y - 1) * src_stride;
-        int32_t srcIndex = y * src_stride;
-        for(int32_t x = 0; x < width; ++x) {
-            dst[dstIndex + width - x - 1] = src[srcIndex + x];
-        }
-    }
-}
-
-static void rotate90_argb8888(const uint32_t * src, uint32_t * dst, int32_t src_width, int32_t src_height,
-                              int32_t src_stride, int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE270_ARGB8888(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    src_stride /= sizeof(uint32_t);
-    dst_stride /= sizeof(uint32_t);
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        int32_t dstIndex = (src_width - x - 1);
-        int32_t srcIndex = x;
-        for(int32_t y = 0; y < src_height; ++y) {
-            dst[dstIndex * dst_stride + y] = src[srcIndex];
-            srcIndex += src_stride;
-        }
-    }
-}
-
 #endif
 
-#if LV_DRAW_SW_SUPPORT_RGB888
-
-static void rotate90_rgb888(const uint8_t * src, uint8_t * dst, int32_t src_width, int32_t src_height,
-                            int32_t src_stride,
-                            int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE90_RGB888(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        for(int32_t y = 0; y < src_height; ++y) {
-            int32_t srcIndex = y * src_stride + x * 3;
-            int32_t dstIndex = (src_width - x - 1) * dst_stride + y * 3;
-            dst[dstIndex] = src[srcIndex];       /*Red*/
-            dst[dstIndex + 1] = src[srcIndex + 1]; /*Green*/
-            dst[dstIndex + 2] = src[srcIndex + 2]; /*Blue*/
-        }
-    }
-}
-
-static void rotate180_rgb888(const uint8_t * src, uint8_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                             int32_t dest_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE180_RGB888(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    for(int32_t y = 0; y < height; ++y) {
-        for(int32_t x = 0; x < width; ++x) {
-            int32_t srcIndex = y * src_stride + x * 3;
-            int32_t dstIndex = (height - y - 1) * dest_stride + (width - x - 1) * 3;
-            dst[dstIndex] = src[srcIndex];
-            dst[dstIndex + 1] = src[srcIndex + 1];
-            dst[dstIndex + 2] = src[srcIndex + 2];
-        }
-    }
-}
-
-static void rotate270_rgb888(const uint8_t * src, uint8_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                             int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE270_RGB888(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    for(int32_t x = 0; x < width; ++x) {
-        for(int32_t y = 0; y < height; ++y) {
-            int32_t srcIndex = y * src_stride + x * 3;
-            int32_t dstIndex = x * dst_stride + (height - y - 1) * 3;
-            dst[dstIndex] = src[srcIndex];       /*Red*/
-            dst[dstIndex + 1] = src[srcIndex + 1]; /*Green*/
-            dst[dstIndex + 2] = src[srcIndex + 2]; /*Blue*/
-        }
-    }
-}
-
-#endif
-
-#if LV_DRAW_SW_SUPPORT_RGB565
-
-static void rotate270_rgb565(const uint16_t * src, uint16_t * dst, int32_t src_width, int32_t src_height,
-                             int32_t src_stride,
-                             int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE90_RGB565(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    src_stride /= sizeof(uint16_t);
-    dst_stride /= sizeof(uint16_t);
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        int32_t dstIndex = x * dst_stride;
-        int32_t srcIndex = x;
-        for(int32_t y = 0; y < src_height; ++y) {
-            dst[dstIndex + (src_height - y - 1)] = src[srcIndex];
-            srcIndex += src_stride;
-        }
-    }
-}
-
-static void rotate180_rgb565(const uint16_t * src, uint16_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                             int32_t dest_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE180_RGB565(src, dst, width, height, src_stride)) {
-        return ;
-    }
-
-    src_stride /= sizeof(uint16_t);
-    dest_stride /= sizeof(uint16_t);
-
-    for(int32_t y = 0; y < height; ++y) {
-        int32_t dstIndex = (height - y - 1) * dest_stride;
-        int32_t srcIndex = y * src_stride;
-        for(int32_t x = 0; x < width; ++x) {
-            dst[dstIndex + width - x - 1] = src[srcIndex + x];
-        }
-    }
-}
-
-static void rotate90_rgb565(const uint16_t * src, uint16_t * dst, int32_t src_width, int32_t src_height,
-                            int32_t src_stride,
-                            int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE270_RGB565(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    src_stride /= sizeof(uint16_t);
-    dst_stride /= sizeof(uint16_t);
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        int32_t dstIndex = (src_width - x - 1);
-        int32_t srcIndex = x;
-        for(int32_t y = 0; y < src_height; ++y) {
-            dst[dstIndex * dst_stride + y] = src[srcIndex];
-            srcIndex += src_stride;
-        }
-    }
-}
-
-#endif
-
-
-#if LV_DRAW_SW_SUPPORT_L8
-
-static void rotate90_l8(const uint8_t * src, uint8_t * dst, int32_t src_width, int32_t src_height,
-                        int32_t src_stride,
-                        int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE270_L8(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        int32_t dstIndex = (src_width - x - 1);
-        int32_t srcIndex = x;
-        for(int32_t y = 0; y < src_height; ++y) {
-            dst[dstIndex * dst_stride + y] = src[srcIndex];
-            srcIndex += src_stride;
-        }
-    }
-}
-
-static void rotate180_l8(const uint8_t * src, uint8_t * dst, int32_t width, int32_t height, int32_t src_stride,
-                         int32_t dest_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE180_L8(src, dst, width, height, src_stride)) {
-        return ;
-    }
-
-    for(int32_t y = 0; y < height; ++y) {
-        int32_t dstIndex = (height - y - 1) * dest_stride;
-        int32_t srcIndex = y * src_stride;
-        for(int32_t x = 0; x < width; ++x) {
-            dst[dstIndex + width - x - 1] = src[srcIndex + x];
-        }
-    }
-}
-
-static void rotate270_l8(const uint8_t * src, uint8_t * dst, int32_t src_width, int32_t src_height,
-                         int32_t src_stride,
-                         int32_t dst_stride)
-{
-    if(LV_RESULT_OK == LV_DRAW_SW_ROTATE90_L8(src, dst, src_width, src_height, src_stride, dst_stride)) {
-        return ;
-    }
-
-    for(int32_t x = 0; x < src_width; ++x) {
-        int32_t dstIndex = x * dst_stride;
-        int32_t srcIndex = x;
-        for(int32_t y = 0; y < src_height; ++y) {
-            dst[dstIndex + (src_height - y - 1)] = src[srcIndex];
-            srcIndex += src_stride;
-        }
-    }
-}
-
-#endif
 
 #endif /*LV_USE_DRAW_SW*/

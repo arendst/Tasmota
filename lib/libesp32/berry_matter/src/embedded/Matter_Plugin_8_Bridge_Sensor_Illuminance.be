@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Illuminance.be - implements base class for a Light/Illuminance Sensor via HTTP to Tasmota
+# Matter_Plugin_Bridge_Sensor_Illuminance.be - implements Light/Illuminance Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -16,6 +16,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+#################################################################################
+# Matter 1.4.1 Bridge Variant - HTTP Remote Illuminance Sensor
+#################################################################################
+# This is a BRIDGE variant that inherits from Matter_Plugin_Sensor_Illuminance.
+# It communicates with a remote Tasmota device via HTTP to read light levels.
+#
+# DEVICE TYPE: Light Sensor (0x0106)
+# See Matter_Plugin_3_Sensor_Illuminance.be for complete Matter 1.4.1 specifications
+# including Illuminance Measurement cluster (0x0400) details.
+#
+# BRIDGE BEHAVIOR:
+# - Polls remote Tasmota device via HTTP using UPDATE_CMD
+# - Parses JSON response to extract illuminance value
+# - Converts illuminance to logarithmic scale (10000 * log10(lux) + 1)
+# - Inherits all cluster implementations from base class
+#
+# CONFIGURATION:
+# - TYPE: "http_illuminance" - Plugin identifier in Matter configuration
+# - BRIDGE: true - Marks this as a bridged device
+# - Requires endpoint configuration with remote device URL
+#################################################################################
 
 import matter
 

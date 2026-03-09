@@ -21,7 +21,7 @@ class Leds_animation_UI
   def web_add_button()
     import webserver
     webserver.content_send(
-      "<form id=but_part_mgr style='display: block;' action='leds_anim' method='get'><button>Leds animation</button></form><p></p>")
+      "<p></p><form id=but_part_mgr style='display: block;' action='leds_anim' method='get'><button>Leds animation</button></form>")
   end
 
   #######################################################################

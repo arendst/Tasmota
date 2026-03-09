@@ -179,7 +179,8 @@ typedef struct {
  * @param ver_res       vertical resolution
  * @param flags         default configuration settings (mirror, RGB ordering, etc.)
  * @param send_cmd      platform-dependent function to send a command to the LCD controller (usually uses polling transfer)
- * @param send_color    platform-dependent function to send pixel data to the LCD controller (usually uses DMA transfer: must implement a 'ready' callback)
+ * @param send_color    platform-dependent function to send pixel data to the LCD controller (usually uses DMA transfer).
+ *                      `lv_display_flush_ready` must be called after the transfer has finished.
  * @return              pointer to the created display
  */
 lv_display_t * lv_lcd_generic_mipi_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_t flags,
@@ -232,10 +233,11 @@ void lv_lcd_generic_mipi_send_cmd_list(lv_display_t * disp, const uint8_t * cmd_
  *      MACROS
  **********************/
 
+
+#endif /*LV_USE_GENERIC_MIPI*/
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
-#endif /*LV_USE_GENERIC_MIPI*/
-
-#endif /* LV_LCD_GENERIC_MIPI_H */
+#endif /*LV_LCD_GENERIC_MIPI_H*/

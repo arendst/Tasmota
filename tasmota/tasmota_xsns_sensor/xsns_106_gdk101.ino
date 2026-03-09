@@ -256,10 +256,11 @@ bool Xsns106(uint32_t function) {
 
   bool result = false;
 
-  if (FUNC_INIT == function) {
-    Gdk101Detect();
-  }
-  else if (Gdk.ready) {
+  if (!Gdk.ready) {
+    if ((TasmotaGlobal.uptime < 20) && (FUNC_EVERY_SECOND == function)) {
+      Gdk101Detect();  // GDK101 power on ready can take 8 seconds so try every second for up to 20 seconds
+    }
+  } else {
     switch (function) {
       case FUNC_EVERY_SECOND:
         Gdk101EverySecond();

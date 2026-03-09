@@ -32,7 +32,7 @@ extern "C" {
 LV_EXPORT_CONST_INT(LV_DROPDOWN_POS_LAST);
 
 #if LV_USE_OBJ_PROPERTY
-enum {
+enum _lv_property_dropdown_id_t {
     LV_PROPERTY_ID(DROPDOWN, TEXT,                LV_PROPERTY_TYPE_TEXT,  0),
     LV_PROPERTY_ID(DROPDOWN, OPTIONS,             LV_PROPERTY_TYPE_TEXT,  1),
     LV_PROPERTY_ID(DROPDOWN, OPTION_COUNT,        LV_PROPERTY_TYPE_INT,   2),
@@ -232,6 +232,17 @@ void lv_dropdown_close(lv_obj_t * obj);
  * @return          true if the list os opened
  */
 bool lv_dropdown_is_open(lv_obj_t * obj);
+
+
+#if LV_USE_OBSERVER
+/**
+ * Bind an integer Subject to a Dropdown's value.
+ * @param obj       pointer to Dropdown
+ * @param subject   pointer to Subject
+ * @return          pointer to newly-created Observer
+ */
+lv_observer_t * lv_dropdown_bind_value(lv_obj_t * obj, lv_subject_t * subject);
+#endif
 
 /**********************
  *      MACROS

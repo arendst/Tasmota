@@ -17,6 +17,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+#################################################################################
+# Matter 1.4.1 Bridge Variant - On/Off Plug-in Unit via HTTP
+#################################################################################
+# INHERITS FROM: Matter_Plugin_Bridge_Light0 → Matter_Plugin_Light0
+# VARIANT TYPE: Bridge (Remote HTTP Device)
+#
+# DEVICE TYPE: On/Off Plug-in Unit (0x010A) - See Matter_Plugin_3_OnOff.be
+# CLUSTERS: Same as On/Off Light - See base class documentation
+#
+# BRIDGE MODE SPECIFICS:
+# - TYPE: "http_relay" (JSON configuration identifier)
+# - DISPLAY_NAME: "Relay" (user-friendly name)
+# - Inherits HTTP bridge functionality from Matter_Plugin_Bridge_Light0
+# - Communicates with remote Tasmota relay via HTTP API
+# - Custom web display showing relay number and state
+#
+# CONFIGURATION:
+# - Requires "url" parameter for remote device address
+# - Requires "relay" parameter for relay number (1-based)
+# - Example: {"type":"http_relay","url":"192.168.1.100","relay":1}
+#
+# NOTES:
+# - Functionally identical to Bridge Light0 but with different device type
+# - Device type 0x010A (On/Off Plug-in Unit) vs 0x0100 (On/Off Light)
+# - See Matter_Plugin_3_OnOff.be for device type specification
+# - See Matter_Plugin_2_Light0.be for cluster specifications
+#################################################################################
+
 import matter
 
 # Matter plug-in for core behavior

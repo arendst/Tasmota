@@ -1,0 +1,187 @@
+<style>
+  .border {
+    display: none;
+    margin-top: 5px;
+    padding: 1px;
+    border: 1px solid var(--c_txt);
+    background-color: black;
+    box-sizing: border-box;
+  }
+
+  #canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+</style>
+<table style="width: 100%;">
+  <tbody>
+    <tr>
+      <td>
+        <button id="lvBtn">LVGL screen mirroring</button>
+        <div class="border">
+          <canvas id="canvas"></canvas>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<script>
+  const HEADER_BYTES = 10; // 10 bytes: 2(LV) + 2(x) + 2(y) + 2(w) + 2(h)
+  const RGB565_LUT = new Uint32Array(65536);
+
+  const lvBtn = document.getElementById('lvBtn');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext("2d");
+
+  let abortController = null;
+  let isStreaming = false;
+  let imageData, argb, sharedBuffer, buf8, buf16;
+
+  // RGB565 to ARGB8888 (Little Endian: AABBGGRR) using bit replication
+  for (let p = 0; p < 0x10000; p++) {
+    RGB565_LUT[p] = 0xFF000000 | // Alpha (opaque)
+      (((p & 0xF800) >>> 8) | ((p & 0xE000) >>> 13)) | // R 5-bit abcde -> abcdeabc
+      (((p & 0x07E0) << 5) | ((p & 0x0600) >>> 1)) |   // G 6-bit abcdef -> abcdefab
+      (((p & 0x001F) << 19) | ((p & 0x001C) << 14));   // B 5-bit abcde -> abcdeabc
+  }
+
+  async function startStream(url) {
+    const border = canvas.parentElement;
+    border.style.display = 'block';
+
+    abortController = new AbortController();
+    var width, height;
+
+    try {
+      const response = await fetch(url, { signal: abortController.signal });
+      const screenSize = response.headers.get('Screen-Size');
+      if (screenSize) {
+        [width, height] = screenSize.split('x').map(Number);
+        if (!imageData) {
+          const parentWidth = border.parentElement.clientWidth;
+          border.style.width = parentWidth + 'px';
+          border.style.height = (parentWidth * height / width) + 'px';
+
+          canvas.width = width;
+          canvas.height = height;
+
+          imageData = ctx.createImageData(width, height);
+          argb = new Uint32Array(imageData.data.buffer);
+          sharedBuffer = new ArrayBuffer(HEADER_BYTES + width * height * 2);
+          buf8 = new Uint8Array(sharedBuffer);
+          buf16 = new Uint16Array(sharedBuffer);
+        }
+        isStreaming = true;
+      } else {
+        console.error('No screen size header');
+        stopStream();
+        return;
+      }
+
+      const reader = response.body.getReader();
+
+      let bufEnd = 0;
+      let updateBytes, magic, x, y, w, h;
+      let sIdx, dIdx, dInc;
+      let rowBytes, rowsRemaining;
+
+      while (isStreaming) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buf8.set(value, bufEnd);
+        bufEnd += value.length;
+
+        if (!updateBytes) {
+          if (bufEnd < HEADER_BYTES) break;
+          [magic, x, y, w, h] = buf16
+          if (magic !== 0x4C56) { // LV
+            console.error("No magic found");
+            stopStream();
+            return;
+          }
+          updateBytes = HEADER_BYTES + w * h * 2;
+          sIdx = HEADER_BYTES / 2;
+          dIdx = x + y * width;
+          dInc = width - w;
+          rowBytes = w * 2;
+          rowsRemaining = h;
+        }
+
+        const pixelData = bufEnd - sIdx * 2;
+        const rowsToProcess = Math.min(Math.floor(pixelData / rowBytes), rowsRemaining);
+
+        if (rowsToProcess === 0) continue;
+
+        for (let r = 0; r < rowsToProcess; r++, dIdx += dInc) {
+          for (let c = 0; c < w; c++) {
+            argb[dIdx++] = RGB565_LUT[buf16[sIdx++]];
+          }
+        }
+
+        rowsRemaining -= rowsToProcess;
+
+        if (rowsRemaining > 0) continue;
+
+        ctx.putImageData(imageData, 0, 0, x, y, w, h);
+
+        bufEnd -= updateBytes;
+
+        if (bufEnd > 0) {
+          buf8.copyWithin(0, updateBytes, updateBytes + bufEnd);
+        }
+        updateBytes = undefined;
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error(err);
+    } finally {
+      stopStream();
+    }
+  }
+
+  function stopStream() {
+    canvas.parentElement.style.display = 'none';
+    isStreaming = false;
+    if (abortController) {
+      abortController.abort();
+    }
+    if (imageData) {
+      argb.fill(0);
+      ctx.putImageData(imageData, 0, 0);
+      imageData = undefined
+    }
+  }
+
+  function getCanvasCoordinates(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round((event.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.round((event.clientY - rect.top) * (canvas.height / rect.height));
+    return { x, y };
+  }
+
+  canvas.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const host = getHost();
+    fetch(`http://${host}/lvgl_touch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(getCanvasCoordinates(e)).toString()
+    }).catch(err => {
+      console.error("Touch event error:", err);
+    });
+  });
+
+  lvBtn.addEventListener('click', (e) => {
+    const host = getHost();
+    isStreaming ? stopStream() : startStream(`http://${host}:8881`);
+  });
+
+  function getHost() {
+    return window.location.hostname || 'localhost';
+  }
+</script>

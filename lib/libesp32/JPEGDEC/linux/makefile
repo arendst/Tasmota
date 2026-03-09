@@ -1,13 +1,15 @@
-CFLAGS=-c -Wall -O2 -I../src -D__LINUX__
+CFLAGS=-c -Wall -O2 -ggdb -D__LINUX__ -I../src
 LIBS = -lm -lpthread
 
-all: jpegdec
+all: libJPEGDEC.a
 
-jpegdec: main.o
-	$(CC) main.o $(LIBS) -o jpegdec
+libJPEGDEC.a: JPEGDEC.o
+	ar -rc libJPEGDEC.a JPEGDEC.o ;\
+	sudo cp libJPEGDEC.a /usr/local/lib ;\
+	sudo cp ../src/JPEGDEC.h /usr/local/include
 
-main.o: main.c ../src/JPEGDEC.h makefile
-	$(CC) $(CFLAGS) main.c
+JPEGDEC.o: ../src/JPEGDEC.cpp ../src/JPEGDEC.h ../src/jpeg.inl
+	$(CXX) $(CFLAGS) ../src/JPEGDEC.cpp
 
 clean:
-	rm *.o jpegdec
+	rm *.o libJPEGDEC.a

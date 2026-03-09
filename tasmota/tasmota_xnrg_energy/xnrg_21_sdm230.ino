@@ -192,8 +192,11 @@ void Sdm230SnsInit(void)
   uint8_t result = Sdm230Modbus->Begin(SDM230_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
-      Energy->phase_count = 1;
-      Energy->frequency_common = true;             // Use common frequency
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SDM: Serial UART%d"), Sdm230Modbus->getUart());
+#endif
+    Energy->phase_count = 1;
+    Energy->frequency_common = true;             // Use common frequency
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

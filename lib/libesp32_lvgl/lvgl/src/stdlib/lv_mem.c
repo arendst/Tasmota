@@ -116,6 +116,17 @@ void * lv_malloc_zeroed(size_t size)
     return alloc;
 }
 
+void * lv_calloc(size_t num, size_t size)
+{
+    LV_TRACE_MEM("allocating number of %zu each %zu bytes", num, size);
+    return lv_malloc_zeroed(num * size);
+}
+
+void * lv_zalloc(size_t size)
+{
+    return lv_malloc_zeroed(size);
+}
+
 void lv_free(void * data)
 {
     LV_TRACE_MEM("freeing %p", data);
@@ -123,6 +134,15 @@ void lv_free(void * data)
     if(data == NULL) return;
 
     lv_free_core(data);
+}
+
+void * lv_reallocf(void * data_p, size_t new_size)
+{
+    void * new = lv_realloc(data_p, new_size);
+    if(!new) {
+        lv_free(data_p);
+    }
+    return new;
 }
 
 void * lv_realloc(void * data_p, size_t new_size)

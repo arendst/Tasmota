@@ -201,8 +201,8 @@ struct THERMOSTAT {
   uint32_t time_ctr_checkpoint = 0;                                           // Time to finalize the control cycle within the PI strategy or to switch to PI from Rampup in seconds
   uint32_t time_ctr_changepoint = 0;                                          // Time until switching off output within the controller in seconds
   int32_t temp_measured_gradient = 0;                                         // Temperature measured gradient from sensor in thousandths of degrees per hour
-  int16_t temp_target_level = THERMOSTAT_TEMP_INIT;                           // Target level of the thermostat in tenths of degrees
-  int16_t temp_target_level_ctr = THERMOSTAT_TEMP_INIT;                       // Target level set for the controller
+  int16_t temp_target_level = THERMOSTAT_TEMP_INIT;                           // Target level of the thermostat in tenths of degrees celsius
+  int16_t temp_target_level_ctr = THERMOSTAT_TEMP_INIT;                       // Target level set for the controller in tenths of degrees celsius
   int16_t temp_pi_accum_error = 0;                                            // Temperature accumulated error for the PI controller in hundredths of degrees
   int16_t temp_pi_error = 0;                                                  // Temperature error for the PI controller in hundredths of degrees
   int32_t time_proportional_pi;                                               // Time proportional part of the PI controller
@@ -1402,7 +1402,7 @@ void ThermostatGetLocalSensor(uint8_t ctr_output) {
     JsonParserToken value_token = root[sensor_name].getObject()[PSTR(D_JSON_TEMPERATURE)];
     if (value_token.isNum()) {
       int16_t value = value_token.getFloat() * 10;
-      if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
+      if (Settings->flag.temperature_conversion) { // SetOption8 - Local Sensor provided in Fahrenheit
         value = ThermostatFahrenheitToCelsius(value, TEMP_CONV_ABSOLUTE);
       }
       if ( (value >= -1000)
@@ -2085,18 +2085,27 @@ void ThermostatShow(uint8_t ctr_output, bool json)
   } else {
     char c_unit = Thermostat[ctr_output].status.temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
     float f_temperature;
+    int32_t value;
 
     WSContentSend_P(HTTP_THERMOSTAT_INFO, ctr_output + 1, D_ENABLED);
 
-    f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f;
+    value = Thermostat[ctr_output].temp_target_level; // in tenths of degrees Celsius
+    if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
+      value = ThermostatCelsiusToFahrenheit(value, TEMP_CONV_ABSOLUTE);
+    }
+    f_temperature = value / 10.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
 
-    f_temperature = Thermostat[ctr_output].temp_measured / 10.0f;
+    value = Thermostat[ctr_output].temp_measured; // in tenths of degrees Celsius
+    if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
+      value = ThermostatCelsiusToFahrenheit(value, TEMP_CONV_ABSOLUTE);
+    }
+    f_temperature = value / 10.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SENSOR, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
 
-    int16_t value = Thermostat[ctr_output].temp_measured_gradient;
+    value = Thermostat[ctr_output].temp_measured_gradient;
     if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
-      value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_measured_gradient, TEMP_CONV_RELATIVE);
+      value = ThermostatCelsiusToFahrenheit(value, TEMP_CONV_RELATIVE);
     }
     f_temperature = abs(value) / 1000.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMP_GRAD, value < 0 ? '-' : '+', Settings->flag2.temperature_resolution, &f_temperature, c_unit);

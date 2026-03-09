@@ -69,7 +69,7 @@ static unsigned toidentifier_length(const char *s)
     unsigned len = 1;
     const char * p = s;
     while (*p) {
-        if (p[0] == '_' && p[1] == 'X') {
+        if (p[0] == '_' && p[1] != '\0' && p[1] == 'X') {
             len += 3;
             p += 2;
         } else if (isalnum(p[0]) || p[0] == '_') {
@@ -275,7 +275,9 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, 
 
             char * hex_out = be_pushbuffer(vm, hex_len);
             be_bytes_tohex(hex_out, hex_len, bufptr, len);
-            logfmt("be_const_bytes_instance(%s)", hex_out);
+            lognofmt("be_const_bytes_instance(");
+            lognofmt(hex_out);
+            lognofmt(")");
             be_pop(vm, 1);
         } else if (ins->super || ins->sub) {
             be_raise(vm, "internal_error", "instance must not have a super/sub class");
@@ -426,7 +428,8 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
     const char * func_name = str(pr->name);
 
     if (clo->nupvals > 0) {
-        logfmt("--> Unsupported upvals in closure <---");
+        const char *name = str(clo->proto->name);
+        logfmt("--> Unsupported upvals in closure in '%s' <---", name ? name : "<unkown>");
         // be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
 

@@ -202,6 +202,9 @@ extern "C" uint32_t _FS_start;      // 1M = 0x402fb000, 2M = 0x40300000, 4M = 0x
 const uint32_t FLASH_FS_START = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE);
 uint32_t SETTINGS_LOCATION = FLASH_FS_START -1;                                                 // 0xFA, 0x0FF or 0x0FF
 
+extern "C" uint32_t _FS_end;
+const uint32_t FLASH_FS_SIZE = (uint32_t)&_FS_end - (uint32_t)&_FS_start;
+
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 extern "C" uint32_t _EEPROM_start;  // 1M = 0x402FB000, 2M = 0x403FB000, 4M = 0x405FB000
 const uint32_t EEPROM_LOCATION = ((uint32_t)&_EEPROM_start - 0x40200000) / SPI_FLASH_SEC_SIZE;  // 0xFB, 0x1FB or 0x3FB
@@ -546,6 +549,10 @@ bool SettingsConfigRestore(void) {
     valid_settings = (5 == settings_buffer[0xF36]);  // Settings->config_version ESP32C2
 #elif CONFIG_IDF_TARGET_ESP32C6
     valid_settings = (6 == settings_buffer[0xF36]);  // Settings->config_version ESP32C6
+#elif CONFIG_IDF_TARGET_ESP32P4
+    valid_settings = (7 == settings_buffer[0xF36]);  // Settings->config_version ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C5
+    valid_settings = (8 == settings_buffer[0xF36]);  // Settings->config_version ESP32C5
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version ESP32 all other
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -663,10 +670,10 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 
     if (diff != 0) {
       // Shift Settings->text up or down
-      memmove_P(Settings->text_pool + start_pos + replace_len, Settings->text_pool + end_pos, char_len - end_pos);
+      memmove(Settings->text_pool + start_pos + replace_len, Settings->text_pool + end_pos, char_len - end_pos);
     }
     // Replace text
-    memmove_P(Settings->text_pool + start_pos, replace, replace_len);
+    memmove(Settings->text_pool + start_pos, replace, replace_len);
     // Fill for future use
     memset(Settings->text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
 
@@ -674,7 +681,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
   }
 
 #ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id %02d = \"%s\""), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id%02d '%s'"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
 #else
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
 #endif
@@ -986,6 +993,10 @@ void SettingsDefaultSet2(void) {
   Settings->config_version = 5;  // ESP32C2
 #elif CONFIG_IDF_TARGET_ESP32C6
   Settings->config_version = 6;  // ESP32C6
+#elif CONFIG_IDF_TARGET_ESP32P4
+  Settings->config_version = 7;  // ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C5
+  Settings->config_version = 8;  // ESP32C5
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1440,6 +1451,7 @@ void SettingsDefaultSet2(void) {
 
   // Matter
   flag6.matter_enabled |= MATTER_ENABLED;
+  flag6.tls_use_ecdsa |= MQTT_TLS_ECDSA;
 
   Settings->flag = flag;
   Settings->flag2 = flag2;
@@ -1519,6 +1531,8 @@ void SettingsEnableAllI2cDrivers(void) {
   Settings->i2c_drivers[0] = I2CDRIVERS_0_31;
   Settings->i2c_drivers[1] = I2CDRIVERS_32_63;
   Settings->i2c_drivers[2] = I2CDRIVERS_64_95;
+  Settings->i2c_drivers2[0] = I2CDRIVERS_96_127;
+  Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;
 }
 
 /********************************************************************************************/
@@ -1598,6 +1612,10 @@ void SettingsDelta(void) {
       Settings->config_version = 5;  // ESP32C2
 #elif CONFIG_IDF_TARGET_ESP32C6
       Settings->config_version = 6;  // ESP32C6
+#elif CONFIG_IDF_TARGET_ESP32P4
+      Settings->config_version = 7;  // ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C5
+      Settings->config_version = 8;  // ESP32C5
 #else
       Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
@@ -1680,8 +1698,8 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09050002) {
       if (Settings->cfg_size != sizeof(TSettings)) {
         // Fix onetime Settings layout due to changed ESP32-C3 myio and mytmplt types sizes
-        memmove_P((uint8_t*)&Settings->user_template, (uint8_t*)&Settings->free_esp32c3_3D8, sizeof(TSettings) - 0x3FC);
-        memmove_P((uint8_t*)&Settings->eth_type, (uint8_t*)&Settings->free_esp32c3_42A, sizeof(TSettings) - 0x446);
+        memmove((uint8_t*)&Settings->user_template, (uint8_t*)&Settings->free_esp32c3_3D8, sizeof(TSettings) - 0x3FC);
+        memmove((uint8_t*)&Settings->eth_type, (uint8_t*)&Settings->free_esp32c3_42A, sizeof(TSettings) - 0x446);
         // Reset for future use
         memset(&Settings->free_esp32c3_3D8, 0x00, sizeof(Settings->free_esp32c3_3D8));
         memset(&Settings->free_esp32c3_42A, 0x00, sizeof(Settings->free_esp32c3_42A));
@@ -1860,21 +1878,35 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x0E030007) {  // 14.3.0.7
       // move up uint8_t knx_CB_registered from 4A8 to 533
-      memmove_P((uint8_t*)&Settings->knx_CB_registered, (uint8_t*)&Settings->switchmode, 1);
+      memmove((uint8_t*)&Settings->knx_CB_registered, (uint8_t*)&Settings->switchmode, 1);
       // move up uint8_t global_sensor_index[3] from 4C5 to 53C
-      memmove_P((uint8_t*)&Settings->global_sensor_index, (uint8_t*)&Settings->switchmode +29, 3);
+      memmove((uint8_t*)&Settings->global_sensor_index, (uint8_t*)&Settings->switchmode +29, 3);
       // move dn uint8_t switchmode[MAX_SWITCHES_SET] from 4A9 to 4A8
-      memmove_P((uint8_t*)&Settings->switchmode, (uint8_t*)&Settings->switchmode +1, 28);
+      memmove((uint8_t*)&Settings->switchmode, (uint8_t*)&Settings->switchmode +1, 28);
       for (uint32_t i = 28; i < MAX_SWITCHES_SET; i++) {
         Settings->switchmode[i] = SWITCH_MODE;
       }
       // move up int8_t shutter_tilt_pos[MAX_SHUTTERS], uint16_t influxdb_period and uint16_t rf_duplicate_timefrom 51C to 534
-      memmove_P((uint8_t*)&Settings->shutter_tilt_pos, (uint8_t*)&Settings->shutter_tilt_config +12, 8);
+      memmove((uint8_t*)&Settings->shutter_tilt_pos, (uint8_t*)&Settings->shutter_tilt_config +12, 8);
       // move up int8_t shutter_tilt_config[5][MAX_SHUTTERS] from 508 to 510
-      memmove_P((uint8_t*)&Settings->shutter_tilt_config, (uint8_t*)&Settings->shutter_tilt_config -8, 20);
+      memmove((uint8_t*)&Settings->shutter_tilt_config, (uint8_t*)&Settings->shutter_tilt_config -8, 20);
       for (uint32_t i = 14; i < MAX_INTERLOCKS_SET; i++) {
         Settings->interlock[i] = 0;
       }
+    }
+#ifdef USE_DINGTIAN_RELAY                           // Support the Dingian board using 74'595 and 74'165 shift registers
+    if (Settings->version < 0x0F020004) {  // 15.2.0.4
+      Settings->flag5.shift595_invert_outputs = 0;  // SetOption133 - Do not invert 74HC595 shift register outputs
+#ifdef DINGTIAN_INPUTS_INVERTED
+      Settings->flag3.pcf8574_ports_inverted = 1;   // SetOption81 - Invert inputs (74HC165)
+#else
+      Settings->flag3.pcf8574_ports_inverted = 0;   // SetOption81 - Do not invert inputs (74HC165)
+#endif  // DINGTIAN_INPUTS_INVERTED
+    }
+#endif  // USE_DINGTIAN_RELAY
+    if (Settings->version < 0x0F020006) {  // 15.2.0.6
+      Settings->i2c_drivers2[0] = I2CDRIVERS_96_127;
+      Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;
     }
 
     Settings->version = TASMOTA_VERSION;

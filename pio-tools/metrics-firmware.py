@@ -1,17 +1,11 @@
 Import("env")
 
 import os
-import tasmotapiolib
 from os.path import join
 
 def firm_metrics(source, target, env):
-    if env["PIOPLATFORM"] == "espressif32":
-        try:
-            import tasmota_metrics
-            env.Execute("$PYTHONEXE -m tasmota_metrics \"" + str(tasmotapiolib.get_source_map_path(env).resolve()) + "\"")
-        except:
-            pass
-    elif env["PIOPLATFORM"] == "espressif8266":
+    print()
+    if env["PIOPLATFORM"] == "espressif8266":
         map_file = join(env.subst("$BUILD_DIR")) + os.sep + "firmware.map"
         with open(map_file,'r', encoding='utf-8') as f:
             phrase = "_text_end = ABSOLUTE (.)"
@@ -24,5 +18,6 @@ def firm_metrics(source, target, env):
                         percentage = round(used_bytes / 0x8000 * 100,1)
                         print("Used static IRAM:",used_bytes,"bytes (",remaining_bytes,"remain,",percentage,"% used)")
 
-
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin",firm_metrics)
+silent_action = env.Action(firm_metrics)
+silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)

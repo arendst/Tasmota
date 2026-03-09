@@ -211,6 +211,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Path_0.h"
 #include "solidify/solidified_Matter_Path_1_PathGenerator.h"
 #include "solidify/solidified_Matter_Path_1_EventGenerator.h"
+#include "solidify/solidified_Matter_Certs.h"
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
@@ -237,8 +238,6 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Profiler.h"
-
-#include "../generate/be_matter_certs.h"
 
 #include "solidify/solidified_Matter_Plugin_1_Root.h"
 #include "solidify/solidified_Matter_Plugin_1_Aggregator.h"
@@ -305,26 +304,6 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Zigbee_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_z_All.h"
 #include "solidify/solidified_Matter_zz_Device.h"
-
-/*********************************************************************************************\
- * Get a bytes() object of the certificate DAC/PAI_Cert
-\*********************************************************************************************/
-static int matter_return_static_bytes(bvm *vm, const uint8* addr, size_t len) {
-  be_getbuiltin(vm, "bytes");
-  be_pushcomptr(vm, addr);
-  be_pushint(vm, - len);
-  be_call(vm, 2);
-  be_pop(vm, 2);
-  be_return(vm);
-}
-static int matter_PAI_Cert_FFF1(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentPAI_Cert_FFF1, sizeof(kDevelopmentPAI_Cert_FFF1)); }
-static int matter_PAI_Pub_FFF1(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentPAI_PublicKey_FFF1, sizeof(kDevelopmentPAI_PublicKey_FFF1)); }
-static int matter_PAI_Priv_FFF1(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentPAI_PrivateKey_FFF1, sizeof(kDevelopmentPAI_PrivateKey_FFF1)); }
-static int matter_DAC_Cert_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentDAC_Cert_FFF1_8000, sizeof(kDevelopmentDAC_Cert_FFF1_8000)); }
-static int matter_DAC_Pub_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentDAC_PublicKey_FFF1_8000, sizeof(kDevelopmentDAC_PublicKey_FFF1_8000)); }
-static int matter_DAC_Priv_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kDevelopmentDAC_PrivateKey_FFF1_8000, sizeof(kDevelopmentDAC_PrivateKey_FFF1_8000)); }
-static int matter_CD_FFF1_8000(bvm *vm) { return matter_return_static_bytes(vm, kCdForAllExamples, sizeof(kCdForAllExamples)); }
-
 
 #include "be_fixed_matter.h"
 
@@ -494,13 +473,7 @@ module matter (scope: global, strings: weak) {
   Device, class(be_class_Matter_Device)
 
   // credentials from example
-  PAI_Cert_FFF1, func(matter_PAI_Cert_FFF1)
-  PAI_Pub_FFF1, func(matter_PAI_Pub_FFF1)
-  PAI_Priv_FFF1, func(matter_PAI_Priv_FFF1)
-  DAC_Cert_FFF1_8000, func(matter_DAC_Cert_FFF1_8000)
-  DAC_Pub_FFF1_8000, func(matter_DAC_Pub_FFF1_8000)
-  DAC_Priv_FFF1_8000, func(matter_DAC_Priv_FFF1_8000)
-  CD_FFF1_8000, func(matter_CD_FFF1_8000)               // Certification Declaration
+  Certs, class(be_class_Matter_Certs)
 
   // Plugins - only the core classes, all others are taken from `matter_device.plugins_classes`
   Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices

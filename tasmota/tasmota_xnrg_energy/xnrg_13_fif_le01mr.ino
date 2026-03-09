@@ -123,7 +123,7 @@ void FifLEEvery250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, FifLEModbus->ReceiveCount());
 
     if (error) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("FIF: LE01MR Modbus error %d"), error);
     } else {
       Energy->data_valid[0] = 0;
 
@@ -218,6 +218,9 @@ void FifLESnsInit(void)
   uint8_t result = FifLEModbus->Begin(LE01MR_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("FIF: Serial UART%d"), FifLEModbus->getUart());
+#endif
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

@@ -28,9 +28,8 @@
 // does not allocate or free any memory; all memory management decisions
 // are left to you
 JPEGDEC jpeg;
-
 // The LCD display library instance
-SPILCD lcd;
+BB_SPI_LCD lcd;
 //
 // Pixel drawing callback
 // called once for each set of MCUs (minimum coded units).
@@ -46,20 +45,22 @@ int drawMCUs(JPEGDRAW *pDraw)
   int iCount;
   iCount = pDraw->iWidth * pDraw->iHeight; // number of pixels to draw in this call
 //  Serial.printf("Draw pos = %d,%d. size = %d x %d\n", pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
-  spilcdSetPosition(&lcd, pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight, DRAW_TO_LCD);
-  spilcdWriteDataBlock(&lcd, (uint8_t *)pDraw->pPixels, iCount*2, DRAW_TO_LCD | DRAW_WITH_DMA);
+  lcd.setAddrWindow(pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
+  lcd.pushPixels(pDraw->pPixels, iCount, DRAW_TO_LCD | DRAW_WITH_DMA);
   return 1; // returning true (1) tells JPEGDEC to continue decoding. Returning false (0) would quit decoding immediately.
 } /* drawMCUs() */
 
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial) {};
-  spilcdInit(&lcd, LCD_ILI9341, FLAGS_NONE, 40000000, CS_PIN, DC_PIN, RESET_PIN, LED_PIN, MISO_PIN, MOSI_PIN, SCK_PIN);
-  spilcdSetOrientation(&lcd, LCD_ORIENTATION_90);
-  spilcdFill(&lcd, 0, DRAW_TO_LCD); // erase display to black
-  spilcdWriteString(&lcd, 46,0,(char *)"JPEG Thumbnail test", 0x7e0,0,FONT_12x16, DRAW_TO_LCD);
-  delay(4000);
+  delay(3000);
+  Serial.println("Starting...");
+  lcd.begin(/*DISPLAY_WS_AMOLED_18); */ DISPLAY_M5STACK_CORE2);
+  lcd.fillScreen(TFT_BLACK); // erase display to black
+  lcd.setCursor(46, 0);
+  lcd.setFont(FONT_12x16);
+  lcd.setTextColor(TFT_GREEN);
+  lcd.print("JPEG Thumbnail test");
 } /* setup() */
 
 void loop() {
@@ -83,7 +84,10 @@ char szTemp[64];
       lTime = micros() - lTime;
       sprintf(szTemp, "Successfully decoded image in %d us", (int)lTime);
       Serial.println(szTemp);
-      spilcdWriteString(&lcd, 0, 200, szTemp, 0xffe0, 0, FONT_8x8, DRAW_TO_LCD);
+      lcd.setCursor(0,20);
+      lcd.setFont(FONT_8x8);
+      lcd.setTextColor(TFT_YELLOW);
+      lcd.print(szTemp);
     }
     jpeg.close();
   }

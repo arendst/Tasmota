@@ -23,7 +23,7 @@
 #define UPDATE_SIZE_UNKNOWN 0xFFFFFFFF
 
 #define U_FLASH   0
-#define U_SPIFFS  100
+#define U_SPIFFS  101
 #define U_AUTH    200
 
 #define ENCRYPTED_BLOCK_SIZE 16

@@ -130,6 +130,9 @@ void PzemDcSnsInit(void)
   uint8_t result = PzemDc->modbus->Begin(9600, SERIAL_8N2);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PDC: Serial UART%d"), PzemDc->modbus->getUart());
+#endif
     Energy->type_dc = true;
     Energy->phase_count = ENERGY_MAX_PHASES;  // Start off with three channels
     PzemDc->channel = 0;

@@ -1,7 +1,7 @@
 /*
   xsns_83_neopool.ino - Sugar Valley NeoPool Control System Modbus support for Tasmota
 
-  Copyright (C) 2023  Norbert Richter
+  Copyright (C) 2025  Norbert Richter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@
  * Only one Modbus client (master) can be connected to the Modbus connector
  * of the same name. It is not possible to operate several clients on
  * connectors with the same name.
- *
  * The differently labelled Modbus connectors are completely independent
  * physical Modbus interfaces. Data traffic on one of the connector is
  * invisible on the other connectors. One exception is the DISPLAY connector,
@@ -58,9 +57,7 @@
  * Since only one Modbus client can operate one Modbus server at a time, the
  * DISPLAY connector is useless for our purposes as long as the internal LCD
  * is connected to one of the two DISPLAY connectors at the same time.
- *
- * Conclusion:
- * Use the WIFI or EXTERNAL connector only.
+ * Conclusion: Use the WIFI or EXTERNAL connector only.
 \****************************************************************************/
 
 #define XSNS_83                      83
@@ -290,7 +287,7 @@ enum NeoPoolRegister {
   // Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
   MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
-  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight function (see MBV_PAR_BACKLIGHT_*)
+  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight brightness (in %, upper part (8-bit MSB)=0-100) and function (lower part 8-bit LSB, see MBV_PAR_BACKLIGHT_*)
   MBF_PAR_UICFG_SOUND,                    // 0x0603* mask   Audible alerts (see MBMSK_PAR_SOUND_*)
   MBF_PAR_UICFG_PASSWORD,                 // 0x0604*        System password encoded in BCD
   MBF_PAR_UICFG_VISUAL_OPTIONS,           // 0x0605* mask   Stores the different display options for the user interface menus (bitmask). Some bits allow you to hide options that are normally visible (bits 0 to 3) while other bits allow you to show options that are normally hidden (bits 9 to 15)
@@ -325,6 +322,12 @@ enum NeoPoolConstAndBitMask {
   MBMSK_PH_STATUS_MODULE_PRESENT          = 0x8000, // 15 Detected pH measurement module
 
   // MBF_RX_STATUS                                  // bit
+  MBMSK_RX_STATUS_ALARM                   = 0x0007, // Rx alarm. The possible alarm values are depending on the regulation model
+  // Valid alarm values for pH regulation with acid and base:
+  MBV_RX_ALARM0                           = 0,      // no alarm
+  MBV_RX_ALARM6                           = 6,      // ! tank level alarm
+
+  MBMSK_RX_STATUS_RX_TOO_LOW              = 0x0080, //  ! Redox too low
   MBMSK_RX_STATUS_RX_PUMP_ACTIVE          = 0x1000, // 12 Redox pump relay on (pump activated)
   MBMSK_RX_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active Redox control module and controlling pump
   MBMSK_RX_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active Redox measurement module and performing measurements. If this bit is at 1, the Redox bar should be displayed on the screen.
@@ -511,7 +514,7 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_LANG_HUNGARIAN                  = 10,
   MBV_PAR_LANG_RUSSIAN                    = 11,
 
-  // MBF_PAR_UICFG_BACKLIGHT
+  // MBF_PAR_UICFG_BACKLIGHT (LSB)
   MBV_PAR_BACKLIGHT_15SEC                 = 0,      // Backlight off after 15 sec
   MBV_PAR_BACKLIGHT_30SEC                 = 1,      // Backlight off after 30 sec
   MBV_PAR_BACKLIGHT_60SEC                 = 2,      // Backlight off after 60 sec
@@ -809,14 +812,14 @@ typedef union {
 } NeoPoolBitfield;;
 
 // Global structure containing sensor saved variables
-struct {
+typedef struct {
   uint32_t  crc32;
   uint16_t  version;
   NeoPoolBitfield flags;
   uint8_t   result;
   uint16_t  npteleperiod;
-} NeoPoolSettings;
-
+} TNeoPoolSettings;
+TNeoPoolSettings NeoPoolSettings;
 
 #define D_NEOPOOL_NAME "NeoPool"
 
@@ -1005,7 +1008,7 @@ const char HTTP_SNS_NEOPOOL_CELL_RUNTIME[]     PROGMEM = "{s}%s " D_NEOPOOL_CELL
 
 const char HTTP_SNS_NEOPOOL_STATUS[]           PROGMEM = "<span style=\"background-color:%s;font-size:small;text-align:center;%s;\">&nbsp;%s&nbsp;</span>";
 const char HTTP_SNS_NEOPOOL_STATUS_NORMAL[]    PROGMEM = "filter:invert(0.1)";
-const char HTTP_SNS_NEOPOOL_STATUS_DISABLED[]  PROGMEM = "display: none";
+const char HTTP_SNS_NEOPOOL_STATUS_DISABLED[]  PROGMEM = "display:none";
 const char HTTP_SNS_NEOPOOL_STATUS_INACTIVE[]  PROGMEM = "filter:opacity(0.15)";
 const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 
@@ -1168,15 +1171,23 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPRead <addr> {<cnt>}
  * NPReadL <addr> {<cnt>}
- *            read 16/32-bit register (cnt = 1..30|1..15), cnt = 1 if omitted
- *            NPRead read 16-bit register
- *            NPReadL read 32-bit register
+ * NPReadLSB <addr> {<cnt>}
+ * NPReadMSB <addr> {<cnt>}
+ *            read 16|32-bit register (cnt = 1..30|1..15), cnt = 1 if omitted
+ *            NPRead    read 16-bit register
+ *            NPReadL   read 32-bit register
+ *            NPReadLSB read 16-bit register LSB only (like NPRead, but only reads the least significant byte (LSB) of 16-bit register)
+ *            NPReadMSB read 16-bit register MSB only (like NPRead, but only reads the most significant byte (MSB) of 16-bit register)
  *
  * NPWrite <addr> <data> {<data>...}
  * NPWriteL <addr> <data> {<data>...}
- *            NPWrite write 16-bit register (data = 0..65535)
- *            NPWriteL write 32-bit register (data = 0..4294967295)
- *            The max. number of <data> parameters is 10
+ * NPWriteLSB <addr> <data> {<data>...}
+ * NPWriteMSB <addr> <data> {<data>...}
+ *            write 16|32-bit register (the max. number of <data> parameters is 20|10)
+ *            NPWrite    write 16-bit register (data = 0..65535)
+ *            NPWriteL   write 32-bit register (data = 0..4294967295)
+ *            NPWriteLSB write 16-bit register LSB only (data = 0..255, like NPWrite, but only writes the least significant byte (LSB) of 16-bit register)
+ *            NPWriteMSB write 16-bit register MSB only (data = 0..255, like NPWrite, but only writes the most significant byte (LSB) of 16-bit register)
  *
  * NPBit <addr> <bit> {<data>}
  * NPBitL <addr> <bit> {<data>}
@@ -1247,8 +1258,12 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_RESULT "Result"
 #define D_CMND_NP_READ "Read"
 #define D_CMND_NP_READL "ReadL"
+#define D_CMND_NP_READLSB D_CMND_NP_READ "LSB"
+#define D_CMND_NP_READMSB D_CMND_NP_READ "MSB"
 #define D_CMND_NP_WRITE "Write"
 #define D_CMND_NP_WRITEL "WriteL"
+#define D_CMND_NP_WRITELSB D_CMND_NP_WRITE "LSB"
+#define D_CMND_NP_WRITEMSB D_CMND_NP_WRITE "MSB"
 #define D_CMND_NP_BIT "Bit"
 #define D_CMND_NP_BITL "BitL"
 #define D_CMND_NP_FILTRATION "Filtration"
@@ -1283,8 +1298,12 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_RESULT "|"
   D_CMND_NP_READ  "|"
   D_CMND_NP_READL  "|"
+  D_CMND_NP_READLSB  "|"
+  D_CMND_NP_READMSB  "|"
   D_CMND_NP_WRITE  "|"
   D_CMND_NP_WRITEL  "|"
+  D_CMND_NP_WRITELSB  "|"
+  D_CMND_NP_WRITEMSB  "|"
   D_CMND_NP_BIT "|"
   D_CMND_NP_BITL "|"
   D_CMND_NP_FILTRATION "|"
@@ -1320,6 +1339,10 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolResult,
   &CmndNeopoolReadReg,
   &CmndNeopoolReadReg,
+  &CmndNeopoolReadReg,
+  &CmndNeopoolReadReg,
+  &CmndNeopoolWriteReg,
+  &CmndNeopoolWriteReg,
   &CmndNeopoolWriteReg,
   &CmndNeopoolWriteReg,
   &CmndNeopoolBit,
@@ -1444,6 +1467,9 @@ void NeoPoolInit(void) {
       if (2 == result) {
           ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: Serial UART%d"), NeoPoolModbus->getUart());
+#endif
       if (NeoPoolInitData()) {  // Claims heap space
         neopool_active = true;
       }
@@ -2100,6 +2126,7 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_REDOX  "\":{"));
       ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_RX), NeoPoolGetData(MBF_MEASURE_RX));
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_RX), NeoPoolGetData(MBF_PAR_RX1));
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_TANK  "\":%d"), (MBV_RX_ALARM6 == (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_ALARM)) ? 0 : 1);
       ResponseJsonEnd();
     }
 
@@ -2360,9 +2387,11 @@ void NeoPoolShow(bool json)
       // S2
       if ((NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) > 0) {
         GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM, kNeoPoolpHAlarms);
-        WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, stemp);
+        if (strlen(stemp)) {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, stemp);
+          WSContentSend_PD(PSTR(" "));
+        }
       }
-      WSContentSend_PD(PSTR(" "));
       // S3
       if (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_CTRL_ACTIVE) {
         if (MBV_PH_ACID_BASE_ALARM6 == (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM)) {
@@ -2397,6 +2426,15 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color,
         (NeoPoolGetData(MBF_HIDRO_CURRENT) ? HTTP_SNS_NEOPOOL_STATUS_ACTIVE : HTTP_SNS_NEOPOOL_STATUS_INACTIVE),
         stemp);
+      WSContentSend_PD(PSTR(" "));
+      // S2
+      if (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_CTRL_ACTIVE) {
+        if (MBV_RX_ALARM6 == (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_ALARM)) {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_STATUS_TANK));
+        }
+      } else {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_STATUS_OFF));
+      }
       WSContentSend_PD(PSTR("{e}"));
     }
 
@@ -2499,7 +2537,7 @@ void NeoPoolShow(bool json)
  * Command implementation
 \****************************************************************************/
 
-void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32, int16_t bit)
+void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32, bool flsb, bool fmsb, int16_t bit)
 {
   const char *data_fmt;
   uint32_t ldata;
@@ -2510,27 +2548,32 @@ void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool 
 
   data_fmt = PSTR("%ld");
   if (NEOPOOL_RESULT_HEX == NeoPoolSettings.result) {
-    data_fmt = fbits32 ? PSTR("\"0x%08X\"") : PSTR("\"0x%04X\"");
+    data_fmt = fbits32 ? PSTR("\"0x%08X\"") : (!flsb && !fmsb) ? PSTR("\"0x%04X\"") : PSTR("\"0x%02X\"");
   }
-  ldata = (uint32_t)data[0];
-  if (fbits32) {
-    ldata |= (uint32_t)data[1] << 16;
+  char sdel[2] = {0};
+  if ( cnt > 1 ) {
+    ResponseAppend_P(PSTR("["));
+  }
+  for(uint16_t i=0; i<cnt; i++) {
+    if ( cnt > 1 ) {
+      ResponseAppend_P(PSTR("%s"), sdel);
+    }
+    ldata = (uint32_t)data[(fbits32+1)*i];
+    if (fbits32) {
+      ldata |= (uint32_t)data[(fbits32+1)*i+1] << 16;
+    }
+    else if (flsb) {
+      ldata &= 0xff;
+    }
+    else if (fmsb) {
+      ldata >>= 8;
+      ldata &= 0xff;
+    }
+    ResponseAppend_P(data_fmt, ldata);
+    *sdel = ',';
   }
   if ( cnt > 1 ) {
-    char sdel[2] = {0};
-    ResponseAppend_P(PSTR("["));
-    for(uint16_t i=0; i<cnt; i++) {
-      ResponseAppend_P(PSTR("%s"), sdel);
-      ldata = (uint32_t)data[(fbits32+1)*i];
-      if (fbits32) {
-        ldata |= (uint32_t)data[(fbits32+1)*i+1] << 16;
-      }
-      ResponseAppend_P(data_fmt, ldata);
-      *sdel = ',';
-    }
     ResponseAppend_P(PSTR("]"));
-  } else {
-    ResponseAppend_P(data_fmt, ldata);
   }
   if (bit >= 0) {
     ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_BIT  "%d\":%ld"), bit, (ldata>>bit) & 1);
@@ -2566,6 +2609,8 @@ void CmndNeopoolReadReg(void)
   uint32_t value[2] = { 0 };
   uint32_t params_cnt = ParseParameters(nitems(value), value);
   bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_READL));
+  bool flsb = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_READLSB));
+  bool fmsb = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_READMSB));
 
   cnt = 1;
   if (2 == params_cnt) {
@@ -2578,7 +2623,7 @@ void CmndNeopoolReadReg(void)
       return;
     }
   }
-  NeopoolReadWriteResponse(addr, data, cnt, fbits32, -1);
+  NeopoolReadWriteResponse(addr, data, cnt, fbits32, flsb, fmsb, -1);
 }
 
 
@@ -2588,16 +2633,34 @@ void CmndNeopoolWriteReg(void)
   uint32_t value[(nitems(data)/2)+1] = { 0 };
   uint32_t params_cnt = ParseParameters(nitems(value), value);
   bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_WRITEL));
+  bool flsb = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_WRITELSB));
+  bool fmsb = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_WRITEMSB));
 
-  if (params_cnt > 1) {
+  cnt = params_cnt-1;
+  if (params_cnt > 1 && cnt < (fbits32 ? (nitems(data)/2) : nitems(data))) {
     addr = value[0];
-    cnt = params_cnt-1;
+    if (flsb || fmsb) {
+      if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(addr, data, fbits32 ? (cnt*2) : cnt)) {
+        NeopoolResponseError();
+        return;
+      }
+    }
     for (uint32_t i = 0; i < cnt; i++) {
       if (fbits32) {
         data[i*2] = value[i+1];       // LSB
         data[i*2+1] = value[i+1]>>16; // MSB
       } else {
-        data[i] = value[i+1];
+        if (flsb) {
+          data[i] &= 0xff00;
+          data[i] |= (value[i+1] & 0xff);
+        }
+        else if (fmsb) {
+          data[i] &= 0x00ff;
+          data[i] |= (value[i+1] & 0xff)<<8;
+        }
+        else {
+          data[i] = value[i+1];
+        }
       }
     }
     if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegister(addr, data, fbits32 ? cnt*2 : cnt)) {
@@ -2609,7 +2672,7 @@ void CmndNeopoolWriteReg(void)
     NeopoolResponseError();
     return;
   }
-  NeopoolReadWriteResponse(addr, data, cnt, fbits32, -1);
+  NeopoolReadWriteResponse(addr, data, cnt, fbits32, flsb, fmsb, -1);
 }
 
 
@@ -2653,7 +2716,7 @@ void CmndNeopoolBit(void)
         NeopoolResponseError();
         return;
       }
-      NeopoolReadWriteResponse(addr, &data, 1, fbits32, bit);
+      NeopoolReadWriteResponse(addr, &data, 1, fbits32, false, false, bit);
       return;
     }
 
@@ -3363,6 +3426,9 @@ void NeoPoolSettingsLoad(bool erase) {
   NeoPoolSettings.flags.conn_stat = 1;
   NeoPoolSettings.result = NEOPOOL_DEFAULT_RESULT;
   NeoPoolSettings.npteleperiod = NEOPOOL_DEFAULT_NPTELEPERIOD;
+  TNeoPoolSettings NeoPoolSettingsDefaults;
+  memcpy(&NeoPoolSettingsDefaults, &NeoPoolSettings, sizeof(NeoPoolSettingsDefaults));
+
 
 #ifdef USE_UFILESYS
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_SENSOR), XSNS_83);
@@ -3373,6 +3439,10 @@ void NeoPoolSettingsLoad(bool erase) {
 #ifdef DEBUG_TASMOTA_SENSOR
     AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: Settings loaded from file '%s'"), filename);
 #endif  // DEBUG_TASMOTA_SENSOR
+    if (NeoPoolSettings.crc32 != GetCfgCrc32((uint8_t*)&NeoPoolSettings +4, sizeof(NeoPoolSettings) -4)) {
+      AddLog(LOG_LEVEL_INFO, PSTR("NEO: Settings CRC error, reset to defaults"));
+      memcpy(&NeoPoolSettings, &NeoPoolSettingsDefaults, sizeof(NeoPoolSettings));
+    }
   }
   else {
 #ifdef DEBUG_TASMOTA_SENSOR

@@ -33,18 +33,32 @@
 \*********************************************************************************************/
 extern "C" {
 
+  /**
+   * @brief Global webcam state structure
+   */
   struct {
-    uint16_t width = 0;
-    uint16_t height = 0;
-    uint8_t mode = 0;
+    uint16_t width = 0;    ///< Current frame width
+    uint16_t height = 0;   ///< Current frame height
+    uint8_t mode = 0;      ///< Camera mode/resolution setting
   } WcBerry;
 
+  /**
+   * @brief Initializes the webcam hardware
+   * @param vm Berry VM pointer
+   * @return Berry nil
+   */
   int be_cam_init(struct bvm *vm);
   int be_cam_init(struct bvm *vm) {
     WcInit();
     be_return(vm);
   }
 
+  /**
+   * @brief Configures webcam with specified mode/resolution
+   * @param vm Berry VM pointer
+   * @return Berry integer (setup result code)
+   * Berry arguments: (mode)
+   */
   int be_cam_setup(struct bvm *vm);
   int be_cam_setup(struct bvm *vm) {
     
@@ -71,6 +85,16 @@ extern "C" {
     be_return(vm);
   }
 
+  /**
+   * @brief Captures image from webcam, optionally decoding to specified format
+   * @param vm Berry VM pointer
+   * @return Berry bytes buffer (JPEG) or nil if storing to img instance
+   * Berry arguments: ([img_instance], [format])
+   * 
+   * If no arguments: returns JPEG as bytes buffer
+   * If img instance provided: stores image in instance (JPEG by default)
+   * If format provided: decodes JPEG to specified format before storing
+   */
   int be_cam_get_image(struct bvm *vm);
   int be_cam_get_image(struct bvm *vm) {
 
@@ -111,11 +135,17 @@ extern "C" {
               be_return_nil(vm);
             }
           }
+          img->width =  wc_fb->width;
+          img->height = wc_fb->height;
+          img->bpp = bpp;
           switch(pixformat_t(format)) {
             case PIXFORMAT_GRAYSCALE:
               success = be_img_util::jpeg_decode_one_image(wc_fb->buf, wc_fb->len, img->buf, EIGHT_BIT_GRAYSCALE, img);
               break;
             case PIXFORMAT_RGB565:
+              success = be_img_util::jpeg_decode_one_image(wc_fb->buf, wc_fb->len, img->buf, RGB565_BIG_ENDIAN, img);
+              break;
+            case PIXFORMAT_YUV422: // Format 1: RGB565LE
               success = be_img_util::jpeg_decode_one_image(wc_fb->buf, wc_fb->len, img->buf, RGB565_LITTLE_ENDIAN, img);
               break;
             case PIXFORMAT_RGB888:
@@ -125,8 +155,6 @@ extern "C" {
           if(success){
             img->len = wc_fb->width * wc_fb->height * bpp;
             img->format = pixformat_t(format);
-            img->width =  wc_fb->width;
-            img->height = wc_fb->height;
           } else {
             be_img_util::clear(img);
           }
@@ -145,7 +173,11 @@ extern "C" {
     be_return(vm);
   }
 
-  // cam.info(void) -> map
+  /**
+   * @brief Returns webcam information as Berry map
+   * @param vm Berry VM pointer
+   * @return Berry map with mode, width, height
+   */
   int be_cam_info(struct bvm *vm);
   int be_cam_info(struct bvm *vm) {
     be_newobject(vm, "map");

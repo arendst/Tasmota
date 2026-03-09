@@ -1,0 +1,7 @@
+# Computed Values Demo - Example from the original request
+# Shows how to use computed values from value providers
+
+# Get the current strip length
+set strip_len = strip_length()
+set a = strip_len / 4
+set b = abs(strip_len / 4)

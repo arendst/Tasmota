@@ -94,6 +94,9 @@ void Dds2382SnsInit(void)
   uint8_t result = Dds2382Modbus->Begin(DDS2382_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DDS: Serial UART%d"), Dds2382Modbus->getUart());
+#endif
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }

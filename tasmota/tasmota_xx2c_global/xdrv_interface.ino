@@ -1157,11 +1157,31 @@ bool XdrvCall(uint32_t function) {
   uint32_t profile_driver_start = millis();
 #endif  // USE_PROFILE_FUNCTION
 
+#ifdef DEBUG_COMMAND_HANG
+  char tstchr[10];
+  if (FUNC_COMMAND == function) { 
+    sprintf(tstchr, "DRV: ");
+    TasConsole.printf(tstchr);
+  }
+#endif  // DEBUG_COMMAND_HANG
+
   for (uint32_t x = 0; x < xdrv_present; x++) {
 
 #ifdef USE_PROFILE_FUNCTION
     uint32_t profile_function_start = millis();
 #endif  // USE_PROFILE_FUNCTION
+
+#ifdef DEBUG_COMMAND_HANG
+    if (FUNC_COMMAND == function) { 
+#ifdef XFUNC_PTR_IN_ROM
+      uint32_t driverid = pgm_read_byte(kXdrvList + x);
+#else
+      uint32_t driverid = kXdrvList[x];
+#endif
+      sprintf(tstchr, "%d,", driverid);
+      TasConsole.printf(tstchr);
+    }
+#endif  // DEBUG_COMMAND_HANG
 
     result = xdrv_func_ptr[x](function);
 
@@ -1196,6 +1216,12 @@ bool XdrvCall(uint32_t function) {
       break;
     }
   }
+
+#ifdef DEBUG_COMMAND_HANG
+  if (FUNC_COMMAND == function) { 
+    TasConsole.println();
+  }
+#endif  // DEBUG_COMMAND_HANG
 
   PROFILE_DRIVER("drv", function, profile_driver_start);
 

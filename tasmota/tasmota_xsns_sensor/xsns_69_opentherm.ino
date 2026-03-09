@@ -191,7 +191,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
 
     switch (status)
     {
-    case OpenThermResponseStatus::OPTH_SUCCESS:
+    case OpenThermResponseStatus::SUCCESS:
         if (sns_ot_master->isValidResponse(response))
         {
             sns_opentherm_process_success_response(&sns_ot_boiler_status, response);
@@ -200,7 +200,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
         sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
         break;
 
-    case OpenThermResponseStatus::OPTH_INVALID:
+    case OpenThermResponseStatus::INVALID:
         sns_opentherm_check_retry_request();
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
         sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
@@ -210,7 +210,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
     // In this case we do reconnect.
     // If this command will timeout multiple times, it will be excluded from the rotation later on
     // after couple of failed attempts. See sns_opentherm_check_retry_request logic
-    case OpenThermResponseStatus::OPTH_TIMEOUT:
+    case OpenThermResponseStatus::TIMEOUT:
         sns_opentherm_check_retry_request();
         if (--sns_ot_timeout_before_disconnect == 0)
         {
@@ -326,8 +326,8 @@ void sns_ot_start_handshake()
 
     sns_opentherm_protocol_reset();
 
-    sns_ot_master->sendRequestAync(
-        OpenTherm::buildRequest(OpenThermMessageType::OPTH_READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
+    sns_ot_master->sendRequestAsync(
+        OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
 
     sns_ot_connection_status = OpenThermConnectionStatus::OTC_HANDSHAKE;
 }
@@ -335,8 +335,7 @@ void sns_ot_start_handshake()
 void sns_ot_process_handshake(unsigned long response, int st)
 {
     OpenThermResponseStatus status = (OpenThermResponseStatus)st;
-
-    if (status != OpenThermResponseStatus::OPTH_SUCCESS || !sns_ot_master->isValidResponse(response))
+    if (status != OpenThermResponseStatus::SUCCESS || !sns_ot_master->isValidResponse(response))
     {
         AddLog(LOG_LEVEL_ERROR,
                   PSTR("[OTH]: getSlaveConfiguration failed. Status=%s"),
@@ -609,7 +608,7 @@ bool Xsns69(uint32_t function)
             unsigned long request = sns_opentherm_get_next_request(&sns_ot_boiler_status);
             if (-1 != request)
             {
-                sns_ot_master->sendRequestAync(request);
+                sns_ot_master->sendRequestAsync(request);
                 sns_ot_connection_status = OpenThermConnectionStatus::OTC_INFLIGHT;
             }
         }

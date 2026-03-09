@@ -1,9 +1,9 @@
 {
     "name": "Berry int64 implementation for 32 bits architecture",
-    "version": "1.0",
+    "version": "1.1",
     "description": "Berry int64",
     "license": "MIT",
-    "homepage": "https://github.com/*g",
+    "homepage": "https://github.com/",
     "frameworks": "arduino",
     "platforms": "espressif32",
     "authors":

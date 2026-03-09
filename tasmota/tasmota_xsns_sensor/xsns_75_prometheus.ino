@@ -26,46 +26,19 @@
  * should be named.
  *
  * [1]
- * https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
+ * https://github.com/prometheus/docs/blob/main/docs/instrumenting/exposition_formats.md
  * [2]
- * https://github.com/prometheus/docs/blob/master/content/docs/practices/naming.md
+ * https://github.com/prometheus/docs/blob/main/docs/practices/naming.md
  *
 \*********************************************************************************************/
 
 #define XSNS_75                    75
 
-// Find appropriate unit for measurement type.
-const char *UnitfromType(const char *type)
-{
-  if (strcmp(type, "time") == 0) {
-    return "seconds";
-  }
-  if (strcmp(type, "temperature") == 0 || strcmp(type, "dewpoint") == 0) {
-    return "celsius";
-  }
-  if (strcmp(type, "pressure") == 0) {
-    return "hpa";
-  }
-  if (strcmp(type, "voltage") == 0) {
-    return "volts";
-  }
-  if (strcmp(type, "current") == 0) {
-    return "amperes";
-  }
-  if (strcmp(type, "mass") == 0) {
-    return "grams";
-  }
-  if (strcmp(type, "carbondioxide") == 0) {
-    return "ppm";
-  }
-  if (strcmp(type, "humidity") == 0) {
-    return "percentage";
-  }
-  if (strcmp(type, "id") == 0) {
-    return "untyped";
-  }
-  return "";
-}
+const char kPromType[] PROGMEM =
+  "time|temperature|dewpoint|pressure|voltage|current|mass|carbondioxide|humidity|id";
+
+const char kPromUnit[] PROGMEM =
+  "seconds|celsius|celsius|hpa|volts|amperes|grams|ppm|percentage|untyped";
 
 // Replace spaces and periods in metric name to match Prometheus metrics
 // convention.
@@ -185,6 +158,51 @@ void WritePromMemoryMetrics(const char *type, uint32_t size, uint32_t avail, uin
   }
 }
 
+void PromProcessJsonValue(JsonParserKey key, JsonParserToken value, const char* sensor) {
+  const char *mvalue = value.getStr(nullptr);
+  if (mvalue != nullptr
+    && (isdigit(mvalue[0]) || (mvalue[0] == '-') || (mvalue[0] == '.'))
+    && strcmp(sensor, "time") != 0) {  //remove false 'time' metric
+
+    String type = FormatMetricName(key.getStr());
+    if (strcmp(type.c_str(), "totalstarttime") == 0) {  // this metric causes Prometheus of fail
+      return;
+    }
+
+    // Find appropriate unit for measurement type.
+    char stemp[CMDSZ];
+    int unit = GetCommandCode(stemp, sizeof(stemp), type.c_str(), kPromType);
+    char namebuf[64];
+    snprintf_P(namebuf, sizeof(namebuf), PSTR("sensors_%s%s%s"),
+      type.c_str(),
+      (unit >= 0) ? "_" : "",
+      (unit >= 0) ? GetTextIndexed(stemp, sizeof(stemp), unit, kPromUnit) : "");
+
+    if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
+      WritePromMetricInt32(namebuf, kPromMetricGauge, 1,
+        PSTR("sensor"), sensor,
+        PSTR("id"), mvalue,
+        nullptr);
+    } else {
+      WritePromMetricStr(namebuf, kPromMetricGauge, mvalue,
+        PSTR("sensor"), sensor,
+        nullptr);
+    }
+  }
+}
+
+void PromProcessJsonObject(JsonParserObject Object, const char* sensor) {
+  for (auto key : Object) {
+    JsonParserToken value = key.getValue();
+    if (value.isObject()) {
+      PromProcessJsonObject(value.getObject(), key.getStr());
+    } else {
+      String sensor_name = FormatMetricName((sensor == nullptr) ? key.getStr() : sensor);
+      PromProcessJsonValue(key, value, sensor_name.c_str());
+    }
+  }
+}
+
 void HandleMetrics(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -288,63 +306,8 @@ void HandleMetrics(void) {
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) { // did JSON parsing succeed?
-    for (auto key1 : root) {
-      JsonParserToken value1 = key1.getValue();
-      if (value1.isObject()) {
-        JsonParserObject Object2 = value1.getObject();
-        for (auto key2 : Object2) {
-          JsonParserToken value2 = key2.getValue();
-          if (value2.isObject()) {
-            JsonParserObject Object3 = value2.getObject();
-            for (auto key3 : Object3) {
-              const char *value = key3.getValue().getStr(nullptr);
-              if (value != nullptr && (isdigit(value[0]) || (value[0] == '-') || (value[0] == '.'))) {
-                String sensor = FormatMetricName(key2.getStr());
-                String type = FormatMetricName(key3.getStr());
-
-                snprintf_P(namebuf, sizeof(namebuf), PSTR("sensors_%s_%s"),
-                  type.c_str(), UnitfromType(type.c_str()));
-                WritePromMetricStr(namebuf, kPromMetricGauge, value,
-                  PSTR("sensor"), sensor.c_str(),
-                  nullptr);
-              }
-            }
-          } else {
-            const char *value = value2.getStr(nullptr);
-            if (value != nullptr && (isdigit(value[0]) || (value[0] == '-') || (value[0] == '.'))) {
-              String sensor = FormatMetricName(key1.getStr());
-              String type = FormatMetricName(key2.getStr());
-              if (strcmp(type.c_str(), "totalstarttime") != 0) {  // this metric causes Prometheus of fail
-                snprintf_P(namebuf, sizeof(namebuf), PSTR("sensors_%s_%s"),
-                  type.c_str(), UnitfromType(type.c_str()));
-
-                if (strcmp(type.c_str(), "id") == 0) {            // this metric is NaN, so convert it to a label, see Wi-Fi metrics above
-                  WritePromMetricInt32(namebuf, kPromMetricGauge, 1,
-                    PSTR("sensor"), sensor.c_str(),
-                    PSTR("id"), value,
-                    nullptr);
-                } else {
-                  WritePromMetricStr(namebuf, kPromMetricGauge, value,
-                    PSTR("sensor"), sensor.c_str(),
-                    nullptr);
-                }
-              }
-            }
-          }
-        }
-      } else {
-        const char *value = value1.getStr(nullptr);
-        String sensor = FormatMetricName(key1.getStr());
-
-        if (value != nullptr && (isdigit(value[0]) || (value[0] == '-') || (value[0] == '.')) && strcmp(sensor.c_str(), "time") != 0) {  //remove false 'time' metric
-          WritePromMetricStr(PSTR("sensors"), kPromMetricGauge, value,
-            PSTR("sensor"), sensor.c_str(),
-            nullptr);
-        }
-      }
-    }
+    PromProcessJsonObject(root, nullptr);
   }
-
   WSContentEnd();
 }
 

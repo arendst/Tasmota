@@ -588,7 +588,7 @@ void (* const Ld2402Command[])(void) PROGMEM = {
   &CmndLd2402Help, 
 #endif // LD2402_INCLUDE_HELP
 #ifdef LD2402_INCLUDE_FOLLOW
-  , &CmndLd2402Follow
+  &CmndLd2402Follow,
 #endif // LD2402_INCLUDE_FOLLOW
   &CmndLd2402Mode, &CmndLd2402AutoUpdate, &CmndLd2402AutoGain, &CmndLd2402Status, &CmndLd2402Common,
   &CmndLd2402Motion, &CmndLd2402Micro, &CmndLd2402Save, &CmndLd2402ReRead };

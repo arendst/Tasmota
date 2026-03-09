@@ -235,14 +235,14 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
 // multiplier == 0: ignore
 // multiplier == 1: ignore
 void ZbApplyMultiplierForWrites(double &val_d, uint32_t multiplier, uint32_t divider, int32_t base) {
-  if (0 != base) {
-    val_d = val_d - base;
+  if (base != 0) {
+    val_d -= base;
   }
-  if ((0 != multiplier) && (1 != multiplier)) {
-    val_d = val_d / multiplier;
+  if (multiplier > 1) {
+    val_d /= multiplier;
   }
-  if ((0 != divider) && (1 != divider)) {
-    val_d = val_d * divider;
+  if (divider > 1) {
+    val_d *= divider;
   }
 }
 
@@ -1907,8 +1907,9 @@ const char ZB_WEB_U[] PROGMEM =
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // index 0
     //=ZB_WEB_CSS
-    "</table>{t}"         // Terminate current two column table and open new table
-    "<style>"
+    "</table>"         // Terminate current two column table...
+    "<style>"          // Send STYLE for Zigbee
+    "button:disabled{background-color:var(--c_frm)}"
     // Table CSS
     ".ztd td:not(:first-child){width:20px;font-size:70%%}"
     ".ztd td:last-child{width:45px}"
@@ -1917,28 +1918,33 @@ const char ZB_WEB_U[] PROGMEM =
     // Lighting
     ".bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
     // Signal Strength Indicator
-    ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
-    ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:#%06x}"
-    ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}"
+    ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
+    "i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
+    ".b0{height:25%%}.b1{height:50%%}.b2{height:75%%}.b3{height:100%%}}.o30{opacity:.3}"
     "</style>"
+    "{t}"         // ... and open new table for Zigbee devices
 
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // index 1
-    // Visual indicator for PermitJoin Active
-    //=ZB_WEB_PERMITJOIN_ACTIVE
-    "<p><b>[ <span style='color:#080;'>%s</span> ]</b></p>"
+    // Dummy1; free for further use
+    //=ZB_WEB_DUMMY1
+    ""
 
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // index 2
     // Start of vis.js box
     //=ZB_WEB_VIS_JS_BEFORE
-    "<script type=\"text/javascript\" src=\"https://unpkg.com/vis-network/standalone/umd/vis-network.min.js\"></script>"
-    "<div id=\"mynetwork\" style=\"background-color:#fff;color:#000;width:800px;height:400px;border:1px solid lightgray;resize:both;\">Unable to load vis.js</div>"
-    "<script type=\"text/javascript\">"
-    "var container=document.getElementById(\"mynetwork\");"
-    "var options={groups:{o:{shape:\"circle\",color:\"#d55\"},r:{shape:\"box\",color:\"#fb7\"},e:{shape:\"ellipse\",color:\"#adf\"}}};"
+    "<script src='https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'></script>"
+    "<div id='mynetwork' style='background-color:var(--c_csl);color:var(--c_txt);max-width:800px;height:400px;border:1px solid var(--c_tab);'>Unable to load vis.js</div>"
+    "<script>"
+    "function gsc(v){return getComputedStyle(document.documentElement,null).getPropertyValue(v)}"
+    "var container=document.getElementById('mynetwork');"
+    "var options={"
+    "groups:{o:{shape:'circle',color:'#d55'},r:{shape:'box',color:'#fb7'},e:{shape:'ellipse',color:'#adf'}},"
+    "edges:{color:gsc('--c_txt'),font:{color:gsc('--c_txt'),strokeColor:gsc('--c_csl')}}"
+    "};"
     "var data={"
 
     "\0"
@@ -1988,15 +1994,15 @@ const char ZB_WEB_U[] PROGMEM =
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_COLOR_RGB
-    " <i class=\"bx\" style=\"--cl:#%02X%02X%02X\"></i>#%02X%02X%02X"
+    " <i class=\"bx\" style=\"--cl:#%02X%02X%02X\"></i> #%02X%02X%02X"
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_LINE_START
-    "<tr class='htr'><td colspan=\"4\">&#9478;"
+    "<tr class='htr'><td colspan=4>&#9478;"
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_LIGHT_CT
-    " <span title=\"CT %d\"><small>&#9898; </small>%dK</span>"
+    " <span title=\"CT %d\"><small>&#9898; </small>%d%s</span>"
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_END_STATUS
@@ -2005,7 +2011,7 @@ const char ZB_WEB_U[] PROGMEM =
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_LINE_END
-    "</table>{t}<p></p>"
+    "</table>{t}"     // Terminate Zigbee device table and open a new one for buttons and output of following drivers
     "\0"
     ;   // end of list
 
@@ -2015,81 +2021,84 @@ const char ZB_WEB_U[] PROGMEM =
 // ++++++++++++++++++++vvvvvvvvvvvvvvvvvvv++++++++++++++++++++
 enum {
   ZB_WEB_CSS=0,
-  ZB_WEB_PERMITJOIN_ACTIVE=507,
-  ZB_WEB_VIS_JS_BEFORE=561,
-  ZB_WEB_VIS_JS_AFTER=1034,
-  ZB_WEB_AUTO_REFRESH=1098,
-  ZB_WEB_MAP_REFRESH=1164,
-  ZB_WEB_STATUS_LINE=1230,
-  ZB_WEB_BATTERY=1338,
-  ZB_WEB_GP=1410,
-  ZB_WEB_LAST_SEEN=1466,
-  ZB_WEB_COLOR_RGB=1514,
-  ZB_WEB_LINE_START=1574,
-  ZB_WEB_LIGHT_CT=1614,
-  ZB_WEB_END_STATUS=1669,
-  ZB_WEB_LINE_END=1686,
+  ZB_WEB_DUMMY1=541,
+  ZB_WEB_VIS_JS_BEFORE=542,
+  ZB_WEB_VIS_JS_AFTER=1155,
+  ZB_WEB_AUTO_REFRESH=1219,
+  ZB_WEB_MAP_REFRESH=1285,
+  ZB_WEB_STATUS_LINE=1351,
+  ZB_WEB_BATTERY=1459,
+  ZB_WEB_GP=1531,
+  ZB_WEB_LAST_SEEN=1587,
+  ZB_WEB_COLOR_RGB=1635,
+  ZB_WEB_LINE_START=1696,
+  ZB_WEB_LIGHT_CT=1734,
+  ZB_WEB_END_STATUS=1790,
+  ZB_WEB_LINE_END=1807,
 };
 
-// Compressed from 1705 to 1156, -32.2%
-const char ZB_WEB[] PROGMEM = "\x00\x6B\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\x3D\x3D\x46\x41\x33\xF0\xE8\x6D"
-                             "\xA1\x15\x08\x79\xF6\x51\xDD\x3C\xCC\x6F\xFD\x47\x58\x62\xB4\x21\x0E\xF1\xED\x1F"
-                             "\xD1\x28\x51\xE6\x72\x99\x0C\x36\x1E\x0C\x67\x51\xD7\xED\x36\xB3\xCC\xE7\x99\xF4"
-                             "\x7D\x1E\xE2\x04\x3C\x40\x2B\x04\x3C\x28\x10\xB0\x93\x99\xA4\x30\xD8\x08\x36\x8E"
-                             "\x83\xA8\xF6\x8D\xBF\x8F\x6F\x1D\x7F\xD1\xE1\x54\x79\x9C\x8C\x86\x1B\x0F\x07\xB8"
-                             "\xE8\x2A\x2B\xBE\x7B\x42\xDE\x67\x58\xA7\xA3\xC2\xA8\xF3\x39\x4C\x86\x1B\x0F\x71"
-                             "\xD0\x71\xB0\xF6\x82\x14\xC3\x93\x08\x61\xB0\xF0\x08\x39\x49\xC9\x84\x30\xD8\x78"
-                             "\x13\x7C\x30\x2B\x32\x3C\xF7\x82\xDE\x67\x58\xE0\xB0\x33\x43\xC0\xEC\xF8\x8F\xE7"
-                             "\x99\xC8\x43\x0D\x8B\xD8\x16\x88\x83\x17\xFF\xBE\xA2\x0F\x02\xCF\x9E\x07\x58\x66"
-                             "\x83\xDF\xC1\x7C\x21\xD6\x1E\x05\x9F\x3C\xCC\xEF\xE7\x74\xEB\x3A\xC3\x08\xEA\x3C"
-                             "\x8C\x18\x30\x77\x8F\x71\xD3\xDA\x7B\x41\x2B\x33\x30\x13\x36\x1E\x2C\x2D\x1E\xE3"
-                             "\xAF\x69\x8D\xF1\xE6\x60\x26\x6C\x3A\xDF\x08\x78\x04\x3D\xCC\xE6\x90\xC3\x61\xE0"
-                             "\x65\x88\x26\xF0\xF1\xE6\x71\x9E\xE3\xA1\x7B\x56\x82\x17\x0A\x07\x2C\x86\x1B\x0F"
-                             "\x2A\x01\x93\xC2\x30\xC3\x60\x21\x6F\xC7\x5F\xEC\x4D\x17\xE3\xCC\xE5\x90\xC3\x60"
-                             "\x26\xEE\x47\x91\xF4\x71\xF1\x1B\x0F\x71\xD3\xDA\x8E\x83\x8E\x32\x04\x3E\x16\xCE"
-                             "\x56\x9F\x47\xD1\x02\x15\x03\x90\x81\x0E\x81\xCD\x64\x08\x94\x0E\x51\x02\x1D\x03"
-                             "\x9E\x20\x45\xC1\x0E\x59\x02\x27\x12\xE7\x1B\x3E\x8F\xA3\xDC\x74\x2C\x39\x6C\xF6"
-                             "\x96\x0C\xB0\xF6\x8C\x8F\x33\xA1\xCB\x3D\xC7\xA1\xD8\x40\x83\xCA\x24\xE1\x7C\xF4"
-                             "\x18\x7E\x1E\x83\x8F\xC3\xDE\x47\xA7\x86\x5F\x2F\x51\x90\x4C\xF8\x7D\x82\x16\xCE"
-                             "\x71\xFD\x9E\x0F\xB3\xF0\xFA\x2F\x1E\x87\x67\x86\x5F\x1F\x88\xF7\xCF\x43\xB0\x71"
-                             "\xF8\x7A\x1D\x83\x0F\xC9\xC2\xF9\xE9\xE0\xFF\xA3\x29\x51\x90\xC6\x7C\x3D\x94\xCD"
-                             "\x94\x76\x1A\xEC\xCE\xC1\x06\x91\xEC\x5E\xF8\x67\xC3\xD8\x2A\x2B\xA8\x67\x8F\x33"
-                             "\xB0\xEC\x17\xC3\x0D\x07\x8E\x81\xE0\xD3\xB0\xCF\x7C\x75\xF3\xA1\xFC\xF9\xA1\xD9"
-                             "\xEA\xBE\x12\xC2\xCE\x67\x60\xB1\xA2\x02\x3D\x73\xA0\xDD\xE3\xA1\xAF\xC7\xB0\xFC"
-                             "\x3D\x0E\xC0\x41\xCB\x0F\xC3\xD0\x4D\x33\x5A\x21\xF0\xF6\x0D\x32\x04\x2C\x2A\x01"
-                             "\xF6\x02\x17\x2A\x01\xC7\xB0\x13\x78\x9C\x30\x60\xC1\xE0\x10\xF8\x1C\x38\xD9\x02"
-                             "\x17\x32\x27\x3E\xD9\x0C\x36\x02\x1F\x22\x47\x31\xB2\x04\x4E\x3A\x01\x1B\x98\xA0"
-                             "\xB4\x78\x55\x0F\x7E\xCC\x8F\x1F\x7E\xD3\x6B\x3C\xC7\x65\x0A\x3C\x1E\xC3\xF0\x85"
-                             "\xF5\x8E\x09\xAA\xC4\x16\x58\x88\xCF\x7C\x74\x35\xF8\xF4\x3B\x04\xD3\x33\xF0\x16"
-                             "\x78\x63\x3F\x0C\xEF\xE8\x3C\xEA\xBD\xE7\xF3\xE0\x98\x18\xB1\xAF\xA8\xE8\x3C\xE8"
-                             "\x98\x4C\x6B\xEA\x21\xC6\x45\xA2\x1D\xD0\x46\xE0\xC8\xEF\x1E\x0C\xEF\xEB\x06\x56"
-                             "\xE7\x78\xF8\x7B\x47\xBF\x82\xC6\x78\xF3\x3D\xB8\x79\x9E\xDF\x0A\xB1\x8C\xF3\x3D"
-                             "\x81\xEF\xC3\x09\x9E\xC3\xA8\x10\x78\x3D\x3D\x87\x90\x87\x37\x4F\x61\xEE\x3A\x8B"
-                             "\xE0\x89\x70\x76\x1B\x01\x16\xC9\x81\xC7\x3C\x7B\x0F\x71\xD4\x4C\x11\x2C\xB0\x82"
-                             "\xD1\x9E\x04\x6C\x6A\xC4\x30\x7B\x0F\x71\xEE\x3D\xC7\x83\x3B\xFA\x12\xEA\xCF\x87"
-                             "\xB6\x70\xBE\x08\x32\x41\x0B\x6C\x3E\x73\x1F\x46\x7B\xE3\xA1\x70\x20\xCC\x3B\xA0"
-                             "\x89\xC1\x49\xD4\x25\xD5\x9D\x40\x85\xC0\x29\xDE\x3C\x02\x27\x20\xC0\x87\xCB\xA9"
-                             "\xF9\xE7\x45\x5A\x35\xE0\xBA\x3B\xA6\x05\xF0\x75\xB9\xC7\x74\xEF\x1E\xD0\xB0\x3B"
-                             "\xAD\xCE\x3A\x7D\x85\x96\x21\xDD\x3B\xC7\x83\xDC\x75\x1C\x89\x32\x04\x8C\x78\x61"
-                             "\xF8\x7A\x1D\x83\x0F\xC3\xD0\xC6\x7C\x6A\xB0\xEB\x73\x8F\x87\xD9\xB4\x77\xCF\xB4"
-                             "\x35\xD0\xAC\x10\xF8\x7D\x8F\x3A\x3E\xCF\xC3\xD0\x70\xBA\xAC\xE3\xF0\xFA\xF1\xE8"
-                             "\x76\x02\x14\x73\xD0\xEC\x31\x9F\x1A\x7E\x4E\x17\xCF\x4A\xFA\x0C\x2B\xF7\x8F\x87"
-                             "\xD9\xB6\x84\x42\xAB\xE7\xD9\xF8\x7A\x50\x87\xE1\xE8\x39\x56\xD0\x4C\xF8\x7D\x9C"
-                             "\x64\x6C\x3E\x8E\x3C\x22\x36\x23\xEB\xC8\xEB\x47\xD7\x81\x07\xA0\x7E\x38\xFC\x3D"
-                             "\x0E\xCA\x10\xFC\x3D\x28\x43\xF0\xFA\xF0\x22\x47\x3D\x04\xD3\x30\x43\xC4\x88\x22"
-                             "\x35\x16\xA3\xEB\xC7\xD8\x21\xE7\x1E\xD3\xEC\xFC\x9C\x2F\x9E\x9A\x08\x52\xCF\x60"
-                             "\xEA\x3D\x80\x85\x82\x9E\xC3\xE8\x43\xE8\xFA\x3E\xBC\x08\x9D\x2A\x01\x03\xAC\xEB"
-                             "\x1C\x11\xE6\x7D\x08\x30\xD8\x08\x7C\xFA\x1F\x47\x1D\x11\xB0\xFA\x38\xE8\x8D\x87"
-                             "\xD1\xC7\x44\x6C\x3D\x87\xE1\xE8\x76\x69\xF9\x38\x5F\x04\x1E\x86\xD8\x21\x68\xA4"
-                             "\x3D\xF6\xF9\x10\xCC\x1F\x7F\x3E\xC1\x2B\xA1\xDE\x73\x08\x8C\x1C\xC3\xC1\xF6\x7E"
-                             "\x11\x0F\x10\xC0\x42\xE8\x77\xCE\x17\xCF\x4A\x10\x10\xF4\x30\x50\xCE\x4F\xD1\xE4"
-                             "\x6C\x39\x08\x8C\x1C\xDD\xF1\xE0\xFA\x74\x42\x1F\x41\xCE\x17\xD0\x23\x70\x1A\x6C"
-                             "\x04\x6D\xF8\x30\x8F\x33\xC8\xFA\x38\xE8\x88\xD8\x7D\x1C\x74\x44\x6C\x3E\x8E\x3A"
-                             "\x22\x36\x02\x0E\xE6\x09\x13\xC1\x1F\x8B\x40\x43\xE2\xC1\x07\x81\x78\x65\xF1\xF0"
-                             "\xF6\x1C\xC3\xD8\x7E\x1F\xA3\xC9\x67\xBE\x78\x29\xC2\xF8\x21\x74\x6A\x01\x0B\x86"
-                             "\x92\x0C\xA9\x1F\x42\x1E\xC3\xF0\xF4\xF0\xDB\x08\x23\xF0\xFD\x1E\x47\x17\xD7\xCF"
-                             "\x07\x70\xF4\x3B\x08\x10\x66\x1F\x42\x11\xA0\x22\x70\x4E\x08\x3D\x0A\xF3\xB2\x84"
-                             "\x3F\x0F\xAF\x1E\xD6\x7B\xA7\x0B\xE0\x8F\xD3\xF2\x04\x1E\x5C\x67\x0B\xE6";
+// Compressed from 1819 to 1207, -33.6%
+const char ZB_WEB[] PROGMEM = "\x00\x72\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF4\xF5\x19\x04\xCF\xC1\xC2\xEA\xB3\x8F\x31"
+                             "\x37\xD6\x38\x26\x21\xED\x1D\x61\x9A\x0F\x7F\x05\xF0\x87\x58\x78\x16\x7C\xF3\x33"
+                             "\xBF\x9D\xD3\xAC\xEB\x0C\xFD\x98\xF8\xD3\xBC\x7B\x8E\x86\xDA\x11\x50\x87\x9F\x65"
+                             "\x1D\xD3\xCC\xC6\xFF\xD4\x75\x86\x2B\x42\x10\xEF\x1E\xD1\xFD\x12\x85\x1E\x67\x29"
+                             "\x90\xC3\x61\xE0\xC6\x75\x1D\x7E\xD3\x6B\x3C\xCE\x79\x9F\x47\xD1\x02\x26\x20\x15"
+                             "\x82\x1E\x14\x08\x58\x49\xCC\xD2\x18\x6C\x04\x1B\x47\x41\xD4\x7B\x46\xDF\xC7\xB7"
+                             "\x8E\xBF\xE8\xF0\xAA\x3C\xCE\x46\x43\x0D\x87\x83\xDC\x74\x15\x5F\x3D\xA1\x6F\x33"
+                             "\xAC\x53\xD1\xE1\x54\x79\x9C\xA6\x43\x0D\x87\xB8\xE8\x38\xD8\x7B\x41\x0A\x61\xC9"
+                             "\x84\x30\xD8\x78\x04\x1C\xA4\xE4\xC2\x18\x6C\x3C\x09\xBE\x18\x15\x99\x1E\x7B\xC1"
+                             "\x6F\x33\xAC\x70\x58\x19\xA1\xE0\x76\x7C\x47\xF3\xCC\xE4\x21\x86\xC5\xEC\x0B\x44"
+                             "\x41\x8B\xFF\xDF\x51\x07\x81\x67\xCF\x2A\x01\xA7\xC2\x60\x47\x51\xE4\x60\xC1\x83"
+                             "\xBC\x7B\x8E\x9E\xD3\xDA\x09\x59\x99\x80\x99\xB0\xF1\x61\x68\xF7\x1D\x7B\x4C\x6F"
+                             "\x8F\x33\x01\x33\x61\xD6\xF8\x43\xC0\x21\xEE\x67\x34\x86\x1B\x0F\x03\x2C\x41\x37"
+                             "\x87\x8F\x33\x8C\xF0\x5A\x08\x5C\x26\x1C\xB2\x18\x6C\x3C\x02\x4F\x08\x43\x0D\x80"
+                             "\x85\xBD\x1D\x7F\xB1\x34\x5F\x8F\x33\x96\x43\x0D\x80\xA9\xB7\x1F\xBA\x36\x51\xDE"
+                             "\x3D\xC7\x41\xC7\x19\x02\x1F\x0B\x47\x2B\x4F\xA3\xE8\xF7\x1D\x08\x71\xC8\x40\x87"
+                             "\x30\xE6\xB3\xE8\xFA\x3D\xC7\x42\x1C\x72\x88\x10\xE6\x1C\xF1\x02\x0D\xC3\x96\x40"
+                             "\x89\xC4\x51\xC6\xCF\xA3\xE8\xF7\x1E\xE3\xA1\x61\xCB\x67\xB4\xB0\x65\x87\xB4\x64"
+                             "\x79\x9D\x0E\x59\xEE\x3D\x0E\xC2\x04\x1E\x59\x8F\x6D\x1E\xE9\xC2\xFC\xE1\x7C\xF4"
+                             "\xF0\x7F\xD1\x94\xBD\xF0\xCF\x87\xD8\xAA\xA1\x9E\x3C\xCE\xC3\xB0\x5F\x0C\x34\x1E"
+                             "\x3A\x07\x83\x4E\xC3\x3D\xF1\xD7\xCE\x87\xF3\xE6\x87\x67\xAA\xF8\x4B\x0B\x39\x9D"
+                             "\x82\xC6\x88\x08\xF5\xCE\x83\x77\x8E\x86\xBF\x1F\x67\xE1\xE8\x76\x02\x0E\x56\x7E"
+                             "\x1E\x82\x69\x9A\xD1\x0F\x87\xD8\xD3\x20\x42\xC0\x0F\xB5\xEA\x32\x09\x9F\x0F\xB0"
+                             "\x54\xE1\x2C\x3F\x04\x77\x8F\x2A\x01\x9B\xC2\xF1\xE0\x6D\x9B\x0E\xB0\x41\xE2\xB4"
+                             "\xE7\xDB\x21\x86\xC0\x43\xE3\x44\xE6\x36\x40\x89\xC5\x58\x23\x72\x92\x08\x98\xBD"
+                             "\x8E\x3B\xC7\x83\xEC\xFC\x21\x7D\x63\x82\x6A\xB1\x05\x96\x22\x33\xDF\x1D\x0D\x7E"
+                             "\x3D\x0E\xC1\x34\xCC\xFC\x04\x2E\x15\xCF\xC3\x02\xF8\x3A\xDC\xE4\x3D\xE0\xCE\xE9"
+                             "\x99\xDE\x3D\xBF\x74\x2F\xFC\x87\x9D\x10\x78\x34\x60\xBA\x62\x17\xA8\xC8\x26\x77"
+                             "\x44\xC0\xC5\x8D\x7D\x47\x40\x43\x8A\x4C\x26\x35\xF5\x1D\x5C\x2C\x20\x8E\xF1\xD0"
+                             "\x79\xD1\x0C\xFE\x0C\x7F\xA3\x22\x33\xB0\x85\xB3\xBA\x66\x77\x8F\x71\x9D\xFD\x07"
+                             "\x9D\x57\xBC\xFE\x7C\x04\x4C\x74\x79\x82\x1E\x30\x43\x8C\x8B\x44\x3B\xA0\x8D\xC4"
+                             "\x09\xDE\x3C\x19\xDF\xD6\x0C\xAD\xCE\xF1\xF0\xF6\x8F\x7F\x05\x8C\xF1\xE6\x7B\x70"
+                             "\xF3\x3D\xBE\x15\x63\x19\xE6\x7D\x87\xBF\x0C\x26\x7D\x9D\x40\x83\xC4\x21\xF6\x79"
+                             "\x08\x73\x74\xFB\x3D\xC7\x51\x7C\x11\x2E\x0E\xC3\x60\x22\xD9\x30\x38\xE7\x8F\xB3"
+                             "\xDC\x75\x13\x04\x4B\x2C\x20\xB4\x67\x81\x1B\x1A\xB1\x0C\x1F\x67\xB8\xF7\x1D\x4C"
+                             "\x41\xE7\xE3\xCC\xF6\x82\x0D\x21\xEF\x06\x77\x4F\xB0\x42\xE3\x64\xFB\x3B\xC7\x51"
+                             "\x8C\xEA\x05\x2A\x2B\xFE\xAF\xE1\xA3\x20\xC1\x26\xB8\x7E\x08\xFB\x3B\xC7\xB8\xF7"
+                             "\x1E\xE3\xC1\x9D\xFD\x09\x75\x67\xC3\xDB\x38\x5F\x04\x19\x20\x85\xC2\x01\xF3\x98"
+                             "\xFA\x33\xDF\x1D\x0B\x81\x06\x61\xDD\x04\x4E\x1F\x4E\xA1\x2E\xAC\xEA\x04\x2E\x16"
+                             "\x4E\xF1\xE0\x11\x39\xA9\x04\x3E\x80\x09\xF9\xE7\x45\x5A\x35\xE0\xBA\x3B\xA0\x87"
+                             "\xC8\x89\xDD\x3B\xC7\xB4\x2C\x0E\xEB\x73\x8E\x9F\x61\x65\x88\x77\x4E\xF1\xE0\xF7"
+                             "\x1D\x47\x22\x4C\x81\x23\x1E\x18\x7E\x1E\x87\x60\xC3\xF0\xF4\x31\x9F\x1A\xAC\x3A"
+                             "\xDC\xE3\xE1\xF6\x6D\x1D\xF3\xED\x0D\x74\x2B\x04\x3E\x1F\x63\xCE\x8F\xB3\xF0\xF4"
+                             "\x04\x1E\x93\xD1\xF8\x7D\x78\xF4\x3B\x01\x0A\x39\xE8\x76\x18\xCF\x8D\x3F\x27\x0B"
+                             "\xE7\xA5\x7D\x06\x15\xFB\xC7\xC3\xEC\xDB\x42\x21\x55\xF3\xEC\xFC\x3D\x28\x43\xF0"
+                             "\xF4\x1C\xAB\x68\x26\x7C\x3E\xCE\x32\x36\x1F\x47\x1E\x11\x1B\x11\xF5\xE4\x75\xA3"
+                             "\xEB\xC7\xD8\x20\xE4\x27\xE1\xE8\x76\x50\x87\xE1\xE9\x42\x1F\x87\xD7\x81\x12\x39"
+                             "\xE8\x26\x99\x82\x1E\x24\x41\x11\xA8\xB5\x1F\x5E\x3E\xC1\x0F\x38\xF6\x9F\x67\xE4"
+                             "\xE1\x7C\xF4\xD0\x42\x96\x7B\x07\x51\xEC\x04\x2C\x14\xF6\x1F\x42\x1F\x47\xD1\xF5"
+                             "\xE3\xD8\x08\x5D\x0A\x33\xD8\x75\x9D\x63\x82\x3C\xCF\xA1\x06\x1B\x01\x0B\xA1\x1E"
+                             "\x79\x1F\x47\x1D\x11\xB0\xFA\x38\xE8\x8D\x87\xD1\xC7\x44\x6C\x3D\x87\xE1\xE8\x76"
+                             "\x69\xF9\x38\x5F\x3D\x3C\x32\xF8\x10\xF4\x52\x1E\xFB\x7C\x88\x66\x0F\xBF\x82\x27"
+                             "\x43\xA0\x10\xB1\x73\x98\x44\x60\xE6\x1E\x0F\xB3\xF0\x88\x78\x86\x1E\x87\x67\x86"
+                             "\x5F\x1F\x93\x85\xF3\xD2\x84\x04\x3D\x0C\x14\x33\x93\xF4\x79\x1B\x0E\x42\x23\x07"
+                             "\x37\x7C\x78\x3E\x9D\x10\x87\xD0\x73\x85\xF4\x08\xDC\x06\x9B\x01\x1B\x7E\x0C\x23"
+                             "\xCC\xF2\x3E\x8E\x3A\x22\x36\x1F\x47\x1D\x11\x1B\x0F\xA3\x8E\x88\x8D\x80\x83\xB9"
+                             "\xA0\x48\xA0\x08\xFC\x5A\x82\x1F\x16\x28\x3C\x0B\xC3\x2F\x8F\x87\x30\xFC\x3F\x47"
+                             "\x92\xCF\x7C\xF0\x53\x85\xF4\x08\xFC\x14\x1E\xC2\x0C\xA9\x1F\x42\x1E\xC3\xF0\xF4"
+                             "\xF0\xDB\x08\x23\xF0\xFD\x1E\x47\x17\xD7\xCF\x07\x70\xF4\x3B\x08\x10\x66\x1F\x42"
+                             "\x1F\x5E\x04\x4E\x09\xC1\x07\xA2\x8E\x76\x50\x87\xE1\xF5\xE3\xDA\xCF\x74\xE1\x7C"
+                             "\x10\xFA\x8D\x67\xB6\x8F\x74\xE1\x7C";
 
 // ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
 // ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
@@ -2182,121 +2191,113 @@ const char HTTP_ZB_VERSION[] PROGMEM =
   "</div>";
 
 const char HTTP_BTN_ZB_BUTTONS[] PROGMEM =
-  "<button onclick='la(\"&zbj=1\");'>" D_ZIGBEE_PERMITJOIN "</button>"
+  "<button %s onclick='la(\"&zbj=1\");'>%s%s</button>"
   "<p></p>"
-  "<a href='zbm'><button>" D_ZIGBEE_MAP "</button></a>"
+  "<a href='zbm'><button %s>" D_ZIGBEE_MAP "</button></a>"
   "<p></p>";
 
-const char HTTP_BTN_ZB_BUTTONS_DISABLED[] PROGMEM =
-  "<button style='background-color:#%06X' disabled>" D_ZIGBEE_PERMITJOIN "</button>"
-  "<p></p>"
-  "<button style='background-color:#%06X' disabled>" D_ZIGBEE_MAP "</button>"
-  "<p></p>";
-
-void ZigbeeShow(bool json)
+void ZigbeeShow(void)
 {
-  if (json) {
-    return;
 #ifdef USE_WEBSERVER
-  } else {        
-    UnishoxStrings msg(ZB_WEB);
-    uint32_t zigbee_num = zigbee_devices.devicesSize();
-    if ((zigbee_num > 0) && (!zigbee.init_phase)) {     // don't displays devices on UI if still in initialization phase
-      if (zigbee_num > 255) { zigbee_num = 255; }
+  UnishoxStrings msg(ZB_WEB);
+  WSContentSend_P(msg[ZB_WEB_CSS]);
+  uint32_t zigbee_num = zigbee_devices.devicesSize();
+  if ((zigbee_num > 0) && (!zigbee.init_phase)) {     // don't displays devices on UI if still in initialization phase
+    if (zigbee_num > 255) { zigbee_num = 255; }
 
-      WSContentSend_P(msg[ZB_WEB_CSS], WebColor(COL_TEXT));
-      // WSContentSend_compressed(ZB_WEB, 0);
+    // sort elements by name, then by id
+    uint8_t sorted_idx[zigbee_num];
+    for (uint32_t i = 0; i < zigbee_num; i++) {
+      sorted_idx[i] = i;
+    }
 
-      // sort elements by name, then by id
-      uint8_t sorted_idx[zigbee_num];
-      for (uint32_t i = 0; i < zigbee_num; i++) {
-        sorted_idx[i] = i;
+    // insertion sort
+    for (uint32_t i = 1; i < zigbee_num; i++) {
+      uint8_t key = sorted_idx[i];
+      uint8_t j = i;
+      while ((j > 0) && (device_cmp(sorted_idx[j - 1], key) > 0)) {
+        sorted_idx[j] = sorted_idx[j - 1];
+        j--;
+      }
+      sorted_idx[j] = key;
+    }
+
+    uint32_t now = Rtc.utc_time;
+
+    // iterate through devices by alphabetical order
+    for (uint32_t i = 0; i < zigbee_num; i++) {
+      const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
+      uint16_t shortaddr = device.shortaddr;
+      char *name = (char*) device.friendlyName;
+
+      char sdevice[33];
+      if (nullptr == name) {
+        snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
+        name = sdevice;
       }
 
-      // insertion sort
-      for (uint32_t i = 1; i < zigbee_num; i++) {
-        uint8_t key = sorted_idx[i];
-        uint8_t j = i;
-        while ((j > 0) && (device_cmp(sorted_idx[j - 1], key) > 0)) {
-          sorted_idx[j] = sorted_idx[j - 1];
-          j--;
-        }
-        sorted_idx[j] = key;
-      }
-
-      uint32_t now = Rtc.utc_time;
-
-      // iterate through devices by alphabetical order
-      for (uint32_t i = 0; i < zigbee_num; i++) {
-        const Z_Device &device = zigbee_devices.devicesAt(sorted_idx[i]);
-        uint16_t shortaddr = device.shortaddr;
-        char *name = (char*) device.friendlyName;
-
-        char sdevice[33];
-        if (nullptr == name) {
-          snprintf_P(sdevice, sizeof(sdevice), PSTR(D_DEVICE " 0x%04X"), shortaddr);
-          name = sdevice;
-        }
-
-        char sbatt[96];
-        char dhm[48];
-        snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
-        if (device.validBatteryPercent()) {
-          char unit;
-          uint32_t color = WebColor(COL_TEXT);    // color of text
-          dhm[0] = 0;   // start with empty string
-          if (device.validBattLastSeen()) {
-            uint16_t val = convert_seconds_to_dhm(now - device.batt_last_seen, &unit, &color, true);
-            if (val < 100) {
-              snprintf_P(dhm, sizeof(dhm), PSTR(" (%02d%c)"), val, unit);
-            }
-          }
-          snprintf_P(sbatt, sizeof(sbatt),
-            msg[ZB_WEB_BATTERY],
-            device.batt_percent, dhm,
-            changeUIntScale(device.batt_percent, 0, 100, 0, 14),
-            (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF)
-          );
-        } else if (device.isGP()) {   // display GP in green for Green Power
-          snprintf_P(sbatt, sizeof(sbatt), msg[ZB_WEB_GP]);
-        }
-        uint32_t num_bars = 0;
-
-        char slqi[4];
-        slqi[0] = '-';
-        slqi[1] = '\0';
-        if (device.validLqi()){
-          num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
-          snprintf_P(slqi, sizeof(slqi), PSTR("%d"), device.lqi);
-        }
-
-        WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
-        shortaddr,
-        device.modelId ? EscapeHTMLString(device.modelId).c_str() : "",
-        device.manufacturerId ? EscapeHTMLString(device.manufacturerId).c_str() : "",
-        EscapeHTMLString(name).c_str(), sbatt, slqi);
-
-        if(device.validLqi()) {
-            for(uint32_t j = 0; j < 4; ++j) {
-              WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
-            }
-        }
-        snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
-        if (device.validLastSeen()) {
-          char unit;
-          uint32_t color;
-          uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
+      char sbatt[96];
+      char dhm[48];
+      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+      if (device.validBatteryPercent()) {
+        char unit;
+        uint32_t color = WebColor(COL_TEXT);    // color of text
+        dhm[0] = 0;   // start with empty string
+        if (device.validBattLastSeen()) {
+          uint16_t val = convert_seconds_to_dhm(now - device.batt_last_seen, &unit, &color, true);
           if (val < 100) {
-            snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],                         
-                                         (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF),
-                                         val, unit);
+            snprintf_P(dhm, sizeof(dhm), PSTR(" (%02d%c)"), val, unit);
           }
         }
+        snprintf_P(sbatt, sizeof(sbatt),
+          msg[ZB_WEB_BATTERY],
+          device.batt_percent, dhm,
+          changeUIntScale(device.batt_percent, 0, 100, 0, 14),
+          (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF)
+        );
+      } else if (device.isGP()) {   // display GP in green for Green Power
+        snprintf_P(sbatt, sizeof(sbatt), msg[ZB_WEB_GP]);
+      }
+      uint32_t num_bars = 0;
 
-        WSContentSend_PD(msg[ZB_WEB_END_STATUS], dhm );
+      char slqi[16];
+      slqi[0] = '-';
+      slqi[1] = '\0';
+      if (device.validLqi()){
+        num_bars = changeUIntScale(device.lqi, 0, 254, 0, 4);
+        snprintf_P(slqi, sizeof(slqi), PSTR("%d (%d%%)"), device.lqi, changeUIntScale(device.lqi, 0, 254, 0, 100));
+      }
 
+      WSContentSend_PD(msg[ZB_WEB_STATUS_LINE],
+      shortaddr,
+      device.modelId ? EscapeHTMLString(device.modelId).c_str() : "",
+      device.manufacturerId ? EscapeHTMLString(device.manufacturerId).c_str() : "",
+      EscapeHTMLString(name).c_str(), sbatt, slqi);
+
+      if(device.validLqi()) {
+          for(uint32_t j = 0; j < 4; j++) {
+            WSContentSend_P(PSTR("<i class='b%d%s'></i>"), j, (j >= num_bars) ? PSTR(" o30") : PSTR(""));
+          }
+      }
+      snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
+      if (device.validLastSeen()) {
+        char unit;
+        uint32_t color;
+        uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
+        if (val < 100) {
+          snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],                         
+                                        (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF),
+                                        val, unit);
+        }
+      }
+
+      WSContentSend_PD(msg[ZB_WEB_END_STATUS], dhm);
+
+      for (uint8_t i = 0; i < endpoints_max; i++) {
+        if (0 == device.endpoints[i]) continue;
+        uint8_t endpoint = device.endpoints[i];
         // Sensors
-        const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
+        const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>(endpoint);
 
         if (&thermo != &z_data_unk) {
           bool validTemp = thermo.validTemperature();
@@ -2304,18 +2305,19 @@ void ZigbeeShow(bool json)
           bool validThSetpoint = thermo.validThSetpoint();
           bool validHumidity = thermo.validHumidity();
           bool validPressure = thermo.validPressure();
+          bool validCO2      = thermo.validCO2();
 
-          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure) {
+          if (validTemp || validTempTarget || validThSetpoint || validHumidity || validPressure || validCO2) {
             WSContentSend_P(msg[ZB_WEB_LINE_START]);
             if (validTemp) {
               char buf[12];
               dtostrf(thermo.getTemperature() / 100.0f, 3, 1, buf);
-              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s°C"), buf);
+              WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %s" D_UNIT_DEGREE D_UNIT_CELSIUS), buf);
             }
             if (validTempTarget) {
               char buf[12];
               dtostrf(thermo.getTempTarget() / 100.0f, 3, 1, buf);
-              WSContentSend_PD(PSTR(" &#127919; %s°C"), buf);
+              WSContentSend_PD(PSTR(" &#127919; %s" D_UNIT_DEGREE D_UNIT_CELSIUS), buf);
             }
             if (validThSetpoint) {
               WSContentSend_PD(PSTR(" &#9881;&#65039; %d%%"), thermo.getThSetpoint());
@@ -2324,88 +2326,91 @@ void ZigbeeShow(bool json)
               WSContentSend_P(PSTR(" &#x1F4A7; %d%%"), (uint16_t)(thermo.getHumidity() / 100.0f + 0.5f));
             }
             if (validPressure) {
-              WSContentSend_P(PSTR(" &#x26C5; %d hPa"), thermo.getPressure());
+              WSContentSend_P(PSTR(" &#x26C5; %d" D_UNIT_PRESSURE), thermo.getPressure());
+            }
+            if (validCO2) {
+              WSContentSend_P(PSTR(" &#x1FAE7; %.0f" D_UNIT_PARTS_PER_MILLION), 1000000 * thermo.getCO2());
             }
 
             WSContentSend_P(PSTR("{e}"));
           }
         }
-
-        // Light, switches and plugs
-        const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
-        bool onoff_display = (&onoff != &z_data_unk) ? onoff.validPower() : false;
-        const Z_Data_Light & light = device.data.find<Z_Data_Light>();
-        bool light_display = (&light != &z_data_unk) ? light.validDimmer() : false;
-        const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
-        bool plug_voltage = (&plug != &z_data_unk) ? plug.validMainsVoltage() : false;
-        bool plug_power = (&plug != &z_data_unk) ? plug.validMainsPower() : false;
-        if (onoff_display || light_display || plug_voltage || plug_power) {
-          int8_t channels = device.getLightChannels();
-          if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
-          WSContentSend_P(msg[ZB_WEB_LINE_START]);
-          if (onoff_display) {
-            WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
-          }
-          if (&light != &z_data_unk) {
-            if (light.validDimmer() && (channels >= 1)) {
-              WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
-            }
-            if (light.validCT() && ((channels == 2) || (channels == 5))) {
-              uint16_t ct = light.getCT();
-              if (ct != 0) {        // ct == 0 means undefined value
-                uint32_t ct_k = (((1000000 / ct) + 25) / 50) * 50;
-                WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k);
-              }
-            }
-            if (light.validHue() && light.validSat() && (channels >= 3)) {
-              uint8_t r,g,b;
-              uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
-              HsToRgb(light.getHue(), sat, &r, &g, &b);
-              WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
-            } else if (light.validX() && light.validY() && (channels >= 3)) {
-              uint8_t r,g,b;
-              XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
-              WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
-            }
-          }
-          if (plug_voltage || plug_power) {
-            WSContentSend_P(PSTR(" &#9889; "));
-            if (plug_voltage) {
-              float mains_voltage = plug.getMainsVoltage();
-              WSContentSend_P(PSTR(" %-1_fV"), &mains_voltage);
-            }
-            if (plug_power) {
-              float mains_power = plug.getMainsPower();
-              WSContentSend_P(PSTR(" %-1_fW"), &mains_power);
-            }
-          }
-          WSContentSend_P(PSTR("{e}"));
-        }
-#ifdef USE_BERRY
-        // Berry hook to display additional customized information
-        callBerryZigbeeDispatcher("web_device_status", nullptr, nullptr, shortaddr);
-#endif // USE_BERRY
       }
+      // Light, switches and plugs
+      const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
+      bool onoff_display = (&onoff != &z_data_unk) ? onoff.validPower() : false;
+      const Z_Data_Light & light = device.data.find<Z_Data_Light>();
+      bool light_display = (&light != &z_data_unk) ? light.validDimmer() : false;
+      const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
+      bool plug_voltage = (&plug != &z_data_unk) ? plug.validMainsVoltage() : false;
+      bool plug_power = (&plug != &z_data_unk) ? plug.validMainsPower() : false;
+      if (onoff_display || light_display || plug_voltage || plug_power) {
+        int8_t channels = device.getLightChannels();
+        if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
+        WSContentSend_P(msg[ZB_WEB_LINE_START]);
+        if (onoff_display) {
+          WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
+        }
+        if (&light != &z_data_unk) {
+          if (light.validDimmer() && (channels >= 1)) {
+            WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
+          }
+          if (light.validCT() && ((channels == 2) || (channels == 5))) {
+            uint16_t ct = light.getCT();
+            if (ct != 0) {        // ct == 0 means undefined value
+              uint32_t ct_k = (((1000000 / ct) + 25) / 50) * 50;
+              WSContentSend_P(msg[ZB_WEB_LIGHT_CT], light.getCT(), ct_k, D_UNIT_KELVIN);
+            }
+          }
+          if (light.validHue() && light.validSat() && (channels >= 3)) {
+            uint8_t r,g,b;
+            uint8_t sat = changeUIntScale(light.getSat(), 0, 254, 0, 255);    // scale to 0..255
+            HsToRgb(light.getHue(), sat, &r, &g, &b);
+            WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
+          } else if (light.validX() && light.validY() && (channels >= 3)) {
+            uint8_t r,g,b;
+            XyToRgb(light.getX() / 65535.0f, light.getY() / 65535.0f, &r, &g, &b);
+            WSContentSend_P(msg[ZB_WEB_COLOR_RGB], r,g,b,r,g,b);
+          }
+        }
+        if (plug_voltage || plug_power) {
+          WSContentSend_P(PSTR(" &#9889; "));
+          if (plug_voltage) {
+            float mains_voltage = plug.getMainsVoltage();
+            WSContentSend_P(PSTR(" %-1_f" D_UNIT_VOLT), &mains_voltage);
+          }
+          if (plug_power) {
+            float mains_power = plug.getMainsPower();
+            WSContentSend_P(PSTR(" %-1_f" D_UNIT_WATT), &mains_power);
+          }
+        }
+        WSContentSend_P(PSTR("{e}"));
+      }
+#ifdef USE_BERRY
+      // Berry hook to display additional customized information
+      callBerryZigbeeDispatcher("web_device_status", nullptr, nullptr, shortaddr);
+#endif // USE_BERRY
+    }
 
-      WSContentSend_P(msg[ZB_WEB_LINE_END]);  // Terminate current multi column table and open new table
-    }
-    if (zigbee.permit_end_time) {
-      // PermitJoin in progress
-
-      WSContentSend_P(msg[ZB_WEB_PERMITJOIN_ACTIVE], PSTR(D_ZIGBEE_PERMITJOIN_ACTIVE));
-    }
-    // show Zigbee MCU version
-    if (!zigbee.init_phase) {
-      WSContentSend_P(HTTP_ZB_VERSION,
-                      zigbee.major_rel, zigbee.minor_rel,
-                      zigbee.maint_rel, zigbee.revision);
-      WSContentSend_P(HTTP_BTN_ZB_BUTTONS);
-    } else {
-      uint32_t grey = WebColor(COL_FORM);
-      WSContentSend_P(HTTP_BTN_ZB_BUTTONS_DISABLED, grey, grey);
-    }
-#endif
+    WSContentSend_P(msg[ZB_WEB_LINE_END]);  // Terminate current multi column table and open new table
   }
+  WSContentSend_P(PSTR("<tr><td colspan=2>"));
+  if (!zigbee.init_phase) {
+    WSContentSend_P(HTTP_ZB_VERSION,
+                    zigbee.major_rel, zigbee.minor_rel,
+                    zigbee.maint_rel, zigbee.revision); // show Zigbee MCU version
+    if (zigbee.permit_end_time) {  // PermitJoin in progress
+      char sectemp[16];
+      snprintf_P(sectemp, sizeof(sectemp), PSTR(" (%d " D_UNIT_SECOND ")"), TimePassedSince(zigbee.permit_end_time) / -1000);
+      WSContentSend_P(HTTP_BTN_ZB_BUTTONS, "class='button bgrn'", D_ZIGBEE_PERMITJOIN_ACTIVE, sectemp, "");
+    } else {
+      WSContentSend_P(HTTP_BTN_ZB_BUTTONS, "", D_ZIGBEE_PERMITJOIN, "", "");
+    }
+  } else {
+    WSContentSend_P(HTTP_BTN_ZB_BUTTONS, "disabled", D_ZIGBEE_PERMITJOIN, "", "disabled");
+  }
+  WSContentSend_P(PSTR("{e}"));
+#endif // USE_WEBSERVER
 }
 
 // Web handler to refresh the map, the redirect to show map
@@ -2487,7 +2492,7 @@ bool Xdrv23(uint32_t function) {
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        ZigbeeShow(false);
+        ZigbeeShow();
         break;
       // GUI xmodem
       case FUNC_WEB_ADD_HANDLER:

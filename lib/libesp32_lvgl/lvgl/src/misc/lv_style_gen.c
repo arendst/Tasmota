@@ -122,6 +122,14 @@ void lv_style_set_translate_y(lv_style_t * style, int32_t value)
     lv_style_set_prop(style, LV_STYLE_TRANSLATE_Y, v);
 }
 
+void lv_style_set_translate_radial(lv_style_t * style, int32_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_TRANSLATE_RADIAL, v);
+}
+
 void lv_style_set_transform_scale_x(lv_style_t * style, int32_t value)
 {
     lv_style_value_t v = {
@@ -224,6 +232,14 @@ void lv_style_set_pad_column(lv_style_t * style, int32_t value)
         .num = (int32_t)value
     };
     lv_style_set_prop(style, LV_STYLE_PAD_COLUMN, v);
+}
+
+void lv_style_set_pad_radial(lv_style_t * style, int32_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_PAD_RADIAL, v);
 }
 
 void lv_style_set_margin_top(lv_style_t * style, int32_t value)
@@ -514,6 +530,14 @@ void lv_style_set_image_recolor_opa(lv_style_t * style, lv_opa_t value)
     lv_style_set_prop(style, LV_STYLE_IMAGE_RECOLOR_OPA, v);
 }
 
+void lv_style_set_image_colorkey(lv_style_t * style, const lv_image_colorkey_t * value)
+{
+    lv_style_value_t v = {
+        .ptr = value
+    };
+    lv_style_set_prop(style, LV_STYLE_IMAGE_COLORKEY, v);
+}
+
 void lv_style_set_line_width(lv_style_t * style, int32_t value)
 {
     lv_style_value_t v = {
@@ -658,12 +682,44 @@ void lv_style_set_text_align(lv_style_t * style, lv_text_align_t value)
     lv_style_set_prop(style, LV_STYLE_TEXT_ALIGN, v);
 }
 
+void lv_style_set_text_outline_stroke_color(lv_style_t * style, lv_color_t value)
+{
+    lv_style_value_t v = {
+        .color = value
+    };
+    lv_style_set_prop(style, LV_STYLE_TEXT_OUTLINE_STROKE_COLOR, v);
+}
+
+void lv_style_set_text_outline_stroke_width(lv_style_t * style, int32_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_TEXT_OUTLINE_STROKE_WIDTH, v);
+}
+
+void lv_style_set_text_outline_stroke_opa(lv_style_t * style, lv_opa_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_TEXT_OUTLINE_STROKE_OPA, v);
+}
+
 void lv_style_set_radius(lv_style_t * style, int32_t value)
 {
     lv_style_value_t v = {
         .num = (int32_t)value
     };
     lv_style_set_prop(style, LV_STYLE_RADIUS, v);
+}
+
+void lv_style_set_radial_offset(lv_style_t * style, int32_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_RADIAL_OFFSET, v);
 }
 
 void lv_style_set_clip_corner(lv_style_t * style, bool value)
@@ -704,6 +760,22 @@ void lv_style_set_color_filter_opa(lv_style_t * style, lv_opa_t value)
         .num = (int32_t)value
     };
     lv_style_set_prop(style, LV_STYLE_COLOR_FILTER_OPA, v);
+}
+
+void lv_style_set_recolor(lv_style_t * style, lv_color_t value)
+{
+    lv_style_value_t v = {
+        .color = value
+    };
+    lv_style_set_prop(style, LV_STYLE_RECOLOR, v);
+}
+
+void lv_style_set_recolor_opa(lv_style_t * style, lv_opa_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_RECOLOR_OPA, v);
 }
 
 void lv_style_set_anim(lv_style_t * style, const lv_anim_t * value)

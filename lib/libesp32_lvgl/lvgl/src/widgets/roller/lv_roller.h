@@ -39,10 +39,10 @@ typedef enum {
 } lv_roller_mode_t;
 
 #if LV_USE_OBJ_PROPERTY
-enum {
-    LV_PROPERTY_ID(ROLLER, OPTIONS,             LV_PROPERTY_TYPE_TEXT,   0),
-    LV_PROPERTY_ID(ROLLER, SELECTED,            LV_PROPERTY_TYPE_INT,    1),
-    LV_PROPERTY_ID(ROLLER, VISIBLE_ROW_COUNT,   LV_PROPERTY_TYPE_INT,    2),
+enum _lv_property_roller_id_t {
+    LV_PROPERTY_ID2(ROLLER, OPTIONS,            LV_PROPERTY_TYPE_TEXT,  LV_PROPERTY_TYPE_INT,   0),
+    LV_PROPERTY_ID2(ROLLER, SELECTED,           LV_PROPERTY_TYPE_INT,   LV_PROPERTY_TYPE_INT, 1),
+    LV_PROPERTY_ID(ROLLER, VISIBLE_ROW_COUNT,   LV_PROPERTY_TYPE_INT,   2),
     LV_PROPERTY_ROLLER_END,
 };
 #endif
@@ -76,9 +76,18 @@ void lv_roller_set_options(lv_obj_t * obj, const char * options, lv_roller_mode_
  * Set the selected option
  * @param obj       pointer to a roller object
  * @param sel_opt   index of the selected option (0 ... number of option - 1);
- * @param anim   LV_ANIM_ON: set with animation; LV_ANOM_OFF set immediately
+ * @param anim   LV_ANIM_ON: set with animation; LV_ANIM_OFF set immediately
  */
 void lv_roller_set_selected(lv_obj_t * obj, uint32_t sel_opt, lv_anim_enable_t anim);
+
+/**
+ * Sets the given string as the selection on the roller. Does not alter the current selection on failure.
+ * @param obj               pointer to roller object
+ * @param sel_opt   pointer to the string you want to set as an option
+ * @param anim          LV_ANIM_ON: set with animation; LV_ANIM_OFF set immediately
+ * @return                  `true` if set successfully and `false` if the given string does not exist as an option in the roller
+ */
+bool lv_roller_set_selected_str(lv_obj_t * obj, const char * sel_opt, lv_anim_enable_t anim);
 
 /**
  * Set the height to show the given number of rows (options)
@@ -119,6 +128,26 @@ const char * lv_roller_get_options(const lv_obj_t * obj);
  * @return      the total number of options
  */
 uint32_t lv_roller_get_option_count(const lv_obj_t * obj);
+
+/**
+ * Get an option as a string.
+ * @param obj       pointer to roller object
+ * @param option    index of chosen option
+ * @param buf       pointer to an array to store the string
+ * @param buf_size  size of `buf` in bytes. 0: to ignore it.
+ * @return          LV_RESULT_OK if option found
+ */
+lv_result_t lv_roller_get_option_str(const lv_obj_t * obj, uint32_t option, char * buf, uint32_t buf_size);
+
+#if LV_USE_OBSERVER
+/**
+ * Bind an integer Subject to a Roller's value.
+ * @param obj       pointer to Roller
+ * @param subject   pointer to Subject
+ * @return          pointer to newly-created Observer
+ */
+lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject);
+#endif
 
 /**********************
  *      MACROS

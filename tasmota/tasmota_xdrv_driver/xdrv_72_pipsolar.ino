@@ -40,7 +40,6 @@ struct PipSolar
   {
     NONE,
     QPIGS, // get analog values
-    //QPIRI, // Device Rating Information (settings)
     QMOD,  // get mode
     QPIWS, // get status/error information
     QT,    // get inverter time
@@ -50,6 +49,9 @@ struct PipSolar
     QED,   // energy day
     QEH,   // energy hour
     DAT,   // set date time
+    QPIRI, // Device Rating Information (settings)
+    QFLAG, // Device flag status
+    CUSTOM,// Custom command
   } commandType;
 
   enum class CommandState {
@@ -75,6 +77,18 @@ struct PipSolar
     char charValue;
   };
 
+  enum class BoolFlag : int8_t {
+    False,
+    True,
+    Unknown,
+  };
+
+  struct QFlagValueSetting {
+    BoolFlag value;
+    const char identifier;
+    const char name[30];
+  };
+
   struct ValueSetting
   {
     Value value;
@@ -95,6 +109,7 @@ struct PipSolar
     const char unit[4];
     const bool publish;
   };
+
   struct QueryCommand {
     PipSolar::CommandType commandType;
     bool send;
@@ -109,6 +124,7 @@ struct PIPSOLARPollingValue {
   const uint16_t waitAfterResponse; // *2ms
   bool poll;
 };
+
 struct PIPSOLARPollingValue PIPSOLARpollingList[] = {
   {3, PipSolar::CommandType::QPIWS, 600, 200, false},
   {3, PipSolar::CommandType::QPIGS, 600, 200, false},
@@ -120,6 +136,9 @@ struct PIPSOLARPollingValue PIPSOLARpollingList[] = {
   {0, PipSolar::CommandType::QED, 200, 200, false},
   {0, PipSolar::CommandType::QEH, 200, 200, false},
   {0, PipSolar::CommandType::DAT, 200, 200, false},
+  {0, PipSolar::CommandType::QPIRI, 600, 200, false},
+  {0, PipSolar::CommandType::QFLAG, 600, 200, false},
+  {0, PipSolar::CommandType::CUSTOM, 600, 200, false},
 };
 constexpr uint8_t PIPSOLARpollingListCount = sizeof(PIPSOLARpollingList) / sizeof(PIPSOLARPollingValue);
 uint8_t PIPSOLARpollingValuePosition = PIPSOLARpollingListCount;
@@ -164,6 +183,37 @@ struct PipSolar::ValueSetting PIPSOLARqpigsValueSettings[] = {
 };
 constexpr uint8_t PIPSOLARqpigsValueSettingsCount = sizeof(PIPSOLARqpigsValueSettings) / sizeof(PipSolar::ValueSetting);
 
+// (230.0 24.3 230.0 50.0 24.3 5600 5600 48.0 49.0 48.0 55.6 55.6 2 002 060 1 2 3 9 00 0 2 49.0 0 1 000
+struct PipSolar::ValueSetting PIPSOLARqpiriValueSettings[] = {
+    //{{}, PipSolar::ValueSetting::Type::floatType, 1, 5, "Output_voltage", "V", true},
+    //{{}, PipSolar::ValueSetting::Type::floatType, 7, 4, "Output_current", "Hz", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 12, 5, "AC_out_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 18, 4, "AC_out_frequency_setting", "Hz", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 23, 4, "AC_out_current_setting", "A", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   28, 4, "AC_out_apparent_power_setting", "W", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   33, 4, "AC_out_active_power_setting", "W", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 38, 4, "Bat_rating_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 43, 4, "Bat_recharge_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 48, 4, "Bat_under_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 53, 4, "Bat_bulk_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 58, 4, "Bat_float_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   63, 1, "Bat_type_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   65, 3, "Current_max_ac_charge_setting", "A", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   69, 3, "Current_max_charge_setting", "A", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   73, 1, "Input_voltage_range_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   75, 1, "Out_source_prio_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   77, 1, "Charge_source_prio_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   79, 1, "Parallel_max_number_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   81, 2, "Maschine_type_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   84, 1, "Topology_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   86, 1, "Output_mode_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::floatType, 88, 4, "Redischarge_voltage_setting", "V", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   93, 1, "PV_parallel_ok_cond_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   95, 1, "PV_power_balance_setting", "", true},
+    {{}, PipSolar::ValueSetting::Type::intType,   97, 3, "Max_time_cv_stage_setting", "Min", true},
+};
+constexpr uint8_t PIPSOLARqpiriValueSettingsCount = sizeof(PIPSOLARqpiriValueSettings) / sizeof(PipSolar::ValueSetting);
+
 // (B
 struct PipSolar::ValueSetting PIPSOLARqmodValueSettings[] = {
     {{}, PipSolar::ValueSetting::Type::charType, 1, 1, "Mode", "", true},
@@ -185,6 +235,20 @@ struct PipSolar::ValueSetting PIPSOLARqexValueSettings[] = {
     {{}, PipSolar::ValueSetting::Type::intType, 1, 8, "Total_Energy", "Wh", true},
 };
 constexpr uint8_t PIPSOLARqexValueSettingsCount = sizeof(PIPSOLARqexValueSettings) / sizeof(PipSolar::ValueSetting);
+
+// (EakxyDbjuvz
+struct PipSolar::QFlagValueSetting PIPSOLARqflagValueSettings[] = {
+    // deviceflags 8x
+    {PipSolar::BoolFlag::Unknown, 'a', "Buzzer"},
+    {PipSolar::BoolFlag::Unknown, 'b', "OverloadBypass"},
+    {PipSolar::BoolFlag::Unknown, 'k', "DisplayTimeout"},
+    {PipSolar::BoolFlag::Unknown, 'u', "OverloadRestart"},
+    {PipSolar::BoolFlag::Unknown, 'v', "TemperatureRestart"},
+    {PipSolar::BoolFlag::Unknown, 'x', "Backlight"},
+    {PipSolar::BoolFlag::Unknown, 'y', "SourceInterruptAlarm"},
+    {PipSolar::BoolFlag::Unknown, 'z', "FaultCodeRecord"},
+};
+constexpr uint8_t PIPSOLARqflagValueSettingsCount = sizeof(PIPSOLARqflagValueSettings) / sizeof(PipSolar::QFlagValueSetting);
 
 /********************************************************************************************/
 bool PIPSOLARSendCommand(PipSolar::CommandType cmd, const char *parameter = nullptr, bool checksum = false);
@@ -310,6 +374,24 @@ void CmndPipSolarDAT(void) {
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: command DAT"));
   CmndPipSolarParameter(PipSolar::CommandType::DAT);
 }
+void CmndPipSolarQPIRI(void) {
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: command QPIRI"));
+  CmndPipSolarNoParameter(PipSolar::CommandType::QPIRI);
+}
+
+void CmndPipSolarQFLAG(void) {
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: command QFLAG"));
+  CmndPipSolarNoParameter(PipSolar::CommandType::QFLAG);
+}
+
+void CmndPipSolarCUSTOM(void) {
+  if (XdrvMailbox.data_len == 0) {
+    ResponseCmndChar_P(PSTR("Error\", \"Error\": \"Parameter count"));
+    return;
+  }
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: command DAT"));
+  CmndPipSolarParameter(PipSolar::CommandType::CUSTOM);
+}
 
 void CmndPipSolarPollValues(void) {
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: command PollValues"));
@@ -373,6 +455,9 @@ const char kPipSolarCommands[] PROGMEM = D_CMND_PIP_PREFIX "|"
     D_CMND_PIP_QED "|"
     D_CMND_PIP_QEH "|"
     D_CMND_PIP_DAT "|"
+    D_CMND_PIP_QPIRI "|"
+    D_CMND_PIP_QFLAG "|"
+    D_CMND_PIP_CUSTOM "|"
     D_CMND_PIP_POLLVALUES "|"
     D_CMND_PIP_BAUDRATE "|"
     D_CMND_PIP_SERIALCONFIG;
@@ -385,6 +470,9 @@ void (* const PipSolarCommand[])(void) PROGMEM = {
   &CmndPipSolarQED,
   &CmndPipSolarQEH,
   &CmndPipSolarDAT,
+  &CmndPipSolarQPIRI,
+  &CmndPipSolarQFLAG,
+  &CmndPipSolarCUSTOM,
   &CmndPipSolarPollValues,
   &CmndPipSolarBaudRate,
   &CmndPipSolarSerialConfig
@@ -427,49 +515,116 @@ void PIPSOLARPublishResult(const char *subtopic, int payload)
   XdrvRulesProcess(0, buffer);
 }
 
-void PIPSOLARPublish(const char *subtopic, const char *payload)
+void PIPSOLARPublishRaw(const char *subtopic, const char *payload, bool usebracket = false)
 {
   MqttPublishPayloadPrefixTopic_P(STAT, subtopic, payload);
-  char buffer[150];
-  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": \"%s\"}"), subtopic, payload);
+  char buffer[300];
+  if(usebracket)
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\":\"%s\"}"), subtopic, payload);
+  else
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\":%s}"), subtopic, payload);
+  
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: PUBLISH %s"), (const char*)buffer);
   XdrvRulesProcess(0, buffer);
 }
 
-void PIPSOLARPublishRaw(const char *subtopic, const char *payload)
+void PIPSOLARPublish(const char *subtopic, const char *value, bool json = false, const char *name = nullptr, const char *unit = nullptr)
 {
-  MqttPublishPayloadPrefixTopic_P(STAT, subtopic, payload);
-  char buffer[150];
-  snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": %s}"), subtopic, payload);
+  if (json) {
+    char buffer[150];
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\":{\"value\":\"%s\",\"unit\":\"%s\"}}"), name, value, unit);
+    PIPSOLARPublishRaw(subtopic, buffer);
+  } else {
+    PIPSOLARPublishRaw(subtopic, value, true);
+  }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: PUBLISH %s"), (const char*)buffer);
-  XdrvRulesProcess(0, buffer);
+  
 }
 
-void PIPSOLARPublish(const char *subtopic, int value)
+void PIPSOLARPublish(const char *subtopic, int value, bool json = false, const char *name = nullptr, const char *unit = nullptr)
 {
-  char buffer[15];
-  snprintf(buffer, sizeof(buffer), "%d", value);
+  char buffer[150];
+  if (json) {
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\":%d,\"unit\":\"%s\"}}"), name, value, unit);
+  } else {
+    snprintf_P(buffer, sizeof(buffer), PSTR("%d"), value);
+  }
+  PIPSOLARPublishRaw(subtopic, buffer);
+}
+void PIPSOLARPublish(const char *subtopic, uint32_t value, bool json = false, const char *name = nullptr, const char *unit = nullptr)
+{
+  char buffer[150];
+  if (json) {
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\":%u,\"unit\":\"%s\"}}"), name, value, unit);
+  } else {
+    snprintf_P(buffer, sizeof(buffer), PSTR("%u"), value);
+  }
   PIPSOLARPublishRaw(subtopic, buffer);
 }
 
-void PIPSOLARPublish(const char *subtopic, float value)
+void PIPSOLARPublish(const char *subtopic, float value, bool json = false, const char *name = nullptr, const char *unit = nullptr)
 {
-  char buffer[15];
-  snprintf(buffer, sizeof(buffer), "%f", value);
+  char buffer[150];
+  if (json) {
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\":%.1f,\"unit\":\"%s\"}}"), name, value, unit);
+  } else {
+    snprintf_P(buffer, sizeof(buffer), PSTR("%.1f"), value);
+  }
   PIPSOLARPublishRaw(subtopic, buffer);
 }
 
-void PIPSOLARPublish(const char *subtopic, char value)
+void PIPSOLARPublish(const char *subtopic, char value, bool json = false, const char *name = nullptr, const char *unit = nullptr)
 {
-  char buffer[2];
-  snprintf(buffer, sizeof(buffer), "%c", value);
+  char buffer[150];
+  if (json) {
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\":\"%c\",\"unit\":\"%s\"}}"), name, value, unit);
+  } else {
+    snprintf_P(buffer, sizeof(buffer), PSTR("%c"), value);
+  }
   PIPSOLARPublish(subtopic, buffer);
 }
 
-void PIPSOLARPublish(const char *subtopic, bool value)
+void PIPSOLARPublish(const char *subtopic, bool value, bool json = false, const char *name = nullptr, const char *unit = nullptr)
 {
-  char buffer[2];
-  snprintf(buffer, sizeof(buffer), "%d", value);
+  char buffer[150];
+  if (json) {
+    snprintf_P(buffer, sizeof(buffer), PSTR("{\"%s\": {\"value\":%s,\"unit\":\"%s\"}}"), name, (value ? PSTR("true") : PSTR("false")), unit);
+  } else {
+    snprintf_P(buffer, sizeof(buffer), PSTR("%s"), (value ? PSTR("true") : PSTR("false")));
+  }
+  PIPSOLARPublishRaw(subtopic, buffer);
+}
+
+void PIPSOLARQFlagPublish(const char *subtopic)
+{
+  char buffer[150] = "{";
+  uint8_t position = 1;
+  for(int i = 0; i < PIPSOLARqflagValueSettingsCount; ++i) {
+    int8_t addition = 0;
+    if (PIPSOLARqflagValueSettings[i].value == PipSolar::BoolFlag::True) {
+      addition = snprintf_P(buffer+position, sizeof(buffer)-position, PSTR("\"%s\":true,"), PIPSOLARqflagValueSettings[i].name);
+    } else if (PIPSOLARqflagValueSettings[i].value == PipSolar::BoolFlag::False) {
+      addition = snprintf_P(buffer+position, sizeof(buffer)-position, PSTR("\"%s\":false,"), PIPSOLARqflagValueSettings[i].name);
+    }
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("qflag: buffer:\"%s\" position:%d"), buffer, position);
+    if (position+addition > sizeof(buffer)-1) {
+      buffer[position-1] = '}';
+      buffer[position] = '\0';
+      PIPSOLARPublishRaw(subtopic, buffer);
+
+      // process the last one again
+      --i;
+      // make room for the missing messages
+      buffer[1] = 0;
+    }
+    position = strlen(buffer);
+  }
+  if (position == 1) {
+    buffer[1] = '}';
+    buffer[2] = '\0';
+  } else {
+    buffer[position-1] = '}';
+  }
   PIPSOLARPublishRaw(subtopic, buffer);
 }
 
@@ -522,34 +677,44 @@ bool PIPSOLARSendCommand(PipSolar::CommandType cmd, const char *parameter, bool 
   case PipSolar::CommandType::NONE:
     return false;
   case PipSolar::CommandType::QPIGS:
-    command = PSTR("QPIGS");
+    command = PSTR(D_CMND_PIP_QPIGS);
     break;
   case PipSolar::CommandType::QMOD:
-    command = PSTR("QMOD");
+    command = PSTR(D_CMND_PIP_QMOD);
     break;
   case PipSolar::CommandType::QPIWS:
-    command = PSTR("QPIWS");
+    command = PSTR(D_CMND_PIP_QPIWS);
     break;
   case PipSolar::CommandType::QT:
-    command = PSTR("QT");
+    command = PSTR(D_CMND_PIP_QT);
     break;
   case PipSolar::CommandType::QET:
-    command = PSTR("QET");
+    command = PSTR(D_CMND_PIP_QET);
     break;
   case PipSolar::CommandType::QEY:
-    command = PSTR("QEY");
+    command = PSTR(D_CMND_PIP_QEY);
     break;
   case PipSolar::CommandType::QEM:
-    command = PSTR("QEM");
+    command = PSTR(D_CMND_PIP_QEM);
     break;
   case PipSolar::CommandType::QED:
-    command = PSTR("QED");
+    command = PSTR(D_CMND_PIP_QED);
     break;
   case PipSolar::CommandType::QEH:
-    command = PSTR("QEH");
+    command = PSTR(D_CMND_PIP_QEH);
     break;
   case PipSolar::CommandType::DAT:
-    command = PSTR("DAT");
+    command = PSTR(D_CMND_PIP_DAT);
+    break;
+  case PipSolar::CommandType::QPIRI:
+    command = PSTR(D_CMND_PIP_QPIRI);
+    break;
+  case PipSolar::CommandType::QFLAG:
+    command = PSTR(D_CMND_PIP_QFLAG);
+    break;
+  case PipSolar::CommandType::CUSTOM:
+    command = parameter;
+    parameter = nullptr;
     break;
   }
   PIPSOLAR.commandType = cmd;
@@ -604,7 +769,35 @@ const char*  PIPSOLARGetValueStringCopy(char *data, int8_t position, uint8_t cou
   return PIPSOLARGetValueStringCopyString;
 }
 
-void PIPSOLARInterpret(struct PipSolar::ValueSetting *settings, uint8_t count)
+void PIPSOLARQFlagInterpret(const char *flag)
+{
+  bool currentValue = true;
+  while(*flag != '\0') {
+    switch(*flag) {
+      case 'E':
+        currentValue = true;
+        break;
+      case 'D':
+        currentValue = false;
+        break;
+      default:
+        for(int i = 0; i < PIPSOLARqflagValueSettingsCount; ++i) {
+          if(PIPSOLARqflagValueSettings[i].identifier == *flag) {
+            if(currentValue == true) {
+              PIPSOLARqflagValueSettings[i].value = PipSolar::BoolFlag::True;
+            } else {
+              PIPSOLARqflagValueSettings[i].value = PipSolar::BoolFlag::False;
+            }
+            break;
+          }
+        }
+        break;
+    }
+    flag++;
+  }
+}
+
+void PIPSOLARInterpret(struct PipSolar::ValueSetting *settings, uint8_t count, bool json = false, const char *command = nullptr)
 {
   //(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d"), __LINE__);
   for (uint8_t i = 0; i < count; ++i)
@@ -618,7 +811,11 @@ void PIPSOLARInterpret(struct PipSolar::ValueSetting *settings, uint8_t count)
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d %s %s"), __LINE__, setting.name, temp);
       setting.value.intValue = atoi(temp);
       if (setting.publish)
-        PIPSOLARPublish(setting.name, setting.value.intValue);
+        if (json) {
+          PIPSOLARPublish(command, setting.value.intValue, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, setting.value.intValue);
+        }
       break;
     }
     case PipSolar::ValueSetting::Type::intTypeCopy: {
@@ -626,7 +823,11 @@ void PIPSOLARInterpret(struct PipSolar::ValueSetting *settings, uint8_t count)
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d %s %s"), __LINE__, setting.name, temp);
       setting.value.intValue = atoi(temp);
       if (setting.publish)
-        PIPSOLARPublish(setting.name, setting.value.intValue);
+        if (json) {
+          PIPSOLARPublish(command, setting.value.intValue, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, setting.value.intValue);
+        }
       break;
     }
     case PipSolar::ValueSetting::Type::floatType: {
@@ -634,7 +835,11 @@ void PIPSOLARInterpret(struct PipSolar::ValueSetting *settings, uint8_t count)
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d %s %s"), __LINE__, setting.name, temp);
       setting.value.floatValue = atof(temp);
       if (setting.publish)
-        PIPSOLARPublish(setting.name, setting.value.floatValue);
+        if (json) {
+          PIPSOLARPublish(command, setting.value.floatValue, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, setting.value.floatValue);
+        }
       break;
     }
     case PipSolar::ValueSetting::Type::floatTypeCopy: {
@@ -642,26 +847,42 @@ void PIPSOLARInterpret(struct PipSolar::ValueSetting *settings, uint8_t count)
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d %s %s"), __LINE__, setting.name, temp);
       setting.value.floatValue = atof(temp);
       if (setting.publish)
-        PIPSOLARPublish(setting.name, setting.value.floatValue);
+        if (json) {
+          PIPSOLARPublish(command, setting.value.floatValue, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, setting.value.floatValue);
+        }
       break;
     }
     case PipSolar::ValueSetting::Type::boolType:
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d"), __LINE__);
       setting.value.boolValue = PIPSOLAR.receiveBuffer[setting.position] == '1';
       if (setting.publish)
-        PIPSOLARPublish(setting.name, setting.value.boolValue);
+        if (json) {
+          PIPSOLARPublish(command, setting.value.boolValue, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, setting.value.boolValue);
+        }
       break;
     case PipSolar::ValueSetting::Type::charType:
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d"), __LINE__);
       setting.value.charValue = PIPSOLAR.receiveBuffer[setting.position];
       if (setting.publish)
-        PIPSOLARPublish(setting.name, setting.value.charValue);
+        if (json) {
+          PIPSOLARPublish(command, setting.value.charValue, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, setting.value.charValue);
+        }
       break;
     case PipSolar::ValueSetting::Type::stringType:
       const char* temp = PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, setting.position, setting.count);
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d"), __LINE__);
       if (setting.publish)
-        PIPSOLARPublish(setting.name, temp);
+        if (json) {
+          PIPSOLARPublish(command, temp, true, setting.name, setting.unit);
+        } else {
+          PIPSOLARPublish(setting.name, temp);
+        }
       break;
     }
   }
@@ -690,7 +911,7 @@ void PIPSOLARInterpret(void)
     char buffer[8+3+1];
     auto &deviceState1 = PIPSOLARqpigsValueSettings[16];
     auto &deviceState2 = PIPSOLARqpigsValueSettings[20];
-    snprintf(buffer, sizeof(buffer), "%3s%8s"
+    snprintf_P(buffer, sizeof(buffer), PSTR("%3s%8s")
     , PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, deviceState2.position, deviceState2.count)
     , PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, deviceState1.position, deviceState1.count));
     PIPSOLARPublish(PSTR("Device_state"), buffer);
@@ -708,43 +929,62 @@ void PIPSOLARInterpret(void)
     break;
   case PipSolar::CommandType::QT:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("QT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 14));
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_QT), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 14));
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: line %d"), __LINE__);
     PIPSOLARInterpret(PIPSOLARqtValueSettings, PIPSOLARqtValueSettingsCount);
     PIPSOLARPublish(PSTR("Inverter_date_time"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 14));
     break;
   case PipSolar::CommandType::QET:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("QET"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)));
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_QET), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)));
     PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QEY:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("QEY"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_QEY), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QEM:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("QEM"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_QEM), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QED:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("QED"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_QED), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::QEH:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("QEH"), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_QEH), atoi(PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 8)), PIPSOLAR.queryCommand.parameter);
     else
       PIPSOLARInterpret(PIPSOLARqexValueSettings, PIPSOLARqexValueSettingsCount);
     break;
   case PipSolar::CommandType::DAT:
     if (wasQuery)
-      PIPSOLARPublishResult(PSTR("DAT"), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 3), PIPSOLAR.queryCommand.parameter);
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_DAT), PIPSOLARGetValueString((char*)PIPSOLAR.receiveBuffer, 1, 3), PIPSOLAR.queryCommand.parameter);
+    break;
+  case PipSolar::CommandType::QPIRI:
+  {
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: %s %d %d"), __FUNCTION__, __LINE__, PIPSOLAR.receiveBufferPosition);
+    if (PIPSOLAR.receiveBufferPosition != 100)
+      return;
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: %s %d"), __FUNCTION__, __LINE__);
+    const char qpiri[] = PSTR(D_CMND_PIP_QPIRI);
+    PIPSOLARInterpret(PIPSOLARqpiriValueSettings, PIPSOLARqpiriValueSettingsCount, true, qpiri);
+    break;
+  }
+  case PipSolar::CommandType::QFLAG:
+    //if (wasQuery)
+    PIPSOLARQFlagInterpret((char*)PIPSOLAR.receiveBuffer);
+    PIPSOLARQFlagPublish(PSTR(D_CMND_PIP_QFLAG));
+    break;
+  case PipSolar::CommandType::CUSTOM:
+    //if (wasQuery)
+      PIPSOLARPublishResult(PSTR(D_CMND_PIP_CUSTOM), (char*)PIPSOLAR.receiveBuffer, PIPSOLAR.queryCommand.parameter);
     break;
   }
 
@@ -772,6 +1012,8 @@ void PIPSOLARInput(void)
       PIPSOLAR.maxCurrentErrorPoll = std::max(PIPSOLAR.maxCurrentErrorPoll, PIPSOLAR.currentErrorPoll);
       ++PIPSOLAR.errorPoll;
       PIPSOLAR.receiveBufferPosition = 0; // we are in trouble, but keep it going
+      PIPSOLARPublish(PSTR("errortext"),PSTR("Buffer overflow"));
+      PIPSOLARPublish(PSTR("currentError"),PIPSOLAR.currentErrorPoll);
     }
   }
   if (PIPSOLAR.receiveBufferPosition > 2 && PIPSOLAR.receiveBuffer[PIPSOLAR.receiveBufferPosition - 1] == '\r')
@@ -787,8 +1029,14 @@ void PIPSOLARInput(void)
     PIPSOLAR.receiveBuffer[PIPSOLAR.receiveBufferPosition] = 0; // terminate string
     if (valid)
     {
-      PIPSOLAR.currentErrorPoll = 0;
       ++PIPSOLAR.successPoll;
+
+      if (PIPSOLAR.currentErrorPoll != 0 || (PIPSOLAR.successPoll % 100) == 0) {
+        PIPSOLAR.currentErrorPoll = 0;
+        PIPSOLARPublish(PSTR("errortext"),PSTR("Success"));
+        PIPSOLARPublish(PSTR("currentError"),PIPSOLAR.currentErrorPoll);
+      }
+
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: Received valid data \"%s\" timeout %d"), PIPSOLAR.receiveBuffer, PIPSOLAR.commandTimeoutCounter);
       PIPSOLARInterpret();
       PIPSOLAR.commandState = PipSolar::CommandState::GotResponse;
@@ -800,6 +1048,8 @@ void PIPSOLARInput(void)
       PIPSOLAR.receiveBufferPosition = 0;
       PIPSOLAR.commandState = PipSolar::CommandState::None;
       PIPSOLAR.commandType = PipSolar::CommandType::NONE;
+      PIPSOLARPublish(PSTR("errortext"),PSTR("Crc error"));
+      PIPSOLARPublish(PSTR("currentError"),PIPSOLAR.currentErrorPoll);
     }
     PIPSOLAR.commandTimeoutCounter = -1;
   }
@@ -816,6 +1066,8 @@ void PIPSOLARInput(void)
           PIPSOLAR.commandType = PipSolar::CommandType::NONE;
           PIPSOLAR.receiveBufferPosition = 0;
           ++PIPSOLAR.currentErrorPoll;
+          PIPSOLARPublish(PSTR("errortext"),PSTR("Timeout WaitForResponse"));
+          PIPSOLARPublish(PSTR("currentError"),PIPSOLAR.currentErrorPoll);
           PIPSOLAR.maxCurrentErrorPoll = std::max(PIPSOLAR.maxCurrentErrorPoll, PIPSOLAR.currentErrorPoll);
           ++PIPSOLAR.errorPoll;
           PIPSOLARNextPolling();
@@ -842,6 +1094,8 @@ void PIPSOLARNextPolling() {
     switch(PIPSOLAR.queryCommand.commandType) {
     case PipSolar::CommandType::QT:
     case PipSolar::CommandType::QET:
+    case PipSolar::CommandType::QPIRI:
+    case PipSolar::CommandType::QFLAG:
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: query without parameter"));
       PIPSOLARSendCommand(PIPSOLAR.queryCommand.commandType);
       PIPSOLAR.queryCommand.send = true;
@@ -851,6 +1105,7 @@ void PIPSOLARNextPolling() {
     case PipSolar::CommandType::QED:
     case PipSolar::CommandType::QEH:
     case PipSolar::CommandType::DAT:
+    case PipSolar::CommandType::CUSTOM:
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIPSOLAR: query with parameter"));
       PIPSOLARSendCommand(PIPSOLAR.queryCommand.commandType, PIPSOLAR.queryCommand.parameter);
       PIPSOLAR.queryCommand.send = true;
@@ -953,10 +1208,10 @@ void PIPSOLARShowWeb(const PipSolar::ValueSetting &setting)
     break;
   case PipSolar::ValueSetting::Type::floatTypeCopy:
   case PipSolar::ValueSetting::Type::floatType:
-    WSContentSend_PD(PSTR("{s}%s{m}%f %s{e}"), setting.name, setting.value.floatValue, setting.unit);
+    WSContentSend_PD(PSTR("{s}%s{m}%.1f %s{e}"), setting.name, setting.value.floatValue, setting.unit);
     break;
   case PipSolar::ValueSetting::Type::boolType:
-    WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"), setting.name, (setting.value.boolValue ? "true" : "false"), setting.unit);
+    WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"), setting.name, (setting.value.boolValue ? PSTR("true") : PSTR("false")), setting.unit);
     break;
   case PipSolar::ValueSetting::Type::charType:
     WSContentSend_PD(PSTR("{s}%s{m}%c %s{e}"), setting.name, setting.value.charValue, setting.unit);

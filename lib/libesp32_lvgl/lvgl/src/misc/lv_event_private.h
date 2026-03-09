@@ -24,13 +24,13 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-struct lv_event_dsc_t {
+struct _lv_event_dsc_t {
     lv_event_cb_t cb;
     void * user_data;
     uint32_t filter;
 };
 
-struct lv_event_t {
+struct _lv_event_t {
     void * current_target;
     void * original_target;
     lv_event_code_t code;
@@ -40,6 +40,7 @@ struct lv_event_t {
     uint8_t deleted : 1;
     uint8_t stop_processing : 1;
     uint8_t stop_bubbling : 1;
+    uint8_t stop_trickling : 1;
 };
 
 
@@ -54,6 +55,10 @@ struct lv_event_t {
 void lv_event_push(lv_event_t * e);
 
 void lv_event_pop(lv_event_t * e);
+
+
+lv_result_t lv_event_push_and_send(lv_event_list_t * event_list, lv_event_code_t code, void * original_target,
+                                   void * param);
 
 /**
  * Nested events can be called and one of them might belong to an object that is being deleted.

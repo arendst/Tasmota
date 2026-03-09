@@ -113,7 +113,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE
+//#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE  // 2_7_8
+#define ARDUINO_CORE_RELEASE        "2.7.8"
 #endif  // ARDUINO_ESP8266_RELEASE
 
 #ifndef USE_ADC_VCC
@@ -148,15 +149,15 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 \*-------------------------------------------------------------------------------------------*/
 
 /*-------------------------------------------------------------------------------------------*\
- * Start ESP32-C3/C6 specific parameters - disable features not present in ESP32-C3/C6
+ * Start ESP32-C3/C5/C6 specific parameters - disable features not present in ESP32-C3/C5/C6
 \*-------------------------------------------------------------------------------------------*/
 
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6  // ESP32-C3/C6
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6   // ESP32-C3/C5/C6
 //#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // ESP32-C3/C6 does not support ethernet
+//#undef USE_ETHERNET                                // ESP32-C3/C5/C6 does not support ethernet
 //#endif
 
-#endif  // CONFIG_IDF_TARGET_ESP32C3/C6
+#endif  // CONFIG_IDF_TARGET_ESP32C3/C5/C6
 
 /*-------------------------------------------------------------------------------------------*\
  * End ESP32-C3 specific parameters
@@ -194,7 +195,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #ifndef ARDUINO_ESP32_RELEASE
 #define ARDUINO_CORE_RELEASE        "STAGE"
 #else
-#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
+//#define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE  // 3_3_0
+#define ARDUINO_CORE_RELEASE        ESP_ARDUINO_VERSION_STR  // 3.3.0
 #endif  // ARDUINO_ESP32_RELEASE
 
 #ifdef USE_I2C_BUS2                                // If defined for ESP8266 undefine first

@@ -40,7 +40,7 @@ typedef lv_obj_tree_walk_res_t (*lv_obj_tree_walk_cb_t)(lv_obj_t *, void *);
 /**
  * Delete an object and all of its children.
  * Also remove the objects from their group and remove all animations (if any).
- * Send `LV_EVENT_DELETED` to deleted objects.
+ * Send `LV_EVENT_DELETE` to deleted objects.
  * @param obj       pointer to an object
  */
 void lv_obj_delete(lv_obj_t * obj);
@@ -48,7 +48,7 @@ void lv_obj_delete(lv_obj_t * obj);
 /**
  * Delete all children of an object.
  * Also remove the objects from their group and remove all animations (if any).
- * Send `LV_EVENT_DELETED` to deleted objects.
+ * Send `LV_EVENT_DELETE` to deleted objects.
  * @param obj       pointer to an object
  */
 void lv_obj_clean(lv_obj_t * obj);
@@ -192,6 +192,90 @@ uint32_t lv_obj_get_child_count(const lv_obj_t * obj);
  */
 
 uint32_t lv_obj_get_child_count_by_type(const lv_obj_t * obj, const lv_obj_class_t * class_p);
+
+#if LV_USE_OBJ_NAME
+
+/**
+ * Set a name for a widget. The name will be allocated and freed when the
+ * widget is deleted or a new name is set.
+ * @param obj       pointer to an object
+ * @param name      the name to set. If set to `NULL` the default "<widget_type>_#"
+ *                  name will be used.
+ * @note If the name ends with a `#`, older siblings with the same name
+ * will be counted, and the `#` will be replaced by the index of the
+ * given widget. For example, creating multiple widgets with the name
+ * "mybtn_#" will result in resolved names like "mybtn_0", "mybtn_1",
+ * "mybtn_2", etc.  The name is resolved when `lv_obj_get_name_resolved`
+ * is called, so the result reflects the currently existing widgets at
+ * that time.
+ */
+void lv_obj_set_name(lv_obj_t * obj, const char * name);
+
+/**
+ * Set a name for a widget. Only a pointer will be saved.
+ * @param obj       pointer to an object
+ * @param name      the name to set. If set to `NULL` the default "<widget_type>_#"
+ *                  name will be used.
+ * @note If the name ends with a `#`, older siblings with the same name
+ * will be counted, and the `#` will be replaced by the index of the
+ * given widget. For example, creating multiple widgets with the name
+ * "mybtn_#" will result in resolved names like "mybtn_0", "mybtn_1",
+ * "mybtn_2", etc.  The name is resolved when `lv_obj_get_name_resolved`
+ * is called, so the result reflects the currently existing widgets at
+ * that time.
+ */
+void lv_obj_set_name_static(lv_obj_t * obj, const char * name);
+
+/**
+ * Get the set name as it was set.
+ * @param obj       pointer to an object
+ * @return          get the set name or NULL if it wasn't set yet
+ */
+const char * lv_obj_get_name(const lv_obj_t * obj);
+
+/**
+ * Get the set name or craft a name automatically.
+ * @param obj       pointer to an object
+ * @param buf       buffer to store the name
+ * @param buf_size  the size of the buffer in bytes
+ * @note If the name ends with a `#`, older siblings with the same name
+ * will be counted, and the `#` will be replaced by the index of the
+ * given widget. For example, creating multiple widgets with the name
+ * "mybtn_#" will result in resolved names like "mybtn_0", "mybtn_1",
+ * "mybtn_2", etc.  The name is resolved when `lv_obj_get_name_resolved`
+ * is called, so the result reflects the currently existing widgets at
+ * that time.
+ */
+void lv_obj_get_name_resolved(const lv_obj_t * obj, char buf[], size_t buf_size);
+
+/**
+ * Find a child with a given name on a parent. This child doesn't have to be the
+ * direct child of the parent. First direct children of the parent will be checked,
+ * and the direct children of the first child, etc. (Breadth-first search).
+ *
+ * If the name of a widget was not set a name like "lv_button_1" will
+ * be created for it using `lv_obj_get_name_resolved`.
+ *
+ * @param parent        the widget where the search should start
+ * @return              the found widget or NULL if not found.
+ */
+lv_obj_t * lv_obj_find_by_name(const lv_obj_t * parent, const char * name);
+
+/**
+ * Get an object by name. The name can be a path too, for example
+ * "main_container/lv_button_1/label".
+ * In this case the first part of the name-path should be the direct child of the parent,
+ * the second part, should the direct child of first one, etc.
+ *
+ * If the name of a widget was not set a name like "lv_button_1" will
+ * be created for it using `lv_obj_get_name_resolved`.
+ *
+ * @param parent        the widget where the search should start
+ * @return              the found widget or NULL if not found.
+ */
+lv_obj_t * lv_obj_get_child_by_name(const lv_obj_t * parent, const char * name_path);
+
+#endif /*LV_USE_OBJ_NAME*/
 
 /**
  * Get the index of a child.

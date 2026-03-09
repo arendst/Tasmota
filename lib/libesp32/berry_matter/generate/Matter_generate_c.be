@@ -82,7 +82,7 @@ fprint("  const matter_command_t* commands;")
 fprint("} matter_cluster_t;")
 fprint()
 for cl:cl_ids
-  fprint(f"const matter_attribute_t matter_Attributes_{cl:04X}[] = {")
+  fprint(f"const matter_attribute_t matter_Attributes_{cl:04X}[] = {{")
   var attributes = c[cl_id_name[cl]]['attributes']
   var attr_id_name = {}
   for attr:attributes
@@ -91,6 +91,7 @@ for cl:cl_ids
   var attr_ids_local = k2l(attr_id_name)
 
   for attr_id:attr_ids_local
+    if attr_id >= 0xFFF0 continue end
     var reportable = attributes[attr_id].find('reportable', false)
     var writable = attributes[attr_id].find('writable', false)
     var flags = (writable ? 0x01 : 0x00) | (reportable ? 0x02 : 0x00)
@@ -100,7 +101,7 @@ for cl:cl_ids
   fprint("};")
   fprint()
   # commands
-  fprint(f"const matter_command_t matter_Commands_{cl:04X}[] = {")
+  fprint(f"const matter_command_t matter_Commands_{cl:04X}[] = {{")
   var commands = c[cl_id_name[cl]]['commands']
   var cmd_id_name = {}
   for cmd:commands

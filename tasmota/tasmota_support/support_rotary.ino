@@ -70,6 +70,7 @@ struct tEncoder {
   volatile int8_t pinb;
   uint8_t timeout = 0;                         // Disallow direction change within 0.5 second
   int8_t abs_position[2] = { 0 };
+  int8_t rel_position = 0;                     // Relative position for scripter. Cleared after being read.
   bool changed = false;
 };
 tEncoder Encoder[MAX_ROTARIES];
@@ -260,6 +261,14 @@ void RotaryHandler(void) {
       if (Encoder[index].abs_position[button_pressed] > Settings->param[P_ROTARY_MAX_STEP]) {  // SetOption43 - Rotary steps
         Encoder[index].abs_position[button_pressed] = Settings->param[P_ROTARY_MAX_STEP];      // SetOption43 - Rotary steps
       }
+      Encoder[index].rel_position += rotary_position;
+      if (Encoder[index].rel_position > Settings->param[P_ROTARY_MAX_STEP]) {
+        Encoder[index].rel_position = Settings->param[P_ROTARY_MAX_STEP];
+      }
+      if (Encoder[index].rel_position < -(Settings->param[P_ROTARY_MAX_STEP])) {
+        Encoder[index].rel_position = -(Settings->param[P_ROTARY_MAX_STEP]);
+      }
+
       Response_P(PSTR("{\"Rotary%d\":{\"Pos1\":%d,\"Pos2\":%d}}"), index +1, Encoder[index].abs_position[0], Encoder[index].abs_position[1]);
       XdrvRulesProcess(0);
 #ifdef USE_LIGHT

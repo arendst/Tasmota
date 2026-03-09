@@ -220,7 +220,7 @@ a_setoption = [[
     "(Energy) Do not add export energy to energy today (1)",
     "(GUI) Disable display of GUI device name (1)",
     "(WizMote) Enable WiZ Smart Remote support (1)",
-    "",
+    "(TLS) Enable ECDSA validation in addition to RSA",
     "","","","",
     "","","","",
     "","","",""
@@ -312,8 +312,8 @@ a_features = [[
     "USE_SPI_LORA","USE_SPL06_007","USE_QMP6988","USE_WOOLIIS",
     "USE_HX711_M5SCALES","USE_RX8010","USE_PCF85063","USE_ESP32_TWAI",
     "USE_C8_CO2_5K","USE_WIZMOTE","USE_V9240","USE_TELNET",
-    "USE_XYZMODEM","","","",
-    "","","","",
+    "USE_XYZMODEM","USE_WIREGUARD","USE_AP33772S","USE_VID6608",
+    "USE_AGS02MA","USE_SEN6X","USE_FM24CXX","",
     "","","","",
     "","","",""
     ]]
@@ -343,7 +343,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v14.5.0.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v15.2.0.6 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -239,6 +239,15 @@ void TasAutoMutex::take() {
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
+
+void PowerOnDelay(uint32_t msecs) {
+//  if (ResetReasonPowerOn()) {
+    while (millis() < msecs) {
+      delay(1);
+    }
+//  }
+}
+
 /*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;
@@ -1714,7 +1723,7 @@ void TemplateGpios(myio *gp)
     j++;
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4
     dest[i] = src[i];
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
     if (22 == i) { j = 33; }    // skip 22-32
@@ -1786,13 +1795,17 @@ bool FlashPin(uint32_t pin) {
   return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
 #elif CONFIG_IDF_TARGET_ESP32C3
   return ((pin > 13) && (pin < 18));   // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 11 12 13 are useable
+#elif CONFIG_IDF_TARGET_ESP32C5
+  return ((pin > 15) && (pin < 23));   // ESP32C5 has GPIOs 16-22 reserved for Flash
 #elif CONFIG_IDF_TARGET_ESP32C6
   return ((pin == 24) || (pin == 25) || (pin == 27) || (pin == 29) || (pin == 30));  // ESP32C6 has GPIOs 24-30 reserved for Flash, with some boards GPIOs 26 28 are useable
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
   return (pin > 21) && (pin < 33);     // ESP32S2 skip 22-32
+#elif CONFIG_IDF_TARGET_ESP32P4
+  return false;                        // ESP32P4 has no flash pins, but GPIOs 34-38 are strapping pins
 #else
   return (pin >= 28) && (pin <= 31);   // ESP32 skip 28-31
-#endif  // ESP32C2/C3/C6 and S2/S3
+#endif  // ESP32C2/C3/C5/C6 and S2/S3
 #endif  // ESP32
 }
 
@@ -1805,10 +1818,14 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
   return (12 == pin) || (13 == pin);   // ESP32C2: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32C3
   return (11 == pin) || (12 == pin) || (13 == pin);  // ESP32C3: GPIOs 11 12 13 are usually used for Flash (mode QIO/QOUT)
+#elif CONFIG_IDF_TARGET_ESP32C5
+  return (2 == pin) || (7 == pin) || (25 == pin) || (27 == pin) || (28 == pin);  // ESP32C5: GPIO2,7,25,27,28 are strapping pins
 #elif CONFIG_IDF_TARGET_ESP32C6
   return (26 == pin) || (28 == pin);   // ESP32C6: GPIOs 26 28 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32S2
   return false;                        // No red pin on ESP32S3
+#elif  CONFIG_IDF_TARGET_ESP32P4
+  return (34 >= pin) && (38 <= pin);   // strapping pins on ESP32P4
 #elif CONFIG_IDF_TARGET_ESP32S3
   return (33 <= pin) && (37 >= pin);   // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #else   // ESP32 red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
@@ -2203,7 +2220,7 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 
 void ClaimSerial(void) {
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   if (!tasconsole_serial) {
     return;              // USB console does not use serial
@@ -2437,7 +2454,7 @@ void SyslogAsync(bool refresh) {
 
   char* line;
   size_t len;
-  while (GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
+  while (int loglevel = GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
     // <--- mxtime ---> TAG: <---------------------- MSG ---------------------------->
     // 00:00:02.096-029 HTP: Web server active on wemos5 with IP address 192.168.2.172
     //                  HTP: Web server active on wemos5 with IP address 192.168.2.172
@@ -2462,27 +2479,38 @@ void SyslogAsync(bool refresh) {
         return;
       }
 
-      char header[64];
+      char header[128];
       /* Legacy format (until v13.3.0.1) - HOSTNAME TAG: MSG
          SYSLOG-MSG = wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-12-20T13:41:11.825749+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
            and below message in syslog if hostname starts with a "z"
          2023-12-17T00:09:52.797782+01:00 domus8 rsyslogd: Uncompression of a message failed with return code -3 - enable debug logging if you need further information. Message ignored. [v8.2302.0]
          Notice in both cases the date and time is taken from the syslog server
+
+         Example of rsyslog filter using rsyslog properties:
+         :programname, startswith, "ESP-" /var/log/udp-logs/esp.log  # Log in esp.log
+         :programname, startswith, "ESP-" stop                       # Do not log in syslog
+
       */
 //      snprintf_P(header, sizeof(header), PSTR("%s ESP-"), NetworkHostname());
 
       /* Legacy format - <PRI>HOSTNAME TAG: MSG
-         <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
+         <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = 128 + 6 = <134>
          SYSLOG-MSG = <134>wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-12-21T11:31:50.378816+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice in both cases the date and time is taken from the syslog server. Uncompression message is gone.
-      */
-      snprintf_P(header, sizeof(header), PSTR("<134>%s ESP-"), NetworkHostname());
 
-//       SYSLOG-MSG = <134>wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 2023-12-21T11:31:50.378816+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>%s Tasmota "), NetworkHostname());
+         Translate Tasmota loglevel to syslog severity level:
+         LOG_LEVEL_ERROR      1 -> severity level 3 - Error
+         LOG_LEVEL_INFO       2 -> severity level 6 - Informational
+         LOG_LEVEL_DEBUG      3 -> severity level 7 - Debug
+         LOG_LEVEL_DEBUG_MORE 4 -> severity level 7 - Debug
+
+         Example of rsyslog filter using rsyslog properties:
+         :programname, startswith, "ESP-" /var/log/udp-logs/esp.log  # Log in esp.log
+         :programname, startswith, "ESP-" stop                       # Do not log in syslog
+      */
+//      snprintf_P(header, sizeof(header), PSTR("<%d>%s ESP-"), 128 + min(loglevel * 3, 7), NetworkHostname());
 
       /* RFC3164 - BSD syslog protocol - <PRI>TIMESTAMP HOSTNAME TAG: MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
@@ -2491,51 +2519,84 @@ void SyslogAsync(bool refresh) {
          SYSLOG-MSG = <134>Jan  1 00:00:02 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-01-01T00:00:02+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice Year is taken from syslog server. Month, day and time is provided by Tasmota device. No milliseconds
+
+         Example of rsyslog filter using rsyslog properties:
+         :programname, startswith, "ESP-" /var/log/udp-logs/esp.log  # Log in esp.log
+         :programname, startswith, "ESP-" stop                       # Do not log in syslog
       */
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s %s ESP-"), GetSyslogDate(line).c_str(), NetworkHostname());
 
-//       SYSLOG-MSG = <134>Jan  1 00:00:02 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 2023-01-01T00:00:02+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>%s %s Tasmota "), GetSyslogDate(line).c_str(), NetworkHostname());
+      char* msg_start = line +mxtime;
+      uint32_t msg_len = len -mxtime -1;
 
-      /* RFC5425 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
-         <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
-         VERSION = 1
+      /* RFC5424 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID MSGID STRUCTURED-DATA MSG
+         <PRI>[5] = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
+         VERSION[2] = 1
          TIMESTAMP = yyyy-mm-ddThh:mm:ss.nnnnnn-hh:mm (= local with timezone)
-         APP_NAME = Tasmota
-         PROCID = -
+         HOSTNAME[255] = wemos5
+         APP_NAME[48] = tasmota
+         PROCID[128] = -
+         MSGID[32] = HTP:
          STRUCTURED-DATA = -
-         MSGID = ESP-HTP:
-         SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
-         Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
+         SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 tasmota - HTP: - Web server active on wemos5 with IP address 192.168.2.172
+         Result = 1970-01-01T00:00:02.096000+00:00 wemos5 tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice date and time is provided by Tasmota device.
+
+         Example of rsyslog filter using rsyslog properties:
+         :programname, isequal, "tasmota" /var/log/udp-logs/esp.log  # Log in esp.log
+         :programname, isequal, "tasmota" stop                       # Do not log in syslog
       */
-//      char line_time[mxtime];
-//      subStr(line_time, line, " ", 1);                                 // 00:00:02.096-026
-//      subStr(line_time, line_time, "-", 1);                            // 00:00:02.096
-//      String systime = GetDate() + line_time + "000" + GetTimeZone();  // 1970-01-01T00:00:02.096000+01:00
-//      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - ESP-"), systime.c_str(), NetworkHostname());
+      char timestamp[mxtime];
+      subStr(timestamp, line, " ", 1);                        // 00:00:02.096-026
+      subStr(timestamp, timestamp, "-", 1);                   // 00:00:02.096
 
-//       SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - "), systime.c_str(), NetworkHostname());
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - - "),
+        128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
+        GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
+        NetworkHostname());
+/*
+      // msgid is currently not well supported in rsyslog (https://github.com/rsyslog/rsyslog/issues/3592#issuecomment-480186237)
+      char msgid[5];
+      char* line_msgid = strchr(msg_start, ' ');
+      if (line_msgid && (line_msgid - msg_start < sizeof(msgid))) {  // Only 3 character message ids supported
+        subStr(msgid, msg_start, " ", 1);                     // HTP:
+        uint32_t strlen_msgid = strlen(msgid) +1;
+        msg_start += strlen_msgid;
+        msg_len -= strlen_msgid;
+      } else {
+        strcpy(msgid, "-");                                   // -
+      }
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - %s -"),
+        128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
+        GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
+        NetworkHostname(), msgid);
+*/
 
-      char* line_start = line +mxtime;
+/*
+      TasConsole.printf((char*)"Loglevel ");
+      char number[10];
+      TasConsole.printf(itoa(loglevel, number, 10));
+      TasConsole.printf((char*)", Header '");
+      TasConsole.printf(header);
+      TasConsole.printf((char*)"', Msg '");
+      TasConsole.write((uint8_t*)msg_start, msg_len);
+      TasConsole.printf((char*)"'\r\n");
+*/
 #ifdef ESP8266
       // Packets over 1460 bytes are not send
-      uint32_t line_len;
-      int32_t log_len = len -mxtime -1;
+      uint32_t package_len;
+      int32_t log_len = msg_len;
       while (log_len > 0) {
         PortUdp.write(header);
-        line_len = (log_len > 1460) ? 1460 : log_len;
-        PortUdp.write((uint8_t*)line_start, line_len);
+        package_len = (log_len > 1460) ? 1460 : log_len;
+        PortUdp.write((uint8_t*)msg_start, package_len);
         PortUdp.endPacket();
         log_len -= 1460;
-        line_start += 1460;
+        msg_start += 1460;
       }
 #else
       PortUdp.write((const uint8_t*)header, strlen(header));
-      PortUdp.write((uint8_t*)line_start, len -mxtime -1);
+      PortUdp.write((uint8_t*)msg_start, msg_len);
       PortUdp.endPacket();
 #endif
 
@@ -2562,12 +2623,12 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
   return ((line - TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE / 4);
 }
 
-bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
-  if (!TasmotaGlobal.log_buffer) { return false; }  // Leave now if there is no buffer available
-  if (TasmotaGlobal.uptime < 3) { return false; }   // Allow time to setup correct log level
+uint32_t GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+  if (!TasmotaGlobal.log_buffer) { return 0; }  // Leave now if there is no buffer available
+  if (TasmotaGlobal.uptime < 3) { return 0; }   // Allow time to setup correct log level
 
   uint32_t index = *index_p;
-  if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return false; }
+  if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return 0; }
 
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
@@ -2604,11 +2665,11 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
         (TasmotaGlobal.masterlog_level <= req_loglevel)) {
       *entry_pp = entry_p;
       *len_p = len;
-      return true;
+      return loglevel;
     }
     delay(0);
   } while (index != TasmotaGlobal.log_buffer_pointer);
-  return false;
+  return 0;
 }
 
 bool LogDataJsonPrettyPrint(const char *log_line, uint32_t log_data_len, std::function<void(const char*, uint32_t)> println) {

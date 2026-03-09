@@ -87,6 +87,8 @@ ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
 #endif  // ESP32
 */
 
+const int UFS_FILENAME_SIZE = 50;
+
 // Global file system pointer
 FS *ufsp;
 // Flash file system pointer
@@ -94,7 +96,7 @@ FS *ffsp;
 // Local pointer for file managment
 FS *dfsp;
 
-char ufs_path[48];
+char ufs_path[UFS_FILENAME_SIZE];
 File ufs_upload_file;
 uint8_t ufs_dir;
 // 0 = None, 1 = SD, 2 = ffat, 3 = littlefs
@@ -104,7 +106,7 @@ uint8_t ffs_type;
 uint8_t sd_type;
 
 struct {
-  char run_file[48];
+  char run_file[UFS_FILENAME_SIZE];
   int run_file_pos = -1;
   bool run_file_mutex = 0;
   bool download_busy;
@@ -192,17 +194,33 @@ char *fileOnly(char *fname){
 void UfsCheckSDCardInit(void) {
   // Try SPI mode first
   // SPI mode requires SDCARD_CS to be configured
+/*
   if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
     int8_t cs = Pin(GPIO_SDCARD_CS);
+*/
+  uint32_t spi_bus = 0;
+  int8_t cs = -1;
+  if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
+    cs = Pin(GPIO_SDCARD_CS);
+  }
+  if (TasmotaGlobal.spi_enabled2 && PinUsed(GPIO_SDCARD_CS, 1)) {
+    spi_bus = 1;
+    cs = Pin(GPIO_SDCARD_CS, 1);
+  }
+  if (cs > -1) {
 
 #ifdef ESP8266
     SPI.begin();
+    if (SD.begin(cs)) {
 #endif // ESP8266
 #ifdef ESP32
-    SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    if (1 == spi_bus) {
+      SPI_HSPI.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
+    } else {
+      SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+    }
+    if (SD.begin(cs, (1 == spi_bus) ? SPI_HSPI : SPI)) {
 #endif // ESP32
-
-    if (SD.begin(cs)) {
 #ifdef ESP8266
       ufsp = &SDFS;
 #endif  // ESP8266
@@ -220,7 +238,7 @@ void UfsCheckSDCardInit(void) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted"));
 #endif // ESP8266
 #ifdef ESP32
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted (SPI mode) with %d kB free"), UfsInfo(1, 0));
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted (SPI bus%d) with %d kB free"), spi_bus +1, UfsInfo(1, 0));
 #endif // ESP32
     }
   }
@@ -916,8 +934,6 @@ String UfsJsonSettingsRead(const char* key) {
  * Commands
 \*********************************************************************************************/
 
-const int UFS_FILENAME_SIZE = 48;
-
 char* UfsFilename(char* fname, char* fname_in) {
   fname_in = Trim(fname_in);  // Remove possible leading spaces
   snprintf_P(fname, UFS_FILENAME_SIZE, PSTR("%s%s"), ('/' == fname_in[0]) ? "" : "/", fname_in);
@@ -1262,7 +1278,7 @@ void UFSRun(void) {
 #ifdef USE_WEBSERVER
 
 const char UFS_WEB_DIR[] PROGMEM =
-  "<p><form action='ufsd' method='get'><input type='hidden' name='download' value='%s' /> <button>%s</button></form></p>";
+  "<p></p><form action='ufsd' method='get'><input type='hidden' name='download' value='%s' /> <button>%s</button></form>";
 
 const char UFS_CURRDIR[] PROGMEM = 
   "<p>%s: %s</p>";
@@ -1271,9 +1287,6 @@ const char UFS_CURRDIR[] PROGMEM =
   #define D_CURR_DIR "Folder"
 #endif
 
-const char UFS_FORM_FILE_UPLOAD[] PROGMEM =
-  "<div id='f1' name='f1' style='display:block;'>"
-  "<fieldset><legend><b>&nbsp;" D_MANAGE_FILE_SYSTEM "&nbsp;</b></legend>";
 const char UFS_FORM_FILE_UPGc[] PROGMEM =
   "<div style='text-align:left;color:#%06x;'>" D_FS_SIZE " %s MB - " D_FS_FREE " %s MB";
 
@@ -1295,7 +1308,7 @@ const char UFS_FORM_SDC_DIRa[] PROGMEM =
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-  "<form method='get' action='ufse'><input type='hidden' name='file' value='%s/" D_NEW_FILE "'>"
+  "<input type='hidden' name='file' value='%s/" D_NEW_FILE "'>"
   "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
 const char UFS_FORM_FILE_UPGb1[] PROGMEM =
   "<label><input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</label>";
@@ -1329,7 +1342,6 @@ const char UFS_FORM_SDC_HREFedit[] PROGMEM =
   "<a href='ufse?file=%s/%s'>&#x1F4DD;</a>"; // 📝
 
 const char HTTP_EDITOR_FORM_START[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
   "<form>"
   "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
   "<textarea id='content' name='content' wrap='off' rows='8' cols='80' style='font-size: 12pt'>";
@@ -1427,7 +1439,8 @@ void UfsDirectory(void) {
 
   WSContentStart_P(PSTR(D_MANAGE_FILE_SYSTEM));
   WSContentSendStyle();
-  WSContentSend_P(UFS_FORM_FILE_UPLOAD);
+  WSContentSend_P(HTTP_DIV_F1_BLOCK);
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_MANAGE_FILE_SYSTEM));
 
   char ts[FLOATSZ];
   dtostrfd((float)UfsInfo(0, ufs_dir == 2 ? 1:0) / 1000, 3, ts);
@@ -1455,6 +1468,7 @@ void UfsDirectory(void) {
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
 #ifdef GUI_EDIT_FILE
+  WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR("ufse"));
   WSContentSend_P(UFS_FORM_FILE_UPGb, ufs_path);
 #endif
   if (!UfsIsSDC()) {
@@ -1469,7 +1483,7 @@ void UfsDirectory(void) {
 }
 
 void UfsListDir(char *path, uint8_t depth) {
-  char name[48];
+  char name[UFS_FILENAME_SIZE];
   char npath[128];
   char format[12];
   sprintf(format, PSTR("%%-%ds"), 24 - depth);
@@ -1712,7 +1726,7 @@ void download_task(void *path) {
 
 
 bool UfsUploadFileOpen(const char* upload_filename) {
-  char npath[48];
+  char npath[UFS_FILENAME_SIZE];
   snprintf_P(npath, sizeof(npath), PSTR("%s/%s"), ufs_path, upload_filename);
   dfsp->remove(npath);
   ufs_upload_file = dfsp->open(npath, UFS_FILE_WRITE);
@@ -1756,6 +1770,7 @@ void UfsEditor(void) {
 
   WSContentStart_P(PSTR(D_EDIT_FILE));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_EDIT_FILE));
   char *bfname = fname +1;
   WSContentSend_P(HTTP_EDITOR_FORM_START, bfname);  // Skip leading slash
 
@@ -1773,7 +1788,7 @@ void UfsEditor(void) {
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UFS "UfsEditor: read=%d"), l);
         if (l < 0) { break; }
         buf[l] = '\0';
-        WSContentSend_P(PSTR("%s"), HtmlEscape((char*)buf).c_str());
+        WSContentSendRaw_P( HtmlEscape((char*)buf).c_str());
         filelen -= l;
       }
       fp.close();

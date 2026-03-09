@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file lv_color.h
  *
  */
@@ -37,7 +37,7 @@ LV_EXPORT_CONST_INT(LV_COLOR_DEPTH);
  * Opacity percentages.
  */
 
-enum {
+enum _lv_opacity_level_t {
     LV_OPA_TRANSP = 0,
     LV_OPA_0      = 0,
     LV_OPA_10     = 25,
@@ -53,8 +53,8 @@ enum {
     LV_OPA_COVER  = 255,
 };
 
-#define LV_OPA_MIN 2    /**< Opacities below this will be transparent */
-#define LV_OPA_MAX 253  /**< Opacities above this will fully cover */
+#define LV_OPA_MIN 2    /**< Fully transparent if opa <= LV_OPA_MIN */
+#define LV_OPA_MAX 253  /**< Fully cover if opa >= LV_OPA_MAX */
 
 /**
  * Get the pixel size of a color format in bits, bpp
@@ -69,15 +69,27 @@ enum {
                                             (cf) == LV_COLOR_FORMAT_A2 ? 2 :        \
                                             (cf) == LV_COLOR_FORMAT_I4 ? 4 :        \
                                             (cf) == LV_COLOR_FORMAT_A4 ? 4 :        \
+                                            (cf) == LV_COLOR_FORMAT_NEMA_TSC4 ? 4 : \
+                                            (cf) == LV_COLOR_FORMAT_NEMA_TSC6 ? 6 : \
+                                            (cf) == LV_COLOR_FORMAT_NEMA_TSC6A ? 6 : \
+                                            (cf) == LV_COLOR_FORMAT_NEMA_TSC6AP ? 6 : \
                                             (cf) == LV_COLOR_FORMAT_L8 ? 8 :        \
                                             (cf) == LV_COLOR_FORMAT_A8 ? 8 :        \
                                             (cf) == LV_COLOR_FORMAT_I8 ? 8 :        \
+                                            (cf) == LV_COLOR_FORMAT_ARGB2222 ? 8 :  \
+                                            (cf) == LV_COLOR_FORMAT_NEMA_TSC12 ? 12 : \
+                                            (cf) == LV_COLOR_FORMAT_NEMA_TSC12A ? 12 : \
                                             (cf) == LV_COLOR_FORMAT_AL88 ? 16 :     \
                                             (cf) == LV_COLOR_FORMAT_RGB565 ? 16 :   \
+                                            (cf) == LV_COLOR_FORMAT_RGB565_SWAPPED ? 16 :   \
                                             (cf) == LV_COLOR_FORMAT_RGB565A8 ? 16 : \
+                                            (cf) == LV_COLOR_FORMAT_YUY2 ? 16 :     \
+                                            (cf) == LV_COLOR_FORMAT_ARGB1555 ? 16 : \
+                                            (cf) == LV_COLOR_FORMAT_ARGB4444 ? 16 : \
                                             (cf) == LV_COLOR_FORMAT_ARGB8565 ? 24 : \
                                             (cf) == LV_COLOR_FORMAT_RGB888 ? 24 :   \
                                             (cf) == LV_COLOR_FORMAT_ARGB8888 ? 32 : \
+                                            (cf) == LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED ? 32 : \
                                             (cf) == LV_COLOR_FORMAT_XRGB8888 ? 32 : \
                                             0                                       \
                                     )
@@ -143,16 +155,21 @@ typedef enum {
     LV_COLOR_FORMAT_ARGB8565          = 0x13,   /**< Not supported by sw renderer yet. */
     LV_COLOR_FORMAT_RGB565A8          = 0x14,   /**< Color array followed by Alpha array*/
     LV_COLOR_FORMAT_AL88              = 0x15,   /**< L8 with alpha >*/
+    LV_COLOR_FORMAT_RGB565_SWAPPED    = 0x1B,
 
     /*3 byte (+alpha) formats*/
     LV_COLOR_FORMAT_RGB888            = 0x0F,
     LV_COLOR_FORMAT_ARGB8888          = 0x10,
     LV_COLOR_FORMAT_XRGB8888          = 0x11,
+    LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED          = 0x1A,
 
     /*Formats not supported by software renderer but kept here so GPU can use it*/
     LV_COLOR_FORMAT_A1                = 0x0B,
     LV_COLOR_FORMAT_A2                = 0x0C,
     LV_COLOR_FORMAT_A4                = 0x0D,
+    LV_COLOR_FORMAT_ARGB1555          = 0x16,
+    LV_COLOR_FORMAT_ARGB4444          = 0x17,
+    LV_COLOR_FORMAT_ARGB2222          = 0X18,
 
     /* reference to https://wiki.videolan.org/YUV/ */
     /*YUV planar formats*/
@@ -169,6 +186,17 @@ typedef enum {
     LV_COLOR_FORMAT_UYVY              = 0x27,  /*YUV422 packed like 'U Y V Y'*/
 
     LV_COLOR_FORMAT_YUV_END           = LV_COLOR_FORMAT_UYVY,
+
+    LV_COLOR_FORMAT_PROPRIETARY_START = 0x30,
+
+    LV_COLOR_FORMAT_NEMA_TSC_START    = LV_COLOR_FORMAT_PROPRIETARY_START,
+    LV_COLOR_FORMAT_NEMA_TSC4         = LV_COLOR_FORMAT_NEMA_TSC_START,
+    LV_COLOR_FORMAT_NEMA_TSC6         = 0x31,
+    LV_COLOR_FORMAT_NEMA_TSC6A        = 0x32,
+    LV_COLOR_FORMAT_NEMA_TSC6AP       = 0x33,
+    LV_COLOR_FORMAT_NEMA_TSC12        = 0x34,
+    LV_COLOR_FORMAT_NEMA_TSC12A       = 0x35,
+    LV_COLOR_FORMAT_NEMA_TSC_END      = LV_COLOR_FORMAT_NEMA_TSC12A,
 
     /*Color formats in which LVGL can render*/
 #if LV_COLOR_DEPTH == 1
@@ -206,8 +234,8 @@ typedef enum {
 
 #define LV_COLOR_MAKE(r8, g8, b8) {b8, g8, r8}
 
-#define LV_OPA_MIX2(a1, a2) (((int32_t)(a1) * (a2)) >> 8)
-#define LV_OPA_MIX3(a1, a2, a3) (((int32_t)(a1) * (a2) * (a3)) >> 16)
+#define LV_OPA_MIX2(a1, a2) ((lv_opa_t)(((int32_t)(a1) * (a2)) >> 8))
+#define LV_OPA_MIX3(a1, a2, a3) ((lv_opa_t)(((int32_t)(a1) * (a2) * (a3)) >> 16))
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -299,6 +327,33 @@ lv_color32_t lv_color32_make(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
  * @return      the color
  */
 lv_color_t lv_color_hex3(uint32_t c);
+
+/**
+ * Check if a color with an RGB888 color is within the color range defined by l_color and h_color.
+ * @param color   the color to check
+ * @param l_color the lower bound color
+ * @param h_color the upper bound color
+ * @return        true: pixel is within the color range
+ */
+static inline bool lv_color_is_in_range(lv_color_t color, lv_color_t l_color, lv_color_t h_color)
+{
+    return (color.red <= h_color.red &&
+            color.green <= h_color.green &&
+            color.blue <= h_color.blue &&
+            color.red >= l_color.red &&
+            color.green >= l_color.green &&
+            color.blue >= l_color.blue);
+}
+
+/**
+ * Convert a RGB565 color to RGB888
+ * @param c       a RGB565 color on lv_color16_t
+ * @return        the color
+ */
+static inline lv_color_t lv_color16_to_color(lv_color16_t c)
+{
+    return lv_color_make(c.red << 3, c.green << 2, c.blue << 3);
+}
 
 /**
  * Convert am RGB888 color to RGB565 stored in `uint16_t`
@@ -411,6 +466,17 @@ uint8_t lv_color24_luminance(const uint8_t * c);
  * @return the brightness [0..255]
  */
 uint8_t lv_color32_luminance(lv_color32_t c);
+
+
+/**
+ * Swap the endianness of an rgb565 color
+ * @param c a color
+ * @return the swapped color
+ */
+static inline uint16_t LV_ATTRIBUTE_FAST_MEM lv_color_swap_16(uint16_t c)
+{
+    return (c >> 8) | (c << 8);
+}
 
 /**********************
  *      MACROS

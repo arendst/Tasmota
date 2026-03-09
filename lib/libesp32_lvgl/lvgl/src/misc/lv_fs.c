@@ -18,8 +18,8 @@
  *      DEFINES
  *********************/
 
-#if LV_FS_DEFAULT_DRIVE_LETTER != '\0' && (LV_FS_DEFAULT_DRIVE_LETTER < 'A' || 'Z' < LV_FS_DEFAULT_DRIVE_LETTER)
-    #error "When enabled, LV_FS_DEFAULT_DRIVE_LETTER needs to be a capital ASCII letter (A-Z)"
+#if LV_FS_DEFAULT_DRIVER_LETTER != '\0' && (LV_FS_DEFAULT_DRIVER_LETTER < 'A' || 'Z' < LV_FS_DEFAULT_DRIVER_LETTER)
+    #error "When enabled, LV_FS_DEFAULT_DRIVER_LETTER needs to be a capital ASCII letter (A-Z)"
 #endif
 
 #define fsdrv_ll_p &(LV_GLOBAL_DEFAULT()->fsdrv_ll)
@@ -28,7 +28,7 @@
  *      TYPEDEFS
  **********************/
 typedef struct {
-    char drive_letter;
+    char driver_letter;
     const char * real_path;
 } resolved_path_t;
 
@@ -82,7 +82,7 @@ lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mo
 
     resolved_path_t resolved_path = lv_fs_resolve_path(path);
 
-    lv_fs_drv_t * drv = lv_fs_get_drv(resolved_path.drive_letter);
+    lv_fs_drv_t * drv = lv_fs_get_drv(resolved_path.driver_letter);
 
     if(drv == NULL) {
         LV_LOG_WARN("Can't open file (%s): unknown driver letter", path);
@@ -101,7 +101,7 @@ lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mo
         return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     file_p->drv = drv;
 
@@ -112,7 +112,7 @@ lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mo
     else {
         void * file_d = drv->open_cb(drv, resolved_path.real_path, mode);
         if(file_d == NULL || file_d == (void *)(-1)) {
-            LV_PROFILER_END;
+            LV_PROFILER_FS_END;
             return LV_FS_RES_UNKNOWN;
         }
         file_p->file_d = file_d;
@@ -125,10 +125,13 @@ lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mo
         /* If this is a memory-mapped file, then set "cache" to the memory buffer */
         if(drv->cache_size == LV_FS_CACHE_FROM_BUFFER) {
             lv_fs_path_ex_t * path_ex = (lv_fs_path_ex_t *)path;
-            file_p->cache->buffer = (void *)path_ex->buffer;
+            lv_result_t res = lv_fs_get_buffer_from_path(path_ex, &file_p->cache->buffer, &file_p->cache->end);
+            if(res == LV_RESULT_INVALID) {
+                LV_LOG_WARN("lv_fs_path_ex_t is invalid");
+                return LV_FS_RES_UNKNOWN;
+            }
             file_p->cache->start = 0;
             file_p->cache->file_position = 0;
-            file_p->cache->end = path_ex->size;
         }
         /*Set an invalid range by default*/
         else {
@@ -137,18 +140,55 @@ lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mo
         }
     }
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return LV_FS_RES_OK;
 }
 
-void lv_fs_make_path_from_buffer(lv_fs_path_ex_t * path, char letter, const void * buf, uint32_t size)
+void lv_fs_make_path_from_buffer(lv_fs_path_ex_t * path, char letter, const void * buf, uint32_t size, const char * ext)
 {
-    path->path[0] = letter;
-    path->path[1] = ':';
-    path->path[2] = 0;
-    path->buffer = buf;
-    path->size = size;
+    /*Make a path the contains both the address and the size. */
+
+    /*Don't add the '.' and the extension if the extension is NULL*/
+    if(ext == NULL) {
+        lv_snprintf(path->path, sizeof(path->path), "%c:%zu-%" LV_PRIu32, letter, (size_t) buf, size);
+    }
+    else {
+        lv_snprintf(path->path, sizeof(path->path), "%c:%zu-%" LV_PRIu32 ".%s", letter,
+                    (size_t) buf, size, ext);
+    }
+}
+
+lv_result_t lv_fs_get_buffer_from_path(lv_fs_path_ex_t * path, void ** buffer, uint32_t * size)
+{
+    LV_ASSERT_NULL(path);
+    LV_ASSERT_NULL(buffer);
+    LV_ASSERT_NULL(size);
+
+    *size = 0;
+    *buffer = NULL;
+
+    if(path->path[0] < 'A' || path->path[0] > 'Z') return LV_RESULT_INVALID;
+    if(path->path[1] != ':') return LV_RESULT_INVALID;
+
+    uint32_t i;
+    lv_uintptr_t adr = 0;
+    for(i = 2; path->path[i] != '-' && path->path[i] != '\0' && i < sizeof(path->path); i++) {
+        adr = adr * 10;
+        adr += path->path[i] - '0';
+    }
+
+    if(path->path[i] == '\0' || i == sizeof(path->path)) return LV_RESULT_INVALID;
+    i++; /*Skip '-'*/
+
+    for(; path->path[i] != '.' && path->path[i] != '\0' && i < sizeof(path->path); i++) {
+        *size = (*size) * 10;
+        *size += path->path[i] - '0';
+    }
+
+    *buffer = (void *)adr;
+
+    return LV_RESULT_OK;
 }
 
 lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
@@ -161,7 +201,7 @@ lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
         return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     lv_fs_res_t res = file_p->drv->close_cb(file_p->drv, file_p->file_d);
 
@@ -178,7 +218,7 @@ lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
     file_p->drv    = NULL;
     file_p->cache  = NULL;
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return res;
 }
@@ -195,7 +235,7 @@ lv_fs_res_t lv_fs_read(lv_fs_file_t * file_p, void * buf, uint32_t btr, uint32_t
         if(file_p->drv->read_cb == NULL) return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     uint32_t br_tmp = 0;
     lv_fs_res_t res;
@@ -209,7 +249,7 @@ lv_fs_res_t lv_fs_read(lv_fs_file_t * file_p, void * buf, uint32_t btr, uint32_t
 
     if(br != NULL) *br = br_tmp;
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return res;
 }
@@ -229,7 +269,7 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
         if(file_p->drv->write_cb == NULL) return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     lv_fs_res_t res;
     uint32_t bw_tmp = 0;
@@ -241,8 +281,7 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
     }
     if(bw != NULL) *bw = bw_tmp;
 
-    LV_PROFILER_END;
-
+    LV_PROFILER_FS_END;
     return res;
 }
 
@@ -259,7 +298,7 @@ lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos, lv_fs_whence_t whenc
         if(file_p->drv->seek_cb == NULL) return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     lv_fs_res_t res;
     if(file_p->drv->cache_size) {
@@ -269,7 +308,7 @@ lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos, lv_fs_whence_t whenc
         res = file_p->drv->seek_cb(file_p->drv, file_p->file_d, pos, whence);
     }
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return res;
 }
@@ -286,7 +325,7 @@ lv_fs_res_t lv_fs_tell(lv_fs_file_t * file_p, uint32_t * pos)
         return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     lv_fs_res_t res;
     if(file_p->drv->cache_size) {
@@ -297,9 +336,81 @@ lv_fs_res_t lv_fs_tell(lv_fs_file_t * file_p, uint32_t * pos)
         res = file_p->drv->tell_cb(file_p->drv, file_p->file_d, pos);
     }
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return res;
+}
+
+lv_fs_res_t lv_fs_get_size(lv_fs_file_t * file_p, uint32_t * size_res)
+{
+    uint32_t original_pos;
+    lv_fs_res_t ret = lv_fs_tell(file_p, &original_pos);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    ret = lv_fs_seek(file_p, 0, LV_FS_SEEK_END);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    ret = lv_fs_tell(file_p, size_res);
+
+    if(ret != LV_FS_RES_OK || *size_res != original_pos) {
+        lv_fs_res_t seek_res = lv_fs_seek(file_p, original_pos, LV_FS_SEEK_SET);
+        if(ret == LV_FS_RES_OK) {
+            ret = seek_res;
+        }
+    }
+
+    return ret;
+}
+
+lv_fs_res_t lv_fs_path_get_size(const char * path, uint32_t * size_res)
+{
+    lv_fs_file_t file;
+    lv_fs_res_t ret = lv_fs_open(&file, path, LV_FS_MODE_RD);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    ret = lv_fs_seek(&file, 0, LV_FS_SEEK_END);
+
+    if(ret == LV_FS_RES_OK) {
+        ret = lv_fs_tell(&file, size_res);
+    }
+
+    lv_fs_res_t close_res = lv_fs_close(&file);
+    if(ret == LV_FS_RES_OK) {
+        ret = close_res;
+    }
+
+    return ret;
+}
+
+lv_fs_res_t lv_fs_load_to_buf(void * buf, uint32_t buf_size, const char * path)
+{
+    lv_fs_file_t file;
+    lv_fs_res_t ret = lv_fs_open(&file, path, LV_FS_MODE_RD);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    uint32_t bytes_read;
+    ret = lv_fs_read(&file, buf, buf_size, &bytes_read);
+
+    if(ret == LV_FS_RES_OK && bytes_read != buf_size) {
+        LV_LOG_WARN("Only %"LV_PRIu32" bytes out of %"LV_PRIu32" were read from the file to the buffer",
+                    bytes_read, buf_size);
+        ret = LV_FS_RES_UNKNOWN;
+    }
+
+    lv_fs_res_t close_res = lv_fs_close(&file);
+    if(ret == LV_FS_RES_OK) {
+        ret = close_res;
+    }
+
+    return ret;
 }
 
 lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
@@ -308,7 +419,7 @@ lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
 
     resolved_path_t resolved_path = lv_fs_resolve_path(path);
 
-    lv_fs_drv_t * drv = lv_fs_get_drv(resolved_path.drive_letter);
+    lv_fs_drv_t * drv = lv_fs_get_drv(resolved_path.driver_letter);
 
     if(drv == NULL) {
         return LV_FS_RES_NOT_EX;
@@ -324,19 +435,19 @@ lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
         return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     void * dir_d = drv->dir_open_cb(drv, resolved_path.real_path);
 
     if(dir_d == NULL || dir_d == (void *)(-1)) {
-        LV_PROFILER_END;
+        LV_PROFILER_FS_END;
         return LV_FS_RES_UNKNOWN;
     }
 
     rddir_p->drv = drv;
     rddir_p->dir_d = dir_d;
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return LV_FS_RES_OK;
 }
@@ -357,11 +468,11 @@ lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn, uint32_t fn_len)
         return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     lv_fs_res_t res = rddir_p->drv->dir_read_cb(rddir_p->drv, rddir_p->dir_d, fn, fn_len);
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return res;
 }
@@ -376,14 +487,14 @@ lv_fs_res_t lv_fs_dir_close(lv_fs_dir_t * rddir_p)
         return LV_FS_RES_NOT_IMP;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_FS_BEGIN;
 
     lv_fs_res_t res = rddir_p->drv->dir_close_cb(rddir_p->drv, rddir_p->dir_d);
 
     rddir_p->dir_d = NULL;
     rddir_p->drv   = NULL;
 
-    LV_PROFILER_END;
+    LV_PROFILER_FS_END;
 
     return res;
 }
@@ -490,7 +601,7 @@ const char * lv_fs_get_last(const char * path)
 
     size_t i;
     for(i = len; i > 0; i--) {
-        if(path[i] == '/' || path[i] == '\\') break;
+        if(path[i] == '/' || path[i] == '\\' || path[i] == ':') break;
     }
 
     /*No '/' or '\' in the path so return with path itself*/
@@ -498,6 +609,31 @@ const char * lv_fs_get_last(const char * path)
 
     return &path[i + 1];
 }
+
+int lv_fs_path_join(char * buf, size_t buf_sz, const char * base, const char * end)
+{
+    if(base[0] == '\0') return lv_strlcpy(buf, end, buf_sz);
+    if(end[0] == '\0') return lv_strlcpy(buf, base, buf_sz);
+
+    size_t base_len = lv_strlen(base);
+    char base_end_char = base_len ? base[base_len - 1] : '\0';
+
+    bool base_has_sep = base_end_char == '/' || base_end_char == '\\';
+    bool end_has_sep = end[0] == '/' || end[0] == '\\';
+
+    if(base_has_sep && end_has_sep) {
+        end++;
+        end_has_sep = false;
+    }
+
+    const char * sep = "/";
+    if(base_has_sep || end_has_sep) {
+        sep = "";
+    }
+
+    return lv_snprintf(buf, buf_sz, "%s%s%s", base, sep, end);
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -510,19 +646,19 @@ static resolved_path_t lv_fs_resolve_path(const char * path)
 {
     resolved_path_t resolved;
 
-#if LV_FS_DEFAULT_DRIVE_LETTER != '\0' /*When using default drive letter, strict format (X:) is mandatory*/
+#if LV_FS_DEFAULT_DRIVER_LETTER != '\0' /* When using default driver-identifier letter, strict format (X:) is mandatory */
     bool has_drive_prefix = ('A' <= path[0]) && (path[0] <= 'Z') && (path[1] == ':');
 
     if(has_drive_prefix) {
-        resolved.drive_letter = path[0];
+        resolved.driver_letter = path[0];
         resolved.real_path = path + 2;
     }
     else {
-        resolved.drive_letter = LV_FS_DEFAULT_DRIVE_LETTER;
+        resolved.driver_letter = LV_FS_DEFAULT_DRIVER_LETTER;
         resolved.real_path = path;
     }
 # else /*Lean rules for backward compatibility*/
-    resolved.drive_letter = path[0];
+    resolved.driver_letter = path[0];
 
     if(*path != '\0') {
         path++; /*Ignore the driver letter*/

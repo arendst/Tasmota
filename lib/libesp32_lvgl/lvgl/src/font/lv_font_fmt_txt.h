@@ -144,7 +144,7 @@ typedef struct {
 typedef enum {
     LV_FONT_FMT_TXT_PLAIN      = 0,
     LV_FONT_FMT_TXT_COMPRESSED = 1,
-    LV_FONT_FMT_TXT_COMPRESSED_NO_PREFILTER = 1,
+    LV_FONT_FMT_TXT_COMPRESSED_NO_PREFILTER = 2,
 } lv_font_fmt_txt_bitmap_format_t;
 
 /** Describe store for additional data for fonts */
@@ -183,7 +183,22 @@ typedef struct {
      * from `lv_font_fmt_txt_bitmap_format_t`
      */
     uint16_t bitmap_format  : 2;
+
+    /**
+     * Bytes to which each line is padded.
+     * 0: means no align and padding
+     * 1: e.g. with bpp=4 lines are aligned to 1 byte, so there can be a 4 bits of padding
+     * 4, 8, 16, 32, 64: each line is padded to the given byte boundaries
+     */
+    uint8_t stride;
 } lv_font_fmt_txt_dsc_t;
+
+typedef struct {
+    const lv_font_t * font_p; /**< Pointer to built-in font*/
+    uint32_t size; /** < Size of the built-in font*/
+} lv_builtin_font_src_t;
+
+LV_ATTRIBUTE_EXTERN_DATA extern const lv_font_class_t lv_builtin_font_class;
 
 /**********************
  * GLOBAL PROTOTYPES

@@ -29,7 +29,7 @@ License along with NeoPixel.  If not, see
 
 #pragma once
 
-#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C6) && !defined(CONFIG_IDF_TARGET_ESP32C2)
+#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C6) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C5)
 
 /*  General Reference documentation for the APIs used in this implementation
 LOW LEVEL:  (what is actually used)
@@ -454,7 +454,7 @@ public:
     const static rmt_channel_t RmtChannelNumber = RMT_CHANNEL_3;
 };
 
-#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C5) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 class NeoEsp32RmtChannel4
 {

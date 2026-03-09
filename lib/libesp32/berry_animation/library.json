@@ -1,0 +1,16 @@
+{
+  "name": "Berry Animation Framework",
+  "version": "1.0.0",
+  "description": "Comprehensive LED animation framework for Tasmota Berry",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "authors": {
+    "name": "Tasmota Team",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+  }
+}

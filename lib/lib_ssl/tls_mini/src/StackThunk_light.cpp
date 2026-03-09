@@ -45,11 +45,15 @@ uint32_t stack_thunk_light_refcnt = 0;
 
 //#define _stackSize (5600/4)
 #if defined(USE_MQTT_CLIENT_CERT) || defined(USE_MQTT_AWS_IOT_LIGHT) || defined(USE_MQTT_AZURE_IOT)
-  #define _stackSize (5300/4)   // using a light version of bearssl we can save 300 bytes
+  #define _stackSizeRSA (5300/4)   // using a light version of bearssl we can save 500 bytes
+  #define _stackSizeECDSA (6300/4)   // using a light version of bearssl we can save 300 bytes
 #else
-  #define _stackSize (4800/4)   // no private key, we can reduce a little, max observed 4300
+  #define _stackSizeRSA (4800/4)   // no private key, we can reduce a little, max observed 4300
+  #define _stackSizeECDSA (6800/4)   // using a light version of bearssl we can save 300 bytes
 #endif
 #define _stackPaint 0xdeadbeef
+
+size_t _stackSize = _stackSizeRSA;
 
 void stack_thunk_yield()
 {
@@ -68,6 +72,16 @@ void stack_thunk_yield()
             "mov.n a1, %0\n\t"
         :: "r"(tmp) : "memory");
     }
+}
+
+/* Set the size for stack depending on RSA or RSA/ECDSA */
+void stack_thunk_light_set_size(bool _rsa_only)
+{
+  if (_rsa_only) {
+    _stackSize = _stackSizeRSA;
+  } else {
+    _stackSize = _stackSizeECDSA;
+  }
 }
 
 /* Add a reference, and allocate the stack if necessary */

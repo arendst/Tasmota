@@ -3,7 +3,7 @@
 // input sha256: 960fbc2354bc4029cbc93953e54edc74024a46ca58902af175f5ecf8839eb0a8
 /////////////////////////////////////////////////////////////////////
 
-const size_t HTTP_SCRIPT_CONSOL_SIZE = 985;
+const size_t HTTP_SCRIPT_CONSOL_SIZE = 985;    // compressed size 724 bytes
 const char HTTP_SCRIPT_CONSOL_COMPRESSED[] PROGMEM = "\x33\xBF\xAF\x71\xF0\xE3\x3A\x8B\x44\x3E\x1C\x67\x51\x18\xA3\xA8\x2A\x2B\x1A\x7C"
                              "\x3E\x84\x3C\x18\x17\xC1\xD6\xE7\x20\x8E\xE8\xC3\xBC\x7B\x4C\xEF\xE8\x33\xAB\x0F"
                              "\x87\xD9\xF6\x78\x0C\x27\x7F\x2A\x2B\xD1\xAF\x05\xD1\xDD\x0A\x8E\xF0\x24\xCD\x31"

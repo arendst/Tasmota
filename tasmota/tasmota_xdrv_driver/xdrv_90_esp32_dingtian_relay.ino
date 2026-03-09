@@ -23,6 +23,9 @@
 #define XDRV_90           90
 
 /********************************************************************************************************
+ * SetOption133 - Inverts 74HC595 shift register outputs
+ * SetOption81 - Inverts 74HC165 shift register inputs
+ *
  * Check defines
  */
 
@@ -55,6 +58,10 @@ struct DINGTIAN_DATA {
 
 uint32_t DingtianReadWrite(uint32_t outputs)
 {
+  if (Settings->flag5.shift595_invert_outputs) {  // SetOption133 - Inverts 74HC595 shift register outputs
+    outputs = ~outputs;
+  }
+  
   uint32_t inputs = 0;
   uint32_t in_bit = 1;
 
@@ -82,11 +89,11 @@ uint32_t DingtianReadWrite(uint32_t outputs)
     Dingtian->outputs_initialized = true;
   }
 
-#ifdef DINGTIAN_INPUTS_INVERTED
-  return ~inputs;
-#else
-  return inputs;
-#endif
+  if (Settings->flag3.pcf8574_ports_inverted) {    // SetOption81 - Inverts 74HC165 shift register inputs
+    return ~inputs;
+  } else {
+    return inputs;
+  }
 }
 
 /********************************************************************************************************
@@ -95,22 +102,26 @@ uint32_t DingtianReadWrite(uint32_t outputs)
 
 void DingtianInit(void) {
   if (PinUsed(GPIO_DINGTIAN_CLK, GPIO_ANY) && PinUsed(GPIO_DINGTIAN_SDI) && PinUsed(GPIO_DINGTIAN_Q7)
-   && (PinUsed(GPIO_DINGTIAN_PL) || PinUsed(GPIO_DINGTIAN_OE)) && PinUsed(GPIO_DINGTIAN_RCK)) {
+   && (PinUsed(GPIO_DINGTIAN_PL) || PinUsed(GPIO_DINGTIAN_OE))
+   && (PinUsed(GPIO_DINGTIAN_PL) || PinUsed(GPIO_DINGTIAN_RCK))) {
     // allocate Dingtian data structure
     Dingtian = (struct DINGTIAN_DATA*)calloc(1, sizeof(struct DINGTIAN_DATA));
     if (Dingtian) {
       // get pins
-      Dingtian->pin_clk = Pin(GPIO_DINGTIAN_CLK, GPIO_ANY);                     // shift clock   : 595's SCLK & 165's CLK
-      Dingtian->pin_sdi = Pin(GPIO_DINGTIAN_SDI);                               // Serial out    : 595's SER
-      Dingtian->pin_q7  = Pin(GPIO_DINGTIAN_Q7);                                // Serial in     : 165's Q7
-      if (PinUsed(GPIO_DINGTIAN_PL)) Dingtian->pin_pl  = Pin(GPIO_DINGTIAN_PL); // Input load    : 595's nOE  & 165's PL (or SH/LD on some datasheet)
-      if (PinUsed(GPIO_DINGTIAN_OE)) Dingtian->pin_oe  = Pin(GPIO_DINGTIAN_OE); // Output enable : 595's nOE (v3.6.10)
-      Dingtian->pin_rck = Pin(GPIO_DINGTIAN_RCK);                               // Output load   : 595's RCLK & 165's CLKINH
+      Dingtian->pin_clk = Pin(GPIO_DINGTIAN_CLK, GPIO_ANY);                       // shift clock   : 595's SCLK & 165's CLK
+      Dingtian->pin_sdi = Pin(GPIO_DINGTIAN_SDI);                                 // Serial out    : 595's SER
+      Dingtian->pin_q7  = Pin(GPIO_DINGTIAN_Q7);                                  // Serial in     : 165's Q7
+      if (PinUsed(GPIO_DINGTIAN_PL)) Dingtian->pin_pl  = Pin(GPIO_DINGTIAN_PL);   // Input load    : 595's nOE  & 165's PL (or SH/LD on some datasheet)
+      if (PinUsed(GPIO_DINGTIAN_OE)) Dingtian->pin_oe  = Pin(GPIO_DINGTIAN_OE);   // Output enable : 595's nOE & 165's nCE (v3.6.10)
+      if (PinUsed(GPIO_DINGTIAN_RCK)) Dingtian->pin_rck = Pin(GPIO_DINGTIAN_RCK); // Output load   : 595's RCLK & 165's CLKINH
+      else Dingtian->pin_rck = Dingtian->pin_pl;                                  // Use PL as RCK if not defined (shared pin boards)
       // number of shift registers is the CLK index
       Dingtian->count   = ((GetPin(Dingtian->pin_clk) - AGPIO(GPIO_DINGTIAN_CLK)) + 1) * 8;
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: clk:%d, sdi:%d, q7:%d, pl:%d, oe:%d, rck:%d, count:%d"),
-        Dingtian->pin_clk, Dingtian->pin_sdi, Dingtian->pin_q7, Dingtian->pin_pl, Dingtian->pin_oe, Dingtian->pin_rck, Dingtian->count);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DNGT: clk:%d, sdi:%d, q7:%d, pl:%d, oe:%d, rck:%d, count:%d, SO133:%d, SO81:%d"),
+        Dingtian->pin_clk, Dingtian->pin_sdi, Dingtian->pin_q7, Dingtian->pin_pl, Dingtian->pin_oe, Dingtian->pin_rck, Dingtian->count,
+        Settings->flag5.shift595_invert_outputs,  // SetOption133 - Inverts 74HC595 shift register outputs
+        Settings->flag3.pcf8574_ports_inverted);  // SetOption81 - Inverts 74HC165 shift register inputs
 
       DINGTIAN_SET_OUTPUT(Dingtian->pin_clk, 0);
       DINGTIAN_SET_OUTPUT(Dingtian->pin_sdi, 0);

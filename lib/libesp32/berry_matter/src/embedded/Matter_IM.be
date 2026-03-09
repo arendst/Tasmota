@@ -239,7 +239,7 @@ class Matter_IM
   #
   # `pi` is the plugin object
   #      if `pi` is nil, just report the status for ctx.status
-  # `ctx` is the context with endpoint/cluster/attribute, `cts.status` is non-nil for direct request and contains the error message to show
+  # `ctx` is the context with endpoint/cluster/attribute, `ctx.status` is non-nil for direct request and contains the error message to show
   # `session` is the current session
   # `force_log` is false, then don't log normal values - typically used to not log wildcard requests
   #
@@ -787,8 +787,8 @@ class Matter_IM
 
       self.attributedata2raw(raw, ctx, res)
 
-      # add suffix 1824FF0118
-      raw.add(0x1824FF01, -4)        # add 1824FF01
+      # add suffix 1824FF0C18
+      raw.add(0x1824FF0C, -4)        # add 1824FF0C - InteractionModelRevision 12
       raw.add(0x18, 1)               # add 18
 
     elif ctx.status != nil
@@ -801,8 +801,8 @@ class Matter_IM
 
       self.attributestatus2raw(raw, ctx, ctx.status)
       
-      # add suffix 1824FF0118
-      raw.add(0x1824FF01, -4)        # add 1824FF01
+      # add suffix 1824FF0C18
+      raw.add(0x1824FF0C, -4)        # add 1824FF0C - InteractionModelRevision 12
       raw.add(0x18, 1)               # add 18
 
     else
@@ -1022,8 +1022,8 @@ class Matter_IM
       # ignore if content is nil and status is undefined
       return false
     end
-    # add suffix 1824FF0118
-    raw.add(0x1824FF01, -4)       # add 1824FF01
+    # add suffix 1824FF0C18
+    raw.add(0x1824FF0C, -4)       # add 1824FF0C - InteractionModelRevision 12
     raw.add(0x18, 1)              # add 18
 
     # log(f"MTR: raw={raw.tohex()}", 3)
@@ -1258,11 +1258,3 @@ class Matter_IM
 
 end
 matter.IM = Matter_IM
-
-#-
-
-# Unit tests
-
-
--#
-

@@ -63,7 +63,7 @@ const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in fir
   const uint8_t MAX_PWMS = 16;              // ESP32: 16 ledc PWM channels in total - TODO for now
   #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
   const uint8_t MAX_PWMS = 8;               // ESP32S2/S3: 8 ledc PWM channels in total
-  #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+  #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
   const uint8_t MAX_PWMS = 6;               // ESP32C2/C3/C6: 6 ledc PWM channels in total
   #else
   const uint8_t MAX_PWMS = 5;               // Unknown - revert to 5 PWM max
@@ -135,6 +135,8 @@ const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #ifdef ESP32
   #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
   const uint8_t MAX_ADCS = 5;               // Max number of ESP32-C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
+  #elif CONFIG_IDF_TARGET_ESP32C5
+  const uint8_t MAX_ADCS = 6;               // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)  
   #elif CONFIG_IDF_TARGET_ESP32C6
   const uint8_t MAX_ADCS = 7;               // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
   #else   // ESP32
@@ -428,7 +430,7 @@ enum Ws2812Color { WS_RED, WS_GREEN, WS_BLUE };
 
 enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LST_RGBCW, LST_MAX=5 };   // Do not insert new fields
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
-                     LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
+                     LT_NU8,   LT_W,       LT_CW,        LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
 enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT, FUNC_ACTIVE, FUNC_ABOUT_TO_RESTART,
                      FUNC_LOOP, FUNC_SLEEP_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
@@ -442,7 +444,7 @@ enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2,
                      FUNC_WEB_GET_ARG, FUNC_WEB_ADD_HANDLER, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN, FUNC_TIME_SYNCED,
                      FUNC_DEVICE_GROUP_ITEM,
                      FUNC_NETWORK_UP, FUNC_NETWORK_DOWN,
-                     FUNC_WEB_STATUS,
+                     FUNC_WEB_STATUS_LEFT, FUNC_WEB_STATUS_RIGHT,
                      FUNC_return_result = 200,  // Insert function WITHOUT return results before here. Following functions return results
                      FUNC_PIN_STATE, FUNC_MODULE_INIT, FUNC_ADD_BUTTON, FUNC_ADD_SWITCH, FUNC_BUTTON_PRESSED, FUNC_BUTTON_MULTI_PRESSED,
                      FUNC_SET_DEVICE_POWER,

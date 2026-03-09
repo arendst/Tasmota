@@ -12,6 +12,6 @@
       "maintainer": true
     },
     "build": {
-      "flags": [ "-I$PROJECT_DIR/include" ]
+      "flags": [ "-I$PROJECT_DIR/include", "-DCOMPILE_BERRY_LIB" ]
     }
   }

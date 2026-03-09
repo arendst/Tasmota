@@ -19,7 +19,7 @@ on:
 
 jobs:
   os-check-win:
-    runs-on: windows-2019
+    runs-on: windows-latest
     if: github.repository == 'arendst/Tasmota'
     strategy:
       fail-fast: true
@@ -29,17 +29,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          #python -m pip install --upgrade pip
-          pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v4
         with:
@@ -57,17 +61,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          #python -m pip install --upgrade pip
-          pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v4
         with:
@@ -94,7 +102,9 @@ jobs:
           - tasmota32solo1
           - tasmota32c2
           - tasmota32c3
+          - tasmota32c5
           - tasmota32c6
+          - tasmota32p4
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -111,22 +121,28 @@ jobs:
           - tasmota32s3-safeboot
           - tasmota32c2-safeboot
           - tasmota32c3-safeboot
+          - tasmota32c5-safeboot
           - tasmota32c6-safeboot
+          - tasmota32p4-safeboot
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          #python -m pip install --upgrade pip
-          pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v4
         with:
@@ -144,17 +160,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install wheel
-          #python -m pip install --upgrade pip
-          pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
+          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - uses: actions/upload-artifact@v4
         with:

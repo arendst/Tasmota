@@ -36,14 +36,9 @@ extern "C" {
  **********************/
 
 #define _LV_EVENT_LAST  LV_EVENT_LAST
-#define _lv_obj_t   lv_obj_t
-#define _lv_obj_class_t lv_obj_class_t
-#define _lv_event_t lv_event_t
 #define _lv_event_code_t lv_event_code_t
 #define _lv_event_mark_deleted lv_event_mark_deleted
 #define lv_obj_add_event lv_obj_add_event_cb
-
-#define _lv_anim_t lv_anim_t
 
 #define _LV_STYLE_LAST_BUILT_IN_PROP LV_STYLE_LAST_BUILT_IN_PROP
 #define _LV_FLEX_REVERSE LV_FLEX_REVERSE
@@ -78,21 +73,57 @@ extern "C" {
 #define _lv_obj_get_ext_draw_size lv_obj_get_ext_draw_size
 #define _lv_indev_scroll_handler lv_indev_scroll_handler
 
-#define _lv_display_t lv_display_t
 #define _lv_display_refr_timer lv_disp_refr_timer
 #define _lv_disp_refr_timer lv_disp_refr_timer
 #define _lv_disp_get_refr_timer lv_disp_get_refr_timer
 
-#define _lv_timer_t lv_timer_t
+#define lv_obj_get_child_by_id  lv_obj_find_by_id
+#define lv_obj_update_flag      lv_obj_set_flag
 
 #define _lv_inv_area lv_inv_area
+#define lv_chart_set_all_value lv_chart_set_all_values
+#define lv_calendar_set_showed_date lv_calendar_set_month_shown
+#define lv_chart_set_range lv_chart_set_axis_range
+#define lv_chart_set_value_by_id lv_chart_set_series_value_by_id
+#define lv_chart_get_x_array lv_chart_get_series_x_array
+#define lv_chart_get_y_array lv_chart_get_series_y_array
+#define lv_chart_set_ext_x_array lv_chart_set_series_ext_x_array
+#define lv_chart_set_ext_y_array lv_chart_set_series_ext_y_array
 
-/**********************
- * DEPRECATED FUNCTIONS
- **********************/
+#if defined(LV_FS_DEFAULT_DRIVE_LETTER)
+#warning LV_FS_DEFAULT_DRIVE_LETTER is deprecated. Rename to LV_FS_DEFAULT_DRIVER_LETTER
+
+#if LV_FS_DEFAULT_DRIVER_LETTER == '\0'
+#undef LV_FS_DEFAULT_DRIVER_LETTER
+#define LV_FS_DEFAULT_DRIVER_LETTER LV_FS_DEFAULT_DRIVE_LETTER
+#endif
+
+#endif /* defined(LV_FS_DEFAULT_DRIVE_LETTER) */
+
+#define LV_LABEL_LONG_WRAP             LV_LABEL_LONG_MODE_WRAP
+#define LV_LABEL_LONG_DOT              LV_LABEL_LONG_MODE_DOTS
+#define LV_LABEL_LONG_SCROLL           LV_LABEL_LONG_MODE_SCROLL
+#define LV_LABEL_LONG_SCROLL_CIRCULAR  LV_LABEL_LONG_MODE_SCROLL_CIRCULAR
+#define LV_LABEL_LONG_CLIP             LV_LABEL_LONG_MODE_CLIP
+
+#define lv_anim_set_time                lv_anim_set_duration
+#define lv_anim_set_playback_time       lv_anim_set_reverse_duration
+#define lv_anim_set_playback_delay      lv_anim_set_reverse_delay
+#define lv_anim_set_playback_duration   lv_anim_set_reverse_duration
+
+#define lv_gradient_init_stops  lv_grad_init_stops
+#define lv_gradient_stop_t      lv_grad_stop_t
+
+#define lv_spangroup_new_span lv_spangroup_add_span
+#define lv_spangroup_refr_mode lv_spangroup_refresh
+
+#define lv_slider_set_left_value lv_slider_set_start_value
+
+#define lv_calendar_header_arrow_create     lv_calendar_add_header_arrow
+#define lv_calendar_header_dropdown_create  lv_calendar_add_header_dropdown
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
-#endif /*LV_API_MAP_V9_0_H*/
+#endif /* LV_API_MAP_V9_1_H */

@@ -10,7 +10,7 @@ env.Append(CXXFLAGS=["-Wno-volatile"])
 env.Append(CFLAGS=["-Wno-discarded-qualifiers", "-Wno-implicit-function-declaration", "-Wno-incompatible-pointer-types"])
 
 # Remove build flags which are not valid for risc-v
-if mcu in ("esp32c2", "esp32c3", "esp32c6", "esp32h2", "esp32p4"):
+if mcu in ("esp32c2", "esp32c3", "esp32c5", "esp32c6", "esp32h2", "esp32p4"):
   try:
     build_flags.pop(build_flags.index("-mno-target-align"))
   except:

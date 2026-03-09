@@ -38,7 +38,7 @@ class Leds : Leds_ntv
       # in such case, `self._p` is equal to `0`
       self.leds = self.pixel_count()
       import light
-      self.bri = light.get()['bri']
+      self.bri = light.get(0, 'bri')
     else
       # use pure Berry driver
       leds = int(leds)
@@ -76,8 +76,16 @@ class Leds : Leds_ntv
     self.show()
   end
 
-  # set bri (0..255)
+  # set bri (0..255) or 'nil' to adjust to the default Tasmota brightness if we use the default strip
   def set_bri(bri)
+    if (bri == nil)
+      if !self._p         # if `_p` is `nil` or `<ptr: 0>` then bool() returns false
+        import light
+        bri = light.get(0, 'bri')
+      else
+        return            # not default strip, we don't adjust
+      end
+    end
     if (bri < 0)    bri = 0   end
     if (bri > 255)  bri = 255 end
     self.bri = bri
@@ -112,12 +120,32 @@ class Leds : Leds_ntv
   def can_show()
     return self.call_native(3)
   end
+  def can_show_wait()
+    while !self.can_show()
+      tasmota.yield()
+    end
+  end
   def is_dirty()                ## DEPRECATED
     return self.call_native(4)
   end
   def dirty()                   ## DEPRECATED
     self.call_native(5)
   end
+
+  # push_pixels
+  #
+  # Pushes a bytes() buffer of 0xAARRGGBB colors, without bri nor gamma correction
+  # 
+  def push_pixels_buffer_argb(pixels)
+    # Leds.set_pixels(buffer:bytes, pixels_buffer:comptr, pixels_count:int, [pixel_size:int = 3, bri:int (0..255) = 255, gamma:bool = true]) -> void
+    self.set_pixels(pixels,
+                    self.call_native(6),  # address of buffer in memory
+                    self.pixel_count(),
+                    self.pixel_size(),
+                    self.get_bri(),
+                    self.get_gamma())
+  end
+
   def pixels_buffer(old_buf)
     var buf = self.call_native(6)   # address of buffer in memory
     var sz = self.pixel_size() * self.pixel_count()
@@ -133,6 +161,9 @@ class Leds : Leds_ntv
   end
   def pixel_count()
     return self.call_native(8)
+  end
+  def length()
+    return self.pixel_count()
   end
   def pixel_offset()
     return 0
@@ -176,11 +207,17 @@ class Leds : Leds_ntv
     class Leds_segment
       var strip
       var offset, leds
+      var bri         # inherit brightness from parent strip
+      var gamma       # inherit gamma setting from parent strip
+      var animate     # attached animate object or nil
     
       def init(strip, offset, leds)
         self.strip = strip
         self.offset = int(offset)
         self.leds = int(leds)
+        self.bri = strip.bri    # inherit brightness from parent strip
+        self.gamma = strip.gamma  # inherit gamma setting from parent strip
+        self.animate = nil      # initialize animate to nil
       end
     
       def clear()
@@ -199,6 +236,9 @@ class Leds : Leds_ntv
       end
       def can_show()
         return self.strip.can_show()
+      end
+      def can_show_wait()
+        self.strip.can_show_wait()
       end
       def is_dirty()                ## DEPRECATED
         return self.strip.is_dirty()
@@ -220,7 +260,7 @@ class Leds : Leds_ntv
       end
       def clear_to(col, bri)
         if (bri == nil)   bri = self.bri    end
-        self.strip.call_native(9, self.strip.to_gamma(col, bri), self.offset, self.leds)
+        self.strip.call_native(9, self.to_gamma(col, bri), self.offset, self.leds)
         # var i = 0
         # while i < self.leds
         #   self.strip.set_pixel_color(i + self.offset, col, bri)
@@ -232,7 +272,41 @@ class Leds : Leds_ntv
         self.strip.set_pixel_color(idx + self.offset, col, bri)
       end
       def get_pixel_color(idx)
-        return self.strip.get_pixel_color(idx + self.offseta)
+        return self.strip.get_pixel_color(idx + self.offset)
+      end
+      
+      # set bri (0..255)
+      def set_bri(bri)
+        if (bri == nil)
+          return
+        end
+        if (bri < 0)    bri = 0   end
+        if (bri > 255)  bri = 255 end
+        self.bri = bri
+      end
+      def get_bri()
+        return self.bri
+      end
+      
+      def set_gamma(gamma)
+        self.gamma = bool(gamma)
+      end
+      def get_gamma()
+        return self.gamma
+      end
+      
+      # set animate object
+      def set_animate(animate)
+        self.animate = animate
+      end
+      def get_animate()
+        return self.animate
+      end
+      
+      # apply gamma and bri
+      def to_gamma(rgb, bri)
+        if (bri == nil)   bri = self.bri    end
+        return self.strip.apply_bri_gamma(rgb, bri, self.gamma)
       end
     end
 

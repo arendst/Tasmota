@@ -674,16 +674,16 @@ TEST(TestSend, GenericSimpleSendMethodFailure) {
   for (int i = 0; i <= kLastDecodeType; i++) {
     if (hasACState((decode_type_t)i) && i != GREE) {  // Gree is an exception.
       // Check it fails.
-      ASSERT_FALSE(irsend.send((decode_type_t)i, (uint64_t)0, 0));
+      ASSERT_FALSE(irsend.send((decode_type_t)i, static_cast<uint64_t>(0), 0));
     }
   }
 
   // Test some other special cases.
-  ASSERT_FALSE(irsend.send(UNKNOWN, (uint64_t)0, 0));
-  ASSERT_FALSE(irsend.send(UNUSED, (uint64_t)0, 0));
-  ASSERT_FALSE(irsend.send(RAW, (uint64_t)0, 0));
-  ASSERT_FALSE(irsend.send(PRONTO, (uint64_t)0, 0));
-  ASSERT_FALSE(irsend.send(GLOBALCACHE, (uint64_t)0, 0));
+  ASSERT_FALSE(irsend.send(UNKNOWN, static_cast<uint64_t>(0), 0));
+  ASSERT_FALSE(irsend.send(UNUSED, static_cast<uint64_t>(0), 0));
+  ASSERT_FALSE(irsend.send(RAW, static_cast<uint64_t>(0), 0));
+  ASSERT_FALSE(irsend.send(PRONTO, static_cast<uint64_t>(0), 0));
+  ASSERT_FALSE(irsend.send(GLOBALCACHE, static_cast<uint64_t>(0), 0));
 }
 
 // Test expected to work/produce a message for complex irsend:send()

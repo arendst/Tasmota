@@ -150,7 +150,7 @@ static const bvalue be_ktab_class_Matter_IM[203] = {
   /* K141 */  be_nested_str_weak(expire_sendqueue),
   /* K142 */  be_nested_str_weak(MTR_X3A_X20_X3ECommand1_X20_X20_X28_X256i_X29_X20_X25s_X20_X25s_X20_X25s),
   /* K143 */  be_const_int(354943030),
-  /* K144 */  be_const_int(405077761),
+  /* K144 */  be_const_int(405077772),
   /* K145 */  be_nested_str_weak(build_response),
   /* K146 */  be_nested_str_weak(message_handler),
   /* K147 */  be_nested_str_weak(raw),

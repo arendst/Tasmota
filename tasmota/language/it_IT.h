@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 17.04.2025
+ * Updated until v9.4.0.1 - Last update 18.02.2026
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -60,8 +60,8 @@
 #define D_AT                   "in"
 #define D_AUTO                 "AUTO"
 #define D_AUTO_UPDATE          "Aggiornamento automatico"
-#define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
+#define D_BATTERY              "Batteria"
 #define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
 #define D_BLINK                "Lampeggia"
 #define D_BLINKOFF             "Lampeggia OFF"
@@ -76,17 +76,17 @@
 #define D_CO2                  "CO2"
 #define D_CODE                 "codice"              // Button code
 #define D_COLDLIGHT            "Fredda"
+#define D_COLOR                "Colore"
 #define D_COMMAND              "Comando"
 #define D_CONNECTED            "Connesso"
 #define D_CORS_DOMAIN          "Dominio CORS"
-#define D_COLOR                "Colore"
 #define D_COUNT                "Conteggio"
 #define D_COUNTER              "Contatore"
 #define D_CT_POWER             "Alimentazione CT"
 #define D_CURRENT              "Corrente"            // As in Voltage and Current
 #define D_CURRENT_NEUTRAL      "Corrente neutrale"
-#define D_DATA                 "Dati"
 #define D_DARKLIGHT            "Scuro"
+#define D_DATA                 "Dati"
 #define D_DEBUG                "Debug"
 #define D_DEWPOINT             "Punto rugiada" //
 #define D_DISABLED             "Disabilitato/a"
@@ -113,15 +113,14 @@
 #define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE           "Frequenza fotogrammi"
 #define D_FREE_MEMORY          "Memoria libera"
-#define D_PSR_MAX_MEMORY       "PS-RAM - Memoria"
-#define D_PSR_FREE_MEMORY      "PS-RAM - Memoria libera"
 #define D_FREQUENCY            "Frequenza"
 #define D_GAS                  "Gas"
 #define D_GATEWAY              "Gateway"
 #define D_GROUP                "Gruppo"
-#define D_HOST                 "Host"
 #define D_HALL_EFFECT          "Effetto hall"
+#define D_HCHO                 "Formaldeide"
 #define D_HEATINDEX            "Indice calore"
+#define D_HOST                 "Host"
 #define D_HOSTNAME             "Nome host"
 #define D_HUMIDITY             "Umidità"
 #define D_ILLUMINANCE          "Illuminazione"
@@ -132,10 +131,11 @@
 #define D_INITIALIZED          "Inizializzato"
 #define D_IP_ADDRESS           "Indirizzo IP"
 #define D_LIGHT                "Luce"
-#define D_LWT                  "LWT"
 #define D_LQI                  "LQI"                  // Zigbee Link Quality Index
+#define D_LWT                  "LWT"
 #define D_MODULE               "Modulo"
 #define D_MOISTURE             "Umidità"
+#define D_MQ                   "MQ"
 #define D_MQTT                 "MQTT"
 #define D_MULTI_PRESS          "multi-pressione"
 #define D_NOISE                "Rumore"
@@ -148,10 +148,9 @@
 #define D_ON                   "ON"
 #define D_ONLINE               "Online"
 #define D_ORP                  "ORP"
+#define D_PARTITION            "Partizione"      // As in flash and firmware partition
 #define D_PASSWORD             "Password"
 #define D_PH                   "pH"
-#define D_MQ                   "MQ"
-#define D_PARTITION            "Partizione"      // As in flash and firmware partition
 #define D_PORT                 "Porta"
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
@@ -164,27 +163,31 @@
 #define D_PROGRAM_FLASH_SIZE   "Dimensione flash"
 #define D_PROGRAM_SIZE         "Dimensione programma"
 #define D_PROJECT              "Progetto"
+#define D_PSR_FREE_MEMORY      "PS-RAM - Memoria libera"
+#define D_PSR_MAX_MEMORY       "PS-RAM - Memoria"
 #define D_RAIN                 "Pioggia"
 #define D_RANGE                "Intervallo"
 #define D_RECEIVED             "Ricevuto"
 #define D_RESTART              "Riavvia"
-#define D_RESTARTING           "Riavvio"
 #define D_RESTART_REASON       "Causa riavvio"
+#define D_RESTARTING           "Riavvio"
 #define D_RETAINED             "salvato"
 #define D_RULE                 "Regola"
 #define D_SAVE                 "Salva"
 #define D_SENSOR               "Sensore"
+#define D_SOC                  "Stato di carica"
+#define D_SOH                  "State di salute"
 #define D_SSID                 "SSID"
 #define D_START                "Esegui"
 #define D_STD_TIME             "STD"
 #define D_STOP                 "Stop"
 #define D_SUBNET_MASK          "Maschera sottorete"
 #define D_SUBSCRIBE_TO         "Abbonati a"
-#define D_UNSUBSCRIBE_FROM     "Rimuovi abbonamento da"
 #define D_SUCCESSFUL           "Completato"
 #define D_SUNRISE              "Alba"
 #define D_SUNSET               "Tramonto"
 #define D_TEMPERATURE          "Temperatura"
+#define D_TIME_OF_DAY                 "Ora"
 #define D_TO                   "a"
 #define D_TOGGLE               "ON/OFF"
 #define D_TOPIC                "Topic"
@@ -195,6 +198,7 @@
 #define D_TWILIGHT_ASTRONOMICAL "astronomico"
 #define D_TWILIGHT_CIVIL       "civile"
 #define D_TWILIGHT_NAUTICAL    "nautico"
+#define D_UNSUBSCRIBE_FROM     "Rimuovi abbonamento da"
 #define D_UPLOAD               "Caricamento"
 #define D_UPTIME               "Tempo accensione"
 #define D_USED                 "usati"
@@ -214,12 +218,10 @@
 #define D_VOC                  "VOC"
 #define D_VOLTAGE              "Tensione"
 #define D_VOLUME               "Volume"
-#define D_WEIGHT               "Peso"
 #define D_WARMLIGHT            "Calda"
-#define D_WEB_SERVER           "Server web"
-#define D_SOC                  "Stato di carica"
-#define D_SOH                  "State di salute"
 #define D_WATER_DEPTH          "Profondità dell'acqua"
+#define D_WEB_SERVER           "Server web"
+#define D_WEIGHT               "Peso"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION  "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
@@ -373,6 +375,7 @@
 #define D_PROGRAM_VERSION       "Versione programma"
 #define D_BUILD_DATE_AND_TIME   "Data/ora compilazione"
 #define D_CORE_AND_SDK_VERSION  "Versione core/SDK"
+#define D_HOSTED_MCU            "MCU hostato"
 #define D_FLASH_WRITE_COUNT     "Numero scritture flash"
 #define D_MAC_ADDRESS           "Indirizzo MAC"
 #define D_MQTT_HOST             "Host MQTT"
@@ -453,6 +456,8 @@
 #define D_DOMOTICZ_IDX              "Idx"
 #define D_DOMOTICZ_KEY_IDX          "Idx - chiave"
 #define D_DOMOTICZ_SWITCH_IDX       "Idx - switch"
+#define D_DOMOTICZ_KEY              "Chiave"
+#define D_DOMOTICZ_SWITCH           "Switch"
 #define D_DOMOTICZ_SENSOR_IDX       "Idx - sensore"
 #define D_DOMOTICZ_TEMP             "Temp"
 #define D_DOMOTICZ_TEMP_HUM         "Temp,Umd"
@@ -471,7 +476,6 @@
 #define D_TIMER_PARAMETERS  "Parametri timer"
 #define D_TIMER_ENABLE      "Abilita timer"
 #define D_TIMER_ARM         "Abilita"
-#define D_TIMER_TIME        "Ora"
 #define D_TIMER_DAYS        "Giorni"
 #define D_TIMER_REPEAT      "Ripeti"
 #define D_TIMER_OUTPUT      "Uscita"
@@ -538,6 +542,10 @@
 #define D_ENERGY_TODAY                    "Energia - oggi"
 #define D_ENERGY_YESTERDAY                "Energia - ieri"
 #define D_ENERGY_TOTAL                    "Energia - totale"
+
+// xdrv_92_vid6608.ino
+#define D_VID6608_F "VID6608 F"
+#define D_VID6608_CW "VID6608 CW"
 
 // xsns_100_ina3221.ino
 #define  D_UNIT_CHARGE                    "Ah"
@@ -752,6 +760,13 @@
 #define D_SENSOR_SDIO_D1                "SDIO - D1"
 #define D_SENSOR_SDIO_D2                "SDIO - D2"
 #define D_SENSOR_SDIO_D3                "SDIO - D3"
+#define D_SENSOR_HSDIO_CMD              "HSDIO - CMD"
+#define D_SENSOR_HSDIO_CLK              "HSDIO - CLK"
+#define D_SENSOR_HSDIO_RST              "HSDIO - RST"
+#define D_SENSOR_HSDIO_D0               "HSDIO - D0"
+#define D_SENSOR_HSDIO_D1               "HSDIO - D1"
+#define D_SENSOR_HSDIO_D2               "HSDIO - D2"
+#define D_SENSOR_HSDIO_D3               "HSDIO - D3"
 #define D_SENSOR_BACKLIGHT              "Retroilluminazione"
 #define D_SENSOR_PMS5003_TX             "PMS5003 - TX"
 #define D_SENSOR_PMS5003_RX             "PMS5003 - RX"
@@ -1028,6 +1043,8 @@
 #define D_SENSOR_WOOLIIS_RX             "Wooliis - RX"
 #define D_SENSOR_C8_CO2_5K_RX           "C8-CO2-5K - RX"
 #define D_SENSOR_C8_CO2_5K_TX           "C8-CO2-5K - TX"
+#define D_SENSOR_MKSKYBLU_TX            "MkSkyBlu - TX"
+#define D_SENSOR_MKSKYBLU_RX            "MkSkyBlu - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

@@ -331,11 +331,14 @@ bbool be_instance_setmember(bvm *vm, binstance *o, bstring *name, bvalue *src)
             v = obj->members[v.v.i];
         }
         if (var_basetype(&v) == BE_FUNCTION) {
+            if (var_isfunction(src)) {
+                var_clearstatic(src);
+            }
             bvalue *top = vm->top;
             var_setval(top, &v);
             var_setinstance(top + 1, o); /* move instance to argv[0] */
-            var_setstr(top + 2, name); /* move method name to argv[1] */
-            var_setval(top + 3, src); /* move method name to argv[1] */
+            var_setstr(top + 2, name); /* move key to argv[1] */
+            var_setval(top + 3, src); /* move value to argv[2] */
             vm->top += 4;   /* prevent collection results */
             be_dofunc(vm, top, 3); /* call method 'member' */
             vm->top -= 4;
