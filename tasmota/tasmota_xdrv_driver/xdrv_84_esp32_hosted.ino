@@ -27,6 +27,10 @@ extern "C" {
 #  define ESP_HOSTED_NEW_OTA
 #endif
 
+#ifdef CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6
+#  define ESP_HOSTED_CP_TARGET_STR "esp32c6"
+#endif
+
 enum EspHostTypes { ESP_HOST, ESP_HOSTED };
 
 struct Hosted_t {
@@ -75,10 +79,11 @@ String GetHostedFwVersion(uint32_t device) {
 
 String GetHostedMCU(void) {
   // Function is not yet implemented in Arduino Core so emulate it here
-  if (0 == strcasecmp_P(CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET, PSTR("esp32c6"))) {
-    return String("ESP32-C6");
-  }
+#ifdef CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6
+  return String("ESP32-C6");
+#else
   return String("Unknown");
+#endif
 }
 
 void HostedMCUStatus(void) {
@@ -319,7 +324,7 @@ void CmndHostedLoad(void) {
     if (XdrvMailbox.data_len) {
       snprintf_P(version, sizeof(version), PSTR("/%s"), XdrvMailbox.data);
     }
-    snprintf_P(Hosted.ota_url, 200, PSTR("/coprocessor%s/network_adapter_" CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET ".bin"),
+    snprintf_P(Hosted.ota_url, 200, PSTR("/coprocessor%s/network_adapter_" ESP_HOSTED_CP_TARGET_STR ".bin"),
       version);
   }
   Hosted.ota_file_state_flag = 1;
@@ -331,7 +336,7 @@ void CmndHostedLoad(void) {
 void CmndHostedOta(void) {
   /*
   If OtaUrl = "https://ota.tasmota.com/tasmota32/tasmota32p4.bin"
-   Then use "https://ota.tasmota.com/tasmota32/coprocessor/network_adapter_" CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET ".bin"
+   Then use "https://ota.tasmota.com/tasmota32/coprocessor/network_adapter_" ESP_HOSTED_CP_TARGET_STR ".bin"
   As an option allow user to enter URL like:
    HostedOta https://ota.tasmota.com/tasmota32/coprocessor/network_adapter_esp32c6.bin
    HostedOta https://ota.tasmota.com/tasmota32/coprocessor/v2.0.14/network_adapter_esp32c6.bin
@@ -353,7 +358,7 @@ void CmndHostedOta(void) {
     if (XdrvMailbox.data_len) {
       snprintf_P(version, sizeof(version), PSTR("/%s"), XdrvMailbox.data);
     }
-    snprintf_P(Hosted.ota_url, 200, PSTR("%s/coprocessor%s/network_adapter_" CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET ".bin"), 
+    snprintf_P(Hosted.ota_url, 200, PSTR("%s/coprocessor%s/network_adapter_" ESP_HOSTED_CP_TARGET_STR ".bin"),
       Hosted.ota_url, version);
   }
   Hosted.ota_http_state_flag = 1;

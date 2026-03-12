@@ -468,7 +468,9 @@ uint32_t WcInitPipeline() {
 // De-initialize only the resolution-dependent hardware
 void WcDeinitPipeline() {
   // 0. AWB must go before ISP processor
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
   WcIspDeinitAWB();
+#endif
   
   // 1. Delete Encoder
   if (Wc.h264.handle) {
