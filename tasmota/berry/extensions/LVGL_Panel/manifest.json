@@ -3,6 +3,6 @@
   "version": "0x1A030300",
   "description": "Realtime mirror of the LVGL display in browser",
   "author": "Stephan Hadinger & Milko Daskalov",
-  "min_tasmota": "0x0F040000",
+  "min_tasmota": "0x0F030002",
   "features": "display"
 }
