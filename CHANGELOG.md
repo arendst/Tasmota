@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Crash when shutting down Wifi with `Wifi 0` (#24536)
 
 ### Removed
+- Berry remove `mdns.stop()`
 
 ## [15.3.0.1] 20260308
 ### Added

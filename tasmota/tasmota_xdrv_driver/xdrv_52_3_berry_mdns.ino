@@ -46,14 +46,6 @@ extern "C" {
   BE_FUNC_CTYPE_DECLARE(m_mdns_start, "", "@[s]")
 
   //
-  // `msdn.stop() -> nil`
-  // free all mdns resources
-  void m_mdns_stop(void) {
-    mdns_free();
-  }
-  BE_FUNC_CTYPE_DECLARE(m_mdns_stop, "", "")
-
-  //
   // `mdns.set_hostname(hostname:string) -> nil`
   // change the hostname
   void m_mdns_set_hostname(struct bvm *vm, const char * hostname) {
