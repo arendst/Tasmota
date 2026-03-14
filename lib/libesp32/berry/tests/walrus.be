@@ -79,3 +79,19 @@ def check_overwrite_builtin()
 end
 
 check_overwrite_builtin()
+
+# Bug when dereferencing in a walrus
+class Test_walrus_member
+    var a
+    def init()
+        self.a = 2
+    end
+    def f()
+        var v
+        if (v := self.a) != nil         # here is where the bug happens
+            return v                    # 'v' would have a wrong value
+        end
+    end
+end
+var t = Test_walrus_member()
+assert(t.f() == 2)
