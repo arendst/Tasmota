@@ -212,6 +212,16 @@ public:
     }
   }
 
+  void set_nowait(bool nowait) {
+    if (state == AsyncTCPState::CONNECTED) {
+      int flag = nowait ? 1 : 0;
+      int result = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
+      if (result < 0) {
+        AddLog(LOG_LEVEL_INFO, "BRY: Error: setsockopt failed on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
+      }
+    }
+  }
+
   size_t available(void) {
     _update_connected();
     if (state == AsyncTCPState::CONNECTED) {
@@ -477,6 +487,19 @@ extern "C" {
     AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
     tcp->stop();
     be_return_nil(vm);
+  }
+
+  // tcp.set_nowait(bool) -> nil
+  int32_t wc_tcpasync_set_nowait(struct bvm *vm);
+  int32_t wc_tcpasync_set_nowait(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isbool(vm, 2)) {
+      AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
+      bool nowait = be_tobool(vm, 2);
+      tcp->set_nowait(nowait);
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 
   // tcp.available(void) -> int

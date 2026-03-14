@@ -13,6 +13,7 @@ extern int wc_tcpasync_connected(bvm *vm);
 extern int wc_tcpasync_listening(bvm *vm);
 extern int wc_tcpasync_info(bvm *vm);
 extern int wc_tcpasync_close(bvm *vm);
+extern int wc_tcpasync_set_nowait(bvm *vm);
 extern int wc_tcpasync_available(bvm *vm);
 
 extern int wc_tcpasync_write(bvm *vm);
@@ -34,6 +35,7 @@ class be_class_tcpclientasync (scope: global, name: tcpclientasync) {
     listening, func(wc_tcpasync_listening)
     info, func(wc_tcpasync_info)
     close, func(wc_tcpasync_close)
+    set_nowait, func(wc_tcpasync_set_nowait)
     available, func(wc_tcpasync_available)
 
     write, func(wc_tcpasync_write)
