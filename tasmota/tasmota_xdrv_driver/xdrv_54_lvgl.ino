@@ -37,7 +37,7 @@
 // callback type when a screen paint is done
 typedef void (*lv_paint_cb_t)(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint8_t *pixels);
 // callback type when a stream buffer is ready
-typedef void (*lv_stream_cb_t)(const uint8_t *buf, size_t len);
+typedef void (*lv_stream_cb_t)(const uint8_t *buf, size_t len, bool last);
 
 struct LVGL_Glue {
   lv_display_t *lv_display = nullptr;
@@ -149,7 +149,7 @@ void lv_process_stream(int32_t x, int32_t y, int32_t width, int32_t height, cons
       chunk[chunk_pos++] = val;
       if (chunk_pos >= CHUNK_SIZE) {
           chunk_pos = 0;
-          lvgl_glue->stream_cb((const uint8_t *)chunk, CHUNK_SIZE * 2);
+          lvgl_glue->stream_cb((const uint8_t *)chunk, CHUNK_SIZE * 2, false);
       }
   };
 
@@ -179,7 +179,7 @@ void lv_process_stream(int32_t x, int32_t y, int32_t width, int32_t height, cons
     }
   }
   if (chunk_pos > 0)
-    lvgl_glue->stream_cb((const uint8_t *)chunk, chunk_pos * 2);
+    lvgl_glue->stream_cb((const uint8_t *)chunk, chunk_pos * 2, true);
 }
 
 /************************************************************
