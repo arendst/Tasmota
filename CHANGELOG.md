@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Environment sensors CCS811, SGP30 and SGP40 second I2C bus support
 - Real Time Clocks BM8563, PCF85063 and PCF85363 second I2C bus support
 - LCD second I2C bus support
+- Berry add `loglevel` to `mqtt.publish()`
 
 ### Breaking Changed
 
