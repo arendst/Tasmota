@@ -71,6 +71,7 @@ class lvgl_panel
       var req = cnx.read()
       var w = lv.get_hor_res()
       var h = lv.get_ver_res()
+      cnx.set_nowait(true)
       cnx.write(f"HTTP/1.1 200 OK\r\n"
         "Content-Type: application/octet-stream\r\n"
         "Screen-Size: {w}x{h}\r\n"
