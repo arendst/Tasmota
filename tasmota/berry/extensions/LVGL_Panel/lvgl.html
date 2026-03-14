@@ -38,7 +38,9 @@
 
   let abortController = null;
   let isStreaming = false;
-  let imageData, argb, readBuf, readBuf16, updateBuffer;
+  let dataBuf, readBuf, writeBuf, imageData, imgBuf;
+  let touchPos = null;
+  let touchPressed = false;
 
   // RGB565 to ARGB8888 (Little Endian: AABBGGRR) using bit replication
   for (let p = 0; p < 0x10000; p++) {
@@ -65,11 +67,11 @@
           border.style.height = (parentWidth * height / width) + 'px';
           canvas.width = width;
           canvas.height = height;
+          dataBuf = new Uint8Array((HEADER_WORDS + (width * height)) * 2);
+          readBuf = new Uint16Array(dataBuf.buffer);
+          writeBuf = new Uint16Array(width * height);
           imageData = ctx.createImageData(width, height);
-          argb = new Uint32Array(imageData.data.buffer);
-          readBuf = new Uint8Array(width * height * 2 + HEADER_WORDS * 2);
-          readBuf16 = new Uint16Array(readBuf.buffer);
-          updateBuffer = new Uint16Array(width * height);
+          imgBuf = new Uint32Array(imageData.data.buffer);
         }
         isStreaming = true;
       } else {
@@ -78,72 +80,67 @@
         return;
       }
       const reader = response.body.getReader();
-      let available = 0;
-      let expectedPixels, x, y, w, h;
-      let readOffset, dIdx, dInc, uIdx;
-      let drawnRows = 0;
-      let frameStart = 0;
+      let dataOffset = 0;
+      let readOffset = 0;
+      let headerParsed = false;
+      let expectedPixels = 0;
+      let writeOffset = 0;
+      let x = 0, y = 0, w = 0, h = 0;
       while (isStreaming) {
         const { value, done } = await reader.read();
         if (done) break;
-        readBuf.set(value, available * 2);
-        available += value.length / 2;
+        dataBuf.set(value, dataOffset);
+        dataOffset += value.length;
+        const totalWords = dataOffset >> 1;
         while (true) {
-          if (!expectedPixels) {
-            if (available - frameStart < HEADER_WORDS) break;
-            [magic, x, y, w, h] = readBuf16.subarray(frameStart);
+          if (!headerParsed) {
+            if (totalWords - readOffset < HEADER_WORDS) break;
+            [magic, x, y, w, h] = readBuf.subarray(readOffset);
             if (magic !== LV_MAGIC) {
               console.error("Sync Error: No magic found");
               stopStream();
               return;
             }
             expectedPixels = w * h;
-            readOffset = frameStart + HEADER_WORDS;
+            readOffset += HEADER_WORDS;
             writeOffset = 0;
-            drawnRows = 0;
-            dIdx = y * width + x;
-            dInc = width - w;
-            uIdx = 0;
+            iIdx = y * width + x;
+            iInc = width - w;
+            wIdx = 0;
+            headerParsed = true;
           }
-          while (readOffset < available && writeOffset < expectedPixels) {
-            const header = readBuf16[readOffset];
+          while (readOffset < totalWords && writeOffset < expectedPixels) {
+            const header = readBuf[readOffset];
             const isRun = header & 0x8000;
             const count = (header & 0x7FFF) + (isRun ? 2 : 1);
-            if (available < readOffset + 1 + (isRun ? 1 : count)) break;
+            if (totalWords < readOffset + 1 + (isRun ? 1 : count)) break;
             readOffset++;
             if (isRun) {
-              updateBuffer.fill(readBuf16[readOffset++], writeOffset, writeOffset + count);
+              writeBuf.fill(readBuf[readOffset++], writeOffset, writeOffset + count);
             } else {
-              updateBuffer.set(readBuf16.subarray(readOffset, readOffset + count), writeOffset);
+              writeBuf.set(readBuf.subarray(readOffset, readOffset + count), writeOffset);
               readOffset += count;
             }
             writeOffset += count;
           }
-          const availableRows = Math.floor(writeOffset / w);
-          if (availableRows > drawnRows) {
-            const newRows = availableRows - drawnRows;
-            for (let r = 0; r < newRows; r++, dIdx += dInc) {
-              for (let c = 0; c < w; c++) {
-                argb[dIdx++] = RGB565_LUT[updateBuffer[uIdx++]];
-              }
-            }
-            ctx.putImageData(imageData, 0, 0, x, y + drawnRows, w, newRows);
-            drawnRows = availableRows;
-          }
           if (writeOffset < expectedPixels) break;
-          frameStart = readOffset;
-          expectedPixels = undefined;
-        }
-        if (frameStart > 0) {
-          if (frameStart < available) {
-            readBuf16.copyWithin(0, frameStart, available);
-            readOffset -= frameStart;
-          } else {
-            readOffset = 0;
+          for (let r = 0; r < h; r++, iIdx += iInc) {
+            for (let c = 0; c < w; c++) {
+              imgBuf[iIdx++] = RGB565_LUT[writeBuf[wIdx++]];
+            }
           }
-          available -= frameStart;
-          frameStart = 0;
+          ctx.putImageData(imageData, 0, 0, x, y, w, h);
+          headerParsed = false;
         }
+        if (readOffset === totalWords) {
+          dataOffset = 0;
+        } else {
+          const consumedBytes = readOffset * 2;
+          const remainingBytes = dataOffset - consumedBytes;
+          dataBuf.copyWithin(0, consumedBytes, dataOffset);
+          dataOffset = remainingBytes;
+        }
+        readOffset = 0;
       }
     } catch (err) {
       if (err.name !== 'AbortError') console.error("Stream Error: ", err);
@@ -159,30 +156,34 @@
       abortController.abort();
     }
     if (imageData) {
-      argb.fill(0);
+      imgBuf.fill(0);
       ctx.putImageData(imageData, 0, 0);
       imageData = undefined
     }
   }
 
-  function sendTouchEvent(e) {
-    e.preventDefault();
-    if (e.type === "mousemove" && e.buttons !== 1) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.round((e.clientX - rect.left) * (canvas.width / rect.width));
-    const y = Math.round((e.clientY - rect.top) * (canvas.height / rect.height));
-    const t = e.type === "mouseup" ? 0 : 1;
-    const host = getHost();
-    fetch(`http://${host}/lvgl_touch`, {
+  function sendTouch(t) {
+    fetch(`http://${getHost()}/lvgl_touch`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ x, y, t }).toString()
-    }).catch(err => console.error("Touch event error:", err));
+      body: new URLSearchParams({ ...touchPos, t }).toString()
+    }).catch(() => { });
   }
 
-  canvas.addEventListener("mousemove", sendTouchEvent);
-  canvas.addEventListener("mouseup", sendTouchEvent);
-  canvas.addEventListener("mousedown", sendTouchEvent);
+  function updatePos(e) {
+    const r = canvas.getBoundingClientRect();
+    touchPos = {
+      x: Math.round((e.clientX - r.left) * (canvas.width / r.width)),
+      y: Math.round((e.clientY - r.top) * (canvas.height / r.height))
+    };
+  }
+
+  setInterval(() => { if (touchPressed) sendTouch(1); }, 50);
+
+  canvas.addEventListener("mousedown", (e) => { e.preventDefault(); if (e.button === 0) { touchPressed = true; updatePos(e); } });
+  canvas.addEventListener("mousemove", (e) => { e.preventDefault(); if (e.buttons === 1) updatePos(e); });
+  canvas.addEventListener("mouseup", (e) => { e.preventDefault(); if (e.button === 0) { touchPressed = false; sendTouch(0); } });
+  window.addEventListener("mouseup", (e) => { if (e.button === 0) touchPressed = false; });
 
   lvBtn.addEventListener('click', (e) => {
     const host = getHost();
