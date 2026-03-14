@@ -300,28 +300,20 @@ public:
     return 0;
   }
 
-  bool writebytes(const char *buf, size_t size)
-  {
-    if (state != AsyncTCPState::CONNECTED) {
-      return false;
-    }
+  bool writebytes(const char *buf, size_t size) {
+    if (state != AsyncTCPState::CONNECTED) return false;
     size_t offset = 0;
     while (offset < size) {
-      fd_set wfd, efd;
-      FD_ZERO(&wfd);
-      FD_ZERO(&efd);
-      FD_SET(sockfd, &wfd);
-      FD_SET(sockfd, &efd);
-      struct timeval tv = {0, 1000};
-      int sent = 0;
-      int res = ::select(sockfd + 1, NULL, &wfd, &efd, &tv);
-      if (res > 0 && FD_ISSET(sockfd, &wfd)) {
-        sent = ::send(sockfd, buf + offset, size - offset, MSG_DONTWAIT);
-      }
-      if (sent > 0) { offset += sent; }
-      else if ((res < 0) || (sent == 0) || FD_ISSET(sockfd, &efd))
-      {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) { continue; }
+      ssize_t sent = send(sockfd, buf + offset, size - offset, MSG_DONTWAIT);
+      if (sent > 0) {
+        offset += sent;
+      } else if (sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) { // Buffer full
+        fd_set wfd;
+        FD_ZERO(&wfd);
+        FD_SET(sockfd, &wfd);
+        struct timeval tv = {0, 5000};
+        select(sockfd + 1, NULL, &wfd, NULL, &tv);
+      } else { // disconnection or a hard error
         stop();
         return false;
       }
