@@ -3,6 +3,8 @@
 
     Copyright (C) 2025  Christian Baars and Theo Arends
 
+    Runtime AE & CCM Implementation by Martin Macák - HexaMaster
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -167,6 +169,19 @@ void WcShowStream(void) {
 
 // Command handlers (mockup/stub implementations)
 
+static void WcResumeRuntimeAfterReconfig(void) {
+  Wc.core.state = CAM_STREAMING;
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
+  WcIspStartAE();
+  WcIspStartAWB();
+#endif
+
+  if (Wc.core.resume_sem) {
+    xSemaphoreGive(Wc.core.resume_sem);
+  }
+}
+
 void CmndWcRes(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: WcRes called, payload=%d"), XdrvMailbox.payload);
   
@@ -259,10 +274,9 @@ void CmndWcRes(void) {
     }
     
     delay(100); // Give sensor time to start
-    
-    // Resume task
-    Wc.core.state = CAM_STREAMING;
-    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+
+    // Re-start ISP runtime controllers (AE/AWB continuous statistics)
+    WcResumeRuntimeAfterReconfig();
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resumed streaming"));
   } else {
     Wc.core.state = CAM_INIT;
@@ -395,10 +409,9 @@ void CmndWcWindow(void) {
     }
     
     delay(100); // Give sensor time to start
-    
-    // Resume task
-    Wc.core.state = CAM_STREAMING;
-    if (Wc.core.resume_sem) xSemaphoreGive(Wc.core.resume_sem);
+
+    // Re-start ISP runtime controllers (AE/AWB continuous statistics)
+    WcResumeRuntimeAfterReconfig();
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Resumed streaming"));
   } else {
     Wc.core.state = CAM_INIT;
