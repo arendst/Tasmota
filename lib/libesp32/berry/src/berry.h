@@ -2137,11 +2137,6 @@ BERRY_API void be_stop_iteration(bvm *vm);
  * @note exception API
  * @brief register a native function
  *
- * The specific behavior of this function is related to the value of the BE_USE_PRECOMPILED_OBJECT macro
- * (although the FFI is still available when using the compile-time construction technique,
- * it cannot dynamically register the built-in variables.
- * In this case, please refer to the method of registering the built-in objects.
- *
  * @param vm virtual machine instance
  * @param name name of the native function
  * @param f pointer of the native function

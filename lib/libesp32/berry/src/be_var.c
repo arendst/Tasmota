@@ -24,21 +24,12 @@ void be_globalvar_init(bvm *vm)
     global(vm).vtab = be_map_new(vm);
     be_gc_fix(vm, gc_object(global(vm).vtab));
     be_vector_init(vm, &global(vm).vlist, sizeof(bvalue));
-#if !BE_USE_PRECOMPILED_OBJECT
-    builtin(vm).vtab = be_map_new(vm);
-    be_vector_init(vm, &builtin(vm).vlist, sizeof(bvalue));
-    be_gc_fix(vm, gc_object(builtin(vm).vtab));
-#endif
 }
 
 void be_globalvar_deinit(bvm *vm)
 {
     global(vm).vtab = NULL;
     be_vector_delete(vm, &global(vm).vlist);
-#if !BE_USE_PRECOMPILED_OBJECT
-    builtin(vm).vtab = NULL;
-    be_vector_delete(vm, &builtin(vm).vlist);
-#endif
 }
 
 /* This function is called when the global was not found */
@@ -171,31 +162,8 @@ bstring* be_builtin_name(bvm *vm, int index)
     return NULL;
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-int be_builtin_new(bvm *vm, bstring *name)
-{
-    int idx = be_builtin_find(vm, name);
-    if (idx == -1) {
-        bvalue *desc;
-        idx = be_map_count(builtin(vm).vtab);
-        desc = be_map_insertstr(vm, builtin(vm).vtab, name, NULL);
-        var_setint(desc, idx);
-        be_vector_resize(vm, &builtin(vm).vlist, idx + 1);
-        /* set the new variable to nil */
-        var_setnil((bvalue*)(builtin(vm).vlist.end));
-    }
-    return idx;
-}
-
-void be_bulitin_release_space(bvm *vm)
-{
-    be_map_compact(vm, builtin(vm).vtab);
-    be_vector_release(vm, &builtin(vm).vlist);
-}
-#else
 void be_const_builtin_set(bvm *vm, const bmap *map, const bvector *vec)
 {
     builtin(vm).vtab = cast(bmap*, map);
     builtin(vm).vlist = *vec;
 }
-#endif

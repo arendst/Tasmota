@@ -45,9 +45,7 @@ typedef struct {
 #define str_extra(_s)           ((_s)->extra)
 #define str_literal(_vm, _s)    be_newstrn((_vm), (_s), sizeof(_s) - 1)
 
-#if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_const_strtab.h"
-#endif
 
 void be_string_init(bvm *vm);
 void be_string_deleteall(bvm *vm);

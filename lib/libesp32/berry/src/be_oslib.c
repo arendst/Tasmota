@@ -216,31 +216,6 @@ static int m_path_join(bvm *vm)
     be_return(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(path) {
-    be_native_module_function("isdir", m_path_isdir),
-    be_native_module_function("isfile", m_path_isfile),
-    be_native_module_function("exists", m_path_exists),
-    be_native_module_function("split", m_path_split),
-    be_native_module_function("splitext", m_path_splitext),
-    be_native_module_function("join", m_path_join)
-};
-
-static be_define_native_module(path, NULL);
-
-be_native_module_attr_table(os) {
-    be_native_module_function("getcwd", m_getcwd),
-    be_native_module_function("chdir", m_chdir),
-    be_native_module_function("mkdir", m_mkdir),
-    be_native_module_function("remove", m_remove),
-    be_native_module_function("listdir", m_listdir),
-    be_native_module_function("system", m_system),
-    be_native_module_function("exit", m_exit),
-    be_native_module_module("path", be_native_module(path))
-};
-
-be_define_native_module(os, NULL);
-#else
 /* @const_object_info_begin
 module path (scope: local, file: os_path, depend: BE_USE_OS_MODULE) {
     isdir, func(m_path_isdir)
@@ -266,6 +241,5 @@ module os (scope: global, depend: BE_USE_OS_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_os.h"
-#endif
 
 #endif /* BE_USE_OS_MODULE */

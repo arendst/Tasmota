@@ -36,7 +36,6 @@ const char* be_vtype2str(bvalue *v)
     }
 }
 
-#if BE_USE_PRECOMPILED_OBJECT
 extern const bcstring be_const_str_nil;
 extern const bcstring be_const_str_int;
 extern const bcstring be_const_str_real;
@@ -52,11 +51,9 @@ extern const bcstring be_const_str_module;
 extern const bcstring be_const_str_var;
 extern const bcstring be_const_str_ptr;
 extern const bcstring be_const_str_invalid_type;
-#endif
 
 bstring* be_vtype2bstring(bvalue *v)
 {
-#if BE_USE_PRECOMPILED_OBJECT
     switch(var_primetype(v)) {
     case BE_NIL: return (bstring*) &be_const_str_nil;
     case BE_INT: return (bstring*) &be_const_str_int;
@@ -75,9 +72,6 @@ bstring* be_vtype2bstring(bvalue *v)
     case BE_COMPTR: return (bstring*) &be_const_str_ptr;
     default: return (bstring*) &be_const_str_invalid_type;
     }
-#else
-    return be_newstr(vm, be_vtype2str(v));
-#endif
 }
 
 bvalue* be_indexof(bvm *vm, int idx)

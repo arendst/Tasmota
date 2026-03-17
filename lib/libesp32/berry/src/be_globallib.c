@@ -92,17 +92,6 @@ static int m_undef(bvm *vm)
     be_return_nil(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(global) {
-    be_native_module_function("()", m_globals),
-    be_native_module_function("contains", m_contains),
-    be_native_module_function("member", m_findglobal),
-    be_native_module_function("setmember", m_setglobal),
-    be_native_module_function("undef", m_undef),
-};
-
-be_define_native_module(global, NULL);
-#else
 /* @const_object_info_begin
 module global (scope: global, depend: BE_USE_GLOBAL_MODULE) {
     (), func(m_globals)
@@ -113,6 +102,5 @@ module global (scope: global, depend: BE_USE_GLOBAL_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_global.h"
-#endif
 
 #endif /* BE_USE_GLOBAL_MODULE */

@@ -358,44 +358,6 @@ int m_max(bvm *vm)
     return m_min_max(vm, 0);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(math) {
-    be_native_module_function("isnan", m_isnan),
-    be_native_module_function("isinf", m_isinf),
-    be_native_module_function("abs", m_abs),
-    be_native_module_function("ceil", m_ceil),
-    be_native_module_function("floor", m_floor),
-    be_native_module_function("round", m_round),
-    be_native_module_function("sin", m_sin),
-    be_native_module_function("cos", m_cos),
-    be_native_module_function("tan", m_tan),
-    be_native_module_function("asin", m_asin),
-    be_native_module_function("acos", m_acos),
-    be_native_module_function("atan", m_atan),
-    be_native_module_function("atan2", m_atan2),
-    be_native_module_function("sinh", m_sinh),
-    be_native_module_function("cosh", m_cosh),
-    be_native_module_function("tanh", m_tanh),
-    be_native_module_function("sqrt", m_sqrt),
-    be_native_module_function("exp", m_exp),
-    be_native_module_function("log", m_log),
-    be_native_module_function("log10", m_log10),
-    be_native_module_function("deg", m_deg),
-    be_native_module_function("rad", m_rad),
-    be_native_module_function("pow", m_pow),
-    be_native_module_function("srand", m_srand),
-    be_native_module_function("rand", m_rand),
-    be_native_module_function("min", m_min),
-    be_native_module_function("max", m_max),
-    be_native_module_real("pi", M_PI),
-    be_native_module_real("nan", NAN),
-    be_native_module_real("inf", INFINITY),
-    be_native_module_int("imax", M_IMAX),
-    be_native_module_int("imin", M_IMIN),
-};
-
-be_define_native_module(math, NULL);
-#else
 /* @const_object_info_begin
 module math (scope: global, depend: BE_USE_MATH_MODULE) {
     isnan, func(m_isnan)
@@ -433,6 +395,5 @@ module math (scope: global, depend: BE_USE_MATH_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_math.h"
-#endif
 
 #endif /* BE_USE_MATH_MODULE */

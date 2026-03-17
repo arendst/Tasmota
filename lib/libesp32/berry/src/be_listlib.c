@@ -493,38 +493,6 @@ static int m_nequal(bvm *vm)
     return list_equal(vm, bfalse);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-void be_load_listlib(bvm *vm)
-{
-    static const bnfuncinfo members[] = {
-        { ".p", NULL },
-        { "init", m_init },
-        { "tostring", m_tostring },
-        { "push", m_push },
-        { "pop", m_pop },
-        { "insert", m_insert },
-        { "remove", m_remove },
-        { "item", m_item },
-        { "find", m_find },
-        { "setitem", m_setitem },
-        { "size", m_size },
-        { "resize", m_resize },
-        { "clear", m_clear },
-        { "iter", m_iter },
-        { "concat", m_concat },
-        { "reverse", m_reverse },
-        { "copy", m_copy },
-        { "keys", m_keys },
-        { "tobool", m_tobool },
-        { "..", m_connect },
-        { "+", m_merge },
-        { "==", m_equal },
-        { "!=", m_nequal },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "list", members);
-}
-#else
 /* @const_object_info_begin
 class be_class_list (scope: global, name: list) {
     .p, var
@@ -553,4 +521,3 @@ class be_class_list (scope: global, name: list) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_list.h"
-#endif

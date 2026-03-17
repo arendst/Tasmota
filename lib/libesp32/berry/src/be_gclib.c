@@ -33,14 +33,6 @@ static int m_collect(bvm *vm)
     be_return_nil(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(gc){
-    be_native_module_function("allocated", m_allocated),
-    be_native_module_function("collect", m_collect)
-};
-
-be_define_native_module(gc, NULL);
-#else
 /* @const_object_info_begin
 module gc (scope: global, depend: BE_USE_GC_MODULE) {
     allocated, func(m_allocated)
@@ -48,6 +40,5 @@ module gc (scope: global, depend: BE_USE_GC_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_gc.h"
-#endif
 
 #endif /* BE_USE_SYS_MODULE */

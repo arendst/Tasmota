@@ -1905,61 +1905,6 @@ be_local_closure(setbits,   /* name */
 );
 /*******************************************************************/
 
-#if !BE_USE_PRECOMPILED_OBJECT
-void be_load_byteslib(bvm *vm)
-{
-    static const bnfuncinfo members[] = {
-        { ".p", NULL },
-        { ".len", NULL },
-        { ".size", NULL },
-        { "_buffer", m_buffer },
-        { "_change_buffer", m_change_buffer },
-        { "ismapped", m_is_mapped },
-        { "isreadonly", m_is_readonly },
-        { "init", m_init },
-        { "deinit", m_deinit },
-        { "tostring", m_tostring },
-        { "asstring", m_asstring },
-        { "tobool", m_tobool },
-        { "fromstring", m_fromstring },
-        { "tob64", m_tob64 },
-        { "fromb64", m_fromb64 },
-        { "fromhex", m_fromhex },
-        { "tohex", m_tohex },
-        { "add", m_add },
-        { "get", m_getu },
-        { "geti", m_geti },
-        { "set", m_set },
-        { "seti", m_set },      // setters for signed and unsigned are identical
-        { "setbytes", m_setbytes },
-        { "getfloat", m_getfloat },
-        { "setfloat", m_setfloat },
-        { "addfloat", m_addfloat },
-        { "item", m_item },
-        { "setitem", m_setitem },
-        { "size", m_size },
-        { "resize", m_resize },
-        { "clear", m_clear },
-        { "reverse", m_reverse },
-        { "copy", m_copy },
-        { "append", m_connect },
-        { "appendhex", m_appendhex },
-        { "appendb64", m_appendb64 },
-        { "+", m_merge },
-        { "..", m_connect },
-        { "==", m_equal },
-        { "!=", m_nequal },
-
-        { NULL, (bntvfunc) BE_CLOSURE }, /* mark section for berry closures */
-        { "getbits", (bntvfunc) &getbits_closure },
-        { "setbits", (bntvfunc) &setbits_closure },
-
-        { NULL, NULL }
-    };
-    be_regclass(vm, "bytes", members);
-}
-#else
-
 #include "../generate/be_const_bytes_def.h"
 
 /* @const_object_info_begin
@@ -2010,4 +1955,3 @@ class be_class_bytes (scope: global, name: bytes) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_bytes.h"
-#endif

@@ -80,17 +80,10 @@ BERRY_API void be_regfunc(bvm *vm, const char *name, bntvfunc f)
 {
     bvalue *var;
     bstring *s = be_newstr(vm, name);
-#if !BE_USE_PRECOMPILED_OBJECT
-    int idx = be_builtin_find(vm, s);
-    be_assert(idx < 0);
-    if (idx < 0) { /* new function */
-        idx = be_builtin_new(vm, s);
-#else
     int idx = be_global_find(vm, s);
     be_assert(idx < be_builtin_count(vm));
     if (idx < be_builtin_count(vm)) { /* new function */
         idx = be_global_new(vm, s);
-#endif
         var = be_global_var(vm, idx);
         var_setntvfunc(var, f);
     } /* error case, do nothing */
@@ -100,17 +93,10 @@ BERRY_API void be_regclass(bvm *vm, const char *name, const bnfuncinfo *lib)
 {
     bvalue *var;
     bstring *s = be_newstr(vm, name);
-#if !BE_USE_PRECOMPILED_OBJECT
-    int idx = be_builtin_find(vm, s);
-    be_assert(idx < 0);
-    if (idx < 0) { /* new function */
-        idx = be_builtin_new(vm, s);
-#else
     int idx = be_global_find(vm, s);
     be_assert(idx < be_builtin_count(vm));
     if (idx < be_builtin_count(vm)) { /* new function */
         idx = be_global_new(vm, s);
-#endif
         var = be_global_var(vm, idx);
         var_setclass(var, class_auto_make(vm, s, lib));
     } /* error case, do nothing */

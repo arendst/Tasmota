@@ -1135,26 +1135,6 @@ static int str_endswith(bvm *vm)
     be_return_nil(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(string) {
-    be_native_module_function("format", be_str_format),
-    be_native_module_function("count", str_count),
-    be_native_module_function("split", str_split),
-    be_native_module_function("find", str_find),
-    be_native_module_function("hex", str_i2hex),
-    be_native_module_function("byte", str_byte),
-    be_native_module_function("char", str_char),
-    be_native_module_function("tolower", str_tolower),
-    be_native_module_function("toupper", str_toupper),
-    be_native_module_function("tr", str_tr),
-    be_native_module_function("escape", str_escape),
-    be_native_module_function("replace", str_replace),
-    be_native_module_function("startswith", str_startswith),
-    be_native_module_function("endswith", str_endswith),
-};
-
-be_define_native_module(string, NULL);
-#else
 /* @const_object_info_begin
 module string (scope: global, depend: BE_USE_STRING_MODULE) {
     format, func(be_str_format)
@@ -1174,6 +1154,5 @@ module string (scope: global, depend: BE_USE_STRING_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_string.h"
-#endif
 
 #endif /* BE_USE_STRING_MODULE */

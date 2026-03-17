@@ -18,12 +18,4 @@ extern void be_load_byteslib(bvm *vm);
 void be_loadlibs(bvm *vm)
 {
     be_load_baselib(vm);
-#if !BE_USE_PRECOMPILED_OBJECT
-    be_load_listlib(vm);
-    be_load_maplib(vm);
-    be_load_rangelib(vm);
-    be_load_filelib(vm);
-    be_load_byteslib(vm);
-    be_load_baselib_next(vm);
-#endif
 }

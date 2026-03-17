@@ -868,14 +868,6 @@ static int m_nocompact(bvm *vm)
     be_return_nil(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(solidify) {
-    be_native_module_function("dump", m_dump),
-    be_native_module_function("compact", m_compact),
-};
-
-be_define_native_module(solidify, NULL);
-#else
 /* @const_object_info_begin
 module solidify (scope: global, depend: BE_USE_SOLIDIFY_MODULE) {
     dump, func(m_dump)
@@ -884,6 +876,5 @@ module solidify (scope: global, depend: BE_USE_SOLIDIFY_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_solidify.h"
-#endif
 
 #endif /* BE_USE_SOLIFIDY_MODULE */

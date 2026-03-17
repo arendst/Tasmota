@@ -151,24 +151,6 @@ static int m_iter(bvm *vm)
     be_return(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-void be_load_rangelib(bvm *vm)
-{
-    static const bnfuncinfo members[] = {
-        { "__lower__", NULL },
-        { "__upper__", NULL },
-        { "__incr__", NULL },
-        { "init", m_init },
-        { "tostring", m_tostring },
-        { "lower", m_lower },
-        { "upper", m_upper },
-        { "setrange", m_setrange },
-        { "iter", m_iter },
-        { NULL, NULL }
-    };
-    be_regclass(vm, "range", members);
-}
-#else
 /* @const_object_info_begin
 class be_class_range (scope: global, name: range) {
     __lower__, var
@@ -184,4 +166,3 @@ class be_class_range (scope: global, name: range) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_range.h"
-#endif

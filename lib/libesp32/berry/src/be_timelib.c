@@ -50,15 +50,6 @@ static int m_clock(bvm *vm)
     be_return(vm);
 }
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(time) {
-    be_native_module_function("time", m_time),
-    be_native_module_function("dump", m_dump),
-    be_native_module_function("clock", m_clock)
-};
-
-be_define_native_module(time, NULL);
-#else
 /* @const_object_info_begin
 module time (scope: global, depend: BE_USE_TIME_MODULE) {
     time, func(m_time)
@@ -67,6 +58,5 @@ module time (scope: global, depend: BE_USE_TIME_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_time.h"
-#endif
 
 #endif /* BE_USE_TIME_MODULE */
