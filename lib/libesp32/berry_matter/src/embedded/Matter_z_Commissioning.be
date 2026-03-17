@@ -261,8 +261,8 @@ class Matter_Commissioning
         var eth = tasmota.eth()
         self.hostname_eth  = string.replace(eth.find("mac"), ':', '')
         if !self.device.ipv4only || !eth.contains('ip6local')
-          # log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_eth, eth.find('ip6local',''), eth.find('ip','')), 4)
-          mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''), eth.find('ip6',''))
+          log(f"MTR: calling mdns.add_hostname({self.hostname_eth}, {eth.find('ip6local','')}, {eth.find('ip','')})", 3)
+          mdns.add_hostname(self.hostname_eth, eth.find('ip6local',''), eth.find('ip',''))
         else
           log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_eth, eth.find('ip','')), 3)
           mdns.add_hostname(self.hostname_eth, eth.find('ip',''))
@@ -271,8 +271,8 @@ class Matter_Commissioning
         var wifi = tasmota.wifi()
         self.hostname_wifi = string.replace(wifi.find("mac"), ':', '')
         if !self.device.ipv4only || !wifi.contains('ip6local')
-          # log(format("MTR: calling mdns.add_hostname(%s, %s, %s)", self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip','')), 4)
-          mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''), wifi.find('ip6',''))
+          log(f"MTR: calling mdns.add_hostname({self.hostname_wifi}, {wifi.find('ip6local','')}, {wifi.find('ip','')})", 3)
+          mdns.add_hostname(self.hostname_wifi, wifi.find('ip6local',''), wifi.find('ip',''))
         else
           log(format("MTR: calling mdns.add_hostname(%s, %s)", self.hostname_wifi, wifi.find('ip','')), 3)
           mdns.add_hostname(self.hostname_wifi, wifi.find('ip',''))
