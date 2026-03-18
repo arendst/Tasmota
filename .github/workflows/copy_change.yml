@@ -20,7 +20,7 @@ jobs:
           - name: 'BUILDS.md'
             message: 'Builds.md changed'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Push ${{ matrix.file.name }} to docs repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
