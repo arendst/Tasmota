@@ -192,7 +192,7 @@ struct {
   uint8_t  stream_active;
 #ifndef USE_WEBCAM_SETUP_ONLY
   WiFiClient client;
-  ESP8266WebServer *CamServer;
+  TasmotaWebServer *CamServer;
   struct PICSTORE picstore[MAX_PICSTORE];
 #ifdef ENABLE_RTSPSERVER
   WiFiServer *rtspp;
@@ -1059,7 +1059,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
   if (flag) {
     if (!Wc.CamServer) {
       Wc.stream_active = 0;
-      Wc.CamServer = new ESP8266WebServer(81);
+      Wc.CamServer = new TasmotaWebServer(81);
       Wc.CamServer->on("/", HandleWebcamRoot);
       Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
       Wc.CamServer->on("/cam.jpg", HandleWebcamMjpeg);
