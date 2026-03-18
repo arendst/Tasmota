@@ -1084,7 +1084,7 @@ void WcInterruptControl() {
 
   WcSetStreamserver(Settings->webcam_config.stream);
   if(Wc.up == 0) {
-    WcSetup(Settings->webcam_config.resolution);
+    WcSetup((int32_t)Settings->webcam_config.resolution);
   }
 
 }
@@ -1501,7 +1501,7 @@ void CmndWebcamClock(void){
 }
 
 void CmndWebcamInit(void) {
-  WcSetup(Settings->webcam_config.resolution);
+  WcSetup((int32_t)Settings->webcam_config.resolution);
   WcInterruptControl();
   ResponseCmndDone();
 }
@@ -1594,7 +1594,7 @@ bool Xdrv81(uint32_t function) {
       WcInit();
       break;
     case FUNC_INIT:
-      if(Wc.up == 0) WcSetup(Settings->webcam_config.resolution);
+      if(Wc.up == 0) WcSetup((int32_t)Settings->webcam_config.resolution);
       break;
     case FUNC_ACTIVE:
       result = true;
