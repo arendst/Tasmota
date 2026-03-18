@@ -157,7 +157,7 @@ SemaphoreHandle_t WebcamMutex = nullptr;
 
 #ifndef USE_WEBCAM_SETUP_ONLY
 bool HttpCheckPriviledgedAccess(bool);
-extern ESP8266WebServer *Webserver;
+extern TasmotaWebServer *Webserver;
 
 // use mutex like:
 // TasAutoMutex localmutex(&WebcamMutex, "somename");
