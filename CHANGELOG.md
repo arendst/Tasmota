@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.02.30 to 2026.03.30, Framework (Arduino Core) from v3.1.9 to v3.1.10 and IDF from v5.3.4.251226 to v5.3.4.260127 (#24547)
 - Matter don't advertize IPv6 global address, only link-local (#24563)
 - ESP32-C5/C6/P4 Platform from 2025.03.30 to 2026.03.50, Framework (Arduino Core) from v3.1.10 to v3.3.7 and IDF from v5.3.4.260127 to v5.5.3+ (#24567)
+- NeoPool always output valid sensitive data
 
 ### Fixed
 - Athom esp32 2-3-4 gang change led behaviour after firmware update (#24509)

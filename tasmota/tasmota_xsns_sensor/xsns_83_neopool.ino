@@ -1,7 +1,7 @@
 /*
   xsns_83_neopool.ino - Sugar Valley NeoPool Control System Modbus support for Tasmota
 
-  Copyright (C) 2025  Norbert Richter
+  Copyright (C) 2026  Norbert Richter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -2065,21 +2065,31 @@ void NeoPoolShow(bool json)
       }
       if (neopool_power_module_nodeid[0] ||
           NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, neopool_power_module_nodeid, nitems(neopool_power_module_nodeid))) {
-        if (Settings->flag6.neopool_outputsensitive) {
-          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
-            neopool_power_module_nodeid[0],
-            neopool_power_module_nodeid[1],
-            neopool_power_module_nodeid[2],
-            neopool_power_module_nodeid[3],
-            neopool_power_module_nodeid[4],
-            neopool_power_module_nodeid[5]
-          );
+        uint8_t buf[12];
+        memcpy(buf, neopool_power_module_nodeid, 12);
+        if (!Settings->flag6.neopool_outputsensitive) {
+          // Multiple XOR, rotation and avalanche
+          for (int i = 0; i < (neopool_power_module_nodeid[5] & 0x07); i++) {
+            uint8_t tmp = buf[0];
+            for (int i = 0; i < 11; i++) buf[i] = buf[i+1];
+            buf[11] = tmp;
+            for (int i = 0; i < 12; i++) {
+              buf[i] ^= buf[(i + 3) % 12];
+              buf[i]  = (buf[i] << 3) | (buf[i] >> 5);
+              buf[i] += buf[(i + 7) % 12];
+            }
+          }
+          // indicate hidden id
+          ((uint16_t *)buf)[0] = 0xAA55;
         }
-        else {
-          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"XXXX XXXX XXXX XXXX XXXX %04X\","),
-            neopool_power_module_nodeid[5]
-          );
-        }
+        ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
+          ((uint16_t *)buf)[0],
+          ((uint16_t *)buf)[1],
+          ((uint16_t *)buf)[2],
+          ((uint16_t *)buf)[3],
+          ((uint16_t *)buf)[4],
+          ((uint16_t *)buf)[5]
+        );
       }
       ResponseAppend_P(PSTR("\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
         Settings->flag2.voltage_resolution, &f5volt,
