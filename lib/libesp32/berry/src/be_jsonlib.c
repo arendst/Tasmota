@@ -624,6 +624,14 @@ static int m_json_dump(bvm *vm)
     be_return(vm);
 }
 
+#if !BE_USE_PRECOMPILED_OBJECT
+be_native_module_attr_table(json) {
+    be_native_module_function("load", m_json_load),
+    be_native_module_function("dump", m_json_dump)
+};
+
+be_define_native_module(json, NULL);
+#else
 /* @const_object_info_begin
 module json (scope: global, depend: BE_USE_JSON_MODULE) {
     load, func(m_json_load)
@@ -631,5 +639,6 @@ module json (scope: global, depend: BE_USE_JSON_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_json.h"
+#endif
 
 #endif /* BE_USE_JSON_MODULE */

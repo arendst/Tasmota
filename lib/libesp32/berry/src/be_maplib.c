@@ -220,6 +220,29 @@ static int m_keys(bvm *vm)
     be_return(vm);
 }
 
+#if !BE_USE_PRECOMPILED_OBJECT
+void be_load_maplib(bvm *vm)
+{
+    static const bnfuncinfo members[] = {
+        { ".p", NULL },
+        { "init", m_init },
+        { "tostring", m_tostring },
+        { "remove", m_remove },
+        { "item", m_item },
+        { "setitem", m_setitem },
+        { "find", m_find },
+        { "contains", m_contains },
+        { "has", m_contains },  /* deprecated */
+        { "size", m_size },
+        { "insert", m_insert },
+        { "iter", m_iter },
+        { "keys", m_keys },
+        { "tobool", m_tobool },
+        { NULL, NULL }
+    };
+    be_regclass(vm, "map", members);
+}
+#else
 /* @const_object_info_begin
 class be_class_map (scope: global, name: map) {
     .p, var
@@ -239,3 +262,4 @@ class be_class_map (scope: global, name: map) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_map.h"
+#endif

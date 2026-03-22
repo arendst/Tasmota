@@ -20,7 +20,6 @@ All notable changes to this project will be documented in this file.
 - ESP8266 heap drain and exception 29 when DHCP provides NTP server (#24515)
 
 ### Removed
-- Berry removed `BE_USE_PRECOMPILED_OBJECT` which is enforced in Tasmota (#24565)
 
 ## [15.3.0.2] 20260315
 ### Added

@@ -17,9 +17,18 @@
 #include "be_gc.h"
 #include <string.h>
 
+
+#if !BE_USE_PRECOMPILED_OBJECT
+be_native_module_attr_table(undefined) {
+    be_native_module_nil(".p"),         /* not needed but can't be empty */
+};
+
+be_define_native_module(undefined, NULL);
+#else
 /* @const_object_info_begin
 module undefined (scope: global) {
     .p, nil()
 }
 @const_object_info_end */
 #include "../generate/be_fixed_undefined.h"
+#endif

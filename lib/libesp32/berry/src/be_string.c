@@ -45,7 +45,9 @@ struct bconststrtab {
     int size;
 };
 
+#if BE_USE_PRECOMPILED_OBJECT
 #include "../generate/be_const_strtab_def.h"
+#endif
 
 int be_eqstr(bstring *s1, bstring *s2)
 {
@@ -132,6 +134,11 @@ static uint32_t str_hash(const char *str, size_t len)
 void be_string_init(bvm *vm)
 {
     resize(vm, 8);
+#if !BE_USE_PRECOMPILED_OBJECT
+    /* the destructor name deinit needs to exist all the time, to ensure
+     * that it does not need to be created when the heap is exhausted. */
+    be_gc_fix(vm, cast(bgcobject*, str_literal(vm, "deinit")));
+#endif
     /* be_const_str_deinit --> for precompiled */
 }
 
@@ -164,6 +171,7 @@ static bstring* createstrobj(bvm *vm, size_t len, int islong)
     return s;
 }
 
+#if BE_USE_PRECOMPILED_OBJECT
 static bstring* find_conststr(const char *str, size_t len)
 {
     const struct bconststrtab *tab = &m_const_string_table;
@@ -182,6 +190,7 @@ static bstring* find_conststr(const char *str, size_t len)
     }
     return NULL;
 }
+#endif
 
 static bstring* newshortstr(bvm *vm, const char *str, size_t len)
 {
@@ -237,8 +246,12 @@ bstring* be_newstr(bvm *vm, const char *str)
 bstring *be_newstrn(bvm *vm, const char *str, size_t len)
 {
     if (len <= SHORT_STR_MAX_LEN) {
+#if BE_USE_PRECOMPILED_OBJECT
         bstring *s = find_conststr(str, len);
         return s ? s : newshortstr(vm, str, len);
+#else
+        return newshortstr(vm, str, len);
+#endif
     }
     return be_newlongstr(vm, str, len); /* long string */
 }

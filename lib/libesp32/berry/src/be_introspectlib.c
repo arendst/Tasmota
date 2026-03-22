@@ -250,6 +250,28 @@ static int m_name(bvm *vm)
     be_return_nil(vm);
 }
 
+#if !BE_USE_PRECOMPILED_OBJECT
+be_native_module_attr_table(introspect) {
+    be_native_module_function("members", m_attrlist),
+
+    be_native_module_function("get", m_findmember),
+    be_native_module_function("set", m_setmember),
+    be_native_module_function("contains", m_contains),
+
+    be_native_module_function("module", m_getmodule),
+    be_native_module_function("setmodule", m_setmodule),
+
+    be_native_module_function("toptr", m_toptr),
+    be_native_module_function("fromptr", m_fromptr),
+    be_native_module_function("solidified", m_solidified),
+
+    be_native_module_function("name", m_name),
+
+    be_native_module_function("ismethod", m_ismethod),
+};
+
+be_define_native_module(introspect, NULL);
+#else
 /* @const_object_info_begin
 module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
     members, func(m_attrlist)
@@ -271,5 +293,6 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_introspect.h"
+#endif
 
 #endif /* BE_USE_INTROSPECT_MODULE */
