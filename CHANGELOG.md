@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Athom esp32 2-3-4 gang change led behaviour after firmware update (#24509)
 - ESP8266 heap drain and exception 29 when DHCP provides NTP server (#24515)
+- NeoPool fix possible IntegerDivideByZero
 
 ### Removed
 - Berry removed `BE_USE_PRECOMPILED_OBJECT` which is enforced in Tasmota (#24565)

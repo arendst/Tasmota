@@ -2173,8 +2173,8 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_HIDRO), decimals, &fvalue);
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_PERCENT  "\":{"));
-      ResponseAppend_P(PSTR( "\""  D_JSON_DATA  "\":%d"), data * 100 / max);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":%d"), setpoint * 100 / max);
+      ResponseAppend_P(PSTR( "\""  D_JSON_DATA  "\":%d"), max ? (data * 100 / max) : 0);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":%d"), max ? (setpoint * 100 / max) : 0);
       ResponseJsonEnd();
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));
