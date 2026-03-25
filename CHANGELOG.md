@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP8266 platform update from 2026.02.00 to 2026.03.00 (#24547)
+- ESP8266 use wrapped symbols for sntp_init and sntp_stop (#24566)
 - ESP32 Platform from 2025.02.30 to 2026.03.30, Framework (Arduino Core) from v3.1.9 to v3.1.10 and IDF from v5.3.4.251226 to v5.3.4.260127 (#24547)
 - Matter don't advertize IPv6 global address, only link-local (#24563)
 - ESP32-C5/C6/P4 Platform from 2025.03.30 to 2026.03.50, Framework (Arduino Core) from v3.1.10 to v3.3.7 and IDF from v5.3.4.260127 to v5.5.3+ (#24567)
@@ -18,7 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Athom esp32 2-3-4 gang change led behaviour after firmware update (#24509)
-- ESP8266 heap drain and exception 29 when DHCP provides NTP server (#24515)
+- ESP8266 heap drain and exception 29 when DHCP provides NTP server (#24515,#24566)
 - NeoPool possible IntegerDivideByZero (#24578)
 
 ### Removed
