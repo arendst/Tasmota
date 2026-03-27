@@ -1245,11 +1245,6 @@ void PerformEverySecond(void)
 #ifdef ESP8266
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
-
-  if (0 == (TasmotaGlobal.uptime % 60)) {  // Perform every minute
-    // We do not want core SNTP server which uses DHCP to find NTP server(s). See #24515
-    sntp_stop();
-  }
 #endif
 
   WifiPollNtp();

@@ -11,15 +11,17 @@
 #######################################
 
 begin	KEYWORD2
+pins	KEYWORD2
 setClock	KEYWORD2
 setClockStretchLimit	KEYWORD2
 beginTransmission	KEYWORD2
 endTransmission	KEYWORD2
 requestFrom	KEYWORD2
-send	KEYWORD2
-receive	KEYWORD2
-onReceive	KEYWORD2
-onRequest	KEYWORD2
+write	KEYWORD2
+available	KEYWORD2
+read	KEYWORD2
+peek	KEYWORD2
+flush	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)

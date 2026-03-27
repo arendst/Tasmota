@@ -248,8 +248,8 @@ void callBerryRunDeferred(void) {
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
-void BerryObservability(bvm *vm, int event...);
-void BerryObservability(bvm *vm, int event...) {
+void BerryObservability(bvm *vm, int event, ...);
+void BerryObservability(bvm *vm, int event, ...) {
   va_list param;
   va_start(param, event);
   static int32_t vm_usage = 0;

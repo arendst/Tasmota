@@ -125,6 +125,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Sen5x power on delay of 60ms [#24452](https://github.com/arendst/Tasmota/issues/24452)
 - Berry add `loglevel` to `mqtt.publish()` [#24551](https://github.com/arendst/Tasmota/issues/24551)
 
+### Breaking Changed
+- Renamed SCD40 sensors to their real names like SCD40 to SCD43
+
 ### Changed
 - ESP8266 platform update from 2026.02.00 to 2026.03.00 [#24547](https://github.com/arendst/Tasmota/issues/24547)
 - ESP32 Platform from 2025.02.30 to 2026.03.30, Framework (Arduino Core) from v3.1.9 to v3.1.10 and IDF from v5.3.4.251226 to v5.3.4.260127 [#24547](https://github.com/arendst/Tasmota/issues/24547)
@@ -136,16 +139,20 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Sensirion Core library from v0.6.0 to v0.7.2
 - LVGL library from v9.4.0 to v9.5.0 [#24470](https://github.com/arendst/Tasmota/issues/24470)
 - SHT1x software reset I2C bus after initial (un)detection
+- NeoPool always output valid sensitive data [#24573](https://github.com/arendst/Tasmota/issues/24573)
+- SML suppress MQTT publish until valid meter data received [#24587](https://github.com/arendst/Tasmota/issues/24587)
 - Matter improved parameters handling [#24471](https://github.com/arendst/Tasmota/issues/24471)
 
 ### Fixed
-- ESP8266 heap drain and exception 29 when DHCP provides NTP server [#24515](https://github.com/arendst/Tasmota/issues/24515)
+- ESP8266 heap drain and exception 29 when DHCP provides NTP server [#24515](https://github.com/arendst/Tasmota/issues/24515), [#24566](https://github.com/arendst/Tasmota/issues/24566)
 - Crash when shutting down Wifi with `Wifi 0` [#24536](https://github.com/arendst/Tasmota/issues/24536)
+- Don't send extraneous `0\r\n\r\n` with non-chunked HTTP/1.0 [#24518](https://github.com/arendst/Tasmota/issues/24518)
+- NeoPool possible IntegerDivideByZero [#24578](https://github.com/arendst/Tasmota/issues/24578)
 - Do not free BT memory when in use [#24480](https://github.com/arendst/Tasmota/issues/24480)
 - Berry avoid `tasmota.wifi()` returning bad values when wifi is turned off [#24505](https://github.com/arendst/Tasmota/issues/24505)
-- Don't send extraneous `0\r\n\r\n` with non-chunked HTTP/1.0 [#24518](https://github.com/arendst/Tasmota/issues/24518)
 - File upload improvements: `/ufsu` api mode, no interrupts disabling, cleaner confirmation page [#24521](https://github.com/arendst/Tasmota/issues/24521)
 
 ### Removed
+- ESP8266 I2C Slave support which was never used by Tasmota anyway
 - Berry `tasmota.urlbecload()` superseded by Extension Manager [#24493](https://github.com/arendst/Tasmota/issues/24493)
 - Berry remove `mdns.stop()` [#24549](https://github.com/arendst/Tasmota/issues/24549)

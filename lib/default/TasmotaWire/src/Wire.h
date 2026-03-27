@@ -33,71 +33,56 @@
 //#warning "Using TasmotaWire library"
 
 class Twi;
-typedef std::function<void(void)> txEvent;
-typedef std::function<void(uint8_t*,size_t)> rxEvent;
 
 #define BUFFER_LENGTH 128
 
-class TwoWire : public Stream
-{
+class TwoWire : public Stream {
 private:
-    Twi &twi;
-    uint8_t rxBuffer[BUFFER_LENGTH];
-    uint8_t rxBufferIndex;
-    uint8_t rxBufferLength;
+  Twi &twi;
+  uint8_t rxBuffer[BUFFER_LENGTH];
+  uint8_t rxBufferIndex;
+  uint8_t rxBufferLength;
 
-    uint8_t txAddress;
-    uint8_t txBuffer[BUFFER_LENGTH];
-    uint8_t txBufferIndex;
-    uint8_t txBufferLength;
+  uint8_t txAddress;
+  uint8_t txBuffer[BUFFER_LENGTH];
+  uint8_t txBufferIndex;
+  uint8_t txBufferLength;
 
-    uint8_t default_sda_pin;
-    uint8_t default_scl_pin;
+  uint8_t default_sda_pin;
+  uint8_t default_scl_pin;
 
-    uint8_t transmitting;
-    void (*user_onRequest)(void);
-    void (*user_onReceive)(size_t);
-    void onRequestService(void);
-    void onReceiveService(uint8_t*, size_t);
+  uint8_t transmitting;
 
 public:
-    TwoWire();
-    void begin(int sda, int scl);
-    void begin(int sda, int scl, uint8_t address);
-    void pins(int sda, int scl) __attribute__((deprecated)); // use begin(sda, scl) in new code
-    void begin();
-    void begin(uint8_t);
-    void begin(int);
-    void setClock(uint32_t);
-    void setClockStretchLimit(uint32_t);
-    void beginTransmission(uint8_t);
-    void beginTransmission(int);
-    uint8_t endTransmission(void);
-    uint8_t endTransmission(uint8_t);
-    size_t requestFrom(uint8_t address, size_t size, bool sendStop);
-    uint8_t status();
+  TwoWire();
+  void begin(int sda, int scl);
+  void pins(int sda, int scl) __attribute__((deprecated)); // use begin(sda, scl) in new code
+  void begin();
+  void setClock(uint32_t);
+  void setClockStretchLimit(uint32_t);
+  void beginTransmission(uint8_t);
+  void beginTransmission(int);
+  uint8_t endTransmission(void);
+  uint8_t endTransmission(uint8_t);
+  size_t requestFrom(uint8_t address, size_t size, bool sendStop);
 
-    uint8_t requestFrom(uint8_t, uint8_t);
-    uint8_t requestFrom(uint8_t, uint8_t, uint8_t);
-    uint8_t requestFrom(int, int);
-    uint8_t requestFrom(int, int, int);
+  uint8_t requestFrom(uint8_t, uint8_t);
+  uint8_t requestFrom(uint8_t, uint8_t, uint8_t);
+  uint8_t requestFrom(int, int);
+  uint8_t requestFrom(int, int, int);
 
-    virtual size_t write(uint8_t);
-    virtual size_t write(const uint8_t *, size_t);
-    virtual int available(void);
-    virtual int read(void);
-    virtual int peek(void);
-    virtual void flush(void);
-    void onReceive(void (*)(int));    // arduino api
-    void onReceive(void (*)(size_t)); // legacy esp8266 backward compatibility
-    void onRequest(void (*)(void));
+  virtual size_t write(uint8_t);
+  virtual size_t write(const uint8_t *, size_t);
+  virtual int available(void);
+  virtual int read(void);
+  virtual int peek(void);
+  virtual void flush(void);
 
-    using Print::write;
+  using Print::write;
 };
 
-#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_TWOWIRE)
 extern TwoWire Wire;
-#endif
+extern TwoWire Wire1;
 
 #endif  // TwoWire_h
 

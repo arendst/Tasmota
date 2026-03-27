@@ -11,12 +11,6 @@
  * Basic I2C routines supporting two busses
 \*********************************************************************************************/
 
-#ifdef ESP8266
-#if MAX_I2C > 1
-TwoWire Wire1;
-#endif  // MAX_I2C
-#endif  // ESP8266
-
 const uint8_t I2C_RETRY_COUNTER = 3;
 
 struct I2Ct {

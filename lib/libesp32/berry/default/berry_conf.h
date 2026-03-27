@@ -53,6 +53,13 @@
  **/
 #define BE_BYTES_MAX_SIZE               (32*1024)   /* 32 kb default value */
 
+/* Macro: BE_USE_PRECOMPILED_OBJECT
+ * Use precompiled objects to avoid creating these objects at
+ * runtime. Enable this macro can greatly optimize RAM usage.
+ * Default: 1
+ **/
+#define BE_USE_PRECOMPILED_OBJECT       1
+
 /* Macro: BE_DEBUG_SOURCE_FILE
  * Indicate if each function remembers its source file name
  * 0: do not keep the file name (saves 4 bytes per function)

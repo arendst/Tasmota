@@ -419,10 +419,6 @@ void RtcSetTimeOfDay(uint32_t local_time) {
   tv.tv_sec = local_time;
   tv.tv_usec = 0;
   settimeofday(&tv, nullptr);
-#ifdef ESP8266
-  // We do not want core SNTP server which uses DHCP to find NTP server(s). See #24515
-  sntp_stop();
-#endif  // ESP8266
 }
 
 void RtcSecond(void) {
