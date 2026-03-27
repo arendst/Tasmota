@@ -23,6 +23,7 @@
 from genericpath import exists
 import os
 from os.path import join, getsize
+import re
 import csv
 from littlefs import LittleFS
 import requests
@@ -307,13 +308,22 @@ def esp32_create_combined_bin(source, target, env):
             "--flash-size",
             flash_size,
         ]
-        # platformio estimates the flash space used to store the firmware.
-        # the estimation is inaccurate. perform a final check on the firmware
-        # size by comparing it against the partition size.
+        # Platformio estimates the flash space used to store the firmware.
+        # The estimation is inaccurate. Get the exact firmware flash usage
+        # from the size tool (same value as PlatformIO's "Flash:" line)
         max_size = env.BoardConfig().get("upload.maximum_size", 1)
-        fw_size = getsize(firmware_name)
+        elf_file = os.path.normpath(env.subst("$BUILD_DIR/${PROGNAME}.elf"))
+        fw_size = 0
+        size_cmd = env.subst("$SIZETOOL") + " -A -d " + elf_file
+        size_output = subprocess.check_output(size_cmd, shell=True, text=True)
+        size_regexp = re.compile(env.get("SIZEPROGREGEXP"))
+        for line in size_output.splitlines():
+            m = size_regexp.match(line)
+            if m:
+                fw_size += int(m.group(1))
         if (fw_size > max_size):
-            raise Exception(Fore.RED + "firmware binary too large: %d > %d" % (fw_size, max_size))
+            print(Fore.RED + "firmware binary too large: %d > %d" % (fw_size, max_size))
+            exit(1)
 
         print()
         print("    Offset   | File")
