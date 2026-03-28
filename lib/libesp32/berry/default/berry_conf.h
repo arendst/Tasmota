@@ -1,5 +1,5 @@
 /********************************************************************
-** Copyright (c) 2018-2020 Guan Wenliang
+** Copyright (c) 2018-2026 Guan Wenliang
 ** This file is part of the Berry default interpreter.
 ** skiars@qq.com, https://github.com/Skiars/berry
 ** See Copyright Notice in the LICENSE file or at
@@ -128,7 +128,7 @@
  * Increase is you need to solidify functions.
  * Default: 50
  **/
-#define BE_CONST_SEARCH_SIZE            150
+#define BE_CONST_SEARCH_SIZE            250
 
 /* Macro: BE_STACK_FREE_MIN
  * The short string will hold the hash value when the value is
