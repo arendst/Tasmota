@@ -1,0 +1,11 @@
+{
+	"name": "Tasmota",
+	"image": "mcr.microsoft.com/devcontainers/python:3",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"platformio.platformio-ide"
+			]
+		}
+	}
+}

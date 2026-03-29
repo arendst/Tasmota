@@ -1,0 +1,19 @@
+tasks:
+  install-platformio:
+    name: Install PlatformIO
+    description: Install the PlatformIO CLI and its dependencies via pip.
+    command: |
+      pip install --upgrade platformio
+      pio --version
+    triggeredBy:
+      - postDevcontainerStart
+
+  build:
+    name: Build firmware
+    description: Build a Tasmota firmware variant. Defaults to tasmota (ESP8266). Override with PIO_ENV env var, e.g. PIO_ENV=tasmota32 ona auto task start build.
+    command: |
+      pio run -e ${PIO_ENV:-tasmota}
+    triggeredBy:
+      - manual
+    dependsOn:
+      - install-platformio
