@@ -18,11 +18,6 @@ allocator handles small objects efficiently.
 # ********************************************************************/
 
 from berry_port.be_object import BE_MALLOC_FAIL
-from berry_port.berry_conf import BE_USE_DEBUG_GC
-
-# /* GC status flag for "allocation in progress" */
-# #define GC_ALLOC    (1 << 2)
-GC_ALLOC = (1 << 2)
 
 
 # ============================================================================
@@ -164,16 +159,11 @@ def be_realloc(vm, ptr, old_size, new_size):
             break
 
         if gc_occurred:
-            # Already tried GC, can't recover — raise allocation failure.
-            # Import here to avoid circular imports at module level.
+            # Already retried once, can't recover — raise allocation failure.
             from berry_port.be_exec import be_throw
             be_throw(vm, BE_MALLOC_FAIL)
 
-        # Force a GC cycle and retry
-        vm.gc.status |= GC_ALLOC
-        from berry_port.be_gc import be_gc_collect
-        be_gc_collect(vm)
-        vm.gc.status &= ~GC_ALLOC
+        # Retry once without GC trigger
         gc_occurred = True
 
     # Update allocated-bytes counter

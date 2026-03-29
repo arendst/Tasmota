@@ -2489,21 +2489,11 @@ def mainfunc(parser, cl):
     finfo.proto.name = be_newstr(parser.vm, funcname(parser))
     cl.proto = finfo.proto
     # be_remove(parser->vm, -3) — remove proto from stack
-    # In Python port, we just adjust the stack
-    if vm_has_remove(parser.vm):
-        _be_remove(parser.vm, -3)
+    from berry_port.be_api import be_remove as _be_remove
+    _be_remove(parser.vm, -3)
     stmtlist(parser)
     end_func(parser)
     match_token(parser, TokenEOS)
-
-
-def vm_has_remove(vm):
-    """Check if be_remove is available (from be_api.py, not yet ported)."""
-    return False
-
-def _be_remove(vm, index):
-    """Stub for be_remove — will be implemented in be_api.py."""
-    pass
 
 
 # bclosure* be_parser_source(bvm *vm,

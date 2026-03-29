@@ -78,10 +78,6 @@ def be_newclass(vm, name, super_=None):
     obj = bclass()
     obj.type = BE_CLASS
 
-    # Register with GC
-    obj.next = vm.gc.list
-    vm.gc.list = obj
-
     obj.super = super_
     obj.members = None  # gc protection
     obj.nvar = 0
@@ -217,9 +213,6 @@ def be_class_method_bind(vm, c, name, p, is_static):
     cl.nupvals = p.nupvals
     cl.proto = p
     cl.upvals = [None] * p.nupvals
-    # Register closure with GC
-    cl.next = vm.gc.list
-    vm.gc.list = cl
     var_setclosure(attr, cl)
     if is_static:
         var_markstatic(attr)
@@ -460,10 +453,6 @@ def _newobjself(vm, c):
     """Create a single instance for class *c* with all member variables set to nil."""
     obj = binstance()
     obj.type = BE_INSTANCE
-
-    # Register with GC
-    obj.next = vm.gc.list
-    vm.gc.list = obj
 
     # Initialize member variable slots to nil
     obj.members = [bvalue() for _ in range(c.nvar)]

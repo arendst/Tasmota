@@ -213,9 +213,6 @@ def _new_module(vm, nm):
 
     obj = bmodule()
     obj.type = BE_MODULE
-    # Register with GC
-    obj.next = vm.gc.list
-    vm.gc.list = obj
     obj.marked = 0  # GC_WHITE
 
     # Push onto stack for GC protection
@@ -742,9 +739,6 @@ def be_module_new(vm):
 
     obj = bmodule()
     obj.type = BE_MODULE
-    # Register with GC
-    obj.next = vm.gc.list
-    vm.gc.list = obj
     obj.marked = 0  # GC_WHITE
 
     # Push onto stack for GC protection

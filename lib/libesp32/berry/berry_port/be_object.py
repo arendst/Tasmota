@@ -401,7 +401,7 @@ class bproto(bgcobject):
     __slots__ = (
         'nstack', 'nupvals', 'argc', 'varg',
         'codesize', 'nconst', 'nproto',
-        'gray', 'upvals', 'ktab', 'ptab', 'code', 'name',
+        'upvals', 'ktab', 'ptab', 'code', 'name',
         'source', 'lineinfo', 'nlineinfo', 'varinfo', 'nvarinfo',
     )
 
@@ -415,7 +415,6 @@ class bproto(bgcobject):
         self.codesize = 0      # int16_t codesize
         self.nconst = 0        # int16_t nconst
         self.nproto = 0        # int16_t nproto
-        self.gray = None       # bgcobject* gray
         self.upvals = None     # bupvaldesc* upvals (list of bupvaldesc)
         self.ktab = None       # bvalue* ktab (list of bvalue)
         self.ptab = None       # bproto** ptab (list of bproto)
@@ -442,13 +441,12 @@ class bproto(bgcobject):
 # };
 class bclosure(bgcobject):
     """Berry closure: pairs a bproto with captured upvalues."""
-    __slots__ = ('nupvals', 'gray', 'proto', 'upvals')
+    __slots__ = ('nupvals', 'proto', 'upvals')
 
     def __init__(self):
         super().__init__()
         self.type = BE_CLOSURE
         self.nupvals = 0       # bbyte nupvals
-        self.gray = None       # bgcobject* gray
         self.proto = None      # bproto* proto
         self.upvals = []       # bupval*[] (list of bupval)
 
@@ -465,13 +463,12 @@ class bclosure(bgcobject):
 # };
 class bntvclos(bgcobject):
     """C native function or closure."""
-    __slots__ = ('nupvals', 'gray', 'f', 'upvals')
+    __slots__ = ('nupvals', 'f', 'upvals')
 
     def __init__(self):
         super().__init__()
         self.type = BE_NTVCLOS
         self.nupvals = 0       # bbyte nupvals
-        self.gray = None       # bgcobject* gray
         self.f = None          # bntvfunc f (Python callable)
         self.upvals = []       # bupval*[] (accessed via be_ntvclos_upval)
 
@@ -542,12 +539,11 @@ class bmapnode:
 # };
 class bmap(bgcobject):
     """Berry map (hash table) with open addressing and chaining."""
-    __slots__ = ('gray', 'slots', 'lastfree', 'size', 'count')
+    __slots__ = ('slots', 'lastfree', 'size', 'count')
 
     def __init__(self):
         super().__init__()
         self.type = BE_MAP
-        self.gray = None       # bgcobject* gray
         self.slots = None      # bmapnode* slots (list of bmapnode)
         self.lastfree = 0      # int index (replaces bmapnode* lastfree)
         self.size = 0          # int size
@@ -566,12 +562,11 @@ class bmap(bgcobject):
 # };
 class blist(bgcobject):
     """Berry list container."""
-    __slots__ = ('gray', 'count', 'capacity', 'data')
+    __slots__ = ('count', 'capacity', 'data')
 
     def __init__(self):
         super().__init__()
         self.type = BE_LIST
-        self.gray = None       # bgcobject* gray
         self.count = 0         # int count
         self.capacity = 0      # int capacity
         self.data = None       # bvalue* data (list of bvalue)
@@ -591,7 +586,7 @@ class blist(bgcobject):
 # };
 class bclass(bgcobject):
     """Berry class with single inheritance."""
-    __slots__ = ('nvar', 'super', 'members', 'name', 'gray')
+    __slots__ = ('nvar', 'super', 'members', 'name')
 
     def __init__(self):
         super().__init__()
@@ -600,7 +595,6 @@ class bclass(bgcobject):
         self.super = None      # bclass* super
         self.members = None    # bmap* members
         self.name = None       # bstring* name
-        self.gray = None       # bgcobject* gray
 
 
 # ============================================================================
@@ -617,7 +611,7 @@ class bclass(bgcobject):
 # };
 class binstance(bgcobject):
     """Berry class instance with variable-length member array."""
-    __slots__ = ('super', 'sub', '_class', 'gray', 'members')
+    __slots__ = ('super', 'sub', '_class', 'members')
 
     def __init__(self):
         super().__init__()
@@ -625,7 +619,6 @@ class binstance(bgcobject):
         self.super = None      # binstance* super
         self.sub = None        # binstance* sub
         self._class = None     # bclass* _class
-        self.gray = None       # bgcobject* gray
         self.members = []      # bvalue[] members
 
 
@@ -645,14 +638,13 @@ class binstance(bgcobject):
 # } bmodule;
 class bmodule(bgcobject):
     """Berry module with attribute table."""
-    __slots__ = ('table', 'info', 'gray')
+    __slots__ = ('table', 'info')
 
     def __init__(self):
         super().__init__()
         self.type = BE_MODULE
         self.table = None      # bmap* table
         self.info = None       # union infodata (native/name/sname)
-        self.gray = None       # bgcobject* gray
 
 
 # ============================================================================
@@ -725,18 +717,11 @@ bstack = bvector
 #     bbyte status;
 # };
 class bgc:
-    """Garbage collector state."""
-    __slots__ = ('list', 'gray', 'fixed', 'usage', 'threshold', 'steprate', 'status')
+    """Minimal GC state — only tracks memory usage."""
+    __slots__ = ('usage',)
 
     def __init__(self):
-        self.list = None       # bgcobject* list
-        self.gray = None       # bgcobject* gray (gray list head)
-        self.fixed = None      # bgcobject* fixed
-        # pool16/pool32 skipped — Python allocator handles small objects
         self.usage = 0         # size_t usage
-        self.threshold = 0     # size_t threshold
-        self.steprate = 0      # bbyte steprate
-        self.status = 0        # bbyte status
 
 
 # ============================================================================

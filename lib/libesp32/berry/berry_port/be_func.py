@@ -337,21 +337,16 @@ def upval_value(uv):
 def be_newproto(vm):
     """Allocate and initialize a new function prototype.
 
-    All fields are zeroed/nulled. The proto is registered on the GC list.
+    All fields are zeroed/nulled.
     """
     p = bproto()
     p.type = BE_PROTO
-
-    # Register with GC
-    p.next = vm.gc.list
-    vm.gc.list = p
 
     p.upvals = None
     p.ktab = None
     p.ptab = None
     p.code = None
     p.name = None
-    p.gray = None
     p.codesize = 0
     p.nupvals = 0
     p.nproto = 0
@@ -393,10 +388,6 @@ def be_newclosure(vm, nupval):
     """
     cl = bclosure()
     cl.type = BE_CLOSURE
-
-    # Register with GC
-    cl.next = vm.gc.list
-    vm.gc.list = cl
 
     cl.proto = None
     cl.nupvals = nupval
@@ -467,10 +458,6 @@ def be_newntvclosure(vm, cf, nupvals):
     """
     f = bntvclos()
     f.type = BE_NTVCLOS
-
-    # Register with GC
-    f.next = vm.gc.list
-    vm.gc.list = f
 
     f.f = cf
     f.nupvals = nupvals

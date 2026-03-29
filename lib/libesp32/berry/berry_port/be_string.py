@@ -364,9 +364,9 @@ def _createstrobj(vm, length, islong):
     s._s = ""  # will be filled by caller
 
     if islong:
-        # Long strings go on the GC object list (like be_newgcobj in C)
-        s.next = vm.gc.list
-        vm.gc.list = s
+        # Long strings were previously linked into the GC object list.
+        # No longer needed — Python GC handles lifetime.
+        pass
     # Short strings are NOT on gc.list — they live in the string table
     # and are collected by be_gcstrtab. Their .next field is used for
     # the string table bucket chain.

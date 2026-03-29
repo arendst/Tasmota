@@ -26,7 +26,7 @@ from berry_port.be_object import (
     BE_NONE, BE_NIL, BE_INT, BE_REAL, BE_BOOL, BE_COMPTR, BE_INDEX,
     BE_FUNCTION, BE_STRING, BE_CLASS, BE_INSTANCE, BE_PROTO,
     BE_LIST, BE_MAP, BE_MODULE, BE_COMOBJ,
-    BE_NTVFUNC, BE_CLOSURE, BE_NTVCLOS, BE_CTYPE_FUNC,
+    BE_NTVFUNC, BE_CLOSURE, BE_NTVCLOS, BE_CTYPE_FUNC, BE_STATIC,
     # Error codes
     BE_OK, BE_EXIT, BE_MALLOC_FAIL, BE_EXCEPTION,
     BE_SYNTAX_ERROR, BE_EXEC_ERROR, BE_IO_ERROR,
@@ -239,12 +239,22 @@ def _class_init(vm, c, lib):
             return entry[1]
         return entry.function
 
+    def _is_static(entry):
+        if isinstance(entry, tuple) and len(entry) >= 3:
+            return entry[2]
+        return False
+
     i = 0
     while i < len(lib) and _get_name(lib[i]) is not None:
         entry = lib[i]
         s = be_str.be_newstr(vm, _get_name(entry))
         if _get_func(entry) is not None:
             be_cls.be_class_native_method_bind(vm, c, s, _get_func(entry))
+            if _is_static(entry):
+                # Mark the just-inserted attribute as static (BE_NTVFUNC | BE_STATIC)
+                attr = be_mp.be_map_findstr(vm, c.members, s)
+                if attr is not None:
+                    attr.type = attr.type | BE_STATIC
         else:
             be_cls.be_class_member_bind(vm, c, s, True)
         i += 1

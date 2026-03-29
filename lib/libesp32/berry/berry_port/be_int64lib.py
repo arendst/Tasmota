@@ -908,11 +908,11 @@ def be_load_int64lib(vm):
         ("_p", None),
         ("init", int64_init),
         ("deinit", int64_deinit),
-        ("fromu32", int64_fromu32),       # static
-        ("fromfloat", int64_fromfloat),   # static
-        ("toint64", int64_toint64),       # static
+        ("fromu32", int64_fromu32, True),       # static
+        ("fromfloat", int64_fromfloat, True),   # static
+        ("toint64", int64_toint64, True),       # static
         ("tostring", int64_tostring),
-        ("fromstring", int64_fromstring), # static
+        ("fromstring", int64_fromstring, True), # static
         ("isint", int64_isint),
         ("toint", int64_toint),
         ("tobool", int64_tobool),
@@ -932,7 +932,7 @@ def be_load_int64lib(vm):
         ("<<", int64_shiftleft),
         (">>", int64_shiftright),
         ("tobytes", int64_tobytes),
-        ("frombytes", int64_frombytes),   # static
+        ("frombytes", int64_frombytes, True),   # static
         ("low32", int64_low32),
         ("high32", int64_high32),
     ]

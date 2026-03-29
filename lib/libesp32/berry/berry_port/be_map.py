@@ -488,10 +488,6 @@ def be_map_new(vm):
     map_.count = 0
     map_.slots = None
 
-    # Register with GC
-    map_.next = vm.gc.list
-    vm.gc.list = map_
-
     _resize(vm, map_, 2)
     return map_
 

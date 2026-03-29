@@ -332,7 +332,7 @@ def _ins2str(vm, idx):
     from berry_port import be_exec as _be_exec
     if vm.top_idx + 2 >= len(vm.stack):
         _be_exec.be_stack_expansion(vm, 4)
-    vm.stack[vm.top_idx] = dst
+    var_setval(vm.stack[vm.top_idx], dst)
     vm.top_idx += 1  # be_incrtop
     if basetype(mtype) != BE_FUNCTION:
         # No tostring method — return "<instance: ClassName()>"
@@ -341,7 +341,7 @@ def _ins2str(vm, idx):
         return mod.be_newstr(vm, "<instance: %s()>" % name)
     else:
         # Push self as argument: *vm->top = vm->reg[idx]
-        vm.stack[vm.top_idx] = vm.stack[vm.reg_idx + idx]
+        var_setval(vm.stack[vm.top_idx], vm.stack[vm.reg_idx + idx])
         # be_dofunc(vm, vm->top - 1, 1) — call method at top-1 with 1 arg
         be_dofunc(vm, vm.top_idx - 1, 1)
         # After be_dofunc, return value is at the function slot (top_idx - 1)

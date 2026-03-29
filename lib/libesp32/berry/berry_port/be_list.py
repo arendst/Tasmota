@@ -66,10 +66,6 @@ def be_list_new(vm):
     lst.count = 0
     lst.capacity = 2
 
-    # Register with GC
-    lst.next = vm.gc.list
-    vm.gc.list = lst
-
     # Allocate backing store (tracked via gc.usage)
     lst.data = [bvalue() for _ in range(lst.capacity)]
     vm.gc.usage += _datasize(lst.capacity)
@@ -120,10 +116,6 @@ def be_list_copy(vm, original):
     lst.type = BE_LIST
     lst.count = original.count
     lst.capacity = original.capacity
-
-    # Register with GC
-    lst.next = vm.gc.list
-    vm.gc.list = lst
 
     # Copy backing store
     lst.data = [bvalue() for _ in range(lst.capacity)]
