@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 heap drain and exception 29 when DHCP provides NTP server (#24515, #24566)
 - NeoPool possible IntegerDivideByZero (#24578)
 - Shelly Dimmer 2 serial timeout regression from v15.2.0.1 (#24560)
+- Berry crash when comparing for equality float literals on ESP32
 
 ### Removed
 
