@@ -194,6 +194,6 @@ try:
 
         return _compress_with_zopfli(data, **kw)
 
-except ModuleNotFoundError:
+except (ImportError, ModuleNotFoundError):
     def compress(data, level=9, **kw):
         return _compress_with_gzip(data, level)
