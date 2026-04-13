@@ -52,7 +52,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -100,7 +100,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -156,7 +156,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
@@ -205,7 +205,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
