@@ -397,11 +397,11 @@ Renderer *Init_uDisplay(const char *desc) {
         if (!wire_n) {
           GT911_Touch_Init(&Wire, irq, rst, xs, ys);
         }
-#if defined(ESP32) && defined(USE_I2C_BUS2)
+#if MAX_I2C > 1
         else {
           GT911_Touch_Init(&Wire1, irq, rst, xs, ys);
         }
-#endif  // ESP32
+#endif  // MAX_I2C
 #endif  // USE_GT911
       } 
       else if (i2caddr == CST816S_address) {
@@ -414,11 +414,11 @@ Renderer *Init_uDisplay(const char *desc) {
         if (!wire_n) { 
           FT5206_Touch_Init(Wire);
         }
-#if defined(ESP32) && defined(USE_I2C_BUS2)
+#if MAX_I2C > 1
         else {
           FT5206_Touch_Init(Wire1);
         }
-#endif  // ESP32
+#endif  // MAX_I2C
 #endif  // USE_FT5206
       }
     }

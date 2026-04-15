@@ -14461,13 +14461,12 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
 #ifdef ESP32
       if (val1 == 0) glob_script_mem.script_i2c_wire = &Wire;
       else {
-#if defined(USE_I2C_BUS2)
+#if MAX_I2C > 1
         glob_script_mem.script_i2c_wire = &Wire1;
 #else
         glob_script_mem.script_i2c_wire = &Wire;
-#endif
+#endif  // MAX_I2C
       }
-
 #else
       glob_script_mem.script_i2c_wire = &Wire;
 #endif
@@ -14514,7 +14513,8 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       glob_script_mem.script_i2c_wire->endTransmission();
       break;
     case 14:
-#if defined(ESP32) && defined(USE_I2C_BUS2)
+#ifdef ESP32
+#if MAX_I2C > 1
       Wire1.end();
       Wire1.begin(val & 0x7f, val1);
       glob_script_mem.script_i2c_wire = &Wire1;
@@ -14522,7 +14522,8 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       if (val & 128) {
         XsnsCall(FUNC_INIT);
       }
-#endif
+#endif  // MAX_I2C
+#endif  // ESP32
       break;
   }
   return rval;

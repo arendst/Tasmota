@@ -2954,18 +2954,15 @@ void CmndBatteryPercent(void) {
 void CmndI2cScan(void) {
   // I2CScan   - Scan bus1 then bus2
   bool jsflag = false;
-  if (TasmotaGlobal.i2c_enabled[0]) {
-    I2cScan();
-    jsflag = true;
-  }
-#ifdef USE_I2C_BUS2
-  if (TasmotaGlobal.i2c_enabled[1]) {
-    if (jsflag) {
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+    if (TasmotaGlobal.i2c_enabled[bus]) {
+      if (jsflag) {
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
+      }
+      I2cScan(bus);
+      jsflag = true;
     }
-    I2cScan(1);
   }
-#endif  // USE_I2C_BUS2
 }
 
 void CmndI2cDriver(void)

@@ -2668,6 +2668,8 @@ nextsect:
 
 //"1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 void SML_Immediate_MQTT(const char *mp,uint8_t index,uint8_t mindex) {
+  if (!sml_globs.dvalid[index]) return;
+
   char tpowstr[32];
   char jname[24];
 
@@ -2714,6 +2716,7 @@ void SML_Show(boolean json) {
   int8_t index = 0, mid = 0;
   char *mp = (char*)sml_globs.meter_p;
   char *cp, nojson = 0;
+  bool group_open = false;
   //char b_mqtt_data[MESSZ];
   //b_mqtt_data[0]=0;
 
@@ -2843,32 +2846,26 @@ void SML_Show(boolean json) {
             }
 
             if (json) {
-              //if (sml_globs.dvalid[index]) {
-
-                //AddLog(LOG_LEVEL_INFO, PSTR("not yet valid line %d"), index);
-              //}
-              // json export
-              if (index == 0) {
-                  //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,sml_globs.mp[mindex].prefix,jname,tpowstr);
-                  if (!nojson) {
-                    ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"), sml_globs.mp[mindex].prefix, jname, tpowstr);
-                  }
-              }
-              else {
+              if (!sml_globs.dvalid[index]) {
+                // skip values not yet received from meter
+                lastmind = mindex;
+              } else {
+                // json export
                 if (lastmind != mindex) {
-                  // meter changed, close mqtt
-                  //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
-                  if (!nojson) {
-                     ResponseAppend_P(PSTR("}"));
-                   }
-                    // and open new
-                    //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,sml_globs.mp[mindex].prefix,jname,tpowstr);
+                  // meter changed, close previous group if open
+                  if (group_open && !nojson) {
+                    ResponseAppend_P(PSTR("}"));
+                  }
+                  group_open = false;
+                  lastmind = mindex;
+                }
+                if (!group_open) {
+                  // open new meter group
                   if (!nojson) {
                     ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"), sml_globs.mp[mindex].prefix, jname, tpowstr);
                   }
-                  lastmind = mindex;
+                  group_open = true;
                 } else {
-                  //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":%s", b_mqtt_data,jname,tpowstr);
                   if (!nojson) {
                     ResponseAppend_P(PSTR(",\"%s\":%s"), jname, tpowstr);
                   }
@@ -2897,9 +2894,7 @@ void SML_Show(boolean json) {
         if (mp) mp++;
     }
     if (json) {
-     //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
-     //ResponseAppend_P(PSTR("%s"),b_mqtt_data);
-     if (!nojson) {
+     if (group_open && !nojson) {
        ResponseAppend_P(PSTR("}"));
      }
    } else {

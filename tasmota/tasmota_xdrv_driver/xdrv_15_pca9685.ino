@@ -41,21 +41,40 @@
 
 bool pca9685_inverted = false; // invert PWM for open-collector load
 bool pca9685_detected = false;
+uint8_t pca9685_bus;
 uint16_t pca9685_freq = USE_PCA9685_FREQ;
 uint16_t pca9685_pin_pwm_value[16];
 
-void PCA9685_Detect(void)
-{
-  if (!I2cSetDevice(USE_PCA9685_ADDR)) { return; }
+/********************************************************************************************/
 
-  uint8_t buffer;
-  if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {
-    I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x20);
-    if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {
-      if (0x20 == buffer) {
-        pca9685_detected = true;
-        I2cSetActiveFound(USE_PCA9685_ADDR, "PCA9685");
-        PCA9685_Reset(); // Reset the controller
+bool PCA9685_I2cValidRead8(uint8_t *data, uint8_t reg) {
+  return I2cValidRead8(data, USE_PCA9685_ADDR, reg, pca9685_bus);
+}
+
+uint8_t PCA9685_I2cRead8(uint8_t reg) {
+  return I2cRead8(USE_PCA9685_ADDR, reg, pca9685_bus);
+}
+
+bool PCA9685_I2cWrite8(uint8_t reg, uint32_t val) {
+  return I2cWrite8(USE_PCA9685_ADDR, reg, val, pca9685_bus);
+}
+
+/********************************************************************************************/
+
+void PCA9685_Detect(void) {
+  for (pca9685_bus = 0; pca9685_bus < MAX_I2C; pca9685_bus++) {
+    if (!I2cSetDevice(USE_PCA9685_ADDR, pca9685_bus)) { continue; }
+
+    uint8_t buffer;
+    if (PCA9685_I2cValidRead8(&buffer, PCA9685_REG_MODE1)) {
+      PCA9685_I2cWrite8(PCA9685_REG_MODE1, 0x20);
+      if (PCA9685_I2cValidRead8(&buffer, PCA9685_REG_MODE1)) {
+        if (0x20 == buffer) {
+          pca9685_detected = true;
+          I2cSetActiveFound(USE_PCA9685_ADDR, "PCA9685", pca9685_bus);
+          PCA9685_Reset(); // Reset the controller
+          return;
+        }
       }
     }
   }
@@ -63,7 +82,7 @@ void PCA9685_Detect(void)
 
 void PCA9685_Reset(void)
 {
-  I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x80);
+  PCA9685_I2cWrite8(PCA9685_REG_MODE1, 0x80);  // Disable ALLCALL (uses I2C address 0x70)
   PCA9685_SetPWMfreq(USE_PCA9685_FREQ);
   pca9685_inverted = false;
   for (uint32_t pin=0;pin<16;pin++) {
@@ -93,20 +112,20 @@ void PCA9685_SetPWMfreq(double freq) {
   }
   uint8_t pre_scale_osc = round(25000000/(4096*pca9685_freq))-1;
   if (1526 == pca9685_freq) pre_scale_osc=0xFF; // force setting for 24hz because rounding causes 1526 to be 254
-  uint8_t current_mode1 = I2cRead8(USE_PCA9685_ADDR, PCA9685_REG_MODE1); // read current value of MODE1 register
+  uint8_t current_mode1 = PCA9685_I2cRead8(PCA9685_REG_MODE1); // read current value of MODE1 register
   uint8_t sleep_mode1 = (current_mode1&0x7F) | 0x10; // Determine register value to put PCA to sleep
-  I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, sleep_mode1); // Let's sleep a little
-  I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_PRE_SCALE, pre_scale_osc); // Set the pre-scaler
-  I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, current_mode1 | 0xA0); // Reset MODE1 register to original state and enable auto increment
+  PCA9685_I2cWrite8(PCA9685_REG_MODE1, sleep_mode1); // Let's sleep a little
+  PCA9685_I2cWrite8(PCA9685_REG_PRE_SCALE, pre_scale_osc); // Set the pre-scaler
+  PCA9685_I2cWrite8(PCA9685_REG_MODE1, current_mode1 | 0xA0); // Reset MODE1 register to original state and enable auto increment
 }
 
 void PCA9685_SetPWM_Reg(uint8_t pin, uint16_t on, uint16_t off) {
   uint8_t led_reg = PCA9685_REG_LED0_ON_L + 4 * pin;
   uint32_t led_data = 0;
-  I2cWrite8(USE_PCA9685_ADDR, led_reg, on);
-  I2cWrite8(USE_PCA9685_ADDR, led_reg+1, (on >> 8));
-  I2cWrite8(USE_PCA9685_ADDR, led_reg+2, off);
-  I2cWrite8(USE_PCA9685_ADDR, led_reg+3, (off >> 8));
+  PCA9685_I2cWrite8(led_reg, on);
+  PCA9685_I2cWrite8(led_reg+1, (on >> 8));
+  PCA9685_I2cWrite8(led_reg+2, off);
+  PCA9685_I2cWrite8(led_reg+3, (off >> 8));
 }
 
 void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
@@ -119,71 +138,94 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
   pca9685_pin_pwm_value[pin] = pwm_val;
 }
 
-bool PCA9685_Command(void)
-{
+bool PCA9685_Command(void) {
   bool serviced = true;
   bool validpin = false;
   uint8_t paramcount = 0;
+
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
   } else {
     serviced = false;
     return serviced;
   }
+
   char argument[XdrvMailbox.data_len];
   for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
-    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
-    if (',' == XdrvMailbox.data[ca]) { paramcount++; }
+    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { 
+      XdrvMailbox.data[ca] = ',';
+    }
+    if (',' == XdrvMailbox.data[ca]) { 
+      paramcount++;
+    }
   }
   UpperCase(XdrvMailbox.data,XdrvMailbox.data);
 
-  if (!strcmp(ArgV(argument, 1),"RESET"))  {  PCA9685_Reset(); return serviced; }
+  if (!strcmp(ArgV(argument, 1), "RESET")) {
+    // Driver15 reset
+    PCA9685_Reset();
+    return serviced;
+  }
 
-  if (!strcmp(ArgV(argument, 1),"STATUS"))  { PCA9685_OutputTelemetry(false); return serviced; }
+  if (!strcmp(ArgV(argument, 1), "STATUS")) {
+    // Driver15 status
+    ResponseTime_P(PSTR(""));
+    PCA9685_Show(1);
+    ResponseJsonEnd();
+    return serviced;
+  }
 
-  if (!strcmp(ArgV(argument, 1),"INVERT")) {
+  if (!strcmp(ArgV(argument, 1), "INVERT")) {
+    // Driver15 invert   - Show current state
+    // Driver15 invert 0 - Invert OFF
+    // Driver15 invert 1 - Invert ON
     if (paramcount > 1) {
       pca9685_inverted = (1 == atoi(ArgV(argument, 2)));
-      Response_P(PSTR("{\"PCA9685\":{\"INVERT\":%i, \"Result\":\"OK\"}}"), pca9685_inverted?1:0);
-      return serviced;
-    } else { // No parameter was given for invert, so we return current setting
-      Response_P(PSTR("{\"PCA9685\":{\"INVERT\":%i}}"), pca9685_inverted?1:0);
-      return serviced;
     }
+    Response_P(PSTR("{\"PCA9685\":{\"INVERT\":%i"), pca9685_inverted ? 1 : 0);
+    if (paramcount > 1) {
+      ResponseAppend_P(PSTR(",\"Result\":\"OK\""));
+    }
+    ResponseJsonEndEnd();
+    return serviced;
   }
-  if (!strcmp(ArgV(argument, 1),"PWMF")) {
+
+  if (!strcmp(ArgV(argument, 1), "PWMF")) {
+    // Driver15 pwmf    - Show current frequency
+    // Driver15 pwmf 50 - Frequency set to 50Hz
+    bool valid = false;
     if (paramcount > 1) {
       uint16_t new_freq = atoi(ArgV(argument, 2));
       if ((new_freq >= 24) && (new_freq <= 1526)) {
         PCA9685_SetPWMfreq(new_freq);
-        Response_P(PSTR("{\"PCA9685\":{\"PWMF\":%i, \"Result\":\"OK\"}}"),new_freq);
-        return serviced;
+        valid = true;
       }
-    } else { // No parameter was given for setfreq, so we return current setting
-      Response_P(PSTR("{\"PCA9685\":{\"PWMF\":%i}}"),pca9685_freq);
-      return serviced;
     }
+    Response_P(PSTR("{\"PCA9685\":{\"PWMF\":%i"), pca9685_freq);
+    if (valid) {
+      ResponseAppend_P(PSTR(",\"Result\":\"OK\""));
+    }
+    ResponseJsonEndEnd();
+    return serviced;
   }
+
   if (!strcmp(ArgV(argument, 1),"PWM")) {
+    // Driver15 pwm 0..15 ON
+    // Driver15 pwm 0..15 OFF
+    // Driver15 pwm 0..15 0..4096
     if (paramcount > 1) {
       uint8_t pin = atoi(ArgV(argument, 2));
       if (paramcount > 2) {
-        if (!strcmp(ArgV(argument, 3), "ON")) {
-          PCA9685_SetPWM(pin, 4096, pca9685_inverted);
-          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,4096);
-          serviced = true;
-          return serviced;
-        }
-        if (!strcmp(ArgV(argument, 3), "OFF")) {
-          PCA9685_SetPWM(pin, 0, pca9685_inverted);
-          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,0);
-          serviced = true;
-          return serviced;
-        }
         uint16_t pwm = atoi(ArgV(argument, 3));
-        if ((pin >= 0 && pin <= 15 || pin==61) && (pwm >= 0 && pwm <= 4096)) {
+        if (!strcmp(ArgV(argument, 3), "ON")) {
+          pwm = 4096;
+        }
+        else if (!strcmp(ArgV(argument, 3), "OFF")) {
+          pwm = 0;
+        }
+        if ((pin >= 0 && pin <= 15 || pin == 61) && (pwm >= 0 && pwm <= 4096)) {
           PCA9685_SetPWM(pin, pwm, pca9685_inverted);
-          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
+          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"), pin, pwm);
           serviced = true;
           return serviced;
         }
@@ -193,22 +235,25 @@ bool PCA9685_Command(void)
   return serviced;
 }
 
-void PCA9685_OutputTelemetry(bool telemetry)
-{
-  ResponseTime_P(PSTR(",\"PCA9685\":{\"PWM_FREQ\":%i,"),pca9685_freq);
-  ResponseAppend_P(PSTR("\"INVERT\":%i,"), pca9685_inverted?1:0);
-  for (uint32_t pin=0;pin<16;pin++) {
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+void PCA9685_Show(bool json) {
+  ResponseAppend_P(PSTR(",\"PCA9685\":{\"PWM_FREQ\":%i"),pca9685_freq);
+  ResponseAppend_P(PSTR(",\"INVERT\":%i"), pca9685_inverted?1:0);
+  for (uint32_t pin = 0; pin < 16; pin++) {
     uint16_t pwm_val = PCA9685_GetPWMvalue(pca9685_pin_pwm_value[pin], pca9685_inverted); // return logical (possibly inverted) pwm value
-    ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pwm_val);
+    ResponseAppend_P(PSTR(",\"PWM%i\":%i"), pin, pwm_val);
   }
-  ResponseAppend_P(PSTR("\"END\":1}}"));
-  if (telemetry) {
-    MqttPublishTeleSensor();
-  }
+  ResponseJsonEnd();
 }
 
-bool Xdrv15(uint32_t function)
-{
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+bool Xdrv15(uint32_t function) {
   if (!I2cEnabled(XI2C_01)) { return false; }
 
   bool result = false;
@@ -218,10 +263,8 @@ bool Xdrv15(uint32_t function)
   }
   else if (pca9685_detected) {
     switch (function) {
-      case FUNC_EVERY_SECOND:
-        if (TasmotaGlobal.tele_period == 0) {
-          PCA9685_OutputTelemetry(true);
-        }
+      case FUNC_JSON_APPEND:
+        PCA9685_Show(1);
         break;
       case FUNC_COMMAND_DRIVER:
         if (XDRV_15 == XdrvMailbox.index) {

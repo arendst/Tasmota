@@ -109,10 +109,37 @@ class Matter_UDPServer
   # Stops the server and remove driver
   def stop()
     if self.listening
-      self.udp_socket.stop()
+      self.udp_socket.close()
       self.listening = false
       # tasmota.remove_driver(self)
       tasmota.remove_fast_loop(self.loop_cb)
+    end
+  end
+
+  #############################################################
+  # Flush the UDP socket by closing it.
+  # Called before WiFi teardown to discard any queued packets
+  # whose pbufs reference the WiFi netif (which is about to be
+  # destroyed).  The fast_loop stays registered so that the
+  # server can be reopened without re-registering.
+  def flush_socket()
+    if self.listening && self.udp_socket != nil
+      self.udp_socket.close()
+      self.udp_socket = nil
+      self.packets_sent = []        # clear all packets awaiting ack, the remote will retry
+    end
+  end
+
+  #############################################################
+  # Reopen the UDP socket after WiFi teardown is complete.
+  # Creates a fresh socket with an empty receive buffer.
+  def reopen_socket()
+    if self.listening && self.udp_socket == nil
+      self.udp_socket = udp()
+      var ok = self.udp_socket.begin(self.addr, self.port)
+      if !ok
+        log("MTR: error reopening UDP server", 2)
+      end
     end
   end
 
@@ -161,6 +188,7 @@ class Matter_UDPServer
   #
   # Returns `true` if packet was successfully sent.
   def send(packet)
+    if self.udp_socket == nil   return false end
     var ok = self.udp_socket.send(packet.addr ? packet.addr : self.udp_socket.remote_ip, packet.port ? packet.port : self.udp_socket.remote_port, packet.raw)
     
     if ok

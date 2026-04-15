@@ -87,7 +87,7 @@ bool CmndStccError(int error) {
 void StccInit(void) {
   PowerOnDelay(20);  // Sensor startup time (Time after power-on until I2C communication can be started)
   for (uint32_t address = STCC4_I2C_ADDR_64; address < STCC4_I2C_ADDR_64 +2; address++) {
-    for (uint32_t bus = 0; bus < 2; bus++) {
+    for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
       if (!I2cSetDevice(address, bus)) { 
 //        StccError("Scan", address + bus +1);
         continue;

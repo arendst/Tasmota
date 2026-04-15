@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v15.3.0.1 - Last update 19.02.2026
+ * Updated until v15.3.0.1 - Last update 06.03.2026
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -349,7 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Einstellungen"
 #define D_TEMPLATE "Vorlage"
-#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
+#define D_TEMPLATE_WRONG_ARCH "MCU-Typ wurde korrigiert"
 #define D_ACTIVATE "Aktivieren"
 #define D_DEVICE_NAME "Gerätename"
 #define D_WEB_ADMIN_PASSWORD "Passwort für Weboberfläche"

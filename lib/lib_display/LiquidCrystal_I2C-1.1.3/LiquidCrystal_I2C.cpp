@@ -2,28 +2,15 @@
 
 #include "LiquidCrystal_I2C.h"
 #include <inttypes.h>
-#if defined(ARDUINO) && ARDUINO >= 100
 
 #include "Arduino.h"
 
-#define printIIC(args)	Wire.write(args)
 inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 	send(value, Rs);
 	return 1;
 }
 
-#else
-#include "WProgram.h"
-
-#define printIIC(args)	Wire.send(args)
-inline void LiquidCrystal_I2C::write(uint8_t value) {
-	send(value, Rs);
-}
-
-#endif
 #include "Wire.h"
-
-
 
 // When the display powers up, it is configured as follows:
 //
@@ -52,13 +39,17 @@ LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t l
   _backlightval = LCD_NOBACKLIGHT;
 }
 
+void LiquidCrystal_I2C::setWire(TwoWire *wire){
+  _Wire = wire;
+}
+
 void LiquidCrystal_I2C::init(){
 	init_priv();
 }
 
 void LiquidCrystal_I2C::init_priv()
 {
-	Wire.begin();
+	_Wire->begin();
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
 	begin(_cols, _rows);  
 }
@@ -250,9 +241,10 @@ void LiquidCrystal_I2C::write4bits(uint8_t value) {
 }
 
 void LiquidCrystal_I2C::expanderWrite(uint8_t _data){                                        
-	Wire.beginTransmission(_Addr);
-	printIIC((int)(_data) | _backlightval);
-	Wire.endTransmission();   
+	_Wire->beginTransmission(_Addr);
+//	printIIC((int)(_data) | _backlightval);
+  _Wire->write(_data | _backlightval);
+	_Wire->endTransmission();   
 }
 
 void LiquidCrystal_I2C::pulseEnable(uint8_t _data){

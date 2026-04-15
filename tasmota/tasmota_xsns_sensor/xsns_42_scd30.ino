@@ -63,37 +63,43 @@ struct {
   uint16_t interval;
   uint16_t co2 = 0;
   uint16_t co2e_avg = 0;
+  uint8_t bus;
   bool init_once;
   bool found = false;
   bool data_valid = false;
 } Scd30;
 
+void Scd30BusSpeed(bool set) {  
+  I2cSetClock((set) ? 50000 : 0, Scd30.bus);
+}
+
 void Scd30Detect(void) {
-  I2cSetClock(50000);
-  if (I2cSetDevice(SCD30_ADDRESS)) { 
-    scd30.begin();
-
-    uint8_t major = 0;
-    uint8_t minor = 0;
-    if (!scd30.getFirmwareVersion(&major, &minor)) { 
-      if (!scd30.getMeasurementInterval(&Scd30.interval)) { 
-        if (!scd30.beginMeasuring()) { 
-          I2cSetActiveFound(SCD30_ADDRESS, "SCD30");
-          Scd30.found = true;
-
-//          AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: FW v%d.%d"), major, minor);
+  for (Scd30.bus = 0; Scd30.bus < MAX_I2C; Scd30.bus++) {
+    Scd30BusSpeed(1);
+    if (I2cSetDevice(SCD30_ADDRESS, Scd30.bus)) { 
+      scd30.begin(&I2cGetWire(Scd30.bus));
+      uint8_t major;
+      uint8_t minor;
+      if (!scd30.getFirmwareVersion(&major, &minor)) { 
+        if (!scd30.getMeasurementInterval(&Scd30.interval)) { 
+          if (!scd30.beginMeasuring()) { 
+            I2cSetActiveFound(SCD30_ADDRESS, "SCD30", Scd30.bus);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: SCD30 v%d.%d"), major, minor);
+            Scd30.found = true;
+          }
         }
       }
     }
+    Scd30BusSpeed(0);
+    if (Scd30.found) { break; }
   }
-  I2cSetClock();
 }
 
 // gets data from the sensor every 3 seconds or so to give the sensor time to gather new data
 void Scd30Update(void) {
   Scd30.loop_count++;
   if (Scd30.loop_count > (Scd30.interval - 1)) {
-    I2cSetClock(50000);
+    Scd30BusSpeed(1);
     uint32_t error = 0;
     switch (Scd30.error_state) {
       case SCD30_STATE_NO_ERROR: {
@@ -134,7 +140,7 @@ void Scd30Update(void) {
 #ifdef SCD30_DEBUG
             AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, Scd30.loop_count);
 #endif
-            I2cSetClock();
+            Scd30BusSpeed(0);
             return;
           }
           break;
@@ -206,7 +212,7 @@ void Scd30Update(void) {
         Scd30.error_state = SCD30_STATE_ERROR_SOFT_RESET; // try again
       }
     }
-    I2cSetClock();
+    Scd30BusSpeed(0);
 
     if (Scd30.loop_count > (SCD30_MAX_MISSED_READS * Scd30.interval)) {
       Scd30.data_valid = false;
@@ -220,49 +226,49 @@ void Scd30Update(void) {
 
 void CmndScd30Altitude(void) {
   uint16_t value = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   if (XdrvMailbox.data_len > 0) {
     value = XdrvMailbox.payload;
     scd30.setAltitudeCompensation(value);
   } else {
     scd30.getAltitudeCompensation(&value);
   }
-  I2cSetClock();
+  Scd30BusSpeed(0);
   ResponseCmndNumber(value);
 };
 
 void CmndScd30AutoMode(void) {
   uint16_t value = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   if (XdrvMailbox.data_len > 0) {
     value = XdrvMailbox.payload;
     scd30.setCalibrationType(value);
   } else {
     scd30.getCalibrationType(&value);
   }
-  I2cSetClock();
+  Scd30BusSpeed(0);
   ResponseCmndNumber(value);
 };
 
 void CmndScd30Calibrate(void) {
   uint16_t value = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   if (XdrvMailbox.data_len > 0) {
     value = XdrvMailbox.payload;
     scd30.setForcedRecalibrationFactor(value);
   } else {
     scd30.getForcedRecalibrationFactor(&value);
   }
-  I2cSetClock();
+  Scd30BusSpeed(0);
   ResponseCmndNumber(value);
 };
 
 void CmndScd30Firmware(void) {
   uint8_t major = 0;
   uint8_t minor = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   int error = scd30.getFirmwareVersion(&major, &minor);
-  I2cSetClock();
+  Scd30BusSpeed(0);
   if (!error) {
     float firmware = major + ((float)minor / 100);
     ResponseCmndFloat(firmware, 2);
@@ -271,7 +277,7 @@ void CmndScd30Firmware(void) {
 
 void CmndScd30Interval(void) {
   uint16_t value = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   if (XdrvMailbox.data_len > 0) {
     value = XdrvMailbox.payload;
     int error = scd30.setMeasurementInterval(value);
@@ -280,33 +286,33 @@ void CmndScd30Interval(void) {
     }
   }
   scd30.getMeasurementInterval(&value);
-  I2cSetClock();
+  Scd30BusSpeed(0);
   ResponseCmndNumber(value);
 };
 
 void CmndScd30Pressure(void) {
   uint16_t value = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   if (XdrvMailbox.data_len > 0) {
     value = XdrvMailbox.payload;
     scd30.setAmbientPressure(value);
   } else {
     scd30.getAmbientPressure(&value);
   }
-  I2cSetClock();
+  Scd30BusSpeed(0);
   ResponseCmndNumber(value);
 };
 
 void CmndScd30TempOffset(void) {
   uint16_t value = 0;
-  I2cSetClock(50000);
+  Scd30BusSpeed(1);
   if (XdrvMailbox.data_len > 0) {
     value = XdrvMailbox.payload;
     scd30.setTemperatureOffset(value);
   } else {
     scd30.getTemperatureOffset(&value);
   }
-  I2cSetClock();
+  Scd30BusSpeed(0);
   ResponseCmndNumber(value);
 };
 

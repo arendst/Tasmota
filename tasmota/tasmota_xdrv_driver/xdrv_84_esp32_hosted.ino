@@ -27,6 +27,13 @@ extern "C" {
 #  define ESP_HOSTED_NEW_OTA
 #endif
 
+#ifdef CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6
+#ifdef CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET
+#undef CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET
+#endif
+#define CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET "esp32c6"
+#endif
+
 enum EspHostTypes { ESP_HOST, ESP_HOSTED };
 
 struct Hosted_t {

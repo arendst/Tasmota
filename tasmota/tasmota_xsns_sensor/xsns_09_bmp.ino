@@ -47,11 +47,7 @@
 
 #define BMP_CMND_RESET       0xB6  // I2C Parameter for RESET to put BMP into reset state
 
-#ifdef USE_I2C_BUS2
-  #define BMP_MAX_SENSORS    4     // 2 busses
-#else
-  #define BMP_MAX_SENSORS    2
-#endif
+#define BMP_MAX_SENSORS      2 * MAX_I2C  // Busses
 
 const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
 
@@ -557,7 +553,7 @@ void BmpShow(bool json) {
       if (bmp_count > 1) {
         // BMP280-77
         snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);
-#ifdef USE_I2C_BUS2
+#if MAX_I2C > 1
         if (TasmotaGlobal.i2c_enabled[1]) {           // Second bus enabled
           uint8_t bus = bmp_sensors[0].bmp_bus;
           for (uint32_t i = 1; i < bmp_count; i++) {
@@ -568,7 +564,7 @@ void BmpShow(bool json) {
             }
           }
         }
-#endif  // USE_I2C_BUS2
+#endif  // MAX_I2C
       }
 
       char pressure[33];

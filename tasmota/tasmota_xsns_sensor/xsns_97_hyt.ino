@@ -87,7 +87,7 @@ bool HYT_Read(void) {
 /********************************************************************************************/
 
 void HYT_Detect(void) {
-  for (HYT.bus = 0; HYT.bus < 2; HYT.bus++) {
+  for (HYT.bus = 0; HYT.bus < MAX_I2C; HYT.bus++) {
     if (!I2cSetDevice(HYT_ADDR, HYT.bus)) { continue; }
     if (HYT_Read()) {
       I2cSetActiveFound(HYT_ADDR, "HYT", HYT.bus);

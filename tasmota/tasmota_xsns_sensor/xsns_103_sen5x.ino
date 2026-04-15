@@ -63,16 +63,16 @@ bool Sen5xError(const char* func, int error) {
 
 void sen5x_Init(void) {
   PowerOnDelay(60);  // Sensor startup time (Time after power-on until I2C communication can be started)
-  for (uint32_t bus = 0; bus < 2; bus++) {
-    if (!I2cSetDevice(SEN5X_ADDRESS, bus)) { 
-      continue;
-    }
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+    if (!I2cSetDevice(SEN5X_ADDRESS, bus)) { continue; }
     sen5x = new SensirionI2CSen5x();
     sen5x->begin(I2cGetWire(bus));
 
     if (!Settings->flag6.sen5x_passive_mode) {  // SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
-      if (Sen5xError("Reset", sen5x->deviceReset())) {   // Performs delay(200) if no error
-        continue;
+      if (sen5x->deviceReset()) {                        // Performs delay(200) if no error
+        if (Sen5xError("Reset", sen5x->deviceReset())) { // See https://github.com/arendst/Tasmota/discussions/24452
+          continue;
+        }
       }
       delay(1100);                              // Wait 1 second for sensors to start recording + 100ms for reset command
       if (Sen5xError("Measurement", sen5x->startMeasurement())) {

@@ -117,6 +117,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #define ARDUINO_CORE_RELEASE        "2.7.8"
 #endif  // ARDUINO_ESP8266_RELEASE
 
+#define MAX_I2C                     2
+
 #ifndef USE_ADC_VCC
 #define USE_ADC
 #else
@@ -186,12 +188,7 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #define ARDUINO_CORE_RELEASE        ESP_ARDUINO_VERSION_STR  // 3.3.0
 #endif  // ARDUINO_ESP32_RELEASE
 
-#ifdef USE_I2C_BUS2                                // If defined for ESP8266 undefine first
-#undef USE_I2C_BUS2
-#endif  // USE_I2C_BUS2
-#if SOC_HP_I2C_NUM > 1
-#define USE_I2C_BUS2                               // Redefine based on hardware support
-#endif  // SOC_HP_I2C_NUM
+#define MAX_I2C                     SOC_HP_I2C_NUM
 
 // Hardware has no ESP32
 #undef USE_EXS_DIMMER

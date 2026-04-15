@@ -248,8 +248,8 @@ void callBerryRunDeferred(void) {
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
-void BerryObservability(bvm *vm, int event...);
-void BerryObservability(bvm *vm, int event...) {
+void BerryObservability(bvm *vm, int event, ...);
+void BerryObservability(bvm *vm, int event, ...) {
   va_list param;
   va_start(param, event);
   static int32_t vm_usage = 0;
@@ -979,6 +979,13 @@ bool Xdrv52(uint32_t function)
       break;
     case FUNC_AFTER_TELEPERIOD:
       callBerryEventDispatcher(PSTR("after_teleperiod"), nullptr, 0, nullptr);
+      break;
+
+    case FUNC_NETWORK_UP:
+      callBerryEventDispatcher(PSTR("network_up"), nullptr, 0, nullptr);
+      break;
+    case FUNC_NETWORK_DOWN:
+      callBerryEventDispatcher(PSTR("network_down"), nullptr, 0, nullptr);
       break;
 
     case FUNC_ACTIVE:

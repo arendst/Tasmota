@@ -381,7 +381,7 @@ void HxInit(void) {
 #if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
   uint32_t bus;
   if (!hx711_config && I2cEnabled(XI2C_89)) { 
-    for (bus = 0; bus < 2; bus++) {
+    for (bus = 0; bus < MAX_I2C; bus++) {
       if (!I2cSetDevice(HX_SCALES_ADDR, bus)) { continue; }
       I2cSetActiveFound(HX_SCALES_ADDR, "M5Unit Scales", bus);
       hx711_config = 2;

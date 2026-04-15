@@ -13,11 +13,17 @@
 static int m_allocated(bvm *vm)
 {
     size_t count = be_gc_memcount(vm);
+#if BE_INTGER_TYPE >= 2
+    /* bint is 64-bit: can always represent the memory count as int */
+    be_pushint(vm, (bint)count);
+#else
+    /* bint is 32-bit: fall back to real if count >= 2GB */
     if (count < 0x80000000) {
         be_pushint(vm, (bint)count);
     } else {
         be_pushreal(vm, (breal)count);
     }
+#endif
     be_return(vm);
 }
 

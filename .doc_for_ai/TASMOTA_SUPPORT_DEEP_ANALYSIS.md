@@ -720,7 +720,7 @@ TwoWire& I2cGetWire(uint8_t bus = 0) {
   if ((0 == bus) && TasmotaGlobal.i2c_enabled[0]) {
     return Wire;
   }
-#ifdef USE_I2C_BUS2
+#if MAX_I2C > 1
   else if ((1 == bus) && TasmotaGlobal.i2c_enabled[1]) {
     return Wire1;
   }

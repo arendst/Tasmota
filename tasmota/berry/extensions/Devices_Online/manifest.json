@@ -1,0 +1,8 @@
+{
+  "name": "Devices Online",
+  "version": "0x1A040900",
+  "description": "Display devices online info",
+  "author": "Theo Arends",
+  "min_tasmota": "0x09040000",
+  "features": ""
+}

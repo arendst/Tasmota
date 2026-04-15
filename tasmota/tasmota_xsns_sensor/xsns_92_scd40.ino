@@ -129,7 +129,7 @@ bool Scd40Error(const char* func, int error) {
 /********************************************************************************************/
 
 void Scd40Detect(void) {
-  for (uint32_t bus = 0; bus < 2; bus++) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     if (!I2cSetDevice(SCD40_ADDRESS, bus)) { continue; }
     scd40.begin(&I2cGetWire(bus));
 

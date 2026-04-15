@@ -281,7 +281,7 @@ static void Fm24_Detect(void) {
   fm24.block_size  = (uint32_t)FM24CXX_BLOCK_SIZE;
   Fm24_RecalcBlocks();
 
-  for (fm24.bus = 0; fm24.bus < 2; fm24.bus++) {
+  for (fm24.bus = 0; fm24.bus < MAX_I2C; fm24.bus++) {
     if (!I2cSetDevice(fm24.address, fm24.bus)) continue;
 
     uint8_t b = 0;

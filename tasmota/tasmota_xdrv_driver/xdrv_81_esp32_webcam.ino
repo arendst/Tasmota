@@ -157,7 +157,7 @@ SemaphoreHandle_t WebcamMutex = nullptr;
 
 #ifndef USE_WEBCAM_SETUP_ONLY
 bool HttpCheckPriviledgedAccess(bool);
-extern ESP8266WebServer *Webserver;
+extern TasmotaWebServer *Webserver;
 
 // use mutex like:
 // TasAutoMutex localmutex(&WebcamMutex, "somename");
@@ -192,7 +192,7 @@ struct {
   uint8_t  stream_active;
 #ifndef USE_WEBCAM_SETUP_ONLY
   WiFiClient client;
-  ESP8266WebServer *CamServer;
+  TasmotaWebServer *CamServer;
   struct PICSTORE picstore[MAX_PICSTORE];
 #ifdef ENABLE_RTSPSERVER
   WiFiServer *rtspp;
@@ -1059,7 +1059,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
   if (flag) {
     if (!Wc.CamServer) {
       Wc.stream_active = 0;
-      Wc.CamServer = new ESP8266WebServer(81);
+      Wc.CamServer = new TasmotaWebServer(81);
       Wc.CamServer->on("/", HandleWebcamRoot);
       Wc.CamServer->on("/cam.mjpeg", HandleWebcamMjpeg);
       Wc.CamServer->on("/cam.jpg", HandleWebcamMjpeg);
@@ -1084,7 +1084,7 @@ void WcInterruptControl() {
 
   WcSetStreamserver(Settings->webcam_config.stream);
   if(Wc.up == 0) {
-    WcSetup(Settings->webcam_config.resolution);
+    WcSetup((int32_t)Settings->webcam_config.resolution);
   }
 
 }
@@ -1501,7 +1501,7 @@ void CmndWebcamClock(void){
 }
 
 void CmndWebcamInit(void) {
-  WcSetup(Settings->webcam_config.resolution);
+  WcSetup((int32_t)Settings->webcam_config.resolution);
   WcInterruptControl();
   ResponseCmndDone();
 }
@@ -1594,7 +1594,7 @@ bool Xdrv81(uint32_t function) {
       WcInit();
       break;
     case FUNC_INIT:
-      if(Wc.up == 0) WcSetup(Settings->webcam_config.resolution);
+      if(Wc.up == 0) WcSetup((int32_t)Settings->webcam_config.resolution);
       break;
     case FUNC_ACTIVE:
       result = true;

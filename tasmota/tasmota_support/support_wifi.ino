@@ -1639,8 +1639,32 @@ void WifiShutdown(bool option) {
  */
 void WifiDisable(void) {
   if (!TasmotaGlobal.global_state.wifi_down) {
+#ifdef USE_WEBSERVER
+    // Close the webserver listening socket BEFORE WiFi teardown.
+    // WifiShutdown() contains delay() calls that yield to the RTOS,
+    // during which the lwIP task can queue new TCP connections into
+    // the accept backlog via the WiFi netif. When WiFi.disconnect()
+    // then destroys the netif, those connections have dangling pbufs.
+    // By closing the socket first, there is no backlog to poison.
+    WebserverStopSocket();
+#endif  // USE_WEBSERVER
+    // Notify all drivers to close their sockets BEFORE WiFi teardown.
+    // Any socket with queued data referencing the WiFi netif will have
+    // dangling pbufs after WiFi.disconnect() destroys the netif.
+    XdrvXsnsCall(FUNC_NETWORK_DOWN);
     WifiShutdown();
     WifiSetMode(WIFI_OFF);
+#ifdef USE_WEBSERVER
+    // Reopen the listening socket with a clean accept backlog.
+    // This is needed when Ethernet is active so the webserver
+    // continues to serve requests on the Ethernet interface.
+    WebserverStartSocket();
+#endif  // USE_WEBSERVER
+    if (!TasmotaGlobal.global_state.eth_down) {
+      // If Ethernet is still up, notify drivers that network is available
+      // so they can reopen their sockets on the Ethernet interface.
+      XdrvXsnsCall(FUNC_NETWORK_UP);
+    }
   }
   TasmotaGlobal.global_state.wifi_down = 1;
 }

@@ -51,8 +51,6 @@
 #define GDK101_READ_FIRMWARE        0xB4
 
 // gdk101 variables
-uint8_t gdk101_addresses[] = { GDK101_ADDRESS1, GDK101_ADDRESS2, GDK101_ADDRESS3, GDK101_ADDRESS4 };
-
 typedef enum {
  GDK_STATUS_READY,
  GDK_STATUS_UNDER_10_MINUTES,
@@ -88,6 +86,7 @@ struct GDK {
   gdk_avg_dose_t ard_1min;
   gdk_status_data_t status = {GDK_STATUS_INVALID, false};
   uint8_t address;
+  uint8_t bus;
   uint8_t evr10 = 0;
   bool ready = false;
 } Gdk;
@@ -101,21 +100,24 @@ void Gdk101ErrLog(bool ret) {
 }
 
 void Gdk101Detect(void) {
-  for (uint32_t i = 0; i < sizeof(gdk101_addresses); i++) {
-    Gdk.address = gdk101_addresses[i];
-    if (!I2cSetDevice(Gdk.address)) {
-      continue;  // Do not make the next step without a confirmed device on the bus
-    }
-    bool reset = false;
-    bool ret = Gdk101Reset(&reset);
-    if (ret) {
-      if (reset) {
-        delay(10);
-        I2cSetActiveFound(Gdk.address, "GDK101");
-        ret = Gdk101Firmware(&Gdk.version);
-        Gdk101ErrLog(ret);
-        Gdk.ready = true;
-        break;
+  for (Gdk.bus = 0; Gdk.bus < MAX_I2C; Gdk.bus++) {
+    for (Gdk.address = GDK101_ADDRESS1; Gdk.address < GDK101_ADDRESS4 +1; Gdk.address++) {
+      if (!I2cSetDevice(Gdk.address, Gdk.bus)) {
+        continue;  // Do not make the next step without a confirmed device on the bus
+      }
+      bool reset = false;
+      bool ret = Gdk101Reset(&reset);
+      if (ret) {
+        if (reset) {
+          delay(10);
+          uint8_t buf[2];
+          ret = Gdk101Firmware(&Gdk.version);
+          Gdk101ErrLog(ret);
+          I2cSetActiveFound(Gdk.address, "GDK101", Gdk.bus);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("GDK: GDK101 v%d.%d"), Gdk.version.major, Gdk.version.minor);
+          Gdk.ready = true;
+          return;
+        }
       }
     }
   }
@@ -123,7 +125,7 @@ void Gdk101Detect(void) {
 
 bool Gdk101Reset(bool *reset) {
   uint8_t buf;
-  bool ret = I2cValidRead8(&buf, Gdk.address, GDK101_RESET);
+  bool ret = I2cValidRead8(&buf, Gdk.address, GDK101_RESET, Gdk.bus);
   if (ret) {
     *reset = (bool) buf;  // 0 = Reset fail, 1 = Reset success
   }
@@ -132,7 +134,7 @@ bool Gdk101Reset(bool *reset) {
 
 bool Gdk101Firmware(struct gdk_fW_version *fw) {
   uint8_t buf[2];
-  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_FIRMWARE);
+  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_FIRMWARE, Gdk.bus);
   if (ret) {
     fw->major = buf[0];  // 0
     fw->minor = buf[1];  // 6
@@ -142,7 +144,7 @@ bool Gdk101Firmware(struct gdk_fW_version *fw) {
 
 bool Gdk101Ard10min(struct gdk_avg_dose *avg) {
   uint8_t buf[2];
-  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_10MIN_AVG);
+  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_10MIN_AVG, Gdk.bus);
   if (ret) {
     avg->integral = buf[0];
     avg->fractional = buf[1];
@@ -152,7 +154,7 @@ bool Gdk101Ard10min(struct gdk_avg_dose *avg) {
 
 bool Gdk101Ard1min(struct gdk_avg_dose *avg) {
   uint8_t buf[2];
-  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_1MIN_AVG);
+  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_1MIN_AVG, Gdk.bus);
   if (ret) {
     avg->integral = buf[0];
     avg->fractional = buf[1];
@@ -162,7 +164,7 @@ bool Gdk101Ard1min(struct gdk_avg_dose *avg) {
 
 bool Gdk101Status(struct gdk_status_data *status) {
   uint8_t buf[2];
-  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_STATUS);
+  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_STATUS, Gdk.bus);
   if (ret) {
     status->status = (gdk_status_t) buf[0];  // 0 = Ready, 1 = 10min Waiting, 2 = Normal
     status->vibration = (bool) buf[1];       // 0 = Off, 1 = On
@@ -173,7 +175,7 @@ bool Gdk101Status(struct gdk_status_data *status) {
 bool Gdk101MeasuringTime(struct gdk_measuring_time *meas_time) {
   // Can return 255 minutes and 60 seconds - Not used in Application Note AN_GDK101_V1.1
   uint8_t buf[2];
-  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_MEASURING_TIME);
+  bool ret = I2cValidRead16LE((uint16_t*) buf, Gdk.address, GDK101_READ_MEASURING_TIME, Gdk.bus);
   if (ret) {
     meas_time->min = buf[0];
     meas_time->sec = buf[1];

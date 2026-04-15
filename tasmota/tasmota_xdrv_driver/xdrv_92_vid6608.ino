@@ -86,6 +86,38 @@
   #define VID6608_RESET_ON_INIT  true
 #endif
 
+/**
+ * @brief Defaine steps range
+ *
+ * Some drives can have another steps scale:
+ * Common X27-168: 320° * 12 steps
+ * Bi-Axial BKA30D-R5:
+ * Inner: 320° * 12 steps
+ * Outer: 275° * 12 steps
+ *
+ * Use defines VID6608_STEPS_X to configure steps range per-drive
+ */
+
+#ifndef VID6608_STEPS_DEFAULT
+  #define VID6608_STEPS_DEFAULT 320 * 12
+#endif
+
+#ifndef VID6608_STEPS_1
+  #define VID6608_STEPS_1 VID6608_STEPS_DEFAULT
+#endif
+
+#ifndef VID6608_STEPS_2
+  #define VID6608_STEPS_2 VID6608_STEPS_DEFAULT
+#endif
+
+#ifndef VID6608_STEPS_3
+  #define VID6608_STEPS_3 VID6608_STEPS_DEFAULT
+#endif
+
+#ifndef VID6608_STEPS_4
+  #define VID6608_STEPS_4 VID6608_STEPS_DEFAULT
+#endif
+
 #include "vid6608.h"
 
 /**
@@ -116,7 +148,6 @@ enum GaugeInternalCommand {
  * @brief Global vars
  */
 bool vid6608Present = false;
-float vid6608StepsFloat = VID6608_DEFAULT_MAX_STEPS;
 vid6608 *vid6608Drives[VID6608_MAX_DRIVES];
 #ifdef VID6608_RTOS
   /**
@@ -135,6 +166,13 @@ vid6608 *vid6608Drives[VID6608_MAX_DRIVES];
   #define VID6608_MUTEX_TAKE
   #define VID6608_MUTEX_GIVE
 #endif
+
+const uint16_t vid6608MaxSteps[VID6608_MAX_DRIVES] PROGMEM = {
+    VID6608_STEPS_1,
+    VID6608_STEPS_2,
+    VID6608_STEPS_3,
+    VID6608_STEPS_4,
+};
 
 /**
  * @brief Command Gauge
@@ -196,7 +234,9 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
             ResponseAppend_P(PSTR("\"cmd\":\"set\",\"pos\":%d"), payload);
             break;
           case GAUGE_SET_PERCENT:
-            float moveSteps = vid6608StepsFloat * ( (float)payload / 100.0 );
+            uint16_t maxSteps = 0;
+            memcpy_P(&maxSteps, &vid6608MaxSteps[x], 2);
+            float moveSteps = (float)maxSteps * ( (float)payload / 100.0 );
             driver->moveTo(moveSteps);
             ResponseAppend_P(PSTR("\"cmd\":\"perc\",\"perc\":%d,\"pos\":%d"), payload, (int32_t)moveSteps);
             break;
@@ -293,8 +333,10 @@ void VID6608Init() {
       // We have motor defined at number x
       uint32_t pinStep = Pin(GPIO_VID6608_F, x);
       uint32_t pinDir = Pin(GPIO_VID6608_CW, x);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: detected drive %d at pin %d, %d"), x, pinStep, pinDir);
-      vid6608Drives[x] = new vid6608(pinStep, pinDir);
+      uint16_t maxSteps = 0;
+      memcpy_P(&maxSteps, &vid6608MaxSteps[x], 2);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: detected drive %d at pin %d, %d, steps %d"), x, pinStep, pinDir, (uint32_t)maxSteps);
+      vid6608Drives[x] = new vid6608(pinStep, pinDir, maxSteps);
 
       // Perform homing operation
       if (VID6608_RESET_ON_INIT) {

@@ -4,8 +4,10 @@ BM8563::BM8563()
 {
 }
 
-void BM8563::begin(void)
+void BM8563::begin(TwoWire *wire)
 {
+    myWire = wire;
+    myWire->begin();
     WriteReg(0x00,0x00);
     WriteReg(0x01,0x00);
     WriteReg(0x0D,0x00);

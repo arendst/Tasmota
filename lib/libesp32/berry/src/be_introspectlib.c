@@ -131,7 +131,7 @@ static int m_toptr(bvm *vm)
             be_pushcomptr(vm, (void*) (intptr_t) var_toint(v));
             be_return(vm);
         } else {
-            be_raise(vm, "value_error", "unsupported for this type");
+            be_raise(vm, "value_error", "unsupported for this type"); /* LCOV_EXCL_LINE - noreturn via longjmp, gcov can't track execution */
         }
     }
     be_return_nil(vm);
@@ -167,7 +167,7 @@ static int m_fromptr(bvm *vm)
                 bvalue *top = be_incrtop(vm);
                 var_setobj(top, ptr->type, ptr);
             } else {
-                be_raise(vm, "value_error", "unsupported for this type");
+                be_raise(vm, "value_error", "unsupported for this type"); /* LCOV_EXCL_LINE - noreturn via longjmp, gcov can't track execution */
             }
             be_return(vm);
         }

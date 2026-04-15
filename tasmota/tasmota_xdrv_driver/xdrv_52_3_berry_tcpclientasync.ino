@@ -26,10 +26,17 @@
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 
+#ifdef CONFIG_LIBC_PICOLIBC
+#define T_IN6_IS_ADDR_V4MAPPED(a) \
+        ((((const uint32_t *) (a))[0] == 0) \
+         && (((const uint32_t *) (a))[1] == 0) \
+         && (((const uint32_t *) (a))[2] == htonl (0xffff)))
+#else
 #define T_IN6_IS_ADDR_V4MAPPED(a) \
         ((((__const uint32_t *) (a))[0] == 0) \
          && (((__const uint32_t *) (a))[1] == 0) \
          && (((__const uint32_t *) (a))[2] == htonl (0xffff)))
+#endif
 
 enum class AsyncTCPState {
   INPROGRESS,
@@ -212,6 +219,16 @@ public:
     }
   }
 
+  void set_nowait(bool nowait) {
+    if (state == AsyncTCPState::CONNECTED) {
+      int flag = nowait ? 1 : 0;
+      int result = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
+      if (result < 0) {
+        AddLog(LOG_LEVEL_INFO, "BRY: Error: setsockopt failed on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
+      }
+    }
+  }
+
   size_t available(void) {
     _update_connected();
     if (state == AsyncTCPState::CONNECTED) {
@@ -288,6 +305,27 @@ public:
       return 0;
     }
     return 0;
+  }
+
+  bool writebytes(const char *buf, size_t size) {
+    if (state != AsyncTCPState::CONNECTED) return false;
+    size_t offset = 0;
+    while (offset < size) {
+      ssize_t sent = send(sockfd, buf + offset, size - offset, MSG_DONTWAIT);
+      if (sent > 0) {
+        offset += sent;
+      } else if (sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) { // Buffer full
+        fd_set wfd;
+        FD_ZERO(&wfd);
+        FD_SET(sockfd, &wfd);
+        struct timeval tv = {0, 5000};
+        select(sockfd + 1, NULL, &wfd, NULL, &tv);
+      } else { // disconnection or a hard error
+        stop();
+        return false;
+      }
+    }
+    return true;
   }
 
   size_t read(uint8_t* buf, size_t size) {
@@ -450,6 +488,19 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  // tcp.set_nowait(bool) -> nil
+  int32_t wc_tcpasync_set_nowait(struct bvm *vm);
+  int32_t wc_tcpasync_set_nowait(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isbool(vm, 2)) {
+      AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
+      bool nowait = be_tobool(vm, 2);
+      tcp->set_nowait(nowait);
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // tcp.available(void) -> int
   int32_t wc_tcpasync_available(struct bvm *vm);
   int32_t wc_tcpasync_available(struct bvm *vm) {
@@ -542,6 +593,32 @@ extern "C" {
         be_pushint(vm, 0);    // nothing to send
       }
       be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // tcp.writebytes(comptr | bytes | string [, len:int]) -> bool
+  int32_t wc_tcpasync_writebytes(struct bvm *vm);
+  int32_t wc_tcpasync_writebytes(struct bvm *vm)
+  {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2) || be_iscomptr(vm, 2))) {
+      AsyncTCPClient * tcp = wc_gettcpclientasync_p(vm);
+      const char *buf = nullptr;
+      size_t size = (argc >= 3 && be_isint(vm, 3)) ? be_toint(vm, 3) : 0;
+      if (be_iscomptr(vm, 2)) { // comptr
+        buf = (const char *)be_tocomptr(vm, 2);
+      } else  if (be_isbytes(vm, 2)) { // bytes
+        buf = (const char*) be_tobytes(vm, 2, &size);
+      } else if (be_isstring(vm, 2)) {  // string
+        buf = be_tostring(vm, 2);
+        size = strlen(buf);
+      }
+      if ((buf != nullptr) && (size != 0)) {
+        int res = tcp->writebytes(buf, size);
+        be_pushbool(vm, res);
+        be_return(vm);
+      }
     }
     be_raise(vm, kTypeError, nullptr);
   }
