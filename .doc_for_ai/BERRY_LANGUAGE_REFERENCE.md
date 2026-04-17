@@ -1,1013 +1,327 @@
-# Berry Language Reference for Tasmota
+# Berry Language Reference
 
-Note: this file is supposed to use as a reference manual for Generative AI in a compact form. For Claude AI it costs ~6k tokens.
+Compact reference for Generative AI. For Tasmota-specific features, see `BERRY_TASMOTA.md`.
 
-## Command Line Options
-
-When running Berry from the command line in Tasmota, several options are available:
-
-```
-berry [options]
-```
-
-Available options:
-- `-s`: Enable strict mode for the Berry compiler
-- `-g`: Force named globals in VM (required for solidification)
-- `-i`: Enter interactive mode after executing script
-- `-l`: Parse all variables in script as local
-- `-e`: Load script source string and execute
-- `-m <path>`: Custom module search path(s)
-- `-c <file>`: Compile script file to bytecode
-- `-o <file>`: Save bytecode to file
-- `-v`: Show version information
-- `-h`: Show help information
-
-Common usage in Tasmota:
-```
-berry -s -g
-```
-This runs Berry with strict mode enabled and named globals, which is the recommended configuration for code that will be solidified.
-
-## Introduction
-
-Berry is an ultra-lightweight, dynamically typed embedded scripting language designed for resource-constrained environments. The language primarily supports procedural programming, with additional support for object-oriented and functional programming paradigms. Berry's key design goal is to run efficiently on embedded devices with very limited memory, making the language highly streamlined while maintaining rich scripting capabilities.
-
-**Tasmota Integration**: Berry is integrated into Tasmota firmware. For Tasmota-specific features, see the companion document `BERRY_TASMOTA.md`.
-
-## Basic Information
-
-### Comments
-
+## Comments
 ```berry
-# This is a line comment
-#- This is a
-   block comment
--#
+# Line comment
+#- Block multiline comment -#
 ```
 
-### Literals
-
-#### Numerical Literals
+## Literals
 ```berry
-40      # Integer literal
-0x80    # Hexadecimal literal (integer)
-3.14    # Real literal
-1.1e-6  # Real literal with scientific notation
+40  0x80  3.14  1.1e-6  true  false  nil
+'string'  "string"  "a" "b"  # adjacent strings concatenate
+```
+Escapes: `\n \r \t \\ \" \' \0 \xhh \uXXXX`
+
+## Keywords
+```
+if elif else while for def end class break continue return
+true false nil var do import as try except raise static
 ```
 
-#### Boolean Literals
+## Types
+Simple: nil, int, real, bool, string, function, class, instance, module, comptr
+Built-in classes: list, map, range, bytes
+
+Note: `type()` returns the base type, not the class name. For list/map/range/bytes instances, `type()` returns `'instance'`. Use `classname(x)` to get `'list'`, `'map'`, etc.
+
+## Variables
 ```berry
-true    # Boolean true
-false   # Boolean false
+a = 1              # global if no var declaration in scope
+var a              # nil
+var a = 1
+var a, b = 1, 2
 ```
+Outermost block = global; inner blocks = local. `do ... end` creates a scope.
 
-#### String Literals
+## Operators
+```
+Arithmetic:   + - * / %  (unary -)
+Relational:   < <= == != >= >
+Logical:      && || !  (short-circuit)
+Bitwise:      ~ & | ^ << >>
+Assignment:   = += -= *= /= %= &= |= ^= <<= >>=
+Walrus:       :=  (assign + return value in expressions)
+Other:        . [] ?: ..
+```
+`..` = range (int..int), string concat (auto-converts RHS), or list/bytes append-in-place.
+`"ab" * 3` → `"ababab"`. Accepts int or bool. `"s" * false` → `""`.
+
+## Control Flow
 ```berry
-'this is a string'
-"this is a string"
+if cond ... elif cond2 ... else ... end
+while cond ... end
+for i: 0..5 ... end              # inclusive range
+for i: range(0, 10, 2) ... end   # stepped
+for item: [1,2,3] ... end        # container
+for val: mymap ... end            # map values
+for key: mymap.keys() ... end     # map keys
+for i: 10.. ... end               # open-ended (upper = MAXINT)
+do ... end                        # scoped block
+break  continue
 ```
 
-String literals can be concatenated without operators:
+## Import
 ```berry
-s = "a" "b" "c"    # s == "abc"
-s = "a"            # Multi-line strings
-    "b"
-    "c"            # s == "abc"
-```
-
-Escape sequences:
-- `\a` - Bell
-- `\b` - Backspace
-- `\f` - Form feed
-- `\n` - Newline
-- `\r` - Carriage return
-- `\t` - Horizontal tab
-- `\v` - Vertical tab
-- `\\` - Backslash
-- `\'` - Single quote
-- `\"` - Double quote
-- `\?` - Question mark
-- `\0` - Null character
-- `\ooo` - Character represented by octal number
-- `\xhh` - Character represented by hexadecimal number
-- `\uXXXX` - Unicode character (UTF-8 encoded)
-
-#### Nil Literal
-```berry
-nil     # Represents no value
-```
-
-### Identifiers
-
-An identifier starts with an underscore or letter, followed by any combination of underscores, letters, or numbers. Berry is case-sensitive.
-
-```berry
-a
-TestVariable
-Test_Var
-_init
-baseClass
-_
-```
-
-### Keywords
-
-```
-if       elif     else     while     for      def
-end      class    break    continue  return   true
-false    nil      var      do        import   as
-try      except   raise    static
-```
-
-## Types and Variables
-
-### Built-in Types
-
-#### Simple Types
-
-- **nil**: Represents no value
-- **Integer**: Signed integer (typically 32-bit)
-- **Real**: Floating-point number (typically 32-bit)
-- **Boolean**: `true` or `false`
-- **String**: Sequence of characters
-- **Function**: First-class value that can be called
-- **Class**: Template for instances
-- **Instance**: Object constructed from a class
-
-#### Class Types
-
-- **list**: Ordered collection of elements
-- **map**: Key-value pairs collection
-- **range**: Integer range
-- **bytes**: Byte buffer
-
-### Variables
-
-Variables are dynamically typed in Berry. They can be defined in two ways:
-
-```berry
-# Direct assignment (creates variable if it doesn't exist)
-a = 1
-
-# Using the var keyword
-var a       # Defines a with nil value
-var a = 1   # Defines a with value 1
-var a, b    # Defines multiple variables
-var a = 1, b = 2  # Defines multiple variables with values
-```
-
-### Scope and Lifecycle
-
-Variables defined in the outermost block have global scope. Variables defined in inner blocks have local scope.
-
-```berry
-var i = 0   # Global scope
-do
-    var j = 'str'  # Local scope
-    print(i, j)    # Both i and j are accessible
-end
-print(i)    # Only i is accessible here
-```
-
-## Expressions
-
-### Operators
-
-#### Arithmetic Operators
-- `-` (unary): Negation
-- `+`: Addition or string concatenation
-- `-`: Subtraction
-- `*`: Multiplication
-- `/`: Division
-- `%`: Modulo (remainder)
-
-**String Multiplication**: The `*` operator supports string multiplication when the left operand is a string and the right operand is an integer or boolean:
-
-```berry
-"aze" * 3        # "azeazeaze" - repeat string 3 times
-"aze" * 0        # "" - empty string
-"aze" * true     # "aze" - string if true
-"aze" * false    # "" - empty string if false
-
-# Common use cases:
-"  " * indent    # Create indentation spaces
-f"{n} time{'s' * bool(n >= 2)}"  # Conditional pluralization
-```
-
-#### Relational Operators
-- `<`: Less than
-- `<=`: Less than or equal to
-- `==`: Equal to
-- `!=`: Not equal to
-- `>=`: Greater than or equal to
-- `>`: Greater than
-
-#### Logical Operators
-- `&&`: Logical AND (short-circuit)
-- `||`: Logical OR (short-circuit)
-- `!`: Logical NOT
-
-#### Bitwise Operators
-- `~`: Bitwise NOT
-- `&`: Bitwise AND
-- `|`: Bitwise OR
-- `^`: Bitwise XOR
-- `<<`: Left shift
-- `>>`: Right shift
-
-#### Assignment Operators
-- `=`: Simple assignment
-- `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`: Compound assignment
-- `:=`: Walrus assignment (assigns and returns value)
-
-#### Domain and Subscript Operators
-- `.`: Member access
-- `[]`: Subscript access
-
-#### Conditional Operator
-- `? :`: Ternary conditional
-
-#### Concatenation Operators
-- `+`: String or list concatenation
-- `..`: String concatenation or range creation
-
-### Operator Precedence (highest to lowest)
-
-1. `()` (grouping)
-2. `()` (function call), `[]` (subscript), `.` (member access)
-3. `-` (unary), `!`, `~`
-4. `*`, `/`, `%`
-5. `+`, `-`
-6. `<<`, `>>`
-7. `&`
-8. `^`
-9. `|`
-10. `..`
-11. `<`, `<=`, `>`, `>=`
-12. `==`, `!=`
-13. `&&`
-14. `||`
-15. `? :`
-16. `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
-17. `:=`
-
-## Statements
-
-### Expression Statements
-
-```berry
-a = 1       # Assignment statement
-print(a)    # Function call statement
-```
-
-### Block
-
-A block is a collection of statements. It defines a scope.
-
-```berry
-do
-    # This is a block
-    var a = 1
-    print(a)
-end
-```
-
-### Conditional Statements
-
-```berry
-# Simple if
-if condition
-    # code executed if condition is true
-end
-
-# if-else
-if condition
-    # code executed if condition is true
-else
-    # code executed if condition is false
-end
-
-# if-elif-else
-if condition1
-    # code executed if condition1 is true
-elif condition2
-    # code executed if condition1 is false and condition2 is true
-else
-    # code executed if both condition1 and condition2 are false
-end
-```
-
-### Iteration Statements
-
-```berry
-# while loop
-while condition
-    # code executed repeatedly while condition is true
-end
-
-# for loop (iterating over a container)
-for variable: expression
-    # code executed for each element in the container
-end
-
-# Examples
-for i: 0..5
-    print(i)    # Prints 0, 1, 2, 3, 4, 5
-end
-
-for item: ['a', 'b', 'c']
-    print(item)  # Prints a, b, c
-end
-
-for key: map.keys()
-    print(key, map[key])  # Iterates over map keys
-end
-```
-
-### Jump Statements
-
-```berry
-# break - exits the loop
-while true
-    if condition
-        break
-    end
-end
-
-# continue - skips to the next iteration
-for i: 0..5
-    if i == 3
-        continue
-    end
-    print(i)  # Prints 0, 1, 2, 4, 5
-end
-```
-
-### Import Statement
-
-```berry
-import math              # Import math module
-import hardware as hw    # Import hardware module as hw
-```
-
-### Exception Handling
-
-```berry
-# Raising exceptions
-raise 'my_error'                     # Raise an exception
-raise 'my_error', 'error message'    # Raise with message
-
-# Catching exceptions
-try
-    # code that might raise an exception
-except 'my_error'
-    # code executed if 'my_error' is raised
-end
-
-# Catching with exception variable
-try
-    # code that might raise an exception
-except 'my_error' as e
-    # e contains the exception value
-end
-
-# Catching with exception and message variables
-try
-    # code that might raise an exception
-except 'my_error' as e, msg
-    # e contains the exception value, msg contains the message
-end
-
-# Catching any exception
-try
-    # code that might raise an exception
-except ..
-    # code executed for any exception
-end
-
-# Catching multiple exception types
-try
-    # code that might raise an exception
-except 'error1', 'error2' as e, msg
-    # code executed if either 'error1' or 'error2' is raised
-end
+import math
+import hardware as hw
 ```
 
 ## Functions
-
-### Function Definition
-
 ```berry
-# Named function
-def add(a, b)
-    return a + b
-end
+def add(a, b) return a + b end
 
-# Anonymous function
-add = def (a, b)
-    return a + b
-end
+# Anonymous
+f = def (a, b) return a + b end
 
-# Lambda expression (compact form)
-add = / a, b -> a + b
+# Lambda (single expression, commas optional between params)
+f = / a b -> a + b
+f = /-> nil                       # zero-arg
+
+# Varargs
+def f(a, *args) end               # args is a list
+
+# Dynamic call (last arg list is unpacked)
+call(func, 1, [2, 3])            # func(1, 2, 3)
 ```
 
-### Function with Variable Arguments
+**Closures** capture variables by reference from enclosing scope.
 
-```berry
-def print_all(a, b, *args)
-    print(a, b)
-    for arg: args
-        print(arg)
-    end
-end
-
-print_all(1, 2, 3, 4, 5)  # args will be [3, 4, 5]
-```
-
-### Calling Functions with Dynamic Arguments
-
-```berry
-def sum(a, b, c)
-    return a + b + c
-end
-
-call(sum, 1, 2, 3)        # Calls sum(1, 2, 3)
-call(sum, 1, [2, 3])      # Calls sum(1, 2, 3)
-```
-
-### Closures
-
-```berry
-def counter(start)
-    var count = start
-    return def()
-        count += 1
-        return count
-    end
-end
-
-c = counter(0)
-print(c())  # 1
-print(c())  # 2
-```
-
-## Object-Oriented Programming
-
-### Class Declaration
-
+## Classes
 ```berry
 class Person
     var name, age
-    
-    def init(name, age)
-        self.name = name
-        self.age = age
-    end
-    
-    def greet()
-        print("Hello, my name is", self.name)
-    end
+    def init(name, age) self.name = name self.age = age end
+    def greet() print("Hello, I'm", self.name) end
 end
 ```
 
-### Static Members
-
+**Static members:**
 ```berry
-class MathUtils
-    static var PI = 3.14159
-    
-    static def square(x)
-        return x * x
-    end
-end
-
-print(MathUtils.PI)           # Access static variable
-print(MathUtils.square(5))    # Call static method
-```
-
-### Inheritance
-
-```berry
-class Student : Person
-    var school
-    
-    def init(name, age, school)
-        super(self).init(name, age)  # Call parent constructor
-        self.school = school
-    end
-    
-    def greet()
-        super(self).greet()          # Call parent method
-        print("I study at", self.school)
-    end
+class C
+    static var PI = 3.14          # preferred
+    static PI2 = 6.28             # also valid
+    static def square(x) return x * x end
+    static class Inner ... end    # nested class
 end
 ```
+Instance methods access statics via `self`. Static methods get implicit `_class`.
+Static methods can be called on the class (`C.square(5)`) or on an instance (`c.square(5)`), but they do not receive `self`.
 
-### Instantiation and Method Calls
-
+**Inheritance:** `class B : A ... end`
 ```berry
-person = Person("John", 30)
-person.greet()                # Hello, my name is John
-
-student = Student("Alice", 20, "University")
-student.greet()               # Hello, my name is Alice
-                              # I study at University
+super(self).init(args)            # auto-infers parent from calling context
+super(self, TargetClass)          # explicit ancestor
+super(Class)                      # parent class of a class
 ```
 
-### Operator Overloading
-
+**Operator overloading** — define methods named after the operator:
+Overloadable: `+ - * / % < <= == != > >= & | ^ << >> .. ~ ()`
 ```berry
-class Vector
-    var x, y
-    
-    def init(x, y)
-        self.x = x
-        self.y = y
-    end
-    
-    def +(other)
-        return Vector(self.x + other.x, self.y + other.y)
-    end
-    
-    def tostring()
-        return "Vector(" + str(self.x) + ", " + str(self.y) + ")"
-    end
-end
-
-v1 = Vector(1, 2)
-v2 = Vector(3, 4)
-v3 = v1 + v2
-print(v3)  # Vector(4, 6)
+def +(other) ... end    # binary
+def -() ... end         # unary neg
+def ~() ... end         # unary flip
+def ()() ... end        # call operator
+def tostring() ... end  # string conversion
+def tobool() ... end    # boolean conversion
+def toint() ... end     # int() conversion
 ```
 
-## Built-in Classes
+**Virtual member dispatch:** define `member(name)` / `setmember(name, value)` on a class or module to handle undefined attributes dynamically. Return `import undefined` from `member()` to signal attribute doesn't exist.
 
-### List
+**Indirect member access:** `obj.('name')` — dynamic member name from expression.
 
+## Iterator Protocol
+`for` calls `iter()` on the object, which returns a closure. The closure yields values and raises `'stop_iteration'` when done.
+
+## List
 ```berry
-# Creating lists
-l1 = []                # Empty list
-l2 = [1, 2, 3]         # List with elements
-l3 = list()            # Empty list using constructor
-l4 = list(1, 2, 3)     # List with elements using constructor
-
-# Accessing elements
-l2[0]                  # First element (1)
-l2[-1]                 # Last element (3)
-
-# Range-based access (slicing)
-l2[1..3]               # Elements from index 1 to 3 inclusive [2, 3]
-l2[1..]                # Elements from index 1 to end [2, 3]
-l2[1..-1]              # Elements from index 1 to last element [2, 3]
-l2[0..-2]              # All elements except the last one [1, 2]
-l2[-2..-1]             # Last two elements [2, 3]
-
-# Modifying lists
-l2.push(4)             # Add element to end
-l2.pop()               # Remove and return last element
-l2.pop(1)              # Remove and return element at index 1
-l2.insert(1, 5)        # Insert 5 at index 1
-l2.remove(1)           # Remove element at index 1
-l2.resize(5)           # Resize list to 5 elements (fills with nil)
-l2.clear()             # Remove all elements
-
-# Negative indices for modification
-l2[-1] = 10            # Set last element to 10
-l2[-2] += 5            # Add 5 to second-to-last element
-
-# Other operations
-l2.size()              # Number of elements
-l2.concat()            # Join elements as string (no separator)
-l2.concat(", ")        # Join elements with separator
-l2.reverse()           # Reverse the list
-l2.copy()              # Create a shallow copy
-l2 + [4, 5]            # Concatenate lists (new list)
-l2 .. 4                # Append element (modifies list)
-
-# Finding elements
-l2.find(3)             # Returns index of first occurrence or nil if not found
-
-# Iterating over indices
-for i: l2.keys()       # Iterate over list indices
-    print(i, l2[i])
-end
-
-# Comparing lists
-[1, 2] == [1, 2]       # true
-[1, 2] != [1, 3]       # true
+l = [1, 2, 3]
+l[0]  l[-1]  l[1..3]  l[1..]  l[0..-2]
+l.push(x)  l.pop()  l.pop(i)  l.insert(i, x)  l.remove(i)
+l.resize(n)  l.clear()  l.size()  l.reverse()  l.copy()
+l.find(x)              # index or nil
+l.concat()  l.concat("-")
+l + [4,5]              # new list (does not mutate l)
+l .. x                 # append in place, returns l
+l.keys()               # range of indices
+[1,2] == [1,2]         # deep comparison
 ```
 
-### Map
-
+## Map
 ```berry
-# Creating maps
-m1 = {}                # Empty map
-m2 = {"key": "value"}  # Map with key-value pair
-m3 = map()             # Empty map using constructor
-
-# Accessing elements
-m2["key"]              # Get value by key
-m2.find("key")         # Get value by key (returns nil if not found)
-m2.find("key", "default")  # Get value with default if not found
-
-# Modifying maps
-m2["new_key"] = "new_value"  # Add or update key-value pair
-m2.insert("key", "value")    # Insert key-value pair (returns true if inserted, false if key exists)
-m2.remove("key")             # Remove key-value pair
-
-# Other operations
-m2.size()              # Number of key-value pairs
-m2.contains("key")     # Check if key exists
-for k: m2.keys()       # Iterate over keys
-    print(k, m2[k])
-end
+m = {"a": 1, 0: true}
+m["a"]                 # raises key_error if missing
+m.find("a")            # nil if missing
+m.find("a", default)
+m["k"] = v
+m.insert("k", v)      # true if new, false if exists
+m.remove("k")  m.size()  m.contains("k")
 ```
 
-### Range
-
+## Range
 ```berry
-# Creating ranges
-r1 = 0..5              # Range from 0 to 5 (inclusive)
-r2 = range(0, 5)       # Same using constructor
-r3 = 10..              # Range from 10 to MAXINT
-
-# Accessing properties
-r1.lower()             # Lower bound (0)
-r1.upper()             # Upper bound (5)
-r1.incr()              # Increment (default 1)
-
-# Modifying ranges
-r1.setrange(1, 6)      # Change range bounds
-r1.setrange(1, 10, 2)  # Change range bounds and increment
-
-# Using in for loops
-for i: 0..5
-    print(i)           # Prints 0, 1, 2, 3, 4, 5
-end
+0..5                   # inclusive, increment 1
+10..                   # open-ended
+range(1, 10)           # explicit
+range(1, 10, 2)        # custom increment
+range(30, 0, -3)       # negative increment
+r.lower()  r.upper()  r.incr()  r.setrange(lo, hi)  r.setrange(lo, hi, step)
 ```
 
-### String Operations
-
+## String Operations
 ```berry
-# String indexing and slicing
-s = "hello"
-s[0]                   # "h"
-s[1]                   # "e"
-s[-1]                  # "o" (last character)
-s[1..3]                # "ell" (characters from index 1 to 3)
-s[1..]                 # "ello" (characters from index 1 to end)
-s[1..-1]               # "ello" (characters from index 1 to last)
-s[0..-2]               # "hell" (all characters except the last one)
+s[0]  s[-1]  s[1..3]  s[1..]  s[0..-2]   # slicing, tolerant of out-of-range
+```
+Strings have no methods. Use `import string` for string operations (e.g. `string.find(s, sub)`, not `s.find(sub)`).
+
+## Bytes
+```berry
+b = bytes()  bytes("1122AA")  bytes(10)  bytes(-8)  # -N = fixed size
+b[0]  b[1..2]  b[0] = 0xFF
+b.size()  b.resize(n)  b.clear()  b.reverse()  b.copy()
+# Structured I/O (size: 1,2,-2,4,-4; negative=big-endian)
+b.get(off, sz)  b.geti(off, sz)  b.set(off, val, sz)  b.add(val, sz)
+b.getfloat(off)  b.setfloat(off, v)  b.addfloat(v)
+b.setbytes(off, other)
+b.tohex()  b.asstring()  b.tob64()
+b.fromhex(s)  b.fromstring(s)  b.fromb64(s)
+b1 .. b2               # append in place
+b1 == b2               # content equality
 ```
 
-### Bytes
-
+## File I/O
 ```berry
-# Creating bytes objects
-b1 = bytes()           # Empty bytes
-b2 = bytes("1122AA")   # From hex string
-b3 = bytes(10)         # Pre-allocated 10 bytes
-b4 = bytes(-8)         # Fixed size 8 bytes
-
-# Accessing bytes
-b2[0]                  # First byte (0x11)
-b2[1..2]               # Bytes from index 1 to 2
-
-# Modifying bytes
-b2[0] = 0xFF           # Set byte at index 0
-b2.resize(10)          # Resize buffer
-b2.clear()             # Clear all bytes
-
-# Reading/writing structured data
-b2.get(0, 2)           # Read 2 bytes as unsigned int (little endian)
-b2.get(0, -2)          # Read 2 bytes as unsigned int (big endian)
-b2.geti(0, 2)          # Read 2 bytes as signed int
-b2.set(0, 0x1234, 2)   # Write 2-byte value
-b2.add(0x1234, 2)      # Append 2-byte value
-
-# Conversion
-b2.tohex()             # Convert to hex string
-b2.asstring()          # Convert to raw string
-b2.tob64()             # Convert to base64 string
-b2.fromhex("AABBCC")   # Load from hex string
-b2.fromstring("Hello") # Load from raw string
-b2.fromb64("SGVsbG8=") # Load from base64 string
+f = open("file.txt", "r")
+f.read()  f.readline()  f.readbytes()  f.close()
+f = open("file.txt", "w")
+f.write(s)  f.flush()  f.close()
+f.seek(pos)  f.tell()  f.size()
 ```
 
-### File
-
+## Built-in Functions
 ```berry
-# Opening files
-f = open("test.txt", "w")  # Open for writing
-f = open("test.txt", "r")  # Open for reading
-
-# Writing to files
-f.write("Hello, world!")   # Write string
-f.write(bytes("AABBCC"))   # Write bytes
-
-# Reading from files
-content = f.read()         # Read entire file
-line = f.readline()        # Read one line
-raw_data = f.readbytes()   # Read as bytes
-
-# File positioning
-f.seek(10)                 # Move to position 10
-pos = f.tell()             # Get current position
-size = f.size()            # Get file size
-
-# Closing files
-f.flush()                  # Flush buffers
-f.close()                  # Close file
+print(...)  input("prompt")
+type(x)  classname(x)  classof(x)
+isinstance(inst, cls)  issubclass(cls, parent)
+int(x)  real(x)  bool(x)  str(x)  number(s)  size(x)
+compile("code")  compile("file.be", "file")
+super(self)  super(self, Class)  super(Class)
+assert(cond)  assert(cond, "msg")
+format(fmt, ...)  call(func, args...)
+module()  module("name")
 ```
 
-## Standard Libraries
-
-### String Module
-
+## String Module
 ```berry
 import string
-
-# String operations
-string.count("hello", "l")         # Count occurrences (2)
-string.find("hello", "lo")         # Find substring (3), returns -1 if not found
-string.split("a,b,c", ",")         # Split by separator (["a", "b", "c"])
-string.split("hello", 2)           # Split at position (["he", "llo"])
-
-# Character operations
-string.byte("A")                   # Get byte value (65)
-string.char(65)                    # Get character from byte ('A')
-
-# Case conversion
-string.toupper("hello")            # Convert to uppercase ("HELLO")
-string.tolower("HELLO")            # Convert to lowercase ("hello")
-
-# String transformation
-string.tr("hello", "el", "ip")     # Replace characters ("hippo")
-string.replace("hello", "ll", "xx") # Replace substring ("hexxo")
-string.escape("hello\n")           # Escape for C strings
-
-# Checking
-string.startswith("hello", "he")   # Check prefix (true)
-string.startswith("hello", "HE", true) # Case-insensitive check (true)
-string.endswith("hello", "lo")     # Check suffix (true)
-string.endswith("hello", "LO", true) # Case-insensitive check (true)
-
-# Formatting
-string.format("Value: %d", 42)     # Format string
-format("Value: %.2f", 3.14159)     # Format (global function)
-f"Value: {x}"                      # f-string format
-f"Value: {x:.2f}"                  # f-string with format specifier
-f"{x=}"                           # f-string debug format
+string.find(s, sub [, start [, end]])     # -1 if not found
+string.count(s, sub [, start [, end]])
+string.split(s, sep [, max_splits])
+string.byte("A")  string.char(65)
+string.toupper(s)  string.tolower(s)
+string.tr(s, from, to)  string.replace(s, old, new)
+string.startswith(s, prefix [, case_insensitive])
+string.endswith(s, suffix [, case_insensitive])
+string.escape(s [, single_quote])
+string.format(fmt, ...)                   # %d %i %u %o %x %X %f %e %E %g %G %s %c %q %%
+f"Value: {x}"  f"{x:.2f}"  f"{x=}"  f"{{literal braces}}"
 ```
 
-### Math Module
-
+## Math Module
 ```berry
 import math
-
-# Constants
-math.pi                            # Pi (3.14159...)
-math.inf                           # Infinity
-math.nan                           # Not a Number
-math.imin                          # Smallest possible integer
-math.imax                          # Largest possible integer
-
-# Basic functions
-math.abs(-5)                       # Absolute value (5)
-math.floor(3.7)                    # Round down (3)
-math.ceil(3.2)                     # Round up (4)
-math.round(3.5)                    # Round to nearest (4)
-math.min(1, 2, 3)                  # Minimum value (1)
-math.max(1, 2, 3)                  # Maximum value (3)
-
-# Exponential and logarithmic
-math.sqrt(16)                      # Square root (4)
-math.pow(2, 3)                     # Power (8)
-math.exp(1)                        # e^x (2.71828...)
-math.log(2.71828)                  # Natural logarithm (1)
-math.log10(100)                    # Base-10 logarithm (2)
-
-# Trigonometric
-math.sin(math.pi/2)                # Sine (1)
-math.cos(0)                        # Cosine (1)
-math.tan(math.pi/4)                # Tangent (1)
-math.asin(1)                       # Arc sine (pi/2)
-math.acos(1)                       # Arc cosine (0)
-math.atan(1)                       # Arc tangent (pi/4)
-math.atan2(1, 1)                   # Arc tangent of y/x (pi/4)
-
-# Angle conversion
-math.deg(math.pi)                  # Radians to degrees (180)
-math.rad(180)                      # Degrees to radians (pi)
-
-# Random numbers
-math.srand(42)                     # Seed random generator
-math.rand()                        # Random integer
-
-# Special checks
-math.isinf(math.inf)               # Check if value is infinity (true)
-math.isnan(math.nan)               # Check if value is NaN (true)
+math.pi  math.inf  math.nan  math.imin  math.imax
+math.abs(x)  math.floor(x)  math.ceil(x)  math.round(x)
+math.min(...)  math.max(...)
+math.sqrt(x)  math.pow(x,y)  math.exp(x)  math.log(x)  math.log10(x)
+math.sin(x)  math.cos(x)  math.tan(x)
+math.asin(x)  math.acos(x)  math.atan(x)  math.atan2(y,x)
+math.deg(rad)  math.rad(deg)
+math.srand(seed)  math.rand()
+math.isinf(x)  math.isnan(x)
 ```
 
-### JSON Module
-
+## JSON Module
 ```berry
 import json
-
-# Parsing JSON
-data = json.load('{"name": "John", "age": 30}')
-print(data.name)                   # John
-
-# Error handling with json.load
-data = json.load('{"invalid": }')  # Returns nil on parsing error
-if data == nil
-    print("Invalid JSON")
-end
-
-# Generating JSON
-person = {
-    "name": "Alice",
-    "age": 25,
-    "hobbies": ["reading", "swimming"]
-}
-json_str = json.dump(person)       # Compact JSON
-json_formatted = json.dump(person, "format")  # Formatted JSON
+json.load('{"a":1}')          # parse, nil on error
+json.dump(obj)                 # compact
+json.dump(obj, "format")       # pretty
 ```
 
-### OS Module
+## Regular Expressions
+```berry
+import re
+re.search(pat, str)            # ['match', 'group1', ...] or nil
+re.match(pat, str)             # anchored to start
+re.match2(pat, str)            # [match_len, 'group1', ...]
+re.searchall(pat, str)         # list of all matches
+re.matchall(pat, str)          # consecutive matches from start
+re.split(pat, str)
+# Pre-compiled:
+p = re.compile(pat)
+p.search(s)  p.match(s)  p.match2(s)  p.searchall(s)  p.matchall(s)  p.split(s)
+```
 
+## OS Module
 ```berry
 import os
-
-# Directory operations
-os.getcwd()                        # Get current directory
-os.chdir("/path/to/dir")           # Change directory
-os.mkdir("/path/to/new/dir")       # Create directory
-os.remove("/path/to/file")         # Delete file or directory
-os.listdir()                       # List current directory
-os.listdir("/path")                # List specific directory
-
-# Path operations
-os.path.isdir("/path")             # Check if path is directory
-os.path.isfile("/path/file.txt")   # Check if path is file
-os.path.exists("/path")            # Check if path exists
-os.path.split("/path/file.txt")    # Split into ["/path", "file.txt"]
-os.path.splitext("file.txt")       # Split into ["file", ".txt"]
-os.path.join("path", "file.txt")   # Join into "path/file.txt"
-
-# System operations
-os.system("command")               # Execute system command
-os.exit()                          # Exit interpreter
+os.getcwd()  os.chdir(p)  os.mkdir(p)  os.remove(p)
+os.listdir()  os.listdir(p)  os.system(cmd)  os.exit()
+os.path.exists(p)  os.path.isfile(p)  os.path.isdir(p)
+os.path.split(p)  os.path.splitext(p)  os.path.join(a, b)
 ```
 
-### Global Module
-
+## Global Module
 ```berry
 import global
-
-# Accessing globals
-global_vars = global()             # List of all global variables
-global.contains("var_name")        # Check if global exists
-value = global.var_name            # Get global value
-global.var_name = 42               # Set global value
-value = global.("dynamic_name")    # Dynamic access by name
+global()                       # list all global names
+global.contains("name")
+global.var_name                # get (nil if absent)
+global.var_name = 42           # set
+global.("dynamic")             # indirect access
+global.undef("name")           # remove
 ```
 
-### Introspect Module
-
+## Introspect Module
 ```berry
 import introspect
-
-# Inspecting objects
-members = introspect.members(obj)  # List of object members
-value = introspect.get(obj, "attr") # Get attribute value
-introspect.set(obj, "attr", value) # Set attribute value
-name = introspect.name(obj)        # Get object name
-is_method = introspect.ismethod(fn) # Check if function is method
-
-# Module operations
-mod = introspect.module("math")    # Import module dynamically
-
-# Pointer operations (advanced)
-ptr = introspect.toptr(addr)       # Convert int to pointer
-addr = introspect.fromptr(ptr)     # Convert pointer to int
+introspect.members(obj)        # list member names
+introspect.get(obj, "attr")    # nil if missing (protected)
+introspect.set(obj, "attr", v)
+introspect.contains(obj, "a")
+introspect.name(obj)           # name of class/closure/module
+introspect.ismethod(fn)
+introspect.module("math")      # dynamic import, no global created
+introspect.setmodule("n", m)   # override cached module
+introspect.toptr(obj)          # to comptr
+introspect.fromptr(ptr)        # comptr back to object
+introspect.solidified(obj)     # is constant/ROM?
 ```
 
-## Error Handling
-
-### Standard Exceptions
-
-- `assert_failed`: Assertion failed
-- `index_error`: Index out of bounds
-- `io_error`: IO malfunction
-- `key_error`: Key error
-- `runtime_error`: VM runtime exception
-- `stop_iteration`: End of iterator
-- `syntax_error`: Syntax error
-- `unrealized_error`: Unrealized function
-- `type_error`: Type error
-
-### Raising Exceptions
+## Exception Handling
+Exceptions: `assert_failed` `attribute_error` `index_error` `io_error` `key_error` `runtime_error` `stop_iteration` `syntax_error` `type_error` `unrealized_error` `value_error`
 
 ```berry
-raise "my_error"                   # Raise exception
-raise "my_error", "message"        # Raise with message
+raise "error_type", "message"
+try ... except "type" as e, msg ... end
+try ... except "t1", "t2" as e, msg ... end
+try ... except .. as e, msg ... end        # catch all
 ```
+Many functions return nil on error instead of raising (json.load, map.find, list.find).
 
-### Catching Exceptions
-
+## Preprocessor
+Directives must start at beginning of line (`#` mid-line = comment):
 ```berry
-try
-    # Code that might raise an exception
-except "my_error"
-    # Handle specific exception
-end
-
-try
-    # Code that might raise an exception
-except "error1", "error2"
-    # Handle multiple exceptions
-end
-
-try
-    # Code that might raise an exception
-except "my_error" as e
-    # e contains the exception value
-end
-
-try
-    # Code that might raise an exception
-except "my_error" as e, msg
-    # e contains exception, msg contains message
-end
-
-try
-    # Code that might raise an exception
-except ..
-    # Catch all exceptions
-end
+#define NAME 1       # truthy
+#define NAME 0       # falsy
+#define NAME         # truthy (defined, no value)
+#undef NAME
+#if NAME ... #elif NAME2 ... #else ... #endif
+#if !UNDEFINED ... #endif    # negation
 ```
-
-### Error Handling Patterns
-
-Many functions in Berry return `nil` to indicate errors rather than raising exceptions. This is common in functions that parse data or perform operations that might fail:
-
-```berry
-# JSON parsing
-data = json.load('{"invalid": }')  # Returns nil on parsing error
-if data == nil
-    print("Invalid JSON")
-end
-
-# Map access
-value = map.find("key")            # Returns nil if key doesn't exist
-if value == nil
-    print("Key not found")
-end
-
-# String operations
-index = string.find("hello", "z")  # Returns -1 if substring not found
-if index == -1
-    print("Substring not found")
-end
-```
-
-### Assertions
-
-```berry
-assert(condition)                  # Raises assert_failed if condition is false
-assert(condition, "message")       # Raises with custom message
-```
-
-## Best Practices
-
-### Variable Naming
-
-- Use descriptive names for variables and functions
-- Use camelCase or snake_case consistently
-- Prefix private members with underscore (convention only)
-
-### Code Organization
-
-- Group related functions and classes
-- Use modules for logical separation
-- Keep functions small and focused
-
-### Memory Management
-
-- Be mindful of memory usage on embedded systems
-- Release resources when no longer needed
-- Use fixed-size buffers when appropriate
-
-### Error Handling
-
-- Use exceptions for exceptional conditions
-- Check return values for expected errors
-- Provide meaningful error messages
-
-### Performance
-
-- Avoid creating unnecessary objects
-- Reuse buffers when processing large data
-- Use native functions for performance-critical code
+Nesting up to 8 levels. `#define` inside skipped blocks is ignored.
+Runtime: `import preproc` → `preproc.define('X','1')` `preproc.undef('X')` `preproc.clear()`
