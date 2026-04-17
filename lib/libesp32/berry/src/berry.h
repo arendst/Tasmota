@@ -874,7 +874,7 @@ BERRY_API bbool be_classof(bvm *vm, int index);
  * @brief length of the specified Berry string
  *
  * This function returns the number of bytes in the string at index
- * (the ’\0’ characters at the end of the Berry string are not counted).
+ * (the '\0' characters at the end of the Berry string are not counted).
  * If the value of the index position is not a string, the be_strlen function will return 0.
  * Although the Berry string is compatible with the C string format,
  * it is not recommended to use the strlen function of the C standard library to measure the length of the Berry string.
@@ -1296,7 +1296,7 @@ BERRY_API bbool be_tobool(bvm *vm, int index);
  * Get the value of the index position of index from the virtual stack and return it as a string type.
  * If the indexed value is not a string type, the indexed value will be converted to a string,
  * and the conversion process will replace the value at the indexed position in the virtual stack with the converted string.
- * The string returned by this function always ends with ’\0’ characters.
+ * The string returned by this function always ends with '\0' characters.
  * If the value is an instance, the method tostring() is called if it exists.
  *
  * @param vm virtual machine instance virtual machine instance
@@ -1391,7 +1391,7 @@ BERRY_API void be_pushreal(bvm *vm, breal r);
  * @brief Push the string str onto the virtual stack.
  *
  * Push the string str onto the virtual stack.
- * The parameter str must point to a C string that ends with a null character ’\0’,
+ * The parameter str must point to a C string that ends with a null character '\0',
  * and a null pointer cannot be passed in.
  *
  * @param vm virtual machine instance
@@ -1518,7 +1518,7 @@ BERRY_API void be_pushntvclass(bvm *vm, const struct bclass *c);
  *
  * Push a general pointer onto the top of the virtual stack.
  * The general pointer ptr points to a certain C data area.
- * Since the content pointed to by this pointer is not maintained by Berry’s garbage collector,
+ * Since the content pointed to by this pointer is not maintained by Berry's garbage collector,
  * users have to maintain the life cycle of the data themselves.
  *
  * @param vm virtual machine instance
@@ -1695,7 +1695,7 @@ BERRY_API bbool be_getmethod(bvm *vm, int index, const char *k);
  * @brief get the value of list or map
  *
  * This function is used to get an element from the map or list container (internal values, not instances of map or list classes),
- * and the index of the element is stored at the top of the stack (relative index is  − 1).
+ * and the index of the element is stored at the top of the stack (relative index is -1).
  * After calling this function, the value obtained from the container will be pushed onto the top of the stack.
  * If there is no subscript pointed to by the container, the value of nil will be pushed onto the top of the stack.
  *
@@ -1711,8 +1711,8 @@ BERRY_API bbool be_getindex(bvm *vm, int index);
  * @brief set a value in list or map
  *
  * This function is used to write an element of the map or list container.
- * The index of the value to be written in the virtual stack is  − 1,
- * and the index of the subscript of the write position in the virtual stack is  − 2.
+ * The index of the value to be written in the virtual stack is -1,
+ * and the index of the subscript of the write position in the virtual stack is -2.
  * If the element with the specified subscript does not exist in the container, the write operation will fail.
  *
  * @param vm virtual machine instance
