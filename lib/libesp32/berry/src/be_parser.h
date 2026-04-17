@@ -45,7 +45,7 @@ typedef struct {
     int t; /* patch list of 'exit when true' */
     int f; /* patch list of 'exit when false' */
     bbyte not; /* not mark */
-    bbyte type;
+    exptype_t type : 8;
 } bexpdesc;
 
 typedef struct bblockinfo {
