@@ -175,21 +175,12 @@ def m_listdir(vm):
 #     be_return(vm);
 # }
 def m_system(vm):
-    res = -1
-    argc = be_api.be_top(vm)
-    if argc > 0:
-        be_api.be_tostring(vm, 1)
-        be_api.be_pushstring(vm, " ")
-        for i in range(2, argc + 1):
-            be_api.be_strconcat(vm, 1)  # add " "
-            be_api.be_tostring(vm, i)
-            be_api.be_pushvalue(vm, i)
-            be_api.be_strconcat(vm, 1)  # concat arg
-            be_api.be_pop(vm, 1)
-        be_api.be_pop(vm, argc)
-        res = os.system(be_api.be_tostring(vm, 1))
-    be_api.be_pushint(vm, res)
-    return be_api.be_returnvalue(vm)
+    # os.system() is disabled for security reasons.
+    # Passing unsanitised Berry VM strings to os.system() allows any Berry
+    # script (web console, MQTT, uploaded .be file) to execute arbitrary OS
+    # commands with full device privileges (CVE / V-005).
+    be_api.be_raise(vm, "runtime_error", "os.system() is disabled for security reasons")
+    return be_api.be_returnnilvalue(vm)
 
 
 # static int m_exit(bvm *vm)
