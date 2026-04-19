@@ -2245,7 +2245,19 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			name != NULL ? name : "N/A");
 
 		utoa(status->compressorfrequency, buf, 10);
-		ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"), buf);
+		ResponseAppend_P(PSTR(",\"CompressorFrequency\":\"%s\""), buf);
+
+		uint16_t combined_power =
+			((uint16_t)status->operationpower << 8) |
+			 (uint16_t)status->operationpower1;
+		dtostrfd((float)combined_power, 0, buf);
+		ResponseAppend_P(PSTR(",\"PowerUsage\":\"%s\""), buf);
+
+		uint16_t combined_energy =
+			((uint16_t)status->operationenergy << 8) |
+			 (uint16_t)status->operationenergy1;
+		dtostrfd((float)combined_energy / 10.0f, 1, buf);
+		ResponseAppend_P(PSTR(",\"EnergyUsage\":\"%s\""), buf);
 
 		ResponseAppend_P(PSTR(",\"StatusHex\":\"%s\""),
 			ToHex_P((uint8_t *)&sc->sc_status,
