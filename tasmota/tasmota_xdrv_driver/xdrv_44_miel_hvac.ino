@@ -1850,7 +1850,7 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	name = miel_hvac_map_byval(set->power,
 		miel_hvac_power_map, nitems(miel_hvac_power_map));
 	if (name != NULL)
-		ResponseAppend_P(PSTR("\"PowerState\":\"%s\""), name);
+		ResponseAppend_P(PSTR("\"" D_JSON_IRHVAC_POWER "\":\"%s\""), name);
 
 	/* Mode */
 	name = miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK,
@@ -2247,18 +2247,6 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		utoa(status->compressorfrequency, buf, 10);
 		ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"), buf);
 
-		uint16_t combined_power =
-			((uint16_t)status->operationpower << 8) |
-			 (uint16_t)status->operationpower1;
-		dtostrfd((float)combined_power, 0, buf);
-		ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":%s"), buf);
-
-		uint16_t combined_energy =
-			((uint16_t)status->operationenergy << 8) |
-			 (uint16_t)status->operationenergy1;
-		dtostrfd((float)combined_energy / 10.0f, 1, buf);
-		ResponseAppend_P(PSTR(",\"" D_JSON_ENERGY "\":%s"), buf);
-
 		ResponseAppend_P(PSTR(",\"StatusHex\":\"%s\""),
 			ToHex_P((uint8_t *)&sc->sc_status,
 				sizeof(sc->sc_status), hex, sizeof(hex)));
@@ -2374,6 +2362,28 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	}
 
 	ResponseAppend_P(PSTR("}"));
+
+	/* Energy sub-object — published alongside MiElHVAC so Home Assistant
+	 * can discover Power (W) and Energy (kWh) as standard sensors. */
+	if (sc->sc_status.type != 0)
+	{
+		const struct miel_hvac_data_status *status =
+			&sc->sc_status.data.status;
+		char buf[33];
+
+		uint16_t combined_power =
+			((uint16_t)status->operationpower << 8) |
+			 (uint16_t)status->operationpower1;
+		dtostrfd((float)combined_power, 0, buf);
+		ResponseAppend_P(PSTR(",\"ENERGY\":{"));
+		ResponseAppend_P(PSTR("\"" D_JSON_POWERUSAGE "\":%s"), buf);
+
+		uint16_t combined_energy =
+			((uint16_t)status->operationenergy << 8) |
+			 (uint16_t)status->operationenergy1;
+		dtostrfd((float)combined_energy / 10.0f, 1, buf);
+		ResponseAppend_P(PSTR(",\"" D_JSON_ENERGY "\":%s}"), buf);
+	}
 }
 
 /*
