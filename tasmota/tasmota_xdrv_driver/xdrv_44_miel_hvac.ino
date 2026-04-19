@@ -2394,7 +2394,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			((uint16_t)status->operationenergy << 8) |
 			 (uint16_t)status->operationenergy1;
 		dtostrfd((float)combined_energy / 10.0f, 1, buf);
-		ResponseAppend_P(PSTR(",\"" D_JSON_ENERGY_TOTAL "\":%s}"), buf);
+		ResponseAppend_P(PSTR(",\"" D_JSON_ENERGY "\":%s}"), buf);
 	}
 }
 
