@@ -69,11 +69,19 @@ def _secure_str_to_int64(vm, s):
 
     Returns a Python int in [INT64_MIN, INT64_MAX].
     Raises Berry 'value_error' on invalid format or out-of-range.
+
+    Mirrors C strtoll behavior:
+      - empty or whitespace-only string -> 0 (no error)
+      - leading/trailing whitespace trimmed
+      - trailing non-whitespace -> value_error
+      - out of 64-bit range -> value_error
     """
     be_api = _lazy_be_api()
-    if s is None or s == "":
+    if s is None:
         return 0
     s = s.strip()
+    if s == "":
+        return 0
     try:
         result = int(s, 10)
     except ValueError:

@@ -422,9 +422,14 @@ def test_hex_lowercase(n):
 # Property 19n: Hex string escapes parse correctly
 # ---------------------------------------------------------------------------
 @settings(max_examples=200)
-@given(n=integers(min_value=0, max_value=255))
+@given(n=integers(min_value=1, max_value=255))
 def test_hex_string_escape(n):
-    r"""Hex escape sequences (\xHH) in strings must produce the correct byte."""
+    r"""Hex escape sequences (\xHH) in strings must produce the correct byte.
+
+    Note: n=0 is excluded because the C lexer truncates string literals at
+    the first NULL byte (see tr_string in be_lexer.c), so "\x00" tokenizes
+    to an empty string. This matches the documented C behavior.
+    """
     source = f'"\\x{n:02X}"'
     tokens = tokenize(source)
     assert len(tokens) == 1, f"Expected 1 token for {source!r}, got {len(tokens)}"

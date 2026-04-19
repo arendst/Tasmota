@@ -32,7 +32,8 @@ def be_gc_deleteall(vm):
 
 
 def be_gc_collect(vm):
-    """No-op — Python GC handles memory."""
+    """No-op — Python GC handles memory. Reset to initial memory just to decrease the number"""
+    vm.gc.usage = 256
     pass
 
 

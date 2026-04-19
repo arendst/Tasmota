@@ -33,7 +33,7 @@ from berry_port.be_object import (
 from berry_port.be_map import (
     be_map_new, be_map_findstr, be_map_insertstr, be_map_next, be_map_compact,
 )
-from berry_port.be_string import be_newstrn
+from berry_port.be_string import be_newstrn, be_str2cstr
 
 
 # ============================================================================
@@ -674,7 +674,7 @@ def be_instance_member(vm, instance, name, dst):
     else:
         # No direct member found — try virtual
         # If 'init' does not exist, create a virtual empty constructor
-        name_str = name.s if hasattr(name, 's') else ""
+        name_str = be_str2cstr(name)
         if name_str == "init":
             var_setntvfunc(dst, _be_default_init_native_function)
             return var_primetype(dst)
@@ -737,11 +737,10 @@ def _be_default_init_native_function(vm):
     """Default empty constructor for classes without an explicit init method.
 
     Returns the first argument (self) if present, otherwise nil.
-    This is a placeholder; the real implementation lives in be_vm.py.
+    Delegates to the real implementation in be_vm.
     """
-    # This will be replaced by be_vm.be_default_init_native_function
-    # once the VM module is available. For now, return 0 (BE_OK).
-    return 0
+    from berry_port.be_vm import be_default_init_native_function
+    return be_default_init_native_function(vm)
 
 
 # ============================================================================

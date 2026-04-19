@@ -264,6 +264,177 @@ class TestModulePath:
             os.rmdir(mod_dir)
 
 
+# ── Default module path (no -m) ────────────────────────────────────────
+
+# Regression tests for the default module search path that the CLI entry
+# point installs when -m is NOT provided. Mirrors berry_paths() in
+# default/berry.c which adds BERRY_ROOT "/lib/berry/packages" on Unix or
+# BERRY_ROOT "\\berry\\packages" on Windows.
+
+_DEFAULT_PATH = (
+    "\\Windows\\system32\\berry\\packages"
+    if sys.platform == "win32"
+    else "/usr/local/lib/berry/packages"
+)
+
+C_BERRY = os.path.join(
+    os.path.dirname(__file__), "..", "..", "berry"
+)
+C_BERRY_AVAILABLE = os.path.isfile(C_BERRY) and os.access(C_BERRY, os.X_OK)
+
+
+class TestDefaultModulePath:
+    """Without -m, the CLI must install the default search path, matching
+    the C implementation's berry_paths() behavior."""
+
+    def test_default_path_is_non_empty(self):
+        """sys.path() returns a non-empty list when -m is not provided."""
+        r = run_berry("-e", "import sys print(sys.path().size())")
+        assert r.returncode == 0
+        assert int(r.stdout.strip()) >= 1
+
+    def test_default_path_contains_expected_entry(self):
+        """Default sys.path() contains the platform-specific BERRY_ROOT entry."""
+        r = run_berry("-e", "import sys print(sys.path())")
+        assert r.returncode == 0
+        assert _DEFAULT_PATH in r.stdout
+
+    def test_default_path_with_s_and_g_flags(self):
+        """Default path is installed regardless of -s / -g compiler flags.
+        Regression: tests/module.be invoked as `-s -g` failed because the
+        Python port skipped berry_paths() entirely."""
+        r = run_berry("-s", "-g", "-e", "import sys print(sys.path().size())")
+        assert r.returncode == 0
+        assert int(r.stdout.strip()) >= 1
+
+    def test_custom_path_replaces_default(self):
+        """With -m, only the custom path(s) are installed — the default
+        BERRY_ROOT entry is NOT added (matches C berry_paths() being in the
+        else branch)."""
+        with tempfile.TemporaryDirectory() as d:
+            r = run_berry("-m", d, "-e", "import sys print(sys.path())")
+            assert r.returncode == 0
+            assert d in r.stdout
+            assert _DEFAULT_PATH not in r.stdout
+
+    def test_custom_path_multiple_entries(self):
+        """-m accepts PATH_SEPARATOR-separated entries, all added in order."""
+        sep = ";" if sys.platform == "win32" else ":"
+        with tempfile.TemporaryDirectory() as d1, tempfile.TemporaryDirectory() as d2:
+            r = run_berry(
+                "-m", f"{d1}{sep}{d2}",
+                "-e", "import sys for p : sys.path() print(p) end",
+            )
+            assert r.returncode == 0
+            lines = [ln.strip() for ln in r.stdout.strip().splitlines() if ln.strip()]
+            assert d1 in lines
+            assert d2 in lines
+
+    def test_default_path_entries_are_strings(self):
+        """Every entry in the default sys.path() is a string."""
+        r = run_berry(
+            "-e",
+            "import sys for p : sys.path() assert(type(p) == 'string') end print('ok')",
+        )
+        assert r.returncode == 0
+        assert r.stdout.strip() == "ok"
+
+    def test_module_be_regression(self):
+        """Regression: tests/module.be runs to completion under -s -g.
+        This was the original failure: line 78 `assert(p.size() >= 1)`
+        failed because berry_paths() was never called."""
+        module_test = os.path.join(
+            os.path.dirname(__file__), "..", "module.be"
+        )
+        if not os.path.isfile(module_test):
+            pytest.skip("tests/module.be not found")
+        r = run_berry("-s", "-g", module_test)
+        assert r.returncode == 0, (
+            f"tests/module.be failed:\n{r.stdout}\n{r.stderr}"
+        )
+
+    @pytest.mark.skipif(
+        not C_BERRY_AVAILABLE,
+        reason="C berry binary not available for cross-validation",
+    )
+    def test_default_path_matches_c_implementation(self):
+        """Cross-validation: default sys.path() in Python port matches the
+        compiled C berry binary."""
+        code = "import sys for p : sys.path() print(p) end"
+        r_py = run_berry("-e", code)
+        r_c = subprocess.run(
+            [C_BERRY, "-e", code], capture_output=True, text=True, timeout=15
+        )
+        assert r_py.returncode == 0
+        assert r_c.returncode == 0
+        assert r_py.stdout == r_c.stdout
+
+
+# ── berry_paths / berry_custom_paths unit tests ───────────────────────
+
+class TestBerryPathsUnit:
+    """Unit tests for the path-installing helpers in berry_port.__main__."""
+
+    @staticmethod
+    def _collect_path_entries(vm):
+        """Call be_module_path(vm), read the list from the top of stack,
+        return Python-str entries, and pop."""
+        from berry_port.be_module import be_module_path
+        from berry_port.be_string import be_str2cstr
+
+        be_module_path(vm)
+        lst = vm.stack[vm.top - 1].v
+        entries = [be_str2cstr(lst.data[i].v) for i in range(lst.count)]
+        vm.top -= 1
+        return entries
+
+    def test_berry_paths_installs_default(self):
+        from berry_port.berry import be_vm_new, be_vm_delete
+        from berry_port.__main__ import berry_paths, _MODULE_PATHS
+
+        vm = be_vm_new()
+        try:
+            berry_paths(vm)
+            entries = self._collect_path_entries(vm)
+            for expected in _MODULE_PATHS:
+                assert expected in entries
+        finally:
+            be_vm_delete(vm)
+
+    def test_berry_custom_paths_splits_on_separator(self):
+        from berry_port.berry import be_vm_new, be_vm_delete
+        from berry_port.__main__ import berry_custom_paths, PATH_SEPARATOR
+
+        vm = be_vm_new()
+        try:
+            berry_custom_paths(vm, f"/a{PATH_SEPARATOR}/b{PATH_SEPARATOR}/c")
+            entries = self._collect_path_entries(vm)
+            assert "/a" in entries
+            assert "/b" in entries
+            assert "/c" in entries
+        finally:
+            be_vm_delete(vm)
+
+    def test_berry_custom_paths_skips_empty_segments(self):
+        """Empty segments (from leading/trailing/double separators) are skipped,
+        matching C strtok() behavior."""
+        from berry_port.berry import be_vm_new, be_vm_delete
+        from berry_port.__main__ import berry_custom_paths, PATH_SEPARATOR
+
+        vm = be_vm_new()
+        try:
+            berry_custom_paths(
+                vm,
+                f"{PATH_SEPARATOR}/x{PATH_SEPARATOR}{PATH_SEPARATOR}/y{PATH_SEPARATOR}",
+            )
+            entries = self._collect_path_entries(vm)
+            assert "" not in entries
+            assert "/x" in entries
+            assert "/y" in entries
+        finally:
+            be_vm_delete(vm)
+
+
 # ── REPL mode ──────────────────────────────────────────────────────────
 
 class TestREPL:

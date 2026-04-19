@@ -100,11 +100,22 @@ def m_isinf(vm):
 # ============================================================================
 
 def _math_unary(vm, func):
-    """Helper for single-argument math functions that take a number and push a real."""
+    """Helper for single-argument math functions that take a number and push a real.
+
+    C math functions return NaN/inf silently on domain/range errors (e.g. sqrt(-1)),
+    while Python raises ValueError/OverflowError. Catch those and return NaN/inf
+    to match C behavior.
+    """
     be_api = _lazy_be_api()
     if be_api.be_top(vm) >= 1 and be_api.be_isnumber(vm, 1):
         x = be_api.be_toreal(vm, 1)
-        be_api.be_pushreal(vm, func(x))
+        try:
+            result = func(x)
+        except ValueError:
+            result = float('nan')
+        except OverflowError:
+            result = math.inf if x >= 0 else -math.inf
+        be_api.be_pushreal(vm, result)
     else:
         be_api.be_pushreal(vm, 0.0)
     return be_api.be_returnvalue(vm)
@@ -287,7 +298,13 @@ def m_pow(vm):
     if be_api.be_top(vm) >= 2 and be_api.be_isnumber(vm, 1) and be_api.be_isnumber(vm, 2):
         x = be_api.be_toreal(vm, 1)
         y = be_api.be_toreal(vm, 2)
-        be_api.be_pushreal(vm, math.pow(x, y))
+        try:
+            result = math.pow(x, y)
+        except ValueError:
+            result = float('nan')
+        except OverflowError:
+            result = math.inf
+        be_api.be_pushreal(vm, result)
     else:
         be_api.be_pushreal(vm, 0.0)
     return be_api.be_returnvalue(vm)

@@ -169,11 +169,19 @@ f.close()
 
 
 def test_write_bytes(vm, tmpdir):
-    """file.write() can write bytes objects."""
+    """file.write() can write bytes objects.
+
+    Note: bytes are built via repeated append to avoid the C lexer's
+    string-literal NULL truncation (see tr_string in be_lexer.c), which
+    would truncate '\\x00\\x01\\x02' to an empty string.
+    """
     path = os.path.join(tmpdir, "write_bytes.bin")
     code = f"""
 var f = open('{path}', 'w')
-var b = bytes().fromstring('\\x00\\x01\\x02')
+var b = bytes()
+b..0x00
+b..0x01
+b..0x02
 f.write(b)
 f.close()
 """

@@ -677,7 +677,43 @@ def load_script(vm, remaining_argv, args, script):
     return res
 
 
-# ── berry_custom_paths ──────────────────────────────────────────────────
+# ── berry_paths / berry_custom_paths ────────────────────────────────────
+
+# /*
+# ** #if defined(_WIN32)
+# ** #define BERRY_ROOT "\\Windows\\system32"
+# ** static const char *module_paths[] = {
+# **     BERRY_ROOT "\\berry\\packages",
+# ** };
+# ** #else
+# ** #define BERRY_ROOT "/usr/local"
+# ** static const char *module_paths[] = {
+# **     BERRY_ROOT "/lib/berry/packages",
+# ** };
+# ** #endif
+# */
+if sys.platform == "win32":
+    _BERRY_ROOT = "\\Windows\\system32"
+    _MODULE_PATHS = (_BERRY_ROOT + "\\berry\\packages",)
+else:
+    _BERRY_ROOT = "/usr/local"
+    _MODULE_PATHS = (_BERRY_ROOT + "/lib/berry/packages",)
+
+
+# /*
+# ** static void berry_paths(bvm *vm)
+# ** {
+# **     size_t i;
+# **     for (i = 0; i < array_count(module_paths); ++i) {
+# **         be_module_path_set(vm, module_paths[i]);
+# **     }
+# ** }
+# */
+def berry_paths(vm):
+    """Add the default module search paths."""
+    for p in _MODULE_PATHS:
+        be_module_path_set(vm, p)
+
 
 # /*
 # ** static void berry_custom_paths(bvm *vm, const char *modulepath)
@@ -761,6 +797,9 @@ def analysis_args(vm, argv):
     if args & arg_m:
         berry_custom_paths(vm, opt.modulepath)
         args &= ~arg_m
+    else:
+        # use default module paths
+        berry_paths(vm)
 
     if args & arg_g:
         comp_set_named_gbl(vm)

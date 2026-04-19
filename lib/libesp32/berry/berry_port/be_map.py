@@ -19,14 +19,19 @@ Original C code is included as comments for each function.
 
 from berry_port.be_object import (
     BE_MAP, BE_NIL, BE_BOOL, BE_INT, BE_REAL, BE_STRING, BE_INSTANCE,
+    BE_FUNCTION, BE_NONE,
     GC_CONST,
     bmap, bmapnode, bmapkey, bvalue,
-    var_isnil, var_tobool, var_toint, var_toreal, var_tostr, var_toobj,
-    var_setstr, var_setmap,
+    var_isnil, var_isint, var_isinstance,
+    var_tobool, var_toint, var_toreal, var_tostr, var_toobj,
+    var_setstr, var_setmap, var_setval,
+    basetype,
+    be_instance_name,
     gc_isconst,
 )
-from berry_port.be_string import be_strhash, be_eqstr
+from berry_port.be_string import be_strhash, be_eqstr, be_str2cstr
 from berry_port.be_vector import be_nextsize
+from berry_port.berry_conf import BE_USE_OVERLOAD_HASH
 
 
 # ============================================================================
@@ -130,6 +135,69 @@ def _hashreal(r):
         return 0
 
 
+# #if BE_USE_OVERLOAD_HASH
+# static uint32_t hashins(bvm *vm, binstance *obj)
+# {
+#     int type = be_instance_member(vm, obj, str_literal(vm, "hash"), vm->top);
+#     if (basetype(type) == BE_FUNCTION) {
+#         bvalue *top = vm->top;
+#         var_setinstance(top + 1, obj);
+#         vm->top += 2;
+#         be_dofunc(vm, top, 1); /* call method 'item' */
+#         vm->top -= 2;
+#         if (!var_isint(vm->top)) { /* check the return value */
+#             const char *name = str(be_instance_name(obj));
+#             be_raise(vm, "runtime_error", be_pushfstring(vm,
+#                 "the value of `%s::hash()` is not a 'int'",
+#                 strlen(name) ? name : "<anonymous>"));
+#         }
+#         return (uint32_t)var_toint(vm->top);
+#     }
+#     return hashptr(obj);
+# }
+# #endif
+def _hashins(vm, obj):
+    """Hash an instance: call its hash() method if defined, else use hashptr.
+
+    Matches C hashins(). Looks up "hash" on the instance; if it resolves to
+    a function, invokes it with the instance as self and requires an int
+    return. Otherwise falls back to hashing the Python object identity.
+    """
+    # Lazy imports to avoid circular dependency (be_class and be_vm both depend
+    # on map operations indirectly through built-in class construction).
+    from berry_port import be_class as _be_class
+    from berry_port import be_vm as _be_vm
+    from berry_port import be_api as _be_api
+
+    # int type = be_instance_member(vm, obj, str_literal(vm, "hash"), vm->top);
+    hash_str = _be_vm.str_literal(vm, "hash")
+    type_ = _be_class.be_instance_member(vm, obj, hash_str, vm.stack[vm.top_idx])
+    if basetype(type_) == BE_FUNCTION:
+        # bvalue *top = vm->top;
+        # var_setinstance(top + 1, obj);   -- place self as argv[0]
+        # vm->top += 2;
+        # be_dofunc(vm, top, 1);
+        # vm->top -= 2;
+        top_idx = vm.top_idx
+        # Place 'self' at top+1 (argv[0])
+        self_slot = vm.stack[top_idx + 1]
+        self_slot.type = BE_INSTANCE
+        self_slot.v = obj
+        vm.top_idx += 2
+        _be_vm.be_dofunc(vm, top_idx, 1)
+        vm.top_idx -= 2
+        result = vm.stack[vm.top_idx]
+        if not var_isint(result):
+            name = be_str2cstr(be_instance_name(obj))
+            if not name:
+                name = "<anonymous>"
+            _be_api.be_raise(vm, "runtime_error",
+                _be_api.be_pushfstring(vm,
+                    "the value of `%s::hash()` is not a 'int'", name))
+        return var_toint(result) & 0xFFFFFFFF
+    return _hashptr(obj)
+
+
 # static uint32_t _hashcode(bvm *vm, int type, union bvaldata v)
 # {
 #     (void)vm;
@@ -139,14 +207,18 @@ def _hashreal(r):
 #     case BE_INT: return (uint32_t)v.i;
 #     case BE_REAL: return hashreal(v);
 #     case BE_STRING: return be_strhash(v.s);
+# #if BE_USE_OVERLOAD_HASH
+#     case BE_INSTANCE: return hashins(vm, v.p);
+# #endif
 #     default: return hashptr(v.p);
 #     }
 # }
 def _hashcode(vm, type_, v):
     """Compute the hash code for a value given its type and data.
 
-    Mirrors the C _hashcode function. The vm parameter is unused in the
-    base implementation (needed for BE_USE_OVERLOAD_HASH).
+    Mirrors the C _hashcode function. For instances, dispatches to
+    _hashins when BE_USE_OVERLOAD_HASH is enabled, which may invoke
+    the instance's hash() method.
     """
     if type_ == BE_NIL:
         return 0
@@ -158,6 +230,8 @@ def _hashcode(vm, type_, v):
         return _hashreal(v)
     elif type_ == BE_STRING:
         return be_strhash(v)
+    elif BE_USE_OVERLOAD_HASH and type_ == BE_INSTANCE:
+        return _hashins(vm, v)
     else:
         return _hashptr(v)
 
@@ -181,6 +255,14 @@ def _hashcode_key(vm, k):
 #     (void)vm;
 #     if (!var_isnil(key)) {
 #         bmapkey *k = key(node);
+# #if BE_USE_OVERLOAD_HASH
+#         if (var_isinstance(key)) {
+#             bvalue kv;
+#             kv.type = k->type;
+#             kv.v = k->v;
+#             return be_vm_iseq(vm, key, &kv);
+#         }
+# #endif
 #         if(keytype(k) == key->type && hashcode(k) == hash) {
 #             switch (key->type) {
 #             case BE_BOOL: return var_tobool(key) == var_tobool(k);
@@ -198,6 +280,14 @@ def _eqnode(vm, node, key, hash_val):
     if var_isnil(key):
         return 0
     k = node.key
+    # BE_USE_OVERLOAD_HASH: instance keys compare via be_vm_iseq so that
+    # user-defined == operators are honored. This matches the C code path.
+    if BE_USE_OVERLOAD_HASH and var_isinstance(key):
+        from berry_port import be_vm as _be_vm
+        kv = bvalue()
+        kv.type = k.type
+        kv.v = k.v
+        return 1 if _be_vm.be_vm_iseq(vm, key, kv) else 0
     # keytype is signed char cast of k.type
     kt = k.type if k.type < 128 else k.type - 256
     if kt == key.type and _hashcode_key(vm, k) == hash_val:

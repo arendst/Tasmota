@@ -518,7 +518,16 @@ def be_baselib_int(vm):
             be_api.be_pushint(vm, 1 if be_api.be_tobool(vm, 1) else 0)
         elif be_api.be_iscomptr(vm, 1):
             p = be_api.be_tocomptr(vm, 1)
-            be_api.be_pushint(vm, int(p) if p is not None else 0)
+            # Match C: intptr_t p = (intptr_t) be_tocomptr(vm, 1);
+            # In the Python port, a comptr may hold an integer address or a
+            # Python object; fall back to id() for the latter (as tostring does).
+            if p is None:
+                pi = 0
+            elif isinstance(p, int):
+                pi = p
+            else:
+                pi = id(p)
+            be_api.be_pushint(vm, pi)
         elif be_api.be_isinstance(vm, 1):
             v = vm.stack[be_api.be_indexof(vm, 1)]
             ok, val = _obj2int(vm, v)

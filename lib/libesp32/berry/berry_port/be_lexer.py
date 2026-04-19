@@ -939,12 +939,12 @@ def _tr_string(lexer):
                     dst.append(c & 0xFF)
                     i += 2
                 else:
-                    # Octal escape
+                    # Octal escape \OOO (always 3 digits in C).
+                    # In C, read_oct always reads 3 digits or raises; the
+                    # caller then advances src by 3 total (src += 2; ++src).
                     c = _read_oct(lexer, src, i)
-                    if c != 0:
-                        i += 2
                     dst.append(c & 0xFF)
-                    i += 1
+                    i += 3  # skip all 3 octal digits
             else:
                 # Unicode escape \uXXXX
                 utf8_bytes = be_load_unicode(src, i + 1)
@@ -959,7 +959,11 @@ def _tr_string(lexer):
     # Copy result back into buffer
     for j in range(len(dst)):
         lexer.buf.s[j] = dst[j]
-    lexer.buf.len = len(dst)
+    # Truncate at first NULL byte to match C behavior (see tr_string in be_lexer.c):
+    #   const char* found = memchr(str, '\0', len);
+    #   lexer->buf.len = found ? (size_t)(found - str) : len;
+    null_idx = dst.find(b'\x00')
+    lexer.buf.len = null_idx if null_idx != -1 else len(dst)
 
 
 # ============================================================================

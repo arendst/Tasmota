@@ -728,7 +728,10 @@ def m_init(vm):
     be_exec = _lazy_be_exec()
     from berry_port.be_object import BE_MALLOC_FAIL
     argc = be_api.be_top(vm)
-    attr = buf_impl(size=0, length=0, bufptr=None, prev_size=-1,
+    # initialize prev_values to invalid to force a write at the end
+    # (prev_len=-1 is the invalid marker; prev_size must NOT be -1 because
+    # that equals BYTES_SIZE_FIXED and would suppress the write)
+    attr = buf_impl(size=0, length=0, bufptr=None, prev_size=0,
                     prev_len=-1, prev_bufptr=None)
     hex_in = None
 

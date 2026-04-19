@@ -333,7 +333,11 @@ def _sim2str(vm, v):
     elif t == BE_MODULE:
         sbuf = _module2str(v)
     elif t == BE_COMPTR:
-        sbuf = "<ptr: 0x%x>" % id(var_toobj(v))
+        p = var_toobj(v)
+        if isinstance(p, int):
+            sbuf = "<ptr: 0x%x>" % p
+        else:
+            sbuf = "<ptr: 0x%x>" % id(p)
     else:
         sbuf = "(unknown value)"
     return be_string.be_newstr(vm, sbuf)
@@ -619,8 +623,8 @@ def be_str2int(s, return_end=False):
                 break
             total = total * 16 + c
             pos += 1
-        # Mask to 64-bit signed range
-        total = _to_signed64(total)
+        # Wrap to the configured bint width (matches C integer overflow).
+        total = _wrap_bint(total)
         if return_end:
             return (total, pos)
         return total
@@ -675,12 +679,29 @@ def be_str2int(s, return_end=False):
         return total
 
 
-def _to_signed64(v):
-    """Mask an integer to signed 64-bit range."""
-    v = v & 0xFFFFFFFFFFFFFFFF
-    if v >= 0x8000000000000000:
-        v -= 0x10000000000000000
+def _wrap_bint(v):
+    """Wrap a Python arbitrary-precision int into the configured bint width.
+
+    In C, ``bint`` is a fixed-width signed integer whose size depends on
+    ``BE_INTGER_TYPE`` (0 → int/32-bit, 1 → long/32-bit on targets where
+    ``long`` is 32 bits, 2 → long long/64-bit). Hex literal parsing in
+    C naturally wraps on overflow because ``sum * 16 + c`` uses the
+    native type. Python integers have unlimited precision, so we must
+    truncate and sign-extend to match that behaviour.
+    """
+    if BE_INTGER_TYPE <= 1:          # 32-bit signed
+        v = v & 0xFFFFFFFF
+        if v >= 0x80000000:
+            v -= 0x100000000
+    else:                            # 64-bit signed
+        v = v & 0xFFFFFFFFFFFFFFFF
+        if v >= 0x8000000000000000:
+            v -= 0x10000000000000000
     return v
+
+
+# Kept for backward compatibility with any external callers.
+_to_signed64 = _wrap_bint
 
 
 # ---------------------------------------------------------------------------
@@ -712,7 +733,17 @@ def _to_signed64(v):
 # overflow:
 #     return sign == '-' ? -HUGE_VAL : HUGE_VAL;
 def _f32(x):
-    """Round a Python float through float32, matching C single-precision."""
+    """Round a Python float through float32, matching C single-precision.
+
+    Values exceeding FLT_MAX saturate to +/- inf instead of raising, which
+    matches the silent overflow behaviour of C float arithmetic.
+    """
+    if math.isnan(x):
+        return x
+    if x > BREAL_MAX:
+        return math.inf
+    if x < -BREAL_MAX:
+        return -math.inf
     return struct.unpack('<f', struct.pack('<f', x))[0]
 
 
@@ -823,6 +854,13 @@ def be_str2real(s, return_end=False):
             e = -e
         while e > 0:
             e -= 1
+            # Match C: if (e > 0 && sum > BREAL_MAX / ratio) goto overflow;
+            if e > 0 and total > BREAL_MAX / ratio:
+                end_pos = pos - 1
+                val = -math.inf if sign_char == '-' else math.inf
+                if return_end:
+                    return (val, end_pos)
+                return val
             total = f(total * ratio)
 
     # Compute end position

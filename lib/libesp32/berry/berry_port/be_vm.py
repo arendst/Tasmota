@@ -310,7 +310,12 @@ def _sim2str(vm, v):
         else:
             return mod.be_newstr(vm, "<module: %s>" % hex(id(var_toobj(v))))
     elif t == BE_COMPTR:
-        return mod.be_newstr(vm, "<ptr: %s>" % hex(id(v.v)))
+        # If the comptr holds an integer address (from toptr(int)), print the
+        # literal address; otherwise print id() of the referenced object.
+        p = v.v
+        if isinstance(p, int):
+            return mod.be_newstr(vm, "<ptr: 0x%x>" % p)
+        return mod.be_newstr(vm, "<ptr: %s>" % hex(id(p)))
     else:
         return mod.be_newstr(vm, "(unknown value)")
 
@@ -367,23 +372,11 @@ def _format_real(r):
 def be_strindex(vm, s, idx):
     """String subscript operation s[idx].
 
-    Stub — full implementation in be_strlib.py (task 9.9).
+    Delegates to be_strlib.be_strindex which supports both integer
+    indexing and range slicing (str[i], str[lo..hi]).
     """
-    mod = _lazy_be_string()
-    c = mod.be_str2cstr(s)
-    if var_isint(idx):
-        i = var_toint(idx)
-        if i < 0:
-            i = len(c) + i
-        if 0 <= i < len(c):
-            return mod.be_newstr(vm, c[i])
-        else:
-            vm_error(vm, "index_error", "string index out of range")
-    else:
-        vm_error(vm, "type_error",
-                 "string indices must be integers, not '%s'",
-                 be_vtype2str(idx))
-    return mod.be_newstr(vm, "")  # unreachable
+    import berry_port.be_strlib as be_strlib
+    return be_strlib.be_strindex(vm, s, idx)
 
 
 # ============================================================================
@@ -696,7 +689,15 @@ def be_value2bool(vm, v):
     elif bt == BE_STRING:
         return str_len(var_tostr(v)) != 0
     elif bt == BE_COMPTR:
-        return var_toobj(v) is not None
+        # C semantics: ptr != NULL. In the Python port, a comptr may hold either
+        # an integer address (from toptr(int)) or a Python object. Treat integer
+        # 0 as NULL-equivalent and None as NULL.
+        p = var_toobj(v)
+        if p is None:
+            return False
+        if isinstance(p, int) and p == 0:
+            return False
+        return True
     elif bt == BE_COMOBJ:
         obj = var_toobj(v)
         return obj is not None and obj.data is not None
@@ -891,9 +892,9 @@ def ins_unop(vm, op, self_val):
 # ins_binop macro — used inside vm_exec
 def ins_binop(vm, op, reg_idx, ktab, ins):
     """Inline binary operator overload for instances."""
-    rkb_idx = _rkb_idx(reg_idx, ktab, ins)
-    rkc_idx = _rkc_idx(reg_idx, ktab, ins)
-    object_binop(vm, op, vm.stack[rkb_idx], vm.stack[rkc_idx])
+    b_val = _resolve_rkb(vm, reg_idx, ktab, ins)
+    c_val = _resolve_rkc(vm, reg_idx, ktab, ins)
+    object_binop(vm, op, b_val, c_val)
     # After call, reg may have changed
     new_reg_idx = vm.reg_idx
     ra_idx = new_reg_idx + IGET_RA(ins)
@@ -925,8 +926,13 @@ def be_vm_iseq(vm, a, b):
         elif var_isstr(a):
             smod = _lazy_be_string()
             return smod.be_eqstr(var_tostr(a), var_tostr(b))
-        elif var_isclass(a) or var_isfunction(a) or var_iscomptr(a):
+        elif var_isclass(a) or var_isfunction(a):
             return var_toobj(a) is var_toobj(b)
+        elif var_iscomptr(a):
+            # C compares pointers by value. In the port a comptr may hold an
+            # int (address) or a Python object; '==' gives value equality for
+            # ints and falls back to identity for other objects.
+            return var_toobj(a) == var_toobj(b)
         else:
             binop_error(vm, "==", a, b)
             return False
@@ -953,8 +959,10 @@ def be_vm_isneq(vm, a, b):
         elif var_isstr(a):
             smod = _lazy_be_string()
             return not smod.be_eqstr(var_tostr(a), var_tostr(b))
-        elif var_isclass(a) or var_isfunction(a) or var_iscomptr(a):
+        elif var_isclass(a) or var_isfunction(a):
             return var_toobj(a) is not var_toobj(b)
+        elif var_iscomptr(a):
+            return var_toobj(a) != var_toobj(b)
         else:
             binop_error(vm, "!=", a, b)
             return False
@@ -1420,6 +1428,11 @@ def vm_exec(vm):
     smod = _lazy_be_string()
 
     vm.cf.status |= BASE_FRAME
+    # Depth of the callstack at entry to this vm_exec invocation. Used to
+    # detect exceptions whose handler lives in an OUTER vm_exec frame (in
+    # C, longjmp bypasses intermediate C stack frames; here we must
+    # re-raise so the outer Python vm_exec can catch and resume).
+    _base_depth = be_vector.be_stack_count(vm.callstack)
 
     # newframe label — in Python we use a nested function and loop
     while True:  # newframe loop
@@ -1712,6 +1725,16 @@ def vm_exec(vm):
             # Exception caught — equivalent to setjmp returning non-zero
             # in the C OP_EXBLK handler.
             if be_vector.be_stack_count(vm.exceptstack) > 0:
+                # Peek at the handler frame's target callstack depth.
+                # If that depth is SHALLOWER than this vm_exec's entry
+                # depth, the handler lives in an outer vm_exec — we must
+                # re-raise so the outer Python frame can catch it (this
+                # mirrors longjmp bypassing intermediate C frames).
+                _top_frame = be_vector.be_vector_at(
+                    vm.exceptstack,
+                    be_vector.be_stack_count(vm.exceptstack) - 1)
+                if _top_frame.depth < _base_depth:
+                    raise
                 # Save exception values from top of stack
                 top_idx = vm.top_idx
                 e1 = bvalue()
@@ -1777,10 +1800,18 @@ def _exec_add(vm, reg_idx, ktab, ins, ra_idx):
         ra_idx = reg_idx + IGET_RA(ins)
         var_setstr(vm.stack[ra_idx], s)
     elif var_isinstance(a):
-        ins_binop(vm, "+", reg_idx, 0, ins)
+        ins_binop(vm, "+", reg_idx, ktab, ins)
     elif var_iscomptr(a) and var_isint(b):
-        # comptr + int: pointer arithmetic (not meaningful in Python, but preserved)
-        var_setcomptr(dst, var_toobj(a))  # simplified
+        # C: pointer + int  →  advance byte pointer.
+        # In the Python port, a comptr holds a Python int (address literal) or
+        # a Python object (e.g. bytearray). For int-backed comptrs, do integer
+        # arithmetic; otherwise leave the object unchanged (C would produce an
+        # offset pointer into the object, which has no direct Python analogue).
+        p = var_toobj(a)
+        if isinstance(p, int):
+            var_setcomptr(dst, p + var_toint(b))
+        else:
+            var_setcomptr(dst, p)
     else:
         binop_error(vm, "+", a, b)
 
@@ -1794,7 +1825,14 @@ def _exec_sub(vm, reg_idx, ktab, ins, ra_idx):
     elif var_isnumber(a) and var_isnumber(b):
         var_setreal(dst, var2real(a) - var2real(b))
     elif var_isinstance(a):
-        ins_binop(vm, "-", reg_idx, 0, ins)
+        ins_binop(vm, "-", reg_idx, ktab, ins)
+    elif var_iscomptr(a) and var_isint(b):
+        # Mirror C pointer arithmetic (see _exec_add comment).
+        p = var_toobj(a)
+        if isinstance(p, int):
+            var_setcomptr(dst, p - var_toint(b))
+        else:
+            var_setcomptr(dst, p)
     else:
         binop_error(vm, "-", a, b)
 
@@ -1813,7 +1851,7 @@ def _exec_mul(vm, reg_idx, ktab, ins, ra_idx):
         ra_idx = reg_idx + IGET_RA(ins)
         var_setval(vm.stack[ra_idx], vm.stack[vm.top_idx])
     elif var_isinstance(a):
-        ins_binop(vm, "*", reg_idx, 0, ins)
+        ins_binop(vm, "*", reg_idx, ktab, ins)
     else:
         binop_error(vm, "*", a, b)
 
@@ -1839,7 +1877,7 @@ def _exec_div(vm, reg_idx, ktab, ins, ra_idx):
         else:
             var_setreal(dst, x / y)
     elif var_isinstance(a):
-        ins_binop(vm, "/", reg_idx, 0, ins)
+        ins_binop(vm, "/", reg_idx, ktab, ins)
     else:
         binop_error(vm, "/", a, b)
 
@@ -1865,7 +1903,7 @@ def _exec_mod(vm, reg_idx, ktab, ins, ra_idx):
         else:
             var_setreal(dst, math.fmod(x, y))
     elif var_isinstance(a):
-        ins_binop(vm, "%", reg_idx, 0, ins)
+        ins_binop(vm, "%", reg_idx, ktab, ins)
     else:
         binop_error(vm, "%", a, b)
 
@@ -1892,7 +1930,7 @@ def _exec_bitwise(vm, reg_idx, ktab, ins, ra_idx, op_str):
         elif op_str == '>>':
             var_setint(dst, ai >> bi)
     elif var_isinstance(a):
-        ins_binop(vm, op_str, reg_idx, 0, ins)
+        ins_binop(vm, op_str, reg_idx, ktab, ins)
     else:
         binop_error(vm, op_str, a, b)
 
@@ -2146,8 +2184,16 @@ def _exec_getidx(vm, reg_idx, ktab, ins, ra_idx):
         ra_idx = reg_idx + IGET_RA(ins)
         var_setstr(vm.stack[ra_idx], s)
     elif var_iscomptr(b_val) and var_isint(c_val):
-        # comptr[int] — not meaningful in Python, stub
-        var_setint(vm.stack[ra_idx], 0)
+        # C: p[idx] on a uint8_t* buffer. In the port, the comptr may hold an
+        # indexable object (bytearray/bytes/memoryview) — index into it.
+        # For raw integer addresses we can't dereference host memory; return 0
+        # to match the original stub behavior rather than raise.
+        p = var_toobj(b_val)
+        idx = var_toint(c_val)
+        if isinstance(p, (bytearray, bytes, memoryview)):
+            var_setint(vm.stack[ra_idx], p[idx] & 0xFF)
+        else:
+            var_setint(vm.stack[ra_idx], 0)
     else:
         vm_error(vm, "type_error",
                  "value '%s' does not support subscriptable",
@@ -2169,7 +2215,14 @@ def _exec_setidx(vm, reg_idx, ktab, ins, ra_idx):
         be_dofunc(vm, top_idx, 3)
         vm.top_idx -= 4
     elif var_iscomptr(a_val) and var_isint(b_val) and var_isint(c_val):
-        pass  # comptr[int] = int — not meaningful in Python
+        # C: p[idx] = byte. In the port the comptr may hold a writable buffer
+        # (bytearray/memoryview) — write into it. Raw int addresses are no-ops.
+        p = var_toobj(a_val)
+        idx = var_toint(b_val)
+        val = var_toint(c_val) & 0xFF
+        if isinstance(p, (bytearray, memoryview)):
+            p[idx] = val
+        # else: no-op (raw integer address or non-writable buffer)
     else:
         vm_error(vm, "type_error",
                  "value '%s' does not support index assignment",
