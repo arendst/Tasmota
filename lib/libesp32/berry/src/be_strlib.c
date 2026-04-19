@@ -664,16 +664,22 @@ static const char* get_mode(const char *str, char *buf, size_t buf_len)
     }
     p = skip2dig(p); /* skip width (2 digits at most) */
     if (*p == '.') {
-        p = skip2dig(++p); /* skip width (2 digits at most) */
+        p = skip2dig(++p); /* skip precision (2 digits at most) */
     }
     *(buf++) = '%';
     size_t mode_size = p - str + 1;
     /* Leave 2 bytes for the leading % and the trailing '\0' */
-    if (mode_size > buf_len - 2) { 
-        mode_size = buf_len - 2;
+    /* Also ensure the format specifier character is always included */
+    if (mode_size > buf_len - 2) {
+        /* truncate flags/width but always keep the conversion specifier */
+        size_t max = buf_len - 2;
+        strncpy(buf, str, max - 1);
+        buf[max - 1] = p[0]; /* conversion specifier */
+        buf[max] = '\0';
+    } else {
+        strncpy(buf, str, mode_size);
+        buf[mode_size] = '\0';
     }
-    strncpy(buf, str, mode_size);
-    buf[mode_size] = '\0';
     return p;
 }
 

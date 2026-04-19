@@ -18,7 +18,7 @@
 #define SHORT_STR_LEN       32
 #define EOS                 '\0' /* end of source */
 
-#define type_count()        (int)array_count(kwords_tab)
+#define type_count()        (int)array_count(token_strings)
 #define lexbuf(lex)         ((lex)->buf.s)
 #define isvalid(lex)        ((lex)->reader.cursor < (lex)->endbuf)
 #define lgetc(lex)          ((lex)->reader.cursor)
@@ -30,7 +30,7 @@
 #if BE_USE_SCRIPT_COMPILER
 
 /* IMPORTANT: This must follow the enum found in be_lexer.h !!! */
-static const char* const kwords_tab[] = {
+static const char* const token_strings[] = {
     "NONE", "EOS", "ID", "INT", "REAL", "STR",
     "=", "+=","-=", "*=", "/=", "%=", "&=", "|=",
     "^=", "<<=", ">>=", "+", "-", "*", "/", "%",
@@ -57,7 +57,7 @@ static void keyword_registe(bvm *vm)
 {
     int i;
     for (i = KeyIf; i < type_count(); ++i) {
-        bstring *s = be_newstr(vm, kwords_tab[i]);
+        bstring *s = be_newstr(vm, token_strings[i]);
         be_gc_fix(vm, gc_object(s));
         be_str_setextra(s, i);
     }
@@ -67,7 +67,7 @@ static void keyword_unregiste(bvm *vm)
 {
     int i;
     for (i = KeyIf; i < type_count(); ++i) {
-        bstring *s = be_newstr(vm, kwords_tab[i]);
+        bstring *s = be_newstr(vm, token_strings[i]);
         be_gc_unfix(vm, gc_object(s));
     }
 }
@@ -156,14 +156,14 @@ static int is_octal(int c)
     return c >= '0' && c <= '7';
 }
 
-static int is_letter(int c)
+static int is_ident_start(int c)
 {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
 }
 
 static int is_word(int c)
 {
-    return is_letter(c) || is_digit(c);
+    return is_ident_start(c) || is_digit(c);
 }
 
 static int check_next(blexer *lexer, int c)
@@ -423,9 +423,9 @@ static btokentype scan_numeral(blexer *lexer)
     } else {
         type = scan_decimal(lexer);
     }
-    /* can't follow decimal or letter after numeral */
+    /* can't follow identifier start or decimal after numeral */
     if (lexer->cacheType == TokenNone) {
-        if (is_letter(lgetc(lexer)) || decimal_dots(lexer)) {
+        if (is_ident_start(lgetc(lexer)) || decimal_dots(lexer)) {
             be_lexerror(lexer, "malformed number");
         }
     }
@@ -699,6 +699,7 @@ static btokentype scan_string(blexer *lexer)
         while ((c = lgetc(lexer)) != EOS && (c != end)) {
             save(lexer);
             if (c == '\\') {
+                if (lgetc(lexer) == EOS) { c = EOS; break; }
                 save(lexer); /* skip '\\.' */
             }
         }
@@ -841,7 +842,7 @@ static btokentype lexer_next(blexer *lexer)
         case '5': case '6': case '7': case '8': case '9':
             return scan_numeral(lexer);
         default:
-            if (is_letter(lgetc(lexer))) {
+            if (is_ident_start(lgetc(lexer))) {
                 return scan_identifier(lexer);
             }
             be_lexerror(lexer, be_pushfstring(lexer->vm,
@@ -920,13 +921,13 @@ const char* be_token2str(bvm *vm, btoken *token)
     case TokenReal:
         return be_pushfstring(vm, "%g", token->u.r);
     default:
-        return kwords_tab[token->type];
+        return token_strings[token->type];
     }
 }
 
 const char* be_tokentype2str(btokentype type)
 {
-    return kwords_tab[type];
+    return token_strings[type];
 }
 
 #endif
