@@ -1850,7 +1850,7 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	name = miel_hvac_map_byval(set->power,
 		miel_hvac_power_map, nitems(miel_hvac_power_map));
 	if (name != NULL)
-		ResponseAppend_P(PSTR("\"" D_JSON_IRHVAC_POWER "\":\"%s\""), name);
+		ResponseAppend_P(PSTR("\"PowerState\":\"%s\""), name);
 
 	/* Mode */
 	name = miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK,
