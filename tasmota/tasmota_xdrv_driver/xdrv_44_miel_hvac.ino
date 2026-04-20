@@ -626,15 +626,15 @@ struct miel_hvac_capabilities
 	uint8_t  sc_caps_raw[16];      /* raw 0xC9 response data */
 
 	/* capability flags A (byte 7) */
-	bool     cap_heat;             /* heat mode available (inverted: bit 0x02) */
+	bool     cap_mode_heat;             /* heat mode available (inverted: bit 0x02) */
 	bool     cap_vane_v;           /* vertical vane support (bit 0x20) */
 	bool     cap_vane_swing;       /* vane swing support (bit 0x40) */
 
 	/* capability flags B (byte 8) */
-	bool     cap_dry;              /* dry mode available (inverted: bit 0x01) */
-	bool     cap_fan_mode;         /* fan-only mode available (inverted: bit 0x02) */
+	bool     cap_mode_dry;              /* dry mode available (inverted: bit 0x01) */
+	bool     cap_mode_fan;         /* fan-only mode available (inverted: bit 0x02) */
 	bool     cap_ext_temp;         /* extended temperature range (bit 0x04) */
-	bool     cap_auto_fan;         /* auto fan speed available (inverted: bit 0x10) */
+	bool     cap_fan_auto;         /* auto fan speed available (inverted: bit 0x10) */
 	bool     cap_installer;        /* installer function settings (bit 0x20) */
 
 	/* capability flags C (byte 9) */
@@ -661,6 +661,8 @@ struct miel_hvac_softc
 	bool sc_settings_set;
 	bool sc_connected;
 	bool sc_identified;            /* true once 0x5B 0xC9 has been sent */
+	bool sc_has_isee;              /* true once i-See widevane state observed */
+	bool sc_has_energy;            /* true once non-zero Power or Energy seen */
 
 	struct miel_hvac_data sc_settings;
 	struct miel_hvac_data sc_roomtemp;
@@ -1124,9 +1126,9 @@ miel_hvac_cmnd_setfanspeed(void)
 
 	if (sc->sc_caps.sc_caps_valid)
 	{
-		/* AUTO requires cap_auto_fan; QUIET needs 5 speeds; FAN_4 needs 4 speeds. */
+		/* AUTO requires cap_fan_auto; QUIET needs 5 speeds; FAN_4 needs 4 speeds. */
 		uint8_t fan_count = miel_hvac_get_fan_count(sc);
-		if (e->byte == MIEL_HVAC_SETTINGS_FAN_AUTO && !sc->sc_caps.cap_auto_fan)
+		if (e->byte == MIEL_HVAC_SETTINGS_FAN_AUTO && !sc->sc_caps.cap_fan_auto)
 		{
 			miel_hvac_respond_not_supported();
 			return;
@@ -1175,17 +1177,17 @@ miel_hvac_cmnd_setmode(void)
 	if (sc->sc_caps.sc_caps_valid)
 	{
 		uint8_t mode = e->byte & MIEL_HVAC_SETTINGS_MODE_MASK;
-		if (mode == MIEL_HVAC_SETTINGS_MODE_HEAT && !sc->sc_caps.cap_heat)
+		if (mode == MIEL_HVAC_SETTINGS_MODE_HEAT && !sc->sc_caps.cap_mode_heat)
 		{
 			miel_hvac_respond_not_supported();
 			return;
 		}
-		if (mode == MIEL_HVAC_SETTINGS_MODE_DRY && !sc->sc_caps.cap_dry)
+		if (mode == MIEL_HVAC_SETTINGS_MODE_DRY && !sc->sc_caps.cap_mode_dry)
 		{
 			miel_hvac_respond_not_supported();
 			return;
 		}
-		if (mode == MIEL_HVAC_SETTINGS_MODE_FAN && !sc->sc_caps.cap_fan_mode)
+		if (mode == MIEL_HVAC_SETTINGS_MODE_FAN && !sc->sc_caps.cap_mode_fan)
 		{
 			miel_hvac_respond_not_supported();
 			return;
@@ -1231,17 +1233,17 @@ miel_hvac_cmnd_sethamode(void)
 	if (sc->sc_caps.sc_caps_valid)
 	{
 		uint8_t mode = e->byte & MIEL_HVAC_SETTINGS_MODE_MASK;
-		if (mode == MIEL_HVAC_SETTINGS_MODE_HEAT && !sc->sc_caps.cap_heat)
+		if (mode == MIEL_HVAC_SETTINGS_MODE_HEAT && !sc->sc_caps.cap_mode_heat)
 		{
 			miel_hvac_respond_not_supported();
 			return;
 		}
-		if (mode == MIEL_HVAC_SETTINGS_MODE_DRY && !sc->sc_caps.cap_dry)
+		if (mode == MIEL_HVAC_SETTINGS_MODE_DRY && !sc->sc_caps.cap_mode_dry)
 		{
 			miel_hvac_respond_not_supported();
 			return;
 		}
-		if (mode == MIEL_HVAC_SETTINGS_MODE_FAN && !sc->sc_caps.cap_fan_mode)
+		if (mode == MIEL_HVAC_SETTINGS_MODE_FAN && !sc->sc_caps.cap_mode_fan)
 		{
 			miel_hvac_respond_not_supported();
 			return;
@@ -1700,16 +1702,16 @@ miel_hvac_input_identify(struct miel_hvac_softc *sc,
 
 	/* flags_a = byte 7 */
 	uint8_t fa = d[7];
-	caps->cap_heat      = !(fa & 0x02);  /* inverted */
+	caps->cap_mode_heat      = !(fa & 0x02);  /* inverted */
 	caps->cap_vane_v    = (fa & 0x20) != 0;
 	caps->cap_vane_swing= (fa & 0x40) != 0;
 
 	/* flags_b = byte 8 */
 	uint8_t fb = d[8];
-	caps->cap_dry       = !(fb & 0x01);  /* inverted */
-	caps->cap_fan_mode  = !(fb & 0x02);  /* inverted */
+	caps->cap_mode_dry       = !(fb & 0x01);  /* inverted */
+	caps->cap_mode_fan  = !(fb & 0x02);  /* inverted */
 	caps->cap_ext_temp  = (fb & 0x04) != 0;
-	caps->cap_auto_fan  = !(fb & 0x10);  /* inverted */
+	caps->cap_fan_auto  = !(fb & 0x10);  /* inverted */
 	caps->cap_installer = (fb & 0x20) != 0;
 
 	/* flags_c = byte 9 */
@@ -1733,11 +1735,11 @@ miel_hvac_input_identify(struct miel_hvac_softc *sc,
 	caps->sc_caps_valid = true;
 
 	AddLog(LOG_LEVEL_INFO, PSTR(MIEL_HVAC_LOGNAME
-		": capabilities: heat=%d dry=%d fan=%d vane_v=%d swing=%d "
-		"ext_temp=%d auto_fan=%d outdoor=%d run_state=%d"),
-		caps->cap_heat, caps->cap_dry, caps->cap_fan_mode,
+		": capabilities: mode_heat=%d mode_dry=%d mode_fan=%d vane_v=%d swing=%d "
+		"ext_temp=%d fan_auto=%d outdoor_temp=%d run_state=%d"),
+		caps->cap_mode_heat, caps->cap_mode_dry, caps->cap_mode_fan,
 		caps->cap_vane_v, caps->cap_vane_swing, caps->cap_ext_temp,
-		caps->cap_auto_fan, caps->cap_outdoor_temp, caps->cap_run_state);
+		caps->cap_fan_auto, caps->cap_outdoor_temp, caps->cap_run_state);
 
 	/* raw packet bytes */
 	AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME ": capabilities hex %s"),
@@ -1848,13 +1850,19 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
 
-	/* Air direction — read from 0x62 0x02 byte 14 */
-	name = widevane_isee
-		? miel_hvac_map_byval(set->airdirection,
-			miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map))
-		: "off";
-	if (name != NULL)
-		ResponseAppend_P(PSTR(",\"AirDirection\":\"%s\""), name);
+	/* Air direction — only reported when the unit has both a vertical vane
+	 * and an observed i-See sensor. Without i-See the direction value is
+	 * meaningless regardless of whether vaneV is present. */
+	if (!sc->sc_caps.sc_caps_valid
+	    || (sc->sc_caps.cap_vane_v && sc->sc_has_isee))
+	{
+		name = widevane_isee
+			? miel_hvac_map_byval(set->airdirection,
+				miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map))
+			: "off";
+		if (name != NULL)
+			ResponseAppend_P(PSTR(",\"AirDirection\":\"%s\""), name);
+	}
 
 	/* Prohibit */
 	name = miel_hvac_map_byval(set->prohibit,
@@ -1921,6 +1929,11 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	if (bitRead(TasmotaGlobal.power, sc->sc_device) != !!state)
 		ExecuteCommandPower(sc->sc_device, state, SRC_SWITCH);
 
+	/* Detect presence of i-See sensor from widevane bit 0x80 or the
+	 * two known i-See-active non-0x80 values. Once set, stays set. */
+	if ((set->widevane & 0x80) || set->widevane == 0x28 || set->widevane == 0xaa)
+		sc->sc_has_isee = true;
+
 	publish = (sc->sc_settings_set == 0)
 	       || (memcmp(d, &sc->sc_settings, sizeof(sc->sc_settings)) != 0);
 	sc->sc_settings_set = 1;
@@ -1979,6 +1992,18 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 		break;
 	case MIEL_HVAC_DATA_T_STATUS:
 		miel_hvac_input_sensor(sc, &sc->sc_status, d);
+		/* Mark energy metering as supported once we see any non-zero
+		 * power or energy value. Units that never report these will
+		 * keep the flag false and the ENERGY sub-object stays hidden. */
+		{
+			const struct miel_hvac_data_status *st = &d->data.status;
+			uint16_t p = ((uint16_t)st->operationpower << 8)
+			           | (uint16_t)st->operationpower1;
+			uint16_t e = ((uint16_t)st->operationenergy << 8)
+			           | (uint16_t)st->operationenergy1;
+			if (p != 0 || e != 0)
+				sc->sc_has_energy = true;
+		}
 		break;
 	case MIEL_HVAC_DATA_T_STAGE:
 		miel_hvac_input_sensor(sc, &sc->sc_stage, d);
@@ -2179,17 +2204,21 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		utoa(status->compressorfrequency, buf, 10);
 		ResponseAppend_P(PSTR(",\"CompressorFrequency\":%s"), buf);
 
-		uint16_t combined_power =
-			((uint16_t)status->operationpower << 8) |
-			 (uint16_t)status->operationpower1;
-		dtostrfd((float)combined_power, 0, buf);
-		ResponseAppend_P(PSTR(",\"PowerUsage\":%s"), buf);
+		/* Power / Energy — only when the unit reports energy metering. */
+		if (sc->sc_has_energy)
+		{
+			uint16_t combined_power =
+				((uint16_t)status->operationpower << 8) |
+				 (uint16_t)status->operationpower1;
+			dtostrfd((float)combined_power, 0, buf);
+			ResponseAppend_P(PSTR(",\"Power\":%s"), buf);
 
-		uint16_t combined_energy =
-			((uint16_t)status->operationenergy << 8) |
-			 (uint16_t)status->operationenergy1;
-		dtostrfd((float)combined_energy / 10.0f, 1, buf);
-		ResponseAppend_P(PSTR(",\"EnergyUsage\":%s"), buf);
+			uint16_t combined_energy =
+				((uint16_t)status->operationenergy << 8) |
+				 (uint16_t)status->operationenergy1;
+			dtostrfd((float)combined_energy / 10.0f, 1, buf);
+			ResponseAppend_P(PSTR(",\"Energy\":%s"), buf);
+		}
 
 		ResponseAppend_P(PSTR(",\"StatusHex\":\"%s\""),
 			ToHex_P((uint8_t *)&sc->sc_status,
@@ -2259,34 +2288,38 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		char hex_caps[(16 + 1) * 2];
 
 		ResponseAppend_P(PSTR(","
-			"\"HeatSupported\":\"%s\","
-			"\"DrySupported\":\"%s\","
-			"\"FanSupported\":\"%s\","
+			"\"ModeHeatSupported\":\"%s\","
+			"\"ModeDrySupported\":\"%s\","
+			"\"ModeFanSupported\":\"%s\","
 			"\"VaneVSupported\":\"%s\","
 			"\"SwingSupported\":\"%s\","
-			"\"AutoFanSupported\":\"%s\","
-			"\"OutdoorTempSupported\":\"%s\","
+			"\"FanAutoSupported\":\"%s\","
+			"\"OutdoorTemperatureSupported\":\"%s\","
 			"\"AirDirectionSupported\":\"%s\","
 			"\"PurifierSupported\":\"%s\","
 			"\"NightModeSupported\":\"%s\","
 			"\"EconoCoolSupported\":\"%s\""),
-			caps->cap_heat         ? "on" : "off",
-			caps->cap_dry          ? "on" : "off",
-			caps->cap_fan_mode     ? "on" : "off",
+			caps->cap_mode_heat    ? "on" : "off",
+			caps->cap_mode_dry     ? "on" : "off",
+			caps->cap_mode_fan     ? "on" : "off",
 			caps->cap_vane_v       ? "on" : "off",
 			caps->cap_vane_swing   ? "on" : "off",
-			caps->cap_auto_fan     ? "on" : "off",
+			caps->cap_fan_auto     ? "on" : "off",
 			caps->cap_outdoor_temp ? "on" : "off",
-			caps->cap_run_state    ? "on" : "control_not_supported",
+			/* AirDirection requires a vertical vane, an observed i-See
+			 * sensor (widevane 0x80/0x28/0xaa seen at least once), and
+			 * 0x08 Set Run State for control. */
+			(!caps->cap_vane_v || !sc->sc_has_isee) ? "not_supported"
+			  : (caps->cap_run_state ? "on" : "control_not_supported"),
 			caps->cap_run_state    ? "on" : "not_supported",
 			caps->cap_run_state    ? "on" : "not_supported",
 			caps->cap_run_state    ? "on" : "not_supported");
 
 		if (caps->cap_temp_ranges)
 		{
-			ResponseAppend_P(PSTR(",\"TempCool\":[%.1f,%.1f]"
-				",\"TempHeat\":[%.1f,%.1f]"
-				",\"TempAuto\":[%.1f,%.1f]"),
+			ResponseAppend_P(PSTR(",\"SetTemperatureCoolMinMax\":[%.1f,%.1f]"
+				",\"SetTemperatureHeatMinMax\":[%.1f,%.1f]"
+				",\"SetTemperatureAutoMinMax\":[%.1f,%.1f]"),
 				(caps->temp_cool_min - 128) / 2.0f,
 				(caps->temp_cool_max - 128) / 2.0f,
 				(caps->temp_heat_min - 128) / 2.0f,
@@ -2301,8 +2334,9 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 	ResponseAppend_P(PSTR("}"));
 
-	/* ENERGY sub-object: Power (W) and Total (kWh). */
-	if (sc->sc_status.type != 0)
+	/* ENERGY sub-object: Power (W) and Total (kWh).
+	 * Only published when non-zero values have been observed at least once. */
+	if (sc->sc_status.type != 0 && sc->sc_has_energy)
 	{
 		const struct miel_hvac_data_status *status =
 			&sc->sc_status.data.status;
@@ -2321,6 +2355,36 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL "\":%s}"), buf);
 	}
 }
+
+#ifdef USE_WEBSERVER
+/*
+ * Web UI sensor display — shows instantaneous Power (W) and cumulative
+ * Total energy (kWh) rows on the Tasmota main page, matching how other
+ * energy drivers render their values.
+ */
+static void
+miel_hvac_web_sensor(struct miel_hvac_softc *sc)
+{
+	if (sc->sc_status.type == 0 || !sc->sc_has_energy)
+		return;
+
+	const struct miel_hvac_data_status *status =
+		&sc->sc_status.data.status;
+	char buf[33];
+
+	uint16_t combined_power =
+		((uint16_t)status->operationpower << 8) |
+		 (uint16_t)status->operationpower1;
+	dtostrfd((float)combined_power, 0, buf);
+	WSContentSend_PD(PSTR("{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"), buf);
+
+	uint16_t combined_energy =
+		((uint16_t)status->operationenergy << 8) |
+		 (uint16_t)status->operationenergy1;
+	dtostrfd((float)combined_energy / 10.0f, 1, buf);
+	WSContentSend_PD(PSTR("{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}"), buf);
+}
+#endif  /* USE_WEBSERVER */
 
 /*
  * Connection negotiation: try 2400 baud then 9600 baud, sending a connect
@@ -2565,6 +2629,11 @@ bool Xdrv44(uint32_t function)
 	case FUNC_JSON_APPEND:
 		miel_hvac_sensor(sc);
 		break;
+#ifdef USE_WEBSERVER
+	case FUNC_WEB_SENSOR:
+		miel_hvac_web_sensor(sc);
+		break;
+#endif
 	case FUNC_AFTER_TELEPERIOD:
 		if (sc->sc_settings_set)
 			miel_hvac_publish_settings(sc);
