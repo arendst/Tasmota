@@ -162,7 +162,7 @@ jobs:
           uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/upload-artifact@v8
+        uses: actions/download-artifact@v7
         with:
           pattern: tasmota32*
           path: ./temp
@@ -213,7 +213,7 @@ jobs:
           uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/upload-artifact@v8
+        uses: actions/download-artifact@v7
         with:
           pattern: tasmota32*
           path: ./temp
