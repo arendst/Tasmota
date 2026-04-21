@@ -185,7 +185,7 @@ class AudioEncoderOpusWebm : public AudioEncoder
       if (len > 2) // ignore packets shorter than or equal to 2 bytes.
       {
         if(!muxerSegment.AddFrame(outFrame, len, trackNumber, timeCode, true)){
-          return -1;
+          return -2;
         }
       }
       timeCode += 20000 * 1000; // 20 ms in nanoseconds
@@ -316,7 +316,7 @@ void I2sMicTask(void *arg){
 
     if (audio_i2s.Settings->sys.full_duplex) { // if we initiated with 2 channels for TX!! TODO: make it bullteproof for any duplex configuration
       i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)stereo_buf,
-                      mic_enc->byteSize * 2, &bytes_read, pdMS_TO_TICKS(1));
+                      mic_enc->byteSize * 2, &bytes_read, pdMS_TO_TICKS(timeForOneRead));
       // decimate: extract left channel into encoder's mono buffer
       for (size_t i = 0; i < mic_enc->samplesPerPass; i++) {
         mic_enc->inBuffer[i] = stereo_buf[(i * 2)];
@@ -324,7 +324,7 @@ void I2sMicTask(void *arg){
       bytes_read /= 2;
     } else {
       i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)mic_enc->inBuffer,
-                      mic_enc->byteSize, &bytes_read, pdMS_TO_TICKS(1));
+                      mic_enc->byteSize, &bytes_read, pdMS_TO_TICKS(timeForOneRead));
     }
 
     if (gain > 1) {
@@ -350,7 +350,7 @@ void I2sMicTask(void *arg){
     }
 
     audio_i2s_mp3.recdur = TasmotaGlobal.uptime - ctime;
-    vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(timeForOneRead));
+    xTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(timeForOneRead));
   }
 
   written = mic_enc->stop();
@@ -435,7 +435,7 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
   audio_i2s.in->SetRxRate(rec_rate);
 
   audio_i2s.in->startRx();
-  err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
+  err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 20, &audio_i2s_mp3.mic_task_handle, 1);
   return err;
 }
 

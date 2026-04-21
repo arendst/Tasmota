@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LCD multi I2C bus support
 - I2S full duplex, auto rx sample rate [#24469](https://github.com/arendst/Tasmota/issues/24469)
 - Sen5x power on delay of 60ms [#24452](https://github.com/arendst/Tasmota/issues/24452)
+- Berry solidification is now part of the build system [#24664](https://github.com/arendst/Tasmota/issues/24664)
 - Berry add `loglevel` to `mqtt.publish()` [#24551](https://github.com/arendst/Tasmota/issues/24551)
 
 ### Breaking Changed
@@ -146,6 +147,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - SHT1x software reset I2C bus after initial (un)detection
 - NeoPool always output valid sensitive data [#24573](https://github.com/arendst/Tasmota/issues/24573)
 - SML suppress MQTT publish until valid meter data received [#24587](https://github.com/arendst/Tasmota/issues/24587)
+- Berry faster compilation [#24656](https://github.com/arendst/Tasmota/issues/24656)
 - Matter improved parameters handling [#24471](https://github.com/arendst/Tasmota/issues/24471)
 
 ### Fixed
@@ -154,8 +156,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Don't send extraneous `0\r\n\r\n` with non-chunked HTTP/1.0 [#24518](https://github.com/arendst/Tasmota/issues/24518)
 - Shelly Dimmer 2 serial timeout regression from v15.2.0.1 [#24560](https://github.com/arendst/Tasmota/issues/24560)
 - NeoPool possible IntegerDivideByZero [#24578](https://github.com/arendst/Tasmota/issues/24578)
+- Mitsubishi Electric HVAC memory leak and other issues for MiElHVAC [#24660](https://github.com/arendst/Tasmota/issues/24660)
 - File upload improvements: `/ufsu` api mode, no interrupts disabling, cleaner confirmation page [#24521](https://github.com/arendst/Tasmota/issues/24521)
 - Do not free BT memory when in use [#24480](https://github.com/arendst/Tasmota/issues/24480)
+- I2S mkv muxing for files [#24666](https://github.com/arendst/Tasmota/issues/24666)
 - Berry avoid `tasmota.wifi()` returning bad values when wifi is turned off [#24505](https://github.com/arendst/Tasmota/issues/24505)
 - Berry crash when comparing for equality float literals on ESP32 [#24610](https://github.com/arendst/Tasmota/issues/24610)
 

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.3.0.4]
 ### Added
+- Berry solidification is now part of the build system (#24664)
 
 ### Breaking Changed
 
@@ -12,9 +13,11 @@ All notable changes to this project will be documented in this file.
 - ESP8266 platform update from 2026.03.00 to 2026.04.00 (#24635)
 - ESP32 Platform from 2025.03.30 to 2026.04.30, Framework (Arduino Core) from v3.1.10 to v3.1.11 and IDF from v5.3.4.251226 to v5.3.4.260127 (#24635)
 - ESP32-C5/C6/P4 Platform from 2025.03.50 to 2026.04.50, Framework (Arduino Core) from v3.3.7 to v3.3.8 and IDF from v5.5.3+ to v5.5.4.260407 (#24635)
-- Berry faster compilation
+- Berry faster compilation (#24656)
 
 ### Fixed
+- Mitsubishi Electric HVAC memory leak and other issues for MiElHVAC (#24660)
+- I2S mkv muxing for files (#24666)
 
 ### Removed
 

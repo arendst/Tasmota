@@ -140,7 +140,7 @@ cleanFolder() # always clean up this folder
 try:
     files = env.GetProjectOption("custom_berry_solidify")
 except:
-    print("Nothing more to solidify")
+    pass  # no custom Berry files to solidify - common case, no need to log
 else:
     if env.IsCleanTarget() == False:
         BERRY_EXECUTABLE = ensureBerry()

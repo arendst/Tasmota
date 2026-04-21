@@ -15,72 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  be_solidify:
-    runs-on: ubuntu-latest
-    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-
-      - name: Make Berry and Solidify code
-        run: |
-          cd lib/libesp32/berry
-          make
-          cd ../berry_tasmota
-          ../berry/berry -s -g solidify_all.be
-          cd ../berry_matter
-          ../berry/berry -s -g solidify_all.be
-          cd ../berry_animation
-          ../berry/berry -s -g solidify_all.be
-          cd ../../libesp32_lvgl/lv_binding_berry
-          ../../libesp32/berry/berry -s -g solidify_all.be
-          cd ../lv_haspmota
-          ../../libesp32/berry/berry -s -g solidify_all.be
-      - uses: actions/upload-artifact@v4
-        with:
-          name: berry
-          path: |
-            ./lib/libesp32/berry_tasmota/src/solidify
-            ./lib/libesp32/berry_matter/src/solidify
-            ./lib/libesp32/berry_animation/src/solidify
-            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
-            ./lib/libesp32_lvgl/lv_haspmota/src/solidify
-            ./lib/libesp32/berry/generate
-
-  push_solidified:
-    needs: be_solidify
-    runs-on: ubuntu-latest
-    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: berry
-          path: berry
-      - name: Move solidified Berry files back
-        run: |
-          ls -R ./berry
-          mv berry/berry/libesp32/berry_tasmota/src/solidify/* ./lib/libesp32/berry_tasmota/src/solidify
-          mv berry/berry/libesp32/berry_matter/src/solidify/* ./lib/libesp32/berry_matter/src/solidify
-          mv berry/berry/libesp32/berry_animation/src/solidify/* ./lib/libesp32/berry_animation/src/solidify
-          mv berry/berry/libesp32_lvgl/lv_binding_berry/src/solidify/* ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
-          mv berry/berry/libesp32_lvgl/lv_haspmota/src/solidify/* ./lib/libesp32_lvgl/lv_haspmota/src/solidify
-          mv berry/berry/libesp32/berry/generate/* ./lib/libesp32/berry/generate
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Solidified Code updated
-
   safeboot-images:
-    needs: push_solidified
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
@@ -130,13 +65,12 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }} 
       - name: Upload safeboot firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}
           path: ./build_output
 
   base-images:
-    needs: push_solidified
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
@@ -180,7 +114,7 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}
           path: ./build_output
@@ -228,7 +162,7 @@ jobs:
           uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: tasmota32*
           path: ./temp
@@ -247,19 +181,57 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}
           path: ./build_output
 
   language-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: development
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
+      - name: Install dependencies
+        run: |
+          uv pip install --system pioarduino
+      - name: Add SHA to footer
+        run: |
+          COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
+          SHA=${COMMIT_SHA_LONG::7}
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT $SHA-/g" ./tasmota/include/tasmota_version.h
+      - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e tasmota-${{ matrix.language }}
+      - name: Upload language firmware artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: tasmota-${{ matrix.language }}
+          path: ./build_output
+
+  language32-images:
     needs: safeboot-images
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
     strategy:
       matrix:
-        variant: [ tasmota, tasmota32 ]
         language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v6
@@ -279,7 +251,7 @@ jobs:
           uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: tasmota32*
           path: ./temp
@@ -296,15 +268,15 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
           PYTHONUTF8: '1'
-        run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
+        run: platformio run -e tasmota32-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.variant }}-${{ matrix.language }}
+          name: tasmota32-${{ matrix.language }}
           path: ./build_output
 
   Start_final_copy:
-    needs: [base-images, base32-images, language-images]
+    needs: [base-images, base32-images, language-images, language32-images]
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
