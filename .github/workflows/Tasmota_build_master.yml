@@ -182,13 +182,49 @@ jobs:
           path: ./build_output
 
   language-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+          enable-cache: false
+      - name: Install dependencies
+        run: |
+          uv pip install --system pioarduino
+      - name: Add "release" to footer
+        run: |
+          sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
+      - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e tasmota-${{ matrix.language }}
+      - name: Upload language firmware artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: tasmota-${{ matrix.language }}
+          path: ./build_output
+
+  language32-images:
     needs: safeboot-images
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
     strategy:
       matrix:
-        variant: [ tasmota, tasmota32 ]
         language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v6
@@ -223,15 +259,15 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
           PYTHONUTF8: '1'
-        run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
+        run: platformio run -e tasmota32-${{ matrix.language }}
       - name: Upload language firmware artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.variant }}-${{ matrix.language }}
+          name: tasmota32-${{ matrix.language }}
           path: ./build_output
 
   Release:
-    needs: [base-images, base32-images, language-images]
+    needs: [base-images, base32-images, language-images, language32-images]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
