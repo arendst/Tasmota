@@ -70,7 +70,7 @@ int32 MkvWriter::Position(int64 position) {
   if (!file_ || use_write_cb_)
     return -1;
 
-  return file_->seek(position);
+  return file_->seek(position) ? 0 : -1;
 
 // #ifdef _MSC_VER
 //   return _fseeki64(file_, position, SEEK_SET);
