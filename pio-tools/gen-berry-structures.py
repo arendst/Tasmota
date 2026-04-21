@@ -43,6 +43,11 @@ else:
     solidify_env["PYTHONPATH"] = (
         BERRY_PORT_DIR + (os.pathsep + existing_pp if existing_pp else "")
     )
+    # Force UTF-8 mode (PEP 540) so Python uses UTF-8 for open()/stdio
+    # regardless of the host locale. This is required on Windows where the
+    # default code page (e.g. cp1252) otherwise fails to read some Berry
+    # source files (notably in lib/libesp32/berry_animation).
+    solidify_env["PYTHONUTF8"] = "1"
 
     for solidify_dir in SOLIDIFY_DIRS:
         script = join(solidify_dir, "solidify_all_python.be")
