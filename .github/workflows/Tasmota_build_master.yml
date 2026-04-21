@@ -63,7 +63,7 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}
           path: ./build_output
@@ -111,7 +111,7 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}
           path: ./build_output
@@ -159,7 +159,7 @@ jobs:
           uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: actions/upload-artifact@v8
         with:
           pattern: tasmota32*
           path: ./temp
@@ -176,7 +176,7 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}
           path: ./build_output
@@ -208,7 +208,7 @@ jobs:
           uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: actions/download-artifact@v4
+        uses: actions/upload-artifact@v8
         with:
           pattern: tasmota32*
           path: ./temp
@@ -225,7 +225,7 @@ jobs:
           PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant }}-${{ matrix.language }}
           path: ./build_output
@@ -237,7 +237,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Download all Tasmota artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/upload-artifact@v8
       with:
         pattern: tasmota*
         path: ./temp
