@@ -5,7 +5,11 @@
 
 # Templates
 
-Find below the available templates as of December 2025. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of April 2026. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+
+## 
+```
+```
 
 ## Adapter Board
 ```
@@ -26,7 +30,6 @@ Kogan 5-Stage 3S             {"NAME":"Kogan Air Purifier 3S","GPIO":[0,2272,0,23
 ## Air Quality Sensor
 ```
 AirGradient Pro Version DIY  {"NAME":"AirGradient Pro","GPIO":[1600,1,1632,0,640,608,1,1,1664,1,1696,1,1,1],"FLAG":0,"BASE":18}
-IoTorero CO2 Sensor          {"NAME":"IoTorero SCD40 Sensor","GPIO":[0,0,0,0,0,0,0,0,608,32,640,0,0,0,0,0,0,0,0,0,0,1376],"FLAG":0,"BASE":1}
 Tuya PM Box                  {"NAME":"PM Box","GPIO":[1,1,1,1,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 99,91 | TuyaMCU 71,2 | TuyaMCU 73,3 | HumRes 1 | TempRes 1 "}
 ```
 
@@ -187,6 +190,7 @@ LE lampUX 15W RGBCCT         {"NAME":"LE lampUX 15W","GPIO":[0,0,0,0,416,419,0,0
 LightZone MeLiTec            {"NAME":"LightZone MeLiTec D114 Light ","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Lohas ZN026CL10 RGBCCT       {"NAME":"Lohas LED Lamp","GPIO":[0,0,0,0,417,416,0,0,419,418,420,0,0,0],"FLAG":0,"BASE":18}
 LOLAsmart Uranus White 70 cm  {"NAME":"lola smart","GPIO":[0,0,0,1088,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
+LSC 20W 1400lm White Ambiance  {"NAME":"LSC RGBCW LED","GPIO":[0,0,0,0,0,0,0,0,4065,0,4032,0,0,0],"FLAG":0,"BASE":18}
 Luminea 24W CCT              {"NAME":"Luminea NX6205-944","GPIO":[0,0,0,0,0,0,0,0,449,0,416,0,0,0],"FLAG":0,"BASE":48}
 LVL 300mm Round              {"NAME":"LVL 300m Round 24W Ceiling LED","GPIO":[0,0,0,0,0,416,0,0,0,449,0,0,0,0],"FLAG":0,"BASE":48}
 Nedis CCT 800lm              {"NAME":"NEDIS WIFILAW10WT","GPIO":[0,0,0,0,0,0,0,0,417,0,416,0,0,0],"FLAG":0,"BASE":18}
@@ -404,6 +408,7 @@ Shelly Vintage 4W 260lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 SmartDGM 9W 806lm            {"NAME":"L-WB9W1","GPIO":[0,0,0,0,0,416,0,0,160,0,0,0,0,0],"FLAG":0,"BASE":18}
+Smitch 10W 6500K             {"NAME":"Smitch SB0110 CCT","GPIO":[0,0,0,0,0,416,0,417,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Smitch 10W 6500K             {"NAME":"Smitch 10W 6500K Dimmable Bulb (SB0110 - E27)","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":1}
 TCP Smart 806lm Warm White   {"NAME":"TCP Smart Clas","GPIO":[0,0,0,0,0,0,0,0,0,416,0,0,0,0],"FLAG":0,"BASE":1}
 TCP Smart 810lm Filament     {"NAME":"TCP Filament","GPIO":[0,0,0,0,0,0,0,0,0,0,448,0,0,0],"FLAG":0,"BASE":18}
@@ -697,7 +702,6 @@ Electrodragon ESP LED Strip Board, Mosfet Drive  {"NAME":"LEDBoard RGBW","GPIO":
 H801                         {"NAME":"H801","GPIO":[1,288,1,1,420,321,0,0,418,417,419,416,0,0],"FLAG":0,"BASE":20}
 Hama Adapter and RGB         {"NAME":"HAMA LED-Strip WLAN-Controller","GPIO":[0,0,0,0,417,419,0,0,0,416,418,0,0,0],"FLAG":0,"BASE":18}
 Holman Garden Light RGB      {"NAME":"Holman RGB","GPIO":[0,0,0,0,0,0,0,0,417,416,418,0,0,0],"FLAG":0,"BASE":18}
-IoTorero PWM RGBCCT & Addressable Dul Mode Strip Controller  {"NAME":"IoTorero RGBCW Controller","GPIO":[0,0,0,418,419,416,417,420,576,32,1088,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 Jinvoo SM-WA104 RGB          {"NAME":"Jinvoo LED Controller","GPIO":[0,0,0,0,256,418,0,0,416,32,417,0,257,0],"FLAG":0,"BASE":18}
 Konesky 12V RGB              {"NAME":"RGBwifi","GPIO":[0,0,0,0,416,0,0,0,417,320,418,0,0,0],"FLAG":0,"BASE":18}
 LEDEnet                      {"NAME":"LEDEnet","GPIO":[0,1,320,1,3136,420,0,0,417,418,416,419,0,0],"FLAG":0,"BASE":34}
@@ -993,7 +997,7 @@ Merkury                      {"NAME":"Merkury Switch","GPIO":[0,0,0,0,32,0,0,0,0
 Meross MSS620 16A IP44       {"NAME":"MSS620","GPIO":[0,320,0,320,225,0,0,0,224,576,32,0,0,0],"FLAG":0,"BASE":18}
 Minoston MP22W               {"NAME":"Minoston MP22W","GPIO":[0,0,0,0,320,0,0,0,224,64,0,0,0,0],"FLAG":0,"BASE":18}
 Nedis PO120 IP44             {"NAME":"WIFIPO120FWT","GPIO":[32,0,0,0,2688,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":49}
-Nous A6T Smart Socket        {"NAME":"NOUS A5T","GPIO":[0,3072,544,3104,0,259,0,0,225,226,224,0,35,4704],"FLAG":1,"BASE":18}
+Nous A6T Smart Socket        {"NAME":"Nous A6T","GPIO":[1,1,320,1,32,1,1,1,1,224,2624,1,1,1,1,1,0,1,1,1,0,1,2656,2720,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 Nous Dual Smart Socket       {"NAME":"NOUS A4T","GPIO":[0,2624,0,576,2656,2720,0,0,224,225,32,0,0,0],"FLAG":0,"BASE":18}
 Obi Stecker IP44             {"NAME":"OBI-Outdoor-Socket2","GPIO":[0,0,0,0,224,32,0,0,576,288,1,1,1,1],"FLAG":0,"BASE":18}
 Oittm IP44 15A               {"NAME":"Oittm Outdoor","GPIO":[576,0,320,0,2688,2656,0,0,224,2592,0,0,0,0],"FLAG":0,"BASE":57}
@@ -1079,7 +1083,6 @@ Arlec Twin Socket with Energy Meter  {"NAME":"Arlec PC287HA","GPIO":[0,32,0,320,
 Athom 16A                    {"NAME":"Athom Power Monitoring Plug","GPIO":[0,0,0,32,2720,2656,0,0,2624,544,224,0,0,1],"FLAG":0,"BASE":18}
 Athom 16A AU                 {"NAME":"Athom PG05-AU16A","GPIO":[0,0,0,32,2720,2656,0,0,2624,544,224,0,0,0],"FLAG":0,"BASE":1}
 Athom 16A AU                 {"NAME":"Athom Plug V2","GPIO":[0,0,0,3104,0,32,0,0,224,576,0,0,0,0],"FLAG":0,"BASE":18}
-Athom 16A AU V3              {"NAME":"Athom Plug V3","GPIO":[0,0,0,32,0,224,576,0,0,0,0,0,0,0,0,0,0,0,0,0,3104,0],"FLAG":0,"BASE":1}
 Athom 16A BR V2              {"NAME":"Athom Plug V2","GPIO":[0,0,0,3104,0,32,0,0,224,576,0,0,0,0],"FLAG":0,"BASE":18}
 Athom 16A Brazil             {"NAME":"Athom PG05-BR16A","GPIO":[0,0,0,32,2720,2656,0,0,2624,544,224,0,0,0],"FLAG":0,"BASE":1}
 Athom 16A EU V2              {"NAME":"Athom Plug V2","GPIO":[0,0,0,3104,0,32,0,0,224,576,0,0,0,0],"FLAG":0,"BASE":18}
@@ -1089,10 +1092,8 @@ Athom 16A Italy              {"NAME":"Athom PG05-IT16A","GPIO":[0,0,0,32,2720,26
 Athom 16A Switzerland v2     {"NAME":"Athom Plug V2","GPIO":[0,0,0,3104,0,32,0,0,224,576,0,0,0,0],"FLAG":0,"BASE":18}
 Athom 16A UK                 {"NAME":"Athom PG04-UK16A","GPIO":[0,0,0,32,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":18}
 Athom 16A UK V2              {"NAME":"Athom Plug V2","GPIO":[0,0,0,3104,0,32,0,0,224,576,0,0,0,0],"FLAG":0,"BASE":18}
-Athom 16A UK V3              {"NAME":"Athom Plug V3","GPIO":[0,0,0,32,0,224,576,0,0,0,0,0,0,0,0,0,0,0,0,0,3104,0],"FLAG":0,"BASE":1}
 Athom 16A US                 {"NAME":"Athom PG03-US16A","GPIO":[0,0,0,32,2720,2656,0,0,2624,288,224,0,0,0],"FLAG":0,"BASE":18}
 Athom 16A US V2              {"NAME":"Athom Plug V2","GPIO":[0,0,0,3104,0,32,0,0,224,576,0,0,0,0],"FLAG":0,"BASE":18}
-Athom 16A US V3              {"NAME":"Athom Plug V3","GPIO":[0,0,0,32,0,224,576,0,0,0,0,0,0,0,0,0,0,0,0,0,3104,0],"FLAG":0,"BASE":1}
 Atlantis                     {"NAME":"Atlantis Smart Plug","GPIO":[32,0,0,0,2720,2656,0,0,2624,544,224,0,0,0],"FLAG":0,"BASE":18}
 Atomi AT1217                 {"NAME":"AT1217","GPIO":[0,0,0,0,320,321,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 Aubess 16A                   {"NAME":"Aubess 16A Power Monitoring Plug","GPIO":[0,32,0,0,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":18}
@@ -2327,7 +2328,7 @@ KRIDA 8 Channel 10A Electromagnetic  {"NAME":"8CH Relay","GPIO":[230,1,231,229,1
 LC Technology 12V 4 Channel  {"NAME":"LC Technology 4CH Relay","GPIO":[224,0,225,0,226,227,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 LC Technology 5V 2 Channel   {"NAME":"LC-ESP01-2R-5V","GPIO":[0,3200,0,3232,0,0,0,0,224,225,0,0,0,0],"FLAG":0,"BASE":18}
 LC Technology 5V 4 Channel   {"NAME":"LC-Tech_4CH ","GPIO":[288,1,32,1,0,0,0,0,224,225,226,227,0,0],"FLAG":0,"BASE":18}
-LC Technology 5V/7-30V 8 Channel  {"NAME":"ESP32_Relay_X8","GPIO":[0,0,0,0,0,0,0,0,225,224,226,0,0,0,0,0,0,0,0,0,0,229,228,227,0,0,0,0,231,230,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+LC Technology 5V/7-30V 8 Channel  "Not available"
 LC Technology 5V/8-80V 1 Channel  {"NAME":"LC-Relay-ESP12-1R-MV","GPIO":[1,1,544,1,1,224,1,1,1,1,1,1,321,1],"FLAG":0,"BASE":18}
 LC Technology 5V/8-80V 1 Channel  {"NAME":"LC-Relay-ESP12-1R-D8","GPIO":[1,1,544,1,1,224,1,1,1,1,1,1,321,1],"FLAG":0,"BASE":18}
 LC Technology AC90V-250V 1 Channel  {"NAME":"ESP32_Relay_AC_X1","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,224,1,1,1,0,1,1,544,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
@@ -2456,6 +2457,7 @@ Connect SmartHome 3 Gang Wall Switch ()  {"NAME":"CSH-SWTCH3","GPIO":[0,0,288,0,
 Csmart US-B2                 {"NAME":"Csmart US-B2","GPIO":[0,544,0,33,32,0,0,0,0,225,224,0,0,0],"FLAG":0,"BASE":18}
 Delock WLAN EASY-USB         {"NAME":"Delock 11828","GPIO":[0,0,0,32,0,0,0,0,0,576,224,0,0,0],"FLAG":0,"BASE":53}
 Deta 1 Gang                  {"NAME":"Deta 1G Switch","GPIO":[0,0,0,0,544,0,0,0,0,224,0,0,64,0],"FLAG":0,"BASE":18}
+Deta 2 Gang                  {"NAME":"DETA 2G Switch","GPIO":[0,0,0,0,544,0,0,0,65,224,225,0,64,0],"FLAG":0,"BASE":18}
 Deta 3 Gang                  {"NAME":"DETA 3G Switch","GPIO":[544,0,0,66,65,224,0,0,226,0,225,0,64,0],"FLAG":0,"BASE":18}
 Deta 4 Gang                  {"NAME":"Deta 4G Switch","GPIO":[576,0,0,34,33,224,0,0,226,35,225,227,32,0],"FLAG":0,"BASE":18}
 DETA Mechanism               {"NAME":"Deta 6014HA","GPIO":[0,0,0,0,0,0,0,0,320,0,32,0,224,0],"FLAG":0,"BASE":18}
@@ -2814,6 +2816,7 @@ Shelly 1L No Neutral         {"NAME":"Shelly 1L","GPIO":[320,0,0,0,192,224,0,0,0
 Shelly 1PM                   {"NAME":"Shelly 1PM","GPIO":[320,0,0,0,192,2720,0,0,0,0,0,224,0,4736],"FLAG":0,"BASE":18}
 Shelly 2                     {"NAME":"Shelly 2","GPIO":[0,2752,0,2784,224,225,0,0,160,0,161,2816,0,0],"FLAG":0,"BASE":47}
 Shelly 2.5                   {"NAME":"Shelly 2.5","GPIO":[320,0,0,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
+Shelly 2PM Gen4              {"NAME":"Shelly 2PM Gen4","GPIO":[9472,3458,576,225,4736,224,640,608,0,0,193,192,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9472,0],"FLAG":0,"BASE":1}
 Shelly EM                    {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
 Shelly i3 Action and Scenes Activation Device  {"NAME":"Shelly i3","GPIO":[0,0,0,0,0,320,0,0,193,194,192,0,0,4736],"FLAG":0,"BASE":18}
 Shelly Plus 1                {"NAME":"Shelly Plus 1 ","GPIO":[288,0,0,0,192,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,32,224,0,0,0,0,0,4736,4705,0,0,0,0,0,0],"FLAG":0,"BASE":1}
@@ -2873,7 +2876,6 @@ Coiaca Humidity and          {"NAME":"Coiaca AWR01THERMt","GPIO":[576,1216,0,32,
 DS18B20 ESP01 DIY            {"NAME":"ESP-01-01S-DS18B20-v1.0","GPIO":[1,1,1312,1,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 ESP01 DHT11 DIY              {"NAME":"ESP01S DHT11","GPIO":[1,1,1184,1,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 IOT4SH01DS                   {"NAME":"IOT4SH01DS","GPIO":[1,1,1,1,1,1,0,0,1,1312,1,1,1,1],"FLAG":0,"BASE":18}
-IoTorero Temperature and Humidity Sensor  {"NAME":"IoTorero SHT40 Sensor","GPIO":[0,0,0,0,0,0,0,0,608,32,640,0,0,0,0,0,0,0,0,0,0,1376],"FLAG":0,"BASE":1}
 Shelly Add-on                {"NAME":"Shelly 1 Temp ","GPIO":[1344,0,0,1312,224,192,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":46}
 Shelly Plus Add-On           {"NAME":"Shelly Plus 1","GPIO":[1344,1312,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,224,0,0,0,0,0,4736,4705,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 ```

@@ -3,11 +3,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.3.0.4]
+## [15.4.0.1]
 ### Added
-- Berry solidification is now part of the build system (#24664)
 
 ### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+
+## [Released]
+
+## [15.4.0] 20260422
+- Release Sybil
+
+## [15.3.0.4] 20260422
+### Added
+- Berry solidification is now part of the build system (#24664)
 
 ### Changed
 - ESP8266 platform update from 2026.03.00 to 2026.04.00 (#24635)
@@ -18,9 +34,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Mitsubishi Electric HVAC memory leak and other issues for MiElHVAC (#24660)
 - I2S mkv muxing for files (#24666)
-
-### Removed
-
 
 ## [15.3.0.3] 20260412
 ### Added
@@ -87,9 +100,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Berry `tasmota.urlbecload()` superseded by Extension Manager (#24493)
 
-## [Released]
-
-## [15.3.0]
+## [15.3.0] 20260219
 - Release Susan
 
 ## [15.2.0.6] 20260219
@@ -173,7 +184,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Berry `animate` to be replaced with `animation` framework (#24241)
 
-## [15.2.0]
+## [15.2.0] 20251212
 - Release Stephan
 
 ## [15.1.0.3] 20251212
