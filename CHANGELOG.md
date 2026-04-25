@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.4.0.1]
 ### Added
 - Berry add support for pre-processor
+- Berry transpose C defines to Berry in `tasmota_defines_for_berry.be`
 
 ### Breaking Changed
 
