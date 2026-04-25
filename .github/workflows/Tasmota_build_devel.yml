@@ -140,6 +140,7 @@ jobs:
           - tasmota32c5
           - tasmota32c6
           - tasmota32p4
+          - tasmota32p4r3
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
