@@ -1409,3 +1409,35 @@ def str_len(s):
 # #define str_extra(_s)           ((_s)->extra)
 def str_extra(s):
     return s.extra
+
+# ============================================================================
+# be_vtype2bstring (from src/be_object.c)
+# ============================================================================
+
+# bstring* be_vtype2bstring(bvalue *v)
+# {
+# #if BE_USE_PRECOMPILED_OBJECT
+#     switch(var_primetype(v)) {
+#     case BE_NIL: return (bstring*) &be_const_str_nil;
+#     case BE_INT: return (bstring*) &be_const_str_int;
+#     ...
+#     default: return (bstring*) &be_const_str_invalid_type;
+#     }
+# #else
+#     return be_newstr(vm, be_vtype2str(v));
+# #endif
+# }
+#
+# The Python port does not use precompiled const-string objects
+# (no BE_USE_PRECOMPILED_OBJECT), so we follow the #else branch.
+# Strings are deduplicated by the VM's string table, so be_newstr
+# provides equivalent sharing to the precompiled fast path.
+def be_vtype2bstring(vm, v):
+    """Return an interned bstring for the type name of value v.
+
+    Mirrors: src/be_object.c be_vtype2bstring()
+    """
+    # Lazy import to avoid circular dependencies.
+    from berry_port.be_vm import be_vtype2str
+    from berry_port.be_string import be_newstr
+    return be_newstr(vm, be_vtype2str(v))

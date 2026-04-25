@@ -2388,6 +2388,40 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length);
  */
 BERRY_API char* be_readstring(char *buffer, size_t size);
 
+#if BE_USE_PREPROCESSOR
+
+/**
+ * @fn void be_preprocessor_define(bvm*, const char*, const char*)
+ * @note Preprocessor API
+ * @brief Define a macro with optional value. If value is NULL, stores integer 1 (truthy).
+ *
+ * @param vm virtual machine instance
+ * @param name macro name
+ * @param value macro value (NULL for empty define)
+ */
+BERRY_API void be_preprocessor_define(bvm *vm, const char *name, const char *value);
+
+/**
+ * @fn void be_preprocessor_undef(bvm*, const char*)
+ * @note Preprocessor API
+ * @brief Remove a single macro definition.
+ *
+ * @param vm virtual machine instance
+ * @param name macro name to remove
+ */
+BERRY_API void be_preprocessor_undef(bvm *vm, const char *name);
+
+/**
+ * @fn void be_preprocessor_clear(bvm*)
+ * @note Preprocessor API
+ * @brief Clear all macro definitions and free the map.
+ *
+ * @param vm virtual machine instance
+ */
+BERRY_API void be_preprocessor_clear(bvm *vm);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif

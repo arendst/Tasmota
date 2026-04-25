@@ -475,6 +475,24 @@ def be_loadbuffer(vm, name, buffer, length):
     return be_protectedparser(vm, name, _sgets, sbuf, False)
 
 
+# BERRY_API int be_loadbuffer_local(bvm *vm,
+#     const char *name, const char *buffer, size_t length, bbool islocal)
+# {
+#     struct strbuf sbuf;
+#     sbuf.s = buffer;
+#     sbuf.len = length;
+#     return be_protectedparser(vm, name, _sgets, &sbuf, islocal);
+# }
+def be_loadbuffer_local(vm, name, buffer, length, islocal):
+    """Load Berry source code from a string buffer, in local or global context.
+
+    Compiles the source and pushes the resulting closure onto the stack.
+    Returns 0 on success, or an error code.
+    """
+    sbuf = _strbuf(s=buffer, length=length)
+    return be_protectedparser(vm, name, _sgets, sbuf, bool(islocal))
+
+
 # ============================================================================
 # be_loadmode — load from file (bytecode or source)
 # ============================================================================
@@ -1228,3 +1246,8 @@ def _ensure_stack_space(vm, count):
 def be_loadmodule(vm, name):
     """Load a Berry module from file (macro equivalent: be_loadmode(vm, name, 1))."""
     return be_loadmode(vm, name, 1)
+
+# #define be_loadfile_local(vm, name, islocal)   be_loadmode((vm), (name), islocal)
+def be_loadfile_local(vm, name, islocal):
+    """Load a Berry file in local or global context (macro equivalent)."""
+    return be_loadmode(vm, name, islocal)

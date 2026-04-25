@@ -1710,6 +1710,14 @@ def be_loadbuffer(vm, name, buffer, length=None):
         length = len(buffer)
     return be_exec.be_loadbuffer(vm, name, buffer, length)
 
+# BERRY_API void be_loadbuffer_local(...)  — delegated to be_exec
+def be_loadbuffer_local(vm, name, buffer, length=None, islocal=False):
+    """Load Berry source from a buffer string, in local or global context."""
+    be_exec = _lazy_be_exec()
+    if length is None:
+        length = len(buffer)
+    return be_exec.be_loadbuffer_local(vm, name, buffer, length, islocal)
+
 # BERRY_API void be_loadmode(...)  — delegated to be_exec
 def be_loadmode(vm, name, islocal):
     """Load Berry source from a file."""

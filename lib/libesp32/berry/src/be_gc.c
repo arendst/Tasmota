@@ -143,6 +143,7 @@ bbool be_gc_fix_set(bvm *vm, bgcobject *obj, bbool fix)
 #endif
 
 static void mark_gray_reset_counters(bvm *vm) {
+    (void) vm;
 #if BE_USE_PERF_COUNTERS
     vm->gc_mark_string = 0;
     vm->gc_mark_class = 0;
@@ -398,6 +399,11 @@ static void premark_internal(bvm *vm)
     mark_gray(vm, gc_object(vm->module.loaded));
     mark_gray(vm, gc_object(vm->module.path));
     mark_gray(vm, gc_object(vm->ntvclass));
+#if BE_USE_PREPROCESSOR
+    if (vm->preprocessor) {
+        mark_gray(vm, gc_object(vm->preprocessor));
+    }
+#endif
 #if BE_USE_DEBUG_HOOK
     if (be_isgcobj(&vm->hook)) {
         mark_gray(vm, gc_object(var_toobj(&vm->hook)));

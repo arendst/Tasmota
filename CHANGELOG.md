@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.4.0.1]
 ### Added
+- Berry add support for pre-processor
 
 ### Breaking Changed
 

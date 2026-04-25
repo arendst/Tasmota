@@ -300,6 +300,9 @@ static int skip_newline(blexer *lexer)
         next(lexer); /* skip "\n\r" or "\r\n" */
     }
     lexer->linenumber++;
+#if BE_USE_PREPROCESSOR
+    lexer->pp_at_line_start = btrue;
+#endif
     return lexer->reader.cursor;
 }
 
@@ -327,6 +330,35 @@ static void skip_comment(blexer *lexer)
         }
     }
 }
+
+#if BE_USE_PREPROCESSOR
+/* Like skip_comment but '#' has already been consumed.
+ * The cursor is on the character after '#'. */
+static void skip_comment_body(blexer *lexer)
+{
+    if (lgetc(lexer) == '-') { /* block comment #- ... -# */
+        int lno = lexer->linenumber;
+        int mark, c = 'x';
+        do {
+            mark = c == '-';
+            if (is_newline(c)) {
+                c = skip_newline(lexer);
+                continue;
+            }
+            c = next(lexer);
+        } while (!(mark && c == '#') && c != EOS);
+        if (c == EOS) {
+            be_lexerror(lexer, be_pushfstring(lexer->vm,
+                "unterminated comment block started in line %d", lno));
+        }
+        next(lexer); /* skip trailing '#' */
+    } else { /* line comment */
+        while (!is_newline(lgetc(lexer)) && lgetc(lexer)) {
+            next(lexer);
+        }
+    }
+}
+#endif
 
 static bbool scan_realexp(blexer *lexer)
 {
@@ -670,11 +702,44 @@ static btokentype scan_identifier(blexer *lexer)
 }
 
 /* munch any delimeter and return 1 if any found */
+#if BE_USE_PREPROCESSOR
+/* forward declarations for preprocessor functions used in skip_delimiter */
+static bbool pp_skipping(blexer *lexer);
+static void pp_skip_to_eol(blexer *lexer);
+static void pp_define(blexer *lexer);
+static void pp_undef(blexer *lexer);
+static bbool pp_process_directive(blexer *lexer);
+#endif
 static int skip_delimiter(blexer *lexer) {
     int c = lgetc(lexer);
     int delimeter_present = 0;
     while (1) {
         if (c == '#') {
+#if BE_USE_PREPROCESSOR
+            /* When at line start, '#' followed by a lowercase letter
+             * could be a preprocessor directive.  Stop skipping so
+             * the main lexer loop can handle it properly (it has the
+             * skipping logic for false conditional blocks).
+             * For '#' followed by anything else (space, '-', '"', etc.)
+             * treat as a normal comment. */
+            if (lexer->pp_at_line_start) {
+                int nc = next(lexer); /* consume '#', peek next */
+                if (nc >= 'a' && nc <= 'z') {
+                    /* Potential directive — stop.  We already consumed
+                     * '#' but lexer_next also consumes '#' before
+                     * checking directives.  So we set a flag to tell
+                     * lexer_next that '#' is already consumed. */
+                    lexer->pp_hash_consumed = btrue;
+                    break;
+                }
+                /* Not a directive — handle as comment.
+                 * '#' is already consumed, use skip_comment_body. */
+                skip_comment_body(lexer);
+                c = lgetc(lexer);
+                delimeter_present = 1;
+                continue;
+            }
+#endif
             skip_comment(lexer);
         } else if (c == '\r' || c == '\n') {
             skip_newline(lexer);
@@ -690,28 +755,52 @@ static int skip_delimiter(blexer *lexer) {
     return delimeter_present;
 }
 
-static btokentype scan_string(blexer *lexer)
+/* Scan a single string literal from the opening quote to the closing
+ * quote, appending raw (un-escaped) bytes to the lexer buffer.
+ * Cursor must be positioned on the opening quote; on exit the cursor
+ * is past the closing quote.  Does NOT call tr_string — the caller
+ * is responsible for escape processing. */
+static void scan_one_literal(blexer *lexer)
 {
-    while (1) {     /* handle multiple string literals in a row */
-        int c;
-        int end = lgetc(lexer);     /* string delimiter, either '"' or '\'' */
-        next(lexer); /* skip '"' or '\'' */
-        while ((c = lgetc(lexer)) != EOS && (c != end)) {
-            save(lexer);
-            if (c == '\\') {
-                if (lgetc(lexer) == EOS) { c = EOS; break; }
-                save(lexer); /* skip '\\.' */
-            }
+    int c;
+    int end = lgetc(lexer);     /* string delimiter, either '"' or '\'' */
+    next(lexer); /* skip opening quote */
+    while ((c = lgetc(lexer)) != EOS && (c != end)) {
+        save(lexer);
+        if (c == '\\') {
+            save(lexer); /* skip '\\.' */
         }
-        if (c == EOS) {
-            be_lexerror(lexer, "unfinished string");
-        }
-        c = next(lexer); /* skip '"' or '\'' */
-        /* check if there's an additional string literal right after */
+    }
+    if (c == EOS) {
+        be_lexerror(lexer, "unfinished string");
+    }
+    next(lexer); /* skip closing quote */
+}
+
+/* After one or more string literals have been scanned into the lexer
+ * buffer (still un-escaped), pick up any adjacent string literals and
+ * append their raw bytes to the buffer.  On return, the cursor is
+ * past the last closing quote and the buffer holds the concatenated
+ * raw bytes of all literals.  The caller is responsible for calling
+ * tr_string() to process escapes on the final buffer. */
+static void scan_string_continue(blexer *lexer)
+{
+    int c;
+    skip_delimiter(lexer);
+    c = lgetc(lexer);
+    while (c == '"' || c == '\'') {
+        scan_one_literal(lexer);
         skip_delimiter(lexer);
         c = lgetc(lexer);
-        if (c != '"' && c != '\'') { break; }
     }
+}
+
+static btokentype scan_string(blexer *lexer)
+{
+    /* scan first literal */
+    scan_one_literal(lexer);
+    /* then pick up any adjacent string literals */
+    scan_string_continue(lexer);
     tr_string(lexer);
     setstr(lexer, buf_tostr(lexer));
     return TokenString;
@@ -787,9 +876,590 @@ static btokentype scan_ge(blexer *lexer)
     }
 }
 
+/********************************************************************
+** Preprocessor helper functions
+********************************************************************/
+#if BE_USE_PREPROCESSOR
+
+/* Check if currently skipping (inside a false conditional block) */
+static bbool pp_skipping(blexer *lexer)
+{
+    return lexer->ppdepth >= 0
+        && !lexer->ppstack[lexer->ppdepth].active;
+}
+
+/* Consume characters until newline or EOF */
+static void pp_skip_to_eol(blexer *lexer)
+{
+    while (!is_newline(lgetc(lexer)) && lgetc(lexer) != EOS) {
+        next(lexer);
+    }
+}
+
+/* Read an identifier from current position into lexer buffer.
+ * Returns the length of the identifier read (0 if none). */
+static int pp_read_ident(blexer *lexer)
+{
+    int len = 0;
+    clear_buf(lexer);
+    if (is_ident_start(lgetc(lexer))) {
+        do {
+            save(lexer);
+            len++;
+        } while (is_word(lgetc(lexer)));
+    }
+    return len;
+}
+
+/* Look up a macro name in the VM's preprocessor map.
+ * Returns pointer to the bvalue if found, NULL otherwise. */
+static bvalue* pp_find_macro(blexer *lexer, const char *name, int len)
+{
+    bvm *vm = lexer->vm;
+    if (vm->preprocessor) {
+        bstring *key = be_newstrn(vm, name, len);
+        return be_map_findstr(vm, vm->preprocessor, key);
+    }
+    return NULL;
+}
+
+/* Evaluate truthiness of a macro for #if evaluation.
+ * Returns btrue if the macro is defined and its value is not BE_INT 0. */
+static bbool pp_macro_truthy(blexer *lexer, const char *name, int len)
+{
+    bvalue *val = pp_find_macro(lexer, name, len);
+    if (!val) {
+        return bfalse; /* undefined → falsy */
+    }
+    if (var_isint(val) && var_toint(val) == 0) {
+        return bfalse; /* defined as 0 → falsy */
+    }
+    return btrue; /* everything else → truthy */
+}
+
+/* Ensure the VM's preprocessor map exists, lazily allocating on first use. */
+static bmap* pp_ensure_map(blexer *lexer)
+{
+    bvm *vm = lexer->vm;
+    if (!vm->preprocessor) {
+        vm->preprocessor = be_map_new(vm);
+    }
+    return vm->preprocessor;
+}
+
+/* Try to parse a string as an integer. Returns btrue and sets *out on success. */
+static bbool pp_parse_int(const char *s, int len, bint *out)
+{
+    bint val = 0;
+    int i = 0;
+    int neg = 0;
+    if (len == 0) {
+        return bfalse;
+    }
+    if (s[0] == '-') {
+        neg = 1;
+        i = 1;
+    } else if (s[0] == '+') {
+        i = 1;
+    }
+    if (i >= len) {
+        return bfalse; /* sign only, no digits */
+    }
+    for (; i < len; i++) {
+        if (s[i] < '0' || s[i] > '9') {
+            return bfalse;
+        }
+        val = val * 10 + (s[i] - '0');
+    }
+    *out = neg ? -val : val;
+    return btrue;
+}
+
+/* Handle #define MACRO_NAME [value]
+ * Parse macro name and optional value from rest of line.
+ * - No value: store BE_INT 1
+ * - Value "0" or numeric: store BE_INT
+ * - Otherwise: store BE_STRING
+ */
+static void pp_define(blexer *lexer)
+{
+    bvm *vm = lexer->vm;
+    bmap *map;
+    bstring *key;
+    bvalue val;
+    int namelen;
+    const char *name;
+    const char *vstart;
+    int vlen;
+
+    /* skip whitespace after #define */
+    while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+        next(lexer);
+    }
+
+    /* read macro name */
+    namelen = pp_read_ident(lexer);
+    if (namelen == 0) {
+        be_lexerror(lexer, "macro name expected after '#define'");
+        return;
+    }
+    name = lexbuf(lexer);
+
+    /* intern the macro name string before we reuse the buffer */
+    map = pp_ensure_map(lexer);
+    key = be_newstrn(vm, name, namelen);
+    /* protect key from GC during subsequent allocations */
+    var_setstr(vm->top, key);
+    be_stackpush(vm);
+
+    /* skip whitespace between name and value */
+    while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+        next(lexer);
+    }
+
+    /* check if there's a value (rest of line) */
+    if (is_newline(lgetc(lexer)) || lgetc(lexer) == EOS) {
+        /* empty define: store integer 1 (truthy) */
+        var_setint(&val, 1);
+    } else {
+        /* read value: collect characters until end of line */
+        clear_buf(lexer);
+        while (!is_newline(lgetc(lexer)) && lgetc(lexer) != EOS) {
+            save(lexer);
+        }
+        vstart = lexbuf(lexer);
+        vlen = (int)lexer->buf.len;
+
+        /* trim trailing whitespace */
+        while (vlen > 0 && (vstart[vlen - 1] == ' ' || vstart[vlen - 1] == '\t')) {
+            vlen--;
+        }
+
+        if (vlen == 0) {
+            /* whitespace-only value: treat as empty define */
+            var_setint(&val, 1);
+        } else {
+            /* try to parse as integer */
+            bint ival;
+            if (pp_parse_int(vstart, vlen, &ival)) {
+                var_setint(&val, ival);
+            } else {
+                /* store as string */
+                bstring *s = be_newstrn(vm, vstart, vlen);
+                var_setstr(&val, s);
+            }
+        }
+    }
+
+    /* insert or update the macro in the map */
+    be_map_insertstr(vm, map, key, &val);
+    be_stackpop(vm, 1); /* release GC protection for key */
+}
+
+/* Handle #undef MACRO_NAME
+ * Parse macro name and remove it from the map.
+ */
+static void pp_undef(blexer *lexer)
+{
+    bvm *vm = lexer->vm;
+    int namelen;
+
+    /* skip whitespace after #undef */
+    while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+        next(lexer);
+    }
+
+    /* read macro name */
+    namelen = pp_read_ident(lexer);
+    if (namelen == 0) {
+        be_lexerror(lexer, "macro name expected after '#undef'");
+        return;
+    }
+
+    /* remove from map if it exists */
+    if (vm->preprocessor) {
+        bstring *key = be_newstrn(vm, lexbuf(lexer), namelen);
+        be_map_removestr(vm, vm->preprocessor, key);
+    }
+
+    /* consume rest of line */
+    pp_skip_to_eol(lexer);
+}
+
+/* Handle #if MACRO_NAME or #if !MACRO_NAME
+ * Push a new entry onto ppstack, set active/matched based on truthiness.
+ */
+static void pp_if(blexer *lexer)
+{
+    bbool negate = bfalse;
+    bbool truthy;
+    int namelen;
+
+    /* check nesting depth */
+    if (lexer->ppdepth + 1 >= BE_PREPROC_MAX_DEPTH) {
+        be_lexerror(lexer, "preprocessor conditional nesting too deep");
+        return;
+    }
+
+    /* If we are already skipping, just push a dummy inactive entry
+     * to track nesting for correct #endif matching. */
+    if (pp_skipping(lexer)) {
+        lexer->ppdepth++;
+        lexer->ppstack[lexer->ppdepth].active = 0;
+        lexer->ppstack[lexer->ppdepth].matched = 1; /* prevent elif/else from activating */
+        lexer->ppstack[lexer->ppdepth].line = lexer->linenumber;
+        pp_skip_to_eol(lexer);
+        return;
+    }
+
+    /* skip whitespace after #if */
+    while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+        next(lexer);
+    }
+
+    /* check for negation */
+    if (lgetc(lexer) == '!') {
+        negate = btrue;
+        next(lexer);
+        /* skip optional whitespace after ! */
+        while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+            next(lexer);
+        }
+    }
+
+    /* read macro name */
+    namelen = pp_read_ident(lexer);
+    if (namelen == 0) {
+        be_lexerror(lexer, "macro name expected after '#if'");
+        return;
+    }
+
+    /* evaluate truthiness */
+    truthy = pp_macro_truthy(lexer, lexbuf(lexer), namelen);
+    if (negate) {
+        truthy = !truthy;
+    }
+
+    /* push new conditional entry */
+    lexer->ppdepth++;
+    lexer->ppstack[lexer->ppdepth].active = truthy ? 1 : 0;
+    lexer->ppstack[lexer->ppdepth].matched = truthy ? 1 : 0;
+    lexer->ppstack[lexer->ppdepth].line = lexer->linenumber;
+
+    /* consume rest of line */
+    pp_skip_to_eol(lexer);
+}
+
+/* Handle #elif MACRO_NAME or #elif !MACRO_NAME
+ * Evaluate condition only if no prior branch in this group matched.
+ */
+static void pp_elif(blexer *lexer)
+{
+    bbool negate = bfalse;
+    bbool truthy;
+    int namelen;
+
+    if (lexer->ppdepth < 0) {
+        be_lexerror(lexer, "'#elif' without matching '#if'");
+        return;
+    }
+
+    /* if a prior branch already matched, this branch is inactive */
+    if (lexer->ppstack[lexer->ppdepth].matched) {
+        lexer->ppstack[lexer->ppdepth].active = 0;
+        pp_skip_to_eol(lexer);
+        return;
+    }
+
+    /* skip whitespace after #elif */
+    while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+        next(lexer);
+    }
+
+    /* check for negation */
+    if (lgetc(lexer) == '!') {
+        negate = btrue;
+        next(lexer);
+        while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+            next(lexer);
+        }
+    }
+
+    /* read macro name */
+    namelen = pp_read_ident(lexer);
+    if (namelen == 0) {
+        be_lexerror(lexer, "macro name expected after '#elif'");
+        return;
+    }
+
+    /* evaluate truthiness */
+    truthy = pp_macro_truthy(lexer, lexbuf(lexer), namelen);
+    if (negate) {
+        truthy = !truthy;
+    }
+
+    lexer->ppstack[lexer->ppdepth].active = truthy ? 1 : 0;
+    if (truthy) {
+        lexer->ppstack[lexer->ppdepth].matched = 1;
+    }
+
+    /* consume rest of line */
+    pp_skip_to_eol(lexer);
+}
+
+/* Handle #else
+ * Toggle active state if no prior branch matched.
+ * Report error on duplicate #else or missing #if.
+ */
+static void pp_else(blexer *lexer)
+{
+    if (lexer->ppdepth < 0) {
+        be_lexerror(lexer, "'#else' without matching '#if'");
+        return;
+    }
+
+    if (lexer->ppstack[lexer->ppdepth].matched) {
+        /* a prior branch already matched — skip this #else block */
+        lexer->ppstack[lexer->ppdepth].active = 0;
+    } else {
+        /* no prior branch matched — activate this block */
+        lexer->ppstack[lexer->ppdepth].active = 1;
+        lexer->ppstack[lexer->ppdepth].matched = 1;
+    }
+
+    /* consume rest of line */
+    pp_skip_to_eol(lexer);
+}
+
+/* Handle #endif
+ * Pop the conditional stack entry.
+ */
+static void pp_endif(blexer *lexer)
+{
+    if (lexer->ppdepth < 0) {
+        be_lexerror(lexer, "'#endif' without matching '#if'");
+        return;
+    }
+
+    lexer->ppdepth--;
+
+    /* consume rest of line */
+    pp_skip_to_eol(lexer);
+}
+
+/* Process a directive line after '#' has been identified at line start.
+ * The lexer cursor is positioned at the first character after '#'.
+ * Returns btrue if a valid directive was processed, bfalse if the '#'
+ * should be treated as a comment (unrecognized keyword).
+ */
+static bbool pp_process_directive(blexer *lexer)
+{
+    int len;
+    const char *kw;
+
+    /* The character immediately after '#' must be a letter (start of
+     * a directive keyword).  If it is a space, tab, '-', or anything
+     * else, the '#' is a regular Berry comment — return bfalse so the
+     * caller falls through to skip_comment(). */
+    if (lgetc(lexer) < 'a' || lgetc(lexer) > 'z') {
+        return bfalse;
+    }
+
+    /* read the directive keyword */
+    len = pp_read_ident(lexer);
+    if (len == 0) {
+        return bfalse; /* bare '#' or '#' followed by non-ident → comment */
+    }
+    kw = lexbuf(lexer);
+
+    /* match against recognized directive keywords */
+    if (len == 2 && kw[0] == 'i' && kw[1] == 'f') {
+        pp_if(lexer);
+    } else if (len == 4 && !strncmp(kw, "elif", 4)) {
+        pp_elif(lexer);
+    } else if (len == 4 && !strncmp(kw, "else", 4)) {
+        pp_else(lexer);
+    } else if (len == 5 && !strncmp(kw, "endif", 5)) {
+        pp_endif(lexer);
+    } else if (len == 6 && !strncmp(kw, "define", 6)) {
+        if (!pp_skipping(lexer)) {
+            pp_define(lexer);
+        } else {
+            pp_skip_to_eol(lexer);
+        }
+    } else if (len == 5 && !strncmp(kw, "undef", 5)) {
+        if (!pp_skipping(lexer)) {
+            pp_undef(lexer);
+        } else {
+            pp_skip_to_eol(lexer);
+        }
+    } else {
+        /* unrecognized keyword → treat '#' as comment */
+        return bfalse;
+    }
+
+    return btrue;
+}
+
+/* Handle a '$IDENT"..."', '$IDENT\'...\'', or '$IDENT' translatable
+ * string expression.  Called from the top-level dispatch in
+ * lexer_next() after '$' has been consumed.  The cursor is positioned
+ * on the character immediately following '$'.
+ *
+ * Behaviour:
+ *   - '$IDENT"default"' (or '$IDENT\'default\''): if IDENT is defined
+ *     as a string macro, the macro's value replaces the default text;
+ *     otherwise the default text is emitted.  Adjacent string
+ *     literals that follow (e.g. '$IDENT"hi" " folks"') are
+ *     concatenated to the resolved value, matching Berry's normal
+ *     string-literal concatenation.
+ *   - '$IDENT' with no following quote: if IDENT is defined as a
+ *     string macro, its value is emitted as a string token; otherwise
+ *     a "stray '$' in program" syntax error is raised.
+ *
+ * Reports "stray '$' in program" if '$' is not followed by an
+ * identifier.  Returns TokenString on success.
+ */
+static btokentype pp_scan_translatable(blexer *lexer)
+{
+    int namelen;
+    int quote;
+    bvalue *val;
+    bstring *name, *head;
+    bvm *vm = lexer->vm;
+
+    /* The character after '$' must be an identifier-start character. */
+    if (!is_ident_start(lgetc(lexer))) {
+        be_lexerror(lexer, "stray '$' in program");
+        return TokenNone;
+    }
+
+    /* Read the macro name into the lexer buffer. */
+    namelen = pp_read_ident(lexer);
+
+    /* Intern the macro name and keep it GC-protected on the stack. */
+    name = be_newstrn(vm, lexbuf(lexer), namelen);
+    var_setstr(vm->top, name);
+    be_stackpush(vm);
+
+    val = pp_find_macro(lexer, str(name), str_len(name));
+
+    quote = lgetc(lexer);
+    if (quote != '\'' && quote != '"') {
+        /* '$IDENT' with no quote: emit the macro's string value if
+         * defined as a string, otherwise raise stray '$'. */
+        if (val && var_isstr(val)) {
+            setstr(lexer, var_tostr(val));
+            be_stackpop(vm, 1);
+            return TokenString;
+        }
+        be_stackpop(vm, 1);
+        be_lexerror(lexer, "stray '$' in program");
+        return TokenNone;
+    }
+
+    /* Scan the default-text literal, process escapes, and choose
+     * either its processed text or the macro's replacement as the
+     * head of the resulting string. */
+    clear_buf(lexer);
+    scan_one_literal(lexer);
+    tr_string(lexer);
+    head = (val && var_isstr(val)) ? var_tostr(val) : buf_tostr(lexer);
+
+    /* Keep the head string alive across further allocations. */
+    var_setstr(vm->top, head);
+    be_stackpush(vm);
+
+    /* Pick up any adjacent string literals, processing each one's
+     * escapes independently, and concatenate them via be_strcat. */
+    skip_delimiter(lexer);
+    while (lgetc(lexer) == '"' || lgetc(lexer) == '\'') {
+        bstring *seg;
+        clear_buf(lexer);
+        scan_one_literal(lexer);
+        tr_string(lexer);
+        seg = buf_tostr(lexer);
+        head = be_strcat(vm, var_tostr(vm->top - 1), seg);
+        var_setstr(vm->top - 1, head); /* update in-place on stack */
+        skip_delimiter(lexer);
+    }
+
+    setstr(lexer, var_tostr(vm->top - 1));
+    be_stackpop(vm, 2); /* release head and macro name */
+    return TokenString;
+}
+
+#endif /* BE_USE_PREPROCESSOR */
+
 static btokentype lexer_next(blexer *lexer)
 {
     for (;;) {
+#if BE_USE_PREPROCESSOR
+        /* Skipping mode: when inside a false conditional block,
+         * consume all characters except #directives at line start.
+         * We must still count newlines for accurate line numbers
+         * and track nested #if/#endif for correct matching. */
+        while (pp_skipping(lexer)) {
+            int c = lgetc(lexer);
+            if (c == EOS) {
+                break; /* let the switch/EOS case handle end-of-source */
+            }
+            if (is_newline(c)) {
+                skip_newline(lexer);
+                /* after newline, check if next non-whitespace is '#' */
+                while (lgetc(lexer) == ' ' || lgetc(lexer) == '\t') {
+                    next(lexer);
+                }
+                if (lgetc(lexer) == '#') {
+                    next(lexer); /* consume '#' */
+                    if (!pp_process_directive(lexer)) {
+                        /* unrecognized directive keyword while skipping:
+                         * treat as comment, skip rest of line */
+                        pp_skip_to_eol(lexer);
+                    }
+                    clear_buf(lexer); /* reset buffer after directive in skip mode */
+                }
+                continue;
+            }
+            next(lexer); /* consume non-newline character */
+        }
+#endif
+        /* Check if skip_delimiter already consumed '#' for a directive */
+#if BE_USE_PREPROCESSOR
+        if (lexer->pp_hash_consumed) {
+            lexer->pp_hash_consumed = bfalse;
+            /* '#' was already consumed by skip_delimiter; cursor is on
+             * the first letter of the directive keyword.  Jump directly
+             * to directive processing (same as case '#' with
+             * pp_at_line_start, but without consuming '#' again). */
+            if (lgetc(lexer) == '-') {
+                /* block comment #- ... -# */
+                int lno = lexer->linenumber;
+                int mark, c = 'x';
+                do {
+                    mark = c == '-';
+                    if (is_newline(c)) {
+                        c = skip_newline(lexer);
+                        continue;
+                    }
+                    c = next(lexer);
+                } while (!(mark && c == '#') && c != EOS);
+                if (c == EOS) {
+                    be_lexerror(lexer, be_pushfstring(lexer->vm,
+                        "unterminated comment block started in line %d", lno));
+                }
+                next(lexer); /* skip trailing '#' */
+            } else if (pp_process_directive(lexer)) {
+                lexer->pp_at_line_start = bfalse;
+                clear_buf(lexer);
+            } else {
+                pp_skip_to_eol(lexer);
+                clear_buf(lexer);
+            }
+            lexer->had_whitespace = 1;
+            continue; /* re-enter the for(;;) loop */
+        }
+#endif
         switch (lgetc(lexer)) {
         case '\r': case '\n': /* newline */
             skip_newline(lexer);
@@ -799,11 +1469,55 @@ static btokentype lexer_next(blexer *lexer)
             next(lexer);
             lexer->had_whitespace = 1;
             break;
-        case '#': /* comment */
+        case '#': /* comment or preprocessor directive */
+#if BE_USE_PREPROCESSOR
+            if (lexer->pp_at_line_start) {
+                next(lexer); /* consume '#' */
+                /* Block comment #- must be checked before directive parsing,
+                 * since pp_process_directive would consume the whitespace. */
+                if (lgetc(lexer) == '-') {
+                    /* block comment #- ... -# : replicate skip_comment logic
+                     * (the '#' is already consumed) */
+                    int lno = lexer->linenumber;
+                    int mark, c = 'x';
+                    do {
+                        mark = c == '-';
+                        if (is_newline(c)) {
+                            c = skip_newline(lexer);
+                            continue;
+                        }
+                        c = next(lexer);
+                    } while (!(mark && c == '#') && c != EOS);
+                    if (c == EOS) {
+                        be_lexerror(lexer, be_pushfstring(lexer->vm,
+                            "unterminated comment block started in line %d", lno));
+                    }
+                    next(lexer); /* skip trailing '#' */
+                } else if (pp_process_directive(lexer)) {
+                    /* directive recognized and handled, no token emitted */
+                    lexer->pp_at_line_start = bfalse;
+                    clear_buf(lexer); /* reset buffer after directive processing */
+                } else {
+                    /* unrecognized keyword after '#' — treat as line comment */
+                    pp_skip_to_eol(lexer);
+                    clear_buf(lexer); /* reset buffer after skipping comment */
+                }
+                lexer->had_whitespace = 1;
+                break;
+            }
+#endif
             skip_comment(lexer);
             lexer->had_whitespace = 1;
             break;
-        case EOS: return TokenEOS; /* end of source stream */
+        case EOS: /* end of source stream */
+#if BE_USE_PREPROCESSOR
+            if (lexer->ppdepth >= 0) {
+                be_lexerror(lexer, be_pushfstring(lexer->vm,
+                    "unfinished conditional block started in line %d",
+                    lexer->ppstack[lexer->ppdepth].line));
+            }
+#endif
+            return TokenEOS;
         /* operator */
         case '+': return scan_assign(lexer, OptAddAssign, OptAdd);
         case '-': return scan_sub(lexer);
@@ -835,7 +1549,22 @@ static btokentype lexer_next(blexer *lexer)
             next(lexer);
             return check_next(lexer, '=') ? OptNE : OptNot;
         case '\'': case '"':
-            return scan_string(lexer);
+        {
+            btokentype type = scan_string(lexer);
+            return type;
+        }
+#if BE_USE_PREPROCESSOR
+        case '$':
+            /* Translatable string expression: $IDENT"..." or $IDENT'...'.
+             * Consume the '$' and dispatch to pp_scan_translatable(),
+             * which reads the identifier, scans the string literal, and
+             * substitutes the macro's replacement value if defined.
+             * A stray '$' (not followed by IDENT and a quote) raises
+             * a syntax error. */
+            next(lexer); /* consume '$' */
+            lexer->pp_at_line_start = bfalse;
+            return pp_scan_translatable(lexer);
+#endif
         case '.':
             return scan_dot_real(lexer);
         case '0': case '1': case '2': case '3': case '4':
@@ -871,6 +1600,12 @@ void be_lexer_init(blexer *lexer, bvm *vm,
     lexer->reader.data = data;
     lexer->reader.len = 0;
     lexer->had_whitespace = 1; /* start with whitespace state */
+#if BE_USE_PREPROCESSOR
+    lexer->ppdepth = -1;           /* no conditional active */
+    lexer->pp_at_line_start = btrue;
+    lexer->pp_translatable_ready = bfalse;
+    lexer->pp_hash_consumed = bfalse;
+#endif
     lexerbuf_init(lexer);
     keyword_registe(vm);
     lexer->strtab = be_map_new(vm);
@@ -903,6 +1638,17 @@ int be_lexer_scan_next(blexer *lexer)
     clear_buf(lexer);
     if (type != TokenNone) {
         lexer->token.type = type;
+#if BE_USE_PREPROCESSOR
+        /* Clear pp_at_line_start after emitting a token, UNLESS
+         * the cursor is sitting on '#' with the flag still true.
+         * This happens when skip_delimiter (inside scan_string)
+         * broke out at a '#' that could be a preprocessor directive.
+         * We must preserve the flag so the next lexer_next call
+         * recognizes the '#' as a directive, not a comment. */
+        if (type != TokenEOS && !(lexer->pp_at_line_start && (lgetc(lexer) == '#' || lexer->pp_hash_consumed))) {
+            lexer->pp_at_line_start = bfalse;
+        }
+#endif
     } else {
         lexer->token.type = TokenEOS;
         return 0;

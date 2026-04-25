@@ -36,6 +36,7 @@ BE_IO_ERROR     = 6
 # Re-export key public functions from be_api
 from berry_port.be_api import be_vm_new, be_vm_delete
 from berry_port.be_api import be_loadbuffer
+from berry_port.be_api import be_loadbuffer_local
 from berry_port.be_api import be_pcall, be_call
 
 
@@ -51,6 +52,19 @@ def be_loadstring(vm, s):
     """
     s = s.encode('utf-8').decode('latin-1')
     return be_loadbuffer(vm, "string", s, len(s))
+
+
+# /*
+# ** #define be_loadstring_local(vm, str, islocal) \
+# **     be_loadbuffer_local((vm), "string", (str), strlen(str), islocal)
+# */
+def be_loadstring_local(vm, s, islocal):
+    """Load Berry source from a string, in local or global context.
+
+    Mirrors the C macro be_loadstring_local.
+    """
+    s = s.encode('utf-8').decode('latin-1')
+    return be_loadbuffer_local(vm, "string", s, len(s), islocal)
 
 
 # /*

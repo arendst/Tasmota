@@ -30,6 +30,7 @@ be_extern_native_module(cb);
 
 /* Tasmota specific */
 be_extern_native_module(python_compat);
+be_extern_native_module(preproc);
 be_extern_native_module(re);
 be_extern_native_module(mqtt);
 be_extern_native_module(persist);
@@ -139,7 +140,9 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(strict),
 #endif
     &be_native_module(undefined),
-
+#if BE_USE_PREPROCESSOR
+    &be_native_module(preproc),
+#endif
     &be_native_module(re),
 #ifdef TASMOTA
     /* Berry extensions */

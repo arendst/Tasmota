@@ -325,3 +325,14 @@ Directives must start at beginning of line (`#` mid-line = comment):
 ```
 Nesting up to 8 levels. `#define` inside skipped blocks is ignored.
 Runtime: `import preproc` → `preproc.define('X','1')` `preproc.undef('X')` `preproc.clear()`
+
+### Translatable String Expressions
+`"default"#MACRO` (no space) — emits the macro's string value if defined with a string, otherwise emits the default text. Integer-valued macros do not substitute.
+```berry
+#define TR_HI "Bonjour"
+print("Hello"#TR_HI)      # → Bonjour
+print("Hello"#UNDEFINED)  # → Hello
+```
+`#` after a string followed by a non-identifier = comment. No recursive expansion.
+
+`import preproc` — manage macros at runtime: `preproc.define('K','v')` `preproc.define('K')` `preproc.undef('K')` `preproc.defined('K')` `preproc.value('K')` `preproc.clear()`

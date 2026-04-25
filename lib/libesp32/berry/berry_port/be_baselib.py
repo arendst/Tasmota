@@ -386,15 +386,31 @@ def be_baselib_super(vm):
 # int be_baselib_type(bvm *vm)
 # {
 #     if (be_top(vm)) {
+# #if BE_USE_PRECOMPILED_OBJECT
+#         bvalue *v = be_indexof(vm, 1);
+#         bstring *s = be_vtype2bstring(v);
+#         bvalue *reg = be_incrtop(vm);
+#         be_assert(reg < vm->stacktop);
+#         var_setstr(reg, s);
+# #else
 #         be_pushstring(vm, be_typename(vm, 1));
+# #endif
 #         be_return(vm);
 #     }
 #     be_return_nil(vm);
 # }
+#
+# Port note: BE_USE_PRECOMPILED_OBJECT is always conceptually "on" here —
+# be_vtype2bstring uses the VM's string table, which gives the same
+# interning / dedup behavior as the precompiled fast path in C.
 def be_baselib_type(vm):
     be_api = _lazy_be_api()
+    be_obj = _lazy_be_object()
     if be_api.be_top(vm):
-        be_api.be_pushstring(vm, be_api.be_typename(vm, 1))
+        v = vm.stack[be_api.be_indexof(vm, 1)]
+        s = be_obj.be_vtype2bstring(vm, v)
+        reg_idx = be_api.be_incrtop(vm)
+        be_obj.var_setstr(vm.stack[reg_idx], s)
         return be_api.be_returnvalue(vm)
     return be_api.be_returnnilvalue(vm)
 
@@ -809,30 +825,30 @@ def _raise_compile_error(vm):
     be_exec.be_throw(vm, be_obj.BE_EXCEPTION)
     return 0
 
-# static int m_compile_str(bvm *vm)
+# static int m_compile_str(bvm *vm, bbool islocal)
 # {
 #     int len = be_strlen(vm, 1);
 #     const char *src = be_tostring(vm, 1);
-#     int res = be_loadbuffer(vm, "string", src, len);
+#     int res = be_loadbuffer_local(vm, "string", src, len, islocal);
 #     if (res == BE_OK) {
 #         be_return(vm);
 #     }
 #     return raise_compile_error(vm);
 # }
-def _m_compile_str(vm):
+def _m_compile_str(vm, islocal):
     be_api = _lazy_be_api()
     be_obj = _lazy_be_object()
     length = be_api.be_strlen(vm, 1)
     src = be_api.be_tostring(vm, 1)
-    res = be_api.be_loadbuffer(vm, "string", src, length)
+    res = be_api.be_loadbuffer_local(vm, "string", src, length, islocal)
     if res == be_obj.BE_OK:
         return be_api.be_returnvalue(vm)
     return _raise_compile_error(vm)
 
-# static int m_compile_file(bvm *vm)
+# static int m_compile_file(bvm *vm, bbool islocal)
 # {
 #     const char *fname = be_tostring(vm, 1);
-#     int res = be_loadfile(vm, fname);
+#     int res = be_loadfile_local(vm, fname, islocal);
 #     if (res == BE_OK) {
 #         be_return(vm);
 #     } else if (res == BE_IO_ERROR) {
@@ -841,12 +857,12 @@ def _m_compile_str(vm):
 #     }
 #     return raise_compile_error(vm);
 # }
-def _m_compile_file(vm):
+def _m_compile_file(vm, islocal):
     be_api = _lazy_be_api()
     be_obj = _lazy_be_object()
     be_exec = _lazy_be_exec()
     fname = be_api.be_tostring(vm, 1)
-    res = be_exec.be_loadmode(vm, fname, False)
+    res = be_exec.be_loadfile_local(vm, fname, islocal)
     if res == be_obj.BE_OK:
         return be_api.be_returnvalue(vm)
     elif res == be_obj.BE_IO_ERROR:
@@ -864,14 +880,18 @@ def _m_compile_file(vm):
 #     if (be_top(vm) && be_isstring(vm, 1)) {
 #         if (be_top(vm) >= 2 && be_isstring(vm, 2)) {
 #             const char *s = be_tostring(vm, 2);
+#             bbool islocal = bfalse;
+#             if (be_top(vm) >= 3 && be_isbool(vm, 3)) {
+#                 islocal = be_tobool(vm, 3);
+#             }
 #             if (!strcmp(s, "string")) {
-#                 return m_compile_str(vm);
+#                 return m_compile_str(vm, islocal);
 #             }
 #             if (!strcmp(s, "file")) {
-#                 return m_compile_file(vm);
+#                 return m_compile_file(vm, islocal);
 #             }
 #         } else {
-#             return m_compile_str(vm);
+#             return m_compile_str(vm, bfalse);       /* default to global context */
 #         }
 #     }
 # #endif
@@ -884,12 +904,15 @@ def be_baselib_compile(vm):
         if be_api.be_top(vm) and be_api.be_isstring(vm, 1):
             if be_api.be_top(vm) >= 2 and be_api.be_isstring(vm, 2):
                 s = be_api.be_tostring(vm, 2)
+                islocal = False
+                if be_api.be_top(vm) >= 3 and be_api.be_isbool(vm, 3):
+                    islocal = be_api.be_tobool(vm, 3)
                 if s == "string":
-                    return _m_compile_str(vm)
+                    return _m_compile_str(vm, islocal)
                 if s == "file":
-                    return _m_compile_file(vm)
+                    return _m_compile_file(vm, islocal)
             else:
-                return _m_compile_str(vm)
+                return _m_compile_str(vm, False)  # default to global context
     return be_api.be_returnnilvalue(vm)
 
 # ============================================================================

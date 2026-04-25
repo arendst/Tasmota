@@ -1033,8 +1033,13 @@ def _register_module_table():
     # &be_native_module(undefined),  /* always registered */
     _register_native_module("undefined", _build_undefined_module_table())
 
-    # Note: preproc module not registered here — preprocessor is handled
-    # internally by the lexer.
+    # #if BE_USE_PREPROCESSOR
+    #     &be_native_module(preproc),
+    # #endif
+    from berry_port.berry_conf import BE_USE_PREPROCESSOR
+    if BE_USE_PREPROCESSOR:
+        from berry_port import be_preproclib as _be_preproclib
+        _register_native_module("preproc", _be_preproclib.be_preproc_module_table())
 
 
 # ============================================================================
