@@ -35,7 +35,7 @@ def _run_dump():
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Working dir for the sdkconfig.h stub.
-    stub_parent = project_dir / "build_output"
+    stub_parent = pathlib.Path(env.subst("$BUILD_DIR"))
     stub_parent.mkdir(parents=True, exist_ok=True)
 
     cxx = env.subst("$CXX")
