@@ -185,6 +185,26 @@
  **/
 #define BE_USE_OVERLOAD_HASH            1
 
+/* Macro: BE_USE_PREPROCESSOR
+ * Enable the preprocessor for conditional compilation
+ * (#if/#else/#elif/#endif/#define/#undef) and translatable
+ * string expressions ("text"#MACRO). Set to 0 to exclude
+ * all preprocessor code from compilation.
+ * Default: 1
+ **/
+#ifdef TASMOTA
+#define BE_USE_PREPROCESSOR             0   /* Berry preprocessor not included in Tasmota firmwares */
+#else
+#define BE_USE_PREPROCESSOR             1   /* Berry preprocessor only used in standalone for solidification */
+#endif
+
+/* Macro: BE_PREPROC_MAX_DEPTH
+ * Maximum nesting depth for preprocessor conditional blocks.
+ * Only used when BE_USE_PREPROCESSOR is enabled.
+ * Default: 8
+ **/
+#define BE_PREPROC_MAX_DEPTH            8
+
 /* Macro: BE_USE_DEBUG_HOOK
  * Berry debug hook switch.
  * Default: 0

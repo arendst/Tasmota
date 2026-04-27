@@ -140,6 +140,7 @@ jobs:
           - tasmota32c5
           - tasmota32c6
           - tasmota32p4
+          - tasmota32p4r3
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -169,7 +170,7 @@ jobs:
       - name: Move safeboot files
         run: |
           mkdir -p ./firmware/firmware
-          find ./temp -type f -exec cp -t ./firmware/firmware {} +
+          find ./temp -type f -exec cp -f -t ./firmware/firmware {} +
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")

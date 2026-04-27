@@ -326,7 +326,9 @@ static int w_webfiles_serve(bvm *vm) {
             .uri      = registered_uri_pattern, // Use the static buffer
             .method   = HTTP_GET,
             .handler  = webfiles_handler,
+#if CONFIG_HTTPD_WS_SUPPORT
             .is_websocket = false,
+#endif // CONFIG_HTTPD_WS_SUPPORT
             .user_ctx = NULL
         };
 

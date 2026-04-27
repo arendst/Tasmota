@@ -11,6 +11,8 @@ import re
 import sys
 sys.path().push('src/embedded')   # allow to import from src/embedded
 
+import "../../../tasmota/tasmota_defines_for_berry.be" as tasmota_defines
+
 # globals that need to exist to make compilation succeed
 var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,tcpclientasync,log,"
             "lv_clock,lv_clock_icon,lv_signal_arcs,lv_signal_bars,lv_wifi_arcs_icon,lv_wifi_arcs,"

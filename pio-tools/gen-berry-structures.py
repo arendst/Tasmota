@@ -33,6 +33,7 @@ else:
         join(PROJECT_DIR, "lib", "libesp32", "berry_tasmota"),
         join(PROJECT_DIR, "lib", "libesp32", "berry_matter"),
         join(PROJECT_DIR, "lib", "libesp32", "berry_animation"),
+        join(PROJECT_DIR, "lib", "libesp32", "berry_custom"),
         join(PROJECT_DIR, "lib", "libesp32_lvgl", "lv_binding_berry"),
         join(PROJECT_DIR, "lib", "libesp32_lvgl", "lv_haspmota"),
     ]
@@ -54,7 +55,7 @@ else:
         if not isfile(script):
             continue
         rel_script = os.path.relpath(script, PROJECT_DIR)
-        print(f"Solidifying: {rel_script}")
+        print(f"Berry solidification: {rel_script}")
         os.chdir(solidify_dir)
         solidify_cmd = (
             env["PYTHONEXE"],
@@ -108,6 +109,8 @@ for filePath in fileList:
         # print("Deleting file : ", filePath)
     except:
         print("Error while deleting file : ", filePath)
+
+print(f"Berry coc compiler")
 cmd = (env["PYTHONEXE"],join("tools","coc","coc"),"-o","generate","src","default",join("..","berry_tasmota","src"),join("..","berry_matter","src","solidify"),join("..","berry_matter","src"),join("..","berry_custom","src","solidify"),join("..","berry_custom","src"),join("..","berry_animation","src","solidify"),join("..","berry_animation","src"),join("..","berry_tasmota","src","solidify"),join("..","berry_mapping","src"),join("..","berry_int64","src"),join("..","..","libesp32_lvgl","lv_binding_berry","src"),join("..","..","libesp32_lvgl","lv_binding_berry","src","solidify"),join("..","..","libesp32_lvgl","lv_binding_berry","generate"),join("..","..","libesp32_lvgl","lv_haspmota","src","solidify"),"-c",join("default","berry_conf.h"))
 returncode = subprocess.call(cmd, shell=False)
 os.chdir(CURRENT_DIR)
