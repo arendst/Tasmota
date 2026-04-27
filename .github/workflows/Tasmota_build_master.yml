@@ -37,6 +37,8 @@ jobs:
           - tasmota32c6ser-safeboot
           - tasmota32p4-safeboot
           - tasmota32p4ser-safeboot
+          - tasmota32p4r3-safeboot
+          - tasmota32p4r3ser-safeboot
     steps:
       - uses: actions/checkout@v6
         with:
