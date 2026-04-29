@@ -820,9 +820,11 @@ class Matter_IM
     msg_raw.clear()
     resp.encode_frame(raw, msg_raw)    # payload in cleartext
     resp.encrypt()
+#if USE_BERRY_DEBUG
     if tasmota.loglevel(4)
       log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     end
+#endif
 
     responder.send_response_frame(resp)
 

@@ -289,9 +289,11 @@ class Matter_Commisioning_Context
     import crypto
     # Validate Sigma1 Destination ID, p.162
     # traverse all existing fabrics
+#if USE_BERRY_DEBUG
     if tasmota.loglevel(4)
       log("MTR: SEARCHING: destinationId=" + destinationId.tohex(), 4)
     end
+#endif
     for fabric : self.device.sessions.fabrics
       if fabric.noc == nil || fabric.fabric_id == nil || fabric.device_id == nil     continue end
       # compute candidateDestinationId, Section 4.13.2.4.1, "Destination Identifier"
@@ -302,9 +304,11 @@ class Matter_Commisioning_Context
       var h = crypto.HMAC_SHA256(key)
       h.update(destinationMessage)
       var candidateDestinationId = h.out()
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log("MTR: SIGMA1: candidateDestinationId=" + candidateDestinationId.tohex(), 4)
       end
+#endif
       if candidateDestinationId == destinationId
         return fabric
       end

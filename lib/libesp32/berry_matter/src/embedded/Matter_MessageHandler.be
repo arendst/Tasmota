@@ -53,9 +53,11 @@ class Matter_MessageHandler
       # special case, the local_session_id is not the one from the session
       resp.local_session_id = frame.local_session_id
       resp.encode_frame()
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log(format("MTR: <Ack       (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 4)
       end
+#endif
       self.send_response_frame(resp)
     end
   end
@@ -70,9 +72,11 @@ class Matter_MessageHandler
       var resp = frame.build_standalone_ack(reliable)
       resp.encode_frame()
       resp.encrypt()
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log(format("MTR: <Ack*      (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 4)
       end
+#endif
       self.send_response_frame(resp)
     end
   end
@@ -113,9 +117,11 @@ class Matter_MessageHandler
         
         # check if it's a duplicate
         if !session._counter_insecure_rcv.validate(frame.message_counter, false)
+#if USE_BERRY_DEBUG
           if tasmota.loglevel(4)
             log(format("MTR: .          Duplicate unencrypted message = %i ref = %i", frame.message_counter, session._counter_insecure_rcv.val()), 4)
           end
+#endif
           self.send_simple_ack(frame, false #-not reliable-#)
           return false
         end
@@ -130,9 +136,11 @@ class Matter_MessageHandler
             # log(format("MTR: >Received  (%6i) %s rid=%i exch=%i from [%s]:%i", session.local_session_id, op_name, frame.message_counter, frame.exchange_id, addr, port), 3)
           end
         else
+#if USE_BERRY_DEBUG
           if tasmota.loglevel(4)
             log(format("MTR: >rcv Ack   (%6i) rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.message_counter, frame.x_flag_r ? "{reliable} " : "", frame.exchange_id, str(frame.ack_message_counter), addr, port), 4)
           end
+#endif
         end
         ret = self.commissioning.process_incoming(frame)
         # if ret is false, the implicit Ack was not sent
@@ -142,9 +150,11 @@ class Matter_MessageHandler
         #############################################################
         # encrypted message
         # matter.profiler.log("msg_received_header_encrypted_message_received")
+#if USE_BERRY_DEBUG
         if tasmota.loglevel(4)
           log(format("MTR: decode header: local_session_id=%i message_counter=%i", frame.local_session_id, frame.message_counter), 4)
         end
+#endif
 
         var session = self.device.sessions.get_session_by_local_session_id(frame.local_session_id)
         # matter.profiler.log("msg_received_header_session_retrieved")
@@ -161,9 +171,11 @@ class Matter_MessageHandler
        
         # check if it's a duplicate
         if !session.counter_rcv_validate(frame.message_counter, true)
+#if USE_BERRY_DEBUG
           if tasmota.loglevel(4)
             log("MTR: .          Duplicate encrypted message = " + str(frame.message_counter) + " counter=" + str(session.counter_rcv), 4)
           end
+#endif
           self.send_encrypted_ack(frame, false #-not reliable-#)
           return false
         end
@@ -178,9 +190,11 @@ class Matter_MessageHandler
         # log(format("MTR: idx=%i clear=%s", frame.payload_idx, frame.raw.tohex()), 4)
         frame.decode_payload()
         # matter.profiler.log("msg_received_payload_decoded")
+#if USE_BERRY_DEBUG
         if tasmota.loglevel(4)
           log("MTR: >          Decrypted message: protocol_id:"+str(frame.protocol_id)+" opcode="+str(frame.opcode)+" exchange_id="+str(frame.exchange_id & 0xFFFF), 4)
         end
+#endif
 
         # log(format("MTR: >rcv       (%6i) [%02X/%02X] rid=%i exch=%i ack=%s %sfrom [%s]:%i", session.local_session_id, frame.protocol_id, frame.opcode, frame.message_counter, frame.exchange_id, str(frame.ack_message_counter), frame.x_flag_r ? "{reliable} " : "", addr, port), 3)
 
