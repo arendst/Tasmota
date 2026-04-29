@@ -1521,6 +1521,50 @@ void CmndSavedata(void)
 }
 
 void CmndSetoption(void) {
+  if (!XdrvMailbox.usridx) {
+    // SetOption   - Report all boolean options where preceded by ! means not-set (0)
+    // SetOption 1 - Report only boolean options set (1)
+    // SetOption 2 - Report all multi value options (SetOption32 .. 49)
+    uint32_t display_option = XdrvMailbox.payload;
+    Response_P(PSTR("{\"" D_CMND_SETOPTION));
+    if (2 == display_option) {         // Report all multi value options (SetOption32 .. 49)
+      ResponseAppend_P(PSTR("Multi\":["));
+      for (uint32_t i = 0; i < PARAM8_SIZE; i++) {
+        ResponseAppend_P(PSTR("%s%d"),
+          (i) ? "," : "",
+          Settings->param[i]);
+      }
+      ResponseAppend_P(PSTR("]}"));    // End multi value list
+      return;
+    }
+    if (1 == display_option) {         // Report only options set (1)
+      ResponseAppend_P(PSTR("Set\":"));
+    } else {                           // Report all boolean options where preceded by ! means not-set (0)
+      ResponseAppend_P(PSTR("\":"));
+    }
+    uint32_t flag[5];
+    flag[0] = Settings->flag.data;     // SetOption0 .. 31
+    flag[1] = Settings->flag3.data;    // SetOption50 .. 81
+    flag[2] = Settings->flag4.data;    // SetOption82 .. 113
+    flag[3] = Settings->flag5.data;    // SetOption114 .. 145
+    flag[4] = Settings->flag6.data;    // SetOption146 .. 177
+    bool first_shown = false;
+    for (uint32_t i = 0; i <= MAX_SETOPTION_USED - PARAM8_SIZE; i++) {
+      bool option_set = bitRead(flag[i / 32], i % 32);
+      if ((1 == display_option) && (!option_set)) { continue; }  // Report only options set (1)
+      ResponseAppend_P(PSTR("%s%s%d"), 
+        (first_shown) ? "," : (1 == display_option) ? "[" : "\"",
+        (option_set) ? "" : "!",
+        (i < 32) ? i : i + PARAM8_SIZE);
+      first_shown = true;
+    }
+    if (1 == display_option) {         // Report only options set (1)
+      ResponseAppend_P(PSTR("]}"));    // End multi value list
+    } else {
+      ResponseAppend_P(PSTR("\"}"));   // End string
+    }
+    return;
+  }
   snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
   CmndSetoptionBase(1);
 }

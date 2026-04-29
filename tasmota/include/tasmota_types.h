@@ -215,6 +215,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SOBitfield6;
 
+const uint8_t MAX_SETOPTION_USED = 165;    // Max number of SetOption. Used by command SetOption to display all states
+
 // Bitfield to be used for persistent multi bit
 typedef union {
   uint32_t data;                           // Allow bit manipulation
