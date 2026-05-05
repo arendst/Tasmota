@@ -1956,7 +1956,7 @@ uint32_t NeoPoolGetFiltrationSpeed()
 bool NeoPoolIsHydrolysis(void)
 {
   return (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
-          (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
+          (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_MODULE_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
 }
 
 bool NeoPoolIsHydrolysisInPercent(void)

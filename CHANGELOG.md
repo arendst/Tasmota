@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - NeoPool fix possible overflow/div-zero errors
+- NeoPool fix Hydrolysis module detection
 
 ### Removed
 
