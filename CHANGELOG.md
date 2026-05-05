@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2026.04.50 to 2026.05.50, Framework (Arduino Core) from v3.3.8 to v3.3.8.260506 and IDF v5.5.4.260407 (#24718)
 
 ### Fixed
+- NeoPool fix possible overflow/div-zero errors
 
 ### Removed
 
