@@ -38,8 +38,12 @@ class Matter_Zigbee_Mapper
   var device_arg                                    # contains the device shortaddr (int) or device name (str) as per configuration JSON
                                                     # we need to store it, because the zigbee subsystem is not initialized when Matter starts
                                                     # hence lookup needs to be postponed
+  var device_arg_str                                # original config string preserved verbatim, so ZbSend can auto-resolve
+                                                    # per-endpoint friendly names (e.g. "light_ep2" -> EP2). nil if config was an integer.
   var zigbee_device                                 # zigbee device
   var shortaddr                                     # shortaddr to facilitatefiltering
+  var endpoint                                      # known zigbee endpoint, set via explicit ":N" suffix or auto-derived
+                                                    # from per-endpoint friendly name. nil = no endpoint filter (legacy behavior).
 
   def init(pi)
     self.pi = pi
@@ -48,11 +52,26 @@ class Matter_Zigbee_Mapper
   #############################################################
   # parse_configuration
   #
-  # Parse configuration map
+  # Parse configuration map.
+  # Accepts:
+  #   - integer shortaddr (e.g. 0x1234)
+  #   - "0x1234" / "0x1234:2"          hex shortaddr, optional explicit endpoint
+  #   - "multi_relay" / "multi_relay:2"  device-level friendly name, optional explicit endpoint
+  #   - "light_ep2"                      per-endpoint friendly name (endpoint auto-derived in resolve_zb_device)
   def parse_configuration(config)
     import zigbee
     import string
     self.device_arg = config.find('zigbee_device', nil)
+    # parse optional ":<endpoint>" explicit suffix
+    if (type(self.device_arg) == 'string')
+      var idx = string.find(self.device_arg, ':')
+      if (idx >= 0)
+        self.endpoint = int(self.device_arg[idx+1..])
+        self.device_arg = self.device_arg[0..idx-1]
+      end
+      # preserve original string (post-suffix-strip) for ZbSend's per-endpoint name resolution
+      self.device_arg_str = self.device_arg
+    end
     # we accept hex integers
     if (type(self.device_arg) == 'string')
       if string.startswith(self.device_arg, "0x") || string.startswith(self.device_arg, "0X")
@@ -90,6 +109,30 @@ class Matter_Zigbee_Mapper
   # It is virtually equivalent to doing `ZbInfo` and parsing
   # the last known value
   def probe_zb_values()
+    if !self.resolve_zb_device()   return   end
+
+    if (self.endpoint != nil)
+      # Endpoint-aware probe: trigger a Zigbee Read for each attribute the plugin tracks.
+      # The response carries _src_ep, flows through attributes_final, and our endpoint
+      # filter routes it to this specific Matter plugin only.
+      # Avoids the "merged Z_Data" pollution where probe_zb_values pushed the same
+      # state to all plugins targeting the same shortaddr.
+      var dev = (type(self.device_arg_str) == 'string') ? self.device_arg_str : f'0x{self.shortaddr:04X}'
+      for key: self.pi.consolidate_update_commands()
+        # translate Matter-side attribute key to Tasmota ZbRead attribute name
+        var attr
+        if   (key == 'Power')   attr = 'Power'
+        elif (key == 'Bri')     attr = 'Dimmer'
+        elif (key == 'CT')      attr = 'CT'
+        end
+        if (attr != nil)
+          tasmota.cmd(f'ZbRead {{"Device":"{dev}","Endpoint":{self.endpoint},"Read":"{attr}"}}', true)
+        end
+      end
+      return
+    end
+
+    # legacy path: cached merged info (single-endpoint devices, unchanged behavior)
     var info = self.read_zb_info()
     if (info != nil)
       log(f"MTR: Read information for zigbee device 0x{self.shortaddr:%04X}", 3)
@@ -105,17 +148,54 @@ class Matter_Zigbee_Mapper
   # return true if found, false if not found or zigbee not started
   def resolve_zb_device()
     import zigbee
+    import string
     if (self.device_arg == nil)   return false    end
     if (self.shortaddr != nil)    return true     end
 
     self.zigbee_device = zigbee.find(self.device_arg)
     if self.zigbee_device
       self.shortaddr = self.zigbee_device.shortaddr
+      # auto-derive endpoint from per-endpoint friendly name (one-shot, lazy).
+      # only fires if the user did NOT supply an explicit ":N" suffix and the
+      # config value is a non-hex string that might be a per-endpoint friendly name.
+      if (self.endpoint == nil) && (type(self.device_arg_str) == 'string') &&
+         !string.startswith(self.device_arg_str, "0x") && !string.startswith(self.device_arg_str, "0X")
+        self.endpoint = self._lookup_endpoint_by_name(self.device_arg_str)
+      end
       return true
     else
       log(f"MTR: cannot find zigbee device '{self.device_arg}'", 3)
       return false
     end
+  end
+
+  #############################################################
+  # _lookup_endpoint_by_name
+  #
+  # Query `ZbName <name>` and recursively walk the response to find which
+  # endpoint the given per-endpoint friendly name belongs to.
+  # ZbName response format (Tasmota >= 15.x):
+  #   {"0x1234":{"Name":"multi_relay","Names":{"1":"light_ep1","2":"light_ep2"}}}
+  # Returns nil for device-level names (e.g. "multi_relay") or if not found.
+  def _lookup_endpoint_by_name(name)
+    var resp = tasmota.cmd(f'ZbName {name}', true)
+    return self._search_for_ep(resp, name)
+  end
+
+  # Recursively walk a map and return the integer key whose value equals `name`.
+  # Filters non-numeric keys (e.g. "Name") via `int(k) > 0`.
+  def _search_for_ep(node, name)
+    if !isinstance(node, map)   return nil   end
+    for k: node.keys()
+      var v = node[k]
+      if (v == name)
+        var ep = int(k)
+        if (ep > 0)   return ep   end
+      end
+      var found = self._search_for_ep(v, name)
+      if (found != nil)   return found   end
+    end
+    return nil
   end
 
   #############################################################
@@ -125,12 +205,17 @@ class Matter_Zigbee_Mapper
   def zb_single_command(key, value)
     # to ease caller, we accept nil arguments and do nothing
     var cmd
+    # Use original config string as Device when available (preserves per-endpoint friendly name).
+    # Falls back to hex shortaddr when config was an int.
+    var dev = (type(self.device_arg_str) == 'string') ? self.device_arg_str : f'0x{self.shortaddr:04X}'
+    # Add explicit Endpoint field when known (matches the source endpoint, avoids ambiguity).
+    var ep  = (self.endpoint != nil) ? f',"Endpoint":{self.endpoint}' : ''
     if   (key == 'Power')
-      cmd = f'ZbSend {{"Device":"0x{self.shortaddr:04X}","Send":{{"Power":{value:i}}}}}'
+      cmd = f'ZbSend {{"Device":"{dev}"{ep},"Send":{{"Power":{value:i}}}}}'
     elif (key == 'Bri')
-      cmd = f'ZbSend {{"Device":"0x{self.shortaddr:04X}","Send":{{"Dimmer":{value:i}}}}}'
+      cmd = f'ZbSend {{"Device":"{dev}"{ep},"Send":{{"Dimmer":{value:i}}}}}'
     elif (key == 'CT')
-      cmd = f'ZbSend {{"Device":"0x{self.shortaddr:04X}","Send":{{"CT":{value:i}}}}}'
+      cmd = f'ZbSend {{"Device":"{dev}"{ep},"Send":{{"CT":{value:i}}}}}'
     end
     # send command
     if (cmd != nil)
@@ -177,7 +262,14 @@ class Matter_Zigbee
       if (pi.ZIGBEE && pi.zigbee_mapper)          # first test always works, while second works only if `zigbee` arrtibute exists
         if (pi.zigbee_mapper.resolve_zb_device())    # resolve if this wan't done before
           if (pi.zigbee_mapper.shortaddr == shortaddr)
-            pi.zigbee_received(frame, attr_list)
+            # endpoint filter: when the mapper has a known endpoint (per-endpoint friendly name
+            # auto-derived, or explicit ":N" suffix), only deliver events whose source endpoint matches.
+            # Note: `frame` is always nil here (caller passes nullptr); use attr_list._src_ep instead.
+            var ep = pi.zigbee_mapper.endpoint
+            var src_ep = (attr_list != nil) ? attr_list._src_ep : nil
+            if (ep == nil) || (src_ep == nil) || (src_ep == 0) || (ep == src_ep)
+              pi.zigbee_received(frame, attr_list)
+            end
           end
         end
       end
