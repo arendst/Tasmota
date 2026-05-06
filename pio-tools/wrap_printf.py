@@ -37,7 +37,6 @@ if mcu == "esp8266":
                 os.path.dirname(stubs_src),
                 src_filter=["-<*>", "+<printf_stubs.cpp>"],
             )
-            print("wrap_printf: ESP8266 printf/vprintf/fprintf wrapped (saves ~1.6 KB flash)")
         else:
             print("wrap_printf: WARNING - printf_stubs.cpp not found at %s" % stubs_src)
     else:
