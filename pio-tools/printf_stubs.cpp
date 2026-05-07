@@ -1,9 +1,6 @@
 /*
  * Linker wrap stubs for FILE*-based printf functions.
  *
- * Ported to Tasmota from esphome PR #14621
- *   https://github.com/esphome/esphome/pull/14621
- *
  * The ESP8266 Arduino framework and libraries may reference printf(),
  * vprintf(), and fprintf() which pull in newlib's _vfprintf_r (~900 bytes).
  * Tasmota never uses these for logging - log output is written directly to
@@ -28,34 +25,27 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <ets_sys.h>  // declares ets_vprintf and ets_putc
 
-static constexpr size_t PRINTF_BUFFER_SIZE = 512;
+static constexpr size_t PRINTF_BUFFER_SIZE = 128;
 
 // These stubs are essentially dead code at runtime - Tasmota writes directly
 // to the UART via Arduino's Serial, and Serial.printf() has its own
 // implementation. The buffer overflow check is purely defensive and should
 // never trigger.
-static int write_printf_buffer(FILE *stream, char *buf, int len) {
-  if (len < 0) {
-    return len;
-  }
-  size_t write_len = len;
-  if (write_len >= PRINTF_BUFFER_SIZE) {
-    fwrite(buf, 1, PRINTF_BUFFER_SIZE - 1, stream);
-    abort();
-  }
-  if (fwrite(buf, 1, write_len, stream) < write_len || ferror(stream)) {
-    return -1;
-  }
-  return len;
+static int write_printf_buffer(FILE *stream, const char *buf, int len) {
+  if (len < 0) return len;
+  size_t write_len = (len < (int)PRINTF_BUFFER_SIZE) ? (size_t)len : PRINTF_BUFFER_SIZE - 1;
+  fwrite(buf, 1, write_len, stream);
+  return len;  // return original vsnprintf result (POSIX-compatible)
 }
 
 // NOLINTBEGIN(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp,readability-identifier-naming)
 extern "C" {
 
 int __wrap_vprintf(const char *fmt, va_list ap) {
-  char buf[PRINTF_BUFFER_SIZE];
-  return write_printf_buffer(stdout, buf, vsnprintf(buf, sizeof(buf), fmt, ap));
+  // ets_putc is a ROM function — zero flash cost
+  return ets_vprintf(ets_putc, fmt, ap);
 }
 
 int __wrap_printf(const char *fmt, ...) {
@@ -69,8 +59,13 @@ int __wrap_printf(const char *fmt, ...) {
 int __wrap_fprintf(FILE *stream, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  char buf[PRINTF_BUFFER_SIZE];
-  int len = write_printf_buffer(stream, buf, vsnprintf(buf, sizeof(buf), fmt, ap));
+  int len;
+  if (stream == stdout || stream == stderr || stream == NULL) {
+    len = __wrap_vprintf(fmt, ap);
+  } else {
+    char buf[PRINTF_BUFFER_SIZE];
+    len = write_printf_buffer(stream, buf, vsnprintf(buf, sizeof(buf), fmt, ap));
+  }
   va_end(ap);
   return len;
 }
