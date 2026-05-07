@@ -25,14 +25,31 @@
 
 #define XSNS_53 53
 
-// this driver depends on use USE_SCRIPT !!!
+// this driver works with USE_SCRIPT or standalone with USE_UFILESYS (file: /sml_meter.def)
 
+
+// fixes some modbus tcp errors (dynamic MBAP SIZE for write FCs)
+#ifdef ESP32
+#define USE_BAT_CTRL
+#endif
+
+// provide SCRIPT_EOL if scripter is not compiled
+#ifndef SCRIPT_EOL
+#define SCRIPT_EOL '\n'
+#endif
 
 // debug counter input to led for counter1 and 2
 //#define DEBUG_CNT_LED1 2
 //#define DEBUG_CNT_LED1 2
 
 #include <TasmotaSerial.h>
+
+// SOL_SOCKET / SO_LINGER / struct linger for setSocketOption() in SML_Clean_Meters.
+// ESP32 Arduino core only forward-declares `struct linger` via its Network stack,
+// so we pull in lwIP's definitions here (ESP32-only; ESP8266 path doesn't use TCP meters).
+#ifdef ESP32
+#include <lwip/sockets.h>
+#endif
 
 
 // use special no wait serial driver, should be always on
@@ -58,9 +75,11 @@
 // if you have to save more RAM you may disable these options by defines in user_config_override
 
 #ifndef NO_SML_REPLACE_VARS
+#ifdef USE_SCRIPT
 // allows to replace values in decoder section with script string variables
 #undef SML_REPLACE_VARS
 #define SML_REPLACE_VARS
+#endif
 #endif
 
 #ifndef NO_USE_SML_SPECOPT
@@ -664,6 +683,13 @@ struct SML_GLOBS {
 	uint8_t *script_meter;
 	struct METER_DESC *mp;
   uint8_t to_cnt;
+#ifdef USE_BAT_CTRL
+  uint8_t meter_switch_cooldown;  // cooldown after meter switch (in 100ms ticks)
+  char sml_write_buf[2][96];      // 2-slot write queue for script commands
+  uint8_t sml_write_head;         // next slot to write into (0 or 1)
+  uint8_t sml_write_tail;         // next slot to send from (0 or 1)
+  uint8_t sml_write_meter;        // meter index for queued writes
+#endif // USE_BAT_CTRL
   bool ready;
 #ifdef USE_SML_CANBUS
   uint8_t twai_installed;
@@ -1346,6 +1372,8 @@ double dval;
 }
 
 uint8_t sb_counter;
+uint32_t lastmath;
+uint8_t math_run;
 
 // need double precision in this driver
 double CharToDouble(const char *str)
@@ -1483,6 +1511,8 @@ void sml_empty_receiver(uint32_t meters) {
     meter_desc[meters].meter_ss->read();
   }
 }
+
+void SML_Decode(uint8_t index);
 
 void sml_shift_in(uint32_t meters, uint32_t shard) {
   uint32_t count;
@@ -1745,7 +1775,33 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
       }
 
       if (mp->spos >= 3) {
-        uint32_t mlen = mp->sbuff[2] + 5;
+        // Modbus RTU response framing — the on-wire length depends on FC:
+        //   FC01/02/03/04 (reads):       addr fc bc data..  crcL crcH  → bc + 5
+        //   FC05/06       (write single): addr fc reg×2 val×2 crcL crcH → 8 fixed
+        //   FC15/16       (write multi echo): addr fc reg×2 qty×2 crcL crcH → 8 fixed
+        //   exception     (FC | 0x80, ec): addr (fc|0x80) ec crcL crcH    → 5 fixed
+        //
+        // Older code used `bc + 5` for ALL responses, treating sbuff[2] as a
+        // byte count. For FC03/04 reads that's correct; for write-FC echoes
+        // it interprets the high byte of the echoed register/coil address as
+        // a byte count, computes the wrong frame length, and either flushes
+        // 5 bytes early (leaving 3 bytes of next frame's prefix in the
+        // receive buffer = misaligned subsequent decode) or waits forever
+        // for bytes that never arrive (when reg_hi >= 4 → mlen ≥ 9).
+        //
+        // Without this special case writes worked only by accident — the
+        // post-write read happened to recover after a few cycles when the
+        // stale bytes finally got walked past. With coil/discrete-input
+        // FC01/FC02 reads coexisting with FC05 writes it broke loudly.
+        uint8_t fc = mp->sbuff[1];
+        uint32_t mlen;
+        if (fc & 0x80) {
+          mlen = 5;             // exception response (any FC|0x80)
+        } else if (fc == 0x05 || fc == 0x06 || fc == 0x0F || fc == 0x10) {
+          mlen = 8;             // write-FC echoes: fixed length, no byte_count
+        } else {
+          mlen = mp->sbuff[2] + 5;  // FC01-04 reads: byte_count is sbuff[2]
+        }
         if (mlen > mp->sbsiz) mlen = mp->sbsiz;
         if (mp->spos >= mlen) {
 #ifdef MODBUS_DEBUG
@@ -1810,6 +1866,9 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
       break;
   }
   sb_counter++;
+  if (sb_counter > 10) {
+    sb_counter = 0;
+  }
 
   if (mp->shift_mode) {
     SML_Decode(meters);
@@ -1954,6 +2013,12 @@ void SML_Decode(uint8_t index) {
     return;
   }
 
+  // check once per decode call if 1 second has elapsed for math lines
+  if ((millis() - lastmath) > 1000) {
+    lastmath = millis();
+    math_run = 1;
+  }
+
   while (mp != NULL) {
     // check list of defines
     if (*mp == 0) break;
@@ -1992,8 +2057,8 @@ void SML_Decode(uint8_t index) {
       // calculated entry, check syntax
       mp++;
       // do math m 1+2+3
-      if (*mp == 'm' && !sb_counter) {
-        // only every 256 th byte
+      if (*mp == 'm' && math_run) {
+        // once per second — flag set at top of SML_Decode
         // else it would be calculated every single serial byte
         mp++;
         while (*mp == ' ') mp++;
@@ -2121,7 +2186,20 @@ void SML_Decode(uint8_t index) {
           continue;
         }
         if (sml_globs.mp[mindex].type == 'o' || sml_globs.mp[mindex].type == 'c') {
-          if (*mp++ != *cp++) {
+          // handle escapes
+          if (*mp == '/' && *(mp + 1) == 'n') {
+            // line feed escape
+            mp += 2;
+            if ('\n' != *cp++) {
+              found = 0;
+            }
+          } else if (*mp == '/' && *(mp + 1) == 'r') {
+            // carriage return escape
+            mp += 2;
+            if ('\r' != *cp++) {
+              found = 0;
+            }
+          } else if (*mp++ != *cp++) {
             found = 0;
           }
         } else {
@@ -2596,6 +2674,15 @@ void SML_Decode(uint8_t index) {
               uint8_t shift = *mp&7;
               ebus_dval = (uint32_t)ebus_dval >> shift;
               ebus_dval = (uint32_t)ebus_dval & 1;
+              // Keep mbus_dval in sync so the @i-index path (line below) also
+              // sees the bit-extracted value. Without this, descriptors that
+              // combine bit-extract with mbus index filter, e.g.
+              // `010101uu@b0:i6:1` for FC01 coil reads, take dval=mbus_dval
+              // = the raw response byte (0x11 for "coils 0+4 set"), not the
+              // single bit. The @i path is the only way to dispatch reads
+              // across multiple coil/discrete-input requests in the same
+              // descriptor, so this combination matters.
+              mbus_dval = ebus_dval;
               mp+=2;
             }
             if (*mp == 'i') {
@@ -2664,11 +2751,27 @@ nextsect:
     mp = strchr(mp, '|');
     if (mp) mp++;
   }
+  math_run = 0;
 }
 
 //"1-0:1.8.0*255(@1," D_TPWRIN ",kWh," DJ_TPWRIN ",4|"
 void SML_Immediate_MQTT(const char *mp,uint8_t index,uint8_t mindex) {
-  if (!sml_globs.dvalid[index]) return;
+  // NOTE: SML_Immediate_MQTT is by definition called immediately after a
+  // fresh value has just been parsed and stored in meter_vars[index].
+  // The "dvalid" flag is for the *periodic* TelePeriod path (SML_Show)
+  // which needs to suppress slots that haven't seen any data yet — not
+  // here. PR #24587 added an early-bail `if (!dvalid) return;` here
+  // which was wrong:
+  //   • the math `@`-chain branch (2094) sets dvalid AFTER calling
+  //     this function → first emission lost on every meter
+  //   • the Modbus/eBus/PZEM/VBus/raw value branch never sets dvalid
+  //     in this code path at all → those meters lost ALL immediate-MQTT
+  //     emissions
+  //   • encrypted SML decoders feed SML_Decode → match fires →
+  //     SML_Immediate_MQTT, but encrypted descriptors may not hit the
+  //     same dvalid-set sites that PR #24587 assumed
+  // SML_Show (TelePeriod JSON) keeps its dvalid gate — that's correct
+  // since it fires regardless of whether new data arrived in this cycle.
 
   char tpowstr[32];
   char jname[24];
@@ -2699,7 +2802,11 @@ void SML_Immediate_MQTT(const char *mp,uint8_t index,uint8_t mindex) {
           // immediate mqtt
           DOUBLE2CHAR(sml_globs.meter_vars[index], dp & 0xf, tpowstr);
           ResponseTime_P(PSTR(",\"%s\":{\"%s\":%s}}"), sml_globs.mp[mindex].prefix, jname, tpowstr);
+          uint8_t slog = TasmotaGlobal.masterlog_level;
+          TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG;
           MqttPublishTeleSensor();
+          TasmotaGlobal.masterlog_level = slog;
+
         }
       }
     }
@@ -2894,6 +3001,8 @@ void SML_Show(boolean json) {
         if (mp) mp++;
     }
     if (json) {
+     //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
+     //ResponseAppend_P(PSTR("%s"),b_mqtt_data);
      if (group_open && !nojson) {
        ResponseAppend_P(PSTR("}"));
      }
@@ -2961,10 +3070,11 @@ void SML_CounterIsr(void *arg) {
 #endif
 
 
-#ifdef SML_REPLACE_VARS
-
 #ifndef SML_SRCBSIZE
-#define SML_SRCBSIZE 256
+// 256 is too small when sml_meter.def is loaded from filesystem without Scripter —
+// rows with 30+ registers exceed the line buffer, Parser reads mid-line → misparse.
+// 512 fits typical meter defs with headroom.
+#define SML_SRCBSIZE 512
 #endif
 
 uint32_t SML_getlinelen(char *lp) {
@@ -2976,6 +3086,8 @@ uint32_t cnt;
   }
   return cnt;
 }
+
+#ifdef SML_REPLACE_VARS
 
 uint32_t SML_getscriptsize(char *lp) {
 uint32_t mlen = 0;
@@ -3252,11 +3364,54 @@ void reset_sml_vars(uint16_t maxmeters) {
 #endif
 #endif // USE_SML_DECRYPT
 
-
+#ifdef USE_BAT_CTRL
+#ifdef USE_SML_TCP
+    // force TCP RST before re-init (SO_LINGER=0 sends RST instead of FIN)
+    // prevents SMA WR from blocking Modbus after script reload
+    if (mp->client) {
+#ifdef ESP32
+      // SO_LINGER with timeout 0 forces TCP RST instead of FIN, freeing the
+      // meter's single-session slot immediately. ESP8266's WiFiClient has no
+      // setSocketOption(); plain stop() is the best it can do there.
+      struct linger sl = { 1, 0 };
+      mp->client->setSocketOption(SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
+#endif
+      mp->client->stop();
+      delete mp->client;
+      mp->client = nullptr;
+    }
+#endif // USE_SML_TCP
+#endif // USE_BAT_CTRL
 
   }
 }
 
+
+#ifdef USE_SML_TCP
+// Force TCP RST on all active meter connections.
+// Called from FUNC_SAVE_BEFORE_RESTART (OTA, Restart 1, watchdog, exception).
+// Without this, Modbus-TCP meters that only allow one TCP session
+// (e.g. SMA Tripower 10.0SE) keep the old session ESTABLISHED and reject
+// reconnects after we reboot.
+void SML_Clean_Meters(void) {
+  if (!sml_globs.ready) return;
+  for (uint32_t meters = 0; meters < sml_globs.meters_used; meters++) {
+    struct METER_DESC *mp = &sml_globs.mp[meters];
+    if (mp->client) {
+#ifdef ESP32
+      // SO_LINGER with timeout 0 forces TCP RST instead of FIN, freeing the
+      // meter's single-session slot immediately. ESP8266's WiFiClient has no
+      // setSocketOption(); plain stop() is the best it can do there.
+      struct linger sl = { 1, 0 };
+      mp->client->setSocketOption(SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
+#endif
+      mp->client->stop();
+      delete mp->client;
+      mp->client = nullptr;
+    }
+  }
+}
+#endif // USE_SML_TCP
 
 void SML_Init(void) {
 
@@ -3268,40 +3423,70 @@ void SML_Init(void) {
 
 	sml_globs.mp = meter_desc;
 
+  lastmath = millis();
+
+#ifdef USE_SCRIPT
   uint8_t meter_script = Run_Scripter(">M", -2, 0);
+#else
+  uint8_t meter_script = 0;  // no script, force file-only path
+#endif
   char *lp;
 #ifdef USE_UFILESYS
   char *file_md = 0;
 #define SML_METER_FILE "/sml_meter.def"
   if (meter_script != 99) {
     // try to load meter descriptor from filesystem
-    char fname[16]; 
+    char fname[16];
     strcpy_P(fname, PSTR("/sml_meter.def"));
+#ifdef USE_SCRIPT
     FS *cfp = script_file_path(fname);
+#else
+    FS *cfp = ufsp;
+#endif
+    if (!cfp) {
+      AddLog(LOG_LEVEL_INFO, PSTR("SML: filesystem not available"));
+      return;
+    }
     File ef = cfp->open(fname, FS_FILE_READ);
     if (ef) {
       uint16_t fsiz = ef.size();
       file_md = (char*)special_malloc(fsiz + 16);
+      if (!file_md) {
+        AddLog(LOG_LEVEL_INFO, PSTR("SML: malloc failed (%d bytes)"), fsiz + 16);
+        ef.close();
+        return;
+      }
       ef.read((uint8_t*)file_md, fsiz);
       ef.close();
+      file_md[fsiz] = 0;
       lp = strstr_P(file_md, PSTR(">M"));
       if (!lp) {
         goto nfd;
       }
     } else {
       nfd:
-      AddLog(LOG_LEVEL_INFO, PSTR("no meter section found!"));
+      AddLog(LOG_LEVEL_INFO, PSTR("SML: no meter section found!"));
       return;
     }
   } else {
+#ifdef USE_SCRIPT
      lp = glob_script_mem.section_ptr;
-  }
 #else
+     AddLog(LOG_LEVEL_INFO, PSTR("SML: no meter section found!"));
+     return;
+#endif
+  }
+#else  // !USE_UFILESYS
+#ifdef USE_SCRIPT
   if (meter_script != 99) {
-    AddLog(LOG_LEVEL_INFO, PSTR("no meter section found!"));
+    AddLog(LOG_LEVEL_INFO, PSTR("SML: no meter section found!"));
     return;
   }
   lp = glob_script_mem.section_ptr;
+#else
+  AddLog(LOG_LEVEL_INFO, PSTR("SML: need USE_SCRIPT or USE_UFILESYS!"));
+  return;
+#endif
 #endif
 
   uint8_t new_meters_used;
@@ -3336,6 +3521,13 @@ void SML_Init(void) {
 #endif // USE_SML_CANBUS
 
     reset_sml_vars(sml_globs.meters_used);
+#ifdef USE_BAT_CTRL
+    // reset write queue and cooldown on script reload
+    sml_globs.sml_write_head = 0;
+    sml_globs.sml_write_tail = 0;
+    sml_globs.meter_switch_cooldown = 0;
+    memset(sml_globs.sml_write_buf, 0, sizeof(sml_globs.sml_write_buf));
+#endif // USE_BAT_CTRL
   }
 
   if (*lp == '>' && *(lp + 1) == 'M') {
@@ -3369,10 +3561,14 @@ void SML_Init(void) {
   if (file_md) {
     lp = strstr_P(file_md, PSTR(">M"));
   } else {
+#ifdef USE_SCRIPT
     lp = glob_script_mem.section_ptr;
+#endif
   }
 #else
+#ifdef USE_SCRIPT
   lp = glob_script_mem.section_ptr;
+#endif
 #endif
 
   struct METER_DESC *mmp;
@@ -3414,7 +3610,7 @@ void SML_Init(void) {
           index = *lp1 & 7;
           lp1 += 2;
           if (index < 1 || index > sml_globs.meters_used) {
-            AddLog(LOG_LEVEL_INFO, PSTR("illegal meter number!"));
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: illegal meter number!"));
             goto next_line;
           }
           index--;
@@ -3443,7 +3639,7 @@ void SML_Init(void) {
           } else {
             srcpin  = strtol(lp1, &lp1, 10);
             if (Gpio_used(abs(srcpin))) {
-              AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for RX in meter number %d"), abs(srcpin), index + 1);
+              AddLog(LOG_LEVEL_INFO, PSTR("SML: Duplicate GPIO %d defined. Not usable for RX in meter number %d"), abs(srcpin), index + 1);
 dddef_exit:
               if (sml_globs.script_meter) free(sml_globs.script_meter);
               sml_globs.script_meter = 0;
@@ -3593,7 +3789,6 @@ dddef_exit:
 				lp += SML_getlinelen(lp);
 #endif // SML_REPLACE_VARS
 
-        //AddLog(LOG_LEVEL_INFO, PSTR("%s"),dstbuf);
         if (*lp1 == '-' || isdigit(*lp1)) {
           //toLogEOL(">>",lp);
           // add meters line -1,1-0:1.8.0*255(@10000,H2OIN,cbm,COUNTER,4|
@@ -3645,7 +3840,10 @@ dddef_exit:
           }
 
           while (1) {
-            if (*lp1 == 0) {
+            // Without Scripter, lp1 points into file_md — lines end with SCRIPT_EOL
+            // not \0. Without this check the copy runs past the line end → heap
+            // corruption (observed with sml_meter.def on SD, 35+ data rows).
+            if (*lp1 == 0 || *lp1 == SCRIPT_EOL) {
               *tp++ = '|';
               goto next_line;
             }
@@ -3849,11 +4047,19 @@ next_line:
 #endif // ESP8266
 
 #ifdef ESP32
-        // use hardware serial
-        if (mp->uart_index >= 0) {
-          uart_index = mp->uart_index;
+        if (mp->srcpin >= 0) {
+          // use hardware serial
+          if (mp->srcpin == mp->trxpin) {
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: REC pin must not be equal to TRX pin"));
+            return;
+          }
+          if (mp->uart_index >= 0) {
+            uart_index = mp->uart_index;
+          }
+          AddLog(LOG_LEVEL_INFO, PSTR("SML: uart used: %d"),uart_index);
+        } else {
+          AddLog(LOG_LEVEL_INFO, PSTR("SML: software serial with pin: %d"),mp->srcpin);
         }
-        AddLog(LOG_LEVEL_INFO, PSTR("SML: uart used: %d"),uart_index);
 #ifdef USE_ESP32_SW_SERIAL
         mp->meter_ss = new SML_ESP32_SERIAL(uart_index);
         if (mp->srcpin >= 0) {
@@ -4043,9 +4249,35 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
       if (!meter_desc[meter].meter_ss) return 0;
     }
   }
+#ifdef USE_BAT_CTRL
+  if (flag > 0) {
+    // Modbus (m/M/k) and MODBUS-TCP meters go through a 2-slot write queue so
+    // writes can't collide with a pending read response. For other meter
+    // types — OBIS 'o' in particular — IEC 62056-21 mode-A handshake needs
+    // deterministic timing (wake-up at T=600 ms, ACK at T=1800 ms, baud
+    // switch at T=2000 ms), and a 100-ms queue hop between SML_Write and
+    // SML_Check_Send would break it. Send those directly.
+    uint8_t mtype = meter_desc[meter].type;
+    bool use_queue = (mtype == 'm' || mtype == 'M' || mtype == 'k');
+    if (use_queue) {
+      uint8_t slot = sml_globs.sml_write_head;
+      strlcpy(sml_globs.sml_write_buf[slot], hstr, sizeof(sml_globs.sml_write_buf[0]));
+      sml_globs.sml_write_meter = meter;
+      sml_globs.sml_write_head = (slot + 1) % 2;
+      // set script_str to first queued slot so SML_Check_Send picks it up
+      if (!meter_desc[meter].script_str) {
+        meter_desc[meter].script_str = sml_globs.sml_write_buf[sml_globs.sml_write_tail];
+      }
+    } else {
+      SML_Send_Seq(meter, hstr);
+    }
+  } else
+#else
   if (flag > 0) {
     SML_Send_Seq(meter, hstr);
-  } else {
+  } else
+#endif // USE_BAT_CTRL
+  if (flag < 0) {
     // 9600:8E1, only hardware serial
     uint32_t baud = strtol(hstr, &hstr, 10);
     hstr++;
@@ -4266,8 +4498,6 @@ uint32_t ctime = millis();
   }
 }
 
-#ifdef USE_SCRIPT
-
 #ifdef USE_SML_CANBUS
 
 
@@ -4402,6 +4632,13 @@ char *SML_Get_Sequence(char *cp,uint32_t index) {
 
 void SML_Check_Send(void) {
   sml_globs.sml_100ms_cnt++;
+#ifdef USE_BAT_CTRL
+  // cooldown after meter switch - wait before accessing next meter
+  if (sml_globs.meter_switch_cooldown > 0) {
+    sml_globs.meter_switch_cooldown--;
+    return;
+  }
+#endif // USE_BAT_CTRL
   char *cp;
   for (uint32_t cnt = sml_globs.sml_desc_cnt; cnt < sml_globs.meters_used; cnt++) {
     if (meter_desc[cnt].trxpin >= 0 && (meter_desc[cnt].txmem || meter_desc[cnt].script_str)) {
@@ -4412,6 +4649,14 @@ void SML_Check_Send(void) {
         if (meter_desc[cnt].script_str) {
           cp = meter_desc[cnt].script_str;
           meter_desc[cnt].script_str = 0;
+#ifdef USE_BAT_CTRL
+          // advance write queue tail, check if more writes pending
+          sml_globs.sml_write_tail = (sml_globs.sml_write_tail + 1) % 2;
+          if (sml_globs.sml_write_tail != sml_globs.sml_write_head) {
+            // another write queued - set script_str for next polling slot
+            meter_desc[cnt].script_str = sml_globs.sml_write_buf[sml_globs.sml_write_tail];
+          }
+#endif // USE_BAT_CTRL
         } else {
           //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
           if (meter_desc[cnt].max_index > 1) {
@@ -4433,6 +4678,12 @@ void SML_Check_Send(void) {
         if (sml_globs.sml_desc_cnt >= sml_globs.meters_used) {
           sml_globs.sml_desc_cnt = 0;
         }
+#ifdef USE_BAT_CTRL
+        // set cooldown when switching to a different meter (5 x 100ms = 500ms)
+        if (sml_globs.sml_desc_cnt != cnt && sml_globs.meters_used > 1) {
+          sml_globs.meter_switch_cooldown = 5;
+        }
+#endif // USE_BAT_CTRL
         break;
       }
     } else {
@@ -4487,7 +4738,11 @@ typedef struct {
   uint16_t P_ID;
   uint16_t SIZE;
   uint8_t U_ID;
+#ifdef USE_BAT_CTRL
+  uint8_t payload[48];    // orig: payload[8] — FC16 Write needs up to 26+ bytes
+#else
   uint8_t payload[8];
+#endif // USE_BAT_CTRL
  } MODBUS_TCP_HEADER;
 
 uint16_t sml_swap(uint16_t in) {
@@ -4503,7 +4758,11 @@ MODBUS_TCP_HEADER tcph;
   tcph.T_ID = random(0xffff);
 
   tcph.P_ID = 0;
+#ifdef USE_BAT_CTRL
+  tcph.SIZE = sml_swap(slen - 2);  // orig: sml_swap(6) — dynamic for FC16 Write
+#else
   tcph.SIZE = sml_swap(6);
+#endif // USE_BAT_CTRL
   tcph.U_ID = *sbuff;
 
   sbuff++;
@@ -4703,7 +4962,7 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
       }
 #endif
 #endif // USE_SML_CANBUS
-    } else { 
+    } else {
       if (mp->trx_en.trxen) {
         digitalWrite(meter_desc[meter].trx_en.trxenpin, meter_desc[meter].trx_en.trxenpol ^ 1);
       }
@@ -4738,7 +4997,6 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
 #endif
 
 }
-#endif // USE_SCRIPT
 
 uint16_t MBUS_calculateCRC(uint8_t *frame, uint8_t num, uint16_t start) {
   uint16_t crc, flag;
@@ -4970,6 +5228,9 @@ bool Xsns53(uint32_t function) {
         }
         break;
       case FUNC_SAVE_BEFORE_RESTART:
+#ifdef USE_SML_TCP
+        SML_Clean_Meters();   // force TCP RST on all meter connections before restart
+#endif
       case FUNC_SAVE_AT_MIDNIGHT:
         if (sml_globs.ready) {
           SML_CounterSaveState();
