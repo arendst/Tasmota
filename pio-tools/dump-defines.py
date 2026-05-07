@@ -24,6 +24,14 @@ import subprocess
 
 from colorama import Fore
 
+# Skip during the espidf libs compile phase that runs first when
+# `custom_sdkconfig` is set. The Arduino-as-component / hybrid build
+# triggers a recursive SConscript("espidf.py") which sets
+# ARDUINO_LIB_COMPILE_FLAG="Build" - in that pass we don't want any
+# Berry action.
+if env.subst("$ARDUINO_LIB_COMPILE_FLAG") == "Build":
+    print("berry-dump-defines: skipped (ESP-IDF libs compile phase)")
+    Return()
 
 _IS_ESP32 = env["PIOPLATFORM"] == "espressif32"
 
