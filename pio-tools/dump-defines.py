@@ -24,6 +24,8 @@ import subprocess
 
 from colorama import Fore
 
+from tasmotapiolib import is_non_build_target
+
 # Skip during the espidf libs compile phase that runs first when
 # `custom_sdkconfig` is set. The Arduino-as-component / hybrid build
 # triggers a recursive SConscript("espidf.py") which sets
@@ -31,6 +33,11 @@ from colorama import Fore
 # Berry action.
 if env.subst("$ARDUINO_LIB_COMPILE_FLAG") == "Build":
     print("berry-dump-defines: skipped (ESP-IDF libs compile phase)")
+    Return()
+
+# Skip for non-compiling targets (upload, erase, monitor, ...).
+if is_non_build_target(env):
+    print("berry-dump-defines: skipped (non-build target)")
     Return()
 
 _IS_ESP32 = env["PIOPLATFORM"] == "espressif32"

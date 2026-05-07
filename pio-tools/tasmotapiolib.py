@@ -21,6 +21,7 @@ map_dir = /tmp/map_files/
 Values in .ini files override environment variables
 
 """
+import sys
 import zlib
 import pathlib
 import os
@@ -125,6 +126,63 @@ def is_env_set(name: str, env):
         val = val.strip()
         return val == "1"
     return False
+
+
+# ---------------------------------------------------------------------------
+# Target detection helper
+#
+# The Berry generator scripts (dump-defines.py, gen-berry-defines.py,
+# gen-berry-structures.py) are wired in as `extra_scripts` and therefore
+# execute during PlatformIO's SCons script-loading phase for *every*
+# invocation - including targets that do not actually compile firmware
+# (upload, erase, monitor, ...).
+#
+# `is_non_build_target(env)` returns True when the user only asked for one
+# of those non-compiling targets, so the Berry pipeline can short-circuit
+# and avoid regenerating .be / .h artifacts.
+# ---------------------------------------------------------------------------
+
+# Targets for which Berry artifact regeneration should be skipped.
+NON_BUILD_TARGETS = frozenset({
+    # uploads
+    "upload", "uploadfs", "uploadfsota",
+    # filesystem build/download
+    "buildfs", "downloadfs", "download_fs",
+    # erase variants
+    "erase", "erase_flash", "eraseflash",
+    # info-only / no-op
+    "monitor", "nobuild", "envdump", "exec",
+    "size", "sizedata", "metrics", "idedata", "compiledb",
+    # cleanups
+    "clean", "fullclean", "cleanall",
+    # custom Tasmota targets (see pio-tools/custom_target.py)
+    "reset_target", "factory_flash", "external_crashreport",
+})
+
+def is_non_build_target(env=None):
+    """Return True if the current PlatformIO invocation only requests
+    non-compiling targets (upload, erase, monitor, ...).
+
+    Returns False for the default build (no -t given) and for any
+    invocation that mixes a build-relevant target.
+    """
+    try:
+        from SCons.Script import COMMAND_LINE_TARGETS
+    except ImportError:
+        COMMAND_LINE_TARGETS = []
+
+    if COMMAND_LINE_TARGETS:
+        # SCons targets available - use them directly.
+        return all(t in NON_BUILD_TARGETS for t in COMMAND_LINE_TARGETS)
+
+    # COMMAND_LINE_TARGETS is empty (e.g. VS Code / PlatformIO IDE environment).
+    # Fall back to inspecting sys.argv for known non-build target keywords.
+    argv_lower = [str(a).lower() for a in sys.argv]
+    if any(t in arg for t in NON_BUILD_TARGETS for arg in argv_lower):
+        return True
+
+    return False  # default build
+
 
 def _compress_with_gzip(data, level=9):
     import zlib
