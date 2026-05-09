@@ -20,14 +20,28 @@
 #ifndef EXT_PRINTF_H
 #define EXT_PRINTF_H
 
+#ifdef __cplusplus
 #include <cstddef>
 #include <cstdint>
 #include <cstdarg>
+#else
+#include <stddef.h>
+#include <stdint.h>
+#include <stdarg.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int32_t ext_vsnprintf_P(char * buf, size_t buf_len, const char * fmt_P, va_list va);
 int32_t ext_snprintf_P(char * buf, size_t buf_len, const char * fmt, ...);
 char * ext_snprintf_malloc_P(const char * fmt, ...);
 char * ext_vsnprintf_malloc_P(const char * fmt_P, va_list va);
+
+#ifdef __cplusplus
+}
+#endif
 
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween);
 
