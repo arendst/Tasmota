@@ -28,14 +28,22 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 //#define TASMOTAMODBUSDEBUG
 
 #define TASMOTA_MODBUS_TX_ENABLE        // Use local Tx enable on write buffer
+#define TASMOTA_MODBUS_RX_ENABLE        // Use local Rx enable on read buffer
 
-TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int tx_enable_pin) : TasmotaSerial(receive_pin, transmit_pin, 2)
+TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin, int tx_enable_pin, int rx_enable_pin) : TasmotaSerial(receive_pin, transmit_pin, 2)
 {
 #ifdef TASMOTA_MODBUS_TX_ENABLE
   mb_tx_enable_pin = tx_enable_pin;     // Use local Tx enable on write buffer
 #else
   setTransmitEnablePin(tx_enable_pin);  // Use TasmotaSerial Tx enable on write byte
 #endif  // TASMOTA_MODBUS_TX_ENABLE
+
+#ifdef TASMOTA_MODBUS_RX_ENABLE
+  mb_rx_enable_pin = rx_enable_pin;     // Use local Rx enable on read buffer
+#else
+  setReceiveEnablePin(rx_enable_pin);  // Use TasmotaSerial Rx enable on read byte
+#endif  // TASMOTA_MODBUS_RX_ENABLE
+  
   mb_address = 0;
 }
 
@@ -70,6 +78,13 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
       digitalWrite(mb_tx_enable_pin, LOW);
     }
 #endif  // TASMOTA_MODBUS_TX_ENABLE
+
+#ifdef TASMOTA_MODBUS_RX_ENABLE
+    if (mb_rx_enable_pin > -1) {
+      pinMode(mb_rx_enable_pin, OUTPUT);
+      digitalWrite(mb_rx_enable_pin, LOW);
+    }
+#endif  // TASMOTA_MODBUS_RX_ENABLE
   }
   return result;
 }
@@ -188,7 +203,22 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
     digitalWrite(mb_tx_enable_pin, HIGH);
   }
 #endif  // TASMOTA_MODBUS_TX_ENABLE
+
+#ifdef TASMOTA_MODBUS_RX_ENABLE
+  if (mb_rx_enable_pin > -1) {
+    digitalWrite(mb_rx_enable_pin, HIGH);
+  }
+#endif  // TASMOTA_MODBUS_RX_ENABLE
+
   write(frame, framepointer);
+
+#ifdef TASMOTA_MODBUS_RX_ENABLE
+  delay(10); // add a delay to allow write buffers to empty
+  if (mb_rx_enable_pin > -1) {
+    digitalWrite(mb_rx_enable_pin, LOW);
+  }
+#endif  // TASMOTA_MODBUS_RX_ENABLE
+
 #ifdef TASMOTA_MODBUS_TX_ENABLE
   if (mb_tx_enable_pin > -1) {
     flush();  // Must wait for all data sent
