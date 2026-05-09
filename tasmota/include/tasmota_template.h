@@ -517,7 +517,7 @@ const char kSensorNames[] PROGMEM =
 #endif
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
-  D_SENSOR_MBR_RX_ENA "|" 
+  D_SENSOR_MBS_RX_ENA "|" 
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
