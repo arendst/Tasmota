@@ -108,29 +108,46 @@ def addHeaderFile(name):
 """
     file_name = f"_temp_be_{name}_lib.c"
     file_path = join(BERRY_SOLIDIFY_DIR,"src",file_name)
-    open(file_path,"w").write(data)
+    with open(file_path,"w") as f:
+        f.write(data)
 
 def prepareBerryFiles(files):
     embedded_dir = join("src","embedded")
     for file in files:
-        if "http" and "://" in file:
-            response = requests.get(file.split(" ")[0])
+        # Remove leading and trailing whitespace, ignore empty lines
+        file = file.strip()
+        if not file:
+            continue
+
+        # Remote URL
+        if file.startswith(("http://", "https://")):
+            parts = file.split(" ")
+            url, alias = parts[0], parts[1] if len(parts) > 1 else None
+            url_basename = url.split("/")[-1]
+            effective_name = alias or url_basename
+            response = requests.get(url)
             if response.ok:
-                target = join(embedded_dir,file.split(os.path.sep)[-1])
-                if len(file.split(" ")) > 1:
-                    target = join(embedded_dir,file.split(" ")[1])
-                    print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
-                open(target, "wb").write(response.content)
-                addHeaderFile(file.split(os.path.sep)[-1])
+                if alias: print("Renaming", url_basename, "to", alias)
+                with open(join(embedded_dir, effective_name), "wb") as f:
+                    f.write(response.content)
+                addHeaderFile(effective_name)
                 addEntryToModtab(response.content)
             else:
-                print(Fore.RED + "Failed to download: ",file)
+                print(Fore.RED + "Failed to download: ", file)
             continue
-        # maybe later ...
-        # if os.path.isdir(file):
-        #     continue
-        # else:
-        #     shutil.copy(file, embedded_dir)
+
+        # Local path (relative to PROJECT_DIR or absolute)
+        src_path = file if os.path.isabs(file) else join(env.subst("$PROJECT_DIR"), file)
+        if not os.path.isfile(src_path):
+            print(Fore.RED + "File not found: ", src_path)
+            continue
+        with open(src_path, 'rb') as f:
+            source = f.read()
+        with open(join(embedded_dir, os.path.basename(src_path)), "wb") as f:
+            f.write(source)
+        addHeaderFile(os.path.basename(src_path))
+        addEntryToModtab(source)
+
     return True
 
 
