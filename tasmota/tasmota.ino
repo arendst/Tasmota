@@ -676,8 +676,18 @@ void setup(void) {
 
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
   if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
+    // If hostname in Settings contains % (a format specifier), then reset hostname to WIFI_HOSTNAME from tasmota_globals.h
+    // and then expand the string.
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
-    snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
+    const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
+    const char* second_spec = strchr(first_spec + 1, '%');
+    if (first_spec && second_spec) {
+      // Two (or more) specifiers: expands first as mqtt topic and second as chip ID
+      snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
+    } else {
+      // One specifier: use Format() which handles %NX = last N MAC hex chars, %Nd = short chip ID dec, %d = full chip ID dec
+      Format(TasmotaGlobal.hostname, SettingsText(SET_HOSTNAME), sizeof(TasmotaGlobal.hostname)-1);
+    }
   } else {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
