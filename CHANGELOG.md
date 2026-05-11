@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2026.04.50 to 2026.05.50, Framework (Arduino Core) from v3.3.8 to v3.3.8.260506 and IDF v5.5.4.260407 (#24718)
 - Berry `format()` now uses internal `ext_snprintf_P()` for floating point formatting (#24725)
 - ESP8266 wrap printf and replace with stubs reducing flash size by 6k (#24714)
+- LVGL splash screen uses default Montserrat-14 instead of Montserrat-20 on small screens
 
 ### Fixed
 - NeoPool possible overflow/div-zero errors and Hydrolysis module detection (#24724)
