@@ -1231,7 +1231,7 @@ if (interface == _UDSP_SPI) {
         // Set update mode to partial for subsequent updates
         epd->setUpdateMode(DISPLAY_INIT_PARTIAL);
     } else {   
-        AddLog(2,"SPI Panel!");
+        AddLog(2,"DSP: SPI Panel");
         // Populate remaining SPI config fields (most already parsed directly into union)
         panel_config->spi.width = gxs;
         panel_config->spi.height = gys;
