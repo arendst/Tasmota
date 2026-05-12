@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 06.03.2026
+ * Updated until v9.4.0.1 - Last update 12.05.2026
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1342,6 +1342,6 @@
 #define D_SENSOR_V9240_TX "V9240 - TX"
 #define D_SENSOR_V9240_RX "V9240 - RX"
 
-#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+#define D_SENSOR_MBS_RX_ENA    "ModBr - RX ON"
 
 #endif  // _LANGUAGE_IT_IT_H_
