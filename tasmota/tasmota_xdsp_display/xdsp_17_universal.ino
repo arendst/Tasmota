@@ -173,7 +173,7 @@ Renderer *Init_uDisplay(const char *desc) {
       // 22,21,-1
       int8_t scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
       int8_t sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
-      replacepin(&cp, Pin(GPIO_OLED_RESET));
+      replacepin(&cp, Pin(GPIO_DISPLAY_RESET));
 
       if (wire_n == 0) {
         if (!TasmotaGlobal.i2c_enabled[0]) {
@@ -225,7 +225,7 @@ Renderer *Init_uDisplay(const char *desc) {
         replacepin(&cp, Pin(GPIO_SPI_MOSI, spi_type));
         replacepin(&cp, Pin(GPIO_SPI_DC, spi_type));
         replacepin(&cp, Pin(GPIO_BACKLIGHT));
-        replacepin(&cp, Pin(GPIO_OLED_RESET));
+        replacepin(&cp, Pin(GPIO_DISPLAY_RESET));
         replacepin(&cp, Pin(GPIO_SPI_MISO, spi_type));
       } else {                 // SPI,3 is software SPI
         replacepin(&cp, Pin(GPIO_SSPI_CS));
@@ -233,7 +233,7 @@ Renderer *Init_uDisplay(const char *desc) {
         replacepin(&cp, Pin(GPIO_SSPI_MOSI));
         replacepin(&cp, Pin(GPIO_SSPI_DC));
         replacepin(&cp, Pin(GPIO_BACKLIGHT));
-        replacepin(&cp, Pin(GPIO_OLED_RESET));
+        replacepin(&cp, Pin(GPIO_DISPLAY_RESET));
         replacepin(&cp, Pin(GPIO_SSPI_MISO));
       }
     }
