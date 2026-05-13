@@ -611,7 +611,18 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             rot_t[3] = next_hex(&lp1);
             break;
           case 'A':
-            if (interface == _UDSP_I2C || bpp == 1) {
+            if (interface == _UDSP_SPI && panel_config->spi.mono_pack_width && panel_config->spi.mono_pack_height) {
+              // Some 1bpp SPI panels use TFT-style RAMWR instead of OLED pages.
+              // A descriptor-selected packed mono mode provides the RAM window.
+              panel_config->spi.cmd_set_addr_x = next_hex(&lp1);
+              panel_config->spi.cmd_set_addr_y = next_hex(&lp1);
+              panel_config->spi.cmd_write_ram = next_hex(&lp1);
+              panel_config->spi.address_mode = next_val(&lp1);
+              panel_config->spi.ram_x_start = next_hex(&lp1);
+              panel_config->spi.ram_x_end = next_hex(&lp1);
+              panel_config->spi.ram_y_start = next_hex(&lp1);
+              panel_config->spi.ram_y_end = next_hex(&lp1);
+            } else if (interface == _UDSP_I2C || bpp == 1) {
               // Parse directly into I2C config
               panel_config->i2c.cmd_set_addr_x = next_hex(&lp1);
               panel_config->i2c.page_start = next_hex(&lp1);
@@ -673,6 +684,13 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               panel_config->i80.color_mode = col_mode;
             }
 #endif
+            break;
+          case 'F':
+            if (interface == _UDSP_SPI && bpp == 1) {
+              panel_config->spi.mono_pack_width = next_val(&lp1);
+              panel_config->spi.mono_pack_height = next_val(&lp1);
+              panel_config->spi.mono_pack_flags = next_val(&lp1);
+            }
             break;
           case 'i':
             inv_off = next_hex(&lp1);
@@ -1138,13 +1156,23 @@ Renderer *uDisplay::Init(void) {
   // for any bpp below native 16 bits, we allocate a local framebuffer to copy into
   if (ep_mode || bpp < 16) {
     if (framebuffer) free(framebuffer);
+    uint32_t framebuffer_size = (gxs * gys * bpp) / 8;
+    if (bpp == 1) {
+      // Renderer packs monochrome pixels in vertical 8-pixel pages:
+      // framebuffer[x + (y >> 3) * width]. Non-8-multiple heights need
+      // storage for the partial final page.
+      framebuffer_size = gxs * ((gys + 7) / 8);
+    }
 #ifdef ESP8266
-    framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+    framebuffer = (uint8_t*)calloc(framebuffer_size, 1);
 #else
     if (UsePSRAM()) {
-      framebuffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      framebuffer = (uint8_t*)heap_caps_malloc(framebuffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      if (framebuffer) {
+        memset(framebuffer, 0, framebuffer_size);
+      }
     } else {
-      framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+      framebuffer = (uint8_t*)calloc(framebuffer_size, 1);
     }
 #endif // ESP8266
   }

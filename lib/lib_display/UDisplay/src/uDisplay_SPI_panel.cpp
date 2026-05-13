@@ -203,6 +203,14 @@ bool SPIPanel::pushColors(uint16_t *data, uint32_t len, bool not_swapped) {
 }
 
 bool SPIPanel::setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
+    if (hasPackedMono()) {
+        window_x0 = x0;
+        window_y0 = y0;
+        window_x1 = x1;
+        window_y1 = y1;
+        return false;
+    }
+
     // From original uDisplay::setAddrWindow
     window_x0 = x0;
     window_y0 = y0;
@@ -294,6 +302,10 @@ bool SPIPanel::displayOnff(int8_t on) {
     }
     spi->csHigh();
     spi->endTransaction();
+
+    if (display_on && fb_buffer && hasPackedMono()) {
+        return updateFramePackedMono();
+    }
     
     return false; //true;
 }
@@ -352,6 +364,10 @@ bool SPIPanel::updateFrame() {
     // From original uDisplay::Updateframe - only for monochrome SPI OLEDs
     // Only handle framebuffer updates for monochrome displays
     if (!fb_buffer || cfg.bpp != 1) return false;
+
+    if (hasPackedMono()) {
+        return updateFramePackedMono();
+    }
     
     // OLED page-based framebuffer update (from original code)
     uint8_t ys = height >> 3;
@@ -375,6 +391,63 @@ bool SPIPanel::updateFrame() {
             }
         }
     }
+    spi->csHigh();
+    spi->endTransaction();
+    return true;
+}
+
+uint8_t SPIPanel::getMonoPixel(int16_t x, int16_t y) const {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        return 0;
+    }
+    return (fb_buffer[x + (y >> 3) * width] & (1 << (y & 7))) ? 1 : 0;
+}
+
+bool SPIPanel::hasPackedMono() const {
+    return fb_buffer && cfg.bpp == 1 && cfg.mono_pack_width && cfg.mono_pack_height &&
+           (cfg.mono_pack_width * cfg.mono_pack_height <= 8);
+}
+
+bool SPIPanel::updateFramePackedMono() {
+    if (!hasPackedMono()) {
+        return false;
+    }
+
+    spi->beginTransaction();
+    spi->csLow();
+
+    // Packed monochrome RAMWR displays may not restart at the full-screen RAM
+    // window on a bare RAMWR, so set the descriptor-provided range each flush.
+    spi->writeCommand(cfg.cmd_set_addr_x);
+    spi->writeData8(cfg.ram_x_start);
+    spi->writeData8(cfg.ram_x_end);
+    spi->writeCommand(cfg.cmd_set_addr_y);
+    spi->writeData8(cfg.ram_y_start);
+    spi->writeData8(cfg.ram_y_end);
+    spi->writeCommand(cfg.cmd_write_ram);
+
+    for (uint16_t x = 0; x < width; x += cfg.mono_pack_width) {
+        for (uint16_t y = 0; y < height; y += cfg.mono_pack_height) {
+            // Descriptor-defined packed mono format, row-major from bit7 down.
+            uint8_t packed = 0;
+            uint8_t bit = 0x80;
+            for (uint8_t row = 0; row < cfg.mono_pack_height; row++) {
+                int16_t sy = (cfg.mono_pack_flags & UDISP_MONO_PACK_REVERSE_Y)
+                              ? height - 1 - y - row : y + row;
+                for (uint8_t col = 0; col < cfg.mono_pack_width; col++) {
+                    if (getMonoPixel(x + col, sy)) {
+                        packed |= bit;
+                    }
+                    bit >>= 1;
+                }
+            }
+            if (cfg.mono_pack_flags & UDISP_MONO_PACK_INVERT) {
+                packed = ~packed;
+            }
+            spi->writeData8(packed);
+        }
+    }
+
     spi->csHigh();
     spi->endTransaction();
     return true;
