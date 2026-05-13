@@ -348,56 +348,71 @@ def buf_get1(attr, offset):
 
 # static void buf_set1(buf_impl* attr, size_t offset, uint8_t data)
 # {
-#     if ((int32_t)offset < attr->len) {
+#     if (attr->len > 0 && offset < (size_t)attr->len) {
 #         attr->bufptr[offset] = data;
 #     }
 # }
 def buf_set1(attr, offset, data):
-    if offset >= 0 and offset < attr.len:
+    if attr.len > 0 and 0 <= offset < attr.len:
         attr.bufptr[offset] = data & 0xFF
+
+# /* The buf_set/get helpers below operate on a `size_t` offset coming from
+#  * scripts. We use this helper to test that `offset + N` bytes are inside
+#  * the buffer, with no signed overflow / negative-cast hazard. attr->len
+#  * is non-negative (int32_t), so casting it to size_t is exact. */
+# static inline bbool buf_room(buf_impl* attr, size_t offset, size_t need)
+# {
+#     return attr->len > 0
+#         && offset < (size_t)attr->len
+#         && need <= (size_t)attr->len - offset;
+# }
+def buf_room(attr, offset, need):
+    # Python ints can't overflow, but we still reject negative offsets
+    # because bytearray[-n] would silently write near the end of the buffer.
+    return attr.len > 0 and 0 <= offset < attr.len and need <= attr.len - offset
 
 # static void buf_set2_le(buf_impl* attr, size_t offset, uint16_t data)
 def buf_set2_le(attr, offset, data):
     data = data & 0xFFFF
-    if offset + 1 < attr.len:
+    if buf_room(attr, offset, 2):
         attr.bufptr[offset] = data & 0xFF
         attr.bufptr[offset + 1] = (data >> 8) & 0xFF
 
 # static void buf_set2_be(buf_impl* attr, size_t offset, uint16_t data)
 def buf_set2_be(attr, offset, data):
     data = data & 0xFFFF
-    if offset + 1 < attr.len:
+    if buf_room(attr, offset, 2):
         attr.bufptr[offset + 1] = data & 0xFF
         attr.bufptr[offset] = (data >> 8) & 0xFF
 
 # static uint16_t buf_get2_le(buf_impl* attr, size_t offset)
 def buf_get2_le(attr, offset):
-    if offset + 1 < attr.len:
+    if buf_room(attr, offset, 2):
         return attr.bufptr[offset] | (attr.bufptr[offset + 1] << 8)
     return 0
 
 # static uint16_t buf_get2_be(buf_impl* attr, size_t offset)
 def buf_get2_be(attr, offset):
-    if offset + 1 < attr.len:
+    if buf_room(attr, offset, 2):
         return attr.bufptr[offset + 1] | (attr.bufptr[offset] << 8)
     return 0
 
 # static uint32_t buf_get3_le(buf_impl* attr, size_t offset)
 def buf_get3_le(attr, offset):
-    if offset + 2 < attr.len:
+    if buf_room(attr, offset, 3):
         return attr.bufptr[offset] | (attr.bufptr[offset+1] << 8) | (attr.bufptr[offset+2] << 16)
     return 0
 
 # static uint32_t buf_get3_be(buf_impl* attr, size_t offset)
 def buf_get3_be(attr, offset):
-    if offset + 2 < attr.len:
+    if buf_room(attr, offset, 3):
         return attr.bufptr[offset+2] | (attr.bufptr[offset+1] << 8) | (attr.bufptr[offset] << 16)
     return 0
 
 # static void buf_set3_le(buf_impl* attr, size_t offset, uint32_t data)
 def buf_set3_le(attr, offset, data):
     data = data & 0xFFFFFFFF
-    if offset + 2 < attr.len:
+    if buf_room(attr, offset, 3):
         attr.bufptr[offset]   = data & 0xFF
         attr.bufptr[offset+1] = (data >> 8) & 0xFF
         attr.bufptr[offset+2] = (data >> 16) & 0xFF
@@ -405,7 +420,7 @@ def buf_set3_le(attr, offset, data):
 # static void buf_set3_be(buf_impl* attr, size_t offset, uint32_t data)
 def buf_set3_be(attr, offset, data):
     data = data & 0xFFFFFFFF
-    if offset + 2 < attr.len:
+    if buf_room(attr, offset, 3):
         attr.bufptr[offset+2] = data & 0xFF
         attr.bufptr[offset+1] = (data >> 8) & 0xFF
         attr.bufptr[offset]   = (data >> 16) & 0xFF
@@ -413,7 +428,7 @@ def buf_set3_be(attr, offset, data):
 # static void buf_set4_le(buf_impl* attr, size_t offset, uint32_t data)
 def buf_set4_le(attr, offset, data):
     data = data & 0xFFFFFFFF
-    if offset + 3 < attr.len:
+    if buf_room(attr, offset, 4):
         attr.bufptr[offset]   = data & 0xFF
         attr.bufptr[offset+1] = (data >> 8) & 0xFF
         attr.bufptr[offset+2] = (data >> 16) & 0xFF
@@ -422,7 +437,7 @@ def buf_set4_le(attr, offset, data):
 # static void buf_set4_be(buf_impl* attr, size_t offset, uint32_t data)
 def buf_set4_be(attr, offset, data):
     data = data & 0xFFFFFFFF
-    if offset + 3 < attr.len:
+    if buf_room(attr, offset, 4):
         attr.bufptr[offset+3] = data & 0xFF
         attr.bufptr[offset+2] = (data >> 8) & 0xFF
         attr.bufptr[offset+1] = (data >> 16) & 0xFF
@@ -430,14 +445,14 @@ def buf_set4_be(attr, offset, data):
 
 # static uint32_t buf_get4_le(buf_impl* attr, size_t offset)
 def buf_get4_le(attr, offset):
-    if offset + 3 < attr.len:
+    if buf_room(attr, offset, 4):
         return (attr.bufptr[offset] | (attr.bufptr[offset+1] << 8) |
                 (attr.bufptr[offset+2] << 16) | (attr.bufptr[offset+3] << 24))
     return 0
 
 # static uint32_t buf_get4_be(buf_impl* attr, size_t offset)
 def buf_get4_be(attr, offset):
-    if offset + 3 < attr.len:
+    if buf_room(attr, offset, 4):
         return (attr.bufptr[offset+3] | (attr.bufptr[offset+2] << 8) |
                 (attr.bufptr[offset+1] << 16) | (attr.bufptr[offset] << 24))
     return 0
@@ -1111,8 +1126,11 @@ def m_setbytes(vm):
         if argc >= 5 and be_api.be_isint(vm, 5):
             from_len = be_api.be_toint(vm, 5)
             if from_len < 0: from_len = 0
-            if from_len >= from_len_total: from_len = from_len_total
-        if idx + from_len >= attr.len:
+            # clamp against the bytes available *after* from_byte, not the
+            # total source length, otherwise the copy reads past src
+            if from_len > from_len_total - from_byte:
+                from_len = from_len_total - from_byte
+        if idx + from_len > attr.len:
             from_len = attr.len - idx
 
         if from_len > 0:
@@ -1140,7 +1158,9 @@ def m_reverse(vm):
     if argc >= 3 and be_api.be_isint(vm, 3):
         length = be_api.be_toint(vm, 3)
         if length < 0: length = attr.len - idx
-    if idx + length >= attr.len:
+    # clamp len without overflowing idx + len (and off-by-one: cutting at
+    # `>= attr.len` previously dropped the last valid byte)
+    if length > attr.len - idx:
         length = attr.len - idx
     if argc >= 4 and be_api.be_isint(vm, 4):
         grouplen = be_api.be_toint(vm, 4)
@@ -1280,7 +1300,13 @@ def m_merge(vm):
             buf = bytearray(s.encode('latin-1')) if isinstance(s, str) else bytearray(s)
             buf_len = len(buf)
 
-        bytes_new_object(vm, attr.len + buf_len)
+        # reject obvious over-large results up-front; otherwise
+        # bytes_realloc would silently clamp to bytesmaxsize and truncate
+        total = attr.len + buf_len
+        if total > vm.bytesmaxsize:
+            be_api.be_raise(vm, "memory_error", "bytes object too large")
+
+        bytes_new_object(vm, total)
         attr3 = m_read_attributes(vm, -1)
         check_ptr(vm, attr3)
         buf_add_buf(attr3, attr)

@@ -79,6 +79,7 @@ from berry_port.berry_conf import (
     BE_USE_SCRIPT_COMPILER,
     BE_DEBUG_RUNTIME_INFO, BE_DEBUG_VAR_INFO,
     BE_INTGER_TYPE,
+    BE_MAX_PARSER_DEPTH,
 )
 
 
@@ -417,10 +418,11 @@ class bfuncinfo:
 #     bfuncinfo *finfo;
 #     bclosure *cl;
 #     bbyte islocal;
+#     bbyte depth;  /* recursion depth for expr/block; bounded by BE_MAX_PARSER_DEPTH (must fit in bbyte) */
 # } bparser;
 class bparser:
     """Parser state — mirrors C bparser struct."""
-    __slots__ = ('lexer', 'vm', 'finfo', 'cl', 'islocal')
+    __slots__ = ('lexer', 'vm', 'finfo', 'cl', 'islocal', 'depth')
 
     def __init__(self):
         self.lexer = blexer()
@@ -428,6 +430,32 @@ class bparser:
         self.finfo = None
         self.cl = None
         self.islocal = 0
+        self.depth = 0
+
+
+# /* BE_MAX_PARSER_DEPTH is defined in berry_conf.h as a hard limit to keep
+#  * pathological source from overflowing the C stack. Each level of nesting
+#  * in expr/sub_expr/block costs ~hundreds of bytes of native stack, so the
+#  * default 200 leaves comfortable headroom on small targets.
+#  * Stored in a bbyte, so values above 255 are clamped. */
+
+
+# #define enter_recursion(parser) do { \
+#     if (++(parser)->depth > BE_MAX_PARSER_DEPTH) { \
+#         push_error((parser), "expression or block too deeply nested"); \
+#     } \
+# } while (0)
+def enter_recursion(parser):
+    """Increment recursion depth and error out if too deep."""
+    parser.depth += 1
+    if parser.depth > BE_MAX_PARSER_DEPTH:
+        push_error(parser, "expression or block too deeply nested")
+
+
+# #define leave_recursion(parser)  (--(parser)->depth)
+def leave_recursion(parser):
+    """Decrement recursion depth."""
+    parser.depth -= 1
 
 
 # ============================================================================
@@ -1752,6 +1780,7 @@ def cond_expr(parser, e):
 def sub_expr(parser, e, prio):
     """Parse a sub-expression with operator precedence."""
     finfo = parser.finfo
+    enter_recursion(parser)
     op = get_unary_op(parser)
     if op != OP_NOT_UNARY:
         scan_next_token(parser)
@@ -1785,6 +1814,7 @@ def sub_expr(parser, e, prio):
 
     if prio == ASSIGN_OP_PRIO:
         cond_expr(parser, e)
+    leave_recursion(parser)
 
 
 # static void walrus_expr(bparser *parser, bexpdesc *e)
@@ -2470,9 +2500,11 @@ def stmtlist(parser):
 def block(parser, type_):
     """Parse a block: begin_block, stmtlist, end_block."""
     binfo = bblockinfo()
+    enter_recursion(parser)
     begin_block(parser.finfo, binfo, type_)
     stmtlist(parser)
     end_block(parser)
+    leave_recursion(parser)
 
 
 # ============================================================================
@@ -2539,18 +2571,34 @@ def be_parser_source(vm, fname, reader, data, islocal):
     parser.finfo = None
     parser.cl = cl
     parser.islocal = 1 if islocal else 0
+    parser.depth = 0
 
-    # Push closure on stack for GC protection
-    if vm.top_idx >= len(vm.stack):
-        vm.stack.append(bvalue())
-    var_setclosure(vm.stack[vm.top_idx], cl)
-    be_stackpush(vm)
+    # The Python port bounces through ~7–10 frames per parser level
+    # (expr → walrus_expr → sub_expr → suffix_expr → primary_expr → expr …),
+    # so BE_MAX_PARSER_DEPTH=200 needs a comfortable Python frame budget.
+    # The C port uses its own depth counter (not the OS stack) to reject
+    # pathological input; we mirror that but still need to keep Python's
+    # recursion limit above our bound so our error fires first.
+    _prev_recursion_limit = sys.getrecursionlimit()
+    _needed = BE_MAX_PARSER_DEPTH * 20 + 500  # 10x safety factor
+    if _prev_recursion_limit < _needed:
+        sys.setrecursionlimit(_needed)
 
-    be_lexer_init(parser.lexer, vm, fname, reader, data)
-    scan_next_token(parser)  # scan first token
-    mainfunc(parser, cl)
-    be_lexer_deinit(parser.lexer)
-    be_global_release_space(vm)
-    be_stackpop(vm, 2)  # pop strtab
-    scan_next_token(parser)  # clear lexer
+    try:
+        # Push closure on stack for GC protection
+        if vm.top_idx >= len(vm.stack):
+            vm.stack.append(bvalue())
+        var_setclosure(vm.stack[vm.top_idx], cl)
+        be_stackpush(vm)
+
+        be_lexer_init(parser.lexer, vm, fname, reader, data)
+        scan_next_token(parser)  # scan first token
+        mainfunc(parser, cl)
+        be_lexer_deinit(parser.lexer)
+        be_global_release_space(vm)
+        be_stackpop(vm, 2)  # pop strtab
+        scan_next_token(parser)  # clear lexer
+    finally:
+        if _prev_recursion_limit < _needed:
+            sys.setrecursionlimit(_prev_recursion_limit)
     return cl

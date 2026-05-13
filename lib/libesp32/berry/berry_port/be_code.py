@@ -322,7 +322,7 @@ if BE_USE_SCRIPT_COMPILER:
     # {
     #     int base = finfo->freereg;
     #     allocstack(finfo, count);
-    #     finfo->freereg += (char)count;
+    #     finfo->freereg += count;
     #     return base;
     # }
     def be_code_allocregs(finfo, count):
@@ -341,12 +341,18 @@ if BE_USE_SCRIPT_COMPILER:
     # {
     #     binstruction *p = be_vector_at(&finfo->code, pc);
     #     int offset = dst - (pc + 1);
+    #     if (offset < IsBx_MIN || offset > IsBx_MAX) {
+    #         be_lexerror(finfo->lexer, "jump too far");
+    #     }
     #     *p = (*p & ~IBx_MASK) | ISET_sBx(offset);
     # }
     def setjump(finfo, pc, dst):
         """Set jump destination for instruction at pc."""
         p = be_vector_at(finfo.code, pc)
         offset = dst - (pc + 1)
+        if offset < IsBx_MIN or offset > IsBx_MAX:
+            from berry_port.be_lexer import be_lexerror
+            be_lexerror(finfo.lexer, "jump too far")
         new_val = (p & ~IBx_MASK) | ISET_sBx(offset)
         finfo.code.data[pc] = new_val & 0xFFFFFFFF
 

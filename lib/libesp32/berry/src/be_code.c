@@ -139,7 +139,7 @@ int be_code_allocregs(bfuncinfo *finfo, int count)
 {
     int base = finfo->freereg;
     allocstack(finfo, count);
-    finfo->freereg += (char)count;
+    finfo->freereg += count;
     return base;
 }
 
@@ -147,6 +147,9 @@ static void setjump(bfuncinfo *finfo, int pc, int dst)
 {
     binstruction *p = be_vector_at(&finfo->code, pc);
     int offset = dst - (pc + 1);
+    if (offset < IsBx_MIN || offset > IsBx_MAX) {
+        be_lexerror(finfo->lexer, "jump too far");
+    }
     /* instruction edit jump destination */
     *p = (*p & ~IBx_MASK) | ISET_sBx(offset);
 }
