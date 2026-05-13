@@ -3,32 +3,12 @@
 Import("env")
 
 import os
-import sys
 from genericpath import exists
 from os.path import join
 import subprocess
 from colorama import Fore, Back, Style
 import requests
 import re
-
-IS_WINDOWS = sys.platform.startswith("win")
-
-def ensureBerry():
-    BERRY_GEN_DIR = join(env.subst("$PROJECT_DIR"), "lib", "libesp32","berry")
-    os.chdir(BERRY_GEN_DIR)
-    BERRY_EXECUTABLE = join(BERRY_GEN_DIR,"berry")
-    if IS_WINDOWS:
-        berry_executable = join(BERRY_GEN_DIR,"berry.exe")
-    else:
-        if os.path.exists(BERRY_EXECUTABLE) == False:
-            print("Will compile Berry executable")
-            make_cmd = "make"
-            subprocess.call(make_cmd, shell=False)
-    
-    if os.path.exists(BERRY_EXECUTABLE):
-        return BERRY_EXECUTABLE
-    else:
-        return Null
 
 def cleanFolder():
     with open(HEADER_FILE_PATH, 'w') as file:
@@ -160,12 +140,40 @@ except:
     pass  # no custom Berry files to solidify - common case, no need to log
 else:
     if env.IsCleanTarget() == False:
-        BERRY_EXECUTABLE = ensureBerry()
-        
         os.chdir(BERRY_SOLIDIFY_DIR)
 
         if prepareBerryFiles(files.splitlines()):
-            solidify_command = BERRY_EXECUTABLE
-            solidify_flags = " -s -g solidify_all.be"
+            BERRY_GEN_DIR = join(env.subst("$PROJECT_DIR"), "lib", "libesp32", "berry")
+            solidify_env = os.environ.copy()
+            existing_pp = solidify_env.get("PYTHONPATH", "")
+            solidify_env["PYTHONPATH"] = (
+                BERRY_GEN_DIR + (os.pathsep + existing_pp if existing_pp else "")
+            )
+            solidify_env["PYTHONUTF8"] = "1"
             print("Start solidification for 'berry_custom':")
-            subprocess.call(solidify_command + solidify_flags, shell=True)
+            proc = subprocess.Popen(
+                (env["PYTHONEXE"], "-m", "berry_port", "-s", "-g", "solidify_all_python.be"),
+                shell=False,
+                env=solidify_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            other_lines = []
+            for raw in proc.stdout:
+                line = raw.rstrip("\r\n")
+                stripped = line.strip()
+                if stripped.startswith("Parsing:"):
+                    continue
+                if stripped.startswith("Skipping:"):
+                    continue
+                if stripped.startswith("# Output directory"):
+                    continue
+                other_lines.append(line)
+            rc = proc.wait()
+            for line in other_lines:
+                if line:
+                    print(line)
+            if rc != 0:
+                print(Fore.RED + f"ERROR: solidification failed (rc={rc})")
+                env.Exit(rc)
