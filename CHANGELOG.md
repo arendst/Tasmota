@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Seesaw encoder position tracking in light control mode (#24730)
 
 ### Removed
-
+- `USE_UNIVERSAL_TOUCH` no more forced when `USE_UNIVERSAL_DISPLAY` is enabled
 
 ## [15.4.0.1] 20260507
 ### Added
