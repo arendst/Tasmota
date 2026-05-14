@@ -2804,17 +2804,12 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
   TasAutoMutex mutex((SemaphoreHandle_t *)&TasmotaGlobal.log_buffer_mutex);
 #endif  // ESP32
 
-  char mxtime[21];  // "13:45:21.999-123/12 "
+  char mxtime[25];  // "13:45:21.999-123/12 " or with fragmentation suffix
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d.%03d"),
     RtcTime.hour, RtcTime.minute, RtcTime.second, RtcMillis());
   if (Settings->flag5.show_heap_with_timestamp) {
-#ifdef ESP8266
-    snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d"),
-      mxtime, ESP_getFreeHeap1024());
-#else
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d/%02d"),
       mxtime, ESP_getFreeHeap1024(), ESP_getHeapFragmentation());
-#endif
   }
   strcat(mxtime, " ");
 

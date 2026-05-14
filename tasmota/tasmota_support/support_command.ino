@@ -1036,6 +1036,12 @@ void CmndStatus(void)
 #endif // ESP8266
                           , ESP_getFlashChipId()
                           , ESP_getFlashChipSpeed()/1000000);
+#ifdef ESP8266
+    ESP_UpdateHeapMetrics();
+    ResponseAppend_P(PSTR(",\"MaxFreeBlock\":%d,\"Frag\":%d"),
+                          (uint32_t)ESP_getMaxAllocHeap()/1024,
+                          (int32_t)ESP_getHeapFragmentation());
+#endif  // ESP8266
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
