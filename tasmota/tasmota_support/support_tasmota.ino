@@ -1131,6 +1131,7 @@ void PerformEverySecond(void)
   if (Settings->flag5.show_heap_with_timestamp) {
     ESP_UpdateHeapMetrics();
   }
+  ESP_HeapOomCheck();
 #endif
 
   if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {

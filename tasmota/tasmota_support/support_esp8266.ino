@@ -128,6 +128,23 @@ int32_t ESP_getHeapFragmentation(void) {
   return (frag < 0) ? 0 : frag;
 }
 
+void ESP_HeapOomCheck(void) {
+#if defined(UMM_INLINE_METRICS) || defined(UMM_STATS_FULL)
+  static size_t oom_prev = 0;
+  size_t oom = UMM_OOM_COUNT;
+  if (oom != oom_prev) {
+    AddLog(LOG_LEVEL_INFO, PSTR("OOM: count %u (+%u)"), oom, oom - oom_prev);
+    oom_prev = oom;
+  }
+#endif
+}
+
+void ESP_HeapOomTest(void) {
+#if defined(UMM_INLINE_METRICS) || defined(UMM_STATS_FULL)
+  AddLog(LOG_LEVEL_INFO, PSTR("OOM: count %u (test-trigger)"), (uint32_t)umm_get_oom_count());
+#endif
+}
+
 uint32_t ESP_getFlashChipId(void) {
   return ESP.getFlashChipId();
 }

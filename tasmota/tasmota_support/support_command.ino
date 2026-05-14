@@ -17,6 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
+#include <umm_malloc/umm_malloc_cfg.h>
+#endif
+
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
   D_SO_WIFINOSLEEP "|"
@@ -901,7 +905,11 @@ void CmndStatus(void)
 
   if (0 == XdrvMailbox.index) { payload = 0; }  // All status messages in one MQTT message (status0)
 
+#ifdef ESP8266
+  if (payload > MAX_STATUS && 44 != payload) { return; }  // {"Command":"Error"}
+#else
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
+#endif
   if (!Settings->flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
   if (!TasmotaGlobal.energy_driver && (9 == payload)) { return; }
 #ifndef FIRMWARE_MINIMAL
@@ -1041,6 +1049,14 @@ void CmndStatus(void)
     ResponseAppend_P(PSTR(",\"MaxFreeBlock\":%d,\"Frag\":%d"),
                           (uint32_t)ESP_getMaxAllocHeap()/1024,
                           (int32_t)ESP_getHeapFragmentation());
+#if defined(UMM_INLINE_METRICS) || defined(UMM_STATS_FULL)
+    ResponseAppend_P(PSTR(",\"OomCount\":%d"), (uint32_t)umm_get_oom_count());
+#endif
+#ifdef UMM_STATS_FULL
+    ResponseAppend_P(PSTR(",\"HeapLwm\":%d,\"MaxAllocSz\":%d"),
+                          (uint32_t)umm_free_heap_size_lw_min()/1024,
+                          (uint32_t)umm_get_max_alloc_size());
+#endif  // UMM_STATS_FULL
 #endif  // ESP8266
     ResponseAppendFeatures();
     XsnsDriverState();
@@ -1189,6 +1205,19 @@ void CmndStatus(void)
     if (ShutterStatus()) { CmndStatusResponse(13); }
   }
 #endif
+
+#ifdef ESP8266
+  // Status 44 - trigger umm heap dump to serial + OOM test
+  // ESP8266-only heap diagnostic. Chosen above the standard range
+  // (0-MAX_STATUS = 0-13) and below the reserved value 99 (full status dump).
+  if (44 == payload) {
+    umm_info(nullptr, true);
+    ESP_HeapOomTest();
+    Response_P(PSTR("{\"" D_CMND_STATUS "44\":{\"HeapDump\":\"serial\"}}"));
+    CmndStatusResponse(44);
+    return;
+  }
+#endif  // ESP8266
 
   CmndStatusResponse(99);
 
