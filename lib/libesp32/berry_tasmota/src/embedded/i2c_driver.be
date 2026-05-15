@@ -47,7 +47,7 @@ class I2C_Driver
       if self.name == nil  self.wire = nil end
 
       if self.wire
-        print("I2C:", self.name, "detected on bus", self.wire.bus)
+        log("I2C:", self.name, "detected on bus", self.wire.bus, 2)
       end
     end
   end

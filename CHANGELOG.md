@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Modbus RX Enable GPIO (#24726)
 - Support for hostname generation using single-specifier Format() patterns (#24731)
+- Support for M5Stack Atom S3R drivers
 
 ### Breaking Changed
 
