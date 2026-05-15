@@ -19,3 +19,10 @@ if mcu in ("esp32c2", "esp32c3", "esp32c5", "esp32c6", "esp32h2", "esp32p4"):
     build_flags.pop(build_flags.index("-mtarget-align"))
   except:
     pass
+
+# Remove -DUSE_SHA_ROM for esp32s3 (currently not working on this chip)
+if mcu in ("esp32s3"):
+  try:
+    build_flags.pop(build_flags.index("-DUSE_SHA_ROM"))
+  except:
+    pass
