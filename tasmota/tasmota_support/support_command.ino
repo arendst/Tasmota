@@ -657,6 +657,7 @@ void CmndDelay(void) {
   else if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
     TasmotaGlobal.backlog_timer = millis() + (100 * XdrvMailbox.payload);
   }
+  if (TasmotaGlobal.backlog_mutex) { TasmotaGlobal.backlog_delay_guard = true; }
   uint32_t bl_delay = 0;
   long bl_delta = TimePassedSince(TasmotaGlobal.backlog_timer);
   if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }

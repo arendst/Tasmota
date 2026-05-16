@@ -312,6 +312,7 @@ struct TasmotaGlobal_t {
   bool no_mqtt_response;                    // Respond with rule processing only
   bool backlog_nodelay;                     // Execute all backlog commands with no delay
   bool backlog_mutex;                       // Command backlog pending
+  bool backlog_delay_guard;                 // CmndDelay set timer during drain; BacklogLoop preserves it
   bool backlog_no_mqtt_response;            // Set respond with rule processing only
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
@@ -760,6 +761,10 @@ void BacklogLoop(void) {
           free(cmd);
           if (nodelay || TasmotaGlobal.backlog_nodelay) {
             TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          } else if (TasmotaGlobal.backlog_delay_guard) {
+            TasmotaGlobal.backlog_delay_guard = false;
+          } else {
+            TasmotaGlobal.backlog_timer = millis() + Settings->param[P_BACKLOG_DELAY];
           }
           break;
         }
