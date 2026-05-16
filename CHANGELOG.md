@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for M5Stack Atom S3R drivers (#24747)
 - Support for multi-byte chars like emojis (💡) in light device toggle buttons (#24482)
 - Berry RGBW white blend and 10-bit gamma support to Berry LED pixel rendering (#24750)
+- Manual tool to compare and verify Berry solidification between C and Python
 
 ### Breaking Changed
 
