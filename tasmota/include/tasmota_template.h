@@ -238,6 +238,7 @@ enum UserSelectablePins {
   GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
   GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_MBS_RX_ENA,                      // Modbus Bridge Serial Receive Enable
+  GPIO_UWB_CS, GPIO_UWB_RST, GPIO_UWB_IRQ,  // DW3000 UWB SPI interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -517,7 +518,8 @@ const char kSensorNames[] PROGMEM =
 #endif
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
-  D_SENSOR_MBS_RX_ENA "|" 
+  D_SENSOR_MBS_RX_ENA "|"
+  D_GPIO_UWB_CS "|" D_GPIO_UWB_RST "|" D_GPIO_UWB_IRQ "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -672,6 +674,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LORA_DI4),
   AGPIO(GPIO_LORA_DI5),
 #endif  // USE_SPI_LORA
+#ifdef USE_UWB_DW3000
+  AGPIO(GPIO_UWB_CS),                              // DW3000 UWB SPI Chip Select
+  AGPIO(GPIO_UWB_RST),                             // DW3000 UWB Reset
+  AGPIO(GPIO_UWB_IRQ),                             // DW3000 UWB IRQ
+#endif  // USE_UWB_DW3000
 #endif  // USE_SPI
 
 #if defined(USE_SDCARD) && defined(ESP32)

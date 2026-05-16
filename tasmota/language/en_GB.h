@@ -1343,5 +1343,8 @@
 #define D_SENSOR_V9240_RX "V9240 RX"
 
 #define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+#define D_GPIO_UWB_CS          "UWB CS"
+#define D_GPIO_UWB_RST         "UWB RST"
+#define D_GPIO_UWB_IRQ         "UWB IRQ"
 
 #endif  // _LANGUAGE_EN_GB_H_

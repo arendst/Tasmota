@@ -831,7 +831,16 @@ typedef struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
-  uint8_t       free_eb0[20];              // EB0  20 bytes
+  uint8_t       free_eb0[20];              // EB0  20 bytes - [0..10] reserved by xsns_126 UWB DW3000
+                                           //   [0] UWB mode autostart (0=off,1=tag,2=anchor)
+                                           //   [1] UWB channel (5 or 9)
+                                           //   [2..3] UWB interval ms (uint16 LE)
+                                           //   [4..5] UWB antenna delay ticks (uint16 LE)
+                                           //   [6] magic 0xAD
+                                           //   [7] flags bit0=mqttRealtime
+                                           //   [8] UWB anchor ID (0-3)
+                                           //   [9] UWB anchor count (1-4)
+                                           //   [10] UWB filter window (1-10)
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
   uint8_t       shift595_device_count;     // EC6
