@@ -142,6 +142,12 @@ else:
     if env.IsCleanTarget() == False:
         os.chdir(BERRY_SOLIDIFY_DIR)
 
+        # tasmota_defines_for_berry.be is generated post-compilation; create an empty
+        # stub if it doesn't exist yet so solidify_all_python.be can import it safely.
+        defines_file = join(env.subst("$PROJECT_DIR"), "tasmota", "tasmota_defines_for_berry.be")
+        if not os.path.exists(defines_file):
+            open(defines_file, 'w').close()
+
         if prepareBerryFiles(files.splitlines()):
             BERRY_GEN_DIR = join(env.subst("$PROJECT_DIR"), "lib", "libesp32", "berry")
             solidify_env = os.environ.copy()
