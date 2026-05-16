@@ -140,9 +140,15 @@ def esp32_build_filesystem(fs_size):
         print(Fore.GREEN + "Will create filesystem with the following file(s):")
         print()
     for file in files:
+        # Remove leading and trailing whitespace, ignore empty lines
+        file = file.strip()
+        if not file:
+            continue
+
         if "no_files" in file:
             continue
-        if "http" and "://" in file:
+        # Remote URL
+        if file.startswith(("http://", "https://")):
             response = requests.get(file.split(" ")[0])
             if response.ok:
                 target = os.path.normpath(join(filesystem_dir, file.split(os.path.sep)[-1]))
@@ -155,6 +161,8 @@ def esp32_build_filesystem(fs_size):
             else:
                 print(Fore.RED + "Failed to download: ",file)
             continue
+        # Local path (relative to PROJECT_DIR or absolute)
+        file = file if os.path.isabs(file) else os.path.normpath(join(env.subst("$PROJECT_DIR"), file))
         if os.path.isdir(file):
             print(f"{file}/ (directory)")
             shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
