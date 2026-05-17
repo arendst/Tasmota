@@ -23,3 +23,7 @@
 \*********************************************************************************************/
 
 void BacklogLoop(void) { Backlog::Loop(); }
+
+// Bridge: exposes TasmotaGlobal.sleep to support_backlog.cpp (separate translation unit).
+// Called from Backlog::Loop() when _fast_budget_ms == 0 to derive the burst budget at runtime.
+uint8_t TasmotaGetSleep() { return TasmotaGlobal.sleep; }

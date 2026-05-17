@@ -35,6 +35,7 @@ uint32_t  GetOption(uint32_t index);
 void      AddLog(uint32_t loglevel, PGM_P formatP, ...);
 int       Response_P(PGM_P formatP, ...);
 int       ResponseAppend_P(PGM_P formatP, ...);
+uint8_t   TasmotaGetSleep();  // defined in support_backlog.ino: returns TasmotaGlobal.sleep
 
 /*********************************************************************************************\
  * Backlog - command queue with configurable inter-command timing
@@ -57,7 +58,12 @@ namespace Backlog {
  * Private state - inaccessible outside this translation unit
 \*********************************************************************************************/
 namespace {
-  LList<char*> _queue;
+  LList<char*> _timed_queue;   // timed-lane: Backlog1/3, or all commands when USE_BACKLOG_FASTLANE not defined
+#ifdef USE_BACKLOG_FASTLANE
+  LList<char*> _fast_queue;    // fast-lane: nodelay commands (Backlog0/2) when SO_BACKLOG_FASTLANE=1
+  uint32_t     _fast_budget_ms     = BACKLOG_FASTLANE_BUDGET_MS;  // 0 = use TasmotaGlobal.sleep
+  uint32_t     _fast_drain_count   = 0;
+#endif
   uint32_t     _timer                = 0;
   bool         _nodelay_staged       = false;   // set by CmndBacklog / ExecuteCommandBlock
   bool         _nodelay_current      = false;   // set per drain step from flavor byte
@@ -129,8 +135,21 @@ static bool _CheckUsageCount(uint32_t acct_bytes) {
 
 void Init() { _timer = millis(); }
 
-bool IsEmpty()     { return _queue.isEmpty(); }
-bool IsNodelay()   { return _nodelay_current; }
+bool IsEmpty() {
+#ifdef USE_BACKLOG_FASTLANE
+  return _timed_queue.isEmpty() && _fast_queue.isEmpty();
+#else
+  return _timed_queue.isEmpty();
+#endif
+}
+
+bool IsSleepBlocked() {
+#ifdef USE_BACKLOG_FASTLANE
+  if (GetOption(SO_BACKLOG_FASTLANE) && !_fast_queue.isEmpty()) return true;
+#endif
+  return !_timed_queue.isEmpty() && TimeReached(_timer);
+}
+
 uint32_t GetChunkSize() { return _chunk_size; }
 bool     IsTraceDrain() { return _trace_drain; }
 
@@ -148,6 +167,18 @@ uint32_t GetMaxBytes() { return _bytes_limit; }
 void SetMaxBytes(uint32_t limit) {
   _bytes_limit = (limit == 0) ? kDefaultMaxBytes : max(limit, kMinBytes);
 }
+
+#ifdef USE_BACKLOG_FASTLANE
+uint32_t GetFastBudget() { return _fast_budget_ms; }
+void SetFastBudget(uint32_t ms) {
+  if (ms == 0) {
+    _fast_budget_ms = 0;  // 0 = derive from TasmotaGlobal.sleep at runtime
+  } else {
+    _fast_budget_ms = min(max(ms, (uint32_t)BACKLOG_FASTLANE_BUDGET_MIN_MS),
+                              (uint32_t)BACKLOG_FASTLANE_BUDGET_MAX_MS);
+  }
+}
+#endif
 
 // Log a warning when a command that requires inter-command settling time is called
 // inside a NoDelay drain step. Call from handlers with hardware or state-machine
@@ -238,14 +269,27 @@ void EnqueueCmd(const char* cmd, uint8_t source, NoDelay noDelay, NoMqttResponse
     *(temp + 1) = (char)source;
 #endif
     strcpy(temp + kCmdOffset, cmd);
-    char* &elem = _queue.addToLast();
+#ifdef USE_BACKLOG_FASTLANE
+    // Lane routing is decided at enqueue time from _nodelay_staged and SO167.
+    // Switching between lanes within a sequence without restarting at position 0
+    // is undefined behaviour - callers must not rely on cross-lane ordering.
+    char* &elem = (GetOption(SO_BACKLOG_FASTLANE) && _nodelay_staged)
+                  ? _fast_queue.addToLast()
+                  : _timed_queue.addToLast();
+#else
+    char* &elem = _timed_queue.addToLast();
+#endif
     elem = temp;
     _enqueue_count++;
     _depth++;
     _queue_bytes += acct_bytes;
     if (_queue_bytes > _max_bytes)  { _max_bytes  = _queue_bytes; }
     if (cmd_len > _max_entry_len)   { _max_entry_len = cmd_len; }
-    uint32_t d = _queue.length();
+#ifdef USE_BACKLOG_FASTLANE
+    uint32_t d = _fast_queue.length() + _timed_queue.length();
+#else
+    uint32_t d = _timed_queue.length();
+#endif
     if (d > _max_depth) { _max_depth = d; }
   }
 }
@@ -276,82 +320,118 @@ void InsertCmd(const char* cmd, uint32_t position, uint8_t source, NoDelay noDel
     *(temp + 1) = (char)source;
 #endif
     strcpy(temp + kCmdOffset, cmd);
-    char* &elem = _queue.insertAt(position);
+#ifdef USE_BACKLOG_FASTLANE
+    // Position counts within the target lane.
+    char* &elem = (GetOption(SO_BACKLOG_FASTLANE) && _nodelay_staged)
+                  ? _fast_queue.insertAt(position)
+                  : _timed_queue.insertAt(position);
+    uint32_t d = _fast_queue.length() + _timed_queue.length();
+#else
+    char* &elem = _timed_queue.insertAt(position);
+    uint32_t d = _timed_queue.length();
+#endif
     elem = temp;
     _insert_count++;
     _depth++;
     _queue_bytes += acct_bytes;
     if (_queue_bytes > _max_bytes)  { _max_bytes  = _queue_bytes; }
     if (cmd_len > _max_entry_len)   { _max_entry_len = cmd_len; }
-    uint32_t d = _queue.length();
     if (d > _max_depth) { _max_depth = d; }
   }
 }
 
 // Discard all queued commands (called when Backlog is invoked with no data).
 void Clear() {
-  for (auto &elem : _queue) {
-    free(elem);
-    _queue.remove(&elem);
-  }
+#ifdef USE_BACKLOG_FASTLANE
+  for (auto &elem : _fast_queue)  { free(elem); _fast_queue.remove(&elem); }
+#endif
+  for (auto &elem : _timed_queue) { free(elem); _timed_queue.remove(&elem); }
   _depth       = 0;
   _queue_bytes = 0;
 }
 
+// Drain one entry from the given queue; update accounting and counters.
+// Returns true if an entry was drained.
+static bool _DrainOne(LList<char*>& queue, uint32_t& drain_counter, const char* tag) {
+  if (queue.isEmpty() || _mutex) {
+    if (!queue.isEmpty()) { _mutex_skip++; }
+    return false;
+  }
+  _mutex = true;
+  char* head = *queue.head();
+  queue.removeHead();
+  _nodelay_current      = _NoDelayOf(head);
+  _no_mqtt_resp_current = _NoMqttOf(head);
+  char*    cmd        = head + kCmdOffset;
+  uint32_t acct_bytes = _AcctBytes(strlen(cmd), 1);  // must be read before free(head)
+  if (_trace_drain) {
+    // D= shows depth before this drain step (pre-decrement): last entry logs D=1, not D=0.
+    // Semantics: "queue held D entries when this command was taken."
+#ifdef BACKLOG_TRACE_SOURCE
+    AddLog(LOG_LEVEL_INFO, PSTR("%s: D=%u T=%u Src=%u Cmd=\"%s\""), tag,
+           _depth, (uint8_t)*head, (uint8_t)*(head + 1), cmd);
+#else
+    AddLog(LOG_LEVEL_INFO, PSTR("%s: D=%u T=%u Cmd=\"%s\""), tag,
+           _depth, (uint8_t)*head, cmd);
+#endif
+  }
+  if (_depth > 0) { _depth--; }
+  else { AddLog(LOG_LEVEL_ERROR, PSTR("%s: depth counter underflow"), tag); }
+  if (_no_mqtt_resp_current) { SuppressMqttResponse(); }
+  ExecuteCommand(cmd, SRC_BACKLOG);
+  free(head);
+  drain_counter++;
+  if (_queue_bytes >= acct_bytes) { _queue_bytes -= acct_bytes; }
+  else { _queue_bytes = 0; }
+  _mutex = false;
+  return true;
+}
+
 // Main drain loop - called every iteration from BacklogLoop().
 void Loop() {
-  if (TimeReached(_timer)) {
-    if (!_queue.isEmpty() && !_mutex) {
-      _mutex = true;
-      char* head = *_queue.head();
-      _queue.removeHead();
-      _nodelay_current      = _NoDelayOf(head);
-      _no_mqtt_resp_current = _NoMqttOf(head);
-      char*    cmd        = head + kCmdOffset;
-      uint32_t acct_bytes = _AcctBytes(strlen(cmd), 1);  // must be read before free(head)
-      if (_trace_drain) {
-        // D= shows depth before this drain step (pre-decrement): last entry logs D=1, not D=0.
-        // Semantics: "queue held D entries when this command was taken."
-#ifdef BACKLOG_TRACE_SOURCE
-        AddLog(LOG_LEVEL_INFO, PSTR("BLG: D=%u T=%u Src=%u Cmd=\"%s\""),
-               _depth, (uint8_t)*head, (uint8_t)*(head + 1), cmd);
-#else
-        AddLog(LOG_LEVEL_INFO, PSTR("BLG: D=%u T=%u Cmd=\"%s\""),
-               _depth, (uint8_t)*head, cmd);
+#ifdef USE_BACKLOG_FASTLANE
+  // Fast-Lane: drain nodelay entries for up to _fast_budget_ms per Loop() call, no timer gate.
+  // At least one entry is always drained when the queue is non-empty (do-while guarantee).
+  // _timer is owned exclusively by the Timed-Lane and is not touched here.
+  if (GetOption(SO_BACKLOG_FASTLANE) && !_fast_queue.isEmpty()) {
+    uint32_t budget      = _fast_budget_ms ? _fast_budget_ms : (uint32_t)TasmotaGetSleep();
+    uint32_t burst_start = millis();
+    do {
+      if (!_DrainOne(_fast_queue, _fast_drain_count, PSTR("BLF"))) { break; }
+    } while (!_fast_queue.isEmpty() && (millis() - burst_start) < budget);
+  }
 #endif
-      }
-      if (_depth > 0) { _depth--; }
-      else { AddLog(LOG_LEVEL_ERROR, PSTR("BLG: depth counter underflow")); }
-      if (_no_mqtt_resp_current) { SuppressMqttResponse(); }
-      ExecuteCommand(cmd, SRC_BACKLOG);
-      free(head);
-      _drain_count++;
-      if (_queue_bytes >= acct_bytes) { _queue_bytes -= acct_bytes; }
-      else { _queue_bytes = 0; }
-      // Loop() is the sole owner of _timer after each drain step.
-      // Exception: when CmndDelay ran during the drain it sets _delay_guard via
-      // ScheduleDelay(). In that case Loop() preserves _timer for that one step.
-      if (_nodelay_current) {
-        _timer = millis();
-      } else if (_delay_guard) {
+
+  // Timed-Lane: one entry per Loop() call, gated by _timer.
+  // After each drain Loop() normally owns the timer (lookahead sets inter-command delay).
+  // Exception: when CmndDelay ran during the drain it sets _delay_guard via ScheduleDelay().
+  // In that case Loop() preserves _timer -- the delay value from CmndDelay takes precedence.
+  // OnCommandExecuted() (external commands, SO166) can still shorten an active delay; this
+  // matches the original Tasmota behaviour and is intentional (external override).
+  if (TimeReached(_timer)) {
+    if (_DrainOne(_timed_queue, _drain_count, PSTR("BLG"))) {
+      if (_delay_guard) {
         _delay_guard = false;
       } else {
-        _timer = millis() + SettingsParam(P_BACKLOG_DELAY);
+        bool next_nodelay = !_timed_queue.isEmpty() && _NoDelayOf(*_timed_queue.head());
+        _timer = next_nodelay ? millis() : millis() + SettingsParam(P_BACKLOG_DELAY);
       }
-      _mutex = false;
-    } else if (!_queue.isEmpty() && _mutex) {
-      _mutex_skip++;
     }
-    if (_queue.isEmpty()) {
-      _nodelay_current      = false;
-      _no_mqtt_resp_current = false;
-    }
+  }
+
+  if (IsEmpty()) {
+    _nodelay_current      = false;
+    _no_mqtt_resp_current = false;
   }
 }
 
 // Backlog20 - Queue statistics snapshot
 void DumpStats() {
-  uint32_t depth       = _queue.length();
+#ifdef USE_BACKLOG_FASTLANE
+  uint32_t depth = _fast_queue.length() + _timed_queue.length();
+#else
+  uint32_t depth = _timed_queue.length();
+#endif
   int32_t  timer_delta = (int32_t)(_timer - millis());
 
   Response_P(PSTR("{\"BacklogStat\":{"));
@@ -371,49 +451,69 @@ void DumpStats() {
                    SettingsParam(P_BACKLOG_DELAY),
                    GetOption(SO_BACKLOG_EXT_DELAY_DISABLE),
                    _ExtDelayMs());
+#ifdef USE_BACKLOG_FASTLANE
+  uint32_t fast_budget_eff = _fast_budget_ms ? _fast_budget_ms : (uint32_t)TasmotaGetSleep();
+  ResponseAppend_P(PSTR("\"FastLane\":%u,\"FastDepth\":%u,\"FastDrained\":%u,\"FastBudget\":%u,\"FastBudgetMs\":%u,"),
+                   GetOption(SO_BACKLOG_FASTLANE) ? 1 : 0,
+                   _fast_queue.length(), _fast_drain_count, _fast_budget_ms, fast_budget_eff);
+#endif
   ResponseAppend_P(PSTR("\"ChunkSize\":%u,\"BytesLimit\":%u,\"DefaultBytesLimit\":%u}}"),
                    _chunk_size, _bytes_limit, kDefaultMaxBytes);
 }
 
+// Emit one queue entry to both AddLog and ResponseAppend. Returns updated idx.
+static uint32_t _DumpEntry(char* head, uint32_t idx, const char* lane, bool& first) {
+  uint8_t flavor = (uint8_t)*head;
+  char*   cmd    = head + kCmdOffset;
+  if (!first) { ResponseAppend_P(PSTR(",")); }
+  first = false;
+#ifdef BACKLOG_TRACE_SOURCE
+  uint8_t src = (uint8_t)*(head + 1);
+  AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"Idx\":%u,\"Lane\":\"%s\",\"T\":%u,\"Src\":%u,\"Cmd\":\"%s\"}"),
+         idx, lane, flavor, src, cmd);
+  ResponseAppend_P(PSTR("{\"Idx\":%u,\"Lane\":\"%s\",\"T\":%u,\"Src\":%u,\"Cmd\":\"%s\"}"),
+                   idx, lane, flavor, src, cmd);
+#else
+  AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"Idx\":%u,\"Lane\":\"%s\",\"T\":%u,\"Cmd\":\"%s\"}"),
+         idx, lane, flavor, cmd);
+  ResponseAppend_P(PSTR("{\"Idx\":%u,\"Lane\":\"%s\",\"T\":%u,\"Cmd\":\"%s\"}"),
+                   idx, lane, flavor, cmd);
+#endif
+  return idx + 1;
+}
+
 // Backlog21..29 - Queue content, paged
 // page = BacklogIndex - 21; entries [page*_chunk_size .. (page+1)*_chunk_size - 1]
-// All output channels (Serial/log via AddLog, Web-Console/MQTT via Response) use
-// identical JSON format - one entry object per AddLog line, assembled response for the rest.
+// Fast-Lane entries (Lane:"F") appear first, Timed-Lane (Lane:"T") after. Idx is global.
+// All output channels use identical JSON format - one entry object per AddLog line.
 void DumpQueue(uint32_t page) {
-  uint32_t depth     = _queue.length();
+#ifdef USE_BACKLOG_FASTLANE
+  uint32_t depth = _fast_queue.length() + _timed_queue.length();
+#else
+  uint32_t depth = _timed_queue.length();
+#endif
   uint32_t start_idx = page * _chunk_size;
+  uint32_t end_idx   = start_idx + _chunk_size;
 
   AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"BacklogQueue\":{\"Depth\":%u,\"StartIdx\":%u,\"ChunkSize\":%u,\"Entry\":["),
          depth, start_idx, _chunk_size);
   Response_P(PSTR("{\"BacklogQueue\":{\"Depth\":%u,\"StartIdx\":%u,\"ChunkSize\":%u,\"Entry\":["),
              depth, start_idx, _chunk_size);
 
-  uint32_t idx   = 0;
-  uint32_t count = 0;
+  uint32_t idx  = 0;
   bool     first = true;
-  for (auto &entry : _queue) {
-    if (idx >= start_idx) {
-      if (count >= _chunk_size) { break; }
-      char*   head   = entry;
-      uint8_t flavor = (uint8_t)*head;
-      char*   cmd    = head + kCmdOffset;
 
-      if (!first) { ResponseAppend_P(PSTR(",")); }
-      first = false;
-#ifdef BACKLOG_TRACE_SOURCE
-      uint8_t src = (uint8_t)*(head + 1);
-      AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"Idx\":%u,\"T\":%u,\"Src\":%u,\"Cmd\":\"%s\"}"),
-             idx, flavor, src, cmd);
-      ResponseAppend_P(PSTR("{\"Idx\":%u,\"T\":%u,\"Src\":%u,\"Cmd\":\"%s\"}"),
-                       idx, flavor, src, cmd);
-#else
-      AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"Idx\":%u,\"T\":%u,\"Cmd\":\"%s\"}"),
-             idx, flavor, cmd);
-      ResponseAppend_P(PSTR("{\"Idx\":%u,\"T\":%u,\"Cmd\":\"%s\"}"), idx, flavor, cmd);
+#ifdef USE_BACKLOG_FASTLANE
+  for (auto &entry : _fast_queue) {
+    if (idx >= end_idx)   { break; }
+    if (idx >= start_idx) { idx = _DumpEntry(entry, idx, "F", first); }
+    else                  { idx++; }
+  }
 #endif
-      count++;
-    }
-    idx++;
+  for (auto &entry : _timed_queue) {
+    if (idx >= end_idx)   { break; }
+    if (idx >= start_idx) { idx = _DumpEntry(entry, idx, "T", first); }
+    else                  { idx++; }
   }
 
   AddLog(LOG_LEVEL_INFO, PSTR("BLQ: ]}}"));

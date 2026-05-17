@@ -222,6 +222,7 @@ const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 #define BACKLOG_EXT_DELAY  100              // Post-external-command drain window in ms (user_config_override.h: 0 = always off)
 #endif
 #define SO_BACKLOG_EXT_DELAY_DISABLE  166   // SetOption166: disable post-external-command drain window (1=disable, 0=enable)
+#define SO_BACKLOG_FASTLANE           167   // SetOption167: enable Fast-Lane (nodelay) queue; requires USE_BACKLOG_FASTLANE build flag
 
 // Backlog queue byte limit - controls how much heap the queue may consume.
 // Per-command heap cost: ~15 B payload (typical short command) + ~27 B fixed overhead
@@ -239,6 +240,24 @@ const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 #ifndef BACKLOG_QUEUE_MIN_BYTES
 // Minimum value accepted by Backlog18; empirically stable on ESP8266 under sustained load.
 #  define BACKLOG_QUEUE_MIN_BYTES  1024     // ~24 short commands
+#endif
+
+// Fast-Lane (USE_BACKLOG_FASTLANE): max wall-clock time spent draining the fast queue per
+// BacklogLoop() call. At least one command is always drained even if it exceeds the budget.
+// BACKLOG_FASTLANE_BUDGET_MS = 0 (default): budget = TasmotaGlobal.sleep at runtime.
+//   This is the recommended default - the fast-lane burst naturally scales with the main-loop
+//   period, and no separate tuning is needed alongside the Sleep setting.
+// Override at build time in user_config_override.h; adjust at runtime via Backlog19 N (ms).
+//   Runtime range: 0 (= sleep), or BACKLOG_FASTLANE_BUDGET_MIN_MS..BACKLOG_FASTLANE_BUDGET_MAX_MS.
+//   Values 1..(MIN-1) are clamped to MIN; values above MAX are clamped to MAX.
+#ifndef BACKLOG_FASTLANE_BUDGET_MS
+#  define BACKLOG_FASTLANE_BUDGET_MS      0    // 0 = use TasmotaGlobal.sleep
+#endif
+#ifndef BACKLOG_FASTLANE_BUDGET_MIN_MS
+#  define BACKLOG_FASTLANE_BUDGET_MIN_MS  50   // minimum explicit budget in ms
+#endif
+#ifndef BACKLOG_FASTLANE_BUDGET_MAX_MS
+#  define BACKLOG_FASTLANE_BUDGET_MAX_MS  250  // maximum explicit budget in ms (= max Sleep)
 #endif
 
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate

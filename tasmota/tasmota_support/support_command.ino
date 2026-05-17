@@ -529,6 +529,7 @@ void CmndBacklog(void) {
   // Backlog16 N    Set queue-content chunk size for Backlog21-29 (runtime, non-persistent)
   // Backlog17 0/1  Enable/disable per-entry drain trace log (BLG: tag)
   // Backlog18 N    Set queue byte limit (0 = reset to compile-time default; clamped to BACKLOG_QUEUE_MIN_BYTES)
+  // Backlog19 N    [USE_BACKLOG_FASTLANE] Fast-lane burst budget: 0=use Sleep (default), 50..250=fixed ms; 1..49 clamped to 50
   // Backlog20      Queue statistics snapshot
   // Backlog21-29   Queue content, paged (page = index - 21)
 
@@ -550,6 +551,13 @@ void CmndBacklog(void) {
         Backlog::SetMaxBytes((uint32_t)XdrvMailbox.payload);
       }
       Response_P(PSTR("{\"BacklogQueueLimit\":%u}"), Backlog::GetMaxBytes());
+#ifdef USE_BACKLOG_FASTLANE
+    } else if (19 == idx) {
+      if (XdrvMailbox.data_len > 0) {
+        Backlog::SetFastBudget((uint32_t)XdrvMailbox.payload);
+      }
+      Response_P(PSTR("{\"BacklogFastBudget\":%u}"), Backlog::GetFastBudget());
+#endif
     } else if (20 == idx) {
       Backlog::DumpStats();
     } else if (idx >= 21 && idx <= 29) {

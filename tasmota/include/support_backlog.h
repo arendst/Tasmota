@@ -40,7 +40,7 @@ namespace Backlog {
   void Init();
 
   bool     IsEmpty();
-  bool     IsNodelay();
+  bool     IsSleepBlocked();
   uint32_t GetRemainingDelay_ms();
   uint32_t GetChunkSize();
   bool     IsTraceDrain();
@@ -51,6 +51,11 @@ namespace Backlog {
   void SetTraceDrain(bool val);
   uint32_t GetMaxBytes();
   void     SetMaxBytes(uint32_t limit);  // 0 = reset to compile-time default; clamped to BACKLOG_QUEUE_MIN_BYTES
+
+#ifdef USE_BACKLOG_FASTLANE
+  uint32_t GetFastBudget();
+  void     SetFastBudget(uint32_t ms);  // 0 = use TasmotaGlobal.sleep; 50..250 = fixed ms
+#endif
 
   // Call from command handlers that are unsafe when the current drain step is NoDelay --
   // e.g. commands controlling hardware with settling-time requirements, interlock logic,

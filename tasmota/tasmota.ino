@@ -745,7 +745,7 @@ void SleepSkip(void) {
 }
 
 void SleepDelay(uint32_t mseconds) {
-  if (!Backlog::IsNodelay() && mseconds) {
+  if (!Backlog::IsSleepBlocked() && mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TasmotaGlobal.skip_sleep &&  // We need to service imminent interrupts ASAP
            !TimeReached(wait) &&
