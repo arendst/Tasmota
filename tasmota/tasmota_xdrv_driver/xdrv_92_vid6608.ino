@@ -81,8 +81,11 @@
 #define VID6608_RMT 0
 #endif
 
-#if !defined(ESP32) && VID6608_RMT
-  #error "VID6608 RMT mode is ESP-32 only"
+#if VID6608_RMT
+  #include "soc/soc_caps.h"
+  #if !SOC_RMT_SUPPORTED
+    #error "VID6608 RMT is not supported on this platform"
+  #endif
 #endif
 
 /**

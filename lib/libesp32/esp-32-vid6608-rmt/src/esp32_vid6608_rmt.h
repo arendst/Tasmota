@@ -19,6 +19,11 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#include "soc/soc_caps.h"
+#if !SOC_RMT_SUPPORTED
+  #error "RMT is not supported on this platform"
+#endif
+
 class esp32_vid6608_rmt {
 public:
     /**
