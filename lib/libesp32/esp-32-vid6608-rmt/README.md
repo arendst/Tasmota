@@ -30,7 +30,7 @@ This library has following features:
 * Optimized homing
 * Extended API's
 
-[![PlatformIO Registry](https://badges.registry.platformio.org/packages/petrows/library/vid6608.svg)](https://registry.platformio.org/libraries/petrows/vid6608)
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/petrows/library/esp-32-vid6608-rmt.svg)](https://registry.platformio.org/libraries/petrows/esp-32-vid6608-rmt)
 
 ## Chip documentation
 
@@ -76,7 +76,7 @@ idf.py flash monitor
 ## Basic example
 
 ```cpp
-#include "vid6608.h"
+#include "esp32_vid6608_rmt.h"
 
 extern "C" void app_main(void)
 {

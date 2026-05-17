@@ -1,3 +1,12 @@
+/**
+ * @file esp32_vid6608_rmt.h
+ * @author Petr Golovachev (petro@petro.ws)
+ * @brief Main class of ESP-32 VID6608 RMT driver
+ *
+ * @copyright Copyright (c) 2026
+ *
+ */
+
 #pragma once
 
 #include <array>
@@ -10,7 +19,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
-class vid6608 {
+class esp32_vid6608_rmt {
 public:
     /**
      * @brief Configuration struct
@@ -24,15 +33,15 @@ public:
     };
 
     /**
-     * @brief Construct a new vid6608 object
+     * @brief Construct a new esp32_vid6608_rmt object
      *
      * @param cfg Configuration struct
      */
-    explicit vid6608(const Config &cfg);
-    ~vid6608();
+    explicit esp32_vid6608_rmt(const Config &cfg);
+    ~esp32_vid6608_rmt();
 
-    vid6608(const vid6608 &)            = delete;
-    vid6608 &operator=(const vid6608 &) = delete;
+    esp32_vid6608_rmt(const esp32_vid6608_rmt &)            = delete;
+    esp32_vid6608_rmt &operator=(const esp32_vid6608_rmt &) = delete;
 
     enum MoveState {
       ZERO_BACK_FULL = 0,
@@ -89,6 +98,52 @@ public:
      * @return int32_t current position (sheduled at this moment, actual move may apply)
      */
     int32_t     getCurrentPosition() { return this->targetPosition; }
+
+    // -------------------------------------------------------------------------------------------
+    // Old Arduino-vid6608 compat layer
+    // -------------------------------------------------------------------------------------------
+
+    /**
+     * @brief Shedules movement to defined absolute position
+     *
+     * Input is checked for sanity: must be in range 0...maxSteps-1. Values bigger are threated as maxSteps-1.
+     * @warning this function is asynchronous, actual movement is done in the loop() function.
+     * @warning next move will be scheduled after current move is done to avoid drive jittering.
+     *
+     * @param position absolute position in range 0...maxSteps-1
+     */
+    void moveTo(uint16_t position) { setPos(position); }
+
+    /**
+     * @brief Test if motor is moving
+     *
+     * Return true, if drive still have sheduled steps (that means that next loop() call will result impulse).
+     *
+     * @return true if drive is moveemnt
+     * @return false if drive is stopped
+     */
+    bool isMoving();
+
+    /**
+     * @brief Test if motor is stopped
+     *
+     * @return true if drive is stopped
+     * @return false if drive is moveemnt
+     */
+    bool isStopped() { return !isMoving(); }
+
+    /**
+     * @brief Returns current real absolute position
+     *
+     * @return uint16_t current real drive position in steps
+     */
+    uint16_t getPosition() { return (uint16_t)this->targetPosition; }
+
+    /**
+     * @brief Does nothing on RMT
+     *
+     */
+    void loop() {}
 
 private:
     /**

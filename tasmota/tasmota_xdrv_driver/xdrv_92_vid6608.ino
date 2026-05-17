@@ -64,15 +64,33 @@
 
   Version history:
 
+    * 2026-05-17 - add support for ESP RMT driver
     * 2025-11-23 - fixes related with ESP8266 performance
     * 2025-11-22 - initial release
 */
 
 /**
+ * @brief Use HW RMT driver?
+ * Provides much better performance, but requires free RMT,
+ * some SoC (i.e. ESP32C6) have only 2 onboard, and some may be used by other drivers
+ * (like TasmotaLED and others).
+ *
+ * Default is disabled
+ */
+#if !defined(VID6608_RMT)
+#define VID6608_RMT 0
+#endif
+
+#if !defined(ESP32) && VID6608_RMT
+  #error "VID6608 RMT mode is ESP-32 only"
+#endif
+
+/**
  * @brief Driver impulse mode decision here
  * ESP-32 has FreeRTOS, that allows us to perform precision inpulse control
+ * Disabled in RMT mode
  */
-#ifdef ESP32
+#if defined(ESP32) && !VID6608_RMT
   #define VID6608_RTOS
 #endif
 
@@ -82,8 +100,8 @@
  * Disable if you dont want to perform reset/homing operation on driver init,
  * usefull for cases, where you have advanced mode (i.e. use saved values from NVRAM to restore and manual reset).
  */
-#ifndef VID6608_RESET_ON_INIT
-  #define VID6608_RESET_ON_INIT  true
+#if !defined(VID6608_RESET_ON_INIT)
+  #define VID6608_RESET_ON_INIT  1
 #endif
 
 /**
@@ -98,27 +116,33 @@
  * Use defines VID6608_STEPS_X to configure steps range per-drive
  */
 
-#ifndef VID6608_STEPS_DEFAULT
+#if !defined(VID6608_STEPS_DEFAULT)
   #define VID6608_STEPS_DEFAULT 320 * 12
 #endif
 
-#ifndef VID6608_STEPS_1
+#if !defined(VID6608_STEPS_1)
   #define VID6608_STEPS_1 VID6608_STEPS_DEFAULT
 #endif
 
-#ifndef VID6608_STEPS_2
+#if !defined(VID6608_STEPS_2)
   #define VID6608_STEPS_2 VID6608_STEPS_DEFAULT
 #endif
 
-#ifndef VID6608_STEPS_3
+#if !defined(VID6608_STEPS_3)
   #define VID6608_STEPS_3 VID6608_STEPS_DEFAULT
 #endif
 
-#ifndef VID6608_STEPS_4
+#if !defined(VID6608_STEPS_4)
   #define VID6608_STEPS_4 VID6608_STEPS_DEFAULT
 #endif
 
-#include "vid6608.h"
+#if VID6608_RMT
+  #include "esp32_vid6608_rmt.h"
+  #define VID6608_CLASS esp32_vid6608_rmt
+#else
+  #include "vid6608.h"
+  #define VID6608_CLASS vid6608
+#endif
 
 /**
  * @brief Command definition
@@ -148,8 +172,9 @@ enum GaugeInternalCommand {
  * @brief Global vars
  */
 bool vid6608Present = false;
-vid6608 *vid6608Drives[VID6608_MAX_DRIVES];
-#ifdef VID6608_RTOS
+VID6608_CLASS *vid6608Drives[VID6608_MAX_DRIVES];
+
+#if defined(VID6608_RTOS)
   /**
    * @brief Mutex for RTOS precision timing
    *
@@ -218,7 +243,7 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
   bool isFirstItem = true;
   for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
     if (index == 0 || index == (x+1)) {
-      vid6608 *driver = vid6608Drives[x];
+      VID6608_CLASS *driver = vid6608Drives[x];
       if (driver) {
         if (!isFirstItem) {
           ResponseAppend_P(PSTR(","));
@@ -230,14 +255,14 @@ void CmndGaugeCommand(int32_t command, uint32_t index, int32_t payload) {
             ResponseAppend_P(PSTR("\"cmd\":\"zero\",\"pos\":0"));
             break;
           case GAUGE_SET:
-            driver->setPos(payload);
+            driver->moveTo(payload);
             ResponseAppend_P(PSTR("\"cmd\":\"set\",\"pos\":%d"), payload);
             break;
           case GAUGE_SET_PERCENT:
             uint16_t maxSteps = 0;
             memcpy_P(&maxSteps, &vid6608MaxSteps[x], 2);
             float moveSteps = (float)maxSteps * ( (float)payload / 100.0 );
-            driver->setPos(moveSteps);
+            driver->moveTo(moveSteps);
             ResponseAppend_P(PSTR("\"cmd\":\"perc\",\"perc\":%d,\"pos\":%d"), payload, (int32_t)moveSteps);
             break;
         }
@@ -259,12 +284,12 @@ void VID6608StatusJson() {
   bool isFirstItem = true;
   VID6608_MUTEX_TAKE
   for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
-    vid6608 *driver = vid6608Drives[x];
+    VID6608_CLASS *driver = vid6608Drives[x];
     if (driver) {
       if (!isFirstItem) {
         ResponseAppend_P(PSTR(","));
       }
-      ResponseAppend_P(PSTR("\"%d\":{\"pos\":%d}"), (int32_t)(x+1), (int32_t)driver->getCurrentPosition());
+      ResponseAppend_P(PSTR("\"%d\":{\"pos\":%d}"), (int32_t)(x+1), (int32_t)driver->getPosition());
       isFirstItem = false;
     }
   }
@@ -281,15 +306,46 @@ void VID6608StatusWeb() {
   WSContentSend_PD(HTTP_TABLE100);
   VID6608_MUTEX_TAKE
   for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
-    vid6608 *driver = vid6608Drives[x];
+    VID6608_CLASS *driver = vid6608Drives[x];
     if (driver) {
-      WSContentSend_PD(PSTR("<tr><th>Gauge %d</th><td>%d</td></tr>"), (int32_t)(x+1), (int32_t)driver->getCurrentPosition());
+      WSContentSend_PD(PSTR("<tr><th>Gauge %d</th><td>%d</td></tr>"), (int32_t)(x+1), (int32_t)driver->getPosition());
     }
   }
   VID6608_MUTEX_GIVE
   WSContentSend_PD(PSTR("</table>"));
 }
 #endif
+
+#if defined(VID6608_RTOS)
+/**
+ * @brief FreeRTOS background process function
+ * This function is required to handle movement with precision timings.
+ * Used in ESP-32 only, the ESP8266 uses classical loop() thread.
+ */
+void VID6608XvTask(void *) {
+  while(true) {
+    bool needToMove = false;
+    VID6608_MUTEX_TAKE
+    for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
+      VID6608_CLASS *driver = vid6608Drives[x];
+      if (driver) {
+        driver->loop();
+        if (driver->isMoving()) {
+          needToMove = true;
+        }
+      }
+    }
+    VID6608_MUTEX_GIVE
+    /*
+      If we dont need to move any -> go sleep.
+      This will delay next move begin up to 500ms, but freeds up CPU a lot.
+    */
+    if (!needToMove) {
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+    }
+  }
+}
+#endif // VID6608_RTOS
 
 /**
  * @brief Driver initalisation
@@ -300,20 +356,29 @@ void VID6608Init() {
   for (uint32_t x = 0; x < VID6608_MAX_DRIVES; x++) {
     if (PinUsed(GPIO_VID6608_F, x) && PinUsed(GPIO_VID6608_CW, x)) {
       // We have motor defined at number x
+      uint32_t pinStep = Pin(GPIO_VID6608_F, x);
+      uint32_t pinDir = Pin(GPIO_VID6608_CW, x);
       uint16_t maxSteps = 0;
       memcpy_P(&maxSteps, &vid6608MaxSteps[x], 2);
-      vid6608::Config config;
-      config.stepPin = (gpio_num_t)Pin(GPIO_VID6608_F, x);
-      config.dirPin = (gpio_num_t)Pin(GPIO_VID6608_CW, x);
-      config.maxSteps = maxSteps;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: detected drive %d at pin %d, %d, steps %d"), x, config.stepPin, config.dirPin, (uint32_t)maxSteps);
-      vid6608Drives[x] = new vid6608(config);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("VID: Detected drive %d at pin %d, %d, steps %d"), x, pinStep, pinDir, (uint32_t)maxSteps);
+      #if VID6608_RMT
+        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: Using hardware RMT driver"));
+        esp32_vid6608_rmt::Config cfg;
+        cfg.stepPin = (gpio_num_t)pinStep;
+        cfg.dirPin = (gpio_num_t)pinDir;
+        cfg.maxSteps = maxSteps;
+        vid6608Drives[x] = new esp32_vid6608_rmt(cfg);
+      #else
+        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: Using software driver"));
+        vid6608Drives[x] = new vid6608(pinStep, pinDir, maxSteps);
+      #endif
+
       // Perform homing operation
       if (VID6608_RESET_ON_INIT) {
         vid6608Drives[x]->zero();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d done"), x);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: Zero %d done"), x);
       } else {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: zero %d skipped"), x);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("VID: Zero %d skipped"), x);
       }
       vid6608Present = true;
     } else {
@@ -324,15 +389,35 @@ void VID6608Init() {
   if (!vid6608Present) {
     return;
   }
+#if defined(VID6608_RTOS)
+  AddLog(LOG_LEVEL_DEBUG, PSTR("VID: Using FreeRTOS mode"));
+  // Create mutex for RTOS thread safety
+  vid6608Mutex = xSemaphoreCreateMutex();
+  // Start background RTOS thread -> required for precision timing
+  xTaskCreate(
+    VID6608XvTask,                /* Function to implement the task */
+    "VID6608XvTask",              /* Name of the task */
+    1024,                         /* Stack size in words */
+    NULL,                         /* Task input parameter */
+    0,                            /* Priority of the task, lowest */
+    NULL                          /* Task handle. */
+  );
+#endif // VID6608_RTOS
 }
 
 // Classical loop implementation
-#ifndef VID6608_RTOS
+#if !defined(VID6608_RTOS) && !VID6608_RMT
 /**
  * @brief Non-FreeRTOS background process function
  * ESP8266 classical loop() thread function, used where is no FreeRTOS.
  */
 bool VID6608Loop() {
+  for (uint8_t x = 0; x < VID6608_MAX_DRIVES; x++) {
+    VID6608_CLASS *driver = vid6608Drives[x];
+    if (driver) {
+      driver->loop();
+    }
+  }
   return true;
 }
 #endif // VID6608_RTOS
@@ -356,9 +441,10 @@ bool Xdrv92(uint32_t function) {
 
   switch (function) {
     case FUNC_LOOP:
-#ifndef VID6608_RTOS
-      // ESP32 uses FreeRTOS to manage moving tasks, as it requires precision timings
+#if !defined(VID6608_RTOS) && !VID6608_RMT
+      // 1. ESP32 uses FreeRTOS to manage moving tasks, as it requires precision timings
       // Others should use regular loop -> slower, but still works
+      // 2. ESP32 RMT version does not need loop
       result = VID6608Loop();
 #else
       result = true;

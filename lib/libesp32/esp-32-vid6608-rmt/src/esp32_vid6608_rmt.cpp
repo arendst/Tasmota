@@ -1,11 +1,20 @@
-#include "vid6608.h"
+/**
+ * @file esp32_vid6608_rmt.cpp
+ * @author Petr Golovachev (petro@petro.ws)
+ * @brief Main class of ESP-32 VID6608 RMT driver
+ *
+ * @copyright Copyright (c) 2026
+ *
+ */
+
+#include "esp32_vid6608_rmt.h"
 
 #include "esp_log.h"
 
 static constexpr uint32_t RMT_RES_HZ = 1'000'000;  // 1 тик = 1 мкс
-static const char       *TAG         = "vid6608";
+static const char       *TAG         = "VID6608";
 
-std::array<uint16_t, vid6608::kAccelSteps> vid6608::buildAccelCurve() {
+std::array<uint16_t, esp32_vid6608_rmt::kAccelSteps> esp32_vid6608_rmt::buildAccelCurve() {
     // Linear ramp from startHz up to cruiseHz over kAccelSteps pulses.
     // Edit these two frequencies to retune the shipped profile.
     constexpr float startHz  = 250.0f;
@@ -19,10 +28,10 @@ std::array<uint16_t, vid6608::kAccelSteps> vid6608::buildAccelCurve() {
     return out;
 }
 
-const std::array<uint16_t, vid6608::kAccelSteps> vid6608::kAccelHalfPeriod =
-    vid6608::buildAccelCurve();
+const std::array<uint16_t, esp32_vid6608_rmt::kAccelSteps> esp32_vid6608_rmt::kAccelHalfPeriod =
+    esp32_vid6608_rmt::buildAccelCurve();
 
-vid6608::vid6608(const Config &cfg) : config(cfg) {
+esp32_vid6608_rmt::esp32_vid6608_rmt(const Config &cfg) : config(cfg) {
     gpio_config_t io = {
         .pin_bit_mask = (1ULL << this->config.dirPin),
         .mode         = GPIO_MODE_OUTPUT,
@@ -52,8 +61,8 @@ vid6608::vid6608(const Config &cfg) : config(cfg) {
 
     // Start task
     xTaskCreate(
-        &vid6608::driverTaskStart,    /* Function to implement the task */
-        "vid6608",                    /* Name of the task */
+        &esp32_vid6608_rmt::driverTaskStart,    /* Function to implement the task */
+        "esp32_vid6608_rmt",                    /* Name of the task */
         1024,                         /* Stack size in words */
         this,                         /* Task input parameter */
         0,                            /* Priority of the task, lowest */
@@ -61,7 +70,7 @@ vid6608::vid6608(const Config &cfg) : config(cfg) {
     );
 }
 
-vid6608::~vid6608() {
+esp32_vid6608_rmt::~esp32_vid6608_rmt() {
     this->running = false;
     xSemaphoreGive(this->taskNotify);
     vTaskDelete(this->taskHandle);
@@ -72,7 +81,7 @@ vid6608::~vid6608() {
     if (this->enc) rmt_del_encoder(this->enc);
 }
 
-void vid6608::zero(int32_t initialPos) {
+void esp32_vid6608_rmt::zero(int32_t initialPos) {
     xSemaphoreTake(this->infoMutex, portMAX_DELAY);
     this->targetPositionNext = 0;
     this->targetPosition = 0;
@@ -95,7 +104,7 @@ void vid6608::zero(int32_t initialPos) {
     xSemaphoreGive(this->infoMutex);
 }
 
-void vid6608::wait(int32_t timeout_ms) {
+void esp32_vid6608_rmt::wait(int32_t timeout_ms) {
     /**
      * @brief This function makes polling check, that the flag
      * this->targetPending is unset
@@ -138,7 +147,15 @@ void vid6608::wait(int32_t timeout_ms) {
     }
 }
 
-void vid6608::setPos(int32_t steps) {
+bool esp32_vid6608_rmt::isMoving() {
+    bool pending;
+    xSemaphoreTake(this->infoMutex, portMAX_DELAY);
+    pending = this->targetPending;
+    xSemaphoreGive(this->infoMutex);
+    return pending;
+}
+
+void esp32_vid6608_rmt::setPos(int32_t steps) {
     // Critical section
     xSemaphoreTake(this->infoMutex, portMAX_DELAY);
     this->targetPending = true;
@@ -148,7 +165,7 @@ void vid6608::setPos(int32_t steps) {
     xSemaphoreGive(this->taskNotify);
 }
 
-void vid6608::driverTask() {
+void esp32_vid6608_rmt::driverTask() {
     do {
         int32_t targetMove = 0; // Now much steps we need to move?
         xSemaphoreTake(this->infoMutex, portMAX_DELAY);
@@ -183,11 +200,11 @@ void vid6608::driverTask() {
     } while (this->running);
 }
 
-void vid6608::driverTaskStart(void *arg) {
-    static_cast<vid6608 *>(arg)->driverTask();
+void esp32_vid6608_rmt::driverTaskStart(void *arg) {
+    static_cast<esp32_vid6608_rmt *>(arg)->driverTask();
 }
 
-void vid6608::movePrepare(int32_t steps) {
+void esp32_vid6608_rmt::movePrepare(int32_t steps) {
     if (steps == 0) return;
     uint8_t newTargetDir = steps > 0 ? 0 : 1;
     if (newTargetDir != this->targetDir) {
@@ -199,7 +216,7 @@ void vid6608::movePrepare(int32_t steps) {
     }
 }
 
-void vid6608::moveRamp(int32_t steps) {
+void esp32_vid6608_rmt::moveRamp(int32_t steps) {
     if (steps == 0) return;
 
     uint32_t n = static_cast<uint32_t>(steps > 0 ? steps : -steps);
@@ -253,7 +270,7 @@ void vid6608::moveRamp(int32_t steps) {
     ESP_ERROR_CHECK(rmt_tx_wait_all_done(this->chan, 10000));
 }
 
-void vid6608::moveConst(int32_t steps, int32_t speed_hz) {
+void esp32_vid6608_rmt::moveConst(int32_t steps, int32_t speed_hz) {
     if (steps == 0) return;
 
     uint32_t n    = static_cast<uint32_t>(steps > 0 ? steps : -steps);
