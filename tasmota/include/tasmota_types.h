@@ -200,7 +200,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t gui_device_name : 1;          // bit 17 (v14.4.1.1) - SetOption163 - GUI_NOSHOW_DEVICENAME - (GUI) Disable display of GUI device name (1)
     uint32_t wizmote_enabled : 1;          // bit 18 (v14.4.1.4) - SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
     uint32_t tls_use_ecdsa : 1;            // bit 19 (v15.0.1.0) - SetOption165 - (TLS) Enable ECDSA validation in addition to RSA
-    uint32_t spare20 : 1;                  // bit 20
+    uint32_t backlog_ext_delay_disable : 1; // bit 20             - SetOption166 - (Backlog) Disable post-external-command drain window; see SO34 and BACKLOG_EXT_DELAY (1)
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22
     uint32_t spare23 : 1;                  // bit 23
@@ -215,7 +215,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SOBitfield6;
 
-const uint8_t MAX_SETOPTION_USED = 165;    // Max number of SetOption. Used by command SetOption to display all states
+const uint8_t MAX_SETOPTION_USED = 166;    // Max number of SetOption. Used by command SetOption to display all states
 
 // Bitfield to be used for persistent multi bit
 typedef union {

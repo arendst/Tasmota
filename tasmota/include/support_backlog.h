@@ -21,6 +21,19 @@
 #define _SUPPORT_BACKLOG_H_
 
 namespace Backlog {
+
+  enum class NoDelay : uint8_t {
+    OFF,
+    ON,
+    NoChange
+  };
+
+  enum class NoMqttResponse : uint8_t {
+    OFF,
+    ON,
+    NoChange
+  };
+
   void Init();
 
   bool     IsEmpty();
@@ -30,15 +43,25 @@ namespace Backlog {
   void SetNodelay(bool val);
   void SetNoMqttResponse(bool val);
 
+  // Call from command handlers that are unsafe when the current drain step is NoDelay --
+  // e.g. commands controlling hardware with settling-time requirements, interlock logic,
+  // or state-machine dependencies. Logs an error if _nodelay_current is set.
+  // Handlers without this call have not yet been evaluated for NoDelay safety.
+  void WarnIfNoDelay(PGM_P cmd_name_P);
+
   void OnCommandExecuted();
   void ScheduleNow();
   void ScheduleDelay(uint32_t ms);
 
-  void EnqueueCmd(const char* cmd);
-  void InsertCmd(const char* cmd, uint32_t position);
+  void EnqueueCmd(const char* cmd, NoDelay noDelay = NoDelay::NoChange, NoMqttResponse noMqttResponse = NoMqttResponse::NoChange);
+  void InsertCmd(const char* cmd, uint32_t position, NoDelay noDelay = NoDelay::NoChange, NoMqttResponse noMqttResponse = NoMqttResponse::NoChange);
   void Clear();
 
   void Loop();
+
+  inline void EnqueueCmd(const char* cmd, NoMqttResponse noMqttResponse, NoDelay noDelay) { EnqueueCmd(cmd, noDelay, noMqttResponse); }
+  inline void EnqueueCmd(const char* cmd, NoDelay noDelay)                                { EnqueueCmd(cmd, noDelay, NoMqttResponse::NoChange); }
+  inline void EnqueueCmd(const char* cmd, NoMqttResponse noMqttResponse)                 { EnqueueCmd(cmd, NoDelay::NoChange, noMqttResponse); }
 }
 
 void BacklogLoop(void);

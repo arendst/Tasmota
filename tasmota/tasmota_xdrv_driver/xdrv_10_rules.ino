@@ -1965,6 +1965,8 @@ void ExecuteCommandBlock(const char * commands, int len)
 
   char oneCommand[len + 1];     //To put one command
   int insertPosition = 0;       //When insert into backlog, we should do it by 0, 1, 2 ...
+  Backlog::SetNodelay(false);        // IF block behaves like plain Backlog (timed, MQTT on)
+  Backlog::SetNoMqttResponse(false);
   char * pos = cmdbuff;
   int lenEndBlock = 0;
   while (*pos) {
@@ -2007,8 +2009,12 @@ void ExecuteCommandBlock(const char * commands, int len)
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Position %d, Command '%s'"), insertPosition, blcommand);
 
     if (strlen(blcommand)) {
-      //Insert into backlog
-      Backlog::InsertCmd(blcommand, insertPosition++);
+      //Insert into backlog; resolve NoDelay at enqueue time
+      if (0 == strncasecmp_P(blcommand, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+        Backlog::SetNodelay(true);
+      } else {
+        Backlog::InsertCmd(blcommand, insertPosition++);
+      }
     }
   }
   return;

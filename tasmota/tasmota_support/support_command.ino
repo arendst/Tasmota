@@ -528,9 +528,11 @@ void CmndBacklog(void) {
   // Backlog3 command1;command2;..  Execute commands in sequence with a delay but no response but rule processing only
 
   if (XdrvMailbox.data_len) {
-    Backlog::SetNodelay(0 == (XdrvMailbox.index & 0x01));           // Backlog0, Backlog2
+    const bool initial_nodelay = (0 == (XdrvMailbox.index & 0x01));  // true for Backlog0/2
+    Backlog::SetNodelay(initial_nodelay);                            // Backlog0, Backlog2
     Backlog::SetNoMqttResponse(2 == (XdrvMailbox.index & 0x02));    // Backlog2, Backlog3
 
+    bool nodelay_oneshot = false;
     char *blcommand = strtok(XdrvMailbox.data, ";");
     while (blcommand != nullptr) {
       // Ignore semicolon (; = end of single command) between brackets {}
@@ -549,9 +551,18 @@ void CmndBacklog(void) {
           break;
         }
       }
-      // Do not allow command Reset in backlog
-      if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0)) {
-        Backlog::EnqueueCmd(blcommand);
+      // Do not allow command Reset in backlog; resolve NoDelay at enqueue time.
+      // NoDelay is one-shot: it affects exactly the next enqueued command, then reverts to the
+      // sequence's initial nodelay state - matching the original drain-time semantics where NoDelay
+      // was a queue entry that set a local flag for one command only.
+      if (*blcommand != '\0') {
+        if (0 == strncasecmp_P(blcommand, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          Backlog::SetNodelay(true);
+          nodelay_oneshot = true;
+        } else if (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0) {
+          Backlog::EnqueueCmd(blcommand);
+          if (nodelay_oneshot) { Backlog::SetNodelay(initial_nodelay); nodelay_oneshot = false; }
+        }
       }
       blcommand = strtok(nullptr, ";");
     }
@@ -644,6 +655,7 @@ void CmndDelay(void) {
   // Delay 1   - Wait default time (200ms)
   // Delay 2   - Wait 2 x 100ms
   // Delay 10  - Wait 10 x 100ms
+  Backlog::WarnIfNoDelay(PSTR(D_CMND_DELAY));
   if (XdrvMailbox.payload == -1) {
     Backlog::ScheduleDelay(1000 - RtcMillis());  // Next second (#18984)
   }

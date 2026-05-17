@@ -218,6 +218,11 @@ const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads
 
 const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 
+#ifndef BACKLOG_EXT_DELAY
+#define BACKLOG_EXT_DELAY  100              // Post-external-command drain window in ms (user_config_override.h: 0 = always off)
+#endif
+#define SO_BACKLOG_EXT_DELAY_DISABLE  166   // SetOption166: disable post-external-command drain window (1=disable, 0=enable)
+
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
 const uint32_t SERIAL_POLLING = 100;        // Serial receive polling in ms
