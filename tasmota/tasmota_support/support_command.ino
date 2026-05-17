@@ -526,6 +526,32 @@ void CmndBacklog(void) {
   // Backlog0 command1;command2;..  Execute commands in sequence with no delay
   // Backlog2 command1;command2;..  Execute commands in sequence with no delay and no response but rule processing only
   // Backlog3 command1;command2;..  Execute commands in sequence with a delay but no response but rule processing only
+  // Backlog16 N    Set queue-content chunk size for Backlog21-29 (runtime, non-persistent)
+  // Backlog17 0/1  Enable/disable per-entry drain trace log (BLG: tag)
+  // Backlog20      Queue statistics snapshot
+  // Backlog21-29   Queue content, paged (page = index - 21)
+
+  auto idx = XdrvMailbox.index;
+  if (idx >= 4) {
+    // Runtime config and diagnostic indices - independent of data payload
+    if (16 == idx) {
+      if (XdrvMailbox.data_len > 0 && XdrvMailbox.payload > 0) {
+        Backlog::SetChunkSize((uint32_t)XdrvMailbox.payload);
+      }
+      Response_P(PSTR("{\"BacklogChunkSize\":%u}"), Backlog::GetChunkSize());
+    } else if (17 == idx) {
+      if (XdrvMailbox.data_len > 0) {
+        Backlog::SetTraceDrain(XdrvMailbox.payload != 0);
+      }
+      Response_P(PSTR("{\"BacklogTraceDrain\":%u}"), Backlog::IsTraceDrain() ? 1 : 0);
+    } else if (20 == idx) {
+      Backlog::DumpStats();
+    } else if (idx >= 21 && idx <= 29) {
+      Backlog::DumpQueue(idx - 21);
+    }
+    // indices 4-15, 18-19: reserved, no response
+    return;
+  }
 
   if (XdrvMailbox.data_len) {
     const bool initial_nodelay = (0 == (XdrvMailbox.index & 0x01));  // true for Backlog0/2

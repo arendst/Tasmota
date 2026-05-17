@@ -33,6 +33,8 @@ void      SuppressMqttResponse();
 uint8_t&  SettingsParam(uint32_t index);
 uint32_t  GetOption(uint32_t index);
 void      AddLog(uint32_t loglevel, PGM_P formatP, ...);
+int       Response_P(PGM_P formatP, ...);
+int       ResponseAppend_P(PGM_P formatP, ...);
 
 /*********************************************************************************************\
  * Backlog - command queue with configurable inter-command timing
@@ -41,6 +43,12 @@ void      AddLog(uint32_t loglevel, PGM_P formatP, ...);
  *   Backlog  / Backlog1 - commands separated by SetOption34 delay, MQTT responses on
  *   Backlog0 / Backlog2 - no delay, MQTT responses on/off
  *   Backlog3            - SetOption34 delay, MQTT responses off
+ *
+ * Queue entry layout:
+ *   Without BACKLOG_TRACE_SOURCE: [flavor_byte][cmd\0]           - malloc(strlen+2)
+ *   With    BACKLOG_TRACE_SOURCE: [flavor_byte][source][cmd\0]   - malloc(strlen+3)
+ *   flavor_byte: bit0=nodelay, bit1=no_mqtt_resp
+ *   source:      CommandSource enum value, 255 = not annotated
 \*********************************************************************************************/
 
 namespace Backlog {
@@ -57,6 +65,25 @@ namespace {
   bool         _delay_guard          = false;   // set by ScheduleDelay() inside a timed drain; prevents Loop() from overwriting _timer
   bool         _no_mqtt_resp_staged  = false;   // set by CmndBacklog / ExecuteCommandBlock
   bool         _no_mqtt_resp_current = false;   // set per drain step from flavor byte
+
+  // Phase H: diagnostics and runtime config
+  uint32_t     _drain_count           = 0;
+  uint32_t     _enqueue_count         = 0;
+  uint32_t     _insert_count          = 0;
+  uint32_t     _mutex_skip            = 0;
+  uint32_t     _depth                 = 0;  // running counter: +1 on enqueue/insert, -1 on drain, 0 on clear
+  uint32_t     _max_depth             = 0;
+  uint32_t     _max_bytes             = 0;  // Phase S: always 0 until then
+  uint32_t     _max_entry_len         = 0;
+  uint32_t     _chunk_size            = 20;
+  bool         _trace_drain           = false;
+
+  // Byte offset from start of a queue entry to the command string.
+#ifdef BACKLOG_TRACE_SOURCE
+  static constexpr uint8_t kCmdOffset = 2;
+#else
+  static constexpr uint8_t kCmdOffset = 1;
+#endif
 }
 
 /*********************************************************************************************\
@@ -65,8 +92,10 @@ namespace {
 
 void Init() { _timer = millis(); }
 
-bool IsEmpty()   { return _queue.isEmpty(); }
-bool IsNodelay() { return _nodelay_current; }
+bool IsEmpty()     { return _queue.isEmpty(); }
+bool IsNodelay()   { return _nodelay_current; }
+uint32_t GetChunkSize() { return _chunk_size; }
+bool     IsTraceDrain() { return _trace_drain; }
 
 uint32_t GetRemainingDelay_ms() {
   if (TimeReached(_timer)) { return 0; }
@@ -75,6 +104,8 @@ uint32_t GetRemainingDelay_ms() {
 
 void SetNodelay(bool val)        { _nodelay_staged      = val; }
 void SetNoMqttResponse(bool val) { _no_mqtt_resp_staged = val; }
+void SetChunkSize(uint32_t n)    { if (n > 0) _chunk_size = n; }
+void SetTraceDrain(bool val)     { _trace_drain = val; }
 
 // Log a warning when a command that requires inter-command settling time is called
 // inside a NoDelay drain step. Call from handlers with hardware or state-machine
@@ -85,10 +116,10 @@ void WarnIfNoDelay(PGM_P cmd_name_P) {
 }
 
 // Flavor-byte accessors - bit0=nodelay, bit1=no_mqtt_resp
-static bool _NoDelayOf(const char* head)       { return !!(*head & (1 << 0)); }
-static bool _NoMqttOf(const char* head)        { return !!(*head & (1 << 1)); }
-static void _SetNoDelayIn(char* val, bool flag) { *val |= (flag ? 1 : 0) << 0; }
-static void _SetNoMqttIn(char* val, bool flag)  { *val |= (flag ? 1 : 0) << 1; }
+static bool _NoDelayOf(const char* head)        { return !!(*head & (1 << 0)); }
+static bool _NoMqttOf(const char* head)         { return !!(*head & (1 << 1)); }
+static void _SetNoDelayIn(char* val, bool flag)  { *val |= (flag ? 1 : 0) << 0; }
+static void _SetNoMqttIn(char* val, bool flag)   { *val |= (flag ? 1 : 0) << 1; }
 
 // Returns the configured post-external-command drain window in ms, or 0 if disabled.
 // SO166=0 (default): window active, value from BACKLOG_EXT_DELAY compile constant.
@@ -127,41 +158,59 @@ void ScheduleDelay(uint32_t ms) {
 // inside CmndBacklog's tokenisation loop).
 // Each entry is prefixed with a flavor byte (bit0=nodelay, bit1=no_mqtt_resp)
 // baked in from the staged flags at enqueue time.
-void EnqueueCmd(const char* cmd, NoDelay noDelay, NoMqttResponse noMqttResponse) {
+void EnqueueCmd(const char* cmd, uint8_t source, NoDelay noDelay, NoMqttResponse noMqttResponse) {
   if (NoDelay::NoChange != noDelay)
     _nodelay_staged = NoDelay::ON == noDelay;
 
   if (NoMqttResponse::NoChange != noMqttResponse)
     _no_mqtt_resp_staged = NoMqttResponse::ON == noMqttResponse;
 
-  char* temp = (char*)malloc(strlen(cmd) + 2);
+  uint32_t cmd_len = strlen(cmd);
+  char* temp = (char*)malloc(cmd_len + 1 + kCmdOffset);
   if (temp != nullptr) {
     *temp = 0;
     _SetNoDelayIn(temp, _nodelay_staged);
     _SetNoMqttIn(temp, _no_mqtt_resp_staged);
-    strcpy(temp + 1, cmd);
+#ifdef BACKLOG_TRACE_SOURCE
+    *(temp + 1) = (char)source;
+#endif
+    strcpy(temp + kCmdOffset, cmd);
     char* &elem = _queue.addToLast();
     elem = temp;
+    _enqueue_count++;
+    _depth++;
+    if (cmd_len > _max_entry_len) { _max_entry_len = cmd_len; }
+    uint32_t d = _queue.length();
+    if (d > _max_depth) { _max_depth = d; }
   }
 }
 
 // Insert a command at a specific position (used by the rules IF/ENDIF engine
 // to prepend a command block in-order at the head of the queue).
-void InsertCmd(const char* cmd, uint32_t position, NoDelay noDelay, NoMqttResponse noMqttResponse) {
+void InsertCmd(const char* cmd, uint32_t position, uint8_t source, NoDelay noDelay, NoMqttResponse noMqttResponse) {
   if (NoDelay::NoChange != noDelay)
     _nodelay_staged = NoDelay::ON == noDelay;
 
   if (NoMqttResponse::NoChange != noMqttResponse)
     _no_mqtt_resp_staged = NoMqttResponse::ON == noMqttResponse;
 
-  char* temp = (char*)malloc(strlen(cmd) + 2);
+  uint32_t cmd_len = strlen(cmd);
+  char* temp = (char*)malloc(cmd_len + 1 + kCmdOffset);
   if (temp != nullptr) {
     *temp = 0;
     _SetNoDelayIn(temp, _nodelay_staged);
     _SetNoMqttIn(temp, _no_mqtt_resp_staged);
-    strcpy(temp + 1, cmd);
+#ifdef BACKLOG_TRACE_SOURCE
+    *(temp + 1) = (char)source;
+#endif
+    strcpy(temp + kCmdOffset, cmd);
     char* &elem = _queue.insertAt(position);
     elem = temp;
+    _insert_count++;
+    _depth++;
+    if (cmd_len > _max_entry_len) { _max_entry_len = cmd_len; }
+    uint32_t d = _queue.length();
+    if (d > _max_depth) { _max_depth = d; }
   }
 }
 
@@ -171,6 +220,7 @@ void Clear() {
     free(elem);
     _queue.remove(&elem);
   }
+  _depth = 0;
 }
 
 // Main drain loop - called every iteration from BacklogLoop().
@@ -182,10 +232,24 @@ void Loop() {
       _queue.removeHead();
       _nodelay_current      = _NoDelayOf(head);
       _no_mqtt_resp_current = _NoMqttOf(head);
-      char* cmd = head + 1;
+      char* cmd = head + kCmdOffset;
+      if (_trace_drain) {
+        // D= shows depth before this drain step (pre-decrement): last entry logs D=1, not D=0.
+        // Semantics: "queue held D entries when this command was taken."
+#ifdef BACKLOG_TRACE_SOURCE
+        AddLog(LOG_LEVEL_INFO, PSTR("BLG: D=%u T=%u Src=%u Cmd=\"%s\""),
+               _depth, (uint8_t)*head, (uint8_t)*(head + 1), cmd);
+#else
+        AddLog(LOG_LEVEL_INFO, PSTR("BLG: D=%u T=%u Cmd=\"%s\""),
+               _depth, (uint8_t)*head, cmd);
+#endif
+      }
+      if (_depth > 0) { _depth--; }
+      else { AddLog(LOG_LEVEL_ERROR, PSTR("BLG: depth counter underflow")); }
       if (_no_mqtt_resp_current) { SuppressMqttResponse(); }
       ExecuteCommand(cmd, SRC_BACKLOG);
       free(head);
+      _drain_count++;
       // Loop() is the sole owner of _timer after each drain step.
       // Exception: when CmndDelay ran during the drain it sets _delay_guard via
       // ScheduleDelay(). In that case Loop() preserves _timer for that one step.
@@ -197,12 +261,84 @@ void Loop() {
         _timer = millis() + SettingsParam(P_BACKLOG_DELAY);
       }
       _mutex = false;
+    } else if (!_queue.isEmpty() && _mutex) {
+      _mutex_skip++;
     }
     if (_queue.isEmpty()) {
       _nodelay_current      = false;
       _no_mqtt_resp_current = false;
     }
   }
+}
+
+// Backlog20 - Queue statistics snapshot
+void DumpStats() {
+  uint32_t depth       = _queue.length();
+  int32_t  timer_delta = (int32_t)(_timer - millis());
+
+  Response_P(PSTR("{\"BacklogStat\":{"));
+  ResponseAppend_P(PSTR("\"Depth\":%u,\"DepthCounter\":%u,\"Bytes\":0,"), depth, _depth);
+  ResponseAppend_P(PSTR("\"TimerMs\":%d,\"Ready\":%u,\"Mutex\":%u,"),
+                   timer_delta, TimeReached(_timer) ? 1 : 0, _mutex ? 1 : 0);
+  ResponseAppend_P(PSTR("\"StagedNodelay\":%u,\"StagedNoMqtt\":%u,"),
+                   _nodelay_staged ? 1 : 0, _no_mqtt_resp_staged ? 1 : 0);
+  ResponseAppend_P(PSTR("\"CurrentNodelay\":%u,\"TraceDrain\":%u,"),
+                   _nodelay_current ? 1 : 0, _trace_drain ? 1 : 0);
+  ResponseAppend_P(PSTR("\"Drained\":%u,\"Enqueued\":%u,\"Inserted\":%u,"),
+                   _drain_count, _enqueue_count, _insert_count);
+  ResponseAppend_P(PSTR("\"Discarded\":0,\"MutexSkipped\":%u,"), _mutex_skip);
+  ResponseAppend_P(PSTR("\"MaxDepth\":%u,\"MaxBytes\":0,\"MaxEntryLen\":%u,"),
+                   _max_depth, _max_entry_len);
+  ResponseAppend_P(PSTR("\"SO34\":%u,\"SO166\":%u,\"ExtDelayMs\":%u,"),
+                   SettingsParam(P_BACKLOG_DELAY),
+                   GetOption(SO_BACKLOG_EXT_DELAY_DISABLE),
+                   _ExtDelayMs());
+  ResponseAppend_P(PSTR("\"ChunkSize\":%u}}"), _chunk_size);
+}
+
+// Backlog21..29 - Queue content, paged
+// page = BacklogIndex - 21; entries [page*_chunk_size .. (page+1)*_chunk_size - 1]
+// All output channels (Serial/log via AddLog, Web-Console/MQTT via Response) use
+// identical JSON format - one entry object per AddLog line, assembled response for the rest.
+void DumpQueue(uint32_t page) {
+  uint32_t depth     = _queue.length();
+  uint32_t start_idx = page * _chunk_size;
+
+  AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"BacklogQueue\":{\"Depth\":%u,\"StartIdx\":%u,\"ChunkSize\":%u,\"Entry\":["),
+         depth, start_idx, _chunk_size);
+  Response_P(PSTR("{\"BacklogQueue\":{\"Depth\":%u,\"StartIdx\":%u,\"ChunkSize\":%u,\"Entry\":["),
+             depth, start_idx, _chunk_size);
+
+  uint32_t idx   = 0;
+  uint32_t count = 0;
+  bool     first = true;
+  for (auto &entry : _queue) {
+    if (idx >= start_idx) {
+      if (count >= _chunk_size) { break; }
+      char*   head   = entry;
+      uint8_t flavor = (uint8_t)*head;
+      char*   cmd    = head + kCmdOffset;
+
+      if (!first) { ResponseAppend_P(PSTR(",")); }
+      first = false;
+#ifdef BACKLOG_TRACE_SOURCE
+      uint8_t src = (uint8_t)*(head + 1);
+      AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"Idx\":%u,\"T\":%u,\"Src\":%u,\"Cmd\":\"%s\"}"),
+             idx, flavor, src, cmd);
+      ResponseAppend_P(PSTR("{\"Idx\":%u,\"T\":%u,\"Src\":%u,\"Cmd\":\"%s\"}"),
+                       idx, flavor, src, cmd);
+#else
+      AddLog(LOG_LEVEL_INFO, PSTR("BLQ: {\"Idx\":%u,\"T\":%u,\"Cmd\":\"%s\"}"),
+             idx, flavor, cmd);
+      ResponseAppend_P(PSTR("{\"Idx\":%u,\"T\":%u,\"Cmd\":\"%s\"}"), idx, flavor, cmd);
+#endif
+      count++;
+    }
+    idx++;
+  }
+
+  AddLog(LOG_LEVEL_INFO, PSTR("BLQ: ]}}"));
+  ResponseAppend_P(PSTR("]}}"));
 }
 
 } // namespace Backlog

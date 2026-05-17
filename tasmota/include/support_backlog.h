@@ -34,15 +34,21 @@ namespace Backlog {
     NoChange
   };
 
+  // Value stored in the source byte of a queue entry when the caller did not annotate.
+  static constexpr uint8_t kSourceUnknown = 255;
+
   void Init();
 
   bool     IsEmpty();
   bool     IsNodelay();
   uint32_t GetRemainingDelay_ms();
+  uint32_t GetChunkSize();
+  bool     IsTraceDrain();
 
   void SetNodelay(bool val);
   void SetNoMqttResponse(bool val);
-
+  void SetChunkSize(uint32_t n);
+  void SetTraceDrain(bool val);
   // Call from command handlers that are unsafe when the current drain step is NoDelay --
   // e.g. commands controlling hardware with settling-time requirements, interlock logic,
   // or state-machine dependencies. Logs an error if _nodelay_current is set.
@@ -53,15 +59,22 @@ namespace Backlog {
   void ScheduleNow();
   void ScheduleDelay(uint32_t ms);
 
-  void EnqueueCmd(const char* cmd, NoDelay noDelay = NoDelay::NoChange, NoMqttResponse noMqttResponse = NoMqttResponse::NoChange);
-  void InsertCmd(const char* cmd, uint32_t position, NoDelay noDelay = NoDelay::NoChange, NoMqttResponse noMqttResponse = NoMqttResponse::NoChange);
-  void Clear();
+  void DumpStats();
+  void DumpQueue(uint32_t page);
 
+  void Clear();
   void Loop();
 
-  inline void EnqueueCmd(const char* cmd, NoMqttResponse noMqttResponse, NoDelay noDelay) { EnqueueCmd(cmd, noDelay, noMqttResponse); }
-  inline void EnqueueCmd(const char* cmd, NoDelay noDelay)                                { EnqueueCmd(cmd, noDelay, NoMqttResponse::NoChange); }
-  inline void EnqueueCmd(const char* cmd, NoMqttResponse noMqttResponse)                 { EnqueueCmd(cmd, NoDelay::NoChange, noMqttResponse); }
+  void EnqueueCmd(const char* cmd, uint8_t source = kSourceUnknown,
+                  NoDelay noDelay = NoDelay::NoChange,
+                  NoMqttResponse noMqttResponse = NoMqttResponse::NoChange);
+  void InsertCmd(const char* cmd, uint32_t position, uint8_t source = kSourceUnknown,
+                 NoDelay noDelay = NoDelay::NoChange,
+                 NoMqttResponse noMqttResponse = NoMqttResponse::NoChange);
+  // helper overloads -- source defaults to kSourceUnknown
+  inline void EnqueueCmd(const char* cmd, uint8_t source, NoMqttResponse noMqttResponse, NoDelay noDelay) { EnqueueCmd(cmd, source, noDelay, noMqttResponse); }
+  inline void EnqueueCmd(const char* cmd, uint8_t source, NoDelay noDelay)                                { EnqueueCmd(cmd, source, noDelay, NoMqttResponse::NoChange); }
+  inline void EnqueueCmd(const char* cmd, uint8_t source, NoMqttResponse noMqttResponse)                 { EnqueueCmd(cmd, source, NoDelay::NoChange, noMqttResponse); }
 }
 
 void BacklogLoop(void);
