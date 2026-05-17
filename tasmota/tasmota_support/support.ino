@@ -3070,3 +3070,13 @@ String Decompress(const char * compressed, size_t uncompressed_size) {
 }
 
 #endif // USE_UNISHOX_COMPRESSION
+
+/*********************************************************************************************\
+ * Bridge functions - isolate peripheral code from TasmotaGlobal and Settings internals
+\*********************************************************************************************/
+
+uint8_t& SettingsParam(uint32_t index) {
+  static uint8_t _oob = 0;
+  if (index >= PARAM8_SIZE) { _oob = 0; return _oob; }
+  return Settings->param[index];
+}

@@ -1589,7 +1589,7 @@ void CmndSetoption(void) {
         for (uint32_t i = 0; i < PARAM8_SIZE; i++) {
           ResponseAppend_P(PSTR("%s%d"),
             (i) ? "," : "",
-            Settings->param[i]);                   // SetOption32 .. 49
+            SettingsParam(i));                     // SetOption32 .. 49
         }
         ResponseAppend_P(PSTR("]"));
       }
@@ -1642,7 +1642,7 @@ uint32_t GetOption(uint32_t index) {
   uint32_t pindex;
   if (SetoptionDecode(index, &ptype, &pindex)) {
     if (1 == ptype) {
-      return Settings->param[pindex];
+      return SettingsParam(pindex);
     } else {
       uint32_t flag = Settings->flag.data;
       if (3 == ptype) {
@@ -1687,7 +1687,7 @@ void CmndSetoptionBase(bool indexed) {
             break;
         }
         if ((XdrvMailbox.payload >= param_low) && (XdrvMailbox.payload <= param_high)) {
-          Settings->param[pindex] = XdrvMailbox.payload;
+          SettingsParam(pindex) = XdrvMailbox.payload;
 #ifdef USE_LIGHT
           if (P_RGB_REMAP == pindex) {
             LightUpdateColorMapping();
