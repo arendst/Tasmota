@@ -528,6 +528,7 @@ void CmndBacklog(void) {
   // Backlog3 command1;command2;..  Execute commands in sequence with a delay but no response but rule processing only
   // Backlog16 N    Set queue-content chunk size for Backlog21-29 (runtime, non-persistent)
   // Backlog17 0/1  Enable/disable per-entry drain trace log (BLG: tag)
+  // Backlog18 N    Set queue byte limit (0 = reset to compile-time default; clamped to BACKLOG_QUEUE_MIN_BYTES)
   // Backlog20      Queue statistics snapshot
   // Backlog21-29   Queue content, paged (page = index - 21)
 
@@ -544,12 +545,17 @@ void CmndBacklog(void) {
         Backlog::SetTraceDrain(XdrvMailbox.payload != 0);
       }
       Response_P(PSTR("{\"BacklogTraceDrain\":%u}"), Backlog::IsTraceDrain() ? 1 : 0);
+    } else if (18 == idx) {
+      if (XdrvMailbox.data_len > 0) {
+        Backlog::SetMaxBytes((uint32_t)XdrvMailbox.payload);
+      }
+      Response_P(PSTR("{\"BacklogQueueLimit\":%u}"), Backlog::GetMaxBytes());
     } else if (20 == idx) {
       Backlog::DumpStats();
     } else if (idx >= 21 && idx <= 29) {
       Backlog::DumpQueue(idx - 21);
     }
-    // indices 4-15, 18-19: reserved, no response
+    // indices 4-15 and 19: reserved, no response
     return;
   }
 
@@ -557,6 +563,18 @@ void CmndBacklog(void) {
     const bool initial_nodelay = (0 == (XdrvMailbox.index & 0x01));  // true for Backlog0/2
     Backlog::SetNodelay(initial_nodelay);                            // Backlog0, Backlog2
     Backlog::SetNoMqttResponse(2 == (XdrvMailbox.index & 0x02));    // Backlog2, Backlog3
+
+    // Whole-sequence-or-nothing gate - must run before strtok() destroys the string.
+    // Semicolons inside {} pairs are re-joined in the loop below but counted here: the
+    // resulting overcount is intentional (conservative estimate, never underestimates).
+    uint32_t semicolon_count = 0;
+    for (const char* p = XdrvMailbox.data; *p; p++) {
+      if (';' == *p) { semicolon_count++; }
+    }
+    if (!Backlog::TryReserveSequence(XdrvMailbox.data_len, semicolon_count + 1)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("BLG: Discarded: %s"), XdrvMailbox.data);
+      return;
+    }
 
     bool nodelay_oneshot = false;
     char *blcommand = strtok(XdrvMailbox.data, ";");

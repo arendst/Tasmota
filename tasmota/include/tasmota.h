@@ -223,6 +223,24 @@ const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 #endif
 #define SO_BACKLOG_EXT_DELAY_DISABLE  166   // SetOption166: disable post-external-command drain window (1=disable, 0=enable)
 
+// Backlog queue byte limit - controls how much heap the queue may consume.
+// Per-command heap cost: ~15 B payload (typical short command) + ~27 B fixed overhead
+// (LList node, allocator bookkeeping per malloc/new, entry header bytes) = ~42 B/cmd.
+// Overhead breakdown is in support_backlog.cpp (kPerCmdAcctOverhead, kEntryFixedOverhead).
+// Capacity examples:  1024 B ~= 24 short cmds   4096 B ~= 97   32768 B ~= 780
+// Override at build time via user_config_override.h; adjust at runtime via Backlog18 N.
+#ifndef BACKLOG_QUEUE_MAX_BYTES
+#  ifdef ESP32
+#    define BACKLOG_QUEUE_MAX_BYTES  32768  // ~1/5 of typical free heap on tightest ESP32 target
+#  else
+#    define BACKLOG_QUEUE_MAX_BYTES  4096   // ~1/5 of typical free heap on ESP8266
+#  endif
+#endif
+#ifndef BACKLOG_QUEUE_MIN_BYTES
+// Minimum value accepted by Backlog18; empirically stable on ESP8266 under sustained load.
+#  define BACKLOG_QUEUE_MIN_BYTES  1024     // ~24 short commands
+#endif
+
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
 const uint32_t SERIAL_POLLING = 100;        // Serial receive polling in ms

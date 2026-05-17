@@ -73,10 +73,14 @@ namespace {
   uint32_t     _mutex_skip            = 0;
   uint32_t     _depth                 = 0;  // running counter: +1 on enqueue/insert, -1 on drain, 0 on clear
   uint32_t     _max_depth             = 0;
-  uint32_t     _max_bytes             = 0;  // Phase S: always 0 until then
+  uint32_t     _max_bytes             = 0;
   uint32_t     _max_entry_len         = 0;
   uint32_t     _chunk_size            = 20;
   bool         _trace_drain           = false;
+
+  // Phase S: queue byte limit
+  uint32_t     _queue_bytes           = 0;  // current heap used by queue entries
+  uint32_t     _discard_count         = 0;  // enqueue attempts rejected due to byte limit
 
   // Byte offset from start of a queue entry to the command string.
 #ifdef BACKLOG_TRACE_SOURCE
@@ -84,6 +88,39 @@ namespace {
 #else
   static constexpr uint8_t kCmdOffset = 1;
 #endif
+
+  static constexpr uint32_t kDefaultMaxBytes = BACKLOG_QUEUE_MAX_BYTES;
+  static constexpr uint32_t kMinBytes        = BACKLOG_QUEUE_MIN_BYTES;
+  static uint32_t           _bytes_limit     = kDefaultMaxBytes;
+
+  // Estimated bookkeeping added by the heap allocator per malloc/new call on ESP targets.
+  // Applied twice per queued command: once for the malloc'd entry, once for the LList node.
+  static constexpr uint32_t kHeapAllocOverhead = 8;
+  // Fixed heap cost per queued command, independent of command length:
+  //   LList<char*>::element_size - node struct (pointer + value), from LList's public interface
+  //   2 * kHeapAllocOverhead     - allocator bookkeeping for entry malloc + LList node new
+  static constexpr uint32_t kEntryFixedOverhead =
+      static_cast<uint32_t>(LList<char*>::element_size) + 2 * kHeapAllocOverhead;
+  // Total fixed accounting cost added per queued command on top of the raw string length:
+  //   kCmdOffset + 1 - header byte(s) + null terminator in the malloc'd entry (1+1 or 2+1)
+  //   kEntryFixedOverhead - LList node struct (8 B) + 2 x allocator bookkeeping (2x8 B) = 24 B
+  // Sum: 26 B (without BACKLOG_TRACE_SOURCE) or 27 B (with). Empirically confirmed on ESP8266.
+  // See BACKLOG_QUEUE_MAX_BYTES / BACKLOG_QUEUE_MIN_BYTES in tasmota.h for capacity estimates.
+  static constexpr uint32_t kPerCmdAcctOverhead = kCmdOffset + 1 + kEntryFixedOverhead;
+}
+
+// Accounting byte cost for cmd_count commands whose strings sum to str_len bytes.
+// Single source of truth for the per-entry overhead formula - used by all check and
+// drain sites so that formula changes require editing exactly one place.
+static uint32_t _AcctBytes(uint32_t str_len, uint32_t cmd_count) {
+  return str_len + cmd_count * kPerCmdAcctOverhead;
+}
+
+// Returns true if acct_bytes fit within the queue limit.
+// On failure: increments _discard_count, returns false. Caller owns the log message.
+static bool _CheckUsageCount(uint32_t acct_bytes) {
+  if (_queue_bytes + acct_bytes > _bytes_limit) { _discard_count++; return false; }
+  return true;
 }
 
 /*********************************************************************************************\
@@ -106,6 +143,11 @@ void SetNodelay(bool val)        { _nodelay_staged      = val; }
 void SetNoMqttResponse(bool val) { _no_mqtt_resp_staged = val; }
 void SetChunkSize(uint32_t n)    { if (n > 0) _chunk_size = n; }
 void SetTraceDrain(bool val)     { _trace_drain = val; }
+
+uint32_t GetMaxBytes() { return _bytes_limit; }
+void SetMaxBytes(uint32_t limit) {
+  _bytes_limit = (limit == 0) ? kDefaultMaxBytes : max(limit, kMinBytes);
+}
 
 // Log a warning when a command that requires inter-command settling time is called
 // inside a NoDelay drain step. Call from handlers with hardware or state-machine
@@ -154,6 +196,20 @@ void ScheduleDelay(uint32_t ms) {
   if (_mutex) { _delay_guard = true; }
 }
 
+// Pre-check for CmndBacklog(): whole-sequence-or-nothing gate.
+// Call before the tokenisation loop with the raw data string length and the number of
+// commands (semicolons + 1). Counts the rejection and logs the byte context on failure.
+// Contract: after a true return the caller MUST enqueue the sequence - no exceptions.
+bool TryReserveSequence(uint32_t total_str_len, uint32_t cmd_count) {
+  uint32_t estimated = _AcctBytes(total_str_len, cmd_count);
+  if (!_CheckUsageCount(estimated)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLG: Sequence rejected, queue %u/%u B, need ~%u B"),
+           _queue_bytes, _bytes_limit, estimated);
+    return false;
+  }
+  return true;
+}
+
 // Append a single command string to the queue (called once per parsed token
 // inside CmndBacklog's tokenisation loop).
 // Each entry is prefixed with a flavor byte (bit0=nodelay, bit1=no_mqtt_resp)
@@ -165,8 +221,15 @@ void EnqueueCmd(const char* cmd, uint8_t source, NoDelay noDelay, NoMqttResponse
   if (NoMqttResponse::NoChange != noMqttResponse)
     _no_mqtt_resp_staged = NoMqttResponse::ON == noMqttResponse;
 
-  uint32_t cmd_len = strlen(cmd);
-  char* temp = (char*)malloc(cmd_len + 1 + kCmdOffset);
+  uint32_t cmd_len     = strlen(cmd);
+  uint32_t alloc_bytes = cmd_len + 1 + kCmdOffset;
+  uint32_t acct_bytes  = _AcctBytes(cmd_len, 1);
+  if (!_CheckUsageCount(acct_bytes)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLG: Queue full (%u/%u B), discarded: %s"),
+           _queue_bytes, _bytes_limit, cmd);
+    return;
+  }
+  char* temp = (char*)malloc(alloc_bytes);
   if (temp != nullptr) {
     *temp = 0;
     _SetNoDelayIn(temp, _nodelay_staged);
@@ -179,7 +242,9 @@ void EnqueueCmd(const char* cmd, uint8_t source, NoDelay noDelay, NoMqttResponse
     elem = temp;
     _enqueue_count++;
     _depth++;
-    if (cmd_len > _max_entry_len) { _max_entry_len = cmd_len; }
+    _queue_bytes += acct_bytes;
+    if (_queue_bytes > _max_bytes)  { _max_bytes  = _queue_bytes; }
+    if (cmd_len > _max_entry_len)   { _max_entry_len = cmd_len; }
     uint32_t d = _queue.length();
     if (d > _max_depth) { _max_depth = d; }
   }
@@ -194,8 +259,15 @@ void InsertCmd(const char* cmd, uint32_t position, uint8_t source, NoDelay noDel
   if (NoMqttResponse::NoChange != noMqttResponse)
     _no_mqtt_resp_staged = NoMqttResponse::ON == noMqttResponse;
 
-  uint32_t cmd_len = strlen(cmd);
-  char* temp = (char*)malloc(cmd_len + 1 + kCmdOffset);
+  uint32_t cmd_len     = strlen(cmd);
+  uint32_t alloc_bytes = cmd_len + 1 + kCmdOffset;
+  uint32_t acct_bytes  = _AcctBytes(cmd_len, 1);
+  if (!_CheckUsageCount(acct_bytes)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLG: Queue full (%u/%u B), discarded: %s"),
+           _queue_bytes, _bytes_limit, cmd);
+    return;
+  }
+  char* temp = (char*)malloc(alloc_bytes);
   if (temp != nullptr) {
     *temp = 0;
     _SetNoDelayIn(temp, _nodelay_staged);
@@ -208,7 +280,9 @@ void InsertCmd(const char* cmd, uint32_t position, uint8_t source, NoDelay noDel
     elem = temp;
     _insert_count++;
     _depth++;
-    if (cmd_len > _max_entry_len) { _max_entry_len = cmd_len; }
+    _queue_bytes += acct_bytes;
+    if (_queue_bytes > _max_bytes)  { _max_bytes  = _queue_bytes; }
+    if (cmd_len > _max_entry_len)   { _max_entry_len = cmd_len; }
     uint32_t d = _queue.length();
     if (d > _max_depth) { _max_depth = d; }
   }
@@ -220,7 +294,8 @@ void Clear() {
     free(elem);
     _queue.remove(&elem);
   }
-  _depth = 0;
+  _depth       = 0;
+  _queue_bytes = 0;
 }
 
 // Main drain loop - called every iteration from BacklogLoop().
@@ -232,7 +307,8 @@ void Loop() {
       _queue.removeHead();
       _nodelay_current      = _NoDelayOf(head);
       _no_mqtt_resp_current = _NoMqttOf(head);
-      char* cmd = head + kCmdOffset;
+      char*    cmd        = head + kCmdOffset;
+      uint32_t acct_bytes = _AcctBytes(strlen(cmd), 1);  // must be read before free(head)
       if (_trace_drain) {
         // D= shows depth before this drain step (pre-decrement): last entry logs D=1, not D=0.
         // Semantics: "queue held D entries when this command was taken."
@@ -250,6 +326,8 @@ void Loop() {
       ExecuteCommand(cmd, SRC_BACKLOG);
       free(head);
       _drain_count++;
+      if (_queue_bytes >= acct_bytes) { _queue_bytes -= acct_bytes; }
+      else { _queue_bytes = 0; }
       // Loop() is the sole owner of _timer after each drain step.
       // Exception: when CmndDelay ran during the drain it sets _delay_guard via
       // ScheduleDelay(). In that case Loop() preserves _timer for that one step.
@@ -277,7 +355,7 @@ void DumpStats() {
   int32_t  timer_delta = (int32_t)(_timer - millis());
 
   Response_P(PSTR("{\"BacklogStat\":{"));
-  ResponseAppend_P(PSTR("\"Depth\":%u,\"DepthCounter\":%u,\"Bytes\":0,"), depth, _depth);
+  ResponseAppend_P(PSTR("\"Depth\":%u,\"DepthCounter\":%u,\"Bytes\":%u,"), depth, _depth, _queue_bytes);
   ResponseAppend_P(PSTR("\"TimerMs\":%d,\"Ready\":%u,\"Mutex\":%u,"),
                    timer_delta, TimeReached(_timer) ? 1 : 0, _mutex ? 1 : 0);
   ResponseAppend_P(PSTR("\"StagedNodelay\":%u,\"StagedNoMqtt\":%u,"),
@@ -286,14 +364,15 @@ void DumpStats() {
                    _nodelay_current ? 1 : 0, _trace_drain ? 1 : 0);
   ResponseAppend_P(PSTR("\"Drained\":%u,\"Enqueued\":%u,\"Inserted\":%u,"),
                    _drain_count, _enqueue_count, _insert_count);
-  ResponseAppend_P(PSTR("\"Discarded\":0,\"MutexSkipped\":%u,"), _mutex_skip);
-  ResponseAppend_P(PSTR("\"MaxDepth\":%u,\"MaxBytes\":0,\"MaxEntryLen\":%u,"),
-                   _max_depth, _max_entry_len);
+  ResponseAppend_P(PSTR("\"Discarded\":%u,\"MutexSkipped\":%u,"), _discard_count, _mutex_skip);
+  ResponseAppend_P(PSTR("\"MaxDepth\":%u,\"MaxBytes\":%u,\"MaxEntryLen\":%u,"),
+                   _max_depth, _max_bytes, _max_entry_len);
   ResponseAppend_P(PSTR("\"SO34\":%u,\"SO166\":%u,\"ExtDelayMs\":%u,"),
                    SettingsParam(P_BACKLOG_DELAY),
                    GetOption(SO_BACKLOG_EXT_DELAY_DISABLE),
                    _ExtDelayMs());
-  ResponseAppend_P(PSTR("\"ChunkSize\":%u}}"), _chunk_size);
+  ResponseAppend_P(PSTR("\"ChunkSize\":%u,\"BytesLimit\":%u,\"DefaultBytesLimit\":%u}}"),
+                   _chunk_size, _bytes_limit, kDefaultMaxBytes);
 }
 
 // Backlog21..29 - Queue content, paged

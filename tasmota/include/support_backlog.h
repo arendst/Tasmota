@@ -49,6 +49,9 @@ namespace Backlog {
   void SetNoMqttResponse(bool val);
   void SetChunkSize(uint32_t n);
   void SetTraceDrain(bool val);
+  uint32_t GetMaxBytes();
+  void     SetMaxBytes(uint32_t limit);  // 0 = reset to compile-time default; clamped to BACKLOG_QUEUE_MIN_BYTES
+
   // Call from command handlers that are unsafe when the current drain step is NoDelay --
   // e.g. commands controlling hardware with settling-time requirements, interlock logic,
   // or state-machine dependencies. Logs an error if _nodelay_current is set.
@@ -58,6 +61,7 @@ namespace Backlog {
   void OnCommandExecuted();
   void ScheduleNow();
   void ScheduleDelay(uint32_t ms);
+  bool TryReserveSequence(uint32_t total_str_len, uint32_t cmd_count);
 
   void DumpStats();
   void DumpQueue(uint32_t page);

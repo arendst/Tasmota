@@ -58,6 +58,13 @@ public:
   LList() : _head(nullptr) {}
   ~LList() { reset(); }
 
+  // Structural size of one list node (sizeof LList_elt<T>, excluding heap-allocator bookkeeping).
+  // Callers that account for queue memory must not compute this from LList_elt<T> directly:
+  // the node layout is an implementation detail of LList and may change independently of T.
+  // Exposing it here keeps the per-element cost contract stable while enforcing the principle
+  // that only LList owns — and therefore discloses — the size of its own internal nodes.
+  static constexpr size_t element_size = sizeof(LList_elt<T>);
+
   // remove elements
   T * removeHead(void);      // remove first element
   void reset(void);           // remove all elements
