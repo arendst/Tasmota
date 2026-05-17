@@ -1,8 +1,6 @@
-# Gauge stepper motor Switec X25.168 driver for VID6608 and clones
+# ESP-IDF library to drive Automotive gauge drivers using HW RMT driver
 
-![Moving example](doc/output.gif)
-
-This library implements driver for Arduino framework
+This library implements driver for native ESP-IDF framework
 for following driver chips for analog automotive gauges (Switec X25.168, X27.168 and clones) with microstepping support:
 
 * VID6606 (2 motors)
@@ -16,7 +14,14 @@ Driver chips with microstepping is the recommended way to drive such motors,
 they provide much more relailabe and smooth movement with reduced noise and
 to avoid skipping steps.
 
-This library is developed by inspiration from [SwitecX25](https://github.com/clearwater/SwitecX25) library, many thanks to author.
+This library is very similar to [Arduino-vid6608](https://github.com/petrows/arduino-vid6608),
+but it implements hardware generator for driver steps sequence,
+the [ESP-32 Remote Control Transceiver (RMT)](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/rmt.html):
+
+* No `delay()` call;
+* Much better precision movement without interrupts and slow-downs for bi-axial instruments;
+
+Only the ESP-32 is supported. All chips has minimum 2 RMT channels.
 
 This library has following features:
 
@@ -58,36 +63,32 @@ like in the classical "full scale back" method.
 
 See inline documentation in source code: [vid6608.h](src/vid6608.h).
 
+## Compile examples
+
+To compile and flash examples, navigate to example dir and call idf:
+
+```bash
+cd examples/gauge-cal
+export IDF_TARGET=esp32c6
+idf.py flash monitor
+```
+
 ## Basic example
 
-Simple code to activate the library.
-
 ```cpp
-#include <Arduino.h>
-#include <vid6608.h>
+#include "vid6608.h"
 
-// standard X25.168 range 315 degrees at 1/3 degree steps
-#define STEPS (320 * 12)
-
-#define PIN_STEP 26 // Pin, connected to f(scx)
-#define PIN_DIR 27  // Pin. connected to CW/CCW
-
-vid6608 motor1(PIN_STEP, PIN_DIR, STEPS);
-
-unsigned long nextMoveTime = 0;
-uint16_t nextMovePos = 0;
-
-void setup(void)
+extern "C" void app_main(void)
 {
-  // Run the motor against the stops
-  motor1.zero();
-  // Plan next move (in loop())
-  motor1.moveTo(100);
-}
+    vid6608::Config cfg {
+        .stepPin   = GPIO_NUM_14,
+        .dirPin    = GPIO_NUM_18,
+        .maxSteps  = 12 * 320,
+    };
+    vid6608 driver = vid6608(cfg);
 
-void loop(void)
-{
-  // the motor only moves when you call update
-  motor1.loop();
+    driver.zero();
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    driver.setPos(12 * 180);
 }
 ```
