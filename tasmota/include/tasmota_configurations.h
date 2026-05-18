@@ -1146,4 +1146,19 @@
   #define CODE_IMAGE_STR "tasmota"
 #endif
 
+// Multical21 / FlowIQ wM-Bus driver requires hardware SPI for the CC1101 transceiver.
+// Re-enable USE_SPI in case the selected firmware variant has #undef'd it (e.g. the
+// default ESP8266 "tasmota" 1 MB image disables all SPI devices).
+#ifdef USE_MULTICAL21
+  #ifndef USE_SPI
+    #define USE_SPI
+  #endif
+  // Settings (AES key, meter id, ...) are persisted to the filesystem.
+  // Auto-enable USE_UFILESYS where the image has room for it; on ESP8266_1M
+  // there is no filesystem partition, settings then live in RAM only.
+  #if !defined(USE_UFILESYS) && !defined(ESP8266_1M) && !defined(FIRMWARE_MINIMAL)
+    #define USE_UFILESYS
+  #endif
+#endif
+
 #endif  // _TASMOTA_CONFIGURATIONS_H_

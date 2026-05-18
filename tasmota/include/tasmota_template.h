@@ -1214,6 +1214,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_CC1101_GDO0),                       // CC1101 pin for RX
   AGPIO(GPIO_CC1101_GDO2),                       // CC1101 pin for RX
 #endif
+#if defined(USE_MULTICAL21) && !defined(USE_KEELOQ)
+  AGPIO(GPIO_CC1101_GDO0),                       // CC1101 pin for RX (Multical21 wM-Bus)
+#endif
 #ifdef USE_HRXL
   AGPIO(GPIO_HRXL_RX),
 #endif
