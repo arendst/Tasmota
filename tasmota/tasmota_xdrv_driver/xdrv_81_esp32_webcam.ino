@@ -75,7 +75,7 @@
  13 = FRAMESIZE_HD,       // 1280x720
  14 = FRAMESIZE_SXGA,     // 1280x1024
  15 = FRAMESIZE_UXGA,     // 1600x1200
-      // 3MP Sensors above this no yet supported with this driver
+      // 3MP Sensors
  16 = FRAMESIZE_FHD,      // 1920x1080
  17 = FRAMESIZE_P_HD,     //  720x1280
  18 = FRAMESIZE_P_3MP,    //  864x1536
@@ -217,6 +217,19 @@ struct {
 
 /*********************************************************************************************/
 
+int32_t WcResolutionSetting(int32_t resolution = -1);
+int32_t WcResolutionSetting(int32_t resolution) {
+  if (resolution > -1) {
+    Settings->webcam_config.resolution = resolution & 0xF;
+    Settings->webcam_config2.resolution = resolution >> 4 & 0x1;
+  }
+  return Settings->webcam_config2.resolution << 4 | Settings->webcam_config.resolution;
+}
+
+static_assert(FRAMESIZE_INVALID == 25, "Number of supported frame sizes has changed in tools/esp32-arduino-libs sensor.h. If over 31 redesign WcResolutionSetting()");
+
+/*********************************************************************************************/
+
 void WcInterrupt(uint32_t state) {
   TasAutoMutex localmutex(&WebcamMutex, "WcInterrupt");
   // Stop camera ISR if active to fix TG1WDT_SYS_RESET
@@ -260,6 +273,7 @@ void WcFeature(int32_t value) {
   TasAutoMutex localmutex(&WebcamMutex, "WcFeature");
   sensor_t * wc_s = esp_camera_sensor_get();
   if (!wc_s) { return; }
+  if (wc_s->id.PID != OV2640_PID) { return; }   // We currently only support OV2460 features
 
   if (value != 1) {
       // CLKRC: Set Clock Divider to 0 = fullspeed
@@ -372,13 +386,14 @@ uint32_t WcSetup(int32_t fsiz) {
   TasAutoMutex localmutex(&WebcamMutex, "WcSetup");
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: WcSetup"));
-  if (fsiz >= FRAMESIZE_FHD) { fsiz = FRAMESIZE_FHD - 1; }
+  if (fsiz >= FRAMESIZE_INVALID) { fsiz = FRAMESIZE_INVALID - 1; }
 
   int stream_active = Wc.stream_active;
   Wc.stream_active = 0;
 
   if (fsiz < 0) {
     if (Wc.up){    
+      esp_camera_return_all();
       esp_camera_deinit();
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Deinit fsiz %d"), fsiz);
       Wc.up = 0;
@@ -387,6 +402,7 @@ uint32_t WcSetup(int32_t fsiz) {
   }
 
   if (Wc.up) {
+    esp_camera_return_all();
     esp_camera_deinit();
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Deinit"));
     //return Wc.up;
@@ -490,6 +506,7 @@ uint32_t WcSetup(int32_t fsiz) {
 
     if (err != ESP_OK) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAM: InitErr 0x%x try %d"), err, (i+1));
+      esp_camera_return_all();
       esp_camera_deinit();
     } else {
       if (i){
@@ -1084,7 +1101,7 @@ void WcInterruptControl() {
 
   WcSetStreamserver(Settings->webcam_config.stream);
   if(Wc.up == 0) {
-    WcSetup((int32_t)Settings->webcam_config.resolution);
+    WcSetup((int32_t)WcResolutionSetting());
   }
 
 }
@@ -1167,7 +1184,7 @@ void WcShowStream(void) {
 void WcInit(void) {
   if (!Settings->webcam_config.data) {
     Settings->webcam_config.stream = 1;
-    Settings->webcam_config.resolution = FRAMESIZE_QVGA;
+    WcResolutionSetting(FRAMESIZE_QVGA);
     WcSetDefaults(0);
   }
   // previous webcam driver had only a small subset of possible config vars
@@ -1266,7 +1283,7 @@ void CmndWebcam(void) {
   ",\"" D_CMND_RTSP "\":%d"
 #endif // ENABLE_RTSPSERVER
   "}}"),
-    Settings->webcam_config.stream, Settings->webcam_config.resolution, Settings->webcam_config.mirror,
+    Settings->webcam_config.stream, WcResolutionSetting(), Settings->webcam_config.mirror,
     Settings->webcam_config.flip,
     Settings->webcam_config.saturation -2, Settings->webcam_config.brightness -2, Settings->webcam_config.contrast -2,
     Settings->webcam_config2.special_effect, Settings->webcam_config.awb, Settings->webcam_config2.wb_mode,
@@ -1294,11 +1311,11 @@ void CmndWebcamStream(void) {
 }
 
 void CmndWebcamResolution(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < FRAMESIZE_FHD)) {
-    Settings->webcam_config.resolution = XdrvMailbox.payload;
-    WcSetOptions(0, Settings->webcam_config.resolution);
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < FRAMESIZE_INVALID)) {
+    WcResolutionSetting(XdrvMailbox.payload);
+    WcSetOptions(0, WcResolutionSetting());
   }
-  ResponseCmndNumber(Settings->webcam_config.resolution);
+  ResponseCmndNumber(WcResolutionSetting());
 }
 
 void CmndWebcamMirror(void) {
@@ -1501,7 +1518,7 @@ void CmndWebcamClock(void){
 }
 
 void CmndWebcamInit(void) {
-  WcSetup((int32_t)Settings->webcam_config.resolution);
+  WcSetup((int32_t)WcResolutionSetting());
   WcInterruptControl();
   ResponseCmndDone();
 }
@@ -1594,7 +1611,7 @@ bool Xdrv81(uint32_t function) {
       WcInit();
       break;
     case FUNC_INIT:
-      if(Wc.up == 0) WcSetup((int32_t)Settings->webcam_config.resolution);
+      if(Wc.up == 0) WcSetup((int32_t)WcResolutionSetting());
       break;
     case FUNC_ACTIVE:
       result = true;

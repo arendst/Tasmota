@@ -331,14 +331,25 @@ static uint8_t buf_get1(buf_impl* attr, int offset)
 
 static void buf_set1(buf_impl* attr, size_t offset, uint8_t data)
 {
-    if ((int32_t)offset < attr->len) {
+    if (attr->len > 0 && offset < (size_t)attr->len) {
         attr->bufptr[offset] = data;
     }
 }
 
+/* The buf_set/get helpers below operate on a `size_t` offset coming from
+ * scripts. We use this helper to test that `offset + N` bytes are inside
+ * the buffer, with no signed overflow / negative-cast hazard. attr->len
+ * is non-negative (int32_t), so casting it to size_t is exact. */
+static inline bbool buf_room(buf_impl* attr, size_t offset, size_t need)
+{
+    return attr->len > 0
+        && offset < (size_t)attr->len
+        && need <= (size_t)attr->len - offset;
+}
+
 static void buf_set2_le(buf_impl* attr, size_t offset, uint16_t data)
 {
-    if ((int32_t)offset + 1 < attr->len) {
+    if (buf_room(attr, offset, 2)) {
         attr->bufptr[offset] = data & 0xFF;
         attr->bufptr[offset+1] = data >> 8;
     }
@@ -346,7 +357,7 @@ static void buf_set2_le(buf_impl* attr, size_t offset, uint16_t data)
 
 static void buf_set2_be(buf_impl* attr, size_t offset, uint16_t data)
 {
-    if ((int32_t)offset + 1 < attr->len) {
+    if (buf_room(attr, offset, 2)) {
         attr->bufptr[offset+1] = data & 0xFF;
         attr->bufptr[offset] = data >> 8;
     }
@@ -354,7 +365,7 @@ static void buf_set2_be(buf_impl* attr, size_t offset, uint16_t data)
 
 static uint16_t buf_get2_le(buf_impl* attr, size_t offset)
 {
-    if ((int32_t)offset + 1 < attr->len) {
+    if (buf_room(attr, offset, 2)) {
         return attr->bufptr[offset] | (attr->bufptr[offset+1] << 8);
     }
     return 0;
@@ -362,7 +373,7 @@ static uint16_t buf_get2_le(buf_impl* attr, size_t offset)
 
 static uint16_t buf_get2_be(buf_impl* attr, size_t offset)
 {
-    if ((int32_t)offset + 1 < attr->len) {
+    if (buf_room(attr, offset, 2)) {
         return attr->bufptr[offset+1] | (attr->bufptr[offset] << 8);
     }
     return 0;
@@ -370,7 +381,7 @@ static uint16_t buf_get2_be(buf_impl* attr, size_t offset)
 
 static uint32_t buf_get3_le(buf_impl* attr, size_t offset)
 {
-    if ((int32_t)offset + 2 < attr->len) {
+    if (buf_room(attr, offset, 3)) {
         return attr->bufptr[offset] | (attr->bufptr[offset+1] << 8) | (attr->bufptr[offset+2] << 16);
     }
     return 0;
@@ -378,7 +389,7 @@ static uint32_t buf_get3_le(buf_impl* attr, size_t offset)
 
 static uint32_t buf_get3_be(buf_impl* attr, size_t offset)
 {
-    if ((int32_t)offset + 2 < attr->len) {
+    if (buf_room(attr, offset, 3)) {
         return attr->bufptr[offset+2] | (attr->bufptr[offset+1] << 8) | (attr->bufptr[offset] << 16);
     }
     return 0;
@@ -386,7 +397,7 @@ static uint32_t buf_get3_be(buf_impl* attr, size_t offset)
 
 static void buf_set3_le(buf_impl* attr, size_t offset, uint32_t data)
 {
-    if ((int32_t)offset + 2 < attr->len) {
+    if (buf_room(attr, offset, 3)) {
         attr->bufptr[offset] = data & 0xFF;
         attr->bufptr[offset+1] = (data >> 8) & 0xFF;
         attr->bufptr[offset+2] = (data >> 16) & 0xFF;
@@ -395,7 +406,7 @@ static void buf_set3_le(buf_impl* attr, size_t offset, uint32_t data)
 
 static void buf_set3_be(buf_impl* attr, size_t offset, uint32_t data)
 {
-    if ((int32_t)offset + 2 < attr->len) {
+    if (buf_room(attr, offset, 3)) {
         attr->bufptr[offset+2] = data & 0xFF;
         attr->bufptr[offset+1] = (data >> 8) & 0xFF;
         attr->bufptr[offset] = (data >> 16) & 0xFF;
@@ -404,7 +415,7 @@ static void buf_set3_be(buf_impl* attr, size_t offset, uint32_t data)
 
 static void buf_set4_le(buf_impl* attr, size_t offset, uint32_t data)
 {
-    if ((int32_t)offset + 3 < attr->len) {
+    if (buf_room(attr, offset, 4)) {
         attr->bufptr[offset] = data & 0xFF;
         attr->bufptr[offset+1] = (data >> 8) & 0xFF;
         attr->bufptr[offset+2] = (data >> 16) & 0xFF;
@@ -414,7 +425,7 @@ static void buf_set4_le(buf_impl* attr, size_t offset, uint32_t data)
 
 static void buf_set4_be(buf_impl* attr, size_t offset, uint32_t data)
 {
-    if ((int32_t)offset + 3 < attr->len) {
+    if (buf_room(attr, offset, 4)) {
         attr->bufptr[offset+3] = data & 0xFF;
         attr->bufptr[offset+2] = (data >> 8) & 0xFF;
         attr->bufptr[offset+1] = (data >> 16) & 0xFF;
@@ -424,7 +435,7 @@ static void buf_set4_be(buf_impl* attr, size_t offset, uint32_t data)
 
 static uint32_t buf_get4_le(buf_impl* attr, size_t offset)
 {
-    if ((int32_t)offset + 3 < attr->len) {
+    if (buf_room(attr, offset, 4)) {
         return attr->bufptr[offset] | (attr->bufptr[offset+1] << 8) |
             (attr->bufptr[offset+2] << 16) | (attr->bufptr[offset+3] << 24);
     }
@@ -433,7 +444,7 @@ static uint32_t buf_get4_le(buf_impl* attr, size_t offset)
 
 static uint32_t buf_get4_be(buf_impl* attr, size_t offset)
 {
-    if ((int32_t)offset + 3 < attr->len) {
+    if (buf_room(attr, offset, 4)) {
         return attr->bufptr[offset+3] | (attr->bufptr[offset+2] << 8) |
             (attr->bufptr[offset+1] << 16) | (attr->bufptr[offset] << 24);
     }
@@ -1121,13 +1132,17 @@ static int m_setbytes(bvm *vm)
             if ((size_t)from_byte >= from_len_total) { from_byte = from_len_total; }
         }
 
-        int32_t from_len = from_len_total - from_byte;
+        int32_t from_len = (int32_t)(from_len_total - from_byte);
         if (argc >= 5 && be_isint(vm, 5)) {
             from_len = be_toint(vm, 5);
             if (from_len < 0) { from_len = 0; }
-            if (from_len >= (int32_t)from_len_total) { from_len = from_len_total; }
+            /* clamp against the bytes available *after* from_byte, not the
+             * total source length, otherwise memmove reads past src */
+            if (from_len > (int32_t)(from_len_total - from_byte)) {
+                from_len = (int32_t)(from_len_total - from_byte);
+            }
         }
-        if (idx + from_len >= attr.len) { from_len = attr.len - idx; }
+        if (idx + from_len > attr.len) { from_len = attr.len - idx; }
 
         // all parameters ok
         if (from_len > 0) {
@@ -1168,7 +1183,8 @@ static int m_reverse(bvm *vm)
         len = be_toint(vm, 3);
         if (len < 0) { len = attr.len - idx; }  /* negative len means */
     }
-    if (idx + len >= attr.len) { len = attr.len - idx; }
+    /* clamp len without overflowing idx + len */
+    if (len > attr.len - idx) { len = attr.len - idx; }
 
     // truncate len to multiple of grouplen
     if (argc >= 4 && be_isint(vm, 4)) {
@@ -1335,8 +1351,13 @@ static int m_merge(bvm *vm)
             buf_len = strlen((const char *)buf);
         }
 
-        /* allocate new object */
-        bytes_new_object(vm, attr.len + buf_len);
+        /* allocate new object; do the size addition in size_t and reject
+         * obvious overflow before bytes_realloc clamps it down */
+        size_t total = (size_t)attr.len + (size_t)buf_len;
+        if (total > (size_t)vm->bytesmaxsize) {
+            be_raise(vm, "memory_error", "bytes object too large");
+        }
+        bytes_new_object(vm, (int32_t)total);
         buf_impl attr3 = m_read_attributes(vm, -1);
         check_ptr(vm, &attr3);
 
@@ -1663,7 +1684,9 @@ BERRY_API void * be_pushbytes(bvm *vm, const void * bytes, size_t len)
     bytes_new_object(vm, len);
     buf_impl attr = m_read_attributes(vm, -1);
     check_ptr(vm, &attr);
-    if ((int32_t)len > attr.size) { len = attr.size; } /* double check if the buffer allocated was smaller */
+    /* compare unsigned: a huge `len` (> INT32_MAX) must NOT be treated as
+     * negative and bypass the cap */
+    if (len > (size_t)attr.size) { len = (size_t)attr.size; }
     if (bytes) {  /* if bytes is null, buffer is filled with zeros */
         memmove((void*)attr.bufptr, bytes, len);
     } else {

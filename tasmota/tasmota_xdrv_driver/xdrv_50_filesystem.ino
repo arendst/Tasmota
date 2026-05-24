@@ -1364,6 +1364,8 @@ const char HTTP_EDITOR_FORM_END[] PROGMEM =
 // This wrapper ensures upload_file_type is always set before entering the
 // shared upload handler.
 void HandleUploadUFSLoop(void) {
+  if (!HttpCheckPriviledgedAccess(false)) { return; }
+
   Web.upload_file_type = UPL_UFSFILE;
   HandleUploadLoop();
 }

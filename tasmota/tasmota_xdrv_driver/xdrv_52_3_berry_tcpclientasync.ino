@@ -151,14 +151,14 @@ public:
       res = getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &sockerr, &len);
 
       if (res < 0) {
-        AddLog(LOG_LEVEL_DEBUG, "BRY: getsockopt on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
+        AddLog(LOG_LEVEL_DEBUG_MORE, "BRY: getsockopt on fd %d, errno: %d, \"%s\"", sockfd, errno, strerror(errno));
         stop();
         state = AsyncTCPState::REFUSED;
         return;
       }
 
       if (sockerr != 0) {
-        AddLog(LOG_LEVEL_DEBUG, "BRY: socket error on fd %d, errno: %d, \"%s\"", sockfd, sockerr, strerror(sockerr));
+        AddLog(LOG_LEVEL_DEBUG_MORE, "BRY: socket error on fd %d, errno: %d, \"%s\"", sockfd, sockerr, strerror(sockerr));
         stop();
         state = AsyncTCPState::REFUSED;
         return;

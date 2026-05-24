@@ -620,6 +620,10 @@ TasmotaModbus *NeoPoolModbus;
 // enables also cmnd 'NPgPerh [0|1]': 0 = disables emulation, 1 enables emulation
 //#define NEOPOOL_EMULATE_GPERH 16          // Max g/h power of an emulated % system
 #ifdef NEOPOOL_EMULATE_GPERH
+  #if NEOPOOL_EMULATE_GPERH == 0
+    #warning "NEOPOOL_EMULATE_GPERH must be != 0"
+    #undef NEOPOOL_EMULATE_GPERH
+  #endif
 bool neopool_system_gperh = false;        // emulation defaults off
 #endif
 
@@ -1536,14 +1540,19 @@ bool NeoPoolInitData(void)
 void NeoPoolLogRW(const char *name, uint16_t addr, uint16_t *data, uint16_t cnt)
 {
   char *log_data = (char *)malloc(cnt*7+1);
-  *log_data = 0;
-  for (uint32_t i = 0; i < cnt; i++) {
-    char h[8];
-    snprintf_P(h, sizeof(h), PSTR("%s0x%04X"), i ? PSTR(",") : PSTR(""), data[i]);
-    strncat(log_data, h, cnt*7+1);
+  if (nullptr != log_data) {
+    *log_data = 0;
+    for (uint32_t i = 0; i < cnt; i++) {
+      char h[8];
+      snprintf_P(h, sizeof(h), PSTR("%s0x%04X"), i ? PSTR(",") : PSTR(""), data[i]);
+      strncat(log_data, h, cnt*7+1);
+    }
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: %s(0x%04X, %d) = [%s]"), name, addr, cnt, log_data);
+    free(log_data);
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: %s(0x%04X, %d) = [%s]"), name, addr, cnt, log_data);
-  free(log_data);
+    else {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolLogRW - out of memory"));
+  }
 }
 #endif  // DEBUG_TASMOTA_SENSOR
 
@@ -1643,7 +1652,7 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
   NeoPoolLogRW("NeoPoolWriteRegister", addr, data, cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
   NeoPool250msSetStatus(false);
-  numbytes = 7+cnt*2;
+  numbytes = 7 + (uint32_t)cnt * 2;
   frame = (uint8_t*)malloc(numbytes+2);
   if (nullptr == frame) {
 #ifdef DEBUG_TASMOTA_SENSOR
@@ -1947,7 +1956,7 @@ uint32_t NeoPoolGetFiltrationSpeed()
 bool NeoPoolIsHydrolysis(void)
 {
   return (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
-          (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
+          (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_MODULE_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
 }
 
 bool NeoPoolIsHydrolysisInPercent(void)

@@ -81,11 +81,19 @@ String GetHostedFwVersion(uint32_t device) {
 }
 
 String GetHostedMCU(void) {
-  // Function is not yet implemented in Arduino Core so emulate it here
-  if (0 == strcasecmp_P(CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET, PSTR("esp32c6"))) {
-    return String("ESP32-C6");
+  char cp_name[30] = CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET;  // Allow user selection of different hosted MCU until v2.12.2
+  if (GetHostedMCUFwVersion() >= 0x00020C02) {            // 2.12.2
+    uint32_t cp_name_len = sizeof(cp_name);
+    uint32_t cp_chip_id = 0;
+    memset(cp_name, 0, sizeof(cp_name));                  // Need this as function copies name without trailing /0
+    esp_err_t res = esp_hosted_get_cp_info(&cp_chip_id, cp_name, cp_name_len);
+    if (ESP_OK == res) {
+      return String(cp_name);                             // esp32, esp32c2, esp32c3, esp32c6 or esp32s3 as used in network_adapter_x.bin
+    }
+  } else {
+    return String(cp_name);                               // esp32c6 as defined by CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET
   }
-  return String("Unknown");
+  return String("Unknown");                               // Unknown
 }
 
 void HostedMCUStatus(void) {
@@ -250,7 +258,7 @@ void HostedMCUEverySecond(void) {
                 if ((ret = esp_hosted_slave_ota_end()) != ESP_OK) {
                   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HST: ota_end failed %d"), ret);
                 } else {
-                  if (GetHostedMCUFwVersion() >= 0x00020600) { 
+                  if (GetHostedMCUFwVersion() >= 0x00020600) {  // v2.6.0
                     // Activate will likely reboot the slave
                     ret = esp_hosted_slave_ota_activate();
                   }
@@ -326,8 +334,8 @@ void CmndHostedLoad(void) {
     if (XdrvMailbox.data_len) {
       snprintf_P(version, sizeof(version), PSTR("/%s"), XdrvMailbox.data);
     }
-    snprintf_P(Hosted.ota_url, 200, PSTR("/coprocessor%s/network_adapter_" CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET ".bin"),
-      version);
+    snprintf_P(Hosted.ota_url, 200, PSTR("/coprocessor%s/network_adapter_%s.bin"),
+      version, GetHostedMCU().c_str());
   }
   Hosted.ota_file_state_flag = 1;
   Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), 
@@ -360,8 +368,8 @@ void CmndHostedOta(void) {
     if (XdrvMailbox.data_len) {
       snprintf_P(version, sizeof(version), PSTR("/%s"), XdrvMailbox.data);
     }
-    snprintf_P(Hosted.ota_url, 200, PSTR("%s/coprocessor%s/network_adapter_" CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET ".bin"), 
-      Hosted.ota_url, version);
+    snprintf_P(Hosted.ota_url, 200, PSTR("%s/coprocessor%s/network_adapter_%s.bin"), 
+      Hosted.ota_url, version, GetHostedMCU().c_str());
   }
   Hosted.ota_http_state_flag = 1;
   Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), 

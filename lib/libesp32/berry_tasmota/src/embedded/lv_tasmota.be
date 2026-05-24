@@ -109,7 +109,6 @@ def splash()
 
   var bg = lv.obj(lv.scr_act())     # create a parent object for splash screen
   var f28 = lv.montserrat_font(28)  # load embedded Montserrat 28
-  var f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
   var white = lv.color(lv.COLOR_WHITE)
 
   bg.set_style_bg_color(lv.color(0x000066), 0) # lv.PART_MAIN | lv.STATE_DEFAULT
@@ -132,8 +131,6 @@ def splash()
   tas.set_text("TASMOTA")
   if lv.get_hor_res() >= 200
     if f28 != nil tas.set_style_text_font(f28, 0) end
-  else
-    if f20 != nil tas.set_style_text_font(f20, 0) end
   end
   tas.set_align(lv.ALIGN_LEFT_MID)
   tas.set_x(42)

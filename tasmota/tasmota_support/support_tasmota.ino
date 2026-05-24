@@ -616,10 +616,9 @@ void SetPulseTimer(uint32_t index, uint32_t time)
 
 uint32_t GetPulseTimer(uint32_t index)
 {
-  long time = TimePassedSince(TasmotaGlobal.pulse_timer[index]);
-  if (time < 0) {
-    time *= -1;
-    return (time > 11100) ? (time / 1000) + 100 : (time > 0) ? time / 100 : 0;
+  int32_t time = -TimePassedSince(TasmotaGlobal.pulse_timer[index]);
+  if (TasmotaGlobal.pulse_timer[index] && time > 0) {
+      return (time > 11100) ? (time / 1000) + 100 : time / 100;
   }
   return 0;
 }

@@ -917,7 +917,7 @@ def _tr_string(lexer):
             be_lexerror(lexer, "unfinished string")
         elif c == ord('\\'):
             if i >= src_len:
-                be_lexerror(lexer, "unfinished string")
+                be_lexerror(lexer, "invalid escape sequence")
             nc = src[i]
             if nc != ord('u'):
                 escape_map = {
@@ -932,6 +932,9 @@ def _tr_string(lexer):
                     dst.append(escape_map[nc])
                     i += 1
                 elif nc == ord('x'):
+                    # Mirror C: need 'x' + 2 hex digits before end of buffer.
+                    if src_len - i < 3:
+                        be_lexerror(lexer, "invalid hexadecimal number")
                     i += 1  # skip 'x'
                     c = _read_hex(lexer, src, i)
                     dst.append(c & 0xFF)
@@ -940,11 +943,15 @@ def _tr_string(lexer):
                     # Octal escape \OOO (always 3 digits in C).
                     # In C, read_oct always reads 3 digits or raises; the
                     # caller then advances src by 3 total (src += 2; ++src).
+                    if src_len - i < 3:
+                        be_lexerror(lexer, "invalid octal number")
                     c = _read_oct(lexer, src, i)
                     dst.append(c & 0xFF)
                     i += 3  # skip all 3 octal digits
             else:
-                # Unicode escape \uXXXX
+                # Unicode escape \uXXXX — need 'u' + 4 hex digits.
+                if src_len - i < 5:
+                    be_lexerror(lexer, "incorrect '\\u' encoding")
                 utf8_bytes = be_load_unicode(src, i + 1)
                 if utf8_bytes is None:
                     be_lexerror(lexer, "incorrect '\\u' encoding")

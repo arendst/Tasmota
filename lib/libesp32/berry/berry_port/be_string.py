@@ -334,8 +334,13 @@ def _free_sstring(vm, s):
 
 # static bstring* createstrobj(bvm *vm, size_t len, int islong)
 # {
-#     size_t size = (islong ? sizeof(blstring)
-#                 : sizeof(bsstring)) + len + 1;
+#     size_t header = islong ? sizeof(blstring) : sizeof(bsstring);
+#     /* guard against size_t overflow on header + len + 1, and against
+#      * len > INT_MAX which would truncate when stored in blstring.llen */
+#     if (len > (size_t)INT_MAX || len > SIZE_MAX - header - 1) {
+#         be_raise(vm, "memory_error", "string too large");
+#     }
+#     size_t size = header + len + 1;
 #     bgcobject *gco = be_gc_newstr(vm, size, islong);
 #     bstring *s = cast_str(gco);
 #     if (s) {
@@ -345,12 +350,22 @@ def _free_sstring(vm, s):
 #     }
 #     return s;
 # }
+_INT_MAX = 2**31 - 1  # C int max; blstring.llen is int-sized in the C port
+
 def _createstrobj(vm, length, islong):
     """Create a new string GC object.
 
     In C this allocates via be_gc_newstr. In Python we create a bstring
     instance and register it with the GC.
+
+    Mirrors the C guard against length > INT_MAX. Python ints are
+    unbounded so size_t overflow can't happen here, but we still raise
+    the same error for parity with the C port — anything consuming the
+    value downstream (e.g. serialised bytecode) treats llen as int.
     """
+    if length > _INT_MAX:
+        from berry_port.be_api import be_raise
+        be_raise(vm, "memory_error", "string too large")
     # Approximate C allocation size for gc.usage tracking
     if islong:
         approx_size = 16 + length + 1  # sizeof(blstring) ~ 16

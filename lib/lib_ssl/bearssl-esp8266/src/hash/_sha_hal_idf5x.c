@@ -54,7 +54,7 @@
 #define HAVE_HAL_SHA512  (SOC_SHA_SUPPORT_SHA512)
 
 static portMUX_TYPE s_sha_mux = portMUX_INITIALIZER_UNLOCKED;
-#define SHA_ENTER()  {portENTER_CRITICAL(&s_sha_mux); int __DECLARE_RCC_ATOMIC_ENV; sha_ll_enable_bus_clock(true); sha_ll_reset_register();}
+#define SHA_ENTER()  {portENTER_CRITICAL(&s_sha_mux); int __DECLARE_RCC_ATOMIC_ENV; sha_ll_enable_bus_clock(true); sha_ll_reset_register(); sha_ll_set_mode(mode);}
 #define SHA_EXIT()   {portEXIT_CRITICAL(&s_sha_mux); int __DECLARE_RCC_ATOMIC_ENV; sha_ll_enable_bus_clock(false);}
 #define SHA_WAIT()   {while (sha_ll_busy()) { } }
 
@@ -65,24 +65,21 @@ static portMUX_TYPE s_sha_mux = portMUX_INITIALIZER_UNLOCKED;
 
 static void __attribute__((noinline))
 sha_hal_process_block(void *state_buf, const void *blk,
-                      esp_sha_type type, size_t digest_words,
+                      esp_sha_type mode, size_t digest_words,
                       size_t block_words, bool first)
 {
     SHA_ENTER();
-#if defined(CONFIG_IDF_TARGET_ESP32P4) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
-    sha_ll_set_mode(type); // required on P4 in IDF 5.5+
-#endif 
     if (!first) {
-        sha_ll_write_digest(type, state_buf, digest_words);
+        sha_ll_write_digest(mode, state_buf, digest_words);
     }
     sha_ll_fill_text_block(blk, block_words);
     if (first) {
-        sha_ll_start_block(type);
+        sha_ll_start_block(mode);
     } else {
-        sha_ll_continue_block(type);
+        sha_ll_continue_block(mode);
     }
     SHA_WAIT();
-    sha_ll_read_digest(type, state_buf, digest_words);
+    sha_ll_read_digest(mode, state_buf, digest_words);
     SHA_EXIT();
 }
 
@@ -290,7 +287,7 @@ void br_sha224_update(br_sha224_context *cc, const void *data, size_t len)
     if (!len) return;
 
     /* Embedded mode selection by vtable pointer (no desc, no tags) */
-    const int mode = (cc->vtable == &br_sha256_vtable) ? SHA2_256 : SHA2_224;
+    const esp_sha_type mode = (cc->vtable == &br_sha256_vtable) ? SHA2_256 : SHA2_224;
 
     const uint8_t *data_ptr = (const uint8_t *)data;
     const uint8_t *orig_ptr = data_ptr;
@@ -346,7 +343,7 @@ void br_sha224_update(br_sha224_context *cc, const void *data, size_t len)
                 sha_ll_write_digest(mode, midstate_words2, 8);
             }
 
-#if defined(CONFIG_IDF_TARGET_ARCH_RISCV)  /* RISC-V: enforce 8-block (512B) window with checkpointing */
+#if defined(CONFIG_IDF_TARGET_ARCH_RISCV)  /* RISC-V: enforce 8-block (512B) window with checkpointing to prevent hardware overrun.*/
             while (len >= 64) {
                 sha_ll_fill_text_block(data_ptr, 16);
                 sha_ll_continue_block(mode);
@@ -402,7 +399,7 @@ void br_sha256_out(const br_sha256_context *cc, void *out)
     memcpy(saved_state, cc->val, 32);
 
     uint8_t partial_len = (uint8_t)(saved_count & 63U);
-    const int mode = (cc->vtable == &br_sha256_vtable) ? SHA2_256 : SHA2_224;
+    const esp_sha_type mode = (cc->vtable == &br_sha256_vtable) ? SHA2_256 : SHA2_224;
 
     bool midstate_is_iv = (memcmp(saved_state, S256_IV_BYTES, 32) == 0);
     bool no_full_blocks_done = (saved_count < 64);
@@ -528,6 +525,7 @@ void br_sha384_init(br_sha384_context *cc) {
 
 void br_sha384_update(br_sha384_context *cc, const void *data, size_t len) {
     if (!len) return;
+    const esp_sha_type mode = SHA2_512;
     const uint8_t *src = (const uint8_t *)data;
     size_t used = (size_t)(cc->count & 127U);
     uint64_t prior_count = cc->count;
@@ -589,6 +587,7 @@ void br_sha384_update(br_sha384_context *cc, const void *data, size_t len) {
 }
 
 void br_sha384_out(const br_sha384_context *cc, void *out) {
+    const esp_sha_type mode = SHA2_512;
     br_sha384_context ctx = *cc;
     size_t used = (size_t)(ctx.count & 127U);
     uint64_t bit_hi = (uint64_t)(ctx.count >> 61);
@@ -689,6 +688,7 @@ void br_sha512_init(br_sha512_context *cc) {
 }
 
 void br_sha512_out(const br_sha512_context *cc, void *out) {
+    const esp_sha_type mode = SHA2_512;
     br_sha512_context ctx = *cc;
     size_t used = (size_t)(ctx.count & 127U);
     uint64_t bit_hi = (uint64_t)(ctx.count >> 61);

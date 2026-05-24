@@ -3,32 +3,12 @@
 Import("env")
 
 import os
-import sys
 from genericpath import exists
 from os.path import join
 import subprocess
 from colorama import Fore, Back, Style
 import requests
 import re
-
-IS_WINDOWS = sys.platform.startswith("win")
-
-def ensureBerry():
-    BERRY_GEN_DIR = join(env.subst("$PROJECT_DIR"), "lib", "libesp32","berry")
-    os.chdir(BERRY_GEN_DIR)
-    BERRY_EXECUTABLE = join(BERRY_GEN_DIR,"berry")
-    if IS_WINDOWS:
-        berry_executable = join(BERRY_GEN_DIR,"berry.exe")
-    else:
-        if os.path.exists(BERRY_EXECUTABLE) == False:
-            print("Will compile Berry executable")
-            make_cmd = "make"
-            subprocess.call(make_cmd, shell=False)
-    
-    if os.path.exists(BERRY_EXECUTABLE):
-        return BERRY_EXECUTABLE
-    else:
-        return Null
 
 def cleanFolder():
     with open(HEADER_FILE_PATH, 'w') as file:
@@ -108,29 +88,46 @@ def addHeaderFile(name):
 """
     file_name = f"_temp_be_{name}_lib.c"
     file_path = join(BERRY_SOLIDIFY_DIR,"src",file_name)
-    open(file_path,"w").write(data)
+    with open(file_path,"w") as f:
+        f.write(data)
 
 def prepareBerryFiles(files):
     embedded_dir = join("src","embedded")
     for file in files:
-        if "http" and "://" in file:
-            response = requests.get(file.split(" ")[0])
+        # Remove leading and trailing whitespace, ignore empty lines
+        file = file.strip()
+        if not file:
+            continue
+
+        # Remote URL
+        if file.startswith(("http://", "https://")):
+            parts = file.split(" ")
+            url, alias = parts[0], parts[1] if len(parts) > 1 else None
+            url_basename = url.split("/")[-1]
+            effective_name = alias or url_basename
+            response = requests.get(url)
             if response.ok:
-                target = join(embedded_dir,file.split(os.path.sep)[-1])
-                if len(file.split(" ")) > 1:
-                    target = join(embedded_dir,file.split(" ")[1])
-                    print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
-                open(target, "wb").write(response.content)
-                addHeaderFile(file.split(os.path.sep)[-1])
+                if alias: print("Renaming", url_basename, "to", alias)
+                with open(join(embedded_dir, effective_name), "wb") as f:
+                    f.write(response.content)
+                addHeaderFile(effective_name)
                 addEntryToModtab(response.content)
             else:
-                print(Fore.RED + "Failed to download: ",file)
+                print(Fore.RED + "Failed to download: ", file)
             continue
-        # maybe later ...
-        # if os.path.isdir(file):
-        #     continue
-        # else:
-        #     shutil.copy(file, embedded_dir)
+
+        # Local path (relative to PROJECT_DIR or absolute)
+        src_path = file if os.path.isabs(file) else join(env.subst("$PROJECT_DIR"), file)
+        if not os.path.isfile(src_path):
+            print(Fore.RED + "File not found: ", src_path)
+            continue
+        with open(src_path, 'rb') as f:
+            source = f.read()
+        with open(join(embedded_dir, os.path.basename(src_path)), "wb") as f:
+            f.write(source)
+        addHeaderFile(os.path.basename(src_path))
+        addEntryToModtab(source)
+
     return True
 
 
@@ -143,12 +140,46 @@ except:
     pass  # no custom Berry files to solidify - common case, no need to log
 else:
     if env.IsCleanTarget() == False:
-        BERRY_EXECUTABLE = ensureBerry()
-        
         os.chdir(BERRY_SOLIDIFY_DIR)
 
+        # tasmota_defines_for_berry.be is generated post-compilation; create an empty
+        # stub if it doesn't exist yet so solidify_all_python.be can import it safely.
+        defines_file = join(env.subst("$PROJECT_DIR"), "tasmota", "tasmota_defines_for_berry.be")
+        if not os.path.exists(defines_file):
+            open(defines_file, 'w').close()
+
         if prepareBerryFiles(files.splitlines()):
-            solidify_command = BERRY_EXECUTABLE
-            solidify_flags = " -s -g solidify_all.be"
+            BERRY_GEN_DIR = join(env.subst("$PROJECT_DIR"), "lib", "libesp32", "berry")
+            solidify_env = os.environ.copy()
+            existing_pp = solidify_env.get("PYTHONPATH", "")
+            solidify_env["PYTHONPATH"] = (
+                BERRY_GEN_DIR + (os.pathsep + existing_pp if existing_pp else "")
+            )
+            solidify_env["PYTHONUTF8"] = "1"
             print("Start solidification for 'berry_custom':")
-            subprocess.call(solidify_command + solidify_flags, shell=True)
+            proc = subprocess.Popen(
+                (env["PYTHONEXE"], "-m", "berry_port", "-s", "-g", "solidify_all_python.be"),
+                shell=False,
+                env=solidify_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            other_lines = []
+            for raw in proc.stdout:
+                line = raw.rstrip("\r\n")
+                stripped = line.strip()
+                if stripped.startswith("Parsing:"):
+                    continue
+                if stripped.startswith("Skipping:"):
+                    continue
+                if stripped.startswith("# Output directory"):
+                    continue
+                other_lines.append(line)
+            rc = proc.wait()
+            for line in other_lines:
+                if line:
+                    print(line)
+            if rc != 0:
+                print(Fore.RED + f"ERROR: solidification failed (rc={rc})")
+                env.Exit(rc)

@@ -248,16 +248,16 @@ class Matter_Plugin_Device : Matter_Plugin
     elif cluster == 0x0039             # ========== Bridged Device Basic Information 9.13 p.485 ==========
       import string
 
-      if   attribute == 0x0003          #  ---------- ProductName / string ----------
+      if   attribute == 0x0003          #  ---------- ProductName / string (not nullable) ----------
         if self.BRIDGE
-          var name = self.http_remote.get_info().find("name")
-          return tlv_solo.set_or_nil(0x0C #-TLV.UTF1-#, name)
+          var name = self.http_remote.get_info().find("name", "")
+          return tlv_solo.set(0x0C #-TLV.UTF1-#, name)
         else
           return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.cmd("DeviceName", true)['DeviceName'])
         end
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, self.get_name())
-      elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
+      elif attribute == 0x000A          #  ---------- SoftwareVersionString / string (not nullable) ----------
         if self.BRIDGE
           var version_full = self.http_remote.get_info().find("version")
           if version_full
@@ -265,7 +265,7 @@ class Matter_Plugin_Device : Matter_Plugin
             if version_end > 0    version_full = version_full[0..version_end - 1]   end
             return tlv_solo.set(0x0C #-TLV.UTF1-#, version_full)
           else
-            return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
+            return tlv_solo.set(0x0C #-TLV.UTF1-#, "")     # spec is not nullable, return empty until first poll
           end
         else
           var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
@@ -273,10 +273,10 @@ class Matter_Plugin_Device : Matter_Plugin
           if version_end > 0    version_full = version_full[0..version_end - 1]   end
           return tlv_solo.set(0x0C #-TLV.UTF1-#, version_full)
         end
-      elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber / string ----------
+      elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber / UniqueID / string (not nullable) ----------
         if self.BRIDGE
-          var mac = self.http_remote.get_info().find("mac")
-          return tlv_solo.set_or_nil(0x0C #-TLV.UTF1-#, mac)
+          var mac = self.http_remote.get_info().find("mac", "")
+          return tlv_solo.set(0x0C #-TLV.UTF1-#, mac)
         else
           return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.wifi().find("mac", ""))
         end

@@ -161,9 +161,11 @@ class Matter_UDPServer
       packet_read += 1
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log(format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
       end
+#endif
       # log("MTR: Perf/UDP_received = " + str(debug.counters()), 4)
       if self.dispatch_cb
         # profiler.log("udp_loop_dispatch")
@@ -192,9 +194,11 @@ class Matter_UDPServer
     var ok = self.udp_socket.send(packet.addr ? packet.addr : self.udp_socket.remote_ip, packet.port ? packet.port : self.udp_socket.remote_port, packet.raw)
     
     if ok
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log(format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
       end
+#endif
     else
       if tasmota.loglevel(3)
         log(format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 3)
@@ -245,9 +249,11 @@ class Matter_UDPServer
       var packet = self.packets_sent[idx]
       if packet.msg_id == id && packet.exchange_id == exch
         self.packets_sent.remove(idx)
+#if USE_BERRY_DEBUG
         if tasmota.loglevel(4)
           log("MTR: .          Removed packet from sending list id=" + str(id), 4)
         end
+#endif
       else
         idx += 1
       end

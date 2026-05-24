@@ -363,32 +363,49 @@ extern "C" {
         gamma = be_tobool(vm, 6);
       }
 
-      // now do the stuff
+      // check if strip is RGBW and white blend mode is enabled (SetOption105)
+      bool white_blend = (pixel_size == 4) && (Settings->flag4.white_blend_mode);
+      uint16_t white_corr_10 = white_blend ? change8to10(Settings->rgbwwTable[3]) : 0;
+
+      // Use 10-bit intermediates for brightness and gamma to preserve color ratios
+      // at low brightness
       uint8_t * p = pixels;
       for (uint32_t i = 0; i < pixels_count; i++) {
         uint32_t argb = buffer[i];                        // get 0xAARRGGBB, we drop the AA alpha channel
-        uint8_t r = (argb >> 16) & 0xFF;
-        uint8_t g = (argb >>  8) & 0xFF;
-        uint8_t b = (argb      ) & 0xFF;
-        uint8_t w = 0;                                    // for now we set white channel to zero
+        uint16_t r10 = change8to10((argb >> 16) & 0xFF);
+        uint16_t g10 = change8to10((argb >>  8) & 0xFF);
+        uint16_t b10 = change8to10((argb      ) & 0xFF);
+        uint16_t w10 = 0;
 
-        // apply brigthness
+        // apply brightness
         if (bri255 < 255) {
-          r = changeUIntScale(bri255, 0, 255, 0, r);
-          g = changeUIntScale(bri255, 0, 255, 0, g);
-          b = changeUIntScale(bri255, 0, 255, 0, b);
+          r10 = changeUIntScale(bri255, 0, 255, 0, r10);
+          g10 = changeUIntScale(bri255, 0, 255, 0, g10);
+          b10 = changeUIntScale(bri255, 0, 255, 0, b10);
+        }
+        // extract white from RGB if white blend mode is enabled
+        // mirrors logic from xdrv_04_light.ino calcGammaBulbs()
+        if (white_blend) {
+          uint16_t min_rgb = (r10 < g10) ? r10 : g10;
+          min_rgb = (min_rgb < b10) ? min_rgb : b10;
+          r10 -= min_rgb;
+          g10 -= min_rgb;
+          b10 -= min_rgb;
+          w10 = changeUIntScale(min_rgb, 0, 1023, 0, white_corr_10);
+          if (w10 > 1023) { w10 = 1023; }    // max 1023
         }
         // apply gamma
         if (gamma) {
-          r = ledGamma(r);
-          g = ledGamma(g);
-          b = ledGamma(b);
+          r10 = ledGamma10_10(r10);
+          g10 = ledGamma10_10(g10);
+          b10 = ledGamma10_10(b10);
+          if (white_blend) { w10 = ledGamma10_10(w10); }
         }
         // set pixel in strip
-        if (pixel_size == 4) { *p++ = 0;}
-        *p++ = r;
-        *p++ = g;
-        *p++ = b;
+        if (pixel_size == 4) { *p++ = change10to8(w10); }
+        *p++ = change10to8(r10);
+        *p++ = change10to8(g10);
+        *p++ = change10to8(b10);
       }
       
       be_return_nil(vm);

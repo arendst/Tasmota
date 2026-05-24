@@ -311,16 +311,16 @@ void SPIController::hw_write9(uint8_t val, uint8_t dc) {
 // DMA
 #ifdef ESP32
 bool SPIController::initDMA(uint16_t width, uint16_t flushlines, uint8_t data) {
-    AddLog(3,"init dma %u %u %d",flushlines,data, spi_config.cs);
+    AddLog(3,"DSP: init dma %u %u %d",flushlines,data, spi_config.cs);
     if (!spi && spi_config.cs == -1) return false;
     if((data&1) == 0){
-        AddLog(3,"no dma selected");
+        AddLog(3,"DSP: no dma selected");
         return false;
     }
     if (spi_config.bus_nr == 1){
-        AddLog(3,"dma spi 1");
+        AddLog(3,"DSP: dma spi 1");
     } else if (spi_config.bus_nr == 2){
-        AddLog(3,"dma spi 2");
+        AddLog(3,"DSP: dma spi 2");
         spi_host = HSPI_HOST;
     } else {
         return false;
@@ -361,11 +361,11 @@ bool SPIController::initDMA(uint16_t width, uint16_t flushlines, uint8_t data) {
 
     ret = spi_bus_initialize(spi_host, &buscfg, SPI_DMA_CH_AUTO);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        AddLog(3,"init dma bus init failed: %d", ret);
+        AddLog(3,"DSP: init dma bus init failed: %d", ret);
         return false;
     }
     if (ret == ESP_ERR_INVALID_STATE) {
-        AddLog(3,"init dma bus already initialized (OK)");
+        AddLog(3,"DSP: init dma bus already initialized (OK)");
     }
     
     ret = spi_bus_add_device(spi_host, &devcfg, &dmaHAL);
@@ -374,7 +374,7 @@ bool SPIController::initDMA(uint16_t width, uint16_t flushlines, uint8_t data) {
         async_dma_enabled = ((data&4) != 0);
         dma_enabled = true;
         spiBusyCheck = 0;
-        AddLog(3,"init dma succes");
+        AddLog(3,"DSP: init dma succes");
         return true;
     }
     return false;

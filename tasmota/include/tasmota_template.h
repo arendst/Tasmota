@@ -37,7 +37,7 @@ enum UserSelectablePins {
   GPIO_SPI_MISO, GPIO_SPI_MOSI, GPIO_SPI_CLK, GPIO_SPI_CS, GPIO_SPI_DC,        // Hardware SPI
   GPIO_SSPI_MISO, GPIO_SSPI_MOSI, GPIO_SSPI_SCLK, GPIO_SSPI_CS, GPIO_SSPI_DC,  // Software SPI
   GPIO_BACKLIGHT,                      // Display backlight control
-  GPIO_OLED_RESET,                     // OLED Display Reset
+  GPIO_DISPLAY_RESET,                  // Display Reset (renamed from OLED_RESET)
   GPIO_IRSEND, GPIO_IRRECV,            // IR interface
   GPIO_RFSEND, GPIO_RFRECV,            // RF interface
   GPIO_DHT11, GPIO_DHT22, GPIO_SI7021, GPIO_DHT11_OUT,  // DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
@@ -237,6 +237,7 @@ enum UserSelectablePins {
 #endif
   GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
   GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
+  GPIO_MBS_RX_ENA,                      // Modbus Bridge Serial Receive Enable
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -516,6 +517,7 @@ const char kSensorNames[] PROGMEM =
 #endif
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
+  D_SENSOR_MBS_RX_ENA "|" 
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -754,7 +756,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TM1640DIN),
 #endif  // USE_DISPLAY_TM1640
   AGPIO(GPIO_BACKLIGHT),                         // Display backlight control
-  AGPIO(GPIO_OLED_RESET),                        // OLED Display Reset
+  AGPIO(GPIO_DISPLAY_RESET),                     // Display Reset (renamed from OLED_RESET)
 #ifdef ESP32
   AGPIO(GPIO_EPD_DATA),                          // Base connection EPD driver
 #endif
@@ -1037,6 +1039,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MODBUS_BRIDGE
   AGPIO(GPIO_MBR_TX_ENA),                        // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_TX),                            // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBS_RX_ENA),                        // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_RX),                            // Modbus Bridge Serial interface
 #endif
 #ifdef USE_TCP_BRIDGE

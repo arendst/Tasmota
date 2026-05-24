@@ -1520,53 +1520,66 @@ void CmndSavedata(void)
   ResponseCmndChar((Settings->save_data > 1) ? stemp1 : GetStateText(Settings->save_data));
 }
 
+void SetOptionShow(uint32_t display_set) {
+  // display_set = 0 - "SetOption":"0,!1,!2,3,!4,!5,!6,!7 ... !162,!163,!164,!165"
+  // display_set = 1 - "SetOptionSet":[0,3,15,56,57,59,95,96,128]
+  ResponseAppend_P(PSTR("\"" D_CMND_SETOPTION "%s\":"),
+    (0 == display_set) ? "" : "Set");
+  uint32_t flag[5];
+  flag[0] = Settings->flag.data;                   // SetOption0 .. 31
+  flag[1] = Settings->flag3.data;                  // SetOption50 .. 81
+  flag[2] = Settings->flag4.data;                  // SetOption82 .. 113
+  flag[3] = Settings->flag5.data;                  // SetOption114 .. 145
+  flag[4] = Settings->flag6.data;                  // SetOption146 .. 177
+  bool first_shown = false;
+  for (uint32_t i = 0; i <= MAX_SETOPTION_USED - PARAM8_SIZE; i++) {
+    bool option_set = bitRead(flag[i / 32], i % 32);
+    if (display_set && !option_set) { continue; }  // Report only options set (1)
+    ResponseAppend_P(PSTR("%s%s%d"), 
+      (first_shown) ? "," : (0 == display_set) ? "\"" : "[",
+      (option_set) ? "" : "!",
+      (i < 32) ? i : i + PARAM8_SIZE);
+    first_shown = true;
+  }
+  ResponseAppend_P(PSTR("%s"), (0 == display_set) ? "\"" : "]");
+}
+
 void CmndSetoption(void) {
   if (!XdrvMailbox.usridx) {
     // SetOption   - Report all boolean options where preceded by ! means not-set (0)
+    // SetOption 0 - Report only boolean options set (1) AND all multi value options (SetOption32 .. 49)
     // SetOption 1 - Report only boolean options set (1)
     // SetOption 2 - Report all multi value options (SetOption32 .. 49)
-    uint32_t display_option = XdrvMailbox.payload;
-    Response_P(PSTR("{\"" D_CMND_SETOPTION));
-    if (2 == display_option) {         // Report all multi value options (SetOption32 .. 49)
-      ResponseAppend_P(PSTR("Multi\":["));
-      for (uint32_t i = 0; i < PARAM8_SIZE; i++) {
-        ResponseAppend_P(PSTR("%s%d"),
-          (i) ? "," : "",
-          Settings->param[i]);
+    Response_P(PSTR("{"));
+    int display_option = XdrvMailbox.payload;
+    if ((display_option >= 0) && (display_option <= 2)) {
+      // SetOption 0 or 1 - Report only options set (1)
+      //   "SetOptionSet":[0,3,15,56,57,59,95,96,128]
+      if ((0 == display_option) || (1 == display_option)) {
+        SetOptionShow(1);
       }
-      ResponseAppend_P(PSTR("]}"));    // End multi value list
-      return;
-    }
-    if (1 == display_option) {         // Report only options set (1)
-      ResponseAppend_P(PSTR("Set\":"));
-    } else {                           // Report all boolean options where preceded by ! means not-set (0)
-      ResponseAppend_P(PSTR("\":"));
-    }
-    uint32_t flag[5];
-    flag[0] = Settings->flag.data;     // SetOption0 .. 31
-    flag[1] = Settings->flag3.data;    // SetOption50 .. 81
-    flag[2] = Settings->flag4.data;    // SetOption82 .. 113
-    flag[3] = Settings->flag5.data;    // SetOption114 .. 145
-    flag[4] = Settings->flag6.data;    // SetOption146 .. 177
-    bool first_shown = false;
-    for (uint32_t i = 0; i <= MAX_SETOPTION_USED - PARAM8_SIZE; i++) {
-      bool option_set = bitRead(flag[i / 32], i % 32);
-      if ((1 == display_option) && (!option_set)) { continue; }  // Report only options set (1)
-      ResponseAppend_P(PSTR("%s%s%d"), 
-        (first_shown) ? "," : (1 == display_option) ? "[" : "\"",
-        (option_set) ? "" : "!",
-        (i < 32) ? i : i + PARAM8_SIZE);
-      first_shown = true;
-    }
-    if (1 == display_option) {         // Report only options set (1)
-      ResponseAppend_P(PSTR("]}"));    // End multi value list
+      // SetOption 0 or 2 - Report all multi value options (SetOption32 .. 49)
+      //   "SetOption32_49":[40,5,200,0,1,0,6,0,0,60,90,255,0,40,0,0,0,0]
+      if ((0 == display_option) || (2 == display_option)) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_SETOPTION "32_49\":["),
+          (0 == display_option) ? "," : "");
+        for (uint32_t i = 0; i < PARAM8_SIZE; i++) {
+          ResponseAppend_P(PSTR("%s%d"),
+            (i) ? "," : "",
+            Settings->param[i]);                   // SetOption32 .. 49
+        }
+        ResponseAppend_P(PSTR("]"));
+      }
     } else {
-      ResponseAppend_P(PSTR("\"}"));   // End string
+      // SetOption - Report all boolean options where preceded by ! means not-set (0)
+      //   "SetOption":"0,!1,!2,3,!4,!5,!6,!7 ... !162,!163,!164,!165"
+      SetOptionShow(0);
     }
-    return;
+    ResponseAppend_P(PSTR("}"));
+  } else {
+    snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
+    CmndSetoptionBase(1);
   }
-  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
-  CmndSetoptionBase(1);
 }
 
 // Code called by SetOption and by Berry

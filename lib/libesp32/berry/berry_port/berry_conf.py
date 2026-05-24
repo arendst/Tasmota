@@ -207,6 +207,17 @@ BE_USE_PREPROCESSOR = 1
 # #define BE_PREPROC_MAX_DEPTH            8
 BE_PREPROC_MAX_DEPTH = 8
 
+# /* Macro: BE_MAX_PARSER_DEPTH
+#  * Hard limit on parser recursion depth (nested expressions and blocks).
+#  * Each level costs ~hundreds of bytes of native C stack, so this protects
+#  * pathological source from overflowing the C stack at compile time.
+#  * Stored in a bbyte, so values above 255 are clamped.
+#  * Default: 25 (safe on ESP32 with an 8 KB task stack; well above any
+#  * realistic hand-written Berry code).
+#  **/
+# #define BE_MAX_PARSER_DEPTH             25
+BE_MAX_PARSER_DEPTH = 25
+
 # /* Macro: BE_USE_DEBUG_HOOK
 #  * Berry debug hook switch.
 #  * Default: 0

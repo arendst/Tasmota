@@ -1342,4 +1342,6 @@
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
 
+#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+
 #endif  // _LANGUAGE_EN_GB_H_

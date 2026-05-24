@@ -153,6 +153,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
                 digitalWrite(reset, HIGH);
                 delay(50);
                 reset_pin(50, 200);
+#ifdef UDSP_DEBUG
+                AddLog(LOG_LEVEL_DEBUG, "UDisplay: RGB/SSPI resetting device on pin %d", reset);
+#endif
               }
 #ifdef UDSP_DEBUG
               AddLog(LOG_LEVEL_DEBUG, "UDisplay: SSPI_MOSI:%d SSPI_SCLK:%d SSPI_CS:%d DSP_RESET:%d", spiController->spi_config.mosi, spiController->spi_config.clk, spiController->spi_config.dc, reset);
@@ -611,7 +614,18 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             rot_t[3] = next_hex(&lp1);
             break;
           case 'A':
-            if (interface == _UDSP_I2C || bpp == 1) {
+            if (interface == _UDSP_SPI && panel_config->spi.mono_pack_width && panel_config->spi.mono_pack_height) {
+              // Some 1bpp SPI panels use TFT-style RAMWR instead of OLED pages.
+              // A descriptor-selected packed mono mode provides the RAM window.
+              panel_config->spi.cmd_set_addr_x = next_hex(&lp1);
+              panel_config->spi.cmd_set_addr_y = next_hex(&lp1);
+              panel_config->spi.cmd_write_ram = next_hex(&lp1);
+              panel_config->spi.address_mode = next_val(&lp1);
+              panel_config->spi.ram_x_start = next_hex(&lp1);
+              panel_config->spi.ram_x_end = next_hex(&lp1);
+              panel_config->spi.ram_y_start = next_hex(&lp1);
+              panel_config->spi.ram_y_end = next_hex(&lp1);
+            } else if (interface == _UDSP_I2C || bpp == 1) {
               // Parse directly into I2C config
               panel_config->i2c.cmd_set_addr_x = next_hex(&lp1);
               panel_config->i2c.page_start = next_hex(&lp1);
@@ -673,6 +687,13 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               panel_config->i80.color_mode = col_mode;
             }
 #endif
+            break;
+          case 'F':
+            if (interface == _UDSP_SPI && bpp == 1) {
+              panel_config->spi.mono_pack_width = next_val(&lp1);
+              panel_config->spi.mono_pack_height = next_val(&lp1);
+              panel_config->spi.mono_pack_flags = next_val(&lp1);
+            }
             break;
           case 'i':
             inv_off = next_hex(&lp1);
@@ -1138,13 +1159,23 @@ Renderer *uDisplay::Init(void) {
   // for any bpp below native 16 bits, we allocate a local framebuffer to copy into
   if (ep_mode || bpp < 16) {
     if (framebuffer) free(framebuffer);
+    uint32_t framebuffer_size = (gxs * gys * bpp) / 8;
+    if (bpp == 1) {
+      // Renderer packs monochrome pixels in vertical 8-pixel pages:
+      // framebuffer[x + (y >> 3) * width]. Non-8-multiple heights need
+      // storage for the partial final page.
+      framebuffer_size = gxs * ((gys + 7) / 8);
+    }
 #ifdef ESP8266
-    framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+    framebuffer = (uint8_t*)calloc(framebuffer_size, 1);
 #else
     if (UsePSRAM()) {
-      framebuffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      framebuffer = (uint8_t*)heap_caps_malloc(framebuffer_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+      if (framebuffer) {
+        memset(framebuffer, 0, framebuffer_size);
+      }
     } else {
-      framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
+      framebuffer = (uint8_t*)calloc(framebuffer_size, 1);
     }
 #endif // ESP8266
   }
@@ -1161,6 +1192,18 @@ Renderer *uDisplay::Init(void) {
 #endif // ESP32
 
     if (wire) {
+      // Apply hardware reset pulse if a reset pin is configured
+      // (e.g. some OLED modules with an RST line)
+      if (reset >= 0) {
+        pinMode(reset, OUTPUT);
+        digitalWrite(reset, HIGH);
+        delay(10);
+        reset_pin(10, 200);
+#ifdef UDSP_DEBUG
+        AddLog(LOG_LEVEL_DEBUG, "UDisplay: I2C resetting device on pin %d", reset);
+#endif
+      }
+
       // Populate remaining I2C config fields (most already parsed directly into union)
       panel_config->i2c.width = gxs;
       panel_config->i2c.height = gys;
@@ -1188,7 +1231,7 @@ if (interface == _UDSP_SPI) {
       delay(50);
       reset_pin(50, 200);
 #ifdef UDSP_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, "UDisplay: resetting device");
+      AddLog(LOG_LEVEL_DEBUG, "UDisplay: SPI resetting device on pin %d", reset);
 #endif
     }
     
@@ -1231,7 +1274,7 @@ if (interface == _UDSP_SPI) {
         // Set update mode to partial for subsequent updates
         epd->setUpdateMode(DISPLAY_INIT_PARTIAL);
     } else {   
-        AddLog(2,"SPI Panel!");
+        AddLog(2,"DSP: SPI Panel");
         // Populate remaining SPI config fields (most already parsed directly into union)
         panel_config->spi.width = gxs;
         panel_config->spi.height = gys;
@@ -1322,6 +1365,9 @@ if (interface == _UDSP_SPI) {
           digitalWrite(reset, HIGH);
           delay(50);
           reset_pin(50, 200);
+#ifdef UDSP_DEBUG
+          AddLog(LOG_LEVEL_DEBUG, "UDisplay: PAR resetting device on pin %d", reset);
+#endif
       }
       
       // Populate remaining I80 config fields (most already parsed directly into union)

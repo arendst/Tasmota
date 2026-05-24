@@ -73,7 +73,16 @@ typedef struct {
     bfuncinfo *finfo;
     bclosure *cl;
     bbyte islocal;
+    bbyte depth;  /* recursion depth for expr/block; bounded by BE_MAX_PARSER_DEPTH (must fit in bbyte) */
 } bparser;
+
+#define enter_recursion(parser) do { \
+    if (++(parser)->depth > BE_MAX_PARSER_DEPTH) { \
+        push_error((parser), "expression or block too deeply nested"); \
+    } \
+} while (0)
+
+#define leave_recursion(parser)  (--(parser)->depth)
 
 #if BE_USE_SCRIPT_COMPILER
 
@@ -1078,7 +1087,9 @@ static void cond_expr(bparser *parser, bexpdesc *e)
 static void sub_expr(bparser *parser, bexpdesc *e, int prio)
 {
     bfuncinfo *finfo = parser->finfo;
-    btokentype op = get_unary_op(parser);  /* check if first token in unary op */
+    btokentype op;
+    enter_recursion(parser);
+    op = get_unary_op(parser);  /* check if first token in unary op */
     if (op != OP_NOT_UNARY) {  /* unary op found */
         int line, res;
         scan_next_token(parser);  /* move to next token */
@@ -1116,6 +1127,7 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
     if (prio == ASSIGN_OP_PRIO) {
         cond_expr(parser, e);
     }
+    leave_recursion(parser);
 }
 
 static void walrus_expr(bparser *parser, bexpdesc *e)
@@ -1807,9 +1819,11 @@ static void stmtlist(bparser *parser)
 static void block(bparser *parser, int type)
 {
     bblockinfo binfo;
+    enter_recursion(parser);
     begin_block(parser->finfo, &binfo, type);
     stmtlist(parser);
     end_block(parser);
+    leave_recursion(parser);
 }
 
 static void mainfunc(bparser *parser, bclosure *cl)
@@ -1835,6 +1849,7 @@ bclosure* be_parser_source(bvm *vm,
     parser.finfo = NULL;
     parser.cl = cl;
     parser.islocal = (bbyte)islocal;
+    parser.depth = 0;
     var_setclosure(vm->top, cl);
     be_stackpush(vm);
     be_lexer_init(&parser.lexer, vm, fname, reader, data);

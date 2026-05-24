@@ -2966,6 +2966,45 @@ String HtmlEscape(const String unescaped) {
 String SettingsTextEscaped(uint32_t index) {
   return HtmlEscape(SettingsText(index));
 }
+// Truncate src to max UTF-8 codepoints with optional max visual width.
+// max_codepoints limits codepoints (0 = no limit)
+// max_width limits *approximated* visual width (0 = no limit):
+//    narrow chars (1-2 byte: ASCII, Latin, Cyrillic) approximated to cost 1 width unit
+//    wide chars (3-4 byte: CJK, emoji) approximated to cost 2 width units
+// Multi-byte characters are never split mid-sequence
+// ZWJ sequences and skin tone modifiers are not recognized as single glyphs and may be split
+String Utf8Truncate(const char *src, uint32_t max_codepoints, uint32_t max_width = 0) {
+  if (!src) { return String(); }
+  if (!max_codepoints && !max_width) {
+    return String(src);
+  }
+  size_t slen = strlen(src);
+  size_t bytes = 0;
+  size_t width = 0;
+  size_t chars = 0;
+  while (bytes < slen) {
+    if (max_codepoints && chars >= max_codepoints) { break; }
+    uint8_t lead = (uint8_t)src[bytes];
+    size_t clen = 1;
+    if      (lead >= 0xF0 && lead <= 0xF4) { clen = 4; }   // valid 4-byte lead
+    else if (lead >= 0xE0)                 { clen = 3; }   // 3-byte lead
+    else if (lead >= 0xC2)                 { clen = 2; }   // 2-byte lead (skip overlong 0xC0/0xC1)
+    // else: ASCII or stray continuation byte -> treat as 1 byte
+    if (bytes + clen > slen) { break; }
+    size_t cwidth = (clen >= 3) ? 2 : 1;
+    if (max_width && (width + cwidth > max_width)) { break; }
+    bytes += clen;
+    width += cwidth;
+    chars++;
+  }
+  if (!bytes) {
+    return String();
+  }
+  String result;
+  result.reserve(bytes);
+  result.concat(src, bytes);
+  return result;
+}
 
 String UrlEscape(const char *unescaped) {
   static const char *hex = "0123456789ABCDEF";

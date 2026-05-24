@@ -147,17 +147,15 @@ class Matter_TCP_async
         self.event_refused()
         self.close()
         return
-      elif (tasmota.millis() - self.time_start) > self.timeout
-        # connection timeout
-        self.status = -3
-        self.tcp_connected = false        # force to false
-        self.event_timeout()
       end
+      # if still not connected, fall through to the timeout check below
     end
 
     if (tasmota.millis() - self.time_start) > self.timeout
+      # connection timeout (either while connecting or after established)
       self.close()
       self.status = -3
+      self.tcp_connected = false        # force to false
       self.event_timeout()
       return
     end

@@ -2770,7 +2770,7 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
         String boundary = glob_script_mem.jpg_task.http.header(headerKeys[0]);
         char *cp = strchr(boundary.c_str(), '=');
         if (cp) {
-          strcpy(glob_script_mem.jpg_task.boundary,cp + 1);
+          strlcpy(glob_script_mem.jpg_task.boundary, cp + 1, sizeof(glob_script_mem.jpg_task.boundary));
         }
       } else {
         AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, glob_script_mem.jpg_task.http.errorToString(httpCode).c_str());
@@ -2806,7 +2806,7 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
           glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
           //AddLog(LOG_LEVEL_INFO, PSTR("size = %s"), inbuff);
           char *cp = strchr(inbuff, ':');
-          uint16_t size = 0;
+          uint32_t size = 0;
           if (cp) {
             size = atoi(cp + 1);
           }
