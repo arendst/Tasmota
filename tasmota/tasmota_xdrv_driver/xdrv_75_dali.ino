@@ -354,7 +354,7 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
   DaliFrame frame;
   if (adr & TM_DALI_EVENT_FRAME) {             // 24-bit event frame
     frame.data = cmd;
-    frame.meta = adr & TM_DALI_BIT_COUNT_MASK;
+    frame.meta = adr & (TM_DALI_BIT_COUNT_MASK | TM_DALI_SEND_TWICE);
   } else {                                     // 16-bit command frame
     adr &= 0xFF;
     cmd &= 0xFF;
@@ -1289,7 +1289,14 @@ void CmndDaliSend(void) {
 
   if (255 == XdrvMailbox.index) {                   // DaliSend255 <bitcount>,<value> - Dali-2 24-bit frame
     if (params >= 2) {
-      DaliSendData(values[0] | TM_DALI_EVENT_FRAME, values[1]);
+      DaliSendData((values[0] & TM_DALI_BIT_COUNT_MASK) | TM_DALI_EVENT_FRAME, values[1]);
+      ResponseCmndDone();
+    }
+    return;
+  }
+  if (256 == XdrvMailbox.index) {                   // DaliSend256 <bitcount>,<value> - Dali-2 24-bit frame
+    if (params >= 2) {
+      DaliSendData((values[0] & TM_DALI_BIT_COUNT_MASK) | TM_DALI_EVENT_FRAME | TM_DALI_SEND_TWICE, values[1]);
       ResponseCmndDone();
     }
     return;
