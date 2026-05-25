@@ -77,5 +77,4 @@ if __name__ == '__main__':
 
     args = vars(parser.parse_args())
     # print(args)
-    print("ÜÜÜÜÜÜÜÜ",args)
     b = builder(args["input_folder"], args["o"], args["c"])
