@@ -1268,6 +1268,32 @@ class Matter_Plugin_Root : Matter_Plugin
         return true                   # OK
       end
     
+#if USE_MI_EXT_GUI
+    elif cluster == 0x0031              # ========== Network Commissioning Cluster  11.9. ==========
+
+      if   command == 0x0002          #  ---------- AddOrUpdateWiFiNetwork  ----------
+        var ssid = (val.findsubval(0)).asstring()
+        var pass = (val.findsubval(1)).asstring()
+        tasmota.cmd(f"wifitest1 {ssid}+{pass}")
+        tasmota.delay(1000)
+
+        var ncresp = TLV.Matter_TLV_struct()
+        ncresp.add_TLV(0, 0x04 #-TLV.U1-#, 0x00 #-matter.SUCCESS-#)   # NetworkCommissioningStatusEnum
+        ncresp.add_TLV(1, 0x0D #-TLV.UTF2-#, tasmota.wifi().tostring())     # DebugText
+        ncresp.add_TLV(2, 0x04 #-TLV.U1-#, 1)                # NetworkIndex
+        ctx.command = 0x05              # NetworkConfigResponse
+        return ncresp
+
+      elif   command == 0x0006          #  ---------- ConnectNetwork  ----------
+        # Defer response - poll_deferred_connect_network() in Matter_BLE_Device handles it
+        import global
+        log("MTR: ConnectNetwork deferred, waiting for WiFi", 2)
+        global.matter_device.deferred_connect_network = ctx.msg
+        ctx.status = nil
+        return nil
+      end
+#endif
+
     else
       return super(self).invoke_request(session, val, ctx)
     end

@@ -109,7 +109,7 @@ class Matter_Plugin
     # 0x0003: 0x00,                           # Identify: no optional features
     0x0006: 0x01,                           # On/Off: Lighting feature (bit 0)
     0x0008: 0x03,                           # Level Control: On/Off (bit 0) + Lighting (bit 1)
-    0x0031: 0x04,                           # Network Commissioning: Ethernet (for WiFi/Ethernet devices)
+    0x0031: 0x05,                           # Eth + WiFi - the latter is needed for Bluetooth commissioning
     0x0046: 0x00,                           # ICD Management: 0x00 = no optional features (base SIT mode, no CIP/UAT/LITS)
     0x0062: 0x01,                           # Scenes Management: SceneNames (bit 0)
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)

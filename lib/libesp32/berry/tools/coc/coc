@@ -16,7 +16,7 @@ class builder:
     def __init__(self, input_folders, output_folder, macro_files):
         self.output = output_folder
         self.input = input_folders
-        self.config = macro_files
+        self.config = list(macro_files)
         self.macro = None
         self.strmap = {}
         self.strmap_weak = {}
@@ -24,8 +24,9 @@ class builder:
         self.bytesmap = {}
 
         self.macro = macro_table()
+        self.config.append("../../../tasmota/tasmota_defines_for_berry.h")
         for path in self.config:
-            self.macro.scan_file(path)                
+            self.macro.scan_file(path)       
 
         for d in self.input:
             self.scandir(d)
