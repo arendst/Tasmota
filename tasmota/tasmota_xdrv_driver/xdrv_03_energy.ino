@@ -721,7 +721,7 @@ void ResponseCmndEnergyTotalYesterdayToday(void) {
   if (Energy->local_energy_active_export) {
     ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
       EnergyFmt(Energy->export_active, Settings->flag2.energy_resolution));
-    if (Energy->phase_count > 1) {
+    if (Energy->phase_count > 1 && !Settings->flag5.energy_phase) {
       ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE_TOTAL "\":%s"),
       EnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, 2));
     }
@@ -1367,7 +1367,7 @@ void EnergyShow(bool json) {
         EnergyFmt(&Energy->daily_sum_export_balanced, Settings->flag2.energy_resolution, 1));
       ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
         EnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, single));
-      if (Energy->phase_count > 1) {
+      if (Energy->phase_count > 1 && !Settings->flag5.energy_phase) {
        ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE_TOTAL "\":%s"),
           EnergyFmt(Energy->export_active, Settings->flag2.energy_resolution, 2));
       }
@@ -1390,7 +1390,7 @@ void EnergyShow(bool json) {
 
     ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":%s"),
         EnergyFmt(Energy->active_power, Settings->flag2.wattage_resolution));
-    if (Energy->phase_count > 1) {
+    if (Energy->phase_count > 1 && !Settings->flag5.energy_phase) {
       ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE_TOTAL "\":%s"),
           EnergyFmt(Energy->active_power, Settings->flag2.wattage_resolution, 2));
     }
