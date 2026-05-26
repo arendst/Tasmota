@@ -901,7 +901,15 @@ void CmndStatus(void)
 
   if (0 == XdrvMailbox.index) { payload = 0; }  // All status messages in one MQTT message (status0)
 
-  if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
+  while (payload > MAX_STATUS) { 
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+    if (44 == payload) { break; }
+#endif  // USE_ESP8266_DEBUG_HEAP
+#endif  // ESP8266  
+    return;   // {"Command":"Error"}
+  }
+
   if (!Settings->flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
   if (!TasmotaGlobal.energy_driver && (9 == payload)) { return; }
 #ifndef FIRMWARE_MINIMAL
@@ -1019,23 +1027,28 @@ void CmndStatus(void)
 
   // Status 4 - StatusMEM
   if ((0 == payload) || (4 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
-#ifdef ESP32
-                          D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
-#endif  // ESP32
-                          D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
-                          ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":\"" D_TASMOTA_FLASHMODE "\""),
-                          ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
-#ifdef ESP32
-                          uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
-                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
-#endif  // ESP32
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d"),
+                          ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024());
+
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+    ResponseAppendHeapInfo();
+#endif  // USE_ESP8266_DEBUG_HEAP
+#else   // ESP32
+    ResponseAppend_P(PSTR(",\"" D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d"),
+                          uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024);
+#endif  // ESP8266 or ESP32
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
+                          ",\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"FlashFrequency\":%d"
+                          ",\"" D_JSON_FLASHMODE "\":\"" D_TASMOTA_FLASHMODE "\""),
 #ifdef ESP8266
                           ESP_getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
-#endif // ESP8266
-                          , ESP_getFlashChipId()
-                          , ESP_getFlashChipSpeed()/1000000);
+#else   // ESP32
+                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
+#endif  // ESP8266 or ESP32
+                          , ESP_getFlashChipId(), ESP_getFlashChipSpeed()/1000000);
+
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1183,6 +1196,17 @@ void CmndStatus(void)
     if (ShutterStatus()) { CmndStatusResponse(13); }
   }
 #endif
+
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+  // Status 44 - Trigger umm heap dump to serial + OOM test
+  if (44 == payload) {
+    SerialHeapDump();
+    Response_P(PSTR("{\"" D_CMND_STATUS "44\":{\"HeapDump\":\"Serial output only\"}}"));
+    CmndStatusResponse(44);
+  }
+#endif  // USE_ESP8266_DEBUG_HEAP
+#endif  // ESP8266
 
   CmndStatusResponse(99);
 

@@ -1127,6 +1127,12 @@ void PerformEverySecond(void)
 {
   TasmotaGlobal.uptime++;
 
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+  ESP_HeapUsageUpdate();
+#endif  // USE_ESP8266_DEBUG_HEAP
+#endif  // ESP8266
+
   if (POWER_CYCLE_TIME == TasmotaGlobal.uptime) {
     UpdateQuickPowerCycle(false);
   }

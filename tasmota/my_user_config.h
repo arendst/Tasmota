@@ -1354,6 +1354,7 @@
 //#define DEBUG_TASMOTA_DRIVER                     // Enable driver debug messages
 //#define DEBUG_TASMOTA_SENSOR                     // Enable sensor debug messages
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
+//#define USE_ESP8266_DEBUG_HEAP                   // Add heap fragmentation display support. Needs build_flags -DUMM_STATS_FULL and -DUMM_INLINE_METRICS too (+2k5 code)
 
 /*********************************************************************************************\
  * Profiling features

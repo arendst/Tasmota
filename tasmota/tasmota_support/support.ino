@@ -2811,10 +2811,14 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 #ifdef ESP8266
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d"),
       mxtime, ESP_getFreeHeap1024());
-#else
+#ifdef USE_ESP8266_DEBUG_HEAP
+    snprintf_P(mxtime, sizeof(mxtime), PSTR("%s/%02d"),
+      mxtime, ESP_getHeapFragmentation());
+#endif  // USE_ESP8266_DEBUG_HEAP
+#else   // ESP32
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d/%02d"),
       mxtime, ESP_getFreeHeap1024(), ESP_getHeapFragmentation());
-#endif
+#endif  // ESP8266 or ESP32
   }
   strcat(mxtime, " ");
 
