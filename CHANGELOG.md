@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 VID6608 hardware RMT support for Automotive gauge driver (#24759)
 - Support for uDisplay ST7305 (#24738)
 - Support for hosted MCU different from esp32c6
+- Trigger events to Berry when `USE_RULES` is not enabled
 
 ### Breaking Changed
 

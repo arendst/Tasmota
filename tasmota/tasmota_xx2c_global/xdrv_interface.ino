@@ -1088,11 +1088,16 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
   char* data_save = XdrvMailbox.data;
   XdrvMailbox.data = (char*)event;
   bool rule_handled = XdrvCallDriver(10, (teleperiod) ? FUNC_TELEPERIOD_RULES_PROCESS : FUNC_RULES_PROCESS);
-#if defined(USE_BERRY) && !defined(USE_RULES)
-  // events are sent to Berry in Rules driver, or here if USE_RULES is not defined (only on a subset)
+#if defined(USE_BERRY) && !defined(USE_RULES) && defined(USE_SCRIPT)
+  // Berry forwarding for events going through XdrvRulesProcess:
+  //   - USE_RULES build:   xdrv_10_rules.ino's RulesProcessEvent calls callBerryRule itself.
+  //   - USE_SCRIPT only:   Scripter's RulesProcessEvent does NOT call Berry, so we forward here.
+  //   - "neither" build:   xdrv_10_system_events.ino's RulesProcessEvent calls callBerryRule itself.
+  // Forwarding is therefore only needed when Scripter owns slot 10, otherwise Berry receives
+  // the event twice (once via slot 10's dispatcher and once via this fallback).
   bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
   rule_handled |= berry_handled;
-#endif  // USE_BERRY and No USE_RULES
+#endif  // USE_BERRY && !USE_RULES && USE_SCRIPT
   XdrvMailbox.data = data_save;
   return rule_handled;
 }
