@@ -62,9 +62,9 @@
 #endif
 
 struct SYSTEM_EVENTS {
-  long new_power = -1;            // current TasmotaGlobal.power snapshot
-  long old_power = -1;            // last seen power mask; -1 == "never sampled" (boot path)
-  long old_dimm = -1;             // last seen Settings->light_dimmer; -1 == boot path
+  int32_t new_power = -1;            // current TasmotaGlobal.power snapshot
+  int32_t old_power = -1;            // last seen power mask; -1 == "never sampled" (boot path)
+  int32_t old_dimm = -1;             // last seen Settings->light_dimmer; -1 == boot path
   uint16_t last_minute = 60;      // last RtcTime.minute that fired Time#Minute (60 = invalid sentinel)
   bool teleperiod = false;        // set by FUNC_TELEPERIOD_RULES_PROCESS in the active dispatcher
   bool busy = false;              // re-entry guard for the local RulesProcessEvent stub
@@ -105,7 +105,7 @@ void SystemEventsSetTeleperiod(bool v) {
   SystemEvents.teleperiod = v;
 }
 
-void SystemEventsSetNewPower(long v) {
+void SystemEventsSetNewPower(int32_t v) {
   SystemEvents.new_power = v;
 }
 
