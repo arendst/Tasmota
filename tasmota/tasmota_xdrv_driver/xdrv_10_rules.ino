@@ -160,7 +160,7 @@ extern void SystemEventsEvery50ms(void);
 extern void SystemEventsEverySecond(void);
 extern void SystemEventsSaveBeforeRestart(void);
 extern void SystemEventsSetTeleperiod(bool v);
-extern void SystemEventsSetNewPower(long v);
+extern void SystemEventsSetNewPower(int32_t v);
 extern void CmndEvent(void);
 
 const char kRulesCommands[] PROGMEM = "|"  // No prefix
