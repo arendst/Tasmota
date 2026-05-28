@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # decode-esp8266-stack.sh — decode ESP8266 crash stack dump using xtensa-lx106-elf-addr2line
 #
 # Usage:
