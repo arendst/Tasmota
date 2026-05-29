@@ -495,9 +495,14 @@ void CmndBrRun(void) {
 
   if (berry.vm == nullptr) { ResponseCmndChar_P(PSTR(D_BR_NOT_STARTED)); return; }
 
-  char br_cmd[XdrvMailbox.data_len+12];
+  // Use stack VLA for small payloads (≤ 2048 bytes); heap for large ones to avoid stack overflow
+  const uint32_t br_cmd_len = XdrvMailbox.data_len + 12;
+  char* br_cmd_heap = (br_cmd_len > 2048) ? (char*)malloc(br_cmd_len) : nullptr;
+  if (br_cmd_len > 2048 && br_cmd_heap == nullptr) { ResponseCmndChar_P(PSTR("out of memory")); return; }
+  char br_cmd_vla[br_cmd_len <= 2048 ? br_cmd_len : 1];  // only used when br_cmd_len <= 2048
+  char* br_cmd = (br_cmd_len <= 2048) ? br_cmd_vla : br_cmd_heap;
   // encapsulate into a function, copied from `be_repl.c` / `try_return()`
-  snprintf_P(br_cmd, sizeof(br_cmd), PSTR("return (%s)"), XdrvMailbox.data);
+  snprintf_P(br_cmd, br_cmd_len, PSTR("return (%s)"), XdrvMailbox.data);
 
   checkBeTop();
   do {
@@ -530,11 +535,9 @@ void CmndBrRun(void) {
   }
 
   checkBeTop();
+  if (br_cmd_heap != nullptr) { free(br_cmd_heap); }
 }
 
-/*********************************************************************************************\
- * Berry console
-\*********************************************************************************************/
 #ifdef USE_WEBSERVER
 
 void BrREPLRun(char * cmd) {

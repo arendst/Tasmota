@@ -74,7 +74,7 @@ TwoWire & getWire(bvm *vm) {
 #endif  // MAX_I2C
   } else {
     be_raise(vm, "configuration_error", "I2C bus not initiliazedd");
-    return *(TwoWire*)nullptr;
+    __builtin_unreachable();  // be_raise() never returns (longjmp); suppress missing-return warning
   }
 }
 

@@ -985,13 +985,13 @@ public:
     // AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
     if (offset + size > signed_size){
       AddLog(LOG_LEVEL_ERROR, "BERRYWC: buffer overrun");
-      return size;
+      return 0;
     }
 
     char *bytebuf = (char*) be_tobytes(vm, -1, NULL); /* we get the address of the internam buffer of size 'size' */
     if (!bytebuf){
       AddLog(LOG_LEVEL_ERROR, "BERRYWC: buffer null??");
-      return size;
+      return 0;
     }
 
     // stream in our chunk

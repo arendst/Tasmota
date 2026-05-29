@@ -493,7 +493,7 @@ void TFL_task_loop(void *pvParameters){
       TFL->stats->invocations++;
       TFL->option.unread_output = 1;
       TFL->option.running_invocation = 0;
-      TFL->option.new_input_data == 0;
+      TFL->option.new_input_data = 0;
     }
     if(TFL->option.running_loop == 1) vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000 / TFL->max_invocations)); //maybe we already want to exit
   }
