@@ -267,6 +267,7 @@ void BerryObservability(bvm *vm, int event, ...) {
           be_dumpstack(vm);
         }
       }
+      break;
     case BE_OBS_GC_START:
       {
         gc_time = millis();
