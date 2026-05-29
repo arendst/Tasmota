@@ -77,7 +77,7 @@ struct SimpleHexParse {
 
 uint8_t SimpleHexParseGetByte(char* hexline, uint8_t idx) {
   char buff[3];
-  buff[3] = '\0';
+  buff[2] = '\0';
   memcpy(&buff, &hexline[(idx*2)-2], 2);
   return strtol(buff, 0, 16);
 }
