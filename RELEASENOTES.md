@@ -121,7 +121,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for multi-byte chars like emojis (💡) in light device toggle buttons [#24482](https://github.com/arendst/Tasmota/issues/24482)
 - Support for M5Stack Atom S3R drivers [#24747](https://github.com/arendst/Tasmota/issues/24747)
 - Support for uDisplay ST7305 [#24738](https://github.com/arendst/Tasmota/issues/24738)
-- Support for hosted MCU different from esp32c6
+- Support for hosted MCU other than esp32c6
+- Trigger events to Berry when `USE_RULES` is not enabled [#24796](https://github.com/arendst/Tasmota/issues/24796)
 - MiElHVAC extend support of AirDirection control [#24675](https://github.com/arendst/Tasmota/issues/24675)
 - ESP32 VID6608 hardware RMT support for Automotive gauge driver [#24759](https://github.com/arendst/Tasmota/issues/24759)
 - Berry add support for pre-processor [#24679](https://github.com/arendst/Tasmota/issues/24679)
@@ -140,6 +141,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL splash screen uses default Montserrat-14 instead of Montserrat-20 on small screens [#24735](https://github.com/arendst/Tasmota/issues/24735)
 
 ### Fixed
+- Crash when MQTT-TLS when tcp connection failed [#24798](https://github.com/arendst/Tasmota/issues/24798)
 - I80 pushColors swap logic for parallel displays [#24766](https://github.com/arendst/Tasmota/issues/24766)
 - NeoPool possible overflow/div-zero errors and Hydrolysis module detection [#24724](https://github.com/arendst/Tasmota/issues/24724)
 - Seesaw encoder position tracking in light control mode [#24730](https://github.com/arendst/Tasmota/issues/24730)
