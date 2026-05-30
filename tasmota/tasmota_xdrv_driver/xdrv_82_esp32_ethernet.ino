@@ -258,7 +258,7 @@ void EthernetInit(void) {
   eth_config_change = 0;
 
   strlcpy(eth_hostname, TasmotaGlobal.hostname, sizeof(eth_hostname) -5);  // Make sure there is room for "-eth"
-  strcat(eth_hostname, "-eth");
+  strlcat(eth_hostname, "-eth", sizeof(eth_hostname));  // use strlcat for defense in depth
 
   WiFi.onEvent(EthernetEvent);
 
