@@ -150,10 +150,16 @@ void WiFiServerAsync::begin(uint16_t port, int enable){
   }
   memset(server.sin6_addr.s6_addr, 0x0, 16);
   server.sin6_port = htons(_port);
-  if(bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
+  if(bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0) {
+    lwip_close(sockfd);   // close fd to avoid leak on bind failure
+    sockfd = -1;
     return;
-  if(listen(sockfd , _max_clients) < 0)
+  }
+  if(listen(sockfd , _max_clients) < 0) {
+    lwip_close(sockfd);   // close fd to avoid leak on listen failure
+    sockfd = -1;
     return;
+  }
   fcntl(sockfd, F_SETFL, O_NONBLOCK);
   _listening = true;
   _noDelay = false;

@@ -243,7 +243,7 @@ extern "C" {
   #else
         head->addr.u_addr.ip4.addr = (uint32_t) ip;
   #endif
-      } while (0);
+      }
 
       if (err == ESP_OK && head != nullptr) {
         err = mdns_delegate_hostname_add(hostname, head);

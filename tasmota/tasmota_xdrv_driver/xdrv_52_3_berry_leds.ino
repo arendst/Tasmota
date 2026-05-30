@@ -352,7 +352,7 @@ extern "C" {
       if (pixel_size > 4) { pixel_size = 4; }
       // arg5: bri:int (0..255)
       int32_t bri255 = 255;
-      if (top >= 3 && be_isint(vm, 5)) {
+      if (top >= 5 && be_isint(vm, 5)) {  // L-16: was `top >= 3` which never guards slot 5 correctly
         bri255 = be_toint(vm, 5);
       }
       if (bri255 < 0)  { bri255 = 0; }

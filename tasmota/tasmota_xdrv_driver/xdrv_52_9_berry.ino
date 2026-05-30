@@ -546,6 +546,7 @@ void BrREPLRun(char * cmd) {
   size_t cmd_len = strlen(cmd);
   size_t cmd2_len = cmd_len + 12;
   char * cmd2 = (char*) malloc(cmd2_len);
+  if (!cmd2) { return; }  // guard against malloc failure
   do {
     int32_t ret_code;
 
