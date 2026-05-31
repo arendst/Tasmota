@@ -121,7 +121,7 @@ class WiFiClientSecure_light : public WiFiClient {
       }
     }
     int32_t getLastCipherSuite(void) {
-      return _eng->session.cipher_suite;
+      return _eng ? _eng->session.cipher_suite : 0;
     }
     inline void setLastError(int32_t err) {
       _last_error = err;

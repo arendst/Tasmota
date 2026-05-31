@@ -77,6 +77,11 @@ bool convertGPDF_data(class Z_attribute_list &attr_list, uint16_t shortaddr, uin
 // Handle GPDF Commissioning 0xE0 command
 bool convertGPDF_Commissioning(class Z_attribute_list &attr_list, uint16_t shortaddr, bool wasbroadcast, const SBuffer &payload, size_t payload_start, size_t payload_len) {
   uint32_t idx_offset = payload_start;    // offset compared to minimal packet
+  size_t payload_end = payload_start + payload_len;
+
+  // (a) Need at least 2 bytes for gpd_device_id + gpd_options
+  if (payload_len < 2) { return false; }
+
   uint8_t gpd_device_id = payload.get8(idx_offset++);    // type of device
 
   uint8_t gpd_options = payload.get8(idx_offset++);
@@ -90,6 +95,7 @@ bool convertGPDF_Commissioning(class Z_attribute_list &attr_list, uint16_t short
 
   uint8_t gpd_options_ext = 0;
   if (gpd_options_has_ext) {
+    if (idx_offset >= payload_end) { return false; }
     gpd_options_ext = payload.get8(idx_offset++);
   }
   uint8_t gpd_sec_level_capa = (gpd_options_ext & 0x03);
@@ -101,17 +107,21 @@ bool convertGPDF_Commissioning(class Z_attribute_list &attr_list, uint16_t short
   uint64_t gpd_key_low = 0;
   uint64_t gpd_key_high = 0;
   if (gpd_key_present) {
+    // (b) Need 16 bytes for the key
+    if (idx_offset + 16 > payload_end) { return false; }
     gpd_key_low = payload.get64(idx_offset);
     gpd_key_high = payload.get64(idx_offset + 8);
     idx_offset += 16;
   }
   uint32_t gpd_key_mic = 0;
   if (gpd_key_present && gpd_key_encryption) {
+    if (idx_offset + 4 > payload_end) { return false; }
     gpd_key_mic = payload.get32(idx_offset);
     idx_offset += 4;
   }
   uint32_t gpd_out_counter = 0;
   if (gpd_out_counter_present) {
+    if (idx_offset + 4 > payload_end) { return false; }
     gpd_out_counter = payload.get32(idx_offset);
     idx_offset += 4;
   }
@@ -145,7 +155,7 @@ bool convertGPDF_Commissioning(class Z_attribute_list &attr_list, uint16_t short
     bool gp_app_cluster_reports_present = (gp_app_info & 0x08);
 
     if (gp_app_manuf_present) {
-      uint16_t gp_app_manuf_id = payload.get8(idx_offset);
+      uint16_t gp_app_manuf_id = payload.get16(idx_offset);
       idx_offset += 2;
       ResponseAppend_P(PSTR(",\"manufid\":\"0x%04X\""), gp_app_manuf_id);
     }

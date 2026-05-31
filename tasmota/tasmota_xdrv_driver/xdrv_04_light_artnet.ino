@@ -143,9 +143,7 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
 //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: opcode=0x%04X procotol=%i universe=%i datalen=%i univ_start=%i univ_end=%i"), opcode, protocol, universe, datalen, artnet_conf.univ, artnet_conf.univ + artnet_conf.rows);
   if (opcode != 0x5000 || protocol != 14) { return; }
 
-//  if (len + 18 < datalen) {
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("DMX: packet is truncated. Expected: %u Bytes, Received: %u Bytes."), datalen, len + 18);
-//  }
+  if (datalen > len - 18) { return; }  // datalen must not exceed actual received payload length
 
   if (universe < artnet_conf.univ || universe >= artnet_conf.univ + artnet_conf.rows) { return; }  // universe is not ours, ignore
   size_t idx = 18;      // start of payload data in the UDP frame

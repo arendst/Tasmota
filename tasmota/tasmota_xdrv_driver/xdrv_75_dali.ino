@@ -30,6 +30,10 @@
  * DaliSend <byte1>,<byte2>                      - Execute DALI code and do not expect a DALI backward frame
  * DaliSend <dt>,<byte1>,<byte2>                 - Execute DALI extended code for DT and do not expect a DALI backward frame
  * DaliSend <0xA3>,<byte2>,<byte3>,<byte4>       - Set DALI parameter using DTR0 and do not expect a DALI backward frame
+ * DaliSend6                                     - DT6 = 207 = Extended LED commands 224...236
+ * DaliSend8                                     - DT8 = 209 = Extended colour commands 224...246
+ * DaliSend255 <bitcount>,<value>                - Dali-2 24-bit event frame
+ * DaliSend256 <bitcount>,<value>                - Dali-2 24-bit event frame send twice
  * DaliQuery <byte1>,<byte2>                     - Execute DALI code and report result (DALI backward frame)
  * DaliQuery <dt>,<byte1>,<byte2>                - Execute DALI extended code for DT and report result (DALI backward frame)
  * DaliScan 1|2[,<max_count>]                    - Reset (0) or (1)/and commission device short addresses up to optional <max_count> - default 64
@@ -67,6 +71,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.5.2.0 20260530  update    - Add DaliSend256 to send 24-bit event frame twice
   1.5.1.0 20251207  update    - Display GUI broadcast slider even if Tasmota Light Control is active
                               - Add command `DaliNoBS 0|1` to disable display of GUI broadcast slider
   1.5.0.0 20251206  update    - Fix WAF GUI sync
@@ -354,7 +359,7 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
   DaliFrame frame;
   if (adr & TM_DALI_EVENT_FRAME) {             // 24-bit event frame
     frame.data = cmd;
-    frame.meta = adr & TM_DALI_BIT_COUNT_MASK;
+    frame.meta = adr & (TM_DALI_BIT_COUNT_MASK | TM_DALI_SEND_TWICE);
   } else {                                     // 16-bit command frame
     adr &= 0xFF;
     cmd &= 0xFF;
@@ -1276,9 +1281,13 @@ void CmndDaliGear(void) {
 
 void CmndDaliSend(void) {
   // Send command
-  // DaliSend 0xa5,255           - DALI Initialise
-  // DaliSend 6,3,0xe2           - DALI DT6 (6) for address 1 (3) extended command disable current protector (0xe2) 
-  // DaliSend 0x01,0xa3,0x2d,254 - Set Power On level (0x2d) for address 0 (0x01) to 254 only if Read Power On level (0xa3) is different
+  // DaliSend 0xa5,255              - DALI Initialise
+  // DaliSend 6,3,0xe2              - DALI DT6 (6) for address 1 (3) extended command disable current protector (0xe2) 
+  // DaliSend 0x01,0xa3,0x2d,254    - Set Power On level (0x2d) for address 0 (0x01) to 254 only if Read Power On level (0xa3) is different
+  // DaliSend6                      - DT6 = 207 = Extended LED commands 224...236
+  // DaliSend8                      - DT8 = 209 = Extended colour commands 224...246
+  // DaliSend255 <bitcount>,<value> - Dali-2 24-bit event frame
+  // DaliSend256 <bitcount>,<value> - Dali-2 24-bit event frame send twice
 
   uint32_t values[5] = { 0 };
   uint32_t params = ParseParameters(5, values);
@@ -1287,9 +1296,16 @@ void CmndDaliSend(void) {
   AddLog(Dali->log_level, PSTR("DLI: index %d, params %d, values %i,%i,%i,%i,%i"), XdrvMailbox.index, params, values[0], values[1], values[2], values[3], values[4]);
 #endif  // DALI_DEBUG
 
-  if (255 == XdrvMailbox.index) {                   // DaliSend255 <bitcount>,<value> - Dali-2 24-bit frame
+  if (255 == XdrvMailbox.index) {                   // DaliSend255 <bitcount>,<value> - Dali-2 24-bit event frame
     if (params >= 2) {
-      DaliSendData(values[0] | TM_DALI_EVENT_FRAME, values[1]);
+      DaliSendData((values[0] & TM_DALI_BIT_COUNT_MASK) | TM_DALI_EVENT_FRAME, values[1]);
+      ResponseCmndDone();
+    }
+    return;
+  }
+  if (256 == XdrvMailbox.index) {                   // DaliSend256 <bitcount>,<value> - Dali-2 24-bit event frame send twice
+    if (params >= 2) {
+      DaliSendData((values[0] & TM_DALI_BIT_COUNT_MASK) | TM_DALI_EVENT_FRAME | TM_DALI_SEND_TWICE, values[1]);
       ResponseCmndDone();
     }
     return;

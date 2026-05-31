@@ -68,7 +68,7 @@ void CmndDrvText(void) {
       // Command DrvText<index> <text>
       uint32_t index = XdrvMailbox.index -1;
       if (XdrvMailbox.data_len > 0) {
-        snprintf_P(DrvDemoSettings.drv_text[index], sizeof(DrvDemoSettings.drv_text[index]), XdrvMailbox.data);
+        snprintf_P(DrvDemoSettings.drv_text[index], sizeof(DrvDemoSettings.drv_text[index]), PSTR("%s"), XdrvMailbox.data);
       }
       ResponseCmndIdxChar(DrvDemoSettings.drv_text[index]);
     }

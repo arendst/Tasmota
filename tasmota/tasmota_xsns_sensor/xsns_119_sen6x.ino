@@ -169,8 +169,10 @@ void Sen6xInit(void) {
     }
     sen6x.begin(I2cGetWire(bus), SEN6X_I2C_ADDR_6B);
 
-    if (Sen6xError("Reset", sen6x.deviceReset())) {   // Performs delay(1200) if no error
-      continue;
+    if (sen6x.deviceReset()) {                        // Performs delay(1200) if no error
+      if (Sen6xError("Reset", sen6x.deviceReset())) { // See https://github.com/arendst/Tasmota/discussions/24452
+        continue;
+      }
     }
 
     uint8_t major;
