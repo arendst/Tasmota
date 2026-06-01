@@ -238,6 +238,10 @@ enum UserSelectablePins {
   GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
   GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_MBS_RX_ENA,                      // Modbus Bridge Serial Receive Enable
+#ifdef USE_MODBUS_RELAY                    // Modbus RTU Relay modules
+  GPIO_MODBUSRELAY_TX, GPIO_MODBUSRELAY_TX_ENA,
+  GPIO_MODBUSRELAY_RX, GPIO_MODBUSRELAY_RX_ENA,
+#endif                      
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -517,7 +521,7 @@ const char kSensorNames[] PROGMEM =
 #endif
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
-  D_SENSOR_MBS_RX_ENA "|" 
+  D_SENSOR_MBS_RX_ENA "|" D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1277,6 +1281,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PIPSOLAR
   AGPIO(GPIO_PIPSOLAR_TX),                       // pipsolar inverter Serial interface
   AGPIO(GPIO_PIPSOLAR_RX),                       // pipsolar inverter Serial interface
+#endif
+
+#ifdef USE_MODBUS_RELAY
+  AGPIO(GPIO_MODBUSRELAY_TX),
+  AGPIO(GPIO_MODBUSRELAY_TX_ENA),
+  AGPIO(GPIO_MODBUSRELAY_RX),
+  AGPIO(GPIO_MODBUSRELAY_RX_ENA),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

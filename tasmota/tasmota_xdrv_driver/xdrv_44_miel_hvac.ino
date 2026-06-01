@@ -1942,7 +1942,11 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	sc->sc_settings = *d;
 
 	if (publish)
+	{
 		miel_hvac_publish_settings(sc);
+		MqttPublishSensor();
+		TasRediscover();
+	}
 }
 
 static void
@@ -2015,8 +2019,17 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 		miel_hvac_input_sensor(sc, &sc->sc_stage, d);
 		break;
 	case MIEL_HVAC_DATA_T_OPTIONS:
-		miel_hvac_input_sensor(sc, &sc->sc_options, d);
+	{
+		bool changed = (memcmp(&sc->sc_options, d, sizeof(sc->sc_options)) != 0);
+		sc->sc_options = *d;
+		if (changed)
+		{
+			MqttPublishSensor();
+			miel_hvac_publish_settings(sc);
+			TasRediscover();
+		}
 		break;
+	}
 	default:
 		miel_hvac_data_response(sc, d);
 		break;
