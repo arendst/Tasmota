@@ -90,10 +90,12 @@ app = Flask(__name__)
 
 @app.route('/<filename>')
 def fw(filename):
-    if os.path.exists(os.path.join(fwdir, os.path.basename(filename))):
-        return send_from_directory(fwdir, os.path.basename(filename),
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        return "ERROR: invalid filename", 400
+    if os.path.exists(os.path.join(fwdir, safe_name)):
+        return send_from_directory(fwdir, safe_name,
                                    mimetype='application/octet-stream')
-
     return "ERROR: file not found"
 
 
