@@ -92,10 +92,10 @@ class Matter_Plugin_Aggregator : Matter_Plugin
       # overwrite PartsList
       elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
-        var eps = self.device.get_active_endpoints(true)
-        for ep: eps
-          if ep != 0x0001 #-matter.AGGREGATOR_ENDPOINT-#
-            pl.add_TLV(nil, 0x05 #-TLV.U2-#, ep)     # add each endpoint
+        for plugin: self.device.plugins
+          var ep = plugin.get_endpoint()
+          if ep != 0x0001 #-matter.AGGREGATOR_ENDPOINT-# && ep != 0 && plugin.AGGREGATE
+            pl.add_TLV(nil, 0x05 #-TLV.U2-#, ep)     # add each top-level endpoint
           end
         end
         return pl

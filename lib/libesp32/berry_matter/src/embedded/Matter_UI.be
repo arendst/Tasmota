@@ -192,7 +192,7 @@ class Matter_UI
                               "|airquality"
   static var _CLASSES_TYPES_VIRTUAL = 
                               "-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
-                              "|v_fan"
+                              "|v_fan|v_hvac|v_hvac_option"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality"
   static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
