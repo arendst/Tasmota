@@ -17,7 +17,7 @@ concurrency:
 jobs:
   safeboot-images:
     runs-on: ubuntu-latest
- #   if: github.repository == 'arendst/Tasmota'
+    if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
     strategy:
       matrix:
@@ -43,7 +43,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: master
-          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
