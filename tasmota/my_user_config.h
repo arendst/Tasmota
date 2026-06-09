@@ -412,6 +412,9 @@
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
 #define USE_IMPROV                               // Add support for IMPROV serial protocol as used by esp-web-tools (+2k code)
 
+// -- Serial input --------------------------------
+//#define USE_SERIAL_BACKSPACE                     // Add support for backspace (0x08) in serial console input, removing the last typed character
+
 // -- IPv6 support -------------------------------
 // #define USE_IPV6                                 // Enable IPv6 support (if the underlying esp-idf is also configured to support it)
                                                  // Code size increase: ESP8266: +34.5kb
