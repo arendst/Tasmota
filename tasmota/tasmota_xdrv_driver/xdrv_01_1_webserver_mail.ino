@@ -418,8 +418,8 @@ void attach_Array(char *aname) {
     snprintf_P(buff, sizeof(buff), PSTR("Content-Disposition: attachment; filename=\"%s.txt\"\r\n\r\n"), aname);
     g_client->write(buff);
     // send timestamp
-    strcpy(buff, GetDateAndTime(DT_LOCAL).c_str());
-    strcat(buff, "\t");
+    strlcpy(buff, GetDateAndTime(DT_LOCAL).c_str(), sizeof(buff));
+    strlcat(buff, "\t", sizeof(buff));
     g_client->write(buff);
 
     float *fp=array;
@@ -428,9 +428,9 @@ void attach_Array(char *aname) {
       char nbuff[16];
       flt2char(*fp++, nbuff);
       if (cnt < (alen - 1)) {
-        strcat(nbuff, "\t");
+        strlcat(nbuff, "\t", sizeof(nbuff));
       } else {
-        strcat(nbuff, "\n");
+        strlcat(nbuff, "\n", sizeof(nbuff));
       }
       g_client->write(nbuff, strlen(nbuff));
     }

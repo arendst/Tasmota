@@ -551,9 +551,8 @@ void CmndBacklog(void) {
       }
       // Do not allow command Reset in backlog
       if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-        char* temp = (char*)malloc(strlen(blcommand)+1);
+        char* temp = strdup(blcommand);
         if (temp != nullptr) {
-          strcpy(temp, blcommand);
           char* &elem = backlog.addToLast();
           elem = temp;
         }
@@ -773,9 +772,8 @@ bool SetTimedCmnd(uint32_t time, const char *command) {
     }
   }
   // Add command
-  char* cmnd = (char*)malloc(strlen(command) +1);
+  char* cmnd = strdup(command);
   if (cmnd) {
-    strcpy(cmnd, command);
     tTimedCmnd &elem = timed_cmnd.addToLast();
     elem.time = millis() + time;
     elem.command = cmnd;
@@ -1964,7 +1962,7 @@ void CmndModule(void)
   if (XdrvMailbox.index == 2) {
     module_real = Settings->fallback_module;
     module_number = (USER_MODULE == Settings->fallback_module) ? 0 : Settings->fallback_module +1;
-    strcat(XdrvMailbox.command, "2");
+    strlcat(XdrvMailbox.command, "2", CMDSZ);
   }
   Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, module_number, AnyModuleName(module_real).c_str());
 }

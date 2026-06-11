@@ -977,7 +977,7 @@ void dump2log(void) {
             	// new packet, plot last one
             	sml_globs.log_data[sml_globs.sml_logindex] = 0;
             	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
-            	strcpy(&sml_globs.log_data[0], ": aa ");
+            	strlcpy(sml_globs.log_data, ": aa ", sizeof(sml_globs.log_data));
             	sml_globs.sml_logindex = 5;
           	}
           	continue;
@@ -1549,11 +1549,11 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
     if (cp->telestartpos==-1)  {
       //check start of buffer for start sequence
       if(cp->crcbuff_pos>=8) {
-        if (memcmp(&cp->crcbuff[0], "\x1B\x1B\x1B\x1B\x01\x01\x01\x01", 8) == 0 ) {
+        if (memcmp(cp->crcbuff, "\x1B\x1B\x1B\x1B\x01\x01\x01\x01", 8) == 0 ) {
           //found start sequence
           cp->telestartpos=0;
         } else {
-          memmove(&cp->crcbuff[0], &cp->crcbuff[1], cp->crcbuff_pos-1);
+          memmove(cp->crcbuff, &cp->crcbuff[1], cp->crcbuff_pos-1);
           cp->crcbuff_pos--;
         }
 
@@ -1571,7 +1571,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           uint16_t len=cp->teleendpos + 1;
           //testing: fake some error for testing 
           //if (random(0, 50) < 30) {cp->crcbuff[12]=99;}
-          uint16_t calculated_crc = calculateSMLbinCRC(&cp->crcbuff[0], len-2, cp->crcmode);
+          uint16_t calculated_crc = calculateSMLbinCRC(cp->crcbuff, len-2, cp->crcmode);
           if (calculated_crc == extracted_crc) {
             cp->crcfinecnt++;
             //AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC ok"));
@@ -1720,7 +1720,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
         mp->spos = 0;
       } else if (iob == 0x0d) {
         uint8_t index = 0;
-        uint8_t *ucp = &mp->sbuff[0];
+        uint8_t *ucp = mp->sbuff;
         for (uint16_t cnt = 0; cnt < mp->spos; cnt++) {
           uint8_t iob = mp->sbuff[cnt] ;
           if (iob == 0x1b) {
@@ -1731,7 +1731,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           }
           index++;
         }
-        uint16_t crc = KS_calculateCRC(&mp->sbuff[0], index);
+        uint16_t crc = KS_calculateCRC(mp->sbuff, index);
         if (!crc) {
           SML_Decode(meters);
         }
@@ -1759,7 +1759,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           uint8_t tlen = (mp->sbuff[4] << 8) | mp->sbuff[5];
           if (mp->spos == 6 + tlen) {
             mp->spos = 0;
-            memmove(&mp->sbuff[0], &mp->sbuff[6], mp->sbsiz - 6);
+            memmove(mp->sbuff, &mp->sbuff[6], mp->sbsiz - 6);
 #ifdef MODBUS_DEBUG
             AddLog(LOG_LEVEL_INFO, PSTR("meter %d, receive index >> %d"), meters, mp->index);
             Hexdump(mp->sbuff, 10);
@@ -3631,7 +3631,7 @@ void SML_Init(void) {
             lp1++;
 #ifdef USE_SML_TCP
 #ifdef USE_SML_TCP_IP_STR
-            strcpy(mmp->ip_addr, str);
+            strlcpy(mmp->ip_addr, str, sizeof(mmp->ip_addr));
 #else
             mmp->ip_addr.fromString(str);
 #endif
@@ -4329,7 +4329,7 @@ uint32_t SML_Read(int32_t meter, char *str, uint32_t slen) {
   mp->sbuff[mp->spos] = 0;
 
   if (!hflg) {
-    strlcpy(str, (char*)&mp->sbuff[0], slen);
+    strlcpy(str, (char*)mp->sbuff, slen);
   } else {
     uint32_t index = 0;
     for (uint32_t cnt = 0; cnt < mp->spos; cnt++) {
@@ -4796,9 +4796,9 @@ int32_t sml_tcp_init(struct METER_DESC *mp) {
     int32_t err = mp->client->connect(mp->ip_addr, mp->params);
     char ipa[32];
 #ifdef USE_SML_TCP_IP_STR
-    strcpy(ipa, mp->ip_addr);
+    strlcpy(ipa, mp->ip_addr, sizeof(ipa));
 #else
-    strcpy(ipa, mp->ip_addr.toString().c_str());
+    strlcpy(ipa, mp->ip_addr.toString().c_str(), sizeof(ipa));
 #endif
     if (!err) {
       AddLog(LOG_LEVEL_INFO, PSTR("SML: could not connect TCP to %s:%d"),ipa, mp->params);

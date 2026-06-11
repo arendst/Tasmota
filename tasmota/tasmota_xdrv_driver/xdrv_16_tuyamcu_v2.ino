@@ -260,7 +260,7 @@ int init_tuya_struct() {
   if (pTuya) return 0;  // done already
   pTuya = (TUYA_STRUCT *)calloc(sizeof(TUYA_STRUCT), 1);
   if (!pTuya) return 0;
-  strcpy(pTuya->RGBColor, "000000");            // Stores RGB Color string in Hex format
+  strlcpy(pTuya->RGBColor, "000000", sizeof(pTuya->RGBColor));            // Stores RGB Color string in Hex format
   pTuya->CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   pTuya->CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
   pTuya->wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()

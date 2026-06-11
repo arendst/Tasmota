@@ -291,8 +291,8 @@ char *topicPrefix(int prefix, const uint8_t *addr, int useAlias){
   const char *id = addrStr(addr, useAlias);
   if (!EQ3TopicStyle){
     GetTopic_P(stopic, prefix, TasmotaGlobal.mqtt_topic, PSTR(""));
-    strcat(stopic, PSTR("EQ3/"));
-    strcat(stopic, id);
+    strlcat(stopic, PSTR("EQ3/"), sizeof(stopic));
+    strlcat(stopic, id, sizeof(stopic));
   } else {
     char p[] = "EQ3";
     GetTopic_P(stopic, prefix, p, id);
@@ -984,8 +984,8 @@ int EQ3SendResult(char *requested, const char *result){
   Response_P(PSTR("{\"result\":\"%s\"}"), result);
   static char stopic[TOPSZ];
   GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, PSTR(""));
-  strcat(stopic, PSTR("EQ3/"));
-  strcat(stopic, requested);
+  strlcat(stopic, PSTR("EQ3/"), sizeof(stopic));
+  strlcat(stopic, requested, sizeof(stopic));
   MqttPublish(stopic, false);
   return 0;
 }

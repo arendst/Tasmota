@@ -829,7 +829,7 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
     // compute the target topic
     char *topic = SettingsText(SET_MQTT_TOPIC);
     char topic2[strlen(topic)+1];       // save buffer onto stack
-    strcpy(topic2, topic);
+    strlcpy(topic2, topic, sizeof(topic2));
     // replace any '/' with '_'
     char *s = topic2;
     while (*s) {
