@@ -45,11 +45,12 @@ Example:
     ./fw-server.py -i 192.168.1.10
 """
 
+import ipaddress
 import os.path
 from optparse import OptionParser
 from sys import exit
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request, abort
 import netifaces as ni
 
 usage = "usage: fw-server {-d | -i} arg"
@@ -90,6 +91,12 @@ app = Flask(__name__)
 
 @app.route('/<filename>')
 def fw(filename):
+    try:
+        client_ip = ipaddress.ip_address(request.remote_addr)
+        if not (client_ip.is_private or client_ip.is_loopback or client_ip.is_link_local):
+            abort(403)
+    except ValueError:
+        abort(403)
     if os.path.exists(os.path.join(fwdir, os.path.basename(filename))):
         return send_from_directory(fwdir, os.path.basename(filename),
                                    mimetype='application/octet-stream')
