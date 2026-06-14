@@ -11,6 +11,7 @@
 #include "be_string.h"
 #include "be_class.h"
 #include "be_func.h"
+#include "be_gc.h"
 #include "be_exec.h"
 #include "be_list.h"
 #include "be_map.h"
@@ -592,8 +593,16 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
     /* if empty, it's a static member so don't allocate an actual proto */
     bstring *name = load_string(vm, fp);
     if (str_len(name)) {
+        /* `name` is only held in a C local until it is attached to the proto
+         * below. be_newproto() allocates and may trigger a GC, which would
+         * otherwise collect this not-yet-referenced string and leave a dangling
+         * proto->name (its freed slot then gets reused, corrupting the proto).
+         * Pin it across the allocation, then release once reachable via the
+         * proto. */
+        be_gc_fix(vm, gc_object(name));
         *proto = be_newproto(vm);
         (*proto)->name = name;
+        be_gc_unfix(vm, gc_object(name)); /* now reachable through the proto */
 #if BE_DEBUG_SOURCE_FILE
         (*proto)->source = load_string(vm, fp);
 #else
