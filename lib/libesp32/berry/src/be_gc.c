@@ -492,6 +492,7 @@ static void destruct_object(bvm *vm, bgcobject *obj)
     }
     if (obj->type == BE_INSTANCE) {
         int type;
+        int slot = cast_int(vm->top - vm->stack); /* remember the scratch slot offset (stack may be reallocated) */
         binstance *ins = cast_instance(obj);
         /* does not GC when creating the string "deinit". */
         type = be_instance_member_simple(vm, ins, str_literal(vm, "deinit"), vm->top);
@@ -501,8 +502,14 @@ static void destruct_object(bvm *vm, bgcobject *obj)
             be_incrtop(vm);
             be_dofunc(vm, vm->top - 2, 1);  /* warning, there shoudln't be any exception raised here, or the gc stops */
             be_stackpop(vm, 1);
+            var_setnil(vm->stack + slot + 1); /* clear the arg slot which held 'ins' (about to be freed) */
         }
         be_stackpop(vm, 1);
+        /* Clear the scratch slot that held the 'deinit' lookup / instance.
+         * The instance is about to be freed by delete_white; leaving a pointer
+         * to it in a stack slot above vm->top would become a dangling reference
+         * if a later GC runs with a higher vm->top and scans this slot (UAF). */
+        var_setnil(vm->stack + slot);
     }
 }
 
