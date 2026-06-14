@@ -383,6 +383,7 @@ def test_constants_in_output(source):
     """Integer and string constants in the output should match the proto."""
     from berry_port.be_object import BE_INT, BE_STRING, var_toint, var_tostr
     from berry_port.be_string import be_str2cstr
+    from berry_port.berry_conf import BE_USE_COMPACT_KTAB
 
     vm, clo, proto = _compile_to_inner_closure(source)
 
@@ -396,7 +397,11 @@ def test_constants_in_output(source):
             continue
         if var_type(k) == BE_INT:
             val = var_toint(k)
-            assert f"be_const_int({val})" in output
+            # compact mode emits be_kv_int(...), legacy emits be_const_int(...)
+            if BE_USE_COMPACT_KTAB:
+                assert f"be_kv_int({val})" in output
+            else:
+                assert f"be_const_int({val})" in output
         elif var_type(k) == BE_STRING:
             s = be_str2cstr(var_tostr(k))
             from berry_port.be_solidifylib import toidentifier
@@ -407,6 +412,10 @@ def test_constants_in_output(source):
 # ============================================================================
 # Property 8f: Cross-validation with C binary — closure solidification
 # ============================================================================
+
+# A string literal of >=255 chars triggers the "long string" path: legacy
+# solidify emits be_nested_str_long(...), compact emits be_kv_str_long(...).
+_LONG_STR = "Z" * 260
 
 _CLOSURE_TEST_VECTORS = [
     ("simple return int", "def f()\n  return 42\nend", True),
@@ -424,6 +433,10 @@ _CLOSURE_TEST_VECTORS = [
     ("string concat", "def f()\n  return 'foo' + 'bar'\nend", True),
     ("simple return int (no weak)", "def f()\n  return 42\nend", False),
     ("unary add (no weak)", "def f(x)\n  return x + 1\nend", False),
+    ("long string weak",
+     'def f()\n  return "' + _LONG_STR + '"\nend', True),
+    ("long string non-weak",
+     'def f()\n  return "' + _LONG_STR + '"\nend', False),
 ]
 
 
@@ -530,7 +543,13 @@ def test_class_compaction_shared_ktab():
     except Exception as e:
         import pytest
         pytest.skip(f"Class solidification failed: {e}")
-    assert "be_ktab_class_C" in out
+    from berry_port.berry_conf import BE_USE_COMPACT_KTAB
+    if BE_USE_COMPACT_KTAB:
+        # compact mode emits split value/type arrays
+        assert "be_kval_class_C" in out
+        assert "be_ktype_class_C" in out
+    else:
+        assert "be_ktab_class_C" in out
     assert "/* shared constants */" in out
     assert "compact class 'C'" in out
 
@@ -563,6 +582,85 @@ def test_class_compaction_deduplicates_long_strings():
     )
     # ktab size should be 1 (one deduplicated string), not 2
     assert "ktab size: 1, total: 2" in out
+
+
+# ============================================================================
+# Property 8o: Long strings (>=255) in a function ktab
+# ============================================================================
+
+def test_long_string_closure_macro():
+    """A string constant >=255 chars must use the 'long string' macro:
+    be_kv_str_long(...) in compact mode, be_nested_str_long(...) in legacy.
+    In both cases the encoded string must appear and the ktab entry's type
+    must remain BE_STRING."""
+    from berry_port.berry_conf import BE_USE_COMPACT_KTAB
+
+    source = 'def f()\n  return "' + _LONG_STR + '"\nend'
+    out = _compile_and_solidify_python(source, str_literal=True)
+
+    # the long string content appears as an identifier
+    assert _LONG_STR in out
+    if BE_USE_COMPACT_KTAB:
+        # long strings use be_kv_str_long(...) so coc registers a bclstring
+        assert "be_kv_str_long(%s)" % _LONG_STR in out
+        # must NOT be emitted as a short strong/weak reference
+        assert "be_kv_str(%s)" % _LONG_STR not in out
+        assert "be_kv_str_weak(%s)" % _LONG_STR not in out
+        # the parallel type array still tags it as a string
+        assert "BE_STRING" in out
+    else:
+        assert "be_nested_str_long(%s)" % _LONG_STR in out
+
+
+def test_long_string_closure_matches_c():
+    """Cross-validate long-string closure solidification against the C binary.
+    Proves the chosen long-string macro (be_kv_str_long / be_nested_str_long)
+    matches whatever the C build emits in the same configuration."""
+    import pytest
+    if not _c_binary_available():
+        pytest.skip("C binary not available")
+    source = 'def f()\n  return "' + _LONG_STR + '"\nend'
+    for str_literal in (True, False):
+        py_out = _compile_and_solidify_python(source, str_literal=str_literal)
+        c_out = _solidify_with_c_binary(source, str_literal=str_literal)
+        if c_out is None:
+            pytest.skip("C binary solidification failed")
+        assert (_strip_trailing_whitespace(py_out) ==
+                _strip_trailing_whitespace(c_out)), (
+            "Long-string mismatch (str_literal=%s):\n--- Python ---\n%s\n"
+            "--- C ---\n%s" % (str_literal, py_out, c_out))
+
+
+def test_long_string_shared_ktab():
+    """A long string (>=255) shared across class methods must be deduplicated
+    into a single shared-ktab entry and use the long-string macro in compact
+    mode (be_kv_str_long inside be_kval_class_C)."""
+    import pytest
+    from berry_port.berry_conf import BE_USE_COMPACT_KTAB
+
+    source = (
+        "class C\n"
+        f'  def f1() return "{_LONG_STR}" end\n'
+        f'  def f2() return "{_LONG_STR}" end\n'
+        "end"
+    )
+    try:
+        out = _compile_class_and_solidify_python(source, str_literal=True)
+    except Exception as e:
+        pytest.skip(f"Class solidification failed: {e}")
+
+    assert "compact class 'C'" in out
+    # deduplicated to a single entry
+    assert "ktab size: 1, total: 2" in out
+    # the long string appears exactly once
+    assert out.count(_LONG_STR) == 1
+    if BE_USE_COMPACT_KTAB:
+        assert "be_kval_class_C" in out
+        assert "be_ktype_class_C" in out
+        assert "be_kv_str_long(%s)" % _LONG_STR in out
+    else:
+        assert "be_ktab_class_C" in out
+        assert "be_nested_str_long(%s)" % _LONG_STR in out
 
 
 # ============================================================================
@@ -609,6 +707,7 @@ def test_known_simple_function_output():
     """Verify exact output for a trivial function against known-good output."""
     source = "def f()\n  return 42\nend"
     out = _compile_and_solidify_python(source, str_literal=True)
+    from berry_port.berry_conf import BE_USE_COMPACT_KTAB
     assert "be_local_closure(f," in out
     assert "be_nested_proto(" in out
     assert "1,                          /* nstack */" in out
@@ -619,7 +718,11 @@ def test_known_simple_function_output():
     assert "0,                          /* has sup protos */" in out
     assert "NULL,                       /* no sub protos */" in out
     assert "0,                          /* has constants */" in out
-    assert "NULL,                       /* no const */" in out
+    # compact mode emits two NULLs (kval + ktype), legacy emits one (ktab)
+    if BE_USE_COMPACT_KTAB:
+        assert "NULL, NULL,                 /* no const */" in out
+    else:
+        assert "NULL,                       /* no const */" in out
     assert "be_str_weak(f)," in out
     assert "&be_const_str_solidified," in out
     assert "( &(const binstruction[" in out

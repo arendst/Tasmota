@@ -1459,9 +1459,8 @@ def be_data_reverse(vm, index):
 #         var_setobj(iter, BE_COMPTR, NULL);
 #         return btrue;
 #     } else if (var_islist(v)) {
-#         blist *list = var_toobj(v);
 #         bvalue *iter = be_incrtop(vm);
-#         var_setobj(iter, BE_COMPTR, be_list_data(list) - 1);
+#         var_setint(iter, -1); /* index-based: start before first element */
 #         return btrue;
 #     }
 #     return bfalse;
@@ -1476,46 +1475,32 @@ def be_pushiter(vm, index):
     elif var_islist(v):
         _ensure_stack(vm, 1)
         idx = be_incrtop(vm)
-        # Store iterator as integer index: -1 means "before first element"
-        var_setobj(vm.stack[idx], BE_COMPTR, -1)
+        # index-based: start before first element. Storing the index instead of
+        # a pointer means the iterator stays valid if the list is reallocated
+        # (e.g. mutated) during iteration.
+        var_setint(vm.stack[idx], -1)
         return True
     return False
 
-# static int list_next(bvm *vm)
-def _list_next(vm):
+# static int list_next(bvm *vm, bvalue *v)
+def _list_next(vm, v):
     """Advance list iterator and push the next value. Returns 1."""
     iter_val = vm.stack[be_indexof(vm, -1)]
-    cur = var_toobj(iter_val)  # current index
-    next_idx = cur + 1
-    var_setobj(iter_val, BE_COMPTR, next_idx)
-    # Get the list from the stack position before the iterator
-    # The list is at index -2 relative to the iterator push
-    # But we need to find it — the caller passes the list index
-    # Actually, list_next in C uses the raw pointer. In Python we store
-    # the index into list.data. We need the list object.
-    # The list is at the index passed to be_iter_next, which is before the iter.
-    # We'll get it from the calling context. For now, push the value.
+    idx = var_toint(iter_val) + 1
+    lst = var_toobj(v)
+    var_setint(iter_val, idx)
     _ensure_stack(vm, 1)
     dst_idx = be_incrtop(vm)
-    dst = vm.stack[dst_idx]
-    # We need the list — it's stored at the index the user passed to be_iter_next
-    # The convention is: list at `index`, iter at top-1
-    # We'll store the list ref in a helper. Actually, let's look at how C does it:
-    # list_next just uses the iter pointer to walk through list data.
-    # In Python, we store the index. We need the list to get data[next_idx].
-    # The list is passed via the `o` parameter in be_iter_next.
-    # We'll handle this in be_iter_next directly.
-    var_setnil(dst)
+    var_setval(vm.stack[dst_idx], lst.data[idx])
     return 1
 
 # static bbool list_hasnext(bvm *vm, bvalue *v)
 def _list_hasnext(vm, v):
     """Check if list iterator has more elements."""
     iter_val = vm.stack[be_indexof(vm, -1)]
-    lst = var_toobj(v)
-    cur = var_toobj(iter_val)  # current index
-    next_idx = cur + 1
-    return 0 <= next_idx < lst.count
+    obj = var_toobj(v)
+    idx = var_toint(iter_val) + 1
+    return 0 <= idx < obj.count
 
 # static int map_next(bvm *vm, bvalue *v)
 def _map_next(vm, v):
@@ -1551,26 +1536,14 @@ def _map_hasnext(vm, v):
 # BERRY_API int be_iter_next(bvm *vm, int index)
 # {
 #     bvalue *o = be_indexof(vm, index);
-#     if (var_islist(o)) { return list_next(vm); }
+#     if (var_islist(o)) { return list_next(vm, o); }
 #     else if (var_ismap(o)) { return map_next(vm, o); }
 #     return 0;
 # }
 def be_iter_next(vm, index):
     o = vm.stack[be_indexof(vm, index)]
     if var_islist(o):
-        # Inline list_next with access to the list object
-        iter_val = vm.stack[be_indexof(vm, -1)]
-        cur = var_toobj(iter_val)
-        next_idx = cur + 1
-        var_setobj(iter_val, BE_COMPTR, next_idx)
-        lst = var_toobj(o)
-        _ensure_stack(vm, 1)
-        dst_idx = be_incrtop(vm)
-        if 0 <= next_idx < lst.count:
-            var_setval(vm.stack[dst_idx], lst.data[next_idx])
-        else:
-            var_setnil(vm.stack[dst_idx])
-        return 1
+        return _list_next(vm, o)
     elif var_ismap(o):
         return _map_next(vm, o)
     return 0

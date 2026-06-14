@@ -523,6 +523,31 @@ typedef bclass_ptr bclass_array[];
  * @brief define bproto
  *
  */
+#if BE_USE_COMPACT_KTAB
+#define be_define_local_proto(_name, _nstack, _argc, _is_const, _is_subproto, _is_upval)           \
+  static const bproto _name##_proto = {                                           \
+    NULL,                                                             /**< bgcobject *next */      \
+    BE_PROTO,                                                         /**< type BE_PROTO */        \
+    0x08,                                                             /**< marked outside of GC */ \
+    (_nstack),                                                        /**< nstack */               \
+    BE_IIF(_is_upval)(sizeof(_name##_upvals)/sizeof(bupvaldesc),0),   /**< nupvals */              \
+    (_argc),                                                          /**< argc */                 \
+    0,                                                                /**< varg */                 \
+    sizeof(_name##_code)/sizeof(uint32_t),                            /**< codesize */             \
+    BE_IIF(_is_const)(sizeof(_name##_ktype)/sizeof(bbyte),0),         /**< nconst */               \
+    BE_IIF(_is_subproto)(sizeof(_name##_subproto)/sizeof(bproto*),0), /**< proto */                \
+    NULL,                                                             /**< bgcobject *gray */      \
+    BE_IIF(_is_upval)((bupvaldesc*)&_name##_upvals,NULL),             /**< bupvaldesc *upvals */   \
+    BE_IIF(_is_const)((union bvaldata*)&_name##_kval,NULL),           /**< kval */                 \
+    BE_IIF(_is_const)((bbyte*)&_name##_ktype,NULL),                   /**< ktype */                \
+    BE_IIF(_is_subproto)((struct bproto**)&_name##_subproto,NULL),    /**< bproto **ptab */        \
+    (binstruction*) &_name##_code,                                    /**< code */                 \
+    be_local_const_str(_name##_str_name),                             /**< name */                 \
+    PROTO_SOURCE_FILE_STR(_name)                                      /**< source */               \
+    PROTO_RUNTIME_BLOCK                                               /**< */                      \
+    PROTO_VAR_INFO_BLOCK                                              /**< */                      \
+  }
+#else
 #define be_define_local_proto(_name, _nstack, _argc, _is_const, _is_subproto, _is_upval)           \
   static const bproto _name##_proto = {                                           \
     NULL,                                                             /**< bgcobject *next */      \
@@ -545,12 +570,38 @@ typedef bclass_ptr bclass_array[];
     PROTO_RUNTIME_BLOCK                                               /**< */                      \
     PROTO_VAR_INFO_BLOCK                                              /**< */                      \
   }
+#endif
 
 /**
  * @def be_nested_proto
  * @brief new version for more compact literals
  *
  */
+#if BE_USE_COMPACT_KTAB
+#define be_nested_proto(_nstack, _argc, _varg, _has_upval, _upvals, _has_subproto, _protos, _has_const, _kval, _ktype, _fname, _source, _code)     \
+  & (const bproto) {                                                              \
+    NULL,                                                       /**< bgcobject *next */      \
+    BE_PROTO,                                                   /**< type BE_PROTO */        \
+    0x08,                                                       /**< marked outside of GC */ \
+    (_nstack),                                                  /**< nstack */               \
+    BE_IIF(_has_upval)(sizeof(*_upvals)/sizeof(bupvaldesc),0),  /**< nupvals */              \
+    (_argc),                                                    /**< argc */                 \
+    (_varg),                                                    /**< varg */                 \
+    sizeof(*_code)/sizeof(binstruction),                        /**< codesize */             \
+    BE_IIF(_has_const)(sizeof(*_ktype)/sizeof(bbyte),0),        /**< nconst (from type array) */ \
+    BE_IIF(_has_subproto)(sizeof(*_protos)/sizeof(bproto*),0),  /**< proto */                \
+    NULL,                                                       /**< bgcobject *gray */      \
+    (bupvaldesc*) _upvals,                                      /**< bupvaldesc *upvals */   \
+    (union bvaldata*) _kval,                                    /**< kval */                 \
+    (bbyte*) _ktype,                                            /**< ktype */                \
+    (struct bproto**) _protos,                                  /**< bproto **ptab */        \
+    (binstruction*) _code,                                      /**< code */                 \
+    ((bstring*) _fname),                                        /**< name */                 \
+    PROTO_SOURCE_FILE(_source)                                  /**< source */               \
+    PROTO_RUNTIME_BLOCK                                         /**< */                      \
+    PROTO_VAR_INFO_BLOCK                                        /**< */                      \
+  }
+#else
 #define be_nested_proto(_nstack, _argc, _varg, _has_upval, _upvals, _has_subproto, _protos, _has_const, _ktab, _fname, _source, _code)     \
   & (const bproto) {                                                              \
     NULL,                                                       /**< bgcobject *next */      \
@@ -573,6 +624,7 @@ typedef bclass_ptr bclass_array[];
     PROTO_RUNTIME_BLOCK                                         /**< */                      \
     PROTO_VAR_INFO_BLOCK                                        /**< */                      \
   }
+#endif
 
 /**
  * @def be_define_local_closure

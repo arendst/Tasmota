@@ -25,7 +25,7 @@ class builder:
 
         self.macro = macro_table()
         for path in self.config:
-            self.macro.scan_file(path)
+            self.macro.scan_file(path)                
 
         for d in self.input:
             self.scandir(d)
