@@ -218,7 +218,7 @@ extern "C" {
       const char* hostname = be_tostring(vm, 1);
       const char* ip_text = nullptr;
       for (uint16_t i = 2; i <= top; i++) {
-        const char* ip_text = be_tostring(vm, i);
+        ip_text = be_tostring(vm, i);
         if (ip_text == nullptr || ip_text[0] == 0) { continue; }    // ignore empty string
         IPAddress ip;
         if (!ip.fromString(ip_text)) { err = -1; break; }

@@ -316,7 +316,7 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_zigbee_zcl_attribute_struct = {
     sizeof(Z_attribute),  /* size in bytes */
-    11,  /* number of elements */
+    12,  /* number of elements, elements are in sorted order */
     nullptr,
     (const be_ctypes_structure_item_t[12]) {
       { "_attr_id", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u16, 0 },

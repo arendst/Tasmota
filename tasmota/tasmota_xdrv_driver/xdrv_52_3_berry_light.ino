@@ -208,7 +208,6 @@ extern "C" {
             int32_t list_size = get_list_size(vm);
             // AddLog(LOG_LEVEL_INFO, "Instance is list size = %d", list_size);
 
-            uint8_t channels[LST_MAX] = {};     // initialized with all zeroes
             if (list_size > LST_MAX) { list_size = LST_MAX; }   // no more than 5 channels, no need to test for positive, any negative will be discarded by loop
             for (uint32_t i = 0; i < list_size; i++) {
               // be_dumpstack(vm);
