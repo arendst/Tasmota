@@ -86,7 +86,16 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
             }
         }
         uint32_t chars_to_append = (cr_pos >= 0) ? cr_pos - idx : length - idx;     // note cr_pos < length
-        snprintf(log_berry_buffer, BERRY_LOGSZ, "%s%.*s", log_berry_buffer, chars_to_append, &buffer[idx]);   // append at most `length` chars
+        // Append to log_berry_buffer. We must not pass log_berry_buffer as both the
+        // destination and a "%s" source of snprintf (that aliasing is undefined behavior).
+        // On ESP32 there is no separate PROGMEM address space, so a plain memcpy is safe.
+        size_t cur_len = strlen(log_berry_buffer);
+        if (cur_len < BERRY_LOGSZ - 1) {
+            size_t space = BERRY_LOGSZ - 1 - cur_len;
+            size_t to_copy = (chars_to_append < space) ? chars_to_append : space;
+            memcpy(log_berry_buffer + cur_len, &buffer[idx], to_copy);
+            log_berry_buffer[cur_len + to_copy] = 0;
+        }
         if (cr_pos >= 0) {
             // flush
             berry_log(log_berry_buffer);
@@ -295,7 +304,6 @@ void* be_fopen(const char *filename, const char *modes)
         File f = zip_ufsp.open(fname2, modes);       // returns an object, not a pointer
         if (f) {
             File * f_ptr = new File(f);                 // copy to dynamic object
-            *f_ptr = f;                                 // TODO is this necessary?
             return f_ptr;
         }
     }
