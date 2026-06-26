@@ -48,8 +48,9 @@ extern "C" {
 #endif
 #define BE_INT_FORMAT           "%" BE_INT_FMTLEN "d" /**< BE_INT_FORMAT */
 
-typedef uint8_t bbyte;   /**< bbyte */
-typedef BE_INTEGER bint; /**< bint */
+typedef uint8_t bbyte;            /**< bbyte */
+typedef BE_INTEGER bint;          /**< bint */
+typedef unsigned BE_INTEGER buint; /**< buint (unsigned bint, for well-defined wrap-around arithmetic) */
 
 #if BE_USE_SINGLE_FLOAT != 0
   typedef float                 breal; /**< breal */

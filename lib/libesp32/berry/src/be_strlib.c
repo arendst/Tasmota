@@ -387,7 +387,7 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
         /* hex literal */
         str += 2;       /* skip 0x or 0X */
         while ((c = be_char2hex(*str++)) >= 0) {
-            sum = sum * 16 + c;
+            sum = (bint)((buint)sum * 16 + (buint)c);
         }
         if (endstr) {
             *endstr = str - 1;
