@@ -381,3 +381,307 @@ assert_error(def () b.addfloat(true) end, 'type_error')
 assert_error(def () b.addfloat(nil) end, 'type_error')
 assert_error(def () b.addfloat('foo') end, 'type_error')
 assert_error(def () b.addfloat() end, 'type_error')
+
+#- ------------------------------------------------------------ -#
+#- getbits / setbits                                            -#
+#- ------------------------------------------------------------ -#
+
+#- getbits: basic reads within a single byte (LSB = bit 0) -#
+b = bytes("AF000000")
+assert(b.getbits(0, 4) == 0x0F)
+assert(b.getbits(4, 4) == 0x0A)
+assert(b.getbits(0, 8) == 0xAF)
+assert(b.getbits(0, 1) == 1)
+assert(b.getbits(7, 1) == 1)
+assert(b.getbits(4, 1) == 0)        #- 0xAF = 1010_1111, bit4 = 0 -#
+assert(b.getbits(5, 1) == 1)
+
+#- getbits: reading zero bytes returns 0 -#
+b = bytes("00000000")
+assert(b.getbits(0, 8) == 0)
+assert(b.getbits(0, 32) == 0)
+
+#- getbits: spanning byte boundaries (byte0 is least significant) -#
+b = bytes("3412")            #- bytes[0]=0x34, bytes[1]=0x12 -#
+assert(b.getbits(0, 16) == 0x1234)
+assert(b.getbits(0, 4) == 0x4)      #- low nibble of byte0 -#
+assert(b.getbits(4, 8) == 0x23)     #- high nibble of byte0 + low nibble of byte1 -#
+assert(b.getbits(8, 8) == 0x12)     #- byte1 -#
+assert(b.getbits(12, 4) == 0x1)     #- high nibble of byte1 -#
+
+#- getbits: full 32-bit read -#
+b = bytes("78563412")
+assert(b.getbits(0, 32) == 0x12345678)
+
+#- getbits: reading past the end of the buffer yields zero bits -#
+b = bytes("FF")
+assert(b.getbits(0, 8) == 0xFF)
+assert(b.getbits(0, 16) == 0x00FF)  #- second byte is out of range -> 0 -#
+assert(b.getbits(8, 8) == 0)
+
+#- getbits: length validation -#
+assert(bytes("00").getbits(0, 0) == nil)        #- zero length returns nil (like get()) -#
+assert_error(def () bytes("00").getbits(0, 33) end, 'value_error')
+assert_error(def () bytes("00").getbits(0, -33) end, 'value_error')
+
+#- getbits: argument type validation -#
+assert_error(def () bytes("00").getbits() end, 'type_error')
+assert_error(def () bytes("00").getbits(0) end, 'type_error')
+assert_error(def () bytes("00").getbits('a', 4) end, 'type_error')
+assert_error(def () bytes("00").getbits(0, 'a') end, 'type_error')
+assert_error(def () bytes("00").getbits(0.5, 4) end, 'type_error')
+
+#- setbits: basic writes within a single byte -#
+b = bytes("00000000")
+assert(b.setbits(0, 4, 0x0F) == bytes("0F000000"))
+assert(b.setbits(4, 4, 0x0A) == bytes("AF000000"))
+
+#- setbits: overwriting existing bits clears the old value -#
+b = bytes("FF000000")
+b.setbits(0, 4, 0x0)
+assert(b == bytes("F0000000"))
+b.setbits(4, 4, 0x0)
+assert(b == bytes("00000000"))
+
+#- setbits: spanning byte boundaries (little-endian byte order) -#
+b = bytes("00000000")
+b.setbits(4, 8, 0xAB)
+assert(b == bytes("B00A0000"))      #- low nibble in byte0, high nibble in byte1 -#
+assert(b.getbits(4, 8) == 0xAB)
+
+b = bytes("00000000")
+b.setbits(0, 16, 0x1234)
+assert(b == bytes("34120000"))
+
+#- setbits: full 32-bit write -#
+b = bytes("00000000")
+b.setbits(0, 32, 0x12345678)
+assert(b == bytes("78563412"))
+assert(b.getbits(0, 32) == 0x12345678)
+
+#- setbits: only the targeted bits are modified, neighbours are preserved -#
+b = bytes("FFFFFFFF")
+b.setbits(4, 8, 0x00)
+assert(b == bytes("0FF0FFFF"))
+assert(b.getbits(0, 4) == 0x0F)     #- low nibble preserved -#
+assert(b.getbits(4, 8) == 0x00)     #- cleared field -#
+
+#- setbits: value larger than len_bits is masked to len_bits -#
+b = bytes("00")
+b.setbits(0, 4, 0xFF)               #- only low 4 bits should be written -#
+assert(b == bytes("0F"))
+
+#- setbits: writing zero bits leaves the buffer unchanged and returns self -#
+b = bytes("1234")
+assert(b.setbits(0, 0, 0xFF) == bytes("1234"))
+
+#- setbits: accepts bool values (converted to int) -#
+b = bytes("00")
+b.setbits(0, 1, true)
+assert(b.getbits(0, 1) == 1)
+b.setbits(1, 1, false)
+assert(b.getbits(1, 1) == 0)
+
+#- setbits: returns self so calls can be chained -#
+b = bytes("00000000")
+assert(b.setbits(0, 4, 1).setbits(4, 4, 2) == bytes("21000000"))
+
+#- setbits / getbits round-trip across a range of offsets and lengths -#
+b = bytes("0000000000")
+b.setbits(3, 12, 0xABC)
+assert(b.getbits(3, 12) == 0xABC)
+b.setbits(15, 17, 0x1FFFF)
+assert(b.getbits(15, 17) == 0x1FFFF)
+assert(b.getbits(3, 12) == 0xABC)   #- previous field untouched -#
+
+#- setbits: length validation -#
+assert(bytes("FF").setbits(0, 0, 0) == bytes("FF"))   #- zero length is a no-op -#
+assert_error(def () bytes("00").setbits(0, 33, 0) end, 'value_error')
+assert_error(def () bytes("00").setbits(0, -33, 0) end, 'value_error')
+
+#- setbits: argument type validation -#
+assert_error(def () bytes("00").setbits() end, 'type_error')
+assert_error(def () bytes("00").setbits(0) end, 'type_error')
+assert_error(def () bytes("00").setbits(0, 4) end, 'type_error')
+assert_error(def () bytes("00").setbits('a', 4, 0) end, 'type_error')
+assert_error(def () bytes("00").setbits(0, 'a', 0) end, 'type_error')
+assert_error(def () bytes("00").setbits(0, 4, 'a') end, 'type_error')
+assert_error(def () bytes("00").setbits(0, 4, nil) end, 'type_error')
+
+
+#- ------------------------------------------------------------ -#
+#- getbits / setbits — Big Endian support (PR berry-lang#537)   -#
+#- ------------------------------------------------------------ -#
+
+#- Single byte - endiannes does't matter -#
+def getbit_and_setbit_roundtrip(byte, offset, length, val)
+    # check for expected value within a predefined byte
+    assert(byte.getbits(offset, length) == val)
+
+    # set the value at a position, roundtrip and should return same value
+    assert(bytes(-2).setbits(offset, length, val).getbits(offset, length) == val)
+end
+
+b = bytes("ABCD") # bytes constructor uses big endian, btw
+assert(b.get(0) == 0xAB)    
+assert(b.get(1) == 0xCD)
+assert(b.get(0,-2) == 0xABCD)
+# little endian
+v=0x3;    o=0;   l= 2;   getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xB;    o=0;   l= 4;   getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xA;    o=4;   l= 4;   getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xAB;   o=0;   l= 8;   getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xDA;   o=4;   l= 8;   getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xDAB;  o=0;   l= 12;  getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xC;    o=12;  l= 4;   getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xCDAB; o=0;   l= 16;  getbit_and_setbit_roundtrip(b, o, l, v)
+# big endian
+v=0xB;    o=4;   l= -4;  getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xA;    o=0;   l= -4;  getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xAB;   o=0;   l= -8;  getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xBC;   o=4;   l= -8;  getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xABC;  o=0;   l= -12; getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xD;    o=12;  l= -4;  getbit_and_setbit_roundtrip(b, o, l, v)
+v=0xABCD; o=0;   l= -16; getbit_and_setbit_roundtrip(b, o, l, v)
+
+
+#- LE: read from known pattern -#
+b = bytes("A55A")
+assert(b.getbits(0, 16) == 0x5AA5)
+
+#- BE: read from known pattern -#
+b = bytes("A55A")
+assert(b.getbits(0, -16) == 0xA55A)
+
+
+#- setbit - input value read/write -#
+# we always truncate input value according to big endian - so in both cases we will see alteration of A and B nibbles in the output
+b = bytes(-3)
+b.setbits(0, 8, 0xDEADAB)
+assert(b == bytes("AB0000"))
+# endiannes doesn't matter for a single contiguous byte:
+b = bytes(-3)
+b.setbits(0, -8, 0xBEEFAB)
+assert(b == bytes("AB0000"))
+# endiannes and offset only influences the output
+b = bytes(-3)
+b.setbits(4, 8, 0xBEEFAB)
+assert(b == bytes("B00A00")) # write down bytes vertically if it doesn't make sense ;)
+b = bytes(-3)
+b.setbits(4, -8, 0xBEEFAB)
+assert(b == bytes("0AB000"))
+
+#- setbit - input longer than length - partial byte-#
+b = bytes("0000")
+b.setbits(0, 4, 0xFFFF)
+assert(b == bytes("0F00"))
+assert(b.getbits(0, 4) == 0xF)
+
+
+#- LE: single-bit set -#
+b = bytes("5A")
+b.setbits(0, 1, 1)
+assert(b == bytes("5B"))        #- LSB 0→1 -#
+b = bytes("5A")
+b.setbits(7, 1, 1)
+assert(b == bytes("DA"))        #- MSB 0→1 -#
+b.setbits(7, 1, 0)
+assert(b == bytes("5A"))        #- MSB 1→0 -#
+
+#- BE: single-bit -#
+b = bytes("5A")
+b.setbits(0, -1, 1)
+assert(b == bytes("DA"))        # MSB-0 bit 0 (phys 7) 0→1
+b = bytes("5A")
+b.setbits(7, -1, 1)
+assert(b == bytes("5B"))        # MSB-0 bit 7 (phys 0) 0→1
+b.setbits(7, -1, 0)
+assert(b == bytes("5A"))
+
+
+#- LE: partial middle of byte -#
+b = bytes("00")
+b.setbits(2, 3, 5)              #- 5 = 101b at bits 2,3,4 -#
+assert(b == bytes("14"))        #- 0001_0100 -#
+assert(b.getbits(2, 3) == 5)
+
+b = bytes("FF")
+b.setbits(1, 2, 0)
+assert(b == bytes("F9"))        #- clear bits 1,2 → 1111_1001 -#
+assert(b.getbits(1, 2) == 0)
+
+#- BE: partial middle of byte -#
+b = bytes("00")
+b.setbits(1, -3, 5)
+assert(b == bytes("50"))        # 5 = 101b at bits 1,2,3 → phys 6,5,4 = 0101_0000
+assert(b.getbits(1, -3) == 5)
+
+b = bytes("FF")
+b.setbits(1, -2, 0)
+assert(b == bytes("9F"))        # clear bits 1,2 (phys 6,5) → 1001_1111
+assert(b.getbits(1, -2) == 0)
+
+
+#- LE: full byte -#
+b = bytes("00")
+b.setbits(0, 8, 0x5A)
+assert(b == bytes("5A"))
+b.setbits(0, 8, 0xA5)
+assert(b == bytes("A5"))
+
+#- BE: full byte -#
+b = bytes("00")
+b.setbits(0, -8, 0x5A)
+assert(b == bytes("5A"))
+b.setbits(0, -8, 0xA5)
+assert(b == bytes("A5"))
+
+
+#- LE: multi-byte -#
+b = bytes("0000")
+b.setbits(0, 16, 0xA55A)
+assert(b == bytes("5AA5"))      #- LE wire order: LSB first -#
+b = bytes("0000")
+b.setbits(8, 8, 0x5A)
+assert(b == bytes("005A"))
+
+#- BE multi-byte = MSB-first byte order (opposite of LE) -#
+b = bytes("0000")
+b.setbits(0, -16, 0xA55A)
+assert(b == bytes("A55A"))      # BE wire order: MSB first 
+b = bytes("0000")
+b.setbits(8, -8, 0x5A)
+assert(b == bytes("005A"))
+
+
+#- LE: cross-byte partial  -#
+b = bytes("0000")
+b.setbits(4, 10, 0xFFF)
+assert(b == bytes("F03F"))      #- byte0 bits 4-7 = 0xF, byte1 bits 0-5 = 0x3F -#
+assert(b.getbits(4, 10) == 0x3FF)
+
+
+#- BE: cross-byte partial -#
+b = bytes("0000")
+b.setbits(4, -10, 0xFFF)
+assert(b == bytes("0FFC"))      # byte0 bits 4-7 = 0x0F, byte1 bits 0-5 = 0xFC
+assert(b.getbits(4, -10) == 0x3FF)
+
+#- mixing LE/BE -#
+b = bytes(-3)
+b.setbits(0, -12, 0xABC)
+b.setbits(12, 12, 0xDEF) # F corrupts C nibble, one nibble empty
+assert(b == bytes("ABF0DE")) 
+b = bytes(-4) # let's try again
+b.setbits(0, -12, 0xABC)
+b.setbits(16, 12, 0xDEF) # we need to start in byte 2
+assert(b == bytes("ABC0EF0D"))
+
+
+# length check
+assert(bytes("FF").getbits(0, 0) == nil)
+assert(bytes("FF").setbits(0, 0, 0) == bytes("FF"))
+assert_error(def () bytes("00").getbits(0, 33) end, 'value_error')
+assert_error(def () bytes("00").setbits(0, 33, 0) end, 'value_error')
+assert_error(def () bytes("00").getbits(0, -33) end, 'value_error')
+assert_error(def () bytes("00").setbits(0, -33, 0) end, 'value_error')
