@@ -42,7 +42,7 @@ extern void ls_set_power(void* l, int32_t pow); BE_FUNC_CTYPE_DECLARE(ls_set_pow
 extern int32_t ls_reachable(void* p);   BE_VAR_CTYPE_DECLARE(ls_reachable, "b");
 extern void ls_set_reachable(void* l, int32_t pow); BE_FUNC_CTYPE_DECLARE(ls_set_reachable, "", ".b");
 
-extern void ls_signal_change(void) {} BE_FUNC_CTYPE_DECLARE(ls_signal_change, "", ".");
+extern void ls_signal_change(void* l) {} BE_FUNC_CTYPE_DECLARE(ls_signal_change, "", ".");
 
 extern int32_t ls_gamma8(int32_t val);      BE_FUNC_CTYPE_DECLARE(ls_gamma8, "i", "i")
 extern int32_t ls_gamma10(int32_t val);     BE_FUNC_CTYPE_DECLARE(ls_gamma10, "i", "i")

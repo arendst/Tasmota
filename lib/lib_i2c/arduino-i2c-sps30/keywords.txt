@@ -1,0 +1,41 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2cSps30	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+wakeUpSequence	KEYWORD2
+startMeasurement	KEYWORD2
+stopMeasurement	KEYWORD2
+readDataReadyFlag	KEYWORD2
+readMeasurementValuesUint16	KEYWORD2
+readMeasurementValuesFloat	KEYWORD2
+sleep	KEYWORD2
+wakeUp	KEYWORD2
+startFanCleaning	KEYWORD2
+readAutoCleaningInterval	KEYWORD2
+writeAutoCleaningInterval	KEYWORD2
+readProductType	KEYWORD2
+readSerialNumber	KEYWORD2
+readFirmwareVersion	KEYWORD2
+readDeviceStatusRegister	KEYWORD2
+clearDeviceStatusRegister	KEYWORD2
+deviceReset	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sensor	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

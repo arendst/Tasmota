@@ -1,5 +1,5 @@
 /*
- * xdrv_52_3_berry_webserver.ino — Berry scripting language, webserver/webclient module
+ * xdrv_52_3_berry_webclient.ino — Berry scripting language, webclient/TCP client module
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -423,7 +423,7 @@ extern "C" {
   int32_t wc_addheader(struct bvm *vm);
   int32_t wc_addheader(struct bvm *vm) {
     int32_t argc = be_top(vm);
-    if (argc >= 3 && (be_isstring(vm, 2) || be_isstring(vm, 2))) {
+    if (argc >= 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {
 #ifdef USE_BERRY_WEBCLIENT_ASYNC
       AsyncHttpClientLight * cl = wc_getclient(vm);
 #else

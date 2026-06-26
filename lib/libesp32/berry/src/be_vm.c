@@ -30,8 +30,21 @@
     be_raise(vm, except, be_pushfstring(vm, __VA_ARGS__))
 
 #define RA()   (reg + IGET_RA(ins))  /* Get value of register A */
+#if BE_USE_COMPACT_KTAB
+/* With a compact constant table there is no `bvalue[]` to point into, so a
+ * constant operand is materialized into a per-operand scratch `bvalue`
+ * (`_krkb` for B, `_krkc` for C) and its address is returned. Register
+ * operands still return a direct pointer into the register file. */
+#define RK_CONST(_idx, _scr) \
+    ((_scr).v = kval[_idx], (_scr).type = ktype[_idx], &(_scr))
+#define RKB()  (isKB(ins) ? RK_CONST(KR2idx(IGET_RKB(ins)), _krkb) \
+                          : reg + KR2idx(IGET_RKB(ins)))
+#define RKC()  (isKC(ins) ? RK_CONST(KR2idx(IGET_RKC(ins)), _krkc) \
+                          : reg + KR2idx(IGET_RKC(ins)))
+#else
 #define RKB()  ((isKB(ins) ? ktab : reg) + KR2idx(IGET_RKB(ins)))  /* Get value of register or constant B */
 #define RKC()  ((isKC(ins) ? ktab : reg) + KR2idx(IGET_RKC(ins)))  /* Get value of register or constant C */
+#endif
 
 #define var2cl(_v)          cast(bclosure*, var_toobj(_v))  /* cast var to closure */
 #define var2real(_v)        (var_isreal(_v) ? (_v)->v.r : (breal)(_v)->v.i)  /* get var as real or convert to real if integer */
@@ -594,13 +607,25 @@ BERRY_API void be_vm_delete(bvm *vm)
 static void vm_exec(bvm *vm)
 {
     bclosure *clos;
-    bvalue *ktab, *reg;
+    bvalue *reg;
+#if BE_USE_COMPACT_KTAB
+    const union bvaldata *kval; /* current constant payload words */
+    const bbyte *ktype;         /* current constant type bytes */
+    bvalue _krkb, _krkc;        /* scratch for materialized constant operands B/C */
+#else
+    bvalue *ktab;
+#endif
     binstruction ins;
     vm->cf->status |= BASE_FRAME;
 newframe: /* a new call frame */
     be_assert(var_isclosure(vm->cf->func));
     clos = var_toobj(vm->cf->func);  /* `clos` is the current function/closure */
+#if BE_USE_COMPACT_KTAB
+    kval = clos->proto->kval;  /* current constant payload words */
+    ktype = clos->proto->ktype;  /* current constant type bytes */
+#else
     ktab = clos->proto->ktab;  /* `ktab` is the current constant table */
+#endif
     reg = vm->reg;  /* `reg` is the current stack base for the callframe */
 #if BE_USE_PERF_COUNTERS
     vm->counter_enter++;
@@ -625,7 +650,13 @@ newframe: /* a new call frame */
         }
         opcase(LDCONST): {
             bvalue *dst = RA();
+#if BE_USE_COMPACT_KTAB
+            int _kidx = IGET_Bx(ins);
+            dst->v = kval[_kidx];
+            dst->type = ktype[_kidx];
+#else
             *dst = ktab[IGET_Bx(ins)];
+#endif
             dispatch();
         }
         opcase(GETGBL): {
@@ -979,7 +1010,11 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(CLASS): {
+#if BE_USE_COMPACT_KTAB
+            bclass *c = (bclass*)kval[IGET_Bx(ins)].p;
+#else
             bclass *c = var_toobj(ktab + IGET_Bx(ins));
+#endif
             be_class_upvalue_init(vm, c);
             dispatch();
         }

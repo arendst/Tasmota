@@ -11,6 +11,7 @@
 #include "be_string.h"
 #include "be_class.h"
 #include "be_func.h"
+#include "be_gc.h"
 #include "be_exec.h"
 #include "be_list.h"
 #include "be_map.h"
@@ -207,17 +208,19 @@ static void save_bytecode(bvm *vm, void *fp, bproto *proto)
 
 static void save_constants(bvm *vm, void *fp, bproto *proto)
 {
-    bvalue *v = proto->ktab, *end;
+    int i;
     save_long(fp, proto->nconst); /* constants count */
-    for (end = v + proto->nconst; v < end; ++v) {
-        if ((v == proto->ktab) && (proto->varg & BE_VA_STATICMETHOD) && (v->type == BE_CLASS)) {
+    for (i = 0; i < proto->nconst; ++i) {
+        bvalue v;
+        proto_const_get(proto, i, v);
+        if ((i == 0) && (proto->varg & BE_VA_STATICMETHOD) && (v.type == BE_CLASS)) {
             /* implicit `_class` parameter, output nil */
             bvalue v_nil;
             v_nil.v.i = 0;
             v_nil.type = BE_NIL;
             save_value(vm, fp, &v_nil);
         } else {
-            save_value(vm, fp, v);
+            save_value(vm, fp, &v);
         }
     }
 }
@@ -473,11 +476,19 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
             bproto *proto = (bproto*)var_toobj(value);
             bbool is_method = proto->varg & BE_VA_METHOD;
             if (!is_method) {
+#if BE_USE_COMPACT_KTAB
+                if ((proto->nconst > 0) && (proto->ktype[0] == BE_NIL)) {
+                    /* The first argument is nil so we replace with the class as implicit '_class' */
+                    proto->ktype[0] = BE_CLASS;
+                    proto->kval[0].p = c;
+                }
+#else
                 if ((proto->nconst > 0) && (proto->ktab->type == BE_NIL)) {
                     /* The first argument is nil so we replace with the class as implicit '_class' */
                     proto->ktab->type = BE_CLASS;
                     proto->ktab->v.p = c;
                 }
+#endif
             }
             be_class_method_bind(vm, c, name, var_toobj(value), !is_method);
         } else {
@@ -547,6 +558,34 @@ static void load_constant(bvm *vm, void *fp, bproto *proto, int version)
 {
     int size = load_count(vm, fp, "constant"); /* nconst */
     if (size) {
+#if BE_USE_COMPACT_KTAB
+        /* Load into a temporary bvalue[] and only build the compact arrays
+         * once everything is loaded. The temporary array is published to the
+         * proto using the in-progress sentinel (`ktype == NULL` means "`kval`
+         * is really a `bvalue[]` of `nconst` entries", see be_gc.c), so the
+         * partially-loaded constants stay GC-reachable through the proto.
+         * This matters because loading a single constant can allocate and
+         * trigger a GC: e.g. a class constant loads its methods, and the class
+         * (already stored in the array) must not be collected while its method
+         * protos are being read. Loading into a non-reachable C local instead
+         * would let the GC free that class -> heap-use-after-free. */
+        bvalue *v, *end, *tmp = be_malloc(vm, sizeof(bvalue) * size);
+        for (v = tmp, end = tmp + size; v < end; ++v) {
+            v->v.i = 0;
+            var_setnil(v);
+        }
+        proto->kval = (union bvaldata*)tmp; /* sentinel: ktype == NULL */
+        proto->ktype = NULL;
+        proto->nconst = (int16_t)size;
+        for (v = tmp, end = tmp + size; v < end; ++v) {
+            load_value(vm, fp, v, version);
+        }
+        /* build the compact arrays from the fully-loaded temporary; the
+         * temporary stays reachable (sentinel) across the allocation in
+         * be_proto_set_ktab, then is freed */
+        be_proto_set_ktab(vm, proto, tmp, size);
+        be_free(vm, tmp, sizeof(bvalue) * size);
+#else
         bvalue *end, *v = be_malloc(vm, sizeof(bvalue) * size);
         memset(v, 0, sizeof(bvalue) * size);
         proto->ktab = v;
@@ -554,6 +593,7 @@ static void load_constant(bvm *vm, void *fp, bproto *proto, int version)
         for (end = v + size; v < end; ++v) {
             load_value(vm, fp, v, version);
         }
+#endif
     }
 }
 
@@ -592,8 +632,16 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
     /* if empty, it's a static member so don't allocate an actual proto */
     bstring *name = load_string(vm, fp);
     if (str_len(name)) {
+        /* `name` is only held in a C local until it is attached to the proto
+         * below. be_newproto() allocates and may trigger a GC, which would
+         * otherwise collect this not-yet-referenced string and leave a dangling
+         * proto->name (its freed slot then gets reused, corrupting the proto).
+         * Pin it across the allocation, then release once reachable via the
+         * proto. */
+        be_gc_fix(vm, gc_object(name));
         *proto = be_newproto(vm);
         (*proto)->name = name;
+        be_gc_unfix(vm, gc_object(name)); /* now reachable through the proto */
 #if BE_DEBUG_SOURCE_FILE
         (*proto)->source = load_string(vm, fp);
 #else

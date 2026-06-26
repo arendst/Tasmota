@@ -1102,7 +1102,7 @@ extern "C" {
     va_start(arg, berry_buf);
     uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
     va_end(arg);
-    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    if (len+3 > LOGSZ) { strlcat(log_data, "...", sizeof(log_data)); }  // Actual data is more
     TasConsole.printf(log_data);
 #ifdef USE_SERIAL_BRIDGE
     SerialBridgeWrite(log_data, strlen(log_data));
@@ -1120,7 +1120,7 @@ extern "C" {
     va_start(arg, berry_buf);
     uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
     va_end(arg);
-    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    if (len+3 > LOGSZ) { strlcat(log_data, "...", sizeof(log_data)); }  // Actual data is more
     berry_log(log_data);
   }
 

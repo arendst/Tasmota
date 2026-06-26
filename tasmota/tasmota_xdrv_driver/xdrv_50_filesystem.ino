@@ -1085,7 +1085,7 @@ void UFSList(void) {
   // UfsList2      - List all files and directories in root directory
   // UfsList /dir1 - List all non-dot files and directories in directory dir1
   bool hide_dot = (XdrvMailbox.index != 2);
-  strcpy(ufs_path, "/");
+  strlcpy(ufs_path, "/", sizeof(ufs_path));
   if (XdrvMailbox.data_len > 0) {
     strlcpy(ufs_path, XdrvMailbox.data, sizeof(ufs_path));
   }
@@ -1412,7 +1412,7 @@ void UfsDirectory(void) {
   uint8_t depth = 0;
   uint8_t isdir = 0;
 
-  strcpy(ufs_path, "/");
+  strlcpy(ufs_path, "/", sizeof(ufs_path));
 
   if (Webserver->hasArg(F("dir"))) {
     String stmp = Webserver->arg(F("dir"));
@@ -1447,7 +1447,7 @@ void UfsDirectory(void) {
     char *cp = (char*)stmp.c_str();
     if (UfsDownloadFile(cp)) {
       // is directory
-      strcpy(ufs_path, cp);
+      strlcpy(ufs_path, cp, sizeof(ufs_path));
       isdir = 1;
     } else {
       return;
@@ -1578,9 +1578,9 @@ void UfsListDir(char *path, uint8_t depth) {
 #ifdef UFILESYS_RECURSEFOLDERS_GUI
           uint8_t plen = strlen(path);
           if (plen > 1) {
-            strcat(path, "/");
+            strlcat(path, "/", UFS_FILENAME_SIZE);
           }
-          strcat(path, ep);
+          strlcat(path, ep, UFS_FILENAME_SIZE);
           UfsListDir(path, depth + 4);
           path[plen] = 0;
 #endif          
@@ -1684,7 +1684,7 @@ uint8_t UfsDownloadFile(char *file) {
 
   UfsData.download_busy = true;
   char *path = (char*)malloc(128);
-  strcpy(path,file);
+  strlcpy(path, file, 128);
   BaseType_t ret = xTaskCreatePinnedToCore(download_task, "DT", 6000, (void*)path, 3, nullptr, 1);
   if (ret != pdPASS)
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "Download task failed with %d"), ret);
@@ -1856,14 +1856,14 @@ void UfsEditorUpload(void) {
   // recursively create folder(s)
   char tmp[UFS_FILENAME_SIZE];
   char folder[UFS_FILENAME_SIZE] = "";
-  strcpy(tmp, fname);
+  strlcpy(tmp, fname, sizeof(tmp));
   // zap file name off the end
   folderOnly(tmp);
   char *tf = strtok(tmp, "/");
   while(tf){
     if (*tf){
-      strcat(folder, "/");
-      strcat(folder, tf);
+      strlcat(folder, "/", sizeof(folder));
+      strlcat(folder, tf, sizeof(folder));
     }
     // we don;t care if it fails - it may already exist.
     dfsp->mkdir(folder);
@@ -1892,7 +1892,7 @@ void UfsEditorUpload(void) {
   // zap file name off the end
   folderOnly(fname);
   char t[20+UFS_FILENAME_SIZE] = "/ufsu?download=";
-  strcat(t, fname);
+  strlcat(t, fname, sizeof(t));
   Webserver->sendHeader(F("Location"), t);
   Webserver->send(303);
 }

@@ -60,6 +60,7 @@ public:
   void begin();
   void setClock(uint32_t);
   void setClockStretchLimit(uint32_t);
+  uint8_t status();
   void beginTransmission(uint8_t);
   void beginTransmission(int);
   uint8_t endTransmission(void);

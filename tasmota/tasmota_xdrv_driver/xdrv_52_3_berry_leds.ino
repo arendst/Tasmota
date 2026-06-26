@@ -343,6 +343,13 @@ extern "C" {
       uint8_t * pixels = (uint8_t*) be_tocomptr(vm, 2);
       // arg3: pixels_count:int
       int32_t pixels_count = be_toint(vm, 3);
+      // sanity check: each pixel reads one uint32_t (4 bytes 0xAARRGGBB) from `buffer`.
+      // Guard against a negative count (would wrap in the unsigned loop below) and clamp
+      // to the source buffer size to avoid out-of-bounds reads.
+      if (pixels_count < 0) { pixels_count = 0; }
+      if ((size_t)pixels_count * 4 > buffer_length) {
+        pixels_count = buffer_length / 4;
+      }
       // arg4: pixel_size:int
       size_t pixel_size = 3;    // 0xRRGGBB
       if (top >= 4 && be_isint(vm, 4)) {

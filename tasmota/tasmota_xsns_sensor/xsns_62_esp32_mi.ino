@@ -1112,8 +1112,7 @@ void MI32loadCfg(){
           _val = _device[PSTR("name")];
           if (_val) {
             char *_name = (char *)_val.getStr();
-            MIBLEsensors[_numberOfDevices].name = new char[strlen(_name) + 1];
-            strcpy(MIBLEsensors[_numberOfDevices].name, _name);
+            MIBLEsensors[_numberOfDevices].name = strdup(_name);
             AddLog(LOG_LEVEL_INFO,PSTR("M32: found name: %s"), _name);
           }
           _val = _device[PSTR("feat")];
@@ -2396,14 +2395,13 @@ void CmndMi32Name(void) {
     return;
   }
   if(MIBLEsensors[XdrvMailbox.index].name != nullptr){
-    delete []MIBLEsensors[XdrvMailbox.index].name;
+    free(MIBLEsensors[XdrvMailbox.index].name);
   }
   if(XdrvMailbox.data_len==0){
     MIBLEsensors[XdrvMailbox.index].name = nullptr;
   }
   else{
-    MIBLEsensors[XdrvMailbox.index].name = new char[XdrvMailbox.data_len + 1];
-    strcpy(MIBLEsensors[XdrvMailbox.index].name,XdrvMailbox.data);
+    MIBLEsensors[XdrvMailbox.index].name = strdup(XdrvMailbox.data);
   }
   ResponseCmndChar((const char*)MI32getDeviceName(XdrvMailbox.index));
 }

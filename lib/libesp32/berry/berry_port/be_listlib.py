@@ -639,15 +639,15 @@ def m_clear(vm):
 #      * directly without using by the stack. */
 #     bntvclos *func = var_toobj(vm->cf->func);
 #     bvalue *uv0 = be_ntvclos_upval(func, 0)->value; /* list value */
-#     bvalue *uv1 = be_ntvclos_upval(func, 1)->value; /* iter value */
-#     bvalue *next = cast(bvalue*, var_toobj(uv1)) + 1;
+#     bvalue *uv1 = be_ntvclos_upval(func, 1)->value; /* iter value (index) */
+#     bint idx = var_toint(uv1) + 1;
 #     blist *list = var_toobj(uv0);
-#     if (next >= be_list_end(list)) {
+#     if (idx >= be_list_count(list)) {
 #         be_stop_iteration(vm);
 #     }
-#     var_toobj(uv1) = next; /* set upvale[1] (iter value) */
+#     var_setint(uv1, idx); /* set upvalue[1] (iter index) */
 #     /* push next value to top */
-#     var_setval(vm->top, next);
+#     var_setval(vm->top, be_list_at(list, idx));
 #     be_incrtop(vm);
 #     be_return(vm);
 # }
@@ -658,24 +658,22 @@ def iter_closure(vm):
 
     func = be_obj.var_toobj(vm.stack[vm.cf.func])
     uv0 = be_func.be_ntvclos_upval(func, 0).value  # list value
-    uv1 = be_func.be_ntvclos_upval(func, 1).value  # iter value
+    uv1 = be_func.be_ntvclos_upval(func, 1).value  # iter value (index)
 
-    # In C, uv1 holds a pointer into the list data array.
-    # In Python, uv1.v is an integer index into list.data.
-    # "next = cast(bvalue*, var_toobj(uv1)) + 1" means advance the iterator.
-    cur_idx = be_obj.var_toobj(uv1)
-    next_idx = cur_idx + 1
+    # uv1 holds an integer index into the list. Storing an index instead of a
+    # pointer keeps the iterator valid if the list is reallocated (mutated)
+    # during iteration.
+    idx = be_obj.var_toint(uv1) + 1
 
     lst = be_obj.var_toobj(uv0)  # blist object
-    if next_idx >= lst.count:
+    if idx >= lst.count:
         be_api.be_stop_iteration(vm)
 
-    # Update the iterator upvalue to point to next_idx
-    uv1.v = next_idx
-    uv1.type = be_obj.BE_INDEX
+    # Update the iterator upvalue to the new index
+    be_obj.var_setint(uv1, idx)
 
-    # Push the value at next_idx to top of stack
-    val = lst.data[next_idx]
+    # Push the value at idx to top of stack
+    val = lst.data[idx]
     be_obj.var_setval(vm.stack[vm.top_idx], val)
     be_api.be_incrtop(vm)
     return be_api.be_returnvalue(vm)
@@ -690,7 +688,7 @@ def iter_closure(vm):
 #     be_pushntvclosure(vm, iter_closure, 2);
 #     be_getmember(vm, 1, ".p");
 #     be_setupval(vm, -2, 0);
-#     be_pushiter(vm, -1);
+#     be_pushint(vm, -1); /* start index before first element */
 #     be_setupval(vm, -3, 1);
 #     be_pop(vm, 2);
 #     be_return(vm);
@@ -700,7 +698,7 @@ def m_iter(vm):
     be_api.be_pushntvclosure(vm, iter_closure, 2)
     be_api.be_getmember(vm, 1, ".p")
     be_api.be_setupval(vm, -2, 0)
-    be_api.be_pushiter(vm, -1)
+    be_api.be_pushint(vm, -1)  # start index before first element
     be_api.be_setupval(vm, -3, 1)
     be_api.be_pop(vm, 2)
     return be_api.be_returnvalue(vm)

@@ -346,6 +346,7 @@
 #define D_CMND_IPADDRESS "IPAddress"
 #define D_CMND_NTPSERVER "NtpServer"
 #define D_CMND_AP "Ap"
+#define D_CMND_BSSID "BSSId"
 #define D_CMND_SSID "SSId"
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"

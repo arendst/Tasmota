@@ -117,6 +117,11 @@ static void toidentifier(char *to, const char *p)
 
 static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, const char *prefix_name, const char *key, void* fout);
 
+#if BE_USE_COMPACT_MAP
+static void m_solidify_map_value(bvm *vm, bbool str_literal, const bvalue * value, const char *prefix_name, const char *key, void* fout);
+static void m_solidify_kval(bvm *vm, bbool str_literal, const bvalue * value, const char *prefix_name, const char *key, void* fout);
+#endif
+
 static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *prefix_name, void* fout)
 {
     // compact first
@@ -124,6 +129,46 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *p
     
     logfmt("    be_nested_map(%i,\n", map->count);
 
+#if BE_USE_COMPACT_MAP
+    logfmt("    ( (struct bmapnode*) &(const bmapnodec[]) {\n");
+    for (int i = 0; i < map->size; i++) {
+        bmapnode * node = &map->slots[i];
+        if (node->key.type == BE_NIL) {
+            continue;   /* key not used */
+        }
+        int key_next = node->key.next;
+        if (0xFFFFFF == key_next) {
+            key_next = -1;      /* more readable */
+        }
+        if (node->key.type == BE_STRING) {
+            /* convert the string literal to identifier */
+            const char * key = str(node->key.v.s);
+            size_t id_len = toidentifier_length(key);
+            char id_buf[id_len];
+            toidentifier(id_buf, key);
+            if (!str_literal) {
+                logfmt("        { be_ckey(%s, %i), ", id_buf, key_next);
+            } else {
+                logfmt("        { be_ckey_weak(%s, %i), ", id_buf, key_next);
+            }
+            m_solidify_map_value(vm, str_literal, &node->value, prefix_name, str(node->key.v.s), fout);
+        } else if (node->key.type == BE_INT) {
+#if BE_INTGER_TYPE == 2
+            logfmt("        { be_ckey_int(%lli, %i), ", node->key.v.i, key_next);
+#else
+            logfmt("        { be_ckey_int(%i, %i), ", node->key.v.i, key_next);
+#endif
+            m_solidify_map_value(vm, str_literal, &node->value, prefix_name, NULL, fout);
+        } else {
+            char error[64];
+            snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
+            be_raise(vm, "internal_error", error);
+        }
+
+        logfmt(" },\n");
+    }
+    logfmt("    }))");
+#else
     logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
     for (int i = 0; i < map->size; i++) {
         bmapnode * node = &map->slots[i];
@@ -162,6 +207,7 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *p
         logfmt(" },\n");
     }
     logfmt("    }))");        // TODO need terminal comma?
+#endif
 
 }
 
@@ -177,6 +223,95 @@ static void m_solidify_list(bvm *vm, bbool str_literal, const blist * list, cons
     }
     logfmt("    }))");        // TODO need terminal comma?
 }
+
+#if BE_USE_COMPACT_MAP
+/* Emit one compact map node's value: the value type byte, then the value
+ * payload (a `union bvaldata` initializer). Mirrors the legacy m_solidify_bvalue
+ * but splits type from payload to match the bmapnodec layout. */
+static void m_solidify_map_value(bvm *vm, bbool str_literal, const bvalue * value, const char *prefix_name, const char *key, void* fout)
+{
+    int type = var_primetype(value);
+    /* --- value type byte --- */
+    const char *tname;
+    switch (type) {
+    case BE_NIL:      tname = "BE_NIL";      break;
+    case BE_BOOL:     tname = "BE_BOOL";     break;
+    case BE_INT:      tname = "BE_INT";      break;
+    case BE_INDEX:    tname = "BE_INDEX";    break;
+    case BE_REAL:     tname = "BE_REAL";     break;
+    case BE_STRING:   tname = "BE_STRING";   break;
+    case BE_CLOSURE:  tname = "BE_CLOSURE";  break;
+    case BE_CLASS:    tname = "BE_CLASS";    break;
+    case BE_COMPTR:   tname = "BE_COMPTR";   break;
+    case BE_NTVFUNC:  tname = "BE_NTVFUNC";  break;
+    case BE_INSTANCE: tname = "BE_INSTANCE"; break;
+    case BE_MAP:      tname = "BE_MAP";      break;
+    case BE_LIST:     tname = "BE_LIST";     break;
+    default:
+        {
+            char error[80];
+            snprintf(error, sizeof(error), "Unsupported type in compact map value: %i", type);
+            be_raise(vm, "internal_error", error);
+        }
+        return;
+    }
+    if (var_isstatic(value)) {
+        logfmt("%s | BE_STATIC, ", tname);
+    } else {
+        logfmt("%s, ", tname);
+    }
+    /* --- value payload --- */
+    switch (type) {
+    case BE_INSTANCE:
+    {
+        binstance * ins = (binstance *) var_toobj(value);
+        bclass * cl = ins->_class;
+        if (cl == &be_class_bytes) {
+            const void * bufptr = var_toobj(&ins->members[0]);
+            int32_t len = var_toint(&ins->members[1]);
+            size_t hex_len = len * 2 + 1;
+            char * hex_out = be_pushbuffer(vm, hex_len);
+            be_bytes_tohex(hex_out, hex_len, bufptr, len);
+            lognofmt("be_kv_bytes_instance(");
+            lognofmt(hex_out);
+            lognofmt(")");
+            be_pop(vm, 1);
+        } else if (ins->super || ins->sub) {
+            be_raise(vm, "internal_error", "instance must not have a super/sub class");
+        } else {
+            const char * cl_ptr = "";
+            if (cl == &be_class_map) { cl_ptr = "map"; }
+            else if (cl == &be_class_list) { cl_ptr = "list"; }
+            else { be_raise(vm, "internal_error", "unsupported class"); }
+            /* payload is a pointer to a nested simple instance */
+            logfmt("be_kv_ptr(be_nested_simple_instance(&be_class_%s, {\n", cl_ptr);
+            if (cl == &be_class_map) {
+                logfmt("        be_const_map( * ");
+            } else {
+                logfmt("        be_const_list( * ");
+            }
+            m_solidify_bvalue(vm, str_literal, &ins->members[0], prefix_name, key, fout);
+            logfmt("    ) } ))");
+        }
+    }
+        break;
+    case BE_MAP:
+        logfmt("be_kv_ptr(");
+        m_solidify_map(vm, str_literal, (bmap *) var_toobj(value), prefix_name, fout);
+        logfmt(")");
+        break;
+    case BE_LIST:
+        logfmt("be_kv_ptr(");
+        m_solidify_list(vm, str_literal, (blist *) var_toobj(value), prefix_name, fout);
+        logfmt(")");
+        break;
+    default:
+        /* scalars, strings, closures, classes, comptr, ntvfunc */
+        m_solidify_kval(vm, str_literal, value, prefix_name, key, fout);
+        break;
+    }
+}
+#endif /* BE_USE_COMPACT_MAP */
 
 // pass key name in case of class, or NULL if none
 static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, const char *prefix_name, const char *key, void* fout)
@@ -315,6 +450,156 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, 
 
 static void m_solidify_subclass(bvm *vm, bbool str_literal, const bclass *cl, void* fout);
 
+/* read constant `idx` of proto `pr` into a bvalue, regardless of layout */
+static bvalue proto_kvalue(const bproto *pr, int idx)
+{
+    bvalue v;
+    proto_const_get(pr, idx, v);
+    return v;
+}
+
+#if BE_USE_COMPACT_KTAB || BE_USE_COMPACT_MAP
+/* emit the `union bvaldata` payload-word initializer for one constant */
+static void m_solidify_kval(bvm *vm, bbool str_literal, const bvalue * value, const char *prefix_name, const char *key, void* fout)
+{
+    int type = var_primetype(value);
+    switch (type) {
+    case BE_NIL:
+        logfmt("be_kv_nil()");
+        break;
+    case BE_BOOL:
+        logfmt("be_kv_bool(%i)", var_tobool(value));
+        break;
+    case BE_INT:
+    case BE_INDEX:
+#if BE_INTGER_TYPE == 2
+        logfmt("be_kv_int(%lli)", var_toint(value));
+#else
+        logfmt("be_kv_int(%i)", (int)var_toint(value));
+#endif
+        break;
+    case BE_REAL:
+#if BE_USE_SINGLE_FLOAT
+        logfmt("be_kv_real(0x%08" PRIX32 ")", (uint32_t)(uintptr_t)var_toobj(value));
+#else
+        logfmt("be_kv_real(0x%016" PRIx64 ")", (uint64_t)var_toobj(value));
+#endif
+        break;
+    case BE_STRING:
+        {
+            const char * cstr = str(var_tostr(value));
+            size_t len = strlen(cstr);
+            size_t id_len = toidentifier_length(cstr);
+            char id_buf_stack[64];
+            char *id_buf = id_buf_stack;
+            if (id_len >= 64) {
+                id_buf = be_os_malloc(id_len);
+                if (!id_buf) {
+                    be_raise(vm, "memory_error", "could not allocated buffer");
+                }
+            }
+            toidentifier(id_buf, cstr);
+            /* be_kv_str / be_kv_str_weak / be_kv_str_long carry the &be_const_str_
+             * detail inside the macro and are recognized by coc (strong / weak /
+             * long-bclstring) so the referenced string is registered */
+            if (len >= 255) {
+                logfmt("be_kv_str_long(%s)", id_buf);
+            } else if (!str_literal) {
+                logfmt("be_kv_str(%s)", id_buf);
+            } else {
+                logfmt("be_kv_str_weak(%s)", id_buf);
+            }
+            if (id_buf != id_buf_stack) {
+                be_os_free(id_buf);
+            }
+        }
+        break;
+    case BE_CLOSURE:
+        {
+            bclosure *clo = (bclosure*) var_toobj(value);
+            const char * func_name = str(clo->proto->name);
+            size_t id_len = toidentifier_length(func_name);
+            char func_name_id[id_len];
+            toidentifier(func_name_id, func_name);
+            logfmt("be_kv_closure(%s%s%s_closure)",
+                prefix_name ? prefix_name : "", prefix_name ? "_" : "",
+                func_name_id);
+        }
+        break;
+    case BE_CLASS:
+        logfmt("be_kv_class(be_class_%s)", str(((bclass*) var_toobj(value))->name));
+        break;
+    case BE_COMPTR:
+        logfmt("be_kv_comptr(&be_ntv_%s_%s)", prefix_name ? prefix_name : "unknown", key ? key : "unknown");
+        break;
+    case BE_NTVFUNC:
+        logfmt("be_kv_func(be_ntv_%s_%s)", prefix_name ? prefix_name : "unknown", key ? key : "unknown");
+        break;
+    default:
+        {
+            char error[80];
+            snprintf(error, sizeof(error), "Unsupported type in compact ktab constants: %i", type);
+            be_raise(vm, "internal_error", error);
+        }
+    }
+}
+
+/* emit the type-byte symbolic name for one constant (with BE_STATIC if set) */
+static void m_solidify_ktype(bvm *vm, const bvalue * value, void* fout)
+{
+    int type = var_primetype(value);
+    const char *name;
+    switch (type) {
+    case BE_NIL:     name = "BE_NIL";     break;
+    case BE_BOOL:    name = "BE_BOOL";    break;
+    case BE_INT:     name = "BE_INT";     break;
+    case BE_INDEX:   name = "BE_INDEX";   break;
+    case BE_REAL:    name = "BE_REAL";    break;
+    case BE_STRING:  name = "BE_STRING";  break;
+    case BE_CLOSURE: name = "BE_CLOSURE"; break;
+    case BE_CLASS:   name = "BE_CLASS";   break;
+    case BE_COMPTR:  name = "BE_COMPTR";  break;
+    case BE_NTVFUNC: name = "BE_NTVFUNC"; break;
+    default:
+        {
+            char error[80];
+            snprintf(error, sizeof(error), "Unsupported type in compact ktab constants: %i", type);
+            be_raise(vm, "internal_error", error);
+        }
+        return;
+    }
+    if (var_isstatic(value)) {
+        logfmt("%s | BE_STATIC", name);
+    } else {
+        logfmt("%s", name);
+    }
+}
+#endif /* BE_USE_COMPACT_KTAB || BE_USE_COMPACT_MAP */
+
+/* emit a proto's constant table as two inline arrays (payload words + types) */
+#if BE_USE_COMPACT_KTAB
+static void m_solidify_proto_ktab_compact(bvm *vm, bbool str_literal, const bproto *pr, int indent, void* fout)
+{
+    logfmt("%*s( &(const union bvaldata[%2d]) {     /* constants */\n", indent, "", pr->nconst);
+    for (int k = 0; k < pr->nconst; k++) {
+        bvalue kv = proto_kvalue(pr, k);
+        logfmt("%*s/* K%-3d */  ", indent, "", k);
+        m_solidify_kval(vm, str_literal, &kv, NULL, NULL, fout);
+        logfmt(",\n");
+    }
+    logfmt("%*s}),\n", indent, "");
+    logfmt("%*s( &(const bbyte[%2d]) {     /* constant types */\n", indent, "", pr->nconst);
+    for (int k = 0; k < pr->nconst; k++) {
+        bvalue kv = proto_kvalue(pr, k);
+        logfmt("%*s/* K%-3d */  ", indent, "", k);
+        m_solidify_ktype(vm, &kv, fout);
+        logfmt(",\n");
+    }
+    logfmt("%*s}),\n", indent, "");
+}
+#endif /* BE_USE_COMPACT_KTAB */
+
+
 /* solidify any inner class */
 static void m_solidify_closure_inner_class(bvm *vm, bbool str_literal, const bclosure *clo, void* fout)
 {
@@ -322,12 +607,13 @@ static void m_solidify_closure_inner_class(bvm *vm, bbool str_literal, const bcl
     bproto *pr = clo->proto;
     if ((!gc_isconst(clo)) && (pr->nconst > 0) && (!(pr->varg & BE_VA_SHARED_KTAB)) && (!(pr->varg & BE_VA_NOCOMPACT))) {        /* if shared ktab or nocompact, skip */
         for (int k = 0; k < pr->nconst; k++) {
-            if (var_type(&pr->ktab[k]) == BE_CLASS) {
+            if (proto_const_type(pr, k) == BE_CLASS) {
                 if ((k == 0) && (pr->varg & BE_VA_STATICMETHOD)) {
                     // it is the implicit '_class' variable from a static method, don't dump the class
                 } else {
                     // output the class
-                    m_solidify_subclass(vm, str_literal, (bclass*) var_toobj(&pr->ktab[k]), fout);
+                    bvalue kv = proto_kvalue(pr, k);
+                    m_solidify_subclass(vm, str_literal, (bclass*) var_toobj(&kv), fout);
                 }
             }
         }
@@ -372,19 +658,32 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const
     logfmt("%*s%d,                          /* has constants */\n", indent, "", (pr->nconst > 0) ? 1 : 0);
     if (pr->nconst > 0) {
         // we output the full table unless it's a shared ktab
+#if BE_USE_COMPACT_KTAB
+        if (pr->varg & BE_VA_SHARED_KTAB) {
+            logfmt("%*s&be_kval_%s, &be_ktype_%s,     /* shared constants */\n", indent, "", prefix_name, prefix_name);
+        } else {
+            m_solidify_proto_ktab_compact(vm, str_literal, pr, indent, fout);
+        }
+#else
         if (pr->varg & BE_VA_SHARED_KTAB) {
             logfmt("%*s&be_ktab_%s,     /* shared constants */\n", indent, "", prefix_name);
         } else {
             logfmt("%*s( &(const bvalue[%2d]) {     /* constants */\n", indent, "", pr->nconst);
             for (int k = 0; k < pr->nconst; k++) {
+                bvalue kv = proto_kvalue(pr, k);
                 logfmt("%*s/* K%-3d */  ", indent, "", k);
-                m_solidify_bvalue(vm, str_literal, &pr->ktab[k], NULL, NULL, fout);
+                m_solidify_bvalue(vm, str_literal, &kv, NULL, NULL, fout);
                 logfmt(",\n");
             }
             logfmt("%*s}),\n", indent, "");
         }
+#endif
     } else {
+#if BE_USE_COMPACT_KTAB
+        logfmt("%*sNULL, NULL,                 /* no const */\n", indent, "");
+#else
         logfmt("%*sNULL,                       /* no const */\n", indent, "");
+#endif
     }
 
     /* convert the string literal to identifier */
@@ -631,20 +930,19 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
 
                 // iterate on each bvalue in ktab
                 for (int i = 0; i < pr->nconst; i++) {
+                    bvalue ki = proto_kvalue(pr, i);
                     // look if the bvalue pair is already in ktab
                     int found = 0;
                     for (int j = 0; j < ktab_size; j++) {
                         // to avoid any size issue, we compare all bytes
-                        // berry_log_C("// p1=%p p2=%p sz=%i", &pr->ktab[i], &ktab[j], sizeof(bvalue));
-                        if ((pr->ktab[i].type == ktab[j].type) && (pr->ktab[i].v.i == ktab[j].v.i) && (pr->ktab[i].v.c == ktab[j].v.c)) {
-                        // if (memcmp(&pr->ktab[i], &ktab[j], sizeof(bvalue)) == 0) {
+                        if ((ki.type == ktab[j].type) && (ki.v.i == ktab[j].v.i) && (ki.v.c == ktab[j].v.c)) {
                             found = 1;
                             break;
                         }
                     }
                     // if not already there, add it
                     if (!found) {
-                        ktab[ktab_size++] = pr->ktab[i];
+                        ktab[ktab_size++] = ki;
                     }
                     if (ktab_size >= MAX_KTAB_SIZE) {
                         logfmt("// ktab too big for class '%s' - skipping\n", classname);
@@ -661,6 +959,18 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
         /* allocate a proper ktab */
         bvalue *new_ktab = be_malloc(vm, sizeof(bvalue) * ktab_size);
         memmove(new_ktab, ktab, sizeof(bvalue) * ktab_size);
+#if BE_USE_COMPACT_KTAB
+        /* build a single shared compact ktab block (kval words + type bytes)
+         * that every method of this class will point to at runtime */
+        char *shared_blk = be_malloc(vm, (size_t)ktab_size * (sizeof(union bvaldata) + sizeof(bbyte)));
+        union bvaldata *shared_kval = (union bvaldata*)shared_blk;
+        bbyte *shared_ktype = (bbyte*)(shared_blk + (size_t)ktab_size * sizeof(union bvaldata));
+        for (int i = 0; i < ktab_size; i++) {
+            shared_kval[i] = new_ktab[i].v;
+            shared_ktype[i] = (bbyte)new_ktab[i].type;
+        }
+        be_free(vm, new_ktab, sizeof(bvalue) * ktab_size);  /* intermediate, no longer needed */
+#endif
 
         /* second iteration to replace ktab and patch code */
         iter = be_map_iter();
@@ -674,10 +984,10 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                 uint8_t mapping_array[MAX_KTAB_SIZE];
                 // iterate in proto ktab to get the index in the global ktab
                 for (int i = 0; i < pr->nconst; i++) {
+                    bvalue ki = proto_kvalue(pr, i);
                     for (int j = 0; j < ktab_size; j++) {
                         // compare all bytes
-                        if ((pr->ktab[i].type == ktab[j].type) && (pr->ktab[i].v.i == ktab[j].v.i) && (pr->ktab[i].v.c == ktab[j].v.c)) {
-                        // if (memcmp(&pr->ktab[i], &ktab[j], sizeof(bvalue)) == 0) {
+                        if ((ki.type == ktab[j].type) && (ki.v.i == ktab[j].v.i) && (ki.v.c == ktab[j].v.c)) {
                             mapping_array[i] = j;
                             break;
                         }
@@ -685,7 +995,12 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                 }
 
                 // replace ktab
+#if BE_USE_COMPACT_KTAB
+                pr->kval = shared_kval;
+                pr->ktype = shared_ktype;
+#else
                 pr->ktab = new_ktab;
+#endif
                 pr->nconst = ktab_size;
                 // flag as shared ktab
                 pr->varg |= BE_VA_SHARED_KTAB;
@@ -804,6 +1119,24 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
 
     // output shared ktab
     int indent = 0;
+#if BE_USE_COMPACT_KTAB
+    logfmt("// compact class '%s' ktab size: %d, total: %d (saved %i bvalues)\n", classname, ktab_size, ktab_total, (ktab_total - ktab_size));
+    logfmt("static const union bvaldata be_kval_class_%s[%i] = {\n", classname, ktab_size);
+    for (int k = 0; k < ktab_size; k++) {
+        logfmt("%*s/* K%-3d */  ", indent + 2, "", k);
+        m_solidify_kval(vm, str_literal, &ktab[k], NULL, NULL, fout);
+        logfmt(",\n");
+    }
+    logfmt("%*s};\n", indent, "");
+    logfmt("static const bbyte be_ktype_class_%s[%i] = {\n", classname, ktab_size);
+    for (int k = 0; k < ktab_size; k++) {
+        logfmt("%*s/* K%-3d */  ", indent + 2, "", k);
+        m_solidify_ktype(vm, &ktab[k], fout);
+        logfmt(",\n");
+    }
+    logfmt("%*s};\n", indent, "");
+    logfmt("\n");
+#else
     logfmt("// compact class '%s' ktab size: %d, total: %d (saved %i bytes)\n", classname, ktab_size, ktab_total, (ktab_total - ktab_size) * 8);
     logfmt("static const bvalue be_ktab_class_%s[%i] = {\n", classname, ktab_size);
     for (int k = 0; k < ktab_size; k++) {
@@ -813,6 +1146,7 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
     }
     logfmt("%*s};\n", indent, "");
     logfmt("\n");
+#endif
 }
 
 // takes a class or a module

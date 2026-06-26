@@ -478,7 +478,7 @@ bool CmndTM1637Float(bool clear)
   {
     char tmptxt[30];
     ext_snprintf_P(tmptxt, sizeof(tmptxt), "%*s%s", strlen(txt)-(length+1), "", txt);
-    strcpy (txt, tmptxt);
+    strlcpy(txt, tmptxt, sizeof(txt));
   }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: num %4_f, prec %d, len %d"), &fnum, precision, length);

@@ -2820,7 +2820,7 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
       mxtime, ESP_getFreeHeap1024(), ESP_getHeapFragmentation());
 #endif  // ESP8266 or ESP32
   }
-  strcat(mxtime, " ");
+  strlcat(mxtime, " ", sizeof(mxtime));
 
   char empty[2] = { 0 };
   if (!log_data_payload) { log_data_payload = empty; }

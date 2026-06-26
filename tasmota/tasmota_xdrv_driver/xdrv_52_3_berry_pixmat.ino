@@ -167,8 +167,8 @@ int be_pixmat_init(bvm* vm) {
         mc->serpentine = (argc >= 6) ? be_tobool(vm, 6) : false;
         mc->external = true;
 
-        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0) {
-            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp");
+        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0 || mc->bpp > 8) {
+            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp (max bpp is 8)");
         }
         size_t need = (size_t)mc->width * (size_t)mc->height;
         if (mc->bpp > 0 && need > (std::numeric_limits<size_t>::max)() / (size_t)mc->bpp) {
@@ -188,8 +188,8 @@ int be_pixmat_init(bvm* vm) {
         mc->serpentine = (argc >= 5) ? be_tobool(vm, 5) : false;
         mc->external = false;
 
-        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0) {
-            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp");
+        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0 || mc->bpp > 8) {
+            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp (max bpp is 8)");
         }
         size_t need = (size_t)mc->width * (size_t)mc->height;
         if (mc->bpp > 0 && need > (std::numeric_limits<size_t>::max)() / (size_t)mc->bpp) {

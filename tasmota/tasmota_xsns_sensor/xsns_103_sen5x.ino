@@ -35,8 +35,8 @@
 #define SEN5X_PASSIVE_MODE_INTERVAL 10
 
 #include <SensirionI2CSen5x.h>
-#include <Wire.h>
-SensirionI2CSen5x *sen5x = nullptr;
+
+SensirionI2CSen5x sen5x;
 
 struct SEN5XDATA_s {
   float massConcentrationPm1p0;
@@ -65,23 +65,52 @@ void sen5x_Init(void) {
   PowerOnDelay(60);  // Sensor startup time (Time after power-on until I2C communication can be started)
   for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     if (!I2cSetDevice(SEN5X_ADDRESS, bus)) { continue; }
-    sen5x = new SensirionI2CSen5x();
-    sen5x->begin(I2cGetWire(bus));
+    sen5x.begin(I2cGetWire(bus));
+
+    uint8_t firmwareMajor;
+    uint8_t firmwareMinor;
+    bool firmwareDebug;
+    uint8_t hardwareMajor;
+    uint8_t hardwareMinor;
+    uint8_t protocolMajor;
+    uint8_t protocolMinor;
+    unsigned char serial_number[32] = { 0 };
+    unsigned char product_name[32] = { 0 };
 
     if (!Settings->flag6.sen5x_passive_mode) {  // SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
-      if (sen5x->deviceReset()) {                        // Performs delay(200) if no error
-        if (Sen5xError("Reset", sen5x->deviceReset())) { // See https://github.com/arendst/Tasmota/discussions/24452
+      if (sen5x.deviceReset()) {                        // Performs delay(200) if no error
+        if (Sen5xError("Reset", sen5x.deviceReset())) { // See https://github.com/arendst/Tasmota/discussions/24452
           continue;
         }
       }
+
+      if (Sen5xError("Version", sen5x.getVersion(firmwareMajor, firmwareMinor, firmwareDebug,
+                                                 hardwareMajor, hardwareMinor, protocolMajor,
+                                                 protocolMinor))) {
+        continue;
+      }
+
+      if (Sen5xError("Serialnumber", sen5x.getSerialNumber(serial_number, sizeof(serial_number)))) {
+        continue;
+      }
+
+      if (Sen5xError("Productname", sen5x.getProductName(product_name, sizeof(product_name)))) {
+        continue;
+      }
+
       delay(1100);                              // Wait 1 second for sensors to start recording + 100ms for reset command
-      if (Sen5xError("Measurement", sen5x->startMeasurement())) {
+      if (Sen5xError("Measurement", sen5x.startMeasurement())) {
         continue;
       }
     }
 
     SEN5XDATA = (SEN5XDATA_s *)calloc(1, sizeof(struct SEN5XDATA_s));
     I2cSetActiveFound(SEN5X_ADDRESS, "SEN5X", bus);
+
+    if (!Settings->flag6.sen5x_passive_mode) {  // SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
+      AddLog(LOG_LEVEL_DEBUG, PSTR("S5X: %s serialnumber %s v%d.%d"), product_name, serial_number, firmwareMajor, firmwareMinor);
+    }
+
     return;
   }
 }
@@ -91,7 +120,7 @@ void SEN5XUpdate(void) {  // Perform every second to ensure proper operation of 
   char errorMessage[256];
   DEBUG_SENSOR_LOG(PSTR("Running readMeasuredValues for SEN5X..."));
 
-  error = sen5x->readMeasuredValues(
+  error = sen5x.readMeasuredValues(
       SEN5XDATA->massConcentrationPm1p0, SEN5XDATA->massConcentrationPm2p5, SEN5XDATA->massConcentrationPm4p0,
       SEN5XDATA->massConcentrationPm10p0, SEN5XDATA->ambientHumidity, SEN5XDATA->ambientTemperature, SEN5XDATA->vocIndex,
       SEN5XDATA->noxIndex);

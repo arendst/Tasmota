@@ -529,7 +529,7 @@ void ZbSendSend(class JsonParserToken val_cmd, ZCLFrame & zcl) {
         // const char *s_const = value.as<const char*>();
         if (s_const != nullptr) {
           char s[strlen(s_const)+1];
-          strcpy(s, s_const);
+          strlcpy(s, s_const, sizeof(s));
           if ((nullptr != s) && (0x00 != *s)) {     // ignore any null or empty string, could represent 'null' json value
             char *sval = strtok(s, delim);
             if (sval) {

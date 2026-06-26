@@ -113,7 +113,7 @@ String Gm861AIMId2AIM(const char* aim_id) {
   strcpy_P(aim_ids, kGm861AIMID);
   int index = (strstr(aim_ids, aim_id) -aim_ids) /2;
   if (index < 0) {                     // Unknown
-    strcpy(aim_ids, aim_id);           // Return AIM-id
+    strlcpy(aim_ids, aim_id, sizeof(aim_ids));           // Return AIM-id
   } else {
     GetTextIndexed(aim_ids, sizeof(aim_ids), index, kGm861AIM);
   }
@@ -237,7 +237,7 @@ void Gm861SerialInput(void) {
     // Prepare GUI result
     snprintf_P(Gm861->barcode, sizeof(Gm861->barcode) -3, PSTR("%s"), buffer + offset);
     if (strlen(buffer) > sizeof(Gm861->barcode) -3) {
-      strcat(Gm861->barcode, "...");
+      strlcat(Gm861->barcode, "...", sizeof(Gm861->barcode));
     }
 
     ResponseTime_P(PSTR(",\"GM861\":{"));

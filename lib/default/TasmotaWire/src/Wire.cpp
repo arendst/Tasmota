@@ -77,6 +77,10 @@ void TwoWire::setClockStretchLimit(uint32_t limit) {
   twi.setClockStretchLimit(limit);
 }
 
+uint8_t TwoWire::status(void) {
+  return twi.status();
+}
+
 size_t TwoWire::requestFrom(uint8_t address, size_t size, bool sendStop) {
   if (size > BUFFER_LENGTH) {
     size = BUFFER_LENGTH;

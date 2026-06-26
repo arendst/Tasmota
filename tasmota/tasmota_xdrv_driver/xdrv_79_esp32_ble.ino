@@ -899,7 +899,7 @@ int getSeenDevicesToJson(char *dest, int maxlen){
 
   int len;
   if (!maxlen) return 0;
-  strcpy((dest), ",\"BLEDevices\":{");
+  strlcpy(dest, ",\"BLEDevices\":{", maxlen);
   len = strlen(dest);
   dest += len;
   maxlen -= len;
@@ -1197,12 +1197,12 @@ void setDetails(ble_advertisment_t *ad){
 
   *(p++) = '{';
   maxlen--;
-  strcpy(p, "\"DetailsBLE\":{");
+  strlcpy(p, "\"DetailsBLE\":{", maxlen);
   int len = strlen(p);
   p += len;
   maxlen -= len;
 
-  strcpy(p, "\"mac\":\"");
+  strlcpy(p, "\"mac\":\"", maxlen);
   len = strlen(p);
   p += len;
   maxlen -= len;
@@ -1218,11 +1218,11 @@ void setDetails(ble_advertisment_t *ad){
 
   const char *alias = BLE_ESP32::getAlias(ad->addr);
   if (alias && (*alias)){
-    strcpy(p, ",\"a\":\"");
+    strlcpy(p, ",\"a\":\"", maxlen);
     len = strlen(p);
     p += len;
     maxlen -= len;
-    strcpy(p, alias);
+    strlcpy(p, alias, maxlen);
     len = strlen(p);
     p += len;
     maxlen -= len;
@@ -1235,7 +1235,7 @@ void setDetails(ble_advertisment_t *ad){
 
   if (BLEAdvertismentDetailsJsonLost){
     BLEAdvertismentDetailsJsonLost = 0;
-    strcpy(p, ",\"lost\":true");
+    strlcpy(p, ",\"lost\":true", maxlen);
     len = strlen(p);
     p += len;
     maxlen -= len;
@@ -1246,7 +1246,7 @@ void setDetails(ble_advertisment_t *ad){
   const uint8_t* payload = advertisedDevice->getPayload().data();
   size_t payloadlen = advertisedDevice->getPayload().size();
   if (payloadlen  && (maxlen > 30)){ // will truncate if not enough space
-    strcpy(p, ",\"p\":\"");
+    strlcpy(p, ",\"p\":\"", maxlen);
     p += 6;
     maxlen -= 6;
     dump(p, maxlen-10, payload, payloadlen);
@@ -1277,7 +1277,7 @@ void setDetails(ble_advertisment_t *ad){
       if (maxlen -10 > svclen){
         *(p++) = ',';
         *(p++) = '\"';
-        strcpy(p, strUUID.c_str());
+        strlcpy(p, strUUID.c_str(), maxlen);
         p += strUUID.length();
         *(p++) = '\"';
         *(p++) = ':';
@@ -2578,7 +2578,7 @@ int getAddr(uint8_t *dest, char *src){
   char tmp[12+5+1+2];
   int srclen = strlen(src);
   if ((srclen == 12+5) || (srclen == 12+5+2)){
-    strcpy(tmp, src);
+    strlcpy(tmp, src, sizeof(tmp));
     stripColon(tmp);
     src = tmp;
   }
@@ -3551,7 +3551,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   if (toSend->readlen){
     dump(temp, 99, toSend->dataRead, toSend->readlen);
     if (toSend->readtruncated){
-      strcat(temp, "+");
+      strlcat(temp, "+", sizeof(temp));
     }
     out = out + ",\"read\":\"";
     out = out + temp;
@@ -3566,7 +3566,7 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
   if (toSend->notifylen){
     dump(temp, 99, toSend->dataNotify, toSend->notifylen);
     if (toSend->notifytruncated){
-      strcat(temp, "+");
+      strlcat(temp, "+", sizeof(temp));
     }
     out = out + ",\"notify\":\"";
     out = out + temp;

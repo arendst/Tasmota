@@ -46,7 +46,7 @@ from berry_port.be_decoder import (
     OP_CLASS, OP_LDCONST, OP_RET,
     OP_GETGBL, OP_SETGBL,
 )
-from berry_port.berry_conf import BE_INTGER_TYPE, BE_USE_SINGLE_FLOAT
+from berry_port.berry_conf import BE_INTGER_TYPE, BE_USE_SINGLE_FLOAT, BE_USE_COMPACT_KTAB, BE_USE_COMPACT_MAP
 
 
 # ============================================================================
@@ -297,6 +297,41 @@ def m_solidify_map(vm, str_literal, map_, prefix_name, fout):
     be_map.be_map_compact(vm, map_)
 
     _logfmt(fout, "    be_nested_map(%i,\n", map_.count)
+
+    if BE_USE_COMPACT_MAP:
+        _logfmt(fout, "    ( (struct bmapnode*) &(const bmapnodec[]) {\n")
+        for i in range(map_.size):
+            node = map_.slots[i]
+            if node.key.type == BE_NIL:
+                continue  # key not used
+
+            key_next = node.key.next
+            if key_next == 0xFFFFFF:
+                key_next = -1  # more readable
+
+            if node.key.type == BE_STRING:
+                key = be_string.be_str2cstr(node.key.v)
+                id_buf = toidentifier(key)
+                if not str_literal:
+                    _logfmt(fout, "        { be_ckey(%s, %i), ", id_buf, key_next)
+                else:
+                    _logfmt(fout, "        { be_ckey_weak(%s, %i), ", id_buf, key_next)
+                m_solidify_map_value(vm, str_literal, node.value, prefix_name,
+                                     be_string.be_str2cstr(node.key.v), fout)
+            elif node.key.type == BE_INT:
+                _logfmt(fout, "        { be_ckey_int(%i, %i), ",
+                        node.key.v, key_next)
+                m_solidify_map_value(vm, str_literal, node.value, prefix_name,
+                                     None, fout)
+            else:
+                error = "Unsupported type in key: %i" % node.key.type
+                be_api.be_raise(vm, "internal_error", error)
+
+            _logfmt(fout, " },\n")
+
+        _lognofmt(fout, "    }))")
+        return
+
     _logfmt(fout, "    ( (struct bmapnode*) &(const bmapnode[]) {\n")
 
     for i in range(map_.size):
@@ -562,6 +597,218 @@ def _solidify_instance(vm, str_literal, value, prefix_name, key, fout):
         _lognofmt(fout, "    ) } ))")
 
 
+# value type names for compact map nodes (incl. INSTANCE/MAP/LIST which never
+# occur in a function ktab)
+_MAP_VALTYPE_NAMES = {
+    BE_NIL: "BE_NIL",
+    BE_BOOL: "BE_BOOL",
+    BE_INT: "BE_INT",
+    BE_INDEX: "BE_INDEX",
+    BE_REAL: "BE_REAL",
+    BE_STRING: "BE_STRING",
+    BE_CLOSURE: "BE_CLOSURE",
+    BE_CLASS: "BE_CLASS",
+    BE_COMPTR: "BE_COMPTR",
+    BE_NTVFUNC: "BE_NTVFUNC",
+    BE_INSTANCE: "BE_INSTANCE",
+    BE_MAP: "BE_MAP",
+    BE_LIST: "BE_LIST",
+}
+
+
+def m_solidify_map_value(vm, str_literal, value, prefix_name, key, fout):
+    """Emit one compact map node's value: the value type byte then the value
+    payload. Mirrors m_solidify_map_value in be_solidifylib.c."""
+    be_string = _lazy_be_string()
+    be_api = _lazy_be_api()
+    be_byteslib = _lazy_be_byteslib()
+
+    type_ = var_primetype(value)
+    tname = _MAP_VALTYPE_NAMES.get(type_)
+    if tname is None:
+        error = "Unsupported type in compact map value: %i" % type_
+        be_api.be_raise(vm, "internal_error", error)
+        return
+    if var_isstatic(value):
+        _logfmt(fout, "%s | BE_STATIC, ", tname)
+    else:
+        _logfmt(fout, "%s, ", tname)
+
+    if type_ == BE_INSTANCE:
+        ins = var_toobj(value)
+        cl = ins._class
+        cl_name = be_string.be_str2cstr(cl.name)
+        if cl_name == "bytes":
+            bufptr = var_toobj(ins.members[0])
+            length = var_toint(ins.members[1])
+            if bufptr is not None and length > 0:
+                hex_out = be_byteslib.be_bytes_tohex(bufptr, length)
+            else:
+                hex_out = ""
+            _lognofmt(fout, "be_kv_bytes_instance(")
+            _lognofmt(fout, hex_out)
+            _lognofmt(fout, ")")
+        elif ins.super is not None or ins.sub is not None:
+            be_api.be_raise(vm, "internal_error",
+                            "instance must not have a super/sub class")
+        else:
+            if cl_name == "map":
+                cl_ptr = "map"
+            elif cl_name == "list":
+                cl_ptr = "list"
+            else:
+                be_api.be_raise(vm, "internal_error", "unsupported class")
+                return
+            _logfmt(fout,
+                    "be_kv_ptr(be_nested_simple_instance(&be_class_%s, {\n",
+                    cl_ptr)
+            if cl_ptr == "map":
+                _lognofmt(fout, "        be_const_map( * ")
+            else:
+                _lognofmt(fout, "        be_const_list( * ")
+            m_solidify_bvalue(vm, str_literal, ins.members[0],
+                              prefix_name, key, fout)
+            _lognofmt(fout, "    ) } ))")
+    elif type_ == BE_MAP:
+        _lognofmt(fout, "be_kv_ptr(")
+        m_solidify_map(vm, str_literal, var_toobj(value), prefix_name, fout)
+        _lognofmt(fout, ")")
+    elif type_ == BE_LIST:
+        _lognofmt(fout, "be_kv_ptr(")
+        m_solidify_list(vm, str_literal, var_toobj(value), prefix_name, fout)
+        _lognofmt(fout, ")")
+    else:
+        m_solidify_kval(vm, str_literal, value, prefix_name, key, fout)
+
+
+
+# ============================================================================
+# Compact ktab emitters (BE_USE_COMPACT_KTAB) — mirror be_solidifylib.c
+# ============================================================================
+
+# static void m_solidify_kval(bvm *vm, bbool str_literal, const bvalue * value,
+#                             const char *prefix_name, const char *key, void* fout)
+# emit the `union bvaldata` payload-word initializer for one constant
+def m_solidify_kval(vm, str_literal, value, prefix_name, key, fout):
+    """Emit the union bvaldata payload-word initializer for one constant.
+    Mirrors m_solidify_kval in be_solidifylib.c. Produces be_kv_* macros."""
+    be_string = _lazy_be_string()
+    be_api = _lazy_be_api()
+
+    type_ = var_primetype(value)
+
+    if type_ == BE_NIL:
+        _lognofmt(fout, "be_kv_nil()")
+
+    elif type_ == BE_BOOL:
+        _logfmt(fout, "be_kv_bool(%i)", 1 if var_tobool(value) else 0)
+
+    elif type_ == BE_INT or type_ == BE_INDEX:
+        _logfmt(fout, "be_kv_int(%i)", var_toint(value))
+
+    elif type_ == BE_REAL:
+        real_val = var_toreal(value)
+        if BE_USE_SINGLE_FLOAT:
+            raw = struct.unpack('>I', struct.pack('>f', real_val))[0]
+            _logfmt(fout, "be_kv_real(0x%08X)", raw)
+        else:
+            raw = struct.unpack('<Q', struct.pack('<d', real_val))[0]
+            _logfmt(fout, "be_kv_real(0x%016x)", raw)
+
+    elif type_ == BE_STRING:
+        s = be_string.be_str2cstr(var_tostr(value))
+        slen = len(s)
+        id_buf = toidentifier(s)
+        # be_kv_str / be_kv_str_weak / be_kv_str_long carry the &be_const_str_
+        # detail inside the macro and are recognized by coc (strong / weak /
+        # long-bclstring) so the referenced string is registered
+        if slen >= 255:
+            _logfmt(fout, "be_kv_str_long(%s)", id_buf)
+        elif not str_literal:
+            _logfmt(fout, "be_kv_str(%s)", id_buf)
+        else:
+            _logfmt(fout, "be_kv_str_weak(%s)", id_buf)
+
+    elif type_ == BE_CLOSURE:
+        clo = var_toobj(value)
+        func_name = be_string.be_str2cstr(clo.proto.name)
+        func_name_id = toidentifier(func_name)
+        prefix = prefix_name if prefix_name else ""
+        sep = "_" if prefix_name else ""
+        _logfmt(fout, "be_kv_closure(%s%s%s_closure)",
+                prefix, sep, func_name_id)
+
+    elif type_ == BE_CLASS:
+        cl = var_toobj(value)
+        _logfmt(fout, "be_kv_class(be_class_%s)",
+                be_string.be_str2cstr(cl.name))
+
+    elif type_ == BE_COMPTR:
+        _logfmt(fout, "be_kv_comptr(&be_ntv_%s_%s)",
+                prefix_name if prefix_name else "unknown",
+                key if key else "unknown")
+
+    elif type_ == BE_NTVFUNC:
+        _logfmt(fout, "be_kv_func(be_ntv_%s_%s)",
+                prefix_name if prefix_name else "unknown",
+                key if key else "unknown")
+
+    else:
+        error = "Unsupported type in compact ktab constants: %i" % type_
+        be_api.be_raise(vm, "internal_error", error)
+
+
+# static void m_solidify_ktype(bvm *vm, const bvalue * value, void* fout)
+# emit the type-byte symbolic name for one constant (with BE_STATIC if set)
+_KTYPE_NAMES = {
+    BE_NIL: "BE_NIL",
+    BE_BOOL: "BE_BOOL",
+    BE_INT: "BE_INT",
+    BE_INDEX: "BE_INDEX",
+    BE_REAL: "BE_REAL",
+    BE_STRING: "BE_STRING",
+    BE_CLOSURE: "BE_CLOSURE",
+    BE_CLASS: "BE_CLASS",
+    BE_COMPTR: "BE_COMPTR",
+    BE_NTVFUNC: "BE_NTVFUNC",
+}
+
+def m_solidify_ktype(vm, value, fout):
+    """Emit the type-byte symbolic name for one constant (OR BE_STATIC).
+    Mirrors m_solidify_ktype in be_solidifylib.c."""
+    be_api = _lazy_be_api()
+    type_ = var_primetype(value)
+    name = _KTYPE_NAMES.get(type_)
+    if name is None:
+        error = "Unsupported type in compact ktab constants: %i" % type_
+        be_api.be_raise(vm, "internal_error", error)
+        return
+    if var_isstatic(value):
+        _logfmt(fout, "%s | BE_STATIC", name)
+    else:
+        _lognofmt(fout, name)
+
+
+# static void m_solidify_proto_ktab_compact(bvm *vm, bbool str_literal,
+#                                           const bproto *pr, int indent, void* fout)
+# emit a proto's constant table as two inline arrays (payload words + types)
+def m_solidify_proto_ktab_compact(vm, str_literal, pr, indent, fout):
+    """Emit a proto's constant table as two inline arrays (values + types)."""
+    _logfmt(fout, "%*s( &(const union bvaldata[%2d]) {     /* constants */\n",
+            indent, "", pr.nconst)
+    for k in range(pr.nconst):
+        _logfmt(fout, "%*s/* K%-3d */  ", indent, "", k)
+        m_solidify_kval(vm, str_literal, pr.ktab[k], None, None, fout)
+        _lognofmt(fout, ",\n")
+    _logfmt(fout, "%*s}),\n", indent, "")
+    _logfmt(fout, "%*s( &(const bbyte[%2d]) {     /* constant types */\n",
+            indent, "", pr.nconst)
+    for k in range(pr.nconst):
+        _logfmt(fout, "%*s/* K%-3d */  ", indent, "", k)
+        m_solidify_ktype(vm, pr.ktab[k], fout)
+        _lognofmt(fout, ",\n")
+    _logfmt(fout, "%*s}),\n", indent, "")
+
 
 # ============================================================================
 # m_solidify_closure_inner_class (from be_solidifylib.c)
@@ -677,21 +924,32 @@ def m_solidify_proto(vm, str_literal, pr, func_name, indent, prefix_name, fout):
     _logfmt(fout, "%*s%d,                          /* has constants */\n",
             indent, "", 1 if (pr.nconst > 0) else 0)
     if pr.nconst > 0:
-        if pr.varg & BE_VA_SHARED_KTAB:
-            _logfmt(fout, "%*s&be_ktab_%s,     /* shared constants */\n",
-                    indent, "", prefix_name)
+        if BE_USE_COMPACT_KTAB:
+            if pr.varg & BE_VA_SHARED_KTAB:
+                _logfmt(fout, "%*s&be_kval_%s, &be_ktype_%s,     /* shared constants */\n",
+                        indent, "", prefix_name, prefix_name)
+            else:
+                m_solidify_proto_ktab_compact(vm, str_literal, pr, indent, fout)
         else:
-            _logfmt(fout, "%*s( &(const bvalue[%2d]) {     /* constants */\n",
-                    indent, "", pr.nconst)
-            for k in range(pr.nconst):
-                _logfmt(fout, "%*s/* K%-3d */  ", indent, "", k)
-                m_solidify_bvalue(vm, str_literal, pr.ktab[k],
-                                  None, None, fout)
-                _lognofmt(fout, ",\n")
-            _logfmt(fout, "%*s}),\n", indent, "")
+            if pr.varg & BE_VA_SHARED_KTAB:
+                _logfmt(fout, "%*s&be_ktab_%s,     /* shared constants */\n",
+                        indent, "", prefix_name)
+            else:
+                _logfmt(fout, "%*s( &(const bvalue[%2d]) {     /* constants */\n",
+                        indent, "", pr.nconst)
+                for k in range(pr.nconst):
+                    _logfmt(fout, "%*s/* K%-3d */  ", indent, "", k)
+                    m_solidify_bvalue(vm, str_literal, pr.ktab[k],
+                                      None, None, fout)
+                    _lognofmt(fout, ",\n")
+                _logfmt(fout, "%*s}),\n", indent, "")
     else:
-        _logfmt(fout, "%*sNULL,                       /* no const */\n",
-                indent, "")
+        if BE_USE_COMPACT_KTAB:
+            _logfmt(fout, "%*sNULL, NULL,                 /* no const */\n",
+                    indent, "")
+        else:
+            _logfmt(fout, "%*sNULL,                       /* no const */\n",
+                    indent, "")
 
     # function name
     name_str = be_string.be_str2cstr(pr.name)
@@ -1162,18 +1420,39 @@ def m_compact_class(vm, str_literal, cla, fout):
 
     # output shared ktab
     indent = 0
-    _logfmt(fout,
-            "// compact class '%s' ktab size: %d, total: %d (saved %i bytes)\n",
-            classname, ktab_size, ktab_total,
-            (ktab_total - ktab_size) * 8)
-    _logfmt(fout, "static const bvalue be_ktab_class_%s[%i] = {\n",
-            classname, ktab_size)
-    for k in range(ktab_size):
-        _logfmt(fout, "%*s/* K%-3d */  ", indent + 2, "", k)
-        m_solidify_bvalue(vm, str_literal, ktab[k], None, None, fout)
-        _lognofmt(fout, ",\n")
-    _logfmt(fout, "%*s};\n", indent, "")
-    _lognofmt(fout, "\n")
+    if BE_USE_COMPACT_KTAB:
+        _logfmt(fout,
+                "// compact class '%s' ktab size: %d, total: %d (saved %i bvalues)\n",
+                classname, ktab_size, ktab_total,
+                (ktab_total - ktab_size))
+        _logfmt(fout, "static const union bvaldata be_kval_class_%s[%i] = {\n",
+                classname, ktab_size)
+        for k in range(ktab_size):
+            _logfmt(fout, "%*s/* K%-3d */  ", indent + 2, "", k)
+            m_solidify_kval(vm, str_literal, ktab[k], None, None, fout)
+            _lognofmt(fout, ",\n")
+        _logfmt(fout, "%*s};\n", indent, "")
+        _logfmt(fout, "static const bbyte be_ktype_class_%s[%i] = {\n",
+                classname, ktab_size)
+        for k in range(ktab_size):
+            _logfmt(fout, "%*s/* K%-3d */  ", indent + 2, "", k)
+            m_solidify_ktype(vm, ktab[k], fout)
+            _lognofmt(fout, ",\n")
+        _logfmt(fout, "%*s};\n", indent, "")
+        _lognofmt(fout, "\n")
+    else:
+        _logfmt(fout,
+                "// compact class '%s' ktab size: %d, total: %d (saved %i bytes)\n",
+                classname, ktab_size, ktab_total,
+                (ktab_total - ktab_size) * 8)
+        _logfmt(fout, "static const bvalue be_ktab_class_%s[%i] = {\n",
+                classname, ktab_size)
+        for k in range(ktab_size):
+            _logfmt(fout, "%*s/* K%-3d */  ", indent + 2, "", k)
+            m_solidify_bvalue(vm, str_literal, ktab[k], None, None, fout)
+            _lognofmt(fout, ",\n")
+        _logfmt(fout, "%*s};\n", indent, "")
+        _lognofmt(fout, "\n")
 
 
 

@@ -441,7 +441,7 @@ matter_device.events.dump()
     elif attribute == 0xFFFB            # AttributeList
       var acli = TLV.Matter_TLV_array()
       var attr_list_bytes = self.get_attribute_list_bytes(cluster)
-      var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) : 0
+      var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) / 2 : 0
       var idx = 0
       while idx < attr_list_bytes_sz
         acli.add_TLV(nil, 0x05 #-TLV.U2-#, attr_list_bytes.get(idx * 2, -2))
@@ -453,6 +453,16 @@ matter_device.events.dump()
       return el                         # return empty list
     elif attribute == 0xFFF9            # AcceptedCommandList
       var al = TLV.Matter_TLV_array()
+      if cluster == 0x0006              # On/Off
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0000)    # Off
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0001)    # On
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0002)    # Toggle
+        if (self.FEATURE_MAPS.find(cluster, 0) & 0x01) != 0
+          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0040)  # OffWithEffect
+          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0041)  # OnWithRecallGlobalScene
+          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0042)  # OnWithTimedOff
+        end
+      end
       return al                         # TODO
     elif attribute == 0xFFFC            # FeatureMap
       var featuremap = self.FEATURE_MAPS.find(cluster, 0)

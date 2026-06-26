@@ -60,6 +60,51 @@
  **/
 #define BE_USE_PRECOMPILED_OBJECT       1
 
+/* Macro: BE_USE_COMPACT_KTAB
+ * Store each function's constant table (ktab) as a structure-of-arrays:
+ * a payload-word array (`union bvaldata`) plus a parallel type-byte
+ * array, instead of an array of full `bvalue` (which wastes the padding
+ * of the 4-byte type field). On 32-bit targets (single-precision float,
+ * 32-bit int) a payload word is 4 bytes, so this saves ~37% of the flash
+ * occupied by constant tables of solidified code (executed in place from
+ * flash on ESP32). Constant tables are read-only at runtime, so constants
+ * are materialized into a scratch value on access; live registers are
+ * unchanged. The representation is portable: on 64-bit hosts the payload
+ * word is 8 bytes and the feature still works (and can be unit-tested),
+ * but the flash win is only meaningful on the 32-bit target.
+ * Default: 0 (disabled)
+ **/
+#ifndef BE_USE_COMPACT_KTAB
+#define BE_USE_COMPACT_KTAB             1
+#endif
+
+/* Macro: BE_USE_COMPACT_MAP
+ * Store the nodes of *constant* (solidified/flash) maps in a packed
+ * 12-byte layout instead of the regular 16-byte `bmapnode`. The value's
+ * type byte is folded into the spare bits of the key word (`next` is
+ * shrunk to 16 bits), removing the 3 padding bytes of the value's type
+ * field. On 32-bit targets this saves 25% of the flash used by solidified
+ * class/module member maps (executed in place from flash on ESP32).
+ *
+ * Only read-only (const) maps use the packed layout; mutable runtime maps
+ * keep the regular 16-byte layout untouched, so all map mutation paths and
+ * their `bvalue*` return contract are unchanged. Const-map reads decode the
+ * packed node into a scratch on access. The discriminator at runtime is
+ * `gc_isconst(map)`. Limited to 65535 slots per const map (ample).
+ *
+ * The representation is portable: on 64-bit hosts the node is larger (the
+ * payload word is 8 bytes) and the feature still works and is testable, but
+ * the flash win is only meaningful on the 32-bit target.
+ *
+ * NOTE: changing this flag changes the layout of every const map emitted by
+ * `coc` and by solidify, so the generated headers must be regenerated
+ * (`make prebuild`) and `berry_port/berry_conf.py` must match.
+ * Default: 0 (disabled)
+ **/
+#ifndef BE_USE_COMPACT_MAP
+#define BE_USE_COMPACT_MAP              1
+#endif
+
 /* Macro: BE_DEBUG_SOURCE_FILE
  * Indicate if each function remembers its source file name
  * 0: do not keep the file name (saves 4 bytes per function)

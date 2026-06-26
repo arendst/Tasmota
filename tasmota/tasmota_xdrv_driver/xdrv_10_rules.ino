@@ -1087,12 +1087,12 @@ bool RulesMqttData(void) {
   bool serviced = false;
   String buData = XdrvMailbox.data;            // Destroyed by JsonParser. Could be very long SENSOR message
   char ctopic[strlen(XdrvMailbox.topic)+1];
-  strcpy(ctopic, XdrvMailbox.topic);           // Destroyed by result of following iteration
+  strlcpy(ctopic, XdrvMailbox.topic, sizeof(ctopic));           // Destroyed by result of following iteration
 
   for (auto &event_item : subscriptions) {     // Looking for all matched topics
     char etopic[strlen(event_item.topic)+2];
-    strcpy(etopic, event_item.topic);          // tele/tasmota/SENSOR
-    strcat(etopic, "/");                       // tele/tasmota/SENSOR/
+    strlcpy(etopic, event_item.topic, sizeof(etopic));          // tele/tasmota/SENSOR
+    strlcat(etopic, "/", sizeof(etopic));                       // tele/tasmota/SENSOR/
     if ((strcmp(ctopic, event_item.topic) == 0) ||         // Equal tele/tasmota/SENSOR
         (strncmp(ctopic, etopic, strlen(etopic)) == 0)) {  // StartsWith tele/tasmota/SENSOR/
 
@@ -1107,7 +1107,7 @@ bool RulesMqttData(void) {
         if (!jsonData) { break; }              // Failed to parse JSON data, ignore this message.
 
         char ckey1[strlen(event_item.key)+1];
-        strcpy(ckey1, event_item.key);         // DS18B20.Temperature
+        strlcpy(ckey1, event_item.key, sizeof(ckey1));         // DS18B20.Temperature
         char* ckey2 = strchr(ckey1, '.');
         if (ckey2 != nullptr) {                // .Temperature
           *ckey2++ = '\0';                     // Temperature and ckey1 becomes DS18B20
@@ -1142,8 +1142,8 @@ bool RuleUnsubscribe(const char* event) {
         (strcmp(event, index.event) == 0)) {   // Equal
       //If find exists one, remove it.
       char stopic[strlen(index.topic)+3];
-      strcpy(stopic, index.topic);
-      strcat(stopic, "/#");
+      strlcpy(stopic, index.topic, sizeof(stopic));
+      strlcat(stopic, "/#", sizeof(stopic));
       MqttUnsubscribe(stopic);
       free(index.key);
       free(index.topic);
@@ -1185,25 +1185,23 @@ void CmndSubscribe(void) {
       // Add "/#" to the topic
       uint32_t slen = strlen(topic);
       char stopic[slen +3];
-      strcpy(stopic, topic);
+      strlcpy(stopic, topic, sizeof(stopic));
       if (stopic[slen-1] != '#') {
         if (stopic[slen-1] == '/') {
-          strcat(stopic, "#");
+          strlcat(stopic, "#", sizeof(stopic));
         } else {
-          strcat(stopic, "/#");
+          strlcat(stopic, "/#", sizeof(stopic));
         }
       }
 
       if (!key) { key = EmptyStr; }
 
       // MQTT Subscribe
-      char* hevent = (char*)malloc(strlen(event) +1);
+      char* hevent = strdup(event);
       char* htopic = (char*)malloc(strlen(stopic) -1);  // Remove "/#"
-      char* hkey = (char*)malloc(strlen(key) +1);
+      char* hkey = strdup(key);
       if (hevent && htopic && hkey) {
-        strcpy(hevent, event);
         strlcpy(htopic, stopic, strlen(stopic)-1);      // Remove "/#" so easy to match
-        strcpy(hkey, key);
         MQTT_Subscription &subscription_item = subscriptions.addToLast();
         subscription_item.event = hevent;
         subscription_item.topic = htopic;
@@ -1640,7 +1638,7 @@ float evaluateExpression(const char * expression, unsigned int len) {
 void CmndIf(void) {
   if (XdrvMailbox.data_len > 0) {
     char parameters[XdrvMailbox.data_len +1];
-    strcpy(parameters, XdrvMailbox.data);
+    strlcpy(parameters, XdrvMailbox.data, sizeof(parameters));
     ProcessIfStatement(parameters);
   }
   ResponseCmndDone();
@@ -2010,9 +2008,8 @@ void ExecuteCommandBlock(const char * commands, int len)
 
     if (strlen(blcommand)) {
       //Insert into backlog
-      char* temp = (char*)malloc(strlen(blcommand)+1);
+      char* temp = strdup(blcommand);
       if (temp != nullptr) {
-        strcpy(temp, blcommand);
         char* &elem = backlog.insertAt(insertPosition++);
         elem = temp;
       }

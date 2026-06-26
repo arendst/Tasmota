@@ -493,7 +493,7 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #define COLOR_TITLE_TEXT			      COLOR_TEXT // Title text color defaults to global text color either dark or light
 #endif
 #ifndef COLOR_BUTTON_OFF
-#define COLOR_BUTTON_OFF			      "#08405e"  // Button color when off - Darkest blueish
+#define COLOR_BUTTON_OFF			      "#a1d9f7"  // Button color when off - Light blue
 #endif
 
 enum WebColors {

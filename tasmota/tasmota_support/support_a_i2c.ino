@@ -93,6 +93,28 @@ bool I2cSetClock(uint32_t frequency, uint32_t bus) {
   return true;
 }
 
+uint8_t I2cClearBus(uint32_t bus = 0);
+uint8_t I2cClearBus(uint32_t bus) {
+#ifdef ESP8266
+  /**
+   * twi_status() attempts to read out any data left that is holding SDA low, so a new transaction can take place
+   * something like (http://www.forward.com.au/pfod/ArduinoProgramming/I2C_ClearBus/index.html)
+   *
+   * Returns:
+   * 0 - No error
+   * 1 - SCL held low by another device, no procedure available to recover
+   * 2 - I2C bus error. SCL held low beyond slave clock stretch time
+   * 3 - I2C bus error. SDA line held low by slave/another_master after n bits
+   */
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return 0; }                   // No valid I2c bus
+
+  return myWire.status();
+#else
+  return 0;
+#endif
+}
+
 /*-------------------------------------------------------------------------------------------*\
  * Return code: 0 = Error, 1 = OK
 \*-------------------------------------------------------------------------------------------*/

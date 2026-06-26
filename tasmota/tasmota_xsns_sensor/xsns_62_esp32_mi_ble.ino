@@ -1866,13 +1866,13 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       MIBLEsensors[_slot].weight_removed = weight_removed;
 
       if (_packetV1->status & (1 << 0)) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
       } else if(_packetV1->status & (1 << 4)) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
       } else {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV1->weight / 200.0f;
       }
 
@@ -1906,16 +1906,16 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       MIBLEsensors[_slot].weight_removed = weight_removed;
 
       if (_packetV2->weight_unit & (1 << 4)) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
       } else if(_packetV2->weight_unit == 3) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
       } else if(_packetV2->weight_unit == 2) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV2->weight / 200.0f;
       } else {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR(""));
+        strlcpy(MIBLEsensors[_slot].weight_unit, PSTR(""), sizeof(MIBLEsensors[_slot].weight_unit));
         MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
       }
 
@@ -2805,7 +2805,7 @@ void HandleMI32Key(){
 
   WSContentSend_P(HTTP_KEY_ADDED, mac, key);
 
-  strcat(key, mac);
+  strlcat(key, mac, sizeof(key));
   MI32AddKey(key, nullptr);
 
 //  WSContentSpaceButton(BUTTON_CONFIGURATION);
@@ -3579,30 +3579,30 @@ void MI32Show(bool json)
 #ifdef USE_MI_DECRYPTION
       bool showkey = false;
       char tmp[40];
-      strcpy(tmp, PSTR("KeyRqd"));
+      strlcpy(tmp, PSTR("KeyRqd"), sizeof(tmp));
       switch(p->needkey) {
         default:{
           snprintf(tmp, 39, PSTR("?%d?"), p->needkey );
           showkey = true;
         } break;
         case KEY_REQUIREMENT_UNKNOWN: {
-          strcpy(tmp, PSTR("WAIT"));
+          strlcpy(tmp, PSTR("WAIT"), sizeof(tmp));
           showkey = true;
         } break;
         case KEY_NOT_REQUIRED: {
-          strcpy(tmp, PSTR("NOTKEY"));
+          strlcpy(tmp, PSTR("NOTKEY"), sizeof(tmp));
           //showkey = true;
         } break;
         case KEY_REQUIRED_BUT_NOT_FOUND: {
-          strcpy(tmp, PSTR("NoKey"));
+          strlcpy(tmp, PSTR("NoKey"), sizeof(tmp));
           showkey = true;
         } break;
         case KEY_REQUIRED_AND_FOUND: {
-          strcpy(tmp, PSTR("KeyOk"));
+          strlcpy(tmp, PSTR("KeyOk"), sizeof(tmp));
           showkey = true;
         } break;
         case KEY_REQUIRED_AND_INVALID: {
-          strcpy(tmp, PSTR("KeyInv"));
+          strlcpy(tmp, PSTR("KeyInv"), sizeof(tmp));
           showkey = true;
         } break;
       }

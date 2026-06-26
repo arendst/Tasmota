@@ -97,10 +97,10 @@ extern "C" {
               const char* val = be_tostring(vm, -1);
               size_t key_len = strlen(key)+1;
               txt_items[i].key = (const char*)be_os_malloc(key_len);
-              if (txt_items[i].key) { strcpy((char*)txt_items[i].key, key); }
+              if (txt_items[i].key) { strlcpy((char*)txt_items[i].key, key, key_len); }
               size_t val_len = strlen(val)+1;
               txt_items[i].value = (const char*)be_os_malloc(val_len);
-              if (txt_items[i].value) { strcpy((char*)txt_items[i].value, val); }
+              if (txt_items[i].value) { strlcpy((char*)txt_items[i].value, val, val_len); }
               be_pop(vm, 2);
               i++;
             }
@@ -218,7 +218,7 @@ extern "C" {
       const char* hostname = be_tostring(vm, 1);
       const char* ip_text = nullptr;
       for (uint16_t i = 2; i <= top; i++) {
-        const char* ip_text = be_tostring(vm, i);
+        ip_text = be_tostring(vm, i);
         if (ip_text == nullptr || ip_text[0] == 0) { continue; }    // ignore empty string
         IPAddress ip;
         if (!ip.fromString(ip_text)) { err = -1; break; }

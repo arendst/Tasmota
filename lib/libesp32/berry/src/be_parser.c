@@ -259,8 +259,10 @@ static void begin_func(bparser *parser, bfuncinfo *finfo, bblockinfo *binfo)
     proto->code = be_vector_data(&finfo->code);
     proto->codesize = be_vector_capacity(&finfo->code);
     be_vector_init(vm, &finfo->kvec, sizeof(bvalue)); /* vector for constants */
+#if !BE_USE_COMPACT_KTAB
     proto->ktab = be_vector_data(&finfo->kvec);
     proto->nconst = be_vector_capacity(&finfo->kvec);
+#endif
     be_vector_init(vm, &finfo->pvec, sizeof(bproto*)); /* vector for subprotos */
     proto->ptab = be_vector_data(&finfo->pvec);
     proto->nproto = be_vector_capacity(&finfo->pvec);
@@ -331,13 +333,29 @@ static void end_func(bparser *parser)
     setupvals(finfo); /* close upvals */
     proto->code = be_vector_release(vm, &finfo->code); /* compact all vectors and return NULL if empty */
     proto->codesize = finfo->pc;
+#if BE_USE_COMPACT_KTAB
+    {   /* build the compact constant table from the scratch bvalue vector */
+        bvalue *kdata = be_vector_release(vm, &finfo->kvec);
+        int nconst = be_vector_count(&finfo->kvec);
+        /* keep the released bvalue[] visible to the GC (ktype==NULL sentinel)
+         * while be_proto_set_ktab allocates the compact block (which may GC) */
+        proto->kval = (union bvaldata*) kdata;
+        proto->ktype = NULL;
+        proto->nconst = (int16_t)nconst;
+        be_proto_set_ktab(vm, proto, kdata, nconst);
+        if (kdata) { be_free(vm, kdata, nconst * sizeof(bvalue)); }
+    }
+#else
     proto->ktab = be_vector_release(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
+#endif
     proto->ptab = be_vector_release(vm, &finfo->pvec);
     proto->nproto = be_vector_count(&finfo->pvec);
 #if BE_USE_MEM_ALIGNED
     proto->code = be_move_to_aligned(vm, proto->code, proto->codesize * sizeof(binstruction));     /* move `code` to 4-bytes aligned memory region */
+#if !BE_USE_COMPACT_KTAB
     proto->ktab = be_move_to_aligned(vm, proto->ktab, proto->nconst * sizeof(bvalue));     /* move `ktab` to 4-bytes aligned memory region */
+#endif
 #endif /* BE_USE_MEM_ALIGNED */
 #if BE_DEBUG_RUNTIME_INFO
     proto->lineinfo = be_vector_release(vm, &finfo->linevec);     /* move `lineinfo` to 4-bytes aligned memory region */
