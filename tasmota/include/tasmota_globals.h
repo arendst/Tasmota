@@ -435,65 +435,66 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
  * UserConfig related parameters
 \*********************************************************************************************/
 
+// Tasmota modern dark "instrument console" theme - heritage blue accent on a deep blue-black panel
 #ifndef COLOR_TEXT
-#define COLOR_TEXT                  "#000"     // Global text color - Black
+#define COLOR_TEXT                  "#c9d4e0"  // Global text color - Cool light grey
 #endif
 #ifndef COLOR_BACKGROUND
-#define COLOR_BACKGROUND            "#fff"     // Global background color - White
+#define COLOR_BACKGROUND            "#0e1116"  // Global background color - Deep blue-black panel
 #endif
 #ifndef COLOR_FORM
-#define COLOR_FORM                  "#f2f2f2"  // Form background color - Greyish
+#define COLOR_FORM                  "#171c24"  // Form background color - Raised panel
 #endif
 #ifndef COLOR_INPUT_TEXT
-#define COLOR_INPUT_TEXT            "#000"     // Input text color - Black
+#define COLOR_INPUT_TEXT            "#e6edf3"  // Input text color - Near white
 #endif
 #ifndef COLOR_INPUT
-#define COLOR_INPUT                 "#fff"     // Input background color - White
+#define COLOR_INPUT                 "#0b0e13"  // Input background color - Inset dark
 #endif
 #ifndef COLOR_CONSOLE_TEXT
-#define COLOR_CONSOLE_TEXT          "#000"     // Console text color - Black
+#define COLOR_CONSOLE_TEXT          "#c9d4e0"  // Console text color - Cool light grey
 #endif
 #ifndef COLOR_CONSOLE
-#define COLOR_CONSOLE               "#fff"     // Console background color - White
+#define COLOR_CONSOLE               "#0b0e13"  // Console background color - Inset dark
 #endif
 #ifndef COLOR_TEXT_WARNING
-#define COLOR_TEXT_WARNING          "#f00"     // Warning text color - Red
+#define COLOR_TEXT_WARNING          "#ff5c5c"  // Warning text color - Soft red
 #endif
 #ifndef COLOR_TEXT_SUCCESS
-#define COLOR_TEXT_SUCCESS          "#008000"  // Success text color - Green
+#define COLOR_TEXT_SUCCESS          "#3dd68c"  // Success text color - Signal green
 #endif
 #ifndef COLOR_BUTTON_TEXT
-#define COLOR_BUTTON_TEXT           "#fff"     // Button text color - White
+#define COLOR_BUTTON_TEXT           "#ffffff"  // Button text color - White
 #endif
 #ifndef COLOR_BUTTON
-#define COLOR_BUTTON                "#1fa3ec"  // Button color - Blueish
+#define COLOR_BUTTON                "#1fa3ec"  // Button color - Heritage Tasmota blue
 #endif
 #ifndef COLOR_BUTTON_HOVER
-#define COLOR_BUTTON_HOVER          "#0e70a4"  // Button color when hovered over - Darker blueish
+#define COLOR_BUTTON_HOVER          "#4fc3f7"  // Button color when hovered over - Brighter blue glow
 #endif
 #ifndef COLOR_BUTTON_RESET
-#define COLOR_BUTTON_RESET          "#d43535"  // Restart/Reset/Delete button color - Redish
+#define COLOR_BUTTON_RESET          "#e0484d"  // Restart/Reset/Delete button color - Redish
 #endif
 #ifndef COLOR_BUTTON_RESET_HOVER
-#define COLOR_BUTTON_RESET_HOVER    "#931f1f"  // Restart/Reset/Delete button color when hovered over - Darker redish
+#define COLOR_BUTTON_RESET_HOVER    "#ff6b70"  // Restart/Reset/Delete button color when hovered over - Brighter red
 #endif
 #ifndef COLOR_BUTTON_SAVE
-#define COLOR_BUTTON_SAVE           "#47c266"  // Save button color - Greenish
+#define COLOR_BUTTON_SAVE           "#2bb673"  // Save button color - Greenish
 #endif
 #ifndef COLOR_BUTTON_SAVE_HOVER
-#define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"  // Save button color when hovered over - Darker greenish
+#define COLOR_BUTTON_SAVE_HOVER     "#3dd68c"  // Save button color when hovered over - Brighter green
 #endif
 #ifndef COLOR_TIMER_TAB_TEXT
-#define COLOR_TIMER_TAB_TEXT        "#fff"     // Config timer tab text color - White
+#define COLOR_TIMER_TAB_TEXT        "#ffffff"  // Config timer tab text color - White
 #endif
 #ifndef COLOR_TIMER_TAB_BACKGROUND
-#define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
+#define COLOR_TIMER_TAB_BACKGROUND  "#2a3340"  // Config timer tab background color - Slate
 #endif
 #ifndef COLOR_TITLE_TEXT
-#define COLOR_TITLE_TEXT			      COLOR_TEXT // Title text color defaults to global text color either dark or light
+#define COLOR_TITLE_TEXT			      "#fefefe"  // Title text color - Logo white
 #endif
 #ifndef COLOR_BUTTON_OFF
-#define COLOR_BUTTON_OFF			      "#a1d9f7"  // Button color when off - Light blue
+#define COLOR_BUTTON_OFF			      "#2a3a4d"  // Button color when off - Dim slate
 #endif
 
 enum WebColors {

@@ -225,8 +225,10 @@
 #define COLOR_TITLE_TEXT            "#000"       // [WebColor19] Title text color - Whiteish
 #define COLOR_BUTTON_OFF            "#a1d9f7"    // [WebColor20] Button color when off - Light blue
 */
-// Dark theme
+// Dark theme - legacy preset, disabled: the modern dark "instrument console" theme now
+// lives in the COLOR_* defaults in include/tasmota_globals.h (single source of truth).
 // WebColor {"WebColor":["#eaeaea","#252525","#4f4f4f","#000","#ddd","#65c115","#1f1f1f","#ff5661","#008000","#faffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#faffff","#999","#eaeaea","#08405e"]}
+/*
 #define COLOR_TEXT                  "#eaeaea"    // [WebColor1] Global text color - Very light gray
 #define COLOR_BACKGROUND            "#252525"    // [WebColor2] Global background color - Very dark gray (mostly black)
 #define COLOR_FORM                  "#4f4f4f"    // [WebColor3] Form background color - Very dark gray
@@ -247,6 +249,7 @@
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"       // [WebColor18] Config timer tab background color - Dark gray
 #define COLOR_TITLE_TEXT            "#eaeaea"    // [WebColor19] Title text color - Very light gray
 #define COLOR_BUTTON_OFF            "#08405e"    // [WebColor20] Button color when off - Darkest blueish
+*/
 
 // -- KNX -----------------------------------------
 #define KNX_ENABLED            false             // [Knx_Enabled] Enable KNX protocol
