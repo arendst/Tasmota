@@ -38,8 +38,10 @@
 set -euo pipefail
 
 # ----------------------------- configuration -------------------------------
-WORKDIR="${WORKDIR:-$PWD/tasmota-qemu}"      # everything is created under here
-TASMOTA_REPO="${TASMOTA_REPO:-https://github.com/arendst/Tasmota.git}"
+WORKDIR="${WORKDIR:-$PWD/tasmota-qemu}"      # qemu builds, flash images, venv live here
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASMOTA_SRC="${TASMOTA_SRC:-$SCRIPT_DIR}"    # Tasmota checkout to build (default: this repo,
+                                              #   i.e. your local changes — no clone)
 TASMOTA_ENV="${TASMOTA_ENV:-tasmota32}"      # PlatformIO env (must be an ESP32 one)
 MINIMAL="${MINIMAL:-0}"                       # 1 = build the stripped safeboot env (fewest
                                               #     IDF drivers -> fewest pre-app init fns;
@@ -99,7 +101,7 @@ download() {  # download <url> <dest>
 # Write/refresh the WiFi station creds into a managed block in
 # user_config_override.h so the build joins the emulated AP (NET_WIFI=1).
 ensure_wifi_creds() {
-  local ovr="$WORKDIR/Tasmota/tasmota/user_config_override.h"
+  local ovr="$TASMOTA_SRC/tasmota/user_config_override.h"
   local b="// >>> run-it.sh NET_WIFI creds (managed) >>>"
   local e="// <<< run-it.sh NET_WIFI creds (managed) <<<"
   local block
@@ -133,24 +135,24 @@ EOF
 
 # --------------------------- step 1: build ---------------------------------
 build_tasmota() {
-  log "Building Tasmota env '$TASMOTA_ENV' (this pulls toolchains on first run) ..."
+  [ -f "$TASMOTA_SRC/platformio.ini" ] \
+    || { err "TASMOTA_SRC ($TASMOTA_SRC) is not a Tasmota checkout (no platformio.ini)"; exit 1; }
+  log "Building env '$TASMOTA_ENV' from local source $TASMOTA_SRC (this pulls toolchains on first run) ..."
   mkdir -p "$WORKDIR"
-  if [ ! -d "$WORKDIR/Tasmota/.git" ]; then
-    git clone --depth 1 "$TASMOTA_REPO" "$WORKDIR/Tasmota"
-  fi
-  cd "$WORKDIR/Tasmota"
 
   [ "$NET_WIFI" = "1" ] && ensure_wifi_creds
 
-  [ -d .venv ] || python3 -m venv .venv
+  # Keep the venv out of the source tree so the working copy stays clean.
+  local venv="$WORKDIR/.venv"
+  [ -d "$venv" ] || python3 -m venv "$venv"
   # shellcheck disable=SC1091
-  source .venv/bin/activate
+  source "$venv/bin/activate"
   pip install -q --upgrade pip
   pip install -q platformio
-  pio run -e "$TASMOTA_ENV"
+  ( cd "$TASMOTA_SRC" && pio run -e "$TASMOTA_ENV" )
   deactivate
 
-  local factory="$WORKDIR/Tasmota/build_output/firmware/${TASMOTA_ENV}.factory.bin"
+  local factory="$TASMOTA_SRC/build_output/firmware/${TASMOTA_ENV}.factory.bin"
   [ -f "$factory" ] || { err "expected merged image not found: $factory"; exit 1; }
   log "Firmware built: $factory"
 }
@@ -159,7 +161,7 @@ build_tasmota() {
 make_image() {
   local size; size="$(flash_bytes "$FLASH_SIZE")"
   local img="$WORKDIR/flash_image.bin"
-  local factory="$WORKDIR/Tasmota/build_output/firmware/${TASMOTA_ENV}.factory.bin"
+  local factory="$TASMOTA_SRC/build_output/firmware/${TASMOTA_ENV}.factory.bin"
 
   if [ -f "$factory" ]; then
     # .factory.bin already starts at offset 0x0 (bootloader + partitions + app);
@@ -172,7 +174,7 @@ make_image() {
 
   # No factory image (e.g. the safeboot env ships app-only). Merge the raw parts
   # at the standard ESP32 offsets ourselves, same as smoketest.
-  local bd="$WORKDIR/Tasmota/.pio/build/${TASMOTA_ENV}"
+  local bd="$TASMOTA_SRC/.pio/build/${TASMOTA_ENV}"
   local boot="$bd/bootloader.bin" part="$bd/partitions.bin" app="$bd/firmware.bin"
   local f
   for f in "$boot" "$part" "$app"; do
@@ -263,10 +265,25 @@ setup_qemu() {
   log "Built QEMU: $QEMU_BIN"
 }
 
+# Kill any QEMU we previously launched against this WORKDIR, so the new run can
+# grab the hostfwd port (avoids 'Could not set up host forwarding ... address
+# already in use'). Matches only our own QEMU (cmdline references $WORKDIR); the
+# script's own process has no 'qemu-system-xtensa' in its cmdline, so no self-kill.
+kill_stale_qemu() {
+  local pids
+  pids="$(pgrep -f "qemu-system-xtensa.*$WORKDIR" 2>/dev/null || true)"
+  [ -n "$pids" ] || return 0
+  log "Stopping previous QEMU (pid: $(echo $pids | tr '\n' ' ')) to free port ${WEB_PORT_HOST} ..."
+  # shellcheck disable=SC2086
+  kill -9 $pids 2>/dev/null || true
+  sleep 1
+}
+
 # ----------------------------- step 4: run ---------------------------------
 run_qemu() {
   [ -f "$WORKDIR/flash_image.bin" ] || { err "flash_image.bin missing — run '$0 make-image' first"; exit 1; }
   if [ -z "$QEMU_BIN" ] || [ ! -x "$QEMU_BIN" ]; then setup_qemu; fi
+  kill_stale_qemu
 
   # When running from a source build, point QEMU at its bios/rom directory.
   local src_dir pcbios=""
@@ -364,7 +381,7 @@ decode_panic() {
   local elf
   case "$logfile" in
     *smoke*) elf="$WORKDIR/smoke/.pio/build/smoke/firmware.elf";;
-    *)       elf="$WORKDIR/Tasmota/.pio/build/${TASMOTA_ENV}/firmware.elf";;
+    *)       elf="$TASMOTA_SRC/.pio/build/${TASMOTA_ENV}/firmware.elf";;
   esac
   [ -f "$elf" ] || { err "ELF not found: $elf (run the matching build first)"; exit 1; }
 
@@ -399,13 +416,13 @@ decode_panic() {
 #   boots OK  -> QEMU fine, Tasmota's own config/PSRAM is the culprit
 #   same panic-> QEMU/IDF baseline can't boot this IDF; fix QEMU, not Tasmota
 smoketest() {
-  local tas="$WORKDIR/Tasmota" smoke="$WORKDIR/smoke"
-  [ -d "$tas/.venv" ] || { err "need Tasmota venv+platform — run '$0 build' first"; exit 1; }
+  local smoke="$WORKDIR/smoke" venv="$WORKDIR/.venv"
+  [ -d "$venv" ] || { err "need the build venv+platform — run '$0 build' first"; exit 1; }
 
   # Reuse the exact espressif32 platform Tasmota pins, so IDF matches.
   local platform
   platform="$(grep -hoE 'https://github.com/tasmota/platform-espressif32/[^ ]+\.zip' \
-                "$tas/platformio_tasmota32.ini" | head -n1)"
+                "$TASMOTA_SRC/platformio_tasmota32.ini" | head -n1)"
   [ -n "$platform" ] || { err "espressif32 platform URL not found in platformio_tasmota32.ini"; exit 1; }
   log "Smoketest platform (matches Tasmota): $platform"
 
@@ -435,7 +452,7 @@ void loop() {
 EOF
 
   # shellcheck disable=SC1091
-  source "$tas/.venv/bin/activate"
+  source "$venv/bin/activate"
   ( cd "$smoke" && pio run -e smoke )
 
   local bd="$smoke/.pio/build/smoke"
@@ -463,6 +480,7 @@ EOF
   log "Smoketest image: $img ($FLASH_SIZE)"
 
   if [ -z "$QEMU_BIN" ] || [ ! -x "$QEMU_BIN" ]; then setup_qemu; fi
+  kill_stale_qemu
   local src_dir pcbios=""
   src_dir="$(dirname "$(dirname "$QEMU_BIN")")"
   [ -d "$src_dir/pc-bios" ] && pcbios="-L $src_dir/pc-bios"
@@ -486,7 +504,7 @@ usage() {
 tasmota-qemu.sh — build & run Tasmota (ESP32) under QEMU on amd64
 
 Commands:
-  build        Compile Tasmota firmware (PlatformIO env: \$TASMOTA_ENV)
+  build        Compile Tasmota firmware from \$TASMOTA_SRC (PlatformIO env: \$TASMOTA_ENV)
   make-image   Pad the .factory.bin into a QEMU flash image
   qemu-setup   Clone + build the chosen QEMU fork
   run          Boot the firmware in QEMU (serial tee'd to \$WORKDIR/qemu.log)
@@ -497,6 +515,8 @@ Commands:
 
 Key environment variables (current defaults):
   WORKDIR=$WORKDIR
+  TASMOTA_SRC=$TASMOTA_SRC
+                            Tasmota checkout to build (default: this repo — your changes)
   TASMOTA_ENV=$TASMOTA_ENV          ESP32 PlatformIO env
   MINIMAL=$MINIMAL                  1 = build $MINIMAL_ENV (stripped, fewest drivers)
   NET_WIFI=$NET_WIFI                 1 = one-shot networked recipe (wifi fork + $NET_WIFI_ENV
