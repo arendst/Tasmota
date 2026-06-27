@@ -73,7 +73,16 @@ typedef struct {
     bfuncinfo *finfo;
     bclosure *cl;
     bbyte islocal;
+    bbyte depth;  /* recursion depth for expr/block; bounded by BE_MAX_PARSER_DEPTH (must fit in bbyte) */
 } bparser;
+
+#define enter_recursion(parser) do { \
+    if (++(parser)->depth > BE_MAX_PARSER_DEPTH) { \
+        push_error((parser), "expression or block too deeply nested"); \
+    } \
+} while (0)
+
+#define leave_recursion(parser)  (--(parser)->depth)
 
 #if BE_USE_SCRIPT_COMPILER
 
@@ -250,8 +259,10 @@ static void begin_func(bparser *parser, bfuncinfo *finfo, bblockinfo *binfo)
     proto->code = be_vector_data(&finfo->code);
     proto->codesize = be_vector_capacity(&finfo->code);
     be_vector_init(vm, &finfo->kvec, sizeof(bvalue)); /* vector for constants */
+#if !BE_USE_COMPACT_KTAB
     proto->ktab = be_vector_data(&finfo->kvec);
     proto->nconst = be_vector_capacity(&finfo->kvec);
+#endif
     be_vector_init(vm, &finfo->pvec, sizeof(bproto*)); /* vector for subprotos */
     proto->ptab = be_vector_data(&finfo->pvec);
     proto->nproto = be_vector_capacity(&finfo->pvec);
@@ -322,13 +333,29 @@ static void end_func(bparser *parser)
     setupvals(finfo); /* close upvals */
     proto->code = be_vector_release(vm, &finfo->code); /* compact all vectors and return NULL if empty */
     proto->codesize = finfo->pc;
+#if BE_USE_COMPACT_KTAB
+    {   /* build the compact constant table from the scratch bvalue vector */
+        bvalue *kdata = be_vector_release(vm, &finfo->kvec);
+        int nconst = be_vector_count(&finfo->kvec);
+        /* keep the released bvalue[] visible to the GC (ktype==NULL sentinel)
+         * while be_proto_set_ktab allocates the compact block (which may GC) */
+        proto->kval = (union bvaldata*) kdata;
+        proto->ktype = NULL;
+        proto->nconst = (int16_t)nconst;
+        be_proto_set_ktab(vm, proto, kdata, nconst);
+        if (kdata) { be_free(vm, kdata, nconst * sizeof(bvalue)); }
+    }
+#else
     proto->ktab = be_vector_release(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
+#endif
     proto->ptab = be_vector_release(vm, &finfo->pvec);
     proto->nproto = be_vector_count(&finfo->pvec);
 #if BE_USE_MEM_ALIGNED
     proto->code = be_move_to_aligned(vm, proto->code, proto->codesize * sizeof(binstruction));     /* move `code` to 4-bytes aligned memory region */
+#if !BE_USE_COMPACT_KTAB
     proto->ktab = be_move_to_aligned(vm, proto->ktab, proto->nconst * sizeof(bvalue));     /* move `ktab` to 4-bytes aligned memory region */
+#endif
 #endif /* BE_USE_MEM_ALIGNED */
 #if BE_DEBUG_RUNTIME_INFO
     proto->lineinfo = be_vector_release(vm, &finfo->linevec);     /* move `lineinfo` to 4-bytes aligned memory region */
@@ -1078,7 +1105,9 @@ static void cond_expr(bparser *parser, bexpdesc *e)
 static void sub_expr(bparser *parser, bexpdesc *e, int prio)
 {
     bfuncinfo *finfo = parser->finfo;
-    btokentype op = get_unary_op(parser);  /* check if first token in unary op */
+    btokentype op;
+    enter_recursion(parser);
+    op = get_unary_op(parser);  /* check if first token in unary op */
     if (op != OP_NOT_UNARY) {  /* unary op found */
         int line, res;
         scan_next_token(parser);  /* move to next token */
@@ -1116,6 +1145,7 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
     if (prio == ASSIGN_OP_PRIO) {
         cond_expr(parser, e);
     }
+    leave_recursion(parser);
 }
 
 static void walrus_expr(bparser *parser, bexpdesc *e)
@@ -1807,9 +1837,11 @@ static void stmtlist(bparser *parser)
 static void block(bparser *parser, int type)
 {
     bblockinfo binfo;
+    enter_recursion(parser);
     begin_block(parser->finfo, &binfo, type);
     stmtlist(parser);
     end_block(parser);
+    leave_recursion(parser);
 }
 
 static void mainfunc(bparser *parser, bclosure *cl)
@@ -1835,6 +1867,7 @@ bclosure* be_parser_source(bvm *vm,
     parser.finfo = NULL;
     parser.cl = cl;
     parser.islocal = (bbyte)islocal;
+    parser.depth = 0;
     var_setclosure(vm->top, cl);
     be_stackpush(vm);
     be_lexer_init(&parser.lexer, vm, fname, reader, data);

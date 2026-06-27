@@ -258,10 +258,10 @@ bool I80Panel::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
     return true;
 }
 
-bool I80Panel::pushColors(uint16_t *data, uint32_t len, bool swapped) {
+bool I80Panel::pushColors(uint16_t *data, uint32_t len, bool not_swapped) {
     // Match old code: just push pixels, no transaction management
     // Transaction is managed by setAddrWindow()
-    pb_pushPixels(data, len, !swapped, false);  // swap_bytes=true to match old driver
+    pb_pushPixels(data, len, not_swapped, false);
     return true;
 }
 

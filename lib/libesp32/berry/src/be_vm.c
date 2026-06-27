@@ -30,8 +30,21 @@
     be_raise(vm, except, be_pushfstring(vm, __VA_ARGS__))
 
 #define RA()   (reg + IGET_RA(ins))  /* Get value of register A */
+#if BE_USE_COMPACT_KTAB
+/* With a compact constant table there is no `bvalue[]` to point into, so a
+ * constant operand is materialized into a per-operand scratch `bvalue`
+ * (`_krkb` for B, `_krkc` for C) and its address is returned. Register
+ * operands still return a direct pointer into the register file. */
+#define RK_CONST(_idx, _scr) \
+    ((_scr).v = kval[_idx], (_scr).type = ktype[_idx], &(_scr))
+#define RKB()  (isKB(ins) ? RK_CONST(KR2idx(IGET_RKB(ins)), _krkb) \
+                          : reg + KR2idx(IGET_RKB(ins)))
+#define RKC()  (isKC(ins) ? RK_CONST(KR2idx(IGET_RKC(ins)), _krkc) \
+                          : reg + KR2idx(IGET_RKC(ins)))
+#else
 #define RKB()  ((isKB(ins) ? ktab : reg) + KR2idx(IGET_RKB(ins)))  /* Get value of register or constant B */
 #define RKC()  ((isKC(ins) ? ktab : reg) + KR2idx(IGET_RKC(ins)))  /* Get value of register or constant C */
+#endif
 
 #define var2cl(_v)          cast(bclosure*, var_toobj(_v))  /* cast var to closure */
 #define var2real(_v)        (var_isreal(_v) ? (_v)->v.r : (breal)(_v)->v.i)  /* get var as real or convert to real if integer */
@@ -81,36 +94,41 @@
 #define opcase(opcode)      case OP_##opcode
 #define dispatch()          goto loop
 
-#define equal_rule(op, iseq) \
-    bbool res; \
-    be_assert(!var_isstatic(a)); \
-    be_assert(!var_isstatic(b)); \
-    if (var_isint(a) && var_isint(b)) { \
-        res = ibinop(op, a, b); \
-    } else if (var_isnumber(a) && var_isnumber(b)) { \
-        res = var2real(a) op var2real(b); \
-    } else if (var_isinstance(a) && !var_isnil(b)) { \
-        res = object_eqop(vm, #op, iseq, a, b); \
-    } else if (var_primetype(a) == var_primetype(b)) { /* same types */ \
-        if (var_isnil(a)) { /* nil op nil */ \
-            res = 1 op 1; \
-        } else if (var_isbool(a)) { /* bool op bool */ \
-            res = var_tobool(a) op var_tobool(b); \
-        } else if (var_isstr(a)) { /* string op string */ \
-            res = 1 op be_eqstr(a->v.s, b->v.s); \
-        } else if (var_isclass(a) || var_isfunction(a) || var_iscomptr(a)) { \
-            res = var_toobj(a) op var_toobj(b); \
-        } else { \
-            binop_error(vm, #op, a, b); \
-            res = bfalse; /* will not be executed */ \
-        } \
-    } else { /* different types */ \
-        res = 1 op 0; \
-    } \
-    return res
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
 
-/* when running on ESP32 in IRAM, there is a bug in early chip revision */
-#ifdef ESP32
+    #define equal_rule(op, iseq) \
+        bbool res; \
+        be_assert(!var_isstatic(a)); \
+        be_assert(!var_isstatic(b)); \
+        if (var_isint(a) && var_isint(b)) { \
+            res = ibinop(op, a, b); \
+        } else if (var_isnumber(a) && var_isnumber(b)) { \
+            union bvaldata x, y; \
+            x.i = a->v.i; \
+            if (var_isint(a)) { x.r = (breal) x.i; } \
+            y.i = b->v.i; \
+            if (var_isint(b)) { y.r = (breal) y.i; } \
+            res = x.r op y.r; \
+        } else if (var_isinstance(a) && !var_isnil(b)) { \
+            res = object_eqop(vm, #op, iseq, a, b); \
+        } else if (var_primetype(a) == var_primetype(b)) { /* same types */ \
+            if (var_isnil(a)) { /* nil op nil */ \
+                res = 1 op 1; \
+            } else if (var_isbool(a)) { /* bool op bool */ \
+                res = var_tobool(a) op var_tobool(b); \
+            } else if (var_isstr(a)) { /* string op string */ \
+                res = 1 op be_eqstr(a->v.s, b->v.s); \
+            } else if (var_isclass(a) || var_isfunction(a) || var_iscomptr(a)) { \
+                res = var_toobj(a) op var_toobj(b); \
+            } else { \
+                binop_error(vm, #op, a, b); \
+                res = bfalse; /* will not be executed */ \
+            } \
+        } else { /* different types */ \
+            res = 1 op 0; \
+        } \
+        return res
+
     #define relop_rule(op) \
         bbool res; \
         if (var_isint(a) && var_isint(b)) { \
@@ -136,7 +154,35 @@
             res = bfalse; /* will not be executed */ \
         } \
         return res
-#else  // ESP32
+#else  // CONFIG_IDF_TARGET_ESP32
+    #define equal_rule(op, iseq) \
+        bbool res; \
+        be_assert(!var_isstatic(a)); \
+        be_assert(!var_isstatic(b)); \
+        if (var_isint(a) && var_isint(b)) { \
+            res = ibinop(op, a, b); \
+        } else if (var_isnumber(a) && var_isnumber(b)) { \
+            res = var2real(a) op var2real(b); \
+        } else if (var_isinstance(a) && !var_isnil(b)) { \
+            res = object_eqop(vm, #op, iseq, a, b); \
+        } else if (var_primetype(a) == var_primetype(b)) { /* same types */ \
+            if (var_isnil(a)) { /* nil op nil */ \
+                res = 1 op 1; \
+            } else if (var_isbool(a)) { /* bool op bool */ \
+                res = var_tobool(a) op var_tobool(b); \
+            } else if (var_isstr(a)) { /* string op string */ \
+                res = 1 op be_eqstr(a->v.s, b->v.s); \
+            } else if (var_isclass(a) || var_isfunction(a) || var_iscomptr(a)) { \
+                res = var_toobj(a) op var_toobj(b); \
+            } else { \
+                binop_error(vm, #op, a, b); \
+                res = bfalse; /* will not be executed */ \
+            } \
+        } else { /* different types */ \
+            res = 1 op 0; \
+        } \
+        return res
+
     #define relop_rule(op) \
         bbool res; \
         if (var_isint(a) && var_isint(b)) { \
@@ -156,7 +202,7 @@
             res = bfalse; /* will not be executed */ \
         } \
         return res
-#endif // ESP32
+#endif // CONFIG_IDF_TARGET_ESP32
 
 #define bitwise_block(op) \
     bvalue *dst = RA(), *a = RKB(), *b = RKC(); \
@@ -561,13 +607,25 @@ BERRY_API void be_vm_delete(bvm *vm)
 static void vm_exec(bvm *vm)
 {
     bclosure *clos;
-    bvalue *ktab, *reg;
+    bvalue *reg;
+#if BE_USE_COMPACT_KTAB
+    const union bvaldata *kval; /* current constant payload words */
+    const bbyte *ktype;         /* current constant type bytes */
+    bvalue _krkb, _krkc;        /* scratch for materialized constant operands B/C */
+#else
+    bvalue *ktab;
+#endif
     binstruction ins;
     vm->cf->status |= BASE_FRAME;
 newframe: /* a new call frame */
     be_assert(var_isclosure(vm->cf->func));
     clos = var_toobj(vm->cf->func);  /* `clos` is the current function/closure */
+#if BE_USE_COMPACT_KTAB
+    kval = clos->proto->kval;  /* current constant payload words */
+    ktype = clos->proto->ktype;  /* current constant type bytes */
+#else
     ktab = clos->proto->ktab;  /* `ktab` is the current constant table */
+#endif
     reg = vm->reg;  /* `reg` is the current stack base for the callframe */
 #if BE_USE_PERF_COUNTERS
     vm->counter_enter++;
@@ -592,7 +650,13 @@ newframe: /* a new call frame */
         }
         opcase(LDCONST): {
             bvalue *dst = RA();
+#if BE_USE_COMPACT_KTAB
+            int _kidx = IGET_Bx(ins);
+            dst->v = kval[_kidx];
+            dst->type = ktype[_kidx];
+#else
             *dst = ktab[IGET_Bx(ins)];
+#endif
             dispatch();
         }
         opcase(GETGBL): {
@@ -662,17 +726,17 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(+, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
-#ifdef ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
+#if CONFIG_IDF_TARGET_ESP32    /* when running on ESP32 in IRAM, there is a bug in early chip revision */
                 union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
                 x.i = a->v.i;
                 if (var_isint(a)) { x.r = (breal) x.i; }
                 y.i = b->v.i;
                 if (var_isint(b)) { y.r = (breal) y.i; }
                 var_setreal(dst, x.r + y.r);
-#else  // ESP32
+#else  // CONFIG_IDF_TARGET_ESP32
                 breal x = var2real(a), y = var2real(b);
                 var_setreal(dst, x + y);
-#endif // ESP32
+#endif // CONFIG_IDF_TARGET_ESP32
             } else if (var_isstr(a) && var_isstr(b)) { /* strcat */
                 bstring *s = be_strcat(vm, var_tostr(a), var_tostr(b));
                 reg = vm->reg;
@@ -946,7 +1010,11 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(CLASS): {
+#if BE_USE_COMPACT_KTAB
+            bclass *c = (bclass*)kval[IGET_Bx(ins)].p;
+#else
             bclass *c = var_toobj(ktab + IGET_Bx(ins));
+#endif
             be_class_upvalue_init(vm, c);
             dispatch();
         }

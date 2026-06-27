@@ -78,24 +78,24 @@ class Matter_Plugin_Aggregator : Matter_Plugin
     # ====================================================================================================
     if   cluster == 0x0003              # ========== Identify 1.2 p.16 ==========
       if   attribute == 0x0000          #  ---------- IdentifyTime / u2 ----------
-        return tlv_solo.set(TLV.U2, 0)      # no identification in progress
+        return tlv_solo.set(0x05 #-TLV.U2-#, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
-        return tlv_solo.set(TLV.U1, 0)      # IdentifyType = 0x00 None
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)      # IdentifyType = 0x00 None
       end
 
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
       if attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
         var pl = TLV.Matter_TLV_array()
         # from connectedhome reference implementation
-        pl.add_TLV(nil, TLV.U2, 0x001E)     # Binding
+        pl.add_TLV(nil, 0x05 #-TLV.U2-#, 0x001E)     # Binding
         return pl        
       # overwrite PartsList
       elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
         for ep: eps
-          if ep != matter.AGGREGATOR_ENDPOINT
-            pl.add_TLV(nil, TLV.U2, ep)     # add each endpoint
+          if ep != 0x0001 #-matter.AGGREGATOR_ENDPOINT-#
+            pl.add_TLV(nil, 0x05 #-TLV.U2-#, ep)     # add each endpoint
           end
         end
         return pl
@@ -126,7 +126,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
         # ID=1
         #  0=Certificate (octstr)
         var iqr = TLV.Matter_TLV_struct()
-        iqr.add_TLV(0, TLV.U2, 0)       # Timeout
+        iqr.add_TLV(0, 0x05 #-TLV.U2-#, 0)       # Timeout
         ctx.command = 0x00              # IdentifyQueryResponse
         return iqr
       elif command == 0x0040            # ---------- TriggerEffect ----------

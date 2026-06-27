@@ -113,6 +113,7 @@ struct PCF8574 {
   uint32_t relay_inverted;
   uint32_t button_inverted;
   uint8_t address[MAX_PCF8574];
+  uint8_t bus[MAX_PCF8574];
   uint8_t pin_mask[MAX_PCF8574] = { 0 };
 #ifdef USE_PCF8574_MQTTINPUT
   uint8_t last_input[MAX_PCF8574] = { 0 };
@@ -137,14 +138,29 @@ uint16_t *Pcf8574_pin = nullptr;
 \*********************************************************************************************/
 
 uint8_t Pcf8574Read(uint8_t idx) {
+/*
   Wire.requestFrom(Pcf8574.address[idx], (uint8_t)1);
   return Wire.read();
+*/
+  TwoWire& myWire = I2cGetWire(Pcf8574.bus[idx]);
+  myWire.requestFrom(Pcf8574.address[idx], (uint8_t)1);
+  return myWire.read();
+}
+
+void Pcf8574WriteData(uint8_t idx, uint8_t data) {
+  TwoWire& myWire = I2cGetWire(Pcf8574.bus[idx]);
+  myWire.beginTransmission(Pcf8574.address[idx]);
+  myWire.write(data);
+  myWire.endTransmission();
 }
 
 void Pcf8574Write(uint8_t idx) {
+/*
   Wire.beginTransmission(Pcf8574.address[idx]);
   Wire.write(Pcf8574.pin_mask[idx]);
   Wire.endTransmission();
+*/
+  Pcf8574WriteData(idx, Pcf8574.pin_mask[idx]);
 }
 
 #ifdef USE_PCF8574_MODE2
@@ -170,9 +186,12 @@ void Pcf8574DigitalWrite(uint8_t pin, bool pin_value) {
   } else {
     value &= ~(1 << bit);
   }
+/*
   Wire.beginTransmission(Pcf8574.address[chip]);
   Wire.write(value);
   Wire.endTransmission();
+*/
+  Pcf8574WriteData(chip, value);
 }
 
 void Pcf8574DigitalWriteConfig(uint8_t pin, bool pin_value) {
@@ -629,34 +648,37 @@ void Pcf8574ShowJson(void) {
 \*********************************************************************************************/
 
 void Pcf8574ModuleInit(void) {
-  uint8_t pcf8574_address = (PCF8574_ADDR1_COUNT > 0) ? PCF8574_ADDR1 : PCF8574_ADDR2;
-  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +PCF8574_ADDR2_COUNT)) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+    uint8_t pcf8574_address = (PCF8574_ADDR1_COUNT > 0) ? PCF8574_ADDR1 : PCF8574_ADDR2;
+    while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +PCF8574_ADDR2_COUNT)) {
 
-#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
-    if (USE_MCP230xx_ADDR == pcf8574_address) {
-      AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP230xx"), pcf8574_address);
-    } else {
-#endif
+  #if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
+      if (USE_MCP230xx_ADDR == pcf8574_address) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PCF: Address 0x%02x reserved for MCP230xx"), pcf8574_address);
+      } else {
+  #endif
 
-      if (I2cSetDevice(pcf8574_address)) {
-        Pcf8574.mode = 1;
+        if (I2cSetDevice(pcf8574_address, bus)) {
+          Pcf8574.mode = 1;
 
-        Pcf8574.max_connected_ports += 8;
-        Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
-        Pcf8574.max_devices++;
+          Pcf8574.max_connected_ports += 8;
+          Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
+          Pcf8574.bus[Pcf8574.max_devices] = bus;
+          Pcf8574.max_devices++;
 
-        char stype[12];
-        sprintf_P(stype, PSTR("PCF8574%s"), (pcf8574_address >= PCF8574_ADDR2) ? "A" : "");
-        I2cSetActiveFound(pcf8574_address, stype);
+          char stype[12];
+          sprintf_P(stype, PSTR("PCF8574%s"), (pcf8574_address >= PCF8574_ADDR2) ? "A" : "");
+          I2cSetActiveFound(pcf8574_address, stype, bus);
+        }
+
+  #if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
       }
+  #endif
 
-#if defined(USE_MCP230xx) && defined(USE_MCP230xx_ADDR)
-    }
-#endif
-
-    pcf8574_address++;
-    if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
-      pcf8574_address = PCF8574_ADDR2;
+      pcf8574_address++;
+      if ((PCF8574_ADDR1 +PCF8574_ADDR1_COUNT) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
+        pcf8574_address = PCF8574_ADDR2;
+      }
     }
   }
 

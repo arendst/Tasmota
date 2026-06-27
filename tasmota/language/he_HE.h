@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "פרמטרים שונים"
 #define D_TEMPLATE "תבנית"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "הפעל"
 #define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "סיסמת מנהל"
@@ -1339,5 +1340,13 @@
 // xnrg_25_v9240.ino
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
+
+#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+
+// xdrv_94_modbus_relay.ino
+#define D_MODBUSRELAY_TX         "MbsRelay TX"
+#define D_MODBUSRELAY_TX_ENA     "MbsRelay TX Ena"
+#define D_MODBUSRELAY_RX         "MbsRelay RX"
+#define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
 
 #endif  // _LANGUAGE_HE_HE_H_

@@ -25,7 +25,7 @@ bvalue* be_incrtop(bvm *vm);
 
 /* in MinGW-w64, setjmp / longjmp may be broken,
  * so here is replaced by __builtin version. */
-#if defined(__GNUC__) && defined(__MINGW32__)
+#if defined(__GNUC__) && defined(__MINGW32__) && !defined(__clang__)
   #define be_setjmp(env)        __builtin_setjmp(env)
   #define be_longjmp(env, v)    __builtin_longjmp(env, v)
 #else

@@ -24,26 +24,29 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy used in Shelly 2.5 (model 1), EM (model 2), Plus 2PM and 2PM Gen3 (model 3), Pro 1PM (model 4), Pro 2PM (model 5) and Pro 4PM (model 6)
+ * ADE7953 - Energy used in Shelly 2.5 (model 1), EM and Pro EM (model 2), Plus 2PM and 2PM Gen3 (model 3), Pro 1PM (model 4), Pro 2PM (model 5) and Pro 4PM (model 6)
  *
- * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
- * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
- * {"NAME":"Shelly Plus 2PM PCB v0.1.5","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3458,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
- * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
- * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
- * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
- * {"NAME":"Shelly Pro 4PM","GPIO":[0,6210,0,6214,9568,0,0,0,0,0,9569,0,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,736,704,3461,0,4736,0,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
- * {"NAME":"Shelly 2PM Gen3","GPIO":[9472,3458,576,225,4736,224,640,608,1,1,193,0,0,0,0,0,0,0,192,32,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio4 10000,10000,4000"}
+ * {"NAME":"Shelly 2.5","ARCH":"ESP8266","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly EM","ARCH":"ESP8266","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly Plus 2PM PCB v0.1.5","ARCH":"ESP32","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3458,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
+ * {"NAME":"Shelly Plus 2PM PCB v0.1.9","ARCH":"ESP32","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcGpio35 10000,10000,3350"}
+ * {"NAME":"Shelly Pro 1PM","ARCH":"ESP32","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcGpio36 10000,10000,3350"}
+ * {"NAME":"Shelly Pro 2PM","ARCH":"ESP32","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcGpio36 10000,10000,3350;AdcGpio37 10000,10000,3350"}
+ * {"NAME":"Shelly Pro 4PM","ARCH":"ESP32","GPIO":[0,6210,0,6214,9568,0,0,0,0,0,9569,0,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,736,704,3461,0,4736,0,0,672],"FLAG":0,"BASE":1,"CMND":"AdcGpio36 10000,10000,3350"}
+ * {"NAME":"Shelly Pro EM-50","ARCH":"ESP32","GPIO":[0,0,224,0,3457,0,0,0,0,608,544,640,9472,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,5536,0,0,32,4736,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcGpio36 10000,10000,3350"}
+ * {"NAME":"Shelly 2PM Gen3","ARCH":"ESP32C3","GPIO":[9472,3458,576,225,4736,224,640,608,1,1,193,0,0,0,0,0,0,0,192,32,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio4 10000,10000,3350"}
  * 
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
  * Model differences:
  * Function                        Model1   Model2   Model3   Model4  Model5  Model6  Remark
  * ------------------------------  -------  -------  -------  ------  ------  ------  -------------------------------------------------
- * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM  Pro4PM  Shelly hardware
- *                                                   2PMGen3
- * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32   ESP32
- *                                                   ESP32C3                          Shelly Gen3
+ * Shelly Gen1                     2.5      EM       -        -       -       -
+ * Shelly Gen2                     -        ProEM    Plus2PM  Pro1PM  Pro2PM  Pro4PM
+ * Shelly Gen3                     -        -        2PMGen3  -       -       -
+ * Processor Gen1                  ESP8266  ESP8266  -        -       -       -
+ * Processor Gen2                  -        ESP32    ESP32    ESP32   ESP32   ESP32
+ * Processor Gen3                  -        -        ESP32C3  -       -       -
  * Interface                       I2C      I2C      I2C      SPI     SPI     SPI     Interface type used
  * Number of inputs                2        2        2        1       2       4       Count of ADE9753 inputs used
  * Number of ADE9753 chips         1        1        1        1       2       2       Count of ADE9753 chips
@@ -728,9 +731,9 @@ void Ade7953DrvInit(void) {
       pinMode(pin_reset, OUTPUT);                    // Reset pin ADE7953
       delay(1);                                      // To initiate a hardware reset, this pin must be brought low for a minimum of 10 μs.
       digitalWrite(pin_reset, 1);
-      if (Ade7953.model < ADE7953_SHELLY_PRO_1PM) {
-        pinMode(pin_reset, INPUT);
-      }
+#if defined(ESP8266) || defined(CONFIG_IDF_TARGET_ESP32C3)  // Only ESP8266 (Gen1) and ESP32-C3 (Gen3) benefit from this
+      pinMode(pin_reset, INPUT);                     // Reduce current on this pin lowering temperature considerably
+#endif
     }
 #ifdef USE_ESP32_SPI
 #if (defined(USE_SHELLY_PRO) && defined(USE_MCP23XXX_DRV)) || defined(USE_SHELLY_PRO_V2)

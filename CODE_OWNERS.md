@@ -236,6 +236,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_117_c8_co2_5k           | @jeroenvermeulen
 | xsns_118_ags02ma             | Akshaylal S
 | xsns_119_sen6x               | @arendst
+| xsns_120_stcc4               | @arendst
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |

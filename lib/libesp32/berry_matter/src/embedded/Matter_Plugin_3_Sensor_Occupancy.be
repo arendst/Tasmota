@@ -124,7 +124,6 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
   static var DISPLAY_NAME = "Occupancy"                     # display name of the plug-in
   # static var ARG  = "switch"                        # additional argument name (or empty if none)
   # static var ARG_HINT = "Switch<x> number"
-  # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 750                      # update every 750ms
   static var JSON_NAME = "Occupancy"                # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Occupancy")
@@ -149,18 +148,17 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     # ====================================================================================================
     if   cluster == 0x0406              # ========== Occupancy Sensing ==========
       if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        return tlv_solo.set_or_nil(TLV.U1, self.shadow_bool_value)
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_bool_value)
       elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
-        return tlv_solo.set(TLV.U1, 3)  # physical contact
+        return tlv_solo.set(0x04 #-TLV.U1-#, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
-        return tlv_solo.set(TLV.U1, 0)  # unknown
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)  # unknown
       end
 
     end

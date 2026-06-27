@@ -95,7 +95,12 @@ bproto* be_newproto(bvm *vm)
     bproto *p = cast_proto(gco);
     if (p) {
         p->upvals = NULL;
+#if BE_USE_COMPACT_KTAB
+        p->kval = NULL;
+        p->ktype = NULL;
+#else
         p->ktab = NULL;
+#endif
         p->ptab = NULL;
         p->code = NULL;
         p->name = NULL;
@@ -122,6 +127,38 @@ bproto* be_newproto(bvm *vm)
     }
     return p;
 }
+
+#if BE_USE_COMPACT_KTAB
+void be_proto_set_ktab(bvm *vm, bproto *proto, const bvalue *src, int nconst)
+{
+    if (nconst > 0) {
+        /* one allocation: nconst payload words followed by nconst type bytes.
+         * be_malloc may trigger GC, so we fill a fresh block and only publish
+         * it to the proto afterwards (the proto keeps its previous, still-valid
+         * kval/ktype/nconst until then) */
+        char *blk = be_malloc(vm, be_proto_ktab_size(nconst));
+        union bvaldata *kval = (union bvaldata*)blk;
+        bbyte *ktype = (bbyte*)(blk + (size_t)nconst * sizeof(union bvaldata));
+        int i;
+        for (i = 0; i < nconst; ++i) {
+            if (src) {
+                kval[i] = src[i].v;
+                ktype[i] = (bbyte)src[i].type;
+            } else {
+                kval[i].i = 0;     /* nil-initialize: GC-safe placeholder */
+                ktype[i] = BE_NIL;
+            }
+        }
+        proto->kval = kval;
+        proto->ktype = ktype;
+        proto->nconst = (int16_t)nconst;
+    } else {
+        proto->kval = NULL;
+        proto->ktype = NULL;
+        proto->nconst = 0;
+    }
+}
+#endif
 
 bclosure* be_newclosure(bvm *vm, int nupval)
 {

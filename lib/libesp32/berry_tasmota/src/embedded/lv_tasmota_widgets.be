@@ -42,7 +42,7 @@ class lv_clock: lv_label
       self.hour = hour
       self.minute = minute
       self.sec = sec
-      #if txt[0] == '0'  txt = '!' .. string.split(txt,1)[1] end  # replace first char with '!'
+      # if txt[0] == '0'  txt = '!' .. string.split(txt,1)[1] end  # replace first char with '!'
       self.set_text(txt)
     end
   end

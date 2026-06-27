@@ -55,9 +55,10 @@ class Matter_Plugin_Zigbee_Light0 : Matter_Plugin_Light0
   static var TYPE = "z_light0"                      # name of the plug-in in json
   static var DISPLAY_NAME = "Zig Light 0 OnOff"     # display name of the plug-in
   static var ZIGBEE_NAME = "Power"                  # name of zigbee attribute with sensor reported
-  static var ARG  = "zigbee_device"                 # zigbee device
-  static var ARG_TYPE = / x -> str(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Device"                    # Hint for entering the Argument (inside 'placeholder')
+
+  static var SCHEMA = "zigbee_device|"              # arg name
+                      "l:Device|"                   # label (display name)
+                      "h:Device"                    # hint (type defaults to text)
   static var VIRTUAL = true                         # virtual device, necessary for Zigbee mapping
   var zigbee_mapper                                 # required for zigbee device
 

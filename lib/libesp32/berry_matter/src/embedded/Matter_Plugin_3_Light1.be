@@ -137,8 +137,11 @@ import matter
 class Matter_Plugin_Light1 : Matter_Plugin_Light0
   static var TYPE = "light1"                                # name of the plug-in in json
   static var DISPLAY_NAME = "Light 1 Dimmer"                # display name of the plug-in
-  static var ARG  = "light"                         # additional argument name (or empty if none)
-  static var ARG_HINT = "(opt) Light number"
+
+  static var SCHEMA = "light|"                      # arg name
+                      "l:Light number (opt)|"       # label (display name)
+                      "t:i|"                        # type: int
+                      "h:(opt) Light number"        # hint
   # static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
@@ -177,11 +180,11 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     super(self).parse_configuration(config)
     # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
     if self.BRIDGE
-      self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
+      self.tasmota_relay_index = int(config.find('relay', nil))
       if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
     else
       if (self.tasmota_relay_index == nil) && (self.TYPE == "light1")   # only if `light1` and not for subclasses
-        var light_index_arg = config.find(self.ARG #-'light'-#)
+        var light_index_arg = config.find('light')
         if (light_index_arg == nil)
           if (tasmota.get_option(68) == 0)    # if default mode, and `SO68 0`, check if we have split RGB/W
             import light
@@ -262,7 +265,6 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
@@ -270,15 +272,15 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_bri)
+        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_bri)
       elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)
       elif attribute == 0x0003          #  ---------- MaxLevel / u1 ----------
-        return tlv_solo.set(TLV.U1, 254)
+        return tlv_solo.set(0x04 #-TLV.U1-#, 254)
       elif attribute == 0x000F          #  ---------- Options / map8 ----------
-        return tlv_solo.set(TLV.U1, 0)    #
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)    #
       elif attribute == 0x0011          #  ---------- OnLevel / u1 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_bri)
+        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_bri)
       end
       
     end

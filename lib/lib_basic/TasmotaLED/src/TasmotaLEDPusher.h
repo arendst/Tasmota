@@ -22,6 +22,9 @@
 
 #include <Arduino.h>
 
+// Include user defines
+#include "tasmota_options.h"
+
 // Below are flags to enable of disable each hardware support: RMT, I2S, SPI
 // By default, only enable RMT support, and SPI is used as fallback if no protocol works
 //

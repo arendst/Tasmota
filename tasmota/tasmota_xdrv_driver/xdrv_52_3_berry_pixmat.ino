@@ -167,8 +167,8 @@ int be_pixmat_init(bvm* vm) {
         mc->serpentine = (argc >= 6) ? be_tobool(vm, 6) : false;
         mc->external = true;
 
-        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0) {
-            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp");
+        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0 || mc->bpp > 8) {
+            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp (max bpp is 8)");
         }
         size_t need = (size_t)mc->width * (size_t)mc->height;
         if (mc->bpp > 0 && need > (std::numeric_limits<size_t>::max)() / (size_t)mc->bpp) {
@@ -188,8 +188,8 @@ int be_pixmat_init(bvm* vm) {
         mc->serpentine = (argc >= 5) ? be_tobool(vm, 5) : false;
         mc->external = false;
 
-        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0) {
-            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp");
+        if (mc->width <= 0 || mc->height <= 0 || mc->bpp <= 0 || mc->bpp > 8) {
+            delete mc; be_raise(vm, "value_error", "invalid dimensions or bpp (max bpp is 8)");
         }
         size_t need = (size_t)mc->width * (size_t)mc->height;
         if (mc->bpp > 0 && need > (std::numeric_limits<size_t>::max)() / (size_t)mc->bpp) {
@@ -376,7 +376,12 @@ int be_pixmat_scroll(bvm* vm) {
     }
 
     size_t need = (dir < 2 ? w : h) * bpp;
-    uint8_t edge[256], pix[8];
+    uint8_t* edge_heap = nullptr;
+    uint8_t* edge = (need <= 2048)
+                    ? (uint8_t*)alloca(need > 0 ? need : 1)
+                    : (edge_heap = (uint8_t*)malloc(need));
+    if (!edge) be_raise(vm, "memory_error", "scroll: out of memory");
+    uint8_t pix[8];
 
     auto save_row  = [&](int y, PixmatCore* m) { for (int x = 0; x < w; ++x) m->load(x, y, edge + x * bpp); };
     auto save_col  = [&](int x, PixmatCore* m) { for (int y = 0; y < h; ++y) m->load(x, y, edge + y * bpp); };
@@ -425,6 +430,7 @@ int be_pixmat_scroll(bvm* vm) {
             break;
     }
 
+    free(edge_heap);
     be_return_nil(vm);
 }
 

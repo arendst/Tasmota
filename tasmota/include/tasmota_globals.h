@@ -57,13 +57,11 @@ void InfluxDbProcess(bool use_copy = false);
 #endif
 
 #ifdef ESP32
-//#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #ifdef USE_ETHERNET
 IPAddress EthernetLocalIP(void);
 char* EthernetHostname(void);
 String EthernetMacAddress(void);
 #endif  // USE_ETHERNET
-//#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 /*********************************************************************************************\
@@ -73,7 +71,7 @@ String EthernetMacAddress(void);
 #include "include/tasmota_configurations.h"            // Preconfigured configurations
 
 /*********************************************************************************************\
- * Finale overrides
+ * Final overrides
 \*********************************************************************************************/
 
 const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_config_override.h
@@ -103,6 +101,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 
 #ifdef ESP8266
 
+#define TASMOTA_ARCH                "esp8266"      // ESP8266 and ESP8285
+
 #ifndef MODULE
 #define MODULE                      SONOFF_BASIC   // [Module] Select default model
 #endif
@@ -116,6 +116,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 //#define ARDUINO_CORE_RELEASE        ARDUINO_ESP8266_RELEASE  // 2_7_8
 #define ARDUINO_CORE_RELEASE        "2.7.8"
 #endif  // ARDUINO_ESP8266_RELEASE
+
+#define MAX_I2C                     2
 
 #ifndef USE_ADC_VCC
 #define USE_ADC
@@ -131,58 +133,45 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 
 #ifdef ESP32
 
-/*-------------------------------------------------------------------------------------------*\
- * Start ESP32 specific parameters - disable features not present in ESP32
-\*-------------------------------------------------------------------------------------------*/
-
-#if CONFIG_IDF_TARGET_ESP32
-
-
-#else   // Disable features not present in other ESP32 like ESP32C3, ESP32S2, ESP32S3 etc.
-//#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
-//#endif
-#endif  // CONFIG_IDF_TARGET_ESP32
-
-/*-------------------------------------------------------------------------------------------*\
- * End ESP32 specific parameters
-\*-------------------------------------------------------------------------------------------*/
-
-/*-------------------------------------------------------------------------------------------*\
- * Start ESP32-C3/C5/C6 specific parameters - disable features not present in ESP32-C3/C5/C6
-\*-------------------------------------------------------------------------------------------*/
-
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6   // ESP32-C3/C5/C6
-//#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // ESP32-C3/C5/C6 does not support ethernet
-//#endif
-
-#endif  // CONFIG_IDF_TARGET_ESP32C3/C5/C6
-
-/*-------------------------------------------------------------------------------------------*\
- * End ESP32-C3 specific parameters
-\*-------------------------------------------------------------------------------------------*/
-/*-------------------------------------------------------------------------------------------*\
- * Start ESP32-S2 specific parameters - disable features not present in ESP32-S2
-\*-------------------------------------------------------------------------------------------*/
-
-#if CONFIG_IDF_TARGET_ESP32S2                      // ESP32-S2
-//#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // ESP32-S2 does not support ethernet
-//#endif
-#ifdef USE_BLE_ESP32
-#undef USE_BLE_ESP32                               // ESP32-S2 does not support BLE
+#if CONFIG_IDF_TARGET_ESP32                        // ESP32/PICO-D4
+  #ifdef CORE32SOLO1
+    #define TASMOTA_ARCH            "esp32solo1"
+  #else
+    #define TASMOTA_ARCH            "esp32"
+  #endif
+#elif CONFIG_IDF_TARGET_ESP32C2
+  #define TASMOTA_ARCH              "esp32c2"
+#elif CONFIG_IDF_TARGET_ESP32C3
+  #define TASMOTA_ARCH              "esp32c3"      // ESP32C3, ESP8685 and ESP8686
+#elif CONFIG_IDF_TARGET_ESP32C5
+  #define TASMOTA_ARCH              "esp32c5"  
+#elif CONFIG_IDF_TARGET_ESP32C6
+  #define TASMOTA_ARCH              "esp32c6"
+#elif CONFIG_IDF_TARGET_ESP32H2
+  #define TASMOTA_ARCH              "esp32h2"
+#elif CONFIG_IDF_TARGET_ESP32H4
+  #define TASMOTA_ARCH              "esp32h4"
+#elif CONFIG_IDF_TARGET_ESP32P4
+  #define TASMOTA_ARCH              "esp32p4"
+#elif CONFIG_IDF_TARGET_ESP32S2
+  #define TASMOTA_ARCH              "esp32s2"
+  #ifdef USE_BLE_ESP32
+  #undef USE_BLE_ESP32                             // ESP32-S2 does not support BLE
+  #endif
+  #ifdef USE_MI_ESP32
+  #undef USE_MI_ESP32                              // ESP32-S2 does not support BLE
+  #endif
+  #ifdef USE_IBEACON_ESP32
+  #undef USE_IBEACON_ESP32                         // ESP32-S2 does not support BLE
+  #endif
+#elif CONFIG_IDF_TARGET_ESP32S3
+  #define TASMOTA_ARCH              "esp32s3"
+#else
+  #define TASMOTA_ARCH              "esp32"
 #endif
-#ifdef USE_MI_ESP32
-#undef USE_MI_ESP32                                // ESP32-S2 does not support BLE
-#endif
-#ifdef USE_IBEACON_ESP32
-#undef USE_IBEACON_ESP32                           // ESP32-S2 does not support BLE
-#endif
-#endif  // CONFIG_IDF_TARGET_ESP32S2
 
 /*-------------------------------------------------------------------------------------------*\
- * End ESP32-S2 specific parameters
+ * End ESP32 architecture specific parameters
 \*-------------------------------------------------------------------------------------------*/
 
 #ifndef MODULE
@@ -199,12 +188,7 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #define ARDUINO_CORE_RELEASE        ESP_ARDUINO_VERSION_STR  // 3.3.0
 #endif  // ARDUINO_ESP32_RELEASE
 
-#ifdef USE_I2C_BUS2                                // If defined for ESP8266 undefine first
-#undef USE_I2C_BUS2
-#endif  // USE_I2C_BUS2
-#if SOC_HP_I2C_NUM > 1
-#define USE_I2C_BUS2                               // Redefine based on hardware support
-#endif  // SOC_HP_I2C_NUM
+#define MAX_I2C                     SOC_HP_I2C_NUM
 
 // Hardware has no ESP32
 #undef USE_EXS_DIMMER
@@ -509,7 +493,7 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #define COLOR_TITLE_TEXT			      COLOR_TEXT // Title text color defaults to global text color either dark or light
 #endif
 #ifndef COLOR_BUTTON_OFF
-#define COLOR_BUTTON_OFF			      "#08405e"  // Button color when off - Darkest blueish
+#define COLOR_BUTTON_OFF			      "#a1d9f7"  // Button color when off - Light blue
 #endif
 
 enum WebColors {

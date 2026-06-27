@@ -684,6 +684,7 @@ String Z_attribute::toString(bool prefix_comma) const {
     res += '"';
     if (val.bval) {
       size_t blen = val.bval->len();
+      if (blen > 250) { blen = 250; }   // safeguard: Zigbee frames never exceed 256 bytes; cap hex buffer to 500 bytes on stack
       // print as HEX
       char hex[2*blen+1];
       ToHex_P(val.bval->getBuffer(), blen, hex, sizeof(hex));

@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_native.ino - Berry scripting language, native fucnctions
+  xdrv_52_3_berry_onewire.ino - Berry scripting language, OneWire class
 
   Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
 

@@ -143,6 +143,7 @@ bbool be_gc_fix_set(bvm *vm, bgcobject *obj, bbool fix)
 #endif
 
 static void mark_gray_reset_counters(bvm *vm) {
+    (void) vm;
 #if BE_USE_PERF_COUNTERS
     vm->gc_mark_string = 0;
     vm->gc_mark_class = 0;
@@ -221,12 +222,28 @@ static void mark_proto(bvm *vm, bgcobject *obj)
     bproto *p = cast_proto(obj);
     gc_try (p != NULL) {
         int count;
-        bvalue *k = p->ktab;
         bproto **ptab = p->ptab;
         vm->gc.gray = p->gray; /* remove object from gray list */
+#if BE_USE_COMPACT_KTAB
+        if (p->ktype == NULL) {
+            /* in-progress (compile-time): kval actually points to a bvalue[] */
+            bvalue *k = (bvalue*)p->kval;
+            for (count = 0; count < p->nconst; ++count) {
+                mark_gray_var(vm, k + count);
+            }
+        } else {
+            for (count = 0; count < p->nconst; ++count) {
+                bvalue k;
+                proto_const_get(p, count, k); /* materialize constant to mark it */
+                mark_gray_var(vm, &k);
+            }
+        }
+#else
+        bvalue *k = p->ktab;
         for (count = p->nconst; count--; ++k) {
             mark_gray_var(vm, k);
         }
+#endif
         for (count = p->nproto; count--; ++ptab) {
             mark_gray(vm, gc_object(*ptab));
         }
@@ -323,7 +340,18 @@ static void free_proto(bvm *vm, bgcobject *obj)
         if (!(proto->varg & BE_VA_SHARED_KTAB)) {       /* do not free shared ktab */
                                                         /*caveat: the shared ktab is never GCed, in practice this is not a problem */
                                                         /* since shared ktab are primarily meant for solidification hence not gc-able */
+#if BE_USE_COMPACT_KTAB
+            if (proto->ktype == NULL) {
+                /* in-progress / abandoned compile: kval is a bvalue[] */
+                be_free(vm, proto->kval, proto->nconst * sizeof(bvalue));
+            } else {
+                /* kval and ktype share a single allocation, kval at the front */
+                be_free(vm, proto->kval,
+                    (size_t)proto->nconst * (sizeof(union bvaldata) + sizeof(bbyte)));
+            }
+#else
             be_free(vm, proto->ktab, proto->nconst * sizeof(bvalue));
+#endif
         }
         be_free(vm, proto->ptab, proto->nproto * sizeof(bproto*));
         be_free(vm, proto->code, proto->codesize * sizeof(binstruction));
@@ -398,6 +426,11 @@ static void premark_internal(bvm *vm)
     mark_gray(vm, gc_object(vm->module.loaded));
     mark_gray(vm, gc_object(vm->module.path));
     mark_gray(vm, gc_object(vm->ntvclass));
+#if BE_USE_PREPROCESSOR
+    if (vm->preprocessor) {
+        mark_gray(vm, gc_object(vm->preprocessor));
+    }
+#endif
 #if BE_USE_DEBUG_HOOK
     if (be_isgcobj(&vm->hook)) {
         mark_gray(vm, gc_object(var_toobj(&vm->hook)));
@@ -486,6 +519,7 @@ static void destruct_object(bvm *vm, bgcobject *obj)
     }
     if (obj->type == BE_INSTANCE) {
         int type;
+        int slot = cast_int(vm->top - vm->stack); /* remember the scratch slot offset (stack may be reallocated) */
         binstance *ins = cast_instance(obj);
         /* does not GC when creating the string "deinit". */
         type = be_instance_member_simple(vm, ins, str_literal(vm, "deinit"), vm->top);
@@ -495,8 +529,14 @@ static void destruct_object(bvm *vm, bgcobject *obj)
             be_incrtop(vm);
             be_dofunc(vm, vm->top - 2, 1);  /* warning, there shoudln't be any exception raised here, or the gc stops */
             be_stackpop(vm, 1);
+            var_setnil(vm->stack + slot + 1); /* clear the arg slot which held 'ins' (about to be freed) */
         }
         be_stackpop(vm, 1);
+        /* Clear the scratch slot that held the 'deinit' lookup / instance.
+         * The instance is about to be freed by delete_white; leaving a pointer
+         * to it in a stack slot above vm->top would become a dangling reference
+         * if a later GC runs with a higher vm->top and scans this slot (UAF). */
+        var_setnil(vm->stack + slot);
     }
 }
 

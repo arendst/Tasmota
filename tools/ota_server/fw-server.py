@@ -49,7 +49,7 @@ import os.path
 from optparse import OptionParser
 from sys import exit
 
-from flask import Flask, send_file
+from flask import Flask, send_from_directory
 import netifaces as ni
 
 usage = "usage: fw-server {-d | -i} arg"
@@ -90,10 +90,9 @@ app = Flask(__name__)
 
 @app.route('/<filename>')
 def fw(filename):
-    if os.path.exists(fwdir + str(filename)):
-        return send_file(fwdir + str(filename),
-                         attachment_filename=filename,
-                         mimetype='application/octet-stream')
+    if os.path.exists(os.path.join(fwdir, os.path.basename(filename))):
+        return send_from_directory(fwdir, os.path.basename(filename),
+                                   mimetype='application/octet-stream')
 
     return "ERROR: file not found"
 

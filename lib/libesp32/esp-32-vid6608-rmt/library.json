@@ -1,0 +1,17 @@
+{
+  "name": "esp-32-vid6608-rmt",
+  "version": "1.2",
+  "keywords": "esp32, espressif, vid6608, x27-168, rmt, stepper",
+  "description": "ESP32 library to drive Automotive gauge drivers like x27-168 using HW RMT driver",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petrows/esp-32-vid6608-rmt.git"
+  },
+  "authors": {
+    "name": "Petr Golovachev",
+    "email": "petro@petro.ws",
+    "url": "https://petro.ws/"
+  },
+  "frameworks": "espidf,arduino",
+  "platforms": "espressif32"
+}

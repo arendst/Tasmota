@@ -1,7 +1,7 @@
 /*
   xsns_83_neopool.ino - Sugar Valley NeoPool Control System Modbus support for Tasmota
 
-  Copyright (C) 2025  Norbert Richter
+  Copyright (C) 2026  Norbert Richter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -620,6 +620,10 @@ TasmotaModbus *NeoPoolModbus;
 // enables also cmnd 'NPgPerh [0|1]': 0 = disables emulation, 1 enables emulation
 //#define NEOPOOL_EMULATE_GPERH 16          // Max g/h power of an emulated % system
 #ifdef NEOPOOL_EMULATE_GPERH
+  #if NEOPOOL_EMULATE_GPERH == 0
+    #warning "NEOPOOL_EMULATE_GPERH must be != 0"
+    #undef NEOPOOL_EMULATE_GPERH
+  #endif
 bool neopool_system_gperh = false;        // emulation defaults off
 #endif
 
@@ -1536,14 +1540,19 @@ bool NeoPoolInitData(void)
 void NeoPoolLogRW(const char *name, uint16_t addr, uint16_t *data, uint16_t cnt)
 {
   char *log_data = (char *)malloc(cnt*7+1);
-  *log_data = 0;
-  for (uint32_t i = 0; i < cnt; i++) {
-    char h[8];
-    snprintf_P(h, sizeof(h), PSTR("%s0x%04X"), i ? PSTR(",") : PSTR(""), data[i]);
-    strncat(log_data, h, cnt*7+1);
+  if (nullptr != log_data) {
+    *log_data = 0;
+    for (uint32_t i = 0; i < cnt; i++) {
+      char h[8];
+      snprintf_P(h, sizeof(h), PSTR("%s0x%04X"), i ? PSTR(",") : PSTR(""), data[i]);
+      strncat(log_data, h, cnt*7+1);
+    }
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: %s(0x%04X, %d) = [%s]"), name, addr, cnt, log_data);
+    free(log_data);
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: %s(0x%04X, %d) = [%s]"), name, addr, cnt, log_data);
-  free(log_data);
+    else {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: NeoPoolLogRW - out of memory"));
+  }
 }
 #endif  // DEBUG_TASMOTA_SENSOR
 
@@ -1643,7 +1652,7 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
   NeoPoolLogRW("NeoPoolWriteRegister", addr, data, cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
   NeoPool250msSetStatus(false);
-  numbytes = 7+cnt*2;
+  numbytes = 7 + (uint32_t)cnt * 2;
   frame = (uint8_t*)malloc(numbytes+2);
   if (nullptr == frame) {
 #ifdef DEBUG_TASMOTA_SENSOR
@@ -1947,7 +1956,7 @@ uint32_t NeoPoolGetFiltrationSpeed()
 bool NeoPoolIsHydrolysis(void)
 {
   return (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
-          (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
+          (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_MODULE_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
 }
 
 bool NeoPoolIsHydrolysisInPercent(void)
@@ -2065,21 +2074,31 @@ void NeoPoolShow(bool json)
       }
       if (neopool_power_module_nodeid[0] ||
           NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, neopool_power_module_nodeid, nitems(neopool_power_module_nodeid))) {
-        if (Settings->flag6.neopool_outputsensitive) {
-          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
-            neopool_power_module_nodeid[0],
-            neopool_power_module_nodeid[1],
-            neopool_power_module_nodeid[2],
-            neopool_power_module_nodeid[3],
-            neopool_power_module_nodeid[4],
-            neopool_power_module_nodeid[5]
-          );
+        uint8_t buf[12];
+        memcpy(buf, neopool_power_module_nodeid, 12);
+        if (!Settings->flag6.neopool_outputsensitive) {
+          // Multiple XOR, rotation and avalanche
+          for (int i = 0; i < (neopool_power_module_nodeid[5] & 0x07); i++) {
+            uint8_t tmp = buf[0];
+            for (int i = 0; i < 11; i++) buf[i] = buf[i+1];
+            buf[11] = tmp;
+            for (int i = 0; i < 12; i++) {
+              buf[i] ^= buf[(i + 3) % 12];
+              buf[i]  = (buf[i] << 3) | (buf[i] >> 5);
+              buf[i] += buf[(i + 7) % 12];
+            }
+          }
+          // indicate hidden id
+          ((uint16_t *)buf)[0] = 0xAA55;
         }
-        else {
-          ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"XXXX XXXX XXXX XXXX XXXX %04X\","),
-            neopool_power_module_nodeid[5]
-          );
-        }
+        ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
+          ((uint16_t *)buf)[0],
+          ((uint16_t *)buf)[1],
+          ((uint16_t *)buf)[2],
+          ((uint16_t *)buf)[3],
+          ((uint16_t *)buf)[4],
+          ((uint16_t *)buf)[5]
+        );
       }
       ResponseAppend_P(PSTR("\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
         Settings->flag2.voltage_resolution, &f5volt,
@@ -2173,8 +2192,8 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_HIDRO), decimals, &fvalue);
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_PERCENT  "\":{"));
-      ResponseAppend_P(PSTR( "\""  D_JSON_DATA  "\":%d"), data * 100 / max);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":%d"), setpoint * 100 / max);
+      ResponseAppend_P(PSTR( "\""  D_JSON_DATA  "\":%d"), max ? (data * 100 / max) : 0);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":%d"), max ? (setpoint * 100 / max) : 0);
       ResponseJsonEnd();
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));

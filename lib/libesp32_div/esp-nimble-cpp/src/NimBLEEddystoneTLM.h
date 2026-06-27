@@ -23,6 +23,7 @@
 
 class NimBLEUUID;
 
+# include <cstdint>
 # include <string>
 
 # define EDDYSTONE_TLM_FRAME_TYPE 0x20

@@ -126,7 +126,7 @@ void PzemDcEverySecond(void)
 
 void PzemDcSnsInit(void)
 {
-  PzemDc->modbus = new TasmotaModbus(Pin(GPIO_PZEM017_RX), Pin(GPIO_PZEM0XX_TX), Pin(GPIO_NRG_MBS_TX_ENA));
+  PzemDc->modbus = new TasmotaModbus(Pin(GPIO_PZEM017_RX), Pin(GPIO_PZEM0XX_TX), Pin(GPIO_NRG_MBS_TX_ENA), Pin(GPIO_MBS_RX_ENA));
   uint8_t result = PzemDc->modbus->Begin(9600, SERIAL_8N2);
   if (result) {
     if (2 == result) { ClaimSerial(); }

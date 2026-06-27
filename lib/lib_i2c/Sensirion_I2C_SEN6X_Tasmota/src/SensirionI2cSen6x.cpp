@@ -328,25 +328,32 @@ int16_t SensirionI2cSen6x::readMeasuredValuesAsIntegers(
     if (localError != NO_ERROR) {
         return localError;
     }
-    localError |= rxFrame.getUInt16(massConcentrationPm1p0);
+    localError |= rxFrame.getUInt16(massConcentrationPm1p0);  // SPS6x
     localError |= rxFrame.getUInt16(massConcentrationPm2p5);
     localError |= rxFrame.getUInt16(massConcentrationPm4p0);
     localError |= rxFrame.getUInt16(massConcentrationPm10p0);
-    localError |= rxFrame.getInt16(ambientHumidity);
+    localError |= rxFrame.getInt16(ambientHumidity);          // SHT4x
     localError |= rxFrame.getInt16(ambientTemperature);
     vOCIndex = SEN6X_INT_INVALID;
     nOxIndex = SEN6X_INT_INVALID;
     if ((65 == model) || (66 == model) || (68 == model) || (69 == model)) {
-      localError |= rxFrame.getInt16(vOCIndex);
+      localError |= rxFrame.getInt16(vOCIndex);               // SGP41
       localError |= rxFrame.getInt16(nOxIndex);
-    }
-    cO2 = SEN6X_UINT_INVALID;
-    if ((63 == model) || (66 == model) || (69 == model)) {
-      localError |= rxFrame.getUInt16(cO2);
     }
     hCHO = SEN6X_UINT_INVALID;
     if ((68 == model) || (69 == model)) {
-      localError |= rxFrame.getUInt16(hCHO);
+      localError |= rxFrame.getUInt16(hCHO);                  // SFA40
+    }
+    cO2 = SEN6X_UINT_INVALID;
+    if (66 == model) {
+      localError |= rxFrame.getUInt16(cO2);                   // SCD4x
+    }
+    else if ((63 == model) || (69 == model)) {                // STCC4
+      int16_t cO2i;
+      localError |= rxFrame.getInt16(cO2i);
+      if (cO2i != SEN6X_INT_INVALID) {
+        cO2 = cO2i;
+      }
     }
     return localError;
 }

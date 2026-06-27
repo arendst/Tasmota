@@ -1,0 +1,43 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2cStcc4	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+readMeasurement	KEYWORD2
+setPressureCompensation	KEYWORD2
+startContinuousMeasurement	KEYWORD2
+readMeasurementRaw	KEYWORD2
+stopContinuousMeasurement	KEYWORD2
+measureSingleShot	KEYWORD2
+performForcedRecalibration	KEYWORD2
+getProductId	KEYWORD2
+setRhtCompensation	KEYWORD2
+setPressureCompensationRaw	KEYWORD2
+performSelfTest	KEYWORD2
+performConditioning	KEYWORD2
+enterSleepMode	KEYWORD2
+exitSleepMode	KEYWORD2
+enableTestingMode	KEYWORD2
+disableTestingMode	KEYWORD2
+performFactoryReset	KEYWORD2
+signalTemperature	KEYWORD2
+signalRelativeHumidity	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sensor	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

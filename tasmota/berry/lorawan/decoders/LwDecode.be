@@ -430,9 +430,7 @@ class lwdecode_cls
   Called every WebRefresh time
   ------------------------------------------------------------#
   def web_sensor()
-    var current_time = tasmota.millis()
-
-    if current_time < self.cache_timeout
+    if !tasmota.time_reached(self.cache_timeout)
       tasmota.web_send_decimal(self.web_msg_cache)
       return
     end
@@ -459,7 +457,7 @@ class lwdecode_cls
         msg)
 
       self.web_msg_cache = full_msg
-      self.cache_timeout = current_time + 5000
+      self.cache_timeout = tasmota.millis() + 5000
       tasmota.web_send_decimal(full_msg)
     end
   end

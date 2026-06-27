@@ -87,9 +87,9 @@ class Matter_Plugin
   # Global type system for plugins
   static var TYPE = ""                      # name of the plug-in in json
   static var DISPLAY_NAME = ""                      # display name of the plug-in
-  static var ARG  = ""                      # additional argument name (or empty if none)
-  static var ARG_TYPE = / x -> str(x)       # function to convert argument to the right type
-  static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
+
+  # Note: SCHEMA is only defined in subclasses that have UI parameters
+  # Check for presence with: var schema = self.find('SCHEMA')  or  if cl.SCHEMA != nil
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   static var VIRTUAL = false                # set to true only for virtual devices
@@ -109,7 +109,7 @@ class Matter_Plugin
     # 0x0003: 0x00,                           # Identify: no optional features
     0x0006: 0x01,                           # On/Off: Lighting feature (bit 0)
     0x0008: 0x03,                           # Level Control: On/Off (bit 0) + Lighting (bit 1)
-    0x0031: 0x04,                           # Network Commissioning: Ethernet (for WiFi/Ethernet devices)
+    0x0031: 0x05,                           # Eth + WiFi - the latter is needed for Bluetooth commissioning
     0x0046: 0x00,                           # ICD Management: 0x00 = no optional features (base SIT mode, no CIP/UAT/LITS)
     0x0062: 0x01,                           # Scenes Management: SceneNames (bit 0)
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
@@ -261,8 +261,8 @@ class Matter_Plugin
 
 var root = matter_device.plugins[0]
 var tlv_solo = matter.TLV.Matter_TLV_item()
-tlv_solo.set(matter.TLV.U4, 42)
-root.publish_event(0x001D, 0, matter.EVENT_CRITICAL, tlv_solo)
+tlv_solo.set(0x06 #-matter.TLV.U4-\#, 42)
+root.publish_event(0x001D, 0, 2 #-matter.EVENT_CRITICAL-\#, tlv_solo)
 matter_device.events.dump()
 
 -#
@@ -410,14 +410,14 @@ matter_device.events.dump()
         var types = self.TYPES
         for dt: types.keys()
           var d1 = dtl.add_struct()
-          d1.add_TLV(0, TLV.U2, dt)     # DeviceType
-          d1.add_TLV(1, TLV.U2, types[dt])      # Revision
+          d1.add_TLV(0, 0x05 #-TLV.U2-#, dt)     # DeviceType
+          d1.add_TLV(1, 0x05 #-TLV.U2-#, types[dt])      # Revision
         end
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
         var sl = TLV.Matter_TLV_array()
         for cl: self.get_cluster_list_sorted()
-          sl.add_TLV(nil, TLV.U4, cl)
+          sl.add_TLV(nil, 0x06 #-TLV.U4-#, cl)
         end
         return sl
       elif attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
@@ -427,9 +427,9 @@ matter_device.events.dump()
         var pl = TLV.Matter_TLV_array()
         return pl
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    #
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)    #
       elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 1)    # "Initial Release"
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)    # "Initial Release"
       end
 
     end
@@ -441,10 +441,10 @@ matter_device.events.dump()
     elif attribute == 0xFFFB            # AttributeList
       var acli = TLV.Matter_TLV_array()
       var attr_list_bytes = self.get_attribute_list_bytes(cluster)
-      var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) : 0
+      var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) / 2 : 0
       var idx = 0
       while idx < attr_list_bytes_sz
-        acli.add_TLV(nil, TLV.U2, attr_list_bytes.get(idx * 2, -2))
+        acli.add_TLV(nil, 0x05 #-TLV.U2-#, attr_list_bytes.get(idx * 2, -2))
         idx += 1
       end
       return acli                       # TODO, empty list for now
@@ -453,13 +453,23 @@ matter_device.events.dump()
       return el                         # return empty list
     elif attribute == 0xFFF9            # AcceptedCommandList
       var al = TLV.Matter_TLV_array()
+      if cluster == 0x0006              # On/Off
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0000)    # Off
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0001)    # On
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0002)    # Toggle
+        if (self.FEATURE_MAPS.find(cluster, 0) & 0x01) != 0
+          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0040)  # OffWithEffect
+          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0041)  # OnWithRecallGlobalScene
+          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0042)  # OnWithTimedOff
+        end
+      end
       return al                         # TODO
     elif attribute == 0xFFFC            # FeatureMap
       var featuremap = self.FEATURE_MAPS.find(cluster, 0)
-      return tlv_solo.set(TLV.U4, featuremap)
+      return tlv_solo.set(0x06 #-TLV.U4-#, featuremap)
     elif attribute == 0xFFFD            # ClusterRevision
       var clusterrevision = self.CLUSTER_REVISIONS.find(cluster, 1)
-      return tlv_solo.set(TLV.U4, clusterrevision)
+      return tlv_solo.set(0x06 #-TLV.U4-#, clusterrevision)
     end
 
     # no handler found, return nil
@@ -544,29 +554,6 @@ matter_device.events.dump()
   #############################################################
   # UI Methods
   #############################################################
-  # ui_conf_to_string
-  #
-  # Convert the current plugin parameters to a single string
-  static def ui_conf_to_string(cl, conf)
-    var arg_name = cl.ARG
-    var arg = arg_name ? str(conf.find(arg_name, '')) : ''
-    # print("MTR: ui_conf_to_string", conf, cl, arg_name, arg)
-    return arg
-  end
-
-  #############################################################
-  # ui_string_to_conf
-  #
-  # Convert the string in UI to actual parameters added to the map
-  static def ui_string_to_conf(cl, conf, arg)
-    var arg_name = cl.ARG
-    var arg_type = cl.ARG_TYPE
-    if arg && arg_name
-      conf[arg_name] = arg_type(arg)
-    end
-    # print("ui_string_to_conf", conf, arg)
-    return conf
-  end
 
   #############################################################
   # append_state_json

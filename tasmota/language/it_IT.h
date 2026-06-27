@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 18.02.2026
+ * Updated until v9.4.0.1 - Last update 02.06.2026
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS    "Altri parametri"
 #define D_TEMPLATE            "Modello"
+#define D_TEMPLATE_WRONG_ARCH "Ripristina tipo chip corretto"
 #define D_ACTIVATE            "Attiva"
 #define D_DEVICE_NAME         "Nome dispositivo"
 #define D_WEB_ADMIN_PASSWORD  "Password amministratore web"
@@ -1340,5 +1341,13 @@
 // xnrg_25_v9240.ino
 #define D_SENSOR_V9240_TX "V9240 - TX"
 #define D_SENSOR_V9240_RX "V9240 - RX"
+
+#define D_SENSOR_MBS_RX_ENA    "ModBr - RX ON"
+
+// xdrv_94_modbus_relay.ino
+#define D_MODBUSRELAY_TX         "MbsRelay - TX"
+#define D_MODBUSRELAY_TX_ENA     "MbsRelay - Abil. TX"
+#define D_MODBUSRELAY_RX         "MbsRelay - RX"
+#define D_MODBUSRELAY_RX_ENA     "MbsRelay - Abil. RX"
 
 #endif  // _LANGUAGE_IT_IT_H_

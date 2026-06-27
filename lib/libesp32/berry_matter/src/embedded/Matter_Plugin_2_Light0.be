@@ -115,16 +115,18 @@ import matter
 class Matter_Plugin_Light0 : Matter_Plugin_Device
   static var TYPE = "light0"                        # name of the plug-in in json
   static var DISPLAY_NAME = "Light 0 OnOff"         # display name of the plug-in
-  static var ARG  = "relay"                         # additional argument name (or empty if none)
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Relay<x> number"
+
+  static var SCHEMA = "relay|"                      # arg name
+                      "l:Relay number|"                    # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Relay<x> number"           # hint
   static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
     # 0x0004: inherited                             # Groups 1.3 p.21
     # 0x0062: inherited                             # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
-    0x0006: [0],                                    # On/Off 1.5 p.48
+    0x0006: [0,0x4000,0x4001,0x4002,0x4003],        # On/Off 1.5 p.48
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Power")
   static var TYPES = { 0x0100: 3 }                  # OnOff Light - Matter 1.4.1 Device Library Rev 3
@@ -154,7 +156,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   def parse_configuration(config)
     super(self).parse_configuration(config)
     # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
-    self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
+    self.tasmota_relay_index = int(config.find('relay', nil))
     if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
   end
 
@@ -207,7 +209,6 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
@@ -215,7 +216,15 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
+        return tlv_solo.set(0x08 #-TLV.BOOL-#, self.shadow_onoff)
+      elif attribute == 0x4000          #  ---------- GlobalSceneControl / bool ----------
+        return tlv_solo.set(0x08 #-TLV.BOOL-#, true)
+      elif attribute == 0x4001          #  ---------- OnTime / u2 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 0)
+      elif attribute == 0x4002          #  ---------- OffWaitTime / u2 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 0)
+      elif attribute == 0x4003          #  ---------- StartUpOnOff / enum8 nullable ----------
+        return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       end
 
     end
@@ -246,6 +255,18 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
       elif command == 0x0002            # ---------- Toggle ----------
         self.set_onoff(!self.shadow_onoff)
         self.publish_command('Power', self.shadow_onoff ? 1 : 0)
+        return true
+      elif command == 0x0040            # ---------- OffWithEffect ----------
+        self.set_onoff(false)
+        self.publish_command('Power', 0)
+        return true
+      elif command == 0x0041            # ---------- OnWithRecallGlobalScene ----------
+        self.set_onoff(true)
+        self.publish_command('Power', 1)
+        return true
+      elif command == 0x0042            # ---------- OnWithTimedOff ----------
+        self.set_onoff(true)
+        self.publish_command('Power', 1)
         return true
       end
     end

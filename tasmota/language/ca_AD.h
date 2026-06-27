@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Altres paràmetres"
 #define D_TEMPLATE "Plantilla"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Activar"
 #define D_DEVICE_NAME "Nom del dispositiu"
 #define D_WEB_ADMIN_PASSWORD "Mot de pas Admin Web"
@@ -1339,5 +1340,13 @@
 // xnrg_25_v9240.ino
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
+
+#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+
+// xdrv_94_modbus_relay.ino
+#define D_MODBUSRELAY_TX         "MbsRelay TX"
+#define D_MODBUSRELAY_TX_ENA     "MbsRelay TX Ena"
+#define D_MODBUSRELAY_RX         "MbsRelay RX"
+#define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
 
 #endif  // _LANGUAGE_CA_AD_H_

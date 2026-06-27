@@ -11,6 +11,7 @@
 #include "be_string.h"
 #include "be_class.h"
 #include "be_func.h"
+#include "be_gc.h"
 #include "be_exec.h"
 #include "be_list.h"
 #include "be_map.h"
@@ -35,7 +36,7 @@
 #if BE_USE_BYTECODE_SAVER || BE_USE_BYTECODE_LOADER
 static void bytecode_error(bvm *vm, const char *msg)
 {
-    be_raise(vm, "io_error", msg);
+    be_raise(vm, "bytecode_error", msg);
 }
 
 static uint8_t vm_sizeinfo(void)
@@ -207,17 +208,19 @@ static void save_bytecode(bvm *vm, void *fp, bproto *proto)
 
 static void save_constants(bvm *vm, void *fp, bproto *proto)
 {
-    bvalue *v = proto->ktab, *end;
+    int i;
     save_long(fp, proto->nconst); /* constants count */
-    for (end = v + proto->nconst; v < end; ++v) {
-        if ((v == proto->ktab) && (proto->varg & BE_VA_STATICMETHOD) && (v->type == BE_CLASS)) {
+    for (i = 0; i < proto->nconst; ++i) {
+        bvalue v;
+        proto_const_get(proto, i, v);
+        if ((i == 0) && (proto->varg & BE_VA_STATICMETHOD) && (v.type == BE_CLASS)) {
             /* implicit `_class` parameter, output nil */
             bvalue v_nil;
             v_nil.v.i = 0;
             v_nil.type = BE_NIL;
             save_value(vm, fp, &v_nil);
         } else {
-            save_value(vm, fp, v);
+            save_value(vm, fp, &v);
         }
     }
 }
@@ -320,41 +323,62 @@ void be_bytecode_save(bvm *vm, const char *filename, bproto *proto)
 #if BE_USE_BYTECODE_LOADER
 static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version);
 
-static uint8_t load_byte(void *fp)
+/* Robustness limits for values read from the .bec file.
+ * codesize / nconst / nproto are stored as int16_t in bproto, so 32767
+ * is the absolute hard ceiling. Method/global/var counts are bounded
+ * to the same value to keep allocations sane. */
+#define BYTECODE_MAX_COUNT          32767
+
+static void load_bytes(bvm *vm, void *fp, void *buf, size_t len)
+{
+    if (be_fread(fp, buf, len) != len) {
+        bytecode_error(vm, "truncated bytecode file.");
+    }
+}
+
+static uint8_t load_byte(bvm *vm, void *fp)
 {
     uint8_t buffer[1];
-    if (be_fread(fp, buffer, sizeof(buffer)) == sizeof(buffer)) {
-        return buffer[0];
-    }
-    return 0;
+    load_bytes(vm, fp, buffer, sizeof(buffer));
+    return buffer[0];
 }
 
-static uint16_t load_word(void *fp)
+static uint16_t load_word(bvm *vm, void *fp)
 {
     uint8_t buffer[2];
-    if (be_fread(fp, buffer, sizeof(buffer)) == sizeof(buffer)) {
-        return ((uint16_t)buffer[1] << 8) | buffer[0];
-    }
-    return 0;
+    load_bytes(vm, fp, buffer, sizeof(buffer));
+    return ((uint16_t)buffer[1] << 8) | buffer[0];
 }
 
-static uint32_t load_long(void *fp)
+static uint32_t load_long(bvm *vm, void *fp)
 {
     uint8_t buffer[4];
-    if (be_fread(fp, buffer, sizeof(buffer)) == sizeof(buffer)) {
-        return ((uint32_t)buffer[3] << 24)
-            | ((uint32_t)buffer[2] << 16)
-            | ((uint32_t)buffer[1] << 8)
-            | buffer[0];
-    }
-    return 0;
+    load_bytes(vm, fp, buffer, sizeof(buffer));
+    return ((uint32_t)buffer[3] << 24)
+        | ((uint32_t)buffer[2] << 16)
+        | ((uint32_t)buffer[1] << 8)
+        | buffer[0];
 }
 
-static int load_head(void *fp)
+/* Read a non-negative count and reject obviously corrupt values
+ * (negative when reinterpreted as int, or larger than the loader ceiling). */
+static int load_count(bvm *vm, void *fp, const char *what)
+{
+    uint32_t raw = load_long(vm, fp);
+    if (raw > (uint32_t)BYTECODE_MAX_COUNT) {
+        bytecode_error(vm, be_pushfstring(vm,
+            "invalid %s count in bytecode (got %u).", what, raw));
+    }
+    return (int)raw;
+}
+
+static int load_head(bvm *vm, void *fp)
 {
     int res;
     uint8_t buffer[8] = { 0 };
-    be_fread(fp, buffer, sizeof(buffer));
+    if (be_fread(fp, buffer, sizeof(buffer)) != sizeof(buffer)) {
+        bytecode_error(vm, "truncated bytecode header.");
+    }
     res = buffer[0] == MAGIC_NUMBER1 &&
           buffer[1] == MAGIC_NUMBER2 &&
           buffer[2] == MAGIC_NUMBER3 &&
@@ -368,7 +392,7 @@ static int load_head(void *fp)
 
 bbool be_bytecode_check(const char *path)
 {
-    void *fp = be_fopen(path, "r");
+    void *fp = be_fopen(path, "rb");
     if (fp) {
         uint8_t buffer[3], rb;
         rb = (uint8_t)be_fread(fp, buffer, 3);
@@ -382,42 +406,42 @@ bbool be_bytecode_check(const char *path)
     return bfalse;
 }
 
-static bint load_int(void *fp)
+static bint load_int(bvm *vm, void *fp)
 {
 #if USE_64BIT_INT
     bint i;
-    i = load_long(fp);
-    i |= (bint)load_long(fp) << 32;
+    i = load_long(vm, fp);
+    i |= (bint)load_long(vm, fp) << 32;
     return i;
 #else
-    return load_long(fp);
+    return load_long(vm, fp);
 #endif
 }
 
-static breal load_real(void *fp)
+static breal load_real(bvm *vm, void *fp)
 {
 #if BE_USE_SINGLE_FLOAT
     union { breal r; uint32_t i; } u;
-    u.i = load_long(fp);
+    u.i = load_long(vm, fp);
     return u.r;
 #else
     union {
         breal r;
         uint64_t i;
     } u;
-    u.i = load_long(fp);
-    u.i |= (uint64_t)load_long(fp) << 32;
+    u.i = load_long(vm, fp);
+    u.i |= (uint64_t)load_long(vm, fp) << 32;
     return u.r;
 #endif
 }
 
 static bstring* load_string(bvm *vm, void *fp)
 {
-    uint16_t len = load_word(fp);
+    uint16_t len = load_word(vm, fp);
     if (len > 0) {
         bstring *str;
         char *buf = be_malloc(vm, len);
-        be_fread(fp, buf, len);
+        load_bytes(vm, fp, buf, len);
         str = be_newstrn(vm, buf, len);
         be_free(vm, buf, len);
         return str;
@@ -439,8 +463,8 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
     bclass *c = be_newclass(vm, NULL, NULL);
     var_setclass(v, c);
     c->name = load_string(vm, fp);
-    nvar = load_long(fp);
-    count = load_long(fp);
+    nvar = load_count(vm, fp, "class member-variable");
+    count = load_count(vm, fp, "class method");
     while (count--) { /* load method table */
         bvalue *value;
         bstring *name = cache_string(vm, fp);
@@ -452,11 +476,19 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
             bproto *proto = (bproto*)var_toobj(value);
             bbool is_method = proto->varg & BE_VA_METHOD;
             if (!is_method) {
+#if BE_USE_COMPACT_KTAB
+                if ((proto->nconst > 0) && (proto->ktype[0] == BE_NIL)) {
+                    /* The first argument is nil so we replace with the class as implicit '_class' */
+                    proto->ktype[0] = BE_CLASS;
+                    proto->kval[0].p = c;
+                }
+#else
                 if ((proto->nconst > 0) && (proto->ktab->type == BE_NIL)) {
                     /* The first argument is nil so we replace with the class as implicit '_class' */
                     proto->ktab->type = BE_CLASS;
                     proto->ktab->v.p = c;
                 }
+#endif
             }
             be_class_method_bind(vm, c, name, var_toobj(value), !is_method);
         } else {
@@ -474,34 +506,45 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
 
 static void load_value(bvm *vm, void *fp, bvalue *v, int version)
 {
-    switch (load_byte(fp)) {
-    case BE_INT: var_setint(v, load_int(fp)); break;
-    case BE_REAL: var_setreal(v, load_real(fp)); break;
+    uint8_t type = load_byte(vm, fp);
+    switch (type) {
+    case BE_NIL: var_setnil(v); break;
+    case BE_INT: var_setint(v, load_int(vm, fp)); break;
+    case BE_REAL: var_setreal(v, load_real(vm, fp)); break;
     case BE_STRING: var_setstr(v, load_string(vm, fp)); break;
     case BE_CLASS: load_class(vm, fp, v, version); break;
-    default: break;
+    default:
+        bytecode_error(vm, be_pushfstring(vm,
+            "unsupported constant type %u in bytecode.", type));
     }
 }
 
 static void load_bytecode(bvm *vm, void *fp, bproto *proto, int info)
 {
-    int size = (int)load_long(fp);
+    int size = load_count(vm, fp, "instruction");
     if (size) {
         binstruction *code, *end;
         int bcnt = be_builtin_count(vm);
         blist *list = var_toobj(be_indexof(vm, info));
+        int gcnt = be_list_count(list);
         be_assert(be_islist(vm, info));
         proto->code = be_malloc(vm, sizeof(binstruction) * size);
-        proto->codesize = size;
+        proto->codesize = (int16_t)size;
         code = proto->code;
         for (end = code + size; code < end; ++code) {
-            binstruction ins = (binstruction)load_long(fp);
+            binstruction ins = (binstruction)load_long(vm, fp);
             binstruction op = IGET_OP(ins);
             /* fix global variable index */
             if (op == OP_GETGBL || op == OP_SETGBL) {
                 int idx = IGET_Bx(ins);
                 if (idx >= bcnt) { /* does not fix builtin index */
-                    bvalue *name = be_list_at(list, idx - bcnt);
+                    bvalue *name;
+                    if (idx - bcnt >= gcnt) {
+                        bytecode_error(vm, be_pushfstring(vm,
+                            "global index %d out of range (have %d).",
+                            idx - bcnt, gcnt));
+                    }
+                    name = be_list_at(list, idx - bcnt);
                     idx = be_global_find(vm, var_tostr(name));
                     ins = (ins & ~IBx_MASK) | ISET_Bx(idx);
                 }
@@ -513,26 +556,55 @@ static void load_bytecode(bvm *vm, void *fp, bproto *proto, int info)
 
 static void load_constant(bvm *vm, void *fp, bproto *proto, int version)
 {
-    int size = (int)load_long(fp); /* nconst */
+    int size = load_count(vm, fp, "constant"); /* nconst */
     if (size) {
+#if BE_USE_COMPACT_KTAB
+        /* Load into a temporary bvalue[] and only build the compact arrays
+         * once everything is loaded. The temporary array is published to the
+         * proto using the in-progress sentinel (`ktype == NULL` means "`kval`
+         * is really a `bvalue[]` of `nconst` entries", see be_gc.c), so the
+         * partially-loaded constants stay GC-reachable through the proto.
+         * This matters because loading a single constant can allocate and
+         * trigger a GC: e.g. a class constant loads its methods, and the class
+         * (already stored in the array) must not be collected while its method
+         * protos are being read. Loading into a non-reachable C local instead
+         * would let the GC free that class -> heap-use-after-free. */
+        bvalue *v, *end, *tmp = be_malloc(vm, sizeof(bvalue) * size);
+        for (v = tmp, end = tmp + size; v < end; ++v) {
+            v->v.i = 0;
+            var_setnil(v);
+        }
+        proto->kval = (union bvaldata*)tmp; /* sentinel: ktype == NULL */
+        proto->ktype = NULL;
+        proto->nconst = (int16_t)size;
+        for (v = tmp, end = tmp + size; v < end; ++v) {
+            load_value(vm, fp, v, version);
+        }
+        /* build the compact arrays from the fully-loaded temporary; the
+         * temporary stays reachable (sentinel) across the allocation in
+         * be_proto_set_ktab, then is freed */
+        be_proto_set_ktab(vm, proto, tmp, size);
+        be_free(vm, tmp, sizeof(bvalue) * size);
+#else
         bvalue *end, *v = be_malloc(vm, sizeof(bvalue) * size);
         memset(v, 0, sizeof(bvalue) * size);
         proto->ktab = v;
-        proto->nconst = size;
+        proto->nconst = (int16_t)size;
         for (end = v + size; v < end; ++v) {
             load_value(vm, fp, v, version);
         }
+#endif
     }
 }
 
 static void load_proto_table(bvm *vm, void *fp, bproto *proto, int info, int version)
 {
-    int size = (int)load_long(fp); /* proto count */
+    int size = load_count(vm, fp, "proto"); /* proto count */
     if (size) {
         bproto **p = be_malloc(vm, sizeof(bproto *) * size);
         memset(p, 0, sizeof(bproto *) * size);
         proto->ptab = p;
-        proto->nproto = size;
+        proto->nproto = (int16_t)size;
         while (size--) {
             load_proto(vm, fp, p++, info, version);
         }
@@ -541,15 +613,15 @@ static void load_proto_table(bvm *vm, void *fp, bproto *proto, int info, int ver
 
 static void load_upvals(bvm *vm, void *fp, bproto *proto)
 {
-    int size = (int)load_byte(fp);
+    int size = (int)load_byte(vm, fp);
     if (size) {
         bupvaldesc *uv, *end;
         proto->upvals = be_malloc(vm, sizeof(bupvaldesc) * size);
         proto->nupvals = (bbyte)size;
         uv = proto->upvals;
         for (end = uv + size; uv < end; ++uv) {
-            uv->instack = load_byte(fp);
-            uv->idx = load_byte(fp);
+            uv->instack = load_byte(vm, fp);
+            uv->idx = load_byte(vm, fp);
         }
     }
 }
@@ -560,18 +632,26 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
     /* if empty, it's a static member so don't allocate an actual proto */
     bstring *name = load_string(vm, fp);
     if (str_len(name)) {
+        /* `name` is only held in a C local until it is attached to the proto
+         * below. be_newproto() allocates and may trigger a GC, which would
+         * otherwise collect this not-yet-referenced string and leave a dangling
+         * proto->name (its freed slot then gets reused, corrupting the proto).
+         * Pin it across the allocation, then release once reachable via the
+         * proto. */
+        be_gc_fix(vm, gc_object(name));
         *proto = be_newproto(vm);
         (*proto)->name = name;
+        be_gc_unfix(vm, gc_object(name)); /* now reachable through the proto */
 #if BE_DEBUG_SOURCE_FILE
         (*proto)->source = load_string(vm, fp);
 #else
         load_string(vm, fp);    /* discard name */
 #endif
-        (*proto)->argc = load_byte(fp);
-        (*proto)->nstack = load_byte(fp);
+        (*proto)->argc = load_byte(vm, fp);
+        (*proto)->nstack = load_byte(vm, fp);
         if (version > 1) {
-            (*proto)->varg = load_byte(fp);
-            load_byte(fp); /* discard reserved byte */
+            (*proto)->varg = load_byte(vm, fp);
+            load_byte(vm, fp); /* discard reserved byte */
         }
         load_bytecode(vm, fp, *proto, info);
         load_constant(vm, fp, *proto, version);
@@ -585,8 +665,8 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
 void load_global_info(bvm *vm, void *fp)
 {
     int i;
-    int bcnt = (int)load_long(fp); /* builtin count */
-    int gcnt = (int)load_long(fp); /* global count */
+    int bcnt = (int)load_long(vm, fp); /* builtin count */
+    int gcnt = load_count(vm, fp, "global"); /* global count */
     if (bcnt > be_builtin_count(vm)) {
         bytecode_error(vm, be_pushfstring(vm,
             "inconsistent number of builtin objects."));
@@ -603,7 +683,7 @@ void load_global_info(bvm *vm, void *fp)
 
 bclosure* be_bytecode_load_from_fs(bvm *vm, void *fp)
 {
-    int version = load_head(fp);
+    int version = load_head(vm, fp);
     if (version == BYTECODE_VERSION) {
         bclosure *cl = be_newclosure(vm, 0);
         var_setclosure(vm->top, cl);

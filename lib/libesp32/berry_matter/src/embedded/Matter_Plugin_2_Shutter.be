@@ -143,9 +143,11 @@ import matter
 class Matter_Plugin_Shutter : Matter_Plugin_Device
   static var TYPE = "shutter"                       # name of the plug-in in json
   static var DISPLAY_NAME = "Shutter"                       # display name of the plug-in
-  static var ARG  = "shutter"                       # additional argument name (or empty if none)
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Relay<x> number"
+
+  static var SCHEMA = "shutter|"                    # arg name
+                      "l:Shutter|"                  # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Relay<x> number"           # hint
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                             # Identify 1.2 p.16
@@ -167,7 +169,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.tasmota_shutter_index = config.find(self.ARG #-'relay'-#)
+    self.tasmota_shutter_index = config.find('shutter')
     if self.tasmota_shutter_index == nil     self.tasmota_shutter_index = 0   end
     self.shadow_shutter_inverted = -1
   end
@@ -210,7 +212,6 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
     var cluster = ctx.cluster
     var attribute = ctx.attribute
     var matter_position
@@ -220,13 +221,13 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       self.update_shadow_lazy()
       self.update_inverted()
       if   attribute == 0x0000          #  ---------- Type / enum8 ----------
-        return tlv_solo.set(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0xFF) # 0xFF = unknown type of shutter
       elif attribute == 0x0005          #  ---------- NumberOfActuationsLift / u16 ----------
-        return tlv_solo.set(TLV.U2, 0)
+        return tlv_solo.set(0x05 #-TLV.U2-#, 0)
       elif attribute == 0x0007          #  ---------- ConfigStatus / u8 ----------
-        return tlv_solo.set(TLV.U1, 1 + 8)   # Operational + Lift Position Aware
+        return tlv_solo.set(0x04 #-TLV.U1-#, 1 + 8)   # Operational + Lift Position Aware
       elif attribute == 0x000D          #  ---------- EndProductType / u8 ----------
-        return tlv_solo.set(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0xFF) # 0xFF = unknown type of shutter
       elif attribute == 0x000E          #  ---------- CurrentPositionLiftPercent100ths / u16 ----------
         if self.shadow_shutter_pos != nil
           if self.shadow_shutter_inverted == 0
@@ -235,13 +236,13 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
             matter_position = self.shadow_shutter_pos * 100
           end
         end
-        return tlv_solo.set_or_nil(TLV.U2, matter_position)
+        return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, matter_position)
       elif attribute == 0x000A          #  ---------- OperationalStatus / u8 ----------
         var op
         if self.shadow_shutter_direction != nil
           op = self.shadow_shutter_direction == 0 ? 0 : (self.shadow_shutter_direction > 0 ? 1 : 2)
         end
-        return tlv_solo.set_or_nil(TLV.U1, op)
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, op)
       elif attribute == 0x000B          #  ---------- TargetPositionLiftPercent100ths / u16 ----------
         if self.shadow_shutter_target != nil
           if self.shadow_shutter_inverted == 0
@@ -250,10 +251,10 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
             matter_position = self.shadow_shutter_target * 100
           end
         end
-        return tlv_solo.set_or_nil(TLV.U2, matter_position)
+        return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, matter_position)
 
       elif attribute == 0x0017          #  ---------- Mode / u8 ----------
-        return tlv_solo.set(TLV.U1, 0)    # normal mode
+        return tlv_solo.set(0x04 #-TLV.U1-#, 0)    # normal mode
       end
 
     end

@@ -360,7 +360,7 @@ void Qmp6988Detect(void) {
   if (nullptr == Qmp6988) { return; }
 
   const uint8_t addresses[2] = { QMP6988_ADDRESS_L, QMP6988_ADDRESS_H };
-  for (uint32_t bus = 0; bus < 2; bus++) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     for (uint32_t i = 0; i < sizeof(addresses); i++) {
       if (!I2cSetDevice(addresses[i], bus)) { continue; }
       Qmp6988->address = addresses[i];

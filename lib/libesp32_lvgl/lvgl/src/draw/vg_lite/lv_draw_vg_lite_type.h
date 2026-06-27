@@ -22,7 +22,7 @@ extern "C" {
 #include "../../misc/lv_array.h"
 
 #if LV_USE_VG_LITE_THORVG
-#include "../../others/vg_lite_tvg/vg_lite.h"
+#include "../../debugging/vg_lite_tvg/vg_lite.h"
 #else
 #if LV_USE_VG_LITE_DRIVER
 #include "../../libs/vg_lite_driver/inc/vg_lite.h"
@@ -42,7 +42,7 @@ extern "C" {
 struct _lv_vg_lite_pending_t;
 struct _lv_vg_lite_grad_ctx_t;
 
-struct _lv_draw_vg_lite_unit_t {
+typedef struct _lv_draw_vg_lite_unit_t {
     lv_draw_unit_t base_unit;
     lv_draw_task_t * task_act;
     lv_area_t current_scissor_area;
@@ -53,7 +53,9 @@ struct _lv_draw_vg_lite_unit_t {
 
     lv_cache_t * stroke_cache;
 
+    lv_cache_t * bitmap_font_cache;
     struct _lv_vg_lite_pending_t * bitmap_font_pending;
+    struct _lv_vg_lite_pending_t * letter_pending;
 
     uint16_t flush_count;
     uint16_t letter_count;
@@ -61,7 +63,7 @@ struct _lv_draw_vg_lite_unit_t {
     vg_lite_matrix_t global_matrix;
     struct _lv_vg_lite_path_t * global_path;
     bool path_in_use;
-};
+} lv_draw_vg_lite_unit_t;
 
 /**********************
  * GLOBAL PROTOTYPES

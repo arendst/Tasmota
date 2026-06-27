@@ -100,7 +100,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 struct MQTT {
   uint16_t connect_count = 0;            // MQTT re-connect count
   uint16_t retry_counter = 1;            // MQTT connection retry counter
-  uint16_t retry_counter_delay = 1;      // MQTT retry counter multiplier
+  uint16_t retry_counter_multiplier = 1; // MQTT retry counter multiplier
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
@@ -701,7 +701,8 @@ void MqttPublishLoggingAsync(bool refresh) {
   }
 }
 
-void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length, bool retained) {
+void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length = 0, bool retained = false, uint32_t log_level = LOG_LEVEL_INFO);
+void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length, bool retained, uint32_t log_level) {
   // Publish <topic> payload string or binary when binary_length set with optional retained
   SHOW_FREE_MEM(PSTR("MqttPublishPayload"));
 
@@ -714,46 +715,50 @@ void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_
     retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
-  // To lower heap usage the payload is not copied to the heap but used directly
-  String log_data_topic;                                 // 20210420 Moved to heap to solve tight stack resulting in exception 2
-  if (Settings->flag.mqtt_enabled && MqttPublishLib(topic, (const uint8_t*)payload, binary_length, retained)) {  // SetOption3 - Enable MQTT
-#ifdef USE_TASMESH
-    log_data_topic = (MESHroleNode()) ? F("MSH: ") : F(D_LOG_MQTT);  // MSH: or MQT:
-#else
-    log_data_topic = F(D_LOG_MQTT);                      // MQT:
-#endif  // USE_TASMESH
-    log_data_topic += topic;                             // stat/tasmota/STATUS2
-  } else {
-    log_data_topic = F(D_LOG_RESULT);                    // RSL:
-    char *command = strrchr(topic, '/');                 // If last part of topic it is always the command
-    log_data_topic += (command == nullptr) ? topic : command +1;  // STATUS2
-    retained = false;                                    // Without MQTT enabled there is no retained message
+  bool published = (Settings->flag.mqtt_enabled && MqttPublishLib(topic, (const uint8_t*)payload, binary_length, retained));  // SetOption3 - Enable MQTT
+  if (log_level > LOG_LEVEL_NONE) {
+    // To lower heap usage the payload is not copied to the heap but used directly
+    String log_data_topic;                               // 20210420 Moved to heap to solve tight stack resulting in exception 2
+    if (published) {
+  #ifdef USE_TASMESH
+      log_data_topic = (MESHroleNode()) ? F("MSH: ") : F(D_LOG_MQTT);  // MSH: or MQT:
+  #else
+      log_data_topic = F(D_LOG_MQTT);                    // MQT:
+  #endif  // USE_TASMESH
+      log_data_topic += topic;                           // stat/tasmota/STATUS2
+    } else {
+      log_data_topic = F(D_LOG_RESULT);                  // RSL:
+      char *command = strrchr(topic, '/');               // If last part of topic it is always the command
+      log_data_topic += (command == nullptr) ? topic : command +1;  // STATUS2
+      retained = false;                                  // Without MQTT enabled there is no retained message
+    }
+    log_data_topic += F(" = ");                          // =
+    char* log_data_payload = (char*)payload;
+    String log_data_payload_b;
+    if (binary_data) {
+      log_data_payload_b = HexToString((uint8_t*)payload, binary_length);
+      log_data_payload = (char*)log_data_payload_b.c_str();
+    }
+    char* log_data_retained = nullptr;
+    String log_data_retained_b;
+    if (retained) {
+      log_data_retained_b = F(" (" D_RETAINED ")");      // (retained)
+      log_data_retained = (char*)log_data_retained_b.c_str();
+    }
+    AddLogData(log_level, log_data_topic.c_str(), log_data_payload, log_data_retained);  // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
   }
-  log_data_topic += F(" = ");                            // =
-  char* log_data_payload = (char*)payload;
-  String log_data_payload_b;
-  if (binary_data) {
-    log_data_payload_b = HexToString((uint8_t*)payload, binary_length);
-    log_data_payload = (char*)log_data_payload_b.c_str();
-  }
-  char* log_data_retained = nullptr;
-  String log_data_retained_b;
-  if (retained) {
-    log_data_retained_b = F(" (" D_RETAINED ")");        // (retained)
-    log_data_retained = (char*)log_data_retained_b.c_str();
-  }
-  AddLogData(LOG_LEVEL_INFO, log_data_topic.c_str(), log_data_payload, log_data_retained);  // MQT: stat/tasmota/STATUS2 = {"StatusFWR":{"Version":...
 
   if (Settings->ledstate &0x04) {
     TasmotaGlobal.blinks++;
   }
 }
 
+/*
 void MqttPublishPayload(const char* topic, const char* payload) {
   // Publish <topic> payload string no retained
   MqttPublishPayload(topic, payload, 0, false);
 }
-
+*/
 void MqttPublish(const char* topic, bool retained) {
   // Publish <topic> default ResponseData string with optional retained
   MqttPublishPayload(topic, ResponseData(), 0, retained);
@@ -824,7 +829,7 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
     // compute the target topic
     char *topic = SettingsText(SET_MQTT_TOPIC);
     char topic2[strlen(topic)+1];       // save buffer onto stack
-    strcpy(topic2, topic);
+    strlcpy(topic2, topic, sizeof(topic2));
     // replace any '/' with '_'
     char *s = topic2;
     while (*s) {
@@ -1000,10 +1005,8 @@ void MqttDisconnected(int state) {
   */
   Mqtt.connected = false;
 
-  Mqtt.retry_counter = Settings->mqtt_retry * Mqtt.retry_counter_delay;
-  if ((Settings->mqtt_retry * Mqtt.retry_counter_delay) < 120) {
-    Mqtt.retry_counter_delay++;
-  }
+  Mqtt.retry_counter = Settings->mqtt_retry * Mqtt.retry_counter_multiplier;
+  if (Mqtt.retry_counter < 120) { Mqtt.retry_counter_multiplier++; }
 
   if (MqttClient.connected()) {
     MqttClient.disconnect();
@@ -1023,7 +1026,7 @@ void MqttConnected(void) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECTED));
     Mqtt.connected = true;
     Mqtt.retry_counter = 0;
-    Mqtt.retry_counter_delay = 1;
+    Mqtt.retry_counter_multiplier = 1;
     Mqtt.connect_count++;
 
     GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
@@ -1147,7 +1150,7 @@ void MqttReconnect(void) {
 #endif  // USE_EMULATION
 
   Mqtt.connected = false;
-  Mqtt.retry_counter = Settings->mqtt_retry * Mqtt.retry_counter_delay;
+  Mqtt.retry_counter = Settings->mqtt_retry * Mqtt.retry_counter_multiplier;
   TasmotaGlobal.global_state.mqtt_down = 1;
 
 #ifdef FIRMWARE_MINIMAL
@@ -1397,13 +1400,15 @@ void MqttReconnect(void) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
 
 #if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
-      if (tlsClient->getLastError() == 296) {
-        // in this special case of cipher mismatch, we force enable ECDSA
-        // this would be the case for newer letsencrypt certificates now defaulting
-        // to EC certificates requiring ECDSA instead of RSA
-        Settings->flag6.tls_use_ecdsa = true;
-        tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS now enabling ECDSA 'SetOption165 1'"), tlsClient->getLastError());
+      if (tlsClient->getLastError() == 296 /* BR_ALERT_HANDSHAKE_FAILURE */) {
+        if (!Settings->flag6.tls_use_ecdsa) {
+          // in this special case of cipher mismatch, we force enable ECDSA
+          // this would be the case for newer letsencrypt certificates now defaulting
+          // to EC certificates requiring ECDSA instead of RSA
+          Settings->flag6.tls_use_ecdsa = true;
+          tlsClient->setECDSA(Settings->flag6.tls_use_ecdsa);
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS now enabling ECDSA 'SetOption165 1'"), tlsClient->getLastError());
+        }
       }
 #endif // defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
     }
@@ -1424,7 +1429,7 @@ void MqttReconnect(void) {
     MqttDisconnected(MqttClient.state());
   }
 #ifdef USE_MQTT_TLS
-  if (Mqtt.mqtt_tls) {
+  if (Mqtt.mqtt_tls && (tlsClient != NULL)) {
     int32_t cipher_suite = tlsClient->getLastCipherSuite();
     if (BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_RSA_AES_128_GCM_SHA256"));

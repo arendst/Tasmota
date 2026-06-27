@@ -1085,7 +1085,7 @@ void UFSList(void) {
   // UfsList2      - List all files and directories in root directory
   // UfsList /dir1 - List all non-dot files and directories in directory dir1
   bool hide_dot = (XdrvMailbox.index != 2);
-  strcpy(ufs_path, "/");
+  strlcpy(ufs_path, "/", sizeof(ufs_path));
   if (XdrvMailbox.data_len > 0) {
     strlcpy(ufs_path, XdrvMailbox.data, sizeof(ufs_path));
   }
@@ -1353,6 +1353,23 @@ const char HTTP_EDITOR_FORM_END[] PROGMEM =
 
 #endif  // #ifdef GUI_EDIT_FILE
 
+// Wrapper around HandleUploadLoop() for /ufsu file uploads.
+// HandleUploadLoop() is shared between OTA firmware updates (/u2) and filesystem
+// uploads (/ufsu), and uses Web.upload_file_type to distinguish them.
+// When uploading via the web UI, the browser first does a GET which calls
+// UfsDirectory() and sets upload_file_type = UPL_UFSFILE. But direct POST
+// requests (e.g. curl -F "file=@..." /ufsu) skip the GET, leaving
+// upload_file_type unset and causing HandleUploadLoop() to treat the file
+// as a firmware image, which fails.
+// This wrapper ensures upload_file_type is always set before entering the
+// shared upload handler.
+void HandleUploadUFSLoop(void) {
+  if (!HttpCheckPriviledgedAccess(false)) { return; }
+
+  Web.upload_file_type = UPL_UFSFILE;
+  HandleUploadLoop();
+}
+
 void HandleUploadUFSDone(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -1382,7 +1399,7 @@ void HandleUploadUFSDone(void) {
   }
   WSContentSend_P(PSTR("</div><br>"));
 
-  XdrvCall(FUNC_WEB_ADD_MANAGEMENT_BUTTON);
+  WSContentSend_PD(UFS_WEB_DIR, "/", PSTR(D_MANAGE_FILE_SYSTEM));
 
   WSContentStop();
 }
@@ -1395,7 +1412,7 @@ void UfsDirectory(void) {
   uint8_t depth = 0;
   uint8_t isdir = 0;
 
-  strcpy(ufs_path, "/");
+  strlcpy(ufs_path, "/", sizeof(ufs_path));
 
   if (Webserver->hasArg(F("dir"))) {
     String stmp = Webserver->arg(F("dir"));
@@ -1430,7 +1447,7 @@ void UfsDirectory(void) {
     char *cp = (char*)stmp.c_str();
     if (UfsDownloadFile(cp)) {
       // is directory
-      strcpy(ufs_path, cp);
+      strlcpy(ufs_path, cp, sizeof(ufs_path));
       isdir = 1;
     } else {
       return;
@@ -1561,9 +1578,9 @@ void UfsListDir(char *path, uint8_t depth) {
 #ifdef UFILESYS_RECURSEFOLDERS_GUI
           uint8_t plen = strlen(path);
           if (plen > 1) {
-            strcat(path, "/");
+            strlcat(path, "/", UFS_FILENAME_SIZE);
           }
-          strcat(path, ep);
+          strlcat(path, ep, UFS_FILENAME_SIZE);
           UfsListDir(path, depth + 4);
           path[plen] = 0;
 #endif          
@@ -1667,7 +1684,7 @@ uint8_t UfsDownloadFile(char *file) {
 
   UfsData.download_busy = true;
   char *path = (char*)malloc(128);
-  strcpy(path,file);
+  strlcpy(path, file, 128);
   BaseType_t ret = xTaskCreatePinnedToCore(download_task, "DT", 6000, (void*)path, 3, nullptr, 1);
   if (ret != pdPASS)
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "Download task failed with %d"), ret);
@@ -1839,14 +1856,14 @@ void UfsEditorUpload(void) {
   // recursively create folder(s)
   char tmp[UFS_FILENAME_SIZE];
   char folder[UFS_FILENAME_SIZE] = "";
-  strcpy(tmp, fname);
+  strlcpy(tmp, fname, sizeof(tmp));
   // zap file name off the end
   folderOnly(tmp);
   char *tf = strtok(tmp, "/");
   while(tf){
     if (*tf){
-      strcat(folder, "/");
-      strcat(folder, tf);
+      strlcat(folder, "/", sizeof(folder));
+      strlcat(folder, tf, sizeof(folder));
     }
     // we don;t care if it fails - it may already exist.
     dfsp->mkdir(folder);
@@ -1875,7 +1892,7 @@ void UfsEditorUpload(void) {
   // zap file name off the end
   folderOnly(fname);
   char t[20+UFS_FILENAME_SIZE] = "/ufsu?download=";
-  strcat(t, fname);
+  strlcat(t, fname, sizeof(t));
   Webserver->sendHeader(F("Location"), t);
   Webserver->send(303);
 }
@@ -1974,13 +1991,9 @@ bool Xdrv50(uint32_t function) {
       }
       break;
     case FUNC_WEB_ADD_HANDLER:
-//      Webserver->on(F("/ufsd"), UfsDirectory);
-//      Webserver->on(F("/ufsu"), HTTP_GET, UfsDirectory);
-//      Webserver->on(F("/ufsu"), HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
       Webserver->on("/ufsd", UfsDirectory);
       Webserver->on("/ufsu", HTTP_GET, UfsDirectory);
-      //Webserver->on("/ufsu", HTTP_POST,[](){Webserver->sendHeader(F("Location"),F("/ufsu"));Webserver->send(303);}, HandleUploadLoop);
-      Webserver->on("/ufsu", HTTP_POST, HandleUploadUFSDone, HandleUploadLoop);
+      Webserver->on("/ufsu", HTTP_POST, HandleUploadUFSDone, HandleUploadUFSLoop);
 #ifdef GUI_EDIT_FILE
       Webserver->on("/ufse", HTTP_GET, UfsEditor);
       Webserver->on("/ufse", HTTP_POST, UfsEditorUpload);

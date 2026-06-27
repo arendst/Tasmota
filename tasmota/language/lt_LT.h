@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "Kiti parametrai"
 #define D_TEMPLATE "Šablonas"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Aktyvuoti"
 #define D_DEVICE_NAME "Įrenginio pavadinimas"
 #define D_WEB_ADMIN_PASSWORD "Web administratoriaus slaptažodis"
@@ -1339,5 +1340,13 @@
 // xnrg_34_v9240.ino
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
+
+#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+
+// xdrv_94_modbus_relay.ino
+#define D_MODBUSRELAY_TX         "MbsRelay TX"
+#define D_MODBUSRELAY_TX_ENA     "MbsRelay TX Ena"
+#define D_MODBUSRELAY_RX         "MbsRelay RX"
+#define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
 
 #endif  // _LANGUAGE_LT_LT_H_

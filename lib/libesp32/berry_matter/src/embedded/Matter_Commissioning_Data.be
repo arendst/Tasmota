@@ -39,6 +39,13 @@ class Matter_PBKDFParamRequest
   var hasPBKDFParameters
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
+  # Matter 1.4+ session params (tags 4-7) are available in the initiator's session-parameter-struct
+  # but not extracted here because Tasmota doesn't perform version negotiation.
+  # Uncomment if needed for future compatibility checks.
+  # var initiator_data_model_revision
+  # var initiator_im_revision
+  # var initiator_specification_version
+  # var initiator_max_paths_per_invoke
 
   def parse(b, idx)
     var TLV = matter.TLV
@@ -53,6 +60,12 @@ class Matter_PBKDFParamRequest
     if initiatorSEDParams != nil
       self.SLEEPY_IDLE_INTERVAL = initiatorSEDParams.findsubval(1)
       self.SLEEPY_ACTIVE_INTERVAL = initiatorSEDParams.findsubval(2)
+      # Matter 1.4+ fields - parsed but not stored to save memory since Tasmota
+      # doesn't negotiate based on the initiator's capabilities.
+      # self.initiator_data_model_revision = initiatorSEDParams.findsubval(4)
+      # self.initiator_im_revision = initiatorSEDParams.findsubval(5)
+      # self.initiator_specification_version = initiatorSEDParams.findsubval(6)
+      # self.initiator_max_paths_per_invoke = initiatorSEDParams.findsubval(7)
     end
     return self
   end
@@ -75,17 +88,21 @@ class Matter_PBKDFParamResponse
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     # initiatorRandom
-    s.add_TLV(1, TLV.B1, self.initiatorRandom)
-    s.add_TLV(2, TLV.B1, self.responderRandom)
-    s.add_TLV(3, TLV.U2, self.responderSessionId)
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.initiatorRandom)
+    s.add_TLV(2, 0x10 #-TLV.B1-#, self.responderRandom)
+    s.add_TLV(3, 0x05 #-TLV.U2-#, self.responderSessionId)
     var s_pbkdf = s.add_struct(4)
-    s_pbkdf.add_TLV(1, TLV.U4, self.pbkdf_parameters_iterations)
-    s_pbkdf.add_TLV(2, TLV.B1, self.pbkdf_parameters_salt)
-    if self.SLEEPY_IDLE_INTERVAL != nil || self.SLEEPY_ACTIVE_INTERVAL != nil
-      var s2 = s.add_struct(5)
-      s2.add_TLV(1, TLV.U4, self.SLEEPY_IDLE_INTERVAL)
-      s2.add_TLV(2, TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
-    end
+    s_pbkdf.add_TLV(1, 0x06 #-TLV.U4-#, self.pbkdf_parameters_iterations)
+    s_pbkdf.add_TLV(2, 0x10 #-TLV.B1-#, self.pbkdf_parameters_salt)
+    # Always include session params with mandatory fields (Matter 1.4 §4.10)
+    var s2 = s.add_struct(5)
+    s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
+    s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
+    s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
 end
@@ -119,8 +136,8 @@ class Matter_Pake2
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     #
-    s.add_TLV(1, TLV.B1, self.pB)
-    s.add_TLV(2, TLV.B1, self.cB)
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.pB)
+    s.add_TLV(2, 0x10 #-TLV.B1-#, self.cB)
     return s.tlv2raw(b)
   end
 end
@@ -152,6 +169,13 @@ class Matter_Sigma1
   # var initiatorSEDParams    # (opt) sed-parameter-struct
   var SLEEPY_IDLE_INTERVAL
   var SLEEPY_ACTIVE_INTERVAL
+  # Matter 1.4+ session params (tags 4-7) are available in the initiator's session-parameter-struct
+  # but not extracted here because Tasmota doesn't perform version negotiation.
+  # Uncomment if needed for future compatibility checks.
+  # var initiator_data_model_revision
+  # var initiator_im_revision
+  # var initiator_specification_version
+  # var initiator_max_paths_per_invoke
   var resumptionID          # (opt) bytes(16)
   var initiatorResumeMIC    # (opt) bytes(16)
   var Msg1
@@ -170,6 +194,12 @@ class Matter_Sigma1
     if initiatorSEDParams != nil
       self.SLEEPY_IDLE_INTERVAL = initiatorSEDParams.findsubval(1)
       self.SLEEPY_ACTIVE_INTERVAL = initiatorSEDParams.findsubval(2)
+      # Matter 1.4+ fields - parsed but not stored to save memory since Tasmota
+      # doesn't negotiate based on the initiator's capabilities.
+      # self.initiator_data_model_revision = initiatorSEDParams.findsubval(4)
+      # self.initiator_im_revision = initiatorSEDParams.findsubval(5)
+      # self.initiator_specification_version = initiatorSEDParams.findsubval(6)
+      # self.initiator_max_paths_per_invoke = initiatorSEDParams.findsubval(7)
     end
     self.resumptionID = val.findsubval(6)
     self.initiatorResumeMIC = val.findsubval(7)
@@ -193,15 +223,19 @@ class Matter_Sigma2
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     # initiatorRandom
-    s.add_TLV(1, TLV.B1, self.responderRandom)
-    s.add_TLV(2, TLV.U2, self.responderSessionId)
-    s.add_TLV(3, TLV.B1, self.responderEphPubKey)
-    s.add_TLV(4, TLV.B1, self.encrypted2)
-    if self.SLEEPY_IDLE_INTERVAL != nil || self.SLEEPY_ACTIVE_INTERVAL != nil
-      var s2 = s.add_struct(5)
-      s2.add_TLV(1, TLV.U4, self.SLEEPY_IDLE_INTERVAL)
-      s2.add_TLV(2, TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
-    end
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.responderRandom)
+    s.add_TLV(2, 0x05 #-TLV.U2-#, self.responderSessionId)
+    s.add_TLV(3, 0x10 #-TLV.B1-#, self.responderEphPubKey)
+    s.add_TLV(4, 0x10 #-TLV.B1-#, self.encrypted2)
+    # Always include session params with mandatory fields (Matter 1.4 §4.10)
+    var s2 = s.add_struct(5)
+    s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
+    s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
+    s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
 end
@@ -221,14 +255,18 @@ class Matter_Sigma2Resume
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     # initiatorRandom
-    s.add_TLV(1, TLV.B1, self.resumptionID)
-    s.add_TLV(2, TLV.B1, self.sigma2ResumeMIC)
-    s.add_TLV(3, TLV.U2, self.responderSessionID)
-    if self.SLEEPY_IDLE_INTERVAL != nil || self.SLEEPY_ACTIVE_INTERVAL != nil
-      var s2 = s.add_struct(4)
-      s2.add_TLV(1, TLV.U4, self.SLEEPY_IDLE_INTERVAL)
-      s2.add_TLV(2, TLV.U4, self.SLEEPY_ACTIVE_INTERVAL)
-    end
+    s.add_TLV(1, 0x10 #-TLV.B1-#, self.resumptionID)
+    s.add_TLV(2, 0x10 #-TLV.B1-#, self.sigma2ResumeMIC)
+    s.add_TLV(3, 0x05 #-TLV.U2-#, self.responderSessionID)
+    # Always include session params with mandatory fields (Matter 1.4 §4.10)
+    var s2 = s.add_struct(4)
+    s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
+    s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
+    s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
 end

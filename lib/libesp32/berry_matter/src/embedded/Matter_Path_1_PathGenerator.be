@@ -110,10 +110,10 @@ class Matter_PathGenerator
   # This error is only reported if `direct` is true
   def _default_status_error()
     if self.is_direct()
-      if (!self.endpoint_found)     return matter.UNSUPPORTED_ENDPOINT      end
-      if (!self.cluster_found)      return matter.UNSUPPORTED_CLUSTER       end
-      if (!self.attribute_found)    return matter.UNSUPPORTED_ATTRIBUTE     end
-      return matter.UNREPORTABLE_ATTRIBUTE
+      if (!self.endpoint_found)     return 0x7F #-matter.UNSUPPORTED_ENDPOINT-#      end
+      if (!self.cluster_found)      return 0xC3 #-matter.UNSUPPORTED_CLUSTER-#       end
+      if (!self.attribute_found)    return 0x86 #-matter.UNSUPPORTED_ATTRIBUTE-#     end
+      return 0x8C #-matter.UNREPORTABLE_ATTRIBUTE-#
     end
     return nil
   end

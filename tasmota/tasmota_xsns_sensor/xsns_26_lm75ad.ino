@@ -53,7 +53,7 @@ struct {
 
 void LM75ADDetect(void) {
   if ((LM75AD_MAX_SENSORS < 1) || (LM75AD_MAX_SENSORS > 16)) { return; }  // Safeguard user changed LM75AD_MAX_SENSORS out of bounds
-  for (uint32_t bus = 0; bus < 2; bus++) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     for (uint32_t address = LM75AD_ADDRESS; address < LM75AD_ADDRESS + LM75AD_COUNT; address++) {
       if (!I2cSetDevice(address, bus)) { continue; }  // Do not make the next step without a confirmed device on the bus
       uint16_t buffer;
@@ -97,11 +97,11 @@ void LM75ADShow(bool json) {
     strlcpy(name, "LM75AD", sizeof(name));                                                             // LM75AD
     if (Lm75.count > 1) {
       snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), Lm75.address[sensor]);  // LM75AD-49
-#ifdef USE_I2C_BUS2
+#if MAX_I2C > 1
       if (TasmotaGlobal.i2c_enabled[1] && dual_bus_use) {  // Different busses
         snprintf_P(name, sizeof(name), PSTR("%s%c%d"), name, IndexSeparator(), Lm75.bus[sensor] +1);   // LM75AD-49-1
       }
-#endif  // USE_I2C_BUS2
+#endif  // MAX_I2C
     }
 
     if (json) {

@@ -55,6 +55,7 @@
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef ESP8266
+#include "sntp.h"                           // To disable sntp using UDP for NTP updates
 #ifdef USE_ARDUINO_OTA
 #include <ArduinoOTA.h>                     // Arduino OTA
 #ifndef USE_DISCOVERY
@@ -315,7 +316,7 @@ struct TasmotaGlobal_t {
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
-  bool i2c_enabled[2];                      // I2C configured for all possible buses (1 or 2)
+  bool i2c_enabled[2];                      // I2C configured for all possible buses (1 or 2) - MAX_I2C
 #ifdef ESP32
   bool camera_initialized;                  // For esp32-webcam, to be used in discovery
   bool ota_factory;                         // Select safeboot binary
@@ -675,8 +676,18 @@ void setup(void) {
 
   Format(TasmotaGlobal.mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(TasmotaGlobal.mqtt_topic));
   if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
+    // If hostname in Settings contains % (a format specifier), then reset hostname to WIFI_HOSTNAME from tasmota_globals.h
+    // and then expand the string.
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
-    snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
+    const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
+    const char* second_spec = strchr(first_spec + 1, '%');
+    if (first_spec && second_spec) {
+      // Two (or more) specifiers: expands first as mqtt topic and second as chip ID
+      snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
+    } else {
+      // One specifier: use Format() which handles %NX = last N MAC hex chars, %Nd = short chip ID dec, %d = full chip ID dec
+      Format(TasmotaGlobal.hostname, SettingsText(SET_HOSTNAME), sizeof(TasmotaGlobal.hostname)-1);
+    }
   } else {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }

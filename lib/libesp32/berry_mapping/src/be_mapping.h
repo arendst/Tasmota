@@ -47,6 +47,11 @@
       bvaldata((const void*) &ctype_func_def##_f),                \
       BE_CTYPE_FUNC | BE_STATIC                                   \
   }
+  // compact map node value (BE_USE_COMPACT_MAP): emits "<type byte>, <payload>"
+  #define be_ckv_ctype_func(_f)                                   \
+      BE_CTYPE_FUNC, bvaldata((const void*) &ctype_func_def##_f)
+  #define be_ckv_static_ctype_func(_f)                            \
+      BE_CTYPE_FUNC | BE_STATIC, bvaldata((const void*) &ctype_func_def##_f)
 #else // __cplusplus
 typedef const void* be_constptr;
   #define be_const_ctype_func(_f) {                               \
@@ -57,6 +62,11 @@ typedef const void* be_constptr;
       .v.nf = (const void*) &ctype_func_def##_f,                  \
       .type = BE_CTYPE_FUNC | BE_STATIC                           \
   }
+  // compact map node value (BE_USE_COMPACT_MAP): emits "<type byte>, <payload>"
+  #define be_ckv_ctype_func(_f)                                   \
+      BE_CTYPE_FUNC, { .nf = (const void*) &ctype_func_def##_f }
+  #define be_ckv_static_ctype_func(_f)                            \
+      BE_CTYPE_FUNC | BE_STATIC, { .nf = (const void*) &ctype_func_def##_f }
 #endif // __cplusplus
 
 #define BE_FUNC_CTYPE_DECLARE(_name, _ret_arg, _in_arg) \

@@ -26,6 +26,9 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
+#include <stdlib.h>    // for malloc/free
+#include <string.h>    // for str* / mem* helpers
+
 // ESP-IDF includes
 #include "esp_log.h"
 #include "esp_http_server.h"
@@ -50,9 +53,8 @@ static char uri_prefix[32] = "/";
 
 // Scratch buffer size for file transfer
 #define SCRATCH_BUFSIZE 4096   // 4KB scratch buffer for chunks
-
-// Static buffer for file sending - fixed allocation
-static char scratch_buffer[SCRATCH_BUFSIZE];
+// Note: the scratch buffer is allocated per-request on the heap (see webfiles_handler)
+// rather than as a shared static buffer, so concurrent requests cannot corrupt each other.
 
 // MIME Type Mapping
 static const struct {
@@ -156,8 +158,25 @@ static void set_content_type_from_file(httpd_req_t *req, const char *filepath) {
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 }
 
-//checks if a .html, .css, or .js file exists with a .br suffix and serve that Brotli-compressed version instead
+// Reject any path containing a ".." segment to prevent directory traversal
+// outside of `base_path`. A ".." is only dangerous when it is a whole path
+// segment (bounded by '/', '\\', start or end of string), so filenames that
+// merely contain ".." (e.g. "my..file.txt") are still allowed.
+static bool is_path_safe(const char *path) {
+    const char *p = path;
+    while (*p) {
+        if (p[0] == '.' && p[1] == '.' &&
+            (p[2] == '\0' || p[2] == '/' || p[2] == '\\') &&
+            (p == path || p[-1] == '/' || p[-1] == '\\')) {
+            return false;
+        }
+        p++;
+    }
+    return true;
+}
 
+// If the requested resource is .html/.css/.js/.svg and the client supports it,
+// serve a pre-compressed `.gz` (gzip) variant when one exists on the filesystem.
 static esp_err_t webfiles_handler(httpd_req_t *req) {
   char filepath[FILE_PATH_MAX];
   char compressed_filepath[FILE_PATH_MAX];
@@ -182,7 +201,14 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
   
   // Restore query string if we modified it
   if (query) *query = '?';
-  
+
+  // Reject directory-traversal attempts before touching the filesystem
+  if (!is_path_safe(filepath)) {
+      ESP_LOGW(TAG, "Rejected path traversal attempt for URI: %s", req->uri);
+      httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
+      return ESP_FAIL;
+  }
+
   ESP_LOGI(TAG, "Requested file: %s", filepath);
   
   // Check if file is .html, .css, .js, or .svg and if a compressed version exists
@@ -249,6 +275,16 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
       httpd_resp_set_hdr(req, "Vary", "Accept-Encoding");
   }
 
+  // Allocate a per-request scratch buffer on the heap to avoid a shared,
+  // non-reentrant static buffer (ESP-IDF httpd may serve requests concurrently).
+  char *scratch_buffer = malloc(SCRATCH_BUFSIZE);
+  if (!scratch_buffer) {
+      ESP_LOGE(TAG, "Failed to allocate scratch buffer");
+      fclose(file);
+      httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Out of memory");
+      return ESP_FAIL;
+  }
+
   // Send file in chunks for efficiency
   size_t chunk_size;
   size_t total_sent = 0;
@@ -256,6 +292,7 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
   while ((chunk_size = fread(scratch_buffer, 1, SCRATCH_BUFSIZE, file)) > 0) {
       if (httpd_resp_send_chunk(req, scratch_buffer, chunk_size) != ESP_OK) {
           ESP_LOGE(TAG, "File send failed");
+          free(scratch_buffer);
           fclose(file);
           httpd_resp_send_chunk(req, NULL, 0);
           return ESP_FAIL;
@@ -264,6 +301,7 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
   }
   
   // Close file
+  free(scratch_buffer);
   fclose(file);
   
   // Finish the HTTP response
@@ -326,7 +364,9 @@ static int w_webfiles_serve(bvm *vm) {
             .uri      = registered_uri_pattern, // Use the static buffer
             .method   = HTTP_GET,
             .handler  = webfiles_handler,
+#if CONFIG_HTTPD_WS_SUPPORT
             .is_websocket = false,
+#endif // CONFIG_HTTPD_WS_SUPPORT
             .user_ctx = NULL
         };
 

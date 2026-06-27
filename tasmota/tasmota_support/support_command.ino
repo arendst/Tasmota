@@ -30,7 +30,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOREAD "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
   D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|"
   D_CMND_SERIALBUFFER "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|" D_CMND_SERIALDELIMITER "|"
-  D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|" D_CMND_WIFI "|" D_CMND_DNSTIMEOUT "|"
+  D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_BSSID "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|" D_CMND_WIFI "|" D_CMND_DNSTIMEOUT "|"
   D_CMND_DEVICENAME "|" D_CMND_FN "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|"
   D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|"
   D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
@@ -79,7 +79,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpioRead, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport,
   &CmndSerialBuffer, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig, &CmndSerialDelimiter,
-  &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig, &CmndWifi, &CmndDnsTimeout,
+  &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndBSsid, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig, &CmndWifi, &CmndDnsTimeout,
   &CmndDevicename, &CmndFriendlyname, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset,
   &CmndTime, &CmndTimezone, &CmndTimeStd, &CmndTimeDst, &CmndAltitude,
   &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
@@ -551,9 +551,8 @@ void CmndBacklog(void) {
       }
       // Do not allow command Reset in backlog
       if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-        char* temp = (char*)malloc(strlen(blcommand)+1);
+        char* temp = strdup(blcommand);
         if (temp != nullptr) {
-          strcpy(temp, blcommand);
           char* &elem = backlog.addToLast();
           elem = temp;
         }
@@ -773,9 +772,8 @@ bool SetTimedCmnd(uint32_t time, const char *command) {
     }
   }
   // Add command
-  char* cmnd = (char*)malloc(strlen(command) +1);
+  char* cmnd = strdup(command);
   if (cmnd) {
-    strcpy(cmnd, command);
     tTimedCmnd &elem = timed_cmnd.addToLast();
     elem.time = millis() + time;
     elem.command = cmnd;
@@ -901,7 +899,15 @@ void CmndStatus(void)
 
   if (0 == XdrvMailbox.index) { payload = 0; }  // All status messages in one MQTT message (status0)
 
-  if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
+  while (payload > MAX_STATUS) { 
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+    if (44 == payload) { break; }
+#endif  // USE_ESP8266_DEBUG_HEAP
+#endif  // ESP8266  
+    return;   // {"Command":"Error"}
+  }
+
   if (!Settings->flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
   if (!TasmotaGlobal.energy_driver && (9 == payload)) { return; }
 #ifndef FIRMWARE_MINIMAL
@@ -1019,23 +1025,28 @@ void CmndStatus(void)
 
   // Status 4 - StatusMEM
   if ((0 == payload) || (4 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
-#ifdef ESP32
-                          D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
-#endif  // ESP32
-                          D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
-                          ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":\"" D_TASMOTA_FLASHMODE "\""),
-                          ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
-#ifdef ESP32
-                          uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
-                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
-#endif  // ESP32
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d"),
+                          ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024());
+
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+    ResponseAppendHeapInfo();
+#endif  // USE_ESP8266_DEBUG_HEAP
+#else   // ESP32
+    ResponseAppend_P(PSTR(",\"" D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d"),
+                          uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024);
+#endif  // ESP8266 or ESP32
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
+                          ",\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"FlashFrequency\":%d"
+                          ",\"" D_JSON_FLASHMODE "\":\"" D_TASMOTA_FLASHMODE "\""),
 #ifdef ESP8266
                           ESP_getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
-#endif // ESP8266
-                          , ESP_getFlashChipId()
-                          , ESP_getFlashChipSpeed()/1000000);
+#else   // ESP32
+                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
+#endif  // ESP8266 or ESP32
+                          , ESP_getFlashChipId(), ESP_getFlashChipSpeed()/1000000);
+
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1183,6 +1194,17 @@ void CmndStatus(void)
     if (ShutterStatus()) { CmndStatusResponse(13); }
   }
 #endif
+
+#ifdef ESP8266
+#ifdef USE_ESP8266_DEBUG_HEAP
+  // Status 44 - Trigger umm heap dump to serial + OOM test
+  if (44 == payload) {
+    SerialHeapDump();
+    Response_P(PSTR("{\"" D_CMND_STATUS "44\":{\"HeapDump\":\"Serial output only\"}}"));
+    CmndStatusResponse(44);
+  }
+#endif  // USE_ESP8266_DEBUG_HEAP
+#endif  // ESP8266
 
   CmndStatusResponse(99);
 
@@ -1520,9 +1542,66 @@ void CmndSavedata(void)
   ResponseCmndChar((Settings->save_data > 1) ? stemp1 : GetStateText(Settings->save_data));
 }
 
+void SetOptionShow(uint32_t display_set) {
+  // display_set = 0 - "SetOption":"0,!1,!2,3,!4,!5,!6,!7 ... !162,!163,!164,!165"
+  // display_set = 1 - "SetOptionSet":[0,3,15,56,57,59,95,96,128]
+  ResponseAppend_P(PSTR("\"" D_CMND_SETOPTION "%s\":"),
+    (0 == display_set) ? "" : "Set");
+  uint32_t flag[5];
+  flag[0] = Settings->flag.data;                   // SetOption0 .. 31
+  flag[1] = Settings->flag3.data;                  // SetOption50 .. 81
+  flag[2] = Settings->flag4.data;                  // SetOption82 .. 113
+  flag[3] = Settings->flag5.data;                  // SetOption114 .. 145
+  flag[4] = Settings->flag6.data;                  // SetOption146 .. 177
+  bool first_shown = false;
+  for (uint32_t i = 0; i <= MAX_SETOPTION_USED - PARAM8_SIZE; i++) {
+    bool option_set = bitRead(flag[i / 32], i % 32);
+    if (display_set && !option_set) { continue; }  // Report only options set (1)
+    ResponseAppend_P(PSTR("%s%s%d"), 
+      (first_shown) ? "," : (0 == display_set) ? "\"" : "[",
+      (option_set) ? "" : "!",
+      (i < 32) ? i : i + PARAM8_SIZE);
+    first_shown = true;
+  }
+  ResponseAppend_P(PSTR("%s"), (0 == display_set) ? "\"" : "]");
+}
+
 void CmndSetoption(void) {
-  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
-  CmndSetoptionBase(1);
+  if (!XdrvMailbox.usridx) {
+    // SetOption   - Report all boolean options where preceded by ! means not-set (0)
+    // SetOption 0 - Report only boolean options set (1) AND all multi value options (SetOption32 .. 49)
+    // SetOption 1 - Report only boolean options set (1)
+    // SetOption 2 - Report all multi value options (SetOption32 .. 49)
+    Response_P(PSTR("{"));
+    int display_option = XdrvMailbox.payload;
+    if ((display_option >= 0) && (display_option <= 2)) {
+      // SetOption 0 or 1 - Report only options set (1)
+      //   "SetOptionSet":[0,3,15,56,57,59,95,96,128]
+      if ((0 == display_option) || (1 == display_option)) {
+        SetOptionShow(1);
+      }
+      // SetOption 0 or 2 - Report all multi value options (SetOption32 .. 49)
+      //   "SetOption32_49":[40,5,200,0,1,0,6,0,0,60,90,255,0,40,0,0,0,0]
+      if ((0 == display_option) || (2 == display_option)) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_SETOPTION "32_49\":["),
+          (0 == display_option) ? "," : "");
+        for (uint32_t i = 0; i < PARAM8_SIZE; i++) {
+          ResponseAppend_P(PSTR("%s%d"),
+            (i) ? "," : "",
+            Settings->param[i]);                   // SetOption32 .. 49
+        }
+        ResponseAppend_P(PSTR("]"));
+      }
+    } else {
+      // SetOption - Report all boolean options where preceded by ! means not-set (0)
+      //   "SetOption":"0,!1,!2,3,!4,!5,!6,!7 ... !162,!163,!164,!165"
+      SetOptionShow(0);
+    }
+    ResponseAppend_P(PSTR("}"));
+  } else {
+    snprintf_P(XdrvMailbox.command, CMDSZ, PSTR(D_CMND_SETOPTION));  // Rename result shortcut command SO to SetOption
+    CmndSetoptionBase(1);
+  }
 }
 
 // Code called by SetOption and by Berry
@@ -1883,7 +1962,7 @@ void CmndModule(void)
   if (XdrvMailbox.index == 2) {
     module_real = Settings->fallback_module;
     module_number = (USER_MODULE == Settings->fallback_module) ? 0 : Settings->fallback_module +1;
-    strcat(XdrvMailbox.command, "2");
+    strlcat(XdrvMailbox.command, "2", CMDSZ);
   }
   Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, module_number, AnyModuleName(module_real).c_str());
 }
@@ -2163,7 +2242,7 @@ void CmndTemplate(void)
     if (JsonTemplate(XdrvMailbox.data)) {
       if (USER_MODULE == Settings->module) { TasmotaGlobal.restart_flag = 2; }
     } else {
-      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
+      ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON " or Bad Chip Type"));
       error = true;
     }
 #endif // FIRMWARE_MINIMAL
@@ -2394,6 +2473,22 @@ void CmndAp(void)
     TasmotaGlobal.restart_flag = 2;
   }
   Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings->sta_active +1, EscapeJSONString(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str());
+}
+
+void CmndBSsid(void) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SSIDS)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_APBSSID1, MAX_SSIDS);
+    } else {
+      if ((Shortcut() < 2) || (17 == XdrvMailbox.data_len)) {  // Valid BSSID = 18:E8:29:CA:17:C1
+        SettingsUpdateText(SET_APBSSID1 + XdrvMailbox.index -1,
+                (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? AP_BSSID1 : AP_BSSID2 : XdrvMailbox.data);
+        Settings->sta_active = XdrvMailbox.index -1;
+        TasmotaGlobal.restart_flag = 2;
+      }
+      ResponseCmndIdxChar(SettingsText(SET_APBSSID1 + XdrvMailbox.index -1));
+    }
+  }
 }
 
 void CmndSsid(void)
@@ -2954,18 +3049,15 @@ void CmndBatteryPercent(void) {
 void CmndI2cScan(void) {
   // I2CScan   - Scan bus1 then bus2
   bool jsflag = false;
-  if (TasmotaGlobal.i2c_enabled[0]) {
-    I2cScan();
-    jsflag = true;
-  }
-#ifdef USE_I2C_BUS2
-  if (TasmotaGlobal.i2c_enabled[1]) {
-    if (jsflag) {
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+    if (TasmotaGlobal.i2c_enabled[bus]) {
+      if (jsflag) {
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
+      }
+      I2cScan(bus);
+      jsflag = true;
     }
-    I2cScan(1);
   }
-#endif  // USE_I2C_BUS2
 }
 
 void CmndI2cDriver(void)

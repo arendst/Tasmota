@@ -109,10 +109,37 @@ class Matter_UDPServer
   # Stops the server and remove driver
   def stop()
     if self.listening
-      self.udp_socket.stop()
+      self.udp_socket.close()
       self.listening = false
       # tasmota.remove_driver(self)
       tasmota.remove_fast_loop(self.loop_cb)
+    end
+  end
+
+  #############################################################
+  # Flush the UDP socket by closing it.
+  # Called before WiFi teardown to discard any queued packets
+  # whose pbufs reference the WiFi netif (which is about to be
+  # destroyed).  The fast_loop stays registered so that the
+  # server can be reopened without re-registering.
+  def flush_socket()
+    if self.listening && self.udp_socket != nil
+      self.udp_socket.close()
+      self.udp_socket = nil
+      self.packets_sent = []        # clear all packets awaiting ack, the remote will retry
+    end
+  end
+
+  #############################################################
+  # Reopen the UDP socket after WiFi teardown is complete.
+  # Creates a fresh socket with an empty receive buffer.
+  def reopen_socket()
+    if self.listening && self.udp_socket == nil
+      self.udp_socket = udp()
+      var ok = self.udp_socket.begin(self.addr, self.port)
+      if !ok
+        log("MTR: error reopening UDP server", 2)
+      end
     end
   end
 
@@ -134,9 +161,11 @@ class Matter_UDPServer
       packet_read += 1
       var from_addr = self.udp_socket.remote_ip
       var from_port = self.udp_socket.remote_port
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log(format("MTR: UDP received from [%s]:%i", from_addr, from_port), 4)
       end
+#endif
       # log("MTR: Perf/UDP_received = " + str(debug.counters()), 4)
       if self.dispatch_cb
         # profiler.log("udp_loop_dispatch")
@@ -161,12 +190,15 @@ class Matter_UDPServer
   #
   # Returns `true` if packet was successfully sent.
   def send(packet)
+    if self.udp_socket == nil   return false end
     var ok = self.udp_socket.send(packet.addr ? packet.addr : self.udp_socket.remote_ip, packet.port ? packet.port : self.udp_socket.remote_port, packet.raw)
     
     if ok
+#if USE_BERRY_DEBUG
       if tasmota.loglevel(4)
         log(format("MTR: sending packet to '[%s]:%i'", packet.addr, packet.port), 4)
       end
+#endif
     else
       if tasmota.loglevel(3)
         log(format("MTR: error sending packet to '[%s]:%i'", packet.addr, packet.port), 3)
@@ -217,9 +249,11 @@ class Matter_UDPServer
       var packet = self.packets_sent[idx]
       if packet.msg_id == id && packet.exchange_id == exch
         self.packets_sent.remove(idx)
-        if tasmota.loglevel(3)
-          log("MTR: .          Removed packet from sending list id=" + str(id), 3)
+#if USE_BERRY_DEBUG
+        if tasmota.loglevel(4)
+          log("MTR: .          Removed packet from sending list id=" + str(id), 4)
         end
+#endif
       else
         idx += 1
       end

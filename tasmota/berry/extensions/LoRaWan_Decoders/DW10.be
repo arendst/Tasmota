@@ -97,7 +97,7 @@ class LwDecoDW10
       msg += "<tr class='htr'><td colspan='4'>&#9478;"                      # |
       msg += string.format(" &#x2600;&#xFE0F; %.1f°C", temperature)         # Sunshine - Temperature
       msg += string.format(" &#x1F4A7; %.1f%%", humidity)                   # Raindrop - Humidity
-      msg += string.format(" %s %s", (door_open) ? "&#x1F513" : "&#x1F512", # Open or Closed lock - Door
+      msg += string.format(" %s %s", (door_open) ? "&#x1F513;" : "&#x1F512;", # Open or Closed lock - Door
                                      fmt.dhm(door_open_last_seen))
       msg += "{e}"                                                          # = </td></tr>
     end

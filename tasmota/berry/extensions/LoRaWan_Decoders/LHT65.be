@@ -195,7 +195,7 @@ class LwDecoLHT65
         msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", temp_ext)   # Sunshine - Temperature external
       end
       if door_open < 1000
-        msg += string.format(" %s %s", (door_open) ? "&#x1F513" : "&#x1F512", # Open or Closed lock - Door
+        msg += string.format(" %s %s", (door_open) ? "&#x1F513;" : "&#x1F512;", # Open or Closed lock - Door
                                        fmt.dhm(door_open_last_seen))
       end
       msg += "{e}"                                                       # = </td></tr>

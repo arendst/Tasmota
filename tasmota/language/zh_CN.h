@@ -349,6 +349,7 @@
 
 #define D_OTHER_PARAMETERS "其他设置"
 #define D_TEMPLATE "模板"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "启用"
 #define D_DEVICE_NAME "设备名称"
 #define D_WEB_ADMIN_PASSWORD "WEB 管理密码"
@@ -1339,5 +1340,13 @@
 // xnrg_25_v9240.ino
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
+
+#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+
+// xdrv_94_modbus_relay.ino
+#define D_MODBUSRELAY_TX         "MbsRelay TX"
+#define D_MODBUSRELAY_TX_ENA     "MbsRelay TX Ena"
+#define D_MODBUSRELAY_RX         "MbsRelay RX"
+#define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
 
 #endif  // _LANGUAGE_ZH_CN_H_

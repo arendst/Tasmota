@@ -139,7 +139,7 @@ int be_code_allocregs(bfuncinfo *finfo, int count)
 {
     int base = finfo->freereg;
     allocstack(finfo, count);
-    finfo->freereg += (char)count;
+    finfo->freereg += count;
     return base;
 }
 
@@ -147,6 +147,9 @@ static void setjump(bfuncinfo *finfo, int pc, int dst)
 {
     binstruction *p = be_vector_at(&finfo->code, pc);
     int offset = dst - (pc + 1);
+    if (offset < IsBx_MIN || offset > IsBx_MAX) {
+        be_lexerror(finfo->lexer, "jump too far");
+    }
     /* instruction edit jump destination */
     *p = (*p & ~IBx_MASK) | ISET_sBx(offset);
 }
@@ -258,11 +261,25 @@ static int newconst(bfuncinfo *finfo, bvalue *k)
 {
     int idx = be_vector_count(&finfo->kvec);
     be_vector_push_c(finfo->lexer->vm, &finfo->kvec, k);
+#if BE_USE_COMPACT_KTAB
+    /* During compilation the `bvalue` vector `kvec` is the source of truth, but
+     * we must keep it reachable by the GC (constants such as classes are only
+     * referenced from here). We expose it through proto->kval with ktype==NULL
+     * acting as a sentinel meaning "in-progress, kval is actually a bvalue[]".
+     * end_func later replaces this with the real compact kval/ktype. */
+    finfo->proto->kval = (union bvaldata*) be_vector_data(&finfo->kvec);
+    finfo->proto->ktype = NULL;
+    finfo->proto->nconst = be_vector_capacity(&finfo->kvec);
+    if (k == NULL) {
+        var_setnil((bvalue*)be_vector_at(&finfo->kvec, idx));
+    }
+#else
     finfo->proto->ktab = be_vector_data(&finfo->kvec);
     finfo->proto->nconst = be_vector_capacity(&finfo->kvec);
     if (k == NULL) {
         var_setnil(&finfo->proto->ktab[idx]);
     }
+#endif
     return idx;
 }
 

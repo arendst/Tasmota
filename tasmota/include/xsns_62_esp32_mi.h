@@ -172,7 +172,14 @@ struct MI32connectionContextBerry_t{
   NimBLEUUID charUUID;
   uint16_t returnCharUUID;
   uint16_t handle;
+  uint16_t itvl_min;
+  uint16_t itvl_max;
   uint8_t * buffer;
+  // Reverse-role client (peripheral side). Singleton owned by NimBLEServer
+  // (do NOT pass to NimBLEDevice::deleteClient). Use only for server-side
+  // ACNS-style queries toward the connected central. Set in
+  // MI32ServerCallbacks::onConnect, cleared (not freed) in onDisconnect.
+  NimBLEClient * serverPeer = nullptr;
   uint8_t MAC[6];
   uint8_t operation;
   uint8_t addrType;
@@ -188,7 +195,6 @@ struct {
   // uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   TaskHandle_t ScanTask = nullptr;
   TaskHandle_t ConnTask = nullptr;
-  TaskHandle_t ServerTask = nullptr;
   MI32connectionContextBerry_t *conCtx = nullptr;
   uint16_t connID;
   union {
@@ -214,14 +220,11 @@ struct {
 
       uint32_t triggerBerryAdvCB:1;
       uint32_t triggerBerryConnCB:1;
-      uint32_t triggerNextConnJob:1;
-      uint32_t readyForNextConnJob:1;
+      uint32_t triggerNextJob:1;
+      uint32_t readyForNextJob:1;
       uint32_t discoverAttributes:1;
 
-      uint32_t triggerNextServerJob:1;
-      uint32_t readyForNextServerJob:1;
-      uint32_t triggerBerryServerCB:1;
-      uint32_t deleteServerTask:1;
+      uint32_t deleteConnectionTask:1; // request server-task teardown (renamed from deleteServerTask)
     };
     uint32_t all = 0;
   } mode;
@@ -245,10 +248,9 @@ struct {
 
   void *beConnCB;
   void *beAdvCB;
-  void *beServerCB;
   uint8_t *beAdvBuf;
   uint8_t infoMsg = 0;
-  uint8_t role = 0;
+  uint8_t role = 0; // bitfield of MI32Role values (concurrently active roles)
 } MI32;
 
 struct mi_sensor_t{
@@ -419,8 +421,6 @@ enum MI32_Commands {          // commands useable in console or rules
 
 enum MI32_TASK {
   MI32_TASK_SCAN = 0,
-  MI32_TASK_CONN = 1,
-  MI32_TASK_SERV = 2,
 };
 
 enum BLE_CLIENT_OP {
@@ -461,6 +461,15 @@ enum MI32_ConnErrorMsg {
   MI32_CONN_CAN_NOT_WRITE,
   MI32_CONN_DID_NOT_WRITE,
   MI32_CONN_NOTIFY_TIMEOUT
+};
+
+// MI32.role bit layout (concurrently-active roles, not mutually exclusive)
+enum MI32Role : uint8_t {
+  MI32_ROLE_NONE       = 0x00,
+  MI32_ROLE_SCAN       = 0x01,
+  MI32_ROLE_CLIENT     = 0x02,
+  MI32_ROLE_SERVER     = 0x04,
+  MI32_ROLE_ADVERTISER = 0x08,
 };
 
 enum MI32_BLEInfoMsg {
@@ -511,8 +520,8 @@ const char HTTP_MI32_POWER_WIDGET[] PROGMEM =
   "<div class='box' id='box%u'>"
    "<h2 style='margin-top:0em;'>Energy"
   "</h2>"
-  "<p>" D_VOLTAGE ": %.1f " D_UNIT_VOLT "</p>"
-  "<p>" D_CURRENT ": %.3f " D_UNIT_AMPERE "</p>";
+  "<p>" D_VOLTAGE ": %s " D_UNIT_VOLT "</p>"
+  "<p>" D_CURRENT ": %s " D_UNIT_AMPERE "</p>";
 #endif //USE_MI_ESP32_ENERGY
 
 /*

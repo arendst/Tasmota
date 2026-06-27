@@ -8,6 +8,7 @@
 #include "be_string.h"
 #include "be_vm.h"
 #include "be_mem.h"
+#include "be_exec.h"
 #include "be_constobj.h"
 #include <string.h>
 
@@ -157,8 +158,16 @@ void be_string_deleteall(bvm *vm)
     be_free(vm, tab->table, tab->size * sizeof(bstring*));
 }
 
+/* Hard cap on string length. Well above any plausible string on an
+ * embedded target, but small enough that header + len + 1 cannot
+ * overflow size_t and len fits in blstring.llen (int). */
+#define BE_STRING_MAX_LEN  (16 * 1024 * 1024)  /* 16 MiB */
+
 static bstring* createstrobj(bvm *vm, size_t len, int islong)
 {
+    if (len > BE_STRING_MAX_LEN) {
+        be_raise(vm, "memory_error", "string too large");
+    }
     size_t size = (islong ? sizeof(blstring)
                 : sizeof(bsstring)) + len + 1;
     bgcobject *gco = be_gc_newstr(vm, size, islong);

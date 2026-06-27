@@ -30,6 +30,7 @@ be_extern_native_module(cb);
 
 /* Tasmota specific */
 be_extern_native_module(python_compat);
+be_extern_native_module(preproc);
 be_extern_native_module(re);
 be_extern_native_module(mqtt);
 be_extern_native_module(persist);
@@ -139,7 +140,9 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(strict),
 #endif
     &be_native_module(undefined),
-
+#if BE_USE_PREPROCESSOR
+    &be_native_module(preproc),
+#endif
     &be_native_module(re),
 #ifdef TASMOTA
     /* Berry extensions */
@@ -272,6 +275,9 @@ be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
 be_extern_native_class(tcpclientasync);
+#ifdef USE_BERRY_MQTTCLIENT
+be_extern_native_class(mqttclient);
+#endif // USE_BERRY_MQTTCLIENT
 be_extern_native_class(webserver_async);
 be_extern_native_class(tcpserver);
 be_extern_native_class(energy_struct);
@@ -326,6 +332,9 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(webclient),
     &be_native_class(tcpclient),
     &be_native_class(tcpclientasync),
+#ifdef USE_BERRY_MQTTCLIENT
+    &be_native_class(mqttclient),
+#endif // USE_BERRY_MQTTCLIENT
 #ifdef USE_BERRY_DEBUG
     &be_native_class(webserver_async),  // include only when USE_BERRY_DEBUG is enabled
 #endif // USE_BERRY_DEBUG

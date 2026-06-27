@@ -48,8 +48,9 @@ extern "C" {
 #endif
 #define BE_INT_FORMAT           "%" BE_INT_FMTLEN "d" /**< BE_INT_FORMAT */
 
-typedef uint8_t bbyte;   /**< bbyte */
-typedef BE_INTEGER bint; /**< bint */
+typedef uint8_t bbyte;            /**< bbyte */
+typedef BE_INTEGER bint;          /**< bint */
+typedef unsigned BE_INTEGER buint; /**< buint (unsigned bint, for well-defined wrap-around arithmetic) */
 
 #if BE_USE_SINGLE_FLOAT != 0
   typedef float                 breal; /**< breal */
@@ -523,6 +524,31 @@ typedef bclass_ptr bclass_array[];
  * @brief define bproto
  *
  */
+#if BE_USE_COMPACT_KTAB
+#define be_define_local_proto(_name, _nstack, _argc, _is_const, _is_subproto, _is_upval)           \
+  static const bproto _name##_proto = {                                           \
+    NULL,                                                             /**< bgcobject *next */      \
+    BE_PROTO,                                                         /**< type BE_PROTO */        \
+    0x08,                                                             /**< marked outside of GC */ \
+    (_nstack),                                                        /**< nstack */               \
+    BE_IIF(_is_upval)(sizeof(_name##_upvals)/sizeof(bupvaldesc),0),   /**< nupvals */              \
+    (_argc),                                                          /**< argc */                 \
+    0,                                                                /**< varg */                 \
+    sizeof(_name##_code)/sizeof(uint32_t),                            /**< codesize */             \
+    BE_IIF(_is_const)(sizeof(_name##_ktype)/sizeof(bbyte),0),         /**< nconst */               \
+    BE_IIF(_is_subproto)(sizeof(_name##_subproto)/sizeof(bproto*),0), /**< proto */                \
+    NULL,                                                             /**< bgcobject *gray */      \
+    BE_IIF(_is_upval)((bupvaldesc*)&_name##_upvals,NULL),             /**< bupvaldesc *upvals */   \
+    BE_IIF(_is_const)((union bvaldata*)&_name##_kval,NULL),           /**< kval */                 \
+    BE_IIF(_is_const)((bbyte*)&_name##_ktype,NULL),                   /**< ktype */                \
+    BE_IIF(_is_subproto)((struct bproto**)&_name##_subproto,NULL),    /**< bproto **ptab */        \
+    (binstruction*) &_name##_code,                                    /**< code */                 \
+    be_local_const_str(_name##_str_name),                             /**< name */                 \
+    PROTO_SOURCE_FILE_STR(_name)                                      /**< source */               \
+    PROTO_RUNTIME_BLOCK                                               /**< */                      \
+    PROTO_VAR_INFO_BLOCK                                              /**< */                      \
+  }
+#else
 #define be_define_local_proto(_name, _nstack, _argc, _is_const, _is_subproto, _is_upval)           \
   static const bproto _name##_proto = {                                           \
     NULL,                                                             /**< bgcobject *next */      \
@@ -545,12 +571,38 @@ typedef bclass_ptr bclass_array[];
     PROTO_RUNTIME_BLOCK                                               /**< */                      \
     PROTO_VAR_INFO_BLOCK                                              /**< */                      \
   }
+#endif
 
 /**
  * @def be_nested_proto
  * @brief new version for more compact literals
  *
  */
+#if BE_USE_COMPACT_KTAB
+#define be_nested_proto(_nstack, _argc, _varg, _has_upval, _upvals, _has_subproto, _protos, _has_const, _kval, _ktype, _fname, _source, _code)     \
+  & (const bproto) {                                                              \
+    NULL,                                                       /**< bgcobject *next */      \
+    BE_PROTO,                                                   /**< type BE_PROTO */        \
+    0x08,                                                       /**< marked outside of GC */ \
+    (_nstack),                                                  /**< nstack */               \
+    BE_IIF(_has_upval)(sizeof(*_upvals)/sizeof(bupvaldesc),0),  /**< nupvals */              \
+    (_argc),                                                    /**< argc */                 \
+    (_varg),                                                    /**< varg */                 \
+    sizeof(*_code)/sizeof(binstruction),                        /**< codesize */             \
+    BE_IIF(_has_const)(sizeof(*_ktype)/sizeof(bbyte),0),        /**< nconst (from type array) */ \
+    BE_IIF(_has_subproto)(sizeof(*_protos)/sizeof(bproto*),0),  /**< proto */                \
+    NULL,                                                       /**< bgcobject *gray */      \
+    (bupvaldesc*) _upvals,                                      /**< bupvaldesc *upvals */   \
+    (union bvaldata*) _kval,                                    /**< kval */                 \
+    (bbyte*) _ktype,                                            /**< ktype */                \
+    (struct bproto**) _protos,                                  /**< bproto **ptab */        \
+    (binstruction*) _code,                                      /**< code */                 \
+    ((bstring*) _fname),                                        /**< name */                 \
+    PROTO_SOURCE_FILE(_source)                                  /**< source */               \
+    PROTO_RUNTIME_BLOCK                                         /**< */                      \
+    PROTO_VAR_INFO_BLOCK                                        /**< */                      \
+  }
+#else
 #define be_nested_proto(_nstack, _argc, _varg, _has_upval, _upvals, _has_subproto, _protos, _has_const, _ktab, _fname, _source, _code)     \
   & (const bproto) {                                                              \
     NULL,                                                       /**< bgcobject *next */      \
@@ -573,6 +625,7 @@ typedef bclass_ptr bclass_array[];
     PROTO_RUNTIME_BLOCK                                         /**< */                      \
     PROTO_VAR_INFO_BLOCK                                        /**< */                      \
   }
+#endif
 
 /**
  * @def be_define_local_closure
@@ -874,7 +927,7 @@ BERRY_API bbool be_classof(bvm *vm, int index);
  * @brief length of the specified Berry string
  *
  * This function returns the number of bytes in the string at index
- * (the ’\0’ characters at the end of the Berry string are not counted).
+ * (the '\0' characters at the end of the Berry string are not counted).
  * If the value of the index position is not a string, the be_strlen function will return 0.
  * Although the Berry string is compatible with the C string format,
  * it is not recommended to use the strlen function of the C standard library to measure the length of the Berry string.
@@ -1296,7 +1349,7 @@ BERRY_API bbool be_tobool(bvm *vm, int index);
  * Get the value of the index position of index from the virtual stack and return it as a string type.
  * If the indexed value is not a string type, the indexed value will be converted to a string,
  * and the conversion process will replace the value at the indexed position in the virtual stack with the converted string.
- * The string returned by this function always ends with ’\0’ characters.
+ * The string returned by this function always ends with '\0' characters.
  * If the value is an instance, the method tostring() is called if it exists.
  *
  * @param vm virtual machine instance virtual machine instance
@@ -1391,7 +1444,7 @@ BERRY_API void be_pushreal(bvm *vm, breal r);
  * @brief Push the string str onto the virtual stack.
  *
  * Push the string str onto the virtual stack.
- * The parameter str must point to a C string that ends with a null character ’\0’,
+ * The parameter str must point to a C string that ends with a null character '\0',
  * and a null pointer cannot be passed in.
  *
  * @param vm virtual machine instance
@@ -1518,7 +1571,7 @@ BERRY_API void be_pushntvclass(bvm *vm, const struct bclass *c);
  *
  * Push a general pointer onto the top of the virtual stack.
  * The general pointer ptr points to a certain C data area.
- * Since the content pointed to by this pointer is not maintained by Berry’s garbage collector,
+ * Since the content pointed to by this pointer is not maintained by Berry's garbage collector,
  * users have to maintain the life cycle of the data themselves.
  *
  * @param vm virtual machine instance
@@ -1695,7 +1748,7 @@ BERRY_API bbool be_getmethod(bvm *vm, int index, const char *k);
  * @brief get the value of list or map
  *
  * This function is used to get an element from the map or list container (internal values, not instances of map or list classes),
- * and the index of the element is stored at the top of the stack (relative index is  − 1).
+ * and the index of the element is stored at the top of the stack (relative index is -1).
  * After calling this function, the value obtained from the container will be pushed onto the top of the stack.
  * If there is no subscript pointed to by the container, the value of nil will be pushed onto the top of the stack.
  *
@@ -1711,8 +1764,8 @@ BERRY_API bbool be_getindex(bvm *vm, int index);
  * @brief set a value in list or map
  *
  * This function is used to write an element of the map or list container.
- * The index of the value to be written in the virtual stack is  − 1,
- * and the index of the subscript of the write position in the virtual stack is  − 2.
+ * The index of the value to be written in the virtual stack is -1,
+ * and the index of the subscript of the write position in the virtual stack is -2.
  * If the element with the specified subscript does not exist in the container, the write operation will fail.
  *
  * @param vm virtual machine instance
@@ -2387,6 +2440,40 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length);
  * @return (???)
  */
 BERRY_API char* be_readstring(char *buffer, size_t size);
+
+#if BE_USE_PREPROCESSOR
+
+/**
+ * @fn void be_preprocessor_define(bvm*, const char*, const char*)
+ * @note Preprocessor API
+ * @brief Define a macro with optional value. If value is NULL, stores integer 1 (truthy).
+ *
+ * @param vm virtual machine instance
+ * @param name macro name
+ * @param value macro value (NULL for empty define)
+ */
+BERRY_API void be_preprocessor_define(bvm *vm, const char *name, const char *value);
+
+/**
+ * @fn void be_preprocessor_undef(bvm*, const char*)
+ * @note Preprocessor API
+ * @brief Remove a single macro definition.
+ *
+ * @param vm virtual machine instance
+ * @param name macro name to remove
+ */
+BERRY_API void be_preprocessor_undef(bvm *vm, const char *name);
+
+/**
+ * @fn void be_preprocessor_clear(bvm*)
+ * @note Preprocessor API
+ * @brief Clear all macro definitions and free the map.
+ *
+ * @param vm virtual machine instance
+ */
+BERRY_API void be_preprocessor_clear(bvm *vm);
+
+#endif
 
 #ifdef __cplusplus
 }

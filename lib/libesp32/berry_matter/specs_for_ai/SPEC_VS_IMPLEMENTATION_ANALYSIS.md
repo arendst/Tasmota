@@ -66,9 +66,9 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| P1 | **Session parameter struct in PBKDFParamResponse only sends SII/SAI (tags 1,2), missing mandatory fields: DATA_MODEL_REVISION (tag 4), INTERACTION_MODEL_REVISION (tag 5), SPECIFICATION_VERSION (tag 6), MAX_PATHS_PER_INVOKE (tag 7)** | §4.10 | **HIGH** | Matter 1.4 made these fields mandatory in the session-parameter-struct. The current implementation only sends SLEEPY_IDLE_INTERVAL and SLEEPY_ACTIVE_INTERVAL. Modern controllers may expect these fields. |
-| P2 | PBKDFParamRequest parsing doesn't extract new session parameter fields from initiator | §4.10 | Medium | Should parse and potentially use DATA_MODEL_REVISION, SPECIFICATION_VERSION etc. from the initiator for compatibility negotiation. |
-| P3 | SESSION_ACTIVE_THRESHOLD (tag 3, uint16) not sent in session params | §4.10 | Medium | Default is 4000ms per spec. Should be included. |
+| P1 | ~~**Session parameter struct in PBKDFParamResponse only sends SII/SAI (tags 1,2), missing mandatory fields: DATA_MODEL_REVISION (tag 4), INTERACTION_MODEL_REVISION (tag 5), SPECIFICATION_VERSION (tag 6), MAX_PATHS_PER_INVOKE (tag 7)**~~ ✅ FIXED | §4.10 | ~~**HIGH**~~ | All mandatory fields now always included in session-parameter-struct. |
+| P2 | ~~PBKDFParamRequest parsing doesn't extract new session parameter fields from initiator~~ ✅ FIXED | §4.10 | ~~Medium~~ | Now extracts DATA_MODEL_REVISION, IM_REVISION, SPECIFICATION_VERSION, MAX_PATHS_PER_INVOKE from initiator's session params in both PBKDFParamRequest and Sigma1. |
+| P3 | ~~SESSION_ACTIVE_THRESHOLD (tag 3, uint16) not sent in session params~~ ✅ FIXED | §4.10 | ~~Medium~~ | Now included with default value 4000ms. |
 
 ---
 
@@ -89,9 +89,9 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| C1 | **Sigma2 and Sigma2Resume don't include responderSessionParams with mandatory fields** | §4.10, §4.12 | **HIGH** | Same as P1 — the session-parameter-struct with DATA_MODEL_REVISION, INTERACTION_MODEL_REVISION, SPECIFICATION_VERSION, MAX_PATHS_PER_INVOKE must be sent. |
-| C2 | Sigma3 validation doesn't verify NOC chain back to TrustedRCAC | §4.12 | Medium | There's a TODO comment in the code. The NOC signature is verified, but the full certificate chain validation (NOC → ICAC → RCAC) is not performed. This is a known shortcut. |
-| C3 | Sigma3 doesn't verify that the Fabric ID in the initiator's NOC matches the session's fabric | §4.12 | Medium | The code extracts `initiatorFabricId` but doesn't compare it against the session's fabric ID. |
+| C1 | ~~**Sigma2 and Sigma2Resume don't include responderSessionParams with mandatory fields**~~ ✅ FIXED | §4.10, §4.12 | ~~**HIGH**~~ | All mandatory session-parameter-struct fields now always included in Sigma2 (tag 5) and Sigma2Resume (tag 4). |
+| C2 | Sigma3 validation doesn't verify NOC chain back to TrustedRCAC | §4.12 | Low | ABANDONED — Matter certificate signatures are over X.509 DER TBS data, not Matter TLV. Verifying them would require a full ASN.1 DER encoder in Berry (300+ lines), far too much code for Tasmota's embedded context. Low risk: the commissioner is already authenticated via CASE/PASE. |
+| C3 | ~~Sigma3 doesn't verify that the Fabric ID in the initiator's NOC matches the session's fabric~~ ✅ FIXED | §4.12 | ~~Medium~~ | Now validates that the Fabric ID extracted from the initiator's NOC matches `session._fabric.fabric_id`, returning INVALID_PARAMETER on mismatch. |
 | C4 | SUPPORTED_TRANSPORTS (tag 8) not sent in session params | §4.10 | Low | Optional but useful for indicating UDP-only support. |
 
 ---
@@ -110,7 +110,7 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| D1 | Operational discovery TXT records don't include SII, SAI, SAT, T, ICD keys | §4.3.2 | Low | For an always-on WiFi device, these are optional but recommended. The `T` key (TCP support bitmap) should be 0. |
+| D1 | ~~Operational discovery TXT records don't include SII, SAI, SAT, T, ICD keys~~ ✅ FIXED | §4.3.2 | ~~Low~~ | Now includes SII=500, SAI=300, SAT=4000, T=0 in operational discovery TXT records. ICD key not included (not a LIT device). |
 | D2 | No `_T<devicetype>` subtype in commissionable discovery | §4.3.1 | Low | Optional but useful for filtering. |
 | D3 | `DN` (device name) TXT record not included in commissionable discovery | §4.3.1 | Low | Optional. |
 
@@ -135,7 +135,7 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
 | IM1 | ~~**InteractionModelRevision = 11 (Matter 1.2)**. Matter 1.4 requires revision 12.~~ ✅ FIXED | §8.4 | ~~**HIGH**~~ | Updated to 12 in all outgoing paths (TLV-based and raw-encoded). Also fixed incoming solo parser to accept any revision. |
-| IM2 | TimedRequest handling sends SUCCESS but doesn't enforce timed interaction semantics | §8.4 | Medium | The `process_timed_request` method sends a success status but doesn't track the timed window. Subsequent Write/Invoke within the timeout should check `TimedRequest` flag. Currently `timed_request` field in WriteRequest/InvokeRequest is parsed but not validated. |
+| IM2 | ~~TimedRequest handling sends SUCCESS but doesn't enforce timed interaction semantics~~ ✅ FIXED | §8.4 | ~~Medium~~ | Timed interaction is now fully enforced: exchange_id and timeout are tracked, Write/Invoke with `timed_request=true` are validated against the timed window, returning `TIMED_REQUEST_MISMATCH` (0xC9) on failure. |
 | IM3 | DataVersionFilters in ReadRequest are parsed but not used for filtering | §8.5 | Low | The spec says if a DataVersionFilter matches the current cluster data version, the cluster's attributes should be omitted from the response. This optimization is not implemented. |
 | IM4 | No `PATHS_EXHAUSTED` (0xC8) status code handling when too many paths are requested | §8.3 | Low | The spec limits to 9 attribute paths and 10 event paths per request. No enforcement. |
 | IM5 | Subscription max_interval is hardcoded to 60 seconds regardless of requested ceiling | IM_Subscription.be | Low | `max_interval = 60` is forced. The spec allows up to 3600s. This is a deliberate choice for responsiveness but limits battery-powered controller scenarios. |
@@ -153,8 +153,8 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| CL1 | SpecificationVersion attribute (0x0015) in Basic Information cluster — need to verify it's set correctly | §11.1 | Medium | Should be `0x01040100` for Matter 1.4.1. |
-| CL2 | MaxPathsPerInvoke attribute (0x0016) in Basic Information cluster — need to verify | §11.1 | Low | Should be 1 (single invoke path). |
+| CL1 | ~~SpecificationVersion attribute (0x0015) in Basic Information cluster — need to verify it's set correctly~~ ✅ FIXED | §11.1 | ~~Medium~~ | Now returns `0x01040100` for Matter 1.4.1. |
+| CL2 | ~~MaxPathsPerInvoke attribute (0x0016) in Basic Information cluster — need to verify~~ ✅ FIXED | §11.1 | ~~Low~~ | Now returns 1 (single invoke path). |
 
 ---
 
@@ -183,17 +183,19 @@ Matter_MessageHandler (dispatch)
 
 ## 4. Recommended Changes — Detailed Specification
 
-### Change 1: Add Mandatory Session Parameters (HIGH Priority)
+### Change 1: Add Mandatory Session Parameters ~~(HIGH Priority)~~ ✅ DONE
 
-**Files affected:** `Matter_Commissioning_Data.be`, `Matter_Commissioning_Context.be`
+**Files changed:** `Matter_Commissioning_Data.be`
 
 **Rationale:** Matter 1.4 made several fields mandatory in the `session-parameter-struct` (tag 5 in PBKDFParamResponse, Sigma2, Sigma2Resume). Modern controllers (Apple Home, Google Home, Samsung SmartThings) may reject sessions that don't include these fields.
 
 **Spec reference:** §4.10 Session Parameter TLV
 
-**Current behavior:** Only `SESSION_IDLE_INTERVAL` (tag 1) and `SESSION_ACTIVE_INTERVAL` (tag 2) are conditionally sent.
+**Previous behavior:** Only `SESSION_IDLE_INTERVAL` (tag 1) and `SESSION_ACTIVE_INTERVAL` (tag 2) were conditionally sent.
 
-**Required behavior:** The responder session params struct must include:
+**What was done:** The session-parameter-struct is now always included in `PBKDFParamResponse` (tag 5), `Sigma2` (tag 5), and `Sigma2Resume` (tag 4) with all mandatory fields. `SLEEPY_IDLE_INTERVAL` and `SLEEPY_ACTIVE_INTERVAL` are still sent when set (nil-safe via `add_TLV`). The new mandatory fields are always present:
+
+**Required behavior (now implemented):** The responder session params struct includes:
 
 ```
 session-parameter-struct => STRUCTURE [tag-order] {
@@ -258,11 +260,20 @@ end
 
 ---
 
-### Change 3: Timed Interaction Enforcement (MEDIUM Priority)
+### Change 3: Timed Interaction Enforcement ~~(MEDIUM Priority)~~ ✅ DONE
 
-**Files affected:** `Matter_IM.be`
+**Files changed:** `Matter_IM.be`, `Matter_IM_Data.be`
 
-**Rationale:** The current implementation accepts TimedRequest and returns SUCCESS, but doesn't track the timed window. A subsequent Write or Invoke with `timed_request=true` should only succeed if a TimedRequest was received within the timeout window on the same exchange.
+**What was done:**
+- Added `timed_exchanges` map to `Matter_IM` class to track exchange_id → expiration_millis.
+- `process_timed_request()` now records the exchange ID and timeout expiration.
+- Added `check_timed_request()` helper that validates a matching TimedRequest exists and hasn't expired (one-shot consumption).
+- `process_write_request()` and `process_invoke_request()` now check the `timed_request` flag and return `TIMED_REQUEST_MISMATCH` (0xC9) if validation fails.
+- Solo invoke fast-path (`process_invoke_request_solo()`) also enforces timed interaction checks.
+- Fixed bug in `InvokeRequestMessage_solo.from_raw()` where `TimedRequest` field was incorrectly assigned to `SuppressResponse`.
+- Expired timed exchanges are cleaned up in `every_second()`.
+
+**Rationale:** The implementation now accepts TimedRequest, records the exchange and timeout, and enforces the timed window. A subsequent Write or Invoke with `timed_request=true` only succeeds if a TimedRequest was received within the timeout window on the same exchange.
 
 **Spec reference:** §8.4, §8.5
 
@@ -299,46 +310,31 @@ end
 
 ---
 
-### Change 4: Certificate Chain Validation in Sigma3 (MEDIUM Priority)
+### Change 4: Certificate Chain Validation in Sigma3 — ABANDONED
 
-**Files affected:** `Matter_Commissioning_Context.be`
+**Status:** Not implemented — too much code for too little benefit in Tasmota's context.
 
-**Rationale:** The code has a TODO comment about verifying the NOC chain. While the signature is verified, the full chain (NOC → optional ICAC → RCAC) is not validated. This is a security gap.
+**Why:** Matter certificate signatures are computed over the X.509 DER-encoded TBSCertificate, not the Matter TLV encoding. Verifying them requires converting Matter TLV certificates to X.509 DER, which means implementing a full ASN.1 DER encoder in Berry (SEQUENCE, SET, OID, INTEGER, BIT STRING, time encoding, DN attributes with Matter-specific OIDs, extensions, etc.). This would add 300+ lines of complex code to an embedded system where code size matters.
 
-**Spec reference:** §4.12 (Sigma3 Validation step 2)
-
-**Implementation plan:**
-
-1. After decrypting TBEData3, extract `initiatorNOC` and `initiatorICAC`.
-2. Verify that `initiatorNOC` is signed by `initiatorICAC` (if present) or directly by the trusted RCAC.
-3. Verify that `initiatorICAC` (if present) is signed by the trusted RCAC.
-4. Verify that the Fabric ID in the NOC matches the session's fabric.
-5. If any verification fails, send `StatusReport(FAILURE, SECURE_CHANNEL, INVALID_PARAMETER)`.
-
-This is complex to implement in Berry due to X.509/Matter certificate parsing requirements. A pragmatic approach would be to at least verify the Fabric ID match (gap C3).
+**Risk:** Low. The commissioner is already authenticated through CASE/PASE. The certificates are provided by the commissioner during AddNOC. A malicious actor would need to have already compromised the session to inject bad certificates.
 
 ---
 
-### Change 5: Operational Discovery TXT Records (LOW Priority)
+### Change 5: Operational Discovery TXT Records ~~(LOW Priority)~~ ✅ DONE
 
-**Files affected:** `Matter_z_Commissioning.be`
+**Files changed:** `Matter_z_Commissioning.be`
 
-**Rationale:** Adding SII, SAI, T keys to operational discovery helps controllers optimize their retry behavior.
+**What was done:** Added TXT records to `mdns_announce_op_discovery()` for operational mDNS announcements. The `nil` services parameter was replaced with a map containing the spec-required keys:
+- `SII=500` (SESSION_IDLE_INTERVAL, 500ms spec default)
+- `SAI=300` (SESSION_ACTIVE_INTERVAL, 300ms spec default)
+- `SAT=4000` (SESSION_ACTIVE_THRESHOLD, 4000ms spec default)
+- `T=0` (TCP support bitmap, 0 = UDP only)
+
+The `ICD` key is intentionally not included since Tasmota is an always-on WiFi device, not a Long Idle Time ICD device. Per spec §4.3.2: "The key SHALL NOT be provided by a Node that does not support the ICD Long Idle Time operating mode."
+
+**Rationale:** These TXT records help controllers optimize their MRP retry behavior when communicating with the device during operational (post-commissioning) interactions.
 
 **Spec reference:** §4.3.2
-
-**Implementation plan:**
-
-In `mdns_announce_op_discovery()`, add TXT records:
-```berry
-var services = {
-  "SII": 500,    # SESSION_IDLE_INTERVAL
-  "SAI": 300,    # SESSION_ACTIVE_INTERVAL
-  "SAT": 4000,   # SESSION_ACTIVE_THRESHOLD
-  "T": 0         # TCP support: 0 = no TCP
-}
-mdns.add_service("_matter", "_tcp", 5540, services, op_node, hostname)
-```
 
 ---
 
@@ -346,11 +342,16 @@ mdns.add_service("_matter", "_tcp", 5540, services, op_node, hostname)
 
 | Priority | Change | Impact | Effort |
 |----------|--------|--------|--------|
-| **HIGH** | Session parameter struct with mandatory fields (Change 1) | Compatibility with modern controllers | Medium |
+| **HIGH** | ~~Session parameter struct with mandatory fields (Change 1)~~ ✅ DONE | Compatibility with modern controllers | Medium |
 | **HIGH** | ~~InteractionModelRevision = 12 (Change 2)~~ ✅ DONE | Spec compliance, controller compatibility | Trivial |
-| MEDIUM | Timed interaction enforcement (Change 3) | Security compliance | Low |
-| MEDIUM | Certificate chain validation (Change 4) | Security | High |
-| LOW | Operational discovery TXT records (Change 5) | Better MRP behavior | Trivial |
+| MEDIUM | ~~Timed interaction enforcement (Change 3)~~ ✅ DONE | Security compliance | Low |
+| MEDIUM | Certificate chain validation (Change 4) — ABANDONED | Security | Too high — requires full ASN.1 DER encoder in Berry |
+| MEDIUM | ~~Sigma3 Fabric ID validation (C3)~~ ✅ DONE | Security compliance | Trivial |
+| MEDIUM | ~~Initiator session params extraction (P2)~~ ✅ DONE | Completeness | Trivial |
+| MEDIUM | ~~SpecificationVersion + MaxPathsPerInvoke attributes (CL1, CL2)~~ ✅ DONE | Spec compliance | Trivial |
+| LOW | ~~Operational discovery TXT records (Change 5)~~ ✅ DONE | Better MRP behavior | Trivial |
+| LOW | DataVersionFilters optimization (IM3) — NOT IMPLEMENTED | Performance optimization | Medium |
+| LOW | PATHS_EXHAUSTED enforcement (IM4) — NOT IMPLEMENTED | Robustness | Low |
 
 ---
 

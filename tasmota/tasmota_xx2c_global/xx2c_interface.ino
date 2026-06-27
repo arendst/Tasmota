@@ -673,9 +673,9 @@ bool I2cEnabled(uint32_t i2c_index) {
     state = bitRead(Settings->i2c_drivers2[(i2c_index / 32) -3], i2c_index % 32);
   }
   return ((TasmotaGlobal.i2c_enabled[0]
-#ifdef USE_I2C_BUS2
+#if MAX_I2C > 1
    || TasmotaGlobal.i2c_enabled[1]
-#endif
+#endif  // MAX_I2C
    ) && state);
 }
 

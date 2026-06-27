@@ -18,6 +18,7 @@ managed_components
 .gcc-flags.json
 .cache
 .dummy
+compile_commands.json
 sdkconfig.*
 sdkconfig.defaults
 CMakeLists.txt
@@ -26,6 +27,8 @@ unpacked_fs
 unpacked_boards
 tasmota/user/*
 tasmota/user_config_override.h
+tasmota/tasmota_defines_for_berry.h
+tasmota/tasmota_defines_for_berry.be
 tasmota/include/local_ca_data.h
 tasmota/include/local_ca_descriptor.h
 variants
@@ -41,6 +44,7 @@ platformio_tasmota_user_env.ini
 platformio_tasmota_core3_env.ini
 lib/libesp32/berry/generate/*
 lib/libesp32/berry/berry
+**/solidify/*.h
 
 ## Visual Studio Code specific ######
 .vscode
@@ -58,3 +62,6 @@ lib/libesp32/berry/berry
 ## Python virtual environments for Platformio ##
 venv
 .venv
+
+## Qemu test folder
+tasmota-qemu

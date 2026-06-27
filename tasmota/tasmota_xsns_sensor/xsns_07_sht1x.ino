@@ -86,7 +86,7 @@ bool ShtSendCommand(const uint8_t cmd) {
   }
   if (ackerror) {
 //    Sht1x.type = 0;
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_DID_NOT_ACK_COMMAND));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_SHT1 D_SENSOR_DID_NOT_ACK_COMMAND));
   }
   return (!ackerror);
 }
@@ -99,7 +99,7 @@ bool ShtAwaitResult(void) {
     }
     delay(20);
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SHT1 D_SENSOR_BUSY));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_SHT1 D_SENSOR_BUSY));
 //  Sht1x.type = 0;
   return false;
 }
@@ -155,22 +155,26 @@ bool ShtRead(void) {
 /********************************************************************************************/
 
 void ShtDetect(void) {
+  if (!TasmotaGlobal.i2c_enabled[0]) { return; }
   Sht1x.sda_pin = Pin(GPIO_I2C_SDA);
   Sht1x.scl_pin = Pin(GPIO_I2C_SCL);
   if (ShtRead()) {
     Sht1x.type = 1;
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));
+    AddLog(LOG_LEVEL_INFO, PSTR("I2C: SHT1X found on bus1"));
   }
   I2cBegin(Sht1x.sda_pin, Sht1x.scl_pin);    // Reinit I2C bus
+  I2cReset();
 }
 
 void ShtEverySecond(void) {
   if (!(TasmotaGlobal.uptime %4)) {          // Every 4 seconds
     // 344mS
-    if (!ShtRead()) {
+    bool missed = !ShtRead();
+    I2cBegin(Sht1x.sda_pin, Sht1x.scl_pin);  // Reinit I2C bus
+    if (missed) {
+      I2cReset();
       AddLogMissed(Sht1x.types, Sht1x.valid);
     }
-    I2cBegin(Sht1x.sda_pin, Sht1x.scl_pin);  // Reinit I2C bus
   }
 }
 

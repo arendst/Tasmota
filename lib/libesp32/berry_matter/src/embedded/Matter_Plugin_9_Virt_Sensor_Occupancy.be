@@ -50,8 +50,8 @@ import matter
 class Matter_Plugin_Virt_Sensor_Occupancy : Matter_Plugin_Sensor_Occupancy
   static var TYPE = "v_occupancy"                       # name of the plug-in in json
   static var DISPLAY_NAME = "v.Occupancy"                     # display name of the plug-in
-  static var ARG  = ""                              # no arg for virtual device
-  static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
+
+  static var SCHEMA = nil                          # no parameter
   static var VIRTUAL = true                         # virtual device
 end
 matter.Plugin_Virt_Sensor_Occupancy = Matter_Plugin_Virt_Sensor_Occupancy

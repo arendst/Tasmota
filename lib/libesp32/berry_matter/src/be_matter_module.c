@@ -26,36 +26,6 @@
 #include "be_mapping.h"
 #include <stdio.h>
 
-// Matter logo
-static const uint8_t MATTER_LOGO[] = 
-  "<svg style='vertical-align:middle;' width='24' height='24' xmlns='http://www.w3.org/2000/svg' viewBox='100 100 240 240'>"
-  "<defs><style>.cls-1{fill:none}.cls-2{fill:#FFFFFF;}</style></defs><rect class='cls-1' "
-  "width='420' height='420'/><path class='cls-2' d='"
-  "M167,156.88a71,71,0,0,0,32.1,14.73v-62.8l12.79-7.38,12.78,7.38v62.8a71.09,71.09,0,0,0,32.11-14.73"
-  "L280,170.31a96.92,96.92,0,0,1-136.33,0Zm28.22,160.37A96.92,96.92,0,0,0,127,199.19v26.87a71.06,"
-  "71.06,0,0,1,28.82,20.43l-54.39,31.4v14.77L114.22,300l54.38-31.4a71,71,0,0,1,3.29,35.17Zm101.5-"
-  "118.06a96.93,96.93,0,0,0-68.16,118.06l23.27-13.44a71.1,71.1,0,0,1,3.29-35.17L309.46,300l12.78-"
-  "7.38V277.89l-54.39-31.4a71.13,71.13,0,0,1,28.82-20.43Z'/></svg>";
-
-// Matter stylesheet
-static const uint8_t MATTER_STYLESHEET[] = 
-  "<style>"
-  ".bxm{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
-  ".ztdm td:not(:first-child){width:20px;font-size:70%}"
-  ".ztdm td:last-child{width:45px}"
-  ".ztdm .bt{margin-right:10px;}"
-  ".htrm{line-height:20px}"
-  "</style>";
-
-static const uint8_t MATTER_ADD_ENDPOINT_HINTS_JS[] =
-  "<script type='text/javascript'>"
-  "function otm(arg_name,val){"
-  "var s=eb(arg_name);"
-  "s.placeholder=(val in hm)?hl[hm[val]]:\"\";"
-  "s.title=s.placeholder;"
-  "};"
-  "</script>";
-
 extern uint32_t matter_convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bbool days);
 
 char* matter_seconds_to_dhm(int32_t seconds) {
@@ -303,6 +273,11 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Zigbee_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_9_Zigbee_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_z_All.h"
+#if USE_MI_EXT_GUI
+#include "solidify/solidified_Matter_BTP.h"
+#include "solidify/solidified_Matter_zz_Device_BLE.h"
+// #warning ________________
+#endif //USE_MI_EXT_GUI
 #include "solidify/solidified_Matter_zz_Device.h"
 
 #include "be_fixed_matter.h"
@@ -310,12 +285,9 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 /* @const_object_info_begin
 
 module matter (scope: global, strings: weak) {
-  _LOGO, comptr(MATTER_LOGO)
-  _STYLESHEET, comptr(MATTER_STYLESHEET)
-  _ADD_ENDPOINT_JS, comptr(MATTER_ADD_ENDPOINT_HINTS_JS)
-  MATTER_OPTION, int(151)       // SetOption151 enables Matter
-  AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
-  START_ENDPOINT, int(0x0002)         // endpoint where to start devices
+  // MATTER_OPTION, int(151)       // SetOption151 enables Matter
+  // AGGREGATOR_ENDPOINT, int(0x0001)    // some controllers require aggregator to be endpoint 1
+  // START_ENDPOINT, int(0x0002)         // endpoint where to start devices
   seconds_to_dhm, ctype_func(matter_seconds_to_dhm)
 
   Verhoeff, class(be_class_Matter_Verhoeff)
@@ -342,38 +314,38 @@ module matter (scope: global, strings: weak) {
   Profiler, class(be_class_Matter_Profiler)
 
   // EVents priority levels
-  EVENT_DEBUG, int(0)
-  EVENT_INFO, int(1)
-  EVENT_CRITICAL, int(2)
+  // EVENT_DEBUG, int(0)
+  // EVENT_INFO, int(1)
+  // EVENT_CRITICAL, int(2)
 
   // Status codes
-  SUCCESS, int(0x00)
-  FAILURE, int(0x01)
-  INVALID_SUBSCRIPTION, int(0x7D)
-  UNSUPPORTED_ACCESS, int(0x7E)
-  UNSUPPORTED_ENDPOINT, int(0x7F)
-  INVALID_ACTION, int(0x80)
-  UNSUPPORTED_COMMAND, int(0x81)
-  INVALID_COMMAND, int(0x85)
-  UNSUPPORTED_ATTRIBUTE, int(0x86)
-  CONSTRAINT_ERROR, int(0x87)
-  UNSUPPORTED_WRITE, int(0x88)
-  RESOURCE_EXHAUSTED, int(0x89)
-  NOT_FOUND, int(0x8B)
-  UNREPORTABLE_ATTRIBUTE, int(0x8C)
-  INVALID_DATA_TYPE, int(0x8D)
-  UNSUPPORTED_READ, int(0x8F)
-  DATA_VERSION_MISMATCH, int(0x92)
-  TIMEOUT, int(0x94)
-  UNSUPPORTED_NODE, int(0x9B)
-  BUSY, int(0x9C)
-  UNSUPPORTED_CLUSTER, int(0xC3)
-  NO_UPSTREAM_SUBSCRIP­TION, int(0xC5)
-  NEEDS_TIMED_INTERACTION, int(0xC6)
-  UNSUPPORTED_EVENT, int(0xC7)
-  PATHS_EXHAUSTED, int(0xC8)
-  TIMED_REQUEST_MISMATCH, int(0xC9)
-  FAILSAFE_REQUIRED, int(0xCA)
+  // SUCCESS, int(0x00)
+  // FAILURE, int(0x01)
+  // INVALID_SUBSCRIPTION, int(0x7D)
+  // UNSUPPORTED_ACCESS, int(0x7E)
+  // UNSUPPORTED_ENDPOINT, int(0x7F)
+  // INVALID_ACTION, int(0x80)
+  // UNSUPPORTED_COMMAND, int(0x81)
+  // INVALID_COMMAND, int(0x85)
+  // UNSUPPORTED_ATTRIBUTE, int(0x86)
+  // CONSTRAINT_ERROR, int(0x87)
+  // UNSUPPORTED_WRITE, int(0x88)
+  // RESOURCE_EXHAUSTED, int(0x89)
+  // NOT_FOUND, int(0x8B)
+  // UNREPORTABLE_ATTRIBUTE, int(0x8C)
+  // INVALID_DATA_TYPE, int(0x8D)
+  // UNSUPPORTED_READ, int(0x8F)
+  // DATA_VERSION_MISMATCH, int(0x92)
+  // TIMEOUT, int(0x94)
+  // UNSUPPORTED_NODE, int(0x9B)
+  // BUSY, int(0x9C)
+  // UNSUPPORTED_CLUSTER, int(0xC3)
+  // NO_UPSTREAM_SUBSCRIP­TION, int(0xC5)
+  // NEEDS_TIMED_INTERACTION, int(0xC6)
+  // UNSUPPORTED_EVENT, int(0xC7)
+  // PATHS_EXHAUSTED, int(0xC8)
+  // TIMED_REQUEST_MISMATCH, int(0xC9)
+  // FAILSAFE_REQUIRED, int(0xCA)
 
   // Matter_Data_IM classes
   AttributePathIB, class(be_class_Matter_AttributePathIB)
@@ -468,6 +440,12 @@ module matter (scope: global, strings: weak) {
 
   // Base38 for QR Code
   Base38, class(be_class_Matter_Base38)
+
+  // optional BTP for BLE
+  BTP, class(be_class_Matter_BTP), USE_MI_EXT_GUI
+
+  // optional Matter BLE Device core class
+  Device_BLE, class(be_class_Matter_Device_BLE), USE_MI_EXT_GUI
 
   // Matter Device core class
   Device, class(be_class_Matter_Device)
