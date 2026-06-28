@@ -3075,6 +3075,11 @@ String Decompress(const char * compressed, size_t uncompressed_size) {
  * Bridge functions - isolate peripheral code from TasmotaGlobal and Settings internals
 \*********************************************************************************************/
 
+// MQTT-response suppression for the underscore-prefix command feature and Backlog.
+void SuppressMqttResponse() {
+  TasmotaGlobal.no_mqtt_response = true;
+}
+
 uint8_t& SettingsParam(uint32_t index) {
   static uint8_t _oob = 0;
   if (index >= PARAM8_SIZE) { _oob = 0; return _oob; }

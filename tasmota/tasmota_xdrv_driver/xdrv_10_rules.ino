@@ -2008,11 +2008,7 @@ void ExecuteCommandBlock(const char * commands, int len)
 
     if (strlen(blcommand)) {
       //Insert into backlog
-      char* temp = strdup(blcommand);
-      if (temp != nullptr) {
-        char* &elem = backlog.insertAt(insertPosition++);
-        elem = temp;
-      }
+      Backlog::InsertCmd(blcommand, insertPosition++);
     }
   }
   return;

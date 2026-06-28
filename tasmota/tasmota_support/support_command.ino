@@ -466,8 +466,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   if (strlen(type)) {
     if (Settings->ledstate &0x02) { TasmotaGlobal.blinks++; }
 
-//    TasmotaGlobal.backlog_timer = millis() + (100 * MIN_BACKLOG_DELAY);
-    TasmotaGlobal.backlog_timer = millis() + Settings->param[P_BACKLOG_DELAY];  // SetOption34
+//    Backlog::ScheduleDelay(100 * MIN_BACKLOG_DELAY);
+    Backlog::OnCommandExecuted();  // SetOption34 - keeps drain window open during burst
 
     char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
@@ -528,8 +528,8 @@ void CmndBacklog(void) {
   // Backlog3 command1;command2;..  Execute commands in sequence with a delay but no response but rule processing only
 
   if (XdrvMailbox.data_len) {
-    TasmotaGlobal.backlog_nodelay = (0 == (XdrvMailbox.index & 0x01));           // Backlog0, Backlog2
-    TasmotaGlobal.backlog_no_mqtt_response = (2 == (XdrvMailbox.index & 0x02));  // Backlog2, Backlog3
+    Backlog::SetNodelay(0 == (XdrvMailbox.index & 0x01));           // Backlog0, Backlog2
+    Backlog::SetNoMqttResponse(2 == (XdrvMailbox.index & 0x02));    // Backlog2, Backlog3
 
     char *blcommand = strtok(XdrvMailbox.data, ";");
     while (blcommand != nullptr) {
@@ -550,24 +550,17 @@ void CmndBacklog(void) {
         }
       }
       // Do not allow command Reset in backlog
-      if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0))  {
-        char* temp = strdup(blcommand);
-        if (temp != nullptr) {
-          char* &elem = backlog.addToLast();
-          elem = temp;
-        }
+      if ((*blcommand != '\0') && (strncasecmp_P(blcommand, PSTR(D_CMND_RESET), strlen(D_CMND_RESET)) != 0)) {
+        Backlog::EnqueueCmd(blcommand);
       }
       blcommand = strtok(nullptr, ";");
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     ResponseClear();
-    TasmotaGlobal.backlog_timer = millis();
+    Backlog::ScheduleNow();
   } else {
-    bool blflag = BACKLOG_EMPTY;
-    for (auto &elem : backlog) {
-      free(elem);
-      backlog.remove(&elem);
-    }
+    bool blflag = Backlog::IsEmpty();
+    Backlog::Clear();
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
   }
 }
@@ -652,16 +645,12 @@ void CmndDelay(void) {
   // Delay 2   - Wait 2 x 100ms
   // Delay 10  - Wait 10 x 100ms
   if (XdrvMailbox.payload == -1) {
-    TasmotaGlobal.backlog_timer = millis() + (1000 - RtcMillis());  // Next second (#18984)
+    Backlog::ScheduleDelay(1000 - RtcMillis());  // Next second (#18984)
   }
   else if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
-    TasmotaGlobal.backlog_timer = millis() + (100 * XdrvMailbox.payload);
+    Backlog::ScheduleDelay(100 * XdrvMailbox.payload);
   }
-  if (TasmotaGlobal.backlog_mutex) { TasmotaGlobal.backlog_delay_guard = true; }
-  uint32_t bl_delay = 0;
-  long bl_delta = TimePassedSince(TasmotaGlobal.backlog_timer);
-  if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }
-  ResponseCmndNumber(bl_delay);
+  ResponseCmndNumber(Backlog::GetRemainingDelay_ms() / 100);
 }
 
 void CmndJsonPP(void) {

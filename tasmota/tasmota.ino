@@ -260,7 +260,7 @@ struct TasmotaGlobal_t {
   uint32_t baudrate;                        // Current Serial baudrate
   uint32_t pulse_timer[MAX_PULSETIMERS];    // Power off timer
   uint32_t blink_timer;                     // Power cycle timer
-  uint32_t backlog_timer;                   // Timer for next command in backlog
+  // backlog_timer moved to Backlog namespace (support_backlog.cpp)
   uint32_t loop_load_avg;                   // Indicative loop load average
   uint32_t log_buffer_pointer;              // Index in log buffer
   uint32_t uptime;                          // Counting every second until 4294967295 = 130 year
@@ -310,10 +310,7 @@ struct TasmotaGlobal_t {
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
   bool no_mqtt_response;                    // Respond with rule processing only
-  bool backlog_nodelay;                     // Execute all backlog commands with no delay
-  bool backlog_mutex;                       // Command backlog pending
-  bool backlog_delay_guard;                 // CmndDelay set timer during drain; BacklogLoop preserves it
-  bool backlog_no_mqtt_response;            // Set respond with rule processing only
+  // backlog_nodelay, backlog_mutex, backlog_delay_guard, backlog_no_mqtt_response moved to Backlog namespace (support_backlog.cpp)
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
@@ -397,8 +394,8 @@ struct TasmotaGlobal_t {
 
 TSettings* Settings = nullptr;
 
-LList<char*> backlog;                       // Command backlog implemented with TasmotaLList
-#define BACKLOG_EMPTY (backlog.isEmpty())
+#include "include/support_backlog.h"
+#define BACKLOG_EMPTY (Backlog::IsEmpty())
 
 /*********************************************************************************************\
  * Main
@@ -707,6 +704,7 @@ void setup(void) {
 #ifdef ROTARY_V1
   RotaryInit();
 #endif  // ROTARY_V1
+  Backlog::Init();               // Set timer to millis() before Berry or drivers may enqueue commands
 #ifdef USE_BERRY
   if (!TasmotaGlobal.no_autoexec) {
     BerryInit();                 // Load preinit.be
@@ -740,49 +738,14 @@ void setup(void) {
   TasmotaGlobal.rules_flag.system_init = 1;
 }
 
-void BacklogLoop(void) {
-  if (TimeReached(TasmotaGlobal.backlog_timer)) {
-    if (!BACKLOG_EMPTY && !TasmotaGlobal.backlog_mutex) {
-      TasmotaGlobal.backlog_mutex = true;
-      bool nodelay = false;
-      do {
-        char* cmd = *backlog.head();
-        backlog.removeHead();
-/*
-        // This adds 32 bytes
-        char* cmd = *backlog.removeHead();
-*/
-        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
-          free(cmd);
-          nodelay = true;
-        } else {
-          TasmotaGlobal.no_mqtt_response = TasmotaGlobal.backlog_no_mqtt_response;
-          ExecuteCommand(cmd, SRC_BACKLOG);
-          free(cmd);
-          if (nodelay || TasmotaGlobal.backlog_nodelay) {
-            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-          } else if (TasmotaGlobal.backlog_delay_guard) {
-            TasmotaGlobal.backlog_delay_guard = false;
-          } else {
-            TasmotaGlobal.backlog_timer = millis() + Settings->param[P_BACKLOG_DELAY];
-          }
-          break;
-        }
-      } while (!BACKLOG_EMPTY);
-      TasmotaGlobal.backlog_mutex = false;
-    }
-    if (BACKLOG_EMPTY) {
-      TasmotaGlobal.backlog_nodelay = false;
-    }
-  }
-}
+// BacklogLoop() is defined in support_backlog.ino (Backlog::Loop() + thin wrapper)
 
 void SleepSkip(void) {
   TasmotaGlobal.skip_sleep = 250;     // Skip sleep for 250 loops;
 }
 
 void SleepDelay(uint32_t mseconds) {
-  if (!TasmotaGlobal.backlog_nodelay && mseconds) {
+  if (!Backlog::IsNodelay() && mseconds) {
     uint32_t wait = millis() + mseconds;
     while (!TasmotaGlobal.skip_sleep &&  // We need to service imminent interrupts ASAP
            !TimeReached(wait) &&
