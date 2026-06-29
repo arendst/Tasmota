@@ -1265,8 +1265,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SHIFT595_SER),
 #endif
 
-#if defined (ESP32) && defined(USE_DINGTIAN_RELAY)
-  AGPIO(GPIO_DINGTIAN_CLK) + AGMAX(MAX_DINGTIAN_SHIFT),  // Dingtian Relay board - 8,16,24 or 32 relays & inputs
+#if defined (ESP32) && (defined(USE_DINGTIAN_RELAY) || defined(USE_SP595165))
+  AGPIO(GPIO_DINGTIAN_CLK) + AGMAX(MAX_DINGTIAN_SHIFT),  // Dingtian / IONE SP595165
   AGPIO(GPIO_DINGTIAN_SDI),
   AGPIO(GPIO_DINGTIAN_Q7),
   AGPIO(GPIO_DINGTIAN_PL),

@@ -1139,6 +1139,9 @@
 //  #define DINGTIAN_USE_AS_BUTTON                 // Inputs as Tasmota's virtual Buttons
 //  #define DINGTIAN_USE_AS_SWITCH                 // Inputs as Tasmota's virtual Switches
 
+//#define USE_SP595165                             // [ESP32] IONE 74HC595+74HC165 8CH (xdrv_95) — USE_SHIFT595/USE_DINGTIAN_RELAY 와 동시 사용 금지
+//  #define SP595165_INPUTS_INVERTED               // SetOption81 기본 ON (Active-Low 입력)
+
 // Select none or only one of the below defines
 //#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k6/0k8 code)
 //#define USE_TX23_WIND_SENSOR                     // Add support for La Crosse TX23 anemometer (+2k7/1k code)

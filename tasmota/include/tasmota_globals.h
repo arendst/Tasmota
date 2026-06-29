@@ -70,6 +70,11 @@ String EthernetMacAddress(void);
 
 #include "include/tasmota_configurations.h"            // Preconfigured configurations
 
+#ifdef USE_SP595165                                  // IONE 74HC595+74HC165 — 단독 드라이버
+#undef USE_SHIFT595
+#undef USE_DINGTIAN_RELAY
+#endif
+
 /*********************************************************************************************\
  * Final overrides
 \*********************************************************************************************/

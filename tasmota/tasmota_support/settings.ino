@@ -1904,6 +1904,16 @@ void SettingsDelta(void) {
 #endif  // DINGTIAN_INPUTS_INVERTED
     }
 #endif  // USE_DINGTIAN_RELAY
+#ifdef USE_SP595165                               // IONE 74HC595+74HC165 board
+    if (Settings->version < 0x0F050001) {  // 15.5.0.1
+      Settings->flag5.shift595_invert_outputs = 0;  // SetOption133
+#ifdef SP595165_INPUTS_INVERTED
+      Settings->flag3.pcf8574_ports_inverted = 1;   // SetOption81 - Active-Low 입력
+#else
+      Settings->flag3.pcf8574_ports_inverted = 0;
+#endif  // SP595165_INPUTS_INVERTED
+    }
+#endif  // USE_SP595165
     if (Settings->version < 0x0F020006) {  // 15.2.0.6
       Settings->i2c_drivers2[0] = I2CDRIVERS_96_127;
       Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;

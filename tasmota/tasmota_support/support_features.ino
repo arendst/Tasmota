@@ -831,6 +831,9 @@ constexpr uint32_t feature[] = {
 #ifdef USE_DINGTIAN_RELAY
   0x00000100 |  // xdrv_90_dingtian_relay.ino
 #endif
+#ifdef USE_SP595165
+  0x00000100 |  // xdrv_95_esp32_sp595165.ino
+#endif
 #if defined(USE_I2C) && defined(USE_HMC5883L)
   0x00000200 |  // xsns_101_hmc5883l.ino
 #endif
