@@ -1803,6 +1803,10 @@ void ArduinoOtaLoop(void)
 #endif  // USE_ARDUINO_OTA
 #endif  // ESP8266
 
+#ifdef USE_IMPROV
+bool ImprovSerialInput(const char *serial_in_buffer, int serial_in_counter, char serial_in_byte);
+#endif
+
 /********************************************************************************************/
 
 void SerialInput(void) {
@@ -1812,6 +1816,7 @@ void SerialInput(void) {
 
   static uint32_t serial_polling_window = 0;
   static bool serial_buffer_overrun = false;
+  static bool serial_cr_pending = false;                                           // CRLF: \r 실행 후 \n 무시
 
   while (Serial.available()) {
 //    yield();
@@ -1869,17 +1874,28 @@ void SerialInput(void) {
       Serial.flush();
       return;
     }
-    if (!Settings->flag.mqtt_serial) {                                             // SerialSend active - CMND_SERIALSEND and CMND_SERIALLOG
-      if (isprint(TasmotaGlobal.serial_in_byte)) {                                 // Any char between 32 and 127
-        if (TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {         // Add char to string if it still fits
+    if (!Settings->flag.mqtt_serial) {                                             // Console 명령 모드 - CMND_SERIALSEND/CMND_SERIALLOG 비활성
+      if (isprint(TasmotaGlobal.serial_in_byte)) {                                 // 출력 가능 문자 (32~127)
+        serial_cr_pending = false;                                                 // CRLF 대기 플래그 해제
+        if (TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {         // 버퍼에 문자 추가
           TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
+#ifdef ESP32
+          if (tasconsole_serial) {                                                 // UART0 콘솔: 입력 에코
+            Serial.write(TasmotaGlobal.serial_in_byte);
+          }
+#endif  // ESP32
         } else {
-          serial_buffer_overrun = true;                                            // Signal overrun but continue reading input to flush until '\n' (EOL)
+          serial_buffer_overrun = true;                                            // 오버런 표시, EOL까지 플러시
         }
       }
 #ifdef USE_SERIAL_BACKSPACE
-      else if (TasmotaGlobal.serial_in_byte == 0x08 && TasmotaGlobal.serial_in_byte_counter > 0) { // Backspace (BS) - remove last char from buffer
+      else if (TasmotaGlobal.serial_in_byte == 0x08 && TasmotaGlobal.serial_in_byte_counter > 0) { // Backspace - 마지막 문자 삭제
         TasmotaGlobal.serial_in_byte_counter--;
+#ifdef ESP32
+        if (tasconsole_serial) {                                                   // UART0 콘솔: 백스페이스 에코
+          Serial.write("\b \b");
+        }
+#endif  // ESP32
       }
 #endif  // USE_SERIAL_BACKSPACE
     } else {
@@ -1924,8 +1940,19 @@ void SerialInput(void) {
     if (tasconsole_serial) {
 #endif  // ESP32
 
-    if (!Settings->flag.mqtt_serial && (TasmotaGlobal.serial_in_byte == '\n')) {   // CMND_SERIALSEND and CMND_SERIALLOG
-      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;    // Serial data completed
+    if (!Settings->flag.mqtt_serial && (TasmotaGlobal.serial_in_byte == '\n' || TasmotaGlobal.serial_in_byte == '\r')) {  // Console 명령 Enter 처리
+      if (TasmotaGlobal.serial_in_byte == '\n' && serial_cr_pending) {           // CRLF: \r 실행 후 lf 무시
+        serial_cr_pending = false;
+        serial_polling_window = 0;
+        continue;
+      }
+#ifdef ESP32
+      if (tasconsole_serial && TasmotaGlobal.serial_in_byte == '\r') {           // Enter 줄바꿈 에코
+        Serial.write('\r');
+        Serial.write('\n');
+      }
+#endif  // ESP32
+      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;    // 명령 문자열 종료
       SetMinimumSeriallog();
       if (serial_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
@@ -1933,6 +1960,7 @@ void SerialInput(void) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), TasmotaGlobal.serial_in_buffer);
         ExecuteCommand(TasmotaGlobal.serial_in_buffer, SRC_SERIAL);
       }
+      serial_cr_pending = (TasmotaGlobal.serial_in_byte == '\r');                 // PuTTY 등 CR-only Enter 대비
       TasmotaGlobal.serial_in_byte_counter = 0;
       serial_polling_window = 0;
       Serial.flush();
@@ -1984,6 +2012,7 @@ void TasConsoleInput(void) {
 #endif  // USE_XYZMODEM
 
   static bool console_buffer_overrun = false;
+  static bool console_cr_pending = false;                                          // CRLF: \r 실행 후 \n 무시
 
   while (TasConsole.available()) {
     delay(0);
@@ -1991,7 +2020,7 @@ void TasConsoleInput(void) {
 
 #ifdef USE_IMPROV
     if (ImprovSerialInput(console_buffer.c_str(),
-                          console_buffer.length(),
+                          (int)console_buffer.length(),
                           console_in_byte)) {
       console_buffer = "";
       continue;
@@ -2003,18 +2032,29 @@ void TasConsoleInput(void) {
 #endif  // USE_XYZMODEM
 
 #ifdef USE_SERIAL_BACKSPACE
-    if (console_in_byte == 0x08 && console_buffer.length() > 0) { // Backspace (BS) - remove last char from buffer
+    if (console_in_byte == 0x08 && console_buffer.length() > 0) { // Backspace - 마지막 문자 삭제
       console_buffer.remove(console_buffer.length() - 1);
+      TasConsole.write((const uint8_t *)"\b \b", 3);                          // USB CDC 콘솔: 백스페이스 에코
     } else
 #endif  // USE_SERIAL_BACKSPACE
-    if (isprint(console_in_byte)) {                       // Any char between 32 and 127
-      if (console_buffer.length() < INPUT_BUFFER_SIZE) {  // Add char to string if it still fits
+    if (isprint(console_in_byte)) {                       // 출력 가능 문자 (32~127)
+      console_cr_pending = false;                         // CRLF 대기 플래그 해제
+      if (console_buffer.length() < INPUT_BUFFER_SIZE) {  // 버퍼에 문자 추가
         console_buffer += console_in_byte;
+        TasConsole.write(console_in_byte);                // USB CDC 콘솔: 입력 에코
       } else {
-        console_buffer_overrun = true;                    // Signal overrun but continue reading input to flush until '\n' (EOL)
+        console_buffer_overrun = true;                    // 오버런 표시, EOL까지 플러시
       }
     }
-    else if (console_in_byte == '\n') {
+    else if (console_in_byte == '\n' || console_in_byte == '\r') {
+      if (console_in_byte == '\n' && console_cr_pending) {  // CRLF: \r 실행 후 lf 무시
+        console_cr_pending = false;
+        continue;
+      }
+      if (console_in_byte == '\r') {                      // Enter 줄바꿈 에코
+        TasConsole.write('\r');
+        TasConsole.write('\n');
+      }
       SetMinimumSeriallog();
       if (console_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "USB buffer overrun"));
@@ -2022,6 +2062,7 @@ void TasConsoleInput(void) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), console_buffer.c_str());
         ExecuteCommand(console_buffer.c_str(), SRC_USBCONSOLE);
       }
+      console_cr_pending = (console_in_byte == '\r');                 // PuTTY 등 CR-only Enter 대비
       console_buffer = "";
       console_buffer_overrun = false;
       TasConsole.flush();

@@ -5,7 +5,7 @@
 # and before gen-berry-structures.py runs solidification.
 #
 # Supported conversions (everything else becomes a comment):
-#   #define NAME              → preproc.define('NAME')
+#   #define NAME              → preproc.define('NAME', 1)
 #   #define NAME true/false   → preproc.define('NAME', true/false)
 #   #define NAME "string"     → preproc.define('NAME', "string")
 #   #define NAME 123          → preproc.define('NAME', 123)
@@ -58,9 +58,9 @@ def _classify(name: str, value: str | None):
     Returns ('emit', berry_value_str) or ('ignore', reason).
     berry_value_str is None for bare defines (no value).
     """
-    # Skip compiler built-ins
+    # Skip compiler built-ins (주석에 '#define' 문자열을 넣지 않음 — Berry #define 지시문과 혼동 방지)
     if name.startswith("__"):
-        return ("ignore", f"#define {name}" + (f" {value}" if value else ""))
+        return ("ignore", f"{name}" + (f" {value}" if value else ""))
 
     # No value → bare define
     if value is None or value == "":
@@ -83,7 +83,7 @@ def _classify(name: str, value: str | None):
         return ("emit", value)
 
     # Anything else (expressions, identifiers, floats, …) → comment
-    return ("ignore", f"#define {name} {value}")
+    return ("ignore", f"{name} {value}")
 
 
 def _run():
@@ -121,12 +121,13 @@ def _run():
             action, payload = _classify(name, value)
 
             if action == "ignore":
-                fh_out.write(f"    # ignored {payload}\n")
+                fh_out.write(f"    # ignored: {payload}\n")
                 n_ignored += 1
             else:
                 # payload is the Berry value string, or None for bare define
                 if payload is None:
-                    fh_out.write(f"preproc.define('{name}')\n")
+                    # 값 1을 명시 — bare define의 preproc.define()에서 Berry 키워드 'def' 파싱 오류 회피
+                    fh_out.write(f"preproc.define('{name}', 1)\n")
                 else:
                     fh_out.write(f"preproc.define('{name}', {payload})\n")
                 n_emitted += 1
