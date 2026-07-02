@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - MiElHVAC auto-enable i-See widevane when setting AirDirection (#24860)
 
 ### Fixed
+- BLE EQ3 float output in mqtt messages regression from v15.4.0.2 (#24869)
 
 ### Removed
 

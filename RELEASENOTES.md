@@ -122,5 +122,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MiElHVAC auto-enable i-See widevane when setting AirDirection [#24860](https://github.com/arendst/Tasmota/issues/24860)
 
 ### Fixed
+- BLE EQ3 float output in mqtt messages regression from v15.4.0.2 [#24869](https://github.com/arendst/Tasmota/issues/24869)
 
 ### Removed
