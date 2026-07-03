@@ -403,7 +403,11 @@ bool RulesProcessEvent(const char *json_event) {
   // (allocation/toUpperCase) and keeps a documented hook for future consumers.
 
   SystemEvents.busy = false;
-  return true;
+  // Return false ("not serviced"), mirroring xdrv_10_rules.ino's `serviced` semantics where
+  // true means a rule actually consumed the event. There are no rule sets in this build mode,
+  // so returning true made SendKey() consider every button/switch event handled and the
+  // default ButtonN -> ExecuteCommandPower action never ran (button press logged, no toggle).
+  return false;
 }
 
 // Local `RulesProcess` stub — mirrors xdrv_10_rules.ino's `RulesProcess` shape so the
