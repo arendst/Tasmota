@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.5.0.1]
 ### Added
 - Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian (#24857)
+- HASPmota ability to set default screen background on `p0b0` object
 
 ### Breaking Changed
 
