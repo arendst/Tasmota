@@ -1185,12 +1185,17 @@ class lvh_obj : lvh_root
 
   #- ------------------------------------------------------------#
   # `setmember` virtual setter
+  #
+  # accepts an optional `lv_obj` if the target is not the same as `self._lv_obj`
   #- ------------------------------------------------------------#
-  def setmember(k, v)
+  def setmember(k, v, lv_obj)
     import string
     import introspect
 
     if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
+    if lv_obj == nil
+      lv_obj = self._lv_obj
+    end
 
     # if value is 'real', round to nearest int
     if type(v) == 'real'
@@ -1239,19 +1244,19 @@ class lvh_obj : lvh_root
     
     # try first `set_X` from lvgl object
     if (style_modifier == nil)
-      f = introspect.get(self._lv_obj, "set_" + k)
+      f = introspect.get(lv_obj, "set_" + k)
       if type(f) == 'function'                  # found and function, call it
         # print(f">>>: setmember standard method set_{k}")
-        return f(self._lv_obj, v)
+        return f(lv_obj, v)
       end
     end
 
     # if not found, try `set_style_X`
-    f = introspect.get(self._lv_obj, "set_style_" + k)
+    f = introspect.get(lv_obj, "set_style_" + k)
     if type(f) == 'function'                  # found and function, call it
       # print(f">>>: setmember style_ method set_{k}")
       # style function need a selector as second parameter
-      return f(self._lv_obj, v, style_modifier != nil ? style_modifier : 0)
+      return f(lv_obj, v, style_modifier != nil ? style_modifier : 0)
     end
 
     print("HSP: unknown attribute:", k)
@@ -2709,6 +2714,27 @@ end
 #@ solidify:lvh_scr,weak
 class lvh_scr : lvh_obj
   static var _lv_class = nil    # no class for screen
+
+  def setmember(k, v)
+    import string
+
+    if string.startswith(k, "bg_")
+      var page = self._page
+      if page._page_id == 0 && page._lv_scr_bottom != nil
+        return super(self).setmember(k, v, page._lv_scr_bottom)
+      else
+        # special case when we set `bg_color` and `bg_opa` is `0`, then we force opacity
+        if k == "bg_color" && self._lv_obj.get_style_bg_opa(0) == 0
+          self._lv_obj.set_style_bg_opa(255, 0)
+        end
+      end
+    end
+    return super(self).setmember(k, v)
+  end
+
+  # def set_bg_color(a,b,c)
+  #   log(f">>>: lvh_scr.set_bg_color {a=} {b=} {c=}")
+  # end
 end
 
 
@@ -2724,6 +2750,7 @@ class lvh_page
   var _obj_id               # (map) of `lvh_obj` objects by id numbers
   var _page_id              # (int) id number of this page
   var _lv_scr               # (lv_obj) lvgl screen object
+  var _lv_scr_bottom        # (lv_obj) lvgl screen object for background
   var _hm                   # HASPmota global object
   # haspmota attributes for page are on item `#0`
   var prev, next, back      # (int) id values for `prev`, `next`, `back` buttons
@@ -2753,8 +2780,13 @@ class lvh_page
     # page 1 is mapped directly to the default screen `scr_act`
     if page_number == 0
       self._lv_scr = lv.layer_top() # top layer, visible over all screens
+      self._lv_scr_bottom = lv.layer_bottom() # bottom layer, used to set background colors
+      # set top transparent and bottom opaque
+      self._lv_scr.set_style_bg_opa(0, 0)
+      self._lv_scr_bottom.set_style_bg_opa(255, 0)
     else
       self._lv_scr = lv.obj(0)      # allocate a new screen
+      self._lv_scr.set_style_bg_opa(0, 0) # force new screen to transparent, unless its color is decided
     end
 
     # page object is also stored in the object map at id `0` as instance of `lvg_scr`
@@ -2842,7 +2874,7 @@ class lvh_page
   end
 
   #====================================================================
-  #  `delete` special attribute used to delete the object
+  #  `clear` special attribute
   #====================================================================
   def get_clear()
     self._clear()
@@ -2868,6 +2900,9 @@ class lvh_page
     end
     self._obj_id = {}       # clear map
   end
+  #====================================================================
+  #  `delete` special attribute used to delete the object
+  #====================================================================
   def get_delete()
     self._delete()
     return def () end
