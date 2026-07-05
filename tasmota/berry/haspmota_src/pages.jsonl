@@ -1,0 +1,275 @@
+{"page":0,"comment":"---------- Upper stat line ----------"}
+# {"id":0,"bg_color":"#000088"}
+
+{"id":90,"obj":"flex","x":0,"y":0,"w%":100,"h":24,"bg_color":"#DD0000","bg_opa":255,"radius":0,"border_side":1,"border_width":1}
+  {"id":91,"obj":"label","parentid":90,"x":0,"y":0,"w":100,"h%":100,"long_mode":3,"text":"HASPmota widgets explorer","flex_grow":1}
+  {"id":92,"obj":"fixed","parentid":90,"w":102}
+    {"id":95,"parentid":92,"comment":"-- Clock --","obj":"lv_clock","x":0,"y":3,"w":55,"h":16,"radius":0,"border_side":0}
+    {"id":96,"parentid":92,"comment":"-- Battery indicator --","obj":"label","x":57,"y":0,"w":20,"h":20,"text":"\uF2A3","align":0,"text_font":"icons-18"}
+    {"id":97,"parentid":92,"comment":"-- Wifi indicator --","obj":"lv_wifi_arcs","x":73,"y":0,"w":29,"h":20,"radius":0,"border_side":0,"bg_color":"#000000","line_color":"#FFFFFF"}
+
+{"comment":"---------- Bottom buttons - prev/home/next ----------"}
+{"id":100,"obj":"flex","x":0,"y%":84,"h%":16,"w%":100,"flex_main_place":3}
+  {"id":101,"obj":"btn","parentid":100,"w%":25,"h%":100,"action":"prev","text":"\uF053","text_font":"montserrat-20"}
+  {"id":102,"obj":"btn","parentid":100,"w%":25,"h%":100,"action":"back","text":"\uF015","text_font":"montserrat-20"}
+  {"id":103,"obj":"btn","parentid":100,"w%":25,"h%":100,"action":"next","text":"\uF054","text_font":"montserrat-20"}
+
+{"page":1,"comment":"---------- Page 1 Obj ----------"}
+
+{"id":10,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[1. Instructions]","text_font":"montserrat-20"}
+{"id":11,"obj":"spangroup","x":5,"y":60,"w":310,"h":130}
+  {"id":12,"obj":"span","parentid":11,"text":"This simple app shows each HASPmota widget class in action. Use the arrows below to navigate from one page to the other","text_font":"montserrat-14"}
+
+{"page":2,"comment":"---------- Page 2 Rich Text ----------"}
+
+{"id":10,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[2. Spangroup]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"spangroup","x":0,"y":60,"w":300,"h":115,"text_font":"robotocondensed-16","bg_color":"#000044","bg_opa":255}
+  {"id":12,"obj":"span","parentid":11,"text":"This is "}
+  {"id":13,"obj":"span","parentid":11,"text":"RED","text_color":"#FF0000","text_font":"montserrat-28"}
+  {"id":14,"obj":"span","parentid":11,"text":" and this is "}
+  {"id":15,"obj":"span","parentid":11,"text":"GREEN","text_color":"#00FF00","text_font":"montserrat-28","text_decor":1}
+  {"id":16,"obj":"span","parentid":11,"text":" underlined"}
+  {"id":17,"obj":"span","parentid":11,"text":"\nAnd this is almost transparent","text_opa":100,"text_font":"montserrat-20"}
+
+{"page":3,"comment":"---------- Page 3 Buttons ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[3. Buttons]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"btn","x":5,"y":60,"w":80,"h":30,"radius":10,"text":"Disabled","enabled":false}
+{"id":12,"obj":"btn","x":100,"y":60,"w":80,"h":30,"radius":10,"text":"Enabled"}
+
+{"id":13,"obj":"btn","x":5,"y":100,"w":80,"h":30,"radius":0,"text":"Disabled","enabled":false,"bg_color":"#DD0000"}
+{"id":14,"obj":"btn","x":100,"y":100,"w":80,"h":30,"radius":0,"text":"Enabled","bg_color":"#DD0000"}
+
+{"page":4,"comment":"---------- Page 4 Leds ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[4. Leds]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"led","x":10,"y":60,"w":20,"h":20,"color":"#FF0000"}
+{"id":12,"obj":"led","x":60,"y":60,"w":20,"h":20,"color":"#FF0000","val":200}
+{"id":13,"obj":"led","x":110,"y":60,"w":20,"h":20,"color":"#FF0000","val":0}
+
+{"id":21,"obj":"led","x":10,"y":100,"w":20,"h":20,"color":"#00FF00"}
+{"id":22,"obj":"led","x":60,"y":100,"w":20,"h":20,"color":"#00FF00","val":200}
+{"id":23,"obj":"led","x":110,"y":100,"w":20,"h":20,"color":"#00FF00","val":0}
+
+{"id":31,"obj":"led","x":10,"y":140,"w":20,"h":20,"color":"#FFFF88"}
+{"id":32,"obj":"led","x":60,"y":140,"w":20,"h":20,"color":"#FFFF88","val":200}
+{"id":33,"obj":"led","x":110,"y":140,"w":20,"h":20,"color":"#FFFF88","val":0}
+
+{"page":5,"comment":"---------- Page 5 Switches ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[5. Switches]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"switch","x":0,"y":60,"w":60,"h":30}
+{"id":12,"obj":"switch","x":80,"y":60,"w":60,"h":30,"toggle":true}
+{"id":13,"obj":"switch","x":160,"y":60,"w":60,"h":30,"enabled":false}
+{"id":14,"obj":"switch","x":240,"y":60,"w":60,"h":30,"toggle":true,"enabled":false}
+
+{"id":21,"obj":"switch","x":0,"y":100,"w":130,"h":30,"text":"On"}
+{"id":22,"obj":"switch","x":140,"y":100,"w":130,"h":30,"toggle":true,"text":"Off"}
+
+{"page":6,"comment":"---------- Page 6 Checkboxes ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[6. Checkboxes]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"checkbox","x":0,"y":60,"w":60,"h":30,"text":""}
+{"id":12,"obj":"checkbox","x":80,"y":60,"w":60,"h":30,"toggle":true,"text":""}
+{"id":13,"obj":"checkbox","x":160,"y":60,"w":60,"h":30,"text":"","enabled":false}
+{"id":14,"obj":"checkbox","x":240,"y":60,"w":60,"h":30,"text":"","toggle":true,"enabled":false}
+
+{"id":21,"obj":"checkbox","x":0,"y":100,"w":130,"h":30,"text":"Option 1"}
+{"id":22,"obj":"checkbox","x":0,"y":130,"w":130,"h":30,"text":"Option 2","toggle":true}
+
+{"page":7,"comment":"---------- Page 7 Lines ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[7. Lines]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"line","x":0,"y":60,"w":100,"h":50,"line_width":3,"points":[[0,0],[30,40],[65,15],[90,50]]}
+{"id":12,"obj":"line","x":120,"y":60,"w":100,"h":50,"line_color":"#00FF00","line_width":5,"points":[[0,0],[30,40],[65,15],[90,50]],"y_invert":true,"line_rounded":true}
+
+{"page":8,"comment":"---------- Page 8 Bars ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[8. Bars]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"bar","x":0,"y":60,"w":100,"h":10,"val":65}
+{"id":12,"obj":"bar","x":0,"y":90,"w":180,"h":20,"bg_color":"#4F4F4F","bg_color10":"#00FF00","val":40,"bg_opa":255,"border_color":"#FFFF88","border_width":2,"pad_all":6,"radius":6}
+{"id":13,"obj":"bar","x":0,"y":120,"w":180,"h":15,"bg_color":"#4F4F4F","bg_opa":255,"bg_color10":"#4444FF","val":26,"min":-20,"max":30,"bg_grad_color10":"#FF4400","bg_grad_dir10":2}
+
+{"page":9,"comment":"---------- Page 9 Button Matrix ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[9. BtnMatrix]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"btnmatrix","x":5,"y":60,"w":310,"h":125,"bg_color":"#000044","options":["1","2","3","4","5","\n","6","7","8","9","0","\n","Action1","Action2"],"border_color30":"#1FA3EC","border_width30":2,"bg_color30":"#000044","text_color30":"#FFFFFF","border_color":"#000044"}
+
+{"page":10,"comment":"---------- Page 10 Chart ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[10. Chart]","text_font":"montserrat-20"}
+
+{"page":10,"id":10,"obj":"chart","x":10,"y":60,"w":230,"h":120,"pad_all":2,"y_min":0,"y_max":50,"point_count":50,"height10":0,"width10":0,"v_div_line_count":0,"h_div_line_count":5,"line_color":"#555555","line_width30":3}
+
+{"comment":"--- Add random values to chart every second ---","berry_run":"tasmota.add_cron('*/1 * * * * *', def () import math var val = math.rand() % 50 global.p10b10.val = val val = math.rand() % 50 global.p10b10.val2 = val end, 'hm_every_1_s_chart')"}
+
+{"page":11,"comment":"---------- Page 11 Images ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[11. Images]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"img","x":10,"y":60,"raw":"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"}
+{"id":12,"obj":"img","x":200,"y":60,"scale":350,"src":"tasmota_logo","image_recolor":"#FFFFFF","image_recolor_opa":255}
+
+{"page":12,"comment":"---------- Page 12 Roller ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[12. Roller]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"roller","x":10,"y":55,"options":"Option 1\nOption 2\nOption 3\nOption 4","val":1}
+
+{"page":13,"comment":"---------- Page 13 QR Code ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[13. QR Code]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"qrcode","qr_text":"https://tasmota.github.io/","x":85,"y":55,"qr_size":120}
+
+{"page":14,"comment":"---------- Page 14 Bars ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[14. Sliders]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"slider","x":0,"y":60,"w":100,"h":10,"val":65}
+{"id":12,"obj":"slider","x":0,"y":90,"w":180,"h":20,"bg_color":"#000044","bg_color10":"#00FF00","bg_color20":"#FFFFFF","val":40,"bg_opa":255,"border_color":"#1FA3EC","border_width":2,"pad_all":6,"radius":6}
+{"id":13,"obj":"slider","x":0,"y":130,"w":180,"h":15,"bg_color":"#4F4F4F","bg_opa":255,"bg_color10":"#00FF00","bg_color20":"#FFFFFF","val":26,"min":-20,"max":30,"bg_grad_color10":"#FF4400","bg_grad_dir10":2}
+
+{"page":15,"comment":"---------- Page 15 Arcs ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[15. Arcs]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"arc","x":10,"y":60,"w":100,"h":100,"min":-20,"max":40,"val":26,"text":"76%","label_to_angle":-20}
+{"id":12,"obj":"arc","x":150,"y":60,"w":100,"h":120,"arc_color10":"#00FF00","bg_color20":"#00FF00","val":65,"text":"Nominal","angle":-40,"border_width20":3,"border_color20":"#FFFFFF","end_angle":310}
+
+{"page":16,"comment":"---------- Page 16 Scale ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[16. Scale]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"scale","x":10,"y":60,"w":200,"h":30,"min":10,"max":40,"total_tick_count":31,"major_tick_every":5,"label_show":true,"line_width":2,"line_width10":2,"line_width30":2,"length10":10,"length30":5,"pad_top":10}
+  {"id":12,"obj":"bar","parentid":11,"y":-8,"w%":100,"h":6,"val":27}
+
+{"id":22,"obj":"scale","x":240,"y":35,"w":74,"h":140,"min":0,"max":100,"mode":4,"total_tick_count":21,"major_tick_every":5,"label_show":true,"line_color":"#4444FF","line_color10":"#4444FF","line_color30":"#AAAAFF","line_width":2,"line_width10":2,"line_width30":2,"length10":10,"length30":5,"text_src":["0 °C", "25 °C", "50 °C", "75 °C", "100 °C"],"bg_color":"#000044","bg_opa":127,"pad_left":16,"radius":8,"pad_ver":12}
+  {"id":23,"obj":"scale_section","parentid":22,"min":75,"max":100,"line_color":"#FF4400","line_width":3,"line_color10":"#FF4400","line_width10":4,"text_color10":"#FF4400","line_color30":"#FF4400","line_width30":3}
+  {"id":24,"obj":"bar","parentid":22,"x":-10,"h%":100,"w":6,"radius":0,"radius10":0,"bg_color":"#4F4F4F","bg_color10":"#FFFFFF","val":27}
+
+{"page":17,"comment":"---------- Page 17 Scale 2 ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[17. Scale 2]","text_font":"montserrat-20"}
+
+{"id":21,"obj":"scale","x":10,"y":60,"w":120,"h":120,"min":10,"max":40,"mode":8,"bg_opa":255,"radius":32767,"clip_corner":true,"label_show":true,"total_tick_count":31,"major_tick_every":5,"length10":10,"length30":5,"angle_range":270,"rotation":135,"arc_width":2,"line_width10":2,"line_width30":2,"length10":10,"length30":5}
+  {"id":22,"obj":"scale_line","parentid":21,"line_color":"#00FF00","line_width":4,"line_rounded":true,"needle_length":50,"val":22}
+  {"id":23,"obj":"scale_line","parentid":21,"line_color":"#FF4400","line_width":6,"line_rounded":true,"needle_length":30,"val":33}
+
+{"id":31,"obj":"scale","x":180,"y":80,"w":80,"h":80,"min":0,"max":100,"mode":16,"bg_opa":0,"label_show":true,"total_tick_count":21,"major_tick_every":5,"text_src":["0 °C", "25 °C", "50 °C", "75 °C", "100 °C"],"arc_color":"#4444FF","line_color10":"#4444FF","line_color30":"#AAAAFF","text_color":"#AAAAFF","arc_width":2,"line_width10":2,"line_width30":2,"length10":10,"length30":5}
+  {"id":32,"obj":"scale_section","parentid":31,"min":75,"max":100,"arc_color":"#FF4400","arc_width":3,"line_color10":"#FF4400","line_width10":4,"text_color10":"#FF4400","line_color30":"#FF4400","line_width30":3}
+  {"id":33,"obj":"scale_line","parentid":31,"line_color":"#1FA3EC","line_width":10,"line_rounded":true,"needle_length":30,"val":37}
+
+{"page":18,"comment":"---------- Page 18 Spinner ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[18. Spinner]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"spinner","x":10,"y":60,"w":100,"h":100,"angle":200,"speed":5000,"arc_color":"#000044","arc_color10":"#1FA3EC"}
+
+{"page":19,"comment":"---------- Page 19 Dropdown ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[19. Dropdown]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"dropdown","x":10,"y":55,"direction":3,"options":"Option 1\nOption 2\nOption 3\nOption 4","val":1}
+  {"id":12,"obj":"dropdown_list","parentid":11,"h":90}
+
+{"page":20,"comment":"---------- Page 20 Embedded Fonts ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[20. Embedded Fonts]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"label","x":2,"y":50,"w":316,"text":"robotocondensed-12","text_font":"robotocondensed-12"}
+{"id":12,"obj":"label","x":2,"y":64,"w":316,"text":"robotocondensed-16","text_font":"robotocondensed-16"}
+{"id":13,"obj":"label","x":2,"y":80,"w":316,"text":"robotocondensed-24","text_font":"robotocondensed-24"}
+
+{"id":15,"obj":"label","x":2,"y":106,"w":316,"text":"montserrat-10","text_font":"montserrat-10"}
+{"id":16,"obj":"label","x":2,"y":114,"w":316,"text":"montserrat-14","text_font":"montserrat-14"}
+{"id":17,"obj":"label","x":2,"y":126,"w":316,"text":"montserrat-20","text_font":"montserrat-20"}
+{"id":18,"obj":"label","x":2,"y":140,"w":316,"text":"montserrat-28","text_font":"montserrat-28"}
+
+{"id":20,"obj":"label","x":2,"y":170,"w":100,"text":"unscii-8","text_font":"unscii-8"}
+{"id":21,"obj":"label","x":102,"y":166,"w":200,"text":"unscii-16","text_font":"unscii-16"}
+
+{"page":21,"comment":"---------- Page 21 Icons ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[21. Icons]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"label","x":2,"y":60,"w":30,"align":1,"text":"10"}
+{"id":12,"obj":"label","x":32,"y":60,"w":30,"align":1,"text":"12"}
+{"id":13,"obj":"label","x":62,"y":60,"w":30,"align":1,"text":"14"}
+{"id":14,"obj":"label","x":92,"y":60,"w":30,"align":1,"text":"18"}
+{"id":15,"obj":"label","x":122,"y":60,"w":30,"align":1,"text":"20"}
+{"id":16,"obj":"label","x":152,"y":60,"w":30,"align":1,"text":"24"}
+{"id":17,"obj":"label","x":192,"y":60,"w":30,"align":1,"text":"28"}
+
+{"id":21,"obj":"label","x":2,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-10"}
+{"id":22,"obj":"label","x":32,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-12"}
+{"id":23,"obj":"label","x":62,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-14"}
+{"id":24,"obj":"label","x":92,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-18"}
+{"id":25,"obj":"label","x":122,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-20"}
+{"id":26,"obj":"label","x":152,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-24"}
+{"id":27,"obj":"label","x":192,"y":78,"w":30,"align":1,"text":"\uF015","text_font":"icons-28"}
+
+{"id":41,"obj":"label","x":2,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-10"}
+{"id":42,"obj":"label","x":32,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-12"}
+{"id":43,"obj":"label","x":62,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-14"}
+{"id":44,"obj":"label","x":92,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-18"}
+{"id":45,"obj":"label","x":122,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-20"}
+{"id":46,"obj":"label","x":152,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-24"}
+{"id":47,"obj":"label","x":192,"y":110,"w":30,"align":1,"text":"\uE335","text_font":"icons-28"}
+
+{"page":22,"comment":"---------- Page 22 Seg7 font ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[22. Font Seg7]","text_font":"montserrat-20"}
+
+{"id":10,"obj":"label","x":2,"y":60,"w":30,"align":1,"text":"8"}
+{"id":11,"obj":"label","x":32,"y":60,"w":40,"align":1,"text":"10"}
+{"id":12,"obj":"label","x":72,"y":60,"w":50,"align":1,"text":"12"}
+{"id":13,"obj":"label","x":122,"y":60,"w":50,"align":1,"text":"14"}
+{"id":14,"obj":"label","x":172,"y":60,"w":60,"align":1,"text":"18"}
+{"id":15,"obj":"label","x":232,"y":60,"w":70,"align":1,"text":"20"}
+{"id":16,"obj":"label","x":2,"y":100,"w":70,"align":1,"text":"24"}
+{"id":17,"obj":"label","x":72,"y":100,"w":90,"align":1,"text":"28"}
+{"id":18,"obj":"label","x":162,"y":100,"w":130,"align":1,"text":"36"}
+
+{"id":20,"obj":"label","x":2,"y":82,"w":30,"align":1,"text":"12:34","text_font":"seg7-8","text_color":"#FF4400"}
+{"id":21,"obj":"label","x":32,"y":82,"w":40,"align":1,"text":"12:34","text_font":"seg7-10","text_color":"#FF4400"}
+{"id":22,"obj":"label","x":72,"y":82,"w":50,"align":1,"text":"12:34","text_font":"seg7-12","text_color":"#FF4400"}
+{"id":23,"obj":"label","x":122,"y":82,"w":50,"align":1,"text":"12:34","text_font":"seg7-14","text_color":"#FF4400"}
+{"id":24,"obj":"label","x":172,"y":82,"w":60,"align":1,"text":"12:34","text_font":"seg7-16","text_color":"#FF4400"}
+{"id":25,"obj":"label","x":232,"y":82,"w":70,"align":1,"text":"12:34","text_font":"seg7-18","text_color":"#FF4400"}
+{"id":26,"obj":"label","x":2,"y":122,"w":70,"align":1,"text":"12:34","text_font":"seg7-20","text_color":"#FF4400"}
+{"id":27,"obj":"label","x":72,"y":122,"w":90,"align":1,"text":"12:34","text_font":"seg7-24","text_color":"#FF4400"}
+{"id":28,"obj":"label","x":162,"y":122,"w":130,"align":1,"text":"12:34","text_font":"seg7-36","text_color":"#FF4400"}
+
+{"page":23,"comment":"---------- Page 23 Message Box ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[23. Message Box]","text_font":"montserrat-20"}
+
+{"id":10,"obj":"msgbox","x":0,"y":0,"w%":80,"h":100,"text":"A message box with two buttons.","options":["Apply","Close"]}
+
+{"page":24,"comment":"---------- Page 24 Color Picker ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[24. Color Picker]","text_font":"montserrat-20"}
+
+{"id":10,"obj":"cpicker","x":20,"y":60,"w":120,"h":120,"color":"#FFFF00","mode":"hue","scale_width":20}
+
+{"page":25,"comment":"---------- Page 25 Tabview ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[25. Tabview]","text_font":"montserrat-20"}
+
+{"id":10,"obj":"tabview","x%":5,"y":60,"h%":55,"w%":90,"tab_bar_size":40,"btn_pos":1,"val":2}
+  {"id":51,"obj":"tab","parentid":10,"text":"Tab 1"}
+  {"id":52,"obj":"tab","parentid":10,"text":"Tab 2"}
+  {"id":53,"obj":"tab","parentid":10,"text":"Tab 3"}
+    {"id":61,"obj":"switch","x":20,"y":10,"w":60,"h":30,"parentid":51,"radius":25,"radius20":25}
+    {"id":71,"obj":"dropdown","x":15,"y":10,"w":110,"h":30,"parentid":52,"options":"Apple\nBanana\nOrange\nMelon"}
+      {"id":72,"obj":"dropdown_list","parentid":71}
+    {"id":81,"obj":"checkbox","x":15,"y":10,"w":150,"h":30,"parentid":53,"text":"Nice tabview"}
