@@ -55,12 +55,16 @@ class Matter_Plugin_Virt_HVAC : Matter_Plugin_Thermostat
 
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.ir_vendor = config.find("vendor", "")
+    var vendor = config.find("vendor", nil)
+    self.ir_vendor = vendor == nil ? "" : str(vendor)
     self.ir_model = config.find("model", -1)
     self.ir_fan = config.find("fan", "Auto")
     self.local_temp_filter = config.find("temp_filter")
     if self.local_temp_filter
       self.local_temp_matcher = tasmota.Rule_Matcher.parse(self.local_temp_filter)
+    end
+    if self.ir_vendor == ""
+      log("MTR: v.HVAC endpoint " + str(self.endpoint) + " missing IRHVAC vendor; commands will be ignored", 2)
     end
   end
 
@@ -120,7 +124,14 @@ class Matter_Plugin_Virt_HVAC : Matter_Plugin_Thermostat
     }
     var cmd = "IRHVAC " + json.dump(payload)
     log("MTR: v.HVAC " + cmd, 2)
-    return tasmota.cmd(cmd, true)
+    var resp = tasmota.cmd(cmd, true)
+    if isinstance(resp, map)
+      var irhvac_resp = resp.find("IRHVAC", nil)
+      if type(irhvac_resp) == 'string'
+        log("MTR: v.HVAC endpoint " + str(self.endpoint) + " IRHVAC rejected vendor '" + self.ir_vendor + "': " + irhvac_resp, 2)
+      end
+    end
+    return resp
   end
 
   def option_state(option_name)
