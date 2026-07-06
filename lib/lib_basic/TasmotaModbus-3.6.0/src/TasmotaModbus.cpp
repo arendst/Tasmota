@@ -213,8 +213,8 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   write(frame, framepointer);
 
 #ifdef TASMOTA_MODBUS_RX_ENABLE
-  delay(10); // add a delay to allow write buffers to empty
   if (mb_rx_enable_pin > -1) {
+    delay(10); // allow write buffer to drain before re-enabling Rx
     digitalWrite(mb_rx_enable_pin, LOW);
   }
 #endif  // TASMOTA_MODBUS_RX_ENABLE
