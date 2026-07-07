@@ -730,7 +730,10 @@ class Matter_Device
   def signal_endpoints_changed()
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
-    self.attribute_updated(0x0001 #-matter.AGGREGATOR_ENDPOINT-#, 0x001D, 0x0003, false)
+    var eps = self.get_active_endpoints(true)
+    for ep: eps
+      self.attribute_updated(ep, 0x001D, 0x0003, false)
+    end
   end
 
   #############################################################
