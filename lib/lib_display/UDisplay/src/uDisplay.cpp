@@ -634,6 +634,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               panel_config->i2c.col_start = next_hex(&lp1);
               panel_config->i2c.col_end = next_hex(&lp1);
               panel_config->i2c.cmd_write_ram = next_hex(&lp1);
+              // SPI + bpp==1: also write to spi config (union offset mismatch)
+              if (interface == _UDSP_SPI) {
+                panel_config->spi.cmd_set_addr_x = panel_config->i2c.cmd_set_addr_x;
+                panel_config->spi.cmd_set_addr_y = panel_config->i2c.cmd_set_addr_y;
+                panel_config->spi.cmd_write_ram = panel_config->i2c.cmd_write_ram;
+              }
               // Also keep in legacy vars for now
               saw_1 = panel_config->i2c.cmd_set_addr_x;
               i2c_page_start = panel_config->i2c.page_start;
