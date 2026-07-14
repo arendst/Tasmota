@@ -634,6 +634,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               panel_config->i2c.col_start = next_hex(&lp1);
               panel_config->i2c.col_end = next_hex(&lp1);
               panel_config->i2c.cmd_write_ram = next_hex(&lp1);
+              // SPI + bpp==1: also write to spi config (union offset mismatch)
+              if (interface == _UDSP_SPI) {
+                panel_config->spi.cmd_set_addr_x = panel_config->i2c.cmd_set_addr_x;
+                panel_config->spi.cmd_set_addr_y = panel_config->i2c.cmd_set_addr_y;
+                panel_config->spi.cmd_write_ram = panel_config->i2c.cmd_write_ram;
+              }
               // Also keep in legacy vars for now
               saw_1 = panel_config->i2c.cmd_set_addr_x;
               i2c_page_start = panel_config->i2c.page_start;
@@ -899,8 +905,13 @@ void UfsCheckSDCardInit(void);
   AddLog(LOG_LEVEL_DEBUG, "UDisplay: Device:%s xs:%d ys:%d bpp:%d", dname, gxs, gys, bpp);
 
   if (interface == _UDSP_SPI) {
+#if USE_UNIVERSAL_TOUCH
     AddLog(LOG_LEVEL_DEBUG, "UDisplay: Nr:%d CS:%d CLK:%d MOSI:%d DC:%d TS_CS:%d TS_RST:%d TS_IRQ:%d", 
        spiController->spi_config.bus_nr, spiController->spi_config.cs, spiController->spi_config.clk, spiController->spi_config.mosi, spiController->spi_config.dc, ut_spi_cs, ut_reset, ut_irq);
+#else
+    AddLog(LOG_LEVEL_DEBUG, "UDisplay: Nr:%d CS:%d CLK:%d MOSI:%d DC:%d", 
+       spiController->spi_config.bus_nr, spiController->spi_config.cs, spiController->spi_config.clk, spiController->spi_config.mosi, spiController->spi_config.dc);
+#endif
     AddLog(LOG_LEVEL_DEBUG, "UDisplay: BPAN:%d RES:%d MISO:%d SPED:%d Pixels:%d SaMode:%d DMA-Mode:%d opts:%02x,%02x,%02x SetAddr:%x,%x,%x", 
        bpanel, reset, spiController->spi_config.miso, spiController->spi_config.speed*1000000, col_mode, sa_mode, lvgl_param.use_dma, saw_3, dim_op, startline, saw_1, saw_2, saw_3);
     AddLog(LOG_LEVEL_DEBUG, "UDisplay: Rot 0: %x,%x - %d - %d", madctrl, rot[0], x_addr_offs[0], y_addr_offs[0]);
