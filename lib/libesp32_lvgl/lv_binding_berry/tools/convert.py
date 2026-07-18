@@ -588,6 +588,7 @@ extern "C" {
 #include "be_ctypes.h"
 #include "be_mapping.h"
 #include "../src/lv_colorwheel.h"
+#include "../src/lv_stripes.h"
 """
 
 C_CLASSES_MAP_OPEN = """
@@ -711,6 +712,9 @@ extern int lvbe_theme_create(bvm *vm);
 
 // adding ad-hoc colorwheel from LVGL8 to LVGL9
 extern const lv_obj_class_t lv_colorwheel_class;
+
+// custom Tasmota widget: rectangle filled with an angled stripe pattern
+extern const lv_obj_class_t lv_stripes_class;
 
 """
 

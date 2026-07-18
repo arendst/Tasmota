@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian (#24857)
 - HASPmota ability to set default screen background on `p0b0` object (#24874)
 - Matter virtual IR HVAC thermostat support (#24821)
+- HASPmota and LVGL `stripes` widget
 
 ### Breaking Changed
 
