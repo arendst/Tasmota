@@ -3648,7 +3648,17 @@ class HASPmota
         end
       end
 
-      # Step 3.d. if not found, try to load a module with the name of the class
+      # Step 3.d. if not found, try `lv.<name>` as direct mapping of LVGL class
+      if obj_class == nil
+        # if not found, check if a LVGL class with name `lv.<name>` exists
+        var lv_cl = introspect.get(lv, obj_type)
+        if (lv_cl != nil) && (type(lv_cl) == 'class')
+          lv_instance = lv_cl(parent_lvgl)
+          obj_class = self.lvh_obj           # use the basic lvh_obj component to encapsulate
+        end
+      end
+
+      # Step 3.e. if not found, try to load a module with the name of the class
       if obj_class == nil
         var lv_cl = introspect.module(obj_type)
         if lv_cl != nil && type(lv_cl) == 'class'

@@ -1,4 +1,5 @@
 # simple script to make screenshots of HASPmota demo
+# backlog time 1704112620; sleep 3; br lv.screenshot()
 
 def pageshot(p, cb)
   global.(f"p{p}").show()

@@ -1811,3 +1811,20 @@ set_mode|int||[lv_colorwheel_set_mode](https://docs.lvgl.io/9.0/search.html?q=lv
 set_mode_fixed|bool||[lv_colorwheel_set_mode_fixed](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_set_mode_fixed)
 set_rgb|lv.color|bool|[lv_colorwheel_set_rgb](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_set_rgb)
 
+### widget `lv.stripes`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+get_angle||int|[lv_stripes_get_angle](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_get_angle)
+get_gap_width||int|[lv_stripes_get_gap_width](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_get_gap_width)
+get_offset||int|[lv_stripes_get_offset](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_get_offset)
+get_stripe_color||lv.color|[lv_stripes_get_stripe_color](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_get_stripe_color)
+get_stripe_opa||int|[lv_stripes_get_stripe_opa](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_get_stripe_opa)
+get_stripe_width||int|[lv_stripes_get_stripe_width](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_get_stripe_width)
+set_angle|int||[lv_stripes_set_angle](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_set_angle)
+set_gap_width|int||[lv_stripes_set_gap_width](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_set_gap_width)
+set_offset|int||[lv_stripes_set_offset](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_set_offset)
+set_stripe_color|lv.color||[lv_stripes_set_stripe_color](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_set_stripe_color)
+set_stripe_opa|int||[lv_stripes_set_stripe_opa](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_set_stripe_opa)
+set_stripe_width|int||[lv_stripes_set_stripe_width](https://docs.lvgl.io/9.0/search.html?q=lv_stripes_set_stripe_width)
+

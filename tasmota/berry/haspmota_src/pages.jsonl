@@ -273,3 +273,43 @@
     {"id":71,"obj":"dropdown","x":15,"y":10,"w":110,"h":30,"parentid":52,"options":"Apple\nBanana\nOrange\nMelon"}
       {"id":72,"obj":"dropdown_list","parentid":71}
     {"id":81,"obj":"checkbox","x":15,"y":10,"w":150,"h":30,"parentid":53,"text":"Nice tabview"}
+
+{"page":26,"comment":"---------- Page 26 Stripes angles ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[26. Stripes angles]","text_font":"montserrat-20"}
+
+{"id":21,"obj":"label","x":10,"y":56,"w":145,"h":14,"text":"0deg  10/10","align":1,"text_font":"montserrat-14"}
+{"id":11,"obj":"stripes","x":10,"y":71,"w":145,"h":50,"radius":6,"border_side":0,"bg_color":"#FFFFFF","stripe_color":"#1FA3EC","stripe_opa":255,"stripe_width":10,"gap_width":10,"angle":0}
+
+{"id":22,"obj":"label","x":165,"y":56,"w":145,"h":14,"text":"45deg  10/10","align":1,"text_font":"montserrat-14"}
+{"id":12,"obj":"stripes","x":165,"y":71,"w":145,"h":50,"radius":6,"border_side":0,"bg_color":"#FFFFFF","stripe_color":"#1FA3EC","stripe_opa":255,"stripe_width":10,"gap_width":10,"angle":45}
+
+{"id":23,"obj":"label","x":10,"y":126,"w":145,"h":14,"text":"45deg  wide 20/6","align":1,"text_font":"montserrat-14"}
+{"id":13,"obj":"stripes","x":10,"y":141,"w":145,"h":50,"radius":6,"border_side":0,"bg_color":"#FFFFFF","stripe_color":"#1FA3EC","stripe_opa":255,"stripe_width":20,"gap_width":6,"angle":45}
+
+{"id":24,"obj":"label","x":165,"y":126,"w":145,"h":14,"text":"45deg  thin 4/16","align":1,"text_font":"montserrat-14"}
+{"id":14,"obj":"stripes","x":165,"y":141,"w":145,"h":50,"radius":6,"border_side":0,"bg_color":"#FFFFFF","stripe_color":"#1FA3EC","stripe_opa":255,"stripe_width":4,"gap_width":16,"angle":45}
+
+{"page":27,"comment":"---------- Page 27 Stripes styles ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[27. Stripes styles]","text_font":"montserrat-20"}
+
+{"id":21,"obj":"label","x":10,"y":56,"w":145,"h":14,"text":"Colored","align":1,"text_font":"montserrat-14"}
+{"id":11,"obj":"stripes","x":10,"y":71,"w":145,"h":50,"radius":6,"border_side":0,"bg_color":"#2C3E50","stripe_color":"#F1C40F","stripe_opa":255,"stripe_width":12,"gap_width":10,"angle":45}
+
+{"id":22,"obj":"label","x":165,"y":56,"w":145,"h":14,"text":"Opacity 128","align":1,"text_font":"montserrat-14"}
+{"id":12,"obj":"stripes","x":165,"y":71,"w":145,"h":50,"radius":6,"border_side":0,"bg_color":"#F1C40F","stripe_color":"#2C3E50","stripe_opa":128,"stripe_width":14,"gap_width":8,"angle":20}
+
+{"id":23,"obj":"label","x":10,"y":126,"w":145,"h":14,"text":"Radius 22","align":1,"text_font":"montserrat-14"}
+{"id":13,"obj":"stripes","x":10,"y":141,"w":145,"h":50,"radius":22,"border_side":0,"bg_color":"#000044","stripe_color":"#00C853","stripe_opa":255,"stripe_width":12,"gap_width":10,"angle":135}
+
+{"id":24,"obj":"label","x":165,"y":126,"w":145,"h":14,"text":"Radius + border","align":1,"text_font":"montserrat-14"}
+{"id":14,"obj":"stripes","x":165,"y":141,"w":145,"h":50,"radius":22,"border_side":15,"border_width":4,"border_color":"#FFFFFF","bg_color":"#000044","stripe_color":"#00C853","stripe_opa":230,"stripe_width":12,"gap_width":10,"angle":45}
+
+{"page":28,"comment":"---------- Page 28 Stripes warning ----------"}
+
+{"id":1,"obj":"label","x":0,"y":30,"w%":100,"h":24,"text":"[28. Stripes warning]","text_font":"montserrat-20"}
+
+{"id":11,"obj":"stripes","x":20,"y":80,"w":280,"h":80,"radius":10,"bg_color":"#FFD500","stripe_color":"#000000","stripe_opa":255,"stripe_width":12,"gap_width":12,"angle":45,"border_color":"#000000","border_width":6}
+
+{"comment":"--- Scroll the pattern by animating the offset; wraps seamlessly every period ---","berry_run":"def warn_scroll() if global.p28b11 global.p28b11.offset += 2 end tasmota.set_timer(60, warn_scroll) end warn_scroll()"}

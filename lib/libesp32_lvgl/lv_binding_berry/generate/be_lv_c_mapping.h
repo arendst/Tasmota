@@ -10,6 +10,7 @@ extern "C" {
 #include "be_ctypes.h"
 #include "be_mapping.h"
 #include "../src/lv_colorwheel.h"
+#include "../src/lv_stripes.h"
 
 /* `lv_style` methods */
 const be_ntv_func_def_t lv_style_func[] = {
@@ -1646,6 +1647,24 @@ const be_ntv_func_def_t lv_colorwheel_func[] = {
 };
 #endif // BE_LV_WIDGET_COLORWHEEL
 
+/* `lv_stripes` methods */
+#ifdef BE_LV_WIDGET_STRIPES
+const be_ntv_func_def_t lv_stripes_func[] = {
+  { "get_angle", { (const void*) &lv_stripes_get_angle, "i", "(lv.obj)" } },
+  { "get_gap_width", { (const void*) &lv_stripes_get_gap_width, "i", "(lv.obj)" } },
+  { "get_offset", { (const void*) &lv_stripes_get_offset, "i", "(lv.obj)" } },
+  { "get_stripe_color", { (const void*) &lv_stripes_get_stripe_color, "lv.color", "(lv.obj)" } },
+  { "get_stripe_opa", { (const void*) &lv_stripes_get_stripe_opa, "i", "(lv.obj)" } },
+  { "get_stripe_width", { (const void*) &lv_stripes_get_stripe_width, "i", "(lv.obj)" } },
+  { "set_angle", { (const void*) &lv_stripes_set_angle, "", "(lv.obj)i" } },
+  { "set_gap_width", { (const void*) &lv_stripes_set_gap_width, "", "(lv.obj)i" } },
+  { "set_offset", { (const void*) &lv_stripes_set_offset, "", "(lv.obj)i" } },
+  { "set_stripe_color", { (const void*) &lv_stripes_set_stripe_color, "", "(lv.obj)(lv.color)" } },
+  { "set_stripe_opa", { (const void*) &lv_stripes_set_stripe_opa, "", "(lv.obj)i" } },
+  { "set_stripe_width", { (const void*) &lv_stripes_set_stripe_width, "", "(lv.obj)i" } },
+};
+#endif // BE_LV_WIDGET_STRIPES
+
 extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_animimg;
 extern const bclass be_class_lv_arc;
@@ -1688,6 +1707,7 @@ extern const bclass be_class_lv_span;
 extern const bclass be_class_lv_spangroup;
 extern const bclass be_class_lv_spinbox;
 extern const bclass be_class_lv_spinner;
+extern const bclass be_class_lv_stripes;
 extern const bclass be_class_lv_style;
 extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
@@ -1812,6 +1832,9 @@ const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_SPINNER
   { "lv_spinner", &be_class_lv_spinner, lv_spinner_func, sizeof(lv_spinner_func) / sizeof(lv_spinner_func[0]) },
 #endif // BE_LV_WIDGET_SPINNER
+#ifdef BE_LV_WIDGET_STRIPES
+  { "lv_stripes", &be_class_lv_stripes, lv_stripes_func, sizeof(lv_stripes_func) / sizeof(lv_stripes_func[0]) },
+#endif // BE_LV_WIDGET_STRIPES
   { "lv_style", &be_class_lv_style, lv_style_func, sizeof(lv_style_func) / sizeof(lv_style_func[0]) },
 #ifdef BE_LV_WIDGET_SWITCH
   { "lv_switch", &be_class_lv_switch, lv_switch_func, sizeof(lv_switch_func) / sizeof(lv_switch_func[0]) },
@@ -2004,6 +2027,10 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_COLORWHEEL
   int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+_p", "(lv.obj)b"); }
 #endif // BE_LV_WIDGET_COLORWHEEL
+  /* `lv_stripes` methods */
+#ifdef BE_LV_WIDGET_STRIPES
+  int be_ntv_lv_stripes_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_stripes_create, "+_p", "(lv.obj)"); }
+#endif // BE_LV_WIDGET_STRIPES
 
 // create font either empty or from parameter on stack
 int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
