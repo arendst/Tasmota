@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota ability to set default screen background on `p0b0` object (#24874)
 - Matter virtual IR HVAC thermostat support (#24821)
 - HASPmota and LVGL `stripes` widget
+- TLS support for EC P-384 curve in server certificate
 
 ### Breaking Changed
 
