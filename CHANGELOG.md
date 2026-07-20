@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Matter virtual IR HVAC thermostat support (#24821)
 - HASPmota and LVGL `stripes` widget (#24907)
 - MagicSwitch configurable masking window fixing problems with multiple false triggering (#24888)
+- TLS support for EC P-384 curve in server certificate
 
 ### Breaking Changed
 
