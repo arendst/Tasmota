@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - MiElHVAC auto-enable i-See widevane when setting AirDirection (#24860)
+- `PubSub` lib renamed `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests
 
 ### Fixed
 - BLE EQ3 float output in mqtt messages regression from v15.4.0.2 (#24869)

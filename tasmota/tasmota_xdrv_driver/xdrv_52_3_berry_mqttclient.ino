@@ -221,6 +221,7 @@ struct BerryMqttClient {
     mqtt = new PubSubClient();
     mqtt->setClient(*active_client);
     mqtt->setBufferSize(MQTT_MAX_PACKET_SIZE);
+    mqtt->setMaxIncomingPacketSize(MQTT_MAX_PACKET_SIZE);
     mqtt->setKeepAlive(Settings->mqtt_keepalive);
     mqtt->setSocketTimeout(Settings->mqtt_socket_timeout);
 

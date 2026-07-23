@@ -220,6 +220,7 @@ void MqttSetClientTimeout(void) {
 void MqttInit(void) {
   // Force buffer size since the #define may not be visible from Arduino lib
   MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+  MqttClient.setMaxIncomingPacketSize(MQTT_MAX_PACKET_SIZE);
 
 #ifdef USE_MQTT_AZURE_IOT
   Settings->mqtt_port = 8883;
@@ -544,7 +545,12 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 
   uint32_t written = MqttClient.write(payload, plength);
   if (written != plength) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Message too large"));
+    // The fixed header (and possibly part of the payload) has already been sent
+    // by beginPublish()/write(). A short write leaves an incomplete MQTT control packet
+    // on the wire, so the connection is desynchronised and must not be reused. Drop it;
+    // Tasmota will reconnect on the next loop.
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Partial write (%u/%u), dropping connection"), written, plength);
+    MqttClient.disconnect();
     return false;
   }
 /*
