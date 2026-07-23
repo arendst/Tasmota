@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [15.5.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests (#24916)
+
+### Fixed
+
+### Removed
+
 ## [15.5.0.1]
 ### Added
 - Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian (#24857)
@@ -12,19 +24,14 @@ All notable changes to this project will be documented in this file.
 - MagicSwitch configurable masking window fixing problems with multiple false triggering (#24888)
 - TLS support for EC P-384 curve in server certificate (#24909)
 
-### Breaking Changed
-
 ### Changed
 - MiElHVAC auto-enable i-See widevane when setting AirDirection (#24860)
-- `PubSub` lib renamed `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests
 
 ### Fixed
 - BLE EQ3 float output in mqtt messages regression from v15.4.0.2 (#24869)
 - Default button/switch actions on builds without rules regression from v15.4.0.2 (#24871)
 - PZEM/Modbus energy monitor Exception crash-loop on ESP8266 regression from v15.5.0 (#24883)
 - Udisp SPI for mono color display (#24899)
-
-### Removed
 
 ## [Released]
 
