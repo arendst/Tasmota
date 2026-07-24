@@ -52,6 +52,15 @@
     If the text fits into the display, it is shown in the center.
     Otherwise it scrolls to the left and repeats as long it is cleared or new "DisplayText" overwrites it.
 
+  DisplayText  [xNNyNN]text
+    The text can be prefixed by an optional position in pixel. Both parameters "x" and "y" are optional.
+    On displays with more than one module row this addresses a text row, e.g. "DisplayText [y8]second row".
+    Positioned text is not scrolled.
+    Examples:
+      DisplayText [y0]first row     // text at the top row
+      DisplayText [y8]second row    // text at the second module row
+      DisplayText [x4y8]indented    // second row, starting at pixel 4
+
   DisplayDimmer [0..100]
     Sets the intensity of the display.
 
@@ -166,11 +175,60 @@ bool MAX7291Matrix_init(void)
     return true;
 }
 
+/**
+ * @brief Parses an optional leading position prefix "[xNNyNN]" of the display text.
+ * Supported are the parameters "x" (horizontal) and "y" (vertical) in pixel, both optional.
+ * On multi row displays this allows to address a text row, e.g. "[y8]" for the second row.
+ * 
+ * @param text pointer to the display text. It is moved behind the prefix when a prefix was found.
+ * @param x horizontal pixel position, only written when the prefix contains "x"
+ * @param y vertical pixel position, only written when the prefix contains "y"
+ * @return true when a position prefix was found
+ */
+bool MAX7291Matrix_parseTextPos(char **text, int *x, int *y)
+{
+    char *cp = *text;
+    if (nullptr == cp || '[' != *cp) { return false; }
+
+    bool found = false;
+    cp++; // skip '['
+    while (*cp && ']' != *cp)
+    {
+        char param = *cp++;
+        if ('x' != param && 'y' != param) { return false; } // unknown parameter, keep text unchanged
+        if (*cp < '0' || *cp > '9') { return false; }       // missing value, keep text unchanged
+        int value = 0;
+        while (*cp >= '0' && *cp <= '9')
+        {
+            if (value < 10000) { value = (value * 10) + (*cp - '0'); } // limit value to avoid integer overflow
+            cp++;
+        }
+        if ('x' == param) { *x = value; } else { *y = value; }
+        found = true;
+    }
+    if (']' != *cp || !found) { return false; } // unterminated or empty prefix, keep text unchanged
+
+    *text = cp + 1; // move text pointer behind ']'
+    return true;
+}
+
 bool MAX7291Matrix_setText(bool clearBefore=true)
 {
     if(Settings->display_mode != 0) MAX7291Matrix_init();
     LedMatrix_settings.blink_delay = 0; // no blinking    
-    return max7219_Matrix->drawText(XdrvMailbox.data, clearBefore); 
+
+    char *text = XdrvMailbox.data;
+    int posX = 0;
+    int posY = 0;
+    if (MAX7291Matrix_parseTextPos(&text, &posX, &posY))
+    {
+        // positioned text, e.g. "[y8]second row" on a display with more than one module row
+        if(clearBefore) max7219_Matrix->clearDisplay();
+        bool result = max7219_Matrix->drawTextAt(text, posX, posY);
+        max7219_Matrix->refresh();
+        return result;
+    }
+    return max7219_Matrix->drawText(text, clearBefore); 
 }
 
 // FUNC_DISPLAY_SCROLLDELAY
