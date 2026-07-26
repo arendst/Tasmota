@@ -11,8 +11,6 @@
   SPDX-FileCopyrightText: 2020-2025 Theo Arends and Tasmota contributors
 
   SPDX-License-Identifier: MIT
-
-  Tasmota-specific changes are marked with "Start Tasmota patch" comments.
 */
 
 #ifndef PubSubClient_h
@@ -99,15 +97,18 @@
 
 class PubSubClient : public Print {
 private:
-   Client* _client;
-   uint8_t* buffer;
-   uint16_t bufferSize;
-   uint16_t keepAlive;
-   uint16_t socketTimeout;
-   uint16_t nextMsgId;
-   unsigned long lastOutActivity;
-   unsigned long lastInActivity;
-   bool pingOutstanding;
+// All members are default-initialised. The constructors do not assign every field
+// (nextMsgId, the activity timestamps, pingOutstanding, port), and `buffer` was left
+// dangling when the initial malloc() failed - the destructor then free()d garbage.
+   Client* _client = nullptr;
+   uint8_t* buffer = nullptr;
+   uint16_t bufferSize = 0;
+   uint16_t keepAlive = 0;
+   uint16_t socketTimeout = 0;
+   uint16_t nextMsgId = 0;
+   unsigned long lastOutActivity = 0;
+   unsigned long lastInActivity = 0;
+   bool pingOutstanding = false;
    MQTT_CALLBACK_SIGNATURE;
    uint32_t readPacket(uint8_t*);
    boolean readByte(uint8_t * result);
@@ -115,28 +116,22 @@ private:
    boolean write(uint8_t header, uint8_t* buf, uint16_t length);
    uint16_t writeString(const char* string, uint8_t* buf, uint16_t pos);
    // Build up the header ready to send
-   // Returns the size of the header
+   // Returns the size of the header, or 0 if `length` cannot be encoded
    // Note: the header is built at the end of the first MQTT_MAX_HEADER_SIZE bytes, so will start
    //       (MQTT_MAX_HEADER_SIZE - <returned size>) bytes into the buffer
-   size_t buildHeader(uint8_t header, uint8_t* buf, uint32_t length);   // Tasmota patch: 32-bit Remaining Length
+   size_t buildHeader(uint8_t header, uint8_t* buf, uint32_t length);   // 32-bit Remaining Length
    IPAddress ip;
 
-// Start Tasmota patch
-//   const char* domain;
-
    String domain;
-// End Tasmota patch
 
-   uint16_t port;
-   Stream* stream;
-   int _state;
+   uint16_t port = 0;          // 0 = no usable server configured
+   Stream* stream = nullptr;
+   int _state = MQTT_DISCONNECTED;
 
-// Start Tasmota patch
 // Hard cap on the total size (fixed header + Remaining Length) of an inbound packet
 // that the client will accept, independent of the working buffer allocation.
 // 0 = disabled: fall back to the buffer size for non-stream, unbounded for stream.
    uint32_t maxIncomingPacketSize = 0;
-// End Tasmota patch
 public:
    PubSubClient();
    PubSubClient(Client& client);
@@ -155,12 +150,10 @@ public:
 
    ~PubSubClient();
 
-// Start Tasmota patch
 // The class owns and frees `buffer`; a copy would share ownership and lead to a
 // double-free / use-after-free. Copying is therefore disabled.
    PubSubClient(const PubSubClient&) = delete;
    PubSubClient& operator=(const PubSubClient&) = delete;
-// End Tasmota patch
 
    PubSubClient& setServer(IPAddress ip, uint16_t port);
    PubSubClient& setServer(uint8_t * ip, uint16_t port);
@@ -174,13 +167,11 @@ public:
    boolean setBufferSize(uint16_t size);
    uint16_t getBufferSize() const;
 
-// Start Tasmota patch
    // Set the maximum accepted inbound packet size (total wire bytes). 0 disables the
    // cap. When set, a larger declared packet closes the connection instead of being
    // drained/streamed. Useful to bound stream-mode input and tune DoS resistance.
    PubSubClient& setMaxIncomingPacketSize(uint32_t size) { this->maxIncomingPacketSize = size; return *this; }
    uint32_t getMaxIncomingPacketSize() const { return this->maxIncomingPacketSize; }
-// End Tasmota patch
 
    boolean connect(const char* id);
    boolean connect(const char* id, const char* user, const char* pass);
@@ -188,11 +179,7 @@ public:
    boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage);
    boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage, boolean cleanSession);
 
-// Start Tasmota patch
-//   void disconnect();
-
    void disconnect(bool disconnect_package = false);
-// End Tasmota patch
 
    boolean publish(const char* topic, const char* payload);
    boolean publish(const char* topic, const char* payload, boolean retained);
@@ -223,8 +210,6 @@ public:
    boolean loop();
    boolean connected();
    int state() const;
-
 };
-
 
 #endif
