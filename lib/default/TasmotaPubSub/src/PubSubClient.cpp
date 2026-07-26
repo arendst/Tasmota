@@ -11,8 +11,6 @@
   SPDX-FileCopyrightText: 2020-2025 Theo Arends and Tasmota contributors
 
   SPDX-License-Identifier: MIT
-
-  Tasmota-specific changes are marked with "Start Tasmota patch" comments.
 */
 
 #include "PubSubClient.h"
@@ -192,13 +190,15 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
     if (!connected()) {
         int result = 0;
 
-// Start Tasmota patch
         if (_client == nullptr) {
             return false;
         }
-// End Tasmota patch
+        // Without a working buffer the CONNECT packet below would be assembled through
+        // a null pointer. bufferSize == 0 means the allocation failed.
+        if ((this->buffer == nullptr) || (this->bufferSize == 0)) {
+            return false;
+        }
 
-// Start Tasmota patch
         // A null client id would crash the later strnlen()/writeString(). MQTT allows a
         // zero-length id (with clean session) but not a null pointer.
         if (id == nullptr) {
@@ -211,19 +211,19 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
                 return false;
             }
         }
-// End Tasmota patch
 
         if (_client->connected()) {
             result = 1;
+
+// port == 0 means no server was configured, or setServer() failed to keep the host
+// name (out of memory). Connecting anyway would target an unintended endpoint.
+        } else if (this->port == 0) {
+            _state = MQTT_CONNECT_FAILED;
+            return false;
+
         } else {
-
-// Start Tasmota patch
-//            if (domain != NULL) {
-//                result = _client->connect(this->domain, this->port);
-
             if (domain.length() != 0) {
                 result = _client->connect(this->domain.c_str(), this->port);
-// End Tasmota patch
 
             } else {
                 result = _client->connect(this->ip, this->port);
@@ -292,10 +292,7 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
             lastInActivity = lastOutActivity = millis();
 
             while (!_client->available()) {
-
-// Start Tasmota patch
                 delay(0);  // Prevent watchdog crashes
-// End Tasmota patch
 
                 unsigned long t = millis();
                 if (t-lastInActivity >= ((int32_t) this->socketTimeout*1000UL)) {
@@ -307,11 +304,9 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
             uint8_t llen;
             uint32_t len = readPacket(&llen);
 
-// Start Tasmota patch
 // Only accept a well-formed CONNACK: exact packet type (0x20), Remaining Length 2.
 // Previously any 4-byte frame ending in 0 was treated as a successful connection.
             if (len == 4 && (buffer[0] == MQTTCONNACK) && (buffer[1] == 2)) {
-// End Tasmota patch
                 if (buffer[3] == 0) {
                     lastInActivity = millis();
                     pingOutstanding = false;
@@ -332,28 +327,29 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
 
 // reads a byte into result
 boolean PubSubClient::readByte(uint8_t * result) {
-
-// Start Tasmota patch
    if (_client == nullptr) {
      return false;
    }
-// End Tasmota patch
 
    uint32_t previousMillis = millis();
    while (!_client->available()) {
-
-// Start Tasmota patch
-//     yield();
-
      delay(1);  // Prevent watchdog crashes
-// End Tasmota patch
 
      uint32_t currentMillis = millis();
      if (currentMillis - previousMillis >= ((int32_t) this->socketTimeout * 1000)) {
        return false;
      }
    }
-   *result = _client->read();
+
+// read() returns -1 when no byte could be retrieved even though available() was
+// non-zero (reachable with TLS clients at record boundaries). Storing that as 0xFF
+// would silently inject a bogus byte into the packet being parsed.
+   int rc = _client->read();
+   if (rc < 0) {
+     return false;
+   }
+   *result = (uint8_t)rc;
+
    return true;
 }
 
@@ -370,6 +366,16 @@ boolean PubSubClient::readByte(uint8_t * result, uint16_t * index) {
 
 uint32_t PubSubClient::readPacket(uint8_t* lengthLength) {
     uint16_t len = 0;
+
+// The fixed header plus the Remaining Length field occupy up to MQTT_MAX_HEADER_SIZE
+// bytes, which are always written to the front of the buffer. A buffer smaller than
+// that cannot hold any packet header, so refuse instead of overrunning it.
+    if ((this->buffer == nullptr) || (this->bufferSize < MQTT_MAX_HEADER_SIZE)) {
+        _state = MQTT_DISCONNECTED;
+        if (_client != nullptr) { _client->stop(); }
+        return 0;
+    }
+
     if (!readByte(this->buffer, &len)) { return 0; }
     bool isPublish = (this->buffer[0]&0xF0) == MQTTPUBLISH;
     uint32_t multiplier = 1;
@@ -379,7 +385,7 @@ uint32_t PubSubClient::readPacket(uint8_t* lengthLength) {
     uint32_t start = 0;
 
     do {
-        if (len == 5) {
+        if (len == MQTT_MAX_HEADER_SIZE) {
             // Invalid remaining length encoding - kill the connection
             _state = MQTT_DISCONNECTED;
             _client->stop();
@@ -390,15 +396,14 @@ uint32_t PubSubClient::readPacket(uint8_t* lengthLength) {
         length += (digit & 127) * multiplier;
         multiplier <<=7; //multiplier *= 128
 
-// Start Tasmota patch
-//    } while ((digit & 128) != 0);
-
-    } while ((digit & 128) != 0 && len < (this->bufferSize -2));
-// End Tasmota patch
+// Remaining Length is 1-4 bytes; the `len == MQTT_MAX_HEADER_SIZE` check above is the
+// bound. The previous extra `len < bufferSize - 2` condition truncated the decode of a
+// legal multi-byte length on small buffers (and underflowed for bufferSize < 2).
+    } while ((digit & 128) != 0);
 
     *lengthLength = len-1;
 
-// Start Tasmota patch (DoS mitigation + sentinel byte)
+// DoS mitigation + sentinel byte:
 // In non-stream mode, if the declared packet cannot fit the buffer while leaving
 // at least one spare byte (needed by consumers that NUL-terminate at buffer[len]),
 // close the connection immediately instead of draining the whole Remaining Length
@@ -423,7 +428,6 @@ uint32_t PubSubClient::readPacket(uint8_t* lengthLength) {
         _client->stop();
         return 0;
     }
-// End Tasmota patch
 
     if (isPublish) {
         // Read in topic length to calculate bytes to skip over for Stream writing
@@ -452,28 +456,28 @@ uint32_t PubSubClient::readPacket(uint8_t* lengthLength) {
         }
         idx++;
 
-// Start Tasmota patch
 // Periodically yield while consuming a large (typically streamed) body so the
 // watchdog is not starved. Non-stream packets are < bufferSize so this rarely fires.
         if ((i & 0x3FF) == 0) { delay(0); }
-// End Tasmota patch
     }
 
-// Start Tasmota patch (sentinel byte)
-// Use >= so an exact-buffer packet is also ignored, guaranteeing a spare byte for
+// Sentinel byte: use >= so an exact-buffer packet is also ignored, guaranteeing a spare byte for
 // downstream NUL-termination at buffer[len]. Non-stream oversized packets are
 // normally already rejected above; this is defense-in-depth.
     if (!this->stream && idx >= this->bufferSize) {
         len = 0; // This will cause the packet to be ignored.
     }
-// End Tasmota patch
     return len;
 }
 
 boolean PubSubClient::loop() {
     if (connected()) {
         unsigned long t = millis();
-        if ((t - lastInActivity > this->keepAlive*1000UL) || (t - lastOutActivity > this->keepAlive*1000UL)) {
+// keepAlive == 0 disables the keepalive mechanism (as advertised by MQTT itself).
+// Without the guard the interval collapses to 0 ms, so every loop() sent a PINGREQ and
+// the next one tore the connection down with MQTT_CONNECTION_TIMEOUT.
+        if (this->keepAlive &&
+            ((t - lastInActivity > this->keepAlive*1000UL) || (t - lastOutActivity > this->keepAlive*1000UL))) {
             if (pingOutstanding) {
                 this->_state = MQTT_CONNECTION_TIMEOUT;
                 _client->stop();
@@ -482,16 +486,10 @@ boolean PubSubClient::loop() {
                 this->buffer[0] = MQTTPINGREQ;
                 this->buffer[1] = 0;
 
-// Start Tasmota patch
-//                _client->write(this->buffer,2);
-//                lastOutActivity = t;
-//                lastInActivity = t;
-
                 if (_client->write(this->buffer,2) != 0) {
                   lastOutActivity = t;
                   lastInActivity = t;
                 }
-// End Tasmota patch
 
                 pingOutstanding = true;
             }
@@ -508,7 +506,6 @@ boolean PubSubClient::loop() {
                     if (callback) {
                         uint16_t tl = (this->buffer[llen+1]<<8)+this->buffer[llen+2]; /* topic length in bytes */
 
-// Start Tasmota patch
 // Observed heap corruption in some cases since v10.0.0
 // Also see https://github.com/knolleary/pubsubclient/pull/843
 //
@@ -538,7 +535,6 @@ boolean PubSubClient::loop() {
                           _client->stop();
                           return false;
                         }
-// End Tasmota patch
 
                         memmove(this->buffer+llen+2,this->buffer+llen+3,tl); /* move topic inside buffer 1 byte to front */
                         this->buffer[llen+2+tl] = 0; /* end the topic as a 'C' string with \x00 */
@@ -554,14 +550,9 @@ boolean PubSubClient::loop() {
                             this->buffer[2] = (msgId >> 8);
                             this->buffer[3] = (msgId & 0xFF);
 
-// Start Tasmota patch
-//                            _client->write(this->buffer,4);
-//                            lastOutActivity = t;
-
                             if (_client->write(this->buffer,4) != 0) {
                               lastOutActivity = t;
                             }
-// End Tasmota patch
 
                         } else {
                             payload = this->buffer+llen+3+tl;
@@ -599,11 +590,9 @@ boolean PubSubClient::publish(const char* topic, const uint8_t* payload, unsigne
 
 boolean PubSubClient::publish(const char* topic, const uint8_t* payload, unsigned int plength, boolean retained) {
     if (connected()) {
-// Start Tasmota patch
         if ((topic == nullptr) || ((payload == nullptr) && (plength != 0))) {
             return false;
         }
-// End Tasmota patch
         if (this->bufferSize < MQTT_MAX_HEADER_SIZE + 2+strnlen(topic, this->bufferSize) + plength) {
             // Too long
             return false;
@@ -633,72 +622,51 @@ boolean PubSubClient::publish_P(const char* topic, const char* payload, boolean 
 }
 
 boolean PubSubClient::publish_P(const char* topic, const uint8_t* payload, unsigned int plength, boolean retained) {
-    uint8_t llen = 0;
-    uint8_t digit;
     unsigned int rc = 0;
-    uint16_t tlen;
-    unsigned int pos = 0;
-    unsigned int i;
-    uint8_t header;
-    unsigned int len;
-    int expectedLength;
 
     if (!connected()) {
         return false;
     }
 
-// Start Tasmota patch
     if ((topic == nullptr) || ((payload == nullptr) && (plength != 0))) {
         return false;
     }
-    tlen = strnlen(topic, this->bufferSize);
+    uint16_t tlen = strnlen(topic, this->bufferSize);
     // Header + topic must fit the working buffer (payload itself is streamed, not buffered).
     if ((size_t)MQTT_MAX_HEADER_SIZE + 2 + tlen > this->bufferSize) {
         return false;
     }
-// End Tasmota patch
 
-    header = MQTTPUBLISH;
+    uint8_t header = MQTTPUBLISH;
     if (retained) {
         header |= 1;
     }
-    this->buffer[pos++] = header;
-    len = plength + 2 + tlen;
-    do {
-        digit = len  & 127; //digit = len %128
-        len >>= 7; //len = len / 128
-        if (len > 0) {
-            digit |= 0x80;
-        }
-        this->buffer[pos++] = digit;
-        llen++;
-    } while (len>0);
 
-    pos = writeString(topic,this->buffer,pos);
+    // Assemble the topic behind the reserved header space, then let buildHeader() emit the
+    // Remaining Length in front of it. Sharing the single encoder keeps the framing
+    // identical to publish()/beginPublish() and enforces its 4-byte bound in one place.
+    uint16_t length = writeString(topic, this->buffer, MQTT_MAX_HEADER_SIZE);
+    size_t hlen = buildHeader(header, this->buffer, (uint32_t)plength + 2 + tlen);
+    if (hlen == 0) {
+        return false;
+    }
+    uint16_t headerLength = length - (MQTT_MAX_HEADER_SIZE - hlen);
 
-    rc += _client->write(this->buffer,pos);
+    rc += _client->write(this->buffer + (MQTT_MAX_HEADER_SIZE - hlen), headerLength);
 
-    for (i=0;i<plength;i++) {
+    for (unsigned int i = 0; i < plength; i++) {
         rc += _client->write((char)pgm_read_byte_near(payload + i));
     }
-
-// Start Tasmota patch
-//    lastOutActivity = millis();
 
     if (rc > 0) {
       lastOutActivity = millis();
     }
-// End Tasmota patch
 
-    expectedLength = 1 + llen + 2 + tlen + plength;
-
-    return (rc == expectedLength);
+    return (rc == (unsigned int)headerLength + plength);
 }
 
 boolean PubSubClient::beginPublish(const char* topic, unsigned int plength, boolean retained) {
     if (connected()) {
-
-// Start Tasmota patch
         if (topic == nullptr) {
             return false;
         }
@@ -710,7 +678,6 @@ boolean PubSubClient::beginPublish(const char* topic, unsigned int plength, bool
         // Remaining Length now uses 32-bit accounting (buildHeader emits up to 4 bytes),
         // so payloads above 65535 bytes are framed correctly instead of being truncated.
         uint32_t remaining_length = (uint32_t)plength + 2 + tlen;
-// End Tasmota patch
 
         // Send the header and variable length field
         uint16_t length = MQTT_MAX_HEADER_SIZE;
@@ -720,15 +687,16 @@ boolean PubSubClient::beginPublish(const char* topic, unsigned int plength, bool
             header |= 1;
         }
         size_t hlen = buildHeader(header, this->buffer, remaining_length);
-        uint16_t rc = _client->write(this->buffer+(MQTT_MAX_HEADER_SIZE-hlen),length-(MQTT_MAX_HEADER_SIZE-hlen));
 
-// Start Tasmota patch
-//        lastOutActivity = millis();
+        if (hlen == 0) {   // Remaining Length above 268435455, nothing has been sent yet
+            return false;
+        }
+
+        uint16_t rc = _client->write(this->buffer+(MQTT_MAX_HEADER_SIZE-hlen),length-(MQTT_MAX_HEADER_SIZE-hlen));
 
         if (rc > 0) {
            lastOutActivity = millis();
         }
-// End Tasmota patch
 
         return (rc == (length-(MQTT_MAX_HEADER_SIZE-hlen)));
     }
@@ -740,11 +708,6 @@ int PubSubClient::endPublish() {
 }
 
 size_t PubSubClient::write(uint8_t data) {
-
-// Start Tasmota patch
-//    lastOutActivity = millis();
-//    return _client->write(data);
-
     if (_client == nullptr) {
         lastOutActivity = millis();
         return 0;
@@ -754,16 +717,9 @@ size_t PubSubClient::write(uint8_t data) {
         lastOutActivity = millis();
     }
     return rc;
-// End Tasmota patch
-
 }
 
 size_t PubSubClient::write(const uint8_t *buffer, size_t size) {
-
-// Start Tasmota patch
-//    lastOutActivity = millis();
-//    return _client->write(buffer,size);
-
     if (_client == nullptr) {
         lastOutActivity = millis();
         return 0;
@@ -773,11 +729,8 @@ size_t PubSubClient::write(const uint8_t *buffer, size_t size) {
         lastOutActivity = millis();
     }
     return rc;
-// End Tasmota patch
-
 }
 
-// Start Tasmota patch
 // length is the MQTT Remaining Length and must be 32-bit: encoded as 1-4 bytes
 // (max 268435455). A uint16_t parameter previously truncated payloads > 65535,
 // desynchronising the connection.
@@ -787,9 +740,7 @@ size_t PubSubClient::buildHeader(uint8_t header, uint8_t* buf, uint32_t length) 
     uint8_t digit;
     uint8_t pos = 0;
     uint32_t len = length;
-// End Tasmota patch
     do {
-
         digit = len  & 127; //digit = len %128
         len >>= 7; //len = len / 128
         if (len > 0) {
@@ -797,11 +748,16 @@ size_t PubSubClient::buildHeader(uint8_t header, uint8_t* buf, uint32_t length) 
         }
         lenBuf[pos++] = digit;
         llen++;
-// Start Tasmota patch
 // Remaining Length is encoded in at most 4 bytes; bound the loop to the lenBuf[4]
 // size so an out-of-range length can never overflow lenBuf[] or underflow buf[4-llen].
     } while (len>0 && llen<4);
-// End Tasmota patch
+
+// A length above 268435455 does not fit the 4-byte encoding. Emitting the truncated
+// value would desynchronise the connection, so report failure and let the caller
+// abort instead.
+    if (len > 0) {
+        return 0;
+    }
 
     buf[4-llen] = header;
     for (int i=0;i<llen;i++) {
@@ -813,6 +769,10 @@ size_t PubSubClient::buildHeader(uint8_t header, uint8_t* buf, uint32_t length) 
 boolean PubSubClient::write(uint8_t header, uint8_t* buf, uint16_t length) {
     uint16_t rc;
     uint8_t hlen = buildHeader(header, buf, length);
+
+    if (hlen == 0) {   // Remaining Length could not be encoded, send nothing
+        return false;
+    }
 
 #ifdef MQTT_MAX_TRANSFER_SIZE
     uint8_t* writeBuf = buf+(MQTT_MAX_HEADER_SIZE-hlen);
@@ -830,13 +790,9 @@ boolean PubSubClient::write(uint8_t header, uint8_t* buf, uint16_t length) {
 #else
     rc = _client->write(buf+(MQTT_MAX_HEADER_SIZE-hlen),length+hlen);
 
-// Start Tasmota patch
-//    lastOutActivity = millis();
-
     if (rc != 0) {
         lastOutActivity = millis();
     }
-// End Tasmota patch
 
     return (rc == hlen+length);
 #endif
@@ -847,7 +803,6 @@ boolean PubSubClient::subscribe(const char* topic) {
 }
 
 boolean PubSubClient::subscribe(const char* topic, uint8_t qos) {
-// Start Tasmota patch
 // Check for null before calling strnlen(). The SUBSCRIBE packet also writes a
 // trailing QoS byte, so it needs one more byte than UNSUBSCRIBE: the buffer must
 // hold header(5) + msgId(2) + topic-length(2) + topic + qos(1) = 10 + topicLength.
@@ -862,7 +817,6 @@ boolean PubSubClient::subscribe(const char* topic, uint8_t qos) {
         // Too long
         return false;
     }
-// End Tasmota patch
     if (connected()) {
         // Leave room in the buffer for header and variable length field
         uint16_t length = MQTT_MAX_HEADER_SIZE;
@@ -880,7 +834,6 @@ boolean PubSubClient::subscribe(const char* topic, uint8_t qos) {
 }
 
 boolean PubSubClient::unsubscribe(const char* topic) {
-// Start Tasmota patch
 // Check for null before calling strnlen().
     if (topic == nullptr) {
         return false;
@@ -890,7 +843,6 @@ boolean PubSubClient::unsubscribe(const char* topic) {
         // Too long
         return false;
     }
-// End Tasmota patch
     if (connected()) {
         uint16_t length = MQTT_MAX_HEADER_SIZE;
         nextMsgId++;
@@ -906,49 +858,47 @@ boolean PubSubClient::unsubscribe(const char* topic) {
 }
 
 void PubSubClient::disconnect(bool disconnect_package) {
-    this->buffer[0] = MQTTDISCONNECT;
-    this->buffer[1] = 0;
-
-// Start Tasmota patch
-//    _client->write(this->buffer,2);
-//    _state = MQTT_DISCONNECTED;
-//    _client->flush();
-//    _client->stop();
-
     if (_client != nullptr) {
-      if (disconnect_package) {
+      if (disconnect_package && (this->buffer != nullptr) && (this->bufferSize >= 2)) {
+        this->buffer[0] = MQTTDISCONNECT;
+        this->buffer[1] = 0;
         _client->write(this->buffer,2);
       }
       _client->flush();
       _client->stop();
     }
     _state = MQTT_DISCONNECTED;
-// End Tasmota patch
+    // A stale outstanding ping would otherwise time out the next connection immediately
+    pingOutstanding = false;
 
     lastInActivity = lastOutActivity = millis();
 }
 
 uint16_t PubSubClient::writeString(const char* string, uint8_t* buf, uint16_t pos) {
-    const char* idp = string;
-    uint16_t i = 0;
-    pos += 2;
-    while (*idp) {
-        buf[pos++] = *idp++;
-        i++;
+// Defense in depth: every caller already validates that the string fits, but this
+// function used to walk the string to its NUL with no bound at all. Verify the 2-byte
+// length prefix plus the payload fit the buffer and leave `pos` untouched otherwise,
+// so a mistake in a caller can no longer corrupt the heap.
+    if (string == nullptr) {
+        return pos;
     }
-    buf[pos-i-2] = (i >> 8);
-    buf[pos-i-1] = (i & 0xFF);
-    return pos;
+    size_t slen = strnlen(string, this->bufferSize);
+    if ((slen > 0xFFFF) || ((size_t)pos + 2 + slen > (size_t)this->bufferSize)) {
+        return pos;
+    }
+    buf[pos++] = (uint8_t)(slen >> 8);
+    buf[pos++] = (uint8_t)(slen & 0xFF);
+    memcpy(buf + pos, string, slen);
+    return pos + slen;
 }
-
 
 boolean PubSubClient::connected() {
     boolean rc;
-    if (_client == NULL ) {
 
-// Start Tasmota patch
+// A client without a working buffer cannot be considered connected: every packet
+// exchange goes through `buffer`, so treat a failed allocation as disconnected.
+    if ((_client == NULL) || (this->buffer == NULL)) {
         this->_state = MQTT_DISCONNECTED;
-// End Tasmota patch
 
         rc = false;
     } else {
@@ -958,6 +908,8 @@ boolean PubSubClient::connected() {
                 this->_state = MQTT_CONNECTION_LOST;
                 _client->flush();
                 _client->stop();
+
+                pingOutstanding = false;
             }
         } else {
             return this->_state == MQTT_CONNECTED;
@@ -975,18 +927,26 @@ PubSubClient& PubSubClient::setServer(IPAddress ip, uint16_t port) {
     this->ip = ip;
     this->port = port;
 
-// Start Tasmota patch
-//    this->domain = NULL;
-
     this->domain = "";
-// End Tasmota patch
 
     return *this;
 }
 
 PubSubClient& PubSubClient::setServer(const char * domain, uint16_t port) {
-    this->domain = domain;
+// A null host, or a String assignment that ran out of memory, used to leave an empty
+// domain behind - connect() would then silently fall back to the (unrelated) IP
+// address. Clear the port instead so connect() fails cleanly.
+    this->domain = "";
+    if (domain != nullptr) {
+        this->domain = domain;
+        if (this->domain.length() != strlen(domain)) {   // out of memory
+            this->domain = "";
+            this->port = 0;
+            return *this;
+        }
+    }
     this->port = port;
+
     return *this;
 }
 
@@ -1014,7 +974,6 @@ boolean PubSubClient::setBufferSize(uint16_t size) {
         // Cannot set it back to 0
         return false;
     }
-// Start Tasmota patch
 // Commit bufferSize only after a successful (re)allocation. Previously bufferSize
 // was set even when malloc() failed, leaving the object reporting a non-zero
 // capacity while buffer == nullptr, which later operations would dereference.
@@ -1033,13 +992,11 @@ boolean PubSubClient::setBufferSize(uint16_t size) {
     }
     this->bufferSize = size;
     return true;
-// End Tasmota patch
 }
 
 uint16_t PubSubClient::getBufferSize() const {
     return this->bufferSize;
 }
-
 
 PubSubClient& PubSubClient::setKeepAlive(uint16_t keepAlive) {
     this->keepAlive = keepAlive;
