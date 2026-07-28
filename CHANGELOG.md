@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests (#24916)
 
 ### Fixed
+- Can sniffer functionality (#18287)
 
 ### Removed
 
