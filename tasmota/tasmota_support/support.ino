@@ -2175,8 +2175,18 @@ void SetSerialSwap(void) {
 }
 #endif
 
+void SetTasmotaGlobalBaudrate(uint32_t baudrate) {
+  TasmotaGlobal.baudrate = baudrate;
+  if (Settings != nullptr) {              // May not have been initialized yet
+    Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  }
+  if (74700 == TasmotaGlobal.baudrate) {  // 74880 / 300 = 249,6. 249 * 300 = 74700
+    TasmotaGlobal.baudrate = 74880;       // ESP8266 ROM baudrate
+  }
+}
+
 void SetSerialBegin(void) {
-  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  SetTasmotaGlobalBaudrate(Settings->baudrate * 300);
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
@@ -2199,7 +2209,7 @@ void SetSerialBegin(void) {
 }
 
 void SetSerialInitBegin(void) {
-  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  SetTasmotaGlobalBaudrate(Settings->baudrate * 300);
   if ((GetSerialBaudrate() != TasmotaGlobal.baudrate) || (TS_SERIAL_8N1 != Settings->serial_config)) {
     SetSerialBegin();
   }
@@ -2216,8 +2226,7 @@ void SetSerialConfig(uint32_t serial_config) {
 }
 
 void SetSerialBaudrate(uint32_t baudrate) {
-  TasmotaGlobal.baudrate = baudrate;
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetTasmotaGlobalBaudrate(baudrate);
   if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
     SetSerialBegin();
   }
@@ -2226,8 +2235,7 @@ void SetSerialBaudrate(uint32_t baudrate) {
 void SetSerial(uint32_t baudrate, uint32_t serial_config) {
   Settings->flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
   Settings->serial_config = serial_config;
-  TasmotaGlobal.baudrate = baudrate;
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetTasmotaGlobalBaudrate(baudrate);
   SetSeriallog(LOG_LEVEL_NONE);
   SetSerialBegin();
 }
@@ -2245,8 +2253,7 @@ void ClaimSerial(void) {
   TasmotaGlobal.serial_local = true;
   AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  TasmotaGlobal.baudrate = GetSerialBaudrate();
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetTasmotaGlobalBaudrate(GetSerialBaudrate());
 }
 
 void SerialSendRaw(char *codes)

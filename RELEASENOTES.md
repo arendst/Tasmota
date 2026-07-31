@@ -114,6 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.5.0.2
 ### Added
+- Support for baudrate 74880 replacing 74700 [#24924](https://github.com/arendst/Tasmota/issues/24924)
 - TLS support for EC P-384 curve in server certificate [#24909](https://github.com/arendst/Tasmota/issues/24909)
 - MagicSwitch configurable masking window fixing problems with multiple false triggering [#24888](https://github.com/arendst/Tasmota/issues/24888)
 - Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian [#24857](https://github.com/arendst/Tasmota/issues/24857)
