@@ -190,8 +190,8 @@ class Matter_UI
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality"
-  static var _CLASSES_TYPES_VIRTUAL = 
-                              "-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
+  static var _CLASSES_TYPES_VIRTUAL =
+                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3"
                               "|v_fan|v_hvac|v_hvac_option"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality"

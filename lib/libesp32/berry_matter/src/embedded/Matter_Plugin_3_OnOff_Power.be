@@ -83,6 +83,10 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0090: [0,1,2,8,9,0x0A,0x0B,0x0C,0x0D,0x0E,0x11],   # Electrical Power Measurement
   })
+  # Accepted keys for virtual devices via `MtrUpdate {"Name":"...", "Voltage":230, "ActiveCurrent":..}`
+  # Note: `Power` is already used (inherited) for the On/Off boolean state, so the
+  # wattage key is named `ActivePower` to avoid any ambiguity.
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Voltage", "Current", "ActivePower", "ApparentPower", "ReactivePower", "Factor", "Frequency")
 
   # MeasurementTypeEnum values used below (Matter 1.4.1 Common Data Types)
   static var MT_ACTIVE_POWER   = 5
@@ -137,17 +141,39 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   #
   # Reads the (non-indexed) `ENERGY` object from `tasmota.read_sensors()`
   def parse_sensors(payload)
-    var nrg = payload.find("ENERGY")
-    if nrg != nil
-      self.shadow_voltage        = self._parse_energy_value(nrg, "Voltage", self.shadow_voltage, 0x000B)
-      self.shadow_current        = self._parse_energy_value(nrg, "Current", self.shadow_current, 0x000C)
-      self.shadow_active_power   = self._parse_energy_value(nrg, "Power", self.shadow_active_power, 0x0008, 0x000D)
-      self.shadow_apparent_power = self._parse_energy_value(nrg, "ApparentPower", self.shadow_apparent_power, 0x000A)
-      self.shadow_reactive_power = self._parse_energy_value(nrg, "ReactivePower", self.shadow_reactive_power, 0x0009)
-      self.shadow_frequency      = self._parse_energy_value(nrg, "Frequency", self.shadow_frequency, 0x000E)
-      self.shadow_power_factor   = self._parse_energy_value(nrg, "Factor", self.shadow_power_factor, 0x0011)
+    if !self.VIRTUAL
+      var nrg = payload.find("ENERGY")
+      if nrg != nil
+        self.shadow_voltage        = self._parse_energy_value(nrg, "Voltage", self.shadow_voltage, 0x000B)
+        self.shadow_current        = self._parse_energy_value(nrg, "Current", self.shadow_current, 0x000C)
+        self.shadow_active_power   = self._parse_energy_value(nrg, "Power", self.shadow_active_power, 0x0008, 0x000D)
+        self.shadow_apparent_power = self._parse_energy_value(nrg, "ApparentPower", self.shadow_apparent_power, 0x000A)
+        self.shadow_reactive_power = self._parse_energy_value(nrg, "ReactivePower", self.shadow_reactive_power, 0x0009)
+        self.shadow_frequency      = self._parse_energy_value(nrg, "Frequency", self.shadow_frequency, 0x000E)
+        self.shadow_power_factor   = self._parse_energy_value(nrg, "Factor", self.shadow_power_factor, 0x0011)
+      end
     end
     super(self).parse_sensors(payload)
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices, ex:
+  # `MtrUpdate {"Name":"Plug", "Voltage":230.0, "Current":0.5, "ActivePower":100.0}`
+  def update_virtual(payload)
+    self.shadow_voltage        = self._parse_update_virtual(payload, "Voltage", self.shadow_voltage, real, 0x0090, 0x000B)
+    self.shadow_current        = self._parse_update_virtual(payload, "Current", self.shadow_current, real, 0x0090, 0x000C)
+    var old_active_power = self.shadow_active_power
+    self.shadow_active_power   = self._parse_update_virtual(payload, "ActivePower", self.shadow_active_power, real, 0x0090, 0x0008)
+    if self.shadow_active_power != old_active_power
+      self.attribute_updated(0x0090, 0x000D)     # RMSPower mirrors ActivePower
+    end
+    self.shadow_apparent_power = self._parse_update_virtual(payload, "ApparentPower", self.shadow_apparent_power, real, 0x0090, 0x000A)
+    self.shadow_reactive_power = self._parse_update_virtual(payload, "ReactivePower", self.shadow_reactive_power, real, 0x0090, 0x0009)
+    self.shadow_frequency      = self._parse_update_virtual(payload, "Frequency", self.shadow_frequency, real, 0x0090, 0x000E)
+    self.shadow_power_factor   = self._parse_update_virtual(payload, "Factor", self.shadow_power_factor, real, 0x0090, 0x0011)
+    super(self).update_virtual(payload)
   end
 
   #############################################################
