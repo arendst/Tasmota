@@ -186,7 +186,7 @@ class Matter_UI
   "</script>"
 
   static var _CLASSES_TYPES_STD =
-                              "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
+                              "|relay|relay_power|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality"

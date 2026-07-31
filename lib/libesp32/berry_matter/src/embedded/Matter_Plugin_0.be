@@ -113,6 +113,7 @@ class Matter_Plugin
     0x0031: 0x05,                           # Eth + WiFi - the latter is needed for Bluetooth commissioning
     0x0046: 0x00,                           # ICD Management: 0x00 = no optional features (base SIT mode, no CIP/UAT/LITS)
     0x0062: 0x01,                           # Scenes Management: SceneNames (bit 0)
+    0x0090: 0x02,                           # Electrical Power Measurement: AlternatingCurrent (bit 1)
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
     0x0201: 0x23,                           # Thermostat: HEAT + COOL + AUTO
     0x0202: 2,                              # Fan Control: Auto (bit 1)
@@ -150,6 +151,7 @@ class Matter_Plugin
     # 0x005C: 1,                            # Smoke CO Alarm - Initial Release
     0x0062: 1,                              # Scenes Management - Matter 1.4.1 (PROVISIONAL)
     0x0080: 1,                              # Boolean State Configuration - Initial Release
+    0x0090: 1,                              # Electrical Power Measurement - Initial Release (Matter 1.3)
     0x0101: 7,                              # Door Lock - Added support for European door locks (unbolt feature)
     0x0102: 5,                              # Window Covering - New data model format and notation
     0x0200: 4,                              # Pump Configuration and Control - Added feature map
