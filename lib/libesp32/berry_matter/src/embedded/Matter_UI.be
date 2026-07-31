@@ -1045,8 +1045,19 @@ class Matter_UI
     end
 
     # rest is relays
+    # If the remote device reports an `ENERGY` sensor, it's typically a single
+    # shared meter for the whole device (ex: multi-socket power strips) rather
+    # than one meter per relay. Tag only the first relay with `relay_power`
+    # so the Electrical Power Measurement cluster isn't duplicated (and made
+    # misleading) across every relay endpoint.
+    var energy_assigned = false
     for i: 1..power_cnt
-      config_list.push({'type': 'light0', 'relay': i})
+      if !energy_assigned && status10.contains("ENERGY")
+        config_list.push({'type': 'relay_power', 'relay': i})
+        energy_assigned = true
+      else
+        config_list.push({'type': 'light0', 'relay': i})
+      end
     end
 
     # show lights
