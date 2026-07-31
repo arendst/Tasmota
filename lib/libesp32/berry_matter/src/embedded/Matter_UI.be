@@ -195,7 +195,7 @@ class Matter_UI
                               "|v_fan|v_hvac|v_hvac_option"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality"
-  static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
+  static var _CLASSES_TYPES2= "|http_relay|http_relay_power|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
                               "|http_airquality"

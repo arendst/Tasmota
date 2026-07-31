@@ -137,23 +137,47 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   end
 
   #############################################################
+  # _parse_energy
+  #
+  # Shared by `parse_sensors` (local device) and `parse_status` (HTTP bridge),
+  # both of which receive the same shape of data (top-level `ENERGY` object).
+  def _parse_energy(nrg)
+    if nrg != nil
+      self.shadow_voltage        = self._parse_energy_value(nrg, "Voltage", self.shadow_voltage, 0x000B)
+      self.shadow_current        = self._parse_energy_value(nrg, "Current", self.shadow_current, 0x000C)
+      self.shadow_active_power   = self._parse_energy_value(nrg, "Power", self.shadow_active_power, 0x0008, 0x000D)
+      self.shadow_apparent_power = self._parse_energy_value(nrg, "ApparentPower", self.shadow_apparent_power, 0x000A)
+      self.shadow_reactive_power = self._parse_energy_value(nrg, "ReactivePower", self.shadow_reactive_power, 0x0009)
+      self.shadow_frequency      = self._parse_energy_value(nrg, "Frequency", self.shadow_frequency, 0x000E)
+      self.shadow_power_factor   = self._parse_energy_value(nrg, "Factor", self.shadow_power_factor, 0x0011)
+    end
+  end
+
+  #############################################################
   # parse sensor
   #
   # Reads the (non-indexed) `ENERGY` object from `tasmota.read_sensors()`
+  # Only applies to local devices: virtual devices are updated via
+  # `update_virtual()`, bridge devices via `parse_status()`.
   def parse_sensors(payload)
-    if !self.VIRTUAL
-      var nrg = payload.find("ENERGY")
-      if nrg != nil
-        self.shadow_voltage        = self._parse_energy_value(nrg, "Voltage", self.shadow_voltage, 0x000B)
-        self.shadow_current        = self._parse_energy_value(nrg, "Current", self.shadow_current, 0x000C)
-        self.shadow_active_power   = self._parse_energy_value(nrg, "Power", self.shadow_active_power, 0x0008, 0x000D)
-        self.shadow_apparent_power = self._parse_energy_value(nrg, "ApparentPower", self.shadow_apparent_power, 0x000A)
-        self.shadow_reactive_power = self._parse_energy_value(nrg, "ReactivePower", self.shadow_reactive_power, 0x0009)
-        self.shadow_frequency      = self._parse_energy_value(nrg, "Frequency", self.shadow_frequency, 0x000E)
-        self.shadow_power_factor   = self._parse_energy_value(nrg, "Factor", self.shadow_power_factor, 0x0011)
-      end
+    if !self.VIRTUAL && !self.BRIDGE
+      self._parse_energy(payload.find("ENERGY"))
     end
     super(self).parse_sensors(payload)
+  end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # Reads the (non-indexed) `ENERGY` object from the remote `Status 10` response
+  def parse_status(data, index)
+    if index == 10                              # Status 10
+      self._parse_energy(data.find("ENERGY"))
+    end
+    super(self).parse_status(data, index)
   end
 
   #############################################################

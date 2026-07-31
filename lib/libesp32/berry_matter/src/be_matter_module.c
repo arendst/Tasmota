@@ -256,6 +256,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Rain.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_OnOff_Power.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Light0.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Light1.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Light2.h"
