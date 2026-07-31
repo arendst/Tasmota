@@ -1283,16 +1283,15 @@ void MqttReconnect(void) {
 
         bool learned = false;
 
-        // If the fingerprint slot is marked for update, we'll do so.
-        // Otherwise, if the fingerprint slot had the magic trust-on-first-use
-        // value, we will save the current fingerprint there, but only if the other fingerprint slot
+        // If the fingerprint slot had the magic trust-on-first-use value, we will
+        // save the current fingerprint there, but only if the other fingerprint slot
         // *didn't* match it.
-        if (recv_fingerprint[20] & 0x1 || (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[1], 20))) {
+        if (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[1], 20)) {
           memcpy(Settings->mqtt_fingerprint[0], recv_fingerprint, 20);
           learned = true;
         }
         // As above, but for the other slot.
-        if (recv_fingerprint[20] & 0x2 || (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[0], 20))) {
+        if (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[0], 20)) {
           memcpy(Settings->mqtt_fingerprint[1], recv_fingerprint, 20);
           learned = true;
         }

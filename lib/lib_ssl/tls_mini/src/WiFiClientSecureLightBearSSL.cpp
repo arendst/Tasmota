@@ -199,6 +199,7 @@ void WiFiClientSecure_light::_clear() {
   _fingerprint_any = true; // by default accept all fingerprints
   _fingerprint1 = nullptr;
   _fingerprint2 = nullptr;
+  memset(_recv_fingerprint, 0, sizeof(_recv_fingerprint)); // don't leave the received fingerprint uninitialized
   _chain_P = nullptr;
   _sk_ec_P = nullptr;
   _ta_P = nullptr;
@@ -823,6 +824,8 @@ extern "C" {
       int32_t curve = htonl(eckey.curve);
       sha1_update_len(&shactx, &curve, 4);   // curve id as int32be
       sha1_update_len(&shactx, eckey.q, eckey.qlen);       // public point
+
+      br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
     }
   #endif
     else {
