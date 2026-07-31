@@ -21,23 +21,38 @@
 #################################################################################
 # Matter 1.4.1 Device Specification - On/Off Plug-in Unit (0x010A) with Power
 #################################################################################
-# Device Type: On/Off Plug-in Unit (0x010A)
-# Device Type Revision: 3 (Matter 1.4.1)
-# Class: Simple | Scope: Endpoint
+# Device Types: On/Off Plug-in Unit (0x010A) + Electrical Sensor (0x0510)
+# Device Type Revisions: 3 / 1 (Matter 1.4.1)
+# Class: Simple + Utility (composed on a single endpoint) | Scope: Endpoint
 #
 # Same device type as the plain `relay` plugin (`Matter_Plugin_OnOff`), with the
-# addition of the Electrical Power Measurement cluster so the plug reports live
+# addition of the Electrical Sensor device type and its Power Topology +
+# Electrical Power Measurement clusters, so the plug reports live
 # Voltage/Current/Power to the Matter controller (Apple Home, Google Home,
 # SmartThings and similar all display power for plugs exposing this cluster).
 #
 # NOTES:
-# - Not a strict Matter "Electrical Sensor" (0x0510) composition; this follows
-#   the common real-world practice of adding the measurement cluster directly
-#   on the plug endpoint, as done by many commercial Matter plugs.
+# - Composes both device types on the same endpoint (DeviceTypeList carries
+#   both 0x010A and 0x0510), rather than a separate dedicated endpoint for the
+#   Electrical Sensor - matching common real-world Matter plug implementations.
 # - Single measurement channel: reads the (non-indexed) `ENERGY` JSON object,
 #   i.e. plugs with a single energy-monitoring chip (HLW8012, BL0937, CSE7766,
 #   ADE7953, PZEM, etc.). Multi-channel/multi-phase energy (`Voltage1/2`,
 #   `Power1/2`, ...) is not handled by this plugin.
+#################################################################################
+
+#################################################################################
+# Matter 1.4.1 Power Topology Cluster (0x009C)
+#################################################################################
+# Cluster Revision: 1 (Matter 1.4.1) - Mandatory on the Electrical Sensor device type
+# Role: Application | Scope: Endpoint
+#
+# FEATURES:
+# - Bit 0 (NODE): NodeTopology - this endpoint meters the whole node (fixed)
+#
+# No attributes or commands: the NODE feature alone (as opposed to SET) means
+# there is nothing to enumerate - the single ENERGY sensor covers the entire
+# device, matching Tasmota's non-indexed `ENERGY` object.
 #################################################################################
 
 #################################################################################
@@ -81,8 +96,11 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   static var UPDATE_CMD = "Status 10"               # command to send for updates (bridge mode)
   static var UPDATE_TIME = 5000                     # update sensor every 5s
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
+    0x009C: [],                                          # Power Topology (NODE feature, no attributes)
     0x0090: [0,1,2,8,9,0x0A,0x0B,0x0C,0x0D,0x0E,0x11],   # Electrical Power Measurement
   })
+  # Composed endpoint: On/Off Plug-in Unit (control) + Electrical Sensor (measurement)
+  static var TYPES = { 0x010A: 3, 0x0510: 1 }
   # Accepted keys for virtual devices via `MtrUpdate {"Name":"...", "Voltage":230, "ActiveCurrent":..}`
   # Note: `Power` is already used (inherited) for the On/Off boolean state, so the
   # wattage key is named `ActivePower` to avoid any ambiguity.

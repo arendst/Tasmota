@@ -114,6 +114,7 @@ class Matter_Plugin
     0x0046: 0x00,                           # ICD Management: 0x00 = no optional features (base SIT mode, no CIP/UAT/LITS)
     0x0062: 0x01,                           # Scenes Management: SceneNames (bit 0)
     0x0090: 0x02,                           # Electrical Power Measurement: AlternatingCurrent (bit 1)
+    0x009C: 0x01,                           # Power Topology: NodeTopology (bit 0) - meters the whole node
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
     0x0201: 0x23,                           # Thermostat: HEAT + COOL + AUTO
     0x0202: 2,                              # Fan Control: Auto (bit 1)
