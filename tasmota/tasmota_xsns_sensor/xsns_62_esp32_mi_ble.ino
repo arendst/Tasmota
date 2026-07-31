@@ -1258,13 +1258,13 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
   for(uint32_t i = 0; i < MIBLEbindKeys.size(); i++){
     if(!memcmp(mac, MIBLEbindKeys[i].MAC, 6)){
       memcpy(_bindkey, MIBLEbindKeys[i].key, 16);
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Decryption Key found"), MIaddrStr(mac));
+      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Decryption key found"), MIaddrStr(mac));
       foundNoKey = false;
       break;
     }
   }
   if(foundNoKey){
-    AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: No Key found"), MIaddrStr(mac));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: No key found"), MIaddrStr(mac));
     return -2; // indicates needs key
   }
 
@@ -1285,7 +1285,7 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
   // returns 1 if matched, else 0
   int ret = br_ccm_check_tag(&ctx, &tag) - 1;
 
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Error %i, Decrypted %02x %02x %02x %02x %02x %02x"), MIaddrStr(mac), ret, payload[0], payload[1], payload[2], payload[3], payload[4], payload[5]);
+  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: %sDecrypted %02x %02x %02x %02x %02x %02x"), MIaddrStr(mac), ret ? PSTR("ERROR ") : PSTR(""), payload[0], payload[1], payload[2], payload[3], payload[4], payload[5]);
   return ret; // -> -1=fail, 0=success
 }
 
