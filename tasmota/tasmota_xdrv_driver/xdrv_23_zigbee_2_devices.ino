@@ -1302,11 +1302,11 @@ extern "C" int32_t callBerryZigbeeDispatcher(const char* event, const class ZCLF
 /*********************************************************************************************\
  * Singleton variable
 \*********************************************************************************************/
-Z_Devices zigbee_devices = Z_Devices();
+Z_Devices zigbee_devices{};
 
 // Following device is used represent the unknown device, with all defaults
 // Any find() function will not return Null, instead it will return this instance
-Z_Device device_unk = Z_Device(BAD_SHORTADDR);
+Z_Device device_unk(BAD_SHORTADDR);
 
 // Local coordinator information
 uint64_t localIEEEAddr = 0;
