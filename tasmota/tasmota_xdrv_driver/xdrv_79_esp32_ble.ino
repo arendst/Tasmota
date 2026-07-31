@@ -1819,6 +1819,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 #ifdef BLE_ESP32_DEBUG
       if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: new currentOperation"));
 #endif
+      BLERunningScan = 0;
       BLEOpCount++;
       generic_sensor_t* temp = *pCurrentOperation;
       //this will null it out, so save and restore.
