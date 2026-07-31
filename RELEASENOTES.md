@@ -133,6 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - PZEM/Modbus energy monitor Exception crash-loop on ESP8266 regression from v15.5.0 [#24883](https://github.com/arendst/Tasmota/issues/24883)
 - Can sniffer functionality [#18287](https://github.com/arendst/Tasmota/issues/18287)
 - Udisp SPI for mono color display [#24899](https://github.com/arendst/Tasmota/issues/24899)
+- Reset BLE scan flag on new operation [#24925](https://github.com/arendst/Tasmota/issues/24925)
 - BLE EQ3 float output in mqtt messages regression from v15.4.0.2 [#24869](https://github.com/arendst/Tasmota/issues/24869)
 
 ### Removed
