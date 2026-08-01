@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for baudrate 74880 replacing 74700 [#24924](https://github.com/arendst/Tasmota/issues/24924)
 - TLS support for EC P-384 curve in server certificate [#24909](https://github.com/arendst/Tasmota/issues/24909)
 - MagicSwitch configurable masking window fixing problems with multiple false triggering [#24888](https://github.com/arendst/Tasmota/issues/24888)
+- Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
 - Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian [#24857](https://github.com/arendst/Tasmota/issues/24857)
 - HASPmota ability to set default screen background on `p0b0` object [#24874](https://github.com/arendst/Tasmota/issues/24874)
 - HASPmota and LVGL `stripes` widget [#24907](https://github.com/arendst/Tasmota/issues/24907)
