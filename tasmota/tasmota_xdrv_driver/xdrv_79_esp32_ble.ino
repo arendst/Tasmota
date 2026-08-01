@@ -92,9 +92,10 @@
         BLEName <mac|alias> - read the name
         BLEName <mac|alias> <name> - write the name - few devices support this
       BLEDebug
-        enable more debug
-        BLEDebug0 - turn off
-        BLEDebug|BLEDebug1 - turn on
+        enable more debug logging
+        BLEDebug - show debug logging status
+        BLEDebug 0 - turn off
+        BLEDebug 1 - turn on
       BLEDevices
         display or clear the devices list
         BLEDevices0 - clear list
@@ -673,7 +674,7 @@ int addSeenDevice(const uint8_t *mac, uint8_t addrtype, const char *name, int8_t
       int total = seenDevices.size();
       if (total < MAX_BLE_DEVICES_LOGGED){
 #ifdef BLE_ESP32_DEBUG
-        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: New seendev slot %d"), total);
+        if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: New seendev slot %d"), total);
 #endif
         BLE_ESP32::BLE_simple_device_t* dev = new BLE_ESP32::BLE_simple_device_t;
         freeDevices.push_back(dev);
@@ -1162,7 +1163,7 @@ void ReverseMAC(uint8_t _mac[]){
 #ifdef BLE_ESP32_FILTER_BY_NAME
 bool isDeviceInFilter(const String& deviceName) {
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Device chcked in filter %s"), deviceName);
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Device chcked in filter %s"), deviceName);
 #endif  
   for (const auto& filterName : bleFilterNames) {
     if (deviceName == filterName) {
@@ -1330,17 +1331,17 @@ void postAdvertismentDetails(){
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pClient) {
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
   }
   void onDisconnect(NimBLEClient* pClient, int reason) {
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
   }
   bool onConnParamsUpdateRequest(NimBLEClient* pClient, const ble_gap_upd_params* params) {
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnParamsUpdateRequest %s"), ((std::string)pClient->getPeerAddress()).c_str());
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnParamsUpdateRequest %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
 
 //    if(params->itvl_min < 24) { /** 1.25ms units */
@@ -1501,13 +1502,13 @@ static BLESensorCallback BLESensorCB;
 static void BLEscanEndedCB(NimBLEScanResults results){
 
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Scan ended"));
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Scan ended"));
 #endif
   for (int i = 0; i < scancompleteCallbacks.size(); i++){
     SCANCOMPLETE_CALLBACK *pFn = scancompleteCallbacks[i];
     int callbackres = pFn(results);
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: scancompleteCallbacks %d %d"), i, callbackres);
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: scancompleteCallbacks %d %d"), i, callbackres);
 #endif
   }
 
@@ -1535,7 +1536,7 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
 
 
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Notified length: %u"),length);
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Notified length: %u"),length);
 #endif
   // find the operation this is associated with
   const NimBLERemoteService *pSvc = pRemoteCharacteristic->getRemoteService();
@@ -1783,7 +1784,7 @@ int BLETaskStartScan(int time){
   }
 
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: Startscan"));
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: Startscan"));
 #endif
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   ble32Scan->setActiveScan(BLEScanActiveMode ? 1: 0);
@@ -1817,7 +1818,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     *pCurrentOperation = nextOperation(&queuedOperations);
     if (*pCurrentOperation){
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: new currentOperation"));
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: new currentOperation"));
 #endif
       BLERunningScan = 0;
       BLEOpCount++;
@@ -1856,7 +1857,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
       (*pCurrentOperation)->state = GEN_STATE_NOTIFIED;
       // just stay here until this is removed by the main thread
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: notify operation complete"));
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: notify operation complete"));
 #endif
       BLE_ESP32::BLETaskRunTaskDoneOperation(pCurrentOperation, ppClient);
       pClient = *ppClient;
@@ -1867,7 +1868,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     case GEN_STATE_NOTIFIED: // - may have completed DURING our read/write to get here
       // just stay here until this is removed by the main thread
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: operation complete"));
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: operation complete"));
 #endif
       BLE_ESP32::BLETaskRunTaskDoneOperation(pCurrentOperation, ppClient);
       pClient = *ppClient;
@@ -1925,7 +1926,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   snprintf(addrstr, sizeof(addrstr), "%02X%02X%02X%02X%02X%02X", m_address[5], m_address[4], m_address[3], m_address[2], m_address[1], m_address[0]);
 
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: attempt connect %s"), ((std::string)op->addr).c_str());
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: attempt connect %s"), ((std::string)op->addr).c_str());
 #endif
 
   if (!op->serviceUUID.bitSize()){
@@ -1939,7 +1940,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     BLE_ESP32::BLETaskStartScan(20);
 
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: connected %s -> getservice"), ((std::string)op->addr).c_str());
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: connected %s -> getservice"), ((std::string)op->addr).c_str());
 #endif
     NimBLERemoteService *pService = pClient->getService(op->serviceUUID);
     int waitNotify = false;
@@ -1948,7 +1949,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
     if (pService != nullptr) {
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got service"));
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got service"));
 #endif
       // pre-set to fail if no operations requested
       //newstate = GEN_STATE_FAILED_NOREADWRITE;
@@ -1965,7 +1966,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
           pService->getCharacteristic(op->notificationCharacteristicUUID);
         if (pNCharacteristic != nullptr) {
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got notify characteristic"));
+          if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got notify characteristic"));
 #endif
           op->notifylen = 0;
           bool response = false;
@@ -1979,7 +1980,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
           */
           uint8_t props = pNCharacteristic->getProperties();
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: characteristic props 0x%02X"), props);
+          if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: characteristic props 0x%02X"), props);
 #endif
 
           if(pNCharacteristic->canNotify()) {
@@ -1988,7 +1989,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
             if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB, response)) {
 #ifdef BLE_ESP32_DEBUG
-              if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for notify - resp %d"), response? 1:0);
+              if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for notify - resp %d"), response? 1:0);
 #endif
               // this will get changed to read or write,
               // but here in case it's notify only (can that happen?)
@@ -2045,7 +2046,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
           pCharacteristic = pService->getCharacteristic(op->characteristicUUID);
           if (pCharacteristic != nullptr) {
 #ifdef BLE_ESP32_DEBUG
-            if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got read/write characteristic"));
+            if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got read/write characteristic"));
 #endif
             newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
 
@@ -2065,12 +2066,12 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
                 if (op->readmodifywritecallback){
                   READ_CALLBACK *pFn = (READ_CALLBACK *)op->readmodifywritecallback;
 #ifdef BLE_ESP32_DEBUG
-                  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: read characteristic with readmodifywritecallback"));
+                  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: read characteristic with readmodifywritecallback"));
 #endif
                   pFn(op);
                 } else {
 #ifdef BLE_ESP32_DEBUG
-                  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: read characteristic"));
+                  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: read characteristic"));
 #endif
                 }
 
@@ -2091,7 +2092,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
                 } else {
                   if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
 #ifdef BLE_ESP32_DEBUG
-                  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: write characteristic"));
+                  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: write characteristic"));
 #endif
                 }
               } else {
@@ -2162,7 +2163,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient **ppClient){
   if ((*ppClient)->isConnected()){
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: disconnecting connected client"));
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: disconnecting connected client"));
 #endif
     (*ppClient)->disconnect();
     // wait for 1/2 second after disconnect
@@ -2215,7 +2216,7 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
 
   // by adding it to this list, this will cause it to be sent to MQTT
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: add to completedOperations"));
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: runTaskDoneOperation: add to completedOperations"));
 #endif
   addOperation(&completedOperations, op);
   return;
@@ -2653,7 +2654,6 @@ static void CmndBLEPeriod(void) {
   ResponseCmndDone();
 }
 
-
 //////////////////////////////////////////////////////////////
 // Determine what to do with advertismaents
 // BLEAdv0 -> suppress MQTT about devices found
@@ -2676,13 +2676,8 @@ void CmndBLEAdv(void){
   ResponseCmndNumber(BLEAdvertMode);
 }
 
-
-//////////////////////////////////////////////////////////////
-// Determine what to do with advertisements
-// BLEAdv0 -> suppress MQTT about devices found
-// BLEAdv1 -> send MQTT about devices found after each scan
 void CmndBLEDebug(void){
-  BLEDebugMode = XdrvMailbox.index;
+  if (XdrvMailbox.data_len) BLEDebugMode = (bool)XdrvMailbox.payload;
   ResponseCmndNumber(BLEDebugMode);
 }
 
@@ -2721,7 +2716,6 @@ void CmndBLEAddrFilter(void){
   }
   ResponseCmndIdxNumber(BLEAddressFilter);
 }
-
 
 //////////////////////////////////////////////////////////////
 // Scan options
@@ -2767,7 +2761,6 @@ void CmndBLEScan(void){
   }
 }
 
-
 //////////////////////////////////////////////////////////////
 // Determine what to do with advertismaents
 // BLEMode0 -> kill BLE completely
@@ -2778,7 +2771,6 @@ void CmndBLEMode(void){
   if (XdrvMailbox.data_len > 0) {
     val = XdrvMailbox.payload;
   }
-
   switch(val){
     case BLEModeDisabled:{
       if (BLEMode != BLEModeDisabled){
@@ -2843,13 +2835,11 @@ void CmndBLEEnableUnsaved(void){
   if (XdrvMailbox.data_len > 0) {
     val = XdrvMailbox.payload;
   }
-
   if (val >= 0){
     BLEEnableUnsaved = val;
   }
   ResponseCmndNumber(BLEEnableUnsaved);
 }
-
 
 //////////////////////////////////////////
 // get more drtails for a single MAC address
@@ -2867,7 +2857,6 @@ void CmndBLEDetails(void){
       BLEDetailsRequest = 0;
       ResponseCmndNumber(BLEDetailsRequest);
       break;
-
     case 1:
     case 2:{
       BLEDetailsRequest = 0;
@@ -2878,17 +2867,14 @@ void CmndBLEDetails(void){
         ResponseCmndChar("InvalidMac");
       }
     } break;
-
     case 3:{
       BLEDetailsRequest = XdrvMailbox.index;
       ResponseCmndNumber(BLEDetailsRequest);
     } break;
-
     case 4:{
       BLEDetailsRequest = XdrvMailbox.index;
       ResponseCmndNumber(BLEDetailsRequest);
     } break;
-
     default:
       ResponseCmndChar("InvalidIndex");
       break;
@@ -2900,9 +2886,8 @@ void CmndBleFilterNames(void) {
 #ifdef BLE_ESP32_FILTER_BY_NAME
   int op = XdrvMailbox.index;
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Name %d %s"), op, XdrvMailbox.data);
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Name %d %s"), op, XdrvMailbox.data);
 #endif
-
   switch(op){
     case 0:{
       bleFilterNames.clear();
@@ -2912,7 +2897,6 @@ void CmndBleFilterNames(void) {
       if (XdrvMailbox.data_len) {
         String filters = XdrvMailbox.data;
         bleFilterNames.clear();
-        
         int start = 0;
         int end = filters.indexOf(',');
         while (end != -1) {
@@ -2921,7 +2905,6 @@ void CmndBleFilterNames(void) {
           end = filters.indexOf(',', start);
         }
         bleFilterNames.push_back(filters.substring(start));
-        
         Response_P(PSTR("{\"BLEFilterNames\":\"%s\"}"), filters.c_str());
       } else {
         String filterList;
@@ -2931,7 +2914,6 @@ void CmndBleFilterNames(void) {
           }
           filterList += name;
         }
-
         Response_P(PSTR("{\"BLEFilterNames\":\"%s\"}"), filterList.c_str());
       }
     } break;
@@ -2951,8 +2933,7 @@ void CmndSetMinRSSI(void) {
 void CmndBLEAlias(void){
 #ifdef BLE_ESP32_ALIASES
   int op = XdrvMailbox.index;
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Alias %d %s"), op, XdrvMailbox.data);
-
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Alias %d %s"), op, XdrvMailbox.data);
   int res = -1;
   switch(op){
     case 0:
@@ -2960,12 +2941,10 @@ void CmndBLEAlias(void){
       char *p = strtok(XdrvMailbox.data, " ,=");
       bool trigger = false;
       int added = 0;
-
       do {
         if (!p || !(*p)){
           break;
         }
-
         uint8_t addr[7];
         char *mac = p;
         int len = fromMAC(addr, p, sizeof(addr));
@@ -2974,7 +2953,6 @@ void CmndBLEAlias(void){
           ResponseCmndChar("invalidmac");
           return;
         }
-
         p = strtok(nullptr, " ,=");
         char *name = p;
         if (!p || !(*p)){
@@ -2990,16 +2968,14 @@ void CmndBLEAlias(void){
           ResponseCmndChar("invalidmac");
           return;
         }
-
         AddLog(LOG_LEVEL_INFO, PSTR("BLE: Add Alias mac %s = name %s"), mac, p);
         if (addAlias( addr, name )){
           added++;
         }
         p = strtok(nullptr, " ,=");
       } while (p);
-
       if (added){
-        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Added %d Aliases"), added);
+        if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Added %d Aliases"), added);
         BLEAliasListResp();
       } else {
         BLEAliasListResp();
@@ -3007,7 +2983,7 @@ void CmndBLEAlias(void){
       return;
     } break;
     case 2:{ // clear
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Alias clearing %d"), aliases.size());
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Alias clearing %d"), aliases.size());
       for (int i = aliases.size()-1; i >= 0; i--){
         BLE_ESP32::ble_alias_t *alias = aliases[i];
         aliases.pop_back();
@@ -3026,30 +3002,25 @@ void CmndBLEAlias(void){
 // uses s:1800 c:2a00 and writes name to DEVICE
 void CmndBLEName(void) {
   char *p = strtok(XdrvMailbox.data, " ");
-
   if (!p || !(*p)){
     ResponseCmndIdxChar(PSTR("invalid"));
     return;
   }
-
   uint8_t addrbin[7];
   int addrres = BLE_ESP32::getAddr(addrbin, p);
   NimBLEAddress addr(addrbin, addrbin[6]);
-
   if (addrres){
     if (addrres == 2){
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: addr used alias: %s"), p);
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: addr used alias: %s"), p);
     }
-
 //#ifdef EQ3_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: cmd addr: %s -> %s"), p, addr.toString().c_str());
+    if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: cmd addr: %s -> %s"), p, addr.toString().c_str());
 //#endif
   } else {
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: addr invalid: %s"), p);
     ResponseCmndIdxChar(PSTR("invalidaddr"));
     return;
   }
-
   BLE_ESP32::generic_sensor_t *op = nullptr;
   // ALWAYS use this function to create a new one.
   int res = BLE_ESP32::newOperation(&op);
@@ -3058,28 +3029,25 @@ void CmndBLEName(void) {
     ResponseCmndChar(PSTR("FAIL"));
     return;
   } else {
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got a newOperation from BLE"));
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got a newOperation from BLE"));
   }
-
   op->addr = addr;
   op->serviceUUID = NimBLEUUID("1800");
   op->characteristicUUID = NimBLEUUID("2A00");
-
   // get next part of cmd
   char *name = strtok(nullptr, " ");
   bool write = false;
   if (name && *name){
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: write name %s"), name);
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: write name %s"), name);
     op->writelen = strlen(name);
     memcpy(op->dataToWrite, name, op->writelen);
     write = true;
   } else {
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: read name"));
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: read name"));
     op->readlen = 1;
   }
-
   res = BLE_ESP32::extQueueOperation(&op);
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: queue res %d"), res);
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: queue res %d"), res);
   if (!res){
     // if it fails to add to the queue, do please delete it
     BLE_ESP32::freeOperation(&op);
@@ -3087,11 +3055,10 @@ void CmndBLEName(void) {
     ResponseCmndChar(PSTR("QUEUEFAIL"));
     return;
   }
-
   if (write){
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: will write name"));
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: will write name"));
   } else {
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: will read name"));
+    if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: will read name"));
   }
   ResponseCmndDone();
   return;
@@ -3118,18 +3085,14 @@ void CmndBLEName(void) {
 
 // You may queue up operations.  they are currently processed serially.
 void CmndBLEOperation(void){
-
   int op = XdrvMailbox.index;
-
   //AddLog(LOG_LEVEL_INFO,PSTR("BLE: op %d"), op);
-
   int res = -1;
-
   // if in progress, only op 0 or 11 are allowed
   switch(op) {
     case 0:
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: preview"));
+      if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: preview"));
 #endif
       BLEPostMQTTTrigger = 1;
       break;
@@ -3186,10 +3149,8 @@ void CmndBLEOperation(void){
             }
             break;
         }
-
         p = strtok(nullptr, " ,");
       }
-
       if (trigger){
         int u = (int)prepOperation->context;
         int opres = BLE_ESP32::extQueueOperation(&prepOperation);
@@ -3205,7 +3166,7 @@ void CmndBLEOperation(void){
         } else {
           // NOTE: prepOperation has been set to null if we queued sucessfully.
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: Operations queued:%d"), queuedOperations.size());
+          if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: Operations queued:%d"), queuedOperations.size());
 #endif
           char temp[40];
           sprintf(temp, "{\"opid\":%d,\"u\":%d}", lastopid-1, u);
@@ -3240,7 +3201,7 @@ void CmndBLEOperation(void){
       } else {
         // NOTE: prepOperation has been set to null if we queued sucessfully.
 #ifdef BLE_ESP32_DEBUG
-        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: Operations queued:%d"), queuedOperations.size());
+        if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: Operations queued:%d"), queuedOperations.size());
 #endif
         char temp[40];
         sprintf(temp, "{\"opid\":%d,\"u\":%d}", lastopid-1, u);
@@ -3282,20 +3243,20 @@ static void BLEPostMQTT(bool onlycompleted) {
 
   if (prepOperation || mqttOperations.size() || queuedOperations.size() || currentOperations.size()){
 #ifdef BLE_ESP32_DEBUG
-    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: some to show"));
+    if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: some to show"));
 #endif
     if (prepOperation && !onlycompleted){
       std::string out = BLETriggerResponse(prepOperation);
       Response_P(PSTR("%s"), out.c_str());
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: prep sent %s"), out.c_str());
+      if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: prep sent %s"), out.c_str());
 #endif
     }
 
     if (queuedOperations.size() && !onlycompleted){
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d"), queuedOperations.size());
+      if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d"), queuedOperations.size());
 #endif
       for (int i = 0; i < queuedOperations.size(); i++){
         TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEPost1");
@@ -3309,7 +3270,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           Response_P(PSTR("%s"), out.c_str());
           MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d sent %s"), i, out.c_str());
+          if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: queued %d sent %s"), i, out.c_str());
 #endif
           //break;
         }
@@ -3318,7 +3279,7 @@ static void BLEPostMQTT(bool onlycompleted) {
 
     if (currentOperations.size() && !onlycompleted){
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: current %d"), currentOperations.size());
+      if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: current %d"), currentOperations.size());
 #endif
       for (int i = 0; i < currentOperations.size(); i++){
         TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEPost2");
@@ -3331,7 +3292,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           Response_P(PSTR("%s"), out.c_str());
           MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: curr %d sent %s"), i, out.c_str());
+          if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: curr %d sent %s"), i, out.c_str());
 #endif
           //break;
         }
@@ -3340,7 +3301,7 @@ static void BLEPostMQTT(bool onlycompleted) {
 
     if (mqttOperations.size()){
 #ifdef BLE_ESP32_DEBUG
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: completed %d"), mqttOperations.size());
+      if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: completed %d"), mqttOperations.size());
 #endif
       do {
         generic_sensor_t *toSend = nextOperation(&mqttOperations);
@@ -3348,7 +3309,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           break; // break from while loop
         } else {
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: mqttOperation removed opid %d"), toSend->opid);
+          if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: mqttOperation removed opid %d"), toSend->opid);
 #endif
           std::string out = BLETriggerResponse(toSend);
           Response_P(PSTR("%s"), out.c_str());
@@ -3420,22 +3381,22 @@ static void mainThreadOpCallbacks() {
 
       bool callbackres = false;
 
-      if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback is %u opid %d"), op->completecallback, op->opid);
+      if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback is %u opid %d"), op->completecallback, op->opid);
       if (op->completecallback){
         OPCOMPLETE_CALLBACK *pFn = (OPCOMPLETE_CALLBACK *)(op->completecallback);
         callbackres = pFn(op);
 #ifdef BLE_ESP32_DEBUG
-        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback %d opid %d"), callbackres, op->opid);
+        if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: op->completecallback %d opid %d"), callbackres, op->opid);
 #endif
       }
 
       if (!callbackres){
         for (int i = 0; i < operationsCallbacks.size(); i++){
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d is %u"), i, operationsCallbacks[i]);
+          if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d is %u"), i, operationsCallbacks[i]);
           OPCOMPLETE_CALLBACK *pFn = operationsCallbacks[i];
           callbackres = pFn(op);
 #ifdef BLE_ESP32_DEBUG
-          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d %d"), i, callbackres);
+          if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: operationsCallbacks %d %d"), i, callbackres);
 #endif
           if (callbackres){
             break; // this callback ate the op.
@@ -3451,7 +3412,7 @@ static void mainThreadOpCallbacks() {
         addOperation(&mqttOperations, &op);
       } else {
 #ifdef BLE_ESP32_DEBUG
-        if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: callbackres true -> delete op opid %d"), op->opid);
+        if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: callbackres true -> delete op opid %d"), op->opid);
 #endif
         delete op;
       }
@@ -3500,7 +3461,7 @@ static void BLEDiag()
   uint32_t totalCount = BLEAdvertisment.totalCount;
   uint32_t deviceCount = seenDevices.size();
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: scans:%u,advertisements:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
+  if (BLEDebugMode) AddLog(LOG_LEVEL_INFO,PSTR("BLE: scans:%u,advertisements:%u,devices:%u,resets:%u,BLEStop:%d,BLERunning:%d,BLERunningScan:%d,BLELoopCount:%u,BLEOpCount:%u"), BLEScanCount, totalCount, deviceCount, BLEResets, BLEStop, BLERunning, BLERunningScan, BLELoopCount, BLEOpCount);
 #endif
 }
 
@@ -3621,7 +3582,7 @@ void HandleBleConfiguration(void)
   WebGetArg("en", tmp, sizeof(tmp));
 
 #ifdef BLE_ESP32_DEBUG
-  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: arg en is %s"), tmp);
+  if (BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: arg en is %s"), tmp);
 #endif
 
   if (Webserver->hasArg("save")) {
