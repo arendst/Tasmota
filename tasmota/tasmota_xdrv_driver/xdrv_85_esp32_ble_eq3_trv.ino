@@ -849,7 +849,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   if (!found) return 0;
 
 #ifdef EQ3_DEBUG
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: saw device"),advertisedDevice->getAddress().toString().c_str());
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: saw device"),advertisedDevice->getAddress().toString().c_str());
 #endif
 
   uint8_t* payload = (uint8_t *)advertisedDevice->getPayload().data();

@@ -676,7 +676,7 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
     AddLog(LOG_LEVEL_ERROR,PSTR("M32: Can't get a newOperation"));
     return 0;
   } else {
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Got a newOperation"));
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: Got a newOperation"));
   }
 
   if (slot >= 0){
@@ -737,7 +737,7 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
   uint32_t context = (optype << 24) | (MIBLEsensors[slot].type << 16) | slot;
   op->context = (void *)context;
 
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: MI s:%d op:%s"), slot, BLE_ESP32::BLETriggerResponse(op).c_str());
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: MI s:%d op:%s"), slot, BLE_ESP32::BLETriggerResponse(op).c_str());
 
   res = BLE_ESP32::extQueueOperation(&op);
   if (!res){
@@ -782,9 +782,9 @@ int genericBatReadFn(int slot){
       break;
   }
   if (res > 0){
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_INFO, PSTR("M32: Req batt read slot %d type %d queued"), slot, MIBLEsensors[slot].type);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Req batt read slot %d type %d queued"), slot, MIBLEsensors[slot].type);
   } else {
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_INFO, PSTR("M32: Req batt read slot %d type %d non-queued res %d"), slot, MIBLEsensors[slot].type, res);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Req batt read slot %d type %d non-queued res %d"), slot, MIBLEsensors[slot].type, res);
   }
   return res;
 }
@@ -840,7 +840,7 @@ int readOneSensor(){
     }
 
     res = genericSensorReadFn(MI32.sensorreader.slot, 0);
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: genericSensorReadFn slot %d res %d"), MI32.sensorreader.slot, res);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: genericSensorReadFn slot %d res %d"), MI32.sensorreader.slot, res);
 
     // if this sensor in this slot does not need to be read via notify, just move on top the next one
     if (res < 0){
@@ -861,7 +861,7 @@ int readOneSensor(){
   // and make it wait until the read/notify is complete
   // this is cleared in the response callback.
   MI32.sensorreader.active = 1;
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: readOneSensor reading for slot %d res %d"), MI32.sensorreader.slot-1, res);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: readOneSensor reading for slot %d res %d"), MI32.sensorreader.slot-1, res);
 
   // started one
   return 1;
@@ -884,7 +884,7 @@ int readOneBat(){
   if (res < 0){
     MI32.batteryreader.slot++;
     if (MI32.batteryreader.slot >= MIBLEsensors.size()){
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_INFO, PSTR("M32: Batt loop complete at %d"), MI32.batteryreader.slot);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Batt loop complete at %d"), MI32.batteryreader.slot);
     }
     return 0;
   }
@@ -900,7 +900,7 @@ int readOneBat(){
   // this is cleared in the response callback.
   MI32.batteryreader.active = 1;
   if (MI32.batteryreader.slot >= MIBLEsensors.size()){
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_INFO, PSTR("M32: Batt loop will complete at %d"), MI32.batteryreader.slot);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Batt loop will complete at %d"), MI32.batteryreader.slot);
   }
   // started one
   return 1;
@@ -984,7 +984,7 @@ int genericTimeWriteFn(int slot){
 int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   uint32_t context = (uint32_t) op->context;
 
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: MI op complete context %x"), context);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: MI op complete context %x"), context);
 
   int opType = context >> 24;
   int devType = (context >> 16) & 0xff;
@@ -1066,7 +1066,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
       // allow another...
       MI32.sensorreader.active = 0;
       MI32notifyHT_LY(slot, (char*)op->dataNotify, op->notifylen);
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: HT_LY notify complete"), slotMAC);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: HT_LY notify complete"), slotMAC);
     } return 0;
 
     default:
@@ -1116,14 +1116,14 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   }
   uint16_t UUID = *(uint16_t*)UUIDBig.getValue();
 
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: svc[0] UUID (%x)"), MIaddrStr(addr), UUID);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: svc[0] UUID (%x)"), MIaddrStr(addr), UUID);
   std::string ServiceDataStr = advertisedDevice->getServiceData(0);
 
   uint32_t  ServiceDataLength = ServiceDataStr.length();
   const uint8_t *ServiceData = (const uint8_t *)ServiceDataStr.data();
   char temp[60];
   BLE_ESP32::dump(temp, 60, ServiceData, ServiceDataLength);
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: SrvData %s"), MIaddrStr(addr), temp);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: SrvData %s"), MIaddrStr(addr), temp);
 
   if (UUID){
     // this will take and keep the mutex until the function is over
@@ -1254,11 +1254,11 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
   uint8_t _bindkey[32] = {0x0};
   const unsigned char authData[16] = {0x11};
   bool foundNoKey = true;
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Searching key"), MIaddrStr(mac));
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: Searching key"), MIaddrStr(mac));
   for(uint32_t i = 0; i < MIBLEbindKeys.size(); i++){
     if(!memcmp(mac, MIBLEbindKeys[i].MAC, 6)){
       memcpy(_bindkey, MIBLEbindKeys[i].key, 16);
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Decryption key found"), MIaddrStr(mac));
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: Decryption key found"), MIaddrStr(mac));
       foundNoKey = false;
       break;
     }
@@ -1285,7 +1285,7 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
   // returns 1 if matched, else 0
   int ret = br_ccm_check_tag(&ctx, &tag) - 1;
 
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: %sDecrypted %02x %02x %02x %02x %02x %02x"), MIaddrStr(mac), ret ? PSTR("ERROR ") : PSTR(""), payload[0], payload[1], payload[2], payload[3], payload[4], payload[5]);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: %sDecrypted %02x %02x %02x %02x %02x %02x"), MIaddrStr(mac), ret ? PSTR("ERROR ") : PSTR(""), payload[0], payload[1], payload[2], payload[3], payload[4], payload[5]);
   return ret; // -> -1=fail, 0=success
 }
 
@@ -1357,7 +1357,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
   parsed->devicetype = *((uint16_t *)(data + byteindex));
   byteindex += 2;
   parsed->framecnt = data[byteindex];
-  //if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: MI frame %d"), parsed->framecnt);
+  //AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: MI frame %d"), parsed->framecnt);
   byteindex++;
 
 
@@ -1407,7 +1407,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
       break;
     case 0: // suceeded
       parsed->needkey = KEY_REQUIRED_AND_FOUND;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: Payload decrypted"), MIaddrStr(slotmac));
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: Payload decrypted"), MIaddrStr(slotmac));
       break;
     case -1: // key failed to work
       parsed->needkey = KEY_REQUIRED_AND_INVALID;
@@ -1452,7 +1452,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
   }
 
   if ((len - byteindex) == 0){
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: No payload"), MIaddrStr(slotmac));
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: No payload"), MIaddrStr(slotmac));
     parsed->payload.size = 0;
     parsed->payloadpresent = 0;
     return 0;
@@ -1461,7 +1461,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
   // we have payload which did not need decrypt.
   if (decres == 1){
     parsed->needkey = KEY_NOT_REQUIRED;
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: Payload unencrypted"), MIaddrStr(slotmac));
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: Payload unencrypted"), MIaddrStr(slotmac));
   }
 
   // already decrypted if required
@@ -1513,12 +1513,12 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Counters: %x %x"),MIBLEsensors[i].lastCnt, counter);
       if(MIBLEsensors[i].lastCnt==counter) {
         // AddLog(LOG_LEVEL_DEBUG,PSTR("Old packet"));
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Slot %u/[0-%u] - ign repeat"), MIaddrStr(mac), i, MIBLEsensors.size() - 1);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Slot %u/[0-%u] - ign repeat"), MIaddrStr(mac), i, MIBLEsensors.size() - 1);
         if(ignoreDuplicate) return 0xff; // packet received before, stop here
       }
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Frame %d, last %d"), MIaddrStr(mac), counter, MIBLEsensors[i].lastCnt);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: Frame %d, last %d"), MIaddrStr(mac), counter, MIBLEsensors[i].lastCnt);
       MIBLEsensors[i].lastCnt = counter;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Slot %u/[0-%u]"), MIaddrStr(mac), i, MIBLEsensors.size() - 1);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Slot %u/[0-%u]"), MIaddrStr(mac), i, MIBLEsensors.size() - 1);
 
       if (MIBLEsensors[i].type != _type){
         // this happens on incorrectly configured pvvx ATC firmware
@@ -1642,7 +1642,7 @@ void MI32StatusInfo() {
 
 int MI32scanCompleteCallback(NimBLEScanResults results){
   // we actually don't need to do anything here....
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Scan complete"));
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: Scan complete"));
   return 0;
 }
 
@@ -1707,7 +1707,7 @@ int MIParseBatt(int slot, uint8_t *data, int len){
     MIBLEsensors[slot].eventType.bat  = 1;
     MIBLEsensors[slot].shallSendMQTT = 1;
     MI32.mode.shallTriggerTele = 1;
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Batt read for %s complete %d"), slotMAC, value);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: Batt read for %s complete %d"), slotMAC, value);
   } else {
     AddLog(LOG_LEVEL_ERROR,PSTR("M32: Batt read for %s complete but out of range 1-101 (%d)"), slotMAC, value);
   }
@@ -1739,7 +1739,7 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
       if(_slot == 0xff) return;
 
       if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: %s:pvvx at slot %u"), MIaddrStr(addr), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: %s:pvvx at slot %u"), MIaddrStr(addr), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
         MIBLEsensors[_slot].RSSI=RSSI;
         MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
 
@@ -1786,7 +1786,7 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
   if(_slot == 0xff) return;
 
   if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
-    if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
     MIBLEsensors[_slot].RSSI=RSSI;
     MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
 
@@ -1816,7 +1816,7 @@ void MI32ParseCGDK2Packet(const uint8_t * _buf, uint32_t length, const uint8_t *
         if(_slot == 0xff) return;
 
         if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
-          if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s:pvvx at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
+          AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s:pvvx at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
           MIBLEsensors[_slot].RSSI=RSSI;
           MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
           MIBLEsensors[_slot].temp = (float)(cgdk_packet->temperature)/10.0f;
@@ -1857,7 +1857,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
     if (_slot == 0xff) return;
 
     if ((_slot >= 0) && (_slot < MIBLEsensors.size())) {
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
       MIBLEsensors[_slot].RSSI = RSSI;
       MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
       MIBLEsensors[_slot].eventType.scale = 1;
@@ -1897,7 +1897,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
     if (_slot == 0xff) return;
 
     if ((_slot >= 0) && (_slot < MIBLEsensors.size())) {
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
       MIBLEsensors[_slot].RSSI = RSSI;
       MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
       MIBLEsensors[_slot].eventType.scale = 1;
@@ -1953,7 +1953,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
 
   char tmp[20];
   BLE_ESP32::dump(tmp, 20, (uint8_t*)&(parsed->payload), parsed->payload.size + 3);
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: slot %d, payload %s"), MIaddrStr(MIBLEsensors[_slot].MAC), _slot, tmp);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: slot %d, payload %s"), MIaddrStr(MIBLEsensors[_slot].MAC), _slot, tmp);
 
   // clear this for every payload
   MIBLEsensors[_slot].pairing = 0;
@@ -2005,9 +2005,9 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].temp=_tempFloat;
         MIBLEsensors[_slot].feature.temp = 1;
         MIBLEsensors[_slot].eventType.temp = 1;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 4: temp updated"));
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode 4: temp updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 4: temp ignored > 60 (%2_f)"), &_tempFloat);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode 4: temp ignored > 60 (%2_f)"), &_tempFloat);
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 4: U16:  %u Temp"), _beacon.temp );
     } break;
@@ -2018,9 +2018,9 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].hum=_tempFloat;
         MIBLEsensors[_slot].feature.hum = 1;
         MIBLEsensors[_slot].eventType.hum = 1;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 6: hum updated"));
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode 6: hum updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 6: hum ignored > 101 (%2_f)"), &_tempFloat);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode 6: hum ignored > 101 (%2_f)"), &_tempFloat);
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 6: U16:  %u Hum"), _beacon.hum);
     } break;
@@ -2037,14 +2037,14 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MIBLEsensors[_slot].moisture=pld->moist;
       MIBLEsensors[_slot].eventType.moist  = 1;
       MIBLEsensors[_slot].feature.moist = 1;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 8: moisture updated"));
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode 8: moisture updated"));
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 8: U8: %u Moisture"), _beacon.moist);
     break;
     case 0x1009: // 'conductivity' / 'Soil EC value'
       MIBLEsensors[_slot].fertility=pld->fert;
       MIBLEsensors[_slot].eventType.fert  = 1;
       MIBLEsensors[_slot].feature.fert = 1;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 9: fertility updated"));
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode 9: fertility updated"));
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 9: U16: %u Fertility"), _beacon.fert);
     break;
     case 0x100a:// 'Electricity'
@@ -2056,10 +2056,10 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       }
       if (pld->bat < 101) {
         MIBLEsensors[_slot].bat = pld->bat;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Mode a: bat updated (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Mode a: bat updated (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
       } else {
         MIBLEsensors[_slot].bat = 100;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Mode a: bat > 100 (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Mode a: bat > 100 (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
       }
       MIBLEsensors[_slot].eventType.bat  = 1;
       MIBLEsensors[_slot].feature.bat = 1;
@@ -2071,16 +2071,16 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       float _tempFloat=(float)(pld->HT.temp)/10.0f;
       if(_tempFloat < 60){
         MIBLEsensors[_slot].temp = _tempFloat;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: temp updated"));
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode d: temp updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: temp ignored > 60 (%2_f)"), &_tempFloat);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode d: temp ignored > 60 (%2_f)"), &_tempFloat);
       }
       _tempFloat=(float)(pld->HT.hum)/10.0f;
       if(_tempFloat < 100){
         MIBLEsensors[_slot].hum = _tempFloat;
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum updated"));
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode d: hum updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum ignored > 100 (%2_f)"), &_tempFloat);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: Mode d: hum ignored > 100 (%2_f)"), &_tempFloat);
       }
       MIBLEsensors[_slot].eventType.tempHum  = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode d: U16:  %x Temp U16: %x Hum"), _beacon.HT.temp,  _beacon.HT.hum);
@@ -2256,7 +2256,7 @@ void MI32ParseResponse(const uint8_t *buf, uint16_t bufsize, const uint8_t* addr
     }
     MIBLEsensors[_slot].RSSI=RSSI;
     if (!res){ // - if the payload is not valid
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: MIParsePacket returned %d"), MIaddrStr(addr), res);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: MIParsePacket returned %d"), MIaddrStr(addr), res);
       return;
     }
     MI32parseMiPayload(_slot, &parsed);
@@ -2285,25 +2285,23 @@ void MI32removeMIBLEsensor(uint8_t* MAC){
 \***********************************************************************/
 
 void MI32notifyHT_LY(int _slot, char *_buf, int len){
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: %s: Raw data %02x%02x%02x%02x%02x%02x%02x"),MIaddrStr(MIBLEsensors[_slot].MAC), _buf[0], _buf[1], _buf[2], _buf[3], _buf[4], _buf[5], _buf[6]);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE],PSTR("M32: %s: Raw data %02x%02x%02x%02x%02x%02x%02x"),MIaddrStr(MIBLEsensors[_slot].MAC), _buf[0], _buf[1], _buf[2], _buf[3], _buf[4], _buf[5], _buf[6]);
   // the value 0b00 is 28.16 C?
   if (_buf[0] || _buf[1]){
     memcpy(&LYWSD0x_HT, (void *)_buf, sizeof(LYWSD0x_HT));
-    if (BLE_ESP32::BLEDebugMode) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: T * 100: %u, H: %u, V: %u"), MIaddrStr(MIBLEsensors[_slot].MAC), LYWSD0x_HT.temp, LYWSD0x_HT.hum, LYWSD0x_HT.volt);
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: Sensor slot %u"), MIaddrStr(MIBLEsensors[_slot].MAC), _slot);
-    }
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: T * 100: %u, H: %u, V: %u"), MIaddrStr(MIBLEsensors[_slot].MAC), LYWSD0x_HT.temp, LYWSD0x_HT.hum, LYWSD0x_HT.volt);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Sensor slot %u"), MIaddrStr(MIBLEsensors[_slot].MAC), _slot);
     static float _tempFloat;
     _tempFloat = (float)(LYWSD0x_HT.temp) / 100.0f;
     if(_tempFloat < 60){
       MIBLEsensors[_slot].temp = _tempFloat;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: LYWSD0x Temp updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].temp);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Temp updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].temp);
         // MIBLEsensors[_slot].showedUp=255; // this sensor is real
     }
     _tempFloat=(float)LYWSD0x_HT.hum;
     if(_tempFloat < 100){
       MIBLEsensors[_slot].hum = _tempFloat;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: LYWSD0x Hum updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].hum);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Hum updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].hum);
     }
     MIBLEsensors[_slot].eventType.tempHum  = 1;
     if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD02MMC2 || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
@@ -2317,7 +2315,7 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
       if (percent > 100) percent = 100;
 
       MIBLEsensors[_slot].bat = (int)percent;
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: LYWSD0x Bat updated %d"), MIaddrStr(MIBLEsensors[_slot].MAC), MIBLEsensors[_slot].bat);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Bat updated %d"), MIaddrStr(MIBLEsensors[_slot].MAC), MIBLEsensors[_slot].bat);
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
     if(MI32.option.directBridgeMode) {
@@ -2457,7 +2455,7 @@ void CmndMi32Time(void) {
     if (MIBLEsensors.size() > slot) {
       int res = genericTimeWriteFn(slot);
       if (res > 0){
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: will set Time"));
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: will set Time"));
         ResponseCmndNumber(slot);
         return;
       }
@@ -2497,7 +2495,7 @@ void CmndMi32Unit(void) {
       // TOGGLE unit?
       int res = genericUnitWriteFn(slot, -1);
       if (res > 0){
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG, PSTR("M32: will toggle Unit"));
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: will toggle Unit"));
         ResponseCmndNumber(slot);
         return;
       }
@@ -2675,7 +2673,7 @@ void MI32KeyListResp(){
 void CmndMi32Keys(void){
 #ifdef BLE_ESP32_ALIASES
   int op = XdrvMailbox.index;
-  if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Key %d %s"), op, XdrvMailbox.data);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: Key %d %s"), op, XdrvMailbox.data);
 
   int res = -1;
   switch(op){
@@ -2725,7 +2723,7 @@ void CmndMi32Keys(void){
       } while (p);
 
       if (added){
-        if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Added %d Keys"), added);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: Added %d Keys"), added);
         MI32KeyListResp();
       } else {
         MI32KeyListResp();
@@ -2733,7 +2731,7 @@ void CmndMi32Keys(void){
       return;
     } break;
     case 2:{ // clear
-      if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Keys clearing %d"), MIBLEbindKeys.size());
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: Keys clearing %d"), MIBLEbindKeys.size());
       for (int i = MIBLEbindKeys.size()-1; i >= 0; i--){
         MIBLEbindKeys.pop_back();
       }
