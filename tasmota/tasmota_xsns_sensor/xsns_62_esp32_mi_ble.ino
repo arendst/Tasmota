@@ -1255,7 +1255,7 @@ int MI32AddKey(char* payload, char* key = nullptr){
   return 0;
 }
 
-int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
+int MIDecryptPayload(uint32_t version, const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
   uint8_t payload[32];
   uint8_t mac[6];
   memcpy(mac, macin, 6);
@@ -1282,8 +1282,12 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
 
   br_ccm_context ctx;
   br_ccm_init(&ctx, &keyCtx.vtable);
-  br_ccm_reset(&ctx, nonce, 12, 1, len, 4);
-  br_ccm_aad_inject(&ctx, authData, 1);
+  if (1 == version) {
+    br_ccm_reset(&ctx, nonce, 13, 0, len, 4);
+  } else {  
+    br_ccm_reset(&ctx, nonce, 12, 1, len, 4);
+    br_ccm_aad_inject(&ctx, authData, 1);
+  }
   br_ccm_flip(&ctx);
 
   memcpy(payload, data, len); //we want to be sure about 4-byte alignement
@@ -1294,7 +1298,7 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
   // returns 1 if matched, else 0
   int ret = br_ccm_check_tag(&ctx, &tag) - 1;
 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: %sDecrypted %02x %02x %02x %02x %02x %02x"), MIaddrStr(mac), ret ? PSTR("ERROR ") : PSTR(""), payload[0], payload[1], payload[2], payload[3], payload[4], payload[5]);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: %sDecrypted %*_H"), MIaddrStr(mac), ret ? PSTR("ERROR ") : PSTR(""), len, payload);
   return ret; // -> -1=fail, 0=success
 }
 
@@ -1406,7 +1410,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
     uint32_t tag = *(uint32_t *)(data + (len-4));
 
     // decrypt the data in place
-    decres = MIDecryptPayload(mac, nonce, tag, data + byteindex, len - byteindex - 7);
+    decres = MIDecryptPayload(0, mac, nonce, tag, data + byteindex, len - byteindex - 7);
     // no longer need the nonce data.
     len -= 7;
   }
@@ -2032,8 +2036,45 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     return;
   }
   if (encrypted) {
-    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: encrypted packets not yet supported"));
-    return;
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: MAC `%6_H` encrypted packet (%*_H)"), addr, length, _buf);
+
+    uint8_t *buf = (uint8_t *)_buf;
+    const uint8_t* mac = addr;
+    uint16_t uuid = 0xFCD2;
+    uint8_t nonce[13];
+    uint8_t *p = nonce;
+    memcpy(p, mac, 6);
+    p += 6;
+    memcpy(p, &uuid, 2);  // UUID
+    p += 2;
+    *(p++) = 0x41;       // BTHome device data byte
+    const uint8_t *extCnt = buf +(length-8);
+    memcpy(p, extCnt, 4);
+    p += 4;
+    uint32_t mic = *(uint32_t *)(buf + (length-4));
+
+    // decrypt the data in place
+    int decres = MIDecryptPayload(1, mac, nonce, mic, buf + 1, length - 9);
+    // no longer need the nonce data.
+    length -= 8;
+
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: decrypted packet (%*_H)"), length, buf);
+
+    switch(decres){
+      case 1: // decrypt not requested
+        break;
+      case 0: // suceeded
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: Payload decrypted"), MIaddrStr(addr));
+        break;
+      case -1: // key failed to work
+        AddLog(LOG_LEVEL_ERROR,PSTR("M32: %s: Payload decrypt failed"), MIaddrStr(addr));
+        return;
+        break;
+      case -2: // key not present
+        AddLog(LOG_LEVEL_ERROR,PSTR("M32: %s: Payload encrypted but no key"), MIaddrStr(addr));
+        return;
+        break;
+    }
   }
 
   // First pass: find optional packet_id (object 0x00) for duplicate detection
