@@ -1142,8 +1142,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!param || param[0] == 0){
         return -1;
       }
-      float ftemp = 20;
-      sscanf(param, "%f", &ftemp);
+      float ftemp = atof(param);
       if (ftemp < 4.5) ftemp = 4.5;
       if (ftemp > 30) ftemp = 30;
       ftemp *= 2;
@@ -1157,9 +1156,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!param || param[0] == 0){
         return 0;
       }
-      float ftemp = 20;
-      sscanf(param, "%f", &ftemp);
-      ftemp *= 2;
+      float ftemp = atof(param) * 2;
       int8_t ctemp = (int8_t) ftemp;
       ctemp += 7;
       d[0] = 0x13; d[1] = ctemp; dlen = 2;
@@ -1174,14 +1171,12 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!param2 || param2[0] == 0){
         return -1;
       }
-      float ftemp = 15;
-      sscanf(param, "%f", &ftemp);
+      float ftemp = atof(param);
       if (ftemp < 5) ftemp = 5;
       ftemp *= 2;
       uint8_t dtemp = (uint8_t) ftemp;
 
-      ftemp = 20;
-      sscanf(param2, "%f", &ftemp);
+      ftemp = atof(param2);
       if (ftemp < 5) ftemp = 5;
       ftemp *= 2;
       uint8_t ntemp = (uint8_t) ftemp;
@@ -1198,8 +1193,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!param2 || param2[0] == 0){
         return -1;
       }
-      float ftemp = 15;
-      sscanf(param, "%f", &ftemp);
+      float ftemp = atof(param);
       if (ftemp < 5) ftemp = 5;
       ftemp *= 2;
       uint8_t temp = (uint8_t) ftemp;
@@ -1246,8 +1240,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       min += hour*60;
       int tt = min / 30;
 
-      float ftemp = 15;
-      sscanf(param2, "%f", &ftemp);
+      float ftemp = atof(param2);
       if (ftemp < 5) ftemp = 5;
       ftemp *= 2;
       uint8_t temp = (uint8_t) ftemp + 128;
@@ -1364,19 +1357,21 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       uint8_t times[7] = {0x90,0x90,0x90,0x90,0x90,0x90,0x90};
 
       // 20.5-17:30,
-      const char *p = strtok(param2, ",");
+      const char *p = strtok(param2, "-");
       int i = 0;
       while (p){
         float t = 17;
         int mm = 0;
         int hh = 24;
-        sscanf(p, "%f-%d:%d", &t, &hh, &mm);
-        t *= 2;
+        t = atof(p) * 2;
         temps[i] = (uint8_t) t;
+        p = strtok(nullptr, ",");
+        if (!p || !p[0]) return -1;
+        sscanf(p, "%d:%d", &hh, &mm);
         int time = hh*60+mm;
         time = time / 10;
         times[i] = time;
-        p = strtok(nullptr, ",");
+        p = strtok(nullptr, "-");
         i++;
         if (i >= 7) break;
       }
