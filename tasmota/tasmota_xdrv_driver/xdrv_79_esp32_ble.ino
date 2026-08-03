@@ -92,12 +92,12 @@
         BLEName <mac|alias> - read the name
         BLEName <mac|alias> <name> - write the name - few devices support this
       BLEDebug
-        Set log levels more debug logging
-        BLEDebug0 - show debug logging status
-        BLEDebug1 <loglevel> - Set log level for errors     - default 0 -> off
-        BLEDebug2 <loglevel> - Set log level for infos      - default 0 -> off
-        BLEDebug3 <loglevel> - Set log level for debug      - default 0 -> off
-        BLEDebug4 <loglevel> - Set log level for more debug - default 0 -> off
+        Set log levels more BLE debug logging - omit the parameter to display setting
+        BLEDebug0 <loglevel> - Set log level for all messages - default 0 -> off
+        BLEDebug1 <loglevel> - Set log level for errors       - default 0 -> off
+        BLEDebug2 <loglevel> - Set log level for infos        - default 0 -> off
+        BLEDebug3 <loglevel> - Set log level for debug        - default 0 -> off
+        BLEDebug4 <loglevel> - Set log level for more debug   - default 0 -> off
         * for all details compile with #define BLE_ESP32_DEBUG and #define EQ3_DEBUG
       BLEDevices
         display or clear the devices list
@@ -2678,6 +2678,11 @@ void CmndBLEDebug(void){
     }
     ResponseCmndIdxNumber(BLELogLevel[XdrvMailbox.index]);
   } else {
+    if (!XdrvMailbox.index && (XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
+      for (uint32_t i = LOG_LEVEL_ERROR; i <= LOG_LEVEL_DEBUG_MORE; i++) {
+        BLELogLevel[i] = XdrvMailbox.payload;
+      }
+    }
     ResponseClear();
     for (uint32_t i = LOG_LEVEL_ERROR; i <= LOG_LEVEL_DEBUG_MORE; i++) {
       ResponseAppend_P(PSTR("%c\"%s%d\":\"%d\""), (i - 1) ? ',' : '{', XdrvMailbox.command, i, BLELogLevel[i]);
