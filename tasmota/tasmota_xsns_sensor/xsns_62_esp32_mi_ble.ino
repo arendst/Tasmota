@@ -20,11 +20,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.8"
+#define MI32_VERSION "V0.9.3.0"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.3.0 20260803  changed - added BTHome v2 decryption
+  -------
   0.9.2.8 20260323  changed - added BTHome v2 protocol support (UUID 0xFCD2)
   -------
   0.9.2.7 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
@@ -2012,6 +2014,7 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x3F, 4},  // Unix epoch (seconds)
   {0x40, 2},  // Acceleration (0.001 m/s2)
   {0x41, 2},  // Gyroscope (0.001 deg/s)
+  {0x63, 4},  // Acceleration (signed) (0.000001 m/s2)
   {0xFF, 0},  // sentinel
 };
 
