@@ -2922,6 +2922,7 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
     return;
   }
 #endif
+  if (!loglevel) return; // loglevel == 0 -> nothing to log
   uint32_t highest_loglevel = HighestLogLevel();
   // If no logging is requested then do not access heap to fight fragmentation
   if ((loglevel <= highest_loglevel) && (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
