@@ -20,11 +20,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.7"
+#define MI32_VERSION "V0.9.2.8"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.8 20260323  changed - added BTHome v2 protocol support (UUID 0xFCD2)
+  -------
   0.9.2.7 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
                               view on UI only when BLE enabled
   -------
@@ -500,8 +502,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_SJWS01LM    19
 #define MI_LYWSD02MMC  20
 #define MI_LYWSD02MMC2 21
+#define MI_BTHOME      22
 
-#define MI_MI32_TYPES  21 //count this manually
+#define MI_MI32_TYPES  22 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -524,7 +527,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x004e, // Avago Tech Bluetooth Buttons (Company Id)
   0x0863, // SJWS01LM
   0x2542, // LYWSD02MMC
-  0x16e4  // LYWSD02MMC F3_A1 hardware revision, 2.0.1_0060 firmware revision
+  0x16e4, // LYWSD02MMC F3_A1 hardware revision, 2.0.1_0060 firmware revision
+  0xFCD2  // BTHome v2
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -548,10 +552,11 @@ const char kMI32DeviceType17[] PROGMEM ="ATBTN";
 const char kMI32DeviceType18[] PROGMEM = "SJWS01LM";
 const char kMI32DeviceType19[] PROGMEM = "LYWSD02MMC";
 const char kMI32DeviceType20[] PROGMEM = "LYWSD02MMC";
+const char kMI32DeviceType21[] PROGMEM = "BTHome";
 const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0, kMI32DeviceType1, kMI32DeviceType2, kMI32DeviceType3,
   kMI32DeviceType4, kMI32DeviceType5, kMI32DeviceType6, kMI32DeviceType7, kMI32DeviceType8, kMI32DeviceType9,
   kMI32DeviceType10, kMI32DeviceType11, kMI32DeviceType12, kMI32DeviceType13, kMI32DeviceType14, kMI32DeviceType15,
-  kMI32DeviceType16, kMI32DeviceType17, kMI32DeviceType18, kMI32DeviceType19, kMI32DeviceType20};
+  kMI32DeviceType16, kMI32DeviceType17, kMI32DeviceType18, kMI32DeviceType19, kMI32DeviceType20, kMI32DeviceType21};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -1149,6 +1154,10 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       {
         MI32ParseMiScalePacket(ServiceData, ServiceDataLength, addr, RSSI, UUID);
       } break;
+      case 0xFCD2: // BTHome v2
+      {
+        MI32ParseBTHomePacket(ServiceData, ServiceDataLength, addr, RSSI);
+      } break;
 
       default:{
       } break;
@@ -1600,6 +1609,12 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
       _newSensor.feature.Btn = 1;
       _newSensor.feature.bat = 1;
       break;
+    case MI_BTHOME:
+      // BTHome sensors announce their own features dynamically via object IDs.
+      // Initialise with no features — they are set when the first packet is parsed.
+      _newSensor.hum = NAN;
+      _newSensor.needkey = KEY_NOT_REQUIRED;
+      break;
 
     default:
       _newSensor.hum=NAN;
@@ -1937,6 +1952,211 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       MIBLEsensors[_slot].shallSendMQTT = 1;
       MI32.mode.shallTriggerTele = 1;
     }
+  }
+}
+
+/*********************************************************************************************\
+ * BTHome v2 protocol support
+ * https://bthome.io/
+ * BLE Service UUID: 0xFCD2
+\*********************************************************************************************/
+
+// BTHome v2 object ID to data-length mapping table (obj_id, data_len pairs, 0xFF = sentinel)
+struct bthome_obj_def_t { uint8_t obj_id; uint8_t data_len; };
+static const bthome_obj_def_t BTHOME_OBJECTS[] = {
+  {0x00, 1},  // Packet ID
+  {0x01, 1},  // Battery (%)
+  {0x02, 2},  // Temperature (0.01 °C)
+  {0x03, 2},  // Humidity (0.01 %)
+  {0x04, 3},  // Pressure (0.01 hPa)
+  {0x05, 3},  // Illuminance (0.01 lx)
+  {0x06, 2},  // Mass kg (0.01 kg)
+  {0x07, 2},  // Mass lbs (0.01 lbs)
+  {0x08, 2},  // Dewpoint (0.01 °C)
+  {0x09, 1},  // Count (uint8)
+  {0x0A, 3},  // Energy (0.001 kWh)
+  {0x0B, 3},  // Power (0.01 W)
+  {0x0C, 2},  // Voltage (0.001 V)
+  {0x0D, 2},  // PM2.5 (ug/m3)
+  {0x0E, 2},  // PM10 (ug/m3)
+  {0x0F, 1},  // Generic boolean
+  {0x10, 1},  // Power (on/off)
+  {0x11, 1},  // Opening (boolean)
+  {0x12, 2},  // CO2 (ppm)
+  {0x13, 2},  // TVOC (ug/m3)
+  {0x14, 1},  // Moisture (%)
+  {0x15, 2},  // Humidity (0.01 %)
+  {0x16, 2},  // Moisture (0.1 %)
+  {0x2D, 2},  // Count (uint16)
+  {0x2E, 2},  // Rotation (0.1 deg)
+  {0x2F, 2},  // Distance (mm)
+  {0x30, 3},  // Distance (0.1 m)
+  {0x31, 3},  // Duration (0.001 s)
+  {0x32, 2},  // Current (0.001 A)
+  {0x33, 2},  // Speed (0.01 m/s)
+  {0x34, 2},  // Temperature (0.1 °C)
+  {0x35, 1},  // UV index (0.1)
+  {0x36, 3},  // Volume (0.1 L)
+  {0x37, 2},  // Volume (mL)
+  {0x38, 2},  // Flow rate (m3/hr x 0.001)
+  {0x39, 2},  // Voltage (0.1 V)
+  {0x3A, 2},  // Gas (m3 x 0.001 uint16)
+  {0x3B, 3},  // Gas (m3 x 0.001 uint24)
+  {0x3C, 4},  // Energy (kWh x 0.001 uint32)
+  {0x3D, 4},  // Count (uint32)
+  {0x3E, 4},  // Timestamp
+  {0x3F, 4},  // Unix epoch (seconds)
+  {0x40, 2},  // Acceleration (0.001 m/s2)
+  {0x41, 2},  // Gyroscope (0.001 deg/s)
+  {0xFF, 0},  // sentinel
+};
+
+// Returns data length for a BTHome v2 object ID, or -1 if unknown
+int BTHomeGetObjectDataLen(uint8_t obj_id) {
+  for (int i = 0; BTHOME_OBJECTS[i].obj_id != 0xFF; i++) {
+    if (BTHOME_OBJECTS[i].obj_id == obj_id) return BTHOME_OBJECTS[i].data_len;
+  }
+  return -1;
+}
+
+void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI) {
+  if (length < 1) return;
+
+  uint8_t devInfo = _buf[0];
+  bool encrypted  = devInfo & 0x01;
+  uint8_t version = (devInfo >> 5) & 0x07;
+
+  // Only BTHome v2 is supported (version field == 2)
+  if (version != 2) {
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: unsupported version %d"), version);
+    return;
+  }
+  if (encrypted) {
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: encrypted packets not yet supported"));
+    return;
+  }
+
+  // First pass: find optional packet_id (object 0x00) for duplicate detection
+  uint8_t packetId = 0;
+  {
+    uint32_t j = 1;
+    while (j < length) {
+      uint8_t oid = _buf[j++];
+      int dlen = BTHomeGetObjectDataLen(oid);
+      if (dlen < 0 || (j + (uint32_t)dlen) > length) break;
+      if (oid == 0x00) { packetId = _buf[j]; break; }
+      j += dlen;
+    }
+  }
+
+  uint32_t slot = MIBLEgetSensorSlot(addr, 0xFCD2, packetId);
+  if (slot == 0xff) return;
+  if (slot >= MIBLEsensors.size()) return;
+
+  MIBLEsensors[slot].RSSI     = RSSI;
+  MIBLEsensors[slot].needkey  = KEY_NOT_REQUIRED;
+
+  bool hasTemp = false;
+  bool hasHum  = false;
+
+  // Second pass: parse all measurement objects
+  uint32_t i = 1;
+  while (i < length) {
+    uint8_t obj_id = _buf[i++];
+    int dlen = BTHomeGetObjectDataLen(obj_id);
+    if (dlen < 0) {
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: unknown obj 0x%02x - stopping"), obj_id);
+      break;
+    }
+    if ((i + (uint32_t)dlen) > length) break;
+
+    switch (obj_id) {
+      case 0x00: // Packet ID (already used above)
+        break;
+
+      case 0x01: { // Battery (uint8, %)
+        MIBLEsensors[slot].bat = _buf[i];
+        MIBLEsensors[slot].feature.bat    = 1;
+        MIBLEsensors[slot].eventType.bat  = 1;
+      } break;
+
+      case 0x02: { // Temperature (int16, 0.01 °C)
+        int16_t raw = (int16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        float t = (float)raw / 100.0f;
+        if (t > -40.0f && t < 85.0f) {
+          MIBLEsensors[slot].temp = t;
+          MIBLEsensors[slot].feature.temp   = 1;
+          MIBLEsensors[slot].eventType.temp = 1;
+          hasTemp = true;
+        }
+      } break;
+
+      case 0x03: { // Humidity (uint16, 0.01 %)
+        uint16_t raw = (uint16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        float h = (float)raw / 100.0f;
+        if (h >= 0.0f && h <= 100.0f) {
+          MIBLEsensors[slot].hum = h;
+          MIBLEsensors[slot].feature.hum   = 1;
+          MIBLEsensors[slot].eventType.hum = 1;
+          hasHum = true;
+        }
+      } break;
+
+      case 0x05: { // Illuminance (uint24, 0.01 lx)
+        uint32_t raw = (uint32_t)(_buf[i] | ((uint32_t)_buf[i+1] << 8) | ((uint32_t)_buf[i+2] << 16));
+        MIBLEsensors[slot].lux = raw / 100;
+        MIBLEsensors[slot].feature.lux   = 1;
+        MIBLEsensors[slot].eventType.lux = 1;
+      } break;
+
+      case 0x08: // Dewpoint — Tasmota calculates dew point internally
+        break;
+
+      case 0x14: { // Moisture (uint8, %)
+        MIBLEsensors[slot].moisture = _buf[i];
+        MIBLEsensors[slot].feature.moist   = 1;
+        MIBLEsensors[slot].eventType.moist = 1;
+      } break;
+
+      case 0x15: { // Humidity (uint16, 0.01 %) — same encoding as 0x03
+        uint16_t raw = (uint16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        float h = (float)raw / 100.0f;
+        if (h >= 0.0f && h <= 100.0f) {
+          MIBLEsensors[slot].hum = h;
+          MIBLEsensors[slot].feature.hum   = 1;
+          MIBLEsensors[slot].eventType.hum = 1;
+          hasHum = true;
+        }
+      } break;
+
+      case 0x34: { // Temperature (int16, 0.1 °C) — lower-precision variant
+        int16_t raw = (int16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        float t = (float)raw / 10.0f;
+        if (t > -40.0f && t < 85.0f) {
+          MIBLEsensors[slot].temp = t;
+          MIBLEsensors[slot].feature.temp   = 1;
+          MIBLEsensors[slot].eventType.temp = 1;
+          hasTemp = true;
+        }
+      } break;
+
+      default:
+        break;
+    }
+    i += dlen;
+  }
+
+  // If both temperature and humidity were received, mark the combined feature
+  if (hasTemp && hasHum) {
+    MIBLEsensors[slot].feature.tempHum   = 1;
+    MIBLEsensors[slot].eventType.tempHum = 1;
+  }
+
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: %s slot %u"), MIaddrStr(addr), slot);
+
+  if (MI32.option.directBridgeMode) {
+    MIBLEsensors[slot].shallSendMQTT = 1;
+    MI32.mode.shallTriggerTele = 1;
   }
 }
 
