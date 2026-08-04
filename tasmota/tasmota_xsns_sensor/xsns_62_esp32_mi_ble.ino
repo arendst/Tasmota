@@ -20,11 +20,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.3.0"
+#define MI32_VERSION "V0.9.3.1"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.3.1 20260804  changed - BTHome v2 device id table refresh based on https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
+                              Add BTHome button decoding
+                              Add BTHome binary catch all decoding (POC)
+  -------
   0.9.3.0 20260803  changed - added BTHome v2 decryption
   -------
   0.9.2.8 20260323  changed - added BTHome v2 protocol support (UUID 0xFCD2)
@@ -1969,6 +1973,8 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
 
 // BTHome v2 object ID to data-length mapping table (obj_id, data_len pairs, 0xFF = sentinel)
 struct bthome_obj_def_t { uint8_t obj_id; uint8_t data_len; };
+/*
+// Original poster table
 static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x00, 1},  // Packet ID
   {0x01, 1},  // Battery (%)
@@ -2014,7 +2020,110 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x3F, 4},  // Unix epoch (seconds)
   {0x40, 2},  // Acceleration (0.001 m/s2)
   {0x41, 2},  // Gyroscope (0.001 deg/s)
-  {0x63, 4},  // Acceleration (signed) (0.000001 m/s2)
+  {0xFF, 0},  // sentinel
+};
+*/
+// New BTHome V2 table from https://bthome.io/format/
+// and https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
+static const bthome_obj_def_t BTHOME_OBJECTS[] = {
+  // Sensors
+  {0x00, 1},  // Packet ID uint8
+  {0x01, 1},  // Battery (%) uint8
+  {0x02, 2},  // Temperature (0.01 °C) int16
+  {0x03, 2},  // Humidity (0.01 %) uint16
+  {0x04, 3},  // Pressure (0.01 hPa) uint24
+  {0x05, 3},  // Illuminance (0.01 lx) uint24
+  {0x06, 2},  // Mass kg (0.01 kg) uint16
+  {0x07, 2},  // Mass lbs (0.01 lbs) uint16
+  {0x08, 2},  // Dewpoint (0.01 °C) int16
+  {0x09, 1},  // Count (uint8) uint8
+  {0x0A, 3},  // Energy (0.001 kWh) uint24
+  {0x0B, 3},  // Power (0.01 W) uint24
+  {0x0C, 2},  // Voltage (0.001 V) uint16
+  {0x0D, 2},  // PM2.5 (ug/m3) uint16
+  {0x0E, 2},  // PM10 (ug/m3) uint16
+  // Binary sensors uint8
+  {0x0F, 1},  // Generic boolean (0 = Off, 1 = On)
+  {0x10, 1},  // Power (0 = Off, 1 = On)
+  {0x11, 1},  // Opening (0 = Closed, 1 = Open)
+  // Sensors
+  {0x12, 2},  // CO2 (ppm) uint16
+  {0x13, 2},  // TVOC (ug/m3) uint16
+  {0x14, 2},  // Moisture (0.01 %) uint16
+  // Binary sensors uint8
+  {0x15, 1},  // Battery (0 = Normal, 1 = Low)
+  {0x16, 1},  // Battery charging (0 = Not charging, 1 = Charging)
+  {0x17, 1},  // CO (0 = Not detected, 1 = Detected)
+  {0x18, 1},  // Cold (0 = Normal, 1 = Cold)
+  {0x19, 1},  // Connectivity (0 = Disconnected, 1 = Connected)
+  {0x1A, 1},  // Door (0 = Closed, 1 = Open)
+  {0x1B, 1},  // Garage door (0 = Closed, 1 = Open)
+  {0x1C, 1},  // Gas (0 = Clear, 1 = Detected)
+  {0x1D, 1},  // Heat (0 = Normal, 1 = Hot)
+  {0x1E, 1},  // Light (0 = No light, 1 = Light detected)
+  {0x1F, 1},  // Lock (0 = Locked, 1 = Unlocked)
+  {0x20, 1},  // Moisture (0 = Dry, 1 = Wet)
+  {0x21, 1},  // Motion (0 = Clear, 1 = Detected)
+  {0x22, 1},  // Moving (0 = Not moving, 1 = Moving)
+  {0x23, 1},  // Occupancy (0 = Clear, 1 = Detected)
+  {0x24, 1},  // Plug (0 = Unplugged, 1 = Plugged)
+  {0x25, 1},  // Presence (0 = Away, 1 = Home)
+  {0x26, 1},  // Problem (0 = OK, 1 = Problem)
+  {0x27, 1},  // Running (0 = Not running, 1 = Running)
+  {0x28, 1},  // Safety (0 = Unsafe, 1 = Safe)
+  {0x29, 1},  // Smoke (0 = Clear, 1 = Detected)
+  {0x2A, 1},  // Sound (0 = Clear, 1 = Detected)
+  {0x2B, 1},  // Tamper (0 = Off, 1 = On)
+  {0x2C, 1},  // Vibration (0 = Clear, 1 = Detected)
+  {0x2D, 1},  // Window (0 = Closed, 1 = Open)
+  // Sensors
+  {0x2E, 1},  // Humidity (1 deg) uint8
+  {0x2F, 1},  // Moisture (1 %) uint8
+
+  {0x3A, 1},  // Event button uint8
+  {0x3B, 2},  // Event command 0..2 uint16, 3..4 uint24
+  {0x3C, 2},  // Event dimmer uint16
+  {0x3D, 2},  // Count (1) uint16
+  {0x3E, 4},  // Count (1) uint32_t
+  {0x3F, 2},  // Rotation (0.1 deg) int16
+  {0x40, 2},  // Distance (1 mm) uint16
+  {0x41, 2},  // Distance (0.1 m) uint16
+  {0x42, 3},  // Duration (0.001 s) uint24
+  {0x43, 2},  // Current (0.001 A) int16
+  {0x44, 2},  // Speed (0.01 m/s) uint16
+  {0x45, 2},  // Temperature (0.1 °C) int16
+  {0x46, 1},  // UV index (0.1) uint8
+  {0x47, 2},  // Volume (0.1 L) uint16
+  {0x48, 2},  // Volume (mL) uint16
+  {0x49, 2},  // Volume flow rate (0.001 m3/hr) uint16
+  {0x4A, 2},  // Voltage (0.1 V) uint16
+  {0x4B, 3},  // Gas (0.001 m3) uint24
+  {0x4C, 4},  // Gas (0.001 m3) uint32
+  {0x4D, 4},  // Energy (0.001 kWh) uint32
+  {0x4E, 4},  // Volume (0.001 L) uint32
+  {0x4F, 4},  // Volume water (0.001 L) uint32
+  {0x50, 4},  // Timestamp uint32
+  {0x51, 2},  // Acceleration (0.001 m/s2) uint16
+  {0x52, 2},  // Gyroscope (0.001 deg/s) uint16
+  {0x53, 1},  // Text
+  {0x54, 1},  // Raw
+  {0x55, 4},  // Volume storage (0.001 L) uint32
+  {0x56, 2},  // Conductivity (1 uS/cm) uint16
+  {0x57, 1},  // Temperature (1 °C) int8
+  {0x58, 1},  // Temperature (0.35 °C) int8
+  {0x59, 1},  // Count (1) int8
+  {0x5A, 2},  // Count (1) int16
+  {0x5B, 4},  // Count (1) int32
+  {0x5C, 4},  // Power (0.01 W) int32
+  {0x5D, 2},  // Current (0.001 A) int16
+  {0x5E, 2},  // Direction (0.001 deg) uint16
+  {0x5F, 2},  // Precipitation (0.1 mm) uint16
+  {0x60, 1},  // Channel uint8
+  {0x61, 2},  // Rotational speed (1 rpm) uint16
+  {0x62, 4},  // Speed (0.000001 m/s) int32
+  {0x63, 4},  // Acceleration (0.000001 m/s2) int32
+  {0x64, 1},  // Light level (0 = Dark, 1 = Twilight, 2 = Bright) uint8
+  {0x65, 1},  // Settings revision uint8
   {0xFF, 0},  // sentinel
 };
 
@@ -2039,7 +2148,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     return;
   }
   if (encrypted) {
-    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: MAC `%6_H` encrypted packet (%*_H)"), addr, length, _buf);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: MAC `%6_H` encrypted packet (%*_H)"), addr, length, _buf);
 
     uint8_t *buf = (uint8_t *)_buf;
     const uint8_t* mac = addr;
@@ -2061,7 +2170,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     // no longer need the nonce data.
     length -= 8;
 
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: decrypted packet (%*_H)"), length, buf);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: decrypted packet %*_H"), length, buf);
 
     switch(decres){
       case 1: // decrypt not requested
@@ -2078,7 +2187,11 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         return;
         break;
     }
+
+    buf[0] &= 0xFE;  // Reset encrypted flag
   }
+
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: packet %*_H"), length, _buf);
 
   // First pass: find optional packet_id (object 0x00) for duplicate detection
   uint8_t packetId = 0;
@@ -2155,25 +2268,47 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x08: // Dewpoint — Tasmota calculates dew point internally
         break;
+/*
+      case 0x0C: { // Voltage (uint16, 0.001 %)
+        uint16_t raw = (uint16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        float v = (float)raw / 1000.0f;
+        MIBLEsensors[slot].volt = v;
+        MIBLEsensors[slot].feature.volt   = 1;
+        MIBLEsensors[slot].eventType.volt = 1;
+      } break;
+*/
+      case 0x14: { // Moisture (uint16, 0.01%)
+        uint16_t raw = (uint16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        MIBLEsensors[slot].moisture = raw / 100;
+        MIBLEsensors[slot].feature.moist   = 1;
+        MIBLEsensors[slot].eventType.moist = 1;
+      } break;
 
-      case 0x14: { // Moisture (uint8, %)
+      case 0x0F ... 0x11:
+      case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
+        MIBLEsensors[slot].lastTime = millis();
+        MIBLEsensors[slot].events = (uint16_t)(_buf[1] | ((uint16_t)obj_id << 8));
+        MIBLEsensors[slot].feature.events  = 1;
+        MIBLEsensors[slot].eventType.motion = 1;
+        MI32.mode.shallTriggerTele = 1;
+        MIBLEsensors[slot].shallSendMQTT = 1;
+      } break;
+
+      case 0x2F: { // Moisture (uint8, 1%)
         MIBLEsensors[slot].moisture = _buf[i];
         MIBLEsensors[slot].feature.moist   = 1;
         MIBLEsensors[slot].eventType.moist = 1;
       } break;
 
-      case 0x15: { // Humidity (uint16, 0.01 %) — same encoding as 0x03
-        uint16_t raw = (uint16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
-        float h = (float)raw / 100.0f;
-        if (h >= 0.0f && h <= 100.0f) {
-          MIBLEsensors[slot].hum = h;
-          MIBLEsensors[slot].feature.hum   = 1;
-          MIBLEsensors[slot].eventType.hum = 1;
-          hasHum = true;
-        }
+      case 0x3A: { // Button (uint8, event)
+        MIBLEsensors[slot].Btn = _buf[i];
+        MIBLEsensors[slot].feature.Btn    = 1;
+        MIBLEsensors[slot].eventType.Btn  = 1;
+        MI32.mode.shallTriggerTele = 1;
+        MIBLEsensors[slot].shallSendMQTT = 1;
       } break;
 
-      case 0x34: { // Temperature (int16, 0.1 °C) — lower-precision variant
+      case 0x45: { // Temperature (int16, 0.1 °C) — lower-precision variant
         int16_t raw = (int16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
         float t = (float)raw / 10.0f;
         if (t > -40.0f && t < 85.0f) {
