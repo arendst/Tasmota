@@ -2287,7 +2287,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
         MIBLEsensors[slot].lastTime = millis();
-        MIBLEsensors[slot].events = (uint16_t)(_buf[1] | ((uint16_t)obj_id << 8));
+        MIBLEsensors[slot].events = (uint16_t)(_buf[i] | ((uint16_t)obj_id << 8));
         MIBLEsensors[slot].feature.events  = 1;
         MIBLEsensors[slot].eventType.motion = 1;
         MI32.mode.shallTriggerTele = 1;
@@ -2319,7 +2319,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         }
       } break;
 
+      case 0x64:{ // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
+        MIBLEsensors[slot].light = _buf[i];
+        MIBLEsensors[slot].feature.light = 1;
+        MIBLEsensors[slot].eventType.light = 1;
+        MI32.mode.shallTriggerTele = 1;
+        MIBLEsensors[slot].shallSendMQTT = 1;
+      } break;
+
       default:
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: undecoded obj %02X %*_H"), obj_id, dlen, _buf +i);
         break;
     }
     i += dlen;
