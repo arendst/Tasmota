@@ -1,11 +1,7 @@
 /*
   xsns_62_esp32_mi_ble.ino - MI-BLE-sensors via ESP32 support for Tasmota
-  enabled by ESP32 && USE_BLE_ESP32
-  if (ESP32 && !USE_BLE_ESP32) then xsns_62_esp32_mi.ino is used - the older driver
 
-
-  Copyright (C) 2020  Christian Baars and Theo Arends
-  Also Simon Hailes and Robert Klauco
+  Copyright (C) 2020  Christian Baars, Simon Hailes, Robert Klauco and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,8 +16,34 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.3.1"
+//#define VSCODE_DEV
+
 /*
+#ifdef VSCODE_DEV
+#define ESP32
+#define USE_BLE_ESP32
+#define USE_MI_ESP32
+#endif
+*/
+//#undef USE_MI_ESP32
+
+// for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
+#ifdef USE_BLE_ESP32
+
+#ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+
+#ifdef USE_MI_ESP32
+
+#define MI32_VERSION "V0.9.3.1"
+
+/*********************************************************************************************\
+  BLE Xiaomi/Mijia (MI) sensor decoding
+  BLE BTHome V2 sensor decoding
+
+  enabled by #define ESP32 && #define USE_BLE_ESP32
+  if (#define ESP32 && no #define USE_BLE_ESP32) then xsns_62_esp32_mi.ino is used - the older driver
+
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
@@ -76,29 +98,11 @@
   -------
   0.9.0.0 20200413  started - initial development by Christian Baars
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
+\*********************************************************************************************/
 
-*/
-//#define VSCODE_DEV
+#define XSNS_62                62
 
-/*
-#ifdef VSCODE_DEV
-#define ESP32
-#define USE_BLE_ESP32
-#define USE_MI_ESP32
-#endif
-*/
-//#undef USE_MI_ESP32
-
-// for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
-#ifdef USE_BLE_ESP32
-
-#ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
-
-#ifdef USE_MI_ESP32
-
-#define XSNS_62                    62
-#define USE_MI_DECRYPTION
+#define USE_MI_DECRYPTION         // Enable also for BTHome V2
 
 #include <vector>
 #ifdef USE_MI_DECRYPTION
