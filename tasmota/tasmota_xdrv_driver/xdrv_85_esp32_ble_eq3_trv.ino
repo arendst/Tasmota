@@ -322,7 +322,7 @@ bool EQ3Operation(const uint8_t *MAC, const uint8_t *data, int datalen, int cmdt
     return 0;
   } else {
 #ifdef EQ3_DEBUG
-    AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: Got a newOperation from BLE"), addrStr(MAC, cmdtype & 0x80));
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: Got a newOperation from BLE"), addrStr(MAC, cmdtype & 0x80));
 #endif
   }
 
@@ -767,7 +767,7 @@ int TaskEQ3AddDevice(int8_t RSSI, const uint8_t* addr, char *serial){
     }
     if (EQ3Devices[i].timeoutTime && (EQ3Devices[i].timeoutTime < now)) {
 #ifdef EQ3_DEBUG
-    AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: timeout at %d"), addrStr(EQ3Devices[i].addr), i);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: timeout at %d"), addrStr(EQ3Devices[i].addr), i);
 #endif
       EQ3Devices[i].timeoutTime = 0L;
     }
@@ -789,7 +789,7 @@ int TaskEQ3AddDevice(int8_t RSSI, const uint8_t* addr, char *serial){
 
 #ifdef EQ3_DEBUG
   if (!EQ3Devices[i].timeoutTime)
-    AddLog(LOG_LEVEL_INFO, PSTR("EQ3: %s: added at %d"), addrStr(addr), i);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("EQ3: %s: added at %d"), addrStr(addr), i);
 #endif
 
   EQ3Devices[i].timeoutTime = now + (1000L*1000L)*EQ3_TIMEOUT;
@@ -841,7 +841,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     found = true;
   }
 
-  // if the addr matches the EQ2 mfg prefix, add it?
+  // if the addr matches the EQ3 mfg prefix, add it?
   if (!found && EQ3MatchPrefix && (matchPrefix(addr) >= 0)){
     found = true;
   }
@@ -849,7 +849,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   if (!found) return 0;
 
 #ifdef EQ3_DEBUG
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: saw device"),advertisedDevice->getAddress().toString().c_str());
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: Device seen"), addrStr(addr));
 #endif
 
   uint8_t* payload = (uint8_t *)advertisedDevice->getPayload().data();
@@ -877,7 +877,7 @@ void EQ3Init(void) {
   memset(&EQ3Devices, 0, sizeof(EQ3Devices));
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"EQ3", TaskEQ3advertismentCallback);
 #ifdef EQ3_DEBUG
-  AddLog(LOG_LEVEL_INFO, PSTR("EQ3: init: request callbacks"));
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("EQ3: init: request callbacks"));
 #endif
 
   EQ3Period = Settings->tele_period;
@@ -1060,7 +1060,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
   memset(d, 0, sizeof(d));
   int dlen = 0;
 #ifdef EQ3_DEBUG
-  AddLog(LOG_LEVEL_INFO, PSTR("EQ3: %s: cmd: [%s] [%s] [%s]"), addrStr(addr), cmd, param, param2);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("EQ3: %s: cmd: [%s] [%s] [%s]"), addrStr(addr), cmd, param, param2);
 #endif
 
 /* done on whole string before here.
@@ -1072,11 +1072,10 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
   int cmdtype = 0;
 
   do {
-    if (!strcmp(cmd, "raw")){
+    if (!strcmp(cmd, "raw")) {
       cmdtype = 1;
-      if (!param || param[0] == 0){
-        return -1;
-      }
+      if (!param || !param[0]) return -1;
+
       int len = strlen(param) / 2;
       if (len > 20){
         AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: raw len of %s = %d > 20"), param, len);
@@ -1103,7 +1102,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!strcmp(cmd, "settime")){
         cmdtype = 3;
       }
-      if (!param || param[0] == 0){
+      if (!param || !param[0]){
 
         if (RtcTime.valid) {
           d[0] = 0x03;
@@ -1137,126 +1136,105 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       break;
     }
 
-    if (!strcmp(cmd, "settemp")){
+    if (!strcmp(cmd, "settemp")) {
       cmdtype = 4;
-      if (!param || param[0] == 0){
-        return -1;
-      }
+      if (!param || !param[0]) return -1;
+
       float ftemp = atof(param);
       if (ftemp < 4.5) ftemp = 4.5;
       if (ftemp > 30) ftemp = 30;
-      ftemp *= 2;
-      uint8_t ctemp = (uint8_t) ftemp;
-      d[0] = 0x41; d[1] = ctemp; dlen = 2;
+
+      d[0] = 0x41;
+      d[1] = (uint8_t)(ftemp * 2);
+      dlen = 2;
       break;
     }
 
-    if (!strcmp(cmd, "offset")){
+    if (!strcmp(cmd, "offset")) {
       cmdtype = 5;
-      if (!param || param[0] == 0){
-        return 0;
-      }
-      float ftemp = atof(param) * 2;
-      int8_t ctemp = (int8_t) ftemp;
-      ctemp += 7;
-      d[0] = 0x13; d[1] = ctemp; dlen = 2;
+      if (!param || !param[0]) return -1;
+
+      float ftemp = atof(param);
+      if (ftemp < -3.5) ftemp = -3.5;
+      if (ftemp > 3.5) ftemp = 3.5;
+
+      d[0] = 0x13;
+      d[1] = (int8_t)(ftemp * 2 + 7);
+      dlen = 2;
       break;
     }
 
-    if (!strcmp(cmd, "setdaynight")){
+    if (!strcmp(cmd, "setdaynight")) {
       cmdtype = 6;
-      if (!param || param[0] == 0){
-        return -1;
-      }
-      if (!param2 || param2[0] == 0){
-        return -1;
-      }
+      if (!param || !param[0] || !param2 || !param2[0]) return -1;
+
+      d[0] = 0x11;
+
       float ftemp = atof(param);
-      if (ftemp < 5) ftemp = 5;
-      ftemp *= 2;
-      uint8_t dtemp = (uint8_t) ftemp;
+      if (ftemp < 4.5) ftemp = 4.5;
+      if (ftemp > 30)  ftemp = 30;
+      d[1] = (uint8_t)(ftemp * 2);
 
       ftemp = atof(param2);
-      if (ftemp < 5) ftemp = 5;
-      ftemp *= 2;
-      uint8_t ntemp = (uint8_t) ftemp;
+      if (ftemp < 4.5) ftemp = 4.5;
+      if (ftemp > 30)  ftemp = 30;
+      d[2] = (uint8_t)(ftemp * 2);
 
-      d[0] = 0x11; d[1] = dtemp; d[2] = ntemp; dlen = 3;
+      dlen = 3;
       break;
     }
 
-    if (!strcmp(cmd, "setwindowtempdur")){
+    if (!strcmp(cmd, "setwindowtempdur")) {
       cmdtype = 7;
-      if (!param || param[0] == 0){
-        return -1;
-      }
-      if (!param2 || param2[0] == 0){
-        return -1;
-      }
-      float ftemp = atof(param);
-      if (ftemp < 5) ftemp = 5;
-      ftemp *= 2;
-      uint8_t temp = (uint8_t) ftemp;
+      if (!param || !param[0] || !param2 || !param2[0]) return -1;
 
-      int dur = 0;
-      sscanf(param2, "%d", &dur);
-      d[0] = 0x14; d[1] = temp; d[2] = (dur/5); dlen = 3;
+      float ftemp = atof(param);
+      if (ftemp < 4.5) ftemp = 4.5;
+      if (ftemp > 30)  ftemp = 30;
+
+      uint8_t dur = atoi(param2);
+      if (dur > 20) dur = 20;
+
+      d[0] = 0x14;
+      d[1] = (uint8_t)(ftemp * 2);
+      d[2] = dur / 5;
+      dlen = 3;
       break;
     }
 
-    if (!strcmp(cmd, "setholiday")){
+    if (!strcmp(cmd, "setholiday")) {
       cmdtype = 8;
       //40941C152402
       // 40 94
-      if (!param || param[0] == 0){
-        return -1;
-      }
-      if (!param2 || param2[0] == 0){
-        return -1;
-      }
+      if (!param || !param[0] || !param2 || !param2[0]) return -1;
 
-      int yy = 0;
-      int mm = 0;
-      int dd = 0;
-      int hour = 0;
-      int min = 0;
-      char *p = param;
-      p = strtok(p, "-");
-      if (!p || p[0] == 0) return -1;
-      sscanf(p, "%d", &yy);
-      p = strtok(nullptr, "-");
-      if (!p || p[0] == 0) return -1;
-      sscanf(p, "%d", &mm);
-      p = strtok(nullptr, ",");
-      if (!p || p[0] == 0) return -1;
-      sscanf(p, "%d", &dd);
-      p = strtok(nullptr, ":");
-      if (!p || p[0] == 0) return -1;
-      sscanf(p, "%d", &hour);
-      p = strtok(nullptr, "");
-      if (!p || p[0] == 0) return -1;
-      sscanf(p, "%d", &min);
-
-      min += hour*60;
-      int tt = min / 30;
-
+      char *p1 = nullptr, *p2 = nullptr, *p3 = nullptr, *p4 = nullptr, *p5 = nullptr;
+      uint8_t yy   = (int)strtol(param, &p1, 10);
+      uint8_t mm   = (p1 && p1[0] == '-') ? (int)strtol(p1 + 1, &p2, 10) : 255;
+      uint8_t dd   = (p2 && p2[0] == '-') ? (int)strtol(p2 + 1, &p3, 10) : 255;
+      uint8_t hour = (p3 && p3[0] == ',') ? (int)strtol(p3 + 1, &p4, 10) : 255;
+      uint8_t min  = (p4 && p4[0] == ':') ? (int)strtol(p4 + 1, &p5, 10) : 255;
       float ftemp = atof(param2);
-      if (ftemp < 5) ftemp = 5;
-      ftemp *= 2;
-      uint8_t temp = (uint8_t) ftemp + 128;
+
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: setholiday: %02d-%02d-%02d,%02d:%02d %1_f"), yy, mm, dd, hour, min, &ftemp);
+
+      if (yy > 99 || !mm || mm > 12 || !dd || dd > 31 || hour > 23 || min > 59) return -1;
+
+      if (ftemp < 4.5)  ftemp = 4.5;
+      if (ftemp > 29.5) ftemp = 29.5; // Cannot be set to more than 29.5 in this command
 
       d[0] = 0x40;
-      d[1] = temp;
+      d[1] = (uint8_t)(ftemp * 2 + 128);
       d[2] = dd;
       d[3] = yy;
-      d[4] = tt;
+      d[4] = (hour * 60 + min) / 30;
       d[5] = mm;
       dlen = 6;
       break;
     }
 
 
-    if (!strcmp(cmd, "boost"))    {
+    if (!strcmp(cmd, "boost")) {
       cmdtype = 9;
       d[0] = 0x45; d[1] = 0x01;
       if (param && (!strcmp(param, "off") || param[0] == '0')){
@@ -1264,7 +1242,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       }
       dlen = 2; break;
     }
-    if (!strcmp(cmd, "unboost"))  {
+    if (!strcmp(cmd, "unboost")) {
       cmdtype = 10;
       d[0] = 0x45; d[1] = 0x00; dlen = 2; break; }
     if (!strcmp(cmd, "lock"))     { cmdtype = 23; d[0] = 0x80; d[1] = 0x01;
@@ -1278,36 +1256,33 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
     if (!strcmp(cmd, "manual"))   { cmdtype = 13; d[0] = 0x40; d[1] = 0x40; dlen = 2; break; }
     // this is basically 'cancel holiday' - mode auto does that.
     //if (!strcmp(cmd, "eco"))      { cmdtype = 14; d[0] = 0x40; d[1] = 0x80; dlen = 2; break; }
-    if (!strcmp(cmd, "on"))       {
+    if (!strcmp(cmd, "on")) {
       int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
       char tmp[] = "30";
       int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
       return res2;
     }
-    if (!strcmp(cmd, "off"))      {
+    if (!strcmp(cmd, "off")) {
       int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
       char tmp[] = "4.5";
       int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
       return res2;
     }
     if (!strcmp(cmd, "valve"))     { cmdtype = 17; d[0] = 0x41; d[1] = 0x3c;
-      if (!param || param[0] == 0){
-        return -1;
-      }
+      if (!param || !param[0]) return -1;
+
       if ((!strcmp(param, "off") || param[0] == '0')){
         d[1] = 0x09;
       }
       dlen = 2; break;
     }
     if (!strcmp(cmd, "mode"))     { cmdtype = 18; d[0] = 0x40; d[1] = 0xff;// invlaid
+      if (!param || !param[0]) return -1;
 
-      if (!param || param[0] == 0){
-        return -1;
-      }
-      if (!strcmp(param, "auto")){
+      if (!strcmp(param, "auto")) {
         d[1] = 0x00;
       }
-      if (!strcmp(param, "manual") || !strcmp(param, "heat" )){
+      if (!strcmp(param, "manual") || !strcmp(param, "heat" )) {
         d[1] = 0x40;
       }
       if (!strcmp(param, "on")) {
@@ -1323,9 +1298,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
         return res2;
       }
 
-      if (d[1] == 0xff){ // no valid mode selection found
-        return -1;
-      }
+      if (d[1] == 0xff) return -1; // no valid mode selection found
       // this is basically 'cancel holiday' - mode auto does that.
       //if (!strcmp(param, "eco")){
       //  d[1] = 0x80;
@@ -1335,54 +1308,57 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
     if (!strcmp(cmd, "day"))      { cmdtype = 19; d[0] = 0x43; dlen = 1; break; }
     if (!strcmp(cmd, "night"))    { cmdtype = 20; d[0] = 0x44; dlen = 1; break; }
 
-    if (!strcmp(cmd, "reqprofile"))     { cmdtype = 21;
-      if (!param || param[0] == 0){
-        return -1;
-      }
-      d[0] = 0x20; d[1] = atoi(param); dlen = 2;
+    if (!strcmp(cmd, "reqprofile")) {
+      cmdtype = 21;
+      if (!param || !param[0]) return -1;
+
+      d[0] = 0x20;
+      d[1] = atoi(param);
+      dlen = 2;
       break;
     }
 
-    if (!strcmp(cmd, "setprofile"))     { cmdtype = 22;
-      if (!param || param[0] == 0){
-        return -1;
-      }
-      if (!param2 || param2[0] == 0){
-        return -1;
-      }
-      d[0] = 0x10; d[1] = atoi(param);
+    if (!strcmp(cmd, "setprofile")) {
+      cmdtype = 22;
+      if (!param || !param[0] || !param2 || !param2[0]) return -1;
+
+      d[0] = 0x10;
+      d[1] = atoi(param);
 
       // default
       uint8_t temps[7] = {0x22,0x22,0x22,0x22,0x22,0x22,0x22};
       uint8_t times[7] = {0x90,0x90,0x90,0x90,0x90,0x90,0x90};
 
       // 20.5-17:30,
-      const char *p = strtok(param2, "-");
+      const char *p = param2;
       int i = 0;
-      while (p){
-        float t = 17;
-        int mm = 0;
-        int hh = 24;
-        t = atof(p) * 2;
-        temps[i] = (uint8_t) t;
-        p = strtok(nullptr, ",");
-        if (!p || !p[0]) return -1;
-        sscanf(p, "%d:%d", &hh, &mm);
-        int time = hh*60+mm;
-        time = time / 10;
-        times[i] = time;
-        p = strtok(nullptr, "-");
+      while (p && p[0]) {
+        char *p1 = nullptr, *p2 = nullptr, *p3 = nullptr;
+        float ftemp = strtof(p, &p1);
+        uint8_t hh = (p1 && *p1 == '-') ? (int)strtol(p1 + 1, &p2, 10) : 255;
+        uint8_t mm = (p2 && *p2 == ':') ? (int)strtol(p2 + 1, &p3, 10) : 255;
+
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: setprofile%d[%d]: %1_f-%02d:%02d"), d[1], i, &ftemp, hh, mm);
+
+        if (hh > 24 || mm > 59) return -1;
+
+        if (ftemp < 4.5) ftemp = 4.5;
+        if (ftemp > 30)  ftemp = 30;
+
+        temps[i] = (uint8_t)(ftemp * 2);
+        times[i] = (hh * 60 + mm) / 10;
+        p = (p3 && *p3 == ',') ? p3 + 1 : nullptr;
         i++;
         if (i >= 7) break;
       }
 
       // remaining left at 00 00
-      for (int j = 0; j < 7; j++){
-        d[2+j*2] = temps[j];
-        d[2+j*2+1] = times[j];
+      for (int j = 0; j < 7; j++) {
+        d[2 + j * 2] = temps[j];
+        d[2 + j * 2 + 1] = times[j];
       }
 
-      dlen = 2+14;
+      dlen = 16; // 2 + 14
       break;
     }
 
@@ -1431,14 +1407,14 @@ int CmndTrvNext(int index, char *data){
 
       if (!strcmp(p, "scan")){
 #ifdef EQ3_DEBUG
-        AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: cmd: %s"), p);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: cmd: %s"), p);
 #endif
         EQ3SendCurrentDevices();
         return 0;
       }
       if (!strcmp(p, "devlist")){
 #ifdef EQ3_DEBUG
-        AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: cmd: %s"), p);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: cmd: %s"), p);
 #endif
         EQ3SendCurrentDevices();
         return 0;
@@ -1461,7 +1437,7 @@ int CmndTrvNext(int index, char *data){
         NimBLEAddress addr(addrbin, addrbin[6]);
 
 #ifdef EQ3_DEBUG
-        //AddLog(LOG_LEVEL_INFO, PSTR("EQ3: cmd addr: %s -> %s"), p, addr.toString().c_str());
+        //AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("EQ3: cmd addr: %s -> %s"), p, addr.toString().c_str());
 #endif
       } else {
         AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: addr invalid: %s"), p);
@@ -1482,7 +1458,7 @@ int CmndTrvNext(int index, char *data){
       int res = EQ3Send(addrbin, cmd, param, param2, useAlias);
       if (res > 0) {
         // succeeded to queue
-        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: queued"));
+        AddLog(LOG_LEVEL_INFO, PSTR("EQ3: queued"));
         return 1;
       }
 
