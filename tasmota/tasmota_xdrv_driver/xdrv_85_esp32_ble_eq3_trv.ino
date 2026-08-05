@@ -841,7 +841,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
     found = true;
   }
 
-  // if the addr matches the EQ2 mfg prefix, add it?
+  // if the addr matches the EQ3 mfg prefix, add it?
   if (!found && EQ3MatchPrefix && (matchPrefix(addr) >= 0)){
     found = true;
   }
@@ -849,7 +849,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   if (!found) return 0;
 
 #ifdef EQ3_DEBUG
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: saw device"),advertisedDevice->getAddress().toString().c_str());
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: Device seen"), addrStr(addr));
 #endif
 
   uint8_t* payload = (uint8_t *)advertisedDevice->getPayload().data();
