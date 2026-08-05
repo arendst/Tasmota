@@ -1691,12 +1691,9 @@ void MI32Init(void) {
   MI32.option.onlyAliased = MI32_OPTION5_ONLY_ALIASED;                // Mi32Option5: only include sensors that are aliased
   MI32.option.MQTTType = MI32_OPTION6_MQTT_TYPE;                      // Mi32Option6: publish sensor on MI32.bleTopic with 1 topic per sensor
 
-AddLog(0,PSTR("MI32Option0: %d"), MI32.option.allwaysAggregate);
-AddLog(0,PSTR("MI32Option1: %d"), MI32.option.noSummary);
-AddLog(0,PSTR("MI32Option2: %d"), MI32.option.directBridgeMode);
-AddLog(0,PSTR("MI32Option4: %d"), MI32.option.ignoreBogusBattery);
-AddLog(0,PSTR("MI32Option5: %d"), MI32.option.onlyAliased);
-AddLog(0,PSTR("MI32Option6: %d"), MI32.option.MQTTType);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("M32: MI32Option0:%d, 1:%d, 2:%d, 4:%d, 5:%d, 6:%d"),
+    MI32.option.allwaysAggregate, MI32.option.noSummary, MI32.option.directBridgeMode,
+    MI32.option.ignoreBogusBattery, MI32.option.onlyAliased, MI32.option.MQTTType);
 
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"MI32", MI32advertismentCallback);
   BLE_ESP32::registerForScanCallbacks((const char *)"MI32", MI32scanCompleteCallback);
@@ -2124,7 +2121,10 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x63, 4},  // Acceleration (0.000001 m/s2) int32
   {0x64, 1},  // Light level (0 = Dark, 1 = Twilight, 2 = Bright) uint8
   {0x65, 1},  // Settings revision uint8
-  {0xFF, 0},  // sentinel
+  {0xF0, 2},  // Device type id uint16
+  {0xF1, 4},  // Firmware version (F100010204 = 4.2.1.0} uint32
+  {0xF2, 3},  // Firmware version (F2000106 = 6.1.0} uint24
+  {0xFF, 0}   // sentinel
 };
 
 // Returns data length for a BTHome v2 object ID, or -1 if unknown
