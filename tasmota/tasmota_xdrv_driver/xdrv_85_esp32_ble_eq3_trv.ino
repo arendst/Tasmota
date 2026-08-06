@@ -1421,10 +1421,7 @@ int CmndTrvNext(int index, char *data){
       }
 
       // only allow one command in progress
-      if (retries){
-        //return 2;
-      }
-
+      //if (retries) return 2;
 
       int useAlias = 0;
       uint8_t addrbin[7];
@@ -1455,20 +1452,21 @@ int CmndTrvNext(int index, char *data){
       if (param){
         param2 = strtok(nullptr, " ");
       }
+
       int res = EQ3Send(addrbin, cmd, param, param2, useAlias);
-      if (res > 0) {
-        // succeeded to queue
-        AddLog(LOG_LEVEL_INFO, PSTR("EQ3: queued"));
+
+      if (res > 0) { // succeeded to queue
+        AddLog(LOG_LEVEL_INFO, PSTR("EQ3: Command \"%s\" queued"), cmd);
         return 1;
       }
 
       if (res < 0) { // invalid in some way
-        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: invalid"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: Command \"%s\" failed"), cmd);
         return 3;
       }
 
-      AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: failed to queue"));
       // failed to queue
+      AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: Command \"%s\" failed to queue"), cmd);
       return 4;
     } break;
 
