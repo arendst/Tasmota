@@ -2151,17 +2151,23 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
     buf[0] &= 0xFE;  // Reset encrypted flag
   }
+
 #ifdef USE_MI_DEBUG 
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: packet %*_H"), length, _buf);
 #endif
+
   // First pass: find optional packet_id (object 0x00) for duplicate detection
   uint8_t packetId = 0;
   uint32_t j = 1;
   while (j < length) {
     uint8_t oid = _buf[j++];
     int dlen = BTHomeGetObjectDataLen(oid);
-    if ((0x53 == oid) || (0x54 == oid)) {  // Text or Raw add string length
-      dlen += _buf[j];
+    if ((0x3B == oid) || (0x53 == oid) || (0x54 == oid)) {  // Command, Text or Raw add length
+      uint8_t len = _buf[j];
+      if (0x3B == oid) {
+        len &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
+      }
+      dlen += len;
     }
     if ((dlen < 0) || ((j + (uint32_t)dlen) > length)) {
       break;
@@ -2199,12 +2205,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     last_obj_id = obj_id;
 
     int dlen = BTHomeGetObjectDataLen(obj_id);
-    if ((0x53 == obj_id) || (0x54 == obj_id)) {  // Text or Raw add string length
-      dlen += _buf[i];
+    if ((0x3B == obj_id) || (0x53 == obj_id) || (0x54 == obj_id)) {  // Command, Text or Raw add length
+      uint8_t len = _buf[i];
+      if (0x3B == obj_id) {
+        len &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
+      }
+      dlen += len;
     }
     if (dlen < 0) {
 #ifdef USE_MI_DEBUG 
-      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: unknown obj 0x%02x"), obj_id);
+      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: invalid obj id 0x%02x"), obj_id);
 #endif
       break;
     }
@@ -2236,9 +2246,53 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         }
       } break;
 
+      case 0x45: { // Temperature (int16, 0.1 °C) — lower-precision variant
+        int16_t raw = (int16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
+        float t = (float)raw / 10.0f;
+        if (t > -40.0f && t < 85.0f) {
+          MIBLEsensors[slot].temp = t;
+          MIBLEsensors[slot].feature.temp   = 1;
+          MIBLEsensors[slot].eventType.temp = 1;
+          hasTemp = true;
+        }
+      } break;
+
+      case 0x57: { // Temperature (int8, 1 °C)
+        int8_t raw = (int8_t)(_buf[i]);
+        float t = (float)raw;
+        if (t > -40.0f && t < 85.0f) {
+          MIBLEsensors[slot].temp = t;
+          MIBLEsensors[slot].feature.temp   = 1;
+          MIBLEsensors[slot].eventType.temp = 1;
+          hasTemp = true;
+        }
+      } break;
+
+      case 0x58: { // Temperature (int8, 0.35 °C)
+        int8_t raw = (int8_t)(_buf[i]);
+        float t = (float)raw / 0.35f;
+        if (t > -40.0f && t < 85.0f) {
+          MIBLEsensors[slot].temp = t;
+          MIBLEsensors[slot].feature.temp   = 1;
+          MIBLEsensors[slot].eventType.temp = 1;
+          hasTemp = true;
+        }
+      } break;
+
       case 0x03: { // Humidity (uint16, 0.01 %)
         uint16_t raw = (uint16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
         float h = (float)raw / 100.0f;
+        if (h >= 0.0f && h <= 100.0f) {
+          MIBLEsensors[slot].hum = h;
+          MIBLEsensors[slot].feature.hum   = 1;
+          MIBLEsensors[slot].eventType.hum = 1;
+          hasHum = true;
+        }
+      } break;
+
+      case 0x2E: { // Humidity (uint8, 1 %)
+        uint8_t raw = (uint8_t)(_buf[i]);
+        float h = (float)raw;
         if (h >= 0.0f && h <= 100.0f) {
           MIBLEsensors[slot].hum = h;
           MIBLEsensors[slot].feature.hum   = 1;
@@ -2272,6 +2326,12 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         MIBLEsensors[slot].eventType.moist = 1;
       } break;
 
+      case 0x2F: { // Moisture (uint8, 1%)
+        MIBLEsensors[slot].moisture = _buf[i];
+        MIBLEsensors[slot].feature.moist   = 1;
+        MIBLEsensors[slot].eventType.moist = 1;
+      } break;
+
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
         MIBLEsensors[slot].lastTime = millis();
@@ -2281,28 +2341,11 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         res = 1;
       } break;
 
-      case 0x2F: { // Moisture (uint8, 1%)
-        MIBLEsensors[slot].moisture = _buf[i];
-        MIBLEsensors[slot].feature.moist   = 1;
-        MIBLEsensors[slot].eventType.moist = 1;
-      } break;
-
       case 0x3A: { // Button (uint8, event)
         MIBLEsensors[slot].Btn = _buf[i];
         MIBLEsensors[slot].feature.Btn    = 1;
         MIBLEsensors[slot].eventType.Btn  = 1;
         res = 1;
-      } break;
-
-      case 0x45: { // Temperature (int16, 0.1 °C) — lower-precision variant
-        int16_t raw = (int16_t)(_buf[i] | ((uint16_t)_buf[i+1] << 8));
-        float t = (float)raw / 10.0f;
-        if (t > -40.0f && t < 85.0f) {
-          MIBLEsensors[slot].temp = t;
-          MIBLEsensors[slot].feature.temp   = 1;
-          MIBLEsensors[slot].eventType.temp = 1;
-          hasTemp = true;
-        }
       } break;
 
       case 0x64:{ // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
