@@ -11,6 +11,7 @@ Inputs (produced by ``preprocessor.py``, see ``gen.sh``)
 
 Outputs (written to ``generate/``)
     be_lv_c_mapping.h        C function dispatch tables + widget constructors
+    be_lv_classes.h          extern declarations for widget constructors/classes
     be_lvgl_widgets_lib.c    solidified Berry class/widget definitions
     be_lvgl_module.c         the ``lv`` module (global functions + constants)
     LVGL_API_Reference.md    human readable API reference (Markdown)
@@ -716,6 +717,13 @@ extern const lv_obj_class_t lv_colorwheel_class;
 // custom Tasmota widget: rectangle filled with an angled stripe pattern
 extern const lv_obj_class_t lv_stripes_class;
 
+#include "be_lv_classes.h"
+
+"""
+
+CLASSES_HEADER = """/********************************************************************
+ * Generated code, don't edit
+ *******************************************************************/
 """
 
 WIDGETS_LIB_CORE_CLASSES = """
@@ -869,11 +877,13 @@ extern void arc_anim_end_angle(void * obj, int32_t v);
 """
 
 
-def generate_widgets_lib(path, lv):
-    """Generate ``be_lvgl_widgets_lib.c``: the solidified Berry class and
-    widget definitions (consumed later by the ``coc`` tool)."""
+def generate_classes_header(path, lv):
+    """Generate ``be_lv_classes.h``: extern declarations for the ad-hoc
+    LVGL8 colorwheel/stripes classes, the widget constructor (``_init``)
+    functions, and the widget class objects (included by
+    ``be_lvgl_widgets_lib.c``)."""
     with open(path, 'w') as out:
-        print(WIDGETS_LIB_HEADER, file=out)
+        print(CLASSES_HEADER, file=out)
 
         # expose all extern constructor definitions
         for subtype, flv in lv.items():
@@ -883,7 +893,13 @@ def generate_widgets_lib(path, lv):
         # extern class declarations
         for subtype in sorted(lv):
             print(f"extern const bclass be_class_lv_{subtype};", file=out)
-        print(file=out)
+
+
+def generate_widgets_lib(path, lv):
+    """Generate ``be_lvgl_widgets_lib.c``: the solidified Berry class and
+    widget definitions (consumed later by the ``coc`` tool)."""
+    with open(path, 'w') as out:
+        print(WIDGETS_LIB_HEADER, file=out)
 
         # hand-written core classes (lv_obj and friends)
         print(WIDGETS_LIB_CORE_CLASSES, file=out)
@@ -1022,6 +1038,7 @@ def generate_module(path, lv0, lv_module):
 
 # Output file names (inside the generate directory)
 BE_LV_C_MAPPING = "be_lv_c_mapping.h"
+BE_LV_CLASSES = "be_lv_classes.h"
 BE_LV_WIDGETS_LIB = "be_lvgl_widgets_lib.c"
 BE_LV_MODULE = "be_lvgl_module.c"
 BE_LV_DOC = "LVGL_API_Reference.md"
@@ -1050,6 +1067,7 @@ def main():
     # 3. generate the output files (same order as the historical script)
     generate_doc(out_dir / BE_LV_DOC, lv, lv0)
     generate_c_mapping(out_dir / BE_LV_C_MAPPING, lv)
+    generate_classes_header(out_dir / BE_LV_CLASSES, lv)
     generate_widgets_lib(out_dir / BE_LV_WIDGETS_LIB, lv)
     generate_module(out_dir / BE_LV_MODULE, lv0, lv_module)
 
