@@ -1104,8 +1104,12 @@ class lvh_obj : lvh_root
       self._lv_obj.set_value(t)
     end
   end
-  def get_val()
-    return self._lv_obj.get_value()
+  def get_val()   # if there is no underlining `get_value()` native class, return `nil` instead of exception
+    import introspect
+    if introspect.contains(self._lv_obj, "get_value")
+      return self._lv_obj.get_value()
+    end
+    return nil
   end
   #====================================================================
   #  `radius2`
@@ -2709,7 +2713,12 @@ class lvh_checkbox : lvh_obj
     return self.get_toggle()
   end
 end
-# class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
+#@ solidify:lvh_textarea,weak
+class lvh_textarea : lvh_obj
+  static var _lv_class = lv.textarea
+  def get_val()   return self._lv_obj.get_text()      end
+  def set_val(t)  self._lv_obj.set_text(str(t))       end
+end
 # special case for scr (which is actually lv_obj)
 #@ solidify:lvh_scr,weak
 class lvh_scr : lvh_obj
@@ -3022,7 +3031,9 @@ class HASPmota
 	static lvh_arc = lvh_arc
  	# static lvh_linemeter = lvh_linemeter
  	# static lvh_gauge = lvh_gauge
-	# static lvh_textarea = lvh_textarea    # additional?
+#if BE_LV_WIDGET_TEXTAREA
+	static lvh_textarea = lvh_textarea    # conditional
+#endif
   static lvh_led = lvh_led
   static lvh_scale = lvh_scale
   static lvh_scale_section = lvh_scale_section

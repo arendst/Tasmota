@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Reset BLE scan flag on new operation (#24925)
 - Minor fixes in `LList` (#24927)
 - TLS fix public key fingerprint for ECDSA certificates (#24928)
+- HASPmota better support for `textarea`
 
 ### Removed
 
