@@ -139,5 +139,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - TLS fix public key fingerprint for ECDSA certificates [#24928](https://github.com/arendst/Tasmota/issues/24928)
 - Reset BLE scan flag on new operation [#24925](https://github.com/arendst/Tasmota/issues/24925)
 - BLE EQ3 float output in mqtt messages regression from v15.4.0.2 [#24869](https://github.com/arendst/Tasmota/issues/24869)
+- HASPmota better support for `textarea` [#24946](https://github.com/arendst/Tasmota/issues/24946)
 
 ### Removed
