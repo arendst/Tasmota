@@ -317,12 +317,12 @@ bool EQ3Operation(const uint8_t *MAC, const uint8_t *data, int datalen, int cmdt
   // ALWAYS use this function to create a new one.
   int res = BLE_ESP32::newOperation(&op);
   if (!res){
-    AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: Can't get a newOperation from BLE"), addrStr(MAC, cmdtype & 0x80));
+    AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: Can't get a newOperation \"%s\" from BLE"), addrStr(MAC, cmdtype & 0x80), cmdnames[cmdtype & 0x7f]);
     retries = 0;
     return 0;
   } else {
 #ifdef EQ3_DEBUG
-    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: Got a newOperation from BLE"), addrStr(MAC, cmdtype & 0x80));
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("EQ3: %s: Got a newOperation \"%s\" from BLE"), addrStr(MAC, cmdtype & 0x80), cmdnames[cmdtype & 0x7f]);
 #endif
   }
 
@@ -351,7 +351,7 @@ bool EQ3Operation(const uint8_t *MAC, const uint8_t *data, int datalen, int cmdt
   if (!res){
     // if it fails to add to the queue, do please delete it
     BLE_ESP32::freeOperation(&op);
-    AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: Failed to queue new operation - deleted"), addrStr(MAC, cmdtype & 0x80));
+    AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: Failed to queue new operation \"%s\" - deleted"), addrStr(MAC, cmdtype & 0x80), cmdnames[cmdtype & 0x7f]);
     retries = 0;
   } else {
     if (retries_in){
@@ -369,11 +369,11 @@ int EQ3DoOp(){
       if (EQ3Operation(op->addr, op->towrite, op->writelen, op->cmdtype, EQ3Retries)){
         opQueue.pop_front();
         opInProgress = 1;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: Op dequeued len now %d"), addrStr(op->addr, (op->cmdtype & 0x80)), opQueue.size());
+        AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: Operation \"%s\" dequeued - len now %d"), addrStr(op->addr, (op->cmdtype & 0x80)), cmdnames[op->cmdtype & 0x7f], opQueue.size());
         delete op;
         return 1;
       } else {
-        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: Op BLE could not start op queue len %d"), addrStr(op->addr, (op->cmdtype & 0x80)), opQueue.size());
+        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: Operation \"%s\" BLE could not start op queue - len %d"), addrStr(op->addr, (op->cmdtype & 0x80)), cmdnames[op->cmdtype & 0x7f], opQueue.size());
       }
     }
   }
@@ -388,7 +388,7 @@ int EQ3QueueOp(const uint8_t *MAC, const uint8_t *data, int datalen, int cmdtype
   newop->cmdtype = cmdtype | (useAlias?0x80:0);
   opQueue.push_back(newop);
   int qlen = opQueue.size();
-  AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: Op queued len now %d"), addrStr(newop->addr, (newop->cmdtype & 0x80)), qlen);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: %s: Operation \"%s\" queued - len now %d"), addrStr(newop->addr, (newop->cmdtype & 0x80)), cmdnames[newop->cmdtype & 0x7f], qlen);
   EQ3DoOp();
   return qlen;
 }
@@ -610,17 +610,17 @@ int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
       if (EQ3Operation(addrev, op->dataToWrite, op->writelen, (int)op->context)){
         //EQ3ParseOp(op, false, retries);
-        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: trv operation failed - retrying %d"), addrStr(addrev), op->state);
+        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: TRV operation \"%s\" failed - retries left: %d - State: %d"), addrStr(addrev), cmdnames[context & 0x7f], retries, op->state);
         opInProgress = 1;
       } else {
         retries = 0;
         EQ3ParseOp(op, false, 0);
-        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: trv operation failed to send op %d"), addrStr(addrev), op->state);
+        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: TRV operation \"%s\" failed to send - State: %d"), addrStr(addrev), cmdnames[context & 0x7f], op->state);
       }
     } else {
       retries = 0;
       EQ3ParseOp(op, false, 0);
-      AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: trv operation failed - no more retries %d"), addrStr(addrev), op->state);
+      AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s: TRV operation \"%s\" failed - no more retries - State: %d"), addrStr(addrev), cmdnames[context & 0x7f], op->state);
     }
     return 0;
   }
@@ -1421,10 +1421,7 @@ int CmndTrvNext(int index, char *data){
       }
 
       // only allow one command in progress
-      if (retries){
-        //return 2;
-      }
-
+      //if (retries) return 2;
 
       int useAlias = 0;
       uint8_t addrbin[7];
@@ -1455,20 +1452,21 @@ int CmndTrvNext(int index, char *data){
       if (param){
         param2 = strtok(nullptr, " ");
       }
+
       int res = EQ3Send(addrbin, cmd, param, param2, useAlias);
-      if (res > 0) {
-        // succeeded to queue
-        AddLog(LOG_LEVEL_INFO, PSTR("EQ3: queued"));
+
+      if (res > 0) { // succeeded to queue
+        AddLog(LOG_LEVEL_INFO, PSTR("EQ3: Command \"%s\" queued"), cmd);
         return 1;
       }
 
       if (res < 0) { // invalid in some way
-        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: invalid"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: Command \"%s\" failed"), cmd);
         return 3;
       }
 
-      AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: failed to queue"));
       // failed to queue
+      AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: Command \"%s\" failed to queue"), cmd);
       return 4;
     } break;
 
