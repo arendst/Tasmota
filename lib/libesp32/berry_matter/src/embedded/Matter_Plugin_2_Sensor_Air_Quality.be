@@ -201,7 +201,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
     self.shadow_air_quality = 0
-    device.add_read_sensors_schedule(self.UPDATE_TIME)
+    if !self.BRIDGE
+      device.add_read_sensors_schedule(self.UPDATE_TIME)
+    end
   end
 
   #############################################################
