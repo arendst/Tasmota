@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for baudrate 74880 replacing 74700 (#24924)
 - Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
 - Limited support for BLE BTHome (#20763)
+- Berry extend `sortedmap` constructor
 
 ### Breaking Changed
 
