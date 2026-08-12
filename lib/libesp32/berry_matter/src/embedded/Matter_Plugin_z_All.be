@@ -43,6 +43,19 @@ def register_native_classes()
         end
     end
   end
+
+  # Dynamic MQTT bridge type registration
+  # Map mqtt_* types to existing HTTP bridge plugin classes
+  var mqtt_prefix = "mqtt_"
+  var http_prefix = "http_"
+  for k: plugins_classes.keys()
+    if string.find(k, http_prefix) == 0
+      # Found an http_* type, create mqtt_* alias
+      var mqtt_type = mqtt_prefix + k[size(http_prefix)..]
+      plugins_classes[mqtt_type] = plugins_classes[k]
+    end
+  end
+
   return plugins_classes
 end
 
