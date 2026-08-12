@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests (#24916)
+- Berry `json.dump()` works with subclasses of `map` and `list`
 
 ### Fixed
 - Can sniffer functionality (#18287)
