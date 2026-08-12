@@ -78,6 +78,7 @@ class Matter_UI
   "for(var t in dn){"
   "if(t==='-virtual'){h+='<option disabled>--- Virtual ---</option>';continue;}"
   "if(t==='-zigbee'){h+='<option disabled>--- Zigbee ---</option>';continue;}"
+  "if(t.indexOf('mqtt_')===0&&typeof remtopic==='undefined')continue;"
   "h+='<option value=\"'+t+'\"'+(t===sel?' selected':'')+'>'+dn[t]+'</option>';}"
   "return h;};"
   # Generate parameter rows as table rows (indented under the header row)
@@ -111,7 +112,7 @@ class Matter_UI
   "if(isNew){"
   "h+='<td style=\"font-size:smaller\"><select id=\"epTyp'+ep+'\" onchange=\"chgType('+ep+',this.value)\">'+typeOpts(typ)+'</select></td>';"
   "}else{"
-  "var dnam=dn[typ]||(typ.indexOf('http_')===0?'&#x1F517; '+(dn[typ.substring(5)]||typ.substring(5)):typ);"
+  "var dnam=dn[typ]||(typ.indexOf('http_')===0?'&#x1F517; '+(dn[typ.substring(5)]||typ.substring(5)):(typ.indexOf('mqtt_')===0?'&#x1F4E1; '+(dn[typ.substring(5)]||typ.substring(5)):typ));"
   "h+='<td style=\"font-size:smaller\"><b>'+dnam+'</b></td>';}"
   "h+='<td style=\"text-align:center\"><button type=\"button\" title=\"Delete\" "
   "style=\"background:none;border:none;line-height:1;cursor:pointer\" "
@@ -199,6 +200,10 @@ class Matter_UI
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
                               "|http_airquality"
+  static var _CLASSES_TYPES3= "|mqtt_relay|mqtt_light0|mqtt_light1|mqtt_light2|mqtt_light3"
+                              "|mqtt_temperature|mqtt_pressure|mqtt_illuminance|mqtt_humidity"
+                              "|mqtt_occupancy|mqtt_contact|mqtt_flow|mqtt_rain|mqtt_waterleak"
+                              "|mqtt_airquality"
   var device
   var matter_enabled
 
@@ -363,6 +368,7 @@ class Matter_UI
   def handle_config_json()
     import webserver
     import json
+    import string
     
     var config_json_str = webserver.arg("config_json")
     if config_json_str == nil || config_json_str == ""
@@ -383,6 +389,12 @@ class Matter_UI
       end
       if self.device.plugins_classes.find(typ) == nil
         raise "value_error", "Unknown type '" + typ + "' for endpoint " + ep_str
+      end
+      if string.find(typ, "mqtt_") == 0 && !conf.find("topic")
+        raise "value_error", "MQTT endpoint " + ep_str + " missing topic"
+      end
+      if string.find(typ, "http_") == 0 && !conf.find("url")
+        raise "value_error", "HTTP endpoint " + ep_str + " missing url"
       end
     end
     
@@ -807,9 +819,9 @@ class Matter_UI
 
     # Emit JavaScript data and functions first (before the HTML that uses them)
     if self.device.zigbee
-      self.show_plugins_hints_js(self._CLASSES_TYPES_STD, self.device.zigbee._CLASSES_TYPES, self._CLASSES_TYPES_VIRTUAL)
+      self.show_plugins_hints_js(self._CLASSES_TYPES_STD, self.device.zigbee._CLASSES_TYPES, self._CLASSES_TYPES_VIRTUAL, self._CLASSES_TYPES3)
     else
-      self.show_plugins_hints_js(self._CLASSES_TYPES_STD, self._CLASSES_TYPES_VIRTUAL)
+      self.show_plugins_hints_js(self._CLASSES_TYPES_STD, self._CLASSES_TYPES_VIRTUAL, self._CLASSES_TYPES3)
     end
 
     webserver.content_send("<fieldset><legend><b>&nbsp;Configuration&nbsp;</b></legend><p></p>")
@@ -838,6 +850,7 @@ class Matter_UI
 
       # skip any remote class
       if string.find(typ, "http_") == 0   i += 1   continue    end
+      if string.find(typ, "mqtt_") == 0   i += 1   continue    end
 
       found = true
       webserver.content_send(f"<script>document.write(genEpRows({ep:i},cfg['{ep:i}'],false))</script>")
@@ -899,6 +912,50 @@ class Matter_UI
       end
     end
 
+    # --- MQTT Remote devices ---
+    var mqtt_remotes = []
+    for conf: self.device.plugins_config
+      var topic = conf.find("topic")
+      if topic != nil
+        mqtt_remotes.push(topic)
+      end
+    end
+    self.device.sort_distinct(mqtt_remotes)
+
+    for remote: mqtt_remotes
+      var remote_html = webserver.html_escape(remote)
+      var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(remote).find('name', remote) )
+      webserver.content_send(f"&#x1F4E1; <b>{host_device_name}</b> <i>(MQTT: {remote_html})</i>")
+      webserver.content_send("<table style='width:100%'>"
+                             "<tr>"
+                             "<td width='25'></td>"
+                             "<td width='78'></td>"
+                             "<td width='115'></td>"
+                             "<td width='15'></td>"
+                             "</tr>")
+
+      found = false
+      i = 0
+      while i < size(endpoints)
+        var ep = endpoints[i]
+        var conf = self.device.plugins_config.find(str(ep))
+        var typ = conf.find('type')
+        if !typ   i += 1   continue    end
+        if string.find(typ, "mqtt_") != 0   i += 1   continue    end
+        if conf.find("topic") != remote   i += 1   continue    end
+
+        found = true
+        webserver.content_send(f"<script>document.write(genEpRows({ep:i},cfg['{ep:i}'],false))</script>")
+        i += 1
+      end
+
+      webserver.content_send("</table><p></p>")
+
+      if !found
+        webserver.content_send("<p>&lt;none&gt;</p>")
+      end
+    end
+
     # Save configuration button
     webserver.content_send("<button name='config' class='button bgrn'"
                            " onclick='return submitConfig(this.form)'>"
@@ -915,7 +972,28 @@ class Matter_UI
                            "<td width='10' style='font-size:smaller;'><b>/</b></td></tr>"
                            "</table>"
                            "<div style='display: block;'></div>"
-                           "<button class='button bgrn'>Auto-configure remote Tasmota</button></form><hr>")
+                           "<button class='button bgrn'>Auto-configure remote Tasmota</button></form>")
+
+    # Discovered MQTT devices (AJAX live, 1s polling)
+    webserver.content_send("<hr><p><b>Discovered MQTT Devices</b></p>"
+                           "<div id='mqtt_disc'><i>Subscribing to tasmota/discovery...</i></div>")
+
+    webserver.content_send("<script>")
+    webserver.content_send("function updDisc(d){")
+    webserver.content_send("var el=document.getElementById('mqtt_disc');")
+    webserver.content_send("if(!el)return;")
+    webserver.content_send("var k=Object.keys(d);")
+    webserver.content_send("if(!k.length){el.innerHTML='<i>No devices discovered yet. Reboot a Tasmota device on this broker.</i>';return;}")
+    webserver.content_send("el.textContent='';var tb=document.createElement('table');tb.style.width='100%';")
+    webserver.content_send("var hr=tb.insertRow();['IP','MAC','Topic',''].forEach(function(v){var c=hr.insertCell();c.style.fontSize='smaller';c.style.paddingRight='10px';var b=document.createElement('b');b.textContent=v;c.appendChild(b);});")
+    webserver.content_send("for(var i=0;i<k.length;i++){")
+    webserver.content_send("var t=k[i],n=d[t],r=tb.insertRow();[n.ip,n.mac,t].forEach(function(v){var c=r.insertCell();c.style.paddingRight='10px';c.textContent=v==null?'':v;});var a=r.insertCell();")
+    webserver.content_send("if(n.added)a.textContent='✓ added';")
+    webserver.content_send("else{var l=document.createElement('a');l.className='button bgrn';l.href='/matteradd?topic='+encodeURIComponent(t);l.textContent='Add';a.appendChild(l);}}")
+    webserver.content_send("el.appendChild(tb);}")
+    webserver.content_send("setInterval(function(){fetch('/matter_api/disc').then(function(r){return r.json()}).then(updDisc)},1000);")
+    webserver.content_send("updDisc({});")
+    webserver.content_send("</script><hr>")
 
     # button "Reset and Auto-discover"
     webserver.content_send("<form action='/matterc' method='post'"
@@ -990,6 +1068,8 @@ class Matter_UI
     import webserver
 
     if !webserver.check_privileged_access() return nil end
+
+    self.device.ensure_discovery()          # lazy subscribe to tasmota/discovery/# on first visit
 
     webserver.content_start("Matter")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
@@ -1190,6 +1270,179 @@ class Matter_UI
   end
 
   #######################################################################
+  # AJAX endpoint: return discovered MQTT devices as JSON
+  #######################################################################
+  def page_api_discovered()
+    import webserver
+    if !webserver.check_privileged_access() return nil end
+    webserver.content_open(200, "application/json")
+    webserver.content_send(self.device.get_discovered_mqtt_json())
+  end
+
+  #######################################################################
+  # Show MQTT remote device add form
+  #######################################################################
+  def show_mqtt_add(topic)
+    import webserver
+    import json
+
+    if topic == ''  return end
+
+    # check if we have discovery data for this topic
+    var discovered = self.device.discovered_devices
+    if discovered != nil && discovered.contains(topic)
+      var config_data = discovered[topic].find('config', {})
+      var sensors_data = discovered[topic].find('sensors')
+      var config_list = matter.MQTT_remote.generate_config_from_discovery(self.device, config_data, sensors_data)
+      if config_list != nil && size(config_list) > 0
+        self.show_mqtt_add_discovered(topic, matter.MQTT_remote.discovery_info(config_data), config_list)
+        return
+      end
+    end
+    # no discovery data yet - show waiting page with AJAX polling
+    self.show_mqtt_add_waiting(topic)
+  end
+
+  #######################################################################
+  # Show MQTT add page waiting for discovery - user needs to reboot device
+  #######################################################################
+  def show_mqtt_add_waiting(topic)
+    import webserver
+
+    var topic_html = webserver.html_escape(topic)
+    webserver.content_send("<fieldset><legend><b>&nbsp;Matter MQTT Remote Device&nbsp;</b></legend><p></p>"
+                           "<p><b>Add Remote MQTT sensor or device</b></p>")
+
+    webserver.content_send(f"<p>&#x1F4E1; Topic: <b>{topic_html}</b></p>")
+
+    webserver.content_send("<p>Waiting for device discovery...</p>"
+                           "<p>Please <b>reboot</b> the remote device now.</p>"
+                           "<p>The page will redirect automatically when discovered.</p>")
+
+    # AJAX polling: check every 1s if device appears in discovery
+    webserver.content_send("<script type='text/javascript'>")
+    webserver.content_send("var waitingTopic=new URLSearchParams(location.search).get('topic')||'';")
+    webserver.content_send("setInterval(function(){")
+    webserver.content_send("  fetch('/matter_api/disc').then(function(r){return r.json()}).then(function(d){")
+    webserver.content_send("    if(d[waitingTopic])location.href='/matteradd?topic='+encodeURIComponent(waitingTopic);")
+    webserver.content_send("  })")
+    webserver.content_send("},1000);")
+    webserver.content_send("</script>")
+
+    webserver.content_send("</fieldset>")
+  end
+
+  #######################################################################
+  # Show MQTT add page with discovered endpoints
+  #######################################################################
+  def show_mqtt_add_discovered(topic, info, config_list)
+    import webserver
+    import json
+    import string
+
+    var topic_html = webserver.html_escape(topic)
+
+    # Emit JS data: schemas (ps), display names (dn) for mqtt types
+    webserver.content_send("<script type='text/javascript'>")
+    self.generate_schema_js()
+    self.generate_display_names_js([self._CLASSES_TYPES3])
+    webserver.content_send("var remtopic=new URLSearchParams(location.search).get('topic')||'';")
+    webserver.content_send("</script>")
+    webserver.content_send(self._ADD_ENDPOINT_JS)
+
+    webserver.content_send("<fieldset><legend><b>&nbsp;Matter MQTT Remote Device&nbsp;</b></legend><p></p>"
+                           "<p><b>Add Remote MQTT sensor or device</b></p>")
+
+    webserver.content_send(f"<p>&#x1F4E1; Topic: <b>{topic_html}</b></p>")
+
+    # show device info from discovery
+    if info.contains('name')
+      webserver.content_send(f"<p>Device: <b>{webserver.html_escape(info.find('name', ''))}</b></p>")
+    end
+    if info.contains('version')
+      webserver.content_send(f"<p>Version: {webserver.html_escape(info.find('version', ''))}</p>")
+    end
+
+    # Emit the detected config as a JS array for client-side rendering
+    # Each entry has 'type' prefixed with 'mqtt_' and parameter values
+    var rem_configs = []
+    for config: config_list
+      var entry = {}
+      for k: config.keys()
+        if k == 'type'
+          entry['type'] = 'mqtt_' + config['type']
+        else
+          entry[k] = config[k]
+        end
+      end
+      rem_configs.push(entry)
+    end
+    # JSON embedded in a script must not contain a literal '<' (for example </script> from a sensor name).
+    var rem_configs_json = string.replace(json.dump(rem_configs), '<', '\\u003C')
+    webserver.content_send("<script type='text/javascript'>")
+    webserver.content_send(format("var remcfg=%s;", rem_configs_json))
+    webserver.content_send("</script>")
+
+    # Form with hidden JSON field, rendered by JS
+    webserver.content_send("<form action='/matterc' method='post' onsubmit='return submitMqttRemote(this)'>"
+                           "<input name='topic' type='hidden' value='" + topic_html + "'>"
+                           "<input name='rem_json' type='hidden' value=''>"
+                           "<table id='mqttTbl' style='width:100%'>"
+                           "<tr>"
+                           "<td width='25' style='font-size:smaller;'>#</td>"
+                           "<td width='78' style='font-size:smaller;'>Name</td>"
+                           "<td width='115' style='font-size:smaller;'>Type</td>"
+                           "<td width='15'></td>"
+                           "</tr>"
+                           "</table>"
+                           "<div style='display: block;'></div>"
+                           "<button name='addrem' class='button bgrn'>Add endpoints</button>"
+                           "</form>")
+
+    # JS to populate the table from remcfg and handle submission
+    webserver.content_send(
+      "<script type='text/javascript'>"
+      "var mri=0;"
+      # Render detected endpoints
+      "remcfg.forEach(function(c){"
+      "var tbl=eb('mqttTbl');"
+      "if(tbl)tbl.insertAdjacentHTML('beforeend',genEpRows('mr'+mri,c,false));"
+      "mri++;});"
+      # Add one empty row for new endpoint
+      "(function(){"
+      "var tbl=eb('mqttTbl');"
+      "if(tbl)tbl.insertAdjacentHTML('beforeend',genEpRows('mr'+mri,{type:''},true));"
+      "mri++;})();"
+      # submitMqttRemote: collect all endpoint data into JSON
+      "function submitMqttRemote(f){"
+      "var eps=[];"
+      "for(var i=0;i<mri;i++){"
+      "var ne=eb('epNammr'+i);"
+      "var te=eb('epTypmr'+i);"
+      "var typ=te?te.value:remcfg[i]?remcfg[i].type:'';"
+      "if(!typ)continue;"
+      "var ep={type:typ};"
+      "if(ne){var v=ne.value.trim();if(v)ep.name=v;}"
+      "var schema=ps?ps[typ]:null;"
+      "if(schema){"
+      "for(var key in schema){"
+      "var def=parseSchema(schema[key]);"
+      "var akey=def.a||key;"
+      "var fe=eb('epmr'+i+'_'+key);"
+      "if(fe){"
+      "var v=fe.type==='checkbox'?(fe.checked?1:0):fe.value;"
+      "if(v!==''&&v!==null&&v!==undefined){"
+      "ep[akey]=(def.t==='i')?parseInt(v,10):v;"
+      "}}}}"
+      "eps.push(ep);}"
+      "f.elements['rem_json'].value=JSON.stringify(eps);"
+      "return true;}"
+      "</script>")
+
+    webserver.content_send("</fieldset>")
+  end
+
+  #######################################################################
   # Display the page for adding a new endpoint
   #######################################################################
   def page_part_mgr_add()
@@ -1201,8 +1454,13 @@ class Matter_UI
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     var url = webserver.arg("url")
+    var topic = webserver.arg("topic")
     if self.matter_enabled
-      self.show_remote_autoconf(url)
+      if topic != nil && topic != ''
+        self.show_mqtt_add(topic)
+      elif url != nil && url != ''
+        self.show_remote_autoconf(url)
+      end
     end
     webserver.content_button(webserver.BUTTON_CONFIGURATION)
     webserver.content_stop()                        #- end of web page -#
@@ -1320,6 +1578,64 @@ class Matter_UI
       #---------------------------------------------------------------------#
       elif webserver.has_arg("addrem")
         var url = webserver.arg('url')
+        var topic = webserver.arg('topic')
+
+        # Handle MQTT remote
+        if topic != nil && topic != ''
+          var rem_json_str = webserver.arg('rem_json')
+          if rem_json_str != nil && rem_json_str != ''
+            import json
+            var endpoints = json.load(rem_json_str)
+            if endpoints != nil
+              for ep_conf: endpoints
+                var typ = ep_conf.find('type', '')
+                if typ == ''    continue    end
+                # Convert http_* to mqtt_* type
+                if string.find(typ, "http_") == 0
+                  typ = "mqtt_" + typ[5..]
+                end
+                var typ_class = self.device.plugins_classes.find(typ)
+                if typ_class == nil   continue   end
+
+                var config = {'topic': topic, 'type': typ}
+                var nam = ep_conf.find('name')
+                if nam    config['name'] = nam    end
+                # copy all schema parameters from the submitted config
+                for k: ep_conf.keys()
+                  if k != 'type' && k != 'name'
+                    config[k] = ep_conf[k]
+                  end
+                end
+
+                # check if configuration is already present
+                var duplicate = false
+                for c: self.device.plugins_config   # iterate on values, not on keys()
+                  if self.equal_map(c, config)   duplicate = true  break   end
+                end
+                # not a duplicate, add it
+                if !duplicate
+                  log(format("MTR: mqtt remote add topic='%s' type='%s'", topic, typ), 3)
+                  self.device.bridge_add_endpoint(typ, config)
+                end
+              end
+            end
+          end
+          # Endpoint construction registers the remote. Attach discovery metadata
+          # only after a configured endpoint exists, then persist it once.
+          if self.device.mqtt_remotes != nil && self.device.mqtt_remotes.contains(topic)
+            var discovered = self.device.discovered_devices.find(topic, {})
+            var discovery_config = discovered.find('config')
+            var mqtt_remote = self.device.mqtt_remotes[topic]
+            if discovery_config != nil && mqtt_remote.set_info_from_discovery(discovery_config)
+              mqtt_remote.info_changed()
+            end
+          end
+          #- and go back to Matter configuration -#
+          webserver.redirect("/matterc?")
+          return
+        end
+
+        # Handle HTTP remote (existing code)
         if url == nil || url == ''    raise "value_error", "url shouldn't be null"  end
 
         var rem_json_str = webserver.arg('rem_json')
@@ -1389,23 +1705,34 @@ class Matter_UI
     if (self.device.plugins == nil)   return  end
     import webserver
     var bridge_plugin_by_host
+    var bridge_plugin_by_mqtt_topic
     
     var idx = 0
     while idx < size(self.device.plugins)
       var plg = self.device.plugins[idx]
 
       if plg.BRIDGE
-        if bridge_plugin_by_host == nil     bridge_plugin_by_host = {}   end
-        var host = plg.http_remote.addr
-
-        if !bridge_plugin_by_host.contains(host)    bridge_plugin_by_host[host] = []    end
-        bridge_plugin_by_host[host].push(plg)
-
+        if plg.mqtt_remote
+          # MQTT bridge
+          if bridge_plugin_by_mqtt_topic == nil     bridge_plugin_by_mqtt_topic = {}   end
+          var topic = plg.mqtt_remote.topic
+          if !bridge_plugin_by_mqtt_topic.contains(topic)    bridge_plugin_by_mqtt_topic[topic] = []    end
+          bridge_plugin_by_mqtt_topic[topic].push(plg)
+        elif plg.http_remote
+          # HTTP bridge
+          if bridge_plugin_by_host == nil     bridge_plugin_by_host = {}   end
+          var host = plg.http_remote.addr
+          if !bridge_plugin_by_host.contains(host)    bridge_plugin_by_host[host] = []    end
+          bridge_plugin_by_host[host].push(plg)
+        end
       end
       idx += 1
     end
 
-    if bridge_plugin_by_host == nil     return    end         # no remote device, abort
+    if bridge_plugin_by_host == nil && bridge_plugin_by_mqtt_topic == nil     return    end         # no remote device, abort
+
+    # close the current sensor table, we need a dedicated bridge table
+    webserver.content_send("</table>")
 
     # set specific styles
     webserver.content_send("<hr>")
@@ -1421,22 +1748,45 @@ class Matter_UI
         "</style>"
     )
 
-    for host: self.device.k2l(bridge_plugin_by_host)
-      var host_html = webserver.html_escape(host)
-      var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(host).find('name', host) )
-      webserver.content_send(f"<tr class='ztdm htrm'><td>&#x1F517; <a target='_blank' title='http://{host_html}/' href=\"http://{host_html}/?\"'>{host_device_name}</a></td>")
-      var http_remote = bridge_plugin_by_host[host][0].http_remote    # get the http_remote object from the first in list
-      webserver.content_send(http_remote.web_last_seen())
+    # HTTP remotes
+    if bridge_plugin_by_host
+      for host: self.device.k2l(bridge_plugin_by_host)
+        var host_html = webserver.html_escape(host)
+        var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(host).find('name', host) )
+        webserver.content_send(f"<tr class='ztdm htrm'><td>&#x1F517; <a target='_blank' title='http://{host_html}/' href=\"http://{host_html}/?\"'>{host_device_name}</a></td>")
+        var http_remote = bridge_plugin_by_host[host][0].http_remote    # get the http_remote object from the first in list
+        webserver.content_send(http_remote.web_last_seen())
 
-      for plg: bridge_plugin_by_host[host]
-        webserver.content_send("<tr class='htrm'><td colspan='2'>")
-        plg.web_values()                                      # show values
-        webserver.content_send("</td></tr>")
+        for plg: bridge_plugin_by_host[host]
+          webserver.content_send("<tr class='htrm'><td colspan='2'>")
+          plg.web_values()                                      # show values
+          webserver.content_send("</td></tr>")
+        end
+      end
+    end
+
+    # MQTT remotes
+    if bridge_plugin_by_mqtt_topic
+      for topic: self.device.k2l(bridge_plugin_by_mqtt_topic)
+        var topic_html = webserver.html_escape(topic)
+        var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(topic).find('name', topic) )
+        webserver.content_send(f"<tr class='ztdm htrm'><td>&#x1F4E1; <b>{host_device_name}</b> <i>(MQTT: {topic_html})</i></td>")
+        var mqtt_remote = bridge_plugin_by_mqtt_topic[topic][0].mqtt_remote    # get the mqtt_remote object from the first in list
+        webserver.content_send(mqtt_remote.web_last_seen())
+
+        for plg: bridge_plugin_by_mqtt_topic[topic]
+          webserver.content_send("<tr class='htrm'><td colspan='2'>")
+          plg.web_values()                                      # show values
+          webserver.content_send("</td></tr>")
+        end
       end
     end
 
 
     webserver.content_send("</table><hr>")
+
+    # reopen the sensor table for subsequent drivers
+    webserver.content_send("<table style='width:100%'>")
 
   end
 
@@ -1484,6 +1834,7 @@ class Matter_UI
     webserver.on("/matterc", / -> self.page_part_ctl(), webserver.HTTP_POST)
     webserver.on("/mattera", / -> self.page_part_mgr_adv(), webserver.HTTP_GET)   # advanced
     webserver.on("/matteradd", / -> self.page_part_mgr_add(), webserver.HTTP_GET)   # add endpoint
+    webserver.on("/matter_api/disc", / -> self.page_api_discovered(), webserver.HTTP_GET)   # AJAX discovered MQTT devices
   end
 end
 matter.UI = Matter_UI

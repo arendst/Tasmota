@@ -9,11 +9,13 @@ All notable changes to this project will be documented in this file.
 - Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
 - Limited support for BLE BTHome (#20763)
 - Shelly Pro 2PM emulation for ESP32 (`Emulation 3`) (#24952)
+- Berry extend `sortedmap` constructor
 
 ### Breaking Changed
 
 ### Changed
 - Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests (#24916)
+- Berry `json.dump()` works with subclasses of `map` and `list`
 
 ### Fixed
 - Can sniffer functionality (#18287)

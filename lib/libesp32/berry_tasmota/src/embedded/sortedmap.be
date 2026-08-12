@@ -10,11 +10,26 @@ class sortedmap
   var _keys    # list for maintaining sorted keys
   
   # Constructor
-  def init()
+  def init(base)
     self._data = {}
     self._keys = []
+    if isinstance(base, map) || isinstance(base, sortedmap)
+      self._load(base, self)
+    end
   end
 
+  # Shallow copy from existing map  
+  def _load(org, copy)
+    for key : org.keys()
+      var value = org.item(key)
+      if isinstance(value, map) || isinstance(value, sortedmap)
+        value = self._load(value, sortedmap())
+      end
+      copy.insert(key, value)
+    end
+    return copy
+  end
+  
   # Insert a new key-value pair or update existing value
   def insert(key, value)
     var is_new = !self._data.contains(key)
