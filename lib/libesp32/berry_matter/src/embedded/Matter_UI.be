@@ -1731,6 +1731,9 @@ class Matter_UI
 
     if bridge_plugin_by_host == nil && bridge_plugin_by_mqtt_topic == nil     return    end         # no remote device, abort
 
+    # close the current sensor table, we need a dedicated bridge table
+    webserver.content_send("</table>")
+
     # set specific styles
     webserver.content_send("<hr>")
     webserver.content_send("<table style='width:100%'>")
@@ -1781,6 +1784,9 @@ class Matter_UI
 
 
     webserver.content_send("</table><hr>")
+
+    # reopen the sensor table for subsequent drivers
+    webserver.content_send("<table style='width:100%'>")
 
   end
 
