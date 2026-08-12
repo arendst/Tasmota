@@ -334,7 +334,7 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #endif
 
 #ifndef EMULATION
-#define EMULATION                   EMUL_NONE  // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+#define EMULATION                   EMUL_NONE  // [Emulation] Select Belkin WeMo (single relay/light), Hue Bridge (multi relay/light) or Shelly emulation (EMUL_NONE, EMUL_WEMO, EMUL_HUE or EMUL_SHELLY)
 #endif
 
 #ifndef MTX_ADDRESS1                           // Add Display Support for up to eigth Matrices
