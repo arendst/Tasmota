@@ -2127,7 +2127,7 @@ bool BTHomeGetObject(const uint8_t * _buf, uint32_t length, uint32_t &idx, uint3
 
   if (!BTHomeGetObjectData(obj_id, dlength, dformat, dfactor)) {
 #ifdef USE_MI_DEBUG 
-    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Invalid obj id 0x%02x"), obj_id);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Invalid obj id 0x%02x (%d)"), obj_id, obj_id);
 #endif
     return false;
   }
@@ -2272,7 +2272,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     }
     float value_float = ((1 == dformat) ? (float)value_int : (float)value_uint) * factor;
 
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: ** Obj %02X, Vars int %d, uint %d, float %*_f"), obj_id, value_int, value_uint, dfactor, &value_float);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: ** Obj %02x, Vars int %d, uint %d, float %*_f"), obj_id, value_int, value_uint, dfactor, &value_float);
 
     switch (obj_id) {
       case 0x00:   // Packet ID (already used above)
@@ -2354,7 +2354,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       case 0x3B:   // Event command 0..2 uint16, 3..4 uint24
       case 0x53:   // Text
       case 0x54: { // Raw
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj %02X %*_H"), obj_id, dlength, _buf + idx);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj id 0x%02x (%d), data %*_H"), obj_id, obj_id, dlength, _buf + idx);
       } break;
 
       case 0x64: { // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
@@ -2365,7 +2365,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       default:
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj %02X %*_H = %*_f"), obj_id, dlength, _buf + idx, dfactor, &value_float);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj id 0x%02x (%d), data %*_H = %*_f"), obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
         break;
     }
     idx += dlength;
