@@ -398,6 +398,8 @@ struct mi_sensor_t{
       uint32_t scale:1;
       uint32_t impedance:1;
       uint32_t flooding:1;
+      uint32_t volt:1;
+      uint32_t pres:1;
     };
     uint32_t raw;
   } feature;
@@ -418,6 +420,8 @@ struct mi_sensor_t{
       uint32_t light:1; // binary light sensor
       uint32_t scale:1;
       uint32_t flooding:1;
+      uint32_t volt:1;
+      uint32_t pres:1;
     };
     uint32_t raw;
   } eventType;
@@ -431,6 +435,8 @@ struct mi_sensor_t{
   uint32_t lastTime;
   uint32_t lux;
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
+  float volt; // BTHome voltage
+  float pres; // BTHome pressure
   union {
     struct {
       uint8_t moisture;
@@ -1973,13 +1979,13 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
  * BLE Service UUID: 0xFCD2
 \*********************************************************************************************/
 
-// BTHome v2 object ID to data-length mapping table (obj_id, data_len pairs, 0xFF = sentinel)
+// BTHome v2 object ID to data-length mapping table (0xFF = sentinel)
 struct bthome_obj_def_t { 
   uint8_t obj_id;
   union {
     struct {
       uint8_t length:2;  // 0 = 1, 1 = 2, 2 = 3, 3 = 4
-      uint8_t format:2;  // 0 = uint, 1 = int
+      uint8_t format:2;  // 0 = uint, 1 = int, 2 = command, text or raw
       uint8_t factor:4;  // 0 = 1, 1 = 0.1, 2 = 0.01, 3 = 0.001, 4 = 0.0001, 5 = 0.00001, 6 = 0.000001, 7 = 0.35
     };
     uint8_t raw;
@@ -2042,7 +2048,7 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x2E, 0, 0, 0},  // Humidity (1 deg) uint8
   {0x2F, 0, 0, 0},  // Moisture (1 %) uint8
   {0x3A, 0, 0, 0},  // Event button uint8
-  {0x3B, 1, 0, 0},  // Event command 0..2 uint16, 3..4 uint24
+  {0x3B, 1, 2, 0},  // Event command 0..2 uint16, 3..4 uint24
   {0x3C, 1, 0, 0},  // Event dimmer uint16
   {0x3D, 1, 0, 0},  // Count (1) uint16
   {0x3E, 3, 0, 0},  // Count (1) uint32
@@ -2066,8 +2072,8 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x50, 3, 0, 0},  // Timestamp uint32
   {0x51, 1, 0, 3},  // Acceleration (0.001 m/s2) uint16
   {0x52, 1, 0, 3},  // Gyroscope (0.001 deg/s) uint16
-  {0x53, 0, 0, 0},  // Text
-  {0x54, 0, 0, 0},  // Raw
+  {0x53, 0, 2, 0},  // Text
+  {0x54, 0, 2, 0},  // Raw
   {0x55, 3, 0, 3},  // Volume storage (0.001 L) uint32
   {0x56, 1, 0, 0},  // Conductivity (1 uS/cm) uint16
   {0x57, 0, 1, 0},  // Temperature (1 °C) int8
@@ -2091,7 +2097,7 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0xFF, 0, 0, 0}   // sentinel
 };
 
-// Returns data length for a BTHome v2 object ID, or -1 if unknown
+// Returns True, data length, format and factor for a BTHome v2 object ID, or False if unknown
 bool BTHomeGetObjectData(uint8_t obj_id, uint32_t &length, uint32_t &format, uint32_t &factor) {
   for (int i = 0; BTHOME_OBJECTS[i].obj_id != 0xFF; i++) {
     if (BTHOME_OBJECTS[i].obj_id == obj_id) {
@@ -2104,6 +2110,44 @@ bool BTHomeGetObjectData(uint8_t obj_id, uint32_t &length, uint32_t &format, uin
   return false;
 }
 
+// Returns True, object ID, data length, format and factor, or False if invalid or end-of-packet
+bool BTHomeGetObject(const uint8_t * _buf, uint32_t length, uint32_t &idx, uint32_t &obj_id, uint32_t &dlength, uint32_t &dformat, uint32_t &dfactor) {
+  if (idx >= length) {
+    return false; // End of packet reached
+  }
+
+  uint32_t last_obj_id = obj_id;
+  obj_id = _buf[idx++];
+  if (obj_id < last_obj_id) {
+#ifdef USE_MI_DEBUG 
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Invalid obj order"));
+#endif
+    return false;
+  }
+
+  if (!BTHomeGetObjectData(obj_id, dlength, dformat, dfactor)) {
+#ifdef USE_MI_DEBUG 
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Invalid obj id 0x%02x"), obj_id);
+#endif
+    return false;
+  }
+
+  if ((0x3B == obj_id) || (0x53 == obj_id) || (0x54 == obj_id)) {  // Command, Text or Raw add length
+    uint32_t len = _buf[idx++];
+    if (0x3B == obj_id) {
+      len &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
+    }
+    dlength = len;
+  }
+  if ((idx + (uint32_t)dlength) > length) {
+#ifdef USE_MI_DEBUG 
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Invalid obj size"));
+#endif
+    return false;
+  }
+  return true;
+}
+
 ////////////////////////////////////////////////////////////
 // this SHOULD parse any BTHome packet, including encrypted.
 void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t *mac, int RSSI) {
@@ -2111,17 +2155,17 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     return;
   }
 
-  uint8_t devInfo = _buf[0];
-  uint8_t version = (devInfo >> 5) & 0x07;
+  uint32_t devInfo = _buf[0];
+  uint32_t version = (devInfo >> 5) & 0x07;
   // Only BTHome v2 is supported (version field == 2)
   if (version != 2) {
-    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: unsupported version %d"), version);
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Unsupported version %d"), version);
     return;
   }
 
   bool encrypted = devInfo & 0x01;
   if (encrypted) {
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: MAC `%6_H` encrypted packet (%*_H)"), mac, length, _buf);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: MAC `%6_H` encrypted packet (%*_H)"), mac, length, _buf);
 
     uint8_t *buf = (uint8_t *)_buf;
     uint16_t uuid = 0xFCD2;
@@ -2142,20 +2186,20 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     // no longer need the nonce data.
     length -= 8;
 
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: decrypted packet %*_H"), length, buf);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Decrypted packet %*_H"), length, buf);
 
     switch(decres){
       case 1: // decrypt not requested
         break;
       case 0: // suceeded
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: Payload decrypted"), MIaddrStr(mac));
+//        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("BTH: %s payload decrypted"), MIaddrStr(mac));
         break;
       case -1: // key failed to work
-        AddLog(LOG_LEVEL_ERROR,PSTR("M32: %s: Payload decrypt failed"), MIaddrStr(mac));
+        AddLog(LOG_LEVEL_ERROR,PSTR("BTH: %s payload decrypt failed"), MIaddrStr(mac));
         return;
         break;
       case -2: // key not present
-        AddLog(LOG_LEVEL_ERROR,PSTR("M32: %s: Payload encrypted but no key"), MIaddrStr(mac));
+        AddLog(LOG_LEVEL_ERROR,PSTR("BTH: %s payload encrypted but no key"), MIaddrStr(mac));
         return;
         break;
     }
@@ -2164,7 +2208,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   }
 
 #ifdef USE_MI_DEBUG 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: packet %*_H"), length, _buf);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Packet %*_H"), length, _buf);
 #endif
 
   uint32_t dlength;
@@ -2172,28 +2216,15 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   uint32_t dfactor;
 
   // First pass: find optional packet_id (object 0x00) for duplicate detection
-  uint8_t packetId = 0;
-  uint32_t j = 1;
-  while (j < length) {
-    uint8_t oid = _buf[j++];
-    if (!BTHomeGetObjectData(oid, dlength, dformat, dfactor)) {
+  uint32_t packetId = 0;
+  uint32_t obj_id = 0;
+  uint32_t idx = 1;
+  while (BTHomeGetObject(_buf, length, idx, obj_id, dlength, dformat, dfactor)) {
+    if (0x00 == obj_id) { 
+      packetId = _buf[idx];
       break;
     }
-    if ((0x3B == oid) || (0x53 == oid) || (0x54 == oid)) {  // Command, Text or Raw add length
-      uint32_t len = _buf[j];
-      if (0x3B == oid) {
-        len &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
-      }
-      dlength += len;
-    }
-    if ((j + (uint32_t)dlength) > length) {
-      break;
-    }
-    if (0x00 == oid) { 
-      packetId = _buf[j];
-      break;
-    }
-    j += dlength;
+    idx += dlength;
   }
   uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packetId);
   if ((slot == 0xff) || (slot >= MIBLEsensors.size())) {
@@ -2208,54 +2239,26 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
   // Second pass: parse all measurement objects
   int res = 0;
-  uint8_t last_obj_id = 0;
-  uint32_t i = 1;
-  while (i < length) {
-    uint8_t obj_id = _buf[i++];
+  obj_id = 0;
+  idx = 1;
+  while (BTHomeGetObject(_buf, length, idx, obj_id, dlength, dformat, dfactor)) {
 
-    if (obj_id < last_obj_id) {
-#ifdef USE_MI_DEBUG 
-      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: invalid obj order"));
-#endif
-      break;
-    }
-    last_obj_id = obj_id;
-
-    if (!BTHomeGetObjectData(obj_id, dlength, dformat, dfactor)) {
-#ifdef USE_MI_DEBUG 
-      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: invalid obj id 0x%02x"), obj_id);
-#endif
-      break;
-    }
-    if ((0x3B == obj_id) || (0x53 == obj_id) || (0x54 == obj_id)) {  // Command, Text or Raw add length
-      uint32_t len = _buf[i];
-      if (0x3B == obj_id) {
-        len &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
-      }
-      dlength += len;
-    }
-    if ((i + (uint32_t)dlength) > length) {
-#ifdef USE_MI_DEBUG 
-      AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: invalid obj size"));
-#endif
-      break;
-    }
-
-    int value_int = 0;
     uint32_t value_uint = 0;
-    if (1 == dformat) {  // int
+    int value_int = 0;
+    if (0 == dformat) {      // uint
+      for (uint32_t l = 0; l < dlength; l++) {
+        value_uint |= ((uint32_t)_buf[idx+l] << (l * 8));
+      }
+    }
+    else if (1 == dformat) { // int
       if (1 == dlength) {
-        value_int = (int8_t)_buf[i];
+        value_int = (int8_t)_buf[idx];
       }
       else if (2 == dlength) {
-        value_int = (int16_t)(_buf[i] | ((uint32_t)_buf[i+1] << 8));
+        value_int = (int16_t)(_buf[idx] | ((uint32_t)_buf[idx+1] << 8));
       }
       else if (4 == dlength) {
-        value_int = (int)(_buf[i] | ((uint32_t)_buf[i+1] << 8) | ((uint32_t)_buf[i+2] << 16) | ((uint32_t)_buf[i+3] << 24));
-      }
-    } else {             // uint
-      for (uint32_t l = 0; l < dlength; l++) {
-        value_uint |= ((uint32_t)_buf[i+l] << (l * 8));
+        value_int = (int)(_buf[idx] | ((uint32_t)_buf[idx+1] << 8) | ((uint32_t)_buf[idx+2] << 16) | ((uint32_t)_buf[idx+3] << 24));
       }
     }
 
@@ -2269,7 +2272,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     }
     float value_float = ((1 == dformat) ? (float)value_int : (float)value_uint) * factor;
 
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: ** Obj %02X, Vars int %d, uint %d, float %*_f"), obj_id, value_int, value_uint, dfactor, &value_float);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: ** Obj %02X, Vars int %d, uint %d, float %*_f"), obj_id, value_int, value_uint, dfactor, &value_float);
 
     switch (obj_id) {
       case 0x00:   // Packet ID (already used above)
@@ -2303,6 +2306,12 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         }
       } break;
 
+      case 0x04: { // Pressure (0.01 hPa) uint24
+        MIBLEsensors[slot].pres = value_float;
+        MIBLEsensors[slot].feature.pres   = 1;
+        MIBLEsensors[slot].eventType.pres = 1;
+      } break;
+
       case 0x05: { // Illuminance (uint24, 0.01 lx)
         MIBLEsensors[slot].lux = (uint32_t)value_float;
         MIBLEsensors[slot].feature.lux   = 1;
@@ -2311,13 +2320,14 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x08: // Dewpoint — Tasmota calculates dew point internally
         break;
-/*
-      case 0x0C: { // Voltage (uint16, 0.001 %)
+
+      case 0x0C:   // Voltage (0.001 V) uint16
+      case 0x4A: { // Voltage (0.1 V) uint16
         MIBLEsensors[slot].volt = value_float;
         MIBLEsensors[slot].feature.volt   = 1;
         MIBLEsensors[slot].eventType.volt = 1;
       } break;
-*/
+
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
         MIBLEsensors[slot].lastTime = millis();
@@ -2341,7 +2351,13 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         res = 1;
       } break;
 
-      case 0x64:{ // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
+      case 0x3B:   // Event command 0..2 uint16, 3..4 uint24
+      case 0x53:   // Text
+      case 0x54: { // Raw
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj %02X %*_H"), obj_id, dlength, _buf + idx);
+      } break;
+
+      case 0x64: { // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
         MIBLEsensors[slot].light = value_uint;
         MIBLEsensors[slot].feature.light = 1;
         MIBLEsensors[slot].eventType.light = 1;
@@ -2349,10 +2365,10 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       default:
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: unparsed obj %02X %*_H = %*_f"), obj_id, dlength, _buf +i, dfactor, &value_float);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj %02X %*_H = %*_f"), obj_id, dlength, _buf + idx, dfactor, &value_float);
         break;
     }
-    i += dlength;
+    idx += dlength;
   }
 
   // If both temperature and humidity were received, mark the combined feature
@@ -2366,7 +2382,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     MI32.mode.shallTriggerTele = 1;
   }
 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: BTHome: %s slot %u"), MIaddrStr(mac), slot);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s slot %u"), MIaddrStr(mac), slot);
 }
 
 ////////////////////////////////////////////////////////////
@@ -3323,6 +3339,18 @@ void MI32GetOneSensorJson(int slot, int hidename){
         }
       }
     }
+
+    if (p->feature.pres){
+      if(p->eventType.pres || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate
+#ifdef USE_HOME_ASSISTANT
+          ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+      ){
+        float fpressure = ConvertPressure(p->pres);
+        ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE "\":%*_f"), Settings->flag2.pressure_resolution, &fpressure);
+      }
+    }
+
     if (p->feature.lux){
       if(p->eventType.lux || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
 #ifdef USE_HOME_ASSISTANT
@@ -3422,6 +3450,17 @@ void MI32GetOneSensorJson(int slot, int hidename){
     if(p->eventType.PairBtn && p->pairing){
         ResponseAppend_P(PSTR(",\"Pair\":%u"),p->pairing);
     }
+
+    if (p->feature.volt){
+      if(p->eventType.volt || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate
+#ifdef USE_HOME_ASSISTANT
+          ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+      ){
+        ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%*_f"), Settings->flag2.voltage_resolution, &p->volt);
+      }
+    }
+
   } // minimal summary
 
 
@@ -3446,6 +3485,7 @@ void MI32GetOneSensorJson(int slot, int hidename){
       ResponseAppend_P(PSTR(",\"NMT\":%u"), p->NMT);
     }
   }
+
   if (p->feature.bat){
     if(p->eventType.bat || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate){
 #ifdef USE_HOME_ASSISTANT
@@ -4003,6 +4043,14 @@ void MI32Show(bool json)
         }
       }
 
+      if (p->feature.pres)
+      {
+        float fpressure = ConvertPressure(p->pres);
+        char pressure[33];
+        dtostrfd(fpressure, Settings->flag2.pressure_resolution, pressure);
+        WSContentSend_PD(HTTP_SNS_PRESSURE, label, pressure, PressureUnit().c_str());
+      }
+
 #ifdef USE_MI_DECRYPTION
       bool showkey = false;
       char tmp[40];
@@ -4074,7 +4122,11 @@ void MI32Show(bool json)
         }
       }
       if(p->bat!=0x00){
-          WSContentSend_PD(HTTP_MI32_BATTERY, label, p->bat);
+        WSContentSend_PD(HTTP_MI32_BATTERY, label, p->bat);
+      }
+      if (p->feature.volt)
+      {
+        WSContentSend_PD(HTTP_SNS_F_VOLTAGE, label, Settings->flag2.voltage_resolution, &p->volt);
       }
       if (p->feature.Btn){
         WSContentSend_PD(HTTP_MI32_LASTBUTTON, label, p->Btn);
