@@ -2133,11 +2133,11 @@ bool BTHomeGetObject(const uint8_t * _buf, uint32_t length, uint32_t &idx, uint3
   }
 
   if ((0x3B == obj_id) || (0x53 == obj_id) || (0x54 == obj_id)) {  // Command, Text or Raw add length
-    uint32_t len = _buf[idx++];
+    dlength = _buf[idx++];
     if (0x3B == obj_id) {
-      len &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
+      dlength &= 0x1F;  // length byte: high 3 bits reserved, low 5 bits args length
+      dlength++;
     }
-    dlength = len;
   }
   if ((idx + (uint32_t)dlength) > length) {
 #ifdef USE_MI_DEBUG 
@@ -2346,15 +2346,30 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x3A: { // Button (uint8, event)
         MIBLEsensors[slot].Btn = value_uint;
+        MIBLEsensors[slot].lastTime = millis();
         MIBLEsensors[slot].feature.Btn    = 1;
-        MIBLEsensors[slot].eventType.Btn  = 1;
-        res = 1;
+        if (value_uint > 0) {  // No event if 0x00
+          MIBLEsensors[slot].eventType.Btn  = 1;
+          res = 1;
+        }
       } break;
 
-      case 0x3B:   // Event command 0..2 uint16, 3..4 uint24
-      case 0x53:   // Text
+      case 0x3B: { // Event command 0..2 uint16, 3..4 uint24
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Command %*_H"), dlength, _buf + idx);
+      } break;
+
+      case 0x50: { // Timestamp uint32
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Timestamp %s UTC"), GetDT(value_uint).c_str());
+      } break;
+
+      case 0x53: { // Text
+        char text[dlength +1];
+        ext_snprintf_P(text, sizeof(text), PSTR("%s"), _buf + idx);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Text %s"), text);
+      } break;
+
       case 0x54: { // Raw
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj id 0x%02x (%d), data %*_H"), obj_id, obj_id, dlength, _buf + idx);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Raw %*_H"), dlength, _buf + idx);
       } break;
 
       case 0x64: { // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
@@ -2364,9 +2379,24 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         res = 1;
       } break;
 
-      default:
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("BTH: Unparsed obj id 0x%02x (%d), data %*_H = %*_f"), obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
-        break;
+      case 0xF0: { // Device type id uint16
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Device type id %d"), value_uint);
+      } break;
+
+
+      case 0xF1: { // Firmware version (F100010204 = 4.2.1.0} uint32
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Firmware version %d.%d.%d.%d"), _buf[idx+3], _buf[idx+2], _buf[idx+1], _buf[idx]);
+      } break;
+
+
+      case 0xF2: { // Firmware version (F2000106 = 6.1.0} uint24
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Firmware version %d.%d.%d"), _buf[idx+2], _buf[idx+1], _buf[idx]);
+      } break;
+
+
+      default: {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Unparsed obj id 0x%02x (%d), data %*_H = %*_f"), obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
+      } break;
     }
     idx += dlength;
   }
