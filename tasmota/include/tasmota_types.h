@@ -200,7 +200,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t gui_device_name : 1;          // bit 17 (v14.4.1.1) - SetOption163 - GUI_NOSHOW_DEVICENAME - (GUI) Disable display of GUI device name (1)
     uint32_t wizmote_enabled : 1;          // bit 18 (v14.4.1.4) - SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
     uint32_t tls_use_ecdsa : 1;            // bit 19 (v15.0.1.0) - SetOption165 - (TLS) Enable ECDSA validation in addition to RSA
-    uint32_t spare20 : 1;                  // bit 20
+    uint32_t marbella_publish : 1;         // bit 20 (v15.5.0.2) - SetOption166 - (TFA Marbella) Publish readings as they arrive instead of on TelePeriod only (1)
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22
     uint32_t spare23 : 1;                  // bit 23

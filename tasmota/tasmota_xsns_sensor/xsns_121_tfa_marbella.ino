@@ -38,14 +38,16 @@
  *
  * GDO2 is not needed: receiving uses GDO0 only.
  *
- * Readings go out with the regular TelePeriod telemetry, like any other
- * sensor.
+ * Readings go out with the regular TelePeriod telemetry like any other
+ * sensor; SetOption166 additionally publishes them as they arrive.
  *
  * Commands:
  * Marbella          - Show the bound sensor id and the reception state
  * Marbella <id>     - Bind to one sensor, id as six hex digits, e.g. 683f16
  * Marbella 0        - Forget the binding and learn the next sensor seen
-
+ *
+ * SetOption166 1    - Publish each reading as it arrives. Off by default, so
+ *                     readings go out with the regular TelePeriod telemetry.
  *
  * The binding is stored and survives a restart. TFA_MARBELLA_SERIAL fixes it
  * at compile time instead.
@@ -353,6 +355,20 @@ void TfaMarbellaEvery50ms(void) {
   TfaMarbellaData->last_packet = TasmotaGlobal.uptime;
   TfaMarbellaData->valid = true;
 
+  /*
+    Optionally publish right away instead of waiting for the next TelePeriod.
+    Off by default, because telemetry on TelePeriod is what Tasmota does
+    everywhere else and a driver should not quietly behave differently.
+
+    Worth turning on for this sensor though: it transmits about once a minute,
+    so with the default TelePeriod of 300 seconds four out of five readings
+    never leave the device, and the one that does can be almost five minutes
+    old. Every reading then becomes an MQTT message - useful for rules, but
+    also more traffic on a busy broker, which is why it is a choice.
+  */
+  if (Settings->flag6.marbella_publish) {     // SetOption166 - (TFA Marbella) Publish as they arrive (1)
+    MqttPublishSensor();
+  }
 }
 
 /*
