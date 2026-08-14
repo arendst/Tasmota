@@ -832,7 +832,8 @@ typedef struct {
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
 
-  uint8_t       free_eb0[20];              // EB0  20 bytes
+  uint32_t      marbella_serial;           // EB0  TFA Marbella sensor the receiver is bound to
+  uint8_t       free_eb4[16];              // EB4  16 bytes
 
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
