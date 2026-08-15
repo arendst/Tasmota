@@ -905,7 +905,7 @@ void UfsCheckSDCardInit(void);
   AddLog(LOG_LEVEL_DEBUG, "UDisplay: Device:%s xs:%d ys:%d bpp:%d", dname, gxs, gys, bpp);
 
   if (interface == _UDSP_SPI) {
-#if USE_UNIVERSAL_TOUCH
+#ifdef USE_UNIVERSAL_TOUCH
     AddLog(LOG_LEVEL_DEBUG, "UDisplay: Nr:%d CS:%d CLK:%d MOSI:%d DC:%d TS_CS:%d TS_RST:%d TS_IRQ:%d", 
        spiController->spi_config.bus_nr, spiController->spi_config.cs, spiController->spi_config.clk, spiController->spi_config.mosi, spiController->spi_config.dc, ut_spi_cs, ut_reset, ut_irq);
 #else
