@@ -1273,7 +1273,7 @@ int MI32AddKey(char* payload, char* key = nullptr){
 }
 
 int MIDecryptPayload(uint32_t version, const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
-  uint8_t payload[32];
+  uint8_t payload[len +2];
   uint8_t mac[6];
   memcpy(mac, macin, 6);
   MI32_ReverseMAC(mac);
@@ -1514,7 +1514,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
  * @param _MAC     BLE address of the sensor
  * @param _type       Type number of the sensor
  * @param counter     sequence number of broadcast - same for duplicates
- * @paramm ignoreDulicates  ignore if counter matches lastCnt and previous broardcasts
+ * @param ignoreDulicates  ignore if counter matches lastCnt and previous broardcasts
  * @return uint32_t   Known or new slot in the sensors-vector
  */
 uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter, bool ignoreDuplicate = false){
@@ -2097,6 +2097,63 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0xFF, 0, 0, 0}   // sentinel
 };
 
+bool BTHomeDecrypt(uint8_t* buf, uint32_t &length, const uint8_t *mac) {
+  static uint32_t last_encryption_counter = 0;
+  uint32_t new_encryption_counter = *(uint32_t *)(buf + (length-8));
+#ifdef USE_MI_DEBUG 
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s: counter %d, Encrypted packet '%*_H'"),
+    MIaddrStr(mac), new_encryption_counter, length, buf);
+#endif
+  // Raises false on decreasing encryption counter to avoid replay attacks
+  // Filter advertisements with a decreasing encryption counter.
+  // Allow cases where the counter has restarted from 0
+  // (after reaching the highest number or due to a battery change).
+  // In all other cases, assume the data has been compromised and skip the advertisement.
+  // prepare the data for decryption
+  if ((new_encryption_counter < last_encryption_counter) &&
+      (new_encryption_counter >= 100)) {
+#ifdef USE_MI_DEBUG 
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s: new encryption counter (%d) is smaller than previous value (%d)"), 
+      MIaddrStr(mac), new_encryption_counter, last_encryption_counter);
+#endif
+    return false;
+  }
+  last_encryption_counter = new_encryption_counter;
+
+  uint8_t nonce[13];
+  uint8_t *p = nonce;
+  memcpy(p, mac, 6);
+  p += 6;
+  *(p++) = 0xD2;       // BTHome UUID
+  *(p++) = 0xFC;       // BTHome UUID
+  *(p++) = 0x41;       // BTHome device data byte
+  const uint8_t *encryption_counter = buf +(length-8);
+  memcpy(p, encryption_counter, 4);
+
+  uint32_t mic = *(uint32_t *)(buf + (length-4));  // Message Integrity Check
+
+  // decrypt the data in place
+  int decres = MIDecryptPayload(1, mac, nonce, mic, buf + 1, length - 9);
+  // no longer need the nonce data.
+  length -= 8;
+
+//  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s: decrypted packet %*_H"), MIaddrStr(mac), length, buf);
+
+  switch(decres){
+    case 0:  // suceeded
+      break;
+    case -1: // key failed to work
+      AddLog(LOG_LEVEL_ERROR,PSTR("BTH: %s: payload decrypt failed"), MIaddrStr(mac));
+      return false;
+    case -2: // key not present
+      AddLog(LOG_LEVEL_ERROR,PSTR("BTH: %s: payload encrypted but no key"), MIaddrStr(mac));
+      return false;
+  }
+
+  buf[0] &= 0xFE;  // Reset encrypted flag
+  return true;
+}
+
 // Returns True, data length, format and factor for a BTHome v2 object ID, or False if unknown
 bool BTHomeGetObjectData(uint8_t obj_id, uint32_t &length, uint32_t &format, uint32_t &factor) {
   for (int i = 0; BTHOME_OBJECTS[i].obj_id != 0xFF; i++) {
@@ -2155,79 +2212,69 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     return;
   }
 
-  uint32_t devInfo = _buf[0];
-  uint32_t version = (devInfo >> 5) & 0x07;
+  char log_name[32];
+  ext_snprintf_P(log_name, sizeof(log_name),PSTR("BTH: %s:"), MIaddrStr(mac));
+
+  uint32_t dev_info = _buf[0];
+  uint32_t version = (dev_info >> 5) & 0x07;
   // Only BTHome v2 is supported (version field == 2)
   if (version != 2) {
-    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Unsupported version %d"), version);
+#ifdef USE_MI_DEBUG 
+    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s unsupported version %d"), log_name, version);
+#endif
     return;
   }
 
-  bool encrypted = devInfo & 0x01;
-  if (encrypted) {
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: MAC `%6_H` encrypted packet (%*_H)"), mac, length, _buf);
-
-    uint8_t *buf = (uint8_t *)_buf;
-    uint16_t uuid = 0xFCD2;
-    uint8_t nonce[13];
-    uint8_t *p = nonce;
-    memcpy(p, mac, 6);
-    p += 6;
-    memcpy(p, &uuid, 2);  // UUID
-    p += 2;
-    *(p++) = 0x41;       // BTHome device data byte
-    const uint8_t *extCnt = buf +(length-8);
-    memcpy(p, extCnt, 4);
-    p += 4;
-    uint32_t mic = *(uint32_t *)(buf + (length-4));
-
-    // decrypt the data in place
-    int decres = MIDecryptPayload(1, mac, nonce, mic, buf + 1, length - 9);
-    // no longer need the nonce data.
-    length -= 8;
-
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Decrypted packet %*_H"), length, buf);
-
-    switch(decres){
-      case 1: // decrypt not requested
-        break;
-      case 0: // suceeded
-//        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("BTH: %s payload decrypted"), MIaddrStr(mac));
-        break;
-      case -1: // key failed to work
-        AddLog(LOG_LEVEL_ERROR,PSTR("BTH: %s payload decrypt failed"), MIaddrStr(mac));
-        return;
-        break;
-      case -2: // key not present
-        AddLog(LOG_LEVEL_ERROR,PSTR("BTH: %s payload encrypted but no key"), MIaddrStr(mac));
-        return;
-        break;
+  if (dev_info & 0x01) {  // Encrypted
+    if (!BTHomeDecrypt((uint8_t*)_buf, length, mac)) {
+      return;
     }
-
-    buf[0] &= 0xFE;  // Reset encrypted flag
   }
-
-#ifdef USE_MI_DEBUG 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: Packet %*_H"), length, _buf);
-#endif
 
   uint32_t dlength;
   uint32_t dformat;
   uint32_t dfactor;
 
   // First pass: find optional packet_id (object 0x00) for duplicate detection
-  uint32_t packetId = 0;
+  int packet_id = -1;
   uint32_t obj_id = 0;
   uint32_t idx = 1;
   while (BTHomeGetObject(_buf, length, idx, obj_id, dlength, dformat, dfactor)) {
     if (0x00 == obj_id) { 
-      packetId = _buf[idx];
+      packet_id = _buf[idx];  // Incremental or same packet_id
       break;
     }
     idx += dlength;
   }
-  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packetId);
-  if ((slot == 0xff) || (slot >= MIBLEsensors.size())) {
+/*
+  if (-1 == packet_id) {
+    packet_id = 0;  // packet_id needs to be an 8-bit value from 0 to 255
+  }
+  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, (packet_id != 0)); // Ignore duplicates if packet_id is used
+*/
+  if (-1 == packet_id) {  // No packet_id in BTHome packet so calculate unique 8-bit hash
+    uint8_t hash = 0;
+    for (idx = 0; idx < length; idx++) {
+      uint8_t inbyte = _buf[idx];
+      for (uint32_t i = 8; i; i--) {
+        uint8_t mix = (hash ^ inbyte) & 0x01;
+        hash >>= 1;
+        if (mix) {
+          hash ^= 0x8C;
+        }
+        inbyte >>= 1;
+      }
+    }
+    packet_id = hash;  // Non incremental or same packet_id (can still be used to chk for duplicates)
+  }
+  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, true); // Ignore duplicates
+
+#ifdef USE_MI_DEBUG 
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s packet %*_H%s"), log_name, length, _buf, (slot == 0xff)?" (duplicate)":"");
+#endif
+
+  if ((slot == 0xff) ||                 // Skip duplicates
+      (slot >= MIBLEsensors.size())) {
     return;
   }
 
@@ -2272,7 +2319,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     }
     float value_float = ((1 == dformat) ? (float)value_int : (float)value_uint) * factor;
 
-//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: ** Obj %02x, Vars int %d, uint %d, float %*_f"), obj_id, value_int, value_uint, dfactor, &value_float);
+//    AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s obj %02x, Vars int %d, uint %d, float %*_f"), log_name, obj_id, value_int, value_uint, dfactor, &value_float);
 
     switch (obj_id) {
       case 0x00:   // Packet ID (already used above)
@@ -2355,21 +2402,21 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       case 0x3B: { // Event command 0..2 uint16, 3..4 uint24
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Command %*_H"), dlength, _buf + idx);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s command %*_H"), log_name, dlength, _buf + idx);
       } break;
 
       case 0x50: { // Timestamp uint32
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Timestamp %s UTC"), GetDT(value_uint).c_str());
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s timestamp %s UTC"), log_name, GetDT(value_uint).c_str());
       } break;
 
       case 0x53: { // Text
         char text[dlength +1];
         ext_snprintf_P(text, sizeof(text), PSTR("%s"), _buf + idx);
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Text %s"), text);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s text %s"), log_name, text);
       } break;
 
       case 0x54: { // Raw
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Raw %*_H"), dlength, _buf + idx);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s raw %*_H"), log_name, dlength, _buf + idx);
       } break;
 
       case 0x64: { // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
@@ -2380,22 +2427,22 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       case 0xF0: { // Device type id uint16
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Device type id %d"), value_uint);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s device type id %d"), log_name, value_uint);
       } break;
 
 
       case 0xF1: { // Firmware version (F100010204 = 4.2.1.0} uint32
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Firmware version %d.%d.%d.%d"), _buf[idx+3], _buf[idx+2], _buf[idx+1], _buf[idx]);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s firmware version %d.%d.%d.%d"), log_name, _buf[idx+3], _buf[idx+2], _buf[idx+1], _buf[idx]);
       } break;
 
 
       case 0xF2: { // Firmware version (F2000106 = 6.1.0} uint24
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Firmware version %d.%d.%d"), _buf[idx+2], _buf[idx+1], _buf[idx]);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s firmware version %d.%d.%d"), log_name, _buf[idx+2], _buf[idx+1], _buf[idx]);
       } break;
 
 
       default: {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("BTH: Unparsed obj id 0x%02x (%d), data %*_H = %*_f"), obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("%s unparsed obj id 0x%02x (%d), data %*_H = %*_f"), log_name, obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
       } break;
     }
     idx += dlength;
@@ -2412,7 +2459,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     MI32.mode.shallTriggerTele = 1;
   }
 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s slot %u"), MIaddrStr(mac), slot);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s slot %u"), log_name, slot);
 }
 
 ////////////////////////////////////////////////////////////
