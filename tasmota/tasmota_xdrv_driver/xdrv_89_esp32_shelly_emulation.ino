@@ -1,5 +1,5 @@
 /*
-  xdrv_95_shelly_emulation.ino - Shelly emulation for Tasmota
+  xdrv_89_esp32_shelly_emulation.ino - Shelly emulation for Tasmota
 
   Copyright (C) 2026  Rene Hexel
 
@@ -32,7 +32,7 @@
  * Select with command `Emulation 3` or on the Configure Other web page.
 \*********************************************************************************************/
 
-#define XDRV_95 95
+#define XDRV_89 89
 
 #define SHELLY_SETTINGS_VERSION 0x0101
 #define SHELLY_MODEL "SPSW-202PE16EU"
@@ -718,7 +718,7 @@ static void ShellyMdnsStart(void) {}
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv95(uint32_t function) {
+bool Xdrv89(uint32_t function) {
   bool result = false;
 
   if (FUNC_RESET_SETTINGS == function) {

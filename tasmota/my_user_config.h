@@ -530,7 +530,7 @@
 //    #define GV_SAMPLING_INTERVAL  100            // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
   #define USE_EMULATION_HUE                      // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
   #define USE_EMULATION_WEMO                     // Enable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
-  #define USE_EMULATION_SHELLY                   // (ESP32 only) Enable Shelly emulation (+8k code)
+//  #define USE_EMULATION_SHELLY                   // (ESP32 only) Enable Shelly emulation (+8k code)
   // #define USE_CCLOADER                           // Enable CCLoader FW upgrade tool (for CC25xx devices)
 
 // -- mDNS ----------------------------------------
