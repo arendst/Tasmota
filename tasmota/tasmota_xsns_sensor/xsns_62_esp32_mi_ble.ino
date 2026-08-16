@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "V0.9.3.1"
+#define MI32_VERSION "V0.9.3.2"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,9 +47,11 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.3.2 20260816  changed - BTHome decoding additions
+  -------
   0.9.3.1 20260804  changed - BTHome v2 device id table refresh based on https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
                               Add BTHome button decoding
-                              Add BTHome binary catch all decoding (POC)
+                              Add BTHome binary catch all decoding
   -------
   0.9.3.0 20260803  changed - added BTHome v2 decryption
   -------
@@ -400,6 +402,7 @@ struct mi_sensor_t{
       uint32_t flooding:1;
       uint32_t volt:1;
       uint32_t pres:1;
+      uint32_t accel:1;
     };
     uint32_t raw;
   } feature;
@@ -422,6 +425,7 @@ struct mi_sensor_t{
       uint32_t flooding:1;
       uint32_t volt:1;
       uint32_t pres:1;
+      uint32_t accel:1;
     };
     uint32_t raw;
   } eventType;
@@ -465,6 +469,10 @@ struct mi_sensor_t{
     };
     struct {
       uint8_t button[8]; // BTHome button support
+    };
+    struct {
+      uint8_t accel_used;
+      float acceleration[4];
     };
   };
 };
@@ -2429,6 +2437,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         AddLog(LOG_LEVEL_DEBUG, PSTR("%s timestamp %s UTC"), log_name, GetDT(value_uint).c_str());
       } break;
 
+      case 0x51:   // Acceleration (0.001 m/s2) uint16
+      case 0x63: { // Acceleration (0.000001 m/s2) int32
+        if ((multi >= 0) && (multi < 4)) {  // Support for up to 4 accelerations
+          MIBLEsensors[slot].acceleration[multi] = value_float;
+          MIBLEsensors[slot].accel_used = multi;
+          MIBLEsensors[slot].feature.accel   = 1;
+          MIBLEsensors[slot].eventType.accel = 1;
+        }
+      } break;
+
       case 0x53: { // Text
         char text[dlength +1];
         ext_snprintf_P(text, sizeof(text), PSTR("%s"), _buf + idx);
@@ -3295,6 +3313,7 @@ const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
 const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
 const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%s{e}";
+const char HTTP_MI32_ACCELERATION[] PROGMEM = "{s}%s Acceleration{m}%s{e}";
 const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
 const char HTTP_MI32_NMT[] PROGMEM = "{s}%s No motion{m}> %u " D_SECONDS "{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s Fertility{m}%u " D_UNIT_MICROSIEMENS_PER_CM "{e}";
@@ -3524,6 +3543,19 @@ void MI32GetOneSensorJson(int slot, int hidename){
           }
           ResponseAppend_P(PSTR(",\"Impedance\":%u"), p->impedance);
         }
+      }
+    }
+    if (p->feature.accel){
+      if(p->eventType.accel || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate
+#ifdef USE_HOME_ASSISTANT
+          ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+      ){
+        ResponseAppend_P(PSTR(",\"Acceleration\":"));
+        for (uint32_t i = 0; i <= p->accel_used; i++) {
+          ResponseAppend_P(PSTR("%c%6_f"), (!i)?'[':',', &p->acceleration[i]);
+        }
+        ResponseAppend_P(PSTR("]"));
       }
     }
     if (p->feature.Btn){
@@ -4233,6 +4265,14 @@ void MI32Show(bool json)
       {
         WSContentSend_PD(HTTP_SNS_F_VOLTAGE, label, Settings->flag2.voltage_resolution, &p->volt);
       }
+      if (p->feature.accel){
+        char accelerations[64] = { 0 };
+        for (uint32_t b = 0; b <= p->accel_used; b++) {
+          ext_snprintf_P(accelerations, sizeof(accelerations), PSTR("%s%s%6_f m/s²"), 
+            accelerations, (!b)?"":"<br>", &p->acceleration[b]);
+        }
+        WSContentSend_P(HTTP_MI32_ACCELERATION, label, accelerations);
+      }
       if (p->feature.Btn){
         char buttons[32] = { 0 };
         if ((p->type == MI_BTHOME) && (p->Btn > 255)) {
@@ -4244,7 +4284,6 @@ void MI32Show(bool json)
           snprintf_P(buttons, sizeof(buttons), PSTR("%u"), p->Btn);
         }
         WSContentSend_P(HTTP_MI32_LASTBUTTON, label, buttons);
-
       }
       if (p->feature.flooding)
       {
