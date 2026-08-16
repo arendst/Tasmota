@@ -463,6 +463,9 @@ struct mi_sensor_t{
       uint8_t impedance_stabilized;
       uint16_t impedance;
     };
+    struct {
+      uint8_t button[8]; // BTHome button support
+    };
   };
 };
 
@@ -2283,12 +2286,21 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
   bool hasTemp = false;
   bool hasHum  = false;
+  uint32_t multi = 0;
+  uint32_t last_obj_id = 0;
 
   // Second pass: parse all measurement objects
   int res = 0;
   obj_id = 0;
   idx = 1;
   while (BTHomeGetObject(_buf, length, idx, obj_id, dlength, dformat, dfactor)) {
+
+    if (obj_id == last_obj_id) {
+      multi++;
+    } else {
+      multi = 0;
+    }
+    last_obj_id = obj_id;
 
     uint32_t value_uint = 0;
     int value_int = 0;
@@ -2392,7 +2404,15 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       case 0x3A: { // Button (uint8, event)
-        MIBLEsensors[slot].Btn = value_uint;
+        if ((multi > 0) && (multi < 8)) {  // Support for up to 8 buttons
+          if (1 == multi) {
+            MIBLEsensors[slot].button[0] = MIBLEsensors[slot].Btn;
+          }
+          MIBLEsensors[slot].button[multi] = value_uint;
+          MIBLEsensors[slot].Btn = 256 + multi;
+        } else {
+          MIBLEsensors[slot].Btn = value_uint;
+        }
         MIBLEsensors[slot].lastTime = millis();
         MIBLEsensors[slot].feature.Btn    = 1;
         if (value_uint > 0) {  // No event if 0x00
@@ -3274,7 +3294,7 @@ const char HTTP_MI32_TYPE[] PROGMEM = "{s}%s " D_SENSOR"{m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
 const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
-const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u{e}";
+const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%s{e}";
 const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
 const char HTTP_MI32_NMT[] PROGMEM = "{s}%s No motion{m}> %u " D_SECONDS "{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s Fertility{m}%u " D_UNIT_MICROSIEMENS_PER_CM "{e}";
@@ -3367,11 +3387,11 @@ void MI32GetOneSensorJson(int slot, int hidename){
 
   const char *alias = BLE_ESP32::getAlias(p->MAC);
   if (alias && alias[0]){
-    ResponseAppend_P(PSTR("\"alias\":\"%s\","),
+    ResponseAppend_P(PSTR("\"Alias\":\"%s\","),
           alias);
   }
 
-  ResponseAppend_P(PSTR("\"mac\":\"%02x%02x%02x%02x%02x%02x\""),
+  ResponseAppend_P(PSTR("\"MAC\":\"%02x%02x%02x%02x%02x%02x\""),
         p->MAC[0], p->MAC[1], p->MAC[2],
         p->MAC[3], p->MAC[4], p->MAC[5]);
 
@@ -3512,7 +3532,15 @@ void MI32GetOneSensorJson(int slot, int hidename){
           ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
       ){
-        ResponseAppend_P(PSTR(",\"Btn\":%d"),p->Btn);
+        ResponseAppend_P(PSTR(",\"Btn\":"));
+        if ((p->type == MI_BTHOME) && (p->Btn > 255)) {
+          for (uint32_t i = 0; i <= (p->Btn - 256); i++) {
+            ResponseAppend_P(PSTR("%c%d"), (!i)?'[':',', p->button[i]);
+          }
+          ResponseAppend_P(PSTR("]"));
+        } else {
+          ResponseAppend_P(PSTR("%d"),p->Btn);
+        }
       }
     }
     if (p->feature.flooding){
@@ -4206,7 +4234,17 @@ void MI32Show(bool json)
         WSContentSend_PD(HTTP_SNS_F_VOLTAGE, label, Settings->flag2.voltage_resolution, &p->volt);
       }
       if (p->feature.Btn){
-        WSContentSend_PD(HTTP_MI32_LASTBUTTON, label, p->Btn);
+        char buttons[32] = { 0 };
+        if ((p->type == MI_BTHOME) && (p->Btn > 255)) {
+          for (uint32_t b = 0; b <= (p->Btn - 256); b++) {
+            snprintf_P(buttons, sizeof(buttons), PSTR("%s%s%u"), 
+              buttons, (!b)?"":",", p->button[b]);
+          }
+        } else {
+          snprintf_P(buttons, sizeof(buttons), PSTR("%u"), p->Btn);
+        }
+        WSContentSend_P(HTTP_MI32_LASTBUTTON, label, buttons);
+
       }
       if (p->feature.flooding)
       {
