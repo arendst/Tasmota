@@ -2055,7 +2055,7 @@ void NeoPoolShow(bool json)
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
       fvalue = ConvertTemp((float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10);
-      ResponseAppend_P(PSTR(",\""  D_TEMPERATURE  "\":%*_f"), Settings->flag2.temperature_resolution, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_JSON_TEMPERATURE  "\":%*_f"), Settings->flag2.temperature_resolution, &fvalue);
     }
 
     // Voltage
@@ -2110,7 +2110,7 @@ void NeoPoolShow(bool json)
     // pH
     if (NeoPoolIspHModule()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_JSON_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fvalue);
 
       // S1
       float fphmin = (float)NeoPoolGetData(MBF_PAR_PH2)/100;
