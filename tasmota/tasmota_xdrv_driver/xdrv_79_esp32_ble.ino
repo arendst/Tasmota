@@ -417,6 +417,7 @@ static ble_advertisment_t BLEAdvertisment;
 // general variables for running the driver
 TaskHandle_t TasmotaMainTask;
 
+static uint8_t BLEHandlerAdded = 0;
 
 static int BLEMasterEnable = 0;
 static uint8_t BLEEnableUnsaved = 0;
@@ -3720,9 +3721,14 @@ bool Xdrv79(uint32_t function)
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
 //      WSContentSend_P(BLE_ESP32::HTTP_BTN_MENU_BLE);
+      if (!BLE_ESP32::BLEHandlerAdded) {
+        BLE_ESP32::BLEHandlerAdded = 1;  // This might be called due to missed FUNC_WEB_ADD_HANDLER
+        WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
+      }
       WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_BLE), PSTR(D_CONFIGURE_BLE));
       break;
     case FUNC_WEB_ADD_HANDLER:
+      BLE_ESP32::BLEHandlerAdded = 1;  // This might not be called due to BLE not ready
       WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
       break;
 #endif  // USE_WEBSERVER
