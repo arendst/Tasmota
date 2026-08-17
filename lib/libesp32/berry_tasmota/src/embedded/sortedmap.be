@@ -5,7 +5,7 @@
 # see https://github.com/berry-lang/berry/wiki/Chapter-8
 #################################################################################
 #@ solidify:sortedmap
-class sortedmap
+class sortedmap : map
   var _data    # internal map for storing key-value pairs
   var _keys    # list for maintaining sorted keys
   
