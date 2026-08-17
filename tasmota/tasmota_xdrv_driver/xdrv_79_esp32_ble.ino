@@ -3624,6 +3624,7 @@ void HandleBleConfiguration(void)
     //TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEConf");
     int number = seenDevices.size();
     if (number){
+      WSContentSend_P(PSTR("<br>"));
       WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_BLE_DEVICES));
       WSContentSend_P(HTTP_BLE_DEV_START);
       uint64_t now = esp_timer_get_time();
