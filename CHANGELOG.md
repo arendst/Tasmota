@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - TLS fix public key fingerprint for ECDSA certificates (#24928)
 - HASPmota better support for `textarea` (#24946)
 - NeoPool issue with localized JSON keys (#24962)
-- NeoPool delocalize all JSON outputs
+- NeoPool delocalize all JSON outputs (#24965)
 
 ### Removed
 
