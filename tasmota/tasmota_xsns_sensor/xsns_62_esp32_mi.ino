@@ -112,9 +112,15 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
       memcpy(_packet->MAC,addr,6);
       _packet->addressType = advertisedDevice->getAddressType();
       _packet->RSSI = (uint8_t)RSSI;
-      const uint8_t *_payload = advertisedDevice->getPayload().data();
-      _packet->length = advertisedDevice->getPayload().size();
-      memcpy(_packet->payload,_payload, _packet->length);
+      const auto &_payload = advertisedDevice->getPayload();
+      size_t _payloadLength = _payload.size();
+      if(_payloadLength > sizeof(_packet->payload)){
+        _payloadLength = sizeof(_packet->payload);
+      }
+      _packet->length = (uint8_t)_payloadLength;
+      if(_payloadLength != 0){
+        memcpy(_packet->payload, _payload.data(), _payloadLength);
+      }
       MI32.mode.triggerBerryAdvCB = 1;
     }
 
@@ -1083,6 +1089,10 @@ void MI32loadCfg(){
                 MI32HexStringToBytes(_pidStr,_pid);
                 uint16_t _pid16 = _pid[0]*256 + _pid[1];
                 _numberOfDevices = MIBLEgetSensorSlot(_mac,_pid16,0);
+                if(_numberOfDevices == 0xff){
+                  _error = true;
+                  break;
+                }
                 if (MIBLEsensors[_numberOfDevices].PID == 0) { // no Xiaomi sensor
                   MI32.option.handleEveryDevice = 1; // if in config, we assume to handle it
                 }
@@ -1268,16 +1278,12 @@ void MI32ConnectionGetServices(){
   MI32.conCtx->buffer[1] = srvvector.size(); // number of services
   uint32_t i = 2;
   for (auto &srv: srvvector) {
-    MI32.conCtx->buffer[i] = srv->getUUID().bitSize(); // 16/128 bit
-    if(MI32.conCtx->buffer[i] == 16){
-      const uint16_t _uuid16 =  *(uint16_t*)srv->getUUID().getValue();
-      MI32.conCtx->buffer[i+1] = _uuid16 & 0xff;
-      MI32.conCtx->buffer[i+2] = _uuid16 >> 8;
-    }
-    else{
-      memcpy((MI32.conCtx->buffer)+i+1,srv->getUUID().getValue(),MI32.conCtx->buffer[i]); // the UUID
-    }
-    i += 1 + (MI32.conCtx->buffer[i]/8);
+    const NimBLEUUID &_uuid = srv->getUUID();
+    const uint8_t _uuidBits = _uuid.bitSize();
+    const uint8_t _uuidBytes = _uuidBits / 8;
+    MI32.conCtx->buffer[i] = _uuidBits;
+    memcpy(MI32.conCtx->buffer + i + 1, _uuid.getValue(), _uuidBytes);
+    i += 1 + _uuidBytes;
   }
   MI32.conCtx->buffer[0] = i;
 }
@@ -1298,15 +1304,12 @@ void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc){
   MI32.conCtx->buffer[1] = charvector.size(); // number of characteristics
   uint32_t i = 2;
   for (auto &chr: charvector) {
-    MI32.conCtx->buffer[i] = chr->getUUID().bitSize(); // 16/128 bit
-    if(MI32.conCtx->buffer[i] == 16){
-      MI32.conCtx->buffer[i+1] = *(uint16_t*)chr->getUUID().getValue() & 0xff;
-      MI32.conCtx->buffer[i+2] = *(uint16_t*)chr->getUUID().getValue() >> 8;
-    }
-    else{
-      memcpy((MI32.conCtx->buffer)+i+1,chr->getUUID().getValue(),MI32.conCtx->buffer[i]); // the UUID
-    }
-    i += 1 + (MI32.conCtx->buffer[i]/8);
+    const NimBLEUUID &_uuid = chr->getUUID();
+    const uint8_t _uuidBits = _uuid.bitSize();
+    const uint8_t _uuidBytes = _uuidBits / 8;
+    MI32.conCtx->buffer[i] = _uuidBits;
+    memcpy(MI32.conCtx->buffer + i + 1, _uuid.getValue(), _uuidBytes);
+    i += 1 + _uuidBytes;
     MI32.conCtx->buffer[i] = chr->getProperties(); // flags as bitfield
     MI32.conCtx->buffer[i+1] = chr->getHandle() & 0xff;
     MI32.conCtx->buffer[i+2] = chr->getHandle() >> 8;
@@ -2258,17 +2261,23 @@ void MI32BLELoop()
   if(MI32.mode.triggerBerryAdvCB == 1){
     if(MI32.beAdvCB != nullptr){
         // AddLogBuffer(LOG_LEVEL_DEBUG,MI32.beAdvBuf,40);
-        uint8_t _index = 9; // is the first byte of payload in the advertisement buffer
+        uint16_t _index = 9; // is the first byte of payload in the advertisement buffer
+        const uint16_t _end = _index + MI32.beAdvBuf[8];
         int _svc = 0;
         int _manu = 0;
-        while(_index < 9 + MI32.beAdvBuf[8]){ //index of payload + _packet->length
-          if(MI32.beAdvBuf[_index+1] == 0x16){
+        while(_index < _end){
+          const uint8_t _fieldLength = MI32.beAdvBuf[_index];
+          if(_fieldLength == 0 || _fieldLength > _end - _index - 1){
+            break;
+          }
+          const uint16_t _next = _index + _fieldLength + 1;
+          if(_fieldLength >= 3 && MI32.beAdvBuf[_index+1] == 0x16){
             _svc = _index + 2;
           }
-          else if(MI32.beAdvBuf[_index+1] == 0xff){
+          else if(_fieldLength >= 3 && MI32.beAdvBuf[_index+1] == 0xff){
             _manu = _index + 2;
           }
-          _index += MI32.beAdvBuf[_index] + 1;
+          _index = _next;
         }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: svc:%u , manu:%u"),_svc,_manu);
       void (*func_ptr)(int,int) = (void (*)(int,int))MI32.beAdvCB;

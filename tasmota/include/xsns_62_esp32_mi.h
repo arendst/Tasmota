@@ -106,7 +106,11 @@ struct berryAdvPacket_t{
   uint8_t addressType;
   uint8_t RSSI;
   uint8_t length;      // length of payload
-  uint8_t payload[32]; // only a pointer to the address, size is 0-31 bytes
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+  uint8_t payload[255];
+#else
+  uint8_t payload[62]; // legacy advertisement plus scan response
+#endif
 };
 
 
