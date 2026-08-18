@@ -395,13 +395,52 @@ void TfaMarbellaEverySecond(void) {
 }
 
 /*
-  Nothing is shown while no valid packet has arrived, and nothing is shown once
-  TFA_MARBELLA_TIMEOUT has passed without one. A stale reading looks exactly
-  like a measurement that simply does not change - the one failure this driver
-  must not produce.
+  Renders the age of the last valid packet: "12 sec ago", "4 min ago",
+  "3 hours ago". A bare number of seconds stops being readable after a few
+  minutes, and this line is read precisely when something has been quiet for
+  a long time.
+*/
+void TfaMarbellaAge(char* dest, size_t size, uint32_t seconds) {
+  if (seconds < 120) {
+    snprintf_P(dest, size, PSTR("%u " D_UNIT_SECOND " ago"), seconds);
+  } else if (seconds < 7200) {
+    snprintf_P(dest, size, PSTR("%u " D_UNIT_MINUTE " ago"), seconds / 60);
+  } else {
+    snprintf_P(dest, size, PSTR("%u " D_UNIT_HOUR " ago"), seconds / 3600);
+  }
+}
+
+/*
+  The reading is dropped from JSON once TFA_MARBELLA_TIMEOUT has passed without
+  a packet: a stale value looks exactly like a measurement that simply does not
+  change - the one failure this driver must not produce.
+
+  The web interface, however, always shows a line. Showing nothing at all is
+  indistinguishable from a driver that is not running, from a radio that never
+  starts and from a sensor whose battery died - and those need different
+  answers. So the age of the last packet is stated, and if there never was one,
+  that is said too.
 */
 void TfaMarbellaShow(bool json) {
-  if (!TfaMarbellaReadingValid()) { return; }
+  bool valid = TfaMarbellaReadingValid();
+  bool ever = (TfaMarbellaData && TfaMarbellaData->valid);
+
+  if (json && !valid) { return; }
+
+#ifdef USE_WEBSERVER
+  if (!json && !valid) {
+    if (ever) {
+      char age[24];
+      TfaMarbellaAge(age, sizeof(age), TasmotaGlobal.uptime - TfaMarbellaData->last_packet);
+      WSContentSend_PD(PSTR("{s}TFA Marbella{m}no signal, last %s{e}"), age);
+    } else {
+      WSContentSend_PD(PSTR("{s}TFA Marbella{m}no signal yet{e}"));
+    }
+    return;
+  }
+#else
+  if (!valid) { return; }
+#endif  // USE_WEBSERVER
 
   float temperature = ConvertTemp(TfaMarbellaData->temperature);
   char id[7];
@@ -424,6 +463,14 @@ void TfaMarbellaShow(bool json) {
     */
     WSContentSend_PD(PSTR("{s}TFA Marbella " D_BATTERY "{m}%s{e}"),
                      TfaMarbellaData->low_battery ? "low - replace" : "ok");
+    /*
+      The age of the reading, not a timestamp: the sensor sends once a minute,
+      so what matters is whether the last packet is seconds or hours old. A
+      clock time would also be wrong whenever the device has no NTP yet.
+    */
+    char age[24];
+    TfaMarbellaAge(age, sizeof(age), TasmotaGlobal.uptime - TfaMarbellaData->last_packet);
+    WSContentSend_PD(PSTR("{s}TFA Marbella Last reading{m}%s{e}"), age);
 #endif  // USE_WEBSERVER
   }
 }
