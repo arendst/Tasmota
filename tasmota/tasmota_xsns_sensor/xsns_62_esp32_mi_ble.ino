@@ -2108,13 +2108,48 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0xFF, 0, 0, 0}   // sentinel
 };
 
+/*-------------------------------------------------------------------------------------------*/
+
+struct bthome_hk_t {
+  uint8_t MAC[6];
+  uint32_t encr_cnt; // BTHome last encryption counter
+};
+
+std::vector<bthome_hk_t> BTHomeHk;
+
+uint32_t BTHomeGetHk(const uint8_t *mac) {
+  static bool first_call = true;
+  if (first_call) {
+    first_call = false;
+    BTHomeHk.reserve(10);
+  }
+
+  for (uint32_t slot = 0; slot < BTHomeHk.size(); slot++) {
+    if (!memcmp(mac, BTHomeHk[slot].MAC, 6)) {
+      return slot;
+    }
+  }
+
+  bthome_hk_t new_BTHomeHk;
+  memset(&new_BTHomeHk, 0 , sizeof(new_BTHomeHk));
+  memcpy(new_BTHomeHk.MAC, mac, 6);
+  BTHomeHk.push_back(new_BTHomeHk);
+#ifdef USE_MI_DEBUG 
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %6_H: housekeeing count %d"), mac, BTHomeHk.size());
+#endif
+  return BTHomeHk.size()-1;
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 bool BTHomeDecrypt(uint8_t* buf, uint32_t &length, const uint8_t *mac) {
-  static uint32_t last_encryption_counter = 0;
   uint32_t new_encryption_counter = *(uint32_t *)(buf + (length-8));
 #ifdef USE_MI_DEBUG 
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s: counter %d, Encrypted packet '%*_H'"),
     MIaddrStr(mac), new_encryption_counter, length, buf);
 #endif
+  uint32_t slot = BTHomeGetHk(mac);
+  uint32_t last_encryption_counter = BTHomeHk[slot].encr_cnt;
   // Raises false on decreasing encryption counter to avoid replay attacks
   // Filter advertisements with a decreasing encryption counter.
   // Allow cases where the counter has restarted from 0
@@ -2129,7 +2164,7 @@ bool BTHomeDecrypt(uint8_t* buf, uint32_t &length, const uint8_t *mac) {
 #endif
     return false;
   }
-  last_encryption_counter = new_encryption_counter;
+  BTHomeHk[slot].encr_cnt = new_encryption_counter;
 
   uint8_t nonce[13];
   uint8_t *p = nonce;
@@ -4316,32 +4351,34 @@ bool Xsns62(uint32_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      MI32Init();
-      break;
-    case FUNC_EVERY_50_MSECOND:
-      MI32Every50mSecond();
-      break;
-    case FUNC_EVERY_SECOND:
-      MI32EverySecond(false);
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(kMI32_Commands, MI32_Commands);
-      break;
-    case FUNC_JSON_APPEND:
-      // we are not in control of when this is called...
-      //MI32Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_ADD_HANDLER:
-      WebServer_on(PSTR("/" WEB_HANDLE_MI32), HandleMI32Key);
-      break;
-    case FUNC_WEB_SENSOR:
-      MI32Show(0);
-      break;
-#endif  // USE_WEBSERVER
-    }
+  if (FUNC_INIT == function) {
+    MI32Init();
+  }
+  if (MI32.mode.init) {
+    switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        MI32Every50mSecond();
+        break;
+      case FUNC_EVERY_SECOND:
+        MI32EverySecond(false);
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kMI32_Commands, MI32_Commands);
+        break;
+      case FUNC_JSON_APPEND:
+        // we are not in control of when this is called...
+        //MI32Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer_on(PSTR("/" WEB_HANDLE_MI32), HandleMI32Key);
+        break;
+      case FUNC_WEB_SENSOR:
+        MI32Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+      }
+  }
   return result;
 }
 #endif  // USE_MI_ESP32
