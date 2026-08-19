@@ -215,7 +215,6 @@ struct {
 
       uint32_t canConnect:1;
       uint32_t willConnect:1;
-      uint32_t readingDone:1;
 
       uint32_t shallTriggerTele:1;
       uint32_t triggeredTele:1;
