@@ -405,6 +405,7 @@ struct mi_sensor_t{
       uint32_t volt:1;
       uint32_t pres:1;
       uint32_t accel:1;
+      uint32_t count:1;
     };
     uint32_t raw;
   } feature;
@@ -428,6 +429,7 @@ struct mi_sensor_t{
       uint32_t volt:1;
       uint32_t pres:1;
       uint32_t accel:1;
+      uint32_t count:1;
     };
     uint32_t raw;
   } eventType;
@@ -441,6 +443,7 @@ struct mi_sensor_t{
 
   uint32_t lastTime;
   uint32_t lux;
+  int count;
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
   float volt; // BTHome voltage
   float pres; // BTHome pressure
@@ -1286,7 +1289,7 @@ int MI32AddKey(char* payload, char* key = nullptr){
   return 0;
 }
 
-int MIDecryptPayload(uint32_t version, const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
+int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
   uint8_t payload[len +2];
   uint8_t mac[6];
   memcpy(mac, macin, 6);
@@ -1313,7 +1316,8 @@ int MIDecryptPayload(uint32_t version, const uint8_t *macin, const uint8_t *nonc
 
   br_ccm_context ctx;
   br_ccm_init(&ctx, &keyCtx.vtable);
-  if (1 == version) {
+  uint16_t devicetype = *(uint16_t*)(nonce +6);
+  if (0xFCD2 == devicetype) {  // BTHome
     br_ccm_reset(&ctx, nonce, 13, 0, len, 4);
   } else {  
     br_ccm_reset(&ctx, nonce, 12, 1, len, 4);
@@ -1441,7 +1445,7 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
     uint32_t tag = *(uint32_t *)(data + (len-4));
 
     // decrypt the data in place
-    decres = MIDecryptPayload(0, mac, nonce, tag, data + byteindex, len - byteindex - 7);
+    decres = MIDecryptPayload(mac, nonce, tag, data + byteindex, len - byteindex - 7);
     // no longer need the nonce data.
     len -= 7;
   }
@@ -2019,7 +2023,7 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   {0x06, 1, 0, 2},  // Mass kg (0.01 kg) uint16
   {0x07, 1, 0, 2},  // Mass lbs (0.01 lbs) uint16
   {0x08, 1, 1, 2},  // Dewpoint (0.01 °C) int16
-  {0x09, 0, 0, 0},  // Count (uint8) uint8
+  {0x09, 0, 0, 0},  // Count (1) uint8
   {0x0A, 2, 0, 3},  // Energy (0.001 kWh) uint24
   {0x0B, 2, 0, 2},  // Power (0.01 W) uint24
   {0x0C, 1, 0, 3},  // Voltage (0.001 V) uint16
@@ -2151,7 +2155,7 @@ bool BTHomeDecrypt(uint8_t* buf, uint32_t &length, const uint8_t *mac) {
   uint32_t mic = *(uint32_t *)(buf + (length-4));  // Message Integrity Check
 
   // decrypt the data in place
-  int decres = MIDecryptPayload(1, mac, nonce, mic, buf + 1, length - 9);
+  int decres = MIDecryptPayload(mac, nonce, mic, buf + 1, length - 9);
   // no longer need the nonce data.
   length -= 8;
 
@@ -2392,9 +2396,34 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         MIBLEsensors[slot].eventType.lux = 1;
       } break;
 
-      case 0x08: // Dewpoint — Tasmota calculates dew point internally
+      case 0x06:   // Mass kg (0.01 kg) uint16
+      case 0x07: { // Mass lbs (0.01 lbs) uint16
+        MIBLEsensors[slot].weight = value_float;
+        MIBLEsensors[slot].feature.scale   = 1;
+        MIBLEsensors[slot].eventType.scale = 1;
+        snprintf_P(MIBLEsensors[slot].weight_unit, sizeof(MIBLEsensors[slot].weight_unit), PSTR("%s"), (0x06 == obj_id)?"kg":"lbs");
+      } break;
+
+      case 0x08:   // Dewpoint — Tasmota calculates dew point internally
         break;
 
+      case 0x09:   // Count (1) uint8
+      case 0x3D:   // Count (1) uint16
+      case 0x3E:   // Count (1) uint32
+      case 0x59:   // Count (1) int8
+      case 0x5A:   // Count (1) int16
+      case 0x5B: { // Count (1) int32
+        MIBLEsensors[slot].count = (obj_id >= 0x59) ? value_int : value_uint;
+        MIBLEsensors[slot].feature.count   = 1;
+        MIBLEsensors[slot].eventType.count = 1;
+      } break;
+/*
+      case 0x0A: { // Energy (0.001 kWh) uint24
+      } break;
+
+      case 0x0B: { // Power (0.01 W) uint24
+      } break;
+*/
       case 0x0C:   // Voltage (0.001 V) uint16
       case 0x4A: { // Voltage (0.1 V) uint16
         MIBLEsensors[slot].volt = value_float;
@@ -3325,6 +3354,7 @@ const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
 const char HTTP_MI32_NMT[] PROGMEM = "{s}%s No motion{m}> %u " D_SECONDS "{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s Fertility{m}%u " D_UNIT_MICROSIEMENS_PER_CM "{e}";
 const char HTTP_MI32_LIGHT[] PROGMEM = "{s}%s " D_LIGHT "{m}%d{e}";
+const char HTTP_MI32_COUNT[] PROGMEM = "{s}%s " D_COUNT "{m}%d{e}";
 const char HTTP_MISCALE_WEIGHT[] PROGMEM = "{s}%s " D_WEIGHT "{m}%*_f %s{e}";
 const char HTTP_MISCALE_WEIGHT_REMOVED[] PROGMEM = "{s}%s Weight removed{m}%s{e}";
 const char HTTP_MISCALE_WEIGHT_STABILIZED[] PROGMEM = "{s}%s Weight stabilized{m}%s{e}";
@@ -3627,6 +3657,12 @@ void MI32GetOneSensorJson(int slot, int hidename){
   if (p->feature.NMT || !MI32.mode.triggeredTele){
     if(p->eventType.NMT){
       ResponseAppend_P(PSTR(",\"NMT\":%u"), p->NMT);
+    }
+  }
+
+  if (p->feature.count){
+    if(p->eventType.count){
+        ResponseAppend_P(PSTR(",\"" D_JSON_COUNT "\":%d"), p->count);
     }
   }
 
@@ -4268,8 +4304,10 @@ void MI32Show(bool json)
       if(p->bat!=0x00){
         WSContentSend_PD(HTTP_MI32_BATTERY, label, p->bat);
       }
-      if (p->feature.volt)
-      {
+      if (p->feature.count) {
+        WSContentSend_PD(HTTP_MI32_COUNT, label, p->count);
+      }
+      if (p->feature.volt) {
         WSContentSend_PD(HTTP_SNS_F_VOLTAGE, label, Settings->flag2.voltage_resolution, &p->volt);
       }
       if (p->feature.accel){
