@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "V0.9.3.2"
+#define MI32_VERSION "V0.9.3.3"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.3.3 20260819  changed - fix BTHome decryption of multiple sensors
+  -------
   0.9.3.2 20260816  changed - BTHome decoding additions
   -------
   0.9.3.1 20260804  changed - BTHome v2 device id table refresh based on https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
@@ -430,6 +432,7 @@ struct mi_sensor_t{
     uint32_t raw;
   } eventType;
 
+  uint32_t encr_cnt; // BTHome last encryption counter
   int RSSI;
   uint8_t pairing;
   int8_t light; // binary light sensor - initialise to -1
@@ -1525,10 +1528,10 @@ int MIParsePacket(const uint8_t* slotmac, struct mi_beacon_data_t *parsed, const
  * @param _MAC     BLE address of the sensor
  * @param _type       Type number of the sensor
  * @param counter     sequence number of broadcast - same for duplicates
- * @param ignoreDulicates  ignore if counter matches lastCnt and previous broardcasts
+ * @param ignoreDulicates  (1) ignore if counter matches lastCnt and previous broardcasts, (2) ignore counter
  * @return uint32_t   Known or new slot in the sensors-vector
  */
-uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter, bool ignoreDuplicate = false){
+uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter, uint8_t ignoreDuplicate = 0){
 
   //AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Will test ID-type: %x"), _type);
   bool _success = false;
@@ -1552,10 +1555,11 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
   for(uint32_t i=0; i<MIBLEsensors.size(); i++){
     if(!memcmp(mac, MIBLEsensors[i].MAC, 6)){
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Counters: %x %x"),MIBLEsensors[i].lastCnt, counter);
+      if (2 == ignoreDuplicate) return i; // registered before so return slot
       if(MIBLEsensors[i].lastCnt==counter) {
         // AddLog(LOG_LEVEL_DEBUG,PSTR("Old packet"));
         AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Slot %u/[0-%u] - ign repeat"), MIaddrStr(mac), i, MIBLEsensors.size() - 1);
-        if(ignoreDuplicate) return 0xff; // packet received before, stop here
+        if (1 == ignoreDuplicate) return 0xff; // packet received before, stop here
       }
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: Frame %d, last %d"), MIaddrStr(mac), counter, MIBLEsensors[i].lastCnt);
       MIBLEsensors[i].lastCnt = counter;
@@ -2110,46 +2114,14 @@ static const bthome_obj_def_t BTHOME_OBJECTS[] = {
 
 /*-------------------------------------------------------------------------------------------*/
 
-struct bthome_hk_t {
-  uint8_t MAC[6];
-  uint32_t encr_cnt; // BTHome last encryption counter
-};
-
-std::vector<bthome_hk_t> BTHomeHk;
-
-uint32_t BTHomeGetHk(const uint8_t *mac) {
-  static bool first_call = true;
-  if (first_call) {
-    first_call = false;
-    BTHomeHk.reserve(10);
-  }
-
-  for (uint32_t slot = 0; slot < BTHomeHk.size(); slot++) {
-    if (!memcmp(mac, BTHomeHk[slot].MAC, 6)) {
-      return slot;
-    }
-  }
-
-  bthome_hk_t new_BTHomeHk;
-  memset(&new_BTHomeHk, 0 , sizeof(new_BTHomeHk));
-  memcpy(new_BTHomeHk.MAC, mac, 6);
-  BTHomeHk.push_back(new_BTHomeHk);
-#ifdef USE_MI_DEBUG 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %6_H: housekeeing count %d"), mac, BTHomeHk.size());
-#endif
-  return BTHomeHk.size()-1;
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
 bool BTHomeDecrypt(uint8_t* buf, uint32_t &length, const uint8_t *mac) {
   uint32_t new_encryption_counter = *(uint32_t *)(buf + (length-8));
 #ifdef USE_MI_DEBUG 
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BTH: %s: counter %d, Encrypted packet '%*_H'"),
     MIaddrStr(mac), new_encryption_counter, length, buf);
 #endif
-  uint32_t slot = BTHomeGetHk(mac);
-  uint32_t last_encryption_counter = BTHomeHk[slot].encr_cnt;
+  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, 0, 2); // If registered get last encryption counter
+  uint32_t last_encryption_counter = MIBLEsensors[slot].encr_cnt;
   // Raises false on decreasing encryption counter to avoid replay attacks
   // Filter advertisements with a decreasing encryption counter.
   // Allow cases where the counter has restarted from 0
@@ -2164,7 +2136,7 @@ bool BTHomeDecrypt(uint8_t* buf, uint32_t &length, const uint8_t *mac) {
 #endif
     return false;
   }
-  BTHomeHk[slot].encr_cnt = new_encryption_counter;
+  MIBLEsensors[slot].encr_cnt = new_encryption_counter;
 
   uint8_t nonce[13];
   uint8_t *p = nonce;
@@ -2296,7 +2268,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   if (-1 == packet_id) {
     packet_id = 0;  // packet_id needs to be an 8-bit value from 0 to 255
   }
-  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, (packet_id != 0)); // Ignore duplicates if packet_id is used
+  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, (packet_id != 0)?1:0); // Ignore duplicates if packet_id is used
 */
   if (-1 == packet_id) {  // No packet_id in BTHome packet so calculate unique 8-bit hash
     uint8_t hash = 0;
@@ -2313,7 +2285,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     }
     packet_id = hash;  // Non incremental or same packet_id (can still be used to chk for duplicates)
   }
-  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, true); // Ignore duplicates
+  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, 1); // Ignore duplicates
 
 #ifdef USE_MI_DEBUG 
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s packet %*_H%s"), log_name, length, _buf, (slot == 0xff)?" (duplicate)":"");
@@ -2812,7 +2784,7 @@ void MI32ParseATBtn(uint8_t *buf, uint16_t bufsize, const uint8_t* addr, int RSS
   memcpy(_addr,addr,6);
   _addr[4] = data->switch1;
   _addr[5] = data->switch2;
-  uint32_t _slot = MIBLEgetSensorSlot(_addr, kMI32DeviceID[AT_BTN-1], data->counter, true);
+  uint32_t _slot = MIBLEgetSensorSlot(_addr, kMI32DeviceID[AT_BTN-1], data->counter, 1);
   if(_slot == 0xff) return;
 
   // AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), MI32getDeviceName(_slot),_slot);
