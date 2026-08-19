@@ -30,6 +30,7 @@
 
 #define XSNS_62                    62
 
+#include <atomic>
 #include <vector>
 #include "freertos/ringbuf.h"
 
@@ -57,6 +58,7 @@ static void MI32RunClientOp();
 
 std::vector<mi_sensor_t> MIBLEsensors;
 RingbufHandle_t BLERingBufferQueue = nullptr;
+static std::atomic<bool> MI32ReadingDone{false};
 
 static BLEScan* MI32Scan;
 static NimBLEClient* MI32Client;
@@ -87,6 +89,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.conCtx->error = reason;
     MI32.conCtx->operation = 5; //set for all disconnects that come from the remote device or connection loss
     MI32.mode.triggerBerryConnCB = 1;
+    MI32.mode.updateScan = 1;
   }
   void onPassKeyEntry(NimBLEConnInfo& connInfo) {
     NimBLEDevice::injectPassKey(connInfo, MI32.conCtx->pin);
@@ -293,7 +296,7 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
     item.header.returnCharUUID = *reinterpret_cast<const uint16_t*>(pRemoteCharacteristic->getUUID().getValue() + 12);
     item.header.handle = pRemoteCharacteristic->getHandle();
     xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(5));
-    MI32.mode.readingDone = 1;
+    MI32ReadingDone.store(true, std::memory_order_release);
     MI32.infoMsg = MI32_GOT_NOTIFICATION;
     return;
   }
@@ -386,7 +389,7 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   uint32_t nonceLen = 12; // most devices are v5
   uint8_t tag[4] = {0};
   const unsigned char authData[1] = {0x11};
-  size_t dataLen = _bufSize - 11 ; // _bufsize - frame - type - frame.counter - MAC
+  size_t dataLen;
 
   if(MIBLEsensors[_slot].key == nullptr){
     // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: No Key found !!"));
@@ -397,34 +400,34 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: encrypted msg from %s with version:%u"),MI32getDeviceName(_slot),_version);
 
   if(_version == 5){
+    const uint8_t dataOffset = _beacon->frame.includesMAC ? 11 : 5;
+    if(_bufSize < dataOffset + 10 || _bufSize > dataOffset + 7 + sizeof(mi_payload_t)) return -3;
+    dataLen = _bufSize - dataOffset - 7;
+    memcpy(_payload, _buf + dataOffset, dataLen);
     if(_beacon->frame.includesMAC){
       for (uint32_t i = 0; i<6; i++){
         nonce[i] = _beacon->MAC[i];
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: has MAC"));
-      memcpy(_payload,(uint8_t*)&_beacon->capability, dataLen); //special packet
-      dataLen -= 7;
     }
     else{
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: has no MAC"));
       for (uint32_t i = 0; i<6; i++){
         nonce[i] = MIBLEsensors[_slot].MAC[5-i];
       }
-      dataLen = _bufSize -5 ;
-      memcpy(_payload,_beacon->MAC, dataLen); //special packet
-      dataLen -= 7;
       // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) _payload, dataLen);
     }
     // nonce: device MAC, device type, frame cnt, ext. cnt
     memcpy((uint8_t*)&nonce+6,(uint8_t*)&_beacon->productID,2);
     nonce[8] = _beacon->counter;
-    memcpy((uint8_t*)&nonce+9,(uint8_t*)&_payload[dataLen],3);
-    // memcpy((uint8_t*)&tag,(uint8_t*)&_payload[dataLen-4],4);
+    memcpy((uint8_t*)&nonce+9,(uint8_t*)&_buf[_bufSize-7],3);
     memcpy((uint8_t*)&tag,(uint8_t*)&_buf[_bufSize-4],4);
   }
   else if(_version == 3){
+    if(!_beacon->frame.includesMAC || _bufSize < 18 || _bufSize > 15 + sizeof(mi_payload_t)) return -3;
+    dataLen = _bufSize - 15;
+    memcpy(_payload, (uint8_t*)&_beacon->capability, dataLen);
     // nonce:  frame_ctrl, device type, ext. cnt, frame cnt, device MAC(only first 5 bytes)
-    memcpy(_payload,(uint8_t*)&_beacon->capability, dataLen); //special packet
     nonceLen = 13;
     memcpy((uint8_t*)&nonce,(uint8_t*)&_beacon->frame,2);
     memcpy((uint8_t*)&nonce+2,(uint8_t*)&_beacon->productID,2);
@@ -434,11 +437,8 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
       nonce[i+8] = _beacon->MAC[i];
     }
     // tag[0] = _buf[_bufSize-1]; // it is unclear, if this value is a checksum
-    dataLen -= 4;
   }
-  else{
-    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: unexpected decryption version:%u"),_version); // should never happen
-  }
+  else return -3;
 
   br_aes_small_ctrcbc_keys keyCtx;
   br_aes_small_ctrcbc_init(&keyCtx, MIBLEsensors[_slot].key, 16);
@@ -450,11 +450,11 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   br_ccm_flip(&ctx);
   br_ccm_run(&ctx, 0, _payload, dataLen);
 
-  if(br_ccm_check_tag(&ctx, &tag)) return 0;
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decrypted in %2_f mSec"), &enctime);
   // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) _payload, dataLen);
-  if(_version == 3 && _payload[1] == 0x10) return 0; // no known way to really verify decryption, but 0x10 is expected here for button events
-  return -1; // wrong key ... maybe corrupt data packet too
+  if(!br_ccm_check_tag(&ctx, &tag) && !(_version == 3 && _payload[1] == 0x10)) return -1;
+  if((size_t)_payload[2] + 3 > dataLen) return -3;
+  return 0;
 }
 
 /*********************************************************************************************\
@@ -864,8 +864,8 @@ extern "C" {
 
   void MI32setBerryConnCB(void* function, uint8_t *buffer){
     if(function == nullptr || buffer == nullptr){
-      MI32.mode.deleteConnectionTask = 1; // request task teardown if alive
       MI32.beConnCB = nullptr;
+      MI32.mode.deleteConnectionTask = 1; // request task teardown if alive
       AddLog(LOG_LEVEL_INFO,PSTR("BLE: Connection callback cleared"));
       return;
     }
@@ -1404,6 +1404,7 @@ static void MI32RunClientOp(){
         NimBLEDevice::deleteClient(MI32Client);
         MI32Client = nullptr;
         MI32.mode.willConnect = 0;
+        MI32.mode.updateScan = 1;
         MI32.conCtx->error = MI32_CONN_NO_CONNECT;
         return;
       }
@@ -1486,9 +1487,9 @@ static void MI32RunClientOp(){
         } else {
           MI32.conCtx->error = MI32_CONN_CAN_NOT_WRITE;
         }
-        MI32.mode.readingDone = 1;
         break;
       case 3: // subscribe
+        if(MI32.conCtx->oneOp) MI32ReadingDone.store(false, std::memory_order_relaxed);
         if(!BLERingBufferQueue){
           MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
           break;
@@ -1536,26 +1537,24 @@ static void MI32RunClientOp(){
     MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
   }
 
-  // legacy oneOp: optionally wait for notification then disconnect
+  // Legacy oneOp: only subscribe waits for a notification. Reads and writes
+  // complete synchronously and can disconnect immediately.
   if(MI32.conCtx->oneOp && !bridge){
-    if(MI32.conCtx->error == MI32_CONN_NO_ERROR){
+    if(MI32.conCtx->error == MI32_CONN_NO_ERROR && MI32.conCtx->operation == 3){
       uint32_t timer = 0;
       while(timer < 150){
-        if(MI32.mode.readingDone) break;
-        if(timer > 148 && MI32.conCtx->operation == 3){
+        if(MI32ReadingDone.load(std::memory_order_acquire)) break;
+        if(timer > 148){
           MI32.conCtx->error = MI32_CONN_NOTIFY_TIMEOUT;
         }
         timer++;
         vTaskDelay(100 / portTICK_PERIOD_MS);
       }
     }
-    MI32.mode.readingDone = 0;
     if(MI32Client != nullptr && MI32Client->isConnected()){
       MI32Client->disconnect();
     }
     MI32.role &= ~MI32_ROLE_CLIENT; // defensive; onDisconnect also clears it
-  } else {
-    MI32.mode.readingDone = 0;
   }
 }
 
@@ -1625,19 +1624,14 @@ cleanup:
     NimBLEDevice::deleteClient(MI32Client);
     MI32Client = nullptr;
   }
-  if(MI32.conCtx != nullptr){
-    delete MI32.conCtx;
-    MI32.conCtx = nullptr;
-  }
-  if(BLERingBufferQueue != nullptr){
-    vRingbufferDelete(BLERingBufferQueue);
-    BLERingBufferQueue = nullptr;
-  }
+  // conCtx and the ring buffer are shared with the main loop and NimBLE
+  // callbacks. Keep them for the BLE runtime and reuse them on registration;
+  // the worker task and its stack are still released below.
   MI32.role &= ~(MI32_ROLE_SERVER | MI32_ROLE_CLIENT | MI32_ROLE_ADVERTISER);
   MI32.mode.connected            = 0;
   MI32.mode.willConnect          = 0;
   MI32.mode.deleteConnectionTask = 0;
-  MI32.mode.triggerBerryConnCB   = 1;
+  MI32.mode.triggerBerryConnCB   = 0;
   MI32.ConnTask = nullptr;
   MI32StartTask(MI32_TASK_SCAN);
   vTaskDelete(NULL);
@@ -1802,7 +1796,7 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot, uint16_t _bufSize){
   bitSet(MI32.widgetSlot,_slot);
 #endif //USE_MI_EXT_GUI
 if(_beacon->frame.includesObj == 0){
-  if(_beacon->capability == 0x28) MIBLEsensors[_slot].status.isUnbounded = 1;
+  if(_bufSize > 11 && _beacon->capability == 0x28) MIBLEsensors[_slot].status.isUnbounded = 1;
   return; //nothing to parse
 }
 
@@ -1813,13 +1807,15 @@ if(_beacon->frame.isEncrypted){
     // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decryptRet: %d"),decryptRet);
   }
 else{
-  uint32_t _offset = (_beacon->frame.includesCapability)?0:1;
-  size_t _payloadSize = *(uint8_t*)(&_beacon->payload.size - _offset);
-  if(_beacon->frame.includesMAC && _beacon->frame.includesObj) {
-      // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: offset %u, size: %u"),_offset,_payloadSize);
-      memcpy((uint8_t*)&_payload,(uint8_t*)(&_beacon->payload)-_offset, _payloadSize + 3);
-      // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)&_payload,_payloadSize + 3);
-      }
+  // Short frames such as NLIGHT may omit the embedded MAC.
+  const uint8_t _payloadOffset = 5 + (_beacon->frame.includesMAC ? 6 : 0)
+                                  + (_beacon->frame.includesCapability ? 1 : 0);
+  if(_bufSize < _payloadOffset + 3) return;
+  const uint16_t _payloadLength = (uint8_t)_buf[_payloadOffset + 2] + 3;
+  if(_payloadLength > sizeof(_payload) || _payloadLength > _bufSize - _payloadOffset) return;
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: offset %u, size: %u"),_payloadOffset,_payloadSize);
+  memcpy((uint8_t*)&_payload,(uint8_t*)_buf + _payloadOffset, _payloadLength);
+  // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)&_payload,_payloadLength);
   }
 if(decryptRet!=0){
   AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Decryption failed with error: %d for %u"),decryptRet, _slot);
@@ -2013,7 +2009,7 @@ if(decryptRet!=0){
       else{
         //unknown payload
         AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)_buf,_bufSize);
-        AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)&_payload,_payload.size + 2);
+        AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)&_payload,_payload.size + 3);
       }
     break;
   }
@@ -2288,7 +2284,9 @@ void MI32BLELoop()
 
   // client callback
   // handle notification queue only if there is no message from read/write or subscribe, which is prioritized
-  if(MI32.mode.connected == 1 && BLERingBufferQueue != nullptr && MI32.mode.triggerBerryConnCB == 0) {
+  if(MI32.mode.connected == 1 && BLERingBufferQueue != nullptr && MI32.beConnCB != nullptr
+     && MI32.mode.triggerBerryConnCB == 0 && MI32.mode.readyForNextJob == 1
+     && MI32.mode.triggerNextJob == 0) {
     size_t size;
     BLERingBufferItem_t *q = (BLERingBufferItem_t *)xRingbufferReceive(BLERingBufferQueue, &size, pdMS_TO_TICKS(1));
 
@@ -2318,7 +2316,7 @@ void MI32BLELoop()
   // Bridge mode (connected==0): drain ring buffer into conCtx and defer
   // dispatch via triggerBerryConnCB, same as the client branch above.
   // triggerNextJob==0 guard: don't clobber an op Berry just staged.
-  if(MI32.mode.connected == 0 && BLERingBufferQueue != nullptr
+  if(MI32.mode.connected == 0 && BLERingBufferQueue != nullptr && MI32.beConnCB != nullptr
      && MI32.mode.triggerBerryConnCB == 0 && MI32.mode.readyForNextJob == 1
      && MI32.mode.triggerNextJob == 0){
     size_t size;
