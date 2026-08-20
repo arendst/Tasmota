@@ -379,15 +379,11 @@ char *topicPrefix(int prefix, const uint8_t *addr, int useAlias) {
   return stopic;
 }
 
-// return 0+ if we find the addr has one of our listed prefixes
-// return -1 if we don't recognise the mac
-int matchPrefix(const uint8_t *addr) {
-  for (size_t i = 0; i < sizeof(macprefixes) / sizeof(*macprefixes); i++) {
-    if (!memcmp(addr, macprefixes[i], 3)) {
-      return i;
-    }
+bool matchPrefix(const uint8_t *addr) {
+  for (const auto *prefix : macprefixes) {
+    if (!memcmp(addr, prefix, 3)) return true;
   }
-  return -1;
+  return false;
 }
 
 bool EQ3Operation(const uint8_t *MAC, const uint8_t *data, int datalen, int cmdtype, int retries_in = 0) {
@@ -907,7 +903,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   }
 
   // if the addr matches the EQ3 mfg prefix, add it?
-  if (!found && EQ3MatchPrefix && (matchPrefix(addr) >= 0)) {
+  if (!found && EQ3MatchPrefix && matchPrefix(addr)) {
     found = true;
   }
 
