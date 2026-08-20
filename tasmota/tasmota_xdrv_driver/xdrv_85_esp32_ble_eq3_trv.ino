@@ -136,7 +136,7 @@ print("".join(pin))
 #ifdef USE_BLE_ESP32
 
 #define XDRV_85                    85
-#define D_CMND_EQ3 "Trv"
+#define D_CMND_EQ3 "TRV"
 
 // uncomment for more debug messages
 //#define EQ3_DEBUG
