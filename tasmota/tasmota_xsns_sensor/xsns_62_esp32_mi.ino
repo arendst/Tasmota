@@ -55,6 +55,7 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
 void MI32ConnectionTask(void *pvParameters);
 static void MI32EnsureServerInstance(NimBLEServer *&pServer);
 static void MI32RunClientOp();
+static bool MI32SetSubscription(NimBLERemoteCharacteristic *pChr, bool subscribe, bool response);
 
 std::vector<mi_sensor_t> MIBLEsensors;
 RingbufHandle_t BLERingBufferQueue = nullptr;
@@ -163,6 +164,8 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
         } item;
         item.header.length = 6;
         item.header.type = BLE_OP_ON_CONNECT;
+        item.header.returnCharUUID = 0;
+        item.header.handle = 0;
         memcpy(item.buffer,connInfo.getAddress().getVal(),6);
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + 6 , pdMS_TO_TICKS(1));
         MI32.infoMsg = MI32_SERV_CLIENT_CONNECTED;
@@ -178,6 +181,8 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
         } item;
         item.header.length = 0;
         item.header.type = BLE_OP_ON_DISCONNECT;
+        item.header.returnCharUUID = 0;
+        item.header.handle = 0;
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
         MI32.infoMsg = MI32_SERV_CLIENT_DISCONNECTED;
         if(MI32.conCtx == nullptr) return;
@@ -215,6 +220,8 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
       memcpy(item.buffer + security_record_size, &peer_security_record, security_record_size);
       item.header.length = 2 * security_record_size;
       item.header.type = BLE_OP_ON_AUTHENTICATED;
+      item.header.returnCharUUID = 0;
+      item.header.handle = 0;
       xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + item.header.length, pdMS_TO_TICKS(1));
       MI32.infoMsg = MI32_SERV_CLIENT_AUTHENTICATED;
     }
@@ -281,25 +288,31 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
 
 
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
+  const NimBLEUUID &uuid = pRemoteCharacteristic->getUUID();
+  const uint8_t *uuidValue = uuid.getValue() + (uuid.bitSize() == BLE_UUID_TYPE_128 ? 12 : 0);
+  const uint16_t uuid16 = *reinterpret_cast<const uint16_t*>(uuidValue);
   AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: notifyCB uuid=%04x handle=%u len=%u isNotify=%u"),
-    *reinterpret_cast<const uint16_t*>(pRemoteCharacteristic->getUUID().getValue() + 12),
-    pRemoteCharacteristic->getHandle(), (unsigned)length, (unsigned)isNotify);
-  if(isNotify){
-    struct{
-      BLERingBufferItem_t header;
-      uint8_t buffer[255];
-    } item;
-    if(length > sizeof(item.buffer)) length = sizeof(item.buffer); // Cap notification payload 
-    item.header.length = length;
-    item.header.type = 103; // notification op for serv_cb dispatch in bridge mode (role==3)
-    memcpy(item.buffer,pData,length);
-    item.header.returnCharUUID = *reinterpret_cast<const uint16_t*>(pRemoteCharacteristic->getUUID().getValue() + 12);
-    item.header.handle = pRemoteCharacteristic->getHandle();
-    xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(5));
-    MI32ReadingDone.store(true, std::memory_order_release);
-    MI32.infoMsg = MI32_GOT_NOTIFICATION;
-    return;
-  }
+    uuid16, pRemoteCharacteristic->getHandle(), (unsigned)length, (unsigned)isNotify);
+  struct{
+    BLERingBufferItem_t header;
+    uint8_t buffer[255];
+  } item;
+  if(length > sizeof(item.buffer)) length = sizeof(item.buffer); // Cap notification payload
+  item.header.length = length;
+  item.header.type = BLE_OP_GET_NOTIFICATION;
+  memcpy(item.buffer,pData,length);
+  item.header.returnCharUUID = uuid16;
+  item.header.handle = pRemoteCharacteristic->getHandle();
+  xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(5));
+  MI32ReadingDone.store(true, std::memory_order_release);
+  MI32.infoMsg = MI32_GOT_NOTIFICATION;
+}
+
+static bool MI32SetSubscription(NimBLERemoteCharacteristic *pChr, bool subscribe, bool response){
+  const bool notify = pChr->canNotify();
+  if(!notify && !pChr->canIndicate()) return false;
+  return subscribe ? pChr->subscribe(notify, MI32notifyCB, response)
+                   : pChr->unsubscribe(response);
 }
 
 static MI32AdvCallbacks MI32ScanCallbacks;
@@ -1274,7 +1287,8 @@ void MI32ScanTask(void *pvParameters){
  *        ... next service
  */
 void MI32ConnectionGetServices(){
-  std::vector<NimBLERemoteService*> srvvector = MI32Client->getServices(true); // refresh
+  const bool refresh = MI32.conCtx->response || MI32Client->getServices(false).empty();
+  const auto &srvvector = MI32Client->getServices(refresh);
   MI32.conCtx->buffer[1] = srvvector.size(); // number of services
   uint32_t i = 2;
   for (auto &srv: srvvector) {
@@ -1300,7 +1314,8 @@ void MI32ConnectionGetServices(){
  */
 void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc);
 void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc){
-  auto charvector = pSvc->getCharacteristics(); // refresh
+  const bool refresh = MI32.conCtx->response || pSvc->getCharacteristics(false).empty();
+  const auto &charvector = pSvc->getCharacteristics(refresh);
   MI32.conCtx->buffer[1] = charvector.size(); // number of characteristics
   uint32_t i = 2;
   for (auto &chr: charvector) {
@@ -1479,7 +1494,7 @@ static void MI32RunClientOp(){
         if(pChr->canWrite() || pChr->canWriteNoResponse()){
           uint8_t len = MI32.conCtx->buffer[0];
           if(pChr->writeValue(MI32.conCtx->buffer + 1, len,
-                              MI32.conCtx->response && !pChr->canWriteNoResponse())){
+                              MI32.conCtx->response ? pChr->canWrite() : !pChr->canWriteNoResponse())){
             MI32.conCtx->handle = pChr->getHandle();
           } else {
             MI32.conCtx->error = MI32_CONN_DID_NOT_WRITE;
@@ -1489,24 +1504,21 @@ static void MI32RunClientOp(){
         }
         break;
       case 3: // subscribe
-        if(MI32.conCtx->oneOp) MI32ReadingDone.store(false, std::memory_order_relaxed);
-        if(!BLERingBufferQueue){
+      case 4: { // unsubscribe
+        const bool subscribe = MI32.conCtx->operation == BLE_OP_SUBSCRIBE;
+        if(subscribe && MI32.conCtx->oneOp) MI32ReadingDone.store(false, std::memory_order_relaxed);
+        if(subscribe && !BLERingBufferQueue){
           MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
           break;
         }
         if(MI32.conCtx->hasArg1){
-          if(pChr->canNotify()){
-            if(!pChr->subscribe(true, MI32notifyCB, MI32.conCtx->response)){
-              MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
-            } else {
-              // Mirror the UUID-subscribe path's bookkeeping so Berry receives the
-              // resolved handle (1-handle payload, big-endian then little-endian
-              // pair as expected by the existing decoder).
-              MI32.conCtx->handle = pChr->getHandle();
-              MI32.conCtx->buffer[0] = 2;
-              MI32.conCtx->buffer[1] = pChr->getHandle() >> 8;
-              MI32.conCtx->buffer[2] = pChr->getHandle() & 0xff;
-            }
+          if(!MI32SetSubscription(pChr, subscribe, MI32.conCtx->response)){
+            MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
+          } else {
+            MI32.conCtx->handle = pChr->getHandle();
+            MI32.conCtx->buffer[0] = 2;
+            MI32.conCtx->buffer[1] = pChr->getHandle() >> 8;
+            MI32.conCtx->buffer[2] = pChr->getHandle() & 0xff;
           }
         } else {
           // refresh=false: getCharacteristics(true) would wipe m_vChars and
@@ -1516,20 +1528,20 @@ static void MI32RunClientOp(){
           uint32_t position = 1;
           for(auto &it: charvector){
             if(it->getUUID() == MI32.conCtx->charUUID){
-              if(it->canNotify()){
-                if(!it->subscribe(true, MI32notifyCB, MI32.conCtx->response)){
-                  MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
-                } else {
-                  MI32.conCtx->buffer[position++] = it->getHandle() >> 8;
-                  MI32.conCtx->buffer[position++] = it->getHandle() & 0xff;
-                  MI32.conCtx->handle = it->getHandle();
-                }
+              if(!MI32SetSubscription(it, subscribe, MI32.conCtx->response)){
+                MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
+              } else {
+                MI32.conCtx->buffer[position++] = it->getHandle() >> 8;
+                MI32.conCtx->buffer[position++] = it->getHandle() & 0xff;
+                MI32.conCtx->handle = it->getHandle();
               }
             }
           }
           MI32.conCtx->buffer[0] = position - 1;
+          if(position == 1) MI32.conCtx->error = MI32_CONN_CAN_NOT_NOTIFY;
         }
         break;
+      }
       default:
         break;
     }
@@ -1601,7 +1613,7 @@ void MI32ConnectionTask(void *pvParameters){
         MI32EnsureServerInstance(pServer);
         MI32ServerSetCharacteristic(pServer, servicesToStart, shallStartServices);
         break;
-      case 1: case 2: case 3: case 5: case 6: case 7: // client op
+      case 1: case 2: case 3: case 4: case 5: case 6: case 7: // client op
         MI32RunClientOp();
         MI32.mode.triggerBerryConnCB = 1;
         break;
@@ -1680,11 +1692,11 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
       for (auto & pService : servicesToStart) {
         std::vector<NimBLECharacteristic *> characteristics = pService->getCharacteristics();
         for (auto & pCharacteristic : characteristics) {
+          if (idx + 1 >= sizeof(item.buffer)) break; // limit to 127 characteristics
           uint16_t handle = pCharacteristic->getHandle(); // now we have handles, so pass them to Berry
           //AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: characteristic started %s"),pCharacteristic->toString().c_str());
-          item.buffer[idx] = (uint8_t)handle>>8;
+          item.buffer[idx] = (uint8_t)(handle >> 8);
           item.buffer[idx+1] = (uint8_t)handle&0xff;
-          if (idx > 254) break; // limit to 127 characteristics
           idx += 2;
         }
       }
@@ -2235,8 +2247,13 @@ void MI32HandleEveryDevice(const NimBLEAdvertisedDevice* advertisedDevice, uint8
       _sensor.payload = new uint8_t[64]();
     }
     if(_sensor.payload != nullptr) {
-      memcpy(_sensor.payload, advertisedDevice->getPayload().data(), advertisedDevice->getPayload().size());
-      _sensor.payload_len = advertisedDevice->getPayload().size();
+      const auto &payload = advertisedDevice->getPayload();
+      size_t payload_len = payload.size();
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+      if(payload_len > 63) payload_len = 63;
+#endif
+      memcpy(_sensor.payload, payload.data(), payload_len);
+      _sensor.payload_len = payload_len;
       bitSet(MI32.widgetSlot,_slot);
       MI32addHistory(_sensor.temp_history, 0, 3); // reuse temp_history as sighting history
       _sensor.RSSI=RSSI;
@@ -2293,6 +2310,8 @@ void MI32BLELoop()
     if(q != nullptr){
       if(q->length != 0){
         memcpy(MI32.conCtx->buffer,&q->length,q->length + 1);
+      } else {
+        MI32.conCtx->buffer[0] = 0;
       }
       MI32.conCtx->returnCharUUID = q->returnCharUUID;
       MI32.conCtx->handle = q->handle;

@@ -292,7 +292,8 @@ int be_BLE_run(bvm *vm) {
 // #else
 //     be_map_insert_nil(vm, "bonds");
 // #endif
-    if(MI32.mode.connected == 1 || (MI32.role & MI32_ROLE_SERVER)){
+    NimBLEClient* _serverPeer = MI32.conCtx ? MI32.conCtx->serverPeer : nullptr;
+    if(MI32.mode.connected == 1 || _serverPeer != nullptr){
       NimBLEClient* _device = nullptr;
       if(MI32.mode.connected == 1){
         _device = NimBLEDevice::getClientByHandle(MI32.connID);
@@ -311,7 +312,7 @@ int be_BLE_run(bvm *vm) {
       be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
       be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
       if(_device == nullptr) {
-        auto _remote_client = NimBLEDevice::getServer()->getClient(_info);
+        auto _remote_client = _serverPeer;
         if(_remote_client != nullptr){
           auto _name = _remote_client->getValue(NimBLEUUID((uint16_t)0x1800), NimBLEUUID((uint16_t)0x2A00)); //GAP, name
           if(_name){
@@ -323,8 +324,7 @@ int be_BLE_run(bvm *vm) {
       }
 
       ble_store_value_sec value_sec;
-      ble_sm_read_bond(_info.getConnHandle(), &value_sec);
-      if(value_sec.irk_present == 1){
+      if(ble_sm_read_bond(_info.getConnHandle(), &value_sec) == 0 && value_sec.irk_present == 1){
             char IRK[33];
             ToHex_P(value_sec.irk,16,IRK,33);
             be_map_insert_str(vm, "IRK",IRK );
@@ -358,16 +358,16 @@ be_BLE_op:
 1 read
 2 write
 3 subscribe
-4 unsubscribe - maybe later
+4 unsubscribe
 5 disconnect
-6 discover services
-7 discover characteristics
+6 discover services (true forces refresh)
+7 discover characteristics (true forces refresh)
 
 
 11 read once, then disconnect
 12 write once, then disconnect
 13 subscribe once, then disconnect
-14 unsubscribe once, then disconnect - maybe later
+14 unsubscribe once, then disconnect
 
 #server
 __commands
