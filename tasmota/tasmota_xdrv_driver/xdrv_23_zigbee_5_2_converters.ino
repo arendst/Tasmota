@@ -1757,7 +1757,11 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         case Zint32:  ival32 = *(int32_t*)attr_address;   if (ival32 != -0x80000000) data_size = -32; break;
       }
       if (data_size != 0) {
-        Z_attribute & attr = attr_list.addAttribute(conv_name);
+        // suffix by true endpoint (matching Z_postProcessAttributes' src_ep convention), not by
+        // insertion-order count - device.data isn't guaranteed to be in endpoint order, so the
+        // default count-based suffix can mislabel attributes on devices with non-ascending
+        // per-endpoint data (e.g. a 4-gang relay reporting endpoints out of order).
+        Z_attribute & attr = attr_list.addAttribute(conv_name, false, getEndpoint());
 
         float fval;
         if (data_size > 0) { fval = uval32; }
