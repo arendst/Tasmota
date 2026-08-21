@@ -1744,3 +1744,18 @@ lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj)
 lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj)
 bool lv_colorwheel_get_color_mode_fixed(lv_obj_t * obj)
 
+// ../src/lv_stripes.h
+lv_obj_t * lv_stripes_create(lv_obj_t * parent)
+void lv_stripes_set_stripe_color(lv_obj_t * obj, lv_color_t color)
+void lv_stripes_set_stripe_opa(lv_obj_t * obj, lv_opa_t opa)
+void lv_stripes_set_stripe_width(lv_obj_t * obj, int32_t width)
+void lv_stripes_set_gap_width(lv_obj_t * obj, int32_t width)
+void lv_stripes_set_angle(lv_obj_t * obj, int32_t angle)
+void lv_stripes_set_offset(lv_obj_t * obj, int32_t offset)
+lv_color_t lv_stripes_get_stripe_color(lv_obj_t * obj)
+lv_opa_t lv_stripes_get_stripe_opa(lv_obj_t * obj)
+int32_t lv_stripes_get_stripe_width(lv_obj_t * obj)
+int32_t lv_stripes_get_gap_width(lv_obj_t * obj)
+int32_t lv_stripes_get_angle(lv_obj_t * obj)
+int32_t lv_stripes_get_offset(lv_obj_t * obj)
+

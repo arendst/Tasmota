@@ -49,6 +49,8 @@ LV_WIDGETS = [
     'qrcode',
     # ad-hoc colorwheel back-ported from LVGL8 to LVGL9
     'colorwheel',
+    # custom Tasmota widget: rectangle filled with an angled stripe pattern
+    'stripes',
 ]
 
 # Widgets that do not have a backing ``lv_<name>_class`` C object.
@@ -578,6 +580,7 @@ FUNCTION_HEADER_EXTRA_PATHS = [
     "../../LVGL_assets/src/lv_theme_haspmota.h",
     "../src/lv_berry.h",
     "../src/lv_colorwheel.h",
+    "../src/lv_stripes.h",
 ]
 
 # Glob patterns (relative to LV_SRC_PREFIX) for headers scanned for enums.

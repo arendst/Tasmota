@@ -103,7 +103,9 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # arguments: (map) the map for all complementary arguments that are plugin specific
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
-    device.add_read_sensors_schedule(self.UPDATE_TIME)
+    if !self.BRIDGE
+      device.add_read_sensors_schedule(self.UPDATE_TIME)
+    end
   end
 
   #############################################################

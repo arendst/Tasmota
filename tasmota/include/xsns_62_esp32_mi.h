@@ -106,7 +106,11 @@ struct berryAdvPacket_t{
   uint8_t addressType;
   uint8_t RSSI;
   uint8_t length;      // length of payload
-  uint8_t payload[32]; // only a pointer to the address, size is 0-31 bytes
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+  uint8_t payload[255];
+#else
+  uint8_t payload[62]; // legacy advertisement plus scan response
+#endif
 };
 
 
@@ -211,7 +215,6 @@ struct {
 
       uint32_t canConnect:1;
       uint32_t willConnect:1;
-      uint32_t readingDone:1;
 
       uint32_t shallTriggerTele:1;
       uint32_t triggeredTele:1;
@@ -427,7 +430,7 @@ enum BLE_CLIENT_OP {
 BLE_OP_READ = 1,
 BLE_OP_WRITE,
 BLE_OP_SUBSCRIBE,
-BLE_OP_UNSUBSCRIBE, //maybe used later
+BLE_OP_UNSUBSCRIBE,
 BLE_OP_DISCONNECT,
 BLE_OP_GET_NOTIFICATION = 103,
 };

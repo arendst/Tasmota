@@ -1,0 +1,26 @@
+{
+    "name": "TasmotaPubSub",
+    "version": "2.8.13",
+    "keywords": "ethernet, mqtt, m2m, iot, TasmotaPubSub",
+    "description": "Tasmota fork of the PubSubClient MQTT library. A client library for MQTT messaging, a lightweight messaging protocol ideal for small devices. This fork is hardened and adapted for Tasmota on ESP8266 and ESP32. Based on the original PubSubClient by Nick O'Leary.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/arendst/Tasmota/lib/TasmotaPubSub"
+    },
+    "authors": [
+        {
+            "name": "Nick O'Leary",
+            "email": "nick.oleary@gmail.com",
+            "url": "http://knolleary.net"
+        },
+        {
+            "name": "Stephan Hadinger"
+        }
+    ],
+    "exclude": "tests",
+    "frameworks": "arduino",
+    "platforms": [
+        "espressif8266",
+        "espressif32"
+    ]
+}

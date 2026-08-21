@@ -132,6 +132,7 @@ class Matter_Plugin_Device : Matter_Plugin
   static var SYNC_TIMEOUT = 500                     # timeout of 700 ms for probing
 
   var http_remote                                   # instance of Matter_HTTP_remote
+  var mqtt_remote                                   # instance of Matter_MQTT_remote
 
   # clusters for general devices
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
@@ -162,8 +163,15 @@ class Matter_Plugin_Device : Matter_Plugin
     super(self).init(device, endpoint, arguments)
 
     if self.BRIDGE
-      var addr = arguments.find(self.ARG_HTTP)
-      self.http_remote = self.device.register_http_remote(addr, self.PROBE_TIMEOUT)
+      var topic = arguments.find("topic")
+      if topic
+        # MQTT bridge mode
+        self.mqtt_remote = self.device.register_mqtt_remote(topic)
+      else
+        # HTTP bridge mode (default)
+        var addr = arguments.find(self.ARG_HTTP)
+        self.http_remote = self.device.register_http_remote(addr, self.PROBE_TIMEOUT)
+      end
       self.register_cmd_cb()
     end
   end
@@ -250,7 +258,8 @@ class Matter_Plugin_Device : Matter_Plugin
 
       if   attribute == 0x0003          #  ---------- ProductName / string (not nullable) ----------
         if self.BRIDGE
-          var name = self.http_remote.get_info().find("name", "")
+          var remote = self.mqtt_remote ? self.mqtt_remote : self.http_remote
+          var name = remote ? remote.get_info().find("name", "") : ""
           return tlv_solo.set(0x0C #-TLV.UTF1-#, name)
         else
           return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.cmd("DeviceName", true)['DeviceName'])
@@ -259,7 +268,8 @@ class Matter_Plugin_Device : Matter_Plugin
         return tlv_solo.set(0x0C #-TLV.UTF1-#, self.get_name())
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string (not nullable) ----------
         if self.BRIDGE
-          var version_full = self.http_remote.get_info().find("version")
+          var remote = self.mqtt_remote ? self.mqtt_remote : self.http_remote
+          var version_full = remote ? remote.get_info().find("version") : nil
           if version_full
             var version_end = string.find(version_full, '(')
             if version_end > 0    version_full = version_full[0..version_end - 1]   end
@@ -275,14 +285,17 @@ class Matter_Plugin_Device : Matter_Plugin
         end
       elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber / UniqueID / string (not nullable) ----------
         if self.BRIDGE
-          var mac = self.http_remote.get_info().find("mac", "")
+          var remote = self.mqtt_remote ? self.mqtt_remote : self.http_remote
+          var mac = remote ? remote.get_info().find("mac", "") : ""
           return tlv_solo.set(0x0C #-TLV.UTF1-#, mac)
         else
           return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.wifi().find("mac", ""))
         end
       elif attribute == 0x0011          #  ---------- Reachable / bool ----------
         if self.BRIDGE
-          return tlv_solo.set(0x08 #-TLV.BOOL-#, self.http_remote.reachable)     # TODO find a way to do a ping
+          var remote = self.mqtt_remote ? self.mqtt_remote : self.http_remote
+          var reachable = remote ? remote.reachable : false
+          return tlv_solo.set(0x08 #-TLV.BOOL-#, reachable)
         else
           return tlv_solo.set(0x08 #-TLV.BOOL-#, 1)     # by default we are reachable
         end
@@ -398,12 +411,30 @@ class Matter_Plugin_Device : Matter_Plugin
   #############################################################
   # For Bridge devices
   #############################################################
+  # Return false and set a Matter failure when an MQTT command cannot be sent.
+  def mqtt_command_ready(ctx)
+    if self.mqtt_remote && !self.mqtt_remote.can_send()
+      ctx.status = 0x01 #-matter.FAILURE-#
+      return false
+    end
+    return true
+  end
+
   #############################################################
   # register_cmd_cb
   #
   # Register recurrent command and callback
   # Defined as a separate method to allow override
   def register_cmd_cb()
+    # MQTT bridge mode - register callbacks for state updates via subscriptions
+    if self.mqtt_remote
+      # Register parse_status as callback for all status codes
+      # Status 0=Status, 2=StatusFWR, 5=StatusNET, 10=StatusSNS, 11=StatusSTS
+      self.mqtt_remote.add_async_cb(/ status,payload,cmd -> self.parse_status(payload, status), nil)
+      return
+    end
+
+    # HTTP bridge mode
     self.http_remote.add_schedule(self.UPDATE_CMD, self.UPDATE_TIME,
                                   / status,payload,cmd -> self.parse_http_response(status,payload,cmd))
   end
@@ -415,6 +446,13 @@ class Matter_Plugin_Device : Matter_Plugin
   # and call `parse_status(<data>, <index>)` when data is available.
   def update_shadow()
     if self.BRIDGE && self.tick != self.device.tick     # don't force an update if we just received it
+      # MQTT bridge mode - no polling, state updates come via subscriptions
+      if self.mqtt_remote
+        self.tick = self.device.tick
+        return
+      end
+
+      # HTTP bridge mode
       var ret = self.call_remote_sync(self.UPDATE_CMD)
       if ret
         self.parse_http_response(1, ret, self.UPDATE_CMD)
@@ -442,6 +480,14 @@ class Matter_Plugin_Device : Matter_Plugin
 
       var retry = 2         # try 2 times if first failed
       if arg != nil     cmd = cmd + ' ' + str(arg)      end
+
+      # MQTT bridge mode - return cached state
+      if self.mqtt_remote
+        var ret = self.mqtt_remote.call_sync(cmd, self.SYNC_TIMEOUT)
+        return ret
+      end
+
+      # HTTP bridge mode
       while retry > 0
         var ret = self.http_remote.call_sync(cmd, self.SYNC_TIMEOUT)
         if ret != nil
@@ -466,7 +512,7 @@ class Matter_Plugin_Device : Matter_Plugin
   #     `Status 11`: {"StatusSTS":{ [...] }}
   #     `Status 13`: {"StatusSHT":{ [...] }}
   def parse_http_response(status, payload, cmd)
-    if self.BRIDGE
+    if self.BRIDGE && self.http_remote
       self.tick = self.device.tick        # avoid new force update in same tick
       self.http_remote.parse_status_response_and_call_method(status, payload, cmd, self, self.parse_status)
     end
@@ -478,9 +524,15 @@ class Matter_Plugin_Device : Matter_Plugin
   # check if the timer expired and update_shadow() needs to be called
   def every_250ms()
     if self.BRIDGE
+      # MQTT bridge mode - no polling needed
+      if self.mqtt_remote
+        return
+      end
+
+      # HTTP bridge mode
       self.http_remote.scheduler()          # defer to HTTP scheduler
       # avoid calling update_shadow() since it's not applicable for HTTP remote
-  else
+    else
       super(self).every_250ms()
     end
   end

@@ -270,6 +270,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
 
     # ====================================================================================================
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
+      if !self.mqtt_command_ready(ctx)   return nil   end
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToHue ----------
         var hue_in = val.findsubval(0)  # Hue 0..254

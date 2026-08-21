@@ -1,7 +1,115 @@
 CompileFlags:
+  Add:
+    - "-Wall"
+    - "-Wextra"
+    - "-Wunused-variable"
+    - "-Wunused-function"
+    - "-Wno-unused-parameter"
+    - "-Wno-reserved-identifier"
   Remove:
-    - -fstrict-volatile-bitfields
-    - -fno-tree-switch-conversion
-    - -free
-    - -fipa-pta
-    - -march=*
+    - "-W*"
+    - "-m*"
+    - "-specs=*"
+    - "-MMD"
+    - "-MP"
+    - "-MF"
+    - "-MT"
+    - "-MQ"
+    - "-o"
+    - "--driver-mode=*"
+    - "-fno-shrink-wrap"
+    - "-fno-malloc-dce"
+    - "-fno-tree-switch-conversion"
+    - "-fstrict-volatile-bitfields"
+    - "-fzero-init-padding-bits=*"
+    - "-free"
+    - "-fipa-pta"
+    - "-isysroot"
+    - "-sysroot"
+---
+CompileFlags:
+  BuiltinHeaders: QueryDriver
+Diagnostics:
+  Suppress: [unused-includes]
+---
+If:
+  PathMatch: [tasmota/tasmota_.*/.*\.ino]
+CompileFlags:
+  Add:
+    - "-ferror-limit=0"
+    - "-include"
+    - "Arduino.h"
+    - "-include"
+    - "tasmota/tasmota.ino"
+Diagnostics:
+  Suppress: [undeclared_var_use]
+---
+If:
+  PathMatch: [tasmota/include/.*\.h]
+  PathExclude:
+    - "tasmota/include/i18n.h"
+    - "tasmota/include/tasmota_compat.h"
+    - "tasmota/include/tasmota.h"
+    - "tasmota/include/tasmota_globals.h"
+CompileFlags:
+  Add:
+    - "-include"
+    - "Arduino.h"
+    - "-include"
+    - "tasmota/include/tasmota_compat.h"
+    - "-include"
+    - "tasmota/include/tasmota.h"
+    - "-include"
+    - "tasmota/my_user_config.h"
+    - "-include"
+    - "tasmota/include/tasmota_globals.h"
+    - "-include"
+    - "tasmota/include/i18n.h"
+---
+If:
+  PathMatch:
+    - "tasmota/include/tasmota_compat.h"
+    - "tasmota/include/tasmota.h"
+CompileFlags:
+  Add:
+    - "-include"
+    - "Arduino.h"
+---
+If:
+  PathMatch: [tasmota/include/tasmota_globals.h]
+CompileFlags:
+  Add:
+    - "-include"
+    - "Arduino.h"
+    - "-include"
+    - "tasmota/include/tasmota_compat.h"
+    - "-include"
+    - "tasmota/include/tasmota.h"
+    - "-include"
+    - "tasmota/my_user_config.h"
+---
+If:
+  PathMatch: [tasmota/include/i18n.h]
+CompileFlags:
+  Add:
+    - "-include"
+    - "Arduino.h"
+    - "-include"
+    - "tasmota/include/tasmota_compat.h"
+    - "-include"
+    - "tasmota/include/tasmota.h"
+    - "-include"
+    - "tasmota/my_user_config.h"
+    - "-include"
+    - "tasmota/include/tasmota_globals.h"
+---
+If:
+  PathMatch: [tasmota/my_user_config.h]
+CompileFlags:
+  Add:
+    - "-include"
+    - "Arduino.h"
+    - "-include"
+    - "tasmota/include/tasmota_compat.h"
+    - "-include"
+    - "tasmota/include/tasmota.h"

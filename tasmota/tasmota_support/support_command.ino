@@ -2270,7 +2270,7 @@ void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    TasmotaGlobal.baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
+    SetTasmotaGlobalBaudrate((XdrvMailbox.payload & 0xFFFF) * 300);
     SetSerialBaudrate(TasmotaGlobal.baudrate);
   }
   ResponseCmndNumber(TasmotaGlobal.baudrate);

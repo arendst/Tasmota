@@ -476,7 +476,7 @@ void setup(void) {
 
   if (RtcSettingsLoad(0)) {
     uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
-    if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
+    if (baudrate) { SetTasmotaGlobalBaudrate(baudrate); }
   }
 
   // Init settings and logging preparing for AddLog use
@@ -747,10 +747,6 @@ void BacklogLoop(void) {
       do {
         char* cmd = *backlog.head();
         backlog.removeHead();
-/*
-        // This adds 32 bytes
-        char* cmd = *backlog.removeHead();
-*/
         if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
           free(cmd);
           nodelay = true;

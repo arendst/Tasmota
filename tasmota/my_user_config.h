@@ -1324,6 +1324,9 @@
     // adding ad-hoc colorwheel from LVGL8 to LVGL9
     #define BE_LV_WIDGET_COLORWHEEL
 
+    // custom Tasmota widget: rectangle filled with an angled stripe pattern
+    #define BE_LV_WIDGET_STRIPES
+
     #define BE_LV_WIDGET_ANIMIMG
     #define BE_LV_WIDGET_CHART
     #define BE_LV_WIDGET_IMGBTN       // LVGL 8

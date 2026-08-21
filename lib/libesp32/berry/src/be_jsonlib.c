@@ -46,26 +46,6 @@ static const char* match_char(const char *json, int ch)
     return NULL;
 }
 
-static int is_object(bvm *vm, const char *class, int idx)
-{
-    if (be_isinstance(vm, idx)) {
-        be_pushvalue(vm, idx);
-        while (1) {
-            be_getsuper(vm, -1);
-            if (be_isnil(vm, -1)) {
-                be_pop(vm, 1);
-                break;
-            }
-            be_remove(vm, -2);
-        }
-        const char *name = be_classname(vm, -1);
-        bbool ret = !strcmp(name, class);
-        be_pop(vm, 1);
-        return ret;
-    }
-    return  0;
-}
-
 /* Calculate the actual buffer size needed for JSON string parsing
  * accounting for Unicode expansion and security limits */
 static size_t json_strlen_safe(const char *json, size_t *actual_len)
@@ -587,10 +567,13 @@ static void array_dump(bvm *vm, int *indent, int idx, int fmt)
 
 static void value_dump(bvm *vm, int *indent, int idx, int fmt)
 {
-    // be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
-    if (is_object(vm, "map", idx)) { /* convert to json object */
+    be_stack_require(vm, 1 + BE_STACK_FREE_MIN); /* the isinstance checks below push 1 value */
+    /* `be_ismapinstance()` / `be_islistinstance()` walk the class hierarchy and
+     * compare against the actual builtin `map` / `list` classes, so subclasses
+     * are handled, and a user class that merely shares the name is not. */
+    if (be_ismapinstance(vm, idx)) { /* convert to json object */
         object_dump(vm, indent, idx, fmt);
-    } else if (is_object(vm, "list", idx)) { /* convert to json array */
+    } else if (be_islistinstance(vm, idx)) { /* convert to json array */
         array_dump(vm, indent, idx, fmt);
     } else if (be_isnil(vm, idx)) { /* convert to json null */
         be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 

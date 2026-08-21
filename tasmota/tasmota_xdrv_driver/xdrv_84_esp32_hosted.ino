@@ -103,6 +103,7 @@ void HostedMCUStatus(void) {
   if (once_shown) { return; }
   if (esp_hosted_is_config_valid()) {
     once_shown = true;
+/*
     char config[128] = { 0 };
     struct esp_hosted_transport_config *pconfig;
     if (ESP_TRANSPORT_OK == esp_hosted_transport_get_config(&pconfig)) {
@@ -116,6 +117,9 @@ void HostedMCUStatus(void) {
     }
     AddLog(LOG_LEVEL_INFO, PSTR("HST: Hosted MCU %s v%s%s"),
       GetHostedMCU().c_str(), GetHostedFwVersion(ESP_HOSTED).c_str(), config);
+*/
+    AddLog(LOG_LEVEL_INFO, PSTR("HST: Hosted MCU %s v%s"),
+      GetHostedMCU().c_str(), GetHostedFwVersion(ESP_HOSTED).c_str());
   }
 }
 
