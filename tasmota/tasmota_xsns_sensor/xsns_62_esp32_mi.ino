@@ -559,7 +559,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
       break;
     case YLYK01: case YLKG08: case YLAI003:
       _newSensor.feature.Btn = 1;
-      _newSensor.Btn = 99;
+      _newSensor.Btn = UINT8_MAX;
       if(_type == YLKG08){
         _newSensor.feature.knob = 1;
         _newSensor.dimmer = 0;
@@ -575,7 +575,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
       _newSensor.feature.leak=1;
       _newSensor.feature.bat=1;
       _newSensor.feature.Btn=1;
-      _newSensor.Btn=99;
+      _newSensor.Btn=UINT8_MAX;
       break;
     default:
       _newSensor.hum=NAN;
@@ -1024,34 +1024,38 @@ extern "C" {
     return _name;
   }
 
-  void MI32sendBerryWidget() {
+  bool MI32sendMetrics() {
     static uint32_t lastMetricsTime = UINT32_MAX; //we want an overlow in the first run
+    uint32_t now = millis();
+    if (now - lastMetricsTime < 10000) {
+      return false;
+    }
+    lastMetricsTime = now;
+    char metricsBuf[64];
+    // Fields: RSSI (dBm), Channel, PHY Mode, Free Heap (bytes), Total Heap (bytes), Heap Fragmentation (%), PSRAM Total (bytes), PSRAM Free (bytes), Uptime (sec), MI32.role, BLE Sensors Count
+    snprintf(metricsBuf, sizeof(metricsBuf),
+      "%i,%u,%u,%d,%d,%d,%d,%d,%d,%d,%d",
+      WiFi.RSSI(),
+      WiFi.channel(),
+      WiFiHelper::getPhyMode(),
+      ESP.getFreeHeap(),
+      ESP.getHeapSize(),
+      ESP_getHeapFragmentation(),
+      ESP.getPsramSize(),
+      ESP.getFreePsram(),
+      UpTime(),
+      MI32.role,
+      MIBLEsensors.size()
+    );
+    WSContentSend(metricsBuf, 64);
+    return true;
+  }
+
+  void MI32sendBerryWidget() {
     if(be_MI32Widget.size != 0) {
       WSContentSend(be_MI32Widget.data, be_MI32Widget.size);
       be_MI32Widget.data = nullptr;
       be_MI32Widget.size = 0;
-    } else {
-      uint32_t now = millis();
-      if (now - lastMetricsTime >= 10000) {
-        lastMetricsTime = now;
-        char metricsBuf[64];
-        // Fields: RSSI (dBm), Channel, PHY Mode, Free Heap (bytes), Total Heap (bytes), Heap Fragmentation (%), PSRAM Total (bytes), PSRAM Free (bytes), Uptime (sec), MI32.role, BLE Sensors Count
-        snprintf(metricsBuf, sizeof(metricsBuf),
-          "%i,%u,%u,%d,%d,%d,%d,%d,%d,%d,%d",
-          WiFi.RSSI(),
-          WiFi.channel(),
-          WiFiHelper::getPhyMode(),
-          ESP.getFreeHeap(),
-          ESP.getHeapSize(),
-          ESP_getHeapFragmentation(),
-          ESP.getPsramSize(),
-          ESP.getFreePsram(),
-          UpTime(),
-          MI32.role,
-          MIBLEsensors.size()
-        );
-        WSContentSend(metricsBuf, 64);
-      }
     }
   }
 
@@ -1061,20 +1065,29 @@ extern "C" {
  * Config section
 \*********************************************************************************************/
 
+static constexpr size_t MI32_CFG_MAX_SENSORS = 32;
+static constexpr size_t MI32_CFG_RECORD_SIZE = 139;
+static constexpr size_t MI32_CFG_MAX_SIZE = 2 + MI32_CFG_MAX_SENSORS * MI32_CFG_RECORD_SIZE;
+
 void MI32loadCfg(){
   if (TfsFileExists("/mi32cfg")){
-  MIBLEsensors.reserve(10);
-  const size_t _buf_size = 2048;
-  char * _filebuf = (char*)calloc(_buf_size,1);
+    MIBLEsensors.reserve(10);
+    const size_t _file_size = TfsFileSize("/mi32cfg");
+    if (!_file_size || _file_size > MI32_CFG_MAX_SIZE) {
+      AddLog(LOG_LEVEL_ERROR,PSTR("M32: invalid config size"));
+      return;
+    }
+    char * _filebuf = (char*)calloc(_file_size + 1, 1);
+    if (!_filebuf) { return; }
     AddLog(LOG_LEVEL_INFO,PSTR("M32: found config file"));
-    if(TfsLoadFile("/mi32cfg",(uint8_t*)_filebuf,_buf_size)){
+    if(TfsLoadFile("/mi32cfg",(uint8_t*)_filebuf,_file_size)){
       AddLog(LOG_LEVEL_INFO,PSTR("M32: %s"),_filebuf);
       JsonParser parser(_filebuf);
       JsonParserToken root = parser.getRoot();
       if (!root) {AddLog(LOG_LEVEL_INFO,PSTR("M32: invalid root "));}
       JsonParserArray arr = root.getArray();
       if (!arr) {AddLog(LOG_LEVEL_INFO,PSTR("M32: invalid array object"));; }
-      bool _error;
+      bool _error = true;
       int32_t _numberOfDevices = -1; // slot of the last successfully parsed MAC/PID; -1 = none yet
       for (auto _dev  : arr) {
           AddLog(LOG_LEVEL_INFO,PSTR("M32: found device in config file"));
@@ -1147,16 +1160,20 @@ void MI32loadCfg(){
         AddLog(LOG_LEVEL_INFO,PSTR("M32: added %u devices from config file"), _numberOfDevices + 1);
       }
     }
-  free(_filebuf);
+    free(_filebuf);
   }
 }
 
-void MI32saveConfig(){
-  const size_t _buf_size = 2048;
+bool MI32saveConfig(){
+  const size_t _sensor_count = (MIBLEsensors.size() > MI32_CFG_MAX_SENSORS) ? MI32_CFG_MAX_SENSORS : MIBLEsensors.size();
+  const size_t _buf_size = 2 + _sensor_count * MI32_CFG_RECORD_SIZE;
   char * _filebuf = (char*) malloc(_buf_size);
+  if (!_filebuf) { return false; }
   _filebuf[0] = '[';
-  uint32_t _pos = 1;
-  for(auto _sensor: MIBLEsensors){
+  size_t _pos = 1;
+  bool _error = false;
+  for(size_t i = 0; i < _sensor_count; i++){
+    auto &_sensor = MIBLEsensors[i];
     char _MAC[13];
     ToHex_P(_sensor.MAC,6,_MAC,13);
     char _key[33];
@@ -1166,7 +1183,7 @@ void MI32saveConfig(){
     }
     char _name_feat[64];
     if(_sensor.name != nullptr){
-      snprintf_P(_name_feat,64,PSTR(",\"name\":\"%s\",\"feat\":%u"),_sensor.name,_sensor.feature.raw);
+      snprintf_P(_name_feat,64,PSTR(",\"name\":\"%.35s\",\"feat\":%u"),_sensor.name,_sensor.feature.raw);
     }
     else if(_sensor.type == BTHOME && _sensor.name == nullptr){
       snprintf_P(_name_feat,64,PSTR(",\"feat\":%u"),_sensor.feature.raw);
@@ -1174,14 +1191,21 @@ void MI32saveConfig(){
     else{
       _name_feat[0] = 0;
     }
-    uint32_t _inc = snprintf_P(_filebuf+_pos,200,PSTR("{\"MAC\":\"%s\",\"PID\":\"%04x\",\"key\":\"%s\"%s},"),_MAC,_sensor.PID,_key,_name_feat);
+    const size_t _remaining = _buf_size - _pos;
+    int32_t _inc = snprintf_P(_filebuf+_pos,_remaining,PSTR("{\"MAC\":\"%s\",\"PID\":\"%04x\",\"key\":\"%s\"%s},"),_MAC,_sensor.PID,_key,_name_feat);
+    if (_inc < 0 || (size_t)_inc >= _remaining) {
+      _error = true;
+      break;
+    }
     _pos += _inc;
   }
-  _filebuf[_pos-1] = ']';
-  _filebuf[_pos] = '\0';
-  if (_pos>2){
+  bool _success = false;
+  if (!_error && _pos>2){
+    _filebuf[_pos-1] = ']';
+    _filebuf[_pos] = '\0';
     AddLog(LOG_LEVEL_INFO,PSTR("M32: %s"), _filebuf);
-    if (TfsSaveFile("/mi32cfg",(uint8_t*)_filebuf,_pos+1)) {
+    _success = TfsSaveFile("/mi32cfg",(uint8_t*)_filebuf,_pos+1);
+    if (_success) {
       AddLog(LOG_LEVEL_INFO,PSTR("M32: %u bytes written to config"), _pos+1);
     }
   }
@@ -1189,6 +1213,7 @@ void MI32saveConfig(){
     AddLog(LOG_LEVEL_ERROR,PSTR("M32: nothing written to config"));
   }
   free(_filebuf);
+  return _success;
 }
 
 /*********************************************************************************************\
@@ -2416,7 +2441,7 @@ void CmndMi32Key(void) {
 }
 
 void CmndMi32Name(void) {
-  if(XdrvMailbox.index > MIBLEsensors.size() - 1){
+  if(XdrvMailbox.index >= MIBLEsensors.size()){
     ResponseCmndDone();
     return;
   }
@@ -2433,8 +2458,11 @@ void CmndMi32Name(void) {
 }
 
 void CmndMi32Cfg(void) {
-  MI32saveConfig();
-  ResponseCmndDone();
+  if (MI32saveConfig()) {
+    ResponseCmndDone();
+  } else {
+    ResponseCmndFailed();
+  }
 }
 
 void CmndMi32Option(void){
@@ -2517,7 +2545,7 @@ bool MI32HandleWebGUIResponse(void){
   char tmp[16];
   WebGetArg(PSTR("wi"), tmp, sizeof(tmp));
   if (!tmp[0]) {
-    return false;
+    return be_MI32Widget.callback != nullptr && Webserver->args();
   }
 
   if (atoi(tmp) == 0) {
@@ -2526,14 +2554,24 @@ bool MI32HandleWebGUIResponse(void){
   }
 
   WSContentBegin(200, CT_PLAIN);
-  uint32_t slot = MI32.widgetSlot;
-  if (slot) {
-    uint32_t i = __builtin_ctz(slot);        // index of first set bit
-    MI32sendWidget(i);
-    MI32.widgetSlot &= ~(1UL << i);          // clear that bit
-  } else {
-    MI32sendBerryWidget();
+  if (MI32sendMetrics()) {
+    WSContentEnd();
+    return true;
   }
+  static uint8_t cursor = 0;
+  uint32_t pending = MI32.widgetSlot;
+  uint8_t sent = 0;
+  while (pending && sent < 4) {
+    uint32_t bit = 1UL << cursor;
+    uint8_t slot = cursor;
+    cursor = (cursor + 1) & 31;
+    if (!(pending & bit)) { continue; }
+    pending &= ~bit;
+    MI32.widgetSlot &= ~bit;
+    MI32sendWidget(slot);
+    sent++;
+  }
+  MI32sendBerryWidget();
   WSContentEnd();
   return true;
 }
@@ -2644,12 +2682,13 @@ void MI32sendWidget(uint32_t slot){
   WSContentSend_P(HTTP_MI32_WIDGET,slot+1,_opacity,_MAC,_sensor.RSSI,_bat,_key,MI32getDeviceName(slot));
 
   if(_sensor.feature.temp == 1 && _sensor.feature.hum == 1){
-    if(!isnan(_sensor.temp)){
+    float _temp = ConvertTempToFahrenheit(_sensor.temp);
+    if(!isnan(_temp)){
       char _graph[256];
       MI32createGraph(_graph, _sensor.temp_history, 185, 124, 124);
       char _tempStr[16];
-      ext_snprintf_P(_tempStr, sizeof(_tempStr), PSTR("%*_f"), -1, &_sensor.temp);
-      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %s °C%s</p>"), _tempStr, _graph);
+      ext_snprintf_P(_tempStr, sizeof(_tempStr), PSTR("%*_f"), -1, &_temp);
+      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %s °%c%s</p>"), _tempStr, TempUnit(), _graph);
     }
     if(!isnan(_sensor.hum)){
       char _graph[256];
@@ -2658,20 +2697,21 @@ void MI32sendWidget(uint32_t slot){
       ext_snprintf_P(_humStr, sizeof(_humStr), PSTR("%*_f"), -1, &_sensor.hum);
       WSContentSend_P(PSTR("<p>" D_JSON_HUMIDITY ": %s %%%s</p>"), _humStr, _graph);
     }
-    if(!isnan(_sensor.temp) && !isnan(_sensor.hum)){
+    if(!isnan(_temp) && !isnan(_sensor.hum)){
       char _dewStr[16];
-      float _dewVal = CalcTempHumToDew(_sensor.temp, _sensor.hum);
+      float _dewVal = CalcTempHumToDew(_temp, _sensor.hum);
       ext_snprintf_P(_dewStr, sizeof(_dewStr), PSTR("%*_f"), -1, &_dewVal);
-      WSContentSend_P(PSTR("" D_JSON_DEWPOINT ": %s °C"), _dewStr);
+      WSContentSend_P(PSTR("" D_JSON_DEWPOINT ": %s °%c"), _dewStr, TempUnit());
     }
   }
   else if(_sensor.feature.temp == 1){
-    if(!isnan(_sensor.temp)){
+    float _temp = ConvertTempToFahrenheit(_sensor.temp);
+    if(!isnan(_temp)){
       char _graph[256];
       MI32createGraph(_graph, _sensor.temp_history, 185, 124, 124);
       char _tempStr[16];
-      ext_snprintf_P(_tempStr, sizeof(_tempStr), PSTR("%*_f"), -1, &_sensor.temp);
-      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %s °C%s</p>"), _tempStr, _graph);
+      ext_snprintf_P(_tempStr, sizeof(_tempStr), PSTR("%*_f"), -1, &_temp);
+      WSContentSend_P(PSTR("<p>" D_JSON_TEMPERATURE ": %s °%c%s</p>"), _tempStr, TempUnit(), _graph);
     }
   }
   if(_sensor.feature.lux == 1){
@@ -2691,9 +2731,15 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("<p>Hold: %u</p>"),_sensor.longpress);
   }
   if(_sensor.feature.Btn == 1){
-      char _message[16];
-      GetTextIndexed(_message, sizeof(_message), _sensor.BtnType, kMI32_ButtonMsg);
-      if(_sensor.Btn<12) WSContentSend_P(PSTR("<p>Button%u: %s</p>"),_sensor.Btn,_message);
+      if(_sensor.Btn != UINT8_MAX) {
+        if(_sensor.feature.knob) {
+          WSContentSend_P(PSTR("<p>Button%u: %u</p>"),_sensor.Btn,_sensor.BtnType + 1);
+        } else {
+          char _message[16];
+          GetTextIndexed(_message, sizeof(_message), _sensor.BtnType, kMI32_ButtonMsg);
+          WSContentSend_P(PSTR("<p>Button%u: %s</p>"),_sensor.Btn,_message);
+        }
+      }
   }
   if(_sensor.feature.motion == 1){
       WSContentSend_P(PSTR("<p>Events: %u</p>"),_sensor.events);
@@ -2752,7 +2798,7 @@ void MI32HandleWebGUI(void){
   if (MI32HandleWebGUIResponse()) { return; }
   MI32InitGUI();
   size_t n = MIBLEsensors.size();
-  MI32.widgetSlot = ((1u << n) - 1);
+  MI32.widgetSlot = (n >= 32) ? UINT32_MAX : ((1u << n) - 1);
 }
 #endif //USE_MI_EXT_GUI
 

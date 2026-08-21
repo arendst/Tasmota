@@ -71,11 +71,11 @@ extern "C" {
     return buffer;
   }
 
-  void be_MI32_set_hum(int slot, int hum_val){
+  void be_MI32_set_hum(int slot, float hum_val){
     MI32setHumidityForSlot(slot,hum_val);
   }
 
-  void be_MI32_set_temp(int slot, int temp_val){
+  void be_MI32_set_temp(int slot, float temp_val){
     MI32setTemperatureForSlot(slot,temp_val);
   }
 
