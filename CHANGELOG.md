@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
 - Limited support for BLE BTHome (#20763)
 - Berry extend `sortedmap` constructor (#24955)
+- Shelly Pro 2PM emulation for ESP32 (`Emulation 3`, disabled by default) (#24952)
 
 ### Breaking Changed
 

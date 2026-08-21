@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Support for baudrate 74880 replacing 74700 [#24924](https://github.com/arendst/Tasmota/issues/24924)
 - Limited support for BLE BTHome [#20763](https://github.com/arendst/Tasmota/issues/20763)
+- Shelly Pro 2PM emulation for ESP32 (`Emulation 3`) [#24952](https://github.com/arendst/Tasmota/issues/24952)
 - TLS support for EC P-384 curve in server certificate [#24909](https://github.com/arendst/Tasmota/issues/24909)
 - MagicSwitch configurable masking window fixing problems with multiple false triggering [#24888](https://github.com/arendst/Tasmota/issues/24888)
 - Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7

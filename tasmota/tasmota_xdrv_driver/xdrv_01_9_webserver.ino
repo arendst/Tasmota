@@ -467,7 +467,7 @@ const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|text/event-s
 const char kLoggingOptions[] PROGMEM = D_SERIAL_LOG_LEVEL "|" D_WEB_LOG_LEVEL "|" D_MQTT_LOG_LEVEL "|" D_SYS_LOG_LEVEL;
 const char kLoggingLevels[] PROGMEM = D_NONE "|" D_ERROR "|" D_INFO "|" D_DEBUG "|" D_MORE_DEBUG;
 
-const char kEmulationOptions[] PROGMEM = D_NONE "|" D_BELKIN_WEMO "|" D_HUE_BRIDGE;
+const char kEmulationOptions[] PROGMEM = D_NONE "|" D_BELKIN_WEMO "|" D_HUE_BRIDGE "|" D_SHELLY;
 
 const char kUploadErrors[] PROGMEM =
 //  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9;
@@ -2899,7 +2899,7 @@ void HandleOtherConfiguration(void) {
   }
 
 #ifdef USE_EMULATION
-#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE) || defined(USE_EMULATION_SHELLY)
   WSContentSend_P(PSTR("<p></p>"));  // Keep close to Friendlynames so do not use <br>
   WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_EMULATION));
   WSContentSend_P(PSTR("<p>"));      // Keep close to Friendlynames so do not use <br>
@@ -2910,16 +2910,19 @@ void HandleOtherConfiguration(void) {
 #ifndef USE_EMULATION_HUE
     if (i == EMUL_HUE) { i++; }
 #endif
+#ifndef USE_EMULATION_SHELLY
+    if (i == EMUL_SHELLY) { i++; }
+#endif
     if (i < EMUL_MAX) {
       WSContentSend_P(PSTR("<label><input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s</label><br>"),  // Different id only used for labels
         i, i,
         (i == Settings->flag2.emulation) ? PSTR(" checked") : "",
         GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
-        (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? PSTR(D_SINGLE_DEVICE) : PSTR(D_MULTI_DEVICE));
+        (i == EMUL_NONE) ? "" : (i == EMUL_HUE) ? PSTR(D_MULTI_DEVICE) : PSTR(D_SINGLE_DEVICE));
     }
   }
   WSContentSend_P(PSTR("</p></fieldset>"));
-#endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
+#endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE || USE_EMULATION_SHELLY
 #endif  // USE_EMULATION
 
   WSContentSend_P(HTTP_FORM_END);
@@ -2955,9 +2958,9 @@ bool OtherSaveSettings(void) {
   }
 
 #ifdef USE_EMULATION
-#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE) || defined(USE_EMULATION_SHELLY)
   cmnd += AddWebCommand(PSTR(D_CMND_EMULATION), PSTR("b2"), PSTR("0"));
-#endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE
+#endif  // USE_EMULATION_WEMO || USE_EMULATION_HUE || USE_EMULATION_SHELLY
 #endif  // USE_EMULATION
 
   if (tmpl.length() && (tmpl.length() < MQTT_MAX_PACKET_SIZE)) {
@@ -4322,16 +4325,21 @@ void CmndWebTime(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 void CmndEmulation(void) {
-#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE)
-#if defined(USE_EMULATION_WEMO) && defined(USE_EMULATION_HUE)
+#if defined(USE_EMULATION_WEMO) || defined(USE_EMULATION_HUE) || defined(USE_EMULATION_SHELLY)
+#if defined(USE_EMULATION_WEMO) && defined(USE_EMULATION_HUE) && defined(USE_EMULATION_SHELLY)
   if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
 #else
-#ifndef USE_EMULATION_WEMO
-  if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_HUE == XdrvMailbox.payload)) {
+  if ((EMUL_NONE == XdrvMailbox.payload)
+#ifdef USE_EMULATION_WEMO
+      || (EMUL_WEMO == XdrvMailbox.payload)
 #endif
-#ifndef USE_EMULATION_HUE
-  if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_WEMO == XdrvMailbox.payload)) {
+#ifdef USE_EMULATION_HUE
+      || (EMUL_HUE == XdrvMailbox.payload)
 #endif
+#ifdef USE_EMULATION_SHELLY
+      || (EMUL_SHELLY == XdrvMailbox.payload)
+#endif
+     ) {
 #endif
     Settings->flag2.emulation = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
