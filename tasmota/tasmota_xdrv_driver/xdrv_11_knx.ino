@@ -255,16 +255,17 @@ uint8_t knx_select_nice_list[] = {
 #define D_CMND_KNXTXFLOAT "Tx_Float"    // 2 bytes float (DPT9)
 #define D_CMND_KNXTXDOUBLE "Tx_Double"  // 4 bytes float (DPT14)
 #define D_CMND_KNXTXBYTE "Tx_Byte"      // 1 byte unsigned (DPT5)
+#define D_CMND_KNXSEND "Send"      // 1 byte unsigned (DPT5)
 
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
   D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" 
   D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|"
-  D_CMND_KNXTXFLOAT "|"  D_CMND_KNXTXDOUBLE "|"  D_CMND_KNXTXBYTE;
+  D_CMND_KNXTXFLOAT "|"  D_CMND_KNXTXDOUBLE "|"  D_CMND_KNXTXBYTE "|" D_CMND_KNXSEND;
 
 void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced,
   &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene,
-  &CmndKnxTxFloat, &CmndKnxTxVal, &CmndKnxTxByte};
+  &CmndKnxTxFloat, &CmndKnxTxVal, &CmndKnxTxByte, &CmndKnxSend};
 
   address_t KNX_physs_addr;  // Physical KNX address of this device
   address_t KNX_addr;        // KNX Address converter variable
@@ -743,6 +744,15 @@ void KNX_CB_Action(message_t const &msg, void *arg)
    (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
    tempchar,
    device_param_cb[(chan->type)-1]);
+
+  // --- EIGENES EVENT FÜR BERRY ---
+  char event_cmd[128];
+  // msg.received_on = Gruppenadresse als Integer
+  // msg.ct          = Command Type (Read/Write)
+  snprintf(event_cmd, sizeof(event_cmd), "Event knx_rx={\"ga\":%d,\"ct\":%d,\"len\":%d,\"val\":\"%s\"}", 
+           msg.received_on, (int)msg.ct, msg.data_len, tempchar);
+  ExecuteCommand(event_cmd, SRC_IGNORE);
+  // --------------------------------
 
   switch (msg.ct)
   {
@@ -1556,6 +1566,54 @@ void CmndKnxCb(void)
       ResponseCmndIdxNumber (Settings->knx_CB_registered );
     }
   }
+}
+
+void CmndKnxSend(void) {
+  // Überprüfen, ob genügend Argumente übergeben wurden (mindestens GA, Datentyp, Wert)
+  if (ArgC() < 3 || !Settings->flag.knx_enabled) {
+    ResponseCmndError();
+    return;
+  }
+
+  char arg1[32], arg2[16], arg3[32];
+  ArgV(arg1, 1); // Parameter 1: GA im Format "1/2/15"
+  ArgV(arg2, 2); // Parameter 2: Datentyp (0 = 1-Bit, 1 = 1-Byte UInt, 2 = 2-Byte Float, 4 = 4-Byte Float)
+  ArgV(arg3, 3); // Parameter 3: Wert (z. B. "1", "100" oder "21.5")
+
+  int area = 0, line = 0, member = 0;
+  // Parse die Gruppenadresse (Haupt/Mittel/Unter)
+  if (sscanf(arg1, "%d/%d/%d", &area, &line, &member) < 3) {
+    ResponseCmndError();
+    return;
+  }
+
+  // Hier wird data_type explizit deklariert:
+  uint8_t data_type = (uint8_t)atoi(arg2);
+  float val = atof(arg3);
+
+  address_t target_ga;
+  target_ga.ga.area = (uint8_t)area;
+  target_ga.ga.line = (uint8_t)line;
+  target_ga.ga.member = (uint8_t)member;
+
+  if (data_type == 0) {
+    // 1 BIT (DPT 1: Schalten / An/Aus / Bool)
+    knx.send_1bit(target_ga, KNX_CT_WRITE, (bool)val);
+  } else if (data_type == 1) {
+    // 1 BYTE Unsigned Int (DPT 5: Dimmer 0-100%, Prozent, Szenen, 0-255)
+    knx.send_1byte_uint(target_ga, KNX_CT_WRITE, (uint8_t)val);
+  } else if (data_type == 2) {
+    // 2 BYTE Float (DPT 9: Temperatur, Feuchtigkeit)
+    knx.send_2byte_float(target_ga, KNX_CT_WRITE, val);
+  } else if (data_type == 4) {
+    // 4 BYTE Float (DPT 14: Leistung, Energie, Spannung)
+    knx.send_4byte_float(target_ga, KNX_CT_WRITE, val);
+  } else {
+    ResponseCmndError();
+    return;
+  }
+
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\
