@@ -56,6 +56,7 @@ void MI32ConnectionTask(void *pvParameters);
 static void MI32EnsureServerInstance(NimBLEServer *&pServer);
 static void MI32RunClientOp();
 static bool MI32SetSubscription(NimBLERemoteCharacteristic *pChr, bool subscribe, bool response);
+static void MI32QueueSend(const void *item, size_t size, TickType_t wait);
 
 std::vector<mi_sensor_t> MIBLEsensors;
 RingbufHandle_t BLERingBufferQueue = nullptr;
