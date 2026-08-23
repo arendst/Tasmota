@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "V0.9.3.3"
+#define MI32_VERSION "V0.9.3.4"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.3.4 20260823  changed - redesign BTHome events and buffer JSON message for easier rule/script/berry support
+  -------
   0.9.3.3 20260819  changed - fix BTHome decryption of multiple sensors
   -------
   0.9.3.2 20260816  changed - BTHome decoding additions
@@ -406,6 +408,7 @@ struct mi_sensor_t{
       uint32_t pres:1;
       uint32_t accel:1;
       uint32_t count:1;
+      uint32_t unparsed:1;
     };
     uint32_t raw;
   } feature;
@@ -430,6 +433,7 @@ struct mi_sensor_t{
       uint32_t pres:1;
       uint32_t accel:1;
       uint32_t count:1;
+      uint32_t event:1;
     };
     uint32_t raw;
   } eventType;
@@ -474,13 +478,19 @@ struct mi_sensor_t{
       uint16_t impedance;
     };
     struct {
-      uint8_t button[8]; // BTHome button support
-    };
-    struct {
       uint8_t accel_used;
       float acceleration[4];
     };
   };
+  union {
+    uint8_t button[8]; // BTHome button support
+    struct {
+      uint8_t first_buttons_overlay[4];
+      uint8_t bthome_event[4]; // BTHome event support
+    };
+  };
+  uint8_t unparsed[4]; // BTHome unparsed object id
+  float unparsed_float[4];
 };
 
 struct MAC_t {
@@ -2306,6 +2316,8 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   bool hasTemp = false;
   bool hasHum  = false;
   uint32_t multi = 0;
+  uint32_t multi_event = 0;
+  uint32_t multi_unparsed = 0;
   uint32_t last_obj_id = 0;
 
   // Second pass: parse all measurement objects
@@ -2433,11 +2445,17 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
-        MIBLEsensors[slot].lastTime = millis();
-        MIBLEsensors[slot].events = (uint16_t)(value_uint | ((uint16_t)obj_id << 8));
-        MIBLEsensors[slot].feature.events  = 1;
-        MIBLEsensors[slot].eventType.motion = 1;
-        res = 1;
+        if (0 == multi_event) {  // Reset events
+          for (uint32_t i = 0; i < sizeof(MIBLEsensors[slot].bthome_event); i++) {
+            MIBLEsensors[slot].bthome_event[i] = 0;
+          }
+        }
+        if (multi_event < sizeof(MIBLEsensors[slot].bthome_event)) {
+          MIBLEsensors[slot].bthome_event[multi_event++] = value_uint << 7 | obj_id;
+          MIBLEsensors[slot].events++;
+          MIBLEsensors[slot].eventType.event = 1;
+          res = 1;
+        }
       } break;
 
       case 0x14:   // Moisture (uint16, 0.01%)
@@ -2448,20 +2466,22 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       case 0x3A: { // Button (uint8, event)
-        if ((multi > 0) && (multi < 8)) {  // Support for up to 8 buttons
-          if (1 == multi) {
-            MIBLEsensors[slot].button[0] = MIBLEsensors[slot].Btn;
+        if (multi < sizeof(MIBLEsensors[slot].button)) {
+          if (255 == value_uint) {  // Older version of BTHome for Hold button
+            value_uint = 128;       // Current value for Hold button
           }
-          MIBLEsensors[slot].button[multi] = value_uint;
-          MIBLEsensors[slot].Btn = 256 + multi;
-        } else {
-          MIBLEsensors[slot].Btn = value_uint;
-        }
-        MIBLEsensors[slot].lastTime = millis();
-        MIBLEsensors[slot].feature.Btn    = 1;
-        if (value_uint > 0) {  // No event if 0x00
-          MIBLEsensors[slot].eventType.Btn  = 1;
-          res = 1;
+          if (0 == multi) {  // Reset events
+            for (uint32_t i = 0; i < sizeof(MIBLEsensors[slot].button); i++) {
+              MIBLEsensors[slot].button[i] = 0;
+            }
+          }
+          MIBLEsensors[slot].button[multi] = (0 == value_uint) ? 255 : value_uint;
+          MIBLEsensors[slot].feature.Btn = 1;
+          if (value_uint > 0) {  // No event if 0x00
+            MIBLEsensors[slot].Btn = value_uint;  // Last button
+            MIBLEsensors[slot].eventType.Btn = 1;
+            res = 1;
+          }
         }
       } break;
 
@@ -2514,9 +2534,22 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         AddLog(LOG_LEVEL_DEBUG, PSTR("%s firmware version %d.%d.%d"), log_name, _buf[idx+2], _buf[idx+1], _buf[idx]);
       } break;
 
-
       default: {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("%s unparsed obj id 0x%02x (%d), data %*_H = %*_f"), log_name, obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
+        uint32_t unparsed_slots = sizeof(MIBLEsensors[slot].unparsed);
+        if (multi_unparsed < unparsed_slots) {
+          if (0 == multi_unparsed) {  // Reset
+            for (uint32_t i = 0; i < unparsed_slots; i++) {
+              MIBLEsensors[slot].unparsed[i] = 0;
+            }
+          }
+          MIBLEsensors[slot].unparsed[multi_unparsed] = obj_id;
+          MIBLEsensors[slot].unparsed_float[multi_unparsed] = value_float;
+          MIBLEsensors[slot].feature.unparsed = 1;
+          multi_unparsed++;
+          res = 1;
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("%s unparsed obj id 0x%02x (%d), data %*_H = %*_f"), log_name, obj_id, obj_id, dlength, _buf + idx, dfactor, &value_float);
+        }
       } break;
     }
     idx += dlength;
@@ -3601,14 +3634,14 @@ void MI32GetOneSensorJson(int slot, int hidename){
           ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
       ){
-        ResponseAppend_P(PSTR(",\"Btn\":"));
-        if ((p->type == MI_BTHOME) && (p->Btn > 255)) {
-          for (uint32_t i = 0; i <= (p->Btn - 256); i++) {
-            ResponseAppend_P(PSTR("%c%d"), (!i)?'[':',', p->button[i]);
+        if ((p->type == MI_BTHOME) && (p->button[1] != 0)){
+          for (uint32_t i = 0; i < sizeof(p->button); i++) {
+            if ((p->button[i] > 0) && (p->button[i] < 255)) {
+              ResponseAppend_P(PSTR(",\"Btn%d\":%d"), i +1, p->button[i]);
+            }
           }
-          ResponseAppend_P(PSTR("]"));
         } else {
-          ResponseAppend_P(PSTR("%d"),p->Btn);
+          ResponseAppend_P(PSTR(",\"Btn\":%d"),p->Btn);
         }
       }
     }
@@ -3637,6 +3670,14 @@ void MI32GetOneSensorJson(int slot, int hidename){
 
   } // minimal summary
 
+  if ((p->type == MI_BTHOME) && p->eventType.event) {
+    for (uint32_t i = 0; i < sizeof(p->bthome_event); i++) {
+      if (p->bthome_event[i] > 0) {
+        ResponseAppend_P(PSTR(",\"Evt%d\":%d"),
+          p->bthome_event[i] & 0x7F, p->bthome_event[i] >> 7);
+      }
+    }
+  }
 
   if (p->feature.PIR){
     if(p->eventType.motion || !MI32.mode.triggeredTele){
@@ -3663,6 +3704,20 @@ void MI32GetOneSensorJson(int slot, int hidename){
   if (p->feature.count){
     if(p->eventType.count){
         ResponseAppend_P(PSTR(",\"" D_JSON_COUNT "\":%d"), p->count);
+    }
+  }
+
+  if ((p->type == MI_BTHOME) && p->feature.unparsed) {
+    for (uint32_t i = 0; i < sizeof(p->unparsed); i++) {
+      if (p->unparsed[i] > 0) {
+        uint32_t length;
+        uint32_t format;
+        uint32_t factor;
+        if (BTHomeGetObjectData(p->unparsed[i], length, format, factor)) {
+          ResponseAppend_P(PSTR(",\"Obj%d\":%*_f"),
+            p->unparsed[i], factor, &p->unparsed_float[i]);
+        }
+      }
     }
   }
 
@@ -4219,6 +4274,9 @@ void MI32Show(bool json)
         default:{
           if (!isnan(p->hum) && !isnan(p->temp)) {
             WSContentSend_THD(label, ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
+          }
+          else if (!isnan(p->temp)) {
+            WSContentSend_Temp(label, ConvertTempToFahrenheit(p->temp));  // convert if SO8 on
           }
         }
       }
