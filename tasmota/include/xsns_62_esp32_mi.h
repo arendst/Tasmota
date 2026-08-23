@@ -252,7 +252,7 @@ struct {
   void *beConnCB;
   void *beAdvCB;
   uint8_t *beAdvBuf;
-  uint8_t infoMsg = 0;
+  uint16_t queueDrops = 0;
   uint8_t role = 0; // bitfield of MI32Role values (concurrently active roles)
 } MI32;
 
@@ -407,10 +407,6 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
 
 const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003|BTHOME"};
 
-const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
-
-const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start passive scanning|Start active scanning|Server characteristic set|Server advertisement set|Server scan response set|Server client did connect|Server client did disconnect| Server client did authenticate";
-
 const char kMI32_ButtonMsg[] PROGMEM = "Single|Double|Hold"; //mapping: in Tasmota: 1,2,3 ; for HomeKit and Xiaomi 0,1,2
 /*********************************************************************************************\
  * enumerations
@@ -475,22 +471,6 @@ enum MI32Role : uint8_t {
   MI32_ROLE_ADVERTISER = 0x08,
 };
 
-enum MI32_BLEInfoMsg {
-  MI32_SCAN_ENDED = 1,
-  MI32_GOT_NOTIFICATION,
-  MI32_DID_CONNECT,
-  MI32_DID_DISCONNECT,
-  MI32_STILL_CONNECTED,
-  MI32_START_SCANNING_PASSIVE,
-  MI32_START_SCANNING_ACTIVE,
-  MI32_SERV_CHARACTERISTIC_ADDED,
-  MI32_SERV_ADVERTISEMENT_ADDED,
-  MI32_SERV_SCANRESPONSE_ADDED,
-  MI32_SERV_CLIENT_CONNECTED,
-  MI32_SERV_CLIENT_DISCONNECTED,
-  MI32_SERV_CLIENT_AUTHENTICATED
-};
-
 /*********************************************************************************************\
  * extended web gui
 \*********************************************************************************************/
@@ -508,8 +488,6 @@ const char HTTP_BTN_MENU_MI32[] PROGMEM = "<p></p><form action='m32' method='get
     "x.querySelectorAll('script').forEach(n=>{s=d.createElement('script');s.textContent=n.textContent;d.body.appendChild(s)});"
     "eb('m').innerHTML=(x.querySelector('body')||x).innerHTML;"
     "}));";
-
-const char HTTP_MI32_PARENT_BLE_ROLE[] PROGMEM = "None|Observer|Peripheral|Central";
 
 const char HTTP_MI32_WIDGET[] PROGMEM =
   "<div class='box' id='box%u' style='opacity:%u.5;'>MAC:%s RSSI:%d %s<br>"

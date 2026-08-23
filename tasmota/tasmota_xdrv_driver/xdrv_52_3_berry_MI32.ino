@@ -274,10 +274,19 @@ int be_BLE_run(bvm *vm) {
   int32_t be_BLE_info(struct bvm *vm);
   int32_t be_BLE_info(struct bvm *vm) {
     be_newobject(vm, "map");
-    char _Role[16];
-    GetTextIndexed(_Role, sizeof(_Role), MI32.role, HTTP_MI32_PARENT_BLE_ROLE);
-    char _role[16];
-    LowerCase(_role,_Role);
+    be_map_insert_int(vm, "role_bits", MI32.role);
+    char _role[40] = "";
+    if(MI32.role == MI32_ROLE_NONE){
+      strcpy(_role, "none");
+    } else {
+      const char *roleNames[] = { "scanner", "client", "server", "advertiser" };
+      for(uint32_t i = 0; i < 4; i++){
+        if(MI32.role & (1 << i)){
+          if(_role[0]) strlcat(_role, "+", sizeof(_role));
+          strlcat(_role, roleNames[i], sizeof(_role));
+        }
+      }
+    }
     be_map_insert_str(vm, "role", _role);
     be_map_insert_str(vm, "local_addr", NimBLEDevice::toString().c_str());
     be_map_insert_int(vm, "power", NimBLEDevice::getPower());
@@ -292,6 +301,20 @@ int be_BLE_run(bvm *vm) {
 // #else
 //     be_map_insert_nil(vm, "bonds");
 // #endif
+
+    be_pushstring(vm, "debug");
+    be_newobject(vm, "map");
+    be_map_insert_bool(vm, "ready", MI32.ConnTask != nullptr && MI32.mode.readyForNextJob);
+    be_map_insert_bool(vm, "pending", MI32.mode.triggerNextJob || MI32.mode.triggerBerryConnCB ||
+                                      MI32.mode.triggerBerryAdvCB || (MI32.ConnTask != nullptr && !MI32.mode.readyForNextJob));
+    // The context keeps the most recently staged operation/result until reused.
+    be_map_insert_int(vm, "operation", MI32.conCtx ? MI32.conCtx->operation : 0);
+    be_map_insert_int(vm, "error", MI32.conCtx ? MI32.conCtx->error : 0);
+    be_map_insert_int(vm, "queue_drops", __atomic_load_n(&MI32.queueDrops, __ATOMIC_RELAXED));
+    be_pop(vm, 1);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+
     NimBLEClient* _serverPeer = MI32.conCtx ? MI32.conCtx->serverPeer : nullptr;
     if(MI32.mode.connected == 1 || _serverPeer != nullptr){
       NimBLEClient* _device = nullptr;
