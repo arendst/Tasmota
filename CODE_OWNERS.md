@@ -99,12 +99,12 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_86_esp32_sonoff_spm     | @arendst
 | xdrv_87_esp32_sonoff_tm1621  | @arendst
 | xdrv_88_esp32_shelly_pro     | @arendst
-| xdrv_89_                     |
+| xdrv_89_esp32_shelly_emulation | Rene Hexel
 | xdrv_90_esp32_dingtian_relay | @barbudor
 | xdrv_91_esp32_twai           | @arendst
 | xdrv_92_vid6608              | @petrows
 | xdrv_93_fm24cxx              | Martin Macák
-| xdrv_94_                     |
+| xdrv_94_modbus_relay         | Jacek Ziółkowski
 |                              |
 | xdrv_119_i2c_ap33772s        | @arendst
 | xdrv_120_xyzmodem            | @arendst
