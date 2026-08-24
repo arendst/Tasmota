@@ -1664,6 +1664,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
       // Initialise with no features — they are set when the first packet is parsed.
       _newSensor.hum = NAN;
       _newSensor.needkey = KEY_NOT_REQUIRED;
+      _newSensor.Btn = 0;
       break;
 
     default:
@@ -3381,7 +3382,7 @@ const char HTTP_MI32_TYPE[] PROGMEM = "{s}%s " D_SENSOR"{m}%s{e}";
 const char HTTP_MI32_MAC[] PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
 const char HTTP_MI32_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 const char HTTP_MI32_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
-const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%s{e}";
+const char HTTP_MI32_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u{e}";
 const char HTTP_MI32_ACCELERATION[] PROGMEM = "{s}%s Acceleration{m}%s{e}";
 const char HTTP_MI32_EVENTS[] PROGMEM = "{s}%s Events{m}%u{e}";
 const char HTTP_MI32_NMT[] PROGMEM = "{s}%s No motion{m}> %u " D_SECONDS "{e}";
@@ -4376,17 +4377,8 @@ void MI32Show(bool json)
         }
         WSContentSend_P(HTTP_MI32_ACCELERATION, label, accelerations);
       }
-      if (p->feature.Btn){
-        char buttons[32] = { 0 };
-        if ((p->type == MI_BTHOME) && (p->Btn > 255)) {
-          for (uint32_t b = 0; b <= (p->Btn - 256); b++) {
-            snprintf_P(buttons, sizeof(buttons), PSTR("%s%s%u"), 
-              buttons, (!b)?"":",", p->button[b]);
-          }
-        } else {
-          snprintf_P(buttons, sizeof(buttons), PSTR("%u"), p->Btn);
-        }
-        WSContentSend_P(HTTP_MI32_LASTBUTTON, label, buttons);
+      if (p->feature.Btn) {
+        WSContentSend_P(HTTP_MI32_LASTBUTTON, label, p->Btn);
       }
       if (p->feature.flooding)
       {
