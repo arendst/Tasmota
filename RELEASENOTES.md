@@ -115,7 +115,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v15.5.0.2
 ### Added
 - Support for baudrate 74880 replacing 74700 [#24924](https://github.com/arendst/Tasmota/issues/24924)
-- Limited support for BLE BTHome [#20763](https://github.com/arendst/Tasmota/issues/20763)
+- Support for BLE BTHome in binary `tasmota32-bluetooth.bin` [#20763](https://github.com/arendst/Tasmota/issues/20763)
 - Shelly Pro 2PM emulation for ESP32 (`Emulation 3`) [#24952](https://github.com/arendst/Tasmota/issues/24952)
 - TLS support for EC P-384 curve in server certificate [#24909](https://github.com/arendst/Tasmota/issues/24909)
 - MagicSwitch configurable masking window fixing problems with multiple false triggering [#24888](https://github.com/arendst/Tasmota/issues/24888)
@@ -132,6 +132,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests [#24916](https://github.com/arendst/Tasmota/issues/24916)
 - MiElHVAC auto-enable i-See widevane when setting AirDirection [#24860](https://github.com/arendst/Tasmota/issues/24860)
 - Berry `json.dump()` works with subclasses of `map` and `list` [#24954](https://github.com/arendst/Tasmota/issues/24954)
+- Berry/MI32 improved dashboard and widget handling [#24972](https://github.com/arendst/Tasmota/issues/24972)
 
 ### Fixed
 - Default button/switch actions on builds without rules regression from v15.4.0.2 [#24871](https://github.com/arendst/Tasmota/issues/24871)
