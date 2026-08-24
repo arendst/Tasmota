@@ -1559,6 +1559,15 @@ void WifiConnect(void)
     wifi_event_registered = true;
 #ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
     // Hosted MCU SDIO pins must be set before WiFi is initialized
+    char sdio_source[10] = "default";
+    uint32_t sdio_pins[7] = {   // From framework-arduinoespressif32 variants/esp32p4/pins_arduino.h
+      BOARD_SDIO_ESP_HOSTED_CLK,
+      BOARD_SDIO_ESP_HOSTED_CMD,
+      BOARD_SDIO_ESP_HOSTED_D0,
+      BOARD_SDIO_ESP_HOSTED_D1,
+      BOARD_SDIO_ESP_HOSTED_D2,
+      BOARD_SDIO_ESP_HOSTED_D3,
+      BOARD_SDIO_ESP_HOSTED_RESET };
     if (WiFi.setPins(Pin(GPIO_HSDIO_CLK),
                      Pin(GPIO_HSDIO_CMD),
                      Pin(GPIO_HSDIO_D0),
@@ -1566,8 +1575,17 @@ void WifiConnect(void)
                      Pin(GPIO_HSDIO_D2),
                      Pin(GPIO_HSDIO_D3),
                      Pin(GPIO_HSDIO_RST))) {
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("HMC: Hosted MCU SDIO pins set"));
+      strlcpy(sdio_source, "template", sizeof(sdio_source));
+      sdio_pins[0] = Pin(GPIO_HSDIO_CLK);
+      sdio_pins[1] = Pin(GPIO_HSDIO_CMD);
+      sdio_pins[2] = Pin(GPIO_HSDIO_D0);
+      sdio_pins[3] = Pin(GPIO_HSDIO_D1);
+      sdio_pins[4] = Pin(GPIO_HSDIO_D2);
+      sdio_pins[5] = Pin(GPIO_HSDIO_D3);
+      sdio_pins[6] = Pin(GPIO_HSDIO_RST);
     }
+    AddLog(LOG_LEVEL_DEBUG, PSTR("HST: Hosted MCU using %s GPIO%02d(CLK), GPIO%02d(CMD), GPIO%02d(D0), GPIO%02d(D1), GPIO%02d(D2), GPIO%02d(D3) and GPIO%02d(RST)"),
+      sdio_source, sdio_pins[0], sdio_pins[1], sdio_pins[2], sdio_pins[3], sdio_pins[4], sdio_pins[5], sdio_pins[6]);
 #endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
   }
 #endif // ESP32

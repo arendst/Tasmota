@@ -28,7 +28,7 @@
 static void int64_toa(int64_t num, uint8_t* str) {
   uint64_t sum = num;
   if (num < 0) {
-    sum = -num;
+    sum = -(uint64_t)num;   /* negate in unsigned domain to avoid UB on INT64_MIN */
     str[0] = '-';
     str++;
   }
@@ -226,7 +226,7 @@ static int int64_fromu32(bvm *vm) {
   int argc = be_top(vm);
   uint32_t low = (uint32_t)be_toint(vm, 1);
   uint32_t high = (argc > 1) ? (uint32_t)be_toint(vm, 2) : 0;
-  int64_t val = (int64_t)low | (((int64_t)high) << 32);
+  int64_t val = (int64_t)((uint64_t)low | ((uint64_t)high << 32));
   push_int64_instance(vm, val);
   be_return(vm);
 }
@@ -347,7 +347,7 @@ static int int64_mod(bvm *vm) {
 static int int64_shiftleft(bvm *vm) {
   int64_t *i64 = self_get_p(vm);
   int32_t j32 = be_toint(vm, 2) & 63;
-  push_int64_instance(vm, *i64 << j32);
+  push_int64_instance(vm, (int64_t)((uint64_t)*i64 << j32));
   be_return(vm);
 }
 

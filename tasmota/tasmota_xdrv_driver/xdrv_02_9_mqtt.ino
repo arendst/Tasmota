@@ -220,6 +220,7 @@ void MqttSetClientTimeout(void) {
 void MqttInit(void) {
   // Force buffer size since the #define may not be visible from Arduino lib
   MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+  MqttClient.setMaxIncomingPacketSize(MQTT_MAX_PACKET_SIZE);
 
 #ifdef USE_MQTT_AZURE_IOT
   Settings->mqtt_port = 8883;
@@ -544,7 +545,12 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 
   uint32_t written = MqttClient.write(payload, plength);
   if (written != plength) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Message too large"));
+    // The fixed header (and possibly part of the payload) has already been sent
+    // by beginPublish()/write(). A short write leaves an incomplete MQTT control packet
+    // on the wire, so the connection is desynchronised and must not be reused. Drop it;
+    // Tasmota will reconnect on the next loop.
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Partial write (%u/%u), dropping connection"), written, plength);
+    MqttClient.disconnect();
     return false;
   }
 /*
@@ -1277,16 +1283,15 @@ void MqttReconnect(void) {
 
         bool learned = false;
 
-        // If the fingerprint slot is marked for update, we'll do so.
-        // Otherwise, if the fingerprint slot had the magic trust-on-first-use
-        // value, we will save the current fingerprint there, but only if the other fingerprint slot
+        // If the fingerprint slot had the magic trust-on-first-use value, we will
+        // save the current fingerprint there, but only if the other fingerprint slot
         // *didn't* match it.
-        if (recv_fingerprint[20] & 0x1 || (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[1], 20))) {
+        if (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[1], 20)) {
           memcpy(Settings->mqtt_fingerprint[0], recv_fingerprint, 20);
           learned = true;
         }
         // As above, but for the other slot.
-        if (recv_fingerprint[20] & 0x2 || (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[0], 20))) {
+        if (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[0], 20)) {
           memcpy(Settings->mqtt_fingerprint[1], recv_fingerprint, 20);
           learned = true;
         }

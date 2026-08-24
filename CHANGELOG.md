@@ -3,6 +3,49 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [15.6.0] 20260825
+- Release Sylvie
+
+## [15.5.0.2] 20260825
+### Added
+- Support for baudrate 74880 replacing 74700 (#24924)
+- Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
+- Support for BLE BTHome in binary `tasmota32-bluetooth.bin` (#20763)
+- Berry extend `sortedmap` constructor (#24955)
+- Shelly Pro 2PM emulation for ESP32 (`Emulation 3`, disabled by default) (#24952)
+
+### Changed
+- Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests (#24916)
+- Berry `json.dump()` works with subclasses of `map` and `list` (#24954)
+- Berry/MI32 improved dashboard and widget handling (#24972)
+
+### Fixed
+- Can sniffer functionality (#18287)
+- Reset BLE scan flag on new operation (#24925)
+- Minor fixes in `LList` (#24927)
+- TLS fix public key fingerprint for ECDSA certificates (#24928)
+- HASPmota better support for `textarea` (#24946)
+- NeoPool issue with localized JSON keys (#24962)
+- NeoPool delocalize all JSON outputs (#24965)
+
+## [15.5.0.1] 20260725
+### Added
+- Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian (#24857)
+- HASPmota ability to set default screen background on `p0b0` object (#24874)
+- Matter virtual IR HVAC thermostat support (#24821)
+- HASPmota and LVGL `stripes` widget (#24907)
+- MagicSwitch configurable masking window fixing problems with multiple false triggering (#24888)
+- TLS support for EC P-384 curve in server certificate (#24909)
+
+### Changed
+- MiElHVAC auto-enable i-See widevane when setting AirDirection (#24860)
+
+### Fixed
+- BLE EQ3 float output in mqtt messages regression from v15.4.0.2 (#24869)
+- Default button/switch actions on builds without rules regression from v15.4.0.2 (#24871)
+- PZEM/Modbus energy monitor Exception crash-loop on ESP8266 regression from v15.5.0 (#24883)
+- Udisp SPI for mono color display (#24899)
+
 ## [15.5.0] 20260621
 - Release Sylvan
 

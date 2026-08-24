@@ -476,7 +476,7 @@ void setup(void) {
 
   if (RtcSettingsLoad(0)) {
     uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
-    if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
+    if (baudrate) { SetTasmotaGlobalBaudrate(baudrate); }
   }
 
   // Init settings and logging preparing for AddLog use
@@ -617,6 +617,9 @@ void setup(void) {
 #ifndef USE_EMULATION_HUE
   if (EMUL_HUE == Settings->flag2.emulation) { Settings->flag2.emulation = 0; }
 #endif  // USE_EMULATION_HUE
+#ifndef USE_EMULATION_SHELLY
+  if (EMUL_SHELLY == Settings->flag2.emulation) { Settings->flag2.emulation = 0; }
+#endif  // USE_EMULATION_SHELLY
 #endif  // USE_EMULATION
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("DBG: TasmotaGlobal size %d, data %100_H"), sizeof(TasmotaGlobal), (uint8_t*)&TasmotaGlobal);
@@ -747,10 +750,6 @@ void BacklogLoop(void) {
       do {
         char* cmd = *backlog.head();
         backlog.removeHead();
-/*
-        // This adds 32 bytes
-        char* cmd = *backlog.removeHead();
-*/
         if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
           free(cmd);
           nodelay = true;

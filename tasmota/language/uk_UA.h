@@ -1350,4 +1350,7 @@
 #define D_MODBUSRELAY_RX         "MbsRelay RX"
 #define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
 
+// xdrv_89_esp32_shelly_emulation.ino
+#define D_SHELLY                 "Shelly"
+
 #endif // _LANGUAGE_UK_UA_H_

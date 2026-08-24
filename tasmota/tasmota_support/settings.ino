@@ -1093,6 +1093,8 @@ void SettingsDefaultSet2(void) {
   ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
   Settings->sta_config = WIFI_CONFIG_TOOL;
 //  Settings->sta_active = 0;
+  SettingsUpdateText(SET_APBSSID1, PSTR(AP_BSSID1));
+  SettingsUpdateText(SET_APBSSID2, PSTR(AP_BSSID2));
   SettingsUpdateText(SET_STASSID1, PSTR(STA_SSID1));
   SettingsUpdateText(SET_STASSID2, PSTR(STA_SSID2));
   SettingsUpdateText(SET_STAPWD1, PSTR(STA_PASS1));

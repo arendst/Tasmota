@@ -111,7 +111,7 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
     # TODO simplify
-    if self.BRIDGE
+    if self.BRIDGE || self.mqtt_remote
       if self.temp_unit == self.TEMP_F          # Fahrenheit
         val = (val - 32) / 1.8
       end

@@ -71,7 +71,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-15.5.0
+- http://ota.tasmota.com/tasmota/release-15.6.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -102,7 +102,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-15.5.0
+- https://ota.tasmota.com/tasmota32/release-15.6.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -112,52 +112,34 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.5.0 Sylvan
+## Changelog v15.6.0 Sylvie
 ### Added
-- Build copy firmware artifacts with ELF-extracted build timestamp (opt-in) [#24794](https://github.com/arendst/Tasmota/issues/24794)
-- Command `SetOption [0..2]` to display SetOption values
-- Command `WcResolution 0..24` increasing camera max resolution from 14 to 24
-- Command `BSSid[1|2] [0|1|11:22:33:44:55:66]` to select fixed WiFi Access Point disabling `SetOption56` and `SetOption57` [#24394](https://github.com/arendst/Tasmota/issues/24394)
-- Support for hostname generation using single-specifier Format() patterns [#24731](https://github.com/arendst/Tasmota/issues/24731)
-- Support for Modbus RX Enable GPIO [#24726](https://github.com/arendst/Tasmota/issues/24726)
-- Support for multi-byte chars like emojis (💡) in light device toggle buttons [#24482](https://github.com/arendst/Tasmota/issues/24482)
-- Support for M5Stack Atom S3R drivers [#24747](https://github.com/arendst/Tasmota/issues/24747)
-- Support for uDisplay ST7305 [#24738](https://github.com/arendst/Tasmota/issues/24738)
-- Support for Modbus Relays [#24812](https://github.com/arendst/Tasmota/issues/24812)
-- Support for hosted MCU other than esp32c6
-- Serial console support for Backspace when enabling `#define USE_SERIAL_BACKSPACE` [#24830](https://github.com/arendst/Tasmota/issues/24830)
-- Trigger events to Berry when `USE_RULES` is not enabled [#24796](https://github.com/arendst/Tasmota/issues/24796)
-- MiElHVAC extend support of AirDirection control [#24675](https://github.com/arendst/Tasmota/issues/24675)
-- ESP32 VID6608 hardware RMT support for Automotive gauge driver [#24759](https://github.com/arendst/Tasmota/issues/24759)
-- Berry add support for pre-processor [#24679](https://github.com/arendst/Tasmota/issues/24679)
-- Berry transpose C defines to Berry in `tasmota_defines_for_berry.be` [#24680](https://github.com/arendst/Tasmota/issues/24680)
-- Berry RGBW white blend and 10-bit gamma support to Berry LED pixel rendering [#24750](https://github.com/arendst/Tasmota/issues/24750)
-- Berry manual tool to compare and verify solidification between C and Python [#24754](https://github.com/arendst/Tasmota/issues/24754)
-- Enhance Matter plugin functionality for On/Off control and add support for Global Scene Control and related commands [#24854](https://github.com/arendst/Tasmota/issues/24854)
+- Support for baudrate 74880 replacing 74700 [#24924](https://github.com/arendst/Tasmota/issues/24924)
+- Support for BLE BTHome in binary `tasmota32-bluetooth.bin` [#20763](https://github.com/arendst/Tasmota/issues/20763)
+- Shelly Pro 2PM emulation for ESP32 (`Emulation 3`) [#24952](https://github.com/arendst/Tasmota/issues/24952)
+- TLS support for EC P-384 curve in server certificate [#24909](https://github.com/arendst/Tasmota/issues/24909)
+- MagicSwitch configurable masking window fixing problems with multiple false triggering [#24888](https://github.com/arendst/Tasmota/issues/24888)
+- Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
+- Berry `bytes` methods `setbits`/`getbits` transposed to native and support for big endian [#24857](https://github.com/arendst/Tasmota/issues/24857)
+- Berry extend `sortedmap` constructor [#24955](https://github.com/arendst/Tasmota/issues/24955)
+- HASPmota ability to set default screen background on `p0b0` object [#24874](https://github.com/arendst/Tasmota/issues/24874)
+- HASPmota and LVGL `stripes` widget [#24907](https://github.com/arendst/Tasmota/issues/24907)
+- Matter virtual IR HVAC thermostat support [#24821](https://github.com/arendst/Tasmota/issues/24821)
 
 ### Changed
-- ESP32 Platform from 2025.04.30 to 2026.05.50, Framework (Arduino Core) from v3.1.11 to v3.3.8.260506 and IDF from v5.3.4.260127 to v5.5.4.260407 [#24718](https://github.com/arendst/Tasmota/issues/24718)
-- Sensirion_Core library from v0.7.2 to arduino-core v0.7.3
-- SCD30 library FrogmoreScd30 to Sensirion arduino-i2c-scd30 v1.1.1
-- SCD4x library FrogmoreScd40 to Sensirion arduino-i2c-scd4x v1.1.0
-- SPS30 library Sensirion arduino-i2c-sps30 v1.0.1
-- Code hardening replacing `strcat` and `strcpy` with safer alternatives [#24832](https://github.com/arendst/Tasmota/issues/24832)
-- Increase security by inverting state of `define DISABLE_REFERER_CHK` controlling remote HTTP access which is now default off
-- ESP8266 wrap printf and replace with stubs reducing flash size by 6k [#24714](https://github.com/arendst/Tasmota/issues/24714)
-- Move autoconf repository to `ota.tasmota.com` [#24754](https://github.com/arendst/Tasmota/issues/24754)
-- Berry optimized solidified structures for code constants and maps [#24838](https://github.com/arendst/Tasmota/issues/24838)
-- Berry `format()` now uses internal `ext_snprintf_P()` for floating point formatting [#24725](https://github.com/arendst/Tasmota/issues/24725)
-- LVGL splash screen uses default Montserrat-14 instead of Montserrat-20 on small screens [#24735](https://github.com/arendst/Tasmota/issues/24735)
+- Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests [#24916](https://github.com/arendst/Tasmota/issues/24916)
+- MiElHVAC auto-enable i-See widevane when setting AirDirection [#24860](https://github.com/arendst/Tasmota/issues/24860)
+- Berry `json.dump()` works with subclasses of `map` and `list` [#24954](https://github.com/arendst/Tasmota/issues/24954)
+- Berry/MI32 improved dashboard and widget handling [#24972](https://github.com/arendst/Tasmota/issues/24972)
 
 ### Fixed
-- Crash when MQTT-TLS when tcp connection failed [#24798](https://github.com/arendst/Tasmota/issues/24798)
-- SPS30 not detected on ESP8266 [#24780](https://github.com/arendst/Tasmota/issues/24780)
-- SML modbus/TCP on ESP32-p4 with only Ethernet shows "SML: could not connect TCP since wifi is down" [#24845](https://github.com/arendst/Tasmota/issues/24845)
-- I80 pushColors swap logic for parallel displays [#24766](https://github.com/arendst/Tasmota/issues/24766)
-- MiElHVAC sensor and settings out of sync [#24813](https://github.com/arendst/Tasmota/issues/24813)
-- NeoPool possible overflow/div-zero errors and Hydrolysis module detection [#24724](https://github.com/arendst/Tasmota/issues/24724)
-- Seesaw encoder position tracking in light control mode [#24730](https://github.com/arendst/Tasmota/issues/24730)
-- Berry `write(value:int | s:string) -> nil` internal argument parsing [#24800](https://github.com/arendst/Tasmota/issues/24800)
-
-### Removed
-- `USE_UNIVERSAL_TOUCH` no more forced when `USE_UNIVERSAL_DISPLAY` is enabled [#24743](https://github.com/arendst/Tasmota/issues/24743)
+- Default button/switch actions on builds without rules regression from v15.4.0.2 [#24871](https://github.com/arendst/Tasmota/issues/24871)
+- PZEM/Modbus energy monitor Exception crash-loop on ESP8266 regression from v15.5.0 [#24883](https://github.com/arendst/Tasmota/issues/24883)
+- Can sniffer functionality [#18287](https://github.com/arendst/Tasmota/issues/18287)
+- Udisp SPI for mono color display [#24899](https://github.com/arendst/Tasmota/issues/24899)
+- Minor fixes in `LList` [#24927](https://github.com/arendst/Tasmota/issues/24927)
+- NeoPool delocalize all JSON outputs [#24962](https://github.com/arendst/Tasmota/issues/24962), [#24965](https://github.com/arendst/Tasmota/issues/24965)
+- TLS fix public key fingerprint for ECDSA certificates [#24928](https://github.com/arendst/Tasmota/issues/24928)
+- Reset BLE scan flag on new operation [#24925](https://github.com/arendst/Tasmota/issues/24925)
+- BLE EQ3 float output in mqtt messages regression from v15.4.0.2 [#24869](https://github.com/arendst/Tasmota/issues/24869)
+- HASPmota better support for `textarea` [#24946](https://github.com/arendst/Tasmota/issues/24946)

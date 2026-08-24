@@ -9,6 +9,7 @@
 #ifdef USE_WIZMOTE
 /*********************************************************************************************\
  * WiZ WiFi ESP-NOW Smart Remote decoder
+ * IoTorero ESP-Now Remote Control decoder
  *
  * Enable with command `SetOption164 1`
  *
@@ -75,20 +76,25 @@ struct WizMote {
 #define WIZMOTE_BUTTON_NIGHT           3
 #define WIZMOTE_BUTTON_BRIGHT_DOWN     8
 #define WIZMOTE_BUTTON_BRIGHT_UP       9
-#define WIZMOTE_BUTTON_ONE            16
-#define WIZMOTE_BUTTON_TWO            17
-#define WIZMOTE_BUTTON_THREE          18
-#define WIZMOTE_BUTTON_FOUR           19
+#define WIZMOTE_BUTTON_1              16
+#define WIZMOTE_BUTTON_2              17
+#define WIZMOTE_BUTTON_3              18
+#define WIZMOTE_BUTTON_4              19
+#define WIZMOTE_BUTTON_5              20  // IoTorero extension
+#define WIZMOTE_BUTTON_6              21  // IoTorero extension
+#define WIZMOTE_BUTTON_7              22  // IoTorero extension
+#define WIZMOTE_BUTTON_8              23  // Future extension
 #define WIZSMART_BUTTON_ON           100
 #define WIZSMART_BUTTON_OFF          101
 #define WIZSMART_BUTTON_BRIGHT_UP    102
 #define WIZSMART_BUTTON_BRIGHT_DOWN  103
 
-//                                 01   2  3  4  5  6  7  8  9
-const char kWMButtons[] PROGMEM = "|OFF|ON|BN|B1|B2|B3|B4|BU|BD";
+//                                 01   2  3  4  5  6  7  8  9  10 11 12 13
+const char kWMButtons[] PROGMEM = "|OFF|ON|BN|B1|B2|B3|B4|BU|BD|B5|B6|B7|B8";
 const uint8_t sWMButtons[] PROGMEM = {
   WIZMOTE_BUTTON_ON, WIZMOTE_BUTTON_OFF, WIZMOTE_BUTTON_NIGHT,
-  WIZMOTE_BUTTON_ONE, WIZMOTE_BUTTON_TWO, WIZMOTE_BUTTON_THREE, WIZMOTE_BUTTON_FOUR,
+  WIZMOTE_BUTTON_1, WIZMOTE_BUTTON_2, WIZMOTE_BUTTON_3, WIZMOTE_BUTTON_4,
+  WIZMOTE_BUTTON_5, WIZMOTE_BUTTON_6, WIZMOTE_BUTTON_7, WIZMOTE_BUTTON_8,
   WIZMOTE_BUTTON_BRIGHT_DOWN, WIZMOTE_BUTTON_BRIGHT_UP,
   WIZSMART_BUTTON_ON, WIZSMART_BUTTON_OFF,
   WIZSMART_BUTTON_BRIGHT_DOWN, WIZSMART_BUTTON_BRIGHT_UP
@@ -96,6 +102,7 @@ const uint8_t sWMButtons[] PROGMEM = {
 const uint8_t dWMButtons[] PROGMEM = {
   2, 1, 3,
   4, 5, 6, 7,
+  10, 11, 12, 13,
   9, 8,
   2, 1,
   9, 8
@@ -134,7 +141,7 @@ void WizMoteHandleRemoteData(uint8_t *mac, uint8_t *incoming_data, size_t len, s
   }
 
   WizMote.index = 0;
-  for (uint32_t i = 0; i < 13; i++) {
+  for (uint32_t i = 0; i < sizeof(sWMButtons); i++) {
     if (incoming->button == pgm_read_byte(sWMButtons + i)) {
       WizMote.index = pgm_read_byte(dWMButtons + i);
       break;

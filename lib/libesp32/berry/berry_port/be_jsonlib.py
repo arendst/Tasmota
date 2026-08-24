@@ -83,42 +83,6 @@ def match_char(s, pos, ch):
         return skip_space(s, pos + 1)
     return -1
 
-# static int is_object(bvm *vm, const char *class, int idx)
-# {
-#     if (be_isinstance(vm, idx)) {
-#         be_pushvalue(vm, idx);
-#         while (1) {
-#             be_getsuper(vm, -1);
-#             if (be_isnil(vm, -1)) {
-#                 be_pop(vm, 1);
-#                 break;
-#             }
-#             be_remove(vm, -2);
-#         }
-#         const char *name = be_classname(vm, -1);
-#         bbool ret = !strcmp(name, class);
-#         be_pop(vm, 1);
-#         return ret;
-#     }
-#     return  0;
-# }
-def is_object(vm, classname, idx):
-    """Check if value at idx is an instance whose root class matches classname."""
-    be_api = _lazy_be_api()
-    if be_api.be_isinstance(vm, idx):
-        be_api.be_pushvalue(vm, idx)
-        while True:
-            be_api.be_getsuper(vm, -1)
-            if be_api.be_isnil(vm, -1):
-                be_api.be_pop(vm, 1)
-                break
-            be_api.be_remove(vm, -2)
-        name = be_api.be_classname(vm, -1)
-        ret = (name == classname)
-        be_api.be_pop(vm, 1)
-        return ret
-    return False
-
 # /* Calculate the actual buffer size needed for JSON string parsing
 #  * accounting for Unicode expansion and security limits */
 # static size_t json_strlen_safe(const char *json, size_t *actual_len)
@@ -815,9 +779,10 @@ def array_dump(vm, indent, idx, fmt):
 
 # static void value_dump(bvm *vm, int *indent, int idx, int fmt)
 # {
-#     if (is_object(vm, "map", idx)) {
+#     be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
+#     if (be_ismapinstance(vm, idx)) {
 #         object_dump(vm, indent, idx, fmt);
-#     } else if (is_object(vm, "list", idx)) {
+#     } else if (be_islistinstance(vm, idx)) {
 #         array_dump(vm, indent, idx, fmt);
 #     } else if (be_isnil(vm, idx)) {
 #         be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
@@ -842,9 +807,13 @@ def array_dump(vm, indent, idx, fmt):
 def value_dump(vm, indent, idx, fmt):
     """Serialize any Berry value to JSON string and push result to top."""
     be_api = _lazy_be_api()
-    if is_object(vm, "map", idx):
+    be_api.be_stack_require(vm, 1 + BE_STACK_FREE_MIN)
+    # `be_ismapinstance()` / `be_islistinstance()` walk the class hierarchy and
+    # compare against the actual builtin `map` / `list` classes, so subclasses
+    # are handled, and a user class that merely shares the name is not.
+    if be_api.be_ismapinstance(vm, idx):
         object_dump(vm, indent, idx, fmt)
-    elif is_object(vm, "list", idx):
+    elif be_api.be_islistinstance(vm, idx):
         array_dump(vm, indent, idx, fmt)
     elif be_api.be_isnil(vm, idx):
         be_api.be_stack_require(vm, 1 + BE_STACK_FREE_MIN)
