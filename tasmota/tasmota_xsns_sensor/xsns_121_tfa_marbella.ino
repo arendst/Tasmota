@@ -38,16 +38,20 @@
  *
  * GDO2 is not needed: receiving uses GDO0 only.
  *
- * Readings go out with the regular TelePeriod telemetry like any other
- * sensor; SetOption166 additionally publishes them as they arrive.
+ * Readings are published as they arrive, the way the other receiving
+ * drivers do it, and go out with the regular TelePeriod telemetry as well.
+ * SetOption147 suppresses the immediate publish.
  *
  * Commands:
  * Marbella          - Show the bound sensor id and the reception state
  * Marbella <id>     - Bind to one sensor, id as six hex digits, e.g. 683f16
  * Marbella 0        - Forget the binding and learn the next sensor seen
+ * Marbella <MHz>    - Tune the receiver, e.g. 868.021, to compensate the
+ *                     tolerance of the module's crystal. Stored; the decimal
+ *                     point is what tells a frequency from an id.
  *
- * SetOption166 1    - Publish each reading as it arrives. Off by default, so
- *                     readings go out with the regular TelePeriod telemetry.
+ * SetOption147 1    - Do not publish readings as they arrive; rules still see
+ *                     them. Shared with the other receiving drivers.
  *
  * The binding is stored and survives a restart. TFA_MARBELLA_SERIAL fixes it
  * at compile time instead.
@@ -65,37 +69,44 @@
 #endif
 
 /*
-  Radio parameters of this sensor as documented by rtl_433: FSK_PULSE_PCM with
-  105 us per bit, which is 9.6 kBit/s, in the 868 MHz band.
+  Radio parameters. rtl_433 documents FSK_PULSE_PCM at 105 us per bit in the
+  868 MHz band; the modulation and the band hold, the symbol rate does not.
+
+  Measured off the air with an SDR from three recordings of this sensor, and
+  cross-checked by decoding each recording at every sampling phase with the
+  sensor's own checksum as the verdict: 9400 Bd, not the 9523.8 Bd that
+  105 us implies, and about 34.5 kHz deviation rather than 30. All three
+  recordings peaked at the same rate, and none produced a single valid frame
+  at 9523.8 Bd - over the 112 bits of a transmission a rate that is 1.3 %
+  off drifts more than a full bit, so the tail of every frame arrives
+  shifted. That is why 9.6 kBit/s delivered nothing at all and 9.5238 only
+  worked now and then.
+
+  The frequency is the protocol's 868.0 MHz. What a particular receiver has
+  to be tuned to is a separate matter - see the Marbella command below.
 */
-#define TFA_MARBELLA_FREQUENCY       868.0    // MHz
-/*
-  9.5238 kBit/s, not the 9.6 one would guess: rtl_433 documents the symbol
-  width as 105 us, which is 1/0.000105 = 9523.8 bit/s. The 0.8 percent
-  difference is not academic - over an 88 bit frame it accumulates to about
-  0.7 bit, which is why with 9.6 the first bytes arrive intact and the last
-  ones come out shifted.
-*/
-#define TFA_MARBELLA_BITRATE         9.5238   // kBit/s
-#define TFA_MARBELLA_DEVIATION       30.0     // kHz
+#define TFA_MARBELLA_FREQUENCY       868.0    // MHz, the frequency the protocol uses
+#define TFA_MARBELLA_FREQ_RANGE      0.2      // MHz, how far the tuning may be moved either way
+#define TFA_MARBELLA_BITRATE         9.4      // kBit/s, measured - see above
+#define TFA_MARBELLA_DEVIATION       34.5     // kHz, measured - see above
 #define TFA_MARBELLA_RX_BANDWIDTH    135.0    // kHz
 #define TFA_MARBELLA_POWER           10       // dBm, receive only but begin() wants it
 #define TFA_MARBELLA_PREAMBLE        16       // bits, see the note on the quality threshold below
 
 /*
-  Sync word 0xAAD2 - which is NOT the 0xAA 0x2D 0xD4 the frame itself starts
-  with, and that is worth a word because it looks like a mistake.
+  Sync word 0xAAD2, not the 0xAA 0x2D 0xD4 the frame itself starts with -
+  worth a word, because it looks like a mistake.
 
-  rtl_433 works on the raw demodulated bit stream and searches it for the
-  pattern AA 2D D4 in software. The CC1101 synchronises in hardware on a 16 bit
-  word and strips everything up to and including it. Since the buffer then
-  begins with AA 2D D4, whatever the radio matched must sit in front of that -
-  so the two values describe the same transition seen from different sides, and
-  what rtl_433 calls preamble and sync word is already payload here.
+  The CC1101 synchronises in hardware and strips everything up to and
+  including the word it matched, and the buffer then begins with AA 2D D4. So
+  the sync word has to sit in front of that. Demodulating recordings bit by
+  bit shows what the sensor actually sends:
 
-  Determined empirically: 0xAAD2 delivers frames whose checksums verify,
-  0x2DD4 delivers nothing at all. How the 0xAAD2 arises in the bit stream is
-  not established - the radio cannot report the bits it discarded.
+    ... 1010 1010 1010 | 1101 0010 | 1010 1010 0010 1101 1101 0100 ...
+        <- preamble ->    <- D2 ->   <-        AA 2D D4        ->
+
+  The last preamble byte is 0xAA, so the 16 bits before the frame read AA D2 -
+  which lands the radio precisely on the frame start. 0x2DD4 delivers nothing.
 */
 #define TFA_MARBELLA_SYNC1           0xAA
 #define TFA_MARBELLA_SYNC0           0xD2
@@ -236,6 +247,16 @@ bool TfaMarbellaApply(int16_t state, const char* what) {
   return false;
 }
 
+/*
+  The frequency the radio is actually tuned to: the protocol frequency plus
+  whatever this module's crystal needs. Stored in 100 Hz steps, which is
+  finer than the CC1101 can tune anyway (its step is 26 MHz / 2^16, so about
+  397 Hz) and leaves the setting a comfortable range in an int16.
+*/
+float TfaMarbellaTuning(void) {
+  return TFA_MARBELLA_FREQUENCY + (float)Settings->marbella_frequency / 10000.0f;
+}
+
 void TfaMarbellaInit(void) {
   if ((SPI_MOSI_MISO != TasmotaGlobal.spi_enabled) ||
       !PinUsed(GPIO_CC1101_CS) || !PinUsed(GPIO_CC1101_GDO0)) { return; }
@@ -252,7 +273,7 @@ void TfaMarbellaInit(void) {
 
   TfaMarbellaRadio = new Module(Pin(GPIO_CC1101_CS), Pin(GPIO_CC1101_GDO0), RADIOLIB_NC, RADIOLIB_NC, SPI);
 
-  int16_t state = TfaMarbellaRadio.begin(TFA_MARBELLA_FREQUENCY, TFA_MARBELLA_BITRATE,
+  int16_t state = TfaMarbellaRadio.begin(TfaMarbellaTuning(), TFA_MARBELLA_BITRATE,
                                          TFA_MARBELLA_DEVIATION, TFA_MARBELLA_RX_BANDWIDTH,
                                          TFA_MARBELLA_POWER, TFA_MARBELLA_PREAMBLE);
   if (!TfaMarbellaApply(state, PSTR("CC1101 not found"))) { return; }
@@ -356,17 +377,17 @@ void TfaMarbellaEvery50ms(void) {
   TfaMarbellaData->valid = true;
 
   /*
-    Optionally publish right away instead of waiting for the next TelePeriod.
-    Off by default, because telemetry on TelePeriod is what Tasmota does
-    everywhere else and a driver should not quietly behave differently.
+    Publish as the reading arrives, and let SetOption147 turn that off - the
+    same handle the other receiving drivers use (serial bridge, IR, LoRaWAN,
+    WizMote). Sharing it costs no new SetOption number, and a user who has
+    already silenced one receiver on a busy broker means the same thing here.
 
-    Worth turning on for this sensor though: it transmits about once a minute,
-    so with the default TelePeriod of 300 seconds four out of five readings
-    never leave the device, and the one that does can be almost five minutes
-    old. Every reading then becomes an MQTT message - useful for rules, but
-    also more traffic on a busy broker, which is why it is a choice.
+    Publishing on arrival is the right default for this sensor: it transmits
+    about once a minute, so with the default TelePeriod of 300 seconds four
+    out of five readings would never leave the device, and the one that does
+    could be almost five minutes old.
   */
-  if (Settings->flag6.marbella_publish) {     // SetOption166 - (TFA Marbella) Publish as they arrive (1)
+  if (!Settings->flag6.mqtt_disable_publish) {  // SetOption147 - If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules
     MqttPublishSensor();
   }
 }
@@ -488,22 +509,63 @@ void (* const TfaMarbellaCommand[])(void) PROGMEM = { &CmndTfaMarbella };
 void CmndTfaMarbella(void) {
   if (XdrvMailbox.data_len) {
     /*
-      The id is printed as hex everywhere, so it is entered as hex too. Anything
-      that is not a valid id is refused rather than silently turned into 0,
-      which would look like a successful bind while clearing the binding.
+      A frequency carries a decimal point and an id does not - that is what
+      tells the two apart, and it means neither needs a keyword.
+
+      Why this is a setting and not a constant: the CC1101 is tuned by its own
+      26 MHz crystal, and its tolerance lands the receiver somewhere around
+      the frequency it was told. One module measured here sat 27 kHz low.
+      That still fits inside the 135 kHz receive filter, but it spends the
+      margin the signal needs, and it belongs to the board, not the driver.
     */
-    char* end = nullptr;
-    uint32_t id = strtoul(XdrvMailbox.data, &end, 16);
-    if ((end == XdrvMailbox.data) || (*end != '\0') || (id > TFA_MARBELLA_SERIAL_MASK)) {
-      return;                                        // Leaves the command unhandled -> "Invalid"
+    if (strchr(XdrvMailbox.data, '.')) {
+      char* end = nullptr;
+      float freq = strtof(XdrvMailbox.data, &end);
+      if ((end == XdrvMailbox.data) || (*end != '\0') ||
+          (freq < TFA_MARBELLA_FREQUENCY - TFA_MARBELLA_FREQ_RANGE) ||
+          (freq > TFA_MARBELLA_FREQUENCY + TFA_MARBELLA_FREQ_RANGE)) {
+        return;                                      // Leaves the command unhandled -> "Invalid"
+      }
+      Settings->marbella_frequency = (int16_t)roundf((freq - TFA_MARBELLA_FREQUENCY) * 10000.0f);
+      /*
+        startReceive() is not optional: setFrequency() leaves the chip in
+        standby and does not bring it back, so without it the receiver goes
+        deaf the moment it is retuned - and stays deaf, because the re-arm
+        timer did not recover it either when measured on hardware. A retune
+        that kills reception looks exactly like a retune to a bad frequency.
+      */
+      if (!TfaMarbellaApply(TfaMarbellaRadio.setFrequency(TfaMarbellaTuning()), PSTR("Frequency")) ||
+          !TfaMarbellaApply(TfaMarbellaRadio.startReceive(), PSTR("Receive"))) {
+        return;                                      // Leaves the command unhandled -> "Invalid"
+      }
+    } else {
+      /*
+        The id is printed as hex everywhere, so it is entered as hex too, and
+        as the full six digits - "0" to clear the binding is the one exception.
+
+        Six digits exactly, because a shorter number is more likely a mistyped
+        frequency than an id: "Marbella 868" without the decimal point would
+        otherwise bind to sensor 000868 and report success, and reception
+        would stop for a reason nothing points at.
+      */
+      char* end = nullptr;
+      uint32_t id = strtoul(XdrvMailbox.data, &end, 16);
+      const uint32_t len = strlen(XdrvMailbox.data);
+      if ((end == XdrvMailbox.data) || (*end != '\0') || (id > TFA_MARBELLA_SERIAL_MASK) ||
+          ((6 != len) && !((1 == len) && (0 == id)))) {
+        return;                                      // Leaves the command unhandled -> "Invalid"
+      }
+      Settings->marbella_serial = id;
+      TfaMarbellaData->valid = false;
     }
-    Settings->marbella_serial = id;
-    TfaMarbellaData->valid = false;
   }
-  Response_P(PSTR("{\"%s\":{\"" D_JSON_ID "\":\"%06X\",\"Bound\":\"%s\",\"Reading\":\"%s\"}}"),
+  float tuning = TfaMarbellaTuning();
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_ID "\":\"%06X\",\"Bound\":\"%s\",\"Reading\":\"%s\""
+                  ",\"" D_JSON_FREQUENCY "\":%*_f}}"),
              XdrvMailbox.command, Settings->marbella_serial,
              Settings->marbella_serial ? "YES" : "LEARNING",
-             TfaMarbellaReadingValid() ? "VALID" : "NONE");
+             TfaMarbellaReadingValid() ? "VALID" : "NONE",
+             3, &tuning);
 }
 
 /*********************************************************************************************\
