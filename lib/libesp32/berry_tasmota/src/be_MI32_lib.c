@@ -19,11 +19,11 @@ BE_FUNC_CTYPE_DECLARE(be_MI32_get_name, "s", "i");
 extern uint8_t *be_MI32_get_MAC(int32_t slot, size_t *size);
 BE_FUNC_CTYPE_DECLARE(be_MI32_get_MAC, "&", "i");
 
-extern void be_MI32_set_hum(int slot, int hum_val);
-BE_FUNC_CTYPE_DECLARE(be_MI32_set_hum, "", "ii");
+extern void be_MI32_set_hum(int slot, float hum_val);
+BE_FUNC_CTYPE_DECLARE(be_MI32_set_hum, "", "if");
 
-extern void be_MI32_set_temp(int slot, int temp_val);
-BE_FUNC_CTYPE_DECLARE(be_MI32_set_temp, "", "ii");
+extern void be_MI32_set_temp(int slot, float temp_val);
+BE_FUNC_CTYPE_DECLARE(be_MI32_set_temp, "", "if");
 
 extern bbool be_MI32_widget(const char *sbuf, void* function);
 BE_FUNC_CTYPE_DECLARE(be_MI32_widget, "b", "[sc]");

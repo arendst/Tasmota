@@ -382,7 +382,7 @@ enum SwitchModeOptions {TOGGLE,                              // 0
 
 enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
 
-enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
+enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_SHELLY, EMUL_MAX};
 
 enum TopicOptions { CMND, STAT, TELE, nu1, RESULT_OR_CMND, RESULT_OR_STAT, RESULT_OR_TELE };
 

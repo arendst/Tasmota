@@ -135,7 +135,13 @@ RTC_NOINIT_ATTR volatile struct {
   uint32_t pc;
   uint32_t exccause;
   uint32_t excvaddr;
+  uint32_t pseudo_excause;                 // recorded through panicHandler(): exccause is a PANIC_RSN_* pseudo cause, not an Xtensa one
 } crash_recorder;
+
+// Only the first panic of a boot is recorded. The interrupt watchdog can fire while the panic handler
+// is still running and re-enter through panicHandler(); that frame only shows the panic handler itself
+// and would replace the one that shows the original exception.
+static bool crash_recorded = false;
 
 bool CrashFlag(void)
 {
@@ -179,11 +185,14 @@ extern "C" {
   void __real_xt_unhandled_exception(XtExcFrame *frame);
 }
 
-extern "C" IRAM_ATTR void custom_crash_recorder(XtExcFrame *exc_frame) {
+extern "C" IRAM_ATTR void custom_crash_recorder(XtExcFrame *exc_frame, bool pseudo_excause) {
+  if (crash_recorded) { return; }
+  crash_recorded = true;
   crash_recorder.magic = crash_magic;   // crash occured
   crash_recorder.pc = exc_frame->pc;
   crash_recorder.exccause = exc_frame->exccause;
   crash_recorder.excvaddr = exc_frame->excvaddr;
+  crash_recorder.pseudo_excause = pseudo_excause;
   for (uint32_t i=0; i<crash_dump_max_len; i++) {
     crash_recorder.stack[i] = 0;
   }
@@ -215,13 +224,12 @@ extern "C" IRAM_ATTR void custom_crash_recorder(XtExcFrame *exc_frame) {
 }
 
 extern "C" IRAM_ATTR void __wrap_panicHandler(XtExcFrame *frame) {
-  custom_crash_recorder(frame);
+  custom_crash_recorder(frame, true);
   __real_panicHandler(frame);  // call the actual panic handler
 }
 
 extern "C" IRAM_ATTR void __wrap_xt_unhandled_exception(XtExcFrame *frame) {
-  crash_recorder.magic = crash_magic;   // crash occured
-  custom_crash_recorder(frame);
+  custom_crash_recorder(frame, false);
   __real_xt_unhandled_exception(frame);  // call the actual panic handler
 }
 
@@ -240,12 +248,24 @@ static const char *edesc[] = {
 };
 #define NUM_EDESCS (sizeof(edesc) / sizeof(char *))
 
+// exccause values set by the interrupt based entry points (int wdt, cache error, double exception, ...)
+// before they call panicHandler(), see esp_private/panic_reason.h
+const char kPseudoEdesc[] PROGMEM = "Unknown|DebugException|DoubleException|KernelException|CoprocException|IntWdtCpu0|IntWdtCpu1|CacheError";
+#define NUM_PSEUDO_EDESCS 8
+
 void CrashDump(void)
 {
   if (crash_recorder.magic == crash_magic) {
+    char pseudo_reason[20];
+    const char *reason = "Unknown";
+    if (crash_recorder.pseudo_excause) {
+      reason = GetTextIndexed(pseudo_reason, sizeof(pseudo_reason), (crash_recorder.exccause < NUM_PSEUDO_EDESCS) ? crash_recorder.exccause : 0, kPseudoEdesc);
+    } else if (crash_recorder.exccause < NUM_EDESCS) {
+      reason = edesc[crash_recorder.exccause];
+    }
     ResponseAppend_P("{\"Exception\":%d,\"Reason\":\"%s\",\"EPC\":\"%08x\",\"EXCVADDR\":\"%08x\"",
       crash_recorder.exccause,    // Exception Cause
-      crash_recorder.exccause < NUM_EDESCS ? edesc[crash_recorder.exccause] : "Unknown",
+      reason,
       crash_recorder.pc,          // Exception Progam Counter
       crash_recorder.excvaddr     // Exception Virtual Address Register - Virtual address that caused last fetch, load, or store exception
     );
@@ -291,13 +311,16 @@ const char *esp32c3_crash_reason[] = {
 #define NUM_C3_REASONS (sizeof(esp32c3_crash_reason) / sizeof(char *))
 
 #include <riscv/rvruntime-frames.h>
-extern "C" IRAM_ATTR void custom_crash_recorder(void *exc_frame) {
+extern "C" IRAM_ATTR void custom_crash_recorder(void *exc_frame, bool pseudo_excause) {
   RvExcFrame *regs = (RvExcFrame *)exc_frame;
 
+  if (crash_recorded) { return; }
+  crash_recorded = true;
   crash_recorder.magic = crash_magic;   // crash occured
   crash_recorder.pc = regs->mepc;
   crash_recorder.exccause = regs->mcause;
   crash_recorder.excvaddr = regs->mtval;
+  crash_recorder.pseudo_excause = pseudo_excause;
   for (uint32_t i=0; i<crash_dump_max_len; i++) {
     crash_recorder.stack[i] = 0;
   }
@@ -317,13 +340,12 @@ extern "C" IRAM_ATTR void custom_crash_recorder(void *exc_frame) {
 }
 
 extern "C" IRAM_ATTR void __wrap_panicHandler(void *frame) {
-  custom_crash_recorder(frame);
+  custom_crash_recorder(frame, true);
   __real_panicHandler(frame);  // call the actual panic handler
 }
 
 extern "C" IRAM_ATTR void __wrap_xt_unhandled_exception(void *frame) {
-  crash_recorder.magic = crash_magic;   // crash occured
-  custom_crash_recorder(frame);
+  custom_crash_recorder(frame, false);
   __real_xt_unhandled_exception(frame);  // call the actual panic handler
 }
 
