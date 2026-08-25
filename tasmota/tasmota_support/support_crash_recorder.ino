@@ -250,18 +250,16 @@ static const char *edesc[] = {
 
 // exccause values set by the interrupt based entry points (int wdt, cache error, double exception, ...)
 // before they call panicHandler(), see esp_private/panic_reason.h
-static const char *pseudo_edesc[] = {
-    "Unknown", "DebugException", "DoubleException", "KernelException",
-    "CoprocException", "IntWdtCpu0", "IntWdtCpu1", "CacheError"
-};
-#define NUM_PSEUDO_EDESCS (sizeof(pseudo_edesc) / sizeof(char *))
+const char kPseudoEdesc[] PROGMEM = "Unknown|DebugException|DoubleException|KernelException|CoprocException|IntWdtCpu0|IntWdtCpu1|CacheError";
+#define NUM_PSEUDO_EDESCS 8
 
 void CrashDump(void)
 {
   if (crash_recorder.magic == crash_magic) {
+    char pseudo_reason[20];
     const char *reason = "Unknown";
     if (crash_recorder.pseudo_excause) {
-      if (crash_recorder.exccause < NUM_PSEUDO_EDESCS) { reason = pseudo_edesc[crash_recorder.exccause]; }
+      reason = GetTextIndexed(pseudo_reason, sizeof(pseudo_reason), (crash_recorder.exccause < NUM_PSEUDO_EDESCS) ? crash_recorder.exccause : 0, kPseudoEdesc);
     } else if (crash_recorder.exccause < NUM_EDESCS) {
       reason = edesc[crash_recorder.exccause];
     }
