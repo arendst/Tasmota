@@ -3,15 +3,35 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.5.0.2]
+## [15.6.0.1]
+### Added
+
+
+### Breaking Changed
+
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+
+
+
+## [Released]
+
+## [15.6.0] 20260825
+- Release Sylvie
+
+## [15.5.0.2] 20260825
 ### Added
 - Support for baudrate 74880 replacing 74700 (#24924)
 - Support for WiZ compatible IoTorero ESP-Now Remote Control additional buttons P5 to P7
 - Support for BLE BTHome in binary `tasmota32-bluetooth.bin` (#20763)
 - Berry extend `sortedmap` constructor (#24955)
 - Shelly Pro 2PM emulation for ESP32 (`Emulation 3`, disabled by default) (#24952)
-
-### Breaking Changed
 
 ### Changed
 - Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests (#24916)
@@ -27,8 +47,6 @@ All notable changes to this project will be documented in this file.
 - HASPmota better support for `textarea` (#24946)
 - NeoPool issue with localized JSON keys (#24962)
 - NeoPool delocalize all JSON outputs (#24965)
-
-### Removed
 
 ## [15.5.0.1] 20260725
 ### Added
@@ -47,8 +65,6 @@ All notable changes to this project will be documented in this file.
 - Default button/switch actions on builds without rules regression from v15.4.0.2 (#24871)
 - PZEM/Modbus energy monitor Exception crash-loop on ESP8266 regression from v15.5.0 (#24883)
 - Udisp SPI for mono color display (#24899)
-
-## [Released]
 
 ## [15.5.0] 20260621
 - Release Sylvan
