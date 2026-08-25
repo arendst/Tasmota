@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - Library `PubSubClient` renamed to `TasmotaPubSub`, hardening fixes and comprehensive non-regression tests [#24916](https://github.com/arendst/Tasmota/issues/24916)
+- Keep the first panic in the ESP32 crash recorder [#24976](https://github.com/arendst/Tasmota/issues/24976)
 - MiElHVAC auto-enable i-See widevane when setting AirDirection [#24860](https://github.com/arendst/Tasmota/issues/24860)
 - Berry `json.dump()` works with subclasses of `map` and `list` [#24954](https://github.com/arendst/Tasmota/issues/24954)
 - Berry/MI32 improved dashboard and widget handling [#24972](https://github.com/arendst/Tasmota/issues/24972)
