@@ -60,6 +60,7 @@
 #define D_AT "at"
 #define D_AUTO "AUTO"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "Hall Effect"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Värd"
 #define D_HOSTNAME "Värdnamn"
 #define D_HUMIDITY "Fuktighet"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "Initialiserad"
 #define D_IP_ADDRESS "IP-adress"
 #define D_LIGHT "Ljus"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manual"
 #define D_MODULE "Modul"
 #define D_MOISTURE "Moisture"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "fler tryck"
+#define D_NA "N/A"
 #define D_NOISE "Oväsen"
 #define D_NONE "Ingen"
 #define D_NOX "NOx"

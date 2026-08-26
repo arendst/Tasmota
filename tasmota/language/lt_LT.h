@@ -60,6 +60,7 @@
 #define D_AT "prie"
 #define D_AUTO "AUTOMATINĖ"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Baterija"             // Short for Battery
 #define D_BATTERY "Baterija"
 #define D_BATTERY_CHARGE "Įkrova"    // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "Holo efektas"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Karščio indeksas"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Serveris"
 #define D_HOSTNAME "Mazgo pavadinimas"
 #define D_HUMIDITY "Drėgmė"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "Inicializuota"
 #define D_IP_ADDRESS "IP adresas"
 #define D_LIGHT "Šviesa"
+#define D_LOW "Low"
 #define D_LQI "LQI"                   // Zigbee ryšio kokybės indeksas
 #define D_LWT "LWT"                   // Palikti taip pat, nes susiję su MQTT Last Will and Testament
+#define D_MANUAL "Manual"
 #define D_MODULE "Modulis"
 #define D_MOISTURE "Drėgmės lygis"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "kelių paspaudimų funkcija"
+#define D_NA "N/A"
 #define D_NOISE "Triukšmas"
 #define D_NONE "Nėra"
 #define D_NOX "NOx"
