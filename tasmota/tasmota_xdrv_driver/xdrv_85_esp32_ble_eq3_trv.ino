@@ -296,7 +296,7 @@ struct eq3_device_t {
   uint32_t lastStatusTime;   // 4 Bytes
   int8_t RSSI;               // 1 Byte
   uint8_t nextDiscoveryData; // 1 Byte
-  uint8_t DutyCycle;         // 1 Byte
+  uint8_t ValvePos;          // 1 Byte
   uint8_t Mode;              // 1 Byte
   uint8_t lastStatusLen;     // 1 Byte
   bool pairing;              // 1 Byte
@@ -546,8 +546,8 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t* op, bool success, int retries) {
     ResponseAppend_P(",\"stattime\":%u", stattime);
     eq3->TargetTemp = (float)status[5] / 2;
     ResponseAppend_P(",\"temp\":%1_f", &(eq3->TargetTemp));
-    eq3->DutyCycle = status[3];
-    ResponseAppend_P(",\"posn\":%d", eq3->DutyCycle);
+    eq3->ValvePos = status[3];
+    ResponseAppend_P(",\"posn\":%d", eq3->ValvePos);
     eq3->Mode = status[2] & 3;
     ResponseAppend_P(",\"mode\":\"%s\"", mqtt_mode_names[eq3->Mode]);
 
@@ -838,7 +838,6 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t* pStruct)
   // we will try not to use this...
   const BLEAdvertisedDevice* advertisedDevice = pStruct->advertisedDevice;
 
-  bool found = false;
   int8_t RSSI = pStruct->RSSI;
   const uint8_t* addr = pStruct->addr;
   std::string sname = advertisedDevice->getName();
@@ -852,9 +851,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t* pStruct)
   } 
 
   // Identify device by MAC prefix
-  if (!found && EQ3MatchPrefix && matchPrefix(addr)) {
-    found = true;
-  }
+  bool found = (EQ3MatchPrefix && matchPrefix(addr));
 
   // Identify device by device name; active scan needed
   if (!found) {
@@ -1009,7 +1006,7 @@ constexpr const char HTTP_EQ3_TYPE[]        = "{s}%s " D_NEOPOOL_TYPE "{m}eQ-3 T
 constexpr const char HTTP_EQ3_MAC[]         = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
 constexpr const char HTTP_EQ3_RSSI[]        = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
 constexpr const char HTTP_EQ3_TEMPERATURE[] = "{s}%s " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
-constexpr const char HTTP_EQ3_DUTY_CYCLE[]  = "{s}%s " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
+constexpr const char HTTP_EQ3_VALVE_POS[]   = "{s}%s " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
 constexpr const char HTTP_EQ3_MODE[]        = "{s}%s " D_MODE "{m}%s{e}";
 constexpr const char HTTP_EQ3_BATTERY[]     = "{s}%s " D_BATTERY "{m}%s{e}";
 
@@ -1036,7 +1033,7 @@ void EQ3Show(void)
       WSContentSend_PD(HTTP_EQ3_RSSI, label, WifiGetRssiAsQuality(device.RSSI), device.RSSI);
       if (!EQ3Period || device.lastStatusTime + (EQ3Period * 10) > UtcTime()) {
         WSContentSend_PD(HTTP_EQ3_TEMPERATURE, label, Settings->flag2.temperature_resolution, &device.TargetTemp, c_unit);
-        WSContentSend_P(HTTP_EQ3_DUTY_CYCLE, label, device.DutyCycle);
+        WSContentSend_P(HTTP_EQ3_VALVE_POS, label, device.ValvePos);
         WSContentSend_P(HTTP_EQ3_MODE, label, web_mode_names[device.Mode]);
         WSContentSend_P(HTTP_EQ3_BATTERY, label, device.Battery ? D_LOW : D_OK);
       }

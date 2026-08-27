@@ -592,9 +592,9 @@
 #define D_CONFIGURE_BLE       "BLE"
 #define D_BLE_PARAMETERS      "BLE Parameter"
 #define D_BLE_ENABLE          "BLE aktivieren"
-#define D_BLE_ACTIVESCAN      "Aktiv scannen (*)"
+#define D_BLE_ACTIVESCAN      "Aktiv scannen¹"
 #define D_BLE_DEVICES         "Erkannte Geräte"
-#define D_BLE_REMARK          "Mit (*) markierte Geräte werden nicht gespeichert."
+#define D_BLE_REMARK          "¹ Einstellung wird nicht dauerhaft gespeichert"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
