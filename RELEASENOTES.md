@@ -119,7 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 
 ### Changed
-
+- BLE EQ3-TRV code refactoring [#24978](https://github.com/arendst/Tasmota/issues/24978)
 
 ### Fixed
 
