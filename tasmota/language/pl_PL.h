@@ -60,6 +60,7 @@
 #define D_AT "at"
 #define D_AUTO "AUTO"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Bat"                // Short for Battery
 #define D_BATTERY "Bateria"
 #define D_BATTERY_CHARGE "Ładowanie"   // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "Efekt Hall'a"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Indeks ciepła"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Serwer"
 #define D_HOSTNAME "Nazwa serwera"
 #define D_HUMIDITY "Wilgotność"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "Zainicjowany"
 #define D_IP_ADDRESS "Adres IP"
 #define D_LIGHT "Światło"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manual"
 #define D_MODULE "Moduł"
 #define D_MOISTURE "Wilgotność"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Wielokrotne naciśnięcie"
+#define D_NA "N/A"
 #define D_NOISE "Szum"
 #define D_NONE "Brak"
 #define D_NOX "NOx"

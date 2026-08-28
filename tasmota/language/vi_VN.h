@@ -60,6 +60,7 @@
 #define D_AT "at"
 #define D_AUTO "AUTO"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "Hall Effect"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Máy chủ"
 #define D_HOSTNAME "Tên máy chủ"
 #define D_HUMIDITY "Độ ẩm"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "Khởi tạo"
 #define D_IP_ADDRESS "Địa chỉ IP"
 #define D_LIGHT "Đèn"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manual"
 #define D_MODULE "Mô đun"
 #define D_MOISTURE "Hơi ẩm"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "bấm nhiều lần"
+#define D_NA "N/A"
 #define D_NOISE "Nhiễu"
 #define D_NONE "Không"
 #define D_NOX "NOx"
