@@ -241,7 +241,10 @@ enum UserSelectablePins {
 #ifdef USE_MODBUS_RELAY                    // Modbus RTU Relay modules
   GPIO_MODBUSRELAY_TX, GPIO_MODBUSRELAY_TX_ENA,
   GPIO_MODBUSRELAY_RX, GPIO_MODBUSRELAY_RX_ENA,
-#endif                      
+#endif
+#if defined(USE_MIEL_HVAC) && defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+  GPIO_MIEL_HVAC_MB_TX, GPIO_MIEL_HVAC_MB_RX, GPIO_MIEL_HVAC_MB_TXEN,  // Mitsubishi Electric HVAC Modbus RTU slave
+#endif
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -521,7 +524,13 @@ const char kSensorNames[] PROGMEM =
 #endif
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
-  D_SENSOR_MBS_RX_ENA "|" D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
+  D_SENSOR_MBS_RX_ENA "|"
+#ifdef USE_MODBUS_RELAY
+  D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
+#endif
+#if defined(USE_MIEL_HVAC) && defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+  D_SENSOR_MIEL_HVAC_MB_TX "|" D_SENSOR_MIEL_HVAC_MB_RX "|" D_SENSOR_MIEL_HVAC_MB_TXEN "|"
+#endif
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1234,6 +1243,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),                      // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),                      // Mitsubishi Electric HVAC RX pin
+#if defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+  AGPIO(GPIO_MIEL_HVAC_MB_TX),                   // Mitsubishi Electric HVAC Modbus RTU slave TX pin
+  AGPIO(GPIO_MIEL_HVAC_MB_RX),                   // Mitsubishi Electric HVAC Modbus RTU slave RX pin
+  AGPIO(GPIO_MIEL_HVAC_MB_TXEN),                 // Mitsubishi Electric HVAC Modbus RTU slave RS485 direction (DE/RE) pin
+#endif
 #endif
 #ifdef USE_TUYAMCUBR
   AGPIO(GPIO_TUYAMCUBR_TX),

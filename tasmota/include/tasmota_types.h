@@ -282,7 +282,7 @@ typedef union {
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t dali_light : 1;               // bit 13 (v14.2.0.6) - CMND_DALILIGHT - Enable Tasmota light controls for DALI
     uint32_t dali_no_broadcast_slider : 1; // bit 14 (v15.1.0.3) - CMND_DALIBROADCASTSLIDER - Disable display of broadcast slider
-    uint32_t spare15 : 1;                  // bit 15
+    uint32_t miel_hvac_mb_enable : 1;      // bit 15 (v15.6.0.1) - CMND_HVACMODBUS - Enable MiEL HVAC Modbus RTU slave
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
@@ -832,7 +832,10 @@ typedef struct {
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
 
-  uint8_t       free_eb0[20];              // EB0  20 bytes
+  uint16_t      miel_hvac_mb_baudrate;     // EB0  MiEL HVAC Modbus RTU slave baudrate / 300
+  uint8_t       miel_hvac_mb_address;      // EB2  MiEL HVAC Modbus RTU slave address 1..247
+  uint8_t       miel_hvac_mb_sconfig;      // EB3  MiEL HVAC Modbus RTU slave serial config (TS_SERIAL_*)
+  uint8_t       free_eb0[16];              // EB4  16 bytes
 
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
