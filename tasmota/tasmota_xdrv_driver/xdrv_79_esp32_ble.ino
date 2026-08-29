@@ -3554,8 +3554,8 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
 
 const char HTTP_FORM_BLE[] PROGMEM =
   "<p><label><input id='e0' type='checkbox'%s><b>" D_BLE_ENABLE "</b></label></p>"
-  "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label></p>"
-  "<p>" D_BLE_REMARK "</p>";
+  "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label><br>"
+  "<small>" D_BLE_REMARK "</small></p>";
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";

@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Changed
-
+- BLE EQ3-TRV code refactoring (#24978)
 
 ### Fixed
 

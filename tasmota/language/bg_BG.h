@@ -60,6 +60,7 @@
 #define D_AT "at"
 #define D_AUTO "АВТОМАТИЧНО"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Бат."                // Short for Battery
 #define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "Ефект на Хол"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Хост"
 #define D_HOSTNAME "Име на хоста"
 #define D_HUMIDITY "Влажност"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "Инициализирано"
 #define D_IP_ADDRESS "Адрес по IP"
 #define D_LIGHT "Светлина"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manual"
 #define D_MODULE "Модул"
 #define D_MOISTURE "Влага"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "неколкократно натискане"
+#define D_NA "N/A"
 #define D_NOISE "Шум"
 #define D_NONE "Няма"
 #define D_NOX "NOx"

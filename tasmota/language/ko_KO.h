@@ -60,6 +60,7 @@
 #define D_AT "at"
 #define D_AUTO "자동"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "Hall Effect"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "호스트"
 #define D_HOSTNAME "호스트이름"
 #define D_HUMIDITY "습도"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "초기화됨"
 #define D_IP_ADDRESS "IP 주소"
 #define D_LIGHT "밝게"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manual"
 #define D_MODULE "모듈"
 #define D_MOISTURE "Moisture"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"
+#define D_NA "N/A"
 #define D_NOISE "소음"
 #define D_NONE "없음"
 #define D_NOX "NOx"
