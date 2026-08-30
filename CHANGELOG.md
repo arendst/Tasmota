@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
+### Added
+- Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101
 
 ## [15.6.0.1]
 ### Added

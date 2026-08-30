@@ -243,6 +243,7 @@ enum UserSelectablePins {
 #ifdef ESP32
   GPIO_MIEL_HVAC_MB_TX, GPIO_MIEL_HVAC_MB_RX, GPIO_MIEL_HVAC_MB_TXEN,  // Mitsubishi Electric HVAC Modbus RTU slave
 #endif
+  GPIO_CC1101_CS,                       // CC1101 SPI chip select
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -524,9 +525,11 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
   D_SENSOR_MBS_RX_ENA "|"
   D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
+  D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
 #ifdef ESP32
   D_SENSOR_MIEL_HVAC_MB_TX "|" D_SENSOR_MIEL_HVAC_MB_RX "|" D_SENSOR_MIEL_HVAC_MB_TXEN "|"
 #endif
+  D_SENSOR_CC1101_CS "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1219,9 +1222,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DEEPSLEEP
   AGPIO(GPIO_DEEPSLEEP),
 #endif
-#ifdef USE_KEELOQ
+#if defined(USE_KEELOQ) || defined(USE_TFA_MARBELLA)
   AGPIO(GPIO_CC1101_GDO0),                       // CC1101 pin for RX
   AGPIO(GPIO_CC1101_GDO2),                       // CC1101 pin for RX
+#endif
+#ifdef USE_TFA_MARBELLA
+  AGPIO(GPIO_CC1101_CS),                         // CC1101 SPI chip select
 #endif
 #ifdef USE_HRXL
   AGPIO(GPIO_HRXL_RX),
