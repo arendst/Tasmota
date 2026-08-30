@@ -167,7 +167,8 @@ struct TfaMarbellaData_s {
 */
 volatile bool TfaMarbellaPacketFlag = false;
 
-void IRAM_ATTR TfaMarbellaOnReceive(void) {
+void IRAM_ATTR TfaMarbellaOnReceive(void);
+void TfaMarbellaOnReceive(void) {
   TfaMarbellaPacketFlag = true;
 }
 
