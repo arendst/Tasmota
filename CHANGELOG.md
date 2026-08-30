@@ -2,13 +2,12 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
-### Added
-- Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101
 
 ## [15.6.0.1]
 ### Added
 - Support for GUI tooltip on touch media like phones and tablets
 - ESP32 MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
+- Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (#24959)
 
 ### Breaking Changed
 
