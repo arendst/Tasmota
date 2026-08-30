@@ -3566,31 +3566,640 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 #ifdef USE_WEBSERVER
 /*
- * Web UI sensor display — shows instantaneous Power (W) and cumulative
- * Total energy (kWh) rows on the Tasmota main page, matching how other
- * energy drivers render their values.
+ * Current mode as a control-panel keyword ("off" when powered down; i-See
+ * mode variants folded onto their base mode).
+ */
+static const char *
+miel_hvac_web_curmode(const struct miel_hvac_data_settings *set)
+{
+	if (!set->power)
+		return ("off");
+
+	switch (set->mode & MIEL_HVAC_SETTINGS_MODE_MASK)
+	{
+	case MIEL_HVAC_SETTINGS_MODE_HEAT:
+	case MIEL_HVAC_SETTINGS_MODE_HEAT_ISEE:
+		return ("heat");
+	case MIEL_HVAC_SETTINGS_MODE_COOL:
+	case MIEL_HVAC_SETTINGS_MODE_COOL_ISEE:
+		return ("cool");
+	case MIEL_HVAC_SETTINGS_MODE_DRY:
+	case MIEL_HVAC_SETTINGS_MODE_DRY_ISEE:
+		return ("dry");
+	case MIEL_HVAC_SETTINGS_MODE_FAN:
+		return ("fan");
+	case MIEL_HVAC_SETTINGS_MODE_AUTO:
+		return ("auto");
+	}
+	return ("");
+}
+
+/* Apply the locale decimal separator to a plain number string in place. */
+static void
+miel_hvac_dsep(char *s)
+{
+	if (D_DECIMAL_SEPARATOR[0] == '.')
+		return;
+	for (; *s != '\0'; s++)
+	{
+		if (*s == '.')
+			*s = D_DECIMAL_SEPARATOR[0];
+	}
+}
+
+/*
+ * Emit one state row.  js=false renders the initial <tr> into the panel
+ * card (miel_hvac_web_panel); js=true emits a JS statement that refreshes
+ * that same row's <td> in place, driven from FUNC_WEB_SENSOR so the values
+ * update without a page reload.
+ */
+static void
+miel_hvac_web_ro(bool js, const char *id, const char *label, const char *value)
+{
+	char v[48];
+	size_t i;
+
+	/* protocol keywords use '_' between words; show them with spaces */
+	for (i = 0; i + 1 < sizeof(v) && value[i] != '\0'; i++)
+		v[i] = (value[i] == '_') ? ' ' : value[i];
+	v[i] = '\0';
+
+	if (js)
+		WSContentSend_P(PSTR("(e=eb('%s'))&&(e.innerHTML='%s');"), id, v);
+	else
+		WSContentSend_P(PSTR("<tr><th>%s</th><td id='%s'>%s</td></tr>"),
+			label, id, v);
+}
+
+/*
+ * Read-only state table shown inside the control-panel card, below the
+ * controls (matching the design proposal).  Called once with js=false to
+ * lay it out, then every Settings->web_refresh ms with js=true to refresh
+ * the values live.
+ */
+static void
+miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
+{
+	const struct miel_hvac_data_settings *set = &sc->sc_settings.data.settings;
+	uint8_t traw = (set->temp05 != 0) ? set->temp05 : set->temp;
+	const char *name;
+	const char *vh;
+	char vhbuf[8];
+	char val[48];
+	char buf[33];
+
+	if (!js)
+		WSContentSend_P(PSTR("<div class='hp-ro-w'><table class='hp-ro'>"));
+
+	if (sc->sc_roomtemp.type != 0)
+	{
+		const struct miel_hvac_data_roomtemp *rt =
+			&sc->sc_roomtemp.data.roomtemp;
+		float t = (rt->temp05 != 0)
+			? miel_hvac_roomtemp2deg(sc->sc_temp_type, rt->temp05)
+			: miel_hvac_roomtemp2deg(sc->sc_temp_type, rt->temp);
+
+		dtostrfd(ConvertTemp(t),
+			Settings->flag2.temperature_resolution, buf);
+		miel_hvac_dsep(buf);
+		snprintf_P(val, sizeof(val), PSTR("%s " D_UNIT_DEGREE "%c"), buf, TempUnit());
+		miel_hvac_web_ro(js, "hvro_room", "Room Temp", val);
+	}
+
+	dtostrfd(ConvertTemp(miel_hvac_temp2deg(sc->sc_temp_type, traw)),
+		Settings->flag2.temperature_resolution, buf);
+	miel_hvac_dsep(buf);
+	snprintf_P(val, sizeof(val), PSTR("%s " D_UNIT_DEGREE "%c"), buf, TempUnit());
+	miel_hvac_web_ro(js, "hvro_set", "Set Temp", val);
+
+	name = set->power
+		? miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK,
+			miel_hvac_mode_map, nitems(miel_hvac_mode_map))
+		: "off";
+	miel_hvac_web_ro(js, "hvro_mode", "Mode", name != NULL ? name : "-");
+
+	name = miel_hvac_map_byval(set->fan,
+		miel_hvac_fan_map, nitems(miel_hvac_fan_map));
+	miel_hvac_web_ro(js, "hvro_fan", "Fan", name != NULL ? name : "-");
+
+	name = miel_hvac_map_byval(set->vane,
+		miel_hvac_vane_map, nitems(miel_hvac_vane_map));
+	if (name == NULL)
+		name = "auto";
+
+	bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
+	             || set->widevane == 0xaa);
+
+	if (wv_isee)
+		vh = "isee";
+	else
+	{
+		vh = miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
+			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
+		if (vh == NULL)
+		{
+			snprintf_P(vhbuf, sizeof(vhbuf), PSTR("0x%02x"), set->widevane);
+			vh = vhbuf;
+		}
+	}
+	snprintf_P(val, sizeof(val), PSTR("%s / %s"), name, vh);
+	miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
+
+	/* Air Direction — separate i-See function; "off" unless wide vane is
+	 * in i-See mode.  Shown only when the unit supports it. */
+	if (!sc->sc_caps.sc_caps_valid
+	    || (sc->sc_caps.cap_vane_v && sc->sc_has_isee))
+	{
+		const char *ad = wv_isee
+			? miel_hvac_map_byval(set->airdirection,
+				miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map))
+			: "off";
+		miel_hvac_web_ro(js, "hvro_dir", "Air Direction",
+			ad != NULL ? ad : "off");
+	}
+
+	if (sc->sc_stage.type != 0)
+	{
+		name = miel_hvac_map_byval(sc->sc_stage.data.stage.operation,
+			miel_hvac_stage_operation_map,
+			nitems(miel_hvac_stage_operation_map));
+		miel_hvac_web_ro(js, "hvro_oper", "Operation",
+			name != NULL ? name : "-");
+	}
+
+	if (sc->sc_status.type != 0)
+	{
+		const struct miel_hvac_data_status *st = &sc->sc_status.data.status;
+
+		snprintf_P(val, sizeof(val), PSTR("%u Hz"), st->compressorfrequency);
+		miel_hvac_web_ro(js, "hvro_comp", "Compressor", val);
+
+		if (sc->sc_has_energy)
+		{
+			uint16_t p = ((uint16_t)st->operationpower << 8) |
+				(uint16_t)st->operationpower1;
+			dtostrfd((float)p, 0, buf);
+			miel_hvac_dsep(buf);
+			snprintf_P(val, sizeof(val), PSTR("%s " D_UNIT_WATT), buf);
+			miel_hvac_web_ro(js, "hvro_pow", "Power Usage", val);
+
+			uint16_t e = ((uint16_t)st->operationenergy << 8) |
+				(uint16_t)st->operationenergy1;
+			dtostrfd((float)e / 10.0f, 1, buf);
+			miel_hvac_dsep(buf);
+			snprintf_P(val, sizeof(val), PSTR("%s " D_UNIT_KILOWATTHOUR), buf);
+			miel_hvac_web_ro(js, "hvro_egy", "Energy Total", val);
+		}
+	}
+
+	if (js)
+	{
+		/*
+		 * Keep the interactive controls in sync with the unit — but not
+		 * while a change is still on its way to the unit (the settings we
+		 * would sync from are stale then), and never yank a control the
+		 * user is currently interacting with.
+		 */
+		if (!miel_hvac_update_settings_pending(sc)
+		    && !miel_hvac_update_runstate_pending(sc))
+		{
+			const char *fn = miel_hvac_map_byval(set->fan,
+				miel_hvac_fan_map, nitems(miel_hvac_fan_map));
+			const char *vn = miel_hvac_map_byval(set->vane,
+				miel_hvac_vane_map, nitems(miel_hvac_vane_map));
+			const char *wn = wv_isee ? NULL
+				: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
+					miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
+			const char *ad = wv_isee
+				? miel_hvac_map_byval(set->airdirection,
+					miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map))
+				: "off";
+
+			WSContentSend_P(PSTR(
+				"function S(i,v){var s=eb(i);"
+				"if(s&&v&&s!==document.activeElement)s.value=v;}"
+				"var b=document.querySelectorAll('#hvacp .hp-seg .hp-b'),i;"
+				"for(i=0;i<b.length;i++){"
+				"b[i].className=(b[i].dataset.m=='%s')?'hp-b':'hp-b off';}"),
+				miel_hvac_web_curmode(set));
+			if (fn != NULL)
+				WSContentSend_P(PSTR("S('hvf','%s');"), fn);
+			if (vn != NULL)
+				WSContentSend_P(PSTR("S('hvv','%s');"), vn);
+			if (wn != NULL)
+				WSContentSend_P(PSTR("S('hvh','%s');"), wn);
+			if (ad != NULL)
+				WSContentSend_P(PSTR("S('hvd','%s');"), ad);
+
+			/* target temperature: reuse the panel's own hvts() setter */
+			char tstr[12];
+			dtostrfd(miel_hvac_temp2deg(sc->sc_temp_type, traw), 1, tstr);
+			WSContentSend_P(PSTR("if(eb('hvtr')&&eb('hvtr')!==document.activeElement)"
+				"hvts(%s);"), tstr);
+		}
+	}
+	else
+		WSContentSend_P(PSTR("</table></div>"));
+}
+
+/*
+ * FUNC_WEB_SENSOR — refresh the panel's read-only rows in place.  Uses the
+ * same <img onerror> exec trick as other Tasmota drivers so the values
+ * update on every root-page poll without redrawing the interactive panel.
  */
 static void
 miel_hvac_web_sensor(struct miel_hvac_softc *sc)
 {
-	if (sc->sc_status.type == 0 || !sc->sc_has_energy)
+	if (sc->sc_settings.type == 0)
 		return;
 
-	const struct miel_hvac_data_status *status =
-		&sc->sc_status.data.status;
-	char buf[33];
+	WSContentSend_P(PSTR("</table>"));
+	WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);
+	WSContentSend_P(PSTR("var e;"));
+	miel_hvac_web_readout(sc, true);
+	WSContentSend_P(PSTR("\">{t}"));
+	WSContentSeparator(3);
+}
 
-	uint16_t combined_power =
-		((uint16_t)status->operationpower << 8) |
-		 (uint16_t)status->operationpower1;
-	dtostrfd((float)combined_power, 0, buf);
-	WSContentSend_PD(PSTR("{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"), buf);
+/*
+ * Interactive HVAC control panel on the Tasmota main page.
+ *
+ * Rendered once per full page load from FUNC_WEB_ADD_MAIN_BUTTON (it is
+ * not part of the la() refresh region, so it keeps focus/selection while
+ * the sensor rows above update).  Each control optimistically updates its
+ * own appearance and calls la('&<key>=<value>'); the browser issues
+ * GET /?m=1&<key>=<value> and miel_hvac_web_getarg() (FUNC_WEB_GET_ARG)
+ * turns that into the matching HVACSet* console command.
+ *
+ * Which controls/options render is gated by the 0x7B 0xC9 Base
+ * Capabilities response (sc_caps); when capabilities are not yet known
+ * everything is shown and the unit rejects anything it cannot do.
+ */
+#define MIEL_HVAC_WEBARG_MODE   "hvm"
+#define MIEL_HVAC_WEBARG_TEMP   "hvt"
+#define MIEL_HVAC_WEBARG_FAN    "hvf"
+#define MIEL_HVAC_WEBARG_VANEV  "hvv"
+#define MIEL_HVAC_WEBARG_VANEH  "hvh"
+#define MIEL_HVAC_WEBARG_AIRDIR "hvd"
+#define MIEL_HVAC_WEBARG_PURIFY "hvp"
+#define MIEL_HVAC_WEBARG_NIGHT  "hvn"
+#define MIEL_HVAC_WEBARG_ECONO  "hve"
 
-	uint16_t combined_energy =
-		((uint16_t)status->operationenergy << 8) |
-		 (uint16_t)status->operationenergy1;
-	dtostrfd((float)combined_energy / 10.0f, 1, buf);
-	WSContentSend_PD(PSTR("{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}"), buf);
+/*
+ * Scoped stylesheet reproducing the design proposal exactly (dark palette,
+ * type scale, spacing).  Everything is namespaced under #hvacp so it never
+ * touches the rest of the Tasmota page.  The webfonts load when the device
+ * has internet; the fallback stack keeps the same metrics otherwise.
+ */
+static const char miel_hvac_web_style[] PROGMEM =
+	"<link rel='stylesheet' href='https://fonts.googleapis.com/css2?"
+	"family=Barlow:wght@400;500;600&amp;"
+	"family=Barlow+Semi+Condensed:wght@600;700&amp;display=swap'>"
+	"<style>"
+	"#hvacp{margin-top:10px;text-align:left;color:#e7eaec;font-size:14px;line-height:1.4;"
+		"font-family:'Barlow','Segoe UI',system-ui,-apple-system,sans-serif}"
+	"#hvacp *{box-sizing:border-box}"
+	"#hvacp,#hvacp div,#hvacp input,#hvacp table,#hvacp td,#hvacp th{padding:0;margin:0}"
+	"#hvacp .hp-panel{background:#262a2d;border:1px solid #4a5054;border-radius:8px;padding:12px;"
+		"box-shadow:0 1px 2px rgba(0,0,0,.4),0 10px 34px rgba(0,0,0,.45)}"
+	"#hvacp .hp-field{margin-bottom:12px}"
+	"#hvacp .hp-field:last-child{margin-bottom:0}"
+	"#hvacp .hp-label{font-family:'Barlow Semi Condensed','Barlow',system-ui,sans-serif;"
+		"text-transform:uppercase;letter-spacing:.06em;font-size:11px;font-weight:600;"
+		"color:#9aa1a7;margin-bottom:5px}"
+	"#hvacp .hp-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}"
+	"#hvacp .hp-b{font-family:'Barlow Semi Condensed','Barlow',system-ui,sans-serif;font-weight:600;"
+		"font-size:13px;line-height:1.3;color:#08151d;background:#1fa3ec;border:0;border-radius:6px;"
+		"padding:8px 4px;width:100%%;cursor:pointer;transition:filter .12s ease}"
+	"#hvacp .hp-b:hover{filter:brightness(1.06)}"
+	"#hvacp .hp-b.off{background:#565c61;color:#e7eaec}"
+	"#hvacp .hp-b:focus-visible,#hvacp .hp-sel:focus-visible{outline:2px solid #1fa3ec;outline-offset:1px}"
+	"#hvacp .hp-seg .hp-b{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15}"
+	"#hvacp .hp-ico{font-size:15px;line-height:1}"
+	"#hvacp .hp-temp{display:flex;align-items:center;gap:10px}"
+	"#hvacp .hp-temp .hp-b{width:40px;height:40px;font-size:20px;flex:none;padding:0}"
+	"#hvacp .hp-val{font-family:'Barlow Semi Condensed','Barlow',system-ui,sans-serif;font-weight:700;"
+		"font-size:26px;flex:1;text-align:center;font-variant-numeric:tabular-nums}"
+	"#hvacp .hp-val small{font-size:14px;font-weight:600;color:#9aa1a7}"
+	"#hvacp .hp-sel{width:100%%;font-family:'Barlow','Segoe UI',system-ui,sans-serif;font-size:14px;"
+		"color:#e7eaec;background:#1f2325;border:1px solid #4a5054;border-radius:6px;padding:8px 9px;"
+		"cursor:pointer}"
+	"#hvacp input[type=range]{width:100%%;accent-color:#1fa3ec;margin-top:8px;display:block}"
+	"#hvacp .hp-toggles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}"
+	"#hvacp .hp-toggles .hp-b{font-size:12px}"
+	"#hvacp .hp-ro-w{padding-top:10px;border-top:1px solid #4a5054}"
+	"#hvacp .hp-ro{width:100%%;border-collapse:collapse;font-size:13px}"
+	"#hvacp .hp-ro th{text-align:left;font-weight:500;color:#9aa1a7;padding:3px 0}"
+	"#hvacp .hp-ro td{text-align:right;font-variant-numeric:tabular-nums;padding:3px 0;white-space:nowrap}"
+	"</style>";
+
+static const char miel_hvac_web_script[] PROGMEM =
+	"<script>"
+	"function hvm(b,v){"
+		"var q=b.parentNode.getElementsByTagName('button');"
+		"for(var i=0;i<q.length;i++){q[i].className='hp-b off';}"
+		"b.className='hp-b';"
+		"la('&" MIEL_HVAC_WEBARG_MODE "='+v);"
+	"}"
+	"function hvo(b,k){"
+		"var o=(b.dataset.on=='1')?0:1;"
+		"b.dataset.on=o;"
+		"b.className=o?'hp-b':'hp-b off';"
+		"la('&'+k+'='+(o?'on':'off'));"
+	"}"
+	"function hvts(t){"
+		"t=Math.round(t/hvcs)*hvcs;"
+		"if(t<hvcl){t=hvcl;}if(t>hvch){t=hvch;}"
+		"hvct=t;"
+		"eb('hvtv').innerHTML=t.toFixed(1)+'<small>&deg;C</small>';"
+		"eb('hvtr').value=t;"
+	"}"
+	"function hvtb(d){hvts(hvct+d);la('&" MIEL_HVAC_WEBARG_TEMP "='+hvct.toFixed(1));}"
+	"function hvsl(v){hvts(v*1);la('&" MIEL_HVAC_WEBARG_TEMP "='+hvct.toFixed(1));}"
+	"</script>";
+
+static void
+miel_hvac_web_label(const char *label)
+{
+	WSContentSend_P(PSTR("<div class='hp-label'>%s</div>"), label);
+}
+
+static void
+miel_hvac_web_modebtn(const char *v, const char *icon, const char *label,
+    const char *curm)
+{
+	WSContentSend_P(PSTR("<button class='hp-b%s' data-m='%s' onclick=\"hvm(this,'%s')\">"
+		"<span class='hp-ico'>%s</span>%s</button>"),
+		(strcmp(v, curm) == 0) ? "" : " off", v, v, icon, label);
+}
+
+static void
+miel_hvac_web_optbtn(const char *key, const char *label, bool on)
+{
+	WSContentSend_P(PSTR("<button class='hp-b%s' data-on='%d' "
+		"onclick=\"hvo(this,'%s')\">%s</button>"),
+		on ? "" : " off", on ? 1 : 0, key, label);
+}
+
+/*
+ * Friendly display text for a protocol keyword.  The <option> value stays
+ * the machine name so the emitted HVACSet* command is unchanged.
+ */
+static const char *
+miel_hvac_web_optlabel(const char *name)
+{
+	static const struct {
+		const char *k;
+		const char *v;
+	} lbl[] = {
+		{ "auto",         "Auto"          },
+		{ "quiet",        "Quiet"         },
+		{ "up",           "Up"            },
+		{ "up_middle",    "Up-Middle"     },
+		{ "center",       "Center"        },
+		{ "down_middle",  "Down-Middle"   },
+		{ "down",         "Down"          },
+		{ "swing",        "Swing"         },
+		{ "left",         "Left"          },
+		{ "left_middle",  "Left-Middle"   },
+		{ "right",        "Right"         },
+		{ "right_middle", "Right-Middle"  },
+		{ "left_center",  "Left-Center"   },
+		{ "right_center", "Right-Center"  },
+		{ "split",        "Split"         },
+		{ "even",         "Even"          },
+		{ "indirect",     "Indirect"      },
+		{ "direct",       "Direct"        },
+		{ "off",          "Off"           },
+	};
+	size_t i;
+
+	for (i = 0; i < nitems(lbl); i++)
+	{
+		if (strcmp(name, lbl[i].k) == 0)
+			return (lbl[i].v);
+	}
+
+	return (name);
+}
+
+static void
+miel_hvac_web_select(const char *label, const char *id, const char *key,
+    const struct miel_hvac_map *m, size_t n, uint8_t cur,
+    const uint8_t *skip, size_t nskip)
+{
+	size_t i, j;
+
+	WSContentSend_P(PSTR("<div class='hp-field'>"));
+	miel_hvac_web_label(label);
+	WSContentSend_P(PSTR("<select class='hp-sel' id='%s' onchange=\"la('&%s='+this.value)\">"),
+		id, key);
+
+	for (i = 0; i < n; i++)
+	{
+		bool skipit = false;
+		for (j = 0; j < nskip; j++)
+		{
+			if (skip[j] == m[i].byte)
+			{
+				skipit = true;
+				break;
+			}
+		}
+		if (skipit)
+			continue;
+
+		WSContentSend_P(PSTR("<option value='%s'%s>%s</option>"),
+			m[i].name, (m[i].byte == cur) ? " selected" : "",
+			miel_hvac_web_optlabel(m[i].name));
+	}
+
+	WSContentSend_P(PSTR("</select></div>"));
+}
+
+static void
+miel_hvac_web_panel(struct miel_hvac_softc *sc)
+{
+	if (sc->sc_settings.type == 0)
+		return;
+
+	const struct miel_hvac_data_settings *set = &sc->sc_settings.data.settings;
+	const struct miel_hvac_capabilities *caps = &sc->sc_caps;
+	bool cv = caps->sc_caps_valid;
+	bool m_heat = !cv || caps->cap_mode_heat;
+	bool m_dry  = !cv || caps->cap_mode_dry;
+	bool m_fan  = !cv || caps->cap_mode_fan;
+	const char *curm = miel_hvac_web_curmode(set);
+	uint8_t traw = (set->temp05 != 0) ? set->temp05 : set->temp;
+	float curtemp = miel_hvac_temp2deg(sc->sc_temp_type, traw);
+	int tlo = 16, thi = 31;
+	char tbuf[16];
+
+	if (cv && caps->cap_temp_ranges)
+	{
+		uint8_t mm = set->mode & MIEL_HVAC_SETTINGS_MODE_MASK;
+		if (mm == MIEL_HVAC_SETTINGS_MODE_HEAT)
+		{
+			tlo = (caps->temp_heat_min - 128) / 2;
+			thi = (caps->temp_heat_max - 128) / 2;
+		}
+		else if (mm == MIEL_HVAC_SETTINGS_MODE_AUTO)
+		{
+			tlo = (caps->temp_auto_min - 128) / 2;
+			thi = (caps->temp_auto_max - 128) / 2;
+		}
+		else
+		{
+			tlo = (caps->temp_cool_min - 128) / 2;
+			thi = (caps->temp_cool_max - 128) / 2;
+		}
+	}
+	dtostrfd(curtemp, 1, tbuf);
+
+	WSContentSend_P(miel_hvac_web_style);
+	WSContentSend_P(PSTR("<div id='hvacp'><div class='hp-panel'>"));
+
+	/* per-page JS state, then the shared helpers */
+	WSContentSend_P(PSTR("<script>var hvct=%s,hvcs=%s,hvcl=%d,hvch=%d;</script>"),
+		tbuf, sc->sc_temp_type ? "0.5" : "1", tlo, thi);
+	WSContentSend_P(miel_hvac_web_script);
+
+	/* Mode */
+	miel_hvac_web_label("Mode");
+	WSContentSend_P(PSTR("<div class='hp-seg'>"));
+	miel_hvac_web_modebtn("auto", "A", "Auto", curm);
+	if (m_heat)
+		miel_hvac_web_modebtn("heat", "\xe2\x98\x80", "Heat", curm);
+	miel_hvac_web_modebtn("cool", "\xe2\x9d\x84", "Cool", curm);
+	if (m_dry)
+		miel_hvac_web_modebtn("dry", "\xf0\x9f\x92\xa7", "Dry", curm);
+	if (m_fan)
+		miel_hvac_web_modebtn("fan", "\xe2\x9c\xb1", "Fan", curm);
+	miel_hvac_web_modebtn("off", "\xe2\x8f\xbb", "Off", curm);
+	WSContentSend_P(PSTR("</div>"));
+
+	/* Target temperature */
+	WSContentSend_P(PSTR("<div class='hp-field'>"));
+	miel_hvac_web_label("Target temperature");
+	WSContentSend_P(PSTR("<div class='hp-temp'>"
+		"<button class='hp-b' onclick='hvtb(-hvcs)'>&minus;</button>"
+		"<div class='hp-val' id='hvtv'>%s<small>&deg;C</small></div>"
+		"<button class='hp-b' onclick='hvtb(hvcs)'>+</button></div>"
+		"<input type='range' id='hvtr' min='%d' max='%d' step='%s' value='%s' "
+		"onchange='hvsl(this.value)'></div>"),
+		tbuf, tlo, thi, sc->sc_temp_type ? "0.5" : "1", tbuf);
+
+	/* Fan speed */
+	{
+		uint8_t fskip[3];
+		size_t nf = 0;
+		uint8_t fc = miel_hvac_get_fan_count(sc);
+
+		if (cv && !caps->cap_fan_auto)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_AUTO;
+		if (fc != 0 && fc < 5)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
+		if (fc != 0 && fc < 4)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_4;
+
+		miel_hvac_web_select("Fan speed", "hvf", MIEL_HVAC_WEBARG_FAN,
+			miel_hvac_fan_map, nitems(miel_hvac_fan_map),
+			set->fan, fskip, nf);
+	}
+
+	/* Vane vertical — only when the unit has a controllable vertical vane */
+	if (!cv || caps->cap_vane_v)
+	{
+		uint8_t vskip[1];
+		size_t nv = 0;
+
+		if (cv && !caps->cap_vane_swing)
+			vskip[nv++] = MIEL_HVAC_SETTINGS_VANE_SWING;
+
+		miel_hvac_web_select("Vane vertical", "hvv", MIEL_HVAC_WEBARG_VANEV,
+			miel_hvac_vane_map, nitems(miel_hvac_vane_map),
+			set->vane, vskip, nv);
+	}
+
+	/* Vane horizontal / wide vane */
+	{
+		static const uint8_t hskip[] = { MIEL_HVAC_SETTINGS_WIDEVANE_ISEE };
+
+		miel_hvac_web_select("Vane horizontal", "hvh", MIEL_HVAC_WEBARG_VANEH,
+			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map),
+			set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
+			hskip, nitems(hskip));
+	}
+
+	/* Air direction (i-See) — separate function; needs a vertical vane and
+	 * an observed i-See sensor.  Direction is only meaningful while the wide
+	 * vane is in i-See mode; otherwise the control reads "off". */
+	if (!cv || (caps->cap_vane_v && sc->sc_has_isee))
+	{
+		bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
+		             || set->widevane == 0xaa);
+		uint8_t adcur = wv_isee
+			? set->airdirection
+			: MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF;
+
+		miel_hvac_web_select("Air direction", "hvd", MIEL_HVAC_WEBARG_AIRDIR,
+			miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map),
+			adcur, NULL, 0);
+	}
+
+	/* Purifier / Night mode / EconoCool (0x08 Set Run State) */
+	if (!cv || caps->cap_run_state)
+	{
+		const struct miel_hvac_data_options *opt = &sc->sc_options.data.options;
+		bool have = (sc->sc_options.type != 0);
+
+		WSContentSend_P(PSTR("<div class='hp-field'>"));
+		miel_hvac_web_label("Options");
+		WSContentSend_P(PSTR("<div class='hp-toggles'>"));
+		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_PURIFY, "Purifier",
+			have && opt->purifier == MIEL_HVAC_OPTIONS_PURIFIER_ON);
+		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_NIGHT, "Night",
+			have && opt->nightmode == MIEL_HVAC_OPTIONS_NIGHTMODE_ON);
+		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_ECONO, "EconoCool",
+			have && opt->econocool == MIEL_HVAC_OPTIONS_ECONOCOOL_ON);
+		WSContentSend_P(PSTR("</div></div>"));
+	}
+
+	miel_hvac_web_readout(sc, false);
+	WSContentSend_P(PSTR("</div></div>"));	/* close .hp-panel, #hvacp */
+}
+
+/*
+ * FUNC_WEB_GET_ARG — turn a control-panel GET argument into the matching
+ * HVACSet* console command.  Mode uses HVACSetHAMode so a mode button also
+ * powers the unit on and "Off" powers it down.
+ */
+static void
+miel_hvac_web_getarg(void)
+{
+	char tmp[24];
+	char cmnd[48];
+
+#define MIEL_HVAC_WEB_GETARG(_k, _c) do {                              \
+		WebGetArg(PSTR(_k), tmp, sizeof(tmp));                         \
+		if (strlen(tmp))                                               \
+		{                                                             \
+			snprintf_P(cmnd, sizeof(cmnd), PSTR(_c " %s"), tmp);       \
+			ExecuteWebCommand(cmnd);                                   \
+		}                                                             \
+	} while (0)
+
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_MODE,   D_CMND_MIEL_HVAC_SETHAMODE);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_TEMP,   D_CMND_MIEL_HVAC_SETTEMP);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_FAN,    D_CMND_MIEL_HVAC_SETFANSPEED);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_VANEV,  D_CMND_MIEL_HVAC_SETSWINGV);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_VANEH,  D_CMND_MIEL_HVAC_SETSWINGH);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_AIRDIR, D_CMND_MIEL_HVAC_SETAIRDIRECTION);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_PURIFY, D_CMND_MIEL_HVAC_SETPURIFY);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_NIGHT,  D_CMND_MIEL_HVAC_SETNIGHTMODE);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_ECONO,  D_CMND_MIEL_HVAC_SETECONOCOOL);
+
+#undef MIEL_HVAC_WEB_GETARG
 }
 #endif  /* USE_WEBSERVER */
 
@@ -3859,6 +4468,12 @@ bool Xdrv44(uint32_t function)
 #ifdef USE_WEBSERVER
 	case FUNC_WEB_SENSOR:
 		miel_hvac_web_sensor(sc);
+		break;
+	case FUNC_WEB_ADD_MAIN_BUTTON:
+		miel_hvac_web_panel(sc);
+		break;
+	case FUNC_WEB_GET_ARG:
+		miel_hvac_web_getarg();
 		break;
 #endif
 	case FUNC_AFTER_TELEPERIOD:
