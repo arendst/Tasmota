@@ -238,11 +238,9 @@ enum UserSelectablePins {
   GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
   GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_MBS_RX_ENA,                      // Modbus Bridge Serial Receive Enable
-#ifdef USE_MODBUS_RELAY                    // Modbus RTU Relay modules
   GPIO_MODBUSRELAY_TX, GPIO_MODBUSRELAY_TX_ENA,
   GPIO_MODBUSRELAY_RX, GPIO_MODBUSRELAY_RX_ENA,
-#endif
-#if defined(USE_MIEL_HVAC) && defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+#ifdef ESP32
   GPIO_MIEL_HVAC_MB_TX, GPIO_MIEL_HVAC_MB_RX, GPIO_MIEL_HVAC_MB_TXEN,  // Mitsubishi Electric HVAC Modbus RTU slave
 #endif
   GPIO_SENSOR_END };
@@ -525,10 +523,8 @@ const char kSensorNames[] PROGMEM =
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
   D_SENSOR_MBS_RX_ENA "|"
-#ifdef USE_MODBUS_RELAY
   D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
-#endif
-#if defined(USE_MIEL_HVAC) && defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+#ifdef ESP32
   D_SENSOR_MIEL_HVAC_MB_TX "|" D_SENSOR_MIEL_HVAC_MB_RX "|" D_SENSOR_MIEL_HVAC_MB_TXEN "|"
 #endif
 ;
