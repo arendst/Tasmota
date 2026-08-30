@@ -3,26 +3,30 @@
 #
 # Allows to use a map with members
 # see https://github.com/berry-lang/berry/wiki/Chapter-8
+#
+# The key-value pairs are stored in the underlying `map` instance (inherited
+# from the super class) so that any code walking a `map` -- like `json.dump()`
+# or `map.tostring()` -- sees the actual content. This class only adds a list
+# of keys kept in sorted order, used to iterate in a predictable order.
 #################################################################################
 #@ solidify:sortedmap
-class sortedmap
-  var _data    # internal map for storing key-value pairs
-  var _keys    # list for maintaining sorted keys
+class sortedmap : map
+  var _keys    # list of keys, maintained in sorted order
   
   # Constructor
   def init(base)
-    self._data = {}
+    super(self).init()    # initialize the underlying map, must not be skipped
     self._keys = []
-    if isinstance(base, map) || isinstance(base, sortedmap)
+    if isinstance(base, map)    # `sortedmap` is a `map` too
       self._load(base, self)
     end
   end
 
-  # Shallow copy from existing map  
+  # Shallow copy from existing map, sub-maps are converted to sortedmap
   def _load(org, copy)
     for key : org.keys()
       var value = org.item(key)
-      if isinstance(value, map) || isinstance(value, sortedmap)
+      if isinstance(value, map)
         value = self._load(value, sortedmap())
       end
       copy.insert(key, value)
@@ -32,13 +36,12 @@ class sortedmap
   
   # Insert a new key-value pair or update existing value
   def insert(key, value)
-    var is_new = !self._data.contains(key)
-    self._data[key] = value
+    var is_new = !super(self).contains(key)
+    super(self).setitem(key, value)
     
     if is_new
       # Binary search to find insert position to maintain sorted order
-      var pos = self._find_insert_position(key)
-      self._keys.insert(pos, key)
+      self._keys.insert(self._find_insert_position(key), key)
       return true
     end
     return false
@@ -46,8 +49,8 @@ class sortedmap
   
   # Remove a key-value pair
   def remove(key)
-    if self._data.contains(key)
-      self._data.remove(key)
+    if super(self).contains(key)
+      super(self).remove(key)
       # Find key position in the list
       var idx = self._keys.find(key)
       if idx != nil
@@ -58,32 +61,12 @@ class sortedmap
     return false
   end
   
-  # Get a value by key, with optional default if key doesn't exist
-  def find(key, default)
-    return self._data.find(key, default)
-  end
-
-  # Access a value by key
-  def item(key)
-    return self._data[key]
-  end
-  
   # Set a value by key
   def setitem(key, value)
     return self.insert(key, value)
   end
   
-  # Return true if map contains key
-  def contains(key)
-    return self._data.contains(key)
-  end
-  
-  # Return number of key-value pairs
-  def size()
-    return self._data.size()
-  end
-
-  # Return all sorted keys
+  # Return all sorted keys as a list
   def get_keys()
     return self._keys
   end
@@ -92,16 +75,14 @@ class sortedmap
   def keys()
     return self._keys.iter()
   end
-
-  # String representation
+  # String representation, in sorted key order
   def tostring()
     import string
     var result = "{"
     var first = true
     
-    for i : 0..self._keys.size()-1
-      var key = self._keys[i]
-      var val = self._data[key]
+    for key : self._keys
+      var val = super(self).item(key)
       
       if !first
         result += ", "
@@ -124,20 +105,24 @@ class sortedmap
     result += "}"
     return result
   end
-  
-  # Iterator method for 'for x: map' style iteration
+
+  # Return iterator to values in sorted key order
   def iter()
-    return self._data.iter()
+    var values = []
+    for key : self._keys
+      values.push(super(self).item(key))
+    end
+    return values.iter()
   end
 
   # Get by index number
   def get_by_index(idx)
-    return self._data[self._keys[idx]]
+    return super(self).item(self._keys[idx])
   end
   
   # Clear all key-value pairs
   def clear()
-    self._data = {}
+    super(self).init()    # replace the underlying map with an empty one
     self._keys = []
   end
   
@@ -146,9 +131,8 @@ class sortedmap
     var keys_to_remove = []
     
     # First pass: identify all keys with matching values
-    for i : 0..self._keys.size()-1
-      var key = self._keys[i]
-      if self._data[key] == value
+    for key : self._keys
+      if super(self).item(key) == value
         keys_to_remove.push(key)
       end
     end
@@ -194,6 +178,8 @@ class sortedmap
     return low
   end
 end
+
+return sortedmap
 
 #-
 

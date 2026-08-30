@@ -417,6 +417,7 @@ static ble_advertisment_t BLEAdvertisment;
 // general variables for running the driver
 TaskHandle_t TasmotaMainTask;
 
+static uint8_t BLEHandlerAdded = 0;
 
 static int BLEMasterEnable = 0;
 static uint8_t BLEEnableUnsaved = 0;
@@ -3553,8 +3554,8 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
 
 const char HTTP_FORM_BLE[] PROGMEM =
   "<p><label><input id='e0' type='checkbox'%s><b>" D_BLE_ENABLE "</b></label></p>"
-  "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label></p>"
-  "<p>" D_BLE_REMARK "</p>";
+  "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label><br>"
+  "<small>" D_BLE_REMARK "</small></p>";
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";
@@ -3623,6 +3624,7 @@ void HandleBleConfiguration(void)
     //TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEConf");
     int number = seenDevices.size();
     if (number){
+      WSContentSend_P(PSTR("<br>"));
       WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR(D_BLE_DEVICES));
       WSContentSend_P(HTTP_BLE_DEV_START);
       uint64_t now = esp_timer_get_time();
@@ -3720,9 +3722,14 @@ bool Xdrv79(uint32_t function)
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
 //      WSContentSend_P(BLE_ESP32::HTTP_BTN_MENU_BLE);
+      if (!BLE_ESP32::BLEHandlerAdded) {
+        BLE_ESP32::BLEHandlerAdded = 1;  // This might be called due to missed FUNC_WEB_ADD_HANDLER
+        WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
+      }
       WSContentSend_P(HTTP_FORM_BUTTON, PSTR(WEB_HANDLE_BLE), PSTR(D_CONFIGURE_BLE));
       break;
     case FUNC_WEB_ADD_HANDLER:
+      BLE_ESP32::BLEHandlerAdded = 1;  // This might not be called due to BLE not ready
       WebServer_on(PSTR("/" WEB_HANDLE_BLE), BLE_ESP32::HandleBleConfiguration);
       break;
 #endif  // USE_WEBSERVER

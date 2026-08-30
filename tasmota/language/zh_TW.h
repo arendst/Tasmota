@@ -60,6 +60,7 @@
 #define D_AT "at"                        // at (Used for memory addresses)
 #define D_AUTO "自動"
 #define D_AUTO_UPDATE "自動更新"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "電池"                    // Short for Battery
 #define D_BATTERY "電池"
 #define D_BATTERY_CHARGE "充電"          // Battery charge in %
@@ -120,6 +121,7 @@
 #define D_HALL_EFFECT "霍爾效應"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "酷熱指數"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "主機"
 #define D_HOSTNAME "主機名稱"
 #define D_HUMIDITY "濕度"
@@ -131,13 +133,16 @@
 #define D_INITIALIZED "已初始化"
 #define D_IP_ADDRESS "IP 位址"
 #define D_LIGHT "燈光"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index (kept intact)
 #define D_LWT "LWT"                  // Last Will and Testament (kept intact)
+#define D_MANUAL "Manual"
 #define D_MODULE "模組"
 #define D_MOISTURE "濕度"
 #define D_MQ "MQ"                    // Message Queue (kept intact)
 #define D_MQTT "MQTT"                // Message Queuing Telemetry Transport (kept intact)
 #define D_MULTI_PRESS "多重點擊"
+#define D_NA "N/A"
 #define D_NOISE "雜訊"
 #define D_NONE "無"
 #define D_NOX "NOx"                  // Nitrogen Oxides (kept intact)
@@ -973,6 +978,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TX  "MiEl HVAC MB Tx"
+#define D_SENSOR_MIEL_HVAC_MB_RX  "MiEl HVAC MB Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TXEN  "MiEl HVAC MB DE"
 #define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
 #define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
@@ -1350,5 +1358,8 @@
 #define D_MODBUSRELAY_TX_ENA     "MbsRelay TX Ena"
 #define D_MODBUSRELAY_RX         "MbsRelay RX"
 #define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
+
+// xdrv_89_esp32_shelly_emulation.ino
+#define D_SHELLY                 "Shelly"
 
 #endif  // _LANGUAGE_ZH_TW_H_

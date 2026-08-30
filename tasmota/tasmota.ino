@@ -617,6 +617,9 @@ void setup(void) {
 #ifndef USE_EMULATION_HUE
   if (EMUL_HUE == Settings->flag2.emulation) { Settings->flag2.emulation = 0; }
 #endif  // USE_EMULATION_HUE
+#ifndef USE_EMULATION_SHELLY
+  if (EMUL_SHELLY == Settings->flag2.emulation) { Settings->flag2.emulation = 0; }
+#endif  // USE_EMULATION_SHELLY
 #endif  // USE_EMULATION
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("DBG: TasmotaGlobal size %d, data %100_H"), sizeof(TasmotaGlobal), (uint8_t*)&TasmotaGlobal);
