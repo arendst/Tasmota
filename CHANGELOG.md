@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.6.0.1]
 ### Added
+- MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use (ESP32, ``USE_MIEL_HVAC_MODBUS_SLAVE``)
 
 
 ### Breaking Changed

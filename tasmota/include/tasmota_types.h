@@ -282,7 +282,7 @@ typedef union {
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t dali_light : 1;               // bit 13 (v14.2.0.6) - CMND_DALILIGHT - Enable Tasmota light controls for DALI
     uint32_t dali_no_broadcast_slider : 1; // bit 14 (v15.1.0.3) - CMND_DALIBROADCASTSLIDER - Disable display of broadcast slider
-    uint32_t spare15 : 1;                  // bit 15
+    uint32_t miel_hvac_mb_enable : 1;      // bit 15 (v15.6.0.1) - CMND_HVACMODBUS - Enable MiEL HVAC Modbus RTU slave
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
@@ -775,7 +775,6 @@ typedef struct {
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
-
 #ifdef ESP8266
   uint8_t       ex_user_template8[5];      // 72F  14 bytes (ESP8266) - Free since 9.0.0.1 - only 5 bytes referenced now
 #endif  // ESP8266
@@ -908,10 +907,23 @@ typedef struct {
   SOBitfield5   flag5;                     // FB4
   uint16_t      pulse_counter_debounce_low;   // FB8
   uint16_t      pulse_counter_debounce_high;  // FBA
-  uint32_t      keeloq_master_msb;         // FBC
-  uint32_t      keeloq_master_lsb;         // FC0
-  uint32_t      keeloq_serial;             // FC4
-  uint32_t      keeloq_count;              // FC8
+  union {
+    struct {
+      uint32_t  keeloq_master_msb;         // FBC
+      uint32_t  keeloq_master_lsb;         // FC0
+      uint32_t  keeloq_serial;             // FC4
+      uint32_t  keeloq_count;              // FC8
+    };
+    struct {
+      uint32_t  marbella_serial;           // FBC  TFA Marbella sensor the receiver is bound to
+      int16_t   marbella_frequency;        // FC0  TFA Marbella receiver tuning offset in 100 Hz steps
+      uint8_t   free_fc2[2];               // FC2
+      uint32_t  wizmote_comm_id;           // FC4  WizMote ESP-Now remote control comm id
+      uint16_t  miel_hvac_mb_baudrate;     // FC8  MiEL HVAC Modbus RTU slave baudrate / 300
+      uint8_t   miel_hvac_mb_address;      // FCA  MiEL HVAC Modbus RTU slave address 1..247
+      uint8_t   miel_hvac_mb_sconfig;      // FCB  MiEL HVAC Modbus RTU slave serial config (TS_SERIAL_*)
+    };
+  };
   uint32_t      device_group_share_in;     // FCC  Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0  Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4
