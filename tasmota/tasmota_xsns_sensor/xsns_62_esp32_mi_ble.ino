@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v0.9.3.4"
+#define MI32_VERSION "v26.8.31"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  26.8.31           changed - display icons instead of data lines. disable by removing #define USE_SENSOR_ICON
+  -------
   0.9.3.4 20260823  changed - redesign BTHome events and buffer JSON message for easier rule/script/berry support
   -------
   0.9.3.3 20260819  changed - fix BTHome decryption of multiple sensors
@@ -108,10 +110,10 @@
 
 #define XSNS_62                62
 
-//#define USE_SENSOR_ICON
+//#define USE_SENSOR_ICON           // Display GUI icons instead of line with data
 
 #define USE_MI_DECRYPTION         // Enable also for BTHome V2
-#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
+//#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
 
 #include <vector>
 #ifdef USE_MI_DECRYPTION
@@ -661,7 +663,7 @@ enum MI32_MI_KEY_REQ {
   KEY_REQUIRED_AND_INVALID = 4, // we got an encrypted packet, and could not decrypt
 };
 
-const char kKeyNeeded[] PROGMEM = "WAIT|NOTKEY|NoKey|KeyOk|KeyInv";
+const char kKeyNeeded[] PROGMEM = "Wait|NotKey|NoKey|KeyOk|KeyInv";
 
 /*********************************************************************************************\
  * Classes
@@ -4232,14 +4234,11 @@ void MI32ShowTriggeredSensors(){
 const char SI_WEB_CSS[] PROGMEM =
   "</table>"         // Terminate current two column table...
   "<style>"          // Send STYLE for icon sensors
-  "button:disabled{background-color:var(--c_frm)}"
   // Table CSS
   ".itd td:not(:first-child){width:20px;font-size:70%%}"
   ".itd td:last-child{width:45px}"
   ".itd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
   ".itr{line-height:20px}"
-  // Lighting
-  ".bx{height:14px;width:14px;display:inline-block;border:1px solid currentColor;background-color:var(--cl,#fff)}"
   // Signal Strength Indicator
   ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
   "i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
@@ -4271,6 +4270,27 @@ const char SI_WEB_LINE_END[] PROGMEM =
 
 const char HTTP_MI32_VERSION[] PROGMEM =
   "<div style='text-align:right;font-size:11px;color:#aaa;'>MI ESP32 " MI32_VERSION "</div>";
+
+// Get Alias or Type name
+const char *MI32DeviceName(char *name, uint32_t name_size, uint32_t index) {
+  const char *label = BLE_ESP32::getAlias(MIBLEsensors[index].MAC);
+  bool valid_alias = (label && *label);
+  if (!valid_alias) {
+    const char *typeName = kMI32DeviceType[MIBLEsensors[index].type-1];
+    ext_snprintf_P(name, name_size, PSTR("%s%3_H"), typeName, MIBLEsensors[index].MAC +3);
+    label = name;
+  }
+  return label;
+}
+
+// Comparator function used to sort MI32 devices by alphabetical order
+int MI32DeviceCmp(uint8_t a, uint8_t b) {
+  char name_a[32];
+  const char *label_a = MI32DeviceName(name_a, sizeof(name_a), a);
+  char name_b[32];
+  const char *label_b = MI32DeviceName(name_b, sizeof(name_b), b);
+  return strcasecmp(label_a, label_b);
+}
 
 // Convert seconds to a string representing days, hours or minutes present in the n-value.
 // The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
@@ -4343,24 +4363,36 @@ void MI32Show(bool json)
     if (!Settings->flag5.mi32_enable) return;
 
 #ifdef USE_SENSOR_ICON
+    if (numsensors > 255) {
+      numsensors = 255;  // Display max 255 sensors
+    }
+    // sort elements by alias and type name
+    uint8_t sorted_idx[numsensors];
+    for (uint32_t i = 0; i < numsensors; i++) {
+      sorted_idx[i] = i;
+    }
+    // insertion sort
+    for (uint32_t i = 1; i < numsensors; i++) {
+      uint8_t key = sorted_idx[i];
+      uint8_t j = i;
+      while ((j > 0) && (MI32DeviceCmp(sorted_idx[j - 1], key) > 0)) {
+        sorted_idx[j] = sorted_idx[j - 1];
+        j--;
+      }
+      sorted_idx[j] = key;
+    }
 
     uint32_t now = Rtc.local_time;
 
     WSContentSend_P(SI_WEB_CSS);
+
+    // Iterate through devices by alphabetical order
     for (uint32_t i = 0; i < numsensors; i++) {
       mi_sensor_t *p;
-      p = &MIBLEsensors[i];
+      p = &MIBLEsensors[sorted_idx[i]];
 
       char name[32];
-      const char *label;
-      const char *typeName = kMI32DeviceType[p->type-1];
-      const char *alias = BLE_ESP32::getAlias(p->MAC);
-      if (alias && *alias){
-        label = alias;
-      } else {
-        ext_snprintf_P(name, sizeof(name), PSTR("%s%3_H"), typeName, p->MAC +3);
-        label = name;
-      }
+      const char *label = MI32DeviceName(name, sizeof(name), sorted_idx[i]);
 
       char sbatt[106];
       char dhm[48];
@@ -4425,71 +4457,75 @@ void MI32Show(bool json)
 */
       // Optional new line: Sensors
       if (!isnan(p->temp) || !isnan(p->hum) ||
-           p->feature.pres || p->feature.lux || p->feature.accel || p->feature.flooding || 
-           p->feature.scale || p->feature.NMT || p->feature.events || p->feature.count ||
+           p->feature.pres || p->feature.accel || p->feature.flooding || p->feature.scale || 
+           p->feature.NMT || p->feature.events || p->feature.count ||
           (p->feature.moist && (p->moisture != 0xff)) ||
-          (p->feature.fert && (p->fertility != 0xffff))) {
+          (p->feature.fert && (p->fertility != 0xffff)) ||
+          (p->feature.lux && (p->lux!=0x00ffffff))
+         ) {
         WSContentSend_P(SI_WEB_LINE_START);
         if (!isnan(p->temp)) {
           float temp = ConvertTempToFahrenheit(p->temp); // convert if SO8 on
-          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &temp, TempUnit());
+          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &temp, TempUnit());  // ☀ Sun
         }
         if (!isnan(p->hum)) {
-          WSContentSend_PD(PSTR(" &#x1F4A7; %*_f%%"), Settings->flag2.humidity_resolution, &p->hum);
+          WSContentSend_PD(PSTR(" &#x1F4A7; %*_f%%"), Settings->flag2.humidity_resolution, &p->hum);  // 💧
         }
         if (!isnan(p->temp) && !isnan(p->hum)) {
           float dewpoint = CalcTempHumToDew(p->temp, p->hum);
           WSContentSend_PD(PSTR(" %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &dewpoint, TempUnit());
         }
         if (p->feature.moist && (p->moisture != 0xff)) {
-          WSContentSend_PD(PSTR(" &#x1F4A6; %d%%"), p->moisture);
+          WSContentSend_PD(PSTR(" &#x1F4A6; %d%%"), p->moisture);  // 💦
         }
         if (p->feature.fert && (p->fertility != 0xffff)) {  // Electrical conductivity measuring salt or fertilizer
-          WSContentSend_PD(PSTR(" &#x1F340; %u" D_UNIT_MICROSIEMENS_PER_CM), p->fertility);
+          WSContentSend_PD(PSTR(" &#x1F340; %u" D_UNIT_MICROSIEMENS_PER_CM), p->fertility);  // 🍀
         }
         if (p->feature.pres) {
           float pressure = ConvertPressure(p->pres);  // SetOption24 - Switch between hPa or mmHg pressure unit, SetOption139 - Switch between mmHg or inHg pressure unit
-          WSContentSend_PD(PSTR(" &#x26C5; %*_f%s"), Settings->flag2.pressure_resolution, &pressure, PressureUnit().c_str());
-        }
-        if (p->feature.lux) {
-          WSContentSend_PD(PSTR(" &#x1F506; %u" D_UNIT_LUX), p->lux);
-        }
-        if (p->feature.accel) {
-          for (uint32_t b = 0; b <= p->accel_used; b++) {
-            WSContentSend_PD(PSTR(" &#x1F680; %3_fm/s²"), &p->acceleration[b]);
-          }
-        }
-        if (p->feature.flooding) {
-          WSContentSend_PD(PSTR(" &#x1F30A; %u"), p->flooding);
-        }
-        if (p->feature.scale){
-          WSContentSend_PD(PSTR(" &#x2696; %*_f%s"), Settings->flag2.weight_resolution, &p->weight, p->weight_unit);  // Weight
-          if (MI32.option.directBridgeMode) {
-            WSContentSend_P(PSTR(" &#x%s;"), (p->weight_removed) ? PSTR("1F90F") : PSTR("1F44C"));  // Yes = Minimal / No = OK
-            WSContentSend_P(PSTR(" &#x1F44%c;"), (p->weight_stabilized) ? 'D' : 'E');  // Yes = Thumb UP / No = DOWN
-          }
-          if (p->feature.impedance) {
-            WSContentSend_PD(PSTR(" &#x2126; %u"), p->impedance);  // Scale impedance (BIA)
-            if (MI32.option.directBridgeMode) {
-              WSContentSend_P(PSTR(" &#x1F44%c;"), (p->impedance_stabilized) ? 'D' : 'E');  // Yes = Thumb UP / No = DOWN
-            }
-          }
+          WSContentSend_PD(PSTR(" &#x26C5; %*_f%s"), Settings->flag2.pressure_resolution, &pressure, PressureUnit().c_str());  // ⛅
         }
         if (p->feature.events){
-          WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - Runner
+          WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - 🏃 Runner
         }
         if (p->feature.NMT){
           // no motion time
           if (p->NMT > 0) {
-            WSContentSend_PD(PSTR(" &#x270B; %usec"), p->NMT);  // No motion time in seconds- Hand stop sign
+            WSContentSend_PD(PSTR(" &#x270B; %usec"), p->NMT);  // No motion time in seconds - ✋ hand stop
+          }
+        }
+        if (p->feature.lux) {
+          if (p->lux!=0x00ffffff) { // this is the error code -> no valid value
+            WSContentSend_PD(PSTR(" &#x1F506; %u" D_UNIT_LUX), p->lux);  // 🔆 bright button
+          }
+        }
+        if (p->feature.scale){
+          WSContentSend_PD(PSTR(" &#x2696; %*_f%s"), Settings->flag2.weight_resolution, &p->weight, p->weight_unit);  // ⚖
+          if (MI32.option.directBridgeMode) {
+            WSContentSend_P(PSTR(" &#x%s;"), (p->weight_removed) ? PSTR("1F90F") : PSTR("1F44C"));  // Yes = 🤏 / No = 👌
+            WSContentSend_P(PSTR(" &#x1F44%c;"), (p->weight_stabilized) ? 'D' : 'E');  // Yes = 👍 / No = 👎
+          }
+          if (p->feature.impedance) {
+            WSContentSend_PD(PSTR(" &#x1F463; %u"), p->impedance);  // 👣 feet - Scale impedance (BIA)
+            if (MI32.option.directBridgeMode) {
+              WSContentSend_P(PSTR(" &#x1F44%c;"), (p->impedance_stabilized) ? 'D' : 'E');  // Yes = 👍 / No = 👎
+            }
+          }
+        }
+        if (p->feature.accel) {
+          for (uint32_t b = 0; b <= p->accel_used; b++) {
+            WSContentSend_PD(PSTR(" &#x1F680; %3_fm/s²"), &p->acceleration[b]);  // 🚀 rocket
           }
         }
         if (p->feature.count) {
-          WSContentSend_PD(PSTR(" &#x1FAD8; %d"), p->count);  // Count - Beans
+          WSContentSend_PD(PSTR(" &#x1FAD8; %d"), p->count);  // 🫘 beans
+        }
+        if (p->feature.flooding) {
+          WSContentSend_PD(PSTR(" &#x1F30A; %u"), p->flooding);  // 🌊 wave
         }
 /*
         if (p->feature.co2) {
-          WSContentSend_P(PSTR(" &#x1FAE7; %.0f" D_UNIT_PARTS_PER_MILLION), p->co2);
+          WSContentSend_P(PSTR(" &#x1FAE7; %.0f" D_UNIT_PARTS_PER_MILLION), p->co2);  // 🫧 bubbles
         }
 */
         WSContentSend_P(PSTR("{e}"));
@@ -4500,7 +4536,7 @@ void MI32Show(bool json)
         WSContentSend_P(SI_WEB_LINE_START);
 
         if (p->feature.light){
-          WSContentSend_PD(PSTR(" &#x1F4A1; %d"), p->light);
+          WSContentSend_PD(PSTR(" &#x1F4A1; %d"), p->light);  // 💡 bulb
         }
 
         if (p->feature.Btn) {
@@ -4508,11 +4544,11 @@ void MI32Show(bool json)
             for (uint32_t i = 0; i < sizeof(p->button); i++) {
               if (p->button[i] > 0) {
                 uint32_t button = (255 == p->button[i]) ? 0 : p->button[i];
-                WSContentSend_PD(PSTR(" %d&#xFE0F;&#x20E3; %d"), i +1, button);
+                WSContentSend_PD(PSTR(" %d&#xFE0F;&#x20E3; %d"), i +1, button);  // 1️⃣ .. 8️⃣
               }
             }
           } else {
-            WSContentSend_PD(PSTR(" 1&#xFE0F;&#x20E3; %d"), p->Btn);
+            WSContentSend_PD(PSTR(" 1&#xFE0F;&#x20E3; %d"), p->Btn);  // 1️⃣
           }
         }
 
@@ -4535,7 +4571,13 @@ void MI32Show(bool json)
         WSContentSend_P(SI_WEB_LINE_START);
         char MAC[18];
         BLE_ESP32::dump(MAC, 13, p->MAC, 6);
-        WSContentSend_P(PSTR(" &#x1F511; <a target='_blank' href='https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey'>%s</a>{e}"), MAC, IPGetListeningAddressStr().c_str(), tmp);
+        WSContentSend_P(PSTR(" &#x1F511; <a target='_blank' href='https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey'>%s</a>"), MAC, IPGetListeningAddressStr().c_str(), tmp);  // 🔑 key
+
+        if (p->pairing){
+          WSContentSend_P(PSTR(" &#x1F91D;"));  // 🤝 handshake
+        }
+
+        WSContentSend_P(PSTR("{e}"));
       }
 #endif  // USE_MI_DECRYPTION
 

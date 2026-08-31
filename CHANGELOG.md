@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - BLE EQ3-TRV code refactoring (#24978)
+- BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
 
 ### Fixed
 
