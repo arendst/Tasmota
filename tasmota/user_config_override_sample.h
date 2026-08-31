@@ -89,6 +89,7 @@ Examples :
 
 
 
-
+#define USE_SENDMAIL
+#define USE_ESP32MAIL
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
