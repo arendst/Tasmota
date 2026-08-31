@@ -4389,12 +4389,10 @@ void MI32Show(bool json)
         );
       }
 
-      uint32_t num_bars = 0;
+      uint32_t rssi_as_quality = WifiGetRssiAsQuality(p->RSSI);
+      uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
       char rssi[16];
-      rssi[0] = '-';
-      rssi[1] = '\0';
-      num_bars = changeUIntScale(p->RSSI, 0, 254, 0, 4);
-      snprintf_P(rssi, sizeof(rssi), PSTR("%d (%d%%)"), p->RSSI, changeUIntScale(p->RSSI, 0, 254, 0, 100));
+      snprintf_P(rssi, sizeof(rssi), PSTR("%d (%d%%)"), p->RSSI, rssi_as_quality);
 
       // New line: Device name, battery state, RSSI and last seen
       WSContentSend_PD(SI_WEB_STATUS_LINE,
