@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 28.08.2026
+ * Updated until v9.4.0.1 - Last update 31.08.2026
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -977,9 +977,9 @@
 #define D_SENSOR_IEM3000_RX             "iEM3000 - RX"
 #define D_SENSOR_MIEL_HVAC_TX           "MiEl HVAC - TX"
 #define D_SENSOR_MIEL_HVAC_RX           "MiEl HVAC - RX"
-#define D_SENSOR_MIEL_HVAC_MB_TX  "MiEl HVAC MB Tx"
-#define D_SENSOR_MIEL_HVAC_MB_RX  "MiEl HVAC MB Rx"
-#define D_SENSOR_MIEL_HVAC_MB_TXEN  "MiEl HVAC MB DE"
+#define D_SENSOR_MIEL_HVAC_MB_TX        "MiEl HVAC MB - TX"
+#define D_SENSOR_MIEL_HVAC_MB_RX        "MiEl HVAC MB - RX"
+#define D_SENSOR_MIEL_HVAC_MB_TXEN      "MiEl HVAC MB - DE"
 #define D_SENSOR_PROJECTOR_CTRL_TX      "DLP - Tx"
 #define D_SENSOR_PROJECTOR_CTRL_RX      "DLP - Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0    "SHD - Boot 0"
