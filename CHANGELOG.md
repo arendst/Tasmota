@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
 - MiEL HVAC Modbus slave mirrors room temperature, compressor, power, stage and diagnostic counters on FC03 holding registers 0x000f..0x0016
 - MiEL HVAC Modbus slave accepts writes before the HVAC link is up (queued like the HVACSet* commands) instead of returning exception 0x04
+- MiEL HVAC Modbus slave frames incoming requests by length instead of the T3.5 gap, fixing spurious CRC errors above 9600 baud and on a shared bus
 - MiEL HVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (#24959)
 

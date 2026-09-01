@@ -2965,6 +2965,33 @@ miel_hvac_mb_do_write_multi_coil(struct miel_hvac_softc *sc, bool broadcast)
 	miel_hvac_mb_reply(mb, r, 6);
 }
 
+/*
+ * Total length (including the 2-byte CRC) of the RTU request whose leading
+ * bytes are in buf, or 0 if it cannot be determined yet / the function code is
+ * unknown.  Used to frame incoming requests by length rather than by relying on
+ * the T3.5 inter-frame gap, which a cooperatively-scheduled FUNC_LOOP poll is
+ * too coarse to measure reliably above 9600 baud.
+ */
+static uint16_t
+miel_hvac_mb_framelen(const uint8_t *buf, uint16_t len)
+{
+	if (len < 2)
+		return (0);
+
+	switch (buf[1])
+	{
+	case 0x01: case 0x02: case 0x03: case 0x04:
+	case 0x05: case 0x06:
+		return (8);
+	case 0x0f: case 0x10:
+		if (len < 7)
+			return (0);
+		return (7 + buf[6] + 2);
+	default:
+		return (0);
+	}
+}
+
 static void
 miel_hvac_mb_process(struct miel_hvac_softc *sc)
 {
@@ -3041,20 +3068,56 @@ miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 		int c = serial->read();
 		if (c < 0)
 			break;
-		if (mb->sc_len < MIEL_HVAC_MB_BUFLEN)
-			mb->sc_buf[mb->sc_len++] = (uint8_t)c;
-		else
-			mb->sc_overruns++;
 		got = true;
+
+		if (mb->sc_len >= MIEL_HVAC_MB_BUFLEN)
+		{
+			mb->sc_overruns++;
+			mb->sc_len = 0;   /* resync */
+		}
+		mb->sc_buf[mb->sc_len++] = (uint8_t)c;
+
+		/* dispatch as soon as a complete frame of known length is buffered */
+		uint16_t need = miel_hvac_mb_framelen(mb->sc_buf, mb->sc_len);
+		if (need != 0 && mb->sc_len >= need)
+		{
+			uint16_t extra = mb->sc_len - need;
+
+			if (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0)
+			{
+				mb->sc_len = need;
+				miel_hvac_mb_process(sc);
+			}
+			/* else: request addressed to another slave - skip it */
+
+			if (extra > 0)
+			{
+				memmove(mb->sc_buf, &mb->sc_buf[need], extra);
+				mb->sc_len = extra;
+			}
+			else
+				mb->sc_len = 0;
+		}
 	}
 	if (got)
 		mb->sc_last_us = micros();
 
-	if (mb->sc_len > 0 && (micros() - mb->sc_last_us) > mb->sc_t35_us)
+	/*
+	 * Fallback: after an idle gap drop a stuck partial frame, or make a
+	 * last-ditch attempt on an unknown function code (replies exception 0x01
+	 * if the CRC checks out).
+	 */
+	if (mb->sc_len > 0)
 	{
-		if (mb->sc_len >= 4)
-			miel_hvac_mb_process(sc);
-		mb->sc_len = 0;
+		uint32_t gap = mb->sc_t35_us > 4000 ? mb->sc_t35_us : 4000;
+		if ((micros() - mb->sc_last_us) > gap)
+		{
+			if (mb->sc_len >= 4 &&
+			    miel_hvac_mb_framelen(mb->sc_buf, mb->sc_len) == 0 &&
+			    (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0))
+				miel_hvac_mb_process(sc);
+			mb->sc_len = 0;
+		}
 	}
 }
 
