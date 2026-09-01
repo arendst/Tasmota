@@ -16,10 +16,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - BLE EQ3-TRV code refactoring (#24978)
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
-- MiEL HVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant)
+- MiEL HVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) (#24992)
 
 ### Fixed
-- MiEL HVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table
+- MiEL HVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table (#24992)
 
 ### Removed
 
