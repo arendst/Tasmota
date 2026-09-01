@@ -461,6 +461,7 @@ static const struct miel_hvac_map miel_hvac_mode_map[] = {
 	{MIEL_HVAC_SETTINGS_MODE_DRY,       "dry"},
 	{MIEL_HVAC_SETTINGS_MODE_COOL,      "cool"},
 	{MIEL_HVAC_SETTINGS_MODE_FAN,       "fan"},
+	{MIEL_HVAC_SETTINGS_MODE_FAN,       "fan_only"},  /* Home Assistant alias for "fan" */
 	{MIEL_HVAC_SETTINGS_MODE_AUTO,      "auto"},
 	{MIEL_HVAC_SETTINGS_MODE_HEAT_ISEE, "heat_isee"},
 	{MIEL_HVAC_SETTINGS_MODE_DRY_ISEE,  "dry_isee"},
