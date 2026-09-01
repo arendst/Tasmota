@@ -2481,11 +2481,21 @@ miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 	buf[len++] = (uint8_t)(crc >> 8);
 
 	if (mb->sc_txen_pin >= 0)
+	{
 		digitalWrite(mb->sc_txen_pin, HIGH);
-	mb->sc_serial->write(buf, len);
-	mb->sc_serial->flush();   /* wait for tx to drain (also clears any rx echo) */
-	if (mb->sc_txen_pin >= 0)
+		mb->sc_serial->write(buf, len);
+		mb->sc_serial->flush();   /* hold DE until the frame has left the UART */
 		digitalWrite(mb->sc_txen_pin, LOW);
+	}
+	else
+	{
+		/*
+		 * Auto-direction transceiver: just queue the frame.  flush() is
+		 * avoided here because on ESP32 it also discards the RX buffer,
+		 * which would drop the next request on a busy bus.
+		 */
+		mb->sc_serial->write(buf, len);
+	}
 }
 
 static void
@@ -2992,33 +3002,15 @@ miel_hvac_mb_framelen(const uint8_t *buf, uint16_t len)
 	}
 }
 
+/* Dispatch one CRC-validated request; sc_buf holds the PDU without the CRC. */
 static void
-miel_hvac_mb_process(struct miel_hvac_softc *sc)
+miel_hvac_mb_handle(struct miel_hvac_softc *sc)
 {
 	struct miel_hvac_mb_softc *mb = sc->sc_mb;
-	uint16_t len = mb->sc_len;
-	uint16_t crc;
-	uint8_t unit, fc;
-	bool broadcast;
-
-	if (len < 4)
-		return;
-
-	crc = ((uint16_t)mb->sc_buf[len - 1] << 8) | mb->sc_buf[len - 2];
-	if (miel_hvac_mb_crc(mb->sc_buf, len - 2) != crc)
-	{
-		mb->sc_crc_errors++;
-		return;
-	}
-
-	unit = mb->sc_buf[0];
-	if (unit != mb->sc_address && unit != 0)
-		return;
+	uint8_t fc = mb->sc_buf[1];
+	bool broadcast = (mb->sc_buf[0] == 0);
 
 	mb->sc_requests++;
-	broadcast = (unit == 0);
-	fc = mb->sc_buf[1];
-	mb->sc_len = len - 2;   /* handlers work on the pdu without the crc */
 
 	switch (fc)
 	{
@@ -3056,68 +3048,103 @@ miel_hvac_mb_process(struct miel_hvac_softc *sc)
 	}
 }
 
+/*
+ * Try to consume one request from the front of sc_buf.  Returns the number of
+ * leading bytes dealt with (0 = wait for more data).  On a framing/CRC mismatch
+ * a single byte is dropped so a genuine frame starting later in the buffer can
+ * still be recovered without waiting for the bus to fall idle - important on a
+ * shared bus where our slave also sees every other device's traffic.
+ */
+static uint16_t
+miel_hvac_mb_consume(struct miel_hvac_softc *sc)
+{
+	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	uint16_t need, crc;
+
+	if (mb->sc_len < 4)
+		return (0);
+
+	need = miel_hvac_mb_framelen(mb->sc_buf, mb->sc_len);
+	if (need == 0)
+	{
+		/* FC 0x0f / 0x10 byte-count field not received yet -> wait */
+		if ((mb->sc_buf[1] == 0x0f || mb->sc_buf[1] == 0x10) && mb->sc_len < 7)
+			return (0);
+		return (1);   /* unknown function code -> slide to resync */
+	}
+	if (mb->sc_len < need)
+		return (0);   /* rest of the frame is still on the wire */
+	if (need > MIEL_HVAC_MB_BUFLEN)
+		return (1);   /* absurd length -> resync */
+
+	crc = ((uint16_t)mb->sc_buf[need - 1] << 8) | mb->sc_buf[need - 2];
+	if (miel_hvac_mb_crc(mb->sc_buf, need - 2) != crc)
+	{
+		if (mb->sc_buf[0] == mb->sc_address)
+			mb->sc_crc_errors++;   /* count only frames that claim to be ours */
+		return (1);
+	}
+
+	if (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0)
+	{
+		uint16_t total = mb->sc_len;
+		mb->sc_len = need - 2;       /* handlers see the PDU without the CRC */
+		miel_hvac_mb_handle(sc);
+		mb->sc_len = total;
+	}
+	/* else: a valid frame for another slave - consumed silently */
+
+	return (need);
+}
+
 static void
 miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 {
 	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	TasmotaSerial *serial = mb->sc_serial;
 	bool got = false;
+	int avail;
 
-	while (serial->available())
+	while ((avail = serial->available()) > 0)
 	{
-		int c = serial->read();
-		if (c < 0)
-			break;
-		got = true;
+		uint16_t room = MIEL_HVAC_MB_BUFLEN - mb->sc_len;
+		size_t want, n;
 
-		if (mb->sc_len >= MIEL_HVAC_MB_BUFLEN)
+		if (room == 0)
 		{
 			mb->sc_overruns++;
-			mb->sc_len = 0;   /* resync */
+			mb->sc_len = 0;   /* buffer full of unparseable data -> resync */
+			room = MIEL_HVAC_MB_BUFLEN;
 		}
-		mb->sc_buf[mb->sc_len++] = (uint8_t)c;
+		want = ((size_t)avail < room) ? (size_t)avail : room;
+		n = serial->read(&mb->sc_buf[mb->sc_len], want);
+		if (n == 0)
+			break;
+		mb->sc_len += n;
+		got = true;
 
-		/* dispatch as soon as a complete frame of known length is buffered */
-		uint16_t need = miel_hvac_mb_framelen(mb->sc_buf, mb->sc_len);
-		if (need != 0 && mb->sc_len >= need)
+		for (;;)
 		{
-			uint16_t extra = mb->sc_len - need;
+			uint16_t used = miel_hvac_mb_consume(sc);
+			uint16_t rem;
 
-			if (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0)
-			{
-				mb->sc_len = need;
-				miel_hvac_mb_process(sc);
-			}
-			/* else: request addressed to another slave - skip it */
-
-			if (extra > 0)
-			{
-				memmove(mb->sc_buf, &mb->sc_buf[need], extra);
-				mb->sc_len = extra;
-			}
-			else
-				mb->sc_len = 0;
+			if (used == 0)
+				break;
+			rem = mb->sc_len > used ? mb->sc_len - used : 0;
+			if (rem)
+				memmove(mb->sc_buf, &mb->sc_buf[used], rem);
+			mb->sc_len = rem;
 		}
 	}
 	if (got)
 		mb->sc_last_us = micros();
 
-	/*
-	 * Fallback: after an idle gap drop a stuck partial frame, or make a
-	 * last-ditch attempt on an unknown function code (replies exception 0x01
-	 * if the CRC checks out).
-	 */
-	if (mb->sc_len > 0)
+	/* drop a stale sub-minimal fragment once the bus has gone idle */
+	if (mb->sc_len > 0 && mb->sc_len < 4)
 	{
 		uint32_t gap = mb->sc_t35_us > 4000 ? mb->sc_t35_us : 4000;
 		if ((micros() - mb->sc_last_us) > gap)
-		{
-			if (mb->sc_len >= 4 &&
-			    miel_hvac_mb_framelen(mb->sc_buf, mb->sc_len) == 0 &&
-			    (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0))
-				miel_hvac_mb_process(sc);
 			mb->sc_len = 0;
-		}
 	}
 }
 
@@ -3184,8 +3211,10 @@ miel_hvac_mb_init(struct miel_hvac_softc *sc)
 	mb->sc_t35_us   = miel_hvac_mb_t35_us(mb->sc_baudrate);
 	mb->sc_txen_pin = PinUsed(GPIO_MIEL_HVAC_MB_TXEN) ? Pin(GPIO_MIEL_HVAC_MB_TXEN) : -1;
 
+	/* Large RX buffer: on a shared bus we also see every other slave's
+	 * traffic and FUNC_LOOP can be milliseconds late. */
 	mb->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_MB_RX),
-	    Pin(GPIO_MIEL_HVAC_MB_TX), 2);
+	    Pin(GPIO_MIEL_HVAC_MB_TX), 2, 0, 1024);
 	if (!mb->sc_serial->begin(mb->sc_baudrate,
 	    ConvertSerialConfig(mb->sc_sconfig)))
 	{
