@@ -3005,25 +3005,22 @@ miel_hvac_mb_process(struct miel_hvac_softc *sc)
 		if (!broadcast)
 			miel_hvac_mb_do_read_regs(sc, fc);
 		break;
+	/*
+	 * Writes are accepted whether or not the unit is connected yet - the
+	 * update is queued and sent once the link is up, matching the HVACSet*
+	 * console commands.
+	 */
 	case 0x05:
+		miel_hvac_mb_do_write_single_coil(sc, broadcast);
+		break;
 	case 0x06:
+		miel_hvac_mb_do_write_single_reg(sc, broadcast);
+		break;
 	case 0x0f:
+		miel_hvac_mb_do_write_multi_coil(sc, broadcast);
+		break;
 	case 0x10:
-		/* queue updates only once we can actually reach the unit */
-		if (!sc->sc_connected)
-		{
-			if (!broadcast)
-				miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_FAILURE);
-			break;
-		}
-		if (fc == 0x05)
-			miel_hvac_mb_do_write_single_coil(sc, broadcast);
-		else if (fc == 0x06)
-			miel_hvac_mb_do_write_single_reg(sc, broadcast);
-		else if (fc == 0x0f)
-			miel_hvac_mb_do_write_multi_coil(sc, broadcast);
-		else
-			miel_hvac_mb_do_write_multi_reg(sc, broadcast);
+		miel_hvac_mb_do_write_multi_reg(sc, broadcast);
 		break;
 	default:
 		if (!broadcast)
