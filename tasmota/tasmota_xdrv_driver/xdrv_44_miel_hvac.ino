@@ -2633,21 +2633,38 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 	return (0);
 }
 
-/* Control register read-back (FC03): last-known actual state. */
+/*
+ * FC03 holding-register reads.
+ *   0x0000..0x000e  read-back of the writable control registers
+ *   0x0010..0x0017  mirror of selected read-only sensor values, so a master
+ *                   that only speaks FC03 can still reach them
+ */
 static uint16_t
 miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 {
-	static const uint16_t input_of[] = {
+	static const uint16_t control_of[] = {
 		0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
 		0x0018, 0x0019, 0x001a, 0x0011, 0x0029, 0x002a,
+	};
+	static const uint16_t mirror_of[] = {
+		0x0020,   /* 0x0010 room temperature C x10 */
+		0x0023,   /* 0x0011 compressor 0/1 */
+		0x0025,   /* 0x0012 instantaneous power W */
+		0x0038,   /* 0x0013 stage operation */
+		0x0039,   /* 0x0014 stage fan */
+		0x003a,   /* 0x0015 stage mode */
+		0x0050,   /* 0x0016 diagnostics: requests received */
+		0x0051,   /* 0x0017 diagnostics: CRC errors */
 	};
 
 	*ok = true;
 
-	if (addr < nitems(input_of))
-		return (miel_hvac_mb_reg_input(sc, input_of[addr], ok));
+	if (addr < nitems(control_of))
+		return (miel_hvac_mb_reg_input(sc, control_of[addr], ok));
 	if (addr == 0x000e)
 		return (0);
+	if (addr >= 0x0010 && addr < 0x0010 + nitems(mirror_of))
+		return (miel_hvac_mb_reg_input(sc, mirror_of[addr - 0x0010], ok));
 
 	*ok = false;
 	return (0);
