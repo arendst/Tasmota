@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
 
 ### Fixed
-
+- MiEL HVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table
 
 ### Removed
 
