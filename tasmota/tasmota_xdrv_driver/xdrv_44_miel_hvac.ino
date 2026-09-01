@@ -2646,7 +2646,7 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 /*
  * FC03 holding-register reads.
  *   0x0000..0x000e  read-back of the writable control registers
- *   0x000f..0x0016  mirror of selected read-only sensor values, so a master
+ *   0x000f..0x0017  mirror of selected read-only sensor values, so a master
  *                   that only speaks FC03 can still reach them
  */
 #define MIEL_HVAC_MB_HOLD_MIRROR_BASE 0x000f
@@ -2666,6 +2666,7 @@ miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		0x003a,   /* 0x0014 stage mode */
 		0x0050,   /* 0x0015 diagnostics: requests received */
 		0x0051,   /* 0x0016 diagnostics: CRC errors */
+		0x0001,   /* 0x0017 connected to unit 0/1 */
 	};
 
 	*ok = true;
