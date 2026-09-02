@@ -2476,9 +2476,20 @@ static void
 miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 {
 	uint16_t crc = miel_hvac_mb_crc(buf, len);
+	uint32_t since, quiet;
 
 	buf[len++] = (uint8_t)crc;
 	buf[len++] = (uint8_t)(crc >> 8);
+
+	/*
+	 * Modbus RTU turnaround: keep quiet for ~3.5 char times after the last
+	 * received byte so the master (and an auto-direction transceiver) has
+	 * switched from transmit to receive before the response starts.
+	 */
+	since = micros() - mb->sc_last_us;
+	quiet = mb->sc_t35_us > 3500 ? 3500 : mb->sc_t35_us;
+	if (since < quiet)
+		delayMicroseconds(quiet - since);
 
 	if (mb->sc_txen_pin >= 0)
 	{
@@ -3103,7 +3114,6 @@ miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 {
 	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	TasmotaSerial *serial = mb->sc_serial;
-	bool got = false;
 	int avail;
 
 	while ((avail = serial->available()) > 0)
@@ -3122,7 +3132,7 @@ miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 		if (n == 0)
 			break;
 		mb->sc_len += n;
-		got = true;
+		mb->sc_last_us = micros();   /* needed by the turnaround wait in reply */
 
 		for (;;)
 		{
@@ -3137,8 +3147,6 @@ miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 			mb->sc_len = rem;
 		}
 	}
-	if (got)
-		mb->sc_last_us = micros();
 
 	/* drop a stale sub-minimal fragment once the bus has gone idle */
 	if (mb->sc_len > 0 && mb->sc_len < 4)
