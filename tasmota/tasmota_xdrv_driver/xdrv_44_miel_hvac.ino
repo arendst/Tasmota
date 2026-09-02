@@ -694,6 +694,7 @@ struct miel_hvac_mb_softc
 	uint32_t sc_t35_us;      /* 3.5-char inter-frame gap, microseconds */
 	uint32_t sc_last_us;     /* micros() of last received byte */
 	uint16_t sc_len;
+	bool     sc_no_reply;    /* suppress the response for a stale request */
 	uint8_t  sc_buf[MIEL_HVAC_MB_BUFLEN];
 	uint32_t sc_requests;
 	uint32_t sc_crc_errors;
@@ -2475,9 +2476,13 @@ miel_hvac_mb_x10(float v)
 static void
 miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 {
-	uint16_t crc = miel_hvac_mb_crc(buf, len);
+	uint16_t crc;
 	uint32_t since, quiet;
 
+	if (mb->sc_no_reply)
+		return;   /* master already re-polled - a late answer would derail it */
+
+	crc = miel_hvac_mb_crc(buf, len);
 	buf[len++] = (uint8_t)crc;
 	buf[len++] = (uint8_t)(crc >> 8);
 
@@ -3100,9 +3105,20 @@ miel_hvac_mb_consume(struct miel_hvac_softc *sc)
 	if (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0)
 	{
 		uint16_t total = mb->sc_len;
+
+		/*
+		 * If another request is already buffered behind this one, the master
+		 * has timed out and re-polled: apply this (stale) request but do not
+		 * put a late response on the bus - it would land on the master's next
+		 * transaction and make that one fail too.
+		 */
+		mb->sc_no_reply = (total > need
+		    && (mb->sc_buf[need] == mb->sc_address || mb->sc_buf[need] == 0));
+
 		mb->sc_len = need - 2;       /* handlers see the PDU without the CRC */
 		miel_hvac_mb_handle(sc);
 		mb->sc_len = total;
+		mb->sc_no_reply = false;
 	}
 	/* else: a valid frame for another slave - consumed silently */
 
