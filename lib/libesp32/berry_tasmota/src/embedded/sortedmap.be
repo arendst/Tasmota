@@ -77,33 +77,26 @@ class sortedmap : map
   end
   # String representation, in sorted key order
   def tostring()
-    import string
-    var result = "{"
-    var first = true
-    
-    for key : self._keys
-      var val = super(self).item(key)
-      
-      if !first
-        result += ", "
-      end
-      first = false
-      
-      if type(key) == 'string'
-        result += string.format("'%s': ", key)
-      else
-        result += string.format("%s: ", str(key))
-      end
-      
-      if type(val) == 'string'
-        result += string.format("'%s'", val)
-      else
-        result += str(val)
-      end
+    var r = '{'
+    var sep = ''
+    for k : self._keys
+      r += f'{sep}{k:q}: {self.item(k):q}'
+      sep = ', '
     end
-    
-    result += "}"
-    return result
+    r += '}'
+    return r
+  end
+
+  # Compact JSON representation, in sorted key order
+  def tojson()
+    import json
+    var r = '{'
+    var sep = ''
+    for k : self._keys
+      r += f'{sep}{json.dump(str(k))}:{json.dump(self.item(k))}'
+      sep = ','
+    end
+    return r + '}'
   end
 
   # Return iterator to values in sorted key order
@@ -265,6 +258,30 @@ assert(keys[1] == 2)
 assert(keys[2] == 10)
 assert(keys[3] == 'a')
 assert(keys[4] == 'c')
+
+# Test string representation and escaping
+m = sortedmap()
+m.insert('b', 2)
+m.insert('a', 1)
+assert(str(m) == "{'a': 1, 'b': 2}")
+var key = "k'\"\\\n\r\t\x01é"
+var value = "v'\"\\\n\r\t\x1f世界"
+m = sortedmap()
+m.insert(key, value)
+var plain = {}
+plain.insert(key, value)
+assert(str(m) == str(plain))
+
+# Test JSON serialization
+import json
+m = sortedmap()
+assert(json.dump(m) == '{}')
+m.insert('z', 1)
+m.insert('a', 'x')
+assert(json.dump(m) == '{"a":"x","z":1}')
+assert(json.dump(m, 'format') == '{"a":"x","z":1}')
+m = sortedmap({'z': {'b': 2, 'a': 1}, 'a"b': 'line\n'})
+assert(json.dump(m) == '{"a\\"b":"line\\n","z":{"a":1,"b":2}}')
 
 # Test clear
 m.clear()
