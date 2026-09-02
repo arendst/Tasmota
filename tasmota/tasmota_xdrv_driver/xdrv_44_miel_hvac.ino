@@ -2576,7 +2576,14 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		    set->temp05 != 0 ? set->temp05 : set->temp)));
 	case 0x0013: return (has_set ? set->fan : 0);
 	case 0x0014: return (has_set ? set->vane : 0);
-	case 0x0015: return (has_set ? set->widevane : 0);
+	case 0x0015:
+		/* report the wide-vane position only; the unit mixes the i-See
+		 * sensor bit (0x80) into this byte. 0x80 = i-See direction mode. */
+		if (!has_set)
+			return (0);
+		if (set->widevane == 0x80 || set->widevane == 0x28 || set->widevane == 0xaa)
+			return (0x80);
+		return (set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK);
 	case 0x0016: return (has_set ? set->prohibit : 0);
 	case 0x0017: return (has_set ? set->airdirection : 0);
 	case 0x0018: return (has_op ? (op->purifier ? 1 : 0) : 0);

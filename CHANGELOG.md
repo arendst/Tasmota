@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for GUI tooltip on touch media like phones and tablets
 - ESP32 MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
 - MiEL HVAC Modbus slave mirrors room temperature, compressor, power, stage, link status and diagnostic counters on FC03 holding registers 0x000f..0x0017
+- MiEL HVAC Modbus swingH register reports the wide-vane position only, without the i-See sensor bit
 - MiEL HVAC Modbus slave accepts writes before the HVAC link is up (queued like the HVACSet* commands) instead of returning exception 0x04
 - MiEL HVAC Modbus slave frames incoming requests by length instead of the T3.5 gap, resyncs byte-by-byte on a framing mismatch, waits the RTU turnaround silence before answering, suppresses a late reply once the master has re-polled, uses a 1 kB RX buffer and skips flush() on auto-direction transceivers - fixes spurious CRC errors, corrupted responses and cascading slave timeouts above 9600 baud and on a shared bus
 - MiEL HVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
