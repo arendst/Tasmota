@@ -120,6 +120,12 @@ int ButtonAddVirtualPin(int index, uint32_t state) {
   return index;
 }
 
+void ButtonRemoveVirtualPin(int index) {
+  if (bitRead(Button.used, index)) { 
+    bitClear(Button.used, index);            // This pin is released
+  }
+}
+
 void ButtonSetVirtualPinState(uint32_t index, uint32_t state) {
   // Set virtual pin state to be debounced as used by early detected buttons
   bitWrite(Button.virtual_pin, index, state);
