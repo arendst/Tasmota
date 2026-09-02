@@ -32,7 +32,7 @@ extern void gp_set_frequency(int32_t pin, int32_t frequency);   BE_FUNC_CTYPE_DE
 extern int gp_get_duty(int32_t pin);               BE_FUNC_CTYPE_DECLARE(gp_get_duty, "i", "i");
 extern int gp_get_duty_resolution(int32_t pin);    BE_FUNC_CTYPE_DECLARE(gp_get_duty_resolution, "i", "i");
 
-extern int gp_add_virtual_button(int32_t index, int32_t state);        BE_FUNC_CTYPE_DECLARE(gp_add_virtual_button, "i", "ii");
+extern int gp_add_virtual_button(int32_t state);                       BE_FUNC_CTYPE_DECLARE(gp_add_virtual_button, "i", "i");
 extern void gp_remove_virtual_button(int32_t index);                   BE_FUNC_CTYPE_DECLARE(gp_remove_virtual_button, "", "i");
 extern void gp_set_virtual_button_state(int32_t index, int32_t state); BE_FUNC_CTYPE_DECLARE(gp_set_virtual_button_state, "", "ii");
 

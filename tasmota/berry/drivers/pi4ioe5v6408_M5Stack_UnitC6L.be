@@ -51,11 +51,8 @@ class PI4IOE5V6408_UnitC6L : I2C_Driver
       self.write_bit(0x05, 6, 1)    # enable SX_ANT_SW
       self.write_bit(0x05, 5, 1)    # enable SX_LNA_EN
 
-      # Get virtual button index
-      var vp = gpio.add_virtual_button(-1, 0)
-      if vp >= 0
-        self.virtual_buttons[0] = vp
-      end
+      # Get virtual button index or -1
+      self.virtual_buttons[0] = gpio.add_virtual_button(0)
 
       tasmota.add_driver(self)      # register this driver
     end
