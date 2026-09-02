@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
 - MiEL HVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (#24959)
+- Berry virtual button support
 
 ### Breaking Changed
 
