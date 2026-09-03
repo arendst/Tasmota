@@ -279,11 +279,11 @@ extern "C" {
     return GetPin(pin) % 32;
   }
 
-  // gpio.add_virtual_button(index:int, state:int) -> int
+  // gpio.add_virtual_button(state:int) -> int
   //
-  extern int gp_add_virtual_button(int32_t index, int32_t state);
-  extern int gp_add_virtual_button(int32_t index, int32_t state) {
-    return ButtonAddVirtualPin(index, state);
+  extern int gp_add_virtual_button(int32_t state);
+  extern int gp_add_virtual_button(int32_t state) {
+    return ButtonAddVirtualPin(state);
   }
 
   // gpio.remove_virtual_button(index:int) -> nil

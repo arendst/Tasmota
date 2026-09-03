@@ -10,7 +10,8 @@ All notable changes to this project will be documented in this file.
 - MiEL HVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (#24959)
 - Berry virtual button support
-- NeoPool add AuxMode
+- NeoPool AuxMode (#24998)
+- Berry `sortedmap` support for `json.dump` (#24999)
 
 ### Breaking Changed
 

@@ -90,55 +90,31 @@ void ButtonTouchFlag(uint32_t button_bit) {
 
 /*------------------------------------------------------------------------------------------*/
 
-int ButtonAddVirtualPin(int index, uint32_t state) {
-  if (-1 == index) {                         // Request next slot
-    index = 0;
-    for (uint32_t i = 0; i < MAX_KEYS_SET; i++) {
-      if (ButtonUsed(i)) { 
-        index++;                             // Find first free slot
-      } else {
-        break;
-      }
+// Return a virtual button index set to state of default OFF
+// Return -1 if no more slots left
+int ButtonAddVirtualPin(uint32_t state) {
+  int index = 0;                             // Find first free slot
+  while (ButtonUsed(index)) {
+    index++;
+    if (index >= MAX_KEYS_SET) {
+      return -1;                             // All slots are used
     }
   }
-  if (index >= MAX_KEYS_SET) {
-    return -1;                               // All slots are used
-  }
-  bool button_used = (Button.used);
-  bitSet(Button.used, index);                // This pin is used
-  ButtonSetVirtualPinState(index, state);    // Virtual hardware pin state
-  if (!state) { ButtonInvertFlag(index); }   // Set inverted flag
-  // last_state[index] must be 1 to indicate no button pressed
-  Button.last_state[index] = (bitRead(Button.virtual_pin, index) != bitRead(Button.inverted_mask, index));
-  Button.debounced_state[index] = Button.last_state[index];
-  if (!button_used) {
-    ButtonTickerAttach();
-  }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add vButton%d, State %d"), index +1, Button.last_state[index]);
-
-  return index;
+  ButtonAddVirtualPinAt(index, state);
+  return index;                              // Virtual button index
 }
 
+// Free assigned slot
 void ButtonRemoveVirtualPin(int index) {
   if (bitRead(Button.used, index)) { 
-    bitClear(Button.used, index);            // This pin is released
+    bitClear(Button.used, index);            // This button is released
   }
 }
 
+// Set virtual pin state to be debounced as used by early detected buttons
 void ButtonSetVirtualPinState(uint32_t index, uint32_t state) {
-  // Set virtual pin state to be debounced as used by early detected buttons
   bitWrite(Button.virtual_pin, index, state);
-}
-
-uint8_t ButtonGetState(uint32_t index) {
-  // Get current state
-  return Button.debounced_state[index];
-}
-
-uint8_t ButtonLastState(uint32_t index) {
-  // Get last state
-  return Button.last_state[index];
 }
 
 /*------------------------------------------------------------------------------------------*/
@@ -278,6 +254,22 @@ void ButtonTickerAttach(void) {
   }
 }
 
+void ButtonAddVirtualPinAt(int index, uint32_t state) {
+  bool button_used = (Button.used);
+  bitSet(Button.used, index);                // This pin is used
+  ButtonSetVirtualPinState(index, state);    // Virtual hardware pin state
+  if (!state) { ButtonInvertFlag(index); }   // Set inverted flag
+  // last_state[index] must be 1 to indicate no button pressed
+  Button.last_state[index] = (bitRead(Button.virtual_pin, index) != bitRead(Button.inverted_mask, index));
+  Button.debounced_state[index] = Button.last_state[index];
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Add vButton%d, State %d"), index +1, Button.last_state[index]);
+
+  if (!button_used) {
+    ButtonTickerAttach();
+  }
+}
+
 void ButtonInit(void) {
   bool ac_detect = (Settings->button_debounce % 10 == 9);
   Button.used = 0;
@@ -313,7 +305,7 @@ void ButtonInit(void) {
       XdrvMailbox.index = i;
       if (XdrvCall(FUNC_ADD_BUTTON)) {
         bool state = (XdrvMailbox.index &1);
-        ButtonAddVirtualPin(i, state);
+        ButtonAddVirtualPinAt(i, state);
       }
     }
     Button.debounced_state[i] = Button.last_state[i];
