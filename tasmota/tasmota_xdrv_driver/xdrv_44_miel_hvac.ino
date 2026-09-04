@@ -27,6 +27,10 @@
  * https://muart-group.github.io/developer/it-protocol/
  * Compile with USE_MIEL_HVAC; GPIOs "MiEl HVAC Rx" / "MiEl HVAC Tx".
  *
+ * The web panel's Off button replaces the generic Tasmota power toggle, which is hidden
+ * together with its ON/OFF state row; the POWER command and its MQTT / Home Assistant
+ * state sync are unchanged.
+ *
  * --- Modbus RTU slave (USE_MIEL_HVAC_MODBUS_SLAVE, ESP32) ---------------------------------
  * Optional second RS485 port that mirrors every driver state as read registers and maps
  * every driver function to write registers / coils, so the unit can be driven from a PLC
@@ -4211,6 +4215,23 @@ miel_hvac_web_select(const char *label, const char *id, const char *key,
 static void
 miel_hvac_web_panel(struct miel_hvac_softc *sc)
 {
+	/*
+	 * The Mode segment (with its Off button) replaces the generic power
+	 * toggle, so hide that button and its ON/OFF state row.  When the HVAC
+	 * is the only device the whole button table and the state row go; with
+	 * other relays present only this device's button cell is hidden.  The
+	 * POWER command and its MQTT state sync stay in place for rules and
+	 * Home Assistant.
+	 */
+	if (TasmotaGlobal.devices_present == 1)
+		WSContentSend_P(PSTR("<style>"
+			"table:has(#o1){display:none}"
+			"#l1>table:last-of-type{display:none}"
+			"</style>"));
+	else
+		WSContentSend_P(PSTR("<style>td:has(>#o%u){display:none}</style>"),
+			sc->sc_device + 1);
+
 	if (sc->sc_settings.type == 0)
 		return;
 
