@@ -113,7 +113,7 @@
 //#define USE_SENSOR_ICON           // Display GUI icons instead of line with data
 
 #define USE_MI_DECRYPTION         // Enable also for BTHome V2
-//#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
+#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
 
 #include <vector>
 #ifdef USE_MI_DECRYPTION
@@ -2487,10 +2487,10 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
               MIBLEsensors[_slot].button[i] = 0;
             }
           }
+          MIBLEsensors[_slot].Btn = value_uint;  // Last button
           MIBLEsensors[_slot].button[multi] = (0 == value_uint) ? 255 : value_uint;
           MIBLEsensors[_slot].feature.Btn = 1;
           if (value_uint > 0) {  // No event if 0x00
-            MIBLEsensors[_slot].Btn = value_uint;  // Last button
             MIBLEsensors[_slot].eventType.Btn = 1;
             res = 1;
           }
@@ -3656,8 +3656,9 @@ void MI32GetOneSensorJson(int slot, int hidename){
       ){
         if ((p->type == MI_BTHOME) && (p->button[1] != 0)){
           for (uint32_t i = 0; i < sizeof(p->button); i++) {
-            if ((p->button[i] > 0) && (p->button[i] < 255)) {
-              ResponseAppend_P(PSTR(",\"Btn%d\":%d"), i +1, p->button[i]);
+            if (p->button[i] > 0) {
+              uint32_t button = (255 == p->button[i]) ? 0 : p->button[i];
+              ResponseAppend_P(PSTR(",\"Btn%d\":%d"), i +1, button);
             }
           }
         } else {
@@ -3762,7 +3763,7 @@ void MI32GetOneSensorJson(int slot, int hidename){
   if (!hidename) {
     ResponseAppend_P(PSTR("}"));
   }
-  p->eventType.raw = 0;
+  p->eventType.raw = 0;  // Reset all events
   p->shallSendMQTT = 0;
 
 }
