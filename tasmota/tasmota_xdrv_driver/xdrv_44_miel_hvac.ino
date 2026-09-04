@@ -19,7 +19,56 @@
 
 #ifdef USE_MIEL_HVAC
 /*********************************************************************************************\
- * Mitsubishi Electric HVAC serial interface
+ * Mitsubishi Electric HVAC (CN105) serial interface
+ *
+ * Speaks the Mitsubishi "IT protocol" on the indoor unit's CN105 connector and exposes it
+ * through the console (HVACSet* commands), MQTT (SENSOR / HVACSettings) and a climate
+ * control panel on the web UI main page.  Protocol reference:
+ * https://muart-group.github.io/developer/it-protocol/
+ * Compile with USE_MIEL_HVAC; GPIOs "MiEl HVAC Rx" / "MiEl HVAC Tx".
+ *
+ * --- Modbus RTU slave (USE_MIEL_HVAC_MODBUS_SLAVE, ESP32) ---------------------------------
+ * Optional second RS485 port that mirrors every driver state as read registers and maps
+ * every driver function to write registers / coils, so the unit can be driven from a PLC
+ * alongside the console / MQTT.  Off by default.
+ *
+ *   GPIOs      "MiEl HVAC MB Rx" / "MiEl HVAC MB Tx", and optionally "MiEl HVAC MB Tx En"
+ *              (RS485 DE/RE - omit for auto-direction transceivers)
+ *   Commands   HVACModbus 0|1, HVACModbusAddress 1..247, HVACModbusBaudrate 1200..115200,
+ *              HVACModbusConfig 8N1|8E1|8O1|8N2|8E2|8O2   (persisted, applied live)
+ *   Function   0x01/0x02 read coils / discrete inputs, 0x03/0x04 read holding / input
+ *   codes      registers, 0x05/0x0F/0x06/0x10 write coils / registers; CRC-16 checked,
+ *              broadcast (address 0) accepted for writes
+ *   Framing    requests are framed by their expected length rather than the T3.5 gap, the
+ *              RX stream resyncs byte-by-byte on a mismatch, replies wait the RTU
+ *              turnaround silence and are dropped once the master has already re-polled -
+ *              keeps a shared bus and rates above 9600 baud reliable
+ *
+ *   Input registers (FC04), 16-bit, 0x0000..0x00ff - read-only live state:
+ *     0x0000..0x0006  link / capability / feature flags
+ *     0x0010..0x001a  settings: power, mode, temp x10, fan, vane, widevane, prohibit,
+ *                     air direction, purifier, night mode, econocool
+ *     0x0020..0x002a  room / outdoor / set temperature x10, power W, energy, run time,
+ *                     compressor, remote temperature, clear time
+ *     0x0030..0x003a  timers and operation stage
+ *     0x0040..0x0048  decoded capabilities and per-mode temperature limits
+ *     0x0050..0x0053  diagnostics: requests, CRC errors, exceptions, RX overruns
+ *
+ *   Holding registers (FC03 / FC06 / FC10), 16-bit:
+ *     0x0000..0x000e  writable control - power, mode, temp x10, fan, vane, widevane,
+ *                     prohibit, air direction, purifier, night mode, econocool, HA mode,
+ *                     remote temp (0x7fff clears), remote-temp clear time, raw 0x42 byte;
+ *                     reads return the last written value
+ *     0x000f..0x0017  read-only mirror of selected input registers, for FC03-only masters
+ *
+ *   Coils (FC01 / FC05 / FC0F): 0 power, 1 purifier, 2 night mode, 3 econocool,
+ *                               4 clear remote-temp override (write 0)
+ *   Discrete inputs (FC02): 0 connected, 1 capabilities valid, 2 compressor running,
+ *                           3 i-See sensor, 4 energy metering, 5 remote temp active,
+ *                           6 defrost
+ *
+ *   Writes reuse the miel_hvac_apply_* setters (same capability gating as the console
+ *   commands) and are queued when the HVAC link is not up yet rather than rejected.
 \*********************************************************************************************/
 
 #define XDRV_44 44
