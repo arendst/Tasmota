@@ -19,7 +19,56 @@
 
 #ifdef USE_MIEL_HVAC
 /*********************************************************************************************\
- * Mitsubishi Electric HVAC serial interface
+ * Mitsubishi Electric HVAC (CN105) serial interface
+ *
+ * Speaks the Mitsubishi "IT protocol" on the indoor unit's CN105 connector and exposes it
+ * through the console (HVACSet* commands), MQTT (SENSOR / HVACSettings) and a climate
+ * control panel on the web UI main page.  Protocol reference:
+ * https://muart-group.github.io/developer/it-protocol/
+ * Compile with USE_MIEL_HVAC; GPIOs "MiEl HVAC Rx" / "MiEl HVAC Tx".
+ *
+ * --- Modbus RTU slave (USE_MIEL_HVAC_MODBUS_SLAVE, ESP32) ---------------------------------
+ * Optional second RS485 port that mirrors every driver state as read registers and maps
+ * every driver function to write registers / coils, so the unit can be driven from a PLC
+ * alongside the console / MQTT.  Off by default.
+ *
+ *   GPIOs      "MiEl HVAC MB Rx" / "MiEl HVAC MB Tx", and optionally "MiEl HVAC MB Tx En"
+ *              (RS485 DE/RE - omit for auto-direction transceivers)
+ *   Commands   HVACModbus 0|1, HVACModbusAddress 1..247, HVACModbusBaudrate 1200..115200,
+ *              HVACModbusConfig 8N1|8E1|8O1|8N2|8E2|8O2   (persisted, applied live)
+ *   Function   0x01/0x02 read coils / discrete inputs, 0x03/0x04 read holding / input
+ *   codes      registers, 0x05/0x0F/0x06/0x10 write coils / registers; CRC-16 checked,
+ *              broadcast (address 0) accepted for writes
+ *   Framing    requests are framed by their expected length rather than the T3.5 gap, the
+ *              RX stream resyncs byte-by-byte on a mismatch, replies wait the RTU
+ *              turnaround silence and are dropped once the master has already re-polled -
+ *              keeps a shared bus and rates above 9600 baud reliable
+ *
+ *   Input registers (FC04), 16-bit, 0x0000..0x00ff - read-only live state:
+ *     0x0000..0x0006  link / capability / feature flags
+ *     0x0010..0x001a  settings: power, mode, temp x10, fan, vane, widevane, prohibit,
+ *                     air direction, purifier, night mode, econocool
+ *     0x0020..0x002a  room / outdoor / set temperature x10, power W, energy, run time,
+ *                     compressor, remote temperature, clear time
+ *     0x0030..0x003a  timers and operation stage
+ *     0x0040..0x0048  decoded capabilities and per-mode temperature limits
+ *     0x0050..0x0053  diagnostics: requests, CRC errors, exceptions, RX overruns
+ *
+ *   Holding registers (FC03 / FC06 / FC10), 16-bit:
+ *     0x0000..0x000e  writable control - power, mode, temp x10, fan, vane, widevane,
+ *                     prohibit, air direction, purifier, night mode, econocool, HA mode,
+ *                     remote temp (0x7fff clears), remote-temp clear time, raw 0x42 byte;
+ *                     reads return the last written value
+ *     0x000f..0x0017  read-only mirror of selected input registers, for FC03-only masters
+ *
+ *   Coils (FC01 / FC05 / FC0F): 0 power, 1 purifier, 2 night mode, 3 econocool,
+ *                               4 clear remote-temp override (write 0)
+ *   Discrete inputs (FC02): 0 connected, 1 capabilities valid, 2 compressor running,
+ *                           3 i-See sensor, 4 energy metering, 5 remote temp active,
+ *                           6 defrost
+ *
+ *   Writes reuse the miel_hvac_apply_* setters (same capability gating as the console
+ *   commands) and are queued when the HVAC link is not up yet rather than rejected.
 \*********************************************************************************************/
 
 #define XDRV_44 44
@@ -694,6 +743,7 @@ struct miel_hvac_mb_softc
 	uint32_t sc_t35_us;      /* 3.5-char inter-frame gap, microseconds */
 	uint32_t sc_last_us;     /* micros() of last received byte */
 	uint16_t sc_len;
+	bool     sc_no_reply;    /* suppress the response for a stale request */
 	uint8_t  sc_buf[MIEL_HVAC_MB_BUFLEN];
 	uint32_t sc_requests;
 	uint32_t sc_crc_errors;
@@ -2475,17 +2525,42 @@ miel_hvac_mb_x10(float v)
 static void
 miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 {
-	uint16_t crc = miel_hvac_mb_crc(buf, len);
+	uint16_t crc;
+	uint32_t since, quiet;
 
+	if (mb->sc_no_reply)
+		return;   /* master already re-polled - a late answer would derail it */
+
+	crc = miel_hvac_mb_crc(buf, len);
 	buf[len++] = (uint8_t)crc;
 	buf[len++] = (uint8_t)(crc >> 8);
 
+	/*
+	 * Modbus RTU turnaround: keep quiet for ~3.5 char times after the last
+	 * received byte so the master (and an auto-direction transceiver) has
+	 * switched from transmit to receive before the response starts.
+	 */
+	since = micros() - mb->sc_last_us;
+	quiet = mb->sc_t35_us > 3500 ? 3500 : mb->sc_t35_us;
+	if (since < quiet)
+		delayMicroseconds(quiet - since);
+
 	if (mb->sc_txen_pin >= 0)
+	{
 		digitalWrite(mb->sc_txen_pin, HIGH);
-	mb->sc_serial->write(buf, len);
-	mb->sc_serial->flush();   /* wait for tx to drain (also clears any rx echo) */
-	if (mb->sc_txen_pin >= 0)
+		mb->sc_serial->write(buf, len);
+		mb->sc_serial->flush();   /* hold DE until the frame has left the UART */
 		digitalWrite(mb->sc_txen_pin, LOW);
+	}
+	else
+	{
+		/*
+		 * Auto-direction transceiver: just queue the frame.  flush() is
+		 * avoided here because on ESP32 it also discards the RX buffer,
+		 * which would drop the next request on a busy bus.
+		 */
+		mb->sc_serial->write(buf, len);
+	}
 }
 
 static void
@@ -2550,7 +2625,14 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		    set->temp05 != 0 ? set->temp05 : set->temp)));
 	case 0x0013: return (has_set ? set->fan : 0);
 	case 0x0014: return (has_set ? set->vane : 0);
-	case 0x0015: return (has_set ? set->widevane : 0);
+	case 0x0015:
+		/* report the wide-vane position only; the unit mixes the i-See
+		 * sensor bit (0x80) into this byte. 0x80 = i-See direction mode. */
+		if (!has_set)
+			return (0);
+		if (set->widevane == 0x80 || set->widevane == 0x28 || set->widevane == 0xaa)
+			return (0x80);
+		return (set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK);
 	case 0x0016: return (has_set ? set->prohibit : 0);
 	case 0x0017: return (has_set ? set->airdirection : 0);
 	case 0x0018: return (has_op ? (op->purifier ? 1 : 0) : 0);
@@ -2633,21 +2715,42 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 	return (0);
 }
 
-/* Control register read-back (FC03): last-known actual state. */
+/*
+ * FC03 holding-register reads.
+ *   0x0000..0x000e  read-back of the writable control registers
+ *   0x000f..0x0017  mirror of selected read-only sensor values, so a master
+ *                   that only speaks FC03 can still reach them
+ */
+#define MIEL_HVAC_MB_HOLD_MIRROR_BASE 0x000f
 static uint16_t
 miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 {
-	static const uint16_t input_of[] = {
+	static const uint16_t control_of[] = {
 		0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
 		0x0018, 0x0019, 0x001a, 0x0011, 0x0029, 0x002a,
+	};
+	static const uint16_t mirror_of[] = {
+		0x0020,   /* 0x000f room temperature C x10 */
+		0x0023,   /* 0x0010 compressor 0/1 */
+		0x0025,   /* 0x0011 instantaneous power W */
+		0x0038,   /* 0x0012 stage operation */
+		0x0039,   /* 0x0013 stage fan */
+		0x003a,   /* 0x0014 stage mode */
+		0x0050,   /* 0x0015 diagnostics: requests received */
+		0x0051,   /* 0x0016 diagnostics: CRC errors */
+		0x0001,   /* 0x0017 connected to unit 0/1 */
 	};
 
 	*ok = true;
 
-	if (addr < nitems(input_of))
-		return (miel_hvac_mb_reg_input(sc, input_of[addr], ok));
+	if (addr < nitems(control_of))
+		return (miel_hvac_mb_reg_input(sc, control_of[addr], ok));
 	if (addr == 0x000e)
 		return (0);
+	if (addr >= MIEL_HVAC_MB_HOLD_MIRROR_BASE
+	    && addr < MIEL_HVAC_MB_HOLD_MIRROR_BASE + nitems(mirror_of))
+		return (miel_hvac_mb_reg_input(sc,
+		    mirror_of[addr - MIEL_HVAC_MB_HOLD_MIRROR_BASE], ok));
 
 	*ok = false;
 	return (0);
@@ -2945,33 +3048,42 @@ miel_hvac_mb_do_write_multi_coil(struct miel_hvac_softc *sc, bool broadcast)
 	miel_hvac_mb_reply(mb, r, 6);
 }
 
+/*
+ * Total length (including the 2-byte CRC) of the RTU request whose leading
+ * bytes are in buf, or 0 if it cannot be determined yet / the function code is
+ * unknown.  Used to frame incoming requests by length rather than by relying on
+ * the T3.5 inter-frame gap, which a cooperatively-scheduled FUNC_LOOP poll is
+ * too coarse to measure reliably above 9600 baud.
+ */
+static uint16_t
+miel_hvac_mb_framelen(const uint8_t *buf, uint16_t len)
+{
+	if (len < 2)
+		return (0);
+
+	switch (buf[1])
+	{
+	case 0x01: case 0x02: case 0x03: case 0x04:
+	case 0x05: case 0x06:
+		return (8);
+	case 0x0f: case 0x10:
+		if (len < 7)
+			return (0);
+		return (7 + buf[6] + 2);
+	default:
+		return (0);
+	}
+}
+
+/* Dispatch one CRC-validated request; sc_buf holds the PDU without the CRC. */
 static void
-miel_hvac_mb_process(struct miel_hvac_softc *sc)
+miel_hvac_mb_handle(struct miel_hvac_softc *sc)
 {
 	struct miel_hvac_mb_softc *mb = sc->sc_mb;
-	uint16_t len = mb->sc_len;
-	uint16_t crc;
-	uint8_t unit, fc;
-	bool broadcast;
-
-	if (len < 4)
-		return;
-
-	crc = ((uint16_t)mb->sc_buf[len - 1] << 8) | mb->sc_buf[len - 2];
-	if (miel_hvac_mb_crc(mb->sc_buf, len - 2) != crc)
-	{
-		mb->sc_crc_errors++;
-		return;
-	}
-
-	unit = mb->sc_buf[0];
-	if (unit != mb->sc_address && unit != 0)
-		return;
+	uint8_t fc = mb->sc_buf[1];
+	bool broadcast = (mb->sc_buf[0] == 0);
 
 	mb->sc_requests++;
-	broadcast = (unit == 0);
-	fc = mb->sc_buf[1];
-	mb->sc_len = len - 2;   /* handlers work on the pdu without the crc */
 
 	switch (fc)
 	{
@@ -2985,25 +3097,22 @@ miel_hvac_mb_process(struct miel_hvac_softc *sc)
 		if (!broadcast)
 			miel_hvac_mb_do_read_regs(sc, fc);
 		break;
+	/*
+	 * Writes are accepted whether or not the unit is connected yet - the
+	 * update is queued and sent once the link is up, matching the HVACSet*
+	 * console commands.
+	 */
 	case 0x05:
+		miel_hvac_mb_do_write_single_coil(sc, broadcast);
+		break;
 	case 0x06:
+		miel_hvac_mb_do_write_single_reg(sc, broadcast);
+		break;
 	case 0x0f:
+		miel_hvac_mb_do_write_multi_coil(sc, broadcast);
+		break;
 	case 0x10:
-		/* queue updates only once we can actually reach the unit */
-		if (!sc->sc_connected)
-		{
-			if (!broadcast)
-				miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_FAILURE);
-			break;
-		}
-		if (fc == 0x05)
-			miel_hvac_mb_do_write_single_coil(sc, broadcast);
-		else if (fc == 0x06)
-			miel_hvac_mb_do_write_single_reg(sc, broadcast);
-		else if (fc == 0x0f)
-			miel_hvac_mb_do_write_multi_coil(sc, broadcast);
-		else
-			miel_hvac_mb_do_write_multi_reg(sc, broadcast);
+		miel_hvac_mb_do_write_multi_reg(sc, broadcast);
 		break;
 	default:
 		if (!broadcast)
@@ -3012,32 +3121,111 @@ miel_hvac_mb_process(struct miel_hvac_softc *sc)
 	}
 }
 
+/*
+ * Try to consume one request from the front of sc_buf.  Returns the number of
+ * leading bytes dealt with (0 = wait for more data).  On a framing/CRC mismatch
+ * a single byte is dropped so a genuine frame starting later in the buffer can
+ * still be recovered without waiting for the bus to fall idle - important on a
+ * shared bus where our slave also sees every other device's traffic.
+ */
+static uint16_t
+miel_hvac_mb_consume(struct miel_hvac_softc *sc)
+{
+	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	uint16_t need, crc;
+
+	if (mb->sc_len < 4)
+		return (0);
+
+	need = miel_hvac_mb_framelen(mb->sc_buf, mb->sc_len);
+	if (need == 0)
+	{
+		/* FC 0x0f / 0x10 byte-count field not received yet -> wait */
+		if ((mb->sc_buf[1] == 0x0f || mb->sc_buf[1] == 0x10) && mb->sc_len < 7)
+			return (0);
+		return (1);   /* unknown function code -> slide to resync */
+	}
+	if (mb->sc_len < need)
+		return (0);   /* rest of the frame is still on the wire */
+	if (need > MIEL_HVAC_MB_BUFLEN)
+		return (1);   /* absurd length -> resync */
+
+	crc = ((uint16_t)mb->sc_buf[need - 1] << 8) | mb->sc_buf[need - 2];
+	if (miel_hvac_mb_crc(mb->sc_buf, need - 2) != crc)
+	{
+		if (mb->sc_buf[0] == mb->sc_address)
+			mb->sc_crc_errors++;   /* count only frames that claim to be ours */
+		return (1);
+	}
+
+	if (mb->sc_buf[0] == mb->sc_address || mb->sc_buf[0] == 0)
+	{
+		uint16_t total = mb->sc_len;
+
+		/*
+		 * If another request is already buffered behind this one, the master
+		 * has timed out and re-polled: apply this (stale) request but do not
+		 * put a late response on the bus - it would land on the master's next
+		 * transaction and make that one fail too.
+		 */
+		mb->sc_no_reply = (total > need
+		    && (mb->sc_buf[need] == mb->sc_address || mb->sc_buf[need] == 0));
+
+		mb->sc_len = need - 2;       /* handlers see the PDU without the CRC */
+		miel_hvac_mb_handle(sc);
+		mb->sc_len = total;
+		mb->sc_no_reply = false;
+	}
+	/* else: a valid frame for another slave - consumed silently */
+
+	return (need);
+}
+
 static void
 miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 {
 	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	TasmotaSerial *serial = mb->sc_serial;
-	bool got = false;
+	int avail;
 
-	while (serial->available())
+	while ((avail = serial->available()) > 0)
 	{
-		int c = serial->read();
-		if (c < 0)
-			break;
-		if (mb->sc_len < MIEL_HVAC_MB_BUFLEN)
-			mb->sc_buf[mb->sc_len++] = (uint8_t)c;
-		else
+		uint16_t room = MIEL_HVAC_MB_BUFLEN - mb->sc_len;
+		size_t want, n;
+
+		if (room == 0)
+		{
 			mb->sc_overruns++;
-		got = true;
-	}
-	if (got)
-		mb->sc_last_us = micros();
+			mb->sc_len = 0;   /* buffer full of unparseable data -> resync */
+			room = MIEL_HVAC_MB_BUFLEN;
+		}
+		want = ((size_t)avail < room) ? (size_t)avail : room;
+		n = serial->read(&mb->sc_buf[mb->sc_len], want);
+		if (n == 0)
+			break;
+		mb->sc_len += n;
+		mb->sc_last_us = micros();   /* needed by the turnaround wait in reply */
 
-	if (mb->sc_len > 0 && (micros() - mb->sc_last_us) > mb->sc_t35_us)
+		for (;;)
+		{
+			uint16_t used = miel_hvac_mb_consume(sc);
+			uint16_t rem;
+
+			if (used == 0)
+				break;
+			rem = mb->sc_len > used ? mb->sc_len - used : 0;
+			if (rem)
+				memmove(mb->sc_buf, &mb->sc_buf[used], rem);
+			mb->sc_len = rem;
+		}
+	}
+
+	/* drop a stale sub-minimal fragment once the bus has gone idle */
+	if (mb->sc_len > 0 && mb->sc_len < 4)
 	{
-		if (mb->sc_len >= 4)
-			miel_hvac_mb_process(sc);
-		mb->sc_len = 0;
+		uint32_t gap = mb->sc_t35_us > 4000 ? mb->sc_t35_us : 4000;
+		if ((micros() - mb->sc_last_us) > gap)
+			mb->sc_len = 0;
 	}
 }
 
@@ -3104,8 +3292,10 @@ miel_hvac_mb_init(struct miel_hvac_softc *sc)
 	mb->sc_t35_us   = miel_hvac_mb_t35_us(mb->sc_baudrate);
 	mb->sc_txen_pin = PinUsed(GPIO_MIEL_HVAC_MB_TXEN) ? Pin(GPIO_MIEL_HVAC_MB_TXEN) : -1;
 
+	/* Large RX buffer: on a shared bus we also see every other slave's
+	 * traffic and FUNC_LOOP can be milliseconds late. */
 	mb->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_MB_RX),
-	    Pin(GPIO_MIEL_HVAC_MB_TX), 2);
+	    Pin(GPIO_MIEL_HVAC_MB_TX), 2, 0, 1024);
 	if (!mb->sc_serial->begin(mb->sc_baudrate,
 	    ConvertSerialConfig(mb->sc_sconfig)))
 	{
