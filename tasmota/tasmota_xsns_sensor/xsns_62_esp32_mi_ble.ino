@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.8.31"
+#define MI32_VERSION "v26.9.4"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  26.9.4            changed - BTHome reset button if datagram received (#25002)
+  -------
   26.8.31           changed - display icons instead of data lines. disable by removing #define USE_SENSOR_ICON
   -------
   0.9.3.4 20260823  changed - redesign BTHome events and buffer JSON message for easier rule/script/berry support
@@ -113,7 +115,7 @@
 //#define USE_SENSOR_ICON           // Display GUI icons instead of line with data
 
 #define USE_MI_DECRYPTION         // Enable also for BTHome V2
-#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
+//#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
 
 #include <vector>
 #ifdef USE_MI_DECRYPTION
