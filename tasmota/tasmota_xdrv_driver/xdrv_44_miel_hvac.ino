@@ -22,10 +22,22 @@
  * Mitsubishi Electric HVAC (CN105) serial interface
  *
  * Speaks the Mitsubishi "IT protocol" on the indoor unit's CN105 connector and exposes it
- * through the console (HVACSet* commands), MQTT (SENSOR / HVACSettings) and a climate
- * control panel on the web UI main page.  Protocol reference:
+ * through the console (HVACSet* commands), MQTT (SENSOR / HVACSettings) and a web control
+ * panel on the main page.  Protocol reference:
  * https://muart-group.github.io/developer/it-protocol/
  * Compile with USE_MIEL_HVAC; GPIOs "MiEl HVAC Rx" / "MiEl HVAC Tx".
+ *
+ * --- Web control panel (USE_WEBSERVER) ---------------------------------------------------
+ * Full climate panel on the main page: mode (Auto/Heat/Cool/Dry/Fan/Off), target
+ * temperature, fan speed, vertical + horizontal vane, air direction and the remote lock
+ * (prohibit).  Which controls appear is gated by the 0x7B 0xC9 Base Capabilities, and the
+ * panel is refreshed in place on every web_refresh poll so it also follows changes made
+ * from the IR remote / MQTT / console.
+ *
+ * A control change is written to sc_settings straight away, before the unit confirms with
+ * the next 0x62 0x02, so the panel, the Modbus registers and SENSOR show the intent
+ * instead of the stale pre-change state for ~1s; the unit's next report wins if it
+ * rejects the change.
  *
  * --- Modbus RTU slave (USE_MIEL_HVAC_MODBUS_SLAVE, ESP32) ---------------------------------
  * Optional second RS485 port that mirrors every driver state as read registers and maps
@@ -392,14 +404,21 @@ struct miel_hvac_msg_update_settings
 #define MIEL_HVAC_SETTINGS_F_TEMP          (1 << 10)
 #define MIEL_HVAC_SETTINGS_F_FAN           (1 << 11)
 #define MIEL_HVAC_SETTINGS_F_VANE          (1 << 12)
-#define MIEL_HVAC_SETTINGS_F_PROHIBIT      (1 << 13)
+/*
+ * Prohibit / remote lock: update flag is 0x0040 on the wire (i.e. bit 14
+ * of the host-order uint16 before htons()), and the lock byte sits at
+ * payload offset 11 — not the offset the GET response uses (8).
+ * Docs: muart-group.github.io/.../0x41-set-request/0x01-set-settings
+ */
+#define MIEL_HVAC_SETTINGS_F_PROHIBIT      (1 << 14)
 	uint8_t power;
 	uint8_t mode;
 	uint8_t temp;
 	uint8_t fan;
 	uint8_t vane;
+	uint8_t _pad1[3];
 	uint8_t prohibit;
-	uint8_t _pad1[4];
+	uint8_t _pad2[1];
 	uint8_t widevane;
 	uint8_t temp05;
 	uint8_t airdirection;
@@ -413,7 +432,7 @@ CTASSERT(offsetof(struct miel_hvac_msg_update_settings, mode)         == MIEL_HV
 CTASSERT(offsetof(struct miel_hvac_msg_update_settings, temp)         == MIEL_HVAC_OFFS(10));
 CTASSERT(offsetof(struct miel_hvac_msg_update_settings, fan)          == MIEL_HVAC_OFFS(11));
 CTASSERT(offsetof(struct miel_hvac_msg_update_settings, vane)         == MIEL_HVAC_OFFS(12));
-CTASSERT(offsetof(struct miel_hvac_msg_update_settings, prohibit)     == MIEL_HVAC_OFFS(13));
+CTASSERT(offsetof(struct miel_hvac_msg_update_settings, prohibit)     == MIEL_HVAC_OFFS(16));
 CTASSERT(offsetof(struct miel_hvac_msg_update_settings, widevane)     == MIEL_HVAC_OFFS(18));
 CTASSERT(offsetof(struct miel_hvac_msg_update_settings, temp05)       == MIEL_HVAC_OFFS(19));
 CTASSERT(offsetof(struct miel_hvac_msg_update_settings, airdirection) == MIEL_HVAC_OFFS(20));
@@ -3909,6 +3928,11 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 			ad != NULL ? ad : "off");
 	}
 
+	name = miel_hvac_map_byval(set->prohibit,
+		miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map));
+	miel_hvac_web_ro(js, "hvro_prohibit", "Prohibit",
+		name != NULL ? name : "off");
+
 	if (sc->sc_stage.type != 0)
 	{
 		name = miel_hvac_map_byval(sc->sc_stage.data.stage.operation,
@@ -3947,9 +3971,9 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 	{
 		/*
 		 * Keep the interactive controls in sync with the unit — but not
-		 * while a change is still on its way to the unit (the settings we
-		 * would sync from are stale then), and never yank a control the
-		 * user is currently interacting with.
+		 * while a change is still queued (sc_settings is only made to
+		 * reflect it once the packet goes out), and never yank a control
+		 * the user is currently interacting with.
 		 */
 		if (!miel_hvac_update_settings_pending(sc)
 		    && !miel_hvac_update_runstate_pending(sc))
@@ -3965,6 +3989,8 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 				? miel_hvac_map_byval(set->airdirection,
 					miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map))
 				: "off";
+			const char *pr = miel_hvac_map_byval(set->prohibit,
+				miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map));
 
 			WSContentSend_P(PSTR(
 				"function S(i,v){var s=eb(i);"
@@ -3981,6 +4007,8 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 				WSContentSend_P(PSTR("S('hvh','%s');"), wn);
 			if (ad != NULL)
 				WSContentSend_P(PSTR("S('hvd','%s');"), ad);
+			if (pr != NULL)
+				WSContentSend_P(PSTR("S('hvpr','%s');"), pr);
 
 			/* target temperature: reuse the panel's own hvts() setter */
 			char tstr[12];
@@ -4032,6 +4060,7 @@ miel_hvac_web_sensor(struct miel_hvac_softc *sc)
 #define MIEL_HVAC_WEBARG_VANEV  "hvv"
 #define MIEL_HVAC_WEBARG_VANEH  "hvh"
 #define MIEL_HVAC_WEBARG_AIRDIR "hvd"
+#define MIEL_HVAC_WEBARG_PROHIBIT "hvpr"
 #define MIEL_HVAC_WEBARG_PURIFY "hvp"
 #define MIEL_HVAC_WEBARG_NIGHT  "hvn"
 #define MIEL_HVAC_WEBARG_ECONO  "hve"
@@ -4162,7 +4191,15 @@ miel_hvac_web_optlabel(const char *name)
 		{ "indirect",     "Indirect"      },
 		{ "direct",       "Direct"        },
 		{ "off",          "Off"           },
+		{ "power",        "Power"         },
+		{ "mode",         "Mode"          },
+		{ "mode_power",   "Mode-Power"    },
+		{ "temp",         "Temp"          },
+		{ "temp_power",   "Temp-Power"    },
+		{ "temp_mode",    "Temp-Mode"     },
+		{ "all",          "All"           },
 	};
+	static char buf[24];
 	size_t i;
 
 	for (i = 0; i < nitems(lbl); i++)
@@ -4171,7 +4208,11 @@ miel_hvac_web_optlabel(const char *name)
 			return (lbl[i].v);
 	}
 
-	return (name);
+	/* fallback: protocol keyword with '_' shown as spaces */
+	for (i = 0; i + 1 < sizeof(buf) && name[i] != '\0'; i++)
+		buf[i] = (name[i] == '_') ? ' ' : name[i];
+	buf[i] = '\0';
+	return (buf);
 }
 
 static void
@@ -4338,6 +4379,11 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			adcur, NULL, 0);
 	}
 
+	/* Prohibit — lock out RC changes (power / mode / temperature) */
+	miel_hvac_web_select("Prohibit", "hvpr", MIEL_HVAC_WEBARG_PROHIBIT,
+		miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map),
+		set->prohibit, NULL, 0);
+
 	/* Purifier / Night mode / EconoCool (0x08 Set Run State) */
 	if (!cv || caps->cap_run_state)
 	{
@@ -4386,6 +4432,7 @@ miel_hvac_web_getarg(void)
 	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_VANEV,  D_CMND_MIEL_HVAC_SETSWINGV);
 	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_VANEH,  D_CMND_MIEL_HVAC_SETSWINGH);
 	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_AIRDIR, D_CMND_MIEL_HVAC_SETAIRDIRECTION);
+	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_PROHIBIT, D_CMND_MIEL_HVAC_SETPROHIBIT);
 	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_PURIFY, D_CMND_MIEL_HVAC_SETPURIFY);
 	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_NIGHT,  D_CMND_MIEL_HVAC_SETNIGHTMODE);
 	MIEL_HVAC_WEB_GETARG(MIEL_HVAC_WEBARG_ECONO,  D_CMND_MIEL_HVAC_SETECONOCOOL);
@@ -4482,8 +4529,44 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 	if (miel_hvac_update_settings_pending(sc))
 	{
 		struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+		uint16_t f = update->flags;
 
 		miel_hvac_send_update_settings(sc, update);
+
+		/*
+		 * Optimistic local apply: reflect what was just sent in
+		 * sc_settings so every reader (web panel sync, Modbus registers,
+		 * SENSOR) shows the intent right away instead of the pre-change
+		 * state for the ~1s until the unit confirms with the next 0x62
+		 * 0x02.  If the unit rejects the change its report wins on the
+		 * next read.  The update and settings structs share field names.
+		 */
+		if (sc->sc_settings.type != 0)
+		{
+			struct miel_hvac_data_settings *set =
+				&sc->sc_settings.data.settings;
+
+			if (f & htons(MIEL_HVAC_SETTINGS_F_POWER))
+				set->power = update->power;
+			if (f & htons(MIEL_HVAC_SETTINGS_F_MODE))
+				set->mode = update->mode;
+			if (f & htons(MIEL_HVAC_SETTINGS_F_TEMP))
+			{
+				set->temp = update->temp;
+				set->temp05 = update->temp05;
+			}
+			if (f & htons(MIEL_HVAC_SETTINGS_F_FAN))
+				set->fan = update->fan;
+			if (f & htons(MIEL_HVAC_SETTINGS_F_VANE))
+				set->vane = update->vane;
+			if (f & htons(MIEL_HVAC_SETTINGS_F_PROHIBIT))
+				set->prohibit = update->prohibit;
+			if (f & htons(MIEL_HVAC_SETTINGS_F_WIDEVANE))
+				set->widevane = update->widevane;
+			if (f & htons(MIEL_HVAC_SETTINGS_F_AIRDIRECTION))
+				set->airdirection = update->airdirection;
+		}
+
 		miel_hvac_init_update_settings(update);
 
 		/* refresh settings on next tick */
