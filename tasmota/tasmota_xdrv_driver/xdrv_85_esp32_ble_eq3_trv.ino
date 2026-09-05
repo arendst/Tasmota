@@ -299,7 +299,6 @@ struct eq3_device_t {
   uint8_t ValvePos;          // 1 Byte
   uint8_t Mode;              // 1 Byte
   uint8_t lastStatusLen;     // 1 Byte
-  bool pairing;              // 1 Byte
   bool Battery;              // 1 Byte
   uint8_t addr[6];           // 6 Bytes
   uint8_t lastStatus[16];    // 16 Bytes
@@ -312,12 +311,8 @@ int retries = 0;
 // allow 240s before timeout of sa device - based on that we restart BLE if we don't see adverts for 120s
 #define EQ3_TIMEOUT 240L
 
-uint8_t pairingaddr[6] = {};
-char pairingserial[20] = {};
-bool pairing = false;
-
 #define EQ3_NUM_DEVICESLOTS 16
-eq3_device_t EQ3Devices[EQ3_NUM_DEVICESLOTS];
+eq3_device_t EQ3Devices[EQ3_NUM_DEVICESLOTS] = {};
 SemaphoreHandle_t EQ3mutex = nullptr;
 
 uint16_t EQ3Period = 300;
@@ -655,7 +650,7 @@ int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t* op) {
     retries--;
 
     if (EQ3Operation(addrev, op->dataToWrite, op->writelen, (int)context)) {
-      AddLog(LOG_LEVEL_INFO, "EQ3: %s: Operation 1/%u \"%s\" failed - retries left: %d/%d - State: %d", addrStr(addrev), opQueue.size(), IdxToTrvCmd(context & 0x7f), retries, EQ3Retries, op->state);
+      AddLog(LOG_LEVEL_INFO, "EQ3: %s: Operation 1/%u \"%s\" failed - retries left: %d/%d - State: %s (%d)", addrStr(addrev), opQueue.size(), IdxToTrvCmd(context & 0x7f), retries, EQ3Retries, BLE_ESP32::getStateString(op->state), op->state);
       opInProgress = true;
       return 0; 
     }
@@ -663,7 +658,7 @@ int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t* op) {
   }
 
   if (is_failed) {
-    AddLog(LOG_LEVEL_ERROR, "EQ3: %s: Operation 1/%u \"%s\" final fail - State: %d", addrStr(addrev), opQueue.size(), IdxToTrvCmd(context & 0x7f), op->state);
+    AddLog(LOG_LEVEL_ERROR, "EQ3: %s: Operation 1/%u \"%s\" final fail - State: %s (%d)", addrStr(addrev), opQueue.size(), IdxToTrvCmd(context & 0x7f), BLE_ESP32::getStateString(op->state), op->state);
   } else {
     AddLog(LOG_LEVEL_DEBUG, "EQ3: %s: Operation 1/%u \"%s\" done", addrStr(addrev), opQueue.size(), IdxToTrvCmd(context & 0x7f));
   }
@@ -682,129 +677,12 @@ int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t* op) {
 }
 
 /*********************************************************************************************\
- * Functons actualy called from within the BLE task
+ * Functions actualy called from within the BLE task
 \*********************************************************************************************/
 
-int ispairing2(const uint8_t* payload, int len, char* name, int nameLen, char* serial, int serialLen) {
-  while (len) {
-    int l = *payload;
-    //BLE_ESP32::dump(temp, 40, payload, l+1);
-    //AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s"), temp);
-
-    payload++;
-    len--;
-    if (len < l) {
-      //AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: part len er %d<%d"),len, l);
-      return 0;
-    }
-    switch (*payload) {
-      case 0xff: {// parse the EQ3 advert payload looking for nnFF01ssssssss
-        payload++;
-        len--;
-        l--;
-        if (*payload == 1) {
-          payload++;
-          len--;
-          l--;
-          //char serialstr[20];
-          //strncpy(serialstr, (const char*)payload, l);
-          //AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: adv part FF01 detected %s"), serialstr);
-          // we don;t use these, but that's what they seem to be....
-          strncpy(serial, (const char*)payload, tmin(l, serialLen));
-          serial[serialLen - 1] = 0;
-          payload += l;
-          len -= l;
-          return 1;
-        } else {
-          payload += l;
-          len -= l;
-        }
-      } break;
-      case 0x09: {
-        payload++;
-        len--;
-        l--;
-        if (*payload == 1) {
-          payload++;
-          len--;
-          l--;
-          //char serialstr[20];
-          //strncpy(serialstr, (const char*)payload, l);
-          //AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: adv part FF01 detected %s"), serialstr);
-          // we don;t use these, but that's what they seem to be....
-          strncpy(serial, (const char*)payload, tmin(l, serialLen));
-          name[nameLen - 1] = 0;
-          payload += l;
-          len -= l;
-          //return 1;
-        } else {
-          payload += l;
-          len -= l;
-        }
-      } break;
-      default:{
-        payload += l;
-        len -= l;
-      } break;
-    }
-  }
-  return 0;
-}
-
-int ispairing(const uint8_t* payload, int len) {
-  //char temp[40];
-  //BLE_ESP32::dump(temp, 40, payload, len);
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: pair%d %s"), len, temp);
-  while (len) {
-    int l = *payload;
-    //BLE_ESP32::dump(temp, 40, payload, l+1);
-    //AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: %s"), temp);
-
-    payload++;
-    len--;
-    if (len < l) {
-      //AddLog(LOG_LEVEL_ERROR, PSTR("EQ3: part len er %d<%d"),len, l);
-      return 0;
-    }
-    if (*payload == 0xff) {
-      payload++;
-      len--;
-      l--;
-      if (*payload == 1) {
-        payload++;
-        len--;
-        l--;
-        //char serialstr[20];
-        //strncpy(serialstr, (const char*)payload, l);
-        //AddLog(LOG_LEVEL_DEBUG, PSTR("EQ3: adv part FF01 detected %s"), serialstr);
-        // we don;t use these, but that's what they seem to be....
-        const uint8_t* serial = payload;
-        uint8_t serialLen = l;
-        payload += l;
-        len -= l;
-        return 1;
-      } else {
-        payload += l;
-        len -= l;
-      }
-    } else {
-      payload += l;
-      len -= l;
-    }
-  }
-  return 0;
-}
-
-void TaskEQ3AddDevice(int8_t RSSI, const uint8_t* addr, char* serial) {
+void TaskEQ3AddDevice(int8_t RSSI, const uint8_t* addr) {
   eq3_device_t* targetDevice = nullptr;
   eq3_device_t* firstFreeSlot = nullptr;
-
-  if (serial && *serial && !pairing) {
-    memcpy(pairingaddr, addr, 6);
-    strncpy(pairingserial, serial, sizeof(pairingserial));
-    pairingserial[sizeof(pairingserial) - 1] = 0;
-    pairing = true;
-  }
 
   for (auto& device : EQ3Devices) {
     if (!memcmp(addr, device.addr, 6)) {
@@ -830,7 +708,6 @@ void TaskEQ3AddDevice(int8_t RSSI, const uint8_t* addr, char* serial) {
   targetDevice->timeoutTime = esp_timer_get_time() + 1000000ULL * EQ3_TIMEOUT;
   memcpy(targetDevice->addr, addr, 6);
   targetDevice->RSSI = RSSI;
-  targetDevice->pairing = (serial && *serial);
 }
 
 int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t* pStruct)
@@ -869,17 +746,9 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t* pStruct)
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "EQ3: %s: Device seen", addrStr(addr));
 #endif
 
-  uint8_t* payload = (uint8_t*)advertisedDevice->getPayload().data();
-  size_t payloadlen = advertisedDevice->getPayload().size();
-
-  char name[20] {};
-  char serial[20] {};
-  // bool pairing = false; // Is not used below, so removing should be no problem
-  ispairing2(payload, payloadlen, name, sizeof(name), serial, sizeof(serial));
-
   // this will take and keep the mutex until the function is over
   TasAutoMutex localmutex(&EQ3mutex);
-  TaskEQ3AddDevice(RSSI, addr, serial);
+  TaskEQ3AddDevice(RSSI, addr);
   return 0;
 }
 
@@ -898,8 +767,6 @@ void EQ3Init(void) {
 #endif
 
   EQ3Period = tmax(Settings->tele_period, EQ3_NUM_DEVICESLOTS);
-
-  return;
 }
 
 /***********************************************************************\
@@ -913,16 +780,6 @@ void EQ3Init(void) {
 
 void EQ3EverySecond(void) {
 
-/// Handle pairing ////
-  if (pairing) {
-    Response_P("{\"pairing\":\"%s\",\"serial\":\"%s\"}", addrStr(pairingaddr), pairingserial);
-    char addrstr[4 + 8 * 2 + 2] = "EQ3/";
-    BLE_ESP32::dump(&addrstr[4], 8 * 2 + 2, pairingaddr, 6);
-    char* topic = topicPrefix((int)STAT, pairingaddr, true);
-    MqttPublish(topic, false);
-    pairing = false;
-  }
-
 /// Check for timeout and cleanup devices ////
   for (auto& device : EQ3Devices) {
     if (device.timeoutTime && (device.timeoutTime < esp_timer_get_time() || !Settings->flag5.mi32_enable)) {
@@ -933,7 +790,7 @@ void EQ3EverySecond(void) {
 
 /// Handle polling ////
   if (NextPollSeconds) NextPollSeconds--;
-  if (!NextPollSeconds && EQ3Period && opQueue.empty() && !opInProgress && !pairing) {
+  if (!NextPollSeconds && EQ3Period && opQueue.empty() && !opInProgress) {
     uint8_t activeDevices = 0;
     for (const auto& dev : EQ3Devices) {
       if (dev.timeoutTime) activeDevices++;
@@ -962,7 +819,7 @@ void EQ3EverySecond(void) {
 
 //// Simulation ////
 #ifdef EQ3_SIMULATION
-  TaskEQ3AddDevice(-RtcTime.second - 30, TESTADDR1, nullptr);
+  TaskEQ3AddDevice(-RtcTime.second - 30, TESTADDR1);
   if (TasmotaGlobal.uptime < 120) {
     for (auto& dev : EQ3Devices) {
       if (!memcmp(dev.addr, TESTADDR1, 6)) dev.lastStatusTime = UtcTime();
@@ -1365,23 +1222,19 @@ uint8_t CmndTrvNext(char* data) {
   // only allow one command in progress
   //if (retries) return TRV_IGNOREDBUSY;
 
-  bool useAlias = false;
-  uint8_t addrbin[6];
-  int addrres = BLE_ESP32::getAddr(addrbin, p);
-  if (addrres) {
-    if (addrres == 2) {
-      AddLog(LOG_LEVEL_DEBUG, "EQ3: addr used alias: %s", p);
-      useAlias = true;
-    }
-    NimBLEAddress addr(addrbin, addrbin[6]);
-
-#ifdef EQ3_DEBUG
-    //AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("EQ3: cmd addr: %s -> %s"), p, addr.toString().c_str());
-#endif
-  } else {
-    AddLog(LOG_LEVEL_ERROR, "EQ3: addr invalid: %s", p);
+  uint8_t addrbin[7]; // Must be 7, because addrbin[6] contains the type
+  int addrResult = BLE_ESP32::getAddr(addrbin, p);
+  if (!addrResult) {
+    AddLog(LOG_LEVEL_ERROR, "EQ3: Address invalid: %s", p);
     return TRV_INVADDR;
   }
+  bool useAlias = (addrResult == 2);
+  if (useAlias) AddLog(LOG_LEVEL_DEBUG, "EQ3: %s: Used alias: %s", addrStr(addrbin), p);
+//  NimBLEAddress addr(addrbin, addrbin[6]); // Object addr not used, only addrbin. Maybe we use it in future.
+
+#ifdef EQ3_DEBUG
+  //AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("EQ3: cmd addr: %s -> %s"), p, addrStr(addrbin));
+#endif
 
   // get index of next part of cmd
   char* cmd = strtok(nullptr, " ");
@@ -1527,7 +1380,7 @@ bool mqtt_direct() {
   int remains = 120;
   memset(tmp, 0, sizeof(tmp));
   p = tmp;
-  uint8_t addr[6];
+  uint8_t addr[7]; // Must be 7, because addr[6] contains the type
   uint8_t res = TRV_INVADDR; // invalid address/alias
 
   // if address or alias valid
