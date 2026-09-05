@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - MiEL HVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table (#24992)
 - MiEL HVAC Modbus length-based framing, queue writes, FC03 sensor mirror (#24993)
+- Zigbee deferred timer use after free, and the truncated backtrace that hid it (#24979)
+- Matter: fix autoconfiguration after configuration reset (#24997)
 
 ### Removed
 
