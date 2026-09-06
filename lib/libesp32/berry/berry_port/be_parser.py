@@ -536,8 +536,8 @@ def be_code_freeregs(finfo, n):
     # #define be_code_freeregs(f, n)  ((f)->freereg -= (bbyte)(n))
     finfo.freereg -= n
 
-def be_code_prebinop(finfo, op, e):
-    return _lazy_be_code().be_code_prebinop(finfo, op, e)
+def be_code_prebinop(finfo, op, e, dst):
+    return _lazy_be_code().be_code_prebinop(finfo, op, e, dst)
 
 def be_code_binop(finfo, op, e1, e2, dst):
     return _lazy_be_code().be_code_binop(finfo, op, e1, e2, dst)
@@ -1674,18 +1674,24 @@ def suffix_alloc_reg(parser, l):
 def compound_assign(parser, op, l, r):
     """Handle compound assignment (+=, -=, etc.)."""
     dst = -1
+    e = None
     if op != OptAssign:
         check_var(parser, l)
         dst = parser.finfo.freereg
         suffix_alloc_reg(parser, l)
-    expr(parser, r)
-    check_var(parser, r)
-    if op != OptAssign:
         e = _clone_expdesc(l)
         if op < OptAndAssign:
             op = op - OptAddAssign + OptAdd
         else:
             op = op - OptAndAssign + OptBitAnd
+        # Materialize the left operand here, before the right one is parsed,
+        # the way sub_expr() does it through be_code_prebinop(). Otherwise the
+        # code that loads it is emitted from binaryexp() below, by then the
+        # right side has opened its jump list, and the load lands inside it.
+        be_code_prebinop(parser.finfo, op, e, dst)
+    expr(parser, r)
+    check_var(parser, r)
+    if op != OptAssign:
         be_code_binop(parser.finfo, op, e, r, dst)
         _copy_expdesc(r, e)
 
@@ -1800,7 +1806,7 @@ def sub_expr(parser, e, prio):
         e2 = bexpdesc()
         check_var(parser, e)
         scan_next_token(parser)
-        be_code_prebinop(finfo, op, e)
+        be_code_prebinop(finfo, op, e, -1)  # and or
         if op == OptConnect:
             parser.finfo.binfo.sideeffect = 1
         init_exp(e2, ETVOID, 0)

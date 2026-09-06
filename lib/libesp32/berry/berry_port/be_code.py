@@ -935,6 +935,11 @@ if BE_USE_SCRIPT_COMPILER:
     #         pct = code_bool(finfo, reg, 1, 0);
     #         patchlistaux(finfo, e->f, finfo->pc, pcf);
     #         patchlistaux(finfo, e->t, finfo->pc, pct);
+    #         /* the LDBOOL pair wrote the value to `reg`; record that in `e`, so that
+    #          * callers which re-read the descriptor instead of using the return
+    #          * value do not pick up the register of the last operand */
+    #         e->type = ETREG;
+    #         e->v.idx = reg;
     #         e->t = NO_JUMP;
     #         e->f = NO_JUMP;
     #         e->not = 0;
@@ -957,6 +962,11 @@ if BE_USE_SCRIPT_COMPILER:
             pct = codeABC(finfo, OP_LDBOOL, reg, 1, 0)
             patchlistaux(finfo, e.f, finfo.pc, pcf)
             patchlistaux(finfo, e.t, finfo.pc, pct)
+            # the LDBOOL pair wrote the value to `reg`; record that in `e`, so that
+            # callers which re-read the descriptor instead of using the return
+            # value do not pick up the register of the last operand
+            e.type = ETREG
+            e.v.idx = reg
             e.t = NO_JUMP
             e.f = NO_JUMP
             e.not_ = 0
@@ -1044,7 +1054,7 @@ if BE_USE_SCRIPT_COMPILER:
     # be_code_prebinop — pre-process binary operator
     # ========================================================================
 
-    # void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e)
+    # void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e, int dst)
     # {
     #     switch (op) {
     #     case OptAnd:
@@ -1054,18 +1064,18 @@ if BE_USE_SCRIPT_COMPILER:
     #         be_code_jumpbool(finfo, e, btrue);
     #         break;
     #     default:
-    #         exp2anyreg(finfo, e);
+    #         exp2reg(finfo, e, dst);
     #         break;
     #     }
     # }
-    def be_code_prebinop(finfo, op, e):
+    def be_code_prebinop(finfo, op, e, dst):
         """Pre-process binary operator (short-circuit for && and ||)."""
         if op == OptAnd:
             be_code_jumpbool(finfo, e, bfalse)
         elif op == OptOr:
             be_code_jumpbool(finfo, e, btrue)
         else:
-            exp2anyreg(finfo, e)
+            exp2reg(finfo, e, dst)
 
     # ========================================================================
     # be_code_binop — Apply binary operator
@@ -1608,15 +1618,37 @@ if BE_USE_SCRIPT_COMPILER:
 
     # static void package_suffix(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
     # {
-    #     c->v.ss.obj = exp2anyreg(finfo, c);
-    #     int key = exp2anyreg(finfo, k);
+    #     int key;
+    #     if (hasjump(k)) {
+    #         /* The key still carries open short-circuit jumps. Close them before
+    #          * materializing the object, otherwise the code that loads the object
+    #          * lands between those jumps and is skipped whenever the short circuit
+    #          * is taken. Materializing the object first is what 2785c08 changed in
+    #          * order to save a register in `self.a[128]`, so keep that order for
+    #          * every key that has no pending jumps. */
+    #         key = exp2anyreg(finfo, k);
+    #         c->v.ss.obj = exp2anyreg(finfo, c);
+    #     } else {
+    #         c->v.ss.obj = exp2anyreg(finfo, c);
+    #         key = exp2anyreg(finfo, k);
+    #     }
     #     c->v.ss.tt = c->type;
     #     c->v.ss.idx = key;
     # }
     def package_suffix(finfo, c, k):
         """Package a suffix object from c with key k."""
-        c.v.ss.obj = exp2anyreg(finfo, c)
-        key = exp2anyreg(finfo, k)
+        if hasjump(k):
+            # The key still carries open short-circuit jumps. Close them before
+            # materializing the object, otherwise the code that loads the object
+            # lands between those jumps and is skipped whenever the short circuit
+            # is taken. Materializing the object first is what 2785c08 changed in
+            # order to save a register in `self.a[128]`, so keep that order for
+            # every key that has no pending jumps.
+            key = exp2anyreg(finfo, k)
+            c.v.ss.obj = exp2anyreg(finfo, c)
+        else:
+            c.v.ss.obj = exp2anyreg(finfo, c)
+            key = exp2anyreg(finfo, k)
         c.v.ss.tt = c.type
         c.v.ss.idx = key
 

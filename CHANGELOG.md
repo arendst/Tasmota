@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - MiEL HVAC Modbus length-based framing, queue writes, FC03 sensor mirror (#24993)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it (#24979)
 - Matter: fix autoconfiguration after configuration reset (#24997)
+- Berry rare register allocation bug
 
 ### Removed
 
