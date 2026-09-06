@@ -689,11 +689,14 @@ int ble_local_store_write(int type, const union ble_store_value* value) {
   
   FILE* file = fopen(filepath, "w");
   if (file) {
-    fwrite(&value->sec, 1, sizeof(ble_store_value_sec), file);
+    size_t written = fwrite(&value->sec, 1, sizeof(ble_store_value_sec), file);
     fclose(file);
-    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: BLE data saved in %s", filepath);
-    return 0; // 0 = Success
+    if (written == sizeof(ble_store_value_sec)) {
+      AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: BLE data saved in %s", filepath);
+      return 0; // 0 = Success
+    }
   }
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Save BLE data failed");
   return BLE_HS_ENOMEM; // Write failed
 }
 
