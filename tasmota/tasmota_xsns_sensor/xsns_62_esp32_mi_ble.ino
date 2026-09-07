@@ -4253,7 +4253,7 @@ const char SI_WEB_STATUS_LINE[] PROGMEM =
   "<tr class='itd itr'>"
   "<td><b title='0x%6_H'>%s</b></td>" // name
   "<td>%s</td>" // sbatt (Battery Indicator)
-  "<td><div title='RSSI %s' class='si'>"; // slqi
+  "<td><div title='" D_RSSI " %s' class='si'>"; // slqi
 
 const char SI_WEB_BATTERY[] PROGMEM =
   "<div title='%s%d%%%s'><i class='bt' style='--bl:%dpx;color:#%02x%02x%02x'></i></div>";  // Need div for touch media tooltip to work
@@ -4427,7 +4427,7 @@ void MI32Show(bool json)
       uint32_t rssi_as_quality = WifiGetRssiAsQuality(p->RSSI);
       uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
       char rssi[16];
-      snprintf_P(rssi, sizeof(rssi), PSTR("%d (%d%%)"), p->RSSI, rssi_as_quality);
+      snprintf(rssi, sizeof(rssi), "%d%% (%d dBm)", rssi_as_quality, p->RSSI);
 
       // New line: Device name, battery state, RSSI and last seen
       WSContentSend_P(SI_WEB_STATUS_LINE,
