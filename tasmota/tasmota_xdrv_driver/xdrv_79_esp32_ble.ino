@@ -34,6 +34,7 @@
 #ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
 #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_BLE_ESP32
+#ifdef USE_UFILESYS
 
 /*
   xdrv_79:
@@ -151,6 +152,9 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 
 #define XDRV_79                    79
 
+#define XDRV_79_KEY "drvset79" // Unique driver key for central filesystem
+#define MAX_BOND_DEVICES 16
+
 #include <vector>
 #include <deque>
 #include <string.h>
@@ -229,8 +233,6 @@ namespace BLE_ESP32 {
 
 #define BLE_ESP32_MAXNAMELEN 32
 #define BLE_ESP32_MAXALIASLEN 32
-
-#define BLE_STORE_DIR "/.blestore"
 
 #define MAX_BLE_DATA_LEN 100
 struct generic_sensor_t {
@@ -652,64 +654,6 @@ const char *BLE_RESTART_BLE_REASON_CONN_LIMIT = PSTR("connect failed with connec
 const char *BLE_RESTART_BLE_REASON_CONN_EXISTS = PSTR("connect failed with connection exists");
 const char *BLERestartBLEReason = nullptr;
 
-// Global native hook: Filepath
-static void ble_get_bond_filepath(const uint8_t* val, int type, char* out_buf, size_t buf_len) {
-  // Format: BLE_STORE_DIR/AABBCCDDEEFF.TYPE
-  snprintf(out_buf, buf_len, BLE_STORE_DIR "/%02X%02X%02X%02X%02X%02X.%03d",
-    val[5], val[4], val[3], val[2], val[1], val[0], type);
-}
-
-// Global native hook: Read stored BLE data
-int ble_local_store_read(int type, const union ble_store_key* key, union ble_store_value* value) {
-  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOENT; // Only that is needed at the moment
-  char filepath[sizeof(BLE_STORE_DIR) + 20];
-  
-  // Pass the raw 6-byte MAC array pointer from the internal union struct
-  ble_get_bond_filepath(key->sec.peer_addr.val, type, filepath, sizeof(filepath));
-  
-  FILE* file = fopen(filepath, "r");
-  if (file) {
-    if (fread(&value->sec, 1, sizeof(ble_store_value_sec), file) == sizeof(ble_store_value_sec)) {
-      fclose(file);
-      AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: BLE data loaded from %s", filepath);
-      return 0; // 0 = Success for the NimBLE controller
-    }
-    fclose(file);
-  }
-  return BLE_HS_ENOENT; // Key not found, falls back to normal pairing workflow
-}
-
-// Global native hook: Write BLE data
-int ble_local_store_write(int type, const union ble_store_value* value) {
-  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOMEM; // Only that is needed at the moment
-  char filepath[sizeof(BLE_STORE_DIR) + 20];
-  
-  // Pass the raw 6-byte MAC array pointer from the internal union struct
-  ble_get_bond_filepath(value->sec.peer_addr.val, type, filepath, sizeof(filepath));
-  
-  FILE* file = fopen(filepath, "w");
-  if (file) {
-    size_t written = fwrite(&value->sec, 1, sizeof(ble_store_value_sec), file);
-    fclose(file);
-    if (written == sizeof(ble_store_value_sec)) {
-      AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: BLE data saved in %s", filepath);
-      return 0; // 0 = Success
-    }
-  }
-  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Save BLE data failed");
-  return BLE_HS_ENOMEM; // Write failed
-}
-
-// Global API: Delete dynamic storage file
-void ble_local_store_delete(const uint8_t* mac_addr) {
-  if (!mac_addr) return;
-  char filepath[sizeof(BLE_STORE_DIR) + 20];
-
-  // Only delete files of BLE_STORE_OBJ_TYPE_PEER_SEC as no others are needed at the moment
-  ble_get_bond_filepath(mac_addr, BLE_STORE_OBJ_TYPE_PEER_SEC, filepath, sizeof(filepath));
-  unlink(filepath); 
-  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Deleted BLE data file %s", filepath);
-}
 
 /*********************************************************************************************\
  * log of all devices present
@@ -1250,6 +1194,149 @@ bool isDeviceInFilter(const String& deviceName) {
 #endif
 
 /*********************************************************************************************\
+ * BLE storage functions
+\*********************************************************************************************/
+
+int BLEStoreModify(const uint8_t* peerMAC, const char* peerKeyStr) {
+  String ltkBonds[MAX_BOND_DEVICES][2];
+  int8_t keyIdx = -1;
+  int8_t keyCount = -1;
+
+  uint8_t peerAddr[6];
+  memcpy(peerAddr, peerMAC, sizeof(peerAddr));
+  ReverseMAC(peerAddr);
+  char peerAddrStr[13];
+  dump(peerAddrStr, sizeof(peerAddrStr), peerAddr, sizeof(peerAddr));
+
+// Read entries from settings file
+  char xdrv_key[] = XDRV_79_KEY;
+  String json = UfsJsonSettingsRead(xdrv_key);
+  if (json.length()) {
+    JsonParser parser((char*)json.c_str());
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
+      JsonParserArray ltkBondMAC = root["ltkBondMAC"];
+      JsonParserArray ltkBondKey = root["ltkBondKey"];
+      if (ltkBondMAC && ltkBondKey) {
+        for (uint8_t i = 0; i < MAX_BOND_DEVICES; i++) {
+          if (!ltkBondMAC[i] || !ltkBondKey[i]) { // end of list
+            break;
+          }
+          ltkBonds[i][0] = ltkBondMAC[i].getStr();
+          ltkBonds[i][1] = ltkBondKey[i].getStr();
+          if (!strcmp(ltkBonds[i][0].c_str(), peerAddrStr)) keyIdx = i;
+          keyCount = i;
+        }
+      }
+    }
+  }
+
+// Add / modify bond key
+  if (keyIdx == -1) {
+    keyIdx = ++keyCount;
+    if (keyIdx == MAX_BOND_DEVICES) return BLE_HS_ENOMEM;
+    ltkBonds[keyIdx][0] = peerAddrStr;
+  }
+  ltkBonds[keyIdx][1] = peerKeyStr;
+
+#ifdef BLE_ESP32_DEBUG
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG],"BLE: Read Bond List, keyCount: %d, keyIdx: %d", keyCount, keyIdx);
+  for (uint8_t i = 0; i <= keyCount; i++) {
+    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Bond Key Index: %d, ltkBondMAC: %s, ltkBondKey: %s", i, ltkBonds[i][0].c_str(), ltkBonds[i][1].c_str());
+  }
+#endif
+
+// Create JSON for output
+  String jsonOutput = "{\"" + String(XDRV_79_KEY) + "\":{\"ltkBondMAC\":[\"";
+  for (uint8_t i = 0; i <= keyCount; i++) {
+    if (ltkBonds[i][1].isEmpty()) i++; // Skip when key is empty; means delete the pair
+    jsonOutput += ltkBonds[i][0];
+    jsonOutput += (i < keyCount) ? "\",\"" : "\"],\"ltkBondKey\":[\"";
+    }
+  for (uint8_t i = 0; i <= keyCount; i++) {
+    if (ltkBonds[i][1].isEmpty()) i++; // Skip when key is empty; means delete the pair
+    jsonOutput += ltkBonds[i][1];
+    jsonOutput += (i < keyCount) ? "\",\"" : "\"]}}";
+    }
+
+  AddLog(LOG_LEVEL_DEBUG, "BLE: Settings: %s", jsonOutput.c_str());
+
+  if (UfsJsonSettingsWrite(jsonOutput.c_str())) return 0; // 0 = Success for the NimBLE controller
+  AddLog(LOG_LEVEL_ERROR, "BLE: Saving bond keys failed");
+  return BLE_HS_ENOMEM;
+}
+
+// Global Hook: Delete LTK
+int ble_local_store_delete(int type, const union ble_store_key* key) {
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: ble_local_store_delete called");
+  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOMEM; // Only that is needed at the moment
+  if (!key->sec.peer_addr.val) return BLE_HS_ENOMEM;
+
+  return BLEStoreModify(key->sec.peer_addr.val, "");
+}
+
+// Global Hook: Read the 16-byte raw LTK using clean native C String slicing
+int ble_local_store_read(int type, const union ble_store_key* key, union ble_store_value* value) {
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: ble_local_store_read called");
+  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOENT;
+  if (!key->sec.peer_addr.val) return BLE_HS_ENOENT;
+
+  int8_t keyIdx = -1;
+  uint8_t peerAddr[6];
+  memcpy(peerAddr, key->sec.peer_addr.val, sizeof(peerAddr));
+  ReverseMAC(peerAddr);
+  char peerAddrStr[13];
+  dump(peerAddrStr, sizeof(peerAddrStr), peerAddr, sizeof(peerAddr));
+
+// Read entries from settings file
+  char xdrv_key[] = XDRV_79_KEY;
+  String json = UfsJsonSettingsRead(xdrv_key);
+  if (json.length()) {
+    JsonParser parser((char*)json.c_str());
+    JsonParserObject root = parser.getRootObject();
+    if (root) {
+      // Read ltkBondMAC
+      JsonParserArray ltkBondMAC = root["ltkBondMAC"];
+      JsonParserArray ltkBondKey = root["ltkBondKey"];
+      if (ltkBondMAC && ltkBondKey) {
+        for (uint8_t i = 0; i < MAX_BOND_DEVICES; i++) {
+          if (!ltkBondMAC[i] || !ltkBondKey[i]) break; // end of list
+          if (!strcmp(ltkBondMAC[i].getStr(), peerAddrStr)) {
+            keyIdx = i;
+            break;
+          }
+        }
+        if (keyIdx != -1) {
+          const char* peerKeyStr = ltkBondKey[keyIdx].getStr();
+          if (strlen(peerKeyStr) != 32 ) return BLE_HS_ENOENT;
+          HexToBytes(peerKeyStr, value->sec.ltk, 16);
+          value->sec.peer_addr.type = key->sec.peer_addr.type;
+          memcpy(value->sec.peer_addr.val, key->sec.peer_addr.val, 6);
+          value->sec.authenticated = 1; 
+          value->sec.ltk_present = 1;   
+
+          AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Loaded Bond Key Idx: %d, MAC: %s, Key: %s", keyIdx, peerAddrStr, peerKeyStr);
+          return 0; // 0 = Success for the NimBLE controller
+        }
+      }
+    }
+  }
+  return BLE_HS_ENOENT;
+}
+
+// Global Hook: Write LTK
+int ble_local_store_write(int type, const union ble_store_value* value) {
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: ble_local_store_write called");
+  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOMEM; // Only that is needed at the moment
+  if (!value->sec.peer_addr.val) return BLE_HS_ENOMEM;
+
+  char peerKeyStr[33];
+  dump(peerKeyStr, 33, value->sec.ltk, 16);
+
+  return BLEStoreModify(value->sec.peer_addr.val, peerKeyStr);
+}
+
+/*********************************************************************************************\
  * Advertisment details
 \*********************************************************************************************/
 
@@ -1399,7 +1486,6 @@ void postAdvertismentDetails(){
  * Classes
 \*********************************************************************************************/
 
-// does not really take any action
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pClient) {
 #ifdef BLE_ESP32_DEBUG
@@ -1842,11 +1928,10 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
     NimBLEDevice::init("BLE_ESP32");
 
     // --- NEUTRAL ADVANCED STORAGE ROUTING LAYER ---
-    // Create the physical folder BLE_STORE_DIR in the flash memory
-    mkdir(BLE_STORE_DIR, 0777);
     // Hook the dynamic directory filesystem into the native Apache MyNewT config
     ble_hs_cfg.store_read_cb = ble_local_store_read;
     ble_hs_cfg.store_write_cb = ble_local_store_write;
+    ble_hs_cfg.store_delete_cb = ble_local_store_delete;
 
     // Set default global security capabilities for the Bluetooth stack
     NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM | BLE_SM_PAIR_AUTHREQ_SC);
@@ -1926,8 +2011,8 @@ static void BLEDoPairing(NimBLEClient **ppClient) {
 
   BLERunningScan = 0;
   // Delete old bonding
-  ble_local_store_delete(pairingAddress.getBase()->val);
-  NimBLEDevice::deleteBond(pairingAddress); // Must be executed after ble_local_store_delete
+  BLEStoreModify(pairingAddress.getBase()->val, "");
+  NimBLEDevice::deleteBond(pairingAddress); // Must be executed after BLEStoreModify
 
   if (pClient->connect(pairingAddress, false, false, false)) { 
     AddLog(LOG_LEVEL_DEBUG, "BLE: Connected for pairing. Starting crypto handshake...");
@@ -3990,7 +4075,7 @@ void sendExample(){
 // end #ifdef BLE_ESP32_EXAMPLES
 #endif
 
-
-#endif
+#endif  // USE_UFILESYS
+#endif  // USE_BLE_ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32 or CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
