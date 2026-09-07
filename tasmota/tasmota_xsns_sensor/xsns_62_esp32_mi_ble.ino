@@ -4430,7 +4430,7 @@ void MI32Show(bool json)
       snprintf_P(rssi, sizeof(rssi), PSTR("%d (%d%%)"), p->RSSI, rssi_as_quality);
 
       // New line: Device name, battery state, RSSI and last seen
-      WSContentSend_PD(SI_WEB_STATUS_LINE,
+      WSContentSend_P(SI_WEB_STATUS_LINE,
         p->MAC,
         HtmlEscape(label).c_str(), sbatt, rssi);
 
@@ -4450,12 +4450,12 @@ void MI32Show(bool json)
         }
       }
 
-      WSContentSend_PD(SI_WEB_END_STATUS, dhm);
+      WSContentSend_P(SI_WEB_END_STATUS, dhm);
 
 /*
       // Icon test line
       WSContentSend_P(SI_WEB_LINE_START);
-      WSContentSend_PD(PSTR(" 1'&#x1F3C3;' 2'&#x270B;' 3'&#x26C5;' 4'&#x1F680;' 5'&#x1F30A;' 6'&#x2696;' 7'&#x2126;' 8'&#x1FAD8'"));
+      WSContentSend_P(PSTR(" 1'&#x1F3C3;' 2'&#x270B;' 3'&#x26C5;' 4'&#x1F680;' 5'&#x1F30A;' 6'&#x2696;' 7'&#x2126;' 8'&#x1FAD8'"));
       WSContentSend_P(PSTR("{e}"));
 */
       // Optional new line: Sensors

@@ -230,6 +230,7 @@ namespace BLE_ESP32 {
 #define BLE_ESP32_MAXNAMELEN 32
 #define BLE_ESP32_MAXALIASLEN 32
 
+#define BLE_STORE_DIR "/.blestore"
 
 #define MAX_BLE_DATA_LEN 100
 struct generic_sensor_t {
@@ -387,6 +388,7 @@ static void BLEStartOperationTask();
 // these are only run from the run task
 static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOperation, NimBLEClient **ppClient);
 static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLEClient **ppClient);
+static void BLEDoPairing(NimBLEClient **ppClient);
 int BLETaskStartScan(int time);
 
 
@@ -508,7 +510,7 @@ int minRSSI = -100;
 #define D_CMND_BLE "BLE"
 
 const char kBLE_Commands[] PROGMEM = D_CMND_BLE "|"
-  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved|FilterNames|MinRssiLevel";
+  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved|FilterNames|MinRssiLevel|Pair";
 
 static void CmndBLEPeriod(void);
 static void CmndBLEAdv(void);
@@ -525,6 +527,7 @@ static void CmndBLEAddrFilter(void);
 static void CmndBLEEnableUnsaved(void);
 static void CmndBleFilterNames(void);
 static void CmndSetMinRSSI(void);
+static void CmndPair(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEPeriod,
@@ -541,7 +544,8 @@ void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEAddrFilter,
   &BLE_ESP32::CmndBLEEnableUnsaved,
   &BLE_ESP32::CmndBleFilterNames,
-  &BLE_ESP32::CmndSetMinRSSI
+  &BLE_ESP32::CmndSetMinRSSI,
+  &BLE_ESP32::CmndPair
 };
 
 const char *successStates[] PROGMEM = {
@@ -614,12 +618,22 @@ enum {
   //BLE_ADV_ALL = 2,  // driver sends every advert with full data to MQTT
 } BLEADVERTMODE;
 
+enum BLE_PAIRING_STATES : uint8_t {
+  PAIRING_NONE = 0,
+  PAIRING_REQUESTED,
+  PAIRING_CONNECTED,
+  PAIRING_KEY_SENT
+};
 
 uint8_t BLEMode = BLEModeRegularScan;
 //uint8_t BLEMode = BLEModeScanByCommand;
 uint8_t BLETriggerScan = 0;
 uint8_t BLEAdvertMode = BLE_ADV_TELE;
 uint8_t BLEdeviceLimitReached = 0;
+
+uint8_t pairingState = PAIRING_NONE;
+uint32_t pairingPIN = 0;
+NimBLEAddress pairingAddress;
 
 uint8_t BLEStop = 0;
 uint64_t BLEStopAt = 0;
@@ -638,6 +652,64 @@ const char *BLE_RESTART_BLE_REASON_CONN_LIMIT = PSTR("connect failed with connec
 const char *BLE_RESTART_BLE_REASON_CONN_EXISTS = PSTR("connect failed with connection exists");
 const char *BLERestartBLEReason = nullptr;
 
+// Global native hook: Filepath
+static void ble_get_bond_filepath(const uint8_t* val, int type, char* out_buf, size_t buf_len) {
+  // Format: BLE_STORE_DIR/AABBCCDDEEFF.TYPE
+  snprintf(out_buf, buf_len, BLE_STORE_DIR "/%02X%02X%02X%02X%02X%02X.%03d",
+    val[5], val[4], val[3], val[2], val[1], val[0], type);
+}
+
+// Global native hook: Read stored BLE data
+int ble_local_store_read(int type, const union ble_store_key* key, union ble_store_value* value) {
+  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOENT; // Only that is needed at the moment
+  char filepath[sizeof(BLE_STORE_DIR) + 20];
+  
+  // Pass the raw 6-byte MAC array pointer from the internal union struct
+  ble_get_bond_filepath(key->sec.peer_addr.val, type, filepath, sizeof(filepath));
+  
+  FILE* file = fopen(filepath, "r");
+  if (file) {
+    if (fread(&value->sec, 1, sizeof(ble_store_value_sec), file) == sizeof(ble_store_value_sec)) {
+      fclose(file);
+      AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: BLE data loaded from %s", filepath);
+      return 0; // 0 = Success for the NimBLE controller
+    }
+    fclose(file);
+  }
+  return BLE_HS_ENOENT; // Key not found, falls back to normal pairing workflow
+}
+
+// Global native hook: Write BLE data
+int ble_local_store_write(int type, const union ble_store_value* value) {
+  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOMEM; // Only that is needed at the moment
+  char filepath[sizeof(BLE_STORE_DIR) + 20];
+  
+  // Pass the raw 6-byte MAC array pointer from the internal union struct
+  ble_get_bond_filepath(value->sec.peer_addr.val, type, filepath, sizeof(filepath));
+  
+  FILE* file = fopen(filepath, "w");
+  if (file) {
+    size_t written = fwrite(&value->sec, 1, sizeof(ble_store_value_sec), file);
+    fclose(file);
+    if (written == sizeof(ble_store_value_sec)) {
+      AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: BLE data saved in %s", filepath);
+      return 0; // 0 = Success
+    }
+  }
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Save BLE data failed");
+  return BLE_HS_ENOMEM; // Write failed
+}
+
+// Global API: Delete dynamic storage file
+void ble_local_store_delete(const uint8_t* mac_addr) {
+  if (!mac_addr) return;
+  char filepath[sizeof(BLE_STORE_DIR) + 20];
+
+  // Only delete files of BLE_STORE_OBJ_TYPE_PEER_SEC as no others are needed at the moment
+  ble_get_bond_filepath(mac_addr, BLE_STORE_OBJ_TYPE_PEER_SEC, filepath, sizeof(filepath));
+  unlink(filepath); 
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Deleted BLE data file %s", filepath);
+}
 
 /*********************************************************************************************\
  * log of all devices present
@@ -1331,17 +1403,17 @@ void postAdvertismentDetails(){
 class BLESensorCallback : public NimBLEClientCallbacks {
   void onConnect(NimBLEClient* pClient) {
 #ifdef BLE_ESP32_DEBUG
-    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
+    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: onConnect %s", pClient->getPeerAddress().toString().c_str());
 #endif
   }
   void onDisconnect(NimBLEClient* pClient, int reason) {
 #ifdef BLE_ESP32_DEBUG
-    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
+    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: onDisconnect %s, reason: 0x%04X", pClient->getPeerAddress().toString().c_str(), reason);
 #endif
   }
   bool onConnParamsUpdateRequest(NimBLEClient* pClient, const ble_gap_upd_params* params) {
 #ifdef BLE_ESP32_DEBUG
-    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: onConnParamsUpdateRequest %s"), ((std::string)pClient->getPeerAddress()).c_str());
+    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: onConnParamsUpdateRequest %s", pClient->getPeerAddress().toString().c_str());
 #endif
 
 //    if(params->itvl_min < 24) { /** 1.25ms units */
@@ -1370,6 +1442,33 @@ class BLESensorCallback : public NimBLEClientCallbacks {
     // just always reject thiers, and use ours.
     return false;
 
+  }
+  void onPassKeyEntry(NimBLEConnInfo& connInfo) override {
+#ifdef BLE_ESP32_DEBUG
+    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: onPassKeyEntry %s", connInfo.getAddress().toString().c_str());
+#endif
+    if (pairingState == PAIRING_CONNECTED && connInfo.getAddress() == pairingAddress) {
+      NimBLEDevice::injectPassKey(connInfo, pairingPIN);
+      AddLog(LOG_LEVEL_INFO, "BLE: PIN %06u sent to %s", pairingPIN, connInfo.getAddress().toString().c_str());
+      pairingState = PAIRING_KEY_SENT;
+    }
+  }
+  void onAuthenticationComplete(NimBLEConnInfo& connInfo) override {
+#ifdef BLE_ESP32_DEBUG
+    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: onAuthenticationComplete %s", connInfo.getAddress().toString().c_str());
+#endif
+    NimBLEClient* pActiveClient = NimBLEDevice::getClientByPeerAddress(connInfo.getAddress());
+    if (pActiveClient && pActiveClient->isConnected()) {
+      if (pairingState == PAIRING_KEY_SENT && connInfo.getAddress() == pairingAddress) {
+        if (connInfo.isEncrypted()) {
+          AddLog(LOG_LEVEL_INFO, "BLE: Pairing %s successful.", connInfo.getAddress().toString().c_str());
+        } else {
+          AddLog(LOG_LEVEL_ERROR, "BLE: Pairing %s failed!", connInfo.getAddress().toString().c_str());
+        }
+        pActiveClient->disconnect();
+        pairingState = PAIRING_NONE;
+      }
+    }
   }
 };
 
@@ -1742,6 +1841,17 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
     AddLog(LOG_LEVEL_INFO, PSTR("BLE: BLETask: Starting NimBLE"));
     NimBLEDevice::init("BLE_ESP32");
 
+    // --- NEUTRAL ADVANCED STORAGE ROUTING LAYER ---
+    // Create the physical folder BLE_STORE_DIR in the flash memory
+    mkdir(BLE_STORE_DIR, 0777);
+    // Hook the dynamic directory filesystem into the native Apache MyNewT config
+    ble_hs_cfg.store_read_cb = ble_local_store_read;
+    ble_hs_cfg.store_write_cb = ble_local_store_write;
+
+    // Set default global security capabilities for the Bluetooth stack
+    NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM | BLE_SM_PAIR_AUTHREQ_SC);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_KEYBOARD_ONLY);
+
     *ppClient = NimBLEDevice::createClient();
     (*ppClient)->setClientCallbacks(&clientCB, false);
     /** Set initial connection parameters: These settings are 15ms interval, 0 latency, 120ms timout.
@@ -1807,6 +1917,33 @@ int BLETaskStartScan(int time){
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   return 0;
 }
+
+static void BLEDoPairing(NimBLEClient **ppClient) {
+  if (pairingState != PAIRING_REQUESTED) return;
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Pairing requested. PIN: %u", pairingPIN);
+
+  NimBLEClient *pClient = *ppClient;
+
+  BLERunningScan = 0;
+  // Delete old bonding
+  ble_local_store_delete(pairingAddress.getBase()->val);
+  NimBLEDevice::deleteBond(pairingAddress); // Must be executed after ble_local_store_delete
+
+  if (pClient->connect(pairingAddress, false, false, false)) { 
+    AddLog(LOG_LEVEL_DEBUG, "BLE: Connected for pairing. Starting crypto handshake...");
+    pairingState = PAIRING_CONNECTED;
+    // secureConnection will rise onPassKeyEntry for transmitting the PairingPIN.
+    // Abort the pairing prozess, when sending fails.
+    if (!pClient->secureConnection()) {
+      pClient->disconnect();
+      pairingState = PAIRING_NONE;
+    }
+  } else {
+    AddLog(LOG_LEVEL_ERROR, "BLE: Connect for pairing failed.");
+    pairingState = PAIRING_NONE;
+  }
+}
+
 
 // this runs one operation
 // if the passed pointer is empty, it tries to get a next one.
@@ -2242,6 +2379,8 @@ static void BLEOperationTask(void *pvParameters){
   for(;;){
     BLELastLoopTime = esp_timer_get_time();
     BLELoopCount++;
+
+    BLE_ESP32::BLEDoPairing(&pClient);
 
     BLE_ESP32::BLETaskRunCurrentOperation(&currentOperation, &pClient);
 
@@ -3074,6 +3213,32 @@ void CmndBLEName(void) {
   return;
 }
 
+ void CmndPair(void) {
+  // "BLEPair <MAC or Alias> <PairingPIN>"
+
+  if (!XdrvMailbox.data_len) {
+    ResponseCmndError();
+    return;
+  }
+
+  // Find the separator space between <MACorAlias> and <PairingPIN> to replace it with '\0'
+  char* space_ptr = strchr(XdrvMailbox.data, ' ');
+  if (!space_ptr) {
+    ResponseCmndError();
+    return;
+  }
+  *space_ptr = '\0'; 
+  pairingPIN = atoi(space_ptr + 1);
+
+  uint8_t addrbin[7];
+  if (!getAddr(addrbin, XdrvMailbox.data)) {
+     ResponseCmndError();
+    return;
+  }
+  pairingAddress = NimBLEAddress(addrbin, addrbin[6]);
+  pairingState = PAIRING_REQUESTED;
+  Response_P("{\"%s\":\"started\",\"MAC\":\"%s\",\"PIN\":\"%06u\"}", XdrvMailbox.command, pairingAddress.toString().c_str(), pairingPIN);
+ };
 
 
 //////////////////////////////////////////////////////////////////////////

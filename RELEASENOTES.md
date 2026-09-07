@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - MiEL HVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it [#24979](https://github.com/arendst/Tasmota/issues/24979)
+- Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)
 - Matter autoconfiguration after configuration reset [#24997](https://github.com/arendst/Tasmota/issues/24997)
 
 ### Removed
