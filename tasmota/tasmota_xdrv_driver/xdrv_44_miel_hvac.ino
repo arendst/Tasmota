@@ -59,28 +59,37 @@
  *              turnaround silence and are dropped once the master has already re-polled -
  *              keeps a shared bus and rates above 9600 baud reliable
  *
- *   Input registers (FC04), 16-bit, 0x0000..0x00ff - read-only live state:
- *     0x0000..0x0006  link / capability / feature flags
- *     0x0010..0x001a  settings: power, mode, temp x10, fan, vane, widevane, prohibit,
- *                     air direction, purifier, night mode, econocool
- *     0x0020..0x002a  room / outdoor / set temperature x10, power W, energy, run time,
- *                     compressor, remote temperature, clear time
- *     0x0030..0x003a  timers and operation stage
- *     0x0040..0x0048  decoded capabilities and per-mode temperature limits
- *     0x0050..0x0053  diagnostics: requests, CRC errors, exceptions, RX overruns
+ *   Addresses below are the raw 0-based protocol offset used on the wire, with the
+ *   5-digit Modicon / PLC address in ().
  *
- *   Holding registers (FC03 / FC06 / FC10), 16-bit:
- *     0x0000..0x000e  writable control - power, mode, temp x10, fan, vane, widevane,
- *                     prohibit, air direction, purifier, night mode, econocool, HA mode,
- *                     remote temp (0x7fff clears), remote-temp clear time, raw 0x42 byte;
- *                     reads return the last written value
- *     0x000f..0x0017  read-only mirror of selected input registers, for FC03-only masters
+ *   Input registers (FC04, 3xxxx), 16-bit, read-only live state:
+ *     0x0000..0x0006 (30001..30007)  link / capability / feature flags
+ *     0x0010..0x001a (30017..30027)  settings: power, mode, temp x10, fan, vane, widevane,
+ *                                    prohibit, air direction, purifier, night mode, econocool
+ *     0x0020..0x002a (30033..30043)  room / outdoor / set temperature x10, power W, energy,
+ *                                    run time, compressor, remote temperature, clear time
+ *     0x0030..0x003a (30049..30059)  timers and operation stage
+ *     0x0040..0x0048 (30065..30073)  decoded capabilities and per-mode temperature limits
+ *     0x0050..0x0053 (30081..30084)  diagnostics: requests, CRC errors, exceptions, RX overruns
+ *     0x0054..0x0055 (30085..30086)  error state: BCD code (8000 = no error), two-char code
  *
- *   Coils (FC01 / FC05 / FC0F): 0 power, 1 purifier, 2 night mode, 3 econocool,
- *                               4 clear remote-temp override (write 0)
- *   Discrete inputs (FC02): 0 connected, 1 capabilities valid, 2 compressor running,
- *                           3 i-See sensor, 4 energy metering, 5 remote temp active,
- *                           6 defrost
+ *   Holding registers (FC03 / FC06 / FC10, 4xxxx), 16-bit:
+ *     0x0000..0x000e (40001..40015)  writable control - power, mode, temp x10, fan, vane,
+ *                                    widevane, prohibit, air direction, purifier, night mode,
+ *                                    econocool, HA mode, remote temp (0x7fff clears),
+ *                                    remote-temp clear time, raw 0x42 byte; reads return
+ *                                    the last written value
+ *     0x000f..0x0017 (40016..40024)  read-only mirror of selected input registers, for
+ *                                    FC03-only masters
+ *     0x0018..0x0019 (40025..40026)  error state mirror (same as 0x0054..0x0055)
+ *
+ *   Coils (FC01 / FC05 / FC0F, 0xxxx):
+ *     0 (00001) power, 1 (00002) purifier, 2 (00003) night mode, 3 (00004) econocool,
+ *     4 (00005) clear remote-temp override (write 0)
+ *   Discrete inputs (FC02, 1xxxx):
+ *     0 (10001) connected, 1 (10002) capabilities valid, 2 (10003) compressor running,
+ *     3 (10004) i-See sensor, 4 (10005) energy metering, 5 (10006) remote temp active,
+ *     6 (10007) defrost
  *
  *   Writes reuse the miel_hvac_apply_* setters (same capability gating as the console
  *   commands) and are queued when the HVAC link is not up yet rather than rejected.
@@ -226,6 +235,21 @@ struct miel_hvac_data_roomtemp
 	uint8_t operationtime2;  /* least-significant byte */
 };
 
+/*
+ * Response to request 0x04 (Get Error State).
+ * https://muart-group.github.io/developer/it-protocol/0x62-get-response/0x04-get-error-state
+ *   bytes 4-5  error code, big-endian.  0x8000 = no error, 0x6999 = bad
+ *              communication with the indoor unit, other codes per the spec.
+ *   byte  6    packed two-character code; 0x00 decodes to "A0" (no error)
+ */
+struct miel_hvac_data_error
+{
+	uint8_t _pad1[3];
+	uint8_t code;
+	uint8_t code1;
+	uint8_t shortcode;
+};
+
 struct miel_hvac_data_timers
 {
 	uint8_t _pad1[2];
@@ -314,6 +338,7 @@ struct miel_hvac_data
 	uint8_t type;
 #define MIEL_HVAC_DATA_T_SETTINGS    0x02
 #define MIEL_HVAC_DATA_T_ROOMTEMP    0x03
+#define MIEL_HVAC_DATA_T_ERROR       0x04
 #define MIEL_HVAC_DATA_T_TIMERS      0x05
 #define MIEL_HVAC_DATA_T_STATUS      0x06
 #define MIEL_HVAC_DATA_T_STAGE       0x09
@@ -323,6 +348,7 @@ struct miel_hvac_data
 	{
 		struct miel_hvac_data_settings     settings;
 		struct miel_hvac_data_roomtemp     roomtemp;
+		struct miel_hvac_data_error        error;
 		struct miel_hvac_data_timers       timers;
 		struct miel_hvac_data_status       status;
 		struct miel_hvac_data_stage        stage;
@@ -349,6 +375,9 @@ CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.settemp)        == 7);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime)  == 11);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime1) == 12);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime2) == 13);
+
+CTASSERT(offsetof(struct miel_hvac_data, data.error.code)      == 4);
+CTASSERT(offsetof(struct miel_hvac_data, data.error.shortcode) == 6);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.timers.mode)               == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.timers.onminutes)           == 4);
@@ -384,6 +413,7 @@ struct miel_hvac_msg_request
 	uint8_t type;
 #define MIEL_HVAC_REQUEST_SETTINGS    0x02
 #define MIEL_HVAC_REQUEST_ROOMTEMP    0x03
+#define MIEL_HVAC_REQUEST_ERROR       0x04
 #define MIEL_HVAC_REQUEST_TIMERS      0x05
 #define MIEL_HVAC_REQUEST_STATUS      0x06
 #define MIEL_HVAC_REQUEST_STAGE       0x09
@@ -801,6 +831,7 @@ struct miel_hvac_softc
 	struct miel_hvac_data sc_status;
 	struct miel_hvac_data sc_stage;
 	struct miel_hvac_data sc_options; /* 0x42 Options */
+	struct miel_hvac_data sc_error;   /* 0x04 Error State */
 
 	struct miel_hvac_capabilities sc_caps; /* 0x7B 0xC9 Base Capabilities */
 
@@ -2099,6 +2130,9 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 			sc->sc_temp_type = true;
 		miel_hvac_input_sensor(sc, &sc->sc_roomtemp, d);
 		break;
+	case MIEL_HVAC_DATA_T_ERROR:
+		miel_hvac_input_sensor(sc, &sc->sc_error, d);
+		break;
 	case MIEL_HVAC_DATA_T_TIMERS:
 		miel_hvac_input_sensor(sc, &sc->sc_timers, d);
 		break;
@@ -2544,6 +2578,18 @@ miel_hvac_mb_x10(float v)
 	return ((int16_t)(v + (v >= 0 ? 0.5f : -0.5f)));
 }
 
+/*
+ * Mitsubishi error codes are packed BCD - e.g. wire 0x8000 -> 8000 (no error),
+ * 0x6999 -> 6999 (bad indoor-unit comms).  Decode so a Modbus register holds the
+ * printed code rather than the raw 0x.. value.
+ */
+static uint16_t
+miel_hvac_mb_bcd16(uint16_t v)
+{
+	return ((v >> 12 & 0xf) * 1000 + (v >> 8 & 0xf) * 100
+	     +  (v >>  4 & 0xf) * 10   + (v      & 0xf));
+}
+
 static void
 miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 {
@@ -2609,7 +2655,11 @@ miel_hvac_mb_exc_for(uint8_t r)
 	}
 }
 
-/* Read-only state map (FC04, and FC03 fallback for unmapped control regs). */
+/*
+ * Read-only state map (FC04 input registers, PLC 3xxxx; also reachable via the FC03
+ * holding mirror).  addr is the raw 0-based offset; see the register map at the head
+ * of this file for the addresses and their PLC equivalents.
+ */
 static uint16_t
 miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 {
@@ -2728,6 +2778,17 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 	case 0x0051: return ((uint16_t)sc->sc_mb->sc_crc_errors);
 	case 0x0052: return ((uint16_t)sc->sc_mb->sc_exceptions);
 	case 0x0053: return ((uint16_t)sc->sc_mb->sc_overruns);
+
+	/* 0x04 Get Error State - 0x0054..0x0055 (PLC 30085..30086).
+	 * BCD-decoded spec codes: 8000 = no error, 6999 = bad indoor-unit comms. */
+	case 0x0054:
+		return (miel_hvac_mb_bcd16(sc->sc_error.type != 0
+		    ? (((uint16_t)sc->sc_error.data.error.code << 8)
+		       | sc->sc_error.data.error.code1)
+		    : 0x8000));
+	case 0x0055:
+		return (sc->sc_error.type != 0
+		    ? sc->sc_error.data.error.shortcode : 0);
 	}
 
 	if (addr <= 0x00ff)
@@ -2738,10 +2799,11 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 }
 
 /*
- * FC03 holding-register reads.
- *   0x0000..0x000e  read-back of the writable control registers
- *   0x000f..0x0017  mirror of selected read-only sensor values, so a master
- *                   that only speaks FC03 can still reach them
+ * FC03 holding-register reads.  Raw 0-based offset (PLC 4xxxx):
+ *   0x0000..0x000e (40001..40015)  read-back of the writable control registers
+ *   0x000f..0x0017 (40016..40024)  mirror of selected read-only sensor values, so a
+ *                                  master that only speaks FC03 can still reach them
+ *   0x0018..0x0019 (40025..40026)  error state mirror (input regs 0x0054..0x0055)
  */
 #define MIEL_HVAC_MB_HOLD_MIRROR_BASE 0x000f
 static uint16_t
@@ -2752,15 +2814,17 @@ miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		0x0018, 0x0019, 0x001a, 0x0011, 0x0029, 0x002a,
 	};
 	static const uint16_t mirror_of[] = {
-		0x0020,   /* 0x000f room temperature C x10 */
-		0x0023,   /* 0x0010 compressor 0/1 */
-		0x0025,   /* 0x0011 instantaneous power W */
-		0x0038,   /* 0x0012 stage operation */
-		0x0039,   /* 0x0013 stage fan */
-		0x003a,   /* 0x0014 stage mode */
-		0x0050,   /* 0x0015 diagnostics: requests received */
-		0x0051,   /* 0x0016 diagnostics: CRC errors */
-		0x0001,   /* 0x0017 connected to unit 0/1 */
+		0x0020,   /* 0x000f (40016) room temperature C x10 */
+		0x0023,   /* 0x0010 (40017) compressor 0/1 */
+		0x0025,   /* 0x0011 (40018) instantaneous power W */
+		0x0038,   /* 0x0012 (40019) stage operation */
+		0x0039,   /* 0x0013 (40020) stage fan */
+		0x003a,   /* 0x0014 (40021) stage mode */
+		0x0050,   /* 0x0015 (40022) diagnostics: requests received */
+		0x0051,   /* 0x0016 (40023) diagnostics: CRC errors */
+		0x0001,   /* 0x0017 (40024) connected to unit 0/1 */
+		0x0054,   /* 0x0018 (40025) error BCD code (8000 = no error) */
+		0x0055,   /* 0x0019 (40026) error packed two-char code */
 	};
 
 	*ok = true;
@@ -2778,6 +2842,10 @@ miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 	return (0);
 }
 
+/*
+ * Writable control registers (FC06 / FC10 holding, PLC 40001..40015).  addr is the
+ * raw 0-based offset; see the register map at the head of this file.
+ */
 static uint8_t
 miel_hvac_mb_write_reg(struct miel_hvac_softc *sc, uint16_t addr, uint16_t val)
 {
@@ -2820,7 +2888,7 @@ miel_hvac_mb_read_bit(struct miel_hvac_softc *sc, uint8_t fc, uint16_t addr, boo
 
 	*ok = true;
 
-	if (fc == 0x02)   /* discrete inputs */
+	if (fc == 0x02)   /* discrete inputs, PLC 1xxxx (bit 0 = 10001) */
 	{
 		switch (addr)
 		{
@@ -2834,7 +2902,7 @@ miel_hvac_mb_read_bit(struct miel_hvac_softc *sc, uint8_t fc, uint16_t addr, boo
 		    && sg->operation == MIEL_HVAC_STAGE_OPERATION_DEFROST);
 		}
 	}
-	else              /* coils */
+	else              /* coils, PLC 0xxxx (bit 0 = 00001) */
 	{
 		switch (addr)
 		{
@@ -3525,6 +3593,22 @@ miel_hvac_loop(struct miel_hvac_softc *sc)
 	}
 }
 
+/*
+ * Decode the packed two-character error code from 0x62 0x04 byte 6.
+ * Upper 3 bits -> a letter, lower 5 bits -> an alphanumeric.  0x00 -> "A0".
+ * https://muart-group.github.io/developer/it-protocol/0x62-get-response/0x04-get-error-state
+ */
+static void
+miel_hvac_error_shortcode(uint8_t c, char *out)
+{
+	static const char upper[] = "AbEFJLPU";
+	static const char lower[] = "0123456789ABCDEFOHJLPU";
+
+	out[0] = upper[(c & 0xe0) >> 5];
+	out[1] = ((c & 0x1f) < sizeof(lower) - 1) ? lower[c & 0x1f] : '?';
+	out[2] = '\0';
+}
+
 static void
 miel_hvac_sensor(struct miel_hvac_softc *sc)
 {
@@ -3589,6 +3673,24 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"RoomTempHex\":\"%s\""),
 			ToHex_P((uint8_t *)&sc->sc_roomtemp,
 				sizeof(sc->sc_roomtemp), hex, sizeof(hex)));
+	}
+
+	/* Error state (0x04).  Spec error codes: 8000 = no error,
+	 * 6999 = bad communication with the indoor unit, etc. */
+	if (sc->sc_error.type != 0)
+	{
+		const struct miel_hvac_data_error *er = &sc->sc_error.data.error;
+		uint16_t ec = ((uint16_t)er->code << 8) | er->code1;
+		char shortcode[3];
+		char hex[(sizeof(sc->sc_error) + 1) * 2];
+
+		miel_hvac_error_shortcode(er->shortcode, shortcode);
+
+		ResponseAppend_P(PSTR(",\"ErrorState\":\"%s\",\"ErrorCode\":\"%04X\",\"ErrorShort\":\"%s\""),
+			(ec != 0x8000) ? "on" : "off", ec, shortcode);
+		ResponseAppend_P(PSTR(",\"ErrorHex\":\"%s\""),
+			ToHex_P((uint8_t *)&sc->sc_error,
+				sizeof(sc->sc_error), hex, sizeof(hex)));
 	}
 
 	/* Timers */
@@ -4510,11 +4612,14 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		MIEL_HVAC_REQUEST_STATUS,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_ROOMTEMP,
+		/* 0x04 Get Error State. Non-supporting units timeout via p_tmo. */
+		MIEL_HVAC_REQUEST_ERROR,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_TIMERS,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		/* MUZ-GA80VA does not respond to STAGE */
 		MIEL_HVAC_REQUEST_STAGE,
+		MIEL_HVAC_REQUEST_SETTINGS,
 		/* 0x42: Purifier, NightMode, EconoCool state. Sent with len=1
 		 * (short request form). Non-supporting units timeout via p_tmo. */
 		MIEL_HVAC_REQUEST_OPTIONS,
