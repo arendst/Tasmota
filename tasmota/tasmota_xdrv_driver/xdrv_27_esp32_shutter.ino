@@ -45,7 +45,7 @@
 #define D_ERROR_FILESYSTEM_NOT_READY "SHT: ERROR File system not enabled"
 #define D_ERROR_FILE_NOT_FOUND "SHT: ERROR File system not ready or file not found"
 
-const uint16_t SHUTTER_VERSION = 0x0100;  // Latest driver version (See settings deltas below)
+const uint16_t SHUTTER_VERSION = 0x0101;  // Latest driver version (See settings deltas below)
 
 typedef struct { // depreciated 2023-04-28
   int8_t pos;
@@ -89,7 +89,7 @@ struct SHUTTERSETTINGS {
   uint16_t      shutter_opentime[MAX_SHUTTERS_ESP32];
   uint16_t      shutter_closetime[MAX_SHUTTERS_ESP32];
   int16_t       shuttercoeff[5][MAX_SHUTTERS_ESP32];
-  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1:INVERT bit2: LOCK  bit3: ExtraEndStop bit4: INVert WebButtons bit5: extraStopRelay
+  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1: INVERT (1)  bit2: LOCK (2)  bit3: ExtraOpenEndStopTime (4)  bit4: INVert WebButtons (8)  bit5: extraStopRelay (16)  bit6: ExtraCloseEndStopTime (32)
   uint8_t       shutter_set50percent[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_position[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_startrelay[MAX_SHUTTERS_ESP32];
@@ -124,7 +124,7 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_TOGGLE "|" D_CMND_SHUTTER_TOGGLEDIR "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|" D_CMND_SHUTTER_MODE "|"  D_CMND_SHUTTER_PWMRANGE "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
-  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
+  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_OPENENDSTOPTIME "|" D_CMND_SHUTTER_CLOSEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
 #ifdef SHUTTER_UNITTEST
   D_CMND_SHUTTER_UNITTEST "|" 
@@ -136,7 +136,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay, &CmndShutterMode, &CmndShutterPwmRange,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
-  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
+  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterOpenEndStopTime, &CmndShutterCloseEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
 #ifdef SHUTTER_UNITTEST
   &CmndShutterUnitTest,
@@ -697,9 +697,9 @@ void ShutterInit(void)
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"), i+1, Shutter[i].min_realPositionChange, Shutter[i].min_TiltChange);
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"), i+1, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init. Pos %d, Inv %d, Locked %d, Endstop enab %d, webButt inv %d, Motordel: %d"),
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init. Pos %d, Inv %d, Locked %d, OpenEndStop enab %d, CloseEndStop enab %d, webButt inv %d, Motordel: %d"),
         i+1,  Shutter[i].real_position,
-        (ShutterSettings.shutter_options[i] & 1) ? 1 : 0, (ShutterSettings.shutter_options[i] & 2) ? 1 : 0, (ShutterSettings.shutter_options[i] & 4) ? 1 : 0, (ShutterSettings.shutter_options[i] & 8) ? 1 : 0, Shutter[i].motordelay);
+        (ShutterSettings.shutter_options[i] & 1) ? 1 : 0, (ShutterSettings.shutter_options[i] & 2) ? 1 : 0, (ShutterSettings.shutter_options[i] & 4) ? 1 : 0, (ShutterSettings.shutter_options[i] & 32) ? 1 : 0, (ShutterSettings.shutter_options[i] & 8) ? 1 : 0, Shutter[i].motordelay);
     } else {
       // terminate loop at first INVALID Shutter[i].
       break;
@@ -1101,6 +1101,15 @@ void ShutterSettingsDelta(void) {
       }
     }
 
+    // Split of EnableEndStopTime into OpenEndStopTime and CloseEndStopTime flags
+    if (ShutterSettings.version < 0x0101) {
+      for (uint8_t i=0; i < MAX_SHUTTERS_ESP32; i++){
+        if(ShutterSettings.shutter_options[i] & 4) {
+          ShutterSettings.shutter_options[i] |= 32;
+        }
+      }
+    }
+
     // Set current version and save settings
     ShutterSettings.version = SHUTTER_VERSION;
     ShutterSettingsSave();
@@ -1240,7 +1249,7 @@ bool ShutterStatus(void) {
                                   "\"Mode\":\"%d\","
                                   "\"TiltConfig\":[%d,%d,%d,%d,%d]}"),
                                   i, ShutterSettings.shutter_startrelay[i], ShutterSettings.shutter_startrelay[i] +1, ShutterSettings.shutter_opentime[i], ShutterSettings.shutter_closetime[i],
-                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(ShutterSettings.shutter_options[i], 4).c_str(),
+                                  ShutterSettings.shutter_set50percent[i], ShutterSettings.shutter_motordelay[i], GetBinary8(ShutterSettings.shutter_options[i], 6).c_str(),
                                   ShutterSettings.shuttercoeff[0][i], ShutterSettings.shuttercoeff[1][i], ShutterSettings.shuttercoeff[2][i], ShutterSettings.shuttercoeff[3][i], ShutterSettings.shuttercoeff[4][i],
                                   ShutterSettings.shutter_mode, 
                                   ShutterSettings.shutter_tilt_config[0][i], ShutterSettings.shutter_tilt_config[1][i], ShutterSettings.shutter_tilt_config[2][i], ShutterSettings.shutter_tilt_config[3][i], ShutterSettings.shutter_tilt_config[4][i]
@@ -1701,9 +1710,14 @@ void CmndShutterCloseTime(void)
   }
 }
 
-void CmndShutterEnableEndStopTime(void)
+void CmndShutterOpenEndStopTime(void)
 {
   ShutterOptionsSetHelper(4);
+}
+
+void CmndShutterCloseEndStopTime(void)
+{
+  ShutterOptionsSetHelper(32);
 }
 
 void CmndShutterExtraStopPulseRelay(void)
@@ -1889,9 +1903,11 @@ void CmndShutterPosition(void)
       if ( (target_pos_percent >= 0) && (target_pos_percent <= 100) &&
            (abs(Shutter[index].target_position - Shutter[index].real_position ) > Shutter[index].min_realPositionChange ||
             abs(Shutter[index].tilt_target_pos - Shutter[index].tilt_real_pos ) > Shutter[index].min_TiltChange) ) {
-        if (ShutterSettings.shutter_options[index] & 4) {
-          if (0   == target_pos_percent && Shutter[index].real_position > 0) Shutter[index].target_position -= 1 * RESOLUTION * STEPS_PER_SECOND;
-          if (100 == target_pos_percent && Shutter[index].real_position < Shutter[index].open_max) Shutter[index].target_position += 1 * RESOLUTION * STEPS_PER_SECOND;
+        if ((ShutterSettings.shutter_options[index] & 4) && 100 == target_pos_percent && Shutter[index].real_position < Shutter[index].open_max) {
+          Shutter[index].target_position += 1 * RESOLUTION * STEPS_PER_SECOND;
+        }
+        if ((ShutterSettings.shutter_options[index] & 32) && 0 == target_pos_percent && Shutter[index].real_position > 0) {
+          Shutter[index].target_position -= 1 * RESOLUTION * STEPS_PER_SECOND;
         }
         int8_t new_shutterdirection;
         if (abs(Shutter[index].target_position - Shutter[index].real_position ) > Shutter[index].min_realPositionChange) {

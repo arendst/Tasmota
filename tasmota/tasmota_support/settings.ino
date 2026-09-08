@@ -1909,6 +1909,16 @@ void SettingsDelta(void) {
       Settings->i2c_drivers2[1] = I2CDRIVERS_128_159;
     }
 
+    // Split of EnableEndStopTime into OpenEndStopTime and CloseEndStopTime flags
+    if (Settings->version < 0x0F060001) {  // 15.6.0.1
+      // ESP8266 Shutter driver (data always exposed, but otherwise unused)
+      for (size_t shutter_idx = 0; shutter_idx < MAX_SHUTTERS; shutter_idx++) {
+        if(Settings->shutter_options[shutter_idx] & 4) {
+          Settings->shutter_options[shutter_idx] |= 16;
+        }
+      }
+    }
+
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
   }
