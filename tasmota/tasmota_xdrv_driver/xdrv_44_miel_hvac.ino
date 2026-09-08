@@ -39,8 +39,8 @@
  *
  * A control change is written to sc_settings straight away, before the unit confirms with
  * the next 0x62 0x02, so the panel, the Modbus registers and SENSOR show the intent
- * instead of the stale pre-change state for ~1s; the unit's next report wins if it
- * rejects the change.
+ * instead of the stale pre-change state for ~1s, and HVACSettings / SENSOR are published
+ * at that point; the unit's next report wins (and republishes) if it rejects the change.
  *
  * --- Modbus RTU slave (USE_MIEL_HVAC_MODBUS_SLAVE, ESP32) ---------------------------------
  * Optional second RS485 port that mirrors every driver state as read registers and maps
@@ -4690,6 +4690,20 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 				set->widevane = update->widevane;
 			if (f & htons(MIEL_HVAC_SETTINGS_F_AIRDIRECTION))
 				set->airdirection = update->airdirection;
+
+			/*
+			 * Publish the new state now.  The confirming 0x62 0x02
+			 * normally equals the optimistically applied sc_settings,
+			 * so miel_hvac_input_settings()'s memcmp() would not fire
+			 * and HVACSettings / SENSOR would not go out until the
+			 * next TelePeriod.  If the unit rejects or changes the
+			 * request its report still differs and republishes.
+			 */
+			if (sc->sc_settings_set)
+			{
+				miel_hvac_publish_settings(sc);
+				MqttPublishSensor();
+			}
 		}
 
 		miel_hvac_init_update_settings(update);
