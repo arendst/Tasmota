@@ -51,6 +51,9 @@
  *              (RS485 DE/RE - omit for auto-direction transceivers)
  *   Commands   HVACModbus 0|1, HVACModbusAddress 1..247, HVACModbusBaudrate 1200..115200,
  *              HVACModbusConfig 8N1|8E1|8O1|8N2|8E2|8O2   (persisted, applied live)
+ *   Web        a "Modbus RTU" button on the Configuration menu opens a page for the enable
+ *              flag and the three parameters above (saved via the commands, applied live -
+ *              no reboot).  A "Modbus" status sticker shows while the slave runs
  *   Function   0x01/0x02 read coils / discrete inputs, 0x03/0x04 read holding / input
  *   codes      registers, 0x05/0x0F/0x06/0x10 write coils / registers; CRC-16 checked,
  *              broadcast (address 0) accepted for writes
@@ -4561,6 +4564,91 @@ miel_hvac_web_getarg(void)
 
 #undef MIEL_HVAC_WEB_GETARG
 }
+
+#if defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+/*
+ * Modbus RTU slave configuration page, reached from a "Modbus RTU" button on
+ * the Configuration menu (the same place as "MQTT").  The enable flag and the
+ * three parameters are saved through the HVACModbus* console commands, which
+ * apply live - no reboot.  While the slave is running a "Modbus" sticker is
+ * shown on the main-page status line.
+ */
+#define MIEL_HVAC_WEB_MB_PAGE  "hvac_mb"
+
+static const char miel_hvac_web_mb_form[] PROGMEM =
+	"<p><label><input id='mbe' type='checkbox'%s><b>Enable Modbus RTU</b></label></p>"
+	"<p><b>" D_ADDRESS "</b> (1)<br><input id='mba' placeholder='1' value='%d'></p>"
+	"<p><b>Baudrate</b><br><select id='mbr'>%s</select></p>"
+	"<p><b>Config</b><br><select id='mbc'>%s</select></p>";
+
+static void
+miel_hvac_web_mb_config(void)
+{
+	static const uint32_t bauds[] =
+	    { 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200 };
+	static const char cfgs[][4] =
+	    { "8N1", "8E1", "8O1", "8N2", "8E2", "8O2" };
+	String opts_baud;
+	String opts_cfg;
+	String cur_cfg;
+	uint32_t cur_baud;
+	unsigned int i;
+
+	if (!HttpCheckPriviledgedAccess())
+		return;
+
+	if (Webserver->hasArg(F("save")))
+	{
+		String cmnd = F(D_CMND_BACKLOG "0 ");
+		cmnd += F(D_CMND_MIEL_HVAC_MODBUS " ");
+		cmnd += Webserver->hasArg(F("mbe")) ? F("1") : F("0");
+		cmnd += AddWebCommand(PSTR(D_CMND_MIEL_HVAC_MODBUS_ADDRESS),
+		    PSTR("mba"), PSTR("1"));
+		cmnd += AddWebCommand(PSTR(D_CMND_MIEL_HVAC_MODBUS_BAUDRATE),
+		    PSTR("mbr"), PSTR("9600"));
+		cmnd += AddWebCommand(PSTR(D_CMND_MIEL_HVAC_MODBUS_CONFIG),
+		    PSTR("mbc"), PSTR("8N1"));
+		ExecuteWebCommand((char *)cmnd.c_str());
+		HandleConfiguration();		/* applied live, back to the menu */
+		return;
+	}
+
+	miel_hvac_mb_settings_clamp();
+	cur_baud = (uint32_t)Settings->miel_hvac_mb_baudrate * 300;
+	cur_cfg = GetSerialConfig(Settings->miel_hvac_mb_sconfig);
+
+	for (i = 0; i < nitems(bauds); i++)
+	{
+		char o[32];
+		snprintf_P(o, sizeof(o), PSTR("<option%s>%u</option>"),
+		    (bauds[i] == cur_baud) ? " selected" : "", bauds[i]);
+		opts_baud += o;
+	}
+	for (i = 0; i < nitems(cfgs); i++)
+	{
+		char o[36];
+		snprintf_P(o, sizeof(o), PSTR("<option%s>%s</option>"),
+		    cur_cfg.equals(cfgs[i]) ? " selected" : "", cfgs[i]);
+		opts_cfg += o;
+	}
+
+	WSContentStart_P(PSTR("Modbus RTU"));
+	WSContentSendStyle();
+	WSContentSend_P(HTTP_FIELDSET_LEGEND, PSTR("Modbus RTU"));
+	WSContentSend_P(HTTP_FORM_GET_ACTION, PSTR(MIEL_HVAC_WEB_MB_PAGE));
+	WSContentSend_P(miel_hvac_web_mb_form,
+	    Settings->sbflag1.miel_hvac_mb_enable ? PSTR(" checked") : PSTR(""),
+	    Settings->miel_hvac_mb_address,
+	    opts_baud.c_str(), opts_cfg.c_str());
+	if (!PinUsed(GPIO_MIEL_HVAC_MB_RX) || !PinUsed(GPIO_MIEL_HVAC_MB_TX))
+		WSContentSend_P(PSTR("<p style='width:320px;max-width:100%%'>"
+		    "&#9888; The \"MiEl HVAC MB Rx\" and \"MiEl HVAC MB Tx\" GPIOs "
+		    "are not assigned, so the slave cannot start.</p>"));
+	WSContentSend_P(HTTP_FORM_END);
+	WSContentSpaceButton(BUTTON_CONFIGURATION);
+	WSContentStop();
+}
+#endif  /* USE_MIEL_HVAC_MODBUS_SLAVE && ESP32 */
 #endif  /* USE_WEBSERVER */
 
 /*
@@ -4874,6 +4962,21 @@ bool Xdrv44(uint32_t function)
 	case FUNC_WEB_GET_ARG:
 		miel_hvac_web_getarg();
 		break;
+#if defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+	case FUNC_WEB_ADD_BUTTON:
+		WSContentSend_P(HTTP_FORM_BUTTON, PSTR(MIEL_HVAC_WEB_MB_PAGE),
+		    PSTR("Modbus RTU"));
+		break;
+	case FUNC_WEB_ADD_HANDLER:
+		WebServer_on(PSTR("/" MIEL_HVAC_WEB_MB_PAGE), miel_hvac_web_mb_config);
+		break;
+#ifdef USE_WEB_STATUS_LINE
+	case FUNC_WEB_STATUS_RIGHT:
+		if (sc->sc_mb != nullptr)
+			WSContentStatusSticker(PSTR("Modbus"));
+		break;
+#endif
+#endif
 #endif
 	case FUNC_AFTER_TELEPERIOD:
 		if (sc->sc_settings_set)
