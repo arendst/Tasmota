@@ -4280,7 +4280,7 @@ const char *MI32DeviceName(char *name, uint32_t name_size, uint32_t index) {
   bool valid_alias = (label && *label);
   if (!valid_alias) {
     const char *typeName = kMI32DeviceType[MIBLEsensors[index].type-1];
-    ext_snprintf_P(name, name_size, PSTR("%s%3_H"), typeName, MIBLEsensors[index].MAC +3);
+    ext_snprintf_P(name, name_size, "%s-%3_H", typeName, MIBLEsensors[index].MAC +3);
     label = name;
   }
   return label;
