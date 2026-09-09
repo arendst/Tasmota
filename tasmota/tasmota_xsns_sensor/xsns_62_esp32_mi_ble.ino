@@ -657,6 +657,15 @@ enum MI32_MI_OP_TYPES {
   OP_READ_HT_LY = 5,
 };
 
+constexpr const char* const MiOperations[] = {
+  "TIME_WRITE",
+  "BATT_READ",
+  "UNIT_WRITE",
+  "UNIT_READ",
+  "UNIT_TOGGLE",
+  "READ_HT_LY"
+};
+
 enum MI32_MI_KEY_REQ {
   KEY_REQUIREMENT_UNKNOWN = 0, // we don't know if a key is needed
   KEY_NOT_REQUIRED = 1, // we got an unencrypted payload
@@ -1061,7 +1070,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   }
 
   if (op->state <= GEN_STATE_FAILED){
-    AddLog(LOG_LEVEL_ERROR, PSTR("M32: %s: Operation failed %d"), slotMAC, op->state);
+    AddLog(LOG_LEVEL_ERROR, "M32: %s: Operation \"%s\" failed - State: %s (%d)", slotMAC, MiOperations[opType], BLE_ESP32::getStateString(op->state), op->state);
     fail = true;
   }
 
@@ -1081,7 +1090,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
   switch(opType){
     case OP_TIME_WRITE:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Time write complete"), slotMAC);
+      AddLog(LOG_LEVEL_INFO, "M32: %s: Time write complete", slotMAC);
       return 0; // nothing to do
     case OP_BATT_READ:{
       uint8_t *data = nullptr;
@@ -3099,19 +3108,19 @@ void CmndMi32Time(void) {
     if (MIBLEsensors.size() > slot) {
       int res = genericTimeWriteFn(slot);
       if (res > 0){
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: will set Time"));
-        ResponseCmndNumber(slot);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "M32: %s: Setting time", MIaddrStr(MIBLEsensors[slot].MAC));
+        ResponseCmndChar(MIaddrStr(MIBLEsensors[slot].MAC));
         return;
       }
       if (res < 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot set Time on sensor type"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: Cannot set time on sensor type", MIaddrStr(MIBLEsensors[slot].MAC));
       }
       if (res == 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot set Time right now"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: Cannot set time right now", MIaddrStr(MIBLEsensors[slot].MAC));
       }
     }
   }
-  ResponseCmndChar_P("fail");
+  ResponseCmndFailed();
 }
 
 void CmndMi32Page(void) {
@@ -3134,24 +3143,23 @@ void CmndMi32Unit(void) {
     if (slot < 0) {
       slot = XdrvMailbox.payload;
     }
-
     if (MIBLEsensors.size() > slot) {
       // TOGGLE unit?
       int res = genericUnitWriteFn(slot, -1);
       if (res > 0){
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: will toggle Unit"));
-        ResponseCmndNumber(slot);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "M32: %s: will toggle unit", MIaddrStr(MIBLEsensors[slot].MAC));
+        ResponseCmndChar(MIaddrStr(MIBLEsensors[slot].MAC));
         return;
       }
       if (res < 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot toggle Unit on sensor type"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: cannot toggle unit on sensor type", MIaddrStr(MIBLEsensors[slot].MAC));
       }
       if (res == 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot toggle Unit right now"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: cannot toggle unit right now", MIaddrStr(MIBLEsensors[slot].MAC));
       }
     }
   }
-  ResponseCmndIdxChar(PSTR("Invalid"));
+  ResponseCmndFailed();
 }
 
 #ifdef USE_MI_DECRYPTION
