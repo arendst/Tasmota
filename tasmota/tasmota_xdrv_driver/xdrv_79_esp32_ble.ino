@@ -1198,81 +1198,63 @@ bool isDeviceInFilter(const String& deviceName) {
 \*********************************************************************************************/
 
 int BLEStoreModify(const uint8_t* peerMAC, const char* peerKeyStr) {
-  String ltkBonds[MAX_BOND_DEVICES][2];
-  int8_t keyIdx = -1;
-  int8_t keyCount = -1;
-
+  char xdrv_key[] = XDRV_79_KEY "ltk";
+  bool first = true;
   uint8_t peerAddr[6];
   memcpy(peerAddr, peerMAC, sizeof(peerAddr));
   ReverseMAC(peerAddr);
   char peerAddrStr[13];
   dump(peerAddrStr, sizeof(peerAddrStr), peerAddr, sizeof(peerAddr));
 
-// Read entries from settings file
-  char xdrv_key[] = XDRV_79_KEY;
+// Read and write entries from/to settings file
   String json = UfsJsonSettingsRead(xdrv_key);
+  String jsonOutput = "{\"";
+  jsonOutput += xdrv_key;
+  jsonOutput += "\":{\"ltkBondKeys\":[";
   if (json.length()) {
     JsonParser parser((char*)json.c_str());
     JsonParserObject root = parser.getRootObject();
     if (root) {
-      JsonParserArray ltkBondMAC = root["ltkBondMAC"];
-      JsonParserArray ltkBondKey = root["ltkBondKey"];
-      if (ltkBondMAC && ltkBondKey) {
-        for (uint8_t i = 0; i < MAX_BOND_DEVICES; i++) {
-          if (!ltkBondMAC[i] || !ltkBondKey[i]) { // end of list
-            break;
+      JsonParserArray ltkBondKeys = root["ltkBondKeys"];
+      if (ltkBondKeys) {
+        int8_t i = -1;
+        while(ltkBondKeys[++i]) {
+          if (strncmp(ltkBondKeys[i].getStr(), peerAddrStr, 12)) { // not ours, just copy
+            if (!first) jsonOutput += ',';
+            jsonOutput += '"';
+            jsonOutput += ltkBondKeys[i].getStr();
+            jsonOutput += '"';
+            first = false;
+          } else {
+            continue; // Skip when found; means remove the entry at this point
           }
-          ltkBonds[i][0] = ltkBondMAC[i].getStr();
-          ltkBonds[i][1] = ltkBondKey[i].getStr();
-          if (!strcmp(ltkBonds[i][0].c_str(), peerAddrStr)) keyIdx = i;
-          keyCount = i;
         }
       }
     }
   }
 
-// Add / modify bond key
-  if (keyIdx == -1) {
-    keyIdx = ++keyCount;
-    if (keyIdx == MAX_BOND_DEVICES) return BLE_HS_ENOMEM;
-    ltkBonds[keyIdx][0] = peerAddrStr;
+  // Add entry
+  if (peerKeyStr) {
+    if (!first) jsonOutput += ',';
+    jsonOutput += '"';
+    jsonOutput += peerAddrStr;
+    jsonOutput += ':';
+    jsonOutput += peerKeyStr;
+    jsonOutput += '"';
   }
-  ltkBonds[keyIdx][1] = peerKeyStr;
 
-#ifdef BLE_ESP32_DEBUG
-  AddLog(BLELogLevel[LOG_LEVEL_DEBUG],"BLE: Read Bond List, keyCount: %d, keyIdx: %d", keyCount, keyIdx);
-  for (uint8_t i = 0; i <= keyCount; i++) {
-    AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Bond Key Index: %d, ltkBondMAC: %s, ltkBondKey: %s", i, ltkBonds[i][0].c_str(), ltkBonds[i][1].c_str());
+  jsonOutput += "]}}";
+
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: ltk-setting: %s", jsonOutput.c_str());
+
+  if (jsonOutput.indexOf("[]") != -1) { // No pair present, so no setting is needed and deleted
+    UfsJsonSettingsDelete(xdrv_key);
+    return 0; // 0 = Success for the NimBLE controller
   }
-#endif
-
-// Create JSON for output
-  String jsonOutput = "{\"" + String(XDRV_79_KEY) + "\":{\"ltkBondMAC\":[\"";
-  for (uint8_t i = 0; i <= keyCount; i++) {
-    if (ltkBonds[i][1].isEmpty()) i++; // Skip when key is empty; means delete the pair
-    jsonOutput += ltkBonds[i][0];
-    jsonOutput += (i < keyCount) ? "\",\"" : "\"],\"ltkBondKey\":[\"";
-    }
-  for (uint8_t i = 0; i <= keyCount; i++) {
-    if (ltkBonds[i][1].isEmpty()) i++; // Skip when key is empty; means delete the pair
-    jsonOutput += ltkBonds[i][1];
-    jsonOutput += (i < keyCount) ? "\",\"" : "\"]}}";
-    }
-
-  AddLog(LOG_LEVEL_DEBUG, "BLE: Settings: %s", jsonOutput.c_str());
 
   if (UfsJsonSettingsWrite(jsonOutput.c_str())) return 0; // 0 = Success for the NimBLE controller
   AddLog(LOG_LEVEL_ERROR, "BLE: Saving bond keys failed");
   return BLE_HS_ENOMEM;
-}
-
-// Global Hook: Delete LTK
-int ble_local_store_delete(int type, const union ble_store_key* key) {
-  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: ble_local_store_delete called");
-  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOMEM; // Only that is needed at the moment
-  if (!key->sec.peer_addr.val) return BLE_HS_ENOMEM;
-
-  return BLEStoreModify(key->sec.peer_addr.val, "");
 }
 
 // Global Hook: Read the 16-byte raw LTK using clean native C String slicing
@@ -1281,7 +1263,7 @@ int ble_local_store_read(int type, const union ble_store_key* key, union ble_sto
   if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOENT;
   if (!key->sec.peer_addr.val) return BLE_HS_ENOENT;
 
-  int8_t keyIdx = -1;
+  char xdrv_key[] = XDRV_79_KEY "ltk";
   uint8_t peerAddr[6];
   memcpy(peerAddr, key->sec.peer_addr.val, sizeof(peerAddr));
   ReverseMAC(peerAddr);
@@ -1289,34 +1271,26 @@ int ble_local_store_read(int type, const union ble_store_key* key, union ble_sto
   dump(peerAddrStr, sizeof(peerAddrStr), peerAddr, sizeof(peerAddr));
 
 // Read entries from settings file
-  char xdrv_key[] = XDRV_79_KEY;
   String json = UfsJsonSettingsRead(xdrv_key);
   if (json.length()) {
     JsonParser parser((char*)json.c_str());
     JsonParserObject root = parser.getRootObject();
     if (root) {
-      // Read ltkBondMAC
-      JsonParserArray ltkBondMAC = root["ltkBondMAC"];
-      JsonParserArray ltkBondKey = root["ltkBondKey"];
-      if (ltkBondMAC && ltkBondKey) {
-        for (uint8_t i = 0; i < MAX_BOND_DEVICES; i++) {
-          if (!ltkBondMAC[i] || !ltkBondKey[i]) break; // end of list
-          if (!strcmp(ltkBondMAC[i].getStr(), peerAddrStr)) {
-            keyIdx = i;
-            break;
+      JsonParserArray ltkBondKeys = root["ltkBondKeys"];
+      if (ltkBondKeys) {
+        int8_t i = -1;
+        while(ltkBondKeys[++i]) {
+          if (!strncmp(ltkBondKeys[i].getStr(), peerAddrStr, 12)) { // Entry found
+            const char* peerKeyStr = ltkBondKeys[i].getStr() + 13;
+            if (strlen(peerKeyStr) != 32 ) return BLE_HS_ENOENT;
+            HexToBytes(peerKeyStr, value->sec.ltk, 16);
+            value->sec.peer_addr.type = key->sec.peer_addr.type;
+            memcpy(value->sec.peer_addr.val, key->sec.peer_addr.val, 6);
+            value->sec.authenticated = 1; 
+            value->sec.ltk_present = 1;   
+            AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Loaded Bond Key Idx: %d, MAC: %s, Key: %s", i, peerAddrStr, peerKeyStr);
+            return 0; // 0 = Success for the NimBLE controller
           }
-        }
-        if (keyIdx != -1) {
-          const char* peerKeyStr = ltkBondKey[keyIdx].getStr();
-          if (strlen(peerKeyStr) != 32 ) return BLE_HS_ENOENT;
-          HexToBytes(peerKeyStr, value->sec.ltk, 16);
-          value->sec.peer_addr.type = key->sec.peer_addr.type;
-          memcpy(value->sec.peer_addr.val, key->sec.peer_addr.val, 6);
-          value->sec.authenticated = 1; 
-          value->sec.ltk_present = 1;   
-
-          AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: Loaded Bond Key Idx: %d, MAC: %s, Key: %s", keyIdx, peerAddrStr, peerKeyStr);
-          return 0; // 0 = Success for the NimBLE controller
         }
       }
     }
@@ -1334,6 +1308,15 @@ int ble_local_store_write(int type, const union ble_store_value* value) {
   dump(peerKeyStr, 33, value->sec.ltk, 16);
 
   return BLEStoreModify(value->sec.peer_addr.val, peerKeyStr);
+}
+
+// Global Hook: Delete LTK
+int ble_local_store_delete(int type, const union ble_store_key* key) {
+  AddLog(BLELogLevel[LOG_LEVEL_DEBUG], "BLE: ble_local_store_delete called");
+  if (type != BLE_STORE_OBJ_TYPE_PEER_SEC) return BLE_HS_ENOMEM; // Only that is needed at the moment
+  if (!key->sec.peer_addr.val) return BLE_HS_ENOMEM;
+
+  return BLEStoreModify(key->sec.peer_addr.val, nullptr);
 }
 
 /*********************************************************************************************\
@@ -2011,7 +1994,7 @@ static void BLEDoPairing(NimBLEClient **ppClient) {
 
   BLERunningScan = 0;
   // Delete old bonding
-  BLEStoreModify(pairingAddress.getBase()->val, "");
+  BLEStoreModify(pairingAddress.getBase()->val, nullptr);
   NimBLEDevice::deleteBond(pairingAddress); // Must be executed after BLEStoreModify
 
   if (pClient->connect(pairingAddress, false, false, false)) { 
@@ -2024,7 +2007,7 @@ static void BLEDoPairing(NimBLEClient **ppClient) {
       pairingState = PAIRING_NONE;
     }
   } else {
-    AddLog(LOG_LEVEL_ERROR, "BLE: Connect for pairing failed.");
+    AddLog(LOG_LEVEL_ERROR, "BLE: Connect for pairing failed. Please try again.");
     pairingState = PAIRING_NONE;
   }
 }
