@@ -819,6 +819,8 @@ int genericBatReadFn(int slot){
 
   switch(MIBLEsensors[slot].type) {
     // these use notify for battery read, and it comes in the temp packet
+    case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD03MMC:
       res = MI32Operation(slot, OP_BATT_READ, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
@@ -983,6 +985,8 @@ int genericUnitWriteFn(int slot, int unit){
   uint8_t writeData[1];
   writeData[0] = unit;
   switch (MIBLEsensors[slot].type){
+    case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD02:
       res = MI32Operation(slot, op, LYWSD02_Svc, LYWSD02_UnitChar, nullptr, writeData, 1);
       break;
@@ -1001,6 +1005,8 @@ int genericUnitWriteFn(int slot, int unit){
 int genericUnitReadFn(int slot){
   int res = 0;
   switch (MIBLEsensors[slot].type){
+    case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD02:
       res = MI32Operation(slot, OP_UNIT_READ, LYWSD02_Svc, LYWSD02_UnitChar);
       break;
