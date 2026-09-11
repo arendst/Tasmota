@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.9.4"
+#define MI32_VERSION "v26.9.11"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,9 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  26.9.11           changed - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
+                              Fix "M32Period 0" and "M32Period 1"
+  -------
   26.9.4            changed - BTHome reset button if datagram received (#25002)
   -------
   26.8.31           changed - display icons instead of data lines. disable by removing #define USE_SENSOR_ICON
@@ -161,6 +164,10 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
 #define MI32_BLE_TOPIC "tasmota_ble"
 #endif
 
+#ifndef MI32_BATTERY_PERIOD
+#define MI32_BATTERY_PERIOD 3600
+#endif
+
 ///////////////////////////////////////////////////////////
 
 
@@ -185,6 +192,7 @@ struct {
   } mode;
 
   struct {
+    uint32_t pollSeconds = 0;
     // the slot currently having it's battery read
     // set to 0 to start a battery read cycle
     uint8_t slot = 255;
@@ -867,13 +875,11 @@ int genericSensorReadFn(int slot, int force){
       if (MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) return -2;
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD02_Svc, nullptr, LYWSD02_BattNotifyChar);
       break;*/
-    case MI_LYWSD03MMC:
-      // don't read if key present and we've decoded at least one advert
-      if ((MIBLEsensors[slot].needkey == KEY_NOT_REQUIRED || MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) && !force) return -2;
-      res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
-      break;
     case MI_LYWSD02MMC:
     case MI_LYWSD02MMC2:
+    case MI_LYWSD03MMC:
+      // don't read if key present and we've decoded at least one advert and battery value is present
+      if ((MIBLEsensors[slot].needkey == KEY_NOT_REQUIRED || MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) && MIBLEsensors[slot].bat && !force) return -2;
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_MHOC401:
@@ -936,6 +942,8 @@ int readOneSensor(){
 
 // called once per second
 int readOneBat(){
+  MI32.batteryreader.pollSeconds = 0;
+
   if (MI32.batteryreader.active){
     return 0;
   }
@@ -2954,12 +2962,14 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
     _tempFloat = (float)(LYWSD0x_HT.temp) / 100.0f;
     if(_tempFloat < 60){
       MIBLEsensors[_slot].temp = _tempFloat;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Temp updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].temp);
         // MIBLEsensors[_slot].showedUp=255; // this sensor is real
     }
     _tempFloat=(float)LYWSD0x_HT.hum;
     if(_tempFloat < 100){
       MIBLEsensors[_slot].hum = _tempFloat;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Hum updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].hum);
     }
     MIBLEsensors[_slot].eventType.tempHum  = 1;
@@ -2974,6 +2984,7 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
       if (percent > 100) percent = 100;
 
       MIBLEsensors[_slot].bat = (int)percent;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Bat updated %d"), MIaddrStr(MIBLEsensors[_slot].MAC), MIBLEsensors[_slot].bat);
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
@@ -3026,6 +3037,12 @@ void MI32EverySecond(bool restart){
     MI32ShowOneMISensor(MI32.option.MQTTType < 2);
   }
 
+  // trigger reading battery every hour, independent of Mi32Period
+  MI32.batteryreader.pollSeconds++; // Will be reset in readOneBat()
+  if (MI32.period && MI32.batteryreader.pollSeconds > MI32_BATTERY_PERIOD) {
+    MI32.batteryreader.slot = 0;
+  }
+
   // read a battery if
   // MI32.batteryreader.slot < filled and !MI32.batteryreader.active
   readOneBat();
@@ -3035,10 +3052,10 @@ void MI32EverySecond(bool restart){
   // for sensors which need to get data through notify...
   readOneSensor();
 
-  if (MI32.secondsCounter >= MI32.period){
+  if (MI32.period && MI32.secondsCounter >= MI32.period) {
     // only if we finished the last read
-    if (MI32.sensorreader.slot >= MIBLEsensors.size()){
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Kick off readOneSensor"));
+    if (MI32.sensorreader.slot >= MIBLEsensors.size()) {
+      AddLog(LOG_LEVEL_DEBUG, "M32: Kick off readOneSensor");
       // kick off notification sensor reading every period.
       MI32.sensorreader.slot = 0;
       MI32.secondsCounter = 0;
@@ -3046,24 +3063,20 @@ void MI32EverySecond(bool restart){
   }
   MI32.secondsCounter++;
 
-  if (MI32.secondsCounter2 >= MI32.period){
-    if (MI32.mqttCurrentSlot >= MIBLEsensors.size()){
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Kick off tele sending"));
+  if (MI32.period && MI32.secondsCounter2 >= MI32.period) {
+    if (MI32.mqttCurrentSlot >= MIBLEsensors.size()) {
+      AddLog(LOG_LEVEL_DEBUG, "M32: Kick off tele sending");
       MI32.mqttCurrentSlot = 0;
       MI32.secondsCounter2 = 0;
       MI32.mqttCurrentSingleSlot = 0;
     } else {
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Hit tele time, restarted but not finished last - lost from slot %d")+MI32.mqttCurrentSlot);
+      AddLog(LOG_LEVEL_DEBUG, "M32: Hit tele time, restarted but not finished last - lost from slot %d", MI32.mqttCurrentSlot);
       MI32.mqttCurrentSlot = 0;
       MI32.secondsCounter2 = 0;
       MI32.mqttCurrentSingleSlot = 0;
     }
   }
   MI32.secondsCounter2++;
-
-  static uint32_t _counter = MI32.period - 15;
-  static uint32_t _nextSensorSlot = 0;
-  uint32_t _idx = 0;
 
   int numsensors = MIBLEsensors.size();
   for (uint32_t i = 0; i < numsensors; i++) {
@@ -3082,9 +3095,10 @@ void MI32EverySecond(bool restart){
 \*********************************************************************************************/
 
 void CmndMi32Period(void) {
-  if (XdrvMailbox.data_len > 0) {
-    if (1 == XdrvMailbox.payload) {
-      MI32EverySecond(true);
+  if (XdrvMailbox.data_len) {
+    if (XdrvMailbox.payload == 1) {
+      MI32.secondsCounter = MI32.period;
+      MI32.secondsCounter2 = MI32.period;
     } else {
       MI32.period = XdrvMailbox.payload;
     }
@@ -4265,7 +4279,7 @@ const char SI_WEB_CSS[] PROGMEM =
 
 const char SI_WEB_STATUS_LINE[] PROGMEM =
   "<tr class='itd itr'>"
-  "<td><b title='0x%6_H'>%s</b></td>" // name
+  "<td><b title='%s - 0x%6_H'>%s</b></td>" // name
   "<td>%s</td>" // sbatt (Battery Indicator)
   "<td><div title='" D_RSSI " %s' class='si'>"; // slqi
 
@@ -4445,7 +4459,7 @@ void MI32Show(bool json)
 
       // New line: Device name, battery state, RSSI and last seen
       WSContentSend_P(SI_WEB_STATUS_LINE,
-        p->MAC,
+        kMI32DeviceType[p->type - 1], p->MAC,
         HtmlEscape(label).c_str(), sbatt, rssi);
 
       for(uint32_t j = 0; j < 4; j++) {
