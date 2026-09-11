@@ -114,8 +114,19 @@ void uDisplay::dim10(uint8_t dim, uint16_t dim_gamma) {
         if (dim_op != 0xff) {
             spiController->beginTransaction();
             spiController->csLow();
+/*
+            M5Stack SSD1306 additional commands
+            spiController->writeCommand(0xD9);
+            spiController->writeCommand(((dimmer8+15)/17)*0x11);
+            spiController->writeCommand(0xDB);
+            spiController->writeCommand(dimmer8>>1);
+*/
             spiController->writeCommand(dim_op);
-            spiController->writeData8(dimmer8);
+            if (!allcmd_mode) {
+              spiController->writeData8(dimmer8);
+            } else {
+              spiController->writeCommand(dimmer8);
+            }
             spiController->csHigh();
             spiController->endTransaction();
         }
