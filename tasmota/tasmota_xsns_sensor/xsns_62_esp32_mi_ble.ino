@@ -942,8 +942,6 @@ int readOneSensor(){
 
 // called once per second
 int readOneBat(){
-  MI32.batteryreader.pollSeconds = 0;
-
   if (MI32.batteryreader.active){
     return 0;
   }
@@ -959,6 +957,7 @@ int readOneBat(){
   if (res < 0){
     MI32.batteryreader.slot++;
     if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+      MI32.batteryreader.pollSeconds = 0;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Batt loop complete at %d"), MI32.batteryreader.slot);
     }
     return 0;
@@ -975,6 +974,7 @@ int readOneBat(){
   // this is cleared in the response callback.
   MI32.batteryreader.active = 1;
   if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+    MI32.batteryreader.pollSeconds = 0;
     AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Batt loop will complete at %d"), MI32.batteryreader.slot);
   }
   // started one
@@ -3038,8 +3038,9 @@ void MI32EverySecond(bool restart){
   }
 
   // trigger reading battery every hour, independent of Mi32Period
-  MI32.batteryreader.pollSeconds++; // Will be reset in readOneBat()
+  MI32.batteryreader.pollSeconds++;
   if (MI32.period && MI32.batteryreader.pollSeconds > MI32_BATTERY_PERIOD) {
+    MI32.batteryreader.pollSeconds = 0;
     MI32.batteryreader.slot = 0;
   }
 
