@@ -1,9 +1,9 @@
 /////////////////////////////////////////////////////////////////////
 // compressed by tools/unishox/compress-html-uncompressed.py
-// input sha256: 8586de24213150903bc63edd604c2cf944e15fd52e475e019efc2f241b66fc3a
+// input sha256: f57b9a6242d8c79160c15b2f6c89cf01b8555196ce9a0a553b3ee6acb09363ef
 /////////////////////////////////////////////////////////////////////
 
-const size_t HTTP_HEAD_STYLE_TOOLTIP_SIZE = 330;    // compressed size 230 bytes
+const size_t HTTP_HEAD_STYLE_TOOLTIP_SIZE = 327;    // compressed size 228 bytes
 const char HTTP_HEAD_STYLE_TOOLTIP_COMPRESSED[] PROGMEM = "\x3B\xF1\xAC\x4D\xB3\xBA\x33\x37\xA9\xFC\xF3\x0F\x2F\xFE\x67\x78\xEA\x3B\xA2\xB0"
                              "\xCD\xFC\xF3\xEC\xE6\x77\x8F\x69\xEF\x56\xD0\x4C\xF7\xCF\x68\xCC\xF6\xD6\xE7\x1E"
                              "\x7F\x61\x5D\x69\x9B\x3C\x09\xBE\x18\x15\x99\x1E\x7B\xC1\x6F\x33\xAC\xC0\x4C\xD8"
@@ -15,6 +15,6 @@ const char HTTP_HEAD_STYLE_TOOLTIP_COMPRESSED[] PROGMEM = "\x3B\xF1\xAC\x4D\xB3\
                              "\xF6\x05\xA2\x1E\x07\xF4\x4A\x14\x79\x98\xDA\x04\x3D\xF8\xF0\x32\xC4\x13\x78\x78"
                              "\xF3\x39\x44\x30\xD8\x8E\x69\x0C\x36\x1E\x0C\x67\x51\xD7\xEA\x32\x09\x9E\x7D\x9F"
                              "\x1B\x61\x02\x14\xED\x36\xB3\xCC\xE4\xA2\x18\x6C\x3C\x0F\x8A\xDA\x67\x5F\x86\x58"
-                             "\x6C\xF3\xEC\x1F\xFD\x8C\x3C\x1E\xE3\xDC";
+                             "\x6C\xF3\x19\xF6\x78\x3D\xC7\xB8";
 
 #define  HTTP_HEAD_STYLE_TOOLTIP       Decompress(HTTP_HEAD_STYLE_TOOLTIP_COMPRESSED,HTTP_HEAD_STYLE_TOOLTIP_SIZE).c_str()

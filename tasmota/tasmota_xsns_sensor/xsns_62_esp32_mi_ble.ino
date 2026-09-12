@@ -4280,7 +4280,7 @@ const char SI_WEB_CSS[] PROGMEM =
 
 const char SI_WEB_STATUS_LINE[] PROGMEM =
   "<tr class='itd itr'>"
-  "<td><b title='%s - 0x%6_H'>%s</b></td>" // name
+  "<td><b title='%s\n0x%6_H'>%s</b></td>" // name
   "<td>%s</td>" // sbatt (Battery Indicator)
   "<td><div title='" D_RSSI " %s' class='si'>"; // slqi
 

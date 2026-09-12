@@ -9,6 +9,6 @@ const char HTTP_HEAD_STYLE_TOOLTIP[] PROGMEM =
       "padding:2px 5px;"
       "font-style:normal;"    // Disable italic and/or bold
       "font-size:12px;"
-      "white-space:nowrap;"   // Stay on one line
+      "white-space:pre;"   // Stay on one line except sending \n
     "}"
   "}";
