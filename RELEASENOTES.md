@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - BLE EQ3-TRV code refactoring [#24978](https://github.com/arendst/Tasmota/issues/24978)
 
 ### Fixed
+- Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 [#24731](https://github.com/arendst/Tasmota/issues/24731)
 - MiEL HVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it [#24979](https://github.com/arendst/Tasmota/issues/24979)
 - Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)

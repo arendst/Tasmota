@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it (#24979)
 - Matter: fix autoconfiguration after configuration reset (#24997)
 - Berry rare register allocation bug (#25010)
+- Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 (#24731)
 
 ### Removed
 
