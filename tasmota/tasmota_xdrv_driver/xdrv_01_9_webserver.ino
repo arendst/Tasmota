@@ -1024,7 +1024,8 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 
   WSContentSendRaw_P(HTTP_HEAD_STYLE1);
   WSContentSendRaw_P(HTTP_HEAD_STYLE2);
-#ifdef ESP32
+
+#if defined(ESP32) || defined(USE_WEB_STATUS_LINE_WIFI)
   WSContentSendRaw_P(HTTP_HEAD_STYLE_TOOLTIP);
 #endif
 
@@ -2008,9 +2009,10 @@ bool HandleRootStatusRefresh(void) {
 #ifdef USE_WEB_STATUS_LINE_WIFI
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("<div class='wifi' title='%s: " D_RSSI " %d%% (%d dBm)'><div class='arc a3%s'></div><div class='arc a2%s'></div><div class='arc a1%s'></div><div class='arc a0'></div></div>"),
-                          SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str(),                      
+    WSContentSend_P(PSTR("<div class='wifi' title='" D_SSID ": %s\n" D_RSSI ": %d%% (%d dBm)\n" D_AP ": %s'><div class='arc a3%s'></div><div class='arc a2%s'></div><div class='arc a1%s'></div><div class='arc a0'></div></div>"),
+                          SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str(),
                           WifiGetRssiAsQuality(rssi), rssi,
+                          WiFi.BSSIDstr().c_str(),
                           rssi < -55 ? " o30" : "",
                           rssi < -70 ? " o30" : "",
                           rssi < -85 ? " o30" : "");
@@ -2636,10 +2638,10 @@ void HandleWifiConfiguration(void) {
                   uint8_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
                   uint8_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
 
-                  WSContentSend_P(PSTR("<div title='%d%% (%d dBm)'>"), rssi_as_quality, rssi);
+                  WSContentSend_P(PSTR("<div>"));
                   if (limitScannedNetworks) {
                     // Print SSID and item
-                    WSContentSend_P(PSTR("<a href='#p' onclick='c(this)'>%s</a><span class='q'><div class='si'>"), HtmlEscape(ssid_copy).c_str());
+                    WSContentSend_P(PSTR("<a href='#p' onclick='c(this)'>%s</a><span title='%d%% (%d dBm)' class='q'><div class='si'>"), HtmlEscape(ssid_copy).c_str(), rssi_as_quality, rssi);
                     ssid_showed++;
                     skipduplicated = true; // For the simplified page, just show 1 SSID if there are many Networks with the same
 #ifdef USE_HIGHLIGHT_CONNECTED_AP
@@ -2647,8 +2649,9 @@ void HandleWifiConfiguration(void) {
 #endif
                   } else {
                     // Print item
-                    WSContentSend_P(PSTR("%s<span class='q'>(%d) <div class='si'>"),
+                    WSContentSend_P(PSTR("%s<span title='%d%% (%d dBm)' class='q'>(%d) <div class='si'>"),
                       WiFi.BSSIDstr(indices[j]).c_str(),
+                      rssi_as_quality, rssi,
                       WiFi.channel(indices[j]));
 #ifdef USE_HIGHLIGHT_CONNECTED_AP
                     HighlightAP = WiFi.BSSIDstr(indices[j]) == WiFi.BSSIDstr();

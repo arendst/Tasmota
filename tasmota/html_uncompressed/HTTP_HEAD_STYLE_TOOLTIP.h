@@ -1,13 +1,14 @@
 const char HTTP_HEAD_STYLE_TOOLTIP[] PROGMEM =
   // Enable tooltips on touch media
   "@media(pointer:coarse),(hover:none){"
-    "[title]{position:relative;display:inline-block;}"
+    "[title]{position:relative;}"
     "[title]:hover::after{"
       "content:attr(title);"
       "position:absolute;"
+      "z-index:999;"
       "top:100%;"
-      "left:0;"
-      "margin-left:-50%;"
+      "left:50%;"
+      "transform:translateX(-50%);"
       "color:var(--c_btntxt);"
       "background-color:var(--c_btn);"
       "border:1px solid;"
