@@ -125,8 +125,9 @@ class Matter_Autoconf
           end
         elif channels_count == 4
           # not supported yet
-        else # only option left is 5 channels
-          # not supported yet
+        elif channels_count == 5
+          m[str(endpoint)] = {'type':'light5'}
+          endpoint += 1
         end
       end
     end
