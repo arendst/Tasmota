@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////
 // compressed by tools/unishox/compress-html-uncompressed.py
-// input sha256: 35555e164adfffb28f4138a03a96d7c5afde82666e0f561692b6d2e0649162fb
+// input sha256: e649e46e9cc9f77d98964541af1432a329bfcf3a5a0e56cc8cb8cebbddc7234d
 /////////////////////////////////////////////////////////////////////
 
 const size_t HTTP_HEAD_STYLE_TOOLTIP_SIZE = 312;    // compressed size 226 bytes
