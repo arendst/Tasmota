@@ -10,6 +10,7 @@
 #include "esp_ldo_regulator.h"
 #include "driver/gpio.h"
 #include <rom/cache.h>
+#include "esp_rom_sys.h"
 
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
 
@@ -215,7 +216,25 @@ bool DSIPanel::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
 }
 
 bool DSIPanel::pushColors(uint16_t *data, uint32_t len, bool not_swapped) {
-    esp_err_t ret = esp_lcd_panel_draw_bitmap(panel_handle, window_x0, window_y0, window_x1, window_y1, data);
+    esp_err_t ret;
+    uint16_t retries = 0;
+    // esp_lcd_panel_draw_bitmap's DMA2D path takes the draw semaphore with a 0 timeout and
+    // returns ESP_ERR_INVALID_STATE (without drawing anything) if the previous async transfer
+    // hasn't completed yet - retry instead of silently dropping this chunk, which would leave
+    // stale framebuffer content on screen for that region. A ~60KB chunk transfer typically
+    // completes in well under 1ms, so poll in short bursts rather than in 1ms FreeRTOS ticks -
+    // the completion ISR isn't blocked by this busy-wait, so it doesn't delay noticing success.
+    const uint16_t max_retries = 300;
+    do {
+        ret = esp_lcd_panel_draw_bitmap(panel_handle, window_x0, window_y0, window_x1, window_y1, data);
+        if (ret == ESP_ERR_INVALID_STATE) {
+            esp_rom_delay_us(50);
+            retries++;
+        }
+    } while (ret == ESP_ERR_INVALID_STATE && retries < max_retries);
+    if (ret != ESP_OK) {
+        AddLog(3, "DSI: draw_bitmap failed after %d retries: %d", retries, ret);
+    }
     return (ret == ESP_OK);
 }
 
