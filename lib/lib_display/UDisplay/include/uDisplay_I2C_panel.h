@@ -60,14 +60,15 @@ public:
     bool drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) override { return false; }
     bool drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) override { return false; }
 
+    // I2C-specific public method
+    void i2c_command(uint8_t val);
+
     uint8_t* framebuffer = nullptr;
 
 private:
     // ===== Hardware & Configuration =====
     I2CPanelConfig cfg;        // Copy of config
-    
-    // ===== Internal Helpers =====
-    void i2c_command(uint8_t val);
+
 };
 
 #endif // _UDISPLAY_I2C_PANEL_H_
