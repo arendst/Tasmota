@@ -47,6 +47,9 @@
  * DaliTarget <broadcast>|<device>|<group>       - Set Tasmota light control device (0, 1..64, 101..116) - default 0
  * DaliChannels 1..5                             - Set Tasmota light type (1 = R/C = DT6, 2 = RG/CW, 3 = RGB, 4 = RGBW, 5 = RGBWC) for DaliTarget
  * 
+ * DALI-2 input devices (push buttons, occupancy and light sensors) send 24-bit event messages which are decoded and
+ * published for rules and MQTT as {"DALI":{"Event":"0x82840B","Scheme":"Instance","Type":1,"Instance":1,"Info":11,"Name":"LongPressRepeat"}}
+ * 
  * DALI background information
  * Address type        Address byte
  * ------------------  --------------------
@@ -772,6 +775,106 @@ bool DaliLoopSync(uint32_t channels) {
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
+/*********************************************************************************************\
+ * DALI-2 input device event messages (IEC 62386-103 clause 9.7)
+ *
+ * Input devices like push buttons (301), absolute inputs (302), occupancy sensors (303) and
+ * light sensors (304) send 24-bit event messages. Bit 16 is always 0 for an event message
+ * (bit 16 = 1 marks a command sent to a control device by another application controller).
+ *
+ * Addressing scheme is selected by bits 23, 22 and 15:
+ *  0 - 0  Device          0AAAAAA0 0TTTTTEE EEEEEEEE  short address + instance type
+ *  0 - 1  DeviceInstance  0AAAAAA0 1NNNNNEE EEEEEEEE  short address + instance number
+ *  1 0 0  DeviceGroup     10GGGGG0 0TTTTTEE EEEEEEEE  device group + instance type
+ *  1 1 0  InstanceGroup   11GGGGG0 0TTTTTEE EEEEEEEE  instance group + instance type
+ *  1 0 1  Instance        10TTTTT0 1NNNNNEE EEEEEEEE  instance type + instance number (default)
+ *  1 1 1  Reserved
+ *
+ * The decoded event is published for rules and MQTT as
+ *  {"DALI":{"Event":"0x82840B","Scheme":"Instance","Type":1,"Instance":1,"Info":11,"Name":"LongPressRepeat"}}
+\*********************************************************************************************/
+
+const char kDaliEventScheme[] PROGMEM = "Device|DeviceInstance|DeviceGroup|InstanceGroup|Instance|Reserved";
+
+// IEC 62386-301 Table 4 - Push button event information
+const char kDaliPushButtonEvent[] PROGMEM =
+  "ButtonReleased|ButtonPressed|ShortPress|||DoublePress||||LongPressStart||LongPressRepeat|LongPressStop||ButtonFree|ButtonStuck";
+
+void DaliEventMessage(uint32_t data) {
+  if (data & 0x010000) { return; }             // Command to a control device, not an event message
+
+  uint32_t scheme = ((data >> 21) & 0x06) | ((data >> 15) & 0x01);  // bit23 bit22 bit15
+  int address = -1;
+  int group = -1;
+  int instance_group = -1;
+  int type = -1;
+  int instance = -1;
+  uint32_t scheme_index;
+  switch (scheme) {
+    case 0: case 2:                            // Device
+      scheme_index = 0;
+      address = (data >> 17) & 0x3F;
+      type = (data >> 10) & 0x1F;
+      break;
+    case 1: case 3:                            // DeviceInstance
+      scheme_index = 1;
+      address = (data >> 17) & 0x3F;
+      instance = (data >> 10) & 0x1F;
+      break;
+    case 4:                                    // DeviceGroup
+      scheme_index = 2;
+      group = (data >> 17) & 0x1F;
+      type = (data >> 10) & 0x1F;
+      break;
+    case 6:                                    // InstanceGroup
+      scheme_index = 3;
+      instance_group = (data >> 17) & 0x1F;
+      type = (data >> 10) & 0x1F;
+      break;
+    case 5:                                    // Instance
+      scheme_index = 4;
+      type = (data >> 17) & 0x1F;
+      instance = (data >> 10) & 0x1F;
+      break;
+    default:                                   // Reserved
+      scheme_index = 5;
+      break;
+  }
+  uint32_t info = data & 0x3FF;
+
+  char scheme_name[16];
+  GetTextIndexed(scheme_name, sizeof(scheme_name), scheme_index, kDaliEventScheme);
+  Response_P(PSTR("{\"DALI\":{\"Event\":\"0x%06X\",\"Scheme\":\"%s\""), data, scheme_name);
+  if (address >= 0) { ResponseAppend_P(PSTR(",\"Address\":%d"), address); }
+  if (group >= 0) { ResponseAppend_P(PSTR(",\"DeviceGroup\":%d"), group); }
+  if (instance_group >= 0) { ResponseAppend_P(PSTR(",\"InstanceGroup\":%d"), instance_group); }
+  if (type >= 0) { ResponseAppend_P(PSTR(",\"Type\":%d"), type); }
+  if (instance >= 0) { ResponseAppend_P(PSTR(",\"Instance\":%d"), instance); }
+  ResponseAppend_P(PSTR(",\"Info\":%d"), info);
+
+  switch (type) {
+    case 1: {                                  // IEC 62386-301 Push button
+      if (info < 16) {
+        char event_name[16];
+        GetTextIndexed(event_name, sizeof(event_name), info, kDaliPushButtonEvent);
+        if (strlen(event_name)) { ResponseAppend_P(PSTR(",\"Name\":\"%s\""), event_name); }
+      }
+      break;
+    }
+    case 3:                                    // IEC 62386-303 Occupancy sensor
+      ResponseAppend_P(PSTR(",\"Movement\":%d,\"Occupied\":%d,\"Repeat\":%d,\"Sensor\":\"%s\""),
+        (info & 0x01) ? 1 : 0, (info & 0x02) ? 1 : 0, (info & 0x04) ? 1 : 0, (info & 0x08) ? "Movement" : "Presence");
+      break;
+    case 4:                                    // IEC 62386-304 Light sensor
+      ResponseAppend_P(PSTR(",\"Illuminance\":%d"), info);
+      break;
+  }
+  ResponseJsonEndEnd();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
+}
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
 void DaliLoop(void) {
   while (Dali->dali->available()) { 
     uint32_t queue = Dali->dali->available();
@@ -783,10 +886,13 @@ void DaliLoop(void) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%08X %2d queue %d%s%s"),
       frame.data, bit_count, queue, (8 == bit_count)?" backward":"", (collision)?" collision":"");
 
-    if ((frame.meta != 16) ||                  // Skip backward frames
-        (1 == Dali->probe)) {                  // Probe only
+    if (1 == Dali->probe) { continue; }        // Probe only
+
+    if (24 == frame.meta) {                    // DALI-2 24-bit forward frame (event message or control device command)
+      DaliEventMessage(frame.data);
       continue;
     }
+    if (frame.meta != 16) { continue; }        // Skip backward frames and frames with collision
 
     Dali->address = (frame.data >> 8) &0xFF;
     Dali->command = frame.data &0xFF;
