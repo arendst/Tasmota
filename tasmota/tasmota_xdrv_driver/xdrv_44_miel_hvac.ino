@@ -827,6 +827,8 @@ struct miel_hvac_softc
 	unsigned long sc_remotetemp_auto_clear_time;
 	unsigned long sc_remotetemp_last_call_time;
 	int sc_remotetemp_half;        /* last remote temp in 0.5°C units */
+	uint8_t sc_last_airdirection;  /* last EVEN/DIRECT/INDIRECT (never OFF), for
+	                                 * re-engaging air direction from SwingH=I-See */
 
 	struct miel_hvac_data sc_settings;
 	struct miel_hvac_data sc_roomtemp;
@@ -1515,6 +1517,17 @@ miel_hvac_cmnd_setwidevane(void)
 		return;
 	}
 
+	if (e->byte == MIEL_HVAC_SETTINGS_WIDEVANE_ISEE)
+	{
+		/* i-See isn't a plain vane position: it's a read-back of air
+		 * direction control being active. Selecting it here re-engages
+		 * air direction at whatever direction was last active, instead
+		 * of sending a bare widevane byte the unit won't act on. */
+		miel_hvac_cmnd_apply_response(
+			miel_hvac_apply_airdirection(sc, sc->sc_last_airdirection), e->name);
+		return;
+	}
+
 	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
 	update->widevane = e->byte;
 
@@ -1571,6 +1584,7 @@ miel_hvac_cmnd_setairdirection(void)
 		rs->eight          = 0x08;
 		rs->flags         |= htons(MIEL_HVAC_RUNSTATE_F_AIRDIRECTION);
 		rs->airdirection   = e->byte;
+		sc->sc_last_airdirection = e->byte;
 		break;
 	}
 	case MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF:
@@ -1904,6 +1918,70 @@ miel_hvac_input_connected(struct miel_hvac_softc *sc,
 	AddLog(LOG_LEVEL_INFO, PSTR(MIEL_HVAC_LOGNAME
 		": connected to Mitsubishi Electric HVAC"));
 	sc->sc_connected = true;
+}
+
+/*
+ * Home Assistant "hvac_action" (heating/cooling/drying/fan/idle/defrosting/
+ * preheating/off).  HAMode alone can't distinguish Auto's actual heat/cool
+ * stage, or a defrost/preheat/standby cycle, so this also consults the
+ * 0x62 0x09 Stage packet when available.  Used both for the "HAAction"
+ * SENSOR field and, indirectly, by the climate discovery config.
+ */
+static const char *
+miel_hvac_ha_action(struct miel_hvac_softc *sc)
+{
+	const struct miel_hvac_data_settings *set;
+
+	if (sc->sc_settings.type == 0)
+		return NULL;
+
+	set = &sc->sc_settings.data.settings;
+	if (!set->power)
+		return "off";
+
+	/* Standby/defrost/preheat can happen in any active mode (heat, cool,
+	 * dry, auto), and HA has dedicated actions for all three, so report
+	 * those ahead of the mode-based mapping below. */
+	if (sc->sc_stage.type != 0)
+	{
+		switch (sc->sc_stage.data.stage.operation)
+		{
+		case MIEL_HVAC_STAGE_OPERATION_STANDBY:
+			return "idle";
+		case MIEL_HVAC_STAGE_OPERATION_DEFROST:
+			return "defrosting";
+		case MIEL_HVAC_STAGE_OPERATION_PREHEAT:
+			return "preheating";
+		}
+	}
+
+	switch (set->mode & MIEL_HVAC_SETTINGS_MODE_MASK)
+	{
+	case MIEL_HVAC_SETTINGS_MODE_HEAT:
+	case MIEL_HVAC_SETTINGS_MODE_HEAT_ISEE:
+		return "heating";
+	case MIEL_HVAC_SETTINGS_MODE_COOL:
+	case MIEL_HVAC_SETTINGS_MODE_COOL_ISEE:
+		return "cooling";
+	case MIEL_HVAC_SETTINGS_MODE_DRY:
+	case MIEL_HVAC_SETTINGS_MODE_DRY_ISEE:
+		return "drying";
+	case MIEL_HVAC_SETTINGS_MODE_FAN:
+		return "fan";
+	case MIEL_HVAC_SETTINGS_MODE_AUTO:
+		if (sc->sc_stage.type != 0)
+		{
+			switch (sc->sc_stage.data.stage.mode)
+			{
+			case MIEL_HVAC_STAGE_MODE_AUTO_HEAT:
+				return "heating";
+			case MIEL_HVAC_STAGE_MODE_AUTO_COOL:
+				return "cooling";
+			}
+		}
+		return "fan";
+	}
+	return NULL;
 }
 
 /*
@@ -2436,6 +2514,7 @@ miel_hvac_apply_airdirection(struct miel_hvac_softc *sc, uint8_t dir)
 		rs->eight        = 0x08;
 		rs->flags       |= htons(MIEL_HVAC_RUNSTATE_F_AIRDIRECTION);
 		rs->airdirection = dir;
+		sc->sc_last_airdirection = dir;
 		break;
 	}
 	case MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF:
@@ -3621,7 +3700,15 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 	/* Settings (power, mode, temp, fan, vane, widevane, prohibit, purifier, nightmode) */
 	if (sc->sc_settings.type != 0)
+	{
+		const char *ha_action;
+
 		miel_hvac_append_settings_json(sc);
+
+		ha_action = miel_hvac_ha_action(sc);
+		if (ha_action != NULL)
+			ResponseAppend_P(PSTR(",\"HAAction\":\"%s\""), ha_action);
+	}
 
 	/* Room temperature */
 	if (sc->sc_roomtemp.type != 0)
@@ -4283,28 +4370,29 @@ miel_hvac_web_optlabel(const char *name)
 		{ "auto",         "Auto"          },
 		{ "quiet",        "Quiet"         },
 		{ "up",           "Up"            },
-		{ "up_middle",    "Up-Middle"     },
+		{ "up_middle",    "Up Middle"     },
 		{ "center",       "Center"        },
-		{ "down_middle",  "Down-Middle"   },
+		{ "down_middle",  "Down Middle"   },
 		{ "down",         "Down"          },
 		{ "swing",        "Swing"         },
 		{ "left",         "Left"          },
-		{ "left_middle",  "Left-Middle"   },
+		{ "left_middle",  "Left Middle"   },
 		{ "right",        "Right"         },
-		{ "right_middle", "Right-Middle"  },
-		{ "left_center",  "Left-Center"   },
-		{ "right_center", "Right-Center"  },
+		{ "right_middle", "Right Middle"  },
+		{ "left_center",  "Left Center"   },
+		{ "right_center", "Right Center"  },
 		{ "split",        "Split"         },
+		{ "isee",         "I-See"         },
 		{ "even",         "Even"          },
 		{ "indirect",     "Indirect"      },
 		{ "direct",       "Direct"        },
 		{ "off",          "Off"           },
 		{ "power",        "Power"         },
 		{ "mode",         "Mode"          },
-		{ "mode_power",   "Mode-Power"    },
+		{ "mode_power",   "Mode Power"    },
 		{ "temp",         "Temp"          },
-		{ "temp_power",   "Temp-Power"    },
-		{ "temp_mode",    "Temp-Mode"     },
+		{ "temp_power",   "Temp Power"    },
+		{ "temp_mode",    "Temp Mode"     },
 		{ "all",          "All"           },
 	};
 	static char buf[24];
@@ -4478,14 +4566,20 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			set->vane, vskip, nv);
 	}
 
-	/* Vane horizontal / wide vane */
+	/* Vane horizontal / wide vane — I-See only shown once known supported,
+	 * selecting it re-engages air direction at the last active setting
+	 * (see miel_hvac_cmnd_setwidevane()), same as the HA discovery config. */
 	{
-		static const uint8_t hskip[] = { MIEL_HVAC_SETTINGS_WIDEVANE_ISEE };
+		uint8_t hskip[1];
+		size_t nh = 0;
+
+		if (cv && (!caps->cap_vane_v || !sc->sc_has_isee))
+			hskip[nh++] = MIEL_HVAC_SETTINGS_WIDEVANE_ISEE;
 
 		miel_hvac_web_select("Vane horizontal", "hvh", MIEL_HVAC_WEBARG_VANEH,
 			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map),
 			set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
-			hskip, nitems(hskip));
+			hskip, nh);
 	}
 
 	/* Air direction (i-See) — separate function; needs a vertical vane and
@@ -4867,6 +4961,150 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 }
 
 /*********************************************************************************************\
+ * Home Assistant MQTT Discovery
+ *
+ * Publishes a single retained "climate" config exposing everything: mode,
+ * current/target temperature, fan, action, vertical swing, horizontal
+ * swing/widevane and air direction (as a preset). Uses HA's full,
+ * non-abbreviated config keys throughout (the same schema as the YAML
+ * "climate:" platform config) rather than the short "avty_t"-style
+ * abbreviations, since not all of the keys used here (notably
+ * swing_horizontal_mode_*, a newer addition) have a documented short form.
+ *
+ * Fan speed, both swing controls and air direction are exposed with
+ * capitalized/spaced display labels (e.g. "Up Middle") via a Jinja dict
+ * literal in each state/command template, translating to and from the
+ * lower_snake_case values the MiELHVAC commands and SENSOR JSON actually use.
+ *
+ * This payload does not fit under Tasmota's default MQTT_MAX_PACKET_SIZE
+ * (1200 bytes), my_user_config.h raises it to 4096 for that reason. A
+ * driver alone cannot do this itself -- by the time this file is reached,
+ * all .ino files are concatenated (alphabetically, per subdirectory) into
+ * one translation unit, and xdrv_02_9_mqtt.ino has already read the macro
+ * to size the MQTT client's buffer.
+ *
+ * Republished whenever MQTT (re)connects. SetOption19 enables (0, default)
+ * or disables (1) it, same as the rest of Tasmota's HA discovery.
+ *
+ * "I-See" (widevane 0x80) is a read-back of the unit's i-See auto-tracking
+ * sub-mode -- it is engaged via AirDirection (the preset), not by sending
+ * SwingH="I-See" directly, and only exists on units with an i-See sensor.
+ * So it's listed as a swing_horizontal_modes option (and mapped in its
+ * templates) only once the unit is actually known to support it.
+\*********************************************************************************************/
+static const char miel_hvac_swingh_modes_isee[] PROGMEM =
+	"[\"Left\",\"Left Middle\",\"Center\",\"Right Middle\",\"Right\",\"Left Center\",\"Right Center\",\"Split\",\"Swing\",\"I-See\"]";
+static const char miel_hvac_swingh_modes_noisee[] PROGMEM =
+	"[\"Left\",\"Left Middle\",\"Center\",\"Right Middle\",\"Right\",\"Left Center\",\"Right Center\",\"Split\",\"Swing\"]";
+
+static const char miel_hvac_swingh_state_tpl_isee[] PROGMEM =
+	"{{ {'left':'Left','left_middle':'Left Middle','center':'Center','right_middle':'Right Middle','right':'Right','left_center':'Left Center','right_center':'Right Center','split':'Split','swing':'Swing','isee':'I-See'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
+static const char miel_hvac_swingh_state_tpl_noisee[] PROGMEM =
+	"{{ {'left':'Left','left_middle':'Left Middle','center':'Center','right_middle':'Right Middle','right':'Right','left_center':'Left Center','right_center':'Right Center','split':'Split','swing':'Swing'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
+
+static const char miel_hvac_swingh_cmd_tpl_isee[] PROGMEM =
+	"{{ {'Left':'left','Left Middle':'left_middle','Center':'center','Right Middle':'right_middle','Right':'right','Left Center':'left_center','Right Center':'right_center','Split':'split','Swing':'swing','I-See':'isee'}[value] }}";
+static const char miel_hvac_swingh_cmd_tpl_noisee[] PROGMEM =
+	"{{ {'Left':'left','Left Middle':'left_middle','Center':'center','Right Middle':'right_middle','Right':'right','Left Center':'left_center','Right Center':'right_center','Split':'split','Swing':'swing'}[value] }}";
+
+static void
+miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
+{
+	char dev_id[9];
+	char object_id[16];
+	char stopic[TOPSZ];
+	char base_topic[TOPSZ];
+	char cmnd_topic[TOPSZ];
+	bool isee_capable = sc->sc_caps.sc_caps_valid && sc->sc_caps.cap_vane_v && sc->sc_has_isee;
+	PGM_P swingh_modes = isee_capable ? miel_hvac_swingh_modes_isee : miel_hvac_swingh_modes_noisee;
+	PGM_P swingh_state_tpl = isee_capable ? miel_hvac_swingh_state_tpl_isee : miel_hvac_swingh_state_tpl_noisee;
+	PGM_P swingh_cmd_tpl = isee_capable ? miel_hvac_swingh_cmd_tpl_isee : miel_hvac_swingh_cmd_tpl_noisee;
+	/* Device (not entity) name -- Tasmota's "Device Name" setting, so the
+	 * device page in HA shows it instead of falling back to the topic/IP. */
+	String esc_devname = EscapeJSONString(SettingsText(SET_DEVICENAME));
+
+	snprintf_P(dev_id, sizeof(dev_id), PSTR("%06X"), ESP_getChipId());
+	snprintf_P(object_id, sizeof(object_id), PSTR("%s_hvac"), dev_id);
+	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/climate/%s/config"), object_id);
+
+	if (Settings->flag.hass_discovery)
+	{
+		/* SetOption19 1 - discovery disabled: clear any previously retained config */
+		ResponseClear();
+		MqttPublish(stopic, true);
+		return;
+	}
+
+	/* "~" - shared topic prefix, expanded by HA wherever "~" appears in a
+	 * topic string. Both tele/<topic>/SENSOR and tele/<topic>/LWT share it. */
+	GetTopic_P(base_topic, TELE, TasmotaGlobal.mqtt_topic, PSTR(""));
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETTEMP));
+	Response_P(PSTR(
+		"{\"~\":\"%s\","
+		"\"name\":null,"
+		"\"unique_id\":\"%s\","
+		"\"availability_topic\":\"~LWT\","
+		"\"payload_available\":\"" MQTT_LWT_ONLINE "\","
+		"\"payload_not_available\":\"" MQTT_LWT_OFFLINE "\","
+		"\"current_temperature_topic\":\"~SENSOR\","
+		"\"current_temperature_template\":\"{{value_json.MiElHVAC.RoomTemperature}}\","
+		"\"temperature_state_topic\":\"~SENSOR\","
+		"\"temperature_state_template\":\"{{value_json.MiElHVAC.SetTemperature}}\","
+		"\"temperature_command_topic\":\"%s\","
+		"\"temperature_unit\":\"%c\","
+		"\"precision\":0.5,\"temp_step\":0.5,"
+		"\"min_temp\":%d,\"max_temp\":%d,"
+		"\"modes\":[\"off\",\"heat\",\"dry\",\"cool\",\"fan_only\",\"auto\"],"
+		"\"mode_state_topic\":\"~SENSOR\","
+		"\"mode_state_template\":\"{{value_json.MiElHVAC.HAMode}}\","
+		"\"mode_command_topic\":\""),
+		base_topic, object_id, cmnd_topic, TempUnit(),
+		MIEL_HVAC_SETTINGS_TEMP_MIN, MIEL_HVAC_SETTINGS_TEMP_MAX);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETHAMODE));
+	ResponseAppend_P(PSTR("%s\","
+		"\"action_topic\":\"~SENSOR\","
+		"\"action_template\":\"{{value_json.MiElHVAC.HAAction}}\","
+		"\"fan_modes\":[\"Auto\",\"Quiet\",\"1\",\"2\",\"3\",\"4\"],"
+		"\"fan_mode_state_topic\":\"~SENSOR\","
+		"\"fan_mode_state_template\":\"{{ {'auto':'Auto','quiet':'Quiet','1':'1','2':'2','3':'3','4':'4'}.get(value_json.MiElHVAC.FanSpeed, 'Auto') }}\","
+		"\"fan_mode_command_topic\":\""), cmnd_topic);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETFANSPEED));
+	ResponseAppend_P(PSTR("%s\","
+		"\"fan_mode_command_template\":\"{{ {'Auto':'auto','Quiet':'quiet','1':'1','2':'2','3':'3','4':'4'}[value] }}\","
+		"\"swing_modes\":[\"Auto\",\"Up\",\"Up Middle\",\"Center\",\"Down Middle\",\"Down\",\"Swing\"],"
+		"\"swing_mode_state_topic\":\"~SENSOR\","
+		"\"swing_mode_state_template\":\"{{ {'auto':'Auto','up':'Up','up_middle':'Up Middle','center':'Center','down_middle':'Down Middle','down':'Down','swing':'Swing'}.get(value_json.MiElHVAC.SwingV, 'Auto') }}\","
+		"\"swing_mode_command_topic\":\""), cmnd_topic);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGV));
+	ResponseAppend_P(PSTR("%s\","
+		"\"swing_mode_command_template\":\"{{ {'Auto':'auto','Up':'up','Up Middle':'up_middle','Center':'center','Down Middle':'down_middle','Down':'down','Swing':'swing'}[value] }}\","
+		"\"swing_horizontal_modes\":%s,"
+		"\"swing_horizontal_mode_state_topic\":\"~SENSOR\","
+		"\"swing_horizontal_mode_state_template\":\"%s\","
+		"\"swing_horizontal_mode_command_topic\":\""), cmnd_topic, swingh_modes, swingh_state_tpl);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGH));
+	ResponseAppend_P(PSTR("%s\","
+		"\"swing_horizontal_mode_command_template\":\"%s\","
+		"\"preset_modes\":[\"Even\",\"Direct\",\"Indirect\",\"Off\"],"
+		"\"preset_mode_state_topic\":\"~SENSOR\","
+		"\"preset_mode_value_template\":\"{{ {'even':'Even','direct':'Direct','indirect':'Indirect','off':'Off'}.get(value_json.MiElHVAC.AirDirection, 'Off') }}\","
+		"\"preset_mode_command_topic\":\""), cmnd_topic, swingh_cmd_tpl);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETAIRDIRECTION));
+	ResponseAppend_P(PSTR("%s\","
+		"\"preset_mode_command_template\":\"{{ {'Even':'even','Direct':'direct','Indirect':'indirect','Off':'off'}[value] }}\","
+		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
+		cmnd_topic, dev_id, esc_devname.c_str(), TasmotaGlobal.version);
+
+	MqttPublish(stopic, true);
+}
+
+/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 static const char miel_hvac_cmnd_names[] PROGMEM =
@@ -4995,6 +5233,9 @@ bool Xdrv44(uint32_t function)
 	case FUNC_AFTER_TELEPERIOD:
 		if (sc->sc_settings_set)
 			miel_hvac_publish_settings(sc);
+		break;
+	case FUNC_MQTT_SUBSCRIBE:
+		miel_hvac_hass_discovery(sc);
 		break;
 	case FUNC_COMMAND:
 		return DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
