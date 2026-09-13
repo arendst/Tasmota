@@ -187,16 +187,16 @@ class Matter_UI
   "</script>"
 
   static var _CLASSES_TYPES_STD =
-                              "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
+                              "|relay|relay_power|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality"
-  static var _CLASSES_TYPES_VIRTUAL = 
-                              "-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
+  static var _CLASSES_TYPES_VIRTUAL =
+                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3"
                               "|v_fan|v_hvac|v_hvac_option"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality"
-  static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
+  static var _CLASSES_TYPES2= "|http_relay|http_relay_power|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
                               "|http_airquality"
@@ -1125,8 +1125,19 @@ class Matter_UI
     end
 
     # rest is relays
+    # If the remote device reports an `ENERGY` sensor, it's typically a single
+    # shared meter for the whole device (ex: multi-socket power strips) rather
+    # than one meter per relay. Tag only the first relay with `relay_power`
+    # so the Electrical Power Measurement cluster isn't duplicated (and made
+    # misleading) across every relay endpoint.
+    var energy_assigned = false
     for i: 1..power_cnt
-      config_list.push({'type': 'light0', 'relay': i})
+      if !energy_assigned && status10.contains("ENERGY")
+        config_list.push({'type': 'relay_power', 'relay': i})
+        energy_assigned = true
+      else
+        config_list.push({'type': 'light0', 'relay': i})
+      end
     end
 
     # show lights
