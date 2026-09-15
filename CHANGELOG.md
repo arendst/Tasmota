@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [15.6.0.1]
 ### Added
+- DALI-2 input device event messages (IEC 62386-103) from push buttons, occupancy and light sensors decoded and published for rules and MQTT
+- DALI-2 control device commissioning and instance queries with commands `DaliDeviceScan` and `DaliDevice`
 - Support for GUI tooltip on touch media like phones and tablets
 - ESP32 MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
 - MiEL HVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
