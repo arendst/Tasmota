@@ -859,6 +859,7 @@ static void miel_hvac_input_connected(struct miel_hvac_softc *, const void *, si
 static void miel_hvac_input_data(struct miel_hvac_softc *, const void *, size_t);
 static void miel_hvac_input_updated(struct miel_hvac_softc *, const void *, size_t);
 static void miel_hvac_input_identify(struct miel_hvac_softc *, const void *, size_t);
+static void miel_hvac_hass_discovery(struct miel_hvac_softc *);
 
 static enum miel_hvac_parser_state
 miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
@@ -1899,6 +1900,11 @@ miel_hvac_input_identify(struct miel_hvac_softc *sc,
 	/* raw packet bytes */
 	AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME ": capabilities hex %s"),
 		ToHex_P(caps->sc_caps_raw, 16, hex, sizeof(hex)));
+
+	/* MQTT may have connected before the C9 response arrived.  Republish
+	 * the custom climate discovery now so fan modes reflect the actual
+	 * unit capabilities instead of the conservative startup fallback. */
+	miel_hvac_hass_discovery(sc);
 }
 
 static void
@@ -2131,6 +2137,7 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	const struct miel_hvac_data_settings *set = &d->data.settings;
 	uint32_t state = set->power ? 1 : 0;
 	bool publish;
+	bool had_isee = sc->sc_has_isee;
 
 	if (miel_hvac_update_settings_pending(sc))
 	{
@@ -2149,6 +2156,13 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	 * two known i-See-active non-0x80 values. Once set, stays set. */
 	if ((set->widevane & 0x80) || set->widevane == 0x28 || set->widevane == 0xaa)
 		sc->sc_has_isee = true;
+
+	/* i-See is learned from live settings rather than the C9 capability
+	 * packet.  When it is first observed, republish discovery so HA gains
+	 * the AirDirection preset control (and I-See horizontal mode) without
+	 * requiring an MQTT reconnect or device restart. */
+	if (!had_isee && sc->sc_has_isee)
+		miel_hvac_hass_discovery(sc);
 
 	publish = (sc->sc_settings_set == 0)
 	       || (memcmp(d, &sc->sc_settings, sizeof(sc->sc_settings)) != 0);
@@ -4971,20 +4985,27 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
  * abbreviations, since not all of the keys used here (notably
  * swing_horizontal_mode_*, a newer addition) have a documented short form.
  *
- * Fan speed, both swing controls and air direction are exposed with
- * capitalized/spaced display labels (e.g. "Up Middle") via a Jinja dict
- * literal in each state/command template, translating to and from the
- * lower_snake_case values the MiELHVAC commands and SENSOR JSON actually use.
+ * Fan speed is capability-driven: Auto follows cap_fan_auto and numbered
+ * speeds are limited to the fan count reported by the C9 Base Capabilities
+ * response. Quiet is intentionally not exposed through MQTT discovery:
+ * some CN105 units accept Quiet only from the IR remote and report that
+ * state back over CN105 as fan speed 1, so it cannot be represented as a
+ * distinct, reliable climate fan mode. AirDirection presets are exposed
+ * only after a vertical vane and i-See support are known.
+ * Swing controls and state/command values use capitalized/spaced HA labels
+ * mapped to the lower_snake_case values used by MiELHVAC commands/SENSOR JSON.
  *
  * This payload does not fit under Tasmota's default MQTT_MAX_PACKET_SIZE
- * (1200 bytes), my_user_config.h raises it to 4096 for that reason. A
+ * (1200 bytes), user_config_override.h raises it to 4096 for that reason. A
  * driver alone cannot do this itself -- by the time this file is reached,
  * all .ino files are concatenated (alphabetically, per subdirectory) into
  * one translation unit, and xdrv_02_9_mqtt.ino has already read the macro
  * to size the MQTT client's buffer.
  *
- * Republished whenever MQTT (re)connects. SetOption19 enables (0, default)
- * or disables (1) it, same as the rest of Tasmota's HA discovery.
+ * Republished whenever MQTT (re)connects, and again once C9 capabilities
+ * arrive or i-See is first observed, so fan/preset modes catch up to the
+ * unit's actual capabilities without a reconnect. SetOption19 enables (0,
+ * default) or disables (1) it, same as the rest of Tasmota's HA discovery.
  *
  * "I-See" (widevane 0x80) is a read-back of the unit's i-See auto-tracking
  * sub-mode -- it is engaged via AirDirection (the preset), not by sending
@@ -5015,10 +5036,39 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 	char stopic[TOPSZ];
 	char base_topic[TOPSZ];
 	char cmnd_topic[TOPSZ];
-	bool isee_capable = sc->sc_caps.sc_caps_valid && sc->sc_caps.cap_vane_v && sc->sc_has_isee;
+	bool caps_valid = sc->sc_caps.sc_caps_valid;
+	bool isee_capable = caps_valid && sc->sc_caps.cap_vane_v && sc->sc_has_isee;
+	uint8_t fan_count = miel_hvac_get_fan_count(sc);
+	bool fan_count_known = caps_valid && (fan_count > 0);
+	bool fan_auto_capable = !caps_valid || sc->sc_caps.cap_fan_auto;
+	uint8_t max_numbered_fan = fan_count_known ? ((fan_count > 4) ? 4 : fan_count) : 4;
 	PGM_P swingh_modes = isee_capable ? miel_hvac_swingh_modes_isee : miel_hvac_swingh_modes_noisee;
 	PGM_P swingh_state_tpl = isee_capable ? miel_hvac_swingh_state_tpl_isee : miel_hvac_swingh_state_tpl_noisee;
 	PGM_P swingh_cmd_tpl = isee_capable ? miel_hvac_swingh_cmd_tpl_isee : miel_hvac_swingh_cmd_tpl_noisee;
+
+	/* Build the Home Assistant fan mode list from the capabilities reported
+	 * by the indoor unit. C9 is used only to limit the numbered speeds.
+	 * Auto is included only when cap_fan_auto is set. Quiet is deliberately
+	 * never exposed via MQTT because on some CN105 units a Quiet selection
+	 * made with the IR remote is reported back as fan speed 1. Until fan
+	 * capabilities are known, conservatively expose Auto + 1..4. */
+	String fan_modes = "[";
+	bool fan_first = true;
+	if (fan_auto_capable)
+	{
+		fan_modes += "\"Auto\"";
+		fan_first = false;
+	}
+	for (uint8_t i = 1; i <= max_numbered_fan; i++)
+	{
+		if (!fan_first) fan_modes += ',';
+		fan_modes += "\"";
+		fan_modes += (char)('0' + i);
+		fan_modes += "\"";
+		fan_first = false;
+	}
+	fan_modes += ']';
+
 	/* Device (not entity) name -- Tasmota's "Device Name" setting, so the
 	 * device page in HA shows it instead of falling back to the topic/IP. */
 	String esc_devname = EscapeJSONString(SettingsText(SET_DEVICENAME));
@@ -5063,17 +5113,19 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 		MIEL_HVAC_SETTINGS_TEMP_MIN, MIEL_HVAC_SETTINGS_TEMP_MAX);
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETHAMODE));
+	const char *fan_auto_state = fan_auto_capable ? "Auto" : "1";
 	ResponseAppend_P(PSTR("%s\","
 		"\"action_topic\":\"~SENSOR\","
 		"\"action_template\":\"{{value_json.MiElHVAC.HAAction}}\","
-		"\"fan_modes\":[\"Auto\",\"Quiet\",\"1\",\"2\",\"3\",\"4\"],"
+		"\"fan_modes\":%s,"
 		"\"fan_mode_state_topic\":\"~SENSOR\","
-		"\"fan_mode_state_template\":\"{{ {'auto':'Auto','quiet':'Quiet','1':'1','2':'2','3':'3','4':'4'}.get(value_json.MiElHVAC.FanSpeed, 'Auto') }}\","
-		"\"fan_mode_command_topic\":\""), cmnd_topic);
+		"\"fan_mode_state_template\":\"{{ {'auto':'%s','quiet':'1','1':'1','2':'2','3':'3','4':'4'}.get(value_json.MiElHVAC.FanSpeed, '%s') }}\","
+		"\"fan_mode_command_topic\":\""), cmnd_topic, fan_modes.c_str(),
+		fan_auto_state, fan_auto_state);
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETFANSPEED));
 	ResponseAppend_P(PSTR("%s\","
-		"\"fan_mode_command_template\":\"{{ {'Auto':'auto','Quiet':'quiet','1':'1','2':'2','3':'3','4':'4'}[value] }}\","
+		"\"fan_mode_command_template\":\"{{ {'Auto':'auto','1':'1','2':'2','3':'3','4':'4'}[value] }}\","
 		"\"swing_modes\":[\"Auto\",\"Up\",\"Up Middle\",\"Center\",\"Down Middle\",\"Down\",\"Swing\"],"
 		"\"swing_mode_state_topic\":\"~SENSOR\","
 		"\"swing_mode_state_template\":\"{{ {'auto':'Auto','up':'Up','up_middle':'Up Middle','center':'Center','down_middle':'Down Middle','down':'Down','swing':'Swing'}.get(value_json.MiElHVAC.SwingV, 'Auto') }}\","
@@ -5089,17 +5141,28 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGH));
 	ResponseAppend_P(PSTR("%s\","
-		"\"swing_horizontal_mode_command_template\":\"%s\","
-		"\"preset_modes\":[\"Even\",\"Direct\",\"Indirect\",\"Off\"],"
-		"\"preset_mode_state_topic\":\"~SENSOR\","
-		"\"preset_mode_value_template\":\"{{ {'even':'Even','direct':'Direct','indirect':'Indirect','off':'Off'}.get(value_json.MiElHVAC.AirDirection, 'Off') }}\","
-		"\"preset_mode_command_topic\":\""), cmnd_topic, swingh_cmd_tpl);
+		"\"swing_horizontal_mode_command_template\":\"%s\""), cmnd_topic, swingh_cmd_tpl);
 
-	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETAIRDIRECTION));
-	ResponseAppend_P(PSTR("%s\","
-		"\"preset_mode_command_template\":\"{{ {'Even':'even','Direct':'direct','Indirect':'indirect','Off':'off'}[value] }}\","
+	/* AirDirection is meaningful only on units with a vertical vane and an
+	 * observed i-See sensor.  Omit the entire preset-mode capability from
+	 * MQTT discovery on units that do not support it. */
+	if (isee_capable)
+	{
+		ResponseAppend_P(PSTR(","
+			"\"preset_modes\":[\"Even\",\"Direct\",\"Indirect\",\"Off\"],"
+			"\"preset_mode_state_topic\":\"~SENSOR\","
+			"\"preset_mode_value_template\":\"{{ {'even':'Even','direct':'Direct','indirect':'Indirect','off':'Off'}.get(value_json.MiElHVAC.AirDirection, 'Off') }}\","
+			"\"preset_mode_command_topic\":\""));
+
+		GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETAIRDIRECTION));
+		ResponseAppend_P(PSTR("%s\","
+			"\"preset_mode_command_template\":\"{{ {'Even':'even','Direct':'direct','Indirect':'indirect','Off':'off'}[value] }}\""),
+			cmnd_topic);
+	}
+
+	ResponseAppend_P(PSTR(","
 		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
-		cmnd_topic, dev_id, esc_devname.c_str(), TasmotaGlobal.version);
+		dev_id, esc_devname.c_str(), TasmotaGlobal.version);
 
 	MqttPublish(stopic, true);
 }
