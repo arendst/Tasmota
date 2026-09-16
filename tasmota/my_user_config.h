@@ -118,11 +118,6 @@
 #define MQTT_SOCKET_TIMEOUT    4                 // [MqttTimeout] Number of seconds before Mqtt connection timeout
 #define MQTT_WIFI_CLIENT_TIMEOUT 200             // [MqttWifiTimeout] Number of milliseconds before Mqtt Wi-Fi timeout
 
-#undef  MQTT_MAX_PACKET_SIZE                     // ESP32 builds set this to 1200 via a -D build flag (platformio_tasmota32.ini)
-#define MQTT_MAX_PACKET_SIZE   4096              // Raised from the 1200 byte default: MiELHVAC's single-entity Home
-                                                 // Assistant climate discovery config (with all its state/command
-                                                 // value-mapping templates) does not fit in 1200, or even 3200, bytes.
-
 #define MQTT_HOST              ""                // [MqttHost]
 
 #define MQTT_FINGERPRINT1      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  // [MqttFingerprint1] (auto-learn)
@@ -1420,6 +1415,14 @@
 #if defined(USE_MQTT_AWS_IOT) && !defined(USE_MQTT_CLIENT_CERT)
   #define USE_MQTT_CLIENT_CERT                   // USE_MQTT_AWS_IOT requires USE_MQTT_CLIENT_CERT
 #endif
+#ifdef USE_MIEL_HVAC
+  #undef  MQTT_MAX_PACKET_SIZE                   // ESP32 builds set this to 1200 via a -D build flag (platformio_tasmota32.ini)
+  #define MQTT_MAX_PACKET_SIZE   4096            // Raised from the 1200 byte default: MiELHVAC's single-entity Home
+                                                  // Assistant climate discovery config (with all its state/command
+                                                  // value-mapping templates) does not fit in 1200, or even 3200, bytes.
+                                                  // Only applies when this driver is enabled, to keep the default
+                                                  // 1200 for everyone else.
+#endif  // USE_MIEL_HVAC
 
 /*********************************************************************************************\
  * Post-process obsoletes

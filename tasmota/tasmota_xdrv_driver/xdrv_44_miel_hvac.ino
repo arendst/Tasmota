@@ -5034,7 +5034,8 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
  * mapped to the lower_snake_case values used by MiELHVAC commands/SENSOR JSON.
  *
  * This payload does not fit under Tasmota's default MQTT_MAX_PACKET_SIZE
- * (1200 bytes), user_config_override.h raises it to 4096 for that reason. A
+ * (1200 bytes), my_user_config.h raises it to 4096 whenever USE_MIEL_HVAC
+ * is defined, so other drivers/builds keep the smaller default. A
  * driver alone cannot do this itself -- by the time this file is reached,
  * all .ino files are concatenated (alphabetically, per subdirectory) into
  * one translation unit, and xdrv_02_9_mqtt.ino has already read the macro
