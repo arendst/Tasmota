@@ -2072,11 +2072,12 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
 
-	/* Air direction — only reported when the unit has both a vertical vane
-	 * and an observed i-See sensor. Without i-See the direction value is
-	 * meaningless regardless of whether vaneV is present. */
-	if (!sc->sc_caps.sc_caps_valid
-	    || (sc->sc_caps.cap_vane_v && sc->sc_has_isee))
+	/* Air direction — only reported once the unit is confirmed to have both
+	 * a vertical vane and an observed i-See sensor, matching the HA
+	 * discovery preset_modes gate (isee_capable) and the web panel's Air
+	 * Direction control, so all three stay in sync on the same criterion. */
+	if (sc->sc_caps.sc_caps_valid
+	    && sc->sc_caps.cap_vane_v && sc->sc_has_isee)
 	{
 		name = widevane_isee
 			? miel_hvac_map_byval(set->airdirection,
@@ -4125,9 +4126,10 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 	miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
 
 	/* Air Direction — separate i-See function; "off" unless wide vane is
-	 * in i-See mode.  Shown only when the unit supports it. */
-	if (!sc->sc_caps.sc_caps_valid
-	    || (sc->sc_caps.cap_vane_v && sc->sc_has_isee))
+	 * in i-See mode.  Shown only once the unit is confirmed capable, same
+	 * gate as the SENSOR JSON field and the Air Direction control below. */
+	if (sc->sc_caps.sc_caps_valid
+	    && sc->sc_caps.cap_vane_v && sc->sc_has_isee)
 	{
 		const char *ad = wv_isee
 			? miel_hvac_map_byval(set->airdirection,
@@ -4548,19 +4550,25 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 		"onchange='hvsl(this.value)'></div>"),
 		tbuf, tlo, thi, sc->sc_temp_type ? "0.5" : "1", tbuf);
 
-	/* Fan speed — Quiet is never offered here either: some CN105 units
+	/* Fan speed — numbered speeds are capped to the fan count reported by
+	 * the C9 Base Capabilities response, same as the HA discovery
+	 * fan_modes list. Quiet is never offered here either: some CN105 units
 	 * accept Quiet only from the IR remote and report that state back
 	 * over CN105 as fan speed 1, so it can't be shown as a distinct,
 	 * reliable selection once picked (same reasoning as the HA discovery
 	 * fan_modes list). */
 	{
-		uint8_t fskip[3];
+		uint8_t fskip[5];
 		size_t nf = 0;
 		uint8_t fc = miel_hvac_get_fan_count(sc);
 
 		if (cv && !caps->cap_fan_auto)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_AUTO;
 		fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
+		if (fc != 0 && fc < 2)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_2;
+		if (fc != 0 && fc < 3)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_3;
 		if (fc != 0 && fc < 4)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_4;
 
@@ -4583,14 +4591,15 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			set->vane, vskip, nv);
 	}
 
-	/* Vane horizontal / wide vane — I-See only shown once known supported,
-	 * selecting it re-engages air direction at the last active setting
-	 * (see miel_hvac_cmnd_setwidevane()), same as the HA discovery config. */
+	/* Vane horizontal / wide vane — I-See only shown once confirmed
+	 * supported, selecting it re-engages air direction at the last active
+	 * setting (see miel_hvac_cmnd_setwidevane()), same isee_capable gate as
+	 * the HA discovery config. */
 	{
 		uint8_t hskip[1];
 		size_t nh = 0;
 
-		if (cv && (!caps->cap_vane_v || !sc->sc_has_isee))
+		if (!cv || !caps->cap_vane_v || !sc->sc_has_isee)
 			hskip[nh++] = MIEL_HVAC_SETTINGS_WIDEVANE_ISEE;
 
 		miel_hvac_web_select("Vane horizontal", "hvh", MIEL_HVAC_WEBARG_VANEH,
@@ -4599,10 +4608,11 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			hskip, nh);
 	}
 
-	/* Air direction (i-See) — separate function; needs a vertical vane and
-	 * an observed i-See sensor.  Direction is only meaningful while the wide
+	/* Air direction (i-See) — separate function; needs a confirmed vertical
+	 * vane and an observed i-See sensor, same isee_capable gate as the HA
+	 * discovery preset_modes.  Direction is only meaningful while the wide
 	 * vane is in i-See mode; otherwise the control reads "off". */
-	if (!cv || (caps->cap_vane_v && sc->sc_has_isee))
+	if (cv && caps->cap_vane_v && sc->sc_has_isee)
 	{
 		bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
 		             || set->widevane == 0xaa);
