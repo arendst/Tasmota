@@ -4611,6 +4611,14 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			set->vane, vskip, nv);
 	}
 
+	/* i-See is a distinct high-bit marker (0x80), or one of two odd values
+	 * (0x28/0xaa) seen in the wild -- none fall within
+	 * MIEL_HVAC_SETTINGS_WIDEVANE_MASK's low nibble, so it must be checked
+	 * before masking, not after (masking it away is what previously made
+	 * the Vane horizontal selector never show I-See as current). */
+	bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
+	             || set->widevane == 0xaa);
+
 	/* Vane horizontal / wide vane — I-See only shown once confirmed
 	 * supported, selecting it re-engages air direction at the last active
 	 * setting (see miel_hvac_cmnd_setwidevane()), same isee_capable gate as
@@ -4618,14 +4626,15 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 	{
 		uint8_t hskip[1];
 		size_t nh = 0;
+		uint8_t vhcur = wv_isee ? MIEL_HVAC_SETTINGS_WIDEVANE_ISEE
+			: (set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK);
 
 		if (!cv || !caps->cap_vane_v || !sc->sc_has_isee)
 			hskip[nh++] = MIEL_HVAC_SETTINGS_WIDEVANE_ISEE;
 
 		miel_hvac_web_select("Vane horizontal", "hvh", MIEL_HVAC_WEBARG_VANEH,
 			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map),
-			set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
-			hskip, nh);
+			vhcur, hskip, nh);
 	}
 
 	/* Air direction (i-See) — separate function; needs a confirmed vertical
@@ -4634,8 +4643,6 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 	 * vane is in i-See mode; otherwise the control reads "off". */
 	if (cv && caps->cap_vane_v && sc->sc_has_isee)
 	{
-		bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
-		             || set->widevane == 0xaa);
 		uint8_t adcur = wv_isee
 			? set->airdirection
 			: MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF;
