@@ -602,10 +602,10 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
  * move both vanes together to that position. "left_center" and
  * "right_center" are asymmetric splits instead of a synchronized position:
  * left_center puts the left vane at the left_middle angle and the right
- * vane at center; right_center mirrors that (left vane at center, right
+ * vane at center, right_center mirrors that (left vane at center, right
  * vane at the right_middle angle). WIDEVANE_RR is named "right" here, not
  * "right_middle", because it drives both vanes to the furthest-right
- * extreme, matching what "right" means on the left/center side;
+ * extreme, matching what "right" means on the left/center side.
  * WIDEVANE_R ("right_middle") is the lesser position. This is not
  * necessarily true on other models -- there is no capability bit
  * indicating vane count or this per-side behavior (checked against
