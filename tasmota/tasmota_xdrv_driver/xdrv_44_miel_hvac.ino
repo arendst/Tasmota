@@ -598,15 +598,20 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
  * affects display order in the web select and HA discovery swing_horizontal_modes.
  *
  * On dual-vane units, confirmed by testing against a real MSZ-LN unit:
- * "left"/"center"/"right"/"split"/"swing" move both vanes together, while
- * the *_middle/*_center values move only one vane independently (left_middle
- * and left_center: left vane only; right_middle and right_center: right vane
- * only -- right_middle drives the right vane to its furthest-right extreme,
- * right_center to center). This is not necessarily true on other models --
- * there is no capability bit indicating vane count or this per-side
- * behavior (checked against mUART's independently reverse-engineered
- * protocol docs, which describe a different, single-vane-oriented scheme
- * for these same raw values) -- so do not assume this mapping generalizes.
+ * "left"/"center"/"split"/"swing" move both vanes together, while the
+ * *_middle/*_center values move only one vane independently (left_middle
+ * and left_center: left vane only; right and right_center: right vane
+ * only -- WIDEVANE_RR is named "right" here, not "right_middle", because
+ * it drives the right vane to its furthest-right extreme, matching what
+ * "right" means on the left/center side; WIDEVANE_R ("right_middle") is
+ * the lesser, synchronized-with-the-left-vane position. This asymmetry
+ * (left's *_middle/*_center are the single-vane variants, right's base
+ * name is) is confirmed real, not a typo. This is not necessarily true on
+ * other models -- there is no capability bit indicating vane count or this
+ * per-side behavior (checked against mUART's independently
+ * reverse-engineered protocol docs, which describe a different,
+ * single-vane-oriented scheme for these same raw values) -- so do not
+ * assume this mapping generalizes.
  */
 static const struct miel_hvac_map miel_hvac_widevane_map[] = {
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LL,    "left"},
@@ -614,8 +619,8 @@ static const struct miel_hvac_map miel_hvac_widevane_map[] = {
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LC,    "left_center"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_C,     "center"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_RC,    "right_center"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_RR,    "right_middle"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_R,     "right"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_RR,    "right"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_R,     "right_middle"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SPLIT, "split"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SWING, "swing"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_ISEE,  "isee"},
