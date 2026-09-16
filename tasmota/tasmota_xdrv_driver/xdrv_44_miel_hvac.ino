@@ -1701,7 +1701,6 @@ miel_hvac_cmnd_seteconocool(void)
 		return;
 	}
 
-
 	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
 	{
 		miel_hvac_respond_not_supported();
@@ -4215,7 +4214,7 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 				miel_hvac_fan_map, nitems(miel_hvac_fan_map));
 			const char *vn = miel_hvac_map_byval(set->vane,
 				miel_hvac_vane_map, nitems(miel_hvac_vane_map));
-			const char *wn = wv_isee ? NULL
+			const char *wn = wv_isee ? "isee"
 				: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
 					miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
 			const char *ad = wv_isee
