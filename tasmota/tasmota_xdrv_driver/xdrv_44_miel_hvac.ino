@@ -4548,7 +4548,11 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 		"onchange='hvsl(this.value)'></div>"),
 		tbuf, tlo, thi, sc->sc_temp_type ? "0.5" : "1", tbuf);
 
-	/* Fan speed */
+	/* Fan speed — Quiet is never offered here either: some CN105 units
+	 * accept Quiet only from the IR remote and report that state back
+	 * over CN105 as fan speed 1, so it can't be shown as a distinct,
+	 * reliable selection once picked (same reasoning as the HA discovery
+	 * fan_modes list). */
 	{
 		uint8_t fskip[3];
 		size_t nf = 0;
@@ -4556,8 +4560,7 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 
 		if (cv && !caps->cap_fan_auto)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_AUTO;
-		if (fc != 0 && fc < 5)
-			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
+		fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
 		if (fc != 0 && fc < 4)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_4;
 
