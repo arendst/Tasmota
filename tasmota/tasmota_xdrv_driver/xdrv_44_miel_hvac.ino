@@ -596,6 +596,17 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
  * sort by their raw protocol byte value), then the non-positional extras.
  * Lookups below are by name/value, not array index, so this order only
  * affects display order in the web select and HA discovery swing_horizontal_modes.
+ *
+ * On dual-vane units, confirmed by testing against a real MSZ-LN unit:
+ * "left"/"center"/"right"/"split"/"swing" move both vanes together, while
+ * the *_middle/*_center values move only one vane independently (left_middle
+ * and left_center: left vane only; right_middle and right_center: right vane
+ * only -- right_middle drives the right vane to its furthest-right extreme,
+ * right_center to center). This is not necessarily true on other models --
+ * there is no capability bit indicating vane count or this per-side
+ * behavior (checked against mUART's independently reverse-engineered
+ * protocol docs, which describe a different, single-vane-oriented scheme
+ * for these same raw values) -- so do not assume this mapping generalizes.
  */
 static const struct miel_hvac_map miel_hvac_widevane_map[] = {
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LL,    "left"},
