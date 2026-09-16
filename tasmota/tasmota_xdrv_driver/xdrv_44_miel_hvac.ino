@@ -4558,11 +4558,8 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 
 	/* Fan speed — numbered speeds are capped to the fan count reported by
 	 * the C9 Base Capabilities response, same as the HA discovery
-	 * fan_modes list. Quiet is never offered here either: some CN105 units
-	 * accept Quiet only from the IR remote and report that state back
-	 * over CN105 as fan speed 1, so it can't be shown as a distinct,
-	 * reliable selection once picked (same reasoning as the HA discovery
-	 * fan_modes list). */
+	 * fan_modes list. Quiet is only offered once fan_count is confirmed to
+	 * be 5, the same threshold SetFanSpeed itself enforces. */
 	{
 		uint8_t fskip[5];
 		size_t nf = 0;
@@ -4570,7 +4567,8 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 
 		if (cv && !caps->cap_fan_auto)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_AUTO;
-		fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
+		if (fc != 0 && fc < 5)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
 		if (fc != 0 && fc < 2)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_2;
 		if (fc != 0 && fc < 3)
@@ -5004,13 +5002,12 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
  * abbreviations, since not all of the keys used here (notably
  * swing_horizontal_mode_*, a newer addition) have a documented short form.
  *
- * Fan speed is capability-driven: Auto follows cap_fan_auto and numbered
- * speeds are limited to the fan count reported by the C9 Base Capabilities
- * response. Quiet is intentionally not exposed through MQTT discovery:
- * some CN105 units accept Quiet only from the IR remote and report that
- * state back over CN105 as fan speed 1, so it cannot be represented as a
- * distinct, reliable climate fan mode. AirDirection presets are exposed
- * only after a vertical vane and i-See support are known.
+ * Fan speed is capability-driven: Auto follows cap_fan_auto, Quiet is only
+ * offered once the C9 Base Capabilities response confirms 5 fan speeds
+ * (fan_count == 5, same threshold SetFanSpeed itself enforces), and
+ * numbered speeds are capped to the reported fan count. AirDirection
+ * presets are exposed only after a vertical vane and i-See support are
+ * known.
  * Swing controls and state/command values use capitalized/spaced HA labels
  * mapped to the lower_snake_case values used by MiELHVAC commands/SENSOR JSON.
  *
@@ -5062,22 +5059,31 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 	uint8_t fan_count = miel_hvac_get_fan_count(sc);
 	bool fan_count_known = caps_valid && (fan_count > 0);
 	bool fan_auto_capable = !caps_valid || sc->sc_caps.cap_fan_auto;
+	bool fan_quiet_capable = fan_count_known && (fan_count >= 5);
 	uint8_t max_numbered_fan = fan_count_known ? ((fan_count > 4) ? 4 : fan_count) : 4;
 	PGM_P swingh_modes = isee_capable ? miel_hvac_swingh_modes_isee : miel_hvac_swingh_modes_noisee;
 	PGM_P swingh_state_tpl = isee_capable ? miel_hvac_swingh_state_tpl_isee : miel_hvac_swingh_state_tpl_noisee;
 	PGM_P swingh_cmd_tpl = isee_capable ? miel_hvac_swingh_cmd_tpl_isee : miel_hvac_swingh_cmd_tpl_noisee;
 
 	/* Build the Home Assistant fan mode list from the capabilities reported
-	 * by the indoor unit. C9 is used only to limit the numbered speeds.
-	 * Auto is included only when cap_fan_auto is set. Quiet is deliberately
-	 * never exposed via MQTT because on some CN105 units a Quiet selection
-	 * made with the IR remote is reported back as fan speed 1. Until fan
+	 * by the indoor unit. Auto is included only when cap_fan_auto is set;
+	 * numbered speeds are capped to the C9-reported fan count. Quiet is
+	 * only offered once the unit is confirmed to have 5 fan speeds
+	 * (fan_count == 5), the same threshold the SetFanSpeed command itself
+	 * already enforces -- on units that report fewer, Quiet either doesn't
+	 * exist or can't be told apart from fan speed 1. Until fan
 	 * capabilities are known, conservatively expose Auto + 1..4. */
 	String fan_modes = "[";
 	bool fan_first = true;
 	if (fan_auto_capable)
 	{
 		fan_modes += "\"Auto\"";
+		fan_first = false;
+	}
+	if (fan_quiet_capable)
+	{
+		if (!fan_first) fan_modes += ',';
+		fan_modes += "\"Quiet\"";
 		fan_first = false;
 	}
 	for (uint8_t i = 1; i <= max_numbered_fan; i++)
@@ -5135,22 +5141,24 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETHAMODE));
 	const char *fan_auto_state = fan_auto_capable ? "Auto" : "1";
+	const char *fan_quiet_state = fan_quiet_capable ? "Quiet" : "1";
 	ResponseAppend_P(PSTR("%s\","
 		"\"action_topic\":\"~SENSOR\","
 		"\"action_template\":\"{{value_json.MiElHVAC.HAAction}}\","
 		"\"fan_modes\":%s,"
 		"\"fan_mode_state_topic\":\"~SENSOR\","
-		"\"fan_mode_state_template\":\"{{ {'auto':'%s','quiet':'1','1':'1','2':'2','3':'3','4':'4'}.get(value_json.MiElHVAC.FanSpeed, '%s') }}\","
+		"\"fan_mode_state_template\":\"{{ {'auto':'%s','quiet':'%s','1':'1','2':'2','3':'3','4':'4'}.get(value_json.MiElHVAC.FanSpeed, '%s') }}\","
 		"\"fan_mode_command_topic\":\""), cmnd_topic, fan_modes.c_str(),
-		fan_auto_state, fan_auto_state);
+		fan_auto_state, fan_quiet_state, fan_auto_state);
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETFANSPEED));
+	const char *fan_quiet_cmd_entry = fan_quiet_capable ? "'Quiet':'quiet'," : "";
 	ResponseAppend_P(PSTR("%s\","
-		"\"fan_mode_command_template\":\"{{ {'Auto':'auto','1':'1','2':'2','3':'3','4':'4'}[value] }}\","
+		"\"fan_mode_command_template\":\"{{ {'Auto':'auto',%s'1':'1','2':'2','3':'3','4':'4'}[value] }}\","
 		"\"swing_modes\":[\"Auto\",\"Up\",\"Up Middle\",\"Center\",\"Down Middle\",\"Down\",\"Swing\"],"
 		"\"swing_mode_state_topic\":\"~SENSOR\","
 		"\"swing_mode_state_template\":\"{{ {'auto':'Auto','up':'Up','up_middle':'Up Middle','center':'Center','down_middle':'Down Middle','down':'Down','swing':'Swing'}.get(value_json.MiElHVAC.SwingV, 'Auto') }}\","
-		"\"swing_mode_command_topic\":\""), cmnd_topic);
+		"\"swing_mode_command_topic\":\""), cmnd_topic, fan_quiet_cmd_entry);
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGV));
 	ResponseAppend_P(PSTR("%s\","
