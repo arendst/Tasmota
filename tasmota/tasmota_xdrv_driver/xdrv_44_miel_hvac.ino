@@ -5203,7 +5203,14 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 	/* Prohibit / remote-control lock as a separate Home Assistant MQTT
 	 * select entity -- climate has no native lockout concept. Options and
 	 * labels mirror the web panel's Prohibit dropdown; the same device
-	 * identifier as the climate entity keeps both on one HA device page. */
+	 * identifier as the climate entity keeps both on one HA device page.
+	 *
+	 * entity_category "config" is deliberate: it is a device-lockout
+	 * setting, not a primary control, so HA is correct to keep it off the
+	 * Area dashboard's auto-generated card even once an Area is assigned --
+	 * that is standard behavior for config/diagnostic entities, not a bug.
+	 * It stays reachable from the device page and from Settings > Areas.
+	 * Drop this line if a visible Area-card entity is wanted instead. */
 	snprintf_P(object_id, sizeof(object_id), PSTR("%s_prohibit"), dev_id);
 	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/select/%s/config"), object_id);
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETPROHIBIT));
