@@ -591,14 +591,20 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
 	{MIEL_HVAC_SETTINGS_VANE_SWING,      "swing"},
 };
 
+/*
+ * Ordered left-to-right by physical vane position (LL/L/LC/C/RC/RR/R do not
+ * sort by their raw protocol byte value), then the non-positional extras.
+ * Lookups below are by name/value, not array index, so this order only
+ * affects display order in the web select and HA discovery swing_horizontal_modes.
+ */
 static const struct miel_hvac_map miel_hvac_widevane_map[] = {
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LL,    "left"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_L,     "left_middle"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_C,     "center"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_R,     "right"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_RR,    "right_middle"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LC,    "left_center"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_C,     "center"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_RC,    "right_center"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_RR,    "right_middle"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_R,     "right"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SPLIT, "split"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SWING, "swing"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_ISEE,  "isee"},
@@ -5026,20 +5032,22 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
  * So it's listed as a swing_horizontal_modes option (and mapped in its
  * templates) only once the unit is actually known to support it.
 \*********************************************************************************************/
+/* Ordered left-to-right by physical vane position, then the non-positional
+ * extras, matching miel_hvac_widevane_map. */
 static const char miel_hvac_swingh_modes_isee[] PROGMEM =
-	"[\"Left\",\"Left Middle\",\"Center\",\"Right Middle\",\"Right\",\"Left Center\",\"Right Center\",\"Split\",\"Swing\",\"I-See\"]";
+	"[\"Left\",\"Left Middle\",\"Left Center\",\"Center\",\"Right Center\",\"Right Middle\",\"Right\",\"Split\",\"Swing\",\"I-See\"]";
 static const char miel_hvac_swingh_modes_noisee[] PROGMEM =
-	"[\"Left\",\"Left Middle\",\"Center\",\"Right Middle\",\"Right\",\"Left Center\",\"Right Center\",\"Split\",\"Swing\"]";
+	"[\"Left\",\"Left Middle\",\"Left Center\",\"Center\",\"Right Center\",\"Right Middle\",\"Right\",\"Split\",\"Swing\"]";
 
 static const char miel_hvac_swingh_state_tpl_isee[] PROGMEM =
-	"{{ {'left':'Left','left_middle':'Left Middle','center':'Center','right_middle':'Right Middle','right':'Right','left_center':'Left Center','right_center':'Right Center','split':'Split','swing':'Swing','isee':'I-See'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
+	"{{ {'left':'Left','left_middle':'Left Middle','left_center':'Left Center','center':'Center','right_center':'Right Center','right_middle':'Right Middle','right':'Right','split':'Split','swing':'Swing','isee':'I-See'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
 static const char miel_hvac_swingh_state_tpl_noisee[] PROGMEM =
-	"{{ {'left':'Left','left_middle':'Left Middle','center':'Center','right_middle':'Right Middle','right':'Right','left_center':'Left Center','right_center':'Right Center','split':'Split','swing':'Swing'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
+	"{{ {'left':'Left','left_middle':'Left Middle','left_center':'Left Center','center':'Center','right_center':'Right Center','right_middle':'Right Middle','right':'Right','split':'Split','swing':'Swing'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
 
 static const char miel_hvac_swingh_cmd_tpl_isee[] PROGMEM =
-	"{{ {'Left':'left','Left Middle':'left_middle','Center':'center','Right Middle':'right_middle','Right':'right','Left Center':'left_center','Right Center':'right_center','Split':'split','Swing':'swing','I-See':'isee'}[value] }}";
+	"{{ {'Left':'left','Left Middle':'left_middle','Left Center':'left_center','Center':'center','Right Center':'right_center','Right Middle':'right_middle','Right':'right','Split':'split','Swing':'swing','I-See':'isee'}[value] }}";
 static const char miel_hvac_swingh_cmd_tpl_noisee[] PROGMEM =
-	"{{ {'Left':'left','Left Middle':'left_middle','Center':'center','Right Middle':'right_middle','Right':'right','Left Center':'left_center','Right Center':'right_center','Split':'split','Swing':'swing'}[value] }}";
+	"{{ {'Left':'left','Left Middle':'left_middle','Left Center':'left_center','Center':'center','Right Center':'right_center','Right Middle':'right_middle','Right':'right','Split':'split','Swing':'swing'}[value] }}";
 
 static void
 miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
