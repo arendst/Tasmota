@@ -598,20 +598,21 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
  * affects display order in the web select and HA discovery swing_horizontal_modes.
  *
  * On dual-vane units, confirmed by testing against a real MSZ-LN unit:
- * "left"/"center"/"split"/"swing" move both vanes together, while the
- * *_middle/*_center values move only one vane independently (left_middle
- * and left_center: left vane only; right and right_center: right vane
- * only -- WIDEVANE_RR is named "right" here, not "right_middle", because
- * it drives the right vane to its furthest-right extreme, matching what
- * "right" means on the left/center side; WIDEVANE_R ("right_middle") is
- * the lesser, synchronized-with-the-left-vane position. This asymmetry
- * (left's *_middle/*_center are the single-vane variants, right's base
- * name is) is confirmed real, not a typo. This is not necessarily true on
- * other models -- there is no capability bit indicating vane count or this
- * per-side behavior (checked against mUART's independently
- * reverse-engineered protocol docs, which describe a different,
- * single-vane-oriented scheme for these same raw values) -- so do not
- * assume this mapping generalizes.
+ * "left"/"left_middle"/"center"/"right_middle"/"right"/"split"/"swing"
+ * move both vanes together to that position. "left_center" and
+ * "right_center" are asymmetric splits instead of a synchronized position:
+ * left_center puts the left vane at the left_middle angle and the right
+ * vane at center; right_center mirrors that (left vane at center, right
+ * vane at the right_middle angle). WIDEVANE_RR is named "right" here, not
+ * "right_middle", because it drives both vanes to the furthest-right
+ * extreme, matching what "right" means on the left/center side;
+ * WIDEVANE_R ("right_middle") is the lesser position. This is not
+ * necessarily true on other models -- there is no capability bit
+ * indicating vane count or this per-side behavior (checked against
+ * mUART's independently reverse-engineered protocol docs, which describe
+ * a different, single-vane-oriented scheme for these same raw values,
+ * and another real unit reported by a PR reviewer showed yet another
+ * variant) -- so do not assume this mapping generalizes.
  */
 static const struct miel_hvac_map miel_hvac_widevane_map[] = {
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LL,    "left"},
