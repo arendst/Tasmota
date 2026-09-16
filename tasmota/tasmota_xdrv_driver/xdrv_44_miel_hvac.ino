@@ -5106,8 +5106,13 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 
 	if (Settings->flag.hass_discovery)
 	{
-		/* SetOption19 1 - discovery disabled: clear any previously retained config */
+		/* SetOption19 1 - discovery disabled: clear any previously retained
+		 * config for both the climate entity and the Prohibit select below. */
 		ResponseClear();
+		MqttPublish(stopic, true);
+
+		snprintf_P(object_id, sizeof(object_id), PSTR("%s_prohibit"), dev_id);
+		snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/select/%s/config"), object_id);
 		MqttPublish(stopic, true);
 		return;
 	}
@@ -5192,6 +5197,32 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 	ResponseAppend_P(PSTR(","
 		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
 		dev_id, esc_devname.c_str(), TasmotaGlobal.version);
+
+	MqttPublish(stopic, true);
+
+	/* Prohibit / remote-control lock as a separate Home Assistant MQTT
+	 * select entity -- climate has no native lockout concept. Options and
+	 * labels mirror the web panel's Prohibit dropdown; the same device
+	 * identifier as the climate entity keeps both on one HA device page. */
+	snprintf_P(object_id, sizeof(object_id), PSTR("%s_prohibit"), dev_id);
+	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/select/%s/config"), object_id);
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETPROHIBIT));
+
+	Response_P(PSTR(
+		"{\"~\":\"%s\","
+		"\"name\":\"Prohibit\","
+		"\"unique_id\":\"%s\","
+		"\"entity_category\":\"config\","
+		"\"availability_topic\":\"~LWT\","
+		"\"payload_available\":\"" MQTT_LWT_ONLINE "\","
+		"\"payload_not_available\":\"" MQTT_LWT_OFFLINE "\","
+		"\"options\":[\"Off\",\"Power\",\"Mode\",\"Mode Power\",\"Temp\",\"Temp Power\",\"Temp Mode\",\"All\"],"
+		"\"state_topic\":\"~SENSOR\","
+		"\"value_template\":\"{{ {'off':'Off','power':'Power','mode':'Mode','mode_power':'Mode Power','temp':'Temp','temp_power':'Temp Power','temp_mode':'Temp Mode','all':'All'}.get(value_json.MiElHVAC.Prohibit, 'Off') }}\","
+		"\"command_topic\":\"%s\","
+		"\"command_template\":\"{{ {'Off':'off','Power':'power','Mode':'mode','Mode Power':'mode_power','Temp':'temp','Temp Power':'temp_power','Temp Mode':'temp_mode','All':'all'}[value] }}\","
+		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
+		base_topic, object_id, cmnd_topic, dev_id, esc_devname.c_str(), TasmotaGlobal.version);
 
 	MqttPublish(stopic, true);
 }
