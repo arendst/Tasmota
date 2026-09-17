@@ -760,7 +760,12 @@ struct miel_hvac_parser
  *   bytes 10-15 = temperature range pairs (cool, heat, auto) — only present
  *                 when extended temp range is supported (flags_b & 0x04)
  *
- * Arbitrary data byte 6 bit 0x10 indicates 0x08 Set Run State support.
+ * byte 9 bit 0x10 was previously assumed to indicate 0x08 Set Run State
+ * support (stored as cap_run_state), but per mUART's own docs
+ * (0x7B-identify-response/0xC9-base-capabilities) that bit is undocumented
+ * ("???", observed both true and false) — it is kept only for diagnostics
+ * (CapabilitiesHex / Modbus raw register) and no longer gates any command,
+ * polling, or UI visibility.
  */
 struct miel_hvac_capabilities
 {
@@ -781,7 +786,7 @@ struct miel_hvac_capabilities
 
 	/* capability flags C (byte 9) */
 	bool     cap_outdoor_temp;     /* outdoor temperature reporting (bit 0x20) */
-	bool     cap_run_state;        /* supports 0x08 Set Run State features (bit 0x10) */
+	bool     cap_run_state;        /* byte 9 bit 0x10 — undocumented, unreliable, diagnostics-only */
 
 	/* temperature ranges (bytes 10-15, only when cap_ext_temp) */
 	bool     cap_temp_ranges;      /* temperature range bytes present */
@@ -859,6 +864,32 @@ struct miel_hvac_softc
 	struct miel_hvac_data sc_status;
 	struct miel_hvac_data sc_stage;
 	struct miel_hvac_data sc_options; /* 0x42 Options */
+	bool sc_options_confirmed; /* true once any genuine 0x62 0x42 response
+	                             * has been parsed — used only to gate the
+	                             * raw OptionsHex diagnostic dump */
+
+	/*
+	 * Not all units that answer 0x42 support all three of Purifier,
+	 * NightMode and EconoCool (e.g. some report NightMode/Purifier but
+	 * not EconoCool). There is no capability bit for this in the 0x42
+	 * response, so each is only proven supported by a round trip: a Set
+	 * Run State request is sent asking for a value that DIFFERS from the
+	 * last confirmed value (armed below, sc_*_pending/sc_*_want), and if
+	 * the next genuine 0x42 response reads back exactly that requested
+	 * value, the transition really happened and that option is marked
+	 * confirmed. A no-op resend of the already-current value is not
+	 * armed, since matching it back would prove nothing.
+	 */
+	bool    sc_purifier_pending;
+	uint8_t sc_purifier_want;
+	bool    sc_purifier_confirmed;
+	bool    sc_nightmode_pending;
+	uint8_t sc_nightmode_want;
+	bool    sc_nightmode_confirmed;
+	bool    sc_econocool_pending;
+	uint8_t sc_econocool_want;
+	bool    sc_econocool_confirmed;
+
 	struct miel_hvac_data sc_error;   /* 0x04 Error State */
 
 	struct miel_hvac_capabilities sc_caps; /* 0x7B 0xC9 Base Capabilities */
@@ -1638,13 +1669,6 @@ miel_hvac_cmnd_setpurify(void)
 		return;
 	}
 
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-	{
-		miel_hvac_respond_not_supported();
-		return;
-	}
-
 	update->eight     = 0x08;
 	update->flags    |= htons(MIEL_HVAC_RUNSTATE_F_PURIFIER);
 	update->purifier  = e->byte;
@@ -1670,13 +1694,6 @@ miel_hvac_cmnd_setnightmode(void)
 		return;
 	}
 
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-	{
-		miel_hvac_respond_not_supported();
-		return;
-	}
-
 	update->eight      = 0x08;
 	update->flags     |= htons(MIEL_HVAC_RUNSTATE_F_NIGHTMODE);
 	update->nightmode  = e->byte;
@@ -1699,12 +1716,6 @@ miel_hvac_cmnd_seteconocool(void)
 	if (e == NULL)
 	{
 		miel_hvac_respond_unsupported();
-		return;
-	}
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-	{
-		miel_hvac_respond_not_supported();
 		return;
 	}
 
@@ -1829,6 +1840,39 @@ miel_hvac_cmnd_request(void)
 	miel_hvac_request(sc, type);
 
 	ResponseCmndDone();
+}
+
+/*
+ * HVACProbeRunState <flags_hex> <byte_offset> <value_hex>
+ *
+ * Debug-only raw probe of the 0x08 Set Run State surface, for testing
+ * undocumented flag/byte combinations (e.g. reports of a flag 0x1000,
+ * byte 12 buzzer test on other units). byte_offset is the 0-based
+ * position within the 16-byte 0x08 payload (3-15, bytes 0-2 are the
+ * command type and flags themselves and are not writable this way).
+ * No validation of whether the combination is safe or meaningful —
+ * this exists purely to let a human correlate a raw packet with a
+ * physically observed effect (LED, sound, fan) on real hardware.
+ */
+static void
+miel_hvac_cmnd_proberunstate(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update_runstate *update = &sc->sc_runstate_update;
+	unsigned int flags, offset, value;
+
+	if (sscanf(XdrvMailbox.data, "%x %u %x", &flags, &offset, &value) != 3
+	    || flags > 0xffff || offset < 3 || offset > 15 || value > 0xff)
+	{
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	update->eight = 0x08;
+	update->flags |= htons((uint16_t)flags);
+	((uint8_t *)update)[offset] = (uint8_t)value;
+
+	ResponseCmndChar_P(XdrvMailbox.data);
 }
 #endif
 
@@ -2115,27 +2159,42 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"Prohibit\":\"%s\""), name);
 
-	/* Purifier, NightMode, EconoCool — state from 0x62 0x42 Options. */
-	if ((!sc->sc_caps.sc_caps_valid || sc->sc_caps.cap_run_state)
-		&& sc->sc_options.type != 0)
+	/* Purifier, NightMode, EconoCool — state from 0x62 0x42 Options.
+	 * cap_run_state (0xC9 byte 9 bit 0x10) is not a reliable indicator
+	 * (undocumented per mUART, observed both true and false). Not all
+	 * units that answer 0x42 support all three, so each is gated on its
+	 * own round-trip-confirmed flag (sc_purifier_confirmed et al, set
+	 * only once a Set Run State request's value is read back exactly).
+	 * Only published once confirmed — *Supported in the capabilities
+	 * block already reports "not_supported" otherwise, no need to repeat
+	 * that here too. */
 	{
 		const struct miel_hvac_data_options *opt =
 			&sc->sc_options.data.options;
 
-		name = miel_hvac_map_byval(opt->purifier,
-			miel_hvac_purifier_map, nitems(miel_hvac_purifier_map));
-		if (name != NULL)
-			ResponseAppend_P(PSTR(",\"Purifier\":\"%s\""), name);
+		if (sc->sc_purifier_confirmed)
+		{
+			name = miel_hvac_map_byval(opt->purifier,
+				miel_hvac_purifier_map, nitems(miel_hvac_purifier_map));
+			if (name != NULL)
+				ResponseAppend_P(PSTR(",\"Purifier\":\"%s\""), name);
+		}
 
-		name = miel_hvac_map_byval(opt->nightmode,
-			miel_hvac_nightmode_map, nitems(miel_hvac_nightmode_map));
-		if (name != NULL)
-			ResponseAppend_P(PSTR(",\"NightMode\":\"%s\""), name);
+		if (sc->sc_nightmode_confirmed)
+		{
+			name = miel_hvac_map_byval(opt->nightmode,
+				miel_hvac_nightmode_map, nitems(miel_hvac_nightmode_map));
+			if (name != NULL)
+				ResponseAppend_P(PSTR(",\"NightMode\":\"%s\""), name);
+		}
 
-		name = miel_hvac_map_byval(opt->econocool,
-			miel_hvac_econocool_map, nitems(miel_hvac_econocool_map));
-		if (name != NULL)
-			ResponseAppend_P(PSTR(",\"EconoCool\":\"%s\""), name);
+		if (sc->sc_econocool_confirmed)
+		{
+			name = miel_hvac_map_byval(opt->econocool,
+				miel_hvac_econocool_map, nitems(miel_hvac_econocool_map));
+			if (name != NULL)
+				ResponseAppend_P(PSTR(",\"EconoCool\":\"%s\""), name);
+		}
 	}
 
 	/* raw packet bytes */
@@ -2275,7 +2334,30 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 	case MIEL_HVAC_DATA_T_OPTIONS:
 	{
 		bool changed = (memcmp(&sc->sc_options, d, sizeof(sc->sc_options)) != 0);
+		const struct miel_hvac_data_options *opt = &d->data.options;
+
 		sc->sc_options = *d;
+		sc->sc_options_confirmed = true;
+
+		if (sc->sc_purifier_pending)
+		{
+			if (opt->purifier == sc->sc_purifier_want)
+				sc->sc_purifier_confirmed = true;
+			sc->sc_purifier_pending = false;
+		}
+		if (sc->sc_nightmode_pending)
+		{
+			if (opt->nightmode == sc->sc_nightmode_want)
+				sc->sc_nightmode_confirmed = true;
+			sc->sc_nightmode_pending = false;
+		}
+		if (sc->sc_econocool_pending)
+		{
+			if (opt->econocool == sc->sc_econocool_want)
+				sc->sc_econocool_confirmed = true;
+			sc->sc_econocool_pending = false;
+		}
+
 		if (changed)
 		{
 			MqttPublishSensor();
@@ -2569,9 +2651,6 @@ miel_hvac_apply_runstate(struct miel_hvac_softc *sc, uint16_t flag,
 {
 	struct miel_hvac_msg_update_runstate *update = &sc->sc_runstate_update;
 
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-		return (MIEL_HVAC_APPLY_UNSUPPORTED);
-
 	update->eight = 0x08;
 	update->flags |= htons(flag);
 	*field = on ? 0x01 : 0x00;
@@ -2794,7 +2873,6 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 	bool has_tm  = (sc->sc_timers.type != 0);
 	bool has_st  = (sc->sc_status.type != 0);
 	bool has_sg  = (sc->sc_stage.type != 0);
-	bool has_op  = (sc->sc_options.type != 0);
 
 	*ok = true;
 
@@ -2826,9 +2904,9 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		return (set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK);
 	case 0x0016: return (has_set ? set->prohibit : 0);
 	case 0x0017: return (has_set ? set->airdirection : 0);
-	case 0x0018: return (has_op ? (op->purifier ? 1 : 0) : 0);
-	case 0x0019: return (has_op ? (op->nightmode ? 1 : 0) : 0);
-	case 0x001a: return (has_op ? (op->econocool ? 1 : 0) : 0);
+	case 0x0018: return (sc->sc_purifier_confirmed  ? (op->purifier  ? 1 : 0) : 0);
+	case 0x0019: return (sc->sc_nightmode_confirmed ? (op->nightmode ? 1 : 0) : 0);
+	case 0x001a: return (sc->sc_econocool_confirmed ? (op->econocool ? 1 : 0) : 0);
 
 	case 0x0020:
 		if (!has_rt) return (0);
@@ -3026,9 +3104,9 @@ miel_hvac_mb_read_bit(struct miel_hvac_softc *sc, uint8_t fc, uint16_t addr, boo
 		switch (addr)
 		{
 		case 0: return (sc->sc_settings.type != 0 && set->power);
-		case 1: return (sc->sc_options.type != 0 && op->purifier);
-		case 2: return (sc->sc_options.type != 0 && op->nightmode);
-		case 3: return (sc->sc_options.type != 0 && op->econocool);
+		case 1: return (sc->sc_purifier_confirmed  && op->purifier);
+		case 2: return (sc->sc_nightmode_confirmed && op->nightmode);
+		case 3: return (sc->sc_econocool_confirmed && op->econocool);
 		case 4: return (sc->sc_remotetemp_active);
 		}
 	}
@@ -3919,8 +3997,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	}
 
 	/* Options raw hex — Purifier/NightMode/EconoCool already in settings block above. */
-	if ((!sc->sc_caps.sc_caps_valid || sc->sc_caps.cap_run_state)
-		&& sc->sc_options.type != 0)
+	if (sc->sc_options_confirmed)
 	{
 		char hex[(sizeof(sc->sc_options) + 1) * 2];
 		ResponseAppend_P(PSTR(",\"OptionsHex\":\"%s\""),
@@ -3956,9 +4033,13 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			/* AirDirection requires cap_vane_v and an observed i-See sensor.
 			 * It works independently of cap_run_state. */
 			(!caps->cap_vane_v || !sc->sc_has_isee) ? "not_supported" : "on",
-			caps->cap_run_state    ? "on" : "not_supported",
-			caps->cap_run_state    ? "on" : "not_supported",
-			caps->cap_run_state    ? "on" : "not_supported");
+			/* cap_run_state (0xC9 byte 9 bit 0x10) is undocumented per mUART
+			 * and not a reliable capability indicator. Not all units that
+			 * answer 0x42 support all three of these, so each is reported
+			 * independently based on its own round-trip-confirmed flag. */
+			sc->sc_purifier_confirmed  ? "on" : "not_supported",
+			sc->sc_nightmode_confirmed ? "on" : "not_supported",
+			sc->sc_econocool_confirmed ? "on" : "not_supported");
 
 		if (caps->cap_temp_ranges)
 		{
@@ -4657,21 +4738,27 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 		miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map),
 		set->prohibit, NULL, 0);
 
-	/* Purifier / Night mode / EconoCool (0x08 Set Run State) */
-	if (!cv || caps->cap_run_state)
+	/* Purifier / Night mode / EconoCool (0x08 Set Run State).
+	 * cap_run_state is undocumented/unreliable, so don't gate on it.
+	 * Not all units that answer 0x42 support all three, so each button
+	 * only appears once its own round-trip-confirmed flag is set. */
+	if (sc->sc_purifier_confirmed || sc->sc_nightmode_confirmed
+	    || sc->sc_econocool_confirmed)
 	{
 		const struct miel_hvac_data_options *opt = &sc->sc_options.data.options;
-		bool have = (sc->sc_options.type != 0);
 
 		WSContentSend_P(PSTR("<div class='hp-field'>"));
 		miel_hvac_web_label("Options");
 		WSContentSend_P(PSTR("<div class='hp-toggles'>"));
-		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_PURIFY, "Purifier",
-			have && opt->purifier == MIEL_HVAC_OPTIONS_PURIFIER_ON);
-		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_NIGHT, "Night",
-			have && opt->nightmode == MIEL_HVAC_OPTIONS_NIGHTMODE_ON);
-		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_ECONO, "EconoCool",
-			have && opt->econocool == MIEL_HVAC_OPTIONS_ECONOCOOL_ON);
+		if (sc->sc_purifier_confirmed)
+			miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_PURIFY, "Purifier",
+				opt->purifier == MIEL_HVAC_OPTIONS_PURIFIER_ON);
+		if (sc->sc_nightmode_confirmed)
+			miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_NIGHT, "Night",
+				opt->nightmode == MIEL_HVAC_OPTIONS_NIGHTMODE_ON);
+		if (sc->sc_econocool_confirmed)
+			miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_ECONO, "EconoCool",
+				opt->econocool == MIEL_HVAC_OPTIONS_ECONOCOOL_ON);
 		WSContentSend_P(PSTR("</div></div>"));
 	}
 
@@ -4965,22 +5052,30 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 			&sc->sc_runstate_update;
 		uint16_t sent_flags = runstate->flags;
 
-		/* Optimistic update: apply values to sc_options before sending
-		 * so SENSOR reflects intended state immediately. Confirmed by next 0x42 read. */
-		if (sent_flags & htons(MIEL_HVAC_RUNSTATE_F_PURIFIER))
+		/* No optimistic apply here — Purifier/NightMode/EconoCool must
+		 * reflect the unit's own confirmed state, not what we just asked
+		 * for, since on some units the 0x42 read-back below never
+		 * arrives and an optimistic guess would then never get
+		 * corrected. Arm a pending round-trip check per option instead,
+		 * only when the request actually asks for a different value
+		 * than last confirmed — see sc_purifier_pending et al. */
+		if ((sent_flags & htons(MIEL_HVAC_RUNSTATE_F_PURIFIER))
+		    && runstate->purifier != sc->sc_options.data.options.purifier)
 		{
-			sc->sc_options.type = MIEL_HVAC_DATA_T_OPTIONS;
-			sc->sc_options.data.options.purifier = runstate->purifier;
+			sc->sc_purifier_want = runstate->purifier;
+			sc->sc_purifier_pending = true;
 		}
-		if (sent_flags & htons(MIEL_HVAC_RUNSTATE_F_NIGHTMODE))
+		if ((sent_flags & htons(MIEL_HVAC_RUNSTATE_F_NIGHTMODE))
+		    && runstate->nightmode != sc->sc_options.data.options.nightmode)
 		{
-			sc->sc_options.type = MIEL_HVAC_DATA_T_OPTIONS;
-			sc->sc_options.data.options.nightmode = runstate->nightmode;
+			sc->sc_nightmode_want = runstate->nightmode;
+			sc->sc_nightmode_pending = true;
 		}
-		if (sent_flags & htons(MIEL_HVAC_RUNSTATE_F_ECONOCOOL))
+		if ((sent_flags & htons(MIEL_HVAC_RUNSTATE_F_ECONOCOOL))
+		    && runstate->econocool != sc->sc_options.data.options.econocool)
 		{
-			sc->sc_options.type = MIEL_HVAC_DATA_T_OPTIONS;
-			sc->sc_options.data.options.econocool = runstate->econocool;
+			sc->sc_econocool_want = runstate->econocool;
+			sc->sc_econocool_pending = true;
 		}
 
 		miel_hvac_send_update_runstate(sc, runstate);
@@ -4997,19 +5092,11 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 
 	i = (sc->sc_tick++ % nitems(updates));
 
-	/* 0x42 uses short request form (len=1). Units without cap_run_state
-	 * never respond to 0x42, so skip polling to avoid timeouts. */
+	/* 0x42 uses short request form (len=1). cap_run_state is not a
+	 * reliable predictor of 0x42 support (undocumented per mUART,
+	 * observed both true and false) so it is always polled here. */
 	if (updates[i] == MIEL_HVAC_REQUEST_OPTIONS)
-	{
-		if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-		{
-			/* skip this slot silently — advance tick counter only */
-		}
-		else
-		{
-			miel_hvac_request_short(sc, updates[i]);
-		}
-	}
+		miel_hvac_request_short(sc, updates[i]);
 	else
 		miel_hvac_request(sc, updates[i]);
 }
@@ -5284,6 +5371,7 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 #endif
 #ifdef MIEL_HVAC_DEBUG
 	"|HVACRequest"
+	"|HVACProbeRunState"
 #endif
 	;
 
@@ -5310,6 +5398,7 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 #endif
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
+	&miel_hvac_cmnd_proberunstate,
 #endif
 };
 
