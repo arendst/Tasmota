@@ -100,3 +100,13 @@ for i:1..50 l50.push(i) end
 
 assert(call(g, l50) == [1, 2, 3])
 assert(call(c, l50) == 50)
+
+#- call should be working for a class constructor -#
+class A
+    var a
+    def init(x)
+        self.a = x
+    end
+end
+var inst = call(A, 5)
+assert(inst.a == 5)

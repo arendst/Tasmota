@@ -2367,7 +2367,7 @@ bool Xdrv27(uint32_t function)
         ShutterReportPosition(false, MAX_SHUTTERS_ESP32);
         break;
       case FUNC_RESTORE_SETTINGS:
-        result = ShutterSettingsRestore();
+        return ShutterSettingsRestore(); // Returns true with updated XdrvMailbox.index and .data
         break;
       case FUNC_SAVE_SETTINGS:
         ShutterSettingsSave();

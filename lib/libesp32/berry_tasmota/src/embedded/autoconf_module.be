@@ -90,7 +90,7 @@ autoconf_module.init = def (m)
     def load_templates()
       import json
       try 
-        var url = format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s_manifest.json", tasmota.arch())
+        var url = format("https://ota.tasmota.com/autoconf/%s_manifest.json", tasmota.arch())
         tasmota.log(format("CFG: loading '%s'", url), 3)
         # load the template
         var cl = webclient()

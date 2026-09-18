@@ -657,7 +657,7 @@ bool AP33772S_SetOutput(uint8_t flag) {
 
 void AP33772S_Init(void) {
   uint32_t bus;
-  for (bus = 0; bus < 2; bus++) {
+  for (bus = 0; bus < MAX_I2C; bus++) {
     if (!I2cSetDevice(AP33772S_I2C_ADDR, bus)) {
       continue;
     }

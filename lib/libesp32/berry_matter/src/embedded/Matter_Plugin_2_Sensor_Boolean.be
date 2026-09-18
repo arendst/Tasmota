@@ -51,7 +51,6 @@
 # CONFIGURATION:
 # - ARG: "switch" - Tasmota Switch number (1-based)
 # - ARG_HINT: "Switch<x> number" - User guidance
-# - ARG_TYPE: int(x) - Converts argument to integer
 # - UPDATE_TIME: 750ms - Fast update for responsive binary sensors
 #
 # TASMOTA INTEGRATION:
@@ -96,9 +95,12 @@ import matter
 class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   # static var TYPE = ""                              # name of the plug-in in json
   # static var DISPLAY_NAME = ""                      # display name of the plug-in
-  static var ARG  = "switch"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Switch<x> number"
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+
+  static var SCHEMA = "switch|"                     # arg name
+                      "l:Switch|"                   # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Switch<x> number|"         # hint
+                      "r:1"                         # required
   static var UPDATE_TIME = 750                      # update every 750ms
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
@@ -117,7 +119,7 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
+    self.tasmota_switch_index = int(config.find('switch', 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 
@@ -126,7 +128,7 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   #
   def update_shadow()
     super(self).update_shadow()
-    if !self.VIRTUAL
+    if !self.VIRTUAL && !self.mqtt_remote
       var switch_str = "Switch" + str(self.tasmota_switch_index)
 
       var j = tasmota.cmd("Status 10", true)
@@ -169,9 +171,9 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   # This call is synnchronous and blocking.
   def parse_status(data, index)
     if index == 10                             # Status 10
-      var state = false
-
-      state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
+      var switch_key = "Switch" + str(self.tasmota_switch_index)
+      if !data.contains(switch_key)   return   end
+      var state = (data.find(switch_key) == "ON")
 
       if self.shadow_bool_value != nil && self.shadow_bool_value != bool(state)
         self.value_updated()

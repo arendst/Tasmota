@@ -460,8 +460,8 @@ void Renderer::drawFastVLineInternal(int16_t x, int16_t __y, int16_t __h, uint16
   }
 
   // this display doesn't need ints for coordinates, use local byte registers for faster juggling
-  register uint8_t y = __y;
-  register uint8_t h = __h;
+  register uint16_t y = __y;
+  register uint16_t h = __h;
 
 
   // set up the pointer for fast movement through the buffer

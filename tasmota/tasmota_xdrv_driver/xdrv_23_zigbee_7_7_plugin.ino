@@ -166,6 +166,7 @@ bool ZbLoad_inner(const char *filename, File &fp) {
       // allocate only once the filename for multiple entries
       // freed only by `ZbUnload`
       filename_imported = (char*) malloc(strlen_P(filename)+1);
+      if (filename_imported == nullptr) { return false; }  // L-34: guard against malloc failure
       strcpy_P(filename_imported, filename);
     }
 

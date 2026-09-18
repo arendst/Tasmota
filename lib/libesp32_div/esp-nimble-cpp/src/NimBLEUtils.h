@@ -41,6 +41,7 @@ void nimble_cpp_assert(const char *file, unsigned line) __attribute((weak, noret
 # define NIMBLE_CPP_DEBUG_ASSERT(cond) (void(0))
 #endif
 
+# include <cstdint>
 # include <string>
 
 class NimBLEAddress;

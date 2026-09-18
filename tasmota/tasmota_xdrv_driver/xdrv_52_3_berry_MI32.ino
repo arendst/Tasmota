@@ -71,11 +71,11 @@ extern "C" {
     return buffer;
   }
 
-  void be_MI32_set_hum(int slot, int hum_val){
+  void be_MI32_set_hum(int slot, float hum_val){
     MI32setHumidityForSlot(slot,hum_val);
   }
 
-  void be_MI32_set_temp(int slot, int temp_val){
+  void be_MI32_set_temp(int slot, float temp_val){
     MI32setTemperatureForSlot(slot,temp_val);
   }
 
@@ -107,7 +107,7 @@ extern "C" {
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
   extern void MI32setBerryServerCB(void* function, uint8_t *buffer);
-  extern bool MI32runBerryConnection(uint8_t operation, bbool response, int32_t *arg1);
+  extern bool MI32runBerryConnection(uint8_t operation, bbool response, bbool hasArg1, int32_t arg1);
   extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type, uint32_t pin);
@@ -196,22 +196,36 @@ extern "C" {
     be_raisef(vm, "ble_error", "BLE: could not set characteristic");
   }
 
-  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1);
-  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1){
-    int32_t argc = be_top(vm); // Get the number of arguments
-    bool _response = false;
-    if(response){
-      _response = response;
-    }
-    int32_t *ptr_arg1 = nullptr;
-    int32_t _arg1 = arg1;
-    if(argc == 3){
-      ptr_arg1 = &_arg1;
-    }
-    if (MI32runBerryConnection(operation, _response, ptr_arg1)) return;
+int be_BLE_run(bvm *vm);
+int be_BLE_run(bvm *vm) {
+  int argc = be_top(vm);
 
-    be_raisef(vm, "ble_error", "BLE: could not run operation");
+  if (argc < 1 || !be_isint(vm, 1)) {
+    be_raise(vm, "value_error", "BLE.run: wrong arguments");
+    be_return_nil(vm);
   }
+
+  uint8_t operation = (uint8_t) be_toint(vm, 1);
+
+  bool response = false;
+  if (argc >= 2) {
+    response = be_tobool(vm, 2);
+  }
+
+  int32_t arg1 = 0;
+  bool hasArg1 = false;
+  if (argc >= 3) {
+      arg1 = (int32_t) be_toint(vm, 3);
+      hasArg1 = true;
+  }
+
+  if (MI32runBerryConnection(operation, response, hasArg1, arg1)) {
+    be_return_nil(vm);
+  }
+
+  be_raisef(vm, "ble_error", "BLE: could not run operation");
+  be_return_nil(vm);
+}
 
   void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
   void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
@@ -260,10 +274,19 @@ extern "C" {
   int32_t be_BLE_info(struct bvm *vm);
   int32_t be_BLE_info(struct bvm *vm) {
     be_newobject(vm, "map");
-    char _Role[16];
-    GetTextIndexed(_Role, sizeof(_Role), MI32.role, HTTP_MI32_PARENT_BLE_ROLE);
-    char _role[16];
-    LowerCase(_role,_Role);
+    be_map_insert_int(vm, "role_bits", MI32.role);
+    char _role[40] = "";
+    if(MI32.role == MI32_ROLE_NONE){
+      strcpy(_role, "none");
+    } else {
+      const char *roleNames[] = { "scanner", "client", "server", "advertiser" };
+      for(uint32_t i = 0; i < 4; i++){
+        if(MI32.role & (1 << i)){
+          if(_role[0]) strlcat(_role, "+", sizeof(_role));
+          strlcat(_role, roleNames[i], sizeof(_role));
+        }
+      }
+    }
     be_map_insert_str(vm, "role", _role);
     be_map_insert_str(vm, "local_addr", NimBLEDevice::toString().c_str());
     be_map_insert_int(vm, "power", NimBLEDevice::getPower());
@@ -278,7 +301,22 @@ extern "C" {
 // #else
 //     be_map_insert_nil(vm, "bonds");
 // #endif
-    if(MI32.mode.connected == 1 || MI32.ServerTask != nullptr){
+
+    be_pushstring(vm, "debug");
+    be_newobject(vm, "map");
+    be_map_insert_bool(vm, "ready", MI32.ConnTask != nullptr && MI32.mode.readyForNextJob);
+    be_map_insert_bool(vm, "pending", MI32.mode.triggerNextJob || MI32.mode.triggerBerryConnCB ||
+                                      MI32.mode.triggerBerryAdvCB || (MI32.ConnTask != nullptr && !MI32.mode.readyForNextJob));
+    // The context keeps the most recently staged operation/result until reused.
+    be_map_insert_int(vm, "operation", MI32.conCtx ? MI32.conCtx->operation : 0);
+    be_map_insert_int(vm, "error", MI32.conCtx ? MI32.conCtx->error : 0);
+    be_map_insert_int(vm, "queue_drops", __atomic_load_n(&MI32.queueDrops, __ATOMIC_RELAXED));
+    be_pop(vm, 1);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+
+    NimBLEClient* _serverPeer = MI32.conCtx ? MI32.conCtx->serverPeer : nullptr;
+    if(MI32.mode.connected == 1 || _serverPeer != nullptr){
       NimBLEClient* _device = nullptr;
       if(MI32.mode.connected == 1){
         _device = NimBLEDevice::getClientByHandle(MI32.connID);
@@ -297,7 +335,7 @@ extern "C" {
       be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
       be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
       if(_device == nullptr) {
-        auto _remote_client = NimBLEDevice::getServer()->getClient(_info);
+        auto _remote_client = _serverPeer;
         if(_remote_client != nullptr){
           auto _name = _remote_client->getValue(NimBLEUUID((uint16_t)0x1800), NimBLEUUID((uint16_t)0x2A00)); //GAP, name
           if(_name){
@@ -309,8 +347,7 @@ extern "C" {
       }
 
       ble_store_value_sec value_sec;
-      ble_sm_read_bond(_info.getConnHandle(), &value_sec);
-      if(value_sec.irk_present == 1){
+      if(ble_sm_read_bond(_info.getConnHandle(), &value_sec) == 0 && value_sec.irk_present == 1){
             char IRK[33];
             ToHex_P(value_sec.irk,16,IRK,33);
             be_map_insert_str(vm, "IRK",IRK );
@@ -344,16 +381,16 @@ be_BLE_op:
 1 read
 2 write
 3 subscribe
-4 unsubscribe - maybe later
+4 unsubscribe
 5 disconnect
-6 discover services
-7 discover characteristics
+6 discover services (true forces refresh)
+7 discover characteristics (true forces refresh)
 
 
 11 read once, then disconnect
 12 write once, then disconnect
 13 subscribe once, then disconnect
-14 unsubscribe once, then disconnect - maybe later
+14 unsubscribe once, then disconnect
 
 #server
 __commands

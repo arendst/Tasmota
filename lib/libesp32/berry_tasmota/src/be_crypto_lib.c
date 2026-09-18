@@ -94,7 +94,7 @@ const be_const_member_t be_crypto_members[] = {
 
 #ifdef USE_BERRY_CRYPTO_AES_CCM
   { "/AES_CCM", (intptr_t) &be_class_aes_ccm },
-#endif // USE_BERRY_CRYPTO_AES_CTR
+#endif // USE_BERRY_CRYPTO_AES_CCM
 
 #ifdef USE_BERRY_CRYPTO_AES_CTR
   { "/AES_CTR", (intptr_t) &be_class_aes_ctr },
@@ -136,7 +136,7 @@ const be_const_member_t be_crypto_members[] = {
 
 #ifdef USE_BERRY_CRYPTO_RSA
   { "/RSA", (intptr_t) &be_class_rsa },
-#endif // USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256
+#endif // USE_BERRY_CRYPTO_RSA
 
 #ifdef USE_BERRY_CRYPTO_SHA256
   { "/SHA256", (intptr_t) &be_class_sha256 },

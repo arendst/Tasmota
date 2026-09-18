@@ -234,15 +234,22 @@ gpio.digital_read(pin)          # Read GPIO state
 gpio.pin_mode(pin, gpio.OUTPUT) # Set GPIO mode
 
 # PWM control
-gpio.set_pwm(pin, duty, phase)  # Set PWM value
-gpio.set_pwm_freq(pin, freq)    # Set PWM frequency
+gpio.set_pwm(pin, duty, hpoint)  # Set PWM value (hpoint = phase)
+gpio.set_pwm_freq(pin, freq)     # Set PWM frequency
+gpio.read_pwm(pin)               # Read PWM duty value (returns -1 if not PWM pin)
+gpio.read_pwm_resolution(pin)    # Read PWM resolution (returns -1 if not PWM pin)
 
 # DAC (ESP32 GPIO 25-26, ESP32-S2 GPIO 17-18)
 gpio.dac_voltage(pin, voltage_mv)  # Set DAC voltage
 
 # Counters
-gpio.counter_read(counter)      # Read counter value
-gpio.counter_set(counter, value) # Set counter value
+gpio.counter_read(counter)      # Read counter value (returns nil if counter not used)
+gpio.counter_set(counter, value) # Set counter value (returns nil if counter not used)
+gpio.counter_add(counter, value) # Add to counter value (returns nil if counter not used)
+
+# GPIO configuration info
+gpio.get_pin_type(pin)          # Get GPIO type configured (0 if not configured)
+gpio.get_pin_type_index(pin)    # Get GPIO sub-index (0 if not configured)
 ```
 
 ### I²C Communication

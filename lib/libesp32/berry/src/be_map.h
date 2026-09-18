@@ -21,6 +21,22 @@ typedef struct bmapnode {
     bvalue value;
 } bmapnode;
 
+#if BE_USE_COMPACT_MAP
+/* Packed read-only node for constant (solidified/flash) maps. The value's
+ * type byte is folded into the key word so the node is 12 bytes on 32-bit
+ * targets (vs 16 for bmapnode). Used ONLY for const maps; mutable runtime
+ * maps always use bmapnode. `bmap.slots` is reinterpreted as bmapnodec* when
+ * gc_isconst(map) is true. */
+typedef struct bmapnodec {
+    union bvaldata key_v;       /* key payload */
+    uint32_t key_type : 8;      /* key type    */
+    uint32_t next     : 16;     /* chain link (LASTNODE == 0xFFFF) */
+    uint32_t val_type : 8;      /* value type (stolen from the old next:24) */
+    union bvaldata val_v;       /* value payload */
+} bmapnodec;
+#define BE_MAP_LASTNODE_COMPACT     0xFFFF
+#endif
+
 struct bmap {
     bcommon_header;
     bgcobject *gray; /* for gc gray list */

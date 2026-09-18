@@ -73,7 +73,7 @@ void CB_MESHDataReceived(const esp_now_recv_info_t *esp_now_info, const uint8_t 
 //        AddLog(LOG_LEVEL_INFO, PSTR("MSH: Rcvd topic %s, payload %*_H"), (char*)_recvPacket->payload + 6, MESH.packetToConsume.front().chunkSize+5, (uint8_t *)&MESH.packetToConsume.front().payload);
         for (auto &_peer : MESH.peers) {
           if (memcmp(_peer.MAC, _recvPacket->sender, 6) == 0) {
-            strcpy(_peer.topic, (char*)_recvPacket->payload + 6);
+            strlcpy(_peer.topic, (char*)_recvPacket->payload + 6, MESH_TOPICSZ);
             MESHsubscribe((char*)&_peer.topic);
             _locked = false;
             return;
@@ -244,7 +244,7 @@ bool MESHinterceptMQTTonBroker(char* _topic, uint8_t* _data, unsigned int data_l
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Intercept topic %s"), _topic);
   for (auto &_peer : MESH.peers) {
     GetTopic_P(stopic, CMND, _peer.topic, PSTR("")); //cmnd/topic/
-    if (strlen(_topic) != strlen(_topic)) {
+    if (strlen(_topic) != strlen(stopic)) {
       return false; // prevent false result when _topic is the leading substring of stopic
     }
     if (memcmp(_topic, stopic, strlen(stopic)) == 0) {
@@ -363,7 +363,7 @@ bool MESHrouteMQTTtoMESH(const char* _topic, char* _data, bool _retained) {
  */
 void MESHregisterNode(uint8_t mode){
   memcpy(MESH.sendPacket.receiver, MESH.broker, 6);  // First 6 bytes -> MAC of broker
-  strcpy((char*)MESH.sendPacket.payload +6, TasmotaGlobal.mqtt_topic);  // Remaining bytes -> topic of node
+  strlcpy((char*)MESH.sendPacket.payload +6, TasmotaGlobal.mqtt_topic, MESH_PAYLOAD_SIZE - 6);  // Remaining bytes -> topic of node
   AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Register node with topic '%s'"), (char*)MESH.sendPacket.payload +6);
   MESH.sendPacket.TTL = 2;
   MESH.sendPacket.chunks = 1;

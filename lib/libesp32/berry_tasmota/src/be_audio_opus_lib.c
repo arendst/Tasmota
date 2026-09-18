@@ -22,10 +22,10 @@ void *be_audio_opus_decoder_init_ntv(int freq, int channels) {
   int opus_size = opus_decoder_get_size(channels);   // get size for n channel
   tasmota_log_C(LOG_LEVEL_DEBUG, "AUD: allocated %i bytes for Opus decoder", opus_size);
   void * buf = BE_EXPLICIT_MALLOC(opus_size);
-  if (!buf) { berry_log_C("OPUS: out of memory"); }
+  if (!buf) { tasmota_log_C(LOG_LEVEL_ERROR, "OPUS: out of memory"); }
 
   int err = opus_decoder_init((OpusDecoder*)buf, freq, channels);
-  if (err) { berry_log_C("OPUS: opus_encoder_init error=%i", err); }
+  if (err) { tasmota_log_C(LOG_LEVEL_ERROR, "OPUS: opus_decoder_init error=%i", err); }
 
   return buf;
 }
@@ -56,9 +56,9 @@ int be_audio_opus_decoder_decode(struct bvm *vm) {
   if (argc >= 3) { frame_start = be_toint(vm, 3); if (frame_start < 0) frame_start = 0; }
   if (argc >= 4) { frame_len = be_toint(vm, 4); }
 
-  if (frame_start >= bytes_len) { frame_len = 0; }              // send empty packet
+  if (frame_start >= (int32_t)bytes_len) { frame_len = 0; }              // send empty packet
   else if (frame_len < 0) { frame_len = bytes_len - frame_start; }    // send all packet, adjust len
-  else if (frame_start + frame_len > bytes_len) { frame_len = bytes_len - frame_start; }    // len is too long, adjust
+  else if ((size_t)frame_start + (size_t)frame_len > bytes_len) { frame_len = bytes_len - frame_start; }    // len is too long, adjust
   // adjust start
   opus_frame = opus_frame + frame_start;
 

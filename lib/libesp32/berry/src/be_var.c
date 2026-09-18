@@ -162,8 +162,9 @@ int be_builtin_find(bvm *vm, bstring *name)
 bstring* be_builtin_name(bvm *vm, int index)
 {
     bmap *map = builtin(vm).vtab;
-    bmapnode *end, *node = map->slots;
-    for (end = node + map->size; node < end; ++node) {
+    bmapnode *node;
+    bmapiter iter = be_map_iter();
+    while ((node = be_map_next(map, &iter)) != NULL) {
         if (var_isstr(&node->key) && node->value.v.i == index) {
             return node->key.v.s;
         }

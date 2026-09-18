@@ -54,9 +54,10 @@ class Matter_Plugin_Zigbee_Occupancy : Matter_Plugin_Sensor_Occupancy
   static var TYPE = "z_occupancy"                   # name of the plug-in in json
   static var DISPLAY_NAME = "Zig Occupancy"         # display name of the plug-in
   static var ZIGBEE_NAME = "Occupancy"              # name of zigbee attribute with sensor reported
-  static var ARG  = "zigbee_device"                 # zigbee device
-  static var ARG_TYPE = / x -> str(x)               # function to convert argument to the right type
-  static var ARG_HINT = "Device"                    # Hint for entering the Argument (inside 'placeholder')
+
+  static var SCHEMA = "zigbee_device|"              # arg name
+                      "l:Device|"                   # label (display name)
+                      "h:Device"                    # hint (type defaults to text)
   static var VIRTUAL = true                         # virtual device, necessary for Zigbee mapping
   var zigbee_mapper                                 # required for zigbee device
 

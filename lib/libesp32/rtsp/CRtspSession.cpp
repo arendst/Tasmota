@@ -63,7 +63,7 @@ bool CRtspSession::ParseRtspRequest(char const * aRequest, unsigned aRequestSize
             {
                 Length = 128;
             }
-            strncpy(CP,ClientPortPtr, Length);
+            strlcpy(CP,ClientPortPtr, Length);
             pCP = strstr(CP,"=");
             if (pCP != nullptr)
             {

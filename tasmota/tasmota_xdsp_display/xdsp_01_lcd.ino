@@ -27,10 +27,11 @@
 #define LCD_ADDRESS1           0x27         // LCD I2C address option 1
 #define LCD_ADDRESS2           0x3F         // LCD I2C address option 2
 
-#include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
 LiquidCrystal_I2C *lcd;
+
+uint8_t lcd_addresses[] = { LCD_ADDRESS1, LCD_ADDRESS2 };
 
 /*********************************************************************************************/
 
@@ -56,33 +57,30 @@ void LcdInit(uint8_t mode)
 }
 
 void LcdInitDriver(void) {
-  if (!TasmotaGlobal.i2c_enabled[0]) { return; }
+  if ((0 == Settings->display_model) || 
+      (XDSP_01 == Settings->display_model)) {
+    for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+      for (uint32_t idx = 0; idx < 2; idx++) {
+        if (!I2cSetDevice(lcd_addresses[idx], bus)) { continue; }
+        Settings->display_address[0] = lcd_addresses[idx];
+        Settings->display_model = XDSP_01;
+        I2cSetActiveFound(Settings->display_address[0], "LCD", bus);
 
-  if (!Settings->display_model) {
-    if (I2cSetDevice(LCD_ADDRESS1)) {
-      Settings->display_address[0] = LCD_ADDRESS1;
-      Settings->display_model = XDSP_01;
-    }
-    else if (I2cSetDevice(LCD_ADDRESS2)) {
-      Settings->display_address[0] = LCD_ADDRESS2;
-      Settings->display_model = XDSP_01;
-    }
-  }
-
-  if (XDSP_01 == Settings->display_model) {
-    I2cSetActiveFound(Settings->display_address[0], "LCD");
-
-    Settings->display_width = Settings->display_cols[0];
-    Settings->display_height = Settings->display_rows;
-    lcd = new LiquidCrystal_I2C(Settings->display_address[0], Settings->display_cols[0], Settings->display_rows);
+        Settings->display_width = Settings->display_cols[0];
+        Settings->display_height = Settings->display_rows;
+        lcd = new LiquidCrystal_I2C(Settings->display_address[0], Settings->display_cols[0], Settings->display_rows);
+        lcd->setWire(&I2cGetWire(bus));
 
 #ifdef USE_DISPLAY_MODES1TO5
-    DisplayAllocScreenBuffer();
+        DisplayAllocScreenBuffer();
 #endif  // USE_DISPLAY_MODES1TO5
 
-    LcdInitMode();
+        LcdInitMode();
 
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: LCD"));
+        AddLog(LOG_LEVEL_INFO, PSTR("DSP: LCD"));
+        return;
+      }
+    }
   }
 }
 

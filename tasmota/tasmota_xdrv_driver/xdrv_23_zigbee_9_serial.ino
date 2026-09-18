@@ -232,7 +232,7 @@ void ZigbeeInputLoop(void) {
 			// compute CRC
       for (uint32_t i=0; i<frame_len-2; i++) {
         crc = crc ^ ((uint16_t)zigbee_buffer->get8(i) << 8);
-        for (uint32_t i=0; i<8; i++) {
+        for (uint32_t j=0; j<8; j++) {
           if (crc & 0x8000) {
             crc = (crc << 1) ^ 0x1021;          // polynom is x^16 + x^12 + x^5 + 1, CCITT standard
           } else {
@@ -479,7 +479,7 @@ void ZigbeeEZSPSendRaw(const uint8_t *msg, size_t len, bool send_cancel) {
 
       // compute CRC
       crc = crc ^ ((uint16_t)out_byte << 8);
-      for (uint32_t i=0; i<8; i++) {
+      for (uint32_t j=0; j<8; j++) {
         if (crc & 0x8000) {
           crc = (crc << 1) ^ 0x1021;          // polynom is x^16 + x^12 + x^5 + 1, CCITT standard
         } else {

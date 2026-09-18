@@ -306,7 +306,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
     var ret = super(self).begin_sync(cmd_url, timeout)
     var payload_short = (ret) ? ret : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    log(format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
+    log(f"MTR: HTTP {'sync'}-resp in {tasmota.millis() - self.time_start} ms from {self.addr}: [{size(self.payload)}] '{payload_short}'", 3)
     return ret
   end
 
@@ -314,17 +314,17 @@ class Matter_HTTP_remote : Matter_HTTP_async
     if self.current_cmd == nil    return  end       # do nothing if sync request
     var payload_short = (self.payload != nil) ? self.payload : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    log(format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
+    log(f"MTR: HTTP {'async'}-resp in {tasmota.millis() - self.time_start} ms from {self.addr}: [{size(self.payload)}] '{payload_short}'", 3)
     self.dispatch_cb(self.http_status, self.payload)
   end
   def event_http_failed()
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    log("MTR: HTTP failed", 3)
+    log(f"MTR: HTTP failed in={tasmota.millis() - self.time_start} ms from {self.addr}", 3)
     self.dispatch_cb(self.http_status, nil)
   end
   def event_http_timeout()
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    log(format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 3)
+    log(f"MTR: HTTP timeout in={tasmota.millis() - self.time_start} ms from {self.addr}", 3)
     self.dispatch_cb(self.http_status, nil)
   end
 

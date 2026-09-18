@@ -2770,7 +2770,7 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
         String boundary = glob_script_mem.jpg_task.http.header(headerKeys[0]);
         char *cp = strchr(boundary.c_str(), '=');
         if (cp) {
-          strcpy(glob_script_mem.jpg_task.boundary,cp + 1);
+          strlcpy(glob_script_mem.jpg_task.boundary, cp + 1, sizeof(glob_script_mem.jpg_task.boundary));
         }
       } else {
         AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, glob_script_mem.jpg_task.http.errorToString(httpCode).c_str());
@@ -2806,7 +2806,7 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
           glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
           //AddLog(LOG_LEVEL_INFO, PSTR("size = %s"), inbuff);
           char *cp = strchr(inbuff, ':');
-          uint16_t size = 0;
+          uint32_t size = 0;
           if (cp) {
             size = atoi(cp + 1);
           }
@@ -6928,6 +6928,33 @@ void tmod_directModeOutput(uint32_t pin);
               fvar = udp_call(url, port, payload, alend);
               free(payload);
             }
+          }
+          if (sel == 8) {
+            // generic send to url and port
+            char url[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, url, 0);
+            TS_FLOAT port;
+            lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+
+            // send to recive port up to 3 text buffers
+            char payload[SCRIPT_MAX_SBSIZE * 3];
+            char part1[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+            SCRIPT_SKIP_SPACES
+            strcpy(payload, part1);
+            if (*lp != ')') {
+              // get next part
+              lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+              SCRIPT_SKIP_SPACES
+              strcat(payload, part1);
+              if (*lp != ')') {
+                // get next part
+                lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+                SCRIPT_SKIP_SPACES
+                strcat(payload, part1);
+              }
+            }
+            fvar = udp_call(url, port, (uint8_t*)payload, strlen(payload));
           }
           goto nfuncexit;
         }
@@ -14461,13 +14488,12 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
 #ifdef ESP32
       if (val1 == 0) glob_script_mem.script_i2c_wire = &Wire;
       else {
-#if defined(USE_I2C_BUS2)
+#if MAX_I2C > 1
         glob_script_mem.script_i2c_wire = &Wire1;
 #else
         glob_script_mem.script_i2c_wire = &Wire;
-#endif
+#endif  // MAX_I2C
       }
-
 #else
       glob_script_mem.script_i2c_wire = &Wire;
 #endif
@@ -14514,7 +14540,8 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       glob_script_mem.script_i2c_wire->endTransmission();
       break;
     case 14:
-#if defined(ESP32) && defined(USE_I2C_BUS2)
+#ifdef ESP32
+#if MAX_I2C > 1
       Wire1.end();
       Wire1.begin(val & 0x7f, val1);
       glob_script_mem.script_i2c_wire = &Wire1;
@@ -14522,7 +14549,8 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       if (val & 128) {
         XsnsCall(FUNC_INIT);
       }
-#endif
+#endif  // MAX_I2C
+#endif  // ESP32
       break;
   }
   return rval;

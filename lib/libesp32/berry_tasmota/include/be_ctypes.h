@@ -71,6 +71,19 @@ static void ctypes_register_class(bvm *vm, const bclass * ctypes_class) {
 }
 
 // Define a sub-class of ctypes with only one member which points to the ctypes defintion
+#if BE_USE_COMPACT_MAP
+// Compact map node layout (BE_USE_COMPACT_MAP): { key, value_type, value_payload }
+#define be_define_ctypes_class(_c_name, _def, _super, _name)                \
+  be_local_class(_c_name,                                                   \
+      0,                                                                    \
+      _super,                                                               \
+      be_nested_map(1,                                                      \
+      ( (struct bmapnode*) &(const bmapnodec[]) {                           \
+          { be_ckey_nested("_def", 1985022181, 4, -1), be_ckv_comptr(_def) },\
+      })),                                                                  \
+      (be_nested_const_str(_name, 0, sizeof(_name)-1))                      \
+  )
+#else
 #define be_define_ctypes_class(_c_name, _def, _super, _name)                \
   be_local_class(_c_name,                                                   \
       0,                                                                    \
@@ -81,6 +94,7 @@ static void ctypes_register_class(bvm *vm, const bclass * ctypes_class) {
       })),                                                                  \
       (be_nested_const_str(_name, 0, sizeof(_name)-1))                      \
   )
+#endif
 
 // list of simple classes, sorted
 typedef struct be_ctypes_class_by_name_t {

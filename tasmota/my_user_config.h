@@ -54,6 +54,7 @@
 #ifdef ESP8266
 #define FALLBACK_MODULE        SONOFF_BASIC      // [Module2] Select default module on fast reboot where USER_MODULE is user template
 //#define USER_TEMPLATE "{\"NAME\":\"Generic\",\"GPIO\":[1,1,1,1,1,1,1,1,1,1,1,1,1,1],\"FLAG\":0,\"BASE\":18}"  // [Template] Set JSON template
+//#define MODULE USER_MODULE                       // Set template enabled by default
 #endif  // ESP8266
 #ifdef ESP32
 #define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
@@ -77,11 +78,17 @@
 #ifndef STA_PASS1
 #define STA_PASS1              ""                // [Password1] Wi-Fi password
 #endif
+#ifndef AP_BSSID1
+#define AP_BSSID1              ""                // [BSsid1] Wi-Fi desired AP BSSID to connect to
+#endif
 #ifndef STA_SSID2
 #define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wi-Fi SSID
 #endif
 #ifndef STA_PASS2
 #define STA_PASS2              ""                // [Password2] Optional alternate AP Wi-Fi password
+#endif
+#ifndef AP_BSSID2
+#define AP_BSSID2              ""                // [BSsid2] Wi-Fi desired AP BSSID to connect to
 #endif
 #ifndef WIFI_AP_PASSPHRASE
 #define WIFI_AP_PASSPHRASE     ""                // AccessPoint passphrase. For WPA2 min 8 char, for open use "" (max 63 char).
@@ -94,7 +101,7 @@
 #define WIFI_SCAN_AT_RESTART   false             // [SetOption56] Scan Wi-Fi network at restart for configured AP's
 #define WIFI_SCAN_REGULARLY    true              // [SetOption57] Scan Wi-Fi network every 44 minutes for configured AP's
 #define WIFI_NO_SLEEP          false             // [SetOption127] Sets Wifi in no-sleep mode which improves responsiveness on some routers
-#define WIFI_DEFAULT_HOSTNAME  "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
+#define WIFI_DEFAULT_HOSTNAME  "%s-%04d"         // [Hostname] Expands to <MQTT_TOPIC>-<last 4 decimal chars of chip ID>
 
 // -- Syslog --------------------------------------
 #define SYS_LOG_HOST           ""                // [LogHost] (Linux) syslog host
@@ -181,7 +188,7 @@
 #define WEB_SERVER             2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
 #define WEB_PASSWORD           ""                // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
 #define FRIENDLY_NAME          "Tasmota"         // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
-#define EMULATION              EMUL_NONE         // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+#define EMULATION              EMUL_NONE         // [Emulation] Select Belkin WeMo (single relay/light), Hue Bridge (multi relay/light) or Shelly emulation (EMUL_NONE, EMUL_WEMO, EMUL_HUE or EMUL_SHELLY)
 #define EMULATION_HUE_1ST_GEN  false             // [Emulation] Force SetOption109 1 - if you only have Echo Dot 2nd gen devices
 //#define USE_CORS                                 // [Cors] Enable CORS - Be aware that this feature is unsecure ATM (https://github.com/arendst/Tasmota/issues/6767)
   #define CORS_DOMAIN            ""                // [Cors] CORS Domain for preflight requests
@@ -411,6 +418,9 @@
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
 #define USE_IMPROV                               // Add support for IMPROV serial protocol as used by esp-web-tools (+2k code)
 
+// -- Serial input --------------------------------
+//#define USE_SERIAL_BACKSPACE                     // Add support for backspace (0x08) in serial console input, removing the last typed character
+
 // -- IPv6 support -------------------------------
 // #define USE_IPV6                                 // Enable IPv6 support (if the underlying esp-idf is also configured to support it)
                                                  // Code size increase: ESP8266: +34.5kb
@@ -520,6 +530,7 @@
 //    #define GV_SAMPLING_INTERVAL  100            // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
   #define USE_EMULATION_HUE                      // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
   #define USE_EMULATION_WEMO                     // Enable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+//  #define USE_EMULATION_SHELLY                   // (ESP32 only) Enable Shelly emulation (+8k code)
   // #define USE_CCLOADER                           // Enable CCLoader FW upgrade tool (for CC25xx devices)
 
 // -- mDNS ----------------------------------------
@@ -644,7 +655,6 @@
 #define I2CDRIVERS_128_159     0xFFFFFFFF        // Enable I2CDriver128 to I2CDriver159
 
 #ifdef USE_I2C
-//  #define USE_I2C_BUS2                           // Add experimental support for second I2C bus on ESP8266 (+0k6k code)
 //  #define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
 //  #define USE_HTU                                // [I2cDriver9] Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
 //  #define USE_BMP                                // [I2cDriver10] Enable BMP085/BMP180/BMP280/BME280 sensors (I2C addresses 0x76 and 0x77) (+4k4 code)
@@ -663,13 +673,16 @@
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
 //  #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 //  #define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40/Scd41 CO2 sensor (I2C address 0x62) (+3k5 code)
+//  #define USE_STCC4                              // [I2cDriver99] Enable Sensiron STCC4 CO2 sensor (I2C address 0x64 or 0x65) (+3k8 code)
 //  #define USE_SEN5X                              // [I2cDriver76] Enable Sensiron SEN5X sensor (I2C address 0x69) (+3k code)
-//  #define USE_SEN6X                              // [I2cDriver97] Enable Sensiron SEN6X sensor (I2C address 0x6B) (+7k8 code)
+//  #define USE_SEN6X                              // [I2cDriver97] Enable Sensiron SEN6X sensor (I2C address 0x6B) (+8k8 code)
 //  #define USE_SHT3X                              // [I2cDriver15] Enable Sensiron SHT3x (I2C address 0x44 or 0x45) or SHTC3 (I2C address 0x70) sensor (+0k7 code)
 //  #define USE_SGP30                              // [I2cDriver18] Enable Sensiron SGP30 sensor (I2C address 0x58) (+1k1 code)
 //  #define USE_SGP40                              // [I2cDriver69] Enable Sensiron SGP40 sensor (I2C address 0x59) (+1k4 code)
 //  #define USE_SGP4X                              // [I2cDriver82] Enable Sensiron SGP41 sensor (I2C address 0x59) (+7k2 code)
 //  #define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
+//    #define SPS30_ENABLE_SLEEP                   // SPS30 v2.0: Adds support for sleep/wakeup to reduce power when not measuring (+0k2 code)
+//    #define SPS30_PARTS_PER_DECILITER            // Report NCPM as parts per deciliter instead of parts per cm3 (+0k1 code)
 //  #define USE_SI1145                             // [I2cDriver19] Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
 //  #define USE_LM75AD                             // [I2cDriver20] Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k6 code)
 //    #define LM75AD_MAX_SENSORS    8              // Max number of LM75AD sensors supported (default = 8 on 2 busses, max = 16 on 2 busses)
@@ -842,6 +855,15 @@
 //    #define USE_GRAPH                            // Enable line charts with displays
 //    #define NUM_GRAPHS     4                     // Max 16
 
+//  #define USE_FM24CXX                           // External FRAM module over I2C accesible via tasmota console / berry. be used to store super volatile data, frequently-changing settings, logs etc... (ps: shall work with AT24C32-AT24C512, but use with care - wear)
+    #define FM24CXX_I2C_ADD             0x57    // Fram I2C address.
+    #define FM24CXX_CAPACITY            8192    // FRAM Module size in bytes. 8192 = 64kbits (FM24C64), 4096 = 32kbits (FM24C32) etc..
+    #define FM24CXX_BLOCK_SIZE          256     // Parsed block size. When 256 and FRAM Size 8192, there are 8192/256 = 32 blocks per 256 bytes.
+    #define FM24CXX_I2C_CHUNK           32      // I2C Read Chunk size. For maximum compatibility, use 32. ESP32 S3,P4 works with 128 (a bit faster writes)
+    #define FM24CXX_MAX_WRITE_BYTES     4096    // Maximum bytes to be written at single cmd
+    #define FM24CXX_JSON_MAX_BYTES      4096    // Maximum bytes to get in single json response in FramReadRaw cmd. Above raise error.
+
+
 #endif  // USE_I2C
 
 //#define USE_DISPLAY                              // Add I2C/TM1637/MAX7219 Display Support (+2k code)
@@ -878,6 +900,9 @@
 //    #define USE_LORA_SX126X                      // Add driver support for LoRa on SX126x based devices like LiliGo T3S3 Lora32 (+16k code)
 //    #define USE_LORA_SX127X                      // Add driver support for LoRa on SX127x based devices like M5Stack LoRa868, RFM95W (+5k code)
 //    #define USE_LORAWAN_BRIDGE                   // Add support for LoRaWan bridge (+8k code)
+//  #define USE_TFA_MARBELLA                       // Add support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (+12k6 code on ESP8266, +5k7 on ESP32)
+//    #define TFA_MARBELLA_TIMEOUT   900           // Seconds without a packet after which the reading is dropped
+//    #define TFA_MARBELLA_SERIAL    0             // Sensor id to bind to, 0 learns the first sensor received
 
 #endif  // USE_SPI
 
@@ -925,6 +950,7 @@
   #define USE_TASMOTA_CLIENT_SERIAL_SPEED 57600  // Depends on the sketch that is running on the Uno/Pro Mini
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 //#define USE_MIEL_HVAC                            // Add support for Mitsubishi Electric HVAC serial interface (+5k code)
+//  #define USE_MIEL_HVAC_MODBUS_SLAVE             // Expose all MiEL HVAC states/functions on a second RS485 port as a Modbus RTU slave for PLC use (ESP32 only, +4k code)
 //#define USE_TUYAMCUBR                            // Add support for TuyaMCU Bridge
 //#define USE_PROJECTOR_CTRL                       // Add support for LCD/DLP Projector serial control interface (+2k code)
 //  #define USE_PROJECTOR_CTRL_NEC                 // Use codes for NEC
@@ -1135,7 +1161,8 @@
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 //#define USE_VID6608                              // Add support for VID6608 Automotive analog gauge driver (+0k7 code)
-//  #define VID6608_RESET_ON_INIT  true            // Reset VID6608 on init (default: true), change if you control this manually
+//  #define VID6608_RESET_ON_INIT  1               // Reset VID6608 on init (default: true), change if you control this manually
+//  #define VID6608_RMT            0               // Use hardware RMT driver, ESP32 only. Warning: SoC have limited RMT count, amy conflict with others (WS2812b, IR and similar)
 
 //#define USE_PROMETHEUS                           // Add support for https://prometheus.io/ metrics exporting over HTTP /metrics endpoint
 
@@ -1250,15 +1277,8 @@
                                                  // Note that only two ciphers are enabled: ECDHE_RSA_WITH_AES_128_GCM_SHA256, ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
     #define USE_BERRY_WEBCLIENT_USERAGENT  "TasmotaClient" // default user-agent used, can be changed with `wc.set_useragent()`
     #define USE_BERRY_WEBCLIENT_TIMEOUT  2000    // Default timeout in milliseconds
-    // #define USE_BERRY_LEDS_PANEL                 // Add button to dynamically load the Leds Panel from a bec file online
-    #define USE_BERRY_LEDS_PANEL_URL             "http://ota.tasmota.com/tapp/leds_panel.bec"
-    // #define USE_BERRY_LVGL_PANEL                 // Add button to dynamically load the LVGL Panel from a bec file online
-    #define USE_BERRY_LVGL_PANEL_URL             "http://ota.tasmota.com/tapp/lvgl_panel.bec"
-    //#define USE_BERRY_PARTITION_WIZARD           // Add a button to dynamically load the Partion Wizard from a bec file online (+1.3KB Flash)
-    #define USE_BERRY_PARTITION_WIZARD_URL      "http://ota.tasmota.com/tapp/partition_wizard.bec"
-    //#define USE_BERRY_GPIOVIEWER                 // Add a button to dynamocally load the GPIO Viewer from a bec file online
-    #define USE_BERRY_GPIOVIEWER_URL            "http://ota.tasmota.com/tapp/gpioviewer.bec"
   #define USE_BERRY_TCPSERVER                    // Enable TCP socket server (+0.6k)
+  // #define USE_BERRY_MQTTCLIENT                  // Enable standalone, independent Berry MQTT client (+5.1k)
   // #define USE_BERRY_ULP                          // Enable ULP (Ultra Low Power) support (+4.9k)
   // Berry crypto extensions below:
   #define USE_BERRY_CRYPTO_AES_GCM               // enable AES GCM 256 bits
@@ -1287,6 +1307,7 @@
   // Main widgets as defined in LVGL8
     #define BE_LV_WIDGET_OBJ
     #define BE_LV_WIDGET_ARC
+    #define BE_LV_WIDGET_ARCLABEL   // LVGL 9.5.0
     #define BE_LV_WIDGET_BAR
     #define BE_LV_WIDGET_BTN        // LVGL 8
     #define BE_LV_WIDGET_BUTTON     // LVGL 9
@@ -1307,6 +1328,9 @@
 
     // adding ad-hoc colorwheel from LVGL8 to LVGL9
     #define BE_LV_WIDGET_COLORWHEEL
+
+    // custom Tasmota widget: rectangle filled with an angled stripe pattern
+    #define BE_LV_WIDGET_STRIPES
 
     #define BE_LV_WIDGET_ANIMIMG
     #define BE_LV_WIDGET_CHART
@@ -1337,6 +1361,7 @@
 // -- Matter protocol ---------------------------------
   // #define USE_MATTER_DEVICE                      // Enable Matter device support (+380KB)
                                                     // Enabled by default in standard ESP32 binary
+  // #define USE_MATTER_VERBOSE                     // Enable verbose mode in logs (+16KB), automatically enabled with USE_BERRY_DEBUG
 
 #endif  // ESP32
 
@@ -1348,6 +1373,7 @@
 //#define DEBUG_TASMOTA_DRIVER                     // Enable driver debug messages
 //#define DEBUG_TASMOTA_SENSOR                     // Enable sensor debug messages
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
+//#define USE_ESP8266_DEBUG_HEAP                   // Add heap fragmentation display support. Needs build_flags -DUMM_STATS_FULL and -DUMM_INLINE_METRICS too (+2k5 code)
 
 /*********************************************************************************************\
  * Profiling features

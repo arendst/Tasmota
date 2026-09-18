@@ -199,6 +199,7 @@ void WiFiClientSecure_light::_clear() {
   _fingerprint_any = true; // by default accept all fingerprints
   _fingerprint1 = nullptr;
   _fingerprint2 = nullptr;
+  memset(_recv_fingerprint, 0, sizeof(_recv_fingerprint)); // don't leave the received fingerprint uninitialized
   _chain_P = nullptr;
   _sk_ec_P = nullptr;
   _ta_P = nullptr;
@@ -823,6 +824,8 @@ extern "C" {
       int32_t curve = htonl(eckey.curve);
       sha1_update_len(&shactx, &curve, 4);   // curve id as int32be
       sha1_update_len(&shactx, eckey.q, eckey.qlen);       // public point
+
+      br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
     }
   #endif
     else {
@@ -920,8 +923,11 @@ extern "C" {
     br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
     br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
-    // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
-    br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
+    // Use all supported EC curves (P-256, P-384, P-521, Curve25519) for ECDHE key exchange.
+    // Some servers (e.g. with ECDSA P-384 certificates) refuse P-256 for key exchange
+    // and abort the handshake with SSL3_ALERT_HANDSHAKE_FAILURE (error 296).
+    // `br_ec_all_m15` is already linked for X509 ECDSA validation, so no flash size impact.
+    br_ssl_engine_set_ec(&cc->eng, &br_ec_all_m15);
 #if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
     br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
 #endif

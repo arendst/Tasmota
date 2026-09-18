@@ -52,7 +52,7 @@ class Matter_EventQueued
     self.priority = priority
     # priority
     if (self.priority < 0)                        self.priority = 0                       end
-    if (self.priority > matter.EVENT_CRITICAL)    self.priority = matter.EVENT_CRITICAL   end
+    if (self.priority > 2 #-matter.EVENT_CRITICAL-#)    self.priority = 2 #-matter.EVENT_CRITICAL-#   end
     # epoch_time
     self.epoch_timestamp = tasmota.rtc('utc')
     if (self.epoch_timestamp < 1700000000)
@@ -326,14 +326,14 @@ class Matter_EventHandler
     if size(self.queue_debug) > self.EVENT_QUEUE_SIZE_MAX
       # remove first (oldest element)
       var ev_debug_removed = self.queue_debug.pop(0)
-      if ev_debug_removed.priority > matter.EVENT_DEBUG
+      if ev_debug_removed.priority > 0 #-matter.EVENT_DEBUG-#
         # if removed item is higher than DEBUG, push to INFO queue
         self.queue_info.push(ev_debug_removed)
         # if INFO queue is full
         if size(self.queue_info) > self.EVENT_QUEUE_SIZE_MAX
           # remove first (oldest element)
           var ev_info_removed = self.queue_info.pop(0)
-          if ev_info_removed.priority > matter.EVENT_INFO
+          if ev_info_removed.priority > 1 #-matter.EVENT_INFO-#
             # if removed item is higher than INFO, push to CRITICAL queue
             self.queue_critical.push(ev_info_removed)
             # if CRITICAL queue is full

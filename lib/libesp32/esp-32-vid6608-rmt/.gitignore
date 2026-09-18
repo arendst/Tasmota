@@ -1,0 +1,7 @@
+.pio
+.vscode
+.cache
+managed_components
+build
+sdkconfig
+dependencies.lock

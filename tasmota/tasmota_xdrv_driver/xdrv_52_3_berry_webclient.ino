@@ -1,5 +1,5 @@
 /*
- * xdrv_52_3_berry_webserver.ino — Berry scripting language, webserver/webclient module
+ * xdrv_52_3_berry_webclient.ino — Berry scripting language, webclient/TCP client module
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -423,7 +423,7 @@ extern "C" {
   int32_t wc_addheader(struct bvm *vm);
   int32_t wc_addheader(struct bvm *vm) {
     int32_t argc = be_top(vm);
-    if (argc >= 3 && (be_isstring(vm, 2) || be_isstring(vm, 2))) {
+    if (argc >= 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {
 #ifdef USE_BERRY_WEBCLIENT_ASYNC
       AsyncHttpClientLight * cl = wc_getclient(vm);
 #else
@@ -985,13 +985,13 @@ public:
     // AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
     if (offset + size > signed_size){
       AddLog(LOG_LEVEL_ERROR, "BERRYWC: buffer overrun");
-      return size;
+      return 0;
     }
 
     char *bytebuf = (char*) be_tobytes(vm, -1, NULL); /* we get the address of the internam buffer of size 'size' */
     if (!bytebuf){
       AddLog(LOG_LEVEL_ERROR, "BERRYWC: buffer null??");
-      return size;
+      return 0;
     }
 
     // stream in our chunk

@@ -37,6 +37,7 @@
 #define XM_NAK     0x15
 #define XM_CAN     0x18
 #define XM_SUB     0x1a
+#define XM_TIMEOUT (-1)   // sentinel returned by XModemWaitACK() and ZigbeeUploadFlashRead() on error
 
 enum ZbUploadSteps { ZBU_IDLE, ZBU_INIT,
                      ZBU_SOFTWARE_RESET, ZBU_SOFTWARE_SEND, ZBU_HARDWARE_RESET, ZBU_PROMPT,
@@ -65,10 +66,10 @@ uint32_t ZigbeeUploadAvailable(void) {
   return available;
 }
 
-char ZigbeeUploadFlashRead(void) {
+int16_t ZigbeeUploadFlashRead(void) {
   if (nullptr == ZbUpload.buffer) {
     if (!(ZbUpload.buffer = (char *)malloc(SPI_FLASH_SEC_SIZE))) {
-      return -1;  // Not enough (memory) space
+      return XM_TIMEOUT;  // Not enough (memory) space
     }
   }
 
@@ -80,7 +81,7 @@ char ZigbeeUploadFlashRead(void) {
     // AddLog(LOG_LEVEL_DEBUG, "= sector %d %*_H", ZbUpload.sector_counter, 256, ZbUpload.buffer);
   }
 
-  char data = ZbUpload.buffer[index];
+  int16_t data = (uint8_t)ZbUpload.buffer[index];
   ZbUpload.byte_counter++;
 
   if (ZbUpload.byte_counter > ZbUpload.ota_size) {
@@ -139,16 +140,16 @@ void XModemOutputByte(uint8_t out_char) {
 }
 
 // Wait for the remote to acknowledge or cancel.
-// Returns the received char if no timeout occured or a CAN was received. In this cases, it returns -1.
-char XModemWaitACK(void)
+// Returns the received char, or XM_TIMEOUT (-1) on timeout, or XM_CAN if cancelled.
+int16_t XModemWaitACK(void)
 {
-  char in_char;
+  int16_t in_char;
   do {
     int i = 0;
     while (!ZigbeeSerial->available()) {
       delayMicroseconds(100);
       i++;
-      if (i > 4000) { return -1; }
+      if (i > 4000) { return XM_TIMEOUT; }
     }
     in_char = ZigbeeSerial->read();
 
@@ -166,7 +167,7 @@ bool XModemSendPacket(uint32_t packet_no) {
 
   // Sending a packet will be retried
   uint32_t retries = 0;
-  char in_char;
+  int16_t in_char;
   do {
     // Seek to start of current data block,
     // will advance through the file as block will be acked..
@@ -185,6 +186,7 @@ bool XModemSendPacket(uint32_t packet_no) {
     ZigbeeSerial->write(~packet_num);
     for (uint32_t i = 0; i < XMODEM_PACKET_SIZE; i++) {
       in_char = ZigbeeUploadFlashRead();
+      if (XM_TIMEOUT == in_char) { return false; }  // malloc failure
       XModemOutputByte(in_char);
     }
     // Send out checksum, either CRC-16 CCITT or classical inverse of sum of bytes.
@@ -247,7 +249,7 @@ bool ZigbeeUploadBootloaderPrompt(void) {
     // 3. ebl info[cr][lf]
     // BL >
 
-    if (((uint8_t)bootloader_byte >=0) && (buf_len < sizeof(serial_buffer) -2)) {
+    if ((bootloader_byte >= 0) && (buf_len < sizeof(serial_buffer) -2)) {
       serial_buffer[buf_len++] = bootloader_byte;
     }
 
@@ -390,7 +392,7 @@ bool ZigbeeUploadXmodem(void) {
         // [cr][lf]
         // begin upload[cr][lf]
         // C
-        char xmodem_sync = ZigbeeSerial->read();
+        int16_t xmodem_sync = ZigbeeSerial->read();
 
 //        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("XMD: Rcvd2 0x%02X"), xmodem_sync);
 
@@ -441,7 +443,7 @@ bool ZigbeeUploadXmodem(void) {
         return true;
       }
       if (ZigbeeSerial->available()) {
-        char xmodem_ack = XModemWaitACK();
+        int16_t xmodem_ack = XModemWaitACK();
         if (XM_CAN == xmodem_ack) {
           AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Transfer invalid"));
           ZbUpload.ota_step = ZBU_ERROR;

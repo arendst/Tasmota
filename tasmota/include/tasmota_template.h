@@ -37,7 +37,7 @@ enum UserSelectablePins {
   GPIO_SPI_MISO, GPIO_SPI_MOSI, GPIO_SPI_CLK, GPIO_SPI_CS, GPIO_SPI_DC,        // Hardware SPI
   GPIO_SSPI_MISO, GPIO_SSPI_MOSI, GPIO_SSPI_SCLK, GPIO_SSPI_CS, GPIO_SSPI_DC,  // Software SPI
   GPIO_BACKLIGHT,                      // Display backlight control
-  GPIO_OLED_RESET,                     // OLED Display Reset
+  GPIO_DISPLAY_RESET,                  // Display Reset (renamed from OLED_RESET)
   GPIO_IRSEND, GPIO_IRRECV,            // IR interface
   GPIO_RFSEND, GPIO_RFRECV,            // RF interface
   GPIO_DHT11, GPIO_DHT22, GPIO_SI7021, GPIO_DHT11_OUT,  // DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
@@ -237,6 +237,13 @@ enum UserSelectablePins {
 #endif
   GPIO_VID6608_F, GPIO_VID6608_CW,      // VID6608
   GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
+  GPIO_MBS_RX_ENA,                      // Modbus Bridge Serial Receive Enable
+  GPIO_MODBUSRELAY_TX, GPIO_MODBUSRELAY_TX_ENA,
+  GPIO_MODBUSRELAY_RX, GPIO_MODBUSRELAY_RX_ENA,
+#ifdef ESP32
+  GPIO_MIEL_HVAC_MB_TX, GPIO_MIEL_HVAC_MB_RX, GPIO_MIEL_HVAC_MB_TXEN,  // Mitsubishi Electric HVAC Modbus RTU slave
+#endif
+  GPIO_CC1101_CS,                       // CC1101 SPI chip select
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -516,17 +523,18 @@ const char kSensorNames[] PROGMEM =
 #endif
   D_VID6608_F "|" D_VID6608_CW "|"
   D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
+  D_SENSOR_MBS_RX_ENA "|"
+  D_MODBUSRELAY_TX "|" D_MODBUSRELAY_TX_ENA "|" D_MODBUSRELAY_RX "|" D_MODBUSRELAY_RX_ENA "|"
+#ifdef ESP32
+  D_SENSOR_MIEL_HVAC_MB_TX "|" D_SENSOR_MIEL_HVAC_MB_RX "|" D_SENSOR_MIEL_HVAC_MB_TXEN "|"
+#endif
+  D_SENSOR_CC1101_CS "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 // Max number of GPIOs
-#define MAX_I2C                  1  // Display no index if one bus
-#ifdef USE_I2C_BUS2
-#undef MAX_I2C
-#define MAX_I2C                  2
-#endif
 #define MAX_MAX31855S            6
 #define MAX_MAX31865S            6
 #define MAX_MCP23XXX             6
@@ -759,7 +767,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TM1640DIN),
 #endif  // USE_DISPLAY_TM1640
   AGPIO(GPIO_BACKLIGHT),                         // Display backlight control
-  AGPIO(GPIO_OLED_RESET),                        // OLED Display Reset
+  AGPIO(GPIO_DISPLAY_RESET),                     // Display Reset (renamed from OLED_RESET)
 #ifdef ESP32
   AGPIO(GPIO_EPD_DATA),                          // Base connection EPD driver
 #endif
@@ -1042,6 +1050,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MODBUS_BRIDGE
   AGPIO(GPIO_MBR_TX_ENA),                        // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_TX),                            // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBS_RX_ENA),                        // Modbus Bridge Serial interface
   AGPIO(GPIO_MBR_RX),                            // Modbus Bridge Serial interface
 #endif
 #ifdef USE_TCP_BRIDGE
@@ -1212,9 +1221,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DEEPSLEEP
   AGPIO(GPIO_DEEPSLEEP),
 #endif
-#ifdef USE_KEELOQ
+#if defined(USE_KEELOQ) || defined(USE_TFA_MARBELLA)
   AGPIO(GPIO_CC1101_GDO0),                       // CC1101 pin for RX
   AGPIO(GPIO_CC1101_GDO2),                       // CC1101 pin for RX
+#endif
+#ifdef USE_TFA_MARBELLA
+  AGPIO(GPIO_CC1101_CS),                         // CC1101 SPI chip select
 #endif
 #ifdef USE_HRXL
   AGPIO(GPIO_HRXL_RX),
@@ -1232,6 +1244,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),                      // Mitsubishi Electric HVAC TX pin
   AGPIO(GPIO_MIEL_HVAC_RX),                      // Mitsubishi Electric HVAC RX pin
+#if defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
+  AGPIO(GPIO_MIEL_HVAC_MB_TX),                   // Mitsubishi Electric HVAC Modbus RTU slave TX pin
+  AGPIO(GPIO_MIEL_HVAC_MB_RX),                   // Mitsubishi Electric HVAC Modbus RTU slave RX pin
+  AGPIO(GPIO_MIEL_HVAC_MB_TXEN),                 // Mitsubishi Electric HVAC Modbus RTU slave RS485 direction (DE/RE) pin
+#endif
 #endif
 #ifdef USE_TUYAMCUBR
   AGPIO(GPIO_TUYAMCUBR_TX),
@@ -1279,6 +1296,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PIPSOLAR
   AGPIO(GPIO_PIPSOLAR_TX),                       // pipsolar inverter Serial interface
   AGPIO(GPIO_PIPSOLAR_RX),                       // pipsolar inverter Serial interface
+#endif
+
+#ifdef USE_MODBUS_RELAY
+  AGPIO(GPIO_MODBUSRELAY_TX),
+  AGPIO(GPIO_MODBUSRELAY_TX_ENA),
+  AGPIO(GPIO_MODBUSRELAY_RX),
+  AGPIO(GPIO_MODBUSRELAY_RX_ENA),
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

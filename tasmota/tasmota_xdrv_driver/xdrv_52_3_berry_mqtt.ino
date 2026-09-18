@@ -23,7 +23,7 @@
 
 #include "berry.h"
 
-// Berry: `tasmota.publish(topic, payload [, retain:bool, start:int, len:int]) -> nil``
+// Berry: `mqtt.publish(topic, payload [, retain:bool, start:int, len:int, loglevel:int]) -> nil`
 // is_method is true if called from Tasmota class, false if called from mqtt module
 extern "C" {
   int32_t be_mqtt_publish(struct bvm *vm);
@@ -34,13 +34,15 @@ extern "C" {
       int32_t payload_start = 0;
       int32_t len = -1;   // send all of it
       bool is_binary = be_isbytes(vm, 3);       // is this a binary payload (or false = string)
-      if (top >= 4) { retain = be_tobool(vm, 4); }
-      if (top >= 5) {
+      int32_t loglevel = LOG_LEVEL_INFO;
+      if (top >= 4 && !be_isnil(vm, 4)) { retain = be_tobool(vm, 4); }
+      if (top >= 5 && !be_isnil(vm, 5)) {
         if (!is_binary) { be_raise(vm, "argument_error", "start and len are not allowed with string payloads"); }
         payload_start = be_toint(vm, 5);
         if (payload_start < 0) { payload_start = 0; }
       }
-      if (top >= 6) { len = be_toint(vm, 6); }
+      if (top >= 6 && !be_isnil(vm, 6)) { len = be_toint(vm, 6); }
+      if (top >= 7 && !be_isnil(vm, 7)) { loglevel = be_toint(vm, 7); }
       const char * topic = be_tostring(vm, 2);
       const char * payload = nullptr;
       size_t payload_len = 0;
@@ -62,7 +64,7 @@ extern "C" {
 
       be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
 
-      MqttPublishPayload(topic, payload, is_binary ? len : 0 /*if string don't send length*/, retain);
+      MqttPublishPayload(topic, payload, is_binary ? len : 0 /*if string don't send length*/, retain, loglevel);
       if (!is_binary) {
         XdrvRulesProcess(0, payload);  // Process rules on berry publish
       }

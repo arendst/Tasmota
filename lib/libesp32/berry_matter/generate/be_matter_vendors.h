@@ -14,6 +14,7 @@ typedef struct {
 
 const matter_vendor_t matter_Vendors[] = {
 
+#ifdef USE_MATTER_VERBOSE
   { 0x100B, "Signify"},
   { 0x101D, "Assa Abloy"},
   { 0x1021, "Legrand Group"},
@@ -32,9 +33,13 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x1188, "TP-Link"},
   { 0x118C, "Midea Group"},
   { 0x120B, "HEIMAN"},
+#endif // USE_MATTER_VERBOSE
   { 0x1217, "Amazon Alexa"},
+#ifdef USE_MATTER_VERBOSE
   { 0x1219, "ORVIBO"},
+#endif // USE_MATTER_VERBOSE
   { 0x125D, "Tuya"},
+#ifdef USE_MATTER_VERBOSE
   { 0x127F, "Nordic Semiconductor ASA"},
   { 0x1280, "Siterwell"},
   { 0x1286, "CoolKit"},
@@ -53,7 +58,10 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x1344, "Eltako"},
   { 0x1345, "Meross"},
   { 0x1346, "Rafael"},
+#endif // USE_MATTER_VERBOSE
   { 0x1349, "Apple Home"},
+  { 0x134B, "Nabu Casa"},
+#ifdef USE_MATTER_VERBOSE
   { 0x134E, "tado"},
   { 0x134F, "mediola"},
   { 0x1351, "HooRii Technology"},
@@ -64,8 +72,10 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x1371, "Tridonic"},
   { 0x1372, "innovation matters"},
   { 0x137F, "NEO"},
+#endif // USE_MATTER_VERBOSE
   { 0x1381, "Amazon Prime Video"},
   { 0x1384, "Apple Keychain"},
+#ifdef USE_MATTER_VERBOSE
   { 0x1386, "Skylux"},
   { 0x1387, "Qianyan"},
   { 0x138A, "Nature"},
@@ -86,9 +96,8 @@ const matter_vendor_t matter_Vendors[] = {
   { 0x141F, "Ductech"},
   { 0x142D, "QH"},
   { 0x142F, "QIACHIP"},
+#endif // USE_MATTER_VERBOSE
   { 0x6006, "Google LLC"},
-  
-  { 0x134B, "Nabu Casa"},
 
   { 0xFFFF, NULL },
 };

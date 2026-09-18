@@ -22,7 +22,7 @@
 #include "../../misc/lv_math.h"
 #include "../../misc/lv_text_ap.h"
 #include "../../misc/lv_text_private.h"
-#include "../../others/observer/lv_observer_private.h"
+#include "../../core/lv_observer_private.h"
 #include "../../stdlib/lv_string.h"
 
 /*********************
@@ -69,7 +69,7 @@ static lv_obj_t * get_label(const lv_obj_t * obj);
  *  STATIC VARIABLES
  **********************/
 #if LV_USE_OBJ_PROPERTY
-static const lv_property_ops_t properties[] = {
+static const lv_property_ops_t lv_dropdown_properties[] = {
     {
         .id = LV_PROPERTY_DROPDOWN_TEXT,
         .setter = lv_dropdown_set_text,
@@ -129,17 +129,7 @@ const lv_obj_class_t lv_dropdown_class = {
     .group_def = LV_OBJ_CLASS_GROUP_DEF_TRUE,
     .base_class = &lv_obj_class,
     .name = "lv_dropdown",
-#if LV_USE_OBJ_PROPERTY
-    .prop_index_start = LV_PROPERTY_DROPDOWN_START,
-    .prop_index_end = LV_PROPERTY_DROPDOWN_END,
-    .properties = properties,
-    .properties_count = sizeof(properties) / sizeof(properties[0]),
-
-#if LV_USE_OBJ_PROPERTY_NAME
-    .property_names = lv_dropdown_property_names,
-    .names_count = sizeof(lv_dropdown_property_names) / sizeof(lv_property_name_t),
-#endif
-#endif
+    LV_PROPERTY_CLASS_FIELDS(dropdown, DROPDOWN)
 };
 
 const lv_obj_class_t lv_dropdownlist_class = {
@@ -171,13 +161,32 @@ lv_obj_t * lv_dropdown_create(lv_obj_t * parent)
  * Setter functions
  *====================*/
 
-void lv_dropdown_set_text(lv_obj_t * obj, const char * txt)
+void lv_dropdown_set_text(lv_obj_t * obj, const char * text)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_dropdown_t * dropdown = (lv_dropdown_t *)obj;
-    if(dropdown->text == txt) return;
 
-    dropdown->text = txt;
+    char * copied_text = NULL;
+    if(text) {
+        copied_text = lv_strdup(text);
+        LV_ASSERT_MALLOC(copied_text);
+    }
+
+    if(!dropdown->static_text) lv_free(dropdown->text);
+    dropdown->static_text = 0;
+    dropdown->text = copied_text;
+
+    lv_obj_invalidate(obj);
+}
+
+void lv_dropdown_set_text_static(lv_obj_t * obj, const char * text)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_dropdown_t * dropdown = (lv_dropdown_t *)obj;
+
+    if(!dropdown->static_text) lv_free(dropdown->text);
+    dropdown->static_text = 1;
+    dropdown->text = (char *)text;
 
     lv_obj_invalidate(obj);
 }
@@ -206,7 +215,7 @@ void lv_dropdown_set_options(lv_obj_t * obj, const char * options)
     size_t len = lv_text_ap_calc_bytes_count(options) + 1;
 #endif
 
-    if(dropdown->options != NULL && dropdown->static_txt == 0) {
+    if(dropdown->options != NULL && dropdown->static_options == 0) {
         lv_free(dropdown->options);
         dropdown->options = NULL;
     }
@@ -223,7 +232,7 @@ void lv_dropdown_set_options(lv_obj_t * obj, const char * options)
 #endif
 
     /*Now the text is dynamically allocated*/
-    dropdown->static_txt = 0;
+    dropdown->static_options = 0;
 
     lv_obj_invalidate(obj);
     if(dropdown->list) lv_obj_invalidate(dropdown->list);
@@ -246,12 +255,12 @@ void lv_dropdown_set_options_static(lv_obj_t * obj, const char * options)
     dropdown->sel_opt_id      = 0;
     dropdown->sel_opt_id_orig = 0;
 
-    if(dropdown->static_txt == 0 && dropdown->options != NULL) {
+    if(dropdown->static_options == 0 && dropdown->options != NULL) {
         lv_free(dropdown->options);
         dropdown->options = NULL;
     }
 
-    dropdown->static_txt = 1;
+    dropdown->static_options = 1;
     dropdown->options = (char *)options;
 
     lv_obj_invalidate(obj);
@@ -266,7 +275,7 @@ void lv_dropdown_add_option(lv_obj_t * obj, const char * option, uint32_t pos)
     lv_dropdown_t * dropdown = (lv_dropdown_t *)obj;
 
     /*Convert static options to dynamic*/
-    if(dropdown->static_txt != 0) {
+    if(dropdown->static_options != 0) {
         char * static_options = dropdown->options;
         if(dropdown->options) {
             dropdown->options = lv_strdup(static_options);
@@ -276,7 +285,7 @@ void lv_dropdown_add_option(lv_obj_t * obj, const char * option, uint32_t pos)
         }
         LV_ASSERT_MALLOC(dropdown->options);
         if(dropdown->options == NULL) return;
-        dropdown->static_txt = 0;
+        dropdown->static_options = 0;
     }
 
     /*Allocate space for the new option*/
@@ -336,11 +345,11 @@ void lv_dropdown_clear_options(lv_obj_t * obj)
     lv_dropdown_t * dropdown = (lv_dropdown_t *)obj;
     if(dropdown->options == NULL) return;
 
-    if(dropdown->static_txt == 0)
+    if(dropdown->static_options == 0)
         lv_free(dropdown->options);
 
     dropdown->options = NULL;
-    dropdown->static_txt = 1;
+    dropdown->static_options = 1;
     dropdown->option_cnt = 0;
 
     lv_obj_invalidate(obj);
@@ -687,8 +696,9 @@ static void lv_dropdown_constructor(const lv_obj_class_t * class_p, lv_obj_t * o
     dropdown->options     = NULL;
     dropdown->symbol         = LV_SYMBOL_DOWN;
     dropdown->text         = NULL;
-    dropdown->static_txt = 1;
+    dropdown->static_options = 1;
     dropdown->selected_highlight = 1;
+    dropdown->static_text = 1;
     dropdown->sel_opt_id      = 0;
     dropdown->sel_opt_id_orig = 0;
     dropdown->pr_opt_id = LV_DROPDOWN_PR_NONE;
@@ -717,10 +727,11 @@ static void lv_dropdown_destructor(const lv_obj_class_t * class_p, lv_obj_t * ob
         dropdown->list = NULL;
     }
 
-    if(!dropdown->static_txt) {
-        lv_free(dropdown->options);
-        dropdown->options = NULL;
-    }
+    if(!dropdown->static_options) lv_free(dropdown->options);
+    dropdown->options = NULL;
+
+    if(!dropdown->static_text) lv_free(dropdown->text);
+    dropdown->text = NULL;
 }
 
 static void lv_dropdownlist_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)

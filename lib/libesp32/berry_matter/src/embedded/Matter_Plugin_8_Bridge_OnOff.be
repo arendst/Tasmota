@@ -54,7 +54,11 @@ import matter
 class Matter_Plugin_Bridge_OnOff : Matter_Plugin_Bridge_Light0
   static var TYPE = "http_relay"                    # name of the plug-in in json
   static var DISPLAY_NAME = "Relay"               # display name of the plug-in
-  static var ARG_HINT = "Relay<x> number"
+
+  static var SCHEMA = "relay|"                      # arg name
+                      "l:Relay number|"             # label (display name)
+                      "t:i|"                        # type: int
+                      "h:Relay<x> number"           # hint
   static var TYPES = { 0x010A: 2 }                  # On/Off Plug-in Unit
 
   #############################################################

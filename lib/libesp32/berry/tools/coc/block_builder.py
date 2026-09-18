@@ -24,6 +24,7 @@ class block_builder:
         self.strtab = []
         self.strtab_weak = []
         self.strtab_long = []
+        self.macro = macro
 
         self.block.name = obj.name
         if depend(obj, macro):
@@ -77,13 +78,22 @@ class block_builder:
         entlist = hmap.entry_list()
         ostr = ""
 
+        compact = self.macro.query("BE_USE_COMPACT_MAP")
         ostr += "static be_define_const_map_slots(" + name + ") {\n"
         for ent in entlist:
-            if literal:
-                ostr += "    { be_const_key_weak(" + ent.key + ", "
+            if compact:
+                # compact map node: { key, value_type, value_payload }
+                keymac = "be_ckey_weak" if literal else "be_ckey"
+                # be_const_xxx(...) -> be_ckv_xxx(...) (type byte + payload)
+                value = ent.value.replace("be_const_", "be_ckv_", 1)
+                ostr += "    { " + keymac + "(" + ent.key + ", "
+                ostr += str(ent.next) + "), " + value + " },\n"
             else:
-                ostr += "    { be_const_key(" + ent.key + ", "
-            ostr += str(ent.next) + "), " + ent.value + " },\n"
+                if literal:
+                    ostr += "    { be_const_key_weak(" + ent.key + ", "
+                else:
+                    ostr += "    { be_const_key(" + ent.key + ", "
+                ostr += str(ent.next) + "), " + ent.value + " },\n"
         ostr += "};\n\n"
 
         if local:

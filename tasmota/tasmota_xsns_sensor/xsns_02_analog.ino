@@ -714,8 +714,9 @@ float AdcGetRange(uint32_t channel) {
 */
   int adc = AdcRead(Adc[channel].pin, 5);
   float adcrange = ( ((float)Adc[channel].param[1] - (float)adc) / ( ((float)Adc[channel].param[1] - (float)Adc[channel].param[0])) * ((float)Adc[channel].param[2] - (float)Adc[channel].param[3]) + (float)Adc[channel].param[3] );
-//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBG: ADC%d, AdcRead %d, Range %4_f"), channel +1, adc, &adcrange);
-
+#ifdef ADC_DEBUG
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBG: ADC%d, AdcRead %d, Range %4_f"), channel +1, adc, &adcrange);
+#endif  // ADC_DEBUG
   return adcrange;
 }
 
@@ -741,7 +742,7 @@ void AdcGetCurrentPower(uint32_t channel, uint32_t factor) {
         analog_max = analog;
       }
     }
-    //AddLog(0, PSTR("min: %u, max:%u, dif:%u"), analog_min, analog_max, analog_max-analog_min);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("min: %u, max:%u, dif:%u"), analog_min, analog_max, analog_max-analog_min);
     Adc[channel].current = (float)(analog_max-analog_min) * ((float)(Adc[channel].param[1]) / 100000);
     if (Adc[channel].current < (((float)Adc[channel].param[3]) / 10000.0)) {
       Adc[channel].current = 0.0;

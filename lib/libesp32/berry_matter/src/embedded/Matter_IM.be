@@ -33,6 +33,7 @@ class Matter_IM
   var read_request_solo               # instance of ReadRequestMessage_solo to optimize single reads
   var invoke_request_solo             # instance of InvokeRequestMessage_solo to optimize single reads
   var tlv_solo                        # instance of Matter_TLV_item for simple responses
+  var timed_exchanges                 # map: exchange_id -> expiration_millis for timed interactions
   
   def init(device)
     self.device = device
@@ -41,6 +42,7 @@ class Matter_IM
     self.read_request_solo = matter.ReadRequestMessage_solo()
     self.invoke_request_solo = matter.InvokeRequestMessage_solo()
     self.tlv_solo = matter.TLV.Matter_TLV_item()
+    self.timed_exchanges = {}
   end
 
   def process_incoming(msg)
@@ -212,7 +214,7 @@ class Matter_IM
   def process_status_response(msg, val)
     var status = val.findsubval(0, 0xFF)
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
-    if status == matter.SUCCESS
+    if status == 0x00 #-matter.SUCCESS-#
       if message
         return message.status_ok_received(msg)         # re-arm the sending of next packets for the same exchange
       else
@@ -301,7 +303,7 @@ class Matter_IM
         self.attributestatus2raw(ret_raw_or_list, ctx, ctx.status)
 
         if tasmota.loglevel(3)
-          log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
+          log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == 0x86 #-matter.UNSUPPORTED_ATTRIBUTE-# ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
         end
       end
     end
@@ -580,7 +582,7 @@ class Matter_IM
     # either value or statuc
     if val == nil
       var status = ctx.status
-      if status == nil  status = matter.SUCCESS end
+      if status == nil  status = 0x00 #-matter.SUCCESS-# end
       raw.add(0x3501, -2)         # add 3501
       raw.add(0x2400, -2)         # add 2400
       raw.add(ctx.status, 1)      # add status:1
@@ -755,7 +757,7 @@ class Matter_IM
   # or raises an exception
   def process_read_request_solo(msg, ctx)
     # prepare fallback error
-    ctx.status = matter.INVALID_ACTION
+    ctx.status = 0x80 #-matter.INVALID_ACTION-#
     ctx.msg = msg
 
     # find pi for this endpoint/cluster/attribute
@@ -764,7 +766,7 @@ class Matter_IM
 
     var raw                      # this is the bytes() block we need to add to response (or nil)
     if pi != nil
-      ctx.status = matter.UNSUPPORTED_ATTRIBUTE    # new fallback error
+      ctx.status = 0x86 #-matter.UNSUPPORTED_ATTRIBUTE-#    # new fallback error
       res = pi.read_attribute(msg.session, ctx, self.tlv_solo)
     end
 
@@ -818,9 +820,11 @@ class Matter_IM
     msg_raw.clear()
     resp.encode_frame(raw, msg_raw)    # payload in cleartext
     resp.encrypt()
+#if USE_BERRY_DEBUG
     if tasmota.loglevel(4)
       log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     end
+#endif
 
     responder.send_response_frame(resp)
 
@@ -841,7 +845,7 @@ class Matter_IM
       #   log(f"MTR:            {raw=}", 3)    # TODO remove before flight
       # end
     elif ctx.status != nil
-      var unsupported_attribute = (ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : "")
+      var unsupported_attribute = (ctx.status == 0x86 #-matter.UNSUPPORTED_ATTRIBUTE-# ? "UNSUPPORTED_ATTRIBUTE" : "")
       if tasmota.loglevel(3)
         log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - STATUS: 0x{ctx.status:02X} {unsupported_attribute}", 3)
       end
@@ -910,6 +914,13 @@ class Matter_IM
     ctx.msg = msg
 
     var query = matter.InvokeRequestMessage().from_TLV(val)
+
+    # enforce timed interaction (§8.4)
+    if !self.check_timed_request(msg, query.timed_request)
+      self.send_status(msg, 0xC9 #-matter.TIMED_REQUEST_MISMATCH-#)
+      return true
+    end
+
     if query.invoke_requests != nil
       # prepare the response
       var ret = matter.InvokeResponseMessage()
@@ -920,7 +931,7 @@ class Matter_IM
         ctx.endpoint = q.command_path.endpoint
         ctx.cluster = q.command_path.cluster
         ctx.command = q.command_path.command
-        ctx.status = matter.UNSUPPORTED_COMMAND   #default error if returned `nil`
+        ctx.status = 0x81 #-matter.UNSUPPORTED_COMMAND-#   #default error if returned `nil`
 
         var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
         var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
@@ -931,8 +942,8 @@ class Matter_IM
         ctx.log = nil
         var raw = bytes(32)
         # var a1 = matter.InvokeResponseIB()
-        if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
-          ctx.status = matter.SUCCESS
+        if res == true || ctx.status == 0x00 #-matter.SUCCESS-#      # special case, just respond ok
+          ctx.status = 0x00 #-matter.SUCCESS-#
           self.invokeresponse2raw(raw, ctx, nil)
           ret.invoke_responses.push(raw)
           if tasmota.loglevel(3)
@@ -979,7 +990,16 @@ class Matter_IM
   def process_invoke_request_solo(msg, ctx)
     # import debug
     ctx.msg = msg
-    ctx.status = matter.UNSUPPORTED_COMMAND   #default error if returned `nil`
+
+    # enforce timed interaction (§8.4)
+    if ctx.TimedRequest
+      if !self.check_timed_request(msg, true)
+        self.send_status(msg, 0xC9 #-matter.TIMED_REQUEST_MISMATCH-#)
+        return true
+      end
+    end
+
+    ctx.status = 0x81 #-matter.UNSUPPORTED_COMMAND-#   #default error if returned `nil`
 
     var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
     var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
@@ -995,8 +1015,8 @@ class Matter_IM
     # prefix 1528003601
     raw.add(0x15280036, -4)       # add 15280036
     raw.add(0x01, 1)              # add 01
-    if res == true || ctx.status == matter.SUCCESS      # special case, just respond ok
-      ctx.status = matter.SUCCESS
+    if res == true || ctx.status == 0x00 #-matter.SUCCESS-#      # special case, just respond ok
+      ctx.status = 0x00 #-matter.SUCCESS-#
       self.invokeresponse2raw(raw, ctx, nil)
 
       if tasmota.loglevel(3)
@@ -1083,7 +1103,7 @@ class Matter_IM
       a1.status.status = ctx.status
 
       ret.write_responses.push(a1)
-      log(format("MTR: >Write_Attr%s%s - %s STATUS: 0x%02X %s", str(ctx), attr_name, write_data, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
+      log(format("MTR: >Write_Attr%s%s - %s STATUS: 0x%02X %s", str(ctx), attr_name, write_data, ctx.status, ctx.status == 0x00 #-matter.SUCCESS-# ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
     elif tasmota.loglevel(3)
       log(format("MTR: >Write_Attr%s%s - IGNORED", str(ctx), attr_name), 3)
       # ignore if content is nil and status is undefined
@@ -1099,8 +1119,13 @@ class Matter_IM
     var ctx_log = matter.Path()         # pre-allocate object for logging
 
     var suppress_response = query.suppress_response
-    # var timed_request = query.timed_request   # TODO not supported
-    # var more_chunked_messages = query.more_chunked_messages # TODO not supported
+    var timed_request = query.timed_request
+
+    # enforce timed interaction (§8.4)
+    if !self.check_timed_request(msg, timed_request)
+      self.send_status(msg, 0xC9 #-matter.TIMED_REQUEST_MISMATCH-#)
+      return true
+    end
 
     if query.write_requests != nil
       # prepare the response
@@ -1116,7 +1141,7 @@ class Matter_IM
         
         # return an error if the expansion is illegal
         if write_path.cluster == nil || write_path.attribute == nil
-          ctx_log.status = matter.INVALID_ACTION
+          ctx_log.status = 0x80 #-matter.INVALID_ACTION-#
           self.write_single_attribute_status_to_bytes(ret, ctx_log, nil)
           continue
         end
@@ -1139,10 +1164,10 @@ class Matter_IM
           else                              #  ctx.status is nil, it exists
 
             var pi = generator.get_pi()
-            ctx.status = matter.UNSUPPORTED_WRITE
-            #   ctx.status = matter.UNSUPPORTED_WRITE
+            ctx.status = 0x88 #-matter.UNSUPPORTED_WRITE-#
+            #   ctx.status = 0x88 #-matter.UNSUPPORTED_WRITE-#
             var res = (pi != nil) ? pi.write_attribute(msg.session, ctx, write_data) : nil
-            if (res)    ctx.status = matter.SUCCESS   end     # if the cb returns true, the request was processed
+            if (res)    ctx.status = 0x00 #-matter.SUCCESS-#   end     # if the cb returns true, the request was processed
 
             self.write_single_attribute_status_to_bytes(ret, ctx, write_data)
           end
@@ -1184,10 +1209,35 @@ class Matter_IM
     # log("MTR: received TimedRequestMessage=" + str(query), 3)
 
     log(format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 3)
-    
-    # Send success status report
-    self.send_status(msg, matter.SUCCESS)
 
+    # record the exchange and expiration for timed interaction enforcement (§8.4)
+    self.timed_exchanges[msg.exchange_id] = tasmota.millis() + query.timeout
+
+    # Send success status report
+    self.send_status(msg, 0x00 #-matter.SUCCESS-#)
+
+    return true
+  end
+
+  #############################################################
+  # check_timed_request
+  #
+  # Validates timed interaction for Write/Invoke requests (§8.4)
+  # If timed_request flag is set, verifies a matching TimedRequest
+  # was received on the same exchange and hasn't expired.
+  # Returns true if ok to proceed, false if mismatch.
+  def check_timed_request(msg, is_timed_request)
+    if !is_timed_request  return true end   # not a timed request, always ok
+    var expiry = self.timed_exchanges.find(msg.exchange_id)
+    self.timed_exchanges.remove(msg.exchange_id)  # one-shot, consume it
+    if expiry == nil
+      log(format("MTR: >Timed     (%6i) TIMED_REQUEST_MISMATCH no prior TimedRequest", msg.session.local_session_id), 3)
+      return false
+    end
+    if tasmota.time_reached(expiry)
+      log(format("MTR: >Timed     (%6i) TIMED_REQUEST_MISMATCH timeout expired", msg.session.local_session_id), 3)
+      return false
+    end
     return true
   end
 
@@ -1248,6 +1298,18 @@ class Matter_IM
   # placeholder, nothing to run for now
   def every_second()
     self.expire_sendqueue()
+    # clean up expired timed exchanges
+    if size(self.timed_exchanges) > 0
+      var to_remove = []
+      for exchange_id : self.timed_exchanges.keys()
+        if tasmota.time_reached(self.timed_exchanges[exchange_id])
+          to_remove.push(exchange_id)
+        end
+      end
+      for exchange_id : to_remove
+        self.timed_exchanges.remove(exchange_id)
+      end
+    end
   end
 
   #############################################################

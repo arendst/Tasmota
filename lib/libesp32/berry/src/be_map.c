@@ -123,6 +123,98 @@ static int eqnode(bvm *vm, bmapnode *node, bvalue *key, uint32_t hash)
     return 0;
 }
 
+#if BE_USE_COMPACT_MAP
+/* Compare a candidate key given as (type, payload) against `key`. Shared by
+ * the const-compact-map lookup path; uses the same equality rules as eqnode. */
+static int keyeq(bvm *vm, int ktype, union bvaldata kv, bvalue *key, uint32_t hash)
+{
+    if (var_isnil(key)) {
+        return 0;
+    }
+#if BE_USE_OVERLOAD_HASH
+    if (var_isinstance(key)) {
+        bvalue tk;
+        tk.type = ktype;
+        tk.v = kv;
+        return be_vm_iseq(vm, key, &tk);
+    }
+#endif
+    if ((signed char)ktype == key->type && _hashcode(vm, ktype, kv) == hash) {
+        bvalue tk;
+        tk.type = ktype;
+        tk.v = kv;
+        switch (key->type) {
+        case BE_BOOL: return var_tobool(key) == var_tobool(&tk);
+        case BE_INT: return var_toint(key) == var_toint(&tk);
+        case BE_REAL: return var_toreal(key) == var_toreal(&tk);
+        case BE_STRING: return be_eqstr(var_tostr(key), var_tostr(&tk));
+        default: return var_toobj(key) == var_toobj(&tk);
+        }
+    }
+    return 0;
+}
+
+/* Scratch values used to expose packed const-map nodes through the regular
+ * bvalue* / bmapnode* APIs. Safe because const maps are read-only and every
+ * caller consumes the returned value before the next map call (Berry is
+ * single-threaded). `find` and `next` use separate scratch so an iteration
+ * and a lookup do not clobber each other. */
+static bvalue map_const_find_scratch;
+static bmapnode map_const_next_scratch;
+
+/* Lookup in a const (read-only) compact map. Returns a pointer to a scratch
+ * bvalue holding the decoded value, or NULL if not found. */
+static bvalue* map_find_const(bvm *vm, bmap *map, bvalue *key)
+{
+    if (map->size == 0) {   /* solidified empty map */
+        return NULL;
+    }
+    uint32_t hash = hashcode(key);
+    bmapnodec *slots = (bmapnodec*)map->slots;
+    bmapnodec *slot = slots + (hash % (uint32_t)map->size);
+    if (slot->key_type == BE_NIL) {
+        return NULL;
+    }
+    for (;;) {
+        if (keyeq(vm, slot->key_type, slot->key_v, key, hash)) {
+            map_const_find_scratch.type = slot->val_type;
+            map_const_find_scratch.v = slot->val_v;
+            return &map_const_find_scratch;
+        }
+        uint32_t n = slot->next;
+        if (n == BE_MAP_LASTNODE_COMPACT) {
+            return NULL;
+        }
+        slot = slots + n;
+    }
+}
+
+/* Iterate a const (read-only) compact map. The cursor `*iter` walks the
+ * compact array (stored as a bmapnode* but really a bmapnodec*); the returned
+ * node is a scratch in the regular bmapnode layout so all existing iteration
+ * consumers (reading node->key / node->value) work unchanged. */
+static bmapnode* map_next_const(bmap *map, bmapiter *iter)
+{
+    bmapnodec *slots = (bmapnodec*)map->slots;
+    bmapnodec *end = slots + map->size;
+    bmapnodec *cur = (bmapnodec*)*iter;
+    cur = cur ? cur + 1 : slots;
+    while (cur < end && cur->key_type == BE_NIL) {
+        ++cur;
+    }
+    *iter = (bmapnode*)cur;     /* store the compact cursor for the next call */
+    if (cur < end) {
+        map_const_next_scratch.key.type = cur->key_type;
+        map_const_next_scratch.key.next = cur->next;
+        map_const_next_scratch.key.v = cur->key_v;
+        map_const_next_scratch.value.type = cur->val_type;
+        map_const_next_scratch.value.v = cur->val_v;
+        return &map_const_next_scratch;
+    }
+    return NULL;
+}
+#endif /* BE_USE_COMPACT_MAP */
+
 static bmapnode* findprev(bmap *map, bmapnode *list, bmapnode *slot)
 {
     int n, pos = pos(map, slot);
@@ -251,6 +343,11 @@ void be_map_delete(bvm *vm, bmap *map)
 
 bvalue* be_map_find(bvm *vm, bmap *map, bvalue *key)
 {
+#if BE_USE_COMPACT_MAP
+    if (gc_isconst(map)) {
+        return map_find_const(vm, map, key);
+    }
+#endif
     bmapnode *entry = find(vm, map, key, hashcode(key));
     return entry ? value(entry) : NULL;
 }
@@ -335,6 +432,11 @@ void be_map_removestr(bvm *vm, bmap *map, bstring *key)
 
 bmapnode* be_map_next(bmap *map, bmapiter *iter)
 {
+#if BE_USE_COMPACT_MAP
+    if (gc_isconst(map)) {
+        return map_next_const(map, iter);
+    }
+#endif
     bmapnode *end = map->slots + map->size;
     *iter = *iter ? *iter + 1 : map->slots;
     while (*iter < end && isnil(*iter)) {

@@ -223,6 +223,29 @@ struct SeesawEncoder : public SeesawDevice {
     // Button is pressed: set color temperature
     if (button_current) { flags |= FLAG_CHANGED; }
 
+    // Always update position tracking for Show() and Telemetry
+    abs_position[button_current] += current_delta;
+    if (abs_position[button_current] < 0) {
+      abs_position[button_current] = 0;
+    }
+    if (abs_position[button_current] > Settings->param[P_ROTARY_MAX_STEP]) {
+      abs_position[button_current] = Settings->param[P_ROTARY_MAX_STEP];
+    }
+
+    rel_position += current_delta;
+    if (rel_position > Settings->param[P_ROTARY_MAX_STEP]) {
+      rel_position = Settings->param[P_ROTARY_MAX_STEP];
+    }
+    if (rel_position < -(Settings->param[P_ROTARY_MAX_STEP])) {
+      rel_position = -(Settings->param[P_ROTARY_MAX_STEP]);
+    }
+
+#ifdef DEBUG_SEESAW_ENCODER
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: %s btn=%d delta=%d abs_position[0]=%d abs_position[1]=%d, rel_position=%d"),
+           device_name, button_current, current_delta,
+           abs_position[0], abs_position[1], rel_position);
+#endif
+
 #ifdef SEESAW_ENCODER_LIKE_ROTARY
     // Button click handling - toggle relay on a click without rotation
     // On button click - track if rotation occurs
@@ -282,38 +305,15 @@ struct SeesawEncoder : public SeesawDevice {
           LightDimmerOffset(2, current_delta * Rotary.dimmer_increment);
         }
       }
-      return;  // Skip rules processing for light control mode
+      return;  // Return early to skip rules processing for light control mode
     }
 #endif  // USE_LIGHT
 #endif  // SEESAW_ENCODER_LIKE_ROTARY
 
-    // Position tracking and rules (when not in direct light control mode)
-    // Mirrors support_rotary.ino lines 257-273
-    abs_position[button_current] += current_delta;
-    if (abs_position[button_current] < 0) {
-      abs_position[button_current] = 0;
-    }
-    if (abs_position[button_current] > Settings->param[P_ROTARY_MAX_STEP]) {
-      abs_position[button_current] = Settings->param[P_ROTARY_MAX_STEP];
-    }
-
-    rel_position += current_delta;
-    if (rel_position > Settings->param[P_ROTARY_MAX_STEP]) {
-      rel_position = Settings->param[P_ROTARY_MAX_STEP];
-    }
-    if (rel_position < -(Settings->param[P_ROTARY_MAX_STEP])) {
-      rel_position = -(Settings->param[P_ROTARY_MAX_STEP]);
-    }
-
-#ifdef DEBUG_SEESAW_ENCODER
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SEE: %s btn=%d delta=%d abs_position[0]=%d abs_position[1]=%d, rel_position=%d"),
-           device_name, button_current, current_delta,
-           abs_position[0], abs_position[1], rel_position);
-#endif
-
     // Trigger rules (when not in direct light control mode)
-    Response_P(PSTR("{\"%s\":{\"Pos1\":%d,\"Pos2\":%d,\"Button\":%d}}"),
+    Response_P(PSTR("{\"%s\":{\"Pos\":%d,\"Pos1\":%d,\"Pos2\":%d,\"Button\":%d}}"),
                device_name,
+               rel_position,
                abs_position[0],
                abs_position[1],
                button_current);
@@ -328,11 +328,11 @@ struct SeesawEncoder : public SeesawDevice {
     bool button_state = (flags & FLAG_BUTTON);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"Pos1\":%d,\"Pos2\":%d,\"Button\":%d,\"Color\":\"%06X\"}"),
-        name, abs_position[0], abs_position[1],
-        button_state, pixel_color);
+      ResponseAppend_P(PSTR(",\"%s\":{\"Pos\":%d,\"Pos1\":%d,\"Pos2\":%d,\"Button\":%d,\"Color\":\"%06X\"}"),
+                       name, rel_position, abs_position[0], abs_position[1], button_state, pixel_color);
 #if defined(USE_WEBSERVER) && !defined(SEESAW_ENCODER_HIDE_WEB_DISPLAY)
     } else {
+      WSContentSend_PD(PSTR("{s}%s Pos{m}%d{e}"), name, rel_position);
       WSContentSend_PD(PSTR("{s}%s Pos1{m}%d{e}"), name, abs_position[0]);
       WSContentSend_PD(PSTR("{s}%s Pos2{m}%d{e}"), name, abs_position[1]);
       WSContentSend_PD(PSTR("{s}%s Button{m}%d{e}"), name, button_state);

@@ -264,7 +264,7 @@ boolean FtpServer::processCommand () {
   else if (!strcmp (command, "CWD")) { 
     char path[FTP_CWD_SIZE];
     if (haveParameter () && makeExistsPath (path)) {
-      strcpy (cwdName, path);
+      strlcpy (cwdName, path, sizeof(cwdName));
       client.println (F("250 Ok. Current directory is ") + String (cwdName));
     }  
   }

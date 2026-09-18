@@ -76,8 +76,10 @@ import matter
 #@ solidify:Matter_Plugin_Sensor,weak
 
 class Matter_Plugin_Sensor : Matter_Plugin_Device
-  static var ARG  = "filter"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Filter pattern"
+
+  static var SCHEMA = "filter|"                     # arg name
+                      "l:Filter|"                   # label (display name)
+                      "h:Filter pattern"            # hint (type defaults to text)
   static var UPDATE_CMD = "Status 10"               # command to send for updates
   static var UPDATE_TIME = 5000                     # update sensor every 5s
   static var JSON_NAME = ""                         # Name of the sensor attribute in JSON payloads
@@ -101,7 +103,9 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # arguments: (map) the map for all complementary arguments that are plugin specific
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
-    device.add_read_sensors_schedule(self.UPDATE_TIME)
+    if !self.BRIDGE
+      device.add_read_sensors_schedule(self.UPDATE_TIME)
+    end
   end
 
   #############################################################
@@ -110,7 +114,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    self.tasmota_sensor_filter = config.find(self.ARG#-'filter'-#)
+    self.tasmota_sensor_filter = config.find('filter')
     if self.tasmota_sensor_filter
       self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
     end

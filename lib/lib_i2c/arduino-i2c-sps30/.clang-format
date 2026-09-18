@@ -1,0 +1,14 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+AlignAfterOpenBracket: Align
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+IndentCaseLabels: true
+SpacesBeforeTrailingComments: 2
+PointerAlignment: Left
+AlignEscapedNewlines: Left
+ForEachMacros: ['TEST_GROUP', 'TEST']
+...

@@ -553,7 +553,7 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
     File zipfile = fs->open(prefix, "r", false);
     if ((bool)zipfile) {
       // we could read the file
-      ZipArchive zip_archive = ZipArchive(&zipfile);
+      ZipArchive zip_archive(&zipfile);
       zip_archive.parse();
 
       for (auto & entry : zip_archive.entries) {
@@ -591,7 +591,7 @@ bool ZipReadFSImpl::exists(const char* path) {
     File zipfile = fs->open(prefix, "r", false);
     if ((bool)zipfile) {
       // we could read the file
-      ZipArchive zip_archive = ZipArchive(&zipfile);
+      ZipArchive zip_archive(&zipfile);
       zip_archive.parse();
 
       for (auto & entry : zip_archive.entries) {

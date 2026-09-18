@@ -18,6 +18,9 @@
 */
 
 #ifdef USE_BERRY_WSSERVER
+#if !defined(CONFIG_HTTPD_WS_SUPPORT) || !CONFIG_HTTPD_WS_SUPPORT
+  #error "You need to compile with option 'custom_sdkconfig = CONFIG_HTTPD_WS_SUPPORT=y'"
+#endif
 
 #ifndef LOG_LOCAL_LEVEL
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO

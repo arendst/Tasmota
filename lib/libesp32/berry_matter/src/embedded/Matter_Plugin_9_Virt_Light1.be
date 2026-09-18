@@ -37,8 +37,8 @@ import matter
 class Matter_Plugin_Virt_Light1 : Matter_Plugin_Light1
   static var TYPE = "v_light1"                      # name of the plug-in in json
   static var DISPLAY_NAME = "v.Light 1 Dimmer"                # display name of the plug-in
-  static var ARG  = ""                              # no arg for virtual device
-  static var ARG_HINT = "_Not used_"                # Hint for entering the Argument (inside 'placeholder')
+
+  static var SCHEMA = nil                          # no parameter
   static var VIRTUAL = true                         # virtual device
 end
 matter.Plugin_Virt_Light1 = Matter_Plugin_Virt_Light1

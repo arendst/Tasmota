@@ -148,13 +148,20 @@ double TaylorLog(double x)
 // This is demo code to guide developers in implementing their own approximation
 // software. This code is merely meant to illustrate algorithms.
 
-inline float sinf(float x) { return sin_52(x); }
-inline float cosf(float x) { return cos_52(x); }
-inline float tanf(float x) { return tan_56(x); }
-inline float atanf(float x) { return atan_66(x); }
-inline float asinf(float x) { return asinf1(x); }
-inline float acosf(float x) { return acosf1(x); }
-inline float sqrtf(float x) { return sqrt1(x); }
+float sinf(float x) __attribute__((weak));
+float sinf(float x) { return sin_52(x); }
+float cosf(float x) __attribute__((weak));
+float cosf(float x) { return cos_52(x); }
+float tanf(float x) __attribute__((weak));
+float tanf(float x) { return tan_56(x); }
+float atanf(float x) __attribute__((weak));
+float atanf(float x) { return atan_66(x); }
+float asinf(float x) __attribute__((weak));
+float asinf(float x) { return asinf1(x); }
+float acosf(float x) __attribute__((weak));
+float acosf(float x) { return acosf1(x); }
+float sqrtf(float x) __attribute__((weak));
+float sqrtf(float x) { return sqrt1(x); }
 
 // Math constants we'll use
 double const f_pi           = 3.1415926535897932384626433;  // f_pi

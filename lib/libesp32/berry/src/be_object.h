@@ -155,7 +155,19 @@ typedef struct bproto {
     int16_t nproto; /* proto count */
     bgcobject *gray; /* for gc gray list */
     bupvaldesc *upvals;
+#if BE_USE_COMPACT_KTAB
+    /* compact constant table: structure-of-arrays, the `type` byte is split
+     * out of the `bvalue` to avoid its 3 bytes of padding on 32-bit targets.
+     * `kval`/`ktype` are parallel arrays of `nconst` entries. For runtime
+     * protos both arrays live in a single allocation (kval first, ktype
+     * right after); for solidified protos they are two `const` flash arrays.
+     * Declared non-const (like the legacy `ktab`) so flash macros cast and
+     * the rare runtime mutations (bytecode loader, ktab sharing) compile. */
+    union bvaldata *kval; /* constants payload words */
+    bbyte *ktype;         /* constants type bytes (parallel to kval) */
+#else
     bvalue *ktab; /* constants table */
+#endif
     struct bproto **ptab; /* proto table */
     binstruction *code; /* instructions sequence */
     bstring *name; /* function name */
@@ -259,6 +271,23 @@ typedef const char* (*breader)(struct blexer*, void*, size_t*);
 #define var_toobj(_v)           ((_v)->v.p)
 #define var_tontvfunc(_v)       ((_v)->v.nf)
 #define var_toidx(_v)           cast_int(var_toint(_v))
+
+/* Generic read accessors for a proto's constant table. They work the same
+ * whether the build uses the compact (structure-of-arrays) representation or
+ * the legacy `bvalue[]`. `proto_const_get` materializes constant `_idx` of
+ * proto `_pr` into the `bvalue` lvalue `_dst`. `proto_const_type` returns the
+ * type byte. These are used on the cold paths (GC mark, bytecode save,
+ * solidify). The VM hot path inlines the equivalent logic directly. */
+#if BE_USE_COMPACT_KTAB
+#define proto_const_get(_pr, _idx, _dst) do {       \
+        (_dst).v = (_pr)->kval[_idx];               \
+        (_dst).type = (_pr)->ktype[_idx];           \
+    } while (0)
+#define proto_const_type(_pr, _idx)     ((_pr)->ktype[_idx])
+#else
+#define proto_const_get(_pr, _idx, _dst) ((_dst) = (_pr)->ktab[_idx])
+#define proto_const_type(_pr, _idx)     ((_pr)->ktab[_idx].type)
+#endif
 
 const char* be_vtype2str(bvalue *v);
 bstring* be_vtype2bstring(bvalue *v);

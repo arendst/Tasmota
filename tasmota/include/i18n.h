@@ -82,6 +82,7 @@
 #define D_JSON_EVERY "Every"
 #define D_JSON_EXPORT "Export"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
+#define D_JSON_EXPORT_ACTIVE_TOTAL "ExportActiveTotal"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
 #define D_JSON_EXPORT_POWER "ExportPower"
 #define D_JSON_FAILED "Failed"
@@ -100,6 +101,7 @@
 #define D_JSON_GROUPS "Groups"
 #define D_JSON_HALLEFFECT "HallEffect"
 #define D_JSON_HALTING "Halting"
+#define D_JSON_HCHO "Formaldehyde"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HEATINDEX "HeatIndex"
 #define D_JSON_HIGH "High"
@@ -146,6 +148,7 @@
 #define D_JSON_POWERFACTOR "Factor"
 #define D_JSON_POWERMAX "MaxPower"
 #define D_JSON_POWERUSAGE "Power"
+#define D_JSON_POWERUSAGE_TOTAL "PowerTotal"
 #define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
 #define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
 #define D_JSON_REACTIVE_POWERUSAGE "ReactivePower"
@@ -343,6 +346,7 @@
 #define D_CMND_IPADDRESS "IPAddress"
 #define D_CMND_NTPSERVER "NtpServer"
 #define D_CMND_AP "Ap"
+#define D_CMND_BSSID "BSSId"
 #define D_CMND_SSID "SSId"
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"
@@ -396,6 +400,7 @@
 #define D_CMND_SERIALCONFIG "SerialConfig"
 #define D_CMND_TEMPLATE "Template"
   #define D_JSON_NAME "NAME"
+  #define D_JSON_ARCH "ARCH"
   #define D_JSON_GPIO "GPIO"
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
@@ -988,8 +993,10 @@ const char HTTP_SNS_F_VOLTAGE[]     PROGMEM = "{s}%s "  D_VOLTAGE             "{
 const char HTTP_SNS_F_CURRENT[]     PROGMEM = "{s}%s "  D_CURRENT             "{m}%*_f " D_UNIT_AMPERE            "{e}";
 const char HTTP_SNS_F_POWER[]       PROGMEM = "{s}%s "  D_POWERUSAGE          "{m}%*_f " D_UNIT_WATT              "{e}";
 const char HTTP_SNS_F_DISTANCE_CM[] PROGMEM = "{s}%s "  D_DISTANCE            "{m}%1_f " D_UNIT_CENTIMETER        "{e}";
-const char HTTP_SNS_F_NOX[]         PROGMEM = "{s}%s "  D_NOX                 "{m}%*_f"                           "{e}";
-const char HTTP_SNS_F_VOC[]         PROGMEM = "{s}%s "  D_VOC                 "{m}%*_f"                           "{e}";
+const char HTTP_SNS_F_NOX[]         PROGMEM = "{s}%s "  D_NOX                 "{m}%0_f"                           "{e}";
+const char HTTP_SNS_F_VOC[]         PROGMEM = "{s}%s "  D_VOC                 "{m}%0_f"                           "{e}";
+const char HTTP_SNS_F_CO2[]         PROGMEM = "{s}%s "  D_CO2                 "{m}%0_f " D_UNIT_PARTS_PER_MILLION "{e}";
+const char HTTP_SNS_F_HCHO[]        PROGMEM = "{s}%s "  D_HCHO                "{m}%0_f " D_UNIT_PARTS_PER_BILLION "{e}";
 const char HTTP_SNS_F_ABS_HUM[]     PROGMEM = "{s}%s "  D_ABSOLUTE_HUMIDITY   "{m}%*_f " D_UNIT_GRAM_PER_CUBIC_METER "{e}";
 
 const char HTTP_SNS_HUM[]           PROGMEM = "{s}%s "  D_HUMIDITY            "{m}%s " D_UNIT_PERCENT             "{e}";

@@ -32,6 +32,10 @@ extern void gp_set_frequency(int32_t pin, int32_t frequency);   BE_FUNC_CTYPE_DE
 extern int gp_get_duty(int32_t pin);               BE_FUNC_CTYPE_DECLARE(gp_get_duty, "i", "i");
 extern int gp_get_duty_resolution(int32_t pin);    BE_FUNC_CTYPE_DECLARE(gp_get_duty_resolution, "i", "i");
 
+extern int gp_add_virtual_button(int32_t state);                       BE_FUNC_CTYPE_DECLARE(gp_add_virtual_button, "i", "i");
+extern void gp_remove_virtual_button(int32_t index);                   BE_FUNC_CTYPE_DECLARE(gp_remove_virtual_button, "", "i");
+extern void gp_set_virtual_button_state(int32_t index, int32_t state); BE_FUNC_CTYPE_DECLARE(gp_set_virtual_button_state, "", "ii");
+
 /* @const_object_info_begin
 module gpio (scope: global) {
     member, func(gp_member)
@@ -53,6 +57,10 @@ module gpio (scope: global) {
     set_pwm_freq, ctype_func(gp_set_frequency)
     read_pwm, ctype_func(gp_get_duty)
     read_pwm_resolution, ctype_func(gp_get_duty_resolution)
+
+    add_virtual_button, ctype_func(gp_add_virtual_button)
+    remove_virtual_button, ctype_func(gp_remove_virtual_button)
+    set_virtual_button_state, ctype_func(gp_set_virtual_button_state)
 }
 @const_object_info_end */
 #include "be_fixed_gpio.h"

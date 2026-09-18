@@ -74,7 +74,7 @@ bool IAQ_Read(void) {
 }
 
 void IAQ_Init(void) {
-  for (uint32_t bus = 0; bus < 2; bus++) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
     if (!I2cSetDevice(I2_ADR_IAQ, bus)) { continue; }
     iAQ.i2c_address = I2_ADR_IAQ;
     iAQ.i2c_bus = bus;

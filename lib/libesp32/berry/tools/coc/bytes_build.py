@@ -24,7 +24,9 @@ class bytes_build:
         ostr = ""
         ostr += "/* binary arrays */\n"
         ostr += "be_define_const_bytes_empty();\n"
-        for k in self.map:
+        # sort to ensure deterministic output so the generated header only
+        # changes when its content actually changes (avoids spurious rebuilds)
+        for k in sorted(self.map):
             ostr += "be_define_const_bytes("
             ostr += k + ", " + ", ".join( [ "0x" + k[i:i+2] for i in range(0, len(k), 2)] )
             ostr += ");\n"
@@ -35,7 +37,7 @@ class bytes_build:
         ostr = ""
         ostr += "/* extern binary arrays */\n"
         ostr += "extern const binstance_arg3 be_const_instance_;\n"
-        for k in self.map:
+        for k in sorted(self.map):
             ostr += "extern const binstance_arg3 be_const_instance_" + k + ";\n"
 
         return ostr

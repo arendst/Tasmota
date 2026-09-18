@@ -60,6 +60,7 @@
 #define D_AT "at"
 #define D_AUTO "АВТОМАТИЧНО"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Бат."                // Short for Battery
 #define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -118,7 +119,9 @@
 #define D_GATEWAY "Шлюз"
 #define D_GROUP "Група"
 #define D_HALL_EFFECT "Ефект на Хол"
+#define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Хост"
 #define D_HOSTNAME "Име на хоста"
 #define D_HUMIDITY "Влажност"
@@ -130,13 +133,16 @@
 #define D_INITIALIZED "Инициализирано"
 #define D_IP_ADDRESS "Адрес по IP"
 #define D_LIGHT "Светлина"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manual"
 #define D_MODULE "Модул"
 #define D_MOISTURE "Влага"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "неколкократно натискане"
+#define D_NA "N/A"
 #define D_NOISE "Шум"
 #define D_NONE "Няма"
 #define D_NOX "NOx"
@@ -348,6 +354,7 @@
 
 #define D_OTHER_PARAMETERS "Други параметри"
 #define D_TEMPLATE "Модел"
+#define D_TEMPLATE_WRONG_ARCH "Reset to correct chip type"
 #define D_ACTIVATE "Включване"
 #define D_DEVICE_NAME "Име на устройството"
 #define D_WEB_ADMIN_PASSWORD "Парола на интерфейса"
@@ -970,6 +977,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TX  "MiEl HVAC MB Tx"
+#define D_SENSOR_MIEL_HVAC_MB_RX  "MiEl HVAC MB Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TXEN  "MiEl HVAC MB DE"
 #define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
 #define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
@@ -1340,5 +1350,15 @@
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
 
+#define D_SENSOR_MBS_RX_ENA    "ModBr Rx Ena"
+
+// xdrv_94_modbus_relay.ino
+#define D_MODBUSRELAY_TX         "MbsRelay TX"
+#define D_MODBUSRELAY_TX_ENA     "MbsRelay TX Ena"
+#define D_MODBUSRELAY_RX         "MbsRelay RX"
+#define D_MODBUSRELAY_RX_ENA     "MbsRelay RX Ena"
+
+// xdrv_89_esp32_shelly_emulation.ino
+#define D_SHELLY                 "Shelly"
 
 #endif  // _LANGUAGE_BG_BG_H_

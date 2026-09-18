@@ -99,12 +99,12 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_86_esp32_sonoff_spm     | @arendst
 | xdrv_87_esp32_sonoff_tm1621  | @arendst
 | xdrv_88_esp32_shelly_pro     | @arendst
-| xdrv_89_                     |
+| xdrv_89_esp32_shelly_emulation | Rene Hexel
 | xdrv_90_esp32_dingtian_relay | @barbudor
 | xdrv_91_esp32_twai           | @arendst
 | xdrv_92_vid6608              | @petrows
-| xdrv_93_                     |
-| xdrv_94_                     |
+| xdrv_93_fm24cxx              | Martin Macák
+| xdrv_94_modbus_relay         | Jacek Ziółkowski
 |                              |
 | xdrv_119_i2c_ap33772s        | @arendst
 | xdrv_120_xyzmodem            | @arendst
@@ -138,7 +138,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_21_sgp30                | Gerhard Mutz
 | xsns_22_sr04                 | Nuno Ferreira, @arendst
 | xsns_23_me007                | Mathias Buder
-| xsns_24_si1145               |
+| xsns_24_si1145               | @arendst
 | xsns_25_spl06-007_sensor     | @rai68
 | xsns_26_lm75ad               | Andre Thomas
 | xsns_27_apds9960             | Shawn Hymel
@@ -170,7 +170,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_52_ibeacon              | Gerhard Mutz
 | xsns_53_sml                  | Gerhard Mutz
 | xsns_54_ina226               | Stephen Rodgers
-| xsns_55_hih_series           |
+| xsns_55_hih_series           | @thepotoo
 | xsns_56_hpma                 | David Hunt
 | xsns_57_tsl2591              | Markus Bösling
 | xsns_58_dht12                | Stefan Oskam
@@ -235,6 +235,8 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_115_wooliis             | Luca Melette
 | xsns_117_c8_co2_5k           | @jeroenvermeulen
 | xsns_118_ags02ma             | Akshaylal S
+| xsns_119_sen6x               | @arendst
+| xsns_120_stcc4               | @arendst
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |

@@ -95,7 +95,7 @@ struct AUDIO_I2S_MP3_t {
 
   char mic_path[32];
   int8_t mic_error;
-  bool mic_stop = false;
+  volatile bool mic_stop = false;
   bool use_stream = false;
   bool task_running = false;
   bool file_play_pausing = false;
@@ -334,7 +334,7 @@ void CmndI2SConfig(void) {
                     "\"DMADesc\":%d"
                   "}}}",
                   cfg->sys.version,
-                  cfg->sys.duplex,
+                  cfg->sys.full_duplex,
                   cfg->sys.tx,
                   cfg->sys.rx,
                   cfg->sys.exclusive,
@@ -471,7 +471,7 @@ void I2sInit(void) {
   I2SSettingsLoad(AUDIO_CONFIG_FILENAME, false);    // load configuration (no-erase)
   if (!audio_i2s.Settings) { return; }     // fatal error, could not allocate memory for configuration
 
-  bool duplex = false;      // the same ports are used for input and output
+  bool tx_and_rx = false;      // the same ports are used for input and output
   bool exclusive = false;   // signals that in/out have a shared GPIO and need to un/install driver before use
   bool dac_mode = (gpio_dac_0 >= 0);
   if (dac_mode) {
@@ -481,7 +481,7 @@ void I2sInit(void) {
   // AddLog(LOG_LEVEL_INFO, PSTR("I2S: init pins bclk=%d, ws=%d, dout=%d, mclk=%d, din=%d"),
   //                         Pin(GPIO_I2S_BCLK, 0) , Pin(GPIO_I2S_WS, 0), Pin(GPIO_I2S_DOUT, 0), Pin(GPIO_I2S_MCLK, 0), Pin(GPIO_I2S_DIN, 0));
 
-  audio_i2s.Settings->sys.duplex = false;
+  audio_i2s.Settings->sys.full_duplex = false;
   audio_i2s.Settings->sys.tx = false;
   audio_i2s.Settings->sys.rx = false;
   audio_i2s.Settings->sys.exclusive = false;
@@ -500,12 +500,12 @@ void I2sInit(void) {
     // if neither input, nor output, nor DAC/ADC skip (WS could is only needed for DAC but supports only port 0)
     if (din < 0 && dout < 0 && (!(dac_mode && port == 0))) { continue; }
 
-    duplex = (din >= 0) && (dout >= 0);
-    if (duplex) {
+    tx_and_rx = (din >= 0) && (dout >= 0); // portential full duplex
+    if (tx_and_rx) {
       if (audio_i2s.Settings->rx.mode == I2S_MODE_PDM || audio_i2s.Settings->tx.mode == I2S_MODE_PDM ){
         exclusive = true;
       }
-      AddLog(LOG_LEVEL_DEBUG, "I2S: enabling duplex mode, exclusive:%i", exclusive);
+      AddLog(LOG_LEVEL_DEBUG, "I2S: enabling exclusive:%i", exclusive);
     }
 
     const char *err_msg = nullptr;   // to save code, we indicate an error with a message configured
@@ -597,7 +597,6 @@ void I2sInit(void) {
 
     bool init_tx_ok = false;
     bool init_rx_ok = false;
-    exclusive = true; //TODO: try fix full dupleyx mode
     if (tx && rx && exclusive) {
       i2s->setExclusive(true);
       audio_i2s.Settings->sys.exclusive = exclusive;
@@ -614,7 +613,7 @@ void I2sInit(void) {
     if (init_rx_ok) { audio_i2s.in = i2s; }
     audio_i2s.Settings->sys.tx |= init_tx_ok; // Do not set to zero id already configured on another channnel
     audio_i2s.Settings->sys.rx |= init_rx_ok;
-    if (init_tx_ok && init_rx_ok) { audio_i2s.Settings->sys.duplex = true; }
+    if (init_tx_ok && init_rx_ok && exclusive == false) { audio_i2s.Settings->sys.full_duplex = true; }
 
     // if intput and output are configured, don't proceed with other IS2 ports
     if (audio_i2s.out && audio_i2s.in) {
@@ -673,7 +672,7 @@ int32_t I2SPrepareTx(void) {
 //
 // Returns `I2S_OK` if ok to record input or error code
 int32_t I2SPrepareRx(void) {
-  if (!audio_i2s.in) return I2S_ERR_OUTPUT_NOT_CONFIGURED;
+  if (!audio_i2s.in) return I2S_ERR_INPUT_NOT_CONFIGURED;
 
   if (audio_i2s.Settings->sys.exclusive) {
     // TODO - deconfigure input driver
@@ -868,7 +867,7 @@ void i2s_clean_pause_data(void) {
 \*********************************************************************************************/
 
 void CmndI2SMic(void) {
-  if (I2SPrepareRx()) {
+  if (I2SPrepareRx() != I2S_OK) {
     ResponseCmndChar("I2S Mic not configured");
     return;
   }
@@ -1007,7 +1006,7 @@ void CmndI2SI2SRtttl(void) {
 }
 
 void CmndI2SMicRec(void) {
-  if (I2SPrepareRx()) {
+  if (I2SPrepareRx() != I2S_OK) {
     ResponseCmndChar("I2S Mic not configured");
     return;
   }
@@ -1086,10 +1085,6 @@ bool Xdrv42(uint32_t function) {
 #endif
 #if defined(I2S_BRIDGE)
       i2s_bridge_loop();
-#endif
-      break;
-#if defined(I2S_BRIDGE)
-      I2SBridgeInit();
 #endif
       break;
 

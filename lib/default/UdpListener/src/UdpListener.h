@@ -63,11 +63,27 @@ extern "C" {
 #include <lwip/igmp.h>
 }
 
+// GCC added the __atomic built-ins in 4.7; Clang exposes them through its
+// GNU-compatibility layer. Other C++11 compilers use std::atomic instead.
+#if defined(__clang__)
+#if __has_builtin(__atomic_load_n) && __has_builtin(__atomic_store_n)
+#define UDPLISTENER_USE_GNU_ATOMICS 1
+#endif
+#elif defined(__GNUC__) && \
+      ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)))
+#define UDPLISTENER_USE_GNU_ATOMICS 1
+#endif
+
+#ifndef UDPLISTENER_USE_GNU_ATOMICS
+#define UDPLISTENER_USE_GNU_ATOMICS 0
+#include <atomic>
+#endif
+
 template <size_t PACKET_SIZE>
 struct UdpPacket {
     IPAddress   srcaddr;
     IPAddress   dstaddr;
-    int16_t     srcport;
+    uint16_t    srcport;        // unsigned, UDP source ports can exceed 32767
     netif*      input_netif;
     size_t      len;
     uint8_t     buf[PACKET_SIZE];
@@ -84,32 +100,35 @@ public:
     : _pcb(0)
     , _packet_number(packet_number)
     , _buffers(nullptr)
-    , _udp_packets(0)
+    , _head(0)
+    , _tail(0)
     , _udp_ready(false)
-    , _udp_index(0)
     {
-        _packet_number = packet_number;
         _buffers = new UdpPacket<PACKET_SIZE>[_packet_number];
-        _pcb = udp_new();
+        _pcb = udp_new();           // may return nullptr when out of memory
     }
 
     ~UdpListener()
     {
-        udp_remove(_pcb);
-        _pcb = 0;
+        if (_pcb != nullptr) {
+            udp_recv(_pcb, nullptr, nullptr);   // no callback into an object being destroyed
+            udp_remove(_pcb);
+            _pcb = 0;
+        }
         delete[] _buffers;
         _buffers = nullptr;
     }
 
     void reset(void)
     {
-        _udp_packets = 0;
-        _udp_index = 0;
+        _udp_ready = false;
+        uint32_t head = _load_acquire(&_head);
+        _store_release(&_tail, head);  // drop all pending packets
     }
 
     bool listen(const IPAddress& addr, uint16_t port)
     {
-        if (!_buffers) { return false; }
+        if (!_buffers || (_pcb == nullptr)) { return false; }
         udp_recv(_pcb, &_s_recv, (void *) this);
         err_t err = udp_bind(_pcb, addr, port);
         return err == ERR_OK;
@@ -117,26 +136,22 @@ public:
 
     void disconnect()
     {
-        udp_disconnect(_pcb);
+        if (_pcb != nullptr) {
+            udp_disconnect(_pcb);
+        }
     }
 
+    // Release the packet returned by the previous `read()` and make the next one current.
+    // Returns true when a packet is available for `read()`.
     bool next()
     {
         if (!_buffers) { return false; }
-        if (_udp_packets > 0) {
-            if (!_udp_ready) {
-                // we just consume the first packet
-                _udp_ready = true;
-            } else {
-                _udp_packets--;
-                _udp_index = (_udp_index + 1) % _packet_number;      // advance to next buffer index in ring
-                if (_udp_packets == 0) {
-                    _udp_ready = false;
-                }
-            }
-        } else {
+        if (_udp_ready) {
             _udp_ready = false;
+            uint32_t tail = _load_relaxed(&_tail);
+            _store_release(&_tail, _incr(tail));
         }
+        _udp_ready = (_available() > 0);
         return _udp_ready;
     }
 
@@ -144,7 +159,8 @@ public:
     {
         if (!_buffers) { return nullptr; }
         if (_udp_ready) {        // we have a packet ready to consume
-            return &_buffers[_udp_index];
+            uint32_t tail = _load_relaxed(&_tail);
+            return &_buffers[_slot(tail)];
         } else {
             return nullptr;
         }
@@ -152,18 +168,80 @@ public:
 
 private:
 
+#if UDPLISTENER_USE_GNU_ATOMICS
+    typedef uint32_t atomic_counter_t;
+
+    static uint32_t _load_acquire(const atomic_counter_t *counter)
+    {
+        return __atomic_load_n(counter, __ATOMIC_ACQUIRE);
+    }
+
+    static uint32_t _load_relaxed(const atomic_counter_t *counter)
+    {
+        return __atomic_load_n(counter, __ATOMIC_RELAXED);
+    }
+
+    static void _store_release(atomic_counter_t *counter, uint32_t value)
+    {
+        __atomic_store_n(counter, value, __ATOMIC_RELEASE);
+    }
+#else
+    typedef std::atomic<uint32_t> atomic_counter_t;
+
+    static uint32_t _load_acquire(const atomic_counter_t *counter)
+    {
+        return counter->load(std::memory_order_acquire);
+    }
+
+    static uint32_t _load_relaxed(const atomic_counter_t *counter)
+    {
+        return counter->load(std::memory_order_relaxed);
+    }
+
+    static void _store_release(atomic_counter_t *counter, uint32_t value)
+    {
+        counter->store(value, std::memory_order_release);
+    }
+#endif
+
+    // The ring counters run in [0..2*_packet_number), the extra bit distinguishes
+    // a full ring from an empty one without giving up a slot.
+    uint32_t _counter_modulo(void) const { return (uint32_t)_packet_number * 2; }
+
+    uint32_t _incr(uint32_t counter) const
+    {
+        counter++;
+        return (counter >= _counter_modulo()) ? 0 : counter;
+    }
+
+    uint8_t _slot(uint32_t counter) const
+    {
+        return (counter >= _packet_number) ? (counter - _packet_number) : counter;
+    }
+
+    // Packets waiting, including the one currently checked out by `read()`.
+    // Acquire loads pair with the producer and consumer release stores, making packet
+    // contents visible before consumption and consumption complete before slot reuse.
+    uint32_t _available(void) const
+    {
+        uint32_t head = _load_acquire(&_head);
+        uint32_t tail = _load_acquire(&_tail);
+        return (head >= tail) ? (head - tail) : (head + _counter_modulo() - tail);
+    }
+
     void _recv(udp_pcb *upcb, pbuf *pb,
             const ip_addr_t *srcaddr, u16_t srcport)
     {
         if (!_buffers) { pbuf_free(pb); return; }
-        // Serial.printf(">>> _recv: _udp_packets = %d, _udp_index = %d, tot_len = %d\n", _udp_packets, _udp_index, pb->tot_len);
-        if (_udp_packets >= _packet_number) {
+        // Serial.printf(">>> _recv: _available() = %d, tot_len = %d\n", _available(), pb->tot_len);
+        if (_available() >= _packet_number) {
             // we don't have slots anymore, drop packet
             pbuf_free(pb);
             return;
         }
 
-        uint8_t next_slot = (_udp_index + _udp_packets) % _packet_number;
+        uint32_t head = _load_relaxed(&_head);
+        uint8_t next_slot = _slot(head);
 
         size_t packet_len = pb->tot_len;
         if (packet_len > PACKET_SIZE) { packet_len = PACKET_SIZE; }
@@ -180,7 +258,7 @@ private:
             _buffers[next_slot].dstaddr = ip_current_dest_addr();
             _buffers[next_slot].srcport = srcport;
             _buffers[next_slot].input_netif = ip_current_input_netif();
-            _udp_packets++;            // we have one packet ready
+            _store_release(&_head, _incr(head));
         }
         pbuf_free(pb);      // free memory immediately
     }
@@ -198,12 +276,15 @@ private:
 
     UdpPacket<PACKET_SIZE> *   _buffers;
 
-    // how many packets are ready.
-    int8_t  _udp_packets;               // number of udp packets ready to consume
-    bool    _udp_ready;          // is a packet currenlty consumed after a call to next()
-    // ring buffer ranges from 0..(_packet_number-1)
-    int8_t  _udp_index;                 // current index in the ring buffer
+    // Single-producer / single-consumer ring. `_head` is written only by `_recv()`, which
+    // runs in the lwIP context and can preempt the Arduino loop, `_tail` only by the
+    // consumer. Acquire/release atomics order packet access across both contexts.
+    atomic_counter_t _head;            // next slot to be filled by the producer
+    atomic_counter_t _tail;            // oldest slot not yet released by the consumer
+    bool    _udp_ready;          // is a packet currently consumed after a call to next()
 };
+
+#undef UDPLISTENER_USE_GNU_ATOMICS
 
 #endif // ESP8266
 #endif //UDPMULTICASTLISTENER_H

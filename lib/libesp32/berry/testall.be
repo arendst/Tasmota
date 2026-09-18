@@ -1,7 +1,7 @@
 #! ./berry
 import os
 
-os.system('lcov', '-q -c -i -d . -o init.info')
+os.system('lcov', '-q -c -i -d . -o init.info --ignore-errors gcov,unsupported')
 
 var exec = './berry'
 var path = 'tests'
@@ -30,9 +30,9 @@ if failed != 0
 end
 
 var cmds = [
-    'lcov -q -c -d ./ -o cover.info',
-    'lcov -q -a init.info -a cover.info -o total.info',
-    'lcov --remove total.info */usr/include/* -o final.info',
+    'lcov -q -c -d ./ -o cover.info --ignore-errors gcov,unsupported',
+    'lcov -q -a init.info -a cover.info -o total.info --ignore-errors gcov,unsupported',
+    'lcov --remove total.info */usr/include/* -o final.info --ignore-errors gcov,unsupported',
     'genhtml -q -o test_report --legend --title "lcov" --prefix=./ final.info',
     'rm -f init.info cover.info total.info final.info'
 ]

@@ -56,7 +56,7 @@ extern "C" {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_isint(vm, 1)) {
       int32_t n = be_toint(vm, 1);
-      if (n < 0 || n > 4096) { be_raise(vm, "value_error", ""); }
+      if (n < 0 || n > 2048) { be_raise(vm, "value_error", ""); }
 
       uint8_t rand_bytes[n];
       esp_fill_random(rand_bytes, n);

@@ -139,7 +139,7 @@ int be_code_allocregs(bfuncinfo *finfo, int count)
 {
     int base = finfo->freereg;
     allocstack(finfo, count);
-    finfo->freereg += (char)count;
+    finfo->freereg += count;
     return base;
 }
 
@@ -147,6 +147,9 @@ static void setjump(bfuncinfo *finfo, int pc, int dst)
 {
     binstruction *p = be_vector_at(&finfo->code, pc);
     int offset = dst - (pc + 1);
+    if (offset < IsBx_MIN || offset > IsBx_MAX) {
+        be_lexerror(finfo->lexer, "jump too far");
+    }
     /* instruction edit jump destination */
     *p = (*p & ~IBx_MASK) | ISET_sBx(offset);
 }
@@ -258,11 +261,25 @@ static int newconst(bfuncinfo *finfo, bvalue *k)
 {
     int idx = be_vector_count(&finfo->kvec);
     be_vector_push_c(finfo->lexer->vm, &finfo->kvec, k);
+#if BE_USE_COMPACT_KTAB
+    /* During compilation the `bvalue` vector `kvec` is the source of truth, but
+     * we must keep it reachable by the GC (constants such as classes are only
+     * referenced from here). We expose it through proto->kval with ktype==NULL
+     * acting as a sentinel meaning "in-progress, kval is actually a bvalue[]".
+     * end_func later replaces this with the real compact kval/ktype. */
+    finfo->proto->kval = (union bvaldata*) be_vector_data(&finfo->kvec);
+    finfo->proto->ktype = NULL;
+    finfo->proto->nconst = be_vector_capacity(&finfo->kvec);
+    if (k == NULL) {
+        var_setnil((bvalue*)be_vector_at(&finfo->kvec, idx));
+    }
+#else
     finfo->proto->ktab = be_vector_data(&finfo->kvec);
     finfo->proto->nconst = be_vector_capacity(&finfo->kvec);
     if (k == NULL) {
         var_setnil(&finfo->proto->ktab[idx]);
     }
+#endif
     return idx;
 }
 
@@ -492,6 +509,11 @@ static int exp2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
         pct = code_bool(finfo, reg, 1, 0);
         patchlistaux(finfo, e->f, finfo->pc, pcf);
         patchlistaux(finfo, e->t, finfo->pc, pct);
+        /* the LDBOOL pair wrote the value to `reg`; record that in `e`, so that
+         * callers which re-read the descriptor instead of using the return
+         * value do not pick up the register of the last operand */
+        e->type = ETREG;
+        e->v.idx = reg;
         e->t = NO_JUMP;
         e->f = NO_JUMP;
         e->not = 0;
@@ -542,7 +564,7 @@ static void binaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e1, bexpdesc *e2, 
     e1->v.idx = dst; /* update register as output */
 }
 
-void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e)
+void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e, int dst)
 {
     switch (op) {
     case OptAnd:
@@ -552,7 +574,7 @@ void be_code_prebinop(bfuncinfo *finfo, int op, bexpdesc *e)
         be_code_jumpbool(finfo, e, btrue);
         break;
     default:
-        exp2anyreg(finfo, e);
+        exp2reg(finfo, e, dst);
         break;
     }
 }
@@ -861,8 +883,20 @@ void be_code_ret(bfuncinfo *finfo, bexpdesc *e)
 /* Both expdesc are materialized in kregs */
 static void package_suffix(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
 {
+    int key;
+    if (hasjump(k)) {
+        /* The key still carries open short-circuit jumps. Close them before
+         * materializing the object, otherwise the code that loads the object
+         * lands between those jumps and is skipped whenever the short circuit
+         * is taken. Materializing the object first is what 2785c08 changed in
+         * order to save a register in `self.a[128]`, so keep that order for
+         * every key that has no pending jumps. */
+        key = exp2anyreg(finfo, k);
     c->v.ss.obj = exp2anyreg(finfo, c);
-    int key = exp2anyreg(finfo, k);
+    } else {
+        c->v.ss.obj = exp2anyreg(finfo, c);
+        key = exp2anyreg(finfo, k);
+    }
     c->v.ss.tt = c->type;
     c->v.ss.idx = key;
 }

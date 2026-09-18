@@ -486,7 +486,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Serial Number of device
             else if (ilabel == LABEL_ADCO || ilabel == LABEL_ADSC)
             {
-                strcpy(serialNumber, me->value);
+                strlcpy(serialNumber, me->value, sizeof(serialNumber));
                 AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TIC: %s set to %s"), me->name, serialNumber);
             }
             // Status
@@ -581,7 +581,7 @@ bool ResponseAppendTInfo(char sep, bool all)
                             // Some values contains space 
                             if (strcmp(me->name, "NGTF")==0 || strcmp(me->name, "LTARF")==0 || strcmp(me->name, "MSG1")==0) {
                                 char trimmed_value[strlen(me->value)+1];
-                                strcpy(trimmed_value, me->value);
+                                strlcpy(trimmed_value, me->value, sizeof(trimmed_value));
                                 ResponseAppend_P( PSTR("\"%s\""), Trim(trimmed_value) );
                             } else {
                                 ResponseAppend_P( PSTR("\"%s\""), me->value );

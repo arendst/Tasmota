@@ -968,7 +968,7 @@ void HAssAnnounceSensors(void)
     TasmotaGlobal.tele_period = tele_period_save;
     size_t sensordata_len = ResponseLength();
     char sensordata[sensordata_len+2];   // dynamically adjust the size
-    strcpy(sensordata, ResponseData());    // we can use strcpy since the buffer has the right size
+    strlcpy(sensordata, ResponseData(), sizeof(sensordata));    // we can use strlcpy since the buffer has the right size
 
     // ******************* JSON TEST *******************
     // char sensordata[512];

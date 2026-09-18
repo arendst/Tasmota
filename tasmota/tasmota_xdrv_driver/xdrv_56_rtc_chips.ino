@@ -161,8 +161,8 @@ void RV3028SetTime(uint32_t epoch_time) {
 void RV3028Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_94)) {
     RtcChip.address = RV3028_ADDR;
-    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
-      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) continue;
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
       if (I2cValidRead(RtcChip.address, RV3028_STATUS, 1, RtcChip.bus)) {
         uint8_t status = I2cRead8(RtcChip.address, RV3028_STATUS, RtcChip.bus);
         if (status & _BV(RV3028_PORF)) {
@@ -302,10 +302,8 @@ void DS3231SetTime(uint32_t epoch_time) {
 void DS3231Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_26)) {
     RtcChip.address = DS3231_ADDRESS;
-    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
-      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) {
-        continue; 
-      }
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
       if (I2cValidRead(RtcChip.address, DS3231_STATUS, 1, RtcChip.bus)) {
         RtcChip.detected = 1;
         strcpy_P(RtcChip.name, PSTR("DS3231"));
@@ -348,18 +346,19 @@ void DS3231Detected(void) {
  * Read time and return the epoch time (second since 1-1-1970 00:00)
 \*-------------------------------------------------------------------------------------------*/
 uint32_t Pcf85063ReadTime(void) {
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(PCF85063_REG_SECONDS);
-  Wire.endTransmission(false);   // false -> repeated start
-  Wire.requestFrom((uint8_t)RtcChip.address, (uint8_t)7);
+  TwoWire& myWire = I2cGetWire(RtcChip.bus);
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(PCF85063_REG_SECONDS);
+  myWire.endTransmission(false);   // false -> repeated start
+  myWire.requestFrom((uint8_t)RtcChip.address, (uint8_t)7);
 
-  uint8_t sec   = Wire.read(); // 0x04
-  uint8_t min   = Wire.read(); // 0x05
-  uint8_t hour  = Wire.read(); // 0x06
-  uint8_t day   = Wire.read(); // 0x07
-  uint8_t wday  = Wire.read(); // 0x08
-  uint8_t month = Wire.read(); // 0x09
-  uint8_t year  = Wire.read(); // 0x0A
+  uint8_t sec   = myWire.read(); // 0x04
+  uint8_t min   = myWire.read(); // 0x05
+  uint8_t hour  = myWire.read(); // 0x06
+  uint8_t day   = myWire.read(); // 0x07
+  uint8_t wday  = myWire.read(); // 0x08
+  uint8_t month = myWire.read(); // 0x09
+  uint8_t year  = myWire.read(); // 0x0A
 
   TIME_T tm;
   tm.second       = Bcd2Dec(sec  & 0x7F); 
@@ -391,16 +390,17 @@ void Pcf85063SetTime(uint32_t epoch_time) {
   uint8_t bcd_month = Dec2Bcd(tm.month +1);
   uint8_t bcd_year  = Dec2Bcd(year);
 
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(PCF85063_REG_SECONDS);
-  Wire.write(bcd_sec);
-  Wire.write(bcd_min);
-  Wire.write(bcd_hour);
-  Wire.write(bcd_day);
-  Wire.write(bcd_wday);
-  Wire.write(bcd_month);
-  Wire.write(bcd_year);
-  Wire.endTransmission();
+  TwoWire& myWire = I2cGetWire(RtcChip.bus);
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(PCF85063_REG_SECONDS);
+  myWire.write(bcd_sec);
+  myWire.write(bcd_min);
+  myWire.write(bcd_hour);
+  myWire.write(bcd_day);
+  myWire.write(bcd_wday);
+  myWire.write(bcd_month);
+  myWire.write(bcd_year);
+  myWire.endTransmission();
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -409,17 +409,18 @@ void Pcf85063SetTime(uint32_t epoch_time) {
 void Pcf85063Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_92)) {
     RtcChip.address = PCF85063_ADDRESS;
-    // Vyskúšame, či vieme prečítať nejaký register
-    if (I2cSetDevice(RtcChip.address)) {
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
+      // Vyskúšame, či vieme prečítať nejaký register
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
       // Skúsime napr. prečítať PCF85063_REG_CTRL1
-      if (I2cValidRead(RtcChip.address, PCF85063_REG_CTRL1, 1)) {
+      if (I2cValidRead(RtcChip.address, PCF85063_REG_CTRL1, 1, RtcChip.bus)) { 
         RtcChip.detected = 1;
         strcpy_P(RtcChip.name, PSTR("PCF85063"));
         RtcChip.ReadTime = &Pcf85063ReadTime;
         RtcChip.SetTime  = &Pcf85063SetTime;
         RtcChip.mem_size = -1;    // Nemá extra user RAM, ak by si nepotreboval
-
         // Ak by si chcel implementovať MemRead/MemWrite, doplň RtcChip.MemRead a RtcChip.MemWrite
+        break;
       }
     }
   }
@@ -436,20 +437,15 @@ void Pcf85063Detected(void) {
 #define XI2C_59             59       // See I2CDEVICES.md
 
 #include "BM8563.h"
-
-struct {
-  BM8563 Rtc;
-  bool rtc_ready = false;
-  bool ntp_time_ok = false;
-} bm8563_driver;
+BM8563 Bm8563Rtc;
 
 uint32_t BM8563GetUtc(void) {
   RTC_TimeTypeDef RTCtime;
   // 1. read has errors ???
-  bm8563_driver.Rtc.GetTime(&RTCtime);
+  Bm8563Rtc.GetTime(&RTCtime);
 //   core2_globs.Rtc.GetTime(&RTCtime);
   RTC_DateTypeDef RTCdate;
-  bm8563_driver.Rtc.GetDate(&RTCdate);
+  Bm8563Rtc.GetDate(&RTCdate);
   TIME_T tm;
   tm.second =  RTCtime.Seconds;
   tm.minute = RTCtime.Minutes;
@@ -468,13 +464,13 @@ void BM8563SetUtc(uint32_t epoch_time) {
   RTCtime.Hours = tm.hour;
   RTCtime.Minutes = tm.minute;
   RTCtime.Seconds = tm.second;
-  bm8563_driver.Rtc.SetTime(&RTCtime);
+  Bm8563Rtc.SetTime(&RTCtime);
   RTC_DateTypeDef RTCdate;
   RTCdate.WeekDay = tm.day_of_week;
   RTCdate.Month = tm.month;
   RTCdate.Date = tm.day_of_month;
   RTCdate.Year = tm.year + 1970;
-  bm8563_driver.Rtc.SetDate(&RTCdate);
+  Bm8563Rtc.SetDate(&RTCdate);
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -483,22 +479,15 @@ void BM8563SetUtc(uint32_t epoch_time) {
 void BM8563Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_59)) {
     RtcChip.address = BM8563_ADRESS;
-    if (I2cSetDevice(RtcChip.address, 0)) {
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
+      Bm8563Rtc.begin(&I2cGetWire(RtcChip.bus));
       RtcChip.detected = 1;
-    }
-#ifdef ESP32
-    else if (I2cSetDevice(RtcChip.address, 1)) {
-      RtcChip.detected = 1;
-      RtcChip.bus = 1;
-      bm8563_driver.Rtc.setBus(1);                            // switch to bus 1
-    }
-#endif
-    if (RtcChip.detected) {
-      bm8563_driver.Rtc.begin();
       strcpy_P(RtcChip.name, PSTR("BM8563"));
       RtcChip.ReadTime = &BM8563GetUtc;
       RtcChip.SetTime = &BM8563SetUtc;
       RtcChip.mem_size = -1;
+      break;
     }
   }
 }
@@ -519,14 +508,15 @@ void BM8563Detected(void) {
  * Read time and return the epoch time (second since 1-1-1970 00:00)
 \*-------------------------------------------------------------------------------------------*/
 uint32_t Pcf85363ReadTime(void) {
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(0x00);
-  Wire.endTransmission();
+  TwoWire& myWire = I2cGetWire(RtcChip.bus);
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(0x00);
+  myWire.endTransmission();
 
   uint8_t buffer[8];
-  Wire.requestFrom(RtcChip.address, (uint8_t)8);
-  for (uint32_t i = 0; i < 8; i++) { buffer[i] = Wire.read(); }
-  Wire.endTransmission();
+  myWire.requestFrom(RtcChip.address, (uint8_t)8);
+  for (uint32_t i = 0; i < 8; i++) { buffer[i] = myWire.read(); }
+  myWire.endTransmission();
 
   TIME_T tm;
   tm.second = Bcd2Dec(buffer[1] & 0x7F);
@@ -555,23 +545,25 @@ void Pcf85363SetTime(uint32_t epoch_time) {
   buffer[5] = tm.day_of_week;
   buffer[6] = Dec2Bcd(tm.month);
   buffer[7] = Dec2Bcd(tm.year -30);  // Offset from 1970
+
+  TwoWire& myWire = I2cGetWire(RtcChip.bus);
 /*
   // Handbook page 13
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(0x2E);
-  Wire.write(0x01);                  // Set stop
-  Wire.write(0xA4);                  // Clear prescaler
-  for (uint32_t i = 0; i < 8; i++) { Wire.write(buffer[i]); }
-  Wire.endTransmission();
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(0x2E);
-  Wire.write(0x00);                  // Set start
-  Wire.endTransmission();
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(0x2E);
+  myWire.write(0x01);                  // Set stop
+  myWire.write(0xA4);                  // Clear prescaler
+  for (uint32_t i = 0; i < 8; i++) { myWire.write(buffer[i]); }
+  myWire.endTransmission();
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(0x2E);
+  myWire.write(0x00);                  // Set start
+  myWire.endTransmission();
 */
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(0x00);
-  for (uint32_t i = 0; i < 8; i++) { Wire.write(buffer[i]); }
-  Wire.endTransmission();
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(0x00);
+  for (uint32_t i = 0; i < 8; i++) { myWire.write(buffer[i]); }
+  myWire.endTransmission();
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -581,26 +573,27 @@ void Pcf85363SetTime(uint32_t epoch_time) {
 void Pcf85363Dump(void) {
   uint8_t buffer[64];
 
+  TwoWire& myWire = I2cGetWire(RtcChip.bus);
   // 0x00 to 0x2F
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(0x00);
-  Wire.endTransmission();
-  Wire.requestFrom(RtcChip.address, (uint8_t)48);
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(0x00);
+  myWire.endTransmission();
+  myWire.requestFrom(RtcChip.address, (uint8_t)48);
   for (uint32_t i = 0; i < 48; i++) {
-    buffer[i] = Wire.read();
+    buffer[i] = myWire.read();
   }
-  Wire.endTransmission();
+  myWire.endTransmission();
   AddLog(LOG_LEVEL_DEBUG, PSTR("P85: Read 0x00: %48_H"), buffer);
 
   // 0x40 to 0x7F
-  Wire.beginTransmission(RtcChip.address);
-  Wire.write(0x40);
-  Wire.endTransmission();
-  Wire.requestFrom(RtcChip.address, (uint8_t)64);
+  myWire.beginTransmission(RtcChip.address);
+  myWire.write(0x40);
+  myWire.endTransmission();
+  myWire.requestFrom(RtcChip.address, (uint8_t)64);
   for (uint32_t i = 0; i < 64; i++) {
-    buffer[i] = Wire.read();
+    buffer[i] = myWire.read();
   }
-  Wire.endTransmission();
+  myWire.endTransmission();
   AddLog(LOG_LEVEL_DEBUG, PSTR("P85: Read 0x40: %64_H"), buffer);
 }
 */
@@ -609,11 +602,11 @@ void Pcf85363Dump(void) {
  * Memory block functions
 \*-------------------------------------------------------------------------------------------*/
 int32_t Pcf8563MemRead(uint8_t *buffer, uint32_t size) {
-  return I2cReadBuffer(RtcChip.address, 0x40, buffer, size);
+  return I2cReadBuffer(RtcChip.address, 0x40, buffer, size, RtcChip.bus);
 }
 
 int32_t Pcf8563MemWrite(uint8_t *buffer, uint32_t size) {
-  return I2cWriteBuffer(RtcChip.address, 0x40, (uint8_t *)buffer, size);
+  return I2cWriteBuffer(RtcChip.address, 0x40, (uint8_t *)buffer, size, RtcChip.bus);
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -622,7 +615,8 @@ int32_t Pcf8563MemWrite(uint8_t *buffer, uint32_t size) {
 void Pcf85363Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_66)) {
     RtcChip.address = PCF85363_ADDRESS;
-    if (I2cSetDevice(RtcChip.address)) {
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
       RtcChip.detected = 1;
       strcpy_P(RtcChip.name, PSTR("PCF85363"));
       RtcChip.ReadTime = &Pcf85363ReadTime;
@@ -630,6 +624,7 @@ void Pcf85363Detected(void) {
       RtcChip.mem_size = 64;
       RtcChip.MemRead = &Pcf8563MemRead;
       RtcChip.MemWrite = &Pcf8563MemWrite;
+      break;
     }
   }
 }
@@ -712,7 +707,7 @@ void Rx8010SetTime(uint32_t epoch_time) {
 void Rx8010Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_90)) {
     RtcChip.address = RX8010_ADDRESS;
-    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
       if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
       if (I2cValidRead(RtcChip.address, RX80x0_REG_CTRL, 1, RtcChip.bus)) {
         RtcChip.detected = 1;
@@ -927,7 +922,7 @@ void Rx8025Detected(void) {
   if (!RtcChip.detected && I2cEnabled(XI2C_96)) {
     RtcChip.address = RX8025_ADDRESS;
 
-    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
+    for (RtcChip.bus = 0; RtcChip.bus < MAX_I2C; RtcChip.bus++) {
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: RX8025T DETECT try bus=%d addr=0x%02X"), RtcChip.bus, RtcChip.address);
 
@@ -993,7 +988,6 @@ void RtcChipDetect(void) {
 #ifdef USE_RX8025
   Rx8025Detected();
 #endif  // USE_RX8025
-
 
   if (!RtcChip.detected) { return; }
 

@@ -1,0 +1,8 @@
+# Build artifacts for the host-based doctest test system
+build/
+
+# Legacy artifacts (harmless if absent)
+.build
+tmpbin
+logs
+*.pyc

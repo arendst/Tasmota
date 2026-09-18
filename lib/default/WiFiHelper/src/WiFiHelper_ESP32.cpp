@@ -109,10 +109,12 @@ void WiFiHelper::scrubDNS(void) {
 
   // Step 2. scrub addresses not supported
 #ifdef USE_IPV6
-  if (!has_v4 && has_v6) {            // v6 only
-    dns_save4[0] = *IP4_ADDR_ANY;
-    dns_save4[1] = *IP4_ADDR_ANY;
-  }
+  // Note: do NOT clear dns_save4 when !has_v4 && has_v6.
+  // IPv4 may be temporarily unavailable during WiFi reconnect while IPv6 RA
+  // completes before DHCP. Clearing dns_save4 here would lose the saved IPv4
+  // DNS server, causing all subsequent DNS lookups to fail until DHCP restores
+  // it. Step 3 already uses dns_save6 exclusively when !has_v4 && has_v6,
+  // so clearing dns_save4 here is both harmful and redundant.
   if (!has_v6) {
     dns_save6[0] = *IP_ADDR_ANY;
     dns_save6[1] = *IP_ADDR_ANY;

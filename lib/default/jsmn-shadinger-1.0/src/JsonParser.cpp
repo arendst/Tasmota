@@ -305,7 +305,7 @@ JsonParser::~JsonParser() {
 }
 
 const JsonParserObject JsonParser::getRootObject(void) const {
-  return JsonParserObject(&_tokens[0]);
+  return (_tokens != nullptr) ? JsonParserObject(&_tokens[0]) : JsonParserObject(&token_bad);
 }
 
 const JsonParserToken JsonParser::operator[](int32_t i) const {
@@ -408,11 +408,11 @@ void JsonParser::parse(char * json_in) {
   allocate();
   jsmn_init(&this->_parser);
   _token_len = jsmn_parse(&this->_parser, json_in, json_len, _tokens, _size);
-  // TODO error checking
-  if (_token_len >= 0) {
+  if ((_tokens != nullptr) && (_token_len >= 0)) {
     postProcess(json_len);
   } else {
-    this->free();   // invalid JSON
+    this->free();
+    _token_len = 0;
   }
 }
 
@@ -553,5 +553,6 @@ void JsonParser::allocate(void) {
   this->free();
   if (_size != 0) {
     _tokens = new jsmntok_t[_size];
+    if (!_tokens) { _size = 0; }
   }
 }

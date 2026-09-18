@@ -64,19 +64,41 @@ lv_opengl_shader_program_t * lv_opengl_shader_program_create(unsigned int _progr
 void lv_opengl_shader_program_destroy(lv_opengl_shader_program_t * program)
 {
 #ifndef __EMSCRIPTEN__
-    GLuint shader_names[10];
-    GLsizei shader_count;
-    GL_CALL(glGetAttachedShaders(program->id, 10, &shader_count,
-                                 shader_names));
+    GLint shader_num = 0;
+    GL_CALL(glGetProgramiv(program->id, GL_ATTACHED_SHADERS, &shader_num));
 
-    // Detach and delete each shader
-    for(GLsizei i = 0; i < shader_count; ++i) {
-        if(shader_names[i] != 0)
-            GL_CALL(glDetachShader(program->id, shader_names[i]));
+    if(shader_num > 0) {
+        GLuint * shader_names = lv_malloc(shader_num * sizeof(GLuint));
+
+        if(shader_names) {
+            GLsizei shader_count;
+            GL_CALL(glGetAttachedShaders(program->id, shader_num, &shader_count,
+                                         shader_names));
+
+            // Detach and delete each shader
+            for(GLsizei i = 0; i < shader_count && i < shader_num; ++i) {
+                if(shader_names[i] != 0)
+                    GL_CALL(glDetachShader(program->id, shader_names[i]));
+            }
+            lv_free(shader_names);
+        }
     }
 #endif
 
-    GL_CALL(glDeleteProgram(program->id));
+    /* We should be able to call the function below without issue at this point
+     * but because of subtle issues regarding lazy updates of shader resources
+     * this induces significant pause on some platforms.  Since the shaders
+     * have already been detached, we can safely skip this function and leave
+     * the empty programs in OpenGL's cache until the app shuts down, it's a
+     * very small amount of memory.
+     *
+     * To-do: Consider setting a flag at this point and if that flag is true
+     * when the app finally shuts down, then perform the glDeleteProgram calls
+     * if necessary.  That is not really necessary, OpenGL will do that anyways
+     * when it shuts down. */
+
+    /* GL_CALL(glDeleteProgram(program->id)); */
+    lv_free(program);
 }
 
 GLuint lv_opengl_shader_program_get_id(lv_opengl_shader_program_t * program)

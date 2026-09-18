@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_webserver.ino - Berry scripting language, webserver module
+  xdrv_52_3_berry_flash.ino - Berry scripting language, flash and OTA partition module
 
   Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
 
@@ -65,9 +65,9 @@ size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t s
 #endif
     if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not erase flash sector 0x%X ret=%i", page_addr / SPI_FLASH_SEC_SIZE, ret); return 0; }
 #if ESP_IDF_VERSION_MAJOR < 5
-    spi_flash_write(page_addr, buffer, SPI_FLASH_SEC_SIZE);
+    ret = spi_flash_write(page_addr, buffer, SPI_FLASH_SEC_SIZE);
 #else
-    esp_flash_write(NULL, buffer, page_addr, SPI_FLASH_SEC_SIZE);
+    ret = esp_flash_write(NULL, buffer, page_addr, SPI_FLASH_SEC_SIZE);
 #endif
 
     if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not write flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }

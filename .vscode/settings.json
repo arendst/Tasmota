@@ -19,6 +19,7 @@
         "text": "Upload",
         "tooltip": "PlatformIO: Flash firmware (NO build run)",
         "commands": [
+          "esp-decoder.disconnect",
           {
             "id": "platformio-ide.runPIOCoreCommand",
             "args": "pio run -t nobuild -t factory_flash -e ${command:platformio-ide.activeEnvironment}"
@@ -34,6 +35,7 @@
         "text": "$(flame)",
         "tooltip": "PlatformIO: Build, Erase and Upload",
         "commands": [
+          "esp-decoder.disconnect",
           {
             "id": "platformio-ide.runPIOCoreCommand",
             "args": "pio run -t erase_upload -e ${command:platformio-ide.activeEnvironment}"
@@ -44,6 +46,7 @@
         "text": "$(error)",
         "tooltip": "PlatformIO: Erase Flash",
         "commands": [
+          "esp-decoder.disconnect",
           {
             "id": "platformio-ide.runPIOCoreCommand",
             "args": "pio run -t nobuild -t erase -e ${command:platformio-ide.activeEnvironment}"

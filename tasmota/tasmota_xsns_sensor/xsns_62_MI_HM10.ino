@@ -896,7 +896,7 @@ void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
     MIBLEsensors[_slot].weight_removed = 0;
     MIBLEsensors[_slot].weight = 0.0f;
     MIBLEsensors[_slot].impedance = 0;
-    strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+    strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"), sizeof(MIBLEsensors[_slot].weight_unit));  // Mi Scale V2 init
   }
 
   // Mi Scale V1
@@ -918,17 +918,17 @@ void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
 
         if (_packetV1->status & (1 << 0))
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
         }
         else if (_packetV1->status & (1 << 4))
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
         }
         else
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV1->weight / 200.0f;
         }
 
@@ -975,22 +975,22 @@ void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
         MIBLEsensors[_slot].weight_removed = weight_removed;
         if (_packetV2->weight_unit & (1 << 4))
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
         }
         else if (_packetV2->weight_unit == 3)
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
         }
         else if (_packetV2->weight_unit == 2)
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV2->weight / 200.0f;
         }
         else
         {
-          strcpy(MIBLEsensors[_slot].weight_unit, PSTR(""));
+          strlcpy(MIBLEsensors[_slot].weight_unit, PSTR(""), sizeof(MIBLEsensors[_slot].weight_unit));
           MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
         }
 

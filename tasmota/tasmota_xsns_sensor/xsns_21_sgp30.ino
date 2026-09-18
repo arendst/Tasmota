@@ -41,14 +41,19 @@ float sgp30_abshum;
 
 /********************************************************************************************/
 
-void sgp30_Init(void)
-{
-  if (!I2cSetDevice(SGP30_ADDRESS)) { return; }
-
-  if (sgp.begin()) {
+void sgp30_Init(void) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+    if (!I2cSetDevice(SGP30_ADDRESS, bus)) { continue; }
+    if (!sgp.begin(&I2cGetWire(bus))) {
+      if (!sgp.IAQinit()) { continue; }  // Fix I2C bus incompatibilities
+      if (!sgp.begin(&I2cGetWire(bus))) { continue; }
+    }
     sgp30_type = true;
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
-    I2cSetActiveFound(SGP30_ADDRESS, "SGP30");
+    I2cSetActiveFound(SGP30_ADDRESS, "SGP30", bus);
+
+    uint64_t serialnumber = (uint64_t)sgp.serialnumber[0] << 32 | sgp.serialnumber[1] << 16 | sgp.serialnumber[2];
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SG3: Serialnumber %_U"), &serialnumber);
+    return;
   }
 }
 
@@ -97,7 +102,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
     uint16_t eCO2_base;
 
     if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("SG3: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
   }
 }
 

@@ -187,7 +187,7 @@ enum LegacyUserSelectablePins {
   GPI8_ARIRFSEL,       // Arilux RF Receive input selected
   GPI8_BUZZER,         // Buzzer
   GPI8_BUZZER_INV,     // Inverted buzzer
-  GPI8_OLED_RESET,     // OLED Display Reset
+  GPI8_DISPLAY_RESET,  // Display Reset (renamed from OLED_RESET)
   GPI8_SOLAXX1_TX,     // Solax Inverter tx pin
   GPI8_SOLAXX1_RX,     // Solax Inverter rx pin
   GPI8_ZIGBEE_TX,      // Zigbee Serial interface
@@ -417,7 +417,7 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_ARIRFSEL),       // Arilux RF Receive input selected
   AGPIO(GPIO_BUZZER),         // Buzzer
   AGPIO(GPIO_BUZZER_INV),     // Inverted buzzer
-  AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
+  AGPIO(GPIO_DISPLAY_RESET),  // Display Reset (renamed from OLED_RESET)
   AGPIO(GPIO_SOLAXX1_TX),     // Solax Inverter tx pin
   AGPIO(GPIO_SOLAXX1_RX),     // Solax Inverter rx pin
   AGPIO(GPIO_ZIGBEE_TX),      // Zigbee Serial interface

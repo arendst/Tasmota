@@ -277,7 +277,7 @@ bool DomoticzMqttData(void) {
 
 #ifdef USE_DOMOTICZ_DEBUG
   char dom_data[XdrvMailbox.data_len +1];
-  strcpy(dom_data, XdrvMailbox.data);
+  strlcpy(dom_data, XdrvMailbox.data, sizeof(dom_data));
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "%s = %s"), XdrvMailbox.topic, RemoveControlCharacter(dom_data));
 #endif  // USE_DOMOTICZ_DEBUG
 

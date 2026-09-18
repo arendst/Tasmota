@@ -44,14 +44,16 @@ int32_t voc_index;
 
 /********************************************************************************************/
 
-void sgp40_Init(void)
-{
-  if (!I2cSetDevice(SGP40_ADDRESS)) { return; }
-
-  if (sgp40.begin()) {
+void sgp40_Init(void) {
+  for (uint32_t bus = 0; bus < MAX_I2C; bus++) {
+    if (!I2cSetDevice(SGP40_ADDRESS, bus)) { continue; }
+    if (!sgp40.begin(&I2cGetWire(bus))) { continue; }
     sgp40_type = true;
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp40.serialnumber[0], sgp40.serialnumber[1], sgp40.serialnumber[2]);
     I2cSetActiveFound(SGP40_ADDRESS, "SGP40");
+
+    uint64_t serialnumber = (uint64_t)sgp40.serialnumber[0] << 32 | sgp40.serialnumber[1] << 16 | sgp40.serialnumber[2];
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SG4: Serialnumber %_U"), &serialnumber);
+    return;
   }
 }
 

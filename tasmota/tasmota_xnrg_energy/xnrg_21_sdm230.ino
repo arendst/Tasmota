@@ -188,7 +188,7 @@ void SDM230Every250ms(void)
 
 void Sdm230SnsInit(void)
 {
-  Sdm230Modbus = new TasmotaModbus(Pin(GPIO_SDM230_RX), Pin(GPIO_SDM230_TX), Pin(GPIO_NRG_MBS_TX_ENA));
+  Sdm230Modbus = new TasmotaModbus(Pin(GPIO_SDM230_RX), Pin(GPIO_SDM230_TX), Pin(GPIO_NRG_MBS_TX_ENA), Pin(GPIO_MBS_RX_ENA));
   uint8_t result = Sdm230Modbus->Begin(SDM230_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }

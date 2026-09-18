@@ -64,3 +64,101 @@ m = module('m')
 introspect.set(m, 'c', 30)
 assert(m.c == 30)
 assert(introspect.get(m, 'c') == 30)
+
+#- contains: instance, class, module -#
+class B var x def f() end end
+b = B()
+assert(introspect.contains(b, 'x') == true)
+assert(introspect.contains(b, 'f') == true)
+assert(introspect.contains(b, 'z') == false)
+assert(introspect.contains(B, 'x') == true)
+assert(introspect.contains(B, 'missing') == false)
+m2 = module('m2')
+m2.val = 42
+assert(introspect.contains(m2, 'val') == true)
+assert(introspect.contains(m2, 'nope') == false)
+# non-object types always return false
+assert(introspect.contains(42, 'x') == false)
+
+#- members with no args dumps globals -#
+assert(isinstance(introspect.members(), list))
+
+#- members(nil) also dumps globals -#
+assert(isinstance(introspect.members(nil), list))
+
+#- members with unsupported type returns empty list -#
+assert(introspect.members(42) == [])
+
+#- get: protected mode returns nil for non-object type -#
+assert(introspect.get(42, 'x') == nil)
+
+#- get: unprotected mode, member found -#
+class C var p end
+c = C()
+c.p = 99
+assert(introspect.get(c, 'p', false) == 99)
+
+#- get: unprotected mode (true = raise), missing member returns module 'undefined' -#
+var r = introspect.get(c, 'no_such', true)
+assert(type(r) == 'module')
+assert(introspect.name(r) == 'undefined')
+# same for class and module
+var r2 = introspect.get(C, 'no_such', true)
+assert(introspect.name(r2) == 'undefined')
+var mx = module('mx')
+var r3 = introspect.get(mx, 'no_such', true)
+assert(introspect.name(r3) == 'undefined')
+
+#- toptr: string returns ptr -#
+assert(type(introspect.toptr('hello')) == 'ptr')
+
+#- toptr: closure returns ptr -#
+def myfunc() return 1 end
+assert(type(introspect.toptr(myfunc)) == 'ptr')
+
+#- toptr: unsupported type raises value_error -#
+try
+    introspect.toptr(true)
+    assert(false)
+except .. as e, msg
+    assert(e == 'value_error')
+end
+
+#- fromptr / toptr: unsupported types -#
+try
+    introspect.toptr(1.5)
+    assert(false)
+except .. as e, msg
+    assert(e == 'value_error')
+end
+
+#- fromptr: round-trip comptr -> list -#
+var lst = [10, 20, 30]
+var rp = introspect.toptr(lst)
+assert(type(rp) == 'ptr')
+var recovered = introspect.fromptr(rp)
+assert(isinstance(recovered, list))
+assert(recovered == [10, 20, 30])
+
+#- solidified: Berry closure is not solidified -#
+def notsolid() return 1 end
+assert(introspect.solidified(notsolid) == false)
+
+#- L93: get with no args or non-string key returns nil -#
+assert(introspect.get() == nil)
+assert(introspect.get('hello', 42) == nil)
+
+#- L137: toptr with no args returns nil -#
+assert(introspect.toptr() == nil)
+
+#- L151: solidified with non-function type returns nil or false -#
+assert(introspect.solidified('hello') == false)  # string: basetype >= BE_FUNCTION, not solidified
+assert(introspect.solidified(42) == nil)          # int: doesn't match, returns nil
+assert(introspect.solidified() == nil)            # no args: returns nil
+
+#- L175: fromptr with no args or zero pointer returns nil -#
+assert(introspect.fromptr() == nil)
+assert(introspect.fromptr(0) == nil)
+
+#- module() returns nil for unknown module name -#
+assert(introspect.module("no_such_module_xyz") == nil)

@@ -1,5 +1,5 @@
 /********************************************************************
-** Copyright (c) 2018-2020 Guan Wenliang
+** Copyright (c) 2018-2026 Guan Wenliang
 ** This file is part of the Berry default interpreter.
 ** skiars@qq.com, https://github.com/Skiars/berry
 ** See Copyright Notice in the LICENSE file or at
@@ -59,6 +59,51 @@
  * Default: 1
  **/
 #define BE_USE_PRECOMPILED_OBJECT       1
+
+/* Macro: BE_USE_COMPACT_KTAB
+ * Store each function's constant table (ktab) as a structure-of-arrays:
+ * a payload-word array (`union bvaldata`) plus a parallel type-byte
+ * array, instead of an array of full `bvalue` (which wastes the padding
+ * of the 4-byte type field). On 32-bit targets (single-precision float,
+ * 32-bit int) a payload word is 4 bytes, so this saves ~37% of the flash
+ * occupied by constant tables of solidified code (executed in place from
+ * flash on ESP32). Constant tables are read-only at runtime, so constants
+ * are materialized into a scratch value on access; live registers are
+ * unchanged. The representation is portable: on 64-bit hosts the payload
+ * word is 8 bytes and the feature still works (and can be unit-tested),
+ * but the flash win is only meaningful on the 32-bit target.
+ * Default: 0 (disabled)
+ **/
+#ifndef BE_USE_COMPACT_KTAB
+#define BE_USE_COMPACT_KTAB             1
+#endif
+
+/* Macro: BE_USE_COMPACT_MAP
+ * Store the nodes of *constant* (solidified/flash) maps in a packed
+ * 12-byte layout instead of the regular 16-byte `bmapnode`. The value's
+ * type byte is folded into the spare bits of the key word (`next` is
+ * shrunk to 16 bits), removing the 3 padding bytes of the value's type
+ * field. On 32-bit targets this saves 25% of the flash used by solidified
+ * class/module member maps (executed in place from flash on ESP32).
+ *
+ * Only read-only (const) maps use the packed layout; mutable runtime maps
+ * keep the regular 16-byte layout untouched, so all map mutation paths and
+ * their `bvalue*` return contract are unchanged. Const-map reads decode the
+ * packed node into a scratch on access. The discriminator at runtime is
+ * `gc_isconst(map)`. Limited to 65535 slots per const map (ample).
+ *
+ * The representation is portable: on 64-bit hosts the node is larger (the
+ * payload word is 8 bytes) and the feature still works and is testable, but
+ * the flash win is only meaningful on the 32-bit target.
+ *
+ * NOTE: changing this flag changes the layout of every const map emitted by
+ * `coc` and by solidify, so the generated headers must be regenerated
+ * (`make prebuild`) and `berry_port/berry_conf.py` must match.
+ * Default: 0 (disabled)
+ **/
+#ifndef BE_USE_COMPACT_MAP
+#define BE_USE_COMPACT_MAP              1
+#endif
 
 /* Macro: BE_DEBUG_SOURCE_FILE
  * Indicate if each function remembers its source file name
@@ -128,7 +173,7 @@
  * Increase is you need to solidify functions.
  * Default: 50
  **/
-#define BE_CONST_SEARCH_SIZE            150
+#define BE_CONST_SEARCH_SIZE            250
 
 /* Macro: BE_STACK_FREE_MIN
  * The short string will hold the hash value when the value is
@@ -184,6 +229,36 @@
  * Default: 1
  **/
 #define BE_USE_OVERLOAD_HASH            1
+
+/* Macro: BE_USE_PREPROCESSOR
+ * Enable the preprocessor for conditional compilation
+ * (#if/#else/#elif/#endif/#define/#undef) and translatable
+ * string expressions ("text"#MACRO). Set to 0 to exclude
+ * all preprocessor code from compilation.
+ * Default: 1
+ **/
+#ifdef TASMOTA
+#define BE_USE_PREPROCESSOR             0   /* Berry preprocessor not included in Tasmota firmwares */
+#else
+#define BE_USE_PREPROCESSOR             1   /* Berry preprocessor only used in standalone for solidification */
+#endif
+
+/* Macro: BE_PREPROC_MAX_DEPTH
+ * Maximum nesting depth for preprocessor conditional blocks.
+ * Only used when BE_USE_PREPROCESSOR is enabled.
+ * Default: 8
+ **/
+#define BE_PREPROC_MAX_DEPTH            8
+
+/* Macro: BE_MAX_PARSER_DEPTH
+ * Hard limit on parser recursion depth (nested expressions and blocks).
+ * Each level costs ~hundreds of bytes of native C stack, so this protects
+ * pathological source from overflowing the C stack at compile time.
+ * Stored in a bbyte, so values above 255 are clamped.
+ * Default: 25 (safe on ESP32 with an 8 KB task stack; well above any
+ * realistic hand-written Berry code).
+ **/
+#define BE_MAX_PARSER_DEPTH             25
 
 /* Macro: BE_USE_DEBUG_HOOK
  * Berry debug hook switch.
@@ -260,6 +335,7 @@
   #define BE_USE_DEBUG_MODULE             1
   #define BE_USE_SOLIDIFY_MODULE          1
   #define BE_MAPPING_ENABLE_INPUT_VALIDATION   1    // input validation for lv_mapping
+  #define USE_MATTER_VERBOSE              1         // enable names for actions and attributes in logs
 #endif // USE_BERRY_DEBUG
 
 /* Macro: BE_EXPLICIT_XXX

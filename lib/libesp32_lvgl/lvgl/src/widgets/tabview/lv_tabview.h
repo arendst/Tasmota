@@ -15,6 +15,7 @@ extern "C" {
  *********************/
 #include "../../lv_conf_internal.h"
 #include "../../core/lv_obj.h"
+#include "../../core/lv_obj_property.h"
 
 #if LV_USE_TABVIEW
 
@@ -23,6 +24,14 @@ extern "C" {
  *********************/
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_tabview_class;
+
+#if LV_USE_OBJ_PROPERTY
+enum _lv_property_tabview_id_t {
+    LV_PROPERTY_ID(TABVIEW, TAB_ACTIVE,       LV_PROPERTY_TYPE_INT, 0),
+    LV_PROPERTY_ID(TABVIEW, TAB_BAR_POSITION, LV_PROPERTY_TYPE_INT, 1),
+    LV_PROPERTY_TABVIEW_END,
+};
+#endif
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -49,7 +58,19 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * obj, const char * name);
  * @param idx       the index of the tab to rename
  * @param new_name  the new name as a string
  */
-void lv_tabview_rename_tab(lv_obj_t * obj, uint32_t idx, const char * new_name);
+void lv_tabview_set_tab_text(lv_obj_t * obj, uint32_t idx, const char * new_name);
+
+#if LV_USE_TRANSLATION
+
+/**
+ * Add a tab with a translation tag to the tabview.
+ * @param obj       pointer to a tabview widget
+ * @param tag       translation key used for the tab label; will be displayed on the tab bar
+ * @return          the widget where the content of the tab can be created
+ */
+lv_obj_t * lv_tabview_set_tab_translation_tag(lv_obj_t * obj, const char * tag);
+
+#endif
 
 /**
  * Show a tab
@@ -110,6 +131,13 @@ lv_obj_t * lv_tabview_get_content(lv_obj_t * obj);
  * @return          the tab bar
  */
 lv_obj_t * lv_tabview_get_tab_bar(lv_obj_t * obj);
+
+/**
+ * Get the position of the tab bar
+ * @param obj       pointer to a tabview widget
+ * @return          LV_DIR_TOP/BOTTOM/LEFT/RIGHT
+ */
+lv_dir_t lv_tabview_get_tab_bar_position(lv_obj_t * obj);
 
 /**********************
  *      MACROS

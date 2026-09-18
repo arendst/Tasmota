@@ -15,6 +15,13 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  20260731 - `removeHead()` and `remove()` now return `bool` instead of a
+             pointer into the node they just freed (use-after-free).
+             Copy construction and copy assignment are deleted: the implicit
+             ones shallow-copied `_head` and double-freed every node.
+             `const_iterator::operator!=` now takes its argument by const
+             reference, so it works outside a range-based `for`.
 */
 
 #ifndef __LLIST__
@@ -58,10 +65,19 @@ public:
   LList() : _head(nullptr) {}
   ~LList() { reset(); }
 
+  // A list owns its nodes and frees them in the destructor, so it must not be
+  // copied: the implicit copy would duplicate `_head` and both lists would
+  // free the same nodes. Deleted rather than implemented, to keep the code
+  // size down -- pass by reference or by pointer instead.
+  LList(const LList<T> &) = delete;
+  LList<T> & operator=(const LList<T> &) = delete;
+
   // remove elements
-  T * removeHead(void);      // remove first element
+  bool removeHead(void);      // remove first element, false if list was empty
   void reset(void);           // remove all elements
-  const T * remove(const T * val);
+  // remove the element holding `val`, false if not found.
+  // `val` points into the freed node once this returns -- don't use it after.
+  bool remove(const T * val);
 
   // read the list
   inline bool isEmpty(void) const { return (_head == nullptr) ? true : false; }
@@ -71,7 +87,7 @@ public:
   const T * at(size_t index) const ;
   // non-const variants
   // not very academic cast but reduces code size
-  inline T * at(size_t index) { return (T*) ((const LList<T>*)this)->at(index); }
+  inline T * at(size_t index) { return const_cast<T*>(((const LList<T>*)this)->at(index)); }
 
   // adding elements
   T & addHead(void);
@@ -103,7 +119,7 @@ public:
     public:
       const_iterator(const LList_elt<T> *_cur): cur(_cur), next(nullptr) { if (cur) { next = cur->_next; } }
       const_iterator operator++() { cur = next; if (cur) { next = cur->_next;} return *this; }
-      bool operator!=(const_iterator & other) const { return cur != other.cur; }
+      bool operator!=(const const_iterator & other) const { return cur != other.cur; }
       const T & operator*() const { return cur->_val; }
     private:
       const LList_elt<T> *cur;
@@ -143,20 +159,19 @@ void LList<T>::reset(void) {
 }
 
 template <typename T>
-T * LList<T>::removeHead(void) {
+bool LList<T>::removeHead(void) {
   if (_head) {
-    T * orginal_head = &_head->_val;
     LList_elt<T> * next = _head->next();
     delete _head;
     _head = next;
-    return orginal_head;
+    return true;
   }
-  return nullptr;
+  return false;
 }
 
 template <typename T>
-const T * LList<T>::remove(const T * val) {
-  if (nullptr == val) { return val; }
+bool LList<T>::remove(const T * val) {
+  if (nullptr == val) { return false; }
   // find element in chain and find pointer before
   LList_elt<T> **curr_ptr = &_head;
   while (*curr_ptr) {
@@ -164,11 +179,11 @@ const T * LList<T>::remove(const T * val) {
     if ( &(curr_elt->_val) == val) {
       *curr_ptr = curr_elt->_next;   // update previous pointer to next element
       delete curr_elt;
-      break;                        // stop iteration now
+      return true;                  // stop iteration now
     }
     curr_ptr = &((*curr_ptr)->_next);   // move to next element
   }
-  return val;
+  return false;
 }
 
 template <typename T>

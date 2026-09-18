@@ -1,0 +1,67 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2cScd4x	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+readMeasurement	KEYWORD2
+setTemperatureOffset	KEYWORD2
+getTemperatureOffset	KEYWORD2
+setAmbientPressure	KEYWORD2
+getAmbientPressure	KEYWORD2
+getDataReadyStatus	KEYWORD2
+getSensorVariant	KEYWORD2
+measureAndReadSingleShot	KEYWORD2
+startPeriodicMeasurement	KEYWORD2
+readMeasurementRaw	KEYWORD2
+stopPeriodicMeasurement	KEYWORD2
+setTemperatureOffsetRaw	KEYWORD2
+getTemperatureOffsetRaw	KEYWORD2
+setSensorAltitude	KEYWORD2
+getSensorAltitude	KEYWORD2
+setAmbientPressureRaw	KEYWORD2
+getAmbientPressureRaw	KEYWORD2
+performForcedRecalibration	KEYWORD2
+setAutomaticSelfCalibrationEnabled	KEYWORD2
+getAutomaticSelfCalibrationEnabled	KEYWORD2
+setAutomaticSelfCalibrationTarget	KEYWORD2
+getAutomaticSelfCalibrationTarget	KEYWORD2
+startLowPowerPeriodicMeasurement	KEYWORD2
+getDataReadyStatusRaw	KEYWORD2
+persistSettings	KEYWORD2
+getSerialNumber	KEYWORD2
+performSelfTest	KEYWORD2
+performFactoryReset	KEYWORD2
+reinit	KEYWORD2
+getSensorVariantRaw	KEYWORD2
+measureSingleShot	KEYWORD2
+measureSingleShotRhtOnly	KEYWORD2
+powerDown	KEYWORD2
+wakeUp	KEYWORD2
+setAutomaticSelfCalibrationInitialPeriod	KEYWORD2
+getAutomaticSelfCalibrationInitialPeriod	KEYWORD2
+setAutomaticSelfCalibrationStandardPeriod	KEYWORD2
+getAutomaticSelfCalibrationStandardPeriod	KEYWORD2
+signalTemperature	KEYWORD2
+signalRelativeHumidity	KEYWORD2
+signalCo2Concentration	KEYWORD2
+signalTemperatureOffset	KEYWORD2
+signalAmbientPressure	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sensor	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

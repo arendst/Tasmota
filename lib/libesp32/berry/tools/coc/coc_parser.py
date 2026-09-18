@@ -32,9 +32,15 @@ class coc_parser:
             "be_const_key(": self.parse_string,
             "be_nested_str(": self.parse_string,
             "be_const_key_weak(": self.parse_string_weak,
+            "be_ckey(": self.parse_string,
+            "be_ckey_weak(": self.parse_string_weak,
+            "be_kv_bytes_instance(": self.parse_bin,
             "be_nested_str_weak(": self.parse_string_weak,
             "be_nested_str_long(": self.parse_string_long,
             "be_str_weak(": self.parse_string_weak,
+            "be_kv_str(": self.parse_string,
+            "be_kv_str_weak(": self.parse_string_weak,
+            "be_kv_str_long(": self.parse_string_long,
         }
 
         while len(self.text) > 0:

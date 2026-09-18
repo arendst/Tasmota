@@ -116,6 +116,14 @@ typedef struct btoken {
     } u;
 } btoken;
 
+#if BE_USE_PREPROCESSOR
+typedef struct {
+    uint8_t active : 1;    /* 1 = emitting tokens, 0 = skipping */
+    uint8_t matched : 1;   /* 1 = some branch in this group already matched */
+    int line;              /* line number where this #if started */
+} bppstate;
+#endif
+
 typedef struct blexer {
     const char *fname;
     btoken token;
@@ -127,6 +135,13 @@ typedef struct blexer {
     bmap *strtab;
     bvm *vm;
     int had_whitespace; /* track if whitespace/newline preceded current token */
+#if BE_USE_PREPROCESSOR
+    bppstate ppstack[BE_PREPROC_MAX_DEPTH];
+    int ppdepth;            /* current nesting depth, -1 = no conditional active */
+    bbool pp_at_line_start; /* true when at the beginning of a logical line */
+    bbool pp_translatable_ready; /* true when '#' already consumed before ident in scan_string */
+    bbool pp_hash_consumed; /* true when '#' already consumed by skip_delimiter for a directive */
+#endif
 } blexer;
 
 void be_lexer_init(blexer *lexer, bvm *vm,

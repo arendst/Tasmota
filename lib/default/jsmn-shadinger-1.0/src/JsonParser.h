@@ -236,7 +236,7 @@ public:
   // test if the parsing was successful
   inline explicit operator bool() const { return _token_len > 0; }
 
-  const JsonParserToken getRoot(void) { return JsonParserToken(&_tokens[0]); }
+  const JsonParserToken getRoot(void) { return (_tokens != nullptr) ? JsonParserToken(&_tokens[0]) : JsonParserToken(&token_bad); }
   // const JsonParserObject getRootObject(void) { return JsonParserObject(&_tokens[0]); }
   const JsonParserObject getRootObject(void) const;
 

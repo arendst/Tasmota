@@ -967,8 +967,12 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_SEN6X)
   0x00200000 |  // xsns_119_sen6x.ino
 #endif
-//  0x00400000 |  // 
-//  0x00800000 |  // 
+#if defined(USE_I2C) && defined(USE_FM24CXX)
+  0x00400000 |  // xdrv_93_fm24cxx.ino
+#endif
+#if defined(USE_I2C) && defined(USE_STCC4)
+  0x00800000 |  // xsns_120_stcc4.ino
+#endif
 //  0x01000000 |  // 
 //  0x02000000 |  // 
 //  0x04000000 |  // 

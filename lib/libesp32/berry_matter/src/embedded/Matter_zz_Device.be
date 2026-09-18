@@ -46,6 +46,11 @@ class Matter_Device
   var events                          # Event handler
   # for brige mode, list of HTTP_remote objects (only one instance per remote object)
   var http_remotes                    # map of 'domain:port' to `Matter_HTTP_remote` instance or `nil` if no bridges
+  var mqtt_remotes                    # map of 'topic' to `Matter_MQTT_remote` instance or `nil` if no MQTT bridges
+  # MQTT auto-discovery
+  var discovered_devices              # map keyed by topic: {config: {...}, sensors: {...}} from tasmota/discovery
+  var discovered_sensors              # map keyed by MAC, allowing retained sensors to arrive before config
+  var discovery_subscribed            # true if already subscribed to tasmota/discovery/#
   # saved in parameters
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
@@ -62,7 +67,7 @@ class Matter_Device
   #############################################################
   def init()
     import crypto
-    if !tasmota.get_option(matter.MATTER_OPTION)
+    if !tasmota.get_option(151 #-matter.MATTER_OPTION-#)
       self.ui = matter.UI(self, false)   # minimal UI
       return
     end    # abort if SetOption 151 is not set
@@ -72,6 +77,9 @@ class Matter_Device
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
     self.plugins_config_remotes = {}
+    self.discovered_devices = {}
+    self.discovered_sensors = {}
+    self.discovery_subscribed = false
     self.next_ep = self.EP                        # start at endpoint 2 for dynamically allocated endpoints (1 reserved for aggregator)
     self.ipv4only = false
     self.disable_bridge_mode = false
@@ -88,6 +96,8 @@ class Matter_Device
     tasmota.when_network_up(def () self.start() end)    # start when network is connected
     self.commissioning.init_basic_commissioning()
     tasmota.add_driver(self)
+    tasmota.add_rule("Mqtt#Connected", / -> self.mqtt_connected())
+    tasmota.add_rule("Mqtt#Disconnected", / -> self.mqtt_disconnected())
 
     self.register_commands()
   end
@@ -248,6 +258,26 @@ class Matter_Device
   end
 
   #############################################################
+  # Called on 'network_down' event, before WiFi teardown.
+  # Flush the UDP socket to discard any queued packets whose
+  # pbufs reference the WiFi netif (about to be destroyed).
+  def network_down()
+    if self.udp_server
+      self.udp_server.flush_socket()
+    end
+  end
+
+  #############################################################
+  # Called on 'network_up' event, after WiFi teardown when
+  # Ethernet is still active (or when WiFi reconnects).
+  # Reopen the UDP socket with a clean receive buffer.
+  def network_up()
+    if self.udp_server
+      self.udp_server.reopen_socket()
+    end
+  end
+
+  #############################################################
   # Callback when message is received.
   # Send to `message_handler`
   def msg_received(raw, addr, port)
@@ -364,14 +394,14 @@ class Matter_Device
     # look for plugin
     var pi = self.find_plugin_by_endpoint(endpoint)
     if (pi == nil)
-      ctx.status = matter.UNSUPPORTED_ENDPOINT
+      ctx.status = 0x7F #-matter.UNSUPPORTED_ENDPOINT-#
       return nil
     else
       if   !pi.contains_cluster(cluster)
-        ctx.status = matter.UNSUPPORTED_CLUSTER
+        ctx.status = 0xC3 #-matter.UNSUPPORTED_CLUSTER-#
         return nil
       elif !pi.contains_attribute(cluster, attribute)
-        ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+        ctx.status = 0x86 #-matter.UNSUPPORTED_ATTRIBUTE-#
         return nil
       end
     end
@@ -483,6 +513,16 @@ class Matter_Device
       end
     end
 
+    # Add MQTT remotes info
+    if self.mqtt_remotes != nil
+      for topic:self.mqtt_remotes.keys()
+        var info = self.mqtt_remotes[topic].get_info()
+        if info != nil && size(info) > 0
+          ret[topic] = info
+        end
+      end
+    end
+
     self.plugins_config_remotes = ret
     return ret
   end
@@ -513,13 +553,17 @@ class Matter_Device
       self.ipv4only = bool(j.find("ipv4only", false))
       self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
-      self.plugins_config = j.find("config", {})
-      self.debug = bool(j.find("debug"))    # bool converts nil to false
+      self.plugins_config = j.find("config", nil)
+      self.debug = bool(j.find("debug"))
+
       if self.plugins_config != nil
         log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
         dirty = self.check_config_ep()
         self.plugins_persist = true
+      else
+        self.plugins_config = {}
+        self.plugins_persist = false
       end
       self.plugins_config_remotes = j.find("remotes", {})
       if self.plugins_config_remotes
@@ -571,7 +615,7 @@ class Matter_Device
 
       idx += 1
     end
-    ctx.status = matter.UNSUPPORTED_ENDPOINT
+    ctx.status = 0x7F #-matter.UNSUPPORTED_ENDPOINT-#
   end
 
   #############################################################
@@ -625,15 +669,6 @@ class Matter_Device
   def get_plugin_class_displayname(name)
     var cl = self.plugins_classes.find(name)
     return cl ? cl.DISPLAY_NAME : ""
-  end
-
-  #############################################################
-  # get_plugin_class_arg
-  #
-  # get a class name light "light0" and return the name of the json argumen (or empty)
-  def get_plugin_class_arg(name)
-    var cl = self.plugins_classes.find(name)
-    return cl ? cl.ARG : ""
   end
 
   #############################################################
@@ -719,7 +754,10 @@ class Matter_Device
   def signal_endpoints_changed()
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
-    self.attribute_updated(matter.AGGREGATOR_ENDPOINT, 0x001D, 0x0003, false)
+    var eps = self.get_active_endpoints(true)
+    for ep: eps
+      self.attribute_updated(ep, 0x001D, 0x0003, false)
+    end
   end
 
   #############################################################
@@ -732,7 +770,7 @@ class Matter_Device
     var keys = []
     for k: self.plugins_config.keys()   keys.push(int(k))    end
     for ep: keys
-      if ep == matter.AGGREGATOR_ENDPOINT
+      if ep == 0x0001 #-matter.AGGREGATOR_ENDPOINT-#
         dirty = true
         log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
         self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]
@@ -794,7 +832,147 @@ class Matter_Device
   end
 
   #####################################################################
-  # Remove HTTP remotes that are no longer referenced
+  # Manager MQTT remotes
+  #####################################################################
+  # register new mqtt remote
+  #
+  # If already registered, return current instance
+  def register_mqtt_remote(topic)
+    if self.mqtt_remotes == nil     self.mqtt_remotes = {}    end     # lazy initialization
+    var mqtt_remote
+
+    if self.mqtt_remotes.contains(topic)
+      mqtt_remote = self.mqtt_remotes[topic]
+    else
+      var info = self.plugins_config_remotes.find(topic, {})
+      mqtt_remote = matter.MQTT_remote(self, topic, info)
+      self.mqtt_remotes[topic] = mqtt_remote
+    end
+    return mqtt_remote
+  end
+
+  # Broker lifecycle is separate from listener replay, which mqtt.be handles.
+  def mqtt_connected()
+    if self.mqtt_remotes
+      for remote: self.mqtt_remotes
+        remote.mqtt_connected()
+      end
+    end
+    return false
+  end
+
+  def mqtt_disconnected()
+    if self.mqtt_remotes
+      for remote: self.mqtt_remotes
+        remote.mqtt_disconnected()
+      end
+    end
+    return false
+  end
+
+  # Notify all endpoints sharing a remote when BridgedDeviceBasic Reachable changes.
+  def mqtt_reachable_changed(remote)
+    import introspect
+    for plugin: self.plugins
+      if introspect.get(plugin, "mqtt_remote") == remote
+        plugin.attribute_updated(0x0039, 0x0011)
+      end
+    end
+  end
+
+  #####################################################################
+  # MQTT Auto-Discovery
+  #
+  # Lazy subscription to tasmota/discovery/# — only on first config page visit
+  #####################################################################
+  def ensure_discovery()
+    if !self.discovery_subscribed
+      self.subscribe_discovery()
+      self.discovery_subscribed = true
+    end
+  end
+
+  # Subscribe to tasmota/discovery/# permanently
+  def subscribe_discovery()
+    import mqtt
+    mqtt.subscribe("tasmota/discovery/#", / topic, idx, data, databytes -> self.handle_global_discovery(topic, data))
+    log("MTR: Subscribed to tasmota/discovery/#", 3)
+  end
+
+  # Parse discovery messages, store by topic
+  def handle_global_discovery(mqtt_topic, data)
+    if data == nil   return   end
+    import json
+    import string
+    var j = type(data) == 'string' ? json.load(data) : data
+    if j == nil   return   end
+
+    # tasmota/discovery/<MAC>/config or tasmota/discovery/<MAC>/sensors
+    var discovery_prefix_len = size("tasmota/discovery/")
+    var mac_end = string.find(mqtt_topic, "/", discovery_prefix_len)
+    if mac_end < 0   return   end
+    var mac_part = mqtt_topic[discovery_prefix_len .. mac_end - 1]
+    var msg_type = mqtt_topic[mac_end + 1 ..]
+
+    if msg_type == "config"
+      var config_topic = j.find("t")
+      if config_topic == nil   return   end
+      if !self.discovered_devices.contains(config_topic)
+        self.discovered_devices[config_topic] = {}
+      end
+      self.discovered_devices[config_topic]['config'] = j
+      var config_mac = j.find('mac', mac_part)
+      if self.discovered_sensors.contains(config_mac)
+        self.discovered_devices[config_topic]['sensors'] = self.discovered_sensors[config_mac]
+      end
+      if self.mqtt_remotes != nil && self.mqtt_remotes.contains(config_topic)
+        var mqtt_remote = self.mqtt_remotes[config_topic]
+        if mqtt_remote.set_info_from_discovery(j)
+          mqtt_remote.info_changed()
+        end
+      end
+      log(f"MTR: discovered MQTT device '{config_topic}' name='{j.find('dn','?')}'", 3)
+
+    elif msg_type == "sensors"
+      self.discovered_sensors[mac_part] = j
+      for topic: self.discovered_devices.keys()
+        var cfg = self.discovered_devices[topic]
+        if cfg.contains('config') && cfg['config'].find('mac', '') == mac_part
+          cfg['sensors'] = j
+          break
+        end
+      end
+    end
+  end
+
+  # JSON for AJAX endpoint (lightweight)
+  def get_discovered_mqtt_json()
+    import json
+    var ret = {}
+    if self.discovered_devices != nil
+      for topic: self.discovered_devices.keys()
+        var c = self.discovered_devices[topic].find('config', {})
+        var added = false
+        for conf: self.plugins_config
+          if conf.find('topic') == topic   added = true  break   end
+        end
+        ret[topic] = {
+          'name': c.find('dn', topic),
+          'ip': c.find('ip', ''),
+          'version': c.find('sw', ''),
+          'mac': c.find('mac', ''),
+          'hw': c.find('md', ''),
+          'relay_cnt': c.find('rl', []),
+          'lt_st': c.find('lt_st', 0),
+          'added': added
+        }
+      end
+    end
+    return json.dump(ret)
+  end
+
+  #####################################################################
+  # Remove HTTP and MQTT remotes that are no longer referenced
   def clean_remotes()
     import introspect
 
@@ -833,6 +1011,36 @@ class Matter_Device
         self.http_remotes.remove(remote.addr)
       end
 
+    end
+
+    # Handle MQTT remotes
+    if self.mqtt_remotes
+      var mqtt_remotes_map = {}
+
+      for mqtt_remote: self.mqtt_remotes
+        mqtt_remotes_map[mqtt_remote] = 0
+      end
+
+      # scan all endpoints
+      for pi: self.plugins
+        var mqtt_remote = introspect.get(pi, "mqtt_remote")
+        if mqtt_remote != nil
+          mqtt_remotes_map[mqtt_remote] = mqtt_remotes_map.find(mqtt_remote, 0) + 1
+        end
+      end
+
+      var mqtt_remote_to_remove = []
+      for remote: mqtt_remotes_map.keys()
+        if mqtt_remotes_map[remote] == 0
+          mqtt_remote_to_remove.push(remote)
+        end
+      end
+
+      for remote: mqtt_remote_to_remove
+        log("MTR: remove unused mqtt remote: " + remote.topic, 3)
+        remote.close()
+        self.mqtt_remotes.remove(remote.topic)
+      end
     end
 
   end

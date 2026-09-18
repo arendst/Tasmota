@@ -1,0 +1,43 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SensirionI2cScd30	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+awaitDataReady	KEYWORD2
+blockingReadMeasurementData	KEYWORD2
+startPeriodicMeasurement	KEYWORD2
+stopPeriodicMeasurement	KEYWORD2
+setMeasurementInterval	KEYWORD2
+getMeasurementInterval	KEYWORD2
+getDataReady	KEYWORD2
+readMeasurementData	KEYWORD2
+activateAutoCalibration	KEYWORD2
+getAutoCalibrationStatus	KEYWORD2
+forceRecalibration	KEYWORD2
+getForceRecalibrationStatus	KEYWORD2
+setTemperatureOffset	KEYWORD2
+getTemperatureOffset	KEYWORD2
+getAltitudeCompensation	KEYWORD2
+setAltitudeCompensation	KEYWORD2
+readFirmwareVersion	KEYWORD2
+softReset	KEYWORD2
+readSerialNumber	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+sensor	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

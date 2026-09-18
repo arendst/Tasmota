@@ -52,6 +52,7 @@ extern void lvgl_reset_screenshot_file(void);
 File * lvgl_get_screenshot_file(void);
 extern void lv_set_paint_cb(void* cb);
 extern void* lv_get_paint_cb(void);
+extern void lv_set_stream_cb(void* cb);
 
 /********************************************************************
  * Structures used by LVGL_Berry
@@ -115,16 +116,16 @@ extern void lv_ex_get_started_1(void);
 
 extern "C" {
 
-  
+
 }
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import power
- * 
+ *
  * power.read() -> map
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
 
@@ -438,7 +439,7 @@ extern "C" {
     if (font_entry->size == 0) {
       be_raisef(vm, "value_error", "unknown font size '%s-%i'", name, size);
     }
-    
+
     be_find_global_or_module_member(vm, "lv.lv_font");
     be_pushcomptr(vm, (void*)font_entry->font);
     be_call(vm, 1);
@@ -483,7 +484,7 @@ extern "C" {
 
   /*********************************************************************************************\
    * LVGL Start
-   * 
+   *
    * Calls uDisplay and starts LVGL
   \*********************************************************************************************/
   // lv.start(instance, instance) -> nil
@@ -514,9 +515,9 @@ extern "C" {
 
   /*********************************************************************************************\
    * LVGL Input Devices
-   * 
+   *
    * Calls uDisplay and starts LVGL
-   * 
+   *
    * lv.register_button_encoder([inv: bool]) -> nil
   \*********************************************************************************************/
   void lvbe_encoder_with_keys_read(lv_indev_t * drv, lv_indev_data_t*data);
@@ -656,7 +657,7 @@ extern "C" {
 
       // redraw screen
       lv_obj_invalidate(lv_screen_active());
-      lv_refr_now(lv_disp_get_default());            
+      lv_refr_now(lv_disp_get_default());
 
       lvgl_reset_screenshot_file();
       f.close();
@@ -673,6 +674,17 @@ extern "C" {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_iscomptr(vm, 1)) {
       lv_set_paint_cb(be_tocomptr(vm, 1));
+    }
+    be_pushcomptr(vm, lv_get_paint_cb());
+    be_return(vm);
+  }
+
+  int lv0_set_stream_cb(bvm *vm);
+  int lv0_set_stream_cb(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_iscomptr(vm, 1)) {
+      lv_set_stream_cb(be_tocomptr(vm, 1));
+      be_return_nil(vm);
     }
     be_pushcomptr(vm, lv_get_paint_cb());
     be_return(vm);

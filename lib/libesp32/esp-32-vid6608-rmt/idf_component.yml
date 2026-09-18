@@ -1,0 +1,13 @@
+## IDF Component Manager Manifest File
+description: "ESP32 library to drive automotive steppers like X27-168 via IC VID668 driver using HW RMT API"
+url: "https://github.com/petrows/esp-32-vid6608-rmt"
+repository: "https://github.com/petrows/esp-32-vid6608-rmt.git"
+maintainers:
+  - Petr Golovachev <petro@petro.ws>
+documentation: "https://github.com/petrows/esp-32-vid6608-rmt/blob/master/README.md"
+tags:
+  - Stepper
+  - VID6608
+dependencies:
+  idf:
+    version: ">=5.5.0"

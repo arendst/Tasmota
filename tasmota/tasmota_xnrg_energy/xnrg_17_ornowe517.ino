@@ -184,7 +184,7 @@ void WE517Every250ms(void)
 }
 
 void We517SnsInit(void) {
-  We517Modbus = new TasmotaModbus(Pin(GPIO_WE517_RX), Pin(GPIO_WE517_TX), Pin(GPIO_NRG_MBS_TX_ENA));
+  We517Modbus = new TasmotaModbus(Pin(GPIO_WE517_RX), Pin(GPIO_WE517_TX), Pin(GPIO_NRG_MBS_TX_ENA), Pin(GPIO_MBS_RX_ENA));
   uint8_t result = We517Modbus->Begin(WE517_SPEED, SERIAL_8E1);
   if (result) {
       if (2 == result) {

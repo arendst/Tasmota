@@ -119,7 +119,7 @@ void MCP2515_FrameSizeError(uint8_t len, uint32_t id) {
 
 void MCP2515_Init(void) {
   if (PinUsed(GPIO_MCP2515_CS, GPIO_ANY) && TasmotaGlobal.spi_enabled) {
-    mcp2515 = new MCP2515(5);
+    mcp2515 = new MCP2515(Pin(GPIO_MCP2515_CS, GPIO_ANY));
     if (MCP2515::ERROR_OK != mcp2515->reset()) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAN: Failed to reset module"));
       return;
@@ -132,7 +132,8 @@ void MCP2515_Init(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAN: Failed to set normal mode"));
       return;
     }
-    AddLog(LOG_LEVEL_INFO, PSTR("CAN: Sniffer Initialized"));
+    AddLog(LOG_LEVEL_INFO, PSTR("CAN: Sniffer Initialized on GPIO%d"), Pin(GPIO_MCP2515_CS, GPIO_ANY));
+    Mcp2515.init_status = 1;
   }
 }
 
@@ -205,15 +206,7 @@ bool Xsns87(uint32_t function) {
       case FUNC_COMMAND:
         result = DecodeCommand(kCanCommands, CanCommand);
         break;
-      case FUNC_JSON_APPEND:
-//        MCP2515_Show(1);
-        break;
-        #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-//        MCP2515_Show(0);
-        break;
-      #endif  // USE_WEBSERVER
-          }
+    }
   }
   return result;
 }

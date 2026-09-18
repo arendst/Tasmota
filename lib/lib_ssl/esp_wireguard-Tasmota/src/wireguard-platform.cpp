@@ -33,6 +33,7 @@
 #include "wireguard-platform.h"
 
 #include "lwip/sys.h"
+#include <time.h>
 
 #include "crypto.h"
 
@@ -62,11 +63,19 @@ void wireguard_tai64n_now(uint8_t *output) {
 	// 64 bit seconds from 1970 = 8 bytes
 	// 32 bit nano seconds from current second
 
+#ifdef ESP32
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+
+	uint64_t seconds = 0x400000000000000aULL + ts.tv_sec;
+	uint32_t nanos = ts.tv_nsec;
+#else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 
 	uint64_t seconds = 0x400000000000000aULL + tv.tv_sec;
 	uint32_t nanos = tv.tv_usec * 1000;
+#endif
 	U64TO8_BIG(output + 0, seconds);
 	U32TO8_BIG(output + 8, nanos);
 }

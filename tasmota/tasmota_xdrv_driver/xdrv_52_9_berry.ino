@@ -248,8 +248,8 @@ void callBerryRunDeferred(void) {
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
-void BerryObservability(bvm *vm, int event...);
-void BerryObservability(bvm *vm, int event...) {
+void BerryObservability(bvm *vm, int event, ...);
+void BerryObservability(bvm *vm, int event, ...) {
   va_list param;
   va_start(param, event);
   static int32_t vm_usage = 0;
@@ -267,6 +267,7 @@ void BerryObservability(bvm *vm, int event...) {
           be_dumpstack(vm);
         }
       }
+      break;
     case BE_OBS_GC_START:
       {
         gc_time = millis();
@@ -494,9 +495,14 @@ void CmndBrRun(void) {
 
   if (berry.vm == nullptr) { ResponseCmndChar_P(PSTR(D_BR_NOT_STARTED)); return; }
 
-  char br_cmd[XdrvMailbox.data_len+12];
+  // Use stack VLA for small payloads (≤ 2048 bytes); heap for large ones to avoid stack overflow
+  const uint32_t br_cmd_len = XdrvMailbox.data_len + 12;
+  char* br_cmd_heap = (br_cmd_len > 2048) ? (char*)malloc(br_cmd_len) : nullptr;
+  if (br_cmd_len > 2048 && br_cmd_heap == nullptr) { ResponseCmndChar_P(PSTR("out of memory")); return; }
+  char br_cmd_vla[br_cmd_len <= 2048 ? br_cmd_len : 1];  // only used when br_cmd_len <= 2048
+  char* br_cmd = (br_cmd_len <= 2048) ? br_cmd_vla : br_cmd_heap;
   // encapsulate into a function, copied from `be_repl.c` / `try_return()`
-  snprintf_P(br_cmd, sizeof(br_cmd), PSTR("return (%s)"), XdrvMailbox.data);
+  snprintf_P(br_cmd, br_cmd_len, PSTR("return (%s)"), XdrvMailbox.data);
 
   checkBeTop();
   do {
@@ -529,11 +535,9 @@ void CmndBrRun(void) {
   }
 
   checkBeTop();
+  if (br_cmd_heap != nullptr) { free(br_cmd_heap); }
 }
 
-/*********************************************************************************************\
- * Berry console
-\*********************************************************************************************/
 #ifdef USE_WEBSERVER
 
 void BrREPLRun(char * cmd) {
@@ -542,6 +546,7 @@ void BrREPLRun(char * cmd) {
   size_t cmd_len = strlen(cmd);
   size_t cmd2_len = cmd_len + 12;
   char * cmd2 = (char*) malloc(cmd2_len);
+  if (!cmd2) { return; }  // guard against malloc failure
   do {
     int32_t ret_code;
 
@@ -801,113 +806,6 @@ void HandleBerryConsole(void)
   WSContentStop();
 }
 
-
-// const BeBECCode_t BECCode[] = {
-// struct BeBECCode_t {
-//   const char * display_name;      // display name in Web UI (must be URL encoded)
-//   const char * id;                // id in requested URL
-//   const char * url;               // absolute URL to download the bec file
-//   const char * redirect;          // relative URI to redirect after loading
-// };
-
-// Display Buttons to dynamically load bec files
-void HandleBerryBECLoaderButton(void) {
-  bvm * vm = berry.vm;
-  if (vm == NULL) { return; }       // Berry vm is not initialized
-
-  for (int32_t i = 0; i < ARRAY_SIZE(BECCode); i++) {
-    const BeBECCode_t &bec = BECCode[i];
-    if (!(*bec.loaded)) {
-      if (be_global_find(vm, be_newstr(vm, bec.id)) < 0) {    // the global name  doesn't exist
-        WSContentSend_P("<p></p><form id=but_part_mgr style='display:block;' action='tapp' method='get'><input type='hidden' name='n' value='%s'/><button>[Load %s]</button></form>", bec.id, bec.display_name);
-      } else {
-        *bec.loaded = true;
-      }
-    }
-  }
-}
-
-extern "C" bbool BerryBECLoader(const char * url);
-
-void HandleBerryBECLoader(void) {
-  String n = Webserver->arg("n");
-  for (int32_t i = 0; i < ARRAY_SIZE(BECCode); i++) {
-    const BeBECCode_t &bec = BECCode[i];
-    if (n.equals(bec.id)) {
-      if (BerryBECLoader(bec.url)) {
-        // All good, redirect
-        Webserver->sendHeader("Location", bec.redirect, true);
-        Webserver->send(302, "text/plain", "");
-        *bec.loaded  = true;
-      } else {
-        Webserver->sendHeader("Location", "/mn?", true);
-        Webserver->send(302, "text/plain", "");
-      }
-    }
-  }
-}
-
-// return true if successful
-extern "C" bbool BerryBECLoader(const char * url) {
-  bvm *vm = berry.vm;
-
-  HTTPClientLight cl;
-  cl.setUserAgent(USE_BERRY_WEBCLIENT_USERAGENT);
-  cl.setConnectTimeout(USE_BERRY_WEBCLIENT_TIMEOUT);   // set default timeout
-  cl.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-
-  if (!cl.begin(url)) {
-    AddLog(LOG_LEVEL_INFO, "BRY: unable to load URL '%s'", url);
-    // cl.end();
-    return false;
-  }
-  
-  uint32_t http_connect_time = millis();
-  int32_t httpCode = cl.GET();
-  if (httpCode != 200) {
-    AddLog(LOG_LEVEL_INFO, "BRY: unable to load URL '%s' code %i", url, httpCode);
-    // cl.end();
-    return false;
-  }
-
-  int32_t sz = cl.getSize();
-  AddLog(LOG_LEVEL_DEBUG, "BRY: Response http_code %i size %i bytes in %i ms", httpCode, sz, millis() - http_connect_time);
-  // abort if we exceed 32KB size, things will not go well otherwise
-  if (sz >= 32767 || sz <= 0) {
-    AddLog(LOG_LEVEL_DEBUG, "BRY: Response size too big %i bytes", sz);
-    return false;
-  }
-
-  // create a bytes object at top of stack.
-  // the streamwriter knows how to get it. 
-  uint8_t * buf = (uint8_t*) be_pushbytes(vm, nullptr, sz);
-  StreamBeBytesWriter memory_writer(vm);
-  int32_t written = cl.writeToStream(&memory_writer);
-  cl.end();  // free allocated memory ~16KB
-
-  size_t loaded_sz = 0;
-  const void * loaded_buf = be_tobytes(vm, -1, &loaded_sz);
-
-  FlashFileImplPtr fp = FlashFileImplPtr(new FlashFileImpl(loaded_buf, loaded_sz));
-  File * f_ptr = new File(fp);   // we need to allocate dynamically because be_close calls `delete` on it
-  bclosure* loaded_bec = be_bytecode_load_from_fs(vm, f_ptr);
-  be_pop(vm, 1);
-  if (loaded_bec != NULL) {
-    be_pushclosure(vm, loaded_bec);
-    be_call(vm, 0);
-    be_pop(vm, 1);
-  }
-   be_gc_collect(vm);   // force a GC to free the buffer now
-  return true;
-}
-
-#else   // No USE_WEBSERVER
-
-extern "C" bbool BerryBECLoader(const char * url) {
-  AddLog(LOG_LEVEL_INFO, "BRY: web server disabled");
-  return false;
-}
-
 #endif // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -1042,7 +940,6 @@ bool Xdrv52(uint32_t function)
         XdrvMailbox.index++;
       } else {
         WSContentSend_P(HTTP_FORM_BUTTON, PSTR("bc"), PSTR("Berry Scripting console"));
-        HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
         callBerryEventDispatcher(PSTR("web_add_console_button"), nullptr, 0, nullptr);
       }
@@ -1062,7 +959,6 @@ bool Xdrv52(uint32_t function)
         berry.web_add_handler_done = true;
       }
       WebServer_on("/bc", HandleBerryConsole);
-      WebServer_on("/tapp", HandleBerryBECLoader, HTTP_GET);
       break;
 #ifdef USE_WEB_STATUS_LINE
       case FUNC_WEB_STATUS_LEFT:
@@ -1088,6 +984,13 @@ bool Xdrv52(uint32_t function)
       break;
     case FUNC_AFTER_TELEPERIOD:
       callBerryEventDispatcher(PSTR("after_teleperiod"), nullptr, 0, nullptr);
+      break;
+
+    case FUNC_NETWORK_UP:
+      callBerryEventDispatcher(PSTR("network_up"), nullptr, 0, nullptr);
+      break;
+    case FUNC_NETWORK_DOWN:
+      callBerryEventDispatcher(PSTR("network_down"), nullptr, 0, nullptr);
       break;
 
     case FUNC_ACTIVE:

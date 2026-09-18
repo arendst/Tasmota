@@ -14,9 +14,6 @@
 extern void m_mdns_start(struct bvm *vm, const char* hostname);
 BE_FUNC_CTYPE_DECLARE(m_mdns_start, "", "@[s]")
 
-extern void m_mdns_stop(void);
-BE_FUNC_CTYPE_DECLARE(m_mdns_stop, "", "")
-
 extern void m_mdns_set_hostname(struct bvm *vm, const char * hostname);
 BE_FUNC_CTYPE_DECLARE(m_mdns_set_hostname, "", "@s")
 
@@ -29,7 +26,6 @@ extern int m_dns_find_service(struct bvm *vm);
 /* @const_object_info_begin
 module mdns (scope: global) {
     start, ctype_func(m_mdns_start)
-    stop, ctype_func(m_mdns_stop)
     set_hostname, ctype_func(m_mdns_set_hostname)
     add_service, func(m_mdns_add_service)
     add_hostname, func(m_dns_add_hostname)

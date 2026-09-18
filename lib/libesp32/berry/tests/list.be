@@ -138,3 +138,58 @@ assert([1,2,3,4][1..-1] == [2,3,4])
 assert([1,2,3,4][1..-2] == [2,3])
 assert([1,2,3,4][3..2] == [])
 assert([1,2,3,4][2..-3] == [])
+
+#- set negative index -#
+l = [1, 2]
+l[-1] = 3
+assert(l == [1,3])
+l[-1] += 1
+assert(l == [1,4])
+l[-2] += l[-1]
+assert(l == [5,4])
+
+# list.clear()
+var lc = [1, 2, 3]
+lc.clear()
+assert(lc.size() == 0)
+assert(lc == [])
+lc.push(42)
+assert(lc == [42])
+
+# item_list: index a list with a list of indices
+var src = [10, 20, 30, 40, 50]
+assert(src[list(1, 3)] == [20, 40])
+
+# item_list: out-of-range indices become nil
+var res2 = src[list(0, 99, -1)]
+assert(res2[0] == 10)
+assert(res2[1] == nil)
+assert(res2[2] == nil)
+
+# item_range: negative lower bound
+assert([1,2,3,4,5][-3..-1] == [3,4,5])
+
+# list_getindex: out-of-range raises index_error
+try
+    var x = [1, 2, 3][10]
+    assert(false)
+except .. as e, m
+    assert(e == 'index_error')
+end
+
+# m_setitem: out-of-range assignment raises index_error
+try
+    var l2 = [1, 2, 3]
+    l2[10] = 99
+    assert(false)
+except .. as e, m
+    assert(e == 'index_error')
+end
+
+# m_merge: non-list operand raises type_error
+try
+    var bad = [1, 2] + "not a list"
+    assert(false)
+except .. as e, m
+    assert(e == 'type_error')
+end

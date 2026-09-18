@@ -82,6 +82,7 @@ String GetBuildDateAndTime(void) {
   char bdt[21];
   char *p;
   static const char mdate_P[] PROGMEM = __DATE__;  // "Mar  7 2017"
+  static const char mtime_P[] PROGMEM = __TIME__;  // "11:08:02"
   char mdate[strlen_P(mdate_P)+1];      // copy on stack first
   strcpy_P(mdate, mdate_P);
   char *smonth = mdate;
@@ -105,7 +106,7 @@ String GetBuildDateAndTime(void) {
   char MonthNamesEnglish[sizeof(kMonthNamesEnglish)];
   strcpy_P(MonthNamesEnglish, kMonthNamesEnglish);
   int month = (strstr(MonthNamesEnglish, smonth) -MonthNamesEnglish) /3 +1;
-  snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, PSTR(__TIME__));
+  snprintf_P(bdt, sizeof(bdt), PSTR("%d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%s"), year, month, day, mtime_P);
   return String(bdt);  // 2017-03-07T11:08:02
 }
 

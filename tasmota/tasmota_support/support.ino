@@ -239,6 +239,15 @@ void TasAutoMutex::take() {
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
+
+void PowerOnDelay(uint32_t msecs) {
+//  if (ResetReasonPowerOn()) {
+    while (millis() < msecs) {
+      delay(1);
+    }
+//  }
+}
+
 /*
 String GetBinary(const void* ptr, size_t count) {
   uint32_t value = *(uint32_t*)ptr;
@@ -1862,10 +1871,19 @@ bool ValidSpiPinUsed(uint32_t gpio) {
   return result;
 }
 
-bool JsonTemplate(char* dataBuf)
-{
+String ArchName(void) {
+  String arch = TASMOTA_ARCH;
+  arch.toUpperCase();
+  if (arch.equals("ESP32SOLO1")) {
+    arch = "ESP32";
+  }
+  return arch;
+}
+
+bool JsonTemplate(char* dataBuf) {
   // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
   // New: {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
+  // Newest: {"NAME":"Shelly 2.5","ARCH":"ESP8266","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: |%s|"), dataBuf);
 
@@ -1873,10 +1891,16 @@ bool JsonTemplate(char* dataBuf)
 
   JsonParser parser((char*) dataBuf);
   JsonParserObject root = parser.getRootObject();
-  if (!root) { return false; }
+  if (!root) { return false; }                // Invalid JSON
 
   // All parameters are optional allowing for partial changes
-  JsonParserToken val = root[PSTR(D_JSON_NAME)];
+  JsonParserToken val = root[PSTR(D_JSON_ARCH)];
+  if (val) {
+    if (strcmp(val.getStr(), ArchName().c_str())) {
+      return false;                           // Bad architecture
+    }
+  }
+  val = root[PSTR(D_JSON_NAME)];
   if (val) {
     SettingsUpdateText(SET_TEMPLATE_NAME, val.getStr());
   }
@@ -1954,11 +1978,10 @@ bool JsonTemplate(char* dataBuf)
   return true;
 }
 
-void TemplateJson(void)
-{
+void TemplateJson(void) {
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TPL: Show %*_V"), sizeof(Settings->user_template) / 2, (uint8_t*)&Settings->user_template);
-
-  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), SettingsText(SET_TEMPLATE_NAME));
+  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_ARCH "\":\"%s\",\"" D_JSON_GPIO "\":["),
+    SettingsText(SET_TEMPLATE_NAME), ArchName().c_str());
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
     uint16_t gpio = Settings->user_template.gp.io[i];
     if (gpio == AGPIO(GPIO_USER)) {
@@ -2152,8 +2175,18 @@ void SetSerialSwap(void) {
 }
 #endif
 
+void SetTasmotaGlobalBaudrate(uint32_t baudrate) {
+  TasmotaGlobal.baudrate = baudrate;
+  if (Settings != nullptr) {              // May not have been initialized yet
+    Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  }
+  if (74700 == TasmotaGlobal.baudrate) {  // 74880 / 300 = 249,6. 249 * 300 = 74700
+    TasmotaGlobal.baudrate = 74880;       // ESP8266 ROM baudrate
+  }
+}
+
 void SetSerialBegin(void) {
-  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  SetTasmotaGlobalBaudrate(Settings->baudrate * 300);
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
@@ -2176,7 +2209,7 @@ void SetSerialBegin(void) {
 }
 
 void SetSerialInitBegin(void) {
-  TasmotaGlobal.baudrate = Settings->baudrate * 300;
+  SetTasmotaGlobalBaudrate(Settings->baudrate * 300);
   if ((GetSerialBaudrate() != TasmotaGlobal.baudrate) || (TS_SERIAL_8N1 != Settings->serial_config)) {
     SetSerialBegin();
   }
@@ -2193,8 +2226,7 @@ void SetSerialConfig(uint32_t serial_config) {
 }
 
 void SetSerialBaudrate(uint32_t baudrate) {
-  TasmotaGlobal.baudrate = baudrate;
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetTasmotaGlobalBaudrate(baudrate);
   if (GetSerialBaudrate() != TasmotaGlobal.baudrate) {
     SetSerialBegin();
   }
@@ -2203,8 +2235,7 @@ void SetSerialBaudrate(uint32_t baudrate) {
 void SetSerial(uint32_t baudrate, uint32_t serial_config) {
   Settings->flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
   Settings->serial_config = serial_config;
-  TasmotaGlobal.baudrate = baudrate;
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetTasmotaGlobalBaudrate(baudrate);
   SetSeriallog(LOG_LEVEL_NONE);
   SetSerialBegin();
 }
@@ -2222,8 +2253,7 @@ void ClaimSerial(void) {
   TasmotaGlobal.serial_local = true;
   AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  TasmotaGlobal.baudrate = GetSerialBaudrate();
-  Settings->baudrate = TasmotaGlobal.baudrate / 300;
+  SetTasmotaGlobalBaudrate(GetSerialBaudrate());
 }
 
 void SerialSendRaw(char *codes)
@@ -2788,12 +2818,16 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 #ifdef ESP8266
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d"),
       mxtime, ESP_getFreeHeap1024());
-#else
+#ifdef USE_ESP8266_DEBUG_HEAP
+    snprintf_P(mxtime, sizeof(mxtime), PSTR("%s/%02d"),
+      mxtime, ESP_getHeapFragmentation());
+#endif  // USE_ESP8266_DEBUG_HEAP
+#else   // ESP32
     snprintf_P(mxtime, sizeof(mxtime), PSTR("%s-%03d/%02d"),
       mxtime, ESP_getFreeHeap1024(), ESP_getHeapFragmentation());
-#endif
+#endif  // ESP8266 or ESP32
   }
-  strcat(mxtime, " ");
+  strlcat(mxtime, " ", sizeof(mxtime));
 
   char empty[2] = { 0 };
   if (!log_data_payload) { log_data_payload = empty; }
@@ -2888,6 +2922,7 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
     return;
   }
 #endif
+  if (!loglevel) return; // loglevel == 0 -> nothing to log
   uint32_t highest_loglevel = HighestLogLevel();
   // If no logging is requested then do not access heap to fight fragmentation
   if ((loglevel <= highest_loglevel) && (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
@@ -2942,6 +2977,45 @@ String HtmlEscape(const String unescaped) {
 
 String SettingsTextEscaped(uint32_t index) {
   return HtmlEscape(SettingsText(index));
+}
+// Truncate src to max UTF-8 codepoints with optional max visual width.
+// max_codepoints limits codepoints (0 = no limit)
+// max_width limits *approximated* visual width (0 = no limit):
+//    narrow chars (1-2 byte: ASCII, Latin, Cyrillic) approximated to cost 1 width unit
+//    wide chars (3-4 byte: CJK, emoji) approximated to cost 2 width units
+// Multi-byte characters are never split mid-sequence
+// ZWJ sequences and skin tone modifiers are not recognized as single glyphs and may be split
+String Utf8Truncate(const char *src, uint32_t max_codepoints, uint32_t max_width = 0) {
+  if (!src) { return String(); }
+  if (!max_codepoints && !max_width) {
+    return String(src);
+  }
+  size_t slen = strlen(src);
+  size_t bytes = 0;
+  size_t width = 0;
+  size_t chars = 0;
+  while (bytes < slen) {
+    if (max_codepoints && chars >= max_codepoints) { break; }
+    uint8_t lead = (uint8_t)src[bytes];
+    size_t clen = 1;
+    if      (lead >= 0xF0 && lead <= 0xF4) { clen = 4; }   // valid 4-byte lead
+    else if (lead >= 0xE0)                 { clen = 3; }   // 3-byte lead
+    else if (lead >= 0xC2)                 { clen = 2; }   // 2-byte lead (skip overlong 0xC0/0xC1)
+    // else: ASCII or stray continuation byte -> treat as 1 byte
+    if (bytes + clen > slen) { break; }
+    size_t cwidth = (clen >= 3) ? 2 : 1;
+    if (max_width && (width + cwidth > max_width)) { break; }
+    bytes += clen;
+    width += cwidth;
+    chars++;
+  }
+  if (!bytes) {
+    return String();
+  }
+  String result;
+  result.reserve(bytes);
+  result.concat(src, bytes);
+  return result;
 }
 
 String UrlEscape(const char *unescaped) {

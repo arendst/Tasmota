@@ -20,6 +20,40 @@
 #include <float.h>
 #include <math.h>
 
+#ifdef TASMOTA
+/* In Tasmota builds linked against picolibc's integer-only vfprintf
+ * (see `pio-tools/picolibc_flags.py`), the standard snprintf family
+ * cannot format floating point values anymore and outputs `*float*`
+ * placeholders instead. We route Berry's float formatting through
+ * Tasmota's ext_snprintf_P helper which performs its own float
+ * conversion via dtostrf and does not rely on vfprintf for floats.
+ */
+#include "ext_printf.h"
+
+/* Format a breal using ext_snprintf_P (dtostrf-based) and delegate
+ * width/alignment to snprintf via `%s`. Precision after '.' is honored;
+ * 'g'/'G' strip trailing zeros; 'e'/'E' fall back to fixed notation.
+ */
+static int be_snprintf_real(char *buf, size_t buf_len, const char *mode, breal val)
+{
+    const char *dot = strchr(mode, '.');
+    int prec = dot ? (int)strtol(dot + 1, NULL, 10) : 6;
+    char spec = mode[strlen(mode) - 1];
+    if (spec == 'g' || spec == 'G') { prec = -prec; }  /* trim trailing zeros */
+    float fval = (float)val;
+    char num[32];
+    ext_snprintf_P(num, sizeof(num), "%*_f", prec, &fval);
+    /* Rewrite "%[flags][width][.prec]<spec>" as "%[flags][width]s" */
+    char fmt[24];
+    size_t keep = dot ? (size_t)(dot - mode) : strlen(mode) - 1;
+    if (keep >= sizeof(fmt) - 1) { keep = sizeof(fmt) - 2; }
+    memcpy(fmt, mode, keep);
+    fmt[keep] = 's';
+    fmt[keep + 1] = '\0';
+    return snprintf(buf, buf_len, fmt, num);
+}
+#endif /* TASMOTA */
+
 #if BE_INTGER_TYPE == 0 /* int */
     #define M_IMAX    INT_MAX
     #define M_IMIN    INT_MIN
@@ -135,7 +169,11 @@ bstring* be_num2str(bvm *vm, bvalue *v)
     if (var_isint(v)) {
         snprintf(buf, sizeof(buf),BE_INT_FORMAT, var_toint(v));
     } else if (var_isreal(v)) {
+#ifdef TASMOTA
+        be_snprintf_real(buf, sizeof(buf), "%g", var_toreal(v));
+#else
         snprintf(buf, sizeof(buf), "%g", var_toreal(v));
+#endif
     } else {
         snprintf(buf, sizeof(buf), "(nan)");
     }
@@ -167,7 +205,11 @@ static bstring* sim2str(bvm *vm, bvalue *v)
         snprintf(sbuf, sizeof(sbuf), BE_INT_FORMAT, var_toint(v));
         break;
     case BE_REAL:
+#ifdef TASMOTA
+        be_snprintf_real(sbuf, sizeof(sbuf), "%g", var_toreal(v));
+#else
         snprintf(sbuf, sizeof(sbuf), "%g", var_toreal(v));
+#endif
         break;
     case BE_CLOSURE: case BE_NTVCLOS: case BE_NTVFUNC: case BE_CTYPE_FUNC:
         snprintf(sbuf, sizeof(sbuf), "<function: %p>", var_toobj(v));
@@ -345,7 +387,7 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
         /* hex literal */
         str += 2;       /* skip 0x or 0X */
         while ((c = be_char2hex(*str++)) >= 0) {
-            sum = sum * 16 + c;
+            sum = (bint)((buint)sum * 16 + (buint)c);
         }
         if (endstr) {
             *endstr = str - 1;
@@ -664,16 +706,22 @@ static const char* get_mode(const char *str, char *buf, size_t buf_len)
     }
     p = skip2dig(p); /* skip width (2 digits at most) */
     if (*p == '.') {
-        p = skip2dig(++p); /* skip width (2 digits at most) */
+        p = skip2dig(++p); /* skip precision (2 digits at most) */
     }
     *(buf++) = '%';
     size_t mode_size = p - str + 1;
     /* Leave 2 bytes for the leading % and the trailing '\0' */
-    if (mode_size > buf_len - 2) { 
-        mode_size = buf_len - 2;
+    /* Also ensure the format specifier character is always included */
+    if (mode_size > buf_len - 2) {
+        /* truncate flags/width but always keep the conversion specifier */
+        size_t max = buf_len - 2;
+        strncpy(buf, str, max - 1);
+        buf[max - 1] = p[0]; /* conversion specifier */
+        buf[max] = '\0';
+    } else {
+        strncpy(buf, str, mode_size);
+        buf[mode_size] = '\0';
     }
-    strncpy(buf, str, mode_size);
-    buf[mode_size] = '\0';
     return p;
 }
 
@@ -771,7 +819,11 @@ int be_str_format(bvm *vm)
             {
                 breal val;
                 if (convert_to_real(vm, index, &val)) {
+#ifdef TASMOTA
+                    be_snprintf_real(buf, sizeof(buf), mode, val);
+#else
                     snprintf(buf, sizeof(buf), mode, val);
+#endif
                 }
                 be_pushstring(vm, buf);
                 break;

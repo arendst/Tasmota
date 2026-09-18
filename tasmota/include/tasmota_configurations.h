@@ -286,6 +286,7 @@
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation (+8k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
 #undef USE_DEVICE_GROUPS                         // Disable support for device groups (+3k5 code)
 #undef USE_BLE_ESP32                             // (ESP32 only) Disable support for native BLE on ESP32 - use new driver
@@ -310,6 +311,7 @@
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation (+8k code)
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
@@ -401,6 +403,7 @@
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
 #undef USE_EMULATION_WEMO                        // Disable Wemo emulation - only for relays
+#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation - only for relays
 
 //#undef USE_DOMOTICZ                              // Disable Domoticz
 //#undef USE_HOME_ASSISTANT                        // Disable Home Assistant
@@ -564,6 +567,7 @@
 //#undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #define USE_EMULATION_HUE                        // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation (+8k code)
 #undef USE_CUSTOM                                // Disable Custom features
 #undef USE_DISCOVERY                             // Disable Discovery services for both MQTT and web server
 //#undef USE_TIMERS                                // Disable support for up to 16 timers
@@ -713,6 +717,7 @@
 //#undef USE_EMULATION                             // Disable Wemo or Hue emulation
 //#undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 //#undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+//#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation (+8k code)
 #undef USE_CUSTOM                                // Disable Custom features
 #undef USE_DISCOVERY                             // Disable Discovery services for both MQTT and web server
 //#undef USE_TIMERS                                // Disable support for up to 16 timers
@@ -878,6 +883,7 @@
 #undef USE_EMULATION                             // Disable Wemo or Hue emulation
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation (+8k code)
 #undef USE_CUSTOM                                // Disable Custom features
 #undef USE_DISCOVERY                             // Disable Discovery services for both MQTT and web server
 #undef USE_TIMERS                                // Disable support for up to 16 timers
@@ -1080,10 +1086,16 @@
   #endif  // USE_RULES
 #endif  // NOT ESP8266_1M
 
+#if defined(ESP8266) && defined(USE_EMULATION_SHELLY)
+#undef USE_EMULATION_SHELLY                      // Shelly emulation is ESP32 only (needs the IDF mDNS component)
+#endif
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
 #endif
 #ifdef USE_EMULATION_WEMO
+#define USE_EMULATION
+#endif
+#ifdef USE_EMULATION_SHELLY
 #define USE_EMULATION
 #endif
 #ifdef USE_EMULATION

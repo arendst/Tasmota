@@ -45,8 +45,8 @@ class Matter_Autoconf
     log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
     # always include an aggregator for dynamic endpoints
-    plugins.push(matter.Plugin_Aggregator(self.device, matter.AGGREGATOR_ENDPOINT, {}))
-    log(format("MTR:   endpoint = %5i type:%s%s", matter.AGGREGATOR_ENDPOINT, 'aggregator', ''), 2)
+    plugins.push(matter.Plugin_Aggregator(self.device, 0x0001 #-matter.AGGREGATOR_ENDPOINT-#, {}))
+    log(format("MTR:   endpoint = %5i type:%s%s", 0x0001 #-matter.AGGREGATOR_ENDPOINT-#, 'aggregator', ''), 2)
 
     for ep: endpoints
       if ep == 0  continue end          # skip endpoint 0
@@ -81,7 +81,7 @@ class Matter_Autoconf
     var m = {}
 
     # check if we have a light
-    var endpoint = matter.START_ENDPOINT
+    var endpoint = 0x0002 #-matter.START_ENDPOINT-#
     var light_present = 0
 
     import light

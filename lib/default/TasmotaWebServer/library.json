@@ -1,0 +1,17 @@
+{
+    "name": "TasmotaWebServer",
+    "version": "1.0.0",
+    "keywords": [
+      "webserver", "TasmotaWebServer"
+    ],
+    "description": "Customization of WebServer for both ESP8266 and ESP32",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/arendst/Tasmota/lib/TasmotaWebServer"
+    },
+    "frameworks": "arduino",
+    "platforms": [
+      "espressif8266", "espressif32"
+    ]
+}

@@ -111,8 +111,8 @@ extern "C" {
     if (argc >= 1 && be_isinstance(vm, 1)) {
       const char * c = be_classname(vm, 1);
       if(strcmp(c,"img") != 0) {
+        esp_camera_fb_return(wc_fb);    // release frame buffer before raising (be_raise does not return)
         be_raise(vm, "cam_error", "instance not of img class");
-        esp_camera_fb_return(wc_fb);
         be_return_nil(vm);
       }
       image_t * img = be_get_image_instance(vm);
@@ -131,6 +131,7 @@ extern "C" {
             img->buf = (uint8_t*)heap_caps_realloc((void*)img->buf, wc_fb->width * wc_fb->height * bpp, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
             if(!img->buf){
               be_img_util::clear(img);
+              esp_camera_fb_return(wc_fb);    // release frame buffer before raising (be_raise does not return)
               be_raise(vm, "cam_error", "reallocation failed");
               be_return_nil(vm);
             }

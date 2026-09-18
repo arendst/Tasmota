@@ -273,8 +273,8 @@ bool ShdSerialSend(const uint8_t data[] = nullptr, uint16_t len = 0)
 
     while (retries--)
     {
-        ShdSerial->write(data, len);
         ShdSerial->flush();
+        ShdSerial->write(data, len);
 
         // wait for any response
         uint32_t snd_time = millis() + SHD_ACK_TIMEOUT;

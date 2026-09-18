@@ -140,6 +140,29 @@ const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
   #define BERRY_RULES     0
 #endif
 
+// Forward declarations for the shared System Events helpers defined in
+// xdrv_10_system_events.ino. These symbols are always compiled (independent of
+// USE_RULES / USE_SCRIPT / USE_BERRY) and are linked into every build. The
+// Rules dispatcher (Xdrv10) calls Init/Every50ms/EverySecond/SaveBeforeRestart;
+// the kRulesCommands table below resolves &CmndEvent to the externally-defined
+// CmndEvent in xdrv_10_system_events.ino.
+//
+// SystemEventsSetTeleperiod / SystemEventsSetNewPower are thin setters exposed because
+// struct SYSTEM_EVENTS is file-local to xdrv_10_system_events.ino and not visible from
+// this translation unit. The Rules Xdrv10 dispatcher calls SystemEventsSetTeleperiod
+// around FUNC_TELEPERIOD_RULES_PROCESS to mirror Rules.teleperiod onto
+// SystemEvents.teleperiod; RulesSetPower (FUNC_SET_POWER) calls SystemEventsSetNewPower
+// to snapshot the current power mask for the next 50ms tick.
+extern void SystemEventsInit(void);
+extern bool SystemEventsEvery50msPowerDimmerEvent(void);
+extern void SystemEventsEvery50msRulesFlag(void);
+extern void SystemEventsEvery50ms(void);
+extern void SystemEventsEverySecond(void);
+extern void SystemEventsSaveBeforeRestart(void);
+extern void SystemEventsSetTeleperiod(bool v);
+extern void SystemEventsSetNewPower(int32_t v);
+extern void CmndEvent(void);
+
 const char kRulesCommands[] PROGMEM = "|"  // No prefix
   D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|"
   D_CMND_ADD "|"  D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION
@@ -164,18 +187,11 @@ struct RULES {
   uint32_t triggers[MAX_RULE_SETS] = { 0 };
   uint8_t trigger_count[MAX_RULE_SETS] = { 0 };
 
-  long new_power = -1;
-  long old_power = -1;
-  long old_dimm = -1;
-
-  uint16_t last_minute = 60;
   uint16_t vars_event = 0;   // Bitmask supporting MAX_RULE_VARS bits
   uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
   bool teleperiod = false;
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
-
-  char event_data[RULE_MAX_EVENTSZ];
 } Rules;
 
 char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
@@ -288,7 +304,7 @@ String GetRule(uint32_t idx) {
     // If the cache is empty, we need to decompress from Settings
     if (0 == k_rules[idx].length() ) {
       GetRule_decompress(rule, &Settings->rules[idx][1]);
-      if (!Settings->flag4.compress_rules_cpu) {
+      if (!Settings->flag4.compress_rules_cpu) {  // SetOption93 - (Compress) Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick (1)
         k_rules[idx] = rule;        // keep a copy for next time
       }
     } else {
@@ -918,8 +934,7 @@ bool RulesProcess(void) {
   return false;
 }
 
-void RulesInit(void)
-{
+void RulesInit(void) {
   // indicates scripter not enabled
   bitWrite(Settings->rule_once, 7, 0);
   // and indicates scripter do not use compress
@@ -931,6 +946,16 @@ void RulesInit(void)
       bitWrite(Settings->rule_enabled, i, 0);
       bitWrite(Settings->rule_once, i, 0);
     }
+#ifdef USE_UNISHOX_COMPRESSION
+    else {
+      // Pre-populate k_rules[] cache here (FUNC_PRE_INIT), before WiFi/MQTT/WebServer
+      // allocate heap, so the persistent cache lands at low heap addresses instead of
+      // fragmenting the middle of the heap when first rule evaluation occurs later.
+      if (!Settings->flag4.compress_rules_cpu) {  // SetOption93 - (Compress) Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick (1)
+        GetRule(i);
+      }
+    }
+#endif
   }
   Rules.teleperiod = false;
 }
@@ -940,63 +965,12 @@ void RulesEvery50ms(void)
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     char json_event[RULE_MAX_EVENTSZ +16];  // Add 16 chars for {"Event": .. }
 
-    if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
-    if (Rules.new_power != Rules.old_power) {
-      if (Rules.old_power != -1) {
-        for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-          uint8_t new_state = (Rules.new_power >> i) &1;
-          if (new_state != ((Rules.old_power >> i) &1)) {
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
-            RulesProcessEvent(json_event);
-          }
-        }
-      } else {
-        // Boot time POWER OUTPUTS (Relays) Status
-        for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-          uint8_t new_state = (Rules.new_power >> i) &1;
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
-          RulesProcessEvent(json_event);
-        }
-        // Boot time SWITCHES Status
-        for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-          if (SwitchUsed(i)) {
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"%s\":{\"Boot\":%d}}"), GetSwitchText(i).c_str(), (SwitchState(i)));
-            RulesProcessEvent(json_event);
-          }
-        }
-      }
-      Rules.old_power = Rules.new_power;
-    }
-    else if (Rules.old_dimm != Settings->light_dimmer) {
-      if (Rules.old_dimm != -1) {
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings->light_dimmer);
-      } else {
-        // Boot time DIMMER VALUE
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings->light_dimmer);
-      }
-      RulesProcessEvent(json_event);
-      Rules.old_dimm = Settings->light_dimmer;
-    }
-    else if (Rules.event_data[0]) {
-      char *event;
-      char *parameter;
-      event = strtok_r(Rules.event_data, "=", &parameter);     // Rules.event_data = fanspeed=10
-      if (event) {
-        event = Trim(event);
-        if (parameter) {
-          parameter = Trim(parameter);
-        } else {
-          parameter = event + strlen(event);  // '\0'
-        }
-        bool quotes = (parameter[0] != '{');
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event, (quotes)?"\"":"", parameter, (quotes)?"\"":"");
-        Rules.event_data[0] ='\0';
-        RulesProcessEvent(json_event);
-      } else {
-        Rules.event_data[0] ='\0';
-      }
-    }
-    else if (Rules.vars_event || Rules.mems_event){
+    // Strict-priority drain to match pre-migration semantics:
+    //   Power -> Dimmer -> Event (System Events) -> Vars/Mems (Rules) -> rules_flag (System Events)
+    // Each higher-priority branch yields the tick when it emits.
+    if (SystemEventsEvery50msPowerDimmerEvent()) { return; }
+
+    if (Rules.vars_event || Rules.mems_event) {
       if (Rules.vars_event) {
         for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
           if (bitRead(Rules.vars_event, i)) {
@@ -1017,70 +991,10 @@ void RulesEvery50ms(void)
           }
         }
       }
+      return;
     }
-    else if (TasmotaGlobal.rules_flag.data) {
-      json_event[0] = '\0';
-      if (TasmotaGlobal.rules_flag.system_init) {
-        TasmotaGlobal.rules_flag.system_init = 0;
-        strncpy_P(json_event, PSTR("{\"System\":{\"Init\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.system_boot) {
-        TasmotaGlobal.rules_flag.system_boot = 0;
-        strncpy_P(json_event, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.time_init) {
-        TasmotaGlobal.rules_flag.time_init = 0;
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Initialized\":%d}}"), MinutesPastMidnight());
-      }
-      else if (TasmotaGlobal.rules_flag.time_set) {
-        TasmotaGlobal.rules_flag.time_set = 0;
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), MinutesPastMidnight());
-      }
-      else if (TasmotaGlobal.rules_flag.mqtt_connected) {
-        TasmotaGlobal.rules_flag.mqtt_connected = 0;
-        strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
-        TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
-        strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.wifi_connected) {
-        TasmotaGlobal.rules_flag.wifi_connected = 0;
-        strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.wifi_disconnected) {
-        TasmotaGlobal.rules_flag.wifi_disconnected = 0;
-        strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event));
-      }
-//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
-#if defined(ESP32) && defined(USE_ETHERNET)
-      else if (TasmotaGlobal.rules_flag.eth_connected) {
-        TasmotaGlobal.rules_flag.eth_connected = 0;
-        strncpy_P(json_event, PSTR("{\"ETH\":{\"Connected\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.eth_disconnected) {
-        TasmotaGlobal.rules_flag.eth_disconnected = 0;
-        strncpy_P(json_event, PSTR("{\"ETH\":{\"Disconnected\":1}}"), sizeof(json_event));
-      }
-#endif  // USE_ETHERNET
-      else if (TasmotaGlobal.rules_flag.http_init) {
-        TasmotaGlobal.rules_flag.http_init = 0;
-        strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event));
-      }
-#ifdef USE_SHUTTER
-      else if (TasmotaGlobal.rules_flag.shutter_moved) {
-        TasmotaGlobal.rules_flag.shutter_moved = 0;
-        strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event));
-      }
-      else if (TasmotaGlobal.rules_flag.shutter_moving) {
-        TasmotaGlobal.rules_flag.shutter_moving = 0;
-        strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event));
-      }
-#endif  // USE_SHUTTER
-      if (json_event[0]) {
-        RulesProcessEvent(json_event);  // Only service one event within 50mS
-      }
-    }
+
+    SystemEventsEvery50msRulesFlag();
   }
 }
 
@@ -1096,13 +1010,7 @@ void RulesEverySecond(void)
 {
   char json_event[120];
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
-    if (RtcTime.valid) {
-      if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
-        Rules.last_minute = RtcTime.minute;
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), MinutesPastMidnight());
-        RulesProcessEvent(json_event);
-      }
-    }
+    SystemEventsEverySecond();          // Time#Minute (shared producer, gated to preserve pre-migration semantics)
   }
   for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
     if (Rules.timer[i] != 0L) {           // Timer active?
@@ -1120,10 +1028,7 @@ void RulesEverySecond(void)
 void RulesSaveBeforeRestart(void)
 {
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
-    char json_event[32];
-
-    strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));
-    RulesProcessEvent(json_event);
+    SystemEventsSaveBeforeRestart();    // System#Save (shared producer, gated to preserve pre-migration semantics)
   }
 }
 
@@ -1147,7 +1052,7 @@ void RulesShow() {
 
 void RulesSetPower(void)
 {
-  Rules.new_power = XdrvMailbox.index;
+  SystemEventsSetNewPower(XdrvMailbox.index);
 }
 
 #ifdef SUPPORT_MQTT_EVENT
@@ -1182,12 +1087,12 @@ bool RulesMqttData(void) {
   bool serviced = false;
   String buData = XdrvMailbox.data;            // Destroyed by JsonParser. Could be very long SENSOR message
   char ctopic[strlen(XdrvMailbox.topic)+1];
-  strcpy(ctopic, XdrvMailbox.topic);           // Destroyed by result of following iteration
+  strlcpy(ctopic, XdrvMailbox.topic, sizeof(ctopic));           // Destroyed by result of following iteration
 
   for (auto &event_item : subscriptions) {     // Looking for all matched topics
     char etopic[strlen(event_item.topic)+2];
-    strcpy(etopic, event_item.topic);          // tele/tasmota/SENSOR
-    strcat(etopic, "/");                       // tele/tasmota/SENSOR/
+    strlcpy(etopic, event_item.topic, sizeof(etopic));          // tele/tasmota/SENSOR
+    strlcat(etopic, "/", sizeof(etopic));                       // tele/tasmota/SENSOR/
     if ((strcmp(ctopic, event_item.topic) == 0) ||         // Equal tele/tasmota/SENSOR
         (strncmp(ctopic, etopic, strlen(etopic)) == 0)) {  // StartsWith tele/tasmota/SENSOR/
 
@@ -1202,7 +1107,7 @@ bool RulesMqttData(void) {
         if (!jsonData) { break; }              // Failed to parse JSON data, ignore this message.
 
         char ckey1[strlen(event_item.key)+1];
-        strcpy(ckey1, event_item.key);         // DS18B20.Temperature
+        strlcpy(ckey1, event_item.key, sizeof(ckey1));         // DS18B20.Temperature
         char* ckey2 = strchr(ckey1, '.');
         if (ckey2 != nullptr) {                // .Temperature
           *ckey2++ = '\0';                     // Temperature and ckey1 becomes DS18B20
@@ -1237,8 +1142,8 @@ bool RuleUnsubscribe(const char* event) {
         (strcmp(event, index.event) == 0)) {   // Equal
       //If find exists one, remove it.
       char stopic[strlen(index.topic)+3];
-      strcpy(stopic, index.topic);
-      strcat(stopic, "/#");
+      strlcpy(stopic, index.topic, sizeof(stopic));
+      strlcat(stopic, "/#", sizeof(stopic));
       MqttUnsubscribe(stopic);
       free(index.key);
       free(index.topic);
@@ -1280,25 +1185,23 @@ void CmndSubscribe(void) {
       // Add "/#" to the topic
       uint32_t slen = strlen(topic);
       char stopic[slen +3];
-      strcpy(stopic, topic);
+      strlcpy(stopic, topic, sizeof(stopic));
       if (stopic[slen-1] != '#') {
         if (stopic[slen-1] == '/') {
-          strcat(stopic, "#");
+          strlcat(stopic, "#", sizeof(stopic));
         } else {
-          strcat(stopic, "/#");
+          strlcat(stopic, "/#", sizeof(stopic));
         }
       }
 
       if (!key) { key = EmptyStr; }
 
       // MQTT Subscribe
-      char* hevent = (char*)malloc(strlen(event) +1);
+      char* hevent = strdup(event);
       char* htopic = (char*)malloc(strlen(stopic) -1);  // Remove "/#"
-      char* hkey = (char*)malloc(strlen(key) +1);
+      char* hkey = strdup(key);
       if (hevent && htopic && hkey) {
-        strcpy(hevent, event);
         strlcpy(htopic, stopic, strlen(stopic)-1);      // Remove "/#" so easy to match
-        strcpy(hkey, key);
         MQTT_Subscription &subscription_item = subscriptions.addToLast();
         subscription_item.event = hevent;
         subscription_item.topic = htopic;
@@ -1735,7 +1638,7 @@ float evaluateExpression(const char * expression, unsigned int len) {
 void CmndIf(void) {
   if (XdrvMailbox.data_len > 0) {
     char parameters[XdrvMailbox.data_len +1];
-    strcpy(parameters, XdrvMailbox.data);
+    strlcpy(parameters, XdrvMailbox.data, sizeof(parameters));
     ProcessIfStatement(parameters);
   }
   ResponseCmndDone();
@@ -2105,9 +2008,8 @@ void ExecuteCommandBlock(const char * commands, int len)
 
     if (strlen(blcommand)) {
       //Insert into backlog
-      char* temp = (char*)malloc(strlen(blcommand)+1);
+      char* temp = strdup(blcommand);
       if (temp != nullptr) {
-        strcpy(temp, blcommand);
         char* &elem = backlog.insertAt(insertPosition++);
         elem = temp;
       }
@@ -2352,17 +2254,6 @@ void CmndRuleTimer(void)
   ResponseJsonEnd();
 }
 
-void CmndEvent(void)
-{
-  if (XdrvMailbox.data_len > 0) {
-    strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
-#ifdef USE_DEVICE_GROUPS
-    if (!XdrvMailbox.grpflg) SendDeviceGroupMessage(1, DGR_MSGTYP_UPDATE, DGR_ITEM_EVENT, XdrvMailbox.data);
-#endif  // USE_DEVICE_GROUPS
-  }
-  if (XdrvMailbox.command) ResponseCmndDone();
-}
-
 void CmndVariable(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
@@ -2484,13 +2375,13 @@ bool Xdrv10(uint32_t function)
 
   switch (function) {
     case FUNC_EVERY_50_MSECOND:
-      RulesEvery50ms();
+      RulesEvery50ms();           // drives full priority ladder: Power/Dimmer/Event -> Vars/Mems -> rules_flag
       break;
     case FUNC_EVERY_100_MSECOND:
       RulesEvery100ms();
       break;
     case FUNC_EVERY_SECOND:
-      RulesEverySecond();
+      RulesEverySecond();         // drives Time#Minute (gated) + Rules.timer[] (RuleTimer)
       break;
     case FUNC_SET_POWER:
       RulesSetPower();
@@ -2503,11 +2394,13 @@ bool Xdrv10(uint32_t function)
       break;
     case FUNC_TELEPERIOD_RULES_PROCESS:
       Rules.teleperiod = true;
+      SystemEventsSetTeleperiod(true);   // mirror, since SystemEventsEvery50ms reads it
       result = RulesProcess();
       Rules.teleperiod = false;
+      SystemEventsSetTeleperiod(false);
       break;
     case FUNC_SAVE_BEFORE_RESTART:
-      RulesSaveBeforeRestart();
+      RulesSaveBeforeRestart();   // gated wrapper around SystemEventsSaveBeforeRestart
       break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
@@ -2516,6 +2409,7 @@ bool Xdrv10(uint32_t function)
 #endif  // SUPPORT_MQTT_EVENT
     case FUNC_PRE_INIT:
       RulesInit();
+      SystemEventsInit();
       break;
 #ifdef USE_WEBSERVER
 #ifdef USE_VIEW_RULE_MEMS_AND_VARS

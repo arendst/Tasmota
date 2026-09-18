@@ -68,13 +68,13 @@ TwoWire & getWire(bvm *vm) {
   be_pop(vm, 1);
   if (1 == bus && TasmotaGlobal.i2c_enabled[0]) {
     return Wire;
-#ifdef USE_I2C_BUS2
+#if MAX_I2C > 1
   } else if (2 == bus && TasmotaGlobal.i2c_enabled[1]) {
     return Wire1;
-#endif  // USE_I2C_BUS2
+#endif  // MAX_I2C
   } else {
     be_raise(vm, "configuration_error", "I2C bus not initiliazedd");
-    return *(TwoWire*)nullptr;
+    __builtin_unreachable();  // be_raise() never returns (longjmp); suppress missing-return warning
   }
 }
 
@@ -199,7 +199,7 @@ extern "C" {
         int32_t value = be_toint(vm, 2);
         myWire.write(value);
       } else if (be_isstring(vm, 2)) {
-        const char * s = be_tostring(vm, 1);
+        const char * s = be_tostring(vm, 2);
         myWire.write((uint8_t*) s, strlen(s));
       } else if ((buf = be_tobytes(vm, 2, &len)) != nullptr) {
         myWire.write((uint8_t*) buf, len);

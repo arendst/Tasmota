@@ -283,8 +283,8 @@ uint16_t SendMail(char *buffer) {
 void attach_File(char *path) {
   SMTP_Attachment att;
   if (num_attachments < MAX_ATTCHMENTS) {
-    attachments[num_attachments] = (char*)malloc(32);
-    strcpy(attachments[num_attachments], path);
+    attachments[num_attachments] = strdup(path);
+    if (!attachments[num_attachments]) { return; }
 
     char *cp = attachments[num_attachments];
     att.file.path = cp;
@@ -331,16 +331,17 @@ void attach_Array(char *aname) {
       char nbuff[16];
       flt2char(*fp++, nbuff);
       if (cnt < (alen - 1)) {
-        strcat(nbuff, "\t");
+        strlcat(nbuff, "\t", sizeof(nbuff));
       } else {
-        strcat(nbuff, "\n");
+        strlcat(nbuff, "\n", sizeof(nbuff));
       }
       ttstr += nbuff;
     }
 
     if (num_attachments < MAX_ATTCHMENTS) {
       attachments[num_attachments] = (char*)malloc(ttstr.length() + 1 + 32);
-      strcpy(attachments[num_attachments] + 32, ttstr.c_str());
+      if (!attachments[num_attachments]) { return; }
+      strlcpy(attachments[num_attachments] + 32, ttstr.c_str(), ttstr.length()+1);
       sprintf(attachments[num_attachments], "%s.txt", aname);
       attach_Data(attachments[num_attachments], (uint8_t*)attachments[num_attachments]+32, ttstr.length());
       num_attachments++;

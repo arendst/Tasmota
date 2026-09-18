@@ -68,6 +68,7 @@
 #undef USE_EMULATION                             // Disable Wemo or Hue emulation
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
 #undef USE_EMULATION_WEMO                        // Disable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+#undef USE_EMULATION_SHELLY                      // Disable Shelly emulation (+8k code)
 #undef USE_CUSTOM                                // Disable Custom features
 #undef USE_DISCOVERY                             // Disable Discovery services for both MQTT and web server
 #undef USE_TIMERS                                // Disable support for up to 16 timers
@@ -228,6 +229,7 @@
 #undef USE_TUYA_MCU
 #undef USE_EMULATION_HUE
 #undef USE_EMULATION_WEMO
+#undef USE_EMULATION_SHELLY
 #undef USE_BUZZER
 #undef USE_ARILUX_RF
 #undef USE_DS18x20
@@ -278,6 +280,7 @@
   #define USE_EQ3_ESP32
 #endif // USE_MI_EXT_GUI
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+  #define USE_SENSOR_ICON                        // Display GUI icons instead of line with data
 
 #endif  // FIRMWARE_BLUETOOTH
 
@@ -351,14 +354,17 @@
 
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 #undef USE_EMULATION_WEMO
+#undef USE_EMULATION_SHELLY
 //#undef USE_EMULATION_HUE
 
 #define USE_WS2812
 
 #define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
-#define USE_ENERGY_SENSOR                      // Add energy to support Shelly Pro 4PM display (+38k code)
-#define USE_SHELLY_PRO
+#ifdef CONFIG_IDF_TARGET_ESP32
+  #define USE_ENERGY_SENSOR                      // Add energy to support Shelly Pro 4PM display (+38k code)
+  #define USE_SHELLY_PRO
+#endif
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #undef USE_MLX90614

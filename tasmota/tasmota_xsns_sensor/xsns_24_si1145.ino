@@ -322,7 +322,7 @@ bool Si1145Read(void)
 }
 
 void Si1145Detect(void) {
-  for (si1145_bus = 0; si1145_bus < 2; si1145_bus++) {
+  for (si1145_bus = 0; si1145_bus < MAX_I2C; si1145_bus++) {
     if (!I2cSetDevice(SI114X_ADDR, si1145_bus)) { continue; }
 
     if (Si1145Begin()) {

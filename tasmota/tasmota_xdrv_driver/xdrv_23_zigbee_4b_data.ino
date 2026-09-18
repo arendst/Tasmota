@@ -40,7 +40,7 @@
 // returns the lenght of consumed buffer, or -1 if error
 int32_t hydrateDeviceWideData(class Z_Device & device, const SBuffer & buf, size_t start, size_t len) {
   size_t segment_len = buf.get8(start);
-  if ((segment_len < 6) || (segment_len > len)) {
+  if ((segment_len < 7) || (segment_len > len)) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "invalid device wide data length=%d"), segment_len);
     return -1;
   }

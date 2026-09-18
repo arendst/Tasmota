@@ -1,7 +1,0 @@
-sudo: false
-language: cpp
-compiler:
-  - g++
-script: cd tests && make && make test
-os:
-  - linux

@@ -99,6 +99,21 @@ extern "C" {
     .next = (uint32_t)(_next) & 0xFFFFFF                        \
 }
 
+/* Compact map node (BE_USE_COMPACT_MAP): the node is
+ * { key_v, key_type, next, val_type, val_v }. The be_ckey_* macros emit the
+ * first three elements (key payload, key type, chain link masked to 16 bits);
+ * the node template then appends the value type byte and the value payload.
+ * be_ckey / be_ckey_weak are recognized by coc (strong / weak) like
+ * be_const_key / be_const_key_weak. */
+#define be_ckey(_str, _next)                                    \
+    { .c = &be_const_str_##_str }, BE_STRING, ((uint32_t)(_next) & 0xFFFF)
+
+#define be_ckey_weak(_str, _next)                               \
+    { .c = &be_const_str_##_str }, BE_STRING, ((uint32_t)(_next) & 0xFFFF)
+
+#define be_ckey_int(_i, _next)                                  \
+    { .i = (bint)(_i) }, BE_INT, ((uint32_t)(_next) & 0xFFFF)
+
 #define be_const_func(_func) {                                  \
     .v.nf = (_func),                                            \
     .type = BE_NTVFUNC                                          \
@@ -184,8 +199,13 @@ extern "C" {
     .type = BE_LIST                                             \
 }
 
+#if BE_USE_COMPACT_MAP
+#define be_define_const_map_slots(_name)                        \
+const bmapnodec _name##_slots[] =
+#else
 #define be_define_const_map_slots(_name)                        \
 const bmapnode _name##_slots[] =
+#endif
 
 #define be_define_const_map(_name, _size)                       \
 const bmap _name = {                                            \
@@ -352,6 +372,65 @@ const bntvmodule_t be_native_module(_module) = {                  \
     (uint32_t)(_next) & 0xFFFFFF                                \
   }
 
+/* Compact-map (BE_USE_COMPACT_MAP) literal-string key: emits the first three
+ * elements of a bmapnodec initializer (key payload, key type, chain link masked
+ * to 16 bits). Compact sibling of be_nested_key, for hand-written const maps. */
+#define be_ckey_nested(_str, _hash, _len, _next)                \
+    { .s=(be_nested_const_str(_str, _hash, _len )) },           \
+    BE_STRING,                                                  \
+    (uint32_t)(_next) & 0xFFFF
+
+/* Compact constant table (BE_USE_COMPACT_KTAB): payload-word initializers.
+ * These produce a `union bvaldata` (no type field) used in the split
+ * constant arrays emitted by solidify. The type lives in the parallel
+ * `bbyte` array. Mirrors the readable be_const_* style.
+ * be_kv_str / be_kv_str_weak / be_kv_str_long are recognized by the `coc`
+ * tool (strong / weak / long-bclstring respectively) so the referenced
+ * string is registered in the string table — keep them in lockstep with
+ * tools/coc/coc_parser.py. */
+#define be_kv_nil()             { .i = 0 }
+#define be_kv_int(_v)           { .i = (bint)(_v) }
+#define be_kv_bool(_v)          { .b = (bbool)(_v) }
+#define be_kv_real(_hex)        { .p = (void*)(_hex) }
+#define be_kv_str(_name)        { .s = (bstring*)&be_const_str_##_name }
+#define be_kv_str_weak(_name)   { .s = (bstring*)&be_const_str_##_name }
+#define be_kv_str_long(_name)   { .s = (bstring*)&be_const_str_##_name }
+#define be_kv_class(_class)     { .c = &(_class) }
+#define be_kv_closure(_closure) { .c = &(_closure) }
+#define be_kv_comptr(_ptr)      { .c = (const void*)(_ptr) }
+#define be_kv_func(_func)       { .nf = (_func) }
+
+/* Compact map value payloads (BE_USE_COMPACT_MAP) for the types that do not
+ * occur in a function ktab: a generic pointer payload (nested map / list /
+ * simple instance), and a bytes instance. be_kv_bytes_instance is recognized
+ * by coc so the referenced bytes literal is registered. */
+#define be_kv_ptr(_expr)            { .c = (const void*)(_expr) }
+#define be_kv_bytes_instance(_bytes) { .c = &be_const_instance_##_bytes }
+
+/* be_ckv_*: a full compact-map-node value = "<type byte>, <payload>" (two
+ * positional elements of bmapnodec: val_type then val_v). These mirror the
+ * be_const_* family and are produced by the coc generator (block_builder.py)
+ * from `be_const_<x>(...)` -> `be_ckv_<x>(...)`. Keep in lockstep with the
+ * be_const_* macros above. */
+#define be_ckv_nil()                BE_NIL, { .i = 0 }
+#define be_ckv_int(_v)              BE_INT, { .i = (bint)(_v) }
+#define be_ckv_var(_v)              BE_INDEX, { .i = (bint)(_v) }
+#define be_ckv_real(_v)             BE_REAL, { .r = (breal)(_v) }
+#define be_ckv_real_hex(_v)         BE_REAL, { .p = (void*)(_v) }
+#define be_ckv_bool(_v)             BE_BOOL, { .b = (bbool)(_v) }
+#define be_ckv_str(_s)              BE_STRING, { .s = (bstring*)(_s) }
+#define be_ckv_comptr(_v)           BE_COMPTR, { .c = (const void*)(_v) }
+#define be_ckv_class(_c)            BE_CLASS, { .c = &(_c) }
+#define be_ckv_closure(_c)          BE_CLOSURE, { .c = &(_c) }
+#define be_ckv_static_closure(_c)   BE_CLOSURE | BE_STATIC, { .c = &(_c) }
+#define be_ckv_func(_f)             BE_NTVFUNC, { .nf = (_f) }
+#define be_ckv_static_func(_f)      BE_NTVFUNC | BE_STATIC, { .nf = (_f) }
+#define be_ckv_module(_m)           BE_MODULE, { .c = &(_m) }
+#define be_ckv_simple_instance(_i)  BE_INSTANCE, { .c = (_i) }
+#define be_ckv_map(_m)              BE_MAP, { .c = &(_m) }
+#define be_ckv_list(_l)             BE_LIST, { .c = &(_l) }
+#define be_ckv_bytes_instance(_b)   BE_INSTANCE, { .c = &be_const_instance_##_b }
+
 #else
 
 #define be_define_const_str_weak(_name, _s, _len)               \
@@ -384,6 +463,16 @@ const bcstring be_const_str_##_name = {                         \
         BE_INT,                                                 \
         uint32_t((_next)&0xFFFFFF)                              \
 }
+
+/* Compact map node (BE_USE_COMPACT_MAP), C++ variant. */
+#define be_ckey(_str, _next)                                    \
+    bvaldata((const void*)&be_const_str_##_str), BE_STRING, uint32_t((_next)&0xFFFF)
+
+#define be_ckey_weak(_str, _next)                               \
+    bvaldata((const void*)&be_const_str_##_str), BE_STRING, uint32_t((_next)&0xFFFF)
+
+#define be_ckey_int(_i, _next)                                  \
+    bvaldata(bint(_i)), BE_INT, uint32_t((_next)&0xFFFF)
 
 #define be_const_func(_func) {                                  \
     bvaldata(_func),                                            \
@@ -455,8 +544,13 @@ const bcstring be_const_str_##_name = {                         \
     BE_MODULE                                                   \
 }
 
+#if BE_USE_COMPACT_MAP
+#define be_define_const_map_slots(_name)                        \
+const bmapnodec _name##_slots[] =
+#else
 #define be_define_const_map_slots(_name)                        \
 const bmapnode _name##_slots[] =
+#endif
 
 #define be_define_const_map(_name, _size)                       \
 const bmap _name(                                               \
@@ -490,6 +584,43 @@ const bntvmodule_t be_native_module_##_module = {               \
     0, 0,                                                       \
     (bmodule*)&(m_lib##_module)                                 \
 }
+
+/* Compact constant table (BE_USE_COMPACT_KTAB): payload-word initializers,
+ * C++ variant using the union bvaldata constructors. */
+#define be_kv_nil()             bvaldata(bint(0))
+#define be_kv_int(_v)           bvaldata(bint(_v))
+#define be_kv_bool(_v)          bvaldata(bbool(_v))
+#define be_kv_real(_hex)        bvaldata((void*)(_hex))
+#define be_kv_str(_name)        bvaldata((const void*)&be_const_str_##_name)
+#define be_kv_str_weak(_name)   bvaldata((const void*)&be_const_str_##_name)
+#define be_kv_str_long(_name)   bvaldata((const void*)&be_const_str_##_name)
+#define be_kv_class(_class)     bvaldata((const void*)&(_class))
+#define be_kv_closure(_closure) bvaldata((const void*)&(_closure))
+#define be_kv_comptr(_ptr)      bvaldata((const void*)(_ptr))
+#define be_kv_func(_func)       bvaldata((bntvfunc)(_func))
+#define be_kv_ptr(_expr)        bvaldata((const void*)(_expr))
+#define be_kv_bytes_instance(_bytes) bvaldata((const void*)&be_const_instance_##_bytes)
+
+/* be_ckv_*: full compact-map-node value "<type byte>, <payload>", C++ variant.
+ * Mirrors the be_const_* C++ payloads. */
+#define be_ckv_nil()                BE_NIL, bvaldata(bint(0))
+#define be_ckv_int(_v)              BE_INT, bvaldata(bint(_v))
+#define be_ckv_var(_v)              BE_INDEX, bvaldata(bint(_v))
+#define be_ckv_real(_v)             BE_REAL, bvaldata(breal(_v))
+#define be_ckv_real_hex(_v)         BE_REAL, bvaldata((void*)(_v))
+#define be_ckv_bool(_v)             BE_BOOL, bvaldata(bbool(_v))
+#define be_ckv_str(_s)              BE_STRING, bvaldata(bstring(_s))
+#define be_ckv_comptr(_v)           BE_COMPTR, bvaldata((void*)(_v))
+#define be_ckv_class(_c)            BE_CLASS, bvaldata(&(_c))
+#define be_ckv_closure(_c)          BE_CLOSURE, bvaldata(&(_c))
+#define be_ckv_static_closure(_c)   BE_CLOSURE | BE_STATIC, bvaldata(&(_c))
+#define be_ckv_func(_f)             BE_NTVFUNC, bvaldata((bntvfunc)(_f))
+#define be_ckv_static_func(_f)      BE_NTVFUNC | BE_STATIC, bvaldata((bntvfunc)(_f))
+#define be_ckv_module(_m)           BE_MODULE, bvaldata(&(_m))
+#define be_ckv_simple_instance(_i)  BE_INSTANCE, bvaldata((const void*)(_i))
+#define be_ckv_map(_m)              BE_MAP, bvaldata((const void*)&(_m))
+#define be_ckv_list(_l)             BE_LIST, bvaldata((const void*)&(_l))
+#define be_ckv_bytes_instance(_b)   BE_INSTANCE, bvaldata((const void*)&be_const_instance_##_b)
 
 #endif
 

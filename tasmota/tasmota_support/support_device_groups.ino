@@ -143,12 +143,12 @@ void DeviceGroupsInit(void)
 
   struct device_group * device_group = device_groups;
   for (uint32_t device_group_index = 0; device_group_index < device_group_count; device_group_index++, device_group++) {
-    strcpy(device_group->group_name, SettingsText(SET_DEV_GROUP_NAME1 + device_group_index));
+    strlcpy(device_group->group_name, SettingsText(SET_DEV_GROUP_NAME1 + device_group_index), sizeof(device_group->group_name));
 
     // If the device group name is not set, use the MQTT group topic (with the device group index +
     // 1 appended for device group indices > 0).
     if (!device_group->group_name[0]) {
-      strcpy(device_group->group_name, SettingsText(SET_MQTT_GRP_TOPIC));
+      strlcpy(device_group->group_name, SettingsText(SET_MQTT_GRP_TOPIC), sizeof(device_group->group_name));
       if (device_group_index) {
         snprintf_P(device_group->group_name, sizeof(device_group->group_name), PSTR("%s%u"), device_group->group_name, device_group_index + 1);
       }

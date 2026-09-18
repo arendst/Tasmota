@@ -258,7 +258,7 @@ extern "C" {
       // (-2) map instance, (-1) map
     }
     be_map_insert_str(vm, "mac", WiFiHelper::macAddress().c_str());
-    be_map_insert_bool(vm, "up", WifiHasIP());
+    be_map_insert_bool(vm, "up", WifiHasIP() && Settings->flag4.network_wifi);
     if (Settings->flag4.network_wifi) {
       int32_t rssi = WiFi.RSSI();
       bool show_rssi = false;
@@ -1002,7 +1002,7 @@ extern "C" {
   // ESP object
   int32_t l_arch(bvm *vm);
   int32_t l_arch(bvm *vm) {
-    be_pushstring(vm, ESP32_ARCH);
+    be_pushstring(vm, TASMOTA_ARCH);
     be_return(vm);
   }
 
@@ -1102,7 +1102,7 @@ extern "C" {
     va_start(arg, berry_buf);
     uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
     va_end(arg);
-    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    if (len+3 > LOGSZ) { strlcat(log_data, "...", sizeof(log_data)); }  // Actual data is more
     TasConsole.printf(log_data);
 #ifdef USE_SERIAL_BRIDGE
     SerialBridgeWrite(log_data, strlen(log_data));
@@ -1120,7 +1120,7 @@ extern "C" {
     va_start(arg, berry_buf);
     uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
     va_end(arg);
-    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    if (len+3 > LOGSZ) { strlcat(log_data, "...", sizeof(log_data)); }  // Actual data is more
     berry_log(log_data);
   }
 

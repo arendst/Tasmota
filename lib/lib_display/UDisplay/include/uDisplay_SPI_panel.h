@@ -8,6 +8,11 @@
 #include "uDisplay_panel.h"
 #include "uDisplay_SPI_controller.h"
 
+enum UDisplayMonoPackFlags : uint8_t {
+    UDISP_MONO_PACK_INVERT = 1 << 0,
+    UDISP_MONO_PACK_REVERSE_Y = 1 << 1,
+};
+
 typedef struct LVGL_PARAMS_t {
   uint16_t flushlines;
   union {
@@ -40,6 +45,13 @@ struct SPIPanelConfig {
     uint8_t cmd_set_addr_x;   // Command to set X address range
     uint8_t cmd_set_addr_y;   // Command to set Y address range  
     uint8_t cmd_write_ram;    // Command to write pixel data
+    uint8_t ram_x_start;      // Optional full-frame RAM window for packed mono modes
+    uint8_t ram_x_end;
+    uint8_t ram_y_start;
+    uint8_t ram_y_end;
+    uint8_t mono_pack_width;  // Optional descriptor-selected 1bpp transfer packing
+    uint8_t mono_pack_height;
+    uint8_t mono_pack_flags;
 
     // ===== Display Control Commands =====
     uint8_t cmd_display_on;
@@ -107,6 +119,9 @@ private:
     bool use_hw_spi = false;
 
     // ===== Internal Helpers =====
+    bool hasPackedMono() const;
+    bool updateFramePackedMono();
+    uint8_t getMonoPixel(int16_t x, int16_t y) const;
     void setAddrWindow_internal(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
     void sendAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
     void sendCommand(uint8_t cmd);

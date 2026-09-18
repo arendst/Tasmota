@@ -59,6 +59,7 @@ struct MAGICSWITCH_DATA {
   uint32_t    pulse_len;            // measured pulse length
   uint32_t    min_pulse;            // minimum pulse length
   uint8_t     switch_state;         // switch state - count down for masking window
+  uint8_t     masking_window_len;   // masking window length (in 50 ms units)
   uint8_t     pin;                  // the GPIO of the input
   uint8_t     mode;                 // mode
   int8_t      key_offset;           // index of the MagicSwitch in the list of Switches
@@ -100,7 +101,7 @@ void MagicSwitchLoop()
     }
   } else if (MagicSwitch->pulse_len) {
     SwitchSetVirtualPinState(MagicSwitch->key_offset, 1);
-    MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
+    MagicSwitch->switch_state = MagicSwitch->masking_window_len;
     AddLog(LOG_LEVEL_DEBUG, PSTR("MSW: length:%d, window:%d"), MagicSwitch->pulse_len, MagicSwitch->switch_state);
   }
 }
@@ -108,7 +109,7 @@ void MagicSwitchLoop()
 void MagicSwitchSetPower(void) {
   // It can happen that on relay switch, disturbances on the mains is falsy see as a MagicSwitch pulse
   // This restart the masking windows on every power change to avoid that effect
-  MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
+  MagicSwitch->switch_state = MagicSwitch->masking_window_len;
 }
 
 /********************************************************************************************************
@@ -125,6 +126,7 @@ void MagicSwitchInit(void) {
       MagicSwitch->mode = GetPin(MagicSwitch->pin) - AGPIO(GPIO_MAGIC_SWITCH); // Index 1 => mode 0, etc...
       MagicSwitch->key_offset = -1; // means not yet configured
       MagicSwitch->min_pulse = MAGICSWITCH_MIN_PULSE;
+      MagicSwitch->masking_window_len = MAGICSWITCH_MASKING_WINDOW_LEN;
 
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MSW: pin:%d, mode:%d"), MagicSwitch->pin, MagicSwitch->mode);
 
@@ -148,12 +150,13 @@ bool MagicSwitchAddSwitch(void) {
  * Commands
  */
 
-const char kMagicSwitchCommands[] PROGMEM = "MagicSwitch|" 
-  "Pulse"
+const char kMagicSwitchCommands[] PROGMEM = "MagicSwitch|"
+  "Pulse|Window"
   ;
 
 void (* const MagicSwitchCommand[])(void) PROGMEM = {
-  &CmndMagicSwitchPulse
+  &CmndMagicSwitchPulse,
+  &CmndMagicSwitchWindow
   };
 
 void CmndMagicSwitchPulse(void)
@@ -162,6 +165,14 @@ void CmndMagicSwitchPulse(void)
     MagicSwitch->min_pulse = XdrvMailbox.payload;
   }
   ResponseCmndNumber(MagicSwitch->min_pulse);
+}
+
+void CmndMagicSwitchWindow(void)
+{
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 255)) {
+    MagicSwitch->masking_window_len = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(MagicSwitch->masking_window_len);
 }
 
 /*********************************************************************************************\
