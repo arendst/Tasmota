@@ -581,6 +581,19 @@ static const struct miel_hvac_map miel_hvac_fan_map[] = {
 	{MIEL_HVAC_SETTINGS_FAN_4,     "4"},
 };
 
+/*
+ * On dual-vertical-vane units (confirmed on MSZ-LN, remote has separate
+ * Left/Right vertical vane buttons) this single byte tracks only the
+ * RIGHT vane. Changing the left vane's position, to any value, leaves
+ * every byte of the Settings packet unchanged, confirmed by testing:
+ * set left=up/right=down, then left=down/right=up (same final vane byte
+ * both times), then changed only the right vane (byte followed it) and
+ * only the left vane three times in a row (byte never moved). There is
+ * no separate field anywhere in the Settings packet that exposes the
+ * left vane's position, CN105 simply has no visibility into it on this
+ * unit, the same class of gap as Purifier/NightMode/EconoCool being
+ * settable from the remote but unreported over CN105.
+ */
 static const struct miel_hvac_map miel_hvac_vane_map[] = {
 	{MIEL_HVAC_SETTINGS_VANE_AUTO,       "auto"},
 	{MIEL_HVAC_SETTINGS_VANE_1,          "up"},
@@ -591,14 +604,37 @@ static const struct miel_hvac_map miel_hvac_vane_map[] = {
 	{MIEL_HVAC_SETTINGS_VANE_SWING,      "swing"},
 };
 
+/*
+ * Ordered left-to-right by physical vane position (LL/L/LC/C/RC/RR/R do not
+ * sort by their raw protocol byte value), then the non-positional extras.
+ * Lookups below are by name/value, not array index, so this order only
+ * affects display order in the web select and HA discovery swing_horizontal_modes.
+ *
+ * On dual-vane units, confirmed by testing against a real MSZ-LN unit:
+ * "left"/"left_middle"/"center"/"right_middle"/"right"/"split"/"swing"
+ * move both vanes together to that position. "left_center" and
+ * "right_center" are asymmetric splits instead of a synchronized position:
+ * left_center puts the left vane at the left_middle angle and the right
+ * vane at center, right_center mirrors that (left vane at center, right
+ * vane at the right_middle angle). WIDEVANE_RR is named "right" here, not
+ * "right_middle", because it drives both vanes to the furthest-right
+ * extreme, matching what "right" means on the left/center side.
+ * WIDEVANE_R ("right_middle") is the lesser position. This is not
+ * necessarily true on other models -- there is no capability bit
+ * indicating vane count or this per-side behavior (checked against
+ * mUART's independently reverse-engineered protocol docs, which describe
+ * a different, single-vane-oriented scheme for these same raw values,
+ * and another real unit reported by a PR reviewer showed yet another
+ * variant) -- so do not assume this mapping generalizes.
+ */
 static const struct miel_hvac_map miel_hvac_widevane_map[] = {
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LL,    "left"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_L,     "left_middle"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_C,     "center"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_R,     "right"},
-	{MIEL_HVAC_SETTINGS_WIDEVANE_RR,    "right_middle"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_LC,    "left_center"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_C,     "center"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_RC,    "right_center"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_R,     "right_middle"},
+	{MIEL_HVAC_SETTINGS_WIDEVANE_RR,    "right"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SPLIT, "split"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_SWING, "swing"},
 	{MIEL_HVAC_SETTINGS_WIDEVANE_ISEE,  "isee"},
@@ -737,7 +773,12 @@ struct miel_hvac_parser
  *   bytes 10-15 = temperature range pairs (cool, heat, auto) — only present
  *                 when extended temp range is supported (flags_b & 0x04)
  *
- * Arbitrary data byte 6 bit 0x10 indicates 0x08 Set Run State support.
+ * byte 9 bit 0x10 was previously assumed to indicate 0x08 Set Run State
+ * support (stored as cap_run_state), but per mUART's own docs
+ * (0x7B-identify-response/0xC9-base-capabilities) that bit is undocumented
+ * ("???", observed both true and false) — it is kept only for diagnostics
+ * (CapabilitiesHex / Modbus raw register) and no longer gates any command,
+ * polling, or UI visibility.
  */
 struct miel_hvac_capabilities
 {
@@ -758,7 +799,7 @@ struct miel_hvac_capabilities
 
 	/* capability flags C (byte 9) */
 	bool     cap_outdoor_temp;     /* outdoor temperature reporting (bit 0x20) */
-	bool     cap_run_state;        /* supports 0x08 Set Run State features (bit 0x10) */
+	bool     cap_run_state;        /* byte 9 bit 0x10 — undocumented, unreliable, diagnostics-only */
 
 	/* temperature ranges (bytes 10-15, only when cap_ext_temp) */
 	bool     cap_temp_ranges;      /* temperature range bytes present */
@@ -821,12 +862,22 @@ struct miel_hvac_softc
 	bool sc_connected;
 	bool sc_identified;            /* true once 0x5B 0xC9 has been sent */
 	bool sc_has_isee;              /* true once i-See widevane state observed */
+	bool sc_has_widevane;          /* assumed true; cleared only after positive no-support evidence */
+	bool sc_widevane_seen;         /* at least one genuine 0x62/0x02 widevane value received */
+	bool sc_widevane_pending;      /* waiting for round-trip verification of a requested position */
+	uint8_t sc_widevane_last;      /* last genuine widevane byte from the indoor unit */
+	uint8_t sc_widevane_want;      /* requested widevane byte being verified */
+	bool sc_widevane_probed;       /* true once the one-shot startup support probe has run */
+	bool sc_widevane_probing;      /* probe's round trip is in flight, revert once it resolves */
+	uint8_t sc_widevane_probe_revert; /* position to restore once the probe resolves */
 	bool sc_has_energy;            /* true once non-zero Power or Energy seen */
 	bool sc_temp_type;             /* true once extended .5°C encoding observed */
 	bool sc_remotetemp_active;     /* true when remote temp override is active */
 	unsigned long sc_remotetemp_auto_clear_time;
 	unsigned long sc_remotetemp_last_call_time;
 	int sc_remotetemp_half;        /* last remote temp in 0.5°C units */
+	uint8_t sc_last_airdirection;  /* last EVEN/DIRECT/INDIRECT (never OFF), for
+	                                 * re-engaging air direction from SwingH=I-See */
 
 	struct miel_hvac_data sc_settings;
 	struct miel_hvac_data sc_roomtemp;
@@ -834,6 +885,32 @@ struct miel_hvac_softc
 	struct miel_hvac_data sc_status;
 	struct miel_hvac_data sc_stage;
 	struct miel_hvac_data sc_options; /* 0x42 Options */
+	bool sc_options_confirmed; /* true once any genuine 0x62 0x42 response
+	                             * has been parsed — used only to gate the
+	                             * raw OptionsHex diagnostic dump */
+
+	/*
+	 * Not all units that answer 0x42 support all three of Purifier,
+	 * NightMode and EconoCool (e.g. some report NightMode/Purifier but
+	 * not EconoCool). There is no capability bit for this in the 0x42
+	 * response, so each is only proven supported by a round trip: a Set
+	 * Run State request is sent asking for a value that DIFFERS from the
+	 * last confirmed value (armed below, sc_*_pending/sc_*_want), and if
+	 * the next genuine 0x42 response reads back exactly that requested
+	 * value, the transition really happened and that option is marked
+	 * confirmed. A no-op resend of the already-current value is not
+	 * armed, since matching it back would prove nothing.
+	 */
+	bool    sc_purifier_pending;
+	uint8_t sc_purifier_want;
+	bool    sc_purifier_confirmed;
+	bool    sc_nightmode_pending;
+	uint8_t sc_nightmode_want;
+	bool    sc_nightmode_confirmed;
+	bool    sc_econocool_pending;
+	uint8_t sc_econocool_want;
+	bool    sc_econocool_confirmed;
+
 	struct miel_hvac_data sc_error;   /* 0x04 Error State */
 
 	struct miel_hvac_capabilities sc_caps; /* 0x7B 0xC9 Base Capabilities */
@@ -857,6 +934,7 @@ static void miel_hvac_input_connected(struct miel_hvac_softc *, const void *, si
 static void miel_hvac_input_data(struct miel_hvac_softc *, const void *, size_t);
 static void miel_hvac_input_updated(struct miel_hvac_softc *, const void *, size_t);
 static void miel_hvac_input_identify(struct miel_hvac_softc *, const void *, size_t);
+static void miel_hvac_hass_discovery(struct miel_hvac_softc *);
 
 static enum miel_hvac_parser_state
 miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
@@ -1515,6 +1593,27 @@ miel_hvac_cmnd_setwidevane(void)
 		return;
 	}
 
+	if (e->byte == MIEL_HVAC_SETTINGS_WIDEVANE_ISEE)
+	{
+		/* i-See isn't a plain vane position: it's a read-back of air
+		 * direction control being active. Selecting it here re-engages
+		 * air direction at whatever direction was last active, instead
+		 * of sending a bare widevane byte the unit won't act on. */
+		miel_hvac_cmnd_apply_response(
+			miel_hvac_apply_airdirection(sc, sc->sc_last_airdirection), e->name);
+		return;
+	}
+
+	/* A static widevane read-back cannot tell us whether horizontal-vane
+	 * hardware exists: units such as MSZ-GE35VA (no horizontal vane) still
+	 * report the dummy value CENTER (0x03).  Track a requested change so the
+	 * next genuine 0x62/0x02 read-back can prove support or no support. */
+	if (sc->sc_widevane_seen && e->byte != sc->sc_widevane_last)
+	{
+		sc->sc_widevane_want = e->byte;
+		sc->sc_widevane_pending = true;
+	}
+
 	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
 	update->widevane = e->byte;
 
@@ -1571,6 +1670,7 @@ miel_hvac_cmnd_setairdirection(void)
 		rs->eight          = 0x08;
 		rs->flags         |= htons(MIEL_HVAC_RUNSTATE_F_AIRDIRECTION);
 		rs->airdirection   = e->byte;
+		sc->sc_last_airdirection = e->byte;
 		break;
 	}
 	case MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF:
@@ -1600,13 +1700,6 @@ miel_hvac_cmnd_setpurify(void)
 		return;
 	}
 
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-	{
-		miel_hvac_respond_not_supported();
-		return;
-	}
-
 	update->eight     = 0x08;
 	update->flags    |= htons(MIEL_HVAC_RUNSTATE_F_PURIFIER);
 	update->purifier  = e->byte;
@@ -1632,13 +1725,6 @@ miel_hvac_cmnd_setnightmode(void)
 		return;
 	}
 
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-	{
-		miel_hvac_respond_not_supported();
-		return;
-	}
-
 	update->eight      = 0x08;
 	update->flags     |= htons(MIEL_HVAC_RUNSTATE_F_NIGHTMODE);
 	update->nightmode  = e->byte;
@@ -1661,13 +1747,6 @@ miel_hvac_cmnd_seteconocool(void)
 	if (e == NULL)
 	{
 		miel_hvac_respond_unsupported();
-		return;
-	}
-
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-	{
-		miel_hvac_respond_not_supported();
 		return;
 	}
 
@@ -1793,6 +1872,39 @@ miel_hvac_cmnd_request(void)
 
 	ResponseCmndDone();
 }
+
+/*
+ * HVACProbeRunState <flags_hex> <byte_offset> <value_hex>
+ *
+ * Debug-only raw probe of the 0x08 Set Run State surface, for testing
+ * undocumented flag/byte combinations (e.g. reports of a flag 0x1000,
+ * byte 12 buzzer test on other units). byte_offset is the 0-based
+ * position within the 16-byte 0x08 payload (3-15, bytes 0-2 are the
+ * command type and flags themselves and are not writable this way).
+ * No validation of whether the combination is safe or meaningful —
+ * this exists purely to let a human correlate a raw packet with a
+ * physically observed effect (LED, sound, fan) on real hardware.
+ */
+static void
+miel_hvac_cmnd_proberunstate(void)
+{
+	struct miel_hvac_softc *sc = miel_hvac_sc;
+	struct miel_hvac_msg_update_runstate *update = &sc->sc_runstate_update;
+	unsigned int flags, offset, value;
+
+	if (sscanf(XdrvMailbox.data, "%x %u %x", &flags, &offset, &value) != 3
+	    || flags > 0xffff || offset < 3 || offset > 15 || value > 0xff)
+	{
+		miel_hvac_respond_unsupported();
+		return;
+	}
+
+	update->eight = 0x08;
+	update->flags |= htons((uint16_t)flags);
+	((uint8_t *)update)[offset] = (uint8_t)value;
+
+	ResponseCmndChar_P(XdrvMailbox.data);
+}
 #endif
 
 /* serial data handlers */
@@ -1885,6 +1997,11 @@ miel_hvac_input_identify(struct miel_hvac_softc *sc,
 	/* raw packet bytes */
 	AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME ": capabilities hex %s"),
 		ToHex_P(caps->sc_caps_raw, 16, hex, sizeof(hex)));
+
+	/* MQTT may have connected before the C9 response arrived.  Republish
+	 * the custom climate discovery now so fan modes reflect the actual
+	 * unit capabilities instead of the conservative startup fallback. */
+	miel_hvac_hass_discovery(sc);
 }
 
 static void
@@ -1904,6 +2021,70 @@ miel_hvac_input_connected(struct miel_hvac_softc *sc,
 	AddLog(LOG_LEVEL_INFO, PSTR(MIEL_HVAC_LOGNAME
 		": connected to Mitsubishi Electric HVAC"));
 	sc->sc_connected = true;
+}
+
+/*
+ * Home Assistant "hvac_action" (heating/cooling/drying/fan/idle/defrosting/
+ * preheating/off).  HAMode alone can't distinguish Auto's actual heat/cool
+ * stage, or a defrost/preheat/standby cycle, so this also consults the
+ * 0x62 0x09 Stage packet when available.  Used both for the "HAAction"
+ * SENSOR field and, indirectly, by the climate discovery config.
+ */
+static const char *
+miel_hvac_ha_action(struct miel_hvac_softc *sc)
+{
+	const struct miel_hvac_data_settings *set;
+
+	if (sc->sc_settings.type == 0)
+		return NULL;
+
+	set = &sc->sc_settings.data.settings;
+	if (!set->power)
+		return "off";
+
+	/* Standby/defrost/preheat can happen in any active mode (heat, cool,
+	 * dry, auto), and HA has dedicated actions for all three, so report
+	 * those ahead of the mode-based mapping below. */
+	if (sc->sc_stage.type != 0)
+	{
+		switch (sc->sc_stage.data.stage.operation)
+		{
+		case MIEL_HVAC_STAGE_OPERATION_STANDBY:
+			return "idle";
+		case MIEL_HVAC_STAGE_OPERATION_DEFROST:
+			return "defrosting";
+		case MIEL_HVAC_STAGE_OPERATION_PREHEAT:
+			return "preheating";
+		}
+	}
+
+	switch (set->mode & MIEL_HVAC_SETTINGS_MODE_MASK)
+	{
+	case MIEL_HVAC_SETTINGS_MODE_HEAT:
+	case MIEL_HVAC_SETTINGS_MODE_HEAT_ISEE:
+		return "heating";
+	case MIEL_HVAC_SETTINGS_MODE_COOL:
+	case MIEL_HVAC_SETTINGS_MODE_COOL_ISEE:
+		return "cooling";
+	case MIEL_HVAC_SETTINGS_MODE_DRY:
+	case MIEL_HVAC_SETTINGS_MODE_DRY_ISEE:
+		return "drying";
+	case MIEL_HVAC_SETTINGS_MODE_FAN:
+		return "fan";
+	case MIEL_HVAC_SETTINGS_MODE_AUTO:
+		if (sc->sc_stage.type != 0)
+		{
+			switch (sc->sc_stage.data.stage.mode)
+			{
+			case MIEL_HVAC_STAGE_MODE_AUTO_HEAT:
+				return "heating";
+			case MIEL_HVAC_STAGE_MODE_AUTO_COOL:
+				return "cooling";
+			}
+		}
+		return "fan";
+	}
+	return NULL;
 }
 
 /*
@@ -1980,19 +2161,25 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGV "\":\"%s\""), name);
 
-	/* Swing horizontal / widevane */
-	name = widevane_isee
-		? "isee"
-		: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
-			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
-	if (name != NULL)
-		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
+	/* Swing horizontal / widevane — only report it after a real horizontal
+	 * vane state has been observed. Units without horizontal vanes commonly
+	 * leave the widevane byte at 0x00, which is not a valid mapped position. */
+	if (sc->sc_has_widevane)
+	{
+		name = widevane_isee
+			? "isee"
+			: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
+				miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
+		if (name != NULL)
+			ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
+	}
 
-	/* Air direction — only reported when the unit has both a vertical vane
-	 * and an observed i-See sensor. Without i-See the direction value is
-	 * meaningless regardless of whether vaneV is present. */
-	if (!sc->sc_caps.sc_caps_valid
-	    || (sc->sc_caps.cap_vane_v && sc->sc_has_isee))
+	/* Air direction — only reported once the unit is confirmed to have both
+	 * a vertical vane and an observed i-See sensor, matching the HA
+	 * discovery preset_modes gate (isee_capable) and the web panel's Air
+	 * Direction control, so all three stay in sync on the same criterion. */
+	if (sc->sc_caps.sc_caps_valid
+	    && sc->sc_caps.cap_vane_v && sc->sc_has_isee)
 	{
 		name = widevane_isee
 			? miel_hvac_map_byval(set->airdirection,
@@ -2008,27 +2195,42 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"Prohibit\":\"%s\""), name);
 
-	/* Purifier, NightMode, EconoCool — state from 0x62 0x42 Options. */
-	if ((!sc->sc_caps.sc_caps_valid || sc->sc_caps.cap_run_state)
-		&& sc->sc_options.type != 0)
+	/* Purifier, NightMode, EconoCool — state from 0x62 0x42 Options.
+	 * cap_run_state (0xC9 byte 9 bit 0x10) is not a reliable indicator
+	 * (undocumented per mUART, observed both true and false). Not all
+	 * units that answer 0x42 support all three, so each is gated on its
+	 * own round-trip-confirmed flag (sc_purifier_confirmed et al, set
+	 * only once a Set Run State request's value is read back exactly).
+	 * Only published once confirmed — *Supported in the capabilities
+	 * block already reports "not_supported" otherwise, no need to repeat
+	 * that here too. */
 	{
 		const struct miel_hvac_data_options *opt =
 			&sc->sc_options.data.options;
 
-		name = miel_hvac_map_byval(opt->purifier,
-			miel_hvac_purifier_map, nitems(miel_hvac_purifier_map));
-		if (name != NULL)
-			ResponseAppend_P(PSTR(",\"Purifier\":\"%s\""), name);
+		if (sc->sc_purifier_confirmed)
+		{
+			name = miel_hvac_map_byval(opt->purifier,
+				miel_hvac_purifier_map, nitems(miel_hvac_purifier_map));
+			if (name != NULL)
+				ResponseAppend_P(PSTR(",\"Purifier\":\"%s\""), name);
+		}
 
-		name = miel_hvac_map_byval(opt->nightmode,
-			miel_hvac_nightmode_map, nitems(miel_hvac_nightmode_map));
-		if (name != NULL)
-			ResponseAppend_P(PSTR(",\"NightMode\":\"%s\""), name);
+		if (sc->sc_nightmode_confirmed)
+		{
+			name = miel_hvac_map_byval(opt->nightmode,
+				miel_hvac_nightmode_map, nitems(miel_hvac_nightmode_map));
+			if (name != NULL)
+				ResponseAppend_P(PSTR(",\"NightMode\":\"%s\""), name);
+		}
 
-		name = miel_hvac_map_byval(opt->econocool,
-			miel_hvac_econocool_map, nitems(miel_hvac_econocool_map));
-		if (name != NULL)
-			ResponseAppend_P(PSTR(",\"EconoCool\":\"%s\""), name);
+		if (sc->sc_econocool_confirmed)
+		{
+			name = miel_hvac_map_byval(opt->econocool,
+				miel_hvac_econocool_map, nitems(miel_hvac_econocool_map));
+			if (name != NULL)
+				ResponseAppend_P(PSTR(",\"EconoCool\":\"%s\""), name);
+		}
 	}
 
 	/* raw packet bytes */
@@ -2053,6 +2255,8 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	const struct miel_hvac_data_settings *set = &d->data.settings;
 	uint32_t state = set->power ? 1 : 0;
 	bool publish;
+	bool had_isee = sc->sc_has_isee;
+	bool had_widevane = sc->sc_has_widevane;
 
 	if (miel_hvac_update_settings_pending(sc))
 	{
@@ -2067,10 +2271,107 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	if (bitRead(TasmotaGlobal.power, sc->sc_device) != !!state)
 		ExecuteCommandPower(sc->sc_device, state, SRC_SWITCH);
 
-	/* Detect presence of i-See sensor from widevane bit 0x80 or the
-	 * two known i-See-active non-0x80 values. Once set, stays set. */
+	/* There is no reliable C9 capability bit for horizontal-vane hardware,
+	 * and a static read-back is not enough to decide it: the MSZ-GE35VA has
+	 * no horizontal vane but genuinely reports CENTER (0x03).  Therefore
+	 * VaneHSupported starts ON and is turned OFF only by positive evidence:
+	 * we requested a DIFFERENT valid position and the next genuine settings
+	 * report returned exactly the previous position instead of the request.
+	 *
+	 * A successful requested change, a genuine change from another source,
+	 * or an i-See state is positive support evidence and can turn it back ON. */
+	uint8_t widevane_raw = set->widevane;
+	uint8_t widevane_pos = widevane_raw & MIEL_HVAC_SETTINGS_WIDEVANE_MASK;
+	bool widevane_mapped = (widevane_pos != 0
+	    && miel_hvac_map_byval(widevane_pos, miel_hvac_widevane_map,
+	        nitems(miel_hvac_widevane_map)) != NULL);
+
+	if (!sc->sc_widevane_seen)
+	{
+		sc->sc_widevane_seen = true;
+		sc->sc_widevane_last = widevane_raw;
+
+		/* One-shot startup probe: nudge the horizontal vane to a different
+		 * position and immediately revert it once the round trip resolves,
+		 * so VaneHSupported is established automatically on every boot
+		 * instead of only after a user happens to send HVACSetSwingH.
+		 * Skipped when i-See is already active below -- that alone already
+		 * proves horizontal-vane hardware exists. */
+		if (!sc->sc_widevane_probed
+		    && !((widevane_raw & 0x80) || widevane_raw == 0x28 || widevane_raw == 0xaa))
+		{
+			struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+			uint8_t probe = (widevane_pos == MIEL_HVAC_SETTINGS_WIDEVANE_LL)
+				? MIEL_HVAC_SETTINGS_WIDEVANE_RR : MIEL_HVAC_SETTINGS_WIDEVANE_LL;
+
+			sc->sc_widevane_probed = true;
+			sc->sc_widevane_probing = true;
+			sc->sc_widevane_probe_revert = widevane_raw;
+
+			update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+			update->widevane = probe;
+			sc->sc_widevane_want = probe;
+			sc->sc_widevane_pending = true;
+		}
+	}
+	else
+	{
+		if (sc->sc_widevane_pending)
+		{
+			if (widevane_raw == sc->sc_widevane_want)
+			{
+				/* Requested position survived genuine CN105 read-back. */
+				sc->sc_has_widevane = true;
+			}
+			else if (widevane_raw == sc->sc_widevane_last)
+			{
+				/* Strong no-support evidence: a different widevane position was
+				 * sent, but the indoor unit ignored it and returned the exact
+				 * pre-command position (GE35VA: typically CENTER/0x03). */
+				sc->sc_has_widevane = false;
+			}
+			/* A third value is ambiguous: do not change capability state. */
+			sc->sc_widevane_pending = false;
+
+			/* Startup probe resolved (either way) -- restore the position
+			 * the unit was actually in before we nudged it. */
+			if (sc->sc_widevane_probing)
+			{
+				sc->sc_widevane_probing = false;
+				if (widevane_raw != sc->sc_widevane_probe_revert)
+				{
+					struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+
+					update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+					update->widevane = sc->sc_widevane_probe_revert;
+					sc->sc_widevane_want = sc->sc_widevane_probe_revert;
+					sc->sc_widevane_pending = true;
+				}
+			}
+		}
+		else if (widevane_raw != sc->sc_widevane_last && widevane_mapped)
+		{
+			/* A genuine mapped change not caused by our optimistic local apply
+			 * proves horizontal-vane state is actually changing. */
+			sc->sc_has_widevane = true;
+		}
+
+		sc->sc_widevane_last = widevane_raw;
+	}
+
+	/* i-See itself positively proves horizontal/wide-vane control exists. */
 	if ((set->widevane & 0x80) || set->widevane == 0x28 || set->widevane == 0xaa)
+	{
 		sc->sc_has_isee = true;
+		sc->sc_has_widevane = true;
+	}
+
+	/* Republish discovery whenever VaneHSupported changes in either direction,
+	 * or when i-See is first learned, so HA adds/removes horizontal swing
+	 * without requiring an MQTT reconnect or restart. */
+	if ((had_widevane != sc->sc_has_widevane)
+	    || (!had_isee && sc->sc_has_isee))
+		miel_hvac_hass_discovery(sc);
 
 	publish = (sc->sc_settings_set == 0)
 	       || (memcmp(d, &sc->sc_settings, sizeof(sc->sc_settings)) != 0);
@@ -2160,7 +2461,30 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 	case MIEL_HVAC_DATA_T_OPTIONS:
 	{
 		bool changed = (memcmp(&sc->sc_options, d, sizeof(sc->sc_options)) != 0);
+		const struct miel_hvac_data_options *opt = &d->data.options;
+
 		sc->sc_options = *d;
+		sc->sc_options_confirmed = true;
+
+		if (sc->sc_purifier_pending)
+		{
+			if (opt->purifier == sc->sc_purifier_want)
+				sc->sc_purifier_confirmed = true;
+			sc->sc_purifier_pending = false;
+		}
+		if (sc->sc_nightmode_pending)
+		{
+			if (opt->nightmode == sc->sc_nightmode_want)
+				sc->sc_nightmode_confirmed = true;
+			sc->sc_nightmode_pending = false;
+		}
+		if (sc->sc_econocool_pending)
+		{
+			if (opt->econocool == sc->sc_econocool_want)
+				sc->sc_econocool_confirmed = true;
+			sc->sc_econocool_pending = false;
+		}
+
 		if (changed)
 		{
 			MqttPublishSensor();
@@ -2391,6 +2715,12 @@ miel_hvac_apply_widevane(struct miel_hvac_softc *sc, uint8_t wv_raw)
 	    miel_hvac_widevane_map, nitems(miel_hvac_widevane_map)) == NULL)
 		return (MIEL_HVAC_APPLY_BAD_VALUE);
 
+	if (sc->sc_widevane_seen && wv_raw != sc->sc_widevane_last)
+	{
+		sc->sc_widevane_want = wv_raw;
+		sc->sc_widevane_pending = true;
+	}
+
 	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
 	update->widevane = wv_raw;
 
@@ -2436,6 +2766,7 @@ miel_hvac_apply_airdirection(struct miel_hvac_softc *sc, uint8_t dir)
 		rs->eight        = 0x08;
 		rs->flags       |= htons(MIEL_HVAC_RUNSTATE_F_AIRDIRECTION);
 		rs->airdirection = dir;
+		sc->sc_last_airdirection = dir;
 		break;
 	}
 	case MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF:
@@ -2452,9 +2783,6 @@ miel_hvac_apply_runstate(struct miel_hvac_softc *sc, uint16_t flag,
 	uint8_t *field, bool on)
 {
 	struct miel_hvac_msg_update_runstate *update = &sc->sc_runstate_update;
-
-	if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-		return (MIEL_HVAC_APPLY_UNSUPPORTED);
 
 	update->eight = 0x08;
 	update->flags |= htons(flag);
@@ -2678,7 +3006,6 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 	bool has_tm  = (sc->sc_timers.type != 0);
 	bool has_st  = (sc->sc_status.type != 0);
 	bool has_sg  = (sc->sc_stage.type != 0);
-	bool has_op  = (sc->sc_options.type != 0);
 
 	*ok = true;
 
@@ -2710,9 +3037,9 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		return (set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK);
 	case 0x0016: return (has_set ? set->prohibit : 0);
 	case 0x0017: return (has_set ? set->airdirection : 0);
-	case 0x0018: return (has_op ? (op->purifier ? 1 : 0) : 0);
-	case 0x0019: return (has_op ? (op->nightmode ? 1 : 0) : 0);
-	case 0x001a: return (has_op ? (op->econocool ? 1 : 0) : 0);
+	case 0x0018: return (sc->sc_purifier_confirmed  ? (op->purifier  ? 1 : 0) : 0);
+	case 0x0019: return (sc->sc_nightmode_confirmed ? (op->nightmode ? 1 : 0) : 0);
+	case 0x001a: return (sc->sc_econocool_confirmed ? (op->econocool ? 1 : 0) : 0);
 
 	case 0x0020:
 		if (!has_rt) return (0);
@@ -2910,9 +3237,9 @@ miel_hvac_mb_read_bit(struct miel_hvac_softc *sc, uint8_t fc, uint16_t addr, boo
 		switch (addr)
 		{
 		case 0: return (sc->sc_settings.type != 0 && set->power);
-		case 1: return (sc->sc_options.type != 0 && op->purifier);
-		case 2: return (sc->sc_options.type != 0 && op->nightmode);
-		case 3: return (sc->sc_options.type != 0 && op->econocool);
+		case 1: return (sc->sc_purifier_confirmed  && op->purifier);
+		case 2: return (sc->sc_nightmode_confirmed && op->nightmode);
+		case 3: return (sc->sc_econocool_confirmed && op->econocool);
 		case 4: return (sc->sc_remotetemp_active);
 		}
 	}
@@ -3546,6 +3873,13 @@ miel_hvac_pre_init(void)
 	}
 
 	memset(sc, 0, sizeof(*sc));
+
+	/* There is no reliable C9 bit that says whether a horizontal/wide vane
+	 * exists.  Default to supported so capable units get the control
+	 * immediately.  A real rejected position change can later provide
+	 * positive evidence that the unit has no horizontal vane and clear this. */
+	sc->sc_has_widevane = true;
+
 	sc->sc_remotetemp_auto_clear_time = 10000;
 	miel_hvac_init_update_settings(&sc->sc_settings_update);
 
@@ -3621,7 +3955,15 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 	/* Settings (power, mode, temp, fan, vane, widevane, prohibit, purifier, nightmode) */
 	if (sc->sc_settings.type != 0)
+	{
+		const char *ha_action;
+
 		miel_hvac_append_settings_json(sc);
+
+		ha_action = miel_hvac_ha_action(sc);
+		if (ha_action != NULL)
+			ResponseAppend_P(PSTR(",\"HAAction\":\"%s\""), ha_action);
+	}
 
 	/* Room temperature */
 	if (sc->sc_roomtemp.type != 0)
@@ -3795,8 +4137,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	}
 
 	/* Options raw hex — Purifier/NightMode/EconoCool already in settings block above. */
-	if ((!sc->sc_caps.sc_caps_valid || sc->sc_caps.cap_run_state)
-		&& sc->sc_options.type != 0)
+	if (sc->sc_options_confirmed)
 	{
 		char hex[(sizeof(sc->sc_options) + 1) * 2];
 		ResponseAppend_P(PSTR(",\"OptionsHex\":\"%s\""),
@@ -3815,6 +4156,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			"\"ModeDrySupported\":\"%s\","
 			"\"ModeFanSupported\":\"%s\","
 			"\"VaneVSupported\":\"%s\","
+			"\"VaneHSupported\":\"%s\","
 			"\"SwingSupported\":\"%s\","
 			"\"FanAutoSupported\":\"%s\","
 			"\"OutdoorTemperatureSupported\":\"%s\","
@@ -3826,15 +4168,20 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			caps->cap_mode_dry     ? "on" : "off",
 			caps->cap_mode_fan     ? "on" : "off",
 			caps->cap_vane_v       ? "on" : "off",
+			sc->sc_has_widevane    ? "on" : "off",
 			caps->cap_vane_swing   ? "on" : "off",
 			caps->cap_fan_auto     ? "on" : "off",
 			caps->cap_outdoor_temp ? "on" : "off",
 			/* AirDirection requires cap_vane_v and an observed i-See sensor.
 			 * It works independently of cap_run_state. */
 			(!caps->cap_vane_v || !sc->sc_has_isee) ? "not_supported" : "on",
-			caps->cap_run_state    ? "on" : "not_supported",
-			caps->cap_run_state    ? "on" : "not_supported",
-			caps->cap_run_state    ? "on" : "not_supported");
+			/* cap_run_state (0xC9 byte 9 bit 0x10) is undocumented per mUART
+			 * and not a reliable capability indicator. Not all units that
+			 * answer 0x42 support all three of these, so each is reported
+			 * independently based on its own round-trip-confirmed flag. */
+			sc->sc_purifier_confirmed  ? "on" : "not_supported",
+			sc->sc_nightmode_confirmed ? "on" : "not_supported",
+			sc->sc_econocool_confirmed ? "on" : "not_supported");
 
 		if (caps->cap_temp_ranges)
 		{
@@ -4020,13 +4367,22 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 			vh = vhbuf;
 		}
 	}
-	snprintf_P(val, sizeof(val), PSTR("%s / %s"), name, vh);
-	miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
+	if (sc->sc_has_widevane)
+	{
+		snprintf_P(val, sizeof(val), PSTR("%s / %s"), name, vh);
+		miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
+	}
+	else
+	{
+		snprintf_P(val, sizeof(val), PSTR("%s"), name);
+		miel_hvac_web_ro(js, "hvro_vane", "Vane V", val);
+	}
 
 	/* Air Direction — separate i-See function; "off" unless wide vane is
-	 * in i-See mode.  Shown only when the unit supports it. */
-	if (!sc->sc_caps.sc_caps_valid
-	    || (sc->sc_caps.cap_vane_v && sc->sc_has_isee))
+	 * in i-See mode.  Shown only once the unit is confirmed capable, same
+	 * gate as the SENSOR JSON field and the Air Direction control below. */
+	if (sc->sc_caps.sc_caps_valid
+	    && sc->sc_caps.cap_vane_v && sc->sc_has_isee)
 	{
 		const char *ad = wv_isee
 			? miel_hvac_map_byval(set->airdirection,
@@ -4090,7 +4446,7 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 				miel_hvac_fan_map, nitems(miel_hvac_fan_map));
 			const char *vn = miel_hvac_map_byval(set->vane,
 				miel_hvac_vane_map, nitems(miel_hvac_vane_map));
-			const char *wn = wv_isee ? NULL
+			const char *wn = wv_isee ? "isee"
 				: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
 					miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
 			const char *ad = wv_isee
@@ -4283,28 +4639,29 @@ miel_hvac_web_optlabel(const char *name)
 		{ "auto",         "Auto"          },
 		{ "quiet",        "Quiet"         },
 		{ "up",           "Up"            },
-		{ "up_middle",    "Up-Middle"     },
+		{ "up_middle",    "Up Middle"     },
 		{ "center",       "Center"        },
-		{ "down_middle",  "Down-Middle"   },
+		{ "down_middle",  "Down Middle"   },
 		{ "down",         "Down"          },
 		{ "swing",        "Swing"         },
 		{ "left",         "Left"          },
-		{ "left_middle",  "Left-Middle"   },
+		{ "left_middle",  "Left Middle"   },
 		{ "right",        "Right"         },
-		{ "right_middle", "Right-Middle"  },
-		{ "left_center",  "Left-Center"   },
-		{ "right_center", "Right-Center"  },
+		{ "right_middle", "Right Middle"  },
+		{ "left_center",  "Left Center"   },
+		{ "right_center", "Right Center"  },
 		{ "split",        "Split"         },
+		{ "isee",         "I-See"         },
 		{ "even",         "Even"          },
 		{ "indirect",     "Indirect"      },
 		{ "direct",       "Direct"        },
 		{ "off",          "Off"           },
 		{ "power",        "Power"         },
 		{ "mode",         "Mode"          },
-		{ "mode_power",   "Mode-Power"    },
+		{ "mode_power",   "Mode Power"    },
 		{ "temp",         "Temp"          },
-		{ "temp_power",   "Temp-Power"    },
-		{ "temp_mode",    "Temp-Mode"     },
+		{ "temp_power",   "Temp Power"    },
+		{ "temp_mode",    "Temp Mode"     },
 		{ "all",          "All"           },
 	};
 	static char buf[24];
@@ -4446,9 +4803,12 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 		"onchange='hvsl(this.value)'></div>"),
 		tbuf, tlo, thi, sc->sc_temp_type ? "0.5" : "1", tbuf);
 
-	/* Fan speed */
+	/* Fan speed — numbered speeds are capped to the fan count reported by
+	 * the C9 Base Capabilities response, same as the HA discovery
+	 * fan_modes list. Quiet is only offered once fan_count is confirmed to
+	 * be 5, the same threshold SetFanSpeed itself enforces. */
 	{
-		uint8_t fskip[3];
+		uint8_t fskip[5];
 		size_t nf = 0;
 		uint8_t fc = miel_hvac_get_fan_count(sc);
 
@@ -4456,6 +4816,10 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_AUTO;
 		if (fc != 0 && fc < 5)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_QUIET;
+		if (fc != 0 && fc < 2)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_2;
+		if (fc != 0 && fc < 3)
+			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_3;
 		if (fc != 0 && fc < 4)
 			fskip[nf++] = MIEL_HVAC_SETTINGS_FAN_4;
 
@@ -4478,23 +4842,39 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 			set->vane, vskip, nv);
 	}
 
-	/* Vane horizontal / wide vane */
+	/* i-See is a distinct high-bit marker (0x80), or one of two odd values
+	 * (0x28/0xaa) seen in the wild -- none fall within
+	 * MIEL_HVAC_SETTINGS_WIDEVANE_MASK's low nibble, so it must be checked
+	 * before masking, not after (masking it away is what previously made
+	 * the Vane horizontal selector never show I-See as current). */
+	bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
+	             || set->widevane == 0xaa);
+
+	/* Vane horizontal / wide vane — available by default because C9 has no
+	 * reliable horizontal-vane capability bit.  It is hidden only after a
+	 * real CN105 position-change request is positively rejected by read-back.
+	 * I-See remains separately gated as before. */
+	if (sc->sc_has_widevane)
 	{
-		static const uint8_t hskip[] = { MIEL_HVAC_SETTINGS_WIDEVANE_ISEE };
+		uint8_t hskip[1];
+		size_t nh = 0;
+		uint8_t vhcur = wv_isee ? MIEL_HVAC_SETTINGS_WIDEVANE_ISEE
+			: (set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK);
+
+		if (!cv || !caps->cap_vane_v || !sc->sc_has_isee)
+			hskip[nh++] = MIEL_HVAC_SETTINGS_WIDEVANE_ISEE;
 
 		miel_hvac_web_select("Vane horizontal", "hvh", MIEL_HVAC_WEBARG_VANEH,
 			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map),
-			set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
-			hskip, nitems(hskip));
+			vhcur, hskip, nh);
 	}
 
-	/* Air direction (i-See) — separate function; needs a vertical vane and
-	 * an observed i-See sensor.  Direction is only meaningful while the wide
+	/* Air direction (i-See) — separate function; needs a confirmed vertical
+	 * vane and an observed i-See sensor, same isee_capable gate as the HA
+	 * discovery preset_modes.  Direction is only meaningful while the wide
 	 * vane is in i-See mode; otherwise the control reads "off". */
-	if (!cv || (caps->cap_vane_v && sc->sc_has_isee))
+	if (cv && caps->cap_vane_v && sc->sc_has_isee)
 	{
-		bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
-		             || set->widevane == 0xaa);
 		uint8_t adcur = wv_isee
 			? set->airdirection
 			: MIEL_HVAC_SETTINGS_AIRDIRECTION_OFF;
@@ -4509,21 +4889,27 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 		miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map),
 		set->prohibit, NULL, 0);
 
-	/* Purifier / Night mode / EconoCool (0x08 Set Run State) */
-	if (!cv || caps->cap_run_state)
+	/* Purifier / Night mode / EconoCool (0x08 Set Run State).
+	 * cap_run_state is undocumented/unreliable, so don't gate on it.
+	 * Not all units that answer 0x42 support all three, so each button
+	 * only appears once its own round-trip-confirmed flag is set. */
+	if (sc->sc_purifier_confirmed || sc->sc_nightmode_confirmed
+	    || sc->sc_econocool_confirmed)
 	{
 		const struct miel_hvac_data_options *opt = &sc->sc_options.data.options;
-		bool have = (sc->sc_options.type != 0);
 
 		WSContentSend_P(PSTR("<div class='hp-field'>"));
 		miel_hvac_web_label("Options");
 		WSContentSend_P(PSTR("<div class='hp-toggles'>"));
-		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_PURIFY, "Purifier",
-			have && opt->purifier == MIEL_HVAC_OPTIONS_PURIFIER_ON);
-		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_NIGHT, "Night",
-			have && opt->nightmode == MIEL_HVAC_OPTIONS_NIGHTMODE_ON);
-		miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_ECONO, "EconoCool",
-			have && opt->econocool == MIEL_HVAC_OPTIONS_ECONOCOOL_ON);
+		if (sc->sc_purifier_confirmed)
+			miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_PURIFY, "Purifier",
+				opt->purifier == MIEL_HVAC_OPTIONS_PURIFIER_ON);
+		if (sc->sc_nightmode_confirmed)
+			miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_NIGHT, "Night",
+				opt->nightmode == MIEL_HVAC_OPTIONS_NIGHTMODE_ON);
+		if (sc->sc_econocool_confirmed)
+			miel_hvac_web_optbtn(MIEL_HVAC_WEBARG_ECONO, "EconoCool",
+				opt->econocool == MIEL_HVAC_OPTIONS_ECONOCOOL_ON);
 		WSContentSend_P(PSTR("</div></div>"));
 	}
 
@@ -4817,22 +5203,30 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 			&sc->sc_runstate_update;
 		uint16_t sent_flags = runstate->flags;
 
-		/* Optimistic update: apply values to sc_options before sending
-		 * so SENSOR reflects intended state immediately. Confirmed by next 0x42 read. */
-		if (sent_flags & htons(MIEL_HVAC_RUNSTATE_F_PURIFIER))
+		/* No optimistic apply here — Purifier/NightMode/EconoCool must
+		 * reflect the unit's own confirmed state, not what we just asked
+		 * for, since on some units the 0x42 read-back below never
+		 * arrives and an optimistic guess would then never get
+		 * corrected. Arm a pending round-trip check per option instead,
+		 * only when the request actually asks for a different value
+		 * than last confirmed — see sc_purifier_pending et al. */
+		if ((sent_flags & htons(MIEL_HVAC_RUNSTATE_F_PURIFIER))
+		    && runstate->purifier != sc->sc_options.data.options.purifier)
 		{
-			sc->sc_options.type = MIEL_HVAC_DATA_T_OPTIONS;
-			sc->sc_options.data.options.purifier = runstate->purifier;
+			sc->sc_purifier_want = runstate->purifier;
+			sc->sc_purifier_pending = true;
 		}
-		if (sent_flags & htons(MIEL_HVAC_RUNSTATE_F_NIGHTMODE))
+		if ((sent_flags & htons(MIEL_HVAC_RUNSTATE_F_NIGHTMODE))
+		    && runstate->nightmode != sc->sc_options.data.options.nightmode)
 		{
-			sc->sc_options.type = MIEL_HVAC_DATA_T_OPTIONS;
-			sc->sc_options.data.options.nightmode = runstate->nightmode;
+			sc->sc_nightmode_want = runstate->nightmode;
+			sc->sc_nightmode_pending = true;
 		}
-		if (sent_flags & htons(MIEL_HVAC_RUNSTATE_F_ECONOCOOL))
+		if ((sent_flags & htons(MIEL_HVAC_RUNSTATE_F_ECONOCOOL))
+		    && runstate->econocool != sc->sc_options.data.options.econocool)
 		{
-			sc->sc_options.type = MIEL_HVAC_DATA_T_OPTIONS;
-			sc->sc_options.data.options.econocool = runstate->econocool;
+			sc->sc_econocool_want = runstate->econocool;
+			sc->sc_econocool_pending = true;
 		}
 
 		miel_hvac_send_update_runstate(sc, runstate);
@@ -4849,21 +5243,340 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 
 	i = (sc->sc_tick++ % nitems(updates));
 
-	/* 0x42 uses short request form (len=1). Units without cap_run_state
-	 * never respond to 0x42, so skip polling to avoid timeouts. */
+	/* 0x42 uses short request form (len=1). cap_run_state is not a
+	 * reliable predictor of 0x42 support (undocumented per mUART,
+	 * observed both true and false) so it is always polled here. */
 	if (updates[i] == MIEL_HVAC_REQUEST_OPTIONS)
-	{
-		if (sc->sc_caps.sc_caps_valid && !sc->sc_caps.cap_run_state)
-		{
-			/* skip this slot silently — advance tick counter only */
-		}
-		else
-		{
-			miel_hvac_request_short(sc, updates[i]);
-		}
-	}
+		miel_hvac_request_short(sc, updates[i]);
 	else
 		miel_hvac_request(sc, updates[i]);
+}
+
+/*********************************************************************************************\
+ * Home Assistant MQTT Discovery
+ *
+ * Publishes a single retained "climate" config exposing everything: mode,
+ * current/target temperature, fan, action, vertical swing, horizontal
+ * swing/widevane and air direction (as a preset). Uses HA's full,
+ * non-abbreviated config keys throughout (the same schema as the YAML
+ * "climate:" platform config) rather than the short "avty_t"-style
+ * abbreviations, since not all of the keys used here (notably
+ * swing_horizontal_mode_*, a newer addition) have a documented short form.
+ *
+ * Fan speed is capability-driven: Auto follows cap_fan_auto, Quiet is only
+ * offered once the C9 Base Capabilities response confirms 5 fan speeds
+ * (fan_count == 5, same threshold SetFanSpeed itself enforces), and
+ * numbered speeds are capped to the reported fan count. AirDirection
+ * presets are exposed only after a vertical vane and i-See support are
+ * known.
+ * Swing controls and state/command values use capitalized/spaced HA labels
+ * mapped to the lower_snake_case values used by MiELHVAC commands/SENSOR JSON.
+ *
+ * This payload does not fit under Tasmota's default MQTT_MAX_PACKET_SIZE
+ * (1200 bytes), my_user_config.h raises it to 4096 whenever USE_MIEL_HVAC
+ * is defined, so other drivers/builds keep the smaller default. A
+ * driver alone cannot do this itself -- by the time this file is reached,
+ * all .ino files are concatenated (alphabetically, per subdirectory) into
+ * one translation unit, and xdrv_02_9_mqtt.ino has already read the macro
+ * to size the MQTT client's buffer.
+ *
+ * Republished whenever MQTT (re)connects, and again once C9 capabilities
+ * arrive or i-See is first observed, so fan/preset modes catch up to the
+ * unit's actual capabilities without a reconnect. SetOption19 enables (0,
+ * default) or disables (1) it, same as the rest of Tasmota's HA discovery.
+ *
+ * "I-See" (widevane 0x80) is a read-back of the unit's i-See auto-tracking
+ * sub-mode -- it is engaged via AirDirection (the preset), not by sending
+ * SwingH="I-See" directly, and only exists on units with an i-See sensor.
+ * So it's listed as a swing_horizontal_modes option (and mapped in its
+ * templates) only once the unit is actually known to support it.
+\*********************************************************************************************/
+/* Ordered left-to-right by physical vane position, then the non-positional
+ * extras, matching miel_hvac_widevane_map. */
+static const char miel_hvac_swingh_modes_isee[] PROGMEM =
+	"[\"Left\",\"Left Middle\",\"Left Center\",\"Center\",\"Right Center\",\"Right Middle\",\"Right\",\"Split\",\"Swing\",\"I-See\"]";
+static const char miel_hvac_swingh_modes_noisee[] PROGMEM =
+	"[\"Left\",\"Left Middle\",\"Left Center\",\"Center\",\"Right Center\",\"Right Middle\",\"Right\",\"Split\",\"Swing\"]";
+
+static const char miel_hvac_swingh_state_tpl_isee[] PROGMEM =
+	"{{ {'left':'Left','left_middle':'Left Middle','left_center':'Left Center','center':'Center','right_center':'Right Center','right_middle':'Right Middle','right':'Right','split':'Split','swing':'Swing','isee':'I-See'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
+static const char miel_hvac_swingh_state_tpl_noisee[] PROGMEM =
+	"{{ {'left':'Left','left_middle':'Left Middle','left_center':'Left Center','center':'Center','right_center':'Right Center','right_middle':'Right Middle','right':'Right','split':'Split','swing':'Swing'}.get(value_json.MiElHVAC.SwingH, 'Center') }}";
+
+static const char miel_hvac_swingh_cmd_tpl_isee[] PROGMEM =
+	"{{ {'Left':'left','Left Middle':'left_middle','Left Center':'left_center','Center':'center','Right Center':'right_center','Right Middle':'right_middle','Right':'right','Split':'split','Swing':'swing','I-See':'isee'}[value] }}";
+static const char miel_hvac_swingh_cmd_tpl_noisee[] PROGMEM =
+	"{{ {'Left':'left','Left Middle':'left_middle','Left Center':'left_center','Center':'center','Right Center':'right_center','Right Middle':'right_middle','Right':'right','Split':'split','Swing':'swing'}[value] }}";
+
+/*
+ * Purifier / NightMode / EconoCool as separate Home Assistant MQTT switch
+ * entities -- climate has no slot for arbitrary on/off toggles. Each is
+ * only published once its own round-trip-confirmed flag is set, same as
+ * the SENSOR JSON (miel_hvac_append_settings_json()) and the web panel,
+ * both of which gate on these per-feature flags rather than the
+ * unreliable cap_run_state bit. Called only when discovery is enabled,
+ * the SetOption19-disabled path clears all three unconditionally instead.
+ */
+static void
+miel_hvac_hass_discovery_switch(const char *dev_id, const char *base_topic,
+	const char *esc_devname, const char *object_suffix, const char *name,
+	const char *json_key, const char *cmnd_name, bool confirmed)
+{
+	char object_id[24];
+	char stopic[TOPSZ];
+	char cmnd_topic[TOPSZ];
+
+	snprintf_P(object_id, sizeof(object_id), PSTR("%s_%s"), dev_id, object_suffix);
+	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/switch/%s/config"), object_id);
+
+	if (!confirmed)
+	{
+		/* Not (yet) confirmed on this unit: clear any previously retained
+		 * config -- it may have been published before a firmware update
+		 * added the confirmed-flag gating, or the unit may just not have
+		 * answered a Set Run State round trip for this feature yet. */
+		ResponseClear();
+		MqttPublish(stopic, true);
+		return;
+	}
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, cmnd_name);
+	Response_P(PSTR(
+		"{\"~\":\"%s\","
+		"\"name\":\"%s\","
+		"\"unique_id\":\"%s\","
+		"\"availability_topic\":\"~LWT\","
+		"\"payload_available\":\"" MQTT_LWT_ONLINE "\","
+		"\"payload_not_available\":\"" MQTT_LWT_OFFLINE "\","
+		"\"state_topic\":\"~SENSOR\","
+		"\"value_template\":\"{{value_json.MiElHVAC.%s}}\","
+		"\"command_topic\":\"%s\","
+		"\"payload_on\":\"on\","
+		"\"payload_off\":\"off\","
+		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
+		base_topic, name, object_id, json_key, cmnd_topic,
+		dev_id, esc_devname, TasmotaGlobal.version);
+
+	MqttPublish(stopic, true);
+}
+
+static void
+miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
+{
+	char dev_id[9];
+	char object_id[16];
+	char stopic[TOPSZ];
+	char base_topic[TOPSZ];
+	char cmnd_topic[TOPSZ];
+	bool caps_valid = sc->sc_caps.sc_caps_valid;
+	bool widevane_capable = sc->sc_has_widevane;
+	bool isee_capable = caps_valid && sc->sc_caps.cap_vane_v
+	    && widevane_capable && sc->sc_has_isee;
+	uint8_t fan_count = miel_hvac_get_fan_count(sc);
+	bool fan_count_known = caps_valid && (fan_count > 0);
+	bool fan_auto_capable = !caps_valid || sc->sc_caps.cap_fan_auto;
+	bool fan_quiet_capable = fan_count_known && (fan_count >= 5);
+	uint8_t max_numbered_fan = fan_count_known ? ((fan_count > 4) ? 4 : fan_count) : 4;
+	PGM_P swingh_modes = isee_capable ? miel_hvac_swingh_modes_isee : miel_hvac_swingh_modes_noisee;
+	PGM_P swingh_state_tpl = isee_capable ? miel_hvac_swingh_state_tpl_isee : miel_hvac_swingh_state_tpl_noisee;
+	PGM_P swingh_cmd_tpl = isee_capable ? miel_hvac_swingh_cmd_tpl_isee : miel_hvac_swingh_cmd_tpl_noisee;
+
+	/* Build the Home Assistant fan mode list from the capabilities reported
+	 * by the indoor unit. Auto is included only when cap_fan_auto is set;
+	 * numbered speeds are capped to the C9-reported fan count. Quiet is
+	 * only offered once the unit is confirmed to have 5 fan speeds
+	 * (fan_count == 5), the same threshold the SetFanSpeed command itself
+	 * already enforces -- on units that report fewer, Quiet either doesn't
+	 * exist or can't be told apart from fan speed 1. Until fan
+	 * capabilities are known, conservatively expose Auto + 1..4. */
+	String fan_modes = "[";
+	bool fan_first = true;
+	if (fan_auto_capable)
+	{
+		fan_modes += "\"Auto\"";
+		fan_first = false;
+	}
+	if (fan_quiet_capable)
+	{
+		if (!fan_first) fan_modes += ',';
+		fan_modes += "\"Quiet\"";
+		fan_first = false;
+	}
+	for (uint8_t i = 1; i <= max_numbered_fan; i++)
+	{
+		if (!fan_first) fan_modes += ',';
+		fan_modes += "\"";
+		fan_modes += (char)('0' + i);
+		fan_modes += "\"";
+		fan_first = false;
+	}
+	fan_modes += ']';
+
+	/* Device (not entity) name -- Tasmota's "Device Name" setting, so the
+	 * device page in HA shows it instead of falling back to the topic/IP. */
+	String esc_devname = EscapeJSONString(SettingsText(SET_DEVICENAME));
+
+	snprintf_P(dev_id, sizeof(dev_id), PSTR("%06X"), ESP_getChipId());
+	snprintf_P(object_id, sizeof(object_id), PSTR("%s_hvac"), dev_id);
+	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/climate/%s/config"), object_id);
+
+	if (Settings->flag.hass_discovery)
+	{
+		/* SetOption19 1 - discovery disabled: clear any previously retained
+		 * config for the climate entity and every separate entity below. */
+		ResponseClear();
+		MqttPublish(stopic, true);
+
+		snprintf_P(object_id, sizeof(object_id), PSTR("%s_prohibit"), dev_id);
+		snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/select/%s/config"), object_id);
+		MqttPublish(stopic, true);
+
+		static const char *const swsuffix[] = { "purifier", "nightmode", "econocool" };
+		for (size_t i = 0; i < nitems(swsuffix); i++)
+		{
+			snprintf_P(object_id, sizeof(object_id), PSTR("%s_%s"), dev_id, swsuffix[i]);
+			snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/switch/%s/config"), object_id);
+			MqttPublish(stopic, true);
+		}
+		return;
+	}
+
+	/* "~" - shared topic prefix, expanded by HA wherever "~" appears in a
+	 * topic string. Both tele/<topic>/SENSOR and tele/<topic>/LWT share it. */
+	GetTopic_P(base_topic, TELE, TasmotaGlobal.mqtt_topic, PSTR(""));
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETTEMP));
+	Response_P(PSTR(
+		"{\"~\":\"%s\","
+		"\"name\":null,"
+		"\"unique_id\":\"%s\","
+		"\"availability_topic\":\"~LWT\","
+		"\"payload_available\":\"" MQTT_LWT_ONLINE "\","
+		"\"payload_not_available\":\"" MQTT_LWT_OFFLINE "\","
+		"\"current_temperature_topic\":\"~SENSOR\","
+		"\"current_temperature_template\":\"{{value_json.MiElHVAC.RoomTemperature}}\","
+		"\"temperature_state_topic\":\"~SENSOR\","
+		"\"temperature_state_template\":\"{{value_json.MiElHVAC.SetTemperature}}\","
+		"\"temperature_command_topic\":\"%s\","
+		"\"temperature_unit\":\"%c\","
+		"\"precision\":0.5,\"temp_step\":0.5,"
+		"\"min_temp\":%d,\"max_temp\":%d,"
+		"\"modes\":[\"off\",\"heat\",\"dry\",\"cool\",\"fan_only\",\"auto\"],"
+		"\"mode_state_topic\":\"~SENSOR\","
+		"\"mode_state_template\":\"{{value_json.MiElHVAC.HAMode}}\","
+		"\"mode_command_topic\":\""),
+		base_topic, object_id, cmnd_topic, TempUnit(),
+		MIEL_HVAC_SETTINGS_TEMP_MIN, MIEL_HVAC_SETTINGS_TEMP_MAX);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETHAMODE));
+	const char *fan_auto_state = fan_auto_capable ? "Auto" : "1";
+	const char *fan_quiet_state = fan_quiet_capable ? "Quiet" : "1";
+	ResponseAppend_P(PSTR("%s\","
+		"\"action_topic\":\"~SENSOR\","
+		"\"action_template\":\"{{value_json.MiElHVAC.HAAction}}\","
+		"\"fan_modes\":%s,"
+		"\"fan_mode_state_topic\":\"~SENSOR\","
+		"\"fan_mode_state_template\":\"{{ {'auto':'%s','quiet':'%s','1':'1','2':'2','3':'3','4':'4'}.get(value_json.MiElHVAC.FanSpeed, '%s') }}\","
+		"\"fan_mode_command_topic\":\""), cmnd_topic, fan_modes.c_str(),
+		fan_auto_state, fan_quiet_state, fan_auto_state);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETFANSPEED));
+	const char *fan_quiet_cmd_entry = fan_quiet_capable ? "'Quiet':'quiet'," : "";
+	ResponseAppend_P(PSTR("%s\","
+		"\"fan_mode_command_template\":\"{{ {'Auto':'auto',%s'1':'1','2':'2','3':'3','4':'4'}[value] }}\","
+		"\"swing_modes\":[\"Auto\",\"Up\",\"Up Middle\",\"Center\",\"Down Middle\",\"Down\",\"Swing\"],"
+		"\"swing_mode_state_topic\":\"~SENSOR\","
+		"\"swing_mode_state_template\":\"{{ {'auto':'Auto','up':'Up','up_middle':'Up Middle','center':'Center','down_middle':'Down Middle','down':'Down','swing':'Swing'}.get(value_json.MiElHVAC.SwingV, 'Auto') }}\","
+		"\"swing_mode_command_topic\":\""), cmnd_topic, fan_quiet_cmd_entry);
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGV));
+	ResponseAppend_P(PSTR("%s\","
+		"\"swing_mode_command_template\":\"{{ {'Auto':'auto','Up':'up','Up Middle':'up_middle','Center':'center','Down Middle':'down_middle','Down':'down','Swing':'swing'}[value] }}\""),
+		cmnd_topic);
+
+	/* Horizontal swing is advertised by default.  Because C9 has no reliable
+	 * horizontal-vane capability bit, it is removed only after a real requested
+	 * position change is positively rejected by genuine CN105 read-back. */
+	if (widevane_capable)
+	{
+		ResponseAppend_P(PSTR(","
+			"\"swing_horizontal_modes\":%s,"
+			"\"swing_horizontal_mode_state_topic\":\"~SENSOR\","
+			"\"swing_horizontal_mode_state_template\":\"%s\","
+			"\"swing_horizontal_mode_command_topic\":\""),
+			swingh_modes, swingh_state_tpl);
+
+		GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGH));
+		ResponseAppend_P(PSTR("%s\","
+			"\"swing_horizontal_mode_command_template\":\"%s\""),
+			cmnd_topic, swingh_cmd_tpl);
+	}
+
+	/* AirDirection is meaningful only on units with a vertical vane and an
+	 * observed i-See sensor.  Omit the entire preset-mode capability from
+	 * MQTT discovery on units that do not support it. */
+	if (isee_capable)
+	{
+		ResponseAppend_P(PSTR(","
+			"\"preset_modes\":[\"Even\",\"Direct\",\"Indirect\",\"Off\"],"
+			"\"preset_mode_state_topic\":\"~SENSOR\","
+			"\"preset_mode_value_template\":\"{{ {'even':'Even','direct':'Direct','indirect':'Indirect','off':'Off'}.get(value_json.MiElHVAC.AirDirection, 'Off') }}\","
+			"\"preset_mode_command_topic\":\""));
+
+		GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETAIRDIRECTION));
+		ResponseAppend_P(PSTR("%s\","
+			"\"preset_mode_command_template\":\"{{ {'Even':'even','Direct':'direct','Indirect':'indirect','Off':'off'}[value] }}\""),
+			cmnd_topic);
+	}
+
+	ResponseAppend_P(PSTR(","
+		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
+		dev_id, esc_devname.c_str(), TasmotaGlobal.version);
+
+	MqttPublish(stopic, true);
+
+	/* Prohibit / remote-control lock as a separate Home Assistant MQTT
+	 * select entity -- climate has no native lockout concept. Options and
+	 * labels mirror the web panel's Prohibit dropdown; the same device
+	 * identifier as the climate entity keeps both on one HA device page.
+	 *
+	 * entity_category "config" is deliberate: it is a device-lockout
+	 * setting, not a primary control, so HA is correct to keep it off the
+	 * Area dashboard's auto-generated card even once an Area is assigned --
+	 * that is standard behavior for config/diagnostic entities, not a bug.
+	 * It stays reachable from the device page and from Settings > Areas.
+	 * Drop this line if a visible Area-card entity is wanted instead. */
+	snprintf_P(object_id, sizeof(object_id), PSTR("%s_prohibit"), dev_id);
+	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/select/%s/config"), object_id);
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETPROHIBIT));
+
+	Response_P(PSTR(
+		"{\"~\":\"%s\","
+		"\"name\":\"Prohibit\","
+		"\"unique_id\":\"%s\","
+		"\"entity_category\":\"config\","
+		"\"availability_topic\":\"~LWT\","
+		"\"payload_available\":\"" MQTT_LWT_ONLINE "\","
+		"\"payload_not_available\":\"" MQTT_LWT_OFFLINE "\","
+		"\"options\":[\"Off\",\"Power\",\"Mode\",\"Mode Power\",\"Temp\",\"Temp Power\",\"Temp Mode\",\"All\"],"
+		"\"state_topic\":\"~SENSOR\","
+		"\"value_template\":\"{{ {'off':'Off','power':'Power','mode':'Mode','mode_power':'Mode Power','temp':'Temp','temp_power':'Temp Power','temp_mode':'Temp Mode','all':'All'}.get(value_json.MiElHVAC.Prohibit, 'Off') }}\","
+		"\"command_topic\":\"%s\","
+		"\"command_template\":\"{{ {'Off':'off','Power':'power','Mode':'mode','Mode Power':'mode_power','Temp':'temp','Temp Power':'temp_power','Temp Mode':'temp_mode','All':'all'}[value] }}\","
+		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
+		base_topic, object_id, cmnd_topic, dev_id, esc_devname.c_str(), TasmotaGlobal.version);
+
+	MqttPublish(stopic, true);
+
+	miel_hvac_hass_discovery_switch(dev_id, base_topic, esc_devname.c_str(),
+		PSTR("purifier"), PSTR("Purifier"), PSTR("Purifier"),
+		PSTR(D_CMND_MIEL_HVAC_SETPURIFY), sc->sc_purifier_confirmed);
+	miel_hvac_hass_discovery_switch(dev_id, base_topic, esc_devname.c_str(),
+		PSTR("nightmode"), PSTR("Night Mode"), PSTR("NightMode"),
+		PSTR(D_CMND_MIEL_HVAC_SETNIGHTMODE), sc->sc_nightmode_confirmed);
+	miel_hvac_hass_discovery_switch(dev_id, base_topic, esc_devname.c_str(),
+		PSTR("econocool"), PSTR("EconoCool"), PSTR("EconoCool"),
+		PSTR(D_CMND_MIEL_HVAC_SETECONOCOOL), sc->sc_econocool_confirmed);
 }
 
 /*********************************************************************************************\
@@ -4892,6 +5605,7 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 #endif
 #ifdef MIEL_HVAC_DEBUG
 	"|HVACRequest"
+	"|HVACProbeRunState"
 #endif
 	;
 
@@ -4918,6 +5632,7 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 #endif
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
+	&miel_hvac_cmnd_proberunstate,
 #endif
 };
 
@@ -4995,6 +5710,9 @@ bool Xdrv44(uint32_t function)
 	case FUNC_AFTER_TELEPERIOD:
 		if (sc->sc_settings_set)
 			miel_hvac_publish_settings(sc);
+		break;
+	case FUNC_MQTT_SUBSCRIBE:
+		miel_hvac_hass_discovery(sc);
 		break;
 	case FUNC_COMMAND:
 		return DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
