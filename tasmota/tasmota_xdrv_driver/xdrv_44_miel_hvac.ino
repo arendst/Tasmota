@@ -38,7 +38,11 @@
  * from the IR remote / MQTT / console.
  *
  * The small state table below the controls shows, in order, Room Temp, operation
- * stage, compressor, power, energy and the error state (8000 shown as "no").
+ * stage, compressor state, compressor frequency, power, energy, the error state
+ * (8000 shown as "no") and, last, Timer On/Off as a single "on-time/off-time" row
+ * (0x62 0x05, read-only, each side shown as "off" or as the clock time it fires
+ * at, the unit only reports minutes remaining, so this adds Tasmota's local
+ * clock).
  *
  * A control change is written to sc_settings straight away, before the unit confirms with
  * the next 0x62 0x02, so the panel, the Modbus registers and SENSOR show the intent
@@ -4003,8 +4007,12 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 	{
 		const struct miel_hvac_data_status *st = &sc->sc_status.data.status;
 
+		name = miel_hvac_map_byval(st->compressor,
+			miel_hvac_compressor_map, nitems(miel_hvac_compressor_map));
+		miel_hvac_web_ro(js, "hvro_comp", "Compressor", name != NULL ? name : "off");
+
 		snprintf_P(val, sizeof(val), PSTR("%u Hz"), st->compressorfrequency);
-		miel_hvac_web_ro(js, "hvro_comp", "Compressor", val);
+		miel_hvac_web_ro(js, "hvro_freq", "Frequency", val);
 
 		if (sc->sc_has_energy)
 		{
@@ -4040,6 +4048,20 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 			snprintf_P(val, sizeof(val), PSTR("%04X"), ec);
 			miel_hvac_web_ro(js, "hvro_err", "Error", val);
 		}
+	}
+
+	/* Timer on/off (0x62 0x05) — read-only, see miel_hvac_web_timer_hhmm() */
+	if (sc->sc_timers.type != 0)
+	{
+		const struct miel_hvac_data_timers *tm = &sc->sc_timers.data.timers;
+		char on_hhmm[6], off_hhmm[6];
+
+		miel_hvac_web_timer_hhmm(tm->mode & MIEL_HVAC_TIMER_MODE_ON,
+			tm->onminutesremaining, on_hhmm, sizeof(on_hhmm));
+		miel_hvac_web_timer_hhmm(tm->mode & MIEL_HVAC_TIMER_MODE_OFF,
+			tm->offminutesremaining, off_hhmm, sizeof(off_hhmm));
+		snprintf_P(val, sizeof(val), PSTR("%s/%s"), on_hhmm, off_hhmm);
+		miel_hvac_web_ro(js, "hvro_timer", "Timer On/Off", val);
 	}
 
 	if (js)
@@ -4322,6 +4344,28 @@ miel_hvac_web_select(const char *label, const char *id, const char *key,
 	}
 
 	WSContentSend_P(PSTR("</select></div>"));
+}
+
+/*
+ * Timer on/off (0x62 0x05), read-only.  The unit only reports how many
+ * minutes remain until a side fires, so the displayed clock time is that
+ * plus Tasmota's local clock, wrapping past midnight.  No reference
+ * implementation (SwiCago, ESPHome mitsubishi_itp/mitsubishiheatpump,
+ * muart-group) documents a way to write the plug timer over CN105, only
+ * to read it back.
+ */
+static void
+miel_hvac_web_timer_hhmm(bool active, uint8_t remaining_x10, char *out, size_t len)
+{
+	if (active && RtcTime.valid)
+	{
+		uint16_t now = RtcTime.hour * 60 + RtcTime.minute;
+		uint16_t t = (now + (uint16_t)remaining_x10 * 10) % 1440;
+
+		snprintf_P(out, len, PSTR("%02u:%02u"), t / 60, t % 60);
+	}
+	else
+		snprintf_P(out, len, PSTR("off"));
 }
 
 static void
