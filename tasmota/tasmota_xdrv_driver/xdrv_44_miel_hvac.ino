@@ -849,6 +849,14 @@ struct miel_hvac_softc
 	bool sc_connected;
 	bool sc_identified;            /* true once 0x5B 0xC9 has been sent */
 	bool sc_has_isee;              /* true once i-See widevane state observed */
+	bool sc_has_widevane;          /* assumed true; cleared only after positive no-support evidence */
+	bool sc_widevane_seen;         /* at least one genuine 0x62/0x02 widevane value received */
+	bool sc_widevane_pending;      /* waiting for round-trip verification of a requested position */
+	uint8_t sc_widevane_last;      /* last genuine widevane byte from the indoor unit */
+	uint8_t sc_widevane_want;      /* requested widevane byte being verified */
+	bool sc_widevane_probed;       /* true once the one-shot startup support probe has run */
+	bool sc_widevane_probing;      /* probe's round trip is in flight, revert once it resolves */
+	uint8_t sc_widevane_probe_revert; /* position to restore once the probe resolves */
 	bool sc_has_energy;            /* true once non-zero Power or Energy seen */
 	bool sc_temp_type;             /* true once extended .5°C encoding observed */
 	bool sc_remotetemp_active;     /* true when remote temp override is active */
@@ -1583,6 +1591,16 @@ miel_hvac_cmnd_setwidevane(void)
 		return;
 	}
 
+	/* A static widevane read-back cannot tell us whether horizontal-vane
+	 * hardware exists: units such as MSZ-GE35VA (no horizontal vane) still
+	 * report the dummy value CENTER (0x03).  Track a requested change so the
+	 * next genuine 0x62/0x02 read-back can prove support or no support. */
+	if (sc->sc_widevane_seen && e->byte != sc->sc_widevane_last)
+	{
+		sc->sc_widevane_want = e->byte;
+		sc->sc_widevane_pending = true;
+	}
+
 	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
 	update->widevane = e->byte;
 
@@ -2130,13 +2148,18 @@ miel_hvac_append_settings_json(struct miel_hvac_softc *sc)
 	if (name != NULL)
 		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGV "\":\"%s\""), name);
 
-	/* Swing horizontal / widevane */
-	name = widevane_isee
-		? "isee"
-		: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
-			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
-	if (name != NULL)
-		ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
+	/* Swing horizontal / widevane — only report it after a real horizontal
+	 * vane state has been observed. Units without horizontal vanes commonly
+	 * leave the widevane byte at 0x00, which is not a valid mapped position. */
+	if (sc->sc_has_widevane)
+	{
+		name = widevane_isee
+			? "isee"
+			: miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
+				miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
+		if (name != NULL)
+			ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_SWINGH "\":\"%s\""), name);
+	}
 
 	/* Air direction — only reported once the unit is confirmed to have both
 	 * a vertical vane and an observed i-See sensor, matching the HA
@@ -2220,6 +2243,7 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	uint32_t state = set->power ? 1 : 0;
 	bool publish;
 	bool had_isee = sc->sc_has_isee;
+	bool had_widevane = sc->sc_has_widevane;
 
 	if (miel_hvac_update_settings_pending(sc))
 	{
@@ -2234,16 +2258,106 @@ miel_hvac_input_settings(struct miel_hvac_softc *sc,
 	if (bitRead(TasmotaGlobal.power, sc->sc_device) != !!state)
 		ExecuteCommandPower(sc->sc_device, state, SRC_SWITCH);
 
-	/* Detect presence of i-See sensor from widevane bit 0x80 or the
-	 * two known i-See-active non-0x80 values. Once set, stays set. */
-	if ((set->widevane & 0x80) || set->widevane == 0x28 || set->widevane == 0xaa)
-		sc->sc_has_isee = true;
+	/* There is no reliable C9 capability bit for horizontal-vane hardware,
+	 * and a static read-back is not enough to decide it: the MSZ-GE35VA has
+	 * no horizontal vane but genuinely reports CENTER (0x03).  Therefore
+	 * VaneHSupported starts ON and is turned OFF only by positive evidence:
+	 * we requested a DIFFERENT valid position and the next genuine settings
+	 * report returned exactly the previous position instead of the request.
+	 *
+	 * A successful requested change, a genuine change from another source,
+	 * or an i-See state is positive support evidence and can turn it back ON. */
+	uint8_t widevane_raw = set->widevane;
+	uint8_t widevane_pos = widevane_raw & MIEL_HVAC_SETTINGS_WIDEVANE_MASK;
+	bool widevane_mapped = (widevane_pos != 0
+	    && miel_hvac_map_byval(widevane_pos, miel_hvac_widevane_map,
+	        nitems(miel_hvac_widevane_map)) != NULL);
 
-	/* i-See is learned from live settings rather than the C9 capability
-	 * packet.  When it is first observed, republish discovery so HA gains
-	 * the AirDirection preset control (and I-See horizontal mode) without
-	 * requiring an MQTT reconnect or device restart. */
-	if (!had_isee && sc->sc_has_isee)
+	if (!sc->sc_widevane_seen)
+	{
+		sc->sc_widevane_seen = true;
+		sc->sc_widevane_last = widevane_raw;
+
+		/* One-shot startup probe: nudge the horizontal vane to a different
+		 * position and immediately revert it once the round trip resolves,
+		 * so VaneHSupported is established automatically on every boot
+		 * instead of only after a user happens to send HVACSetSwingH.
+		 * Skipped when i-See is already active below -- that alone already
+		 * proves horizontal-vane hardware exists. */
+		if (!sc->sc_widevane_probed
+		    && !((widevane_raw & 0x80) || widevane_raw == 0x28 || widevane_raw == 0xaa))
+		{
+			struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+			uint8_t probe = (widevane_pos == MIEL_HVAC_SETTINGS_WIDEVANE_LL)
+				? MIEL_HVAC_SETTINGS_WIDEVANE_RR : MIEL_HVAC_SETTINGS_WIDEVANE_LL;
+
+			sc->sc_widevane_probed = true;
+			sc->sc_widevane_probing = true;
+			sc->sc_widevane_probe_revert = widevane_raw;
+
+			update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+			update->widevane = probe;
+			sc->sc_widevane_want = probe;
+			sc->sc_widevane_pending = true;
+		}
+	}
+	else
+	{
+		if (sc->sc_widevane_pending)
+		{
+			if (widevane_raw == sc->sc_widevane_want)
+			{
+				/* Requested position survived genuine CN105 read-back. */
+				sc->sc_has_widevane = true;
+			}
+			else if (widevane_raw == sc->sc_widevane_last)
+			{
+				/* Strong no-support evidence: a different widevane position was
+				 * sent, but the indoor unit ignored it and returned the exact
+				 * pre-command position (GE35VA: typically CENTER/0x03). */
+				sc->sc_has_widevane = false;
+			}
+			/* A third value is ambiguous: do not change capability state. */
+			sc->sc_widevane_pending = false;
+
+			/* Startup probe resolved (either way) -- restore the position
+			 * the unit was actually in before we nudged it. */
+			if (sc->sc_widevane_probing)
+			{
+				sc->sc_widevane_probing = false;
+				if (widevane_raw != sc->sc_widevane_probe_revert)
+				{
+					struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
+
+					update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
+					update->widevane = sc->sc_widevane_probe_revert;
+					sc->sc_widevane_want = sc->sc_widevane_probe_revert;
+					sc->sc_widevane_pending = true;
+				}
+			}
+		}
+		else if (widevane_raw != sc->sc_widevane_last && widevane_mapped)
+		{
+			/* A genuine mapped change not caused by our optimistic local apply
+			 * proves horizontal-vane state is actually changing. */
+			sc->sc_has_widevane = true;
+		}
+
+		sc->sc_widevane_last = widevane_raw;
+	}
+
+	/* i-See itself positively proves horizontal/wide-vane control exists. */
+	if ((set->widevane & 0x80) || set->widevane == 0x28 || set->widevane == 0xaa)
+	{
+		sc->sc_has_isee = true;
+		sc->sc_has_widevane = true;
+	}
+
+	/* Republish discovery whenever VaneHSupported changes in either direction,
+	 * or when i-See is first learned, so HA adds/removes horizontal swing
+	 * without requiring an MQTT reconnect or restart. */
+	if ((had_widevane != sc->sc_has_widevane)
+	    || (!had_isee && sc->sc_has_isee))
 		miel_hvac_hass_discovery(sc);
 
 	publish = (sc->sc_settings_set == 0)
@@ -2587,6 +2701,12 @@ miel_hvac_apply_widevane(struct miel_hvac_softc *sc, uint8_t wv_raw)
 	if (miel_hvac_map_byval(wv_raw,
 	    miel_hvac_widevane_map, nitems(miel_hvac_widevane_map)) == NULL)
 		return (MIEL_HVAC_APPLY_BAD_VALUE);
+
+	if (sc->sc_widevane_seen && wv_raw != sc->sc_widevane_last)
+	{
+		sc->sc_widevane_want = wv_raw;
+		sc->sc_widevane_pending = true;
+	}
 
 	update->flags |= htons(MIEL_HVAC_SETTINGS_F_WIDEVANE);
 	update->widevane = wv_raw;
@@ -3740,6 +3860,13 @@ miel_hvac_pre_init(void)
 	}
 
 	memset(sc, 0, sizeof(*sc));
+
+	/* There is no reliable C9 bit that says whether a horizontal/wide vane
+	 * exists.  Default to supported so capable units get the control
+	 * immediately.  A real rejected position change can later provide
+	 * positive evidence that the unit has no horizontal vane and clear this. */
+	sc->sc_has_widevane = true;
+
 	sc->sc_remotetemp_auto_clear_time = 10000;
 	miel_hvac_init_update_settings(&sc->sc_settings_update);
 
@@ -4016,6 +4143,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			"\"ModeDrySupported\":\"%s\","
 			"\"ModeFanSupported\":\"%s\","
 			"\"VaneVSupported\":\"%s\","
+			"\"VaneHSupported\":\"%s\","
 			"\"SwingSupported\":\"%s\","
 			"\"FanAutoSupported\":\"%s\","
 			"\"OutdoorTemperatureSupported\":\"%s\","
@@ -4027,6 +4155,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 			caps->cap_mode_dry     ? "on" : "off",
 			caps->cap_mode_fan     ? "on" : "off",
 			caps->cap_vane_v       ? "on" : "off",
+			sc->sc_has_widevane    ? "on" : "off",
 			caps->cap_vane_swing   ? "on" : "off",
 			caps->cap_fan_auto     ? "on" : "off",
 			caps->cap_outdoor_temp ? "on" : "off",
@@ -4225,8 +4354,16 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 			vh = vhbuf;
 		}
 	}
-	snprintf_P(val, sizeof(val), PSTR("%s / %s"), name, vh);
-	miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
+	if (sc->sc_has_widevane)
+	{
+		snprintf_P(val, sizeof(val), PSTR("%s / %s"), name, vh);
+		miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
+	}
+	else
+	{
+		snprintf_P(val, sizeof(val), PSTR("%s"), name);
+		miel_hvac_web_ro(js, "hvro_vane", "Vane V", val);
+	}
 
 	/* Air Direction — separate i-See function; "off" unless wide vane is
 	 * in i-See mode.  Shown only once the unit is confirmed capable, same
@@ -4700,10 +4837,11 @@ miel_hvac_web_panel(struct miel_hvac_softc *sc)
 	bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
 	             || set->widevane == 0xaa);
 
-	/* Vane horizontal / wide vane — I-See only shown once confirmed
-	 * supported, selecting it re-engages air direction at the last active
-	 * setting (see miel_hvac_cmnd_setwidevane()), same isee_capable gate as
-	 * the HA discovery config. */
+	/* Vane horizontal / wide vane — available by default because C9 has no
+	 * reliable horizontal-vane capability bit.  It is hidden only after a
+	 * real CN105 position-change request is positively rejected by read-back.
+	 * I-See remains separately gated as before. */
+	if (sc->sc_has_widevane)
 	{
 		uint8_t hskip[1];
 		size_t nh = 0;
@@ -5218,7 +5356,9 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 	char base_topic[TOPSZ];
 	char cmnd_topic[TOPSZ];
 	bool caps_valid = sc->sc_caps.sc_caps_valid;
-	bool isee_capable = caps_valid && sc->sc_caps.cap_vane_v && sc->sc_has_isee;
+	bool widevane_capable = sc->sc_has_widevane;
+	bool isee_capable = caps_valid && sc->sc_caps.cap_vane_v
+	    && widevane_capable && sc->sc_has_isee;
 	uint8_t fan_count = miel_hvac_get_fan_count(sc);
 	bool fan_count_known = caps_valid && (fan_count > 0);
 	bool fan_auto_capable = !caps_valid || sc->sc_caps.cap_fan_auto;
@@ -5338,15 +5478,26 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 
 	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGV));
 	ResponseAppend_P(PSTR("%s\","
-		"\"swing_mode_command_template\":\"{{ {'Auto':'auto','Up':'up','Up Middle':'up_middle','Center':'center','Down Middle':'down_middle','Down':'down','Swing':'swing'}[value] }}\","
-		"\"swing_horizontal_modes\":%s,"
-		"\"swing_horizontal_mode_state_topic\":\"~SENSOR\","
-		"\"swing_horizontal_mode_state_template\":\"%s\","
-		"\"swing_horizontal_mode_command_topic\":\""), cmnd_topic, swingh_modes, swingh_state_tpl);
+		"\"swing_mode_command_template\":\"{{ {'Auto':'auto','Up':'up','Up Middle':'up_middle','Center':'center','Down Middle':'down_middle','Down':'down','Swing':'swing'}[value] }}\""),
+		cmnd_topic);
 
-	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGH));
-	ResponseAppend_P(PSTR("%s\","
-		"\"swing_horizontal_mode_command_template\":\"%s\""), cmnd_topic, swingh_cmd_tpl);
+	/* Horizontal swing is advertised by default.  Because C9 has no reliable
+	 * horizontal-vane capability bit, it is removed only after a real requested
+	 * position change is positively rejected by genuine CN105 read-back. */
+	if (widevane_capable)
+	{
+		ResponseAppend_P(PSTR(","
+			"\"swing_horizontal_modes\":%s,"
+			"\"swing_horizontal_mode_state_topic\":\"~SENSOR\","
+			"\"swing_horizontal_mode_state_template\":\"%s\","
+			"\"swing_horizontal_mode_command_topic\":\""),
+			swingh_modes, swingh_state_tpl);
+
+		GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, PSTR(D_CMND_MIEL_HVAC_SETSWINGH));
+		ResponseAppend_P(PSTR("%s\","
+			"\"swing_horizontal_mode_command_template\":\"%s\""),
+			cmnd_topic, swingh_cmd_tpl);
+	}
 
 	/* AirDirection is meaningful only on units with a vertical vane and an
 	 * observed i-See sensor.  Omit the entire preset-mode capability from
