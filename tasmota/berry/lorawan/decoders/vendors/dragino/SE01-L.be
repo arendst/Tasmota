@@ -13,6 +13,8 @@ if !global.se01LNodes      # data survive to decoder reload
 end
 
 class LwDecoSE01L
+  static var hashCheck = false
+
   static def decodeUplink(Name, Node, RSSI, FPort, Bytes)
     var data = {"Device":"Dragino SE01-LB/LS"}
     
