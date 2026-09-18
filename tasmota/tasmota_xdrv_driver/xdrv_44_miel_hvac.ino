@@ -5157,6 +5157,58 @@ static const char miel_hvac_swingh_cmd_tpl_isee[] PROGMEM =
 static const char miel_hvac_swingh_cmd_tpl_noisee[] PROGMEM =
 	"{{ {'Left':'left','Left Middle':'left_middle','Left Center':'left_center','Center':'center','Right Center':'right_center','Right Middle':'right_middle','Right':'right','Split':'split','Swing':'swing'}[value] }}";
 
+/*
+ * Purifier / NightMode / EconoCool as separate Home Assistant MQTT switch
+ * entities -- climate has no slot for arbitrary on/off toggles. Each is
+ * only published once its own round-trip-confirmed flag is set, same as
+ * the SENSOR JSON (miel_hvac_append_settings_json()) and the web panel,
+ * both of which gate on these per-feature flags rather than the
+ * unreliable cap_run_state bit. Called only when discovery is enabled,
+ * the SetOption19-disabled path clears all three unconditionally instead.
+ */
+static void
+miel_hvac_hass_discovery_switch(const char *dev_id, const char *base_topic,
+	const char *esc_devname, const char *object_suffix, const char *name,
+	const char *json_key, const char *cmnd_name, bool confirmed)
+{
+	char object_id[24];
+	char stopic[TOPSZ];
+	char cmnd_topic[TOPSZ];
+
+	snprintf_P(object_id, sizeof(object_id), PSTR("%s_%s"), dev_id, object_suffix);
+	snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/switch/%s/config"), object_id);
+
+	if (!confirmed)
+	{
+		/* Not (yet) confirmed on this unit: clear any previously retained
+		 * config -- it may have been published before a firmware update
+		 * added the confirmed-flag gating, or the unit may just not have
+		 * answered a Set Run State round trip for this feature yet. */
+		ResponseClear();
+		MqttPublish(stopic, true);
+		return;
+	}
+
+	GetTopic_P(cmnd_topic, CMND, TasmotaGlobal.mqtt_topic, cmnd_name);
+	Response_P(PSTR(
+		"{\"~\":\"%s\","
+		"\"name\":\"%s\","
+		"\"unique_id\":\"%s\","
+		"\"availability_topic\":\"~LWT\","
+		"\"payload_available\":\"" MQTT_LWT_ONLINE "\","
+		"\"payload_not_available\":\"" MQTT_LWT_OFFLINE "\","
+		"\"state_topic\":\"~SENSOR\","
+		"\"value_template\":\"{{value_json.MiElHVAC.%s}}\","
+		"\"command_topic\":\"%s\","
+		"\"payload_on\":\"on\","
+		"\"payload_off\":\"off\","
+		"\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\",\"model\":\"MiELHVAC\",\"sw_version\":\"%s\",\"manufacturer\":\"Tasmota\"}}"),
+		base_topic, name, object_id, json_key, cmnd_topic,
+		dev_id, esc_devname, TasmotaGlobal.version);
+
+	MqttPublish(stopic, true);
+}
+
 static void
 miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 {
@@ -5218,13 +5270,21 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 	if (Settings->flag.hass_discovery)
 	{
 		/* SetOption19 1 - discovery disabled: clear any previously retained
-		 * config for both the climate entity and the Prohibit select below. */
+		 * config for the climate entity and every separate entity below. */
 		ResponseClear();
 		MqttPublish(stopic, true);
 
 		snprintf_P(object_id, sizeof(object_id), PSTR("%s_prohibit"), dev_id);
 		snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/select/%s/config"), object_id);
 		MqttPublish(stopic, true);
+
+		static const char *const swsuffix[] = { "purifier", "nightmode", "econocool" };
+		for (size_t i = 0; i < nitems(swsuffix); i++)
+		{
+			snprintf_P(object_id, sizeof(object_id), PSTR("%s_%s"), dev_id, swsuffix[i]);
+			snprintf_P(stopic, sizeof(stopic), PSTR("homeassistant/switch/%s/config"), object_id);
+			MqttPublish(stopic, true);
+		}
 		return;
 	}
 
@@ -5343,6 +5403,16 @@ miel_hvac_hass_discovery(struct miel_hvac_softc *sc)
 		base_topic, object_id, cmnd_topic, dev_id, esc_devname.c_str(), TasmotaGlobal.version);
 
 	MqttPublish(stopic, true);
+
+	miel_hvac_hass_discovery_switch(dev_id, base_topic, esc_devname.c_str(),
+		PSTR("purifier"), PSTR("Purifier"), PSTR("Purifier"),
+		PSTR(D_CMND_MIEL_HVAC_SETPURIFY), sc->sc_purifier_confirmed);
+	miel_hvac_hass_discovery_switch(dev_id, base_topic, esc_devname.c_str(),
+		PSTR("nightmode"), PSTR("Night Mode"), PSTR("NightMode"),
+		PSTR(D_CMND_MIEL_HVAC_SETNIGHTMODE), sc->sc_nightmode_confirmed);
+	miel_hvac_hass_discovery_switch(dev_id, base_topic, esc_devname.c_str(),
+		PSTR("econocool"), PSTR("EconoCool"), PSTR("EconoCool"),
+		PSTR(D_CMND_MIEL_HVAC_SETECONOCOOL), sc->sc_econocool_confirmed);
 }
 
 /*********************************************************************************************\
