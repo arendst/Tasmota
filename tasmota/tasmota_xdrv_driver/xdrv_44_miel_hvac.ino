@@ -581,6 +581,19 @@ static const struct miel_hvac_map miel_hvac_fan_map[] = {
 	{MIEL_HVAC_SETTINGS_FAN_4,     "4"},
 };
 
+/*
+ * On dual-vertical-vane units (confirmed on MSZ-LN, remote has separate
+ * Left/Right vertical vane buttons) this single byte tracks only the
+ * RIGHT vane. Changing the left vane's position, to any value, leaves
+ * every byte of the Settings packet unchanged, confirmed by testing:
+ * set left=up/right=down, then left=down/right=up (same final vane byte
+ * both times), then changed only the right vane (byte followed it) and
+ * only the left vane three times in a row (byte never moved). There is
+ * no separate field anywhere in the Settings packet that exposes the
+ * left vane's position, CN105 simply has no visibility into it on this
+ * unit, the same class of gap as Purifier/NightMode/EconoCool being
+ * settable from the remote but unreported over CN105.
+ */
 static const struct miel_hvac_map miel_hvac_vane_map[] = {
 	{MIEL_HVAC_SETTINGS_VANE_AUTO,       "auto"},
 	{MIEL_HVAC_SETTINGS_VANE_1,          "up"},
