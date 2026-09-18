@@ -12,6 +12,8 @@ if !global.psli5Nodes      # data survive to decoder reload
 end
 
 class LwDecoPSLI5
+  static var hashCheck = false
+
   static def decodeUplink(Name, Node, RSSI, FPort, Bytes)
     var data = {"Device":"Dragino PS-LB/LS-I5"}
     
