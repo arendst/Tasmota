@@ -146,6 +146,7 @@ jobs:
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
+          - tasmota32s3-ir
           - tasmota32solo1
     steps:
       - uses: actions/checkout@v6
