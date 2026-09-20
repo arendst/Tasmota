@@ -54,7 +54,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino
+          uv pip install --system pioarduino==6.1.19
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add SHA to footer
         run: |
@@ -104,7 +104,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino
+          uv pip install --system pioarduino==6.1.19
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -162,7 +162,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino
+          uv pip install --system pioarduino==6.1.19
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v8
@@ -211,7 +211,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino
+          uv pip install --system pioarduino==6.1.19
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -251,7 +251,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino
+          uv pip install --system pioarduino==6.1.19
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v8
