@@ -114,8 +114,26 @@
 // -- MQTT ----------------------------------------
 #define MQTT_USE               true              // [SetOption3] Select default MQTT use (false = Off, true = On)
 
+// -- PubSubClient defaults -----------------------
 #define MQTT_KEEPALIVE         30                // [MqttKeepAlive] Number of seconds between KeepAlive messages
 #define MQTT_SOCKET_TIMEOUT    4                 // [MqttTimeout] Number of seconds before Mqtt connection timeout
+#define MQTT_MAX_PACKET_SIZE   1200              // Working buffer and advertised maximum incoming packet size
+#define MQTT_PACKET_TIMEOUT    MQTT_SOCKET_TIMEOUT // Seconds allowed to receive a complete MQTT packet
+
+// -- MQTT 5 - PubSubClient defaults --------------
+// MQTT 3.1.1 is the PubSubClient default. Uncomment to opt into MQTT 5 support.
+// #define MQTT_VERSION           MQTT_VERSION_5_0 // Compile MQTT5-capable PubSubClient (with MQTT 3.1.1 fallback, +7k4 code)
+//#define USE_MQTT_DETAILED_LOGGING                // Enable detailed MQTT5 Tx/Rx packet logging at DEBUG_MORE (+0k5 code)
+//#define USE_MQTT_DETAILED_LOGGING_BINARY         // Also dump every raw MQTT5 packet read/written to the transport as hex at DEBUG_MORE (independent of USE_MQTT_DETAILED_LOGGING)
+//#define USE_MQTT_QOS                             // Compile outbound QoS 1/2 acknowledged delivery (+1k9 code) (replay buffers, retransmission, Receive Maximum). Off = smaller code; Tasmota publishes at QoS 0. The MQTT_MAX_INFLIGHT / MQTT_INFLIGHT_COPY_BUDGET knobs below only apply when this is defined.
+#define MQTT_MAX_INFLIGHT      4                 // Outbound QoS 1/2 PUBLISHes awaiting acknowledgement (USE_MQTT_QOS only)
+#define MQTT_MAX_PENDING_SUBSCRIPTIONS 12        // Tracked SUBSCRIBE/UNSUBSCRIBE exchanges
+#define MQTT_MAX_INBOUND_INFLIGHT 8              // Inbound QoS 2 identifiers and MQTT 5 Receive Maximum
+#define MQTT_MAX_TOPIC_ALIASES 0                 // Outbound MQTT 5 Topic Alias entries (0 = disabled)
+#define MQTT_INFLIGHT_COPY_BUDGET 2048           // Bytes retained for QoS 1/2 reconnect replay
+#define MQTT_ACK_TIMEOUT       MQTT_SOCKET_TIMEOUT // Seconds before an unacknowledged operation is reported
+#define MQTT_PERSISTENT_SESSION_EXPIRY_INTERVAL 0xFFFFFFFFUL // MQTT 5 session expiry for mqtt_persistent
+
 #define MQTT_WIFI_CLIENT_TIMEOUT 200             // [MqttWifiTimeout] Number of milliseconds before Mqtt Wi-Fi timeout
 
 #define MQTT_HOST              ""                // [MqttHost]

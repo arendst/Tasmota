@@ -52,6 +52,7 @@
 #include <ext_printf.h>
 #include <SBuffer.hpp>
 #include <LList.h>
+#include <PubSubClient.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef ESP8266
@@ -192,6 +193,10 @@ struct TIME_T {
   uint32_t      valid;
 } RtcTime;
 
+#if MQTT_VERSION == MQTT_VERSION_5_0
+struct MqttCommandContext;
+#endif
+
 struct XDRVMAILBOX {
   bool          grpflg;
   bool          usridx;
@@ -202,6 +207,9 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
   char         *command;
+#if MQTT_VERSION == MQTT_VERSION_5_0
+  const MqttCommandContext *mqtt_context;
+#endif
 } XdrvMailbox;
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa

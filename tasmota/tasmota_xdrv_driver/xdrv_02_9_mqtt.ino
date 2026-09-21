@@ -108,6 +108,35 @@ struct MQTT {
   bool disable_logging = false;          // Temporarly disable logging on some commands
 } Mqtt;
 
+#if MQTT_VERSION == MQTT_VERSION_5_0
+struct MqttCommandContext {
+  String response_topic;
+  uint8_t correlation_data[PubSubClient::MQTT_CORRELATION_DATA_MAX] = {};
+  uint8_t correlation_data_len = 0;
+  bool has_response_topic = false;
+  bool has_correlation_data = false;
+
+  bool active() const {
+    return has_response_topic;
+  }
+};
+
+class MqttCommandContextScope {
+ public:
+  explicit MqttCommandContextScope(const MqttCommandContext* context)
+      : previous_(XdrvMailbox.mqtt_context) {
+    XdrvMailbox.mqtt_context = context;
+  }
+
+  ~MqttCommandContextScope() {
+    XdrvMailbox.mqtt_context = previous_;
+  }
+
+ private:
+  const MqttCommandContext* previous_;
+};
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0
+
 #ifdef USE_MQTT_TLS
 
 // This part of code is necessary to store Private Key and Cert in Flash
@@ -202,8 +231,6 @@ void MqttNonTLSWarning(void) {
  * #define MQTT_MAX_PACKET_SIZE 1200     // Tasmota v8.1.0.8
 \*********************************************************************************************/
 
-#include <PubSubClient.h>
-
 PubSubClient MqttClient;
 
 void MqttSetClientTimeout(void) {
@@ -217,10 +244,34 @@ void MqttSetClientTimeout(void) {
 #endif
 }
 
+#if MQTT_VERSION == MQTT_VERSION_5_0 && defined(USE_MQTT_DETAILED_LOGGING_BINARY)
+// Raw wire dump of every MQTT packet the client reads from and writes to the transport.
+// Registered with PubSubClient as its WireLogCallback; called with the complete received
+// packet (tx == false) or the exact bytes about to be sent (tx == true). Emitted at
+// DEBUG_MORE as a single hex line: `%*_H` expands the whole packet to two hex chars per
+// byte into a heap buffer (freed here), so no large buffer is placed on the stack.
+void MqttLogWirePacket(bool tx, const uint8_t* data, uint32_t len) {
+  const uint32_t highest_loglevel = HighestLogLevel();
+  if ((LOG_LEVEL_DEBUG_MORE > highest_loglevel) ||
+      (TasmotaGlobal.masterlog_level > highest_loglevel)) {
+    return;
+  }
+  char* hex = ext_snprintf_malloc_P(PSTR("%*_H"), len, data);
+  if (hex != nullptr) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT "%cx bin [%u]: %s"),
+           tx ? 'T' : 'R', (unsigned)len, hex);
+    free(hex);
+  }
+}
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0 && USE_MQTT_DETAILED_LOGGING_BINARY
+
 void MqttInit(void) {
   // Force buffer size since the #define may not be visible from Arduino lib
   MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
   MqttClient.setMaxIncomingPacketSize(MQTT_MAX_PACKET_SIZE);
+#if MQTT_VERSION == MQTT_VERSION_5_0 && defined(USE_MQTT_DETAILED_LOGGING_BINARY)
+  MqttClient.setWireLogCallback(MqttLogWirePacket);
+#endif
 
 #ifdef USE_MQTT_AZURE_IOT
   Settings->mqtt_port = 8883;
@@ -507,7 +558,33 @@ void MqttUnsubscribeLib(const char *topic) {
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
+#if MQTT_VERSION == MQTT_VERSION_5_0 && defined(USE_MQTT_DETAILED_LOGGING)
+// Emits the outbound "Tx" diagnostic for a PUBLISH the moment Tasmota hands it to the
+// transport. Only PUBLISH is logged (no PINGREQ/SUBSCRIBE/ACK/DISCONNECT), and the QoS
+// is taken straight from the publish request rather than decoded from a wire header, so
+// no cross-layer hook into the MQTT library is needed.
+void MqttLogTxPublish(const char* topic, const uint8_t* payload, unsigned int payload_len,
+                      uint8_t qos, const MqttMessageProperties* mqtt_properties);
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0 && USE_MQTT_DETAILED_LOGGING
+
+#if MQTT_VERSION == MQTT_VERSION_5_0
+// Arduino's sketch preprocessor can generate these prototypes outside the surrounding
+// MQTT_VERSION guard. Declare them explicitly here so MQTT5-only types never leak into
+// the generated MQTT 3.1.1 translation unit.
+static bool MqttMessagePropertiesEmpty(const MqttMessageProperties& properties);
+static bool MqttPublishLibSingle(const char* topic, const uint8_t* payload,
+                                 unsigned int plength, bool retained,
+                                 const MqttMessageProperties* properties);
+static void MqttPublishCorrelatedResponse(const uint8_t* payload,
+                                          unsigned int plength);
+bool MqttPublish5(const MqttPublishRequest& request, uint16_t* packet_id_out);
+
+static bool MqttPublishLibSingle(const char* topic, const uint8_t* payload,
+                                 unsigned int plength, bool retained,
+                                 const MqttMessageProperties* properties) {
+#else
 bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plength, bool retained) {
+#endif
   // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
@@ -538,7 +615,14 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
   topic = topicString.c_str();
 #endif  // USE_MQTT_AZURE_IOT
 
-  if (!MqttClient.beginPublish(topic, plength, retained)) {
+#if MQTT_VERSION == MQTT_VERSION_5_0
+  const bool publish_started = (properties != nullptr)
+      ? MqttClient.beginPublishWithProperties(topic, plength, retained, *properties)
+      : MqttClient.beginPublish(topic, plength, retained);
+#else
+  const bool publish_started = MqttClient.beginPublish(topic, plength, retained);
+#endif
+  if (!publish_started) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Connection lost or message too large"));
     return false;
   }
@@ -573,13 +657,258 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 
   MqttClient.endPublish();
 
+#if MQTT_VERSION == MQTT_VERSION_5_0 && defined(USE_MQTT_DETAILED_LOGGING)
+  // The streamed path (beginPublish/write/endPublish) is QoS 0 only.
+  MqttLogTxPublish(topic, payload, plength, 0, properties);
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0 && USE_MQTT_DETAILED_LOGGING
+
 //  yield();  // #3313
   delay(0);
   return true;
 }
 
+#if MQTT_VERSION == MQTT_VERSION_5_0
+static bool MqttMessagePropertiesEmpty(const MqttMessageProperties& properties) {
+  return !properties.hasPayloadFormat &&
+         (properties.contentType == nullptr) &&
+         (properties.responseTopic == nullptr) &&
+         (properties.correlationData == nullptr) &&
+         (properties.correlationDataLen == 0) &&
+         (properties.userPropertyCount == 0);
+}
+
+static void MqttPublishCorrelatedResponse(const uint8_t* payload,
+                                          unsigned int plength) {
+  const MqttCommandContext* context =
+      (MqttClient.protocolVersion() == MQTT_VERSION_5_0) ? XdrvMailbox.mqtt_context : nullptr;
+  if (context == nullptr) {
+    return;
+  }
+
+  MqttMessageProperties response_properties;
+  if (context->has_correlation_data) {
+    response_properties.correlationData = context->correlation_data;
+    response_properties.correlationDataLen = context->correlation_data_len;
+  }
+
+  // A command response is always a distinct QoS 0, non-retained publication. It carries
+  // only the request Correlation Data, even when its topic equals the primary topic.
+  if (!MqttPublishLibSingle(context->response_topic.c_str(), payload, plength, false,
+                            &response_properties)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Unable to publish correlated response to %s"),
+           context->response_topic.c_str());
+  }
+}
+
+// Berry `mqtt.is_request()` support: true while an inbound MQTT 5.0 request (a message that
+// carried a Response Topic) is being handled synchronously.
+bool MqttIsRequest(void) {
+  return (MqttClient.protocolVersion() == MQTT_VERSION_5_0) &&
+         (XdrvMailbox.mqtt_context != nullptr);
+}
+
+// Berry `mqtt.respond(payload)` support: explicit reply to the request currently being
+// handled. Publishes `payload` to the request's Response Topic with its Correlation Data
+// echoed back, QoS 0 and non-retained. Uses the non-recursing single publish so it does not
+// itself re-trigger MqttPublishCorrelatedResponse. Returns false when no request is active.
+bool MqttRespond(const uint8_t* payload, unsigned int plength) {
+  const MqttCommandContext* context =
+      (MqttClient.protocolVersion() == MQTT_VERSION_5_0) ? XdrvMailbox.mqtt_context : nullptr;
+  if (context == nullptr) {
+    return false;
+  }
+  MqttMessageProperties response_properties;
+  if (context->has_correlation_data) {
+    response_properties.correlationData = context->correlation_data;
+    response_properties.correlationDataLen = context->correlation_data_len;
+  }
+  return MqttPublishLibSingle(context->response_topic.c_str(), payload, plength, false,
+                              &response_properties);
+}
+
+bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plength, bool retained) {
+  const bool published = MqttPublishLibSingle(topic, payload, plength, retained, nullptr);
+  MqttPublishCorrelatedResponse(payload, plength);
+  return published;
+}
+
+bool MqttPublish5(const MqttPublishRequest& request, uint16_t* packet_id_out) {
+  if (packet_id_out != nullptr) {
+    *packet_id_out = 0;
+  }
+  if (!Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+    return false;
+  }
+
+  MqttPublishRequest effective_request = request;
+  if (Settings->flag4.mqtt_no_retain) {  // SetOption104 - Disable retained messages
+    effective_request.retained = false;
+  }
+
+  if (MqttClient.protocolVersion() != MQTT_VERSION_5_0) {
+    if ((effective_request.qos != 0) ||
+        !MqttMessagePropertiesEmpty(effective_request.properties)) {
+      return false;
+    }
+    return MqttPublishLib(effective_request.topic, effective_request.payload,
+                          effective_request.plength, effective_request.retained);
+  }
+
+  const bool published = MqttClient.publish(effective_request, packet_id_out);
+#ifdef USE_MQTT_DETAILED_LOGGING
+  if (published) {
+    MqttLogTxPublish(effective_request.topic, effective_request.payload,
+                     effective_request.plength, effective_request.qos,
+                     &effective_request.properties);
+  }
+#endif  // USE_MQTT_DETAILED_LOGGING
+  MqttPublishCorrelatedResponse(effective_request.payload, effective_request.plength);
+  return published;
+}
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0
+
+#if MQTT_VERSION == MQTT_VERSION_5_0 && defined(USE_MQTT_DETAILED_LOGGING)
+void MqttLogTxPublish(const char* topic, const uint8_t* payload, unsigned int payload_len,
+                      uint8_t qos, const MqttMessageProperties* mqtt_properties) {
+  if (MqttClient.protocolVersion() != MQTT_VERSION_5_0) {
+    return;  // Detailed Tx diagnostics are an MQTT 5.0 feature; skip after level-4 fallback.
+  }
+  const uint32_t highest_loglevel = HighestLogLevel();
+  if ((LOG_LEVEL_DEBUG_MORE > highest_loglevel) ||
+      (TasmotaGlobal.masterlog_level > highest_loglevel)) {
+    return;
+  }
+
+  JsonGeneratorObject properties;
+  if (mqtt_properties != nullptr) {
+    if (mqtt_properties->correlationData != nullptr) {   // correlation data is always binary
+      properties.addHex("corr", mqtt_properties->correlationData, mqtt_properties->correlationDataLen);
+    }
+    if (mqtt_properties->responseTopic != nullptr) {
+      properties.addStr("respTopic", mqtt_properties->responseTopic);
+    }
+    if (mqtt_properties->hasPayloadFormat) {
+      properties.add("payloadFormat", (uint32_t)mqtt_properties->payloadFormat);
+    }
+    if (mqtt_properties->contentType != nullptr) {
+      properties.addStr("contentType", mqtt_properties->contentType);
+    }
+    if ((mqtt_properties->userPropertyKeys != nullptr) &&
+        (mqtt_properties->userPropertyValues != nullptr) &&
+        (mqtt_properties->userPropertyCount != 0)) {
+      JsonGeneratorArray user_props;
+      for (uint8_t i = 0; i < mqtt_properties->userPropertyCount; i++) {
+        const char* key = mqtt_properties->userPropertyKeys[i];
+        const char* value = mqtt_properties->userPropertyValues[i];
+        JsonGeneratorObject kv;
+        kv.addStr("key", (key != nullptr) ? key : "");
+        kv.addStr("value", (value != nullptr) ? value : "");
+        user_props.addStrRaw(kv.toString().c_str());
+      }
+      properties.addStrRaw("userProperties", user_props.toString().c_str());
+    }
+  }
+
+  String safe_topic = EscapeJSONString(topic);
+  String payload_str;
+  payload_str.concat((const char*)payload, payload_len);
+  String safe_payload = EscapeJSONString(payload_str.c_str());
+  // Single uniform format for every QoS so logs parse consistently: QoS is always shown,
+  // in parentheses right after "Tx".
+  AddLog(LOG_LEVEL_DEBUG_MORE,
+         PSTR(D_LOG_MQTT "Tx(%d) \"%s\" | \"%s\" | %s"),
+         qos, safe_topic.c_str(), safe_payload.c_str(), properties.toString().c_str());
+}
+
+void MqttLogReceivedMessage(const char* topic, const uint8_t* payload, unsigned int payload_len) {
+  const uint32_t highest_loglevel = HighestLogLevel();
+  if ((LOG_LEVEL_DEBUG_MORE > highest_loglevel) ||
+      (TasmotaGlobal.masterlog_level > highest_loglevel)) {
+    return;
+  }
+
+  struct MqttLogPropertyContext {
+    bool has_expiry = false;
+    uint32_t expiry = 0;
+    bool has_sub_ids = false;
+    JsonGeneratorArray sub_ids;
+    bool has_user_properties = false;
+    JsonGeneratorArray user_properties;
+  } context;
+  auto collect_property = [](const MqttPropertyView& property, void* raw_context) -> bool {
+    MqttLogPropertyContext* context = static_cast<MqttLogPropertyContext*>(raw_context);
+    if (property.id == 0x02) {  // Message Expiry Interval
+      context->has_expiry = true;
+      context->expiry = property.value;
+    } else if (property.id == 0x0B) {  // Subscription Identifier
+      context->sub_ids.add((uint32_t)property.value);
+      context->has_sub_ids = true;
+    } else if (property.id == MQTT_PROP_USER_PROPERTY) {
+      String key;
+      key.concat((const char*)property.data, property.len);
+      String value;
+      value.concat((const char*)property.data2, property.len2);
+      JsonGeneratorObject kv;
+      kv.addStr("key", key.c_str());
+      kv.addStr("value", value.c_str());
+      context->user_properties.addStrRaw(kv.toString().c_str());
+      context->has_user_properties = true;
+    }
+    return true;
+  };
+  const bool properties_ok = MqttClient.forEachInboundProperty(collect_property, &context);
+  const MqttInboundProperties& mqtt_properties = MqttClient.inboundProperties();
+
+  JsonGeneratorObject properties;
+  if (mqtt_properties.hasCorrelationData) {   // correlation data is always binary
+    properties.addHex("corr", mqtt_properties.correlationData, mqtt_properties.correlationDataLen);
+  }
+  if (mqtt_properties.responseTopic.present()) {
+    String resp_topic;
+    resp_topic.concat((const char*)mqtt_properties.responseTopic.data, mqtt_properties.responseTopic.len);
+    properties.addStr("respTopic", resp_topic.c_str());
+  }
+  if (context.has_expiry) {
+    properties.add("expiry", context.expiry);
+  }
+  if (mqtt_properties.hasPayloadFormat) {
+    properties.add("payloadFormat", (uint32_t)mqtt_properties.payloadFormat);
+  }
+  if (mqtt_properties.contentType.present()) {
+    String content_type;
+    content_type.concat((const char*)mqtt_properties.contentType.data, mqtt_properties.contentType.len);
+    properties.addStr("contentType", content_type.c_str());
+  }
+  if (mqtt_properties.topicAlias != 0) {
+    properties.add("topicAlias", (uint32_t)mqtt_properties.topicAlias);
+  }
+  if (context.has_sub_ids) {
+    properties.addStrRaw("subIds", context.sub_ids.toString().c_str());
+  }
+  if (context.has_user_properties) {
+    properties.addStrRaw("userProperties", context.user_properties.toString().c_str());
+  }
+  if (!properties_ok) {
+    properties.addStrRaw("propertiesError", "true");
+  }
+
+  String safe_topic = EscapeJSONString(topic);
+  String payload_str;
+  payload_str.concat((const char*)payload, payload_len);
+  String safe_payload = EscapeJSONString(payload_str.c_str());
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT "Rx \"%s\" | \"%s\" | %s"),
+    safe_topic.c_str(), safe_payload.c_str(), properties.toString().c_str());
+}
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0 && USE_MQTT_DETAILED_LOGGING
+
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
   SHOW_FREE_MEM(PSTR("MqttDataHandler"));
+
+#if MQTT_VERSION == MQTT_VERSION_5_0 && defined(USE_MQTT_DETAILED_LOGGING)
+  if (MqttClient.protocolVersion() == MQTT_VERSION_5_0) {
+    MqttLogReceivedMessage(mqtt_topic, mqtt_data, data_len);
+  }
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0 && USE_MQTT_DETAILED_LOGGING
 
   // Do not allow more data than would be feasable within stack space
   if (data_len >= MQTT_MAX_PACKET_SIZE) { return; }
@@ -653,6 +982,47 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   }
 #endif  // ESP32
 #endif  // USE_TASMESH
+
+#if MQTT_VERSION == MQTT_VERSION_5_0
+  // Snapshot request/response metadata before command dispatch. PubSubClient's inbound
+  // views are reused by the next received PUBLISH, while command handling may call
+  // MqttClient.loop() recursively. Keeping capture local avoids Arduino generating an
+  // MQTT5-only type in an unguarded sketch prototype.
+  MqttCommandContext mqtt_context;
+  if (MqttClient.protocolVersion() == MQTT_VERSION_5_0) {
+    const MqttInboundProperties& properties = MqttClient.inboundProperties();
+    if (properties.valid) {
+      bool response_topic_valid = properties.responseTopic.present() &&
+                                  (properties.responseTopic.len != 0) &&
+                                  (properties.responseTopic.len < TOPSZ);
+      for (uint16_t i = 0; response_topic_valid && (i < properties.responseTopic.len); i++) {
+        response_topic_valid = (properties.responseTopic.data[i] != '\0') &&
+                               (properties.responseTopic.data[i] != '+') &&
+                               (properties.responseTopic.data[i] != '#');
+      }
+      if (response_topic_valid &&
+          mqtt_context.response_topic.reserve(properties.responseTopic.len) &&
+          mqtt_context.response_topic.concat(properties.responseTopic.data,
+                                             properties.responseTopic.len) &&
+          (mqtt_context.response_topic.length() == properties.responseTopic.len)) {
+        mqtt_context.has_response_topic = true;
+      }
+
+      if (properties.hasCorrelationData &&
+          (properties.correlationDataLen <= sizeof(mqtt_context.correlation_data))) {
+        if (properties.correlationDataLen != 0) {
+          memcpy(mqtt_context.correlation_data, properties.correlationData,
+                 properties.correlationDataLen);
+        }
+        mqtt_context.correlation_data_len = properties.correlationDataLen;
+        mqtt_context.has_correlation_data = true;
+      }
+    }
+  }
+  // Saving/restoring the mailbox pointer isolates nested MQTT callbacks, while nested
+  // synchronous commands inherit the current request for the rest of this command cycle.
+  MqttCommandContextScope mqtt_context_scope(mqtt_context.active() ? &mqtt_context : nullptr);
+#endif  // MQTT_VERSION == MQTT_VERSION_5_0
 
   // MQTT pre-processing
   XdrvMailbox.index = strlen(topic);
@@ -1029,7 +1399,12 @@ void MqttConnected(void) {
   char stopic[TOPSZ];
 
   if (Mqtt.allowed) {
+#if MQTT_VERSION == MQTT_VERSION_5_0
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECTED " (MQTT %s)"),
+      (MqttClient.protocolVersion() == MQTT_VERSION_5_0) ? "5.0" : "3.1.1");
+#else
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECTED));
+#endif
     Mqtt.connected = true;
     Mqtt.retry_counter = 0;
     Mqtt.retry_counter_multiplier = 1;
