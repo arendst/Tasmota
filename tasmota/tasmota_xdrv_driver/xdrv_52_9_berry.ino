@@ -320,7 +320,11 @@ void BerryObservability(bvm *vm, int event, ...) {
         );
 #endif
         // make new threshold tighter when we reach high memory usage
-        if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
+        if (UsePSRAM()) {
+          if (vm->gc.threshold > 200*1024) {
+            vm->gc.threshold = vm->gc.usage + 100*1024;    // increase by 100 KB
+          }
+        } else if (vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
         }
       }
