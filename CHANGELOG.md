@@ -5,16 +5,18 @@ All notable changes to this project will be documented in this file.
 
 ## [15.6.0.1]
 ### Added
-- DALI-2 input device event messages (IEC 62386-103) from push buttons, occupancy and light sensors decoded and published for rules and MQTT
-- DALI-2 control device commissioning and instance queries with commands `DaliDeviceScan` and `DaliDevice`
 - Support for GUI tooltip on touch media like phones and tablets
-- ESP32 MiEL HVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
-- MiEL HVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
+- ESP32 MiELHVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
+- MiELHVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (#24959)
 - Berry virtual button support
 - NeoPool AuxMode (#24998)
 - Berry `sortedmap` support for `json.dump` (#24999)
-- MQTT 5.0 with focus on request/response (optional)
+- MiELHVAC Home Assistant MQTT discovery (#25027)
+- DALI-2 input device event messages (IEC 62386-103) from push buttons, occupancy and light sensors decoded and published for rules and MQTT (#25029)
+- DALI-2 control device commissioning and instance queries with commands `DaliDeviceScan` and `DaliDevice`  (#25029)
+- Support for MI32 Xiaomi Mi Body Composition Scale (MIBCS/MIBFS) (#25049)
+- MQTT 5.0 with focus on request/response (optional) (#25050)
 
 ### Breaking Changed
 
@@ -22,15 +24,17 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - BLE EQ3-TRV code refactoring (#24978)
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
-- MiEL HVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) (#24992)
+- MiELHVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) (#24992)
 
 ### Fixed
-- MiEL HVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table (#24992)
-- MiEL HVAC Modbus length-based framing, queue writes, FC03 sensor mirror (#24993)
+- MiELHVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table (#24992)
+- MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror (#24993)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it (#24979)
-- Matter: fix autoconfiguration after configuration reset (#24997)
+- Matter autoconfiguration after configuration reset (#24997)
 - Berry rare register allocation bug (#25010)
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 (#24731)
+- ESP32 release UART0 console when the template uses its pins (#25047)
+- WT32_ETH01 ethernet initialization (#25051)
 
 ### Removed
 
