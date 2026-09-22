@@ -223,6 +223,7 @@ typedef struct DliSettings_t {
   uint8_t target;
   uint8_t light_type;
   uint8_t max_gear;
+  uint8_t probe_retry;
 } DliSettings_t;
 
 struct DALI {
@@ -268,16 +269,18 @@ bool DaliLoadData(void) {
   Dali->Settings.target = root.getUInt(PSTR("Target"), Dali->Settings.target);
   Dali->Settings.light_type = root.getUInt(PSTR("LightType"), Dali->Settings.light_type);
   Dali->Settings.max_gear = root.getUInt(PSTR("MaxGear"), Dali->Settings.max_gear);
+  Dali->Settings.probe_retry = root.getUInt(PSTR("Retry"), Dali->Settings.probe_retry);
 
   return true;
 }
 
 bool DaliSaveData(void) {
-  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u,\"MaxGear\":%u}}"),
+  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u,\"MaxGear\":%u,\"Retry\":%u}}"),
                    Dali->Settings.crc32,
                    Dali->Settings.target,
                    Dali->Settings.light_type,
-                   Dali->Settings.max_gear);
+                   Dali->Settings.max_gear,
+                   Dali->Settings.probe_retry);
 
   return UfsJsonSettingsWrite(ResponseData());
 }
@@ -1323,12 +1326,32 @@ bool DaliInit(uint32_t function) {
   UpdateDevicesPresent(1);
 
   TasmotaGlobal.light_type = LT_W;             // Single channel
+
+/*
   Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
   if (Dali->target_rgbwaf > 1) {
     TasmotaGlobal.light_type = Dali->Settings.light_type;
     if ((TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
         (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
       UpdateDevicesPresent(1);                   // We manage RGB and W separately, hence adding a device
+    }
+  }
+*/
+
+  uint32_t probe_retry = Dali->Settings.probe_retry +1;
+  while (probe_retry--) {
+    Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
+    if (Dali->target_rgbwaf > 1) {
+      TasmotaGlobal.light_type = Dali->Settings.light_type;
+      if ((TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
+          (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
+        UpdateDevicesPresent(1);               // We manage RGB and W separately, hence adding a device
+      }
+      break;
+    }
+    if (probe_retry) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Retry target probe %d"), Dali->Settings.probe_retry +1 - probe_retry);
+      delay(1000);                             // Power-On probe delay for DALI targets to get ready
     }
   }
 
@@ -1345,14 +1368,14 @@ bool DaliInit(uint32_t function) {
 const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
   "|" D_CMND_POWER "|" D_CMND_DIMMER
 #ifdef USE_LIGHT
-  "|Light|Target|Channels"
+  "|Light|Target|Channels|Retry"
 #endif  // USE_LIGHT
   "|Send|Query|Scan|Group|GroupSliders|BS|Gear|Device|DeviceScan";
 
 void (* const DALICommand[])(void) PROGMEM = {
   &CmndDali, &CmndDaliPower, &CmndDaliDimmer,
 #ifdef USE_LIGHT
-  &CmndDaliLight, &CmndDaliTarget, &CmndDaliChannels,
+  &CmndDaliLight, &CmndDaliTarget, &CmndDaliChannels, &CmndDaliRetry,
 #endif  // USE_LIGHT
   &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGroupSliders, &CmndDaliBroadcastSlider, &CmndDaliGear,
   &CmndDaliDevice, &CmndDaliDeviceScan };
@@ -1907,6 +1930,18 @@ void CmndDaliGroupSliders(void) {
 }
 
 #ifdef USE_LIGHT
+/*-------------------------------------------------------------------------------------------*/
+
+void CmndDaliRetry(void) {
+  // DaliRetry 0..64 - Retry restart probe count once per second for DALI device
+  if (Dali->allow_light) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
+      Dali->Settings.probe_retry = XdrvMailbox.payload;
+    }
+  }
+  ResponseCmndNumber(Dali->Settings.probe_retry);
+}
+
 /*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliLight(void) {
