@@ -25,10 +25,10 @@
  * through the console (HVACSet* commands), MQTT (SENSOR / HVACSettings) and a web control
  * panel on the main page.  Protocol reference:
  * https://muart-group.github.io/developer/it-protocol/
- * Compile with USE_MIEL_HVAC; GPIOs "MiEl HVAC Rx" / "MiEl HVAC Tx".
+ * Compile with USE_MIEL_HVAC, GPIOs "MiEl HVAC Rx" / "MiEl HVAC Tx".
  *
  * The web panel's Off button replaces the generic Tasmota power toggle, which is hidden
- * together with its ON/OFF state row; the POWER command and its MQTT / Home Assistant
+ * together with its ON/OFF state row, the POWER command and its MQTT / Home Assistant
  * state sync are unchanged.
  * --- Web control panel (USE_WEBSERVER) ---------------------------------------------------
  * Full climate panel on the main page: mode (Auto/Heat/Cool/Dry/Fan/Off), target
@@ -37,10 +37,17 @@
  * panel is refreshed in place on every web_refresh poll so it also follows changes made
  * from the IR remote / MQTT / console.
  *
+ * The small state table below the controls shows, in order, Room Temp, operation
+ * stage, compressor state, compressor frequency, power, energy, the error state
+ * (8000 shown as "no") and, last, Timer On/Off as a single "on-time/off-time" row
+ * (0x62 0x05, read-only, each side shown as "off" or as the clock time it fires
+ * at, the unit only reports minutes remaining, so this adds Tasmota's local
+ * clock).
+ *
  * A control change is written to sc_settings straight away, before the unit confirms with
  * the next 0x62 0x02, so the panel, the Modbus registers and SENSOR show the intent
  * instead of the stale pre-change state for ~1s, and HVACSettings / SENSOR are published
- * at that point; the unit's next report wins (and republishes) if it rejects the change.
+ * at that point, the unit's next report wins (and republishes) if it rejects the change.
  *
  * --- Modbus RTU slave (USE_MIEL_HVAC_MODBUS_SLAVE, ESP32) ---------------------------------
  * Optional second RS485 port that mirrors every driver state as read registers and maps
@@ -4298,9 +4305,10 @@ miel_hvac_web_ro(bool js, const char *id, const char *label, const char *value)
 
 /*
  * Read-only state table shown inside the control-panel card, below the
- * controls (matching the design proposal).  Called once with js=false to
- * lay it out, then every Settings->web_refresh ms with js=true to refresh
- * the values live.
+ * controls: Room Temp, operation stage, compressor, power, energy and the
+ * error state, in that order.  Called once with js=false to lay it out,
+ * then every Settings->web_refresh ms with js=true to refresh the values
+ * live.
  */
 static void
 miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
@@ -4308,10 +4316,12 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 	const struct miel_hvac_data_settings *set = &sc->sc_settings.data.settings;
 	uint8_t traw = (set->temp05 != 0) ? set->temp05 : set->temp;
 	const char *name;
-	const char *vh;
-	char vhbuf[8];
 	char val[48];
 	char buf[33];
+
+	/* Needed by the control-sync block below, not by any row in this table. */
+	bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
+	             || set->widevane == 0xaa);
 
 	if (!js)
 		WSContentSend_P(PSTR("<div class='hp-ro-w'><table class='hp-ro'>"));
@@ -4331,72 +4341,6 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 		miel_hvac_web_ro(js, "hvro_room", "Room Temp", val);
 	}
 
-	dtostrfd(ConvertTemp(miel_hvac_temp2deg(sc->sc_temp_type, traw)),
-		Settings->flag2.temperature_resolution, buf);
-	miel_hvac_dsep(buf);
-	snprintf_P(val, sizeof(val), PSTR("%s " D_UNIT_DEGREE "%c"), buf, TempUnit());
-	miel_hvac_web_ro(js, "hvro_set", "Set Temp", val);
-
-	name = set->power
-		? miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK,
-			miel_hvac_mode_map, nitems(miel_hvac_mode_map))
-		: "off";
-	miel_hvac_web_ro(js, "hvro_mode", "Mode", name != NULL ? name : "-");
-
-	name = miel_hvac_map_byval(set->fan,
-		miel_hvac_fan_map, nitems(miel_hvac_fan_map));
-	miel_hvac_web_ro(js, "hvro_fan", "Fan", name != NULL ? name : "-");
-
-	name = miel_hvac_map_byval(set->vane,
-		miel_hvac_vane_map, nitems(miel_hvac_vane_map));
-	if (name == NULL)
-		name = "auto";
-
-	bool wv_isee = (set->widevane == 0x80 || set->widevane == 0x28
-	             || set->widevane == 0xaa);
-
-	if (wv_isee)
-		vh = "isee";
-	else
-	{
-		vh = miel_hvac_map_byval(set->widevane & MIEL_HVAC_SETTINGS_WIDEVANE_MASK,
-			miel_hvac_widevane_map, nitems(miel_hvac_widevane_map));
-		if (vh == NULL)
-		{
-			snprintf_P(vhbuf, sizeof(vhbuf), PSTR("0x%02x"), set->widevane);
-			vh = vhbuf;
-		}
-	}
-	if (sc->sc_has_widevane)
-	{
-		snprintf_P(val, sizeof(val), PSTR("%s / %s"), name, vh);
-		miel_hvac_web_ro(js, "hvro_vane", "Vane V / H", val);
-	}
-	else
-	{
-		snprintf_P(val, sizeof(val), PSTR("%s"), name);
-		miel_hvac_web_ro(js, "hvro_vane", "Vane V", val);
-	}
-
-	/* Air Direction — separate i-See function; "off" unless wide vane is
-	 * in i-See mode.  Shown only once the unit is confirmed capable, same
-	 * gate as the SENSOR JSON field and the Air Direction control below. */
-	if (sc->sc_caps.sc_caps_valid
-	    && sc->sc_caps.cap_vane_v && sc->sc_has_isee)
-	{
-		const char *ad = wv_isee
-			? miel_hvac_map_byval(set->airdirection,
-				miel_hvac_airdirection_map, nitems(miel_hvac_airdirection_map))
-			: "off";
-		miel_hvac_web_ro(js, "hvro_dir", "Air Direction",
-			ad != NULL ? ad : "off");
-	}
-
-	name = miel_hvac_map_byval(set->prohibit,
-		miel_hvac_prohibit_map, nitems(miel_hvac_prohibit_map));
-	miel_hvac_web_ro(js, "hvro_prohibit", "Prohibit",
-		name != NULL ? name : "off");
-
 	if (sc->sc_stage.type != 0)
 	{
 		name = miel_hvac_map_byval(sc->sc_stage.data.stage.operation,
@@ -4410,8 +4354,12 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 	{
 		const struct miel_hvac_data_status *st = &sc->sc_status.data.status;
 
+		name = miel_hvac_map_byval(st->compressor,
+			miel_hvac_compressor_map, nitems(miel_hvac_compressor_map));
+		miel_hvac_web_ro(js, "hvro_comp", "Compressor", name != NULL ? name : "off");
+
 		snprintf_P(val, sizeof(val), PSTR("%u Hz"), st->compressorfrequency);
-		miel_hvac_web_ro(js, "hvro_comp", "Compressor", val);
+		miel_hvac_web_ro(js, "hvro_freq", "Frequency", val);
 
 		if (sc->sc_has_energy)
 		{
@@ -4429,6 +4377,38 @@ miel_hvac_web_readout(struct miel_hvac_softc *sc, bool js)
 			snprintf_P(val, sizeof(val), PSTR("%s " D_UNIT_KILOWATTHOUR), buf);
 			miel_hvac_web_ro(js, "hvro_egy", "Energy Total", val);
 		}
+	}
+
+	/* Error state (0x04).  8000 is the spec's "no error" code, shown as
+	 * text rather than the number, other codes are shown as the packed
+	 * BCD value SENSOR also uses (6999 = bad indoor-unit communication,
+	 * and so on per the spec). */
+	if (sc->sc_error.type != 0)
+	{
+		const struct miel_hvac_data_error *er = &sc->sc_error.data.error;
+		uint16_t ec = ((uint16_t)er->code << 8) | er->code1;
+
+		if (ec == 0x8000)
+			miel_hvac_web_ro(js, "hvro_err", "Error", "no");
+		else
+		{
+			snprintf_P(val, sizeof(val), PSTR("%04X"), ec);
+			miel_hvac_web_ro(js, "hvro_err", "Error", val);
+		}
+	}
+
+	/* Timer on/off (0x62 0x05) — read-only, see miel_hvac_web_timer_hhmm() */
+	if (sc->sc_timers.type != 0)
+	{
+		const struct miel_hvac_data_timers *tm = &sc->sc_timers.data.timers;
+		char on_hhmm[6], off_hhmm[6];
+
+		miel_hvac_web_timer_hhmm(tm->mode & MIEL_HVAC_TIMER_MODE_ON,
+			tm->onminutesremaining, on_hhmm, sizeof(on_hhmm));
+		miel_hvac_web_timer_hhmm(tm->mode & MIEL_HVAC_TIMER_MODE_OFF,
+			tm->offminutesremaining, off_hhmm, sizeof(off_hhmm));
+		snprintf_P(val, sizeof(val), PSTR("%s/%s"), on_hhmm, off_hhmm);
+		miel_hvac_web_ro(js, "hvro_timer", "Timer On/Off", val);
 	}
 
 	if (js)
@@ -4712,6 +4692,28 @@ miel_hvac_web_select(const char *label, const char *id, const char *key,
 	}
 
 	WSContentSend_P(PSTR("</select></div>"));
+}
+
+/*
+ * Timer on/off (0x62 0x05), read-only.  The unit only reports how many
+ * minutes remain until a side fires, so the displayed clock time is that
+ * plus Tasmota's local clock, wrapping past midnight.  No reference
+ * implementation (SwiCago, ESPHome mitsubishi_itp/mitsubishiheatpump,
+ * muart-group) documents a way to write the plug timer over CN105, only
+ * to read it back.
+ */
+static void
+miel_hvac_web_timer_hhmm(bool active, uint8_t remaining_x10, char *out, size_t len)
+{
+	if (active && RtcTime.valid)
+	{
+		uint16_t now = RtcTime.hour * 60 + RtcTime.minute;
+		uint16_t t = (now + (uint16_t)remaining_x10 * 10) % 1440;
+
+		snprintf_P(out, len, PSTR("%02u:%02u"), t / 60, t % 60);
+	}
+	else
+		snprintf_P(out, len, PSTR("off"));
 }
 
 static void
