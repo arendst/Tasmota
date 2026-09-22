@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - BLE EQ3-TRV code refactoring (#24978)
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
 - MiELHVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) (#24992)
+- Command `SetOption46 201..255` init wait 1 to 55 seconds instead of 2010 to 2550 msec (#25035)
 
 ### Fixed
 - MiELHVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table (#24992)

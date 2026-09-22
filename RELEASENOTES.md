@@ -130,6 +130,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- Command `SetOption46 201..255` init wait 1 to 55 seconds instead of 2010 to 2550 msec [#25035](https://github.com/arendst/Tasmota/issues/25035)
 - MiELHVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) [#24992](https://github.com/arendst/Tasmota/issues/24992)
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
 - BLE EQ3-TRV code refactoring [#24978](https://github.com/arendst/Tasmota/issues/24978)

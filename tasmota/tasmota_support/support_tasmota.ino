@@ -2332,8 +2332,12 @@ void GpioInit(void)
   }
 
   if (Settings->param[P_POWER_ON_DELAY]) {                 // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
-    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %d msec"), init_delay);
+    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;     // 1 .. 200 = 10 .. 2000 msec delay
+    if (Settings->param[P_POWER_ON_DELAY] > 200) {                 
+      init_delay = (Settings->param[P_POWER_ON_DELAY] - 200) * 1000;  // 201 .. 255 = 1 .. 55 seconds delay for devices like DALI gear to become ready
+    }
+    float fdelay = (float)init_delay * 0.001f;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %3_f sec"), &fdelay);
     delay(init_delay);
   }
 
