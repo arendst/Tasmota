@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry virtual button support
 - NeoPool AuxMode (#24998)
 - Berry `sortedmap` support for `json.dump` (#24999)
+- MQTT 5.0 with focus on request/response (optional)
 
 ### Breaking Changed
 

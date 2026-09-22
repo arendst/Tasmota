@@ -323,53 +323,81 @@ TEST_SUITE("hardening") {
     }
 
     // =======================================================================
-    //  F-04 - Streaming publish length 16-bit truncation (Requirement 9.4)
+    //  F-04 - WITHDRAWN, replaced by Property 28 (Requirements 4.9, 4.10, 8.17)
     // =======================================================================
     //
-    // beginPublish() buffers only the header (fixed header + Remaining Length +
-    // topic) and streams the payload separately, so a very large *declared*
-    // length can be framed without allocating the payload. The emitted Remaining
-    // Length must be the full 32-bit value (plength + 2 + topicLen), not a 16-bit
-    // truncation that would desynchronize framing. The fork uses a uint32_t
-    // buildHeader bounded to four length bytes. Expected PASS.
-    TEST_CASE("F-04 large declared streaming length frames Remaining Length without truncation"
+    // F-04 originally required that a large *declared* streaming length be framed
+    // across a 3- or 4-byte Remaining Length rather than truncated to 16 bits,
+    // since beginPublish() buffers only the header and streams the payload.
+    //
+    // The tasmota-pubsub-mqtt5 design retires that contract: the Variable Byte
+    // Integer codec is hard-limited to 2 bytes (MQTT_VBI_MAX == 16383), so a
+    // Remaining Length above 16,383 is refused instead of framed. Property 28
+    // replaces F-04's value - refusal is total, never truncated: zero bytes are
+    // transmitted for the refused packet, the caller gets a failure, and the
+    // connection state is unchanged, so the outbound stream stays synchronized
+    // (Requirement 8.17 for the streaming path, 4.9/4.10 generally).
+    TEST_CASE("F-04 withdrawn: an over-limit declared streaming length is refused, never truncated"
               * FINDING_MARKER(F04)) {
         const std::string topic = "t";                 // topicLen == 1
         const size_t topicLen = topic.size();
-        // Declared payload lengths above the 16-bit range, spanning the 2->3 and
-        // 3->4 byte Remaining Length transitions and the MQTT maximum.
-        const unsigned int plengths[] = {
-            65533u,               // RL = 65536   (first value needing 3 bytes)
-            100000u,              // RL = 100003  (3 bytes)
-            2097149u,             // RL = 2097152 (first value needing 4 bytes)
-            268435455u - 2u - 1u, // RL = 268435455 (MQTT maximum, 4 bytes)
-        };
+        // Remaining Length = plength + 2 + topicLen.
+        const unsigned int overhead = static_cast<unsigned int>(2u + topicLen);
 
-        for (unsigned int plen : plengths) {
-            CAPTURE(plen);
-            TestClock::instance().reset();
-            MockClient client;
-            PubSubClient psc(client);
-            connectAndClear(client, psc);
+        SUBCASE("above the 2-byte limit: refused, nothing emitted, connection intact") {
+            // The original F-04 vectors, now expected to be refused outright,
+            // plus the first refused Remaining Length (16,384).
+            const unsigned int plengths[] = {
+                65533u,               // RL = 65536     (used to need 3 bytes)
+                100000u,              // RL = 100003    (3 bytes)
+                2097149u,             // RL = 2097152   (used to need 4 bytes)
+                268435455u - 2u - 1u, // RL = 268435455 (old MQTT maximum)
+                16384u - overhead,    // RL = 16384, the first refused value
+            };
 
-            REQUIRE(psc.beginPublish(topic.c_str(), plen, false));
+            for (unsigned int plen : plengths) {
+                CAPTURE(plen);
+                TestClock::instance().reset();
+                MockClient client;
+                PubSubClient psc(client);
+                connectAndClear(client, psc);
 
-            const std::vector<uint8_t>& out = client.outbound();
-            REQUIRE(out.size() >= 2);
-            CHECK(static_cast<uint8_t>(out[0] & 0xF0) == static_cast<uint8_t>(MQTTPUBLISH));
+                CHECK_FALSE(psc.beginPublish(topic.c_str(), plen, false));
+                CHECK(client.outbound().empty());
+                CHECK(psc.connected());
+                CHECK_FALSE(client.stopCalled());
+            }
+        }
 
-            uint32_t rl = 0;
-            size_t rlBytes = 0;
-            REQUIRE(MqttParser::decodeRemainingLength(out, 1, rl, rlBytes));
+        SUBCASE("at and just below the limit: framed in exactly two length bytes") {
+            const uint32_t remainingLengths[] = {16382u, 16383u};
 
-            const uint32_t expected =
-                static_cast<uint32_t>(plen) + 2u + static_cast<uint32_t>(topicLen);
-            CHECK(rl == expected);                     // full 32-bit value
-            CHECK(rl != (expected & 0xFFFFu));         // NOT a 16-bit truncation
+            for (uint32_t rlWanted : remainingLengths) {
+                CAPTURE(rlWanted);
+                const unsigned int plen = static_cast<unsigned int>(rlWanted - overhead);
+                TestClock::instance().reset();
+                MockClient client;
+                PubSubClient psc(client);
+                connectAndClear(client, psc);
 
-            // Header framing is self-consistent: fixed(1) + RL bytes + topic
-            // length prefix(2) + topic. No payload streamed yet.
-            CHECK(out.size() == 1u + rlBytes + 2u + topicLen);
+                REQUIRE(psc.beginPublish(topic.c_str(), plen, false));
+
+                const std::vector<uint8_t>& out = client.outbound();
+                REQUIRE(out.size() >= 3);
+                CHECK(static_cast<uint8_t>(out[0] & 0xF0) == static_cast<uint8_t>(MQTTPUBLISH));
+
+                uint32_t rl = 0;
+                size_t rlBytes = 0;
+                REQUIRE(MqttParser::decodeRemainingLength(out, 1, rl, rlBytes));
+                CHECK(rl == rlWanted);
+                CHECK(rlBytes == 2u);
+                CHECK(out[1] == static_cast<uint8_t>((rlWanted & 0x7Fu) | 0x80u));
+                CHECK(out[2] == static_cast<uint8_t>(rlWanted >> 7));
+
+                // Header framing is self-consistent: fixed(1) + RL(2) + topic
+                // length prefix(2) + topic. No payload streamed yet.
+                CHECK(out.size() == 1u + rlBytes + 2u + topicLen);
+            }
         }
     }
 

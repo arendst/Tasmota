@@ -45,6 +45,11 @@
 #include "PubSubClient.h"
 
 namespace {
+constexpr uint32_t kLibraryRemainingLengthMax =
+    kMqtt5 ? 16383u : 268435455u;
+}
+
+namespace {
 
 // Deterministic payload of length n. The pattern intentionally produces 0x00
 // bytes so the round-trip also proves the paths are binary-safe (no reliance on
@@ -193,12 +198,17 @@ TEST_SUITE("baseline") {
     // a PUBLISH whose decoded topic equals the input topic, whose decoded payload
     // equals the input payload, and whose retain bit equals the requested flag.
     // Validated deterministically over a curated boundary table (no randomized
-    // generators). The streamed publish_P() path frames every size because its
-    // payload is not buffered.
+    // generators). The streamed publish_P() path does not buffer its payload, so
+    // the binding limit is the Remaining Length: the Variable Byte Integer codec
+    // is profile-specific. MQTT 5 is hard-limited to two VBI bytes
+    // (`kLibraryRemainingLengthMax == 16383`), while the restored MQTT 3.1.1
+    // implementation retains the original one-to-four-byte encoding. Values over
+    // the selected profile's limit are refused without emitting bytes.
     TEST_CASE("Property 4: publish_P PUBLISH field round-trip over payload-length boundaries") {
-        // Payload-length boundaries: empty, single byte, the 1->2 and 2->3 byte
-        // Remaining Length transitions, and sizes that exceed the 16-bit range.
-        const size_t payloadLengths[] = {0, 1, 127, 128, 16383, 16384, 65535, 65536};
+        // Payload-length boundaries: empty, single byte, the 1->2 byte Remaining
+        // Length transition, the MQTT 5 two-byte limit, and larger values that
+        // exercise the restored MQTT 3.1.1 three-byte encoding.
+        const size_t payloadLengths[] = {0, 1, 127, 128, 16366, 16367, 16383, 16384, 65535, 65536};
         const bool retainedFlags[] = {false, true};
         const std::string topic = "tele/dev/SENSOR";
 
@@ -211,9 +221,20 @@ TEST_SUITE("baseline") {
                 PubSubClient psc(client);
                 connectAndClear(client, psc);
 
+                // Remaining Length = 2 + topicLen + plength.
+                const size_t rl = 2 + topic.size() + plen;
                 const std::vector<uint8_t> payload = makePayload(plen);
-                REQUIRE(psc.publish_P(topic.c_str(), payload.data(),
-                                      static_cast<unsigned int>(payload.size()), retained));
+                const bool ok = psc.publish_P(topic.c_str(), payload.data(),
+                                              static_cast<unsigned int>(payload.size()), retained);
+
+                if (rl > kLibraryRemainingLengthMax) {
+                    // Refused, and refusal is total: no byte of the packet is sent.
+                    CHECK_FALSE(ok);
+                    CHECK(client.outbound().empty());
+                    CHECK(psc.connected());
+                    continue;
+                }
+                REQUIRE(ok);
 
                 const std::vector<uint8_t>& out = client.outbound();
                 REQUIRE(MqttParser::isStructurallyValidPublish(out));
@@ -231,8 +252,10 @@ TEST_SUITE("baseline") {
 
     // Property 4 for the buffered publish() path over the payload lengths that
     // fit a working buffer. Small sizes use the default 1200-byte buffer; the
-    // 16383/16384 sizes use an enlarged buffer (still within the uint16_t buffer
-    // size limit) so the real buffered framing path is exercised end to end.
+    // sizes near the Remaining Length limit use an enlarged buffer (still within
+    // the uint16_t buffer size limit) so the real buffered framing path is
+    // exercised end to end. With an enlarged buffer, MQTT 5's two-byte Remaining
+    // Length gate binds above 16,383; MQTT 3.1.1 continues with three-byte framing.
     TEST_CASE("Property 4: buffered publish PUBLISH field round-trip within buffer capacity") {
         struct Case { size_t plen; uint16_t bufferSize; };
         const Case cases[] = {
@@ -240,6 +263,8 @@ TEST_SUITE("baseline") {
             {1,     MQTT_MAX_PACKET_SIZE},
             {127,   MQTT_MAX_PACKET_SIZE},
             {128,   MQTT_MAX_PACKET_SIZE},
+            {16366, 20000},   // RL = 16383, two bytes
+            {16367, 20000},   // RL = 16384: MQTT 5 refuses, v311 uses three bytes
             {16383, 20000},
             {16384, 20000},
         };
@@ -257,9 +282,19 @@ TEST_SUITE("baseline") {
                 REQUIRE(psc.getBufferSize() == c.bufferSize);
                 connectAndClear(client, psc);
 
+                // Remaining Length = 2 + topicLen + plength.
+                const size_t rl = 2 + topic.size() + c.plen;
                 const std::vector<uint8_t> payload = makePayload(c.plen);
-                REQUIRE(psc.publish(topic.c_str(), payload.data(),
-                                    static_cast<unsigned int>(payload.size()), retained));
+                const bool ok = psc.publish(topic.c_str(), payload.data(),
+                                            static_cast<unsigned int>(payload.size()), retained);
+
+                if (rl > kLibraryRemainingLengthMax) {
+                    CHECK_FALSE(ok);
+                    CHECK(client.outbound().empty());
+                    CHECK(psc.connected());
+                    continue;
+                }
+                REQUIRE(ok);
 
                 const std::vector<uint8_t>& out = client.outbound();
                 REQUIRE(MqttParser::isStructurallyValidPublish(out));
@@ -360,9 +395,12 @@ TEST_SUITE("baseline") {
             CHECK(client.outbound().empty());
         }
 
-        SUBCASE("payloads >= 16-bit buffer limit cannot be buffered even at max buffer") {
-            const size_t hugeLengths[] = {16384, 65535, 65536};
-            for (size_t plen : hugeLengths) {
+        SUBCASE("large payloads respect the selected Remaining Length and buffer limits") {
+            // topic "t" (len 1): Remaining Length = plength + 3.
+            // MQTT 5 refuses a Remaining Length above 16,383. MQTT 3.1.1 can
+            // encode it in three bytes, leaving the uint16_t buffer as its gate.
+            const size_t lengths[] = {16380, 16384, 65535, 65536};
+            for (size_t plen : lengths) {
                 CAPTURE(plen);
                 TestClock::instance().reset();
                 MockClient client;
@@ -370,11 +408,11 @@ TEST_SUITE("baseline") {
                 REQUIRE(psc.setBufferSize(65535));  // largest a uint16_t buffer allows
                 connectAndClear(client, psc);
 
-                // 16384 fits a 65535 buffer; 65535/65536 cannot (need > uint16_t).
+                const size_t rl = plen + 3;
                 const std::vector<uint8_t> payload = makePayload(plen);
                 const bool ok = psc.publish("t", payload.data(),
                                             static_cast<unsigned int>(payload.size()), false);
-                if (plen + 8 <= 65535) {
+                if ((plen + 8 <= 65535) && (rl <= kLibraryRemainingLengthMax)) {
                     CHECK(ok);
                     CHECK(MqttParser::isStructurallyValidPublish(client.outbound()));
                 } else {
@@ -420,21 +458,26 @@ TEST_SUITE("baseline") {
     }
 
     // Property 1 against the library's real emitted bytes: for PUBLISH packets
-    // whose Remaining Length crosses the 1->2 and 2->3 byte transitions, the
-    // decoded Remaining Length equals the actual trailing byte count and equals
-    // 2 + topicLen + plength. The streamed publish_P() path is used so the
-    // larger sizes are framed (the buffered path cannot hold them).
+    // whose Remaining Length crosses the 1->2 byte transition and lands exactly
+    // on the 2-byte maximum, the decoded Remaining Length equals the actual
+    // trailing byte count and equals 2 + topicLen + plength. The streamed
+    // publish_P() path is used so the sizes are not bounded by the working buffer.
+    // The MQTT 5 profile refuses Remaining Length 16,384 because its codec is
+    // intentionally limited to two bytes. The restored MQTT 3.1.1 profile emits
+    // the same packet with a three-byte Remaining Length.
     TEST_CASE("Property 1: emitted PUBLISH Remaining Length equals trailing byte count") {
         const std::string topic = "t";           // topicLen == 1
         const size_t topicLen = topic.size();
         // Remaining Length = 2 + topicLen + plength. Choose plength so RL lands
-        // on each byte-count boundary.
+        // on each byte-count boundary. `expectedRlBytes == 0` means "refused".
         struct Case { size_t plen; size_t expectedRlBytes; };
         const Case cases[] = {
-            {127 - 2 - 1,   1},   // RL = 127  (1 byte)
-            {128 - 2 - 1,   2},   // RL = 128  (2 bytes)
+            {127 - 2 - 1,   1},   // RL = 127   (1 byte)
+            {128 - 2 - 1,   2},   // RL = 128   (2 bytes)
+            {16382 - 2 - 1, 2},   // RL = 16382 (2 bytes)
             {16383 - 2 - 1, 2},   // RL = 16383 (2 bytes)
-            {16384 - 2 - 1, 3},   // RL = 16384 (3 bytes)
+            {16384 - 2 - 1, kMqtt5 ? 0u : 3u},
+                                      // MQTT 5 refuses; MQTT 3.1.1 uses 3 bytes
         };
 
         for (const Case& c : cases) {
@@ -445,8 +488,16 @@ TEST_SUITE("baseline") {
             connectAndClear(client, psc);
 
             const std::vector<uint8_t> payload = makePayload(c.plen);
-            REQUIRE(psc.publish_P(topic.c_str(), payload.data(),
-                                  static_cast<unsigned int>(payload.size()), false));
+            const bool ok = psc.publish_P(topic.c_str(), payload.data(),
+                                          static_cast<unsigned int>(payload.size()), false);
+
+            if (c.expectedRlBytes == 0) {
+                CHECK_FALSE(ok);
+                CHECK(client.outbound().empty());
+                CHECK(psc.connected());
+                continue;
+            }
+            REQUIRE(ok);
 
             const std::vector<uint8_t>& out = client.outbound();
             REQUIRE(MqttParser::isStructurallyValidPublish(out));

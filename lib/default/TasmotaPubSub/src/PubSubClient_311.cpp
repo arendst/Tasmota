@@ -16,6 +16,8 @@
 #include "PubSubClient.h"
 #include "Arduino.h"
 
+#if MQTT_VERSION == MQTT_VERSION_3_1_1
+
 PubSubClient::PubSubClient() {
     this->_state = MQTT_DISCONNECTED;
     this->_client = NULL;
@@ -1006,3 +1008,4 @@ PubSubClient& PubSubClient::setSocketTimeout(uint16_t timeout) {
     this->socketTimeout = timeout;
     return *this;
 }
+#endif  // MQTT_VERSION == MQTT_VERSION_3_1_1
