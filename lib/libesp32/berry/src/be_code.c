@@ -884,15 +884,22 @@ void be_code_ret(bfuncinfo *finfo, bexpdesc *e)
 static void package_suffix(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
 {
     int key;
-    if (hasjump(k)) {
-        /* The key still carries open short-circuit jumps. Close them before
-         * materializing the object, otherwise the code that loads the object
-         * lands between those jumps and is skipped whenever the short circuit
-         * is taken. Materializing the object first is what 2785c08 changed in
-         * order to save a register in `self.a[128]`, so keep that order for
-         * every key that has no pending jumps. */
+    if (hasjump(k) || k->type == ETINDEX || k->type == ETMEMBER) {
+        /* Materialize the key before the object in two cases:
+         * - The key still carries open short-circuit jumps. Loading the object
+         *   first would place that load between those jumps, where it is
+         *   skipped whenever the short circuit is taken.
+         * - The key is itself an index or member expression that is not
+         *   materialized yet, as in `a[b[i+1]]` or `a[o.(n)]`. Loading the
+         *   object first puts it in a register above the key's own object and
+         *   index, and suffix_destreg() then releases it together with them
+         *   although it is still in use; an assignment then leaves freereg
+         *   below the number of active locals.
+         * Materializing the object first is what 2785c08 changed in order to
+         * save a register in `self.a[128]`, so keep that order for every
+         * other key. */
         key = exp2anyreg(finfo, k);
-    c->v.ss.obj = exp2anyreg(finfo, c);
+        c->v.ss.obj = exp2anyreg(finfo, c);
     } else {
         c->v.ss.obj = exp2anyreg(finfo, c);
         key = exp2anyreg(finfo, k);
