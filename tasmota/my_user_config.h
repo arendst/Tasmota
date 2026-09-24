@@ -1384,6 +1384,19 @@
                                                     // Enabled by default in standard ESP32 binary
   // #define USE_MATTER_VERBOSE                     // Enable verbose mode in logs (+16KB), automatically enabled with USE_BERRY_DEBUG
 
+
+// -- P4 settings ---------------------------------
+
+//WIFI - ESP32C6
+#define BOARD_HAS_SDIO_ESP_HOSTED
+#define BOARD_SDIO_ESP_HOSTED_CLK   18
+#define BOARD_SDIO_ESP_HOSTED_CMD   19
+#define BOARD_SDIO_ESP_HOSTED_D0    14
+#define BOARD_SDIO_ESP_HOSTED_D1    15
+#define BOARD_SDIO_ESP_HOSTED_D2    16
+#define BOARD_SDIO_ESP_HOSTED_D3    17
+#define BOARD_SDIO_ESP_HOSTED_RESET 54
+
 #endif  // ESP32
 
 /*********************************************************************************************\
