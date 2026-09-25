@@ -37,6 +37,15 @@
 #define MQTT_SOCKET_TIMEOUT 15
 #endif
 
+// MQTT_MAX_PING_OUTSTANDING : number of unanswered PINGREQ tolerated before the connection
+//  is closed with MQTT_CONNECTION_TIMEOUT. Each one is sent one keepalive interval after the
+//  previous, so a PINGRESP may take up to N x keepAlive to arrive. 1 = original PubSubClient
+//  behavior. Override with setMaxPingOutstanding() (clamped to 1..4).
+//  See https://github.com/arendst/Tasmota/issues/24985
+#ifndef MQTT_MAX_PING_OUTSTANDING
+#define MQTT_MAX_PING_OUTSTANDING 2
+#endif
+
 // MQTT_MAX_TRANSFER_SIZE : limit how much data is passed to the network client
 //  in each write call. Needed for the Arduino Wifi Shield. Leave undefined to
 //  pass the entire MQTT packet in each write call.
@@ -99,7 +108,8 @@ private:
    uint16_t nextMsgId = 0;
    unsigned long lastOutActivity = 0;
    unsigned long lastInActivity = 0;
-   bool pingOutstanding = false;
+   uint8_t pingOutstanding = 0;       // number of PINGREQ sent without a PINGRESP yet
+   uint8_t maxPingOutstanding = MQTT_MAX_PING_OUTSTANDING;
    MQTT_CALLBACK_SIGNATURE;
    uint32_t readPacket(uint8_t*);
    boolean readByte(uint8_t * result);
@@ -154,6 +164,9 @@ public:
    PubSubClient& setStream(Stream& stream);
    PubSubClient& setKeepAlive(uint16_t keepAlive);
    PubSubClient& setSocketTimeout(uint16_t timeout);
+   // Number of unanswered PINGREQ tolerated before closing (clamped to 1..4)
+   PubSubClient& setMaxPingOutstanding(uint8_t n) { this->maxPingOutstanding = (n < 1) ? 1 : ((n > 4) ? 4 : n); return *this; }
+   uint8_t getMaxPingOutstanding() const { return this->maxPingOutstanding; }
 
    boolean setBufferSize(uint16_t size);
    uint16_t getBufferSize() const;

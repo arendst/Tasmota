@@ -1400,7 +1400,7 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
                     }
 
                     lastInActivity = millis();
-                    pingOutstanding = false;
+                    pingOutstanding = 0;
                     _state = MQTT_CONNECTED;
 // Task 18.9: retransmission is part of connection establishment. Keep the prior
 // identity intact while replay verifies each entry belongs to this persistent session;
@@ -1423,7 +1423,7 @@ boolean PubSubClient::connect(const char *id, const char *user, const char *pass
                 if (len == 4 && (buffer[0] == MQTTCONNACK) && (buffer[1] == 2)) {
                     if (buffer[3] == 0) {
                         lastInActivity = millis();
-                        pingOutstanding = false;
+                        pingOutstanding = 0;
                         _state = MQTT_CONNECTED;
                         return true;
                     } else {
@@ -1736,7 +1736,12 @@ boolean PubSubClient::loop() {
 // the next one tore the connection down with MQTT_CONNECTION_TIMEOUT.
         if (this->keepAlive &&
             ((t - lastInActivity > this->keepAlive*1000UL) || (t - lastOutActivity > this->keepAlive*1000UL))) {
-            if (pingOutstanding) {
+// Up to maxPingOutstanding PINGREQ may stay unanswered before giving up. Sending a further
+// PINGREQ (allowed at any time by MQTT 3.1.2.10) keeps the broker's 1.5 x keepAlive timer
+// fed while TCP retransmission recovers a delayed PINGRESP. The window follows the
+// effective keepAlive, including a broker-imposed Server Keep Alive.
+// See https://github.com/arendst/Tasmota/issues/24985
+            if (pingOutstanding >= this->maxPingOutstanding) {
                 this->_state = MQTT_CONNECTION_TIMEOUT;
                 _client->stop();
                 return false;
@@ -1750,7 +1755,7 @@ boolean PubSubClient::loop() {
                 }
                 lastOutActivity = t;
                 lastInActivity = t;
-                pingOutstanding = true;
+                pingOutstanding++;
             }
         }
         if (_client->available()) {
@@ -2086,7 +2091,7 @@ boolean PubSubClient::loop() {
                     this->buffer[1] = 0;
                     transportWrite(this->buffer,2);
                 } else if (type == MQTTPINGRESP) {
-                    pingOutstanding = false;
+                    pingOutstanding = 0;
                 }
             } else if (!connected()) {
                 // readPacket has closed the connection
@@ -4337,7 +4342,7 @@ void PubSubClient::resetConnectionState() {
     publishBytesExpected = 0;
     publishBytesWritten = 0;
     // A stale outstanding ping would otherwise time out the next connection immediately
-    pingOutstanding = false;
+    pingOutstanding = 0;
 
     lastInActivity = lastOutActivity = millis();
 
@@ -4475,7 +4480,7 @@ boolean PubSubClient::connected() {
                 _client->flush();
                 _client->stop();
 
-                pingOutstanding = false;
+                pingOutstanding = 0;
                 if (MQTT_RUNTIME_IS_5() && (!this->sessionIdentity.valid ||
                     (this->sessionIdentity.sessionExpiryInterval == 0))) {
 // Clean Start, explicit zero expiry, or a failed identity capture leaves no session that can
