@@ -117,6 +117,7 @@
 // -- PubSubClient defaults -----------------------
 #define MQTT_KEEPALIVE         30                // [MqttKeepAlive] Number of seconds between KeepAlive messages
 #define MQTT_SOCKET_TIMEOUT    4                 // [MqttTimeout] Number of seconds before Mqtt connection timeout
+#define MQTT_MAX_PING_OUTSTANDING 2              // Number of unanswered PINGREQ (one per KeepAlive) before closing the connection (1..4, 1 = legacy)
 #define MQTT_MAX_PACKET_SIZE   1200              // Working buffer and advertised maximum incoming packet size
 #define MQTT_PACKET_TIMEOUT    MQTT_SOCKET_TIMEOUT // Seconds allowed to receive a complete MQTT packet
 
