@@ -187,6 +187,12 @@ void installExamples();
 void sendExample();
 #endif
 
+#ifdef USE_JBD_BMS_BLE
+// defined in xsns_119_jbd_bms_ble.ino at global scope - declared here (before
+// the namespace opens) so unqualified use inside namespace BLE_ESP32 below
+// resolves to this actual global symbol, not a separate BLE_ESP32::-scoped one.
+extern bool JbdBmsShowOnMain;
+#endif  // USE_JBD_BMS_BLE
 
 namespace BLE_ESP32 {
 
@@ -254,6 +260,22 @@ struct generic_sensor_t {
   uint8_t dataNotify[MAX_BLE_DATA_LEN];
   uint8_t notifylen;
   uint8_t notifytruncated;
+  uint8_t notifyappend;
+  uint8_t notifyendbyte;
+  uint8_t writenoresponse;
+  uint8_t notifyresponse;
+  uint8_t readafterwrite;
+  uint16_t subscribedelay;
+  uint8_t characteristic_properties;
+  uint8_t notification_properties;
+
+  // repeat the write while waiting for a notify that never arrives, some BLE
+  // peripherals (e.g. JBD BMS) only respond to a write if it is resent a
+  // few times after subscribing, rather than to a single one-shot write.
+  uint8_t writerepeat; // number of EXTRA writes to attempt while waiting for notify (0 = none)
+  uint16_t writerepeatinterval; // ms between repeat writes
+  uint8_t writerepeatsdone; // runtime counter
+  uint64_t lastwritetime; // runtime, esp_timer_get_time() of the last write issued
 
   // NOTE!!!: this callback is called DIRECTLY from the operation task, so be careful about cross-thread access of data
   // if is called after read, so that you can do a read/modify/write operation on a characteristic.
@@ -958,6 +980,25 @@ int getSeenDevicesToJson(char *dest, int maxlen){
   *(dest++) = 0;
   int remains = (seenDevices.size() - nextSeenDev);
   return remains;
+}
+
+// simple accessor for other drivers (e.g. xsns_119 JBD BMS) to build a "pick a
+// visible device" UI without reaching into seenDevices/the mutex themselves.
+// returns how many devices are currently known; fills mac/name/rssi for `idx`
+// (0-based, most-recently-seen not guaranteed, insertion order) if in range.
+int getSeenDeviceCount(void){
+  TasAutoMutex localmutex(&BLEDevicesMutex, "BLEGetCnt");
+  return seenDevices.size();
+}
+
+bool getSeenDeviceInfo(int idx, uint8_t *mac6, uint8_t *addrtype, char *name, size_t namelen, int8_t *rssi){
+  TasAutoMutex localmutex(&BLEDevicesMutex, "BLEGetInfo");
+  if (idx < 0 || idx >= (int)seenDevices.size() || !seenDevices[idx]) { return false; }
+  memcpy(mac6, seenDevices[idx]->mac, 6);
+  if (addrtype) { *addrtype = seenDevices[idx]->addrtype; }
+  if (name && namelen) { strlcpy(name, seenDevices[idx]->name, namelen); }
+  if (rssi) { *rssi = seenDevices[idx]->RSSI; }
+  return true;
 }
 
 
@@ -1693,6 +1734,14 @@ static void BLEscanEndedCB(NimBLEScanResults results){
 // this COULD be the reason for the BLE stack hanging up....
 ///////////////////////////////////////////////////////////////////////
 static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
+  AddLog(BLELogLevel[LOG_LEVEL_INFO],  // quiet by default, enable with `BLEDebug2 3`
+         PSTR("BLE: NOTIFY CALLBACK fired len=%u notify=%u first=%02X %02X %02X %02X"),
+         (unsigned)length,
+         isNotify ? 1 : 0,
+         (pData && length > 0) ? pData[0] : 0,
+         (pData && length > 1) ? pData[1] : 0,
+         (pData && length > 2) ? pData[2] : 0,
+         (pData && length > 3) ? pData[3] : 0);
   NimBLEClient *pRClient;
 
   if (!pRemoteCharacteristic){
@@ -1742,7 +1791,8 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
             thisop = op;
             break;
           } else {
-            AddLog(LOG_LEVEL_ERROR, PSTR("BLE: notify: op addr match but op found which is not waiting."));
+            // benign: a late/duplicate fragment (e.g. from an earlier ignored write) arriving after the op already completed
+            AddLog(BLELogLevel[LOG_LEVEL_INFO], PSTR("BLE: notify: op addr match but op found which is not waiting."));
           }
         }
       }
@@ -1759,14 +1809,32 @@ static void BLEGenNotifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, ui
     return;
   }
 
-  for (int i = 0; i < length && i < sizeof(thisop->dataNotify); i++){
-    thisop->dataNotify[i] = pData[i];
+  size_t offset = thisop->notifyappend ? thisop->notifylen : 0;
+  size_t copy_len = 0;
+  if (offset < sizeof(thisop->dataNotify)) {
+    copy_len = length;
+    if (copy_len > sizeof(thisop->dataNotify) - offset) {
+      copy_len = sizeof(thisop->dataNotify) - offset;
+    }
+    memcpy(thisop->dataNotify + offset, pData, copy_len);
   }
-  thisop->notifylen = length;
-  if (length > sizeof(thisop->dataNotify)){
+  thisop->notifylen = offset + copy_len;
+  if (length > copy_len){
     thisop->notifytruncated = 1;
   } else {
     thisop->notifytruncated = 0;
+  }
+
+  if (thisop->notifyappend && thisop->notifyendbyte) {
+    if (thisop->notifylen >= 4 && 0xDD == thisop->dataNotify[0]) {
+      size_t expected_len = thisop->dataNotify[3] + 7;
+      if (thisop->notifylen < expected_len) {
+        return;
+      }
+    }
+    if (!thisop->notifylen || thisop->dataNotify[thisop->notifylen - 1] != thisop->notifyendbyte) {
+      return;
+    }
   }
   // we will NOT change the state here...
   // rely on thisop->notifylen as a flag notify is complete
@@ -2039,16 +2107,34 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
   // if awaiting notification
   if ((*pCurrentOperation)->notifytimer){
-    // if it took too long, then disconnect
+    generic_sensor_t *op = *pCurrentOperation;
     uint64_t now = esp_timer_get_time();
-    uint64_t diff = now - (*pCurrentOperation)->notifytimer;
-    diff = diff/1000;
+
+    // some peripherals (e.g. JBD BMS) never notify off a single write, but
+    // will if the same write is resent a few times on the same connection.
+    if (op->writerepeat && op->writerepeatsdone < op->writerepeat && op->writelen && pClient){
+      uint64_t sincewrite = (now - op->lastwritetime) / 1000;
+      if (sincewrite >= op->writerepeatinterval){
+        NimBLERemoteService *pService = pClient->getService(op->serviceUUID);
+        NimBLERemoteCharacteristic *pCharacteristic = pService ? pService->getCharacteristic(op->characteristicUUID) : nullptr;
+        if (pCharacteristic){
+          bool write_response = op->writenoresponse ? false : !pCharacteristic->canWriteNoResponse();
+          op->writerepeatsdone++;
+          op->lastwritetime = now;
+          AddLog(BLELogLevel[LOG_LEVEL_INFO], PSTR("BLE: repeat write %u/%u while waiting for notify"), op->writerepeatsdone, op->writerepeat);
+          pCharacteristic->writeValue(op->dataToWrite, op->writelen, write_response);
+        }
+      }
+    }
+
+    // if it took too long, then disconnect
+    uint64_t diff = (now - op->notifytimer) / 1000;
     if (diff > 20000){ // 20s
 #ifdef BLE_ESP32_DEBUG
       AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: BLETask: notify timeout"));
 #endif
-      (*pCurrentOperation)->state = GEN_STATE_FAILED_NOTIFYTIMEOUT;
-      (*pCurrentOperation)->notifytimer = 0;
+      op->state = GEN_STATE_FAILED_NOTIFYTIMEOUT;
+      op->notifytimer = 0;
     }
     // we can't process any further, because op will be at state readdone or writedone
     return;
@@ -2142,12 +2228,15 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   if (pClient->connect(op->addr, true)) {
 
     // as soon as connected, start another scan if possible
-    BLE_ESP32::BLETaskStartScan(20);
+    if (!op->notificationCharacteristicUUID.bitSize()) {
+      BLE_ESP32::BLETaskStartScan(20);
+    }
 
 #ifdef BLE_ESP32_DEBUG
     AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: connected %s -> getservice"), ((std::string)op->addr).c_str());
 #endif
     NimBLERemoteService *pService = pClient->getService(op->serviceUUID);
+    NimBLERemoteCharacteristic *pNCharacteristic = nullptr;
     int waitNotify = false;
     int notifystate = 0;
     op->notifytimer = 0L;
@@ -2167,8 +2256,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
       // if we have been asked to get a notification
       if (op->notificationCharacteristicUUID.bitSize()) {
-        NimBLERemoteCharacteristic *pNCharacteristic =
-          pService->getCharacteristic(op->notificationCharacteristicUUID);
+        pNCharacteristic = pService->getCharacteristic(op->notificationCharacteristicUUID);
         if (pNCharacteristic != nullptr) {
 #ifdef BLE_ESP32_DEBUG
           AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: got notify characteristic"));
@@ -2184,18 +2272,24 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
           }
           */
           uint8_t props = pNCharacteristic->getProperties();
+          op->notification_properties = props;
+          response = op->notifyresponse ? true : false;
+          AddLog(BLELogLevel[LOG_LEVEL_INFO], PSTR("BLE: notify props 0x%02X subscribe response %u read-after-write %u"), props, response ? 1 : 0, op->readafterwrite ? 1 : 0);
 #ifdef BLE_ESP32_DEBUG
           AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: characteristic props 0x%02X"), props);
 #endif
 
-          if(pNCharacteristic->canNotify()) {
+           if (op->readafterwrite && !pNCharacteristic->canRead()) {
+            newstate = GEN_STATE_FAILED_CANTREAD;
+           } else if(pNCharacteristic->canNotify()) {
             uint64_t now = esp_timer_get_time();
             op->notifytimer = now;
 
-            if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB, response)) {
+              if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB, response)) {
 #ifdef BLE_ESP32_DEBUG
               AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: subscribe for notify - resp %d"), response? 1:0);
 #endif
+              vTaskDelay(op->subscribedelay / portTICK_PERIOD_MS);
               // this will get changed to read or write,
               // but here in case it's notify only (can that happen?)
               notifystate = GEN_STATE_WAITNOTIFY;
@@ -2215,6 +2309,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 #ifdef BLE_ESP32_DEBUG
                 AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: subscribe for indicate - resp %d"), response? 1:0);
 #endif
+                vTaskDelay(op->subscribedelay / portTICK_PERIOD_MS);
                 notifystate = GEN_STATE_WAITINDICATE;
                 waitNotify = true;
               } else {
@@ -2254,6 +2349,9 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
             AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: got read/write characteristic"));
 #endif
             newstate = GEN_STATE_FAILED_NOREADWRITE; // overwritten on failure
+            op->characteristic_properties = pCharacteristic->getProperties();
+            AddLog(BLELogLevel[LOG_LEVEL_INFO], PSTR("BLE: char props 0x%02X write no-response %u"),
+                   op->characteristic_properties, op->writenoresponse ? 1 : 0);
 
             if (op->readlen){
               if(pCharacteristic->canRead()) {
@@ -2289,13 +2387,31 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
             }
             if (op->writelen){
               if(pCharacteristic->canWrite() || pCharacteristic->canWriteNoResponse() ) {
-                if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, !pCharacteristic->canWriteNoResponse())){ // request response, unless we can't
+                bool write_response = op->writenoresponse ? false : !pCharacteristic->canWriteNoResponse();
+                if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, write_response)){ // request response, unless we can't
                   newstate = GEN_STATE_FAILED_WRITE;
 #ifdef BLE_ESP32_DEBUG
                   AddLog(LOG_LEVEL_DEBUG, PSTR("BLE: characteristic write fail"));
 #endif
                 } else {
+                  op->lastwritetime = esp_timer_get_time();
+                  op->writerepeatsdone = 0;
                   if (!waitNotify) newstate = GEN_STATE_WRITEDONE;
+                  if (op->readafterwrite && pNCharacteristic && pNCharacteristic->canRead()) {
+                    vTaskDelay(250 / portTICK_PERIOD_MS);
+                    std::string value = pNCharacteristic->readValue();
+                    op->readlen = value.length();
+                    memcpy(op->dataRead, value.data(),
+                      (op->readlen > sizeof(op->dataRead))?
+                        sizeof(op->dataRead):
+                        op->readlen);
+                    if (op->readlen > sizeof(op->dataRead)){
+                      op->readtruncated = 1;
+                    } else {
+                      op->readtruncated = 0;
+                    }
+                    if (!waitNotify) newstate = GEN_STATE_READDONE;
+                  }
 #ifdef BLE_ESP32_DEBUG
                   AddLog(BLELogLevel[LOG_LEVEL_DEBUG], PSTR("BLE: write characteristic"));
 #endif
@@ -2670,6 +2786,18 @@ int newOperation(BLE_ESP32::generic_sensor_t** op){
   //uint8_t dataNotify[MAX_BLE_DATA_LEN];
   o->notifylen = 0;
   o->notifytruncated = 0;
+  o->notifyappend = 0;
+  o->notifyendbyte = 0;
+  o->writenoresponse = 0;
+  o->notifyresponse = 0;
+  o->readafterwrite = 0;
+  o->subscribedelay = 100;
+  o->characteristic_properties = 0;
+  o->notification_properties = 0;
+  o->writerepeat = 0;
+  o->writerepeatinterval = 500;
+  o->writerepeatsdone = 0;
+  o->lastwritetime = 0L;
   o->readmodifywritecallback = nullptr; // READ_CALLBACK function, used by external drivers
   o->completecallback = nullptr; // OPCOMPLETE_CALLBACK function, used by external drivers
   o->context = nullptr; // opaque context, used by external drivers, or can be set to a long for MQTT
@@ -3314,7 +3442,7 @@ void CmndBLEName(void) {
 //////////////////////////////////////////////////////////////////////////
 
 // we expect BLEOp0 - poll state
-// we expect BLEOp1 m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <go>
+// we expect BLEOp1 m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <x:1 force write-no-response> <y:1 subscribe-response> <z:1 read n: after write> <d:ms subscribe delay> <go>
 // we expect BLEOp2 trigger queue of op.  return is opid
 
 // returns: Done|FailCreate|FailNoOp|FailQueue|InvalidIndex|<opid>
@@ -3351,7 +3479,7 @@ void CmndBLEOperation(void){
         ResponseCmndChar("FailCreate");
         return;
       }
-      // expect m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <go>
+      // expect m:MAC s:svc <c:characteristic> <n:notifychar> <w:hextowrite> <r> <x:1> <y:1> <z:1> <d:ms> <go>
       // < > are optional
       char *p = strtok(XdrvMailbox.data, " ,");
       bool trigger = false;
@@ -3385,6 +3513,24 @@ void CmndBLEOperation(void){
             break;
           case 'r':
             prepOperation->readlen = 1;
+            break;
+          case 'x':
+            prepOperation->writenoresponse = atoi(p+2) ? 1 : 0;
+            break;
+          case 'y':
+            prepOperation->notifyresponse = atoi(p+2) ? 1 : 0;
+            break;
+          case 'z':
+            prepOperation->readafterwrite = atoi(p+2) ? 1 : 0;
+            break;
+          case 'd':
+            prepOperation->subscribedelay = (uint16_t)constrain(atoi(p+2), 0, 5000);
+            break;
+          case 'q':
+            prepOperation->writerepeat = (uint8_t)constrain(atoi(p+2), 0, 10);
+            break;
+          case 'i':
+            prepOperation->writerepeatinterval = (uint16_t)constrain(atoi(p+2), 50, 10000);
             break;
           case 'g':
             if ((*(p+1))|0x20 == 'o'){
@@ -3750,6 +3896,40 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
     out = out + toSend->notificationCharacteristicUUID.toString();
   }
   out = out + "\"";
+  if (toSend->writenoresponse){
+    out = out + ",\"wrnr\":1";
+  }
+  if (toSend->notifyresponse){
+    out = out + ",\"subrsp\":1";
+  }
+  if (toSend->readafterwrite){
+    out = out + ",\"rawr\":1";
+  }
+  if (toSend->subscribedelay != 100){
+    sprintf(temp, "%u", toSend->subscribedelay);
+    out = out + ",\"subd\":";
+    out = out + temp;
+  }
+  if (toSend->writerepeat){
+    sprintf(temp, "%u", toSend->writerepeatsdone);
+    out = out + ",\"wrepd\":";
+    out = out + temp;
+    sprintf(temp, "%u", toSend->writerepeat);
+    out = out + ",\"wrep\":";
+    out = out + temp;
+  }
+  if (toSend->characteristic_properties){
+    sprintf(temp, "0x%02X", toSend->characteristic_properties);
+    out = out + ",\"cprops\":\"";
+    out = out + temp;
+    out = out + "\"";
+  }
+  if (toSend->notification_properties){
+    sprintf(temp, "0x%02X", toSend->notification_properties);
+    out = out + ",\"nprops\":\"";
+    out = out + temp;
+    out = out + "\"";
+  }
   if (toSend->readlen){
     dump(temp, 99, toSend->dataRead, toSend->readlen);
     if (toSend->readtruncated){
@@ -3789,6 +3969,11 @@ const char HTTP_FORM_BLE[] PROGMEM =
   "<p><label><input id='e0' type='checkbox'%s><b>" D_BLE_ENABLE "</b></label></p>"
   "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label><br>"
   "<small>" D_BLE_REMARK "</small></p>";
+
+#ifdef USE_JBD_BMS_BLE
+const char HTTP_FORM_BLE_JBD[] PROGMEM =
+  "<p><label><input id='e2' type='checkbox'%s><b>Show JBD in main web</b></label></p>";
+#endif  // USE_JBD_BMS_BLE
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";
@@ -3833,6 +4018,10 @@ void HandleBleConfiguration(void)
     BLEScanActiveMode = (Webserver->hasArg("e1")?1:0);  //
 
     SettingsSaveAll();
+#ifdef USE_JBD_BMS_BLE
+    JbdBmsShowOnMain = Webserver->hasArg("e2");
+    JbdBmsSaveConfig();
+#endif  // USE_JBD_BMS_BLE
     HandleConfiguration();
     return;
   }
@@ -3850,6 +4039,9 @@ void HandleBleConfiguration(void)
     (Settings->flag5.mi32_enable) ? " checked" : "",
     (BLEScanActiveMode) ? " checked" : ""
     );
+#ifdef USE_JBD_BMS_BLE
+  WSContentSend_P(HTTP_FORM_BLE_JBD, JbdBmsShowOnMain ? " checked" : "");
+#endif  // USE_JBD_BMS_BLE
   WSContentSend_P(HTTP_FORM_END);
 
 
