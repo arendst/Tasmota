@@ -16,7 +16,7 @@ _Written for PlatformIO._
 
 ## Why Tasmota?
 
-Tasmota is open-source firmware born for the ESP8266/ESP8285, now covering the whole ESP32 family: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C6, ESP32-P4, with PSRAM and USB/CDC support where available.
+Tasmota is open-source firmware born for the ESP8266/ESP8285, now covering the whole ESP32 family: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-P4, with PSRAM and USB/CDC support where available.
 
 It talks MQTT (v3.1.1 or v5) to your own broker or a cloud one over TLS ([AWS IoT Core](https://tasmota.github.io/docs/AWS-IoT/) and [Azure IoT Hub](https://tasmota.github.io/docs/Azure-IoT-Hub/)), or runs entirely standalone with no server at all — your choice.
 
