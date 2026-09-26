@@ -102,7 +102,7 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 - Commissionable discovery: `_matterc._udp` service type — correct per §4.3.1
 - Random 16-char hex instance name — correct per §4.3.1
 - TXT records: D (discriminator), VP (vendor+product), CM (commissioning mode), T (TCP support) — correct
-- Subtypes: `_L<discriminator>`, `_S<upper4bits>`, `_V<vendorID>`, `_CM1` — correct per §4.3.1
+- Subtypes: `_L<discriminator>`, `_S<upper4bits>`, `_V<vendorID>`, `_CM` — correct per §4.3.1 (the subtype is `_CM` with no digit; the mode value 1/2 goes only in the `CM=` TXT record)
 - Operational discovery: `_matter._tcp` with `<CompressedFabricID>-<NodeID>` instance — correct per §4.3.2
 - SII=500, SAI=300 defaults — correct per §4.10
 - Port 5540 — correct per §2.4
