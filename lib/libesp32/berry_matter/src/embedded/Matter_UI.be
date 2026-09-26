@@ -187,7 +187,7 @@ class Matter_UI
   "</script>"
 
   static var _CLASSES_TYPES_STD =
-                              "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
+                              "|relay|light0|light1|light2|light3|light5|shutter|shutter+tilt"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality"
@@ -1112,15 +1112,22 @@ class Matter_UI
     # Now `power_cnt` contains the number of Relays including light
 
     # detect lights
-    var light1, light2, light3    # contains a relay number of nil
-    if status11.contains("HSBColor")
+    var light1, light2, light3, light5    # contains a relay number or nil
+
+    if status11.contains("HSBColor") && status11.contains("CT")
+      light5 = power_cnt
+      power_cnt -= 1
+
+    elif status11.contains("HSBColor")
       light3 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("CT")
-      light2 =  power_cnt
+      light2 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("Dimmer")
-      light1 =  power_cnt
+      light1 = power_cnt
       power_cnt -= 1
     end
 
@@ -1138,6 +1145,9 @@ class Matter_UI
     end
     if light3 != nil
       config_list.push({'type': 'light3', 'relay': light3})
+    end
+    if light5 != nil
+      config_list.push({'type': 'light5', 'relay': light5})
     end
 
 
