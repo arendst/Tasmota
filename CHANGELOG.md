@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.6.0.2]
 ### Added
+- DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down)
 
 
 ### Breaking Changed
