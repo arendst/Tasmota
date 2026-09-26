@@ -38,6 +38,15 @@
 #define MQTT_SOCKET_TIMEOUT 15
 #endif
 
+// MQTT_MAX_PING_OUTSTANDING : number of unanswered PINGREQ tolerated before the connection
+//  is closed with MQTT_CONNECTION_TIMEOUT. Each one is sent one keepalive interval after the
+//  previous, so a PINGRESP may take up to N x keepAlive to arrive. 1 = original PubSubClient
+//  behavior. Override with setMaxPingOutstanding() (clamped to 1..4).
+//  See https://github.com/arendst/Tasmota/issues/24985
+#ifndef MQTT_MAX_PING_OUTSTANDING
+#define MQTT_MAX_PING_OUTSTANDING 2
+#endif
+
 // USE_MQTT_QOS : opt-in to OUTBOUND QoS 1/2 acknowledged delivery.
 //
 // Tasmota publishes at QoS 0 in almost every real deployment, so this MQTT5-capable client
@@ -822,7 +831,8 @@ private:
    uint16_t nextMsgId = 0;
    unsigned long lastOutActivity = 0;
    unsigned long lastInActivity = 0;
-   bool pingOutstanding = false;
+   uint8_t pingOutstanding = 0;       // number of PINGREQ sent without a PINGRESP yet
+   uint8_t maxPingOutstanding = MQTT_MAX_PING_OUTSTANDING;
 
    // State for the beginPublish()/write()/endPublish() streaming contract. A
    // mismatch leaves a truncated PUBLISH on the wire, so it is terminal.
@@ -1412,6 +1422,9 @@ public:
    PubSubClient& setStream(Stream& stream);
    PubSubClient& setKeepAlive(uint16_t keepAlive);
    PubSubClient& setSocketTimeout(uint16_t timeout);
+   // Number of unanswered PINGREQ tolerated before closing (clamped to 1..4)
+   PubSubClient& setMaxPingOutstanding(uint8_t n) { this->maxPingOutstanding = (n < 1) ? 1 : ((n > 4) ? 4 : n); return *this; }
+   uint8_t getMaxPingOutstanding() const { return this->maxPingOutstanding; }
    // Session Expiry Interval used by a legacy `cleanSession == false` CONNECT. The
    // default is 0xFFFFFFFF (indefinite persistence); zero is preserved as an explicit
    // Clean Start 0 / immediate-expiry request rather than replaced by the default.
