@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 (#24731)
 - ESP32 release UART0 console when the template uses its pins (#25047)
 - WT32_ETH01 ethernet initialization (#25051)
+- Matter commissioning mDNS announcements
 
 ### Removed
 
