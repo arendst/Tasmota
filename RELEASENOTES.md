@@ -112,12 +112,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.6.0.1
+## Changelog v15.6.0.2
 ### Added
 - Support for GUI tooltip on touch media like phones and tablets
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 [#24959](https://github.com/arendst/Tasmota/issues/24959)
 - Support for MI32 Xiaomi Mi Body Composition Scale (MIBCS/MIBFS) [#25049](https://github.com/arendst/Tasmota/issues/25049)
 - MQTT 5.0 with focus on request/response (optional) [#25050](https://github.com/arendst/Tasmota/issues/25050)
+- RC522 throttle idle polling and add self-healing watchdog [#25052](https://github.com/arendst/Tasmota/issues/25052)
 - NeoPool AuxMode [#24998](https://github.com/arendst/Tasmota/issues/24998)
 - DALI-2 input device event messages (IEC 62386-103) from push buttons, occupancy and light sensors decoded and published for rules and MQTT [#25029](https://github.com/arendst/Tasmota/issues/25029)
 - DALI-2 control device commissioning and instance queries with commands `DaliDeviceScan` and `DaliDevice` [#25029](https://github.com/arendst/Tasmota/issues/25029)
@@ -130,18 +131,22 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- MQTT connection closed before TCP retransmission could deliver a delayed PINGRESP, now tolerates 2 unanswered pings [#25067](https://github.com/arendst/Tasmota/issues/25067)
 - Command `SetOption46 201..255` init wait 1 to 55 seconds instead of 2010 to 2550 msec [#25035](https://github.com/arendst/Tasmota/issues/25035)
+- Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` [#25020](https://github.com/arendst/Tasmota/issues/25020)
 - MiELHVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) [#24992](https://github.com/arendst/Tasmota/issues/24992)
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
 - BLE EQ3-TRV code refactoring [#24978](https://github.com/arendst/Tasmota/issues/24978)
 
 ### Fixed
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 [#24731](https://github.com/arendst/Tasmota/issues/24731)
+- Touch GT911 fix template [#25068](https://github.com/arendst/Tasmota/issues/25068)
 - MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - WT32_ETH01 ethernet initialization [#25051](https://github.com/arendst/Tasmota/issues/25051)
 - ESP32 release UART0 console when the template uses its pins [#25047](https://github.com/arendst/Tasmota/issues/25047)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it [#24979](https://github.com/arendst/Tasmota/issues/24979)
 - Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)
 - Matter autoconfiguration after configuration reset [#24997](https://github.com/arendst/Tasmota/issues/24997)
+- Matter commissioning mDNS announcements [#25069](https://github.com/arendst/Tasmota/issues/25069)
 
 ### Removed
