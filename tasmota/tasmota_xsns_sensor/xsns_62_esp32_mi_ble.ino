@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.9.11"
+#define MI32_VERSION "v26.9.27"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  26.9.27           changed - Add age of battery reading to battery icon
   26.9.11           changed - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
                               Fix "M32Period 0" and "M32Period 1"
   -------
@@ -459,6 +460,8 @@ struct mi_sensor_t{
   int16_t Btn; // moved so we can initialise to -1
   int16_t flooding;
 
+  uint8_t bat;
+  uint32_t batLastSeen;
   uint32_t lastTime;
   uint32_t lux;
   int count;
@@ -478,9 +481,6 @@ struct mi_sensor_t{
       uint16_t events; //"alarms" since boot
       uint32_t NMT;    // no motion time in seconds for the MJYD2S
     };
-  };
-  union {
-      uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
   };
   union {
     struct {
@@ -1632,6 +1632,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
   _newSensor.temp = NAN;
   _newSensor.needkey = KEY_REQUIREMENT_UNKNOWN;
   _newSensor.bat = 0x00;
+  _newSensor.batLastSeen = 0;
   _newSensor.RSSI = 0xffff;
   _newSensor.lux = 0x00ffffff;
   _newSensor.light = -1;
@@ -1788,6 +1789,7 @@ int MIParseBatt(int slot, uint8_t *data, int len){
 
   if ((value != 0) && (value < 101)){
     MIBLEsensors[slot].bat = value;
+    MIBLEsensors[slot].batLastSeen = Rtc.local_time;
     if(MIBLEsensors[slot].type==MI_FLORA){
       if (len < 7){
         AddLog(LOG_LEVEL_ERROR,PSTR("M32: FLORA: not enough bytes read for firmware?"));
@@ -1841,6 +1843,7 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
         MIBLEsensors[_slot].hum = (float)(ppv_packet->humidity)/100.0f;
         MIBLEsensors[_slot].eventType.tempHum  = 1;
         MIBLEsensors[_slot].bat = ppv_packet->battery_level;
+        MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
         MIBLEsensors[_slot].eventType.bat  = 1;
 
         MIBLEsensors[_slot].Btn = (ppv_packet->flags) & 0x1; // First bit is reed switch status
@@ -1889,6 +1892,7 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
     MIBLEsensors[_slot].hum = (float)_packet->hum;
     MIBLEsensors[_slot].eventType.tempHum  = 1;
     MIBLEsensors[_slot].bat = _packet->batPer;
+    MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
     MIBLEsensors[_slot].eventType.bat  = 1;
 
     if(MI32.option.directBridgeMode) {
@@ -1919,6 +1923,7 @@ void MI32ParseCGDK2Packet(const uint8_t * _buf, uint32_t length, const uint8_t *
           MIBLEsensors[_slot].hum = (float)(cgdk_packet->humidity)/10.0f;
           MIBLEsensors[_slot].eventType.tempHum  = 1;
           MIBLEsensors[_slot].bat = cgdk_packet->battery_level;
+          MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
           MIBLEsensors[_slot].eventType.bat  = 1;
 
           if(MI32.option.directBridgeMode) {
@@ -2407,6 +2412,7 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x01: { // Battery (uint8, %)
         MIBLEsensors[_slot].bat = value_uint;
+        MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
         MIBLEsensors[_slot].feature.bat    = 1;
         MIBLEsensors[_slot].eventType.bat  = 1;
       } break;
@@ -2727,6 +2733,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].bat = 100;
         AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Mode a: bat > 100 (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
       }
+      MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
       MIBLEsensors[_slot].eventType.bat  = 1;
       MIBLEsensors[_slot].feature.bat = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode a: U8: %u %%"), _beacon.bat);
@@ -2984,6 +2991,7 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
       if (percent > 100) percent = 100;
 
       MIBLEsensors[_slot].bat = (int)percent;
+      MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
       MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Bat updated %d"), MIaddrStr(MIBLEsensors[_slot].MAC), MIBLEsensors[_slot].bat);
       MIBLEsensors[_slot].eventType.bat  = 1;
@@ -4438,14 +4446,12 @@ void MI32Show(bool json)
         char unit;
         uint32_t color = WebColor(COL_TEXT);    // color of text
         dhm[0] = 0;   // start with empty string
-/*
         if (p->batLastSeen) {
-          uint16_t val = SIconvert_seconds_to_dhm(now - p->batLastSeen, &unit, &color, true);
+          uint16_t val = SIconvert_seconds_to_dhm(Rtc.local_time - p->batLastSeen, &unit, &color, true);
           if (val < 100) {
-            snprintf_P(dhm, sizeof(dhm), PSTR(" (%02d%c)"), val, unit);
+            snprintf(dhm, sizeof(dhm), " (%02u%c)", val, unit);
           }
         }
-*/
         snprintf_P(sbatt, sizeof(sbatt), SI_WEB_BATTERY,
           bv, p->bat, dhm,
           changeUIntScale(p->bat, 0, 100, 0, 14),
