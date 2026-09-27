@@ -54,19 +54,22 @@
 // the command and the delay amount +1 before sending the command
 // for example: 0x6121, 0x6 byte argument, 0x12 command change mode, 0 ticks delay)
 enum LD2402_Steps {
+  // Don't require a start configuration to be sent
   LD2402_CMND_READ_VERSION=0x0001,          // get version, no arg, no delay
+  LD2402_CMND_START_CONFIGURATION=0x2FF1,   // start configuration mode, 2-byte arg, no delay
+  LD2402_CMND_END_CONFIGURATION=0x0FE1,     // end configuration mode, no arg, no delay
+  // Require device to be in configuration mode
   LD2402_CMND_AUTO_PROGRESS=0x00A9,         // get auto progress, no arg, 8 ticks delay (2 seconds)
   LD2402_CMND_READ_SERIAL=0x0111,           // get serial, no arg, no delay
   LD2402_CMND_AUTO_INTERFERENCE=0x0141,     // get auto interference, no arg, no delay
   LD2402_CMND_AUTO_GAIN=0x0EE1,             // run auto gain, no arg, no delay
   LD2402_CMND_AUTO_GAIN_COMPLETE=0x0F01,    // notify auto gain complete, no arg, no delay (special processing required)
   LD2402_CMND_SAVE_PARAM=0x0FD1,            // save parameters, no arg, no delay (fw 3.3.2+)
-  LD2402_CMND_END_CONFIGURATION=0x0FE1,     // end configuration mode, no arg, no delay
   LD2402_CMND_READ_PARAM=0x2081,            // get a parameter, 2-byte arg, no delay
-  LD2402_CMND_START_CONFIGURATION=0x2FF1,   // start configuration mode, 2-byte arg, no delay
   LD2402_CMND_WRITE_PARAM=0x6071,           // set a parameter, 6-byte arg, no delay
   LD2402_CMND_AUTO_THRESHOLD=0x6091,        // run auto threshold, 6-byte arg, no delay
   LD2402_CMND_MODE=0x6121,                  // set normal/engineering mode, 6-byte arg, no delay
+  // Special non command timeout
   LD2402_CMND_Wait_Timeout=0xFFF9           // special timeout counter, never sent, 8 ticks delay (2 seconds)
 };
 
@@ -289,8 +292,8 @@ void Ld2402HandleConfigData(void) {
 
   // here I am setting up to do the next thing
   case LD2402_CMND_WRITE_PARAM>>4:              // run from terminal command
-    if (((LD2402.cmnd_param[0]&0xF0 == LD2402_MICRO_START) || (LD2402.cmnd_param[0]&0xF0 == LD2402_MOTION_START)) &&  // motion/micro threshold
-        (LD2402.cmnd_param[0]&0x0F != (LD2402_NUM_GATES-1))) {                                                        // but not the last one
+    if (((LD2402.cmnd_param[0]&0xF0) == LD2402_MICRO_START || (LD2402.cmnd_param[0]&0xF0) == LD2402_MOTION_START) &&  // motion/micro threshold
+        (LD2402.cmnd_param[0]&0x0F) != (LD2402_NUM_GATES-1)) {                                                        // but not the last one
       Ld2402LoadLastParam(LD2402.cmnd_param[0]+1);
       LD2402.step = LD2402_CMND_WRITE_PARAM;  // process next write parameter
     } else if (LD2402_MAX_DISTANCE == LD2402.cmnd_param[0]) {
@@ -409,7 +412,6 @@ void Ld2402Input(void) {
     //  reverse order, last digit is most likely to be "bad"
     if (((uint8_t)(LD2402_config_footer&0xFF) == stub.buffer[3]) && ((uint8_t)(LD2402_config_footer>>8&0xFF) == stub.buffer[2]) &&
         ((uint8_t)(LD2402_config_footer>>16&0xFF) == stub.buffer[1]) && ((uint8_t)(LD2402_config_footer>>24&0xFF) == stub.buffer[0])) {
-      LD2402.state = LD2402_CONFIGURATION;
       Ld2402HandleConfigData();
     } else {
       DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, need_counter);
@@ -478,8 +480,12 @@ void Ld2402Every250MSecond(void) {
       DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Device disconnected"));
       LD2402.state = LD2402_DISCONNECTED;
     } else if (!(LD2402.step&0x00F)) {  // Command reaches zero
-      // preprocess - ensure module is in configuration mode except for end configuration
-      if ((LD2402_CMND_END_CONFIGURATION&0x00F != LD2402.step) && (LD2402_CONFIGURATION != LD2402.state)) {
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Step 0x%04X"), LD2402.step);
+      // preprocess - ensure module is in configuration mode except for start/end configuration and read version
+      if ((LD2402_CMND_END_CONFIGURATION&0xFFF0) != LD2402.step && 
+          (LD2402_CMND_START_CONFIGURATION&0xFFF0) != LD2402.step && 
+          (LD2402_CMND_READ_VERSION&0xFFF0) != LD2402.step && 
+          (LD2402_CONFIGURATION != LD2402.state)) {
         LD2402.saved_step = LD2402.step;
         LD2402.sent_cmnd = LD2402_CMND_START_CONFIGURATION>>4;
       } else {
@@ -496,7 +502,8 @@ void Ld2402Every250MSecond(void) {
       if ((LD2402_CMND_START_CONFIGURATION>>4) == LD2402.sent_cmnd) {  // special override if we are setting configuration mode
         stub[4] = 0x01;  // reuse already sent stub buffer
         LD2402Serial->write(stub+4, 2);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send 0x%03X, 0100"), LD2402.sent_cmnd);
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Enabling config, Current State 0x%02X, Saved Step 0x%04X"),
+            LD2402.state, LD2402.saved_step);
       } else if (val_len) {  // send configuration command argument
         LD2402Serial->write(LD2402.cmnd_param, val_len);
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send 0x%03X, %*_H"), LD2402.sent_cmnd, val_len, LD2402.cmnd_param);
