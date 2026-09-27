@@ -26,16 +26,22 @@ This document tracks major specification changes from Matter 1.4.1 (current Tasm
 - Features: Multi-stream support, pan-tilt-zoom, detection/privacy zones, continuous/event-based recording
 - **Tasmota applicability:** ⏹️ Out of scope (no native camera/codec stack on ESP32)
 
-#### 2. **Unified Closures Architecture** ✅ **IN SCOPE**
+#### 2. **Unified Closures Architecture** ✅ **IN SCOPE** (Garage Door done)
 - Replaces scattered Window Covering/Door Lock model with modular Closure architecture
 - New device types:
-  - Closure (0x0230): Parent composite device (window, door, garage door, cabinet, gate, etc.)
-  - Closure Panel (0x0231): Child endpoint representing single degree of freedom
+  - Closure (0x0230, Rev 2): Parent composite device (window, door, garage door, cabinet, gate, etc.)
+  - Closure Panel (0x0231, Rev 2): Child endpoint representing single degree of freedom
 - New clusters:
-  - **Closure Control (0x0104, Rev 1):** Unified state/control interface (MainState, TargetState, RemainingTime)
+  - **Closure Control (0x0104, Rev 2):** Unified state/control interface (MainState, OverallCurrentState, OverallTargetState)
   - **Closure Dimension (0x0105, Rev 1):** Controls individual axis (lift, tilt, rotation, modulation)
 - Semantic tags enable device differentiation (Window, Covering, Cabinet, etc.)
 - **Tasmota applicability:** ✅ High value; Tasmota Shutter relays, RF/IR controllers map naturally
+- ✅ **Garage Door implemented:** `Matter_Plugin_2_GarageDoor.be` (`garage`) — Closure (0x0230) +
+  Closure Control (0x0104) only, driven by the same `ShutterPosition<x>` data as the legacy
+  Shutter plugin. Window Covering (0x0202, `shutter`) kept unchanged for blinds/shutters.
+  Closure Panel (0x0231) + Closure Dimension (0x0105) not implemented (not needed for a
+  Closed/Open/Partial garage door). Confirmed supported by Samsung SmartThings; Home Assistant
+  support in progress (Matter 1.6.1, September 2026).
 
 #### 3. **Energy Management Framework** ✅ **IN SCOPE**
 - New clusters for real-time energy optimization, pricing, tariff, and carbon awareness
@@ -233,11 +239,13 @@ The following changes are part of Matter 1.6.1 (released September 2026, PR #735
 - **Data source:** none native in Tasmota; values would be pushed via `MtrUpdate` (rules/scripts/MQTT)
 
 ### Phase 3: Closures Unified Architecture (v1.6.0, medium-value features)
-- Closure device type (0x0230) with Closure Control (0x0104) and Closure Dimension (0x0105) clusters
-- Closure Panel child device type (0x0231)
-- Migration path for existing Window Covering/Shutter support
-- **Timeframe:** 2-3 weeks
-- **Integration:** Replaces/enhances current scattered cluster approach
+- ✅ Closure device type (0x0230, Rev 2) with Closure Control (0x0104, Rev 2) — Garage Door (`garage`)
+- Closure Panel child device type (0x0231) with Closure Dimension (0x0105) — not implemented (no
+  percentage lift/tilt closure driven yet; would follow the same pattern when needed)
+- Migration path: Window Covering/Shutter (`shutter`, 0x0202) kept as legacy for blinds/shutters;
+  Garage Door implemented directly against Closure (0x0230) since it has no legacy Matter type
+- **Timeframe:** Garage Door done; Closure Panel remaining ~3-5 days
+- **Integration:** Adds alongside the existing Window Covering cluster approach (no breaking change)
 
 ### Phase 4: Sensors & Doorbells (v1.6.0, low-priority features)
 - ✅ Soil Sensor device type (0x0045, Rev 1) with Soil Measurement cluster (0x0430, Rev 1)

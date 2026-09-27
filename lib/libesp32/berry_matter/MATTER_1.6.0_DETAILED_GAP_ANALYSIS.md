@@ -88,7 +88,12 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 - Current `Matter_Plugin_2_Shutter.be` (Window Covering, 0x0202) and `Matter_Plugin_2_Thermostat.be` (Door Lock, 0x0301) use legacy clusters
 - Closure architecture allows unified control of: window coverings (shutters), doors, garage doors, cabinets, gates
 - Tasmota devices (Shutter relays, RF/IR remote controls) map naturally to Closure model
-- **Estimated effort**: Medium (1-2 weeks) — restructure Window Covering + extend to Door Lock; test cross-controller compatibility
+- ✅ **Garage Door implemented**: `Matter_Plugin_2_GarageDoor.be` (`garage`) exposes Closure (0x0230)
+  + Closure Control (0x0104) only, reusing the Shutter's `ShutterPosition<x>`/`SetOption80` data
+  source but reporting MainState/OverallCurrentState/OverallTargetState instead of the legacy
+  Window Covering attributes. Window Covering (0x0202) is left untouched for shutters/blinds.
+- **Remaining effort**: Low-Medium (3-5 days) — Closure Panel (0x0231) + Closure Dimension (0x0105)
+  only needed if a future closure requires percentage lift/tilt; Door Lock migration still open
 
 ### 1.2 Soil Sensor — NEW SIMPLE DEVICE TYPE
 
@@ -265,21 +270,30 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 **Objective**: Refactor Window Covering and Door Lock to new Closure model.
 
-1. **Closure Device Type (0x0230) — Parent**
-   - File: New `Matter_Plugin_Closure.be`
-   - Clusters: Descriptor, Identify, Closure Control (0x0104), Closure Dimension (0x0105)
-   - Effort: 1-2 weeks (design + implementation)
+1. ✅ **Closure Device Type (0x0230, Rev 2) — Garage Door** — implemented
+   - File: `Matter_Plugin_2_GarageDoor.be` (`garage`)
+   - Clusters: Descriptor, Identify (inherited), Closure Control (0x0104, Rev 2)
+   - MainState (Stopped/Moving), OverallCurrentState/OverallTargetState (Current/TargetPositionEnum),
+     Stop (0x00) and MoveTo (0x01) commands, fed by the same `ShutterPosition<x>` /
+     `SetOption80` logic as the legacy Shutter plugin
+   - No Closure Panel child endpoint: garage doors are modelled as a single
+     enum-position closure (Closed/Open/Partial), not a percentage lift axis
+   - Effort: implemented directly (skipped generic Closure/Closure Panel scaffolding below)
 
-2. **Closure Panel Device Type (0x0231) — Child**
+2. **Closure Panel Device Type (0x0231) — Child** (not yet implemented)
    - File: New `Matter_Plugin_Closure_Panel.be` (inherits from `Matter_Plugin_1_Device`)
    - Clusters: Descriptor, Identify, Closure Dimension (0x0105)
+   - Needed only if a future closure requires percentage lift/tilt (e.g. gate, blind) composed as parent+panel
    - Effort: 3-5 days (follows Closure pattern)
 
 3. **Migration Path for Existing Devices**
-   - Current `Matter_Plugin_2_Shutter.be` (Window Covering, 0x0202) — keep as-is or migrate to new Closure model?
-     - Option A: Keep as legacy (backward compatibility)
-     - Option B: Refactor to Closure (cleaner, aligned with v1.6 spec)
-   - Decision deferred to implementation phase (depends on customer device install base)
+   - Current `Matter_Plugin_2_Shutter.be` (Window Covering, 0x0202) — kept as-is (Option A,
+     legacy, widest controller support today) alongside the new `garage` Closure plugin (Option B)
+   - Rationale: Window Covering (0x0202) remains the safer choice for shutters/blinds until
+     Closure Control (0x0104) support is broader across controllers; Garage Door has no legacy
+     Matter device type at all, so it was implemented directly against Closure (0x0230)
+   - Controller support observed: Samsung SmartThings supports Closure Control today; Home
+     Assistant support is in progress (as of Matter 1.6.1, September 2026)
 
 ### Phase 4: Soil Sensor and Doorbells (Weeks 9-10)
 
@@ -316,8 +330,8 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | `Matter_Plugin_Energy_Price.be` | Commodity Price cluster | DEFERRED | 2b |
 | `Matter_Plugin_Energy_Tariff.be` | Commodity Tariff cluster | DEFERRED | 2b |
 | `Matter_Plugin_Sensor_Power.be` | Device Energy Management — not applicable to plugs (ESA only) | N/A | 2 |
-| `Matter_Plugin_Closure.be` | Closure device type (parent) | MEDIUM | 3 |
-| `Matter_Plugin_Closure_Panel.be` | Closure Panel device type (child) | MEDIUM | 3 |
+| `Matter_Plugin_2_GarageDoor.be` | Closure device type (Garage Door, Closure Control only) | DONE | 3 |
+| `Matter_Plugin_Closure_Panel.be` | Closure Panel device type (child, percentage lift/tilt closures) | MEDIUM | 3 |
 | `Matter_Plugin_3_Sensor_Soil.be` | Soil Sensor device type | DONE | 4 |
 | `Matter_Plugin_Doorbell.be` | Doorbell device type | LOW | 4 |
 
@@ -336,7 +350,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | Category | 1.4.1 | 1.6.0 | Status | Effort |
 |---|---|---|---|---|
 | **DataModelRevision** | 18 | 20 | ⚠️ Not updated | <1 day |
-| **Closures clusters** | Window Covering (legacy) | Closure Control/Dimension (new) | ❌ Missing | 2 weeks |
+| **Closures clusters** | Window Covering (legacy) | Closure Control (Garage Door, `garage`) ✅ Done; Closure Dimension (panel-based closures) still missing | ⚠️ Partial | 3-5 days remaining |
 | **Energy Management** | 0x0090/0x0091 only | Add Commodity Price/Tariff, Device EM, EVSE | ❌ Missing | 3-4 weeks |
 | **Soil Measurement** | None | Soil Sensor (0x0045) + cluster | ✅ Done | — |
 | **Doorbell** | None | 0x0148/0x0141/0x0143 | ❌ Missing | 1 week |
