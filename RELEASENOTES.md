@@ -114,7 +114,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.6.0.2
 ### Added
-- DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down)
 - Support for GUI tooltip on touch media like phones and tablets
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 [#24959](https://github.com/arendst/Tasmota/issues/24959)
 - Support for MI32 Xiaomi Mi Body Composition Scale (MIBCS/MIBFS) [#25049](https://github.com/arendst/Tasmota/issues/25049)
@@ -123,11 +122,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - NeoPool AuxMode [#24998](https://github.com/arendst/Tasmota/issues/24998)
 - DALI-2 input device event messages (IEC 62386-103) from push buttons, occupancy and light sensors decoded and published for rules and MQTT [#25029](https://github.com/arendst/Tasmota/issues/25029)
 - DALI-2 control device commissioning and instance queries with commands `DaliDeviceScan` and `DaliDevice` [#25029](https://github.com/arendst/Tasmota/issues/25029)
+- DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) [#25073](https://github.com/arendst/Tasmota/issues/25073)
 - MiELHVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state [#24984](https://github.com/arendst/Tasmota/issues/24984)
 - MiELHVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` [#24982](https://github.com/arendst/Tasmota/issues/24982)
 - MiELHVAC Home Assistant MQTT discovery [#25027](https://github.com/arendst/Tasmota/issues/25027)
 - Berry virtual button support
 - Berry `sortedmap` support for `json.dump` [#24999](https://github.com/arendst/Tasmota/issues/24999)
+- Matter add Electrical Power Measurement cluster to On/Off Plug-in Unit [#24922](https://github.com/arendst/Tasmota/issues/24922)
 
 ### Breaking Changed
 
