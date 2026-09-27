@@ -4447,7 +4447,7 @@ void MI32Show(bool json)
         uint32_t color = WebColor(COL_TEXT);    // color of text
         dhm[0] = 0;   // start with empty string
         if (p->batLastSeen) {
-          uint16_t val = SIconvert_seconds_to_dhm(Rtc.local_time - p->batLastSeen, &unit, &color, true);
+          uint16_t val = SIconvert_seconds_to_dhm(now - p->batLastSeen, &unit, &color, true);
           if (val < 100) {
             snprintf(dhm, sizeof(dhm), " (%02u%c)", val, unit);
           }
