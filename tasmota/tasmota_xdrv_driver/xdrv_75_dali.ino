@@ -65,6 +65,8 @@
  *   3 Off    - short press switches off, long press dims down
  *   4 Up     - short press or rotation dims up, double press full brightness (rotary clockwise)
  *   5 Down   - short press or rotation dims down (rotary anticlockwise)
+ * The last level is only stored for broadcast and group targets. Switching on a short address target restores the
+ * broadcast level as the driver keeps no per short address state, so use a group target to retain a channel's own level.
  * Example zencontrol zc-switch rotary at short address 0 controlling broadcast:
  *   Backlog DaliBind1 1,0,0,1; DaliBind2 1,1,0,4; DaliBind3 1,2,0,5
  * 
