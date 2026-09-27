@@ -233,6 +233,15 @@ class Matter_Autoconf
       end
     end
 
+    # soil moisture sensors
+    for k1: k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Moisture")
+        var temp_rule = k1 + "#Moisture"
+        ret.push({'type':'soil','filter':temp_rule})
+      end
+    end
+
     return ret
   end
 

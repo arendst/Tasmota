@@ -245,6 +245,7 @@ The following changes are part of Matter 1.6.1 (released September 2026, PR #735
   - Reads the Tasmota `Moisture` value (percent), e.g. Adafruit Seesaw soil sensor (xsns_81); filter like `SeeSoil#Moisture`
   - SoilMoistureMeasurementLimits: SoilMoisture (17), 0-100%, single accuracy range with PercentMax 10.00%
   - Optional soil Temperature Measurement (0x0402) not composed on the same endpoint; use a separate `temperature` endpoint
+  - Autoconfiguration creates a `soil` endpoint for any sensor reporting `Moisture` (its `Temperature` gets its own `temperature` endpoint)
 - Doorbell device type (0x0148) — optional, can defer to maintenance release
 
 ### Phase 5: Validation & Compliance Testing (v1.6.0)
