@@ -147,7 +147,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 |---|---|---|---|---|---|
 | Commodity Price | 0x0095 | 4 | Base | SEPR | Real-time/forecasted pricing for gas, energy, water |
 | Commodity Tariff | 0x0700 | 1 | Base | SETRF | Tariff schedules and rate structure |
-| Device Energy Management | 0x0098 | — | Base | — | Power adjustment, demand response, forecasting |
+| Device Energy Management | 0x0098 | 4 | Base | DEM | Power adjustment, demand response, forecasting |
 | Energy EVSE | 0x0099 | — | Base | — | EV charging control (out of scope for Tasmota) |
 | Energy EVSE Mode | 0x009D | — | Base | — | EVSE mode switching |
 | Water Heater Management | 0x0094 | — | Base | — | Water heater control (out of scope for Tasmota) |
@@ -247,23 +247,19 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 **Objective**: Expose Tasmota's extensive energy drivers through Matter Energy Management framework.
 
-1. **Commodity Price Cluster (0x0095, Rev 4)**
-   - Purpose: Receive pricing signals from grid/utility device
-   - File: New `Matter_Plugin_Energy_Price.be` or add to Root Node if it's a global cluster
-   - Attributes: Tiers, pricing matrix, forecasts
-   - Effort: 1 week
+1. ⏹️ **Device Energy Management Cluster (0x0098, Rev 4)** — not applied to plugs
+   - Not required by On/Off Plug-in Unit (0x010A) nor Electrical Sensor (0x0510); DEM belongs to Energy Smart Appliances (device type 0x050D, Rev 3: EVSE, water heater, heat pump, battery, solar)
+   - Reporting-only DEM on a plug (static ESAState, no adjustment) brings no value to controllers
+   - Revisit only if a Tasmota plugin models an actual ESA with load control
 
-2. **Commodity Tariff Cluster (0x0700, Rev 1)**
-   - Purpose: Receive tariff schedule (time-of-use, peak hours, etc.)
-   - File: New `Matter_Plugin_Energy_Tariff.be`
-   - Attributes: Tariff type, pricing tiers, effective dates
-   - Effort: 1 week
+### Phase 2b: Commodity Price & Tariff (deferred)
 
-3. **Device Energy Management Cluster (0x0098)**
-   - Purpose: Expose power measurement + demand response hints
-   - File: Extend `Matter_Plugin_3_OnOff_Power.be` or create new `Matter_Plugin_Sensor_Power.be`
-   - Attributes: CurrentPower, PowerMinimum, PowerMaximum, PowerAdjustmentCapability, etc.
-   - Effort: 1-2 weeks
+1. **Commodity Price (0x0095, Rev 4)** and **Commodity Tariff (0x0700, Rev 1)**
+   - Hosted only by Electrical Energy Tariff (0x0513), a child endpoint of Meter Reference Point (0x0512, with Identify)
+   - Requires Descriptor TagList semantic tags (Commodity Tariff namespaces; Grid/Import/AC/Current in the basic topology) and TimeSyncCond on the Root Node
+   - Commodity Tariff: 14+ attributes with deeply nested structs (DayEntry, DayPattern, CalendarPeriod, TariffComponent, TariffPeriod)
+   - Prerequisites: Namespace Specification 1.6, parent/child virtual composition, TagList support
+   - No native Tasmota data source; values would be pushed via `MtrUpdate`
 
 ### Phase 3: Closures Unified Architecture (Weeks 6-8)
 
@@ -317,9 +313,9 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 | File | Purpose | Priority | Phase |
 |---|---|---|---|---|
-| `Matter_Plugin_Energy_Price.be` | Commodity Price cluster | HIGH | 2 |
-| `Matter_Plugin_Energy_Tariff.be` | Commodity Tariff cluster | HIGH | 2 |
-| `Matter_Plugin_Sensor_Power.be` | Device Energy Management | HIGH | 2 |
+| `Matter_Plugin_Energy_Price.be` | Commodity Price cluster | DEFERRED | 2b |
+| `Matter_Plugin_Energy_Tariff.be` | Commodity Tariff cluster | DEFERRED | 2b |
+| `Matter_Plugin_Sensor_Power.be` | Device Energy Management — not applicable to plugs (ESA only) | N/A | 2 |
 | `Matter_Plugin_Closure.be` | Closure device type (parent) | MEDIUM | 3 |
 | `Matter_Plugin_Closure_Panel.be` | Closure Panel device type (child) | MEDIUM | 3 |
 | `Matter_Plugin_Sensor_Soil.be` | Soil Sensor device type | MEDIUM | 4 |
