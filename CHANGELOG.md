@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) (#25073)
 - Matter add Electrical Power Measurement cluster to On/Off Plug-in Unit (#24922)
+- Matter add Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0)
 
 ### Breaking Changed
 

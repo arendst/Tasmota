@@ -285,10 +285,10 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 **Objective**: Add simple sensor and doorbell device types for completeness.
 
-1. **Soil Sensor (0x0045)**
-   - File: New `Matter_Plugin_Sensor_Soil.be`
-   - Reuses existing humidity/temperature plugins as templates
-   - Effort: 3-5 days
+1. ✅ **Soil Sensor (0x0045, Rev 1)** — implemented
+   - Files: `Matter_Plugin_3_Sensor_Soil.be` (`soil`), `Matter_Plugin_9_Virt_Sensor_Soil.be` (`v_soil`), `Matter_Plugin_8_Bridge_Sensor_Soil.be` (`http_soil`, `mqtt_soil`)
+   - Soil Measurement (0x0430, Rev 1): SoilMoistureMeasurementLimits + SoilMoistureMeasuredValue, fed by the Tasmota `Moisture` JSON key (percent)
+   - Optional Temperature Measurement (0x0402) not composed on the same endpoint
 
 2. **Doorbell Device Type (0x0148) — Optional**
    - File: New `Matter_Plugin_Doorbell.be`
@@ -318,7 +318,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | `Matter_Plugin_Sensor_Power.be` | Device Energy Management — not applicable to plugs (ESA only) | N/A | 2 |
 | `Matter_Plugin_Closure.be` | Closure device type (parent) | MEDIUM | 3 |
 | `Matter_Plugin_Closure_Panel.be` | Closure Panel device type (child) | MEDIUM | 3 |
-| `Matter_Plugin_Sensor_Soil.be` | Soil Sensor device type | MEDIUM | 4 |
+| `Matter_Plugin_3_Sensor_Soil.be` | Soil Sensor device type | DONE | 4 |
 | `Matter_Plugin_Doorbell.be` | Doorbell device type | LOW | 4 |
 
 ### Files to Modify
@@ -338,7 +338,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | **DataModelRevision** | 18 | 20 | ⚠️ Not updated | <1 day |
 | **Closures clusters** | Window Covering (legacy) | Closure Control/Dimension (new) | ❌ Missing | 2 weeks |
 | **Energy Management** | 0x0090/0x0091 only | Add Commodity Price/Tariff, Device EM, EVSE | ❌ Missing | 3-4 weeks |
-| **Soil Measurement** | None | Soil Sensor (0x0045) + cluster | ❌ Missing | 1 week |
+| **Soil Measurement** | None | Soil Sensor (0x0045) + cluster | ✅ Done | — |
 | **Doorbell** | None | 0x0148/0x0141/0x0143 | ❌ Missing | 1 week |
 | **Access Control** | Partial | Complete read + rev updates | ⚠️ Partial | 3-5 days |
 | **Group Key Management** | Rev 2 | Rev 4 | ⚠️ Outdated | 1 week |

@@ -190,20 +190,20 @@ class Matter_UI
                               "|relay|relay_power|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
-                              "|airquality"
+                              "|airquality|soil"
   static var _CLASSES_TYPES_VIRTUAL =
                               "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3"
                               "|v_fan|v_hvac|v_hvac_option"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
-                              "|v_airquality"
+                              "|v_airquality|v_soil"
   static var _CLASSES_TYPES2= "|http_relay|http_relay_power|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
-                              "|http_airquality"
+                              "|http_airquality|http_soil"
   static var _CLASSES_TYPES3= "|mqtt_relay|mqtt_light0|mqtt_light1|mqtt_light2|mqtt_light3"
                               "|mqtt_temperature|mqtt_pressure|mqtt_illuminance|mqtt_humidity"
                               "|mqtt_occupancy|mqtt_contact|mqtt_flow|mqtt_rain|mqtt_waterleak"
-                              "|mqtt_airquality"
+                              "|mqtt_airquality|mqtt_soil"
   var device
   var matter_enabled
 

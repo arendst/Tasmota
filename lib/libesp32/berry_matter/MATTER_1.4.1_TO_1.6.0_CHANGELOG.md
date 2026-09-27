@@ -240,10 +240,12 @@ The following changes are part of Matter 1.6.1 (released September 2026, PR #735
 - **Integration:** Replaces/enhances current scattered cluster approach
 
 ### Phase 4: Sensors & Doorbells (v1.6.0, low-priority features)
-- Soil Sensor device type (0x0045) with Soil Measurement cluster (0x0430)
+- ✅ Soil Sensor device type (0x0045, Rev 1) with Soil Measurement cluster (0x0430, Rev 1)
+  - Plugins: `soil` (`Matter_Plugin_3_Sensor_Soil.be`), `v_soil`, `http_soil`, `mqtt_soil`
+  - Reads the Tasmota `Moisture` value (percent), e.g. Adafruit Seesaw soil sensor (xsns_81); filter like `SeeSoil#Moisture`
+  - SoilMoistureMeasurementLimits: SoilMoisture (17), 0-100%, single accuracy range with PercentMax 10.00%
+  - Optional soil Temperature Measurement (0x0402) not composed on the same endpoint; use a separate `temperature` endpoint
 - Doorbell device type (0x0148) — optional, can defer to maintenance release
-- **Timeframe:** 1 week
-- **Integration:** Extends existing humidity/temperature sensor plugins
 
 ### Phase 5: Validation & Compliance Testing (v1.6.0)
 - Multi-controller interoperability (Apple Home, Google Home, Alexa, SmartThings, Home Assistant)
