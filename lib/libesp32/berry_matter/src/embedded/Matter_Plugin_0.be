@@ -142,7 +142,7 @@ class Matter_Plugin
     # 0x003B: 1,                            # Switch - Initial Release
     # 0x003C: 1,                            # Administrator Commissioning - Initial Release
     # 0x003E: 1,                            # Node Operational Credentials - Initial Release
-    0x003F: 2,                              # Group Key Management - Clarify KeySetWrite validation and behavior on invalid epoch key lengths
+    0x003F: 4,                              # Group Key Management - Matter 1.6.0 (removed GroupKeyMulticastPolicy field in v4)
     # 0x0040: 1,                            # Fixed Label - Initial Release
     # 0x0041: 1,                            # User Label - Initial Release
     # 0x0042: 1,                            # Boolean State - Initial Release
