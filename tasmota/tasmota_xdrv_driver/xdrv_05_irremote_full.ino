@@ -600,33 +600,42 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // IRsend { "protocol": "NEC", "bits": 32, "data":"0x02FDFE80", "repeat": 2 }
   JsonParserToken value;
 
-  // IRsend { "rawdata":"+8570-4240+550...", "frequency": 38000, "channel": 3 }
-  //
-  // The plain "IRsend <freq>,<rawdata>" form has no channel, so a remote whose
-  // protocol the library does not know could only ever be replayed through the
-  // first emitter. Accepting raw data here gives it the same Channel the
-  // decoded protocols already have, in the same shape the receiver publishes.
-  value = root[PSTR(D_JSON_IR_RAWDATA)];
-  if (value) {
+  decode_type_t protocol = decode_type_t::UNKNOWN;
+  value = root[PSTR(D_JSON_IRHVAC_VENDOR)];
+  if (root) { protocol = strToDecodeType(value.getStr()); }
+  value = root[PSTR(D_JSON_IRHVAC_PROTOCOL)];
+  if (root) { protocol = strToDecodeType(value.getStr()); }
+
+  if (decode_type_t::UNKNOWN == protocol) {
+    // IRsend { "rawdata":"+8570-4240+550...", "frequency": 38000, "channel": 3 }
+    //
+    // The plain "IRsend <freq>,<rawdata>" form has no channel, so a remote whose
+    // protocol the library does not know could only ever be replayed through the
+    // first emitter. Accepting raw data here gives it the same Channel the
+    // decoded protocols already have, in the same shape the receiver publishes.
+    //
+    // Raw data is used only when no known protocol is given, so that a payload
+    // copied from IrReceived (Protocol + RawData with SetOption58) is still sent
+    // through the decoded protocol, with its own carrier and repeat gaps.
+    // Payloads with "Protocol":"UNKNOWN" or no Protocol fall back to raw.
+    value = root[PSTR(D_JSON_IR_RAWDATA)];
+    if (!value) { return IE_UNSUPPORTED_PROTOCOL; }
+    if (!value.isStr()) { return IE_INVALID_RAWDATA; }   // reject null, true, numbers, arrays...
     char * rawdata = (char*) value.getStr();
-    if (nullptr == rawdata) { return IE_INVALID_RAWDATA; }
-    uint16_t freq = root.getUInt(PSTR(D_JSON_IR_FREQUENCY), 38000);
+
+    uint32_t freq32 = root.getUInt(PSTR(D_JSON_IR_FREQUENCY), 38000);
+    uint16_t freq = ((0 == freq32) || (freq32 > 0xFFFF)) ? 38000 : freq32;   // same default as parsqeFreq()
+
     uint16_t raw_repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
     if (XdrvMailbox.index > raw_repeat + 1) { raw_repeat = XdrvMailbox.index - 1; }
     int32_t raw_channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
+
     // A list of values is counted by its commas; the compact format has none
     // and is counted by the parser itself.
     uint32_t count = 0;
     for (char * c = rawdata; *c; c++) { if (*c == ',') { count++; } }
     return IrRemoteSendRawStandard(&rawdata, freq, count, raw_repeat, raw_channel);
   }
-
-  decode_type_t protocol = decode_type_t::UNKNOWN;
-  value = root[PSTR(D_JSON_IRHVAC_VENDOR)];
-  if (root) { protocol = strToDecodeType(value.getStr()); }
-  value = root[PSTR(D_JSON_IRHVAC_PROTOCOL)];
-  if (root) { protocol = strToDecodeType(value.getStr()); }
-  if (decode_type_t::UNKNOWN == protocol) { return IE_UNSUPPORTED_PROTOCOL; }
   AddLog(LOG_LEVEL_INFO, PSTR("IRS: protocol %d"), protocol);
 
   uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
@@ -874,7 +883,10 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   count = IrRemoteParseRawCompact(*pp, arr, count);
   // AddLog(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
   // AddLog(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
-  if (0 == count) { return IE_INVALID_RAWDATA; }
+  if (0 == count) {
+    free(arr);                  // was leaked on parse failure (trailing comma, mixed format, invalid char)
+    return IE_INVALID_RAWDATA;
+  }
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   IRsend irsend = IrSendInitGPIO(channel);
@@ -883,9 +895,7 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   }
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
-  if (nullptr != arr) {
-    free(arr);
-  }
+  free(arr);                    // arr is always non-null here
   return IE_NO_ERROR;
 }
 

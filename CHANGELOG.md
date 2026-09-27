@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 - Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` (#25020)
 - ESP8266 platform update from 2026.04.00 to 2026.09.00 (#25072)
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
-
+- IR accept raw data in JSON
 
 ### Fixed
 
