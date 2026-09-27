@@ -410,14 +410,109 @@ The Root plugin implementation demonstrates strong compliance with Matter 1.4.1 
 
 ---
 
+---
+
+## Matter 1.6.0 Delta Impact Analysis
+
+**Analysis Date:** September 2026  
+**Delta Scope:** Matter 1.4.1 → 1.6.0 (versions 1.5, 1.5.1, and 1.6.0)  
+**Baseline:** This document's 1.4.1 analysis; updates below reflect v1.6.0 target state
+
+### DataModelRevision Update
+
+**Current:** 18 (Matter 1.4.1)  
+**Target:** 20 (Matter 1.6.0)  
+**File/Location:** `Matter_Plugin_1_Root.be`, line ~799  
+**Change:** `return tlv_solo.set(0x05, 18)` → `return tlv_solo.set(0x05, 20)`  
+**Status:** ⚠️ **Requires update**
+
+### Access Control Cluster (0x001F) — Unchanged for v1.6.0
+
+**Status:** Remains ⚠️ **MINIMAL** (no new features in v1.6.0)
+
+**Existing gaps still apply:**
+- Missing mandatory attributes 0x0002/0x0003/0x0004 (SubjectsPerAccessControlEntry, TargetsPerAccessControlEntry, AccessControlEntriesPerFabric)
+- No read handler in `read_attribute` for cluster 0x001F
+
+**v1.6.0 does not introduce:** Auxiliary (AUX) feature is finalized in v1.6.1 only, not v1.6.0; exclude from this phase
+
+**Recommendation:** Implement read handlers for the 3 mandatory attributes (as per Part 1.4.1 analysis):
+```berry
+elif cluster == 0x001F  # Access Control
+  if attribute == 0x0002
+    return tlv_solo.set(TLV.U2, 4)  # SubjectsPerAccessControlEntry
+  elif attribute == 0x0003
+    return tlv_solo.set(TLV.U2, 3)  # TargetsPerAccessControlEntry
+  elif attribute == 0x0004
+    return tlv_solo.set(TLV.U2, 4)  # AccessControlEntriesPerFabric
+end
+```
+
+### Group Key Management Cluster (0x003F) — REVISION BUMP 2→4
+
+**Current State:**
+- Implemented revision: **2** (file `Matter_Plugin_0.be:145`)
+- Only attribute 0x0000 (GroupKeyMap) is handled, returns empty list
+- Missing attributes: 0x0001 (GroupTable), 0x0002 (MaxGroupsPerFabric), 0x0003 (MaxGroupKeysPerFabric)
+- Missing commands: KeySetWrite, KeySetRead, KeySetRemove, KeySetReadAllIndices
+
+**v1.6.0 Target Revision:** **4** (spec revision bumped 2→3 in v1.5; then 3→4 in v1.6.1, but we adopt 4 for consistency)
+
+**Note:** The jump 2→4 is intentional (skipping rev 3) because the codebase was implemented at rev 2 before matter evolved; v1.6.1 finalized at rev 4.
+
+**Changes Required:**
+
+1. **Update CLUSTER_REVISIONS in `Matter_Plugin_0.be`:**
+   ```berry
+   0x003F: 4,  # Group Key Management (was 2)
+   ```
+
+2. **Add missing attribute handlers in `Matter_Plugin_1_Root.be`:**
+   ```berry
+   elif cluster == 0x003F  # Group Key Management
+     if attribute == 0x0001  # GroupTable
+       return TLV.Matter_TLV_array()  # empty list for now
+     elif attribute == 0x0002  # MaxGroupsPerFabric
+       return tlv_solo.set(TLV.U2, 4)
+     elif attribute == 0x0003  # MaxGroupKeysPerFabric
+       return tlv_solo.set(TLV.U2, 3)
+   end
+   ```
+
+**Status:** ⚠️ **Requires update** (compulsory for v1.6.0 compliance)
+
+**Effort:** 3-5 days
+
+### Summary: Matter 1.6.0 Compliance for Root Node
+
+| Cluster | Current | v1.6.0 Target | Gap | Effort |
+|---|---|---|---|---|
+| **Basic Information (0x0028)** | Rev 2, DataModelRevision=18 | Rev 2, DataModelRevision=20 | Update revision value only | <1 day |
+| **Access Control (0x001F)** | Minimal (no read) | Minimal (no read) + read 3 attrs | Add 3 read handlers | 2-3 days |
+| **Group Key Management (0x003F)** | Rev 2, 1/4 attrs | Rev 4, 4/4 attrs | Bump rev, add 3 attrs | 3-5 days |
+| **Other clusters** | 1.4.1 compliant | 1.4.1 compliant (no v1.6 changes) | None | — |
+
+**Total Root Node effort for v1.6.0:** ~1-2 weeks
+
+---
+
 ## Conclusion
 
 The Root plugin implementation is **95% compliant** with Matter 1.4.1 specifications. The core commissioning flow, security, and diagnostics are fully implemented and correct. The main gaps are in:
 
 1. Access Control cluster missing 3 mandatory read-only attributes
-2. Group Key Management cluster missing 3 mandatory attributes and commands
+2. Group Key Management cluster missing 3 mandatory attributes and commands (revision also needs bump 2→4)
 3. Network Commissioning cluster minimal implementation
 
-These gaps don't prevent basic Matter functionality but should be addressed for full compliance and better interoperability with all Matter controllers.
+### Path to Matter 1.6.0 Compliance
 
-**Verdict: PRODUCTION READY with minor compliance gaps that should be addressed in future updates.**
+To reach **Matter 1.6.0** (DataModelRevision = 20):
+1. Update DataModelRevision: 18→20 (<1 day)
+2. Add Access Control cluster read handlers (2-3 days)
+3. Bump Group Key Management revision 2→4 and complete attributes (3-5 days)
+
+**Estimated Total:** 1-2 weeks for Root Node to fully support Matter 1.6.0.
+
+These gaps don't prevent basic Matter functionality but should be addressed for full compliance and better interoperability with all Matter controllers. The updates are straightforward and low-risk.
+
+**Verdict: PRODUCTION READY with minor compliance gaps. Roadmap for v1.6.0 adoption in place (see `MATTER_1.6.0_DETAILED_GAP_ANALYSIS.md`).**
