@@ -1,6 +1,6 @@
-# Matter 1.4.1 Core Specification - AI Compact Reference
+# Matter 1.6.1 Core Specification - AI Compact Reference
 
-Version: 1.4.1 (March 2025)
+Version: 1.6.1 (September 2026)
 Purpose: Token-optimized implementation reference
 
 ---
@@ -14,26 +14,41 @@ Matter defines interoperable application layer for smart home devices over IPv6.
 | Acronym | Definition |
 |---------|------------|
 | ACL | Access Control List |
+| AGID | Application Group Identifier |
 | AEAD | Authenticated Encryption with Associated Data |
 | BDX | Bulk Data Exchange |
 | BTP | Bluetooth Transport Protocol |
 | CASE | Certificate Authenticated Session Establishment |
 | CAT | CASE Authenticated Tag |
 | CD | Certification Declaration |
+| CSR | Certificate Signing Request |
 | DAC | Device Attestation Certificate |
+| DNS-SD | DNS-Based Service Discovery |
+| DRBG | Deterministic Random Bit Generator |
+| ECDSA | Elliptic Curve Digital Signature Algorithm |
 | GID | Group Identifier |
+| GKH | Group Key Hash |
 | ICD | Intermittently Connected Device |
 | IPK | Identity Protection Key |
 | MCSP | Message Counter Synchronization Protocol |
+| MIC | Message Integrity Code |
 | MRP | Message Reliability Protocol |
+| NFC | Near Field Communication |
 | NOC | Node Operational Certificate |
 | NOCSR | Node Operational Certificate Signing Request |
+| NTL | NFC Transport Layer |
 | PAA | Product Attestation Authority |
+| PAFTP | Public Action Frame Transport Protocol |
 | PAI | Product Attestation Intermediate |
 | PASE | Passcode-Authenticated Session Establishment |
+| PBKDF | Password-Based Key Derivation Function |
 | PID | Product Identifier |
+| PKI | Public Key Infrastructure |
+| SRP | Service Registration Protocol |
 | SED | Sleepy End Device |
 | TLV | Tag Length Value |
+| TRNG | True Random Number Generator |
+| UGID | Universal Group Identifier |
 | VID | Vendor Identifier |
 | SIT | Short Idle Time (ICD) |
 | LIT | Long Idle Time (ICD) |
@@ -90,28 +105,34 @@ Matter defines interoperable application layer for smart home devices over IPv6.
 Universal Groups:
 - 0xFFFF: All Nodes
 - 0xFFFE: All non-ICD Nodes
-- 0xFFFD: All Proxies
+- 0xFFFD: Deprecated
+- 0xFF00-0xFFFC: Reserved
 
 #### 2.3.5 Node ID (64-bit)
 | Range | Type |
 |-------|------|
 | 0x0000_0000_0000_0000 | Unspecified |
 | 0x0000_0000_0000_0001 - 0xFFFF_FFEF_FFFF_FFFF | Operational Node ID |
+| 0xFFFF_FFF0_0000_0000 - 0xFFFF_FFFA_FFFF_FFFF | Reserved |
 | 0xFFFF_FFFB_xxxx_xxxx | PAKE key identifiers |
+| 0xFFFF_FFFC_xxxx_xxxx | Reserved |
 | 0xFFFF_FFFD_xxxx_xxxx | CASE Authenticated Tag |
 | 0xFFFF_FFFE_xxxx_xxxx | Temporary Local Node ID |
+| 0xFFFF_FFFF_0000_0000 - 0xFFFF_FFFF_FFFE_FFFF | Reserved |
 | 0xFFFF_FFFF_FFFF_xxxx | Group Node ID |
 
 ### 2.4 IPv6 Addressing
 
 #### Multicast Address Format (RFC 3306)
 ```
-FF35:0040:FD<FabricID>00:<GroupID>
+FF35:0040:FD<upper 56 bits FabricID>:<lower 8 bits FabricID>00:<GroupID>
 ```
 - First 12 bits: 0xFF3 (RFC 3306)
 - Scope: 0x5 (Site-Local)
 - Network prefix: 0xFD + upper 56-bits of Fabric ID
 - Group ID: lower 8-bits Fabric ID + 0x00 + 16-bit Group ID
+- Groupcast listeners/senders SHALL also support IANA address `FF05::FA`
+- Groupcast IPv6 hop limit SHOULD be at least 10
 
 #### Multicast Port: 5540 (IANA assigned)
 
@@ -123,10 +144,10 @@ FF35:0040:FD<FabricID>00:<GroupID>
 | Max endpoints per node | 65535 |
 | Max clusters per endpoint | 65535 |
 | Max attributes per cluster | 65535 |
-| Max fabrics per node | 16 (min 5) |
-| Max group keys per fabric | 3 |
-| Max groups per fabric | 4 |
-| Max ACL entries per fabric | 4 |
+| Min fabrics per node | 5 |
+| Min group keys per fabric | 3 (legacy Groups), 4 (Groupcast); IPK always requires at least 1 |
+| Min groups per fabric | 4 per endpoint with Groups cluster |
+| Min ACL entries per fabric | 4 |
 | Max subjects per ACL entry | 4 |
 | Max targets per ACL entry | 3 |
 
@@ -134,10 +155,16 @@ FF35:0040:FD<FabricID>00:<GroupID>
 | Limit | Value |
 |-------|-------|
 | Max attribute paths per request | 9 |
-| Max event paths per request | 10 |
-| Max data version filters | 8 |
-| Max cluster paths per invoke | 1 (provisional: more) |
-| Max subscriptions per fabric | 3 |
+| Min read paths guaranteed per fabric | 9 total attribute/event paths |
+| Min paths per subscription | 3 total attribute/event paths |
+| Min concurrent subscriptions per fabric | 3 |
+| Invoke paths | Multiple concrete paths if supported; see MaxPathsPerInvoke |
+
+### 2.6 Migration from Groups to Groupcast (1.6.1)
+- Groupcast is the preferred group-management mechanism once certifiable; legacy Groups remains for compatibility.
+- A node upgraded from Groups SHALL preserve existing group communication and reflect legacy memberships in the Groupcast `Membership` attribute.
+- With Groupcast enabled, `MaxGroupsPerFabric` is 0; capacity is reported by Groupcast `MaxMembershipCount`.
+- Controllers SHALL use Groupcast `JoinGroup`, `LeaveGroup`, and `UpdateGroupKey`; Group Key Management remains responsible for key-set material.
 
 ---
 
@@ -156,7 +183,8 @@ CRYPTO_AEAD_MIC_LENGTH_BYTES = 16
 CRYPTO_AEAD_NONCE_LENGTH_BYTES = 13
 CRYPTO_PBKDF_ITERATIONS_MIN = 1000
 CRYPTO_PBKDF_ITERATIONS_MAX = 100000
-CRYPTO_W_SIZE_BITS = 256
+CRYPTO_W_SIZE_BYTES = 40
+CRYPTO_W_SIZE_BITS = 320
 ```
 
 ### 3.2 Primitives
@@ -208,7 +236,8 @@ Crypto_PBKDFParameterSet => STRUCTURE [tag-order] {
 - **UDP**: Individual datagrams, uses MRP for reliability
 - **TCP**: Length-prefixed messages, segmentation/reassembly
 - **BTP**: BLE transport, segmentation/reassembly
-- **Wi-Fi Public Action Frame**: Commissioning only
+- **PAFTP**: Reliable Wi-Fi Public Action Frame transport, commissioning only
+- **NTL**: Reliable NFC APDU transport, commissioning only
 
 ### 4.3 Discovery
 
@@ -236,6 +265,9 @@ Crypto_PBKDFParameterSet => STRUCTURE [tag-order] {
 | PH | Pairing hint bitmap |
 | PI | Pairing instructions |
 | JF | Joint Fabric capabilities |
+| SII | Session Idle Interval (ms) |
+| SAI | Session Active Interval (ms) |
+| SAT | Session Active Threshold (ms) |
 
 #### 4.3.2 Operational Discovery
 - DNS-SD service type: `_matter._tcp`
@@ -248,7 +280,7 @@ Crypto_PBKDFParameterSet => STRUCTURE [tag-order] {
 | SII | Session Idle Interval (ms) |
 | SAI | Session Active Interval (ms) |
 | SAT | Session Active Threshold (ms) |
-| T | TCP support bitmap |
+| T | Supported transport bitmap: bit 1 TCP client, bit 2 TCP server |
 | ICD | Long Idle Time ICD mode |
 
 ### 4.4 Message Frame Format
@@ -379,12 +411,11 @@ Does NOT encrypt: Message Flags, Session ID, Security Flags
 
 #### Retransmission Timing Algorithm
 ```
-if (retransCount < MRP_BACKOFF_THRESHOLD):
-  backoff = baseInterval
-else:
-  backoff = baseInterval * (MRP_BACKOFF_BASE ^ (retransCount - MRP_BACKOFF_THRESHOLD))
-
-mrpBackoffTime = backoff * (1 + random(0, MRP_BACKOFF_JITTER))
+baseInterval = MRP_BACKOFF_MARGIN *
+  (SESSION_ACTIVE_INTERVAL if peerActive else SESSION_IDLE_INTERVAL)
+mrpBackoffTime = baseInterval *
+  (MRP_BACKOFF_BASE ^ max(0, sendCount - MRP_BACKOFF_THRESHOLD)) *
+  (1 + random(0, MRP_BACKOFF_JITTER))
 ```
 
 #### MRP Standalone Acknowledgement
@@ -750,7 +781,21 @@ CheckInKey = Crypto_KDF(
 )
 ```
 
-### 4.16 TCP Connection Management
+### 4.16 Commissioning Transports
+
+#### PAFTP
+- Carries Matter commissioning messages over Wi-Fi Alliance Unsynchronized Service Discovery follow-up frames.
+- Reliable and segmented; MRP SHOULD NOT be enabled over PAFTP.
+- Defaults: connection response timeout 5s, standalone ACK timeout 15s, idle timeout 30s.
+
+#### NFC Transport Layer (NTL)
+- Carries commissioning messages as ISO/IEC 7816-4 APDUs over NFC-A/ISO-DEP.
+- Commissioner always transmits first; Commissionee responds.
+- NTL is distinct from reading an onboarding payload from an NFC tag.
+- NTL devices SHALL also expose an NFC onboarding payload and support another commissioning channel.
+- MRP SHALL NOT be enabled over NTL.
+
+### 4.17 TCP Connection Management
 
 #### Configuration Parameters
 - Connection Establishment Timeout
@@ -797,7 +842,9 @@ QR code string = "MT:" + Base38Encode(PackedBinaryData)
 | 1 | BLE supported |
 | 2 | On IP network |
 | 3 | Wi-Fi Public Action Frame |
-| 4-7 | Reserved (0) |
+| 4 | NFC Transport Layer |
+| 5 | Thread Commissioning Protocol (provisional) |
+| 6-7 | Reserved (0) |
 
 #### Manual Pairing Code (11 or 21 digits)
 ```
@@ -818,6 +865,29 @@ DIGIT[21] = CHECK_DIGIT (Verhoeff)
 - Invalid passcodes: 00000000, 11111111, ..., 99999999, 12345678, 87654321
 - SHALL NOT be derived from public information
 - SHALL use cryptographically secure RNG
+
+#### Optional TLV Content
+Anonymous top-level structure; tags 0x00-0x7F are Matter-common, 0x80-0xFF manufacturer-specific.
+| Tag | Name | Type |
+|-----|------|------|
+| 0x00 | SerialNumber | string or uint, max 32-byte string |
+| 0x01 | PBKDFIterations | uint, 1000-100000 |
+| 0x02 | PBKDFSalt | octstr, 16-32 bytes |
+| 0x03 | NumberOfDevices | uint, 1-255 (ECM) |
+| 0x04 | CommissioningTimeout | uint seconds (ECM) |
+
+PBKDFIterations and PBKDFSalt SHALL be included together.
+
+#### Concatenated Onboarding Payloads
+```
+MT:<payload1>*<payload2>*...
+```
+- All Commissioners SHALL recognize `*` as the concatenation delimiter.
+- Each segment is independently encoded; Commissioners SHOULD commission in listed order.
+
+#### NFC Tag
+- Uses the same `MT:` Base38 payload as the QR code, in an NFC NDEF URI record.
+- NDEF prefix bytes: `D1 01 <payload-size> 55 00`, followed by the ASCII payload.
 
 ### 5.2 Commissioning Flows
 
@@ -845,19 +915,38 @@ DIGIT[21] = CHECK_DIGIT (Verhoeff)
 #### IdentificationDeclaration TLV
 ```
 identification-declaration => STRUCTURE [tag-order] {
-  vendorId [1]: UNSIGNED INTEGER [16-bits],
-  productId [2]: UNSIGNED INTEGER [16-bits],
+  vendorId [1, optional]: UNSIGNED INTEGER [16-bits],
+  productId [2, optional]: UNSIGNED INTEGER [16-bits],
   deviceName [3, optional]: STRING [max 32],
-  deviceType [4, optional]: UNSIGNED INTEGER [16-bits],
-  pairingInstruction [5, optional]: STRING [max 128],
-  pairingHint [6, optional]: UNSIGNED INTEGER [16-bits],
-  rotatingDeviceId [7, optional]: OCTET STRING [max 50],
-  targetAppList [8, optional]: ARRAY OF target-app-struct,
-  noPasscode [9, optional]: BOOLEAN,
-  cdPort [10, optional]: UNSIGNED INTEGER [16-bits],
-  commissionerPasscode [11, optional]: BOOLEAN
+  deviceType [4, optional]: UNSIGNED INTEGER [32-bits],
+  pairingInstruction [5, optional]: STRING [max 32],
+  pairingHint [6, optional]: UNSIGNED INTEGER [32-bits],
+  rotatingDeviceId [7, optional]: STRING [max 100],
+  port [8, optional]: UNSIGNED INTEGER [16-bits],
+  targetAppList [9, optional]: ARRAY OF target-app-struct,
+  noPasscode [13, optional]: BOOLEAN,
+  cdUponPasscodeDialog [14, optional]: BOOLEAN,
+  commissionerPasscode [15, optional]: BOOLEAN,
+  commissionerPasscodeReady [16, optional]: BOOLEAN,
+  cancelPasscode [17, optional]: BOOLEAN,
+  passcodeLength [18, optional]: UNSIGNED INTEGER [8-bits]
 }
 ```
+
+The payload begins with the 16-character DNS-SD instance name plus a null byte. UDC is unencrypted/sessionless and SHALL NOT contain sensitive data.
+
+### 5.4 Enhanced Commissioning and Setup
+- **BCM** is optional and reuses the built-in passcode.
+- **ECM** is mandatory for administrator-assisted commissioning and uses a newly generated passcode/verifier; only the verifier is sent to the Node.
+- Standard flow uses an 11-digit Manual Pairing Code; User-Intent and Custom flows use the 21-digit VID/PID form.
+- Enhanced Setup Flow (ESF) standardizes Terms & Conditions. Required acknowledgements are persisted through General Commissioning attributes and `SetTCAcknowledgements`.
+- Updated required terms may block selected interactions with `TERMS_AND_CONDITIONS_CHANGED`.
+
+### 5.5 Network Recovery (Provisional)
+- Allows an already commissioned Node with invalid operational network credentials to recover without recommissioning.
+- Node retries old credentials for at least 120s, advertises a recovery identifier for up to 48h, and establishes CASE (not PASE) over BLE or Wi-Fi PAF.
+- Administrator SHALL obtain user consent before supplying replacement credentials.
+- Recovery uses the normal fail-safe and Network Commissioning operations.
 
 ---
 
@@ -957,16 +1046,15 @@ nocsr-elements => STRUCTURE [tag-order] {
 | Level | Value | Description |
 |-------|-------|-------------|
 | View | 1 | Read attributes, receive events |
-| ProxyView | 2 | View through proxy |
+| ProxyView | 2 | Deprecated |
 | Operate | 3 | View + invoke commands |
 | Manage | 4 | Operate + write attributes |
 | Administer | 5 | Full access including ACL |
 
 #### Privilege Hierarchy
-- Administer includes: Manage, Operate, ProxyView, View
+- Administer includes: Manage, Operate, View
 - Manage includes: Operate, View
 - Operate includes: View
-- ProxyView includes: View
 
 #### ACL Entry Structure
 ```
@@ -1002,10 +1090,16 @@ AccessControlTargetStruct => STRUCTURE {
 struct SubjectDescriptor {
   bool IsCommissioning;
   AuthModeEnum AuthMode;
-  list<SubjectID> Subjects;  // max 3 items (NodeID + up to 3 CATs)
+  list<SubjectID> Subjects;  // NodeID/GroupID/PasscodeID + up to 3 CATs
   FabricIndex FabricIndex;
 }
 ```
+
+#### Access Restriction Lists (ARL)
+- Managed devices may expose device-controlled `CommissioningARL` and per-fabric `ARL` lists.
+- Restrictions can forbid attribute read/write, attribute write only, command invoke, or event read.
+- ARL restrictions override otherwise-valid ACL grants and return `ACCESS_RESTRICTED`.
+- `ReviewFabricRestrictions` starts an asynchronous review and reports progress by event.
 
 #### Access Control Algorithm (Conceptual)
 ```python
@@ -1050,10 +1144,12 @@ def get_granted_privileges(acl, subject_desc, endpoint_id, cluster_id):
     
     return granted_privileges
 
-def get_access_status(acl, arl, request_privilege, subject_desc, endpoint_id, cluster_id):
+def get_access_status(acl, arl, request_privilege, subject_desc,
+                      endpoint_id, cluster_id, request_type, element_id):
     granted = get_granted_privileges(acl, subject_desc, endpoint_id, cluster_id)
     if request_privilege in granted:
-        if is_request_restricted(arl, subject_desc, endpoint_id, cluster_id):
+        if is_request_restricted(arl, subject_desc, endpoint_id, cluster_id,
+                                 request_type, element_id):
             return AccessRestricted
         return AccessGranted
     return AccessDenied
@@ -1090,6 +1186,8 @@ def get_isd_from_message(message):
 
 ## Chapter 7: Data Model
 
+Data Model revision: 21.
+
 ### 7.1 Hierarchy
 ```
 Node
@@ -1101,54 +1199,37 @@ Node
 ```
 
 ### 7.2 Base Data Types
-| Type | Short | ID | Size |
-|------|-------|-----|------|
-| Boolean | bool | 0x10 | 1 byte |
-| 8-bit bitmap | map8 | 0x18 | 1 byte |
-| 16-bit bitmap | map16 | 0x19 | 2 bytes |
-| 32-bit bitmap | map32 | 0x1B | 4 bytes |
-| 64-bit bitmap | map64 | 0x1F | 8 bytes |
-| uint8 | uint8 | 0x20 | 1 byte |
-| uint16 | uint16 | 0x21 | 2 bytes |
-| uint32 | uint32 | 0x23 | 4 bytes |
-| uint64 | uint64 | 0x27 | 8 bytes |
-| int8 | int8 | 0x28 | 1 byte |
-| int16 | int16 | 0x29 | 2 bytes |
-| int32 | int32 | 0x2B | 4 bytes |
-| int64 | int64 | 0x2F | 8 bytes |
-| single | single | 0x39 | 4 bytes |
-| double | double | 0x3A | 8 bytes |
-| octet string | octstr | 0x41 | variable |
-| string | string | 0x42 | variable |
-| list | list | 0x48 | variable |
-| struct | struct | 0x4C | variable |
+| Type | Short | Size |
+|------|-------|------|
+| Boolean | bool | 1 byte |
+| 8/16/32/64-bit bitmap | map8/map16/map32/map64 | 1/2/4/8 bytes |
+| Unsigned integer | uint8..uint64 | 1-8 bytes (8-bit increments) |
+| Signed integer | int8..int64 | 1-8 bytes (8-bit increments) |
+| Floating point | single/double | 4/8 bytes |
+| Octet string | octstr | variable |
+| Character string | string | variable |
+| List | list | variable |
+| Structure | struct | variable |
 
 ### 7.3 Derived Data Types
-| Type | Short | Base | ID |
-|------|-------|------|-----|
-| percent | percent | uint8 | 0xE6 |
-| percent100ths | percent100ths | uint16 | 0xE7 |
-| epoch-us | epoch-us | uint64 | 0xE3 |
-| epoch-s | epoch-s | uint32 | 0xE4 |
-| systime-us | systime-us | uint64 | 0xD0 |
-| systime-ms | systime-ms | uint64 | 0xD1 |
-| elapsed-s | elapsed-s | uint32 | 0xD2 |
-| temperature | temperature | int16 | 0xD8 |
-| enum8 | enum8 | uint8 | 0x30 |
-| enum16 | enum16 | uint16 | 0x31 |
-| group-id | group-id | uint16 | 0xC0 |
-| endpoint-no | endpoint-no | uint16 | 0xC1 |
-| vendor-id | vendor-id | uint16 | 0xC2 |
-| devtype-id | devtype-id | uint32 | 0xC3 |
-| fabric-id | fabric-id | uint64 | 0xC4 |
-| fabric-idx | fabric-idx | uint8 | 0xC5 |
-| cluster-id | cluster-id | uint32 | 0xE8 |
-| attrib-id | attrib-id | uint32 | 0xE9 |
-| event-id | event-id | uint32 | 0xEC |
-| command-id | command-id | uint32 | 0xED |
-| node-id | node-id | uint64 | 0xF0 |
-| data-ver | data-ver | uint32 | 0xC7 |
-| event-no | event-no | uint64 | 0xC8 |
+| Type | Short | Base |
+|------|-------|------|
+| Percentage | percent | uint8 |
+| Percentage 100ths | percent100ths | uint16 |
+| Epoch time | epoch-us / epoch-s | uint64 / uint32 |
+| POSIX time | posix-ms | uint64 |
+| System time | systime-us / systime-ms | uint64 |
+| Elapsed time | elapsed-s | uint32 |
+| Temperature | temperature | int16 |
+| Electrical quantities | power-mW, amperage-mA, voltage-mV, energy-mWh, etc. | int64 |
+| Money | money | int64 |
+| Enumeration | enum8 / enum16 | uint8 / uint16 |
+| Group/endpoint/vendor ID | group-id / endpoint-no / vendor-id | uint16 |
+| Device/cluster/attribute/field/event/command ID | devtype-id / cluster-id / attrib-id / field-id / event-id / command-id | uint32 |
+| Fabric/node/subject ID | fabric-id / node-id / subject-id | uint64 |
+| Fabric index | fabric-idx | uint8 |
+| Data version | data-ver | uint32 |
+| Event number | event-no | uint64 |
 
 ### 7.4 Global Attributes
 | ID | Name | Type |
@@ -1156,6 +1237,7 @@ Node
 | 0xFFFD | ClusterRevision | uint16 |
 | 0xFFFC | FeatureMap | map32 |
 | 0xFFFB | AttributeList | list[attrib-id] |
+| 0xFFFA | EventList | Deprecated |
 | 0xFFF9 | AcceptedCommandList | list[command-id] |
 | 0xFFF8 | GeneratedCommandList | list[command-id] |
 
@@ -1169,7 +1251,7 @@ Node
 | X | Disallowed |
 | [XX] | Conditional on feature XX |
 | [!XX] | Conditional on NOT feature XX |
-| a \| b | Choice: a OR b |
+| a OR b | Choice: a OR b |
 | a, b | Both a AND b |
 
 ### 7.6 Qualities
@@ -1179,25 +1261,37 @@ Node
 | Non-Volatile | N | Persisted across reboot |
 | Fixed | F | Cannot change after commissioning |
 | Scene | S | Part of scene data |
-| Reportable | P | Can be reported in subscriptions |
 | Changes Omitted | C | Changes may not be reported |
 | Singleton | I | Single instance across endpoints |
 | Diagnostics | K | Diagnostic data |
 | Large Message | L | May exceed MTU |
 | Quieter Reporting | Q | Reduced reporting frequency |
+| Atomic | T | Requires atomic-write interaction |
 
-### 7.7 Manufacturer Extensible Identifier (MEI)
+### 7.7 Atomic Writes
+- Atomic-quality attributes are updated through global `AtomicRequest` (0xFE) and `AtomicResponse` (0xFD) commands.
+- Flow: `BeginWrite` → buffered ordinary reads/writes → `CommitWrite` or `RollbackWrite`.
+- Pending values are visible only to the owning client; commit is all-or-nothing.
+- Invalid ownership/state returns `INVALID_IN_STATE`; timeout automatically rolls back.
+
+### 7.8 Manufacturer Extensible Identifier (MEI)
 ```
 MEI = (VendorID << 16) | LocalID
-
-Standard (VID=0x0000): 0x0000_0000 to 0x0000_FFFE
-Manufacturer: 0x0001_0000 to 0xFFF0_FFFF
-Test: 0xFFF1_0000 to 0xFFF4_FFFF
 ```
+
+| Prefix | Source |
+|--------|--------|
+| 0x0000 | Standard or scoped |
+| 0x0001-0xFFF0 | Manufacturer Code |
+| 0xFFF1-0xFFF4 | Test Vendor Code |
+
+Suffix ranges depend on the identifier type: device types use 0x0000-0xBFFF; standard clusters 0x0000-0x7FFF; manufacturer clusters 0xFC00-0xFFFE; non-global attributes 0x0000-0x4FFF; event, command, and field identifiers use their defined 8-bit ranges.
 
 ---
 
 ## Chapter 8: Interaction Model
+
+Interaction Model revision: 13.
 
 ### 8.1 Interactions
 | Interaction | Description |
@@ -1217,9 +1311,13 @@ AttributePathIB => STRUCTURE {
   Endpoint [2, optional]: endpoint-no,
   Cluster [3, optional]: cluster-id,
   Attribute [4, optional]: attrib-id,
-  ListIndex [5, optional]: uint16 | null
+  ListIndex [5, optional]: uint16 | null,
+  WildcardPathFlags [6, optional]: map32,
+  WildcardFilterConfigurationVersion [7, optional]: uint32
 }
 ```
+
+Wildcard flags can skip Root Node, large global attributes, command lists, manufacturer-specific elements, Fixed/Changes-Omitted attributes, and Diagnostics clusters. This feature remains provisional.
 
 #### Event Path
 ```
@@ -1257,14 +1355,14 @@ CommandPathIB => STRUCTURE {
 | UNSUPPORTED_WRITE | Write not supported | 0x88 |
 | RESOURCE_EXHAUSTED | Resources exhausted | 0x89 |
 | NOT_FOUND | Not found | 0x8B |
-| UNREPORTABLE_ATTRIBUTE | Cannot report | 0x8C |
 | INVALID_DATA_TYPE | Wrong data type | 0x8D |
 | UNSUPPORTED_READ | Read not supported | 0x8F |
 | DATA_VERSION_MISMATCH | Version mismatch | 0x92 |
 | TIMEOUT | Timeout | 0x94 |
+| UNSUPPORTED_NODE | Node not supported | 0x9B |
 | BUSY | Busy | 0x9C |
+| ACCESS_RESTRICTED | ACL allows but ARL restricts | 0x9D |
 | UNSUPPORTED_CLUSTER | Cluster not supported | 0xC3 |
-| NO_UPSTREAM_SUBSCRIPTION | No upstream sub | 0xC5 |
 | NEEDS_TIMED_INTERACTION | Timed required | 0xC6 |
 | UNSUPPORTED_EVENT | Event not supported | 0xC7 |
 | PATHS_EXHAUSTED | Too many paths | 0xC8 |
@@ -1272,7 +1370,11 @@ CommandPathIB => STRUCTURE {
 | FAILSAFE_REQUIRED | Failsafe required | 0xCA |
 | INVALID_IN_STATE | Invalid in current state | 0xCB |
 | NO_COMMAND_RESPONSE | No response | 0xCC |
-| WRITE_IGNORED | Write ignored | 0xF0 |
+| TERMS_AND_CONDITIONS_CHANGED | Updated T&C acceptance required | 0xCD |
+| MAINTENANCE_REQUIRED | User maintenance action required | 0xCE |
+| DYNAMIC_CONSTRAINT_ERROR | Runtime validation rejected value | 0xCF |
+| ALREADY_EXISTS | Entity/identifier already exists | 0xD0 |
+| INVALID_TRANSPORT_TYPE | Transport invalid for element | 0xD1 |
 
 ### 8.4 IM Protocol Messages
 | Opcode | Message |
@@ -1360,6 +1462,8 @@ InvokeRequestMessage => STRUCTURE {
 }
 ```
 
+Multiple concrete `CommandDataIB` entries are supported up to `MaxPathsPerInvoke`. Each SHALL have a unique `CommandRef`; execution starts in request order but may complete out of order.
+
 #### InvokeResponseMessage
 ```
 InvokeResponseMessage => STRUCTURE {
@@ -1401,10 +1505,10 @@ EventDataIB => STRUCTURE {
   Path [0]: EventPathIB,
   EventNumber [1]: event-no,
   Priority [2]: priority,
-  EpochTimestamp [3, optional]: epoch-us,
-  SystemTimestamp [4, optional]: systime-us,
-  DeltaEpochTimestamp [5, optional]: epoch-us,
-  DeltaSystemTimestamp [6, optional]: systime-us,
+  EpochTimestamp [3, optional]: posix-ms,
+  SystemTimestamp [4, optional]: systime-ms,
+  DeltaEpochTimestamp [5, optional]: posix-ms,
+  DeltaSystemTimestamp [6, optional]: systime-ms,
   Data [7, optional]: any
 }
 ```
@@ -1413,7 +1517,8 @@ EventDataIB => STRUCTURE {
 ```
 CommandDataIB => STRUCTURE {
   CommandPath [0]: CommandPathIB,
-  CommandFields [1, optional]: any
+  CommandFields [1, optional]: any,
+  CommandRef [2, optional]: uint16
 }
 ```
 
@@ -1433,6 +1538,7 @@ StatusIB => STRUCTURE {
 
 #### Root Node (Endpoint 0)
 Required clusters:
+- Descriptor (0x001D)
 - Basic Information (0x0028)
 - Access Control (0x001F)
 - General Commissioning (0x0030)
@@ -1465,6 +1571,7 @@ Optional clusters:
 | 0x0002 | ClientList | list[cluster-id] |
 | 0x0003 | PartsList | list[endpoint-no] |
 | 0x0004 | TagList | list[SemanticTagStruct] |
+| 0x0005 | EndpointUniqueID | string |
 
 #### DeviceTypeStruct
 ```
@@ -1494,6 +1601,13 @@ TargetStruct => STRUCTURE {
 
 ### 9.4 Access Control Cluster (0x001F)
 
+#### Features
+| Bit | Code | Description |
+|-----|------|-------------|
+| 0 | EXTS | ACL Extension metadata |
+| 1 | MNGD | Managed Device access restrictions |
+| 2 | AUX | Auxiliary synthesized ACL entries |
+
 #### Attributes
 | ID | Name | Type |
 |----|------|------|
@@ -1502,7 +1616,13 @@ TargetStruct => STRUCTURE {
 | 0x0002 | SubjectsPerAccessControlEntry | uint16 |
 | 0x0003 | TargetsPerAccessControlEntry | uint16 |
 | 0x0004 | AccessControlEntriesPerFabric | uint16 |
+| 0x0005 | CommissioningARL | list[CommissioningAccessRestrictionEntryStruct] |
+| 0x0006 | ARL | list[AccessRestrictionEntryStruct] |
+| 0x0007 | AuxiliaryACL | list[AccessControlEntryStruct] |
 
+#### Commands and Events
+- `ReviewFabricRestrictions` (0x00) / response (0x01) request asynchronous review of managed-device restrictions.
+- Events: `AccessControlEntryChanged` (0x00), `AccessControlExtensionChanged` (0x01), `FabricRestrictionReviewUpdate` (0x02), `AuxiliaryAccessUpdated` (0x03).
 
 
 ### 9.5 ICD Management Cluster (0x0046)
@@ -1533,7 +1653,7 @@ TargetStruct => STRUCTURE {
 | 0x0006 | UserActiveModeTriggerHint | UserActiveModeTriggerBitmap | desc | F | 0 | UAT |
 | 0x0007 | UserActiveModeTriggerInstruction | string | max 128 | F | "" | desc |
 | 0x0008 | OperatingMode | OperatingModeEnum | all | | | LITS |
-| 0x0009 | MaximumCheckInBackOff | uint32 | IdleModeDuration-64800 | F | 1 | CIP |
+| 0x0009 | MaximumCheckInBackoff | uint32 | IdleModeDuration-64800 | F | 1 | CIP |
 
 #### MonitoringRegistrationStruct
 ```
@@ -1602,6 +1722,12 @@ MonitoringRegistrationStruct => STRUCTURE {
 - Requires Check-In Protocol support
 - Requires client registration
 - Operates as SIT if no registered clients
+
+### 9.6 Ecosystem Information Cluster (0x0750)
+- Supports Fabric Synchronization by exposing user-consented device name and location metadata for logical devices represented by a Bridged Node.
+- `DeviceDirectory` (0x0000) contains fabric-scoped `EcosystemDeviceStruct` entries.
+- `LocationDirectory` (0x0001) contains fabric-scoped `EcosystemLocationStruct` entries.
+- Edit timestamps and stable location identifiers support conflict resolution and distinguish relocation from renaming.
 
 ---
 
@@ -1703,16 +1829,35 @@ Tag = VendorID (2 bytes) || ProfileNumber (2 bytes) || TagNumber (2 or 4 bytes)
 | 0x0014 | ProductAppearance | ProductAppearanceStruct | |
 | 0x0015 | SpecificationVersion | uint32 | |
 | 0x0016 | MaxPathsPerInvoke | uint16 | |
+| 0x0018 | ConfigurationVersion | uint32 | min 1 |
 
 #### CapabilityMinimaStruct
 ```
 CapabilityMinimaStruct => STRUCTURE {
   CaseSessionsPerFabric [0]: uint16,
-  SubscriptionsPerFabric [1]: uint16
+  SubscriptionsPerFabric [1]: uint16,
+  SimultaneousInvocationsSupported [2]: uint16,
+  SimultaneousWritesSupported [3]: uint16,
+  ReadPathsSupported [4]: uint16,
+  SubscribePathsSupported [5]: uint16
 }
 ```
 
+#### Events
+| ID | Name | Priority |
+|----|------|----------|
+| 0x00 | StartUp | Critical |
+| 0x01 | ShutDown | Critical |
+| 0x02 | Leave | Info |
+| 0x03 | ReachableChanged | Info |
+
 ### 11.2 General Commissioning Cluster (0x0030)
+
+#### Features
+| Bit | Code | Description |
+|-----|------|-------------|
+| 0 | TC | Enhanced Setup Flow Terms & Conditions |
+| 1 | NR | Network Recovery (provisional) |
 
 #### Attributes
 | ID | Name | Type |
@@ -1722,6 +1867,14 @@ CapabilityMinimaStruct => STRUCTURE {
 | 0x0002 | RegulatoryConfig | RegulatoryLocationTypeEnum |
 | 0x0003 | LocationCapability | RegulatoryLocationTypeEnum |
 | 0x0004 | SupportsConcurrentConnection | bool |
+| 0x0005 | TCAcceptedVersion | uint16 |
+| 0x0006 | TCMinRequiredVersion | uint16 |
+| 0x0007 | TCAcknowledgements | map16 |
+| 0x0008 | TCAcknowledgementsRequired | bool |
+| 0x0009 | TCUpdateDeadline | uint32, nullable |
+| 0x000A | RecoveryIdentifier | octstr(8), provisional |
+| 0x000B | NetworkRecoveryReason | NetworkRecoveryReasonEnum, provisional |
+| 0x000C | IsCommissioningWithoutPower | bool |
 
 #### BasicCommissioningInfo
 ```
@@ -1740,6 +1893,8 @@ BasicCommissioningInfo => STRUCTURE {
 | 0x03 | SetRegulatoryConfigResponse | Server→Client |
 | 0x04 | CommissioningComplete | Client→Server |
 | 0x05 | CommissioningCompleteResponse | Server→Client |
+| 0x06 | SetTCAcknowledgements | Client→Server |
+| 0x07 | SetTCAcknowledgementsResponse | Server→Client |
 
 ### 11.3 Network Commissioning Cluster (0x0031)
 
@@ -1749,7 +1904,6 @@ BasicCommissioningInfo => STRUCTURE {
 | 0 | WI | Wi-Fi |
 | 1 | TH | Thread |
 | 2 | ET | Ethernet |
-| 3 | PC | Per-device credentials |
 
 #### Attributes
 | ID | Name | Type |
@@ -1786,8 +1940,6 @@ NetworkInfoStruct => STRUCTURE {
 | 0x06 | ConnectNetwork | Client→Server |
 | 0x07 | ConnectNetworkResponse | Server→Client |
 | 0x08 | ReorderNetwork | Client→Server |
-| 0x09 | QueryIdentity | Client→Server |
-| 0x0A | QueryIdentityResponse | Server→Client |
 
 ### 11.4 Node Operational Credentials Cluster (0x003E)
 
@@ -1837,6 +1989,9 @@ FabricDescriptorStruct => STRUCTURE {
 | 0x09 | UpdateFabricLabel | Client→Server |
 | 0x0A | RemoveFabric | Client→Server |
 | 0x0B | AddTrustedRootCertificate | Client→Server |
+| 0x0C | SetVIDVerificationStatement | Client→Server |
+| 0x0D | SignVIDVerificationRequest | Client→Server |
+| 0x0E | SignVIDVerificationResponse | Server→Client |
 
 ### 11.5 Administrator Commissioning Cluster (0x003C)
 
@@ -1863,6 +2018,12 @@ FabricDescriptorStruct => STRUCTURE {
 
 ### 11.6 Group Key Management Cluster (0x003F)
 
+#### Features
+| Bit | Code | Description |
+|-----|------|-------------|
+| 0 | CS | Cache-and-sync MCSP policy (provisional) |
+| 1 | GCAST | Group management uses Groupcast cluster |
+
 #### Attributes
 | ID | Name | Type |
 |----|------|------|
@@ -1870,6 +2031,7 @@ FabricDescriptorStruct => STRUCTURE {
 | 0x0001 | GroupTable | list[GroupInfoMapStruct] |
 | 0x0002 | MaxGroupsPerFabric | uint16 |
 | 0x0003 | MaxGroupKeysPerFabric | uint16 |
+| 0x0004 | GroupcastAdoption | list[GroupcastAdoptionStruct] |
 
 #### GroupKeyMapStruct
 ```
@@ -1920,6 +2082,7 @@ GroupKeySetStruct => STRUCTURE {
 | 0x0006 | ActiveRadioFaults | list[RadioFaultEnum] |
 | 0x0007 | ActiveNetworkFaults | list[NetworkFaultEnum] |
 | 0x0008 | TestEventTriggersEnabled | bool |
+| 0x000A | DeviceLoadStatus | DeviceLoadStruct |
 
 #### BootReasonEnum
 | Value | Name |
@@ -1938,6 +2101,16 @@ GroupKeySetStruct => STRUCTURE {
 | 0x00 | TestEventTrigger | Client→Server |
 | 0x01 | TimeSnapshot | Client→Server |
 | 0x02 | TimeSnapshotResponse | Server→Client |
+| 0x03 | PayloadTestRequest | Client→Server |
+| 0x04 | PayloadTestResponse | Server→Client |
+
+#### Events
+| ID | Name | Priority |
+|----|------|----------|
+| 0x00 | HardwareFaultChange | Critical |
+| 0x01 | RadioFaultChange | Critical |
+| 0x02 | NetworkFaultChange | Critical |
+| 0x03 | BootReason | Critical |
 
 ### 11.8 Wi-Fi Network Diagnostics Cluster (0x0036)
 
@@ -1968,7 +2141,48 @@ GroupKeySetStruct => STRUCTURE {
 | 4 | WPA2 |
 | 5 | WPA3 |
 
-### 11.9 OTA Software Update
+#### Commands and Events
+- `ResetCounts` (0x00) resets packet/error counters.
+- Events: `Disconnection` (0x00), `AssociationFailure` (0x01), `ConnectionStatus` (0x02).
+
+### 11.9 Time Synchronization Cluster (0x0038)
+
+#### Features
+| Bit | Code | Description |
+|-----|------|-------------|
+| 0 | TZ | Time zone and DST |
+| 1 | NTPC | NTP/SNTP client |
+| 2 | NTPS | NTP server |
+| 3 | TSC | Matter Time Synchronization client |
+
+#### Attributes
+| ID | Name | Type |
+|----|------|------|
+| 0x0000 | UTCTime | epoch-us, nullable |
+| 0x0001 | Granularity | GranularityEnum |
+| 0x0002 | TimeSource | TimeSourceEnum |
+| 0x0003 | TrustedTimeSource | TrustedTimeSourceStruct, nullable |
+| 0x0004 | DefaultNTP | string, nullable |
+| 0x0005 | TimeZone | list[TimeZoneStruct] |
+| 0x0006 | DSTOffset | list[DSTOffsetStruct] |
+| 0x0007 | LocalTime | epoch-us, nullable |
+| 0x0008 | TimeZoneDatabase | TimeZoneDatabaseEnum |
+| 0x0009 | NTPServerAvailable | bool |
+| 0x000A | TimeZoneListMaxSize | uint8 |
+| 0x000B | DSTOffsetListMaxSize | uint8 |
+| 0x000C | SupportsDNSResolve | bool |
+
+#### Commands
+| ID | Name | Direction |
+|----|------|-----------|
+| 0x00 | SetUTCTime | Client→Server |
+| 0x01 | SetTrustedTimeSource | Client→Server |
+| 0x02 | SetTimeZone | Client→Server |
+| 0x03 | SetTimeZoneResponse | Server→Client |
+| 0x04 | SetDSTOffset | Client→Server |
+| 0x05 | SetDefaultNTP | Client→Server |
+
+### 11.10 OTA Software Update
 
 #### OTA Provider Cluster (0x0029)
 
@@ -2030,7 +2244,7 @@ Header:
   - ImageDigest (variable)
 ```
 
-### 11.10 BDX (Bulk Data Exchange) Protocol
+### 11.11 BDX (Bulk Data Exchange) Protocol
 
 #### Protocol ID
 - Vendor ID: 0x0000 (Matter Common)
@@ -2078,7 +2292,7 @@ Header:
 
 #### Transfer Modes
 - **Synchronous (Driven)**: One party controls rate, each message acknowledged
-- **Asynchronous**: No driver, messages sent freely, flow control by transport
+- **Asynchronous (provisional)**: No driver, messages sent freely, flow control by transport; SHALL NOT currently be selected by the responder
 
 #### SendInit/ReceiveInit Message Fields
 | Field | Size | Description |
@@ -2095,7 +2309,7 @@ Header:
 #### Proposed Transfer Control (PTC) Bits
 | Bit | Name | Description |
 |-----|------|-------------|
-| 0-3 | VERSION | Protocol version (0 for Matter 1.0) |
+| 0-3 | VERSION | Highest supported BDX protocol version (Version 0 is defined) |
 | 4 | SENDER_DRIVE | Sender drive supported |
 | 5 | RECEIVER_DRIVE | Receiver drive supported |
 | 6 | ASYNC | Asynchronous mode supported |
@@ -2108,12 +2322,58 @@ Header:
 | 1 | STARTOFS | Start offset present |
 | 4 | WIDERANGE | 64-bit (1) or 32-bit (0) offset/length |
 
+### 11.12 Distributed Compliance Ledger (DCL)
+- Public, cryptographically secured distributed store for certification status and vendor-maintained product metadata.
+- Normative schemas cover vendors, PAA/PAI certificates, operational trust anchors, device models, software versions, compliance results, and attestation-PKI revocation distribution points.
+- Schema records carry a monotonically increasing `SchemaVersion`; DCL data informs commissioning, attestation, revocation, and OTA decisions.
+
+### 11.13 Commissioner Control Cluster (0x0751)
+- Enables user-approved reverse commissioning, including Fabric Synchronization.
+- `SupportedDeviceCategories` (0x0000) advertises supported categories.
+- Commands: `RequestCommissioningApproval` (0x00), `CommissionNode` (0x01), and `ReverseOpenCommissioningWindow` (0x02).
+- `CommissioningRequestResult` event (0x00) asynchronously reports approval, timeout, or failure.
+
+### 11.14 Groupcast Cluster (0x0065)
+- Replaces fragmented legacy Groups configuration with node-scoped membership, addressing, key mapping, and optional auxiliary ACL generation.
+- Features: Listener (bit 0), Sender (bit 1), PerGroup multicast address (bit 2).
+
+#### MembershipStruct
+```
+MembershipStruct => STRUCTURE {
+  GroupID [0]: group-id,
+  Endpoints [1]: list[endpoint-no],
+  KeySetID [2]: uint16,
+  HasAuxiliaryACL [3]: bool,
+  McastAddrPolicy [4]: MulticastAddrPolicyEnum,
+  FabricIndex [254]: fabric-idx
+}
+```
+
+#### Attributes
+| ID | Name | Type |
+|----|------|------|
+| 0x0000 | Membership | list[MembershipStruct] |
+| 0x0001 | MaxMembershipCount | uint16, min 10 |
+| 0x0002 | MaxMcastAddrCount | uint16, min 1 |
+| 0x0003 | UsedMcastAddrCount | uint16 |
+| 0x0004 | FabricUnderTest | fabric-idx |
+
+#### Commands
+| ID | Name | Direction |
+|----|------|-----------|
+| 0x00 | JoinGroup | Client→Server |
+| 0x01 | LeaveGroup | Client→Server |
+| 0x02 | LeaveGroupResponse | Server→Client |
+| 0x03 | UpdateGroupKey | Client→Server |
+| 0x04 | ConfigureAuxiliaryACL | Client→Server |
+| 0x05 | GroupcastTesting | Client→Server |
+
 ---
 
 ## Chapter 12: Multiple Fabrics
 
 ### 12.1 Multi-Admin Support
-- Node can be member of multiple fabrics (min 5, max 16)
+- A node supports at least 5 fabrics; its fixed capacity is reported by `SupportedFabrics`
 - Each fabric has independent:
   - NOC and RCAC
   - ACL entries
@@ -2125,6 +2385,10 @@ Header:
 - Single fabric with single root of trust
 - Administered by multiple ecosystems
 - Uses Anchor Administrator for RCAC
+
+### 12.3 Fabric Synchronization
+- A Fabric Synchronizer mirrors selected devices and locations between fabrics while preventing duplicate representation.
+- Uses Commissioner Control plus Joint Fabric datastore/administrator mechanisms for consent, commissioning approval, and synchronized-device lifecycle.
 
 ---
 
@@ -2146,6 +2410,40 @@ Header:
 - Secure boot recommended
 - Signed firmware updates
 - Rollback protection recommended
+
+---
+
+## Chapter 14: Transport Layer Security
+
+Matter 1.6.1 defines fabric-scoped management of outbound TLS client connections. TLS certificates and endpoints are sensitive, non-volatile configuration; large certificate-bearing commands require a Large Message capable transport.
+
+### 14.1 TLS Certificate Management Cluster (0x0801)
+
+#### Attributes
+| ID | Name | Type |
+|----|------|------|
+| 0x0000 | MaxRootCertificates | uint8, min 5 per fabric |
+| 0x0001 | ProvisionedRootCertificates | list[TLSCertStruct] |
+| 0x0002 | MaxClientCertificates | uint8, min 2 per fabric |
+| 0x0003 | ProvisionedClientCertificates | list[TLSClientCertificateDetailStruct] |
+
+#### Commands
+- Provision/find/lookup/remove root certificates.
+- Generate client CSR; provision/find/lookup/remove client certificates.
+- Certificate bodies may be omitted from ordinary reads over transports that do not support Large Messages.
+
+### 14.2 TLS Client Management Cluster (0x0802)
+
+#### Attributes
+| ID | Name | Type |
+|----|------|------|
+| 0x0000 | MaxProvisioned | uint8, min 5 per fabric |
+| 0x0001 | ProvisionedEndpoints | list[TLSEndpointStruct] |
+
+#### Commands
+- `ProvisionEndpoint`, `FindEndpoint`, and `RemoveEndpoint`.
+- Endpoint configuration identifies hostname, port, CA ID, optional client-certificate ID, and fabric.
+- TLS endpoint operations can report invalid hostname/port, missing certificates, endpoint-in-use, and unsynchronized-time errors.
 
 ---
 
@@ -2228,15 +2526,17 @@ matter-certificate => STRUCTURE {
 | OID | Tag | Name |
 |-----|-----|------|
 | 2.5.4.3 | 1 | CommonName |
-| 2.5.4.6 | 2 | CountryName |
-| 2.5.4.10 | 3 | OrganizationName |
-| 1.3.6.1.4.1.37244.1.1 | 17 | matter-rcac-id |
-| 1.3.6.1.4.1.37244.1.2 | 18 | matter-fabric-id |
-| 1.3.6.1.4.1.37244.1.3 | 19 | matter-noc-cat |
-| 1.3.6.1.4.1.37244.1.4 | 20 | matter-icac-id |
-| 1.3.6.1.4.1.37244.1.5 | 21 | matter-node-id |
-| 1.3.6.1.4.1.37244.2.1 | 22 | matter-vid |
-| 1.3.6.1.4.1.37244.2.2 | 23 | matter-pid |
+| 2.5.4.6 | 4 | CountryName |
+| 2.5.4.10 | 7 | OrganizationName |
+| 1.3.6.1.4.1.37244.1.1 | 17 | matter-node-id |
+| 1.3.6.1.4.1.37244.1.2 | 18 | matter-firmware-signing-id |
+| 1.3.6.1.4.1.37244.1.3 | 19 | matter-icac-id |
+| 1.3.6.1.4.1.37244.1.4 | 20 | matter-rcac-id |
+| 1.3.6.1.4.1.37244.1.5 | 21 | matter-fabric-id |
+| 1.3.6.1.4.1.37244.1.6 | 22 | matter-noc-cat |
+| 1.3.6.1.4.1.37244.1.7 | 23 | matter-vvs-id |
+| 1.3.6.1.4.1.37244.2.1 | N/A | matter-vid (attestation X.509 only) |
+| 1.3.6.1.4.1.37244.2.2 | N/A | matter-pid (attestation X.509 only) |
 
 ### B.3 Signature Algorithm Values
 | Value | Algorithm |
@@ -2259,12 +2559,11 @@ matter-certificate => STRUCTURE {
 
 ### C.1 Structure
 ```
-StatusReport => STRUCTURE {
-  GeneralCode [0]: uint16,
-  ProtocolId [1]: uint32,
-  ProtocolCode [2]: uint16,
-  ProtocolData [3, optional]: OCTET STRING
-}
+StatusReport payload (fixed binary, little-endian):
+  Octets 0-1: GeneralCode (uint16)
+  Octets 2-5: ProtocolId (uint32; Vendor ID in upper 16 bits)
+  Octets 6-7: ProtocolCode (uint16)
+  Octets 8-N: ProtocolData (optional protocol-defined bytes)
 ```
 
 ### C.2 General Codes
@@ -2287,6 +2586,7 @@ StatusReport => STRUCTURE {
 | 14 | ALREADY_EXISTS |
 | 15 | PERMISSION_DENIED |
 | 16 | DATA_LOSS |
+| 17 | MESSAGE_TOO_LARGE |
 
 ### C.3 Secure Channel Protocol Codes
 | Code | Name |
@@ -2304,6 +2604,8 @@ StatusReport => STRUCTURE {
 ### D.1 Cryptographic Constants
 ```
 CRYPTO_GROUP_SIZE_BYTES = 32
+CRYPTO_W_SIZE_BYTES = 40
+CRYPTO_W_SIZE_BITS = 320
 CRYPTO_PUBLIC_KEY_SIZE_BYTES = 65
 CRYPTO_HASH_LEN_BYTES = 32
 CRYPTO_SYMMETRIC_KEY_LENGTH_BYTES = 16
@@ -2346,4 +2648,4 @@ SIT_MAX_IDLE_DURATION = 15 seconds
 
 ---
 
-*End of Matter 1.4.1 Core Specification Compact Reference*
+*End of Matter 1.6.1 Core Specification Compact Reference*
