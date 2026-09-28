@@ -55,6 +55,13 @@ tasmota/
 
 The exact number of files in each directory changes frequently as new drivers are added; do not rely on hard-coded counts.
 
+### Berry solidification
+
+Berry sources in `lib/libesp32/berry_matter/src/embedded/` are automatically
+solidified during the Tasmota build. Do not require generated files in
+`src/solidify/` to be updated in a pull request unless the build workflow
+explicitly requires committed generated output.
+
 ### Configuration Override
 
 To customize a build, copy `tasmota/user_config_override_sample.h` to `tasmota/user_config_override.h` and add your `#define` / `#undef` directives there. Do not edit `my_user_config.h` directly — it is the master configuration shipped with each release.
