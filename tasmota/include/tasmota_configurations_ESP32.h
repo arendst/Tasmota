@@ -280,6 +280,7 @@
   #define USE_EQ3_ESP32
 #endif // USE_MI_EXT_GUI
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+  #define USE_SENSOR_ICON                        // Display GUI icons instead of line with data
 
 #endif  // FIRMWARE_BLUETOOTH
 

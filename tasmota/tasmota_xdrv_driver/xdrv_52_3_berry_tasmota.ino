@@ -282,6 +282,7 @@ extern "C" {
         be_map_insert_int(vm, "rssi", rssi);
         be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
         be_map_insert_str(vm, "ssid", SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str());
+        be_map_insert_str(vm, "bssid", WiFi.BSSIDstr().c_str());
       }
     }
     be_pop(vm, 1);

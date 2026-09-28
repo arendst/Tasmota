@@ -11,6 +11,7 @@ if !global.dds75lbNodes      # data survive to decoder reload
 end
 
 class LwDecoDDS75LB
+  static var hashCheck = false
 
   static def deviceInfo()
    return {"manufacturer":"Dragino", 

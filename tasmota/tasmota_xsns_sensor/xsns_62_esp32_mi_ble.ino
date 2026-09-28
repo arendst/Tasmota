@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "V0.9.3.4"
+#define MI32_VERSION "v26.9.27"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,14 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  26.9.27           changed - Add age of battery reading to battery icon
+  26.9.11           changed - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
+                              Fix "M32Period 0" and "M32Period 1"
+  -------
+  26.9.4            changed - BTHome reset button if datagram received (#25002)
+  -------
+  26.8.31           changed - display icons instead of data lines. disable by removing #define USE_SENSOR_ICON
+  -------
   0.9.3.4 20260823  changed - redesign BTHome events and buffer JSON message for easier rule/script/berry support
   -------
   0.9.3.3 20260819  changed - fix BTHome decryption of multiple sensors
@@ -108,8 +116,10 @@
 
 #define XSNS_62                62
 
+//#define USE_SENSOR_ICON           // Display GUI icons instead of line with data
+
 #define USE_MI_DECRYPTION         // Enable also for BTHome V2
-#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
+//#define USE_MI_DEBUG              // Enable debug messages at the cost of more code size / flash usage
 
 #include <vector>
 #ifdef USE_MI_DECRYPTION
@@ -155,6 +165,10 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
 #define MI32_BLE_TOPIC "tasmota_ble"
 #endif
 
+#ifndef MI32_BATTERY_PERIOD
+#define MI32_BATTERY_PERIOD 3600
+#endif
+
 ///////////////////////////////////////////////////////////
 
 
@@ -179,6 +193,7 @@ struct {
   } mode;
 
   struct {
+    uint32_t pollSeconds = 0;
     // the slot currently having it's battery read
     // set to 0 to start a battery read cycle
     uint8_t slot = 255;
@@ -445,6 +460,8 @@ struct mi_sensor_t{
   int16_t Btn; // moved so we can initialise to -1
   int16_t flooding;
 
+  uint8_t bat;
+  uint32_t batLastSeen;
   uint32_t lastTime;
   uint32_t lux;
   int count;
@@ -464,9 +481,6 @@ struct mi_sensor_t{
       uint16_t events; //"alarms" since boot
       uint32_t NMT;    // no motion time in seconds for the MJYD2S
     };
-  };
-  union {
-      uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
   };
   union {
     struct {
@@ -651,6 +665,14 @@ enum MI32_MI_OP_TYPES {
   OP_READ_HT_LY = 5,
 };
 
+constexpr const char* const MiOperations[] = {
+  "TIME_WRITE",
+  "BATT_READ",
+  "UNIT_WRITE",
+  "UNIT_READ",
+  "UNIT_TOGGLE",
+  "READ_HT_LY"
+};
 
 enum MI32_MI_KEY_REQ {
   KEY_REQUIREMENT_UNKNOWN = 0, // we don't know if a key is needed
@@ -659,6 +681,8 @@ enum MI32_MI_KEY_REQ {
   KEY_REQUIRED_AND_FOUND = 3, // we got an encrypted packet, and could decrypt
   KEY_REQUIRED_AND_INVALID = 4, // we got an encrypted packet, and could not decrypt
 };
+
+const char kKeyNeeded[] PROGMEM = "Wait|NotKey|NoKey|KeyOk|KeyInv";
 
 /*********************************************************************************************\
  * Classes
@@ -803,6 +827,8 @@ int genericBatReadFn(int slot){
 
   switch(MIBLEsensors[slot].type) {
     // these use notify for battery read, and it comes in the temp packet
+    case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD03MMC:
       res = MI32Operation(slot, OP_BATT_READ, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
@@ -849,13 +875,11 @@ int genericSensorReadFn(int slot, int force){
       if (MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) return -2;
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD02_Svc, nullptr, LYWSD02_BattNotifyChar);
       break;*/
-    case MI_LYWSD03MMC:
-      // don't read if key present and we've decoded at least one advert
-      if ((MIBLEsensors[slot].needkey == KEY_NOT_REQUIRED || MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) && !force) return -2;
-      res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
-      break;
     case MI_LYWSD02MMC:
     case MI_LYWSD02MMC2:
+    case MI_LYWSD03MMC:
+      // don't read if key present and we've decoded at least one advert and battery value is present
+      if ((MIBLEsensors[slot].needkey == KEY_NOT_REQUIRED || MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) && MIBLEsensors[slot].bat && !force) return -2;
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_MHOC401:
@@ -933,6 +957,7 @@ int readOneBat(){
   if (res < 0){
     MI32.batteryreader.slot++;
     if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+      MI32.batteryreader.pollSeconds = 0;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Batt loop complete at %d"), MI32.batteryreader.slot);
     }
     return 0;
@@ -949,6 +974,7 @@ int readOneBat(){
   // this is cleared in the response callback.
   MI32.batteryreader.active = 1;
   if (MI32.batteryreader.slot >= MIBLEsensors.size()){
+    MI32.batteryreader.pollSeconds = 0;
     AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_INFO], PSTR("M32: Batt loop will complete at %d"), MI32.batteryreader.slot);
   }
   // started one
@@ -967,6 +993,8 @@ int genericUnitWriteFn(int slot, int unit){
   uint8_t writeData[1];
   writeData[0] = unit;
   switch (MIBLEsensors[slot].type){
+    case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD02:
       res = MI32Operation(slot, op, LYWSD02_Svc, LYWSD02_UnitChar, nullptr, writeData, 1);
       break;
@@ -985,6 +1013,8 @@ int genericUnitWriteFn(int slot, int unit){
 int genericUnitReadFn(int slot){
   int res = 0;
   switch (MIBLEsensors[slot].type){
+    case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD02:
       res = MI32Operation(slot, OP_UNIT_READ, LYWSD02_Svc, LYWSD02_UnitChar);
       break;
@@ -1054,7 +1084,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   }
 
   if (op->state <= GEN_STATE_FAILED){
-    AddLog(LOG_LEVEL_ERROR, PSTR("M32: %s: Operation failed %d"), slotMAC, op->state);
+    AddLog(LOG_LEVEL_ERROR, "M32: %s: Operation \"%s\" failed - State: %s (%d)", slotMAC, MiOperations[opType], BLE_ESP32::getStateString(op->state), op->state);
     fail = true;
   }
 
@@ -1074,7 +1104,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
   switch(opType){
     case OP_TIME_WRITE:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Time write complete"), slotMAC);
+      AddLog(LOG_LEVEL_INFO, "M32: %s: Time write complete", slotMAC);
       return 0; // nothing to do
     case OP_BATT_READ:{
       uint8_t *data = nullptr;
@@ -1602,6 +1632,7 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter,
   _newSensor.temp = NAN;
   _newSensor.needkey = KEY_REQUIREMENT_UNKNOWN;
   _newSensor.bat = 0x00;
+  _newSensor.batLastSeen = 0;
   _newSensor.RSSI = 0xffff;
   _newSensor.lux = 0x00ffffff;
   _newSensor.light = -1;
@@ -1758,6 +1789,7 @@ int MIParseBatt(int slot, uint8_t *data, int len){
 
   if ((value != 0) && (value < 101)){
     MIBLEsensors[slot].bat = value;
+    MIBLEsensors[slot].batLastSeen = Rtc.local_time;
     if(MIBLEsensors[slot].type==MI_FLORA){
       if (len < 7){
         AddLog(LOG_LEVEL_ERROR,PSTR("M32: FLORA: not enough bytes read for firmware?"));
@@ -1805,11 +1837,13 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
         AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: %s:pvvx at slot %u"), MIaddrStr(addr), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
         MIBLEsensors[_slot].RSSI=RSSI;
         MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+        MIBLEsensors[_slot].lastTime = Rtc.local_time;
 
         MIBLEsensors[_slot].temp = (float)(ppv_packet->temperature)/100.0f;
         MIBLEsensors[_slot].hum = (float)(ppv_packet->humidity)/100.0f;
         MIBLEsensors[_slot].eventType.tempHum  = 1;
         MIBLEsensors[_slot].bat = ppv_packet->battery_level;
+        MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
         MIBLEsensors[_slot].eventType.bat  = 1;
 
         MIBLEsensors[_slot].Btn = (ppv_packet->flags) & 0x1; // First bit is reed switch status
@@ -1852,11 +1886,13 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
     AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
     MIBLEsensors[_slot].RSSI=RSSI;
     MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+    MIBLEsensors[_slot].lastTime = Rtc.local_time;
 
     MIBLEsensors[_slot].temp = (float)(int16_t(__builtin_bswap16(_packet->temp)))/10.0f;
     MIBLEsensors[_slot].hum = (float)_packet->hum;
     MIBLEsensors[_slot].eventType.tempHum  = 1;
     MIBLEsensors[_slot].bat = _packet->batPer;
+    MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
     MIBLEsensors[_slot].eventType.bat  = 1;
 
     if(MI32.option.directBridgeMode) {
@@ -1882,10 +1918,12 @@ void MI32ParseCGDK2Packet(const uint8_t * _buf, uint32_t length, const uint8_t *
           AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s:pvvx at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
           MIBLEsensors[_slot].RSSI=RSSI;
           MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+          MIBLEsensors[_slot].lastTime = Rtc.local_time;
           MIBLEsensors[_slot].temp = (float)(cgdk_packet->temperature)/10.0f;
           MIBLEsensors[_slot].hum = (float)(cgdk_packet->humidity)/10.0f;
           MIBLEsensors[_slot].eventType.tempHum  = 1;
           MIBLEsensors[_slot].bat = cgdk_packet->battery_level;
+          MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
           MIBLEsensors[_slot].eventType.bat  = 1;
 
           if(MI32.option.directBridgeMode) {
@@ -1923,6 +1961,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
       MIBLEsensors[_slot].RSSI = RSSI;
       MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       MIBLEsensors[_slot].eventType.scale = 1;
 
       MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
@@ -1963,6 +2002,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG],PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1], _slot);
       MIBLEsensors[_slot].RSSI = RSSI;
       MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       MIBLEsensors[_slot].eventType.scale = 1;
 
       MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
@@ -2300,19 +2340,20 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     }
     packet_id = hash;  // Non incremental or same packet_id (can still be used to chk for duplicates)
   }
-  uint32_t slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, 1); // Ignore duplicates
+  uint32_t _slot = MIBLEgetSensorSlot(mac, 0xFCD2, packet_id, 1); // Ignore duplicates
 
 #ifdef USE_MI_DEBUG 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s packet %*_H%s"), log_name, length, _buf, (slot == 0xff)?" (duplicate)":"");
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s packet %*_H%s"), log_name, length, _buf, (_slot == 0xff)?" (duplicate)":"");
 #endif
 
-  if ((slot == 0xff) ||                 // Skip duplicates
-      (slot >= MIBLEsensors.size())) {
+  if ((_slot == 0xff) ||                 // Skip duplicates
+      (_slot >= MIBLEsensors.size())) {
     return;
   }
 
-  MIBLEsensors[slot].RSSI     = RSSI;
-  MIBLEsensors[slot].needkey  = KEY_NOT_REQUIRED;
+  MIBLEsensors[_slot].RSSI     = RSSI;
+  MIBLEsensors[_slot].needkey  = KEY_NOT_REQUIRED;
+  MIBLEsensors[_slot].lastTime = Rtc.local_time;
 
   bool hasTemp = false;
   bool hasHum  = false;
@@ -2370,9 +2411,10 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         break;
 
       case 0x01: { // Battery (uint8, %)
-        MIBLEsensors[slot].bat = value_uint;
-        MIBLEsensors[slot].feature.bat    = 1;
-        MIBLEsensors[slot].eventType.bat  = 1;
+        MIBLEsensors[_slot].bat = value_uint;
+        MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
+        MIBLEsensors[_slot].feature.bat    = 1;
+        MIBLEsensors[_slot].eventType.bat  = 1;
       } break;
 
       case 0x02:   // Temperature (int16, 0.01 °C)
@@ -2380,9 +2422,9 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       case 0x57:   // Temperature (int8, 1 °C)
       case 0x58: { // Temperature (int8, 0.35 °C)
         if (value_float > -40.0f && value_float < 85.0f) {
-          MIBLEsensors[slot].temp = value_float;
-          MIBLEsensors[slot].feature.temp   = 1;
-          MIBLEsensors[slot].eventType.temp = 1;
+          MIBLEsensors[_slot].temp = value_float;
+          MIBLEsensors[_slot].feature.temp   = 1;
+          MIBLEsensors[_slot].eventType.temp = 1;
           hasTemp = true;
         }
       } break;
@@ -2390,31 +2432,31 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       case 0x03:   // Humidity (uint16, 0.01 %)
       case 0x2E: { // Humidity (uint8, 1 %)
         if (value_float >= 0.0f && value_float <= 100.0f) {
-          MIBLEsensors[slot].hum = value_float;
-          MIBLEsensors[slot].feature.hum   = 1;
-          MIBLEsensors[slot].eventType.hum = 1;
+          MIBLEsensors[_slot].hum = value_float;
+          MIBLEsensors[_slot].feature.hum   = 1;
+          MIBLEsensors[_slot].eventType.hum = 1;
           hasHum = true;
         }
       } break;
 
       case 0x04: { // Pressure (0.01 hPa) uint24
-        MIBLEsensors[slot].pres = value_float;
-        MIBLEsensors[slot].feature.pres   = 1;
-        MIBLEsensors[slot].eventType.pres = 1;
+        MIBLEsensors[_slot].pres = value_float;
+        MIBLEsensors[_slot].feature.pres   = 1;
+        MIBLEsensors[_slot].eventType.pres = 1;
       } break;
 
       case 0x05: { // Illuminance (uint24, 0.01 lx)
-        MIBLEsensors[slot].lux = (uint32_t)value_float;
-        MIBLEsensors[slot].feature.lux   = 1;
-        MIBLEsensors[slot].eventType.lux = 1;
+        MIBLEsensors[_slot].lux = (uint32_t)value_float;
+        MIBLEsensors[_slot].feature.lux   = 1;
+        MIBLEsensors[_slot].eventType.lux = 1;
       } break;
 
       case 0x06:   // Mass kg (0.01 kg) uint16
       case 0x07: { // Mass lbs (0.01 lbs) uint16
-        MIBLEsensors[slot].weight = value_float;
-        MIBLEsensors[slot].feature.scale   = 1;
-        MIBLEsensors[slot].eventType.scale = 1;
-        snprintf_P(MIBLEsensors[slot].weight_unit, sizeof(MIBLEsensors[slot].weight_unit), PSTR("%s"), (0x06 == obj_id)?"kg":"lbs");
+        MIBLEsensors[_slot].weight = value_float;
+        MIBLEsensors[_slot].feature.scale   = 1;
+        MIBLEsensors[_slot].eventType.scale = 1;
+        snprintf_P(MIBLEsensors[_slot].weight_unit, sizeof(MIBLEsensors[_slot].weight_unit), PSTR("%s"), (0x06 == obj_id)?"kg":"lbs");
       } break;
 
       case 0x08:   // Dewpoint — Tasmota calculates dew point internally
@@ -2426,9 +2468,9 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       case 0x59:   // Count (1) int8
       case 0x5A:   // Count (1) int16
       case 0x5B: { // Count (1) int32
-        MIBLEsensors[slot].count = (obj_id >= 0x59) ? value_int : value_uint;
-        MIBLEsensors[slot].feature.count   = 1;
-        MIBLEsensors[slot].eventType.count = 1;
+        MIBLEsensors[_slot].count = (obj_id >= 0x59) ? value_int : value_uint;
+        MIBLEsensors[_slot].feature.count   = 1;
+        MIBLEsensors[_slot].eventType.count = 1;
       } break;
 /*
       case 0x0A: { // Energy (0.001 kWh) uint24
@@ -2439,48 +2481,48 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 */
       case 0x0C:   // Voltage (0.001 V) uint16
       case 0x4A: { // Voltage (0.1 V) uint16
-        MIBLEsensors[slot].volt = value_float;
-        MIBLEsensors[slot].feature.volt   = 1;
-        MIBLEsensors[slot].eventType.volt = 1;
+        MIBLEsensors[_slot].volt = value_float;
+        MIBLEsensors[_slot].feature.volt   = 1;
+        MIBLEsensors[_slot].eventType.volt = 1;
       } break;
 
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
         if (0 == multi_event) {  // Reset events
-          for (uint32_t i = 0; i < sizeof(MIBLEsensors[slot].bthome_event); i++) {
-            MIBLEsensors[slot].bthome_event[i] = 0;
+          for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_event); i++) {
+            MIBLEsensors[_slot].bthome_event[i] = 0;
           }
         }
-        if (multi_event < sizeof(MIBLEsensors[slot].bthome_event)) {
-          MIBLEsensors[slot].bthome_event[multi_event++] = value_uint << 7 | obj_id;
-          MIBLEsensors[slot].events++;
-          MIBLEsensors[slot].eventType.event = 1;
+        if (multi_event < sizeof(MIBLEsensors[_slot].bthome_event)) {
+          MIBLEsensors[_slot].bthome_event[multi_event++] = value_uint << 7 | obj_id;
+          MIBLEsensors[_slot].events++;
+          MIBLEsensors[_slot].eventType.event = 1;
           res = 1;
         }
       } break;
 
       case 0x14:   // Moisture (uint16, 0.01%)
       case 0x2F: { // Moisture (uint8, 1%)
-        MIBLEsensors[slot].moisture = (uint8_t)value_float;
-        MIBLEsensors[slot].feature.moist   = 1;
-        MIBLEsensors[slot].eventType.moist = 1;
+        MIBLEsensors[_slot].moisture = (uint8_t)value_float;
+        MIBLEsensors[_slot].feature.moist   = 1;
+        MIBLEsensors[_slot].eventType.moist = 1;
       } break;
 
       case 0x3A: { // Button (uint8, event)
-        if (multi < sizeof(MIBLEsensors[slot].button)) {
+        if (multi < sizeof(MIBLEsensors[_slot].button)) {
           if (255 == value_uint) {  // Older version of BTHome for Hold button
             value_uint = 128;       // Current value for Hold button
           }
           if (0 == multi) {  // Reset events
-            for (uint32_t i = 0; i < sizeof(MIBLEsensors[slot].button); i++) {
-              MIBLEsensors[slot].button[i] = 0;
+            for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].button); i++) {
+              MIBLEsensors[_slot].button[i] = 0;
             }
           }
-          MIBLEsensors[slot].button[multi] = (0 == value_uint) ? 255 : value_uint;
-          MIBLEsensors[slot].feature.Btn = 1;
+          MIBLEsensors[_slot].Btn = value_uint;  // Last button
+          MIBLEsensors[_slot].button[multi] = (0 == value_uint) ? 255 : value_uint;
+          MIBLEsensors[_slot].feature.Btn = 1;
           if (value_uint > 0) {  // No event if 0x00
-            MIBLEsensors[slot].Btn = value_uint;  // Last button
-            MIBLEsensors[slot].eventType.Btn = 1;
+            MIBLEsensors[_slot].eventType.Btn = 1;
             res = 1;
           }
         }
@@ -2497,10 +2539,10 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       case 0x51:   // Acceleration (0.001 m/s2) uint16
       case 0x63: { // Acceleration (0.000001 m/s2) int32
         if ((multi >= 0) && (multi < 4)) {  // Support for up to 4 accelerations
-          MIBLEsensors[slot].acceleration[multi] = value_float;
-          MIBLEsensors[slot].accel_used = multi;
-          MIBLEsensors[slot].feature.accel   = 1;
-          MIBLEsensors[slot].eventType.accel = 1;
+          MIBLEsensors[_slot].acceleration[multi] = value_float;
+          MIBLEsensors[_slot].accel_used = multi;
+          MIBLEsensors[_slot].feature.accel   = 1;
+          MIBLEsensors[_slot].eventType.accel = 1;
         }
       } break;
 
@@ -2515,9 +2557,9 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       case 0x64: { // Light level (0 = Dark, 1 = Twilight, 2 = Bright) 
-        MIBLEsensors[slot].light = value_uint;
-        MIBLEsensors[slot].feature.light = 1;
-        MIBLEsensors[slot].eventType.light = 1;
+        MIBLEsensors[_slot].light = value_uint;
+        MIBLEsensors[_slot].feature.light = 1;
+        MIBLEsensors[_slot].eventType.light = 1;
         res = 1;
       } break;
 
@@ -2536,16 +2578,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
       } break;
 
       default: {
-        uint32_t unparsed_slots = sizeof(MIBLEsensors[slot].unparsed);
+        uint32_t unparsed_slots = sizeof(MIBLEsensors[_slot].unparsed);
         if (multi_unparsed < unparsed_slots) {
           if (0 == multi_unparsed) {  // Reset
             for (uint32_t i = 0; i < unparsed_slots; i++) {
-              MIBLEsensors[slot].unparsed[i] = 0;
+              MIBLEsensors[_slot].unparsed[i] = 0;
             }
           }
-          MIBLEsensors[slot].unparsed[multi_unparsed] = obj_id;
-          MIBLEsensors[slot].unparsed_float[multi_unparsed] = value_float;
-          MIBLEsensors[slot].feature.unparsed = 1;
+          MIBLEsensors[_slot].unparsed[multi_unparsed] = obj_id;
+          MIBLEsensors[_slot].unparsed_float[multi_unparsed] = value_float;
+          MIBLEsensors[_slot].feature.unparsed = 1;
           multi_unparsed++;
           res = 1;
         } else {
@@ -2558,16 +2600,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
   // If both temperature and humidity were received, mark the combined feature
   if (hasTemp && hasHum) {
-    MIBLEsensors[slot].feature.tempHum   = 1;
-    MIBLEsensors[slot].eventType.tempHum = 1;
+    MIBLEsensors[_slot].feature.tempHum   = 1;
+    MIBLEsensors[_slot].eventType.tempHum = 1;
   }
 
   if (res || MI32.option.directBridgeMode) {
-    MIBLEsensors[slot].shallSendMQTT = 1;
+    MIBLEsensors[_slot].shallSendMQTT = 1;
     MI32.mode.shallTriggerTele = 1;
   }
 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s slot %u"), log_name, slot);
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("%s slot %u"), log_name, _slot);
 }
 
 ////////////////////////////////////////////////////////////
@@ -2605,7 +2647,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
     }break;
     case 0x000f: // 'Someone is moving (with light)'
       MIBLEsensors[_slot].eventType.motion = 1;
-      MIBLEsensors[_slot].lastTime = millis();
+//      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       MIBLEsensors[_slot].events++;
       MIBLEsensors[_slot].lux = pld->lux;
       MIBLEsensors[_slot].eventType.lux = 1;
@@ -2691,6 +2733,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].bat = 100;
         AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: Mode a: bat > 100 (%d)"), MIaddrStr(MIBLEsensors[_slot].MAC), pld->bat);
       }
+      MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
       MIBLEsensors[_slot].eventType.bat  = 1;
       MIBLEsensors[_slot].feature.bat = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode a: U8: %u %%"), _beacon.bat);
@@ -2852,7 +2895,7 @@ void MI32ParseATBtn(uint8_t *buf, uint16_t bufsize, const uint8_t* addr, int RSS
 
   // AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), MI32getDeviceName(_slot),_slot);
   MIBLEsensors[_slot].RSSI=RSSI;
-  MIBLEsensors[_slot].lastTime = millis();
+  MIBLEsensors[_slot].lastTime = Rtc.local_time;
   MIBLEsensors[_slot].eventType.Btn = 1;
   MI32.mode.shallTriggerTele = 1;
   MIBLEsensors[_slot].shallSendMQTT = 1;
@@ -2889,6 +2932,7 @@ void MI32ParseResponse(const uint8_t *buf, uint16_t bufsize, const uint8_t* addr
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: MIParsePacket returned %d"), MIaddrStr(addr), res);
       return;
     }
+    MIBLEsensors[_slot].lastTime = Rtc.local_time;
     MI32parseMiPayload(_slot, &parsed);
   }
 }
@@ -2925,12 +2969,14 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
     _tempFloat = (float)(LYWSD0x_HT.temp) / 100.0f;
     if(_tempFloat < 60){
       MIBLEsensors[_slot].temp = _tempFloat;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Temp updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].temp);
         // MIBLEsensors[_slot].showedUp=255; // this sensor is real
     }
     _tempFloat=(float)LYWSD0x_HT.hum;
     if(_tempFloat < 100){
       MIBLEsensors[_slot].hum = _tempFloat;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Hum updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].hum);
     }
     MIBLEsensors[_slot].eventType.tempHum  = 1;
@@ -2945,6 +2991,8 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
       if (percent > 100) percent = 100;
 
       MIBLEsensors[_slot].bat = (int)percent;
+      MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
+      MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Bat updated %d"), MIaddrStr(MIBLEsensors[_slot].MAC), MIBLEsensors[_slot].bat);
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
@@ -2997,6 +3045,13 @@ void MI32EverySecond(bool restart){
     MI32ShowOneMISensor(MI32.option.MQTTType < 2);
   }
 
+  // trigger reading battery every hour, independent of Mi32Period
+  MI32.batteryreader.pollSeconds++;
+  if (MI32.period && MI32.batteryreader.pollSeconds > MI32_BATTERY_PERIOD) {
+    MI32.batteryreader.pollSeconds = 0;
+    MI32.batteryreader.slot = 0;
+  }
+
   // read a battery if
   // MI32.batteryreader.slot < filled and !MI32.batteryreader.active
   readOneBat();
@@ -3006,10 +3061,10 @@ void MI32EverySecond(bool restart){
   // for sensors which need to get data through notify...
   readOneSensor();
 
-  if (MI32.secondsCounter >= MI32.period){
+  if (MI32.period && MI32.secondsCounter >= MI32.period) {
     // only if we finished the last read
-    if (MI32.sensorreader.slot >= MIBLEsensors.size()){
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Kick off readOneSensor"));
+    if (MI32.sensorreader.slot >= MIBLEsensors.size()) {
+      AddLog(LOG_LEVEL_DEBUG, "M32: Kick off readOneSensor");
       // kick off notification sensor reading every period.
       MI32.sensorreader.slot = 0;
       MI32.secondsCounter = 0;
@@ -3017,24 +3072,20 @@ void MI32EverySecond(bool restart){
   }
   MI32.secondsCounter++;
 
-  if (MI32.secondsCounter2 >= MI32.period){
-    if (MI32.mqttCurrentSlot >= MIBLEsensors.size()){
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Kick off tele sending"));
+  if (MI32.period && MI32.secondsCounter2 >= MI32.period) {
+    if (MI32.mqttCurrentSlot >= MIBLEsensors.size()) {
+      AddLog(LOG_LEVEL_DEBUG, "M32: Kick off tele sending");
       MI32.mqttCurrentSlot = 0;
       MI32.secondsCounter2 = 0;
       MI32.mqttCurrentSingleSlot = 0;
     } else {
-      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Hit tele time, restarted but not finished last - lost from slot %d")+MI32.mqttCurrentSlot);
+      AddLog(LOG_LEVEL_DEBUG, "M32: Hit tele time, restarted but not finished last - lost from slot %d", MI32.mqttCurrentSlot);
       MI32.mqttCurrentSlot = 0;
       MI32.secondsCounter2 = 0;
       MI32.mqttCurrentSingleSlot = 0;
     }
   }
   MI32.secondsCounter2++;
-
-  static uint32_t _counter = MI32.period - 15;
-  static uint32_t _nextSensorSlot = 0;
-  uint32_t _idx = 0;
 
   int numsensors = MIBLEsensors.size();
   for (uint32_t i = 0; i < numsensors; i++) {
@@ -3053,9 +3104,10 @@ void MI32EverySecond(bool restart){
 \*********************************************************************************************/
 
 void CmndMi32Period(void) {
-  if (XdrvMailbox.data_len > 0) {
-    if (1 == XdrvMailbox.payload) {
-      MI32EverySecond(true);
+  if (XdrvMailbox.data_len) {
+    if (XdrvMailbox.payload == 1) {
+      MI32.secondsCounter = MI32.period;
+      MI32.secondsCounter2 = MI32.period;
     } else {
       MI32.period = XdrvMailbox.payload;
     }
@@ -3085,19 +3137,19 @@ void CmndMi32Time(void) {
     if (MIBLEsensors.size() > slot) {
       int res = genericTimeWriteFn(slot);
       if (res > 0){
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: will set Time"));
-        ResponseCmndNumber(slot);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "M32: %s: Setting time", MIaddrStr(MIBLEsensors[slot].MAC));
+        ResponseCmndChar(MIaddrStr(MIBLEsensors[slot].MAC));
         return;
       }
       if (res < 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot set Time on sensor type"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: Cannot set time on sensor type", MIaddrStr(MIBLEsensors[slot].MAC));
       }
       if (res == 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot set Time right now"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: Cannot set time right now", MIaddrStr(MIBLEsensors[slot].MAC));
       }
     }
   }
-  ResponseCmndChar_P("fail");
+  ResponseCmndFailed();
 }
 
 void CmndMi32Page(void) {
@@ -3120,24 +3172,23 @@ void CmndMi32Unit(void) {
     if (slot < 0) {
       slot = XdrvMailbox.payload;
     }
-
     if (MIBLEsensors.size() > slot) {
       // TOGGLE unit?
       int res = genericUnitWriteFn(slot, -1);
       if (res > 0){
-        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: will toggle Unit"));
-        ResponseCmndNumber(slot);
+        AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "M32: %s: will toggle unit", MIaddrStr(MIBLEsensors[slot].MAC));
+        ResponseCmndChar(MIaddrStr(MIBLEsensors[slot].MAC));
         return;
       }
       if (res < 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot toggle Unit on sensor type"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: cannot toggle unit on sensor type", MIaddrStr(MIBLEsensors[slot].MAC));
       }
       if (res == 0) {
-        AddLog(LOG_LEVEL_ERROR, PSTR("M32: cannot toggle Unit right now"));
+        AddLog(LOG_LEVEL_ERROR, "M32: %s: cannot toggle unit right now", MIaddrStr(MIBLEsensors[slot].MAC));
       }
     }
   }
-  ResponseCmndIdxChar(PSTR("Invalid"));
+  ResponseCmndFailed();
 }
 
 #ifdef USE_MI_DECRYPTION
@@ -3452,8 +3503,15 @@ void MI32TimeoutSensors(){
   for (int i = MIBLEsensors.size()-1; i >= 0; i--) {
     //if (MIBLEsensors[i].MAC[2] || MIBLEsensors[i].MAC[3] || MIBLEsensors[i].MAC[4] || MIBLEsensors[i].MAC[5]){
       // Since we use a pseudo MAC for the ATBTN slots we need to ignore these warnings
-      if (!memcmp(MIBLEsensors[i].MAC, ATBTN_Addr, 4))  // Skip pseudo AT BTN addresses
+      if (!memcmp(MIBLEsensors[i].MAC, ATBTN_Addr, 4)) { // Skip pseudo AT BTN addresses
         continue;
+      }
+#ifdef USE_SENSOR_ICON
+      // Keep devices which have set lastTime to be used in GUI
+      if (Rtc.local_time < (MIBLEsensors[i].lastTime + (4 * 24 * 60 * 60))) {  // Keep for 4 days
+        continue;
+      }
+#endif
       if (!BLE_ESP32::devicePresent(MIBLEsensors[i].MAC)){
         AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: Dev no longer present"), MIaddrStr(MIBLEsensors[i].MAC));
         TasAutoMutex localmutex(&slotmutex, "Mi32Timeout");
@@ -3637,8 +3695,9 @@ void MI32GetOneSensorJson(int slot, int hidename){
       ){
         if ((p->type == MI_BTHOME) && (p->button[1] != 0)){
           for (uint32_t i = 0; i < sizeof(p->button); i++) {
-            if ((p->button[i] > 0) && (p->button[i] < 255)) {
-              ResponseAppend_P(PSTR(",\"Btn%d\":%d"), i +1, p->button[i]);
+            if (p->button[i] > 0) {
+              uint32_t button = (255 == p->button[i]) ? 0 : p->button[i];
+              ResponseAppend_P(PSTR(",\"Btn%d\":%d"), i +1, button);
             }
           }
         } else {
@@ -3743,7 +3802,7 @@ void MI32GetOneSensorJson(int slot, int hidename){
   if (!hidename) {
     ResponseAppend_P(PSTR("}"));
   }
-  p->eventType.raw = 0;
+  p->eventType.raw = 0;  // Reset all events
   p->shallSendMQTT = 0;
 
 }
@@ -4211,6 +4270,124 @@ void MI32ShowTriggeredSensors(){
   } while (sensor < numsensors);
 }
 
+#ifdef USE_SENSOR_ICON
+const char SI_WEB_CSS[] PROGMEM =
+  "</table>"         // Terminate current two column table...
+  "<style>"          // Send STYLE for icon sensors
+  // Table CSS
+  ".itd td:not(:first-child){width:20px;font-size:70%%}"
+  ".itd td:last-child{width:45px}"
+  ".itd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
+  ".itr{line-height:20px}"
+  // Signal Strength Indicator
+  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
+  "i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
+  ".b0{height:25%%}.b1{height:50%%}.b2{height:75%%}.b3{height:100%%}}.o30{opacity:.3}"
+  "</style>"
+  "{t}";             // ... and open new table for devices
+
+const char SI_WEB_STATUS_LINE[] PROGMEM =
+  "<tr class='itd itr'>"
+  "<td><b title='%s\n0x%6_H'>%s</b></td>" // name
+  "<td>%s</td>" // sbatt (Battery Indicator)
+  "<td><div title='" D_RSSI " %s' class='si'>"; // slqi
+
+const char SI_WEB_BATTERY[] PROGMEM =
+  "<div title='%s%d%%%s'><i class='bt' style='--bl:%dpx;color:#%02x%02x%02x'></i></div>";  // Need div for touch media tooltip to work
+
+const char SI_WEB_LAST_SEEN[] PROGMEM =
+  "<td style='color:#%02x%02x%02x'>&#x1F557;%02d%c";
+
+const char SI_WEB_LINE_START[] PROGMEM =
+  "<tr class='htr'><td colspan=4>&#9478;";
+
+const char SI_WEB_END_STATUS[] PROGMEM =
+  "</div></td>" // Close RSSI
+  "%s{e}"; // dhm (Last Seen)
+
+const char SI_WEB_LINE_END[] PROGMEM =
+  "</table>{t}";     // Terminate device table and open a new one for buttons and output of following drivers
+
+const char HTTP_MI32_VERSION[] PROGMEM =
+  "<div style='text-align:right;font-size:11px;color:#aaa;'>MI ESP32 " MI32_VERSION "</div>";
+
+// Get Alias or Type name
+const char *MI32DeviceName(char *name, uint32_t name_size, uint32_t index) {
+  const char *label = BLE_ESP32::getAlias(MIBLEsensors[index].MAC);
+  bool valid_alias = (label && *label);
+  if (!valid_alias) {
+    const char *typeName = kMI32DeviceType[MIBLEsensors[index].type-1];
+    ext_snprintf_P(name, name_size, "%s%c%3_H", typeName, IndexSeparator(), MIBLEsensors[index].MAC +3);
+    label = name;
+  }
+  return label;
+}
+
+// Comparator function used to sort MI32 devices by alphabetical order
+int MI32DeviceCmp(uint8_t a, uint8_t b) {
+  char name_a[32];
+  const char *label_a = MI32DeviceName(name_a, sizeof(name_a), a);
+  char name_b[32];
+  const char *label_b = MI32DeviceName(name_b, sizeof(name_b), b);
+  return strcasecmp(label_a, label_b);
+}
+
+// Convert seconds to a string representing days, hours or minutes present in the n-value.
+// The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
+// Inputs:
+// - seconds: uint32_t representing some number of seconds
+// Outputs:
+// - char for unit (d for day, h for hour, m for minute)
+// - the hex color to be used to display the text
+//
+uint32_t SIconvert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bool days = false){
+  static const uint32_t conversions[3] = {24 * 3600, 3600, 60};
+  static const char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
+  static const uint32_t color_threshold_hours[2] = {24 * 3600, 3600};               // 0 - 1 hour - 1 day
+  static const uint32_t color_threshold_days[2] = {7 * 24 * 3600, 2 * 24 * 3600};    // 0 - 2 days - 7 days
+
+  uint32_t color_text_8 = WebColor(COL_TEXT);    // color of text on 8 bits
+  uint8_t color_text_8_r = (color_text_8 & 0xFF0000) >> 16;
+  uint8_t color_text_8_g = (color_text_8 & 0x00FF00) >> 8;
+  uint8_t color_text_8_b = (color_text_8 & 0x0000FF);
+
+  uint32_t color_back_8 = WebColor(COL_BACKGROUND);    // color of background on 8 bits
+  uint8_t color_back_8_r = (color_back_8 & 0xFF0000) >> 16;
+  uint8_t color_back_8_g = (color_back_8 & 0x00FF00) >> 8;
+  uint8_t color_back_8_b = (color_back_8 & 0x0000FF);
+
+  int32_t colors[3] = {
+    ((changeUIntScale( 6, 0, 16, color_back_8_r, color_text_8_r) & 0xFF) << 16U) |   //  6/16 of text
+    ((changeUIntScale( 6, 0, 16, color_back_8_g, color_text_8_g) & 0xFF) <<  8U) |   //  6/16 of text
+    ( changeUIntScale( 6, 0, 16, color_back_8_b, color_text_8_r) & 0xFF),            //  6/16 of text
+
+    ((changeUIntScale(10, 0, 16, color_back_8_r, color_text_8_r) & 0xFF) << 16U) |   // 10/16 of text
+    ((changeUIntScale(10, 0, 16, color_back_8_g, color_text_8_g) & 0xFF) <<  8U) |   // 10/16 of text
+    ( changeUIntScale(10, 0, 16, color_back_8_b, color_text_8_r) & 0xFF),            // 10/16 of text
+
+    (color_text_8_r << 16U) |
+    (color_text_8_g <<  8U) |
+    (color_text_8_b)
+  };
+
+  *color = (uint32_t)colors[2];
+  for (uint32_t i = 0; i < 2; i++) {
+    if (seconds > (days ? color_threshold_days[i] : color_threshold_hours[i])) {
+      *color = (uint32_t)colors[i];
+      break;
+    }
+  }
+  for(uint32_t i = 0; i < 3; ++i) {
+    *unit = units[i];
+    if (seconds > conversions[i]) {    // always pass even if 00m
+      return seconds / conversions[i];
+    }
+  }
+  return 0;
+}
+
+#endif  // USE_SENSOR_ICON
+
 void MI32Show(bool json)
 {
   // don't detect half-added ones here
@@ -4224,6 +4401,230 @@ void MI32Show(bool json)
 #ifdef USE_WEBSERVER
   } else {
     if (!Settings->flag5.mi32_enable) return;
+
+#ifdef USE_SENSOR_ICON
+    if (numsensors > 255) {
+      numsensors = 255;  // Display max 255 sensors
+    }
+    // sort elements by alias and type name
+    uint8_t sorted_idx[numsensors];
+    for (uint32_t i = 0; i < numsensors; i++) {
+      sorted_idx[i] = i;
+    }
+    // insertion sort
+    for (uint32_t i = 1; i < numsensors; i++) {
+      uint8_t key = sorted_idx[i];
+      uint8_t j = i;
+      while ((j > 0) && (MI32DeviceCmp(sorted_idx[j - 1], key) > 0)) {
+        sorted_idx[j] = sorted_idx[j - 1];
+        j--;
+      }
+      sorted_idx[j] = key;
+    }
+
+    uint32_t now = Rtc.local_time;
+
+    WSContentSend_P(SI_WEB_CSS);
+
+    // Iterate through devices by alphabetical order
+    for (uint32_t i = 0; i < numsensors; i++) {
+      mi_sensor_t *p;
+      p = &MIBLEsensors[sorted_idx[i]];
+
+      char name[32];
+      const char *label = MI32DeviceName(name, sizeof(name), sorted_idx[i]);
+
+      char sbatt[106];
+      char dhm[48];
+      snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
+      if (p->bat != 0x00) {
+        char bv[10] = { 0 };
+        if (p->feature.volt) {
+          ext_snprintf_P(bv, sizeof(bv), PSTR("%*_fV, "), Settings->flag2.voltage_resolution, &p->volt);
+        }
+
+        char unit;
+        uint32_t color = WebColor(COL_TEXT);    // color of text
+        dhm[0] = 0;   // start with empty string
+        if (p->batLastSeen) {
+          uint16_t val = SIconvert_seconds_to_dhm(now - p->batLastSeen, &unit, &color, true);
+          if (val < 100) {
+            snprintf(dhm, sizeof(dhm), " (%02u%c)", val, unit);
+          }
+        }
+        snprintf_P(sbatt, sizeof(sbatt), SI_WEB_BATTERY,
+          bv, p->bat, dhm,
+          changeUIntScale(p->bat, 0, 100, 0, 14),
+          (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF)
+        );
+      }
+
+      uint32_t rssi_as_quality = WifiGetRssiAsQuality(p->RSSI);
+      uint32_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
+      char rssi[16];
+      snprintf(rssi, sizeof(rssi), "%d%% (%d dBm)", rssi_as_quality, p->RSSI);
+
+      // New line: Device name, battery state, RSSI and last seen
+      WSContentSend_P(SI_WEB_STATUS_LINE,
+        kMI32DeviceType[p->type - 1], p->MAC,
+        HtmlEscape(label).c_str(), sbatt, rssi);
+
+      for(uint32_t j = 0; j < 4; j++) {
+        WSContentSend_P(PSTR("<i class='b%d%s'></i>"), j, (j >= num_bars) ? PSTR(" o30") : PSTR(""));
+      }
+      snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
+
+      if (p->lastTime != 0) {
+        char unit;
+        uint32_t color;
+        uint16_t val = SIconvert_seconds_to_dhm(now - p->lastTime, &unit, &color);
+        if (val < 100) {
+          snprintf_P(dhm, sizeof(dhm), SI_WEB_LAST_SEEN,                         
+                                       (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF),
+                                       val, unit);
+        }
+      }
+
+      WSContentSend_P(SI_WEB_END_STATUS, dhm);
+
+/*
+      // Icon test line
+      WSContentSend_P(SI_WEB_LINE_START);
+      WSContentSend_P(PSTR(" 1'&#x1F3C3;' 2'&#x270B;' 3'&#x26C5;' 4'&#x1F680;' 5'&#x1F30A;' 6'&#x2696;' 7'&#x2126;' 8'&#x1FAD8'"));
+      WSContentSend_P(PSTR("{e}"));
+*/
+      // Optional new line: Sensors
+      if (!isnan(p->temp) || !isnan(p->hum) ||
+           p->feature.pres || p->feature.accel || p->feature.flooding || p->feature.scale || 
+           p->feature.NMT || p->feature.events || p->feature.count ||
+          (p->feature.moist && (p->moisture != 0xff)) ||
+          (p->feature.fert && (p->fertility != 0xffff)) ||
+          (p->feature.lux && (p->lux!=0x00ffffff))
+         ) {
+        WSContentSend_P(SI_WEB_LINE_START);
+        if (!isnan(p->temp)) {
+          float temp = ConvertTempToFahrenheit(p->temp); // convert if SO8 on
+          WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &temp, TempUnit());  // ☀ Sun
+        }
+        if (!isnan(p->hum)) {
+          WSContentSend_PD(PSTR(" &#x1F4A7; %*_f%%"), Settings->flag2.humidity_resolution, &p->hum);  // 💧
+        }
+        if (!isnan(p->temp) && !isnan(p->hum)) {
+          float dewpoint = CalcTempHumToDew(p->temp, p->hum);
+          WSContentSend_PD(PSTR(" %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &dewpoint, TempUnit());
+        }
+        if (p->feature.moist && (p->moisture != 0xff)) {
+          WSContentSend_PD(PSTR(" &#x1F4A6; %d%%"), p->moisture);  // 💦
+        }
+        if (p->feature.fert && (p->fertility != 0xffff)) {  // Electrical conductivity measuring salt or fertilizer
+          WSContentSend_PD(PSTR(" &#x1F340; %u" D_UNIT_MICROSIEMENS_PER_CM), p->fertility);  // 🍀
+        }
+        if (p->feature.pres) {
+          float pressure = ConvertPressure(p->pres);  // SetOption24 - Switch between hPa or mmHg pressure unit, SetOption139 - Switch between mmHg or inHg pressure unit
+          WSContentSend_PD(PSTR(" &#x26C5; %*_f%s"), Settings->flag2.pressure_resolution, &pressure, PressureUnit().c_str());  // ⛅
+        }
+        if (p->feature.events){
+          WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - 🏃 Runner
+        }
+        if (p->feature.NMT){
+          // no motion time
+          if (p->NMT > 0) {
+            WSContentSend_PD(PSTR(" &#x270B; %usec"), p->NMT);  // No motion time in seconds - ✋ hand stop
+          }
+        }
+        if (p->feature.lux) {
+          if (p->lux!=0x00ffffff) { // this is the error code -> no valid value
+            WSContentSend_PD(PSTR(" &#x1F506; %u" D_UNIT_LUX), p->lux);  // 🔆 bright button
+          }
+        }
+        if (p->feature.scale){
+          WSContentSend_PD(PSTR(" &#x2696; %*_f%s"), Settings->flag2.weight_resolution, &p->weight, p->weight_unit);  // ⚖
+          if (MI32.option.directBridgeMode) {
+            WSContentSend_P(PSTR(" &#x%s;"), (p->weight_removed) ? PSTR("1F90F") : PSTR("1F44C"));  // Yes = 🤏 / No = 👌
+            WSContentSend_P(PSTR(" &#x1F44%c;"), (p->weight_stabilized) ? 'D' : 'E');  // Yes = 👍 / No = 👎
+          }
+          if (p->feature.impedance) {
+            WSContentSend_PD(PSTR(" &#x1F463; %u"), p->impedance);  // 👣 feet - Scale impedance (BIA)
+            if (MI32.option.directBridgeMode) {
+              WSContentSend_P(PSTR(" &#x1F44%c;"), (p->impedance_stabilized) ? 'D' : 'E');  // Yes = 👍 / No = 👎
+            }
+          }
+        }
+        if (p->feature.accel) {
+          for (uint32_t b = 0; b <= p->accel_used; b++) {
+            WSContentSend_PD(PSTR(" &#x1F680; %3_fm/s²"), &p->acceleration[b]);  // 🚀 rocket
+          }
+        }
+        if (p->feature.count) {
+          WSContentSend_PD(PSTR(" &#x1FAD8; %d"), p->count);  // 🫘 beans
+        }
+        if (p->feature.flooding) {
+          WSContentSend_PD(PSTR(" &#x1F30A; %u"), p->flooding);  // 🌊 wave
+        }
+/*
+        if (p->feature.co2) {
+          WSContentSend_P(PSTR(" &#x1FAE7; %.0f" D_UNIT_PARTS_PER_MILLION), p->co2);  // 🫧 bubbles
+        }
+*/
+        WSContentSend_P(PSTR("{e}"));
+      }
+
+      // Optional new line: Lights and buttons
+      if (p->feature.light || p->feature.Btn) {
+        WSContentSend_P(SI_WEB_LINE_START);
+
+        if (p->feature.light){
+          WSContentSend_PD(PSTR(" &#x1F4A1; %d"), p->light);  // 💡 bulb
+        }
+
+        if (p->feature.Btn) {
+          if ((p->type == MI_BTHOME) && (p->button[1] != 0)){
+            for (uint32_t i = 0; i < sizeof(p->button); i++) {
+              if (p->button[i] > 0) {
+                uint32_t button = (255 == p->button[i]) ? 0 : p->button[i];
+                WSContentSend_PD(PSTR(" %d&#xFE0F;&#x20E3; %d"), i +1, button);  // 1️⃣ .. 8️⃣
+              }
+            }
+          } else {
+            WSContentSend_PD(PSTR(" 1&#xFE0F;&#x20E3; %d"), p->Btn);  // 1️⃣
+          }
+        }
+
+        WSContentSend_P(PSTR("{e}"));
+      }
+
+#ifdef USE_MI_DECRYPTION
+      char tmp[16];
+      if (p->needkey > KEY_REQUIRED_AND_INVALID) {
+        snprintf(tmp, sizeof(tmp), PSTR("?%d?"), p->needkey);
+      } else {
+        GetTextIndexed(tmp, sizeof(tmp), p->needkey, kKeyNeeded);
+      }
+
+      // adds the link to get the key.
+      // provides mac and callback address to receive the key, if we had a website which did this
+      // (future work)
+      // Optional new line: Encryption key
+      if (p->needkey != KEY_NOT_REQUIRED) {
+        WSContentSend_P(SI_WEB_LINE_START);
+        char MAC[18];
+        BLE_ESP32::dump(MAC, 13, p->MAC, 6);
+        WSContentSend_P(PSTR(" &#x1F511; <a target='_blank' href='https://tasmota.github.io/ble_key_extractor?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey'>%s</a>"), MAC, IPGetListeningAddressStr().c_str(), tmp);  // 🔑 key
+
+        if (p->pairing){
+          WSContentSend_P(PSTR(" &#x1F91D;"));  // 🤝 handshake
+        }
+
+        WSContentSend_P(PSTR("{e}"));
+      }
+#endif  // USE_MI_DECRYPTION
+
+    }
+
+    WSContentSend_P(SI_WEB_LINE_END);  // Terminate current multi column table and open new table
+    WSContentSend_P(PSTR("<tr><td colspan=2><div style='text-align:right;font-size:11px;color:#aaa;'>MI ESP32 " MI32_VERSION "</div>{e}"));
+
+#else  // don't USE_SENSOR_ICON
 
     static  uint16_t _page = 0;
     static  uint16_t _counter = 0;
@@ -4240,6 +4641,7 @@ void MI32Show(bool json)
     if (numsensors == 0) i=-1; // only for the GUI
 
     WSContentSend_P(HTTP_MI32, i + 1, stemp, numsensors);
+
     for (i; i<j; i++) {
       WSContentSend_P(HTTP_SNS_HR_THIN);
       mi_sensor_t *p;
@@ -4388,6 +4790,7 @@ void MI32Show(bool json)
         WSContentSend_PD(HTTP_PAIRING, label);
       }
     }
+
     _counter++;
     if(_counter>3) {
       _page++;
@@ -4395,6 +4798,9 @@ void MI32Show(bool json)
     }
     if (MIBLEsensors.size()%MI32.perPage == 0 && _page==MIBLEsensors.size()/MI32.perPage) { _page = 0; }
     if (_page>MIBLEsensors.size()/MI32.perPage) { _page = 0; }
+
+#endif  // don't USE_SENSOR_ICON
+
 #endif  // USE_WEBSERVER
   }
 }

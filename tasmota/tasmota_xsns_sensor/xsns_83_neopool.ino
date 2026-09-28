@@ -536,6 +536,7 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_CTIMER_ENABLED_LINKED           = 2,      // Timer enabled and linked to relay from timer 0
   MBV_PAR_CTIMER_ALWAYS_ON                = 3,      // Relay assigned to this timer always on
   MBV_PAR_CTIMER_ALWAYS_OFF               = 4,      // Relay assigned to this timer always off
+  MBV_PAR_CTIMER_COUNTDOWN_KEY            = 5,      // Relay assigned to this timer countdown mode
   MBV_PAR_CTIMER_COUNTDOWN_KEY_PLUS       = 0x0105, // Timer in countdown mode using + key
   MBV_PAR_CTIMER_COUNTDOWN_KEY_MINUS      = 0x0205, // Timer in countdown mode using - key
   MBV_PAR_CTIMER_COUNTDOWN_KEY_ARROWDOWN  = 0x0405, // Timer in countdown mode using arrow-down key
@@ -781,6 +782,20 @@ enum NeoPoolModbusCode {
   } NeoPoolStats;
 #endif
 
+// Aux modes
+enum NeoPoolAuxMode {
+  NEOPOOL_AUX_MODE_UNKNOWN = -1,
+  NEOPOOL_AUX_MODE_MANUAL,
+  NEOPOOL_AUX_MODE_TIMER,
+  NEOPOOL_AUX_MODE_COUNTDOWN
+};
+const uint16_t sNeoPoolAuxMode[] PROGMEM = {
+  MBF_PAR_TIMER_BLOCK_AUX1_INT1,
+  MBF_PAR_TIMER_BLOCK_AUX2_INT1,
+  MBF_PAR_TIMER_BLOCK_AUX3_INT1,
+  MBF_PAR_TIMER_BLOCK_AUX4_INT1
+};
+
 // NPResult possible values
 enum NeoPoolResult {
   NEOPOOL_RESULT_DEC = false,
@@ -863,6 +878,7 @@ TNeoPoolSettings NeoPoolSettings;
 #define D_NEOPOOL_JSON_RELAY_UV               "UV"
 #define D_NEOPOOL_JSON_RELAY_FILTVALVE        "Valve"
 #define D_NEOPOOL_JSON_AUX                    "Aux"
+#define D_NEOPOOL_JSON_AUXMODE                "AuxMode"
 #define D_NEOPOOL_JSON_STATE                  "State"
 #define D_NEOPOOL_JSON_TYPE                   "Type"
 #define D_NEOPOOL_JSON_UNIT                   "Unit"
@@ -2259,6 +2275,29 @@ void NeoPoolShow(bool json)
     ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_AUX  "\":["));
     for(uint16_t i = 3; i < NEOPOOL_RELAY_MAX; i++) {
       ResponseAppend_P(PSTR("%s%d"), i > 3 ? PSTR(",") : PSTR(""), (NeoPoolGetData(MBF_RELAY_STATE) >> i) & 1);
+    }
+    ResponseAppend_P(PSTR("]"));
+    ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_AUXMODE  "\":["));
+    for(uint16_t i = 3; i < NEOPOOL_RELAY_MAX; i++) {
+      uint16_t aux_mode;
+      switch (NeoPoolGetData(sNeoPoolAuxMode[i-3] + MBV_TIMER_OFFMB_TIMER_ENABLE) & 0x00FF) {
+        case MBV_PAR_CTIMER_ALWAYS_OFF:
+        case MBV_PAR_CTIMER_ALWAYS_ON:
+          aux_mode = NEOPOOL_AUX_MODE_MANUAL;
+          break;
+        case MBV_PAR_CTIMER_DISABLE:
+        case MBV_PAR_CTIMER_ENABLED:
+        case MBV_PAR_CTIMER_ENABLED_LINKED:
+          aux_mode = NEOPOOL_AUX_MODE_TIMER;
+          break;
+        case MBV_PAR_CTIMER_COUNTDOWN_KEY:
+          aux_mode = NEOPOOL_AUX_MODE_COUNTDOWN;
+          break;
+        default:
+          aux_mode = NEOPOOL_AUX_MODE_UNKNOWN;
+          break;
+      }
+      ResponseAppend_P(PSTR("%s%d"), i > 3 ? PSTR(",") : PSTR(""), aux_mode);
     }
     ResponseAppend_P(PSTR("]"));
     if (0 != NeoPoolGetData(MBF_PAR_PH_ACID_RELAY_GPIO)) {

@@ -155,6 +155,9 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
     else if(UUID==0x181a) { //ATC and PVVX - deprecated, change FW setting of these devices to BTHome V2
       MI32ParseATCPacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
     }
+    else if(UUID==0x181b) { // Xiaomi Mi Body Composition Scale (MIBCS/MIBFS)
+      MI32ParseMiScalePacket((char*)advertisedDevice->getServiceData(0).data(),ServiceDataLength, addr, RSSI);
+    }
     else if(MI32.option.handleEveryDevice == 1) {
         MI32HandleEveryDevice(advertisedDevice, addr, RSSI);
     }
@@ -576,6 +579,16 @@ uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
       _newSensor.feature.Btn=1;
       _newSensor.Btn=UINT8_MAX;
       break;
+    case MIBCS:
+      _newSensor.feature.weight=1;
+      _newSensor.feature.impedance=1;
+      _newSensor.weight=NAN;
+      _newSensor.impedance=0;
+      _newSensor.weightUnit=0;
+      _newSensor.scaleState=0;
+      _newSensor.scaleLastSeen=0;
+      memset(_newSensor.weight_history,0,sizeof(_newSensor.weight_history));
+      break;
     default:
       _newSensor.hum=NAN;
       _newSensor.feature.temp=1;
@@ -626,6 +639,10 @@ void MI32addHistory(uint8_t history[24], int value, const uint32_t type) {
     }
     case 2: { // light, 0..1000 lux
       scaled = changeIntScale((int16_t)value, 0, 1000, 1, 127);
+      break;
+    }
+    case 4: { // weight, 0..200 kg
+      scaled = changeIntScale((int16_t)value, 0, 200, 1, 127);
       break;
     }
     case 3: { // BLE sightings, count up to 127
@@ -2188,6 +2205,93 @@ void MI32ParseATCPacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI)
   if(MI32.option.directBridgeMode == 1) MI32.mode.shallTriggerTele = 1;
 }
 
+/**
+ * @brief Parse the 13-byte body composition record broadcast by the Xiaomi Mi Body Composition Scale
+ *        (MIBCS, XMTZC02HM) and Mi Body Composition Scale 2 (MIBFS, XMTZC05HM) as service data of UUID 0x181B.
+ *        Weight is published once per weighing session as soon as the "stable" flag is set, impedance once
+ *        its own "stable" flag is set. A session ends with the "finished" flag (user stepped off) or after
+ *        MI32_SCALE_SESSION_TIMEOUT seconds of silence.
+ */
+void MI32ParseMiScalePacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){
+  if (length < sizeof(MiScalePacket_t)) return;
+  MiScalePacket_t *_packet = (MiScalePacket_t*)_buf;
+  uint32_t _slot = MIBLEgetSensorSlot(addr, 0x181b, 0); // fake ID, no frame counter on this device
+  if(_slot==0xff) return;
+  mi_sensor_t &_sensor = MIBLEsensors[_slot];
+
+  const bool _stable    = (_packet->flagsB & 0x20) != 0;
+  const bool _impStable = (_packet->flagsB & 0x02) != 0;
+  const bool _finished  = (_packet->flagsB & 0x80) != 0;
+  const bool _overload  = (_packet->weight == 0xfff0);
+  const uint32_t _now = UpTime();
+
+  // session handling: new session on silence, or on the first non-finished packet after a finished one
+  if ((_now - _sensor.scaleLastSeen) > MI32_SCALE_SESSION_TIMEOUT) {
+    _sensor.scaleState = 0;
+  }
+  else if ((_sensor.scaleState & MI32_SCALE_FINISHED) && !_finished) {
+    _sensor.scaleState = 0;
+  }
+  _sensor.scaleLastSeen = _now;
+  _sensor.RSSI = RSSI;
+  if (_overload) return;
+
+  // live values, always updated so the web UI can show the weight while the user is standing on the scale
+  if (_packet->flagsB & 0x40) {        // jin
+    _sensor.weightUnit = 2;
+    _sensor.weight = (float)_packet->weight / 100.0f;
+  } else if (_packet->flagsA & 0x01) { // lb
+    _sensor.weightUnit = 1;
+    _sensor.weight = (float)_packet->weight / 100.0f;
+  } else {                             // kg
+    _sensor.weightUnit = 0;
+    _sensor.weight = (float)_packet->weight / 200.0f;
+  }
+  const bool _impValid = _impStable && (_packet->impedance != 0xfffe) && (_packet->impedance != 0xfffd) && (_packet->impedance != 0);
+
+  bool _send = false;
+  if (_stable && !(_sensor.scaleState & MI32_SCALE_WEIGHT_SENT)) {
+    _sensor.scaleState |= MI32_SCALE_WEIGHT_SENT;
+    _sensor.eventType.weight = 1;
+    _send = true;
+#ifdef USE_MI_EXT_GUI
+    // history is kept in kg; convert lb and jin
+    float _kg = _sensor.weight;
+    if (_sensor.weightUnit == 1) _kg *= 0.45359237f;
+    if (_sensor.weightUnit == 2) _kg *= 0.5f;
+    MI32addHistory(_sensor.weight_history, (int)(_kg + 0.5f), 4);
+#endif //USE_MI_EXT_GUI
+  }
+  if (_impValid && !(_sensor.scaleState & MI32_SCALE_IMPEDANCE_SENT)) {
+    _sensor.impedance = _packet->impedance;
+    _sensor.scaleState |= MI32_SCALE_IMPEDANCE_SENT;
+    _sensor.eventType.impedance = 1;
+    _sensor.eventType.weight = 1; // repeat the weight so the impedance message is self-contained
+    _send = true;
+  }
+  if (_finished) {
+    if (!(_sensor.scaleState & (MI32_SCALE_IMPEDANCE_SENT | MI32_SCALE_FAILED_SENT))) {
+      _sensor.scaleState |= MI32_SCALE_FAILED_SENT;
+      _sensor.eventType.impedanceFailed = 1;
+      _sensor.eventType.weight = 1;
+      _send = true;
+    }
+    _sensor.scaleState |= MI32_SCALE_FINISHED;
+  }
+  if (!_send) {
+#ifdef USE_MI_EXT_GUI
+    bitSet(MI32.widgetSlot,_slot);
+#endif //USE_MI_EXT_GUI
+    return;
+  }
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: scale slot %u weight %1_f imp %u state %02x"), _slot, &_sensor.weight, _sensor.impedance, _sensor.scaleState);
+#ifdef USE_MI_EXT_GUI
+  bitSet(MI32.widgetSlot,_slot);
+#endif //USE_MI_EXT_GUI
+  _sensor.shallSendMQTT = 1;
+  if(MI32.option.directBridgeMode == 1) MI32.mode.shallTriggerTele = 1;
+}
+
 void MI32parseCGD1Packet(char * _buf, uint32_t length, uint8_t addr[6], int RSSI){ // no MiBeacon
   uint32_t _slot = MIBLEgetSensorSlot(addr, 0x0576, 0); // This must be hard-coded, no object-id in Cleargrass-packet, we have no packet counter too
   if(_slot==0xff) return;
@@ -2780,6 +2884,20 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("<p>No leak</p>"));
     }
   }
+  if(_sensor.feature.weight == 1){
+    if(!isnan(_sensor.weight)){
+      char _graph[256];
+      char _unit[8];
+      char _weightStr[16];
+      GetTextIndexed(_unit, sizeof(_unit), _sensor.weightUnit, kMI32_ScaleUnit);
+      ext_snprintf_P(_weightStr, sizeof(_weightStr), PSTR("%*_f"), -2, &_sensor.weight);
+      MI32createGraph(_graph, _sensor.weight_history, 185, 124, 124);
+      WSContentSend_P(PSTR("<p>Weight: %s %s%s</p>"), _weightStr, _unit, _graph);
+    }
+    if(_sensor.impedance != 0){
+      WSContentSend_P(PSTR("<p>Impedance: %u Ω</p>"), _sensor.impedance);
+    }
+  }
   if(_sensor.feature.payload == 1){
     if(_sensor.payload != nullptr){
       char _payload[128];
@@ -2823,6 +2941,8 @@ const char HTTP_MI32[] PROGMEM = "{s}Mi ESP32 {m} %u devices{e}";
 #ifndef USE_MI_EXT_GUI
 const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u %%{e}";
 const char HTTP_LASTBUTTON[] PROGMEM = "{s}%s Last Button{m}%u {e}";
+const char HTTP_MI32_WEIGHT[] PROGMEM = "{s}%s Weight{m}%*_f %s{e}";
+const char HTTP_MI32_IMPEDANCE[] PROGMEM = "{s}%s Impedance{m}%u Ω{e}";
 const char HTTP_EVENTS[] PROGMEM = "{s}%s Events{m}%u {e}";
 const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";
 const char HTTP_DOOR[] PROGMEM = "{s}%s Door{m}> %u open/closed{e}";
@@ -2984,6 +3104,24 @@ void MI32Show(bool json)
           }
         }
       }
+      if (MIBLEsensors[i].feature.weight == 1){
+        if(MIBLEsensors[i].eventType.weight == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
+          if (!isnan(MIBLEsensors[i].weight)) {
+            char _unit[8];
+            GetTextIndexed(_unit, sizeof(_unit), MIBLEsensors[i].weightUnit, kMI32_ScaleUnit);
+            MI32ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Weight\":%*_f,\"Unit\":\"%s\""), -2, &MIBLEsensors[i].weight, _unit);
+          }
+        }
+        if(MIBLEsensors[i].eventType.impedance == 1 || ((MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1) && MIBLEsensors[i].impedance != 0)){
+          MI32ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"Impedance\":%u"), MIBLEsensors[i].impedance);
+        }
+        if(MIBLEsensors[i].eventType.impedanceFailed == 1){
+          MI32ShowContinuation(&commaflg);
+          ResponseAppend_P(PSTR("\"ImpedanceFailed\":1"));
+        }
+      }
       if (MIBLEsensors[i].feature.payload == 1){
         if(MIBLEsensors[i].eventType.payload == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
           if ((MIBLEsensors[i].payload != nullptr)) {
@@ -3066,6 +3204,16 @@ void MI32Show(bool json)
         }
         if (MIBLEsensors[i].type==YLYK01){
           WSContentSend_PD(HTTP_LASTBUTTON, _sensorName, MIBLEsensors[i].Btn);
+        }
+        if (MIBLEsensors[i].type==MIBCS){
+          if (!isnan(MIBLEsensors[i].weight)) {
+            char _unit[8];
+            GetTextIndexed(_unit, sizeof(_unit), MIBLEsensors[i].weightUnit, kMI32_ScaleUnit);
+            WSContentSend_PD(HTTP_MI32_WEIGHT, _sensorName, -2, &MIBLEsensors[i].weight, _unit);
+          }
+          if (MIBLEsensors[i].impedance != 0) {
+            WSContentSend_PD(HTTP_MI32_IMPEDANCE, _sensorName, MIBLEsensors[i].impedance);
+          }
         }
       }
 #endif //USE_MI_EXT_GUI

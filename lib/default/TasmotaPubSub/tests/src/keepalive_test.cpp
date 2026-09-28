@@ -15,16 +15,18 @@
     - A scripted PINGRESP clears the outstanding-ping state, so the connection
       stays alive and a later idle interval issues a further PINGREQ instead of
       declaring a timeout (Requirement 12.2).
-    - Advancing beyond the interval a second time with no PINGRESP reports a lost
-      connection (Requirement 12.3).
+    - Up to MQTT_MAX_PING_OUTSTANDING (setMaxPingOutstanding()) PINGREQ may stay
+      unanswered, one per interval; the next interval with no PINGRESP reports a
+      lost connection (Requirement 12.3, issue #24985).
 
   Properties (folded in as single deterministic, data-driven cases over a curated
   interval table {15 s default, 2 s short} - NO randomized generators):
     - Property 8: exactly one PINGREQ is issued per idle interval, and after a
       matching PINGRESP another PINGREQ is issued on the next interval rather
       than a timeout being declared (Requirements 12.1, 12.2, 18.9).
-    - Property 9: advancing beyond two consecutive intervals with no PINGRESP
-      reports a lost/timed-out connection (Requirements 12.3, 18.8, 18.9).
+    - Property 9: with a budget of N tolerated pings, advancing beyond N+1
+      consecutive intervals with no PINGRESP reports a lost/timed-out connection
+      (Requirements 12.3, 18.8, 18.9).
 
   Every assertion goes through the public API and decoded MockClient.outbound()
   wire bytes - never private members - so the baseline stays durable across a
@@ -70,6 +72,19 @@ bool isSinglePingreq(const std::vector<uint8_t>& out) {
            d.flags == 0x00 &&
            d.remainingLength == 0 &&
            out.size() == 2;
+}
+
+// Advance `count` idle intervals without delivering any PINGRESP, checking that
+// each one emits exactly one PINGREQ and leaves the connection up.
+void sendUnansweredPings(MockClient& client, PubSubClient& psc, uint16_t keepAliveSecs, uint8_t count) {
+    for (uint8_t i = 0; i < count; i++) {
+        CAPTURE(i);
+        client.clearOutbound();
+        advanceBeyondInterval(keepAliveSecs);
+        REQUIRE(psc.loop());
+        CHECK(isSinglePingreq(client.outbound()));
+        CHECK(psc.connected());
+    }
 }
 
 }  // namespace
@@ -130,19 +145,74 @@ TEST_SUITE("baseline") {
         MockClient client;
         PubSubClient psc(client);
         connectAndClear(client, psc, MQTT_KEEPALIVE);
+        REQUIRE(psc.getMaxPingOutstanding() == MQTT_MAX_PING_OUTSTANDING);
 
-        // First interval: PINGREQ sent, ping now outstanding.
-        advanceBeyondInterval(MQTT_KEEPALIVE);
-        REQUIRE(psc.loop());
-        REQUIRE(isSinglePingreq(client.outbound()));
+        // One PINGREQ per interval while fewer than MQTT_MAX_PING_OUTSTANDING are
+        // unanswered; the connection stays up.
+        sendUnansweredPings(client, psc, MQTT_KEEPALIVE, MQTT_MAX_PING_OUTSTANDING);
 
-        // Second interval with no PINGRESP delivered: the library detects the
-        // unanswered ping and reports a lost/timed-out connection.
+        // Next interval with still no PINGRESP delivered: the library detects the
+        // unanswered pings and reports a lost/timed-out connection.
         advanceBeyondInterval(MQTT_KEEPALIVE);
         CHECK_FALSE(psc.loop());
         CHECK_FALSE(psc.connected());
         CHECK(psc.state() == MQTT_CONNECTION_TIMEOUT);
         CHECK(client.stopCalled());
+    }
+
+    // --- Tolerated unanswered PINGREQ (issue #24985) -------------------------
+
+    TEST_CASE("setMaxPingOutstanding(1) restores the original single-ping timeout") {
+        TestClock::instance().reset();
+        MockClient client;
+        PubSubClient psc(client);
+        psc.setMaxPingOutstanding(1);
+        connectAndClear(client, psc, MQTT_KEEPALIVE);
+
+        advanceBeyondInterval(MQTT_KEEPALIVE);
+        REQUIRE(psc.loop());
+        REQUIRE(isSinglePingreq(client.outbound()));
+
+        advanceBeyondInterval(MQTT_KEEPALIVE);
+        CHECK_FALSE(psc.loop());
+        CHECK(psc.state() == MQTT_CONNECTION_TIMEOUT);
+        CHECK(client.stopCalled());
+    }
+
+    TEST_CASE("setMaxPingOutstanding clamps to 1..4") {
+        MockClient client;
+        PubSubClient psc(client);
+        CHECK(psc.setMaxPingOutstanding(0).getMaxPingOutstanding() == 1);
+        CHECK(psc.setMaxPingOutstanding(3).getMaxPingOutstanding() == 3);
+        CHECK(psc.setMaxPingOutstanding(200).getMaxPingOutstanding() == 4);
+    }
+
+    TEST_CASE("a late PINGRESP after a second PINGREQ keeps the connection alive") {
+        TestClock::instance().reset();
+        MockClient client;
+        PubSubClient psc(client);
+        psc.setMaxPingOutstanding(2);
+        connectAndClear(client, psc, MQTT_KEEPALIVE);
+
+        // Two intervals without answer: two PINGREQ, still connected.
+        sendUnansweredPings(client, psc, MQTT_KEEPALIVE, 2);
+
+        // Both PINGRESP arrive late (TCP retransmission recovered); the counter is
+        // cleared and the surplus PINGRESP is harmless.
+        client.clearOutbound();
+        client.pushPacket(MqttPacket::pingresp());
+        client.pushPacket(MqttPacket::pingresp());
+        REQUIRE(psc.loop());
+        REQUIRE(psc.loop());
+        CHECK(client.outbound().empty());
+        CHECK(psc.connected());
+
+        // A full new budget is available again: two more unanswered intervals do
+        // not time out, the third does.
+        sendUnansweredPings(client, psc, MQTT_KEEPALIVE, 2);
+        advanceBeyondInterval(MQTT_KEEPALIVE);
+        CHECK_FALSE(psc.loop());
+        CHECK(psc.state() == MQTT_CONNECTION_TIMEOUT);
     }
 
     // --- Property 8: exactly one PINGREQ per idle interval ------------------
@@ -194,34 +264,38 @@ TEST_SUITE("baseline") {
 
     // --- Property 9: missing PINGRESP produces a lost connection ------------
 
-    // Feature: tasmota-pubsub-tests, Property 9: for all keepalive intervals,
-    // advancing the virtual clock beyond two consecutive intervals without
-    // delivering a PINGRESP causes the library to report a lost/timed-out
-    // connection. Validated deterministically over a curated interval table
-    // (default 15 s and a short 2 s), no randomized generators.
-    TEST_CASE("Property 9: missing PINGRESP over two intervals reports a lost connection") {
+    // Feature: tasmota-pubsub-tests, Property 9: for all keepalive intervals and
+    // all tolerated-ping budgets N, advancing the virtual clock beyond N
+    // consecutive intervals without a PINGRESP sends exactly one PINGREQ per
+    // interval and keeps the connection; the (N+1)th interval reports a
+    // lost/timed-out connection. Validated deterministically over a curated
+    // interval table (default 15 s and a short 2 s) and N in {1, 2, 4}, no
+    // randomized generators.
+    TEST_CASE("Property 9: missing PINGRESP over N+1 intervals reports a lost connection") {
         const uint16_t intervals[] = {MQTT_KEEPALIVE, 2};
+        const uint8_t budgets[] = {1, 2, 4};
 
         for (uint16_t keepAliveSecs : intervals) {
-            CAPTURE(keepAliveSecs);
-            TestClock::instance().reset();
-            MockClient client;
-            PubSubClient psc(client);
-            connectAndClear(client, psc, keepAliveSecs);
+            for (uint8_t budget : budgets) {
+                CAPTURE(keepAliveSecs);
+                CAPTURE(budget);
+                TestClock::instance().reset();
+                MockClient client;
+                PubSubClient psc(client);
+                psc.setMaxPingOutstanding(budget);
+                connectAndClear(client, psc, keepAliveSecs);
 
-            // First interval: PINGREQ sent, connection still alive.
-            advanceBeyondInterval(keepAliveSecs);
-            REQUIRE(psc.loop());
-            CHECK(isSinglePingreq(client.outbound()));
-            CHECK(psc.connected());
+                // N intervals: one PINGREQ each, connection still alive.
+                sendUnansweredPings(client, psc, keepAliveSecs, budget);
 
-            // Second interval with no PINGRESP: the unanswered ping trips the
-            // keepalive timeout and the connection is reported lost.
-            advanceBeyondInterval(keepAliveSecs);
-            CHECK_FALSE(psc.loop());
-            CHECK_FALSE(psc.connected());
-            CHECK(psc.state() == MQTT_CONNECTION_TIMEOUT);
-            CHECK(client.stopCalled());
+                // Next interval with no PINGRESP: the unanswered pings trip the
+                // keepalive timeout and the connection is reported lost.
+                advanceBeyondInterval(keepAliveSecs);
+                CHECK_FALSE(psc.loop());
+                CHECK_FALSE(psc.connected());
+                CHECK(psc.state() == MQTT_CONNECTION_TIMEOUT);
+                CHECK(client.stopCalled());
+            }
         }
     }
 }

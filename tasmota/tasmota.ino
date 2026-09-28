@@ -52,6 +52,7 @@
 #include <ext_printf.h>
 #include <SBuffer.hpp>
 #include <LList.h>
+#include <PubSubClient.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef ESP8266
@@ -192,6 +193,10 @@ struct TIME_T {
   uint32_t      valid;
 } RtcTime;
 
+#if MQTT_VERSION == MQTT_VERSION_5_0
+struct MqttCommandContext;
+#endif
+
 struct XDRVMAILBOX {
   bool          grpflg;
   bool          usridx;
@@ -202,6 +207,9 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
   char         *command;
+#if MQTT_VERSION == MQTT_VERSION_5_0
+  const MqttCommandContext *mqtt_context;
+#endif
 } XdrvMailbox;
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
@@ -684,8 +692,12 @@ void setup(void) {
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
     const char* second_spec = strchr(first_spec + 1, '%');
-    if (first_spec && second_spec) {
+    bool use_topic_only = (first_spec && !second_spec && ('s' == *(first_spec +1)));  // #24731 Backward compatibility to undocumented single specifier "%s"
+    if (use_topic_only || (first_spec && second_spec)) {
       // Two (or more) specifiers: expands first as mqtt topic and second as chip ID
+      // In C, the extra argument is safely ignored by the compiler and runtime.
+      // The function reads the format string, sees one specifier, grabs the first matching argument from the stack,
+      // and prints it. The second argument is simply left untouched in memory.
       snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
     } else {
       // One specifier: use Format() which handles %NX = last N MAC hex chars, %Nd = short chip ID dec, %d = full chip ID dec

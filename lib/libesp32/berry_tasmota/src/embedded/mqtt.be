@@ -1,5 +1,5 @@
 #- ------------------------------------------------------------ -#
-#  Module `lv_tasmota` - piggybacks on `lv` to extend it
+#  Module `mqtt` - Berry bindings for the Tasmota MQTT client
 #- ------------------------------------------------------------ -#
 
 #-
@@ -50,7 +50,7 @@ class MQTT : MQTT_ntv
       end
 
       def mqtt_data(topic, idx, payload_s, payload_b)
-        # check if the topic matches the patter
+        # check if the topic matches the pattern
         import string
         var topic_elts = string.split(topic, '/')
         var topic_sz = size(topic_elts)
@@ -91,9 +91,10 @@ class MQTT : MQTT_ntv
     return mqtt_listener
   end
 
+  # Subscribe to `topic`, routing matching messages to `closure`.
+  # Inbound MQTT 5.0 properties, when present, are available in the closure via `mqtt.metadata()`.
   def subscribe(topic, closure)
     self.lazy_init()
-    var found = false
     for m : self.topics
       if m.fulltopic == topic && m.closure == closure
         return                                       # we have already the subscription, ignore
@@ -104,15 +105,15 @@ class MQTT : MQTT_ntv
       tasmota.check_not_method(closure)
       self.topics.push(mqtt_listener(topic, closure))
     else
-      self.topics.push(mqtt_listener(topic))
+      self.topics.push(mqtt_listener(topic))         # no closure attached (command routing only)
     end
     self._subscribe(topic)
   end
 
-  # if topic == nil, unsuscribe to all
+  # if topic == nil, unsubscribe from all
   def unsubscribe(topic)
     if self.topics == nil  return end                 # nothing to do
-    
+
     var i = 0
     while i < size(self.topics)
       if topic == nil || self.topics[i].fulltopic == topic
@@ -125,6 +126,13 @@ class MQTT : MQTT_ntv
 
     if topic != nil  self._unsubscribe(topic) end
   end
+
+  # Native methods (from MQTT_ntv), documented here for reference:
+  #   mqtt.is_request() -> bool
+  #     true while handling an inbound MQTT 5.0 request (a message carrying a Response Topic)
+  #   mqtt.respond(payload) -> bool
+  #     reply to that request: publishes to its Response Topic, echoes its Correlation Data,
+  #     QoS 0 and non-retained. Returns true if a response was sent.
 
   def mqtt_data(topic, idx, payload_s, payload_b)
     if self.topics == nil  return end
@@ -141,8 +149,7 @@ class MQTT : MQTT_ntv
   def mqtt_connect()    # called when MQTT connects or re-connects
     tasmota.log("BRY: mqtt subscribe all registered topics", 3)
     for m : self.topics
-      var fulltopic = m.fulltopic
-      self._subscribe(fulltopic)
+      self._subscribe(m.fulltopic)
     end
     return false
   end
@@ -154,17 +161,22 @@ end
 import mqtt
 def p1(a,b,c) print("mqtt1",a,b,c) end
 def p2(a,b,c) print("mqtt2",a,b,c) end
-def p3(a,b,c) print("mqtt3",a,b,c) end
 
 mqtt.subscribe("/a/b", p1)
 mqtt.subscribe("/a/b/c", p2)
-#mqtt.subscribe("#", p3)
+
+# MQTT 5.0 request/response: reply to a request with a single call. `respond` reuses the
+# inbound Response Topic and Correlation Data automatically.
+def ping(topic, idx, s, b)
+  if mqtt.is_request()
+    mqtt.respond("pong")            # -> true, replies to the request's response topic
+  end
+end
+mqtt.subscribe("device/ping", ping)
 
 print(">unsub /a/b")
 mqtt.unsubscribe("/a/b")
 print(">unsub all")
 mqtt.unsubscribe()
 
-
 -#
-

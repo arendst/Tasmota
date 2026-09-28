@@ -16,14 +16,18 @@
       retained flag on/off.
 
   Hardening (TEST_SUITE("hardening")):
-    - F-04 (Requirement 9.4, expected PASS): a declared payload length exceeding
-      the 16-bit range must not emit a truncated Remaining Length that desyncs the
-      framing. beginPublish() takes a uint32_t Remaining Length and buildHeader is
-      bounded to four length bytes. Because beginPublish() buffers only the header
-      (the payload is streamed via write()), a very large *declared* length is
-      feasible to frame without allocating the payload, so the emitted fixed-header
-      Remaining Length is verified to equal plength + 2 + topicLen (full 32-bit)
-      rather than a 16-bit truncation. Marked FINDING_MARKER(F04).
+    - F-04 is deliberately WITHDRAWN by the tasmota-pubsub-mqtt5 design. F-04 used
+      to guarantee that a declared payload length above the 16-bit range was framed
+      across a 3- or 4-byte Remaining Length instead of being truncated. The MQTT 5.0
+      migration hard-limits the Variable Byte Integer codec to 2 bytes
+      (MQTT_VBI_MAX == 16383), so large streamed payloads are no longer framed at
+      all: an over-limit beginPublish() is REFUSED outright. What replaces F-04 is
+      Property 28 (Requirements 4.9, 4.10, 8.17) - refusal is total, never
+      truncated: zero bytes are transmitted for the refused packet and the
+      connection state is left unchanged, so the outbound byte stream stays
+      synchronized. The case below therefore asserts refusal above 16,383 and
+      correct 2-byte framing at and just below it, pinning the boundary from both
+      sides. Still marked FINDING_MARKER(F04) so the withdrawal stays traceable.
     - Property 13 / F-05 (Requirement 9.5, expected FAIL): with a partial transport
       write injected (MockClient::setWriteLimit), the publish path should report
       failure and leave the connection unusable with intact framing so no later
@@ -50,6 +54,9 @@
 #include "PubSubClient.h"
 
 namespace {
+
+constexpr uint32_t kLibraryRemainingLengthMax =
+    kMqtt5 ? 16383u : 268435455u;
 
 // Deterministic payload of length n. The pattern intentionally produces 0x00
 // bytes so the round-trip also proves the streaming path is binary-safe (no
@@ -241,14 +248,16 @@ TEST_SUITE("baseline") {
         }
     }
 
-    // Property 4 for streamed payloads that cross the 16-bit Remaining Length
-    // boundary, asserted against the library's *real* emitted bytes. The buffered
-    // publish() path cannot frame these (its payload must fit the working
-    // buffer), but the streaming path frames them because the payload is not
-    // buffered. This exercises the 2->3 byte Remaining Length transition and
-    // payloads above 65535 bytes end to end.
+    // Property 4 for streamed payloads at the Remaining Length limit, asserted
+    // against the library's *real* emitted bytes. The streaming path is not
+    // bounded by the working buffer (only its header is buffered), so the binding
+    // limit depends on the selected profile. MQTT 5 uses a two-byte Variable
+    // Byte Integer (`kLibraryRemainingLengthMax == 16383`), while the restored
+    // MQTT 3.1.1 implementation retains one-to-four-byte Remaining Length support.
+    // Payloads within the selected limit round-trip end to end; larger values are
+    // refused without emitting bytes.
     TEST_CASE("Property 4: streaming PUBLISH field round-trip across the 16-bit boundary") {
-        const size_t payloadLengths[] = {16383, 16384, 65535, 65536};
+        const size_t payloadLengths[] = {16379, 16380, 16381, 16383, 16384, 65535, 65536};
         const bool retainedFlags[] = {false, true};
         const std::string topic = "t";  // small topic keeps the header tiny
 
@@ -261,10 +270,20 @@ TEST_SUITE("baseline") {
                 PubSubClient psc(client);
                 connectAndClear(client, psc);
 
+                // Remaining Length = 2 + topicLen + plength.
+                const size_t rl = 2 + topic.size() + plen;
                 const std::vector<uint8_t> payload = makePayload(plen);
-                // Buffered write is used so the large payload is emitted in one
-                // call; the recorded outbound bytes are the full PUBLISH.
-                REQUIRE(streamPublish(psc, topic, payload, retained, WriteMode::Buffered));
+                // Buffered write is used so the payload is emitted in one call;
+                // the recorded outbound bytes are the full PUBLISH.
+                const bool ok = streamPublish(psc, topic, payload, retained, WriteMode::Buffered);
+
+                if (rl > kLibraryRemainingLengthMax) {
+                    CHECK_FALSE(ok);
+                    CHECK(client.outbound().empty());
+                    CHECK(psc.connected());
+                    continue;
+                }
+                REQUIRE(ok);
 
                 const std::vector<uint8_t>& out = client.outbound();
                 REQUIRE(MqttParser::isStructurallyValidPublish(out));
@@ -281,75 +300,106 @@ TEST_SUITE("baseline") {
 
 TEST_SUITE("hardening") {
 
-    // F-04 (Requirement 9.4): a declared payload length exceeding the 16-bit
-    // range must not emit a truncated Remaining Length that desynchronizes the
-    // packet framing. beginPublish() buffers only the header (fixed header +
-    // Remaining Length + topic) and streams the payload separately, so a very
-    // large *declared* length can be framed without allocating the payload.
-    // Verify the emitted Remaining Length equals plength + 2 + topicLen using the
-    // full 32-bit value rather than a 16-bit truncation, and that the header's
-    // byte layout stays self-consistent. F-04 is hardened in the current fork
-    // (32-bit buildHeader bounded to four length bytes), so this is expected PASS.
-    TEST_CASE("F-04 large declared payload length frames the Remaining Length without truncation"
+    // F-04 WITHDRAWN - replaced by Property 28 (Requirements 4.9, 4.10, 8.17).
+    //
+    // F-04 originally pinned this behavior: a declared payload length above the
+    // 16-bit range had to be framed across a 3- or 4-byte Remaining Length rather
+    // than truncated, because beginPublish() buffers only the header and streams
+    // the payload, so a very large *declared* length was feasible to frame.
+    //
+    // The tasmota-pubsub-mqtt5 design deliberately retires that contract. The
+    // Variable Byte Integer codec is hard-limited to 2 bytes (MQTT_VBI_MAX ==
+    // 16383), so a Remaining Length above 16,383 is not framed at all - it is
+    // refused. Property 28 replaces F-04's value: refusal is total, never
+    // truncated. For every over-limit declared length the client transmits zero
+    // bytes, returns failure to the caller, and leaves the connection state
+    // unchanged, so the outbound byte stream stays synchronized (Requirement 8.17
+    // for the streaming path specifically, 4.9/4.10 generally).
+    //
+    // The boundary is pinned from both sides: Remaining Lengths of 16,382 and
+    // 16,383 still frame correctly in exactly two length bytes, 16,384 is refused.
+    TEST_CASE("F-04 withdrawn: an over-limit declared payload length is refused, never truncated"
               * FINDING_MARKER(F04)) {
         const std::string topic = "t";          // topicLen == 1
         const size_t topicLen = topic.size();
-        // Declared lengths that force Remaining Length above the 16-bit range,
-        // including the 2->3 and 3->4 byte transitions and the MQTT maximum.
-        // Remaining Length = plength + 2 + topicLen.
-        const unsigned int plengths[] = {
-            65533u,                 // RL = 65536  (first value needing 3 bytes)
-            65536u,                 // RL = 65539  (3 bytes)
-            100000u,                // RL = 100003 (3 bytes)
-            2097149u,               // RL = 2097152 (first value needing 4 bytes)
-            10000000u,              // RL = 10000003 (4 bytes)
-            268435455u - 2u - 1u,   // RL = 268435455 (MQTT maximum, 4 bytes)
-        };
+        // Remaining Length = plength + 2 + topicLen, so plength = RL - 2 - topicLen.
+        const unsigned int overhead = static_cast<unsigned int>(2u + topicLen);
 
-        for (unsigned int plen : plengths) {
-            CAPTURE(plen);
-            TestClock::instance().reset();
-            MockClient client;
-            PubSubClient psc(client);
-            connectAndClear(client, psc);
+        SUBCASE("declared lengths above the 2-byte limit are refused with nothing emitted") {
+            // The original F-04 vectors, now expected to be refused outright.
+            const unsigned int plengths[] = {
+                65533u,                 // RL = 65536    (used to need 3 bytes)
+                65536u,                 // RL = 65539    (3 bytes)
+                100000u,                // RL = 100003   (3 bytes)
+                2097149u,               // RL = 2097152  (used to need 4 bytes)
+                10000000u,              // RL = 10000003 (4 bytes)
+                268435455u - 2u - 1u,   // RL = 268435455 (old MQTT maximum)
+                16384u - overhead,      // RL = 16384, the first refused value
+            };
 
-            // beginPublish emits the header only; with no write limit the mock
-            // accepts every byte so beginPublish reports success.
-            REQUIRE(psc.beginPublish(topic.c_str(), plen, false));
+            for (unsigned int plen : plengths) {
+                CAPTURE(plen);
+                TestClock::instance().reset();
+                MockClient client;
+                PubSubClient psc(client);
+                connectAndClear(client, psc);
 
-            const std::vector<uint8_t>& out = client.outbound();
-            REQUIRE(out.size() >= 2);
+                // Refused: the Remaining Length does not fit two bytes.
+                CHECK_FALSE(psc.beginPublish(topic.c_str(), plen, false));
 
-            // Fixed-header high nibble is PUBLISH, retain bit clear.
-            CHECK(static_cast<uint8_t>(out[0] & 0xF0) == static_cast<uint8_t>(MQTTPUBLISH));
-            CHECK((out[0] & 0x01) == 0x00);
+                // Not one byte of the refused packet reaches the transport, so a
+                // truncated or wrapped Remaining Length can never desync the stream.
+                CHECK(client.outbound().empty());
 
-            // Decode the Remaining Length field directly from the emitted header.
-            uint32_t rl = 0;
-            size_t rlBytes = 0;
-            REQUIRE(MqttParser::decodeRemainingLength(out, 1, rl, rlBytes));
-
-            const uint32_t expected =
-                static_cast<uint32_t>(plen) + 2u + static_cast<uint32_t>(topicLen);
-
-            // The Remaining Length is the full 32-bit value, not a 16-bit
-            // truncation that would desync framing.
-            CHECK(rl == expected);
-            if (expected > 0xFFFFu) {
-                CHECK(rl != (expected & 0xFFFFu));
+                // The connection state is untouched by the refusal.
+                CHECK(psc.connected());
+                CHECK_FALSE(client.stopCalled());
             }
+        }
 
-            // Header framing stays self-consistent: beginPublish emits exactly
-            // the fixed header (1) + Remaining Length bytes + topic length prefix
-            // (2) + topic bytes. No payload has been streamed yet.
-            CHECK(out.size() == 1u + rlBytes + 2u + topicLen);
+        SUBCASE("declared lengths at and just below the limit still frame in two length bytes") {
+            const uint32_t remainingLengths[] = {16382u, 16383u};
 
-            // The emitted 2-byte topic length prefix matches the topic.
-            const size_t topicLenPos = 1u + rlBytes;
-            REQUIRE(out.size() >= topicLenPos + 2u);
-            const uint16_t emittedTopicLen = static_cast<uint16_t>(
-                (out[topicLenPos] << 8) | out[topicLenPos + 1]);
-            CHECK(emittedTopicLen == topicLen);
+            for (uint32_t rlWanted : remainingLengths) {
+                CAPTURE(rlWanted);
+                const unsigned int plen = static_cast<unsigned int>(rlWanted - overhead);
+                CAPTURE(plen);
+                TestClock::instance().reset();
+                MockClient client;
+                PubSubClient psc(client);
+                connectAndClear(client, psc);
+
+                REQUIRE(psc.beginPublish(topic.c_str(), plen, false));
+
+                const std::vector<uint8_t>& out = client.outbound();
+                REQUIRE(out.size() >= 3);
+
+                // Fixed-header high nibble is PUBLISH, retain bit clear.
+                CHECK(static_cast<uint8_t>(out[0] & 0xF0) == static_cast<uint8_t>(MQTTPUBLISH));
+                CHECK((out[0] & 0x01) == 0x00);
+
+                // Exactly two Remaining Length bytes, decoding to the wanted value.
+                uint32_t rl = 0;
+                size_t rlBytes = 0;
+                REQUIRE(MqttParser::decodeRemainingLength(out, 1, rl, rlBytes));
+                CHECK(rl == rlWanted);
+                CHECK(rlBytes == 2u);
+
+                // The expected two length bytes, spelled out.
+                CHECK(out[1] == static_cast<uint8_t>((rlWanted & 0x7Fu) | 0x80u));
+                CHECK(out[2] == static_cast<uint8_t>(rlWanted >> 7));
+
+                // Header framing stays self-consistent: fixed header (1) +
+                // Remaining Length (2) + topic length prefix (2) + topic bytes.
+                // No payload has been streamed yet.
+                CHECK(out.size() == 1u + rlBytes + 2u + topicLen);
+
+                const size_t topicLenPos = 1u + rlBytes;
+                REQUIRE(out.size() >= topicLenPos + 2u);
+                const uint16_t emittedTopicLen = static_cast<uint16_t>(
+                    (out[topicLenPos] << 8) | out[topicLenPos + 1]);
+                CHECK(emittedTopicLen == topicLen);
+            }
         }
     }
 

@@ -210,9 +210,13 @@ extern "C" IRAM_ATTR void custom_crash_recorder(XtExcFrame *exc_frame, bool pseu
 
   static const uint32_t depth = 100;
   //Check if first frame is valid
-  bool corrupted = (esp_stack_ptr_is_sane(stk_frame.sp) &&
-                    esp_ptr_executable((void*)esp_cpu_process_stack_pc(stk_frame.pc))) ?
-                    false : true;
+  // On an instruction fetch exception the pc is the bad address the CPU jumped to, not code, while a0/a1
+  // still describe the frame that made the jump. Keep walking so the caller stays visible, same as
+  // esp_backtrace_print_from_frame() does.
+  bool corrupted = !(esp_stack_ptr_is_sane(stk_frame.sp) &&
+                     (esp_ptr_executable((void*)esp_cpu_process_stack_pc(stk_frame.pc)) ||
+                      exc_frame->exccause == EXCCAUSE_INSTR_PROHIBITED ||
+                      exc_frame->exccause == EXCCAUSE_INSTR_ERROR));
   uint32_t i = ((depth <= 0) ? INT32_MAX : depth) - 1;    //Account for stack frame that's already printed
   while (i-- > 0 && stk_frame.next_pc != 0 && !corrupted) {
       if (!esp_backtrace_get_next_frame(&stk_frame)) {    //Get next stack frame

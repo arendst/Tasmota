@@ -117,7 +117,13 @@ class Matter_Commissioning
     self.commissioning_L  = L
     self.commissioning_admin_fabric = admin_fabric
 
-    tasmota.when_network_up(def () self.mdns_announce_PASE() end)
+    # If network is down, the announce is deferred; the window may be closed
+    # by then (timeout, revoke...), so check again before announcing
+    tasmota.when_network_up(def ()
+      if self.commissioning_open != nil
+        self.mdns_announce_PASE()
+      end
+    end)
   end
 
   #############################################################
@@ -300,10 +306,17 @@ class Matter_Commissioning
     var sii = 500     # SESSION_IDLE_INTERVAL: 500ms (spec default)
     var sai = 300     # SESSION_ACTIVE_INTERVAL: 300ms (spec default)
 
+    # Remove any previous PASE announce before creating new random instance names,
+    # otherwise re-opening an already open window leaves an orphan `_matterc` entry
+    self.mdns_remove_PASE()
+
+    # CM=1 Basic Commissioning (root passcode), CM=2 Enhanced Commissioning (opened by an admin with OpenCommissioningWindow)
+    var cm = (self.commissioning_admin_fabric != nil) ? 2 : 1
+
     var services = {
       "VP": f"{self.device.VENDOR_ID}+{self.device.PRODUCT_ID}",
       "D": self.commissioning_discriminator,
-      "CM":1,                           # requires passcode
+      "CM":cm,                          # commissioning mode, requires passcode
       "T":0,                            # no support for TCP
       "SII":sii, "SAI":sai
       # Note: ICD key is only for devices that support LITS (Long Idle Time Support) feature
@@ -333,7 +346,7 @@ class Matter_Commissioning
         subtype = "_V" + str(self.device.VENDOR_ID)
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth, subtype)
-        subtype = "_CM1"
+        subtype = "_CM"                 # Commissioning Mode subtype (spec 4.3.1.8), no digit
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth, subtype)
       end
@@ -355,7 +368,7 @@ class Matter_Commissioning
         subtype = "_V" + str(self.device.VENDOR_ID)
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi, subtype)
-        subtype = "_CM1"
+        subtype = "_CM"                 # Commissioning Mode subtype (spec 4.3.1.8), no digit
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi, subtype)
       end
@@ -370,21 +383,24 @@ class Matter_Commissioning
   def mdns_remove_PASE()
     import mdns
 
-    try
-      if self.mdns_pase_eth
-        log(format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth), 3)
+    # each interface is removed independently so that a failure on one does not leave the other announced
+    if self.mdns_pase_eth
+      self.mdns_pase_eth = false
+      try
         log(format("MTR: remove mDNS on %s '%s'", "eth", self.commissioning_instance_eth), 3)
-        self.mdns_pase_eth = false
         mdns.remove_service("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth)
+      except .. as e, m
+        log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
-      if self.mdns_pase_wifi
-        log(format("MTR: calling mdns.remove_service(%s, %s, %s, %s)", "_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi), 3)
+    end
+    if self.mdns_pase_wifi
+      self.mdns_pase_wifi = false
+      try
         log(format("MTR: remove mDNS on %s '%s'", "wifi", self.commissioning_instance_wifi), 3)
-        self.mdns_pase_wifi = false
         mdns.remove_service("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi)
+      except .. as e, m
+        log("MTR: Exception" + str(e) + "|" + str(m), 2)
       end
-    except .. as e, m
-      log("MTR: Exception" + str(e) + "|" + str(m), 2)
     end
   end
 

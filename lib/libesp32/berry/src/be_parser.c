@@ -992,18 +992,24 @@ static void suffix_alloc_reg(bparser *parser, bexpdesc *l)
 static void compound_assign(bparser *parser, int op, bexpdesc *l, bexpdesc *r)
 {
     int dst = -1;  /* destination register in case of compound assignment */
+    bexpdesc e;
     if (op != OptAssign) { /* check left variable */
         check_var(parser, l);
         /* cache the register of the object when continuously assigning */
         dst = parser->finfo->freereg;
         suffix_alloc_reg(parser, l);
+        e = *l;
+        op = op < OptAndAssign ? op - OptAddAssign + OptAdd
+                : op - OptAndAssign + OptBitAnd;
+        /* Materialize the left operand here, before the right one is parsed,
+         * the way sub_expr() does it through be_code_prebinop(). Otherwise the
+         * code that loads it is emitted from binaryexp() below, by then the
+         * right side has opened its jump list, and the load lands inside it. */
+        be_code_prebinop(parser->finfo, op, &e, dst);
     }
     expr(parser, r); /* right expression */
     check_var(parser, r);
     if (op != OptAssign) { /* compound assignment */
-        bexpdesc e = *l;
-        op = op < OptAndAssign ? op - OptAddAssign + OptAdd
-                : op - OptAndAssign + OptBitAnd;
         be_code_binop(parser->finfo, op, &e, r, dst); /* coding operation */
         *r = e;
     }
@@ -1128,7 +1134,7 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
         bexpdesc e2;
         check_var(parser, e);  /* check that left part is valid */
         scan_next_token(parser);  /* move to next token */
-        be_code_prebinop(finfo, op, e); /* and or */
+        be_code_prebinop(finfo, op, e, -1); /* and or */
         if (op == OptConnect) {
             parser->finfo->binfo->sideeffect = 1;
         }

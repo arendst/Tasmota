@@ -46,6 +46,34 @@
  * DaliLight 0|1                                 - Enable Tasmota light control for DaliTarget device - default 1
  * DaliTarget <broadcast>|<device>|<group>       - Set Tasmota light control device (0, 1..64, 101..116) - default 0
  * DaliChannels 1..5                             - Set Tasmota light type (1 = R/C = DT6, 2 = RG/CW, 3 = RGB, 4 = RGBW, 5 = RGBWC) for DaliTarget
+ * DaliDeviceScan 1|2[,<max_count>]              - Reset (1) or (2)/and commission DALI-2 control device (input device as opposed to control gear) short addresses up to optional <max_count> - default 64
+ * DaliDevice                                    - Scan bus for DALI-2 control devices with a short address
+ * DaliDevice <device>                           - Report DALI-2 control device version, status and instances (type, enabled, event scheme)
+ * DaliDevice <broadcast>|<device>,<scheme>      - Set event scheme of all instances of a control device
+ *                                                 (0 = Instance, 1 = Device, 2 = DeviceInstance, 3 = DeviceGroup, 4 = InstanceGroup)
+ * DaliBind<1..8> <device>,<instance>,<target>,<mode> - Bind a DALI-2 push button instance to a control gear target
+ *                                                 <device> 0 = any control device, 1..64 = control device short address +1
+ *                                                 <instance> 0..31 = instance number, 255 = any instance
+ *                                                 <target> 0 = broadcast, 1..64 = control gear short address +1, 101..116 = group
+ *                                                 <mode> 1 = Toggle, 2 = On, 3 = Off, 4 = Up, 5 = Down (see below)
+ * DaliBind<1..8> 0                              - Remove binding
+ * DaliBind                                      - Show all bindings
+ * 
+ * Binding behaviour for push button events (IEC 62386-301), the first matching binding is executed:
+ *   1 Toggle - short press toggles the target, long press dims alternating up and down, double press full brightness
+ *   2 On     - short press switches on to the last level, long press dims up, double press full brightness
+ *   3 Off    - short press switches off, long press dims down
+ *   4 Up     - short press or rotation dims up, double press full brightness (rotary clockwise)
+ *   5 Down   - short press or rotation dims down (rotary anticlockwise)
+ * The last level is only stored for broadcast and group targets. Switching on a short address target restores the
+ * broadcast level as the driver keeps no per short address state, so use a group target to retain a channel's own level.
+ * Example zencontrol zc-switch rotary at short address 0 controlling broadcast:
+ *   Backlog DaliBind1 1,0,0,1; DaliBind2 1,1,0,4; DaliBind3 1,2,0,5
+ * 
+ * DALI-2 input devices (push buttons, occupancy and light sensors) send 24-bit event messages which are decoded and
+ * published for rules and MQTT as {"DALI":{"Event":"0x82840B","Scheme":"Instance","Type":1,"Instance":1,"Info":11,"Name":"LongPressRepeat"}}
+ * By default an input device uses event scheme 0 (Instance) which does not contain its short address. After commissioning
+ * with DaliDeviceScan use DaliDevice <device>,2 to switch to DeviceInstance events so every event identifies the sending device.
  * 
  * DALI background information
  * Address type        Address byte
@@ -156,22 +184,83 @@
 
 #define DALI_MAX_STORED            17          // Store broadcast and group states
 
+#ifndef DALI_MAX_BIND
+#define DALI_MAX_BIND              8           // Number of input device to control gear bindings (max 32)
+#endif
+
 #define DALI_TOPIC "DALI"
 #define D_PRFX_DALI "Dali"
 
+/*********************************************************************************************\
+ * DALI-2 control devices (IEC 62386-103) use 24-bit command frames: <address byte><instance byte><opcode byte>
+ *  Address byte   0AAAAAA1 short address, 10GGGGG1 device group, 0xFD broadcast unaddressed, 0xFF broadcast, 0xC1 special command
+ *  Instance byte  000NNNNN instance number, 100GGGGG instance group, 110TTTTT instance type, 0xFE device, 0xFF all instances
+ *                 For special commands the instance byte is the opcode and the opcode byte is the data
+\*********************************************************************************************/
+
+#define DALI_103_FRAME                       (TM_DALI_EVENT_FRAME | 24)  // 24-bit forward frame
+#define DALI_103_BROADCAST                   0xFF
+#define DALI_103_SPECIAL_COMMAND             0xC1
+#define DALI_103_INSTANCE_DEVICE             0xFE  // Instance byte for device commands
+#define DALI_103_INSTANCE_BROADCAST          0xFF  // Instance byte for all instances
+#define DALI_103_MASK                        0xFF
+// Special commands (address byte 0xC1)
+#define DALI_103_TERMINATE                   0x00
+#define DALI_103_INITIALISE                  0x01  // REPEAT - data 0x7F = all devices, 0xFF = all devices without short address
+#define DALI_103_RANDOMISE                   0x02  // REPEAT
+#define DALI_103_COMPARE                     0x03
+#define DALI_103_WITHDRAW                    0x04
+#define DALI_103_SEARCHADDRH                 0x05
+#define DALI_103_SEARCHADDRM                 0x06
+#define DALI_103_SEARCHADDRL                 0x07
+#define DALI_103_PROGRAM_SHORT_ADDRESS       0x08  // data 0..63 or MASK
+#define DALI_103_VERIFY_SHORT_ADDRESS        0x09  // data 0..63
+#define DALI_103_QUERY_SHORT_ADDRESS         0x0A
+#define DALI_103_DTR0                        0x30
+#define DALI_103_DTR1                        0x31
+#define DALI_103_DTR2                        0x32
+#define DALI_103_INITIALISE_ALL              0x7F
+#define DALI_103_INITIALISE_UNADDRESSED      0xFF
+// Device commands (instance byte 0xFE)
+#define DALI_103_IDENTIFY_DEVICE             0x00  // REPEAT
+#define DALI_103_RESET                       0x10  // REPEAT
+#define DALI_103_SET_SHORT_ADDRESS           0x14  // REPEAT - DTR0 0..63 or MASK
+#define DALI_103_QUERY_DEVICE_STATUS         0x30
+#define DALI_103_QUERY_MISSING_SHORT_ADDRESS 0x33
+#define DALI_103_QUERY_VERSION_NUMBER        0x34
+#define DALI_103_QUERY_NUMBER_OF_INSTANCES   0x35
+// Instance commands (instance byte selects instance number, group, type or all)
+#define DALI_103_ENABLE_INSTANCE             0x62  // REPEAT
+#define DALI_103_DISABLE_INSTANCE            0x63  // REPEAT
+#define DALI_103_SET_EVENT_SCHEME            0x67  // REPEAT - DTR0 0..4
+#define DALI_103_QUERY_INSTANCE_TYPE         0x80
+#define DALI_103_QUERY_INSTANCE_ENABLED      0x86
+#define DALI_103_QUERY_EVENT_SCHEME          0x8B
+#define DALI_103_QUERY_INPUT_VALUE           0x8C
+
 /*********************************************************************************************/
+
+typedef struct DliBind_t {
+  uint8_t device;                              // 0 = any control device, 1..64 = short address +1
+  uint8_t instance;                            // 0..31 = instance number, 255 = any instance
+  uint8_t target;                              // 0 = broadcast, 1..64 = gear short address +1, 101..116 = group
+  uint8_t mode;                                // 0 = unused, 1 = Toggle, 2 = On, 3 = Off, 4 = Up, 5 = Down
+} DliBind_t;
 
 typedef struct DliSettings_t {
   uint32_t crc32;                              // To detect file changes
   uint8_t target;
   uint8_t light_type;
   uint8_t max_gear;
+  uint8_t probe_retry;
+  DliBind_t bind[DALI_MAX_BIND];
 } DliSettings_t;
 
 struct DALI {
   DliSettings_t Settings;                      // Persistent settings
   TasmotaDali *dali;
   uint32_t light_sync;
+  uint32_t bind_down;                          // Current dim direction per binding (bit set = down)
   uint8_t address;
   uint8_t command;
   uint8_t last_dimmer;
@@ -211,16 +300,41 @@ bool DaliLoadData(void) {
   Dali->Settings.target = root.getUInt(PSTR("Target"), Dali->Settings.target);
   Dali->Settings.light_type = root.getUInt(PSTR("LightType"), Dali->Settings.light_type);
   Dali->Settings.max_gear = root.getUInt(PSTR("MaxGear"), Dali->Settings.max_gear);
+  Dali->Settings.probe_retry = root.getUInt(PSTR("Retry"), Dali->Settings.probe_retry);
+  JsonParserArray arr = root[PSTR("Bind")];
+  if (arr) {
+    for (uint32_t i = 0; i < DALI_MAX_BIND; i++) {
+      if (arr[i]) {
+        uint32_t bind = arr[i].getUInt();      // Packed as mode << 24 | target << 16 | instance << 8 | device
+        Dali->Settings.bind[i].device = bind;
+        Dali->Settings.bind[i].instance = bind >> 8;
+        Dali->Settings.bind[i].target = bind >> 16;
+        Dali->Settings.bind[i].mode = bind >> 24;
+      }
+    }
+  }
 
   return true;
 }
 
 bool DaliSaveData(void) {
-  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u,\"MaxGear\":%u}}"),
+  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u,\"MaxGear\":%u,\"Retry\":%u}}"),
+                   Dali->Settings.crc32,
+                   Dali->Settings.target,
+                   Dali->Settings.light_type,
+                   Dali->Settings.max_gear,
+                   Dali->Settings.probe_retry);
+  Response_P(PSTR("{\"" XDRV_75_KEY "\":{\"Crc\":%u,\"Target\":%u,\"LightType\":%u,\"MaxGear\":%u,\"Bind\":["),
                    Dali->Settings.crc32,
                    Dali->Settings.target,
                    Dali->Settings.light_type,
                    Dali->Settings.max_gear);
+  for (uint32_t i = 0; i < DALI_MAX_BIND; i++) {
+    DliBind_t *bind = &Dali->Settings.bind[i];
+    ResponseAppend_P(PSTR("%s%u"), (i) ? "," : "",
+      (bind->mode << 24) | (bind->target << 16) | (bind->instance << 8) | bind->device);
+  }
+  ResponseAppend_P(PSTR("]}}"));
 
   return UfsJsonSettingsWrite(ResponseData());
 }
@@ -439,6 +553,34 @@ int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
 }
 
 /*********************************************************************************************\
+ * DALI-2 control device 24-bit command frames (IEC 62386-103)
+\*********************************************************************************************/
+
+uint32_t DaliDeviceFrame(uint32_t address, uint32_t instance, uint32_t opcode) {
+  return ((address & 0xFF) << 16) | ((instance & 0xFF) << 8) | (opcode & 0xFF);
+}
+
+uint32_t DaliDeviceAddress(uint32_t device) {
+  // Convert Tasmota device 1..64 to IEC 62386-103 address byte 0AAAAAA1 (0 = broadcast)
+  return (device) ? (((device -1) & 0x3F) << 1) | 0x01 : DALI_103_BROADCAST;
+}
+
+void DaliDeviceSend(uint32_t frame, bool twice = false);
+void DaliDeviceSend(uint32_t frame, bool twice) {
+  DaliSendData(DALI_103_FRAME | ((twice) ? TM_DALI_SEND_TWICE : 0), frame);
+}
+
+void DaliDeviceSpecial(uint32_t opcode, uint32_t data, bool twice = false);
+void DaliDeviceSpecial(uint32_t opcode, uint32_t data, bool twice) {
+  DaliDeviceSend(DaliDeviceFrame(DALI_103_SPECIAL_COMMAND, opcode, data), twice);
+}
+
+int DaliDeviceQuery(uint32_t frame) {
+  // Send 24-bit frame and return backward frame or -1 (no response) / -2 (collision)
+  return DaliSendWaitResponse(DALI_103_FRAME, frame);
+}
+
+/*********************************************************************************************\
  * DALI tools
  * 
  * Courtesy of https://github.com/qqqlab/DALI-Lighting-Interface
@@ -558,32 +700,48 @@ void DaliInitLight(void) {
  * Courtesy of https://github.com/qqqlab/DALI-Lighting-Interface
 \*********************************************************************************************/
 
-void DaliSetSearchAddress(uint32_t adr) {
-  // Set search address
-  DaliSendData(DALI_102_SEARCHADDRH, adr>>16);
-  DaliSendData(DALI_102_SEARCHADDRM, adr>>8);
-  DaliSendData(DALI_102_SEARCHADDRL, adr);
+void DaliSetSearchAddress(uint32_t adr, bool device = false);
+void DaliSetSearchAddress(uint32_t adr, bool device) {
+  // Set search address of control gear (device = false) or DALI-2 control devices (device = true)
+  if (device) {
+    DaliDeviceSpecial(DALI_103_SEARCHADDRH, adr>>16);
+    DaliDeviceSpecial(DALI_103_SEARCHADDRM, adr>>8);
+    DaliDeviceSpecial(DALI_103_SEARCHADDRL, adr);
+  } else {
+    DaliSendData(DALI_102_SEARCHADDRH, adr>>16);
+    DaliSendData(DALI_102_SEARCHADDRM, adr>>8);
+    DaliSendData(DALI_102_SEARCHADDRL, adr);
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*/
 
-void DaliSetSearchAddressDifference(uint32_t adr_new, uint32_t adr_current) {
+void DaliSetSearchAddressDifference(uint32_t adr_new, uint32_t adr_current, bool device = false);
+void DaliSetSearchAddressDifference(uint32_t adr_new, uint32_t adr_current, bool device) {
   // Set search address, but set only changed bytes (takes less time)
-  if ( (uint8_t)(adr_new>>16) !=  (uint8_t)(adr_current>>16) ) DaliSendData(DALI_102_SEARCHADDRH, adr_new>>16);
-  if ( (uint8_t)(adr_new>>8)  !=  (uint8_t)(adr_current>>8)  ) DaliSendData(DALI_102_SEARCHADDRM, adr_new>>8);
-  if ( (uint8_t)(adr_new)     !=  (uint8_t)(adr_current)     ) DaliSendData(DALI_102_SEARCHADDRL, adr_new);
+  if (device) {
+    if ( (uint8_t)(adr_new>>16) !=  (uint8_t)(adr_current>>16) ) DaliDeviceSpecial(DALI_103_SEARCHADDRH, adr_new>>16);
+    if ( (uint8_t)(adr_new>>8)  !=  (uint8_t)(adr_current>>8)  ) DaliDeviceSpecial(DALI_103_SEARCHADDRM, adr_new>>8);
+    if ( (uint8_t)(adr_new)     !=  (uint8_t)(adr_current)     ) DaliDeviceSpecial(DALI_103_SEARCHADDRL, adr_new);
+  } else {
+    if ( (uint8_t)(adr_new>>16) !=  (uint8_t)(adr_current>>16) ) DaliSendData(DALI_102_SEARCHADDRH, adr_new>>16);
+    if ( (uint8_t)(adr_new>>8)  !=  (uint8_t)(adr_current>>8)  ) DaliSendData(DALI_102_SEARCHADDRM, adr_new>>8);
+    if ( (uint8_t)(adr_new)     !=  (uint8_t)(adr_current)     ) DaliSendData(DALI_102_SEARCHADDRL, adr_new);
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*/
 
-bool DaliCompare() {
+bool DaliCompare(bool device = false);
+bool DaliCompare(bool device) {
   // Is the random address smaller or equal to the search address?
   // As more than one device can reply, the reply gets garbled
   uint8_t retry = 2;
   while (retry > 0) {
     // Compare is true if we received any activity on the bus as reply.
     // Sometimes the reply is not registered... so only accept retry times 'no reply' as a real false compare
-    int rv = DaliSendWaitResponse(DALI_102_COMPARE, 0x00);
+    int rv = (device) ? DaliDeviceQuery(DaliDeviceFrame(DALI_103_SPECIAL_COMMAND, DALI_103_COMPARE, 0x00)) :
+                        DaliSendWaitResponse(DALI_102_COMPARE, 0x00);
     if (rv == 0xFF) return true;               // Yes reply
     if (rv == -2) return true;                 // Reply but collision
     retry--;
@@ -593,39 +751,46 @@ bool DaliCompare() {
 
 /*-------------------------------------------------------------------------------------------*/
 
-uint32_t DaliFindAddress(void) {
+uint32_t DaliFindAddress(bool device = false);
+uint32_t DaliFindAddress(bool device) {
   // Find addr with binary search
   uint32_t adr = 0x800000;
   uint32_t addsub = 0x400000;
   uint32_t adr_last = adr;
-  DaliSetSearchAddress(adr);
+  DaliSetSearchAddress(adr, device);
   
   while (addsub) {
-    DaliSetSearchAddressDifference(adr, adr_last);
+    DaliSetSearchAddressDifference(adr, adr_last, device);
     adr_last = adr;
-    if (DaliCompare()) {                       // Returns true if searchadr > adr
+    if (DaliCompare(device)) {                 // Returns true if searchadr > adr
       adr -= addsub;
     } else {
       adr += addsub;
     }
     addsub >>= 1;
   }
-  DaliSetSearchAddressDifference(adr, adr_last);
+  DaliSetSearchAddressDifference(adr, adr_last, device);
   adr_last = adr;
-  if (!DaliCompare()) {
+  if (!DaliCompare(device)) {
     adr++;
-    DaliSetSearchAddressDifference(adr, adr_last);
+    DaliSetSearchAddressDifference(adr, adr_last, device);
   }
   return adr;
 }
 
 /*-------------------------------------------------------------------------------------------*/
 
-void DaliProgramShortAddress(uint8_t shortadr) {
+void DaliProgramShortAddress(uint8_t shortadr, bool device = false);
+void DaliProgramShortAddress(uint8_t shortadr, bool device) {
   // The slave shall store the received 6-bit address (AAAAAA) as a short address if it is selected.
-  DaliSendData(DALI_102_PROGRAM_SHORT_ADDRESS, (shortadr << 1) | DALI_SELECTOR_BIT);
-
-  AddLog(LOG_LEVEL_INFO, PSTR("DLI: Set short address %d"), shortadr +1);
+  if (device) {
+    DaliDeviceSpecial(DALI_103_PROGRAM_SHORT_ADDRESS, shortadr);  // IEC 62386-103 uses 0..63
+    int verified = DaliDeviceQuery(DaliDeviceFrame(DALI_103_SPECIAL_COMMAND, DALI_103_VERIFY_SHORT_ADDRESS, shortadr));
+    AddLog(LOG_LEVEL_INFO, PSTR("DLI: Set control device short address %d%s"), shortadr +1, (0xFF == verified) ? "" : " not verified");
+  } else {
+    DaliSendData(DALI_102_PROGRAM_SHORT_ADDRESS, (shortadr << 1) | DALI_SELECTOR_BIT);
+    AddLog(LOG_LEVEL_INFO, PSTR("DLI: Set short address %d"), shortadr +1);
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -772,6 +937,360 @@ bool DaliLoopSync(uint32_t channels) {
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
+/*********************************************************************************************\
+ * DALI control gear power control shared by command DaliPower and input device bindings
+\*********************************************************************************************/
+
+uint32_t DaliSetPower(uint32_t target, uint32_t payload) {
+  // target  0 = broadcast, 1..64 = short address, 101..116 = group
+  // payload 0 = off, 1 = on to last dimmer state, 2 = toggle, 3..254 = dim level
+  // returns state index (0 = broadcast or short address, 1..16 = group)
+  uint32_t index = 0;                          // Broadcast
+  if ((target >= 101) && (target <= 116)) {
+    index = target - 100;                      // Group1 to 16
+  }
+  if (payload <= 2) {
+    if (2 == payload) {
+      payload = (Dali->power[index]) ? 0 : 1;
+    }
+    if (1 == payload) {
+      payload = Dali->dimmer[index];
+    }
+  }
+  uint32_t adr = DaliTarget2Address(target);
+#ifdef DALI_POWER_OFF_NO_FADE
+  if (!payload) {
+    DaliSendData(adr | DALI_SELECTOR_BIT, DALI_102_OFF);  // Power off without fade
+  } else
+#endif  // DALI_POWER_OFF_NO_FADE
+  DaliSendData(adr, payload);                  // DAPC command - dim level
+  return index;
+}
+
+/*********************************************************************************************\
+ * DALI-2 input device to control gear bindings
+ *
+ * A binding links push button events (IEC 62386-301) of one input device instance to a control
+ * gear target so common switch and rotary use cases need no rules. See mode table in header.
+\*********************************************************************************************/
+
+const char kDaliBindMode[] PROGMEM = "|Toggle|On|Off|Up|Down";
+
+enum DaliBindMode { DALI_BIND_NONE, DALI_BIND_TOGGLE, DALI_BIND_ON, DALI_BIND_OFF, DALI_BIND_UP, DALI_BIND_DOWN, DALI_BIND_MAX };
+
+// IEC 62386-301 push button event information used by bindings
+enum DaliButtonEvent { DALI_BUTTON_SHORT_PRESS = 2, DALI_BUTTON_DOUBLE_PRESS = 5, DALI_BUTTON_LONG_PRESS_START = 9,
+                       DALI_BUTTON_LONG_PRESS_REPEAT = 11, DALI_BUTTON_LONG_PRESS_STOP = 12 };
+
+void DaliBindDim(uint32_t adr, bool down, bool start) {
+  // Dim target for 200 ms at fade rate. Switch on if needed at start of an upward dim.
+  uint32_t cmd = (down) ? DALI_102_DOWN : (start) ? DALI_102_ON_AND_STEP_UP : DALI_102_UP;
+  DaliSendData(adr | DALI_SELECTOR_BIT, cmd);
+}
+
+void DaliBindExecute(uint32_t slot, uint32_t info) {
+  DliBind_t *bind = &Dali->Settings.bind[slot];
+  uint32_t adr = DaliTarget2Address(bind->target);
+  uint32_t index = ((bind->target >= 101) && (bind->target <= 116)) ? bind->target - 100 : 0;
+  uint32_t mask = 1 << slot;
+  bool down = Dali->bind_down & mask;
+
+  switch (info) {
+    case DALI_BUTTON_SHORT_PRESS:
+      switch (bind->mode) {
+        case DALI_BIND_TOGGLE: {
+          uint32_t payload = 2;                // Toggle using stored broadcast or group state
+          if ((bind->target >= 1) && (bind->target <= 64)) {  // Short address state is not stored so ask the gear
+            int level = DaliSendWaitResponse(adr | DALI_SELECTOR_BIT, DALI_102_QUERY_ACTUAL_LEVEL);
+            if (level >= 0) { payload = (0 == level) ? 1 : 0; }
+          }
+          DaliSetPower(bind->target, payload);
+          break;
+        }
+        case DALI_BIND_ON:
+          DaliSetPower(bind->target, 1);
+          break;
+        case DALI_BIND_OFF:
+          DaliSetPower(bind->target, 0);
+          break;
+        case DALI_BIND_UP:
+          DaliBindDim(adr, false, true);
+          break;
+        case DALI_BIND_DOWN:
+          DaliBindDim(adr, true, false);
+          break;
+      }
+      break;
+    case DALI_BUTTON_DOUBLE_PRESS:
+      if ((DALI_BIND_TOGGLE == bind->mode) || (DALI_BIND_ON == bind->mode) || (DALI_BIND_UP == bind->mode)) {
+        DaliSetPower(bind->target, 254);       // Full brightness
+      }
+      break;
+    case DALI_BUTTON_LONG_PRESS_START:
+      switch (bind->mode) {
+        case DALI_BIND_TOGGLE:                 // Alternate direction on every long press, always up when off
+          down = (Dali->power[index]) ? !down : false;
+          break;
+        case DALI_BIND_ON:
+        case DALI_BIND_UP:
+          down = false;
+          break;
+        case DALI_BIND_OFF:
+        case DALI_BIND_DOWN:
+          down = true;
+          break;
+      }
+      if (down) { Dali->bind_down |= mask; } else { Dali->bind_down &= ~mask; }
+      DaliBindDim(adr, down, true);
+      break;
+    case DALI_BUTTON_LONG_PRESS_REPEAT:
+      DaliBindDim(adr, down, false);
+      break;
+    case DALI_BUTTON_LONG_PRESS_STOP: {        // Sync stored state with the level reached by dimming
+      int level = DaliSendWaitResponse(adr | DALI_SELECTOR_BIT, DALI_102_QUERY_ACTUAL_LEVEL);
+      if ((level >= 0) && (level <= 254)) { DaliSaveState(adr, level); }
+      break;
+    }
+  }
+}
+
+uint32_t DaliBindEvent(int address, int instance, int type, uint32_t info) {
+  // Execute the first binding matching a push button event. Returns binding 1..DALI_MAX_BIND or 0 if none.
+  // Type is unknown (-1) for Device and DeviceInstance event schemes, so only reject known non push button types
+  if ((type != -1) && (type != 1)) { return 0; }
+  for (uint32_t slot = 0; slot < DALI_MAX_BIND; slot++) {
+    DliBind_t *bind = &Dali->Settings.bind[slot];
+    if (DALI_BIND_NONE == bind->mode) { continue; }
+    if (bind->device && (address != bind->device -1)) { continue; }
+    if ((bind->instance != 255) && (instance != bind->instance)) { continue; }
+    DaliBindExecute(slot, info);
+    return slot +1;
+  }
+  return 0;
+}
+
+/*********************************************************************************************\
+ * DALI-2 input device event messages (IEC 62386-103 clause 9.7)
+ *
+ * Input devices like push buttons (301), absolute inputs (302), occupancy sensors (303) and
+ * light sensors (304) send 24-bit event messages. Bit 16 is always 0 for an event message
+ * (bit 16 = 1 marks a command sent to a control device by another application controller).
+ *
+ * Addressing scheme is selected by bits 23, 22 and 15:
+ *  0 - 0  Device          0AAAAAA0 0TTTTTEE EEEEEEEE  short address + instance type
+ *  0 - 1  DeviceInstance  0AAAAAA0 1NNNNNEE EEEEEEEE  short address + instance number
+ *  1 0 0  DeviceGroup     10GGGGG0 0TTTTTEE EEEEEEEE  device group + instance type
+ *  1 1 0  InstanceGroup   11GGGGG0 0TTTTTEE EEEEEEEE  instance group + instance type
+ *  1 0 1  Instance        10TTTTT0 1NNNNNEE EEEEEEEE  instance type + instance number (default)
+ *  1 1 1  Reserved
+ *
+ * The decoded event is published for rules and MQTT as
+ *  {"DALI":{"Event":"0x82840B","Scheme":"Instance","Type":1,"Instance":1,"Info":11,"Name":"LongPressRepeat"}}
+\*********************************************************************************************/
+
+const char kDaliEventScheme[] PROGMEM = "Device|DeviceInstance|DeviceGroup|InstanceGroup|Instance|Reserved";
+
+// IEC 62386-301 Table 4 - Push button event information
+const char kDaliPushButtonEvent[] PROGMEM =
+  "ButtonReleased|ButtonPressed|ShortPress|||DoublePress||||LongPressStart||LongPressRepeat|LongPressStop||ButtonFree|ButtonStuck";
+
+void DaliEventMessage(uint32_t data) {
+  if (data & 0x010000) { return; }             // Command to a control device, not an event message
+
+  uint32_t scheme = ((data >> 21) & 0x06) | ((data >> 15) & 0x01);  // bit23 bit22 bit15
+  int address = -1;
+  int group = -1;
+  int instance_group = -1;
+  int type = -1;
+  int instance = -1;
+  uint32_t scheme_index;
+  switch (scheme) {
+    case 0: case 2:                            // Device
+      scheme_index = 0;
+      address = (data >> 17) & 0x3F;
+      type = (data >> 10) & 0x1F;
+      break;
+    case 1: case 3:                            // DeviceInstance
+      scheme_index = 1;
+      address = (data >> 17) & 0x3F;
+      instance = (data >> 10) & 0x1F;
+      break;
+    case 4:                                    // DeviceGroup
+      scheme_index = 2;
+      group = (data >> 17) & 0x1F;
+      type = (data >> 10) & 0x1F;
+      break;
+    case 6:                                    // InstanceGroup
+      scheme_index = 3;
+      instance_group = (data >> 17) & 0x1F;
+      type = (data >> 10) & 0x1F;
+      break;
+    case 5:                                    // Instance
+      scheme_index = 4;
+      type = (data >> 17) & 0x1F;
+      instance = (data >> 10) & 0x1F;
+      break;
+    default:                                   // Reserved
+      scheme_index = 5;
+      break;
+  }
+  uint32_t info = data & 0x3FF;
+
+  uint32_t bind = DaliBindEvent(address, instance, type, info);  // Execute binding before building the response
+
+  char scheme_name[16];
+  GetTextIndexed(scheme_name, sizeof(scheme_name), scheme_index, kDaliEventScheme);
+  Response_P(PSTR("{\"DALI\":{\"Event\":\"0x%06X\",\"Scheme\":\"%s\""), data, scheme_name);
+  if (address >= 0) { ResponseAppend_P(PSTR(",\"Address\":%d"), address); }
+  if (group >= 0) { ResponseAppend_P(PSTR(",\"DeviceGroup\":%d"), group); }
+  if (instance_group >= 0) { ResponseAppend_P(PSTR(",\"InstanceGroup\":%d"), instance_group); }
+  if (type >= 0) { ResponseAppend_P(PSTR(",\"Type\":%d"), type); }
+  if (instance >= 0) { ResponseAppend_P(PSTR(",\"Instance\":%d"), instance); }
+  ResponseAppend_P(PSTR(",\"Info\":%d"), info);
+  if (bind) { ResponseAppend_P(PSTR(",\"Bind\":%d"), bind); }
+
+  switch (type) {
+    case 1: {                                  // IEC 62386-301 Push button
+      if (info < 16) {
+        char event_name[16];
+        GetTextIndexed(event_name, sizeof(event_name), info, kDaliPushButtonEvent);
+        if (strlen(event_name)) { ResponseAppend_P(PSTR(",\"Name\":\"%s\""), event_name); }
+      }
+      break;
+    }
+    case 3:                                    // IEC 62386-303 Occupancy sensor
+      ResponseAppend_P(PSTR(",\"Movement\":%d,\"Occupied\":%d,\"Repeat\":%d,\"Sensor\":\"%s\""),
+        (info & 0x01) ? 1 : 0, (info & 0x02) ? 1 : 0, (info & 0x04) ? 1 : 0, (info & 0x08) ? "Movement" : "Presence");
+      break;
+    case 4:                                    // IEC 62386-304 Light sensor
+      ResponseAppend_P(PSTR(",\"Illuminance\":%d"), info);
+      break;
+  }
+  ResponseJsonEndEnd();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
+}
+
+/*********************************************************************************************\
+ * DALI-2 control device commissioning and queries (IEC 62386-103)
+ *
+ * Commissioning uses the 24-bit special commands INITIALISE, RANDOMISE, COMPARE, WITHDRAW and
+ * PROGRAM SHORT ADDRESS which mirror the 16-bit control gear sequence used by DaliScan.
+\*********************************************************************************************/
+
+const char kDaliInstanceType[] PROGMEM = "Generic|PushButton|AbsoluteInput|OccupancySensor|LightSensor|ColourSensor|GeneralPurpose";
+
+/*-------------------------------------------------------------------------------------------*/
+
+int DaliDeviceInstances(uint32_t device) {
+  // Return number of instances of a control device or -1 if not present
+  return DaliDeviceQuery(DaliDeviceFrame(DaliDeviceAddress(device), DALI_103_INSTANCE_DEVICE, DALI_103_QUERY_NUMBER_OF_INSTANCES));
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+uint32_t DaliDeviceCommission(uint32_t init_arg, uint32_t max_count) {
+  // init_arg = DALI_103_INITIALISE_ALL (0x7F)         : clear all short addresses and commission all control devices
+  // init_arg = DALI_103_INITIALISE_UNADDRESSED (0xFF) : commission control devices without short address only
+  // returns number of new short addresses assigned
+  uint8_t arr[64] = { 0 };
+  uint32_t sa;
+
+  if (DALI_103_INITIALISE_ALL == init_arg) {  // Clear all short addresses
+    DaliDeviceSpecial(DALI_103_DTR0, DALI_103_MASK);
+    DaliDeviceSend(DaliDeviceFrame(DALI_103_BROADCAST, DALI_103_INSTANCE_DEVICE, DALI_103_SET_SHORT_ADDRESS), true);
+  } else {                                     // Keep short addresses already in use
+    for (sa = 0; sa < 64; sa++) {              // Takes about 2500 ms
+      if (DaliDeviceInstances(sa +1) >= 0) { arr[sa] = 1; }
+      OsWatchLoop();                           // Feed blocked-loop watchdog
+    }
+  }
+  DaliDeviceSpecial(DALI_103_TERMINATE, 0x00);  // Terminate any pending DALI_103_INITIALISE
+  delay(15);
+  // Start commissioning
+  DaliDeviceSpecial(DALI_103_INITIALISE, init_arg, true);
+  DaliDeviceSpecial(DALI_103_RANDOMISE, 0x00, true);
+  delay(100);                                  // The new random address shall be available within a time period of 100ms.
+
+  uint32_t cnt = 0;
+  while (true) {                               // Find random addresses and assign unused short addresses
+    uint32_t adr = DaliFindAddress(true);
+    if (adr > 0xffffff) { break; }             // No more random addresses found -> exit
+    for (sa = 0; sa < 64; sa++) {              // Find first unused short address
+      if (0 == arr[sa]) { break; }
+    }
+    if (sa >= 64) { break; }                   // All 64 short addresses assigned -> exit
+
+    arr[sa] = 1;                               // Mark short address as used
+    cnt++;
+    DaliProgramShortAddress(sa, true);         // Assign short address
+    DaliDeviceSpecial(DALI_103_WITHDRAW, 0x00);  // Remove the device from the search
+    delay(100);
+    OsWatchLoop();                             // Feed blocked-loop watchdog
+
+    if (cnt >= max_count) { break; }
+  }
+
+  delay(100);
+  DaliDeviceSpecial(DALI_103_TERMINATE, 0x00);  // Terminate the DALI_103_INITIALISE command
+  return cnt;
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+bool DaliDeviceSetEventScheme(uint32_t device, uint32_t scheme) {
+  // Set event scheme 0..4 of all instances of a control device (0 = broadcast)
+  if (scheme > 4) { return false; }
+  DaliDeviceSpecial(DALI_103_DTR0, scheme);
+  DaliDeviceSend(DaliDeviceFrame(DaliDeviceAddress(device), DALI_103_INSTANCE_BROADCAST, DALI_103_SET_EVENT_SCHEME), true);
+  return true;
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+bool ResponseDaliDevice(uint32_t device) {
+  // {"DaliDevice":{"Device":1,"Version":"2.0","Status":0,"Instances":[{"Instance":0,"Type":1,"Name":"PushButton","Enabled":1,"Scheme":"Instance"}]}}
+  int instances = DaliDeviceInstances(device);
+  if (instances < 0) { return false; }         // No control device with this short address
+
+  uint32_t address = DaliDeviceAddress(device);
+  int version = DaliDeviceQuery(DaliDeviceFrame(address, DALI_103_INSTANCE_DEVICE, DALI_103_QUERY_VERSION_NUMBER));
+  int status = DaliDeviceQuery(DaliDeviceFrame(address, DALI_103_INSTANCE_DEVICE, DALI_103_QUERY_DEVICE_STATUS));
+
+  ResponseCmnd();
+  ResponseAppend_P(PSTR("{\"Device\":%d"), device);
+  if (version >= 0) { ResponseAppend_P(PSTR(",\"Version\":\"%d.%d\""), version >> 2, version & 0x03); }
+  if (status >= 0) { ResponseAppend_P(PSTR(",\"Status\":%d"), status); }
+  ResponseAppend_P(PSTR(",\"Instances\":["));
+  for (int instance = 0; instance < instances; instance++) {
+    int type = DaliDeviceQuery(DaliDeviceFrame(address, instance, DALI_103_QUERY_INSTANCE_TYPE));
+    int enabled = DaliDeviceQuery(DaliDeviceFrame(address, instance, DALI_103_QUERY_INSTANCE_ENABLED));
+    int scheme = DaliDeviceQuery(DaliDeviceFrame(address, instance, DALI_103_QUERY_EVENT_SCHEME));
+    ResponseAppend_P(PSTR("%s{\"Instance\":%d"), (instance) ? "," : "", instance);
+    if (type >= 0) {
+      ResponseAppend_P(PSTR(",\"Type\":%d"), type);
+      if (type < 7) {
+        char type_name[16];
+        GetTextIndexed(type_name, sizeof(type_name), type, kDaliInstanceType);
+        ResponseAppend_P(PSTR(",\"Name\":\"%s\""), type_name);
+      }
+    }
+    if (enabled >= 0) { ResponseAppend_P(PSTR(",\"Enabled\":%d"), (0xFF == enabled) ? 1 : 0); }
+    if ((scheme >= 0) && (scheme <= 4)) {
+      // eventScheme 0..4 = Instance, Device, DeviceInstance, DeviceGroup, InstanceGroup. kDaliEventScheme starts at Device so rotate by 4
+      char scheme_name[16];
+      GetTextIndexed(scheme_name, sizeof(scheme_name), (scheme + 4) % 5, kDaliEventScheme);
+      ResponseAppend_P(PSTR(",\"Scheme\":\"%s\""), scheme_name);
+    }
+    ResponseJsonEnd();
+    OsWatchLoop();                             // Feed blocked-loop watchdog
+  }
+  ResponseAppend_P(PSTR("]"));
+  ResponseJsonEndEnd();
+  return true;
+}
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
 void DaliLoop(void) {
   while (Dali->dali->available()) { 
     uint32_t queue = Dali->dali->available();
@@ -783,10 +1302,13 @@ void DaliLoop(void) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%08X %2d queue %d%s%s"),
       frame.data, bit_count, queue, (8 == bit_count)?" backward":"", (collision)?" collision":"");
 
-    if ((frame.meta != 16) ||                  // Skip backward frames
-        (1 == Dali->probe)) {                  // Probe only
+    if (1 == Dali->probe) { continue; }        // Probe only
+
+    if (24 == frame.meta) {                    // DALI-2 24-bit forward frame (event message or control device command)
+      DaliEventMessage(frame.data);
       continue;
     }
+    if (frame.meta != 16) { continue; }        // Skip backward frames and frames with collision
 
     Dali->address = (frame.data >> 8) &0xFF;
     Dali->command = frame.data &0xFF;
@@ -993,12 +1515,32 @@ bool DaliInit(uint32_t function) {
   UpdateDevicesPresent(1);
 
   TasmotaGlobal.light_type = LT_W;             // Single channel
+
+/*
   Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
   if (Dali->target_rgbwaf > 1) {
     TasmotaGlobal.light_type = Dali->Settings.light_type;
     if ((TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
         (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
       UpdateDevicesPresent(1);                   // We manage RGB and W separately, hence adding a device
+    }
+  }
+*/
+
+  uint32_t probe_retry = Dali->Settings.probe_retry +1;
+  while (probe_retry--) {
+    Dali->target_rgbwaf = DaliQueryRGBWAF(DaliTarget2Address(Dali->Settings.target));
+    if (Dali->target_rgbwaf > 1) {
+      TasmotaGlobal.light_type = Dali->Settings.light_type;
+      if ((TasmotaGlobal.light_type >= LT_RGBW) &&  // RGBW or RGBCW
+          (Settings->param[P_RGB_REMAP] & 128)) {   // SetOption37 128
+        UpdateDevicesPresent(1);               // We manage RGB and W separately, hence adding a device
+      }
+      break;
+    }
+    if (probe_retry) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Retry target probe %d"), Dali->Settings.probe_retry +1 - probe_retry);
+      delay(1000);                             // Power-On probe delay for DALI targets to get ready
     }
   }
 
@@ -1015,16 +1557,17 @@ bool DaliInit(uint32_t function) {
 const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
   "|" D_CMND_POWER "|" D_CMND_DIMMER
 #ifdef USE_LIGHT
-  "|Light|Target|Channels"
+  "|Light|Target|Channels|Retry"
 #endif  // USE_LIGHT
-  "|Send|Query|Scan|Group|GroupSliders|BS|Gear";
+  "|Send|Query|Scan|Group|GroupSliders|BS|Gear|Device|DeviceScan|Bind";
 
 void (* const DALICommand[])(void) PROGMEM = {
   &CmndDali, &CmndDaliPower, &CmndDaliDimmer,
 #ifdef USE_LIGHT
-  &CmndDaliLight, &CmndDaliTarget, &CmndDaliChannels,
+  &CmndDaliLight, &CmndDaliTarget, &CmndDaliChannels, &CmndDaliRetry,
 #endif  // USE_LIGHT
-  &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGroupSliders, &CmndDaliBroadcastSlider, &CmndDaliGear };
+  &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGroupSliders, &CmndDaliBroadcastSlider, &CmndDaliGear,
+  &CmndDaliDevice, &CmndDaliDeviceScan, &CmndDaliBind };
 
 bool DaliJsonParse(void) {
   // {"addr":254,"cmd":100}
@@ -1116,21 +1659,7 @@ void CmndDaliPower(void) {
   if (((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= 64)) ||
       ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116))) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 254)) {
-      if (XdrvMailbox.payload <= 2) {
-        if (2 == XdrvMailbox.payload) {
-          XdrvMailbox.payload = (Dali->power[index]) ? 0 : 1;
-        }
-        if (1 == XdrvMailbox.payload) {
-          XdrvMailbox.payload = Dali->dimmer[index];
-        }
-      }
-      uint32_t adr = DaliTarget2Address(XdrvMailbox.index);
-#ifdef DALI_POWER_OFF_NO_FADE
-      if (!XdrvMailbox.payload) {
-        DaliSendData(adr | DALI_SELECTOR_BIT, DALI_102_OFF);  // Power off without fade
-      } else
-#endif  // DALI_POWER_OFF_NO_FADE
-      DaliSendData(adr, XdrvMailbox.payload);  // DAPC command - dim level
+      index = DaliSetPower(XdrvMailbox.index, XdrvMailbox.payload);
     }
   }
   ResponseDali(index);
@@ -1500,6 +2029,122 @@ void CmndDaliScan(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+void CmndDaliDeviceScan(void) {
+  // Commission DALI-2 control device (input device as opposed to control gear) short addresses
+  // DaliDeviceScan 1     - Clear all short addresses and commission all control devices
+  // DaliDeviceScan 2     - Commission control devices without short address
+  // DaliDeviceScan x,5   - Commission up to 5 short addresses
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
+  if ((values[0] >= 1) && (values[0] <= 2)) {
+    uint32_t init_arg = (1 == values[0]) ? DALI_103_INITIALISE_ALL : DALI_103_INITIALISE_UNADDRESSED;
+    int result = DaliDeviceCommission(init_arg, (0 == values[1]) ? 64 : values[1]);
+    ResponseCmndNumber(result);
+  }
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void CmndDaliDevice(void) {
+  // DaliDevice           - Scan bus for control devices with a short address taking around 2.5 sec
+  // DaliDevice 3         - Report control device 3 (short address 2) version, status and instances
+  // DaliDevice 3,2       - Set event scheme of all instances of control device 3 to DeviceInstance and report
+  // DaliDevice 0,2       - Set event scheme of all instances of all control devices to DeviceInstance
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
+  if (0 == params) {                           // Scan for control devices
+    char temp[200] = { 0 };
+    uint32_t count = 0;
+    for (uint32_t device = 1; device <= 64; device++) {  // Scanning 64 addresses takes about 2500 ms
+      int instances = DaliDeviceInstances(device);
+      if (instances >= 0) {
+        snprintf_P(temp, sizeof(temp), PSTR("%s%s%d"), temp, (count)?",":"", device);
+        count++;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Control device %d with %d instance(s)"), device, instances);
+      }
+      OsWatchLoop();                           // Feed blocked-loop watchdog
+    }
+    ResponseCmnd();
+    ResponseAppend_P(PSTR("{\"Present\":%d,\"Device\":[%s]}}"), count, temp);
+    return;
+  }
+  if (values[0] > 64) { return; }
+  if (params >= 2) {                           // Set event scheme
+    if (!DaliDeviceSetEventScheme(values[0], values[1])) { return; }
+    if (0 == values[0]) {                      // Broadcast has no report
+      ResponseCmndDone();
+      return;
+    }
+  }
+  if ((0 == values[0]) || !ResponseDaliDevice(values[0])) {
+    ResponseCmndFailed();
+  }
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void ResponseAppendDaliBind(uint32_t slot, bool with_slot) {
+  // {"Bind":1,"Device":1,"Instance":0,"Target":0,"Mode":1,"Name":"Toggle"}
+  DliBind_t *bind = &Dali->Settings.bind[slot];
+  char mode_name[8];
+  GetTextIndexed(mode_name, sizeof(mode_name), (bind->mode < DALI_BIND_MAX) ? bind->mode : 0, kDaliBindMode);
+  ResponseAppend_P(PSTR("{"));
+  if (with_slot) { ResponseAppend_P(PSTR("\"Bind\":%d,"), slot +1); }
+  ResponseAppend_P(PSTR("\"Device\":%d,\"Instance\":%d,\"Target\":%d,\"Mode\":%d,\"Name\":\"%s\"}"),
+    bind->device, bind->instance, bind->target, bind->mode, mode_name);
+}
+
+void CmndDaliBind(void) {
+  // DaliBind                                    - Show all bindings
+  // DaliBind2                                   - Show binding 2
+  // DaliBind2 0                                 - Remove binding 2
+  // DaliBind2 <device>,<instance>,<target>,<mode> - Bind instance of control device to control gear target
+  // DaliBind1 1,0,0,1                           - Control device 1 instance 0 toggles and dims broadcast
+  // DaliBind2 0,255,101,2                       - Any instance of any control device switches on group 1
+  if (!XdrvMailbox.usridx) {                   // Show all bindings
+    Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
+    uint32_t count = 0;
+    for (uint32_t slot = 0; slot < DALI_MAX_BIND; slot++) {
+      if (Dali->Settings.bind[slot].mode) {
+        if (count) { ResponseAppend_P(PSTR(",")); }
+        ResponseAppendDaliBind(slot, true);
+        count++;
+      }
+    }
+    ResponseAppend_P(PSTR("]}"));
+    return;
+  }
+  if ((XdrvMailbox.index < 1) || (XdrvMailbox.index > DALI_MAX_BIND)) { return; }
+  uint32_t slot = XdrvMailbox.index -1;
+  DliBind_t *bind = &Dali->Settings.bind[slot];
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t values[4] = { 0 };
+    uint32_t params = ParseParameters(4, values);
+    if ((1 == params) && (0 == values[0])) {   // Remove binding
+      memset(bind, 0, sizeof(DliBind_t));
+    }
+    else if ((4 == params) &&
+             (values[0] <= 64) &&
+             ((values[1] <= 31) || (255 == values[1])) &&
+             ((values[2] <= 64) || ((values[2] >= 101) && (values[2] <= 116))) &&
+             (values[3] >= DALI_BIND_TOGGLE) && (values[3] < DALI_BIND_MAX)) {
+      bind->device = values[0];
+      bind->instance = values[1];
+      bind->target = values[2];
+      bind->mode = values[3];
+      Dali->bind_down &= ~(1 << slot);
+    } else {
+      ResponseCmndFailed();
+      return;
+    }
+  }
+  Response_P(PSTR("{\"%s%d\":"), XdrvMailbox.command, XdrvMailbox.index);
+  ResponseAppendDaliBind(slot, false);
+  ResponseJsonEnd();
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliBroadcastSlider(void) {
   // DaliBS 1       - Show broadcast slider
   // DaliBS 0       - Hide broadcast slider
@@ -1522,6 +2167,18 @@ void CmndDaliGroupSliders(void) {
 }
 
 #ifdef USE_LIGHT
+/*-------------------------------------------------------------------------------------------*/
+
+void CmndDaliRetry(void) {
+  // DaliRetry 0..64 - Retry restart probe count once per second for DALI device
+  if (Dali->allow_light) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
+      Dali->Settings.probe_retry = XdrvMailbox.payload;
+    }
+  }
+  ResponseCmndNumber(Dali->Settings.probe_retry);
+}
+
 /*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliLight(void) {

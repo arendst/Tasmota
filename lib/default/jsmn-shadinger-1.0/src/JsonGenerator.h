@@ -38,6 +38,7 @@ public:
   void add(int32_t uval32);
   void addStrRaw(const char * sval);
   void addStr(const char * sval);
+  void addHex(const uint8_t * data, size_t len);   // add a byte buffer as an uppercase hex string
 
   inline String &toString(void) { return val; }
 
@@ -59,6 +60,7 @@ public:
   void add(const char* key, int32_t uval32);
   void add(const char* key, const String & str);
   void addHex32(const char* key, uint32_t uval32);
+  void addHex(const char* key, const uint8_t * data, size_t len);   // add a byte buffer as an uppercase hex string
   void addStrRaw(const char* key, const char * sval);
   void addStr(const char* key, const char * sval);
 

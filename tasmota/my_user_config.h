@@ -114,8 +114,27 @@
 // -- MQTT ----------------------------------------
 #define MQTT_USE               true              // [SetOption3] Select default MQTT use (false = Off, true = On)
 
+// -- PubSubClient defaults -----------------------
 #define MQTT_KEEPALIVE         30                // [MqttKeepAlive] Number of seconds between KeepAlive messages
 #define MQTT_SOCKET_TIMEOUT    4                 // [MqttTimeout] Number of seconds before Mqtt connection timeout
+#define MQTT_MAX_PING_OUTSTANDING 2              // Number of unanswered PINGREQ (one per KeepAlive) before closing the connection (1..4, 1 = legacy)
+#define MQTT_MAX_PACKET_SIZE   1200              // Working buffer and advertised maximum incoming packet size
+#define MQTT_PACKET_TIMEOUT    MQTT_SOCKET_TIMEOUT // Seconds allowed to receive a complete MQTT packet
+
+// -- MQTT 5 - PubSubClient defaults --------------
+// MQTT 3.1.1 is the PubSubClient default. Uncomment to opt into MQTT 5 support.
+// #define MQTT_VERSION           MQTT_VERSION_5_0 // Compile MQTT5-capable PubSubClient (with MQTT 3.1.1 fallback, +7k4 code)
+//#define USE_MQTT_DETAILED_LOGGING                // Enable detailed MQTT5 Tx/Rx packet logging at DEBUG_MORE (+0k5 code)
+//#define USE_MQTT_DETAILED_LOGGING_BINARY         // Also dump every raw MQTT5 packet read/written to the transport as hex at DEBUG_MORE (independent of USE_MQTT_DETAILED_LOGGING)
+//#define USE_MQTT_QOS                             // Compile outbound QoS 1/2 acknowledged delivery (+1k9 code) (replay buffers, retransmission, Receive Maximum). Off = smaller code; Tasmota publishes at QoS 0. The MQTT_MAX_INFLIGHT / MQTT_INFLIGHT_COPY_BUDGET knobs below only apply when this is defined.
+#define MQTT_MAX_INFLIGHT      4                 // Outbound QoS 1/2 PUBLISHes awaiting acknowledgement (USE_MQTT_QOS only)
+#define MQTT_MAX_PENDING_SUBSCRIPTIONS 12        // Tracked SUBSCRIBE/UNSUBSCRIBE exchanges
+#define MQTT_MAX_INBOUND_INFLIGHT 8              // Inbound QoS 2 identifiers and MQTT 5 Receive Maximum
+#define MQTT_MAX_TOPIC_ALIASES 0                 // Outbound MQTT 5 Topic Alias entries (0 = disabled)
+#define MQTT_INFLIGHT_COPY_BUDGET 2048           // Bytes retained for QoS 1/2 reconnect replay
+#define MQTT_ACK_TIMEOUT       MQTT_SOCKET_TIMEOUT // Seconds before an unacknowledged operation is reported
+#define MQTT_PERSISTENT_SESSION_EXPIRY_INTERVAL 0xFFFFFFFFUL // MQTT 5 session expiry for mqtt_persistent
+
 #define MQTT_WIFI_CLIENT_TIMEOUT 200             // [MqttWifiTimeout] Number of milliseconds before Mqtt Wi-Fi timeout
 
 #define MQTT_HOST              ""                // [MqttHost]
@@ -900,6 +919,9 @@
 //    #define USE_LORA_SX126X                      // Add driver support for LoRa on SX126x based devices like LiliGo T3S3 Lora32 (+16k code)
 //    #define USE_LORA_SX127X                      // Add driver support for LoRa on SX127x based devices like M5Stack LoRa868, RFM95W (+5k code)
 //    #define USE_LORAWAN_BRIDGE                   // Add support for LoRaWan bridge (+8k code)
+//  #define USE_TFA_MARBELLA                       // Add support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (+12k6 code on ESP8266, +5k7 on ESP32)
+//    #define TFA_MARBELLA_TIMEOUT   900           // Seconds without a packet after which the reading is dropped
+//    #define TFA_MARBELLA_SERIAL    0             // Sensor id to bind to, 0 learns the first sensor received
 
 #endif  // USE_SPI
 
@@ -947,6 +969,7 @@
   #define USE_TASMOTA_CLIENT_SERIAL_SPEED 57600  // Depends on the sketch that is running on the Uno/Pro Mini
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 //#define USE_MIEL_HVAC                            // Add support for Mitsubishi Electric HVAC serial interface (+5k code)
+//  #define USE_MIEL_HVAC_MODBUS_SLAVE             // Expose all MiEL HVAC states/functions on a second RS485 port as a Modbus RTU slave for PLC use (ESP32 only, +4k code)
 //#define USE_TUYAMCUBR                            // Add support for TuyaMCU Bridge
 //#define USE_PROJECTOR_CTRL                       // Add support for LCD/DLP Projector serial control interface (+2k code)
 //  #define USE_PROJECTOR_CTRL_NEC                 // Use codes for NEC
@@ -1411,6 +1434,14 @@
 #if defined(USE_MQTT_AWS_IOT) && !defined(USE_MQTT_CLIENT_CERT)
   #define USE_MQTT_CLIENT_CERT                   // USE_MQTT_AWS_IOT requires USE_MQTT_CLIENT_CERT
 #endif
+#ifdef USE_MIEL_HVAC
+  #undef  MQTT_MAX_PACKET_SIZE                   // ESP32 builds set this to 1200 via a -D build flag (platformio_tasmota32.ini)
+  #define MQTT_MAX_PACKET_SIZE   4096            // Raised from the 1200 byte default: MiELHVAC's single-entity Home
+                                                  // Assistant climate discovery config (with all its state/command
+                                                  // value-mapping templates) does not fit in 1200, or even 3200, bytes.
+                                                  // Only applies when this driver is enabled, to keep the default
+                                                  // 1200 for everyone else.
+#endif  // USE_MIEL_HVAC
 
 /*********************************************************************************************\
  * Post-process obsoletes

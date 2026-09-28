@@ -525,15 +525,21 @@ void Z_Devices::queueTimer(uint16_t shortaddr, uint16_t groupaddr, uint32_t wait
 }
 
 // Run timer at each tick
-// WARNING: don't set a new timer within a running timer, this causes memory corruption
 void Z_Devices::runTimer(void) {
-  // visit all timers
+  // A timer callback can add or remove timers: publishing attributes runs the Rules and the
+  // Berry handlers, which can send Zigbee commands, which in turn re-arm the read-back and
+  // reachability timers of the target device. Removing an element frees it and leaves the
+  // `next` pointer cached by the iterator dangling, so detach the due timers first and only
+  // then run them.
+  LList<Z_Deferred> due;
   for (auto & defer : _deferred) {
-    uint32_t timer = defer.timer;
-    if (TimeReached(timer)) {
-      (*defer.func)(defer.shortaddr, defer.groupaddr, defer.cluster, defer.endpoint, defer.value);
-      _deferred.remove(&defer);
+    if (TimeReached(defer.timer)) {
+      due.addToLast() = defer;      // keep the original order
+      _deferred.remove(&defer);     // safe, no callback has run yet
     }
+  }
+  for (auto & defer : due) {
+    (*defer.func)(defer.shortaddr, defer.groupaddr, defer.cluster, defer.endpoint, defer.value);
   }
 
   // check if we need to save to Flash

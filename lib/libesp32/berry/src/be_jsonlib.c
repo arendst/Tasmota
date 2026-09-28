@@ -490,6 +490,75 @@ void string_dump(bvm *vm, int index)
     be_pushvalue(vm, index);
 }
 
+/* Custom serialization of instances through a `tojson()` method.
+ *
+ * Any instance can control how `json.dump()` serializes it by implementing:
+ *
+ *     def tojson(indent)
+ *
+ * Argument (optional, a `tojson()` declared without argument is valid since
+ * Berry silently ignores extra arguments):
+ *   `indent`: `nil` when `json.dump()` was called without the `"format"` option,
+ *             i.e. the output must be compact.
+ *             Otherwise an `int`, the current nesting level of this value, `0`
+ *             at top-level, each level being `INDENT_WIDTH` (2) spaces. The
+ *             opening indentation is already emitted by the caller, so only
+ *             continuation lines need to be indented (at `indent`, and
+ *             `indent+1` for nested content).
+ *             `nil` and `0` must be distinguished, hence `nil` rather than `0`
+ *             for the compact case: a top-level value is at level `0` in both
+ *             modes, so the type of `indent` is what carries the mode.
+ *             In compact mode the argument is simply not passed, and Berry
+ *             defaults it to `nil`, so a vararg `tojson(*a)` sees `[]`.
+ *
+ * Return value:
+ *   A `string` inserted *verbatim* in the output. No JSON syntax check is done,
+ *   and no quoting nor escaping is applied: the method is fully responsible for
+ *   emitting valid JSON. This is what allows returning a JSON object, array,
+ *   number or `null`, and not only a JSON string. Note that returning a JSON
+ *   string requires the quotes to be part of the returned value, and the content
+ *   to be escaped, e.g. `return '"hello"'`.
+ *   `nil` means "no custom serialization", and `json.dump()` falls back to its
+ *   default behavior for this value.
+ *   Any other type raises `type_error`.
+ *
+ * Instances without a `tojson()` method are unaffected and keep being dumped as
+ * the JSON string of their `tostring()` representation.
+ *
+ * This function returns `btrue` if the value was serialized by `tojson()`, and
+ * the resulting string is left on top of the stack. It returns `bfalse` if the
+ * value is not an instance, has no `tojson` method, or `tojson()` returned
+ * `nil`, and the stack is left unchanged. */
+static bbool instance_dump(bvm *vm, int *indent, int idx, int fmt)
+{
+    if (!be_isinstance(vm, idx)) { return bfalse; }
+    be_stack_require(vm, 3 + BE_STACK_FREE_MIN); /* method + self + 1 arg */
+    idx = be_absindex(vm, idx); /* we push values below, `idx` must not be relative */
+    if (!be_getmethod(vm, idx, "tojson")) {
+        be_pop(vm, 1); /* `be_getmethod` always pushes a value, remove it */
+        return bfalse;
+    }
+    be_pushvalue(vm, idx); /* push instance as first argument (self) */
+    int argc = 1; /* self */
+    if (fmt) {
+        be_pushint(vm, *indent);
+        argc++;
+    } /* else don't pass `indent` at all, Berry defaults missing arguments to `nil` */
+    be_call(vm, argc);
+    be_pop(vm, argc); /* remove self and arg, the return value is now on top */
+    if (be_isnil(vm, -1)) { /* `nil` means: use the default serialization */
+        be_pop(vm, 1);
+        return bfalse;
+    }
+    if (!be_isstring(vm, -1)) {
+        const char *name = be_classname(vm, idx);
+        be_raise(vm, "type_error", be_pushfstring(vm,
+            "the value of `%s::tojson()` is not a 'string'",
+            (name && strlen(name)) ? name : "<anonymous>"));
+    }
+    return btrue;
+}
+
 static void object_dump(bvm *vm, int *indent, int idx, int fmt)
 {
 
@@ -571,7 +640,9 @@ static void value_dump(bvm *vm, int *indent, int idx, int fmt)
     /* `be_ismapinstance()` / `be_islistinstance()` walk the class hierarchy and
      * compare against the actual builtin `map` / `list` classes, so subclasses
      * are handled, and a user class that merely shares the name is not. */
-    if (be_ismapinstance(vm, idx)) { /* convert to json object */
+    if (instance_dump(vm, indent, idx, fmt)) { /* an explicit `tojson()` method takes precedence */
+        /* the result was pushed by `instance_dump` */
+    } else if (be_ismapinstance(vm, idx)) { /* convert to json object */
         object_dump(vm, indent, idx, fmt);
     } else if (be_islistinstance(vm, idx)) { /* convert to json array */
         array_dump(vm, indent, idx, fmt);

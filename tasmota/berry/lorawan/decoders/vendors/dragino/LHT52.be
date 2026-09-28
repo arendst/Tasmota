@@ -11,6 +11,7 @@ if !global.lht52Nodes      # data survive to decoder reload
 end
 
 class LwDecoLHT52
+  static var hashCheck = false
 
   static def deviceInfo()
    return {"manufacturer":"Dragino", 

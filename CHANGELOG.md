@@ -3,15 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.6.0.1]
+## [15.6.0.2]
 ### Added
-
+- DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) (#25073)
+- Matter add Electrical Power Measurement cluster to On/Off Plug-in Unit (#24922)
 
 ### Breaking Changed
 
 
 ### Changed
-- BLE EQ3-TRV code refactoring (#24978)
+- Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` (#25020)
+- ESP8266 platform update from 2026.04.00 to 2026.09.00 (#25072)
+- ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
+- IR accept raw data in JSON
+- Matter update specs to 1.6.1 (to be used by AI)
 
 ### Fixed
 
@@ -19,6 +24,41 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 
+
+## [15.6.0.1] 20260926
+### Added
+- Support for GUI tooltip on touch media like phones and tablets
+- ESP32 MiELHVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` (#24982)
+- MiELHVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state (#24984)
+- Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 (#24959)
+- Berry virtual button support
+- NeoPool AuxMode (#24998)
+- Berry `sortedmap` support for `json.dump` (#24999)
+- MiELHVAC Home Assistant MQTT discovery (#25027)
+- DALI-2 input device event messages (IEC 62386-103) from push buttons, occupancy and light sensors decoded and published for rules and MQTT (#25029)
+- DALI-2 control device commissioning and instance queries with commands `DaliDeviceScan` and `DaliDevice`  (#25029)
+- Support for MI32 Xiaomi Mi Body Composition Scale (MIBCS/MIBFS) (#25049)
+- MQTT 5.0 with focus on request/response (optional) (#25050)
+- RC522 throttle idle polling and add self-healing watchdog (#25052)
+
+### Changed
+- BLE EQ3-TRV code refactoring (#24978)
+- BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
+- MiELHVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) (#24992)
+- Command `SetOption46 201..255` init wait 1 to 55 seconds instead of 2010 to 2550 msec (#25035)
+- MQTT connection closed before TCP retransmission could deliver a delayed PINGRESP, now tolerates 2 unanswered pings (#25067)
+
+### Fixed
+- MiELHVAC Modbus and CC1101 GPIO names shown as `MbsRelay ...` due to a duplicate entry in the GPIO name table (#24992)
+- MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror (#24993)
+- Zigbee deferred timer use after free, and the truncated backtrace that hid it (#24979)
+- Matter autoconfiguration after configuration reset (#24997)
+- Berry rare register allocation bug (#25010)
+- Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 (#24731)
+- ESP32 release UART0 console when the template uses its pins (#25047)
+- WT32_ETH01 ethernet initialization (#25051)
+- Touch GT911 fix template (#25068)
+- Matter commissioning mDNS announcements (#25069)
 
 ## [Released]
 

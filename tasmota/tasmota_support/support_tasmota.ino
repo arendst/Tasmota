@@ -2206,6 +2206,25 @@ void GpioInit(void)
   SetSerialSwap();
 #endif
 
+#if defined(ESP32) && defined(USE_USB_CDC_CONSOLE)
+  // The command console falls back to UART0 when no USB host is detected at boot
+  // (see tasmota.ino, "Fall back to serial port"). On SoCs whose default UART0 pins
+  // are ordinary GPIOs (ESP32-S3 43/44, C3/C6 20/21) a template may assign them to
+  // another function. UART0 keeps driving those pads, which silently corrupts that
+  // function, so release the console rather than the pins.
+  if (tasconsole_serial &&
+      (TasmotaGlobal.gpio_pin[(uint32_t)SOC_TX0] || TasmotaGlobal.gpio_pin[(uint32_t)SOC_RX0])) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Serial console released, GPIO%d/GPIO%d used by template"),
+           (int)SOC_TX0, (int)SOC_RX0);
+    TasmotaGlobal.seriallog_level = 0;    // Stop logging to a console that is about to go away
+    Settings->seriallog_level = 0;
+    Serial.flush();
+    Serial.end();                         // Detaches the pads so the template function owns them
+    TasConsole = Serial;                  // Refresh the copy, it must not point at a released UART
+    tasconsole_serial = false;
+  }
+#endif  // ESP32 && USE_USB_CDC_CONSOLE
+
   uint32_t sspi_mosi = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MOSI)) ? SPI_MOSI : SPI_NONE;
   uint32_t sspi_miso = (PinUsed(GPIO_SSPI_SCLK) && PinUsed(GPIO_SSPI_MISO)) ? SPI_MISO : SPI_NONE;
   TasmotaGlobal.soft_spi_enabled = sspi_mosi + sspi_miso;
@@ -2313,8 +2332,12 @@ void GpioInit(void)
   }
 
   if (Settings->param[P_POWER_ON_DELAY]) {                 // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
-    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %d msec"), init_delay);
+    uint32_t init_delay = Settings->param[P_POWER_ON_DELAY] * 10;     // 1 .. 200 = 10 .. 2000 msec delay
+    if (Settings->param[P_POWER_ON_DELAY] > 200) {                 
+      init_delay = (Settings->param[P_POWER_ON_DELAY] - 200) * 1000;  // 201 .. 255 = 1 .. 55 seconds delay for devices like DALI gear to become ready
+    }
+    float fdelay = (float)init_delay * 0.001f;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: SO46 Wait %3_f sec"), &fdelay);
     delay(init_delay);
   }
 
