@@ -18,10 +18,10 @@
 #
 
 #################################################################################
-# Matter 1.4.1 Root Node Device Specification
+# Matter 1.6.0 Root Node Device Specification
 #################################################################################
 # Device Type: Root Node (0x0016)
-# Device Type Revision: 3 (Matter 1.4.1)
+# Device Type Revision: 3 (Matter 1.6.0, DataModelRevision = 20)
 # Class: Simple | Scope: Node
 #
 # The Root Node device type represents the base functionality required by all
@@ -78,7 +78,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # ATTRIBUTES:
 # ID     | Name                    | Type    | Constraint | Quality | Default | Access | Conf
 # -------|-------------------------|---------|------------|---------|---------|--------|-----
-# 0x0000 | DataModelRevision       | uint16  | all        | F       | 18      | R V    | M
+# 0x0000 | DataModelRevision       | uint16  | all        | F       | 20      | R V    | M
 # 0x0001 | VendorName              | string  | max 32     | F       | -       | R V    | M
 # 0x0002 | VendorID                | uint16  | all        | F       | -       | R V    | M
 # 0x0003 | ProductName             | string  | max 32     | F       | -       | R V    | M
@@ -104,7 +104,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # 0x00 | StartUp | CRITICAL | M
 #
 # NOTES:
-# - DataModelRevision: 18 = Matter 1.3+ (compatible with 1.4.1)
+# - DataModelRevision: 20 = Matter 1.6.0
 # - VendorID: 0xFFF1-0xFFF4 for test vendors
 # - NodeLabel: User-friendly name, writable
 # - Location: ISO 3166-1 alpha-2 country code
@@ -796,7 +796,7 @@ class Matter_Plugin_Root : Matter_Plugin
       self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- DataModelRevision ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 18)     # 18 = Matter 1.3+ (revision 18 of the Data Model, compatible with 1.4.1)
+        return tlv_solo.set(0x05 #-TLV.U2-#, 20)     # 20 = Matter 1.6.0 (revision 20 of the Data Model)
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, "Tasmota")
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------
@@ -838,11 +838,28 @@ class Matter_Plugin_Root : Matter_Plugin
       end
 
     # ====================================================================================================
+    elif cluster == 0x001F              # ========== Access Control Cluster 9.10 p.461 ==========
+
+      if   attribute == 0x0002          #  ---------- SubjectsPerAccessControlEntry / uint16 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
+      elif attribute == 0x0003          #  ---------- TargetsPerAccessControlEntry / uint16 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 3)     # spec minimum
+      elif attribute == 0x0004          #  ---------- AccessControlEntriesPerFabric / uint16 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
+      end
+
+    # ====================================================================================================
     elif cluster == 0x003F              # ========== Group Key Management Cluster 11.2 p.572 ==========
-      
+
       if   attribute == 0x0000          #  ---------- GroupKeyMap / list[GroupKeyMapStruct] ----------
         # Return empty list for now - group keys managed internally
         return TLV.Matter_TLV_array()
+      elif attribute == 0x0001          #  ---------- GroupTable / list[GroupInfo] ----------
+        return TLV.Matter_TLV_array()   # empty list for now
+      elif attribute == 0x0002          #  ---------- MaxGroupsPerFabric / uint16 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
+      elif attribute == 0x0003          #  ---------- MaxGroupKeysPerFabric / uint16 ----------
+        return tlv_solo.set(0x05 #-TLV.U2-#, 3)     # spec minimum
       end
 
     # ====================================================================================================
