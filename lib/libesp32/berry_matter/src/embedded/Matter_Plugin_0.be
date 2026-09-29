@@ -426,8 +426,8 @@ matter_device.events.dump()
         var types = self.TYPES
         for dt: types.keys()
           var d1 = dtl.add_struct()
-          d1.add_TLV(0, 0x05 #-TLV.U2-#, dt)     # DeviceType
-          d1.add_TLV(1, 0x05 #-TLV.U2-#, types[dt])      # Revision
+          d1.add_TLV(0, 0x06 #-TLV.U4-#, dt)     # DeviceType
+          d1.add_TLV(1, 0x06 #-TLV.U4-#, types[dt])      # Revision
         end
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
@@ -460,7 +460,7 @@ matter_device.events.dump()
       var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) / 2 : 0
       var idx = 0
       while idx < attr_list_bytes_sz
-        acli.add_TLV(nil, 0x05 #-TLV.U2-#, attr_list_bytes.get(idx * 2, -2))
+        acli.add_TLV(nil, 0x06 #-TLV.U4-#, attr_list_bytes.get(idx * 2, -2))
         idx += 1
       end
       return acli                       # TODO, empty list for now

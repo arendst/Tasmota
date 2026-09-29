@@ -62,6 +62,40 @@ solidified during the Tasmota build. Do not require generated files in
 `src/solidify/` to be updated in a pull request unless the build workflow
 explicitly requires committed generated output.
 
+### Berry Matter TLV encoding widths
+
+When encoding, `Matter_TLV_item.tlv2raw()` and `encode_len()` in
+`lib/libesp32/berry_matter/src/embedded/Matter_TLV.be` choose the wire type
+from the value. The type passed to `add_TLV()` / `set()` is only a starting
+point:
+
+- `I2`/`I4` shrink to the smallest signed width that fits (`I1`, `I2` or `I4`).
+- `U2`/`U4` shrink to the smallest unsigned width that fits (`U1`, `U2` or `U4`).
+  A Berry int that is negative, meaning a u32 above `0x7FFFFFFF`, stays `U4`.
+- `I8`/`U8` with a plain Berry `int` become `I4`/`U4`, then shrink further.
+  An `int64` instance or `bytes(8)` is always written as 8 bytes, even when
+  the value is small. Pass an `int` if you want the compact form.
+- `I1`/`U1` are never widened. A value that doesn't fit is truncated to one
+  byte, so declare a wider type if the value can exceed the range.
+- Signedness is kept: `U*` never becomes `I*`, and the reverse is also true.
+- `B1`..`B8` and `UTF1`..`UTF8` get their length prefix from the actual size.
+  `BOOL` becomes `BTRUE` or `BFALSE` from the value.
+- Encoding updates `item.typ` in place.
+
+Convention: Matter Berry code encodes every signed integer up to 32 bits as
+`0x02 #-TLV.I4-#` and every unsigned one as `0x06 #-TLV.U4-#`, whatever the
+schema width (enum8, uint16, int16, and so on). Don't use `I1`/`I2`/`U1`/`U2`
+in new code. `I8`/`U8` stay for 64-bit fields, and the other type codes are
+unchanged. `Matter_zzz_TLV_test.be` still covers every code to test the
+encoder.
+
+As a result, declaring `U1`, `U2` or `U4` for an enum8, or `I8` for an int64
+field holding a small value, produces the same bytes. Matter TLV readers must accept
+any integer width that holds the value, so code reviews shouldn't flag the
+declared width unless it is too narrow (`I1`/`U1` truncation) or an `int64`
+instance is used where the compact form was expected. When decoding, only
+8-byte integers come back as `int64`; smaller ones come back as Berry `int`.
+
 ### Configuration Override
 
 To customize a build, copy `tasmota/user_config_override_sample.h` to `tasmota/user_config_override.h` and add your `#define` / `#undef` directives there. Do not edit `my_user_config.h` directly — it is the master configuration shipped with each release.

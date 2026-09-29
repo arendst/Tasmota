@@ -133,12 +133,12 @@ class Matter_AttributePathIB : Matter_IM_base
     var s = TLV.Matter_TLV_list()
     s.add_TLV(0, 0x08 #-TLV.BOOL-#, self.tag_compression)
     s.add_TLV(1, 0x07 #-TLV.U8-#, self.node)
-    s.add_TLV(2, 0x05 #-TLV.U2-#, self.endpoint)
+    s.add_TLV(2, 0x06 #-TLV.U4-#, self.endpoint)
     s.add_TLV(3, 0x06 #-TLV.U4-#, self.cluster)
     s.add_TLV(4, 0x06 #-TLV.U4-#, self.attribute)
     # Re-emit ListIndex only when it was present, preserving append semantics.
     if self.list_index_present
-      s.add_TLV(5, self.list_index_is_null ? 0x14 #-TLV.NULL-# : 0x05 #-TLV.U2-#, self.list_index)
+      s.add_TLV(5, self.list_index_is_null ? 0x14 #-TLV.NULL-# : 0x06 #-TLV.U4-#, self.list_index)
     end
     return s
   end
@@ -167,7 +167,7 @@ class Matter_ClusterPathIB : Matter_IM_base
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_list()
     s.add_TLV(0, 0x07 #-TLV.U8-#, self.node)
-    s.add_TLV(1, 0x05 #-TLV.U2-#, self.endpoint)
+    s.add_TLV(1, 0x06 #-TLV.U4-#, self.endpoint)
     s.add_TLV(2, 0x06 #-TLV.U4-#, self.cluster)
     return s
   end
@@ -306,7 +306,7 @@ class Matter_EventPathIB : Matter_IM_base
     var TLV = matter.TLV
     if s == nil     s = TLV.Matter_TLV_list() end
     s.add_TLV(0, 0x07 #-TLV.U8-#, self.node)
-    s.add_TLV(1, 0x05 #-TLV.U2-#, self.endpoint)
+    s.add_TLV(1, 0x06 #-TLV.U4-#, self.endpoint)
     s.add_TLV(2, 0x06 #-TLV.U4-#, self.cluster)
     s.add_TLV(3, 0x06 #-TLV.U4-#, self.event)
     s.add_TLV(4, 0x08 #-TLV.BOOL-#, self.is_urgent)
@@ -352,7 +352,7 @@ class Matter_EventDataIB : Matter_IM_base
       self.path.to_TLV(s.add_list(0))
     end
     s.add_TLV(1, 0x07 #-TLV.U8-#, self.event_number)
-    s.add_TLV(2, 0x04 #-TLV.U1-#, self.priority)
+    s.add_TLV(2, 0x06 #-TLV.U4-#, self.priority)
     s.add_TLV(3, 0x07 #-TLV.U8-#, self.epoch_timestamp)
     s.add_TLV(4, 0x07 #-TLV.U8-#, self.system_timestamp)
     s.add_TLV(5, 0x07 #-TLV.U8-#, self.delta_epoch_timestamp)
@@ -409,7 +409,7 @@ class Matter_CommandPathIB : Matter_IM_base
   def to_TLV()
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_list()
-    s.add_TLV(0, 0x05 #-TLV.U2-#, self.endpoint)
+    s.add_TLV(0, 0x06 #-TLV.U4-#, self.endpoint)
     s.add_TLV(1, 0x06 #-TLV.U4-#, self.cluster)
     s.add_TLV(2, 0x06 #-TLV.U4-#, self.command)
     return s
@@ -562,8 +562,8 @@ class Matter_StatusIB : Matter_IM_base
   def to_TLV()
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
-    s.add_TLV(0, 0x05 #-TLV.U2-#, self.status)
-    s.add_TLV(1, 0x05 #-TLV.U2-#, self.cluster_status)
+    s.add_TLV(0, 0x06 #-TLV.U4-#, self.status)
+    s.add_TLV(1, 0x06 #-TLV.U4-#, self.cluster_status)
     return s
   end
 end
@@ -602,7 +602,7 @@ class Matter_StatusResponseMessage : Matter_IM_Message_base
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     s.add_TLV(0, 0x06 #-TLV.U4-#, self.status)
-    s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+    s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
     return s
   end
 end
@@ -638,7 +638,7 @@ class Matter_ReadRequestMessage : Matter_IM_Message_base
   #   self.to_TLV_array(s, 2, self.event_filters)
   #   s.add_TLV(3, 0x08 #-TLV.BOOL-#, self.fabric_filtered)
   #   self.to_TLV_array(s, 4, self.data_version_filters)
-  #   s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+  #   s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
   #   return s
   # end
 end
@@ -909,7 +909,7 @@ class Matter_ReportDataMessage : Matter_IM_Message_base
     self.to_TLV_array(s, 2, self.event_reports)
     s.add_TLV(3, 0x08 #-TLV.BOOL-#, self.more_chunked_messages)
     s.add_TLV(4, 0x08 #-TLV.BOOL-#, self.suppress_response)
-    s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+    s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
     return s
   end
 end
@@ -947,14 +947,14 @@ class Matter_SubscribeRequestMessage : Matter_IM_Message_base
   #   var TLV = matter.TLV
   #   var s = TLV.Matter_TLV_struct()
   #   s.add_TLV(0, 0x08 #-TLV.BOOL-#, self.keep_subscriptions)
-  #   s.add_TLV(1, 0x05 #-TLV.U2-#, self.min_interval_floor)
-  #   s.add_TLV(2, 0x05 #-TLV.U2-#, self.max_interval_ceiling)
+  #   s.add_TLV(1, 0x06 #-TLV.U4-#, self.min_interval_floor)
+  #   s.add_TLV(2, 0x06 #-TLV.U4-#, self.max_interval_ceiling)
   #   self.to_TLV_array(s, 3, self.attributes_requests)
   #   self.to_TLV_array(s, 4, self.event_requests)
   #   self.to_TLV_array(s, 5, self.event_filters)
   #   s.add_TLV(7, 0x08 #-TLV.BOOL-#, self.fabric_filtered)
   #   self.to_TLV_array(s, 8, self.data_version_filters)
-  #   s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+  #   s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
   #   return s
   # end
 end
@@ -980,8 +980,8 @@ class Matter_SubscribeResponseMessage : Matter_IM_Message_base
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     s.add_TLV(0, 0x06 #-TLV.U4-#, self.subscription_id)
-    s.add_TLV(2, 0x05 #-TLV.U2-#, self.max_interval)
-    s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+    s.add_TLV(2, 0x06 #-TLV.U4-#, self.max_interval)
+    s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
     return s
   end
 end
@@ -1014,7 +1014,7 @@ class Matter_WriteRequestMessage : Matter_IM_Message_base
   #   s.add_TLV(1, 0x08 #-TLV.BOOL-#, self.timed_request)
   #   self.to_TLV_array(s, 2, self.write_requests)
   #   s.add_TLV(3, 0x08 #-TLV.BOOL-#, self.more_chunked_messages)
-  #   s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+  #   s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
   #   return s
   # end
 end
@@ -1038,7 +1038,7 @@ class Matter_WriteResponseMessage : Matter_IM_Message_base
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
     self.to_TLV_array(s, 0, self.write_responses)
-    s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+    s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
     return s
   end
 end
@@ -1061,8 +1061,8 @@ class Matter_TimedRequestMessage : Matter_IM_Message_base
   # def to_TLV()
   #   var TLV = matter.TLV
   #   var s = TLV.Matter_TLV_struct()
-  #   s.add_TLV(0, 0x05 #-TLV.U2-#, self.timeout)
-  #   s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+  #   s.add_TLV(0, 0x06 #-TLV.U4-#, self.timeout)
+  #   s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
   #   return s
   # end
 end
@@ -1092,7 +1092,7 @@ class Matter_InvokeRequestMessage : Matter_IM_Message_base
   #   s.add_TLV(0, 0x08 #-TLV.BOOL-#, self.suppress_response)
   #   s.add_TLV(1, 0x08 #-TLV.BOOL-#, self.timed_request)
   #   self.to_TLV_array(s, 2, self.invoke_requests)
-  #   s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+  #   s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
   #   return s
   # end
 end
@@ -1119,7 +1119,7 @@ class Matter_InvokeResponseMessage : Matter_IM_Message_base
     var s = TLV.Matter_TLV_struct()
     s.add_TLV(0, 0x08 #-TLV.BOOL-#, self.suppress_response)
     self.to_TLV_array(s, 1, self.invoke_responses)
-    s.add_TLV(0xFF, 0x04 #-TLV.U1-#, self.InteractionModelRevision)
+    s.add_TLV(0xFF, 0x06 #-TLV.U4-#, self.InteractionModelRevision)
     return s
   end
 end

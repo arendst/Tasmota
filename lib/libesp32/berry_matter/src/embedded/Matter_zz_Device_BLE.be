@@ -174,7 +174,7 @@ class Matter_Device_BLE : Matter_Device
 
         var cnresp = TLV.Matter_TLV_struct()
         if r == "Successful"
-            cnresp.add_TLV(0, 0x04 #-TLV.U1-#, 0x00 #-SUCCESS-#)
+            cnresp.add_TLV(0, 0x06 #-TLV.U4-#, 0x00 #-SUCCESS-#)
             cnresp.add_TLV(1, 0x0D #-TLV.UTF2-#, format("ip6=%s", tasmota.wifi()['ip6local']))
             log("MTR: ConnectNetwork deferred -> Successful", 2)
             global.matter_device.start()
@@ -193,7 +193,7 @@ class Matter_Device_BLE : Matter_Device
                 end
             end
         else
-            cnresp.add_TLV(0, 0x04 #-TLV.U1-#, 0x01 #-FAILURE-#)
+            cnresp.add_TLV(0, 0x06 #-TLV.U4-#, 0x01 #-FAILURE-#)
             cnresp.add_TLV(1, 0x0D #-TLV.UTF2-#, format("wifi connect failed: %s", r))
             log(f"MTR: ConnectNetwork deferred -> Failed: {r}", 2)
         end

@@ -149,7 +149,7 @@ class Matter_Plugin_Virt_HVAC : Matter_Plugin_Thermostat
       var parts = TLV.Matter_TLV_array()
       for pl: self.device.plugins
         if pl.TYPE == "v_hvac_option" && pl.hvac_ep == self.endpoint
-          parts.add_TLV(nil, 0x05 #-TLV.U2-#, pl.endpoint)
+          parts.add_TLV(nil, 0x06 #-TLV.U4-#, pl.endpoint)
         end
       end
       return parts

@@ -238,7 +238,7 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
     ]
     for s: specs
       var e = acc.add_struct()
-      e.add_TLV(0, 0x04 #-TLV.U1-#, s[0])              # MeasurementType
+      e.add_TLV(0, 0x06 #-TLV.U4-#, s[0])              # MeasurementType
       e.add_TLV(1, 0x08 #-TLV.BOOL-#, true)            # Measured
       e.add_TLV(2, 0x03 #-TLV.I8-#, s[1])              # MinMeasuredValue
       e.add_TLV(3, 0x03 #-TLV.I8-#, s[2])              # MaxMeasuredValue
@@ -246,7 +246,7 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
       var r = ranges.add_struct()
       r.add_TLV(0, 0x03 #-TLV.I8-#, s[1])              # RangeMin
       r.add_TLV(1, 0x03 #-TLV.I8-#, s[2])              # RangeMax
-      r.add_TLV(2, 0x05 #-TLV.U2-#, 500)               # PercentMax = 5.00%
+      r.add_TLV(2, 0x06 #-TLV.U4-#, 500)               # PercentMax = 5.00%
     end
     return acc
   end
@@ -261,9 +261,9 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
     # ====================================================================================================
     if   cluster == 0x0090              # ========== Electrical Power Measurement 2.13 ==========
       if   attribute == 0x0000          #  ---------- PowerMode / enum8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 2)          # AC
+        return tlv_solo.set(0x06 #-TLV.U4-#, 2)          # AC
       elif attribute == 0x0001          #  ---------- NumberOfMeasurementTypes / u8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 8)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 8)
       elif attribute == 0x0002          #  ---------- Accuracy / list[MeasurementAccuracyStruct] ----------
         return self._build_accuracy_list()
       elif attribute == 0x0008          #  ---------- ActivePower / i64 (mW) ----------
