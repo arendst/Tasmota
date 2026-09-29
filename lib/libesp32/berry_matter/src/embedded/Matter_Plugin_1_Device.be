@@ -507,6 +507,7 @@ class Matter_Plugin_Device : Matter_Plugin
     # shutters
     _stats_json_inner("shadow_shutter_pos",    "ShutterPos")
     _stats_json_inner("shadow_shutter_target", "ShutterTarget")
+    _stats_json_inner("shadow_shutter_direction", "ShutterDirection")
     _stats_json_inner("shadow_shutter_tilt",   "ShutterTilt")
 
     # sensors
