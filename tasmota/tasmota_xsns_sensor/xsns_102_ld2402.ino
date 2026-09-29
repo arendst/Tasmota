@@ -477,8 +477,28 @@ void Ld2402Every250MSecond(void) {
   if (LD2402.step) {
     LD2402.step--;
     if ((LD2402_CMND_Wait_Timeout&0xFFF0) == LD2402.step) {  // Timeout countdown reaches zero
-      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Device disconnected"));
-      LD2402.state = LD2402_DISCONNECTED;
+      switch (LD2402.sent_cmnd) {
+      case LD2402_CMND_START_CONFIGURATION>>4:        // missed start config response
+        LD2402.state = LD2402_CONFIGURATION;          // be forgiving, assume it worked
+        LD2402.step = LD2402.saved_step+1;
+        break;
+
+      case LD2402_CMND_END_CONFIGURATION>>4:          // missed end config response
+        LD2402.state = LD2402_DISCONNECTED;           // give up
+        LD2402.step = 0;
+        if (LD2402.version) {
+          DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Lost connection"));
+        } else {
+          DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Device not found"));
+        }
+        return;
+      
+      default:                                        // assume in config mode
+        LD2402.state = LD2402_CONFIGURATION;          // try to end config mode
+        LD2402.step = LD2402_CMND_END_CONFIGURATION;
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Ending config mode after 0x%04X"), LD2402.sent_cmnd);
+        return;
+      }        
     } else if (!(LD2402.step&0x00F)) {  // Command reaches zero
       DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Step 0x%04X"), LD2402.step);
       // preprocess - ensure module is in configuration mode except for start/end configuration and read version
@@ -520,7 +540,11 @@ void Ld2402Every250MSecond(void) {
 
 void Ld2402EverySecond(void) {
   static enum LD2402_EngTypes person = LD2402_PERSON_UNKNOWN;
-  if (!LD2402.state || !LD2402.version || !LD2402.serial_number) {
+  // if in the middle of command exit
+  if (LD2402.step) { return; }
+
+  // Try to connect only if there is no connection or version
+  if (LD2402_DISCONNECTED == LD2402.state || !LD2402.version) {
     DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Trying to connect."));
     LD2402.step = LD2402_CMND_READ_VERSION;
     return;
