@@ -157,18 +157,18 @@ class Matter_Plugin_Thermostat : Matter_Plugin_Device
         if self.shadow_local_temperature == nil
           return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
         else
-          return tlv_solo.set(0x01 #-TLV.I2-#, self.shadow_local_temperature)
+          return tlv_solo.set(0x02 #-TLV.I4-#, self.shadow_local_temperature)
         end
       elif attribute == 0x0011                        # OccupiedCoolingSetpoint / int16
-        return tlv_solo.set(0x01 #-TLV.I2-#, self.shadow_cooling_setpoint)
+        return tlv_solo.set(0x02 #-TLV.I4-#, self.shadow_cooling_setpoint)
       elif attribute == 0x0012                        # OccupiedHeatingSetpoint / int16
-        return tlv_solo.set(0x01 #-TLV.I2-#, self.shadow_heating_setpoint)
+        return tlv_solo.set(0x02 #-TLV.I4-#, self.shadow_heating_setpoint)
       elif attribute == 0x001B                        # ControlSequenceOfOperation / enum8
-        return tlv_solo.set(0x04 #-TLV.U1-#, 4)       # Cooling and heating
+        return tlv_solo.set(0x06 #-TLV.U4-#, 4)       # Cooling and heating
       elif attribute == 0x001C                        # SystemMode / enum8
-        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_system_mode)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_system_mode)
       elif attribute == 0x0029                        # ThermostatRunningState / bitmap16
-        return tlv_solo.set(0x05 #-TLV.U2-#, self.shadow_running_state)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_running_state)
       end
     end
     return super(self).read_attribute(session, ctx, tlv_solo)

@@ -124,11 +124,11 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
     # ====================================================================================================
     if   cluster == 0x0404              # ========== Flow Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, int(self.shadow_value)) # MeasuredValue represents 10 x flow in m3/h.
+        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, int(self.shadow_value)) # MeasuredValue represents 10 x flow in m3/h.
       elif attribute == 0x0001              #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 0)      # 0 m3/h
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)      # 0 m3/h
       elif attribute == 0x0002              #  ---------- MaxMeasuredValue / i16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 65534)  # 65534 m3/h
+        return tlv_solo.set(0x06 #-TLV.U4-#, 65534)  # 65534 m3/h
       end
 
     end

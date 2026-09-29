@@ -220,9 +220,9 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
       elif attribute == 0x4000          #  ---------- GlobalSceneControl / bool ----------
         return tlv_solo.set(0x08 #-TLV.BOOL-#, true)
       elif attribute == 0x4001          #  ---------- OnTime / u2 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
       elif attribute == 0x4002          #  ---------- OffWaitTime / u2 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
       elif attribute == 0x4003          #  ---------- StartUpOnOff / enum8 nullable ----------
         return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       end

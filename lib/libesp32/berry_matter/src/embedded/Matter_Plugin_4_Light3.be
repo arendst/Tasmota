@@ -234,21 +234,21 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
-        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_hue)
+        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_hue)
       elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
-        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_sat)
+        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_sat)
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 0)# 0 = CurrentHue and CurrentSaturation
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)# 0 = CurrentHue and CurrentSaturation
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
       elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
       elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 0x01)    # HS
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0x01)    # HS
       
       # Defined Primaries Information Attribute Set
       elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0x01)    # HS

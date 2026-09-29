@@ -154,11 +154,11 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
     # ====================================================================================================
     if   cluster == 0x0406              # ========== Occupancy Sensing ==========
       if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_bool_value)
+        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_bool_value)
       elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 3)  # physical contact
+        return tlv_solo.set(0x06 #-TLV.U4-#, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 0)  # unknown
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)  # unknown
       end
 
     end

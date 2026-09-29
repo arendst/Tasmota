@@ -135,11 +135,11 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     # ====================================================================================================
     if   cluster == 0x0403              # ========== Pressure Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        return tlv_solo.set_or_nil(0x01 #-TLV.I2-#, int(self.shadow_value))
+        return tlv_solo.set_or_nil(0x02 #-TLV.I4-#, int(self.shadow_value))
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(0x01 #-TLV.I2-#, 500)  # 500 hPA
+        return tlv_solo.set(0x02 #-TLV.I4-#, 500)  # 500 hPA
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
-        return tlv_solo.set(0x01 #-TLV.I2-#, 1500)  # 1500 hPA
+        return tlv_solo.set(0x02 #-TLV.I4-#, 1500)  # 1500 hPA
       end
 
     end

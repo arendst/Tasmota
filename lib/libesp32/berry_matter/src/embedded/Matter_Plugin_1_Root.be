@@ -641,7 +641,7 @@ class Matter_Plugin_Root : Matter_Plugin
     super(self).init(device, endpoint, config)
     # publish mandatory events
     self.publish_event(0x0028, 0x00, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, tasmota.version()))   # Event StartUp - Software Version
-    self.publish_event(0x0033, 0x03, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
+    self.publish_event(0x0033, 0x03, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
   end
 
   # Open or resume the GroupKeyMap list-write transaction for this exchange.
@@ -689,11 +689,11 @@ class Matter_Plugin_Root : Matter_Plugin
     var result = TLV.Matter_TLV_array()
     if fabric != nil
       var out = result.add_struct(nil)
-      out.add_TLV(1, 0x04 #-TLV.U1-#, 5)                 # Administer
-      out.add_TLV(2, 0x04 #-TLV.U1-#, 2)                 # CASE
+      out.add_TLV(1, 0x06 #-TLV.U4-#, 5)                 # Administer
+      out.add_TLV(2, 0x06 #-TLV.U4-#, 2)                 # CASE
       out.add_TLV(3, 0x14 #-TLV.NULL-#, nil)             # all CASE subjects
       out.add_TLV(4, 0x14 #-TLV.NULL-#, nil)             # all targets
-      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, fabric.get_fabric_index())
+      out.add_TLV(0xFE, 0x06 #-TLV.U4-#, fabric.get_fabric_index())
     end
     return result
   end
@@ -709,9 +709,9 @@ class Matter_Plugin_Root : Matter_Plugin
     end
     for entry : fabric.get_group_key_map()
       var out = result.add_struct(nil)
-      out.add_TLV(1, 0x05 #-TLV.U2-#, entry.find("group_id"))
-      out.add_TLV(2, 0x05 #-TLV.U2-#, entry.find("key_set_id"))
-      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, fabric.get_fabric_index())
+      out.add_TLV(1, 0x06 #-TLV.U4-#, entry.find("group_id"))
+      out.add_TLV(2, 0x06 #-TLV.U4-#, entry.find("key_set_id"))
+      out.add_TLV(0xFE, 0x06 #-TLV.U4-#, fabric.get_fabric_index())
     end
     return result
   end
@@ -825,13 +825,13 @@ class Matter_Plugin_Root : Matter_Plugin
     end
     for entry : fabric.get_group_table()
       var out = result.add_struct(nil)
-      out.add_TLV(1, 0x05 #-TLV.U2-#, entry.find("group_id"))
+      out.add_TLV(1, 0x06 #-TLV.U4-#, entry.find("group_id"))
       var endpoints = out.add_array(2)
       for endpoint : entry.find("endpoints", [])
-        endpoints.add_TLV(nil, 0x05 #-TLV.U2-#, endpoint)
+        endpoints.add_TLV(nil, 0x06 #-TLV.U4-#, endpoint)
       end
       out.add_TLV(3, 0x0C #-TLV.UTF1-#, entry.find("name", ""))
-      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, fabric.get_fabric_index())
+      out.add_TLV(0xFE, 0x06 #-TLV.U4-#, fabric.get_fabric_index())
     end
     return result
   end
@@ -902,8 +902,8 @@ class Matter_Plugin_Root : Matter_Plugin
   def group_key_set_to_tlv(key_set, id)
     var TLV = matter.TLV
     var out = TLV.Matter_TLV_struct()
-    out.add_TLV(0, 0x05 #-TLV.U2-#, id)
-    out.add_TLV(1, 0x04 #-TLV.U1-#, key_set != nil ? key_set.find("policy", 0) : 0)
+    out.add_TLV(0, 0x06 #-TLV.U4-#, id)
+    out.add_TLV(1, 0x06 #-TLV.U4-#, key_set != nil ? key_set.find("policy", 0) : 0)
     # KeySetRead never discloses group key material; only epoch start times are returned.
     var idx = 0
     while idx < 3
@@ -930,13 +930,13 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set(0x07 #-TLV.U8-#, session._breadcrumb)
       elif attribute == 0x0001          # ---------- BasicCommissioningInfo / BasicCommissioningInfo----------
         var bci = TLV.Matter_TLV_struct()
-        bci.add_TLV(0, 0x05 #-TLV.U2-#, 60)      # FailSafeExpiryLengthSeconds
-        bci.add_TLV(1, 0x05 #-TLV.U2-#, 900)     # MaxCumulativeFailsafeSeconds
+        bci.add_TLV(0, 0x06 #-TLV.U4-#, 60)      # FailSafeExpiryLengthSeconds
+        bci.add_TLV(1, 0x06 #-TLV.U4-#, 900)     # MaxCumulativeFailsafeSeconds
         return bci
       elif attribute == 0x0002          # ---------- RegulatoryConfig / RegulatoryLocationType ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 2)    # 2 = IndoorOutdoor | esp-matter = 0
+        return tlv_solo.set(0x06 #-TLV.U4-#, 2)    # 2 = IndoorOutdoor | esp-matter = 0
       elif attribute == 0x0003          # ---------- LocationCapability / RegulatoryLocationType----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 2)    # 2 = IndoorOutdoor
+        return tlv_solo.set(0x06 #-TLV.U4-#, 2)    # 2 = IndoorOutdoor
       elif attribute == 0x0004          # ---------- SupportsConcurrentConnection / bool ----------
         return tlv_solo.set(0x08 #-TLV.BOOL-#, false)    # false - maybe can set to true
       end
@@ -964,7 +964,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var ip6 = eth.add_array(6)                # IPv6Addresses
           ip6.add_TLV(nil, 0x10 #-TLV.B1-#, matter.get_ip_bytes(tas_eth.find("ip6local", "")))
           ip6.add_TLV(nil, 0x10 #-TLV.B1-#, matter.get_ip_bytes(tas_eth.find("ip6", "")))
-          eth.add_TLV(7, 0x04 #-TLV.U1-#, 2)                 # InterfaceType, p646
+          eth.add_TLV(7, 0x06 #-TLV.U4-#, 2)                 # InterfaceType, p646
         end
 
         var tas_wif = tasmota.wifi()
@@ -981,11 +981,11 @@ class Matter_Plugin_Root : Matter_Plugin
           var ip6 = wif.add_array(6)                # IPv6Addresses
           ip6.add_TLV(nil, 0x10 #-TLV.B1-#, matter.get_ip_bytes(tas_wif.find("ip6local", "")))
           ip6.add_TLV(nil, 0x10 #-TLV.B1-#, matter.get_ip_bytes(tas_wif.find("ip6", "")))
-          wif.add_TLV(7, 0x04 #-TLV.U1-#, 1)                 # InterfaceType, p646
+          wif.add_TLV(7, 0x06 #-TLV.U4-#, 1)                 # InterfaceType, p646
         end
         return nwi
       elif attribute == 0x0001          #  ---------- RebootCount u16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, tasmota.cmd("Status 1", true)['StatusPRM']['BootCount'])
+        return tlv_solo.set(0x06 #-TLV.U4-#, tasmota.cmd("Status 1", true)['StatusPRM']['BootCount'])
       elif attribute == 0x0002          #  ---------- UpTime u16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, tasmota.cmd("Status 11", true)['StatusSTS']['UptimeSec'])
       # TODO add later other attributes
@@ -1008,7 +1008,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var epoch_us = (int64(unix_time) - int64(946684800 #-self.MATTER_EPOCH_OFFSET-#)) * int64(1000000)
         return tlv_solo.set(0x07 #-TLV.U8-#, epoch_us)
       elif attribute == 0x0001          #  ---------- Granularity / enum ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 3)     # MillisecondsGranularity (NTP every hour, i.e. 36ms max drift)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 3)     # MillisecondsGranularity (NTP every hour, i.e. 36ms max drift)
       # TODO add some missing args
       elif attribute == 0x0007          #  ---------- LocalTime / epoch_us ----------
         var unix_time = tasmota.rtc('local')
@@ -1033,7 +1033,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, 0x11 #-TLV.B2-#, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, 0x11 #-TLV.B2-#, loc_fabric.get_icac())     # ICAC
-          nocs.add_TLV(0xFE, 0x05 #-TLV.U2-#, loc_fabric.get_fabric_index())    # Label
+          nocs.add_TLV(0xFE, 0x06 #-TLV.U4-#, loc_fabric.get_fabric_index())    # Label
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
@@ -1045,24 +1045,24 @@ class Matter_Plugin_Root : Matter_Plugin
           var root_ca_tlv = TLV.parse(loc_fabric.get_ca())
           var fab = fabrics.add_struct(nil)            # encoding see p.303
           fab.add_TLV(1, 0x11 #-TLV.B2-#, root_ca_tlv.findsubval(9)) # RootPublicKey
-          fab.add_TLV(2, 0x05 #-TLV.U2-#, loc_fabric.get_admin_vendor())      # VendorID
+          fab.add_TLV(2, 0x06 #-TLV.U4-#, loc_fabric.get_admin_vendor())      # VendorID
           fab.add_TLV(3, 0x07 #-TLV.U8-#, loc_fabric.get_fabric_id_as_int64())            # FabricID
           fab.add_TLV(4, 0x07 #-TLV.U8-#, loc_fabric.get_device_id_as_int64())          # NodeID
           fab.add_TLV(5, 0x0C #-TLV.UTF1-#, loc_fabric.get_fabric_label())    # Label
-          fab.add_TLV(0xFE, 0x05 #-TLV.U2-#, loc_fabric.get_fabric_index())    # idx
+          fab.add_TLV(0xFE, 0x06 #-TLV.U4-#, loc_fabric.get_fabric_index())    # idx
         end
         return fabrics
       elif attribute == 0x0002          #  ---------- SupportedFabrics / u1 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, matter.Fabric._MAX_CASE)     # Max 5 fabrics
+        return tlv_solo.set(0x06 #-TLV.U4-#, matter.Fabric._MAX_CASE)     # Max 5 fabrics
       elif attribute == 0x0003          #  ---------- CommissionedFabrics / u1 ----------
         var fabric_actice = self.device.sessions.count_active_fabrics()
-        return tlv_solo.set(0x04 #-TLV.U1-#, fabric_actice)  # number of active fabrics
+        return tlv_solo.set(0x06 #-TLV.U4-#, fabric_actice)  # number of active fabrics
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current FabricIndex / u1 ----------
         var fab_index = session._fabric.get_fabric_index()
         if fab_index == nil   fab_index = 0   end     # if PASE session, then the fabric index should be zero
-        return tlv_solo.set(0x04 #-TLV.U1-#, fab_index)      # number of active sessions
+        return tlv_solo.set(0x06 #-TLV.U4-#, fab_index)      # number of active sessions
       end
 
     # ====================================================================================================
@@ -1071,16 +1071,16 @@ class Matter_Plugin_Root : Matter_Plugin
         var commissioning_open = self.device.commissioning.is_commissioning_open()
         var basic_commissioning = self.device.commissioning.is_root_commissioning_open()
         var val = commissioning_open ? (basic_commissioning ? 2 #-BasicWindowOpen-# : 1 #-EnhancedWindowOpen-#) : 0 #-WindowNotOpen-#
-        return tlv_solo.set(0x04 #-TLV.U1-#, val)
+        return tlv_solo.set(0x06 #-TLV.U4-#, val)
       elif attribute == 0x0001          #  ---------- AdminFabricIndex / u16 ----------
         var admin_fabric = self.device.commissioning.commissioning_admin_fabric
         if admin_fabric != nil
-          return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, admin_fabric.get_fabric_index())
+          return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, admin_fabric.get_fabric_index())
         end
       elif attribute == 0x0002          #  ---------- AdminVendorId / u16 ----------
         var admin_fabric = self.device.commissioning.commissioning_admin_fabric
         if admin_fabric != nil
-          return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, admin_fabric.get_admin_vendor())
+          return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, admin_fabric.get_admin_vendor())
         end
       end
         
@@ -1089,21 +1089,21 @@ class Matter_Plugin_Root : Matter_Plugin
       self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- DataModelRevision ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 21)     # Matter 1.6.1 data model
+        return tlv_solo.set(0x06 #-TLV.U4-#, 21)     # Matter 1.6.1 data model
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, "Tasmota")
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, self.device.VENDOR_ID)    # Vendor ID reserved for development
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.device.VENDOR_ID)    # Vendor ID reserved for development
       elif attribute == 0x0003          #  ---------- ProductName / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.cmd("DeviceName", true)['DeviceName'])
       elif attribute == 0x0004          #  ---------- ProductID / u16 (opt) ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 32768)    # taken from esp-matter example
+        return tlv_solo.set(0x06 #-TLV.U4-#, 32768)    # taken from esp-matter example
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.cmd("FriendlyName", true)['FriendlyName1'])
       elif attribute == 0x0006          #  ---------- Location / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, "XX")   # no location
       elif attribute == 0x0007          #  ---------- HardwareVersion / u16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
       elif attribute == 0x0008          #  ---------- HardwareVersionString / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.cmd("Status 2", true)['StatusFWR']['Hardware'])
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
@@ -1121,17 +1121,17 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set(0x0C #-TLV.UTF1-#, tasmota.wifi().find("mac", ""))
       elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
         var cps = TLV.Matter_TLV_struct()
-        cps.add_TLV(0, 0x05 #-TLV.U2-#, 3)       # CaseSessionsPerFabric = 3
-        cps.add_TLV(1, 0x05 #-TLV.U2-#, 3)       # SubscriptionsPerFabric = 3
-        cps.add_TLV(2, 0x05 #-TLV.U2-#, 1)       # SimultaneousInvocationsSupported
-        cps.add_TLV(3, 0x05 #-TLV.U2-#, 1)       # SimultaneousWritesSupported
-        cps.add_TLV(4, 0x05 #-TLV.U2-#, 9)       # ReadPathsSupported
-        cps.add_TLV(5, 0x05 #-TLV.U2-#, 3)       # SubscribePathsSupported
+        cps.add_TLV(0, 0x06 #-TLV.U4-#, 3)       # CaseSessionsPerFabric = 3
+        cps.add_TLV(1, 0x06 #-TLV.U4-#, 3)       # SubscriptionsPerFabric = 3
+        cps.add_TLV(2, 0x06 #-TLV.U4-#, 1)       # SimultaneousInvocationsSupported
+        cps.add_TLV(3, 0x06 #-TLV.U4-#, 1)       # SimultaneousWritesSupported
+        cps.add_TLV(4, 0x06 #-TLV.U4-#, 9)       # ReadPathsSupported
+        cps.add_TLV(5, 0x06 #-TLV.U4-#, 3)       # SubscribePathsSupported
         return cps
       elif attribute == 0x0015          #  ---------- SpecificationVersion / uint32 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0x01060100)  # Matter 1.6.1.0
       elif attribute == 0x0016          #  ---------- MaxPathsPerInvoke / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 1)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)
       elif attribute == 0x0018          #  ---------- ConfigurationVersion / uint32 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, self.device.configuration_version)
       end
@@ -1142,11 +1142,11 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0000          #  ---------- ACL / list[AccessControlEntryStruct] ----------
         return self.fixed_acl_to_tlv(session.get_fabric())
       elif attribute == 0x0002          #  ---------- SubjectsPerAccessControlEntry / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
+        return tlv_solo.set(0x06 #-TLV.U4-#, 4)     # spec minimum
       elif attribute == 0x0003          #  ---------- TargetsPerAccessControlEntry / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 3)     # spec minimum
+        return tlv_solo.set(0x06 #-TLV.U4-#, 3)     # spec minimum
       elif attribute == 0x0004          #  ---------- AccessControlEntriesPerFabric / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 1)     # one fixed wildcard entry
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)     # one fixed wildcard entry
       end
 
     # ====================================================================================================
@@ -1161,9 +1161,9 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0002          #  ---------- MaxGroupsPerFabric / uint16 ----------
         # Groups remains discoverable for unicast compatibility, but group
         # provisioning is fail-closed until encrypted multicast receive exists.
-        return tlv_solo.set(0x05 #-TLV.U2-#, self.device.GROUP_TRANSPORT_READY ? 4 : 0)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.device.GROUP_TRANSPORT_READY ? 4 : 0)
       elif attribute == 0x0003          #  ---------- MaxGroupKeysPerFabric / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 3)     # spec minimum
+        return tlv_solo.set(0x06 #-TLV.U4-#, 3)     # spec minimum
       elif attribute == 0xFFF8          #  ---------- GeneratedCommandList ----------
         var generated = TLV.Matter_TLV_array()
         generated.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0002)  # KeySetReadResponse
@@ -1186,7 +1186,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0001          #  ---------- UpdatePossible / bool ----------
         return tlv_solo.set(0x08 #-TLV.BOOL-#, 0)  # we claim that update is not possible, would require to go to Tasmota UI
       elif attribute == 0x0002          #  ---------- UpdateState / UpdateStateEnum ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 1)  # Idle
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)  # Idle
       elif attribute == 0x0003          #  ---------- UpdateStateProgress / uint8 ----------
         return tlv_solo.set(0x14 #-TLV.NULL-#, nil)  # null, nothing in process
       end
@@ -1206,12 +1206,12 @@ class Matter_Plugin_Root : Matter_Plugin
     elif cluster == 0x002C              # ========== Time Format Localization Cluster 11.4 p.581 ==========
 
       if   attribute == 0x0000          #  ---------- HourFormat / HourFormat ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 1)  # 1 = 24hr
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)  # 1 = 24hr
       elif attribute == 0x0001          #  ---------- ActiveCalendarType / CalendarType ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 4)  # 4 = Gregorian
+        return tlv_solo.set(0x06 #-TLV.U4-#, 4)  # 4 = Gregorian
       elif attribute == 0x0002          #  ---------- SupportedCalendarTypes / list[CalendarType] ----------
         var callist = TLV.Matter_TLV_array()
-        callist.add_TLV(nil, TLV.create_TLV(0x04 #-TLV.U1-#, 4))
+        callist.add_TLV(nil, 0x06 #-TLV.U4-#, 4)    # 4 = Gregorian
         return callist
       end
 
@@ -1221,13 +1221,13 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0000          #  ---------- TemperatureUnit / TempUnitEnum ----------
         # 0=Fahrenheit, 1=Celsius, 2=Kelvin
         # SetOption8: 0=Celsius, 1=Fahrenheit -> Matter: 0=Fahrenheit, 1=Celsius (inverted)
-        return tlv_solo.set(0x04 #-TLV.U1-#, tasmota.get_option(8) ? 0 : 1)
+        return tlv_solo.set(0x06 #-TLV.U4-#, tasmota.get_option(8) ? 0 : 1)
       end
 
     # ====================================================================================================
     elif cluster == 0x0031              # ========== Network Commissioning Cluster cluster 11.8 p.606 ==========
       if   attribute == 0x0003          #  ---------- ConnectMaxTimeSeconds / uint8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 30)    # 30 - value taking from example in esp-matter
+        return tlv_solo.set(0x06 #-TLV.U4-#, 30)    # 30 - value taking from example in esp-matter
       end
 
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
@@ -1236,7 +1236,7 @@ class Matter_Plugin_Root : Matter_Plugin
       if   attribute == 0x0002          # ---------- ClientList / list[cluster-id] ----------
         var pl = TLV.Matter_TLV_array()
         # from connectedhome reference implementation
-        pl.add_TLV(nil, 0x05 #-TLV.U2-#, 0x001F)     # Access Control Cluster
+        pl.add_TLV(nil, 0x06 #-TLV.U4-#, 0x001F)     # Access Control Cluster
         return pl        
       # overwrite PartsList
       elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
@@ -1246,7 +1246,7 @@ class Matter_Plugin_Root : Matter_Plugin
         for ep: eps
           # if bridge mode is disabled, don't announce Aggregatore (above 0xFF00)
           if !disable_bridge_mode || ep != 0x0001 #-matter.AGGREGATOR_ENDPOINT-#
-            pl.add_TLV(nil, 0x05 #-TLV.U2-#, ep)     # add each endpoint
+            pl.add_TLV(nil, 0x06 #-TLV.U4-#, ep)     # add each endpoint
           end
         end
         return pl
@@ -1270,7 +1270,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set(0x06 #-TLV.U4-#, 300)
       elif attribute == 0x0002          #  ---------- ActiveModeThreshold / uint16 (milliseconds) ----------
         # For always-on WiFi device: 300ms (spec default)
-        return tlv_solo.set(0x05 #-TLV.U2-#, 300)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 300)
       # Note: attributes 0x0003-0x0005 require CIP feature (Check-In Protocol)
       # Note: attribute 0x0008 (OperatingMode) requires LITS feature (Long Idle Time Support)
       # We don't implement CIP or LITS since this is an always-on WiFi device
@@ -1302,7 +1302,7 @@ class Matter_Plugin_Root : Matter_Plugin
         session._breadcrumb = Breadcrumb
 
         var afsr = TLV.Matter_TLV_struct()
-        afsr.add_TLV(0, 0x04 #-TLV.U1-#, 0)      # ErrorCode = OK
+        afsr.add_TLV(0, 0x06 #-TLV.U4-#, 0)      # ErrorCode = OK
         afsr.add_TLV(1, 0x0C #-TLV.UTF1-#, "")   # DebugText = ""
         ctx.command = 0x01              # ArmFailSafeResponse
         return afsr
@@ -1317,7 +1317,7 @@ class Matter_Plugin_Root : Matter_Plugin
         #  0=ErrorCode (OK=0)
         #  1=DebugText
         var srcr = TLV.Matter_TLV_struct()
-        srcr.add_TLV(0, 0x04 #-TLV.U1-#, 0)      # ErrorCode = OK
+        srcr.add_TLV(0, 0x06 #-TLV.U4-#, 0)      # ErrorCode = OK
         srcr.add_TLV(1, 0x0C #-TLV.UTF1-#, "")   # DebugText = ""
         ctx.command = 0x03              # SetRegulatoryConfigResponse
         return srcr
@@ -1336,7 +1336,7 @@ class Matter_Plugin_Root : Matter_Plugin
           #  0=ErrorCode (OK=0)
           #  1=DebugText
           var ccr = TLV.Matter_TLV_struct()
-          ccr.add_TLV(0, 0x04 #-TLV.U1-#, 0)      # ErrorCode = OK
+          ccr.add_TLV(0, 0x06 #-TLV.U4-#, 0)      # ErrorCode = OK
           ccr.add_TLV(1, 0x0C #-TLV.UTF1-#, "")   # DebugText = ""
           ctx.command = 0x05              # CommissioningCompleteResponse
 
@@ -1505,8 +1505,8 @@ class Matter_Plugin_Root : Matter_Plugin
         # 1=FabricIndex (1-254) (opt)
         # 2=DebugText (opt)
         var nocr = TLV.Matter_TLV_struct()
-        nocr.add_TLV(0, 0x04 #-TLV.U1-#, 0x00 #-matter.SUCCESS-#)   # Status
-        nocr.add_TLV(1, 0x04 #-TLV.U1-#, new_fabric.get_fabric_index())   # fabric-index
+        nocr.add_TLV(0, 0x06 #-TLV.U4-#, 0x00 #-matter.SUCCESS-#)   # Status
+        nocr.add_TLV(1, 0x06 #-TLV.U4-#, new_fabric.get_fabric_index())   # fabric-index
         ctx.command = 0x08              # NOCResponse
         return nocr
 
@@ -1520,8 +1520,8 @@ class Matter_Plugin_Root : Matter_Plugin
         # 1=FabricIndex (1-254) (opt)
         # 2=DebugText (opt)
         var nocr = TLV.Matter_TLV_struct()
-        nocr.add_TLV(0, 0x04 #-TLV.U1-#, 0x00 #-matter.SUCCESS-#)   # Status
-        nocr.add_TLV(1, 0x04 #-TLV.U1-#, session.get_fabric().get_fabric_index())   # fabric-index
+        nocr.add_TLV(0, 0x06 #-TLV.U4-#, 0x00 #-matter.SUCCESS-#)   # Status
+        nocr.add_TLV(1, 0x06 #-TLV.U4-#, session.get_fabric().get_fabric_index())   # fabric-index
         ctx.command = 0x08              # NOCResponse
         return nocr
 
@@ -1541,8 +1541,8 @@ class Matter_Plugin_Root : Matter_Plugin
             # 1=FabricIndex (1-254) (opt)
             # 2=DebugText (opt)
             var nocr = TLV.Matter_TLV_struct()
-            nocr.add_TLV(0, 0x04 #-TLV.U1-#, 0x00 #-matter.SUCCESS-#)   # Status
-            nocr.add_TLV(1, 0x04 #-TLV.U1-#, index)   # fabric-index
+            nocr.add_TLV(0, 0x06 #-TLV.U4-#, 0x00 #-matter.SUCCESS-#)   # Status
+            nocr.add_TLV(1, 0x06 #-TLV.U4-#, index)   # fabric-index
             ctx.command = 0x08              # NOCResponse
             return nocr
           end
@@ -1660,9 +1660,9 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0004            # ---------- KeySetReadAllIndices ----------
         var response = TLV.Matter_TLV_struct()
         var indices = response.add_array(0)
-        indices.add_TLV(nil, 0x05 #-TLV.U2-#, 0)       # operational IPK key set
+        indices.add_TLV(nil, 0x06 #-TLV.U4-#, 0)       # operational IPK key set
         for key_set : fabric.get_group_key_sets()
-          indices.add_TLV(nil, 0x05 #-TLV.U2-#, key_set.find("id"))
+          indices.add_TLV(nil, 0x06 #-TLV.U4-#, key_set.find("id"))
         end
         ctx.command = 0x0005             # KeySetReadAllIndicesResponse
         return response
@@ -1685,9 +1685,9 @@ class Matter_Plugin_Root : Matter_Plugin
         tasmota.delay(1000)
 
         var ncresp = TLV.Matter_TLV_struct()
-        ncresp.add_TLV(0, 0x04 #-TLV.U1-#, 0x00 #-matter.SUCCESS-#)   # NetworkCommissioningStatusEnum
+        ncresp.add_TLV(0, 0x06 #-TLV.U4-#, 0x00 #-matter.SUCCESS-#)   # NetworkCommissioningStatusEnum
         ncresp.add_TLV(1, 0x0D #-TLV.UTF2-#, tasmota.wifi().tostring())     # DebugText
-        ncresp.add_TLV(2, 0x04 #-TLV.U1-#, 1)                # NetworkIndex
+        ncresp.add_TLV(2, 0x06 #-TLV.U4-#, 1)                # NetworkIndex
         ctx.command = 0x05              # NetworkConfigResponse
         return ncresp
 

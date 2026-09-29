@@ -393,9 +393,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
       elif attribute == 0x0002          #  ---------- MaxMeasured Value / float ----------
         return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       elif attribute == 0x0008          #  ---------- MeasurementUnit / u8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, unit)
+        return tlv_solo.set(0x06 #-TLV.U4-#, unit)
       elif attribute == 0x0009          #  ---------- MeasurementMedium / u8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 0)  # 0 = Air
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)  # 0 = Air
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 1)  # MEA = NumericMeasurement
       end
@@ -405,7 +405,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x005B              # ========== Air Quality ==========
       if   attribute == 0x0000          #  ---------- AirQuality / U8 ----------
-        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_air_quality)
+        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_air_quality)
       # elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
       #   return tlv_solo.set(0x06 #-TLV.U4-#, 0)  #
       end
