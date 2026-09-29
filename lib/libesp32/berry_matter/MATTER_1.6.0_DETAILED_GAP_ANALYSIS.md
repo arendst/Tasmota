@@ -342,7 +342,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | **DataModelRevision** | 18 | 20 | ⚠️ Not updated | <1 day |
 | **Closures clusters** | Window Covering (legacy) | Closure Control/Dimension (new) | ❌ Missing | 2 weeks |
 | **Energy Management** | 0x0090/0x0091 only | Add Commodity Price/Tariff, Device EM, EVSE | ❌ Missing | 3-4 weeks |
-| **Soil Measurement** | None | Soil Sensor (0x0045) + cluster | ❌ Missing | 1 week |
+| **Soil Measurement** | None | Soil Sensor (0x0045) + cluster | ✅ Done | — |
 | **Doorbell** | None | 0x0148/0x0141/0x0143 | ❌ Missing | 1 week |
 | **Access Control** | Partial | Complete read + rev updates | ⚠️ Partial | 3-5 days |
 | **Group Key Management** | Rev 2 | Rev 4 | ⚠️ Outdated | 1 week |

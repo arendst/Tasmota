@@ -233,6 +233,17 @@ class Matter_Autoconf
       end
     end
 
+    # soil moisture sensors
+    # Skip CHIRP sensors (xsns_48): their `Moisture` is raw capacitance, not percent
+    import string
+    for k1: k2l(sensors)
+      var sensor_2 = sensors[k1]
+      if isinstance(sensor_2, map) && sensor_2.contains("Moisture") && string.find(k1, "CHIRP") != 0
+        var soil_rule = k1 + "#Moisture"
+        ret.push({'type':'soil','filter':soil_rule})
+      end
+    end
+
     return ret
   end
 
