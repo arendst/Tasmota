@@ -94,7 +94,9 @@ class Matter_AttributePathIB : Matter_IM_base
   var endpoint                    # u16
   var cluster                     # u32
   var attribute                   # u32
-  var list_index                  # ?
+  var list_index                  # uint16, or nil
+  var list_index_present          # distinguish absent from explicit TLV null
+  var list_index_is_null
 
   def tostring()
     try
@@ -117,7 +119,12 @@ class Matter_AttributePathIB : Matter_IM_base
     self.endpoint = val.findsubval(2)
     self.cluster = val.findsubval(3)
     self.attribute = val.findsubval(4)
-    self.list_index = val.findsubval(5)
+    # findsubval() cannot distinguish an absent ListIndex from explicit NULL.
+    # Preserve both states because Matter uses NULL to mean list append.
+    var list_index_item = val.findsub(5)
+    self.list_index_present = list_index_item != nil
+    self.list_index_is_null = list_index_item != nil && list_index_item.typ == 0x14 #-TLV.NULL-#
+    self.list_index = self.list_index_is_null ? nil : val.findsubval(5)
     return self
   end
 
@@ -129,7 +136,10 @@ class Matter_AttributePathIB : Matter_IM_base
     s.add_TLV(2, 0x05 #-TLV.U2-#, self.endpoint)
     s.add_TLV(3, 0x06 #-TLV.U4-#, self.cluster)
     s.add_TLV(4, 0x06 #-TLV.U4-#, self.attribute)
-    s.add_TLV(5, 0x05 #-TLV.U2-#, self.list_index)
+    # Re-emit ListIndex only when it was present, preserving append semantics.
+    if self.list_index_present
+      s.add_TLV(5, self.list_index_is_null ? 0x14 #-TLV.NULL-# : 0x05 #-TLV.U2-#, self.list_index)
+    end
     return s
   end
 end
@@ -196,13 +206,17 @@ class Matter_AttributeDataIB : Matter_IM_base
   var data_version                # u32
   var path                        # AttributePathIB
   var data                        # any TLV
+  var data_tlv                    # original TLV item, needed for list element writes
 
   # decode from TLV
   def from_TLV(val)
     if val == nil   return nil end
     self.data_version = val.findsubval(0) # u32
     self.path = matter.AttributePathIB().from_TLV(val.findsub(1))
-    self.data = val.findsubval(2) # any
+    # Keep the original item so list element deletion (TLV NULL) remains
+    # distinguishable from an absent or decoded nil value.
+    self.data_tlv = val.findsub(2)
+    self.data = self.data_tlv != nil ? self.data_tlv.val : nil # any
     return self
   end
 
@@ -566,7 +580,7 @@ class Matter_IM_Message_base : Matter_IM_base
   var InteractionModelRevision              # 0xFF
 
   def init()
-    self.InteractionModelRevision = 12    # 12 = Matter 1.4+ Interaction Model revision
+    self.InteractionModelRevision = 13    # Matter 1.6.1 Interaction Model revision
   end
 end
 
@@ -1188,4 +1202,3 @@ assert(r.to_TLV().tlv2raw() == bytes('152400013601153500370024020024033024040018
 #           'cluster_status': 0, 'status': 0}>}>}>
 
 -#
-

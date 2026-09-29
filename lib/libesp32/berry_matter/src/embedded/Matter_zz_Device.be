@@ -22,6 +22,10 @@ import matter
 #@ solidify:Matter_Device,weak
 
 class Matter_Device
+  # Group key and membership storage exists, but encrypted multicast receive
+  # and dispatch are not implemented yet.  Keep provisioning fail-closed until
+  # the group data plane is operational.
+  static var GROUP_TRANSPORT_READY = false
   static var UDP_PORT = 5540          # this is the default port for group multicast, we also use it for unicast
   static var VENDOR_ID = 0xFFF1
   static var PRODUCT_ID = 0x8000
@@ -58,6 +62,7 @@ class Matter_Device
   var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   var debug                           # debug mode, output all values when responding to read request with wildcard
+  var configuration_version           # persistent Basic Information configuration version
   # cron equivalent to call `read_sensors()` regularly and dispatch to all entpoints
   var probe_sensor_time               # number of milliseconds to wait between each `read_sensors()` or `nil` if none active
   var probe_sensor_timestamp          # timestamp for `read_sensors()` probe (in millis())
@@ -81,6 +86,7 @@ class Matter_Device
     self.discovered_sensors = {}
     self.discovery_subscribed = false
     self.next_ep = self.EP                        # start at endpoint 2 for dynamically allocated endpoints (1 reserved for aggregator)
+    self.configuration_version = 1
     self.ipv4only = false
     self.disable_bridge_mode = false
     self.commissioning = matter.Commissioning(self)
@@ -464,7 +470,7 @@ class Matter_Device
     import json
     self.update_remotes_info()    # update self.plugins_config_remotes
 
-    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i,"configuration_version":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep, self.configuration_version)
     if self.debug
       j += ',"debug":true'
     end
@@ -553,6 +559,7 @@ class Matter_Device
       self.ipv4only = bool(j.find("ipv4only", false))
       self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
+      self.configuration_version = j.find("configuration_version", self.configuration_version)
       self.plugins_config = j.find("config", nil)
       self.debug = bool(j.find("debug"))
 
@@ -560,6 +567,12 @@ class Matter_Device
         log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
         dirty = self.check_config_ep()
+        # Endpoint repair changes the exposed composition just like an explicit
+        # add/remove operation, so controllers need a new ConfigurationVersion.
+        if dirty
+          self.configuration_version += 1
+          if self.configuration_version <= 0   self.configuration_version = 1 end
+        end
         self.plugins_persist = true
       else
         self.plugins_config = {}
@@ -704,9 +717,11 @@ class Matter_Device
     self.plugins_persist = true
     self.next_ep += 1     # increment next allocated endpoint before saving
 
+    # Increment before persistence so ConfigurationVersion and endpoint config
+    # are committed in the same device record.
+    self.signal_endpoints_changed()
     # try saving parameters
     self.save_param()
-    self.signal_endpoints_changed()
 
     return ep
   end
@@ -743,15 +758,21 @@ class Matter_Device
     # clean any orphan remote
     self.clean_remotes()
 
+    # Persist the composition version together with the endpoint removal.
+    self.signal_endpoints_changed()
     # try saving parameters
     self.save_param()
-    self.signal_endpoints_changed()
   end
 
   #############################################################
   # Signal to controller that endpoints changed via subcriptions
   #
   def signal_endpoints_changed()
+    # Basic Information ConfigurationVersion represents composition changes,
+    # while Descriptor PartsList invalidations refresh the affected topology.
+    self.configuration_version += 1
+    if self.configuration_version <= 0   self.configuration_version = 1 end
+    self.attribute_updated(0x0000, 0x0028, 0x0018, false)
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
     var eps = self.get_active_endpoints(true)

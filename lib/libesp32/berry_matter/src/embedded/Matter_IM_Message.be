@@ -393,7 +393,7 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
     end
     # InteractionModelRevision
     raw.add(0x24FF, -2)               # add 24FF
-    raw.add(0x0C, 1)                    # add 0C - InteractionModelRevision 12 (Matter 1.4+)
+    raw.add(0x0D, 1)                    # InteractionModelRevision 13
     # close struct ReportDataMessage
     raw.add(0x18, 1)                  # add 18
     # log(f">>>: {raw.tohex()}", 3)
