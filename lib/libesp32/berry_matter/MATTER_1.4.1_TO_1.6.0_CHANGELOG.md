@@ -225,7 +225,12 @@ The following changes are part of Matter 1.6.1 (released September 2026, PR #735
 - Commodity Tariff cluster (0x0700) read implementation
 - Device Energy Management cluster (0x0098) for power measurement + demand response hints
 - **Timeframe:** 3-4 weeks
-- **Integration:** Extend existing power sensor plugins; enable smart scheduling based on tariff
+
+### Phase 2b: Tariff & Price (deferred)
+- Commodity Price (0x0095, Rev 4) and Commodity Tariff (0x0700, Rev 1)
+- **Why deferred:** per the Device Library, both clusters are only hosted by the Electrical Energy Tariff device type (0x0513), which must be a child of a Meter Reference Point (0x0512) endpoint with Identify, and must carry Descriptor TagList semantic tags (Commodity Tariff Commodity/Chronology namespaces, plus Grid/Import/AC in the basic topology). The Root Node also needs the TimeSyncCond condition. Commodity Tariff alone carries 14+ attributes with deeply nested structs.
+- **Prerequisites:** Namespace Specification 1.6 (to confirm namespace/tag IDs), a parent/child virtual composition (PartsList override, as in `Matter_Plugin_9_Virt_HVAC.be`), Descriptor TagList support (FeatureMap bit 0 on 0x001D)
+- **Data source:** none native in Tasmota; values would be pushed via `MtrUpdate` (rules/scripts/MQTT)
 
 ### Phase 3: Closures Unified Architecture (v1.6.0, medium-value features)
 - Closure device type (0x0230) with Closure Control (0x0104) and Closure Dimension (0x0105) clusters
@@ -239,6 +244,8 @@ The following changes are part of Matter 1.6.1 (released September 2026, PR #735
 - Doorbell device type (0x0148) — optional, can defer to maintenance release
 - **Timeframe:** 1 week
 - **Integration:** Extends existing humidity/temperature sensor plugins
+
+- Doorbell device type (0x0148) — optional, can defer to maintenance release
 
 ### Phase 5: Validation & Compliance Testing (v1.6.0)
 - Multi-controller interoperability (Apple Home, Google Home, Alexa, SmartThings, Home Assistant)
