@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) (#25073)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit (#24922)
-- Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0)
+- Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) (#25088)
 
 ### Breaking Changed
 
@@ -16,8 +16,8 @@ All notable changes to this project will be documented in this file.
 - Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` (#25020)
 - ESP8266 platform update from 2026.04.00 to 2026.09.00 (#25072)
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
-- IR accept raw data in JSON
-- Matter update specs to 1.6.1 (to be used by AI)
+- IR accept raw data in JSON (#25077)
+- Matter update specs to 1.6.1 (to be used by AI) (#25083)
 
 ### Fixed
 
