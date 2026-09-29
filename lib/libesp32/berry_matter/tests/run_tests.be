@@ -41,17 +41,20 @@ end
 matter.get_attribute_name = def (cluster, attribute) return nil end
 
 class TestTasmota
-  var utc_time, local_time
+  var utc_time, local_time, now
   def init()
     self.utc_time = 1
     self.local_time = 1700000000
+    self.now = 0
   end
   def rtc_utc() return self.utc_time end
   def rtc(mode) return self.local_time end
-  def millis() return 0 end
+  def millis() return self.now end
+  def time_reached(deadline) return self.now >= deadline end
   def loglevel(level) return false end
 end
 tasmota = TestTasmota()
+var test_tasmota = tasmota
 log = def (*args) end
 var crypto = module("crypto")
 
@@ -135,6 +138,74 @@ class TestMessage
     self.exchange_id = exchange_id
     self.session = session
   end
+end
+
+class TestTimedSession
+  var local_session_id
+  def init(local_session_id)
+    self.local_session_id = local_session_id
+  end
+end
+
+class TestGarageEvents
+  var published
+  def init() self.published = [] end
+  def publish_event(endpoint, cluster, event_id, urgent, priority, data0, data1, data2)
+    self.published.push(event_id)
+  end
+end
+
+class TestGarageDevice
+  var tick, events
+  def init()
+    self.tick = 1
+    self.events = TestGarageEvents()
+  end
+  def attribute_updated(endpoint, cluster, attribute, fabric_specific) end
+end
+
+class TestGarageTasmota
+  var locked, fail, position, direction, target, inverted
+  def init()
+    self.locked = false
+    self.fail = false
+    self.position = 50
+    self.direction = 1
+    self.target = 100
+    self.inverted = false
+  end
+  def shutter_state()
+    return {"Shutter1": {"Position": self.position, "Direction": self.direction, "Target": self.target, "Tilt": 0}}
+  end
+  def cmd(command, mute)
+    if command == "Status 13"
+      return {"StatusSHT": {"SHT0": {"Opt": self.inverted ? "00001" : "00000"}}}
+    elif command == "ShutterPosition1"
+      return self.shutter_state()
+    end
+    if self.fail  return nil end
+    if self.locked
+      var response = {}
+      response[command] = "Locked"
+      return response
+    end
+    if command == "ShutterStop1"
+      # Real driver: idle Stop answers ResponseCmndDone() without index
+      if self.direction == 0  return {"ShutterStop": "Done"} end
+      self.direction = 0
+      self.target = self.position
+    elif command == "ShutterClose1"
+      self.direction = -1
+      self.target = 0
+    elif command == "ShutterOpen1"
+      self.direction = 1
+      self.target = 100
+    else
+      return nil
+    end
+    return self.shutter_state()
+  end
+  def loglevel(level) return false end
 end
 
 class TestConfigurationDevice : matter.Device
@@ -361,6 +432,166 @@ ctx.command = 5
 assert(endpoint_plugin.invoke_request(session, add_if_identifying, ctx) == nil)
 assert(ctx.status == 0x87)
 print("  unavailable group transport fails closed: OK")
+
+# Timed interactions are keyed by exchange ID, expire, and are consumed once.
+var im = matter.IM(device)
+var timed_session = TestTimedSession(10)
+var timed_msg = TestMessage(55, timed_session)
+tasmota.now = 100
+im.timed_exchanges[timed_msg.exchange_id] = 200
+assert(im.check_timed_request(timed_msg, true))
+assert(!im.check_timed_request(timed_msg, true))
+assert(size(im.timed_exchanges) == 0)
+im.timed_exchanges[timed_msg.exchange_id] = 99
+assert(!im.check_timed_request(timed_msg, true))
+assert(size(im.timed_exchanges) == 0)
+print("  timed interactions are one-shot and expire: OK")
+
+# A locked or failed Tasmota shutter command must not be reported as Matter
+# SUCCESS, and a rejected command must not mutate the signature-position flag.
+var garage_tasmota = TestGarageTasmota()
+tasmota = garage_tasmota
+var garage_device = TestGarageDevice()
+var garage = matter.Plugin_GarageDoor(garage_device, 1, {"shutter": 0})
+garage.update_shadow()
+garage.shadow_signature = true
+garage_tasmota.locked = true
+ctx = matter.Path(1, 0x0104, nil)
+ctx.command = 0
+assert(garage.invoke_request(nil, nil, ctx) == nil)
+assert(ctx.status == 0xCB)
+assert(garage.shadow_signature)
+assert(garage_tasmota.direction == 1)
+
+var move_to = TLV.Matter_TLV_struct()
+move_to.add_TLV(0, 0x04, garage.TP_CLOSE)
+ctx = matter.Path(1, 0x0104, nil)
+ctx.command = 1
+assert(garage.invoke_request(nil, move_to, ctx) == nil)
+assert(ctx.status == 0xCB)
+assert(garage.shadow_signature)
+
+garage_tasmota.locked = false
+garage_tasmota.fail = true
+ctx = matter.Path(1, 0x0104, nil)
+ctx.command = 0
+assert(garage.invoke_request(nil, nil, ctx) == nil)
+assert(ctx.status == 0x01)
+assert(garage.shadow_signature)
+
+garage_tasmota.fail = false
+ctx = matter.Path(1, 0x0104, nil)
+ctx.command = 0
+assert(garage.invoke_request(nil, nil, ctx) == true)
+assert(ctx.status == nil)
+assert(!garage.shadow_signature)
+assert(garage_tasmota.direction == 0)
+
+# Stop on an idle door returns `{"ShutterStop":"Done"}` and is SUCCESS. It
+# preserves OpenedAtSignature because no movement or target changed.
+garage_tasmota.position = 100
+garage_tasmota.target = 100
+garage.set_signature(true)
+garage.update_shadow()
+assert(garage.current_position_enum() == garage.CP_SIGNATURE)
+ctx = matter.Path(1, 0x0104, nil)
+ctx.command = 0
+assert(garage.invoke_request(nil, nil, ctx) == true)
+assert(ctx.status == nil)
+assert(garage.shadow_signature)
+assert(garage.current_position_enum() == garage.CP_SIGNATURE)
+assert(garage.target_position_enum() == garage.TP_SIGNATURE)
+
+# ShutterInvert can change at runtime. The new inversion and the matching
+# Tasmota position must be applied atomically, without reporting open as secure.
+garage.set_signature(false)
+assert(garage.current_position_enum() == garage.CP_OPENED)
+garage_tasmota.inverted = true
+garage_tasmota.position = 0
+garage_tasmota.target = 0
+garage.update_shadow()
+assert(garage.shadow_shutter_inverted == 1)
+assert(garage.current_position_enum() == garage.CP_OPENED)
+ctx = matter.Path(1, 0x0104, 3)
+assert(garage.read_attribute(nil, ctx, TLV.Matter_TLV_item()).findsubval(3) == false)
+
+# A malformed scalar CommandFields value is INVALID_COMMAND, not an uncaught
+# attribute_error while looking for fields on a non-structure TLV item.
+var malformed_move_to = TLV.Matter_TLV_item().set(0x06, garage.TP_CLOSE)
+ctx = matter.Path(1, 0x0104, nil)
+ctx.command = 1
+assert(garage.invoke_request(nil, malformed_move_to, ctx) == nil)
+assert(ctx.status == 0x85)
+print("  garage shutter command rejection is propagated to Matter: OK")
+tasmota = test_tasmota
+
+# Virtual garage doors never call the Tasmota shutter backend. Matter commands
+# complete locally, while MtrUpdate can model an externally driven movement.
+class TestVirtualGarageTasmota
+  def cmd(command, mute) assert(false, "virtual garage called tasmota.cmd") end
+  def loglevel(level) return false end
+end
+matter.publish_command = def (prefix, endpoint, name, payload) end
+tasmota = TestVirtualGarageTasmota()
+var virtual_garage = matter.Plugin_Virt_GarageDoor(garage_device, 2, {})
+assert(virtual_garage.VIRTUAL)
+assert(virtual_garage.UPDATE_COMMANDS.find("ShutterPos") != nil)
+assert(virtual_garage.UPDATE_COMMANDS.find("ShutterTarget") != nil)
+assert(virtual_garage.UPDATE_COMMANDS.find("ShutterDirection") != nil)
+assert(virtual_garage.shadow_shutter_inverted == 0)
+assert(virtual_garage.current_position_enum() == virtual_garage.CP_CLOSED)
+assert(virtual_garage.target_position_enum() == virtual_garage.TP_CLOSE)
+assert(!virtual_garage.is_moving())
+
+garage_device.events.published.clear()
+move_to = TLV.Matter_TLV_struct()
+move_to.add_TLV(0, 0x04, virtual_garage.TP_OPEN)
+ctx = matter.Path(2, 0x0104, nil)
+ctx.command = 1
+assert(virtual_garage.invoke_request(nil, move_to, ctx) == true)
+assert(virtual_garage.current_position_enum() == virtual_garage.CP_OPENED)
+assert(virtual_garage.target_position_enum() == virtual_garage.TP_OPEN)
+assert(!virtual_garage.is_moving())
+assert(garage_device.events.published.find(0x01) != nil)  # MovementCompleted
+assert(garage_device.events.published.find(0x03) != nil)  # SecureStateChanged
+assert(string.find(virtual_garage.state_json(), '"ShutterDirection":0') != nil)
+
+move_to = TLV.Matter_TLV_struct()
+move_to.add_TLV(0, 0x04, virtual_garage.TP_SIGNATURE)
+ctx = matter.Path(2, 0x0104, nil)
+ctx.command = 1
+assert(virtual_garage.invoke_request(nil, move_to, ctx) == true)
+assert(virtual_garage.current_position_enum() == virtual_garage.CP_SIGNATURE)
+assert(virtual_garage.target_position_enum() == virtual_garage.TP_SIGNATURE)
+
+virtual_garage.update_virtual({
+  "ShutterPos": 50,
+  "ShutterTarget": 0,
+  "ShutterDirection": -3
+})
+assert(virtual_garage.current_position_enum() == virtual_garage.CP_PARTIAL)
+assert(virtual_garage.target_position_enum() == virtual_garage.TP_CLOSE)
+assert(virtual_garage.shadow_shutter_direction == -1)
+assert(virtual_garage.is_moving())
+
+ctx = matter.Path(2, 0x0104, nil)
+ctx.command = 0
+assert(virtual_garage.invoke_request(nil, nil, ctx) == true)
+assert(!virtual_garage.is_moving())
+assert(virtual_garage.shadow_shutter_target == 50)
+assert(virtual_garage.target_position_enum() == nil)
+
+virtual_garage.update_virtual({
+  "ShutterPos": -10,
+  "ShutterTarget": 120,
+  "ShutterDirection": 0
+})
+assert(virtual_garage.shadow_shutter_pos == 0)
+assert(virtual_garage.shadow_shutter_target == 100)
+assert(virtual_garage.current_position_enum() == virtual_garage.CP_CLOSED)
+assert(virtual_garage.target_position_enum() == virtual_garage.TP_OPEN)
+print("  virtual garage door commands and updates: OK")
+tasmota = test_tasmota
 
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()

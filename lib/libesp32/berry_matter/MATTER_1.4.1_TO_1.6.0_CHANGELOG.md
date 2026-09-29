@@ -36,6 +36,13 @@ This document tracks major specification changes from Matter 1.4.1 (current Tasm
   - **Closure Dimension (0x0105, Rev 1):** Controls individual axis (lift, tilt, rotation, modulation)
 - Semantic tags enable device differentiation (Window, Covering, Cabinet, etc.)
 - **Tasmota applicability:** ✅ High value; Tasmota Shutter relays, RF/IR controllers map naturally
+- ✅ **Garage Door implemented:** `Matter_Plugin_2_GarageDoor.be` (`garage`) — Closure (0x0230) +
+  Closure Control (0x0104) only, driven by the same `ShutterPosition<x>` data as the legacy
+  Shutter plugin. `Matter_Plugin_9_Virt_GarageDoor.be` (`v_garage`) provides the equivalent
+  virtual endpoint through `MtrUpdate`. Window Covering (0x0202, `shutter`) kept unchanged for blinds/shutters.
+  Closure Panel (0x0231) + Closure Dimension (0x0105) not implemented (not needed for a
+  Closed/Open/Partial garage door). Reported controller support (unverified): Samsung
+  SmartThings supports Closure Control; Home Assistant support in progress (September 2026).
 
 #### 3. **Energy Management Framework** ✅ **IN SCOPE**
 - New clusters for real-time energy optimization, pricing, tariff, and carbon awareness
@@ -233,14 +240,15 @@ The following changes are part of Matter 1.6.1 (released September 2026, PR #735
 - **Data source:** none native in Tasmota; values would be pushed via `MtrUpdate` (rules/scripts/MQTT)
 
 ### Phase 3: Closures Unified Architecture (v1.6.0, medium-value features)
-- Closure device type (0x0230) with Closure Control (0x0104) and Closure Dimension (0x0105) clusters
+- ✅  Closure device type (0x0230) with Closure Control (0x0104) cluster (Garage Door, `garage`)
+- Closure Dimension (0x0105) cluster (not implemented)
 - Closure Panel child device type (0x0231)
 - Migration path for existing Window Covering/Shutter support
 - **Timeframe:** 2-3 weeks
 - **Integration:** Replaces/enhances current scattered cluster approach
 
 ### Phase 4: Sensors & Doorbells (v1.6.0, low-priority features)
-- Soil Sensor device type (0x0045) with Soil Measurement cluster (0x0430)
+- ✅  Soil Sensor device type (0x0045) with Soil Measurement cluster (0x0430)
 - Doorbell device type (0x0148) — optional, can defer to maintenance release
 - **Timeframe:** 1 week
 - **Integration:** Extends existing humidity/temperature sensor plugins

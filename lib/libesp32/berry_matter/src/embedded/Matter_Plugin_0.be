@@ -116,6 +116,7 @@ class Matter_Plugin
     0x0090: 0x02,                           # Electrical Power Measurement: AlternatingCurrent (bit 1)
     0x009C: 0x01,                           # Power Topology: NodeTopology (bit 0) - meters the whole node
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
+    0x0104: 0x01,                           # Closure Control: Positioning (bit 0)
     0x0201: 0x23,                           # Thermostat: HEAT + COOL + AUTO
     0x0202: 2,                              # Fan Control: Auto (bit 1)
   }
@@ -158,6 +159,7 @@ class Matter_Plugin
     0x0090: 1,                              # Electrical Power Measurement - Initial Release (Matter 1.3)
     0x0101: 7,                              # Door Lock - Added support for European door locks (unbolt feature)
     0x0102: 5,                              # Window Covering - New data model format and notation
+    0x0104: 1,                              # Closure Control - Initial revision (Matter 1.5, unchanged in 1.6.1)
     0x0200: 4,                              # Pump Configuration and Control - Added feature map
     0x0201: 6,                              # Thermostat - Introduced the LTNE feature and adapted text (spec issue #5778)
     0x0202: 4,                              # Fan Control - Change conformance for FanModeSequence
@@ -442,11 +444,9 @@ matter_device.events.dump()
       elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         return pl
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0)    #
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 1)    # "Initial Release"
       end
+      # FeatureMap / ClusterRevision use the generic handlers below (CLUSTER_REVISIONS 0x001D = 2, TagList capable);
+      # plugins exposing a TagList override 0x0004 and 0xFFFC (TAGLIST feature bit 0)
 
     end
 

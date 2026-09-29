@@ -88,7 +88,14 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 - Current `Matter_Plugin_2_Shutter.be` (Window Covering, 0x0202) and `Matter_Plugin_2_Thermostat.be` (Door Lock, 0x0301) use legacy clusters
 - Closure architecture allows unified control of: window coverings (shutters), doors, garage doors, cabinets, gates
 - Tasmota devices (Shutter relays, RF/IR remote controls) map naturally to Closure model
-- **Estimated effort**: Medium (1-2 weeks) — restructure Window Covering + extend to Door Lock; test cross-controller compatibility
+- ✅ **Garage Door implemented**: `Matter_Plugin_2_GarageDoor.be` (`garage`) exposes Closure (0x0230, Rev 1)
+  + Closure Control (0x0104, Rev 1, feature PS) only, reusing the Shutter's `ShutterPosition<x>` /
+  ShutterInvert data source but reporting MainState/OverallCurrentState/OverallTargetState instead
+  of the legacy Window Covering attributes. Descriptor TagList carries the Closure namespace
+  GarageDoor tag. `Matter_Plugin_9_Virt_GarageDoor.be` (`v_garage`) exposes the same Matter model
+  with state supplied through `MtrUpdate`. Window Covering (0x0202) is left untouched for shutters/blinds.
+- **Remaining effort**: Low-Medium (3-5 days) — Closure Panel (0x0231) + Closure Dimension (0x0105)
+  only needed if a future closure requires percentage lift/tilt; Door Lock migration still open
 
 ### 1.2 Soil Sensor — NEW SIMPLE DEVICE TYPE
 
@@ -147,7 +154,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 |---|---|---|---|---|---|
 | Commodity Price | 0x0095 | 4 | Base | SEPR | Real-time/forecasted pricing for gas, energy, water |
 | Commodity Tariff | 0x0700 | 1 | Base | SETRF | Tariff schedules and rate structure |
-| Device Energy Management | 0x0098 | — | Base | — | Power adjustment, demand response, forecasting |
+| Device Energy Management | 0x0098 | 4 | Base | DEM | Power adjustment, demand response, forecasting |
 | Energy EVSE | 0x0099 | — | Base | — | EV charging control (out of scope for Tasmota) |
 | Energy EVSE Mode | 0x009D | — | Base | — | EVSE mode switching |
 | Water Heater Management | 0x0094 | — | Base | — | Water heater control (out of scope for Tasmota) |
@@ -247,52 +254,61 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 **Objective**: Expose Tasmota's extensive energy drivers through Matter Energy Management framework.
 
-1. **Commodity Price Cluster (0x0095, Rev 4)**
-   - Purpose: Receive pricing signals from grid/utility device
-   - File: New `Matter_Plugin_Energy_Price.be` or add to Root Node if it's a global cluster
-   - Attributes: Tiers, pricing matrix, forecasts
-   - Effort: 1 week
+1. ⏹️ **Device Energy Management Cluster (0x0098, Rev 4)** — not applied to plugs
+   - Not required by On/Off Plug-in Unit (0x010A) nor Electrical Sensor (0x0510); DEM belongs to Energy Smart Appliances (device type 0x050D, Rev 3: EVSE, water heater, heat pump, battery, solar)
+   - Reporting-only DEM on a plug (static ESAState, no adjustment) brings no value to controllers
+   - Revisit only if a Tasmota plugin models an actual ESA with load control
 
-2. **Commodity Tariff Cluster (0x0700, Rev 1)**
-   - Purpose: Receive tariff schedule (time-of-use, peak hours, etc.)
-   - File: New `Matter_Plugin_Energy_Tariff.be`
-   - Attributes: Tariff type, pricing tiers, effective dates
-   - Effort: 1 week
+### Phase 2b: Commodity Price & Tariff (deferred)
 
-3. **Device Energy Management Cluster (0x0098)**
-   - Purpose: Expose power measurement + demand response hints
-   - File: Extend `Matter_Plugin_3_OnOff_Power.be` or create new `Matter_Plugin_Sensor_Power.be`
-   - Attributes: CurrentPower, PowerMinimum, PowerMaximum, PowerAdjustmentCapability, etc.
-   - Effort: 1-2 weeks
+1. **Commodity Price (0x0095, Rev 4)** and **Commodity Tariff (0x0700, Rev 1)**
+   - Hosted only by Electrical Energy Tariff (0x0513), a child endpoint of Meter Reference Point (0x0512, with Identify)
+   - Requires Descriptor TagList semantic tags (Commodity Tariff namespaces; Grid/Import/AC/Current in the basic topology) and TimeSyncCond on the Root Node
+   - Commodity Tariff: 14+ attributes with deeply nested structs (DayEntry, DayPattern, CalendarPeriod, TariffComponent, TariffPeriod)
+   - Prerequisites: Namespace Specification 1.6, parent/child virtual composition, TagList support
+   - No native Tasmota data source; values would be pushed via `MtrUpdate`
 
 ### Phase 3: Closures Unified Architecture (Weeks 6-8)
 
 **Objective**: Refactor Window Covering and Door Lock to new Closure model.
 
-1. **Closure Device Type (0x0230) — Parent**
-   - File: New `Matter_Plugin_Closure.be`
-   - Clusters: Descriptor, Identify, Closure Control (0x0104), Closure Dimension (0x0105)
-   - Effort: 1-2 weeks (design + implementation)
+1. ✅ **Closure Device Type (0x0230, Rev 1) — Garage Door** — implemented
+   - File: `Matter_Plugin_2_GarageDoor.be` (`garage`)
+   - Clusters: Descriptor (TagList: Closure/GarageDoor), Identify (inherited), Closure Control (0x0104, Rev 1, PS)
+   - MainState (Stopped/Moving), OverallCurrentState/OverallTargetState (Current/TargetPositionEnum),
+     Stop (0x00) and MoveTo (0x01, timed invoke enforced) commands, MovementCompleted and
+     SecureStateChanged events, fed by the same `ShutterPosition<x>` / ShutterInvert logic as the
+     legacy Shutter plugin; MoveToSignaturePosition maps to fully open
+   - Limitation: SecureState (= FullyClosed) follows Tasmota's time-estimated position, not an
+     end-stop sensor; moves outside Tasmota (obstruction reversal, car remote, wall button) are
+     not detected, so SecureState=true is not a confirmed closed state
+   - No Closure Panel child endpoint: garage doors are modelled as a single
+     enum-position closure (Closed/Open/Partial), not a percentage lift axis
+   - Effort: implemented directly (skipped generic Closure/Closure Panel scaffolding below)
 
-2. **Closure Panel Device Type (0x0231) — Child**
+2. **Closure Panel Device Type (0x0231) — Child** (not yet implemented)
    - File: New `Matter_Plugin_Closure_Panel.be` (inherits from `Matter_Plugin_1_Device`)
    - Clusters: Descriptor, Identify, Closure Dimension (0x0105)
+   - Needed only if a future closure requires percentage lift/tilt (e.g. gate, blind) composed as parent+panel
    - Effort: 3-5 days (follows Closure pattern)
 
 3. **Migration Path for Existing Devices**
-   - Current `Matter_Plugin_2_Shutter.be` (Window Covering, 0x0202) — keep as-is or migrate to new Closure model?
-     - Option A: Keep as legacy (backward compatibility)
-     - Option B: Refactor to Closure (cleaner, aligned with v1.6 spec)
-   - Decision deferred to implementation phase (depends on customer device install base)
+   - Current `Matter_Plugin_2_Shutter.be` (Window Covering, 0x0202) — kept as-is (Option A,
+     legacy, widest controller support today) alongside the new `garage` Closure plugin (Option B)
+   - Rationale: Window Covering (0x0202) remains the safer choice for shutters/blinds until
+     Closure Control (0x0104) support is broader across controllers; Garage Door has no legacy
+     Matter device type at all, so it was implemented directly against Closure (0x0230)
+   - Reported controller support (unverified): Samsung SmartThings supports Closure Control; Home
+     Assistant support is in progress (September 2026)
 
 ### Phase 4: Soil Sensor and Doorbells (Weeks 9-10)
 
 **Objective**: Add simple sensor and doorbell device types for completeness.
 
-1. **Soil Sensor (0x0045)**
-   - File: New `Matter_Plugin_Sensor_Soil.be`
-   - Reuses existing humidity/temperature plugins as templates
-   - Effort: 3-5 days
+1. ✅ **Soil Sensor (0x0045, Rev 1)** — implemented
+   - Files: `Matter_Plugin_3_Sensor_Soil.be` (`soil`), `Matter_Plugin_9_Virt_Sensor_Soil.be` (`v_soil`), `Matter_Plugin_8_Bridge_Sensor_Soil.be` (`http_soil`, `mqtt_soil`)
+   - Soil Measurement (0x0430, Rev 1): SoilMoistureMeasurementLimits + SoilMoistureMeasuredValue, fed by the Tasmota `Moisture` JSON key (percent)
+   - Optional Temperature Measurement (0x0402) not composed on the same endpoint
 
 2. **Doorbell Device Type (0x0148) — Optional**
    - File: New `Matter_Plugin_Doorbell.be`
@@ -317,12 +333,12 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 | File | Purpose | Priority | Phase |
 |---|---|---|---|---|
-| `Matter_Plugin_Energy_Price.be` | Commodity Price cluster | HIGH | 2 |
-| `Matter_Plugin_Energy_Tariff.be` | Commodity Tariff cluster | HIGH | 2 |
-| `Matter_Plugin_Sensor_Power.be` | Device Energy Management | HIGH | 2 |
-| `Matter_Plugin_Closure.be` | Closure device type (parent) | MEDIUM | 3 |
-| `Matter_Plugin_Closure_Panel.be` | Closure Panel device type (child) | MEDIUM | 3 |
-| `Matter_Plugin_Sensor_Soil.be` | Soil Sensor device type | MEDIUM | 4 |
+| `Matter_Plugin_Energy_Price.be` | Commodity Price cluster | DEFERRED | 2b |
+| `Matter_Plugin_Energy_Tariff.be` | Commodity Tariff cluster | DEFERRED | 2b |
+| `Matter_Plugin_Sensor_Power.be` | Device Energy Management — not applicable to plugs (ESA only) | N/A | 2 |
+| `Matter_Plugin_2_GarageDoor.be` | Closure device type (Garage Door, Closure Control only) | DONE | 3 |
+| `Matter_Plugin_Closure_Panel.be` | Closure Panel device type (child, percentage lift/tilt closures) | MEDIUM | 3 |
+| `Matter_Plugin_3_Sensor_Soil.be` | Soil Sensor device type | DONE | 4 |
 | `Matter_Plugin_Doorbell.be` | Doorbell device type | LOW | 4 |
 
 ### Files to Modify
@@ -340,7 +356,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | Category | 1.4.1 | 1.6.0 | Status | Effort |
 |---|---|---|---|---|
 | **DataModelRevision** | 18 | 20 | ⚠️ Not updated | <1 day |
-| **Closures clusters** | Window Covering (legacy) | Closure Control/Dimension (new) | ❌ Missing | 2 weeks |
+| **Closures clusters** | Window Covering (legacy) | Closure Control (Garage Door, `garage`) ✅ Done; Closure Dimension (panel-based closures) still missing | ⚠️ Partial | 3-5 days remaining |
 | **Energy Management** | 0x0090/0x0091 only | Add Commodity Price/Tariff, Device EM, EVSE | ❌ Missing | 3-4 weeks |
 | **Soil Measurement** | None | Soil Sensor (0x0045) + cluster | ✅ Done | — |
 | **Doorbell** | None | 0x0148/0x0141/0x0143 | ❌ Missing | 1 week |

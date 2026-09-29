@@ -935,7 +935,13 @@ class Matter_IM
 
         var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
         var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
-        var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
+        var res
+        if !query.timed_request && self.command_needs_timed(ctx)
+          ctx.status = 0xC6 #-matter.NEEDS_TIMED_INTERACTION-#
+          ctx.log = "needs timed invoke"
+        else
+          res = self.device.invoke_request(msg.session, q.command_fields, ctx)
+        end
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
         log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
         # log("MTR: Perf/Command = " + str(debug.counters()), 4)
@@ -1003,7 +1009,13 @@ class Matter_IM
 
     var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
     var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
-    var res = self.device.invoke_request(msg.session, ctx.command_fields, ctx)
+    var res
+    if !ctx.TimedRequest && self.command_needs_timed(ctx)
+      ctx.status = 0xC6 #-matter.NEEDS_TIMED_INTERACTION-#
+      ctx.log = "needs timed invoke"
+    else
+      res = self.device.invoke_request(msg.session, ctx.command_fields, ctx)
+    end
     var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
     if tasmota.loglevel(3)
       log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
@@ -1244,6 +1256,29 @@ class Matter_IM
     self.send_status(msg, 0x00 #-matter.SUCCESS-#)
 
     return true
+  end
+
+  #############################################################
+  # command_needs_timed
+  #
+  # Returns true if the concrete command path in `ctx` requires a Timed
+  # Invoke (access quality `T`) and exists on the target endpoint.
+  # Only timed commands implemented by Tasmota plugins are listed; an
+  # unknown endpoint/cluster falls through to the normal UNSUPPORTED_* path.
+  #
+  # Called with a non-timed Invoke Request; the caller then answers
+  # NEEDS_TIMED_INTERACTION (0xC6) for this command path.
+  def command_needs_timed(ctx)
+    var cluster = ctx.cluster
+    var timed = false
+    if   cluster == 0x0104              # Closure Control
+      timed = (ctx.command == 0x01)     # MoveTo (O T)
+    end
+    if timed
+      var pi = self.device.find_plugin_by_endpoint(ctx.endpoint)
+      timed = (pi != nil) && pi.contains_cluster(cluster)
+    end
+    return timed
   end
 
   #############################################################

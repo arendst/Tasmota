@@ -130,6 +130,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `sortedmap` support for `json.dump` [#24999](https://github.com/arendst/Tasmota/issues/24999)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit [#24922](https://github.com/arendst/Tasmota/issues/24922)
 - Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) [#25088](https://github.com/arendst/Tasmota/issues/25088)
+- Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0)
 
 ### Breaking Changed
 
