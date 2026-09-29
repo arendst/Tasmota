@@ -18,10 +18,10 @@
 #
 
 #################################################################################
-# Matter 1.6.0 Root Node Device Specification
+# Matter 1.6.1 Root Node Device Specification
 #################################################################################
 # Device Type: Root Node (0x0016)
-# Device Type Revision: 3 (Matter 1.6.0, DataModelRevision = 20)
+# Device Type Revision: 5 (Matter 1.6.1, DataModelRevision = 21)
 # Class: Simple | Scope: Node
 #
 # The Root Node device type represents the base functionality required by all
@@ -78,7 +78,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # ATTRIBUTES:
 # ID     | Name                    | Type    | Constraint | Quality | Default | Access | Conf
 # -------|-------------------------|---------|------------|---------|---------|--------|-----
-# 0x0000 | DataModelRevision       | uint16  | all        | F       | 20      | R V    | M
+# 0x0000 | DataModelRevision       | uint16  | all        | F       | 21      | R V    | M
 # 0x0001 | VendorName              | string  | max 32     | F       | -       | R V    | M
 # 0x0002 | VendorID                | uint16  | all        | F       | -       | R V    | M
 # 0x0003 | ProductName             | string  | max 32     | F       | -       | R V    | M
@@ -104,7 +104,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # 0x00 | StartUp | CRITICAL | M
 #
 # NOTES:
-# - DataModelRevision: 20 = Matter 1.6.0
+# - DataModelRevision: 21 = Matter 1.6.1
 # - VendorID: 0xFFF1-0xFFF4 for test vendors
 # - NodeLabel: User-friendly name, writable
 # - Location: ISO 3166-1 alpha-2 country code
@@ -339,21 +339,24 @@ class Matter_Plugin_Root : Matter_Plugin
 #################################################################################
 
 #################################################################################
-# Matter 1.4.1 Access Control Cluster (0x001F)
+# Matter 1.6.1 Access Control Cluster (0x001F) - Tasmota fixed ACL profile
 #################################################################################
-# Cluster Revision: 2 (Matter 1.4.1)
+# Cluster Revision: 2
 # Role: Utility | Scope: Node
 #
-# Manages Access Control Lists (ACLs) for authorization.
+# Tasmota exposes one immutable wildcard ACL entry instead of implementing the
+# full writable ACL authorization engine. This keeps code and persistent state
+# small, but deliberately gives every authenticated CASE peer on a fabric
+# Administer access to every endpoint and cluster.
 #
 # ATTRIBUTES:
 # ID     | Name                              | Type         | Constraint | Quality | Default | Access | Conf
 # -------|-----------------------------------|--------------|------------|---------|---------|--------|-----
-# 0x0000 | ACL                               | list[struct] | max 4      | NF      | []      | RW FA  | M
+# 0x0000 | ACL                               | list[struct] | fixed 1    | NF      | wildcard| R FA   | M
 # 0x0001 | Extension                         | list[struct] | max 4      | NF      | []      | RW FA  | O
 # 0x0002 | SubjectsPerAccessControlEntry     | uint16       | min 4      | F       | 4       | R V    | M
 # 0x0003 | TargetsPerAccessControlEntry      | uint16       | min 3      | F       | 3       | R V    | M
-# 0x0004 | AccessControlEntriesPerFabric     | uint16       | min 4      | F       | 4       | R V    | M
+# 0x0004 | AccessControlEntriesPerFabric     | uint16       | fixed 1    | F       | 1       | R V    | M
 #
 # AccessControlEntryStruct:
 #   - Privilege (enum8): 1=View, 2=ProxyView, 3=Operate, 4=Manage, 5=Administer
@@ -366,11 +369,15 @@ class Matter_Plugin_Root : Matter_Plugin
 #   Administer > Manage > Operate > ProxyView, View
 #
 # NOTES:
-# - ACL: Per-fabric access control entries
-# - Subjects: null = wildcard (all subjects)
-# - Targets: null = wildcard (all targets)
+# - Fixed entry: Privilege=Administer, AuthMode=CASE, Subjects=null,
+#   Targets=null, FabricIndex=current accessing fabric.
+# - ACL writes are acknowledged and discarded for commissioner compatibility;
+#   no ACL data is persisted and reads always return the fixed entry.
+# - CATs, Node-ID restrictions, target restrictions, Group AuthMode, and
+#   AccessControlEntryChanged events are not implemented.
+# - This is not fully conformant with Matter's writable ACL and minimum-entry
+#   requirements. It is an explicit resource/security tradeoff for Tasmota.
 # - PASE commissioning implicitly grants Administer privilege
-# - Minimum 4 ACL entries per fabric
 #################################################################################
 
 #################################################################################
@@ -395,7 +402,7 @@ class Matter_Plugin_Root : Matter_Plugin
 #   - FabricIndex (uint8): Fabric identifier
 #
 # GroupKeySetStruct:
-#   - GroupKeySetID (uint16): Key set identifier (0 = IPK)
+#   - GroupKeySetID (uint16): key set identifier; 0 is not valid in GroupKeyMap
 #   - GroupKeySecurityPolicy (enum8): Security policy
 #   - EpochKey0/1/2 (octstr, nullable): Epoch keys
 #   - EpochStartTime0/1/2 (uint64, nullable): Epoch start times
@@ -598,7 +605,7 @@ class Matter_Plugin_Root : Matter_Plugin
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x001F: [0,2,3,4],                # Access Control Cluster, p.461
-    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x11,0x12,0x13,0x15,0x16],# Basic Information Cluster cluster 11.1 p.565
+    0x0028: [0,1,2,3,4,5,6,7,8,9,0x0A,0x0F,0x11,0x12,0x13,0x15,0x16,0x18],# Basic Information Cluster
     # 0x002A: [0,1,2,3],                # OTA Software Update Requestor Cluster Definition 11.19.7 p.762
     0x002B: [0,1],                    # Localization Configuration Cluster 11.3 p.580
     0x002C: [0,1,2],                  # Time Format Localization Cluster 11.4 p.581
@@ -611,7 +618,7 @@ class Matter_Plugin_Root : Matter_Plugin
     0x0038: [0,1,7],                  # Time Synchronization 11.16 p.689
     0x003C: [0,1,2],                  # Administrator Commissioning Cluster 11.18 p.725
     0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
-    0x003F: [0],                      # Group Key Management Cluster 11.2 p.572
+    0x003F: [0,1,2,3],                # Group Key Management Cluster
     # ICD Management Cluster (0x0046) - Section 9.17
     # For SIT (Short Idle Time) devices without CIP/LITS features:
     # - IdleModeDuration (0x0000): mandatory
@@ -621,7 +628,12 @@ class Matter_Plugin_Root : Matter_Plugin
     # Note: OperatingMode(0x0008) requires LITS feature
     0x0046: [0,1,2]                   # ICD Management Cluster - base SIT mode (no CIP/LITS features)
   })
-  static var TYPES = { 0x0016: 3 }       # Root node - Matter 1.4.1 Device Library Rev 3
+  static var TYPES = { 0x0016: 5 }       # Root node - Matter 1.6.1 Device Library Rev 5
+  # static var MATTER_EPOCH_OFFSET = 946684800  # seconds from Unix epoch to 2000-01-01
+  var _group_key_map_write_staged       # request-scoped candidate GroupKeyMap
+  var _group_key_map_write_failed       # prevents partial GroupKeyMap persistence
+  var _write_exchange_id                # identifies a multi-message list transaction
+  var _write_session                    # prevents transaction reuse by another CASE peer
 
   #############################################################
   # Constructor
@@ -630,6 +642,277 @@ class Matter_Plugin_Root : Matter_Plugin
     # publish mandatory events
     self.publish_event(0x0028, 0x00, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, tasmota.version()))   # Event StartUp - Software Version
     self.publish_event(0x0033, 0x03, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
+  end
+
+  # Open or resume the GroupKeyMap list-write transaction for this exchange.
+  # The transaction survives MoreChunkedMessages.
+  def begin_write_request(msg)
+    var exchange_id = msg != nil ? msg.exchange_id : nil
+    var session = msg != nil ? msg.session : nil
+    if exchange_id != nil && self._write_exchange_id == exchange_id &&
+       self._write_session == session
+      return
+    end
+    self._group_key_map_write_staged = nil
+    self._group_key_map_write_failed = false
+    self._write_exchange_id = exchange_id
+    self._write_session = session
+  end
+
+  # Close a WriteRequest transaction. On the final message this commits staged
+  # lists whose last operation appeared in an earlier protocol message.
+  def end_write_request(msg, more_chunked_messages)
+    if more_chunked_messages   return end
+
+    # The final message may not repeat the GroupKeyMap path. Commit any valid
+    # pending map here so earlier successful chunks are not silently lost.
+    var fabric = (msg != nil && msg.session != nil) ? msg.session.get_fabric() : nil
+    if fabric != nil
+      if self._group_key_map_write_staged != nil && !self._group_key_map_write_failed
+        fabric.replace_group_key_map(self._group_key_map_write_staged)
+        self.attribute_updated(0x003F, 0x0000)
+      end
+    end
+
+    # Failed staged maps are discarded; partial lists are never persisted.
+    self._group_key_map_write_staged = nil
+    self._write_exchange_id = nil
+    self._write_session = nil
+  end
+
+  # Return Tasmota's fixed Access Control policy. Every authenticated CASE peer
+  # on the accessing fabric receives Administer privilege for all targets.
+  # This deliberately trades Matter ACL mutability and least-privilege control
+  # for a small implementation suitable for resource-constrained firmware.
+  def fixed_acl_to_tlv(fabric)
+    var TLV = matter.TLV
+    var result = TLV.Matter_TLV_array()
+    if fabric != nil
+      var out = result.add_struct(nil)
+      out.add_TLV(1, 0x04 #-TLV.U1-#, 5)                 # Administer
+      out.add_TLV(2, 0x04 #-TLV.U1-#, 2)                 # CASE
+      out.add_TLV(3, 0x14 #-TLV.NULL-#, nil)             # all CASE subjects
+      out.add_TLV(4, 0x14 #-TLV.NULL-#, nil)             # all targets
+      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, fabric.get_fabric_index())
+    end
+    return result
+  end
+
+  #############################################################
+  # Encode and validate Group Key Management fabric data.
+  # Build the fabric-filtered GroupKeyMap attribute from normalized storage.
+  def group_key_map_to_tlv(fabric)
+    var TLV = matter.TLV
+    var result = TLV.Matter_TLV_array()
+    if fabric == nil
+      return result
+    end
+    for entry : fabric.get_group_key_map()
+      var out = result.add_struct(nil)
+      out.add_TLV(1, 0x05 #-TLV.U2-#, entry.find("group_id"))
+      out.add_TLV(2, 0x05 #-TLV.U2-#, entry.find("key_set_id"))
+      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, fabric.get_fabric_index())
+    end
+    return result
+  end
+
+  # Validate a complete or single-entry GroupKeyMap value and convert it to
+  # JSON-safe storage. References must resolve to existing non-reserved sets.
+  def normalize_group_key_map(write_data, fabric)
+    if !isinstance(write_data, list) || size(write_data) > 4
+      return nil
+    end
+    var normalized = []
+    var group_ids = []
+    for encoded : write_data
+      var group_id = encoded.findsubval(1)
+      var key_set_id = encoded.findsubval(2)
+      var fabric_index = encoded.findsubval(0xFE)
+      if group_id == nil || group_id < 1 || group_id > 0xFEFF ||
+         key_set_id == nil || key_set_id < 1 || key_set_id > 0xFFFF ||
+         fabric.find_group_key_set(key_set_id) == nil ||
+         group_ids.find(group_id) != nil ||
+         (fabric_index != nil && fabric_index != 0 && fabric_index != fabric.get_fabric_index())
+        return nil
+      end
+      group_ids.push(group_id)
+      normalized.push({"group_id": group_id, "key_set_id": key_set_id})
+    end
+    return normalized
+  end
+
+  # Apply whole-list, append, replace, or delete semantics to a staged
+  # GroupKeyMap so chunked writes are committed atomically.
+  def write_group_key_map_operation(fabric, ctx, write_data)
+    if self._group_key_map_write_failed
+      ctx.status = 0x80 #-matter.INVALID_ACTION-#
+      return false
+    end
+    var staged = self._group_key_map_write_staged
+    if staged == nil   staged = fabric.get_group_key_map().copy() end
+    var replacement
+
+    if !ctx.list_index_present
+      replacement = self.normalize_group_key_map(write_data, fabric)
+      if replacement == nil
+        self._group_key_map_write_failed = true
+        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+        return false
+      end
+      staged = replacement
+    elif ctx.list_index_is_null
+      replacement = self.normalize_group_key_map([ctx.write_tlv], fabric)
+      if replacement == nil || size(staged) >= 4
+        self._group_key_map_write_failed = true
+        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+        return false
+      end
+      var group_id = replacement[0].find("group_id")
+      for existing : staged
+        if existing.find("group_id") == group_id
+          self._group_key_map_write_failed = true
+          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+          return false
+        end
+      end
+      staged.push(replacement[0])
+    else
+      var index = ctx.list_index
+      if index == nil || index < 0 || index >= size(staged)
+        self._group_key_map_write_failed = true
+        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+        return false
+      end
+      if ctx.write_tlv != nil && ctx.write_tlv.typ == 0x14 #-TLV.NULL-#
+        staged.remove(index)
+      else
+        replacement = self.normalize_group_key_map([ctx.write_tlv], fabric)
+        if replacement == nil
+          self._group_key_map_write_failed = true
+          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+          return false
+        end
+        var replacement_group_id = replacement[0].find("group_id")
+        var duplicate_index = 0
+        while duplicate_index < size(staged)
+          if duplicate_index != index && staged[duplicate_index].find("group_id") == replacement_group_id
+            self._group_key_map_write_failed = true
+            ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+            return false
+          end
+          duplicate_index += 1
+        end
+        staged[index] = replacement[0]
+      end
+    end
+
+    self._group_key_map_write_staged = staged
+    if ctx.list_write_final
+      fabric.replace_group_key_map(staged)
+      self._group_key_map_write_staged = nil
+      self.attribute_updated(ctx.cluster, ctx.attribute)
+    end
+    return true
+  end
+
+  # Encode the persisted Groups membership table for the GKM GroupTable
+  # attribute. Only records belonging to the accessing fabric are supplied.
+  def group_table_to_tlv(fabric)
+    var TLV = matter.TLV
+    var result = TLV.Matter_TLV_array()
+    if fabric == nil
+      return result
+    end
+    for entry : fabric.get_group_table()
+      var out = result.add_struct(nil)
+      out.add_TLV(1, 0x05 #-TLV.U2-#, entry.find("group_id"))
+      var endpoints = out.add_array(2)
+      for endpoint : entry.find("endpoints", [])
+        endpoints.add_TLV(nil, 0x05 #-TLV.U2-#, endpoint)
+      end
+      out.add_TLV(3, 0x0C #-TLV.UTF1-#, entry.find("name", ""))
+      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, fabric.get_fabric_index())
+    end
+    return result
+  end
+
+  # Validate KeySetWrite's GroupKeySetStruct and normalize epoch keys/times for
+  # persistence. int64 conversion keeps minimally encoded uint timestamps safe.
+  def normalize_group_key_set(encoded)
+    if encoded == nil
+      return nil
+    end
+    var id = encoded.findsubval(0)
+    var policy = encoded.findsubval(1)
+    if id == nil || id < 1 || id > 0xFFFF ||
+       policy == nil || policy < 0 || policy > 1
+      return nil
+    end
+    var result = {"id": id, "policy": policy}
+    var key_tags = [2,4,6]
+    var time_tags = [3,5,7]
+    var previous_time
+    var idx = 0
+    while idx < 3
+      var key_item = encoded.findsub(key_tags[idx])
+      var time_item = encoded.findsub(time_tags[idx])
+      var key = (key_item != nil && key_item.typ != 0x14) ? key_item.val : nil
+      var start_time = (time_item != nil && time_item.typ != 0x14) ? time_item.val : nil
+      if (key == nil) != (start_time == nil)
+        return nil
+      end
+      if key != nil
+        if !isinstance(key, bytes) || size(key) != 16
+          return nil
+        end
+        if type(start_time) == 'int'
+          # TLV decodes minimally encoded uint values as native ints. Convert
+          # those as unsigned values before checking or comparing them.
+          start_time = int64.fromu32(start_time)
+        elif isinstance(start_time, int64)
+          if start_time < 0   return nil end
+        else
+          return nil
+        end
+        # EpochKey0 is mandatory. Later epochs must be contiguous and their
+        # start times strictly increase.
+        if idx > 0 && result.find("key" + str(idx - 1)) == nil
+          return nil
+        end
+        if idx == 0 && start_time.low32() == 0 && start_time.high32() == 0
+          return nil
+        end
+        if previous_time != nil && start_time <= previous_time
+          return nil
+        end
+        result["key" + str(idx)] = key.tohex()
+        result["time" + str(idx)] = start_time
+        previous_time = start_time
+      end
+      idx += 1
+    end
+    if result.find("key0") == nil
+      return nil
+    end
+    return result
+  end
+
+  # Build a KeySetRead response. Epoch start times are visible, but symmetric
+  # epoch keys are deliberately replaced with NULL and never leave the device.
+  def group_key_set_to_tlv(key_set, id)
+    var TLV = matter.TLV
+    var out = TLV.Matter_TLV_struct()
+    out.add_TLV(0, 0x05 #-TLV.U2-#, id)
+    out.add_TLV(1, 0x04 #-TLV.U1-#, key_set != nil ? key_set.find("policy", 0) : 0)
+    # KeySetRead never discloses group key material; only epoch start times are returned.
+    var idx = 0
+    while idx < 3
+      out.add_TLV(2 + idx * 2, 0x14 #-TLV.NULL-#, nil)
+      var start_time = key_set != nil ? key_set.find("time" + str(idx)) : nil
+      out.add_TLV(3 + idx * 2, start_time == nil ? 0x14 #-TLV.NULL-# : 0x07 #-TLV.U8-#, start_time)
+      idx += 1
+    end
+    return out
   end
 
   #############################################################
@@ -717,14 +1000,24 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0038              # ========== Time Synchronization 11.16 p.689 ==========
       if   attribute == 0x0000          #  ---------- UTCTime / epoch_us ----------
-        var epoch_us = int64(tasmota.rtc_utc()) * int64(1000000)
-        return tlv_solo.set(0x07 #-TLV.U8-#, epoch_us)     # TODO test the conversion of int64()
+        var unix_time = tasmota.rtc_utc()
+        if unix_time < 946684800 #-self.MATTER_EPOCH_OFFSET-#
+          return tlv_solo.set(0x14 #-TLV.NULL-#, nil)      # RTC is not valid yet
+        end
+        # Matter epoch-us starts at 2000-01-01, not at the Unix epoch.
+        var epoch_us = (int64(unix_time) - int64(946684800 #-self.MATTER_EPOCH_OFFSET-#)) * int64(1000000)
+        return tlv_solo.set(0x07 #-TLV.U8-#, epoch_us)
       elif attribute == 0x0001          #  ---------- Granularity / enum ----------
         return tlv_solo.set(0x04 #-TLV.U1-#, 3)     # MillisecondsGranularity (NTP every hour, i.e. 36ms max drift)
       # TODO add some missing args
       elif attribute == 0x0007          #  ---------- LocalTime / epoch_us ----------
-        var epoch_us = int64(tasmota.rtc('local')) * int64(1000000)
-        return tlv_solo.set(0x07 #-TLV.U8-#, epoch_us)     # TODO test the conversion of int64()
+        var unix_time = tasmota.rtc('local')
+        if unix_time < 946684800 #-self.MATTER_EPOCH_OFFSET-#
+          return tlv_solo.set(0x14 #-TLV.NULL-#, nil)      # RTC is not valid yet
+        end
+        # LocalTime uses the same Matter epoch, with the local offset applied.
+        var epoch_us = (int64(unix_time) - int64(946684800 #-self.MATTER_EPOCH_OFFSET-#)) * int64(1000000)
+        return tlv_solo.set(0x07 #-TLV.U8-#, epoch_us)
       end
 
     # ====================================================================================================
@@ -796,7 +1089,7 @@ class Matter_Plugin_Root : Matter_Plugin
       self.ack_request(ctx)             # long operation, send Ack first
 
       if   attribute == 0x0000          #  ---------- DataModelRevision ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 20)     # 20 = Matter 1.6.0 (revision 20 of the Data Model)
+        return tlv_solo.set(0x05 #-TLV.U2-#, 21)     # Matter 1.6.1 data model
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
         return tlv_solo.set(0x0C #-TLV.UTF1-#, "Tasmota")
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------
@@ -829,37 +1122,60 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0013          #  ---------- CapabilityMinima / CapabilityMinimaStruct ----------
         var cps = TLV.Matter_TLV_struct()
         cps.add_TLV(0, 0x05 #-TLV.U2-#, 3)       # CaseSessionsPerFabric = 3
-        cps.add_TLV(1, 0x05 #-TLV.U2-#, 3)       # SubscriptionsPerFabric = 5
+        cps.add_TLV(1, 0x05 #-TLV.U2-#, 3)       # SubscriptionsPerFabric = 3
+        cps.add_TLV(2, 0x05 #-TLV.U2-#, 1)       # SimultaneousInvocationsSupported
+        cps.add_TLV(3, 0x05 #-TLV.U2-#, 1)       # SimultaneousWritesSupported
+        cps.add_TLV(4, 0x05 #-TLV.U2-#, 9)       # ReadPathsSupported
+        cps.add_TLV(5, 0x05 #-TLV.U2-#, 3)       # SubscribePathsSupported
         return cps
       elif attribute == 0x0015          #  ---------- SpecificationVersion / uint32 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0x01040100)  # Matter 1.4.1.0
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0x01060100)  # Matter 1.6.1.0
       elif attribute == 0x0016          #  ---------- MaxPathsPerInvoke / uint16 ----------
         return tlv_solo.set(0x05 #-TLV.U2-#, 1)
+      elif attribute == 0x0018          #  ---------- ConfigurationVersion / uint32 ----------
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.device.configuration_version)
       end
 
     # ====================================================================================================
     elif cluster == 0x001F              # ========== Access Control Cluster 9.10 p.461 ==========
 
-      if   attribute == 0x0002          #  ---------- SubjectsPerAccessControlEntry / uint16 ----------
+      if   attribute == 0x0000          #  ---------- ACL / list[AccessControlEntryStruct] ----------
+        return self.fixed_acl_to_tlv(session.get_fabric())
+      elif attribute == 0x0002          #  ---------- SubjectsPerAccessControlEntry / uint16 ----------
         return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
       elif attribute == 0x0003          #  ---------- TargetsPerAccessControlEntry / uint16 ----------
         return tlv_solo.set(0x05 #-TLV.U2-#, 3)     # spec minimum
       elif attribute == 0x0004          #  ---------- AccessControlEntriesPerFabric / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
+        return tlv_solo.set(0x05 #-TLV.U2-#, 1)     # one fixed wildcard entry
       end
 
     # ====================================================================================================
     elif cluster == 0x003F              # ========== Group Key Management Cluster 11.2 p.572 ==========
 
       if   attribute == 0x0000          #  ---------- GroupKeyMap / list[GroupKeyMapStruct] ----------
-        # Return empty list for now - group keys managed internally
-        return TLV.Matter_TLV_array()
+        if !self.device.GROUP_TRANSPORT_READY   return TLV.Matter_TLV_array() end
+        return self.group_key_map_to_tlv(session.get_fabric())
       elif attribute == 0x0001          #  ---------- GroupTable / list[GroupInfo] ----------
-        return TLV.Matter_TLV_array()   # empty list for now
+        if !self.device.GROUP_TRANSPORT_READY   return TLV.Matter_TLV_array() end
+        return self.group_table_to_tlv(session.get_fabric())
       elif attribute == 0x0002          #  ---------- MaxGroupsPerFabric / uint16 ----------
-        return tlv_solo.set(0x05 #-TLV.U2-#, 4)     # spec minimum
+        # Groups remains discoverable for unicast compatibility, but group
+        # provisioning is fail-closed until encrypted multicast receive exists.
+        return tlv_solo.set(0x05 #-TLV.U2-#, self.device.GROUP_TRANSPORT_READY ? 4 : 0)
       elif attribute == 0x0003          #  ---------- MaxGroupKeysPerFabric / uint16 ----------
         return tlv_solo.set(0x05 #-TLV.U2-#, 3)     # spec minimum
+      elif attribute == 0xFFF8          #  ---------- GeneratedCommandList ----------
+        var generated = TLV.Matter_TLV_array()
+        generated.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0002)  # KeySetReadResponse
+        generated.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0005)  # KeySetReadAllIndicesResponse
+        return generated
+      elif attribute == 0xFFF9          #  ---------- AcceptedCommandList ----------
+        var accepted = TLV.Matter_TLV_array()
+        accepted.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0000)   # KeySetWrite
+        accepted.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0001)   # KeySetRead
+        accepted.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0003)   # KeySetRemove
+        accepted.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0004)   # KeySetReadAllIndices
+        return accepted
       end
 
     # ====================================================================================================
@@ -1279,6 +1595,80 @@ class Matter_Plugin_Root : Matter_Plugin
       end
 
     # ====================================================================================================
+    elif cluster == 0x003F              # ========== Group Key Management Cluster ==========
+      # These commands implement the persistent management plane only. Group
+      # message decryption and multicast dispatch remain gated separately.
+      var fabric = session.get_fabric()
+      if fabric == nil
+        ctx.status = 0x7E #-matter.UNSUPPORTED_ACCESS-#
+        return nil
+      end
+
+      if command == 0x0000              # ---------- KeySetWrite ----------
+        var encoded_key_set = val.findsub(0)
+        if encoded_key_set == nil || encoded_key_set.findsubval(0) == 0
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        if encoded_key_set.findsubval(1) == 1 &&
+           (self.FEATURE_MAPS.find(0x003F, 0) & 0x01) == 0
+          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
+          return nil
+        end
+        var key_set
+        try
+          key_set = self.normalize_group_key_set(encoded_key_set)
+        except .. as e, m
+          log("MTR: invalid KeySetWrite: " + str(e) + "|" + str(m), 2)
+        end
+        if key_set == nil
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        if fabric.find_group_key_set(key_set.find("id")) == nil &&
+           size(fabric.get_group_key_sets()) >= 2       # key set 0 (IPK) is the third supported set
+          ctx.status = 0x89 #-matter.RESOURCE_EXHAUSTED-#
+          return nil
+        end
+        fabric.put_group_key_set(key_set)
+        return true
+
+      elif command == 0x0001            # ---------- KeySetRead ----------
+        var id = val.findsubval(0)
+        var key_set = (id == 0) ? nil : fabric.find_group_key_set(id)
+        if id == nil || (id != 0 && key_set == nil)
+          ctx.status = 0x8B #-matter.NOT_FOUND-#
+          return nil
+        end
+        var response = TLV.Matter_TLV_struct()
+        response.add_obj(0, self.group_key_set_to_tlv(key_set, id))
+        ctx.command = 0x0002             # KeySetReadResponse
+        return response
+
+      elif command == 0x0003            # ---------- KeySetRemove ----------
+        var id = val.findsubval(0)
+        if id == nil || id == 0
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        if !fabric.remove_group_key_set_and_mappings(id)
+          ctx.status = 0x8B #-matter.NOT_FOUND-#
+          return nil
+        end
+        return true
+
+      elif command == 0x0004            # ---------- KeySetReadAllIndices ----------
+        var response = TLV.Matter_TLV_struct()
+        var indices = response.add_array(0)
+        indices.add_TLV(nil, 0x05 #-TLV.U2-#, 0)       # operational IPK key set
+        for key_set : fabric.get_group_key_sets()
+          indices.add_TLV(nil, 0x05 #-TLV.U2-#, key_set.find("id"))
+        end
+        ctx.command = 0x0005             # KeySetReadAllIndicesResponse
+        return response
+      end
+
+    # ====================================================================================================
     elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
 
       if   command == 0x0000          #  ---------- DefaultOTAProviders  ----------
@@ -1349,7 +1739,35 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x001F              # ========== Access Control Cluster 9.10 p.461 ==========
       if   attribute == 0x0000          # ACL - list[AccessControlEntryStruct]
+        # Apple Home writes its commissioned administrator ACL immediately
+        # after CommissioningComplete and removes the fabric if that write is
+        # rejected. Tasmota deliberately keeps a fixed wildcard CASE/Administer
+        # policy, so acknowledge this compatibility write but do not persist or
+        # apply it. Subsequent reads continue to expose fixed_acl_to_tlv().
         return true
+      end
+
+    # ====================================================================================================
+    elif cluster == 0x003F              # ========== Group Key Management Cluster ==========
+      if attribute == 0x0000            # GroupKeyMap - list[GroupKeyMapStruct]
+        # Do not acknowledge usable group mappings until the encrypted
+        # multicast receive path can consume them.
+        if !self.device.GROUP_TRANSPORT_READY
+          ctx.status = 0x88 #-matter.UNSUPPORTED_WRITE-#
+          return false
+        end
+        var fabric = session.get_fabric()
+        if fabric == nil
+          ctx.status = 0x7E #-matter.UNSUPPORTED_ACCESS-#
+          return false
+        end
+        try
+          return self.write_group_key_map_operation(fabric, ctx, write_data)
+        except .. as e, m
+          log("MTR: invalid GroupKeyMap write: " + str(e) + "|" + str(m), 2)
+          ctx.status = 0x8D #-matter.INVALID_DATA_TYPE-#
+          return false
+        end
       end
 
     # ====================================================================================================

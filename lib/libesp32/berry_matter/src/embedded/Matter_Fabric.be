@@ -69,6 +69,11 @@ class Matter_Fabric : Matter_Expirable
   # Admin info extracted from NOC/ICAC
   var admin_subject
   var admin_vendor
+  # Fabric-scoped Group Key Management data.
+  # Keep these as JSON-safe maps/lists so they are persisted with the fabric.
+  var group_key_map
+  var group_table
+  var group_key_sets
 
   #############################################################
   def init(store)
@@ -83,6 +88,9 @@ class Matter_Fabric : Matter_Expirable
     self._counter_group_ctrl_snd_impl  = matter.Counter()
     self.counter_group_data_snd = self._counter_group_data_snd_impl.next() + self._GROUP_SND_INCR
     self.counter_group_ctrl_snd = self._counter_group_data_snd_impl.next() + self._GROUP_SND_INCR
+    self.group_key_map = []
+    self.group_table = []
+    self.group_key_sets = []
   end
 
   def get_noc()               return self.noc               end
@@ -175,6 +183,198 @@ class Matter_Fabric : Matter_Expirable
     self._counter_group_ctrl_snd_impl.reset(self.counter_group_ctrl_snd)
     self.counter_group_data_snd = self._counter_group_data_snd_impl.val()
     self.counter_group_ctrl_snd = self._counter_group_ctrl_snd_impl.val()
+    # Migrate fabrics persisted before group storage was introduced.
+    if self.group_key_map == nil       self.group_key_map = []       end
+    if self.group_table == nil         self.group_table = []         end
+    if self.group_key_sets == nil      self.group_key_sets = []      end
+    # Berry's JSON encoder serializes int64 values as decimal strings.
+    # Restore GroupKeySet epoch fields, which are Matter uint64 values.
+    for key_set : self.group_key_sets
+      for time_name : ["time0", "time1", "time2"]
+        var persisted_time = key_set.find(time_name)
+        if type(persisted_time) == 'string'
+          var restored_time = self.uint64_from_json(persisted_time)
+          if restored_time != nil   key_set[time_name] = restored_time end
+        end
+      end
+    end
+    # GroupKeySetID 0 is the operational IPK and is not a valid GroupKeyMap
+    # target. Remove entries accepted by older builds.
+    var map_idx = size(self.group_key_map) - 1
+    while map_idx >= 0
+      if self.group_key_map[map_idx].find("key_set_id") == 0
+        self.group_key_map.remove(map_idx)
+      end
+      map_idx -= 1
+    end
+  end
+
+  #############################################################
+  # Persist this fabric and all associated sessions.
+  def save()
+    if self._store != nil
+      self._store.save_fabrics()
+    end
+  end
+
+  # Decode the decimal representation emitted by json.dump(int64). Requiring
+  # an exact round-trip prevents malformed epoch times from becoming zero.
+  static def uint64_from_json(value)
+    if isinstance(value, int64)   return value end
+    if type(value) == 'int'       return int64.fromu32(value) end
+    if type(value) != 'string'    return nil end
+    try
+      var restored = int64.fromstring(value)
+      return restored.tostring() == value ? restored : nil
+    except ..
+      # A damaged or hand-edited epoch value must not abort fabric loading.
+      return nil
+    end
+  end
+
+  # Expose GroupID-to-key-set associations for GKM reads and validation.
+  def get_group_key_map()       return self.group_key_map       end
+  # Expose persisted endpoint memberships used by Groups and GKM GroupTable.
+  def get_group_table()         return self.group_table         end
+  # Expose persisted key-set records to the mandatory GKM command handlers.
+  def get_group_key_sets()      return self.group_key_sets      end
+
+  # Find one fabric-scoped Groups record by GroupID for membership commands.
+  def find_group(group_id)
+    for entry : self.group_table
+      if entry.find("group_id") == group_id
+        return entry
+      end
+    end
+    return nil
+  end
+
+  # Atomically replace and persist GroupKeyMap after a validated list write.
+  def replace_group_key_map(entries)
+    self.group_key_map = entries
+    self.save()
+  end
+
+  #############################################################
+  # Group Key Management helpers.
+  # Locate a stored key set without exposing or copying its epoch key material.
+  def find_group_key_set(id)
+    for key_set : self.group_key_sets
+      if key_set.find("id") == id
+        return key_set
+      end
+    end
+    return nil
+  end
+
+  # Insert or replace a key set by ID and persist the fabric immediately.
+  # KeySetWrite calls this only after the Root plugin validates the full set.
+  def put_group_key_set(key_set)
+    var id = key_set.find("id")
+    var idx = 0
+    while idx < size(self.group_key_sets)
+      if self.group_key_sets[idx].find("id") == id
+        self.group_key_sets[idx] = key_set
+        self.save()
+        return
+      end
+      idx += 1
+    end
+    self.group_key_sets.push(key_set)
+    self.save()
+  end
+
+  # KeySetRemove also removes every GroupKeyMap association referencing the
+  # key set. Commit both changes with one fabric save.
+  def remove_group_key_set_and_mappings(id)
+    var found = false
+    var idx = 0
+    while idx < size(self.group_key_sets)
+      if self.group_key_sets[idx].find("id") == id
+        self.group_key_sets.remove(idx)
+        found = true
+        break
+      end
+      idx += 1
+    end
+    if !found   return false end
+    idx = size(self.group_key_map) - 1
+    while idx >= 0
+      if self.group_key_map[idx].find("key_set_id") == id
+        self.group_key_map.remove(idx)
+      end
+      idx -= 1
+    end
+    self.save()
+    return true
+  end
+
+  #############################################################
+  # Maintain the fabric's endpoint membership table for the Groups cluster.
+  # Add an endpoint idempotently, creating the fabric-scoped group if needed.
+  def add_group_endpoint(group_id, endpoint, name)
+    var entry
+    for candidate : self.group_table
+      if candidate.find("group_id") == group_id
+        entry = candidate
+        break
+      end
+    end
+    if entry == nil
+      entry = {"group_id": group_id, "endpoints": [], "name": name ? name : ""}
+      self.group_table.push(entry)
+    elif name != nil
+      entry["name"] = name
+    end
+    var endpoints = entry.find("endpoints")
+    if endpoints.find(endpoint) == nil
+      endpoints.push(endpoint)
+    end
+    self.save()
+  end
+
+  # Remove one endpoint membership and discard an empty group record. The
+  # boolean result lets RemoveGroup distinguish success from NOT_FOUND.
+  def remove_group_endpoint(group_id, endpoint)
+    var idx = 0
+    while idx < size(self.group_table)
+      var entry = self.group_table[idx]
+      if entry.find("group_id") == group_id
+        var endpoints = entry.find("endpoints")
+        var endpoint_idx = endpoints.find(endpoint)
+        if endpoint_idx == nil   return false end
+        endpoints.remove(endpoint_idx)
+        if size(endpoints) == 0
+          self.group_table.remove(idx)
+        end
+        self.save()
+        return true
+      end
+      idx += 1
+    end
+    return false
+  end
+
+  # Remove an endpoint from every group, as required by RemoveAllGroups, and
+  # persist once after all memberships have been updated.
+  def remove_all_groups_for_endpoint(endpoint)
+    var changed = false
+    var idx = size(self.group_table) - 1
+    while idx >= 0
+      var endpoints = self.group_table[idx].find("endpoints")
+      var endpoint_idx = endpoints.find(endpoint)
+      if endpoint_idx != nil
+        endpoints.remove(endpoint_idx)
+        changed = true
+      end
+      if size(endpoints) == 0
+        self.group_table.remove(idx)
+      end
+      idx -= 1
+    end
+    if changed
+      self.save()
+    end
   end
 
   #############################################################

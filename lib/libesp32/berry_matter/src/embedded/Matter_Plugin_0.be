@@ -107,7 +107,7 @@ class Matter_Plugin
   # static var TYPES = { <device_type>: <revision> }    # needs to be defined for each endpoint
   # `FEATURE_MAPS` contains any non-zero value per cluster, if not present default to `0`
   static var FEATURE_MAPS = {               # feature map per cluster
-    # 0x0003: 0x00,                           # Identify: no optional features
+    0x0004: 0x01,                           # Groups: GroupNames
     0x0006: 0x01,                           # On/Off: Lighting feature (bit 0)
     0x0008: 0x03,                           # Level Control: On/Off (bit 0) + Lighting (bit 1)
     0x0031: 0x05,                           # Eth + WiFi - the latter is needed for Bluetooth commissioning
@@ -127,8 +127,11 @@ class Matter_Plugin
     0x0006: 6,                              # On/Off - Matter 1.4.1 (OffOnly feature)
     0x0008: 6,                              # Level Control - Matter 1.4.1 (Frequency feature)
     0x001D: 2,                              # Descriptor - Semantic tag list; TagList feature
-    # 0x001F: 1,                            # Access Control - Initial Release
-    0x0028: 3,                              # Basic Information - Matter 1.4.1 (SpecificationVersion)
+    # Access Control revision 2 is retained pending confirmation against the
+    # full 1.6.1 cluster table; the compact spec includes AUX/AuxiliaryACL but
+    # does not include cluster revision metadata.
+    0x001F: 2,
+    0x0028: 4,                              # Basic Information - Matter 1.6.1
     # 0x002A: 1,                            # OTA Software Update Requestor - Initial Release
     # 0x002B: 1,                            # Localization Configuration - Initial Release
     # 0x002C: 1,                            # Time Format Localization - Initial Release
@@ -142,7 +145,7 @@ class Matter_Plugin
     # 0x003B: 1,                            # Switch - Initial Release
     # 0x003C: 1,                            # Administrator Commissioning - Initial Release
     # 0x003E: 1,                            # Node Operational Credentials - Initial Release
-    0x003F: 4,                              # Group Key Management - Matter 1.6.0 (removed GroupKeyMulticastPolicy field in v4)
+    0x003F: 4,                              # Group Key Management - Matter 1.6.1 (removed GroupKeyMulticastPolicy field in v4)
     # 0x0040: 1,                            # Fixed Label - Initial Release
     # 0x0041: 1,                            # User Label - Initial Release
     # 0x0042: 1,                            # Boolean State - Initial Release
@@ -204,6 +207,14 @@ class Matter_Plugin
     end
     ctx.msg = nil
   end
+
+  # Start a plugin-scoped write transaction. Most plugins have no writable
+  # lists, so the base hook is intentionally empty and Root overrides it.
+  def begin_write_request(msg) end
+
+  # Finish or retain a plugin-scoped transaction depending on whether another
+  # chunk follows. Root overrides this to commit a staged GroupKeyMap.
+  def end_write_request(msg, more_chunked_messages) end
 
   #############################################################
   # parse_configuration
