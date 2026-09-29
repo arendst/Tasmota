@@ -99,9 +99,9 @@ class Matter_PBKDFParamResponse
     s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
     s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
     s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
-    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
-    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
-    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 21)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 13)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01060100)                      # SPECIFICATION_VERSION (1.6.1.0)
     s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
@@ -232,9 +232,9 @@ class Matter_Sigma2
     s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
     s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
     s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
-    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
-    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
-    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 21)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 13)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01060100)                      # SPECIFICATION_VERSION (1.6.1.0)
     s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
@@ -263,9 +263,9 @@ class Matter_Sigma2Resume
     s2.add_TLV(1, 0x06 #-TLV.U4-#, self.SLEEPY_IDLE_INTERVAL)       # SESSION_IDLE_INTERVAL (optional, sent if set)
     s2.add_TLV(2, 0x06 #-TLV.U4-#, self.SLEEPY_ACTIVE_INTERVAL)     # SESSION_ACTIVE_INTERVAL (optional, sent if set)
     s2.add_TLV(3, 0x05 #-TLV.U2-#, 4000)                            # SESSION_ACTIVE_THRESHOLD (4000ms default)
-    s2.add_TLV(4, 0x05 #-TLV.U2-#, 18)                              # DATA_MODEL_REVISION
-    s2.add_TLV(5, 0x05 #-TLV.U2-#, 12)                              # INTERACTION_MODEL_REVISION
-    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01040100)                      # SPECIFICATION_VERSION (1.4.1.0)
+    s2.add_TLV(4, 0x05 #-TLV.U2-#, 21)                              # DATA_MODEL_REVISION
+    s2.add_TLV(5, 0x05 #-TLV.U2-#, 13)                              # INTERACTION_MODEL_REVISION
+    s2.add_TLV(6, 0x06 #-TLV.U4-#, 0x01060100)                      # SPECIFICATION_VERSION (1.6.1.0)
     s2.add_TLV(7, 0x05 #-TLV.U2-#, 1)                               # MAX_PATHS_PER_INVOKE
     return s.tlv2raw(b)
   end
