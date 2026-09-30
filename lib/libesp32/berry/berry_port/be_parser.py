@@ -1830,17 +1830,34 @@ def walrus_expr(parser, e):
     sub_expr(parser, e, ASSIGN_OP_PRIO)
     op = next_type(parser)
     if op == OptWalrus:
+        finfo = parser.finfo
         check_symbol(parser, e)
+        # ':=' only assigns an existing variable, it never creates one (neither
+        # local nor global, nor a local shadowing a builtin). A new local would
+        # take the register right above the other locals, which may still hold
+        # a temporary of the enclosing expression, and an implicit global is an
+        # easy way to hide a typo.
+        if e.type == ETVOID or \
+                (e.type == ETGLOBAL and e.v.idx < be_builtin_count(parser.vm)):
+            name = e.v.s if e.type == ETVOID else be_builtin_name(parser.vm, e.v.idx)
+            parser.lexer.linenumber = line
+            push_error(parser,
+                "cannot create variable '%s' with ':=', "
+                "declare it with 'var' first", be_str2cstr(name))
         e1 = _clone_expdesc(e)
         parser.finfo.binfo.sideeffect = 1
         scan_next_token(parser)  # skip ':='
+        base = finfo.freereg  # registers below are still in use by the enclosing expression
         expr(parser, e)
         check_var(parser, e)
-        if check_newvar(parser, e1):
-            new_var(parser, e1.v.s, e1)
         if be_code_setvar(parser.finfo, e1, e, True):
             parser.lexer.linenumber = line
             parser_error(parser, "try to assign constant expressions.")
+        if e1.type == ETLOCAL and e.type == ETLOCAL and finfo.freereg > base:
+            # the value is now held by the local variable: release the temporary
+            # registers used by the right side, e.g. the object of `l[i]`.
+            # `:=` never creates a local, so `base` is never below the locals
+            finfo.freereg = base
 
 
 # static void expr(bparser *parser, bexpdesc *e)

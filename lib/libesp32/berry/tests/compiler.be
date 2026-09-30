@@ -154,3 +154,78 @@ assert(nk_h() == [10, 'x', 2])
 nk_n = nil
 compile("nk_n = [0, 0, 0, 0, 0]  nk_n[nk_n[4]] = 1  nk_n[1] = nk_n[0] + 1")()
 assert(nk_n == [1, 2, 0, 0, 0])
+
+# Walrus into a local, with an index or member expression on the right, as a
+# call argument. The right side is compiled straight into the register of the
+# local, but the registers of its object and index were not released, so the
+# value was passed one slot too high:
+#
+# ```berry
+# def g()
+#   var p = 0
+#   return f(p := l[3], 4)    # passed l and p instead of p and 4
+# end
+# ```
+def wl_f(a, b) return [a, b] end
+wl_l = [10, 11, 12, 13, 14]
+def wl_g() var p = 0 return wl_f(p := wl_l[3], 4) end
+assert(wl_g() == [13, 4])       # was [wl_l, 13]
+def wl_h() var p = 0 return wl_f(4, p := wl_l[3]) end
+assert(wl_h() == [4, 13])       # was [4, wl_l]
+def wl_i(k) var p = 0 return str(p := wl_l[k + 1]) end
+assert(wl_i(2) == '13')         # was '3', the index
+import global
+def wl_j() var p = 0 return wl_f(p := global.wl_l, 4) end
+assert(wl_j() == [wl_l, 4])     # was [<module: global>, wl_l]
+
+# Walrus never creates a variable, neither a local, nor a global, nor a local
+# shadowing a builtin: the target must already exist. A new local created in
+# the middle of an expression took the register right above the other locals,
+# which could still hold a temporary, so its value was lost:
+#
+# ```berry
+# def t(a)
+#   var r = a * 2 + (n := a + 1)    # computed n + n
+#   return [r, n]                   # [22, 11] instead of [31, 11]
+# end
+# ```
+#
+# `wl_new` is never defined, as a local or as a global.
+import string
+def wl_error(code, name)
+  try
+    compile(code)
+  except 'syntax_error' as e, m
+    return string.find(m, "cannot create variable '" + name + "' with ':='") >= 0
+  end
+  return false
+end
+# new local over a pending temporary, was [22, 11]
+assert(wl_error("def t(a) var r = a * 2 + (wl_new := a + 1) return [r, wl_new] end", 'wl_new'))
+# new local as a call argument, was type_error: 'int' value is not callable
+assert(wl_error("def t(a) return wl_f(a, wl_new := a + 1) end", 'wl_new'))
+# new local in a list literal in a block, was 11, the list was overwritten
+assert(wl_error("do var a = 10 var r = [a, (wl_new := a + 1)] print(r) end", 'wl_new'))
+# new local in the else branch of `?:`, t(true) returned nil
+assert(wl_error("def t(c) var r = c ? 1 : (wl_new := 2) return r end", 'wl_new'))
+# new local with nothing pending, used to work, now refused as well
+assert(wl_error("def t(a) var r = (wl_new := a + 1) + a * 2 return [r, wl_new] end", 'wl_new'))
+assert(wl_error("def t(a) if (wl_new := a + 1) > 5 return wl_new end return 0 end", 'wl_new'))
+assert(wl_error("def t(k) var p = 0 p = wl_l[k + 1] wl_new := 5 return wl_new end", 'wl_new'))
+# new global at module level
+assert(wl_error("wl_new := 4", 'wl_new'))
+assert(wl_error("wl_r = 2 * 3 + (wl_new := 4)", 'wl_new'))
+# local shadowing a builtin
+assert(wl_error("def t() print := 1 end", 'print'))
+# an existing variable is still assigned: local, global, from a function too
+def wl_k(a) var n = 0 var r = a * 2 + (n := a + 1) return [r, n] end
+assert(wl_k(10) == [31, 11])
+def wl_m(a) var n var r = (n := a + 1) + a * 2 return [r, n] end
+assert(wl_m(10) == [31, 11])
+def wl_n(a) var n if (n := a + 1) > 5 return n end return 0 end
+assert(wl_n(10) == 11)
+wl_s = 0
+wl_r = 2 * 3 + (wl_s := 4)
+assert(wl_r == 10 && wl_s == 4)
+def wl_o() return wl_s := 5 end
+assert(wl_o() == 5 && wl_s == 5)
