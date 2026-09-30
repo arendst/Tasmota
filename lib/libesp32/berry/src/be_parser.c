@@ -1160,19 +1160,37 @@ static void walrus_expr(bparser *parser, bexpdesc *e)
     sub_expr(parser, e, ASSIGN_OP_PRIO);    /* left expression */
     btokentype op = next_type(parser);
     if (op == OptWalrus) {
+        bfuncinfo *finfo = parser->finfo;
+        int base;
         check_symbol(parser, e);
+        /* ':=' only assigns an existing variable, it never creates one (neither
+         * local nor global, nor a local shadowing a builtin). A new local would
+         * take the register right above the other locals, which may still hold
+         * a temporary of the enclosing expression, and an implicit global is an
+         * easy way to hide a typo. */
+        if (e->type == ETVOID ||
+            (e->type == ETGLOBAL && e->v.idx < be_builtin_count(parser->vm))) {
+            bstring *name = (e->type == ETVOID) ? e->v.s : be_builtin_name(parser->vm, e->v.idx);
+            parser->lexer.linenumber = line;
+            push_error(parser, "cannot create variable '%s' with ':=', "
+                "declare it with 'var' first", str(name));
+        }
         bexpdesc e1 = *e;           /* copy var to e1, e will get the result of expression */
         parser->finfo->binfo->sideeffect = 1;   /* has side effect */
         scan_next_token(parser);    /* skip ':=' */
+        base = finfo->freereg;      /* registers below are still in use by the enclosing expression */
         expr(parser, e);
         check_var(parser, e);
-        if (check_newvar(parser, &e1)) { /* new variable */
-            new_var(parser, e1.v.s, &e1);
-        }
         if (be_code_setvar(parser->finfo, &e1, e, btrue /* do not release register */ )) {
             parser->lexer.linenumber = line;
             parser_error(parser,
                 "try to assign constant expressions.");
+        }
+        if (e1.type == ETLOCAL && e->type == ETLOCAL && finfo->freereg > base) {
+            /* the value is now held by the local variable: release the temporary
+             * registers used by the right side, e.g. the object of `l[i]`.
+             * `:=` never creates a local, so `base` is never below the locals */
+            finfo->freereg = (bbyte)base;
         }
     }
 }
