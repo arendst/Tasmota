@@ -68,3 +68,20 @@ cd lib/libesp32/berry_matter/tests
 These tests cover state, event metadata and sequences, button isolation, input
 validation, repeated gestures, and `MtrUpdate` dispatch. They do not replace a
 firmware build or an end-to-end test with a physical sender and Matter controller.
+
+For a repeated-gesture memory check, run from the same tests directory:
+
+```sh
+../../berry/berry -g button_stability_tests.be
+```
+
+This also runs the regression suite, then exercises four virtual endpoints with
+13,000 gestures and 117,000 events. It checks bounded event queues, released
+button state, 64-bit event-number rollover, serialization, and retained memory
+after garbage collection. The native `int64` result allocator must release its
+payloads for this check to pass.
+
+The soak uses the actual button plugins, event queues, and TLV encoding/decoding,
+with simulated network transport and flash persistence. It does not validate
+Wi-Fi, controller acknowledgements or actions, power-loss recovery, or hardware
+uptime. Run those checks separately on the device.
