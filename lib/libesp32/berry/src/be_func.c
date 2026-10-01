@@ -195,6 +195,10 @@ bntvclos* be_newntvclosure(bvm *vm, bntvfunc cf, int nupvals)
     if (f) {
         f->f = cf;
         f->nupvals = (bbyte)nupvals;
+        /* Upvalue allocation can trigger GC before construction completes. */
+        for (int i = 0; i < nupvals; ++i) {
+            be_ntvclos_upval(f, i) = NULL;
+        }
         if (nupvals) {
             var_setntvclos(vm->top, f);
             be_incrtop(vm);

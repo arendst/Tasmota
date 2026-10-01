@@ -383,7 +383,11 @@ static void free_ntvclos(bvm *vm, bgcobject *obj)
         int count = f->nupvals;
         bupval **uv = &be_ntvclos_upval(f, 0);
         while (count--) {
-            be_free(vm, *uv++, sizeof(bupval));
+            /* A failed constructor can leave unallocated upvalue slots. */
+            if (*uv != NULL) {
+                be_free(vm, *uv, sizeof(bupval));
+            }
+            ++uv;
         }
         be_free(vm, f, sizeof(bntvclos) + sizeof(bupval*) * f->nupvals);
     }
