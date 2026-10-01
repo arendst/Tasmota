@@ -1154,7 +1154,10 @@ class Matter_Device
         cmd_cleaned[uc[cleaned_command_idx]] = payload_json[k]
       end
       # call plug-in
-      pl.update_virtual(cmd_cleaned)
+      var update_error = pl.update_virtual(cmd_cleaned)
+      if type(update_error) == 'string'
+        return tasmota.resp_cmnd_str(update_error)
+      end
       var state_json = pl.state_json()
       if state_json
         var cmnd_status = f'{{"{cmd_found}":{state_json}}}'
