@@ -2853,8 +2853,10 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
     uint32_t log_data_len = strlen(log_data) + strlen(log_data_payload) + strlen(log_data_retained);
     if (log_data_len > MAX_LOGSZ) {
       too_long = (char*)malloc(TOPSZ);     // Use heap in favour of stack
+      if (too_long == nullptr) { return; }  // Drop the log without touching the existing buffer.
       snprintf_P(too_long, TOPSZ - 20, PSTR("%s%s"), log_data, log_data_payload);   // 20 = strlen("... 123456 truncated")
-      snprintf_P(too_long, TOPSZ, PSTR("%s... %d truncated"), too_long, log_data_len);
+      size_t prefix_len = strlen(too_long);
+      snprintf_P(too_long + prefix_len, TOPSZ - prefix_len, PSTR("... %d truncated"), log_data_len);
       log_data = too_long;
       log_data_payload = empty;
       log_data_retained = empty;
