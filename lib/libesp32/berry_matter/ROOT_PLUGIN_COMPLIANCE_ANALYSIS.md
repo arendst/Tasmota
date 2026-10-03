@@ -318,7 +318,11 @@ The Root plugin implementation demonstrates strong compliance with Matter 1.4.1 
 
 **Implemented Overrides:**
 - ✅ 0x0002 ClientList: Returns [0x001F] (Access Control)
-- ✅ 0x0003 PartsList: Returns list of active endpoints (excludes Aggregator if bridge mode disabled)
+- ✅ 0x0003 PartsList: Returns every active non-root endpoint (Root full-family composition)
+
+**Endpoint composition:**
+- Bridge mode instantiates endpoint 1 as the Aggregator. Root PartsList contains the Aggregator and all application endpoints; Aggregator PartsList contains the aggregated application endpoints.
+- Non-bridge mode does not instantiate an Aggregator. Root PartsList contains the application endpoints directly, and those endpoints omit Bridged Node and Bridged Device Basic Information metadata.
 
 **Issues:** None
 

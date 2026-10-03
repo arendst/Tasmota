@@ -217,7 +217,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     if self.clusters_derived != nil
       return self.clusters_derived
     end
-    return self.CLUSTERS
+    return super(self).get_clusters()
   end
 
   #############################################################
@@ -226,9 +226,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   # Build the dynamic cluster map based on configured filters.
   # Called from parse_configuration() after filter prefixes are known.
   def _build_clusters()
-    # start from the complete CLUSTERS and remove unconfigured ones
+    # Start from the mode-specific base map and remove unconfigured clusters.
     var cl = {}
-    var base = self.CLUSTERS
+    var base = super(self).get_clusters()
     for k: base.keys()
       cl[k] = base[k]
     end

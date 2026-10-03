@@ -1242,12 +1242,8 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         var eps = self.device.get_active_endpoints(true)
-        var disable_bridge_mode = self.device.disable_bridge_mode
         for ep: eps
-          # if bridge mode is disabled, don't announce Aggregatore (above 0xFF00)
-          if !disable_bridge_mode || ep != 0x0001 #-matter.AGGREGATOR_ENDPOINT-#
-            pl.add_TLV(nil, 0x06 #-TLV.U4-#, ep)     # add each endpoint
-          end
+          pl.add_TLV(nil, 0x06 #-TLV.U4-#, ep)       # Root full-family lists every non-root endpoint
         end
         return pl
       end
