@@ -297,12 +297,12 @@ typedef struct gesture_data_type {
 } gesture_data_t;
 
 typedef struct gesture_type {
-  int16_t ud_delta_ = 0;
-  int16_t lr_delta_ = 0;
-  int16_t ud_count_ = 0;
-  int16_t lr_count_ = 0;
-  int16_t state_ = 0;
-  int16_t motion_ = DIR_NONE;
+  int16_t ud_delta_;
+  int16_t lr_delta_;
+  int16_t ud_count_;
+  int16_t lr_count_;
+  int16_t state_;
+  int16_t motion_;
 } gesture_t;
 
 #endif  // USE_APDS9960_GESTURE

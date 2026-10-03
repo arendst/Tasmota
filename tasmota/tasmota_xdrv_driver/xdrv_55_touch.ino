@@ -54,15 +54,15 @@ enum TS_Gesture {
 };
 
 typedef struct TSGlobal_t {
-  int16_t raw_touch_xp = 0;
-  int16_t raw_touch_yp = 0;
-  int16_t touch_xp = 0;
-  int16_t touch_yp = 0;
-  uint8_t touches = 0;    // number of touches for multi-touch
-  uint8_t gesture = 0;    // gesture code
+  int16_t raw_touch_xp;
+  int16_t raw_touch_yp;
+  int16_t touch_xp;
+  int16_t touch_yp;
+  uint8_t touches;    // number of touches for multi-touch
+  uint8_t gesture;    // gesture code
   // multi-point is not yet supported
-  bool touched = false;
-  bool external_ts = false;
+  bool touched;
+  bool external_ts;
 } TSGlobal_t;
 
 TSGlobal_t TSGlobal;

@@ -64,27 +64,29 @@ typedef struct {
   String chat_id;
 //  String from_first_name;
 //  String from_last_name;
-//  uint32_t from_id = 0;
-  uint32_t update_id = 0;
+//  uint32_t from_id;
+  uint32_t update_id;
 } TelegramMessage;
 
 typedef struct {
   TelegramMessage message[TELEGRAM_MAX_MESSAGES];
   uint8_t fingerprint[20];
-  uint32_t next_update_id = 0;
-  uint8_t message_count = 0;   // Amount of messages read per time
-  uint8_t state = 0;
-  uint8_t index = 0;
-  uint8_t retry = 0;
-  uint8_t poll = TELEGRAM_LOOP_WAIT;
-  uint8_t wait = 0;
-  bool recv_busy = false;
-  bool skip = true;           // Skip first telegram if restarted
+  uint32_t next_update_id;
+  uint8_t message_count;   // Amount of messages read per time
+  uint8_t state;
+  uint8_t index;
+  uint8_t retry;
+  uint8_t poll;
+  uint8_t wait;
+  bool recv_busy;
+  bool skip;           // Skip first telegram if restarted
 } Telegram_t;
 Telegram_t* Telegram = nullptr;
 
 void TelegramInit(void) {
   Telegram = (Telegram_t*)calloc(sizeof(Telegram_t), 1);    // Need calloc to reset registers to 0/false
+  Telegram->poll = TELEGRAM_LOOP_WAIT;
+  Telegram->skip = true;
 }
 
 bool TelegramStart(void) {

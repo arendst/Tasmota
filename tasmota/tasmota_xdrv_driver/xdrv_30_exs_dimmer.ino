@@ -60,19 +60,19 @@ TasmotaSerial *ExsSerial = nullptr;
 
 typedef struct
 {
-  uint8_t on = 0;
-  uint8_t bright_tbl = 0;
-  uint8_t dimm = 0;
-  uint8_t impuls_start = 0;
-  uint32_t impuls_len = 0;
+  uint8_t on;
+  uint8_t bright_tbl;
+  uint8_t dimm;
+  uint8_t impuls_start;
+  uint32_t impuls_len;
 } CHANNEL;
 
 typedef struct
 {
-  uint8_t version_major = 0;
-  uint8_t version_minor = 0;
+  uint8_t version_major;
+  uint8_t version_minor;
   CHANNEL channel[2];
-  uint8_t gate_lock = 0;
+  uint8_t gate_lock;
 } DIMMER;
 
 struct EXS
