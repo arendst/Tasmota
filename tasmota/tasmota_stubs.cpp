@@ -12,6 +12,8 @@
   SPDX-License-Identifier: Apache-2.0
 */
 
+#ifdef ESP8266
+
 #include <cstdarg>
 #include <cstdio>
 
@@ -25,3 +27,5 @@ namespace std {
     __builtin_trap();
   }
 }
+
+#endif  // ESP8266
