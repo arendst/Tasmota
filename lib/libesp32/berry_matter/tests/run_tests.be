@@ -132,6 +132,54 @@ class TestEndpointPlugin : matter.Plugin_Device
   end
 end
 
+class TestTopologyDevice
+  var disable_bridge_mode, plugins
+  def init(disable_bridge_mode)
+    self.disable_bridge_mode = disable_bridge_mode
+    self.plugins = []
+  end
+  def get_active_endpoints(exclude_zero)
+    var result = []
+    for plugin : self.plugins
+      var endpoint = plugin.get_endpoint()
+      if exclude_zero && endpoint == 0 continue end
+      if result.find(endpoint) == nil result.push(endpoint) end
+    end
+    return result
+  end
+  def k2l(value)
+    var result = []
+    for key : value.keys() result.push(key) end
+    for i : 1..size(result)-1
+      var current = result[i]
+      var j = i
+      while j > 0 && result[j-1] > current
+        result[j] = result[j-1]
+        j -= 1
+      end
+      result[j] = current
+    end
+    return result
+  end
+end
+
+class TestTopologyApplication : matter.Plugin_Device
+  static var TYPES = { 0x010A: 3 }
+end
+
+def tlv_values(value)
+  var result = []
+  for item : value.val result.push(item.val) end
+  return result
+end
+
+def has_device_type(value, device_type)
+  for item : value.val
+    if item.findsubval(0) == device_type return true end
+  end
+  return false
+end
+
 class TestMessage
   var exchange_id, session
   def init(exchange_id, session)
@@ -239,6 +287,33 @@ assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 0x0106010
 ctx.attribute = 0x0018
 assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 1)
 assert(matter.StatusResponseMessage().InteractionModelRevision == 13)
+
+# Descriptor composition is coherent in both global topology modes.
+var bridge_device = TestTopologyDevice(false)
+var bridge_root = TestRoot()
+bridge_root.device = bridge_device
+var bridge_aggregator = matter.Plugin_Aggregator(bridge_device, 1, {})
+var bridge_app_2 = TestTopologyApplication(bridge_device, 2, {})
+var bridge_app_3 = TestTopologyApplication(bridge_device, 3, {})
+bridge_device.plugins = [bridge_root, bridge_aggregator, bridge_app_2, bridge_app_3]
+assert(tlv_values(bridge_root.read_attribute(session, matter.Path(0, 0x001D, 3), TLV.Matter_TLV_item())) == [1, 2, 3])
+assert(tlv_values(bridge_aggregator.read_attribute(session, matter.Path(1, 0x001D, 3), TLV.Matter_TLV_item())) == [2, 3])
+assert(bridge_app_2.contains_cluster(0x0039))
+assert(has_device_type(bridge_app_2.read_attribute(session, matter.Path(2, 0x001D, 0), TLV.Matter_TLV_item()), 0x0013))
+assert(tlv_values(bridge_app_2.read_attribute(session, matter.Path(2, 0x001D, 1), TLV.Matter_TLV_item())).find(0x0039) != nil)
+
+var native_device = TestTopologyDevice(true)
+var native_root = TestRoot()
+native_root.device = native_device
+var native_app_2 = TestTopologyApplication(native_device, 2, {})
+var native_app_3 = TestTopologyApplication(native_device, 3, {})
+native_device.plugins = [native_root, native_app_2, native_app_3]
+assert(native_device.get_active_endpoints(true) == [2, 3])
+assert(tlv_values(native_root.read_attribute(session, matter.Path(0, 0x001D, 3), TLV.Matter_TLV_item())) == [2, 3])
+assert(!native_app_2.contains_cluster(0x0039))
+assert(!has_device_type(native_app_2.read_attribute(session, matter.Path(2, 0x001D, 0), TLV.Matter_TLV_item()), 0x0013))
+assert(tlv_values(native_app_2.read_attribute(session, matter.Path(2, 0x001D, 1), TLV.Matter_TLV_item())).find(0x0039) == nil)
+print("  bridge and native Descriptor composition: OK")
 
 # Time Synchronization attributes use the Matter epoch (2000-01-01), not Unix.
 tasmota.utc_time = 1790675381

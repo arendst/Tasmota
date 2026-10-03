@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Matter update specs to 1.6.1 (to be used by AI) (#25083)
 
 ### Fixed
-
+- Matter non-bridge endpoint topology
 
 ### Removed
 

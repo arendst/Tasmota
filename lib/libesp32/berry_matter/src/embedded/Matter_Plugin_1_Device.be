@@ -133,6 +133,7 @@ class Matter_Plugin_Device : Matter_Plugin
 
   var http_remote                                   # instance of Matter_HTTP_remote
   var mqtt_remote                                   # instance of Matter_MQTT_remote
+  var clusters                                      # per-instance cluster map for the selected composition mode
 
   # clusters for general devices
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
@@ -143,17 +144,28 @@ class Matter_Plugin_Device : Matter_Plugin
     0x0005: [0,1,2,3,4,5],                          # Scenes 1.4 p.30 - no writable
   })
   static var TYPES = { 0x0013: 1 }                  # fake type
-  static var NON_BRIDGE_VENDOR = [ 0x1217, 0x1381 ] # Fabric VendorID not supporting Bridge mode
   # Inherited
   # var device                                        # reference to the `device` global object
   # var endpoint                                      # current endpoint
-  # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
+    # CLUSTERS is a shared solidified map. Build a private filtered map for
+    # native composition rather than mutating class metadata.
+    self.clusters = self.CLUSTERS
+    if device.disable_bridge_mode
+      var non_bridge_clusters = {}
+      for cluster: self.CLUSTERS.keys()
+        if cluster != 0x0039
+          non_bridge_clusters[cluster] = self.CLUSTERS[cluster]
+        end
+      end
+      self.clusters = non_bridge_clusters
+    end
+
     # Zigbee code, activated only when `ZIGBEE` is true
     # attribute `zigbee_mapper` needs to be defined for classes with `ZIGBEE` true
     if self.ZIGBEE
@@ -174,6 +186,12 @@ class Matter_Plugin_Device : Matter_Plugin
       end
       self.register_cmd_cb()
     end
+  end
+
+  #############################################################
+  # Return the mode-specific cluster map used by Descriptor and IM routing.
+  def get_clusters()
+    return self.clusters
   end
 
   #############################################################
@@ -236,8 +254,8 @@ class Matter_Plugin_Device : Matter_Plugin
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
 
       if   attribute == 0x0000          # ---------- DeviceTypeList / list[DeviceTypeStruct] ----------
-        # for device sub-classes, automatically add the Bridge Node type `0x0013: 1`
-        # unless the fabric doesn't support bridge mode (currently Alexa)
+        # Device subclasses report their primary type first. Bridge mode then
+        # adds the Bridged Node utility type to every application endpoint.
         var dtl = TLV.Matter_TLV_array()
         var types = self.TYPES
         for dt: types.keys()
@@ -245,11 +263,12 @@ class Matter_Plugin_Device : Matter_Plugin
           d1.add_TLV(0, 0x06 #-TLV.U4-#, dt)     # DeviceType
           d1.add_TLV(1, 0x06 #-TLV.U4-#, types[dt])      # Revision
         end
-        # if fabric is not Alexa
-        if (self.NON_BRIDGE_VENDOR.find(session.get_admin_vendor()) == nil) && (!self.device.disable_bridge_mode)
+        # Bridged Node is part of the global bridge composition. Descriptor
+        # identity must not vary with the fabric reading this fixed attribute.
+        if !self.device.disable_bridge_mode
           var d1 = dtl.add_struct()
           d1.add_TLV(0, 0x06 #-TLV.U4-#, 0x0013)     # DeviceType
-          d1.add_TLV(1, 0x06 #-TLV.U4-#, 1)      # Revision
+          d1.add_TLV(1, 0x06 #-TLV.U4-#, 1)          # Revision
         end
         return dtl
       end
