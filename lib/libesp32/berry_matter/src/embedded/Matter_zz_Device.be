@@ -925,7 +925,6 @@ class Matter_Device
   def subscribe_discovery()
     import mqtt
     mqtt.subscribe("tasmota/discovery/#", / topic, idx, data, databytes -> self.handle_global_discovery(topic, data))
-    log("MTR: Subscribed to tasmota/discovery/#", 3)
   end
 
   # Parse discovery messages, store by topic
