@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Matter non-bridge endpoint topology
+- MQTT false connected events when unconfigured
 
 ### Removed
 
