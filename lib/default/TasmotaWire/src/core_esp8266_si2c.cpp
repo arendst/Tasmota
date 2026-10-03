@@ -112,7 +112,7 @@ void Twi::init(unsigned char sda, unsigned char scl) {
   twi_setClockStretchLimit(150000L); // default value is 150 mS
 }
 
-void ICACHE_RAM_ATTR Twi::busywait(unsigned int v) {
+void Twi::busywait(unsigned int v) {
   unsigned int i;
   for (i = 0; i < v; i++) {  // loop time is 5 machine cycles: 31.25ns @ 160MHz, 62.5ns @ 80MHz
     asm("nop"); // minimum element to keep GCC from optimizing this function out.
