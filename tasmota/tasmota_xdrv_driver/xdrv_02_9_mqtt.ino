@@ -1490,7 +1490,7 @@ void MqttConnected(void) {
   Mqtt.initial_connection_state = 0;
 
   TasmotaGlobal.global_state.mqtt_down = 0;
-  if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+  if (Mqtt.connected) {
     TasmotaGlobal.rules_flag.mqtt_connected = 1;
   }
 }

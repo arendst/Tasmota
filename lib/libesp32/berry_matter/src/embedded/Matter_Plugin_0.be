@@ -399,7 +399,7 @@ matter_device.events.dump()
   end
 
   def set_name(n)
-    if n != self.node_label
+    if n != self.node_label && self.contains_cluster(0x0039)
       self.attribute_updated(0x0039, 0x0005)
     end
     self.node_label = n

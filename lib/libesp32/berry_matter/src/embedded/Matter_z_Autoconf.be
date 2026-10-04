@@ -44,9 +44,11 @@ class Matter_Autoconf
     log("MTR: Configuring endpoints", 2)
     log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
-    # always include an aggregator for dynamic endpoints
-    plugins.push(matter.Plugin_Aggregator(self.device, 0x0001 #-matter.AGGREGATOR_ENDPOINT-#, {}))
-    log(format("MTR:   endpoint = %5i type:%s%s", 0x0001 #-matter.AGGREGATOR_ENDPOINT-#, 'aggregator', ''), 2)
+    # bridge mode groups dynamic endpoints below the aggregator
+    if !self.device.disable_bridge_mode
+      plugins.push(matter.Plugin_Aggregator(self.device, 0x0001 #-matter.AGGREGATOR_ENDPOINT-#, {}))
+      log(format("MTR:   endpoint = %5i type:%s%s", 0x0001 #-matter.AGGREGATOR_ENDPOINT-#, 'aggregator', ''), 2)
+    end
 
     for ep: endpoints
       if ep == 0  continue end          # skip endpoint 0

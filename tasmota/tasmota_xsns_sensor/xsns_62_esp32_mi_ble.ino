@@ -2285,6 +2285,13 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
     return;
   }
 
+// When using EQ3 driver, do not parse packet here
+#ifdef USE_EQ3_ESP32
+  if (EQ3_ESP32::matchPrefix(mac)) {
+    return;
+  }
+#endif
+
   char log_name[32];
   ext_snprintf_P(log_name, sizeof(log_name),PSTR("BTH: %s:"), MIaddrStr(mac));
 
@@ -4400,7 +4407,7 @@ void MI32Show(bool json)
 
 #ifdef USE_WEBSERVER
   } else {
-    if (!Settings->flag5.mi32_enable) return;
+    if (!BLE_ESP32::BLEMasterEnable) return;
 
 #ifdef USE_SENSOR_ICON
     if (numsensors > 255) {
