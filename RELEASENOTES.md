@@ -148,6 +148,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 [#24731](https://github.com/arendst/Tasmota/issues/24731)
+- MQTT false connected events when unconfigured [#25100](https://github.com/arendst/Tasmota/issues/25100)
 - Touch GT911 fix template [#25068](https://github.com/arendst/Tasmota/issues/25068)
 - MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - WT32_ETH01 ethernet initialization [#25051](https://github.com/arendst/Tasmota/issues/25051)
@@ -156,5 +157,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)
 - Matter autoconfiguration after configuration reset [#24997](https://github.com/arendst/Tasmota/issues/24997)
 - Matter commissioning mDNS announcements [#25069](https://github.com/arendst/Tasmota/issues/25069)
+- Matter non-bridge endpoint topology [#25099](https://github.com/arendst/Tasmota/issues/25099)
 
 ### Removed
