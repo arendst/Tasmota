@@ -149,6 +149,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 [#24731](https://github.com/arendst/Tasmota/issues/24731)
 - MQTT false connected events when unconfigured [#25100](https://github.com/arendst/Tasmota/issues/25100)
+- OpenTherm support the second heating circuit (CH2) [#25098](https://github.com/arendst/Tasmota/issues/25098)
 - Touch GT911 fix template [#25068](https://github.com/arendst/Tasmota/issues/25068)
 - MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - WT32_ETH01 ethernet initialization [#25051](https://github.com/arendst/Tasmota/issues/25051)
