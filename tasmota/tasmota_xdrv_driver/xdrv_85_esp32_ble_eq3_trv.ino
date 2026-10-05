@@ -269,6 +269,12 @@ constexpr const char* const web_mode_names[] = {
   D_HOLIDAY,
   D_NA
 };
+constexpr const char* const web_mode_icons[] = {
+  "🕗",
+  "✋",
+  "🌴",
+  "?"
+};
 #endif // USE_WEBSERVER
 
 constexpr const char* const mqtt_mode_names[] = {
@@ -977,13 +983,9 @@ int EQ3SendResult(char* requested, const char* result) {
 }
 
 #ifdef USE_WEBSERVER
-constexpr const char HTTP_EQ3_TYPE[]        = "{s}%s " D_NEOPOOL_TYPE "{m}eQ-3 TRV{e}";
-constexpr const char HTTP_EQ3_MAC[]         = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
-constexpr const char HTTP_EQ3_RSSI[]        = "{s}%s " D_RSSI "{m}%d%% (%d dBm){e}";
-constexpr const char HTTP_EQ3_TEMPERATURE[] = "{s}%s " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
-constexpr const char HTTP_EQ3_VALVE_POS[]   = "{s}%s " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
-constexpr const char HTTP_EQ3_MODE[]        = "{s}%s " D_MODE "{m}%s{e}";
-constexpr const char HTTP_EQ3_BATTERY[]     = "{s}%s " D_BATTERY "{m}%s{e}";
+constexpr const char HTTP_EQ3_STATUS[]      = "{s}<span title='eQ-3 TRV\n0x%6_H'>%s</span></th><td align=right nowrap><span title='%s'>%s</span><span title='%s'>%s</span><span title='%s'>%s</span> <span title='" D_RSSI " %s' class='si'>";
+constexpr const char HTTP_EQ3_TEMPERATURE[] = "{s}┆ " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
+constexpr const char HTTP_EQ3_VALVE_POS[]   = "{s}┆ " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
 
 void EQ3Show(void)
 {
@@ -994,24 +996,45 @@ void EQ3Show(void)
     if (device.timeoutTime) {
       if (FirstSensorShown) WSContentSend_P(HTTP_SNS_HR_THIN);
       FirstSensorShown = true;
+
       const char* label;
       const char* alias = BLE_ESP32::getAlias(device.addr);
-      char tlabel[8];
+      char tlabel[16];
       if (alias && *alias) {
         label = alias;
-        WSContentSend_P(HTTP_EQ3_TYPE, label);
       } else {
-        snprintf(tlabel, sizeof(tlabel), "eQ3-%d", (&device - EQ3Devices) + 1);
+        ext_snprintf_P(tlabel, sizeof(tlabel), "eQ3-%3_H", device.addr + 3);
         label = tlabel;
       }
-      WSContentSend_P(HTTP_EQ3_MAC, label, addrStr(device.addr));
-      WSContentSend_PD(HTTP_EQ3_RSSI, label, WifiGetRssiAsQuality(device.RSSI), device.RSSI);
-      if (device.BTHomeAdvert) WSContentSend_Temp(label, device.Temperature);
-      if (!EQ3Period || device.BTHomeAdvert || device.lastStatusTime + (EQ3Period * 10) > UtcTime()) {
-        WSContentSend_PD(HTTP_EQ3_TEMPERATURE, label, Settings->flag2.temperature_resolution, &device.TargetTemp, c_unit);
-        WSContentSend_P(HTTP_EQ3_VALVE_POS, label, device.ValvePos);
-        WSContentSend_P(HTTP_EQ3_MODE, label, web_mode_names[device.Mode]);
-        WSContentSend_P(HTTP_EQ3_BATTERY, label, device.battPercent ? (String(device.battPercent) + "%") : (device.Battery ? D_LOW : D_OK));
+
+      uint8_t rssi_as_quality = WifiGetRssiAsQuality(device.RSSI);
+      uint8_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
+      char rssi[16];
+      snprintf(rssi, sizeof(rssi), "%d%% (%d dBm)", rssi_as_quality, device.RSSI);
+
+      bool showData = (!EQ3Period || device.BTHomeAdvert || device.lastStatusTime + (EQ3Period * 10) > UtcTime());
+      if (showData) {
+        WSContentSend_P(HTTP_EQ3_STATUS, device.addr, label,
+          device.Boost ? D_NEOPOOL_SHOCK : device.Window ? D_NOW_YOU_CAN_CLOSE_THIS_WINDOW : "",
+          device.Boost ? "🔥" : device.Window ? "🪟" : "",
+          web_mode_names[device.Mode],
+          web_mode_icons[device.Mode],
+          device.battPercent ? (String(device.battPercent) + "%") : (device.Battery ? D_LOW : D_OK),
+          device.Battery ? "🪫" : "🔋",
+          rssi
+        );
+      } else {
+        WSContentSend_P(HTTP_EQ3_STATUS, device.addr, label, "", "", "", "", "", "", rssi);
+      }
+      for(uint32_t j = 0; j < 4; j++) {
+        WSContentSend_P(PSTR("<i class='b%d%s'></i>"), j, (j >= num_bars) ? PSTR(" o30") : PSTR(""));
+      }
+      WSContentSend_P("</span>{e}");
+
+      if (showData) {
+        if (device.Temperature) WSContentSend_Temp("┆", device.Temperature);
+        WSContentSend_PD(HTTP_EQ3_TEMPERATURE, Settings->flag2.temperature_resolution, &device.TargetTemp, c_unit);
+        WSContentSend_P(HTTP_EQ3_VALVE_POS, device.ValvePos);
       }
     }
   }
@@ -1031,8 +1054,7 @@ void EQ3publishUpdate(void) {
 
 void EQ3publishMain(eq3_device_t* eq3) {
   ResponseAppend_P("\"MAC\":\"%s\"", addrStr(eq3->addr));
-  const char* host = NetworkHostname();
-  ResponseAppend_P(",\"tas\":\"%s\"", host);
+  ResponseAppend_P(",\"tas\":\"%s\"", NetworkHostname());
   ResponseAppend_P(",\"RSSI\":%d", eq3->RSSI);
   ResponseAppend_P(",\"stattime\":%u", eq3->BTHomeAdvert ? UtcTime() : eq3->lastStatusTime);
   ResponseAppend_P(",\"temp\":%1_f", &eq3->TargetTemp);
@@ -1054,6 +1076,7 @@ void EQ3publishMain(eq3_device_t* eq3) {
   ResponseAppend_P(",\"battery\":\"%s\"", eq3->Battery ? "LOW" : "GOOD");
   if (eq3->BTHomeAdvert) {
     ResponseAppend_P(",\"BattLevel\":%u", eq3->battPercent);
+    ResponseAppend_P(",\"BattVolt\":%3_f", &eq3->battVolt);
     ResponseAppend_P(",\"Ambient\":%1_f", &eq3->Temperature);
   }
 }
