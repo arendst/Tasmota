@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Matter non-bridge endpoint topology (#25099)
 - MQTT false connected events when unconfigured (#25100)
+- PWM on CDC GPIO
 
 ### Removed
 
