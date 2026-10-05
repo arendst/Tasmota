@@ -4286,10 +4286,6 @@ const char SI_WEB_CSS[] PROGMEM =
   ".itd td:last-child{width:45px}"
   ".itd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
   ".itr{line-height:20px}"
-  // Signal Strength Indicator
-  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
-  "i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
-  ".b0{height:25%%}.b1{height:50%%}.b2{height:75%%}.b3{height:100%%}}.o30{opacity:.3}"
   "</style>"
   "{t}";             // ... and open new table for devices
 
