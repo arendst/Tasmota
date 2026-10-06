@@ -521,6 +521,11 @@ void setup(void) {
   is_connected_to_USB = true;      // S2
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 
+  // Detect if esp-emu, if so disable CDC
+  if (WiFiHelper::macAddress().equals("24:0A:C4:00:00:01")) {
+    is_connected_to_USB = false;
+  }
+
   if (is_connected_to_USB) {
     // TasConsole is already running
 #if !ARDUINO_USB_MODE
