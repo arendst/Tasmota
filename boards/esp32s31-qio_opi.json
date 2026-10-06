@@ -1,0 +1,59 @@
+{
+  "build": {
+    "arduino": {
+      "memory_type": "qio_opi"
+    },
+    "core": "esp32",
+    "extra_flags": [
+      "-DARDUINO_TASMOTA",
+      "-DBOARD_HAS_PSRAM",
+      "-DARDUINO_USB_MODE=1",
+      "-DUSE_USB_CDC_CONSOLE",
+      "-DESP32_16M",
+      "-DESP32S31"
+    ],
+    "f_cpu": "320000000L",
+    "f_flash": "80000000L",
+    "flash_mode": "qio",
+    "psram_type": "opi",
+    "mcu": "esp32s31",
+    "variant": "esp32s31",
+    "partitions": "partitions/esp32_partition_app3904k_fs11584k.csv"
+  },
+  "connectivity": [
+    "bluetooth",
+    "wifi"
+  ],
+  "debug": {
+    "default_tool": "esp-builtin",
+    "onboard_tools": [
+      "esp-builtin"
+    ],
+    "openocd_target": "esp32s31.cfg"
+  },
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "name": "Espressif ESP32-S31 (16 MB Flash Quad, 16 MB PSRAM Octal)",
+  "upload": {
+    "arduino": {
+      "flash_extra_images": [
+        [
+          "0x10000",
+          "tasmota32s31-safeboot.bin"
+        ]
+      ]
+    },
+    "flash_size": "16MB",
+    "maximum_ram_size": 327680,
+    "maximum_size": 16777216,
+    "require_upload_port": true,
+    "speed": 2000000
+  },
+  "download": {
+    "speed": 2000000
+  },
+  "url": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s31/esp32-s31-function-coreboard-1/index.html",
+  "vendor": "Espressif"
+}
