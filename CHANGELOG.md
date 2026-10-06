@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
 - IR accept raw data in JSON (#25077)
 - Matter update specs to 1.6.1 (to be used by AI) (#25083)
+- Disable CDC on esp-emu
 
 ### Fixed
 - Matter non-bridge endpoint topology (#25099)
