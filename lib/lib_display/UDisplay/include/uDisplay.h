@@ -29,6 +29,10 @@
 #define USE_ESP32_S3
 #endif
 #include "soc/gpio_periph.h"
+#if __has_include("soc/gpio_struct.h")
+// IDF 6.x: GPIO register struct no longer exported via gpio_periph.h
+#include "soc/gpio_struct.h"
+#endif
 #include <rom/gpio.h>
 // #include "driver/spi_master.h"
 #endif

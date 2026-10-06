@@ -459,9 +459,9 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
   }
 
 #ifndef FIRMWARE_SAFEBOOT
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
   HostedMCUStatus();
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
 #endif  // FIRMWARE_SAFEBOOT
 }
 
@@ -1557,7 +1557,8 @@ void WifiConnect(void)
   if (!wifi_event_registered) {
     WiFi.onEvent(WifiEvents);   // register event listener only once
     wifi_event_registered = true;
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
+#if __has_include("esp_hosted.h")
     // Hosted MCU SDIO pins must be set before WiFi is initialized
     char sdio_source[10] = "default";
     uint32_t sdio_pins[7] = {   // From framework-arduinoespressif32 variants/esp32p4/pins_arduino.h
@@ -1586,9 +1587,10 @@ void WifiConnect(void)
     }
     AddLog(LOG_LEVEL_DEBUG, PSTR("HST: Hosted MCU using %s GPIO%02d(CLK), GPIO%02d(CMD), GPIO%02d(D0), GPIO%02d(D1), GPIO%02d(D2), GPIO%02d(D3) and GPIO%02d(RST)"),
       sdio_source, sdio_pins[0], sdio_pins[1], sdio_pins[2], sdio_pins[3], sdio_pins[4], sdio_pins[5], sdio_pins[6]);
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // __has_include("esp_hosted.h")
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
   }
-#endif // ESP32
+#endif  // ESP32
   WifiSetState(0);
 //  WifiSetOutputPower();
 
@@ -2160,7 +2162,13 @@ uint64_t WifiGetNtp(void) {
 // Respond to some Arduino/esp-idf events for better IPv6 support
 // --------------------------------------------------------------------------------
 #ifdef ESP32
+// IDF < 6: esp_interface_t / IDF >= 6: wifi_interface_t (esp_interface_t removed)
+#include "esp_idf_version.h"
+#if ESP_IDF_VERSION_MAJOR < 6
 extern esp_netif_t* get_esp_interface_netif(esp_interface_t interface);
+#else
+extern esp_netif_t* get_esp_interface_netif(wifi_interface_t interface);
+#endif
 
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
 
@@ -2207,7 +2215,11 @@ void WifiEvents(arduino_event_t *event) {
       // workaround for the race condition in LWIP, see https://github.com/espressif/arduino-esp32/pull/9016#discussion_r1451774885
       {
         uint32_t i = 5;   // try 5 times only
+        #if ESP_IDF_VERSION_MAJOR < 6
         while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_WIFI_STA)) != ESP_OK) {
+        #else
+        while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(WIFI_IF_STA)) != ESP_OK) {
+        #endif
           delay(1);
           if (i-- == 0) {
             break;
