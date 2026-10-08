@@ -112,7 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.6.0.2
+## Changelog v15.6.0.3
 ### Added
 - Support for GUI tooltip on touch media like phones and tablets
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 [#24959](https://github.com/arendst/Tasmota/issues/24959)
@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MiELHVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` [#24982](https://github.com/arendst/Tasmota/issues/24982)
 - MiELHVAC Home Assistant MQTT discovery [#25027](https://github.com/arendst/Tasmota/issues/25027)
 - OpenTherm support the second heating circuit (CH2) [#25098](https://github.com/arendst/Tasmota/issues/25098)
+- BLE EQ3-TRV encryption support [#25113](https://github.com/arendst/Tasmota/issues/25113)
 - Berry virtual button support
 - Berry `sortedmap` support for `json.dump` [#24999](https://github.com/arendst/Tasmota/issues/24999)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit [#24922](https://github.com/arendst/Tasmota/issues/24922)
@@ -151,6 +152,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refresh EQ3 web UI [#25105](https://github.com/arendst/Tasmota/issues/25105)
 
 ### Fixed
+- Unauthenticated UFS writes on web password enabled systems
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 [#24731](https://github.com/arendst/Tasmota/issues/24731)
 - MQTT false connected events when unconfigured [#25100](https://github.com/arendst/Tasmota/issues/25100)
 - Touch GT911 fix template [#25068](https://github.com/arendst/Tasmota/issues/25068)

@@ -3,7 +3,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.6.0.2]
+## [15.6.0.3]
+### Added
+
+
+### Breaking Changed
+
+
+### Changed
+
+
+### Fixed
+- Unauthenticated UFS writes on web password enabled systems
+
+### Removed
+
+
+## [15.6.0.2] 20261008
 ### Added
 - DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) (#25073)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit (#24922)
@@ -11,9 +27,7 @@ All notable changes to this project will be documented in this file.
 - Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0) (#25089)
 - OpenTherm support the second heating circuit (CH2) (#25098)
 - Command `HwDump` to dump detailed hardware GPIO configuration (#25111)
-
-### Breaking Changed
-
+- BLE EQ3-TRV encryption support (#25113)
 
 ### Changed
 - Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` (#25020)
@@ -28,10 +42,6 @@ All notable changes to this project will be documented in this file.
 - Matter non-bridge endpoint topology (#25099)
 - MQTT false connected events when unconfigured (#25100)
 - PWM on CDC GPIO (#25106)
-
-### Removed
-
-
 
 ## [15.6.0.1] 20260926
 ### Added
