@@ -19,6 +19,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.0.2.1 20261007  changed - support for encrypted advertisements, send by FW >= 2
   1.0.2.0 20261004  changed - read advertisements, send by FW >= 2 (https://github.com/dbuezas/eq3-custom-fw)
   1.0.1.1 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
                               view on UI only when BLE enabled
@@ -314,6 +315,7 @@ struct eq3_device_t {
   bool Boost;                // 1 Byte 1=active
   bool Window;               // 1 Byte 1=open
   bool Lock;                 // 1 Byte 1=locked
+  bool cryptState;           // 1 Byte
   bool BTHomeAdvert;         // 1 Byte
   bool Changed;              // 1 Byte
   uint8_t addr[6];           // 6 Bytes
@@ -724,16 +726,16 @@ void TaskEQ3ParseBTHome(BLE_ESP32::ble_advertisment_t* pStruct) {
   const BLEAdvertisedDevice* advertisedDevice = pStruct->advertisedDevice;
 
   if (!advertisedDevice->getServiceDataCount()) return;
-  if (advertisedDevice->getServiceDataUUID(0) != NimBLEUUID((uint16_t)0xFCD2)) return; // No BTHome v2 packet
+  if (advertisedDevice->getServiceDataUUID(0) != NimBLEUUID((uint16_t)0xFCD2)) return; // No BTHome packet
 
   std::string ServiceDataStr = advertisedDevice->getServiceData(0);
   uint32_t  ServiceDataLength = ServiceDataStr.length();
-  const uint8_t *ServiceData = (const uint8_t *)ServiceDataStr.data();
+  const uint8_t* ServiceData = (const uint8_t*)ServiceDataStr.data();
   char temp[60];
   BLE_ESP32::dump(temp, 60, ServiceData, ServiceDataLength);
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], "EQ3: %s: SrvData %s", addrStr(addr), temp);
 
-  if (ServiceData[0] != 0x40) return; // Only use unencrypted payload at the moment
+  if ((ServiceData[0] >> 5) & 0x07 != 2) return; // Not BThome V2
 
   // Find device
   eq3_device_t* eq3 = nullptr;
@@ -746,7 +748,37 @@ void TaskEQ3ParseBTHome(BLE_ESP32::ble_advertisment_t* pStruct) {
 
   if (!eq3) return; // Device not yet known
 
-  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "EQ3: %s: Rec ADV for known device", addrStr(addr));
+  eq3->BTHomeAdvert = false; // Will become true, when unencrypted data is available for parsing
+  eq3->cryptState = ServiceData[0] & 0x01;
+
+  AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "EQ3: %s: Rec%s ADV for known device", addrStr(addr), eq3->cryptState ? " encrypted" : "");
+
+  if (eq3->cryptState) {
+#ifdef USE_MI_ESP32
+#define USE_MI_DECRYPTION // Just to be sure...
+      uint8_t addrRev[6];
+      memcpy(addrRev, addr, 6);
+      BLE_ESP32::ReverseMAC(addrRev);
+      uint8_t* bufPtr = (uint8_t*)ServiceDataStr.data();
+      uint32_t micTag = *(uint32_t*)(bufPtr + (ServiceDataLength - 4));
+      uint8_t nonce[13];
+      memcpy(nonce, addr, 6); 
+      nonce[6] = 0xD2;
+      nonce[7] = 0xFC;
+      nonce[8] = bufPtr[0];
+      memcpy(&nonce[9], bufPtr + (ServiceDataLength - 8), 4);
+      uint8_t* cipherText = bufPtr + 1;
+      int cipherLen = ServiceDataLength - 9;
+      eq3->cryptState = MIDecryptPayload(addrRev, nonce, micTag, cipherText, cipherLen);
+      if (eq3->cryptState) return; // Decrypt failed on any reason
+      ServiceDataLength -= 8;
+      ServiceData = bufPtr;
+#else // USE_MI_ESP32
+      AddLog(LOG_LEVEL_ERROR, "EQ3: %s: Decryption not possible. Please compile with \"#define USE_MI_ESP32\".", addrStr(addr));
+      return; 
+#endif // USE_MI_ESP32
+  }
+
   eq3->BTHomeAdvert = true;
 
   uint32_t pos = 1;
@@ -772,7 +804,7 @@ void TaskEQ3ParseBTHome(BLE_ESP32::ble_advertisment_t* pStruct) {
         floatVal = (ServiceData[pos + 1] | (ServiceData[pos + 2] << 8)) * 0.001f;
         eq3->Changed |= (eq3->battVolt != floatVal);
         eq3->battVolt = floatVal;
-        eq3->battPercent = floatVal * 100 / 3;
+        eq3->battPercent = tmin(floatVal * 100 / 3, 100);
         AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], "EQ3: %s: Rec ADV Batt: %3_f (%u%%)", addrStr(addr), &eq3->battVolt, eq3->battPercent);
         pos += 3;
         break;
@@ -983,7 +1015,8 @@ int EQ3SendResult(char* requested, const char* result) {
 }
 
 #ifdef USE_WEBSERVER
-constexpr const char HTTP_EQ3_STATUS[]      = "{s}<span title='eQ-3 TRV\n0x%6_H'>%s</span></th><td align=right nowrap><span title='%s'>%s</span><span title='%s'>%s</span><span title='%s'>%s</span> <span title='" D_RSSI " %s' class='si'>";
+constexpr const char HTTP_EQ3_STATUS1[]     = "{s}<span title='eQ-3 TRV\n0x%6_H'>%s</span></th><td align=right nowrap>";
+constexpr const char HTTP_EQ3_STATUS2[]     = "<span title='%s'>%s</span>";
 constexpr const char HTTP_EQ3_TEMPERATURE[] = "{s}┆ " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
 constexpr const char HTTP_EQ3_VALVE_POS[]   = "{s}┆ " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
 
@@ -1012,27 +1045,27 @@ void EQ3Show(void)
       char rssi[16];
       snprintf(rssi, sizeof(rssi), "%d%% (%d dBm)", rssi_as_quality, device.RSSI);
 
+      WSContentSend_P(HTTP_EQ3_STATUS1, device.addr, label);
+      if (device.cryptState) WSContentSend_P(HTTP_EQ3_STATUS2, "Decrypt " D_FAILED, "🔑");
       bool showData = (!EQ3Period || device.BTHomeAdvert || device.lastStatusTime + (EQ3Period * 10) > UtcTime());
       if (showData) {
-        WSContentSend_P(HTTP_EQ3_STATUS, device.addr, label,
-          device.Boost ? D_NEOPOOL_SHOCK : device.Window ? D_NOW_YOU_CAN_CLOSE_THIS_WINDOW : "",
-          device.Boost ? "🔥" : device.Window ? "🪟" : "",
-          web_mode_names[device.Mode],
-          web_mode_icons[device.Mode],
+        if (device.Lock) WSContentSend_P(HTTP_EQ3_STATUS2, "Locked", "🔒");
+        if (device.Boost) WSContentSend_P(HTTP_EQ3_STATUS2, "Boost", "🔥");
+        if (device.Window) WSContentSend_P(HTTP_EQ3_STATUS2, D_NOW_YOU_CAN_CLOSE_THIS_WINDOW, "🪟");
+        WSContentSend_P(HTTP_EQ3_STATUS2, web_mode_names[device.Mode], web_mode_icons[device.Mode]);
+        WSContentSend_P(HTTP_EQ3_STATUS2,
           device.battPercent ? (String(device.battPercent) + "%") : (device.Battery ? D_LOW : D_OK),
-          device.Battery ? "🪫" : "🔋",
-          rssi
-        );
-      } else {
-        WSContentSend_P(HTTP_EQ3_STATUS, device.addr, label, "", "", "", "", "", "", rssi);
+          device.Battery ? "🪫" : "🔋");
       }
-      for(uint32_t j = 0; j < 4; j++) {
-        WSContentSend_P(PSTR("<i class='b%d%s'></i>"), j, (j >= num_bars) ? PSTR(" o30") : PSTR(""));
+
+      WSContentSend_P(" <span title='" D_RSSI " %s' class='si'>", rssi);
+      for (uint8_t j = 0; j < 4; j++) {
+        WSContentSend_P("<i class='b%d%s'></i>", j, (j >= num_bars) ? " o30" : "");
       }
       WSContentSend_P("</span>{e}");
 
       if (showData) {
-        if (device.Temperature) WSContentSend_Temp("┆", device.Temperature);
+        if (device.BTHomeAdvert) WSContentSend_Temp("┆", device.Temperature);
         WSContentSend_PD(HTTP_EQ3_TEMPERATURE, Settings->flag2.temperature_resolution, &device.TargetTemp, c_unit);
         WSContentSend_P(HTTP_EQ3_VALVE_POS, device.ValvePos);
       }
