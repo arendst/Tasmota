@@ -215,12 +215,16 @@ class Matter_HTTP_remote : Matter_HTTP_async
   #############################################################
   # device is alive, update reachable_utc
   def device_is_alive(alive)
+    var changed = self.reachable != alive
     if alive
       # device is known to be reachable
       self.reachable = true
       self.reachable_utc = tasmota.rtc_utc()
     else
       self.reachable = false
+    end
+    if changed && self.device != nil
+      self.device.http_reachable_changed(self)
     end
   end
 
