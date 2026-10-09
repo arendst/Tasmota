@@ -58,6 +58,9 @@ if github_actions and os.path.exists(os.path.normpath(os.path.join(".", "firmwar
 # Copy pins_arduino.h to variants folder
 if variants_dir:
     mcu_build_variant_path = os.path.normpath(join(env.subst("$PROJECT_DIR"), "pins_arduino", mcu_build_variant, "pins_arduino.h"))
+    if not os.path.isfile(mcu_build_variant_path):
+        print(Fore.RED + "*** Missing " + mcu_build_variant_path + " - copy it from framework variants/" + mcu_build_variant + " ***")
+        exit(1)
     custom_variant_build = os.path.normpath(join(env.subst("$PROJECT_DIR"), variants_dir , mcu_build_variant, "pins_arduino.h"))
     os.makedirs(os.path.normpath(join(env.subst("$PROJECT_DIR"), variants_dir , mcu_build_variant)), exist_ok=True)
     shutil.copy(mcu_build_variant_path, custom_variant_build)
