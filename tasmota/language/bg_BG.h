@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Мигане вкл."
 #define D_BLINKOFF "Мигане изкл."
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Брой стартирания"
 #define D_BRIGHTLIGHT "Яркост"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Байта"
 #define D_CELSIUS "Целзий"
 #define D_CHANNEL "Канал"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Въглероден диоксид"
 #define D_CODE "код"                 // Button code
 #define D_COLDLIGHT "Студена"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Тъмна"
 #define D_DATA "Данни"
 #define D_DEBUG "Премахване на дефекти"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Температура на оросяване"
 #define D_DISABLED "Забранено"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Дълбочина на водата"
 #define D_WEB_SERVER "Уеб сървър"
 #define D_WEIGHT "Тегло"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ПРЕДУПРЕЖДЕНИЕ Тази версия не поддържа постоянни настройки"

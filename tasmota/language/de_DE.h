@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v15.6.0.1 - Last update 25.08.2026
+ * Updated until v15.6.0.3 - Last update 09.10.2026
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Ladung"    // Battery charge in %
 #define D_BLINK "Blinken"
 #define D_BLINKOFF "BlinkenAus"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Startvorgänge"
 #define D_BRIGHTLIGHT "hell"
 #define D_BSSID "BSSID"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanal"
+#define D_CHILD_LOCK "Kindersicherung"
 #define D_CO2 "CO₂"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "dunkel"
 #define D_DATA "Daten"
 #define D_DEBUG "debug"
+#define D_DECRYPTION "Entschlüsselung"
 #define D_DEWPOINT "Taupunkt"
 #define D_DISABLED "deaktiviert"
 #define D_DISCONNECTED "getrennt"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Wassertiefe"
 #define D_WEB_SERVER "Webserver"
 #define D_WEIGHT "Gewicht"
+#define D_WINDOW_OPEN "Fenster offen"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ACHTUNG: Einstellungen in dieser Version werden nicht gespeichert!"
