@@ -22,6 +22,7 @@
 
 #include <berry.h>
 #include <Wire.h>
+#include "esp_wifi.h"
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
 const uint32_t BERRY_MAX_REPL_LOGS = 50;   // max number of print output recorded when inside REPL
@@ -283,6 +284,35 @@ extern "C" {
         be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
         be_map_insert_str(vm, "ssid", SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str());
         be_map_insert_str(vm, "bssid", WiFi.BSSIDstr().c_str());
+        be_map_insert_int(vm, "channel", WiFi.channel());
+        wifi_ap_record_t ap_info;
+        if (ESP_OK == esp_wifi_sta_get_ap_info(&ap_info)) {
+          const char * security = "";
+          switch (ap_info.authmode) {
+            case WIFI_AUTH_OPEN:              security = "open";  break;
+            case WIFI_AUTH_WEP:               security = "wep";   break;
+            case WIFI_AUTH_WPA_PSK:           security = "wpa";   break;
+            case WIFI_AUTH_WPA2_PSK:
+            case WIFI_AUTH_WPA_WPA2_PSK:
+            case WIFI_AUTH_WPA2_ENTERPRISE:   security = "wpa2";  break;
+            case WIFI_AUTH_WPA3_PSK:
+            case WIFI_AUTH_WPA2_WPA3_PSK:
+            case WIFI_AUTH_WPA3_ENT_192:
+            case WIFI_AUTH_WPA3_EXT_PSK:
+            case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE: security = "wpa3"; break;
+            default:                          break;
+          }
+          be_map_insert_str(vm, "security", security);
+          // highest PHY mode supported by the access point
+          const char * phy = "";
+          if (ap_info.phy_11ax)       { phy = "11ax"; }
+          else if (ap_info.phy_11ac)  { phy = "11ac"; }
+          else if (ap_info.phy_11n)   { phy = "11n"; }
+          else if (ap_info.phy_11g)   { phy = "11g"; }
+          else if (ap_info.phy_11b)   { phy = "11b"; }
+          else if (ap_info.phy_11a)   { phy = "11a"; }
+          be_map_insert_str(vm, "phy", phy);
+        }
       }
     }
     be_pop(vm, 1);
