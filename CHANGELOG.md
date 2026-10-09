@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) (#25088)
 - Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0) (#25089)
 - OpenTherm support the second heating circuit (CH2) (#25098)
+- Command `HwDump` to dump detailed hardware GPIO configuration
 
 ### Breaking Changed
 
@@ -20,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
 - IR accept raw data in JSON (#25077)
 - Matter update specs to 1.6.1 (to be used by AI) (#25083)
+- Disable CDC on esp-emu
 
 ### Fixed
 - Matter non-bridge endpoint topology (#25099)

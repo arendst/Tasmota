@@ -18,7 +18,7 @@
     "psram_type": "opi",
     "mcu": "esp32s31",
     "variant": "esp32s31",
-    "partitions": "partitions/esp32_partition_app3904k_fs11584k.csv"
+    "partitions": "partitions/esp32_partition_app3904k_fs11392k.csv"
   },
   "connectivity": [
     "bluetooth",
