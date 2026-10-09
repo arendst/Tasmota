@@ -132,6 +132,9 @@ assert(string.format("%i", true) == '1')
 assert(string.format("%i", false) == '0')
 
 assert(string.format("%c", a) == '*')
+# %c must honor field width and flags, like the other conversions
+assert(string.format("%5c", 65) == '    A')
+assert(string.format("%-5c", 65) == 'A    ')
 
 assert(string.format("%f", 3.5) == '3.500000')
 assert(string.format("%f", 3) == '3.000000')
