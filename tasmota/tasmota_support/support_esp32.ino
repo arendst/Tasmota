@@ -73,6 +73,10 @@ extern "C" {
   #include "esp32p4/rom/rtc.h"
   #include "esp32p4/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32p4 is located at 0x2000
+#elif CONFIG_IDF_TARGET_ESP32S31
+  #include "esp32s31/rom/rtc.h"
+  #include "esp32s31/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32s31 is located at 0x2000
 #else
   #error Target CONFIG_IDF_TARGET is not supported
 #endif
@@ -943,6 +947,9 @@ typedef struct {
     }
     case 18: {  // ESP32-P4
       return F("ESP32-P4");
+    }
+    case 32: {  // ESP32-S31
+      return F("ESP32-S31");
     }
   }
   return F("ESP32");

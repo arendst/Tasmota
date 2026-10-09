@@ -166,6 +166,8 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
   #endif
 #elif CONFIG_IDF_TARGET_ESP32S3
   #define TASMOTA_ARCH              "esp32s3"
+#elif CONFIG_IDF_TARGET_ESP32S31
+  #define TASMOTA_ARCH              "esp32s31"
 #else
   #define TASMOTA_ARCH              "esp32"
 #endif

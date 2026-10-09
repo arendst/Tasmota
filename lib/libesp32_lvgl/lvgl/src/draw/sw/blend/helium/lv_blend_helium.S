@@ -3,6 +3,9 @@
  *
  */
 
+/* ARM Helium/MVE SIMD implementation - only compiled on ARM targets */
+#if defined(__arm__) || defined(__ARM_ARCH)
+
 #ifndef __ASSEMBLY__
 #define __ASSEMBLY__
 #endif
@@ -711,3 +714,5 @@ export_set argb8888, argb8888, 32, 32, normal
 
 #endif /*LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE && LV_USE_NATIVE_HELIUM_ASM*/
 
+
+#endif /* defined(__arm__) || defined(__ARM_ARCH) */
