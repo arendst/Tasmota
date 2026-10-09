@@ -1250,6 +1250,8 @@
 
 #define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
 #define USE_GPIO_VIEWER                          // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
+//#define USE_HWDUMP                               // Add command HwDump to dump MCU internal GPIO/IO_MUX and peripheral configuration to log (ESP32, ESP32-S2, ESP32-S3, ESP32-C3 and ESP32-C5 for now)
+//  #define USE_HWDUMP_SLEEP_PINS                  // Add per-pin sleep configuration table (IO_MUX SLP_* bits, hold, light sleep wakeup) to HwDump
 
 //#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
 //#define USE_DISPLAY_TM1621_SONOFF                // Add support for TM1621 dsiplay driver used by Sonoff POWR3xxD and THR3xxD
