@@ -285,7 +285,7 @@ void CrashDump(void)
   }
   ResponseJsonEnd();
 }
-#elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 
 extern "C" {
   // esp-idf 3.x
@@ -315,6 +315,8 @@ const char *esp32c3_crash_reason[] = {
 #define NUM_C3_REASONS (sizeof(esp32c3_crash_reason) / sizeof(char *))
 
 #include <riscv/rvruntime-frames.h>
+#include "soc/soc.h"
+
 extern "C" IRAM_ATTR void custom_crash_recorder(void *exc_frame, bool pseudo_excause) {
   RvExcFrame *regs = (RvExcFrame *)exc_frame;
 
@@ -332,10 +334,23 @@ extern "C" IRAM_ATTR void custom_crash_recorder(void *exc_frame, bool pseudo_exc
   uint32_t idx = 0;   // slot in stack trace
   crash_recorder.stack[idx++] = regs->ra;   // push return address as first value
 
-  // // code copied from panic_print_basic_backtrace()
-  uint32_t * sp = (uint32_t*) regs->sp;
+  uint32_t stack_start = regs->sp;
+  uint32_t stack_limit;
+  if ((stack_start & 0xF) != 0) { return; }
+  if ((stack_start >= SOC_DRAM_LOW) && (stack_start < SOC_DRAM_HIGH)) {
+    stack_limit = SOC_DRAM_HIGH;
+  }
+#if CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
+  else if ((stack_start >= SOC_EXTRAM_LOW) && (stack_start < SOC_EXTRAM_HIGH)) {
+    stack_limit = SOC_EXTRAM_HIGH;
+  }
+#endif
+  else {
+    return;
+  }
+  uint32_t * sp = (uint32_t*) stack_start;
   uint32_t i = 0;
-  for (uint32_t i = 0; ((uint32_t) sp) < 0x3FCDFFF0 && i < 320 && idx < crash_dump_max_len; i++, sp++) {
+  for (uint32_t i = 0; ((uint32_t) sp) < stack_limit && i < 320 && idx < crash_dump_max_len; i++, sp++) {
     uint32_t value = *sp;
     if ((value >= 0x40000000) && (value < 0x42800000)) {  // keep only addresses in code area
       crash_recorder.stack[idx++] = value;
