@@ -128,6 +128,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MiELHVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` [#24982](https://github.com/arendst/Tasmota/issues/24982)
 - MiELHVAC Home Assistant MQTT discovery [#25027](https://github.com/arendst/Tasmota/issues/25027)
 - OpenTherm support the second heating circuit (CH2) [#25098](https://github.com/arendst/Tasmota/issues/25098)
+- Display dsi dma2d psram buffers [#24949](https://github.com/arendst/Tasmota/issues/24949)
+- LVGL option to prefer PSRAM for draw buffers using bit 5 (0x20) of `:B` in display.ini [#25120](https://github.com/arendst/Tasmota/issues/25120)
 - BLE EQ3-TRV encryption support [#25113](https://github.com/arendst/Tasmota/issues/25113)
 - Berry virtual button support
 - Berry `sortedmap` support for `json.dump` [#24999](https://github.com/arendst/Tasmota/issues/24999)
