@@ -1384,49 +1384,6 @@
                                                     // Enabled by default in standard ESP32 binary
   // #define USE_MATTER_VERBOSE                     // Enable verbose mode in logs (+16KB), automatically enabled with USE_BERRY_DEBUG
 
-
-// -- P4 settings ---------------------------------
-// ESP32-P4 EV Function board specific definitions
-
-//ETH
-#define ETH_PHY_TYPE    ETH_PHY_TLK110
-#define ETH_PHY_ADDR    1
-#define ETH_PHY_MDC     31
-#define ETH_PHY_MDIO    52
-#define ETH_PHY_POWER   51
-#define ETH_RMII_TX_EN  49
-#define ETH_RMII_TX0    34
-#define ETH_RMII_TX1    35
-#define ETH_RMII_RX0    29
-#define ETH_RMII_RX1_EN 30
-#define ETH_RMII_CRS_DV 28
-#define ETH_RMII_CLK    50
-#define ETH_CLK_MODE    EMAC_CLK_EXT_IN
-
-//SDMMC
-#define BOARD_HAS_SDMMC
-#define BOARD_SDMMC_SLOT           0
-#define BOARD_SDMMC_POWER_CHANNEL  4
-#define BOARD_SDMMC_POWER_PIN      45
-#define BOARD_SDMMC_POWER_ON_LEVEL LOW
-
-// On-chip GP LDO: periman enables VO4 when a GPIO in the range is used (see esp32-hal-ldo.c).
-#define BOARD_PERIMAN_IO_LDO_AUTO        1
-#define BOARD_PERIMAN_IO_LDO0_CHANNEL    4   // LDO_VO4 on ESP32-P4
-#define BOARD_PERIMAN_IO_LDO0_GPIO_MIN   39  // Function EV: GPIO 39-48 on VO4
-#define BOARD_PERIMAN_IO_LDO0_GPIO_MAX   48
-#define BOARD_PERIMAN_IO_LDO0_VOLTAGE_MV 3300
-
-//WIFI - ESP32C6
-#define BOARD_HAS_SDIO_ESP_HOSTED
-#define BOARD_SDIO_ESP_HOSTED_CLK   18
-#define BOARD_SDIO_ESP_HOSTED_CMD   19
-#define BOARD_SDIO_ESP_HOSTED_D0    14
-#define BOARD_SDIO_ESP_HOSTED_D1    15
-#define BOARD_SDIO_ESP_HOSTED_D2    16
-#define BOARD_SDIO_ESP_HOSTED_D3    17
-#define BOARD_SDIO_ESP_HOSTED_RESET 54
-
 #endif  // ESP32
 
 /*********************************************************************************************\

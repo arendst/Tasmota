@@ -50,4 +50,9 @@ static const uint8_t T11 = 13;
 static const uint8_t T12 = 14;
 static const uint8_t T13 = 15;
 
+// SD card on SDMMC slot 0 (IOMUX pins), slot 1 is used by ESP-Hosted
+// No power pin or LDO, configured by template and Ldo command
+#define BOARD_HAS_SDMMC
+#define BOARD_SDMMC_SLOT           0
+
 #endif /* Pins_Arduino_h */
