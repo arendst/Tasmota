@@ -1015,7 +1015,7 @@ int EQ3SendResult(char* requested, const char* result) {
 }
 
 #ifdef USE_WEBSERVER
-constexpr const char HTTP_EQ3_STATUS1[]     = "{s}<span title='eQ-3 TRV\n0x%6_H'>%s</span></th><td align=right nowrap>";
+constexpr const char HTTP_EQ3_STATUS1[]     = "<tr><th colspan=2 nowrap><span title='eQ-3 TRV\n0x%6_H'>%s</span><span style='float:right'>";
 constexpr const char HTTP_EQ3_STATUS2[]     = "<span title='%s'>%s</span>";
 constexpr const char HTTP_EQ3_TEMPERATURE[] = "{s}┆ " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
 constexpr const char HTTP_EQ3_VALVE_POS[]   = "{s}┆ " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
@@ -1062,7 +1062,7 @@ void EQ3Show(void)
       for (uint8_t j = 0; j < 4; j++) {
         WSContentSend_P("<i class='b%d%s'></i>", j, (j >= num_bars) ? " o30" : "");
       }
-      WSContentSend_P("</span>{e}");
+      WSContentSend_P("</span></span>{e}");
 
       if (showData) {
         if (device.BTHomeAdvert) WSContentSend_Temp("┆", device.Temperature);
