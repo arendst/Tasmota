@@ -95,19 +95,19 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
   }
 
   uint32_t pixels_len = width * height;
-  uint32_t chrono_start = millis();
+  uint32_t chrono_start = micros();
   renderer->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
   renderer->pushColors((uint16_t *)color_p, pixels_len, true);
   renderer->setAddrWindow(0,0,0,0);
   renderer->Updateframe();
-  uint32_t chrono_time = millis() - chrono_start;
+  uint32_t chrono_time = micros() - chrono_start;
 
   lv_disp_flush_ready(disp);
 
   if (pixels_len >= 10000 && (!renderer->lvgl_param.use_dma)) {
     if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
-      AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
-              chrono_time > 0 ? pixels_len / chrono_time : -1);
+      AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "Refreshed %d pixels in %d us (%i pix/ms)", pixels_len, chrono_time,
+              chrono_time > 0 ? (pixels_len * 1000 / chrono_time) : -1);
     }
   }
   // if there is a display callback, call it
