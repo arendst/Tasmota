@@ -469,17 +469,13 @@ matter_device.events.dump()
       return el                         # return empty list
     elif attribute == 0xFFF9            # AcceptedCommandList
       var al = TLV.Matter_TLV_array()
-      if cluster == 0x0006              # On/Off
-        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0000)    # Off
-        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0001)    # On
-        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0002)    # Toggle
-        if (self.FEATURE_MAPS.find(cluster, 0) & 0x01) != 0
-          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0040)  # OffWithEffect
-          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0041)  # OnWithRecallGlobalScene
-          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0042)  # OnWithTimedOff
-        end
+      var cmds = self.get_accepted_commands(cluster)
+      var idx = 0
+      while cmds != nil && idx < size(cmds)
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, cmds[idx])
+        idx += 1
       end
-      return al                         # TODO
+      return al
     elif attribute == 0xFFFC            # FeatureMap
       var featuremap = self.FEATURE_MAPS.find(cluster, 0)
       return tlv_solo.set(0x06 #-TLV.U4-#, featuremap)
@@ -489,6 +485,19 @@ matter_device.events.dump()
     end
 
     # no handler found, return nil
+    return nil
+  end
+
+  #############################################################
+  # get_accepted_commands
+  #
+  # Commands accepted for `cluster`, reported in AcceptedCommandList 0xFFF9
+  # Returns `bytes()` with one command id per byte (all ids used are < 0x100), or `nil` for none
+  # Subclasses override it for their clusters and call `super` for the others
+  def get_accepted_commands(cluster)
+    if cluster == 0x0006              # On/Off: Off, On, Toggle (+ OffWithEffect, OnWithRecallGlobalScene, OnWithTimedOff with Lighting)
+      return bytes((self.FEATURE_MAPS.find(cluster, 0) & 0x01) ? "000102404142" : "000102")
+    end
     return nil
   end
 
