@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [15.6.0.3]
 ### Added
-
+- LVGL option to prefer PSRAM for draw buffers using bit 5 (0x20) of `:B` in display.ini
 
 ### Breaking Changed
 
