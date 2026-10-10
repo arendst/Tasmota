@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "מהבהב"
 #define D_BLINKOFF "כיבוי היבהוב"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "מונה הפעלה מחדש"
 #define D_BRIGHTLIGHT "בהירות"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "בייט"
 #define D_CELSIUS "צלזיוס"
 #define D_CHANNEL "ערוץ"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "פחמן דו חמצני"
 #define D_CODE "קוד"                // Button code
 #define D_COLDLIGHT "אור קר"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "חושך"
 #define D_DATA "נתונים"
 #define D_DEBUG "באגים"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "מבוטל"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "עומק המים"
 #define D_WEB_SERVER "Web שרת"
 #define D_WEIGHT "משקל"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "אזהרה גרסה זו אינה תומכת בהגדרות קבועות"

@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"  // Battery charge in %
 #define D_BLINK "Espurna"
 #define D_BLINKOFF "Espurna Fora"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Compte Arrencs"
 #define D_BRIGHTLIGHT "Brillant"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Canal"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Diòxid de Carboni"
 #define D_CODE "codi"                // Button code
 #define D_COLDLIGHT "Freda"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Fosc"
 #define D_DATA "Data"
 #define D_DEBUG "Depuració"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Punt de rossada"
 #define D_DISABLED "Deshabilitat"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Profunditat de l'aigua"
 #define D_WEB_SERVER "Servidor Web"
 #define D_WEIGHT "Pes"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "Avís : Aquesta versió no suporta configuració persistent"

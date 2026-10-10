@@ -1046,12 +1046,12 @@ void EQ3Show(void)
       snprintf(rssi, sizeof(rssi), "%d%% (%d dBm)", rssi_as_quality, device.RSSI);
 
       WSContentSend_P(HTTP_EQ3_STATUS1, device.addr, label);
-      if (device.cryptState) WSContentSend_P(HTTP_EQ3_STATUS2, "Decrypt " D_FAILED, "🔑");
+      if (device.cryptState) WSContentSend_P(HTTP_EQ3_STATUS2, D_DECRYPTION " " D_FAILED, "<del>🔑</del>");
       bool showData = (!EQ3Period || device.BTHomeAdvert || device.lastStatusTime + (EQ3Period * 10) > UtcTime());
       if (showData) {
-        if (device.Lock) WSContentSend_P(HTTP_EQ3_STATUS2, "Locked", "🔒");
-        if (device.Boost) WSContentSend_P(HTTP_EQ3_STATUS2, "Boost", "🔥");
-        if (device.Window) WSContentSend_P(HTTP_EQ3_STATUS2, D_NOW_YOU_CAN_CLOSE_THIS_WINDOW, "🪟");
+        if (device.Lock) WSContentSend_P(HTTP_EQ3_STATUS2, D_CHILD_LOCK, "🔒");
+        if (device.Boost) WSContentSend_P(HTTP_EQ3_STATUS2, D_BOOST, "🔥");
+        if (device.Window) WSContentSend_P(HTTP_EQ3_STATUS2, D_WINDOW_OPEN, "🪟");
         WSContentSend_P(HTTP_EQ3_STATUS2, web_mode_names[device.Mode], web_mode_icons[device.Mode]);
         WSContentSend_P(HTTP_EQ3_STATUS2,
           device.battPercent ? (String(device.battPercent) + "%") : (device.Battery ? D_LOW : D_OK),
