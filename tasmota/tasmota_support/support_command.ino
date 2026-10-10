@@ -59,6 +59,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|"
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   D_CMND_CPU_FREQUENCY "|"
+#ifdef SOC_GP_LDO_SUPPORTED
+  D_CMND_LDO "|"
+#endif  // SOC_GP_LDO_SUPPORTED
 #endif  // ESP32
 
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON "|" D_CMND_JSON_PP
@@ -108,6 +111,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTouchCal, &CmndTouchThres,
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   &CmndCpuFrequency,
+#ifdef SOC_GP_LDO_SUPPORTED
+  &CmndLdo,
+#endif  // SOC_GP_LDO_SUPPORTED
 #endif  // ESP32
 
   &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson, &CmndJsonPP

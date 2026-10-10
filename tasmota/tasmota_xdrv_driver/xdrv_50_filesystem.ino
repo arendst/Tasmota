@@ -259,6 +259,11 @@ void UfsCheckSDCardInit(void) {
       // AddLog(LOG_LEVEL_DEBUG, "UFS: trying SDIO 1-bit clk=%i cmd=%i d0=%i", sdio_clk, sdio_cmd, sdio_d0);
       SD_MMC.setPins(sdio_clk, sdio_cmd, sdio_d0);
     }
+#if defined(SOC_GP_LDO_SUPPORTED) && defined(SOC_SDMMC_IO_POWER_EXTERNAL)
+    if (!LdoEnabled(4)) {
+      SD_MMC.setPowerChannel(4);  // SD card IO power if not set by command Ldo4 (deprecated)
+    }
+#endif
     if (SD_MMC.begin("/sd", !bit_4_mode /*mode 1 bit*/, false /*format_if_failed*/)) {    // mount under "/sd" to be consistent with SD SPI
       ufsp = &SD_MMC;
 
