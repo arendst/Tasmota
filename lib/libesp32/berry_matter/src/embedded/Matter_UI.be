@@ -193,7 +193,7 @@ class Matter_UI
                               "|airquality|soil"
   static var _CLASSES_TYPES_VIRTUAL =
                               "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3|v_light5|v_garage"
-                              "|v_fan|v_hvac|v_hvac_option"
+                              "|v_fan|v_hvac|v_hvac_option|v_gensw"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality|v_soil"
   static var _CLASSES_TYPES2= "|http_relay|http_relay_power|http_light0|http_light1|http_light2|http_light3"

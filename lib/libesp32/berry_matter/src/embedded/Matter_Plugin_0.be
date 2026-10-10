@@ -611,6 +611,7 @@ matter_device.events.dump()
   # The map is pre-cleaned and contains only keys declared in
   # `self.UPDATE_COMMANDS` with the adequate case
   # (no need to handle case-insensitive)
+  # Return an error string for invalid input, or nil on success.
   def update_virtual(payload)
     # pass
   end
