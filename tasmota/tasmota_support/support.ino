@@ -21,6 +21,10 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
+#ifdef ESP32 // ESP32 specific gpio driver defines
+#include "driver/gpio.h"
+#endif // ESP32
+
 /*********************************************************************************************\
  * ESP32 Watchdog
 \*********************************************************************************************/
@@ -1723,7 +1727,7 @@ void TemplateGpios(myio *gp)
     j++;
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
     dest[i] = src[i];
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
     if (22 == i) { j = 33; }    // skip 22-32
@@ -1803,6 +1807,9 @@ bool FlashPin(uint32_t pin) {
   return (pin > 21) && (pin < 33);     // ESP32S2 skip 22-32
 #elif CONFIG_IDF_TARGET_ESP32P4
   return false;                        // ESP32P4 has no flash pins, but GPIOs 34-38 are strapping pins
+#elif CONFIG_IDF_TARGET_ESP32S31
+  return ((pin >= 26) && (pin <= 28)) ||
+         ((pin >= 30) && (pin <= 32)); // SPI flash pins; GPIO29 is unbonded
 #else
   return (pin >= 28) && (pin <= 31);   // ESP32 skip 28-31
 #endif  // ESP32C2/C3/C5/C6 and S2/S3
@@ -1826,6 +1833,8 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
   return false;                        // No red pin on ESP32S3
 #elif  CONFIG_IDF_TARGET_ESP32P4
   return (34 >= pin) && (38 <= pin);   // strapping pins on ESP32P4
+#elif CONFIG_IDF_TARGET_ESP32S31
+  return false;
 #elif CONFIG_IDF_TARGET_ESP32S3
   return (33 <= pin) && (37 >= pin);   // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #else   // ESP32 red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
@@ -1836,6 +1845,11 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
 }
 
 uint32_t ValidPin(uint32_t pin, uint32_t gpio, uint8_t isTuya = false) {
+#if CONFIG_IDF_TARGET_ESP32S31
+  if (!GPIO_IS_VALID_GPIO(pin)) {
+    return GPIO_NONE;
+  }
+#endif
   if (FlashPin(pin)) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
@@ -2242,7 +2256,7 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 
 void ClaimSerial(void) {
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32S31
 #ifdef USE_USB_CDC_CONSOLE
   if (!tasconsole_serial) {
     return;              // USB console does not use serial

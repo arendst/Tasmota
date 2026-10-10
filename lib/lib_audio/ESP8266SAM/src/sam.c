@@ -64,7 +64,7 @@ int GetBufferLength(){return bufferpos;};
 void Init();
 int Parser1();
 void Parser2();
-int SAMMain();
+int SAMMain( void (*cb)(void *, unsigned char), void *cbdata );
 void CopyStress();
 void SetPhonemeLength();
 void AdjustLengths();

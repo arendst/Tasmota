@@ -1537,6 +1537,26 @@ const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO-
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354
 const char PINS_WEMOS[] PROGMEM = "IOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOAOAOAOAOAOAOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOAOAOAOAO";
 
+#elif CONFIG_IDF_TARGET_ESP32S31
+/* ****************************************
+ * ESP32-S31
+ * GPIOs 0..61 (GPIO29 and GPIO41 are not bonded)
+ * ****************************************/
+#define MAX_GPIO_PIN       62
+#define MIN_FLASH_PINS     0
+#define MAX_USER_PINS      62
+#define WEMOS_MODULE       0
+
+const char PINS_WEMOS[] PROGMEM =
+  "AOAOIOIOIOIO"                    // GPIO0..5: 32 kHz crystal analog functions on GPIO0..1
+  "AOAOAOAOAOAOAOAOAOAOAOAOAOAO"    // GPIO6..19: touch-capable GPIOs
+  "IOIOIOIOIOIOFLFLFL"              // GPIO20..28: GPIO26..28 are SPI flash pins
+  "--"                              // GPIO29 is not bonded
+  "FLFLFLAOAOIOIOAOAOAOAO"          // GPIO30..40: GPIO30..32 are SPI flash pins
+  "--"                              // GPIO41 is not bonded
+  "AOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAO" // GPIO42..57: ADC-capable GPIOs
+  "IOIOIOIO";                       // GPIO58..61
+
 #else  // not CONFIG_IDF_TARGET_ESP32C2/C3/C6 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 
 /* ****************************************
@@ -3349,10 +3369,105 @@ const mytmplt kModules[] PROGMEM = {
 /*********************************************************************************************\
  Known templates
 \*********************************************************************************************/
-
-#elif CONFIG_IDF_TARGET_ESP32S2
+ #elif CONFIG_IDF_TARGET_ESP32S31
 /********************************************************************************************\
- * ESP32-S2 Module templates
+  * ESP32-S31 Module templates
+ \********************************************************************************************/
+
+ #define USER_MODULE        255
+ #define WT32_ETH01         4 // Legacy Ethernet module identifier used by the driver
+
+   /*********************************************************************************************\
+   Known templates
+  \*********************************************************************************************/
+
+ enum SupportedModulesESP32S31 {
+   WEMOS,
+   MAXMODULE };
+
+ const uint8_t kModuleNiceList[] PROGMEM = {
+   WEMOS,
+ };
+
+ const char kModuleNames[] PROGMEM =
+   "ESP32S31|"
+   ;
+
+ const mytmplt kModules[] PROGMEM = {
+   {
+     AGPIO(GPIO_USER),            // 0
+     AGPIO(GPIO_USER),            // 1
+     AGPIO(GPIO_USER),            // 2
+     AGPIO(GPIO_USER),            // 3
+     AGPIO(GPIO_USER),            // 4
+     AGPIO(GPIO_USER),            // 5
+     AGPIO(GPIO_USER),            // 6
+     AGPIO(GPIO_USER),            // 7
+     AGPIO(GPIO_USER),            // 8
+     AGPIO(GPIO_USER),            // 9
+     AGPIO(GPIO_USER),            // 10
+     AGPIO(GPIO_USER),            // 11
+     AGPIO(GPIO_USER),            // 12
+     AGPIO(GPIO_USER),            // 13
+     AGPIO(GPIO_USER),            // 14
+     AGPIO(GPIO_USER),            // 15
+     AGPIO(GPIO_USER),            // 16
+     AGPIO(GPIO_USER),            // 17
+     AGPIO(GPIO_USER),            // 18
+     AGPIO(GPIO_USER),            // 19
+     AGPIO(GPIO_USER),            // 20
+     AGPIO(GPIO_USER),            // 21
+     AGPIO(GPIO_USER),            // 22
+     AGPIO(GPIO_USER),            // 23
+     AGPIO(GPIO_USER),            // 24
+     AGPIO(GPIO_USER),            // 25
+     AGPIO(GPIO_NONE),            // 26: SPI flash
+     AGPIO(GPIO_NONE),            // 27: SPI flash
+     AGPIO(GPIO_NONE),            // 28: SPI flash
+     AGPIO(GPIO_NONE),            // 29: not bonded
+     AGPIO(GPIO_NONE),            // 30: SPI flash
+     AGPIO(GPIO_NONE),            // 31: SPI flash
+     AGPIO(GPIO_NONE),            // 32: SPI flash
+     AGPIO(GPIO_USER),            // 33
+     AGPIO(GPIO_USER),            // 34
+     AGPIO(GPIO_USER),            // 35
+     AGPIO(GPIO_USER),            // 36
+     AGPIO(GPIO_USER),            // 37
+     AGPIO(GPIO_USER),            // 38
+     AGPIO(GPIO_USER),            // 39
+     AGPIO(GPIO_USER),            // 40
+     AGPIO(GPIO_NONE),            // 41: not bonded
+     AGPIO(GPIO_USER),            // 42
+     AGPIO(GPIO_USER),            // 43
+     AGPIO(GPIO_USER),            // 44
+     AGPIO(GPIO_USER),            // 45
+     AGPIO(GPIO_USER),            // 46
+     AGPIO(GPIO_USER),            // 47
+     AGPIO(GPIO_USER),            // 48
+     AGPIO(GPIO_USER),            // 49
+     AGPIO(GPIO_USER),            // 50
+     AGPIO(GPIO_USER),            // 51
+     AGPIO(GPIO_USER),            // 52
+     AGPIO(GPIO_USER),            // 53
+     AGPIO(GPIO_USER),            // 54
+     AGPIO(GPIO_USER),            // 55
+     AGPIO(GPIO_USER),            // 56
+     AGPIO(GPIO_USER),            // 57
+     AGPIO(GPIO_USER),            // 58
+     AGPIO(GPIO_USER),            // 59
+     AGPIO(GPIO_USER),            // 60
+     AGPIO(GPIO_USER),            // 61
+     0                            // Flag
+   },
+ };
+
+ /*********************************************************************************************\
+  Known templates
+ \*********************************************************************************************/
+
+ #elif CONFIG_IDF_TARGET_ESP32S2
+ /********************************************************************************************\
+  * ESP32-S2 Module templates
 \********************************************************************************************/
 
 #define USER_MODULE        255

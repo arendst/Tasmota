@@ -992,9 +992,9 @@ void CmndStatus(void)
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
                           "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
                           ",\"HostedMCU\":{\"Hardware\":\"%s\",\"Version\":\"%s\"}"
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
                           "%s}}"),
                           TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str(), GetBuildDateAndTime().c_str()
 #ifdef ESP8266
@@ -1002,9 +1002,9 @@ void CmndStatus(void)
 #endif
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardwareRevision().c_str(),
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
                           GetHostedMCU().c_str(), GetHostedFwVersion(1).c_str(),
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
                           GetStatistics().c_str());
     CmndStatusResponse(2);
   }
