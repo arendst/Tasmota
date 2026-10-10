@@ -114,6 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.6.0.3
 ### Added
+- Initial support for ESP32-S31 [#25130](https://github.com/arendst/Tasmota/issues/25130)
 - Support for GUI tooltip on touch media like phones and tablets
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 [#24959](https://github.com/arendst/Tasmota/issues/24959)
 - Support for MI32 Xiaomi Mi Body Composition Scale (MIBCS/MIBFS) [#25049](https://github.com/arendst/Tasmota/issues/25049)
