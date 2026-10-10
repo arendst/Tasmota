@@ -599,6 +599,37 @@ class Matter_Plugin_Root : Matter_Plugin
 # - Heap metrics: Memory usage statistics
 #################################################################################
 
+#################################################################################
+# Matter 1.6.1 Wi-Fi Network Diagnostics Cluster (0x0036)
+#################################################################################
+# Cluster Revision: 1
+# Role: Utility | Scope: Node
+#
+# Provides Wi-Fi link information (access point, channel, signal strength).
+#
+# FEATURES: none (PKTCNT and ERRCNT counters are not supported)
+#
+# ATTRIBUTES:
+# ID     | Name          | Type             | Constraint | Quality | Default | Access | Conf
+# -------|---------------|------------------|------------|---------|---------|--------|-----
+# 0x0000 | BSSID         | octstr           | 6          | X       | null    | R V    | M
+# 0x0001 | SecurityType  | SecurityTypeEnum | all        | X       | null    | R V    | M
+# 0x0002 | WiFiVersion   | WiFiVersionEnum  | all        | X       | null    | R V    | M
+# 0x0003 | ChannelNumber | uint16           | all        | X       | null    | R V    | M
+# 0x0004 | RSSI          | int8             | -120 to 0  | X C     | null    | R V    | M
+#
+# SecurityTypeEnum:
+#   0=Unspecified, 1=None, 2=WEP, 3=WPA, 4=WPA2, 5=WPA3
+#
+# WiFiVersionEnum:
+#   0=a, 1=b, 2=g, 3=n, 4=ac, 5=ax, 6=ah
+#
+# NOTES:
+# - All attributes are null when Wi-Fi is not connected
+# - WiFiVersion reports the highest PHY mode supported by the access point
+# - BSSID and ChannelNumber changes (roaming) are reported to subscribers
+#################################################################################
+
 
   static var TYPE = "root"            # name of the plug-in in json
   static var DISPLAY_NAME = "Root node"       # display name of the plug-in
@@ -615,6 +646,7 @@ class Matter_Plugin_Root : Matter_Plugin
     0x0032: [],                       # Diagnostic Logs Cluster 11.10 p.637
     0x0033: [0,1,2,8],                # General Diagnostics Cluster 11.11 p.642
     0x0034: [],                       # Software Diagnostics Cluster 11.12 p.654
+    0x0036: [0,1,2,3,4],              # Wi-Fi Network Diagnostics Cluster 11.8 (Matter 1.6.1)
     0x0038: [0,1,7],                  # Time Synchronization 11.16 p.689
     0x003C: [0,1,2],                  # Administrator Commissioning Cluster 11.18 p.725
     0x003E: [0,1,2,3,4,5],            # Node Operational Credentials Cluster 11.17 p.704
@@ -629,11 +661,15 @@ class Matter_Plugin_Root : Matter_Plugin
     0x0046: [0,1,2]                   # ICD Management Cluster - base SIT mode (no CIP/LITS features)
   })
   static var TYPES = { 0x0016: 5 }       # Root node - Matter 1.6.1 Device Library Rev 5
+  static var WIFI_SECURITY = { 'open': 1, 'wep': 2, 'wpa': 3, 'wpa2': 4, 'wpa3': 5 }                 # SecurityTypeEnum
+  static var WIFI_VERSION = { '11a': 0, '11b': 1, '11g': 2, '11n': 3, '11ac': 4, '11ax': 5 }       # WiFiVersionEnum
   # static var MATTER_EPOCH_OFFSET = 946684800  # seconds from Unix epoch to 2000-01-01
   var _group_key_map_write_staged       # request-scoped candidate GroupKeyMap
   var _group_key_map_write_failed       # prevents partial GroupKeyMap persistence
   var _write_exchange_id                # identifies a multi-message list transaction
   var _write_session                    # prevents transaction reuse by another CASE peer
+  var _wifi_bssid                       # last reported BSSID, to detect roaming
+  var _wifi_channel                     # last reported Wi-Fi channel
 
   #############################################################
   # Constructor
@@ -642,6 +678,27 @@ class Matter_Plugin_Root : Matter_Plugin
     # publish mandatory events
     self.publish_event(0x0028, 0x00, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, tasmota.version()))   # Event StartUp - Software Version
     self.publish_event(0x0033, 0x03, 2 #-matter.EVENT_CRITICAL-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
+  end
+
+  #############################################################
+  # Report Wi-Fi Network Diagnostics changes when the device
+  # roams to another access point or channel
+  def update_shadow()
+    var tas_wif = tasmota.wifi()
+    var up = tas_wif['up']
+    var bssid = up ? tas_wif.find('bssid') : nil
+    var channel = up ? tas_wif.find('channel') : nil
+    if bssid != self._wifi_bssid
+      self.attribute_updated(0x0036, 0x0000)      # BSSID
+      self.attribute_updated(0x0036, 0x0001)      # SecurityType
+      self.attribute_updated(0x0036, 0x0002)      # WiFiVersion
+      self._wifi_bssid = bssid
+    end
+    if channel != self._wifi_channel
+      self.attribute_updated(0x0036, 0x0003)      # ChannelNumber
+      self._wifi_channel = channel
+    end
+    super(self).update_shadow()
   end
 
   # Open or resume the GroupKeyMap list-write transaction for this exchange.
@@ -996,6 +1053,26 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x0034              # ========== Software Diagnostics Cluster 11.12 p.654 ==========
       # no mandatory attributes - to be added later (maybe)
+
+    # ====================================================================================================
+    elif cluster == 0x0036              # ========== Wi-Fi Network Diagnostics Cluster 11.8 ==========
+      var tas_wif = tasmota.wifi()
+      if !tas_wif['up']    tas_wif = {}   end     # all attributes are null when not connected
+
+      if   attribute == 0x0000          #  ---------- BSSID / octstr ----------
+        var bssid = tas_wif.find('bssid')
+        if bssid != nil   bssid = bytes().fromhex(string.replace(bssid, ":", ""))   end
+        return tlv_solo.set_or_nil(0x10 #-TLV.B1-#, bssid)
+      elif attribute == 0x0001          #  ---------- SecurityType / enum8 ----------
+        var security = tas_wif.find('security')
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, (security != nil) ? self.WIFI_SECURITY.find(security, 0) : nil)
+      elif attribute == 0x0002          #  ---------- WiFiVersion / enum8 ----------
+        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.WIFI_VERSION.find(tas_wif.find('phy', '')))
+      elif attribute == 0x0003          #  ---------- ChannelNumber / u16 ----------
+        return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, tas_wif.find('channel'))
+      elif attribute == 0x0004          #  ---------- RSSI / i8 ----------
+        return tlv_solo.set_or_nil(0x00 #-TLV.I1-#, tas_wif.find('rssi'))
+      end
 
     # ====================================================================================================
     elif cluster == 0x0038              # ========== Time Synchronization 11.16 p.689 ==========

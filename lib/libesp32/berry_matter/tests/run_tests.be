@@ -41,12 +41,14 @@ end
 matter.get_attribute_name = def (cluster, attribute) return nil end
 
 class TestTasmota
-  var utc_time, local_time, now
+  var utc_time, local_time, now, wifi_info
   def init()
     self.utc_time = 1
     self.local_time = 1700000000
     self.now = 0
+    self.wifi_info = {'up': false}
   end
+  def wifi() return self.wifi_info end
   def rtc_utc() return self.utc_time end
   def rtc(mode) return self.local_time end
   def millis() return self.now end
@@ -328,6 +330,61 @@ tasmota.utc_time = 1
 ctx.attribute = 0x0000
 assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).typ == 0x14)
 print("  Matter epoch conversion for UTC and local time: OK")
+
+# Wi-Fi Network Diagnostics attributes are null when Wi-Fi is not connected.
+ctx = matter.Path(0, 0x0036, 0x0000)
+for attr : 0..4
+  ctx.attribute = attr
+  assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).typ == 0x14)
+end
+tasmota.wifi_info = {'up': true, 'bssid': 'AA:BB:CC:01:02:03', 'channel': 6, 'rssi': -61,
+                     'security': 'wpa2', 'phy': '11ax'}
+ctx.attribute = 0x0000
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == bytes("AABBCC010203"))
+ctx.attribute = 0x0001
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 4)
+ctx.attribute = 0x0002
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 5)
+ctx.attribute = 0x0003
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 6)
+ctx.attribute = 0x0004
+var rssi = root.read_attribute(session, ctx, TLV.Matter_TLV_item())
+assert(rssi.typ == 0x00 && rssi.val == -61)
+assert(rssi.tlv2raw() == bytes("00C3"))
+tasmota.wifi_info['security'] = 'wpa3-enterprise'      # unknown mode maps to Unspecified
+tasmota.wifi_info['phy'] = ''                          # unknown PHY is null
+ctx.attribute = 0x0001
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 0)
+ctx.attribute = 0x0002
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).typ == 0x14)
+
+# Roaming to another access point or channel is reported to subscribers.
+class TestWifiDevice
+  var tick, updates
+  def init() self.tick = 0 self.updates = [] end
+  def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    self.updates.push(attribute)
+  end
+end
+var wifi_root = TestRoot()
+wifi_root.device = TestWifiDevice()
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [0, 1, 2, 3])
+wifi_root.device.updates = []
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [])
+tasmota.wifi_info['bssid'] = 'AA:BB:CC:01:02:04'
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [0, 1, 2])
+wifi_root.device.updates = []
+tasmota.wifi_info['channel'] = 11
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [3])
+wifi_root.device.updates = []
+tasmota.wifi_info = {'up': false}
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [0, 1, 2, 3])
+print("  Wi-Fi Network Diagnostics attributes and roaming: OK")
 
 ctx = matter.Path(0, 0x003F, 0xFFFB)
 var attribute_list = root.read_attribute(session, ctx, TLV.Matter_TLV_item())
