@@ -611,7 +611,7 @@ typedef struct {
   char          serial_delimiter;          // 491
   uint8_t       seriallog_level;           // 492
   uint8_t       sleep;                     // 493
-  uint8_t       free_esp32s31_494[2];      // 494
+  uint16_t      ldo_mv[1];                 // 494  ESP32-S31 LDO3 voltage
 #elif CONFIG_IDF_TARGET_ESP32P4
   // --------------------------------------------------------------
   // Mapping 0x38C to 0x496 for ESP32P4 (Domoticz in filesystem)
@@ -629,7 +629,8 @@ typedef struct {
   uint8_t       sleep;                     // 477
   uint8_t       ws_color[4][3];            // 478  (+xC)
 
-  uint8_t       free_esp32_484[18];        // 484
+  uint16_t      ldo_mv[2];                 // 484  ESP32-P4 LDO3 and LDO4 voltage
+  uint8_t       free_esp32_488[14];        // 488
                                            // 496
 #elif CONFIG_IDF_TARGET_ESP32S3
   // --------------------------------------------------------------
@@ -847,12 +848,9 @@ typedef struct {
 
 #if CONFIG_IDF_TARGET_ESP32S31
   uint8_t       ws_color[4][3];            // EB0
-  uint16_t      ldo_mv[1];                 // EBC  ESP32-S31 LDO3 voltage
-  uint8_t       free_esp32s31_ebe[6];      // EBE
+  uint8_t       free_esp32s31_ebc[8];      // EBC
 #else
-  uint16_t      ldo_mv[2];                 // EB0  ESP32-P4 LDO3 and LDO4 voltage
-
-  uint8_t       free_eb4[16];              // EB4  16 bytes
+  uint8_t       free_eb0[20];              // EB0  20 bytes
 #endif
 
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
