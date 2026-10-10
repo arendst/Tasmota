@@ -150,7 +150,18 @@ assert(string.format("%s", nil) == 'nil')
 assert(string.format("%s", true) == 'true')
 assert(string.format("%s", false) == 'false')
 
+# width does not truncate a long string, precision still applies
+var long = ""
+for i: 1..150 long += "x" end
+assert(string.format("%5s", long) == long)
+assert(string.format("%-5s|", long) == long + "|")
+assert(string.format("%.3s", long) == "xxx")
+
 assert(string.format("%q", "\ntest") == '\'\\ntest\'')
+# %q ignores width/precision: a long string stays whole and properly quoted
+assert(string.format("%5q", long) == "'" + long + "'")
+assert(string.format("%-5q|", long) == "'" + long + "'|")
+assert(string.format("%.3q", long) == "'" + long + "'")
 
 # corrupt format string should not crash the VM
 assert(string.format("%0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f", 3.5) == '3.500000')
