@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "闪烁"
 #define D_BLINKOFF "闪烁关"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "启动次数"
 #define D_BRIGHTLIGHT "亮"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "大小:"
 #define D_CELSIUS "摄氏"
 #define D_CHANNEL "频道"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "二氧化碳"
 #define D_CODE "代码"                // Button code
 #define D_COLDLIGHT "冷"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "暗"
 #define D_DATA "数据:"
 #define D_DEBUG "调试"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "禁用"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "水深"
 #define D_WEB_SERVER "Web服务器"
 #define D_WEIGHT "重量"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持持久保存设置"

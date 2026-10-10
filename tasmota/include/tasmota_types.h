@@ -847,9 +847,12 @@ typedef struct {
 
 #if CONFIG_IDF_TARGET_ESP32S31
   uint8_t       ws_color[4][3];            // EB0
-  uint8_t       free_esp32s31_ebc[8];      // EBC
+  uint16_t      ldo_mv[1];                 // EBC  ESP32-S31 LDO3 voltage
+  uint8_t       free_esp32s31_ebe[6];      // EBE
 #else
-  uint8_t       free_eb0[20];              // EB0  20 bytes
+  uint16_t      ldo_mv[2];                 // EB0  ESP32-P4 LDO3 and LDO4 voltage
+
+  uint8_t       free_eb4[16];              // EB4  16 bytes
 #endif
 
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)

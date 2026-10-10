@@ -1561,14 +1561,14 @@ void WifiConnect(void)
 #if __has_include("esp_hosted.h")
     // Hosted MCU SDIO pins must be set before WiFi is initialized
     char sdio_source[10] = "default";
-    uint32_t sdio_pins[7] = {   // From framework-arduinoespressif32 variants/esp32p4/pins_arduino.h
-      BOARD_SDIO_ESP_HOSTED_CLK,
-      BOARD_SDIO_ESP_HOSTED_CMD,
-      BOARD_SDIO_ESP_HOSTED_D0,
-      BOARD_SDIO_ESP_HOSTED_D1,
-      BOARD_SDIO_ESP_HOSTED_D2,
-      BOARD_SDIO_ESP_HOSTED_D3,
-      BOARD_SDIO_ESP_HOSTED_RESET };
+    uint32_t sdio_pins[7] = {   // From sdkconfig, used by framework if not set by template
+      CONFIG_ESP_SDIO_PIN_CLK,
+      CONFIG_ESP_SDIO_PIN_CMD,
+      CONFIG_ESP_SDIO_PIN_D0,
+      CONFIG_ESP_SDIO_PIN_D1,
+      CONFIG_ESP_SDIO_PIN_D2,
+      CONFIG_ESP_SDIO_PIN_D3,
+      CONFIG_ESP_SDIO_GPIO_RESET_SLAVE };
     if (WiFi.setPins(Pin(GPIO_HSDIO_CLK),
                      Pin(GPIO_HSDIO_CMD),
                      Pin(GPIO_HSDIO_D0),

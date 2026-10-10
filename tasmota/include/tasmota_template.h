@@ -3321,12 +3321,12 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 11      IO                  GPIO11, TOUCH9, LP_GPIO11
     AGPIO(GPIO_USER),            // 12      IO                  GPIO12, TOUCH10, LP_GPIO12
     AGPIO(GPIO_USER),            // 13      IO                  GPIO13, TOUCH11, LP_GPIO13
-    AGPIO(GPIO_USER),            // 14      IO                  GPIO14, TOUCH12, LP_GPIO14, SDIO2_D0 ESPHosted (ESP32C6 GPIO20)
-    AGPIO(GPIO_USER),            // 15      IO                  GPIO15, TOUCH13, LP_GPIO15, SDIO2_D1 ESPHosted (ESP32C6 GPIO21)
-    AGPIO(GPIO_USER),            // 16      IO                  GPIO16, ADC1_CH0, SDIO2_D2 ESPHosted (ESP32C6 GPIO22)
-    AGPIO(GPIO_USER),            // 17      IO                  GPIO17, ADC1_CH1, SDIO2_D3 ESPHosted (ESP32C6 GPIO23)
-    AGPIO(GPIO_USER),            // 18      IO                  GPIO18, ADC1_CH2, SDIO2_CLK ESPHosted (ESP32C6 GPIO19)
-    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, ADC1_CH3, SDIO2_CMD ESPHosted (ESP32C6 GPIO18)
+    AGPIO(GPIO_HSDIO_D0),        // 14      IO                  GPIO14, TOUCH12, LP_GPIO14, SDIO2_D0 ESPHosted (ESP32C6 GPIO20)
+    AGPIO(GPIO_HSDIO_D1),        // 15      IO                  GPIO15, TOUCH13, LP_GPIO15, SDIO2_D1 ESPHosted (ESP32C6 GPIO21)
+    AGPIO(GPIO_HSDIO_D2),        // 16      IO                  GPIO16, ADC1_CH0, SDIO2_D2 ESPHosted (ESP32C6 GPIO22)
+    AGPIO(GPIO_HSDIO_D3),        // 17      IO                  GPIO17, ADC1_CH1, SDIO2_D3 ESPHosted (ESP32C6 GPIO23)
+    AGPIO(GPIO_HSDIO_CLK),       // 18      IO                  GPIO18, ADC1_CH2, SDIO2_CLK ESPHosted (ESP32C6 GPIO19)
+    AGPIO(GPIO_HSDIO_CMD),       // 19      IO                  GPIO19, ADC1_CH3, SDIO2_CMD ESPHosted (ESP32C6 GPIO18)
     AGPIO(GPIO_USER),            // 20      IO                  GPIO20, ADC1_CH4
     AGPIO(GPIO_USER),            // 21      IO                  GPIO21, ADC1_CH5
     AGPIO(GPIO_USER),            // 22      IO                  GPIO22, ADC1_CH6
@@ -3361,7 +3361,7 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 51      IO                  GPIO51, ADC1_CH10, ANA_CMPR_CH0 reference voltage
     AGPIO(GPIO_USER),            // 52      IO                  GPIO52, ADC1_CH11, ANA_CMPR_CH0 input (non-inverting)
     AGPIO(GPIO_USER),            // 53      IO                  GPIO53, ADC1_CH12, ANA_CMPR_CH1 reference voltage
-    AGPIO(GPIO_USER),            // 54      IO                  GPIO54, ADC1_CH13, ANA_CMPR_CH1 input (non-inverting)
+    AGPIO(GPIO_HSDIO_RST),       // 54      IO                  GPIO54, ADC1_CH13, ANA_CMPR_CH1 input (non-inverting), ESPHosted reset
     0                            // Flag
   },
 };

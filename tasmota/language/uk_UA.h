@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Блимати"
 #define D_BLINKOFF "Не блимати"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "К-сть завант."
 #define D_BRIGHTLIGHT "Яскравість"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Байтів"
 #define D_CELSIUS "Цельсія"
 #define D_CHANNEL "Канал"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Вуглек. газ"
 #define D_CODE "код"                // Button code
 #define D_COLDLIGHT "Холодний"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Темний"
 #define D_DATA "Дані"
 #define D_DEBUG "Налагодження"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Tочка роси"
 #define D_DISABLED "Вимкнено"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Глибина води"
 #define D_WEB_SERVER "Web сервер"
 #define D_WEIGHT "Вага"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ПОПЕРЕДЖЕННЯ! Ця версія не підтримує збереження налаштувань"

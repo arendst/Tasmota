@@ -14,6 +14,7 @@
 #include "esp_rom_sys.h"
 
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
+extern bool LdoEnabled(uint32_t channel);
 
 DSIPanel::DSIPanel(const DSIPanelConfig& config)
     : cfg(config), rotation(0)
@@ -23,8 +24,8 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
 
     esp_err_t ret;
 
-    // Step 1: Initialize LDO for display power (from config)
-    if (cfg.ldo_channel >= 0 && cfg.ldo_voltage_mv > 0) {
+    // Step 1: Initialize LDO for display power if not set by command Ldo (descriptor LDO is deprecated)
+    if (cfg.ldo_channel >= 0 && cfg.ldo_voltage_mv > 0 && !LdoEnabled(cfg.ldo_channel)) {
         esp_ldo_channel_config_t ldo_config = {
             .chan_id = cfg.ldo_channel,
             .voltage_mv = cfg.ldo_voltage_mv,
@@ -34,10 +35,8 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
             AddLog(3, "DSI: Failed to acquire LDO: %d", ret);
             return;
         }
-        AddLog(3, "DSI: LDO enabled (ch %d @ %dmV)", cfg.ldo_channel, cfg.ldo_voltage_mv);
+        AddLog(2, "DSI: Descriptor LDO is deprecated, use command 'Ldo%d %d'", cfg.ldo_channel, cfg.ldo_voltage_mv);
         delay(10);
-    } else {
-        AddLog(3, "DSI: No LDO configuration");
     }
 
     // Step 2: Create DSI bus (from config)

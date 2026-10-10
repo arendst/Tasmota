@@ -1056,6 +1056,55 @@ void GpioForceHoldRelay(void) {
 }
 #endif
 
+/*********************************************************************************************\
+ * On-chip LDO configuration (ESP32-P4)
+ *
+ * Ldo3 2500 - Set LDO3 to 2500mV, 0 = not used
+ * LDO1 and LDO2 are reserved for flash and PSRAM
+\*********************************************************************************************/
+
+#ifdef SOC_GP_LDO_SUPPORTED
+#include "esp_ldo_regulator.h"
+
+#define LDO_FIRST_CHANNEL  3
+
+void LdoInit(void) {
+  for (uint32_t i = 0; i < nitems(Settings->ldo_mv); i++) {
+    if (!Settings->ldo_mv[i]) { continue; }
+    esp_ldo_channel_config_t ldo_config = {
+      .chan_id = (int)(LDO_FIRST_CHANNEL + i),
+      .voltage_mv = Settings->ldo_mv[i],
+    };
+    esp_ldo_channel_handle_t ldo_handle = nullptr;  // Kept until restart
+    esp_err_t ret = esp_ldo_acquire_channel(&ldo_config, &ldo_handle);
+    if (ESP_OK == ret) {
+      AddLog(LOG_LEVEL_INFO, PSTR("LDO: Ldo%d %dmV"), ldo_config.chan_id, ldo_config.voltage_mv);
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("LDO: Ldo%d failed (%d)"), ldo_config.chan_id, ret);
+    }
+  }
+}
+
+bool LdoEnabled(uint32_t channel) {
+  return ((channel >= LDO_FIRST_CHANNEL) && (channel < LDO_FIRST_CHANNEL + nitems(Settings->ldo_mv)) &&
+          Settings->ldo_mv[channel - LDO_FIRST_CHANNEL]);
+}
+
+void CmndLdo(void) {
+  if ((XdrvMailbox.index < LDO_FIRST_CHANNEL) || (XdrvMailbox.index >= LDO_FIRST_CHANNEL + nitems(Settings->ldo_mv))) { return; }
+  uint32_t index = XdrvMailbox.index - LDO_FIRST_CHANNEL;
+  uint32_t mv = XdrvMailbox.payload;
+  if ((XdrvMailbox.data_len > 0) &&
+      ((0 == mv) || (3300 == mv) || ((mv >= 500) && (mv <= 2700)))) {  // Off, bypass or LDO range
+    if (mv != Settings->ldo_mv[index]) {
+      Settings->ldo_mv[index] = mv;
+      TasmotaGlobal.restart_flag = 2;
+    }
+  }
+  ResponseCmndIdxNumber(Settings->ldo_mv[index]);
+}
+#endif  // SOC_GP_LDO_SUPPORTED
+
 /********************************************************************************************/
 
 #endif  // ESP32

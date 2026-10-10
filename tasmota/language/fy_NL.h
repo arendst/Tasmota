@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Lading"    // Battery charge in %
 #define D_BLINK "Blinkje"
 #define D_BLINKOFF "BlinkjeUit"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Op 'e nij begjinne"
 #define D_BRIGHTLIGHT "Fel"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanaal"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Koalstofdiokside"
 #define D_CODE "koade"                // Button code
 #define D_COLDLIGHT "Kâld"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Tsjuster"
 #define D_DATA "Data"
 #define D_DEBUG "Debugearje"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dauwpunt"
 #define D_DISABLED "Útsetten"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Vattendjup"
 #define D_WEB_SERVER "Webserver"
 #define D_WEIGHT "Gewicht"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "WARSKOGING Dizze ferzje bewarret gjin ynstellings"
