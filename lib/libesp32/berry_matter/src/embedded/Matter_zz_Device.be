@@ -59,7 +59,7 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
-  var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
+  var disable_bridge_mode             # expose application endpoints as native static endpoints
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   var debug                           # debug mode, output all values when responding to read request with wildcard
   var configuration_version           # persistent Basic Information configuration version
@@ -765,13 +765,21 @@ class Matter_Device
   end
 
   #############################################################
+  # Increment the persisted composition version without publishing updates.
+  # This is used when a restart will rebuild the endpoint topology.
+  #
+  def bump_configuration_version()
+    self.configuration_version += 1
+    if self.configuration_version <= 0   self.configuration_version = 1 end
+  end
+
+  #############################################################
   # Signal to controller that endpoints changed via subcriptions
   #
   def signal_endpoints_changed()
     # Basic Information ConfigurationVersion represents composition changes,
     # while Descriptor PartsList invalidations refresh the affected topology.
-    self.configuration_version += 1
-    if self.configuration_version <= 0   self.configuration_version = 1 end
+    self.bump_configuration_version()
     self.attribute_updated(0x0000, 0x0028, 0x0018, false)
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
@@ -895,7 +903,7 @@ class Matter_Device
   def mqtt_reachable_changed(remote)
     import introspect
     for plugin: self.plugins
-      if introspect.get(plugin, "mqtt_remote") == remote
+      if introspect.get(plugin, "mqtt_remote") == remote && plugin.contains_cluster(0x0039)
         plugin.attribute_updated(0x0039, 0x0011)
       end
     end
@@ -917,7 +925,6 @@ class Matter_Device
   def subscribe_discovery()
     import mqtt
     mqtt.subscribe("tasmota/discovery/#", / topic, idx, data, databytes -> self.handle_global_discovery(topic, data))
-    log("MTR: Subscribed to tasmota/discovery/#", 3)
   end
 
   # Parse discovery messages, store by topic

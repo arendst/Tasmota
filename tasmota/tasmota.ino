@@ -521,6 +521,11 @@ void setup(void) {
   is_connected_to_USB = true;      // S2
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 
+  // Detect if esp-emu, if so disable CDC
+  if (WiFiHelper::macAddress().equals("24:0A:C4:00:00:01")) {
+    is_connected_to_USB = false;
+  }
+
   if (is_connected_to_USB) {
     // TasConsole is already running
 #if !ARDUINO_USB_MODE
@@ -531,6 +536,12 @@ void setup(void) {
   } else {
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
     HWCDCSerial.~HWCDC();       // not needed, deinit CDC
+    // HWCDC::deinit() leaves USB D-/D+ as OUTPUT_OPEN_DRAIN driven LOW (forces host re-enumeration)
+    // No host detected so re-enumeration is not needed: release the pins to high impedance
+    // GPIO_MODE_DISABLE clears output, input and open-drain, so GPIO matrix peripherals (LEDC, RMT...)
+    // can later drive these pins in push-pull mode. Not gpio_reset_pin(): it enables the pull-up on D+
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DM_GPIO_NUM, GPIO_MODE_DISABLE);
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DP_GPIO_NUM, GPIO_MODE_DISABLE);
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
     // Init command serial console preparing for AddLog use
     Serial.begin(TasmotaGlobal.baudrate);

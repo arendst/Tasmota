@@ -96,7 +96,7 @@ typedef struct Ina226Info_tag {
   uint8_t address;
   uint16_t calibrationValue;
   uint16_t config;
-  uint8_t present : 1;
+  uint8_t present;
   float i_lsb;
   float vbus_lsb;
 } Ina226Info_t;

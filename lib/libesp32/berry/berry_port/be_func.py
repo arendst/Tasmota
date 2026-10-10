@@ -412,20 +412,22 @@ def be_newclosure(vm, nupval):
 #     }
 # }
 def _init_upvals_ntv(vm, f):
-    """Initialize upvalues for a native closure.
+    """Initialize the preallocated upvalue slots of a native closure.
 
     Each upvalue is created in the "closed" state (value points to
-    internal storage) with refcnt=1 and a nil value.
+    internal storage) with refcnt=1 and a nil value. The slots are already
+    None before this function begins, so an allocation failure leaves a
+    safely destructible partially initialized closure, mirroring the C
+    runtime's NULL-slot behavior.
     """
-    f.upvals = []
-    for _ in range(f.nupvals):
+    for i in range(f.nupvals):
         uv = bupval()
         # Mark as closed: value points to internal storage (u_value)
         uv.refcnt = 1
         uv.u_value = bvalue()
         var_setnil(uv.u_value)
         uv.value = uv.u_value  # closed: points to own storage
-        f.upvals.append(uv)
+        f.upvals[i] = uv
 
 
 # ============================================================================
@@ -461,10 +463,12 @@ def be_newntvclosure(vm, cf, nupvals):
 
     f.f = cf
     f.nupvals = nupvals
+    # Match the C runtime: publish every slot as None before any per-upvalue
+    # allocation. If construction raises, Python GC can safely reclaim the
+    # partially initialized closure without dereferencing a stale upvalue.
+    f.upvals = [None] * nupvals
     if nupvals:
         _init_upvals_ntv(vm, f)
-    else:
-        f.upvals = []
     return f
 
 

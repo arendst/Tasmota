@@ -187,12 +187,12 @@ class Matter_UI
   "</script>"
 
   static var _CLASSES_TYPES_STD =
-                              "|relay|relay_power|light0|light1|light2|light3|shutter|shutter+tilt|garage"
+                              "|relay|relay_power|light0|light1|light2|light3|light5|shutter|shutter+tilt|garage"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality|soil"
   static var _CLASSES_TYPES_VIRTUAL =
-                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3|v_garage"
+                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3|v_light5|v_garage"
                               "|v_fan|v_hvac|v_hvac_option|v_gensw"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality|v_soil"
@@ -1113,14 +1113,17 @@ class Matter_UI
 
     # detect lights
     var light1, light2, light3    # contains a relay number of nil
+    # RGB+CT remotes stay light3 until an http_light5 bridge exists
     if status11.contains("HSBColor")
       light3 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("CT")
-      light2 =  power_cnt
+      light2 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("Dimmer")
-      light1 =  power_cnt
+      light1 = power_cnt
       power_cnt -= 1
     end
 
@@ -1519,9 +1522,15 @@ class Matter_UI
         var matter_enabled_requested = webserver.has_arg("menable")
         var matter_commissioning_requested = webserver.has_arg("comm")
         var matter_disable_bridge_mode_requested = (webserver.arg("nobridge") == 'on')
-        if self.device.disable_bridge_mode != matter_disable_bridge_mode_requested
+        var matter_disable_bridge_mode_current = self.device.disable_bridge_mode
+        var matter_bridge_mode_changed = matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested
+        if matter_bridge_mode_changed
+          # Persist the next-boot topology while keeping the live topology coherent
+          # until the restart below rebuilds all fixed Descriptor metadata.
           self.device.disable_bridge_mode = matter_disable_bridge_mode_requested
+          self.device.bump_configuration_version()
           self.device.save_param()
+          self.device.disable_bridge_mode = matter_disable_bridge_mode_current
         end
 
         if matter_enabled_requested != self.matter_enabled
@@ -1534,17 +1543,21 @@ class Matter_UI
           end
           #- and force restart -#
           webserver.redirect("/?rst=")
-        elif matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
-          if matter_commissioning_requested
-            self.device.commissioning.start_root_basic_commissioning()
-          else
-            self.device.commissioning.stop_basic_commissioning()
-          end
-        
-          #- and force restart -#
-          webserver.redirect("/")
         else
-          webserver.redirect("/")
+          if matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
+            if matter_commissioning_requested
+              self.device.commissioning.start_root_basic_commissioning()
+            else
+              self.device.commissioning.stop_basic_commissioning()
+            end
+          end
+
+          if matter_bridge_mode_changed
+            #- force restart to rebuild the endpoint topology -#
+            webserver.redirect("/?rst=")
+          else
+            webserver.redirect("/")
+          end
         end
 
       #---------------------------------------------------------------------#

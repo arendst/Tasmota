@@ -1035,6 +1035,10 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 #if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE) || defined(USE_MI_ESP32)
   WSContentSendRaw_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
+#if defined(USE_ZIGBEE) || defined(USE_MI_ESP32) || defined(USE_EQ3_ESP32)
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_SSI);
+#endif
+
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;

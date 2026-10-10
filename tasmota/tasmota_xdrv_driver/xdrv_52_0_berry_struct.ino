@@ -22,6 +22,7 @@
 
 #include <berry.h>
 #include <LList.h>
+#include <new>
 
 #include "be_mapping.h"
 #include "re1.5.h"
@@ -69,8 +70,12 @@ public:
     if (s == nullptr) { s = ""; }
     size_t s_len = strlen_P(s) + strlen_P(prefix) + strlen_P(suffix);
     if (0 == s_len) { return nullptr; }   // do nothing
-    LList_elt<Log_line> * log_elt = new LList_elt<Log_line>();
-    log_elt->val().allocate(s_len + 1);
+    LList_elt<Log_line> * log_elt = new (std::nothrow) LList_elt<Log_line>();
+    if (log_elt == nullptr) { return nullptr; }
+    if (log_elt->val().allocate(s_len + 1) == nullptr) {
+      delete log_elt;
+      return nullptr;  // Drop the log when its buffer cannot be allocated.
+    }
     snprintf_P(log_elt->val().getBuffer(), s_len+1, PSTR("%s%s%s"), prefix, s, suffix);
     log.addToLast(log_elt);
     return log_elt;

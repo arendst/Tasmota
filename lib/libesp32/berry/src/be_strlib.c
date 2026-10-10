@@ -832,7 +832,7 @@ int be_str_format(bvm *vm)
             {
                 bint val;
                 if (convert_to_int(vm, index, &val)) {
-                    snprintf(buf, sizeof(buf), "%c", (int)val);
+                    snprintf(buf, sizeof(buf), mode, (int)val);
                 }
                 be_pushstring(vm, buf);
                 break;

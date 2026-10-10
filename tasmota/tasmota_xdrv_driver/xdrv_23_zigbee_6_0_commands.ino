@@ -32,12 +32,12 @@ typedef struct Z_CommandConverter {
 } Z_CommandConverter;
 
 typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
-  uint32_t    x = 0;
-  uint32_t    y = 0;
-  uint32_t    z = 0;
-  uint8_t     x_type = 0;     // 0 = no value, 1 = 1 bytes, 2 = 2 bytes
-  uint8_t     y_type = 0;
-  uint8_t     z_type = 0;
+  uint32_t    x;
+  uint32_t    y;
+  uint32_t    z;
+  uint8_t     x_type;     // 0 = no value, 1 = 1 bytes, 2 = 2 bytes
+  uint8_t     y_type;
+  uint8_t     z_type;
 } Z_XYZ_Var;
 
 // Cluster specific commands

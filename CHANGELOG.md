@@ -3,15 +3,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.6.0.2]
+## [15.6.0.3]
+### Added
+- LVGL option to prefer PSRAM for draw buffers using bit 5 (0x20) of `:B` in display.ini (#25120)
+- Matter support for Light RBG+CT (5 channels) and refactoring of lights
+
+### Breaking Changed
+
+
+### Changed
+
+
+### Fixed
+- Unauthenticated UFS writes on web password enabled systems
+- Display dsi dma2d psram buffers (#24949)
+
+### Removed
+
+
+## [15.6.0.2] 20261008
 ### Added
 - DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) (#25073)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit (#24922)
 - Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) (#25088)
-- Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0)
-
-### Breaking Changed
-
+- Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0) (#25089)
+- OpenTherm support the second heating circuit (CH2) (#25098)
+- Command `HwDump` to dump detailed hardware GPIO configuration (#25111)
+- BLE EQ3-TRV encryption support (#25113)
 
 ### Changed
 - Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` (#25020)
@@ -19,13 +37,13 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
 - IR accept raw data in JSON (#25077)
 - Matter update specs to 1.6.1 (to be used by AI) (#25083)
+- Refresh EQ3 web UI (#25105)
+- Disable CDC on esp-emu (#25112)
 
 ### Fixed
-
-
-### Removed
-
-
+- Matter non-bridge endpoint topology (#25099)
+- MQTT false connected events when unconfigured (#25100)
+- PWM on CDC GPIO (#25106)
 
 ## [15.6.0.1] 20260926
 ### Added

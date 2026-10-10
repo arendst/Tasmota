@@ -462,8 +462,8 @@ typedef struct {
 } EnergyUsage;
 
 typedef struct {
-  uint8_t fnid = 0;
-  uint8_t dpid = 0;
+  uint8_t fnid;
+  uint8_t dpid;
 } TuyaFnidDpidMap;
 
 typedef union {

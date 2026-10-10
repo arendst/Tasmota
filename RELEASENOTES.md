@@ -112,11 +112,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.6.0.2
+## Changelog v15.6.0.3
 ### Added
 - Support for GUI tooltip on touch media like phones and tablets
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 [#24959](https://github.com/arendst/Tasmota/issues/24959)
 - Support for MI32 Xiaomi Mi Body Composition Scale (MIBCS/MIBFS) [#25049](https://github.com/arendst/Tasmota/issues/25049)
+- Command `HwDump` to dump detailed hardware GPIO configuration [#25111](https://github.com/arendst/Tasmota/issues/25111)
 - MQTT 5.0 with focus on request/response (optional) [#25050](https://github.com/arendst/Tasmota/issues/25050)
 - RC522 throttle idle polling and add self-healing watchdog [#25052](https://github.com/arendst/Tasmota/issues/25052)
 - NeoPool AuxMode [#24998](https://github.com/arendst/Tasmota/issues/24998)
@@ -126,11 +127,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MiELHVAC climate control panel on the web UI main page (mode, target temperature, fan, vanes, air direction) with live state [#24984](https://github.com/arendst/Tasmota/issues/24984)
 - MiELHVAC Modbus RTU slave on a second RS485 port exposing all states and functions for PLC use with `#define USE_MIEL_HVAC_MODBUS_SLAVE` [#24982](https://github.com/arendst/Tasmota/issues/24982)
 - MiELHVAC Home Assistant MQTT discovery [#25027](https://github.com/arendst/Tasmota/issues/25027)
+- OpenTherm support the second heating circuit (CH2) [#25098](https://github.com/arendst/Tasmota/issues/25098)
+- Display dsi dma2d psram buffers [#24949](https://github.com/arendst/Tasmota/issues/24949)
+- LVGL option to prefer PSRAM for draw buffers using bit 5 (0x20) of `:B` in display.ini [#25120](https://github.com/arendst/Tasmota/issues/25120)
+- BLE EQ3-TRV encryption support [#25113](https://github.com/arendst/Tasmota/issues/25113)
 - Berry virtual button support
 - Berry `sortedmap` support for `json.dump` [#24999](https://github.com/arendst/Tasmota/issues/24999)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit [#24922](https://github.com/arendst/Tasmota/issues/24922)
 - Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) [#25088](https://github.com/arendst/Tasmota/issues/25088)
-- Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0)
+- Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0) [#25089](https://github.com/arendst/Tasmota/issues/25089)
 
 ### Breaking Changed
 
@@ -143,18 +148,24 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - IR accept raw data in JSON [#25077](https://github.com/arendst/Tasmota/issues/25077)
 - Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` [#25020](https://github.com/arendst/Tasmota/issues/25020)
 - MiELHVAC accepts `fan_only` as an alias for fan mode in `HVACSetMode` / `HVACSetHAMode` (Home Assistant) [#24992](https://github.com/arendst/Tasmota/issues/24992)
+- Disable CDC on esp-emu [#25112](https://github.com/arendst/Tasmota/issues/25112)
 - BLE MI32 display icons instead of data lines. disable by removing `#define USE_SENSOR_ICON`
 - BLE EQ3-TRV code refactoring [#24978](https://github.com/arendst/Tasmota/issues/24978)
+- Refresh EQ3 web UI [#25105](https://github.com/arendst/Tasmota/issues/25105)
 
 ### Fixed
+- Unauthenticated UFS writes on web password enabled systems
 - Restore default hostname `%s` functionality using topic name only, regression from v15.4.0.2 [#24731](https://github.com/arendst/Tasmota/issues/24731)
+- MQTT false connected events when unconfigured [#25100](https://github.com/arendst/Tasmota/issues/25100)
 - Touch GT911 fix template [#25068](https://github.com/arendst/Tasmota/issues/25068)
 - MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - WT32_ETH01 ethernet initialization [#25051](https://github.com/arendst/Tasmota/issues/25051)
 - ESP32 release UART0 console when the template uses its pins [#25047](https://github.com/arendst/Tasmota/issues/25047)
+- PWM on CDC GPIO [#25106](https://github.com/arendst/Tasmota/issues/25106)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it [#24979](https://github.com/arendst/Tasmota/issues/24979)
 - Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)
 - Matter autoconfiguration after configuration reset [#24997](https://github.com/arendst/Tasmota/issues/24997)
 - Matter commissioning mDNS announcements [#25069](https://github.com/arendst/Tasmota/issues/25069)
+- Matter non-bridge endpoint topology [#25099](https://github.com/arendst/Tasmota/issues/25099)
 
 ### Removed
