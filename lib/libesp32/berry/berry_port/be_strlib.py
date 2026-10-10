@@ -1381,7 +1381,8 @@ def be_str_format(vm):
             elif spec == 's':
                 s = be_api.be_tostring(vm, index)
                 slen = be_api.be_strlen(vm, index)
-                if slen > 100 and len(mode) == 2:
+                # C: if (len > 100 && !strchr(mode, '.')) -- no precision: keep the whole string
+                if slen > 100 and '.' not in mode:
                     be_api.be_pushvalue(vm, index)
                 else:
                     try:
@@ -1393,7 +1394,8 @@ def be_str_format(vm):
                 be_toescape(vm, index, 'q')
                 s = be_api.be_tostring(vm, index)
                 slen = be_api.be_strlen(vm, index)
-                if slen > 100 and len(mode) == 2:
+                # C: if (len > 100) -- mode is ignored for %q: keep the whole escaped string
+                if slen > 100:
                     be_api.be_pushvalue(vm, index)
                 else:
                     be_api.be_pushstring(vm, s)
