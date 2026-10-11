@@ -840,7 +840,7 @@ int be_str_format(bvm *vm)
             case 's': {
                 const char *s = be_tostring(vm, index);
                 int len = be_strlen(vm, index);
-                if (len > 100 && strlen(mode) == 2) {
+                if (len > 100 && !strchr(mode, '.')) { /* no precision: keep the whole string */
                     be_pushvalue(vm, index);
                 } else {
                     snprintf(buf, sizeof(buf), mode, s);
@@ -851,7 +851,7 @@ int be_str_format(bvm *vm)
             case 'q': {
                 const char *s = be_toescape(vm, index, 'q');
                 int len = be_strlen(vm, index);
-                if (len > 100 && strlen(mode) == 2) {
+                if (len > 100) { /* mode is ignored for %q: keep the whole escaped string */
                     be_pushvalue(vm, index);
                 } else {
                     snprintf(buf, sizeof(buf), "%s", s);

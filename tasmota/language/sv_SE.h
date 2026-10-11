@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blinka"
 #define D_BLINKOFF "BlinkaAv"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Uppstartsräknare"
 #define D_BRIGHTLIGHT "Ljust"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanal"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Koldioxid"
 #define D_CODE "kod"                // Button code
 #define D_COLDLIGHT "Kallt"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Mörkt"
 #define D_DATA "Data"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "Inaktiverad"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Vattendjup"
 #define D_WEB_SERVER "Webbserver"
 #define D_WEIGHT "Vikt"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "VARNING Denna version supporterar inte beständiga inställningar"

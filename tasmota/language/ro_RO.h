@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Boot Count"
 #define D_BRIGHTLIGHT "Strălucire"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Canal"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Dioxid de carbon"
 #define D_CODE "cod"                // Button code
 #define D_COLDLIGHT "Rece"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Întunecat"
 #define D_DATA "Date"
 #define D_DEBUG "Depanare"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Punct de rouă"
 #define D_DISABLED "Dezactivat"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Adâncimea apei"
 #define D_WEB_SERVER "Server Web"
 #define D_WEIGHT "Greutate"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ATENȚIE Această versiune nu suportă setări permanente"

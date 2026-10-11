@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "充電"          // Battery charge in %
 #define D_BLINK "閃爍"
 #define D_BLINKOFF "閃爍關"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "啟動次數"
 #define D_BRIGHTLIGHT "亮度"
 #define D_BSSID "BSSId"                // Basic Service Set Identifier (kept intact)
@@ -74,6 +75,7 @@
 #define D_BYTES "大小："
 #define D_CELSIUS "攝氏"
 #define D_CHANNEL "頻道 "             // Added space to append numbers in code
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "二氧化碳"
 #define D_CODE "代碼"                // Button code
 #define D_COLDLIGHT "冷光"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "暗光"
 #define D_DATA "資料："
 #define D_DEBUG "除錯"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "露點"
 #define D_DISABLED "已停用"
 #define D_DISCONNECTED "已斷線"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "水深"
 #define D_WEB_SERVER "網頁伺服器"
 #define D_WEIGHT "重量"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "警告：這個版本無法永久儲存設定！"

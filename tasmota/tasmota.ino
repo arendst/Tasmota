@@ -97,6 +97,7 @@
 #ifdef ESP32
 #include "include/tasconsole.h"
 #if SOC_USB_SERIAL_JTAG_SUPPORTED
+#include "soc/io_mux_reg.h"                 // USB_INT_PHY0_Dx_GPIO_NUM
 #include "hal/usb_serial_jtag_ll.h"
 #include "esp_private/rtc_clk.h"
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
@@ -222,7 +223,7 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
     CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
     CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
 */
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 
 //#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
 #ifdef USE_USB_CDC_CONSOLE
@@ -251,11 +252,11 @@ TASCONSOLE TasConsole{Serial};
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
 #endif  // USE_USB_CDC_CONSOLE
-#else   // No ESP32C3, S2 or S3
+#else   // No USB CDC-capable target
 TASCONSOLE TasConsole{Serial};
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
-#endif  // ESP32C3, S2 or S3
+#endif  // USB CDC-capable targets
 
 #else   // No ESP32
 HardwareSerial TasConsole = Serial;         // Only serial interface
@@ -505,7 +506,7 @@ void setup(void) {
   }
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 #ifdef USE_USB_CDC_CONSOLE
 
   bool is_connected_to_USB = false;

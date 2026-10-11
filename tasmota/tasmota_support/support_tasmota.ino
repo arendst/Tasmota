@@ -2036,6 +2036,10 @@ void TasConsoleInput(void) {
 
 void GpioInit(void)
 {
+#ifdef SOC_GP_LDO_SUPPORTED
+  LdoInit();                                               // Power IO banks before any GPIO use
+#endif  // SOC_GP_LDO_SUPPORTED
+
   if (!ValidModule(Settings->module)) {
     uint32_t module = MODULE;
     if (!ValidModule(MODULE)) {

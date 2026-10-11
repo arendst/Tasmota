@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "깜박임"
 #define D_BLINKOFF "깜박임 끄기"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "부팅 횟수"
 #define D_BRIGHTLIGHT "밝게"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "섭씨"
 #define D_CHANNEL "채널"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "이산화탄소"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "차갑게"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "어둡게"
 #define D_DATA "Data"
 #define D_DEBUG "디버그"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "사용안함"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "수심"
 #define D_WEB_SERVER "웹 서버"
 #define D_WEIGHT "무게"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "경고: 이 버전은 영구 설정을 지원하지 않습니다"

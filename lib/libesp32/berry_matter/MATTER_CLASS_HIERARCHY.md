@@ -86,6 +86,7 @@ Matter_Plugin (Base Class)
     │   ├── Matter_Plugin_Bridge_Sensor_Air_Quality
     │   └── Matter_Plugin_Virt_Sensor_Air_Quality
     └── Matter_Plugin_Sensor_GenericSwitch_Btn
+        └── Matter_Plugin_Virt_Sensor_GenericSwitch_Btn
 ```
 
 ## Base Classes
@@ -302,6 +303,18 @@ static var CLUSTERS = { 0x001D: [0,1,2,3] }  # Descriptor cluster
 - **Display Name**: `"Generic Switch/Button"`
 - **Matter Device Type**: `0x000F` (Generic Switch)
 - **Clusters**: `0x003B` (Switch)
+- **Features**: MomentarySwitch, MomentarySwitchRelease, MomentarySwitchMultiPress (`FeatureMap = 0x16`); supports up to five presses
+- **Behavior**: Maps one configured Tasmota button number to the endpoint and starts with released `CurrentPosition = 0`
+
+### Matter_Plugin_Virt_Sensor_GenericSwitch_Btn
+- **File**: `Matter_Plugin_9_Virt_Sensor_GenericSwitch_Btn.be`
+- **Type**: `"v_gensw"`
+- **Display Name**: `"v.Generic Switch/Button"`
+- **Parent**: `Matter_Plugin_Sensor_GenericSwitch_Btn`
+- **Matter Device Type**: `0x000F` (Generic Switch)
+- **Clusters**: `0x003B` (Switch)
+- **Purpose**: Virtual button endpoint for completed remote gestures
+- **Behavior**: Ignores physical GPIO callbacks; `MtrUpdate` accepts integer `Presses` values from 1 through 5, emits the corresponding Generic Switch events, and returns to released `CurrentPosition = 0`. Omitting `Presses` queries state; invalid values return an error without publishing events.
 
 ## Plugin Selection Logic
 
@@ -338,6 +351,22 @@ The Matter implementation uses a hierarchical approach for plugin selection:
 }
 ```
 
+### Virtual Generic Switch/Button
+```json
+{
+  "type": "v_gensw",
+  "name": "Wall button 1"
+}
+```
+
+After configuring the endpoint, send a completed gesture with `MtrUpdate`, for example:
+
+```text
+MtrUpdate {"Name":"Wall button 1","Presses":1}
+```
+
+`Presses` accepts integers from 1 through 5. Repeated commands represent separate gestures; omitting `Presses` queries the endpoint state.
+
 ### Zigbee Device
 ```json
 {
@@ -369,6 +398,7 @@ The Matter implementation uses a hierarchical approach for plugin selection:
 | flow | Flow Sensor | 0x0306 | 2 | Flow measurement |
 | airquality | Air Quality Sensor | 0x002C | 1 | Air quality measurement |
 | gensw_btn | Generic Switch | 0x000F | 3 | Button/switch |
+| v_gensw | Generic Switch | 0x000F | 3 | Virtual remote button |
 
 ## Cluster Support Matrix
 

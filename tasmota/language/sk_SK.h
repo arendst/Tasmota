@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blikanie"
 #define D_BLINKOFF "BlikanieVyp"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Počítadlo spustení"
 #define D_BRIGHTLIGHT "Svetlý"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytov"
 #define D_CELSIUS "°C"
 #define D_CHANNEL "Kanál"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "CO2"
 #define D_CODE "kód"                 // Button code
 #define D_COLDLIGHT "Studené svetlo"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Tmavý"
 #define D_DATA "Dáta"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "Zablokované"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Hĺbka vody"
 #define D_WEB_SERVER "Web Server"
 #define D_WEIGHT "Hmotnosť"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UPOZORNENIE Táto verzia nepodporuje trvalé nastavenia"

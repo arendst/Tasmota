@@ -32,6 +32,9 @@ License along with NeoPixel.  If not, see
 #if !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C5) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 #if !defined(ARDUINO_ARCH_ESP8266)
 #include "soc/gpio_periph.h"
+#if __has_include("soc/gpio_struct.h")
+#include "soc/gpio_struct.h"
+#endif
 #endif
 
 static inline uint32_t getCycleCount(void)

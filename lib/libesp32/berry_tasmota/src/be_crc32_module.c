@@ -8,7 +8,14 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
+#if __has_include("rom/crc.h")
 #include "rom/crc.h"
+#else
+#include "esp_rom_crc.h"
+#define crc32_le esp_rom_crc32_le
+#define crc16_le esp_rom_crc16_le
+#define crc8_le esp_rom_crc8_le
+#endif
 
 static uint32_t c_crc32(uint32_t crc, const uint8_t* buf, size_t size) {
   return crc32_le(crc, buf, size);

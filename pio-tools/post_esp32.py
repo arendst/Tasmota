@@ -57,7 +57,10 @@ if github_actions and os.path.exists(os.path.normpath(os.path.join(".", "firmwar
 
 # Copy pins_arduino.h to variants folder
 if variants_dir:
-    mcu_build_variant_path = os.path.normpath(join(FRAMEWORK_DIR, "variants", mcu_build_variant, "pins_arduino.h"))
+    mcu_build_variant_path = os.path.normpath(join(env.subst("$PROJECT_DIR"), "pins_arduino", mcu_build_variant, "pins_arduino.h"))
+    if not os.path.isfile(mcu_build_variant_path):
+        print(Fore.RED + "*** Missing " + mcu_build_variant_path + " - copy it from framework variants/" + mcu_build_variant + " ***")
+        exit(1)
     custom_variant_build = os.path.normpath(join(env.subst("$PROJECT_DIR"), variants_dir , mcu_build_variant, "pins_arduino.h"))
     os.makedirs(os.path.normpath(join(env.subst("$PROJECT_DIR"), variants_dir , mcu_build_variant)), exist_ok=True)
     shutil.copy(mcu_build_variant_path, custom_variant_build)
@@ -219,9 +222,13 @@ def esp32_build_filesystem(fs_size):
     print(Fore.GREEN + f"LittleFS image created: {output_file}")
     return True
 
+def esp32_safeboot_platform(tasmota_platform):
+    return tasmota_platform[:-3] if tasmota_platform.endswith("_2M") else tasmota_platform
+
 def esp32_fetch_safeboot_bin(tasmota_platform):
-    safeboot_fw_url = "http://ota.tasmota.com/tasmota32/release/" + tasmota_platform + "-safeboot.bin"
-    safeboot_fw_name = os.path.normpath(join(variants_dir, tasmota_platform + "-safeboot.bin"))
+    safeboot_platform = esp32_safeboot_platform(tasmota_platform)
+    safeboot_fw_url = "http://ota.tasmota.com/tasmota32/release/" + safeboot_platform + "-safeboot.bin"
+    safeboot_fw_name = os.path.normpath(join(variants_dir, safeboot_platform + "-safeboot.bin"))
     if(exists(safeboot_fw_name)):
         try:
             with open(safeboot_fw_name, "rb") as safeboot_file:
@@ -250,12 +257,13 @@ def esp32_fetch_safeboot_bin(tasmota_platform):
         pass
     print(Fore.RED + "Download of safeboot binary failed. Please check your Internet connection.")
     print(Fore.RED + "Creation of " + tasmota_platform + "-factory.bin not possible")
-    print(Fore.YELLOW + "Without download from Internet " + Fore.GREEN + tasmota_platform + "-safeboot.bin" + Fore.YELLOW + " needs to be compiled before " + Fore.GREEN + tasmota_platform)
+    print(Fore.YELLOW + "Without download from Internet " + Fore.GREEN + safeboot_platform + "-safeboot.bin" + Fore.YELLOW + " needs to be compiled before " + Fore.GREEN + tasmota_platform)
     return False
 
 def esp32_copy_new_safeboot_bin(tasmota_platform,new_local_safeboot_fw):
     print("Copy new local safeboot firmware to variants dir -> using it for further flashing operations")
-    safeboot_fw_name = os.path.normpath(join(variants_dir, tasmota_platform + "-safeboot.bin"))
+    safeboot_platform = esp32_safeboot_platform(tasmota_platform)
+    safeboot_fw_name = os.path.normpath(join(variants_dir, safeboot_platform + "-safeboot.bin"))
     if os.path.exists(variants_dir):
         try:
             shutil.copy(new_local_safeboot_fw, safeboot_fw_name)

@@ -61,8 +61,8 @@ const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in fir
 #ifdef ESP32                                // Max number of PWM channels (total including extended) - ESP32 only
   #if CONFIG_IDF_TARGET_ESP32
   const uint8_t MAX_PWMS = 16;              // ESP32: 16 ledc PWM channels in total - TODO for now
-  #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-  const uint8_t MAX_PWMS = 8;               // ESP32S2/S3: 8 ledc PWM channels in total
+  #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32S31
+  const uint8_t MAX_PWMS = 8;               // ESP32S2/S3/S31: 8 ledc PWM channels in total
   #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
   const uint8_t MAX_PWMS = 6;               // ESP32C2/C3/C6: 6 ledc PWM channels in total
   #else
@@ -99,13 +99,38 @@ const uint8_t MAX_SPI = 2;                  // Max number of Hardware SPI contro
 
 // I2S
 #ifdef SOC_I2S_SUPPORTED
+  #ifndef SOC_I2S_NUM  // IDF 6.x: SOC_I2S_NUM removed
+    #ifdef CONFIG_IDF_TARGET_ESP32P4
+      #define SOC_I2S_NUM 3
+    #elif CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32S31
+      #define SOC_I2S_NUM 2
+    #else
+      #define SOC_I2S_NUM 1   
+    #endif
+  #endif
   const uint8_t MAX_I2S = SOC_I2S_NUM;
 #else  // SOC_I2S_SUPPORTED
   const uint8_t MAX_I2S = 0;
 #endif // SOC_I2S_SUPPORTED
 
 // RMT
-#ifdef SOC_RMT_SUPPORTED
+#ifdef SOC_RMT_SUPPORTED  // IDF 6.x:  SOC_RMT_SUPPORTED removed
+  #ifndef SOC_RMT_TX_CANDIDATES_PER_GROUP
+    #ifdef CONFIG_IDF_TARGET_ESP32
+      #define SOC_RMT_TX_CANDIDATES_PER_GROUP 8
+    #elif CONFIG_IDF_TARGET_ESP32S3
+      #define SOC_RMT_TX_CANDIDATES_PER_GROUP 4
+    #elif CONFIG_IDF_TARGET_ESP32P4
+      #define SOC_RMT_TX_CANDIDATES_PER_GROUP 4
+    #elif CONFIG_IDF_TARGET_ESP32S31
+      #define SOC_RMT_TX_CANDIDATES_PER_GROUP 8
+    #else
+      #define SOC_RMT_TX_CANDIDATES_PER_GROUP 2
+    #endif
+  #endif
+  #ifndef SOC_RMT_GROUPS  // IDF 6.x: removed
+    #define SOC_RMT_GROUPS 1
+  #endif
   const uint8_t MAX_RMT = (SOC_RMT_GROUPS) * (SOC_RMT_TX_CANDIDATES_PER_GROUP);
 #else // SOC_RMT_SUPPORTED
   const uint8_t MAX_RMT = 0;
@@ -347,6 +372,8 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define SOC_TOUCH_VERSION_1
 #elif SOC_TOUCH_SENSOR_VERSION == 2  // ESP32S2, ESP32S3
 #define SOC_TOUCH_VERSION_2
+#elif SOC_TOUCH_SENSOR_VERSION == 3  // ESP32S31
+#define SOC_TOUCH_VERSION_3
 #endif  // SOC_TOUCH_SENSOR_VERSION
 #endif  // ESP32
 

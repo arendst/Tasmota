@@ -31,7 +31,7 @@
 # error "No ESP capability header found"
 #endif
 
-#if SOC_MPI_SUPPORTED
+#if SOC_MPI_SUPPORTED && __has_include("rom/bigint.h")
 
 #include <stdint.h>
 #include "rom/bigint.h"

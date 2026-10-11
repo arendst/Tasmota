@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Yeniden başlama sayısı"
 #define D_BRIGHTLIGHT "Işık"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bayt"
 #define D_CELSIUS "Derece"
 #define D_CHANNEL "Channel"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Karbon dioksit"
 #define D_CODE "kod"                // Button code
 #define D_COLDLIGHT "Soğuk"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Karanlık"
 #define D_DATA "Data"
 #define D_DEBUG "Hata Ayıklama"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "Etkin Değil"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Su derinliği"
 #define D_WEB_SERVER "Web Sunucusu"
 #define D_WEIGHT "Weight"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UYARI Bu versiyon ayarların kalıcı olarak kaydedilmesine olanak sağlamıyor"
