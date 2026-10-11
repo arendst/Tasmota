@@ -860,6 +860,18 @@ class Matter_Device
     return http_remote
   end
 
+  # Notify all endpoints sharing a remote when BridgedDeviceBasic Reachable changes.
+  def http_reachable_changed(remote)
+    import introspect
+    for plugin: self.plugins
+      if introspect.get(plugin, "http_remote") == remote && plugin.contains_cluster(0x0039)
+        plugin.attribute_updated(0x0039, 0x0011)
+        plugin.publish_event(0x0039, 0x03, 1 #-matter.EVENT_INFO-#,
+                             matter.TLV.Matter_TLV_item().set(0x08 #-matter.TLV.BOOL-#, remote.reachable))
+      end
+    end
+  end
+
   #####################################################################
   # Manager MQTT remotes
   #####################################################################
