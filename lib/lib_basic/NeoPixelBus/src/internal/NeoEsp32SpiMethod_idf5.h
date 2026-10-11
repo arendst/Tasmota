@@ -30,7 +30,7 @@ License along with NeoPixel.  If not, see
 
 #if defined(ARDUINO_ARCH_ESP32)
 
-#if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C6)) && !defined(HSPI_HOST)
+#if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32C61)) && !defined(HSPI_HOST)
 // HSPI_HOST depreciated in C3
 #define HSPI_HOST   SPI2_HOST
 #endif
@@ -496,12 +496,12 @@ typedef NeoEsp32SpiMethodBase<NeoEsp32SpiSpeedWs2812x, NeoEsp32SpiChannel> NeoEs
 typedef NeoEsp32SpiMethodBase<NeoEsp32SpiSpeedSk6812, NeoEsp32SpiChannel> NeoEsp32SpiNSk6812Method;
 
 
-// SPI channel method is the default method for Esp32C2
-#ifdef CONFIG_IDF_TARGET_ESP32C2
+// SPI channel method is the default method for Esp32C2 & Esp32C61
+#if defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C61)
 typedef NeoEsp32SpiSpeedWs2812x NeoWs2813Method;
 typedef NeoEsp32SpiSpeedWs2812x NeoWs2812xMethod;
 typedef NeoEsp32SpiSpeedSk6812 NeoSk6812Method;
 
-#endif //CONFIG_IDF_TARGET_ESP32C2
+#endif //CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C61
 
 #endif

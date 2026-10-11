@@ -3447,8 +3447,14 @@ chknext:
             if (pin < 1 || pin > 20) pin = 1;
 #elif defined(CONFIG_IDF_TARGET_ESP32S31)
             if (pin < 42 || pin > 57) pin = 42;
-#elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
-            if (pin < 0 || pin > 5) pin = 0;
+#elif defined(CONFIG_IDF_TARGET_ESP32C61)
+            if (pin != 1 && pin != 3 && pin != 4 && pin != 5) pin = 1;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+            if (pin < 0 || pin > 4) pin = 0;
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
+            if (pin < 1 || pin > 7) pin = 1;
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+            if (pin < 0 || pin > 6) pin = 0;
 #else
             if (pin < 32 || pin > 39) pin = 32;
 #endif
