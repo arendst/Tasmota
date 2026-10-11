@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 31.08.2026
+ * Updated until v9.4.0.1 - Last update 11.10.2026
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -75,7 +75,7 @@
 #define D_BYTES                "Byte"
 #define D_CELSIUS              "Celsius"
 #define D_CHANNEL              "Canale"
-#define D_CHILD_LOCK           "Child Lock"
+#define D_CHILD_LOCK           "Blocco bambini"
 #define D_CO2                  "CO2"
 #define D_CODE                 "codice"              // Button code
 #define D_COLDLIGHT            "Fredda"
@@ -91,7 +91,7 @@
 #define D_DARKLIGHT            "Scuro"
 #define D_DATA                 "Dati"
 #define D_DEBUG                "Debug"
-#define D_DECRYPTION           "Decryption"
+#define D_DECRYPTION           "Decriptazione"
 #define D_DEWPOINT             "Punto rugiada" //
 #define D_DISABLED             "Disabilitato/a"
 #define D_DISCONNECTED         "Disconnesso"
@@ -230,7 +230,7 @@
 #define D_WATER_DEPTH          "Profondità dell'acqua"
 #define D_WEB_SERVER           "Server web"
 #define D_WEIGHT               "Peso"
-#define D_WINDOW_OPEN          "Window open"
+#define D_WINDOW_OPEN          "Apertura finestra"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION  "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
