@@ -1070,8 +1070,14 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.WIFI_VERSION.find(tas_wif.find('phy', '')))
       elif attribute == 0x0003          #  ---------- ChannelNumber / u16 ----------
         return tlv_solo.set_or_nil(0x05 #-TLV.U2-#, tas_wif.find('channel'))
-      elif attribute == 0x0004          #  ---------- RSSI / i8 ----------
-        return tlv_solo.set_or_nil(0x00 #-TLV.I1-#, tas_wif.find('rssi'))
+      elif attribute == 0x0004          #  ---------- RSSI / int8 (-120..0) ----------
+        var rssi = tas_wif.find('rssi')
+        if rssi != nil
+          if rssi < -120   rssi = -120
+          elif rssi > 0    rssi = 0
+          end
+        end
+        return tlv_solo.set_or_nil(0x02 #-TLV.I4-#, rssi)
       end
 
     # ====================================================================================================
