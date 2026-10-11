@@ -65,6 +65,10 @@ extern "C" {
   #include "esp32c6/rom/rtc.h"
   #include "esp32c6/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32C61
+  #include "esp32c61/rom/rtc.h"
+  #include "esp32c61/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c61 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32H2
   #include "esp32h2/rom/rtc.h"
   #include "esp32h2/rom/spi_flash.h"
@@ -572,7 +576,7 @@ extern "C" {
 // `psramFound()` can return true even if no PSRAM is actually installed
 // This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
 bool FoundPSRAM(void) {
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || DISABLE_PSRAMCHECK || CORE32SOLO1
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || DISABLE_PSRAMCHECK || CORE32SOLO1
   return psramFound();
 #elif CONFIG_IDF_TARGET_ESP32P4
   return ESP.getPsramSize() > 0;
@@ -916,6 +920,21 @@ typedef struct {
       }
 #endif  // CONFIG_IDF_TARGET_ESP32C5
       return F("ESP32-C5");
+    }
+    case 20: {  // ESP32-C61
+      /*
+      ESP32-C61 Series
+      - 32-bit RISC-V single-core processor that operates at up to 160 MHz
+      - 2.4 GHz Wi-Fi 6 (802.11ax) and Bluetooth 5 (LE)
+      - 320 KB SRAM, 256 KB ROM, Quad SPI flash/PSRAM
+      - 30 programmable GPIOs
+      */
+#ifdef CONFIG_IDF_TARGET_ESP32C61
+      switch (pkg_version) {
+        case 0:              return F("ESP32-C61");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32C61
+      return F("ESP32-C61");
     }
     case 7:     // ESP32-C6(beta)
     case 13: {  // ESP32-C6

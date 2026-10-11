@@ -239,7 +239,7 @@ bool directRead(IO_REG_TYPE mask)
 static inline __attribute__((always_inline))
 IO_REG_TYPE directRead(IO_REG_TYPE pin)
 {
-#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4
+#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32C61
     return (GPIO.in.val >> pin) & 0x1;
 #elif CONFIG_IDF_TARGET_ESP32S31
     if ( pin < 32 )
@@ -259,7 +259,7 @@ IO_REG_TYPE directRead(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directWriteLow(IO_REG_TYPE pin)
 {
-#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4
+#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32C61
     GPIO.out_w1tc.val = ((uint32_t)1 << pin);
 #elif CONFIG_IDF_TARGET_ESP32S31
     if ( pin < 32 )
@@ -277,7 +277,7 @@ void directWriteLow(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directWriteHigh(IO_REG_TYPE pin)
 {
-#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4
+#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32C61
     GPIO.out_w1ts.val = ((uint32_t)1 << pin);
 #elif CONFIG_IDF_TARGET_ESP32S31
     if ( pin < 32 )
@@ -299,7 +299,7 @@ void directModeInput(IO_REG_TYPE pin)
     if ( digitalPinIsValid(pin) )
     {
         // Input
-#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4
+#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32C61
         GPIO.enable_w1tc.val = ((uint32_t)1 << (pin));
 #elif CONFIG_IDF_TARGET_ESP32S31
         if ( pin < 32 )
@@ -322,7 +322,7 @@ void directModeOutput(IO_REG_TYPE pin)
     if ( digitalPinCanOutput(pin) ) 
     {
         // Output
-#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4
+#if SOC_GPIO_PIN_COUNT <= 32 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32C61
         GPIO.enable_w1ts.val = ((uint32_t)1 << (pin));
 #elif CONFIG_IDF_TARGET_ESP32S31
         if ( pin < 32 )
