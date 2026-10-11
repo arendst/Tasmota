@@ -57,6 +57,9 @@ end
 introspect.setmodule("crypto", crypto)
 # Replace only network construction; state transitions and callbacks are real.
 class MemoryRemote : matter.HTTP_remote
+  # Matter_HTTP_async is loaded after its placeholder base in this test harness,
+  # so retain the fields accessed by the real completion callbacks explicitly.
+  var time_start, http_status, addr
   def init(device)
     self.device = device
     self.reachable = false
@@ -64,6 +67,9 @@ class MemoryRemote : matter.HTTP_remote
     self.probe_next_timestamp_map = {}
     self.async_cb_map = {}
     self.info = {}
+    self.time_start = 0
+    self.http_status = 0
+    self.addr = ""
   end
 end
 class MQTTBoundary
@@ -296,6 +302,24 @@ f.remote.dispatch_cb(1, '{"StatusSTS":{"POWER2":"OFF","POWER3":"OFF","POWER4":"O
 f.assert_notifications(3)
 assert(size(f.sub.updates) == 0)
 f.assert_events([true])
+# Asynchronous HTTP failures and timeouts also transition every shared endpoint offline.
+for failure_kind : [0, 1]
+  f = Fixture()
+  f.remote.current_cmd = "Status 11"
+  f.remote.time_start = 0
+  f.remote.http_status = 0
+  f.remote.device_is_alive(true)
+  f.assert_notifications(3)
+  if failure_kind == 0
+    f.remote.event_http_failed()
+  else
+    f.remote.event_http_timeout()
+  end
+  assert(!f.remote.reachable)
+  f.assert_notifications(6)
+  f.assert_events([true, false])
+  f.report(false, [true, false])
+end
 # Native composition hides Bridged Device Basic Information from all endpoints.
 # The backend must still track availability, but cannot report a hidden cluster.
 f = Fixture(true)
