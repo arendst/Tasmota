@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - LVGL option to prefer PSRAM for draw buffers using bit 5 (0x20) of `:B` in display.ini (#25120)
 - Matter support for Light RBG+CT (5 channels) and refactoring of lights
 - Initial support for ESP32-S31 (#25130)
+- Matter Wi-Fi Network Diagnostics cluster (BSSID, security, Wi-Fi version, channel, RSSI)
+- Berry `tasmota.wifi()` reports `channel`, `security` and `phy`
 
 ### Breaking Changed
 
