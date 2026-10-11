@@ -324,11 +324,13 @@ class Matter_HTTP_remote : Matter_HTTP_async
   def event_http_failed()
     if self.current_cmd == nil    return  end       # do nothing if sync request
     log(f"MTR: HTTP failed in={tasmota.millis() - self.time_start} ms from {self.addr}", 3)
+    self.device_is_alive(false)
     self.dispatch_cb(self.http_status, nil)
   end
   def event_http_timeout()
     if self.current_cmd == nil    return  end       # do nothing if sync request
     log(f"MTR: HTTP timeout in={tasmota.millis() - self.time_start} ms from {self.addr}", 3)
+    self.device_is_alive(false)
     self.dispatch_cb(self.http_status, nil)
   end
 
