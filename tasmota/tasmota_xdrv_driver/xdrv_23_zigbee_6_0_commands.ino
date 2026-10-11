@@ -342,7 +342,7 @@ void parseXYZ(const char *model, const SBuffer &payload, struct Z_XYZ_Var *xyz) 
 void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &payload) {
   const char * command_name = nullptr;
   uint8_t conv_direction;
-  Z_XYZ_Var xyz;
+  Z_XYZ_Var xyz = {};
 
   // always report attribute in raw format
   // Format: "0001!06": "00" = "<cluster>!<cmd>": "<payload>" for commands to devices
