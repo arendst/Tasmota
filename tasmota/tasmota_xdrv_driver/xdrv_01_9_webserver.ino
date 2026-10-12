@@ -963,9 +963,11 @@ void WSContentSend_PD(const char* formatP, ...) {  // Content send snprintf_P ch
 
 /*-------------------------------------------------------------------------------------------*/
 
-void WSContentStart_P(const char* title, bool auth) {
+bool WSContentStart_P(const char* title, bool auth = true);
+bool WSContentStart_P(const char* title, bool auth) {
   if (auth && !WebAuthenticate()) {
-    return Webserver->requestAuthentication();
+    Webserver->requestAuthentication();
+    return false;
   }
 
   WSContentBegin(200, CT_HTML);
@@ -976,12 +978,7 @@ void WSContentStart_P(const char* title, bool auth) {
       SettingsTextEscaped(SET_DEVICENAME).c_str(), 
       title);
   }
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
-void WSContentStart_P(const char* title) {
-  WSContentStart_P(title, true);
+  return true;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1263,7 +1260,9 @@ void WebRestart(uint32_t type) {
 
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
-  WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only);
+  if (!WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only)) {
+    return;  // Not authorized
+  }
 #if ((RESTART_AFTER_INITIAL_WIFI_CONFIG) && (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP))
   // In case of type 3 (New network has been configured) go to the new device's IP in the new Network
   if (3 == type) {
