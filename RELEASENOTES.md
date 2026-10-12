@@ -114,6 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.6.0.3
 ### Added
+- Initial support for ESP32-C61 [#25135](https://github.com/arendst/Tasmota/issues/25135)
 - Initial support for ESP32-S31 [#25130](https://github.com/arendst/Tasmota/issues/25130)
 - Support for GUI tooltip on touch media like phones and tablets
 - Support for TFA Dostmann Marbella 868MHz pool thermometer using a CC1101 [#24959](https://github.com/arendst/Tasmota/issues/24959)
@@ -134,9 +135,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - BLE EQ3-TRV encryption support [#25113](https://github.com/arendst/Tasmota/issues/25113)
 - Berry virtual button support
 - Berry `sortedmap` support for `json.dump` [#24999](https://github.com/arendst/Tasmota/issues/24999)
+- Berry `tasmota.wifi()` reports `channel`, `security` and `phy` [#25126](https://github.com/arendst/Tasmota/issues/25126)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit [#24922](https://github.com/arendst/Tasmota/issues/24922)
 - Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) [#25088](https://github.com/arendst/Tasmota/issues/25088)
 - Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0) [#25089](https://github.com/arendst/Tasmota/issues/25089)
+- Matter Wi-Fi Network Diagnostics cluster (BSSID, security, Wi-Fi version, channel, RSSI) [#25126](https://github.com/arendst/Tasmota/issues/25126)
 
 ### Breaking Changed
 
