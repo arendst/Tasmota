@@ -1563,14 +1563,14 @@ void UfsListDir(char *path, uint8_t depth) {
         for (uint8_t cnt = 0; cnt<depth; cnt++) {
           *cp++ = '-';
         }
+        snprintf(cp, sizeof(name) - (cp - name), format, ep);
 
         String pp_escaped_string = UrlEscape(pp);
         String ep_escaped_string = UrlEscape(ep);
         const char* ppe = pp_escaped_string.c_str();    // this can't be merged on a single line otherwise the String object can be freed
         const char* epe = ep_escaped_string.c_str();
-        sprintf(cp, format, ep);
 #ifdef GUI_TRASH_FILE
-        char delpath[128+UFS_FILENAME_SIZE];
+        char delpath[128+UFS_FILENAME_SIZE+(2*strlen(ppe))];
         ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, ppe, epe, ppe[0]?ppe:"/");
 #else
         char delpath[2] = " ";
