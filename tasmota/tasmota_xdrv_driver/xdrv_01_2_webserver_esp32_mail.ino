@@ -212,7 +212,12 @@ uint16_t SendMail(char *buffer) {
                 session.login.password = passwd;
                 session.login.user_domain = "googlemail.com";
 
+#ifdef EMAIL_DISABLE_CHUNKING
+                message.enable.chunking = false;
+#else
                 message.enable.chunking = true;
+#endif
+
                 char sname[32];
                 strlcpy(sname, SettingsText(SET_FRIENDLYNAME1), sizeof(sname));
                 message.sender.name = sname;
