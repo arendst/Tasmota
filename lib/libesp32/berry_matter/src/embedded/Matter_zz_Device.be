@@ -927,7 +927,8 @@ class Matter_Device
   # Lazy subscription to tasmota/discovery/# — only on first config page visit
   #####################################################################
   def ensure_discovery()
-    if !self.discovery_subscribed
+    # when Matter is disabled, init() returns early and `discovery_subscribed` is `nil`
+    if self.discovery_subscribed == false
       self.subscribe_discovery()
       self.discovery_subscribed = true
     end
@@ -942,10 +943,12 @@ class Matter_Device
   # Parse discovery messages, store by topic
   def handle_global_discovery(mqtt_topic, data)
     if data == nil   return   end
+    # discovery tables are not initialized when Matter is disabled
+    if self.discovered_devices == nil || self.discovered_sensors == nil   return   end
     import json
     import string
     var j = type(data) == 'string' ? json.load(data) : data
-    if j == nil   return   end
+    if !isinstance(j, map)   return   end      # also rejects `nil` and non-object JSON
 
     # tasmota/discovery/<MAC>/config or tasmota/discovery/<MAC>/sensors
     var discovery_prefix_len = size("tasmota/discovery/")

@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Unauthenticated UFS writes on web password enabled systems
 - Display dsi dma2d psram buffers (#24949)
+- Matter MQTT subscription when Matter is disabled
 
 ### Removed
 
