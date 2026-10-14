@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Unauthenticated UFS writes on web password enabled systems
 - Display dsi dma2d psram buffers (#24949)
+- Matter MQTT subscription when Matter is disabled (#25140)
+- HttpClientLight time out reading a body when the server goes silent (#25139)
 
 ## [15.6.0.2] 20261008
 ### Added

@@ -1370,6 +1370,10 @@ int HTTPClientLight::writeToStreamDataBlock(Stream * stream, int size)
     uint8_t * buff = (uint8_t *) malloc(buff_size);
 
     if(buff) {
+        // a server gone silent without closing stays connected(): give up
+        // after _tcpTimeout without data, as handleHeaderResponse() does
+        unsigned long lastDataTime = millis();
+
         // read all data from server
         while(connected() && (len > 0 || len == -1)) {
 
@@ -1442,8 +1446,14 @@ int HTTPClientLight::writeToStreamDataBlock(Stream * stream, int size)
                     len -= readBytes;
                 }
 
+                lastDataTime = millis();
                 delay(0);
             } else {
+                if((millis() - lastDataTime) > _tcpTimeout) {
+                    log_w("read timeout after %d bytes", bytesWritten);
+                    free(buff);
+                    return HTTPC_ERROR_READ_TIMEOUT;
+                }
                 delay(1);
             }
         }
