@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.9.27"
+#define MI32_VERSION "v26.10.14"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,6 +47,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  26.10.14          added   - BTHome events to GUI
   26.9.27           changed - Add age of battery reading to battery icon
   26.9.11           changed - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
                               Fix "M32Period 0" and "M32Period 1"
@@ -2065,106 +2066,107 @@ struct bthome_obj_def_t {
 // and https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
 static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   // Sensors
-  {0x00, 0, 0, 0},  // Packet ID uint8
-  {0x01, 0, 0, 0},  // Battery (%) uint8
-  {0x02, 1, 1, 2},  // Temperature (0.01 °C) int16
-  {0x03, 1, 0, 2},  // Humidity (0.01 %) uint16
-  {0x04, 2, 0, 2},  // Pressure (0.01 hPa) uint24
-  {0x05, 2, 0, 2},  // Illuminance (0.01 lx) uint24
-  {0x06, 1, 0, 2},  // Mass kg (0.01 kg) uint16
-  {0x07, 1, 0, 2},  // Mass lbs (0.01 lbs) uint16
-  {0x08, 1, 1, 2},  // Dewpoint (0.01 °C) int16
-  {0x09, 0, 0, 0},  // Count (1) uint8
-  {0x0A, 2, 0, 3},  // Energy (0.001 kWh) uint24
-  {0x0B, 2, 0, 2},  // Power (0.01 W) uint24
-  {0x0C, 1, 0, 3},  // Voltage (0.001 V) uint16
-  {0x0D, 1, 0, 0},  // PM2.5 (ug/m3) uint16
-  {0x0E, 1, 0, 0},  // PM10 (ug/m3) uint16
+  {0x00, 0, 0, 0},  //  0 Packet ID uint8
+  {0x01, 0, 0, 0},  //  1 Battery (%) uint8
+  {0x02, 1, 1, 2},  //  2 Temperature (0.01 °C) int16
+  {0x03, 1, 0, 2},  //  3 Humidity (0.01 %) uint16
+  {0x04, 2, 0, 2},  //  4 Pressure (0.01 hPa) uint24
+  {0x05, 2, 0, 2},  //  5 Illuminance (0.01 lx) uint24
+  {0x06, 1, 0, 2},  //  6 Mass kg (0.01 kg) uint16
+  {0x07, 1, 0, 2},  //  7 Mass lbs (0.01 lbs) uint16
+  {0x08, 1, 1, 2},  //  8 Dewpoint (0.01 °C) int16
+  {0x09, 0, 0, 0},  //  9 Count (1) uint8
+  {0x0A, 2, 0, 3},  // 10 Energy (0.001 kWh) uint24
+  {0x0B, 2, 0, 2},  // 11 Power (0.01 W) uint24
+  {0x0C, 1, 0, 3},  // 12 Voltage (0.001 V) uint16
+  {0x0D, 1, 0, 0},  // 13 PM2.5 (ug/m3) uint16
+  {0x0E, 1, 0, 0},  // 14 PM10 (ug/m3) uint16
   // Binary sensors uint8
-  {0x0F, 0, 0, 0},  // Generic boolean (0 = Off, 1 = On)
-  {0x10, 0, 0, 0},  // Power (0 = Off, 1 = On)
-  {0x11, 0, 0, 0},  // Opening (0 = Closed, 1 = Open)
+  {0x0F, 0, 0, 0},  // 15 Generic boolean (0 = Off, 1 = On)
+  {0x10, 0, 0, 0},  // 16 Power (0 = Off, 1 = On)
+  {0x11, 0, 0, 0},  // 17 Opening (0 = Closed, 1 = Open)
   // Sensors
-  {0x12, 1, 0, 0},  // CO2 (ppm) uint16
-  {0x13, 1, 0, 0},  // TVOC (ug/m3) uint16
-  {0x14, 1, 0, 2},  // Moisture (0.01 %) uint16
+  {0x12, 1, 0, 0},  // 18 CO2 (ppm) uint16
+  {0x13, 1, 0, 0},  // 19 TVOC (ug/m3) uint16
+  {0x14, 1, 0, 2},  // 20 Moisture (0.01 %) uint16
   // Binary sensors uint8
-  {0x15, 0, 0, 0},  // Battery (0 = Normal, 1 = Low)
-  {0x16, 0, 0, 0},  // Battery charging (0 = Not charging, 1 = Charging)
-  {0x17, 0, 0, 0},  // CO (0 = Not detected, 1 = Detected)
-  {0x18, 0, 0, 0},  // Cold (0 = Normal, 1 = Cold)
-  {0x19, 0, 0, 0},  // Connectivity (0 = Disconnected, 1 = Connected)
-  {0x1A, 0, 0, 0},  // Door (0 = Closed, 1 = Open)
-  {0x1B, 0, 0, 0},  // Garage door (0 = Closed, 1 = Open)
-  {0x1C, 0, 0, 0},  // Gas (0 = Clear, 1 = Detected)
-  {0x1D, 0, 0, 0},  // Heat (0 = Normal, 1 = Hot)
-  {0x1E, 0, 0, 0},  // Light (0 = No light, 1 = Light detected)
-  {0x1F, 0, 0, 0},  // Lock (0 = Locked, 1 = Unlocked)
-  {0x20, 0, 0, 0},  // Moisture (0 = Dry, 1 = Wet)
-  {0x21, 0, 0, 0},  // Motion (0 = Clear, 1 = Detected)
-  {0x22, 0, 0, 0},  // Moving (0 = Not moving, 1 = Moving)
-  {0x23, 0, 0, 0},  // Occupancy (0 = Clear, 1 = Detected)
-  {0x24, 0, 0, 0},  // Plug (0 = Unplugged, 1 = Plugged)
-  {0x25, 0, 0, 0},  // Presence (0 = Away, 1 = Home)
-  {0x26, 0, 0, 0},  // Problem (0 = OK, 1 = Problem)
-  {0x27, 0, 0, 0},  // Running (0 = Not running, 1 = Running)
-  {0x28, 0, 0, 0},  // Safety (0 = Unsafe, 1 = Safe)
-  {0x29, 0, 0, 0},  // Smoke (0 = Clear, 1 = Detected)
-  {0x2A, 0, 0, 0},  // Sound (0 = Clear, 1 = Detected)
-  {0x2B, 0, 0, 0},  // Tamper (0 = Off, 1 = On)
-  {0x2C, 0, 0, 0},  // Vibration (0 = Clear, 1 = Detected)
-  {0x2D, 0, 0, 0},  // Window (0 = Closed, 1 = Open)
+  {0x15, 0, 0, 0},  // 21 Battery (0 = Normal, 1 = Low)
+  {0x16, 0, 0, 0},  // 22 Battery charging (0 = Not charging, 1 = Charging)
+  {0x17, 0, 0, 0},  // 23 CO (0 = Not detected, 1 = Detected)
+  {0x18, 0, 0, 0},  // 24 Cold (0 = Normal, 1 = Cold)
+  {0x19, 0, 0, 0},  // 25 Connectivity (0 = Disconnected, 1 = Connected)
+  {0x1A, 0, 0, 0},  // 26 Door (0 = Closed, 1 = Open)
+  {0x1B, 0, 0, 0},  // 27 Garage door (0 = Closed, 1 = Open)
+  {0x1C, 0, 0, 0},  // 28 Gas (0 = Clear, 1 = Detected)
+  {0x1D, 0, 0, 0},  // 29 Heat (0 = Normal, 1 = Hot)
+  {0x1E, 0, 0, 0},  // 30 Light (0 = No light, 1 = Light detected)
+  {0x1F, 0, 0, 0},  // 31 Lock (0 = Locked, 1 = Unlocked)
+  {0x20, 0, 0, 0},  // 32 Moisture (0 = Dry, 1 = Wet)
+  {0x21, 0, 0, 0},  // 33 Motion (0 = Clear, 1 = Detected)
+  {0x22, 0, 0, 0},  // 34 Moving (0 = Not moving, 1 = Moving)
+  {0x23, 0, 0, 0},  // 35 Occupancy (0 = Clear, 1 = Detected)
+  {0x24, 0, 0, 0},  // 36 Plug (0 = Unplugged, 1 = Plugged)
+  {0x25, 0, 0, 0},  // 37 Presence (0 = Away, 1 = Home)
+  {0x26, 0, 0, 0},  // 38 Problem (0 = OK, 1 = Problem)
+  {0x27, 0, 0, 0},  // 39 Running (0 = Not running, 1 = Running)
+  {0x28, 0, 0, 0},  // 40 Safety (0 = Unsafe, 1 = Safe)
+  {0x29, 0, 0, 0},  // 41 Smoke (0 = Clear, 1 = Detected)
+  {0x2A, 0, 0, 0},  // 42 Sound (0 = Clear, 1 = Detected)
+  {0x2B, 0, 0, 0},  // 43 Tamper (0 = Off, 1 = On)
+  {0x2C, 0, 0, 0},  // 44 Vibration (0 = Clear, 1 = Detected)
+  {0x2D, 0, 0, 0},  // 45 Window (0 = Closed, 1 = Open)
   // Sensors
-  {0x2E, 0, 0, 0},  // Humidity (1 deg) uint8
-  {0x2F, 0, 0, 0},  // Moisture (1 %) uint8
-  {0x3A, 0, 0, 0},  // Event button uint8
-  {0x3B, 1, 2, 0},  // Event command 0..2 uint16, 3..4 uint24
-  {0x3C, 1, 0, 0},  // Event dimmer uint16
-  {0x3D, 1, 0, 0},  // Count (1) uint16
-  {0x3E, 3, 0, 0},  // Count (1) uint32
-  {0x3F, 1, 1, 1},  // Rotation (0.1 deg) int16
-  {0x40, 1, 0, 0},  // Distance (1 mm) uint16
-  {0x41, 1, 0, 1},  // Distance (0.1 m) uint16
-  {0x42, 2, 0, 3},  // Duration (0.001 s) uint24
-  {0x43, 1, 1, 3},  // Current (0.001 A) int16
-  {0x44, 1, 0, 2},  // Speed (0.01 m/s) uint16
-  {0x45, 1, 1, 1},  // Temperature (0.1 °C) int16
-  {0x46, 0, 0, 1},  // UV index (0.1) uint8
-  {0x47, 1, 0, 1},  // Volume (0.1 L) uint16
-  {0x48, 1, 0, 0},  // Volume (mL) uint16
-  {0x49, 1, 0, 3},  // Volume flow rate (0.001 m3/hr) uint16
-  {0x4A, 1, 0, 1},  // Voltage (0.1 V) uint16
-  {0x4B, 2, 0, 3},  // Gas (0.001 m3) uint24
-  {0x4C, 3, 0, 3},  // Gas (0.001 m3) uint32
-  {0x4D, 3, 0, 3},  // Energy (0.001 kWh) uint32
-  {0x4E, 3, 0, 3},  // Volume (0.001 L) uint32
-  {0x4F, 3, 0, 3},  // Volume water (0.001 L) uint32
-  {0x50, 3, 0, 0},  // Timestamp uint32
-  {0x51, 1, 0, 3},  // Acceleration (0.001 m/s2) uint16
-  {0x52, 1, 0, 3},  // Gyroscope (0.001 deg/s) uint16
-  {0x53, 0, 2, 0},  // Text
-  {0x54, 0, 2, 0},  // Raw
-  {0x55, 3, 0, 3},  // Volume storage (0.001 L) uint32
-  {0x56, 1, 0, 0},  // Conductivity (1 uS/cm) uint16
-  {0x57, 0, 1, 0},  // Temperature (1 °C) int8
-  {0x58, 0, 1, 7},  // Temperature (0.35 °C) int8
-  {0x59, 0, 1, 0},  // Count (1) int8
-  {0x5A, 1, 1, 0},  // Count (1) int16
-  {0x5B, 3, 1, 0},  // Count (1) int32
-  {0x5C, 3, 1, 2},  // Power (0.01 W) int32
-  {0x5D, 1, 1, 3},  // Current (0.001 A) int16
-  {0x5E, 1, 0, 3},  // Direction (0.001 deg) uint16
-  {0x5F, 1, 0, 1},  // Precipitation (0.1 mm) uint16
-  {0x60, 0, 0, 0},  // Channel uint8
-  {0x61, 1, 0, 0},  // Rotational speed (1 rpm) uint16
-  {0x62, 3, 1, 6},  // Speed (0.000001 m/s) int32
-  {0x63, 3, 1, 6},  // Acceleration (0.000001 m/s2) int32
-  {0x64, 0, 0, 0},  // Light level (0 = Dark, 1 = Twilight, 2 = Bright) uint8
-  {0x65, 0, 0, 0},  // Settings revision uint8
-  {0xF0, 1, 0, 0},  // Device type id uint16
-  {0xF1, 3, 0, 0},  // Firmware version (F100010204 = 4.2.1.0} uint32
-  {0xF2, 2, 0, 0},  // Firmware version (F2000106 = 6.1.0} uint24
-  {0xFF, 0, 0, 0}   // sentinel
+  {0x2E, 0, 0, 0},  // 46 Humidity (1 deg) uint8
+  {0x2F, 0, 0, 0},  // 47 Moisture (1 %) uint8
+
+  {0x3A, 0, 0, 0},  // 58 Event button uint8
+  {0x3B, 1, 2, 0},  // 59 Event command 0..2 uint16, 3..4 uint24
+  {0x3C, 1, 0, 0},  // 60 Event dimmer uint16
+  {0x3D, 1, 0, 0},  // 61 Count (1) uint16
+  {0x3E, 3, 0, 0},  // 62 Count (1) uint32
+  {0x3F, 1, 1, 1},  // 63 Rotation (0.1 deg) int16
+  {0x40, 1, 0, 0},  // 64 Distance (1 mm) uint16
+  {0x41, 1, 0, 1},  // 65 Distance (0.1 m) uint16
+  {0x42, 2, 0, 3},  // 66 Duration (0.001 s) uint24
+  {0x43, 1, 1, 3},  // 67 Current (0.001 A) int16
+  {0x44, 1, 0, 2},  // 68 Speed (0.01 m/s) uint16
+  {0x45, 1, 1, 1},  // 69 Temperature (0.1 °C) int16
+  {0x46, 0, 0, 1},  // 70 UV index (0.1) uint8
+  {0x47, 1, 0, 1},  // 71 Volume (0.1 L) uint16
+  {0x48, 1, 0, 0},  // 72 Volume (mL) uint16
+  {0x49, 1, 0, 3},  // 73 Volume flow rate (0.001 m3/hr) uint16
+  {0x4A, 1, 0, 1},  // 74 Voltage (0.1 V) uint16
+  {0x4B, 2, 0, 3},  // 75 Gas (0.001 m3) uint24
+  {0x4C, 3, 0, 3},  // 76 Gas (0.001 m3) uint32
+  {0x4D, 3, 0, 3},  // 77 Energy (0.001 kWh) uint32
+  {0x4E, 3, 0, 3},  // 78 Volume (0.001 L) uint32
+  {0x4F, 3, 0, 3},  // 79 Volume water (0.001 L) uint32
+  {0x50, 3, 0, 0},  // 80 Timestamp uint32
+  {0x51, 1, 0, 3},  // 81 Acceleration (0.001 m/s2) uint16
+  {0x52, 1, 0, 3},  // 82 Gyroscope (0.001 deg/s) uint16
+  {0x53, 0, 2, 0},  // 83 Text
+  {0x54, 0, 2, 0},  // 84 Raw
+  {0x55, 3, 0, 3},  // 85 Volume storage (0.001 L) uint32
+  {0x56, 1, 0, 0},  // 86 Conductivity (1 uS/cm) uint16
+  {0x57, 0, 1, 0},  // 87 Temperature (1 °C) int8
+  {0x58, 0, 1, 7},  // 88 Temperature (0.35 °C) int8
+  {0x59, 0, 1, 0},  // 89 Count (1) int8
+  {0x5A, 1, 1, 0},  // 90 Count (1) int16
+  {0x5B, 3, 1, 0},  // 91 Count (1) int32
+  {0x5C, 3, 1, 2},  // 92 Power (0.01 W) int32
+  {0x5D, 1, 1, 3},  // 93 Current (0.001 A) int16
+  {0x5E, 1, 0, 3},  // 94 Direction (0.001 deg) uint16
+  {0x5F, 1, 0, 1},  // 95 Precipitation (0.1 mm) uint16
+  {0x60, 0, 0, 0},  // 96 Channel uint8
+  {0x61, 1, 0, 0},  // 97 Rotational speed (1 rpm) uint16
+  {0x62, 3, 1, 6},  // 98 Speed (0.000001 m/s) int32
+  {0x63, 3, 1, 6},  // 99 Acceleration (0.000001 m/s2) int32
+  {0x64, 0, 0, 0},  // 100 Light level (0 = Dark, 1 = Twilight, 2 = Bright) uint8
+  {0x65, 0, 0, 0},  // 101 Settings revision uint8
+  {0xF0, 1, 0, 0},  // 240 Device type id uint16
+  {0xF1, 3, 0, 0},  // 241 Firmware version (F100010204 = 4.2.1.0} uint32
+  {0xF2, 2, 0, 0},  // 242 Firmware version (F2000106 = 6.1.0} uint24
+  {0xFF, 0, 0, 0}   // 255 sentinel
 };
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2502,8 +2504,9 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
         }
         if (multi_event < sizeof(MIBLEsensors[_slot].bthome_event)) {
           MIBLEsensors[_slot].bthome_event[multi_event++] = value_uint << 7 | obj_id;
-          MIBLEsensors[_slot].events++;
+          MIBLEsensors[_slot].feature.events  = 1;
           MIBLEsensors[_slot].eventType.event = 1;
+          MIBLEsensors[_slot].events++;
           res = 1;
         }
       } break;
@@ -4498,6 +4501,18 @@ void MI32Show(bool json)
           (p->feature.lux && (p->lux!=0x00ffffff))
          ) {
         WSContentSend_P(SI_WEB_LINE_START);
+        if (p->feature.events){
+          if (p->type == MI_BTHOME) {
+            for (uint32_t i = 0; i < sizeof(p->bthome_event); i++) {
+              if (p->bthome_event[i] > 0) {
+                uint32_t event = p->bthome_event[i] >> 7;
+                WSContentSend_PD(PSTR(" %d&#xFE0F;&#x20E3; %d"), i +1, event);  // 1️⃣ .. 8️⃣
+              }
+            }
+          } else {
+            WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - 🏃 Runner
+          }
+        }
         if (!isnan(p->temp)) {
           float temp = ConvertTempToFahrenheit(p->temp); // convert if SO8 on
           WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &temp, TempUnit());  // ☀ Sun
@@ -4518,9 +4533,6 @@ void MI32Show(bool json)
         if (p->feature.pres) {
           float pressure = ConvertPressure(p->pres);  // SetOption24 - Switch between hPa or mmHg pressure unit, SetOption139 - Switch between mmHg or inHg pressure unit
           WSContentSend_PD(PSTR(" &#x26C5; %*_f%s"), Settings->flag2.pressure_resolution, &pressure, PressureUnit().c_str());  // ⛅
-        }
-        if (p->feature.events){
-          WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - 🏃 Runner
         }
         if (p->feature.NMT){
           // no motion time
