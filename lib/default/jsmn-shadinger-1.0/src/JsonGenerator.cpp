@@ -18,6 +18,7 @@
 */
 
 #include "JsonGenerator.h"
+#include "ext_printf.h"   // for ext_snprintf_malloc_P() and the %*_H hex specifier
 
 /*********************************************************************************************\
  * JSON Generator for Arrays
@@ -61,6 +62,19 @@ void JsonGeneratorArray::addStr(const char * sval) {
   pre();
   val += '"';
   val += EscapeJSONString(sval).c_str();
+  val += '"';
+  post();
+}
+
+// Add a byte buffer as a quoted uppercase hex string, e.g. "A1B2C3"
+void JsonGeneratorArray::addHex(const uint8_t * data, size_t len) {
+  pre();
+  val += '"';
+  char * hex = ext_snprintf_malloc_P(PSTR("%*_H"), len, data);
+  if (hex != nullptr) {
+    val += hex;
+    free(hex);
+  }
   val += '"';
   post();
 }
@@ -111,6 +125,19 @@ void JsonGeneratorObject::addHex32(const char* key, uint32_t uval32) {
   char hex[16];
   snprintf_P(hex, sizeof(hex), PSTR("\"0x%8X\""), uval32);
   addStrRaw(key, hex);
+}
+
+// Add a byte buffer as a quoted uppercase hex string, e.g. "A1B2C3"
+void JsonGeneratorObject::addHex(const char* key, const uint8_t * data, size_t len) {
+  pre(key);
+  val += '"';
+  char * hex = ext_snprintf_malloc_P(PSTR("%*_H"), len, data);
+  if (hex != nullptr) {
+    val += hex;
+    free(hex);
+  }
+  val += '"';
+  post();
 }
 
 // Add a raw string, that will not be escaped.

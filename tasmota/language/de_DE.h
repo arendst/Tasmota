@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v15.3.0.1 - Last update 06.03.2026
+ * Updated until v15.6.0.3 - Last update 09.10.2026
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -60,11 +60,13 @@
 #define D_AT "an"
 #define D_AUTO "AUTO"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatik"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY "Batterie"
 #define D_BATTERY_CHARGE "Ladung"    // Battery charge in %
 #define D_BLINK "Blinken"
 #define D_BLINKOFF "BlinkenAus"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Startvorgänge"
 #define D_BRIGHTLIGHT "hell"
 #define D_BSSID "BSSID"
@@ -73,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanal"
+#define D_CHILD_LOCK "Kindersicherung"
 #define D_CO2 "CO₂"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
@@ -88,6 +91,7 @@
 #define D_DARKLIGHT "dunkel"
 #define D_DATA "Daten"
 #define D_DEBUG "debug"
+#define D_DECRYPTION "Entschlüsselung"
 #define D_DEWPOINT "Taupunkt"
 #define D_DISABLED "deaktiviert"
 #define D_DISCONNECTED "getrennt"
@@ -120,6 +124,7 @@
 #define D_HALL_EFFECT "Halleffekt"
 #define D_HCHO "Formaldehyd"
 #define D_HEATINDEX "Hitzeindex"
+#define D_HOLIDAY "Ferien"
 #define D_HOST "Host"
 #define D_HOSTNAME "Hostname"
 #define D_HUMIDITY "Feuchtigkeit"
@@ -131,13 +136,16 @@
 #define D_INITIALIZED "initialisiert"
 #define D_IP_ADDRESS "IP-Adresse"
 #define D_LIGHT "Licht"
+#define D_LOW "Niedrig"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index
 #define D_LWT "LWT"
+#define D_MANUAL "Manuell"
 #define D_MODULE "Modul"
 #define D_MOISTURE "Feuchtigkeit"
 #define D_MQ "MQ"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Mehrfachdruck"
+#define D_NA "N/A"
 #define D_NOISE "Lautstärke"
 #define D_NONE "keine"
 #define D_NOX "NOₓ"
@@ -222,6 +230,7 @@
 #define D_WATER_DEPTH "Wassertiefe"
 #define D_WEB_SERVER "Webserver"
 #define D_WEIGHT "Gewicht"
+#define D_WINDOW_OPEN "Fenster offen"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ACHTUNG: Einstellungen in dieser Version werden nicht gespeichert!"
@@ -314,7 +323,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Aktualisieren, um erneut zu suchen"
 #define D_DUPLICATE_ACCESSPOINT "AccessPoint duplizieren"
 #define D_SKIPPING_LOW_QUALITY "WLAN Signal zu schwach"
-#define D_MODE "Mode"
+#define D_MODE "Modus"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA-PSK"
@@ -587,9 +596,9 @@
 #define D_CONFIGURE_BLE       "BLE"
 #define D_BLE_PARAMETERS      "BLE Parameter"
 #define D_BLE_ENABLE          "BLE aktivieren"
-#define D_BLE_ACTIVESCAN      "Aktiv scannen (*)"
+#define D_BLE_ACTIVESCAN      "Aktiv scannen¹"
 #define D_BLE_DEVICES         "Erkannte Geräte"
-#define D_BLE_REMARK          "Mit (*) markierte Geräte werden nicht gespeichert."
+#define D_BLE_REMARK          "¹ Einstellung wird nicht dauerhaft gespeichert"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
@@ -972,6 +981,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TX  "MiEl HVAC MB Tx"
+#define D_SENSOR_MIEL_HVAC_MB_RX  "MiEl HVAC MB Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TXEN  "MiEl HVAC MB DE"
 #define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
 #define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"
@@ -1242,11 +1254,11 @@
 #define D_FP_UNKNOWNERROR "Fehler"                      // Any other error
 
 // xsns_90_hrg15.ino
-#define D_HRG_VALID "Valid"
-#define D_HRG_ACTIVE "Active"
-#define D_HRG_EVENT "Event"
-#define D_HRG_TOTAL "Total"
-#define D_HRG_FLOWRATE "Flow Rate"
+#define D_HRG_VALID "Gültig"
+#define D_HRG_ACTIVE "Aktiv"
+#define D_HRG_EVENT "Ereignis"
+#define D_HRG_TOTAL "Gesamt"
+#define D_HRG_FLOWRATE "Durchfluss"
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Durchflussmesser"

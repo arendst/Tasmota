@@ -52,6 +52,7 @@
 #include <ext_printf.h>
 #include <SBuffer.hpp>
 #include <LList.h>
+#include <PubSubClient.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef ESP8266
@@ -96,6 +97,7 @@
 #ifdef ESP32
 #include "include/tasconsole.h"
 #if SOC_USB_SERIAL_JTAG_SUPPORTED
+#include "soc/io_mux_reg.h"                 // USB_INT_PHY0_Dx_GPIO_NUM
 #include "hal/usb_serial_jtag_ll.h"
 #include "esp_private/rtc_clk.h"
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
@@ -192,6 +194,10 @@ struct TIME_T {
   uint32_t      valid;
 } RtcTime;
 
+#if MQTT_VERSION == MQTT_VERSION_5_0
+struct MqttCommandContext;
+#endif
+
 struct XDRVMAILBOX {
   bool          grpflg;
   bool          usridx;
@@ -202,6 +208,9 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
   char         *command;
+#if MQTT_VERSION == MQTT_VERSION_5_0
+  const MqttCommandContext *mqtt_context;
+#endif
 } XdrvMailbox;
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
@@ -214,7 +223,7 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
     CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
     CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
 */
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 
 //#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
 #ifdef USE_USB_CDC_CONSOLE
@@ -243,11 +252,11 @@ TASCONSOLE TasConsole{Serial};
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
 #endif  // USE_USB_CDC_CONSOLE
-#else   // No ESP32C3, S2 or S3
+#else   // No USB CDC-capable target
 TASCONSOLE TasConsole{Serial};
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
-#endif  // ESP32C3, S2 or S3
+#endif  // USB CDC-capable targets
 
 #else   // No ESP32
 HardwareSerial TasConsole = Serial;         // Only serial interface
@@ -497,7 +506,7 @@ void setup(void) {
   }
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 #ifdef USE_USB_CDC_CONSOLE
 
   bool is_connected_to_USB = false;
@@ -513,6 +522,11 @@ void setup(void) {
   is_connected_to_USB = true;      // S2
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 
+  // Detect if esp-emu, if so disable CDC
+  if (WiFiHelper::macAddress().equals("24:0A:C4:00:00:01")) {
+    is_connected_to_USB = false;
+  }
+
   if (is_connected_to_USB) {
     // TasConsole is already running
 #if !ARDUINO_USB_MODE
@@ -523,6 +537,12 @@ void setup(void) {
   } else {
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
     HWCDCSerial.~HWCDC();       // not needed, deinit CDC
+    // HWCDC::deinit() leaves USB D-/D+ as OUTPUT_OPEN_DRAIN driven LOW (forces host re-enumeration)
+    // No host detected so re-enumeration is not needed: release the pins to high impedance
+    // GPIO_MODE_DISABLE clears output, input and open-drain, so GPIO matrix peripherals (LEDC, RMT...)
+    // can later drive these pins in push-pull mode. Not gpio_reset_pin(): it enables the pull-up on D+
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DM_GPIO_NUM, GPIO_MODE_DISABLE);
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DP_GPIO_NUM, GPIO_MODE_DISABLE);
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
     // Init command serial console preparing for AddLog use
     Serial.begin(TasmotaGlobal.baudrate);
@@ -684,8 +704,12 @@ void setup(void) {
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
     const char* second_spec = strchr(first_spec + 1, '%');
-    if (first_spec && second_spec) {
+    bool use_topic_only = (first_spec && !second_spec && ('s' == *(first_spec +1)));  // #24731 Backward compatibility to undocumented single specifier "%s"
+    if (use_topic_only || (first_spec && second_spec)) {
       // Two (or more) specifiers: expands first as mqtt topic and second as chip ID
+      // In C, the extra argument is safely ignored by the compiler and runtime.
+      // The function reads the format string, sees one specifier, grabs the first matching argument from the stack,
+      // and prints it. The second argument is simply left untouched in memory.
       snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME), TasmotaGlobal.mqtt_topic, ESP_getChipId() & 0x1FFF);
     } else {
       // One specifier: use Format() which handles %NX = last N MAC hex chars, %Nd = short chip ID dec, %d = full chip ID dec

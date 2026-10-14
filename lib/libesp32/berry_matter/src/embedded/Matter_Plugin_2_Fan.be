@@ -230,13 +230,13 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
     if   cluster == 0x0202              # ========== Fan ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- FanMode / enum8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_fan_mode)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_mode)
       elif attribute == 0x0001          #  ---------- FanModeSequence / enum8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 2)  # Off/Low/Med/High/Auto
+        return tlv_solo.set(0x06 #-TLV.U4-#, 2)  # Off/Low/Med/High/Auto
       elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_fan_speed_pct)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_speed_pct)
       elif attribute == 0x0003          #  ---------- PercentSetting / enum8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, self.shadow_fan_speed_pct)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_speed_pct)
       end
 
     end

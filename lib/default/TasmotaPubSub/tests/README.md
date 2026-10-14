@@ -1,26 +1,21 @@
 # TasmotaPubSub Host Test System
 
 A host-based (no ESP32/ESP8266 hardware required) unit-test system for the
-TasmotaPubSub `PubSubClient` MQTT library. It compiles the **unmodified**
-library (`../src/PubSubClient.cpp` / `.h`) against a small host-side Arduino
-environment shim, drives it through a scriptable mock transport, and validates
-its observable MQTT 3.1.1 wire behavior with the
+TasmotaPubSub `PubSubClient` MQTT library. It compiles both guarded implementation
+sources (`../src/PubSubClient_311.cpp` and `../src/PubSubClient_5.cpp`) against a
+small host-side Arduino environment shim and produces one binary per protocol profile.
+The MQTT 3.1.1 binary validates the restored compact implementation; the MQTT 5 binary
+validates the extended profile with the
 [doctest](https://github.com/doctest/doctest) single-header framework.
 
-All assertions go through the public API and the recorded/scripted wire bytes of
-the mock transport — never through private members — so the suite stays
-re-runnable unchanged across future refactors of the library (including a later
-MQTT 5 migration).
-
-> The library under test is never modified. If a test fails, the fix belongs in
-> the test (or the finding gets hardened in the library separately) — not in the
-> library source to make a test pass.
+Assertions use public APIs and recorded/scripted wire bytes from the mock transport.
+Profile-specific tests are compiled only where their public types and APIs exist.
 
 ## Layout
 
 ```
 tests/
-  Makefile              # single-binary build + run targets
+  Makefile              # dual-profile build + run targets
   README.md             # this file
   src/
     test_main.cpp       # the one TU that defines doctest's main()
@@ -51,17 +46,19 @@ No third-party dependencies: doctest is vendored at `src/lib/doctest.h`.
 Run everything from the `tests/` directory.
 
 ```sh
-make            # build build/pubsub_tests (default target: all)
-make test       # build + run the whole binary
-make baseline   # build + run only the Baseline suite  (-ts=baseline)
-make hardening  # build + run only the Hardening suite  (-ts=hardening)
+make            # build both protocol binaries
+make test       # run the applicable suites for both profiles
+make check      # authoritative selector, source, baseline, and MQTT 5 gate
+make baseline   # run the restored MQTT 3.1.1 baseline
+make mqtt5      # run the mandatory MQTT 5 suite
+make hardening-v5  # run MQTT 5 hardening cases
 make clean      # remove the build/ directory
 ```
 
-The build produces a single binary, `build/pubsub_tests`, which links the
-unmodified `PubSubClient.cpp`, the Arduino shim, the test support library, and
-every `src/*_test.cpp`. A compilation failure yields a nonzero exit status and
-produces no binary.
+The build produces `build/pubsub_tests_v311` and `build/pubsub_tests_v5`. Both
+implementation `.cpp` files are compiled in both profiles, matching production source
+discovery; the nonselected source emits no definitions because of its whole-file guard.
+The compact MQTT 3.1.1 build excludes tests that require MQTT 5-only public types.
 
 ## Sanitizers (the `SANITIZE` toggle)
 
@@ -80,41 +77,31 @@ make SANITIZE=0 test       # ... and run
 
 ## Suite selection (`-ts=`)
 
-Every test case is tagged into exactly one doctest test suite: `baseline` or
-`hardening`. The `make baseline` / `make hardening` targets pass the matching
-`-ts=` selector to the binary. You can also select suites (or any other doctest
-flag) directly:
+The main suites are `baseline`, `hardening`, and `mqtt5`. Run profile-specific
+filters against the matching binary:
 
 ```sh
-./build/pubsub_tests -ts=baseline        # only baseline cases
-./build/pubsub_tests -ts=hardening       # only hardening cases
-./build/pubsub_tests                     # everything
-./build/pubsub_tests -ts=baseline -tc="*publish*"   # filter within a suite
+./build/pubsub_tests_v311 -ts=baseline
+./build/pubsub_tests_v5 -ts=mqtt5
+./build/pubsub_tests_v5 -ts=hardening
+./build/pubsub_tests_v5 -ts=mqtt5 -tc="*publish*"
 ```
 
-You can also pass extra flags through the Makefile:
+Extra doctest flags can also be passed through the Makefile:
 
 ```sh
-make test TS=-ts=baseline ARGS=--no-colors
-make hardening ARGS=-s          # -s = show successful assertions
+make test ARGS=--no-colors
+make mqtt5 ARGS=-s
 ```
 
 ## Baseline vs Hardening
 
-- **Baseline suite** — characterization tests that lock in the library's
-  *current* observable MQTT 3.1.1 behavior across the full public API and the
-  wire protocol (CONNECT/CONNACK, PUBLISH/PUBACK, SUBSCRIBE/SUBACK,
-  UNSUBSCRIBE/UNSUBACK, PINGREQ/PINGRESP, DISCONNECT). These are a non-regression
-  safety net and **must all pass** against the current library. `make baseline`
-  is expected to be entirely green.
+- **Baseline suite** — characterization tests for the restored MQTT 3.1.1
+  implementation and its compact public API. `make baseline` must be green.
 
-- **Hardening suite** — tests that encode the *correct/hardened* behavior derived
-  from the static-analysis findings F-01..F-12. The current fork is already
-  partially hardened, so most hardening cases pass today. The genuinely open
-  findings are marked **expected-to-fail** (see the registry below) so their
-  failure is reported as *expected* and does not fail the run. `make hardening`
-  is expected to exit zero, reporting only the designated expected failures and
-  **no unexpected passes**.
+- **Hardening and MQTT 5 suites** — validation for the extended MQTT 5 profile.
+  The genuinely open findings are marked **expected-to-fail** (see the registry
+  below), so expected behavior remains visible without failing `make hardening-v5`.
 
 ### Current expected-fail findings
 

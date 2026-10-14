@@ -59,6 +59,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|"
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   D_CMND_CPU_FREQUENCY "|"
+#ifdef SOC_GP_LDO_SUPPORTED
+  D_CMND_LDO "|"
+#endif  // SOC_GP_LDO_SUPPORTED
 #endif  // ESP32
 
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON "|" D_CMND_JSON_PP
@@ -108,6 +111,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTouchCal, &CmndTouchThres,
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   &CmndCpuFrequency,
+#ifdef SOC_GP_LDO_SUPPORTED
+  &CmndLdo,
+#endif  // SOC_GP_LDO_SUPPORTED
 #endif  // ESP32
 
   &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson, &CmndJsonPP
@@ -986,9 +992,9 @@ void CmndStatus(void)
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
                           "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
                           ",\"HostedMCU\":{\"Hardware\":\"%s\",\"Version\":\"%s\"}"
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
                           "%s}}"),
                           TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str(), GetBuildDateAndTime().c_str()
 #ifdef ESP8266
@@ -996,9 +1002,9 @@ void CmndStatus(void)
 #endif
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardwareRevision().c_str(),
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
                           GetHostedMCU().c_str(), GetHostedFwVersion(1).c_str(),
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
                           GetStatistics().c_str());
     CmndStatusResponse(2);
   }
@@ -2222,7 +2228,7 @@ void CmndTemplate(void)
         if (8 == i) { j = 12; }
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61
         // No change
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 //        if (22 == i) { j = 33; }  // TODO 20230821 verify

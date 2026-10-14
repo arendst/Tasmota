@@ -43,7 +43,7 @@ Relational:   < <= == != >= >
 Logical:      && || !  (short-circuit)
 Bitwise:      ~ & | ^ << >>
 Assignment:   = += -= *= /= %= &= |= ^= <<= >>=
-Walrus:       :=  (assign + return value in expressions)
+Walrus:       :=  (assign + return value in expressions; the target must already exist, := never creates a variable)
 Other:        . [] ?: ..
 ```
 `..` = range (int..int), string concat (auto-converts RHS), or list/bytes append-in-place.

@@ -45,10 +45,13 @@
 // ---------------------------------------------------------------------------
 
 // Expected-FAIL (open findings).
-#define FINDING_MARKER_F05 FINDING_OPEN          // partial-write reuse
 #define FINDING_MARKER_F10 FINDING_OPEN          // SUBACK / session-present tracking
 #define FINDING_MARKER_F11 FINDING_OPEN          // graceful disconnect default
-#define FINDING_MARKER_F03_DEADLINE FINDING_OPEN // F-03 packet-wide read deadline
+
+// Hardened by MQTT5 robustness task 15: every packet has one receive deadline,
+// and any short transport write closes before the stream can be reused.
+#define FINDING_MARKER_F05 FINDING_HARDENED           // partial-write reuse
+#define FINDING_MARKER_F03_DEADLINE FINDING_HARDENED  // F-03 packet-wide read deadline
 
 // Expected-PASS (already hardened).
 #define FINDING_MARKER_F01 FINDING_HARDENED           // exact-buffer inbound overflow

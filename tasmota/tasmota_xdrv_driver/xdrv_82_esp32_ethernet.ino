@@ -139,7 +139,13 @@ const uint8_t eth_type_xtable[] = {
 char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 uint8_t eth_config_change;
 
+// IDF < 6: esp_interface_t / IDF >= 6: wifi_interface_t (esp_interface_t removed)
+#include "esp_idf_version.h"
+#if ESP_IDF_VERSION_MAJOR < 6
 extern esp_netif_t* get_esp_interface_netif(esp_interface_t interface);
+#else
+extern esp_netif_t* get_esp_interface_netif(wifi_interface_t interface);
+#endif
 
 void EthernetEvent(arduino_event_t *event);
 void EthernetEvent(arduino_event_t *event) {
@@ -226,16 +232,17 @@ void EthernetSetIp(void) {
 void EthernetInit(void) {
   if (!Settings->flag4.network_ethernet) { return; }
 
-  int32_t eth_type = (Settings->eth_type < sizeof(eth_type_xtable)) ? eth_type_xtable[Settings->eth_type] : 0;    // make sure we don't overflow
-  bool eth_uses_spi = (eth_type & ETH_USES_SPI);
-  eth_type = eth_type & 0x7F;     // remove SPI flag
-#if CONFIG_ETH_USE_ESP32_EMAC
+#if CONFIG_ETH_USE_ESP32_EMAC     // deprecated, please use standard module and template + configuration instead
   if (WT32_ETH01 == TasmotaGlobal.module_type) {
     Settings->eth_address = 1;                    // EthAddress
     Settings->eth_type = ETH_PHY_LAN8720;         // EthType 0 = LAN8720
     Settings->eth_clk_mode = 0;                   // EthClockMode 0 = ETH_CLOCK_GPIO0_IN
   }
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
+
+  int32_t eth_type = (Settings->eth_type < sizeof(eth_type_xtable)) ? eth_type_xtable[Settings->eth_type] : 0;    // make sure we don't overflow
+  bool eth_uses_spi = (eth_type & ETH_USES_SPI);
+  eth_type = eth_type & 0x7F;     // remove SPI flag
 
   if (eth_uses_spi) {
     // Uses SPI Ethernet and needs at least SPI CS being ETH MDC

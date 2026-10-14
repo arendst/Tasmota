@@ -419,6 +419,7 @@
 #define D_CMND_TOUCH_THRES "TouchThres"
 #define D_CMND_TOUCH_NUM "TouchNum"
 #define D_CMND_CPU_FREQUENCY "CpuFrequency"
+#define D_CMND_LDO "Ldo"
 #endif  // ESP32
 
 // Commands xdrv_02_mqtt.ino
@@ -570,6 +571,7 @@
   #define D_JSON_IR_DATALSB "DataLSB"
   #define D_JSON_IR_HASH "Hash"
   #define D_JSON_IR_RAWDATA "RawData"
+  #define D_JSON_IR_FREQUENCY "Frequency"
   #define D_JSON_IR_REPEAT "Repeat"
   #define D_JSON_IR_CHANNEL "Channel"
 #define D_CMND_IRHVAC "IRHVAC"
@@ -783,7 +785,8 @@
 #define D_CMND_SHUTTER_FREQUENCY "Frequency"
 #define D_CMND_SHUTTER_BUTTON "Button"
 #define D_CMND_SHUTTER_LOCK "Lock"
-#define D_CMND_SHUTTER_ENABLEENDSTOPTIME "EnableEndStopTime"
+#define D_CMND_SHUTTER_OPENENDSTOPTIME "OpenEndStopTime"
+#define D_CMND_SHUTTER_CLOSEENDSTOPTIME "CloseEndStopTime"
 #define D_CMND_SHUTTER_INVERTWEBBUTTONS "InvertWebButtons"
 #define D_CMND_SHUTTER_PWMRANGE "PWMRange"
 #define D_CMND_SHUTTER_UNITTEST "UnitTest"

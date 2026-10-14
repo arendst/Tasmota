@@ -279,6 +279,26 @@ extern "C" {
     return GetPin(pin) % 32;
   }
 
+  // gpio.add_virtual_button(state:int) -> int
+  //
+  extern int gp_add_virtual_button(int32_t state);
+  extern int gp_add_virtual_button(int32_t state) {
+    return ButtonAddVirtualPin(state);
+  }
+
+  // gpio.remove_virtual_button(index:int) -> nil
+  //
+  extern void gp_remove_virtual_button(int32_t index);
+  extern void gp_remove_virtual_button(int32_t index) {
+    ButtonRemoveVirtualPin(index);
+  }
+
+  // gpio.set_virtual_button_state(index:int, state:int) -> nil
+  //
+  extern void gp_set_virtual_button_state(int32_t index, int32_t state);
+  extern void gp_set_virtual_button_state(int32_t index, int32_t state) {
+    ButtonSetVirtualPinState(index, state);
+  }
 }
 
 #endif  // USE_BERRY

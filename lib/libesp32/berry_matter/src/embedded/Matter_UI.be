@@ -187,23 +187,23 @@ class Matter_UI
   "</script>"
 
   static var _CLASSES_TYPES_STD =
-                              "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
+                              "|relay|relay_power|light0|light1|light2|light3|light5|shutter|shutter+tilt|garage"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
-                              "|airquality"
-  static var _CLASSES_TYPES_VIRTUAL = 
-                              "-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
-                              "|v_fan|v_hvac|v_hvac_option"
+                              "|airquality|soil"
+  static var _CLASSES_TYPES_VIRTUAL =
+                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3|v_light5|v_garage"
+                              "|v_fan|v_hvac|v_hvac_option|v_gensw"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
-                              "|v_airquality"
-  static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
+                              "|v_airquality|v_soil"
+  static var _CLASSES_TYPES2= "|http_relay|http_relay_power|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
-                              "|http_airquality"
+                              "|http_airquality|http_soil"
   static var _CLASSES_TYPES3= "|mqtt_relay|mqtt_light0|mqtt_light1|mqtt_light2|mqtt_light3"
                               "|mqtt_temperature|mqtt_pressure|mqtt_illuminance|mqtt_humidity"
                               "|mqtt_occupancy|mqtt_contact|mqtt_flow|mqtt_rain|mqtt_waterleak"
-                              "|mqtt_airquality"
+                              "|mqtt_airquality|mqtt_soil"
   var device
   var matter_enabled
 
@@ -1113,20 +1113,34 @@ class Matter_UI
 
     # detect lights
     var light1, light2, light3    # contains a relay number of nil
+    # RGB+CT remotes stay light3 until an http_light5 bridge exists
     if status11.contains("HSBColor")
       light3 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("CT")
-      light2 =  power_cnt
+      light2 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("Dimmer")
-      light1 =  power_cnt
+      light1 = power_cnt
       power_cnt -= 1
     end
 
     # rest is relays
+    # If the remote device reports an `ENERGY` sensor, it's typically a single
+    # shared meter for the whole device (ex: multi-socket power strips) rather
+    # than one meter per relay. Tag only the first relay with `relay_power`
+    # so the Electrical Power Measurement cluster isn't duplicated (and made
+    # misleading) across every relay endpoint.
+    var energy_assigned = false
     for i: 1..power_cnt
-      config_list.push({'type': 'light0', 'relay': i})
+      if !energy_assigned && status10.contains("ENERGY")
+        config_list.push({'type': 'relay_power', 'relay': i})
+        energy_assigned = true
+      else
+        config_list.push({'type': 'light0', 'relay': i})
+      end
     end
 
     # show lights
@@ -1508,9 +1522,15 @@ class Matter_UI
         var matter_enabled_requested = webserver.has_arg("menable")
         var matter_commissioning_requested = webserver.has_arg("comm")
         var matter_disable_bridge_mode_requested = (webserver.arg("nobridge") == 'on')
-        if self.device.disable_bridge_mode != matter_disable_bridge_mode_requested
+        var matter_disable_bridge_mode_current = self.device.disable_bridge_mode
+        var matter_bridge_mode_changed = matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested
+        if matter_bridge_mode_changed
+          # Persist the next-boot topology while keeping the live topology coherent
+          # until the restart below rebuilds all fixed Descriptor metadata.
           self.device.disable_bridge_mode = matter_disable_bridge_mode_requested
+          self.device.bump_configuration_version()
           self.device.save_param()
+          self.device.disable_bridge_mode = matter_disable_bridge_mode_current
         end
 
         if matter_enabled_requested != self.matter_enabled
@@ -1523,17 +1543,21 @@ class Matter_UI
           end
           #- and force restart -#
           webserver.redirect("/?rst=")
-        elif matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
-          if matter_commissioning_requested
-            self.device.commissioning.start_root_basic_commissioning()
-          else
-            self.device.commissioning.stop_basic_commissioning()
-          end
-        
-          #- and force restart -#
-          webserver.redirect("/")
         else
-          webserver.redirect("/")
+          if matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
+            if matter_commissioning_requested
+              self.device.commissioning.start_root_basic_commissioning()
+            else
+              self.device.commissioning.stop_basic_commissioning()
+            end
+          end
+
+          if matter_bridge_mode_changed
+            #- force restart to rebuild the endpoint topology -#
+            webserver.redirect("/?rst=")
+          else
+            webserver.redirect("/")
+          end
         end
 
       #---------------------------------------------------------------------#

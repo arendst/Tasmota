@@ -215,6 +215,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_1_Device.h"
 #include "solidify/solidified_Matter_Plugin_3_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_3_OnOff_Power.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_OnOff_Power.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor_Air_Quality.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Air_Quality.h"
 #include "solidify/solidified_Matter_Plugin_2_Light0.h"
@@ -225,8 +227,12 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Virt_Light2.h"
 #include "solidify/solidified_Matter_Plugin_4_Light3.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Light3.h"
+#include "solidify/solidified_Matter_Plugin_4_Light5.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Light5.h"
 #include "solidify/solidified_Matter_Plugin_2_Shutter.h"
 #include "solidify/solidified_Matter_Plugin_3_ShutterTilt.h"
+#include "solidify/solidified_Matter_Plugin_2_GarageDoor.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_GarageDoor.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Pressure.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Flow.h"
@@ -238,6 +244,8 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_3_Sensor_Soil.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Soil.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor_Boolean.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_OnOff.h"
@@ -247,6 +255,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_2_Fan.h"
 #include "solidify/solidified_Matter_Plugin_2_Thermostat.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor_GenericSwitch_Btn.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_GenericSwitch_Btn.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Fan.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_HVAC.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_HVAC_Option.h"
@@ -255,6 +264,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Rain.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_OnOff_Power.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Light0.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Light1.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Light2.h"
@@ -263,6 +273,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Temp.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Illuminance.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Soil.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Flow.h"
@@ -277,7 +288,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Zigbee_Humidity.h"
 #include "solidify/solidified_Matter_Plugin_9_Zigbee_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_z_All.h"
-#if USE_MI_EXT_GUI
+#ifdef USE_MI_EXT_GUI
 #include "solidify/solidified_Matter_BTP.h"
 #include "solidify/solidified_Matter_zz_Device_BLE.h"
 // #warning ________________
@@ -465,4 +476,3 @@ module matter (scope: global, strings: weak) {
 }
 
 @const_object_info_end */
-

@@ -60,11 +60,13 @@
 #define D_AT "at"                        // at (Used for memory addresses)
 #define D_AUTO "自動"
 #define D_AUTO_UPDATE "自動更新"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "電池"                    // Short for Battery
 #define D_BATTERY "電池"
 #define D_BATTERY_CHARGE "充電"          // Battery charge in %
 #define D_BLINK "閃爍"
 #define D_BLINKOFF "閃爍關"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "啟動次數"
 #define D_BRIGHTLIGHT "亮度"
 #define D_BSSID "BSSId"                // Basic Service Set Identifier (kept intact)
@@ -73,6 +75,7 @@
 #define D_BYTES "大小："
 #define D_CELSIUS "攝氏"
 #define D_CHANNEL "頻道 "             // Added space to append numbers in code
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "二氧化碳"
 #define D_CODE "代碼"                // Button code
 #define D_COLDLIGHT "冷光"
@@ -88,6 +91,7 @@
 #define D_DARKLIGHT "暗光"
 #define D_DATA "資料："
 #define D_DEBUG "除錯"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "露點"
 #define D_DISABLED "已停用"
 #define D_DISCONNECTED "已斷線"
@@ -120,6 +124,7 @@
 #define D_HALL_EFFECT "霍爾效應"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "酷熱指數"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "主機"
 #define D_HOSTNAME "主機名稱"
 #define D_HUMIDITY "濕度"
@@ -131,13 +136,16 @@
 #define D_INITIALIZED "已初始化"
 #define D_IP_ADDRESS "IP 位址"
 #define D_LIGHT "燈光"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // Zigbee Link Quality Index (kept intact)
 #define D_LWT "LWT"                  // Last Will and Testament (kept intact)
+#define D_MANUAL "Manual"
 #define D_MODULE "模組"
 #define D_MOISTURE "濕度"
 #define D_MQ "MQ"                    // Message Queue (kept intact)
 #define D_MQTT "MQTT"                // Message Queuing Telemetry Transport (kept intact)
 #define D_MULTI_PRESS "多重點擊"
+#define D_NA "N/A"
 #define D_NOISE "雜訊"
 #define D_NONE "無"
 #define D_NOX "NOx"                  // Nitrogen Oxides (kept intact)
@@ -222,6 +230,7 @@
 #define D_WATER_DEPTH "水深"
 #define D_WEB_SERVER "網頁伺服器"
 #define D_WEIGHT "重量"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "警告：這個版本無法永久儲存設定！"
@@ -973,6 +982,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TX  "MiEl HVAC MB Tx"
+#define D_SENSOR_MIEL_HVAC_MB_RX  "MiEl HVAC MB Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TXEN  "MiEl HVAC MB DE"
 #define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
 #define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot 0"

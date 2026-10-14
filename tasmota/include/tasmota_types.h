@@ -282,7 +282,7 @@ typedef union {
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t dali_light : 1;               // bit 13 (v14.2.0.6) - CMND_DALILIGHT - Enable Tasmota light controls for DALI
     uint32_t dali_no_broadcast_slider : 1; // bit 14 (v15.1.0.3) - CMND_DALIBROADCASTSLIDER - Disable display of broadcast slider
-    uint32_t spare15 : 1;                  // bit 15
+    uint32_t miel_hvac_mb_enable : 1;      // bit 15 (v15.6.0.1) - CMND_HVACMODBUS - Enable MiEL HVAC Modbus RTU slave
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
@@ -462,8 +462,8 @@ typedef struct {
 } EnergyUsage;
 
 typedef struct {
-  uint8_t fnid = 0;
-  uint8_t dpid = 0;
+  uint8_t fnid;
+  uint8_t dpid;
 } TuyaFnidDpidMap;
 
 typedef union {
@@ -538,10 +538,10 @@ typedef struct {
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
-#ifndef CONFIG_IDF_TARGET_ESP32P4
+#if !CONFIG_IDF_TARGET_ESP32P4 && !CONFIG_IDF_TARGET_ESP32S31
   uint32_t      domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
   uint32_t      domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
-#endif  // CONFIG_IDF_TARGET_ESP32P4
+#endif  // !CONFIG_IDF_TARGET_ESP32P4 && !CONFIG_IDF_TARGET_ESP32S31
   uint32_t      energy_power_calibration;    // 364 (P4 344)
   uint32_t      energy_voltage_calibration;  // 368 (P4 348)
   uint32_t      energy_current_calibration;  // 36C (P4 34C)
@@ -598,7 +598,21 @@ typedef struct {
                                            // 496
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32S31
+  // S31 needs the P4-sized GPIO mapping plus 14 additional bytes for its GPIOs.
+  myio          my_gp;                     // 38C  2x62 bytes (ESP32-S31)
+  uint8_t       eth_type;                  // 408
+  uint8_t       eth_clk_mode;              // 409
+  mytmplt       user_template;             // 40A  2x63 bytes (ESP32-S31)
+  WebCamCfg     webcam_config;             // 488
+  int8_t        eth_address;               // 48C
+  uint8_t       module;                    // 48D
+  uint8_t       ws_width[3];               // 48E
+  char          serial_delimiter;          // 491
+  uint8_t       seriallog_level;           // 492
+  uint8_t       sleep;                     // 493
+  uint16_t      ldo_mv[1];                 // 494  ESP32-S31 LDO3 voltage
+#elif CONFIG_IDF_TARGET_ESP32P4
   // --------------------------------------------------------------
   // Mapping 0x38C to 0x496 for ESP32P4 (Domoticz in filesystem)
   // --------------------------------------------------------------
@@ -615,7 +629,8 @@ typedef struct {
   uint8_t       sleep;                     // 477
   uint8_t       ws_color[4][3];            // 478  (+xC)
 
-  uint8_t       free_esp32_484[18];        // 484
+  uint16_t      ldo_mv[2];                 // 484  ESP32-P4 LDO3 and LDO4 voltage
+  uint8_t       free_esp32_488[14];        // 488
                                            // 496
 #elif CONFIG_IDF_TARGET_ESP32S3
   // --------------------------------------------------------------
@@ -661,10 +676,10 @@ typedef struct {
   uint8_t       free_esp32s2_494[2];       // 494
                                            // 496
 #else
-  // -----------------------------------------------------------------------
-  // Mapping 0x3AC to 0x496 for ESP32, ESP32C2, ESP32C3, ESP32C5 and ESP32C6
-  // -----------------------------------------------------------------------
-  myio          my_gp;                     // 3AC  2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x29 bytes (ESP32-C5) / 2x31 bytes (ESP32-C6)
+  // -----------------------------------------------------------------------------------
+  // Mapping 0x3AC to 0x496 for ESP32, ESP32C2, ESP32C3, ESP32C5, ESP32C6 and ESP32C61
+  // -----------------------------------------------------------------------------------
+  myio          my_gp;                     // 3AC  2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x29 bytes (ESP32-C5) / 2x30 bytes (ESP32-C61) / 2x31 bytes (ESP32-C6)
 
   #if CONFIG_IDF_TARGET_ESP32C2
   uint8_t       free_esp32c2_3D6[38];      // 3D6  - Due to smaller myio
@@ -672,11 +687,13 @@ typedef struct {
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C5
   uint8_t       free_esp32c5_3E4[22];      // 3E4  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32C61
+  uint8_t       free_esp32c61_3E8[20];     // 3E8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C6
   uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
-  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/5/6
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/5/6/61
 
-  mytmplt       user_template;             // 3FC  2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x30 bytes (ESP32-C5) / 2x32 bytes (ESP32-C6)
+  mytmplt       user_template;             // 3FC  2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x30 bytes (ESP32-C5) / 2x31 bytes (ESP32-C61) / 2x32 bytes (ESP32-C6)
 
   #if CONFIG_IDF_TARGET_ESP32C2
   uint8_t       free_esp32c2_428[30];      // 428  - Due to smaller mytmplt
@@ -684,9 +701,11 @@ typedef struct {
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
   #elif CONFIG_IDF_TARGET_ESP32C5
   uint8_t       free_esp32c5_438[14];      // 438  - Due to smaller mytmplt
+  #elif CONFIG_IDF_TARGET_ESP32C61
+  uint8_t       free_esp32c61_43A[12];     // 43A  - Due to smaller mytmplt
   #elif CONFIG_IDF_TARGET_ESP32C6 
   uint8_t       free_esp32c6_43C[10];      // 43C  - Due to smaller mytmplt
-  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/5/6
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/5/6/61
 
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
@@ -775,7 +794,6 @@ typedef struct {
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
-
 #ifdef ESP8266
   uint8_t       ex_user_template8[5];      // 72F  14 bytes (ESP8266) - Free since 9.0.0.1 - only 5 bytes referenced now
 #endif  // ESP8266
@@ -813,7 +831,7 @@ typedef struct {
   uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
   uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
   int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
-  uint8_t       shutter_options[MAX_SHUTTERS];       // E78
+  uint8_t       shutter_options[MAX_SHUTTERS];       // E78 (ESP8266 only) – bit1: INVERT (1)  bit2: LOCK (2)  bit3: ExtraOpenEndStopTime (4)  bit4: INVert WebButtons (8)  bit4: ExtraCloseEndStopTime (16)
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
@@ -832,7 +850,12 @@ typedef struct {
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
 
+#if CONFIG_IDF_TARGET_ESP32S31
+  uint8_t       ws_color[4][3];            // EB0
+  uint8_t       free_esp32s31_ebc[8];      // EBC
+#else
   uint8_t       free_eb0[20];              // EB0  20 bytes
+#endif
 
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
@@ -908,10 +931,23 @@ typedef struct {
   SOBitfield5   flag5;                     // FB4
   uint16_t      pulse_counter_debounce_low;   // FB8
   uint16_t      pulse_counter_debounce_high;  // FBA
-  uint32_t      keeloq_master_msb;         // FBC
-  uint32_t      keeloq_master_lsb;         // FC0
-  uint32_t      keeloq_serial;             // FC4
-  uint32_t      keeloq_count;              // FC8
+  union {
+    struct {
+      uint32_t  keeloq_master_msb;         // FBC
+      uint32_t  keeloq_master_lsb;         // FC0
+      uint32_t  keeloq_serial;             // FC4
+      uint32_t  keeloq_count;              // FC8
+    };
+    struct {
+      uint32_t  marbella_serial;           // FBC  TFA Marbella sensor the receiver is bound to
+      int16_t   marbella_frequency;        // FC0  TFA Marbella receiver tuning offset in 100 Hz steps
+      uint8_t   free_fc2[2];               // FC2
+      uint32_t  wizmote_comm_id;           // FC4  WizMote ESP-Now remote control comm id
+      uint16_t  miel_hvac_mb_baudrate;     // FC8  MiEL HVAC Modbus RTU slave baudrate / 300
+      uint8_t   miel_hvac_mb_address;      // FCA  MiEL HVAC Modbus RTU slave address 1..247
+      uint8_t   miel_hvac_mb_sconfig;      // FCB  MiEL HVAC Modbus RTU slave serial config (TS_SERIAL_*)
+    };
+  };
   uint32_t      device_group_share_in;     // FCC  Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0  Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4

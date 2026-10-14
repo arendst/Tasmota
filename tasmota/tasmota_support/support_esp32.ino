@@ -65,6 +65,10 @@ extern "C" {
   #include "esp32c6/rom/rtc.h"
   #include "esp32c6/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32C61
+  #include "esp32c61/rom/rtc.h"
+  #include "esp32c61/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c61 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32H2
   #include "esp32h2/rom/rtc.h"
   #include "esp32h2/rom/spi_flash.h"
@@ -73,6 +77,10 @@ extern "C" {
   #include "esp32p4/rom/rtc.h"
   #include "esp32p4/rom/spi_flash.h"
   #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32p4 is located at 0x2000
+#elif CONFIG_IDF_TARGET_ESP32S31
+  #include "esp32s31/rom/rtc.h"
+  #include "esp32s31/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x2000     // Esp32s31 is located at 0x2000
 #else
   #error Target CONFIG_IDF_TARGET is not supported
 #endif
@@ -568,7 +576,7 @@ extern "C" {
 // `psramFound()` can return true even if no PSRAM is actually installed
 // This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
 bool FoundPSRAM(void) {
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || DISABLE_PSRAMCHECK || CORE32SOLO1
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || DISABLE_PSRAMCHECK || CORE32SOLO1
   return psramFound();
 #elif CONFIG_IDF_TARGET_ESP32P4
   return ESP.getPsramSize() > 0;
@@ -913,6 +921,21 @@ typedef struct {
 #endif  // CONFIG_IDF_TARGET_ESP32C5
       return F("ESP32-C5");
     }
+    case 20: {  // ESP32-C61
+      /*
+      ESP32-C61 Series
+      - 32-bit RISC-V single-core processor that operates at up to 160 MHz
+      - 2.4 GHz Wi-Fi 6 (802.11ax) and Bluetooth 5 (LE)
+      - 320 KB SRAM, 256 KB ROM, Quad SPI flash/PSRAM
+      - 30 programmable GPIOs
+      */
+#ifdef CONFIG_IDF_TARGET_ESP32C61
+      switch (pkg_version) {
+        case 0:              return F("ESP32-C61");
+      }
+#endif  // CONFIG_IDF_TARGET_ESP32C61
+      return F("ESP32-C61");
+    }
     case 7:     // ESP32-C6(beta)
     case 13: {  // ESP32-C6
       /*
@@ -943,6 +966,9 @@ typedef struct {
     }
     case 18: {  // ESP32-P4
       return F("ESP32-P4");
+    }
+    case 32: {  // ESP32-S31
+      return F("ESP32-S31");
     }
   }
   return F("ESP32");
@@ -1048,6 +1074,55 @@ void GpioForceHoldRelay(void) {
   }
 }
 #endif
+
+/*********************************************************************************************\
+ * On-chip LDO configuration (ESP32-P4)
+ *
+ * Ldo3 2500 - Set LDO3 to 2500mV, 0 = not used
+ * LDO1 and LDO2 are reserved for flash and PSRAM
+\*********************************************************************************************/
+
+#ifdef SOC_GP_LDO_SUPPORTED
+#include "esp_ldo_regulator.h"
+
+#define LDO_FIRST_CHANNEL  3
+
+void LdoInit(void) {
+  for (uint32_t i = 0; i < nitems(Settings->ldo_mv); i++) {
+    if (!Settings->ldo_mv[i]) { continue; }
+    esp_ldo_channel_config_t ldo_config = {
+      .chan_id = (int)(LDO_FIRST_CHANNEL + i),
+      .voltage_mv = Settings->ldo_mv[i],
+    };
+    esp_ldo_channel_handle_t ldo_handle = nullptr;  // Kept until restart
+    esp_err_t ret = esp_ldo_acquire_channel(&ldo_config, &ldo_handle);
+    if (ESP_OK == ret) {
+      AddLog(LOG_LEVEL_INFO, PSTR("LDO: Ldo%d %dmV"), ldo_config.chan_id, ldo_config.voltage_mv);
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("LDO: Ldo%d failed (%d)"), ldo_config.chan_id, ret);
+    }
+  }
+}
+
+bool LdoEnabled(uint32_t channel) {
+  return ((channel >= LDO_FIRST_CHANNEL) && (channel < LDO_FIRST_CHANNEL + nitems(Settings->ldo_mv)) &&
+          Settings->ldo_mv[channel - LDO_FIRST_CHANNEL]);
+}
+
+void CmndLdo(void) {
+  if ((XdrvMailbox.index < LDO_FIRST_CHANNEL) || (XdrvMailbox.index >= LDO_FIRST_CHANNEL + nitems(Settings->ldo_mv))) { return; }
+  uint32_t index = XdrvMailbox.index - LDO_FIRST_CHANNEL;
+  uint32_t mv = XdrvMailbox.payload;
+  if ((XdrvMailbox.data_len > 0) &&
+      ((0 == mv) || (3300 == mv) || ((mv >= 500) && (mv <= 2700)))) {  // Off, bypass or LDO range
+    if (mv != Settings->ldo_mv[index]) {
+      Settings->ldo_mv[index] = mv;
+      TasmotaGlobal.restart_flag = 2;
+    }
+  }
+  ResponseCmndIdxNumber(Settings->ldo_mv[index]);
+}
+#endif  // SOC_GP_LDO_SUPPORTED
 
 /********************************************************************************************/
 

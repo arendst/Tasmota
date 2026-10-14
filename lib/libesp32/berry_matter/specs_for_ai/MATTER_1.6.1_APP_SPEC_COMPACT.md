@@ -1,5 +1,5 @@
-# Matter 1.4.1 Application Cluster Specification - AI Compact Reference
-Version: 1.4.1 (March 2025)
+# Matter 1.6.1 Application Cluster Specification - AI Compact Reference
+Version: 1.6.1 (September 2026)
 
 ## Document Structure
 - Ch1: General Clusters
@@ -12,17 +12,18 @@ Version: 1.4.1 (March 2025)
 - Ch8: Home Appliances
 - Ch9: Energy Management
 - Ch10: Network Infrastructure
+- Ch11: Cameras
 
 ## Notation
-- M=Mandatory, O=Optional, P=Provisional, F=Fixed, X=Nullable, N=NonVolatile
+- M=Mandatory, O=Optional, P=Provisional, F=Fixed, X=Nullable, N=NonVolatile, D=Deprecated
 - Q=Quieter reporting, S=Scene, P=Periodic reporting
-- R=Read, W=Write, V=View privilege, O=Operate, M=Manage, A=Administer
+- R=Read, W=Write, V=View privilege, O=Operate, M=Manage, A=Administer, L=Large message
 
 ---
 # CHAPTER 1: GENERAL CLUSTERS
 
 ## 1.2 Identify Cluster (0x0003)
-Rev:5 | Role:Utility | Scope:Endpoint | PICS:I
+Rev:6 | Role:Utility | Scope:Endpoint | PICS:I
 
 ### Data Types
 ```
@@ -34,7 +35,7 @@ EffectVariantEnum(enum8): Default=0
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|IdentifyTime|uint16|all||0|RW VO|M|
+|0x0000|IdentifyTime|uint16|all|Q|0|RW VO|M|
 |0x0001|IdentifyType|IdentifyTypeEnum|desc|MS||R V|M|
 
 ### Commands
@@ -107,7 +108,7 @@ ExtensionFieldSetStruct: {ClusterID:cluster-id, AttributeValueList:list[Attribut
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|LastConfiguredBy|node-id|all|X|null|R V|O|
+|0x0000|DoNotUse|—|—|X|—|R V|X|
 |0x0001|SceneTableSize|uint16|all|F||R V|M|
 |0x0002|FabricSceneInfo|list[SceneInfoStruct]|all|||R V|M|
 
@@ -167,7 +168,7 @@ OnWithTimedOff: {OnOffControl:OnOffControlBitmap(0-1), OnTime:uint16(max0xFFFE),
 
 ---
 ## 1.6 Level Control Cluster (0x0008)
-Rev:6 | Role:Application | Scope:Endpoint | PICS:LVL
+Rev:7 | Role:Application | Scope:Endpoint | PICS:LVL
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -186,20 +187,20 @@ StepModeEnum(enum8): Up=0,Down=1
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|CurrentLevel|uint8|1-254|XQN|null|R V|M|
+|0x0000|CurrentLevel|uint8|MinLevel-MaxLevel|XQNS|null|R V|M|
 |0x0001|RemainingTime|uint16|all|Q|0|R V|LT|
-|0x0002|MinLevel|uint8|1-254||1/0|R V|O|
-|0x0003|MaxLevel|uint8|MinLevel-254||254|R V|O|
-|0x0004|CurrentFrequency|uint16|MinFreq-MaxFreq|QP|0|R V|FQ|
-|0x0005|MinFrequency|uint16|0-MaxFreq|F|0|R V|FQ|
-|0x0006|MaxFrequency|uint16|MinFreq-65535|F|0|R V|FQ|
+|0x0002|MinLevel|uint8|max254|F|1|R V|M|
+|0x0003|MaxLevel|uint8|MinLevel-254|F|254|R V|M|
+|0x0004|CurrentFrequency|uint16|MinFrequency-MaxFrequency|QS|0|R V|FQ|
+|0x0005|MinFrequency|uint16|all||0|R V|FQ|
+|0x0006|MaxFrequency|uint16|min MinFrequency||0|R V|FQ|
 |0x000F|Options|OptionsBitmap|all||0|RW VO|M|
 |0x0010|OnOffTransitionTime|uint16|all||0|RW VO|O|
 |0x0011|OnLevel|uint8|MinLevel-MaxLevel|XN|null|RW VO|M|
 |0x0012|OnTransitionTime|uint16|all|XN|null|RW VO|O|
 |0x0013|OffTransitionTime|uint16|all|XN|null|RW VO|O|
-|0x0014|DefaultMoveRate|uint8|all|XN|null|RW VO|O|
-|0x4000|StartUpCurrentLevel|uint8|1-254|XN|MS|RW VM|LT|
+|0x0014|DefaultMoveRate|uint8|min1|XN|MS|RW VO|O|
+|0x4000|StartUpCurrentLevel|uint8|desc|XN|MS|RW VM|LT|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
@@ -222,23 +223,28 @@ MoveToClosestFrequency: {Frequency:uint16}
 
 ---
 ## 1.7 Boolean State Cluster (0x0045)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:BOOL
+Rev:3 | Role:Application | Scope:Endpoint | PICS:BOOL
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|CHGEVENT|ChangeEvent|O|State change event|
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|StateValue|bool||P||R V|M|
+|0x0000|StateValue|bool||||R V|M|
 
 ### Events
 | ID | Name | Priority | Access | Conf |
 |----|------|----------|--------|------|
-|0x00|StateChange|INFO|V|O|
+|0x00|StateChange|INFO|V|CHGEVENT,O|
 
 StateChange: {StateValue:bool}
 
 ---
 ## 1.8 Boolean State Configuration Cluster (0x0080)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:BOOLCFG
+Rev:2 | Role:Application | Scope:Endpoint | PICS:BOOLCFG
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -247,6 +253,7 @@ Rev:1 | Role:Application | Scope:Endpoint | PICS:BOOLCFG
 |1|AUD|Audible|O|Audible alarms|
 |2|SPRS|AlarmSuppress|[VIS\|AUD]|Suppress alarms|
 |3|SENSLVL|SensitivityLevel|O|Sensitivity setting|
+|4|FAULTEV|FaultEvents|O|Sensor fault events|
 
 ### Data Types
 ```
@@ -279,7 +286,7 @@ EnableDisableAlarm: {AlarmsToEnableDisable:AlarmModeBitmap}
 | ID | Name | Priority | Access | Conf |
 |----|------|----------|--------|------|
 |0x00|AlarmsStateChanged|INFO|V|VIS\|AUD|
-|0x01|SensorFault|INFO|V|O|
+|0x01|SensorFault|INFO|V|FAULTEV,O|
 
 ---
 ## 1.9 Mode Select Cluster (0x0050)
@@ -458,7 +465,7 @@ OperationalCommandResponse: {CommandResponseState:ErrorStateStruct}
 
 ---
 ## 1.15 Alarm Base Cluster (Base for derived clusters)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:ALARM
+Rev:2 | Role:Application | Scope:Endpoint | PICS:ALARM
 
 ### Features
 | Bit | Code | Feature | Summary |
@@ -473,8 +480,8 @@ AlarmBitmap(map32): Derived cluster defines bits
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|Mask|AlarmBitmap|all||0|RW VO|M|
-|0x0001|Latch|AlarmBitmap|all|F|0|R V|O|
+|0x0000|Mask|AlarmBitmap|all||0|R V|M|
+|0x0001|Latch|AlarmBitmap|all|F|0|R V|RESET|
 |0x0002|State|AlarmBitmap|all||0|R V|M|
 |0x0003|Supported|AlarmBitmap|all|F|0|R V|M|
 
@@ -482,8 +489,10 @@ AlarmBitmap(map32): Derived cluster defines bits
 | ID | Name | Dir | Response | Access | Conf |
 |----|------|-----|----------|--------|------|
 |0x00|Reset|C→S|Y|O|RESET|
+|0x01|ModifyEnabledAlarms|C→S|Y|O|O|
 
 Reset: {Alarms:AlarmBitmap}
+ModifyEnabledAlarms: {Mask:AlarmBitmap}
 
 ### Events
 | ID | Name | Priority | Access | Conf |
@@ -492,7 +501,7 @@ Reset: {Alarms:AlarmBitmap}
 
 ---
 ## 1.16 Messages Cluster (0x0097)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:MESS
+Rev:3 | Role:Application | Scope:Endpoint | PICS:MESS
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -504,24 +513,28 @@ Rev:1 | Role:Application | Scope:Endpoint | PICS:MESS
 
 ### Data Types
 ```
-FutureBitmap(map32): Reserved
+MessageID(octstr): max16
+FutureMessagePreferenceEnum(enum8): Allowed=0,Increased=1,Reduced=2,Disallowed=3,Banned=4
 MessagePriorityEnum(enum8): Low=0,Medium=1,High=2,Critical=3
 MessageControlBitmap(map8): ConfirmationRequired=Bit0,ResponseRequired=Bit1,ReplyMessage=Bit2,MessageConfirmed=Bit3,MessageProtected=Bit4
-MessageResponseOptionStruct: {MessageResponseID:uint32(O), Label:string(max32,O)}
-MessageStruct: {MessageID:octstr(max16), Priority:MessagePriorityEnum, MessageControl:MessageControlBitmap, StartTime:epoch-s|X, Duration:elapsed-ms|X, MessageText:string(max256), Responses:list[MessageResponseOptionStruct](max4,O)}
+MessageResponseOptionStruct: {MessageResponseID:uint32(min1), Label:string(max32)}
+MessageStruct: {MessageID:MessageID(S), Priority:MessagePriorityEnum(S), MessageControl:MessageControlBitmap(S), StartTime:epoch-s|X(S), Duration:uint64|X(S), MessageText:string(max256,S), Responses:list[MessageResponseOptionStruct](max4,RESP,S)}
 ```
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|Messages|list[MessageStruct]|max8||empty|R V|M|
-|0x0001|ActiveMessageIDs|list[octstr]|max8||empty|R V|M|
+|0x0000|Messages|list[MessageStruct]|max8|F|empty|R V|M|
+|0x0001|ActiveMessageIDs|list[MessageID]|max8||empty|R V|M|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
 |----|------|-----|----------|--------|------|
 |0x00|PresentMessagesRequest|C→S|Y|O|M|
 |0x01|CancelMessagesRequest|C→S|Y|O|M|
+
+PresentMessagesRequest: {MessageID:MessageID, Priority:MessagePriorityEnum, MessageControl:MessageControlBitmap, StartTime:epoch-s|X, Duration:uint64|X, MessageText:string(max256), Responses:list[MessageResponseOptionStruct](max4,RESP)}
+CancelMessagesRequest: {MessageIDs:list[MessageID](max8)}
 
 ### Events
 | ID | Name | Priority | Access | Conf |
@@ -530,9 +543,14 @@ MessageStruct: {MessageID:octstr(max16), Priority:MessagePriorityEnum, MessageCo
 |0x01|MessagePresented|INFO|V|M|
 |0x02|MessageComplete|INFO|V|M|
 
+Event Fields:
+- MessageQueued: {MessageID:MessageID}
+- MessagePresented: {MessageID:MessageID}
+- MessageComplete: {MessageID:MessageID, ResponseID:uint32|X(RESP), Reply:string(max256)|X(RPLY), FutureMessagesPreference:FutureMessagePreferenceEnum|X}
+
 ---
 ## 1.17 Service Area Cluster (0x0150)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:SEAR
+Rev:2 | Role:Application | Scope:Endpoint | PICS:SEAR
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -544,20 +562,24 @@ Rev:1 | Role:Application | Scope:Endpoint | PICS:SEAR
 ### Data Types
 ```
 OperationalStatusEnum(enum8): Pending=0,Operating=1,Skipped=2,Completed=3
+SelectAreasStatus(enum8): Success=0,UnsupportedArea=1,InvalidInMode=2,InvalidSet=3
+SkipAreaStatus(enum8): Success=0,InvalidAreaList=1,InvalidInMode=2,InvalidSkippedArea=3
+LandmarkInfoStruct: {LandmarkTag:tag, RelativePositionTag:tag|X}
+AreaInfoStruct: {LocationInfo:locationdesc|X, LandmarkInfo:LandmarkInfoStruct|X}
 AreaStruct: {AreaID:uint32, MapID:uint32|X(MAPS), AreaInfo:AreaInfoStruct}
 MapStruct: {MapID:uint32, Name:string(max64)}
-ProgressStruct: {AreaID:uint32, Status:OperationalStatusEnum, TotalOperationalTime:elapsed-s|X(O), InitialTimeEstimate:elapsed-s|X(O)}
+ProgressStruct: {AreaID:uint32, Status:OperationalStatusEnum, TotalOperationalTime:elapsed-s|X(O), EstimatedTime:elapsed-s|X(O)}
 ```
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|SupportedAreas|list[AreaStruct]|max99|||R V|M|
-|0x0001|SupportedMaps|list[MapStruct]|max99|X||R V|MAPS|
-|0x0002|SelectedAreas|list[uint32]|max99|||R V|M|
-|0x0003|CurrentArea|uint32||X|null|R V|O|
-|0x0004|EstimatedEndTime|epoch-s||XQ|null|R V|O|
-|0x0005|Progress|list[ProgressStruct]|max99|||R V|PROG|
+|0x0000|SupportedAreas|list[AreaStruct]|max255|MS||R V|M|
+|0x0001|SupportedMaps|list[MapStruct]|max255|MS||R V|MAPS|
+|0x0002|SelectedAreas|list[uint32]|max255||empty|R V|M|
+|0x0003|CurrentArea|uint32|desc|X|null|R V|O|
+|0x0004|EstimatedEndTime|epoch-s||XQ|null|R V|[CurrentArea]|
+|0x0005|Progress|list[ProgressStruct]|max255||empty|R V|PROG|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
@@ -565,11 +587,16 @@ ProgressStruct: {AreaID:uint32, Status:OperationalStatusEnum, TotalOperationalTi
 |0x00|SelectAreas|C→S|SelectAreasResponse|O|M|
 |0x02|SkipArea|C→S|SkipAreaResponse|O|SELRUN&PROG|
 
+SelectAreas: {NewAreas:list[uint32](max255)}
+SelectAreasResponse: {Status:SelectAreasStatus, StatusText:string(max256)}
+SkipArea: {SkippedArea:uint32}
+SkipAreaResponse: {Status:SkipAreaStatus, StatusText:string(max256)}
+
 ---
 # CHAPTER 2: MEASUREMENT AND SENSING
 
 ## 2.2 Illuminance Measurement Cluster (0x0400)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:ILL
+Rev:5 | Role:Application | Scope:Endpoint | PICS:ILL
 
 ### Data Types
 ```
@@ -579,31 +606,31 @@ LightSensorTypeEnum(enum8): Photodiode=0,CMOS=1,64-254=MfgSpecific
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|MeasuredValue|uint16|0,MinMeasuredValue-MaxMeasuredValue|PX|0|R V|M|
-|0x0001|MinMeasuredValue|uint16|1-65533|X||R V|M|
-|0x0002|MaxMeasuredValue|uint16|min(MinMeasuredValue+1)|X||R V|M|
-|0x0003|Tolerance|uint16|max2048|||R V|O|
-|0x0004|LightSensorType|LightSensorTypeEnum|all|X|null|R V|O|
+|0x0000|MeasuredValue|uint16|0,MinMeasuredValue-MaxMeasuredValue|X|0|R V|M|
+|0x0001|MinMeasuredValue|uint16|1-65533|FX||R V|M|
+|0x0002|MaxMeasuredValue|uint16|min(MinMeasuredValue+1)|FX||R V|M|
+|0x0003|Tolerance|uint16|max2048|F||R V|O|
+|0x0004|LightSensorType|LightSensorTypeEnum|all|FX|null|R V|O|
 
 MeasuredValue = 10000 × log10(illuminance) + 1, where 1 lx ≤ illuminance ≤ 3.576 Mlx
 
 ---
 ## 2.3 Temperature Measurement Cluster (0x0402)
-Rev:4 | Role:Application | Scope:Endpoint | PICS:TMP
+Rev:6 | Role:Application | Scope:Endpoint | PICS:TMP
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|MeasuredValue|temperature|MinMeasuredValue-MaxMeasuredValue|XP||R V|M|
-|0x0001|MinMeasuredValue|temperature|-27315-32766|X||R V|M|
-|0x0002|MaxMeasuredValue|temperature|min(MinMeasuredValue+1)|X||R V|M|
-|0x0003|Tolerance|uint16|max2048||0|R V|O|
+|0x0000|MeasuredValue|temperature|MinMeasuredValue-MaxMeasuredValue|X||R V|M|
+|0x0001|MinMeasuredValue|temperature|-27315-32766|FX||R V|M|
+|0x0002|MaxMeasuredValue|temperature|min(MinMeasuredValue+1)|FX||R V|M|
+|0x0003|Tolerance|uint16|max2048|F|0|R V|O|
 
 Temperature in 0.01°C units (e.g., 2500 = 25.00°C)
 
 ---
 ## 2.4 Pressure Measurement Cluster (0x0403)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:PRS
+Rev:5 | Role:Application | Scope:Endpoint | PICS:PRS
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -613,49 +640,49 @@ Rev:3 | Role:Application | Scope:Endpoint | PICS:PRS
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|MeasuredValue|int16|MinMeasuredValue-MaxMeasuredValue|XP||R V|M|
-|0x0001|MinMeasuredValue|int16|max32766|X||R V|M|
-|0x0002|MaxMeasuredValue|int16|(MinMeasuredValue+1)-32767|X||R V|M|
-|0x0003|Tolerance|uint16|max2048||0|R V|O|
-|0x0010|ScaledValue|int16|MinScaledValue-MaxScaledValue|X|0|R V|EXT|
-|0x0011|MinScaledValue|int16|max32766|X|0|R V|EXT|
-|0x0012|MaxScaledValue|int16|(MinScaledValue+1)-32767|X|0|R V|EXT|
-|0x0013|ScaledTolerance|uint16|max2048||0|R V|[EXT]|
-|0x0014|Scale|int8|min-127||0|R V|EXT|
+|0x0000|MeasuredValue|int16|MinMeasuredValue-MaxMeasuredValue|X||R V|M|
+|0x0001|MinMeasuredValue|int16|max32766|FX||R V|M|
+|0x0002|MaxMeasuredValue|int16|(MinMeasuredValue+1)-32767|FX||R V|M|
+|0x0003|Tolerance|uint16|max2048|F|0|R V|O|
+|0x0010|ScaledValue|int16|MinScaledValue-MaxScaledValue|X||R V|EXT|
+|0x0011|MinScaledValue|int16|max32766|FX||R V|EXT|
+|0x0012|MaxScaledValue|int16|(MinScaledValue+1)-32767|FX||R V|EXT|
+|0x0013|ScaledTolerance|uint16|max2048|F|0|R V|[EXT]|
+|0x0014|Scale|int8|min-127|F|0|R V|EXT|
 
 MeasuredValue = 10 × Pressure[kPa]; ScaledValue = 10^Scale × Pressure[Pa]
 
 ---
 ## 2.5 Flow Measurement Cluster (0x0404)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:FLW
+Rev:5 | Role:Application | Scope:Endpoint | PICS:FLW
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|MeasuredValue|uint16|MinMeasuredValue-MaxMeasuredValue|XP|null|R V|M|
-|0x0001|MinMeasuredValue|uint16|max65533|X||R V|M|
-|0x0002|MaxMeasuredValue|uint16|min(MinMeasuredValue+1)|X||R V|M|
-|0x0003|Tolerance|uint16|max2048||0|R V|O|
+|0x0000|MeasuredValue|uint16|MinMeasuredValue-MaxMeasuredValue|X|null|R V|M|
+|0x0001|MinMeasuredValue|uint16|max65533|FX||R V|M|
+|0x0002|MaxMeasuredValue|uint16|min(MinMeasuredValue+1)|FX||R V|M|
+|0x0003|Tolerance|uint16|max2048|F|0|R V|O|
 
 MeasuredValue = 10 × Flow[m³/h]
 
 ---
-## 2.6 Relative Humidity Measurement Cluster (0x0405)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:RH
+## 2.6 Water Content Measurement Clusters (0x0405)
+Rev:5 | Role:Application | Scope:Endpoint | PICS:RH
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|MeasuredValue|uint16|MinMeasuredValue-MaxMeasuredValue|XP||R V|M|
-|0x0001|MinMeasuredValue|uint16|max9999|X||R V|M|
-|0x0002|MaxMeasuredValue|uint16|(MinMeasuredValue+1)-10000|X||R V|M|
-|0x0003|Tolerance|uint16|max2048|||R V|O|
+|0x0000|MeasuredValue|uint16|MinMeasuredValue-MaxMeasuredValue|X||R V|M|
+|0x0001|MinMeasuredValue|uint16|max9999|FX||R V|M|
+|0x0002|MaxMeasuredValue|uint16|(MinMeasuredValue+1)-10000|FX||R V|M|
+|0x0003|Tolerance|uint16|max2048|F||R V|O|
 
 MeasuredValue = 100 × humidity[%] (0-10000 = 0-100%)
 
 ---
 ## 2.7 Occupancy Sensing Cluster (0x0406)
-Rev:5 | Role:Application | Scope:Endpoint | PICS:OCC
+Rev:7 | Role:Application | Scope:Endpoint | PICS:OCC
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -668,21 +695,23 @@ Rev:5 | Role:Application | Scope:Endpoint | PICS:OCC
 |5|RAD|Radar|O|Radar sensing|
 |6|RFS|RFSensing|O|RF sensing|
 |7|VIS|Vision|O|Vision-based|
+|9|OCCEVENT|OccupancyEvent|O|Occupancy changed event|
 
 ### Data Types
 ```
 OccupancyBitmap(map8): Occupied=Bit0
 OccupancySensorTypeEnum(enum8): PIR=0,Ultrasonic=1,PIRAndUltrasonic=2,PhysicalContact=3
 OccupancySensorTypeBitmap(map8): PIR=Bit0,Ultrasonic=Bit1,PhysicalContact=Bit2
+HoldTimeLimitsStruct: {HoldTimeMin:uint16(min1), HoldTimeMax:uint16(min max(HoldTimeMin,10)), HoldTimeDefault:uint16(HoldTimeMin-HoldTimeMax)}
 ```
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|Occupancy|OccupancyBitmap|all|P||R V|M|
+|0x0000|Occupancy|OccupancyBitmap|0-1|||R V|M|
 |0x0001|OccupancySensorType|OccupancySensorTypeEnum|desc|F||R V|M|
 |0x0002|OccupancySensorTypeBitmap|OccupancySensorTypeBitmap|desc|F||R V|M|
-|0x0003|HoldTime|uint16|all|N||RW VM|O|
+|0x0003|HoldTime|uint16|HoldTimeMin-HoldTimeMax|N||RW VM|O|
 |0x0004|HoldTimeLimits|HoldTimeLimitsStruct||F||R V|[HoldTime]|
 |0x0010|PIROccupiedToUnoccupiedDelay|uint16|all|N|0|RW VM|[PIR&HoldTime]|
 |0x0011|PIRUnoccupiedToOccupiedDelay|uint16|all|N|0|RW VM|[PIR&HoldTime]|
@@ -697,13 +726,16 @@ OccupancySensorTypeBitmap(map8): PIR=Bit0,Ultrasonic=Bit1,PhysicalContact=Bit2
 ### Events
 | ID | Name | Priority | Access | Conf |
 |----|------|----------|--------|------|
-|0x00|OccupancyChanged|INFO|V|O|
+|0x00|OccupancyChanged|INFO|V|OCCEVENT,O|
+
+OccupancyChanged: {Occupancy:OccupancyBitmap}
 
 ---
 ## 2.8 Resource Monitoring Clusters
 Base cluster for filter/resource monitoring. Derived clusters:
 - HEPA Filter Monitoring (0x0071)
 - Activated Carbon Filter Monitoring (0x0072)
+- Water Tank Level Monitoring (0x0079)
 
 Rev:1 | Role:Application | Scope:Endpoint
 
@@ -766,7 +798,7 @@ Base cluster for concentration measurements. Derived clusters:
 - Ozone (0x0415), Formaldehyde (0x042B), PM1 (0x042C), PM2.5 (0x042A), PM10 (0x042D)
 - Radon (0x042F), Total VOC (0x042E)
 
-Rev:3 | Role:Application | Scope:Endpoint
+Rev:5 | Role:Application | Scope:Endpoint
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -780,7 +812,7 @@ Rev:3 | Role:Application | Scope:Endpoint
 
 ### Data Types
 ```
-MeasurementUnitEnum(enum8): PPM=0,PPB=1,PPT=2,MGM3=3,UGM3=4,NGM3=5,PM3=6,BQM3=7,PCIL=8
+MeasurementUnitEnum(enum8): PPM=0,PPB=1,PPT=2,MGM3=3,UGM3=4,NGM3=5,PM3=6,BQM3=7
 MeasurementMediumEnum(enum8): Air=0,Water=1,Soil=2
 LevelValueEnum(enum8): Unknown=0,Low=1,Medium=2,High=3,Critical=4
 ```
@@ -788,21 +820,21 @@ LevelValueEnum(enum8): Unknown=0,Low=1,Medium=2,High=3,Critical=4
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|MeasuredValue|single|MinMeasuredValue-MaxMeasuredValue|XPQ|null|R V|MEA|
-|0x0001|MinMeasuredValue|single|all|X|null|R V|MEA|
-|0x0002|MaxMeasuredValue|single|all|X|null|R V|MEA|
-|0x0003|PeakMeasuredValue|single|MinMeasuredValue-MaxMeasuredValue|XQ|null|R V|PEA|
-|0x0004|PeakMeasuredValueWindow|elapsed-s|max604800|F|1|R V|PEA|
-|0x0005|AverageMeasuredValue|single|MinMeasuredValue-MaxMeasuredValue|XQ|null|R V|AVG|
-|0x0006|AverageMeasuredValueWindow|elapsed-s|max604800|F|1|R V|AVG|
-|0x0007|Uncertainty|single|all||0|R V|MEA|
+|0x0000|MeasuredValue|single|MinMeasuredValue-MaxMeasuredValue|X|null|R V|MEA|
+|0x0001|MinMeasuredValue|single|all|FX|null|R V|MEA|
+|0x0002|MaxMeasuredValue|single|min MinMeasuredValue|FX|null|R V|MEA|
+|0x0003|PeakMeasuredValue|single|MinMeasuredValue-MaxMeasuredValue|X|null|R V|PEA|
+|0x0004|PeakMeasuredValueWindow|elapsed-s|max604800|||R V|PEA|
+|0x0005|AverageMeasuredValue|single|MinMeasuredValue-MaxMeasuredValue|X|null|R V|AVG|
+|0x0006|AverageMeasuredValueWindow|elapsed-s|max604800|||R V|AVG|
+|0x0007|Uncertainty|single|all|F|MS|R V|[MEA]|
 |0x0008|MeasurementUnit|MeasurementUnitEnum|desc|F||R V|MEA|
-|0x0009|MeasurementMedium|MeasurementMediumEnum|desc|F||R V|MEA|
+|0x0009|MeasurementMedium|MeasurementMediumEnum|desc|F||R V|M|
 |0x000A|LevelValue|LevelValueEnum|desc|||R V|LEV|
 
 ---
 ## 2.11 Smoke CO Alarm Cluster (0x005C)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:SMOKECO
+Rev:2 | Role:Application | Scope:Endpoint | PICS:SMOKECO
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -817,30 +849,31 @@ SensitivityEnum(enum8): High=0,Standard=1,Low=2
 MuteStateEnum(enum8): NotMuted=0,Muted=1
 EndOfServiceEnum(enum8): Normal=0,Expired=1
 ContaminationStateEnum(enum8): Normal=0,Low=1,Warning=2,Critical=3
-ExpressedStateEnum(enum8): Normal=0,SmokeAlarm=1,COAlarm=2,BatteryAlert=3,Testing=4,HardwareFault=5,EndOfService=6,InterconnectSmoke=7,InterconnectCO=8
+ExpressedStateEnum(enum8): Normal=0,SmokeAlarm=1,COAlarm=2,BatteryAlert=3,Testing=4,HardwareFault=5,EndOfService=6,InterconnectSmoke=7,InterconnectCO=8,Inoperative=9
 ```
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|ExpressedState|ExpressedStateEnum|desc|||R V|M|
-|0x0001|SmokeState|AlarmStateEnum|desc|||R V|SMOKE|
-|0x0002|COState|AlarmStateEnum|desc|||R V|CO|
-|0x0003|BatteryAlert|AlarmStateEnum|desc|||R V|M|
-|0x0004|DeviceMuted|MuteStateEnum|desc|||R V|O|
+|0x0000|ExpressedState|ExpressedStateEnum|desc|N||R V|M|
+|0x0001|SmokeState|AlarmStateEnum|desc|N||R V|SMOKE|
+|0x0002|COState|AlarmStateEnum|desc|N||R V|CO|
+|0x0003|BatteryAlert|AlarmStateEnum|desc|N||R V|M|
+|0x0004|DeviceMuted|MuteStateEnum|desc|N||R V|O|
 |0x0005|TestInProgress|bool|all|||R V|M|
-|0x0006|HardwareFaultAlert|bool|all|||R V|M|
-|0x0007|EndOfServiceAlert|EndOfServiceEnum|desc|||R V|M|
+|0x0006|HardwareFaultAlert|bool|all|N||R V|M|
+|0x0007|EndOfServiceAlert|EndOfServiceEnum|desc|N||R V|M|
 |0x0008|InterconnectSmokeAlarm|AlarmStateEnum|desc|||R V|O|
 |0x0009|InterconnectCOAlarm|AlarmStateEnum|desc|||R V|O|
-|0x000A|ContaminationState|ContaminationStateEnum|desc|||R V|O|
-|0x000B|SmokeSensitivityLevel|SensitivityEnum|desc|N||RW VO|O|
+|0x000A|ContaminationState|ContaminationStateEnum|desc|||R V|[SMOKE]|
+|0x000B|SmokeSensitivityLevel|SensitivityEnum|desc|||RW VM|[SMOKE]|
 |0x000C|ExpiryDate|epoch-s|all|F||R V|O|
+|0x000D|Unmounted|bool|all||false|R V|M|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
 |----|------|-----|----------|--------|------|
-|0x00|SelfTestRequest|C→S|Y|O|M|
+|0x00|SelfTestRequest|C→S|Y|O|O|
 
 ### Events
 | ID | Name | Priority | Access | Conf |
@@ -853,13 +886,13 @@ ExpressedStateEnum(enum8): Normal=0,SmokeAlarm=1,COAlarm=2,BatteryAlert=3,Testin
 |0x05|SelfTestComplete|INFO|V|M|
 |0x06|AlarmMuted|INFO|V|O|
 |0x07|MuteEnded|INFO|V|O|
-|0x08|InterconnectSmokeAlarm|INFO|V|O|
-|0x09|InterconnectCOAlarm|INFO|V|O|
+|0x08|InterconnectSmokeAlarm|CRIT|V|[SMOKE]|
+|0x09|InterconnectCOAlarm|CRIT|V|[CO]|
 |0x0A|AllClear|INFO|V|M|
 
 ---
 ## 2.12 Electrical Energy Measurement Cluster (0x0091)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:EEM
+Rev:2 | Role:Application | Scope:Endpoint | PICS:EEM
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -868,10 +901,15 @@ Rev:1 | Role:Application | Scope:Endpoint | PICS:EEM
 |1|EXPE|ExportedEnergy|O.a+|Exported energy|
 |2|CUME|CumulativeEnergy|O.b+|Cumulative measurement|
 |3|PERE|PeriodicEnergy|O.b+|Periodic measurement|
+|4|APPE|ApparentEnergy|O|Apparent energy|
+|5|REAE|ReactiveEnergy|O|Reactive energy|
 
 ### Data Types
 ```
-EnergyMeasurementStruct: {Energy:energy-mWh, StartTimestamp:epoch-s(O), EndTimestamp:epoch-s(O), StartSystime:systime-ms(O), EndSystime:systime-ms(O)}
+MeasurementTypeEnum(enum8): Unspecified=0,Voltage=1,ActiveCurrent=2,ReactiveCurrent=3,ApparentCurrent=4,ActivePower=5,ReactivePower=6,ApparentPower=7,RMSVoltage=8,RMSCurrent=9,RMSPower=10,Frequency=11,PowerFactor=12,NeutralCurrent=13,ElectricalEnergy=14,ReactiveEnergy=15,ApparentEnergy=16
+MeasurementAccuracyRangeStruct: {RangeMin:int64, RangeMax:int64, PercentMax/Min/Typical:percent100ths(O), FixedMax/Min/Typical:uint64(O)}
+MeasurementAccuracyStruct: {MeasurementType:MeasurementTypeEnum, Measured:bool, MinMeasuredValue:int64, MaxMeasuredValue:int64, AccuracyRanges:list[MeasurementAccuracyRangeStruct](min1)}
+EnergyMeasurementStruct: {Energy:energy-mWh, StartTimestamp:epoch-s(O), EndTimestamp:epoch-s(O), StartSystime:systime-ms(O), EndSystime:systime-ms(O), ApparentEnergy:energy-mVAh(APPE), ReactiveEnergy:energy-mVARh(REAE)}
 CumulativeEnergyResetStruct: {ImportedResetTimestamp:epoch-s|X(O), ExportedResetTimestamp:epoch-s|X(O), ImportedResetSystime:systime-ms|X(O), ExportedResetSystime:systime-ms|X(O)}
 ```
 
@@ -893,7 +931,7 @@ CumulativeEnergyResetStruct: {ImportedResetTimestamp:epoch-s|X(O), ExportedReset
 
 ---
 ## 2.13 Electrical Power Measurement Cluster (0x0090)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:EPM
+Rev:3 | Role:Application | Scope:Endpoint | PICS:EPM
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -907,6 +945,8 @@ Rev:1 | Role:Application | Scope:Endpoint | PICS:EPM
 ### Data Types
 ```
 PowerModeEnum(enum8): Unknown=0,DC=1,AC=2
+MeasurementAccuracyRangeStruct: {RangeMin:int64, RangeMax:int64, PercentMax/Min/Typical:percent100ths(O), FixedMax/Min/Typical:uint64(O)}
+MeasurementAccuracyStruct: {MeasurementType:MeasurementTypeEnum, Measured:bool, MinMeasuredValue:int64, MaxMeasuredValue:int64, AccuracyRanges:list[MeasurementAccuracyRangeStruct](min1)}
 MeasurementRangeStruct: {MeasurementType:MeasurementTypeEnum, Min:int64, Max:int64, StartTimestamp:epoch-s(O), EndTimestamp:epoch-s(O), MinTimestamp:epoch-s(O), MaxTimestamp:epoch-s(O), StartSystime:systime-ms(O), EndSystime:systime-ms(O), MinSystime:systime-ms(O), MaxSystime:systime-ms(O)}
 HarmonicMeasurementStruct: {Order:uint8(min1), Measurement:int64|X}
 ```
@@ -914,23 +954,23 @@ HarmonicMeasurementStruct: {Order:uint8(min1), Measurement:int64|X}
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|PowerMode|PowerModeEnum|||||R V|M|
-|0x0001|NumberOfMeasurementTypes|uint8|min1|F||R V|M|
+|0x0000|PowerMode|PowerModeEnum||||R V|M|
+|0x0001|NumberOfMeasurementTypes|uint8|max32|F||R V|M|
 |0x0002|Accuracy|list[MeasurementAccuracyStruct]|1-NumberOfMeasurementTypes|F||R V|M|
 |0x0003|Ranges|list[MeasurementRangeStruct]|0-NumberOfMeasurementTypes|Q|empty|R V|O|
 |0x0004|Voltage|voltage-mV|-2^62-2^62|XQ|null|R V|O|
 |0x0005|ActiveCurrent|amperage-mA|-2^62-2^62|XQ|null|R V|O|
 |0x0006|ReactiveCurrent|amperage-mA|-2^62-2^62|XQ|null|R V|[ALTC]|
-|0x0007|ApparentCurrent|amperage-mA|0-2^62|XQ|null|R V|[ALTC]|
-|0x0008|ActivePower|power-mW|-2^62-2^62|XQ|null|R V|M|
-|0x0009|ReactivePower|power-mW|-2^62-2^62|XQ|null|R V|[ALTC]|
-|0x000A|ApparentPower|power-mW|-2^62-2^62|XQ|null|R V|[ALTC]|
+|0x0007|ApparentCurrent|amperage-mA|-2^62-2^62|XQ|null|R V|[ALTC]|
+|0x0008|ActivePower|power-mW|-2^62-2^62|XQ||R V|M|
+|0x0009|ReactivePower|power-mVAR|-2^62-2^62|XQ|null|R V|[ALTC]|
+|0x000A|ApparentPower|power-mVA|-2^62-2^62|XQ|null|R V|[ALTC]|
 |0x000B|RMSVoltage|voltage-mV|-2^62-2^62|XQ|null|R V|[ALTC]|
 |0x000C|RMSCurrent|amperage-mA|-2^62-2^62|XQ|null|R V|[ALTC]|
 |0x000D|RMSPower|power-mW|-2^62-2^62|XQ|null|R V|[ALTC]|
 |0x000E|Frequency|int64|0-1000000|XQ|null|R V|[ALTC]|
-|0x000F|HarmonicCurrents|list[HarmonicMeasurementStruct]|desc|XQ|null|R V|HARM|
-|0x0010|HarmonicPhases|list[HarmonicMeasurementStruct]|desc|XQ|null|R V|PWRQ|
+|0x000F|HarmonicCurrents|list[HarmonicMeasurementStruct]|max25|XQ|null|R V|HARM|
+|0x0010|HarmonicPhases|list[HarmonicMeasurementStruct]|max25|XQ|null|R V|PWRQ|
 |0x0011|PowerFactor|int64|-10000-10000|XQ|null|R V|[ALTC]|
 |0x0012|NeutralCurrent|amperage-mA|-2^62-2^62|XQ|null|R V|[POLY]|
 
@@ -940,10 +980,168 @@ HarmonicMeasurementStruct: {Order:uint8(min1), Measurement:int64|X}
 |0x00|MeasurementPeriodRanges|INFO|V|Ranges|
 
 ---
+## 2.14 Zone Management Cluster (0x0550)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:ZONEMGMT
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|TWODCART|TwoDimensional|O|2D Cartesian zones|
+|1|PERZONESENS|PerZoneSensitivity|O|Per-zone sensitivity|
+|2|USERDEFINED|UserDefined|O|User-defined zones|
+|3|FOCUSZONES|FocusZones|O|Focus zones|
+
+### Data Types
+```
+ZoneTypeEnum(enum8): TwoDCARTZone=0
+ZoneUseEnum(enum8): Motion=0,Privacy=1,Focus=2
+ZoneSourceEnum(enum8): Mfg=0,User=1
+ZoneEventTriggeredReasonEnum(enum8): Motion=0
+ZoneEventStoppedReasonEnum(enum8): ActionStopped=0,Timeout=1
+TwoDCartesianVertexStruct: {X:uint16, Y:uint16}
+TwoDCartesianZoneStruct: {Name:string(max32), Use:ZoneUseEnum, Vertices:list[TwoDCartesianVertexStruct](3-12), Color:string(7|9,O)}
+ZoneInformationStruct: {ZoneID:ZoneID, ZoneType:ZoneTypeEnum, ZoneSource:ZoneSourceEnum, TwoDCartesianZone:TwoDCartesianZoneStruct(TWODCART)}
+ZoneTriggerControlStruct: {ZoneID:ZoneID, InitialDuration:elapsed-s(1-65535), AugmentationDuration:elapsed-s(max InitialDuration), MaxDuration:elapsed-s(min InitialDuration), BlindDuration:elapsed-s, Sensitivity:uint8(1-SensitivityMax,PERZONESENS)}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|MaxUserDefinedZones|uint8|min5|F||R V|USERDEFINED|
+|0x0001|MaxZones|uint8|min1|F||R V|M|
+|0x0002|Zones|list[ZoneInformationStruct]|0-MaxZones|N||R V|M|
+|0x0003|Triggers|list[ZoneTriggerControlStruct]|0-MaxZones|N||R V|M|
+|0x0004|SensitivityMax|uint8|2-10|F||R V|M|
+|0x0005|Sensitivity|uint8|1-SensitivityMax|N||RW VO|!PERZONESENS|
+|0x0006|TwoDCartesianMax|TwoDCartesianVertexStruct|all|F||R V|TWODCART|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|CreateTwoDCartesianZone|C→S|CreateTwoDCartesianZoneResponse|M|TWODCART&USERDEFINED|
+|0x02|UpdateTwoDCartesianZone|C→S|Y|M|TWODCART&USERDEFINED|
+|0x03|RemoveZone|C→S|Y|M|USERDEFINED|
+|0x04|CreateOrUpdateTrigger|C→S|Y|M|M|
+|0x05|RemoveTrigger|C→S|Y|M|M|
+
+CreateTwoDCartesianZone: {Zone:TwoDCartesianZoneStruct}
+CreateTwoDCartesianZoneResponse: {ZoneID:ZoneID}
+UpdateTwoDCartesianZone: {ZoneID:ZoneID, Zone:TwoDCartesianZoneStruct}
+RemoveZone: {ZoneID:ZoneID}
+CreateOrUpdateTrigger: {Trigger:ZoneTriggerControlStruct}
+RemoveTrigger: {ZoneID:ZoneID}
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|ZoneTriggered|INFO|V|M|
+|0x01|ZoneStopped|INFO|V|M|
+
+ZoneTriggered: {Zone:ZoneID, Reason:ZoneEventTriggeredReasonEnum}
+ZoneStopped: {Zone:ZoneID, Reason:ZoneEventStoppedReasonEnum}
+
+---
+## 2.15 Soil Measurement Cluster (0x0430)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:SOIL
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|SoilMoistureMeasurementLimits|MeasurementAccuracyStruct|desc|F||R V|M|
+|0x0001|SoilMoistureMeasuredValue|percent|MinMeasuredValue-MaxMeasuredValue|X||R V|M|
+
+---
+## 2.16 Ambient Context Sensing Cluster (0x0431) [PROVISIONAL]
+Rev:1 | Role:Application | Scope:Endpoint | PICS:ACS
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|HA|HumanActivity|O|Human activity|
+|1|OC|ObjectCounting|O|Object counting|
+|2|OI|ObjectIdentification|O|Object identification|
+|3|AUD|SoundIdentification|O|Sound identification|
+|4|PRED|PredictedActivity|O|Predicted activity|
+
+### Data Types
+```
+HoldTimeLimitsStruct: {HoldTimeMin:uint16(min1), HoldTimeMax:uint16(min max(HoldTimeMin,10)), HoldTimeDefault:uint16(HoldTimeMin-HoldTimeMax)}
+AmbientContextTypeStruct: {AmbientContextSensed:list[SemanticTagStruct](max2)}
+ObjectCountConfigStruct: {CountingObject:SemanticTagStruct, ObjectCountThreshold:uint16(min1)}
+PredictedActivityStruct: {StartTimestamp:epoch-s, EndTimestamp:epoch-s, AmbientContextType:list[SemanticTagStruct](max100,HA|OI|AUD), CrowdDetected:bool(OC), CrowdCount:uint8(1-254,[OC]), Confidence:percent}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|HumanActivityDetected|bool|all|||R V|P,HA|
+|0x0001|ObjectIdentified|bool|all|||R V|P,OI|
+|0x0002|AudioContextDetected|bool|all|||R V|P,AUD|
+|0x0003|AmbientContextType|list[AmbientContextTypeStruct]|1-SimultaneousDetectionLimit|||R V|P,HA\|OI\|AUD|
+|0x0004|AmbientContextTypeSupported|list[SemanticTagStruct]|max50|||R V|P,HA\|OI\|AUD|
+|0x0005|ObjectCountThresholdReached|bool|all|||R V|P,OC&OI|
+|0x0006|ObjectCountConfig|ObjectCountConfigStruct|all|N||RW VM|P,OC&OI|
+|0x0007|ObjectCount|uint16|min1||0|R V|P,[OC&OI]|
+|0x0008|SimultaneousDetectionLimit|uint8|1-10|F||R V|P,M|
+|0x0009|HoldTime|uint16|HoldTimeMin-HoldTimeMax|N||RW VM|P,M|
+|0x000A|HoldTimeLimits|HoldTimeLimitsStruct|all|F||R V|P,M|
+|0x000B|PredictedActivity|list[PredictedActivityStruct]|max20|||R V|P,PRED|
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|AmbientContextDetectStarted|INFO|V|P,HA\|OI\|AUD\|(OC&OI)|
+|0x01|AmbientContextDetectEnded|INFO|V|P,HA\|OI\|AUD\|(OC&OI)|
+
+AmbientContextDetectStarted: {AmbientContextDetected:AmbientContextTypeStruct(O), ObjectCountThresholdReached:bool(OC&OI), ObjectCount:uint16|X([OC&OI])}
+AmbientContextDetectEnded: {EventStartTimePos:posix-ms(O.a+), EventStartTimeSys:systime-ms(O.a+)}
+
+---
+## 2.17 Temperature Alarm Cluster (0x0064) [PROVISIONAL]
+Rev:1 | Role:Application | Scope:Endpoint | PICS:TEMPALM
+Derived from: Alarm Base
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|20|OVER|OverTemperature|O.a+|Over-temperature thresholds|
+|21|UNDER|UnderTemperature|O.a+|Under-temperature thresholds|
+|22|MAJOR|MajorThreshold|O|Major thresholds|
+|23|MINOR|MinorThreshold|O|Minor thresholds|
+|24-29|*ADJ|ThresholdAdjustment|O|Adjust corresponding threshold|
+
+### AlarmBitmap (Derived)
+| Bit | Name |
+|-----|------|
+|0|CriticalOverTemperatureAlarm|
+|1|MajorOverTemperatureAlarm|
+|2|MinorOverTemperatureAlarm|
+|3|MinorUnderTemperatureAlarm|
+|4|MajorUnderTemperatureAlarm|
+|5|CriticalUnderTemperatureAlarm|
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0080|CriticalOverTemperatureThreshold|temperature|desc|||R V|OVER|
+|0x0081|MajorOverTemperatureThreshold|temperature|desc|||R V|OVER&MAJOR|
+|0x0082|MinorOverTemperatureThreshold|temperature|desc|||R V|OVER&MINOR|
+|0x0083|MinorUnderTemperatureThreshold|temperature|desc|||R V|UNDER&MINOR|
+|0x0084|MajorUnderTemperatureThreshold|temperature|desc|||R V|UNDER&MAJOR|
+|0x0085|CriticalUnderTemperatureThreshold|temperature|desc|||R V|UNDER|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x80|SetTemperatureAlarmThresholds|C→S|Y|O|OCRIADJ\|OMAJADJ\|OMINADJ\|UMINADJ\|UMAJADJ\|UCRIADJ|
+
+SetTemperatureAlarmThresholds: {CriticalOverTemperatureThreshold:temperature(O), MajorOverTemperatureThreshold:temperature(O), MinorOverTemperatureThreshold:temperature(O), MinorUnderTemperatureThreshold:temperature(O), MajorUnderTemperatureThreshold:temperature(O), CriticalUnderTemperatureThreshold:temperature(O)}
+
+---
 # CHAPTER 3: LIGHTING
 
 ## 3.2 Color Control Cluster (0x0300)
-Rev:7 | Role:Application | Scope:Endpoint | PICS:CC
+Rev:9 | Role:Application | Scope:Endpoint | PICS:CC
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -956,14 +1154,16 @@ Rev:7 | Role:Application | Scope:Endpoint | PICS:CC
 
 ### Data Types
 ```
-HueDirectionEnum(enum8): ShortestDistance=0,LongestDistance=1,Up=2,Down=3
-HueMoveDirectionEnum(enum8): Stop=0,Up=1,Down=2
-SaturationMoveDirectionEnum(enum8): Stop=0,Up=1,Down=2
+DirectionEnum(enum8): Shortest=0,Longest=1,Up=2,Down=3
+MoveModeEnum(enum8): Stop=0,Up=1,Down=3
+StepModeEnum(enum8): Up=1,Down=3
+DriftCompensationEnum(enum8): None=0,OtherOrUnknown=1,TemperatureMonitor=2,OpticalLuminance=3,OpticalColorMonitoring=4
 ColorModeEnum(enum8): CurrentHueAndCurrentSaturation=0,CurrentXAndCurrentY=1,ColorTemperatureMireds=2
 EnhancedColorModeEnum(enum8): CurrentHueAndCurrentSaturation=0,CurrentXAndCurrentY=1,ColorTemperatureMireds=2,EnhancedCurrentHueAndCurrentSaturation=3
 ColorLoopDirectionEnum(enum8): DecrementHue=0,IncrementHue=1
 ColorLoopActionEnum(enum8): Deactivate=0,ActivateFromColorLoopStartEnhancedHue=1,ActivateFromEnhancedCurrentHue=2
-ColorLoopUpdateFlagsBitmap(map8): UpdateAction=Bit0,UpdateDirection=Bit1,UpdateTime=Bit2,UpdateStartHue=Bit3
+UpdateFlagsBitmap(map8): UpdateAction=Bit0,UpdateDirection=Bit1,UpdateTime=Bit2,UpdateStartHue=Bit3
+ColorCapabilitiesBitmap(map16): HueSaturation=Bit0,EnhancedHue=Bit1,ColorLoop=Bit2,XY=Bit3,ColorTemperature=Bit4
 OptionsBitmap(map8): ExecuteIfOff=Bit0
 ```
 
@@ -975,17 +1175,17 @@ OptionsBitmap(map8): ExecuteIfOff=Bit0
 |0x0002|RemainingTime|uint16|all|Q|0|R V|O|
 |0x0003|CurrentX|uint16|0-0xFEFF|QS|0x616B|R V|XY|
 |0x0004|CurrentY|uint16|0-0xFEFF|QS|0x607D|R V|XY|
-|0x0005|DriftCompensation|enum8|0-4|||R V|O|
+|0x0005|DriftCompensation|DriftCompensationEnum|desc|||R V|O|
 |0x0006|CompensationText|string|max254|||R V|O|
 |0x0007|ColorTemperatureMireds|uint16|ColorTempPhysicalMinMireds-ColorTempPhysicalMaxMireds|QNS||R V|CT|
 |0x0008|ColorMode|ColorModeEnum|desc||1|R V|M|
 |0x000F|Options|OptionsBitmap|all||0|RW VO|M|
 |0x0010|NumberOfPrimaries|uint8|0-6|XF|null|R V|O|
-|0x0011-0x0019|Primary1-3X/Y/Intensity|uint16/uint8|varies|F||R V|O|
-|0x0020-0x0028|Primary4-6X/Y/Intensity|uint16/uint8|varies|F||R V|O|
-|0x0030|WhitePointX|uint16|0-0xFEFF|||RW VM|O|
-|0x0031|WhitePointY|uint16|0-0xFEFF|||RW VM|O|
-|0x0032-0x0037|ColorPointR/G/BX/Y/Intensity|uint16/uint8|varies|||RW VM|O|
+|0x0011-0x001B|Primary1-3X/Y/Intensity|uint16/uint8|varies|F||R V|O|
+|0x0020-0x002A|Primary4-6X/Y/Intensity|uint16/uint8|varies|F||R V|O|
+|0x0030|WhitePointX|uint16|0-0xFEFF|||R V|O|
+|0x0031|WhitePointY|uint16|0-0xFEFF|||R V|O|
+|0x0032-0x003C|ColorPointR/G/BX/Y/Intensity|uint16/uint8|varies|||R V|O|
 |0x4000|EnhancedCurrentHue|uint16|all|QS|0|R V|EHUE|
 |0x4001|EnhancedColorMode|EnhancedColorModeEnum|desc|S|1|R V|M|
 |0x4002|ColorLoopActive|uint8|all|S|0|R V|CL|
@@ -993,7 +1193,7 @@ OptionsBitmap(map8): ExecuteIfOff=Bit0
 |0x4004|ColorLoopTime|uint16|all|S|0x0019|R V|CL|
 |0x4005|ColorLoopStartEnhancedHue|uint16|all||0x2300|R V|CL|
 |0x4006|ColorLoopStoredEnhancedHue|uint16|all||0|R V|CL|
-|0x400A|ColorCapabilities|map16|all|F|0|R V|M|
+|0x400A|ColorCapabilities|ColorCapabilitiesBitmap|max0x1F|F|0|R V|M|
 |0x400B|ColorTempPhysicalMinMireds|uint16|all|F|0|R V|CT|
 |0x400C|ColorTempPhysicalMaxMireds|uint16|all|F|0xFEFF|R V|CT|
 |0x400D|CoupleColorTempToLevelMinMireds|uint16|ColorTempPhysicalMinMireds-ColorTemperatureMireds|||R V|[CT&LT]|
@@ -1048,7 +1248,7 @@ Rev:5 | Role:Application | Scope:Endpoint | PICS:BC
 # CHAPTER 4: HVAC
 
 ## 4.2 Pump Configuration and Control Cluster (0x0200)
-Rev:4 | Role:Application | Scope:Endpoint | PICS:PCC
+Rev:5 | Role:Application | Scope:Endpoint | PICS:PCC
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -1084,10 +1284,10 @@ ControlModeEnum(enum8): ConstantSpeed=0,ConstantPressure=1,ProportionalPressure=
 |0x000A|MaxConstFlow|uint16|all|XF|null|R V|[FLW]|
 |0x000B|MinConstTemp|int16|all|XF|null|R V|[TEMP]|
 |0x000C|MaxConstTemp|int16|all|XF|null|R V|[TEMP]|
-|0x0010|PumpStatus|PumpStatusBitmap|all|P|0|R V|O|
+|0x0010|PumpStatus|PumpStatusBitmap|all||0|R V|O|
 |0x0011|EffectiveOperationMode|OperationModeEnum|desc|||R V|M|
 |0x0012|EffectiveControlMode|ControlModeEnum|desc|||R V|M|
-|0x0013|Capacity|int16|all|XPQ|null|R V|M|
+|0x0013|Capacity|int16|all|XQ|null|R V|M|
 |0x0014|Speed|uint16|all|X|null|R V|O|
 |0x0015|LifetimeRunningHours|uint24|all|XNQ|0|RW VM|O|
 |0x0016|Power|uint24|all|XQ|null|R V|O|
@@ -1118,7 +1318,7 @@ ControlModeEnum(enum8): ConstantSpeed=0,ConstantPressure=1,ProportionalPressure=
 
 ---
 ## 4.3 Thermostat Cluster (0x0201)
-Rev:7 | Role:Application | Scope:Endpoint | PICS:TSTAT
+Rev:11 | Role:Application | Scope:Endpoint | PICS:TSTAT
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -1126,12 +1326,13 @@ Rev:7 | Role:Application | Scope:Endpoint | PICS:TSTAT
 |0|HEAT|Heating|O.a+|Heating|
 |1|COOL|Cooling|O.a+|Cooling|
 |2|OCC|Occupancy|O|Occupancy sensing|
-|3|SCH|ScheduleConfiguration|O|Weekly schedule|
-|4|SB|Setback|O|Setback support|
+|4|SB|Setback|D|Deprecated|
 |5|AUTO|AutoMode|O|Auto mode|
 |6|LTNE|LocalTemperatureNotExposed|O|Local temp not exposed|
 |7|MSCH|MatterScheduleConfiguration|O|Matter schedules|
 |8|PRES|Presets|O|Presets support|
+|9|TEVT|Events|P,O|Thermostat events|
+|10|TSUGGEST|ThermostatSuggestions|[PRES]|Preset suggestions|
 
 ### Data Types
 ```
@@ -1146,21 +1347,22 @@ ScheduleDayOfWeekBitmap(map8): Sunday-Saturday=Bit0-6,Away=Bit7
 ScheduleModeBitmap(map8): HeatSetpointPresent=Bit0,CoolSetpointPresent=Bit1
 PresetStruct: {PresetHandle:octstr(max16)|X, PresetScenario:PresetScenarioEnum, Name:string(max64)|X(O), CoolingSetpoint:temperature(COOL), HeatingSetpoint:temperature(HEAT), BuiltIn:bool|X}
 ScheduleStruct: {ScheduleHandle:octstr(max16)|X, SystemMode:SystemModeEnum, Name:string(max64,O), PresetHandle:octstr(max16,O), Transitions:list[ScheduleTransitionStruct], BuiltIn:bool|X}
-WeeklyScheduleTransitionStruct: {TransitionTime:uint16(max1439), HeatSetpoint:temperature|X, CoolSetpoint:temperature|X}
+ThermostatSuggestionNotFollowingReasonBitmap(map8): DemandResponseEvent=Bit0,OngoingHold=Bit1,Schedule=Bit2,Occupancy=Bit3,VacationMode=Bit4,TimeOfUseCostSavings=Bit5,PreCoolingOrPreHeating=Bit6,ConflictingSuggestions=Bit7
+ThermostatSuggestionStruct: {UniqueID:uint8, PresetHandle:octstr(max16), EffectiveTime:epoch-s, ExpirationTime:epoch-s}
 ```
 
 ### Attributes (Key attributes)
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|LocalTemperature|temperature|all|XP|null|R V|M|
+|0x0000|LocalTemperature|temperature|all|X|null|R V|M|
 |0x0001|OutdoorTemperature|temperature|all|X|null|R V|O|
 |0x0002|Occupancy|OccupancyBitmap|all||1|R V|OCC|
 |0x0003|AbsMinHeatSetpointLimit|temperature|desc|F|7°C|R V|[HEAT]|
 |0x0004|AbsMaxHeatSetpointLimit|temperature|desc|F|30°C|R V|[HEAT]|
 |0x0005|AbsMinCoolSetpointLimit|temperature|desc|F|16°C|R V|[COOL]|
 |0x0006|AbsMaxCoolSetpointLimit|temperature|desc|F|32°C|R V|[COOL]|
-|0x0007|PICoolingDemand|uint8|0%-100%|P|-|R V|[COOL]|
-|0x0008|PIHeatingDemand|uint8|0%-100%|P|-|R V|[HEAT]|
+|0x0007|PICoolingDemand|uint8|0%-100%||-|R V|D|
+|0x0008|PIHeatingDemand|uint8|0%-100%||-|R V|D|
 |0x0011|OccupiedCoolingSetpoint|temperature|desc|N|26°C|RW VO|COOL|
 |0x0012|OccupiedHeatingSetpoint|temperature|desc|N|20°C|RW VO|HEAT|
 |0x0013|UnoccupiedCoolingSetpoint|temperature|desc|N|26°C|RW VO|COOL&OCC|
@@ -1169,13 +1371,10 @@ WeeklyScheduleTransitionStruct: {TransitionTime:uint16(max1439), HeatSetpoint:te
 |0x0016|MaxHeatSetpointLimit|temperature|desc|N|AbsMaxHeatSetpointLimit|RW VM|[HEAT]|
 |0x0017|MinCoolSetpointLimit|temperature|desc|N|AbsMinCoolSetpointLimit|RW VM|[COOL]|
 |0x0018|MaxCoolSetpointLimit|temperature|desc|N|AbsMaxCoolSetpointLimit|RW VM|[COOL]|
-|0x0019|MinSetpointDeadBand|SignedTemperature|0-12.7°C|N|2.5°C|R[W] VM|AUTO|
+|0x0019|MinSetpointDeadBand|SignedTemperature|0-12.7°C|N|2°C|R[W] VM|AUTO|
 |0x001B|ControlSequenceOfOperation|ControlSequenceOfOperationEnum|desc|N|4|RW VM|M|
 |0x001C|SystemMode|SystemModeEnum|desc|N|1|RW VM|M|
-|0x001E|ThermostatRunningMode|ThermostatRunningModeEnum|desc||0|R V|[AUTO]|
-|0x0020|StartOfWeek|StartOfWeekEnum|desc|F|–|R V|SCH|
-|0x0021|NumberOfWeeklyTransitions|uint8|all|F|0|R V|SCH|
-|0x0022|NumberOfDailyTransitions|uint8|all|F|0|R V|SCH|
+|0x001E|ThermostatRunningMode|ThermostatRunningModeEnum|desc||0|R V|TEVT&AUTO,[AUTO]|
 |0x0029|ThermostatRunningState|RelayStateBitmap|desc|-||R V|O|
 |0x0048|PresetTypes|list[PresetTypeStruct]|desc|F|MS|R V|PRES|
 |0x0049|ScheduleTypes|list[ScheduleTypeStruct]|desc|F|MS|R V|MSCH|
@@ -1183,24 +1382,41 @@ WeeklyScheduleTransitionStruct: {TransitionTime:uint16(max1439), HeatSetpoint:te
 |0x004F|ActiveScheduleHandle|octstr|max16|XN|null|R V|MSCH|
 |0x0050|Presets|list[PresetStruct]|max NumberOfPresets|NT|empty|RW VM|PRES|
 |0x0051|Schedules|list[ScheduleStruct]|desc|NT|empty|RW VM|MSCH|
+|0x0052|SetpointHoldExpiryTimestamp|epoch-s|all|NX|null|R V|O|
+|0x0053|MaxThermostatSuggestions|uint8|min5|F||R V|TSUGGEST|
+|0x0054|ThermostatSuggestions|list[ThermostatSuggestionStruct]|max MaxThermostatSuggestions|N||R V|TSUGGEST|
+|0x0055|CurrentThermostatSuggestion|ThermostatSuggestionStruct|all|X|null|R V|TSUGGEST|
+|0x0056|ThermostatSuggestionNotFollowingReason|ThermostatSuggestionNotFollowingReasonBitmap|all|X|null|R V|TSUGGEST|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
 |----|------|-----|----------|--------|------|
 |0x00|SetpointRaiseLower|C→S|Y|O|M|
-|0x01|SetWeeklySchedule|C→S|Y|M|SCH|
-|0x02|GetWeeklySchedule|C→S|GetWeeklyScheduleResponse|O|SCH|
-|0x03|ClearWeeklySchedule|C→S|Y|M|SCH|
 |0x05|SetActiveScheduleRequest|C→S|Y|O|MSCH|
 |0x06|SetActivePresetRequest|C→S|Y|O|PRES|
-|0x07|AtomicRequest|C→S|AtomicResponse|O|PRES\|MSCH|
+|0x07|AddThermostatSuggestion|C→S|AddThermostatSuggestionResponse|M|TSUGGEST|
+|0x08|RemoveThermostatSuggestion|C→S|Y|M|TSUGGEST|
 
 SetpointRaiseLower: {Mode:SetpointRaiseLowerModeEnum, Amount:int8}
-SetWeeklySchedule: {NumberOfTransitionsForSequence:uint8, DayOfWeekForSequence:ScheduleDayOfWeekBitmap, ModeForSequence:ScheduleModeBitmap, Transitions:list[WeeklyScheduleTransitionStruct]}
+AddThermostatSuggestion: {PresetHandle:octstr(max16), EffectiveTime:epoch-s|X, ExpirationInMinutes:uint16(30-1440)}
+AddThermostatSuggestionResponse: {UniqueID:uint8}
+RemoveThermostatSuggestion: {UniqueID:uint8}
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|SystemModeChange|INFO|V|P,TEVT|
+|0x01|LocalTemperatureChange|INFO|V|P,TEVT&!LTNE|
+|0x02|OccupancyChange|INFO|V|P,TEVT&OCC|
+|0x03|SetpointChange|INFO|V|P,TEVT|
+|0x04|RunningStateChange|INFO|V|P,TEVT|
+|0x05|RunningModeChange|INFO|V|P,TEVT&AUTO|
+|0x06|ActiveScheduleChange|INFO|V|P,TEVT&MSCH|
+|0x07|ActivePresetChange|INFO|V|P,TEVT&PRES|
 
 ---
 ## 4.4 Fan Control Cluster (0x0202)
-Rev:4 | Role:Application | Scope:Endpoint | PICS:FAN
+Rev:6 | Role:Application | Scope:Endpoint | PICS:FAN
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -1227,11 +1443,11 @@ WindBitmap(map8): SleepWind=Bit0,NaturalWind=Bit1
 |----|------|------|------------|---------|---------|--------|------|
 |0x0000|FanMode|FanModeEnum|desc|N|0|RW VO|M|
 |0x0001|FanModeSequence|FanModeSequenceEnum|desc|F|2|R V|M|
-|0x0002|PercentSetting|percent|all|XN|0|RW VO|M|
-|0x0003|PercentCurrent|percent|all|P|0|R V|M|
+|0x0002|PercentSetting|percent|max100|X|0|RW VO|M|
+|0x0003|PercentCurrent|percent|max100||0|R V|M|
 |0x0004|SpeedMax|uint8|1-100|F|1|R V|SPD|
-|0x0005|SpeedSetting|uint8|0-SpeedMax|XN|0|RW VO|SPD|
-|0x0006|SpeedCurrent|uint8|0-SpeedMax|P|0|R V|SPD|
+|0x0005|SpeedSetting|uint8|0-SpeedMax|X|0|RW VO|SPD|
+|0x0006|SpeedCurrent|uint8|0-SpeedMax||0|R V|SPD|
 |0x0007|RockSupport|RockBitmap|all|F|0|R V|RCK|
 |0x0008|RockSetting|RockBitmap|all|N|0|RW VO|RCK|
 |0x0009|WindSupport|WindBitmap|all|F|0|R V|WND|
@@ -1313,7 +1529,7 @@ Open: {OpenDuration:elapsed-s|X(O), TargetLevel:percent(LVL)}
 # CHAPTER 5: CLOSURES
 
 ## 5.2 Door Lock Cluster (0x0101)
-Rev:7 | Role:Application | Scope:Endpoint | PICS:DRLK
+Rev:10 | Role:Application | Scope:Endpoint | PICS:DRLK
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -1321,13 +1537,11 @@ Rev:7 | Role:Application | Scope:Endpoint | PICS:DRLK
 |0|PIN|PINCredential|O|PIN credentials|
 |1|RID|RFIDCredential|O|RFID credentials|
 |2|FGP|FingerCredentials|O|Finger credentials|
-|3|LOG|Logging|O|Audit logging|
 |4|WDSCH|WeekDayAccessSchedules|O|Week day schedules|
 |5|DPS|DoorPositionSensor|O|Door position sensor|
 |6|FACE|FaceCredentials|O|Face credentials|
 |7|COTA|CredentialOverTheAirAccess|O|OTA credential access|
 |8|USR|User|[PIN\|RID\|FGP\|FACE]|User management|
-|9|NOT|Notification|O|Notifications|
 |10|YDSCH|YearDayAccessSchedules|O|Year day schedules|
 |11|HDSCH|HolidaySchedules|O|Holiday schedules|
 |12|UBOLT|Unbolt|O|Unbolt command|
@@ -1340,8 +1554,8 @@ AlarmCodeEnum(enum8): LockJammed=0,LockFactoryReset=1,LockRadioPowerCycled=3,Wro
 CredentialRuleEnum(enum8): Single=0,Dual=1,Tri=2
 CredentialTypeEnum(enum8): ProgrammingPIN=0,PIN=1,RFID=2,Fingerprint=3,FingerVein=4,Face=5,AliroCredentialIssuerKey=6,AliroEvictableEndpointKey=7,AliroNonEvictableEndpointKey=8
 DataOperationTypeEnum(enum8): Add=0,Clear=1,Modify=2
-DlLockState(enum8): NotFullyLocked=0,Locked=1,Unlocked=2,Unlatched=3
-DlLockType(enum8): DeadBolt=0,Magnetic=1,Other=2,Mortise=3,Rim=4,LatchBolt=5,CylindricalLock=6,TubularLock=7,InterconnectedLock=8,DeadLatch=9,DoorFurniture=10,Eurocylinder=11
+LockStateEnum(enum8): NotFullyLocked=0,Locked=1,Unlocked=2,Unlatched=3
+LockTypeEnum(enum8): DeadBolt=0,Magnetic=1,Other=2,Mortise=3,Rim=4,LatchBolt=5,CylindricalLock=6,TubularLock=7,InterconnectedLock=8,DeadLatch=9,DoorFurniture=10,Eurocylinder=11
 DoorStateEnum(enum8): DoorOpen=0,DoorClosed=1,DoorJammed=2,DoorForcedOpen=3,DoorUnspecifiedError=4,DoorAjar=5
 LockDataTypeEnum(enum8): Unspecified=0,ProgrammingCode=1,UserIndex=2,WeekDaySchedule=3,YearDaySchedule=4,HolidaySchedule=5,PIN=6,RFID=7,Fingerprint=8,FingerVein=9,Face=10,AliroCredentialIssuerKey=11,AliroEvictableEndpointKey=12,AliroNonEvictableEndpointKey=13
 LockOperationTypeEnum(enum8): Lock=0,Unlock=1,NonAccessUserEvent=2,ForcedUserEvent=3,Unlatch=4
@@ -1356,10 +1570,10 @@ CredentialStruct: {CredentialType:CredentialTypeEnum, CredentialIndex:uint16}
 ### Attributes (Key attributes)
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|LockState|DlLockState|desc|XP|null|R V|M|
-|0x0001|LockType|DlLockType|desc|F||R V|M|
+|0x0000|LockState|LockStateEnum|desc|X|null|R V|M|
+|0x0001|LockType|LockTypeEnum|desc|F||R V|M|
 |0x0002|ActuatorEnabled|bool|all|||R V|M|
-|0x0003|DoorState|DoorStateEnum|desc|XP|null|R V|DPS|
+|0x0003|DoorState|DoorStateEnum|desc|X|null|R V|DPS|
 |0x0004|DoorOpenEvents|uint32|all|N||RW VM|[DPS]|
 |0x0005|DoorClosedEvents|uint32|all|N||RW VM|[DPS]|
 |0x0006|OpenPeriod|uint16|all|N||RW VM|[DPS]|
@@ -1380,7 +1594,7 @@ CredentialStruct: {CredentialType:CredentialTypeEnum, CredentialIndex:uint16}
 |0x0024|SoundVolume|uint8|all|N||RW VM|O|
 |0x0025|OperatingMode|OperatingModeEnum|desc|N||RW VM|M|
 |0x0026|SupportedOperatingModes|OperatingModesBitmap|all|F|0xFFF6|R V|M|
-|0x0027|DefaultConfigurationRegister|ConfigurationRegisterBitmap|all|P|0|R V|O|
+|0x0027|DefaultConfigurationRegister|ConfigurationRegisterBitmap|all||0|R V|O|
 |0x0028|EnableLocalProgramming|bool|all|N|true|RW VA|O|
 |0x0029|EnableOneTouchLocking|bool|all|N|false|RW VM|O|
 |0x002A|EnableInsideStatusLED|bool|all|N|false|RW VM|O|
@@ -1391,12 +1605,22 @@ CredentialStruct: {CredentialType:CredentialTypeEnum, CredentialIndex:uint16}
 |0x0032|SendPINOverTheAir|bool|all|N|false|RW VA|COTA&PIN|
 |0x0033|RequirePINforRemoteOperation|bool|all|N|false|RW VA|COTA&PIN|
 |0x0035|ExpiringUserTimeout|uint16|1-2880|N||RW VA|[USR]|
+|0x0080|AliroReaderVerificationKey|octstr|65|X||R A|ALIRO|
+|0x0081|AliroReaderGroupIdentifier|octstr|16|X||R A|ALIRO|
+|0x0082|AliroReaderGroupSubIdentifier|octstr|16|F||R A|ALIRO|
+|0x0083|AliroExpeditedTransactionSupportedProtocolVersions|list[octstr]|max16[2]|F||R A|ALIRO|
+|0x0084|AliroGroupResolvingKey|octstr|16|X||R A|ALBU|
+|0x0085|AliroSupportedBLEUWBProtocolVersions|list[octstr]|max16[2]|F||R A|ALBU|
+|0x0086|AliroBLEAdvertisingVersion|uint8|all|F||R A|ALBU|
+|0x0087|NumberOfAliroCredentialIssuerKeysSupported|uint16|all|F||R V|ALIRO|
+|0x0088|NumberOfAliroEndpointKeysSupported|uint16|all|F||R V|ALIRO|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
 |----|------|-----|----------|--------|------|
 |0x00|LockDoor|C→S|Y|T|M|
 |0x01|UnlockDoor|C→S|Y|T|M|
+|0x02|Toggle|C→S|Y|T|X|
 |0x03|UnlockWithTimeout|C→S|Y|T|O|
 |0x0B|SetWeekDaySchedule|C→S|Y|A|WDSCH|
 |0x0C|GetWeekDaySchedule|C→S|GetWeekDayScheduleResponse|A|WDSCH|
@@ -1414,6 +1638,8 @@ CredentialStruct: {CredentialType:CredentialTypeEnum, CredentialIndex:uint16}
 |0x24|GetCredentialStatus|C→S|GetCredentialStatusResponse|A|USR|
 |0x26|ClearCredential|C→S|Y|A T|USR|
 |0x27|UnboltDoor|C→S|Y|T|UBOLT|
+|0x28|SetAliroReaderConfig|C→S|Y|A T|ALIRO|
+|0x29|ClearAliroReaderConfig|C→S|Y|A T|ALIRO|
 
 LockDoor/UnlockDoor/UnboltDoor: {PINCode:octstr(O)}
 
@@ -1428,7 +1654,7 @@ LockDoor/UnlockDoor/UnboltDoor: {PINCode:octstr(O)}
 
 ---
 ## 5.3 Window Covering Cluster (0x0102)
-Rev:5 | Role:Application | Scope:Endpoint | PICS:WNCV
+Rev:8 | Role:Application | Scope:Endpoint | PICS:WNCV
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -1436,7 +1662,6 @@ Rev:5 | Role:Application | Scope:Endpoint | PICS:WNCV
 |0|LF|Lift|O.a+|Lift control|
 |1|TL|Tilt|O.a+|Tilt control|
 |2|PA_LF|PositionAwareLift|[LF]|Position aware lift|
-|3|ABS|AbsolutePosition|[PA_LF\|PA_TL]|Absolute positioning|
 |4|PA_TL|PositionAwareTilt|[TL]|Position aware tilt|
 
 ### Data Types
@@ -1453,27 +1678,19 @@ SafetyStatusBitmap(map16): RemoteLockout=Bit0,TamperDetection=Bit1,FailedCommuni
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
 |0x0000|Type|TypeEnum|desc|F|0|R V|M|
-|0x0001|PhysicalClosedLimitLift|uint16|all|F|0|R V|[LF&PA_LF]|
-|0x0002|PhysicalClosedLimitTilt|uint16|all|F|0|R V|[TL&PA_TL]|
-|0x0003|CurrentPositionLift|uint16|all|XP|null|R V|[LF&PA_LF]|
-|0x0004|CurrentPositionTilt|uint16|all|XP|null|R V|[TL&PA_TL]|
 |0x0005|NumberOfActuationsLift|uint16|all||0|R V|[LF]|
 |0x0006|NumberOfActuationsTilt|uint16|all||0|R V|[TL]|
-|0x0007|ConfigStatus|ConfigStatusBitmap|all|P|0|R V|M|
-|0x0008|CurrentPositionLiftPercentage|percent|all|XPQ|null|R V|LF&PA_LF|
-|0x0009|CurrentPositionTiltPercentage|percent|all|XPQ|null|R V|TL&PA_TL|
-|0x000A|OperationalStatus|OperationalStatusBitmap|all|P|0|R V|M|
-|0x000B|TargetPositionLiftPercent100ths|percent100ths|all|XPQ|null|R V|LF&PA_LF|
-|0x000C|TargetPositionTiltPercent100ths|percent100ths|all|XPQ|null|R V|TL&PA_TL|
+|0x0007|ConfigStatus|ConfigStatusBitmap|all|N|0|R V|M|
+|0x0008|CurrentPositionLiftPercentage|percent|all|XN|null|R V|LF&PA_LF|
+|0x0009|CurrentPositionTiltPercentage|percent|all|XN|null|R V|TL&PA_TL|
+|0x000A|OperationalStatus|OperationalStatusBitmap|max63||0|R V|M|
+|0x000B|TargetPositionLiftPercent100ths|percent100ths|all|X|null|R V|LF&PA_LF|
+|0x000C|TargetPositionTiltPercent100ths|percent100ths|all|X|null|R V|TL&PA_TL|
 |0x000D|EndProductType|EndProductTypeEnum|desc|F|0|R V|M|
-|0x000E|CurrentPositionLiftPercent100ths|percent100ths|all|XPQ|null|R V|LF&PA_LF|
-|0x000F|CurrentPositionTiltPercent100ths|percent100ths|all|XPQ|null|R V|TL&PA_TL|
-|0x0010|InstalledOpenLimitLift|uint16|all|F|0|R V|LF&PA_LF|
-|0x0011|InstalledClosedLimitLift|uint16|all|F|65534|R V|LF&PA_LF|
-|0x0012|InstalledOpenLimitTilt|uint16|all|F|0|R V|TL&PA_TL|
-|0x0013|InstalledClosedLimitTilt|uint16|all|F|65534|R V|TL&PA_TL|
+|0x000E|CurrentPositionLiftPercent100ths|percent100ths|max10000|XN|null|R V|LF&PA_LF|
+|0x000F|CurrentPositionTiltPercent100ths|percent100ths|max10000|XN|null|R V|TL&PA_TL|
 |0x0017|Mode|ModeBitmap|all|N|0|RW VM|M|
-|0x001A|SafetyStatus|SafetyStatusBitmap|all|P|0|R V|O|
+|0x001A|SafetyStatus|SafetyStatusBitmap|all||0|R V|O|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
@@ -1481,15 +1698,125 @@ SafetyStatusBitmap(map16): RemoteLockout=Bit0,TamperDetection=Bit1,FailedCommuni
 |0x00|UpOrOpen|C→S|Y|O|M|
 |0x01|DownOrClose|C→S|Y|O|M|
 |0x02|StopMotion|C→S|Y|O|M|
-|0x04|GoToLiftValue|C→S|Y|O|LF&ABS|
 |0x05|GoToLiftPercentage|C→S|Y|O|LF&PA_LF|
-|0x07|GoToTiltValue|C→S|Y|O|TL&ABS|
 |0x08|GoToTiltPercentage|C→S|Y|O|TL&PA_TL|
 
-GoToLiftValue: {LiftValue:uint16}
 GoToLiftPercentage: {LiftPercent100thsValue:percent100ths}
-GoToTiltValue: {TiltValue:uint16}
 GoToTiltPercentage: {TiltPercent100thsValue:percent100ths}
+
+---
+## 5.4 Closure Control Cluster (0x0104)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:CLCTRL
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|PS|Positioning|O|Discrete positioning|
+|1|LT|MotionLatching|O|Motion latching|
+|2|IS|Instantaneous|O|Instantaneous motion|
+|3|SP|Speed|O|Speed control|
+|4|VT|Ventilation|O|Ventilation position|
+|5|PD|Pedestrian|O|Pedestrian position|
+|6|CL|Calibration|O|Calibration|
+|7|PT|Protection|O|Protection state|
+|8|MO|ManuallyOperable|O|Manual operation|
+
+### Data Types
+```
+CurrentPositionEnum(enum8): FullyClosed=0,FullyOpened=1,PartiallyOpened=2,OpenedForPedestrian=3,OpenedForVentilation=4,OpenedAtSignature=5
+TargetPositionEnum(enum8): MoveToFullyClosed=0,MoveToFullyOpen=1,MoveToPedestrianPosition=2,MoveToVentilationPosition=3,MoveToSignaturePosition=4
+MainStateEnum(enum8): Stopped=0,Moving=1,WaitingForMotion=2,Error=3,Calibrating=4,Protected=5,Disengaged=6,SetupRequired=7
+ClosureErrorEnum(enum8): PhysicallyBlocked=0,BlockedBySensor=1,TemperatureLimited=2,MaintenanceRequired=3,InternalInterference=4
+LatchControlModesBitmap(map8): RemoteLatching=Bit0,RemoteUnlatching=Bit1
+OverallCurrentStateStruct: {Position:CurrentPositionEnum|X(PS), Latch:bool|X(LT), Speed:ThreeLevelAutoEnum(SP), SecureState:bool|X}
+OverallTargetStateStruct: {Position:TargetPositionEnum|X(PS), Latch:bool|X(LT), Speed:ThreeLevelAutoEnum(SP)}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|CountdownTime|elapsed-s|max259200|XQ|null|R V|[PS&!IS]|
+|0x0001|MainState|MainStateEnum|desc|||R V|M|
+|0x0002|CurrentErrorList|list[ClosureErrorEnum]|max10|||R V|M|
+|0x0003|OverallCurrentState|OverallCurrentStateStruct|all|X|null|R V|M|
+|0x0004|OverallTargetState|OverallTargetStateStruct|all|X|null|R V|M|
+|0x0005|LatchControlModes|LatchControlModesBitmap|all|F||R V|LT|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|Stop|C→S|Y|O|!IS|
+|0x01|MoveTo|C→S|Y|O T|M|
+|0x02|Calibrate|C→S|Y|M T|CL|
+
+MoveTo: {Position:TargetPositionEnum(O.a+), Latch:bool(O.a+), Speed:ThreeLevelAutoEnum(O.a+)}
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|OperationalError|CRIT|V|M|
+|0x01|MovementCompleted|INFO|V|!IS|
+|0x02|EngageStateChanged|INFO|V|MO|
+|0x03|SecureStateChanged|INFO|V|M|
+
+OperationalError: {ErrorState:list[ClosureErrorEnum](1-10)}
+EngageStateChanged: {EngageValue:bool}
+SecureStateChanged: {SecureValue:bool}
+
+---
+## 5.5 Closure Dimension Cluster (0x0105)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:CLDIM
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|PS|Positioning|O|Position control|
+|1|LT|MotionLatching|O|Latching|
+|2|UT|Unit|O|Physical unit|
+|3|LM|Limitation|O|Range limits|
+|4|SP|Speed|O|Speed control|
+|5|TR|Translation|O|Translation|
+|6|RO|Rotation|O|Rotation|
+|7|MD|Modulation|O|Modulation|
+
+### Data Types
+```
+TranslationDirectionEnum(enum8): Downward=0,Upward=1,VerticalMask=2,VerticalSymmetry=3,Leftward=4,Rightward=5,HorizontalMask=6,HorizontalSymmetry=7,Forward=8,Backward=9,DepthMask=10,DepthSymmetry=11
+RotationAxisEnum(enum8): Left=0,CenteredVertical=1,LeftAndRight=2,Right=3,Top=4,CenteredHorizontal=5,TopAndBottom=6,Bottom=7,LeftBarrier=8,LeftAndRightBarriers=9,RightBarrier=10
+OverflowEnum(enum8): NoOverflow=0,Inside=1,Outside=2,TopInside=3,TopOutside=4,BottomInside=5,BottomOutside=6,LeftInside=7,LeftOutside=8,RightInside=9,RightOutside=10
+ModulationTypeEnum(enum8): SlatsOrientation=0,SlatsOpenwork=1,StripesAlignment=2,Opacity=3,Ventilation=4
+ClosureUnitEnum(enum8): Millimeter=0,Degree=1
+StepDirectionEnum(enum8): Decrease=0,Increase=1
+RangePercent100thsStruct: {Min:percent100ths, Max:percent100ths}
+UnitRangeStruct: {Min:int16, Max:int16}
+DimensionStateStruct: {Position:percent100ths|X(PS), Latch:bool|X(LT), Speed:ThreeLevelAutoEnum(SP)}
+LatchControlModesBitmap(map8): RemoteLatching=Bit0,RemoteUnlatching=Bit1
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|CurrentState|DimensionStateStruct|desc|XQ|null|R V|M|
+|0x0001|TargetState|DimensionStateStruct|desc|X|null|R V|M|
+|0x0002|Resolution|percent100ths|min0.01%|F|0.01%|R V|PS|
+|0x0003|StepValue|percent100ths|min0.01%|F|0.01%|R V|PS|
+|0x0004|Unit|ClosureUnitEnum|desc|F||R V|UT|
+|0x0005|UnitRange|UnitRangeStruct|desc|X|null|R V|UT|
+|0x0006|LimitRange|RangePercent100thsStruct|desc|||R V|LM|
+|0x0007|TranslationDirection|TranslationDirectionEnum|desc|F||R V|TR|
+|0x0008|RotationAxis|RotationAxisEnum|desc|F||R V|RO|
+|0x0009|Overflow|OverflowEnum|desc|F||R V|RO|
+|0x000A|ModulationType|ModulationTypeEnum|desc|F||R V|MD|
+|0x000B|LatchControlModes|LatchControlModesBitmap|all|F||R V|LT|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|SetTarget|C→S|Y|O T|M|
+|0x01|Step|C→S|Y|O T|PS|
+
+SetTarget: {Position:percent100ths(O.a+), Latch:bool(O.a+), Speed:ThreeLevelAutoEnum(O.a+)}
+Step: {Direction:StepDirectionEnum, NumberOfSteps:uint16(min1), Speed:ThreeLevelAutoEnum(O)}
 
 ---
 # CHAPTER 6: MEDIA
@@ -1537,7 +1864,7 @@ ApplicationStruct: {CatalogVendorID:uint16, ApplicationID:string}
 
 ---
 ## 6.4 Application Launcher Cluster (0x050C)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:APPLAUNCHER
+Rev:2 | Role:Application | Scope:Endpoint | PICS:APPLAUNCHER
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -1554,7 +1881,7 @@ ApplicationEPStruct: {Application:ApplicationStruct, Endpoint:endpoint-no(O)}
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|CatalogList|list[uint16]|all|||R V|AP|
+|0x0000|CatalogList|list[uint16]|all|N||R V|AP|
 |0x0001|CurrentApp|ApplicationEPStruct|all|X|null|R V|O|
 
 ### Commands
@@ -1923,13 +2250,14 @@ TimePeriodStruct: {StartHour:uint8(0-23), StartMinute:uint8(0-59), EndHour:uint8
 # CHAPTER 7: ROBOTS
 
 ## 7.2 RVC Run Mode Cluster (0x0054)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:RVCRUNM
+Rev:4 | Role:Application | Scope:Endpoint | PICS:RVCRUNM
 Derived from: Mode Base
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
 |-----|------|---------|------|---------|
 |0|DEPONOFF|OnOff|X|Disallowed|
+|20|DIRECTMODECH|DirectModeChange|O|Direct non-idle mode changes|
 
 ### Mode Tags (Derived)
 | Value | Name | Summary |
@@ -1954,13 +2282,14 @@ SupportedModes: Must include at least one Idle mode and one Cleaning mode. Idle/
 
 ---
 ## 7.3 RVC Clean Mode Cluster (0x0055)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:RVCCLEANM
+Rev:5 | Role:Application | Scope:Endpoint | PICS:RVCCLEANM
 Derived from: Mode Base
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
 |-----|------|---------|------|---------|
 |0|DEPONOFF|OnOff|X|Disallowed|
+|20|DIRECTMODECH|DirectModeChange|O|Direct mode changes|
 
 ### Mode Tags (Derived)
 | Value | Name | Summary |
@@ -1968,6 +2297,7 @@ Derived from: Mode Base
 |0x4000|DeepClean|Improved cleaning|
 |0x4001|Vacuum|Vacuuming enabled|
 |0x4002|Mop|Mopping enabled|
+|0x4003|VacuumThenMop|Vacuum followed by mopping|
 
 ### ChangeToModeResponse Status Codes
 | Value | Name |
@@ -1978,7 +2308,7 @@ SupportedModes: Must include at least one mode with Vacuum and/or Mop tag.
 
 ---
 ## 7.4 RVC Operational State Cluster (0x0061)
-Rev:2 | Role:Application | Scope:Endpoint | PICS:RVCOPSTATE
+Rev:3 | Role:Application | Scope:Endpoint | PICS:RVCOPSTATE
 Derived from: Operational State
 
 ### OperationalStateEnum (Derived)
@@ -1987,6 +2317,10 @@ Derived from: Operational State
 |0x40|SeekingCharger|Y|N|
 |0x41|Charging|N|Y|
 |0x42|Docked|N|Y|
+|0x43|EmptyingDustBin|N|N|
+|0x44|CleaningMop|N|N|
+|0x45|FillingWaterTank|N|N|
+|0x46|UpdatingMaps|N|N|
 
 ### ErrorStateEnum (Derived)
 | Value | Name |
@@ -1999,6 +2333,13 @@ Derived from: Operational State
 |0x45|WaterTankMissing|
 |0x46|WaterTankLidOpen|
 |0x47|MopCleaningPadMissing|
+|0x48|LowBattery|
+|0x49|CannotReachTarget|
+|0x4A|DirtyWaterTankFull|
+|0x4B|DirtyWaterTankMissing|
+|0x4C|WheelsJammed|
+|0x4D|BrushJammed|
+|0x4E|NavigationSensorObscured|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
@@ -2041,7 +2382,7 @@ SetTemperature: {TargetTemperature:temperature(TN,O), TargetTemperatureLevel:uin
 
 ---
 ## 8.3 Dishwasher Mode Cluster (0x0059)
-Rev:2 | Role:Application | Scope:Endpoint | PICS:DISHM
+Rev:3 | Role:Application | Scope:Endpoint | PICS:DISHM
 Derived from: Mode Base
 
 ### Features
@@ -2293,6 +2634,9 @@ PowerAdjustReasonEnum(enum8): NoAdjustment=0,LocalOptimizationAdjustment=1,GridO
 CostTypeEnum(enum8): Financial=0,GHGEmissions=1,Comfort=2,Temperature=3
 ForecastStruct: {ForecastID:uint32, ActiveSlotNumber:uint16|X, StartTime:epoch-s, EndTime:epoch-s, EarliestStartTime:epoch-s|X(O), LatestEndTime:epoch-s|X(O), IsPausable:bool, Slots:list[SlotStruct], ForecastUpdateReason:ForecastUpdateReasonEnum}
 SlotStruct: {MinDuration:elapsed-s, MaxDuration:elapsed-s, DefaultDuration:elapsed-s, ElapsedSlotTime:elapsed-s, RemainingSlotTime:elapsed-s, SlotIsPausable:bool(O), MinPauseDuration:elapsed-s(O), MaxPauseDuration:elapsed-s(O), ManufacturerESAState:uint16(O), NominalPower:power-mW(O), MinPower:power-mW(O), MaxPower:power-mW(O), NominalEnergy:energy-mWh(O), Costs:list[CostStruct](O), MinPowerAdjustment:power-mW(O), MaxPowerAdjustment:power-mW(O), MinDurationAdjustment:elapsed-s(O), MaxDurationAdjustment:elapsed-s(O)}
+CostStruct: {CostType:CostTypeEnum, Value:int32, DecimalPoints:uint8, Currency:uint16(max999,O)}
+SlotAdjustmentStruct: {SlotIndex:uint8, NominalPower:power-mW(PFR), Duration:elapsed-s}
+ConstraintsStruct: {StartTime:epoch-s, Duration:elapsed-s(max86400), NominalPower:power-mW(PFR), MaximumEnergy:energy-mWh(PFR), LoadControl:int8(SFR)}
 PowerAdjustStruct: {MinPower:power-mW, MaxPower:power-mW, MinDuration:elapsed-s, MaxDuration:elapsed-s}
 PowerAdjustCapabilityStruct: {PowerAdjustCapability:list[PowerAdjustStruct]|X, Cause:PowerAdjustReasonEnum}
 ```
@@ -2337,7 +2681,7 @@ RequestConstraintBasedForecast: {Constraints:list[ConstraintsStruct](max10), Cau
 
 ---
 ## 9.3 Energy EVSE Cluster (0x0099)
-Rev:3 | Role:Application | Scope:Endpoint | PICS:EEVSE
+Rev:4 | Role:Application | Scope:Endpoint | PICS:EEVSE
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -2377,14 +2721,14 @@ ChargingTargetScheduleStruct: {DayOfWeekForSequence:TargetDayOfWeekBitmap, Charg
 |0x0024|NextChargeTargetTime|epoch-s|all|X|null|R V|PREF|
 |0x0025|NextChargeRequiredEnergy|energy-mWh|all|X|null|R V|PREF|
 |0x0026|NextChargeTargetSoC|percent|all|X|null|R V|PREF&SOC|
-|0x0030|ApproximateEVEfficiency|uint16|all|XN|null|RW VM|PREF|
-|0x0031|StateOfCharge|percent|all|X|null|R V|SOC|
-|0x0032|BatteryCapacity|energy-mWh|all|X|null|R V|SOC|
-|0x0033|VehicleID|string|max32|X|null|R V|PNC|
+|0x0027|ApproximateEVEfficiency|uint16|desc|XN|null|RW VM|[PREF]|
+|0x0030|StateOfCharge|percent|all|X|null|R V|SOC|
+|0x0031|BatteryCapacity|energy-mWh|min0|X|null|R V|SOC|
+|0x0032|VehicleID|string|max32|X|null|R V|PNC|
 |0x0040|SessionID|uint32|all|XN|null|R V|M|
-|0x0041|SessionDuration|elapsed-s|all|N|0|R V|M|
-|0x0042|SessionEnergyCharged|energy-mWh|all|N|0|R V|M|
-|0x0043|SessionEnergyDischarged|energy-mWh|all|N|0|R V|V2X|
+|0x0041|SessionDuration|elapsed-s|all|NXQ|0|R V|M|
+|0x0042|SessionEnergyCharged|energy-mWh|min0|NXQ|0|R V|M|
+|0x0043|SessionEnergyDischarged|energy-mWh|min0|NXQ|0|R V|V2X|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
@@ -2400,6 +2744,7 @@ ChargingTargetScheduleStruct: {DayOfWeekForSequence:TargetDayOfWeekBitmap, Charg
 EnableCharging: {ChargingEnabledUntil:epoch-s|X, MinimumChargeCurrent:amperage-mA, MaximumChargeCurrent:amperage-mA}
 EnableDischarging: {DischargingEnabledUntil:epoch-s|X, MaximumDischargeCurrent:amperage-mA}
 SetTargets: {ChargingTargetSchedules:list[ChargingTargetScheduleStruct](max7)}
+GetTargetsResponse: {ChargingTargetSchedules:list[ChargingTargetScheduleStruct](max7)}
 
 ### Events
 | ID | Name | Priority | Access | Conf |
@@ -2412,8 +2757,28 @@ SetTargets: {ChargingTargetSchedules:list[ChargingTargetScheduleStruct](max7)}
 |0x05|RFID|INFO|V|RFID|
 
 ---
+## 9.4 Energy EVSE Mode Cluster (0x009D)
+Rev:2 | Role:Application | Scope:Endpoint | PICS:EEVSEM
+Derived from: Mode Base
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|DEPONOFF|OnOff|X|Disallowed|
+
+### Mode Tags (Derived)
+| Value | Name |
+|-------|------|
+|0x4000|Manual|
+|0x4001|TimeOfUse|
+|0x4002|SolarCharging|
+|0x4003|V2X|
+
+SupportedModes: Manual cannot be combined with TimeOfUse or SolarCharging.
+
+---
 ## 9.5 Water Heater Management Cluster (0x0094)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:WHM
+Rev:2 | Role:Application | Scope:Endpoint | PICS:EWATERHTR
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
@@ -2517,6 +2882,190 @@ Derived from: Mode Base
 SupportedModes: Must include NoOptimization, LocalOptimization, and GridOptimization modes. NoOptimization cannot be combined with other optimization tags.
 
 ---
+## 9.9 Commodity Price Cluster (0x0095)
+Rev:4 | Role:Application | Scope:Endpoint | PICS:SEPR
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|FORE|Forecasting|O|Price forecasting|
+
+### Data Types
+```
+TariffUnitEnum(enum8): kWh=0,kVAh=1
+TariffPriceTypeEnum(enum8): Standard=0,Critical=1,Virtual=2,Incentive=3,IncentiveSignal=4
+CommodityPriceDetailBitmap(map8): Desc=Bit0,Components=Bit1
+CommodityPriceComponentStruct: {Price:money, Source:TariffPriceTypeEnum, Description:string(max32,O), TariffComponentID:uint32(O)}
+CommodityPriceStruct: {PeriodStart:epoch-s, PeriodEnd:epoch-s|X, Price:money(O.b+), PriceLevel:int16(O.b+), Description:string(max32,O), Components:list[CommodityPriceComponentStruct](max10,[Price])}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|TariffUnit|TariffUnitEnum|desc|||R V|M|
+|0x0001|Currency|currency|all|X||R V|M|
+|0x0002|CurrentPrice|CommodityPriceStruct|all|X||R V|M|
+|0x0003|PriceForecast|list[CommodityPriceStruct]|max56|||R V|FORE|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|GetDetailedPriceRequest|C→S|GetDetailedPriceResponse|O|O|
+|0x02|GetDetailedForecastRequest|C→S|GetDetailedForecastResponse|O L|[FORE]|
+
+GetDetailedPriceRequest: {Details:CommodityPriceDetailBitmap}
+GetDetailedPriceResponse: {CurrentPrice:CommodityPriceStruct|X}
+GetDetailedForecastRequest: {Details:CommodityPriceDetailBitmap}
+GetDetailedForecastResponse: {PriceForecast:list[CommodityPriceStruct](max56)}
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|PriceChange|INFO|V|O|
+
+PriceChange: {CurrentPrice:CommodityPriceStruct|X}
+
+---
+## 9.10 Meter Identification Cluster (0x0B06)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:MTRID
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|PWRTHLD|PowerThreshold|O|Power threshold|
+
+### Data Types
+```
+MeterTypeEnum(enum8): Utility=0,Private=1,Generic=2
+PowerThresholdSourceEnum(enum8): Contract=0,Regulator=1,Equipment=2
+PowerThresholdStruct: {PowerThreshold:power-mW(O.b+), ApparentPowerThreshold:power-mVA(O.b+), PowerThresholdSource:PowerThresholdSourceEnum|X}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|MeterType|MeterTypeEnum|desc|X||R V|M|
+|0x0001|PointOfDelivery|string|max64|X||R V|M|
+|0x0002|MeterSerialNumber|string|max64|X||R V|M|
+|0x0003|ProtocolVersion|string|max64|X||R V|O|
+|0x0004|PowerThreshold|PowerThresholdStruct|all|X||R V|PWRTHLD|
+
+---
+## 9.11 Commodity Metering Cluster (0x0B07)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:COMMTR
+
+### Data Types
+```
+MeteredQuantityStruct: {TariffComponentIDs:list[uint32](max128), Quantity:int64}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|MeteredQuantity|list[MeteredQuantityStruct]|max MaximumMeteredQuantities|X||R V|M|
+|0x0001|MeteredQuantityTimestamp|epoch-s|all|X||R V|M|
+|0x0002|TariffUnit|TariffUnitEnum|desc|X||R V|M|
+|0x0003|MaximumMeteredQuantities|uint16|min1|X||R V|M|
+
+---
+## 9.12 Commodity Tariff Cluster (0x0700)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:SETRF
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|PRICE|Pricing|O|Pricing|
+|1|FCRED|FriendlyCredit|O|Friendly credit|
+|2|AUXLD|AuxiliaryLoad|O|Auxiliary load|
+|3|PEAKP|PeakPeriod|O|Peak periods|
+|4|PWRTHLD|PowerThreshold|O|Power thresholds|
+|5|RNDM|Randomization|O|Randomization|
+
+### Data Types
+```
+DayPatternDayOfWeekBitmap(map8): Sunday-Saturday=Bit0-6
+AuxiliaryLoadSettingEnum(enum8): Off=0,On=1,None=2
+DayTypeEnum(enum8): Standard=0,Holiday=1,Dynamic=2,Event=3
+PeakPeriodSeverityEnum(enum8): Unused=0,Low=1,Medium=2,High=3
+DayEntryRandomizationTypeEnum(enum8): None=0,Fixed=1,Random=2,RandomPositive=3,RandomNegative=4
+BlockModeEnum(enum8): NoBlock=0,Combined=1,Individual=2
+AuxiliaryLoadSwitchSettingsStruct: {Number:uint8, RequiredState:AuxiliaryLoadSettingEnum}
+AuxiliaryLoadSwitchesSettingsStruct: {SwitchStates:list[AuxiliaryLoadSwitchSettingsStruct](max8)}
+CalendarPeriodStruct: {StartDate:epoch-s|X, DayPatternIDs:list[uint32](1-7)}
+DayEntryStruct: {DayEntryID:uint32, StartTime:uint16(max1499), Duration:uint16(O), RandomizationOffset:int16(RNDM), RandomizationType:DayEntryRandomizationTypeEnum(RNDM)}
+DayStruct: {Date:epoch-s, DayType:DayTypeEnum, DayEntryIDs:list[uint32](1-96)}
+DayPatternStruct: {DayPatternID:uint32, DaysOfWeek:DayPatternDayOfWeekBitmap, DayEntryIDs:list[uint32](1-96)}
+PeakPeriodStruct: {Severity:PeakPeriodSeverityEnum, PeakPeriod:uint16(min1)}
+TariffInformationStruct: {TariffLabel:string(max128)|X, ProviderName:string(max128)|X, Currency:currency|X(PRICE), BlockMode:BlockModeEnum|X}
+TariffPriceStruct: {PriceType:TariffPriceTypeEnum, Price:money(O.c+), PriceLevel:int16(O.c+)}
+TariffComponentStruct: {TariffComponentID:uint32, Price:TariffPriceStruct|X(PRICE), FriendlyCredit:bool(FCRED), AuxiliaryLoad:AuxiliaryLoadSwitchesSettingsStruct(AUXLD), PeakPeriod:PeakPeriodStruct(PEAKP), PowerThreshold:PowerThresholdStruct(PWRTHLD), Threshold:int64|X, Label:string(max128)|X(O), Predicted:bool(O)}
+TariffPeriodStruct: {Label:string(max128)|X, DayEntryIDs:list[uint32](1-20), TariffComponentIDs:list[uint32](1-20)}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|TariffInfo|TariffInformationStruct|all|X||R V|M|
+|0x0001|TariffUnit|TariffUnitEnum|desc|X||R V|M|
+|0x0002|StartDate|epoch-s|desc|X||R V|M|
+|0x0003|DayEntries|list[DayEntryStruct]|max672|X||R V|M|
+|0x0004|DayPatterns|list[DayPatternStruct]|max28|X||R V|M|
+|0x0005|CalendarPeriods|list[CalendarPeriodStruct]|1-4|X||R V|M|
+|0x0006|IndividualDays|list[DayStruct]|max50|X||R V|M|
+|0x0007|CurrentDay|DayStruct|all|X||R V|M|
+|0x0008|NextDay|DayStruct|all|X||R V|M|
+|0x0009|CurrentDayEntry|DayEntryStruct|all|X||R V|M|
+|0x000A|CurrentDayEntryDate|epoch-s|all|X||R V|M|
+|0x000B|NextDayEntry|DayEntryStruct|all|X||R V|M|
+|0x000C|NextDayEntryDate|epoch-s|all|X||R V|M|
+|0x000D|TariffComponents|list[TariffComponentStruct]|1-672|X||R V|M|
+|0x000E|TariffPeriods|list[TariffPeriodStruct]|1-672|X||R V|M|
+|0x000F|CurrentTariffComponents|list[TariffComponentStruct]|max20|X||R V|M|
+|0x0010|NextTariffComponents|list[TariffComponentStruct]|max20|X||R V|M|
+|0x0011|DefaultRandomizationOffset|int16|desc|X||R V|RNDM|
+|0x0012|DefaultRandomizationType|DayEntryRandomizationTypeEnum|desc|X||R V|RNDM|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|GetTariffComponent|C→S|GetTariffComponentResponse|O|M|
+|0x01|GetDayEntry|C→S|GetDayEntryResponse|O|M|
+
+GetTariffComponent: {TariffComponentID:uint32}
+GetTariffComponentResponse: {Label:string(max128)|X, DayEntryIDs:list[uint32](1-96), TariffComponent:TariffComponentStruct}
+GetDayEntry: {DayEntryID:uint32}
+GetDayEntryResponse: {DayEntry:DayEntryStruct}
+
+---
+## 9.13 Electrical Grid Conditions Cluster (0x00A0)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:EGC
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|FORE|Forecasting|O|Conditions forecast|
+
+### Data Types
+```
+ThreeLevelEnum(enum8): Low=0,Medium=1,High=2
+ElectricalGridConditionsStruct: {PeriodStart:epoch-s, PeriodEnd:epoch-s|X, GridCarbonIntensity:int16, GridCarbonLevel:ThreeLevelEnum, LocalCarbonIntensity:int16, LocalCarbonLevel:ThreeLevelEnum}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|LocalGenerationAvailable|bool|all|X||RW VO|M|
+|0x0001|CurrentConditions|ElectricalGridConditionsStruct|all|X||R V|M|
+|0x0002|ForecastConditions|list[ElectricalGridConditionsStruct]|max56|||R V|FORE|
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|CurrentConditionsChanged|INFO|V|O|
+
+CurrentConditionsChanged: {CurrentConditions:ElectricalGridConditionsStruct|X}
+
+---
 # CHAPTER 10: NETWORK INFRASTRUCTURE
 
 ## 10.2 Wi-Fi Network Management Cluster (0x0451)
@@ -2538,63 +3087,333 @@ NetworkPassphraseResponse: {Passphrase:octstr(max64)}
 Note: Passphrase format: 8-63 bytes (WPA passphrase) or 64 bytes (hex PSK).
 
 ---
-## 10.3 Thread Border Router Management Cluster (0x0452)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:TBRM
+# CHAPTER 11: CAMERAS
+
+### Common Data Types
+```
+StreamUsageEnum(enum8): Internal=0,Recording=1,Analysis=2,LiveView=3
+ViewportStruct: {X1:uint16, Y1:uint16, X2:uint16, Y2:uint16}
+```
+
+## 11.2 Camera AV Stream Management Cluster (0x0551)
+Rev:2 | Role:Application | Scope:Endpoint | PICS:AVSM
 
 ### Features
 | Bit | Code | Feature | Conf | Summary |
 |-----|------|---------|------|---------|
-|0|PC|PANChange|O|PAN change capability|
-
-### Attributes
-| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
-|----|------|------|------------|---------|---------|--------|------|
-|0x0000|BorderRouterName|string|1-63|||R V|M|
-|0x0001|BorderAgentID|octstr|16|||R V|M|
-|0x0002|ThreadVersion|uint16|all|F|MS|R V|M|
-|0x0003|InterfaceEnabled|bool|all|N|false|R V|M|
-|0x0004|ActiveDatasetTimestamp|uint64|all|XN|0|R V|M|
-|0x0005|PendingDatasetTimestamp|uint64|all|XN|0|R V|M|
-
-### Commands
-| ID | Name | Dir | Response | Access | Conf |
-|----|------|-----|----------|--------|------|
-|0x00|GetActiveDatasetRequest|C→S|DatasetResponse|O|M|
-|0x01|GetPendingDatasetRequest|C→S|DatasetResponse|O|M|
-|0x03|SetActiveDatasetRequest|C→S|Y|M|M|
-|0x04|SetPendingDatasetRequest|C→S|Y|M|PC|
-
-SetActiveDatasetRequest: {ActiveDataset:octstr(max254), Breadcrumb:uint64(O)}
-SetPendingDatasetRequest: {PendingDataset:octstr(max254)}
-DatasetResponse: {Dataset:octstr(max254)}
-
----
-## 10.4 Thread Network Directory Cluster (0x0453)
-Rev:1 | Role:Application | Scope:Endpoint | PICS:THNETDIR
+|0|ADO|Audio|O|Audio streams|
+|1|VDO|Video|O|Video streams|
+|2|SNP|Snapshot|O|Snapshots|
+|3|PRIV|Privacy|O|Privacy modes|
+|4|SPKR|Speaker|O|Speaker|
+|5|ICTL|ImageControl|O|Image controls|
+|6|WMARK|Watermark|O|Watermark|
+|7|OSD|OnScreenDisplay|O|On-screen display|
+|8|STOR|LocalStorage|O|Local storage|
+|9|HDR|HighDynamicRange|O|HDR|
+|10|NV|NightVision|O|Night vision|
 
 ### Data Types
 ```
-ThreadNetworkStruct: {ExtendedPanID:octstr(8), NetworkName:string(1-16), Channel:uint16, ActiveTimestamp:uint64}
+VideoCodecEnum(enum8): H264=0,HEVC=1,VVC=2,AV1=3
+AudioCodecEnum(enum8): OPUS=0,AAC-LC=1
+ImageCodecEnum(enum8): JPEG=0,HEIC=1
+TwoWayTalkSupportTypeEnum(enum8): NotSupported=0,HalfDuplex=1,FullDuplex=2
+TriStateAutoEnum(enum8): Off=0,On=1,Auto=2
+VideoSensorParamsStruct: {SensorWidth:uint16(min64), SensorHeight:uint16(min64), MaxFPS:uint16(min1), MaxHDRFPS:uint16(HDR)}
+VideoResolutionStruct: {Width:uint16(min1), Height:uint16(min1)}
+RateDistortionTradeOffPointsStruct: {Codec:VideoCodecEnum, Resolution:VideoResolutionStruct, MinBitRate:uint32(min1)}
+SnapshotCapabilitiesStruct: {Resolution:VideoResolutionStruct, MaxFrameRate:uint16(min1), ImageCodec:ImageCodecEnum, RequiresEncodedPixels:bool, RequiresHardwareEncoder:bool(O)}
+AudioCapabilitiesStruct: {MaxNumberOfChannels:uint8(min1), SupportedCodecs:list[AudioCodecEnum](min1), SupportedSampleRates:list[uint32](min1), SupportedBitDepths:list[uint8](min1)}
+VideoStreamStruct: {VideoStreamID:VideoStreamID, StreamUsage:StreamUsageEnum, VideoCodec:VideoCodecEnum, MinFrameRate:uint16, MaxFrameRate:uint16, MinResolution:VideoResolutionStruct, MaxResolution:VideoResolutionStruct, MinBitRate:uint32, MaxBitRate:uint32, KeyFrameInterval:uint16, WatermarkEnabled:bool(WMARK), OSDEnabled:bool(OSD), ReferenceCount:uint8}
+AudioStreamStruct: {AudioStreamID:AudioStreamID, StreamUsage:StreamUsageEnum, AudioCodec:AudioCodecEnum, ChannelCount:uint8, SampleRate:uint32, BitRate:uint32, BitDepth:uint8, ReferenceCount:uint8}
+SnapshotStreamStruct: {SnapshotStreamID:SnapshotStreamID, ImageCodec:ImageCodecEnum, FrameRate:uint16, MinResolution:VideoResolutionStruct, MaxResolution:VideoResolutionStruct, Quality:uint8, ReferenceCount:uint8, EncodedPixels:bool, HardwareEncoder:bool, WatermarkEnabled:bool(WMARK), OSDEnabled:bool(OSD)}
+AVMetadataStruct: {UTCTime:epoch-us|X, MotionZonesActive:list[ZoneID](O), BlackAndWhiteActive:bool(O), UserDefined:octstr(max256,O)}
 ```
 
 ### Attributes
 | ID | Name | Type | Constraint | Quality | Default | Access | Conf |
 |----|------|------|------------|---------|---------|--------|------|
-|0x0000|PreferredExtendedPanID|octstr|8|XN|null|RW VM|M|
-|0x0001|ThreadNetworks|list[ThreadNetworkStruct]|max20|||R V|M|
-|0x0002|ThreadNetworkTableSize|uint8|all|F||R V|M|
+|0x0000|MaxConcurrentEncoders|uint8|all|F||R V|VDO\|SNP|
+|0x0001|MaxEncodedPixelRate|uint32|all|F||R V|VDO\|SNP|
+|0x0002|VideoSensorParams|VideoSensorParamsStruct|all|F||R V|VDO|
+|0x0003|NightVisionUsesInfrared|bool|all|F||R V|NV|
+|0x0004|MinViewportResolution|VideoResolutionStruct|all|F||R V|VDO|
+|0x0005|RateDistortionTradeOffPoints|list[RateDistortionTradeOffPointsStruct]|all|F||R V|VDO|
+|0x0006|MaxContentBufferSize|uint32|all|F||R V|M|
+|0x0007|MicrophoneCapabilities|AudioCapabilitiesStruct|all|F||R V|ADO|
+|0x0008|SpeakerCapabilities|AudioCapabilitiesStruct|all|F||R V|SPKR|
+|0x0009|TwoWayTalkSupport|TwoWayTalkSupportTypeEnum|all|F||R V|SPKR|
+|0x000A|SnapshotCapabilities|list[SnapshotCapabilitiesStruct]|all|F||R V|SNP|
+|0x000B|MaxNetworkBandwidth|uint32|all|F||R V|M|
+|0x000C|CurrentFrameRate|uint16|all|||R V|VDO|
+|0x000D|HDRModeEnabled|bool|all|N||RW M|HDR|
+|0x000E|SupportedStreamUsages|list[StreamUsageEnum]|all|F||R V|M|
+|0x000F|AllocatedVideoStreams|list[VideoStreamStruct]|all|N||R V|VDO|
+|0x0010|AllocatedAudioStreams|list[AudioStreamStruct]|all|N||R V|ADO|
+|0x0011|AllocatedSnapshotStreams|list[SnapshotStreamStruct]|all|N||R V|SNP|
+|0x0012|StreamUsagePriorities|list[StreamUsageEnum]|all|N||R V|M|
+|0x0013|SoftRecordingPrivacyModeEnabled|bool|all|N||RW VO|PRIV|
+|0x0014|SoftLivestreamPrivacyModeEnabled|bool|all|N||RW VO|PRIV|
+|0x0015|HardPrivacyModeOn|bool|all||false|R V|O|
+|0x0016|NightVision|TriStateAutoEnum|all|N||RW M|NV|
+|0x0017|NightVisionIllum|TriStateAutoEnum|all|N||RW M|[NV]|
+|0x0018|Viewport|ViewportStruct|all|N||RW M|VDO|
+|0x0019|SpeakerMuted|bool|all|N||RW M|SPKR|
+|0x001A|SpeakerVolumeLevel|uint8|SpeakerMinLevel-SpeakerMaxLevel|N||RW M|SPKR|
+|0x001B|SpeakerMaxLevel|uint8|SpeakerMinLevel-254|||R M|SPKR|
+|0x001C|SpeakerMinLevel|uint8|max SpeakerMaxLevel|||R M|SPKR|
+|0x001D|MicrophoneMuted|bool|all|N||RW M|ADO|
+|0x001E|MicrophoneVolumeLevel|uint8|MicrophoneMinLevel-MicrophoneMaxLevel|N||RW M|ADO|
+|0x001F|MicrophoneMaxLevel|uint8|MicrophoneMinLevel-254|||R M|ADO|
+|0x0020|MicrophoneMinLevel|uint8|max MicrophoneMaxLevel|||R M|ADO|
+|0x0021|MicrophoneAGCEnabled|bool|all|N|true|RW M|[ADO]|
+|0x0022|ImageRotation|uint16|max359|N||RW M|[ICTL]|
+|0x0023|ImageFlipHorizontal|bool|all|N|false|RW M|[ICTL]|
+|0x0024|ImageFlipVertical|bool|all|N|false|RW M|[ICTL]|
+|0x0025|LocalVideoRecordingEnabled|bool|all|N||RW M|VDO&STOR|
+|0x0026|LocalSnapshotRecordingEnabled|bool|all|N||RW M|SNP&STOR|
+|0x0027|StatusLightEnabled|bool|all|N|true|RW M|O|
+|0x0028|StatusLightBrightness|ThreeLevelAutoEnum|all|N||RW M|O|
+|0x0029|ImageRotationDiscreteAngles|uint16|0,90,180,270|N|0|RW M|P,[ICTL&!ImageRotation]|
 
 ### Commands
 | ID | Name | Dir | Response | Access | Conf |
 |----|------|-----|----------|--------|------|
-|0x00|AddNetwork|C→S|Y|M|M|
-|0x01|RemoveNetwork|C→S|Y|M|M|
-|0x02|GetOperationalDataset|C→S|OperationalDatasetResponse|O|M|
+|0x00|AudioStreamAllocate|C→S|AudioStreamAllocateResponse|M|ADO|
+|0x02|AudioStreamDeallocate|C→S|Y|M|ADO|
+|0x03|VideoStreamAllocate|C→S|VideoStreamAllocateResponse|M|VDO|
+|0x05|VideoStreamModify|C→S|Y|M|VDO&(WMARK\|OSD)|
+|0x06|VideoStreamDeallocate|C→S|Y|M|VDO|
+|0x07|SnapshotStreamAllocate|C→S|SnapshotStreamAllocateResponse|M|SNP|
+|0x09|SnapshotStreamModify|C→S|Y|M|SNP&(WMARK\|OSD)|
+|0x0A|SnapshotStreamDeallocate|C→S|Y|M|SNP|
+|0x0B|SetStreamPriorities|C→S|Y|A|M|
+|0x0C|CaptureSnapshot|C→S|CaptureSnapshotResponse|O L|SNP|
 
-AddNetwork: {OperationalDataset:octstr(max254)}
-RemoveNetwork: {ExtendedPanID:octstr(8)}
-GetOperationalDataset: {ExtendedPanID:octstr(8)}
-OperationalDatasetResponse: {OperationalDataset:octstr(max254)}
+AudioStreamAllocate: {StreamUsage:StreamUsageEnum, AudioCodec:AudioCodecEnum, ChannelCount:uint8, SampleRate:uint32, BitRate:uint32, BitDepth:uint8}
+AudioStreamAllocateResponse: {AudioStreamID:AudioStreamID}
+AudioStreamDeallocate: {AudioStreamID:AudioStreamID}
+VideoStreamAllocate: {StreamUsage:StreamUsageEnum, VideoCodec:VideoCodecEnum, MinFrameRate:uint16, MaxFrameRate:uint16, MinResolution:VideoResolutionStruct, MaxResolution:VideoResolutionStruct, MinBitRate:uint32, MaxBitRate:uint32, KeyFrameInterval:uint16, WatermarkEnabled:bool(WMARK), OSDEnabled:bool(OSD)}
+VideoStreamAllocateResponse: {VideoStreamID:VideoStreamID}
+VideoStreamModify: {VideoStreamID:VideoStreamID, WatermarkEnabled:bool(O), OSDEnabled:bool(O)}
+VideoStreamDeallocate: {VideoStreamID:VideoStreamID}
+SnapshotStreamAllocate: {ImageCodec:ImageCodecEnum, MaxFrameRate:uint16, MinResolution:VideoResolutionStruct, MaxResolution:VideoResolutionStruct, Quality:uint8, WatermarkEnabled:bool(WMARK), OSDEnabled:bool(OSD)}
+SnapshotStreamAllocateResponse: {SnapshotStreamID:SnapshotStreamID}
+SnapshotStreamModify: {SnapshotStreamID:SnapshotStreamID, WatermarkEnabled:bool(O), OSDEnabled:bool(O)}
+SnapshotStreamDeallocate: {SnapshotStreamID:SnapshotStreamID}
+SetStreamPriorities: {StreamPriorities:list[StreamUsageEnum]}
+CaptureSnapshot: {SnapshotStreamID:SnapshotStreamID|X, RequestedResolution:VideoResolutionStruct}
+CaptureSnapshotResponse: {Data:octstr, ImageCodec:ImageCodecEnum, Resolution:VideoResolutionStruct}
+
+---
+## 11.3 Camera AV Settings User Level Management Cluster (0x0552)
+Rev:1 | Role:Application | Scope:Endpoint | PICS:AVSUM
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|DPTZ|DigitalPTZ|O|Digital PTZ|
+|1|MPAN|MechanicalPan|O|Mechanical pan|
+|2|MTILT|MechanicalTilt|O|Mechanical tilt|
+|3|MZOOM|MechanicalZoom|O|Mechanical zoom|
+|4|MPRESETS|MechanicalPresets|O|Mechanical presets|
+
+### Data Types
+```
+PhysicalMovementEnum(enum8): Idle=0,Moving=1
+DPTZStruct: {VideoStreamID:VideoStreamID, Viewport:ViewportStruct}
+MPTZStruct: {Pan:int16(MPAN), Tilt:int16(MTILT), Zoom:uint8(MZOOM)}
+MPTZPresetStruct: {PresetID:uint8, Name:string(max32), Settings:MPTZStruct}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|MPTZPosition|MPTZStruct|all|N||R V|MPAN\|MTILT\|MZOOM|
+|0x0001|MaxPresets|uint8|all|F||R V|MPRESETS|
+|0x0002|MPTZPresets|list[MPTZPresetStruct]|max MaxPresets|N||R V|MPRESETS|
+|0x0003|DPTZStreams|list[DPTZStruct]|all|N||R V|DPTZ|
+|0x0004|ZoomMax|uint8|2-100|||R V|MZOOM|
+|0x0005|TiltMin|int16|-180-0|||R V|MTILT|
+|0x0006|TiltMax|int16|1-180|||R V|MTILT|
+|0x0007|PanMin|int16|-180-0|||R V|MPAN|
+|0x0008|PanMax|int16|1-180|||R V|MPAN|
+|0x0009|MovementState|PhysicalMovementEnum|desc|||R V|MPAN\|MTILT\|MZOOM|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|MPTZSetPosition|C→S|Y|O|MPAN\|MTILT\|MZOOM|
+|0x01|MPTZRelativeMove|C→S|Y|O|MPAN\|MTILT\|MZOOM|
+|0x02|MPTZMoveToPreset|C→S|Y|O|MPRESETS|
+|0x03|MPTZSavePreset|C→S|Y|O|MPRESETS|
+|0x04|MPTZRemovePreset|C→S|Y|O|MPRESETS|
+|0x05|DPTZSetViewport|C→S|Y|O|DPTZ|
+|0x06|DPTZRelativeMove|C→S|Y|O|[DPTZ]|
+
+MPTZSetPosition: {Pan:int16(O), Tilt:int16(O), Zoom:uint8(O)}
+MPTZRelativeMove: {PanDelta:int16(O), TiltDelta:int16(O), ZoomDelta:int8(O)}
+MPTZMoveToPreset: {PresetID:uint8}
+MPTZSavePreset: {PresetID:uint8(O), Name:string(max32)}
+MPTZRemovePreset: {PresetID:uint8}
+DPTZSetViewport: {VideoStreamID:VideoStreamID, Viewport:ViewportStruct}
+DPTZRelativeMove: {VideoStreamID:VideoStreamID, DeltaX:int16(O), DeltaY:int16(O), ZoomDelta:int8(O)}
+
+---
+## 11.4 WebRTC Transport Common Data Types
+```
+WebRTCEndReasonEnum(enum8): ICEFailed=0,ICETimeout=1,UserHangup=2,UserBusy=3,Replaced=4,NoUserMedia=5,InviteTimeout=6,AnsweredElsewhere=7,OutOfResources=8,MediaTimeout=9,LowPower=10,PrivacyMode=11,UnknownReason=12
+ICEServerStruct: {URLs:list[string](max10), Username:string(max508,O), Credential:string(max512,O), CAID:TLSCAID(O)}
+ICECandidateStruct: {Candidate:string, SDPMid:string|X, SDPMLineIndex:uint16|X}
+WebRTCSessionStruct: {ID:WebRTCSessionID, PeerNodeID:node-id, PeerEndpointID:endpoint-no(F), StreamUsage:StreamUsageEnum, VideoStreamID:VideoStreamID|X(O), AudioStreamID:AudioStreamID|X(O), MetadataEnabled:bool, VideoStreams:list[VideoStreamID](1-16,O), AudioStreams:list[AudioStreamID](1-16,O)}
+```
+
+## 11.5 WebRTC Transport Provider Cluster (0x0553)
+Rev:2 | Role:Application | Scope:Endpoint | PICS:WEBRTCP
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|METADATA|Metadata|O|Metadata stream|
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|CurrentSessions|list[WebRTCSessionStruct]|all|S||R M|M|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|SolicitOffer|C→S|SolicitOfferResponse|O F L|M|
+|0x02|ProvideOffer|C→S|ProvideOfferResponse|O F L|M|
+|0x04|ProvideAnswer|C→S|Y|O F L|M|
+|0x05|ProvideICECandidates|C→S|Y|O F L|M|
+|0x06|EndSession|C→S|Y|O F L|M|
+
+SolicitOffer: {StreamUsage:StreamUsageEnum, OriginatingEndpointID:endpoint-no, VideoStreamID:VideoStreamID|X(O), AudioStreamID:AudioStreamID|X(O), ICEServers:list[ICEServerStruct](max10,O), ICETransportPolicy:string(max16,O), MetadataEnabled:bool(METADATA), VideoStreams:list[VideoStreamID](1-16,O), AudioStreams:list[AudioStreamID](1-16,O)}
+SolicitOfferResponse: {WebRTCSessionID:WebRTCSessionID, DeferredOffer:bool, VideoStreamID:VideoStreamID|X(O), AudioStreamID:AudioStreamID|X(O)}
+ProvideOffer: {WebRTCSessionID:WebRTCSessionID|X, SDP:string, StreamUsage:StreamUsageEnum(O), OriginatingEndpointID:endpoint-no(O), VideoStreamID:VideoStreamID|X(O), AudioStreamID:AudioStreamID|X(O), ICEServers:list[ICEServerStruct](max10,O), ICETransportPolicy:string(max16,O), MetadataEnabled:bool(METADATA), VideoStreams:list[VideoStreamID](1-16,O), AudioStreams:list[AudioStreamID](1-16,O)}
+ProvideOfferResponse: {WebRTCSessionID:WebRTCSessionID, VideoStreamID:VideoStreamID|X(O), AudioStreamID:AudioStreamID|X(O)}
+ProvideAnswer: {WebRTCSessionID:WebRTCSessionID, SDP:string}
+ProvideICECandidates: {WebRTCSessionID:WebRTCSessionID, ICECandidates:list[ICECandidateStruct](min1)}
+EndSession: {WebRTCSessionID:WebRTCSessionID, Reason:WebRTCEndReasonEnum}
+
+---
+## 11.6 WebRTC Transport Requestor Cluster (0x0554)
+Rev:2 | Role:Application | Scope:Endpoint | PICS:WEBRTCR
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|CurrentSessions|list[WebRTCSessionStruct]|all|S||R A|M|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|Offer|C→S|Y|O L|M|
+|0x01|Answer|C→S|Y|O L|M|
+|0x02|ICECandidates|C→S|Y|O L|M|
+|0x03|End|C→S|Y|O L|M|
+
+Offer: {WebRTCSessionID:WebRTCSessionID, SDP:string, ICEServers:list[ICEServerStruct](max10,O), ICETransportPolicy:string(max16,O)}
+Answer: {WebRTCSessionID:WebRTCSessionID, SDP:string}
+ICECandidates: {WebRTCSessionID:WebRTCSessionID, ICECandidates:list[ICECandidateStruct](min1)}
+End: {WebRTCSessionID:WebRTCSessionID, Reason:WebRTCEndReasonEnum}
+
+---
+## 11.7 Push AV Stream Transport Cluster (0x0555)
+Rev:2 | Role:Application | Scope:Endpoint | PICS:PAVST
+
+### Features
+| Bit | Code | Feature | Conf | Summary |
+|-----|------|---------|------|---------|
+|0|PERZONESENS|PerZoneSensitivity|O|Per-zone sensitivity|
+|1|METADATA|Metadata|O|Metadata|
+
+### Data Types
+```
+TransportTriggerTypeEnum(enum8): Command=0,Motion=1,Continuous=2
+TransportStatusEnum(enum8): Active=0,Inactive=1
+ContainerFormatEnum(enum8): CMAF=0
+IngestMethodsEnum(enum8): CMAFIngest=0
+TriggerActivationReasonEnum(enum8): UserInitiated=0,Automation=1,Emergency=2,DoorbellPressed=3
+CMAFInterfaceEnum(enum8): Interface1=0,Interface2DASH=1,Interface2HLS=2
+SupportedFormatStruct: {ContainerFormat:ContainerFormatEnum, IngestMethod:IngestMethodsEnum}
+VideoStreamStruct: {VideoStreamName:string(1-16), VideoStreamID:VideoStreamID}
+AudioStreamStruct: {AudioStreamName:string(1-16), AudioStreamID:AudioStreamID}
+CMAFContainerOptionsStruct: {CMAFInterface:CMAFInterfaceEnum, SegmentDuration:uint16(500-65500), ChunkDuration:uint16, SessionGroup:uint8(O), TrackName:string(1-16,O), MetadataEnabled:bool(METADATA)}
+ContainerOptionsStruct: {ContainerType:ContainerFormatEnum, CMAFContainerOptions:CMAFContainerOptionsStruct}
+TransportZoneOptionsStruct: {Zone:ZoneID|X, Sensitivity:uint8(1-10,PERZONESENS)}
+TransportMotionTriggerTimeControlStruct: {InitialDuration:uint16(min1), AugmentationDuration:uint16, MaxDuration:elapsed-s, BlindDuration:uint16}
+TransportTriggerOptionsStruct: {TriggerType:TransportTriggerTypeEnum, MotionZones:list[TransportZoneOptionsStruct]|X(Motion), MotionSensitivity:uint8|X(Motion&!PERZONESENS), MotionTimeControl:TransportMotionTriggerTimeControlStruct(Motion), MaxPreRollLen:uint16(Command|Motion)}
+TransportOptionsStruct: {StreamUsage:StreamUsageEnum, VideoStreamID:VideoStreamID|X(O), AudioStreamID:AudioStreamID|X(O), TLSEndpointID:TLSEndpointID, URL:string(13-2000), TriggerOptions:TransportTriggerOptionsStruct, IngestMethod:IngestMethodsEnum, ContainerOptions:ContainerOptionsStruct, ExpiryTime:epoch-s(O), VideoStreams:list[VideoStreamStruct](1-16,O), AudioStreams:list[AudioStreamStruct](1-16,O)}
+TransportConfigurationStruct: {ConnectionID:PushTransportConnectionID, TransportStatus:TransportStatusEnum, TransportOptions:TransportOptionsStruct(O)}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|SupportedFormats|list[SupportedFormatStruct]|min1|F||R V|M|
+|0x0001|CurrentConnections|list[TransportConfigurationStruct]|desc|NS||R V|M|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|AllocatePushTransport|C→S|AllocatePushTransportResponse|M F L|M|
+|0x02|DeallocatePushTransport|C→S|Y|M F|M|
+|0x03|ModifyPushTransport|C→S|Y|M F|M|
+|0x04|SetTransportStatus|C→S|Y|M F|M|
+|0x05|ManuallyTriggerTransport|C→S|Y|O F|M|
+|0x06|FindTransport|C→S|FindTransportResponse|O F L|M|
+
+AllocatePushTransport: {TransportOptions:TransportOptionsStruct}
+AllocatePushTransportResponse: {TransportConfiguration:TransportConfigurationStruct}
+DeallocatePushTransport: {ConnectionID:PushTransportConnectionID}
+ModifyPushTransport: {ConnectionID:PushTransportConnectionID, TransportOptions:TransportOptionsStruct}
+SetTransportStatus: {ConnectionID:PushTransportConnectionID|X, TransportStatus:TransportStatusEnum}
+ManuallyTriggerTransport: {ConnectionID:PushTransportConnectionID, ActivationReason:TriggerActivationReasonEnum, TimeControl:TransportMotionTriggerTimeControlStruct(O), UserDefined:octstr(max256,METADATA)}
+FindTransport: {ConnectionID:PushTransportConnectionID|X}
+FindTransportResponse: {TransportConfigurations:list[TransportConfigurationStruct]}
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|PushTransportBegin|INFO|V|M|
+|0x01|PushTransportEnd|INFO|V|M|
+
+PushTransportBegin: {ConnectionID:PushTransportConnectionID, TriggerType:TransportTriggerTypeEnum, ActivationReason:TriggerActivationReasonEnum(Command), ContainerType:ContainerFormatEnum, CMAFSessionNumber:uint64(CMAF)}
+PushTransportEnd: {ConnectionID:PushTransportConnectionID, ContainerType:ContainerFormatEnum, CMAFSessionNumber:uint64(CMAF)}
+
+---
+## 11.8 Chime Cluster (0x0556)
+Rev:2 | Role:Application | Scope:Endpoint | PICS:CHIME
+
+### Data Types
+```
+ChimeSoundStruct: {ChimeID:uint8, Name:string(1-48)}
+```
+
+### Attributes
+| ID | Name | Type | Constraint | Quality | Default | Access | Conf |
+|----|------|------|------------|---------|---------|--------|------|
+|0x0000|InstalledChimeSounds|list[ChimeSoundStruct]|1-255|||R V|M|
+|0x0001|SelectedChime|uint8|all|N||RW VO|M|
+|0x0002|Enabled|bool|all|N||RW VO|M|
+
+### Commands
+| ID | Name | Dir | Response | Access | Conf |
+|----|------|-----|----------|--------|------|
+|0x00|PlayChimeSound|C→S|N|O|M|
+
+PlayChimeSound: {ChimeID:uint8(O)}
+
+### Events
+| ID | Name | Priority | Access | Conf |
+|----|------|----------|--------|------|
+|0x00|ChimeStartedPlaying|INFO|V|M|
+
+ChimeStartedPlaying: {ChimeID:uint8}
 
 ---
 # END OF DOCUMENT
@@ -2604,7 +3423,6 @@ OperationalDatasetResponse: {OperationalDataset:octstr(max254)}
 |----|------|---------|
 |0x0003|Identify|1|
 |0x0004|Groups|1|
-|0x0005|On/Off|1|
 |0x0006|On/Off|1|
 |0x0008|Level Control|1|
 |0x003B|Switch|1|
@@ -2629,21 +3447,28 @@ OperationalDatasetResponse: {OperationalDataset:octstr(max254)}
 |0x0060|Operational State|1|
 |0x0061|RVC Operational State|7|
 |0x0062|Scenes Management|1|
+|0x0064|Temperature Alarm|2|
 |0x0071|HEPA Filter Monitoring|2|
 |0x0072|Activated Carbon Filter Monitoring|2|
+|0x0079|Water Tank Level Monitoring|2|
 |0x0080|Boolean State Configuration|1|
 |0x0081|Valve Configuration and Control|4|
 |0x0090|Electrical Power Measurement|2|
 |0x0091|Electrical Energy Measurement|2|
 |0x0094|Water Heater Management|9|
+|0x0095|Commodity Price|9|
 |0x0097|Messages|1|
 |0x0098|Device Energy Management|9|
 |0x0099|Energy EVSE|9|
 |0x009B|Energy Preference|9|
+|0x009D|Energy EVSE Mode|9|
 |0x009E|Water Heater Mode|9|
 |0x009F|Device Energy Management Mode|9|
+|0x00A0|Electrical Grid Conditions|9|
 |0x0101|Door Lock|5|
 |0x0102|Window Covering|5|
+|0x0104|Closure Control|5|
+|0x0105|Closure Dimension|5|
 |0x0150|Service Area|1|
 |0x0200|Pump Configuration and Control|4|
 |0x0201|Thermostat|4|
@@ -2667,9 +3492,9 @@ OperationalDatasetResponse: {OperationalDataset:octstr(max254)}
 |0x042D|PM10 Concentration|2|
 |0x042E|Total VOC Concentration|2|
 |0x042F|Radon Concentration|2|
+|0x0430|Soil Measurement|2|
+|0x0431|Ambient Context Sensing|2|
 |0x0451|Wi-Fi Network Management|10|
-|0x0452|Thread Border Router Management|10|
-|0x0453|Thread Network Directory|10|
 |0x0503|Wake On LAN|1|
 |0x0504|Channel|6|
 |0x0505|Target Navigator|6|
@@ -2684,3 +3509,13 @@ OperationalDatasetResponse: {OperationalDataset:octstr(max254)}
 |0x050E|Account Login|6|
 |0x050F|Content Control|6|
 |0x0510|Content App Observer|6|
+|0x0550|Zone Management|2|
+|0x0551|Camera AV Stream Management|11|
+|0x0552|Camera AV Settings User Level Management|11|
+|0x0553|WebRTC Transport Provider|11|
+|0x0554|WebRTC Transport Requestor|11|
+|0x0555|Push AV Stream Transport|11|
+|0x0556|Chime|11|
+|0x0700|Commodity Tariff|9|
+|0x0B06|Meter Identification|9|
+|0x0B07|Commodity Metering|9|

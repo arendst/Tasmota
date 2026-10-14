@@ -107,13 +107,16 @@ class Matter_Plugin
   # static var TYPES = { <device_type>: <revision> }    # needs to be defined for each endpoint
   # `FEATURE_MAPS` contains any non-zero value per cluster, if not present default to `0`
   static var FEATURE_MAPS = {               # feature map per cluster
-    # 0x0003: 0x00,                           # Identify: no optional features
+    0x0004: 0x01,                           # Groups: GroupNames
     0x0006: 0x01,                           # On/Off: Lighting feature (bit 0)
     0x0008: 0x03,                           # Level Control: On/Off (bit 0) + Lighting (bit 1)
     0x0031: 0x05,                           # Eth + WiFi - the latter is needed for Bluetooth commissioning
     0x0046: 0x00,                           # ICD Management: 0x00 = no optional features (base SIT mode, no CIP/UAT/LITS)
     0x0062: 0x01,                           # Scenes Management: SceneNames (bit 0)
+    0x0090: 0x02,                           # Electrical Power Measurement: AlternatingCurrent (bit 1)
+    0x009C: 0x01,                           # Power Topology: NodeTopology (bit 0) - meters the whole node
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
+    0x0104: 0x01,                           # Closure Control: Positioning (bit 0)
     0x0201: 0x23,                           # Thermostat: HEAT + COOL + AUTO
     0x0202: 2,                              # Fan Control: Auto (bit 1)
   }
@@ -125,8 +128,11 @@ class Matter_Plugin
     0x0006: 6,                              # On/Off - Matter 1.4.1 (OffOnly feature)
     0x0008: 6,                              # Level Control - Matter 1.4.1 (Frequency feature)
     0x001D: 2,                              # Descriptor - Semantic tag list; TagList feature
-    # 0x001F: 1,                            # Access Control - Initial Release
-    0x0028: 3,                              # Basic Information - Matter 1.4.1 (SpecificationVersion)
+    # Access Control revision 2 is retained pending confirmation against the
+    # full 1.6.1 cluster table; the compact spec includes AUX/AuxiliaryACL but
+    # does not include cluster revision metadata.
+    0x001F: 2,
+    0x0028: 4,                              # Basic Information - Matter 1.6.1
     # 0x002A: 1,                            # OTA Software Update Requestor - Initial Release
     # 0x002B: 1,                            # Localization Configuration - Initial Release
     # 0x002C: 1,                            # Time Format Localization - Initial Release
@@ -140,7 +146,7 @@ class Matter_Plugin
     # 0x003B: 1,                            # Switch - Initial Release
     # 0x003C: 1,                            # Administrator Commissioning - Initial Release
     # 0x003E: 1,                            # Node Operational Credentials - Initial Release
-    0x003F: 2,                              # Group Key Management - Clarify KeySetWrite validation and behavior on invalid epoch key lengths
+    0x003F: 4,                              # Group Key Management - Matter 1.6.1 (removed GroupKeyMulticastPolicy field in v4)
     # 0x0040: 1,                            # Fixed Label - Initial Release
     # 0x0041: 1,                            # User Label - Initial Release
     # 0x0042: 1,                            # Boolean State - Initial Release
@@ -150,8 +156,10 @@ class Matter_Plugin
     # 0x005C: 1,                            # Smoke CO Alarm - Initial Release
     0x0062: 1,                              # Scenes Management - Matter 1.4.1 (PROVISIONAL)
     0x0080: 1,                              # Boolean State Configuration - Initial Release
+    0x0090: 1,                              # Electrical Power Measurement - Initial Release (Matter 1.3)
     0x0101: 7,                              # Door Lock - Added support for European door locks (unbolt feature)
     0x0102: 5,                              # Window Covering - New data model format and notation
+    0x0104: 1,                              # Closure Control - Initial revision (Matter 1.5, unchanged in 1.6.1)
     0x0200: 4,                              # Pump Configuration and Control - Added feature map
     0x0201: 6,                              # Thermostat - Introduced the LTNE feature and adapted text (spec issue #5778)
     0x0202: 4,                              # Fan Control - Change conformance for FanModeSequence
@@ -201,6 +209,14 @@ class Matter_Plugin
     end
     ctx.msg = nil
   end
+
+  # Start a plugin-scoped write transaction. Most plugins have no writable
+  # lists, so the base hook is intentionally empty and Root overrides it.
+  def begin_write_request(msg) end
+
+  # Finish or retain a plugin-scoped transaction depending on whether another
+  # chunk follows. Root overrides this to commit a staged GroupKeyMap.
+  def end_write_request(msg, more_chunked_messages) end
 
   #############################################################
   # parse_configuration
@@ -383,7 +399,7 @@ matter_device.events.dump()
   end
 
   def set_name(n)
-    if n != self.node_label
+    if n != self.node_label && self.contains_cluster(0x0039)
       self.attribute_updated(0x0039, 0x0005)
     end
     self.node_label = n
@@ -412,8 +428,8 @@ matter_device.events.dump()
         var types = self.TYPES
         for dt: types.keys()
           var d1 = dtl.add_struct()
-          d1.add_TLV(0, 0x05 #-TLV.U2-#, dt)     # DeviceType
-          d1.add_TLV(1, 0x05 #-TLV.U2-#, types[dt])      # Revision
+          d1.add_TLV(0, 0x06 #-TLV.U4-#, dt)     # DeviceType
+          d1.add_TLV(1, 0x06 #-TLV.U4-#, types[dt])      # Revision
         end
         return dtl
       elif attribute == 0x0001          # ---------- ServerList / list[cluster-id] ----------
@@ -428,11 +444,9 @@ matter_device.events.dump()
       elif attribute == 0x0003          # ---------- PartsList / list[endpoint-no]----------
         var pl = TLV.Matter_TLV_array()
         return pl
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0)    #
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 1)    # "Initial Release"
       end
+      # FeatureMap / ClusterRevision use the generic handlers below (CLUSTER_REVISIONS 0x001D = 2, TagList capable);
+      # plugins exposing a TagList override 0x0004 and 0xFFFC (TAGLIST feature bit 0)
 
     end
 
@@ -446,7 +460,7 @@ matter_device.events.dump()
       var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) / 2 : 0
       var idx = 0
       while idx < attr_list_bytes_sz
-        acli.add_TLV(nil, 0x05 #-TLV.U2-#, attr_list_bytes.get(idx * 2, -2))
+        acli.add_TLV(nil, 0x06 #-TLV.U4-#, attr_list_bytes.get(idx * 2, -2))
         idx += 1
       end
       return acli                       # TODO, empty list for now
@@ -455,17 +469,13 @@ matter_device.events.dump()
       return el                         # return empty list
     elif attribute == 0xFFF9            # AcceptedCommandList
       var al = TLV.Matter_TLV_array()
-      if cluster == 0x0006              # On/Off
-        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0000)    # Off
-        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0001)    # On
-        al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0002)    # Toggle
-        if (self.FEATURE_MAPS.find(cluster, 0) & 0x01) != 0
-          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0040)  # OffWithEffect
-          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0041)  # OnWithRecallGlobalScene
-          al.add_TLV(nil, 0x06 #-TLV.U4-#, 0x0042)  # OnWithTimedOff
-        end
+      var cmds = self.get_accepted_commands(cluster)
+      var idx = 0
+      while cmds != nil && idx < size(cmds)
+        al.add_TLV(nil, 0x06 #-TLV.U4-#, cmds[idx])
+        idx += 1
       end
-      return al                         # TODO
+      return al
     elif attribute == 0xFFFC            # FeatureMap
       var featuremap = self.FEATURE_MAPS.find(cluster, 0)
       return tlv_solo.set(0x06 #-TLV.U4-#, featuremap)
@@ -475,6 +485,19 @@ matter_device.events.dump()
     end
 
     # no handler found, return nil
+    return nil
+  end
+
+  #############################################################
+  # get_accepted_commands
+  #
+  # Commands accepted for `cluster`, reported in AcceptedCommandList 0xFFF9
+  # Returns `bytes()` with one command id per byte (all ids used are < 0x100), or `nil` for none
+  # Subclasses override it for their clusters and call `super` for the others
+  def get_accepted_commands(cluster)
+    if cluster == 0x0006              # On/Off: Off, On, Toggle (+ OffWithEffect, OnWithRecallGlobalScene, OnWithTimedOff with Lighting)
+      return bytes((self.FEATURE_MAPS.find(cluster, 0) & 0x01) ? "000102404142" : "000102")
+    end
     return nil
   end
 
@@ -588,6 +611,7 @@ matter_device.events.dump()
   # The map is pre-cleaned and contains only keys declared in
   # `self.UPDATE_COMMANDS` with the adequate case
   # (no need to handle case-insensitive)
+  # Return an error string for invalid input, or nil on success.
   def update_virtual(payload)
     # pass
   end

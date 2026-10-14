@@ -31,10 +31,16 @@
 # error "No ESP capability header found"
 #endif
 
-#if SOC_MPI_SUPPORTED
+#if SOC_MPI_SUPPORTED && __has_include("rom/bigint.h")
 
 #include "rom/bigint.h"
 #include "t_inner.h"
+#ifdef CONFIG_IDF_TARGET_ESP32
+// dport_access.h provides DPORT_STALL_OTHER_CPU_START/END for ESP32 dual-core safety.
+// Must be included at file scope — picolibc's stdio.h (IDF 6.x) contains static inlines
+// that are invalid inside a function body.
+#include "dport_access.h"
+#endif
 
 #define WORDS 8  /* 8×32-bit limbs */
 
@@ -133,7 +139,6 @@ static inline void field_mul(uint32_t *dst, const uint32_t *a, const uint32_t *b
     ets_bigint_getz(dst, WORDS);
     ets_bigint_disable();
 #else
-#include "dport_access.h"
     uint32_t ram_a[16]   __attribute__((aligned(16)));
     uint32_t ram_b[16]   __attribute__((aligned(16)));
     uint32_t ram_tmp[16] __attribute__((aligned(16)));

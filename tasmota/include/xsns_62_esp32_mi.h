@@ -150,6 +150,20 @@ struct ATCPacket_t{ //and PVVX
   };
 };
 
+// Xiaomi Mi Body Composition Scale (MIBCS/MIBFS), service data of UUID 0x181B, 13 bytes, little endian
+struct MiScalePacket_t {
+  uint8_t flagsA;     // bit0: unit lb, bit2: "part"/partial result
+  uint8_t flagsB;     // bit1: impedance stable, bit5: weight stable, bit6: unit jin, bit7: finished (user stepped off)
+  uint16_t year;
+  uint8_t month;
+  uint8_t day;
+  uint8_t hour;
+  uint8_t minute;
+  uint8_t second;
+  uint16_t impedance; // ohms; 0xFFFE = measuring, 0xFFFD = failed
+  uint16_t weight;    // raw; /200 for kg, /100 for lb and jin; 0xFFF0 = overload
+} __attribute__((packed));
+
 union BTHome_info_t{
   struct{
     uint8_t encrypted:1;
@@ -281,6 +295,8 @@ struct mi_sensor_t{
       uint32_t door:1;
       uint32_t leak:1;
       uint32_t payload:1;
+      uint32_t weight:1;    // body composition scale
+      uint32_t impedance:1; // body composition scale
     };
     uint32_t raw = 0;
   } feature;
@@ -302,6 +318,9 @@ struct mi_sensor_t{
       uint32_t door:1;
       uint32_t leak:1;
       uint32_t payload:1;
+      uint32_t weight:1;          // stable weight available
+      uint32_t impedance:1;       // stable impedance available
+      uint32_t impedanceFailed:1; // session ended without a usable impedance
     };
     uint32_t raw = 0;
   } eventType;
@@ -328,6 +347,14 @@ struct mi_sensor_t{
     struct {
       float hum;
       uint8_t hum_history[24];
+    };
+    struct { // MIBCS / MIBFS body composition scale
+      float weight;             // in the unit the scale reports (see weightUnit)
+      uint16_t impedance;       // ohms, 0 = not measured
+      uint8_t weightUnit;       // 0 = kg, 1 = lb, 2 = jin
+      uint8_t scaleState;       // session bookkeeping, see MI32_SCALE_* flags
+      uint32_t scaleLastSeen;   // uptime of last packet, for session timeout
+      uint8_t weight_history[24];
     };
     struct {
       uint16_t events; //"alarms" since boot
@@ -382,8 +409,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Name,&Cmnd
 #define YLKG08      16
 #define YLAI003     17
 #define BTHOME      18
+#define MIBCS       19
 
-#define MI32_TYPES    18 //count this manually
+#define MI32_TYPES    19 //count this manually
 
 const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
@@ -403,9 +431,19 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x03b6, // YLKG08 and YLKG07 - version w/wo mains
                                   0x07bf, // YLAI003
                                   0xb770, // BTHome -> fake ID
+                                  0x181b, // MIBCS/MIBFS body composition scale -> fake ID (service UUID)
                                   };
 
-const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003|BTHOME"};
+const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003|BTHOME|MIBCS"};
+
+const char kMI32_ScaleUnit[] PROGMEM = "kg|lb|jin";
+
+// scaleState flags
+#define MI32_SCALE_WEIGHT_SENT     0x01
+#define MI32_SCALE_IMPEDANCE_SENT  0x02
+#define MI32_SCALE_FAILED_SENT     0x04
+#define MI32_SCALE_FINISHED        0x08
+#define MI32_SCALE_SESSION_TIMEOUT 10 // seconds of silence that end a weighing session
 
 const char kMI32_ButtonMsg[] PROGMEM = "Single|Double|Hold"; //mapping: in Tasmota: 1,2,3 ; for HomeKit and Xiaomi 0,1,2
 /*********************************************************************************************\

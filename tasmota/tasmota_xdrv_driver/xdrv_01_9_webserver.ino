@@ -150,7 +150,7 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "}";
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
       "sk(g[i],i);"                       // Set GPIO
@@ -221,6 +221,7 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_compressed/HTTP_HEAD_STYLE2.h"
   #include "./html_compressed/HTTP_HEAD_STYLE3.h"
   #include "./html_compressed/HTTP_HEAD_STYLE_WIFI.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE_TOOLTIP.h"
 #else
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
@@ -229,9 +230,10 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE3.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE_WIFI.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE_TOOLTIP.h"
 #endif
 
-#if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
+#if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE) || defined(USE_MI_ESP32)
 // Styles used for Zigbee and LoRaWan Web UI
 // Battery icon from https://css.gg/battery
 //
@@ -961,9 +963,11 @@ void WSContentSend_PD(const char* formatP, ...) {  // Content send snprintf_P ch
 
 /*-------------------------------------------------------------------------------------------*/
 
-void WSContentStart_P(const char* title, bool auth) {
+bool WSContentStart_P(const char* title, bool auth = true);
+bool WSContentStart_P(const char* title, bool auth) {
   if (auth && !WebAuthenticate()) {
-    return Webserver->requestAuthentication();
+    Webserver->requestAuthentication();
+    return false;
   }
 
   WSContentBegin(200, CT_HTML);
@@ -974,12 +978,7 @@ void WSContentStart_P(const char* title, bool auth) {
       SettingsTextEscaped(SET_DEVICENAME).c_str(), 
       title);
   }
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
-void WSContentStart_P(const char* title) {
-  WSContentStart_P(title, true);
+  return true;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1023,12 +1022,20 @@ void WSContentSendStyle_P(const char* formatP, ...) {
   WSContentSendRaw_P(HTTP_HEAD_STYLE1);
   WSContentSendRaw_P(HTTP_HEAD_STYLE2);
 
+#if defined(ESP32) || defined(USE_WEB_STATUS_LINE_WIFI)
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_TOOLTIP);
+#endif
+
 #ifdef USE_WEB_STATUS_LINE_WIFI
   WSContentSendRaw_P(HTTP_HEAD_STYLE_WIFI);
 #endif
-#if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
+#if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE) || defined(USE_MI_ESP32)
   WSContentSendRaw_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
+#if defined(USE_ZIGBEE) || defined(USE_MI_ESP32) || defined(USE_EQ3_ESP32)
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_SSI);
+#endif
+
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
@@ -1253,7 +1260,9 @@ void WebRestart(uint32_t type) {
 
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
-  WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only);
+  if (!WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only)) {
+    return;  // Not authorized
+  }
 #if ((RESTART_AFTER_INITIAL_WIFI_CONFIG) && (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP))
   // In case of type 3 (New network has been configured) go to the new device's IP in the new Network
   if (3 == type) {
@@ -2003,9 +2012,10 @@ bool HandleRootStatusRefresh(void) {
 #ifdef USE_WEB_STATUS_LINE_WIFI
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("<div class='wifi' title='%s: " D_RSSI " %d%% (%d dBm)'><div class='arc a3%s'></div><div class='arc a2%s'></div><div class='arc a1%s'></div><div class='arc a0'></div></div>"),
-                          SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str(),                      
+    WSContentSend_P(PSTR("<div class='wifi' title='" D_SSID ": %s\n" D_RSSI ": %d%% (%d dBm)\n" D_AP ": %s'><div class='arc a3%s'></div><div class='arc a2%s'></div><div class='arc a1%s'></div><div class='arc a0'></div></div>"),
+                          SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str(),
                           WifiGetRssiAsQuality(rssi), rssi,
+                          WiFi.BSSIDstr().c_str(),
                           rssi < -55 ? " o30" : "",
                           rssi < -70 ? " o30" : "",
                           rssi < -85 ? " o30" : "");
@@ -2219,14 +2229,14 @@ void HandleTemplateConfiguration(void) {
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
     for (uint32_t i = 0; i < nitems(template_gp.io); i++) {        // 17,148,29,149,7,255,255,255,138,255,139,255,255
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C6
-      // ESP32C2/C3/C6 we always send all GPIOs, Flash are just hidden
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61
+      // ESP32C2/C3/C5/C6/C61 we always send all GPIOs, Flash are just hidden
       WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
 #else
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
-#endif  // CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
+#endif  // CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61
     }
     WSContentSend_P(PSTR("}1%d}1%d"), flag, Settings->user_template_base);  // FLAG: 1  BASE: 17
     WSContentEnd();
@@ -2268,8 +2278,8 @@ void HandleTemplateConfiguration(void) {
                        "<hr>"));
   WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
-    // ESP32C2/C3/C6 all gpios are in the template, flash are hidden
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61
+    // ESP32C2/C3/C5/C6/C61 all gpios are in the template, flash are hidden
     bool hidden = FlashPin(i);
     WSContentSend_P(PSTR("<tr%s><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' onchange='ot(%d,this.value)'></select></td>"),
       hidden ? PSTR(" hidden") : "",
@@ -2281,7 +2291,7 @@ void HandleTemplateConfiguration(void) {
         RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
       WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
     }
-#endif  // CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
+#endif  // CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61
   }
   WSContentSend_P(PSTR("</table>"));
 
@@ -2352,7 +2362,7 @@ void TemplateSaveSettings(void) {
     j++;
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
     if (22 == i) { j = 33; }    // skip 22-32
@@ -2631,10 +2641,10 @@ void HandleWifiConfiguration(void) {
                   uint8_t rssi_as_quality = WifiGetRssiAsQuality(rssi);
                   uint8_t num_bars = changeUIntScale(rssi_as_quality, 0, 100, 0, 4);
 
-                  WSContentSend_P(PSTR("<div title='%d%% (%d dBm)'>"), rssi_as_quality, rssi);
+                  WSContentSend_P(PSTR("<div>"));
                   if (limitScannedNetworks) {
                     // Print SSID and item
-                    WSContentSend_P(PSTR("<a href='#p' onclick='c(this)'>%s</a><span class='q'><div class='si'>"), HtmlEscape(ssid_copy).c_str());
+                    WSContentSend_P(PSTR("<a href='#p' onclick='c(this)'>%s</a><span title='%d%% (%d dBm)' class='q'><div class='si'>"), HtmlEscape(ssid_copy).c_str(), rssi_as_quality, rssi);
                     ssid_showed++;
                     skipduplicated = true; // For the simplified page, just show 1 SSID if there are many Networks with the same
 #ifdef USE_HIGHLIGHT_CONNECTED_AP
@@ -2642,8 +2652,9 @@ void HandleWifiConfiguration(void) {
 #endif
                   } else {
                     // Print item
-                    WSContentSend_P(PSTR("%s<span class='q'>(%d) <div class='si'>"),
+                    WSContentSend_P(PSTR("%s<span title='%d%% (%d dBm)' class='q'>(%d) <div class='si'>"),
                       WiFi.BSSIDstr(indices[j]).c_str(),
+                      rssi_as_quality, rssi,
                       WiFi.channel(indices[j]));
 #ifdef USE_HIGHLIGHT_CONNECTED_AP
                     HighlightAP = WiFi.BSSIDstr(indices[j]) == WiFi.BSSIDstr();
@@ -3110,12 +3121,12 @@ void HandleInformation(void) {
       SettingsTextEscaped(SET_FRIENDLYNAME1 +i).c_str());
   }
   WSContentSeparatorIFat();
-#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if defined(CONFIG_ESP_WIFI_REMOTE_ENABLED) && !defined(SOC_WIFI_SUPPORTED)
   WSContentSend_P(PSTR("}1" D_HOSTED_MCU "}2%s (%s)"), 
     GetHostedMCU().c_str(),
     GetHostedFwVersion(1).c_str());
   WSContentSeparatorIFat();
-#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
+#endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED && !SOC_WIFI_SUPPORTED
   bool show_hr = false;
   if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());

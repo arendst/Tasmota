@@ -605,7 +605,37 @@ uint32_t IrRemoteCmndIrSendJson(void)
   if (root) { protocol = strToDecodeType(value.getStr()); }
   value = root[PSTR(D_JSON_IRHVAC_PROTOCOL)];
   if (root) { protocol = strToDecodeType(value.getStr()); }
-  if (decode_type_t::UNKNOWN == protocol) { return IE_UNSUPPORTED_PROTOCOL; }
+
+  if (decode_type_t::UNKNOWN == protocol) {
+    // IRsend { "rawdata":"+8570-4240+550...", "frequency": 38000, "channel": 3 }
+    //
+    // The plain "IRsend <freq>,<rawdata>" form has no channel, so a remote whose
+    // protocol the library does not know could only ever be replayed through the
+    // first emitter. Accepting raw data here gives it the same Channel the
+    // decoded protocols already have, in the same shape the receiver publishes.
+    //
+    // Raw data is used only when no known protocol is given, so that a payload
+    // copied from IrReceived (Protocol + RawData with SetOption58) is still sent
+    // through the decoded protocol, with its own carrier and repeat gaps.
+    // Payloads with "Protocol":"UNKNOWN" or no Protocol fall back to raw.
+    value = root[PSTR(D_JSON_IR_RAWDATA)];
+    if (!value) { return IE_UNSUPPORTED_PROTOCOL; }
+    if (!value.isStr()) { return IE_INVALID_RAWDATA; }   // reject null, true, numbers, arrays...
+    char * rawdata = (char*) value.getStr();
+
+    uint32_t freq32 = root.getUInt(PSTR(D_JSON_IR_FREQUENCY), 38000);
+    uint16_t freq = ((0 == freq32) || (freq32 > 0xFFFF)) ? 38000 : freq32;   // same default as parsqeFreq()
+
+    uint16_t raw_repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
+    if (XdrvMailbox.index > raw_repeat + 1) { raw_repeat = XdrvMailbox.index - 1; }
+    int32_t raw_channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
+
+    // A list of values is counted by its commas; the compact format has none
+    // and is counted by the parser itself.
+    uint32_t count = 0;
+    for (char * c = rawdata; *c; c++) { if (*c == ',') { count++; } }
+    return IrRemoteSendRawStandard(&rawdata, freq, count, raw_repeat, raw_channel);
+  }
   AddLog(LOG_LEVEL_INFO, PSTR("IRS: protocol %d"), protocol);
 
   uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
@@ -832,8 +862,9 @@ uint32_t IrRemoteParseRawCompact(char * str, uint16_t * arr, size_t arr_len) {
 //   p: token for strtok_r()
 //   count: number of commas in parameters, i.e. it contains count+1 values
 //   repeat: number of repeats (0 means no repeat)
+//   channel: IRsend channel from 0, or -1 for the first emitter available
 //
-uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint32_t repeat) {
+uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint32_t repeat, int32_t channel) {
   // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
   // IRsend 0,+8570-4240+550-1580C-510+565-1565F-505Fh+570gFhIdChIgFeFgFgIhFgIhF-525C-1560IhIkI-520ChFhFhFgFhIkIhIgIgIkIkI-25270A-4225IkIhIgIhIhIkFhIkFjCgIhIkIkI-500IkIhIhIkFhIgIl+545hIhIoIgIhIkFhFgIkIgFgI
 
@@ -852,18 +883,19 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   count = IrRemoteParseRawCompact(*pp, arr, count);
   // AddLog(LOG_LEVEL_DEBUG, PSTR("IrRemoteSendRawStandard: count_2 = %d"), count);
   // AddLog(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
-  if (0 == count) { return IE_INVALID_RAWDATA; }
+  if (0 == count) {
+    free(arr);                  // was leaked on parse failure (trailing comma, mixed format, invalid char)
+    return IE_INVALID_RAWDATA;
+  }
 
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
-  IRsend irsend = IrSendInitGPIO();
+  IRsend irsend = IrSendInitGPIO(channel);
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend.sendRaw(arr, count, freq);
   }
   if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
-  if (nullptr != arr) {
-    free(arr);
-  }
+  free(arr);                    // arr is always non-null here
   return IE_NO_ERROR;
 }
 
@@ -912,7 +944,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
     // standard raw
     // IRsend <freq>,<rawdata>,<rawdata> ...
     // IRsend <freq>,<compact_rawdata>
-    return IrRemoteSendRawStandard(&p, parsqeFreq(str), count, repeat);
+    return IrRemoteSendRawStandard(&p, parsqeFreq(str), count, repeat, -1);
   }
 }
 

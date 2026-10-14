@@ -22,6 +22,10 @@ import matter
 #@ solidify:Matter_Device,weak
 
 class Matter_Device
+  # Group key and membership storage exists, but encrypted multicast receive
+  # and dispatch are not implemented yet.  Keep provisioning fail-closed until
+  # the group data plane is operational.
+  static var GROUP_TRANSPORT_READY = false
   static var UDP_PORT = 5540          # this is the default port for group multicast, we also use it for unicast
   static var VENDOR_ID = 0xFFF1
   static var PRODUCT_ID = 0x8000
@@ -55,9 +59,10 @@ class Matter_Device
   var root_discriminator              # as `int`
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
-  var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
+  var disable_bridge_mode             # expose application endpoints as native static endpoints
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   var debug                           # debug mode, output all values when responding to read request with wildcard
+  var configuration_version           # persistent Basic Information configuration version
   # cron equivalent to call `read_sensors()` regularly and dispatch to all entpoints
   var probe_sensor_time               # number of milliseconds to wait between each `read_sensors()` or `nil` if none active
   var probe_sensor_timestamp          # timestamp for `read_sensors()` probe (in millis())
@@ -81,6 +86,7 @@ class Matter_Device
     self.discovered_sensors = {}
     self.discovery_subscribed = false
     self.next_ep = self.EP                        # start at endpoint 2 for dynamically allocated endpoints (1 reserved for aggregator)
+    self.configuration_version = 1
     self.ipv4only = false
     self.disable_bridge_mode = false
     self.commissioning = matter.Commissioning(self)
@@ -464,7 +470,7 @@ class Matter_Device
     import json
     self.update_remotes_info()    # update self.plugins_config_remotes
 
-    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
+    var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i,"configuration_version":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep, self.configuration_version)
     if self.debug
       j += ',"debug":true'
     end
@@ -553,13 +559,24 @@ class Matter_Device
       self.ipv4only = bool(j.find("ipv4only", false))
       self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
-      self.plugins_config = j.find("config", {})
-      self.debug = bool(j.find("debug"))    # bool converts nil to false
+      self.configuration_version = j.find("configuration_version", self.configuration_version)
+      self.plugins_config = j.find("config", nil)
+      self.debug = bool(j.find("debug"))
+
       if self.plugins_config != nil
         log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
         dirty = self.check_config_ep()
+        # Endpoint repair changes the exposed composition just like an explicit
+        # add/remove operation, so controllers need a new ConfigurationVersion.
+        if dirty
+          self.configuration_version += 1
+          if self.configuration_version <= 0   self.configuration_version = 1 end
+        end
         self.plugins_persist = true
+      else
+        self.plugins_config = {}
+        self.plugins_persist = false
       end
       self.plugins_config_remotes = j.find("remotes", {})
       if self.plugins_config_remotes
@@ -700,9 +717,11 @@ class Matter_Device
     self.plugins_persist = true
     self.next_ep += 1     # increment next allocated endpoint before saving
 
+    # Increment before persistence so ConfigurationVersion and endpoint config
+    # are committed in the same device record.
+    self.signal_endpoints_changed()
     # try saving parameters
     self.save_param()
-    self.signal_endpoints_changed()
 
     return ep
   end
@@ -739,15 +758,29 @@ class Matter_Device
     # clean any orphan remote
     self.clean_remotes()
 
+    # Persist the composition version together with the endpoint removal.
+    self.signal_endpoints_changed()
     # try saving parameters
     self.save_param()
-    self.signal_endpoints_changed()
+  end
+
+  #############################################################
+  # Increment the persisted composition version without publishing updates.
+  # This is used when a restart will rebuild the endpoint topology.
+  #
+  def bump_configuration_version()
+    self.configuration_version += 1
+    if self.configuration_version <= 0   self.configuration_version = 1 end
   end
 
   #############################################################
   # Signal to controller that endpoints changed via subcriptions
   #
   def signal_endpoints_changed()
+    # Basic Information ConfigurationVersion represents composition changes,
+    # while Descriptor PartsList invalidations refresh the affected topology.
+    self.bump_configuration_version()
+    self.attribute_updated(0x0000, 0x0028, 0x0018, false)
     # mark parts lists as changed
     self.attribute_updated(0x0000, 0x001D, 0x0003, false)
     var eps = self.get_active_endpoints(true)
@@ -827,6 +860,18 @@ class Matter_Device
     return http_remote
   end
 
+  # Notify all endpoints sharing a remote when BridgedDeviceBasic Reachable changes.
+  def http_reachable_changed(remote)
+    import introspect
+    for plugin: self.plugins
+      if introspect.get(plugin, "http_remote") == remote && plugin.contains_cluster(0x0039)
+        plugin.attribute_updated(0x0039, 0x0011)
+        plugin.publish_event(0x0039, 0x03, 1 #-matter.EVENT_INFO-#,
+                             matter.TLV.Matter_TLV_item().set(0x08 #-matter.TLV.BOOL-#, remote.reachable))
+      end
+    end
+  end
+
   #####################################################################
   # Manager MQTT remotes
   #####################################################################
@@ -870,7 +915,7 @@ class Matter_Device
   def mqtt_reachable_changed(remote)
     import introspect
     for plugin: self.plugins
-      if introspect.get(plugin, "mqtt_remote") == remote
+      if introspect.get(plugin, "mqtt_remote") == remote && plugin.contains_cluster(0x0039)
         plugin.attribute_updated(0x0039, 0x0011)
       end
     end
@@ -892,7 +937,6 @@ class Matter_Device
   def subscribe_discovery()
     import mqtt
     mqtt.subscribe("tasmota/discovery/#", / topic, idx, data, databytes -> self.handle_global_discovery(topic, data))
-    log("MTR: Subscribed to tasmota/discovery/#", 3)
   end
 
   # Parse discovery messages, store by topic
@@ -1129,7 +1173,10 @@ class Matter_Device
         cmd_cleaned[uc[cleaned_command_idx]] = payload_json[k]
       end
       # call plug-in
-      pl.update_virtual(cmd_cleaned)
+      var update_error = pl.update_virtual(cmd_cleaned)
+      if type(update_error) == 'string'
+        return tasmota.resp_cmnd_str(update_error)
+      end
       var state_json = pl.state_json()
       if state_json
         var cmnd_status = f'{{"{cmd_found}":{state_json}}}'

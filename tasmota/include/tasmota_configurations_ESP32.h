@@ -187,14 +187,14 @@
 
 #undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
 
-#if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 #if CONFIG_ETH_ENABLED                               // Check for Ethernet support in Arduino libs
 //  #undef USE_MQTT_TLS
 //  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
   #define USE_SPI                                    // Make SPI Ethernet adapters useable (+124 bytes)
   #define USE_ETHERNET
 #endif  // CONFIG_ETH_ENABLED
-#endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 
 #endif  // FIRMWARE_SAFEBOOT
 
@@ -280,6 +280,7 @@
   #define USE_EQ3_ESP32
 #endif // USE_MI_EXT_GUI
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+  #define USE_SENSOR_ICON                        // Display GUI icons instead of line with data
 
 #endif  // FIRMWARE_BLUETOOTH
 

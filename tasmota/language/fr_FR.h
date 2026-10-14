@@ -60,11 +60,13 @@
 #define D_AT "at"
 #define D_AUTO "AUTO"
 #define D_AUTO_UPDATE "Auto Update"
+#define D_AUTOMATIC "Automatic"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY "Battery"
 #define D_BATTERY_CHARGE "Charge"    // Battery charge in %
 #define D_BLINK "Blink"              // Not better in french
 #define D_BLINKOFF "BlinkOff"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Nb. de boot"
 #define D_BRIGHTLIGHT "Luminosité"
 #define D_BSSID "BSSId"
@@ -73,6 +75,7 @@
 #define D_BYTES "Octets"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Canal"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Dioxyde de carbone"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Froid"
@@ -88,6 +91,7 @@
 #define D_DARKLIGHT "Sombre"
 #define D_DATA "Donnée"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Point de rosée"
 #define D_DISABLED "Désactivé"
 #define D_DISCONNECTED "Disconnected"
@@ -120,6 +124,7 @@
 #define D_HALL_EFFECT "Effet Hall"
 #define D_HCHO "Formaldehyde"
 #define D_HEATINDEX "Heat index"
+#define D_HOLIDAY "Holiday"
 #define D_HOST "Hôte"
 #define D_HOSTNAME "Nom d'Hôte"
 #define D_HUMIDITY "Humidité"
@@ -131,13 +136,16 @@
 #define D_INITIALIZED "Initialisé"
 #define D_IP_ADDRESS "Adresse IP"
 #define D_LIGHT "Lumière"
+#define D_LOW "Low"
 #define D_LQI "LQI"                  // ZigBee Link Quality Index
 #define D_LWT "LWT"					         // MQTT Last Will and Testament
+#define D_MANUAL "Manual"
 #define D_MODULE "Module"
 #define D_MOISTURE "Humidité"
 #define D_MQ "MQ"                    // MQ series Gas sensor
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-pression"
+#define D_NA "N/A"
 #define D_NOISE "Bruit"
 #define D_NONE "Aucun"
 #define D_NOX "NOx"
@@ -222,6 +230,7 @@
 #define D_WATER_DEPTH "Profondeur de l’eau"
 #define D_WEB_SERVER "Serveur web"
 #define D_WEIGHT "Poids"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ATTENTION Cette version ne gère pas les réglages persistants"
@@ -972,6 +981,9 @@
 #define D_SENSOR_IEM3000_RX    "iEM3000 Rx"
 #define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
 #define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TX  "MiEl HVAC MB Tx"
+#define D_SENSOR_MIEL_HVAC_MB_RX  "MiEl HVAC MB Rx"
+#define D_SENSOR_MIEL_HVAC_MB_TXEN  "MiEl HVAC MB DE"
 #define D_SENSOR_PROJECTOR_CTRL_TX  "DLP Tx"
 #define D_SENSOR_PROJECTOR_CTRL_RX  "DLP Rx"
 #define D_SENSOR_SHELLY_DIMMER_BOOT0 "SHD Boot0"

@@ -141,9 +141,9 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 
 typedef struct
 {
-  uint8_t status = RGX_NOT_CONFIGURED;
+  uint8_t status;
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
-  bool napt_enabled = false;
+  bool napt_enabled;
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 } TRgxSettings;
 

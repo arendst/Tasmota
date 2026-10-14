@@ -22,5 +22,8 @@
     "platforms": [
         "espressif8266",
         "espressif32"
-    ]
+    ],
+    "build": {
+        "flags": [ "-I$PROJECT_DIR/include" ]
+    }
 }

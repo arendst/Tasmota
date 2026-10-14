@@ -259,6 +259,11 @@ void UfsCheckSDCardInit(void) {
       // AddLog(LOG_LEVEL_DEBUG, "UFS: trying SDIO 1-bit clk=%i cmd=%i d0=%i", sdio_clk, sdio_cmd, sdio_d0);
       SD_MMC.setPins(sdio_clk, sdio_cmd, sdio_d0);
     }
+#if defined(SOC_GP_LDO_SUPPORTED) && defined(SOC_SDMMC_IO_POWER_EXTERNAL)
+    if (!LdoEnabled(4)) {
+      SD_MMC.setPowerChannel(4);  // SD card IO power if not set by command Ldo4 (deprecated)
+    }
+#endif
     if (SD_MMC.begin("/sd", !bit_4_mode /*mode 1 bit*/, false /*format_if_failed*/)) {    // mount under "/sd" to be consistent with SD SPI
       ufsp = &SD_MMC;
 
@@ -1364,6 +1369,7 @@ const char HTTP_EDITOR_FORM_END[] PROGMEM =
 // This wrapper ensures upload_file_type is always set before entering the
 // shared upload handler.
 void HandleUploadUFSLoop(void) {
+  if (!WebAuthenticate()) { return; }
   if (!HttpCheckPriviledgedAccess(false)) { return; }
 
   Web.upload_file_type = UPL_UFSFILE;
@@ -1557,14 +1563,14 @@ void UfsListDir(char *path, uint8_t depth) {
         for (uint8_t cnt = 0; cnt<depth; cnt++) {
           *cp++ = '-';
         }
+        snprintf(cp, sizeof(name) - (cp - name), format, ep);
 
         String pp_escaped_string = UrlEscape(pp);
         String ep_escaped_string = UrlEscape(ep);
         const char* ppe = pp_escaped_string.c_str();    // this can't be merged on a single line otherwise the String object can be freed
         const char* epe = ep_escaped_string.c_str();
-        sprintf(cp, format, ep);
 #ifdef GUI_TRASH_FILE
-        char delpath[128+UFS_FILENAME_SIZE];
+        char delpath[128+UFS_FILENAME_SIZE+(2*strlen(ppe))];
         ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, ppe, epe, ppe[0]?ppe:"/");
 #else
         char delpath[2] = " ";

@@ -74,6 +74,14 @@ OpenThermCommand sns_opentherm_commands[] = {
      .m_ot_make_request = sns_opentherm_set_boiler_temperature,
      .m_ot_parse_response = sns_opentherm_parse_set_boiler_temperature,
      .m_ot_appent_telemetry = sns_opentherm_tele_boiler_temperature},
+    {// Set 2nd CH circuit temperature, only sent when CH2 is enabled
+     .m_command_name = "BTMP2",
+     .m_command_code = 0,
+     .m_flags = {.supported = 1},
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_set_boiler2_temperature,
+     .m_ot_parse_response = sns_opentherm_parse_set_boiler_temperature,
+     .m_ot_appent_telemetry = sns_opentherm_tele_boiler_temperature},
     {// Set Hot Water temperature
      .m_command_name = "HWTMP",
      .m_command_code = 0,
@@ -114,6 +122,14 @@ OpenThermCommand sns_opentherm_commands[] = {
      .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
      .m_ot_make_request = sns_opentherm_get_generic_float,
      .m_ot_parse_response = sns_opentherm_parse_boiler_temperature,
+     .m_ot_appent_telemetry = sns_opentherm_tele_generic_float},
+    {// Read CH2 flow water temperature
+     .m_command_name = "TB2",
+     .m_command_code = (uint8_t)OpenThermMessageID::TflowCH2,
+     .m_flags = 0,
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_get_generic_float,
+     .m_ot_parse_response = sns_opentherm_parse_boiler2_temperature,
      .m_ot_appent_telemetry = sns_opentherm_tele_generic_float},
     {// Read DHW temperature
      .m_command_name = "TDHW",
@@ -351,6 +367,26 @@ void sns_opentherm_tele_boiler_temperature(struct OpenThermCommandT *self)
                      actual);
 }
 
+/////////////////////////////////// Set 2nd CH Circuit Temperature //////////////////////////////////////////////////
+unsigned long sns_opentherm_set_boiler2_temperature(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *status)
+{
+    // The same consideration as for the boiler temperature
+    float diff = abs(status->m_boilerSetpoint2 - self->m_results[0].m_float);
+    if (!status->m_enableCentralHeating2 || diff < OPENTHERM_BOILER_SETPOINT_TOLERANCE)
+    {
+        return -1;
+    }
+    AddLog(LOG_LEVEL_INFO,
+              PSTR("[OTH]: Setting Boiler2 Temp. Old: %d, New: %d"),
+              (int)self->m_results[0].m_float,
+              (int)status->m_boilerSetpoint2);
+
+    self->m_results[0].m_float = status->m_boilerSetpoint2;
+
+    unsigned int data = OpenTherm::temperatureToData(status->m_boilerSetpoint2);
+    return OpenTherm::buildRequest(OpenThermMessageType::WRITE_DATA, OpenThermMessageID::TsetCH2, data);
+}
+
 /////////////////////////////////// Set Domestic Hot Water Temperature //////////////////////////////////////////////////
 unsigned long sns_opentherm_set_boiler_dhw_temperature(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *status)
 {
@@ -517,6 +553,12 @@ void sns_opentherm_parse_boiler_temperature(struct OpenThermCommandT *self, stru
 {
     self->m_results[0].m_float = OpenTherm::getFloat(response);
     boilerStatus->m_boiler_temperature_read = self->m_results[0].m_float;
+}
+
+void sns_opentherm_parse_boiler2_temperature(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
+{
+    self->m_results[0].m_float = OpenTherm::getFloat(response);
+    boilerStatus->m_boiler2_temperature_read = self->m_results[0].m_float;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

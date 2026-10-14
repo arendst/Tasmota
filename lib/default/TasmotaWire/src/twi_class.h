@@ -12,7 +12,7 @@ private:
     uint32_t twi_clockStretchLimit = 150000;
 
     // Internal use functions
-    void ICACHE_RAM_ATTR busywait(unsigned int v);
+    void busywait(unsigned int v);
     bool write_start(void);
     bool write_stop(void);
     bool write_bit(bool bit);

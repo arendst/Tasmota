@@ -16,12 +16,20 @@ MockClient::MockClient()
       _readPos(0),
       _outbound(),
       _writeLimit(0),
+      _writeLimitAfterCalls(0),
+      _writeLimitAfterValue(0),
+      _writeCallsSinceLimit(0),
       _trickleBytesPerReveal(0),
       _trickleMsPerReveal(0),
       _trickleBaseMs(0),
+      _trickleStartReadPos(0),
       _connected(false),
       _connectResult(1),
+      _connectResults(),
+      _connectResultPos(0),
       _connectCalled(false),
+      _connectCount(0),
+      _connectionEvents(),
       _lastHost(),
       _lastIp(),
       _lastPort(0),
@@ -61,11 +69,23 @@ void MockClient::clearOutbound() {
 
 void MockClient::setWriteLimit(size_t maxPerWrite) {
     _writeLimit = maxPerWrite;
+    _writeLimitAfterValue = 0;
+    _writeCallsSinceLimit = 0;
+}
+
+void MockClient::setWriteLimitAfter(size_t successfulWriteCalls, size_t maxPerWrite) {
+    _writeLimitAfterCalls = successfulWriteCalls;
+    _writeLimitAfterValue = maxPerWrite;
+    _writeCallsSinceLimit = 0;
 }
 
 void MockClient::setTrickle(size_t bytesPerReveal, unsigned long msPerReveal) {
     _trickleBytesPerReveal = bytesPerReveal;
     _trickleMsPerReveal = msPerReveal;
+    // Each schedule starts from the read position that exists now. Otherwise a
+    // consumed CONNECT/CONNACK prefix delays all newly queued bytes and a caller
+    // must repeatedly enter loop() before the first trickled byte becomes visible.
+    _trickleStartReadPos = _readPos;
     // Anchor the reveal schedule at "now" so bytesPerReveal are visible
     // immediately and additional bytes appear as virtual time advances.
     _trickleBaseMs = TestClock::instance().millis();
@@ -79,6 +99,14 @@ void MockClient::setConnected(bool connected) {
 
 void MockClient::setConnectResult(int result) {
     _connectResult = result;
+}
+
+void MockClient::pushConnectResult(int result) {
+    _connectResults.push_back(result);
+}
+
+const std::vector<MockClient::ConnectionEvent>& MockClient::connectionEvents() const {
+    return _connectionEvents;
 }
 
 bool MockClient::stopCalled() const {
@@ -101,6 +129,10 @@ bool MockClient::connectCalled() const {
     return _connectCalled;
 }
 
+unsigned MockClient::connectCount() const {
+    return _connectCount;
+}
+
 const std::string& MockClient::lastHost() const {
     return _lastHost;
 }
@@ -117,24 +149,34 @@ uint16_t MockClient::lastPort() const {
 
 int MockClient::connect(IPAddress ip, uint16_t port) {
     _connectCalled = true;
+    ++_connectCount;
+    _connectionEvents.push_back(ConnectionEvent::Connect);
     _lastIp = ip;
     _lastPort = port;
+    const int result = (_connectResultPos < _connectResults.size())
+                           ? _connectResults[_connectResultPos++]
+                           : _connectResult;
     // Model a real client: a successful connect brings the socket up. Tests can
     // still override the reported state with setConnected().
-    if (_connectResult == 1) {
+    if (result == 1) {
         _connected = true;
     }
-    return _connectResult;
+    return result;
 }
 
 int MockClient::connect(const char* host, uint16_t port) {
     _connectCalled = true;
+    ++_connectCount;
+    _connectionEvents.push_back(ConnectionEvent::Connect);
     _lastHost = (host != nullptr) ? host : "";
     _lastPort = port;
-    if (_connectResult == 1) {
+    const int result = (_connectResultPos < _connectResults.size())
+                           ? _connectResults[_connectResultPos++]
+                           : _connectResult;
+    if (result == 1) {
         _connected = true;
     }
-    return _connectResult;
+    return result;
 }
 
 size_t MockClient::write(uint8_t b) {
@@ -153,9 +195,15 @@ size_t MockClient::write(const uint8_t* buf, size_t size) {
     // so repeated writes continue advancing through the caller's buffer. A
     // limit of 0 preserves the core "accept everything" behavior.
     size_t accepted = size;
-    if (_writeLimit != 0 && accepted > _writeLimit) {
-        accepted = _writeLimit;
+    size_t limit = _writeLimit;
+    if ((_writeLimitAfterValue != 0) &&
+        (_writeCallsSinceLimit >= _writeLimitAfterCalls)) {
+        limit = _writeLimitAfterValue;
     }
+    if (limit != 0 && accepted > limit) {
+        accepted = limit;
+    }
+    ++_writeCallsSinceLimit;
     _outbound.insert(_outbound.end(), buf, buf + accepted);
     return accepted;
 }
@@ -198,6 +246,7 @@ void MockClient::stop() {
     _connected = false;
     _stopCalled = true;
     ++_stopCount;
+    _connectionEvents.push_back(ConnectionEvent::Stop);
 }
 
 uint8_t MockClient::connected() {
@@ -227,8 +276,10 @@ size_t MockClient::revealedCount() const {
     const unsigned long elapsed = (now >= _trickleBaseMs) ? (now - _trickleBaseMs) : 0UL;
     const unsigned long long steps = 1ULL + (elapsed / _trickleMsPerReveal);
 
-    // Absolute count of revealed bytes, saturated at the total scripted size.
+    // `steps` is measured from the point scheduling began, not byte zero of the
+    // historical queue. Bytes consumed before setTrickle() stay consumed.
     const unsigned long long revealedAbsWide =
+        static_cast<unsigned long long>(_trickleStartReadPos) +
         steps * static_cast<unsigned long long>(_trickleBytesPerReveal);
     const size_t revealedAbs = (revealedAbsWide >= _inbound.size())
                                    ? _inbound.size()

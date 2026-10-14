@@ -309,6 +309,208 @@ class TestJsonDump:
 
 
 # ============================================================================
+# json.dump — custom serialization through `tojson(fmt, indent)`
+# ============================================================================
+
+class TestJsonDumpTojson:
+    """An instance implementing `tojson()` controls its own serialization.
+
+    The returned string is inserted verbatim (no quoting, no escaping, no JSON
+    syntax check), `nil` falls back to the default serialization, and any other
+    return type raises `type_error`.
+    """
+
+    def test_tojson_string(self):
+        run_json_test(
+            "class J def tojson() return '\"raw\"' end end\n"
+            "assert(json.dump(J()) == '\"raw\"')"
+        )
+
+    def test_tojson_raw_fragments(self):
+        """The return value is verbatim, so any JSON type can be emitted."""
+        run_json_test(
+            "class J_int def tojson() return '42' end end\n"
+            "class J_null def tojson() return 'null' end end\n"
+            "class J_obj def tojson() return '{\"a\":1}' end end\n"
+            "class J_arr def tojson() return '[1,2]' end end\n"
+            "assert(json.dump(J_int()) == '42')\n"
+            "assert(json.dump(J_null()) == 'null')\n"
+            "assert(json.dump(J_obj()) == '{\"a\":1}')\n"
+            "assert(json.dump(J_arr()) == '[1,2]')"
+        )
+
+    def test_tojson_no_syntax_check(self):
+        run_json_test(
+            "class J def tojson() return 'not json' end end\n"
+            "assert(json.dump(J()) == 'not json')"
+        )
+
+    def test_tojson_nested_in_containers(self):
+        run_json_test(
+            "class J def tojson() return '{\"a\":1}' end end\n"
+            "assert(json.dump([J(), J()]) == '[{\"a\":1},{\"a\":1}]')\n"
+            "assert(json.dump({'k': J()}) == '{\"k\":{\"a\":1}}')"
+        )
+
+    def test_tojson_not_used_for_map_keys(self):
+        """JSON keys must be strings, so keys always go through tostring()."""
+        run_json_test(
+            "class J\n"
+            "  def tostring() return 'thekey' end\n"
+            "  def tojson() return '{\"a\":1}' end\n"
+            "end\n"
+            "assert(json.dump({J(): 1}) == '{\"thekey\":1}')"
+        )
+
+    def test_tojson_indent_arg(self):
+        """`indent` is nil for compact output, the nesting level in format mode.
+
+        A top-level value is at level 0 in both modes, so the *type* of `indent`
+        is what carries the mode, not its value.
+        """
+        run_json_test(
+            "class J def tojson(indent)\n"
+            "  return string.format('\"%s\"', str(indent))\n"
+            "end end\n"
+            "assert(json.dump(J()) == '\"nil\"')\n"
+            "assert(json.dump(J(), 'format') == '\"0\"')\n"
+            "assert(json.dump({'k': J()}) == '{\"k\":\"nil\"}')\n"
+            "assert(json.dump([[J()]]) == '[[\"nil\"]]')\n"
+            r"assert(json.dump({'k': J()}, 'format') == '{\n  \"k\": \"1\"\n}')"
+            "\n"
+            r"assert(json.dump([[J()]], 'format') == '[\n  [\n    \"2\"\n  ]\n]')"
+        )
+
+    def test_tojson_without_args_is_valid(self):
+        """Berry ignores extra arguments, so a 0-arg tojson() works."""
+        run_json_test(
+            "class J def tojson() return '1' end end\n"
+            "assert(json.dump(J()) == '1')"
+        )
+
+    def test_tojson_nil_falls_back_to_default(self):
+        run_json_test(
+            "class J\n"
+            "  def tojson() return nil end\n"
+            "  def tostring() return 'default' end\n"
+            "end\n"
+            "assert(json.dump(J()) == '\"default\"')"
+        )
+
+    def test_tojson_no_return_falls_back_to_default(self):
+        run_json_test(
+            "class J def tojson() end end\n"
+            "assert(json.dump(J()) == '\"<instance: J()>\"')"
+        )
+
+    def test_tojson_conditional_opt_out(self):
+        """Returning nil per-instance allows opting out selectively."""
+        run_json_test(
+            "class J var raw\n"
+            "  def init(raw) self.raw = raw end\n"
+            "  def tojson() if self.raw return '1' end return nil end\n"
+            "  def tostring() return 'str' end\n"
+            "end\n"
+            "assert(json.dump([J(true), J(false)]) == '[1,\"str\"]')"
+        )
+
+    @pytest.mark.parametrize("ret", ["42", "[1]", "1.5", "true", "{'a':1}"])
+    def test_tojson_non_string_raises_type_error(self, ret):
+        source = (
+            "import json\n"
+            f"class J def tojson() return {ret} end end\n"
+            "try\n"
+            "  json.dump(J())\n"
+            "  assert(false, 'should have raised')\n"
+            "except .. as e, m\n"
+            "  assert(e == 'type_error')\n"
+            "end\n"
+        )
+        rc, stdout, stderr = berry_eval(source)
+        assert rc == 0, f"Berry exited {rc}\nstdout: {stdout}\nstderr: {stderr}"
+
+    def test_tojson_error_from_nested_value(self):
+        run_json_test(
+            "class J def tojson() return 42 end end\n"
+            "try\n"
+            "  json.dump([{'k': J()}])\n"
+            "  assert(false, 'should have raised')\n"
+            "except .. as e, m\n"
+            "  assert(e == 'type_error')\n"
+            "end"
+        )
+
+    def test_tojson_exception_propagates(self):
+        run_json_test(
+            "class J def tojson() raise 'custom_error' end end\n"
+            "try\n"
+            "  json.dump(J())\n"
+            "  assert(false, 'should have raised')\n"
+            "except .. as e, m\n"
+            "  assert(e == 'custom_error')\n"
+            "end"
+        )
+
+    def test_tojson_inherited_and_overridden(self):
+        run_json_test(
+            "class A def tojson() return '{\"a\":1}' end end\n"
+            "class B : A end\n"
+            "class C : A def tojson() return '{\"b\":2}' end end\n"
+            "assert(json.dump(B()) == '{\"a\":1}')\n"
+            "assert(json.dump(C()) == '{\"b\":2}')"
+        )
+
+    def test_tojson_static(self):
+        run_json_test(
+            "class J static def tojson() return '\"static\"' end end\n"
+            "assert(json.dump(J()) == '\"static\"')"
+        )
+
+    def test_tojson_via_virtual_member(self):
+        """A virtual `member()` hook can synthesize `tojson` dynamically."""
+        run_json_test(
+            "class J def member(name)\n"
+            "  if name == 'tojson' return def () return '\"virtual\"' end end\n"
+            "end end\n"
+            "assert(json.dump(J()) == '\"virtual\"')"
+        )
+
+    def test_tojson_non_function_member_ignored(self):
+        run_json_test(
+            "class J var tojson def init() self.tojson = 12 end end\n"
+            "assert(json.dump(J()) == '\"<instance: J()>\"')"
+        )
+
+    def test_tojson_takes_precedence_over_map_subclass(self):
+        run_json_test(
+            "class J : map\n"
+            "  def init() super(self).init() end\n"
+            "  def tojson() return '\"amap\"' end\n"
+            "end\n"
+            "var m = J()\n"
+            "m['k'] = 1\n"
+            "assert(json.dump(m) == '\"amap\"')"
+        )
+
+    def test_tojson_takes_precedence_over_list_subclass(self):
+        run_json_test(
+            "class J : list\n"
+            "  def init() super(self).init() end\n"
+            "  def tojson() return '\"alist\"' end\n"
+            "end\n"
+            "assert(json.dump(J()) == '\"alist\"')"
+        )
+
+    def test_instances_without_tojson_unaffected(self):
+        run_json_test(
+            "class J_plain end\n"
+            "class J_tostr def tostring() return 'a \"quoted\" str' end end\n"
+            "assert(json.dump(J_plain()) == '\"<instance: J_plain()>\"')\n"
+            "assert(json.dump(J_tostr()) == '\"a \\\\\"quoted\\\\\" str\"')"
+        )
+
+
+# ============================================================================
 # Security tests — ported from the new tests in tests/json.be
 # ============================================================================
 

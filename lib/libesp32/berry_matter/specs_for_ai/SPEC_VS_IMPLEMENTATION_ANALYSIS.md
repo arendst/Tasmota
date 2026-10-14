@@ -1,5 +1,14 @@
 # Matter 1.4.1 Spec vs Tasmota Implementation — Gap Analysis & Change Spec
 
+> **Tasmota ACL profile decision (2026-09-29):** Tasmota does not implement
+> writable or fine-grained Matter ACLs. The Access Control cluster exposes one
+> immutable, fabric-scoped entry with `Administer`, `CASE`, `Subjects = null`,
+> and `Targets = null`. This grants every authenticated CASE peer on the fabric
+> full access. ACL writes return `SUCCESS` but are discarded for Apple Home
+> commissioning compatibility; CAT matching, target matching, ACL persistence,
+> and Access Control change events are intentionally omitted. See
+> `TASMOTA_FIXED_ACL_PROFILE.md` for the security and conformance tradeoffs.
+
 ## 1. Executive Summary
 
 This document compares the Matter 1.4.1 Core Specification (March 2025) against the current Tasmota Berry implementation across the message layer, commissioning (PASE/CASE), and Interaction Model. The implementation is solid and functionally correct for a resource-constrained device. The gaps identified are primarily around **session parameter negotiation** (new mandatory fields in 1.4), **InteractionModelRevision** being outdated, and a few minor protocol conformance items. No architectural changes are recommended — the current layered design is clean and appropriate for the platform.
@@ -102,7 +111,7 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 - Commissionable discovery: `_matterc._udp` service type — correct per §4.3.1
 - Random 16-char hex instance name — correct per §4.3.1
 - TXT records: D (discriminator), VP (vendor+product), CM (commissioning mode), T (TCP support) — correct
-- Subtypes: `_L<discriminator>`, `_S<upper4bits>`, `_V<vendorID>`, `_CM1` — correct per §4.3.1
+- Subtypes: `_L<discriminator>`, `_S<upper4bits>`, `_V<vendorID>`, `_CM` — correct per §4.3.1 (the subtype is `_CM` with no digit; the mode value 1/2 goes only in the `CM=` TXT record)
 - Operational discovery: `_matter._tcp` with `<CompressedFabricID>-<NodeID>` instance — correct per §4.3.2
 - SII=500, SAI=300 defaults — correct per §4.10
 - Port 5540 — correct per §2.4

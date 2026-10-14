@@ -66,7 +66,7 @@ typedef struct wooliis_data_t {
   float   energy_in;
   float   energy_out;
   uint8_t status;
-  uint8_t valid = 0;
+  uint8_t valid;
   uint8_t charge_percent;
 } wooliis_data_t;
 

@@ -75,12 +75,12 @@ TasmotaSerial *ShdSerial = nullptr;
 
 typedef struct
 {
-    uint8_t version_major = 0;
-    uint8_t version_minor = 0;
+    uint8_t version_major;
+    uint8_t version_minor;
 
-    uint32_t brightness = 0;
-    uint32_t power = 0;
-    uint32_t fade_rate = 0;
+    uint32_t brightness;
+    uint32_t power;
+    uint32_t fade_rate;
 } SHD_DIMMER;
 
 struct SHD

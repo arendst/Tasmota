@@ -95,19 +95,19 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
   }
 
   uint32_t pixels_len = width * height;
-  uint32_t chrono_start = millis();
+  uint32_t chrono_start = micros();
   renderer->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
   renderer->pushColors((uint16_t *)color_p, pixels_len, true);
   renderer->setAddrWindow(0,0,0,0);
   renderer->Updateframe();
-  uint32_t chrono_time = millis() - chrono_start;
+  uint32_t chrono_time = micros() - chrono_start;
 
   lv_disp_flush_ready(disp);
 
   if (pixels_len >= 10000 && (!renderer->lvgl_param.use_dma)) {
     if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
-      AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
-              chrono_time > 0 ? pixels_len / chrono_time : -1);
+      AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "Refreshed %d pixels in %d us (%i pix/ms)", pixels_len, chrono_time,
+              chrono_time > 0 ? (pixels_len * 1000 / chrono_time) : -1);
     }
   }
   // if there is a display callback, call it
@@ -481,12 +481,19 @@ void start_lvgl(const char * uconfig) {
     if (0 == flushlines) flushlines = LV_BUFFER_ROWS;
 
     lvgl_buffer_size = renderer->width() * flushlines;
+    // By default allocate preferably in internal memory which is faster than PSRAM.
+    // If bit 5 (0x20) of `:B` is set in display.ini, prefer PSRAM instead: this saves
+    // internal memory and can be faster with large flushlines on ESP32-P4 DSI panels.
+    // In both cases, fall back to the other memory type if allocation fails.
+    bool prefer_psram = renderer->lvgl_pars()->use_psram;
+    uint32_t caps_first  = MALLOC_CAP_8BIT | (prefer_psram ? MALLOC_CAP_SPIRAM : MALLOC_CAP_INTERNAL);
+    uint32_t caps_second = MALLOC_CAP_8BIT;
+    const char * mem_pref = prefer_psram ? "PSRAM" : "main memory";
     if (renderer->lvgl_pars()->use_dma) {
       lvgl_buffer_size /= 2;
       if (lvgl_buffer_size < 1000000) {
-        // allocate preferably in internal memory which is faster than PSRAM
-        AddLog(LOG_LEVEL_DEBUG, "LVG: Allocating buffer2 %i bytes in main memory (flushlines %i)", (lvgl_buffer_size * (LV_COLOR_DEPTH / 8)) / 1024, flushlines);
-        lvgl_glue->lv_pixel_buf2 = heap_caps_malloc_prefer(lvgl_buffer_size * (LV_COLOR_DEPTH / 8), 2, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL, MALLOC_CAP_8BIT);
+        AddLog(LOG_LEVEL_DEBUG, "LVG: Allocating buffer2 %i KB preferably in %s (flushlines %i)", (lvgl_buffer_size * (LV_COLOR_DEPTH / 8)) / 1024, mem_pref, flushlines);
+        lvgl_glue->lv_pixel_buf2 = heap_caps_malloc_prefer(lvgl_buffer_size * (LV_COLOR_DEPTH / 8), 2, caps_first, caps_second);
       }
       if (!lvgl_glue->lv_pixel_buf2) {
         status_ok = false;
@@ -494,9 +501,8 @@ void start_lvgl(const char * uconfig) {
       }
     }
 
-    // allocate preferably in internal memory which is faster than PSRAM
-    AddLog(LOG_LEVEL_DEBUG, "LVG: Allocating buffer1 %i KB in main memory (flushlines %i)", (lvgl_buffer_size * (LV_COLOR_DEPTH / 8)) / 1024, flushlines);
-    lvgl_glue->lv_pixel_buf = heap_caps_malloc_prefer(lvgl_buffer_size * (LV_COLOR_DEPTH / 8), 2, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL, MALLOC_CAP_8BIT);
+    AddLog(LOG_LEVEL_DEBUG, "LVG: Allocating buffer1 %i KB preferably in %s (flushlines %i)", (lvgl_buffer_size * (LV_COLOR_DEPTH / 8)) / 1024, mem_pref, flushlines);
+    lvgl_glue->lv_pixel_buf = heap_caps_malloc_prefer(lvgl_buffer_size * (LV_COLOR_DEPTH / 8), 2, caps_first, caps_second);
     if (!lvgl_glue->lv_pixel_buf) {
       status_ok = false;
       break;

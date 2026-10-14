@@ -95,16 +95,13 @@ static int64_t* arg_get_p(bvm *vm, int idx) {
  * Stack on return: new int64 instance at top.
  */
 static void push_int64_instance(bvm *vm, int64_t val) {
-  int64_t *r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
-  if (r64 == NULL) { be_raise(vm, "memory_error", "cannot allocate buffer"); }
-  *r64 = val;
   be_getglobal(vm, "int64");     /* stack: class */
   be_call(vm, 0);                /* stack: instance */
-  be_getmember(vm, -1, "init");  /* stack: instance, init */
-  be_pushvalue(vm, -2);          /* stack: instance, init, instance */
-  be_pushcomptr(vm, r64);        /* stack: instance, init, instance, ptr */
-  be_call(vm, 2);                /* stack: instance, ret */
-  be_pop(vm, 1);                 /* stack: instance */
+  /* The constructor owns the payload; initializing it again would leak it.
+   * Keep the instance on the stack and fill its existing allocation instead. */
+  int64_t *r64 = arg_get_p(vm, -1);
+  if (r64 == NULL) { be_raise(vm, "memory_error", "cannot allocate buffer"); }
+  *r64 = val;
 }
 
 /*********************************************************************************************\

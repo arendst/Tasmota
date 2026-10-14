@@ -347,11 +347,14 @@ def _clone_expdesc(src):
 #     int breaklist;
 #     int beginpc;
 #     int continuelist;
+# #if BE_DEBUG_VAR_INFO
+#     int nvarinfo;
+# #endif
 # } bblockinfo;
 class bblockinfo:
     """Block information — mirrors C bblockinfo struct."""
     __slots__ = ('prev', 'nactlocals', 'type', 'hasupval', 'sideeffect',
-                 'lastjmp', 'breaklist', 'beginpc', 'continuelist')
+                 'lastjmp', 'breaklist', 'beginpc', 'continuelist', 'nvarinfo')
 
     def __init__(self):
         self.prev = None
@@ -363,6 +366,7 @@ class bblockinfo:
         self.breaklist = NO_JUMP
         self.beginpc = 0
         self.continuelist = NO_JUMP
+        self.nvarinfo = 0
 
 
 # ============================================================================
@@ -536,8 +540,8 @@ def be_code_freeregs(finfo, n):
     # #define be_code_freeregs(f, n)  ((f)->freereg -= (bbyte)(n))
     finfo.freereg -= n
 
-def be_code_prebinop(finfo, op, e):
-    return _lazy_be_code().be_code_prebinop(finfo, op, e)
+def be_code_prebinop(finfo, op, e, dst):
+    return _lazy_be_code().be_code_prebinop(finfo, op, e, dst)
 
 def be_code_binop(finfo, op, e1, e2, dst):
     return _lazy_be_code().be_code_binop(finfo, op, e1, e2, dst)
@@ -815,31 +819,37 @@ if BE_DEBUG_VAR_INFO:
             vi.name = name
             vi.beginpc = finfo.pc
             vi.endpc = 0
-            finfo.varvec.data[-1] = vi
+            finfo.varvec.data[finfo.varvec.end] = vi
         finfo.proto.varinfo = be_vector_data(finfo.varvec)
         finfo.proto.nvarinfo = be_vector_capacity(finfo.varvec)
 
-    # void end_varinfo(bparser *parser, int beginpc)
-    def end_varinfo(parser, beginpc):
+    # void end_varinfo(bparser *parser)
+    # {
+    #     bfuncinfo *finfo = parser->finfo;
+    #     bvarinfo *var = be_vector_data(&finfo->varvec);
+    #     int i, count = be_vector_count(&finfo->varvec);
+    #     /* skip the variables of the previous blocks: a variable declared just
+    #      * before the block can have the same beginpc as the block itself */
+    #     for (i = finfo->binfo->nvarinfo; i < count; ++i) {
+    #         if (!var[i].endpc)
+    #             var[i].endpc = finfo->pc;
+    #     }
+    # }
+    def end_varinfo(parser):
         finfo = parser.finfo
-        binfo = finfo.binfo
-        if beginpc == -1:
-            beginpc = binfo.beginpc
         data = be_vector_data(finfo.varvec)
         if data is None:
             return
-        for it in data:
-            if it is None:
-                continue
-            if it.beginpc < beginpc:
-                continue
-            if not it.endpc:
-                it.endpc = finfo.pc
+        count = be_vector_count(finfo.varvec)
+        for i in range(finfo.binfo.nvarinfo, count):
+            var = data[i]
+            if var is not None and not var.endpc:
+                var.endpc = finfo.pc
 else:
     def begin_varinfo(parser, name):
         pass
 
-    def end_varinfo(parser, beginpc):
+    def end_varinfo(parser):
         pass
 
 
@@ -857,6 +867,9 @@ else:
 #     binfo->lastjmp = 0;
 #     binfo->beginpc = finfo->pc;
 #     binfo->nactlocals = (bbyte)be_list_count(finfo->local);
+# #if BE_DEBUG_VAR_INFO
+#     binfo->nvarinfo = be_vector_count(&finfo->varvec);
+# #endif
 #     if (type & BLOCK_LOOP) {
 #         binfo->breaklist = NO_JUMP;
 #         binfo->continuelist = NO_JUMP;
@@ -872,12 +885,14 @@ def begin_block(finfo, binfo, type_):
     binfo.lastjmp = 0
     binfo.beginpc = finfo.pc
     binfo.nactlocals = be_list_count(finfo.local)
+    if BE_DEBUG_VAR_INFO:
+        binfo.nvarinfo = be_vector_count(finfo.varvec)
     if type_ & BLOCK_LOOP:
         binfo.breaklist = NO_JUMP
         binfo.continuelist = NO_JUMP
 
 
-# static void end_block_ex(bparser *parser, int beginpc)
+# static void end_block(bparser *parser)
 # {
 #     bfuncinfo *finfo = parser->finfo;
 #     bblockinfo *binfo = finfo->binfo;
@@ -887,12 +902,12 @@ def begin_block(finfo, binfo, type_):
 #         be_code_patchjump(finfo, binfo->breaklist);
 #         be_code_patchlist(finfo, binfo->continuelist, binfo->beginpc);
 #     }
-#     end_varinfo(parser, beginpc);
+#     end_varinfo(parser);
 #     be_list_resize(parser->vm, finfo->local, binfo->nactlocals);
 #     finfo->freereg = binfo->nactlocals;
 #     finfo->binfo = binfo->prev;
 # }
-def end_block_ex(parser, beginpc):
+def end_block(parser):
     """End a block, closing upvalues and patching jumps."""
     finfo = parser.finfo
     binfo = finfo.binfo
@@ -901,19 +916,10 @@ def end_block_ex(parser, beginpc):
         be_code_jumpto(finfo, binfo.beginpc)
         be_code_patchjump(finfo, binfo.breaklist)
         be_code_patchlist(finfo, binfo.continuelist, binfo.beginpc)
-    end_varinfo(parser, beginpc)
+    end_varinfo(parser)
     be_list_resize(parser.vm, finfo.local, binfo.nactlocals)
     finfo.freereg = binfo.nactlocals
     finfo.binfo = binfo.prev
-
-
-# static void end_block(bparser *parser)
-# {
-#     end_block_ex(parser, -1);
-# }
-def end_block(parser):
-    """End a block using default beginpc."""
-    end_block_ex(parser, -1)
 
 
 # ============================================================================
@@ -1674,18 +1680,24 @@ def suffix_alloc_reg(parser, l):
 def compound_assign(parser, op, l, r):
     """Handle compound assignment (+=, -=, etc.)."""
     dst = -1
+    e = None
     if op != OptAssign:
         check_var(parser, l)
         dst = parser.finfo.freereg
         suffix_alloc_reg(parser, l)
-    expr(parser, r)
-    check_var(parser, r)
-    if op != OptAssign:
         e = _clone_expdesc(l)
         if op < OptAndAssign:
             op = op - OptAddAssign + OptAdd
         else:
             op = op - OptAndAssign + OptBitAnd
+        # Materialize the left operand here, before the right one is parsed,
+        # the way sub_expr() does it through be_code_prebinop(). Otherwise the
+        # code that loads it is emitted from binaryexp() below, by then the
+        # right side has opened its jump list, and the load lands inside it.
+        be_code_prebinop(parser.finfo, op, e, dst)
+    expr(parser, r)
+    check_var(parser, r)
+    if op != OptAssign:
         be_code_binop(parser.finfo, op, e, r, dst)
         _copy_expdesc(r, e)
 
@@ -1800,7 +1812,7 @@ def sub_expr(parser, e, prio):
         e2 = bexpdesc()
         check_var(parser, e)
         scan_next_token(parser)
-        be_code_prebinop(finfo, op, e)
+        be_code_prebinop(finfo, op, e, -1)  # and or
         if op == OptConnect:
             parser.finfo.binfo.sideeffect = 1
         init_exp(e2, ETVOID, 0)
@@ -1824,17 +1836,34 @@ def walrus_expr(parser, e):
     sub_expr(parser, e, ASSIGN_OP_PRIO)
     op = next_type(parser)
     if op == OptWalrus:
+        finfo = parser.finfo
         check_symbol(parser, e)
+        # ':=' only assigns an existing variable, it never creates one (neither
+        # local nor global, nor a local shadowing a builtin). A new local would
+        # take the register right above the other locals, which may still hold
+        # a temporary of the enclosing expression, and an implicit global is an
+        # easy way to hide a typo.
+        if e.type == ETVOID or \
+                (e.type == ETGLOBAL and e.v.idx < be_builtin_count(parser.vm)):
+            name = e.v.s if e.type == ETVOID else be_builtin_name(parser.vm, e.v.idx)
+            parser.lexer.linenumber = line
+            push_error(parser,
+                "cannot create variable '%s' with ':=', "
+                "declare it with 'var' first", be_str2cstr(name))
         e1 = _clone_expdesc(e)
         parser.finfo.binfo.sideeffect = 1
         scan_next_token(parser)  # skip ':='
+        base = finfo.freereg  # registers below are still in use by the enclosing expression
         expr(parser, e)
         check_var(parser, e)
-        if check_newvar(parser, e1):
-            new_var(parser, e1.v.s, e1)
         if be_code_setvar(parser.finfo, e1, e, True):
             parser.lexer.linenumber = line
             parser_error(parser, "try to assign constant expressions.")
+        if e1.type == ETLOCAL and e.type == ETLOCAL and finfo.freereg > base:
+            # the value is now held by the local variable: release the temporary
+            # registers used by the right side, e.g. the object of `l[i]`.
+            # `:=` never creates a local, so `base` is never below the locals
+            finfo.freereg = base
 
 
 # static void expr(bparser *parser, bexpdesc *e)
@@ -1968,15 +1997,15 @@ def for_iter(parser, var, it):
     stmtlist(parser)
 
 
-# static void for_leave(bparser *parser, int jcatch, int beginpc)
-def for_leave(parser, jcatch, beginpc):
+# static void for_leave(bparser *parser, int jcatch)
+def for_leave(parser, jcatch):
     """Emit the for loop exit code with stop_iteration exception handling."""
     e = bexpdesc()
     finfo = parser.finfo
     jbrk = finfo.binfo.breaklist
     init_exp(e, ETSTRING, 0)
     e.v.s = parser_newstr(parser, "stop_iteration")
-    end_block_ex(parser, beginpc)
+    end_block(parser)
     if jbrk != NO_JUMP:
         be_code_exblk(finfo, 1)
         jbrk = be_code_jump(finfo)
@@ -1994,7 +2023,6 @@ def for_leave(parser, jcatch, beginpc):
 def for_stmt(parser):
     """Parse a for loop: for ID : expr block end."""
     finfo = parser.finfo
-    beginpc = finfo.pc
     scan_next_token(parser)  # skip 'for'
     binfo = bblockinfo()
     begin_block(finfo, binfo, BLOCK_EXCEPT | BLOCK_LOOP)
@@ -2004,7 +2032,7 @@ def for_stmt(parser):
     for_init(parser, iter_)
     jcatch = be_code_exblk(finfo, 0)
     for_iter(parser, var, iter_)
-    for_leave(parser, jcatch, beginpc)
+    for_leave(parser, jcatch)
     match_token(parser, KeyEnd)
 
 

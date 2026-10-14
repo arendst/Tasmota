@@ -34,6 +34,8 @@ class MqttPacket;
 
 class MockClient : public Client {
 public:
+    enum class ConnectionEvent : uint8_t { Connect, Stop };
+
     MockClient();
     ~MockClient() override = default;
 
@@ -59,6 +61,12 @@ public:
     // A limit of 0 means "no limit" (accept all) - the core behavior. Used by F-05.
     void setWriteLimit(size_t maxPerWrite);
 
+    // After `successfulWriteCalls` complete writes, cap the next and every later
+    // buffer write to maxPerWrite bytes. This permits a CONNECT frame to succeed
+    // while deterministically failing a chosen replay packet during connect().
+    // Passing maxPerWrite == 0 disables this scheduled cap.
+    void setWriteLimitAfter(size_t successfulWriteCalls, size_t maxPerWrite);
+
     // Trickle delivery (Requirement 6.5). When bytesPerReveal is nonzero,
     // available() reveals at most bytesPerReveal bytes immediately and
     // bytesPerReveal more for every msPerReveal of virtual time that elapses
@@ -71,8 +79,12 @@ public:
     // --- Connection control ------------------------------------------------
     // Force the reported connection state.
     void setConnected(bool connected);
-    // Script the value returned by the next connect() call (default 1 = ok).
+    // Set the default value returned by connect() (default 1 = success).
     void setConnectResult(int result);
+    // Queue per-attempt results; queued values take precedence over the default.
+    void pushConnectResult(int result);
+    // Ordered transport epochs used to prove fallback closes before reopening.
+    const std::vector<ConnectionEvent>& connectionEvents() const;
     // True once stop() has been called at least once (F-03 / F-06 closes).
     bool stopCalled() const;
     // Introspection helpers for connect()/close/flush bookkeeping.
@@ -80,6 +92,7 @@ public:
     bool        flushCalled() const;
     unsigned    flushCount() const;
     bool        connectCalled() const;
+    unsigned    connectCount() const;
     const std::string& lastHost() const;   // set by connect(const char*, ...)
     IPAddress   lastIp() const;             // set by connect(IPAddress, ...)
     uint16_t    lastPort() const;
@@ -114,14 +127,22 @@ private:
 
     // Fault injection (task 6.2). All zero == disabled == core behavior.
     size_t        _writeLimit;             // max bytes accepted per write() (0 = unlimited)
+    size_t        _writeLimitAfterCalls;   // complete writes permitted before scheduled cap
+    size_t        _writeLimitAfterValue;   // scheduled cap (0 = disabled)
+    size_t        _writeCallsSinceLimit;   // calls observed since scheduled cap was configured
     size_t        _trickleBytesPerReveal;  // bytes revealed per step (0 = reveal all)
     unsigned long _trickleMsPerReveal;     // virtual ms between reveal steps
     unsigned long _trickleBaseMs;          // virtual time the trickle schedule started
+    size_t        _trickleStartReadPos;    // consumed prefix at schedule start
 
     // Connection bookkeeping.
     bool        _connected;
     int         _connectResult;
+    std::vector<int> _connectResults;
+    size_t      _connectResultPos;
     bool        _connectCalled;
+    unsigned    _connectCount;
+    std::vector<ConnectionEvent> _connectionEvents;
     std::string _lastHost;
     IPAddress   _lastIp;
     uint16_t    _lastPort;

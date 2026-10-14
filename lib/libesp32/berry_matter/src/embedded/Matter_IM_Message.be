@@ -393,7 +393,7 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
     end
     # InteractionModelRevision
     raw.add(0x24FF, -2)               # add 24FF
-    raw.add(0x0C, 1)                    # add 0C - InteractionModelRevision 12 (Matter 1.4+)
+    raw.add(0x0D, 1)                    # InteractionModelRevision 13
     # close struct ReportDataMessage
     raw.add(0x18, 1)                  # add 18
     # log(f">>>: {raw.tohex()}", 3)
@@ -504,9 +504,10 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
     if self.report_data_phase
       return super(self).status_ok_received(msg)
     else
-      self.sub.re_arm()                       # always re_arm at last StatusReport. The only case where it does not happen is during keep-alive, hence we need to lookg for Ack (see above)
-      super(self).status_ok_received(nil)
-      return false                            # let the caller to the ack
+      self.sub.re_arm()                       # the final StatusResponse completes this report
+      self.finished = true
+      self.ready = false
+      return false                            # let the caller acknowledge the StatusResponse
     end
   end
 
@@ -525,6 +526,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
         # ReportData is finished
         self.report_data_phase = false
         self.ready = false
+        self.finishing = false                    # wait for StatusResponse, not a transport ACK
         self.finished = false                     # while a ReadReport would stop here, we continue for subscription
       else
         # send a simple ACK
@@ -543,10 +545,12 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
       end
 
     else
-      # simple heartbeat ReportData
+      # empty subscription report still requires a StatusResponse
       if self.report_data_phase
         super(self).send_im(responder)
         self.report_data_phase = false
+        self.finishing = false
+        self.ready = false
       else
         # self.finished = true
         self.sub.re_arm()           # signal that we can proceed to next sub report
@@ -640,6 +644,22 @@ class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
     self.sub = sub
     self.report_data_phase = true
     self.set_subscription_id(sub.subscription_id)
+  end
+
+  #################################################################################
+  # Remove an incomplete subscription, but preserve an established one if only
+  # the final SubscribeResponse acknowledgement is missing.
+  def reached_timeout()
+    if self.sub.expiration == nil
+      self.sub.remove_self()
+    end
+  end
+
+  #################################################################################
+  def status_error_received(msg)
+    if self.sub.expiration == nil
+      self.sub.remove_self()
+    end
   end
 
   #################################################################################

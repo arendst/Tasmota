@@ -61,8 +61,8 @@ json.load(text) # do nothing, just check that it doesn't crash
 
 # dump tests
 
-def assert_dump(value, text, format)
-    assert(json.dump(value, format) == text)
+def assert_dump(value, text, fmt)
+    assert(json.dump(value, fmt) == text)
 end
 
 assert_dump(nil, 'null');
@@ -80,6 +80,111 @@ class map2 : map def init() super(self).init() end end
 var m = map2()
 m['key'] = 1
 assert_dump(m, '{"key":1}')
+
+# dump of instances implementing `tojson(format, indent)`
+
+def assert_dump_error(value, error_type, fmt)
+    try
+        json.dump(value, fmt)
+        assert(false, 'unexpected execution flow')
+    except .. as e, m
+        assert(e == error_type)
+    end
+end
+
+# the returned string is inserted verbatim, it can be any JSON fragment
+class J_str def tojson() return '"raw"' end end
+assert_dump(J_str(), '"raw"')
+class J_int def tojson() return '42' end end
+assert_dump(J_int(), '42')
+class J_null def tojson() return 'null' end end
+assert_dump(J_null(), 'null')
+class J_obj def tojson() return '{"a":1}' end end
+assert_dump(J_obj(), '{"a":1}')
+class J_arr def tojson() return '[1,2]' end end
+assert_dump(J_arr(), '[1,2]')
+# no JSON syntax check is done on the returned string
+class J_bad def tojson() return 'not json' end end
+assert_dump(J_bad(), 'not json')
+
+# nested in containers
+assert_dump([J_obj(), J_int()], '[{"a":1},42]')
+assert_dump({'k': J_obj()}, '{"k":{"a":1}}')
+assert_dump({'k': J_obj()}, '{\n  "k": {"a":1}\n}', 'format')
+
+# `tojson()` is not used for map keys, they are always `tostring()` of the key
+class J_key def tostring() return 'thekey' end def tojson() return '{"a":1}' end end
+assert_dump({J_key(): 1}, '{"thekey":1}')
+
+# the `indent` argument is `nil` for compact output, and the nesting level
+# (an `int`, `0` at top-level) when the 'format' option is used
+class J_args def tojson(indent) return string.format('"%s"', str(indent)) end end
+assert_dump(J_args(), '"nil"')
+assert_dump(J_args(), '"0"', 'format')
+assert_dump({'k': J_args()}, '{"k":"nil"}')
+assert_dump({'k': J_args()}, '{\n  "k": "1"\n}', 'format')
+# a top-level value is at level 0 in both modes, so the type of `indent`
+# (`nil` vs `int`) is what carries the mode, not its value
+assert_dump([[J_args()]], '[\n  [\n    "2"\n  ]\n]', 'format')
+assert_dump([[J_args()]], '[["nil"]]')
+# declaring `tojson()` without argument is valid, extra arguments are ignored
+class J_noargs def tojson() return '1' end end
+assert_dump(J_noargs(), '1')
+
+# returning `nil` falls back to the default serialization
+class J_nil def tojson() return nil end def tostring() return 'default' end end
+assert_dump(J_nil(), '"default"')
+class J_noreturn def tojson() end end
+assert_dump(J_noreturn(), '"<instance: J_noreturn()>"')
+# which allows opting out on a per-instance basis
+class J_cond var raw
+    def init(raw) self.raw = raw end
+    def tojson() if self.raw return '1' end return nil end
+    def tostring() return 'str' end
+end
+assert_dump([J_cond(true), J_cond(false)], '[1,"str"]')
+
+# any other return type raises `type_error`
+class J_err_int def tojson() return 42 end end
+assert_dump_error(J_err_int(), 'type_error')
+class J_err_list def tojson() return [1] end end
+assert_dump_error(J_err_list(), 'type_error')
+assert_dump_error([{'k': J_err_int()}], 'type_error')
+# exceptions raised by `tojson()` propagate
+class J_raise def tojson() raise 'custom_error' end end
+assert_dump_error(J_raise(), 'custom_error')
+
+# `tojson()` is inherited, and can be overridden
+class J_sub : J_obj end
+assert_dump(J_sub(), '{"a":1}')
+class J_sub2 : J_obj def tojson() return '{"b":2}' end end
+assert_dump(J_sub2(), '{"b":2}')
+
+# `tojson()` can be static
+class J_static static def tojson() return '"static"' end end
+assert_dump(J_static(), '"static"')
+
+# `tojson()` can be provided by a virtual `member()` method
+class J_virtual def member(name) if name == 'tojson' return def () return '"virtual"' end end end end
+assert_dump(J_virtual(), '"virtual"')
+
+# a `tojson` member which is not a function is ignored
+class J_notfunc var tojson def init() self.tojson = 12 end end
+assert_dump(J_notfunc(), '"<instance: J_notfunc()>"')
+
+# `tojson()` takes precedence over `map` and `list` sub-classes
+class J_map : map def init() super(self).init() end def tojson() return '"amap"' end end
+var jm = J_map()
+jm['k'] = 1
+assert_dump(jm, '"amap"')
+class J_list : list def init() super(self).init() end def tojson() return '"alist"' end end
+assert_dump(J_list(), '"alist"')
+
+# instances without `tojson()` are unaffected
+class J_plain end
+assert_dump(J_plain(), '"<instance: J_plain()>"')
+class J_tostr def tostring() return 'a "quoted" str' end end
+assert_dump(J_tostr(), '"a \\"quoted\\" str"')
 
 # sweep dumping nested arrays of diffrent sizes
 # this tests for any unexpanded stack conditions

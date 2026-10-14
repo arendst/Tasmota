@@ -142,16 +142,15 @@ def arg_get_p(vm, idx):
 #  * Stack on return: new int64 instance at top.
 #  */
 # static void push_int64_instance(bvm *vm, int64_t val) {
-#   int64_t *r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
-#   *r64 = val;
 #   be_getglobal(vm, "int64");     /* stack: class */
 #   be_call(vm, 0);                /* stack: instance */
-#   be_getmember(vm, -1, "init");  /* stack: instance, init */
-#   be_pushvalue(vm, -2);          /* stack: instance, init, instance */
-#   be_pushcomptr(vm, r64);        /* stack: instance, init, instance, ptr */
-#   be_call(vm, 2);                /* stack: instance, ret */
-#   be_pop(vm, 1);                 /* stack: instance */
+#   int64_t *r64 = arg_get_p(vm, -1);  /* reuse constructor-owned payload */
+#   if (r64 == NULL) { be_raise(vm, "memory_error", "cannot allocate buffer"); }
+#   *r64 = val;
 # }
+# Python note: values are immutable Python ints stored directly as comptr, so
+# there is no payload to leak and nothing to fill in place; re-running init
+# with the value as comptr is the equivalent of writing *r64.
 def push_int64_instance(vm, val):
     """Push a new int64 instance with the given value onto the stack.
 

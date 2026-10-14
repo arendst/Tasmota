@@ -32,6 +32,9 @@ SPIPanel::~SPIPanel() {
 // ===== UniversalPanel Interface Implementation =====
 
 bool SPIPanel::drawPixel(int16_t x, int16_t y, uint16_t color) {
+    // Only handle direct SPI drawPixel for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // From original uDisplay::drawPixel - only handle direct SPI drawing for color TFTs
     if ((x < 0) || (x >= width) || (y < 0) || (y >= height)) return true;
 
@@ -65,6 +68,9 @@ bool SPIPanel::drawPixel(int16_t x, int16_t y, uint16_t color) {
 }
 
 bool SPIPanel::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+    // Only handle direct SPI fillRect for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // From original uDisplay::fillRect
     if((x >= width) || (y >= height)) return true;
     if((x + w - 1) >= width)  w = width - x;
@@ -108,6 +114,9 @@ bool SPIPanel::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
 }
 
 bool SPIPanel::pushColors(uint16_t *data, uint32_t len, bool not_swapped) {
+    // Only handle direct SPI pushColors for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // Only handle direct rendering for color displays
     if (cfg.bpp < 16) {
         return false;
@@ -211,6 +220,9 @@ bool SPIPanel::setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
         return false;
     }
 
+    // Only handle direct SPI setAddrWindow for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // From original uDisplay::setAddrWindow
     window_x0 = x0;
     window_y0 = y0;
@@ -281,11 +293,17 @@ void SPIPanel::setAddrWindow_internal(uint16_t x, uint16_t y, uint16_t w, uint16
 }
 
 bool SPIPanel::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
+    // Only handle direct SPI drawFastHLine for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // From original uDisplay::drawFastHLine
     return fillRect(x, y, w, 1, color);
 }
 
 bool SPIPanel::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
+    // Only handle direct SPI drawFastVLine for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // From original uDisplay::drawFastVLine
     return fillRect(x, y, 1, h, color);
 }
@@ -327,6 +345,9 @@ bool SPIPanel::invertDisplay(bool invert) {
 }
 
 bool SPIPanel::setRotation(uint8_t rot) {
+    // Only handle direct SPI rotate for color displays without framebuffer
+    if (fb_buffer && cfg.bpp == 1) return false;
+
     // From original uDisplay::setRotation
     rotation = rot & 3;
     spi->beginTransaction();
@@ -373,7 +394,7 @@ bool SPIPanel::updateFrame() {
     uint8_t ys = height >> 3;
     uint8_t xs = width >> 3;
     uint8_t m_row = cfg.cmd_set_addr_y; // saw_2 in original
-    uint8_t m_col = 0; // i2c_col_start in original
+    uint8_t m_col = cfg.cmd_set_addr_x; // i2c_col_start in original
 
     uint16_t p = 0;
     uint8_t i, j, k = 0;

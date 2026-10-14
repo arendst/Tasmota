@@ -139,24 +139,16 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
     super(self).parse_configuration(config)
     self.tasmota_switch_index = int(config.find('button', 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
+    self.shadow_position = 0             # CurrentPosition is not nullable
   end
-
-  #############################################################
-  # Update shadow
-  #
-  # def update_shadow()
-  #   super(self).update_shadow()
-  #   self.shadow_position = false
-  #   # TODO
-  # end
 
   #############################################################
   # Model
   #
   def set_position(position)
     if position != self.shadow_position
-      self.attribute_updated(0x003B, 0x0001)
       self.shadow_position = position
+      self.attribute_updated(0x003B, 0x0001)
     end
   end
 
@@ -171,12 +163,18 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
     if   cluster == 0x003B              # ========== Generic Switch, 1.12 ==========
     #   self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- NumberOfPositions / uint8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 2)  # default to 2 positions
+        return tlv_solo.set(0x06 #-TLV.U4-#, 2)  # default to 2 positions
       elif attribute == 0x0001          #  ---------- CurrentPosition / uint8 ----------
-        return tlv_solo.set_or_nil(0x04 #-TLV.U1-#, self.shadow_position)
+        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_position)
       elif attribute == 0x0002          #  ---------- MultiPressMax / uint8 ----------
-        return tlv_solo.set(0x04 #-TLV.U1-#, 5)  # up to penta press
+        return tlv_solo.set(0x06 #-TLV.U4-#, 5)  # up to penta press
 
+      elif attribute == 0xFFFA          #  ---------- EventList ----------
+        var events = matter.TLV.Matter_TLV_array()
+        for event_id : [0x01, 0x03, 0x05, 0x06]
+          events.add_TLV(nil, 0x06 #-TLV.U4-#, event_id)
+        end
+        return events
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0x16 #-0x02 | 0x04 | 0x10-#)    # MomentarySwitch + MomentarySwitchRelease + MomentarySwitchMultiPress
       end
@@ -191,9 +189,9 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   # Output the current state in JSON
   # New values need to be appended with `,"key":value` (including prefix comma)
   #
-  # Override the default behavior to use the key `OnOff` instead of `Power`
+  # Report the current button position.
   def append_state_json()
-    return f',"Switch":{int(self.shadow_onoff)}'
+    return f',"Switch":{self.shadow_position}'
   end
 
   #####################################################################
@@ -204,6 +202,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   #   - mode: (int) 0=static report every second, 1=button state changed (immediate), 2=multi-press status (delayed)
   #   - state: 1=button pressed, 0=button released, 2..5+=multi-press complete
   def button_handler(button, mode, state, press_counter)
+    if button != self.tasmota_switch_index return end
     # if tasmota.loglevel(3) && (mode != 0)      # only if actual action
     #   log(f"MTR: button_event {button}/{mode}:{state}", 3)
     # end
@@ -214,19 +213,19 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
     # publish event for (mode==1), InitialPress and ShortRelease
     if (mode == 1)
       if state              # InitialPress
-        self.publish_event(0x003B, 0x01, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1))   # InitialPress, position hardcoded to 1
+        self.publish_event(0x003B, 0x01, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1))   # InitialPress, position hardcoded to 1
       else
-        self.publish_event(0x003B, 0x03, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1))   # ShortRelease, previous position hardcoded to 1
+        self.publish_event(0x003B, 0x03, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1))   # ShortRelease, previous position hardcoded to 1
       end
       # check if there is an ungoing multi-press
       if (state == 1) && (press_counter > 0)
         # MultiPressOngoing
-        self.publish_event(0x003B, 0x05, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1),
-                                                            matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, press_counter + 1))   # MultiPressCom­ plete
+        self.publish_event(0x003B, 0x05, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1),
+                                                            matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, press_counter + 1))   # MultiPressCom­ plete
       end
     elif (mode == 2) && (press_counter > 0)       # Multipress
-      self.publish_event(0x003B, 0x06, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, 1),
-                                                          matter.TLV.Matter_TLV_item().set(0x04 #-matter.TLV.U1-#, press_counter))   # MultiPressCom­ plete
+      self.publish_event(0x003B, 0x06, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1),
+                                                          matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, press_counter))   # MultiPressCom­ plete
     end
   end
 

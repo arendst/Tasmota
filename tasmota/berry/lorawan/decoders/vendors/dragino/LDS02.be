@@ -11,6 +11,8 @@ if !global.lds02Nodes      # data survive to decoder reload
 end
 
 class LwDecoLDS02
+  static var hashCheck = false
+
   static def decodeUplink(Name, Node, RSSI, FPort, Bytes)
     var data = {"Device":"Dragino LDS02"}
 

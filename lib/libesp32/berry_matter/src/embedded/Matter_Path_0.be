@@ -30,6 +30,11 @@ class Matter_Path
   var endpoint                # endpoint or `nil` if expansion
   var cluster                 # cluster or `nil` if expansion
   var attribute               # attribute or `nil` if expansion
+  var list_index              # list operation index, or nil for whole-list replacement
+  var list_index_present      # true for numeric and explicit-null list operations
+  var list_index_is_null      # true only for append (ListIndex = null)
+  var list_write_final        # final operation for this list in the current WriteRequest
+  var write_tlv               # original AttributeDataIB data TLV
   var fabric_filtered         # bool or nil
   var command                 # command
   var status                  # status to be returned (0x00 #-matter.SUCCESS-# or matter.<ERROR>)
@@ -48,6 +53,9 @@ class Matter_Path
     self.endpoint = c.endpoint
     self.cluster = c.cluster
     self.attribute = c.attribute
+    self.list_index = c.list_index
+    self.list_index_present = c.list_index_present
+    self.list_index_is_null = c.list_index_is_null
   end
 
   # reset the object, allows reuse of the same object
@@ -56,6 +64,11 @@ class Matter_Path
     self.endpoint = n
     self.cluster = n
     self.attribute = n
+    self.list_index = n
+    self.list_index_present = n
+    self.list_index_is_null = n
+    self.list_write_final = n
+    self.write_tlv = n
     self.fabric_filtered = n
     self.command = n
     self.status = n

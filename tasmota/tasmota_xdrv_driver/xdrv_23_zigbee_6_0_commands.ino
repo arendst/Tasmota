@@ -32,12 +32,12 @@ typedef struct Z_CommandConverter {
 } Z_CommandConverter;
 
 typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
-  uint32_t    x = 0;
-  uint32_t    y = 0;
-  uint32_t    z = 0;
-  uint8_t     x_type = 0;     // 0 = no value, 1 = 1 bytes, 2 = 2 bytes
-  uint8_t     y_type = 0;
-  uint8_t     z_type = 0;
+  uint32_t    x;
+  uint32_t    y;
+  uint32_t    z;
+  uint8_t     x_type;     // 0 = no value, 1 = 1 bytes, 2 = 2 bytes
+  uint8_t     y_type;
+  uint8_t     z_type;
 } Z_XYZ_Var;
 
 // Cluster specific commands
@@ -342,7 +342,7 @@ void parseXYZ(const char *model, const SBuffer &payload, struct Z_XYZ_Var *xyz) 
 void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &payload) {
   const char * command_name = nullptr;
   uint8_t conv_direction;
-  Z_XYZ_Var xyz;
+  Z_XYZ_Var xyz = {};
 
   // always report attribute in raw format
   // Format: "0001!06": "00" = "<cluster>!<cmd>": "<payload>" for commands to devices
