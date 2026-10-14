@@ -549,10 +549,17 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
   int len = size;
   int bytesWritten = 0;
   uint8_t buf[HTTP_TCP_BUFFER_SIZE];
+  // a server gone silent without closing stays connected(): give up
+  // after _tcpTimeout without data, as handleHeaderResponse() does
+  uint32_t lastDataTime = millis();
 
   while (_transport && _transport->connected() && (len > 0 || len == -1)) {
     int avail = _transport->available();
-    if (avail <= 0) { delay(1); continue; }
+    if (avail <= 0) {
+      if ((millis() - lastDataTime) > (uint32_t)_tcpTimeout) return HTTPC_ERROR_READ_TIMEOUT;
+      delay(1);
+      continue;
+    }
     int wish = avail;
     if (len > 0 && wish > len) wish = len;
     if (wish > (int)sizeof(buf)) wish = sizeof(buf);
@@ -562,6 +569,7 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
       if (w != r) return HTTPC_ERROR_STREAM_WRITE;
       bytesWritten += w;
       if (len > 0) len -= r;
+      lastDataTime = millis();
     }
   }
 
