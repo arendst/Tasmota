@@ -168,11 +168,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MiELHVAC Modbus length-based framing, queue writes, FC03 sensor mirror [#24993](https://github.com/arendst/Tasmota/issues/24993)
 - WT32_ETH01 ethernet initialization [#25051](https://github.com/arendst/Tasmota/issues/25051)
 - ESP32 release UART0 console when the template uses its pins [#25047](https://github.com/arendst/Tasmota/issues/25047)
+- HttpClientLight time out reading a body when the server goes silent [#25139](https://github.com/arendst/Tasmota/issues/25139)
 - PWM on CDC GPIO [#25106](https://github.com/arendst/Tasmota/issues/25106)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it [#24979](https://github.com/arendst/Tasmota/issues/24979)
 - Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)
 - Matter autoconfiguration after configuration reset [#24997](https://github.com/arendst/Tasmota/issues/24997)
 - Matter commissioning mDNS announcements [#25069](https://github.com/arendst/Tasmota/issues/25069)
 - Matter non-bridge endpoint topology [#25099](https://github.com/arendst/Tasmota/issues/25099)
+- Matter MQTT subscription when Matter is disabled [#25140](https://github.com/arendst/Tasmota/issues/25140)
 
 ### Removed
