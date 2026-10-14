@@ -168,6 +168,16 @@ int AsyncHttpClientLight::AsyncTcpAdapter::available() {
   return bytes;
 }
 
+bool AsyncHttpClientLight::AsyncTcpAdapter::connected() {
+  if (_fd < 0 || !_isConnected) return false;
+  // read() only sees the peer close when it is called, and callers only read
+  // when available() > 0: peek, so a close after the last byte is noticed
+  uint8_t c;
+  int r = ::recv(_fd, &c, 1, MSG_PEEK | MSG_DONTWAIT);
+  if (r == 0 || (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) { stop(); return false; }
+  return true;
+}
+
 void AsyncHttpClientLight::AsyncTcpAdapter::stop() {
   if (_fd >= 0) {
 #if ASYNCHTTP_HTTP_LINGER_RST

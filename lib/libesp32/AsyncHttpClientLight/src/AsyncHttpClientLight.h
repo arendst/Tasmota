@@ -194,7 +194,7 @@ private:
     size_t write(const uint8_t* data, size_t len) override;
     int    read(uint8_t* buf, size_t len) override;
     int    available() override;
-    bool   connected() override { return _isConnected && _fd >= 0; }
+    bool   connected() override;
     void   stop() override;
     void   setTimeout(uint16_t ms) override { _rwTimeout = ms; }
 
