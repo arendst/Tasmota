@@ -25,15 +25,17 @@ lv_opa = ct.u8
 lv_blend_mode = ct.u8
 lv_align = ct.u8
 lv_bidi_dir = ct.u8
-lv_base_dir = ct.u8
-lv_text_align = ct.u8
+# LVGL96: C enums are 4 bytes on ESP32 (no `-fshort-enums`), so a plain (non-bitfield)
+# enum member must be mapped as u32. Only use u8 for types declared as `typedef uint8_t`.
+lv_base_dir = ct.u32            # typedef enum lv_base_dir_t
+lv_text_align = ct.u32          # typedef enum lv_text_align_t
 lv_text_flag = ct.u8
 lv_txt_flag = ct.u8
 lv_text_decor = ct.u8
 lv_font = ct.u32
 lv_blend_mode = ct.u8
 lv_draw_mask_line_side = ct.u8
-lv_dir = ct.u8
+lv_dir = ct.u32                 # typedef enum lv_dir_t (4 bytes)
 lv_coord_t = ct.i32
 lv_value_precise = ct.i32
 uint8_t_1 = ct.bf_1
@@ -51,9 +53,14 @@ uint16_t_16 = ct.bf_16
 uint32_t = ct.u32
 int32_t = ct.i32
 size_t = ct.u32
+bool_t = ct.u8                  # C `bool` is 1 byte. Never use Python's `bool` here: it is silently ignored by berry_ctypes
 ptr = ct.ptr32
 
-lv_point = [            # valid LVGL95
+# typedef struct {
+#     int32_t x;
+#     int32_t y;
+# } lv_point_t;
+lv_point = [            # valid LVGL96
     [int32_t, "x"],
     [int32_t, "y"],
 ]
@@ -63,13 +70,19 @@ lv_point = ct.structure(lv_point, "lv_point")
 #     lv_value_precise_t x;
 #     lv_value_precise_t y;
 # } lv_point_precise_t;
-lv_point_precise = [            # valid LVGL95
+lv_point_precise = [            # valid LVGL96
     [lv_value_precise, "x"],
     [lv_value_precise, "y"],
 ]
 lv_point_precise = ct.structure(lv_point_precise, "lv_point_precise")
 
-lv_area = [            # valid LVGL95
+# typedef struct {
+#     int32_t x1;
+#     int32_t y1;
+#     int32_t x2;
+#     int32_t y2;
+# } lv_area_t;
+lv_area = [            # valid LVGL96
     [int32_t, "x1"],
     [int32_t, "y1"],
     [int32_t, "x2"],
@@ -84,7 +97,7 @@ lv_area = ct.structure(lv_area, "lv_area")
 #     lv_opa_t   opa;     /**< The opacity of the color*/
 #     uint8_t    frac;    /**< The stop position in 1/255 unit */
 # } lv_grad_stop_t;
-lv_grad_stop = [            # valid LVGL95
+lv_grad_stop = [            # valid LVGL96
     [lv_color, "color"],
     [lv_opa, "opa"],
     [uint8_t, "frac"],
@@ -122,7 +135,7 @@ lv_grad_stop = ct.structure(lv_grad_stop, "lv_grad_stop")
 #     } params;
 #     void * state;
 # } lv_grad_dsc_t;
-lv_grad_dsc = [            # valid LVGL95
+lv_grad_dsc = [            # valid LVGL96
     # since it's an array and not two structures, we need to explicitly unroll it here or the alignment is wrong
     # [lv_gradient_stop, "stops_0"],
     [lv_color, "stops_0_color"],
@@ -189,7 +202,7 @@ lv_grad_dsc = ct.structure(lv_grad_dsc, "lv_grad_dsc")
 #     /**Any custom user data*/
 #     void * user_data;
 # } lv_draw_dsc_base_t;
-lv_draw_dsc_base = [            # valid LVGL95
+lv_draw_dsc_base = [            # valid LVGL96
     [ptr, "obj"],
     [uint32_t, "part"],
     [uint32_t, "id1"],
@@ -251,7 +264,7 @@ lv_draw_dsc_base = ct.structure(lv_draw_dsc_base, "lv_draw_dsc_base")
 #     int32_t shadow_offset_y;
 #     int32_t shadow_spread;
 # } lv_draw_rect_dsc_t;
-lv_draw_rect_dsc = [            # valid LVGL95
+lv_draw_rect_dsc = [            # valid LVGL96
     [lv_draw_dsc_base, "base"],
 
     [int32_t, "radius"],
@@ -270,10 +283,10 @@ lv_draw_rect_dsc = [            # valid LVGL95
     [lv_opa, "outline_opa"],
     [lv_opa, "shadow_opa"],
 
-    [ptr, "bg_image_colorkey"],
-
     [lv_color, "bg_color"],
     [lv_grad_dsc, "bg_grad"],
+
+    [ptr, "bg_image_colorkey"],     # LVGL96 fix: comes after bg_grad, not before bg_color
 
     #/*Border*/
     [lv_color, "border_color"],
@@ -339,7 +352,7 @@ lv_draw_rect_dsc = ct.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 #     /**1: Do not bother with line ending (if it's not visible for any reason) */
 #     uint8_t raw_end     : 1;
 # } lv_draw_line_dsc_t;
-lv_draw_line_dsc = [            # valid LVGL95
+lv_draw_line_dsc = [            # valid LVGL96
     [lv_draw_dsc_base, "base"],
 
     [lv_point_precise, "p1"],
@@ -389,7 +402,7 @@ lv_draw_line_dsc = ct.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 #     /**1: Make the arc ends rounded*/
 #     uint8_t rounded : 1;
 # } lv_draw_arc_dsc_t;
-lv_draw_arc_dsc = [            # valid LVGL95
+lv_draw_arc_dsc = [            # valid LVGL96
     [lv_draw_dsc_base, "base"],
 
     [lv_color, "color"],
@@ -415,7 +428,7 @@ lv_draw_arc_dsc = ct.structure(lv_draw_arc_dsc, "lv_draw_arc_dsc")
 #     uint32_t stride: 16;        /**< Number of bytes in a row*/
 #     uint32_t reserved_2: 16;    /**< Reserved to be used later*/
 # } lv_image_header_t;
-lv_image_header = [            # valid LVGL95
+lv_image_header = [            # valid LVGL96
     [uint8_t, "magic"],
     [uint8_t, "cf"],
     [uint16_t, "flags"],
@@ -499,7 +512,7 @@ lv_image_header = ct.structure(lv_image_header, "lv_image_header")
 #      * The mask is always center aligned. */
 #     const lv_image_dsc_t * bitmap_mask_src;
 # };
-lv_draw_image_dsc = [            # valid LVGL95
+lv_draw_image_dsc = [            # valid LVGL96
     [lv_draw_dsc_base, "base"],
 
     [ptr, "src"],
@@ -612,7 +625,7 @@ lv_draw_image_dsc = ct.structure(lv_draw_image_dsc, "lv_draw_image_dsc")
 #     int32_t outline_stroke_width;
 
 # } lv_draw_label_dsc_t;
-lv_draw_label_dsc = [            # valid LVGL95
+lv_draw_label_dsc = [            # valid LVGL96
     [lv_draw_dsc_base, "base"],
     [ptr, "text"],
     [lv_point, "text_size"],
@@ -632,10 +645,8 @@ lv_draw_label_dsc = [            # valid LVGL95
     [lv_base_dir, "bidi_dir"],
     [lv_opa, "opa"],
     [lv_opa, "outline_stroke_opa"],
-    [lv_text_flag, "flag"],
     [uint8_t_3, "decor"],
     [uint8_t_5, "flag"],
-    [uint8_t_3, "blend_mode"],
     [uint8_t_1, "text_local"],
     [uint8_t_1, "text_static"],
     [uint8_t_1, "has_bided"],
@@ -656,7 +667,7 @@ lv_draw_label_dsc = ct.structure(lv_draw_label_dsc, "lv_draw_label_dsc")
 #     uint32_t x_axis_sec : 1;
 #     uint32_t y_axis_sec : 1;
 # };
-lv_chart_series = [            # valid LVGL95
+lv_chart_series = [            # valid LVGL96
     [ptr, "x_points"],
     [ptr, "y_points"],
     [lv_color, "color"],
@@ -677,7 +688,7 @@ lv_chart_series = ct.structure(lv_chart_series, "lv_chart_series")
 #     lv_dir_t dir;
 #     uint32_t pos_set: 1;        /**< 1: pos is set; 0: point_id is set */
 # };
-lv_chart_cursor = [            # valid LVGL95
+lv_chart_cursor = [            # valid LVGL96
     [lv_point, "pos"],
     [int32_t, "point_id"],
     [lv_color, "color"],
@@ -728,7 +739,7 @@ lv_event_code = ct.i32
 #     uint32_t instance_size : 16;
 #     uint32_t theme_inheritable : 1;    /**< Value from ::lv_obj_class_theme_inheritable_t*/
 # };
-lv_obj_class = [            # valid LVGL95
+lv_obj_class = [            # valid LVGL96
     [lv_obj_class_ptr, "base_class"],
     [constructor_cb, "constructor_cb"],
     [destructor_cb, "destructor_cb"],
@@ -759,7 +770,7 @@ lv_obj_class = ct.structure(lv_obj_class, "lv_obj_class")
 #     lv_ext_data_t ext_data;
 # #endif
 # };
-lv_event = [                                # valid LVGL95
+lv_event = [                                # valid LVGL96
     [lv_obj_ptr, "current_target"],
     [lv_obj_ptr, "original_target"],
     [lv_event_code, "code"],
@@ -783,7 +794,7 @@ lv_event = ct.structure(lv_event, "lv_event")
 #     const void * reserved;      /**< A reserved field to make it has same size as lv_draw_buf_t*/
 #     const void * reserved_2;    /**< A reserved field to make it has same size as lv_draw_buf_t*/
 # } lv_image_dsc_t;
-lv_image_dsc = [                        # valid LVGL95
+lv_image_dsc = [                        # valid LVGL96
     [lv_image_header, "header"],
     [uint32_t, "data_size"],
     [ptr, "data"],
@@ -802,7 +813,7 @@ lv_image_dsc = ct.structure(lv_image_dsc, "lv_image_dsc")
 #     uint32_t time;                 /**< Duration of the transition in [ms]*/
 #     uint32_t delay;                /**< Delay before the transition in [ms]*/
 # } lv_style_transition_dsc_t;
-lv_style_transition_dsc = [            # valid LVGL95
+lv_style_transition_dsc = [            # valid LVGL96
     [ptr, "props"],
     [ptr, "user_data"],
     [ptr, "path_xcb"],
@@ -840,11 +851,11 @@ lv_style_transition_dsc = ct.structure(lv_style_transition_dsc, "lv_style_transi
 #     /** For any custom data*/
 #     void * user_data;
 # };
-lv_anim_timeline_dsc = [            # valid LVGL95
+lv_anim_timeline_dsc = [            # valid LVGL96
     [ptr, "anim_dsc"],
     [uint32_t, "anim_dsc_cnt"],
     [uint32_t, "act_time"],
-    [bool, "reverse"],
+    [bool_t, "reverse"],
     [uint32_t, "delay"],
     [uint32_t, "repeat_count"],
     [uint32_t, "repeat_delay"],
@@ -858,6 +869,9 @@ lv_anim_timeline_dsc = ct.structure(lv_anim_timeline_dsc, "lv_anim_timeline_dsc"
 
 #     /** Linked list of draw tasks */
 #     lv_draw_task_t * draw_task_head;
+
+#     /** The display assigned to this layer*/
+#     lv_display_t * display;
 
 #     /** Parent layer */
 #     lv_layer_t * parent;
@@ -903,11 +917,15 @@ lv_anim_timeline_dsc = ct.structure(lv_anim_timeline_dsc, "lv_anim_timeline_dsc"
 
 #     /** Opacity of the layer */
 #     lv_opa_t opa;
+
+#     /** true if LVGL is responsible for freeing `draw_buf`*/
+#     bool buffer_owned;
 # };
-lv_layer = [                            # valid LVGL95
+lv_layer = [                            # valid LVGL96
     [ptr, "draw_buf"],
 
     [ptr, "draw_task_head"],
+    [ptr, "display"],                   # new in LVGL96
     [ptr, "parent"],
     [ptr, "next"],
     [ptr, "user_data"],
@@ -919,8 +937,9 @@ lv_layer = [                            # valid LVGL95
     [int32_t, "partial_y_offset"],
     [lv_color32, "recolor"],
     [uint32_t, "color_format"],
-    [bool, "all_tasks_added"],
+    [bool_t, "all_tasks_added"],
     [lv_opa, "opa"],
+    [bool_t, "buffer_owned"],           # new in LVGL96
 ]
 lv_layer = ct.structure(lv_layer, "lv_layer")
 
@@ -931,7 +950,7 @@ lv_layer = ct.structure(lv_layer, "lv_layer")
 #     lv_color_filter_cb_t filter_cb;
 #     void * user_data;
 # };
-lv_color_filter_dsc = [            # valid LVGL95
+lv_color_filter_dsc = [            # valid LVGL96
     [ptr, "filter_cb"],
     [ptr, "user_data"],
 ]
@@ -952,7 +971,7 @@ lv_color_filter_dsc = ct.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
 #     volatile int paused;
 #     uint32_t auto_delete : 1;
 # };
-lv_timer_ntv = [                    # valid LVGL95
+lv_timer_ntv = [                    # valid LVGL96
     [uint32_t, "period"],
     [uint32_t, "last_run"],
     [ptr, "timer_cb"],
@@ -974,7 +993,7 @@ lv_timer_ntv = ct.structure(lv_timer_ntv, "lv_timer_ntv")
 #     void * user_data;
 #     uint32_t filter;
 # };
-lv_event_dsc = [            # valid LVGL95
+lv_event_dsc = [            # valid LVGL96
     [ptr, "cb"],
     [ptr, "user_data"],
     [uint32_t, "filter"],
@@ -983,8 +1002,16 @@ lv_event_dsc = ct.structure(lv_event_dsc, "lv_event_dsc")
 
 #######################################################################
 # Special structure used to calibrate resistive touchscreens
+# Tasmota specific, defined in `lv_binding_berry/src/lv_berry.h`
 #######################################################################
-lv_ts_calibration = [            # valid LVGL95
+# typedef struct lv_ts_calibration_t {
+#   lv_coord_t        raw_x;
+#   lv_coord_t        raw_y;
+#   lv_coord_t        x;
+#   lv_coord_t        y;
+#   lv_indev_state_t  state;
+# } lv_ts_calibration_t;
+lv_ts_calibration = [            # valid LVGL96
     [lv_coord_t, "raw_x"],
     [lv_coord_t, "raw_y"],
     [lv_coord_t, "x"],
@@ -1002,7 +1029,7 @@ lv_ts_calibration = ct.structure(lv_ts_calibration, "lv_ts_calibration")
 #     lv_area_t middle;
 #     lv_area_t trailing;
 # } lv_span_coords_t;
-lv_span_coords = [            # valid LVGL95
+lv_span_coords = [            # valid LVGL96
     [lv_area, "heading"],
     [lv_area, "middle"],
     [lv_area, "trailing"],
@@ -1019,14 +1046,16 @@ lv_span_coords = ct.structure(lv_span_coords, "lv_span_coords")
 #     uint32_t size;                   /**< Font size in pixel*/
 #     uint32_t render_mode;            /**< Font rendering mode, see `lv_freetype_font_render_mode_t`*/
 #     uint32_t style;                  /**< Font style, see `lv_freetype_font_style_t`*/
+#     int32_t weight;                  /**< Font weight for variable fonts (range 1-2000, CSS-like values 100-900; 0 = default: 400 normal, 700 if bold style) */
 #     lv_font_kerning_t kerning;       /**< Font kerning, see `lv_font_kerning_t`*/
 # };
-lv_font_info = [            # valid LVGL95
+lv_font_info = [            # valid LVGL96
     [ptr, "name"],
     [ptr, "class_p"],
     [uint32_t, "size"],
     [uint32_t, "render_mode"],
     [uint32_t, "style"],
+    [int32_t, "weight"],    # new in LVGL96
     [uint32_t, "kerning"],
 ]
 lv_font_info = ct.structure(lv_font_info, "lv_font_info")
@@ -1059,7 +1088,7 @@ lv_font_info = ct.structure(lv_font_info, "lv_font_info")
 #     lv_color_t outline_stroke_color;
 
 # } lv_draw_letter_dsc_t;
-lv_draw_letter_dsc = [            # valid LVGL95
+lv_draw_letter_dsc = [            # valid LVGL96
     [lv_draw_dsc_base, "base"],
     [uint32_t, "unicode"],
     [ptr, "font"],

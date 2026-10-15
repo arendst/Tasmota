@@ -580,13 +580,6 @@ void start_lvgl(const char * uconfig) {
 
 #endif // USE_UFILESYS
 
-#ifdef USE_LVGL_FREETYPE
-  // initialize the FreeType renderer
-  lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES);
-  // lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES,
-  //                  USE_LVGL_FREETYPE_MAX_SIZES,
-  //                  UsePSRAM() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
-#endif
 #ifdef USE_LVGL_PNG_DECODER
   lv_lodepng_init();
 #endif // USE_LVGL_PNG_DECODER

@@ -17,7 +17,8 @@
 #include "lv_vg_lite_utils.h"
 #include "lv_vg_lite_grad.h"
 #include "lv_vg_lite_stroke.h"
-#include "../lv_image_decoder_private.h"
+#include "../../image/lv_image_decoder_private.h"
+#include "../../misc/lv_array.h"
 #include "../lv_draw_vector_private.h"
 #include <float.h>
 #include <math.h>
@@ -160,7 +161,7 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
                         VG_LITE_PATTERN_COLOR,
                         0,
                         recolor,
-                        VG_LITE_FILTER_BI_LINEAR);
+                        lv_vg_lite_matrix_get_filter(&pattern_matrix));
 
                     if(ctx->fill_dsc.img_dsc.colorkey) {
                         lv_vg_lite_set_color_key(NULL);
