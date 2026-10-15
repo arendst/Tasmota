@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Changed
-- LVGL library from v9.5.0 to v9.6.0
+- LVGL library from v9.5.0 to v9.6.0 (#25144)
 
 ### Fixed
 - Unauthenticated UFS writes on web password enabled systems
