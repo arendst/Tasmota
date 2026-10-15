@@ -17,12 +17,12 @@
 #include "../../lvgl/src/core/lv_obj_class_private.h"
 #include "../../lvgl/src/core/lv_obj_private.h"
 #include "../../lvgl/src/misc/lv_area_private.h"
-#include "../../lvgl/src/misc/lv_math.h"
-#include "../../lvgl/src/core/lv_obj_scroll.h"
-#include "../../lvgl/src/draw/lv_draw.h"
-#include "../../lvgl/src/draw/lv_draw_mask.h"
-#include "../../lvgl/src/draw/lv_draw_image.h"
-#include "../../lvgl/src/draw/lv_draw_line.h"
+#include "../../lvgl/include/lvgl/misc/lv_math.h"
+#include "../../lvgl/include/lvgl/core/lv_obj_scroll.h"
+#include "../../lvgl/include/lvgl/draw/lv_draw.h"
+#include "../../lvgl/include/lvgl/draw/lv_draw_mask.h"
+#include "../../lvgl/include/lvgl/draw/lv_draw_image.h"
+#include "../../lvgl/include/lvgl/draw/lv_draw_line.h"
 
 /*********************
  *      DEFINES

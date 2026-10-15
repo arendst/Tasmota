@@ -26,7 +26,7 @@ btn2 = lv.btn(lv.scr_act())
 btn2.add_event_cb(event_handler,lv.EVENT_ALL, nil)
 
 btn2.align(lv.ALIGN_CENTER,0,40)
-btn2.add_flag(lv.OBJ_FLAG_CHECKABLE)
+btn2.set_checkable(true)
 btn2.set_height(lv.SIZE_CONTENT)
 
 label=lv.label(btn2)

@@ -62,7 +62,7 @@ class Antiburn
         self.antiburn = antiburn
       end
       self.antiburn.set_style_bg_opa(255, 0)
-      self.antiburn.add_flag(lv.OBJ_FLAG_CLICKABLE)
+      self.antiburn.set_clickable(true)
       self.antiburn.move_foreground()
 
       self.running = true
@@ -81,7 +81,7 @@ class Antiburn
   def stop()
     if self.running && self.antiburn != nil
       self.antiburn.set_style_bg_opa(0, 0)
-      self.antiburn.clear_flag(lv.OBJ_FLAG_CLICKABLE)
+      self.antiburn.set_clickable(false)
       self.running = false
       self.antiburn.del()
       self.antiburn = nil
@@ -110,7 +110,7 @@ class DimmedPanel
       panel.set_width(lv.get_hor_res())
       panel.set_height(lv.get_ver_res())
 
-      panel.add_flag(lv.OBJ_FLAG_CLICKABLE)
+      panel.set_clickable(true)
       panel.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
       self.panel = panel
     end
@@ -469,19 +469,22 @@ class lvh_root
   # 05 = styling for disabled and toggled state
   #
   # LV_STATE_DEFAULT     =  0x0000,
-  # LV_STATE_CHECKED     =  0x0001,
-  # LV_STATE_FOCUSED     =  0x0002,
-  # LV_STATE_FOCUS_KEY   =  0x0004,
-  # LV_STATE_EDITED      =  0x0008,
-  # LV_STATE_HOVERED     =  0x0010,
-  # LV_STATE_PRESSED     =  0x0020,
-  # LV_STATE_SCROLLED    =  0x0040,
-  # LV_STATE_DISABLED    =  0x0080,
-
+  # LV_STATE_ALT         =  0x0001,
+  #                         0x0002 reserved
+  # LV_STATE_CHECKED     =  0x0004,
+  # LV_STATE_FOCUSED     =  0x0008,
+  # LV_STATE_FOCUS_KEY   =  0x0010,
+  # LV_STATE_EDITED      =  0x0020,
+  # LV_STATE_HOVERED     =  0x0040,
+  # LV_STATE_PRESSED     =  0x0080,
+  # LV_STATE_SCROLLED    =  0x0100,
+  # LV_STATE_DISABLED    =  0x0200,
+  #                         0x0400, 0x0800 reserved
   # LV_STATE_USER_1      =  0x1000,
   # LV_STATE_USER_2      =  0x2000,
   # LV_STATE_USER_3      =  0x4000,
   # LV_STATE_USER_4      =  0x8000,
+  # LV_STATE_ANY         =  0xFFFF,
   #
   #- ------------------------------------------------------------#
   static var _digit2part = [
@@ -820,28 +823,20 @@ class lvh_obj : lvh_root
   #====================================================================
   #- `hidden` attributes mapped to OBJ_FLAG_HIDDEN -#
   def set_hidden(h)
-    if h
-      self._lv_obj.add_flag(lv.OBJ_FLAG_HIDDEN)
-    else
-      self._lv_obj.clear_flag(lv.OBJ_FLAG_HIDDEN)
-    end
+    self._lv_obj.set_hidden(bool(h))      # LVGL 9.6 setters require a real `bool`
   end
   def get_hidden()
-    return self._lv_obj.has_flag(lv.OBJ_FLAG_HIDDEN)
+    return self._lv_obj.is_hidden()
   end
 
   #====================================================================
   #  `enabled` attributes mapped to STATE_DISABLED
   #====================================================================
   def set_enabled(h)
-    if h
-      self._lv_obj.clear_state(lv.STATE_DISABLED)
-    else
-      self._lv_obj.add_state(lv.STATE_DISABLED)
-    end
+    self._lv_obj.set_disabled(!h)
   end
   def get_enabled()
-    return !self._lv_obj.has_state(lv.STATE_DISABLED)
+    return !self._lv_obj.is_disabled()
   end
 
   #====================================================================
@@ -871,28 +866,20 @@ class lvh_obj : lvh_root
       elif t == "FALSE" t = false
       end
     end
-    if t
-      self._lv_obj.add_state(lv.STATE_CHECKED)
-    else
-      self._lv_obj.clear_state(lv.STATE_CHECKED)
-    end
+    self._lv_obj.set_checked(bool(t))
   end
   def get_toggle()
-    return self._lv_obj.has_state(lv.STATE_CHECKED)
+    return self._lv_obj.is_checked()
   end
 
   #====================================================================
   #  `adjustable` flag
   #====================================================================
   def set_adjustable(t)
-    if t
-      self._lv_obj.add_flag(lv.OBJ_FLAG_CLICKABLE)
-    else
-      self._lv_obj.clear_flag(lv.OBJ_FLAG_CLICKABLE)
-    end
+    self._lv_obj.set_clickable(bool(t))
   end
   def get_adjustable()
-    return self._lv_obj.has_flag(lv.OBJ_FLAG_CLICKABLE)
+    return self._lv_obj.is_clickable()
   end
 
   #====================================================================
@@ -980,14 +967,10 @@ class lvh_obj : lvh_root
   # Force flex child on a new line
   #====================================================================
   def set_flex_in_new_track(t)
-    if t
-      self._lv_obj.add_flag(lv.OBJ_FLAG_FLEX_IN_NEW_TRACK)
-    else
-      self._lv_obj.clear_flag(lv.OBJ_FLAG_FLEX_IN_NEW_TRACK)
-    end
+    self._lv_obj.set_flex_in_new_track(bool(t))
   end
   def get_flex_in_new_track()
-    return self._lv_obj.has_flag(lv.OBJ_FLAG_FLEX_IN_NEW_TRACK)
+    return self._lv_obj.is_flex_in_new_track()
   end
 
   #====================================================================
@@ -2011,13 +1994,15 @@ class lvh_scale_section : lvh_root
     # check if it is the parent is a spangroup
     if isinstance(self._parent_lvh, self._page._hm.lvh_scale)
       # print(">>> GOOD")
-      self._lv_obj = self._parent_lvh._lv_obj.add_section()
+      var scale = self._parent_lvh._lv_obj
+      self._lv_obj = scale.add_section()
+      # LVGL 9.6: `section.set_style(part, style)` is deprecated, use `scale.set_section_style_<part>(section, style)`
       self._style = lv.style()        # we create a specific lv.style object for this object
-      self._lv_obj.set_style(lv.PART_MAIN, self._style)
+      scale.set_section_style_main(self._lv_obj, self._style)
       self._style10 = lv.style()        # we create a specific lv.style object for this object
-      self._lv_obj.set_style(lv.PART_INDICATOR, self._style10)
+      scale.set_section_style_indicator(self._lv_obj, self._style10)
       self._style30 = lv.style()        # we create a specific lv.style object for this object
-      self._lv_obj.set_style(lv.PART_ITEMS, self._style30)
+      scale.set_section_style_items(self._lv_obj, self._style30)
     else
       print("HSP: 'scale_section' should have a parent of type 'scale'")
     end
@@ -2181,8 +2166,14 @@ class lvh_spangroup : lvh_obj
   static var _lv_class = lv.spangroup
   # label do not need a sub-label
   def post_init(jline)
-    self._lv_obj.set_mode(lv.SPAN_MODE_BREAK)           # use lv.SPAN_MODE_BREAK by default
-    self._lv_obj.refresh()
+    # LVGL 9.6: `set_mode(lv.SPAN_MODE_BREAK)` is deprecated, below is its equivalent:
+    # keep width (100 if it was LV_SIZE_CONTENT), break long lines and expand height
+    var o = self._lv_obj
+    if o.get_style_width(lv.PART_MAIN) == lv.SIZE_CONTENT
+      o.set_width(100)
+    end
+    o.set_height(lv.SIZE_CONTENT)
+    o.refresh()
     super(self).post_init(jline)         # call super -- not needed
   end
   # refresh mode

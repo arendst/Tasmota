@@ -33,7 +33,7 @@ antiburn.init = def (m)
                     self.antiburn = antiburn
                 end
                 self.antiburn.set_style_bg_opa(255, 0)
-                self.antiburn.add_flag(lv.OBJ_FLAG_CLICKABLE)
+                self.antiburn.set_clickable(true)
                 self.antiburn.move_foreground()
 
                 self.running = true
@@ -52,7 +52,7 @@ antiburn.init = def (m)
         def stop()
             if self.running && self.antiburn != nil
                 self.antiburn.set_style_bg_opa(0, 0)
-                self.antiburn.clear_flag(lv.OBJ_FLAG_CLICKABLE)
+                self.antiburn.set_clickable(false)
                 self.running = false
                 self.antiburn.del()
                 self.antiburn = nil

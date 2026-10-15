@@ -212,6 +212,19 @@ SYNONYM_FUNCTIONS = {
 # classes have no auto-detected `_create` function.
 SYNTHETIC_CLASSES = ['style', 'font', 'color', 'theme']
 
+# Generic style accessors (flash saving): `lv_obj.set_style_<prop>()`,
+# `lv_obj.get_style_<prop>()` and `lv_style.set_<prop>()` are not stored as
+# individual methods but resolved at runtime from a compact property table,
+# calling `lv_obj_set_local_style_prop()`, `lv_obj_get_style_prop()` and
+# `lv_style_set_prop()`. Only functions whose body in LVGL's generated sources
+# follows the standard pattern are handled this way, others stay explicit.
+STYLE_GENERIC_ACCESSORS = True
+STYLE_GEN_SOURCES = {
+    "obj":          "../../lvgl/src/core/lv_obj_style_gen.c",
+    "obj_internal": "../../lvgl/src/core/lv_obj_style_internal_gen.h",
+    "style":        "../../lvgl/src/misc/lv_style_gen.c",
+}
+
 
 # ======================================================================
 # 4. Phase 2 - C-to-Berry type mapping (convert.py)
@@ -269,6 +282,11 @@ SKIPPING_TYPES = [
     "lv_draw_dsc_base_t *",
     "lv_draw_blur_dsc_t *",
     "lv_indev_key_remap_cb_t",
+    # new in 9.6.0
+    "lv_delete_dsc_t *",          # lv_obj_add/remove_delete_cb(), C delete callbacks not usable from Berry
+    "lv_delete_cb_t",
+    "lv_display_sync_cb_t",
+    "lv_display_sync_wait_cb_t",
 ]
 
 # C type -> Berry encoding. Commented-out entries are kept on purpose to
@@ -416,7 +434,7 @@ RETURN_TYPES = {
     "lv_event_dsc_t *": "lv_event_dsc",
     "lv_span_coords_t": "lv_span_coords",
 
-    "_lv_obj_t *": "lv_obj",
+    # "_lv_obj_t *": "lv_obj",     # no longer used in 9.6.0
     "lv_obj_t *": "lv_obj",
     "lv_event_t *": "lv_event",
     "lv_color_t": "lv_color",
@@ -459,6 +477,9 @@ RETURN_TYPES = {
     # new in 9.5.0
     # "lv_blur_quality_t": "i",
     "lv_arclabel_overflow_t": "i",
+    # new in 9.6.0
+    "lv_text_leading_trim_t": "i",
+    "lv_qrcode_update_mode_t": "i",
 
     # callbacks
     "lv_group_focus_cb_t": "lv_group_focus_cb",
@@ -484,8 +505,10 @@ CALLBACKS_SEEN_SEED = ['lv_group_focus_cb', 'lv_event_cb', 'lv_timer_cb',
 # 1. Phase 1 - source scanning (preprocessor.py)
 # ======================================================================
 
-# Default location of the LVGL source tree (relative to tools/).
-LV_SRC_PREFIX = "../../lvgl/src/"
+# Default location of the LVGL public headers (relative to tools/).
+# Since LVGL 9.6.0 public headers live in `include/lvgl/` (flattened layout);
+# `src/` only keeps private headers and deprecated forwarding stubs.
+LV_SRC_PREFIX = "../../lvgl/include/lvgl/"
 
 # Header files to skip entirely (matched by suffix).
 HEADERS_EXCLUDE_SUFFIX = {
@@ -498,6 +521,12 @@ HEADERS_EXCLUDE_SUFFIX = {
     "lv_observer.h",
     "lv_ime_pinyin.h",
     "lv_gif.h",
+    # 9.6.0: moved from `src/libs/` to the flat `widgets/` folder, not scanned before
+    "lv_barcode.h",
+    "lv_ffmpeg.h",
+    "lv_gltf.h",
+    "lv_gstreamer.h",
+    "lv_rlottie.h",
 }
 
 # Function-name exclusion patterns (regex). A function whose name matches
@@ -531,6 +560,15 @@ FUNCTION_EXCLUDE_PATTERNS = [
     r".*_drop_shadow.*",          # 9.5.0
     r".*_blur_.*",                # 9.5.0
     r".*_set_gesture_.*",         # 9.5.0
+    # 9.6.0 per-flag/per-state setters and getters, excluding the less common ones saves flash.
+    # Same features are available with add_flag/remove_flag/has_flag (deprecated in 9.6.0) and add_state/remove_state/has_state
+    # Kept (not listed here) for common attributes: hidden, clickable, checkable, scrollable, flex_in_new_track,
+    # checked, disabled
+    r"^lv_obj_(set|is)_(adv_hittest|alt|click_focusable|edited"
+    r"|event_bubble|event_trickle|floating|focus_key|focused|gesture_bubble|hovered"
+    r"|ignore_layout|overflow_visible|press_lock|pressed|scroll_chain|scroll_chain_hor|scroll_chain_ver"
+    r"|scroll_elastic|scroll_momentum|scroll_on_focus|scroll_one|scroll_with_arrow|scrolled"
+    r"|send_draw_task_events|snappable|state_trickle|state_user_[1-4])$",
 ]
 
 # Enum-value exclusion prefixes. A constant starting with any of these is
@@ -540,18 +578,29 @@ ENUM_EXCLUDE_PREFIXES = {
     "LV_TASK_PRIO_", "LV_THEME_", "LV_LRU_", "LV_VECTOR_",
     "LV_KEYBOARD_MODE_TEXT_ARABIC", "LV_DRAW_TASK_TYPE_3D", 
     "LV_DRAW_TASK_TYPE_VECTOR",
-    "LV_EVENT_TRANSLATION_"
+    "LV_EVENT_TRANSLATION_",
+    # 9.6.0 - reduce flash, constants rarely used directly from Berry
+    "LV_STATE_USER_",
+    "LV_STYLE_STATE_CMP_",
+    "LV_DRAW_TASK_",
+    "LV_IMAGE_COMPRESS_", "LV_IMAGE_FLAGS_", "LV_IMAGE_HEADER_MAGIC", "LV_IMAGE_SRC_",  # keep LV_IMAGE_ALIGN_* (used by HASPmota)
+    "LV_FS_",
+    "LV_LOG_LEVEL_",
 }
 
 
 # Glob patterns (relative to LV_SRC_PREFIX) for headers scanned for functions.
+#
+# LVGL 9.6.0 flattened the layout; former location kept in comments.
 FUNCTION_HEADER_PATTERNS = [
-    "lv_api*.h",
-    "widgets/*/*.h",
-    "libs/qrcode/lv_qrcode.h",
-    "core/*.h",
+    "api_map/lv_api_map*.h",    # was lv_api*.h
+    "widgets/*.h",              # was widgets/*/*.h and libs/qrcode/lv_qrcode.h
+    "core/lv_group.h",          # was core/*.h
+    "core/lv_obj*.h",
+    "core/lv_refr.h",
     "indev/lv_indev.h",
-    "layouts/*/*.h",
+    "layouts/lv_flex.h",        # was layouts/*/*.h
+    "layouts/lv_grid.h",
     "themes/lv_theme.h",
     "draw/lv_draw_arc.h",
     "draw/lv_draw_label.h", 
@@ -561,18 +610,18 @@ FUNCTION_HEADER_PATTERNS = [
     "draw/lv_draw_triangle.h",
     "draw/lv_draw.h",
     "display/*.h",
-    "misc/lv_anim.h",
-    "misc/lv_area.h",
-    "misc/lv_color.h",
-    "misc/lv_color_op.h",
-    "misc/lv_palette.h",
-    "misc/lv_event.h",
-    "misc/lv_style_gen.h",
-    "misc/lv_style.h",
-    "misc/lv_timer.h",
-    "misc/lv_text.h",
+    "core/lv_anim.h",           # was misc/
+    "core/lv_area.h",           # was misc/
+    "draw/lv_color.h",          # was misc/
+    "draw/lv_color_op.h",       # was misc/
+    "draw/lv_palette.h",        # was misc/
+    "core/lv_event.h",          # was misc/
+    "core/lv_style_gen.h",      # was misc/
+    "core/lv_style.h",          # was misc/
+    "core/lv_timer.h",          # was misc/
+    "font/lv_text.h",           # was misc/
     "font/lv_font.h",
-    "../lvgl.h",
+    "lvgl.h",                   # was ../lvgl.h (lv_version_* functions)
 ]
 
 # Extra header files (relative to tools/) appended when present.
@@ -584,14 +633,26 @@ FUNCTION_HEADER_EXTRA_PATHS = [
 ]
 
 # Glob patterns (relative to LV_SRC_PREFIX) for headers scanned for enums.
+#
+# LVGL 9.6.0 flattened the layout and split the former `misc/` folder across
+# core/, draw/, font/, fs/, logging/, debugging/ and image/. Internal headers
+# (lv_array, lv_rb, lv_tree, lv_lru, lv_iter...) stay private in `src/` and
+# are no longer scanned.
 ENUM_HEADER_PATTERNS = [
-    "core/*.h",
-    "draw/*.h", 
-    "hal/*.h",
-    "misc/*.h",
-    "widgets/*/*.h",
+    "core/*.h",                         # was core/*.h + misc/{anim,area,event,style,timer,matrix,ext_data...}
+    "draw/*.h",                         # was draw/*.h + misc/{color,color_op,grad,palette}
+    "image/lv_image_decoder.h",         # was draw/
+    "misc/*.h",                         # async, ll, math
+    "font/lv_bidi.h",                   # was misc/
+    "font/lv_text.h",                   # was misc/
+    "fs/lv_fs.h",                       # was misc/
+    "logging/lv_log.h",                 # was misc/
+    "debugging/lv_assert.h",            # was misc/
+    "debugging/profiler/*.h",           # was misc/
+    "lv_types.h",                       # was misc/
+    "widgets/*.h",                      # was widgets/*/*.h
     "display/lv_display.h",
-    "layouts/**/*.h",
+    "layouts/*.h",                      # was layouts/**/*.h
 ]
 
 
@@ -811,6 +872,10 @@ LV_LABEL_LONG_SCROLL_CIRCULAR=LV_LABEL_LONG_MODE_SCROLL_CIRCULAR
 LV_LABEL_LONG_CLIP=LV_LABEL_LONG_MODE_CLIP
 LV_ANIM_OFF=LV_ANIM_OFF
 LV_ANIM_ON=LV_ANIM_ON
+
+// LVGL 9.6 - no longer enum values, kept as #define in lv_api_map_v9_5.h
+LV_COLOR_FORMAT_NATIVE=LV_COLOR_FORMAT_NATIVE
+LV_COLOR_FORMAT_NATIVE_WITH_ALPHA=LV_COLOR_FORMAT_NATIVE_WITH_ALPHA
 
 // ======================================================================
 // Generated from headers

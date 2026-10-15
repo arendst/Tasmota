@@ -5,34 +5,37 @@
  - and simulates The Waldhoff Renaissance
  -
  - Copy all assets in the file-system, including this file
+ -
+ - Updated for LVGL 9
  -#
 
 lv.start()
 
-scr = lv.scr_act()
+scr = lv.screen_active()
 
-scr.set_style_local_bg_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv.color(lv.COLOR_BLACK))
-ren_back = lv.img(scr)
+scr.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
+ren_back = lv.image(scr)
 ren_back.set_src("A:/watch_ren_back_240.png")
-ren_back.align(0, lv.ALIGN_CENTER, 0, 0)
+ren_back.center()
 
 ren_day = lv.label(ren_back)
-ren_day.set_style_local_text_color(lv.OBJ_PART_MAIN, lv.STATE_DEFAULT, lv.color(lv.COLOR_BLACK))
-ren_day.set_long_mode(lv.LABEL_LONG_CROP)
-ren_day.set_align(lv.LABEL_ALIGN_CENTER)
+ren_day.set_style_text_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
+ren_day.set_style_text_align(lv.TEXT_ALIGN_CENTER, lv.PART_MAIN | lv.STATE_DEFAULT)
+ren_day.set_long_mode(lv.LABEL_LONG_MODE_CLIP)
 ren_day.set_text("")
 ren_day.set_width(18)
 ren_day.set_height(16)
 ren_day.set_pos(184,112)
 
-ren_hour = lv.img(ren_back)
+# hands rotate around the center of each image (default pivot)
+ren_hour = lv.image(ren_back)
 ren_hour.set_src("A:/watch_ren_hour_240.png")
 ren_hour.set_pos(110,45)
 
-ren_min = lv.img(ren_back)
+ren_min = lv.image(ren_back)
 ren_min.set_src("A:/watch_ren_min_240.png")
 
-ren_sec = lv.img(ren_back)
+ren_sec = lv.image(ren_back)
 ren_sec.set_src("A:/watch_ren_sec_240.png")
 ren_sec.set_pos(110,10)
 
@@ -41,12 +44,13 @@ def set_watch()
     var now = tasmota.rtc()
     var time_raw = now['local'] + now['timezone'] * 60
     var time = tasmota.time_dump(time_raw)
+    # rotation is in 0.1 degree units
     # set second
-    ren_sec.set_angle(60 * time['sec'])
+    ren_sec.set_rotation(60 * time['sec'])
     # set minutes
-    ren_min.set_angle(60 * time['min'])
+    ren_min.set_rotation(60 * time['min'])
     # set hours
-    ren_hour.set_angle(300 * (time['hour'] % 12) + time['min'] * 5)
+    ren_hour.set_rotation(300 * (time['hour'] % 12) + time['min'] * 5)
     # set day
     if time['day'] != prev_day
         ren_day.set_text(str(time['day']))
