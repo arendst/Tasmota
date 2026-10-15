@@ -7,10 +7,9 @@
  *      INCLUDES
  *********************/
 
-#include "lv_draw_3d.h"
-#if LV_USE_3DTEXTURE
-
 #include "lv_draw_private.h"
+
+#if LV_USE_3DTEXTURE
 
 /*********************
  *      DEFINES
@@ -38,21 +37,29 @@
 
 void lv_draw_3d_dsc_init(lv_draw_3d_dsc_t * dsc)
 {
+    LV_CHECK_ARG(dsc != NULL, return);
+
     lv_memzero(dsc, sizeof(lv_draw_3d_dsc_t));
-    dsc->base.dsc_size = sizeof(lv_draw_3d_dsc_t);
     dsc->tex_id = LV_3DTEXTURE_ID_NULL;
     dsc->h_flip = false;
     dsc->v_flip = false;
     dsc->opa = LV_OPA_COVER;
+    dsc->base.dsc_size = sizeof(lv_draw_3d_dsc_t);
 }
 
 lv_draw_3d_dsc_t * lv_draw_task_get_3d_dsc(lv_draw_task_t * task)
 {
+    LV_CHECK_ARG(task != NULL, return NULL);
+
     return task->type == LV_DRAW_TASK_TYPE_3D ? (lv_draw_3d_dsc_t *)task->draw_dsc : NULL;
 }
 
 void lv_draw_3d(lv_layer_t * layer, const lv_draw_3d_dsc_t * dsc, const lv_area_t * coords)
 {
+    LV_CHECK_ARG(layer != NULL, return);
+    LV_CHECK_ARG(dsc != NULL, return);
+    LV_CHECK_ARG(coords != NULL, return);
+
     LV_PROFILER_DRAW_BEGIN;
 
     lv_draw_task_t * t = lv_draw_add_task(layer, coords, LV_DRAW_TASK_TYPE_3D);

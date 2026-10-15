@@ -147,6 +147,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP8266 platform update from 2026.04.00 to 2026.09.00 [#25072](https://github.com/arendst/Tasmota/issues/25072)
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 [#25072](https://github.com/arendst/Tasmota/issues/25072)
+- LVGL library from v9.5.0 to v9.6.0 [#25144](https://github.com/arendst/Tasmota/issues/25144)
 - Matter update specs to 1.6.1 (to be used by AI) [#25083](https://github.com/arendst/Tasmota/issues/25083)
 - MQTT connection closed before TCP retransmission could deliver a delayed PINGRESP, now tolerates 2 unanswered pings [#25067](https://github.com/arendst/Tasmota/issues/25067)
 - Command `SetOption46 201..255` init wait 1 to 55 seconds instead of 2010 to 2550 msec [#25035](https://github.com/arendst/Tasmota/issues/25035)

@@ -3,27 +3,27 @@
  *
  */
 
-/* ARM Helium/MVE SIMD implementation - only compiled on ARM targets */
-#if defined(__arm__) || defined(__ARM_ARCH)
+#if defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE
 
 #ifndef __ASSEMBLY__
 #define __ASSEMBLY__
 #endif
 
+/* _RTE_ is not defined by lv_conf, it is defined by MDK RTE system */
 #if defined(_RTE_)
 #include "Pre_Include_Global.h"
 #include "RTE_Components.h"
 #endif
 
-#include "../../../../lv_conf_internal.h"
+
+#include "../../../../lvgl_public.h"
+
+#if LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && LV_USE_NATIVE_HELIUM_ASM
 
 /*GCC Workaround: missing .note.GNU-stack section implies executable stack*/
 #ifdef __ELF__
 .section .note.GNU-stack,"",%progbits
 #endif /* __ELF__ */
-
-
-#if LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE && LV_USE_NATIVE_HELIUM_ASM
 
 .data
 reciprocal:
@@ -712,7 +712,7 @@ export_set rgb888, argb8888, 24, 32, normal
 export_set xrgb8888, argb8888, 31, 32, normal
 export_set argb8888, argb8888, 32, 32, normal
 
-#endif /*LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE && LV_USE_NATIVE_HELIUM_ASM*/
+#endif /*LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM && LV_USE_NATIVE_HELIUM_ASM*/
 
+#endif /*defined(__ARM_FEATURE_MVE) && __ARM_FEATURE_MVE*/
 
-#endif /* defined(__arm__) || defined(__ARM_ARCH) */

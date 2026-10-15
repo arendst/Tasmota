@@ -15,6 +15,9 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.wifi()` reports `channel`, `security` and `phy` (#25126)
 - Initial support for ESP32-C61 (#25135)
 
+### Changed
+- LVGL library from v9.5.0 to v9.6.0 (#25144)
+
 ### Fixed
 - Unauthenticated UFS writes on web password enabled systems
 - Display dsi dma2d psram buffers (#24949)

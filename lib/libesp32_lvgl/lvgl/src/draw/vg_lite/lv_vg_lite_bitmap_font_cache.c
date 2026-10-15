@@ -15,6 +15,7 @@
 #include "lv_vg_lite_pending.h"
 #include "lv_vg_lite_utils.h"
 #include "../../core/lv_global.h"
+#include "../../font/lv_font_private.h"
 
 /*********************
  *      DEFINES
@@ -160,7 +161,7 @@ static bool cache_create_cb(cache_item_t * item, void * user_data)
         return false;
     }
 
-    if(!lv_font_get_glyph_bitmap(&item->g_dsc, draw_buf)) {
+    if(!lv_font_get_glyph_bitmap_internal(&item->g_dsc, draw_buf)) {
         LV_LOG_WARN("Failed to get glyph bitmap for bitmap font cache");
         lv_draw_buf_destroy(draw_buf);
         LV_PROFILER_FONT_END;
@@ -189,16 +190,7 @@ static void cache_free_cb(cache_item_t * item, void * user_data)
 
 static lv_cache_compare_res_t cache_compare_cb(const cache_item_t * lhs, const cache_item_t * rhs)
 {
-    /* Because const font pointers are unique, matching can be performed using only the pointer. */
-    if(lhs->g_dsc.resolved_font != rhs->g_dsc.resolved_font) {
-        return lhs->g_dsc.resolved_font > rhs->g_dsc.resolved_font ? 1 : -1;
-    }
-
-    if(lhs->g_dsc.gid.index != rhs->g_dsc.gid.index) {
-        return lhs->g_dsc.gid.index > rhs->g_dsc.gid.index ? 1 : -1;
-    }
-
-    return 0;
+    return lv_font_glyph_dsc_compare(&lhs->g_dsc, &rhs->g_dsc);
 }
 
 #endif /*LV_USE_DRAW_VG_LITE*/

@@ -1022,12 +1022,7 @@ int AsyncHttpClientLight::Job_WriteToStream(void* arg) {
       int chunk = (int) strtol(h.c_str(), nullptr, 16);
 
       if (chunk <= 0) {
-        String tmp;
-        if (!readLine(tmp)) {
-          if (a->self->_transport) a->self->_transport->stop();
-          a->self->_bodyPending = false;
-          return HTTPC_ERROR_READ_TIMEOUT;
-        }
+        // after the last chunk: trailer lines, if any, up to an empty line
         while (true) {
           String t;
           if (!readLine(t)) {
@@ -1143,12 +1138,7 @@ int AsyncHttpClientLight::Job_GetString(void* arg) {
       int chunk = (int) strtol(h.c_str(), nullptr, 16);
 
       if (chunk <= 0) {
-        String tmp;
-        if (!readLine(tmp)) {
-          if (a->self->_transport) a->self->_transport->stop();
-          a->self->_bodyPending = false;
-          return HTTPC_ERROR_READ_TIMEOUT;
-        }
+        // after the last chunk: trailer lines, if any, up to an empty line
         while (true) {
           String t;
           if (!readLine(t)) {
@@ -1296,8 +1286,7 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
       h.trim();
       int chunk = (int) strtol(h.c_str(), nullptr, 16);
       if (chunk <= 0) {
-        String tmp;
-        if (!readLine(tmp)) return bail(HTTPC_ERROR_READ_TIMEOUT);
+        // after the last chunk: trailer lines, if any, up to an empty line
         while (true) { String t; if (!readLine(t)) return bail(HTTPC_ERROR_READ_TIMEOUT); if (t.length() == 0) break; }
         break; // end
       }

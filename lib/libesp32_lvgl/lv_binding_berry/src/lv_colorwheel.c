@@ -17,7 +17,8 @@
 #include "../../lvgl/src/indev/lv_indev_private.h"
 #include "../../lvgl/src/themes/lv_theme_private.h"
 
-#include "../../lvgl/src/misc/lv_assert.h"
+#include "../../lvgl/include/lvgl/debugging/lv_assert.h"
+#include "include/lvgl/core/lv_obj.h"
 
 /*********************
  *      DEFINES
@@ -289,8 +290,8 @@ static void lv_colorwheel_constructor(const lv_obj_class_t * class_p, lv_obj_t *
     lv_obj_set_style_pad_column(obj, PAD_DEF, LV_PART_KNOB);
 
     // rest of constructor
-    lv_obj_add_flag(obj, LV_OBJ_FLAG_ADV_HITTEST);
-    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_adv_hittest(obj, true);
+    lv_obj_set_scroll_chain(obj, false);    /* clears both LV_OBJ_FLAG_SCROLL_CHAIN_HOR and _VER */
     refr_knob_pos(obj);
 }
 
