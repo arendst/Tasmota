@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.10.14"
+#define MI32_VERSION "v26.10.15"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,7 +47,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
-  26.10.14          added   - BTHome events to GUI
+  26.10.15          added   - BTHome binary events to GUI
   26.9.27           changed - Add age of battery reading to battery icon
   26.9.11           changed - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
                               Fix "M32Period 0" and "M32Period 1"
@@ -501,7 +501,7 @@ struct mi_sensor_t{
     uint8_t button[8]; // BTHome button support
     struct {
       uint8_t first_buttons_overlay[4];
-      uint8_t bthome_event[4]; // BTHome event support
+      uint8_t bthome_binary[4]; // BTHome binary state support
     };
   };
   uint8_t unparsed[4]; // BTHome unparsed object id
@@ -2367,11 +2367,21 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   bool hasTemp = false;
   bool hasHum  = false;
   uint32_t multi = 0;
-  uint32_t multi_event = 0;
+  uint32_t multi_binary = 0;
   uint32_t multi_unparsed = 0;
   uint32_t last_obj_id = 0;
 
   // Second pass: parse all measurement objects
+  uint8_t current_binary[4] = { 0 };
+  for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_binary); i++) {
+    if (MIBLEsensors[_slot].bthome_binary[i] & 0x7F) {
+      current_binary[i] = MIBLEsensors[_slot].bthome_binary[i] >> 7;
+      MIBLEsensors[_slot].bthome_binary[i] &= 0x7F;  // Reset value, keep obj_id
+    } else {
+      MIBLEsensors[_slot].bthome_binary[i] = 0;
+    }
+  }
+
   int res = 0;
   obj_id = 0;
   idx = 1;
@@ -2497,17 +2507,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
-        if (0 == multi_event) {  // Reset events
-          for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_event); i++) {
-            MIBLEsensors[_slot].bthome_event[i] = 0;
-          }
-        }
-        if (multi_event < sizeof(MIBLEsensors[_slot].bthome_event)) {
-          MIBLEsensors[_slot].bthome_event[multi_event++] = value_uint << 7 | obj_id;
+        if (multi_binary < sizeof(MIBLEsensors[_slot].bthome_binary)) {
+          uint8_t current_value = MIBLEsensors[_slot].bthome_binary[multi_binary] >> 7;
+          MIBLEsensors[_slot].bthome_binary[multi_binary++] = value_uint << 7 | obj_id;
           MIBLEsensors[_slot].feature.events  = 1;
-          MIBLEsensors[_slot].eventType.event = 1;
-          MIBLEsensors[_slot].events++;
-          res = 1;
+/*
+          if (current_value != value_uint) {  // Event if changed
+            MIBLEsensors[_slot].eventType.event = 1;
+            res = 1;
+          }
+*/
         }
       } break;
 
@@ -2612,6 +2621,14 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   if (hasTemp && hasHum) {
     MIBLEsensors[_slot].feature.tempHum   = 1;
     MIBLEsensors[_slot].eventType.tempHum = 1;
+  }
+
+  for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_binary); i++) {
+    if (current_binary[i] != (MIBLEsensors[_slot].bthome_binary[i] >> 7)) {
+      MIBLEsensors[_slot].feature.events  = 1;
+      MIBLEsensors[_slot].eventType.event = 1;
+      res = 1;
+    }
   }
 
   if (res || MI32.option.directBridgeMode) {
@@ -3733,11 +3750,13 @@ void MI32GetOneSensorJson(int slot, int hidename){
 
   } // minimal summary
 
-  if ((p->type == MI_BTHOME) && p->eventType.event) {
-    for (uint32_t i = 0; i < sizeof(p->bthome_event); i++) {
-      if (p->bthome_event[i] > 0) {
-        ResponseAppend_P(PSTR(",\"Evt%d\":%d"),
-          p->bthome_event[i] & 0x7F, p->bthome_event[i] >> 7);
+  if ((p->type == MI_BTHOME) && p->feature.events) {
+    for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
+      if (p->bthome_binary[i] > 0) {
+        if (p->eventType.event) {
+          ResponseAppend_P(PSTR(",\"Evt%d\":%d"), p->bthome_binary[i] & 0x7F, p->bthome_binary[i] >> 7);
+        }
+        ResponseAppend_P(PSTR(",\"State%d\":%d"), p->bthome_binary[i] & 0x7F, p->bthome_binary[i] >> 7);
       }
     }
   }
@@ -4503,10 +4522,21 @@ void MI32Show(bool json)
         WSContentSend_P(SI_WEB_LINE_START);
         if (p->feature.events){
           if (p->type == MI_BTHOME) {
-            for (uint32_t i = 0; i < sizeof(p->bthome_event); i++) {
-              if (p->bthome_event[i] > 0) {
-                uint32_t event = p->bthome_event[i] >> 7;
-                WSContentSend_PD(PSTR(" %d&#xFE0F;&#x20E3; %d"), i +1, event);  // 1️⃣ .. 8️⃣
+            uint32_t count = 0;
+            for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
+              if (p->bthome_binary[i] > 0) {
+                count++;
+              }
+            }
+            for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
+              if (p->bthome_binary[i] > 0) {
+                uint32_t state = p->bthome_binary[i] >> 7;
+                if (1 == count) {
+                  WSContentSend_PD(PSTR(" &#x1F3C1; %d"), state);  // 🏁
+                } else {
+                  uint32_t obj_idx = p->bthome_binary[i] & 0x7F;
+                  WSContentSend_PD(PSTR(" &#x1F3C1;%d %d"), obj_idx, state);  // 🏁
+                }
               }
             }
           } else {
