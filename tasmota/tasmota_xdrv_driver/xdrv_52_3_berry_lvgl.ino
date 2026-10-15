@@ -41,7 +41,7 @@
 // Berry easy logging
 extern "C" {
   extern void berry_log_C(const char * berry_buf, ...);
-  extern const be_ntv_class_def_t lv_classes[];
+  extern const lv_ntv_class_def_t lv_classes[];
   extern const size_t lv_classes_size;
 }
 
@@ -612,8 +612,8 @@ extern "C" {
     if (f) {
       lvgl_set_screenshot_file(&f);
 
-      uint32_t bmp_width = lv_display_get_horizontal_resolution(nullptr);
-      uint32_t bmp_height = lv_display_get_vertical_resolution(nullptr);
+      uint32_t bmp_width = lv_display_get_horizontal_resolution(lv_display_get_default());
+      uint32_t bmp_height = lv_display_get_vertical_resolution(lv_display_get_default());
 
       // write BMP header
       static const uint8_t bmp_sign[] = { 0x42, 0x4d };   // BM = Windows

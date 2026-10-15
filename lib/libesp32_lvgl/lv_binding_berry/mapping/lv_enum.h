@@ -186,272 +186,20 @@ LV_LABEL_LONG_CLIP=LV_LABEL_LONG_MODE_CLIP
 LV_ANIM_OFF=LV_ANIM_OFF
 LV_ANIM_ON=LV_ANIM_ON
 
+// LVGL 9.6 - no longer enum values, kept as #define in lv_api_map_v9_5.h
+LV_COLOR_FORMAT_NATIVE=LV_COLOR_FORMAT_NATIVE
+LV_COLOR_FORMAT_NATIVE_WITH_ALPHA=LV_COLOR_FORMAT_NATIVE_WITH_ALPHA
+
 // ======================================================================
 // Generated from headers
 // ======================================================================
-// File: ../../lvgl/src/core/lv_global.h
-
-// File: ../../lvgl/src/core/lv_group.h
-LV_GROUP_REFOCUS_POLICY_NEXT
-LV_GROUP_REFOCUS_POLICY_PREV
-LV_KEY_BACKSPACE
-LV_KEY_DEL
-LV_KEY_DOWN
-LV_KEY_END
-LV_KEY_ENTER
-LV_KEY_ESC
-LV_KEY_HOME
-LV_KEY_LEFT
-LV_KEY_NEXT
-LV_KEY_PREV
-LV_KEY_RIGHT
-LV_KEY_UP
-
-// File: ../../lvgl/src/core/lv_obj.h
-LV_OBJ_FLAG_ADV_HITTEST
-LV_OBJ_FLAG_CHECKABLE
-LV_OBJ_FLAG_CLICKABLE
-LV_OBJ_FLAG_CLICK_FOCUSABLE
-LV_OBJ_FLAG_EVENT_BUBBLE
-LV_OBJ_FLAG_EVENT_TRICKLE
-LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
-LV_OBJ_FLAG_FLOATING
-LV_OBJ_FLAG_GESTURE_BUBBLE
-LV_OBJ_FLAG_HIDDEN
-LV_OBJ_FLAG_IGNORE_LAYOUT
-LV_OBJ_FLAG_LAYOUT_1
-LV_OBJ_FLAG_LAYOUT_2
-LV_OBJ_FLAG_OVERFLOW_VISIBLE
-LV_OBJ_FLAG_PRESS_LOCK
-LV_OBJ_FLAG_SCROLLABLE
-LV_OBJ_FLAG_SCROLL_CHAIN
-LV_OBJ_FLAG_SCROLL_CHAIN_HOR
-LV_OBJ_FLAG_SCROLL_CHAIN_VER
-LV_OBJ_FLAG_SCROLL_ELASTIC
-LV_OBJ_FLAG_SCROLL_MOMENTUM
-LV_OBJ_FLAG_SCROLL_ONE
-LV_OBJ_FLAG_SCROLL_ON_FOCUS
-LV_OBJ_FLAG_SCROLL_WITH_ARROW
-LV_OBJ_FLAG_SEND_DRAW_TASK_EVENTS
-LV_OBJ_FLAG_SNAPPABLE
-LV_OBJ_FLAG_STATE_TRICKLE
-LV_OBJ_FLAG_USER_1
-LV_OBJ_FLAG_USER_2
-LV_OBJ_FLAG_USER_3
-LV_OBJ_FLAG_USER_4
-LV_OBJ_FLAG_WIDGET_1
-LV_OBJ_FLAG_WIDGET_2
-
-// File: ../../lvgl/src/core/lv_obj_class.h
-LV_OBJ_CLASS_EDITABLE_FALSE
-LV_OBJ_CLASS_EDITABLE_INHERIT
-LV_OBJ_CLASS_EDITABLE_TRUE
-LV_OBJ_CLASS_GROUP_DEF_FALSE
-LV_OBJ_CLASS_GROUP_DEF_INHERIT
-LV_OBJ_CLASS_GROUP_DEF_TRUE
-LV_OBJ_CLASS_THEME_INHERITABLE_FALSE
-LV_OBJ_CLASS_THEME_INHERITABLE_TRUE
-
-// File: ../../lvgl/src/core/lv_obj_draw.h
-LV_LAYER_TYPE_NONE
-LV_LAYER_TYPE_SIMPLE
-LV_LAYER_TYPE_TRANSFORM
-
-// File: ../../lvgl/src/core/lv_obj_event.h
-LV_COVER_RES_COVER
-LV_COVER_RES_MASKED
-LV_COVER_RES_NOT_COVER
-
-// File: ../../lvgl/src/core/lv_obj_pos.h
-LV_OBJ_POINT_TRANSFORM_FLAG_INVERSE
-LV_OBJ_POINT_TRANSFORM_FLAG_INVERSE_RECURSIVE
-LV_OBJ_POINT_TRANSFORM_FLAG_NONE
-LV_OBJ_POINT_TRANSFORM_FLAG_RECURSIVE
-
-// File: ../../lvgl/src/core/lv_obj_scroll.h
-LV_SCROLLBAR_MODE_ACTIVE
-LV_SCROLLBAR_MODE_AUTO
-LV_SCROLLBAR_MODE_OFF
-LV_SCROLLBAR_MODE_ON
-LV_SCROLL_SNAP_CENTER
-LV_SCROLL_SNAP_END
-LV_SCROLL_SNAP_NONE
-LV_SCROLL_SNAP_START
-
-// File: ../../lvgl/src/core/lv_obj_style.h
-LV_PART_ANY
-LV_PART_CURSOR
-LV_PART_CUSTOM_FIRST
-LV_PART_INDICATOR
-LV_PART_ITEMS
-LV_PART_KNOB
-LV_PART_MAIN
-LV_PART_SCROLLBAR
-LV_PART_SELECTED
-LV_STATE_ALT
-LV_STATE_ANY
-LV_STATE_CHECKED
-LV_STATE_DEFAULT
-LV_STATE_DISABLED
-LV_STATE_EDITED
-LV_STATE_FOCUSED
-LV_STATE_FOCUS_KEY
-LV_STATE_HOVERED
-LV_STATE_PRESSED
-LV_STATE_SCROLLED
-LV_STATE_USER_1
-LV_STATE_USER_2
-LV_STATE_USER_3
-LV_STATE_USER_4
-LV_STYLE_STATE_CMP_DIFF_DRAW_PAD
-LV_STYLE_STATE_CMP_DIFF_LAYOUT
-LV_STYLE_STATE_CMP_DIFF_REDRAW
-LV_STYLE_STATE_CMP_SAME
-
-// File: ../../lvgl/src/core/lv_obj_style_gen.h
-
-// File: ../../lvgl/src/core/lv_obj_tree.h
-LV_OBJ_TREE_WALK_END
-LV_OBJ_TREE_WALK_NEXT
-LV_OBJ_TREE_WALK_SKIP_CHILDREN
-
-// File: ../../lvgl/src/core/lv_refr.h
-
-// File: ../../lvgl/src/display/lv_display.h
-LV_DISPLAY_RENDER_MODE_DIRECT
-LV_DISPLAY_RENDER_MODE_FULL
-LV_DISPLAY_RENDER_MODE_PARTIAL
-LV_DISPLAY_ROTATION_0
-LV_DISPLAY_ROTATION_180
-LV_DISPLAY_ROTATION_270
-LV_DISPLAY_ROTATION_90
-LV_SCREEN_LOAD_ANIM_FADE_IN
-LV_SCREEN_LOAD_ANIM_FADE_ON
-LV_SCREEN_LOAD_ANIM_FADE_OUT
-LV_SCREEN_LOAD_ANIM_MOVE_BOTTOM
-LV_SCREEN_LOAD_ANIM_MOVE_LEFT
-LV_SCREEN_LOAD_ANIM_MOVE_RIGHT
-LV_SCREEN_LOAD_ANIM_MOVE_TOP
-LV_SCREEN_LOAD_ANIM_NONE
-LV_SCREEN_LOAD_ANIM_OUT_BOTTOM
-LV_SCREEN_LOAD_ANIM_OUT_LEFT
-LV_SCREEN_LOAD_ANIM_OUT_RIGHT
-LV_SCREEN_LOAD_ANIM_OUT_TOP
-LV_SCREEN_LOAD_ANIM_OVER_BOTTOM
-LV_SCREEN_LOAD_ANIM_OVER_LEFT
-LV_SCREEN_LOAD_ANIM_OVER_RIGHT
-LV_SCREEN_LOAD_ANIM_OVER_TOP
-
-// File: ../../lvgl/src/draw/lv_draw.h
-LV_DRAW_TASK_STATE_BLOCKED
-LV_DRAW_TASK_STATE_FINISHED
-LV_DRAW_TASK_STATE_IN_PROGRESS
-LV_DRAW_TASK_STATE_QUEUED
-LV_DRAW_TASK_STATE_WAITING
-LV_DRAW_TASK_TYPE_ARC
-LV_DRAW_TASK_TYPE_BLUR
-LV_DRAW_TASK_TYPE_BORDER
-LV_DRAW_TASK_TYPE_BOX_SHADOW
-LV_DRAW_TASK_TYPE_FILL
-LV_DRAW_TASK_TYPE_IMAGE
-LV_DRAW_TASK_TYPE_LABEL
-LV_DRAW_TASK_TYPE_LAYER
-LV_DRAW_TASK_TYPE_LETTER
-LV_DRAW_TASK_TYPE_LINE
-LV_DRAW_TASK_TYPE_MASK_BITMAP
-LV_DRAW_TASK_TYPE_MASK_RECTANGLE
-LV_DRAW_TASK_TYPE_NONE
-LV_DRAW_TASK_TYPE_TRIANGLE
-
-// File: ../../lvgl/src/draw/lv_draw_3d.h
-
-// File: ../../lvgl/src/draw/lv_draw_arc.h
-
-// File: ../../lvgl/src/draw/lv_draw_blur.h
-
-// File: ../../lvgl/src/draw/lv_draw_buf.h
-LV_STRIDE_AUTO
-
-// File: ../../lvgl/src/draw/lv_draw_image.h
-
-// File: ../../lvgl/src/draw/lv_draw_label.h
-
-// File: ../../lvgl/src/draw/lv_draw_line.h
-
-// File: ../../lvgl/src/draw/lv_draw_mask.h
-
-// File: ../../lvgl/src/draw/lv_draw_rect.h
-LV_RADIUS_CIRCLE
-
-// File: ../../lvgl/src/draw/lv_draw_triangle.h
-
-// File: ../../lvgl/src/draw/lv_draw_vector.h
-
-// File: ../../lvgl/src/draw/lv_image_decoder.h
-LV_IMAGE_SRC_FILE
-LV_IMAGE_SRC_SYMBOL
-LV_IMAGE_SRC_UNKNOWN
-LV_IMAGE_SRC_VARIABLE
-
-// File: ../../lvgl/src/draw/lv_image_dsc.h
-LV_IMAGE_COMPRESS_LZ4
-LV_IMAGE_COMPRESS_NONE
-LV_IMAGE_COMPRESS_RLE
-LV_IMAGE_FLAGS_ALLOCATED
-LV_IMAGE_FLAGS_COMPRESSED
-LV_IMAGE_FLAGS_CUSTOM_DRAW
-LV_IMAGE_FLAGS_MODIFIABLE
-LV_IMAGE_FLAGS_PREMULTIPLIED
-LV_IMAGE_FLAGS_USER1
-LV_IMAGE_FLAGS_USER2
-LV_IMAGE_FLAGS_USER3
-LV_IMAGE_FLAGS_USER4
-LV_IMAGE_FLAGS_USER5
-LV_IMAGE_FLAGS_USER6
-LV_IMAGE_FLAGS_USER7
-LV_IMAGE_FLAGS_USER8
-LV_IMAGE_HEADER_MAGIC
-
-// File: ../../lvgl/src/layouts/flex/lv_flex.h
-LV_FLEX_ALIGN_CENTER
-LV_FLEX_ALIGN_END
-LV_FLEX_ALIGN_SPACE_AROUND
-LV_FLEX_ALIGN_SPACE_BETWEEN
-LV_FLEX_ALIGN_SPACE_EVENLY
-LV_FLEX_ALIGN_START
-LV_FLEX_FLOW_COLUMN
-LV_FLEX_FLOW_COLUMN_REVERSE
-LV_FLEX_FLOW_COLUMN_WRAP
-LV_FLEX_FLOW_COLUMN_WRAP_REVERSE
-LV_FLEX_FLOW_ROW
-LV_FLEX_FLOW_ROW_REVERSE
-LV_FLEX_FLOW_ROW_WRAP
-LV_FLEX_FLOW_ROW_WRAP_REVERSE
-
-// File: ../../lvgl/src/layouts/grid/lv_grid.h
-LV_GRID_ALIGN_CENTER
-LV_GRID_ALIGN_END
-LV_GRID_ALIGN_SPACE_AROUND
-LV_GRID_ALIGN_SPACE_BETWEEN
-LV_GRID_ALIGN_SPACE_EVENLY
-LV_GRID_ALIGN_START
-LV_GRID_ALIGN_STRETCH
-LV_GRID_CONTENT
-LV_GRID_TEMPLATE_LAST
-
-// File: ../../lvgl/src/layouts/lv_layout.h
-LV_LAYOUT_FLEX
-LV_LAYOUT_GRID
-LV_LAYOUT_LAST
-LV_LAYOUT_NONE
-
-// File: ../../lvgl/src/misc/lv_anim.h
+// File: ../../lvgl/include/lvgl/core/lv_anim.h
 LV_ANIM_PLAYTIME_INFINITE
 LV_ANIM_REPEAT_INFINITE
 
-// File: ../../lvgl/src/misc/lv_anim_timeline.h
+// File: ../../lvgl/include/lvgl/core/lv_anim_timeline.h
 
-// File: ../../lvgl/src/misc/lv_area.h
+// File: ../../lvgl/include/lvgl/core/lv_area.h
 LV_ALIGN_BOTTOM_LEFT
 LV_ALIGN_BOTTOM_MID
 LV_ALIGN_BOTTOM_RIGHT
@@ -486,87 +234,10 @@ LV_DIR_TOP
 LV_DIR_VER
 LV_SIZE_CONTENT
 
-// File: ../../lvgl/src/misc/lv_array.h
-
-// File: ../../lvgl/src/misc/lv_assert.h
-
-// File: ../../lvgl/src/misc/lv_async.h
-
-// File: ../../lvgl/src/misc/lv_bidi.h
-LV_BASE_DIR_AUTO
-LV_BASE_DIR_LTR
-LV_BASE_DIR_NEUTRAL
-LV_BASE_DIR_RTL
-LV_BASE_DIR_WEAK
-
-// File: ../../lvgl/src/misc/lv_circle_buf.h
-
-// File: ../../lvgl/src/misc/lv_color.h
-LV_COLOR_DEPTH
-LV_COLOR_FORMAT_A1
-LV_COLOR_FORMAT_A2
-LV_COLOR_FORMAT_A4
-LV_COLOR_FORMAT_A8
-LV_COLOR_FORMAT_AL88
-LV_COLOR_FORMAT_ARGB1555
-LV_COLOR_FORMAT_ARGB2222
-LV_COLOR_FORMAT_ARGB4444
-LV_COLOR_FORMAT_ARGB8565
-LV_COLOR_FORMAT_ARGB8888
-LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED
-LV_COLOR_FORMAT_I1
-LV_COLOR_FORMAT_I2
-LV_COLOR_FORMAT_I4
-LV_COLOR_FORMAT_I400
-LV_COLOR_FORMAT_I420
-LV_COLOR_FORMAT_I422
-LV_COLOR_FORMAT_I444
-LV_COLOR_FORMAT_I8
-LV_COLOR_FORMAT_L8
-LV_COLOR_FORMAT_NATIVE
-LV_COLOR_FORMAT_NATIVE_WITH_ALPHA
-LV_COLOR_FORMAT_NEMA_TSC12
-LV_COLOR_FORMAT_NEMA_TSC12A
-LV_COLOR_FORMAT_NEMA_TSC4
-LV_COLOR_FORMAT_NEMA_TSC6
-LV_COLOR_FORMAT_NEMA_TSC6A
-LV_COLOR_FORMAT_NEMA_TSC6AP
-LV_COLOR_FORMAT_NEMA_TSC_END
-LV_COLOR_FORMAT_NEMA_TSC_START
-LV_COLOR_FORMAT_NV12
-LV_COLOR_FORMAT_NV21
-LV_COLOR_FORMAT_PROPRIETARY_START
-LV_COLOR_FORMAT_RAW
-LV_COLOR_FORMAT_RAW_ALPHA
-LV_COLOR_FORMAT_RGB565
-LV_COLOR_FORMAT_RGB565A8
-LV_COLOR_FORMAT_RGB565_SWAPPED
-LV_COLOR_FORMAT_RGB888
-LV_COLOR_FORMAT_UNKNOWN
-LV_COLOR_FORMAT_UYVY
-LV_COLOR_FORMAT_XRGB8888
-LV_COLOR_FORMAT_YUV_END
-LV_COLOR_FORMAT_YUV_START
-LV_COLOR_FORMAT_YUY2
-LV_OPA_0
-LV_OPA_10
-LV_OPA_100
-LV_OPA_20
-LV_OPA_30
-LV_OPA_40
-LV_OPA_50
-LV_OPA_60
-LV_OPA_70
-LV_OPA_80
-LV_OPA_90
-LV_OPA_COVER
-LV_OPA_TRANSP
-
-// File: ../../lvgl/src/misc/lv_color_op.h
-
-// File: ../../lvgl/src/misc/lv_event.h
+// File: ../../lvgl/include/lvgl/core/lv_event.h
 LV_EVENT_ALL
 LV_EVENT_CANCEL
+LV_EVENT_CHECKED
 LV_EVENT_CHILD_CHANGED
 LV_EVENT_CHILD_CREATED
 LV_EVENT_CHILD_DELETED
@@ -590,6 +261,10 @@ LV_EVENT_FLUSH_WAIT_FINISH
 LV_EVENT_FLUSH_WAIT_START
 LV_EVENT_FOCUSED
 LV_EVENT_GESTURE
+LV_EVENT_GESTURE_DOWN
+LV_EVENT_GESTURE_LEFT
+LV_EVENT_GESTURE_RIGHT
+LV_EVENT_GESTURE_UP
 LV_EVENT_GET_SELF_SIZE
 LV_EVENT_HIT_TEST
 LV_EVENT_HOVER_LEAVE
@@ -599,6 +274,7 @@ LV_EVENT_INSERT
 LV_EVENT_INVALIDATE_AREA
 LV_EVENT_KEY
 LV_EVENT_LAST
+LV_EVENT_LAST_CUSTOM
 LV_EVENT_LAYOUT_CHANGED
 LV_EVENT_LEAVE
 LV_EVENT_LONG_PRESSED
@@ -632,98 +308,142 @@ LV_EVENT_SINGLE_CLICKED
 LV_EVENT_SIZE_CHANGED
 LV_EVENT_STATE_CHANGED
 LV_EVENT_STYLE_CHANGED
+LV_EVENT_SYNC_FINISH
+LV_EVENT_SYNC_START
+LV_EVENT_SYNC_WAIT_FINISH
+LV_EVENT_SYNC_WAIT_START
 LV_EVENT_TRIPLE_CLICKED
+LV_EVENT_UNCHECKED
 LV_EVENT_UPDATE_LAYOUT_COMPLETED
 LV_EVENT_VALUE_CHANGED
 LV_EVENT_VSYNC
 LV_EVENT_VSYNC_REQUEST
 
-// File: ../../lvgl/src/misc/lv_ext_data.h
+// File: ../../lvgl/include/lvgl/core/lv_ext_data.h
 
-// File: ../../lvgl/src/misc/lv_fs.h
-LV_FS_MODE_RD
-LV_FS_MODE_WR
-LV_FS_RES_BUSY
-LV_FS_RES_DENIED
-LV_FS_RES_DRIVE_LETTER_ALREADY_USED
-LV_FS_RES_FS_ERR
-LV_FS_RES_FULL
-LV_FS_RES_HW_ERR
-LV_FS_RES_INV_PARAM
-LV_FS_RES_LOCKED
-LV_FS_RES_NOT_EX
-LV_FS_RES_NOT_IMP
-LV_FS_RES_OK
-LV_FS_RES_OUT_OF_MEM
-LV_FS_RES_TOUT
-LV_FS_RES_UNKNOWN
-LV_FS_SEEK_CUR
-LV_FS_SEEK_END
-LV_FS_SEEK_SET
+// File: ../../lvgl/include/lvgl/core/lv_group.h
+LV_GROUP_REFOCUS_POLICY_NEXT
+LV_GROUP_REFOCUS_POLICY_PREV
+LV_KEY_BACKSPACE
+LV_KEY_DEL
+LV_KEY_DOWN
+LV_KEY_END
+LV_KEY_ENTER
+LV_KEY_ESC
+LV_KEY_HOME
+LV_KEY_LEFT
+LV_KEY_NEXT
+LV_KEY_PREV
+LV_KEY_RIGHT
+LV_KEY_UP
 
-// File: ../../lvgl/src/misc/lv_grad.h
-LV_GRAD_DIR_CONICAL
-LV_GRAD_DIR_HOR
-LV_GRAD_DIR_LINEAR
-LV_GRAD_DIR_NONE
-LV_GRAD_DIR_RADIAL
-LV_GRAD_DIR_VER
-LV_GRAD_EXTEND_PAD
-LV_GRAD_EXTEND_REFLECT
-LV_GRAD_EXTEND_REPEAT
+// File: ../../lvgl/include/lvgl/core/lv_init.h
 
-// File: ../../lvgl/src/misc/lv_iter.h
+// File: ../../lvgl/include/lvgl/core/lv_matrix.h
 
-// File: ../../lvgl/src/misc/lv_ll.h
+// File: ../../lvgl/include/lvgl/core/lv_obj.h
+LV_OBJ_FLAG_ADV_HITTEST
+LV_OBJ_FLAG_CHECKABLE
+LV_OBJ_FLAG_CLICKABLE
+LV_OBJ_FLAG_CLICK_FOCUSABLE
+LV_OBJ_FLAG_EVENT_BUBBLE
+LV_OBJ_FLAG_EVENT_TRICKLE
+LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
+LV_OBJ_FLAG_FLOATING
+LV_OBJ_FLAG_GESTURE_BUBBLE
+LV_OBJ_FLAG_HIDDEN
+LV_OBJ_FLAG_IGNORE_LAYOUT
+LV_OBJ_FLAG_LAYOUT_1
+LV_OBJ_FLAG_LAYOUT_2
+LV_OBJ_FLAG_OVERFLOW_VISIBLE
+LV_OBJ_FLAG_PRESS_LOCK
+LV_OBJ_FLAG_SCROLLABLE
+LV_OBJ_FLAG_SCROLL_CHAIN
+LV_OBJ_FLAG_SCROLL_CHAIN_HOR
+LV_OBJ_FLAG_SCROLL_CHAIN_VER
+LV_OBJ_FLAG_SCROLL_ELASTIC
+LV_OBJ_FLAG_SCROLL_MOMENTUM
+LV_OBJ_FLAG_SCROLL_ONE
+LV_OBJ_FLAG_SCROLL_ON_FOCUS
+LV_OBJ_FLAG_SCROLL_WITH_ARROW
+LV_OBJ_FLAG_SEND_DRAW_TASK_EVENTS
+LV_OBJ_FLAG_SNAPPABLE
+LV_OBJ_FLAG_STATE_TRICKLE
+LV_OBJ_FLAG_USER_1
+LV_OBJ_FLAG_USER_2
+LV_OBJ_FLAG_USER_3
+LV_OBJ_FLAG_USER_4
+LV_OBJ_FLAG_WIDGET_1
+LV_OBJ_FLAG_WIDGET_2
 
-// File: ../../lvgl/src/misc/lv_log.h
-LV_LOG_LEVEL_ERROR
-LV_LOG_LEVEL_INFO
-LV_LOG_LEVEL_NONE
-LV_LOG_LEVEL_TRACE
-LV_LOG_LEVEL_USER
-LV_LOG_LEVEL_WARN
+// File: ../../lvgl/include/lvgl/core/lv_obj_class.h
+LV_OBJ_CLASS_EDITABLE_FALSE
+LV_OBJ_CLASS_EDITABLE_INHERIT
+LV_OBJ_CLASS_EDITABLE_TRUE
+LV_OBJ_CLASS_GROUP_DEF_FALSE
+LV_OBJ_CLASS_GROUP_DEF_INHERIT
+LV_OBJ_CLASS_GROUP_DEF_TRUE
+LV_OBJ_CLASS_THEME_INHERITABLE_FALSE
+LV_OBJ_CLASS_THEME_INHERITABLE_TRUE
 
-// File: ../../lvgl/src/misc/lv_lru.h
+// File: ../../lvgl/include/lvgl/core/lv_obj_draw.h
+LV_LAYER_TYPE_NONE
+LV_LAYER_TYPE_SIMPLE
+LV_LAYER_TYPE_TRANSFORM
 
-// File: ../../lvgl/src/misc/lv_math.h
+// File: ../../lvgl/include/lvgl/core/lv_obj_event.h
+LV_COVER_RES_COVER
+LV_COVER_RES_MASKED
+LV_COVER_RES_NOT_COVER
 
-// File: ../../lvgl/src/misc/lv_matrix.h
+// File: ../../lvgl/include/lvgl/core/lv_obj_pos.h
+LV_OBJ_POINT_TRANSFORM_FLAG_INVERSE
+LV_OBJ_POINT_TRANSFORM_FLAG_INVERSE_RECURSIVE
+LV_OBJ_POINT_TRANSFORM_FLAG_NONE
+LV_OBJ_POINT_TRANSFORM_FLAG_RECURSIVE
 
-// File: ../../lvgl/src/misc/lv_palette.h
-LV_PALETTE_AMBER
-LV_PALETTE_BLUE
-LV_PALETTE_BLUE_GREY
-LV_PALETTE_BROWN
-LV_PALETTE_CYAN
-LV_PALETTE_DEEP_ORANGE
-LV_PALETTE_DEEP_PURPLE
-LV_PALETTE_GREEN
-LV_PALETTE_GREY
-LV_PALETTE_INDIGO
-LV_PALETTE_LAST
-LV_PALETTE_LIGHT_BLUE
-LV_PALETTE_LIGHT_GREEN
-LV_PALETTE_LIME
-LV_PALETTE_NONE
-LV_PALETTE_ORANGE
-LV_PALETTE_PINK
-LV_PALETTE_PURPLE
-LV_PALETTE_RED
-LV_PALETTE_TEAL
-LV_PALETTE_YELLOW
+// File: ../../lvgl/include/lvgl/core/lv_obj_scroll.h
+LV_SCROLLBAR_MODE_ACTIVE
+LV_SCROLLBAR_MODE_AUTO
+LV_SCROLLBAR_MODE_OFF
+LV_SCROLLBAR_MODE_ON
+LV_SCROLL_SNAP_CENTER
+LV_SCROLL_SNAP_END
+LV_SCROLL_SNAP_NONE
+LV_SCROLL_SNAP_START
 
-// File: ../../lvgl/src/misc/lv_pending.h
+// File: ../../lvgl/include/lvgl/core/lv_obj_style.h
+LV_PART_ANY
+LV_PART_CURSOR
+LV_PART_CUSTOM_FIRST
+LV_PART_INDICATOR
+LV_PART_ITEMS
+LV_PART_KNOB
+LV_PART_MAIN
+LV_PART_SCROLLBAR
+LV_PART_SELECTED
+LV_STATE_ALT
+LV_STATE_ANY
+LV_STATE_CHECKED
+LV_STATE_DEFAULT
+LV_STATE_DISABLED
+LV_STATE_EDITED
+LV_STATE_FOCUSED
+LV_STATE_FOCUS_KEY
+LV_STATE_HOVERED
+LV_STATE_PRESSED
+LV_STATE_SCROLLED
 
-// File: ../../lvgl/src/misc/lv_profiler.h
+// File: ../../lvgl/include/lvgl/core/lv_obj_style_gen.h
 
-// File: ../../lvgl/src/misc/lv_profiler_builtin.h
+// File: ../../lvgl/include/lvgl/core/lv_obj_tree.h
+LV_OBJ_TREE_WALK_END
+LV_OBJ_TREE_WALK_NEXT
+LV_OBJ_TREE_WALK_SKIP_CHILDREN
 
-// File: ../../lvgl/src/misc/lv_rb.h
-LV_RB_COLOR_BLACK
-LV_RB_COLOR_RED
+// File: ../../lvgl/include/lvgl/core/lv_refr.h
 
-// File: ../../lvgl/src/misc/lv_style.h
+// File: ../../lvgl/include/lvgl/core/lv_style.h
 LV_BLEND_MODE_ADDITIVE
 LV_BLEND_MODE_DIFFERENCE
 LV_BLEND_MODE_MULTIPLY
@@ -853,6 +573,7 @@ LV_STYLE_TEXT_ALIGN
 LV_STYLE_TEXT_COLOR
 LV_STYLE_TEXT_DECOR
 LV_STYLE_TEXT_FONT
+LV_STYLE_TEXT_LEADING_TRIM
 LV_STYLE_TEXT_LETTER_SPACE
 LV_STYLE_TEXT_LINE_SPACE
 LV_STYLE_TEXT_OPA
@@ -879,11 +600,178 @@ LV_TEXT_DECOR_NONE
 LV_TEXT_DECOR_STRIKETHROUGH
 LV_TEXT_DECOR_UNDERLINE
 
-// File: ../../lvgl/src/misc/lv_style_gen.h
+// File: ../../lvgl/include/lvgl/core/lv_style_gen.h
 
-// File: ../../lvgl/src/misc/lv_templ.h
+// File: ../../lvgl/include/lvgl/core/lv_timer.h
 
-// File: ../../lvgl/src/misc/lv_text.h
+// File: ../../lvgl/include/lvgl/core/lv_translation.h
+
+// File: ../../lvgl/include/lvgl/debugging/lv_assert.h
+
+// File: ../../lvgl/include/lvgl/debugging/profiler/lv_profiler.h
+
+// File: ../../lvgl/include/lvgl/debugging/profiler/lv_profiler_builtin.h
+
+// File: ../../lvgl/include/lvgl/display/lv_display.h
+LV_DISPLAY_RENDER_MODE_DIRECT
+LV_DISPLAY_RENDER_MODE_FULL
+LV_DISPLAY_RENDER_MODE_PARTIAL
+LV_DISPLAY_ROTATION_0
+LV_DISPLAY_ROTATION_180
+LV_DISPLAY_ROTATION_270
+LV_DISPLAY_ROTATION_90
+LV_SCREEN_LOAD_ANIM_FADE_IN
+LV_SCREEN_LOAD_ANIM_FADE_ON
+LV_SCREEN_LOAD_ANIM_FADE_OUT
+LV_SCREEN_LOAD_ANIM_MOVE_BOTTOM
+LV_SCREEN_LOAD_ANIM_MOVE_LEFT
+LV_SCREEN_LOAD_ANIM_MOVE_RIGHT
+LV_SCREEN_LOAD_ANIM_MOVE_TOP
+LV_SCREEN_LOAD_ANIM_NONE
+LV_SCREEN_LOAD_ANIM_OUT_BOTTOM
+LV_SCREEN_LOAD_ANIM_OUT_LEFT
+LV_SCREEN_LOAD_ANIM_OUT_RIGHT
+LV_SCREEN_LOAD_ANIM_OUT_TOP
+LV_SCREEN_LOAD_ANIM_OVER_BOTTOM
+LV_SCREEN_LOAD_ANIM_OVER_LEFT
+LV_SCREEN_LOAD_ANIM_OVER_RIGHT
+LV_SCREEN_LOAD_ANIM_OVER_TOP
+
+// File: ../../lvgl/include/lvgl/draw/lv_color.h
+LV_COLOR_DEPTH
+LV_COLOR_FORMAT_A1
+LV_COLOR_FORMAT_A2
+LV_COLOR_FORMAT_A4
+LV_COLOR_FORMAT_A8
+LV_COLOR_FORMAT_AL88
+LV_COLOR_FORMAT_ARGB1555
+LV_COLOR_FORMAT_ARGB2222
+LV_COLOR_FORMAT_ARGB4444
+LV_COLOR_FORMAT_ARGB8565
+LV_COLOR_FORMAT_ARGB8888
+LV_COLOR_FORMAT_ARGB8888_PREMULTIPLIED
+LV_COLOR_FORMAT_I1
+LV_COLOR_FORMAT_I2
+LV_COLOR_FORMAT_I4
+LV_COLOR_FORMAT_I400
+LV_COLOR_FORMAT_I420
+LV_COLOR_FORMAT_I422
+LV_COLOR_FORMAT_I444
+LV_COLOR_FORMAT_I8
+LV_COLOR_FORMAT_L8
+LV_COLOR_FORMAT_NEMA_TSC12
+LV_COLOR_FORMAT_NEMA_TSC12A
+LV_COLOR_FORMAT_NEMA_TSC4
+LV_COLOR_FORMAT_NEMA_TSC6
+LV_COLOR_FORMAT_NEMA_TSC6A
+LV_COLOR_FORMAT_NEMA_TSC6AP
+LV_COLOR_FORMAT_NEMA_TSC_END
+LV_COLOR_FORMAT_NEMA_TSC_START
+LV_COLOR_FORMAT_NV12
+LV_COLOR_FORMAT_NV21
+LV_COLOR_FORMAT_PROPRIETARY_START
+LV_COLOR_FORMAT_RAW
+LV_COLOR_FORMAT_RAW_ALPHA
+LV_COLOR_FORMAT_RGB565
+LV_COLOR_FORMAT_RGB565A8
+LV_COLOR_FORMAT_RGB565_SWAPPED
+LV_COLOR_FORMAT_RGB888
+LV_COLOR_FORMAT_UNKNOWN
+LV_COLOR_FORMAT_UYVY
+LV_COLOR_FORMAT_XRGB8888
+LV_COLOR_FORMAT_YUV_END
+LV_COLOR_FORMAT_YUV_START
+LV_COLOR_FORMAT_YUY2
+LV_OPA_0
+LV_OPA_10
+LV_OPA_100
+LV_OPA_20
+LV_OPA_30
+LV_OPA_40
+LV_OPA_50
+LV_OPA_60
+LV_OPA_70
+LV_OPA_80
+LV_OPA_90
+LV_OPA_COVER
+LV_OPA_TRANSP
+
+// File: ../../lvgl/include/lvgl/draw/lv_color_op.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_3d.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_arc.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_blur.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_buf.h
+LV_STRIDE_AUTO
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_image.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_label.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_line.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_mask.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_rect.h
+LV_RADIUS_CIRCLE
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_triangle.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_utils.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_draw_vector.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_grad.h
+LV_GRAD_DIR_CONICAL
+LV_GRAD_DIR_HOR
+LV_GRAD_DIR_LINEAR
+LV_GRAD_DIR_NONE
+LV_GRAD_DIR_RADIAL
+LV_GRAD_DIR_VER
+LV_GRAD_EXTEND_PAD
+LV_GRAD_EXTEND_REFLECT
+LV_GRAD_EXTEND_REPEAT
+
+// File: ../../lvgl/include/lvgl/draw/lv_image_dsc.h
+
+// File: ../../lvgl/include/lvgl/draw/lv_palette.h
+LV_PALETTE_AMBER
+LV_PALETTE_BLUE
+LV_PALETTE_BLUE_GREY
+LV_PALETTE_BROWN
+LV_PALETTE_CYAN
+LV_PALETTE_DEEP_ORANGE
+LV_PALETTE_DEEP_PURPLE
+LV_PALETTE_GREEN
+LV_PALETTE_GREY
+LV_PALETTE_INDIGO
+LV_PALETTE_LAST
+LV_PALETTE_LIGHT_BLUE
+LV_PALETTE_LIGHT_GREEN
+LV_PALETTE_LIME
+LV_PALETTE_NONE
+LV_PALETTE_ORANGE
+LV_PALETTE_PINK
+LV_PALETTE_PURPLE
+LV_PALETTE_RED
+LV_PALETTE_TEAL
+LV_PALETTE_YELLOW
+
+// File: ../../lvgl/include/lvgl/draw/lv_snapshot.h
+
+// File: ../../lvgl/include/lvgl/font/lv_bidi.h
+LV_BASE_DIR_AUTO
+LV_BASE_DIR_LTR
+LV_BASE_DIR_NEUTRAL
+LV_BASE_DIR_RTL
+LV_BASE_DIR_WEAK
+
+// File: ../../lvgl/include/lvgl/font/lv_text.h
 LV_TEXT_ALIGN_AUTO
 LV_TEXT_ALIGN_CENTER
 LV_TEXT_ALIGN_LEFT
@@ -893,30 +781,70 @@ LV_TEXT_FLAG_EXPAND
 LV_TEXT_FLAG_FIT
 LV_TEXT_FLAG_NONE
 LV_TEXT_FLAG_RECOLOR
+LV_TEXT_LEADING_TRIM_CAPITAL
+LV_TEXT_LEADING_TRIM_CAPITAL_BASELINE
+LV_TEXT_LEADING_TRIM_LOWER
+LV_TEXT_LEADING_TRIM_LOWER_BASELINE
+LV_TEXT_LEADING_TRIM_NONE
 
-// File: ../../lvgl/src/misc/lv_text_ap.h
+// File: ../../lvgl/include/lvgl/fs/lv_fs.h
 
-// File: ../../lvgl/src/misc/lv_timer.h
+// File: ../../lvgl/include/lvgl/image/lv_image_decoder.h
 
-// File: ../../lvgl/src/misc/lv_tree.h
-LV_TREE_WALK_POST_ORDER
-LV_TREE_WALK_PRE_ORDER
+// File: ../../lvgl/include/lvgl/layouts/lv_flex.h
+LV_FLEX_ALIGN_CENTER
+LV_FLEX_ALIGN_END
+LV_FLEX_ALIGN_SPACE_AROUND
+LV_FLEX_ALIGN_SPACE_BETWEEN
+LV_FLEX_ALIGN_SPACE_EVENLY
+LV_FLEX_ALIGN_START
+LV_FLEX_FLOW_COLUMN
+LV_FLEX_FLOW_COLUMN_REVERSE
+LV_FLEX_FLOW_COLUMN_WRAP
+LV_FLEX_FLOW_COLUMN_WRAP_REVERSE
+LV_FLEX_FLOW_ROW
+LV_FLEX_FLOW_ROW_REVERSE
+LV_FLEX_FLOW_ROW_WRAP
+LV_FLEX_FLOW_ROW_WRAP_REVERSE
 
-// File: ../../lvgl/src/misc/lv_types.h
+// File: ../../lvgl/include/lvgl/layouts/lv_grid.h
+LV_GRID_ALIGN_CENTER
+LV_GRID_ALIGN_END
+LV_GRID_ALIGN_SPACE_AROUND
+LV_GRID_ALIGN_SPACE_BETWEEN
+LV_GRID_ALIGN_SPACE_EVENLY
+LV_GRID_ALIGN_START
+LV_GRID_ALIGN_STRETCH
+LV_GRID_CONTENT
+LV_GRID_TEMPLATE_LAST
+
+// File: ../../lvgl/include/lvgl/layouts/lv_layout.h
+LV_LAYOUT_FLEX
+LV_LAYOUT_GRID
+LV_LAYOUT_LAST
+LV_LAYOUT_NONE
+
+// File: ../../lvgl/include/lvgl/logging/lv_log.h
+
+// File: ../../lvgl/include/lvgl/lv_types.h
 LV_RESULT_INVALID
 LV_RESULT_OK
 
-// File: ../../lvgl/src/misc/lv_utils.h
+// File: ../../lvgl/include/lvgl/misc/lv_async.h
 
-// File: ../../lvgl/src/widgets/animimage/lv_animimage.h
+// File: ../../lvgl/include/lvgl/misc/lv_ll.h
+
+// File: ../../lvgl/include/lvgl/misc/lv_math.h
+
+// File: ../../lvgl/include/lvgl/widgets/lv_animimage.h
 LV_ANIM_IMAGE_PART_MAIN
 
-// File: ../../lvgl/src/widgets/arc/lv_arc.h
+// File: ../../lvgl/include/lvgl/widgets/lv_arc.h
 LV_ARC_MODE_NORMAL
 LV_ARC_MODE_REVERSE
 LV_ARC_MODE_SYMMETRICAL
 
-// File: ../../lvgl/src/widgets/arclabel/lv_arclabel.h
+// File: ../../lvgl/include/lvgl/widgets/lv_arclabel.h
 LV_ARCLABEL_DIR_CLOCKWISE
 LV_ARCLABEL_DIR_COUNTER_CLOCKWISE
 LV_ARCLABEL_OVERFLOW_CLIP
@@ -927,7 +855,7 @@ LV_ARCLABEL_TEXT_ALIGN_DEFAULT
 LV_ARCLABEL_TEXT_ALIGN_LEADING
 LV_ARCLABEL_TEXT_ALIGN_TRAILING
 
-// File: ../../lvgl/src/widgets/bar/lv_bar.h
+// File: ../../lvgl/include/lvgl/widgets/lv_bar.h
 LV_BAR_MODE_NORMAL
 LV_BAR_MODE_RANGE
 LV_BAR_MODE_SYMMETRICAL
@@ -935,9 +863,9 @@ LV_BAR_ORIENTATION_AUTO
 LV_BAR_ORIENTATION_HORIZONTAL
 LV_BAR_ORIENTATION_VERTICAL
 
-// File: ../../lvgl/src/widgets/button/lv_button.h
+// File: ../../lvgl/include/lvgl/widgets/lv_button.h
 
-// File: ../../lvgl/src/widgets/buttonmatrix/lv_buttonmatrix.h
+// File: ../../lvgl/include/lvgl/widgets/lv_buttonmatrix.h
 LV_BUTTONMATRIX_BUTTON_NONE
 LV_BUTTONMATRIX_CTRL_CHECKABLE
 LV_BUTTONMATRIX_CTRL_CHECKED
@@ -968,17 +896,17 @@ LV_BUTTONMATRIX_CTRL_WIDTH_7
 LV_BUTTONMATRIX_CTRL_WIDTH_8
 LV_BUTTONMATRIX_CTRL_WIDTH_9
 
-// File: ../../lvgl/src/widgets/calendar/lv_calendar.h
+// File: ../../lvgl/include/lvgl/widgets/lv_calendar.h
 
-// File: ../../lvgl/src/widgets/calendar/lv_calendar_chinese.h
+// File: ../../lvgl/include/lvgl/widgets/lv_calendar_chinese.h
 
-// File: ../../lvgl/src/widgets/calendar/lv_calendar_header_arrow.h
+// File: ../../lvgl/include/lvgl/widgets/lv_calendar_header_arrow.h
 
-// File: ../../lvgl/src/widgets/calendar/lv_calendar_header_dropdown.h
+// File: ../../lvgl/include/lvgl/widgets/lv_calendar_header_dropdown.h
 
-// File: ../../lvgl/src/widgets/canvas/lv_canvas.h
+// File: ../../lvgl/include/lvgl/widgets/lv_canvas.h
 
-// File: ../../lvgl/src/widgets/chart/lv_chart.h
+// File: ../../lvgl/include/lvgl/widgets/lv_chart.h
 LV_CHART_AXIS_LAST
 LV_CHART_AXIS_PRIMARY_X
 LV_CHART_AXIS_PRIMARY_Y
@@ -994,17 +922,18 @@ LV_CHART_TYPE_STACKED
 LV_CHART_UPDATE_MODE_CIRCULAR
 LV_CHART_UPDATE_MODE_SHIFT
 
-// File: ../../lvgl/src/widgets/checkbox/lv_checkbox.h
+// File: ../../lvgl/include/lvgl/widgets/lv_checkbox.h
 
-// File: ../../lvgl/src/widgets/dropdown/lv_dropdown.h
+// File: ../../lvgl/include/lvgl/widgets/lv_dropdown.h
 LV_DROPDOWN_POS_LAST
 
-// File: ../../lvgl/src/widgets/image/lv_image.h
+// File: ../../lvgl/include/lvgl/widgets/lv_image.h
 LV_IMAGE_ALIGN_BOTTOM_LEFT
 LV_IMAGE_ALIGN_BOTTOM_MID
 LV_IMAGE_ALIGN_BOTTOM_RIGHT
 LV_IMAGE_ALIGN_CENTER
 LV_IMAGE_ALIGN_CONTAIN
+LV_IMAGE_ALIGN_CONTAIN_DOWNSCALE
 LV_IMAGE_ALIGN_COVER
 LV_IMAGE_ALIGN_DEFAULT
 LV_IMAGE_ALIGN_LEFT_MID
@@ -1015,7 +944,7 @@ LV_IMAGE_ALIGN_TOP_LEFT
 LV_IMAGE_ALIGN_TOP_MID
 LV_IMAGE_ALIGN_TOP_RIGHT
 
-// File: ../../lvgl/src/widgets/imagebutton/lv_imagebutton.h
+// File: ../../lvgl/include/lvgl/widgets/lv_imagebutton.h
 LV_IMAGEBUTTON_STATE_CHECKED_DISABLED
 LV_IMAGEBUTTON_STATE_CHECKED_PRESSED
 LV_IMAGEBUTTON_STATE_CHECKED_RELEASED
@@ -1024,7 +953,7 @@ LV_IMAGEBUTTON_STATE_NUM
 LV_IMAGEBUTTON_STATE_PRESSED
 LV_IMAGEBUTTON_STATE_RELEASED
 
-// File: ../../lvgl/src/widgets/keyboard/lv_keyboard.h
+// File: ../../lvgl/include/lvgl/widgets/lv_keyboard.h
 LV_KEYBOARD_MODE_NUMBER
 LV_KEYBOARD_MODE_SPECIAL
 LV_KEYBOARD_MODE_TEXT_LOWER
@@ -1034,7 +963,7 @@ LV_KEYBOARD_MODE_USER_2
 LV_KEYBOARD_MODE_USER_3
 LV_KEYBOARD_MODE_USER_4
 
-// File: ../../lvgl/src/widgets/label/lv_label.h
+// File: ../../lvgl/include/lvgl/widgets/lv_label.h
 LV_LABEL_DOT_NUM
 LV_LABEL_LONG_MODE_CLIP
 LV_LABEL_LONG_MODE_DOTS
@@ -1044,28 +973,30 @@ LV_LABEL_LONG_MODE_WRAP
 LV_LABEL_POS_LAST
 LV_LABEL_TEXT_SELECTION_OFF
 
-// File: ../../lvgl/src/widgets/led/lv_led.h
+// File: ../../lvgl/include/lvgl/widgets/lv_led.h
 
-// File: ../../lvgl/src/widgets/line/lv_line.h
+// File: ../../lvgl/include/lvgl/widgets/lv_line.h
 
-// File: ../../lvgl/src/widgets/list/lv_list.h
+// File: ../../lvgl/include/lvgl/widgets/lv_list.h
 
-// File: ../../lvgl/src/widgets/menu/lv_menu.h
+// File: ../../lvgl/include/lvgl/widgets/lv_menu.h
 LV_MENU_HEADER_BOTTOM_FIXED
 LV_MENU_HEADER_TOP_FIXED
 LV_MENU_HEADER_TOP_UNFIXED
 LV_MENU_ROOT_BACK_BUTTON_DISABLED
 LV_MENU_ROOT_BACK_BUTTON_ENABLED
 
-// File: ../../lvgl/src/widgets/msgbox/lv_msgbox.h
+// File: ../../lvgl/include/lvgl/widgets/lv_msgbox.h
 
-// File: ../../lvgl/src/widgets/objx_templ/lv_objx_templ.h
+// File: ../../lvgl/include/lvgl/widgets/lv_qrcode.h
+LV_QRCODE_UPDATE_MODE_DEFERRED
+LV_QRCODE_UPDATE_MODE_IMMEDIATE
 
-// File: ../../lvgl/src/widgets/roller/lv_roller.h
+// File: ../../lvgl/include/lvgl/widgets/lv_roller.h
 LV_ROLLER_MODE_INFINITE
 LV_ROLLER_MODE_NORMAL
 
-// File: ../../lvgl/src/widgets/scale/lv_scale.h
+// File: ../../lvgl/include/lvgl/widgets/lv_scale.h
 LV_SCALE_LABEL_ENABLED_DEFAULT
 LV_SCALE_LABEL_ROTATE_KEEP_UPRIGHT
 LV_SCALE_LABEL_ROTATE_MATCH_TICKS
@@ -1080,7 +1011,7 @@ LV_SCALE_MODE_VERTICAL_RIGHT
 LV_SCALE_ROTATION_ANGLE_MASK
 LV_SCALE_TOTAL_TICK_COUNT_DEFAULT
 
-// File: ../../lvgl/src/widgets/slider/lv_slider.h
+// File: ../../lvgl/include/lvgl/widgets/lv_slider.h
 LV_SLIDER_MODE_NORMAL
 LV_SLIDER_MODE_RANGE
 LV_SLIDER_MODE_SYMMETRICAL
@@ -1088,7 +1019,7 @@ LV_SLIDER_ORIENTATION_AUTO
 LV_SLIDER_ORIENTATION_HORIZONTAL
 LV_SLIDER_ORIENTATION_VERTICAL
 
-// File: ../../lvgl/src/widgets/span/lv_span.h
+// File: ../../lvgl/include/lvgl/widgets/lv_span.h
 LV_SPAN_MODE_BREAK
 LV_SPAN_MODE_EXPAND
 LV_SPAN_MODE_FIXED
@@ -1097,16 +1028,16 @@ LV_SPAN_OVERFLOW_CLIP
 LV_SPAN_OVERFLOW_ELLIPSIS
 LV_SPAN_OVERFLOW_LAST
 
-// File: ../../lvgl/src/widgets/spinbox/lv_spinbox.h
+// File: ../../lvgl/include/lvgl/widgets/lv_spinbox.h
 
-// File: ../../lvgl/src/widgets/spinner/lv_spinner.h
+// File: ../../lvgl/include/lvgl/widgets/lv_spinner.h
 
-// File: ../../lvgl/src/widgets/switch/lv_switch.h
+// File: ../../lvgl/include/lvgl/widgets/lv_switch.h
 LV_SWITCH_ORIENTATION_AUTO
 LV_SWITCH_ORIENTATION_HORIZONTAL
 LV_SWITCH_ORIENTATION_VERTICAL
 
-// File: ../../lvgl/src/widgets/table/lv_table.h
+// File: ../../lvgl/include/lvgl/widgets/lv_table.h
 LV_TABLE_CELL_CTRL_CUSTOM_1
 LV_TABLE_CELL_CTRL_CUSTOM_2
 LV_TABLE_CELL_CTRL_CUSTOM_3
@@ -1116,13 +1047,13 @@ LV_TABLE_CELL_CTRL_NONE
 LV_TABLE_CELL_CTRL_TEXT_CROP
 LV_TABLE_CELL_NONE
 
-// File: ../../lvgl/src/widgets/tabview/lv_tabview.h
+// File: ../../lvgl/include/lvgl/widgets/lv_tabview.h
 
-// File: ../../lvgl/src/widgets/textarea/lv_textarea.h
+// File: ../../lvgl/include/lvgl/widgets/lv_textarea.h
 LV_PART_TEXTAREA_PLACEHOLDER
 LV_TEXTAREA_CURSOR_LAST
 
-// File: ../../lvgl/src/widgets/tileview/lv_tileview.h
+// File: ../../lvgl/include/lvgl/widgets/lv_tileview.h
 
-// File: ../../lvgl/src/widgets/win/lv_win.h
+// File: ../../lvgl/include/lvgl/widgets/lv_win.h
 

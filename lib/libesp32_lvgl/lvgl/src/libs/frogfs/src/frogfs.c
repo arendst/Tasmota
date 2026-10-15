@@ -8,22 +8,12 @@
  * tool that comes with this source distribution.
  */
 
-#include "../../../lv_conf_internal.h"
+#include "../../../lvgl_public.h"
 #if LV_USE_FS_FROGFS
-
-#include LV_INTTYPES_INCLUDE
-#include LV_LIMITS_INCLUDE
-#include LV_STDINT_INCLUDE
-#include "../../../stdlib/lv_string.h"
-#include "../../../stdlib/lv_mem.h"
-#include "../../../misc/lv_log.h"
-#include "../../../misc/lv_assert.h"
-#include "../../../misc/lv_fs.h"
 
 #include "frogfs_priv.h"
 #include "frogfs_format.h"
 #include "../include/frogfs/frogfs.h"
-
 
 typedef struct frogfs_fs_t {
     const frogfs_head_t *head; /**< fs header pointer */
@@ -337,7 +327,7 @@ int frogfs_is_raw(frogfs_fh_t *fh)
     return !!(fh->flags & FROGFS_OPEN_RAW);
 }
 
-ssize_t frogfs_read(frogfs_fh_t *fh, void *buf, size_t len)
+frogfs_ssize_t frogfs_read(frogfs_fh_t *fh, void *buf, size_t len)
 {
     LV_ASSERT_NULL(fh);
 
@@ -348,7 +338,7 @@ ssize_t frogfs_read(frogfs_fh_t *fh, void *buf, size_t len)
     return -1;
 }
 
-ssize_t frogfs_seek(frogfs_fh_t *fh, long offset, int mode)
+frogfs_ssize_t frogfs_seek(frogfs_fh_t *fh, long offset, int mode)
 {
     LV_ASSERT_NULL(fh);
 

@@ -1,19 +1,15 @@
 #ifndef LV_GLTFDATA_HPP
 #define LV_GLTFDATA_HPP
 
-#include "../../../lv_conf_internal.h"
+#include "../../../lvgl_public.h"
 
 #if LV_USE_GLTF
 
-#include "../gltf_view/lv_gltf.h"
 #include "lv_gltf_data_internal.h"
 
-#include "../../../misc/lv_array.h"
 #include "../../../drivers/opengles/lv_opengles_private.h"
-
-#include "../../../misc/lv_types.h"
-#include "../../../misc/lv_ll.h"
-#include "../../../misc/lv_event.h"
+#include "../../../misc/lv_array.h"
+#include "../../../misc/lv_event_private.h"
 
 #ifdef __cplusplus
 
@@ -43,8 +39,6 @@ using NodePairVector = std::vector<NodeIndexPair>;
 using NodeDistanceVector = std::vector<NodeIndexDistancePair>;
 // Map of uint32_t to NodePairVector
 using MaterialIndexMap = std::map<uint32_t, NodePairVector>;
-// Map of Node Pointers to Transforms
-using NodeTransformMap = std::map<NodePtr, Transform>;
 // Map of Nodes by string (name)
 using StringNodeMap = std::map<std::string, NodePtr>;
 // Map of Nodes by string (name)
@@ -53,6 +47,10 @@ using NodeIntMap = std::map<NodePtr, uint32_t>;
 using NodeVector = std::vector<NodePtr>;
 // Map of Node Index to Map of Prim Index to CenterXYZ+RadiusW Vec4
 using NodePrimCenterMap = std::map<uint32_t, std::map<uint32_t, fastgltf::math::fvec4> >;
+// Map of Node Pointers to Transforms
+using NodeTransformMap = std::map<fastgltf::Node *, fastgltf::math::fmat4x4>;
+
+using IbmBySkinThenNodeMap = std::map<int32_t, std::map<fastgltf::Node *, fastgltf::math::fmat4x4>>;
 
 #define LV_GLTF_NODE_CHANNEL_X 0
 #define LV_GLTF_NODE_CHANNEL_Y 1
@@ -105,17 +103,17 @@ struct _lv_gltf_model_t {
     fastgltf::Asset asset;
     lv_array_t nodes;
     NodeVector node_by_light_index;
-    NodeTransformMap node_transform_cache;
+    NodeTransformMap transforms;
     MaterialIndexMap opaque_nodes_by_material_index;
     MaterialIndexMap blended_nodes_by_material_index;
+    IbmBySkinThenNodeMap ibm_by_skin_then_node;
     std::vector<size_t> validated_skins;
     std::vector<GLuint> skin_tex;
     NodePrimCenterMap local_mesh_to_center_points_by_primitive;
-    lv_gltf_t * viewer;
+    lv_array_t viewers;
 
     std::vector<lv_gltf_mesh_data_t> meshes;
     std::vector<GLuint> textures;
-    lv_array_t compiled_shaders;
     std::map<fastgltf::Node *, std::vector<uint32_t> > channel_set_cache;
     fastgltf::math::fmat4x4 view_mat;
     fastgltf::math::fvec3 view_pos;
@@ -126,9 +124,8 @@ struct _lv_gltf_model_t {
     lv_timer_t * animation_update_timer;
 
     size_t current_animation;
-    size_t last_material_index;
 
-    uint32_t last_camera_index;
+    uint32_t animation_speed_ratio;
     int32_t last_anim_num;
 
     float bound_radius;
@@ -138,11 +135,8 @@ struct _lv_gltf_model_t {
     uint32_t last_tick;
     uint32_t camera;
 
+    bool transforms_changed;
     bool is_animation_enabled;
-    bool last_pass_was_transmission;
-    bool last_frame_was_antialiased;
-    bool last_frame_no_motion;
-    bool _last_frame_no_motion;
     bool write_ops_pending;
     bool write_ops_flushed;
     struct _lv_gltf_model_t * linked_view_source;
@@ -169,7 +163,7 @@ fastgltf::math::fvec3 lv_gltf_data_get_bounds_min(const lv_gltf_model_t * data);
 /**
  * @brief Retrieve the maximum bounds (X/Y/Z) of the model from the GLTF data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
  * @return Pointer to a 3-element float array representing the maximum bounds.
  */
 fastgltf::math::fvec3 lv_gltf_data_get_bounds_max(const lv_gltf_model_t * data);
@@ -177,7 +171,7 @@ fastgltf::math::fvec3 lv_gltf_data_get_bounds_max(const lv_gltf_model_t * data);
 /**
  * @brief Retrieve the center coordinates of the GLTF data object.
  *
- * @param D Pointer to the lv_gltf_data_t object from which to get the center.
+ * @param data Pointer to the lv_gltf_data_t object from which to get the center.
  * @return Pointer to an array containing the center coordinates (x, y, z).
  */
 fastgltf::math::fvec3 lv_gltf_data_get_center(const lv_gltf_model_t * data);
@@ -185,34 +179,25 @@ fastgltf::math::fvec3 lv_gltf_data_get_center(const lv_gltf_model_t * data);
 /**
  * @brief Retrieve the filename of the GLTF model.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
  * @return Pointer to a constant character string representing the filename.
  */
 const char * lv_gltf_get_filename(const lv_gltf_model_t * data);
 
-/**
- * @brief Check if the centerpoint cache contains a specific entry.
- *
- * @param data Pointer to the lv_gltf_data_t object containing the model data.
- * @param index The index of the entry to check.
- * @param element The specific parameter to check within the cache.
- * @return True if the cache contains the entry, false otherwise.
- */
-bool lv_gltf_data_centerpoint_cache_contains(lv_gltf_model_t * data, size_t index, int32_t element);
 
 /**
  * @brief Retrieve a specific primitive from a mesh.
  *
- * @param M Pointer to the MeshData structure containing the mesh data.
- * @param I The index of the primitive to retrieve.
+ * @param mesh Pointer to the MeshData structure containing the mesh data.
+ * @param index The index of the primitive to retrieve.
  * @return Pointer to the primitive data.
  */
-lv_gltf_primitive_t * lv_gltf_data_get_primitive_from_mesh(lv_gltf_mesh_data_t * M, size_t I);
+lv_gltf_primitive_t * lv_gltf_data_get_primitive_from_mesh(lv_gltf_mesh_data_t * mesh, size_t index);
 
 /**
  * @brief Retrieve the asset associated with the GLTF model data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
  * @return Pointer to the asset data.
  */
 fastgltf::Asset * lv_gltf_data_get_asset(lv_gltf_model_t * data);
@@ -220,8 +205,8 @@ fastgltf::Asset * lv_gltf_data_get_asset(lv_gltf_model_t * data);
 /**
  * @brief Retrieve mesh data for a specific index from the GLTF model data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param I The index of the mesh data to retrieve.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
+ * @param index The index of the mesh data to retrieve.
  * @return Pointer to the MeshData structure containing the mesh data.
  */
 lv_gltf_mesh_data_t * lv_gltf_data_get_mesh(lv_gltf_model_t * data, size_t index);
@@ -253,73 +238,41 @@ bool lv_gltf_data_validated_skins_contains(lv_gltf_model_t * data, size_t index)
 void lv_gltf_data_validate_skin(lv_gltf_model_t * data, size_t index);
 
 /**
+ * @brief Drop the draw lists built by a previous parse of this model.
+ *
+ * The lists are rebuilt from the model every time it is parsed for a viewer, so they have
+ * to be emptied first or a model parsed twice would draw every primitive twice.
+ *
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
+ */
+void lv_gltf_data_clear_node_primitives(lv_gltf_model_t * data);
+
+/**
  * @brief Add an opaque node primitive to the GLTF model data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param I The index of the primitive to add.
- * @param N Pointer to the NodePtr representing the node to add.
- * @param P The specific parameter associated with the primitive.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
+ * @param material_index The index of the primitive to add.
+ * @param node Pointer to the NodePtr representing the node to add.
+ * @param primitive_index The specific parameter associated with the primitive.
  */
-void lv_gltf_data_add_opaque_node_primitive(lv_gltf_model_t * data, size_t index, fastgltf::Node * node,
+void lv_gltf_data_add_opaque_node_primitive(lv_gltf_model_t * data, uint32_t material_index, fastgltf::Node * node,
                                             size_t primitive_index);
 
 /**
  * @brief Add a blended node primitive to the GLTF model data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param I The index of the primitive to add.
- * @param N Pointer to the NodePtr representing the node to add.
- * @param P The specific parameter associated with the primitive.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
+ * @param material_index  The index of the material to add.
+ * @param node Pointer to the NodePtr representing the node to add.
+ * @param primitive_index The specific parameter associated with the primitive.
  */
-void lv_gltf_data_add_blended_node_primitive(lv_gltf_model_t * data, size_t mesh_index, fastgltf::Node * node,
+void lv_gltf_data_add_blended_node_primitive(lv_gltf_model_t * data, uint32_t material_index, fastgltf::Node * node,
                                              size_t primitive_index);
-
-/**
- * @brief Set the cached transformation matrix for a specific node in the GLTF model data.
- *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param N Pointer to the NodePtr representing the node for which to set the transformation.
- * @param M The transformation matrix to cache.
- */
-void lv_gltf_data_set_cached_transform(lv_gltf_model_t * data, fastgltf::Node * node, fastgltf::math::fmat4x4 M);
-
-/**
- * @brief Clear the transformation cache for the GLTF model data.
- *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- */
-void lv_gltf_data_clear_transform_cache(lv_gltf_model_t * data);
-
-/**
- * @brief Retrieve the cached transformation matrix for a specific node in the GLTF model data.
- *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param N Pointer to the NodePtr representing the node for which to retrieve the transformation.
- * @return The cached transformation matrix.
- */
-fastgltf::math::fmat4x4 lv_gltf_data_get_cached_transform(lv_gltf_model_t * data, fastgltf::Node * node);
-
-/**
- * @brief Check if a cached transformation matrix exists for a given node.
- *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param N Pointer to the NodePtr representing the node for which to retrieve the transformation.
- * @return true if a cache item exists, false otherwise
- int32_t*/
-bool lv_gltf_data_has_cached_transform(lv_gltf_model_t * data, fastgltf::Node * node);
-
-/**
- * @brief Check if the transformation cache is empty.
- *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @return True if the transformation cache is empty, false otherwise.
- */
-bool lv_gltf_data_transform_cache_is_empty(lv_gltf_model_t * data);
 
 /**
  * @brief Retrieve the size of the skins in the GLTF model data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
  * @return The size of the skins.
  */
 size_t lv_gltf_data_get_skins_size(lv_gltf_model_t * data);
@@ -327,8 +280,8 @@ size_t lv_gltf_data_get_skins_size(lv_gltf_model_t * data);
 /**
  * @brief Retrieve a specific skin from the GLTF model data.
  *
- * @param D Pointer to the lv_gltf_data_t object containing the model data.
- * @param I The index of the skin to retrieve.
+ * @param data Pointer to the lv_gltf_data_t object containing the model data.
+ * @param index The index of the skin to retrieve.
  * @return The skin index.
  */
 size_t lv_gltf_data_get_skin(lv_gltf_model_t * data, size_t index);
@@ -336,7 +289,7 @@ size_t lv_gltf_data_get_skin(lv_gltf_model_t * data, size_t index);
 /**
  * @brief Ingest and discover defines for a specific node and primitive in the GLTF model data.
  *
- * @param data_obj Pointer to the lv_gltf_data_t object containing the model data.
+ * @param data     Pointer to the lv_gltf_data_t object containing the model data.
  * @param node Pointer to the node for which to ingest defines.
  * @param prim Pointer to the primitive for which to ingest defines.
  */
@@ -347,21 +300,21 @@ void lv_gltf_data_injest_discover_defines(lv_gltf_model_t * data, fastgltf::Node
  *
  * @param gltf_data Pointer to the lv_gltf_data_t object containing the model data.
  * @param matrix The transformation matrix to apply when calculating the center point.
- * @param meshIndex The index of the mesh from which to retrieve the center point.
+ * @param mesh_index The index of the mesh from which to retrieve the center point.
  * @param elem The specific element index within the mesh.
  * @return The center point as a fastgltf::math::fvec3 structure.
  */
 fastgltf::math::fvec3 lv_gltf_data_get_centerpoint(lv_gltf_model_t * gltf_data, fastgltf::math::fmat4x4 matrix,
                                                    size_t mesh_index,
-                                                   int32_t elem);
+                                                   size_t elem);
 
 
 lv_gltf_mesh_data_t * lv_gltf_get_new_meshdata(lv_gltf_model_t * _data);
 
-lv_gltf_model_t * lv_gltf_data_create_internal(const char * gltf_path, fastgltf::Asset);
+lv_gltf_model_t * lv_gltf_data_create_internal(const char * gltf_path, fastgltf::Asset && asset);
 
 lv_gltf_model_t * lv_gltf_data_load_internal(const void * data_source, size_t data_size,
-                                             lv_opengl_shader_manager_t * shaders);
+                                             lv_gltf_model_loader_t * loader);
 
 fastgltf::math::fvec4 lv_gltf_get_primitive_centerpoint(lv_gltf_model_t * data, fastgltf::Mesh & mesh,
                                                         uint32_t prim_num);
@@ -404,6 +357,16 @@ lv_gltf_model_node_t * lv_gltf_model_node_get_by_internal_node(lv_gltf_model_t *
                                                                const fastgltf::Node * fastgltf_node);
 
 void lv_gltf_model_send_new_values(lv_gltf_model_t * model);
+
+void lv_gltf_model_set_transforms(lv_gltf_model_t * model, fastgltf::Node * node, fastgltf::math::fmat4x4 M);
+
+void lv_gltf_model_clear_transforms(lv_gltf_model_t * model);
+
+fastgltf::math::fmat4x4 lv_gltf_data_get_node_transform(lv_gltf_model_t * model, fastgltf::Node * node);
+
+bool lv_gltf_model_has_node_transform(lv_gltf_model_t * model, fastgltf::Node * node);
+
+bool lv_gltf_model_needs_transforms(lv_gltf_model_t * model);
 
 #endif
 
