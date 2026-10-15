@@ -168,6 +168,18 @@ int AsyncHttpClientLight::AsyncTcpAdapter::available() {
   return bytes;
 }
 
+bool AsyncHttpClientLight::AsyncTcpAdapter::connected() {
+  if (_fd < 0 || !_isConnected) return false;
+  // read() only sees the peer close when it is called, and callers only read
+  // when available() > 0: peek, so a close after the last byte is noticed.
+  // No stop() here: connected() may be called from another task than the worker.
+  uint8_t c;
+  int r = ::recv(_fd, &c, 1, MSG_PEEK | MSG_DONTWAIT);
+  if (r == 0) return false;
+  if (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK) return false;
+  return true;
+}
+
 void AsyncHttpClientLight::AsyncTcpAdapter::stop() {
   if (_fd >= 0) {
 #if ASYNCHTTP_HTTP_LINGER_RST
@@ -549,10 +561,21 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
   int len = size;
   int bytesWritten = 0;
   uint8_t buf[HTTP_TCP_BUFFER_SIZE];
+  // a server gone silent without closing stays connected(): give up
+  // after _tcpTimeout without data, as handleHeaderResponse() does
+  uint32_t lastDataTime = millis();
 
   while (_transport && _transport->connected() && (len > 0 || len == -1)) {
     int avail = _transport->available();
-    if (avail <= 0) { delay(1); continue; }
+    if (avail <= 0) {
+      if ((millis() - lastDataTime) > (uint32_t)_tcpTimeout) {
+        _transport->stop();       // a stalled connection must not be reused
+        _bodyPending = false;
+        return HTTPC_ERROR_READ_TIMEOUT;
+      }
+      delay(1);
+      continue;
+    }
     int wish = avail;
     if (len > 0 && wish > len) wish = len;
     if (wish > (int)sizeof(buf)) wish = sizeof(buf);
@@ -562,6 +585,7 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
       if (w != r) return HTTPC_ERROR_STREAM_WRITE;
       bytesWritten += w;
       if (len > 0) len -= r;
+      lastDataTime = millis();
     }
   }
 
@@ -1236,12 +1260,21 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
   if (_transferEncoding == HTTPC_TE_IDENTITY) {
     int remaining = _size;
     if (remaining < 0) remaining = size_limit; // max to limit if we dont know content height
+    uint32_t lastDataTime = millis();
 
     while (remaining != 0) {
       if (_asyncAbortReq) return bail(HTTPC_ERROR_CONNECTION_LOST);
 
       int avail = _transport ? _transport->available() : 0;
-      if (avail <= 0) { delay(1); continue; }
+      if (avail <= 0) {
+        if (!_transport || !_transport->connected()) {
+          if (_size > 0) return bail(HTTPC_ERROR_CONNECTION_LOST);  // body cut short
+          break;                                                     // no length: close ends the body
+        }
+        if ((millis() - lastDataTime) > (uint32_t)_tcpTimeout) return bail(HTTPC_ERROR_READ_TIMEOUT);
+        delay(1);
+        continue;
+      }
 
       if (avail > remaining && remaining > 0) avail = remaining;
       if (avail > HTTP_TCP_BUFFER_SIZE) avail = HTTP_TCP_BUFFER_SIZE;
@@ -1258,6 +1291,7 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
         if (!push(buf, take)) return bail(HTTPC_ERROR_STREAM_WRITE);
         read_total += take;
         if (remaining > 0) remaining -= r;
+        lastDataTime = millis();
       }
     }
   }
