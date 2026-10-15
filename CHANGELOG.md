@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Display dsi dma2d psram buffers (#24949)
 - Matter MQTT subscription when Matter is disabled (#25140)
 - HttpClientLight time out reading a body when the server goes silent (#25139)
+- AsyncHttpClientLight finish a chunked body at the empty line after the last chunk (#25142)
 
 ## [15.6.0.2] 20261008
 ### Added
