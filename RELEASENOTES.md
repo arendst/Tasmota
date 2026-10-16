@@ -177,5 +177,3 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter commissioning mDNS announcements [#25069](https://github.com/arendst/Tasmota/issues/25069)
 - Matter non-bridge endpoint topology [#25099](https://github.com/arendst/Tasmota/issues/25099)
 - Matter MQTT subscription when Matter is disabled [#25140](https://github.com/arendst/Tasmota/issues/25140)
-
-### Removed
