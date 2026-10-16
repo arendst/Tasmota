@@ -172,6 +172,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - PWM on CDC GPIO [#25106](https://github.com/arendst/Tasmota/issues/25106)
 - Zigbee deferred timer use after free, and the truncated backtrace that hid it [#24979](https://github.com/arendst/Tasmota/issues/24979)
 - Berry rare register allocation bug [#25010](https://github.com/arendst/Tasmota/issues/25010)
+- Berry webclient.connected() was implemented but not exposed [#25145](https://github.com/arendst/Tasmota/issues/25145)
 - Matter autoconfiguration after configuration reset [#24997](https://github.com/arendst/Tasmota/issues/24997)
 - Matter commissioning mDNS announcements [#25069](https://github.com/arendst/Tasmota/issues/25069)
 - Matter non-bridge endpoint topology [#25099](https://github.com/arendst/Tasmota/issues/25099)
