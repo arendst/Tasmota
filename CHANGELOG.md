@@ -24,7 +24,7 @@ All notable changes to this project will be documented in this file.
 - Matter MQTT subscription when Matter is disabled (#25140)
 - HttpClientLight time out reading a body when the server goes silent (#25139)
 - AsyncHttpClientLight finish a chunked body at the empty line after the last chunk (#25142)
-- Berry webclient.connected() was implemented but not exposed
+- Berry webclient.connected() was implemented but not exposed (#25145)
 
 ### Removed
 
