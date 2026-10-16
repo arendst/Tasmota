@@ -99,7 +99,14 @@ void Tsl2591Show(bool json)
 }
 
 bool tsl2591CommandSensor() {
+  // Sensor57 <timing>,<gain>
+  // Sensor57 1..4, 1..6
   bool serviced = true;
+
+  if ((XdrvMailbox.payload < 1) || (XdrvMailbox.payload > 4)) {
+    return false;
+  }
+
   char argument[XdrvMailbox.data_len];
   long value = 0;
 
@@ -108,7 +115,13 @@ bool tsl2591CommandSensor() {
   }
 
   bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
-  if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
+  if (any_value) { 
+    value = strtol(ArgV(argument, 2), nullptr, 10);
+  }
+
+  if ((value < 1) || (value > 6)) {
+    return false;
+  }
 
   tsl.setGain(gain_enum_array[XdrvMailbox.payload-1]);
   tsl.setTiming(int_enum_array[value-1]);
