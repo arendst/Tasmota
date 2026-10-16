@@ -1941,7 +1941,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
 #endif // USE_IPV6
 
   uint32_t dns_start = millis();
-  bool success = WiFiHelper::hostByName(aHostname, aResult, Settings->dns_timeout);
+  bool success = (WiFiHelper::hostByName(aHostname, aResult, Settings->dns_timeout) == 1);  // https://github.com/letscontrolit/ESPEasy/commit/050017b2b00e1512e46ccc9bc3e2d0568a8c15d7
   uint32_t dns_end = millis();
   if (success) {
     // Host name resolved
