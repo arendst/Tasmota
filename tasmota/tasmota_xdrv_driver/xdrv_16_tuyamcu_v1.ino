@@ -64,6 +64,35 @@
 TasmotaSerial *TuyaSerial = nullptr;
 
 void TuyaSendCmd(uint8_t cmd, uint8_t payload[], uint16_t payload_len);
+uint8_t TuyaTxAckFor(uint8_t cmd);
+
+// TX pacing. Heartbeat (0x00), local time (0x1C) and wifi state (0x03) are all
+// sent from FUNC_EVERY_SECOND and can go out in the same tick. Some MCUs crash
+// when they receive frames back to back.
+
+// Minimum gap between frames. Matches the v2 driver.
+#ifndef TUYA_TX_MIN_GAP_MS
+#define TUYA_TX_MIN_GAP_MS      200
+#endif
+#ifndef TUYA_TX_QUEUE_LEN
+#define TUYA_TX_QUEUE_LEN       12
+#endif
+// MCU must be silent this long before we send. Frames in an MCU burst are
+// 10-20ms apart at 9600 baud.
+#ifndef TUYA_TX_QUIET_MS
+#define TUYA_TX_QUIET_MS        50
+#endif
+// Stop waiting for a reply after this. No effect unless > TUYA_TX_MIN_GAP_MS.
+#ifndef TUYA_TX_ACK_TIMEOUT_MS
+#define TUYA_TX_ACK_TIMEOUT_MS  400
+#endif
+// Max time the reply and quiet checks can hold a frame. Excludes the min gap.
+#ifndef TUYA_TX_MAX_HOLD_MS
+#define TUYA_TX_MAX_HOLD_MS     500
+#endif
+// No reply pending. Not 0, which is TUYA_CMD_HEARTBEAT.
+#define TUYA_TX_ACK_NONE        0xFF
+#define TUYA_TX_FRAME_MAX       72
 
 struct TUYA {
   uint16_t Levels[5] = {0,0,0,0,0};       // Array to store the values of TuyaMCU channels
@@ -94,6 +123,18 @@ struct TUYA {
   bool ignore_tuyareceived = false;       // When a modeset changes ignore stat
   bool active;
   uint32_t time_last_cmd;                 // to compute timeout on response and not sending another message
+  // TX queue, drained by TuyaTxDrain().
+  struct {
+    uint8_t len;
+    uint8_t buf[TUYA_TX_FRAME_MAX];
+  } tx_queue[TUYA_TX_QUEUE_LEN];
+  uint8_t  tx_head = 0;                   // next slot to fill
+  uint8_t  tx_tail = 0;                   // next slot to send
+  uint8_t  tx_count = 0;                  // slots in use
+  uint32_t tx_last_ms = 0;                // millis() of the last frame written
+  uint32_t rx_last_ms = 0;                // millis() of the last byte received from the MCU
+  uint32_t tx_hold_ms = 0;                // millis() when the head frame started waiting
+  uint8_t  tx_ack_wait = TUYA_TX_ACK_NONE; // reply cmd expected from the MCU
 } Tuya;
 
 #define TUYA_CMD_TIMEOUT        200
@@ -472,27 +513,189 @@ uint8_t TuyaGetDpId(uint8_t fnId) {
   return 0;
 }
 
+// millis(), with 0 mapped to 1 since 0 means unset. Not millis() | 1: a stamp
+// ahead of millis() makes now - stamp wrap to ~49 days.
+static inline uint32_t TuyaStamp(void)
+{
+  uint32_t now = millis();
+  return now ? now : 1;
+}
+
+void TuyaTxWrite(const uint8_t *frame, uint8_t len)
+{
+  TuyaSerial->write(frame, len);
+  TuyaSerial->flush();
+  Tuya.tx_last_ms = TuyaStamp();
+  Tuya.tx_ack_wait = TuyaTxAckFor(frame[3]);
+
+  char log_data[700];                       // Was MAX_LOGSZ
+  uint32_t pos = snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send \""));
+  for (uint32_t i = 0; (i < len) && (pos + 4 < sizeof(log_data)); ++i) {
+    pos += snprintf_P(log_data + pos, sizeof(log_data) - pos, PSTR("%02x"), frame[i]);
+  }
+  snprintf_P(log_data + pos, sizeof(log_data) - pos, PSTR("\""));
+  AddLogData(LOG_LEVEL_DEBUG, log_data);
+}
+
+// Commands that need only one copy in the queue.
+bool TuyaTxIsCollapsible(uint8_t cmd)
+{
+  return (cmd == TUYA_CMD_HEARTBEAT) ||
+         (cmd == TUYA_CMD_QUERY_STATE) ||
+         (cmd == TUYA_CMD_SET_TIME) ||
+         (cmd == TUYA_CMD_WIFI_STATE);
+}
+
+// Command the MCU replies with, or TUYA_TX_ACK_NONE. The spec says 0x06 and
+// 0x08 need no response.
+uint8_t TuyaTxAckFor(uint8_t cmd)
+{
+  switch (cmd) {
+    case TUYA_CMD_HEARTBEAT:
+    case TUYA_CMD_WIFI_STATE: return cmd;
+  }
+  return TUYA_TX_ACK_NONE;
+}
+
+// False while any of these hold:
+//   byte_counter  a frame is being received
+//   tx_ack_wait   a reply is pending, up to TUYA_TX_ACK_TIMEOUT_MS
+//   tx_last_ms    less than TUYA_TX_MIN_GAP_MS since the last send
+//   rx_last_ms    less than TUYA_TX_QUIET_MS since the last byte in
+bool TuyaTxMayWrite(void)
+{
+  if (Tuya.byte_counter) { return false; }
+  uint32_t now = millis();
+  if ((Tuya.tx_ack_wait != TUYA_TX_ACK_NONE) && ((now - Tuya.tx_last_ms) < TUYA_TX_ACK_TIMEOUT_MS)) { return false; }
+  if (Tuya.tx_last_ms && ((now - Tuya.tx_last_ms) < TUYA_TX_MIN_GAP_MS)) { return false; }
+  if (Tuya.rx_last_ms && ((now - Tuya.rx_last_ms) < TUYA_TX_QUIET_MS)) { return false; }
+  return true;
+}
+
+// Datapoint id a queued frame writes, or 0 if it is not a datapoint write.
+// Frame layout: 55 AA 00 cmd len_hi len_lo dpid type ...
+uint8_t TuyaTxFrameDpId(const uint8_t *frame, uint8_t len)
+{
+  if ((len < 8) || (frame[3] != TUYA_CMD_SET_DP)) { return 0; }
+  return frame[6];
+}
+
+// Sends at most one queued frame. Called from FUNC_LOOP.
+void TuyaTxDrain(void)
+{
+  if (!Tuya.tx_count || !TuyaSerial) { return; }
+
+  // Min gap is checked outside the hold timer.
+  uint32_t now = millis();
+  if (Tuya.tx_last_ms && ((now - Tuya.tx_last_ms) < TUYA_TX_MIN_GAP_MS)) {
+    Tuya.tx_hold_ms = 0;
+    return;
+  }
+
+  if (!TuyaTxMayWrite()) {
+    if (!Tuya.tx_hold_ms) { Tuya.tx_hold_ms = TuyaStamp(); }
+    uint32_t held = now - Tuya.tx_hold_ms;
+    // Send anyway after TUYA_TX_MAX_HOLD_MS so a chatty MCU can't block us.
+    if (held < TUYA_TX_MAX_HOLD_MS) { return; }
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TYA: Tx held %ums, sending anyway"), held);
+  }
+  Tuya.tx_hold_ms = 0;
+
+  TuyaTxWrite(Tuya.tx_queue[Tuya.tx_tail].buf, Tuya.tx_queue[Tuya.tx_tail].len);
+  Tuya.tx_tail = (Tuya.tx_tail + 1) % TUYA_TX_QUEUE_LEN;
+  Tuya.tx_count--;
+}
+
 void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0)
 {
+  Tuya.time_last_cmd = TuyaStamp();         // issue time, frame may be queued
+  uint8_t frame[TUYA_TX_FRAME_MAX];
+  uint16_t frame_len = payload_len + 7;     // 55 AA 00 cmd len_hi len_lo <payload> checksum
   uint8_t checksum = (0xFF + cmd + (payload_len >> 8) + (payload_len & 0xFF));
-  TuyaSerial->write(0x55);                  // Tuya header 55AA
-  TuyaSerial->write(0xAA);
-  TuyaSerial->write((uint8_t)0x00);         // version 00
-  TuyaSerial->write(cmd);                   // Tuya command
-  TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
-  TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
-  char log_data[700];                       // Was MAX_LOGSZ
-  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
-  for (uint32_t i = 0; i < payload_len; ++i) {
-    TuyaSerial->write(payload[i]);
-    checksum += payload[i];
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, payload[i]);
+
+  frame[0] = 0x55;                          // Tuya header 55AA
+  frame[1] = 0xAA;
+  frame[2] = 0x00;                          // version 00
+  frame[3] = cmd;                           // Tuya command
+  frame[4] = payload_len >> 8;              // following data length (Hi)
+  frame[5] = payload_len & 0xFF;            // following data length (Lo)
+
+  if (frame_len > TUYA_TX_FRAME_MAX) {
+    // Too big for a queue slot (long string datapoints): write it directly.
+    for (uint32_t i = 0; i < payload_len; ++i) { checksum += payload[i]; }
+    TuyaSerial->write(frame, 6);
+    TuyaSerial->write(payload, payload_len);
+    TuyaSerial->write(checksum);
+    TuyaSerial->flush();
+    Tuya.tx_last_ms = TuyaStamp();
+    Tuya.tx_ack_wait = TuyaTxAckFor(cmd);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Send oversized frame unpaced, cmd %02x len %d"), cmd, payload_len);
+    return;
   }
-  TuyaSerial->write(checksum);
-  TuyaSerial->flush();
-  Tuya.time_last_cmd = millis() | 1; // cheap trick to avoid 0
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x\""), log_data, checksum);
-  AddLogData(LOG_LEVEL_DEBUG, log_data);
+
+  for (uint32_t i = 0; i < payload_len; ++i) {
+    frame[6 + i] = payload[i];
+    checksum += payload[i];
+  }
+  frame[frame_len - 1] = checksum;
+
+  // Send now if the line is clear, otherwise queue it.
+  if (!Tuya.tx_count && TuyaTxMayWrite()) {
+    TuyaTxWrite(frame, frame_len);
+    return;
+  }
+
+  // Overwrite a matching queued frame in place. Datapoint writes match on dpid,
+  // collapsible commands on cmd.
+  uint8_t dpid = TuyaTxFrameDpId(frame, frame_len);
+  for (uint32_t n = 0; n < Tuya.tx_count; n++) {
+    uint8_t i = (Tuya.tx_tail + n) % TUYA_TX_QUEUE_LEN;
+    bool collapse;
+    if (dpid) {
+      collapse = (TuyaTxFrameDpId(Tuya.tx_queue[i].buf, Tuya.tx_queue[i].len) == dpid);
+    } else {
+      collapse = (Tuya.tx_queue[i].buf[3] == cmd) && TuyaTxIsCollapsible(cmd);
+    }
+    if (collapse) {
+      Tuya.tx_queue[i].len = frame_len;
+      memcpy(Tuya.tx_queue[i].buf, frame, frame_len);
+      return;
+    }
+  }
+
+  if (Tuya.tx_count >= TUYA_TX_QUEUE_LEN) {
+    // Queue full. Drop the oldest query state, set time or wifi state frame,
+    // since those are resent periodically.
+    int evict = -1;
+    for (uint32_t n = 0; n < Tuya.tx_count; n++) {
+      uint8_t i = (Tuya.tx_tail + n) % TUYA_TX_QUEUE_LEN;
+      uint8_t qcmd = Tuya.tx_queue[i].buf[3];
+      if ((qcmd == TUYA_CMD_QUERY_STATE) ||
+          (qcmd == TUYA_CMD_SET_TIME) ||
+          (qcmd == TUYA_CMD_WIFI_STATE)) { evict = i; break; }
+    }
+    if (evict < 0) {
+      // None queued: drop the oldest frame and keep the new one.
+      evict = Tuya.tx_tail;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Tx queue full, evicting oldest cmd %02x for cmd %02x"),
+             Tuya.tx_queue[evict].buf[3], cmd);
+    }
+    // Shift later frames down one slot.
+    while (true) {
+      uint8_t next = (evict + 1) % TUYA_TX_QUEUE_LEN;
+      if (next == Tuya.tx_head) { break; }
+      Tuya.tx_queue[evict].len = Tuya.tx_queue[next].len;
+      memcpy(Tuya.tx_queue[evict].buf, Tuya.tx_queue[next].buf, Tuya.tx_queue[next].len);
+      evict = next;
+    }
+    Tuya.tx_head = (Tuya.tx_head + TUYA_TX_QUEUE_LEN - 1) % TUYA_TX_QUEUE_LEN;
+    Tuya.tx_count--;
+  }
+
+  Tuya.tx_queue[Tuya.tx_head].len = frame_len;
+  memcpy(Tuya.tx_queue[Tuya.tx_head].buf, frame, frame_len);
+  Tuya.tx_head = (Tuya.tx_head + 1) % TUYA_TX_QUEUE_LEN;
+  Tuya.tx_count++;
 }
 
 void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value)
@@ -1159,6 +1362,7 @@ void TuyaNormalPowerModePacketProcess(void)
       break;
 #ifdef USE_TUYA_TIME
     case TUYA_CMD_SET_TIME:
+      // MCU requested local time
       TuyaSetTime();
       break;
 #endif
@@ -1277,6 +1481,9 @@ void TuyaProcessMessage(void) {
   bool isCmdToSuppress = false;
   Tuya.time_last_cmd = 0;
 
+  // expected reply received
+  if ((Tuya.tx_ack_wait != TUYA_TX_ACK_NONE) && (Tuya.buffer[3] == Tuya.tx_ack_wait)) { Tuya.tx_ack_wait = TUYA_TX_ACK_NONE; }
+
   if (len > 0) {
     ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
     if (TUYA_CMD_STATE == Tuya.buffer[3]) {
@@ -1371,12 +1578,10 @@ void TuyaSerialInput(void)
    *       0  1  2  2  2  2  3 3 3 3 3       Tuya.cmd_status
    */
 
-  static unsigned long time_last_byte_received = 0;
-
   while (TuyaSerial->available()) {
     yield();
     uint8_t serial_in_byte = TuyaSerial->read();
-    time_last_byte_received = millis();
+    Tuya.rx_last_ms = millis();
     if (Tuya.byte_counter == 0) {
       if (serial_in_byte == 0x55) {            // Start TUYA Packet
         Tuya.buffer[Tuya.byte_counter++] = 0x55;
@@ -1418,7 +1623,7 @@ void TuyaSerialInput(void)
     }
   }
   // reset the state machine if no bytes received since a long time
-  if (Tuya.byte_counter > 0 && (millis() - time_last_byte_received) > TUYA_CMD_TIMEOUT) {
+  if (Tuya.byte_counter > 0 && (millis() - Tuya.rx_last_ms) > TUYA_CMD_TIMEOUT) {
      Tuya.byte_counter = 0;
      AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("TYA: serial receive timeout"));
    }
@@ -1689,7 +1894,7 @@ bool Xdrv16(uint32_t function) {
     switch (function) {
       case FUNC_LOOP:
       case FUNC_SLEEP_LOOP:
-        if (TuyaSerial) { TuyaSerialInput(); }
+        if (TuyaSerial) { TuyaSerialInput(); TuyaTxDrain(); }
         break;
       case FUNC_PRE_INIT:
         TuyaInit();
