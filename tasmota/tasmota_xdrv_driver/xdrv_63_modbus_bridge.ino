@@ -782,6 +782,11 @@ void ModbusTCPHandle(void)
         {
           // For functioncode 15 & 16 ignore bytecount, modbusBridgeModbus does calculate this
           uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 13;
+          if (dataStartByte > buf_len) {
+            AddLog(LOG_LEVEL_ERROR, PSTR("MBS: data start larger than buffer"));
+            return;
+          }
+
           uint16_t byteCount = (buf_len - dataStartByte);
           modbusBridge.byteCount = 2;
           modbusBridge.dataCount = 1;
