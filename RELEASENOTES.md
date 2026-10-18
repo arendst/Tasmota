@@ -1,9 +1,16 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./tools/logo/TASMOTA_FullLogo_Vector_White.svg">
-  <img alt="Logo" src="./tools/logo/TASMOTA_FullLogo_Vector.svg" align="right" height="76">
-</picture>
-
-# RELEASE NOTES
+<h1>
+  <picture>
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://raw.githubusercontent.com/arendst/Tasmota/master/tools/logo/TASMOTA_FullLogo_Vector_White.svg">
+    <img
+      alt="Tasmota Logo"
+      src="https://raw.githubusercontent.com/arendst/Tasmota/master/tools/logo/TASMOTA_FullLogo_Vector.svg"
+      height="40"
+      align="right">
+  </picture>
+  RELEASE NOTES
+</h1>
 
 ## Migration Information
 
