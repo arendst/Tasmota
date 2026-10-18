@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [16.0.0.1]
 ### Added
 - Support OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
+- uDisplay support for SPI QSPI displays
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent

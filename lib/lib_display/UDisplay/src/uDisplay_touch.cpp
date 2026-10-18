@@ -98,6 +98,12 @@ void uDisplay::ut_trans(char **sp, uint8_t **code) {
     if (*cp == ':' || *cp == '#') {
       break;
     }
+    if (ut_code - tmp_code > (int)sizeof(tmp_code) - 12) {
+      // keep room for the largest instruction and UT_END
+      AddLog(LOG_LEVEL_INFO, PSTR("UTI: touch script too long, truncated"));
+      while (*cp && *cp != ':' && *cp != '#') cp++;
+      break;
+    }
     if (*cp == ';') {
       // skip comment line
       while (*cp) {
@@ -109,7 +115,28 @@ void uDisplay::ut_trans(char **sp, uint8_t **code) {
       }
     }
     
-    if (!strncmp(cp, "RDWM", 4)) {
+    if (!strncmp(cp, "RDLM", 4)) {
+      // read many with 32-bit register address
+      *ut_code++ = UT_RDLM;
+      uint32_t lval = ut_par(&cp, 0);
+      *ut_code++ = lval >> 24;
+      *ut_code++ = lval >> 16;
+      *ut_code++ = lval >> 8;
+      *ut_code++ = lval;
+      wval = ut_par(&cp, 1);
+      if (wval > sizeof(ut_array)) {
+        wval = sizeof(ut_array);
+      }
+      *ut_code++ = wval;
+    } else if (!strncmp(cp, "RDL", 3)) {
+      // read one with 32-bit register address
+      *ut_code++ = UT_RDL;
+      uint32_t lval = ut_par(&cp, 0);
+      *ut_code++ = lval >> 24;
+      *ut_code++ = lval >> 16;
+      *ut_code++ = lval >> 8;
+      *ut_code++ = lval;
+    } else if (!strncmp(cp, "RDWM", 4)) {
       // read word many
       *ut_code++ = UT_RDWM;
       wval = ut_par(&cp, 0);
@@ -147,9 +174,13 @@ void uDisplay::ut_trans(char **sp, uint8_t **code) {
       // cmp multiple and set
       *ut_code++ = UT_CPM;
       uint8_t num = ut_par(&cp, 0);
-      *ut_code++ = num;
+      uint8_t kept = (num > 8) ? 8 : num;   // keep within the compile buffer guard
+      *ut_code++ = kept;
       for (uint32_t cnt = 0; cnt < num; cnt++) {
-        *ut_code++ = ut_par(&cp, 0);
+        uint8_t val = ut_par(&cp, 0);
+        if (cnt < kept) {
+          *ut_code++ = val;
+        }
       }
     } else if (!strncmp(cp, "CP", 2)) {
       // cmp and set
@@ -249,8 +280,8 @@ uint32_t uDisplay::ut_par(char **lp, uint32_t mode) {
   uint32_t result;
   
   if (!mode) {
-    // hex
-    result = strtol(cp, &cp, 16);
+    // hex, unsigned so that 32-bit register addresses do not saturate
+    result = strtoul(cp, &cp, 16);
   } else if (mode == 1) {
     // word
     result = strtol(cp, &cp, 10);
@@ -275,6 +306,7 @@ int16_t uDisplay::ut_execute(uint8_t *ut_code) {
   uint8_t iob, len;
   uint16_t wval;
 
+  ut_rd_ok = true;
   while (*ut_code != UT_END) {
     iob = *ut_code++;
     switch (iob) {
@@ -296,6 +328,16 @@ int16_t uDisplay::ut_execute(uint8_t *ut_code) {
       case UT_RDWM:
         // read multiple bytes
         ut_code = ut_rd(ut_code, 2, 2);
+        break;
+
+      case UT_RDL:
+        // read 1 byte, 32-bit register address
+        ut_code = ut_rd(ut_code, 1, 4);
+        break;
+
+      case UT_RDLM:
+        // read multiple bytes, 32-bit register address
+        ut_code = ut_rd(ut_code, 2, 4);
         break;
 
       case UT_WR:
@@ -452,6 +494,10 @@ int16_t uDisplay::ut_execute(uint8_t *ut_code) {
       case UT_END:
         break;
     }
+    if (!ut_rd_ok) {
+      // failed or short I2C read: don't act on stale data
+      return 0;
+    }
   }
   
   return result;
@@ -460,10 +506,9 @@ int16_t uDisplay::ut_execute(uint8_t *ut_code) {
 // ===== Low-Level Touch Communication =====
 uint8_t *uDisplay::ut_rd(uint8_t *iop, uint32_t len, uint32_t amode) {
   if (ut_wire) {
-    // i2c mode
+    // i2c mode, amode is the register address size in bytes (1, 2 or 4)
     ut_wire->beginTransmission(ut_i2caddr);
-    ut_wire->write(*iop++);
-    if (amode == 2) {
+    for (uint32_t i = 0; i < amode; i++) {
       ut_wire->write(*iop++);
     }
     ut_wire->endTransmission(false);
@@ -473,7 +518,15 @@ uint8_t *uDisplay::ut_rd(uint8_t *iop, uint32_t len, uint32_t amode) {
     ut_wire->requestFrom(ut_i2caddr, (size_t)len);
     uint8_t index = 0;
     while (ut_wire->available()) {
-      ut_array[index++] = ut_wire->read();
+      uint8_t val = ut_wire->read();
+      if (index < sizeof(ut_array)) {
+        ut_array[index++] = val;
+      }
+    }
+    if (index < len) {
+      // NACK or short read: clear the buffer so stale values are never reused
+      memset(ut_array, 0, sizeof(ut_array));
+      ut_rd_ok = false;
     }
   } else {
     // spi mode
@@ -489,6 +542,12 @@ uint8_t *uDisplay::ut_rd(uint8_t *iop, uint32_t len, uint32_t amode) {
         ut_array[len] = val << 8;
         ut_array[len + 1] = val;
         digitalWrite(ut_spi_cs, HIGH);
+      }
+    } else {
+      // word/long register reads are I2C only: skip the operands
+      iop += amode;
+      if (len > 1) {
+        iop++;
       }
     }
   }

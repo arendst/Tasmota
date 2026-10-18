@@ -206,12 +206,12 @@ Renderer *Init_uDisplay(const char *desc) {
       }
     }
 
-    cp = strstr(ddesc, "SPI,");
+    cp = strstr(ddesc, ",SPI,");     // leading comma so that ",QSPI," does not match
     if (cp) {
       // 9 params nr,cs,sclk,mosi,dc,bl,reset,miso,mhz
       // SPI,1,*,*,*,*,*,*,*,80
       // SPI,3,*,*,*,*,*,*,*,40
-      cp += 4;
+      cp += 5;
       // 1,*,*,*,*,*,*,*,80
       uint32_t spi_type = 2;   // SPI,3 = Software SPI
       if ((*cp == '1') || (*cp == '2')) {
