@@ -27,6 +27,8 @@ def init(lv_tasmota)
   lv.screenshot = lv_tasmota.screenshot
   lv.set_paint_cb = lv_tasmota.set_paint_cb
   lv.set_stream_cb = lv_tasmota.set_stream_cb
+  lv.touch_pointer = lv_tasmota.touch_pointer
+  lv._touch_pointer = nil                     # driver instance once the touch pointer was enabled
 
   # add version information
   lv.version = lv.version_major()
@@ -153,5 +155,83 @@ def splash()
   tasmota.set_timer(5000, lv.splash_remove)    # delete the object in the future
 end
 lv_tasmota.splash = splash
+
+#- ------------------------------------------------------------ -#
+# `lv.touch_pointer(enable:bool [, color:int|lv.color [, size:int]]) -> bool`
+#
+# Show a dot under the finger while the touch screen is pressed,
+# useful for demos and screen recordings. Default is red, 30 px.
+#
+# The dot is the LVGL cursor of the first pointer input device: LVGL
+# moves it at each touch read, on `layer_sys` above all screens, and it
+# is not clickable. LVGL can't detach a cursor, so the object is created
+# once and only hidden when disabled. A driver shows it while pressed.
+#
+# Returns `false` if LVGL is not started or there is no pointer device.
+#- ------------------------------------------------------------ -#
+#@ solidify:lv_tasmota.touch_pointer,weak
+def touch_pointer(enable, color, sz)
+  class touch_pointer_driver
+    var indev, obj, enabled, shown
+
+    def init(indev, obj)
+      self.indev = indev
+      self.obj = obj
+      self.enabled = true
+      self.shown = false
+      tasmota.add_driver(self)
+    end
+
+    def every_50ms()
+      var pressed = self.enabled && (self.indev.get_state() == lv.INDEV_STATE_PRESSED)
+      if pressed != self.shown          # only touch the object on change
+        self.obj.set_hidden(!pressed)
+        self.shown = pressed
+      end
+    end
+  end
+
+  import introspect
+  var tp = lv._touch_pointer
+  if tp == nil
+    if !enable return false end
+    var null_ptr = introspect.toptr(0)
+    # find the first pointer input device
+    var indev = lv.indev(nil).get_next()
+    while (indev._p != null_ptr) && (indev.get_type() != lv.INDEV_TYPE_POINTER)
+      indev = indev.get_next()
+    end
+    if indev._p == null_ptr return false end
+
+    var obj = lv.obj(lv.layer_sys())
+    obj.set_style_radius(lv.RADIUS_CIRCLE, 0)
+    obj.set_style_border_width(0, 0)
+    obj.set_style_shadow_width(0, 0)
+    obj.set_style_pad_all(0, 0)
+    obj.set_style_bg_opa(200, 0)
+    obj.set_scrollable(false)
+    obj.set_hidden(true)
+    indev.set_cursor(obj)              # also makes it non clickable
+    tp = touch_pointer_driver(indev, obj)
+    lv._touch_pointer = tp
+    if color == nil  color = 0xFF0000  end
+    if sz == nil  sz = 30  end
+  end
+
+  tp.enabled = bool(enable)
+  if color != nil
+    if type(color) == 'int'  color = lv.color(color)  end
+    tp.obj.set_style_bg_color(color, 0)
+  end
+  if sz != nil
+    sz = int(sz)
+    tp.obj.set_size(sz, sz)
+    # LVGL places the top-left corner at the touch point, center it instead
+    tp.obj.set_style_translate_x(-sz / 2, 0)
+    tp.obj.set_style_translate_y(-sz / 2, 0)
+  end
+  return true
+end
+lv_tasmota.touch_pointer = touch_pointer
 
 return lv_tasmota

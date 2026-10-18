@@ -652,6 +652,7 @@ ENUM_HEADER_PATTERNS = [
     "lv_types.h",                       # was misc/
     "widgets/*.h",                      # was widgets/*/*.h
     "display/lv_display.h",
+    "indev/lv_indev.h",                 # INDEV_TYPE_*, INDEV_STATE_*, INDEV_MODE_*, INDEV_GESTURE_*
     "layouts/*.h",                      # was layouts/**/*.h
 ]
 
