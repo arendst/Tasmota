@@ -57,6 +57,8 @@ class Matter_IM
         # log(f"MTR: process_incoming {read_request_solo=}")
         return self.process_read_request_solo(msg, read_request_solo)
       end
+    elif opcode == 0x03   # Subscribe Request, avoids keeping DataVersionFilters in memory
+      return self.process_subscribe_request_raw(msg)
     elif opcode == 0x08   # Invoke Request
       var invoke_request_solo = self.invoke_request_solo.from_raw(msg.raw, msg.app_payload_idx)
       # log(f"MTR: {invoke_request_solo=} {msg.raw[msg.app_payload_idx .. ].tohex()} {msg.app_payload_idx=} {msg.raw.tohex()}")
@@ -78,9 +80,6 @@ class Matter_IM
     elif opcode == 0x02   # Read Request
       self.send_ack_now(msg)
       return self.process_read_request_pull(msg, val)
-    elif opcode == 0x03   # Subscribe Request
-      self.send_ack_now(msg)
-      return self.subscribe_request(msg, val)
     elif opcode == 0x04   # Subscribe Response
       # return self.subscribe_response(msg, val)
       return false                                    # not implemented for Matter device
@@ -866,10 +865,24 @@ class Matter_IM
   end
 
   #############################################################
+  # process IM 0x03 Subscribe Request from the raw frame
+  #
+  # Same order as the generic path: parse, ACK, then typed decode
+  def process_subscribe_request_raw(msg)
+    var parsed = matter.SubscribeRequestMessage.parse_raw(msg.raw, msg.app_payload_idx)
+    self.send_ack_now(msg)
+    return self.subscribe_request(msg, parsed[0], parsed[1])
+  end
+
+  #############################################################
   # process IM 0x03 Subscribe Request
   #
-  def subscribe_request(msg, val)
+  # `versions_idx` (optional) is the raw offset of DataVersionFilters not included in `val`
+  def subscribe_request(msg, val, versions_idx)
     var query = matter.SubscribeRequestMessage().from_TLV(val)
+    if versions_idx != nil
+      matter.SubscribeRequestMessage.validate_raw_filters(msg.raw, versions_idx)
+    end
 
     if !query.keep_subscriptions
       # log(f"MTR: remove all subscriptions for session {msg.session}", 3)
