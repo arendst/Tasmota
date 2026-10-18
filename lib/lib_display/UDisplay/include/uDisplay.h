@@ -24,6 +24,8 @@
 #if SOC_MIPI_DSI_SUPPORTED
     #include "uDisplay_DSI_panel.h"
 #endif
+#define UDISPLAY_QSPI
+#include "uDisplay_QSPI_panel.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32S3
 #define USE_ESP32_S3
@@ -61,7 +63,7 @@ union PanelConfigUnion {
 };
 
 enum {
-  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_CPM,UT_END
+  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_CPM,UT_RDL,UT_RDLM,UT_END
 };
 
 #define UDSP_WRITE_16 0xf0
@@ -78,6 +80,7 @@ enum {
 #define _UDSP_PAR16 4
 #define _UDSP_RGB 5
 #define _UDSP_DSI 6
+#define _UDSP_QSPI 7
 
 #define UDISP1_WHITE 1
 #define UDISP1_BLACK 0
@@ -148,7 +151,10 @@ private:
 #endif
     char dname[16];
 
-    SPIController *spiController;
+    SPIController *spiController = nullptr;
+#ifdef UDISPLAY_QSPI
+    QSPIBusConfig qspi_bus = {};
+#endif
     TwoWire *wire;
     UniversalPanel* universal_panel = nullptr;
     
@@ -273,6 +279,7 @@ private:
   int16_t besttwoavg( int16_t x , int16_t y , int16_t z );
 
   uint8_t ut_array[16];
+  bool ut_rd_ok = true;       // false when the last I2C read failed or was short
   uint8_t ut_i2caddr;
   int8_t ut_spi_cs = -1;
   int8_t ut_reset = -1;

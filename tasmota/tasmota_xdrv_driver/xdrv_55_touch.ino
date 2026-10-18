@@ -598,7 +598,8 @@ bool Xdrv55(uint32_t function) {
   switch (function) {
     case FUNC_INIT:
       break;
-    case FUNC_EVERY_100_MSECOND:
+    case FUNC_EVERY_50_MSECOND:
+      // 50 ms matches LVGL input reads and Berry touch drivers; 100 ms felt laggy
       if (CST816S_found || FT5206_found || XPT2046_found || GT911_found || utouch_found || SRES_found) {
         Touch_Check(TS_RotConvert);
       }

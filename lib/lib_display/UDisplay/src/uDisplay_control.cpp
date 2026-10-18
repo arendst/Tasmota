@@ -135,6 +135,12 @@ void uDisplay::dim10(uint8_t dim, uint16_t dim_gamma) {
             spiController->csHigh();
             spiController->endTransaction();
         }
+#ifdef UDISPLAY_QSPI
+        else if (interface == _UDSP_QSPI && universal_panel) {
+            QSPIPanel* qspi_pnl = static_cast<QSPIPanel*>(universal_panel);
+            qspi_pnl->writeCommand(dim_op, &dimmer8, 1);
+        }
+#endif // UDISPLAY_QSPI
     }
 }
 

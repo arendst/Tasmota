@@ -268,6 +268,23 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               spi_cfg.speed = next_val(&lp1);
               spiController = new SPIController(spi_cfg);
               section = 0;
+            } else if (!strncmp(ibuff, "QSPI", 4)) {
+#ifdef UDISPLAY_QSPI
+              // QSPI,bus,cs,clk,d0,d1,d2,d3,bl,rst,mhz[,lines]
+              interface = _UDSP_QSPI;
+              qspi_bus.bus_nr = next_val(&lp1);
+              qspi_bus.cs = next_val(&lp1);
+              qspi_bus.clk = next_val(&lp1);
+              qspi_bus.d0 = next_val(&lp1);
+              qspi_bus.d1 = next_val(&lp1);
+              qspi_bus.d2 = next_val(&lp1);
+              qspi_bus.d3 = next_val(&lp1);
+              bpanel = next_val(&lp1);
+              reset = next_val(&lp1);
+              qspi_bus.speed_mhz = next_val(&lp1);
+              qspi_bus.data_lines = (next_val(&lp1) == 1) ? 1 : 4;   // optional, default 4
+#endif // UDISPLAY_QSPI
+              section = 0;
             } else if (!strncmp(ibuff, "PAR", 3)) {
 #if defined(UDISPLAY_I80)
               uint8_t bus = next_val(&lp1);
@@ -513,7 +530,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'R':
             // Parse directly into SPI config (used by SPI panels only)
-            if (interface == _UDSP_SPI) {
+            if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
               panel_config->spi.cmd_memory_access = next_hex(&lp1);
               panel_config->spi.cmd_startline = next_hex(&lp1);
             } 
@@ -530,7 +547,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case '0':
             if (interface != _UDSP_RGB) {
-              if (interface == _UDSP_SPI) {
+              if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
                 // Parse directly into SPI config
                 panel_config->spi.rot_cmd[0] = next_hex(&lp1);
                 panel_config->spi.x_addr_offset[0] = next_hex(&lp1);
@@ -554,7 +571,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case '1':
             if (interface != _UDSP_RGB) {
-              if (interface == _UDSP_SPI) {
+              if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
                 panel_config->spi.rot_cmd[1] = next_hex(&lp1);
                 panel_config->spi.x_addr_offset[1] = next_hex(&lp1);
                 panel_config->spi.y_addr_offset[1] = next_hex(&lp1);
@@ -577,7 +594,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case '2':
             if (interface != _UDSP_RGB) {
-              if (interface == _UDSP_SPI) {
+              if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
                 panel_config->spi.rot_cmd[2] = next_hex(&lp1);
                 panel_config->spi.x_addr_offset[2] = next_hex(&lp1);
                 panel_config->spi.y_addr_offset[2] = next_hex(&lp1);
@@ -600,7 +617,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case '3':
             if (interface != _UDSP_RGB) {
-              if (interface == _UDSP_SPI) {
+              if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
                 panel_config->spi.rot_cmd[3] = next_hex(&lp1);
                 panel_config->spi.x_addr_offset[3] = next_hex(&lp1);
                 panel_config->spi.y_addr_offset[3] = next_hex(&lp1);
@@ -656,7 +673,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               i2c_col_start = panel_config->i2c.col_start;
               i2c_col_end = panel_config->i2c.col_end;
               saw_3 = panel_config->i2c.cmd_write_ram;
-            } else if (interface == _UDSP_SPI) {
+            } else if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
               // Parse directly into SPI config
               panel_config->spi.cmd_set_addr_x = next_hex(&lp1);
               panel_config->spi.cmd_set_addr_y = next_hex(&lp1);
@@ -712,7 +729,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           case 'i':
             inv_off = next_hex(&lp1);
             inv_on = next_hex(&lp1);
-            if (interface == _UDSP_SPI) {
+            if (interface == _UDSP_SPI || interface == _UDSP_QSPI) {
               panel_config->spi.cmd_invert_off = inv_off;
               panel_config->spi.cmd_invert_on = inv_on;
             } else if (interface == _UDSP_I2C) {
@@ -1317,6 +1334,36 @@ if (interface == _UDSP_SPI) {
     // EPD LUT initialization is now handled inside EPDPanel constructor
     // so we don't need to call Init_EPD here anymore
 }
+
+#ifdef UDISPLAY_QSPI
+  if (interface == _UDSP_QSPI) {
+    HandeBP(-1);
+
+    if (reset >= 0) {
+      pinMode(reset, OUTPUT);
+      digitalWrite(reset, HIGH);
+      delay(10);
+      reset_pin(200, 200);
+    }
+
+    // Commands, rotation and offsets are parsed into the SPI config
+    panel_config->spi.width = gxs;
+    panel_config->spi.height = gys;
+    panel_config->spi.bpp = bpp;
+    panel_config->spi.cmd_display_on = dsp_on;
+    panel_config->spi.cmd_display_off = dsp_off;
+    panel_config->spi.reset_pin = reset;
+    panel_config->spi.bpanel = bpanel;
+    panel_config->spi.all_commands_mode = false;
+
+    QSPIPanel *qspi_panel = new QSPIPanel(panel_config->spi, qspi_bus, dsp_cmds, dsp_ncmds);
+    if (qspi_panel->isReady()) {
+      universal_panel = qspi_panel;
+    } else {
+      delete qspi_panel;
+    }
+  }
+#endif // UDISPLAY_QSPI
 
 #if SOC_LCD_RGB_SUPPORTED
   if (interface == _UDSP_RGB) {
