@@ -756,9 +756,6 @@ void TaskEQ3ParseBTHome(BLE_ESP32::ble_advertisment_t* pStruct) {
   if (eq3->cryptState) {
 #ifdef USE_MI_ESP32
 #define USE_MI_DECRYPTION // Just to be sure...
-      uint8_t addrRev[6];
-      memcpy(addrRev, addr, 6);
-      BLE_ESP32::ReverseMAC(addrRev);
       uint8_t* bufPtr = (uint8_t*)ServiceDataStr.data();
       uint32_t micTag = *(uint32_t*)(bufPtr + (ServiceDataLength - 4));
       uint8_t nonce[13];
@@ -769,7 +766,7 @@ void TaskEQ3ParseBTHome(BLE_ESP32::ble_advertisment_t* pStruct) {
       memcpy(&nonce[9], bufPtr + (ServiceDataLength - 8), 4);
       uint8_t* cipherText = bufPtr + 1;
       int cipherLen = ServiceDataLength - 9;
-      eq3->cryptState = MIDecryptPayload(addrRev, nonce, micTag, cipherText, cipherLen);
+      eq3->cryptState = MIDecryptPayload(addr, nonce, micTag, cipherText, cipherLen);
       if (eq3->cryptState) return; // Decrypt failed on any reason
       ServiceDataLength -= 8;
       ServiceData = bufPtr;
