@@ -537,7 +537,7 @@ extern "C" {
       if (httpCode <= -1000) {
         AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "TLS connection error %d after %d ms", -httpCode - 1000, millis() - http_connect_time);
       } else if (httpCode == -1) {
-        AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "Connection timeout after %d ms", httpCode, millis() - http_connect_time);
+        AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "Connection timeout after %d ms", millis() - http_connect_time);
       } else {
         AddLog(LOG_LEVEL_INFO, D_LOG_HTTP "Connection error %d after %d ms", httpCode, millis() - http_connect_time);
       }
