@@ -3515,6 +3515,22 @@ class HASPmota
         jline.remove("dimming_min")
         jline.remove("dimming_duration")
         jline.remove("antiburn")
+        # `touch_pointer`: true/false, or a color like "#FF0000" (implies true)
+        # `touch_pointer_size`: diameter in pixels (default 30)
+        var touch_pointer = jline.find("touch_pointer")
+        if touch_pointer != nil
+          var tp_color
+          if type(touch_pointer) == 'string'
+            tp_color = self.lvh_root.parse_color(touch_pointer)
+            touch_pointer = true
+          end
+          var tp_size = jline.find("touch_pointer_size")
+          if !lv.touch_pointer(bool(touch_pointer), tp_color, tp_size != nil ? int(tp_size) : nil) && touch_pointer
+            log("HSP: 'touch_pointer' needs a touch screen", 2)
+          end
+        end
+        jline.remove("touch_pointer")
+        jline.remove("touch_pointer_size")
       end
     end
   end
