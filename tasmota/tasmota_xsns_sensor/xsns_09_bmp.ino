@@ -504,66 +504,127 @@ static int16_t Bme680IaqProgress(uint8_t bmp_idx) {
 
 void Bme680IaqRestore(void) {
   if (!Settings || bmp_count < 1) { return; }
-  float stored = Settings->bme680_iaq_baseline[0];
-  if (stored >= BME680_IAQ_R_MIN && stored < BME680_IAQ_BASE_MAX) {
-    if (BME680_CHIPID == bmp_sensors[0].bmp_type) {
-      bmp_sensors[0].bme680_iaq.baseline = stored;
+  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+    if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
+      float stored = (float)Settings->bme680_iaq_baseline[bmp_idx];
+      if (stored >= BME680_IAQ_R_MIN && stored < BME680_IAQ_BASE_MAX) {
+        bmp_sensors[bmp_idx].bme680_iaq.baseline = stored;
+      }
     }
   }
 }
 
 void Bme680IaqStore(void) {
   if (!Settings || bmp_count < 1) { return; }
-  if (BME680_CHIPID == bmp_sensors[0].bmp_type) {
-    Settings->bme680_iaq_baseline[0] = bmp_sensors[0].bme680_iaq.baseline;
-  } else {
-    Settings->bme680_iaq_baseline[0] = 0.0f;
+  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+    if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
+      Settings->bme680_iaq_baseline[bmp_idx] = (uint16_t)roundf(bmp_sensors[bmp_idx].bme680_iaq.baseline);
+    } else {
+      Settings->bme680_iaq_baseline[bmp_idx] = 0;
+    }
   }
 }
 
+// Return the bmp_sensors index of the n-th BME680 sensor (0-based), or -1 when not found
+static int8_t Bme680SensorByOrdinal(uint8_t ordinal) {
+  uint8_t seen = 0;
+  for (uint32_t i = 0; i < bmp_count; i++) {
+    if (BME680_CHIPID == bmp_sensors[i].bmp_type) {
+      if (seen == ordinal) { return (int8_t)i; }
+      seen++;
+    }
+  }
+  return -1;
+}
+
 void Bme680IaqCommand(void) {
-  char arg[16];
+  char arg1[XdrvMailbox.data_len];
+  char arg2[XdrvMailbox.data_len];
   char str[FLOATSZ];
 
+  uint32_t argc = ArgC();
+  if (argc >= 1) { ArgV(arg1, 1); TrimSpace(arg1); }
+  if (argc >= 2) { ArgV(arg2, 2); TrimSpace(arg2); }
+
+  // BmpIaq                     report the baseline of every BME680 sensor
+  if (0 == argc) {
+    bool found = false;
+    Response_P(PSTR("{\"%s\":{"), kBmpIaqNames);
+    for (uint32_t i = 0; i < bmp_count; i++) {
+      if (BME680_CHIPID == bmp_sensors[i].bmp_type) {
+        float factor = Bme680IaqCompFactor(bmp_sensors[i].bmp_temperature, bmp_sensors[i].bmp_humidity);
+        dtostrfd(bmp_sensors[i].bme680_iaq.baseline / factor, 0, str);
+        if (found) { ResponseAppend_P(PSTR(",")); }
+        ResponseAppend_P(PSTR("\"%s%c%02X\":{\"Baseline\":\"%s kOhm\"}"),
+          bmp_sensors[i].bmp_name, IndexSeparator(), bmp_sensors[i].bmp_address, str);
+        found = true;
+      }
+    }
+    if (!found) {
+      Response_P(PSTR("{\"%s\":{\"Error\":\"No BME680 detected\"}}"), kBmpIaqNames);
+    } else {
+      ResponseAppend_P(PSTR("}}"));
+    }
+    return;
+  }
+
+  bool reset = false;
+  bool do_set = false;
+  int8_t ordinal = -1;   // -1 => all sensors
   int8_t bmp_idx = -1;
-  for (uint32_t i = 0; i < bmp_count; i++) {
-    if (bmp_sensors[i].bmp_type == BME680_CHIPID) { bmp_idx = i; break; }
+  float set_value = 0.0f;
+
+  if (1 == argc && !strcasecmp(arg1, "RESET")) {
+    ordinal = -1;
+    reset = true;
+  } else {
+    ordinal = (int8_t)strtoul(arg1, nullptr, 10);
+    bmp_idx = Bme680SensorByOrdinal((uint8_t)ordinal);
+
+    if (argc > 1)
+      reset = !strcasecmp(arg2, "RESET");
+
+    if (!reset) {
+      set_value = strtof(arg2, nullptr);
+      do_set = true;
+    }
   }
 
-  if (bmp_idx < 0) {
-    Response_P(PSTR("{\"%s\":{\"Error\":\"No BME680 detected\"}}"), kBmpIaqNames);
+  if (-1 != ordinal && bmp_idx < 0) {
+    Response_P(PSTR("{\"%s\":{\"Error\":\"BME680 sensor %d not found\"}}"), kBmpIaqNames, (int)ordinal);
     return;
   }
 
-  if (XdrvMailbox.data_len == 0) {
-    float factor = Bme680IaqCompFactor(bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
-    dtostrfd(bmp_sensors[bmp_idx].bme680_iaq.baseline / factor, 0, str);
-    Response_P(PSTR("{\"%s\":{\"Baseline\":\"%s kOhm\"}}"), kBmpIaqNames, str);
+  if (reset) {
+    if (-1 == ordinal) {
+      for (uint32_t i = 0; i < bmp_count; i++) {
+        if (BME680_CHIPID == bmp_sensors[i].bmp_type) { Bme680IaqReset(i); }
+      }
+      Response_P(PSTR("{\"%s\":{\"Reset\":\"Burn-in restarts for all sensors\"}}"), kBmpIaqNames);
+    } else {
+      Bme680IaqReset(bmp_idx);
+      Response_P(PSTR("{\"%s\":{\"Reset\":\"Burn-in restarts\"}}"), kBmpIaqNames);
+    }
     return;
   }
 
-  strlcpy(arg, Trim(XdrvMailbox.data), sizeof(arg));
-  for (uint32_t i = 0; i < sizeof(arg); i++) {
-    if (arg[i] == ',' || arg[i] == 0) { arg[i] = 0; break; }
-    arg[i] = toupper(arg[i]);
-  }
-
-  if (strcmp(arg, "RESET") == 0) {
-    Bme680IaqReset(bmp_idx);
-    Response_P(PSTR("{\"%s\":{\"Reset\":\"Burn-in restarts\"}}"), kBmpIaqNames);
-  }
-  else {
-    float baseline = XdrvMailbox.payload;
-    if (baseline >= BME680_IAQ_R_MIN && baseline <= BME680_IAQ_R_MAX) {
+  if (do_set) {
+    if (set_value >= BME680_IAQ_R_MIN && set_value <= BME680_IAQ_R_MAX) {
       float factor = Bme680IaqCompFactor(bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
-      bmp_sensors[bmp_idx].bme680_iaq.baseline = baseline * factor;
+      bmp_sensors[bmp_idx].bme680_iaq.baseline = set_value * factor;
       SettingsSaveAll();
-      dtostrfd(baseline, 0, str);
+      dtostrfd(set_value, 0, str);
       Response_P(PSTR("{\"%s\":{\"Baseline\":\"%s kOhm stored\"}}"), kBmpIaqNames, str);
     } else {
       Response_P(PSTR("{\"%s\":{\"Error\":\"Value out of range 1..%d kOhm\"}}"), kBmpIaqNames, (int)BME680_IAQ_R_MAX);
     }
+    return;
   }
+
+  // Report a single sensor
+  float factor = Bme680IaqCompFactor(bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
+  dtostrfd(bmp_sensors[bmp_idx].bme680_iaq.baseline / factor, 0, str);
+  Response_P(PSTR("{\"%s\":{\"Baseline\":\"%s kOhm\"}}"), kBmpIaqNames, str);
 }
 
 bool Bme680Init(uint8_t bmp_idx) {
@@ -651,7 +712,7 @@ bmp_sensors[bmp_idx].bme680_state = 0;
       // Avoid using measurements from an unstable heating setup
       if (data.status & BME68X_GASM_VALID_MSK) {
         bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0f;  // Gas resistance in Ohms (converted to kOhm)
-        Bme680IaqUpdate(0, bmp_sensors[bmp_idx].bmp_gas_resistance, bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
+        Bme680IaqUpdate(bmp_idx, bmp_sensors[bmp_idx].bmp_gas_resistance, bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
       } else {
         bmp_sensors[bmp_idx].bmp_gas_resistance = 0;
       }
@@ -855,7 +916,7 @@ void BmpShow(bool json) {
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
           WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
           if (iaq_valid) {
-            WSContentSend_PD(PSTR("{s}%s " D_AIRQUALITY "{m}%s{e}"), name, iaq_quality);
+            WSContentSend_PD(PSTR("{s}%s " D_AIRQUALITY "{m}%s{e}" D_UNIT_PERCENT), name, iaq_quality);
             WSContentSend_PD(PSTR("{s}%s " D_JSON_TVOC "{m}%s " D_UNIT_PARTS_PER_BILLION "{e}"), name, tvoc);
           } else {
             int16_t iaq_prog = Bme680IaqProgress(bmp_idx);
