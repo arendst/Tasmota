@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.1]
 ### Added
-- Support OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
-- uDisplay support for SPI QSPI displays
-- LVGL/HASPmota visual touch pointer (dot under finger)
+- Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
+- uDisplay support for SPI QSPI displays (#25156)
+- LVGL/HASPmota visual touch pointer (dot under finger) (#25158)
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task (#25157)
 
 ### Removed
 
