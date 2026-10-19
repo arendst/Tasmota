@@ -206,9 +206,10 @@ class TestGarageEvents
 end
 
 class TestGarageDevice
-  var tick, events
+  var tick, events, disable_bridge_mode
   def init()
     self.tick = 1
+    self.disable_bridge_mode = false
     self.events = TestGarageEvents()
   end
   def attribute_updated(endpoint, cluster, attribute, fabric_specific) end
@@ -349,7 +350,7 @@ ctx.attribute = 0x0003
 assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 6)
 ctx.attribute = 0x0004
 var rssi = root.read_attribute(session, ctx, TLV.Matter_TLV_item())
-assert(rssi.typ == 0x00 && rssi.val == -61)
+assert(rssi.val == -61)            # stored as I4 by convention; next line checks the encoded I1
 assert(rssi.tlv2raw() == bytes("00C3"))
 tasmota.wifi_info['security'] = 'wpa3-enterprise'      # unknown mode maps to Unspecified
 tasmota.wifi_info['phy'] = ''                          # unknown PHY is null

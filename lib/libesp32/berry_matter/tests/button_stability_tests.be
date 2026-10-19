@@ -74,9 +74,10 @@ def test_button_stability()
     def init() self.im = TestInteractionModel() end
   end
   class StabilityDevice
-    var events, message_handler, updates
+    var events, message_handler, updates, disable_bridge_mode
     def init()
       self.updates = 0
+      self.disable_bridge_mode = false
       self.message_handler = TestMessageHandler()
       self.events = MemoryEventHandler(self)
     end
