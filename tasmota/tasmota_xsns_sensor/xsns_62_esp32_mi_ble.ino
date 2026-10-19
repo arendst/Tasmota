@@ -35,7 +35,7 @@
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.10.17"
+#define MI32_VERSION "v26.10.19"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -47,8 +47,10 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action     Description
   --------------------------------------------------------------------------------------------
+  26.10.19          changed  - BTHome clarify binary state GUI display
+  --------
   26.10.17          breaking - BTHome un-reverse MAC address usage for command MI32Keys to make it consistent
-                    added    - Support OUI wildcard for command MI32Keys in case multiple devices use same bindkey (IoTorero)
+                    added    - Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey (IoTorero)
   --------
   26.10.15          added    - BTHome binary events to GUI
   --------
@@ -4547,21 +4549,14 @@ void MI32Show(bool json)
         WSContentSend_P(SI_WEB_LINE_START);
         if (p->feature.events){
           if (p->type == MI_BTHOME) {
-            uint32_t count = 0;
+            // Binary sensors are shown as 0 or 1 with sub index from table BTHOME_OBJECTS
             for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
               if (p->bthome_binary[i] > 0) {
-                count++;
-              }
-            }
-            for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
-              if (p->bthome_binary[i] > 0) {
+                uint32_t obj_idx = p->bthome_binary[i] & 0x7F;
                 uint32_t state = p->bthome_binary[i] >> 7;
-                if (1 == count) {
-                  WSContentSend_PD(PSTR(" &#x1F3C1; %d"), state);  // 🏁
-                } else {
-                  uint32_t obj_idx = p->bthome_binary[i] & 0x7F;
-                  WSContentSend_PD(PSTR(" &#x1F3C1;%d %d"), obj_idx, state);  // 🏁
-                }
+//                WSContentSend_PD(PSTR(" &#x1F3C1;<sub>%d</sub> %d"), obj_idx, state);  // 🏁
+//                WSContentSend_PD(PSTR(" &#x2B0%d;<sub>%d</sub>"), (state) ? 6 : 7, obj_idx);  // ⬇ or ⬆
+                WSContentSend_PD(PSTR(" %d<sub>%d</sub>"), state, obj_idx);  // 0 or 1
               }
             }
           } else {

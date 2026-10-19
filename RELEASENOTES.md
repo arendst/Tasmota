@@ -126,6 +126,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- Several buffer overflows
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task [#25157](https://github.com/arendst/Tasmota/issues/25157)
 
 ### Removed

@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Several buffer overflows
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task (#25157)
 
 ### Removed
