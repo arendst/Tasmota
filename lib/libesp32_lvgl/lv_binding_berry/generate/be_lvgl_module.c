@@ -21,11 +21,14 @@ extern int lv0_load_font(bvm *vm);
 
 extern lv_ts_calibration_t * lv_get_ts_calibration(void);
 
+// LVGL 9.6: NULL display is deprecated, and with LV_USE_CHECK_ARG 0 a NULL default display crashes; return 0 if no display (9.5 behavior)
 static int lv_get_hor_res(void) {
-  return lv_display_get_horizontal_resolution(lv_display_get_default());    // LVGL 9.6: NULL display is deprecated
+  lv_display_t * disp = lv_display_get_default();
+  return disp ? lv_display_get_horizontal_resolution(disp) : 0;
 }
 static int lv_get_ver_res(void) {
-  return lv_display_get_vertical_resolution(lv_display_get_default());      // LVGL 9.6: NULL display is deprecated
+  lv_display_t * disp = lv_display_get_default();
+  return disp ? lv_display_get_vertical_resolution(disp) : 0;
 }
 
 /* `lv` methods */
