@@ -2202,9 +2202,6 @@ void GpioInit(void)
     }
   }
 
-  analogWriteRange(Settings->pwm_range);      // Default is 1023 (Arduino.h)
-  analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
-
 #ifdef ESP8266
   if ((2 == Pin(GPIO_TXD)) || (H801 == TasmotaGlobal.module_type)) { Serial.set_tx(2); }
   SetSerialSwap();
@@ -2296,25 +2293,6 @@ void GpioInit(void)
       digitalWrite(i, 0);
     }
 
-/*
-  // Until 20210726
-
-    // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
-    // Doing it here solves relay toggles at restart.
-#if CONFIG_IDF_TARGET_ESP32C3
-    else if (((i < 11) || (i > 17)) && (GPIO_NONE == mpin)) {  // Skip SPI flash interface
-      if (!((20 == i) || (21 == i))) {             // Skip serial
-        pinMode(i, INPUT);
-      }
-    }
-#else // CONFIG_IDF_TARGET_ESP32C3
-    else if (((i < 6) || (i > 11)) && (GPIO_NONE == mpin)) {  // Skip SPI flash interface
-      if (!((1 == i) || (3 == i))) {             // Skip serial
-        pinMode(i, INPUT);
-      }
-    }
-#endif // CONFIG_IDF_TARGET_ESP32C3
-*/
 #ifdef ESP8266
     // Set any non-used GPIO to INPUT - Related to resetPins() in support_legacy_cores.ino
     // Doing it here solves relay toggles at restart.
@@ -2405,7 +2383,9 @@ void GpioInit(void)
   }
 #endif  // ESP8266
 
+  analogWriteRange(Settings->pwm_range);      // Default is 1023 (Arduino.h)
   GpioInitPwm();
+  analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c) (Moved after init PWM #25155)
 
   for (uint32_t i = 0; i < MAX_LEDS; i++) {
     if (PinUsed(GPIO_LED1, i)) {
