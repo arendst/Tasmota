@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 `PWMFrequency` < 8 result in WDT exception after restart (#25155)
 - LVGL Panel extension crash (#25165)
 - LVGL Panel improved click handling
+- LVGL touch more responsive
 
 ### Removed
 
