@@ -64,8 +64,14 @@ typedef struct TSGlobal_t {
   bool touched;
   bool external_ts;
   bool ext_pressed;   // press injected by display.touch_update(), ex: LVGL Panel in the browser
+  bool press_latch;   // new press not yet reported by Touch_PressedLatched()
   uint32_t ext_last;  // millis() of the last injected update
 } TSGlobal_t;
+
+// Touch controller polling period. Short taps last 15-30 ms, so 50 ms missed many of them
+#ifndef TOUCH_POLL_MS
+#define TOUCH_POLL_MS 20
+#endif
 
 // An injected press overrides the touch controller until it is released or not refreshed for this time
 #ifndef TOUCH_EXT_TIMEOUT_MS
@@ -90,6 +96,7 @@ VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
 void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t gesture, bool force_no_convert) {
+  bool was_touched = TSGlobal.touched;
   TSGlobal.external_ts = true;
   TSGlobal.gesture = gesture;
   TSGlobal.touches = touches;
@@ -100,7 +107,17 @@ void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t ge
     TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
   }
   TSGlobal.ext_pressed = TSGlobal.touched;
+  if (TSGlobal.touched && !was_touched) { TSGlobal.press_latch = true; }
   TSGlobal.ext_last = millis();
+}
+
+// For LVGL: true if pressed now, or if a press started since the last call.
+// LVGL may not read the input between two polls while it renders, and would lose a short tap.
+// Only the start of a press is latched, so a release is not delayed
+bool Touch_PressedLatched(void) {
+  bool pressed = TSGlobal.touched || TSGlobal.press_latch;
+  TSGlobal.press_latch = false;
+  return pressed;
 }
 
 // return true if succesful, false if not configured
@@ -396,7 +413,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   static bool was_touched = false;    // flag used to log the data sent when the screen was just released
 
   // An injected press (display.touch_update) is kept until released, otherwise
-  // polling the controller would release it within 50 ms
+  // polling the controller would release it at the next poll
   if (TSGlobal.ext_pressed) {
     if (!TimeReached(TSGlobal.ext_last + TOUCH_EXT_TIMEOUT_MS)) { return; }
     TSGlobal.ext_pressed = false;     // no refresh from the source, release it
@@ -456,6 +473,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_XPT2046
 
   if (TSGlobal.touched) {
+    if (!was_touched) { TSGlobal.press_latch = true; }
     was_touched = true;
     TSGlobal.touch_xp = TSGlobal.raw_touch_xp;
     TSGlobal.touch_yp = TSGlobal.raw_touch_yp;
@@ -614,10 +632,13 @@ bool Xdrv55(uint32_t function) {
   switch (function) {
     case FUNC_INIT:
       break;
-    case FUNC_EVERY_50_MSECOND:
-      // 50 ms matches LVGL input reads and Berry touch drivers; 100 ms felt laggy
+    case FUNC_LOOP:
       if (CST816S_found || FT5206_found || XPT2046_found || GT911_found || utouch_found || SRES_found) {
-        Touch_Check(TS_RotConvert);
+        static uint32_t touch_next_poll = 0;
+        if (TimeReached(touch_next_poll)) {
+          SetNextTimeInterval(touch_next_poll, TOUCH_POLL_MS);
+          Touch_Check(TS_RotConvert);
+        }
       }
       break;
     case FUNC_ACTIVE:
@@ -632,6 +653,9 @@ bool Xdrv55(uint32_t function) {
 // dummy for LVGL without a touch controller
 uint32_t Touch_Status(int32_t sel) {
   return 0;
+}
+bool Touch_PressedLatched(void) {
+  return false;
 }
 
 #endif  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)

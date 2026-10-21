@@ -438,13 +438,14 @@ static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
 // TOUCHSCREEN STUFF -------------------------------------------------------
 
 uint32_t Touch_Status(int32_t sel);
+bool Touch_PressedLatched(void);
 
 //typedef void (*lv_indev_read_cb_t)(lv_indev_t * indev, lv_indev_data_t * data);
 void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data);
 void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
   data->point.x = Touch_Status(1); // Last-pressed coordinates
   data->point.y = Touch_Status(2);
-  data->state = Touch_Status(0) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
+  data->state = Touch_PressedLatched() ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;  // don't lose a tap shorter than the read period
   data->continue_reading = false; /*No buffering now so no more data read*/
   // keep data for TS calibration
   lv_ts_calibration.state = data->state;
