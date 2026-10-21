@@ -636,13 +636,12 @@ def parse_functions(mapper, lv_funcs_file):
     """Parse ``lv_funcs.h`` and classify every supported function.
 
     Returns ``(lv, lv0)`` where:
-      - ``lv``  is an ordered dict ``subtype -> [LvglFunction, ...]`` for every
+      - ``lv``  is a dict ``subtype -> [LvglFunction, ...]``, sorted by subtype, for every
         class/widget method (the first argument, the implicit ``self``, is
         stripped from the documentation).
       - ``lv0`` is the list of global ``lv.*`` functions.
     """
-    # Pre-seed the synthetic LVGL8 classes so they keep a stable position at the
-    # front of the generated output (insertion order is significant).
+    # Pre-seed the synthetic LVGL8 classes so they exist even without functions
     lv = {c: [] for c in SYNTHETIC_CLASSES}
     lv0 = []        # functions in the `lv` module
 
@@ -699,7 +698,9 @@ def parse_functions(mapper, lv_funcs_file):
             for n in get_synonyms(be_name):
                 lv0.append(LvglFunction(mapper, be_func_name, c_ret, c_args, c_args_doc_list, c_func_name, n))
 
-    return (lv, lv0)
+    # deterministic output: classes in alphabetical order, independent of the
+    # order in which their functions first appear in the LVGL headers
+    return (dict(sorted(lv.items())), lv0)
 
 
 def parse_constants(lv_enum_file):
@@ -893,11 +894,13 @@ def print_method_tables_header(out, classes, extra_names=()):
 
     ``extra_names`` are added to the name blob (ex: generic style properties)."""
     all_names = list(extra_names)
-    sigs = {}
+    sig_keys = set()
     for entries in classes.values():
         for be_name, f in entries.items():
             all_names.append(method_verb(be_name)[1])
-            sigs.setdefault((f.c_ret_type, f.c_argc), len(sigs))
+            sig_keys.add((f.c_ret_type, f.c_argc))
+    # deterministic output: signatures indexed in alphabetical order
+    sigs = {k: i for i, k in enumerate(sorted(sig_keys))}
     if len(sigs) >= (1 << METHOD_SIG_BITS):
         raise ValueError(f"too many method signatures: {len(sigs)}")
     pieces, offsets = build_name_blob(all_names)
@@ -954,7 +957,7 @@ STYLE_TYPES_MAX = 32            # type index is 5 bits
 def scan_small_typedefs(include_dir):
     """Return ``{type_name: c_kind}`` for types declared as ``typedef uint8_t/uint16_t <name>;``."""
     kinds = {}
-    for h in Path(include_dir).rglob('*.h'):
+    for h in sorted(Path(include_dir).rglob('*.h')):
         for base, name in re.findall(r'typedef\s+(u?int8_t|u?int16_t)\s+(\w+)\s*;', h.read_text(errors='replace')):
             # signed small types are not supported (None), they stay explicit methods
             kinds[name] = None if not base.startswith('u') else ('u16' if '16' in base else 'u8')
@@ -1075,10 +1078,11 @@ def split_style_methods(classes):
             del entries[be_name]            # resolved at runtime, no method entry
     # drop names that ended with no accessor (only possible after a conflict)
     props = {k: v for k, v in props.items() if v['flags']}
-    types = {}
+    # deterministic output: types indexed in alphabetical order
+    keys = sorted({(e['value_arg'] or "", e['ret'] or "", e['kind']) for e in props.values()})
+    types = {k: i for i, k in enumerate(keys)}
     for e in props.values():
-        key = (e['value_arg'] or "", e['ret'] or "", e['kind'])
-        e['type'] = types.setdefault(key, len(types))
+        e['type'] = types[(e['value_arg'] or "", e['ret'] or "", e['kind'])]
     if len(types) > STYLE_TYPES_MAX:
         raise ValueError(f"too many style types: {len(types)}")
     return props, types
@@ -1464,11 +1468,14 @@ extern int lv0_load_font(bvm *vm);
 
 extern lv_ts_calibration_t * lv_get_ts_calibration(void);
 
+// LVGL 9.6: NULL display is deprecated, and with LV_USE_CHECK_ARG 0 a NULL default display crashes; return 0 if no display (9.5 behavior)
 static int lv_get_hor_res(void) {
-  return lv_display_get_horizontal_resolution(lv_display_get_default());    // LVGL 9.6: NULL display is deprecated
+  lv_display_t * disp = lv_display_get_default();
+  return disp ? lv_display_get_horizontal_resolution(disp) : 0;
 }
 static int lv_get_ver_res(void) {
-  return lv_display_get_vertical_resolution(lv_display_get_default());      // LVGL 9.6: NULL display is deprecated
+  lv_display_t * disp = lv_display_get_default();
+  return disp ? lv_display_get_vertical_resolution(disp) : 0;
 }
 
 /* `lv` methods */
