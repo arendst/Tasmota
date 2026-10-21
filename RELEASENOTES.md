@@ -127,7 +127,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Several buffer overflows
-- ESP32 PWMFrequency < 8 result in WDT restart [#25155](https://github.com/arendst/Tasmota/issues/25155)
+- ESP32 `PWMFrequency` < 8 result in WDT exception after restart [#25155](https://github.com/arendst/Tasmota/issues/25155)
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task [#25157](https://github.com/arendst/Tasmota/issues/25157)
+- LVGL Mirror extension crash [#25165](https://github.com/arendst/Tasmota/issues/25165)
 
 ### Removed
