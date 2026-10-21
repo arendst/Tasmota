@@ -88,7 +88,7 @@ lv_obj_t * lv_stripes_create(lv_obj_t * parent)
 
 void lv_stripes_set_stripe_color(lv_obj_t * obj, lv_color_t color)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
 
     if(lv_color_eq(stripes->stripe_color, color)) return;
@@ -98,7 +98,7 @@ void lv_stripes_set_stripe_color(lv_obj_t * obj, lv_color_t color)
 
 void lv_stripes_set_stripe_opa(lv_obj_t * obj, lv_opa_t opa)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
 
     if(stripes->stripe_opa == opa) return;
@@ -108,7 +108,7 @@ void lv_stripes_set_stripe_opa(lv_obj_t * obj, lv_opa_t opa)
 
 void lv_stripes_set_stripe_width(lv_obj_t * obj, int32_t width)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
 
     if(width < 1) width = 1;
@@ -119,7 +119,7 @@ void lv_stripes_set_stripe_width(lv_obj_t * obj, int32_t width)
 
 void lv_stripes_set_gap_width(lv_obj_t * obj, int32_t width)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
 
     if(width < 0) width = 0;
@@ -130,7 +130,7 @@ void lv_stripes_set_gap_width(lv_obj_t * obj, int32_t width)
 
 void lv_stripes_set_angle(lv_obj_t * obj, int32_t angle)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
 
     angle %= 360;
@@ -142,7 +142,7 @@ void lv_stripes_set_angle(lv_obj_t * obj, int32_t angle)
 
 void lv_stripes_set_offset(lv_obj_t * obj, int32_t offset)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
 
     if(stripes->offset == offset) return;
@@ -156,42 +156,42 @@ void lv_stripes_set_offset(lv_obj_t * obj, int32_t offset)
 
 lv_color_t lv_stripes_get_stripe_color(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return lv_color_black());
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
     return stripes->stripe_color;
 }
 
 lv_opa_t lv_stripes_get_stripe_opa(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return LV_OPA_TRANSP);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
     return stripes->stripe_opa;
 }
 
 int32_t lv_stripes_get_stripe_width(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return 0);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
     return stripes->stripe_width;
 }
 
 int32_t lv_stripes_get_gap_width(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return 0);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
     return stripes->gap_width;
 }
 
 int32_t lv_stripes_get_angle(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return 0);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
     return stripes->angle;
 }
 
 int32_t lv_stripes_get_offset(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return 0);
     lv_stripes_t * stripes = (lv_stripes_t *)obj;
     return stripes->offset;
 }

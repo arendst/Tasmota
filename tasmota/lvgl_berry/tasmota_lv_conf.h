@@ -2439,7 +2439,7 @@
 #define LV_USE_ASSERT 0
 
 /** LV_ASSERT_MALLOC */
-#define LV_USE_ASSERT_MALLOC 0
+#define LV_USE_ASSERT_MALLOC 1
 
 /** LV_ASSERT_NULL */
 #define LV_USE_ASSERT_NULL 0
@@ -2471,7 +2471,7 @@
 /** Include the header given by LV_ASSERT_CUSTOM_INCLUDE, which must define
  *  a custom LV_ASSERT_HANDLER.
  */
-#define LV_ASSERT_USE_CUSTOM_INCLUDE 0
+#define LV_ASSERT_USE_CUSTOM_INCLUDE 1                  // TASMOTA
 
 #if LV_ASSERT_USE_CUSTOM_INCLUDE
 /** Optional header to override assert-related macros.
@@ -2480,7 +2480,7 @@
  *    Statement to execute when an assertion fails.
  *    e.g. #define LV_ASSERT_HANDLER my_assert_failed(__FILE__, __LINE__);
  */
-#define LV_ASSERT_CUSTOM_INCLUDE ""
+#define LV_ASSERT_CUSTOM_INCLUDE "tasmota_lv_assert.h"  // TASMOTA
 
 #endif /*LV_ASSERT_USE_CUSTOM_INCLUDE*/
 
