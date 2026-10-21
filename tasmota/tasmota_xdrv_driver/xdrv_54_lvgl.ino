@@ -33,6 +33,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_heap_caps.h"
+#include "esp_rom_sys.h"            // esp_rom_printf, used by lv_tasmota_assert_failed
 
 // callback type when a screen paint is done
 typedef void (*lv_paint_cb_t)(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint8_t *pixels);
@@ -398,6 +400,21 @@ extern "C" {
 
   void lvbe_free(void *ptr) {
     free(ptr);
+  }
+
+  // LVGL assert handler (LV_ASSERT_HANDLER, see tasmota/lvgl_berry/tasmota_lv_assert.h)
+  // Print heap state without allocating, then abort() to get a backtrace and a reboot
+  void lv_tasmota_assert_failed(void) {
+    esp_rom_printf("\nLVG: assert failed, heap internal free %u largest %u",
+                   heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+                   heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    if (heap_caps_get_total_size(MALLOC_CAP_SPIRAM) > 0) {
+      esp_rom_printf(", psram free %u largest %u",
+                     heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
+                     heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+    }
+    esp_rom_printf("\n");
+    abort();
   }
 
 #ifdef USE_LVGL_PNG_DECODER
