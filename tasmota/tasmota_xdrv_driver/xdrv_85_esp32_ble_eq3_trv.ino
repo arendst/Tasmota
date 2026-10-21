@@ -292,7 +292,7 @@ constexpr const char* const mqtt_mode_names[] = {
 };
 
 const uint8_t* const macprefixes[] = {
-  (uint8_t*)"\xB8\x27\xEB",
+//  (uint8_t*)"\xB8\x27\xEB",
   (uint8_t*)"\x00\x1a\x22"
 };
 
