@@ -63,7 +63,14 @@ typedef struct TSGlobal_t {
   // multi-point is not yet supported
   bool touched;
   bool external_ts;
+  bool ext_pressed;   // press injected by display.touch_update(), ex: LVGL Panel in the browser
+  uint32_t ext_last;  // millis() of the last injected update
 } TSGlobal_t;
+
+// An injected press overrides the touch controller until it is released or not refreshed for this time
+#ifndef TOUCH_EXT_TIMEOUT_MS
+#define TOUCH_EXT_TIMEOUT_MS 1000
+#endif
 
 TSGlobal_t TSGlobal;
 
@@ -92,6 +99,8 @@ void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t ge
   if (!force_no_convert) {
     TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
   }
+  TSGlobal.ext_pressed = TSGlobal.touched;
+  TSGlobal.ext_last = millis();
 }
 
 // return true if succesful, false if not configured
@@ -386,6 +395,13 @@ int16_t XPT2046_y() {
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   static bool was_touched = false;    // flag used to log the data sent when the screen was just released
 
+  // An injected press (display.touch_update) is kept until released, otherwise
+  // polling the controller would release it within 50 ms
+  if (TSGlobal.ext_pressed) {
+    if (!TimeReached(TSGlobal.ext_last + TOUCH_EXT_TIMEOUT_MS)) { return; }
+    TSGlobal.ext_pressed = false;     // no refresh from the source, release it
+    TSGlobal.touched = false;
+  }
 
 #ifdef SIMPLE_RES_TOUCH
   if (SRES_found) {
@@ -439,11 +455,10 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   }
 #endif // USE_XPT2046
 
-  TSGlobal.touch_xp = TSGlobal.raw_touch_xp;
-  TSGlobal.touch_yp = TSGlobal.raw_touch_yp;
-
   if (TSGlobal.touched) {
     was_touched = true;
+    TSGlobal.touch_xp = TSGlobal.raw_touch_xp;
+    TSGlobal.touch_yp = TSGlobal.raw_touch_yp;
     rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
     AddLog(LOG_LEVEL_DEBUG_MORE, "TS : touched  x=%i y=%i gest=0x%02x (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.gesture, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
 
@@ -452,7 +467,8 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_TOUCH_BUTTONS
 
   } else {
-    rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);   // still do rot convert if not TSGlobal.touched
+    // keep the last pressed point; converting raw again would break an injected point
+    // (already in screen coordinates) on a rotated display
     if (was_touched) {
       AddLog(LOG_LEVEL_DEBUG_MORE, "TS : released x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
       was_touched = false;

@@ -13,6 +13,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    touch-action: none;
   }
 </style>
 <table style="width: 100%;">
@@ -39,8 +40,12 @@
   let abortController = null;
   let isStreaming = false;
   let dataBuf, readBuf, writeBuf, imageData, imgBuf;
-  let touchPos = null;
-  let touchPressed = false;
+  const TOUCH_HEARTBEAT_MS = 250;  // resend while held, the device releases after 1 s without update
+  let touchPos = null;    // last position {x, y} in screen pixels
+  let touchId = null;     // pointerId of the active press, null when released
+  let touchTimer = null;  // heartbeat while pressed
+  let touchQueue = [];    // pending events, consecutive events of the same type are merged
+  let touchBusy = false;  // one request at a time keeps events in order and avoids flooding
 
   // RGB565 to ARGB8888 (Little Endian: AABBGGRR) using bit replication
   for (let p = 0; p < 0x10000; p++) {
@@ -155,6 +160,7 @@
     if (abortController) {
       abortController.abort();
     }
+    if (touchId !== null) touchRelease();
     if (imageData) {
       imgBuf.fill(0);
       ctx.putImageData(imageData, 0, 0);
@@ -162,28 +168,68 @@
     }
   }
 
-  function sendTouch(t) {
-    fetch(`http://${getHost()}/lvgl_touch`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ ...touchPos, t }).toString()
-    }).catch(() => { });
+  function queueTouch(t) {
+    const ev = { ...touchPos, t };
+    const last = touchQueue[touchQueue.length - 1];
+    if (last && last.t === t) {
+      touchQueue[touchQueue.length - 1] = ev;   // keep only the latest position
+    } else {
+      touchQueue.push(ev);                      // never drop a press or a release
+    }
+    if (!touchBusy) sendTouch();
+  }
+
+  async function sendTouch() {
+    touchBusy = true;
+    while (touchQueue.length) {
+      const ev = touchQueue.shift();
+      try {
+        await fetch(`http://${getHost()}/lvgl_touch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(ev).toString(),
+          signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
+        });
+      } catch (err) { }
+    }
+    touchBusy = false;
   }
 
   function updatePos(e) {
     const r = canvas.getBoundingClientRect();
+    const clamp = (v, max) => Math.min(max - 1, Math.max(0, Math.round(v)));
     touchPos = {
-      x: Math.round((e.clientX - r.left) * (canvas.width / r.width)),
-      y: Math.round((e.clientY - r.top) * (canvas.height / r.height))
+      x: clamp((e.clientX - r.left) * (canvas.width / r.width), canvas.width),
+      y: clamp((e.clientY - r.top) * (canvas.height / r.height), canvas.height)
     };
   }
 
-  setInterval(() => { if (touchPressed) sendTouch(1); }, 50);
+  function touchRelease(e) {
+    touchId = null;
+    clearInterval(touchTimer);
+    if (e && e.type === "pointerup") updatePos(e);
+    queueTouch(0);
+  }
 
-  canvas.addEventListener("mousedown", (e) => { e.preventDefault(); if (e.button === 0) { touchPressed = true; updatePos(e); } });
-  canvas.addEventListener("mousemove", (e) => { e.preventDefault(); if (e.buttons === 1) updatePos(e); });
-  canvas.addEventListener("mouseup", (e) => { e.preventDefault(); if (e.button === 0) { touchPressed = false; sendTouch(0); } });
-  window.addEventListener("mouseup", (e) => { if (e.button === 0) touchPressed = false; });
+  // Pointer events cover mouse, touch and pen; capture keeps the release when it happens outside the canvas
+  canvas.addEventListener("pointerdown", (e) => {
+    if (touchId !== null || e.button !== 0) return;
+    e.preventDefault();
+    touchId = e.pointerId;
+    canvas.setPointerCapture(e.pointerId);
+    updatePos(e);
+    queueTouch(1);
+    touchTimer = setInterval(() => queueTouch(1), TOUCH_HEARTBEAT_MS);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== touchId) return;
+    updatePos(e);
+    queueTouch(1);
+  });
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
+    canvas.addEventListener(type, (e) => { if (e.pointerId === touchId) touchRelease(e); });
+  }
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());   // long press on mobile
 
   lvBtn.addEventListener('click', (e) => {
     const host = getHost();

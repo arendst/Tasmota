@@ -19,7 +19,8 @@ All notable changes to this project will be documented in this file.
 - Several buffer overflows
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task (#25157)
 - ESP32 `PWMFrequency` < 8 result in WDT exception after restart (#25155)
-- LVGL Mirror extension crash (#25165)
+- LVGL Panel extension crash (#25165)
+- LVGL Panel improved click handling
 
 ### Removed
 
