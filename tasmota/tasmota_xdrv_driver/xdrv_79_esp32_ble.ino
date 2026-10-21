@@ -461,6 +461,7 @@ uint8_t BLEAliasListTrigger = 0;
 uint8_t BLEPostMQTTTrigger = 0;
 int BLEMaxAge = 60*10; // 10 minutes
 int BLEAddressFilter = 0;
+uint8_t BLEConnectTimeout = 15;
 
 
 //////////////////////////////////////////////////
@@ -512,7 +513,7 @@ int minRSSI = -100;
 #define D_CMND_BLE "BLE"
 
 const char kBLE_Commands[] PROGMEM = D_CMND_BLE "|"
-  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved|FilterNames|MinRssiLevel|Pair";
+  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved|FilterNames|MinRssiLevel|Pair|ConnTimeout";
 
 static void CmndBLEPeriod(void);
 static void CmndBLEAdv(void);
@@ -530,6 +531,7 @@ static void CmndBLEEnableUnsaved(void);
 static void CmndBleFilterNames(void);
 static void CmndSetMinRSSI(void);
 static void CmndPair(void);
+static void CmndConnTimeout(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEPeriod,
@@ -547,7 +549,8 @@ void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEEnableUnsaved,
   &BLE_ESP32::CmndBleFilterNames,
   &BLE_ESP32::CmndSetMinRSSI,
-  &BLE_ESP32::CmndPair
+  &BLE_ESP32::CmndPair,
+  &BLE_ESP32::CmndConnTimeout
 };
 
 const char *successStates[] PROGMEM = {
@@ -1997,6 +2000,7 @@ static void BLEDoPairing(NimBLEClient **ppClient) {
   BLEStoreModify(pairingAddress.getBase()->val, nullptr);
   NimBLEDevice::deleteBond(pairingAddress); // Must be executed after BLEStoreModify
 
+  pClient->setConnectTimeout(20000); // Always use 20 sec for pairing
   if (pClient->connect(pairingAddress, false, false, false)) { 
     AddLog(LOG_LEVEL_DEBUG, "BLE: Connected for pairing. Starting crypto handshake...");
     pairingState = PAIRING_CONNECTED;
@@ -2139,6 +2143,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     return;
   }
 
+  pClient->setConnectTimeout(BLEConnectTimeout * 1000);
   if (pClient->connect(op->addr, true)) {
 
     // as soon as connected, start another scan if possible
@@ -3308,6 +3313,12 @@ void CmndBLEName(void) {
   Response_P("{\"%s\":\"started\",\"MAC\":\"%s\",\"PIN\":\"%06u\"}", XdrvMailbox.command, pairingAddress.toString().c_str(), pairingPIN);
  };
 
+void CmndConnTimeout(void) {
+  if (XdrvMailbox.data_len) {
+    BLEConnectTimeout = tmax(tmin(XdrvMailbox.payload, 60), 5);
+  }
+  ResponseCmndNumber(BLEConnectTimeout);
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Command to cause BLE read/write/notify operations to be run.
