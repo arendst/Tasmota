@@ -1009,6 +1009,7 @@ const char HTTP_SNS_PRESSURE[]      PROGMEM = "{s}%s "  D_PRESSURE            "{
 const char HTTP_SNS_SEAPRESSURE[]   PROGMEM = "{s}%s "  D_PRESSUREATSEALEVEL  "{m}%s "                          "%s{e}";
 const char HTTP_SNS_ANALOG[]        PROGMEM = "{s}%s "  D_ANALOG_INPUT      "%d{m}%d"                             "{e}";
 const char HTTP_SNS_ILLUMINANCE[]   PROGMEM = "{s}%s "  D_ILLUMINANCE         "{m}%d " D_UNIT_LUX                 "{e}";
+const char HTTP_SNS_S_ILLUMINANCE[] PROGMEM = "{s}%s "  D_ILLUMINANCE         "{m}%s " D_UNIT_LUX                 "{e}";
 const char HTTP_SNS_CO2[]           PROGMEM = "{s}%s "  D_CO2                 "{m}%d " D_UNIT_PARTS_PER_MILLION   "{e}";
 const char HTTP_SNS_CO2EAVG[]       PROGMEM = "{s}%s "  D_ECO2                "{m}%d " D_UNIT_PARTS_PER_MILLION   "{e}";
 const char HTTP_SNS_GALLONS[]       PROGMEM = "{s}%s "  D_TOTAL_USAGE         "{m}%s " D_UNIT_GALLONS             "{e}";
