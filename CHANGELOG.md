@@ -8,7 +8,9 @@ All notable changes to this project will be documented in this file.
 - Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
 - uDisplay support for SPI QSPI displays (#25156)
 - LVGL/HASPmota visual touch pointer (dot under finger) (#25158)
-- LVGL add logging before crash when heap allocation fails
+- LVGL add logging before crash when heap allocation fails (#25170)
+- BLE timeout and eQ3 TRV enhancements (#25173)
+- TuyaMCU pace outgoing frames so the MCU is never written to back-to-back (#25151)
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
@@ -16,12 +18,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
-- Several buffer overflows
+- Security issues caused by buffer overflows
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task (#25157)
 - ESP32 `PWMFrequency` < 8 result in WDT exception after restart (#25155)
 - LVGL Panel extension crash (#25165)
-- LVGL Panel improved click handling
-- LVGL touch more responsive
+- LVGL Panel improved click handling (#25171)
+- LVGL touch more responsive (#25172)
+- VEML7700 lux/white rounding, add new command (#25150)
+- WifiManager name the setup AP as it is turned on (#25169)
 
 ### Removed
 
