@@ -184,7 +184,8 @@
     while (touchQueue.length) {
       const ev = touchQueue.shift();
       try {
-        await fetch(`http://${getHost()}/lvgl_touch`, {
+        // relative URL: same origin as the page, so it keeps the port when behind NAT/port forwarding
+        await fetch('/lvgl_touch', {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams(ev).toString(),
