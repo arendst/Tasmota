@@ -224,7 +224,7 @@ int    AsyncHttpClientLight::BearSslAdapter::read(uint8_t* buf, size_t len)     
 int    AsyncHttpClientLight::BearSslAdapter::available()                            { return _cli->available(); }
 bool   AsyncHttpClientLight::BearSslAdapter::connected()                            { return _cli->connected(); }
 void   AsyncHttpClientLight::BearSslAdapter::stop()                                 { _cli->stop(); }
-void   AsyncHttpClientLight::BearSslAdapter::setTimeout(uint16_t ms)                { _cli->setTimeout(ms); }
+void   AsyncHttpClientLight::BearSslAdapter::setTimeout(uint32_t ms)                { _cli->setTimeout(ms); }
 #endif
 
 // ======================== AsyncHttpClientLight core =====================
@@ -262,7 +262,7 @@ void AsyncHttpClientLight::setAuthorization(const char * user, const char * pass
 }
 void AsyncHttpClientLight::setAuthorization(const char * auth) { if (auth) _base64Authorization = auth; }
 
-void AsyncHttpClientLight::setTimeout(uint16_t timeout) {
+void AsyncHttpClientLight::setTimeout(uint32_t timeout) {
   _tcpTimeout = timeout;
   if (_transport) _transport->setTimeout(timeout);
 }
