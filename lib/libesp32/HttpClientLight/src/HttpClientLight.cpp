@@ -497,7 +497,7 @@ void HTTPClientLight::setConnectTimeout(int32_t connectTimeout)
  * set the timeout for the TCP connection
  * @param timeout unsigned int
  */
-void HTTPClientLight::setTimeout(uint16_t timeout)
+void HTTPClientLight::setTimeout(uint32_t timeout)
 {
     _tcpTimeout = timeout;
     if(connected()) {
