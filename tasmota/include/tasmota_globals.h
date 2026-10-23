@@ -571,6 +571,40 @@ bool first_device_group_is_local = true;
 #define SHOW_FREE_MEM(WHERE)
 #endif
 
+#if defined(ESP32) && defined(USE_HEAP_MAP)     // support_esp32.ino
+#ifndef HEAP_MAP_PERIOD
+#define HEAP_MAP_PERIOD 30                       // seconds between periodic heap map rows after boot, 0 = off
+#endif
+#ifndef HEAP_MAP_CALL_MIN
+#define HEAP_MAP_CALL_MIN 100                    // minimum internal heap change in bytes to log a driver call, 0 = off
+#endif
+#ifndef HEAP_MAP_EVENTS_BOOT_ONLY
+#define HEAP_MAP_EVENTS_BOOT_ONLY 1              // stop logging stages and driver calls once "boot" is logged, keep only the periodic rows
+#endif
+#define HEAP_MAP(STAGE) HeapMapEvent(STAGE);
+#else
+#define HEAP_MAP(STAGE)
+#endif  // ESP32 and USE_HEAP_MAP
+
+// Wrap a driver call: logs the internal heap change of the call if at least HEAP_MAP_CALL_MIN bytes,
+// only for the events listed in support_heap_map.ino (kHeapMapFuncCode and kHeapMapFuncDisplay)
+// TYPE is "xdrv", "xsns", "xlgt", "xnrg" or "xdsp", FUNCTION the FUNC_xxx code
+// ID (read after the call) is the driver number, or HEAP_MAP_ID_POS | position in the driver list if the
+// number is unknown, or HEAP_MAP_ID_DSP | position to ask the display driver with FUNC_DISPLAY_MODEL
+#if defined(ESP32) && defined(USE_HEAP_MAP) && (HEAP_MAP_CALL_MIN > 0)
+#define HEAP_MAP_ID_POS   0x10000
+#define HEAP_MAP_ID_DSP   0x20000
+#define HEAP_MAP_CALL(TYPE, ID, FUNCTION, CALL) ({ \
+  bool _hm_track = HeapMapTracked(((ID) & HEAP_MAP_ID_DSP) != 0, (FUNCTION)); \
+  int32_t _hm_nested = 0; \
+  uint32_t _hm_free = _hm_track ? HeapMapCallStart(&_hm_nested) : 0; \
+  bool _hm_result = (CALL); \
+  if (_hm_track) { HeapMapCallEnd(PSTR(TYPE), (ID), (FUNCTION), _hm_free, _hm_nested); } \
+  _hm_result; })
+#else
+#define HEAP_MAP_CALL(TYPE, ID, FUNCTION, CALL) (CALL)
+#endif  // ESP32 and USE_HEAP_MAP and HEAP_MAP_CALL_MIN
+
 #ifndef USE_PROFILING
 #undef USE_PROFILE_DRIVER
 #undef USE_PROFILE_FUNCTION

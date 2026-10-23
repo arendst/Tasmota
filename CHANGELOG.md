@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - LVGL add logging before crash when heap allocation fails (#25170)
 - BLE timeout and eQ3 TRV enhancements (#25173)
 - TuyaMCU pace outgoing frames so the MCU is never written to back-to-back (#25151)
+- Heap Map optional feature fur detailed memory usage at boot
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
