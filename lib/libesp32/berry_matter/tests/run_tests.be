@@ -940,6 +940,71 @@ def test_generic_switch()
 end
 test_generic_switch()
 
+def test_doorbell()
+  # Doorbell is a reduced Switch cluster contract: MS+MSR only (InitialPress
+  # and ShortRelease), no multi-press. Mirrors test_generic_switch's harness.
+  class TestDoorbellEvents
+    var published
+    def init() self.published = [] end
+    def publish_event(endpoint, cluster, event_id, urgent, priority, data0, data1, data2)
+      self.published.push({"endpoint": endpoint, "cluster": cluster, "event": event_id})
+    end
+  end
+
+  class TestDoorbellDevice : matter.Device
+    var updates
+    def init()
+      self.plugins = []
+      self.events = TestDoorbellEvents()
+      self.updates = []
+    end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+      self.updates.push([endpoint, cluster, attribute])
+    end
+  end
+
+  var doorbell_device = TestDoorbellDevice()
+  var doorbell = matter.Plugin_Sensor_Doorbell_Btn(doorbell_device, 40, {"button": 1})
+  doorbell_device.plugins = [doorbell]
+
+  var ctx = matter.Path(40, 0x003B, 0x0000)
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 2, "NumberOfPositions must be 2")
+  ctx.attribute = 0x0001
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0, "new Doorbell CurrentPosition must start released")
+
+  ctx.attribute = 0xFFFC
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0x06, "FeatureMap must be MS+MSR since ShortRelease is emitted")
+
+  ctx.attribute = 0xFFFA
+  var advertised = []
+  for event : doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val
+    advertised.push(event.val)
+  end
+  assert(size(advertised) == 2 && advertised.find(1) != nil && advertised.find(3) != nil,
+         "EventList must contain only InitialPress and ShortRelease")
+
+  # Wrong button index is ignored entirely.
+  doorbell_device.button_handler(9, 1, 1, 0)
+  assert(size(doorbell_device.events.published) == 0 && size(doorbell_device.updates) == 0)
+
+  # Press then release emits InitialPress then ShortRelease and tracks position.
+  doorbell_device.button_handler(1, 1, 1, 0)
+  assert(doorbell.shadow_position == 1)
+  assert(size(doorbell_device.events.published) == 1 && doorbell_device.events.published[0]["event"] == 1)
+  doorbell_device.button_handler(1, 1, 0, 0)
+  assert(doorbell.shadow_position == 0)
+  assert(size(doorbell_device.events.published) == 2 && doorbell_device.events.published[1]["event"] == 3)
+
+  # Multi-press status (mode 2) is not declared for this device type: no event, no position change.
+  doorbell_device.events.published.clear()
+  doorbell_device.button_handler(1, 2, 0, 2)
+  assert(size(doorbell_device.events.published) == 0)
+  assert(doorbell.shadow_position == 0)
+  assert(json.load(doorbell.state_json())["Switch"] == 0)
+  print("  local Doorbell initialization, routing and metadata: OK")
+end
+test_doorbell()
+
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()
 config_device.signal_endpoints_changed()

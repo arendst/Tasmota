@@ -34,8 +34,11 @@
 # NOTES:
 # - Phase 1 (this file): Switch cluster only. Button presses emit
 #   InitialPress and ShortRelease events. No multi-press.
-# - FeatureMap is 0x02 (MS only). MultiPressMax (0x0002) is not in the
-#   Switch cluster attribute list, and the MultiPress events are not exposed.
+# - FeatureMap is 0x06 (MS + MSR). The device type only mandates MS, but the
+#   Switch cluster's own event conformance ties ShortRelease (0x03) to the
+#   MSR feature, so MSR must also be set since this plug-in emits it.
+# - MultiPressMax (0x0002) is not in the Switch cluster attribute list, and
+#   the MultiPress events are not exposed.
 # - The class derives from Matter_Plugin_Device, not from the generic switch
 #   plug-in: consolidate_clusters() merges the parent's cluster map, so
 #   inheriting the generic switch would keep MultiPressMax in the list.
@@ -107,8 +110,8 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
           events.add_TLV(nil, 0x06 #-TLV.U4-#, event_id)
         end
         return events
-      elif attribute == 0xFFFC          # FeatureMap: MS only
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0x02)
+      elif attribute == 0xFFFC          # FeatureMap: MS + MSR (ShortRelease needs MSR)
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0x06)
       end
     end
     return super(self).read_attribute(session, ctx, tlv_solo)
