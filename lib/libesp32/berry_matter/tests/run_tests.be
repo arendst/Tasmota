@@ -940,6 +940,147 @@ def test_generic_switch()
 end
 test_generic_switch()
 
+def test_doorbell()
+  # Doorbell is a reduced Switch cluster contract: MS+MSR only (InitialPress
+  # and ShortRelease), no multi-press. Mirrors test_generic_switch's harness.
+  class TestDoorbellEvents
+    var published
+    def init() self.published = [] end
+    def publish_event(endpoint, cluster, event_id, urgent, priority, data0, data1, data2)
+      self.published.push({"endpoint": endpoint, "cluster": cluster, "event": event_id})
+    end
+  end
+
+  class TestDoorbellDevice : matter.Device
+    var updates
+    var plugins_config
+    var plugins_persist
+    var save_count
+    def init()
+      self.plugins = []
+      self.events = TestDoorbellEvents()
+      self.updates = []
+      self.plugins_config = {}
+      self.plugins_persist = false
+      self.save_count = 0
+    end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+      self.updates.push([endpoint, cluster, attribute])
+    end
+    def save_param()
+      self.save_count += 1
+    end
+  end
+
+  var doorbell_device = TestDoorbellDevice()
+  var doorbell = matter.Plugin_Sensor_Doorbell_Btn(doorbell_device, 40, {"button": 1})
+  doorbell_device.plugins = [doorbell]
+
+  var ctx = matter.Path(40, 0x003B, 0x0000)
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 2, "NumberOfPositions must be 2")
+  ctx.attribute = 0x0001
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0, "new Doorbell CurrentPosition must start released")
+
+  ctx.attribute = 0xFFFC
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0x06, "FeatureMap must be MS+MSR since ShortRelease is emitted")
+
+  ctx.attribute = 0xFFFA
+  var advertised = []
+  for event : doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val
+    advertised.push(event.val)
+  end
+  assert(size(advertised) == 2 && advertised.find(1) != nil && advertised.find(3) != nil,
+         "EventList must contain only InitialPress and ShortRelease")
+
+  # Wrong button index is ignored entirely.
+  doorbell_device.button_handler(9, 1, 1, 0)
+  assert(size(doorbell_device.events.published) == 0 && size(doorbell_device.updates) == 0)
+
+  # Press then release emits InitialPress then ShortRelease and tracks position.
+  doorbell_device.button_handler(1, 1, 1, 0)
+  assert(doorbell.shadow_position == 1)
+  assert(size(doorbell_device.events.published) == 1 && doorbell_device.events.published[0]["event"] == 1)
+  doorbell_device.button_handler(1, 1, 0, 0)
+  assert(doorbell.shadow_position == 0)
+  assert(size(doorbell_device.events.published) == 2 && doorbell_device.events.published[1]["event"] == 3)
+
+  # Multi-press status (mode 2) is not declared for this device type: no event, no position change.
+  doorbell_device.events.published.clear()
+  doorbell_device.button_handler(1, 2, 0, 2)
+  assert(size(doorbell_device.events.published) == 0)
+  assert(doorbell.shadow_position == 0)
+  assert(json.load(doorbell.state_json())["Switch"] == 0)
+  print("  local Doorbell initialization, routing and metadata: OK")
+
+  # Binding (0x001E) foundation: read empty, full-list write, append via
+  # ListIndex=null, rejection of a malformed entry, delete-by-index, and
+  # persistence into the device's own plugins_config.
+  ctx = matter.Path(40, 0x001E, 0x0000)
+  assert(size(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val) == 0)
+
+  var bind_entry = TLV.Matter_TLV_struct()
+  bind_entry.add_TLV(1, 0x05, 1234)              # Node
+  bind_entry.add_TLV(3, 0x05, 1)                 # Endpoint
+  bind_entry.add_TLV(4, 0x05, 0x0556)            # Cluster (Chime)
+  var bmsg = TestMessage(50, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = false
+  ctx.list_write_final = true
+  assert(doorbell.write_attribute(session, ctx, [bind_entry]))
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 1)
+  assert(doorbell.bindings[0].find('node') == 1234)
+  assert(doorbell.bindings[0].find('fabric_index') == fabric.get_fabric_index())
+
+  # Append a second binding via ListIndex=null.
+  var bind_entry_2 = TLV.Matter_TLV_struct()
+  bind_entry_2.add_TLV(2, 0x05, 5)                # Group
+  bind_entry_2.add_TLV(4, 0x05, 0x0556)
+  bmsg = TestMessage(51, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = true
+  ctx.list_index_is_null = true
+  ctx.list_write_final = true
+  ctx.write_tlv = bind_entry_2
+  assert(doorbell.write_attribute(session, ctx, bind_entry_2.val))
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 2)
+
+  # Reject an entry carrying both Node and Group: nothing is committed.
+  var bad_entry = TLV.Matter_TLV_struct()
+  bad_entry.add_TLV(1, 0x05, 1)
+  bad_entry.add_TLV(2, 0x05, 1)
+  bmsg = TestMessage(52, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = false
+  ctx.list_write_final = true
+  assert(!doorbell.write_attribute(session, ctx, [bad_entry]))
+  assert(ctx.status == 0x87)
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 2)
+
+  # Delete index 0 via a NULL write_tlv at that ListIndex.
+  var null_tlv = TLV.Matter_TLV_item()
+  null_tlv.typ = 0x14
+  bmsg = TestMessage(53, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = true
+  ctx.list_index_is_null = false
+  ctx.list_index = 0
+  ctx.list_write_final = true
+  ctx.write_tlv = null_tlv
+  assert(doorbell.write_attribute(session, ctx, nil))
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 1)
+  assert(doorbell.bindings[0].find('group') == 5)
+
+  # Each successful commit persisted into the device's own plugins_config.
+  assert(doorbell_device.save_count > 0)
+  assert(size(doorbell_device.plugins_config.find("40").find('bindings')) == 1)
+  print("  Doorbell Binding list read/write and persistence: OK")
+end
+test_doorbell()
+
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()
 config_device.signal_endpoints_changed()
