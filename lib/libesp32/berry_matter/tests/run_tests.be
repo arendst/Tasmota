@@ -953,13 +953,22 @@ def test_doorbell()
 
   class TestDoorbellDevice : matter.Device
     var updates
+    var plugins_config
+    var plugins_persist
+    var save_count
     def init()
       self.plugins = []
       self.events = TestDoorbellEvents()
       self.updates = []
+      self.plugins_config = {}
+      self.plugins_persist = false
+      self.save_count = 0
     end
     def attribute_updated(endpoint, cluster, attribute, fabric_specific)
       self.updates.push([endpoint, cluster, attribute])
+    end
+    def save_param()
+      self.save_count += 1
     end
   end
 
@@ -1002,6 +1011,73 @@ def test_doorbell()
   assert(doorbell.shadow_position == 0)
   assert(json.load(doorbell.state_json())["Switch"] == 0)
   print("  local Doorbell initialization, routing and metadata: OK")
+
+  # Binding (0x001E) foundation: read empty, full-list write, append via
+  # ListIndex=null, rejection of a malformed entry, delete-by-index, and
+  # persistence into the device's own plugins_config.
+  ctx = matter.Path(40, 0x001E, 0x0000)
+  assert(size(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val) == 0)
+
+  var bind_entry = TLV.Matter_TLV_struct()
+  bind_entry.add_TLV(1, 0x05, 1234)              # Node
+  bind_entry.add_TLV(3, 0x05, 1)                 # Endpoint
+  bind_entry.add_TLV(4, 0x05, 0x0556)            # Cluster (Chime)
+  var bmsg = TestMessage(50, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = false
+  ctx.list_write_final = true
+  assert(doorbell.write_attribute(session, ctx, [bind_entry]))
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 1)
+  assert(doorbell.bindings[0].find('node') == 1234)
+  assert(doorbell.bindings[0].find('fabric_index') == fabric.get_fabric_index())
+
+  # Append a second binding via ListIndex=null.
+  var bind_entry_2 = TLV.Matter_TLV_struct()
+  bind_entry_2.add_TLV(2, 0x05, 5)                # Group
+  bind_entry_2.add_TLV(4, 0x05, 0x0556)
+  bmsg = TestMessage(51, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = true
+  ctx.list_index_is_null = true
+  ctx.list_write_final = true
+  ctx.write_tlv = bind_entry_2
+  assert(doorbell.write_attribute(session, ctx, bind_entry_2.val))
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 2)
+
+  # Reject an entry carrying both Node and Group: nothing is committed.
+  var bad_entry = TLV.Matter_TLV_struct()
+  bad_entry.add_TLV(1, 0x05, 1)
+  bad_entry.add_TLV(2, 0x05, 1)
+  bmsg = TestMessage(52, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = false
+  ctx.list_write_final = true
+  assert(!doorbell.write_attribute(session, ctx, [bad_entry]))
+  assert(ctx.status == 0x87)
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 2)
+
+  # Delete index 0 via a NULL write_tlv at that ListIndex.
+  var null_tlv = TLV.Matter_TLV_item()
+  null_tlv.typ = 0x14
+  bmsg = TestMessage(53, session)
+  doorbell.begin_write_request(bmsg)
+  ctx.list_index_present = true
+  ctx.list_index_is_null = false
+  ctx.list_index = 0
+  ctx.list_write_final = true
+  ctx.write_tlv = null_tlv
+  assert(doorbell.write_attribute(session, ctx, nil))
+  doorbell.end_write_request(bmsg, false)
+  assert(size(doorbell.bindings) == 1)
+  assert(doorbell.bindings[0].find('group') == 5)
+
+  # Each successful commit persisted into the device's own plugins_config.
+  assert(doorbell_device.save_count > 0)
+  assert(size(doorbell_device.plugins_config.find("40").find('bindings')) == 1)
+  print("  Doorbell Binding list read/write and persistence: OK")
 end
 test_doorbell()
 
