@@ -558,6 +558,7 @@ void EQ3ParseOp(BLE_ESP32::generic_sensor_t* op, bool success) {
 
   if (cmdtype == TRV_INFO && op->notifylen >= 15 && op->dataNotify[0] == 1 && op->dataNotify[2] == 0 && op->dataNotify[3] == 0) {
     eq3->Firmware = op->dataNotify[1];
+    if (!stattime) return; // Avoid sending of empty status
   }
 
   EQ3publishMain(eq3);
