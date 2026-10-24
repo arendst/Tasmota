@@ -509,7 +509,15 @@ void DisplayText(void)
         // if string in buffer print it
         dp -= decode_te(linebuf);
         if ((uint32_t)dp - (uint32_t)linebuf) {
-          if (!fill) { *dp = 0; }
+          if (!fill) {
+            *dp = 0;
+          } else {
+            linebuf[abs(int(fill))] = 0;
+          }
+          if (fill < 0) {
+            // right align
+            alignright(linebuf);
+          }
 #ifdef USE_DISPLAY_MODES1TO5
           if (!Settings->display_mode) {
 #endif  // USE_DISPLAY_MODES1TO5
