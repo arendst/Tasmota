@@ -303,17 +303,24 @@ extern "C" {
         if (ESP_OK == esp_wifi_sta_get_ap_info(&ap_info)) {
           const char * security = "";
           switch (ap_info.authmode) {
-            case WIFI_AUTH_OPEN:              security = "open";  break;
-            case WIFI_AUTH_WEP:               security = "wep";   break;
-            case WIFI_AUTH_WPA_PSK:           security = "wpa";   break;
+            case WIFI_AUTH_OPEN:
+              security = "open";  break;
+            case WIFI_AUTH_WEP:
+              security = "wep";   break;
+            case WIFI_AUTH_WPA_PSK:
+              security = "wpa";   break;
             case WIFI_AUTH_WPA2_PSK:
             case WIFI_AUTH_WPA_WPA2_PSK:
-            case WIFI_AUTH_WPA2_ENTERPRISE:   security = "wpa2";  break;
+            case WIFI_AUTH_WPA2_ENTERPRISE:
+              security = "wpa2";  break;
             case WIFI_AUTH_WPA3_PSK:
             case WIFI_AUTH_WPA2_WPA3_PSK:
             case WIFI_AUTH_WPA3_ENT_192:
+          #if ESP_IDF_VERSION_MAJOR < 6
             case WIFI_AUTH_WPA3_EXT_PSK:
-            case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE: security = "wpa3"; break;
+            case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE:
+          #endif
+              security = "wpa3"; break;
             default:                          break;
           }
           be_map_insert_str(vm, "security", security);
