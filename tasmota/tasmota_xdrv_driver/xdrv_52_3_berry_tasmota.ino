@@ -245,6 +245,20 @@ extern "C" {
     be_return(vm);
   }
 
+#ifdef USE_HEAP_MAP
+  // Berry: tasmota.heapmap([label:string [, header:bool]]) -> nil
+  //
+  // Log a heap map row with the given label (default "berry"), header forces the table header
+  int32_t l_heapmap(struct bvm *vm);
+  int32_t l_heapmap(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    const char *label = (top >= 1 && be_isstring(vm, 1)) ? be_tostring(vm, 1) : "berry";
+    bool header = (top >= 2) ? be_tobool(vm, 2) : false;
+    HeapMap(label, header);
+    be_return_nil(vm);
+  }
+#endif  // USE_HEAP_MAP
+
   // Berry: tasmota.wifi() -> map
   //
   int32_t l_wifi(struct bvm *vm);

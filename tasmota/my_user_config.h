@@ -1395,6 +1395,10 @@
 //#define DEBUG_TASMOTA_SENSOR                     // Enable sensor debug messages
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
 //#define USE_ESP8266_DEBUG_HEAP                   // Add heap fragmentation display support. Needs build_flags -DUMM_STATS_FULL and -DUMM_INLINE_METRICS too (+2k5 code)
+//#define USE_HEAP_MAP                             // (ESP32) Log heap summary (used/free/largest free/min free) at boot stages and periodically, heap change of each driver call and Berry tasmota.heapmap("label")
+//#define HEAP_MAP_PERIOD        30                // (ESP32) With USE_HEAP_MAP, seconds between heap map rows after boot (default 30, 0 = off)
+//#define HEAP_MAP_CALL_MIN     100                // (ESP32) With USE_HEAP_MAP, minimum internal heap change in bytes to log a driver call (default 100, 0 = off)
+//#define HEAP_MAP_EVENTS_BOOT_ONLY 1              // (ESP32) With USE_HEAP_MAP, stop logging stages and driver calls once "boot" is logged, only periodic rows remain (default 1, 0 = keep logging)
 
 /*********************************************************************************************\
  * Profiling features
