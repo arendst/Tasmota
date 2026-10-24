@@ -82,6 +82,9 @@ void (* const IrRemoteCommand[])(void) PROGMEM = {
 
 bool ir_send_active = false;    // do we have a GPIO configured for IR_SEND
 bool ir_recv_active = false;    // do we have a GPIO configured for IR_RECV
+#ifdef ESP32
+int8_t ir_send_period_offset = kPeriodOffset;  // carrier correction, measured once in IrInit()
+#endif
 
 /*********************************************************************************************\
  * Class used to make a compact IR Raw format.
@@ -149,6 +152,9 @@ class IRsend IrSendInitGPIO(int32_t channel = -1) {
   }
   IRsend irsend(pin, IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
   irsend.begin();
+#ifdef ESP32
+  irsend.setPeriodOffset(ir_send_period_offset);
+#endif
   return irsend;
 }
 
@@ -1002,6 +1008,14 @@ void IrInit(void) {
         IrSendInitGPIO(chan);
       }
     }
+#ifdef ESP32
+    // The carrier is made in software and its speed varies with the build, so
+    // measure it once (a 65 ms carrier burst without data) and correct the
+    // period for every IRsend object.
+    IRsend cal = IrSendInitGPIO();
+    ir_send_period_offset = cal.calibrate(38000);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("IR : Carrier period offset %d us"), ir_send_period_offset);
+#endif
   }
 }
 
