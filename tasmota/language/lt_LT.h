@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Apšvietimas"
 #define D_IMMEDIATE "nedelsiant"      // Mygtuko veikimas nedelsiant
 #define D_INDEX "Indeksas"
+#define D_AIRQUALITY "Oro kokybė"
+#define D_IAQ_CALIBRATING "(bazinės linijos kalibravimas, palaikykite orą švarų)"
 #define D_INFO "Informacija"
 #define D_INFRARED "Infraraudonieji spinduliai"
 #define D_INITIALIZED "Inicializuota"

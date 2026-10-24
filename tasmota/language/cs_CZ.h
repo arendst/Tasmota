@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Osvětlení"
 #define D_IMMEDIATE "Okamžité"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Kvalita vzduchu"
+#define D_IAQ_CALIBRATING "(kalibrace základní linie, udržujte vzduch čistý)"
 #define D_INFO "Informace"
 #define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializovaný"
